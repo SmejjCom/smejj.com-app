@@ -1,0 +1,21 @@
+{
+  "name": "smejj-code-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "check": "node --check src/server.js",
+    "idrive:check": "node scripts/model-management/check_idrive_e2_storage.mjs",
+    "idrive:archive-source": "node scripts/model-management/archive_kimi_source_metadata.mjs",
+    "idrive:preflight": "sh scripts/model-management/preflight_kimi_k27_storage.sh",
+    "model:download": "sh scripts/model-management/download_kimi_model.sh",
+    "model:verify": "sh scripts/model-management/verify_model_files.sh",
+    "model:upload": "sh scripts/model-management/upload_to_idrive_e2.sh",
+    "test": "npm run check"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

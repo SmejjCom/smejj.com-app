@@ -1,0 +1,25 @@
+.env
+.env.*
+!.env.example
+
+# Never store model weights, downloaded checkpoints, or generated manifests in Git.
+model-files/
+models/
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.sha256
+checksums.txt
+
+# Local temporary output
+.DS_Store
+node_modules/
+dist/
+coverage/
+tmp/
+temp/
+.wrangler/
