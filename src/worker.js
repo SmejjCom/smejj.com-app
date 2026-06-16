@@ -37,6 +37,28 @@ export default {
       });
     }
 
+    if (readMethod && url.pathname === ROUTES.api.authConfig) {
+      return json(200, {
+        configured: Boolean(env.GOOGLE_CLIENT_ID),
+        clientId: env.GOOGLE_CLIENT_ID || "",
+        allowedEmail: (env.GOOGLE_ALLOWED_EMAIL || "smejjCom@gmail.com").toLowerCase()
+      });
+    }
+
+    if (readMethod && url.pathname === ROUTES.api.authMe) {
+      return json(200, { authenticated: false, user: null });
+    }
+
+    if (request.method === "POST" && url.pathname === ROUTES.api.authGoogle) {
+      return json(503, { error: "Google Login ist online noch nicht konfiguriert." });
+    }
+
+    if (request.method === "POST" && url.pathname === ROUTES.api.authLogout) {
+      return json(200, { authenticated: false }, {
+        "Set-Cookie": "smejj_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
+      });
+    }
+
     if (readMethod && url.pathname === ROUTES.api.storageStatus) {
       return storageStatus(env);
     }
@@ -275,8 +297,14 @@ async function readJson(request) {
   }
 }
 
-function json(status, body) {
-  return new Response(JSON.stringify(body), { status, headers: responseHeaders("application/json; charset=utf-8") });
+function json(status, body, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...responseHeaders("application/json; charset=utf-8"),
+      ...extraHeaders
+    }
+  });
 }
 
 function withSecurityHeaders(response) {

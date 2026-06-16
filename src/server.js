@@ -18,7 +18,10 @@ const config = {
   projectRoot: path.resolve(process.env.PROJECT_ROOT || process.cwd()),
   baseUrl: (process.env.SMEJJ_LLM_BASE_URL || process.env.BRIRT_LLM_BASE_URL || "https://api.moonshot.ai/v1").replace(/\/$/, ""),
   apiKey: process.env.SMEJJ_LLM_API_KEY || process.env.BRIRT_LLM_API_KEY || "",
-  model: process.env.SMEJJ_LLM_MODEL || process.env.BRIRT_LLM_MODEL || "kimi-k2.7-code"
+  model: process.env.SMEJJ_LLM_MODEL || process.env.BRIRT_LLM_MODEL || "kimi-k2.7-code",
+  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+  googleAllowedEmail: (process.env.GOOGLE_ALLOWED_EMAIL || "smejjCom@gmail.com").toLowerCase(),
+  sessionSecret: process.env.SMEJJ_SESSION_SECRET || process.env.GOOGLE_SESSION_SECRET || ""
 };
 
 const forbiddenSegments = new Set([".env", ".git", "node_modules", "dist", "build"]);
@@ -33,14 +36,18 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
     if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res);
     if (readMethod && url.pathname === ROUTES.api.capabilities) return handleCapabilities(res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.chat) return handleChat(req, res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.agent) return handleAgent(req, res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.fileRead) return handleRead(req, res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.fileWrite) return handleWrite(req, res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.terminalRun) return handleTerminal(req, res);
+    if (readMethod && url.pathname === ROUTES.api.authConfig) return handleAuthConfig(res);
+    if (readMethod && url.pathname === ROUTES.api.authMe) return handleAuthMe(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.authGoogle) return await handleGoogleAuth(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return handleAuthLogout(res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.chat) return await handleChat(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.agent) return await handleAgent(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.fileRead) return await handleRead(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.fileWrite) return await handleWrite(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.terminalRun) return await handleTerminal(req, res);
     if (readMethod && url.pathname === ROUTES.api.gitStatus) return handleGitStatus(res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.gitCommit) return handleGitCommit(req, res);
-    if (readMethod && url.pathname === ROUTES.api.storageStatus) return handleStorageStatus(res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.gitCommit) return await handleGitCommit(req, res);
+    if (readMethod && url.pathname === ROUTES.api.storageStatus) return await handleStorageStatus(res);
     json(res, 404, { error: "Not found" });
   } catch (error) {
     json(res, 500, { error: error.message || "Internal error" });
@@ -75,6 +82,52 @@ async function handleCapabilities(res) {
     costPolicy: COST_POLICY,
     capabilities: CAPABILITIES
   });
+}
+
+function handleAuthConfig(res) {
+  json(res, 200, {
+    configured: Boolean(config.googleClientId),
+    clientId: config.googleClientId,
+    allowedEmail: config.googleAllowedEmail
+  });
+}
+
+function handleAuthMe(req, res) {
+  const user = readSession(req);
+  json(res, 200, { authenticated: Boolean(user), user });
+}
+
+async function handleGoogleAuth(req, res) {
+  if (!config.googleClientId) return json(res, 503, { error: "Google Login ist noch nicht konfiguriert." });
+  if (!config.sessionSecret) return json(res, 503, { error: "Session Secret fehlt." });
+  const body = await readJson(req);
+  const payload = await verifyGoogleIdToken(String(body.credential || ""));
+  const email = String(payload.email || "").toLowerCase();
+  if (!payload.email_verified) return json(res, 403, { error: "Google E-Mail ist nicht verifiziert." });
+  if (config.googleAllowedEmail && email !== config.googleAllowedEmail) {
+    return json(res, 403, { error: "Dieses Google Konto ist fuer smejj.com nicht freigegeben." });
+  }
+  const user = {
+    email,
+    name: String(payload.name || email),
+    picture: String(payload.picture || ""),
+    sub: String(payload.sub || "")
+  };
+  res.writeHead(200, {
+    ...SECURITY_HEADERS,
+    "Content-Type": "application/json; charset=utf-8",
+    "Set-Cookie": serializeSessionCookie(user)
+  });
+  res.end(JSON.stringify({ authenticated: true, user }, null, 2));
+}
+
+function handleAuthLogout(res) {
+  res.writeHead(200, {
+    ...SECURITY_HEADERS,
+    "Content-Type": "application/json; charset=utf-8",
+    "Set-Cookie": "smejj_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+  });
+  res.end(JSON.stringify({ authenticated: false }, null, 2));
 }
 
 async function handleAgent(req, res) {
@@ -300,6 +353,69 @@ function readJson(req) {
 function json(res, status, payload) {
   res.writeHead(status, { ...SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload, null, 2));
+}
+
+async function verifyGoogleIdToken(token) {
+  const [headerPart, payloadPart, signaturePart] = token.split(".");
+  if (!headerPart || !payloadPart || !signaturePart) throw new Error("Ungueltiges Google Token.");
+  const header = parseJwtPart(headerPart);
+  const payload = parseJwtPart(payloadPart);
+  if (header.alg !== "RS256" || !header.kid) throw new Error("Ungueltige Google Signatur.");
+  if (payload.aud !== config.googleClientId) throw new Error("Google Client-ID passt nicht.");
+  if (!["https://accounts.google.com", "accounts.google.com"].includes(payload.iss)) throw new Error("Ungueltiger Google Issuer.");
+  if (Number(payload.exp || 0) <= Math.floor(Date.now() / 1000)) throw new Error("Google Token ist abgelaufen.");
+  const key = await getGooglePublicKey(header.kid);
+  const ok = crypto.verify(
+    "RSA-SHA256",
+    Buffer.from(`${headerPart}.${payloadPart}`),
+    key,
+    base64UrlDecode(signaturePart)
+  );
+  if (!ok) throw new Error("Google Signatur konnte nicht geprueft werden.");
+  return payload;
+}
+
+async function getGooglePublicKey(kid) {
+  const response = await fetch("https://www.googleapis.com/oauth2/v3/certs");
+  if (!response.ok) throw new Error("Google Zertifikate konnten nicht geladen werden.");
+  const { keys = [] } = await response.json();
+  const jwk = keys.find((key) => key.kid === kid);
+  if (!jwk) throw new Error("Passendes Google Zertifikat fehlt.");
+  return crypto.createPublicKey({ key: jwk, format: "jwk" });
+}
+
+function serializeSessionCookie(user) {
+  const payload = base64UrlEncode(JSON.stringify({ ...user, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }));
+  const signature = hmac(config.sessionSecret, payload, "base64url");
+  return `smejj_session=${payload}.${signature}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`;
+}
+
+function readSession(req) {
+  const match = String(req.headers.cookie || "").match(/(?:^|;\s*)smejj_session=([^;]+)/);
+  if (!match || !config.sessionSecret) return null;
+  const [payload, signature] = match[1].split(".");
+  const expected = hmac(config.sessionSecret, payload, "base64url");
+  if (!signature || signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  try {
+    const user = JSON.parse(base64UrlDecode(payload).toString("utf8"));
+    if (Number(user.exp || 0) <= Date.now()) return null;
+    delete user.exp;
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+function parseJwtPart(part) {
+  return JSON.parse(base64UrlDecode(part).toString("utf8"));
+}
+
+function base64UrlDecode(value) {
+  return Buffer.from(value.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+}
+
+function base64UrlEncode(value) {
+  return Buffer.from(value).toString("base64url");
 }
 
 async function signedS3List({ endpoint, region, accessKey, secretKey, bucket, prefix }) {

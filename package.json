@@ -16,6 +16,7 @@
     "model:upload": "sh scripts/model-management/upload_to_idrive_e2.sh",
     "release:guard": "node scripts/release/free_tier_release_guard.mjs",
     "release:preflight": "npm run check && npm run release:guard && npm run idrive:check && npm run idrive:artifact && npx wrangler deploy --dry-run --outdir /tmp/smejj-release-preflight",
+    "test:e2e:smoke": "node scripts/testing/prompt5_e2e_smoke.mjs",
     "test": "npm run check"
   },
   "engines": {

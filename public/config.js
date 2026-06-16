@@ -1,6 +1,10 @@
 export const CLIENT_ROUTES = {
   api: {
     agent: "/api/agent",
+    authConfig: "/api/auth/config",
+    authGoogle: "/api/auth/google",
+    authMe: "/api/auth/me",
+    authLogout: "/api/auth/logout",
     capabilities: "/api/capabilities",
     health: "/api/health",
     gitStatus: "/api/git/status",

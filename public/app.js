@@ -26,6 +26,9 @@ function boot() {
   bindMemory();
   bindTools();
   bindProfile();
+  initGoogleLogin().catch((error) => {
+    writeOutput("#profileOutput", error.message || "Google Login konnte nicht geladen werden.");
+  });
   hydrateProfile();
   $("#memoryText").value = state.memory;
   $("#ragText").value = state.rag;
@@ -172,6 +175,10 @@ function bindProfile() {
     writeOutput("#profileOutput", profile.email ? `Lokaler Login-Test aktiv fuer ${profile.email}.` : "Kein lokales Profil gespeichert.");
   });
 
+  $("#logoutLocal").addEventListener("click", () => {
+    writeOutput("#profileOutput", "Lokaler Login-Test beendet. Serverseitige Session-Cookies werden in dieser Free-safe Shell nicht gesetzt.");
+  });
+
   $("#saveProfile").addEventListener("click", () => {
     state.profile = {
       name: $("#profileName").value.trim(),
@@ -189,6 +196,68 @@ function bindProfile() {
   $("#clearLocal").addEventListener("click", () => {
     for (const key of Object.values(STORAGE_KEYS)) localStorage.removeItem(key);
     writeOutput("#profileOutput", "Lokale smejj.com Daten geloescht.");
+  });
+}
+
+async function initGoogleLogin() {
+  const config = await getJson(CLIENT_ROUTES.api.authConfig);
+  if (!config.configured) {
+    $("#googleSignIn").textContent = "Google Login: Client-ID fehlt.";
+    return;
+  }
+  const session = await getJson(CLIENT_ROUTES.api.authMe);
+  if (session.authenticated && session.user) {
+    showSignedIn(session.user);
+    return;
+  }
+  await loadGoogleIdentity();
+  google.accounts.id.initialize({
+    client_id: config.clientId,
+    callback: handleGoogleCredential
+  });
+  google.accounts.id.renderButton($("#googleSignIn"), {
+    theme: "outline",
+    size: "large",
+    text: "signin_with",
+    shape: "rectangular"
+  });
+}
+
+async function handleGoogleCredential(response) {
+  const result = await postJson(CLIENT_ROUTES.api.authGoogle, { credential: response.credential });
+  if (result.authenticated && result.user) {
+    showSignedIn(result.user);
+    return;
+  }
+  writeOutput("#profileOutput", result.error || "Google Login fehlgeschlagen.");
+}
+
+function showSignedIn(user) {
+  $("#profileName").value = user.name || "";
+  $("#profileEmail").value = user.email || "";
+  $("#googleSignIn").innerHTML = "";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = `Google: ${user.email} abmelden`;
+  button.addEventListener("click", async () => {
+    await postJson(CLIENT_ROUTES.api.authLogout, {});
+    $("#googleSignIn").textContent = "Abgemeldet. Seite neu laden fuer Google Login.";
+    writeOutput("#profileOutput", "Google Session beendet.");
+  });
+  $("#googleSignIn").append(button);
+  writeOutput("#profileOutput", `Google Login aktiv fuer ${user.email}.`);
+}
+
+function loadGoogleIdentity() {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts?.id) return resolve();
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Google Login Script konnte nicht geladen werden."));
+    document.head.append(script);
   });
 }
 
@@ -218,21 +287,34 @@ async function showJson(target, url) {
 }
 
 async function getJson(url) {
-  const response = await fetch(url);
-  return response.json();
+  try {
+    const response = await fetch(url);
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { ok: response.ok, status: response.status, text };
+    }
+  } catch (error) {
+    return { ok: false, error: error.message || "Network request failed" };
+  }
 }
 
 async function postJson(url, body) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  const text = await response.text();
   try {
-    return JSON.parse(text);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { ok: response.ok, status: response.status, text };
+    }
   } catch {
-    return { ok: response.ok, status: response.status, text };
+    return { ok: false, error: "Network request failed" };
   }
 }
 

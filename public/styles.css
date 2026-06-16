@@ -23,7 +23,7 @@ textarea {
 .shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .sidebar {
@@ -190,6 +190,7 @@ textarea {
 @media (max-width: 920px) {
   .shell {
     grid-template-columns: 1fr;
+    padding-top: env(safe-area-inset-top, 0);
   }
 
   .sidebar {
