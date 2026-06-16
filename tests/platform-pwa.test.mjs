@@ -20,7 +20,7 @@ test("PWA manifest is install-ready for mobile shells", () => {
 });
 
 test("service worker caches only small app shell assets and has offline fallback", () => {
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v51"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v52"/);
   assert.match(sw, /cache\.addAll\(SHELL\)/);
   assert.match(sw, /fetch\(request\)\.catch/);
   assert.match(sw, /caches\.match\("\/"\)/);
@@ -54,5 +54,17 @@ test("no automatic model or paid provider downloads are wired into public assets
       assert.doesNotMatch(text, /fetch\([^)]*(workers-ai|cloudflare-r2|trial-api|auto-billing|\.gguf|\.safetensors)/i, `${file} contains forbidden provider autoload`);
       assert.doesNotMatch(text, /import\([^)]*(\.gguf|\.safetensors|model-files)/i, `${file} imports model files`);
     }
+  }
+});
+
+test("cloudflare public assets include imported browser modules", () => {
+  for (const file of [
+    "public/storage/index.js",
+    "public/storage/localWorkspace.js",
+    "public/ai/index.js",
+    "public/ai/router.js",
+    "public/shared/securityPolicy.js"
+  ]) {
+    assert.ok(fs.existsSync(file), `missing public module ${file}`);
   }
 });
