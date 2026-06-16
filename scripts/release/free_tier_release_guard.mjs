@@ -128,12 +128,15 @@ function checkPackageScripts() {
   const forbidden = [
     /gh\s+codespace/i,
     /git\s+lfs/i,
+    /\bnpx\b/i,
+    /wrangler\s+deploy/i,
     /wrangler\s+r2\b/i,
     /wrangler\s+d1\b/i,
     /wrangler\s+kv\b/i,
     /wrangler\s+queues\b/i,
     /wrangler\s+vectorize\b/i,
-    /wrangler\s+pages\s+deploy/i
+    /wrangler\s+pages\s+deploy/i,
+    /pages\s+deploy/i
   ];
   for (const [name, command] of Object.entries(scripts)) {
     for (const pattern of forbidden) {
@@ -172,6 +175,7 @@ function checkTrackedSecrets(files) {
   for (const file of files) {
     if (file.startsWith("docs/")) continue;
     if (file === "scripts/release/free_tier_release_guard.mjs") continue;
+    if (file === "scripts/check-no-paid-services.mjs") continue;
     if (file.startsWith(".git/") || file.startsWith("node_modules/")) continue;
     if (/^\.env($|\.)/.test(file) && file !== ".env.example") fail(`${file} must not be tracked or staged.`);
     const ext = path.extname(file);

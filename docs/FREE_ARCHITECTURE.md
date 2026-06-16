@@ -24,7 +24,7 @@ The scalable shape is:
 ## Current Deployment
 
 - Domain: `smejj.com`
-- Cloudflare account: `Smejjcom@gmail.com`
+- Cloudflare account: `smejjcom@gmail.com`
 - Nameservers: `joyce.ns.cloudflare.com`, `plato.ns.cloudflare.com`
 - Worker name: `smejj-com`
 - Custom domains: `smejj.com`, `www.smejj.com`

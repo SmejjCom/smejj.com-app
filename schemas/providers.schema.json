@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/providers.schema.json",
+  "title": "smejj.com Providers Manifest",
+  "type": "object",
+  "required": ["version", "defaultMode", "policy", "providers"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "defaultMode": { "const": "disabled" },
+    "policy": {
+      "type": "object",
+      "required": [
+        "failClosed",
+        "paidFallbackAllowed",
+        "storesSecretsInBrowser",
+        "storesSecretsInRepo",
+        "requiresWrittenReleaseApproval"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "failClosed": { "const": true },
+        "paidFallbackAllowed": { "const": false },
+        "storesSecretsInBrowser": { "const": false },
+        "storesSecretsInRepo": { "const": false },
+        "requiresWrittenReleaseApproval": { "const": true }
+      }
+    },
+    "providers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "costRisk", "enabledByDefault", "fallback"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "costRisk": {
+            "enum": [
+              "zero-central-cost-risk",
+              "user-owned",
+              "zero-until-hard-stop",
+              "storage-only",
+              "zero",
+              "requires-explicit-approval"
+            ]
+          },
+          "enabledByDefault": { "type": "boolean" },
+          "fallback": { "enum": ["disabled", "byok-openai-compatible"] }
+        }
+      }
+    }
+  }
+}

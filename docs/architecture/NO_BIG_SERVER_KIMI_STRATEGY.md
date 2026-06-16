@@ -72,7 +72,7 @@ Not allowed as core:
 - IDrive e2 storage status
 - Kimi K2.7 metadata registry
 - local project agent tools
-- BYOK OpenAI-compatible endpoint
+- local-browser tools and disabled-by-default provider settings
 - clear "provider unavailable" state when no cost-safe inference exists
 
 ### Phase 2: Useful Without Big Server
@@ -80,20 +80,19 @@ Not allowed as core:
 - client-side small coding model for simple tasks
 - static code analysis and patch planning
 - retrieval from IDrive-stored project files and docs
-- optional Cloudflare Workers AI demo only with hard free quota and disabled overage
-- optional Kimi/Moonshot API only as BYOK or explicitly approved paid path
+- no Cloudflare Workers AI core path
+- no Kimi/Moonshot paid API core path
 
 ### Phase 3: Serious Scale
 
-For millions or billions of users per day, free GitHub/Cloudflare plus IDrive storage cannot supply enough inference compute. Serious scale requires one of:
+For millions or billions of users per day, free GitHub/Cloudflare plus IDrive storage cannot supply enough inference compute. Under the current project rule, serious scale must avoid paid GitHub/Cloudflare and avoid hidden paid add-ons. Compliant options are:
 
 - user-owned compute federation
-- customer BYOK/provider accounts
-- separately approved paid inference providers
-- self-owned GPU fleet
-- business partnership with model providers
+- browser/local-device compute
+- self-owned compute explicitly approved outside GitHub/Cloudflare paid services
+- partner compute only after a new written free-safe architecture review
 
-Under the current rules, the only fully compliant path is to keep central compute optional and cost-controlled, not hidden.
+Under the current rules, the fully compliant path is to keep central compute optional, fail-closed, and never silently paid.
 
 ## My Recommendation
 

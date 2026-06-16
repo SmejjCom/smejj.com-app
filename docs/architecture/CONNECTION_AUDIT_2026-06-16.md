@@ -13,8 +13,8 @@ Date: 2026-06-16
 
 ## Verified State
 
-- GitHub repository exists and is visible in the browser: `SmejjCom/smejj.com-app`.
-- Local Git remote points to `git@github.com:SmejjCom/smejj.com-app.git`.
+- GitHub repository exists and is visible in the browser: `smejjcom/smejj.com-app`.
+- Local Git remote points to `git@github.com:smejjcom/smejj.com-app.git`.
 - Local Git is configured to use `~/.ssh/smejjcom_github_ed25519` for this repository.
 - GitHub remote read test succeeded for `refs/heads/main`.
 - No GitHub Actions workflows are present in the local repository.
@@ -51,9 +51,9 @@ source code, and storage checks. It is not a complete billion-user inference bac
 
 For millions or billions of daily users, GitHub Free and Cloudflare Free must remain
 front-door/static roles only. Heavy inference, central compute, and user-scale state
-must be handled by separately approved cost-controlled infrastructure, BYOK provider
-accounts, user-owned compute, or self-owned GPU capacity. The app must fail closed
-instead of silently switching to paid GitHub or Cloudflare services.
+must be handled by browser/local-device compute, user-owned compute, IDrive-e2 object
+flows, or a new written free-safe architecture review. The app must fail closed
+instead of silently switching to paid GitHub, Cloudflare, trial, or auto-billing services.
 
 ## Last Verification Commands
 

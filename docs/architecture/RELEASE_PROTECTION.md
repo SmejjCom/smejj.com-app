@@ -46,8 +46,9 @@ This command performs:
 Millions or billions of daily users cannot be powered by GitHub Free and
 Cloudflare Free as the compute core. The release guard keeps those services in
 safe front-door roles. Heavy AI inference, central compute, and large user-scale
-state must be handled by separately approved cost-controlled infrastructure,
-BYOK provider accounts, user-owned compute, or self-owned GPU capacity.
+state must use browser/local-device compute, user-owned compute, IDrive-e2 object
+flows, or a new written free-safe architecture review. There is no hidden paid
+fallback and no GitHub/Cloudflare paid path.
 
 The app must fail closed when a paid-risk provider is unavailable or not
 explicitly approved.

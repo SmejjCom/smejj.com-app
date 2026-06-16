@@ -128,6 +128,11 @@ function fileRecord(file) {
 
 loadLocalEnv(localEnvPath);
 
+if (process.env.CONFIRM_IDRIVE_ARTIFACT_UPLOAD !== "YES") {
+  console.error("Refusing to upload deployment artifact. Set CONFIRM_IDRIVE_ARTIFACT_UPLOAD=YES only after local checks, backup, rollback point, and written release approval.");
+  process.exit(1);
+}
+
 const endpoint = requiredEnv("IDRIVE_E2_ENDPOINT");
 const accessKey = requiredEnv("IDRIVE_E2_ACCESS_KEY");
 const secretKey = requiredEnv("IDRIVE_E2_SECRET_KEY");

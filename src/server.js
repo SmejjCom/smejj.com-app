@@ -6,9 +6,13 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 import { APP_INFO, CAPABILITIES, CONTENT_TYPES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE } from "./shared/platform.js";
+import { SECURITY_LIMITS, isAllowedRequestOrigin } from "./shared/securityPolicy.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
+const storageSourceDir = path.resolve(__dirname, "storage");
+const aiSourceDir = path.resolve(__dirname, "ai");
+const sharedSourceDir = path.resolve(__dirname, "shared");
 
 loadDotEnv(path.resolve(process.cwd(), ".env.local"));
 loadDotEnv(path.resolve(process.cwd(), ".env"));
@@ -20,7 +24,7 @@ const config = {
   apiKey: process.env.SMEJJ_LLM_API_KEY || process.env.BRIRT_LLM_API_KEY || "",
   model: process.env.SMEJJ_LLM_MODEL || process.env.BRIRT_LLM_MODEL || "",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
-  googleAllowedEmail: (process.env.GOOGLE_ALLOWED_EMAIL || "smejjCom@gmail.com").toLowerCase(),
+  googleAllowedEmail: (process.env.GOOGLE_ALLOWED_EMAIL || "smejjcom@gmail.com").toLowerCase(),
   sessionSecret: normalizeSecret(process.env.SMEJJ_SESSION_SECRET || process.env.GOOGLE_SESSION_SECRET || "")
 };
 
@@ -30,8 +34,12 @@ const allowedCommands = new Set(["npm", "pnpm", "yarn", "node", "git"]);
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
+    if (!isSafeMutatingRequest(req, url)) return json(res, 403, { error: "Origin not allowed" });
     const readMethod = req.method === "GET" || req.method === "HEAD";
     if (readMethod && url.pathname === ROUTES.root) return serveFile(res, "index.html");
+    if (readMethod && url.pathname.startsWith("/assets/storage/")) return serveStorageModule(res, url.pathname.replace("/assets/storage/", ""));
+    if (readMethod && url.pathname.startsWith("/assets/ai/")) return serveAiModule(res, url.pathname.replace("/assets/ai/", ""));
+    if (readMethod && url.pathname.startsWith("/assets/shared/")) return serveSharedModule(res, url.pathname.replace("/assets/shared/", ""));
     if (readMethod && url.pathname.startsWith("/assets/")) return serveFile(res, url.pathname.replace("/assets/", ""));
     if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
     if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res);
@@ -264,6 +272,15 @@ async function handleStorageStatus(res) {
 }
 
 async function streamLLM(res, messages) {
+  if (process.env.SMEJJ_SERVER_AI_ENABLED !== "true") {
+    return json(res, 400, {
+      error: "AI mode disabled. Server AI requires explicit enablement and a hard limit."
+    });
+  }
+  const remaining = Number(process.env.SMEJJ_SERVER_AI_REMAINING || 0);
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    return json(res, 429, { error: "AI rate limit reached or unclear." });
+  }
   if (!config.apiKey || !config.baseUrl || !config.model || config.baseUrl === "disabled" || config.model === "disabled") {
     return json(res, 400, {
       error: "AI mode disabled. Configure an explicit BYOK/local endpoint to enable inference."
@@ -347,12 +364,36 @@ async function serveFile(res, file) {
   createReadStream(safePath).pipe(res);
 }
 
+async function serveStorageModule(res, file) {
+  const safePath = path.resolve(storageSourceDir, file);
+  if (!safePath.startsWith(storageSourceDir + path.sep) && safePath !== storageSourceDir) return json(res, 403, { error: "Forbidden" });
+  const contentType = CONTENT_TYPES[path.extname(safePath)] || "application/javascript; charset=utf-8";
+  res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": contentType });
+  createReadStream(safePath).pipe(res);
+}
+
+async function serveAiModule(res, file) {
+  const safePath = path.resolve(aiSourceDir, file);
+  if (!safePath.startsWith(aiSourceDir + path.sep) && safePath !== aiSourceDir) return json(res, 403, { error: "Forbidden" });
+  const contentType = CONTENT_TYPES[path.extname(safePath)] || "application/javascript; charset=utf-8";
+  res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": contentType });
+  createReadStream(safePath).pipe(res);
+}
+
+async function serveSharedModule(res, file) {
+  const safePath = path.resolve(sharedSourceDir, file);
+  if (!safePath.startsWith(sharedSourceDir + path.sep) && safePath !== sharedSourceDir) return json(res, 403, { error: "Forbidden" });
+  const contentType = CONTENT_TYPES[path.extname(safePath)] || "application/javascript; charset=utf-8";
+  res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": contentType });
+  createReadStream(safePath).pipe(res);
+}
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let raw = "";
     req.on("data", (chunk) => {
       raw += chunk;
-      if (raw.length > 1_000_000) reject(new Error("Request too large"));
+      if (raw.length > SECURITY_LIMITS.maxJsonBodyBytes) reject(new Error("Request too large"));
     });
     req.on("end", () => {
       try {
@@ -370,7 +411,7 @@ function readAuthBody(req) {
     let raw = "";
     req.on("data", (chunk) => {
       raw += chunk;
-      if (raw.length > 1_000_000) reject(new Error("Request too large"));
+      if (raw.length > SECURITY_LIMITS.maxJsonBodyBytes) reject(new Error("Request too large"));
     });
     req.on("end", () => {
       try {
@@ -389,6 +430,14 @@ function readAuthBody(req) {
 function json(res, status, payload) {
   res.writeHead(status, { ...SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload, null, 2));
+}
+
+function isSafeMutatingRequest(req, url) {
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method || "")) return true;
+  const origin = String(req.headers.origin || "");
+  const allowed = [`http://${req.headers.host}`, "https://smejj.com", "https://www.smejj.com"];
+  if (url.pathname === ROUTES.api.authGoogle) allowed.push("https://accounts.google.com");
+  return isAllowedRequestOrigin(origin, allowed);
 }
 
 async function verifyGoogleIdToken(token) {

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "costPolicy": {
+    "githubPaidAllowed": false,
+    "cloudflarePaidAllowed": false,
+    "autoPaidFallbackAllowed": false,
+    "trialServicesAllowed": false,
+    "paidFallbackAllowed": false,
+    "requiresWrittenReleaseApproval": true
+  },
+  "storage": {
+    "primary": "idrive-e2",
+    "contentAddressed": true,
+    "secretsInBrowserAllowed": false,
+    "secretsInRepoAllowed": false,
+    "privateAbsolutePathsAllowed": false
+  },
+  "compute": {
+    "browserLocal": true,
+    "byok": true,
+    "serverPaidDefault": false,
+    "failClosed": true
+  },
+  "decisionPriorities": {
+    "speed": true,
+    "stability": true,
+    "security": true,
+    "scalability": true,
+    "lowOperatingCost": true
+  },
+  "features": {
+    "localWorkspace": true,
+    "idriveSync": true,
+    "browserAi": "feature-detected",
+    "kimiK27": "vault-and-byok-only"
+  }
+}

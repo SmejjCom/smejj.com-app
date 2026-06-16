@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "id": "deployment_current_example",
+  "app": "smejj.com",
+  "environment": "example",
+  "updatedAt": "2026-06-16T00:00:00Z",
+  "storage": {
+    "provider": "idrive-e2",
+    "artifactPrefix": "deployments/smejj-com/",
+    "contentAddressed": true
+  },
+  "source": {
+    "gitCommit": "example-git-commit-placeholder",
+    "repoPathPolicy": "relative-only"
+  },
+  "artifact": {
+    "path": "deployments/smejj-com/example-artifact.tar.gz",
+    "sha256": "example-sha256-placeholder",
+    "size": 0,
+    "contentType": "application/gzip"
+  },
+  "costPolicy": {
+    "githubPaidAllowed": false,
+    "cloudflarePaidAllowed": false,
+    "paidFallbackAllowed": false,
+    "trialServicesAllowed": false,
+    "autoBillingAllowed": false
+  },
+  "release": {
+    "requiresWrittenApproval": true,
+    "livePublished": false,
+    "rollbackRequired": true
+  }
+}

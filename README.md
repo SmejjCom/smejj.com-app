@@ -2,14 +2,16 @@
 
 Minimaler Start fuer ein eigenes Programmier-KI-Tool mit OpenAI-kompatibler API.
 
-## Empfehlung
+## Kosten- und Architekturregel
 
-- Schnellster Start: offizielle Moonshot/Kimi API.
-- Produktion mit eigener Infrastruktur: `moonshotai/Kimi-K2.7-Code` ueber vLLM, SGLang oder KTransformers auf GPU-Servern.
-- Lokaler Mac-Test: GGUF ueber llama.cpp/Ollama, nur als Prototyp.
-- 100 gleichzeitige User: API-Start oder dedizierter GPU-Cluster, nicht ein einzelner lokaler Rechner.
+- `docs/architecture/FREE_ONLY_MASTER_POLICY.md` ist verbindlich.
+- GitHub.com bleibt dauerhaft Free-only.
+- Cloudflare.com bleibt dauerhaft Free-only.
+- IDrive e2 / S3-kompatibler Storage ist Hauptspeicher fuer Dateien, Medien, Modelle, Backups, Deployments und zentrale Daten.
+- Keine kostenpflichtigen Zusatzdienste, keine Trials, keine Auto-Billing-Fallbacks.
+- Funktionen, die mit diesen Regeln nicht sicher moeglich sind, laufen lokal, ueber IDrive-e2-Objekte oder fail-closed.
 
-## Recherchierte Eckdaten
+## Modell- und Speicher-Eckdaten
 
 - Quelle: `moonshotai/Kimi-K2.7-Code` auf Hugging Face.
 - Lizenz: `modified-mit`.
@@ -17,7 +19,7 @@ Minimaler Start fuer ein eigenes Programmier-KI-Tool mit OpenAI-kompatibler API.
 - Kontext: 256K.
 - Download: offizielles HF-Repo ca. 595 GB.
 - Empfohlene Engines: vLLM, SGLang, KTransformers.
-- API: Moonshot stellt OpenAI-/Anthropic-kompatible API bereit.
+- Externe Modell-APIs sind kein Kernbestandteil dieser Free-only-Architektur.
 - Kimi K2.7 Code nutzt Thinking Mode; empfohlene/fixe Werte: `temperature=1.0`, `top_p=0.95`.
 - Lokaler Test: `ollama run hf.co/unsloth/Kimi-K2.7-Code-GGUF:UD-Q4_K_XL` oder `llama-server -hf unsloth/Kimi-K2.7-Code-GGUF:UD-Q4_K_XL`.
 
@@ -59,11 +61,7 @@ export CONFIRM_IDRIVE_UPLOAD=YES
 npm run model:upload
 ```
 
-GGUF-Test:
-
-```bash
-ollama run hf.co/unsloth/Kimi-K2.7-Code-GGUF:UD-Q4_K_XL
-```
+Lokale Modelltests duerfen nur ausserhalb des Repos und ohne GitHub-/Cloudflare-Kostenrisiko stattfinden.
 
 Der offizielle Download ist gross. Der Transfer ist nur auf einer Maschine mit
 mindestens 650 GiB freiem Speicher erlaubt. `MODEL_TMP_DIR` muss ausserhalb des
@@ -88,12 +86,13 @@ Repo gelangen.
 - Skalierung: GitHub nur fuer Code, Cloudflare Free nur fuer Edge/Web-Schicht, IDrive e2 fuer zentrale Dateiablage.
 - Kosten: Keine bezahlten GitHub- oder Cloudflare-Dienste einplanen.
 
-## No-Big-Server Strategie
+## Free-only No-Big-Server Strategie
 
 IDrive e2 ist der Modell-Vault und Hauptspeicher, aber kein Inferenz-Rechner.
-Kimi K2.7 kann dort sicher archiviert werden; Antworten erzeugen muss ein
-separater, kostenkontrollierter OpenAI-kompatibler Endpunkt, ein BYOK-Anschluss
-oder ein kleines lokales/browserseitiges Modell fuer Basisfunktionen.
+Kimi K2.7 kann dort sicher archiviert werden. Antworten duerfen im Kern nicht
+ueber GitHub Paid, Cloudflare Paid, Trial-APIs oder Auto-Billing-Pfade erzeugt
+werden. Basisfunktionen muessen lokal, browserseitig oder fail-closed bleiben,
+bis eine neue schriftliche Free-safe Architekturfreigabe vorliegt.
 
 Details:
 
@@ -103,6 +102,7 @@ docs/architecture/CENTRAL_ARCHITECTURE.md
 docs/architecture/FREE_TIER_IDRIVE_GUARDRAILS.md
 docs/architecture/CONNECTION_AUDIT_2026-06-16.md
 docs/architecture/RELEASE_PROTECTION.md
+docs/architecture/FREE_ONLY_MASTER_POLICY.md
 ```
 
 Der lokale IDrive-Status ist ueber die App und per API pruefbar:

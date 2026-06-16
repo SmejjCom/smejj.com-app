@@ -1,9 +1,29 @@
-const CACHE_NAME = "smejj-shell-v5";
+const CACHE_NAME = "smejj-shell-v51";
 const SHELL = [
   "/",
   "/assets/styles.css",
   "/assets/config.js",
+  "/assets/components.js",
   "/assets/app.js",
+  "/assets/storage/index.js",
+  "/assets/storage/localWorkspace.js",
+  "/assets/storage/indexedDbStore.js",
+  "/assets/storage/opfsStore.js",
+  "/assets/storage/contentAddressed.js",
+  "/assets/storage/manifestLoader.js",
+  "/assets/storage/checksum.js",
+  "/assets/storage/fileSnapshot.js",
+  "/assets/storage/restoreProject.js",
+  "/assets/ai/index.js",
+  "/assets/ai/router.js",
+  "/assets/ai/providers.js",
+  "/assets/ai/byok.js",
+  "/assets/ai/localBrowser.js",
+  "/assets/ai/disabledMode.js",
+  "/assets/ai/freeDemoHardlimit.js",
+  "/assets/ai/costGuard.js",
+  "/assets/ai/promptContextBuilder.js",
+  "/assets/shared/securityPolicy.js",
   "/manifest.webmanifest",
   "/icons/icon.svg",
   "/icons/maskable.svg",
@@ -26,5 +46,10 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
+  const url = new URL(request.url);
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(request));
+    return;
+  }
   event.respondWith(fetch(request).catch(() => caches.match(request).then((cached) => cached || caches.match("/"))));
 });

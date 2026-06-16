@@ -1,9 +1,11 @@
 import { APP_INFO, CAPABILITIES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE, responseHeaders } from "./shared/platform.js";
+import { isAllowedRequestOrigin } from "./shared/securityPolicy.js";
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const readMethod = request.method === "GET" || request.method === "HEAD";
+    if (!isSafeMutatingRequest(request, url)) return json(403, { error: "Origin not allowed" });
 
     if (url.hostname === "www.smejj.com") {
       url.hostname = "smejj.com";
@@ -41,7 +43,7 @@ export default {
       return json(200, {
         configured: Boolean(env.GOOGLE_CLIENT_ID),
         clientId: env.GOOGLE_CLIENT_ID || "",
-        allowedEmail: (env.GOOGLE_ALLOWED_EMAIL || "smejjCom@gmail.com").toLowerCase()
+        allowedEmail: (env.GOOGLE_ALLOWED_EMAIL || "smejjcom@gmail.com").toLowerCase()
       });
     }
 
@@ -368,9 +370,27 @@ function parseKeyCount(xml) {
 
 async function streamLLM(env, messages) {
   const apiKey = env.SMEJJ_LLM_API_KEY || "";
+  if (env.SMEJJ_SERVER_AI_ENABLED !== "true") {
+    const text = [
+      "data: {\"choices\":[{\"delta\":{\"content\":\"KI-Modus disabled. Server-KI ist nicht explizit freigegeben; es gibt keinen Paid-Fallback.\"}}]}",
+      "data: [DONE]",
+      ""
+    ].join("\n\n");
+    return new Response(text, {
+      headers: {
+        ...SECURITY_HEADERS,
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform"
+      }
+    });
+  }
+  const remaining = Number(env.SMEJJ_SERVER_AI_REMAINING || 0);
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    return json(429, { error: "AI rate limit reached or unclear." });
+  }
   if (!apiKey) {
     const text = [
-      "data: {\"choices\":[{\"delta\":{\"content\":\"Online-Shell aktiv. KI ist noch nicht verbunden, weil kein SMEJJ_LLM_API_KEY gesetzt ist. Fuer die Kostenregel: GitHub und Cloudflare bleiben Free; der KI-Endpunkt muss selbst kontrolliert oder kostenfrei angebunden werden.\"}}]}",
+      "data: {\"choices\":[{\"delta\":{\"content\":\"Online-Shell aktiv. KI ist noch nicht verbunden. Fuer die Kostenregel: GitHub und Cloudflare bleiben Free; der KI-Endpunkt muss selbst kontrolliert oder kostenfrei angebunden werden.\"}}]}",
       "data: [DONE]",
       ""
     ].join("\n\n");
@@ -466,4 +486,12 @@ function withSecurityHeaders(response) {
     statusText: response.statusText,
     headers
   });
+}
+
+function isSafeMutatingRequest(request, url) {
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return true;
+  const origin = request.headers.get("origin") || "";
+  const allowed = [`${url.protocol}//${url.host}`, "https://smejj.com", "https://www.smejj.com"];
+  if (url.pathname === ROUTES.api.authGoogle) allowed.push("https://accounts.google.com");
+  return isAllowedRequestOrigin(origin, allowed);
 }

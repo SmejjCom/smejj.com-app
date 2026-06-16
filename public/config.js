@@ -23,8 +23,12 @@ export const UI_COPY = {
 
 export const STORAGE_KEYS = {
   profile: "smejj.profile.v1",
+  session: "smejj.session.v1",
   settings: "smejj.settings.v1",
   memory: "smejj.memory.v1",
   rag: "smejj.rag.v1",
-  drafts: "smejj.drafts.v1"
+  model: "smejj.model.selected.v2",
+  drafts: "smejj.drafts.v1",
+  lastExport: "smejj.project.lastExport.v1",
+  currentProject: "smejj.workspace.currentProject.v1"
 };
