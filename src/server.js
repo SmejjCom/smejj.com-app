@@ -21,7 +21,7 @@ const config = {
   model: process.env.SMEJJ_LLM_MODEL || process.env.BRIRT_LLM_MODEL || "kimi-k2.7-code",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   googleAllowedEmail: (process.env.GOOGLE_ALLOWED_EMAIL || "smejjCom@gmail.com").toLowerCase(),
-  sessionSecret: process.env.SMEJJ_SESSION_SECRET || process.env.GOOGLE_SESSION_SECRET || ""
+  sessionSecret: normalizeSecret(process.env.SMEJJ_SESSION_SECRET || process.env.GOOGLE_SESSION_SECRET || "")
 };
 
 const forbiddenSegments = new Set([".env", ".git", "node_modules", "dist", "build"]);
@@ -416,6 +416,12 @@ function base64UrlDecode(value) {
 
 function base64UrlEncode(value) {
   return Buffer.from(value).toString("base64url");
+}
+
+function normalizeSecret(value) {
+  const secret = String(value || "").trim();
+  if (!secret || secret === "replace_with_long_random_secret") return "";
+  return secret;
 }
 
 async function signedS3List({ endpoint, region, accessKey, secretKey, bucket, prefix }) {

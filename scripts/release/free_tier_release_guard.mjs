@@ -191,10 +191,7 @@ function checkCloudflareBindingsInWorker() {
     fail("Worker must use the central platform configuration.");
   }
   const forbiddenRuntimeBindings = [
-    /\.prepare\(/,
-    /\.put\(/,
-    /\.get\(/,
-    /\.send\(/,
+    /env\.[A-Z0-9_]+\.(prepare|put|get|send)\(/,
     /env\.[A-Z0-9_]*(R2|KV|D1|QUEUE|VECTOR|IMAGE|STREAM)[A-Z0-9_]*/
   ];
   for (const pattern of forbiddenRuntimeBindings) {

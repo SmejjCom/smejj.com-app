@@ -46,11 +46,12 @@ export default {
     }
 
     if (readMethod && url.pathname === ROUTES.api.authMe) {
-      return json(200, { authenticated: false, user: null });
+      const user = await readSession(request, env);
+      return json(200, { authenticated: Boolean(user), user });
     }
 
     if (request.method === "POST" && url.pathname === ROUTES.api.authGoogle) {
-      return json(503, { error: "Google Login ist online noch nicht konfiguriert." });
+      return googleAuth(request, env);
     }
 
     if (request.method === "POST" && url.pathname === ROUTES.api.authLogout) {
@@ -154,6 +155,87 @@ async function storageStatus(env) {
   });
 }
 
+async function googleAuth(request, env) {
+  const clientId = env.GOOGLE_CLIENT_ID || "";
+  const sessionSecret = normalizeSecret(env.SMEJJ_SESSION_SECRET || env.GOOGLE_SESSION_SECRET || "");
+  if (!clientId) return json(503, { error: "Google Login ist noch nicht konfiguriert." });
+  if (!sessionSecret) return json(503, { error: "Session Secret fehlt." });
+
+  const body = await readJson(request);
+  const payload = await verifyGoogleIdToken(String(body.credential || ""), clientId);
+  const email = String(payload.email || "").toLowerCase();
+  const allowedEmail = String(env.GOOGLE_ALLOWED_EMAIL || "smejjcom@gmail.com").toLowerCase();
+  if (!payload.email_verified) return json(403, { error: "Google E-Mail ist nicht verifiziert." });
+  if (allowedEmail && email !== allowedEmail) {
+    return json(403, { error: "Dieses Google Konto ist fuer smejj.com nicht freigegeben." });
+  }
+
+  const user = {
+    email,
+    name: String(payload.name || email),
+    picture: String(payload.picture || ""),
+    sub: String(payload.sub || "")
+  };
+  return json(200, { authenticated: true, user }, {
+    "Set-Cookie": await serializeSessionCookie(user, sessionSecret)
+  });
+}
+
+async function verifyGoogleIdToken(token, clientId) {
+  const [headerPart, payloadPart, signaturePart] = token.split(".");
+  if (!headerPart || !payloadPart || !signaturePart) throw new Error("Ungueltiges Google Token.");
+  const header = parseJwtPart(headerPart);
+  const payload = parseJwtPart(payloadPart);
+  if (header.alg !== "RS256" || !header.kid) throw new Error("Ungueltige Google Signatur.");
+  if (payload.aud !== clientId) throw new Error("Google Client-ID passt nicht.");
+  if (!["https://accounts.google.com", "accounts.google.com"].includes(payload.iss)) throw new Error("Ungueltiger Google Issuer.");
+  if (Number(payload.exp || 0) <= Math.floor(Date.now() / 1000)) throw new Error("Google Token ist abgelaufen.");
+
+  const response = await fetch("https://www.googleapis.com/oauth2/v3/certs");
+  if (!response.ok) throw new Error("Google Zertifikate konnten nicht geladen werden.");
+  const { keys = [] } = await response.json();
+  const jwk = keys.find((key) => key.kid === header.kid);
+  if (!jwk) throw new Error("Passendes Google Zertifikat fehlt.");
+  const key = await crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["verify"]
+  );
+  const ok = await crypto.subtle.verify(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    base64UrlDecode(signaturePart),
+    utf8(`${headerPart}.${payloadPart}`)
+  );
+  if (!ok) throw new Error("Google Signatur konnte nicht geprueft werden.");
+  return payload;
+}
+
+async function serializeSessionCookie(user, secret) {
+  const payload = base64UrlEncode(utf8(JSON.stringify({ ...user, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 })));
+  const signature = base64UrlEncode(await hmacBytes(utf8(secret), payload));
+  return `smejj_session=${payload}.${signature}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`;
+}
+
+async function readSession(request, env) {
+  const sessionSecret = normalizeSecret(env.SMEJJ_SESSION_SECRET || env.GOOGLE_SESSION_SECRET || "");
+  const match = String(request.headers.get("cookie") || "").match(/(?:^|;\s*)smejj_session=([^;]+)/);
+  if (!match || !sessionSecret) return null;
+  const [payload, signature] = match[1].split(".");
+  const expected = base64UrlEncode(await hmacBytes(utf8(sessionSecret), payload));
+  if (!signature || !constantTimeEqual(signature, expected)) return null;
+  try {
+    const user = JSON.parse(new TextDecoder().decode(base64UrlDecode(payload)));
+    if (Number(user.exp || 0) <= Date.now()) return null;
+    delete user.exp;
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 async function signedS3List({ endpoint, region, accessKey, secretKey, bucket, prefix, maxKeys }) {
   const endpointUrl = new URL(endpoint);
   const host = endpointUrl.host;
@@ -229,6 +311,38 @@ async function sha256Hex(data) {
 
 function utf8(value) {
   return new TextEncoder().encode(value);
+}
+
+function parseJwtPart(part) {
+  return JSON.parse(new TextDecoder().decode(base64UrlDecode(part)));
+}
+
+function base64UrlDecode(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+function base64UrlEncode(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function constantTimeEqual(left, right) {
+  if (left.length !== right.length) return false;
+  let diff = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    diff |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return diff === 0;
+}
+
+function normalizeSecret(value) {
+  const secret = String(value || "").trim();
+  if (!secret || secret === "replace_with_long_random_secret") return "";
+  return secret;
 }
 
 function bytesToHex(bytes) {

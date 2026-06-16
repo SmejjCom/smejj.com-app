@@ -81,7 +81,7 @@ await check("idrive storage api", async () => {
   return body.storageRole;
 });
 
-await check("google auth config fails closed without client id", async () => {
+await check("google auth config has safe shape", async () => {
   const { response, body } = await json("/api/auth/config");
   assert(response.ok, `status ${response.status}`);
   assert(body.configured === false || typeof body.clientId === "string", "invalid auth config shape");

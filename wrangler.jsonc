@@ -10,7 +10,9 @@
   },
   "vars": {
     "SMEJJ_LLM_BASE_URL": "https://api.moonshot.ai/v1",
-    "SMEJJ_LLM_MODEL": "kimi-k2.7-code"
+    "SMEJJ_LLM_MODEL": "kimi-k2.7-code",
+    "GOOGLE_CLIENT_ID": "457164842646-pgnrulbj893hlahhjijank4bd6o8n0as.apps.googleusercontent.com",
+    "GOOGLE_ALLOWED_EMAIL": "smejjcom@gmail.com"
   },
   "routes": [
     {
