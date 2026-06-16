@@ -213,7 +213,10 @@ async function initGoogleLogin() {
   await loadGoogleIdentity();
   google.accounts.id.initialize({
     client_id: config.clientId,
-    callback: handleGoogleCredential
+    callback: handleGoogleCredential,
+    ux_mode: "popup",
+    use_fedcm_for_button: false,
+    use_fedcm_for_prompt: false
   });
   google.accounts.id.renderButton($("#googleSignIn"), {
     theme: "outline",
