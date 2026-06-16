@@ -32,7 +32,7 @@ Result: passed in simulation.
 ## Android / PWA-Sized Result
 
 - Viewport: 412 x 915.
-- Active deep link tested: `#offline`.
+- Active deep link tested: `/offline`.
 - Offline page visible.
 - PWA manifest and service worker checks passed.
 

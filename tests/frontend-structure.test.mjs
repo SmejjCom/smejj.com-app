@@ -96,6 +96,7 @@ test("start composer keeps chat inside the start page", () => {
   assert.doesNotMatch(html, /data-view="chat"/);
   assert.match(app, /submitTask\(task, \{ target: "#startLog" \}\)/);
   assert.match(app, /chat: "start"/);
+  assert.match(app, /chat: "\/home"/);
   assert.match(app, /"\/chat": "start"/);
   assert.doesNotMatch(app, /function bindChat/);
   assert.doesNotMatch(app, /bindChat\(\)/);

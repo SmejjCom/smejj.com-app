@@ -39,12 +39,12 @@ Datum: 2026-06-16
   - `/`
   - `/projects`
   - `/search`
-  - `#ai`
+  - `/ai`
   - `/storage`
-  - `#cost`
+  - `/cost`
   - `/settings`
   - `/profile`
-  - `#offline`
+  - `/offline`
 - Sichtbarer Start-Chat.
 - Browser-Konsole.
 - UI-Vertraege fuer Navigation, Sprungziele und Button-Typen.

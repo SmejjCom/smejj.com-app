@@ -56,6 +56,13 @@ const VIEW_ALIASES = Object.freeze({
   provider: "ai",
   storage: "storageView"
 });
+const ALIAS_PATHS = Object.freeze({
+  chat: "/home",
+  home: "/home",
+  providers: "/ai",
+  provider: "/ai",
+  storage: "/storage"
+});
 const VIEW_PATHS = Object.freeze({
   start: "/home",
   search: "/search",
@@ -285,12 +292,13 @@ function goToView(viewId, { replace = false } = {}) {
   }
   $$(".nav-button").forEach((item) => item.classList.toggle("is-active", item.dataset.view === resolvedViewId));
   $$(".view").forEach((view) => view.classList.toggle("is-active", view.id === resolvedViewId));
-  const nextUrl = `${VIEW_PATHS[resolvedViewId] || "/error"}${location.search}`;
-  if (location.pathname !== (VIEW_PATHS[resolvedViewId] || "/error") || location.hash) {
+  const nextPath = ALIAS_PATHS[viewId] || VIEW_PATHS[resolvedViewId] || "/error";
+  const nextUrl = `${nextPath}${location.search}`;
+  if (location.pathname !== nextPath || location.hash) {
     const method = replace ? "replaceState" : "pushState";
     history[method]({ viewId: resolvedViewId }, "", nextUrl);
   }
-  updateCanonical(resolvedViewId);
+  updateCanonical(nextPath);
   target.scrollIntoView({ block: "start" });
 }
 
@@ -306,9 +314,8 @@ function getViewFromUrl() {
   return PATH_VIEWS[location.pathname.replace(/\/$/, "")] || location.pathname.replace(/^\/+/, "");
 }
 
-function updateCanonical(viewId) {
+function updateCanonical(path) {
   const canonical = document.querySelector('link[rel="canonical"]');
-  const path = VIEW_PATHS[viewId] || "/";
   if (canonical) canonical.href = `https://smejj.com${path}`;
 }
 
