@@ -165,7 +165,7 @@ async function googleAuth(request, env) {
   if (!clientId) return json(503, { error: "Google Login ist noch nicht konfiguriert." });
   if (!sessionSecret) return json(503, { error: "Session Secret fehlt." });
 
-  const body = await readJson(request);
+  const body = await readAuthBody(request);
   const payload = await verifyGoogleIdToken(String(body.credential || ""), clientId);
   const email = String(payload.email || "").toLowerCase();
   const allowedEmail = String(env.GOOGLE_ALLOWED_EMAIL || "smejjcom@gmail.com").toLowerCase();
@@ -180,9 +180,18 @@ async function googleAuth(request, env) {
     picture: String(payload.picture || ""),
     sub: String(payload.sub || "")
   };
-  return json(200, { authenticated: true, user }, {
-    "Set-Cookie": await serializeSessionCookie(user, sessionSecret)
-  });
+  const cookie = await serializeSessionCookie(user, sessionSecret);
+  if (body.redirect) {
+    return new Response(null, {
+      status: 303,
+      headers: {
+        ...SECURITY_HEADERS,
+        Location: "/",
+        "Set-Cookie": cookie
+      }
+    });
+  }
+  return json(200, { authenticated: true, user }, { "Set-Cookie": cookie });
 }
 
 async function verifyGoogleIdToken(token, clientId) {
@@ -374,8 +383,22 @@ async function streamLLM(env, messages) {
     });
   }
 
-  const baseUrl = (env.SMEJJ_LLM_BASE_URL || "https://api.moonshot.ai/v1").replace(/\/$/, "");
-  const model = env.SMEJJ_LLM_MODEL || "kimi-k2.7-code";
+  const baseUrl = (env.SMEJJ_LLM_BASE_URL || "").replace(/\/$/, "");
+  const model = env.SMEJJ_LLM_MODEL || "";
+  if (!baseUrl || !model || baseUrl === "disabled" || model === "disabled") {
+    const text = [
+      "data: {\"choices\":[{\"delta\":{\"content\":\"KI-Modus disabled. Fuer BYOK muss ein Nutzer oder Betreiber bewusst einen eigenen Endpoint konfigurieren; es gibt keinen Paid-Fallback.\"}}]}",
+      "data: [DONE]",
+      ""
+    ].join("\n\n");
+    return new Response(text, {
+      headers: {
+        ...SECURITY_HEADERS,
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform"
+      }
+    });
+  }
   const upstream = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
@@ -413,6 +436,16 @@ async function readJson(request) {
   } catch {
     return {};
   }
+}
+
+async function readAuthBody(request) {
+  const contentType = String(request.headers.get("content-type") || "");
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const text = await request.text();
+    const params = new URLSearchParams(text);
+    return { credential: params.get("credential") || "", redirect: true };
+  }
+  return readJson(request);
 }
 
 function json(status, body, extraHeaders = {}) {

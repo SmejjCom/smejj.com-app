@@ -16,9 +16,9 @@ loadDotEnv(path.resolve(process.cwd(), ".env"));
 const config = {
   port: Number(process.env.PORT || 3000),
   projectRoot: path.resolve(process.env.PROJECT_ROOT || process.cwd()),
-  baseUrl: (process.env.SMEJJ_LLM_BASE_URL || process.env.BRIRT_LLM_BASE_URL || "https://api.moonshot.ai/v1").replace(/\/$/, ""),
+  baseUrl: (process.env.SMEJJ_LLM_BASE_URL || process.env.BRIRT_LLM_BASE_URL || "").replace(/\/$/, ""),
   apiKey: process.env.SMEJJ_LLM_API_KEY || process.env.BRIRT_LLM_API_KEY || "",
-  model: process.env.SMEJJ_LLM_MODEL || process.env.BRIRT_LLM_MODEL || "kimi-k2.7-code",
+  model: process.env.SMEJJ_LLM_MODEL || process.env.BRIRT_LLM_MODEL || "",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   googleAllowedEmail: (process.env.GOOGLE_ALLOWED_EMAIL || "smejjCom@gmail.com").toLowerCase(),
   sessionSecret: normalizeSecret(process.env.SMEJJ_SESSION_SECRET || process.env.GOOGLE_SESSION_SECRET || "")
@@ -38,7 +38,13 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.capabilities) return handleCapabilities(res);
     if (readMethod && url.pathname === ROUTES.api.authConfig) return handleAuthConfig(res);
     if (readMethod && url.pathname === ROUTES.api.authMe) return handleAuthMe(req, res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.authGoogle) return await handleGoogleAuth(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.authGoogle) {
+      try {
+        return await handleGoogleAuth(req, res);
+      } catch (error) {
+        return json(res, 400, { error: error.message || "Google Login fehlgeschlagen." });
+      }
+    }
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return handleAuthLogout(res);
     if (req.method === "POST" && url.pathname === ROUTES.api.chat) return await handleChat(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.agent) return await handleAgent(req, res);
@@ -100,7 +106,7 @@ function handleAuthMe(req, res) {
 async function handleGoogleAuth(req, res) {
   if (!config.googleClientId) return json(res, 503, { error: "Google Login ist noch nicht konfiguriert." });
   if (!config.sessionSecret) return json(res, 503, { error: "Session Secret fehlt." });
-  const body = await readJson(req);
+  const body = await readAuthBody(req);
   const payload = await verifyGoogleIdToken(String(body.credential || ""));
   const email = String(payload.email || "").toLowerCase();
   if (!payload.email_verified) return json(res, 403, { error: "Google E-Mail ist nicht verifiziert." });
@@ -113,11 +119,15 @@ async function handleGoogleAuth(req, res) {
     picture: String(payload.picture || ""),
     sub: String(payload.sub || "")
   };
-  res.writeHead(200, {
+  const headers = {
     ...SECURITY_HEADERS,
-    "Content-Type": "application/json; charset=utf-8",
     "Set-Cookie": serializeSessionCookie(user)
-  });
+  };
+  if (body.redirect) {
+    res.writeHead(303, { ...headers, Location: "/" });
+    return res.end();
+  }
+  res.writeHead(200, { ...headers, "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify({ authenticated: true, user }, null, 2));
 }
 
@@ -254,7 +264,11 @@ async function handleStorageStatus(res) {
 }
 
 async function streamLLM(res, messages) {
-  if (!config.apiKey) return json(res, 400, { error: "Missing SMEJJ_LLM_API_KEY" });
+  if (!config.apiKey || !config.baseUrl || !config.model || config.baseUrl === "disabled" || config.model === "disabled") {
+    return json(res, 400, {
+      error: "AI mode disabled. Configure an explicit BYOK/local endpoint to enable inference."
+    });
+  }
   res.writeHead(200, {
     ...SECURITY_HEADERS,
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -345,6 +359,28 @@ function readJson(req) {
         resolve(raw ? JSON.parse(raw) : {});
       } catch {
         reject(new Error("Invalid JSON"));
+      }
+    });
+  });
+}
+
+function readAuthBody(req) {
+  const contentType = String(req.headers["content-type"] || "");
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", (chunk) => {
+      raw += chunk;
+      if (raw.length > 1_000_000) reject(new Error("Request too large"));
+    });
+    req.on("end", () => {
+      try {
+        if (contentType.includes("application/x-www-form-urlencoded")) {
+          const params = new URLSearchParams(raw);
+          return resolve({ credential: params.get("credential") || "", redirect: true });
+        }
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch {
+        reject(new Error("Invalid auth request"));
       }
     });
   });

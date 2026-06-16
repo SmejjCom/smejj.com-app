@@ -118,6 +118,16 @@ await check("google auth rejects invalid credential with json", async () => {
   return "rejected";
 });
 
+await check("google auth rejects invalid form credential with json", async () => {
+  const { body } = await json("/api/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ credential: "bad" }).toString()
+  });
+  assert(typeof body?.error === "string", "invalid form credential did not return json error");
+  return "rejected";
+});
+
 await check("file read ok", async () => {
   const { response, body } = await json("/api/files/read", {
     method: "POST",

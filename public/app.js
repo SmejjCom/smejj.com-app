@@ -214,7 +214,8 @@ async function initGoogleLogin() {
   google.accounts.id.initialize({
     client_id: config.clientId,
     callback: handleGoogleCredential,
-    ux_mode: "popup",
+    login_uri: `${location.origin}${CLIENT_ROUTES.api.authGoogle}`,
+    ux_mode: "redirect",
     use_fedcm_for_button: false,
     use_fedcm_for_prompt: false
   });
