@@ -94,3 +94,9 @@ test("start composer keeps chat inside the start page", () => {
   assert.doesNotMatch(app, /goToView\("chat"\);\n\s*await submitTask\(task\)/);
   assert.doesNotMatch(html, /#start[\s\S]*data-jump="chat"/);
 });
+
+test("storage deep link resolves to storage view", () => {
+  assert.match(app, /VIEW_ALIASES[\s\S]*storage: "storageView"/);
+  assert.match(app, /const resolvedViewId = VIEW_ALIASES\[viewId\] \|\| viewId/);
+  assert.match(html, /id="storageView"/);
+});

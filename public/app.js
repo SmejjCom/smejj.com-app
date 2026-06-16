@@ -49,6 +49,9 @@ const UPLOAD_LIMITS = Object.freeze({
     "text/plain"
   ])
 });
+const VIEW_ALIASES = Object.freeze({
+  storage: "storageView"
+});
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -245,24 +248,26 @@ function hydrateComponents() {
 }
 
 function goToView(viewId, { replace = false } = {}) {
-  const target = $(`#${viewId}`);
+  const resolvedViewId = VIEW_ALIASES[viewId] || viewId;
+  const target = $(`#${resolvedViewId}`);
   if (!target) {
     goToView("error", { replace: true });
     return;
   }
-  $$(".nav-button").forEach((item) => item.classList.toggle("is-active", item.dataset.view === viewId));
-  $$(".view").forEach((view) => view.classList.toggle("is-active", view.id === viewId));
-  const nextUrl = viewId === "start" ? `${location.pathname}${location.search}` : `${location.pathname}${location.search}#${viewId}`;
-  if (location.hash !== `#${viewId}` && !(viewId === "start" && !location.hash)) {
+  $$(".nav-button").forEach((item) => item.classList.toggle("is-active", item.dataset.view === resolvedViewId));
+  $$(".view").forEach((view) => view.classList.toggle("is-active", view.id === resolvedViewId));
+  const nextUrl = resolvedViewId === "start" ? `${location.pathname}${location.search}` : `${location.pathname}${location.search}#${resolvedViewId}`;
+  if (location.hash !== `#${resolvedViewId}` && !(resolvedViewId === "start" && !location.hash)) {
     const method = replace ? "replaceState" : "pushState";
-    history[method]({ viewId }, "", nextUrl);
+    history[method]({ viewId: resolvedViewId }, "", nextUrl);
   }
   target.scrollIntoView({ block: "start" });
 }
 
 function restoreViewFromUrl({ replace = true } = {}) {
   const viewId = location.hash.replace(/^#/, "") || "start";
-  goToView($(`#${viewId}`) ? viewId : "error", { replace });
+  const resolvedViewId = VIEW_ALIASES[viewId] || viewId;
+  goToView($(`#${resolvedViewId}`) ? resolvedViewId : "error", { replace });
 }
 
 function bindChat() {
