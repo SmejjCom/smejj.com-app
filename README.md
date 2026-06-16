@@ -99,6 +99,7 @@ Details:
 
 ```text
 docs/architecture/NO_BIG_SERVER_KIMI_STRATEGY.md
+docs/architecture/CENTRAL_ARCHITECTURE.md
 docs/architecture/FREE_TIER_IDRIVE_GUARDRAILS.md
 docs/architecture/CONNECTION_AUDIT_2026-06-16.md
 docs/architecture/RELEASE_PROTECTION.md

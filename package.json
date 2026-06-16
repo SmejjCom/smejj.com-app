@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
-    "check": "node --check src/server.js",
+    "check": "node --check src/server.js && node --check src/worker.js && node --check src/shared/platform.js && node --check public/config.js && node --check public/app.js && node --check scripts/release/free_tier_release_guard.mjs",
     "idrive:check": "node scripts/model-management/check_idrive_e2_storage.mjs",
     "idrive:artifact": "node scripts/model-management/upload_project_artifact_to_idrive.mjs",
     "idrive:archive-source": "node scripts/model-management/archive_kimi_source_metadata.mjs",

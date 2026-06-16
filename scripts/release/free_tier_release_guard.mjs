@@ -187,6 +187,9 @@ function checkTrackedSecrets(files) {
 
 function checkCloudflareBindingsInWorker() {
   const worker = exists("src/worker.js") ? readText("src/worker.js") : "";
+  if (!worker.includes("./shared/platform.js")) {
+    fail("Worker must use the central platform configuration.");
+  }
   const forbiddenRuntimeBindings = [
     /\.prepare\(/,
     /\.put\(/,
@@ -207,11 +210,18 @@ function checkCloudflareBindingsInWorker() {
 function checkDocsExist() {
   for (const file of [
     "docs/FREE_ARCHITECTURE.md",
+    "docs/architecture/CENTRAL_ARCHITECTURE.md",
     "docs/architecture/FREE_TIER_IDRIVE_GUARDRAILS.md",
     "docs/architecture/NO_BIG_SERVER_KIMI_STRATEGY.md",
-    "docs/architecture/CONNECTION_AUDIT_2026-06-16.md"
+    "docs/architecture/CONNECTION_AUDIT_2026-06-16.md",
+    "docs/architecture/RELEASE_PROTECTION.md",
+    "src/shared/platform.js",
+    "public/config.js",
+    "public/robots.txt",
+    "public/llms.txt",
+    "public/sitemap.xml"
   ]) {
-    if (!exists(file)) fail(`Required architecture document is missing: ${file}`);
+    if (!exists(file)) fail(`Required architecture or platform file is missing: ${file}`);
   }
 }
 

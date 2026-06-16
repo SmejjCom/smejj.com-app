@@ -1,12 +1,16 @@
-const JSON_HEADERS = {
-  "Content-Type": "application/json; charset=utf-8"
-};
+import { APP_INFO, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE, responseHeaders } from "./shared/platform.js";
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const readMethod = request.method === "GET" || request.method === "HEAD";
 
-    if (request.method === "GET" && url.pathname === "/api/git/status") {
+    if (url.hostname === "www.smejj.com") {
+      url.hostname = "smejj.com";
+      return Response.redirect(url.toString(), 301);
+    }
+
+    if (readMethod && url.pathname === ROUTES.api.gitStatus) {
       return json(200, {
         code: 0,
         stdout: "Online-Version: Git-Status ist nur lokal verfuegbar.",
@@ -14,21 +18,21 @@ export default {
       });
     }
 
-    if (request.method === "GET" && url.pathname === "/api/health") {
+    if (readMethod && url.pathname === ROUTES.api.health) {
       return json(200, {
         ok: true,
-        app: "smejj.com Code",
-        costPolicy: "GitHub Free and Cloudflare Free only; IDrive e2 is primary storage.",
+        app: APP_INFO.name,
+        costPolicy: COST_POLICY,
         ai: Boolean(env.SMEJJ_LLM_API_KEY),
         storage: Boolean(env.IDRIVE_E2_ENDPOINT && env.IDRIVE_E2_ACCESS_KEY && env.IDRIVE_E2_SECRET_KEY && env.IDRIVE_E2_BUCKET)
       });
     }
 
-    if (request.method === "GET" && url.pathname === "/api/storage/status") {
+    if (readMethod && url.pathname === ROUTES.api.storageStatus) {
       return storageStatus(env);
     }
 
-    if (request.method === "POST" && url.pathname === "/api/terminal/run") {
+    if (request.method === "POST" && url.pathname === ROUTES.api.terminalRun) {
       return json(200, {
         code: 0,
         stdout: "Online-Version: Terminal-Kommandos sind aus Sicherheitsgruenden deaktiviert.",
@@ -36,17 +40,17 @@ export default {
       });
     }
 
-    if (request.method === "POST" && url.pathname === "/api/files/read") {
+    if (request.method === "POST" && url.pathname === ROUTES.api.fileRead) {
       return json(403, { error: "Dateizugriff ist in der Online-Version deaktiviert." });
     }
 
-    if (request.method === "POST" && url.pathname === "/api/files/write") {
+    if (request.method === "POST" && url.pathname === ROUTES.api.fileWrite) {
       return json(403, { error: "Dateischreiben ist in der Online-Version deaktiviert." });
     }
 
-    if (request.method === "POST" && (url.pathname === "/api/chat" || url.pathname === "/api/agent")) {
+    if (request.method === "POST" && (url.pathname === ROUTES.api.chat || url.pathname === ROUTES.api.agent)) {
       const body = await readJson(request);
-      const messages = url.pathname === "/api/agent"
+      const messages = url.pathname === ROUTES.api.agent
         ? agentMessages(body)
         : Array.isArray(body.messages)
           ? body.messages
@@ -54,7 +58,7 @@ export default {
       return streamLLM(env, messages);
     }
 
-    return env.ASSETS.fetch(assetRequest(request));
+    return withSecurityHeaders(await env.ASSETS.fetch(assetRequest(request)));
   }
 };
 
@@ -102,7 +106,7 @@ async function storageStatus(env) {
   if (!result.ok) {
     return json(502, {
       ok: false,
-      provider: "idrive-e2",
+      provider: STORAGE.provider,
       bucket: env.IDRIVE_E2_BUCKET,
       status: result.status,
       error: result.body.slice(0, 240)
@@ -111,11 +115,11 @@ async function storageStatus(env) {
 
   return json(200, {
     ok: true,
-    provider: "idrive-e2",
+    provider: STORAGE.provider,
     bucket: env.IDRIVE_E2_BUCKET,
     prefix,
     objectCountSample: parseKeyCount(result.body),
-    storageRole: "primary"
+    storageRole: STORAGE.role
   });
 }
 
@@ -214,6 +218,7 @@ async function streamLLM(env, messages) {
     ].join("\n\n");
     return new Response(text, {
       headers: {
+        ...SECURITY_HEADERS,
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform"
       }
@@ -240,12 +245,13 @@ async function streamLLM(env, messages) {
   if (!upstream.ok || !upstream.body) {
     return new Response(await upstream.text(), {
       status: upstream.status,
-      headers: { "Content-Type": "text/plain; charset=utf-8" }
+      headers: responseHeaders("text/plain; charset=utf-8")
     });
   }
 
   return new Response(upstream.body, {
     headers: {
+      ...SECURITY_HEADERS,
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform"
     }
@@ -261,5 +267,15 @@ async function readJson(request) {
 }
 
 function json(status, body) {
-  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+  return new Response(JSON.stringify(body), { status, headers: responseHeaders("application/json; charset=utf-8") });
+}
+
+function withSecurityHeaders(response) {
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) headers.set(key, value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
 }

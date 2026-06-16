@@ -1,3 +1,5 @@
+import { CLIENT_ROUTES, UI_COPY } from "./config.js";
+
 const log = document.querySelector("#log");
 const form = document.querySelector("#form");
 const message = document.querySelector("#message");
@@ -10,7 +12,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
-addEntry("smejj.com ist online. Die Web-Shell laeuft kostenlos ueber Cloudflare Free. Fuer echte KI-Antworten muss ein eigener, kostenkontrollierter OpenAI-kompatibler Endpunkt verbunden werden; GitHub/Cloudflare bleiben dabei nicht der kostenpflichtige KI-Kern.", "assistant");
+addEntry(UI_COPY.startup, "assistant");
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -19,28 +21,28 @@ form.addEventListener("submit", async (event) => {
   addEntry(task, "user");
   message.value = "";
   const output = addEntry("", "assistant");
-  await stream("/api/agent", {
+  await stream(CLIENT_ROUTES.api.agent, {
     task,
     files: files.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
   }, output);
 });
 
 statusButton.addEventListener("click", async () => {
-  const result = await fetch("/api/git/status");
+  const result = await fetch(CLIENT_ROUTES.api.gitStatus);
   addEntry(JSON.stringify(await result.json(), null, 2), "assistant");
 });
 
 testsButton.addEventListener("click", async () => {
-  const result = await fetch("/api/terminal/run", {
+  const result = await fetch(CLIENT_ROUTES.api.terminalRun, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ command: "npm test" })
+    body: JSON.stringify({ command: UI_COPY.testCommand })
   });
   addEntry(JSON.stringify(await result.json(), null, 2), "assistant");
 });
 
 storageButton.addEventListener("click", async () => {
-  const result = await fetch("/api/storage/status");
+  const result = await fetch(CLIENT_ROUTES.api.storageStatus);
   addEntry(JSON.stringify(await result.json(), null, 2), "assistant");
 });
 

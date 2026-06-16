@@ -5,6 +5,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
+import { APP_INFO, CONTENT_TYPES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE } from "./shared/platform.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -26,20 +27,19 @@ const allowedCommands = new Set(["npm", "pnpm", "yarn", "node", "git"]);
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
-    if (req.method === "GET" && url.pathname === "/") return serveFile(res, "index.html", "text/html");
-    if (req.method === "GET" && url.pathname.startsWith("/assets/")) {
-      const file = url.pathname.replace("/assets/", "");
-      const type = file.endsWith(".css") ? "text/css" : "application/javascript";
-      return serveFile(res, file, type);
-    }
-    if (req.method === "POST" && url.pathname === "/api/chat") return handleChat(req, res);
-    if (req.method === "POST" && url.pathname === "/api/agent") return handleAgent(req, res);
-    if (req.method === "POST" && url.pathname === "/api/files/read") return handleRead(req, res);
-    if (req.method === "POST" && url.pathname === "/api/files/write") return handleWrite(req, res);
-    if (req.method === "POST" && url.pathname === "/api/terminal/run") return handleTerminal(req, res);
-    if (req.method === "GET" && url.pathname === "/api/git/status") return handleGitStatus(res);
-    if (req.method === "POST" && url.pathname === "/api/git/commit") return handleGitCommit(req, res);
-    if (req.method === "GET" && url.pathname === "/api/storage/status") return handleStorageStatus(res);
+    const readMethod = req.method === "GET" || req.method === "HEAD";
+    if (readMethod && url.pathname === ROUTES.root) return serveFile(res, "index.html");
+    if (readMethod && url.pathname.startsWith("/assets/")) return serveFile(res, url.pathname.replace("/assets/", ""));
+    if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
+    if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.chat) return handleChat(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.agent) return handleAgent(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.fileRead) return handleRead(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.fileWrite) return handleWrite(req, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.terminalRun) return handleTerminal(req, res);
+    if (readMethod && url.pathname === ROUTES.api.gitStatus) return handleGitStatus(res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.gitCommit) return handleGitCommit(req, res);
+    if (readMethod && url.pathname === ROUTES.api.storageStatus) return handleStorageStatus(res);
     json(res, 404, { error: "Not found" });
   } catch (error) {
     json(res, 500, { error: error.message || "Internal error" });
@@ -55,6 +55,16 @@ async function handleChat(req, res) {
   const body = await readJson(req);
   const messages = Array.isArray(body.messages) ? body.messages : [{ role: "user", content: String(body.message || "") }];
   return streamLLM(res, messages);
+}
+
+async function handleHealth(res) {
+  json(res, 200, {
+    ok: true,
+    app: APP_INFO.name,
+    costPolicy: COST_POLICY,
+    ai: Boolean(config.apiKey),
+    storage: Boolean(process.env.IDRIVE_E2_ENDPOINT && process.env.IDRIVE_E2_ACCESS_KEY && process.env.IDRIVE_E2_SECRET_KEY && process.env.IDRIVE_E2_BUCKET)
+  });
 }
 
 async function handleAgent(req, res) {
@@ -140,7 +150,7 @@ async function handleStorageStatus(res) {
   const secretKey = process.env.IDRIVE_E2_SECRET_KEY;
   const bucket = process.env.IDRIVE_E2_BUCKET;
   const region = process.env.IDRIVE_E2_REGION || "us-west-2";
-  const prefix = process.env.MODEL_S3_PREFIX || "model-files/kimi-k2-7";
+  const prefix = process.env.MODEL_S3_PREFIX || STORAGE.defaultModelPrefix;
   if (!endpoint || !accessKey || !secretKey || !bucket) {
     return json(res, 200, {
       configured: false,
@@ -171,16 +181,19 @@ async function handleStorageStatus(res) {
   json(res, 200, {
     configured: true,
     ok: true,
+    provider: STORAGE.provider,
     bucket,
     prefix: normalizedPrefix,
     objectCount: keys.length,
-    keys
+    keys,
+    storageRole: STORAGE.role
   });
 }
 
 async function streamLLM(res, messages) {
   if (!config.apiKey) return json(res, 400, { error: "Missing SMEJJ_LLM_API_KEY" });
   res.writeHead(200, {
+    ...SECURITY_HEADERS,
     "Content-Type": "text/event-stream; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive"
@@ -244,10 +257,15 @@ function run(bin, args, cwd, timeoutMs) {
   });
 }
 
-async function serveFile(res, file, contentType) {
+function isPublicAsset(pathname) {
+  return [ROUTES.manifest, ROUTES.serviceWorker, ROUTES.robots, ROUTES.llms, ROUTES.sitemap].includes(pathname);
+}
+
+async function serveFile(res, file) {
   const safePath = path.resolve(publicDir, file);
   if (!safePath.startsWith(publicDir + path.sep) && safePath !== publicDir) return json(res, 403, { error: "Forbidden" });
-  res.writeHead(200, { "Content-Type": `${contentType}; charset=utf-8` });
+  const contentType = CONTENT_TYPES[path.extname(safePath)] || "application/octet-stream";
+  res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": contentType });
   createReadStream(safePath).pipe(res);
 }
 
@@ -269,7 +287,7 @@ function readJson(req) {
 }
 
 function json(res, status, payload) {
-  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
+  res.writeHead(status, { ...SECURITY_HEADERS, "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload, null, 2));
 }
 
