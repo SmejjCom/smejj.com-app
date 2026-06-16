@@ -106,3 +106,9 @@ test("provider deep links resolve to the AI mode view", () => {
   assert.match(app, /VIEW_ALIASES[\s\S]*provider: "ai"/);
   assert.match(html, /id="ai"/);
 });
+
+test("buttons declare an explicit type", () => {
+  const buttons = Array.from(html.matchAll(/<button\b[^>]*>/g)).map((match) => match[0]);
+  const missingType = buttons.filter((button) => !/\stype=/.test(button));
+  assert.deepEqual(missingType, []);
+});

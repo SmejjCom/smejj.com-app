@@ -29,21 +29,21 @@
     <main class="shell">
       <aside class="sidebar">
         <nav class="nav" aria-label="Arbeitsbereiche">
-          <button class="nav-button is-active" data-view="start" data-icon="home" title="Neu">Neu</button>
-          <button class="nav-button icon-only-nav" data-view="search" data-icon="search" title="Suche" aria-label="Suche">Suche</button>
-          <button class="nav-button" data-view="chat" data-icon="chat" title="Chat">Chat</button>
-          <button class="nav-button" data-view="websites" data-icon="websites" title="Websites">Websites</button>
-          <button class="nav-button" data-view="smejjClaw" data-icon="claw" title="smejj claw">smejj claw</button>
-          <button class="nav-button" data-view="automation" data-icon="automation" title="Automatisierung">Automatisierung</button>
-          <button class="nav-button" data-view="chatHistory" data-icon="history" title="Chat History">Chat History</button>
-          <button class="nav-button" data-view="projects" data-icon="projects" title="Projekte">Projekte</button>
-          <button class="nav-button" data-view="files" data-icon="files" title="Dateien">Dateien</button>
+          <button class="nav-button is-active" type="button" data-view="start" data-icon="home" title="Neu">Neu</button>
+          <button class="nav-button icon-only-nav" type="button" data-view="search" data-icon="search" title="Suche" aria-label="Suche">Suche</button>
+          <button class="nav-button" type="button" data-view="chat" data-icon="chat" title="Chat">Chat</button>
+          <button class="nav-button" type="button" data-view="websites" data-icon="websites" title="Websites">Websites</button>
+          <button class="nav-button" type="button" data-view="smejjClaw" data-icon="claw" title="smejj claw">smejj claw</button>
+          <button class="nav-button" type="button" data-view="automation" data-icon="automation" title="Automatisierung">Automatisierung</button>
+          <button class="nav-button" type="button" data-view="chatHistory" data-icon="history" title="Chat History">Chat History</button>
+          <button class="nav-button" type="button" data-view="projects" data-icon="projects" title="Projekte">Projekte</button>
+          <button class="nav-button" type="button" data-view="files" data-icon="files" title="Dateien">Dateien</button>
         </nav>
         <nav class="nav bottom-nav" aria-label="Konto und Einstellungen">
-          <button class="nav-button" data-view="cost" data-icon="cost" title="Kosten">Kosten</button>
-          <button class="nav-button" data-view="settings" data-icon="settings" title="Einstellungen">Einstellungen</button>
+          <button class="nav-button" type="button" data-view="cost" data-icon="cost" title="Kosten">Kosten</button>
+          <button class="nav-button" type="button" data-view="settings" data-icon="settings" title="Einstellungen">Einstellungen</button>
         </nav>
-        <button class="profile-dock nav-button" data-view="profile" title="Login / Konto">
+        <button class="profile-dock nav-button" type="button" data-view="profile" title="Login / Konto">
           <span id="profileDockAvatar" class="profile-avatar is-empty" aria-hidden="true"></span>
           <span id="profileDockLabel">Konto</span>
         </button>
@@ -127,7 +127,7 @@
           <div id="log" class="log"></div>
           <form id="form" class="composer">
             <textarea id="message" placeholder="Nachricht an smejj..."></textarea>
-            <button>Senden</button>
+            <button type="submit">Senden</button>
           </form>
         </section>
 
@@ -192,9 +192,9 @@
             <div><strong>Sync</strong><span>lokal zuerst</span></div>
           </div>
           <div class="toolbar">
-            <button data-jump="files">Dateien oeffnen</button>
-            <button data-jump="storageView">Speicher pruefen</button>
-            <button data-jump="ai">Local Browser KI</button>
+            <button type="button" data-jump="files">Dateien oeffnen</button>
+            <button type="button" data-jump="storageView">Speicher pruefen</button>
+            <button type="button" data-jump="ai">Local Browser KI</button>
           </div>
           <div class="output">Browser-Bereich bereit.</div>
         </section>
@@ -216,17 +216,17 @@
           </div>
           <div class="toolbar">
             <input id="filePath" placeholder="public/app.js" aria-label="Dateipfad">
-            <button id="readFile">Lesen</button>
-            <button id="previewWrite">Speichern-Vorschau</button>
-            <button id="applyWrite">Lokal speichern</button>
-            <button id="downloadEditor">Download</button>
+            <button id="readFile" type="button">Lesen</button>
+            <button id="previewWrite" type="button">Speichern-Vorschau</button>
+            <button id="applyWrite" type="button">Lokal speichern</button>
+            <button id="downloadEditor" type="button">Download</button>
           </div>
           <div class="toolbar">
-            <button id="createLocalProject">Lokales Projekt erstellen</button>
-            <button id="saveWorkspaceFile">In Workspace speichern</button>
-            <button id="snapshotWorkspace">Snapshot erzeugen</button>
-            <button id="restoreWorkspace">Aus Manifest wiederherstellen</button>
-            <button id="workspaceStatus">Workspace Status</button>
+            <button id="createLocalProject" type="button">Lokales Projekt erstellen</button>
+            <button id="saveWorkspaceFile" type="button">In Workspace speichern</button>
+            <button id="snapshotWorkspace" type="button">Snapshot erzeugen</button>
+            <button id="restoreWorkspace" type="button">Aus Manifest wiederherstellen</button>
+            <button id="workspaceStatus" type="button">Workspace Status</button>
           </div>
           <div id="codeOutput" class="output"></div>
         </section>
@@ -238,15 +238,15 @@
             <p class="subhead">Projektmanifeste und Snapshots entstehen lokal. IDrive-e2-Sync kommt spaeter ueber signierte URLs.</p>
           </header>
           <div class="toolbar">
-            <button id="projectCreate">Projekt erstellen</button>
-            <button id="projectRefresh">Liste aktualisieren</button>
-            <button id="projectOpen">Projekt oeffnen</button>
-            <button id="projectSave">Projekt speichern</button>
-            <button id="projectSnapshot">Snapshot</button>
-            <button id="projectManifest">Manifest anzeigen</button>
-            <button id="projectExport">Exportieren</button>
-            <button id="projectImport">Importieren</button>
-            <button id="projectDelete">Projekt loeschen</button>
+            <button id="projectCreate" type="button">Projekt erstellen</button>
+            <button id="projectRefresh" type="button">Liste aktualisieren</button>
+            <button id="projectOpen" type="button">Projekt oeffnen</button>
+            <button id="projectSave" type="button">Projekt speichern</button>
+            <button id="projectSnapshot" type="button">Snapshot</button>
+            <button id="projectManifest" type="button">Manifest anzeigen</button>
+            <button id="projectExport" type="button">Exportieren</button>
+            <button id="projectImport" type="button">Importieren</button>
+            <button id="projectDelete" type="button">Projekt loeschen</button>
           </div>
           <div class="panel-grid">
             <label>
@@ -278,8 +278,8 @@
             </label>
           </div>
           <div class="toolbar">
-            <button id="storageAgain">IDrive e2 pruefen</button>
-            <button id="downloadUploadManifest">Upload-Liste downloaden</button>
+            <button id="storageAgain" type="button">IDrive e2 pruefen</button>
+            <button id="downloadUploadManifest" type="button">Upload-Liste downloaden</button>
           </div>
           <div id="fileOutput" class="output"></div>
         </section>
@@ -296,8 +296,8 @@
             <div><strong>Sync</strong><span>presigned URLs spaeter</span></div>
           </div>
           <div class="toolbar">
-            <button id="storagePanelCheck">IDrive e2 pruefen</button>
-            <button id="storagePanelLocal">Lokalen Speicher anzeigen</button>
+            <button id="storagePanelCheck" type="button">IDrive e2 pruefen</button>
+            <button id="storagePanelLocal" type="button">Lokalen Speicher anzeigen</button>
           </div>
           <div id="storagePanelOutput" class="output"></div>
         </section>
@@ -318,9 +318,9 @@
             </label>
           </div>
           <div class="toolbar">
-            <button id="saveMemory">Memory speichern</button>
-            <button id="searchMemory">Memory/RAG suchen</button>
-            <button id="downloadMemory">Memory downloaden</button>
+            <button id="saveMemory" type="button">Memory speichern</button>
+            <button id="searchMemory" type="button">Memory/RAG suchen</button>
+            <button id="downloadMemory" type="button">Memory downloaden</button>
             <input id="memoryQuery" placeholder="Suchbegriff" aria-label="Suchbegriff">
           </div>
           <div id="memoryOutput" class="output"></div>
@@ -357,8 +357,8 @@
             </label>
           </div>
           <div class="toolbar">
-            <button id="evaluateAiMode">KI-Modus pruefen</button>
-            <button id="clearByok">BYOK-Felder leeren</button>
+            <button id="evaluateAiMode" type="button">KI-Modus pruefen</button>
+            <button id="clearByok" type="button">BYOK-Felder leeren</button>
           </div>
           <div class="output" id="aiOutput">KI ist deaktiviert. Kimi K2.7 ist Vault/BYOK/Partner/Self-host spaeter, nicht kostenloser Standardmotor.</div>
         </section>
@@ -378,8 +378,8 @@
             <div><strong>Trials</strong><span>verboten</span></div>
           </div>
           <div class="toolbar">
-            <button id="costGuardDetails">Free-Guard anzeigen</button>
-            <button id="costCheck">Lokale Checks</button>
+            <button id="costGuardDetails" type="button">Free-Guard anzeigen</button>
+            <button id="costCheck" type="button">Lokale Checks</button>
           </div>
           <div id="costOutput" class="output"></div>
         </section>
@@ -390,10 +390,10 @@
             <h2>System</h2>
           </header>
           <div class="toolbar">
-            <button id="capabilities">Capabilities</button>
-            <button id="health">Health</button>
-            <button id="freeGuard">Free-Guard Hinweis</button>
-            <button id="localWorkspaceStatus">Local Workspace</button>
+            <button id="capabilities" type="button">Capabilities</button>
+            <button id="health" type="button">Health</button>
+            <button id="freeGuard" type="button">Free-Guard Hinweis</button>
+            <button id="localWorkspaceStatus" type="button">Local Workspace</button>
           </div>
           <div class="status-grid" aria-label="Aktueller Betriebsstatus">
             <div><strong>Storage</strong><span id="storageStatusText">local-browser</span></div>
@@ -430,9 +430,9 @@
             </label>
           </div>
           <div class="toolbar">
-            <button id="saveSettings">Einstellungen speichern</button>
-            <button id="showOfflinePage">Offline-Seite anzeigen</button>
-            <button id="showErrorPage">Fehlerseite anzeigen</button>
+            <button id="saveSettings" type="button">Einstellungen speichern</button>
+            <button id="showOfflinePage" type="button">Offline-Seite anzeigen</button>
+            <button id="showErrorPage" type="button">Fehlerseite anzeigen</button>
           </div>
           <div id="settingsOutput" class="output"></div>
         </section>
@@ -470,11 +470,11 @@
           </div>
           <div class="toolbar">
             <div id="googleSignIn"></div>
-            <button id="registerLocal">Registrierung lokal vorbereiten</button>
-            <button id="loginLocal">Login lokal testen</button>
-            <button id="logoutLocal">Ausloggen</button>
-            <button id="saveProfile">Profil speichern</button>
-            <button id="clearLocal">Lokale Daten leeren</button>
+            <button id="registerLocal" type="button">Registrierung lokal vorbereiten</button>
+            <button id="loginLocal" type="button">Login lokal testen</button>
+            <button id="logoutLocal" type="button">Ausloggen</button>
+            <button id="saveProfile" type="button">Profil speichern</button>
+            <button id="clearLocal" type="button">Lokale Daten leeren</button>
           </div>
           <div class="status-grid" aria-label="Sessionstatus">
             <div><strong>Session</strong><span id="sessionStatus">nicht angemeldet</span></div>
