@@ -16,7 +16,7 @@ export const CLIENT_ROUTES = {
 };
 
 export const UI_COPY = {
-  startup: "smejj.com ist online. Die Web-Shell laeuft kostenlos ueber Cloudflare Free. Fuer echte KI-Antworten muss ein eigener, kostenkontrollierter OpenAI-kompatibler Endpunkt verbunden werden; GitHub/Cloudflare bleiben dabei nicht der kostenpflichtige KI-Kern.",
+  startup: "Hallo. Frag mich etwas, starte ein Projekt oder lass uns Code bauen.",
   testCommand: "npm test",
   localOnly: "Diese Funktion ist in der Online-Version bewusst geschuetzt oder lokal gespeichert, damit keine versteckten Kosten und keine unsicheren Schreibzugriffe entstehen."
 };
