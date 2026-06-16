@@ -51,9 +51,9 @@ await check("pwa manifest", async () => {
 await check("service worker cache version", async () => {
   const { response, text } = await get("/sw.js");
   assert(response.ok, `status ${response.status}`);
-  assert(text.includes("smejj-shell-v6"), "service worker cache not bumped");
+  assert(text.includes("smejj-shell-v53"), "service worker cache not bumped");
   assert(text.includes("/icons/icon.svg"), "icons not cached");
-  return "v6";
+  return "v53";
 });
 
 await check("security headers", async () => {

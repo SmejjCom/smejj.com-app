@@ -87,3 +87,10 @@ test("smejj start design lock v1 stays protected", () => {
   assert.match(css, /\.sidebar \.bottom-nav[\s\S]*gap: 0/);
   assert.match(css, /\.browser-panel-nav,[\s\S]*gap: 0/);
 });
+
+test("start composer keeps chat inside the start page", () => {
+  assert.match(html, /id="startLog"/);
+  assert.match(app, /submitTask\(task, \{ target: "#startLog" \}\)/);
+  assert.doesNotMatch(app, /goToView\("chat"\);\n\s*await submitTask\(task\)/);
+  assert.doesNotMatch(html, /#start[\s\S]*data-jump="chat"/);
+});

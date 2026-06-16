@@ -287,10 +287,15 @@ function bindStartComposer() {
     if (!task) return;
     input.value = "";
     resizeInput();
-    goToView("chat");
-    await submitTask(task);
+    await submitTask(task, { target: "#startLog" });
   };
   send.addEventListener("click", submit);
+  for (const button of $$("[data-start-tool]")) {
+    button.addEventListener("click", () => {
+      showTaskIndicator("done");
+      showToast("Kommt als naechstes.");
+    });
+  }
   input.addEventListener("input", resizeInput);
   input.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.shiftKey) return;
@@ -300,11 +305,11 @@ function bindStartComposer() {
   resizeInput();
 }
 
-async function submitTask(task) {
+async function submitTask(task, { target = "#log" } = {}) {
   if (!task) return;
   showTaskIndicator("active");
-  addEntry(task, "user");
-  const output = addEntry("", "assistant");
+  addEntry(task, "user", target);
+  const output = addEntry("", "assistant", target);
   try {
     await stream(CLIENT_ROUTES.api.agent, {
       task,
@@ -998,11 +1003,13 @@ async function postJson(url, body) {
   }
 }
 
-function addEntry(text, role) {
+function addEntry(text, role, target = "#log") {
   const node = document.createElement("article");
   node.className = `entry ${role}`;
   node.textContent = text;
-  $("#log").append(node);
+  const log = $(target) || $("#log");
+  log.hidden = false;
+  log.append(node);
   node.scrollIntoView({ block: "end" });
   return node;
 }

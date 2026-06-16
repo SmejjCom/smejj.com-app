@@ -66,6 +66,7 @@
             <header class="home-hero">
               <h2>Was sollen wir in smejj entwickeln?</h2>
             </header>
+            <div id="startLog" class="start-log" aria-label="Start Chat" hidden></div>
             <section class="prompt-glass" aria-label="Start Eingabe">
               <textarea id="startMessage" rows="1" aria-label="Startprompt" placeholder="Nachricht schreiben"></textarea>
               <div class="prompt-actions">
@@ -81,13 +82,13 @@
                     <button type="button" role="menuitem" data-model="local browser">local browser</button>
                   </div>
                 </div>
-                <button class="ghost-button icon-button" type="button" data-jump="chat" aria-label="Mikrofon" title="Mikrofon">
+                <button class="ghost-button icon-button" type="button" data-start-tool="voice" aria-label="Mikrofon" title="Mikrofon">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a4 4 0 0 0-4 4v5a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4Z"/><path d="M5 11v1a7 7 0 0 0 14 0v-1"/><path d="M12 19v3"/></svg>
                 </button>
-                <button class="ghost-button icon-button" type="button" data-jump="chat" aria-label="Audio" title="Audio">
+                <button class="ghost-button icon-button" type="button" data-start-tool="audio" aria-label="Audio" title="Audio">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4"/><path d="M8 7v10"/><path d="M12 4v16"/><path d="M16 7v10"/><path d="M20 10v4"/></svg>
                 </button>
-                <button class="ghost-button icon-button" type="button" data-jump="chat" aria-label="Stimme" title="Stimme">
+                <button class="ghost-button icon-button" type="button" data-start-tool="speaker" aria-label="Stimme" title="Stimme">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></svg>
                 </button>
                 <button id="startSend" class="send-button icon-button" type="button" aria-label="Senden" title="Senden">
