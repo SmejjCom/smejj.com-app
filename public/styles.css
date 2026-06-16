@@ -26,13 +26,13 @@ textarea {
 
 .shell {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100dvh;
   background: #f7f7f4;
 }
 
 .sidebar {
-  display: grid;
+  display: none;
   align-content: start;
   gap: 18px;
   min-height: 100dvh;
@@ -140,6 +140,10 @@ button:hover {
   gap: 22px;
 }
 
+.view:not(#chat) {
+  display: none !important;
+}
+
 #code.view.is-active,
 #files.view.is-active,
 #memory.view.is-active,
@@ -149,6 +153,8 @@ button:hover {
 }
 
 .view-header {
+  width: min(920px, 100%);
+  margin: 0 auto;
   max-width: 920px;
 }
 
@@ -169,6 +175,8 @@ button:hover {
 }
 
 .log {
+  width: min(920px, 100%);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
