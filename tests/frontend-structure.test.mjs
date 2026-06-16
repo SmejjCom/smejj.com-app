@@ -100,3 +100,9 @@ test("storage deep link resolves to storage view", () => {
   assert.match(app, /const resolvedViewId = VIEW_ALIASES\[viewId\] \|\| viewId/);
   assert.match(html, /id="storageView"/);
 });
+
+test("provider deep links resolve to the AI mode view", () => {
+  assert.match(app, /VIEW_ALIASES[\s\S]*providers: "ai"/);
+  assert.match(app, /VIEW_ALIASES[\s\S]*provider: "ai"/);
+  assert.match(html, /id="ai"/);
+});
