@@ -15,23 +15,132 @@
   </head>
   <body>
     <main class="shell">
-      <section class="sidebar">
-        <h1>smejj.com Code</h1>
-        <p class="note">Free-safe PWA shell. GitHub und Cloudflare bleiben dauerhaft im Free-Tarif; zentrale Daten gehoeren in IDrive e2.</p>
-        <label>
-          Dateien
-          <textarea id="files" spellcheck="false" placeholder="src/server.js"></textarea>
-        </label>
-        <button id="status">Git-Status</button>
-        <button id="tests">Tests ausfuehren</button>
-        <button id="storage">IDrive e2 pruefen</button>
-      </section>
+      <aside class="sidebar">
+        <header class="brand">
+          <h1>smejj.com Code</h1>
+          <p class="note">GitHub und Cloudflare bleiben Free. IDrive e2 ist Hauptspeicher.</p>
+        </header>
+        <nav class="nav" aria-label="Arbeitsbereiche">
+          <button class="nav-button is-active" data-view="chat" title="Chat">Chat</button>
+          <button class="nav-button" data-view="code" title="Code-Assistent">Code</button>
+          <button class="nav-button" data-view="files" title="Dateien und Uploads">Dateien</button>
+          <button class="nav-button" data-view="memory" title="Memory und RAG">Memory</button>
+          <button class="nav-button" data-view="tools" title="Tools und Status">Tools</button>
+          <button class="nav-button" data-view="profile" title="Profil und Einstellungen">Profil</button>
+        </nav>
+        <section class="side-block">
+          <button id="storage">IDrive e2 pruefen</button>
+          <button id="status">Git-Status</button>
+          <button id="tests">Tests ausfuehren</button>
+        </section>
+      </aside>
+
       <section class="workspace">
-        <div id="log" class="log"></div>
-        <form id="form" class="composer">
-          <textarea id="message" placeholder="Was soll der Agent im Projekt pruefen oder aendern?"></textarea>
-          <button>Senden</button>
-        </form>
+        <section id="chat" class="view is-active" aria-label="Chat">
+          <div id="log" class="log"></div>
+          <form id="form" class="composer">
+            <textarea id="message" placeholder="Was soll der Agent pruefen, planen oder bauen?"></textarea>
+            <button>Senden</button>
+          </form>
+        </section>
+
+        <section id="code" class="view" aria-label="Code-Assistent">
+          <div class="panel-grid">
+            <label>
+              Dateien
+              <textarea id="fileRefs" spellcheck="false" placeholder="src/server.js"></textarea>
+            </label>
+            <label>
+              Code-Editor
+              <textarea id="editor" spellcheck="false" placeholder="Datei laden oder Code hier bearbeiten"></textarea>
+            </label>
+          </div>
+          <div class="toolbar">
+            <input id="filePath" placeholder="public/app.js" aria-label="Dateipfad">
+            <button id="readFile">Lesen</button>
+            <button id="previewWrite">Speichern-Vorschau</button>
+            <button id="applyWrite">Lokal speichern</button>
+          </div>
+          <div id="codeOutput" class="output"></div>
+        </section>
+
+        <section id="files" class="view" aria-label="Dateien und Uploads">
+          <div class="panel-grid">
+            <label>
+              Upload-Staging
+              <input id="upload" type="file" multiple>
+            </label>
+            <label>
+              Gestagte Uploads
+              <textarea id="uploadList" readonly></textarea>
+            </label>
+          </div>
+          <div class="toolbar">
+            <button id="storageAgain">IDrive e2 pruefen</button>
+          </div>
+          <div id="fileOutput" class="output"></div>
+        </section>
+
+        <section id="memory" class="view" aria-label="Memory und RAG">
+          <div class="panel-grid">
+            <label>
+              Memory
+              <textarea id="memoryText" placeholder="Lokale, browserseitige Notizen"></textarea>
+            </label>
+            <label>
+              RAG-Notizen
+              <textarea id="ragText" placeholder="Lokale Quellen, Begriffe, Snippets"></textarea>
+            </label>
+          </div>
+          <div class="toolbar">
+            <button id="saveMemory">Memory speichern</button>
+            <button id="searchMemory">Memory/RAG suchen</button>
+            <input id="memoryQuery" placeholder="Suchbegriff" aria-label="Suchbegriff">
+          </div>
+          <div id="memoryOutput" class="output"></div>
+        </section>
+
+        <section id="tools" class="view" aria-label="Tools">
+          <div class="toolbar">
+            <button id="capabilities">Capabilities</button>
+            <button id="health">Health</button>
+            <button id="freeGuard">Free-Guard Hinweis</button>
+          </div>
+          <div id="toolOutput" class="output"></div>
+        </section>
+
+        <section id="profile" class="view" aria-label="Profil und Einstellungen">
+          <div class="panel-grid">
+            <label>
+              Name
+              <input id="profileName" placeholder="Dein Name">
+            </label>
+            <label>
+              E-Mail
+              <input id="profileEmail" placeholder="name@example.com" inputmode="email">
+            </label>
+            <label>
+              Sprache
+              <select id="language">
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+            <label>
+              Antwortmodus
+              <select id="mode">
+                <option value="safe">Free-safe</option>
+                <option value="byok">BYOK vorbereitet</option>
+                <option value="local">Lokal</option>
+              </select>
+            </label>
+          </div>
+          <div class="toolbar">
+            <button id="saveProfile">Profil speichern</button>
+            <button id="clearLocal">Lokale Daten leeren</button>
+          </div>
+          <div id="profileOutput" class="output"></div>
+        </section>
       </section>
     </main>
     <script src="/assets/app.js" type="module"></script>

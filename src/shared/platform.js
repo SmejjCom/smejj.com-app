@@ -22,6 +22,7 @@ export const ROUTES = {
   sitemap: "/sitemap.xml",
   api: {
     health: "/api/health",
+    capabilities: "/api/capabilities",
     chat: "/api/chat",
     agent: "/api/agent",
     gitStatus: "/api/git/status",
@@ -31,6 +32,31 @@ export const ROUTES = {
     terminalRun: "/api/terminal/run",
     storageStatus: "/api/storage/status"
   }
+};
+
+export const CAPABILITIES = {
+  startPage: "ready",
+  chat: "ready",
+  codeAssistant: "ready",
+  codeEditor: "client-ready",
+  agents: "ready",
+  localFiles: "local-only",
+  uploads: "client-staged",
+  modelFiles: "idrive-metadata-ready",
+  idriveStorage: "ready",
+  memory: "client-local",
+  rag: "client-local",
+  tools: "free-safe",
+  browserSearchApi: "not-core-without-free-safe-provider",
+  auth: "client-local-placeholder",
+  profiles: "client-local",
+  settings: "client-local",
+  i18n: "client-local",
+  database: "idrive-object-storage-planned",
+  cache: "pwa-ready",
+  errorPages: "client-ready",
+  webPwa: "ready",
+  iphoneAndroid: "pwa-ready"
 };
 
 export const SECURITY_HEADERS = {

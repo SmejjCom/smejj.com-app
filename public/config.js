@@ -1,7 +1,10 @@
 export const CLIENT_ROUTES = {
   api: {
     agent: "/api/agent",
+    capabilities: "/api/capabilities",
     gitStatus: "/api/git/status",
+    fileRead: "/api/files/read",
+    fileWrite: "/api/files/write",
     storageStatus: "/api/storage/status",
     terminalRun: "/api/terminal/run"
   }
@@ -9,5 +12,14 @@ export const CLIENT_ROUTES = {
 
 export const UI_COPY = {
   startup: "smejj.com ist online. Die Web-Shell laeuft kostenlos ueber Cloudflare Free. Fuer echte KI-Antworten muss ein eigener, kostenkontrollierter OpenAI-kompatibler Endpunkt verbunden werden; GitHub/Cloudflare bleiben dabei nicht der kostenpflichtige KI-Kern.",
-  testCommand: "npm test"
+  testCommand: "npm test",
+  localOnly: "Diese Funktion ist in der Online-Version bewusst geschuetzt oder lokal gespeichert, damit keine versteckten Kosten und keine unsicheren Schreibzugriffe entstehen."
+};
+
+export const STORAGE_KEYS = {
+  profile: "smejj.profile.v1",
+  settings: "smejj.settings.v1",
+  memory: "smejj.memory.v1",
+  rag: "smejj.rag.v1",
+  drafts: "smejj.drafts.v1"
 };

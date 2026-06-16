@@ -1,4 +1,4 @@
-import { APP_INFO, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE, responseHeaders } from "./shared/platform.js";
+import { APP_INFO, CAPABILITIES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE, responseHeaders } from "./shared/platform.js";
 
 export default {
   async fetch(request, env) {
@@ -25,6 +25,15 @@ export default {
         costPolicy: COST_POLICY,
         ai: Boolean(env.SMEJJ_LLM_API_KEY),
         storage: Boolean(env.IDRIVE_E2_ENDPOINT && env.IDRIVE_E2_ACCESS_KEY && env.IDRIVE_E2_SECRET_KEY && env.IDRIVE_E2_BUCKET)
+      });
+    }
+
+    if (readMethod && url.pathname === ROUTES.api.capabilities) {
+      return json(200, {
+        ok: true,
+        app: APP_INFO.name,
+        costPolicy: COST_POLICY,
+        capabilities: CAPABILITIES
       });
     }
 

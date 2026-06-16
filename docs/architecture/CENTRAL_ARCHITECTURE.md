@@ -20,6 +20,10 @@ without adding paid GitHub or Cloudflare dependencies.
 | Release protection and free-tier guard | `scripts/release/free_tier_release_guard.mjs` |
 | PWA cache versioning | `public/sw.js` |
 | SEO/AIO/GEO/AEO/KI discovery basics | `public/index.html`, `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` |
+| Capability matrix | `src/shared/platform.js`, `/api/capabilities` |
+| Client-local profile/settings | `public/app.js`, browser `localStorage` |
+| Client-local Memory/RAG notes | `public/app.js`, browser `localStorage` |
+| Upload staging | `public/app.js`, browser memory only |
 
 ## Reserved Central Modules
 
@@ -37,6 +41,18 @@ before they are exposed to users:
 | Layout/design components | a single client UI module before the UI grows beyond this shell |
 | Internationalization | a single i18n dictionary module before adding more languages |
 | Native platform configuration | PWA manifest first; native wrappers later without paid GitHub/Cloudflare dependencies |
+
+## Implemented Safety Boundaries
+
+- Public registration/login is not backed by a server database yet. The current
+  profile/settings flow is client-local to avoid opening an unauthenticated
+  public write API.
+- Memory and RAG notes are client-local until authenticated IDrive e2 object
+  paths and abuse controls exist.
+- Browser uploads are staged locally. Durable upload storage must go through a
+  future authenticated IDrive e2 write path.
+- Online file read/write and terminal execution stay disabled. Local file tools
+  remain available only on `127.0.0.1`.
 
 ## Rules
 

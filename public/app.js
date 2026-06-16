@@ -1,56 +1,218 @@
-import { CLIENT_ROUTES, UI_COPY } from "./config.js";
+import { CLIENT_ROUTES, STORAGE_KEYS, UI_COPY } from "./config.js";
 
-const log = document.querySelector("#log");
-const form = document.querySelector("#form");
-const message = document.querySelector("#message");
-const files = document.querySelector("#files");
-const statusButton = document.querySelector("#status");
-const testsButton = document.querySelector("#tests");
-const storageButton = document.querySelector("#storage");
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+const state = {
+  uploads: [],
+  profile: loadJson(STORAGE_KEYS.profile, { name: "", email: "" }),
+  settings: loadJson(STORAGE_KEYS.settings, { language: "de", mode: "safe" }),
+  memory: loadText(STORAGE_KEYS.memory),
+  rag: loadText(STORAGE_KEYS.rag)
+};
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
-addEntry(UI_COPY.startup, "assistant");
+boot();
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const task = message.value.trim();
-  if (!task) return;
-  addEntry(task, "user");
-  message.value = "";
-  const output = addEntry("", "assistant");
-  await stream(CLIENT_ROUTES.api.agent, {
-    task,
-    files: files.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
-  }, output);
-});
+function boot() {
+  bindNavigation();
+  bindChat();
+  bindSidebarActions();
+  bindCodeTools();
+  bindUploads();
+  bindMemory();
+  bindTools();
+  bindProfile();
+  hydrateProfile();
+  $("#memoryText").value = state.memory;
+  $("#ragText").value = state.rag;
+  addEntry(UI_COPY.startup, "assistant");
+}
 
-statusButton.addEventListener("click", async () => {
-  const result = await fetch(CLIENT_ROUTES.api.gitStatus);
-  addEntry(JSON.stringify(await result.json(), null, 2), "assistant");
-});
+function bindNavigation() {
+  for (const button of $$(".nav-button")) {
+    button.addEventListener("click", () => {
+      $$(".nav-button").forEach((item) => item.classList.toggle("is-active", item === button));
+      $$(".view").forEach((view) => view.classList.toggle("is-active", view.id === button.dataset.view));
+    });
+  }
+}
 
-testsButton.addEventListener("click", async () => {
-  const result = await fetch(CLIENT_ROUTES.api.terminalRun, {
+function bindChat() {
+  $("#form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const task = $("#message").value.trim();
+    if (!task) return;
+    addEntry(task, "user");
+    $("#message").value = "";
+    const output = addEntry("", "assistant");
+    await stream(CLIENT_ROUTES.api.agent, {
+      task,
+      files: $("#fileRefs").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    }, output);
+  });
+}
+
+function bindSidebarActions() {
+  $("#storage").addEventListener("click", () => showJsonInLog(CLIENT_ROUTES.api.storageStatus));
+  $("#status").addEventListener("click", () => showJsonInLog(CLIENT_ROUTES.api.gitStatus));
+  $("#tests").addEventListener("click", async () => {
+    const result = await postJson(CLIENT_ROUTES.api.terminalRun, { command: UI_COPY.testCommand });
+    addEntry(JSON.stringify(result, null, 2), "assistant");
+  });
+}
+
+function bindCodeTools() {
+  $("#readFile").addEventListener("click", async () => {
+    const path = $("#filePath").value.trim();
+    if (!path) return writeOutput("#codeOutput", "Dateipfad fehlt.");
+    const result = await postJson(CLIENT_ROUTES.api.fileRead, { path });
+    if (result.content) $("#editor").value = result.content;
+    writeOutput("#codeOutput", JSON.stringify(result, null, 2));
+  });
+
+  $("#previewWrite").addEventListener("click", async () => {
+    const result = await writeFile(false);
+    writeOutput("#codeOutput", JSON.stringify(result, null, 2));
+  });
+
+  $("#applyWrite").addEventListener("click", async () => {
+    const result = await writeFile(true);
+    writeOutput("#codeOutput", JSON.stringify(result, null, 2));
+  });
+}
+
+function bindUploads() {
+  $("#upload").addEventListener("change", async (event) => {
+    state.uploads = [];
+    for (const file of Array.from(event.target.files || [])) {
+      const text = await file.text().catch(() => "");
+      state.uploads.push({
+        name: file.name,
+        bytes: file.size,
+        type: file.type || "application/octet-stream",
+        preview: text.slice(0, 2000)
+      });
+    }
+    $("#uploadList").value = state.uploads
+      .map((file) => `${file.name} | ${file.bytes} bytes | ${file.type}`)
+      .join("\n");
+    writeOutput("#fileOutput", "Uploads sind lokal gestaged. Dauerhafte Speicherung gehoert in IDrive e2 und bleibt serverseitig geschuetzt.");
+  });
+  $("#storageAgain").addEventListener("click", () => showJson("#fileOutput", CLIENT_ROUTES.api.storageStatus));
+}
+
+function bindMemory() {
+  $("#saveMemory").addEventListener("click", () => {
+    state.memory = $("#memoryText").value;
+    state.rag = $("#ragText").value;
+    localStorage.setItem(STORAGE_KEYS.memory, state.memory);
+    localStorage.setItem(STORAGE_KEYS.rag, state.rag);
+    writeOutput("#memoryOutput", "Memory und RAG-Notizen lokal gespeichert. Serverseitige Memory-Daten muessen spaeter in IDrive e2 landen.");
+  });
+
+  $("#searchMemory").addEventListener("click", () => {
+    const query = $("#memoryQuery").value.trim().toLowerCase();
+    if (!query) return writeOutput("#memoryOutput", "Suchbegriff fehlt.");
+    const haystack = [
+      ["memory", $("#memoryText").value],
+      ["rag", $("#ragText").value],
+      ...state.uploads.map((file) => [`upload:${file.name}`, file.preview])
+    ];
+    const hits = haystack
+      .filter(([, text]) => text.toLowerCase().includes(query))
+      .map(([source, text]) => `${source}\n${snippet(text, query)}`);
+    writeOutput("#memoryOutput", hits.length ? hits.join("\n\n") : "Keine lokalen Treffer.");
+  });
+}
+
+function bindTools() {
+  $("#capabilities").addEventListener("click", () => showJson("#toolOutput", CLIENT_ROUTES.api.capabilities));
+  $("#health").addEventListener("click", () => showJson("#toolOutput", CLIENT_ROUTES.api.health));
+  $("#freeGuard").addEventListener("click", () => {
+    writeOutput("#toolOutput", [
+      "Free-Guard aktiv:",
+      "- GitHub Free nur fuer Code/Doku.",
+      "- Cloudflare Free nur fuer PWA, DNS und leichte Edge-Routen.",
+      "- IDrive e2 ist Hauptspeicher.",
+      "- Unsichere oder paid-risk Online-Schreibwege bleiben gesperrt."
+    ].join("\n"));
+  });
+}
+
+function bindProfile() {
+  $("#saveProfile").addEventListener("click", () => {
+    state.profile = {
+      name: $("#profileName").value.trim(),
+      email: $("#profileEmail").value.trim()
+    };
+    state.settings = {
+      language: $("#language").value,
+      mode: $("#mode").value
+    };
+    localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(state.profile));
+    localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings));
+    writeOutput("#profileOutput", "Profil und Einstellungen lokal gespeichert. Registrierung/Login bleiben bis zu einer sicheren Auth-Architektur client-lokal.");
+  });
+
+  $("#clearLocal").addEventListener("click", () => {
+    for (const key of Object.values(STORAGE_KEYS)) localStorage.removeItem(key);
+    writeOutput("#profileOutput", "Lokale smejj.com Daten geloescht.");
+  });
+}
+
+function hydrateProfile() {
+  $("#profileName").value = state.profile.name || "";
+  $("#profileEmail").value = state.profile.email || "";
+  $("#language").value = state.settings.language || "de";
+  $("#mode").value = state.settings.mode || "safe";
+}
+
+async function writeFile(apply) {
+  const path = $("#filePath").value.trim();
+  if (!path) return { ok: false, error: "Dateipfad fehlt." };
+  return postJson(CLIENT_ROUTES.api.fileWrite, {
+    path,
+    content: $("#editor").value,
+    apply
+  });
+}
+
+async function showJsonInLog(url) {
+  addEntry(JSON.stringify(await getJson(url), null, 2), "assistant");
+}
+
+async function showJson(target, url) {
+  writeOutput(target, JSON.stringify(await getJson(url), null, 2));
+}
+
+async function getJson(url) {
+  const response = await fetch(url);
+  return response.json();
+}
+
+async function postJson(url, body) {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ command: UI_COPY.testCommand })
+    body: JSON.stringify(body)
   });
-  addEntry(JSON.stringify(await result.json(), null, 2), "assistant");
-});
-
-storageButton.addEventListener("click", async () => {
-  const result = await fetch(CLIENT_ROUTES.api.storageStatus);
-  addEntry(JSON.stringify(await result.json(), null, 2), "assistant");
-});
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { ok: response.ok, status: response.status, text };
+  }
+}
 
 function addEntry(text, role) {
   const node = document.createElement("article");
   node.className = `entry ${role}`;
   node.textContent = text;
-  log.append(node);
+  $("#log").append(node);
   node.scrollIntoView({ block: "end" });
   return node;
 }
@@ -103,4 +265,28 @@ async function readableError(response) {
   } catch {
     return text;
   }
+}
+
+function writeOutput(selector, text) {
+  const node = $(selector);
+  node.textContent = text || "";
+}
+
+function loadJson(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "") || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function loadText(key) {
+  return localStorage.getItem(key) || "";
+}
+
+function snippet(text, query) {
+  const index = text.toLowerCase().indexOf(query);
+  const start = Math.max(0, index - 80);
+  const end = Math.min(text.length, index + query.length + 160);
+  return text.slice(start, end);
 }

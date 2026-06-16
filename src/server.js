@@ -5,7 +5,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
-import { APP_INFO, CONTENT_TYPES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE } from "./shared/platform.js";
+import { APP_INFO, CAPABILITIES, CONTENT_TYPES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE } from "./shared/platform.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -32,6 +32,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname.startsWith("/assets/")) return serveFile(res, url.pathname.replace("/assets/", ""));
     if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
     if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res);
+    if (readMethod && url.pathname === ROUTES.api.capabilities) return handleCapabilities(res);
     if (req.method === "POST" && url.pathname === ROUTES.api.chat) return handleChat(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.agent) return handleAgent(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.fileRead) return handleRead(req, res);
@@ -64,6 +65,15 @@ async function handleHealth(res) {
     costPolicy: COST_POLICY,
     ai: Boolean(config.apiKey),
     storage: Boolean(process.env.IDRIVE_E2_ENDPOINT && process.env.IDRIVE_E2_ACCESS_KEY && process.env.IDRIVE_E2_SECRET_KEY && process.env.IDRIVE_E2_BUCKET)
+  });
+}
+
+async function handleCapabilities(res) {
+  json(res, 200, {
+    ok: true,
+    app: APP_INFO.name,
+    costPolicy: COST_POLICY,
+    capabilities: CAPABILITIES
   });
 }
 
