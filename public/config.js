@@ -2,6 +2,7 @@ export const CLIENT_ROUTES = {
   api: {
     agent: "/api/agent",
     capabilities: "/api/capabilities",
+    health: "/api/health",
     gitStatus: "/api/git/status",
     fileRead: "/api/files/read",
     fileWrite: "/api/files/write",
