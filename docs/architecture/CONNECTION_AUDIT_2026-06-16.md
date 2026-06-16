@@ -28,15 +28,21 @@ Date: 2026-06-16
 - Browser tests passed for local `http://127.0.0.1:3000` and live `https://smejj.com`.
 - IDrive e2 signed S3 list succeeds for `s3://smejj-model-files/model-files/kimi-k2-7/`.
 - IDrive e2 signed S3 upload and download succeeded for a small healthcheck object.
+- IDrive e2 project/deployment artifact upload and download verification is available through `npm run idrive:artifact`.
+- Cloudflare KV namespace list returned empty.
+- Cloudflare R2 is not enabled for this account, so the project is not using Cloudflare R2 storage.
+- No Cloudflare D1, Queues, R2, KV, Images, Stream, or paid Cloudflare storage feature is configured in `wrangler.jsonc`.
 
 ## IDrive e2 Permission Note
 
 The current IDrive e2 key can list, upload, and download objects. A delete attempt for
 `healthchecks/codex-1781570645437.txt` returned `AccessDenied`.
 
-This is acceptable for immutable backup/model-vault storage, but it is not enough for
-cleanup workflows that need deletion. If deletion is required, create a separate
-least-privilege maintenance key with delete permission for the intended cleanup prefix.
+This is intentionally compatible with immutable backup/model-vault storage. Runtime,
+deployment, source, and model artifacts are treated as append-only records. Cleanup is
+not a runtime requirement and must not be implemented through GitHub or Cloudflare paid
+storage. If a human maintenance workflow later needs deletion, it must use a separate
+least-privilege IDrive e2 maintenance key outside the production runtime path.
 
 ## Scale Decision
 
@@ -53,6 +59,7 @@ instead of silently switching to paid GitHub or Cloudflare services.
 
 - `npm run check`
 - `npm run idrive:check`
+- `npm run idrive:artifact`
 - `npx wrangler deploy --dry-run --outdir /tmp/smejj-worker-dry-run-final`
 - Browser load: `http://127.0.0.1:3000`
 - Browser load: `https://smejj.com`

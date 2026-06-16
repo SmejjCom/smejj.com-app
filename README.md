@@ -108,3 +108,10 @@ Der lokale IDrive-Status ist ueber die App und per API pruefbar:
 ```text
 GET /api/storage/status
 ```
+
+Projekt- und Deployment-Artefakte werden kostenfrei ausserhalb von GitHub und
+Cloudflare in IDrive e2 archiviert:
+
+```bash
+npm run idrive:artifact
+```

@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "check": "node --check src/server.js",
     "idrive:check": "node scripts/model-management/check_idrive_e2_storage.mjs",
+    "idrive:artifact": "node scripts/model-management/upload_project_artifact_to_idrive.mjs",
     "idrive:archive-source": "node scripts/model-management/archive_kimi_source_metadata.mjs",
     "idrive:preflight": "sh scripts/model-management/preflight_kimi_k27_storage.sh",
     "model:download": "sh scripts/model-management/download_kimi_model.sh",
