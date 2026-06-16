@@ -89,6 +89,8 @@ test("smejj start design lock v1 stays protected", () => {
 
 test("start composer keeps chat inside the start page", () => {
   assert.match(html, /id="startLog"/);
+  assert.match(app, /function addEntry\(text, role, target = "#startLog"\)/);
+  assert.match(app, /\$\(target\) \|\| \$\("#startLog"\)/);
   assert.doesNotMatch(html, /id="chat"/);
   assert.doesNotMatch(html, /id="form"/);
   assert.doesNotMatch(html, /id="message"/);

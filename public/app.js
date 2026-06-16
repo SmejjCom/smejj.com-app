@@ -1062,11 +1062,12 @@ async function postJson(url, body) {
   }
 }
 
-function addEntry(text, role, target = "#log") {
+function addEntry(text, role, target = "#startLog") {
   const node = document.createElement("article");
   node.className = `entry ${role}`;
   node.textContent = text;
-  const log = $(target) || $("#log");
+  const log = $(target) || $("#startLog");
+  if (!log) return node;
   log.hidden = false;
   log.append(node);
   node.scrollIntoView({ block: "end" });
