@@ -124,7 +124,6 @@ function boot() {
   $("#ragText").value = state.rag;
   refreshLocalWorkspaceStatus();
   restoreViewFromUrl();
-  addEntry(UI_COPY.startup, "assistant");
 }
 
 function bindNavigation() {
@@ -1069,6 +1068,7 @@ function addEntry(text, role, target = "#startLog") {
   const log = $(target) || $("#startLog");
   if (!log) return node;
   log.hidden = false;
+  if (log.id === "startLog" && role === "user") $("#start")?.classList.add("has-start-chat");
   log.append(node);
   node.scrollIntoView({ block: "end" });
   return node;

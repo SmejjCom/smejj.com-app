@@ -91,6 +91,10 @@ test("start composer keeps chat inside the start page", () => {
   assert.match(html, /id="startLog"/);
   assert.match(app, /function addEntry\(text, role, target = "#startLog"\)/);
   assert.match(app, /\$\(target\) \|\| \$\("#startLog"\)/);
+  assert.doesNotMatch(app, /addEntry\(UI_COPY\.startup, "assistant"\)/);
+  assert.match(app, /role === "user"\) \$\("#start"\)\?\.classList\.add\("has-start-chat"\)/);
+  assert.match(css, /#start\.has-start-chat \.home-hero[\s\S]*display: none/);
+  assert.match(css, /#start\.has-start-chat \.start-log[\s\S]*justify-content: flex-start/);
   assert.doesNotMatch(html, /id="chat"/);
   assert.doesNotMatch(html, /id="form"/);
   assert.doesNotMatch(html, /id="message"/);
