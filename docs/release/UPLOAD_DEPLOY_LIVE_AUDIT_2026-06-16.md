@@ -53,7 +53,7 @@ Korrektur:
 - Commit: `5cdba69` (`Keep start chat inline`).
 - GitHub Push: `main -> main`.
 - Cloudflare Worker: `smejj-com`.
-- Cloudflare Version ID: `963a2311-0dd4-4cd5-9c60-658aed93a212`.
+- Cloudflare Version ID: `f338910f-dc8b-45e0-900c-712ddf3cfb24`.
 - Live Service Worker: `smejj-shell-v53`.
 
 ## Kosten- und Speicherregel
