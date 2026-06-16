@@ -20,7 +20,7 @@ test("PWA manifest is install-ready for mobile shells", () => {
 });
 
 test("service worker caches only small app shell assets and has offline fallback", () => {
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v53"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v54"/);
   assert.match(sw, /cache\.addAll\(SHELL\)/);
   assert.match(sw, /fetch\(request\)\.catch/);
   assert.match(sw, /caches\.match\("\/"\)/);

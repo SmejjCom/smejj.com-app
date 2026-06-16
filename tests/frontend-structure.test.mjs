@@ -10,7 +10,6 @@ const startDesignLock = fs.readFileSync("docs/frontend/START_DESIGN_LOCK.md", "u
 
 const requiredViews = [
   "start",
-  "chat",
   "search",
   "websites",
   "smejjClaw",
@@ -66,8 +65,8 @@ test("PWA shell caches app component modules", () => {
   }
 });
 
-test("CSS does not force non-chat views hidden", () => {
-  assert.doesNotMatch(css, /view:not\(#chat\)/);
+test("CSS does not force non-start views hidden", () => {
+  assert.doesNotMatch(css, /view:not\(#start\)/);
 });
 
 test("smejj start design lock v1 stays protected", () => {
@@ -90,7 +89,16 @@ test("smejj start design lock v1 stays protected", () => {
 
 test("start composer keeps chat inside the start page", () => {
   assert.match(html, /id="startLog"/);
+  assert.doesNotMatch(html, /id="chat"/);
+  assert.doesNotMatch(html, /id="form"/);
+  assert.doesNotMatch(html, /id="message"/);
+  assert.doesNotMatch(html, /id="log"/);
+  assert.doesNotMatch(html, /data-view="chat"/);
   assert.match(app, /submitTask\(task, \{ target: "#startLog" \}\)/);
+  assert.match(app, /chat: "start"/);
+  assert.match(app, /"\/chat": "start"/);
+  assert.doesNotMatch(app, /function bindChat/);
+  assert.doesNotMatch(app, /bindChat\(\)/);
   assert.doesNotMatch(app, /goToView\("chat"\);\n\s*await submitTask\(task\)/);
   assert.doesNotMatch(html, /#start[\s\S]*data-jump="chat"/);
 });
@@ -105,6 +113,15 @@ test("provider deep links resolve to the AI mode view", () => {
   assert.match(app, /VIEW_ALIASES[\s\S]*providers: "ai"/);
   assert.match(app, /VIEW_ALIASES[\s\S]*provider: "ai"/);
   assert.match(html, /id="ai"/);
+});
+
+test("app navigation uses clean paths instead of hash routes", () => {
+  assert.doesNotMatch(app, /location\.hash\s*=/);
+  assert.doesNotMatch(app, /location\.search\}\s*#\$\{resolvedViewId\}/);
+  assert.doesNotMatch(app, /chat: "\/chat"/);
+  for (const route of ["/home", "/profile", "/settings", "/projects", "/storage", "/ai"]) {
+    assert.match(app, new RegExp(route.replace("/", "\\/")));
+  }
 });
 
 test("buttons declare an explicit type", () => {

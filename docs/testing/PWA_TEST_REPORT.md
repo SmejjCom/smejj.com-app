@@ -14,7 +14,7 @@ Local PWA shell test only. No live publication.
 - App icons are present.
 - Apple/mobile web app metadata is present.
 - Service worker registers from `/sw.js`.
-- Service worker cache name is `smejj-shell-v53`.
+- Service worker cache name is `smejj-shell-v54`.
 - Service worker caches the app shell.
 - Offline fallback path is present: failed GET requests fall back to cache and then `/`.
 - Cache refresh deletes old cache names on activate.

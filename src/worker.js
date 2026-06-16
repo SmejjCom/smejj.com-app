@@ -96,7 +96,11 @@ export default {
       return streamLLM(env, messages);
     }
 
-    return withSecurityHeaders(await env.ASSETS.fetch(assetRequest(request)));
+    const assetResponse = await env.ASSETS.fetch(assetRequest(request));
+    if (readMethod && assetResponse.status === 404 && isAppRoute(url.pathname)) {
+      return withSecurityHeaders(await env.ASSETS.fetch(new Request(new URL("/", request.url), request)));
+    }
+    return withSecurityHeaders(assetResponse);
   }
 };
 
@@ -107,6 +111,10 @@ function assetRequest(request) {
     return new Request(url, request);
   }
   return request;
+}
+
+function isAppRoute(pathname) {
+  return !pathname.split("/").pop().includes(".");
 }
 
 function agentMessages(body) {

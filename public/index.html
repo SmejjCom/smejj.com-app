@@ -31,7 +31,6 @@
         <nav class="nav" aria-label="Arbeitsbereiche">
           <button class="nav-button is-active" type="button" data-view="start" data-icon="home" title="Neu">Neu</button>
           <button class="nav-button icon-only-nav" type="button" data-view="search" data-icon="search" title="Suche" aria-label="Suche">Suche</button>
-          <button class="nav-button" type="button" data-view="chat" data-icon="chat" title="Chat">Chat</button>
           <button class="nav-button" type="button" data-view="websites" data-icon="websites" title="Websites">Websites</button>
           <button class="nav-button" type="button" data-view="smejjClaw" data-icon="claw" title="smejj claw">smejj claw</button>
           <button class="nav-button" type="button" data-view="automation" data-icon="automation" title="Automatisierung">Automatisierung</button>
@@ -78,7 +77,7 @@
                   <button id="modelPickerButton" class="ghost-button text-chip" type="button" aria-haspopup="menu" aria-expanded="false" title="Modell wechseln">smejj 1.0</button>
                   <div id="modelPickerMenu" class="model-menu" role="menu" hidden>
                     <button type="button" role="menuitem" data-model="smejj 1.0">smejj 1.0</button>
-                    <button type="button" role="menuitem" data-model="smejj code">smejj code</button>
+                    <button type="button" role="menuitem" data-model="smejj Code">smejj Code</button>
                     <button type="button" role="menuitem" data-model="local browser">local browser</button>
                   </div>
                 </div>
@@ -116,19 +115,6 @@
             </section>
             <div id="homeOutput" class="output" hidden>Bereit. Lokale Arbeit startet sofort; Online-Sync und KI bleiben fail-closed, bis sie sicher konfiguriert sind.</div>
           </div>
-        </section>
-
-        <section id="chat" class="view" aria-label="Chat">
-          <header class="view-header">
-            <p class="eyebrow">smejj.com</p>
-            <h2>Chat / KI-Assistent</h2>
-            <p class="subhead">Antworten laufen nur im aktiven erlaubten KI-Modus. Ohne sicheren Provider bleibt KI deaktiviert.</p>
-          </header>
-          <div id="log" class="log"></div>
-          <form id="form" class="composer">
-            <textarea id="message" placeholder="Nachricht an smejj..."></textarea>
-            <button type="submit">Senden</button>
-          </form>
         </section>
 
         <section id="search" class="view" aria-label="Suche">

@@ -20,7 +20,7 @@ Tested locally at `http://127.0.0.1:3000`. No live deployment and no production 
 - Disabled Mode is visible and active by default.
 - Fehlerseite and Offline-Seite exist.
 - Navigation deep links work with reload.
-- Browser back button works from `#ai` back to `#projects`.
+- Browser back button works from `/ai` back to `/projects`.
 - No horizontal overflow in tested desktop, tablet, iPhone-sized, Android-sized, and 320px screens.
 
 ## Tested Viewports
@@ -33,7 +33,7 @@ Tested locally at `http://127.0.0.1:3000`. No live deployment and no production 
 
 ## Fixed During Test
 
-- Added hash/history navigation for reload and back-button support.
+- Added clean path/history navigation for reload and back-button support.
 - Added mobile/PWA metadata for iOS/Android shells.
 - Added safe-area padding and touch interaction hinting.
 

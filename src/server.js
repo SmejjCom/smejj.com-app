@@ -62,6 +62,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.gitStatus) return handleGitStatus(res);
     if (req.method === "POST" && url.pathname === ROUTES.api.gitCommit) return await handleGitCommit(req, res);
     if (readMethod && url.pathname === ROUTES.api.storageStatus) return await handleStorageStatus(res);
+    if (readMethod && isAppRoute(url.pathname)) return serveFile(res, "index.html");
     json(res, 404, { error: "Not found" });
   } catch (error) {
     json(res, 500, { error: error.message || "Internal error" });
@@ -378,6 +379,10 @@ function run(bin, args, cwd, timeoutMs) {
 function isPublicAsset(pathname) {
   if (pathname.startsWith("/icons/")) return true;
   return [ROUTES.manifest, ROUTES.serviceWorker, ROUTES.robots, ROUTES.llms, ROUTES.sitemap].includes(pathname);
+}
+
+function isAppRoute(pathname) {
+  return !path.extname(pathname);
 }
 
 async function serveFile(res, file) {

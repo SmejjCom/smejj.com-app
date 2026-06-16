@@ -33,7 +33,7 @@ const PANEL_WIDTHS = Object.freeze({
 });
 const MODEL_MODES = Object.freeze({
   "smejj 1.0": AI_MODES.disabled,
-  "smejj code": AI_MODES.disabled,
+  "smejj Code": AI_MODES.disabled,
   "local browser": AI_MODES.localBrowser
 });
 const UPLOAD_LIMITS = Object.freeze({
@@ -50,9 +50,36 @@ const UPLOAD_LIMITS = Object.freeze({
   ])
 });
 const VIEW_ALIASES = Object.freeze({
+  chat: "start",
+  home: "start",
   providers: "ai",
   provider: "ai",
   storage: "storageView"
+});
+const VIEW_PATHS = Object.freeze({
+  start: "/home",
+  search: "/search",
+  websites: "/websites",
+  smejjClaw: "/smejj-claw",
+  automation: "/automation",
+  chatHistory: "/chat-history",
+  browser: "/browser",
+  code: "/code",
+  projects: "/projects",
+  files: "/files",
+  storageView: "/storage",
+  memory: "/memory",
+  ai: "/ai",
+  cost: "/cost",
+  tools: "/status",
+  settings: "/settings",
+  profile: "/profile",
+  offline: "/offline",
+  error: "/error"
+});
+const PATH_VIEWS = Object.freeze({
+  ...Object.fromEntries(Object.entries(VIEW_PATHS).map(([viewId, path]) => [path, viewId])),
+  "/chat": "start"
 });
 
 if ("serviceWorker" in navigator) {
@@ -65,7 +92,6 @@ function boot() {
   restorePanelWidths();
   hydrateComponents();
   bindNavigation();
-  bindChat();
   bindStartComposer();
   bindSearch();
   bindSidebarActions();
@@ -259,27 +285,31 @@ function goToView(viewId, { replace = false } = {}) {
   }
   $$(".nav-button").forEach((item) => item.classList.toggle("is-active", item.dataset.view === resolvedViewId));
   $$(".view").forEach((view) => view.classList.toggle("is-active", view.id === resolvedViewId));
-  const nextUrl = resolvedViewId === "start" ? `${location.pathname}${location.search}` : `${location.pathname}${location.search}#${resolvedViewId}`;
-  if (location.hash !== `#${resolvedViewId}` && !(resolvedViewId === "start" && !location.hash)) {
+  const nextUrl = `${VIEW_PATHS[resolvedViewId] || "/error"}${location.search}`;
+  if (location.pathname !== (VIEW_PATHS[resolvedViewId] || "/error") || location.hash) {
     const method = replace ? "replaceState" : "pushState";
     history[method]({ viewId: resolvedViewId }, "", nextUrl);
   }
+  updateCanonical(resolvedViewId);
   target.scrollIntoView({ block: "start" });
 }
 
 function restoreViewFromUrl({ replace = true } = {}) {
-  const viewId = location.hash.replace(/^#/, "") || "start";
+  const viewId = getViewFromUrl();
   const resolvedViewId = VIEW_ALIASES[viewId] || viewId;
   goToView($(`#${resolvedViewId}`) ? resolvedViewId : "error", { replace });
 }
 
-function bindChat() {
-  $("#form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const task = $("#message").value.trim();
-    $("#message").value = "";
-    await submitTask(task);
-  });
+function getViewFromUrl() {
+  if (location.hash) return location.hash.replace(/^#\/?/, "") || "home";
+  if (location.pathname === "/") return "start";
+  return PATH_VIEWS[location.pathname.replace(/\/$/, "")] || location.pathname.replace(/^\/+/, "");
+}
+
+function updateCanonical(viewId) {
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const path = VIEW_PATHS[viewId] || "/";
+  if (canonical) canonical.href = `https://smejj.com${path}`;
 }
 
 function bindStartComposer() {
@@ -327,7 +357,7 @@ function bindSearch() {
   });
 }
 
-async function submitTask(task, { target = "#log" } = {}) {
+async function submitTask(task, { target = "#startLog" } = {}) {
   if (!task) return;
   showTaskIndicator("active");
   addEntry(task, "user", target);

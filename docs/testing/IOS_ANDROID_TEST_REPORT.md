@@ -9,7 +9,7 @@ Tested with browser viewport simulation, not physical devices.
 ## iPhone / Safari-Sized Result
 
 - Viewport: 390 x 844.
-- Active deep link tested: `#profile`.
+- Active deep link tested: `/profile`.
 - Login controls visible.
 - Status chips visible.
 - No horizontal overflow.

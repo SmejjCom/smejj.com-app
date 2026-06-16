@@ -2,8 +2,7 @@
 
 ## Seiten
 
-- Startseite
-- Chat / KI-Assistent
+- Startseite mit zentralem Chat / KI-Assistent
 - Code-Assistent
 - Projekte
 - Dateien
@@ -23,6 +22,7 @@
 - klare Statusanzeigen
 - kein falsches Premium-KI-Versprechen
 - aktiver KI-Modus und Kostenstatus bleiben sichtbar
+- keine zweite Chat-Maske; Chat laeuft zentral ueber die Startseiten-Eingabe
 - GitHub und Cloudflare bleiben Free-only
 - IDrive e2 bleibt Hauptspeicher
 
@@ -33,4 +33,3 @@
 - `public/components.js`: zentrale UI-Komponenten
 - `public/styles.css`: zentrales Styling
 - `public/sw.js`: PWA-Shell-Cache
-

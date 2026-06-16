@@ -18,9 +18,9 @@ Status: geprueft, korrigiert, committed, zu GitHub hochgeladen, auf Cloudflare d
 ## Gefundene und korrigierte Fehler
 
 - Start-Chat war vorher fuer den Nutzer sichtbar wirkungslos, weil Server-KI bewusst deaktiviert war. Korrektur: Die App antwortet jetzt im kostenlosen smejj-Local-Modus, ohne Paid-Fallback.
-- `#storage` zeigte vorher nicht stabil auf die Speicheransicht. Korrektur: Alias auf `#storageView`.
+- `/storage` zeigt stabil auf die Speicheransicht.
 - Lokale Suchaenderungen waren noch nicht vollstaendig hochgeladen. Korrektur: Suchfluss committed, gepusht und deployed.
-- `#providers` fuehrte live auf die Fehlerseite. Korrektur: Alias `#providers` und `#provider` auf die AI-Modus-Ansicht `#ai`.
+- `/providers` und `/provider` werden als Alias auf die AI-Modus-Ansicht `/ai` behandelt.
 - Viele UI-Buttons hatten keinen expliziten `type`. Korrektur: nicht-submit Buttons sind jetzt `type="button"`, der Chat-Submit bleibt `type="submit"`.
 
 ## Gesicherte Aenderungen
@@ -52,11 +52,11 @@ Status: geprueft, korrigiert, committed, zu GitHub hochgeladen, auf Cloudflare d
 - `https://smejj.com/`: Startseite laedt.
 - Start-Chat: Nachricht `hi` erzeugt lokale Antwort im kostenlosen smejj-Local-Modus.
 - Alte Meldung `KI-Modus disabled. Server-KI ist nicht explizit freigegeben` ist nicht mehr aktiv.
-- `https://smejj.com/#search`: Suche antwortet im kostenlosen smejj-Local-Modus.
-- `https://smejj.com/#providers`: leitet korrekt auf `#ai`.
-- `https://smejj.com/#provider`: leitet korrekt auf `#ai`.
-- `https://smejj.com/#storage`: leitet korrekt auf `#storageView`.
-- `https://smejj.com/#projects`: Projekte-Ansicht laedt.
+- `https://smejj.com/search`: Suche antwortet im kostenlosen smejj-Local-Modus.
+- `https://smejj.com/providers`: leitet korrekt auf `/ai`.
+- `https://smejj.com/provider`: leitet korrekt auf `/ai`.
+- `https://smejj.com/storage`: Speicheransicht laedt.
+- `https://smejj.com/projects`: Projekte-Ansicht laedt.
 - Browser-Konsole: keine Fehler im geprueften Live-Flow.
 
 ## API- und Speicherpruefung

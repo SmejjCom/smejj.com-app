@@ -37,13 +37,13 @@ Datum: 2026-06-16
   - `/api/agent`
 - Live-Browser-Routen:
   - `/`
-  - `#projects`
-  - `#search`
+  - `/projects`
+  - `/search`
   - `#ai`
-  - `#storage`
+  - `/storage`
   - `#cost`
-  - `#settings`
-  - `#profile`
+  - `/settings`
+  - `/profile`
   - `#offline`
 - Sichtbarer Start-Chat.
 - Browser-Konsole.
