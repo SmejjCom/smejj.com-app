@@ -21,6 +21,7 @@ Status: geprueft, korrigiert, committed, zu GitHub hochgeladen, auf Cloudflare d
 - `#storage` zeigte vorher nicht stabil auf die Speicheransicht. Korrektur: Alias auf `#storageView`.
 - Lokale Suchaenderungen waren noch nicht vollstaendig hochgeladen. Korrektur: Suchfluss committed, gepusht und deployed.
 - `#providers` fuehrte live auf die Fehlerseite. Korrektur: Alias `#providers` und `#provider` auf die AI-Modus-Ansicht `#ai`.
+- Viele UI-Buttons hatten keinen expliziten `type`. Korrektur: nicht-submit Buttons sind jetzt `type="button"`, der Chat-Submit bleibt `type="submit"`.
 
 ## Gesicherte Aenderungen
 
@@ -31,6 +32,7 @@ Status: geprueft, korrigiert, committed, zu GitHub hochgeladen, auf Cloudflare d
 - `public/styles.css`: Suchausgabe fuer den sicheren Suchdialog.
 - `tests/security-abuse.test.mjs`: Chat bleibt ohne Paid-KI nutzbar.
 - `tests/frontend-structure.test.mjs`: Schutztests fuer Start-Chat, Storage-Deep-Link und Provider-Deep-Link.
+- `tests/frontend-structure.test.mjs`: Schutztest fuer explizite Button-Typen.
 - `scripts/testing/prompt5_e2e_smoke.mjs`: Smoke-Test erwartet sicheren lokalen Chat-Fallback.
 
 ## Upload und Deployment
@@ -38,9 +40,10 @@ Status: geprueft, korrigiert, committed, zu GitHub hochgeladen, auf Cloudflare d
 - GitHub Commit `8283fee`: `Keep chat usable in free local mode`.
 - GitHub Commit `a04827d`: `Add local search interface`.
 - GitHub Commit `826fa45`: `Fix provider route and search flow`.
+- GitHub Commit `44d19a7`: `Harden button behavior`.
 - GitHub Push: `main -> main`.
 - Cloudflare Worker: `smejj-com`.
-- Letzte Cloudflare Version ID: `9c455bbc-e1c5-4d1e-959b-cd9197ba54ba`.
+- Letzte Cloudflare Version ID: `cc905144-fa42-424a-85f3-82a3c14f3768`.
 - Letzter Upload: `/index.html`, `/app.js`, `/styles.css`.
 - Live-Dateien wurden per SHA256 gegen lokale Dateien verglichen: `index.html`, `app.js`, `styles.css`, `sw.js` stimmen ueberein.
 
