@@ -83,6 +83,11 @@ function bindCodeTools() {
     const result = await writeFile(true);
     writeOutput("#codeOutput", JSON.stringify(result, null, 2));
   });
+
+  $("#downloadEditor").addEventListener("click", () => {
+    const filename = ($("#filePath").value.trim() || "smejj-editor.txt").split(/[\\/]/).pop();
+    downloadText(filename, $("#editor").value);
+  });
 }
 
 function bindUploads() {
@@ -103,6 +108,12 @@ function bindUploads() {
     writeOutput("#fileOutput", "Uploads sind lokal gestaged. Dauerhafte Speicherung gehoert in IDrive e2 und bleibt serverseitig geschuetzt.");
   });
   $("#storageAgain").addEventListener("click", () => showJson("#fileOutput", CLIENT_ROUTES.api.storageStatus));
+  $("#downloadUploadManifest").addEventListener("click", () => {
+    downloadText("smejj-upload-manifest.json", JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      uploads: state.uploads.map(({ name, bytes, type }) => ({ name, bytes, type }))
+    }, null, 2));
+  });
 }
 
 function bindMemory() {
@@ -127,6 +138,14 @@ function bindMemory() {
       .map(([source, text]) => `${source}\n${snippet(text, query)}`);
     writeOutput("#memoryOutput", hits.length ? hits.join("\n\n") : "Keine lokalen Treffer.");
   });
+
+  $("#downloadMemory").addEventListener("click", () => {
+    downloadText("smejj-memory-rag.json", JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      memory: $("#memoryText").value,
+      rag: $("#ragText").value
+    }, null, 2));
+  });
 }
 
 function bindTools() {
@@ -144,6 +163,15 @@ function bindTools() {
 }
 
 function bindProfile() {
+  $("#registerLocal").addEventListener("click", () => {
+    writeOutput("#profileOutput", "Registrierung lokal vorbereitet. Serverseitige Registrierung bleibt gesperrt, bis Auth, Rate-Limit und IDrive-e2-Datenlayout sicher implementiert sind.");
+  });
+
+  $("#loginLocal").addEventListener("click", () => {
+    const profile = loadJson(STORAGE_KEYS.profile, {});
+    writeOutput("#profileOutput", profile.email ? `Lokaler Login-Test aktiv fuer ${profile.email}.` : "Kein lokales Profil gespeichert.");
+  });
+
   $("#saveProfile").addEventListener("click", () => {
     state.profile = {
       name: $("#profileName").value.trim(),
@@ -289,4 +317,16 @@ function snippet(text, query) {
   const start = Math.max(0, index - 80);
   const end = Math.min(text.length, index + query.length + 160);
   return text.slice(start, end);
+}
+
+function downloadText(filename, text) {
+  const blob = new Blob([text || ""], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }

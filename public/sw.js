@@ -1,5 +1,15 @@
-const CACHE_NAME = "smejj-shell-v2";
-const SHELL = ["/", "/assets/styles.css", "/assets/config.js", "/assets/app.js", "/manifest.webmanifest", "/robots.txt", "/llms.txt"];
+const CACHE_NAME = "smejj-shell-v3";
+const SHELL = [
+  "/",
+  "/assets/styles.css",
+  "/assets/config.js",
+  "/assets/app.js",
+  "/manifest.webmanifest",
+  "/icons/icon.svg",
+  "/icons/maskable.svg",
+  "/robots.txt",
+  "/llms.txt"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)));

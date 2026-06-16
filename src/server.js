@@ -268,6 +268,7 @@ function run(bin, args, cwd, timeoutMs) {
 }
 
 function isPublicAsset(pathname) {
+  if (pathname.startsWith("/icons/")) return true;
   return [ROUTES.manifest, ROUTES.serviceWorker, ROUTES.robots, ROUTES.llms, ROUTES.sitemap].includes(pathname);
 }
 
