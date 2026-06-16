@@ -83,6 +83,23 @@ test("missing auth/origin blocks cross-site mutation", async () => {
   assert.equal(body.error, "Origin not allowed");
 });
 
+test("chat stays usable in free-safe local mode without paid AI", async () => {
+  const response = await worker.fetch(new Request("https://smejj.com/api/agent", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "https://smejj.com"
+    },
+    body: JSON.stringify({ task: "hi" })
+  }), {});
+  const text = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") || "", /text\/event-stream/);
+  assert.match(text, /kostenlosen smejj-Local-Modus/);
+  assert.match(text, /Deine Nachricht/);
+  assert.doesNotMatch(text, /KI-Modus disabled\. Server-KI/);
+});
+
 test("service worker does not offline-cache API fallback", () => {
   const sw = fs.readFileSync("public/sw.js", "utf8");
   assert.match(sw, /pathname\.startsWith\("\/api\/"\)/);

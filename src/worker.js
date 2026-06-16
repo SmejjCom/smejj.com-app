@@ -371,18 +371,7 @@ function parseKeyCount(xml) {
 async function streamLLM(env, messages) {
   const apiKey = env.SMEJJ_LLM_API_KEY || "";
   if (env.SMEJJ_SERVER_AI_ENABLED !== "true") {
-    const text = [
-      "data: {\"choices\":[{\"delta\":{\"content\":\"KI-Modus disabled. Server-KI ist nicht explizit freigegeben; es gibt keinen Paid-Fallback.\"}}]}",
-      "data: [DONE]",
-      ""
-    ].join("\n\n");
-    return new Response(text, {
-      headers: {
-        ...SECURITY_HEADERS,
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform"
-      }
-    });
+    return localAssistantStream(messages);
   }
   const remaining = Number(env.SMEJJ_SERVER_AI_REMAINING || 0);
   if (!Number.isFinite(remaining) || remaining <= 0) {
@@ -448,6 +437,35 @@ async function streamLLM(env, messages) {
       "Cache-Control": "no-cache, no-transform"
     }
   });
+}
+
+function localAssistantStream(messages) {
+  const prompt = latestUserMessage(messages);
+  const reply = [
+    "Ich bin im kostenlosen smejj-Local-Modus aktiv.",
+    "Server-KI ist bewusst deaktiviert, damit keine versteckten Kosten entstehen.",
+    prompt ? `Deine Nachricht: \"${prompt}\"` : "",
+    "Ich kann dir hier trotzdem helfen: Projekt strukturieren, naechste Schritte planen, Dateien/Storage/AI-Modus erklaeren oder den BYOK-Modus vorbereiten.",
+    "Fuer echte Modellantworten muss spaeter local-browser oder BYOK bewusst aktiviert werden."
+  ].filter(Boolean).join("\n\n");
+  const text = [
+    `data: ${JSON.stringify({ choices: [{ delta: { content: reply } }] })}`,
+    "data: [DONE]",
+    ""
+  ].join("\n\n");
+  return new Response(text, {
+    headers: {
+      ...SECURITY_HEADERS,
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform"
+    }
+  });
+}
+
+function latestUserMessage(messages) {
+  const userMessages = Array.isArray(messages) ? messages.filter((message) => message?.role === "user") : [];
+  const content = String(userMessages.at(-1)?.content || "").trim();
+  return content.replace(/\s+/g, " ").slice(0, 180);
 }
 
 async function readJson(request) {

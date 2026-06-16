@@ -273,9 +273,7 @@ async function handleStorageStatus(res) {
 
 async function streamLLM(res, messages) {
   if (process.env.SMEJJ_SERVER_AI_ENABLED !== "true") {
-    return json(res, 400, {
-      error: "AI mode disabled. Server AI requires explicit enablement and a hard limit."
-    });
+    return localAssistantStream(res, messages);
   }
   const remaining = Number(process.env.SMEJJ_SERVER_AI_REMAINING || 0);
   if (!Number.isFinite(remaining) || remaining <= 0) {
@@ -316,6 +314,32 @@ async function streamLLM(res, messages) {
 
   for await (const chunk of upstream.body) res.write(chunk);
   res.end();
+}
+
+function localAssistantStream(res, messages) {
+  const prompt = latestUserMessage(messages);
+  const reply = [
+    "Ich bin im kostenlosen smejj-Local-Modus aktiv.",
+    "Server-KI ist bewusst deaktiviert, damit keine versteckten Kosten entstehen.",
+    prompt ? `Deine Nachricht: \"${prompt}\"` : "",
+    "Ich kann dir hier trotzdem helfen: Projekt strukturieren, naechste Schritte planen, Dateien/Storage/AI-Modus erklaeren oder den BYOK-Modus vorbereiten.",
+    "Fuer echte Modellantworten muss spaeter local-browser oder BYOK bewusst aktiviert werden."
+  ].filter(Boolean).join("\n\n");
+  res.writeHead(200, {
+    ...SECURITY_HEADERS,
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive"
+  });
+  res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: reply } }] })}\n\n`);
+  res.write("data: [DONE]\n\n");
+  res.end();
+}
+
+function latestUserMessage(messages) {
+  const userMessages = Array.isArray(messages) ? messages.filter((message) => message?.role === "user") : [];
+  const content = String(userMessages.at(-1)?.content || "").trim();
+  return content.replace(/\s+/g, " ").slice(0, 180);
 }
 
 function safeResolve(inputPath) {

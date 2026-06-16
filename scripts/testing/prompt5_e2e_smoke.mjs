@@ -174,9 +174,15 @@ await check("write preview does not mutate", async () => {
 });
 
 await check("chat fallback", async () => {
-  const { response, text } = await get("/api/agent");
-  assert(response.status === 404 || text.includes("Not found"), "unexpected GET agent response");
-  return "fail-closed";
+  const { response, text } = await json("/api/agent", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ task: "hi" })
+  });
+  assert(response.ok, `status ${response.status}`);
+  assert(text.includes("kostenlosen smejj-Local-Modus"), "missing local chat fallback");
+  assert(!text.includes("KI-Modus disabled. Server-KI"), "chat shows dead disabled response");
+  return "local-fallback";
 });
 
 const failed = checks.filter((item) => !item.ok);
