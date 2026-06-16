@@ -136,7 +136,16 @@
             <p class="eyebrow">Suche</p>
             <h2>Suche</h2>
           </header>
-          <div class="output">Suche bereit.</div>
+          <form id="searchForm" class="search-shell" role="search">
+            <label class="search-box" for="searchQuery">
+              <span>Suchfeld</span>
+              <input id="searchQuery" type="search" placeholder="Memory, Projekte, Dateien oder Bereiche suchen" autocomplete="off">
+            </label>
+            <button id="searchSubmit" type="submit">Suchen</button>
+          </form>
+          <div id="searchResults" class="search-results" aria-live="polite">
+            <div class="search-empty">Gib einen Suchbegriff ein.</div>
+          </div>
         </section>
 
         <section id="websites" class="view" aria-label="Websites">

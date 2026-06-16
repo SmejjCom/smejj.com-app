@@ -65,6 +65,7 @@ function boot() {
   bindNavigation();
   bindChat();
   bindStartComposer();
+  bindSearch();
   bindSidebarActions();
   bindCodeTools();
   bindLocalWorkspace();
@@ -308,6 +309,106 @@ function bindStartComposer() {
     submit();
   });
   resizeInput();
+}
+
+function bindSearch() {
+  const form = $("#searchForm");
+  const input = $("#searchQuery");
+  if (!form || !input) return;
+  const run = () => renderSearchResults(input.value);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    run();
+  });
+  input.addEventListener("input", run);
+}
+
+function renderSearchResults(rawQuery) {
+  const results = $("#searchResults");
+  if (!results) return;
+  const query = rawQuery.trim().toLowerCase();
+  results.replaceChildren();
+  if (!query) {
+    results.append(renderSearchEmpty("Gib einen Suchbegriff ein."));
+    return;
+  }
+
+  const hits = collectSearchItems()
+    .filter((item) => item.haystack.includes(query))
+    .slice(0, 8);
+  if (!hits.length) {
+    results.append(renderSearchEmpty("Keine lokalen Treffer."));
+    return;
+  }
+  for (const hit of hits) {
+    const card = document.createElement("article");
+    card.className = "search-result";
+    const type = document.createElement("span");
+    type.textContent = hit.type;
+    const title = document.createElement("strong");
+    title.textContent = hit.title;
+    const preview = document.createElement("p");
+    preview.textContent = snippet(hit.text, query);
+    card.append(type, title, preview);
+    if (hit.viewId) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Oeffnen";
+      button.addEventListener("click", () => goToView(hit.viewId));
+      card.append(button);
+    }
+    results.append(card);
+  }
+}
+
+function renderSearchEmpty(text) {
+  const empty = document.createElement("div");
+  empty.className = "search-empty";
+  empty.textContent = text;
+  return empty;
+}
+
+function collectSearchItems() {
+  const viewItems = $$(".view")
+    .filter((view) => view.id && !["search", "start"].includes(view.id))
+    .map((view) => {
+      const heading = view.querySelector("h2")?.textContent?.trim() || view.getAttribute("aria-label") || view.id;
+      const text = view.textContent.replace(/\s+/g, " ").trim();
+      return {
+        type: "Bereich",
+        title: heading,
+        text,
+        haystack: `${heading} ${text}`.toLowerCase(),
+        viewId: view.id
+      };
+    });
+  const localItems = [
+    {
+      type: "Memory",
+      title: "Lokale Notizen",
+      text: $("#memoryText")?.value || state.memory || "",
+      viewId: "memory"
+    },
+    {
+      type: "RAG",
+      title: "Lokale Quellen",
+      text: $("#ragText")?.value || state.rag || "",
+      viewId: "memory"
+    },
+    ...state.uploads.map((file) => ({
+      type: "Upload",
+      title: file.name,
+      text: file.preview || "",
+      viewId: "files"
+    }))
+  ].filter((item) => item.text.trim());
+  return [
+    ...localItems.map((item) => ({
+      ...item,
+      haystack: `${item.title} ${item.text}`.toLowerCase()
+    })),
+    ...viewItems
+  ];
 }
 
 async function submitTask(task, { target = "#log" } = {}) {
