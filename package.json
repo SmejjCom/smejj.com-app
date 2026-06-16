@@ -14,6 +14,8 @@
     "model:download": "sh scripts/model-management/download_kimi_model.sh",
     "model:verify": "sh scripts/model-management/verify_model_files.sh",
     "model:upload": "sh scripts/model-management/upload_to_idrive_e2.sh",
+    "release:guard": "node scripts/release/free_tier_release_guard.mjs",
+    "release:preflight": "npm run check && npm run release:guard && npm run idrive:check && npm run idrive:artifact && npx wrangler deploy --dry-run --outdir /tmp/smejj-release-preflight",
     "test": "npm run check"
   },
   "engines": {

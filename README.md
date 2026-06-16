@@ -101,6 +101,7 @@ Details:
 docs/architecture/NO_BIG_SERVER_KIMI_STRATEGY.md
 docs/architecture/FREE_TIER_IDRIVE_GUARDRAILS.md
 docs/architecture/CONNECTION_AUDIT_2026-06-16.md
+docs/architecture/RELEASE_PROTECTION.md
 ```
 
 Der lokale IDrive-Status ist ueber die App und per API pruefbar:
@@ -114,4 +115,10 @@ Cloudflare in IDrive e2 archiviert:
 
 ```bash
 npm run idrive:artifact
+```
+
+Vor jedem Release ausfuehren:
+
+```bash
+npm run release:preflight
 ```
