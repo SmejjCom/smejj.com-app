@@ -51,7 +51,11 @@ export default {
     }
 
     if (request.method === "POST" && url.pathname === ROUTES.api.authGoogle) {
-      return googleAuth(request, env);
+      try {
+        return await googleAuth(request, env);
+      } catch (error) {
+        return json(400, { error: error.message || "Google Login fehlgeschlagen." });
+      }
     }
 
     if (request.method === "POST" && url.pathname === ROUTES.api.authLogout) {

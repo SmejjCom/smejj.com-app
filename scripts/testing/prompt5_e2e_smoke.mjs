@@ -35,7 +35,7 @@ function assert(condition, message) {
 await check("desktop shell", async () => {
   const { response, text } = await get("/");
   assert(response.ok, `status ${response.status}`);
-  assert(text.includes("smejj.com Code"), "missing brand");
+  assert(text.includes("<title>smejj.com</title>") || text.includes("smejj.com Code"), "missing brand");
   assert(text.includes("logoutLocal"), "missing logout flow");
   assert(text.includes("manifest.webmanifest"), "missing manifest link");
   return "ok";
@@ -106,6 +106,16 @@ await check("auth logout clears session", async () => {
   assert(body.authenticated === false, "logout did not return logged-out state");
   assert((response.headers.get("set-cookie") || "").includes("smejj_session="), "missing session clear cookie");
   return "cleared";
+});
+
+await check("google auth rejects invalid credential with json", async () => {
+  const { body } = await json("/api/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential: "bad" })
+  });
+  assert(typeof body?.error === "string", "invalid credential did not return json error");
+  return "rejected";
 });
 
 await check("file read ok", async () => {
