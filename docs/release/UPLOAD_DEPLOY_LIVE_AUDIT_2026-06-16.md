@@ -40,7 +40,7 @@ Status: geprueft, korrigiert, committed, zu GitHub hochgeladen, auf Cloudflare d
 - GitHub Commit `826fa45`: `Fix provider route and search flow`.
 - GitHub Push: `main -> main`.
 - Cloudflare Worker: `smejj-com`.
-- Letzte Cloudflare Version ID: `e5daedb4-f4f7-4e28-b088-897c8f52f28a`.
+- Letzte Cloudflare Version ID: `9c455bbc-e1c5-4d1e-959b-cd9197ba54ba`.
 - Letzter Upload: `/index.html`, `/app.js`, `/styles.css`.
 - Live-Dateien wurden per SHA256 gegen lokale Dateien verglichen: `index.html`, `app.js`, `styles.css`, `sw.js` stimmen ueberein.
 
