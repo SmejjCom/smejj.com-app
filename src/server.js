@@ -4,10 +4,12 @@ import { createReadStream } from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import crypto from "node:crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
 
+loadDotEnv(path.resolve(process.cwd(), ".env.local"));
 loadDotEnv(path.resolve(process.cwd(), ".env"));
 
 const config = {
@@ -37,6 +39,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && url.pathname === "/api/terminal/run") return handleTerminal(req, res);
     if (req.method === "GET" && url.pathname === "/api/git/status") return handleGitStatus(res);
     if (req.method === "POST" && url.pathname === "/api/git/commit") return handleGitCommit(req, res);
+    if (req.method === "GET" && url.pathname === "/api/storage/status") return handleStorageStatus(res);
     json(res, 404, { error: "Not found" });
   } catch (error) {
     json(res, 500, { error: error.message || "Internal error" });
@@ -129,6 +132,50 @@ async function handleGitCommit(req, res) {
   if (!message) return json(res, 400, { error: "Missing commit message" });
   const result = await run("git", ["commit", "-am", message], config.projectRoot, 30_000);
   json(res, 200, result);
+}
+
+async function handleStorageStatus(res) {
+  const endpoint = process.env.IDRIVE_E2_ENDPOINT;
+  const accessKey = process.env.IDRIVE_E2_ACCESS_KEY;
+  const secretKey = process.env.IDRIVE_E2_SECRET_KEY;
+  const bucket = process.env.IDRIVE_E2_BUCKET;
+  const region = process.env.IDRIVE_E2_REGION || "us-west-2";
+  const prefix = process.env.MODEL_S3_PREFIX || "model-files/kimi-k2-7";
+  if (!endpoint || !accessKey || !secretKey || !bucket) {
+    return json(res, 200, {
+      configured: false,
+      ok: false,
+      message: "IDrive e2 is not configured in local environment."
+    });
+  }
+
+  const normalizedPrefix = prefix.endsWith("/") ? prefix : `${prefix}/`;
+  const { response, body } = await signedS3List({
+    endpoint,
+    region,
+    accessKey,
+    secretKey,
+    bucket,
+    prefix: normalizedPrefix
+  });
+  if (!response.ok) {
+    return json(res, 502, {
+      configured: true,
+      ok: false,
+      bucket,
+      prefix: normalizedPrefix,
+      status: response.status
+    });
+  }
+  const keys = parseS3Keys(body);
+  json(res, 200, {
+    configured: true,
+    ok: true,
+    bucket,
+    prefix: normalizedPrefix,
+    objectCount: keys.length,
+    keys
+  });
 }
 
 async function streamLLM(res, messages) {
@@ -224,6 +271,74 @@ function readJson(req) {
 function json(res, status, payload) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload, null, 2));
+}
+
+async function signedS3List({ endpoint, region, accessKey, secretKey, bucket, prefix }) {
+  const endpointUrl = new URL(endpoint);
+  const host = endpointUrl.host;
+  const method = "GET";
+  const canonicalUri = `/${bucket}`;
+  const queryPairs = [
+    ["list-type", "2"],
+    ["max-keys", "1000"],
+    ["prefix", prefix]
+  ];
+  const canonicalQuery = queryPairs
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .sort()
+    .join("&");
+  const { amzDate, dateStamp } = getS3Dates(new Date());
+  const payloadHash = sha256("");
+  const canonicalHeaders = [
+    `host:${host}`,
+    `x-amz-content-sha256:${payloadHash}`,
+    `x-amz-date:${amzDate}`,
+    ""
+  ].join("\n");
+  const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
+  const canonicalRequest = [
+    method,
+    canonicalUri,
+    canonicalQuery,
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash
+  ].join("\n");
+  const algorithm = "AWS4-HMAC-SHA256";
+  const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
+  const stringToSign = [algorithm, amzDate, credentialScope, sha256(canonicalRequest)].join("\n");
+  const kDate = hmac(`AWS4${secretKey}`, dateStamp);
+  const kRegion = hmac(kDate, region);
+  const kService = hmac(kRegion, "s3");
+  const kSigning = hmac(kService, "aws4_request");
+  const signature = hmac(kSigning, stringToSign, "hex");
+  const authorization = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  const url = `${endpoint.replace(/\/$/, "")}${canonicalUri}?${canonicalQuery}`;
+  const response = await fetch(url, {
+    headers: {
+      Authorization: authorization,
+      "x-amz-content-sha256": payloadHash,
+      "x-amz-date": amzDate
+    }
+  });
+  return { response, body: await response.text() };
+}
+
+function hmac(key, data, encoding) {
+  return crypto.createHmac("sha256", key).update(data, "utf8").digest(encoding);
+}
+
+function sha256(data, encoding = "hex") {
+  return crypto.createHash("sha256").update(data, "utf8").digest(encoding);
+}
+
+function getS3Dates(date) {
+  const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, "");
+  return { amzDate, dateStamp: amzDate.slice(0, 8) };
+}
+
+function parseS3Keys(xml) {
+  return Array.from(xml.matchAll(/<Key>([^<]+)<\/Key>/g), (match) => match[1]);
 }
 
 function loadDotEnv(file) {

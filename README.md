@@ -87,3 +87,24 @@ Repo gelangen.
 - Sicherheit: Secrets nur lokal oder in erlaubten Secret-Stores, niemals im Repo.
 - Skalierung: GitHub nur fuer Code, Cloudflare Free nur fuer Edge/Web-Schicht, IDrive e2 fuer zentrale Dateiablage.
 - Kosten: Keine bezahlten GitHub- oder Cloudflare-Dienste einplanen.
+
+## No-Big-Server Strategie
+
+IDrive e2 ist der Modell-Vault und Hauptspeicher, aber kein Inferenz-Rechner.
+Kimi K2.7 kann dort sicher archiviert werden; Antworten erzeugen muss ein
+separater, kostenkontrollierter OpenAI-kompatibler Endpunkt, ein BYOK-Anschluss
+oder ein kleines lokales/browserseitiges Modell fuer Basisfunktionen.
+
+Details:
+
+```text
+docs/architecture/NO_BIG_SERVER_KIMI_STRATEGY.md
+docs/architecture/FREE_TIER_IDRIVE_GUARDRAILS.md
+docs/architecture/CONNECTION_AUDIT_2026-06-16.md
+```
+
+Der lokale IDrive-Status ist ueber die App und per API pruefbar:
+
+```text
+GET /api/storage/status
+```
