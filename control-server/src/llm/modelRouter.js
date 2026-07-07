@@ -2,50 +2,107 @@
 // fuer alle Backends. Prioritaetskette pro Aufgabenprofil, Fallback bei Fehlern,
 // fail-closed ohne Konfiguration. Keine Keys im Code — alles aus der Umgebung.
 //
-// Backends (in Prioritaetsreihenfolge, nur wenn konfiguriert):
-//   1. salad      — eigener GPU-Endpoint (SaladCloud Container Gateway, z. B. Qwen3 8B/TGI)
-//   2. openrouter — Multi-Modell-Router (GPT, Claude, Gemini, DeepSeek, Kimi, GLM, ...)
-//   3. custom     — generischer OpenAI-kompatibler Endpoint (SMEJJ_LLM_* / lokaler GLM-Server)
+// Backends (Reihenfolge per SMEJJ_LLM_PROVIDER_ORDER steuerbar, Standard unten):
+//   salad      — eigener GPU-Endpoint (SaladCloud Container Gateway, z. B. Qwen3/TGI)
+//   openrouter — Multi-Modell-Router (GPT, Claude, Gemini, DeepSeek, Kimi, GLM, ...)
+//   Katalog    — direkte OpenAI-kompatible Anbieter (nur aktiv, wenn Key gesetzt):
+//                groq, cerebras, gemini, deepseek, mistral, zhipu, qwen, moonshot,
+//                together, fireworks, sambanova, nvidia, openai
+//   custom     — generischer OpenAI-kompatibler Endpoint (SMEJJ_LLM_* / lokaler GLM-Server)
 //
-// Profile: coding | reasoning | fast | default — steuern nur die Modellwahl je Backend.
-// GLM-5.2 bleibt laut Konzept das Qualitaetsmodell; dieser Router macht smejj.com
-// unabhaengig von einem einzelnen Anbieter, ersetzt aber nicht die GLM-Strategie.
+// Aktivierung je Anbieter: SMEJJ_LLM_<NAME>_API_KEY setzen. Optional uebersteuerbar:
+//   SMEJJ_LLM_<NAME>_BASE_URL, SMEJJ_LLM_<NAME>_MODEL, SMEJJ_LLM_<NAME>_MODEL_<PROFIL>
+// Anthropic Claude ist nicht OpenAI-kompatibel und wird ueber OpenRouter genutzt.
+//
+// Profile: coding | reasoning | fast | web | default — steuern nur die Modellwahl.
+// GLM bleibt laut Konzept das Qualitaetsmodell (zhipu-Provider, Default glm-5.2);
+// dieser Router macht smejj.com unabhaengig von einem einzelnen Anbieter.
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
-export const ROUTING_PROFILES = Object.freeze(["coding", "reasoning", "fast", "default"]);
+export const ROUTING_PROFILES = Object.freeze(["coding", "reasoning", "fast", "web", "default"]);
 
 // Konservative, jederzeit per Env uebersteuerbare Modell-Defaults fuer OpenRouter.
 const OPENROUTER_DEFAULT_MODELS = Object.freeze({
   coding: "deepseek/deepseek-chat",
   reasoning: "deepseek/deepseek-reasoner",
   fast: "google/gemini-2.5-flash",
+  web: "google/gemini-2.5-flash",
   default: "deepseek/deepseek-chat"
 });
+
+// Direkte OpenAI-kompatible Anbieter. "models" sind Defaults pro Profil und per Env
+// uebersteuerbar; fehlt ein Profil, greift "default". Free-Tier-freundliche Wahl,
+// keine automatischen Upgrades — ohne gesetzten Key ist ein Anbieter INAKTIV.
+export const PROVIDER_CATALOG = Object.freeze({
+  groq: {
+    baseUrl: "https://api.groq.com/openai/v1",
+    models: { default: "llama-3.3-70b-versatile", fast: "llama-3.1-8b-instant", web: "llama-3.3-70b-versatile" }
+  },
+  cerebras: {
+    baseUrl: "https://api.cerebras.ai/v1",
+    models: { default: "llama-3.3-70b" }
+  },
+  gemini: {
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+    models: { default: "gemini-2.5-flash", reasoning: "gemini-2.5-pro" }
+  },
+  deepseek: {
+    baseUrl: "https://api.deepseek.com/v1",
+    models: { default: "deepseek-chat", reasoning: "deepseek-reasoner", coding: "deepseek-chat" }
+  },
+  mistral: {
+    baseUrl: "https://api.mistral.ai/v1",
+    models: { default: "mistral-small-latest", coding: "codestral-latest" }
+  },
+  zhipu: {
+    baseUrl: "https://open.bigmodel.cn/api/paas/v4",
+    models: { default: "glm-5.2", coding: "glm-5.2", reasoning: "glm-5.2" }
+  },
+  qwen: {
+    baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    models: { default: "qwen-plus", coding: "qwen3-coder-plus" }
+  },
+  moonshot: {
+    baseUrl: "https://api.moonshot.ai/v1",
+    models: { default: "kimi-k2-turbo-preview" }
+  },
+  together: {
+    baseUrl: "https://api.together.xyz/v1",
+    models: { default: "meta-llama/Llama-3.3-70B-Instruct-Turbo" }
+  },
+  fireworks: {
+    baseUrl: "https://api.fireworks.ai/inference/v1",
+    models: { default: "accounts/fireworks/models/llama-v3p3-70b-instruct" }
+  },
+  sambanova: {
+    baseUrl: "https://api.sambanova.ai/v1",
+    models: { default: "Meta-Llama-3.3-70B-Instruct" }
+  },
+  nvidia: {
+    baseUrl: "https://integrate.api.nvidia.com/v1",
+    models: { default: "meta/llama-3.3-70b-instruct" }
+  },
+  openai: {
+    baseUrl: "https://api.openai.com/v1",
+    models: { default: "gpt-4o-mini", reasoning: "o4-mini", coding: "gpt-4o-mini" }
+  }
+});
+
+const DEFAULT_PROVIDER_ORDER = Object.freeze([
+  "salad", "openrouter",
+  "groq", "cerebras", "gemini", "deepseek", "mistral", "zhipu", "qwen",
+  "moonshot", "together", "fireworks", "sambanova", "nvidia", "openai",
+  "custom"
+]);
 
 function trimUrl(value) {
   return String(value || "").trim().replace(/\/$/, "");
 }
 
-function secretList(primary, listValue) {
-  const values = [
-    String(primary || "").trim(),
-    ...String(listValue || "").split(/[\n,]+/).map((value) => value.trim())
-  ].filter(Boolean);
-  return [...new Set(values)];
-}
-
-function withKeyPool(backend, keys) {
-  return keys.map((apiKey, index) => ({
-    ...backend,
-    apiKey,
-    keyIndex: index + 1
-  }));
-}
-
 export function saladBackendFromEnv(env = process.env) {
   const baseUrl = trimUrl(env.SMEJJ_LLM_SALAD_BASE_URL);
-  const [apiKey] = secretList(env.SMEJJ_LLM_SALAD_API_KEY, env.SMEJJ_LLM_SALAD_API_KEYS);
+  const apiKey = String(env.SMEJJ_LLM_SALAD_API_KEY || "").trim();
   if (!baseUrl || !apiKey) return null;
   return {
     name: "salad",
@@ -56,20 +113,8 @@ export function saladBackendFromEnv(env = process.env) {
   };
 }
 
-export function saladBackendsFromEnv(env = process.env) {
-  const baseUrl = trimUrl(env.SMEJJ_LLM_SALAD_BASE_URL);
-  const keys = secretList(env.SMEJJ_LLM_SALAD_API_KEY, env.SMEJJ_LLM_SALAD_API_KEYS);
-  if (!baseUrl || keys.length === 0) return [];
-  return withKeyPool({
-    name: "salad",
-    baseUrl,
-    apiKeyHeader: "Salad-Api-Key",
-    model: String(env.SMEJJ_LLM_SALAD_MODEL || "tgi").trim()
-  }, keys);
-}
-
 export function openrouterBackendFromEnv(env = process.env, profile = "default") {
-  const [apiKey] = secretList(env.SMEJJ_LLM_OPENROUTER_API_KEY, env.SMEJJ_LLM_OPENROUTER_API_KEYS);
+  const apiKey = String(env.SMEJJ_LLM_OPENROUTER_API_KEY || "").trim();
   if (!apiKey) return null;
   const overrideKey = `SMEJJ_LLM_OPENROUTER_MODEL_${profile.toUpperCase()}`;
   return {
@@ -82,49 +127,55 @@ export function openrouterBackendFromEnv(env = process.env, profile = "default")
   };
 }
 
-export function openrouterBackendsFromEnv(env = process.env, profile = "default") {
-  const keys = secretList(env.SMEJJ_LLM_OPENROUTER_API_KEY, env.SMEJJ_LLM_OPENROUTER_API_KEYS);
-  if (keys.length === 0) return [];
-  const overrideKey = `SMEJJ_LLM_OPENROUTER_MODEL_${profile.toUpperCase()}`;
-  return withKeyPool({
-    name: "openrouter",
-    baseUrl: trimUrl(env.SMEJJ_LLM_OPENROUTER_BASE_URL) || OPENROUTER_BASE_URL,
+/** Katalog-Anbieter aus der Env bauen — null, wenn kein Key gesetzt (fail-closed). */
+export function providerBackendFromEnv(name, env = process.env, profile = "default") {
+  const entry = PROVIDER_CATALOG[name];
+  if (!entry) return null;
+  const upper = name.toUpperCase();
+  const apiKey = String(env[`SMEJJ_LLM_${upper}_API_KEY`] || "").trim();
+  if (!apiKey) return null;
+  const overrideProfile = env[`SMEJJ_LLM_${upper}_MODEL_${profile.toUpperCase()}`];
+  const overrideDefault = env[`SMEJJ_LLM_${upper}_MODEL`];
+  const model = String(
+    overrideProfile || overrideDefault || entry.models[profile] || entry.models.default
+  ).trim();
+  return {
+    name,
+    baseUrl: trimUrl(env[`SMEJJ_LLM_${upper}_BASE_URL`]) || entry.baseUrl,
+    apiKey,
     apiKeyHeader: "Authorization",
-    model: String(env[overrideKey] || OPENROUTER_DEFAULT_MODELS[profile] || OPENROUTER_DEFAULT_MODELS.default).trim(),
-    extraHeaders: { "HTTP-Referer": "https://smejj.com", "X-Title": "smejj.com" }
-  }, keys);
+    model
+  };
 }
 
 export function customBackendFromEnv(env = process.env) {
-  const baseUrl = trimUrl(env.SMEJJ_LLM_BASE_URL || env.OPENAI_COMPATIBLE_BASE_URL || env.OPENAI_BASE_URL);
-  const [apiKey] = secretList(
-    env.SMEJJ_LLM_API_KEY || env.OPENAI_COMPATIBLE_API_KEY || env.OPENAI_API_KEY,
-    env.SMEJJ_LLM_API_KEYS || env.OPENAI_COMPATIBLE_API_KEYS || env.OPENAI_API_KEYS
-  );
+  const baseUrl = trimUrl(env.SMEJJ_LLM_BASE_URL || env.OPENAI_COMPATIBLE_BASE_URL || env.BRIRT_LLM_BASE_URL);
+  const apiKey = String(env.SMEJJ_LLM_API_KEY || env.OPENAI_COMPATIBLE_API_KEY || env.OPENAI_API_KEY || "").trim();
   const model = String(env.SMEJJ_LLM_MODEL || env.OPENAI_COMPATIBLE_MODEL || env.OPENAI_MODEL || "").trim();
   if (!baseUrl || baseUrl === "disabled" || !model || model === "disabled" || !apiKey) return null;
   return { name: "custom", baseUrl, apiKey, apiKeyHeader: "Authorization", model };
 }
 
-export function customBackendsFromEnv(env = process.env) {
-  const baseUrl = trimUrl(env.SMEJJ_LLM_BASE_URL || env.OPENAI_COMPATIBLE_BASE_URL || env.OPENAI_BASE_URL);
-  const keys = secretList(
-    env.SMEJJ_LLM_API_KEY || env.OPENAI_COMPATIBLE_API_KEY || env.OPENAI_API_KEY,
-    env.SMEJJ_LLM_API_KEYS || env.OPENAI_COMPATIBLE_API_KEYS || env.OPENAI_API_KEYS
-  );
-  const model = String(env.SMEJJ_LLM_MODEL || env.OPENAI_COMPATIBLE_MODEL || env.OPENAI_MODEL || "").trim();
-  if (!baseUrl || baseUrl === "disabled" || !model || model === "disabled" || keys.length === 0) return [];
-  return withKeyPool({ name: "custom", baseUrl, apiKeyHeader: "Authorization", model }, keys);
+/** Anbieter-Reihenfolge aus der Env (Kommaliste) oder Standard. Unbekannte Namen werden ignoriert. */
+export function providerOrderFromEnv(env = process.env) {
+  const raw = String(env.SMEJJ_LLM_PROVIDER_ORDER || "").trim();
+  if (!raw) return DEFAULT_PROVIDER_ORDER;
+  const known = new Set(["salad", "openrouter", "custom", ...Object.keys(PROVIDER_CATALOG)]);
+  const order = raw.split(",").map((part) => part.trim().toLowerCase()).filter((part) => known.has(part));
+  return order.length > 0 ? order : DEFAULT_PROVIDER_ORDER;
 }
 
 /** Liefert die Fallback-Kette fuer ein Profil — leer, wenn nichts konfiguriert (fail-closed). */
 export function resolveChain(profile = "default", env = process.env) {
   const safeProfile = ROUTING_PROFILES.includes(profile) ? profile : "default";
-  return [
-    ...saladBackendsFromEnv(env),
-    ...openrouterBackendsFromEnv(env, safeProfile),
-    ...customBackendsFromEnv(env)
-  ];
+  const chain = [];
+  for (const name of providerOrderFromEnv(env)) {
+    if (name === "salad") chain.push(saladBackendFromEnv(env));
+    else if (name === "openrouter") chain.push(openrouterBackendFromEnv(env, safeProfile));
+    else if (name === "custom") chain.push(customBackendFromEnv(env));
+    else chain.push(providerBackendFromEnv(name, env, safeProfile));
+  }
+  return chain.filter(Boolean);
 }
 
 // Ein Aufgabentext wird grob einem Profil zugeordnet (leichtgewichtig, deterministisch).
@@ -144,16 +195,22 @@ function buildHeaders(backend) {
 
 /**
  * Fuehrt die Anfrage gegen die Kette aus: erster erreichbarer Kandidat gewinnt,
- * bei HTTP-/Netzfehler wird der naechste versucht. Liefert die ROHE fetch-Response
- * des Gewinners (Streaming bleibt erhalten) plus Metadaten fuer Logging/Capsule.
+ * bei HTTP-/Netzfehler oder Timeout wird der naechste versucht. Liefert die ROHE
+ * fetch-Response des Gewinners (Streaming bleibt erhalten) plus Metadaten.
+ * Timeout pro Versuch: SMEJJ_LLM_TIMEOUT_MS (Default 45000 ms) bis zum Antwort-Start;
+ * das Streaming selbst wird nicht abgebrochen.
  */
-export async function executeWithFallback(chain, messages, { fetchImpl = fetch, stream = true, temperature } = {}) {
+export async function executeWithFallback(chain, messages, { fetchImpl = fetch, stream = true, temperature, timeoutMs } = {}) {
   const attempts = [];
+  const limitMs = Number(timeoutMs || process.env.SMEJJ_LLM_TIMEOUT_MS || 45000);
   for (const backend of chain) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), limitMs);
     try {
       const response = await fetchImpl(`${backend.baseUrl}/chat/completions`, {
         method: "POST",
         headers: buildHeaders(backend),
+        signal: controller.signal,
         body: JSON.stringify({
           model: backend.model,
           messages,
@@ -162,11 +219,14 @@ export async function executeWithFallback(chain, messages, { fetchImpl = fetch, 
         })
       });
       if (response.ok) {
+        clearTimeout(timer);
         return { ok: true, backend: backend.name, model: backend.model, response, attempts };
       }
       attempts.push({ backend: backend.name, model: backend.model, error: `http_${response.status}` });
     } catch (error) {
       attempts.push({ backend: backend.name, model: backend.model, error: String(error?.message || error).slice(0, 120) });
+    } finally {
+      clearTimeout(timer);
     }
   }
   return { ok: false, attempts };
