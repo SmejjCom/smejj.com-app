@@ -138,7 +138,7 @@ const summary = {
   totalGiB: Number((totalBytes / 1024 / 1024 / 1024).toFixed(1)),
   transferStatus: "blocked-on-local-preflight",
   localMinimumFreeGiBRequired: 650,
-  storagePolicy: "IDrive e2 is authoritative storage. GitHub and Cloudflare stay on free tiers and do not store model weights.",
+  storagePolicy: "IDrive e2 is authoritative storage. GitHub stays on the free tier and do not store model weights.",
 };
 
 const transferStatus = [
@@ -153,7 +153,7 @@ const transferStatus = [
   "",
   "No model weights were downloaded or uploaded from this local machine.",
   "Full transfer is blocked until preflight passes with at least 650 GiB free disk and required transfer tools.",
-  "GitHub and Cloudflare must remain permanently free-tier only and must not store model weights or central data.",
+  "GitHub must remain permanently free-tier only and must not store model weights or central data.",
   "IDrive e2 is the durable storage target.",
   "",
 ].join("\n");

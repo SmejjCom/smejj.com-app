@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/salad-worker-preflight.schema.json",
+  "title": "smejj.com Salad Worker Preflight",
+  "type": "object",
+  "required": [
+    "version",
+    "provider",
+    "policy",
+    "defaultWorkerClass",
+    "hardBlocks",
+    "verifiedModelVaults"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "provider": {
+      "const": "salad"
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "failClosed",
+        "githubPaidAllowed",
+        "paidHostingAllowed",
+        "trialServicesAllowed",
+        "autoBillingFallbackAllowed",
+        "secretsInImageAllowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "failClosed": {
+          "const": true
+        },
+        "githubPaidAllowed": {
+          "const": false
+        },
+        "paidHostingAllowed": {
+          "const": false
+        },
+        "trialServicesAllowed": {
+          "const": false
+        },
+        "autoBillingFallbackAllowed": {
+          "const": false
+        },
+        "secretsInImageAllowed": {
+          "const": false
+        }
+      }
+    },
+    "defaultWorkerClass": {
+      "type": "object",
+      "required": [
+        "gpuCount",
+        "gpuVramGb",
+        "vcpu",
+        "ramGb",
+        "localCacheGb",
+        "quotaRemainingReplicas"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "gpuCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "gpuVramGb": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "vcpu": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ramGb": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "localCacheGb": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quotaRemainingReplicas": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "hardBlocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "verifiedModelVaults": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "prefix",
+          "originalFileCount",
+          "idriveObjectCount",
+          "safetensorsCount",
+          "reportedGiB",
+          "lastVerifiedAt",
+          "directFullRunOnDefaultWorker"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "originalFileCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "idriveObjectCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "safetensorsCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reportedGiB": {
+            "type": "number",
+            "minimum": 1
+          },
+          "lastVerifiedAt": {
+            "type": "string"
+          },
+          "directFullRunOnDefaultWorker": {
+            "const": false
+          }
+        }
+      }
+    }
+  }
+}

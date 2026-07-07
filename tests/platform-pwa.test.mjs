@@ -20,8 +20,8 @@ test("PWA manifest is install-ready for mobile shells", () => {
 });
 
 test("service worker caches only small app shell assets and has offline fallback", () => {
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v54"/);
-  assert.match(sw, /cache\.addAll\(SHELL\)/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v72"/);
+  assert.match(sw, /cache\.addAll\(SHELL\.map\(\(url\) => new Request\(url, \{ cache: "reload" \}\)\)\)/);
   assert.match(sw, /fetch\(request\)\.catch/);
   assert.match(sw, /caches\.match\("\/"\)/);
   assert.doesNotMatch(sw, /model-files|\.gguf|\.safetensors|workers-ai|cloudflare-r2/i);
@@ -57,7 +57,7 @@ test("no automatic model or paid provider downloads are wired into public assets
   }
 });
 
-test("cloudflare public assets include imported browser modules", () => {
+test("public assets include imported browser modules", () => {
   for (const file of [
     "public/storage/index.js",
     "public/storage/localWorkspace.js",

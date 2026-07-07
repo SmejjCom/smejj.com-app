@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "provider": "salad",
+  "policy": {
+    "failClosed": true,
+    "githubPaidAllowed": false,
+    "paidHostingAllowed": false,
+    "trialServicesAllowed": false,
+    "autoBillingFallbackAllowed": false,
+    "secretsInImageAllowed": false
+  },
+  "defaultWorkerClass": {
+    "gpuCount": 1,
+    "gpuVramGb": 24,
+    "vcpu": 16,
+    "ramGb": 64,
+    "localCacheGb": 300,
+    "quotaRemainingReplicas": 0
+  },
+  "hardBlocks": [
+    "missing-idrive-e2-model-vault",
+    "missing-task-capsule",
+    "missing-budget-approval",
+    "missing-worker-cache-validation",
+    "missing-rollback-manifest",
+    "github-paid-compute",
+    "cloudflare-paid-compute",
+    "trial-service",
+    "auto-billing-fallback",
+    "secrets-in-image",
+    "large-files-through-control-router"
+  ],
+  "verifiedModelVaults": [
+    {
+      "id": "glm-5-2-fp8",
+      "prefix": "model-files/glm-5-2-fp8/original/",
+      "originalFileCount": 149,
+      "idriveObjectCount": 157,
+      "safetensorsCount": 141,
+      "reportedGiB": 703.8,
+      "lastVerifiedAt": "2026-06-24T00:19:44Z",
+      "directFullRunOnDefaultWorker": false
+    }
+  ]
+}

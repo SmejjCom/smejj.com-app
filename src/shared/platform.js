@@ -5,13 +5,121 @@ export const APP_INFO = {
   description: "Free-safe KI- und Code-Assistent-Plattform mit IDrive e2 als Hauptspeicher."
 };
 
-export const COST_POLICY = "GitHub Free and Cloudflare Free only; IDrive e2 is primary storage.";
+export const COST_POLICY = "GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Salad is pay-per-use compute.";
 
 export const STORAGE = {
   provider: "idrive-e2",
   role: "primary",
-  defaultModelPrefix: "model-files/kimi-k2-7"
+  defaultModelPrefix: "model-files/glm-5-2-fp8"
 };
+
+export const KIMI_K2_7_STATUS = {
+  id: "kimi-k2-7",
+  name: "Kimi K2.7 Code",
+  source: "moonshotai/Kimi-K2.7-Code",
+  storage: {
+    provider: "idrive-e2",
+    prefix: "model-files/kimi-k2-7/original/"
+  },
+  verification: {
+    status: "verified-complete",
+    lastVerifiedAt: "2026-06-17T11:13:21.611Z",
+    sourceFileCount: 86,
+    originalFileCount: 86,
+    idriveObjectCount: 102,
+    safetensorsCount: 64,
+    safetensorsWithMatchingSha256: 64,
+    smallFilesContentChecked: 22,
+    supportFilesChecked: 9,
+    failures: []
+  },
+  files: {
+    weights: ".safetensors",
+    config: "present",
+    tokenizer: "present",
+    readme: "present",
+    license: "present",
+    thirdPartyNotices: "present",
+    checksums: "present",
+    manifest: "present",
+    metadata: "present"
+  },
+  inference: {
+    default: "disabled",
+    freeDefault: false,
+    allowedModes: ["byok", "partner-compute-later", "self-host-later"],
+    notAllowedAsDefault: ["cloudflare-paid", "github-paid", "workers-ai-paid", "browser-free-full-model", "trial-api"]
+  },
+  security: {
+    publicModelFiles: false,
+    secretsInBrowser: false,
+    githubPaidAllowed: false,
+    paidHostingAllowed: false
+  }
+};
+
+export const GLM_5_2_FP8_STATUS = {
+  id: "glm-5-2-fp8",
+  name: "GLM-5.2 FP8",
+  source: "zai-org/GLM-5.2-FP8",
+  storage: {
+    provider: "idrive-e2",
+    prefix: "model-files/glm-5-2-fp8/original/"
+  },
+  sourceArchive: {
+    status: "verified-metadata-archived",
+    lastVerifiedAt: "2026-06-22T00:00:00.000Z",
+    prefix: "model-files/glm-5-2-fp8/",
+    archivedObjects: [
+      "checksums/upstream-file-inventory.json",
+      "configs/huggingface-api-metadata.json",
+      "configs/source-summary.json",
+      "notes/LICENSE",
+      "notes/README.md",
+      "notes/TRANSFER_STATUS.txt"
+    ]
+  },
+  verification: {
+    status: "verified-complete",
+    lastVerifiedAt: "2026-06-24T00:19:44Z",
+    sourceFileCount: 149,
+    originalFileCount: 149,
+    idriveObjectCount: 157,
+    safetensorsCount: 141,
+    reportedGiB: 703.8,
+    failures: []
+  },
+  capabilities: {
+    contextTokens: 1000000,
+    role: "flagship-coding-and-planning-brain"
+  },
+  files: {
+    weights: "present",
+    config: "present",
+    tokenizer: "present",
+    readme: "present",
+    license: "present",
+    checksums: "upstream-inventory-present",
+    metadata: "present"
+  },
+  inference: {
+    default: "disabled",
+    freeDefault: false,
+    allowedModes: ["byok", "partner-compute-later", "self-host-later"],
+    notAllowedAsDefault: ["cloudflare-paid", "github-paid", "workers-ai-paid", "browser-free-full-model", "trial-api"]
+  },
+  security: {
+    publicModelFiles: false,
+    secretsInBrowser: false,
+    githubPaidAllowed: false,
+    paidHostingAllowed: false
+  }
+};
+
+export const MODEL_STATUSES = Object.freeze({
+  [KIMI_K2_7_STATUS.id]: KIMI_K2_7_STATUS,
+  [GLM_5_2_FP8_STATUS.id]: GLM_5_2_FP8_STATUS
+});
 
 export const ROUTES = {
   root: "/",
@@ -20,10 +128,13 @@ export const ROUTES = {
   robots: "/robots.txt",
   llms: "/llms.txt",
   sitemap: "/sitemap.xml",
+  impressum: "/impressum.html",
+  datenschutz: "/datenschutz.html",
   api: {
     health: "/api/health",
     capabilities: "/api/capabilities",
     chat: "/api/chat",
+    ragSearch: "/api/rag/search",
     authConfig: "/api/auth/config",
     authGoogle: "/api/auth/google",
     authMe: "/api/auth/me",
@@ -34,7 +145,20 @@ export const ROUTES = {
     fileRead: "/api/files/read",
     fileWrite: "/api/files/write",
     terminalRun: "/api/terminal/run",
-    storageStatus: "/api/storage/status"
+    storagePresign: "/api/storage/presign",
+    storageStatus: "/api/storage/status",
+    modelStatus: "/api/models/kimi-k2-7/status",
+    glmModelStatus: "/api/models/glm-5-2-fp8/status",
+    modelsStatus: "/api/models/status",
+    workerPreflight: "/api/workers/preflight",
+    jobs: "/api/jobs",
+    freeExecutor: "/api/free-executor",
+    saladPlan: "/api/workers/salad/plan",
+    saladStatus: "/api/workers/salad/status",
+    saladGpuClasses: "/api/workers/salad/gpu-classes",
+    saladCreate: "/api/workers/salad/create",
+    saladStart: "/api/workers/salad/start",
+    saladStop: "/api/workers/salad/stop"
   }
 };
 
@@ -46,7 +170,11 @@ export const CAPABILITIES = {
   agents: "ready",
   localFiles: "local-only",
   uploads: "client-staged",
-  modelFiles: "idrive-metadata-ready",
+  modelFiles: "idrive-verified-vault-ready",
+  modelRouter: "glm-5-2-flagship-vault-ready",
+  taskCapsules: "glm-idrive-write-plan-ready",
+  freeExecutor: "static-mini-app-artifact-ready",
+  workerPreflight: "salad-fail-closed-ready",
   idriveStorage: "ready",
   memory: "client-local",
   rag: "client-local",

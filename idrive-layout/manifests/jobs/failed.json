@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "status": "failed",
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "jobs/failed/"
+  },
+  "failures": []
+}

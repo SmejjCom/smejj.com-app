@@ -1,27 +1,34 @@
 # smejj.com Code MVP
 
-Minimaler Start fuer ein eigenes Programmier-KI-Tool mit OpenAI-kompatibler API.
+Minimaler Start fuer ein GLM-5.2-first Storage-First AI Coding OS mit OpenAI-kompatibler API.
 
 ## Kosten- und Architekturregel
 
 - `docs/architecture/FREE_ONLY_MASTER_POLICY.md` ist verbindlich.
 - GitHub.com bleibt dauerhaft Free-only.
-- Cloudflare.com bleibt dauerhaft Free-only.
+- Cloudflare.com wird nicht genutzt; Hosting ist GitHub Pages (Free), DNS liegt bei Spaceship.
 - IDrive e2 / S3-kompatibler Storage ist Hauptspeicher fuer Dateien, Medien, Modelle, Backups, Deployments und zentrale Daten.
 - Keine kostenpflichtigen Zusatzdienste, keine Trials, keine Auto-Billing-Fallbacks.
 - Funktionen, die mit diesen Regeln nicht sicher moeglich sind, laufen lokal, ueber IDrive-e2-Objekte oder fail-closed.
 
 ## Modell- und Speicher-Eckdaten
 
-- Quelle: `moonshotai/Kimi-K2.7-Code` auf Hugging Face.
-- Lizenz: `modified-mit`.
-- Architektur: MoE, 1T Parameter gesamt, 32B aktive Parameter.
-- Kontext: 256K.
-- Download: offizielles HF-Repo ca. 595 GB.
-- Empfohlene Engines: vLLM, SGLang, KTransformers.
+- Fundament: GLM-5.2 als Hauptgehirn fuer Coding, Architektur, Agentenarbeit und hochwertige Antworten.
+- Primaerer Vault: `zai-org/GLM-5.2-FP8` auf IDrive e2.
+- Referenzquelle: `zai-org/GLM-5.2` auf Hugging Face.
+- Lizenz: `mit`.
+- Kontextziel: 1M Token.
+- Empfohlene Engines: SGLang zuerst, vLLM danach, KTransformers fuer CPU/GPU-heterogene Experimente.
+- IDrive e2 speichert Modelle, Manifeste, Checksums und Artefakte, fuehrt aber keine Inferenz aus.
 - Externe Modell-APIs sind kein Kernbestandteil dieser Free-only-Architektur.
-- Kimi K2.7 Code nutzt Thinking Mode; empfohlene/fixe Werte: `temperature=1.0`, `top_p=0.95`.
-- Lokaler Test: `ollama run hf.co/unsloth/Kimi-K2.7-Code-GGUF:UD-Q4_K_XL` oder `llama-server -hf unsloth/Kimi-K2.7-Code-GGUF:UD-Q4_K_XL`.
+- Kleinere Modelle duerfen nur Nebenrollen wie Embeddings, Klassifizierung, Vorfilterung oder UI-Hilfe uebernehmen.
+
+Details:
+
+```text
+docs/architecture/GLM_5_2_STORAGE_FIRST_CODING_OS.md
+docs/model-management/GLM_5_2_STORAGE.md
+```
 
 ## Start
 
@@ -46,7 +53,7 @@ http://127.0.0.1:3000
 
 ## Speicher- und Download-Plan
 
-GitHub und Cloudflare duerfen nur mit kostenlosen Diensten genutzt werden und
+GitHub darf nur mit kostenlosen Diensten genutzt werden und
 niemals fuer Modell-Dateien, Medienarchive oder zentrale Nutzerdaten. Der
 zentrale Speicher fuer grosse Dateien ist IDrive e2.
 
@@ -61,11 +68,11 @@ export CONFIRM_IDRIVE_UPLOAD=YES
 npm run model:upload
 ```
 
-Lokale Modelltests duerfen nur ausserhalb des Repos und ohne GitHub-/Cloudflare-Kostenrisiko stattfinden.
+Lokale Modelltests duerfen nur ausserhalb des Repos und ohne GitHub-Kostenrisiko stattfinden.
 
 Der offizielle Download ist gross. Der Transfer ist nur auf einer Maschine mit
 mindestens 650 GiB freiem Speicher erlaubt. `MODEL_TMP_DIR` muss ausserhalb des
-Projektordners liegen, damit keine Modell-Dateien in GitHub, Cloudflare oder das
+Projektordners liegen, damit keine Modell-Dateien in GitHub oder das
 Repo gelangen.
 
 ## MVP-Funktionen
@@ -83,14 +90,14 @@ Repo gelangen.
 - Geschwindigkeit: Streaming, Caching, kurze Startpfade und regionale Naehe priorisieren.
 - Stabilitaet: Jobs idempotent, Uploads pruefbar, Checksums verpflichtend.
 - Sicherheit: Secrets nur lokal oder in erlaubten Secret-Stores, niemals im Repo.
-- Skalierung: GitHub nur fuer Code, Cloudflare Free nur fuer Edge/Web-Schicht, IDrive e2 fuer zentrale Dateiablage.
-- Kosten: Keine bezahlten GitHub- oder Cloudflare-Dienste einplanen.
+- Skalierung: GitHub nur fuer Code, GitHub Pages nur fuer die statische Web-Schicht, IDrive e2 fuer zentrale Dateiablage.
+- Kosten: Keine bezahlten GitHub-Dienste einplanen; Cloudflare wird nicht genutzt.
 
 ## Free-only No-Big-Server Strategie
 
 IDrive e2 ist der Modell-Vault und Hauptspeicher, aber kein Inferenz-Rechner.
 Kimi K2.7 kann dort sicher archiviert werden. Antworten duerfen im Kern nicht
-ueber GitHub Paid, Cloudflare Paid, Trial-APIs oder Auto-Billing-Pfade erzeugt
+ueber GitHub Paid, Trial-APIs oder Auto-Billing-Pfade erzeugt
 werden. Basisfunktionen muessen lokal, browserseitig oder fail-closed bleiben,
 bis eine neue schriftliche Free-safe Architekturfreigabe vorliegt.
 
@@ -112,7 +119,7 @@ GET /api/storage/status
 ```
 
 Projekt- und Deployment-Artefakte werden kostenfrei ausserhalb von GitHub und
-Cloudflare in IDrive e2 archiviert:
+GitHub in IDrive e2 archiviert:
 
 ```bash
 npm run idrive:artifact

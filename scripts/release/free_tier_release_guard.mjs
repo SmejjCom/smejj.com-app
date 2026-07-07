@@ -29,7 +29,10 @@ function git(args) {
 
 function repoFiles() {
   const output = git(["ls-files", "--cached", "--others", "--exclude-standard"]);
-  return output.split(/\r?\n/).filter(Boolean);
+  return output
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .filter((file) => exists(file));
 }
 
 function stripJsonComments(text) {
@@ -66,56 +69,20 @@ function checkNoGitLfs(files) {
   }
 }
 
-function checkWranglerConfig() {
-  if (!exists("wrangler.jsonc")) {
-    fail("wrangler.jsonc is required so Cloudflare usage can be audited.");
-    return;
-  }
-  let config;
-  try {
-    config = JSON.parse(stripJsonComments(readText("wrangler.jsonc")));
-  } catch (error) {
-    fail(`wrangler.jsonc cannot be parsed: ${error.message}`);
-    return;
-  }
-
-  const forbiddenTopLevel = new Set([
-    "kv_namespaces",
-    "d1_databases",
-    "r2_buckets",
-    "queues",
-    "vectorize",
-    "analytics_engine_datasets",
-    "durable_objects",
-    "workflows",
-    "pipelines",
-    "services",
-    "hyperdrive",
-    "ai",
-    "browser",
-    "images",
-    "stream"
-  ]);
-
-  for (const key of Object.keys(config)) {
-    if (forbiddenTopLevel.has(key)) {
-      fail(`Cloudflare paid-risk binding is not allowed in wrangler.jsonc: ${key}`);
+function checkNoCloudflareArtifacts() {
+  const forbiddenPaths = [
+    "wrangler.jsonc",
+    "wrangler.toml",
+    ".wrangler",
+    "cloudflare-worker",
+    "src/worker.js",
+    "src/edge"
+  ];
+  for (const artifact of forbiddenPaths) {
+    if (exists(artifact)) {
+      fail(`Cloudflare artifact is no longer allowed in the repo: ${artifact} (hosting is GitHub Pages, see docs/deployment/GITHUB_PAGES_DEPLOY.md).`);
     }
   }
-
-  if (config.placement || config.limits || config.observability?.logs?.enabled) {
-    warn("Cloudflare advanced runtime settings found; verify they remain Free-safe before release.");
-  }
-
-  const vars = config.vars || {};
-  for (const [name, value] of Object.entries(vars)) {
-    if (/KEY|SECRET|TOKEN|PASSWORD/i.test(name) || /sk-[A-Za-z0-9_-]{16,}/.test(String(value))) {
-      fail(`Secret-like value must not be stored in wrangler.jsonc vars: ${name}`);
-    }
-  }
-
-  if (config.name !== "smejj-com") fail("Cloudflare Worker name must remain smejj-com unless the release guard is updated.");
-  if (!config.assets?.directory || !config.assets?.binding) fail("Cloudflare assets binding is required for the Free-safe PWA shell.");
 }
 
 function checkPackageScripts() {
@@ -189,22 +156,22 @@ function checkTrackedSecrets(files) {
   }
 }
 
-function checkCloudflareBindingsInWorker() {
-  const worker = exists("src/worker.js") ? readText("src/worker.js") : "";
-  if (!worker.includes("./shared/platform.js")) {
-    fail("Worker must use the central platform configuration.");
+function checkControlServerFreeSafety() {
+  const server = exists("src/server.js") ? readText("src/server.js") : "";
+  if (!server.includes("./shared/platform.js")) {
+    fail("Control server must use the central platform configuration.");
   }
   const forbiddenRuntimeBindings = [
     /env\.[A-Z0-9_]+\.(prepare|put|get|send)\(/,
     /env\.[A-Z0-9_]*(R2|KV|D1|QUEUE|VECTOR|IMAGE|STREAM)[A-Z0-9_]*/
   ];
   for (const pattern of forbiddenRuntimeBindings) {
-    if (pattern.test(worker)) {
-      fail("Worker code appears to use a Cloudflare paid-risk storage/queue/database binding.");
+    if (pattern.test(server)) {
+      fail("Control server code appears to use a paid-risk storage/queue/database binding.");
     }
   }
-  if (!worker.includes("IDRIVE_E2_ENDPOINT")) {
-    fail("Worker must keep IDrive e2 as the storage status backend.");
+  if (!server.includes("IDRIVE_E2_ENDPOINT")) {
+    fail("Control server must keep IDrive e2 as the storage status backend.");
   }
 }
 
@@ -229,11 +196,11 @@ function checkDocsExist() {
 const files = repoFiles();
 checkNoGitHubActions(files);
 checkNoGitLfs(files);
-checkWranglerConfig();
+checkNoCloudflareArtifacts();
 checkPackageScripts();
 checkEnvExample();
 checkTrackedSecrets(files);
-checkCloudflareBindingsInWorker();
+checkControlServerFreeSafety();
 checkDocsExist();
 
 for (const message of warnings) console.warn(`WARN: ${message}`);
@@ -244,4 +211,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("Free-tier release guard OK: GitHub Free, Cloudflare Free, IDrive e2 primary storage.");
+console.log("Free-tier release guard OK: GitHub Free, GitHub Pages hosting, IDrive e2 primary storage, Salad pay-per-use.");

@@ -1,0 +1,63 @@
+// smejj.com — API-Origin: Standard ist Same-Origin (GitHub Pages). Fuer das
+// Salad-Container-Gateway (Backend auf *.salad.cloud) wird die Origin hier als
+// Konstante gesetzt oder per localStorage "smejj.apiOrigin.v1" uebersteuert
+// (nur https, fail-safe: ungueltige Werte werden ignoriert).
+const DEFAULT_API_ORIGIN = "";
+
+function resolveApiOrigin() {
+  let stored = "";
+  try {
+    stored = globalThis.localStorage?.getItem("smejj.apiOrigin.v1") || "";
+  } catch {
+    stored = "";
+  }
+  const candidate = String(stored || DEFAULT_API_ORIGIN).trim().replace(/\/+$/, "");
+  return /^https:\/\/[a-z0-9.-]+$/i.test(candidate) ? candidate : "";
+}
+
+export const API_ORIGIN = resolveApiOrigin();
+
+const API_PATHS = {
+  agent: "/api/agent",
+    authConfig: "/api/auth/config",
+    authGoogle: "/api/auth/google",
+    authMe: "/api/auth/me",
+    authLogout: "/api/auth/logout",
+    capabilities: "/api/capabilities",
+    health: "/api/health",
+    jobs: "/api/jobs",
+    freeExecutor: "/api/free-executor",
+    gitStatus: "/api/git/status",
+    fileRead: "/api/files/read",
+    fileWrite: "/api/files/write",
+    glmModelStatus: "/api/models/glm-5-2-fp8/status",
+    modelStatus: "/api/models/kimi-k2-7/status",
+    modelsStatus: "/api/models/status",
+    storageStatus: "/api/storage/status",
+    terminalRun: "/api/terminal/run"
+};
+
+export const CLIENT_ROUTES = {
+  api: Object.fromEntries(
+    Object.entries(API_PATHS).map(([name, path]) => [name, `${API_ORIGIN}${path}`])
+  )
+};
+
+export const UI_COPY = {
+  startup: "Hallo. Frag mich etwas, starte ein Projekt oder lass uns Code bauen.",
+  chatOffline: "Chat-Stream aktuell nicht erreichbar. Free-safe gestoppt: keine kostenpflichtigen Fallbacks gestartet.",
+  testCommand: "pnpm run check",
+  localOnly: "Diese Funktion ist in der Online-Version bewusst geschuetzt oder lokal gespeichert, damit keine versteckten Kosten und keine unsicheren Schreibzugriffe entstehen."
+};
+
+export const STORAGE_KEYS = {
+  profile: "smejj.profile.v1",
+  session: "smejj.session.v1",
+  settings: "smejj.settings.v1",
+  memory: "smejj.memory.v1",
+  rag: "smejj.rag.v1",
+  model: "smejj.model.selected.v2",
+  drafts: "smejj.drafts.v1",
+  lastExport: "smejj.project.lastExport.v1",
+  currentProject: "smejj.workspace.currentProject.v1"
+};

@@ -21,7 +21,7 @@
   },
   "costPolicy": {
     "githubPaidAllowed": false,
-    "cloudflarePaidAllowed": false,
+    "paidHostingAllowed": false,
     "paidFallbackAllowed": false,
     "trialServicesAllowed": false,
     "autoBillingAllowed": false

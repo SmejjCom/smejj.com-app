@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "status": "open",
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "jobs/open/"
+  },
+  "policy": {
+    "contaboStoresLargeFiles": false,
+    "paidPlatformServicesAllowed": false,
+    "requiresModelChecksumBeforeRun": true,
+    "failClosed": true
+  },
+  "jobs": []
+}

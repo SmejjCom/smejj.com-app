@@ -2,7 +2,7 @@
   "version": 1,
   "costPolicy": {
     "githubPaidAllowed": false,
-    "cloudflarePaidAllowed": false,
+    "paidHostingAllowed": false,
     "autoPaidFallbackAllowed": false,
     "trialServicesAllowed": false,
     "paidFallbackAllowed": false,

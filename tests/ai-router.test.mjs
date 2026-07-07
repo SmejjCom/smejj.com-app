@@ -66,3 +66,19 @@ test("disabled mode leaves app usable", () => {
   assert.equal(result.mode, AI_MODES.disabled);
   assert.match(result.message, /App bleibt/);
 });
+
+test("GLM-5.2 vault is selected for coding and planning but does not start inference by default", () => {
+  const router = createAiRouter();
+  const coding = router.selectModelRole({ prompt: "Fix this Node API bug", taskType: "code" });
+  assert.equal(coding.providerId, AI_MODES.glm52Vault);
+  assert.equal(coding.role, "flagship-coding-brain");
+  assert.equal(coding.fallbackProviderId, AI_MODES.disabled);
+
+  const heavy = router.selectModelRole({ prompt: "Plane die Architektur", contextTokens: 220_000 });
+  assert.equal(heavy.providerId, AI_MODES.glm52Vault);
+  assert.equal(heavy.fallbackProviderId, AI_MODES.disabled);
+
+  const resolved = router.prepareRequest({ mode: AI_MODES.glm52Vault });
+  assert.equal(resolved.ok, false);
+  assert.equal(resolved.reason, "model_vault_requires_approved_compute");
+});

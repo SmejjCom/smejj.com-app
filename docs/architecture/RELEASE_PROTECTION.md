@@ -3,13 +3,13 @@
 ## Pflichtblock
 
 smejj.com must stay fast, stable, secure, scalable, and cost-controlled. GitHub
-and Cloudflare are Free-plan-only infrastructure. IDrive e2 is the primary
-storage location for files, media, models, backups, deployment artifacts, and
-central data.
+Free is limited to source code and GitHub Pages static hosting. Cloudflare is
+not used. IDrive e2 is the primary storage location for files, media, models,
+backups, deployment artifacts, and central data.
 
 ## Hard Release Rule
 
-Before any release or Cloudflare deployment, run:
+Before any release or GitHub Pages deployment, run:
 
 ```bash
 npm run release:preflight
@@ -18,37 +18,35 @@ npm run release:preflight
 This command performs:
 
 - local syntax check
-- GitHub/Cloudflare Free-tier guard
+- GitHub Free-tier and Cloudflare-exit guard
 - IDrive e2 storage check
 - IDrive e2 deployment artifact upload and download verification
-- Cloudflare dry-run deployment
+- static deployment safety checks
 
 ## What The Guard Blocks
 
 - GitHub Actions workflows as core release automation
 - Git LFS storage
 - GitHub Codespaces commands
-- Cloudflare R2, D1, KV, Queues, Vectorize, Durable Objects, Workflows,
-  Pipelines, Images, Stream, Hyperdrive, AI, Browser, or paid-risk bindings
+- any Cloudflare artifact, runtime binding, route, deployment config, or service
 - secret-like values in tracked source files
-- secret-like values in `wrangler.jsonc`
 - missing IDrive e2 environment documentation
 - removing the IDrive-backed storage status path
 
 ## Allowed Roles
 
 - GitHub Free: source code, small documentation, manual collaboration.
-- Cloudflare Free: DNS, public PWA shell, static assets, light edge routing.
+- GitHub Pages Free: static PWA shell for smejj.com.
+- Spaceship: already-owned domain and DNS for smejj.com.
 - IDrive e2: authoritative object storage for durable files and artifacts.
 
 ## Scale Constraint
 
-Millions or billions of daily users cannot be powered by GitHub Free and
-Cloudflare Free as the compute core. The release guard keeps those services in
-safe front-door roles. Heavy AI inference, central compute, and large user-scale
-state must use browser/local-device compute, user-owned compute, IDrive-e2 object
-flows, or a new written free-safe architecture review. There is no hidden paid
-fallback and no GitHub/Cloudflare paid path.
+Millions or billions of daily users cannot be powered by GitHub Free as the
+compute core. The release guard keeps GitHub in source/static roles. Heavy AI
+inference, central compute, and large user-scale state must use browser/local
+device compute, IDrive-e2 object flows, or explicitly budget-approved stateless
+worker compute. There is no hidden paid fallback and no GitHub paid path.
 
 The app must fail closed when a paid-risk provider is unavailable or not
 explicitly approved.

@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "domain": "smejj.com",
+  "address": "s@smejj.com",
+  "forwardTarget": "smejjcom@gmail.com",
+  "receivePath": "Spaceship Email Forwarding Free (MX: mx1/mx2.efwd.spaceship.net) -> smejjcom@gmail.com",
+  "forwardingStatus": "configured/online (Spaceship)",
+  "testedAt": "2026-07-03T14:56:53Z",
+  "method": "Externer Live-Test: sendtestemail.com (noreply@sendtestemail.com) -> s@smejj.com",
+  "evidence": {
+    "emailId": "6e03d98d6f2376b80a9a2b333b105e81",
+    "messageId": "<20260703145643.3D2183000124@mail.sendtestemail.com>",
+    "deliveredTo": "smejjcom@gmail.com (Posteingang, Zustellzeit ~10s)",
+    "receivedChain": [
+      "mail.sendtestemail.com (143.244.187.129, extern)",
+      "asp-relay-spaceship-ef.jellyfish.systems (for <s@smejj.com>)",
+      "mail-11.efwd.spaceship.net (184.94.214.11, SRS-Rewrite, DKIM d=efwd.spaceship.net s=emailforwarding)",
+      "mx.google.com -> Delivered-To: smejjcom@gmail.com"
+    ],
+    "authResults": {
+      "spf": "PASS (envelope SRS0=...@efwd.spaceship.net, IP 184.94.214.11)",
+      "dkim": "PASS (d=efwd.spaceship.net)",
+      "dmarcNote": "Gmail zeigt DMARC FAIL fuer die ABSENDER-Domain sendtestemail.com — erwartetes Verhalten bei Weiterleitung (SPF-Alignment der Fremddomain bricht, deren Policy ist none). Betrifft smejj.com nicht."
+    }
+  },
+  "earlierSelfSendTest": {
+    "done": true,
+    "token": "RXTEST-2026-07-03",
+    "result": "inconclusive",
+    "reason": "Absender = Weiterleitungsziel (gleiches Gmail-Konto); Gmail dedupliziert per Message-ID."
+  }
+}

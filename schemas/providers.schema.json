@@ -42,12 +42,13 @@
               "user-owned",
               "zero-until-hard-stop",
               "storage-only",
+              "fixed-vps-only",
               "zero",
               "requires-explicit-approval"
             ]
           },
           "enabledByDefault": { "type": "boolean" },
-          "fallback": { "enum": ["disabled", "byok-openai-compatible"] }
+          "fallback": { "enum": ["disabled", "byok-openai-compatible", "kimi-k2-7-vault"] }
         }
       }
     }

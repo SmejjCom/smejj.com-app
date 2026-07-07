@@ -2,19 +2,19 @@
 
 ## Ziel
 
-smejj.com darf deploybar sein, aber GitHub.com und Cloudflare.com bleiben dauerhaft Free-only. Es gibt keine automatische Produktion und keine Veroeffentlichung ohne schriftliche Freigabe.
+smejj.com darf deploybar sein, aber GitHub.com bleibt dauerhaft Free-only; Cloudflare wird nicht genutzt (Cloudflare-Exit 2026-07-02, siehe docs/deployment/GITHUB_PAGES_DEPLOY.md). Es gibt keine automatische Produktion und keine Veroeffentlichung ohne schriftliche Freigabe.
 
 ## Rollen
 
 - GitHub Free: Code, kleine Dokumentation, Issues, Pull Requests.
-- Cloudflare Free: statische PWA, DNS/SSL, leichter Gatekeeper, nur wenn dauerhaft Free-safe.
+- GitHub Pages Free: statische PWA (Deploy-from-Branch gh-pages, keine Actions); DNS/SSL via Spaceship + GitHub Pages.
 - IDrive e2: Deploy-Artefakte, Backups, Modelle, Medien, Manifeste, Checksums und zentrale Dateiablage.
 
 ## Verboten
 
 - GitHub Pro, Team, Enterprise.
 - Bezahlte GitHub Actions-Minuten, Codespaces, Packages, LFS oder grosser Storage.
-- Cloudflare Pro, Business, Enterprise.
+- Cloudflare-Dienste jeglicher Art.
 - Workers Paid, R2 Paid, D1 Paid, KV Paid, Queues, Images, Stream, Workers AI oder paid-risk Add-ons.
 - Trials, Auto-Billing und Paid-Fallbacks.
 - Modell-Dateien oder grosse Medien im Repo.
@@ -51,4 +51,4 @@ Produktion stoppt sofort bei:
 - fehlendem IDrive-e2-Backup,
 - fehlgeschlagenem Free-Tier-Guard,
 - Secret-, Pfad-, JSON-, Manifest- oder Paid-Service-Fehler,
-- unklarem Cloudflare-Free-Status.
+- unklarem GitHub-Pages-Free-Status.

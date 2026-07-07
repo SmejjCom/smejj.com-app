@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/model-cache-manifest.schema.json",
+  "title": "smejj.com Model Cache Manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "modelId",
+    "cacheType",
+    "validation",
+    "entries"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "modelId": {
+      "const": "glm-5-2"
+    },
+    "cacheType": {
+      "type": "string"
+    },
+    "validation": {
+      "type": "object",
+      "required": [
+        "trustPathOnly",
+        "requiresSha256",
+        "requiresManifestVersion"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "trustPathOnly": {
+          "const": false
+        },
+        "requiresSha256": {
+          "const": true
+        },
+        "requiresManifestVersion": {
+          "const": true
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "manifestVersion",
+          "sha256",
+          "sizeBytes",
+          "ttlSeconds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "manifestVersion": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "ttlSeconds": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

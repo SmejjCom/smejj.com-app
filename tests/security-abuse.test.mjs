@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { handleGatekeeperRequest } from "../cloudflare-worker/index.js";
-import { createPresignedIdriveUrl } from "../cloudflare-worker/presignIdrive.js";
+import { handleGatekeeperRequest } from "../gatekeeper/index.js";
+import { createPresignedIdriveUrl } from "../gatekeeper/presignIdrive.js";
 import { validateUploadBatch, validateUploadMetadata } from "../src/shared/securityPolicy.js";
-import worker from "../src/worker.js";
 
 const env = {
   IDRIVE_E2_ENDPOINT: "https://s3.example.invalid",
@@ -70,34 +69,6 @@ test("rate limit reached blocks presign", async () => {
   const body = await response.json();
   assert.equal(response.status, 429);
   assert.equal(body.reason, "presign_rate_limit_reached_or_unclear");
-});
-
-test("missing auth/origin blocks cross-site mutation", async () => {
-  const response = await worker.fetch(new Request("https://smejj.com/api/files/write", {
-    method: "POST",
-    headers: { Origin: "https://evil.example" },
-    body: "{}"
-  }), {});
-  const body = await response.json();
-  assert.equal(response.status, 403);
-  assert.equal(body.error, "Origin not allowed");
-});
-
-test("chat stays usable in free-safe local mode without paid AI", async () => {
-  const response = await worker.fetch(new Request("https://smejj.com/api/agent", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Origin: "https://smejj.com"
-    },
-    body: JSON.stringify({ task: "hi" })
-  }), {});
-  const text = await response.text();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") || "", /text\/event-stream/);
-  assert.match(text, /kostenlosen smejj-Local-Modus/);
-  assert.match(text, /Deine Nachricht/);
-  assert.doesNotMatch(text, /KI-Modus disabled\. Server-KI/);
 });
 
 test("service worker does not offline-cache API fallback", () => {

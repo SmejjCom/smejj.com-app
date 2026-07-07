@@ -107,12 +107,13 @@ function listedFiles() {
     .filter(Boolean)
     .filter((file) => !file.startsWith(".git/"))
     .filter((file) => !file.startsWith("node_modules/"))
-    .filter((file) => !file.startsWith(".wrangler/"))
+    
     .filter((file) => !file.startsWith("dist/"))
     .filter((file) => !file.startsWith("build/"))
     .filter((file) => !file.startsWith("tmp/"))
     .filter((file) => !file.startsWith(".env"))
-    .filter((file) => !file.endsWith(".log"));
+    .filter((file) => !file.endsWith(".log"))
+    .filter((file) => fs.existsSync(path.join(rootDir, file)));
 }
 
 function fileRecord(file) {
@@ -148,16 +149,16 @@ const artifact = {
   app: "smejj.com",
   type: "source-and-deployment-artifact",
   createdAt: now.toISOString(),
-  costPolicy: "GitHub Free and Cloudflare Free only; IDrive e2 is primary storage.",
+  costPolicy: "GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Salad is pay-per-use compute.",
   git: {
     branch,
     commit: git(["rev-parse", "HEAD"]),
     status
   },
-  cloudflare: {
-    worker: "smejj-com",
-    config: "wrangler.jsonc",
-    allowedRole: "DNS, static/PWA shell, light edge routing on Free plan only"
+  hosting: {
+    provider: "github-pages",
+    dns: "spaceship.com",
+    allowedRole: "static/PWA shell on GitHub Pages Free; DNS via Spaceship; no Cloudflare"
   },
   storage: {
     provider: "idrive-e2",

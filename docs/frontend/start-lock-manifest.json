@@ -1,0 +1,23 @@
+{
+  "lock": "smejj start lock v3 (100% Schutz)",
+  "frozenAt": "2026-07-05T11:16:50.431Z",
+  "confirmation": "Ja - Chat/Coding-Flow reparieren, Modellstream zuerst, Free-Fallback nur bei Fehler; Wof Kadavanich 2026-07-05",
+  "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
+  "files": {
+    "public/index.html": "a0876aa11b69bcaa231cfb52500817b9ce3ef76a5c0f6cc0bb1cf10f15356547",
+    "public/styles.css": "e8e40e614f4e69d960edb6b2ee53d05861b7f93528a6ec51e946a00d03452c20",
+    "public/composer-tools.css": "75144c407d06279105f0ced29989de01c090731663da3078457c3e42f0868721",
+    "public/app.js": "edfbe89d9f5105b889f298cc61e45b7dee6edf01d229219fee5d3efcf8bed2b5",
+    "public/config.js": "a720e66785ade61eb84995b2c6957f3df2e3a4124a59ca8557fa5c9f4fbc3f3e",
+    "public/components.js": "72543661d662233382a71c8e6871cd94dc02231bb40940696c0e47385004495a",
+    "public/composer-tools.js": "e4d729024ca9244d302ace4798a4af81486958f9d333a656fc0efaa306d208fe",
+    "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
+    "public/ai/chatClient.js": "71403a5bd56b15fd417c4767005718895926048b391457d83f9b4f291f1e16b1",
+    "public/ai/index.js": "f21fcef60cecb99c454783909fc6f63aedf3f8d2211e1df04380327debe87997",
+    "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
+    "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
+    "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
+    "public/sw.js": "0abfeb1f800c2d60b5c6f1e006dcf2a7df20c83db04a68abe847c8a26fe8407a",
+    "public/manifest.webmanifest": "c7414f8e41c57cb82fb15d8bcdbdd6c168ac8a5e49d92b24b59dc2f85cbd67dc"
+  }
+}

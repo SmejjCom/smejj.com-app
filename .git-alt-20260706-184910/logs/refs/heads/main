@@ -1,0 +1,48 @@
+0000000000000000000000000000000000000000 82c1568c0d495af216d36594cf81f4276877ce3c Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781564031 +0200	commit (initial): Initial smejj.com app setup
+82c1568c0d495af216d36594cf81f4276877ce3c 335ac7a86e431730e3eb0d1da5841637859b9a17 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781564039 +0200	commit (amend): Initial smejj.com app setup
+335ac7a86e431730e3eb0d1da5841637859b9a17 335ac7a86e431730e3eb0d1da5841637859b9a17 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781565081 +0200	Branch: renamed refs/heads/main to refs/heads/main
+335ac7a86e431730e3eb0d1da5841637859b9a17 cb2c96423e3c664be0c43b1c192a2139670416f4 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781570808 +0200	commit: Document free-safe storage and deployment audit
+cb2c96423e3c664be0c43b1c192a2139670416f4 e362040abcc5b46e37f952dd1ff41d60072c01cb Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781571088 +0200	commit: Add IDrive deployment artifact backup
+e362040abcc5b46e37f952dd1ff41d60072c01cb 07dc5d597758b9174c4341078b211b18a1eaf7e0 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781571632 +0200	commit: Add free-tier release protection
+07dc5d597758b9174c4341078b211b18a1eaf7e0 f26a620bad806578c9f4be5b20ff30acdb659986 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781572059 +0200	commit: Centralize platform architecture rules
+f26a620bad806578c9f4be5b20ff30acdb659986 c94d70c014915f5bde65351237ae87d997669fe9 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781572361 +0200	commit: Build free-safe assistant workspace
+c94d70c014915f5bde65351237ae87d997669fe9 1cf713d1d3ae56688c6cb2fd260c48b58820ef75 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781572607 +0200	commit: Finalize free-safe PWA release
+1cf713d1d3ae56688c6cb2fd260c48b58820ef75 9bbc97bcd23761e44b2f716caa2cb20cf7fc0ca4 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781572864 +0200	commit: Fix client health route
+9bbc97bcd23761e44b2f716caa2cb20cf7fc0ca4 947c21361c68ec5c32b75d79f4c54738c3a66906 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781573563 +0200	commit: Mark prompt 5 e2e test ready
+947c21361c68ec5c32b75d79f4c54738c3a66906 66433934721d5479331cf00d4c88dc353f8ba6c3 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781573912 +0200	commit: Activate prompt 6 release freeze
+66433934721d5479331cf00d4c88dc353f8ba6c3 4f94ff9d4751ba93f93849c10cfd6c2531094bd2 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574181 +0200	commit: Enable Google login for smejj.com
+4f94ff9d4751ba93f93849c10cfd6c2531094bd2 b7cee6a2a7cc83cdab1a846f0a9c9b7dff0ac210 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574314 +0200	commit: Harden Google auth error handling
+b7cee6a2a7cc83cdab1a846f0a9c9b7dff0ac210 5905c55d88a03d4a5747a696ae9412b838c01ab0 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574336 +0200	commit: Align public shell UI
+5905c55d88a03d4a5747a696ae9412b838c01ab0 643ac918b99f61ab5df2a73b6404f2bb60289ac3 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574396 +0200	commit: Bump PWA cache for Google login release
+643ac918b99f61ab5df2a73b6404f2bb60289ac3 518d7d68722d166da708857c1851ff8e11c4fbef Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574801 +0200	commit: Disable FedCM for Google login button
+518d7d68722d166da708857c1851ff8e11c4fbef 4015821b16be05983b4c670afdeecc917a17ba35 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574828 +0200	commit: Redesign homepage in Codex style
+4015821b16be05983b4c670afdeecc917a17ba35 ba68507f312bda76094676c4e154b8e1a9e3a020 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574853 +0200	commit: Disable external LLM defaults for free deployment
+ba68507f312bda76094676c4e154b8e1a9e3a020 3c71baa9c1dbc06480f841b265733f1d748c9e9f Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781574974 +0200	commit: Use redirect mode for Google login
+3c71baa9c1dbc06480f841b265733f1d748c9e9f 7b750efe00ad27e55774893a8b276b4889cef164 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781590708 +0200	commit: Lock free-only architecture and start design
+7b750efe00ad27e55774893a8b276b4889cef164 2a72dd1649eda4f5a5f03ab09966ef13d8bd5527 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781591216 +0200	commit: Fix live module assets for menu buttons
+2a72dd1649eda4f5a5f03ab09966ef13d8bd5527 5cdba691268a7a2c46b06c7c6df339c8022f86ea Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781592212 +0200	commit: Keep start chat inline
+5cdba691268a7a2c46b06c7c6df339c8022f86ea bb5c71ce8145b2dc666377007e87966ae9f4d368 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781592368 +0200	commit: Document start chat live audit
+bb5c71ce8145b2dc666377007e87966ae9f4d368 07c3aebcb7bc9e5c9d80382f501e170f4c6d9ec5 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781592469 +0200	commit: Update live audit deploy version
+07c3aebcb7bc9e5c9d80382f501e170f4c6d9ec5 c909a7a0c45d50831805e4394e08ccfa66c89849 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781592644 +0200	commit: Fix storage deep link routing
+c909a7a0c45d50831805e4394e08ccfa66c89849 8283feeb1ef090d124542aa348ad717971130a4d Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781593366 +0200	commit: Keep chat usable in free local mode
+8283feeb1ef090d124542aa348ad717971130a4d a04827db07192c8696de10c821785f2878b58ca7 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781593698 +0200	commit: Add local search interface
+a04827db07192c8696de10c821785f2878b58ca7 826fa457363dbfe818ba362d52522920cb6412c9 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781593934 +0200	commit: Fix provider route and search flow
+826fa457363dbfe818ba362d52522920cb6412c9 878d97f68dd7be2024806c6f2391bef5e81fb0f4 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781594094 +0200	commit: Update live deployment audit
+878d97f68dd7be2024806c6f2391bef5e81fb0f4 21eaab8ba12f6b2f5d4972b2fe9529643594186b Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781594147 +0200	commit: Record final live deployment version
+21eaab8ba12f6b2f5d4972b2fe9529643594186b 44d19a760ac3d021b74362b87530a8f18f4203f0 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781594431 +0200	commit: Harden button behavior
+44d19a760ac3d021b74362b87530a8f18f4203f0 226e793eebe0069e273a64e2f097d1d2c388fe66 Alan Best <abest@5e999825-86f7-47e4-b71f-d5b4a049c613.fritz.box> 1781594502 +0200	commit: Record button hardening audit
+226e793eebe0069e273a64e2f097d1d2c388fe66 bc747188a7568ddeae0df10ec7f3277308c771b1 Alan Best <abest@5e999825-86f7-47e4-b71f-d5b4a049c613.fritz.box> 1781594627 +0200	commit: Add upload deploy live recheck
+bc747188a7568ddeae0df10ec7f3277308c771b1 2709a0cc89b73275c15e0eb4b26560340eed790c Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781607195 +0200	commit: Centralize chat on start page
+2709a0cc89b73275c15e0eb4b26560340eed790c d16f5b1dd30c53c7f5443a29876bae01da5b3901 Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781607290 +0200	commit: Redirect legacy chat route to start
+d16f5b1dd30c53c7f5443a29876bae01da5b3901 3b25697a566c0a44384eb8cf3b0db4129030904f Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781607500 +0200	commit: Use start log as central chat target
+3b25697a566c0a44384eb8cf3b0db4129030904f a1e685f7580e3d9a4430a22d2c0de3f2ab04c96c Alan Best <abest@MacBook-Pro-von-Alan.fritz.box> 1781610584 +0200	commit: Fix start chat mobile layout
+a1e685f7580e3d9a4430a22d2c0de3f2ab04c96c ca3160491591179ce83ae27d5d4a65536a5d6b52 Alan Best <abest@Mac.fritz.box> 1782263826 +0200	commit: Implement storage-first worker preflight
+ca3160491591179ce83ae27d5d4a65536a5d6b52 ef49bb1e6a176ad677cd6873d32423f59897d3f0 Alan Best <abest@Mac.fritz.box> 1782264899 +0200	commit: Stabilize web PWA storage status checks
+ef49bb1e6a176ad677cd6873d32423f59897d3f0 ff612fd9a8d48a6d6db54ae4ac83b95d2d234794 Alan Best <abest@Mac.fritz.box> 1782265288 +0200	commit: Add end-to-end user flow test
+ff612fd9a8d48a6d6db54ae4ac83b95d2d234794 540b362052fa9e75de35150391002869839925bb Alan Best <abest@Mac.fritz.box> 1782282337 +0200	commit: Make composer action icons functional
+540b362052fa9e75de35150391002869839925bb f79f54d252d4fe8e174a422e4d5292891394721e Alan Best <alanbest@MacBook-Neo-von-Alan.fritz.box> 1782952153 +0200	commit: smejj.com: Control-Server, Guardrails, Autonomie-Schleife, Edge-Proxy, Impressum/404-Fix, Change-Lock
+f79f54d252d4fe8e174a422e4d5292891394721e 9b6c8d5bd18793d03decc6c746cfb08d04580533 Wof Kadavanich <smejjcom@gmail.com> 1783090146 +0200	commit: mail(smejj.com): SPF+DMARC set, live-DNS guard, docs & rollback
+9b6c8d5bd18793d03decc6c746cfb08d04580533 c7e5629c9965b3c20344cf109164608b52dfe21f Wof Kadavanich <smejjcom@gmail.com> 1783090846 +0200	commit: mail(smejj.com): Empfang s@smejj.com live bestaetigt (externer Test), Doku+Memory
+c7e5629c9965b3c20344cf109164608b52dfe21f b2762d18b8f1915da32b5b9b596948e7c15c2016 Wof Kadavanich <smejjcom@gmail.com> 1783091999 +0200	commit: mail(smejj.com): Senden-als empirisch verifiziert (Popup nicht automatisierbar), Doku praezisiert
+b2762d18b8f1915da32b5b9b596948e7c15c2016 3b182f2ea84f2b2ec7de20a98113bc783518d920 Wof Kadavanich <smejjcom@gmail.com> 1783092028 +0200	commit (amend): mail(smejj.com): Senden-als empirisch verifiziert (Popup nicht automatisierbar), Doku praezisiert
+3b182f2ea84f2b2ec7de20a98113bc783518d920 c1f20a4899bca528ae96aa314432197238063c13 Wof Kadavanich <smejjcom@gmail.com> 1783106749 +0200	commit: Complete smejj.com mail send-as setup

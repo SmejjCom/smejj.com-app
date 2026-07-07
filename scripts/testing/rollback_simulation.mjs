@@ -23,7 +23,7 @@ if (manifest.release?.rollbackRequired !== true) failures.push("rollbackRequired
 if (manifest.release?.requiresWrittenApproval !== true) failures.push("requiresWrittenApproval must be true");
 if (manifest.release?.livePublished !== false) failures.push("example deployment manifest must not mark livePublished true");
 if (manifest.costPolicy?.githubPaidAllowed !== false) failures.push("githubPaidAllowed must be false");
-if (manifest.costPolicy?.cloudflarePaidAllowed !== false) failures.push("cloudflarePaidAllowed must be false");
+if (manifest.costPolicy?.paidHostingAllowed !== false) failures.push("paidHostingAllowed must be false");
 if (manifest.costPolicy?.paidFallbackAllowed !== false) failures.push("paidFallbackAllowed must be false");
 if (!/Rollback point exists at commit/i.test(freeze)) failures.push("release freeze must name rollback point");
 if (!/IDrive e2 backup artifact/i.test(freeze)) failures.push("release freeze must name IDrive e2 backup artifact");

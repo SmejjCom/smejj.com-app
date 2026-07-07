@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/glm-model-manifest.schema.json",
+  "title": "smejj.com GLM-5.2 Model Manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "modelId",
+    "displayName",
+    "primaryRole",
+    "source",
+    "architecture",
+    "storage",
+    "verification",
+    "runtimePriority",
+    "inferenceDefault"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "modelId": {
+      "const": "glm-5-2"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "primaryRole": {
+      "const": "flagship-coding-brain"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "provider",
+        "repo",
+        "fallbackRepo",
+        "license"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "const": "huggingface"
+        },
+        "repo": {
+          "const": "zai-org/GLM-5.2-FP8"
+        },
+        "fallbackRepo": {
+          "const": "zai-org/GLM-5.2"
+        },
+        "license": {
+          "const": "mit"
+        }
+      }
+    },
+    "architecture": {
+      "type": "object",
+      "required": [
+        "family",
+        "contextTokens",
+        "precision",
+        "supportsEffortLevels",
+        "supportsMtpSpeculation",
+        "supportsIndexShare"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "string"
+        },
+        "contextTokens": {
+          "type": "integer",
+          "minimum": 1000000
+        },
+        "precision": {
+          "type": "string"
+        },
+        "supportsEffortLevels": {
+          "const": true
+        },
+        "supportsMtpSpeculation": {
+          "const": true
+        },
+        "supportsIndexShare": {
+          "const": true
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "required": [
+        "provider",
+        "prefix",
+        "contentAddressed",
+        "multipartUploadRequired"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "const": "idrive-e2"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "contentAddressed": {
+          "const": true
+        },
+        "multipartUploadRequired": {
+          "const": true
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "requiredBeforeInference"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "requiredBeforeInference": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "runtimePriority": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string"
+      }
+    },
+    "inferenceDefault": {
+      "const": "disabled-until-explicit-compute-approval"
+    }
+  }
+}

@@ -5,17 +5,17 @@ import {
   assertFreePolicy,
   evaluateCostRisk,
   evaluateProvider
-} from "../cloudflare-worker/policy.js";
-import { evaluateQuota } from "../cloudflare-worker/quota.js";
+} from "../gatekeeper/policy.js";
+import { evaluateQuota } from "../gatekeeper/quota.js";
 
 test("free policy keeps all paid switches disabled", () => {
   const result = assertFreePolicy(GATEKEEPER_POLICY);
   assert.equal(result.ok, true);
   assert.equal(GATEKEEPER_POLICY.githubPaidAllowed, false);
-  assert.equal(GATEKEEPER_POLICY.cloudflarePaidAllowed, false);
+  assert.equal(GATEKEEPER_POLICY.paidHostingAllowed, false);
   assert.equal(GATEKEEPER_POLICY.autoPaidFallbackAllowed, false);
   assert.equal(GATEKEEPER_POLICY.trialServicesAllowed, false);
-  assert.equal(GATEKEEPER_POLICY.cloudflareR2Allowed, false);
+  assert.equal(GATEKEEPER_POLICY.paidObjectStorageAllowed, false);
   assert.equal(GATEKEEPER_POLICY.workersAIAllowed, false);
   assert.equal(GATEKEEPER_POLICY.paidQueuesAllowed, false);
   assert.equal(GATEKEEPER_POLICY.paidD1Allowed, false);

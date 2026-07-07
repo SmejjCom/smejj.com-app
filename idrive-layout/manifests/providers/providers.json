@@ -39,7 +39,30 @@
       "costRisk": "storage-only",
       "enabledByDefault": false,
       "inference": "not-local-free",
-      "fallback": "byok-openai-compatible"
+      "fallback": "disabled",
+      "role": "archived-comparison-specialist"
+    },
+    {
+      "id": "glm-5-2-fp8-vault",
+      "type": "model-vault",
+      "costRisk": "storage-only",
+      "enabledByDefault": false,
+      "inference": "not-local-free",
+      "modelStorage": "idrive-e2",
+      "requiresChecksum": true,
+      "role": "flagship-coding-and-planning-brain",
+      "fallback": "disabled"
+    },
+    {
+      "id": "nex-n2-pro-idrive-lite",
+      "type": "contabo-local-llama-cpp",
+      "costRisk": "fixed-vps-only",
+      "enabledByDefault": false,
+      "modelStorage": "idrive-e2",
+      "requiresChecksum": true,
+      "requires8gbFitCheck": true,
+      "localCache": "small-temporary-only",
+      "fallback": "disabled"
     },
     {
       "id": "disabled",

@@ -4,7 +4,7 @@
 
 This document is the single map for smejj.com architecture ownership. It keeps
 the project free-safe, maintainable, and ready for later platform expansion
-without adding paid GitHub or Cloudflare dependencies.
+without adding paid GitHub dependencies or any Cloudflare dependency.
 
 ## Centralized Now
 
@@ -12,10 +12,10 @@ without adding paid GitHub or Cloudflare dependencies.
 | --- | --- |
 | API route names | `src/shared/platform.js`, `public/config.js` |
 | Cost policy | `src/shared/platform.js`, architecture docs |
-| Cloudflare/Node security headers | `src/shared/platform.js` |
-| Content types and static file serving | `src/shared/platform.js`, `src/server.js`, Cloudflare Assets |
+| Node/security headers | `src/shared/platform.js` |
+| Content types and static file serving | `src/shared/platform.js`, `src/server.js`, GitHub Pages static files |
 | Client action routes | `public/config.js`, `public/app.js` |
-| IDrive e2 storage status | `src/worker.js`, `src/server.js`, `scripts/model-management/check_idrive_e2_storage.mjs` |
+| IDrive e2 storage status | `src/server.js`, `scripts/model-management/check_idrive_e2_storage.mjs` |
 | IDrive e2 deployment artifacts | `scripts/model-management/upload_project_artifact_to_idrive.mjs` |
 | Release protection and free-tier guard | `scripts/release/free_tier_release_guard.mjs` |
 | PWA cache versioning | `public/sw.js` |
@@ -40,7 +40,7 @@ before they are exposed to users:
 | Icon components | a single client UI module before icons are introduced |
 | Layout/design components | a single client UI module before the UI grows beyond this shell |
 | Internationalization | a single i18n dictionary module before adding more languages |
-| Native platform configuration | PWA manifest first; native wrappers later without paid GitHub/Cloudflare dependencies |
+| Native platform configuration | PWA manifest first; native wrappers later without paid GitHub dependencies or Cloudflare |
 
 ## Implemented Safety Boundaries
 
@@ -57,8 +57,8 @@ before they are exposed to users:
 ## Rules
 
 - Do not introduce a second route table.
-- Do not put secrets in `wrangler.jsonc`, tracked source, frontend files, docs, or GitHub.
-- Do not add Cloudflare storage, queues, databases, AI, browser rendering, or paid-risk bindings.
+- Do not put secrets in tracked source, frontend files, docs, GitHub, or static hosting artifacts.
+- Do not add Cloudflare storage, routing, queues, databases, AI, browser rendering, or bindings.
 - Do not add GitHub Actions, Codespaces, LFS, Packages, or paid-risk GitHub automation.
 - New user data, files, media, models, backups, indexes, and deployment artifacts must use IDrive e2 or another explicitly approved free-safe external path.
 - Online endpoints must fail closed when auth, storage, or inference is missing.
@@ -71,11 +71,11 @@ Every release must have:
 1. a Git commit SHA,
 2. an IDrive e2 deployment artifact,
 3. a passing `npm run release:preflight`,
-4. a Cloudflare deployment version.
+4. a verified GitHub Pages deployment state.
 
 Rollback order:
 
-1. use Cloudflare rollback to the previous known-good version,
+1. restore the previous known-good Git commit or GitHub Pages branch state,
 2. restore source from Git commit or IDrive e2 artifact if needed,
 3. rerun `npm run release:preflight`,
-4. redeploy only after the preflight passes.
+4. publish to GitHub Pages only after the preflight passes.

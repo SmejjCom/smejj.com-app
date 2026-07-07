@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/glm-checksums.schema.json",
+  "title": "smejj.com GLM-5.2 Checksums",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "modelId",
+    "algorithm",
+    "sourceInventory",
+    "verificationRuns"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "modelId": {
+      "const": "glm-5-2"
+    },
+    "algorithm": {
+      "const": "sha256"
+    },
+    "sourceInventory": {
+      "type": "object",
+      "required": [
+        "fileCount",
+        "safetensorsCount",
+        "reportedGiB"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fileCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "safetensorsCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reportedGiB": {
+          "type": "number",
+          "minimum": 1
+        }
+      }
+    },
+    "verificationRuns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "verifiedAt",
+          "reportKey"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string"
+          },
+          "reportKey": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

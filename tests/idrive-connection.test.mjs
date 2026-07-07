@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { runIdriveConnectionTest, validatePresignedEnvelope } from "../src/storage/idriveConnectionTest.js";
-import { createPresignedIdriveUrl } from "../cloudflare-worker/presignIdrive.js";
+import { createPresignedIdriveUrl } from "../gatekeeper/presignIdrive.js";
 import { createMemoryStore } from "../src/storage/indexedDbStore.js";
 import { createMemoryOpfsStore } from "../src/storage/opfsStore.js";
 import { createLocalWorkspace } from "../src/storage/localWorkspace.js";

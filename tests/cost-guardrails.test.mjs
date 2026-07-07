@@ -1,14 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { handleGatekeeperRequest } from "../cloudflare-worker/index.js";
+import { handleGatekeeperRequest } from "../gatekeeper/index.js";
 
 test("gatekeeper health states free gatekeeper role", async () => {
   const response = await handleGatekeeperRequest(new Request("https://example.test/gatekeeper/health"), {});
   const body = await response.json();
   assert.equal(response.status, 200);
   assert.equal(body.ok, true);
-  assert.equal(body.role, "cloudflare-free-gatekeeper-design");
-  assert.equal(body.policy.cloudflarePaidAllowed, false);
+  assert.equal(body.role, "smejj.com-free-gatekeeper-design");
+  assert.equal(body.policy.paidHostingAllowed, false);
   assert.equal(body.policy.workersAIAllowed, false);
 });
 

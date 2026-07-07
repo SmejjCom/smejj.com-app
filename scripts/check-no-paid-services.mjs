@@ -15,7 +15,7 @@ const failures = [];
 const files = listRepoFiles();
 
 checkNoGitHubActions();
-checkNoCloudflarePaidBindings();
+checkNoCloudflareArtifacts();
 checkNoSecrets();
 checkNoLargeBinaries();
 checkNoModelWeights();
@@ -29,25 +29,11 @@ function checkNoGitHubActions() {
   if (workflows.length) failures.push(`GitHub Actions workflows are not allowed: ${workflows.join(", ")}`);
 }
 
-function checkNoCloudflarePaidBindings() {
-  const wrangler = readText("wrangler.jsonc");
-  const forbidden = [
-    "kv_namespaces",
-    "d1_databases",
-    "r2_buckets",
-    "queues",
-    "vectorize",
-    "durable_objects",
-    "workflows",
-    "pipelines",
-    "hyperdrive",
-    "\"ai\"",
-    "\"browser\"",
-    "\"images\"",
-    "\"stream\""
-  ];
+function checkNoCloudflareArtifacts() {
+  const forbidden = ["wrangler.jsonc", "wrangler.toml", ".wrangler/", "cloudflare-worker/", "src/worker.js", "src/edge/"];
   for (const marker of forbidden) {
-    if (wrangler.includes(marker)) failures.push(`wrangler.jsonc contains Cloudflare paid-risk marker: ${marker}`);
+    const hit = files.find((file) => file === marker || file.startsWith(marker));
+    if (hit) failures.push(`Cloudflare artifact must not exist in the repo: ${hit}`);
   }
 }
 

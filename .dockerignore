@@ -1,0 +1,15 @@
+# smejj.com — schlankes Control-Server-Image: alles Unnoetige/Sensible ausschliessen.
+node_modules
+.git
+.env
+.env.*
+backups
+tmp
+tests
+scripts
+idrive-layout
+examples
+workers
+schemas
+*.xlsx
+.DS_Store

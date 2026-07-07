@@ -21,24 +21,29 @@ Nicht erlaubt:
 
 ## Cloudflare
 
-Cloudflare.com bleibt dauerhaft Free-only und ist nur statische PWA/Gatekeeper, wenn Free-safe.
-
-Erlaubt:
-
-- DNS/SSL.
-- Kleine statische PWA.
-- Leichter Gatekeeper.
-- Dry-Run und lokale Pruefung.
+Cloudflare.com wird nicht genutzt.
 
 Nicht erlaubt:
 
+- DNS/SSL.
+- Statische PWA.
+- Gatekeeper.
+- Worker.
 - Workers Paid.
 - R2 Paid.
 - D1 Paid.
 - KV Paid.
 - Queues, Images, Stream, Workers AI, Vectorize, Hyperdrive, Workflows oder paid-risk Add-ons.
+- Free- oder Paid-Cloudflare als Kernbestandteil.
 - Trial-basierte Architektur.
 - Auto-Billing.
+
+Erlaubter Ersatz:
+
+- GitHub Pages Free fuer die statische PWA.
+- Spaceship DNS fuer smejj.com.
+- Node-Control-Server fuer `/api/*`, wenn separat free-safe betrieben.
+- IDrive e2 als dauerhaftes Object Brain.
 
 ## IDrive e2
 

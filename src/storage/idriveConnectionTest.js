@@ -1,6 +1,6 @@
-import { createPresignedIdriveUrl } from "../../cloudflare-worker/presignIdrive.js";
-import { assertFreePolicy, block, evaluateCostRisk, requireIdrivePresignConfig } from "../../cloudflare-worker/policy.js";
-import { evaluateQuota } from "../../cloudflare-worker/quota.js";
+import { createPresignedIdriveUrl } from "../../gatekeeper/presignIdrive.js";
+import { assertFreePolicy, block, evaluateCostRisk, requireIdrivePresignConfig } from "../../gatekeeper/policy.js";
+import { evaluateQuota } from "../../gatekeeper/quota.js";
 import { createContentObject } from "./contentAddressed.js";
 import { createIndexedDbStore } from "./indexedDbStore.js";
 import { createMemoryOpfsStore } from "./opfsStore.js";

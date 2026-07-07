@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "modelId": "glm-5-2",
+  "cacheType": "prefix-block-cache",
+  "validation": {
+    "trustPathOnly": false,
+    "requiresSha256": true,
+    "requiresManifestVersion": true
+  },
+  "entries": [
+    {
+      "id": "system-architecture-rules",
+      "manifestVersion": "2026-06-25-glm-5-2-fp8-vault",
+      "sha256": "example-prefix-sha256-placeholder",
+      "sizeBytes": 0,
+      "ttlSeconds": 86400
+    }
+  ]
+}

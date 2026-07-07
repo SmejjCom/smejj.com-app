@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createPresignedIdriveUrl } from "../cloudflare-worker/presignIdrive.js";
+import { createPresignedIdriveUrl } from "../gatekeeper/presignIdrive.js";
 
 const demoEnv = {
   IDRIVE_E2_ENDPOINT: "https://s3.example.invalid",

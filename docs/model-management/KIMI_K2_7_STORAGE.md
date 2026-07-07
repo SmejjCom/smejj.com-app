@@ -2,6 +2,14 @@
 
 ## Status
 
+Verified on 2026-06-22:
+
+- IDrive e2 prefix `model-files/kimi-k2-7/` lists `102` objects.
+- Original model prefix contains all `86` expected source files.
+- All `64` safetensors shards are present.
+- `npm run idrive:verify-kimi` passed after repairing the missing checksum-manifest entry for `figures/demo_video.mp4`.
+- Inference remains disabled by default; IDrive e2 is storage, not compute.
+
 Provisioned on 2026-06-15:
 
 - IDrive e2 account: `smejjcom@gmail.com`
@@ -13,13 +21,23 @@ Provisioned on 2026-06-15:
 - Local secret file: `.env.local` with file mode `600`
 - S3 access check: passed with `npm run idrive:check`
 
-No model files have been downloaded or uploaded yet.
+No full model-weight files have been downloaded or uploaded yet. Small upstream source files have been archived and test-streamed to IDrive e2.
 
 A dedicated access key named `smejj-kimi-k27-storage` has been created for the transfer workflow. It is scoped to bucket `smejj-model-files` and configured for read/write access without bucket deletion or governance-bypass permissions. Real key values must stay only in local environment variables or a local ignored env file.
 
 The exact public model source for Kimi K2.7 Code is confirmed as `moonshotai/Kimi-K2.7-Code` on Hugging Face.
 
-Current transfer status: storage and credentials are ready; full-model transfer is still blocked until a transfer machine with enough local disk and upload tooling is selected.
+Current transfer status: storage and credentials are ready; full-model transfer is still blocked until a transfer machine with enough bandwidth, stability, and upload tooling is selected.
+
+Direct streaming transfer support was added on 2026-06-16. It can transfer files from Hugging Face to IDrive e2 with S3 multipart uploads without storing the full model locally. It is still gated by explicit confirmation and must only be run after confirming IDrive e2 capacity, source, license, and network stability.
+
+A limited streaming test on 2026-06-16 succeeded for `README.md`, `LICENSE`, and `THIRD_PARTY_NOTICES.md`. These files are visible under `model-files/kimi-k2-7/original/`, and the checksum manifest is visible at `model-files/kimi-k2-7/checksums/streamed-checksums.sha256`.
+
+A full local streaming attempt on 2026-06-16 was stopped after the first safetensors file started transferring. The route is technically valid, but the observed local throughput was too slow for a safe full 554 GiB transfer from this machine. One incomplete multipart upload was aborted with `npm run model:abort-incomplete`. Use a transfer machine with faster upstream bandwidth or a data-center/near-cloud host for the full upload.
+
+The provider-side IDrive e2 Cloud Data Migration path was checked on 2026-06-16. IDrive e2 supports direct migration from S3-compatible/Azure/GCS-style object storage sources, but Hugging Face model repositories are not exposed as an S3-compatible source bucket for IDrive e2 to import directly. See `docs/model-management/KIMI_K27_DIRECT_IDRIVE_IMPORT_DECISION.md`.
+
+A Contabo transfer-machine stream was started on 2026-06-16 from `/root/smejj-kimi-transfer` on `95.111.252.106`. It streams Hugging Face files to IDrive e2 without storing the full model locally. The first safetensors file, `model-00001-of-000064.safetensors`, was uploaded and visible in IDrive e2. The transfer process continued with `model-00002-of-000064.safetensors`.
 
 Local preflight checked on 2026-06-16:
 
@@ -128,6 +146,11 @@ MODEL_TMP_DIR=/tmp/smejj-model-files/kimi-k2-7
 MODEL_S3_PREFIX=model-files/kimi-k2-7
 CONFIRM_MODEL_DOWNLOAD=NO
 CONFIRM_IDRIVE_UPLOAD=NO
+CONFIRM_STREAM_MODEL_UPLOAD=NO
+STREAM_INCLUDE_REGEX=.*
+STREAM_PART_SIZE_BYTES=67108864
+STREAM_RETRY_ATTEMPTS=5
+STREAM_SKIP_EXISTING=YES
 ```
 
 ## Preflight Checklist
@@ -159,6 +182,45 @@ The current local machine does not have AWS CLI installed. The storage-only chec
 
 ```sh
 npm run idrive:check
+```
+
+Stream directly from Hugging Face to IDrive e2 without a full local copy:
+
+```sh
+export HF_MODEL_REPO=moonshotai/Kimi-K2.7-Code
+export MODEL_S3_PREFIX=model-files/kimi-k2-7
+export STREAM_PART_SIZE_BYTES=33554432
+export STREAM_RETRY_ATTEMPTS=8
+export STREAM_SKIP_EXISTING=YES
+export CONFIRM_STREAM_MODEL_UPLOAD=YES
+npm run model:stream-to-idrive
+```
+
+For a limited test, restrict the file set:
+
+```sh
+export STREAM_INCLUDE_REGEX='^(README.md|LICENSE|THIRD_PARTY_NOTICES.md)$'
+export CONFIRM_STREAM_MODEL_UPLOAD=YES
+npm run model:stream-to-idrive
+```
+
+The streaming transfer writes the model files under:
+
+```text
+s3://smejj-model-files/model-files/kimi-k2-7/original/
+```
+
+and writes a checksum manifest to:
+
+```text
+s3://smejj-model-files/model-files/kimi-k2-7/checksums/streamed-checksums.sha256
+```
+
+Abort incomplete multipart uploads after a cancelled or failed stream:
+
+```sh
+export CONFIRM_ABORT_INCOMPLETE_UPLOADS=YES
+npm run model:abort-incomplete
 ```
 
 Archive upstream source metadata and license notes without downloading model weights:

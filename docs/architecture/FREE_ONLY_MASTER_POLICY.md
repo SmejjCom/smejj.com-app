@@ -7,9 +7,13 @@ Diese Datei ist die zentrale Architekturregel fuer smejj.com.
 ## Unveraenderbare Kostenregel
 
 - GitHub.com darf nur im dauerhaft kostenlosen Free-Tarif genutzt werden.
-- Cloudflare.com darf nur im dauerhaft kostenlosen Free-Tarif genutzt werden.
+- Cloudflare.com wird nicht genutzt (Cloudflare-Exit 2026-07-02, schriftlich angeordnet).
+- Spaceship.com wird nur fuer die bereits bezahlte Domain smejj.com und kostenloses DNS genutzt; keine kostenpflichtigen Zusatzdienste.
+- GitHub Pages (Free) ist das einzige Hosting fuer die statische Website/PWA-Shell.
 - Keine GitHub Pro-, Team-, Enterprise-, Actions-Minuten-, Storage-, Packages-, LFS-, Codespaces- oder sonstigen kostenpflichtigen GitHub-Dienste.
-- Keine Cloudflare Pro-, Business-, Enterprise-, Workers-Paid-, R2-Paid-, Images-, Stream-, Queues-, D1-Paid-, KV-Paid-, Workers-AI-Paid- oder sonstigen kostenpflichtigen Cloudflare-Dienste.
+- Keine Cloudflare-Dienste jeglicher Art (weder Free noch Paid).
+- Salad.com nur pay-per-use hinter Budget-Gate und Laufzeit-Watchdog; kein Abo, kein Auto-Billing-Fallback.
+- Oracle Cloud wird NICHT genutzt (schriftliche Nutzer-Entscheidung 2026-07-03: "Oracle rausnehmen, wir arbeiten mit Salad weiter"; die kurzzeitige Always-Free-Zulassung vom selben Tag ist damit revidiert und ein Konto wurde nie angelegt). Der Betriebsweg fuer Rechen- und Serverdienste ist Salad.com — pay-per-use vom vorhandenen Guthaben, hinter Budget-Gate/Watchdog, Auto-Recharge bleibt aus.
 - Keine Trial-Angebote.
 - Keine Auto-Billing-Fallbacks.
 - Keine Funktion, die nach einem kostenlosen Limit automatisch Geld kosten kann.
@@ -29,7 +33,7 @@ IDrive e2 / S3-kompatibler Storage ist der Hauptspeicher fuer:
 - Checksums
 - Such- und RAG-Artefakte
 
-GitHub und Cloudflare duerfen diese Daten nicht als Hauptspeicher ersetzen.
+GitHub und GitHub Pages duerfen diese Daten nicht als Hauptspeicher ersetzen.
 
 ## Rollen
 
@@ -40,12 +44,16 @@ GitHub Free:
 - Issues und Pull Requests
 - manuelle Zusammenarbeit
 
-Cloudflare Free:
+GitHub Pages Free:
 
-- DNS
-- statische PWA-Auslieferung
-- leichte Free-safe Edge-Regeln
-- fail-closed Gatekeeper ohne grosse Daten- oder Compute-Last
+- statische PWA-Auslieferung (Deploy-from-Branch gh-pages, keine GitHub Actions)
+- Custom Domain smejj.com
+
+Spaceship (Domain/DNS):
+
+- Domain-Registrierung smejj.com (bereits bezahlt)
+- DNS auf GitHub Pages (A/AAAA + www-CNAME)
+- keine kostenpflichtigen Zusatzdienste
 
 IDrive e2:
 

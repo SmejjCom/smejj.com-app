@@ -1,0 +1,14 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+	precomposeunicode = true
+	sshCommand = ssh -i ~/.ssh/smejjcom_github_ed25519 -o IdentitiesOnly=yes
+[user]
+	name = Wof Kadavanich
+	email = smejjcom@gmail.com
+[remote "origin"]
+	url = git@github.com:SmejjCom/smejj.com-app.git
+	fetch = +refs/heads/*:refs/remotes/origin/*

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "modelId": "glm-5-2",
+  "cacheType": "worker-shard-cache",
+  "validation": {
+    "trustPathOnly": false,
+    "requiresSha256": true,
+    "requiresManifestVersion": true
+  },
+  "entries": [
+    {
+      "id": "weights-fp8-00001",
+      "manifestVersion": "2026-06-25-glm-5-2-fp8-vault",
+      "sha256": "example-weight-sha256-placeholder",
+      "sizeBytes": 0,
+      "ttlSeconds": 3600
+    }
+  ]
+}

@@ -11,7 +11,7 @@
       "type": "object",
       "required": [
         "githubPaidAllowed",
-        "cloudflarePaidAllowed",
+        "paidHostingAllowed",
         "autoPaidFallbackAllowed",
         "trialServicesAllowed",
         "paidFallbackAllowed",
@@ -20,7 +20,7 @@
       "additionalProperties": false,
       "properties": {
         "githubPaidAllowed": { "const": false },
-        "cloudflarePaidAllowed": { "const": false },
+        "paidHostingAllowed": { "const": false },
         "autoPaidFallbackAllowed": { "const": false },
         "trialServicesAllowed": { "const": false },
         "paidFallbackAllowed": { "const": false },

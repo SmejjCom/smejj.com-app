@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/glm-shard-map.schema.json",
+  "title": "smejj.com GLM-5.2 Shard Map",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "modelId",
+    "manifestVersion",
+    "storage",
+    "shards"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "modelId": {
+      "const": "glm-5-2"
+    },
+    "manifestVersion": {
+      "type": "string"
+    },
+    "storage": {
+      "type": "object",
+      "required": [
+        "provider",
+        "prefix"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "const": "idrive-e2"
+        },
+        "prefix": {
+          "type": "string"
+        }
+      }
+    },
+    "shards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "objectKey",
+          "sha256",
+          "sizeBytes",
+          "role",
+          "cachePriority"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "role": {
+            "type": "string"
+          },
+          "cachePriority": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

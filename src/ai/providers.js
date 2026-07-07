@@ -2,6 +2,8 @@ export const AI_MODES = Object.freeze({
   localBrowser: "local-browser",
   byok: "byok-openai-compatible",
   freeDemo: "free-demo-hardlimit",
+  kimiK27Vault: "kimi-k2-7-vault",
+  glm52Vault: "glm-5-2-fp8-vault",
   disabled: "disabled",
   laterPartnerCompute: "later-partner-compute"
 });
@@ -31,6 +33,24 @@ export const PROVIDERS = Object.freeze({
     requiresServerQuota: true,
     fallback: AI_MODES.disabled
   },
+  [AI_MODES.kimiK27Vault]: {
+    id: AI_MODES.kimiK27Vault,
+    type: "model-vault",
+    costRisk: "storage-only",
+    enabledByDefault: false,
+    inference: "disabled-until-approved-compute",
+    role: "archived-comparison-specialist",
+    fallback: AI_MODES.disabled
+  },
+  [AI_MODES.glm52Vault]: {
+    id: AI_MODES.glm52Vault,
+    type: "model-vault",
+    costRisk: "storage-only",
+    enabledByDefault: false,
+    inference: "disabled-until-approved-compute",
+    role: "flagship-coding-and-planning-brain",
+    fallback: AI_MODES.disabled
+  },
   [AI_MODES.disabled]: {
     id: AI_MODES.disabled,
     type: "disabled",
@@ -51,4 +71,3 @@ export const PROVIDERS = Object.freeze({
 export function getProvider(id) {
   return PROVIDERS[id] || null;
 }
-

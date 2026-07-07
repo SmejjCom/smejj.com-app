@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/context-plan.schema.json",
+  "title": "smejj.com Context Plan",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "jobId",
+    "projectId",
+    "planner",
+    "limits",
+    "selectedFiles",
+    "repoPack",
+    "exclusions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "jobId": {
+      "type": "string"
+    },
+    "projectId": {
+      "type": "string"
+    },
+    "planner": {
+      "type": "object",
+      "required": [
+        "strategy",
+        "blindFullRepoLoadAllowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "const": "targeted-repo-pack"
+        },
+        "blindFullRepoLoadAllowed": {
+          "const": false
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "required": [
+        "maxContextTokens",
+        "reservedOutputTokens"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "maxContextTokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reservedOutputTokens": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "selectedFiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "repoPack": {
+      "type": "object",
+      "required": [
+        "manifestKey",
+        "symbolGraphKey",
+        "ragShardKeys"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "manifestKey": {
+          "type": "string"
+        },
+        "symbolGraphKey": {
+          "type": "string"
+        },
+        "ragShardKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -26,7 +26,10 @@ export function listRepoFiles() {
       cwd: rootDir,
       encoding: "utf8"
     });
-    return output.split(/\r?\n/).filter(Boolean);
+    return output
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .filter((file) => fs.existsSync(repoPath(file)));
   } catch {
     return walkFiles(".").filter((file) => !file.startsWith(".git/") && !file.startsWith("node_modules/"));
   }

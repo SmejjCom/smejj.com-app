@@ -1,3 +1,5 @@
+> **VERALTET (Cloudflare-Exit 2026-07-02):** Cloudflare wird nicht mehr genutzt. Dieses Dokument bleibt nur als historische Referenz erhalten. Aktuell gilt `docs/deployment/GITHUB_PAGES_DEPLOY.md`.
+
 # Cloudflare Free Gatekeeper
 
 ## Entscheidung

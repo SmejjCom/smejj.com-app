@@ -13,14 +13,14 @@
         "storeModelWeightsInRepo",
         "storeLargeMediaInRepo",
         "primaryStorage",
-        "githubCloudflarePaidAllowed"
+        "paidPlatformServicesAllowed"
       ],
       "additionalProperties": false,
       "properties": {
         "storeModelWeightsInRepo": { "const": false },
         "storeLargeMediaInRepo": { "const": false },
         "primaryStorage": { "const": "idrive-e2" },
-        "githubCloudflarePaidAllowed": { "const": false }
+        "paidPlatformServicesAllowed": { "const": false }
       }
     },
     "models": {

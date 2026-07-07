@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { failAndExit, parseJsonOrJsonc, readJson } from "./validation-utils.mjs";
+import fs from "node:fs";
+import { failAndExit, readJson } from "./validation-utils.mjs";
 
 const failures = [];
 
@@ -9,7 +10,7 @@ const models = readJson("idrive-layout/manifests/models/registry.json");
 const deployment = readJson("idrive-layout/manifests/deployments/current.json");
 
 if (capabilities.costPolicy.githubPaidAllowed) failures.push("GitHub paid is allowed in capabilities.");
-if (capabilities.costPolicy.cloudflarePaidAllowed) failures.push("Cloudflare paid is allowed in capabilities.");
+if (capabilities.costPolicy.paidHostingAllowed) failures.push("Paid hosting is allowed in capabilities.");
 if (capabilities.costPolicy.autoPaidFallbackAllowed) failures.push("Auto paid fallback is allowed in capabilities.");
 if (capabilities.costPolicy.trialServicesAllowed) failures.push("Trial services are allowed in capabilities.");
 if (capabilities.costPolicy.paidFallbackAllowed) failures.push("Paid fallback is allowed in capabilities.");
@@ -20,7 +21,7 @@ if (providers.defaultMode !== "disabled") failures.push("Providers default mode 
 if (!providers.policy.failClosed) failures.push("Providers policy must fail closed.");
 if (providers.policy.paidFallbackAllowed) failures.push("Providers policy allows paid fallback.");
 
-if (models.policy.githubCloudflarePaidAllowed) failures.push("Models registry allows GitHub/Cloudflare paid.");
+if (models.policy.paidPlatformServicesAllowed) failures.push("Models registry allows paid platform services.");
 if (models.policy.storeModelWeightsInRepo) failures.push("Models registry allows model weights in repo.");
 if (models.policy.primaryStorage !== "idrive-e2") failures.push("Models registry primary storage is not IDrive e2.");
 
@@ -31,38 +32,14 @@ if (!deployment.release.requiresWrittenApproval) failures.push("Deployment requi
 if (deployment.release.livePublished) failures.push("Deployment manifest must not mark livePublished true.");
 if (!deployment.release.rollbackRequired) failures.push("Deployment rollbackRequired must be true.");
 
-checkWrangler();
+checkNoCloudflareConfig();
 checkPackageScripts();
 
 failAndExit("Cost guardrails", failures);
 
-function checkWrangler() {
-  const config = parseJsonOrJsonc("wrangler.jsonc");
-  const forbiddenTopLevel = [
-    "kv_namespaces",
-    "d1_databases",
-    "r2_buckets",
-    "queues",
-    "vectorize",
-    "analytics_engine_datasets",
-    "durable_objects",
-    "workflows",
-    "pipelines",
-    "hyperdrive",
-    "ai",
-    "browser",
-    "images",
-    "stream"
-  ];
-  for (const key of forbiddenTopLevel) {
-    if (key in config) failures.push(`Cloudflare paid-risk binding is configured in wrangler.jsonc: ${key}`);
-  }
-  const vars = config.vars || {};
-  if (vars.SMEJJ_LLM_BASE_URL && vars.SMEJJ_LLM_BASE_URL !== "disabled") {
-    failures.push("wrangler.jsonc must not configure a server-default paid/provider LLM endpoint.");
-  }
-  if (vars.SMEJJ_LLM_MODEL && vars.SMEJJ_LLM_MODEL !== "disabled") {
-    failures.push("wrangler.jsonc must not configure a server-default LLM model.");
+function checkNoCloudflareConfig() {
+  for (const artifact of ["wrangler.jsonc", "wrangler.toml", ".wrangler", "cloudflare-worker", "src/worker.js", "src/edge"]) {
+    if (fs.existsSync(artifact)) failures.push(`Cloudflare artifact must not exist: ${artifact}`);
   }
 }
 

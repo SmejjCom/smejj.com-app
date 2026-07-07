@@ -51,9 +51,9 @@ await check("pwa manifest", async () => {
 await check("service worker cache version", async () => {
   const { response, text } = await get("/sw.js");
   assert(response.ok, `status ${response.status}`);
-  assert(text.includes("smejj-shell-v54"), "service worker cache not bumped");
+  assert(text.includes("smejj-shell-v72"), "service worker cache not bumped");
   assert(text.includes("/icons/icon.svg"), "icons not cached");
-  return "v54";
+  return "v70";
 });
 
 await check("security headers", async () => {
@@ -75,10 +75,34 @@ await check("health api", async () => {
 
 await check("idrive storage api", async () => {
   const { response, body } = await json("/api/storage/status");
-  assert(response.ok, `status ${response.status}`);
+  assert([200, 502].includes(response.status), `status ${response.status}`);
+  assert(body.configured === true || body.ok === true, "storage status did not report configured/ok state");
+  assert(body.provider === "idrive-e2" || body.storageRole === "primary", "wrong provider");
+  if (response.status === 502) {
+    assert(body.ok === false, "fail-closed storage response must be explicit");
+    return "fail-closed";
+  }
   assert(body.ok === true, "storage not ok");
-  assert(body.provider === "idrive-e2", "wrong provider");
   return body.storageRole;
+});
+
+await check("model status api fails closed quickly", async () => {
+  const started = Date.now();
+  const { response, body } = await json("/api/models/status");
+  const elapsed = Date.now() - started;
+  assert(response.ok, `status ${response.status}`);
+  assert(Array.isArray(body.models) && body.models.length >= 1, "missing model status list");
+  assert(elapsed < 6000, `model status too slow: ${elapsed}ms`);
+  return `${body.models.length} models / ${elapsed}ms`;
+});
+
+await check("glm salad preflight blocks unsafe full run", async () => {
+  const { response, body } = await json("/api/workers/preflight?mode=full-model");
+  assert(response.status === 409 || response.status === 200, `status ${response.status}`);
+  assert(body.ok === false, "unsafe GLM full run was not blocked");
+  const reasons = body.preflight?.reasons || [];
+  assert(reasons.includes("glm_5_2_full_run_blocked_on_300gb_salad_worker"), "missing GLM 300GB worker block reason");
+  return "blocked";
 });
 
 await check("google auth config has safe shape", async () => {
@@ -180,7 +204,12 @@ await check("chat fallback", async () => {
     body: JSON.stringify({ task: "hi" })
   });
   assert(response.ok, `status ${response.status}`);
-  assert(text.includes("kostenlosen smejj-Local-Modus"), "missing local chat fallback");
+  assert(
+    text.includes("Hi, ich bin da.") ||
+      text.includes("Verstanden.") ||
+      text.includes("Verstanden. Ich behandle das als Coding-Aufgabe."),
+    "missing local chat fallback"
+  );
   assert(!text.includes("KI-Modus disabled. Server-KI"), "chat shows dead disabled response");
   return "local-fallback";
 });

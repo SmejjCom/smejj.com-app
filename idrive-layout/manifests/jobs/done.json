@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "status": "done",
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "jobs/done/"
+  },
+  "results": []
+}
