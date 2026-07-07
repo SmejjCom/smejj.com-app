@@ -14,10 +14,13 @@ import { parseS3Keys, signedS3List } from "../control-server/src/storage/s3Signe
 import { handleAutonomousRun, handleCreateJob, handleFreeExecutor, handleJobEvents, handleJobStatus, handleWorkerStatusUpdate } from "../control-server/src/routes/jobRoutes.js";
 import { handleSaladCreate, handleSaladGpuClasses, handleSaladPlan, handleSaladStart, handleSaladStatus, handleSaladStop } from "../control-server/src/routes/saladRoutes.js";
 import { handleStoragePresign } from "../control-server/src/routes/storagePresignRoutes.js";
+import { handleBrowserFetch } from "../control-server/src/routes/browserProxyRoutes.js";
+import { handlePasskeyLoginOptions, handlePasskeyLoginVerify, handlePasskeyRegisterOptions, handlePasskeyRegisterVerify } from "../control-server/src/routes/passkeyRoutes.js";
 import { buildRagContextBlock, searchKnowledge } from "../control-server/src/rag/agentContext.js";
+import { buildWebContextBlock, searchWeb, shouldSearchWeb } from "./search/webSearch.js";
+import { createRateLimiter } from "./shared/rateLimiter.js";
 import { classifyProfile, executeWithFallback, resolveChain } from "../control-server/src/llm/modelRouter.js";
 import { pipeVisibleModelStream } from "../control-server/src/llm/streamFilter.js";
-import { streamLiveInternetAnswer } from "../control-server/src/live/liveInternet.js";
 import { corsHeadersFor, handlePreflight } from "../control-server/src/http/cors.js";
 import { installCrashGuard } from "../control-server/src/http/crashGuard.js";
 
@@ -82,7 +85,13 @@ const server = http.createServer(async (req, res) => {
       }
     }
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return handleAuthLogout(res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyRegisterOptions) return await handlePasskeyRegisterOptions(req, res, { env: process.env });
+    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyRegisterVerify) return await handlePasskeyRegisterVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie });
+    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginOptions) return await handlePasskeyLoginOptions(req, res, { env: process.env });
+    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginVerify) return await handlePasskeyLoginVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie });
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
+    if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
+    if (readMethod && url.pathname === ROUTES.api.browserFetch) return await handleBrowserFetch(url, res, { req });
     if (req.method === "POST" && url.pathname === ROUTES.api.chat) return await handleChat(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.agent) return await handleAgent(req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.fileRead) return await handleRead(req, res);
@@ -232,12 +241,45 @@ function handleAuthLogout(res) {
   res.end(JSON.stringify({ authenticated: false }, null, 2));
 }
 
+// Rate-Limit fuer die offene Websuche: 20 Anfragen / 60s pro IP (free-safe, in-memory).
+const webSearchRateLimiter = createRateLimiter({ windowMs: 60000, max: 20 });
+
+function clientIpFrom(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || req.socket?.remoteAddress || "unknown";
+}
+
+// Live-Internet-Suche als eigener Endpunkt (GET /api/search/web?q=...). Free-only,
+// fail-closed: Fehler liefern eine leere Ergebnisliste, niemals Kosten oder Abbruch.
+async function handleWebSearch(req, url, res) {
+  const gate = webSearchRateLimiter.check(clientIpFrom(req));
+  if (!gate.allowed) {
+    res.setHeader("Retry-After", String(Math.ceil(gate.retryAfterMs / 1000)));
+    res.setHeader("Access-Control-Expose-Headers", "Retry-After");
+    return json(res, 429, { error: "Zu viele Suchanfragen. Bitte kurz warten." });
+  }
+  const query = String(url.searchParams.get("q") || "").trim();
+  if (!query) return json(res, 400, { error: "Missing q" });
+  const results = await searchWeb(query, { limit: 8 });
+  return json(res, 200, { ok: true, query, count: results.length, results });
+}
+
+// Erkennt echte Coding-Aufgaben (nur dann Code-Agent-Modus mit Plan/Diff).
+// Alles andere gilt als Wissens-/Aktualitaetsfrage und wird live im Internet recherchiert.
+function isCodingTask(task) {
+  const t = String(task || "");
+  if (/```/.test(t)) return true;
+  if (/\b(refactor|debug|stack ?trace|compile|dockerfile|commit|deploy|npm |pnpm |yarn |git )\b/i.test(t)) return true;
+  if (/\b(schreib|erstelle|implementier|programmier|code|coden|baue|fix|behebe)\b/i.test(t)
+      && /\b(funktion|function|klasse|class|script|komponente|component|endpoint|modul|module|css|html|javascript|typescript|python|react|node|bug|fehler|datei|file|repo)\b/i.test(t)) return true;
+  return false;
+}
+
 async function handleAgent(req, res) {
   const body = await readJson(req);
   const task = String(body.task || "").trim();
   const files = Array.isArray(body.files) ? body.files.slice(0, 8) : [];
   if (!task) return json(res, 400, { error: "Missing task" });
-  if (await streamLiveInternetAnswer(res, task)) return;
 
   const fileBlocks = [];
   for (const file of files) {
@@ -245,22 +287,53 @@ async function handleAgent(req, res) {
     const content = await readLimited(safePath, 120_000);
     fileBlocks.push(`--- ${file} ---\n${content}`);
   }
-  // Agent recherchiert vor der Aufgabe automatisch im eigenen Projektwissen (fail-closed leer).
+
+  // Coding-Aufgabe -> Code-Agent. Sonst Wissens-/Aktualitaetsfrage -> Live-Websuche.
+  const codingTask = fileBlocks.length > 0 || isCodingTask(task);
+  const webContext = (!codingTask && shouldSearchWeb(task))
+    ? await buildWebContextBlock(task, { maxResults: 6, withPages: 2 })
+    : "";
+  // Projektwissen (RAG) ergaenzt, ersetzt aber nie die Live-Suche.
   const ragContext = await buildRagContextBlock(config.projectRoot, task, 3);
 
+  let systemLines;
+  if (codingTask) {
+    systemLines = [
+      "You are smejj.com Code Agent.",
+      "Return a concise plan and unified diff suggestions only.",
+      "Do not claim that files were changed.",
+      "Dangerous terminal, git, network, secrets, and deletion actions require user approval."
+    ];
+  } else if (webContext) {
+    systemLines = [
+      "Du bist der Assistent von smejj.com mit Live-Internet-Suchergebnissen.",
+      "Beantworte die Frage direkt, korrekt und kompakt in der Sprache des Nutzers.",
+      "Nutze VORRANGIG die Live-Internet-Ergebnisse unten und fasse die relevanten Infos zusammen.",
+      "Fasse in EIGENEN WORTEN und klaren, vollstaendigen Saetzen zusammen; gib NIEMALS rohen Seitentext, Code-, JSON- oder Markup-Fragmente wieder.",
+      "Beispiel: aus der Kontext-Zeile 'Bitcoin 54.792 -0,7% Euro' antwortest du 'Ein Bitcoin kostet aktuell rund 54.792 Euro.' - kopiere niemals ganze Ticker-, Snippet- oder Menue-Zeilen.",
+      "Nenne am Ende die genutzte(n) Quelle(n) als URL samt Abrufzeit (Stand).",
+      "Wenn die Ergebnisse die Antwort nicht enthalten, sage das ehrlich und nenne, was du gefunden hast; erfinde nichts."
+    ];
+  } else {
+    systemLines = [
+      "Du bist der Assistent von smejj.com.",
+      "Beantworte die Frage hilfreich, korrekt und kompakt in der Sprache des Nutzers.",
+      "Wenn dir fuer tagesaktuelle Fakten (Wetter, News, Preise, Oeffnungszeiten) aktuelle Daten fehlen, sage das ehrlich statt zu raten."
+    ];
+  }
+
+  const userParts = [`Frage/Aufgabe:\n${task}`];
+  if (webContext) userParts.push(webContext);
+  if (ragContext) userParts.push(ragContext);
+  if (fileBlocks.length) userParts.push(`Dateien:\n${fileBlocks.join("\n\n")}`);
+
   const messages = [
-    {
-      role: "system",
-      content: [
-        "You are smejj.com Code Agent.",
-        "Return a concise plan and unified diff suggestions only.",
-        "Do not claim that files were changed.",
-        "Dangerous terminal, git, network, secrets, and deletion actions require user approval."
-      ].join("\n")
-    },
-    { role: "user", content: `Task:\n${task}\n\n${ragContext ? `${ragContext}\n\n` : ""}Files:\n${fileBlocks.join("\n\n")}` }
+    { role: "system", content: systemLines.join("\n") },
+    { role: "user", content: userParts.join("\n\n") }
   ];
-  return streamLLM(res, messages, classifyProfile(task));
+  // Profilwahl: Web-Fragen nutzen das Web-Zusammenfassungsprofil des Routers.
+  const profile = webContext ? "web" : classifyProfile(task);
+  return streamLLM(res, messages, profile);
 }
 
 async function handleRead(req, res) {
