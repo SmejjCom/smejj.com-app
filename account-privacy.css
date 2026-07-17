@@ -1,0 +1,263 @@
+#profile.premium-view {
+  padding: 72px clamp(14px, 4vw, 48px) 28px;
+}
+
+#profile .account-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--premium-line);
+}
+
+#profile .account-header h2 {
+  margin: 4px 0 8px;
+  color: var(--premium-text);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 500;
+  line-height: 1.12;
+}
+
+#profile .account-security {
+  padding: 8px 12px;
+  border: 1px solid var(--premium-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--premium-muted);
+  font-size: 13px;
+}
+
+#profile .account-layout {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 820px);
+  align-items: start;
+  gap: clamp(16px, 3vw, 32px);
+}
+
+#profile .account-nav {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--premium-line);
+  border-radius: 8px;
+  background: var(--premium-surface);
+}
+
+#profile .account-nav button {
+  justify-content: flex-start;
+  min-height: 38px;
+  border-color: transparent;
+  border-radius: 6px;
+  background: transparent;
+}
+
+#profile .account-nav button.is-active {
+  border-color: var(--premium-line);
+  background: rgba(255, 255, 255, 0.065);
+}
+
+#profile .account-panel {
+  display: grid;
+  gap: 14px;
+}
+
+#profile .account-panel[hidden] {
+  display: none;
+}
+
+#profile .account-panel h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 550;
+}
+
+#profile .account-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+#profile .account-status,
+#profile .account-list {
+  overflow: hidden;
+  border: 1px solid var(--premium-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 42%),
+    var(--premium-surface);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 12px 34px var(--premium-shadow);
+}
+
+#profile .account-status {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#profile .account-status div,
+#profile .account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 68px;
+  padding: 13px 16px;
+}
+
+#profile .account-status div {
+  display: grid;
+  gap: 4px;
+}
+
+#profile .account-status div:nth-child(n + 3),
+#profile .account-row + .account-row {
+  border-top: 1px solid var(--premium-line);
+}
+
+#profile .account-row > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+#profile .account-row small,
+#profile .account-note,
+#profile .account-status span {
+  color: var(--premium-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+#profile .account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#profile .permission-state {
+  padding: 6px 9px;
+  border: 1px solid var(--premium-line-strong);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--premium-text);
+  font-size: 12px;
+}
+
+#profile .danger-action {
+  border-color: rgba(255, 93, 93, 0.45);
+  color: #ffb1b1;
+}
+
+@media (max-width: 760px) {
+  #profile.premium-view {
+    padding: 56px 12px 22px;
+  }
+
+  #profile .account-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-bottom: 12px;
+  }
+
+  #profile .account-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #profile .account-nav {
+    position: static;
+    display: flex;
+    overflow-x: auto;
+    padding: 5px;
+  }
+
+  #profile .account-nav button {
+    flex: none;
+  }
+
+  #profile .account-grid,
+  #profile .account-status {
+    grid-template-columns: 1fr;
+  }
+
+  #profile .account-status div:nth-child(n + 2) {
+    border-top: 1px solid var(--premium-line);
+  }
+}
+
+@media (max-width: 480px) {
+  #profile.premium-view {
+    padding: 52px 10px 20px;
+  }
+
+  #profile .account-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* Profilbild-Steuerung im Panel "Profil" (public/profile-picture-control.js).
+   Der native File-Input bleibt im DOM und fokussierbar (Tastatur/Screenreader),
+   sichtbar ist das gestylte Label. */
+#profile .account-picture {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+#profile .account-picture .profile-avatar {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  font-size: 26px;
+}
+
+#profile .account-picture-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#profile .account-picture-body small {
+  opacity: 0.68;
+}
+
+#profile .account-picture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+#profile #profilePictureInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#profile .account-picture-choose {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#profile .account-picture-choose:hover {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+#profile #profilePictureInput:focus-visible + .account-picture-choose {
+  outline: 2px solid #00ffef;
+  outline-offset: 2px;
+}
