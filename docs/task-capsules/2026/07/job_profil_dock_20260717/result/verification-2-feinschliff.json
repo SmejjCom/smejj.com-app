@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_profil_dock_20260717",
+  "abschnitt": "Feinschliff + i18n (2026-07-17, zweite Freigaberunde)",
+  "aenderungen": [
+    "profile-dock.css: .profile-dock-button flex 1 1 auto -> 0 1 auto (Zahnrad neben den Namen, 67px -> 39px)",
+    "styles.css: --left-panel-width 228px -> 200px (zeilenzahl-neutral)",
+    "app.js: PANEL_WIDTHS.default 228 -> 200; getPanelWidth migriert [306, 228, 225] -> Standard (zeilenzahl-neutral, Baseline 1403 gehalten)",
+    "i18n: 16 Schluessel x 14 Sprachen ergaenzt (223 -> 239 je Bundle); ui.js Bundle-Import ?v=2 -> ?v=3",
+    "profile-picture-control.js: report(t(result.error)) — Store-Fehlertexte werden an der Oberflaeche uebersetzt",
+    "tests/i18n-ui.test.mjs: profile-dock.js, profile-picture-control.js, profile-picture-store.js als Quell-Dateien ergaenzt",
+    "tests/frontend-structure.test.mjs: Erwartung default: 200",
+    "index.html: Cache-Versionen styles.css + app.js (panel-200-20260717), profile-dock.css (-3)"
+  ],
+  "verifikation": {
+    "check:guidelines": "OK — 701 Dateien; app.js 1403 und styles.css 1565 unveraendert",
+    "check:frontend": "125/126 (1 = bekanntes @resvg-Umgebungsproblem, kein Branding-Asset angefasst)",
+    "check:platform": "7/7",
+    "check:start-lock": "OK — 28/28, neu eingefroren 2026-07-17T17:13:14Z mit Freigabe-Wortlaut",
+    "check:favicon-lock": "OK",
+    "weitere": "json, security, cost, paths, architecture, abuse, users, workspace, rollback, llm-router, release-safety OK"
+  },
+  "livebeweis": {
+    "abstandNameZuZahnrad": "39 px (vorher 67 px)",
+    "sidebarBreite": "200 px, Beschriftungen lesbar",
+    "i18n": "en/ar/ja Bundles je 239 Schluessel; visuell auf Englisch bestaetigt (Profile picture / Choose image / Remove)",
+    "konsolenfehler": 0,
+    "nichtRegression": "Neu/Suche/Coding/Projekte/Dateien/Verlauf ok; Zahnrad -> /settings; Dock -> /profile; Chat live ok"
+  },
+  "lehren": [
+    "GitHub-Upload: Klick-Rueckmeldung ist KEIN Beweis — zwei Commits gingen still verloren, Live-Inhalt muss gegengeprueft werden.",
+    "web_fetch lieferte eine veraltete CDN-Kopie von smejj.com — Live-Pruefung nur im Browser mit cache:'no-store'.",
+    "Jede geaenderte Asset-Datei braucht eine neue ?v=-Query in index.html; styles.css hatte gar keine.",
+    "tests/i18n-ui.test.mjs faengt fehlende Uebersetzungen neuer t()-Strings NICHT — Bundles muessen manuell mitgezogen werden."
+  ],
+  "offen": [
+    "check:branding in der Linux-Session nicht ausfuehrbar (nur darwin-arm64-Binary, Registry gesperrt) — Restrisiko, laeuft auf dem Mac.",
+    "Kontoseite: Logout im zweiten Tab vergraben, vier abmelde-aehnliche Aktionen gleichzeitig sichtbar — Umbauvorschlag liegt vor, freigabepflichtig.",
+    "Profilbild bleibt geraetelokal (kein Sync ueber Geraete); Google-Profilbild-Uebernahme waere moeglich, braucht Datenschutz-Freigabe."
+  ],
+  "status": "verified"
+}

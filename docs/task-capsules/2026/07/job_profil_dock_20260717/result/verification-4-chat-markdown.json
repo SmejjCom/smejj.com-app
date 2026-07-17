@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_profil_dock_20260717",
+  "abschnitt": "Markdown-Anzeige im Chat + Branding-Test-Datei (2026-07-17, vierte Freigaberunde)",
+  "freigabe": "\"Ja\" auf die Empfehlung: Markdown im Chat fixen, .command-Datei fuer den Branding-Test",
+  "neu": ["public/chat-markdown.js", "public/chat-markdown.css", "tests/chat-markdown.test.mjs", "smejj.com Branding-Test.command"],
+  "geaendert": ["public/app.js (+1 Zeile, Baseline 1403->1404 dokumentiert)", "public/components.js (Re-Export)", "public/index.html", "public/sw.js (v128)", "scripts/check-guidelines.mjs"],
+  "verifikation": {
+    "tests/chat-markdown.test.mjs": "8/8",
+    "tests/profile-dock.test.mjs": "14/14",
+    "check:frontend": "139/140 (1 = bekanntes @resvg-Umgebungsproblem)",
+    "check:guidelines": "OK — 712 Dateien; styles.css 1565 unveraendert, app.js 1404 (dokumentiert)",
+    "check:start-lock": "OK — 28/28, neu eingefroren 2026-07-17T18:33:42Z",
+    "weitere": "platform, favicon-lock, json, security, architecture, syntax OK"
+  },
+  "livebeweis": {
+    "markdown": "Hauptstadt Portugal -> <p><strong>Lissabon</strong></p>; Gegenprobe Berlin ebenfalls fett; keine Sternchen",
+    "xss": "**<img src=x onerror=alert(1)>** -> 0 gefaehrliche Elemente im echten DOM, Text lesbar, fett weiterhin aktiv",
+    "sprachmodus": "Mit voiceMode-Flag kein Rendern; Vorlesen liest den sauberen Text",
+    "konsolenfehler": 0
+  },
+  "gefundeneUndBehobeneFehler": [
+    {
+      "fehler": "KRITISCH: import from \"./components.js\" ohne Cache-Version -> alte components.js aus dem HTTP-Cache -> SyntaxError (fehlender Re-Export) -> app.js brach komplett ab (tote App fuer wiederkehrende Nutzer)",
+      "fix": "./components.js?v=chat-markdown-20260717",
+      "lehre": "Nicht nur geaenderte Dateien brauchen eine ?v=-Query, sondern JEDER Import einer Datei, deren Exporte sich aendern.",
+      "verifiziert": "Live nachgetestet: App laedt, Antwort fett, 0 Konsolenfehler"
+    }
+  ],
+  "status": "verified"
+}

@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "policy": {
+    "storeModelWeightsInRepo": false,
+    "storeLargeMediaInRepo": false,
+    "primaryStorage": "idrive-e2",
+    "paidPlatformServicesAllowed": false
+  },
+  "models": [
+    {
+      "id": "kimi-k2-7",
+      "name": "Kimi K2.7",
+      "role": "secondary-agentic-coding-model",
+      "source": {
+        "provider": "huggingface",
+        "repo": "moonshotai/Kimi-K2.7-Code"
+      },
+      "capabilities": {
+        "contextTokens": 262144,
+        "coding": true,
+        "fileAnalysis": true,
+        "projectAnalysis": true,
+        "agentTasks": true,
+        "streaming": true
+      },
+      "checksums": {
+        "status": "present-and-verified",
+        "prefix": "model-files/kimi-k2-7/checksums",
+        "manifestKey": "model-files/kimi-k2-7/checksums/streamed-checksums.sha256"
+      },
+      "inventory": {
+        "status": "verified-complete",
+        "prefix": "model-files/kimi-k2-7/checksums",
+        "sourceFileCount": 86,
+        "idriveObjectCount": 102,
+        "safetensorsCount": 64,
+        "reportedBytes": 595204984507,
+        "reportedGiB": 554.3
+      },
+      "storage": {
+        "provider": "idrive-e2",
+        "prefix": "model-files/kimi-k2-7"
+      },
+      "inference": {
+        "default": "disabled",
+        "allowedModes": [
+          "openai-compatible-api-after-feature-flag",
+          "byok",
+          "partner-compute-later",
+          "self-host-later"
+        ],
+        "notAllowedAsDefault": [
+          "github-paid",
+          "cloudflare-paid",
+          "trial-api",
+          "workers-ai",
+          "browser-free-full-model"
+        ]
+      },
+      "status": "verified-complete-storage-ready-runtime-feature-flagged",
+      "license": "modified-mit",
+      "verifiedAt": "2026-07-10T01:42:00Z",
+      "runtime": {
+        "featureFlag": "SMEJJ_KIMI_K2_7_ENABLED",
+        "default": "disabled",
+        "provider": "kimi",
+        "apiCompatibility": "openai-chat-completions",
+        "fallbackModelId": "glm-5-2",
+        "engines": [
+          "vllm",
+          "sglang",
+          "ktransformers"
+        ]
+      }
+    },
+    {
+      "id": "nex-n2-pro",
+      "name": "Nex N2 Pro",
+      "role": "primary-idrive-vault-target-for-lite-coding-engine",
+      "source": {
+        "provider": "huggingface",
+        "repo": "nex-agi/Nex-N2-Pro",
+        "ggufCandidates": [
+          "bartowski/nex-agi_Nex-N2-Pro-GGUF"
+        ],
+        "selectionPolicy": "use-only-verified-gguf-quantization-that-fits-contabo-8gb-with-small-context"
+      },
+      "checksums": {
+        "status": "required-before-run",
+        "prefix": "model-files/nex-n2-pro/checksums"
+      },
+      "inventory": {
+        "status": "planned",
+        "prefix": "model-files/nex-n2-pro/inventory"
+      },
+      "runtime": {
+        "engine": "llama.cpp",
+        "server": "llama-server",
+        "contaboRamGb": 8,
+        "localCachePolicy": "small-verified-quantization-only",
+        "deleteLocalCacheAfter": "job-or-cache-ttl",
+        "preferRagBeforeModel": true
+      },
+      "storage": {
+        "provider": "idrive-e2",
+        "prefix": "model-files/nex-n2-pro"
+      },
+      "inference": {
+        "default": "disabled",
+        "allowedModes": [
+          "contabo-local-llama-cpp-after-checksum",
+          "byok",
+          "disabled"
+        ],
+        "notAllowedAsDefault": [
+          "github-paid",
+          "cloudflare-paid",
+          "trial-api",
+          "workers-ai",
+          "unverified-model-download",
+          "large-model-permanent-local-storage"
+        ]
+      },
+      "status": "target-model-awaiting-verified-idrive-import",
+      "license": "verify-before-production-use"
+    },
+    {
+      "id": "glm-5-2-fp8",
+      "name": "GLM-5.2 FP8",
+      "role": "flagship-coding-and-planning-vault-target",
+      "source": {
+        "provider": "huggingface",
+        "repo": "zai-org/GLM-5.2-FP8",
+        "fallbackRepo": "zai-org/GLM-5.2",
+        "selectionPolicy": "prefer-fp8-official-zai-repo-before-bf16-because-idrive-capacity-and-inference-hosting-are-more-realistic"
+      },
+      "capabilities": {
+        "contextTokens": 1000000,
+        "recommendedRole": "flagship-coding-architecture-long-context-planning-and-heavy-agent-tasks",
+        "helperPolicy": "smaller_models_only_for_non_quality_critical_side_tasks"
+      },
+      "checksums": {
+        "status": "present",
+        "prefix": "model-files/glm-5-2-fp8/checksums",
+        "manifestKey": "model-files/glm-5-2-fp8/checksums/streamed-checksums.sha256",
+        "upstreamInventoryKey": "model-files/glm-5-2-fp8/checksums/upstream-file-inventory.json"
+      },
+      "inventory": {
+        "status": "present",
+        "prefix": "model-files/glm-5-2-fp8/checksums",
+        "sourceFileCount": 149,
+        "originalFileCount": 149,
+        "idriveObjectCount": 157,
+        "safetensorsCount": 141,
+        "reportedGiB": 703.8
+      },
+      "storage": {
+        "provider": "idrive-e2",
+        "prefix": "model-files/glm-5-2-fp8"
+      },
+      "inference": {
+        "default": "disabled",
+        "allowedModes": [
+          "self-host-later",
+          "partner-compute-later",
+          "byok",
+          "disabled"
+        ],
+        "notAllowedAsDefault": [
+          "github-paid",
+          "cloudflare-paid",
+          "trial-api",
+          "workers-ai",
+          "unverified-model-download",
+          "large-model-permanent-local-storage",
+          "browser-free-full-model"
+        ]
+      },
+      "status": "verified-complete-storage-only",
+      "license": "mit",
+      "verifiedAt": "2026-06-24T00:19:44Z",
+      "runtime": {
+        "default": "disabled",
+        "directFullModelOnSalad4090": "blocked-by-preflight",
+        "requiredLocalCacheGiB": 704,
+        "plannedRoles": [
+          "flagship-coding-brain",
+          "long-context-planner",
+          "heavy-reviewer"
+        ],
+        "allowedOnlyAfter": [
+          "explicit-compute-approval",
+          "preflight-ok",
+          "checksum-ok"
+        ]
+      }
+    }
+  ]
+}

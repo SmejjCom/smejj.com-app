@@ -1,0 +1,381 @@
+{
+  "site": {
+    "origin": "https://smejj.com",
+    "rootLang": "de",
+    "xDefault": "/en/",
+    "themeColor": "#f7f7f4",
+    "logo": "/icons/smejj_icon.svg",
+    "favicon": "/icons/smejj_favicon.svg?v=112",
+    "appleTouchIcon": "/apple-touch-icon.png",
+    "socialImage": "https://smejj.com/og-image.png",
+    "allLanguageNames": {
+      "de": "Deutsch",
+      "en": "English",
+      "zh": "中文",
+      "es": "Español",
+      "ar": "العربية",
+      "fr": "Français",
+      "pt": "Português",
+      "ru": "Русский",
+      "tr": "Türkçe",
+      "ja": "日本語",
+      "ko": "한국어",
+      "it": "Italiano",
+      "hi": "हिन्दी",
+      "id": "Bahasa Indonesia",
+      "bn": "বাংলা"
+    }
+  },
+  "locales": [
+    {
+      "code": "en",
+      "dir": "ltr",
+      "title": "smejj.com — AI & Code Assistant | Autonomous AI Coding OS",
+      "description": "smejj.com is a fast AI and code assistant for chat, programming, and agent tasks. An autonomous AI coding OS that runs in your browser — available worldwide in 15 languages.",
+      "keywords": "smejj.com, AI assistant, code assistant, AI coding, autonomous agents, AI chat, developer tools",
+      "h1": "smejj.com — your AI & code assistant",
+      "tagline": "Chat, code, and automate with autonomous AI agents — fast, transparent, and cost-efficient.",
+      "cta": "Open smejj.com",
+      "featuresTitle": "Features",
+      "features": [
+        { "h": "AI chat", "p": "Ask questions, draft content, and solve problems in a fast, focused chat." },
+        { "h": "Autonomous coding", "p": "Delegate programming tasks — every change is verified, traceable, and reproducible." },
+        { "h": "AI agents", "p": "Agents plan, execute, and verify multi-step tasks with transparent progress and cost control." }
+      ],
+      "faqTitle": "Frequently asked questions",
+      "faq": [
+        { "q": "What is smejj.com?", "a": "smejj.com is an AI and code assistant platform: chat with AI, delegate coding tasks, and run autonomous agent workflows directly in your browser." },
+        { "q": "Which languages does smejj.com support?", "a": "smejj.com is available worldwide in 15 languages: English, Chinese, Spanish, Arabic, French, German, Portuguese, Russian, Turkish, Japanese, Korean, Italian, Hindi, Indonesian, and Bengali." },
+        { "q": "How do I use smejj.com?", "a": "Open smejj.com in a modern browser. It works as a progressive web app (PWA) and can be installed on desktop and mobile." }
+      ],
+      "langNote": "This page is also available in:",
+      "imprint": "Imprint",
+      "privacy": "Privacy"
+    },
+    {
+      "code": "zh",
+      "dir": "ltr",
+      "title": "smejj.com — AI 与代码助手 | 自主 AI 编程系统",
+      "description": "smejj.com 是一款快速的 AI 与代码助手,支持聊天、编程和智能体任务。可在浏览器中直接使用的自主 AI 编程系统,支持 15 种语言,全球可用。",
+      "keywords": "smejj.com, AI 助手, 代码助手, AI 编程, 自主智能体, AI 聊天, 开发者工具",
+      "h1": "smejj.com — 您的 AI 与代码助手",
+      "tagline": "与自主 AI 智能体一起聊天、编程和自动化 — 快速、透明、经济高效。",
+      "cta": "打开 smejj.com",
+      "featuresTitle": "功能",
+      "features": [
+        { "h": "AI 聊天", "p": "在快速、专注的聊天中提问、撰写内容并解决问题。" },
+        { "h": "自主编程", "p": "委托编程任务 — 每一次更改都经过验证、可追溯、可复现。" },
+        { "h": "AI 智能体", "p": "智能体规划、执行并验证多步骤任务,进度透明,成本可控。" }
+      ],
+      "faqTitle": "常见问题",
+      "faq": [
+        { "q": "smejj.com 是什么?", "a": "smejj.com 是一个 AI 与代码助手平台:与 AI 聊天、委托编程任务,并直接在浏览器中运行自主智能体工作流。" },
+        { "q": "smejj.com 支持哪些语言?", "a": "smejj.com 面向全球,支持 15 种语言:英语、中文、西班牙语、阿拉伯语、法语、德语、葡萄牙语、俄语、土耳其语、日语、韩语、意大利语、印地语、印尼语和孟加拉语。" },
+        { "q": "如何使用 smejj.com?", "a": "在现代浏览器中打开 smejj.com。它是一款渐进式 Web 应用(PWA),可安装到桌面和移动设备上。" }
+      ],
+      "langNote": "本页还提供以下语言版本:",
+      "imprint": "法律声明",
+      "privacy": "隐私政策"
+    },
+    {
+      "code": "es",
+      "dir": "ltr",
+      "title": "smejj.com — Asistente de IA y código | Sistema autónomo de programación con IA",
+      "description": "smejj.com es un asistente rápido de IA y código para chat, programación y tareas de agentes. Un sistema autónomo de programación con IA que funciona en tu navegador, disponible en 15 idiomas.",
+      "keywords": "smejj.com, asistente de IA, asistente de código, programación con IA, agentes autónomos, chat de IA, herramientas para desarrolladores",
+      "h1": "smejj.com — tu asistente de IA y código",
+      "tagline": "Chatea, programa y automatiza con agentes de IA autónomos: rápido, transparente y rentable.",
+      "cta": "Abrir smejj.com",
+      "featuresTitle": "Funciones",
+      "features": [
+        { "h": "Chat de IA", "p": "Haz preguntas, redacta contenido y resuelve problemas en un chat rápido y enfocado." },
+        { "h": "Programación autónoma", "p": "Delega tareas de programación: cada cambio se verifica, es trazable y reproducible." },
+        { "h": "Agentes de IA", "p": "Los agentes planifican, ejecutan y verifican tareas de varios pasos con progreso transparente y control de costes." }
+      ],
+      "faqTitle": "Preguntas frecuentes",
+      "faq": [
+        { "q": "¿Qué es smejj.com?", "a": "smejj.com es una plataforma de asistente de IA y código: chatea con la IA, delega tareas de programación y ejecuta flujos de agentes autónomos directamente en tu navegador." },
+        { "q": "¿Qué idiomas admite smejj.com?", "a": "smejj.com está disponible en todo el mundo en 15 idiomas: inglés, chino, español, árabe, francés, alemán, portugués, ruso, turco, japonés, coreano, italiano, hindi, indonesio y bengalí." },
+        { "q": "¿Cómo uso smejj.com?", "a": "Abre smejj.com en un navegador moderno. Funciona como aplicación web progresiva (PWA) y puede instalarse en escritorio y móvil." }
+      ],
+      "langNote": "Esta página también está disponible en:",
+      "imprint": "Aviso legal",
+      "privacy": "Privacidad"
+    },
+    {
+      "code": "ar",
+      "dir": "rtl",
+      "title": "smejj.com — مساعد الذكاء الاصطناعي والبرمجة | نظام برمجة ذاتي بالذكاء الاصطناعي",
+      "description": "smejj.com هو مساعد سريع للذكاء الاصطناعي والبرمجة للدردشة والبرمجة ومهام الوكلاء. نظام برمجة ذاتي بالذكاء الاصطناعي يعمل في متصفحك — متاح حول العالم بـ 15 لغة.",
+      "keywords": "smejj.com, مساعد ذكاء اصطناعي, مساعد برمجة, برمجة بالذكاء الاصطناعي, وكلاء مستقلون, دردشة ذكاء اصطناعي, أدوات المطورين",
+      "h1": "smejj.com — مساعدك للذكاء الاصطناعي والبرمجة",
+      "tagline": "دردش وبرمج وأتمت مهامك مع وكلاء ذكاء اصطناعي مستقلين — بسرعة وشفافية وتكلفة منخفضة.",
+      "cta": "افتح smejj.com",
+      "featuresTitle": "المميزات",
+      "features": [
+        { "h": "دردشة الذكاء الاصطناعي", "p": "اطرح الأسئلة وصِغ المحتوى وحلّ المشكلات في دردشة سريعة ومركّزة." },
+        { "h": "برمجة ذاتية", "p": "فوّض مهام البرمجة — كل تغيير يتم التحقق منه وقابل للتتبع وإعادة الإنتاج." },
+        { "h": "وكلاء الذكاء الاصطناعي", "p": "يخطط الوكلاء وينفذون ويتحققون من المهام متعددة الخطوات مع تقدم شفاف وتحكم في التكاليف." }
+      ],
+      "faqTitle": "الأسئلة الشائعة",
+      "faq": [
+        { "q": "ما هو smejj.com؟", "a": "smejj.com هو منصة مساعد للذكاء الاصطناعي والبرمجة: دردش مع الذكاء الاصطناعي، وفوّض مهام البرمجة، وشغّل سير عمل الوكلاء المستقلين مباشرة في متصفحك." },
+        { "q": "ما اللغات التي يدعمها smejj.com؟", "a": "smejj.com متاح حول العالم بـ 15 لغة: الإنجليزية والصينية والإسبانية والعربية والفرنسية والألمانية والبرتغالية والروسية والتركية واليابانية والكورية والإيطالية والهندية والإندونيسية والبنغالية." },
+        { "q": "كيف أستخدم smejj.com؟", "a": "افتح smejj.com في متصفح حديث. يعمل كتطبيق ويب تقدمي (PWA) ويمكن تثبيته على أجهزة سطح المكتب والجوال." }
+      ],
+      "langNote": "هذه الصفحة متوفرة أيضًا باللغات التالية:",
+      "imprint": "بيان قانوني",
+      "privacy": "الخصوصية"
+    },
+    {
+      "code": "fr",
+      "dir": "ltr",
+      "title": "smejj.com — Assistant IA & code | OS de codage IA autonome",
+      "description": "smejj.com est un assistant IA et code rapide pour le chat, la programmation et les tâches d'agents. Un OS de codage IA autonome qui fonctionne dans votre navigateur, disponible en 15 langues.",
+      "keywords": "smejj.com, assistant IA, assistant code, codage IA, agents autonomes, chat IA, outils développeurs",
+      "h1": "smejj.com — votre assistant IA & code",
+      "tagline": "Discutez, codez et automatisez avec des agents IA autonomes — rapide, transparent et économique.",
+      "cta": "Ouvrir smejj.com",
+      "featuresTitle": "Fonctionnalités",
+      "features": [
+        { "h": "Chat IA", "p": "Posez des questions, rédigez du contenu et résolvez des problèmes dans un chat rapide et ciblé." },
+        { "h": "Codage autonome", "p": "Déléguez vos tâches de programmation — chaque modification est vérifiée, traçable et reproductible." },
+        { "h": "Agents IA", "p": "Les agents planifient, exécutent et vérifient des tâches multi-étapes avec un suivi transparent et un contrôle des coûts." }
+      ],
+      "faqTitle": "Questions fréquentes",
+      "faq": [
+        { "q": "Qu'est-ce que smejj.com ?", "a": "smejj.com est une plateforme d'assistant IA et code : discutez avec l'IA, déléguez des tâches de programmation et exécutez des workflows d'agents autonomes directement dans votre navigateur." },
+        { "q": "Quelles langues smejj.com prend-il en charge ?", "a": "smejj.com est disponible dans le monde entier en 15 langues : anglais, chinois, espagnol, arabe, français, allemand, portugais, russe, turc, japonais, coréen, italien, hindi, indonésien et bengali." },
+        { "q": "Comment utiliser smejj.com ?", "a": "Ouvrez smejj.com dans un navigateur moderne. L'application fonctionne comme une PWA et peut être installée sur ordinateur et mobile." }
+      ],
+      "langNote": "Cette page est également disponible en :",
+      "imprint": "Mentions légales",
+      "privacy": "Confidentialité"
+    },
+    {
+      "code": "pt",
+      "dir": "ltr",
+      "title": "smejj.com — Assistente de IA e código | Sistema autônomo de programação com IA",
+      "description": "smejj.com é um assistente rápido de IA e código para chat, programação e tarefas de agentes. Um sistema autônomo de programação com IA que funciona no seu navegador, disponível em 15 idiomas.",
+      "keywords": "smejj.com, assistente de IA, assistente de código, programação com IA, agentes autônomos, chat de IA, ferramentas para desenvolvedores",
+      "h1": "smejj.com — seu assistente de IA e código",
+      "tagline": "Converse, programe e automatize com agentes de IA autônomos — rápido, transparente e econômico.",
+      "cta": "Abrir smejj.com",
+      "featuresTitle": "Recursos",
+      "features": [
+        { "h": "Chat de IA", "p": "Faça perguntas, redija conteúdo e resolva problemas em um chat rápido e focado." },
+        { "h": "Programação autônoma", "p": "Delegue tarefas de programação — cada alteração é verificada, rastreável e reproduzível." },
+        { "h": "Agentes de IA", "p": "Os agentes planejam, executam e verificam tarefas de várias etapas com progresso transparente e controle de custos." }
+      ],
+      "faqTitle": "Perguntas frequentes",
+      "faq": [
+        { "q": "O que é o smejj.com?", "a": "smejj.com é uma plataforma de assistente de IA e código: converse com a IA, delegue tarefas de programação e execute fluxos de agentes autônomos diretamente no navegador." },
+        { "q": "Quais idiomas o smejj.com suporta?", "a": "O smejj.com está disponível em todo o mundo em 15 idiomas: inglês, chinês, espanhol, árabe, francês, alemão, português, russo, turco, japonês, coreano, italiano, hindi, indonésio e bengali." },
+        { "q": "Como uso o smejj.com?", "a": "Abra smejj.com em um navegador moderno. Funciona como aplicativo web progressivo (PWA) e pode ser instalado no desktop e no celular." }
+      ],
+      "langNote": "Esta página também está disponível em:",
+      "imprint": "Aviso legal",
+      "privacy": "Privacidade"
+    },
+    {
+      "code": "ru",
+      "dir": "ltr",
+      "title": "smejj.com — ИИ- и код-ассистент | Автономная ИИ-система для программирования",
+      "description": "smejj.com — быстрый ИИ- и код-ассистент для чата, программирования и агентных задач. Автономная ИИ-система для кодинга, работающая прямо в браузере. Доступна на 15 языках.",
+      "keywords": "smejj.com, ИИ-ассистент, код-ассистент, ИИ-программирование, автономные агенты, ИИ-чат, инструменты разработчика",
+      "h1": "smejj.com — ваш ИИ- и код-ассистент",
+      "tagline": "Общайтесь, программируйте и автоматизируйте задачи с автономными ИИ-агентами — быстро, прозрачно и экономично.",
+      "cta": "Открыть smejj.com",
+      "featuresTitle": "Возможности",
+      "features": [
+        { "h": "ИИ-чат", "p": "Задавайте вопросы, создавайте контент и решайте задачи в быстром, сфокусированном чате." },
+        { "h": "Автономное программирование", "p": "Делегируйте задачи по программированию — каждое изменение проверено, отслеживаемо и воспроизводимо." },
+        { "h": "ИИ-агенты", "p": "Агенты планируют, выполняют и проверяют многошаговые задачи с прозрачным прогрессом и контролем затрат." }
+      ],
+      "faqTitle": "Частые вопросы",
+      "faq": [
+        { "q": "Что такое smejj.com?", "a": "smejj.com — платформа ИИ- и код-ассистента: общайтесь с ИИ, делегируйте задачи программирования и запускайте автономные агентные процессы прямо в браузере." },
+        { "q": "Какие языки поддерживает smejj.com?", "a": "smejj.com доступен по всему миру на 15 языках: английский, китайский, испанский, арабский, французский, немецкий, португальский, русский, турецкий, японский, корейский, итальянский, хинди, индонезийский и бенгальский." },
+        { "q": "Как пользоваться smejj.com?", "a": "Откройте smejj.com в современном браузере. Приложение работает как PWA и устанавливается на компьютер и смартфон." }
+      ],
+      "langNote": "Эта страница также доступна на других языках:",
+      "imprint": "Правовая информация",
+      "privacy": "Конфиденциальность"
+    },
+    {
+      "code": "tr",
+      "dir": "ltr",
+      "title": "smejj.com — Yapay Zeka ve Kod Asistanı | Otonom Yapay Zeka Kodlama Sistemi",
+      "description": "smejj.com; sohbet, programlama ve ajan görevleri için hızlı bir yapay zeka ve kod asistanıdır. Tarayıcınızda çalışan otonom bir yapay zeka kodlama sistemi — 15 dilde kullanılabilir.",
+      "keywords": "smejj.com, yapay zeka asistanı, kod asistanı, yapay zeka ile kodlama, otonom ajanlar, yapay zeka sohbeti, geliştirici araçları",
+      "h1": "smejj.com — yapay zeka ve kod asistanınız",
+      "tagline": "Otonom yapay zeka ajanlarıyla sohbet edin, kod yazın ve otomatikleştirin — hızlı, şeffaf ve uygun maliyetli.",
+      "cta": "smejj.com'u aç",
+      "featuresTitle": "Özellikler",
+      "features": [
+        { "h": "Yapay zeka sohbeti", "p": "Hızlı ve odaklı bir sohbette soru sorun, içerik oluşturun ve sorunları çözün." },
+        { "h": "Otonom kodlama", "p": "Programlama görevlerini devredin — her değişiklik doğrulanır, izlenebilir ve tekrarlanabilir." },
+        { "h": "Yapay zeka ajanları", "p": "Ajanlar çok adımlı görevleri şeffaf ilerleme ve maliyet kontrolüyle planlar, yürütür ve doğrular." }
+      ],
+      "faqTitle": "Sık sorulan sorular",
+      "faq": [
+        { "q": "smejj.com nedir?", "a": "smejj.com bir yapay zeka ve kod asistanı platformudur: yapay zekayla sohbet edin, kodlama görevlerini devredin ve otonom ajan iş akışlarını doğrudan tarayıcınızda çalıştırın." },
+        { "q": "smejj.com hangi dilleri destekler?", "a": "smejj.com dünya genelinde 15 dilde kullanılabilir: İngilizce, Çince, İspanyolca, Arapça, Fransızca, Almanca, Portekizce, Rusça, Türkçe, Japonca, Korece, İtalyanca, Hintçe, Endonezce ve Bengalce." },
+        { "q": "smejj.com'u nasıl kullanırım?", "a": "smejj.com'u modern bir tarayıcıda açın. Uygulama PWA olarak çalışır; masaüstüne ve mobil cihazlara kurulabilir." }
+      ],
+      "langNote": "Bu sayfa şu dillerde de mevcuttur:",
+      "imprint": "Yasal bildirim",
+      "privacy": "Gizlilik"
+    },
+    {
+      "code": "ja",
+      "dir": "ltr",
+      "title": "smejj.com — AI・コードアシスタント | 自律型AIコーディングOS",
+      "description": "smejj.com は、チャット・プログラミング・エージェントタスクのための高速な AI・コードアシスタントです。ブラウザで動作する自律型 AI コーディング OS。15 言語に対応し、世界中で利用できます。",
+      "keywords": "smejj.com, AIアシスタント, コードアシスタント, AIコーディング, 自律エージェント, AIチャット, 開発者ツール",
+      "h1": "smejj.com — あなたの AI・コードアシスタント",
+      "tagline": "自律型 AI エージェントとチャット・コーディング・自動化 — 高速・透明・低コスト。",
+      "cta": "smejj.com を開く",
+      "featuresTitle": "機能",
+      "features": [
+        { "h": "AI チャット", "p": "高速で集中できるチャットで、質問・文章作成・問題解決ができます。" },
+        { "h": "自律コーディング", "p": "プログラミングタスクを委任 — すべての変更は検証済みで、追跡・再現が可能です。" },
+        { "h": "AI エージェント", "p": "エージェントが複数ステップのタスクを計画・実行・検証。進捗は透明で、コストも管理できます。" }
+      ],
+      "faqTitle": "よくある質問",
+      "faq": [
+        { "q": "smejj.com とは何ですか?", "a": "smejj.com は AI・コードアシスタントのプラットフォームです。AI とチャットし、コーディングタスクを委任し、自律エージェントのワークフローをブラウザ上で直接実行できます。" },
+        { "q": "smejj.com はどの言語に対応していますか?", "a": "smejj.com は世界中で 15 言語に対応しています:英語、中国語、スペイン語、アラビア語、フランス語、ドイツ語、ポルトガル語、ロシア語、トルコ語、日本語、韓国語、イタリア語、ヒンディー語、インドネシア語、ベンガル語。" },
+        { "q": "smejj.com の使い方は?", "a": "モダンブラウザで smejj.com を開くだけです。PWA として動作し、デスクトップやモバイルにインストールできます。" }
+      ],
+      "langNote": "このページは以下の言語でもご覧いただけます:",
+      "imprint": "法的表示",
+      "privacy": "プライバシー"
+    },
+    {
+      "code": "ko",
+      "dir": "ltr",
+      "title": "smejj.com — AI·코드 어시스턴트 | 자율 AI 코딩 OS",
+      "description": "smejj.com은 채팅, 프로그래밍, 에이전트 작업을 위한 빠른 AI·코드 어시스턴트입니다. 브라우저에서 실행되는 자율 AI 코딩 OS로, 전 세계 15개 언어를 지원합니다.",
+      "keywords": "smejj.com, AI 어시스턴트, 코드 어시스턴트, AI 코딩, 자율 에이전트, AI 채팅, 개발자 도구",
+      "h1": "smejj.com — 당신의 AI·코드 어시스턴트",
+      "tagline": "자율 AI 에이전트와 함께 채팅하고, 코딩하고, 자동화하세요 — 빠르고 투명하며 비용 효율적입니다.",
+      "cta": "smejj.com 열기",
+      "featuresTitle": "기능",
+      "features": [
+        { "h": "AI 채팅", "p": "빠르고 집중된 채팅에서 질문하고, 콘텐츠를 작성하고, 문제를 해결하세요." },
+        { "h": "자율 코딩", "p": "프로그래밍 작업을 위임하세요 — 모든 변경 사항은 검증되고 추적 및 재현이 가능합니다." },
+        { "h": "AI 에이전트", "p": "에이전트가 다단계 작업을 계획·실행·검증하며, 진행 상황은 투명하고 비용은 통제됩니다." }
+      ],
+      "faqTitle": "자주 묻는 질문",
+      "faq": [
+        { "q": "smejj.com은 무엇인가요?", "a": "smejj.com은 AI·코드 어시스턴트 플랫폼입니다. AI와 채팅하고, 코딩 작업을 위임하고, 자율 에이전트 워크플로를 브라우저에서 바로 실행할 수 있습니다." },
+        { "q": "smejj.com은 어떤 언어를 지원하나요?", "a": "smejj.com은 전 세계 15개 언어로 제공됩니다: 영어, 중국어, 스페인어, 아랍어, 프랑스어, 독일어, 포르투갈어, 러시아어, 터키어, 일본어, 한국어, 이탈리아어, 힌디어, 인도네시아어, 벵골어." },
+        { "q": "smejj.com은 어떻게 사용하나요?", "a": "최신 브라우저에서 smejj.com을 여세요. PWA로 작동하며 데스크톱과 모바일에 설치할 수 있습니다." }
+      ],
+      "langNote": "이 페이지는 다음 언어로도 제공됩니다:",
+      "imprint": "법적 고지",
+      "privacy": "개인정보 보호"
+    },
+    {
+      "code": "it",
+      "dir": "ltr",
+      "title": "smejj.com — Assistente IA e codice | Sistema autonomo di coding con IA",
+      "description": "smejj.com è un assistente IA e codice veloce per chat, programmazione e attività di agenti. Un sistema autonomo di coding con IA che funziona nel browser, disponibile in 15 lingue.",
+      "keywords": "smejj.com, assistente IA, assistente codice, coding con IA, agenti autonomi, chat IA, strumenti per sviluppatori",
+      "h1": "smejj.com — il tuo assistente IA e codice",
+      "tagline": "Chatta, programma e automatizza con agenti IA autonomi — veloce, trasparente e conveniente.",
+      "cta": "Apri smejj.com",
+      "featuresTitle": "Funzionalità",
+      "features": [
+        { "h": "Chat IA", "p": "Fai domande, redigi contenuti e risolvi problemi in una chat veloce e mirata." },
+        { "h": "Coding autonomo", "p": "Delega le attività di programmazione — ogni modifica è verificata, tracciabile e riproducibile." },
+        { "h": "Agenti IA", "p": "Gli agenti pianificano, eseguono e verificano attività in più passaggi con progressi trasparenti e controllo dei costi." }
+      ],
+      "faqTitle": "Domande frequenti",
+      "faq": [
+        { "q": "Che cos'è smejj.com?", "a": "smejj.com è una piattaforma di assistente IA e codice: chatta con l'IA, delega attività di programmazione ed esegui flussi di agenti autonomi direttamente nel browser." },
+        { "q": "Quali lingue supporta smejj.com?", "a": "smejj.com è disponibile in tutto il mondo in 15 lingue: inglese, cinese, spagnolo, arabo, francese, tedesco, portoghese, russo, turco, giapponese, coreano, italiano, hindi, indonesiano e bengalese." },
+        { "q": "Come si usa smejj.com?", "a": "Apri smejj.com in un browser moderno. Funziona come app web progressiva (PWA) e può essere installata su desktop e mobile." }
+      ],
+      "langNote": "Questa pagina è disponibile anche in:",
+      "imprint": "Note legali",
+      "privacy": "Privacy"
+    },
+    {
+      "code": "hi",
+      "dir": "ltr",
+      "title": "smejj.com — AI और कोड असिस्टेंट | स्वायत्त AI कोडिंग OS",
+      "description": "smejj.com चैट, प्रोग्रामिंग और एजेंट कार्यों के लिए एक तेज़ AI और कोड असिस्टेंट है। ब्राउज़र में चलने वाला स्वायत्त AI कोडिंग OS — दुनिया भर में 15 भाषाओं में उपलब्ध।",
+      "keywords": "smejj.com, AI असिस्टेंट, कोड असिस्टेंट, AI कोडिंग, स्वायत्त एजेंट, AI चैट, डेवलपर टूल",
+      "h1": "smejj.com — आपका AI और कोड असिस्टेंट",
+      "tagline": "स्वायत्त AI एजेंट्स के साथ चैट करें, कोड लिखें और काम स्वचालित करें — तेज़, पारदर्शी और किफ़ायती।",
+      "cta": "smejj.com खोलें",
+      "featuresTitle": "विशेषताएँ",
+      "features": [
+        { "h": "AI चैट", "p": "तेज़ और केंद्रित चैट में सवाल पूछें, सामग्री लिखें और समस्याएँ हल करें।" },
+        { "h": "स्वायत्त कोडिंग", "p": "प्रोग्रामिंग कार्य सौंपें — हर बदलाव सत्यापित, ट्रेस करने योग्य और पुनरुत्पादित करने योग्य है।" },
+        { "h": "AI एजेंट", "p": "एजेंट बहु-चरणीय कार्यों की योजना बनाते, उन्हें पूरा करते और सत्यापित करते हैं — पारदर्शी प्रगति और लागत नियंत्रण के साथ।" }
+      ],
+      "faqTitle": "अक्सर पूछे जाने वाले प्रश्न",
+      "faq": [
+        { "q": "smejj.com क्या है?", "a": "smejj.com एक AI और कोड असिस्टेंट प्लेटफ़ॉर्म है: AI से चैट करें, कोडिंग कार्य सौंपें और स्वायत्त एजेंट वर्कफ़्लो सीधे अपने ब्राउज़र में चलाएँ।" },
+        { "q": "smejj.com कौन-सी भाषाएँ समर्थित करता है?", "a": "smejj.com दुनिया भर में 15 भाषाओं में उपलब्ध है: अंग्रेज़ी, चीनी, स्पेनिश, अरबी, फ़्रेंच, जर्मन, पुर्तगाली, रूसी, तुर्की, जापानी, कोरियाई, इतालवी, हिन्दी, इंडोनेशियाई और बांग्ला।" },
+        { "q": "smejj.com का उपयोग कैसे करें?", "a": "किसी आधुनिक ब्राउज़र में smejj.com खोलें। यह प्रोग्रेसिव वेब ऐप (PWA) की तरह काम करता है और डेस्कटॉप व मोबाइल पर इंस्टॉल किया जा सकता है।" }
+      ],
+      "langNote": "यह पृष्ठ इन भाषाओं में भी उपलब्ध है:",
+      "imprint": "क़ानूनी सूचना",
+      "privacy": "गोपनीयता"
+    },
+    {
+      "code": "id",
+      "dir": "ltr",
+      "title": "smejj.com — Asisten AI & Kode | OS Coding AI Otonom",
+      "description": "smejj.com adalah asisten AI dan kode yang cepat untuk chat, pemrograman, dan tugas agen. OS coding AI otonom yang berjalan di browser Anda — tersedia di seluruh dunia dalam 15 bahasa.",
+      "keywords": "smejj.com, asisten AI, asisten kode, coding AI, agen otonom, chat AI, alat pengembang",
+      "h1": "smejj.com — asisten AI & kode Anda",
+      "tagline": "Mengobrol, menulis kode, dan mengotomatiskan tugas dengan agen AI otonom — cepat, transparan, dan hemat biaya.",
+      "cta": "Buka smejj.com",
+      "featuresTitle": "Fitur",
+      "features": [
+        { "h": "Chat AI", "p": "Ajukan pertanyaan, susun konten, dan selesaikan masalah dalam chat yang cepat dan fokus." },
+        { "h": "Coding otonom", "p": "Delegasikan tugas pemrograman — setiap perubahan terverifikasi, dapat dilacak, dan dapat direproduksi." },
+        { "h": "Agen AI", "p": "Agen merencanakan, menjalankan, dan memverifikasi tugas multi-langkah dengan progres transparan dan kendali biaya." }
+      ],
+      "faqTitle": "Pertanyaan umum",
+      "faq": [
+        { "q": "Apa itu smejj.com?", "a": "smejj.com adalah platform asisten AI dan kode: mengobrol dengan AI, mendelegasikan tugas coding, dan menjalankan alur kerja agen otonom langsung di browser Anda." },
+        { "q": "Bahasa apa saja yang didukung smejj.com?", "a": "smejj.com tersedia di seluruh dunia dalam 15 bahasa: Inggris, Mandarin, Spanyol, Arab, Prancis, Jerman, Portugis, Rusia, Turki, Jepang, Korea, Italia, Hindi, Indonesia, dan Bengali." },
+        { "q": "Bagaimana cara menggunakan smejj.com?", "a": "Buka smejj.com di browser modern. Aplikasi ini berfungsi sebagai progressive web app (PWA) dan dapat dipasang di desktop maupun ponsel." }
+      ],
+      "langNote": "Halaman ini juga tersedia dalam bahasa:",
+      "imprint": "Pemberitahuan hukum",
+      "privacy": "Privasi"
+    },
+    {
+      "code": "bn",
+      "dir": "ltr",
+      "title": "smejj.com — AI ও কোড অ্যাসিস্ট্যান্ট | স্বায়ত্তশাসিত AI কোডিং OS",
+      "description": "smejj.com হলো চ্যাট, প্রোগ্রামিং ও এজেন্ট কাজের জন্য একটি দ্রুত AI ও কোড অ্যাসিস্ট্যান্ট। ব্রাউজারে চলা স্বায়ত্তশাসিত AI কোডিং OS — বিশ্বজুড়ে ১৫টি ভাষায় উপলব্ধ।",
+      "keywords": "smejj.com, AI অ্যাসিস্ট্যান্ট, কোড অ্যাসিস্ট্যান্ট, AI কোডিং, স্বায়ত্তশাসিত এজেন্ট, AI চ্যাট, ডেভেলপার টুল",
+      "h1": "smejj.com — আপনার AI ও কোড অ্যাসিস্ট্যান্ট",
+      "tagline": "স্বায়ত্তশাসিত AI এজেন্টের সঙ্গে চ্যাট করুন, কোড লিখুন এবং কাজ স্বয়ংক্রিয় করুন — দ্রুত, স্বচ্ছ ও সাশ্রয়ী।",
+      "cta": "smejj.com খুলুন",
+      "featuresTitle": "বৈশিষ্ট্য",
+      "features": [
+        { "h": "AI চ্যাট", "p": "দ্রুত ও মনোযোগী চ্যাটে প্রশ্ন করুন, কনটেন্ট লিখুন এবং সমস্যার সমাধান করুন।" },
+        { "h": "স্বায়ত্তশাসিত কোডিং", "p": "প্রোগ্রামিংয়ের কাজ অর্পণ করুন — প্রতিটি পরিবর্তন যাচাইকৃত, ট্রেসযোগ্য ও পুনরুৎপাদনযোগ্য।" },
+        { "h": "AI এজেন্ট", "p": "এজেন্টরা বহু-ধাপের কাজ পরিকল্পনা, সম্পাদন ও যাচাই করে — স্বচ্ছ অগ্রগতি ও ব্যয় নিয়ন্ত্রণসহ।" }
+      ],
+      "faqTitle": "সাধারণ প্রশ্ন",
+      "faq": [
+        { "q": "smejj.com কী?", "a": "smejj.com একটি AI ও কোড অ্যাসিস্ট্যান্ট প্ল্যাটফর্ম: AI-এর সঙ্গে চ্যাট করুন, কোডিংয়ের কাজ অর্পণ করুন এবং স্বায়ত্তশাসিত এজেন্ট ওয়ার্কফ্লো সরাসরি ব্রাউজারে চালান।" },
+        { "q": "smejj.com কোন কোন ভাষা সমর্থন করে?", "a": "smejj.com বিশ্বজুড়ে ১৫টি ভাষায় উপলব্ধ: ইংরেজি, চীনা, স্প্যানিশ, আরবি, ফরাসি, জার্মান, পর্তুগিজ, রুশ, তুর্কি, জাপানি, কোরীয়, ইতালীয়, হিন্দি, ইন্দোনেশীয় ও বাংলা।" },
+        { "q": "smejj.com কীভাবে ব্যবহার করব?", "a": "যেকোনো আধুনিক ব্রাউজারে smejj.com খুলুন। এটি প্রোগ্রেসিভ ওয়েব অ্যাপ (PWA) হিসেবে কাজ করে এবং ডেস্কটপ ও মোবাইলে ইনস্টল করা যায়।" }
+      ],
+      "langNote": "এই পৃষ্ঠাটি আরও যেসব ভাষায় উপলব্ধ:",
+      "imprint": "আইনি বিজ্ঞপ্তি",
+      "privacy": "গোপনীয়তা"
+    }
+  ]
+}

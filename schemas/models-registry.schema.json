@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/models-registry.schema.json",
+  "title": "smejj.com Models Registry",
+  "type": "object",
+  "required": ["version", "policy", "models"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "policy": {
+      "type": "object",
+      "required": [
+        "storeModelWeightsInRepo",
+        "storeLargeMediaInRepo",
+        "primaryStorage",
+        "paidPlatformServicesAllowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "storeModelWeightsInRepo": { "const": false },
+        "storeLargeMediaInRepo": { "const": false },
+        "primaryStorage": { "const": "idrive-e2" },
+        "paidPlatformServicesAllowed": { "const": false }
+      }
+    },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "role", "storage", "inference", "status", "license"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "storage": {
+            "type": "object",
+            "required": ["provider", "prefix"],
+            "properties": {
+              "provider": { "const": "idrive-e2" },
+              "prefix": { "type": "string" }
+            }
+          },
+          "inference": {
+            "type": "object",
+            "required": ["default", "allowedModes", "notAllowedAsDefault"],
+            "properties": {
+              "default": { "const": "disabled" },
+              "allowedModes": { "type": "array", "items": { "type": "string" } },
+              "notAllowedAsDefault": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "status": { "type": "string" },
+          "license": { "type": "string" }
+        }
+      }
+    }
+  }
+}

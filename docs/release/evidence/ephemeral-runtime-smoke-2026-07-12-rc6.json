@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "recordType": "smejj.com-ephemeral-runtime-smoke",
+  "testedAt": "2026-07-12T16:44:37Z",
+  "sourceManifestSha256": "c6b69bf9a2f70993b828afcaf17011e541db11186f07f55bd89718436c548140",
+  "bootstrapSha256": "f2414fd9d5fe37b9efc0ee784c1923e30853190b77b5ba567ee07259a8286693",
+  "appRoot": "/app",
+  "image": "docker.io/library/node@sha256:09dbe0a53523c2482d85a037efc6b0e8e8bb16c6f1acf431fe36aa0ebc871c06",
+  "testedPlatform": "linux/arm64",
+  "targetPlatform": "linux/amd64",
+  "targetImageManifestSha256": "c1f4f4e7afa4f73df11ad95392ff316a4af82df0cb5ca114de1fe7c4dc4dcd20",
+  "runtimeProfile": "browser",
+  "nativeAmd64ProviderVerified": false,
+  "exitCode": 0,
+  "runtime": {
+    "node": "v20.15.1",
+    "git": "git version 2.45.4",
+    "python": "Python 3.12.13",
+    "pytest": "8.3.5",
+    "playwright": "1.49.1",
+    "browser": "Chromium 131.0.6778.108 Alpine Linux"
+  },
+  "privileged": false,
+  "pytest": {
+    "ok": true,
+    "collected": 1,
+    "passed": 1
+  },
+  "browserChecks": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "ok": true
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "ok": true
+    }
+  ],
+  "screenshotCount": 2,
+  "sourceDiffCleanAfterGeneratedCacheExclusions": true,
+  "secretsUsed": false,
+  "trainingEligible": false,
+  "memoryMayLearn": false
+}

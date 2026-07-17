@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_profil_dock_20260717",
+  "abschnitt": "Professioneller Profilbereich (2026-07-17, dritte Freigaberunde)",
+  "freigabe": "\"Ja\" auf (1) Avatar-Menue mit Ausloggen, (2) Kontoseite zustandsrichtig, (3) Kontobild-Uebernahme",
+  "neu": ["public/profile-dock-menu.js", "public/account-auth-state.js"],
+  "geaendert": ["public/index.html", "public/sw.js", "public/profile-dock.js", "public/profile-dock.css", "public/profile-picture-store.js", "public/profile-picture-control.js", "public/account-privacy.js", "public/i18n/*.js", "tests/profile-dock.test.mjs"],
+  "verifikation": {
+    "check:guidelines": "OK — 708 Dateien; app.js 1403 und styles.css 1565 unveraendert",
+    "check:frontend": "129/130 (1 = bekanntes @resvg-Umgebungsproblem)",
+    "tests/profile-dock.test.mjs": "14/14",
+    "check:start-lock": "OK — 28/28, neu eingefroren 2026-07-17T18:06:10Z",
+    "weitere": "platform 7/7, favicon-lock, json, security, architecture, users, syntax OK"
+  },
+  "livebeweis": {
+    "avatarMenue": "Kopf 'Alan Best / alanbestus@gmail.com'; Eintraege Konto, Einstellungen, Ausloggen; Breite 232px; vollstaendig sichtbar; Deckungstest: Menue liegt oben",
+    "kontoseite": "authState=authenticated; sichtbare Knoepfe im Security-Tab von 6 auf 1 ('Ausloggen'); Anmelde-Knoepfe und Server-Sitzungen ausgeblendet",
+    "kontobild": "Mit eigenem Bild: unveraendert (Vorrang). Ohne: data:image/webp, 20 KB uebernommen. Bild des Betreibers gesichert und exakt wiederhergestellt.",
+    "konsolenfehler": 0
+  },
+  "gefundeneUndBehobeneFehler": [
+    {"fehler": ".sidebar overflow:hidden schnitt das Menue ab (208px in 199px)", "fix": "Menue haengt am <body>, position:fixed; JS setzt Koordinaten", "hinweis": "position:fixed INNERHALB der Sidebar half nicht — transform macht sie zum Bezugsrahmen"},
+    {"fehler": "Nach dem Umhaengen war min-width:max(100%,208px) die Fensterbreite (885px)", "fix": "feste Breite 232px, max-width calc(100vw - 16px)"},
+    {"fehler": "Menue lag hinter der Sidebar (z-index 70)", "fix": "z-index 80"}
+  ],
+  "lehren": [
+    "GitHub-Commit-Knopf springt, sobald der ProTip-Hinweis erscheint (Commit-Text >50 Zeichen) — Position immer per Screenshot bestimmen.",
+    "Das React-Commit-Feld ignoriert per JS gesetzte Werte (Commit heisst dann 'Add files via upload').",
+    "Deploy-Beweis nur ueber die GitHub-API (contents?ref=main); raw.githubusercontent.com ist minutenlang gecacht.",
+    "Ein zweiter Prozess committet parallel in dasselbe Repo (seo/hreflang) — bei Deploys einplanen."
+  ],
+  "offen": [
+    "Hinweistext im Security-Tab verweist mit '(unten)' auf den fuer Google-Konten ausgeblendeten Server-Sitzungsblock (kosmetisch).",
+    "Profilbild bleibt geraetelokal — kein Sync ueber Geraete.",
+    "check:branding nur auf dem Mac ausfuehrbar (Linux-Session hat nur das darwin-arm64-Binary).",
+    "Task Capsule liegt lokal; Upload nach IDrive e2 offen (keine Zugangsdaten in der Session)."
+  ],
+  "status": "verified"
+}

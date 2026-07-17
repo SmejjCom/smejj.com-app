@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/capabilities.schema.json",
+  "title": "smejj.com Capabilities Manifest",
+  "type": "object",
+  "required": ["version", "costPolicy", "storage", "compute", "decisionPriorities", "features"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "costPolicy": {
+      "type": "object",
+      "required": [
+        "githubPaidAllowed",
+        "paidHostingAllowed",
+        "autoPaidFallbackAllowed",
+        "trialServicesAllowed",
+        "paidFallbackAllowed",
+        "requiresWrittenReleaseApproval"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "githubPaidAllowed": { "const": false },
+        "paidHostingAllowed": { "const": false },
+        "autoPaidFallbackAllowed": { "const": false },
+        "trialServicesAllowed": { "const": false },
+        "paidFallbackAllowed": { "const": false },
+        "requiresWrittenReleaseApproval": { "const": true }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "required": [
+        "primary",
+        "contentAddressed",
+        "secretsInBrowserAllowed",
+        "secretsInRepoAllowed",
+        "privateAbsolutePathsAllowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "primary": { "const": "idrive-e2" },
+        "contentAddressed": { "const": true },
+        "secretsInBrowserAllowed": { "const": false },
+        "secretsInRepoAllowed": { "const": false },
+        "privateAbsolutePathsAllowed": { "const": false }
+      }
+    },
+    "compute": {
+      "type": "object",
+      "required": ["browserLocal", "byok", "serverPaidDefault", "failClosed"],
+      "additionalProperties": false,
+      "properties": {
+        "browserLocal": { "const": true },
+        "byok": { "const": true },
+        "serverPaidDefault": { "const": false },
+        "failClosed": { "const": true }
+      }
+    },
+    "decisionPriorities": {
+      "type": "object",
+      "required": ["speed", "stability", "security", "scalability", "lowOperatingCost"],
+      "additionalProperties": false,
+      "properties": {
+        "speed": { "const": true },
+        "stability": { "const": true },
+        "security": { "const": true },
+        "scalability": { "const": true },
+        "lowOperatingCost": { "const": true }
+      }
+    },
+    "features": {
+      "type": "object",
+      "required": ["localWorkspace", "idriveSync", "browserAi", "kimiK27"],
+      "additionalProperties": true,
+      "properties": {
+        "localWorkspace": { "const": true },
+        "idriveSync": { "const": true },
+        "browserAi": { "type": "string" },
+        "kimiK27": { "const": "vault-and-byok-only" }
+      }
+    }
+  }
+}

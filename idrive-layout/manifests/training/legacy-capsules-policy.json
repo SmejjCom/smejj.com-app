@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "policyId": "legacy-capsules-training-denied-v1",
+  "effectiveAt": "2026-07-10T12:50:00Z",
+  "appliesTo": [
+    "capsules/",
+    "task-capsules/",
+    "jobs/"
+  ],
+  "defaultTrainingEligible": false,
+  "state": "legacy-unreviewed",
+  "automaticImportAllowed": false,
+  "deletionPerformed": false,
+  "promotionRequires": [
+    "explicit-human-consent",
+    "repository-rights-review",
+    "provider-rights-review",
+    "pre-persistence-sanitization",
+    "all-quality-gates-passed",
+    "encrypted-immutable-candidate",
+    "family-split-leakage-check"
+  ]
+}

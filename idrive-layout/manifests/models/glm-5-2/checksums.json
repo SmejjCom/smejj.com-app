@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "modelId": "glm-5-2",
+  "algorithm": "sha256",
+  "sourceInventory": {
+    "fileCount": 150,
+    "safetensorsCount": 141,
+    "reportedGiB": 703.8
+  },
+  "verificationRuns": [
+    {
+      "id": "glm-5-2-fp8-verified-2026-06-24",
+      "status": "verified-complete-storage-only",
+      "verifiedAt": "2026-06-24T00:19:44Z",
+      "reportKey": "model-files/glm-5-2-fp8/checksums/verification-report.json"
+    }
+  ]
+}

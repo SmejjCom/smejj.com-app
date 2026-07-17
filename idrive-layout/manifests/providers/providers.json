@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "defaultMode": "disabled",
+  "policy": {
+    "failClosed": true,
+    "paidFallbackAllowed": false,
+    "storesSecretsInBrowser": false,
+    "storesSecretsInRepo": false,
+    "requiresWrittenReleaseApproval": true
+  },
+  "providers": [
+    {
+      "id": "local-browser",
+      "type": "webgpu",
+      "costRisk": "zero-central-cost-risk",
+      "enabledByDefault": true,
+      "requiresUserDownload": true,
+      "fallback": "disabled"
+    },
+    {
+      "id": "byok-openai-compatible",
+      "type": "byok",
+      "costRisk": "user-owned",
+      "enabledByDefault": true,
+      "storesKeyOnServer": false,
+      "fallback": "disabled"
+    },
+    {
+      "id": "free-demo-hardlimit",
+      "type": "server-demo",
+      "costRisk": "zero-until-hard-stop",
+      "enabledByDefault": false,
+      "requiresServerQuota": true,
+      "fallback": "disabled"
+    },
+    {
+      "id": "kimi-k2-7-vault",
+      "type": "model-vault",
+      "costRisk": "storage-only",
+      "enabledByDefault": false,
+      "inference": "not-local-free",
+      "featureFlag": "SMEJJ_KIMI_K2_7_ENABLED",
+      "fallback": "glm-5-2-fp8-vault",
+      "role": "secondary-agentic-coding-model",
+      "apiCompatibility": "openai-chat-completions"
+    },
+    {
+      "id": "glm-5-2-fp8-vault",
+      "type": "model-vault",
+      "costRisk": "storage-only",
+      "enabledByDefault": false,
+      "inference": "not-local-free",
+      "modelStorage": "idrive-e2",
+      "requiresChecksum": true,
+      "role": "flagship-coding-and-planning-brain",
+      "fallback": "disabled"
+    },
+    {
+      "id": "nex-n2-pro-idrive-lite",
+      "type": "contabo-local-llama-cpp",
+      "costRisk": "fixed-vps-only",
+      "enabledByDefault": false,
+      "modelStorage": "idrive-e2",
+      "requiresChecksum": true,
+      "requires8gbFitCheck": true,
+      "localCache": "small-temporary-only",
+      "fallback": "disabled"
+    },
+    {
+      "id": "disabled",
+      "type": "disabled",
+      "costRisk": "zero",
+      "enabledByDefault": true,
+      "fallback": "disabled"
+    },
+    {
+      "id": "later-partner-compute",
+      "type": "future-compute",
+      "costRisk": "requires-explicit-approval",
+      "enabledByDefault": false,
+      "disabledUntilApproved": true,
+      "fallback": "disabled"
+    }
+  ]
+}

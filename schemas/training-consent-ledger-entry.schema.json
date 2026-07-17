@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/training-consent-ledger-entry.schema.json",
+  "title": "smejj.com immutable training consent ledger entry",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "eventType",
+    "subjectRef",
+    "repositoryRef",
+    "privacyNoticeSha256",
+    "consentId",
+    "withdrawalId",
+    "occurredAt",
+    "recordedBy",
+    "signingKeyId",
+    "bindingKeyId",
+    "supersedesEventId",
+    "scope",
+    "signature"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": { "type": "string", "pattern": "^[a-z][a-z0-9._:-]{7,120}$" },
+    "eventType": { "enum": ["grant", "revoke", "revocation-sentinel"] },
+    "subjectRef": { "type": "string", "pattern": "^sub_[a-f0-9]{64}$" },
+    "repositoryRef": { "type": "string", "pattern": "^repo_[a-f0-9]{64}$" },
+    "privacyNoticeSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "consentId": { "type": "string", "pattern": "^consent:[a-f0-9-]{36}$" },
+    "withdrawalId": { "type": "string", "pattern": "^withdrawal:[a-f0-9-]{36}$" },
+    "occurredAt": { "type": "string" },
+    "recordedBy": { "const": "authenticated-human" },
+    "signingKeyId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{5,120}$" },
+    "bindingKeyId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{5,120}$" },
+    "supersedesEventId": { "type": ["string", "null"] },
+    "scope": {
+      "type": "object",
+      "required": ["captureReview", "modelTraining", "sourceRightsConfirmed"],
+      "additionalProperties": false,
+      "properties": {
+        "captureReview": { "type": "boolean" },
+        "modelTraining": { "type": "boolean" },
+        "sourceRightsConfirmed": { "type": "boolean" }
+      }
+    },
+    "signature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" }
+  }
+}

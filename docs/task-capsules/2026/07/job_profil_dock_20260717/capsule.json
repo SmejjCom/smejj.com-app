@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_profil_dock_20260717",
+  "createdAt": "2026-07-17T16:25:00.000Z",
+  "product": "smejj.com",
+  "ziel": "Einstellungs-Bereich unten links um Profil und Profilbild erweitern (Vorbild: Screenshot des Nutzers). Zahnrad bleibt als Einstieg in die Einstellungen erhalten.",
+  "freigabe": {
+    "person": "Wof Kadavanich",
+    "wortlaut": "Kannst du in smejj.com Einstellung Icon soll Profil und Profilbild sein genau wie dieser Screenshots — Antwort auf 'Soll ich es umsetzen?': 'Ja'",
+    "datum": "2026-07-17",
+    "beruehrteLocks": ["START_DESIGN_LOCK v3 (public/index.html, public/sw.js)"],
+    "budgetrelevant": false
+  },
+  "anforderungen": [
+    "Profilbild + Name unten links in der Sidebar, Klick oeffnet die Kontoseite",
+    "Zahnrad bleibt daneben erhalten (Non-Regression Einstellungen)",
+    "Profilbild lokal, kein Gravatar/kein externer Dienst (DSGVO)",
+    "Harte Groessengrenzen: 256x256, max 100 KB",
+    "public/app.js und public/styles.css duerfen nicht wachsen (Ratchet-Baseline)"
+  ],
+  "betroffeneDateien": {
+    "neu": [
+      "public/profile-dock.js",
+      "public/profile-dock.css",
+      "public/profile-picture-store.js",
+      "public/profile-picture-control.js",
+      "tests/profile-dock.test.mjs"
+    ],
+    "geaendert": [
+      "public/index.html",
+      "public/sw.js",
+      "public/account-privacy.js",
+      "public/account-privacy.css",
+      "tests/frontend-structure.test.mjs",
+      "tests/platform-pwa.test.mjs",
+      "package.json",
+      "docs/frontend/start-lock-manifest.json"
+    ],
+    "unveraendert": ["public/app.js", "public/styles.css"]
+  },
+  "rollback": {
+    "art": "Dateikopie vor der Aenderung",
+    "pfad": "backups/profile-dock-rollback/2026-07-17T16-27-03Z/",
+    "startLockBackupVorher": "backups/start-design-lock/2026-07-17T16-37-38-719Z/",
+    "live": "GitHub-History SmejjCom/smejj-app-frontend (Commits 542de94, f722637 und Folgecommit index.html)"
+  },
+  "status": "verified"
+}

@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>smejj Browser Responsive Mockup</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #11110f;
+        --panel: #191917;
+        --panel-2: #22211e;
+        --line: rgba(255, 255, 255, 0.12);
+        --line-strong: rgba(255, 255, 255, 0.22);
+        --text: #f6f3ee;
+        --muted: #aca59a;
+        --accent: #7fc7b3;
+        --accent-2: #e7c46b;
+        --danger: #ef8a7a;
+        --shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 12% 8%, rgba(127, 199, 179, 0.12), transparent 28%),
+          linear-gradient(135deg, #0f0f0d 0%, #171613 56%, #12120f 100%);
+        color: var(--text);
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .stage {
+        display: grid;
+        gap: 28px;
+        min-height: 100vh;
+        padding: 28px;
+      }
+
+      .mockup-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 20px;
+        max-width: 1320px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .mockup-header h1 {
+        margin: 0;
+        font-size: clamp(26px, 4vw, 44px);
+        letter-spacing: 0;
+      }
+
+      .mockup-header p {
+        max-width: 640px;
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .route-note {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .showcase {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 390px;
+        align-items: start;
+        gap: 28px;
+        max-width: 1320px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .showcase > * {
+        min-width: 0;
+      }
+
+      .browser-shell {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .browser-shell.desktop {
+        min-height: 720px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: grid;
+        grid-template-rows: 30px 38px;
+        gap: 0;
+        padding: 0;
+        border-bottom: 1px solid var(--line);
+        background: rgba(25, 25, 23, 0.96);
+        backdrop-filter: blur(16px);
+      }
+
+      .active-tab-row,
+      .address-row {
+        display: grid;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .active-tab-row {
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        gap: 6px;
+        padding: 0 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .address-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 6px;
+        padding: 4px 6px;
+      }
+
+      .nav-cluster,
+      .action-cluster {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .icon-btn {
+        display: inline-grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #22211e;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .icon-btn.primary {
+        border-color: rgba(127, 199, 179, 0.48);
+        background: rgba(127, 199, 179, 0.16);
+        color: var(--accent);
+      }
+
+      .icon-btn:focus-visible,
+      .url-field:focus-within,
+      .tab:focus-visible,
+      .current-tab:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .current-tab {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        height: 24px;
+        border: 0;
+        border-radius: 6px;
+        padding: 0 9px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .current-tab span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tab-favicon {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .tab-count {
+        min-width: 30px;
+        padding: 0 8px;
+      }
+
+      .url-field {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        min-height: 30px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        padding: 0 9px;
+        background: #0f0f0d;
+      }
+
+      .url-field input {
+        min-width: 0;
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+      }
+
+      .url-field input::placeholder {
+        color: #817a70;
+      }
+
+      .security-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 4px rgba(127, 199, 179, 0.12);
+      }
+
+      .tabs-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        background: #151512;
+      }
+
+      .tab-track {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        min-width: 0;
+        scrollbar-width: none;
+        scroll-snap-type: x proximity;
+      }
+
+      .tab-track::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab {
+        flex: 0 0 156px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0 10px;
+        background: #20201d;
+        color: var(--muted);
+        cursor: pointer;
+        scroll-snap-align: start;
+      }
+
+      .tab.active {
+        border-color: rgba(127, 199, 179, 0.5);
+        background: #292923;
+        color: var(--text);
+      }
+
+      .tab span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .browser-content {
+        display: grid;
+        grid-template-columns: 270px minmax(0, 1fr);
+        min-height: 620px;
+      }
+
+      .browser-sidebar {
+        border-right: 1px solid var(--line);
+        background: #171713;
+        padding: 14px;
+      }
+
+      .side-title {
+        margin: 4px 0 12px;
+        color: var(--muted);
+        font-size: 13px;
+        text-transform: uppercase;
+      }
+
+      .quick-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .quick-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 42px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        padding: 0 12px;
+        color: var(--text);
+        background: transparent;
+      }
+
+      .quick-item.active,
+      .quick-item:hover {
+        border-color: var(--line);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .viewport {
+        min-width: 0;
+        background: #10100e;
+      }
+
+      .web-card {
+        margin: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #1b1b18;
+        overflow: hidden;
+      }
+
+      .web-hero {
+        display: grid;
+        align-content: end;
+        min-height: 230px;
+        padding: 28px;
+        background:
+          linear-gradient(135deg, rgba(127, 199, 179, 0.2), rgba(231, 196, 107, 0.1)),
+          #20201d;
+      }
+
+      .web-hero h2 {
+        max-width: 620px;
+        margin: 0;
+        font-size: clamp(28px, 5vw, 54px);
+        letter-spacing: 0;
+      }
+
+      .web-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        padding: 18px;
+      }
+
+      .result-card {
+        min-height: 118px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: #22211e;
+      }
+
+      .result-card strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .result-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .phone-frame {
+        position: sticky;
+        top: 28px;
+        width: 100%;
+        max-width: 430px;
+        border: 1px solid var(--line);
+        border-radius: 30px;
+        padding: 12px;
+        background: #090908;
+        box-shadow: var(--shadow);
+      }
+
+      .phone {
+        overflow: hidden;
+        width: 100%;
+        min-height: 760px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: var(--panel);
+      }
+
+      .phone .topbar {
+        grid-template-rows: 32px 42px;
+      }
+
+      .phone .icon-btn {
+        width: 34px;
+        height: 34px;
+      }
+
+      .phone .active-tab-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        padding: 0 4px;
+      }
+
+      .phone .address-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        padding: 4px;
+      }
+
+      .phone .current-tab {
+        height: 28px;
+      }
+
+      .phone .url-field {
+        min-height: 34px;
+      }
+
+      .phone .tabs-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        padding: 8px 10px;
+      }
+
+      .phone .tab {
+        flex-basis: 128px;
+        min-height: 44px;
+      }
+
+      .phone .browser-content {
+        display: block;
+        min-height: auto;
+      }
+
+      .phone .browser-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 10px;
+      }
+
+      .phone .quick-list {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        scrollbar-width: none;
+      }
+
+      .phone .quick-list::-webkit-scrollbar {
+        display: none;
+      }
+
+      .phone .quick-item {
+        flex: 0 0 auto;
+        min-height: 44px;
+        white-space: nowrap;
+      }
+
+      .phone .web-card {
+        margin: 10px;
+      }
+
+      .phone .web-hero {
+        min-height: 190px;
+        padding: 18px;
+      }
+
+      .phone .web-hero h2 {
+        font-size: 30px;
+      }
+
+      .phone .web-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+
+      .mobile-tab-switcher {
+        display: none;
+      }
+
+      .bottom-safe-actions {
+        position: sticky;
+        bottom: 0;
+        display: none;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 10px;
+        border-top: 1px solid var(--line);
+        background: rgba(25, 25, 23, 0.96);
+        backdrop-filter: blur(16px);
+      }
+
+      .bottom-safe-actions .icon-btn {
+        width: 100%;
+      }
+
+      @media (max-width: 1050px) {
+        .showcase {
+          grid-template-columns: 1fr;
+        }
+
+        .phone-frame {
+          position: static;
+          margin: 0 auto;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .stage {
+          padding: 14px;
+        }
+
+        .mockup-header {
+          display: block;
+        }
+
+        .route-note {
+          margin-top: 14px;
+        }
+
+        .browser-shell.desktop {
+          display: none;
+        }
+      }
+
+      @media (max-width: 430px) {
+        .phone-frame {
+          border-radius: 0;
+          padding: 0;
+          border: 0;
+        }
+
+        .phone {
+          min-height: 100vh;
+          border-radius: 0;
+          border: 0;
+        }
+
+        .mobile-tab-switcher {
+          display: inline-grid;
+        }
+
+        .bottom-safe-actions {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      <header class="mockup-header">
+        <div>
+          <h1>smejj Browser: responsive App-Mockup</h1>
+          <p>
+            Separater Entwurf fuer die Browser-Oberflaeche: feste Adressleiste,
+            klare Navigation, horizontaler Tab-Wechsler und einhandfreundliche
+            Mobile-Bedienung. Die normale Startseite bleibt optisch unberuehrt.
+          </p>
+        </div>
+        <div class="route-note">
+          Routing-Ziel spaeter: <strong>/</strong> zeigt Startseite,
+          <strong>/home</strong> leitet sauber weiter.
+        </div>
+      </header>
+
+      <section class="showcase" aria-label="Browser Mockup Vorschau">
+        <article class="browser-shell desktop" aria-label="Desktop Browser Mockup">
+          <div class="topbar">
+            <div class="active-tab-row">
+              <button class="icon-btn" title="Vorheriger Tab" aria-label="Vorheriger Tab">‹</button>
+              <button class="current-tab" aria-label="Aktiver Tab">
+                <span class="tab-favicon" aria-hidden="true"></span>
+                <span>smejj.com</span>
+                <b aria-hidden="true">×</b>
+              </button>
+              <button class="icon-btn" title="Naechster Tab" aria-label="Naechster Tab">›</button>
+              <button class="icon-btn primary tab-count" title="7 Tabs" aria-label="7 Tabs">7</button>
+            </div>
+            <div class="address-row">
+              <div class="nav-cluster" aria-label="Navigation">
+                <button class="icon-btn" title="Zurueck" aria-label="Zurueck">‹</button>
+                <button class="icon-btn" title="Vorwaerts" aria-label="Vorwaerts">›</button>
+                <button class="icon-btn" title="Neu laden" aria-label="Neu laden">↻</button>
+              </div>
+              <label class="url-field">
+                <span class="security-dot" aria-hidden="true"></span>
+                <input value="https://smejj.com" aria-label="Adresse oder Suche" />
+                <span aria-hidden="true">↵</span>
+              </label>
+              <div class="action-cluster" aria-label="Aktionen">
+                <button class="icon-btn" title="Neuer Tab" aria-label="Neuer Tab">+</button>
+                <button class="icon-btn primary" title="Tab-Uebersicht" aria-label="Tab-Uebersicht">▦</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="browser-content">
+            <aside class="browser-sidebar" aria-label="Browser Bereiche">
+              <p class="side-title">Browser</p>
+              <div class="quick-list">
+                <button class="quick-item active"><span>Aktiver Tab</span><span>↗</span></button>
+                <button class="quick-item"><span>Verlauf</span><span>12</span></button>
+                <button class="quick-item"><span>Lesezeichen</span><span>8</span></button>
+                <button class="quick-item"><span>Downloads</span><span>0</span></button>
+                <button class="quick-item"><span>Privat</span><span>○</span></button>
+              </div>
+            </aside>
+            <section class="viewport" aria-label="Webseite">
+              <div class="web-card">
+                <div class="web-hero">
+                  <h2>smejj.com — KI- und Code-Assistent</h2>
+                </div>
+                <div class="web-grid">
+                  <div class="result-card">
+                    <strong>Schnellzugriff</strong>
+                    <p>Tabs, Suche und Verlauf bleiben erreichbar.</p>
+                  </div>
+                  <div class="result-card">
+                    <strong>Responsive</strong>
+                    <p>Keine abgeschnittenen Buttons auf kleinen Screens.</p>
+                  </div>
+                  <div class="result-card">
+                    <strong>Fokus</strong>
+                    <p>Adressfeld bleibt beim Scrollen oben fest.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="phone-frame" aria-label="Mobile Browser Mockup">
+          <div class="phone">
+            <div class="topbar">
+              <div class="active-tab-row">
+                <button class="icon-btn" title="Vorheriger Tab" aria-label="Vorheriger Tab">‹</button>
+                <button class="current-tab" aria-label="Aktiver Tab">
+                  <span class="tab-favicon" aria-hidden="true"></span>
+                  <span>smejj.com</span>
+                  <b aria-hidden="true">×</b>
+                </button>
+                <button class="icon-btn primary tab-count" title="7 Tabs" aria-label="7 Tabs">7</button>
+              </div>
+              <div class="address-row">
+                <div class="nav-cluster" aria-label="Mobile Navigation">
+                  <button class="icon-btn" title="Zurueck" aria-label="Zurueck">‹</button>
+                  <button class="icon-btn" title="Vorwaerts" aria-label="Vorwaerts">›</button>
+                </div>
+                <label class="url-field">
+                  <span class="security-dot" aria-hidden="true"></span>
+                  <input value="smejj.com" aria-label="Adresse oder Suche" />
+                </label>
+                <div class="action-cluster" aria-label="Mobile Aktionen">
+                  <button class="icon-btn" title="Neuer Tab" aria-label="Neuer Tab">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="browser-content">
+              <aside class="browser-sidebar" aria-label="Mobile Browser Bereiche">
+                <div class="quick-list">
+                  <button class="quick-item active">Aktiv</button>
+                  <button class="quick-item">Verlauf</button>
+                  <button class="quick-item">Lesezeichen</button>
+                  <button class="quick-item">Downloads</button>
+                </div>
+              </aside>
+              <section class="viewport" aria-label="Mobile Webseite">
+                <div class="web-card">
+                  <div class="web-hero">
+                    <h2>smejj.com</h2>
+                  </div>
+                  <div class="web-grid">
+                    <div class="result-card">
+                      <strong>Daumenfreundlich</strong>
+                      <p>Wichtige Aktionen sind unten und oben erreichbar.</p>
+                    </div>
+                    <div class="result-card">
+                      <strong>7 Tabs</strong>
+                      <p>Pfeile und Tab-Zaehler verhindern Chaos.</p>
+                    </div>
+                    <div class="result-card">
+                      <strong>PWA/APK</strong>
+                      <p>Safe-Area und Sticky-Leisten sind eingeplant.</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <nav class="bottom-safe-actions" aria-label="Mobile Schnellaktionen">
+              <button class="icon-btn" title="Zurueck" aria-label="Zurueck">‹</button>
+              <button class="icon-btn" title="Tabs" aria-label="Tabs">▦</button>
+              <button class="icon-btn primary" title="Neue Suche" aria-label="Neue Suche">⌕</button>
+              <button class="icon-btn" title="Mehr" aria-label="Mehr">⋯</button>
+            </nav>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

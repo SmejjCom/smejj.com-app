@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/provider-training-rights.schema.json",
+  "title": "smejj.com provider training rights ledger",
+  "type": "object",
+  "required": ["schemaVersion", "reviewedAt", "defaultTrainingUse", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "reviewedAt": { "type": "string" },
+    "defaultTrainingUse": { "const": "denied" },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "sourceType",
+          "provider",
+          "trainingUse",
+          "derivativeTrainingUse",
+          "permissionStatus",
+          "termsUrl",
+          "termsUpdatedAt",
+          "reviewEvidenceId"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string", "minLength": 3 },
+          "sourceType": { "enum": ["api", "open-weights", "legacy-worker", "first-party"] },
+          "provider": { "type": "string" },
+          "trainingUse": { "enum": ["allowed", "denied", "conditional"] },
+          "derivativeTrainingUse": { "enum": ["allowed", "denied", "conditional"] },
+          "permissionStatus": { "enum": ["verified", "missing", "not-required", "blocked"] },
+          "permissionId": { "type": ["string", "null"] },
+          "termsUrl": { "type": "string" },
+          "termsUpdatedAt": { "type": "string" },
+          "reviewEvidenceId": { "type": "string" },
+          "artifactRevision": { "type": ["string", "null"] },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

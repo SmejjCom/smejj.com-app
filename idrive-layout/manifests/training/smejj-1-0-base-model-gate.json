@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "targetModelId": "smejj-1-0",
+  "displayName": "smejj 1.0",
+  "architectureOwner": "smejj.com",
+  "foundationFamily": "glm-5-2",
+  "foundationDecision": {
+    "decidedAt": "2026-07-17",
+    "decidedBy": "operator-written-instruction",
+    "evidence": "docs/architecture/SMEJJ_1_0_TRAINING_RIGHTS_GLM_5_2_2026-07-17.md",
+    "previousFoundationFamily": "qwen",
+    "previousCandidate": "Qwen/Qwen3-8B"
+  },
+  "status": "blocked-exact-base-artifact-required",
+  "trainingAllowed": false,
+  "observedRuntime": {
+    "provider": "salad",
+    "containerGroup": null,
+    "containerGroupState": "none",
+    "activeInstanceCount": 0,
+    "autostart": false,
+    "previousContainerGroup": "smejj-llm-qwen3-v2",
+    "previousContainerGroupState": "stopped",
+    "image": null,
+    "servedModel": null,
+    "observedAt": "2026-07-17T00:00:00Z",
+    "exactWeightRepository": null,
+    "exactWeightRevision": null,
+    "imageDigest": null,
+    "tokenizerRevision": null,
+    "quantization": null
+  },
+  "candidateUpstream": {
+    "repository": "zai-org/GLM-5.2-FP8",
+    "license": "mit",
+    "observedRevision": "70311cfa0158cce7dd2cf5d2e04f68e3fdc3efc1",
+    "identityConfirmedForRuntime": false
+  },
+  "idriveArtifactClaim": {
+    "claimedByOperator": true,
+    "claimedAt": "2026-07-17",
+    "observedAt": "2026-07-17",
+    "observedBucket": "smejj-model-files",
+    "observedPrefix": "model-files/glm-5-2-fp8/original/",
+    "observedEvidence": [
+      "model-files/glm-5-2-fp8/original/LICENSE (1.04 KB)",
+      "model-files/glm-5-2-fp8/original/config.json + chat_template.jinja + generation_config",
+      "model-files/glm-5-2-fp8/original/model-0000x-of-... shards (~5 GB each, FP8)",
+      "model-files/glm-5-2-fp8/checksums/upstream-file-inventory (45.38 KB, 2026-06-22)",
+      "model-files/glm-5-2-fp8/checksums/streamed-checksums (14.28 KB, 2026-06-23)",
+      "model-files/glm-5-2-fp8/checksums/streamed-checksums-corrections-2026-07-17.json (1195 B, sha256 4768a4c906b8146de5cc671b26cf9237d70ea76962936ce3cfca5b667b599ee1)",
+      "models/glm-5-2/{model-manifest.json,checksums.json,shard-map.json}"
+    ],
+    "inventoryVerified": true,
+    "checksumsVerified": true,
+    "checksumVerificationLevel": "manifest-vs-upstream-2026-07-17",
+    "verificationSummary": "streamed-checksums.sha256 (149 entries) compared against official Hugging Face LFS SHA-256 of zai-org/GLM-5.2-FP8: 143/143 LFS files match, 0 missing, 0 mismatched, 755.7 GB total. Non-LFS files hash-match revision 70311cfa (config.json, LICENSE, chat_template.jinja, generation_config.json, tokenizer_config.json). README.md object on e2 is byte-identical to revision 70311cfa; its stale manifest line (recorded before the 2026-06-23 upstream README commit) is REPAIRED via correction object streamed-checksums-corrections-2026-07-17.json (correct README.md sha256 de23c1b7cab43a99f0fedf4edf10de0d165882a2ecb2e2bad6c5796fcabf2e46, 10909 B; original manifest preserved unchanged because it is hash-pinned as evidence in the notices archive). Byte-level re-hash of e2 objects remains optional hardening (paid worker job).",
+    "note": "Claim verified at manifest level on 2026-07-17. Training stays blocked until all requiredBeforeTraining gates pass."
+  },
+  "requiredBeforeTraining": [
+    "runtime-weight-repository-confirmed",
+    "exact-revision-pinned",
+    "license-and-notices-archived-in-idrive-e2",
+    "file-inventory-and-sha256-verified",
+    "tokenizer-and-chat-template-pinned",
+    "quantization-and-engine-pinned",
+    "trainer-image-digest-pinned",
+    "dataset-rights-and-privacy-gates-passed",
+    "written-cost-budget-approved"
+  ],
+  "noticesArchive": {
+    "archivedAt": "2026-07-17",
+    "prefix": "model-files/smejj-1-0/base/glm-5-2/70311cfa0158cce7dd2cf5d2e04f68e3fdc3efc1/notices/",
+    "objects": [
+      "NOTICE.md",
+      "LICENSE",
+      "attestation-report-2026-07-17.json"
+    ],
+    "uploadVerified": "console progress 3 of 3 completed, listing checked 2026-07-17",
+    "gateSatisfied": "license-and-notices-archived-in-idrive-e2"
+  },
+  "captureAcceptanceReview": {
+    "reviewedAt": "2026-07-17",
+    "document": "docs/architecture/SMEJJ_1_0_CAPTURE_ABNAHME_2026-07-17.md",
+    "implementationAccepted": true,
+    "activationBlockedBy": [
+      "privacy-notice-training-section-not-deployed",
+      "training-env-keys-not-provisioned",
+      "separate-training-idrive-credentials-missing",
+      "live-writer-probe-not-run"
+    ]
+  },
+  "targetIdrivePrefix": "model-files/smejj-1-0/base/glm-5-2/",
+  "revisionSegmentRequired": true,
+  "weightsStoredInRepository": false
+}

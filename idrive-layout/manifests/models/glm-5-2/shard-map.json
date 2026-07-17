@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "modelId": "glm-5-2",
+  "manifestVersion": "2026-06-25-glm-5-2-fp8-vault",
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "models/glm-5-2"
+  },
+  "shards": [
+    {
+      "id": "config",
+      "path": "config/config.json",
+      "objectKey": "models/glm-5-2/config/config.json",
+      "sha256": "example-config-sha256-placeholder",
+      "sizeBytes": 0,
+      "role": "config",
+      "cachePriority": "hot"
+    },
+    {
+      "id": "tokenizer",
+      "path": "tokenizer/tokenizer.json",
+      "objectKey": "models/glm-5-2/tokenizer/tokenizer.json",
+      "sha256": "example-tokenizer-sha256-placeholder",
+      "sizeBytes": 0,
+      "role": "tokenizer",
+      "cachePriority": "hot"
+    },
+    {
+      "id": "weights-fp8-00001",
+      "path": "weights-fp8/model-00001-of-00141.safetensors",
+      "objectKey": "models/glm-5-2/weights-fp8/model-00001-of-00141.safetensors",
+      "sha256": "example-weight-sha256-placeholder",
+      "sizeBytes": 0,
+      "role": "weight-shard",
+      "cachePriority": "cold"
+    }
+  ]
+}

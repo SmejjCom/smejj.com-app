@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/project-manifest.schema.json",
+  "title": "smejj.com Project Manifest",
+  "type": "object",
+  "required": ["id", "name", "version", "updatedAt", "storage", "files", "sync", "indexes"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "updatedAt": { "type": "string" },
+    "storage": {
+      "type": "object",
+      "required": [
+        "provider",
+        "contentAddressed",
+        "privateAbsolutePathsAllowed",
+        "secretsAllowed",
+        "largeMediaInRepoAllowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "const": "idrive-e2" },
+        "contentAddressed": { "const": true },
+        "privateAbsolutePathsAllowed": { "const": false },
+        "secretsAllowed": { "const": false },
+        "largeMediaInRepoAllowed": { "const": false }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "size", "contentType"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string" },
+          "size": { "type": "integer", "minimum": 0 },
+          "contentType": { "type": "string" }
+        }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "required": [
+        "strategy",
+        "deltaPrefix",
+        "snapshotPrefix",
+        "conflictPolicy",
+        "failClosedOnCostRisk",
+        "rollbackRequired"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "strategy": { "const": "crdt-deltas-plus-snapshots" },
+        "deltaPrefix": { "type": "string" },
+        "snapshotPrefix": { "type": "string" },
+        "conflictPolicy": { "const": "preserve-both-and-surface-to-user" },
+        "failClosedOnCostRisk": { "const": true },
+        "rollbackRequired": { "const": true }
+      }
+    },
+    "indexes": {
+      "type": "object",
+      "required": ["search", "chunks"],
+      "additionalProperties": false,
+      "properties": {
+        "search": { "type": "string" },
+        "chunks": { "type": "string" }
+      }
+    }
+  }
+}

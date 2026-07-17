@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/training-verification-evidence.schema.json",
+  "title": "smejj.com signed immutable training verification evidence",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "evidenceId",
+    "occurredAt",
+    "signingKeyId",
+    "publicKeySha256",
+    "subjectRef",
+    "repositoryRef",
+    "payloadSha256",
+    "diffSha256",
+    "sourceProof",
+    "provenance",
+    "quality",
+    "repositoryRights",
+    "signature"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "evidenceId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:/-]{5,240}$" },
+    "occurredAt": { "type": "string" },
+    "signingKeyId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{5,120}$" },
+    "publicKeySha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "subjectRef": { "type": "string", "pattern": "^sub_[a-f0-9]{64}$" },
+    "repositoryRef": { "type": "string", "pattern": "^repo_[a-f0-9]{64}$" },
+    "payloadSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "diffSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "sourceProof": {
+      "type": "object",
+      "required": ["taskCapsuleKey", "taskCapsuleSha256", "finalStatusKey", "finalStatusSha256", "conditionEnforced", "contentVerified", "proofStatus"],
+      "additionalProperties": false,
+      "properties": {
+        "taskCapsuleKey": { "type": "string", "pattern": "^jobs/(?:[a-zA-Z0-9][a-zA-Z0-9._-]{1,120}/){1,8}task-capsule\\.json$" },
+        "taskCapsuleSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "finalStatusKey": { "type": "string", "pattern": "^jobs/(?:[a-zA-Z0-9][a-zA-Z0-9._-]{1,120}/){1,8}status\\.json$" },
+        "finalStatusSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "conditionEnforced": { "const": true },
+        "contentVerified": { "const": true },
+        "proofStatus": { "const": 412 }
+      }
+    },
+    "provenance": { "type": "object" },
+    "quality": { "type": "object" },
+    "repositoryRights": { "type": "object" },
+    "signature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+  }
+}

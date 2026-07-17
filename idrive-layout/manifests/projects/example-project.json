@@ -1,0 +1,33 @@
+{
+  "id": "project_smejj_app_example",
+  "name": "smejj.com App",
+  "version": 1,
+  "updatedAt": "2026-06-16T00:00:00Z",
+  "storage": {
+    "provider": "idrive-e2",
+    "contentAddressed": true,
+    "privateAbsolutePathsAllowed": false,
+    "secretsAllowed": false,
+    "largeMediaInRepoAllowed": false
+  },
+  "files": [
+    {
+      "path": "src/server.js",
+      "sha256": "example-sha256-placeholder",
+      "size": 0,
+      "contentType": "text/javascript"
+    }
+  ],
+  "sync": {
+    "strategy": "crdt-deltas-plus-snapshots",
+    "deltaPrefix": "sync/project_smejj_app_example/deltas/",
+    "snapshotPrefix": "sync/project_smejj_app_example/snapshots/",
+    "conflictPolicy": "preserve-both-and-surface-to-user",
+    "failClosedOnCostRisk": true,
+    "rollbackRequired": true
+  },
+  "indexes": {
+    "search": "indexes/project_smejj_app_example/search-index.json",
+    "chunks": "indexes/project_smejj_app_example/chunks.jsonl"
+  }
+}

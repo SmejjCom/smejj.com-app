@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/dataset-version.schema.json",
+  "title": "smejj.com immutable dataset version",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "datasetId",
+    "versionId",
+    "createdAt",
+    "immutable",
+    "trainingDataEncrypted",
+    "sourceRecords",
+    "counts",
+    "contentSha256",
+    "leakageCheck",
+    "promotionStatus"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "datasetId": { "const": "smejj-1-0" },
+    "versionId": { "type": "string", "pattern": "^v[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}(?:-[a-z0-9.-]+)?$" },
+    "createdAt": { "type": "string" },
+    "immutable": { "const": true },
+    "trainingDataEncrypted": { "const": true },
+    "sourceRecords": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "schemaVersion", "recordId", "targetModelId", "trainingState", "trainingEligible",
+          "recordKey", "recordSizeBytes", "recordSha256",
+          "statusKey", "statusSizeBytes", "statusSha256", "payloadFingerprint",
+          "familyFingerprint", "split", "domain", "encryptionAlgorithm", "encryptionKeyId",
+          "consentLedgerDigest",
+          "verificationEvidenceId", "verificationEvidenceSha256",
+          "verificationEvidenceKey", "taskCapsuleKey", "taskCapsuleSha256",
+          "immutableReadbackVerified", "proofSigningKeyId",
+          "proofPublicKeySha256", "proofSha256", "proofSignature"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "schemaVersion": { "const": 1 },
+          "recordId": { "type": "string" },
+          "targetModelId": { "const": "smejj-1-0" },
+          "trainingState": { "const": "candidate" },
+          "trainingEligible": { "const": true },
+          "recordKey": { "type": "string" },
+          "recordSizeBytes": { "type": "integer", "minimum": 1 },
+          "recordSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "statusKey": { "type": "string" },
+          "statusSizeBytes": { "type": "integer", "minimum": 1 },
+          "statusSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "payloadFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "familyFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "split": { "enum": ["train", "validation", "test"] },
+          "domain": { "type": "string" },
+          "encryptionAlgorithm": { "const": "AES-256-GCM" },
+          "encryptionKeyId": { "type": "string" },
+          "consentLedgerDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "verificationEvidenceId": { "type": "string" },
+          "verificationEvidenceKey": { "type": "string" },
+          "verificationEvidenceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "taskCapsuleKey": { "type": "string" },
+          "taskCapsuleSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "immutableReadbackVerified": { "const": true },
+          "proofSigningKeyId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{5,120}$" },
+          "proofPublicKeySha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "proofSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "proofSignature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+        }
+      }
+    },
+    "counts": { "type": "object" },
+    "contentSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "leakageCheck": { "const": "passed-family-grouped" },
+    "promotionStatus": { "enum": ["not-approved", "approved", "rejected", "revoked"] }
+  }
+}

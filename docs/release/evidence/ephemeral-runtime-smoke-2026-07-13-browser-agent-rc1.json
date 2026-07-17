@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "recordType": "smejj.com-ephemeral-runtime-smoke",
+  "testedAt": "2026-07-13T13:53:01Z",
+  "sourceManifestSha256": "1bdcf41451fe2ec0aa94b42a4880f0ec2c5029a76c3957cfd6f0fce7326f0ac0",
+  "bootstrapSha256": "f2414fd9d5fe37b9efc0ee784c1923e30853190b77b5ba567ee07259a8286693",
+  "appRoot": "/app",
+  "image": "docker.io/library/node@sha256:09dbe0a53523c2482d85a037efc6b0e8e8bb16c6f1acf431fe36aa0ebc871c06",
+  "targetImage": "docker.io/library/node@sha256:c1f4f4e7afa4f73df11ad95392ff316a4af82df0cb5ca114de1fe7c4dc4dcd20",
+  "testedPlatform": "linux/arm64",
+  "targetPlatform": "linux/amd64",
+  "targetImageManifestSha256": "c1f4f4e7afa4f73df11ad95392ff316a4af82df0cb5ca114de1fe7c4dc4dcd20",
+  "targetAmd64CoreBootstrapVerified": true,
+  "targetAmd64BrowserBlockedByLocalEmulation": true,
+  "runtimeProfile": "browser",
+  "nativeAmd64ProviderVerified": false,
+  "exitCode": 0,
+  "runtime": {
+    "node": "v20.15.1",
+    "git": "git version 2.45.4",
+    "python": "Python 3.12.13",
+    "pytest": "8.3.5",
+    "playwright": "1.49.1",
+    "browser": "Chromium 131.0.6778.108 Alpine Linux"
+  },
+  "privileged": false,
+  "pytest": {
+    "ok": true,
+    "collected": 1,
+    "passed": 1
+  },
+  "browserChecks": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "ok": true
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "ok": true
+    }
+  ],
+  "screenshotCount": 2,
+  "sourceDiffCleanAfterGeneratedCacheExclusions": true,
+  "secretsUsed": false,
+  "trainingEligible": false,
+  "memoryMayLearn": false
+}

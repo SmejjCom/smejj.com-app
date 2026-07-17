@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/benchmark-suite.schema.json",
+  "title": "smejj.com immutable benchmark suite",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "suiteId",
+    "version",
+    "createdAt",
+    "description",
+    "immutable",
+    "eligibleForTraining",
+    "integrity",
+    "protection",
+    "execution",
+    "metrics",
+    "costGate",
+    "promotion"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "suiteId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10
+    },
+    "immutable": { "const": true },
+    "eligibleForTraining": { "const": false },
+    "integrity": {
+      "type": "object",
+      "required": ["algorithm", "canonicalization", "contentSha256"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": { "const": "sha256" },
+        "canonicalization": { "const": "json-key-sort-v1" },
+        "contentSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "protection": {
+      "type": "object",
+      "required": [
+        "versionedObjectKey",
+        "conditionalWrite",
+        "overwriteAllowed",
+        "evaluationArtifactsEligibleForTraining",
+        "familyLeakageCheckRequired"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "versionedObjectKey": {
+          "type": "string",
+          "pattern": "^evaluations/suites/[a-z0-9-]+/[A-Za-z0-9._-]+/manifest\\.json$"
+        },
+        "conditionalWrite": { "const": "if-none-match-star" },
+        "overwriteAllowed": { "const": false },
+        "evaluationArtifactsEligibleForTraining": { "const": false },
+        "familyLeakageCheckRequired": { "const": true }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "packageManager",
+        "shell",
+        "captureLogBodies",
+        "checkOutputPersistence",
+        "environmentAllowlist",
+        "checks",
+        "protectedAssets"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "packageManager": { "const": "pnpm" },
+        "shell": { "const": false },
+        "captureLogBodies": { "const": false },
+        "checkOutputPersistence": { "const": "none" },
+        "environmentAllowlist": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["PATH", "HOME", "TMPDIR", "TMP", "TEMP", "CI", "PNPM_HOME"]
+          }
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "required": ["id", "scriptSha256", "purpose"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "enum": [
+                  "check:json",
+                  "check:manifests",
+                  "check:cost",
+                  "check:paths",
+                  "check:security",
+                  "check:guidelines",
+                  "check:architecture",
+                  "check:abuse",
+                  "check:gatekeeper",
+                  "check:start-lock"
+                ]
+              },
+              "scriptSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 5
+              }
+            }
+          }
+        },
+        "protectedAssets": {
+          "type": "array",
+          "minItems": 19,
+          "maxItems": 19,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "required": ["path", "sha256"],
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "enum": [
+                  "src/evaluation/modelPromotion.js",
+                  "scripts/evaluation/run_foundation_benchmark.mjs",
+                  "scripts/validate-json.mjs",
+                  "scripts/validate-manifests.mjs",
+                  "scripts/validation-utils.mjs",
+                  "scripts/check-cost-guardrails.mjs",
+                  "scripts/check-no-private-paths.mjs",
+                  "scripts/check-no-paid-services.mjs",
+                  "scripts/check-backup-archives.mjs",
+                  "scripts/check-guidelines.mjs",
+                  "scripts/check-start-lock.mjs",
+                  "tests/training-manifest-policy.test.mjs",
+                  "tests/free-only-master-policy.test.mjs",
+                  "tests/security-abuse.test.mjs",
+                  "tests/gatekeeper.policy.test.mjs",
+                  "tests/presign.failclosed.test.mjs",
+                  "tests/cost-guardrails.test.mjs",
+                  "tests/backup-archive-safety.test.mjs",
+                  "tests/model-promotion.test.mjs"
+                ]
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "direction",
+          "unit",
+          "mustNotRegress",
+          "zeroRequired",
+          "improvementEligible",
+          "minimumImprovement"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]*$"
+          },
+          "category": {
+            "enum": ["safety", "non-regression", "quality", "efficiency"]
+          },
+          "direction": { "enum": ["maximize", "minimize"] },
+          "unit": {
+            "enum": ["count", "ratio", "milliseconds", "tokens", "usd"]
+          },
+          "mustNotRegress": { "type": "boolean" },
+          "zeroRequired": { "type": "boolean" },
+          "improvementEligible": { "type": "boolean" },
+          "minimumImprovement": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "costGate": {
+      "type": "object",
+      "required": [
+        "budgetGatePassRequired",
+        "maxEvaluationRunUsd",
+        "maxCostPerSuccessfulTaskUsd",
+        "minimumMeasuredTasks",
+        "trialServicesAllowed",
+        "autoBillingFallbackAllowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "budgetGatePassRequired": { "const": true },
+        "maxEvaluationRunUsd": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "maxCostPerSuccessfulTaskUsd": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "minimumMeasuredTasks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "trialServicesAllowed": { "const": false },
+        "autoBillingFallbackAllowed": { "const": false }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "required": [
+        "automaticDeploymentAllowed",
+        "writtenHumanApprovalRequired",
+        "sameSuiteDigestRequired",
+        "minimumImprovements",
+        "securityFailureMetricId",
+        "damagedFunctionMetricId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "automaticDeploymentAllowed": { "const": false },
+        "writtenHumanApprovalRequired": { "const": true },
+        "sameSuiteDigestRequired": { "const": true },
+        "minimumImprovements": { "const": 1 },
+        "securityFailureMetricId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "damagedFunctionMetricId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/task-capsule.schema.json",
+  "title": "smejj.com Task Capsule",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "jobId",
+    "projectId",
+    "createdAt",
+    "policy",
+    "model",
+    "provenance",
+    "objects",
+    "verification",
+    "memory",
+    "training"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "jobId": {
+      "type": "string"
+    },
+    "projectId": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "replayable",
+        "rollbackBeforePatch",
+        "blindFullRepoLoadAllowed",
+        "testsAreTruth"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "replayable": {
+          "const": true
+        },
+        "rollbackBeforePatch": {
+          "const": true
+        },
+        "blindFullRepoLoadAllowed": {
+          "const": false
+        },
+        "testsAreTruth": {
+          "const": true
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": [
+        "id",
+        "effort",
+        "inferenceDefault"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": [
+            "glm-5-2",
+            "kimi-k2-7",
+            "smejj-1-0"
+          ]
+        },
+        "effort": {
+          "type": "string"
+        },
+        "inferenceDefault": {
+          "const": "disabled-until-explicit-compute-approval"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "actualProvider",
+        "actualModel",
+        "trainingRightsStatus",
+        "sourceRevisions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "actualProvider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actualModel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trainingRightsStatus": {
+          "enum": [
+            "not-reviewed",
+            "denied",
+            "allowed"
+          ]
+        },
+        "sourceRevisions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "objects": {
+      "type": "object",
+      "required": [
+        "input",
+        "budget",
+        "contextPlan",
+        "repoPack",
+        "promptBlocks",
+        "patch",
+        "testResults",
+        "browserResults",
+        "screenshots",
+        "errors",
+        "selfFixAttempts",
+        "verifierReport",
+        "benchmarkResults",
+        "rollbackManifest",
+        "trainingEligibility",
+        "finalAnswer"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "type": "string"
+        },
+        "budget": {
+          "type": "string"
+        },
+        "contextPlan": {
+          "type": "string"
+        },
+        "repoPack": {
+          "type": "string"
+        },
+        "promptBlocks": {
+          "type": "string"
+        },
+        "patch": {
+          "type": "string"
+        },
+        "testResults": {
+          "type": "string"
+        },
+        "browserResults": {
+          "type": "string"
+        },
+        "screenshots": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "string"
+        },
+        "selfFixAttempts": {
+          "type": "string"
+        },
+        "verifierReport": {
+          "type": "string"
+        },
+        "benchmarkResults": {
+          "type": "string"
+        },
+        "rollbackManifest": {
+          "type": "string"
+        },
+        "trainingEligibility": {
+          "type": "string"
+        },
+        "finalAnswer": {
+          "type": "string"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "required",
+        "selfFixMaxAttempts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "selfFixMaxAttempts": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "required": [
+        "learnDirectlyFromModelOutput",
+        "proposalKey"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "learnDirectlyFromModelOutput": {
+          "const": false
+        },
+        "proposalKey": {
+          "type": "string"
+        }
+      }
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "eligible",
+        "state",
+        "automaticCandidate",
+        "operationalMemoryIsTrainingPermission",
+        "rightsPrivacyQualityGateRequired"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "eligible": {
+          "const": false
+        },
+        "state": {
+          "enum": [
+            "not-evaluated",
+            "denied",
+            "quarantined"
+          ]
+        },
+        "automaticCandidate": {
+          "const": false
+        },
+        "operationalMemoryIsTrainingPermission": {
+          "const": false
+        },
+        "rightsPrivacyQualityGateRequired": {
+          "const": true
+        }
+      }
+    }
+  }
+}

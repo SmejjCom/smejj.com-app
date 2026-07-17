@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "memory/known-fixes/"
+  },
+  "fixes": []
+}

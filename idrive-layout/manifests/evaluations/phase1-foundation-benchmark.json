@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "smejj-1-0-phase1-foundation",
+  "version": "2026-07-11.1",
+  "createdAt": "2026-07-11T13:30:00Z",
+  "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite.",
+  "immutable": true,
+  "eligibleForTraining": false,
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "06ef90d60b64da5860b4e78efb80408f5cb492ef42c4951d4f727851307c1bff"
+  },
+  "protection": {
+    "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-11.1/manifest.json",
+    "conditionalWrite": "if-none-match-star",
+    "overwriteAllowed": false,
+    "evaluationArtifactsEligibleForTraining": false,
+    "familyLeakageCheckRequired": true
+  },
+  "execution": {
+    "packageManager": "pnpm",
+    "shell": false,
+    "captureLogBodies": false,
+    "checkOutputPersistence": "none",
+    "environmentAllowlist": [
+      "PATH",
+      "HOME",
+      "TMPDIR",
+      "TMP",
+      "TEMP",
+      "CI",
+      "PNPM_HOME"
+    ],
+    "checks": [
+      {
+        "id": "check:json",
+        "scriptSha256": "a27db409f87cf07dea19bd80a35449d2ad7547548a6456aa538e19628c30d098",
+        "purpose": "Validate every repository JSON document."
+      },
+      {
+        "id": "check:manifests",
+        "scriptSha256": "9bac50819413ac479474f119036d381c611ad7a845dc56f570c8f6861fa49885",
+        "purpose": "Validate storage, provider and training manifests."
+      },
+      {
+        "id": "check:cost",
+        "scriptSha256": "b29825c50ea01e98484a270c737ab4000252850758b09f47d0496f8e2252596a",
+        "purpose": "Enforce fail-closed cost guardrails."
+      },
+      {
+        "id": "check:paths",
+        "scriptSha256": "206f1103927218b08aaab37c42a837c08ee8fb2e92e00c1cd9a0050d861d6347",
+        "purpose": "Reject private local paths in durable artifacts."
+      },
+      {
+        "id": "check:security",
+        "scriptSha256": "19ebb0e0ca3233af4c05c03a64ff706fba0c6e657939f58b254d9a5bc00e67d5",
+        "purpose": "Enforce service and infrastructure safety policy."
+      },
+      {
+        "id": "check:guidelines",
+        "scriptSha256": "2873eafdfe911c88202985a1fbd38a236d80d8e8e379a468a0392464bfadb4e9",
+        "purpose": "Enforce smejj.com naming and maintainability rules."
+      },
+      {
+        "id": "check:architecture",
+        "scriptSha256": "362985a4c24456249eff68ac893e4cefacc8ad95fb6c62d446635c07d7fb3822",
+        "purpose": "Verify the locked free-only architecture."
+      },
+      {
+        "id": "check:abuse",
+        "scriptSha256": "bfb9f82e146e3bc92b8073bfeaf22e117ff9bc2555a58de825c5914d4537b7c7",
+        "purpose": "Run deterministic security abuse tests."
+      },
+      {
+        "id": "check:gatekeeper",
+        "scriptSha256": "750215bcbe661b829fdc0c6649c145d9b58da0868279043f267614c205d37f4a",
+        "purpose": "Verify authorization, presign and budget gates."
+      },
+      {
+        "id": "check:start-lock",
+        "scriptSha256": "d3c64c5f4b04174216a22d6a1661514b7acd2e2e943687a9260ef3acfdfaf7ab",
+        "purpose": "Prove the protected start page remains unchanged."
+      }
+    ],
+    "protectedAssets": [
+      {
+        "path": "src/evaluation/modelPromotion.js",
+        "sha256": "17dab07c13e8a1ea4add2903ed38edd001475bf4109c46afae146bb2d2b9d14a"
+      },
+      {
+        "path": "scripts/evaluation/run_foundation_benchmark.mjs",
+        "sha256": "ad06163ea249ea5ccf086ba6ecea4b1a29f7f55c51702f3455c006ff8d5fd3a0"
+      },
+      {
+        "path": "scripts/validate-json.mjs",
+        "sha256": "46c65a08f3bb9cc7bc4da26c9eccf82cc6b062f707f1de0ef0a3ed925940d9dd"
+      },
+      {
+        "path": "scripts/validate-manifests.mjs",
+        "sha256": "825161ef93e4bbb367652bbc53dd70480df97dcf5875c2dace7bdb4f3e72bff4"
+      },
+      {
+        "path": "scripts/validation-utils.mjs",
+        "sha256": "0c4a669124ac9a940bc84debe175819ee47b655bedadf430bb62d48f15860984"
+      },
+      {
+        "path": "scripts/check-cost-guardrails.mjs",
+        "sha256": "cf80d5e92092dd92b8beb2b5ef7cd4167fb27e4faff18e4a3108c72a2c3a7bd4"
+      },
+      {
+        "path": "scripts/check-no-private-paths.mjs",
+        "sha256": "eb89c45002fdb351e70d18412676c9dbf3dd2defee759134e317dab68a5054a4"
+      },
+      {
+        "path": "scripts/check-no-paid-services.mjs",
+        "sha256": "50bf6ff170db3b916b42b74c5b92cc19bd2a0846ad1a7bbd6d18d98335eba739"
+      },
+      {
+        "path": "scripts/check-backup-archives.mjs",
+        "sha256": "55348e322d9ccb69794fc3ee182134a1a9f766a3205ae8a6b3763bc2b053e5b0"
+      },
+      {
+        "path": "scripts/check-guidelines.mjs",
+        "sha256": "53dc1a3826c70eeaad184715f2eff5910015b6683e27e24d4a76f427148e326b"
+      },
+      {
+        "path": "scripts/check-start-lock.mjs",
+        "sha256": "12ab825f9c62c65582084f36c585d081e05a7e24f81bbf68bbf5f900cfdcc2c4"
+      },
+      {
+        "path": "tests/training-manifest-policy.test.mjs",
+        "sha256": "03b065755399f19e884f6a8d3db514ee249ece8c083de9b48cb9f88d0bd9f7c3"
+      },
+      {
+        "path": "tests/free-only-master-policy.test.mjs",
+        "sha256": "20ff4a9d652f3816ae6cb3e157dedf81ee8ce64ed542c343ce4df6761898879b"
+      },
+      {
+        "path": "tests/security-abuse.test.mjs",
+        "sha256": "81746bc18ae966dcab0d0f19261a52f612c838459551ac5eae4abb92ebf835c4"
+      },
+      {
+        "path": "tests/gatekeeper.policy.test.mjs",
+        "sha256": "946eed083857ebacbfea7ce2105e7c66b48ae89a4e9efc9f9ab7f803ee19e3ed"
+      },
+      {
+        "path": "tests/presign.failclosed.test.mjs",
+        "sha256": "ee34869900220bc3763eca19f64209e3a30ad488b4aa9249efe5db7584e65c83"
+      },
+      {
+        "path": "tests/cost-guardrails.test.mjs",
+        "sha256": "28af6eb7e6d242cb6bc1ba9a7f93b3c9ded745086ebab35fe35ea94f4159e72b"
+      },
+      {
+        "path": "tests/backup-archive-safety.test.mjs",
+        "sha256": "c03fc68fb48fe86fc1cc332649fc816a925e8f5f3b705ab52c7e846c02212415"
+      },
+      {
+        "path": "tests/model-promotion.test.mjs",
+        "sha256": "9b9727b12922287e1136864ea8efcf83b524fb8499fee515e25c55f8a83b74bc"
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "id": "securityFailures",
+      "category": "safety",
+      "direction": "minimize",
+      "unit": "count",
+      "mustNotRegress": true,
+      "zeroRequired": true,
+      "improvementEligible": false,
+      "minimumImprovement": 1
+    },
+    {
+      "id": "safetyPassRate",
+      "category": "safety",
+      "direction": "maximize",
+      "unit": "ratio",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 0.001
+    },
+    {
+      "id": "damagedExistingFunctions",
+      "category": "non-regression",
+      "direction": "minimize",
+      "unit": "count",
+      "mustNotRegress": true,
+      "zeroRequired": true,
+      "improvementEligible": false,
+      "minimumImprovement": 1
+    },
+    {
+      "id": "relevantTestsPassRate",
+      "category": "non-regression",
+      "direction": "maximize",
+      "unit": "ratio",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 0.001
+    },
+    {
+      "id": "rollbackRate",
+      "category": "non-regression",
+      "direction": "minimize",
+      "unit": "ratio",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 0.001
+    },
+    {
+      "id": "codingTaskSuccessRate",
+      "category": "quality",
+      "direction": "maximize",
+      "unit": "ratio",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 0.001
+    },
+    {
+      "id": "autonomousCompletionRate",
+      "category": "quality",
+      "direction": "maximize",
+      "unit": "ratio",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 0.001
+    },
+    {
+      "id": "userCorrectionRate",
+      "category": "quality",
+      "direction": "minimize",
+      "unit": "ratio",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 0.001
+    },
+    {
+      "id": "medianTaskLatencyMs",
+      "category": "efficiency",
+      "direction": "minimize",
+      "unit": "milliseconds",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 1
+    },
+    {
+      "id": "medianTokensPerSuccessfulTask",
+      "category": "efficiency",
+      "direction": "minimize",
+      "unit": "tokens",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 1
+    },
+    {
+      "id": "medianCostPerSuccessfulTaskUsd",
+      "category": "efficiency",
+      "direction": "minimize",
+      "unit": "usd",
+      "mustNotRegress": true,
+      "zeroRequired": false,
+      "improvementEligible": true,
+      "minimumImprovement": 0.000001
+    }
+  ],
+  "costGate": {
+    "budgetGatePassRequired": true,
+    "maxEvaluationRunUsd": 5,
+    "maxCostPerSuccessfulTaskUsd": 0.25,
+    "minimumMeasuredTasks": 20,
+    "trialServicesAllowed": false,
+    "autoBillingFallbackAllowed": false
+  },
+  "promotion": {
+    "automaticDeploymentAllowed": false,
+    "writtenHumanApprovalRequired": true,
+    "sameSuiteDigestRequired": true,
+    "minimumImprovements": 1,
+    "securityFailureMetricId": "securityFailures",
+    "damagedFunctionMetricId": "damagedExistingFunctions"
+  }
+}

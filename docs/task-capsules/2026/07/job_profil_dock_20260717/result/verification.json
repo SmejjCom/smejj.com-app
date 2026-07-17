@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_profil_dock_20260717",
+  "pipeline": {
+    "syntax_check": "OK (npm run check, inkl. der 4 neuen Module)",
+    "check:guidelines": "OK — 701 Dateien, max 800 Zeilen, Naming smejj.com; app.js 1403 und styles.css 1565 unveraendert",
+    "check:frontend": "125/126 OK (neuer Test tests/profile-dock.test.mjs gruen)",
+    "check:platform": "OK (7/7, SW-Cache v126)",
+    "check:start-lock": "OK — 28 Dateien byte-identisch, neu eingefroren mit Freigabe-Wortlaut",
+    "check:favicon-lock": "OK — 6 Dateien, 18 HTML-Seiten unveraendert",
+    "check:json/manifests/cost/paths/security": "OK",
+    "check:architecture/abuse/users/workspace/rollback": "OK"
+  },
+  "restrisiko": {
+    "check:branding": "In der Linux-Session nicht ausfuehrbar: @resvg/resvg-js liegt nur als darwin-arm64-Binary vor, npm-Registry ist gesperrt. Kein Branding-Asset wurde angefasst; check:favicon-lock und check:start-lock belegen byte-Identitaet aller Marken- und Startseiten-Dateien. Auf dem Mac des Betreibers laeuft der Test unveraendert."
+  },
+  "browserpruefung": {
+    "umgebung": "Chrome, live auf https://smejj.com",
+    "konsolenfehler": 0,
+    "ergebnisse": [
+      "Dock rendert unten links: Avatar-Initiale + 'Alan Best' + Zahnrad rechts",
+      "Klick auf Dock -> /profile; Klick auf Zahnrad -> /settings (Non-Regression bestaetigt)",
+      "Bild-Upload live: 121 KB PNG -> 256x256, 2 KB; Dock aktualisiert sich ohne Reload (Event)",
+      "Persistenz nach Reload bestaetigt",
+      "Entfernen setzt auf Initiale zurueck (Ausgangszustand wiederhergestellt)",
+      "Kompakte Sidebar: Avatar ueber Zahnrad, beide vollstaendig sichtbar"
+    ]
+  },
+  "gefundeneUndBehobeneFehler": [
+    {
+      "fehler": "Kompakte Sidebar: styles.css setzt .sidebar.is-compact .profile-dock auf height:28px + overflow:hidden — mit zwei gestapelten Zeilen wurde das Zahnrad abgeschnitten.",
+      "fix": "profile-dock.css: height:auto, min-height:0, overflow:visible; Avatar in kompakt auf 22px.",
+      "verifiziert": "Live nachgetestet, Zahnrad und Avatar vollstaendig sichtbar."
+    },
+    {
+      "fehler": "Bestehende Browser luden die alte profile-dock.css, weil die ?v=-Cache-Version gleich blieb.",
+      "fix": "Cache-Version in index.html auf profile-dock-20260717-2 erhoeht, start-lock neu eingefroren.",
+      "verifiziert": "Live nachgetestet nach Deploy."
+    }
+  ]
+}

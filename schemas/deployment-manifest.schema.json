@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/deployment-manifest.schema.json",
+  "title": "smejj.com Deployment Manifest",
+  "type": "object",
+  "required": [
+    "version",
+    "id",
+    "app",
+    "environment",
+    "updatedAt",
+    "storage",
+    "source",
+    "artifact",
+    "costPolicy",
+    "release"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "id": { "type": "string" },
+    "app": { "const": "smejj.com" },
+    "environment": { "type": "string" },
+    "updatedAt": { "type": "string" },
+    "storage": {
+      "type": "object",
+      "required": ["provider", "artifactPrefix", "contentAddressed"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "const": "idrive-e2" },
+        "artifactPrefix": { "type": "string" },
+        "contentAddressed": { "const": true }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["gitCommit", "repoPathPolicy"],
+      "additionalProperties": false,
+      "properties": {
+        "gitCommit": { "type": "string" },
+        "repoPathPolicy": { "const": "relative-only" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256", "size", "contentType"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string" },
+        "size": { "type": "integer", "minimum": 0 },
+        "contentType": { "type": "string" }
+      }
+    },
+    "costPolicy": {
+      "type": "object",
+      "required": [
+        "githubPaidAllowed",
+        "paidHostingAllowed",
+        "paidFallbackAllowed",
+        "trialServicesAllowed",
+        "autoBillingAllowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "githubPaidAllowed": { "const": false },
+        "paidHostingAllowed": { "const": false },
+        "paidFallbackAllowed": { "const": false },
+        "trialServicesAllowed": { "const": false },
+        "autoBillingAllowed": { "const": false }
+      }
+    },
+    "release": {
+      "type": "object",
+      "required": ["requiresWrittenApproval", "livePublished", "rollbackRequired"],
+      "additionalProperties": false,
+      "properties": {
+        "requiresWrittenApproval": { "const": true },
+        "livePublished": { "const": false },
+        "rollbackRequired": { "const": true }
+      }
+    }
+  }
+}

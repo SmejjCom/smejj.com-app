@@ -1,0 +1,24 @@
+# smejj.com — schlankes Control-Server-Image: alles Unnoetige/Sensible ausschliessen.
+node_modules
+.git
+.env
+.env.*
+backups
+tmp
+tests
+scripts
+idrive-layout
+examples
+workers/*
+!workers/remote-browser
+!workers/remote-browser/**
+!workers/smejj-worker
+!workers/smejj-worker/**
+!workers/maus-engine
+!workers/maus-engine/**
+!workers/glm-salad
+!workers/glm-salad/s3.js
+schemas/*
+!schemas/maus-action-plan.schema.json
+*.xlsx
+.DS_Store

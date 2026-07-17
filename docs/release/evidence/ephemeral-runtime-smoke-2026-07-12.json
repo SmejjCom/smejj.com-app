@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "recordType": "smejj.com-ephemeral-runtime-smoke",
+  "testedAt": "2026-07-12T11:16:46Z",
+  "sourceManifestSha256": "faf2eb15ba5c909b7a0cae0d7b3b666688de10d2acb09f3f6740b4ea2564fa6d",
+  "image": "mcr.microsoft.com/playwright@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+  "exitCode": 0,
+  "runtime": {
+    "node": "v20.15.1",
+    "python": "Python 3.10.12",
+    "pytest": "8.3.5",
+    "playwright": "1.45.3"
+  },
+  "privileged": false,
+  "pytest": {
+    "ok": true,
+    "collected": 1,
+    "passed": 1
+  },
+  "browserChecks": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "ok": true
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "ok": true
+    }
+  ],
+  "screenshotCount": 2,
+  "sourceDiffCleanAfterGeneratedCacheExclusions": true,
+  "secretsUsed": false,
+  "trainingEligible": false,
+  "memoryMayLearn": false
+}

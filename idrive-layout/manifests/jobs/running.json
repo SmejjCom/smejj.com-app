@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "status": "running",
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "jobs/running/"
+  },
+  "policy": {
+    "localCache": "small-and-temporary",
+    "logsGoToIdrive": true,
+    "resultsGoToIdrive": true,
+    "failClosed": true
+  },
+  "jobs": []
+}

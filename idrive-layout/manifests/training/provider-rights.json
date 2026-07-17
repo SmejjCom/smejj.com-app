@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-07-17T00:00:00Z",
+  "defaultTrainingUse": "denied",
+  "entries": [
+    {
+      "id": "zai-api-glm-5-2-2026-04-14",
+      "sourceType": "api",
+      "provider": "z.ai",
+      "trainingUse": "denied",
+      "derivativeTrainingUse": "denied",
+      "permissionStatus": "blocked",
+      "permissionId": null,
+      "termsUrl": "https://docs.z.ai/legal-agreement/terms-of-use",
+      "termsUpdatedAt": "2026-04-14",
+      "reviewEvidenceId": "docs/architecture/SMEJJ_1_0_TRAINING_RIGHTS_2026-07-10.md",
+      "artifactRevision": null,
+      "notes": "API model, prompts, generated content and transitive derivatives are excluded from training, labeling, fine-tuning, optimization and distillation without a signed provider amendment."
+    },
+    {
+      "id": "moonshot-api-kimi-k2-7-2026-05-27",
+      "sourceType": "api",
+      "provider": "moonshot-ai",
+      "trainingUse": "denied",
+      "derivativeTrainingUse": "denied",
+      "permissionStatus": "blocked",
+      "permissionId": null,
+      "termsUrl": "https://platform.kimi.ai/docs/agreement/modeluse",
+      "termsUpdatedAt": "2026-05-27",
+      "reviewEvidenceId": "docs/architecture/SMEJJ_1_0_TRAINING_RIGHTS_2026-07-10.md",
+      "artifactRevision": null,
+      "notes": "Competitive-model development is not authorized; no positive output-training permission exists."
+    },
+    {
+      "id": "qwen3-8b-open-weights-unidentified-runtime",
+      "sourceType": "open-weights",
+      "provider": "qwen",
+      "trainingUse": "conditional",
+      "derivativeTrainingUse": "conditional",
+      "permissionStatus": "missing",
+      "permissionId": null,
+      "termsUrl": "https://huggingface.co/Qwen/Qwen3-8B",
+      "termsUpdatedAt": "2025-07-26",
+      "reviewEvidenceId": "docs/architecture/SMEJJ_1_0_TRAINING_RIGHTS_2026-07-10.md",
+      "artifactRevision": null,
+      "notes": "Apache-2.0 upstream is compatible in principle, but the active Salad runtime lacks an exact repository, revision, tokenizer, quantization, checksum and archived notice identity."
+    },
+    {
+      "id": "glm-5-2-open-weights-unattested-artifact",
+      "sourceType": "open-weights",
+      "provider": "z.ai-open-weights",
+      "trainingUse": "conditional",
+      "derivativeTrainingUse": "conditional",
+      "permissionStatus": "missing",
+      "permissionId": null,
+      "termsUrl": "https://huggingface.co/zai-org/GLM-5.2-FP8",
+      "termsUpdatedAt": "2026-07-17",
+      "reviewEvidenceId": "docs/architecture/SMEJJ_1_0_TRAINING_RIGHTS_GLM_5_2_2026-07-17.md",
+      "artifactRevision": "70311cfa0158cce7dd2cf5d2e04f68e3fdc3efc1",
+      "notes": "MIT-licensed open weights (zai-org/GLM-5.2-FP8, revision pinned 2026-07-17, 755.7 GB, 149 files). Manifest-level checksum attestation against official upstream SHA-256 passed 2026-07-17 (see review doc). Stays conditional until remaining base-model gates pass (notices archive, trainer image digest, dataset rights, written budget). The separate API entry zai-api-glm-5-2-2026-04-14 stays denied and is not affected by this weights review."
+    },
+    {
+      "id": "legacy-task-capsules-before-training-v1",
+      "sourceType": "legacy-worker",
+      "provider": "smejj.com-legacy-runtime",
+      "trainingUse": "denied",
+      "derivativeTrainingUse": "denied",
+      "permissionStatus": "blocked",
+      "permissionId": null,
+      "termsUrl": "docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md",
+      "termsUpdatedAt": "2026-07-10",
+      "reviewEvidenceId": "legacy-capsules-training-denied-v1",
+      "artifactRevision": null,
+      "notes": "Historical capsules remain operational audit records and are never imported automatically."
+    }
+  ]
+}

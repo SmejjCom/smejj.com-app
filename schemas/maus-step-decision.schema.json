@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/maus-step-decision.schema.json",
+  "title": "smejj.com Maus-Engine Einzelschritt-Entscheidung (Loop-Modus, v1)",
+  "description": "Vertrag fuer GENAU EINE Entscheidung im interaktiven Loop-Modus (beobachten -> entscheiden -> handeln). Additiv zum Plan-Schema: das Feld 'step' nutzt dasselbe Aktions-Vokabular wie schemas/maus-action-plan.schema.json und wird zusaetzlich als synthetischer Ein-Schritt-Plan fail-closed dagegen validiert (inkl. Semantik und Allowlist). Verboten im Loop: openBrowser, closeBrowser, runMacro (Laufzeitpruefung). 'reason' ist Pflicht: jede Modell-Entscheidung wird mit Begruendung als Artefakt gespeichert.",
+  "type": "object",
+  "required": ["schemaVersion", "decision", "reason"],
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "decision": { "enum": ["act", "done", "fail"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+      }
+    }
+  ],
+  "oneOf": [
+    {
+      "properties": {
+        "decision": { "const": "act" },
+        "step": { "type": "object" }
+      },
+      "required": ["step"]
+    },
+    {
+      "properties": {
+        "decision": { "const": "done" },
+        "result": { "type": "string", "maxLength": 2000 }
+      }
+    },
+    {
+      "properties": {
+        "decision": { "const": "fail" }
+      }
+    }
+  ]
+}

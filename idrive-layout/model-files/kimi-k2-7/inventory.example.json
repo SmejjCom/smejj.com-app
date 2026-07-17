@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "modelId": "kimi-k2-7",
+  "status": "example-only-no-model-weights",
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "model-files/kimi-k2-7"
+  },
+  "files": [
+    {
+      "path": "model-files/kimi-k2-7/configs/config.json",
+      "sha256": "example-sha256-placeholder",
+      "size": 0,
+      "contentType": "application/json"
+    }
+  ]
+}

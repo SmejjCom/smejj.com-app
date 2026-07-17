@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "modelId": "glm-5-2",
+  "displayName": "GLM-5.2",
+  "primaryRole": "flagship-coding-brain",
+  "source": {
+    "provider": "huggingface",
+    "repo": "zai-org/GLM-5.2-FP8",
+    "fallbackRepo": "zai-org/GLM-5.2",
+    "license": "mit"
+  },
+  "architecture": {
+    "family": "glm_moe_dsa",
+    "contextTokens": 1000000,
+    "precision": "fp8-vault-primary-bf16-reference",
+    "supportsEffortLevels": true,
+    "supportsMtpSpeculation": true,
+    "supportsIndexShare": true
+  },
+  "storage": {
+    "provider": "idrive-e2",
+    "prefix": "models/glm-5-2",
+    "contentAddressed": true,
+    "multipartUploadRequired": true
+  },
+  "verification": {
+    "requiredBeforeInference": [
+      "manifest-signature-ok",
+      "all-shards-present",
+      "sha256-ok",
+      "license-archived",
+      "runtime-preflight-ok"
+    ]
+  },
+  "runtimePriority": [
+    "sglang-first",
+    "vllm-second",
+    "ktransformers-for-consumer-gpu-offload"
+  ],
+  "inferenceDefault": "disabled-until-explicit-compute-approval"
+}

@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/training-candidate.schema.json",
+  "title": "smejj.com sanitized training candidate",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "recordId",
+    "targetModelId",
+    "createdAt",
+    "captureEnabled",
+    "domain",
+    "payload",
+    "payloadFingerprint",
+    "consentDecision",
+    "verificationEvidence",
+    "provenance",
+    "repositoryRights",
+    "quality",
+    "labels",
+    "sanitization",
+    "encryption",
+    "fingerprinting",
+    "split",
+    "familyFingerprint",
+    "training"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "recordId": { "type": "string", "minLength": 8 },
+    "targetModelId": { "const": "smejj-1-0" },
+    "createdAt": { "type": "string" },
+    "captureEnabled": { "type": "boolean" },
+    "domain": { "enum": ["coding", "browser", "terminal", "git", "database", "web", "pwa", "ios", "android", "safety"] },
+    "payload": { "type": "object" },
+    "payloadFingerprint": { "type": "string" },
+    "consentDecision": {
+      "type": ["object", "null"],
+      "required": [
+        "verified",
+        "status",
+        "captureAllowed",
+        "trainingAllowed",
+        "rightsConfirmed",
+        "recordedBy",
+        "evidenceId",
+        "consentId",
+        "withdrawalId",
+        "subjectRef",
+        "repositoryRef",
+        "privacyNoticeSha256",
+        "ledgerDigest",
+        "resolvedAt",
+        "reasons"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "verified": { "type": "boolean" },
+        "status": { "enum": ["granted", "revoked", "denied"] },
+        "captureAllowed": { "type": "boolean" },
+        "trainingAllowed": { "type": "boolean" },
+        "rightsConfirmed": { "type": "boolean" },
+        "recordedBy": { "type": ["string", "null"] },
+        "evidenceId": { "type": ["string", "null"] },
+        "consentId": { "type": ["string", "null"] },
+        "withdrawalId": { "type": ["string", "null"] },
+        "subjectRef": { "type": "string", "pattern": "^sub_[a-f0-9]{64}$" },
+        "repositoryRef": { "type": "string", "pattern": "^repo_[a-f0-9]{64}$" },
+        "privacyNoticeSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "ledgerDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "resolvedAt": { "type": "string" },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "verificationEvidence": {
+      "type": ["object", "null"],
+      "required": ["schemaVersion", "evidenceId", "subjectRef", "repositoryRef", "payloadSha256", "diffSha256", "sourceProof", "provenance", "quality", "repositoryRights", "signature"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "evidenceId": { "type": "string" },
+        "subjectRef": { "type": "string", "pattern": "^sub_[a-f0-9]{64}$" },
+        "repositoryRef": { "type": "string", "pattern": "^repo_[a-f0-9]{64}$" },
+        "payloadSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "diffSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "sourceProof": { "type": "object" },
+        "provenance": { "type": "object" },
+        "quality": { "type": "object" },
+        "repositoryRights": { "type": "object" },
+        "signature": { "type": "string" }
+      }
+    },
+    "provenance": { "type": "object" },
+    "repositoryRights": { "type": "object" },
+    "quality": {
+      "type": "object",
+      "required": [
+        "build",
+        "typecheck",
+        "lint",
+        "unitTests",
+        "integrationTests",
+        "privacyReview",
+        "security",
+        "nonRegression",
+        "rollback",
+        "stagingOrLive",
+        "uiAffected",
+        "diffStatus",
+        "acceptance"
+      ],
+      "properties": {
+        "build": { "type": "string" },
+        "typecheck": { "type": "string" },
+        "lint": { "type": "string" },
+        "unitTests": { "type": "string" },
+        "integrationTests": { "type": "string" },
+        "privacyReview": { "type": "string" },
+        "security": { "type": "string" },
+        "nonRegression": { "type": "string" },
+        "rollback": { "type": "string" },
+        "stagingOrLive": { "type": "string" },
+        "browser": { "type": "string" },
+        "uiAffected": { "type": "boolean" },
+        "diffStatus": { "type": "string" },
+        "acceptance": {
+          "type": "object",
+          "required": ["status", "source"],
+          "properties": {
+            "status": { "type": "string" },
+            "source": { "type": "string" }
+          }
+        }
+      }
+    },
+    "labels": { "type": "object" },
+    "sanitization": { "type": "object" },
+    "encryption": { "type": "object" },
+    "fingerprinting": { "type": "object" },
+    "split": { "type": ["string", "null"], "enum": ["train", "validation", "test", null] },
+    "familyFingerprint": { "type": "string" },
+    "training": {
+      "type": "object",
+      "required": ["eligible", "state", "reasons"],
+      "properties": {
+        "eligible": { "type": "boolean" },
+        "state": { "enum": ["denied", "quarantined", "candidate", "promoted", "revoked"] },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

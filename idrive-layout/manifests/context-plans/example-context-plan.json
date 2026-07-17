@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_example_001",
+  "projectId": "project_smejj_app_example",
+  "planner": {
+    "strategy": "targeted-repo-pack",
+    "blindFullRepoLoadAllowed": false
+  },
+  "limits": {
+    "maxContextTokens": 1000000,
+    "reservedOutputTokens": 16000
+  },
+  "selectedFiles": [
+    {
+      "path": "docs/architecture/GLM_5_2_STORAGE_FIRST_CODING_OS.md",
+      "sha256": "example-doc-sha256-placeholder",
+      "reason": "primary architecture policy"
+    }
+  ],
+  "repoPack": {
+    "manifestKey": "projects/smejj/repo-pack/job_example_001/manifest.json",
+    "symbolGraphKey": "projects/smejj/symbol-graph/current.json",
+    "ragShardKeys": [
+      "projects/smejj/file-shards/architecture-rules.jsonl"
+    ]
+  },
+  "exclusions": [
+    {
+      "path": "node_modules/",
+      "reason": "dependency cache, never loaded into model context"
+    }
+  ]
+}

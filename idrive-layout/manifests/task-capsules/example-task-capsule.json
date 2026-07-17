@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 2,
+  "jobId": "job_example_001",
+  "projectId": "project_smejj_app_example",
+  "createdAt": "2026-06-25T00:00:00Z",
+  "policy": {
+    "replayable": true,
+    "rollbackBeforePatch": true,
+    "blindFullRepoLoadAllowed": false,
+    "testsAreTruth": true
+  },
+  "model": {
+    "id": "glm-5-2",
+    "effort": "high",
+    "inferenceDefault": "disabled-until-explicit-compute-approval"
+  },
+  "provenance": {
+    "actualProvider": "unresolved",
+    "actualModel": "unresolved",
+    "trainingRightsStatus": "not-reviewed",
+    "sourceRevisions": []
+  },
+  "objects": {
+    "input": "task-capsules/2026/06/job_example_001/input.json",
+    "budget": "task-capsules/2026/06/job_example_001/budget.json",
+    "contextPlan": "task-capsules/2026/06/job_example_001/context-plan.json",
+    "repoPack": "task-capsules/2026/06/job_example_001/repo-pack-manifest.json",
+    "promptBlocks": "task-capsules/2026/06/job_example_001/prompt-blocks.json",
+    "patch": "task-capsules/2026/06/job_example_001/patch.diff",
+    "testResults": "task-capsules/2026/06/job_example_001/test-results.json",
+    "browserResults": "task-capsules/2026/06/job_example_001/browser-results.json",
+    "screenshots": "task-capsules/2026/06/job_example_001/screenshots/",
+    "errors": "task-capsules/2026/06/job_example_001/errors.json",
+    "selfFixAttempts": "task-capsules/2026/06/job_example_001/self-fix-attempts.json",
+    "verifierReport": "task-capsules/2026/06/job_example_001/verifier-report.md",
+    "benchmarkResults": "task-capsules/2026/06/job_example_001/benchmark-results.json",
+    "rollbackManifest": "task-capsules/2026/06/job_example_001/rollback-manifest.json",
+    "trainingEligibility": "task-capsules/2026/06/job_example_001/training-eligibility.json",
+    "finalAnswer": "task-capsules/2026/06/job_example_001/final-answer.md"
+  },
+  "verification": {
+    "required": [
+      "rollback-created",
+      "patch-applied",
+      "targeted-tests-passed",
+      "browser-check-passed-when-ui-changed"
+    ],
+    "selfFixMaxAttempts": 3
+  },
+  "memory": {
+    "learnDirectlyFromModelOutput": false,
+    "proposalKey": "task-capsules/2026/06/job_example_001/memory-proposals.json"
+  },
+  "training": {
+    "eligible": false,
+    "state": "not-evaluated",
+    "automaticCandidate": false,
+    "operationalMemoryIsTrainingPermission": false,
+    "rightsPrivacyQualityGateRequired": true
+  }
+}
