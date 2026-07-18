@@ -49,8 +49,11 @@ import { createSessionHandoffStore, isSessionHandoffId } from "../control-server
 import { handleTrainingConsentRoute } from "../control-server/src/routes/trainingConsentRoutes.js";
 import { signGoogleAuthState, verifyGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
 import { createGoogleAuthHandlers } from "./auth/googleAuthRoutes.js";
+import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
+import { mailerConfig } from "../control-server/src/auth/mailer.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
+import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -79,6 +82,11 @@ const config = {
   // Leere Allowlist = offenes Portal: jeder verifizierte Google-Account darf sich
   // anmelden. Eine explizit gesetzte GOOGLE_ALLOWED_EMAIL beschraenkt wieder.
   googleAllowedEmail: (process.env.GOOGLE_ALLOWED_EMAIL || "").toLowerCase(),
+  // GitHub-Login: eigene OAuth-App, getrennt vom Repo-Publisher (SMEJJ_GITHUB_APP_*).
+  // Fail-closed: ohne Client-ID/Secret liefert die Route 503, kein stiller Fallback.
+  githubLoginClientId: process.env.SMEJJ_GITHUB_LOGIN_CLIENT_ID || "",
+  githubLoginClientSecret: process.env.SMEJJ_GITHUB_LOGIN_CLIENT_SECRET || "",
+  githubLoginAllowedEmail: (process.env.SMEJJ_GITHUB_LOGIN_ALLOWED_EMAIL || "").toLowerCase(),
   sessionSecret: normalizeSecret(process.env.SMEJJ_SESSION_SECRET || process.env.GOOGLE_SESSION_SECRET || "")
 };
 
@@ -136,6 +144,9 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: error.message || "Google Login fehlgeschlagen." });
       }
     }
+    if (url.pathname.startsWith("/api/auth/github") || url.pathname.startsWith("/api/auth/magic-link")) {
+      if (await routeExtraAuth(req, res, url)) return;
+    }
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return await handleAuthLogout(req, res);
     if (url.pathname.startsWith("/api/auth/")) {
       const handled = await handleEmailAuthRoutes(req, url, res, emailAuthContext(url));
@@ -151,6 +162,7 @@ const server = http.createServer(async (req, res) => {
       if (await handleAgentRoute(req, url, res)) return;
     }
     if (url.pathname.startsWith("/api/providers/")) return await handleProviderRoute(req, url, res);
+    if (url.pathname === "/api/keys" || url.pathname.startsWith("/api/keys/")) return await handleApiKeysRoute(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.browserFetch) return await handleBrowserFetch(url, res, { req });
@@ -257,7 +269,9 @@ function handleAuthConfig(res) {
   json(res, 200, {
     configured: Boolean(config.googleClientId),
     clientId: config.googleClientId,
-    allowedEmail: config.googleAllowedEmail
+    allowedEmail: config.googleAllowedEmail,
+    // Fail-closed-UX: nur konfigurierte Methoden werden im Frontend angeboten.
+    methods: { email: true, passkey: true, google: Boolean(config.googleClientId), github: Boolean(config.githubLoginClientId && config.githubLoginClientSecret), magicLink: Boolean(mailerConfig(process.env)), apple: false }
   });
 }
 
@@ -344,6 +358,14 @@ const { handleGoogleAuth, handleGoogleAuthStart } = createGoogleAuthHandlers({
   verifyGoogleIdToken,
   ROUTES,
   env: process.env
+});
+
+// GitHub-Login + Magic Link: Handler-Erzeugung und Dispatch ausgelagert nach
+// src/auth/extraAuthRoutes.js (schlanker Server, Flow ohne Boot testbar).
+const routeExtraAuth = createExtraAuthRouter({
+  config, json, readJson, SECURITY_HEADERS,
+  serializeSessionCookie, serializeSessionToken,
+  sessionHandoffStore, allowedOriginsFromEnv, ROUTES, env: process.env
 });
 
 async function handleAuthLogout(req, res) {
