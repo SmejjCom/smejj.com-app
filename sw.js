@@ -1,4 +1,13 @@
-const CACHE_NAME = "smejj-shell-v128";
+// v131 -> v132 (2026-07-21): Chat-Verlauf (Welle 1) — chat-store.js + chat-history-view.js
+// neu im Shell-Cache; index.html laedt beide Module.
+// v130 -> v131 (2026-07-20): TTS-Sanitizer — voice-speech-queue.js, composer-tools.js,
+// app.js und index.html geaendert; Precache muss die neuen Versionen ausliefern.
+// v129 -> v130 (2026-07-18): shared/http-json.js neu im Shell-Cache.
+// PFLICHT, keine Kosmetik: app.js importiert shared/http-json.js. Ohne Precache
+// findet der Import offline nichts, der Fetch-Handler liefert als Fallback "/"
+// (index.html), und der Browser bricht app.js komplett ab - die App waere
+// offline tot. Non-Regression laut Change-Lock.
+const CACHE_NAME = "smejj-shell-v132";
 const SHELL = [
   "/",
   "/assets/styles.css",
@@ -6,6 +15,7 @@ const SHELL = [
   "/assets/app-surfaces.css",
   "/assets/settings-surface.css",
   "/assets/account-privacy.css",
+  "/assets/panel-backdrop.css",
   "/assets/composer-tools.css",
   "/assets/browser-pane.css",
   "/assets/browser-pane.js",
@@ -19,6 +29,7 @@ const SHELL = [
   "/assets/chat-markdown.css",
   "/assets/app.js",
   "/assets/left-menu-state.js",
+  "/assets/panel-backdrop.js",
   "/assets/premium-surfaces.js",
   "/assets/settings-surface.js",
   "/assets/settings-runtime.js",
@@ -41,6 +52,8 @@ const SHELL = [
   "/assets/view-chrome.css",
   "/assets/composer-tools.js",
   "/assets/voice-speech-queue.js",
+  "/assets/chat-store.js",
+  "/assets/chat-history-view.js",
   "/assets/workspace-bridge.js",
   "/assets/storage/index.js",
   "/assets/storage/localWorkspace.js",
@@ -62,6 +75,7 @@ const SHELL = [
   "/assets/ai/promptContextBuilder.js",
   "/assets/ai/chatClient.js",
   "/assets/shared/securityPolicy.js",
+  "/assets/shared/http-json.js",
   "/manifest.webmanifest",
   "/favicon.ico?v=112",
   "/apple-touch-icon.png",
