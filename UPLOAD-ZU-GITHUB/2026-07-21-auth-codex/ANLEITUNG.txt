@@ -1,0 +1,6 @@
+smejj.com Auth-Redesign (Codex-Stil) — Upload-Ziele auf SmejjCom/smejj-app-frontend main:
+1-assets-auth/auth.css          -> /upload/main/assets/auth
+2-assets-root/config.js         -> /upload/main/assets
+3-assets-i18n/*.js (14 Dateien) -> /upload/main/assets/i18n
+4-auth-login/index.html         -> /upload/main/auth/login
+5-auth-register/index.html      -> /upload/main/auth/register
