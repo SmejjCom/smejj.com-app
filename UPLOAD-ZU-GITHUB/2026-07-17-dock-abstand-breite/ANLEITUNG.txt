@@ -1,0 +1,9 @@
+smejj.com Live-Deploy — Dock-Abstand + schmalere Sidebar (2026-07-17)
+
+SCHRITT 1: https://github.com/SmejjCom/smejj-app-frontend/upload/main/assets
+  -> 3 Dateien aus "1-nach-assets-ziehen" (profile-dock.css, app.js, styles.css)
+SCHRITT 2: https://github.com/SmejjCom/smejj-app-frontend/upload/main
+  -> index.html aus "2-nach-root-ziehen"
+
+Aenderung: Zahnrad steht direkt neben dem Namen; linke Sidebar oeffnet mit 200 statt 228 px.
+Wer die Breite nie bewusst gezogen hat (306/228/225 gespeichert), bekommt automatisch 200 px.

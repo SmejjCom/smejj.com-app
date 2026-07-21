@@ -1,0 +1,13 @@
+smejj.com Live-Deploy — nur 2 Schritte (je: Dateien reinziehen + gruener Knopf)
+
+SCHRITT 1
+Oeffne:  https://github.com/SmejjCom/smejj-app-frontend/upload/main/assets
+Ziehe die 3 Dateien aus dem Ordner "1-nach-assets-ziehen" ins Browserfenster.
+Klicke unten auf den gruenen Knopf "Commit changes".
+
+SCHRITT 2
+Oeffne:  https://github.com/SmejjCom/smejj-app-frontend/upload/main
+Ziehe die 2 Dateien aus dem Ordner "2-nach-root-ziehen" ins Browserfenster.
+Klicke unten auf den gruenen Knopf "Commit changes".
+
+FERTIG — danach uebernimmt Claude automatisch (Live-Test, Worker, Doku).

@@ -38,6 +38,8 @@ const PROTECTED_FILES = [
   "public/workspace-bridge.js",
   "public/browser-pane.js",
   "public/browser-pane-render.js",
+  "public/panel-backdrop.js",
+  "public/panel-backdrop.css",
   "public/cline-model-menu.js",
   "public/cline-model-menu.css",
   "public/auth/passkey-ui.js",

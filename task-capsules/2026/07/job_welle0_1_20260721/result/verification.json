@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "check:guidelines": "OK (766 Dateien)",
+    "check:json": "OK",
+    "check:favicon-lock": "OK (unveraendert)",
+    "check:frontend": "124 pass / 6 fail = EXAKT dokumentierter Vorbestand (0 neue Abweichungen)",
+    "check:platform": "7/7 (SW-Pin v132)",
+    "check:start-lock": "OK - 28 Dateien neu eingefroren mit Freigabe-Wortlaut (2026-07-21T05:06:21Z)"
+  },
+  "liveTests": [
+    "Chat senden -> Antwort -> Reload -> Unterhaltung wiederhergestellt (nativ, ohne Injektion)",
+    "Verlauf-View: Liste mit Titel/Datum/Anzahl/Modell",
+    "Umbenennen (Inline) OK, Loeschen (2-Schritt) OK, Oeffnen/Wechseln OK",
+    "Neu-Button startet echten neuen Chat (alter bleibt im Verlauf)",
+    "Remote-Browser-Bridge /health = JSON live-browser-2026-07-15-1 (vorher: gestoppt/HTML)",
+    "smejj-control 1/1 Replica; session_handoff_not_found trat im Retest nicht mehr auf"
+  ],
+  "offen": [
+    "Browser-Worker cherry-wasabi bootet noch (ghcr-Playwright-Image); interaktive Session-E2E danach",
+    "Automatisierungs-Anmeldung Ende-zu-Ende = Welle 3 (eine Token-Welt)",
+    "Welle 2 (Groq Instant Lane) wartet auf Budget-Freigabe mit Dienst+Betrag"
+  ]
+}

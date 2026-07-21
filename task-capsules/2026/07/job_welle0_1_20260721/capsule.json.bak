@@ -1,0 +1,20 @@
+{
+  "jobId": "job_welle0_1_20260721",
+  "titel": "Welle 0+1: Betriebs-Reparatur + Chat-Verlauf",
+  "freigabe": "Schriftliches 'Ja' von Wof Kadavanich (2026-07-21) auf den Verbesserungsbericht TESTBERICHT_VERBESSERUNGSPLAN_2026-07-21.md (Welle 0 und Welle 1). Budget-Klausel beachtet: keine neuen Dienste, kein Groq (Welle 2 wartet auf Dienst+Betrag).",
+  "scope": {
+    "welle0": ["Salad smejj-remote-browser-bridge-live START", "Salad smejj-remote-browser-live START", "Salad smejj-control Replicas 2->1"],
+    "welle1": ["public/chat-store.js NEU", "public/chat-history-view.js NEU", "public/index.html +2 Script-Tags", "public/sw.js v132 Precache", "tests/profile-dock.test.mjs + tests/platform-pwa.test.mjs Pin v132"]
+  },
+  "deploy": {
+    "repo": "SmejjCom/smejj-app-frontend@main",
+    "commits": ["178304e (assets/chat-store.js, assets/chat-history-view.js)", "84971ef (index.html, sw.js v132)"],
+    "verifikation": "sha256 Mac==GitHub: index.html 24cec3457febaebc, sw.js 1b97be23b77e506a; live ausgeliefert (sw v132, Module 200)"
+  },
+  "rollback": {
+    "dateien": "backups/welle0-1-rollback-2026-07-21T05-04-46Z/ (index.html, sw.js, start-lock-manifest.json, test-pins)",
+    "salad": "smejj-control Replicas wieder auf 2 stellbar; Browser-Gruppen wieder stoppbar (Portal)",
+    "github": "Commit-History 178304e/84971ef revertierbar"
+  },
+  "status": "verified"
+}

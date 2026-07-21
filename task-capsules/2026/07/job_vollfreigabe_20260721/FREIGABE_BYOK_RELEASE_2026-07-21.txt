@@ -1,0 +1,14 @@
+Freigabe (Wof Kadavanich, 2026-07-21, im Chat erteilt — Wortlaut):
+
+BYOK-Release fertigstellen laut Memory_Bank-Eintrag [2026-07-21] und Task Capsule
+job_vollfreigabe_20260721 im Ordner "smejj.com App": Control-Server-Artefakt bauen,
+ueber die lokale .env nach IDrive e2 hochladen, bestehenden Salad-Container neu
+starten (keine neuen Dienste, keine groessere Instanz, Zusatzkosten 0), BYOK-Frontend
+deployen, live testen, Locks neu einfrieren. Ausserdem die 7 inventarisierten
+Tarball-Altlasten nach IDrive e2 verschieben (Manifest in backups/security-cleanup/).
+Dieser Text gilt als schriftliche Freigabe.
+
+STATUS BEI ABLAGE: .env fehlte noch im Projektordner (verifiziert 2026-07-21 ~02:3x UTC).
+VORAUSSETZUNG fuer die Ausfuehrung: .env mit IDRIVE_E2_-Zugangsdaten im Ordner
+"smejj.com App" anlegen (Vorlage: .env.example; Werte aus dem IDrive-e2-Portal,
+Access Keys). Die Datei ist gitignored und bleibt lokal.

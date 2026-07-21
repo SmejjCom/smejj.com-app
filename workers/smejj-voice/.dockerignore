@@ -1,0 +1,12 @@
+# Keep the smejj.com voice worker image lean and secret-free.
+tests/
+docs/
+**/__pycache__/
+**/*.pyc
+.env
+.env.*
+!.env.example
+*.md
+.git/
+.gitignore
+.DS_Store

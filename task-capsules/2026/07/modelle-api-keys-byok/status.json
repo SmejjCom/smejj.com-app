@@ -1,0 +1,7 @@
+{
+  "jobId": "modelle-api-keys-byok",
+  "status": "verified",
+  "phase": "verified-local-pending-deploy",
+  "verifiedAt": "2026-07-18T00:00:00.000Z",
+  "note": "Lokal vollstaendig verifiziert (node --check, Unit-Tests, Backend-CRUD-Smoke). Live-Deploy offen: erfordert schriftliche Freigabe (Deployment-Lock) und Ausfuehrung vom Nutzer-Mac (SSH zu GitHub im Sandbox blockiert; lokaler Stand 36 Commits hinter origin/main)."
+}

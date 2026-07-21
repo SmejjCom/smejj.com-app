@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
   "suiteId": "smejj-1-0-phase1-foundation",
-  "version": "2026-07-11.1",
-  "createdAt": "2026-07-11T13:30:00Z",
+  "version": "2026-07-21.1",
+  "createdAt": "2026-07-21T12:00:00Z",
   "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite.",
   "immutable": true,
   "eligibleForTraining": false,
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "06ef90d60b64da5860b4e78efb80408f5cb492ef42c4951d4f727851307c1bff"
+    "contentSha256": "1467fd888de4ea30a7ed81fd28046b74ccf9f758a36ed135c233e4735a66b2e8"
   },
   "protection": {
-    "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-11.1/manifest.json",
+    "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-21.1/manifest.json",
     "conditionalWrite": "if-none-match-star",
     "overwriteAllowed": false,
     "evaluationArtifactsEligibleForTraining": false,
@@ -99,7 +99,7 @@
       },
       {
         "path": "scripts/validate-manifests.mjs",
-        "sha256": "825161ef93e4bbb367652bbc53dd70480df97dcf5875c2dace7bdb4f3e72bff4"
+        "sha256": "2ac7b714f8d420ac55c8066241016573c2b2a199324cab6c3754832f1c0b75b2"
       },
       {
         "path": "scripts/validation-utils.mjs",
@@ -123,7 +123,7 @@
       },
       {
         "path": "scripts/check-guidelines.mjs",
-        "sha256": "53dc1a3826c70eeaad184715f2eff5910015b6683e27e24d4a76f427148e326b"
+        "sha256": "a52120bb626cbc53f9afe1709898802a14978b6e527eb0121240a509a3b29382"
       },
       {
         "path": "scripts/check-start-lock.mjs",
@@ -131,7 +131,7 @@
       },
       {
         "path": "tests/training-manifest-policy.test.mjs",
-        "sha256": "03b065755399f19e884f6a8d3db514ee249ece8c083de9b48cb9f88d0bd9f7c3"
+        "sha256": "e9bedd681d4da66fb27af092a577e517535af30759042f690270abb47604a4c3"
       },
       {
         "path": "tests/free-only-master-policy.test.mjs",

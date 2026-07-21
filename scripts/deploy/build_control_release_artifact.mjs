@@ -186,6 +186,9 @@ async function addFile(root, absolute, fileMap) {
   const relative = path.relative(root, absolute).split(path.sep).join("/");
   validateRelativePath(relative);
   const basename = path.posix.basename(relative);
+  // Vorlagen (.env.example) gehoeren nicht ins Release-Artefakt — auslassen,
+  // damit Private- und Secret-Guards fuer echte Dateien unveraendert scharf bleiben.
+  if (basename === ".env.example") return;
   const segments = relative.split("/");
   if (isPrivateName(basename) || segments.some((segment) => PRIVATE_DIRECTORIES.has(segment))) {
     throw new Error(`control_release_private_path_blocked:${relative}`);

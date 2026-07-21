@@ -1,0 +1,15 @@
+{
+  "capsule": "job_vollfreigabe_20260721",
+  "freigabe": "Vollstaendiger schriftlicher Freigabetext (Wof Kadavanich, 2026-07-21): Rest-Sync, Security, .well-known, BYOK — mit Blockade-Klausel.",
+  "status": "verified",
+  "ergebnis": {
+    "restSync": "100% — 25 Dateien byte-identisch mit Live c3eac01 (Zip-Kommentar-Beweis), alle Sprachseiten inkl. de/ neu",
+    "security": "Secret-Befund behoben; Tarball-Manifest erstellt; IDrive-Umzug blockiert (keine lokalen Zugangsdaten)",
+    "wellKnown": "NICHT deployt — nur Platzhalter-Werte; Voraussetzung: echte App-Signing-Daten",
+    "byok": "Bis zur Blockade: Live-Backend ohne /api/keys verifiziert; Blockaden (a) keine .env/IDrive-Secrets (b) check:all-Vorbestand (c) Docker nur Mac — Release braucht eigene Session mit Secrets"
+  },
+  "verfahrenNeu": "Repo-Zip via Browser-Download (codeload) -> Downloads-Grant -> Staging -> Zip-Kommentar=Commit-SHA-Beweis -> device_commit_files. Ersetzt Kontext-Relay komplett.",
+  "checks": "json OK, guidelines 762 OK, start-lock OK, favicon-lock neu eingefroren (19 Seiten), voice 20/20+42/42, frontend exakt Vorbestand 124/6",
+  "rollback": "backups/restsync-rollback/2026-07-21T02-00-02Z/, backups/security-cleanup/2026-07-21T01-54-47Z/",
+  "trainingEligible": false
+}

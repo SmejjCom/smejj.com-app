@@ -1,0 +1,111 @@
+{
+  "jobId": "smejj-voice-worker-0001",
+  "createdAt": "2026-07-18T00:00:00.000Z",
+  "platform": "smejj.com",
+  "title": "smejj.com Voice Worker — ChatGPT-style voice mode (any language, low latency, barge-in), pay-per-use behind the budget gate",
+  "status": "proposed-pending-deploy",
+  "goal": "A production-ready but NOT-deployed, self-hosted realtime voice worker for smejj.com: natural (non-robotic) neural voice, AUTOMATIC detection of EVERY spoken language with a reply in that same language, low latency via full streaming, and barge-in (interrupt). The LLM runs over the existing OpenAI-compatible smejj.com router (BYOK). Cost is controlled centrally: fail-closed start only behind the active budget gate, idle auto-shutdown, and a hard runtime cap.",
+  "requirements": [
+    "STT auto-detects the spoken language (faster-whisper large-v3, language=None) — no fixed language.",
+    "Assistant replies in the SAME detected language (language-agnostic system prompt; XTTS-v2 follows the detected language for TTS).",
+    "Natural, human-sounding neural TTS (Piper HTTP self-hosted default; XTTS-v2 compatible upgrade).",
+    "Low latency through end-to-end streaming (STT partials, LLM token stream, sentence-wise TTS).",
+    "Barge-in: user speech interrupts the assistant (Silero VAD + allow_interruptions).",
+    "Fail-closed start ONLY when the budget gate is configured and approved.",
+    "Idle auto-shutdown: worker self-terminates after a configurable idle window (default 120s with no active session).",
+    "Hard runtime cap via SMEJJ_BUDGET_MAX_RUNTIME_MINUTES (same key/limit the control-server watchdog lease enforces).",
+    "Stateless (no local persistence); no secrets in code (ENV/BYOK only); max 800 lines/file; Single Responsibility; platform written smejj.com everywhere."
+  ],
+  "context": {
+    "modelRouter": "OpenAI-compatible, model-agnostic, BYOK, fail-closed (control-server/src/llm/modelRouter.js). Reached via Pipecat OpenAILLMService(base_url=..., api_key=BYOK).",
+    "defaultModel": "glm-5.2 (router resolves the actual backend; overridable per request).",
+    "workerLayer": "Salad pay-per-use GPU behind budget gate + runtime watchdog (control-server/src/budget/*).",
+    "budgetKeysReused": [
+      "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+      "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+      "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+      "SMEJJ_WORKER_BUDGET_USD",
+      "SMEJJ_WORKER_ESTIMATED_RUNTIME_MINUTES"
+    ],
+    "durableStore": "IDrive e2 (only durable store on smejj.com); this worker writes nothing durable — it is stateless.",
+    "pattern": "Follows workers/glm-salad conventions (GPU image, port 8080, /health, no secrets in image)."
+  },
+  "scope": {
+    "included": [
+      "New, additive, isolated package under outputs/smejj-voice-worker/ (no repo files touched).",
+      "src/smejj_voice_worker/{config,idle_shutdown,router_client,stt_whisper,tts_piper,vad,pipeline,server}.py",
+      "tests/{test_config,test_idle_shutdown}.py (+ conftest.py, _runner.py) — run without heavy deps.",
+      "Dockerfile (GPU, stateless), requirements.txt, .env.example, .dockerignore, README.md.",
+      "docs/CONTROL_SERVER_INTEGRATION.md and docs/FRONTEND_INTEGRATION.md (PROPOSALS only, no repo edits)."
+    ],
+    "excluded": [
+      "No change to any file in the connected repo.",
+      "No change to design-locked frontend (composer-tools.js, voice-speech-queue.js, voice-landing.js) — integration is described, not applied.",
+      "No git, no deploy, no npm/pip install executed.",
+      "No live compute started; no paid services enabled."
+    ]
+  },
+  "affectedFiles": [
+    "src/smejj_voice_worker/config.py (new — env + fail-closed budget gate)",
+    "src/smejj_voice_worker/idle_shutdown.py (new — idle auto-shutdown + runtime cap)",
+    "src/smejj_voice_worker/router_client.py (new — BYOK OpenAI-compatible)",
+    "src/smejj_voice_worker/stt_whisper.py (new — faster-whisper auto-detect)",
+    "src/smejj_voice_worker/tts_piper.py (new — Piper/XTTS TTS)",
+    "src/smejj_voice_worker/vad.py (new — Silero VAD / barge-in)",
+    "src/smejj_voice_worker/pipeline.py (new — Pipecat pipeline)",
+    "src/smejj_voice_worker/server.py (new — WS server, /health, supervisor)",
+    "tests/test_config.py (new)",
+    "tests/test_idle_shutdown.py (new)",
+    "Dockerfile, requirements.txt, .env.example, .dockerignore, README.md (new)",
+    "docs/CONTROL_SERVER_INTEGRATION.md, docs/FRONTEND_INTEGRATION.md (new proposals)"
+  ],
+  "policy": {
+    "replayable": true,
+    "rollbackBeforePatch": true,
+    "blindFullRepoLoadAllowed": false,
+    "testsAreTruth": true,
+    "failClosed": true,
+    "stateless": true,
+    "freeOnlyCompliant": true,
+    "inferenceDefault": "disabled-until-explicit-compute-approval"
+  },
+  "budget": {
+    "status": "GATED",
+    "monthlyCeilingUsd": 10,
+    "howEnforced": [
+      "fail-closed: config.evaluate_budget_gate mirrors control-server budgetGate.js — without a positive per-job USD cap, runtime cap, and worker budget within caps, the worker raises ConfigError and never opens a port.",
+      "idle auto-shutdown: SMEJJ_VOICE_IDLE_SHUTDOWN_SECONDS (default 120s) — no active session -> process exits -> Salad replica stops -> GPU billing ends.",
+      "runtime cap: SMEJJ_BUDGET_MAX_RUNTIME_MINUTES (same key as the watchdog lease) — hard wall-clock ceiling per run, enforced locally AND by the control-server watchdog.",
+      "concurrency: SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS bounds parallel voice workers.",
+      "no auto-recharge, no paid fallback; model spend only via user BYOK key."
+    ]
+  },
+  "verification": {
+    "pyCompileAll": "PASS (python3 -m compileall -q src tests)",
+    "unitTests": "PASS — tests/test_config.py 17/17 (budget gate + fail-closed config + auto-detect); tests/test_idle_shutdown.py 12/12 (idle + runtime cap + session counting). Run standalone without pip (no network in sandbox).",
+    "integrationPending": "Full Pipecat STT->router->TTS round-trip, latency and barge-in measurement require a Salad GPU node and a live microphone — not runnable in this sandbox.",
+    "targets": {
+      "timeToFirstAudioMs": "< 1000",
+      "bargeInStopMs": "< 300"
+    }
+  },
+  "rollback": {
+    "strategy": "Purely additive and isolated: rollback = delete the outputs/smejj-voice-worker/ directory. No repo file, no frontend, no control-server file is modified, so there is nothing to revert in the codebase.",
+    "controlServerIntegration": "If later applied, the proposed control-server route is additive (new file + registration lines) and independently removable; see docs/CONTROL_SERVER_INTEGRATION.md.",
+    "frontendIntegration": "If later applied, the proposed frontend switch is guarded by a capability flag and keeps the existing browser fallback + barge-in/voiceMode paths intact; see docs/FRONTEND_INTEGRATION.md.",
+    "gitIndexTouched": false
+  },
+  "qualityAssessment": {
+    "reproducible": true,
+    "auditable": true,
+    "replayable": true,
+    "singleResponsibilityPerFile": true,
+    "maxFileLines": 800,
+    "open": [
+      "VERIFY pipecat-ai / faster-whisper / fastapi import paths and versions against a real build (requirements.txt has NO-network VERIFY notes).",
+      "Integration + latency + barge-in test on a Salad GPU node.",
+      "Select Piper voices per target language, or enable XTTS-v2 for full any-language TTS.",
+      "Apply the two integration proposals only after written deploy approval."
+    ]
+  }
+}

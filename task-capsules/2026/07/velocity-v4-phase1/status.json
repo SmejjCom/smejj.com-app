@@ -1,0 +1,9 @@
+{
+  "jobId": "velocity-v4-phase1",
+  "status": "pending",
+  "phase": "Phase 0 abgeschlossen (Analyse+Messkonzept), Phase 1 vorbereitet, wartet auf Freigabe",
+  "updatedAt": "2026-07-18T14:47:00.000Z",
+  "waitingFor": ["Budget-Betrag (Dienst + Betrag)", "Groq-API-Key"],
+  "safe": true,
+  "costsIncurred": 0
+}

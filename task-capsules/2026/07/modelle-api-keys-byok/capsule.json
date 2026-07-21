@@ -1,0 +1,59 @@
+{
+  "jobId": "modelle-api-keys-byok",
+  "createdAt": "2026-07-18T00:00:00.000Z",
+  "owner": "Wof Kadavanich",
+  "title": "Modelle & API Keys — professioneller BYOK-Bereich (OpenRouter-Stil) im Einstellungen-Panel Modelle",
+  "goal": "Mehrere API-Keys pro Nutzer, serverseitig AES-256-GCM verschluesselt, klare Status-Ampel, Firma-ueber-Modell, Modellwahl ohne Neustart, eigener Anbieter per Dropdown-Ende, responsive (Desktop/Tablet/Handy) — additiv, ohne bestehende (getestete/gelockte) Funktionen zu brechen.",
+  "scope": {
+    "included": [
+      "public/ai/providers-catalog.js (neuer Anbieter = 1 Eintrag)",
+      "control-server/src/providers/genericProviderCatalog.js (SSRF-Schutz, Allowlist)",
+      "control-server/src/providers/genericOpenAiClient.js (OpenAI-kompatibel: models/test/chat)",
+      "control-server/src/routes/apiKeysRoutes.js (Prefix /api/keys, additiv neben /api/providers/cline)",
+      "public/api-keys-surface.js + public/api-keys-surface.css (Surface im Modelle-Panel)",
+      "public/ai/chatClient.js (additive Route key:<provider> -> /api/keys/<id>/chat)",
+      "public/settings-surface.js (Init des neuen Surface), src/shared/controlAccessPolicy.js (Auth-Gate /api/keys), src/server.js (2 Zeilen Routing)"
+    ],
+    "excluded": [
+      "Kein Umbau von provider-settings.js (Cline bleibt unveraendert, Tests gruen)",
+      "Keine Aenderung an Start-/Favicon-Lock-Dateien",
+      "Kein Live-Deploy ohne schriftliche Freigabe (Deployment-Lock)",
+      "Keine Aenderung am parallel laufenden GitHub-Login/Magic-Link-Umbau (fremde in-flight Arbeit im Working Tree)"
+    ]
+  },
+  "affectedFiles": [
+    "public/ai/providers-catalog.js (neu)",
+    "public/api-keys-surface.js (neu)",
+    "public/api-keys-surface.css (neu)",
+    "control-server/src/providers/genericProviderCatalog.js (neu)",
+    "control-server/src/providers/genericOpenAiClient.js (neu)",
+    "control-server/src/routes/apiKeysRoutes.js (neu)",
+    "tests/api-keys-provider.test.mjs (neu)",
+    "public/ai/chatClient.js (additiv)",
+    "public/settings-surface.js (2 Zeilen)",
+    "src/shared/controlAccessPolicy.js (1 Zeile)",
+    "src/server.js (2 Zeilen: Import + Route)"
+  ],
+  "security": {
+    "encryption": "AES-256-GCM ueber bestehenden providerCredentialVault (per Nutzer+Anbieter, IDrive e2 / verschluesselter Speicher)",
+    "keyExposure": "Key nie im Browser-Storage; Liste nur maskiert (letzte 4); Vollanzeige nur einmal direkt nach Anlegen mit Hinweis",
+    "ssrf": "Server-Allowlist bekannter Anbieter-Hosts; eigener Anbieter nur https, keine privaten/Loopback-IPs, keine URL-Credentials",
+    "failClosed": "Ohne Auth 401, ohne konfigurierte Encryption 503, Test vor Speichern, keine kostenpflichtigen Fallbacks"
+  },
+  "budget": {
+    "status": "NONE",
+    "note": "Keine neuen laufenden Kosten. Modell-API-Kosten ausschliesslich ueber vom Nutzer hinterlegte BYOK-Keys."
+  },
+  "rollback": {
+    "gitBaseCommit": "9af9906 (docs: Rollback-Basis dokumentiert)",
+    "strategy": "Additiv: neue Dateien loeschbar; die 3 kleinen Edits (settings-surface.js, controlAccessPolicy.js, server.js) sind isolierte Zeilen und einzeln entfernbar. Keine bestehende Funktion veraendert.",
+    "gitIndexTouched": false
+  },
+  "verification": {
+    "nodeCheck": "PASS (alle neuen/geaenderten Dateien)",
+    "unitTests": "tests/api-keys-provider.test.mjs 6/6 PASS; tests/i18n-ui 11/11 PASS; tests/cline-provider + cline-provider-frontend 13/13 PASS",
+    "backendSmoke": "CRUD end-to-end mit echtem Vault (In-Memory): add/list/select/remove/custom/SSRF/auth — 11/11 PASS",
+    "preexistingUnrelated": "tests/frontend-structure: 4 Fehlschlaege auf unveraenderten Dateien (index.html/app.js/styles.css) — Baseline, nicht durch diese Aufgabe verursacht; check:guidelines meldet src/server.js 859 Zeilen wegen paralleler GitHub-Login/Magic-Link-Arbeit (nicht diese Aufgabe)"
+  },
+  "status": "verified-local-pending-deploy"
+}

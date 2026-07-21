@@ -1,0 +1,15 @@
+!!! WARNUNG (2026-07-20) !!!
+
+Der Live-Deploy des TTS-Sanitizers ist BEREITS ERFOLGT (direkt im Browser,
+Commits 73ae37d / 31d1260 / c3eac01 auf main). Diese Ordner-Dateien wurden
+auf dem VERALTETEN lokalen Stand gebaut:
+
+  1-nach-assets-ziehen/app.js        -> NICHT hochladen (Live hat http-json-Import)
+  2-nach-root-ziehen/index.html      -> NICHT hochladen (veraltete Basis)
+  2-nach-root-ziehen/sw.js           -> NICHT hochladen (Live ist v131, hier v129!)
+
+Ein Upload wuerde die Parallel-Arbeit vom 2026-07-18 (sw v130 + shared/http-json.js)
+und den Sanitizer-Cache-Bump (v131) ZURUECKDREHEN.
+
+composer-tools.js und voice-speech-queue.js in diesem Ordner sind byte-identisch
+mit dem Live-Stand (nur als Archiv-Referenz behalten).

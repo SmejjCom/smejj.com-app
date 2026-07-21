@@ -3,13 +3,15 @@ import { PROJECT_ROLES, createLocalWorkspace } from "/assets/storage/index.js";
 import { AI_MODES, createAiRouter } from "/assets/ai/index.js";
 import { runClientChat } from "/assets/ai/chatClient.js?v=3";
 import { Icons, closeModal, openModal, renderChatMarkdown, renderEmptyState, setButtonIcon, showToast } from "./components.js?v=chat-markdown-20260717";
-import { initComposerTools } from "./composer-tools.js?v=voice-20260716-2";
+import { initComposerTools } from "./composer-tools.js?v=tts-sanitizer-20260720";
 import { initGlobalSearch } from "./search.js";
 import { initWorkspaceBridge } from "./workspace-bridge.js";
 import { enhancePremiumSurfaces, renderProjectCards } from "./premium-surfaces.js?v=account-privacy-v3";
 import { applyPanelCompact, syncLeftMenuState } from "./left-menu-state.js";
+import { initPanelBackdrop } from "./panel-backdrop.js?v=panel-backdrop-20260718";
 import { routeAutonomousRequest } from "./autonomous-intent.js";
 import { collectConversationHistory } from "./chat-history-context.js";
+import { getJson, postJson } from "./shared/http-json.js";
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
@@ -151,23 +153,21 @@ function bindNavigation() {
     menuButton?.setAttribute("aria-expanded", String(open));
     if (open) applyPanelCompact("left", getPanelWidth("left"), PANEL_WIDTHS.min - 1);
     syncLeftMenuState({ waitForOpenTransition: open });
-    if (backdrop) backdrop.hidden = true;
+    syncBackdrop();
   };
   const setBrowserPanelOpen = (open) => {
     browserPanel?.classList.toggle("is-open", open);
     document.body.classList.toggle("right-panel-open", open);
     browserButton?.setAttribute("aria-expanded", String(open));
     if (open) applyPanelCompact("right", getPanelWidth("right"), PANEL_WIDTHS.compact);
-    if (backdrop) backdrop.hidden = true;
+    syncBackdrop();
   };
+  // Abdunkeln, Wegklicken und Escape leben in panel-backdrop.js (SRP).
+  const syncBackdrop = initPanelBackdrop({ backdrop, sidebar, browserPanel, menuButton, browserButton, setMenuOpen, setBrowserPanelOpen });
   menuButton?.addEventListener("click", () => setMenuOpen(!sidebar?.classList.contains("is-open")));
   browserButton?.addEventListener("click", () => setBrowserPanelOpen(!browserPanel?.classList.contains("is-open")));
   bindPanelResize("#leftPanelResize", "left");
   bindPanelResize("#rightPanelResize", "right");
-  backdrop?.addEventListener("click", () => {
-    setMenuOpen(false);
-    setBrowserPanelOpen(false);
-  });
   for (const button of $$(".nav-button")) {
     button.addEventListener("click", () => {
       goToView(button.dataset.view);
@@ -1096,13 +1096,19 @@ function refreshSessionStatus() {
 }
 
 async function initGoogleLogin() {
-  const config = await getJson(CLIENT_ROUTES.api.authConfig).catch(() => null);
+  // Performance: authConfig und authMe parallel holen statt hintereinander
+  // (kein Boot-Wasserfall). authMe wird ohnehin gebraucht; der In-Flight-Dedup
+  // in getJson faellt mit einem etwaigen parallelen Boot-Aufruf zusammen, sodass
+  // kein doppelter /api/auth/me entsteht. Gleiche Endpunkte, gleiche Antworten.
+  const [config, session] = await Promise.all([
+    getJson(CLIENT_ROUTES.api.authConfig).catch(() => null),
+    getJson(CLIENT_ROUTES.api.authMe).catch(() => ({ authenticated: false, user: null }))
+  ]);
   if (!config) {
     $("#googleSignIn").textContent = "Google Login: Control Server ist noch nicht online.";
     return writeOutput("#profileOutput", "Google Login wartet auf den Control Server.");
   }
   if (!config.configured) return void ($("#googleSignIn").textContent = "Google Login: Client-ID fehlt.");
-  const session = await getJson(CLIENT_ROUTES.api.authMe).catch(() => ({ authenticated: false, user: null }));
   if (session.authenticated && session.user) return showSignedIn(session.user);
   const container = $("#googleSignIn");
   container.innerHTML = "";
@@ -1249,38 +1255,6 @@ async function showJsonInLog(url) {
 
 async function showJson(target, url) {
   writeOutput(target, JSON.stringify(await getJson(url), null, 2));
-}
-
-async function getJson(url) {
-  try {
-    const response = await fetch(url);
-    const text = await response.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      return { ok: response.ok, status: response.status, text: text && !text.trimStart().startsWith("<") ? text : UI_COPY.localOnly };
-    }
-  } catch (error) {
-    return { ok: false, error: error.message || "Network request failed" };
-  }
-}
-
-async function postJson(url, body) {
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    const text = await response.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      return { ok: response.ok, status: response.status, text: text && !text.trimStart().startsWith("<") ? text : UI_COPY.localOnly };
-    }
-  } catch {
-    return { ok: false, error: "Network request failed" };
-  }
 }
 
 function addEntry(text, role, target = "#startLog") {

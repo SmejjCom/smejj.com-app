@@ -1,0 +1,28 @@
+{
+  "capsule": "job_tts_sanitizer_20260720",
+  "ziel": "TTS-Sanitizer: Quellen, URLs, Zeitstempel und Markdown werden vor der Sprachausgabe entfernt; Chat-Anzeige bleibt unveraendert (Anzeigen ja, vorlesen nein).",
+  "freigabe": "Ja von Wof Kadavanich am 2026-07-20; Auftrag: eigenstaendig umsetzen, live gehen, live testen, danach 100 Prozent Schutz aktivieren.",
+  "status": "verified",
+  "geaendert": [
+    "public/voice-speech-queue.js (sanitizeForSpeech NEU + Satz-Skip, 124 -> 204 Zeilen)",
+    "public/composer-tools.js (Import + Lautsprecher-Button, 789 -> 790 Zeilen)",
+    "public/app.js (?v-Bump)",
+    "public/index.html (?v-Bump)",
+    "public/sw.js (CACHE_NAME auf v131, Live-Basis v130)",
+    "tests/voice-speech-queue.test.mjs (+15 Tests, 42/42)",
+    "tests/profile-dock.test.mjs + tests/platform-pwa.test.mjs (SW-Pin)"
+  ],
+  "deploy": {
+    "repo": "SmejjCom/smejj-app-frontend",
+    "branch": "main",
+    "commits": ["73ae37d", "31d1260", "c3eac01"],
+    "rollbackBasis": "c745278a2e30ae2f729a2def13f3fa2cee08582d (2026-07-18T19:32:50Z)"
+  },
+  "verifikation": {
+    "lokal": "voice 20/20, queue 42/42, guidelines OK, favicon-lock OK, frontend exakt Vorbestand (0 neue Abweichungen), platform 7/7, json OK, start-lock 28/28 neu eingefroren",
+    "liveModulTest": "19/19 Assertions per Blob-Import der deployten Datei",
+    "liveE2E": "Wetterfrage Berlin: Chat zeigt Quelle Open-Meteo + Stand; TTS erhielt nur den Antworttext (Hook-Beweis); 0 Konsolenfehler; SW v131 aktiv"
+  },
+  "rollbackLokal": "backups/tts-sanitizer-rollback/2026-07-20T19-51-08Z/",
+  "trainingEligible": false
+}

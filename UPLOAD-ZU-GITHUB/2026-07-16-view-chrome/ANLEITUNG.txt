@@ -1,0 +1,11 @@
+smejj.com Live-Deploy view-chrome (2026-07-16) — 2 Schritte
+
+SCHRITT 1
+Oeffne:  https://github.com/SmejjCom/smejj-app-frontend/upload/main/assets
+Ziehe die 2 Dateien aus "1-nach-assets-ziehen" ins Browserfenster.
+Klicke unten auf "Commit changes".
+
+SCHRITT 2
+Oeffne:  https://github.com/SmejjCom/smejj-app-frontend/upload/main
+Ziehe die 2 Dateien aus "2-nach-root-ziehen" ins Browserfenster.
+Klicke unten auf "Commit changes".

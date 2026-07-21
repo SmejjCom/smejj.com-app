@@ -3,8 +3,10 @@
 !.env.example
 
 # Never store model weights, downloaded checkpoints, or generated manifests in Git.
-/model-files/
-/models/
+model-files/
+models/
+!idrive-layout/manifests/models/
+!idrive-layout/manifests/models/registry.json
 *.safetensors
 *.gguf
 *.bin
@@ -15,6 +17,10 @@
 *.sha256
 checksums.txt
 
+# Lokale Rollback- und Upload-Artefakte — gehoeren auf IDrive e2, nie ins Git
+backups/
+UPLOAD-ZU-IDRIVE/
+
 # Local temporary output
 .DS_Store
 node_modules/
@@ -22,14 +28,12 @@ dist/
 coverage/
 tmp/
 temp/
+.wrangler/
+.pnpm-store/
+*.xlsx
+.~lock.*#
+!idrive-layout/manifests/models/**
+scripts/model-management/run_glm_fp8_contabo_transfer 2.sh
 
-# Rollback-Kopien gehoeren auf IDrive e2, nicht in Git (2026-07-15)
-/backups/
-# Transiente Upload-Hilfskopien
-/UPLOAD-ZU-GITHUB/
-# Control-Release-Artefakte liegen auf IDrive e2 (Object Brain = einziger Speicher
-# fuer grosse Dateien laut FREE_ONLY_MASTER_POLICY). Dieser Ordner ist nur die
-# transiente Staging-Kopie fuer den Konsolen-Upload — gehoert nie in Git
-# (Free-Tier: kein LFS, kein Storage). Nachgetragen 2026-07-17: analog zu
-# UPLOAD-ZU-GITHUB, war versehentlich nicht ignoriert (check:security schlug an).
-/UPLOAD-ZU-IDRIVE/
+# Persoenliche Session-Einstellungen bleiben lokal
+.claude/settings.local.json

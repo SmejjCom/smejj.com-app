@@ -1,0 +1,12 @@
+{
+  "capsule": "job_quellsync_20260721",
+  "ziel": "Lokalen Quellordner auf GitHub-main-Stand (c3eac01) angleichen, damit kuenftige Deploys nichts zurueckdrehen; BYOK-Arbeit unangetastet.",
+  "freigabe": "Auswahl 'Quellordner angleichen (Empfohlen)' von Wof Kadavanich am 2026-07-21.",
+  "status": "verified",
+  "uebernommen": ["public/app.js", "public/index.html", "public/sw.js", "public/voice-speech-queue.js", "public/composer-tools.css", "public/shared/http-json.js (NEU)", "public/panel-backdrop.css (NEU)", "public/panel-backdrop.js (NEU)", "tests: SW-Pins v131"],
+  "beweis": "Alle 8 Dateien per Git-Blob-SHA gegen den main-Baum verifiziert; Patch-Uebertragung 8/8 sha256-exakt; BASE-Hypothese (lokal = 5ab377f + eigener Bump) per Hash bestaetigt.",
+  "checks": "voice 20/20, queue 42/42, guidelines OK (756), platform 7/7, json OK, favicon-lock OK, frontend exakt Vorbestand (124/6, 0 neue), start-lock neu eingefroren 2026-07-21T01:19:16Z",
+  "rollback": "backups/quellsync-rollback/2026-07-21T00-51-03Z/ (inkl. patches/), backups/start-design-lock/2026-07-21T01-19-16-909Z/",
+  "offen": ["BYOK-Deploy (Frontend fertig, Backend /api/keys pruefen, Freigabe noetig)", "Sprachseiten/sitemap/voice-landing/account-privacy/ui-modern/remote-browser Sync", ".well-known auf Live fehlt (Vorbestand)", "check:security-Vorbestand"],
+  "trainingEligible": false
+}

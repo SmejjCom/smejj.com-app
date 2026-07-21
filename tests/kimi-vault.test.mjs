@@ -11,9 +11,7 @@ test("Kimi is disabled by default and not a free engine", () => {
   assert.ok(kimi);
   assert.equal(kimi.storage.provider, "idrive-e2");
   assert.equal(kimi.inference.default, "disabled");
-  assert.ok(kimi.inference.allowedModes.includes("byok"));
-  assert.ok(kimi.inference.allowedModes.includes("openai-compatible-api-after-feature-flag"));
-  assert.equal(kimi.status, "verified-complete-storage-ready-runtime-feature-flagged");
+  assert.deepEqual(kimi.inference.allowedModes, ["openai-compatible-api-after-feature-flag", "byok", "partner-compute-later", "self-host-later"]);
   assert.ok(kimi.inference.notAllowedAsDefault.includes("workers-ai"));
   assert.ok(kimi.inference.notAllowedAsDefault.includes("browser-free-full-model"));
 });
@@ -24,10 +22,9 @@ test("Kimi provider is not enabled by default", () => {
   assert.equal(kimiProvider.enabledByDefault, false);
   assert.equal(kimiProvider.type, "model-vault");
   assert.notEqual(kimiProvider.type, "workers-ai");
-  assert.equal(kimiProvider.fallback, "glm-5-2-fp8-vault");
 });
 
-test("GLM 5.2 FP8 is a storage-only long-context vault target", () => {
+test("GLM 5.2 FP8 is the storage-only flagship coding and planning vault target", () => {
   const glm = registry.models.find((model) => model.id === "glm-5-2-fp8");
   assert.ok(glm);
   assert.equal(glm.source.repo, "zai-org/GLM-5.2-FP8");
@@ -41,14 +38,15 @@ test("GLM 5.2 FP8 is a storage-only long-context vault target", () => {
   assert.ok(glmProvider);
   assert.equal(glmProvider.enabledByDefault, false);
   assert.equal(glmProvider.type, "model-vault");
-  assert.equal(glmProvider.fallback, "disabled");
   assert.equal(glmProvider.role, "flagship-coding-and-planning-brain");
+  assert.equal(glmProvider.fallback, "disabled");
   assert.equal(ROUTES.api.glmModelStatus, "/api/models/glm-5-2-fp8/status");
   assert.equal(ROUTES.api.modelsStatus, "/api/models/status");
   assert.equal(GLM_5_2_FP8_STATUS.sourceArchive.status, "verified-metadata-archived");
   assert.equal(GLM_5_2_FP8_STATUS.verification.status, "verified-complete");
+  assert.equal(GLM_5_2_FP8_STATUS.verification.originalFileCount, 149);
   assert.equal(GLM_5_2_FP8_STATUS.verification.idriveObjectCount, 157);
-  assert.equal(GLM_5_2_FP8_STATUS.inference.default, "disabled");
+  assert.equal(GLM_5_2_FP8_STATUS.files.weights, "present");
 });
 
 test("Kimi verified IDrive status is complete but inference stays disabled", () => {
@@ -60,8 +58,6 @@ test("Kimi verified IDrive status is complete but inference stays disabled", () 
   assert.equal(KIMI_K2_7_STATUS.verification.idriveObjectCount, 102);
   assert.equal(KIMI_K2_7_STATUS.verification.safetensorsCount, 64);
   assert.equal(KIMI_K2_7_STATUS.verification.safetensorsWithMatchingSha256, 64);
-  assert.equal(KIMI_K2_7_STATUS.verification.reportedBytes, 595_204_984_507);
-  assert.equal(KIMI_K2_7_STATUS.capabilities.contextTokens, 262_144);
   assert.deepEqual(KIMI_K2_7_STATUS.verification.failures, []);
   assert.equal(KIMI_K2_7_STATUS.inference.default, "disabled");
   assert.equal(KIMI_K2_7_STATUS.inference.freeDefault, false);

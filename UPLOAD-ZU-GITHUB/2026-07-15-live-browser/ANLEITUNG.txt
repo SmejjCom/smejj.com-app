@@ -1,0 +1,56 @@
+smejj.com Live-Browser (klicken/tippen/scrollen wie Chrome) — Livegang
+
+WICHTIG: Reihenfolge einhalten. Der Worker (Schritt A) MUSS zuerst live sein,
+sonst faellt der Browser sauber auf die bisherige Standbild-Ansicht zurueck
+(nichts geht kaputt, aber Klicken funktioniert erst nach Schritt A).
+
+------------------------------------------------------------
+SCHRITT A — Worker-Image neu bauen (nur am Mac, Docker Desktop offen)
+------------------------------------------------------------
+Terminal im Projektordner:
+
+  docker login ghcr.io      (einmalig; User: SmejjCom, Passwort: PAT mit write:packages)
+  bash scripts/deploy/build_and_push_remote_browser_image.sh
+
+Das Script baut ghcr.io/smejjcom/smejj-remote-browser:latest (jetzt inkl.
+session-engine.js + /session-Routen), smoke-testet lokal und pusht.
+
+Danach in Salad (portal.salad.com -> smejjcom -> Container Groups):
+  - smejj-remote-browser-live  ->  Stop, dann Start (zieht das neue :latest Image)
+  - Warten bis 1/1 Running.
+
+Pruefen (Terminal):
+  curl https://cherry-wasabi-plabhh07qstr6egc.salad.cloud/health
+  -> {"ok":true,"app":"smejj.com remote-browser-worker",...}
+
+------------------------------------------------------------
+SCHRITT B — Bridge + Frontend auf GitHub Pages (2x Dateien reinziehen)
+------------------------------------------------------------
+B1) Oeffne: https://github.com/SmejjCom/smejj-app-frontend/upload/main/assets
+    Ziehe ALLE 5 Dateien aus "1-nach-assets-ziehen" ins Fenster.
+    Gruener Knopf "Commit changes".
+    (Neu/aktualisiert: browser-pane-session.js, remote-browser-bridge.js,
+     browser-pane.js, browser-pane-render.js, config.js)
+
+B2) Oeffne: https://github.com/SmejjCom/smejj-app-frontend/upload/main
+    Ziehe sw.js aus "2-nach-root-ziehen" ins Fenster.
+    Gruener Knopf "Commit changes".
+
+Danach in Salad die Bridge neu ausrollen (laedt assets/remote-browser-bridge.js):
+  - smejj-remote-browser-bridge-live  ->  Stop, dann Start. Warten bis 1/1.
+
+Pruefen (Terminal):
+  curl -X POST https://loganberry-fruit-e3n6k5n10h68cawn.salad.cloud/api/browser/session \
+    -H "origin: https://smejj.com" -H "content-type: application/json" \
+    -d '{"url":"https://example.com"}'
+  -> {"ok":true,"interactive":true,"sessionId":"...","screenshot":"data:image/jpeg..."}
+
+------------------------------------------------------------
+SCHRITT C — Live-Test
+------------------------------------------------------------
+Auf smejj.com den integrierten Browser oeffnen, amazon.de eingeben.
+Erwartung: "Live-Browser verbunden" — Suchfeld anklicken, Begriff tippen,
+Enter, Artikel anklicken. Reaktion pro Klick ~1-2 s.
+
+FERTIG. Nichts wird geloescht oder ueberschrieben; die bisherige
+Standbild-Ansicht bleibt als automatischer Fallback erhalten.

@@ -1,6 +1,6 @@
 // smejj.com — Logik-Tests fuer das satzweise Vorlesen (Stufe 1c).
 // Standalone: node tests/voice-speech-queue.test.mjs
-import { splitCompleteSentences, createSpeechQueue } from "../public/voice-speech-queue.js";
+import { splitCompleteSentences, createSpeechQueue, sanitizeForSpeech } from "../public/voice-speech-queue.js";
 
 let passed = 0;
 let failed = 0;
@@ -178,6 +178,65 @@ await (async () => {
   check("11a Getter nach Satz 1", getter() === "Erst dieser Satz hier.");
   tts.endNext();
   check("11b Getter nach Satz 2", getter() === "Erst dieser Satz hier. Dann noch ein weiterer Satz.");
+})();
+
+// --- Test 12: TTS-Sanitizer — Quellen-Zeilen werden nicht vorgelesen ---------------
+{
+  const de = sanitizeForSpeech("Heute bleibt es trocken.\nQuellen: https://api.open-meteo.com/v1 (Stand: 2026-07-20T09:41:00Z)");
+  check("12a Quellen-Zeile (de) entfernt", de === "Heute bleibt es trocken.");
+  const en = sanitizeForSpeech("It stays dry today.\nSources: https://a.example, https://b.example (Stand: 2026-07-20T09:41:00Z)");
+  check("12b Sources-Zeile (en) entfernt", en === "It stays dry today.");
+  const collapsed = sanitizeForSpeech("Es bleibt trocken.Quellen: https://a.example (Stand: 2026-07-20T09:41:00Z)");
+  check("12c Quellen auch ohne Zeilenumbruch entfernt (gerenderte Anzeige)", collapsed === "Es bleibt trocken.");
+}
+
+// --- Test 13: TTS-Sanitizer — URLs und Zeitstempel ----------------------------------
+{
+  const text = sanitizeForSpeech("Mehr dazu unter https://smejj.com/docs und www.example.org steht bereit.");
+  check("13a URLs entfernt, Satz bleibt", !text.includes("http") && !text.includes("www.") && text.includes("steht bereit"));
+  const ts = sanitizeForSpeech("Messung 2026-07-20T09:41:00.000Z abgeschlossen.");
+  check("13b ISO-Zeitstempel entfernt", ts === "Messung abgeschlossen.");
+}
+
+// --- Test 14: TTS-Sanitizer — Markdown-Zeichen --------------------------------------
+{
+  const md = sanitizeForSpeech("**Lissabon** ist die Hauptstadt. Siehe [Portugal](https://example.org) mit \u0060Code\u0060.");
+  check("14a fett/Link/Code bereinigt", md === "Lissabon ist die Hauptstadt. Siehe Portugal mit Code.");
+  const listing = sanitizeForSpeech("# Ueberschrift\n- Punkt eins\n- Punkt zwei");
+  check("14b Ueberschrift/Listenzeichen bereinigt", listing === "Ueberschrift\nPunkt eins\nPunkt zwei");
+}
+
+// --- Test 15: TTS-Sanitizer — Zahlen fuers Ohr (nur Deutsch) ------------------------
+{
+  const de = sanitizeForSpeech("Aktuell 17.6°C bei Wind.", { lang: "de" });
+  check("15a de: 17.6\u00b0C -> 17,6 Grad", de === "Aktuell 17,6 Grad bei Wind.");
+  const en = sanitizeForSpeech("Currently 17.6°C with wind.", { lang: "en" });
+  check("15b en: Dezimalpunkt bleibt", en.includes("17.6"));
+  const idempotent = sanitizeForSpeech(de, { lang: "de" });
+  check("15c idempotent", idempotent === de);
+}
+
+// --- Test 16: Queue ueberspringt reine Quellen-Saetze still -------------------------
+await (async () => {
+  const tts = makeFakeTts();
+  let endedCount = 0;
+  const queue = createSpeechQueue({ speakFn: tts.speakFn, stopFn: () => {}, onQueueEnd: () => { endedCount += 1; } });
+  queue.flush("Es bleibt heute trocken.\nQuellen: https://api.open-meteo.com/v1 (Stand: 2026-07-20T09:41:00Z)");
+  await tick(); await tick(); await tick();
+  check("16a nur der Antwortsatz wird gesprochen", tts.spokenList.join("|") === "Es bleibt heute trocken.");
+  check("16b onQueueEnd trotz uebersprungener Quellen-Zeile", endedCount === 1);
+  check("16c Echo-Filter sieht nur Gesprochenes", queue.spokenText() === "Es bleibt heute trocken.");
+})();
+
+// --- Test 17: Queue faellt nie ganz aus (nur Quellen-Text) --------------------------
+await (async () => {
+  const tts = makeFakeTts();
+  let endedCount = 0;
+  const queue = createSpeechQueue({ speakFn: tts.speakFn, stopFn: () => {}, onQueueEnd: () => { endedCount += 1; } });
+  queue.flush("Quellen: https://a.example (Stand: 2026-07-20T09:41:00Z)");
+  await tick(); await tick();
+  check("17a nichts gesprochen", tts.spokenList.length === 0);
+  check("17b onQueueEnd feuert trotzdem (Loop geht weiter)", endedCount === 1);
 })();
 
 console.log(`\n${passed} bestanden, ${failed} fehlgeschlagen`);

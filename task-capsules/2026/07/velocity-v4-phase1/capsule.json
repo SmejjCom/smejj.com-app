@@ -1,0 +1,47 @@
+{
+  "jobId": "velocity-v4-phase1",
+  "createdAt": "2026-07-18T14:47:00.000Z",
+  "owner": "Wof Kadavanich",
+  "title": "Velocity v4 — Phase 0 (Messung) + Phase 1 (Groq Instant Lane), freigabereif",
+  "goal": "smejj.com fuehlbar schneller machen (TTFT < 0.8s) durch Aktivierung des bereits vorhandenen Multi-Modell-Routers mit Groq als Instant Lane, ohne Frontend-Neubau und ohne Beruehrung geschuetzter Dateien.",
+  "scope": {
+    "included": [
+      "Wiederherstellung des Start-Locks (app.js, styles.css) auf geschuetzten Stand",
+      "Gap-Analyse Ist-Code vs. v4",
+      "Phase-0-Messkonzept",
+      "Phase-1-Konfigurationspaket (Groq + Router + Budget-Gate)"
+    ],
+    "excluded": [
+      "Kein Deploy ohne Freigabe",
+      "Keine Modell-API-Kosten ohne genannten Budget-Betrag",
+      "Kein Frontend-Neubau / keine rAF-Aenderung (Lock-Dateien)",
+      "Kein Anfassen des Git-Index (auf dem Nutzer-Rechner lief ein Git-Prozess)"
+    ]
+  },
+  "affectedFiles": [
+    "public/app.js (nur Restore auf HEAD/Lock-Stand)",
+    "public/styles.css (nur Restore auf HEAD/Lock-Stand)",
+    "control-server/ENV (geplant, Phase 1, noch NICHT gesetzt)",
+    "VELOCITY_V4_STATUS_2026-07-18.md (neu)"
+  ],
+  "budget": {
+    "status": "PENDING_APPROVAL",
+    "note": "Fail-closed. Kein Modellstart ohne genannten Betrag. Empfehlung: 10 USD/Monat Groq (BYOK).",
+    "requestedServices": ["Groq API (BYOK)"],
+    "recommendedCapUsd": 10
+  },
+  "rollback": {
+    "lockFiles": "app.js/styles.css auf HEAD-Stand zurueckgesetzt; abweichende Versionen gesichert unter outputs/lock-drift-backup-20260718-144411/",
+    "gitBaseCommit": "9af9906 (docs: Rollback-Basis dokumentiert)",
+    "gitIndexTouched": false
+  },
+  "blockers": [
+    "A) Budget-Betrag nennen (Pflicht, fail-closed)",
+    "B) Groq-API-Key sicher bereitstellen",
+    "C) Git-Divergenz (lokal 36 Commits hinter origin) vor Deploy sauber mergen"
+  ],
+  "verification": {
+    "checkStartLock": "GREEN (2026-07-18)",
+    "checkFaviconLock": "GREEN (2026-07-18)"
+  }
+}

@@ -21,7 +21,7 @@ test("auth pages expose honest professional sign-in paths", async () => {
     assert.match(page, /appleLogin/);
     assert.match(page, /passkey/);
     assert.match(page, /noindex, nofollow/);
-    assert.match(page, /href="\/assets\/auth\/auth\.css"/);
+    assert.match(page, /href="\/assets\/auth\/auth\.css(\?v=[^"]*)?"/);
     assert.match(page, /src="\/assets\/auth\/auth-page\.js(\?v=[^"]*)?"/);
   }
   assert.match(css, /auth-card/);
