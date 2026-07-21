@@ -5,6 +5,14 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-21] Repo repariert, Arbeitsstand committet (387f184), Rollback auf IDrive e2 gesichert
+- Typ: verified success (Repo-Pflege + Backup). Freigabe: schriftlich ("Ja" zu Commit + Sicherung ausserhalb Google Drive).
+- Repo-Reparatur: 7 leere .lock-Dateien (Drive-Sync-Reste vom 2026-07-18, eine blockierte Commits auf HEAD) entfernt, 2 tote /tmp-Worktrees geprunt. Befund Altschaden: NUR Branch release/smejj-home-icons-2026-06-24 hat fehlende Objekte (Commit 540b362 -> Parent ff612fd fehlt); feature-Branch, main und Tag rollback/pre-auth-redesign-2026-07-18 per rev-list verifiziert intakt.
+- Commit 387f184 (293 Dateien): Wellen 0-2 + Browser-Button-Fix + Lock-Neufreeze. Wichtig: Die von einer frueheren Session versehentlich vorgemerkte Loeschung der Auth-Dateien (githubAuth, magicLinkRoutes, extraAuthRoutes, Tests) wurde aufgehoben — src/server.js importiert sie weiterhin. Vorher geprueft: keine Secrets, keine Grossdateien, npm run check gruen. .gitignore: backups/, UPLOAD-ZU-IDRIVE/, .claude/settings.local.json bleiben lokal.
+- Rollback ausserhalb Google Drive: scripts/model-management/upload_project_artifact_to_idrive.mjs mit CONFIRM_IDRIVE_ARTIFACT_UPLOAD=YES — Artefakt s3://smejj-model-files/deployment-artifacts/smejj-com/20260721/ (json.gz + Manifest), Upload mit SHA-256-Roundtrip verifiziert. Credentials kamen aus ~/.config/smejj.com/env.local (Session hat sie nie gesehen).
+- GitHub-Push nach SmejjCom/smejj.com-app: SSH-Schluesselpaar unter ~/.ssh/smejjcom_github_ed25519 erzeugt (Pfad, den .git/config sshCommand erwartet). Das Eintragen des Deploy-Keys im Portal ist eine Sicherheitseinstellung und bleibt bewusst Nutzer-Schritt (Berechtigungssystem blockiert fail-closed). Sobald eingetragen: git push origin feature/auth-redesign-github-magiclink.
+- trainingEligible:false, memoryMayLearn:true nur fuer die oben belegten Fakten.
+
 ### [2026-07-21] Browser-Button (rechtes Panel-Icon) bleibt ueber offenem Panel sichtbar — LIVE
 - Typ: verified success (UI-Fix). Freigabe: schriftlich, Nutzer-Meldung "Rechte Seite ganz oben Hauptmenü icon ... Soll wie linke seite immer icon oben bleiben" + Master-Prompt "eigenstaendig weiter, live gehen, live testen, 100 % Schutz aktivieren".
 - Problem: Beim Oeffnen des rechten Panels verschwand der Ausloeser oben rechts (#browserButton) — das Panel (z-index 75 aus panel-backdrop.css) lag ueber dem Button (.glass-icon z-index 45). Menue liess sich nur per Backdrop/Escape schliessen. Links war das laengst geloest: branding.css hebt .app-menu-button auf 75 (ueber Sidebar 70).
