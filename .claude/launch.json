@@ -4,20 +4,18 @@
     {
       "name": "smejj-app",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["src/server.js"],
+      "runtimeArgs": [
+        "src/server.js"
+      ],
       "port": 3000,
       "autoPort": true
     },
     {
-      "name": "smejj-head-static",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["/private/tmp/claude-501/-Users-alanbest-Library-CloudStorage-GoogleDrive-smejjcom-gmail-com--shortcut-targets-by-id-1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY---smejj-com-info-smejj-com-App/6ca0719e-93ac-4dc2-a007-c4490009b5fa/scratchpad/serve-head.mjs"],
-      "port": 4200
-    },
-    {
       "name": "glm-salad-worker",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["workers/glm-salad/worker.js"],
+      "runtimeArgs": [
+        "workers/glm-salad/worker.js"
+      ],
       "port": 8080
     }
   ]
