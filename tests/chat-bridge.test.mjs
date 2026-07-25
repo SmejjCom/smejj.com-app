@@ -41,3 +41,65 @@ test("chat bridge limiter enforces per-client windows", () => {
   now += 60_001;
   assert.equal(limiter.take("client-a").allowed, true);
 });
+
+test("fast lane is fail-closed without a Groq key and never writes to the response", async () => {
+  assert.equal(bridge.fastLaneEnabled(), false);
+  const writes = [];
+  const res = {
+    writeHead: (...args) => writes.push(["writeHead", args]),
+    write: (...args) => writes.push(["write", args]),
+    end: (...args) => writes.push(["end", args])
+  };
+  const handled = await bridge.streamFastLane(res, [{ role: "user", content: "Hallo" }], "chat", "");
+  assert.equal(handled, false);
+  assert.deepEqual(writes, []);
+});
+
+test("fast lane steps aside when an explicit deep-lane model is requested", async () => {
+  for (const requested of ["GLM-5.2", "Kimi K2.7", "Cline"]) {
+    const handled = await bridge.streamFastLane({}, [{ role: "user", content: "Hallo" }], "chat", requested);
+    assert.equal(handled, false);
+  }
+});
+
+test("weather fast path detects weather tasks, location and day offset", () => {
+  assert.equal(bridge.isWeatherTask("Wie ist das Wetter morgen in Berlin?"), true);
+  assert.equal(bridge.isWeatherTask("What is the weather in Paris tomorrow?"), true);
+  assert.equal(bridge.isWeatherTask("Erzaehl mir einen Witz."), false);
+  assert.equal(bridge.extractWeatherLocation("Wie ist das Wetter morgen in Berlin?"), "Berlin");
+  assert.equal(bridge.extractWeatherLocation("wie ist Wetter uebermorgen in Hamburg"), "Hamburg");
+  assert.equal(bridge.extractWeatherLocation("Wetter"), "Berlin");
+  assert.equal(bridge.extractWeatherDayOffset("Wetter morgen in Berlin"), 1);
+  assert.equal(bridge.extractWeatherDayOffset("Wetter übermorgen in Berlin"), 2);
+  assert.equal(bridge.extractWeatherDayOffset("Guten Morgen, wie ist das Wetter?"), 0);
+});
+
+test("weather context is built from Open-Meteo data and fails closed on errors", async () => {
+  const fetchOk = async (url) => ({
+    ok: true,
+    json: async () => (String(url).includes("geocoding")
+      ? { results: [{ name: "Berlin", country: "Deutschland", latitude: 52.52, longitude: 13.41 }] }
+      : {
+          current: { time: "2026-07-21T18:00", temperature_2m: 24.4, apparent_temperature: 25.1, precipitation: 0, weather_code: 1, wind_speed_10m: 11.2 },
+          daily: {
+            time: ["2026-07-21", "2026-07-22", "2026-07-23"],
+            weather_code: [1, 3, 61],
+            temperature_2m_max: [26.2, 23.9, 20.1],
+            temperature_2m_min: [15.4, 14.8, 13.2],
+            precipitation_probability_max: [10, 40, 80],
+            precipitation_sum: [0, 1.2, 6.4],
+            wind_speed_10m_max: [18.4, 22.1, 30.5]
+          }
+        })
+  });
+  const context = await bridge.buildWeatherContext("Wie ist das Wetter morgen in Berlin?", fetchOk);
+  assert.match(context, /Live-Internet-Ergebnisse/);
+  assert.match(context, /Berlin, Deutschland/);
+  assert.match(context, /Tagesversatz: morgen/);
+  assert.match(context, /2026-07-22: bewoelkt, 14\.8 bis 23\.9 °C/);
+  assert.match(context, /open-meteo\.com/);
+  // Fail-closed: HTTP-Fehler, leeres Geocoding und Netzwerkfehler liefern "".
+  assert.equal(await bridge.buildWeatherContext("Wetter Berlin", async () => ({ ok: false, json: async () => ({}) })), "");
+  assert.equal(await bridge.buildWeatherContext("Wetter Nirgendwostadt", async () => ({ ok: true, json: async () => ({ results: [] }) })), "");
+  assert.equal(await bridge.buildWeatherContext("Wetter Berlin", async () => { throw new Error("offline"); }), "");
+});

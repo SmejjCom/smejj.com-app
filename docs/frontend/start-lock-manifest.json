@@ -1,16 +1,16 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-21T15:31:27.304Z",
-  "confirmation": "Wof Kadavanich, 2026-07-21: Browser-Button-Fix (rechtes Panel-Icon bleibt sichtbar) freigegeben und live; 'Zum Schluss bitte 100 % Schutz aktivieren: nichts darf kaputtgehen, geloescht oder ohne meine schriftliche Freigabe geaendert werden. Bestehende Funktionen, Daten, Design, Einstellungen und Zugaenge muessen sicher bleiben.' panel-backdrop.js/.css neu in den Schutzumfang aufgenommen.",
+  "frozenAt": "2026-07-21T19:22:29.458Z",
+  "confirmation": "Wof Kadavanich, 2026-07-21: 'Sprachewelle ist sehr langsam ... gibt's keine Sende Icon soll wie ChatGPT Sende Icon sein.' + Nachtrag: 'Sende icon soll ohne Hintergrund und Transparent sein.' Umgesetzt: transparentes Sende-Icon (Pfeil nach oben) in beiden Sprachwellen-Leisten (voice-typed-send.js neu, composer-tools.js/.css, voice-landing.js) + Cache-Buster (app.js, index.html, sw.js v133). Startseiten-Design unverändert.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "2811f2a538dd26cfbfe132dc2bb9e1d93d68703b097f73a565818ebcfd2972a8",
+    "public/index.html": "5bad37c5bf6bb2732c95c0a00fa8ba6294474f5e259e58172407a9d54fb2457e",
     "public/styles.css": "78f06b4a0a61b51ee90da3482cd8a6d93d02e0de7d6bc344e3f80ec67ddfb122",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "dc8ce78a02f311e12ab45e6b4bc81683ad60ef94c3809248cb1fa9eba60b29fe",
-    "public/composer-tools.css": "d3002e5e54956acdbcdfec229395a0be5a3c7ff1d32aae3a1194f68b2e5889e9",
+    "public/composer-tools.css": "2dc316dfbc73da293910b7236bf58c06c72edf325d6f7cbb5fdd2eb0fbbebddb",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "ff90d841f66f30b3823a77870fad7ce176a89b67c1792587ba963ac5bc486296",
+    "public/app.js": "b4877deb892ef10f020f53558c5db1fecd1a1ef6351232545522bfe7f5668822",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "afca421d31fe49a9e9cc1872146a5fdda48d349208a4b362d25ffba10daef933",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
@@ -18,7 +18,7 @@
     "public/autonomous-coding.js": "8d749c9fb8674b91b449fe894dc6519df9139f3eebdfd899e2b20c79fd18f7c5",
     "public/autonomous-coding.css": "5c86c7fea0aff304310c7b929cf8cc58fd1d78b1f5ce394f3e7b86cd86bdb8fe",
     "public/search.js": "8a91514905e59eca1d57596aaec7968751122ff019d383a426b7710b760f2418",
-    "public/composer-tools.js": "ef925b1687694b4f31e08158215ee6d6b470a49f73e3e71bba78c73890b870bc",
+    "public/composer-tools.js": "404589731a38d6849329cea6af554c18fe2b5724c5cff616b83196176d55f2ba",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "3701222f370b9788a8d534e3be0c5a5f4df372498660f8d0e2978f152d50b0d5",
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
@@ -32,7 +32,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "1b97be23b77e506a74f3f02eec7198727cbc3fa0be33504129b5083cb256f30d",
+    "public/sw.js": "02451deb9e85a76f84318c60c7974695e5994071b79a91ade45d0ffd2ef98f4b",
     "public/manifest.webmanifest": "74982e08d5ea4bb2c7042bdf5b8965ea49c823d21ea6e892193ddecff21fcc90"
   }
 }

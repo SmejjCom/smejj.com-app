@@ -54,7 +54,7 @@ test("service worker caches only small app shell assets and has offline fallback
   // Shell-Precache aufgenommen; schriftliche Freigabe des Nutzers ("Ich finde
   // deinen Vorschlag gut mit X Icon schliessen und Zurueckpfeile ... Wie
   // wuerdest du jetzt machen?" + Master-Prompt "eigenstaendig weiter").
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v132"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v133"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   assert.match(sw, /\/assets\/view-chrome\.css/);
   assert.match(sw, /\/assets\/search\.js/);

@@ -18,3 +18,8 @@ Freigabe liegt vor (Wof Kadavanich, 2026-07-21): "0-Euro-Variante: Groq Free-Tie
 2. Pruefen, ob der Live-Control (V80) die Router-Route traegt; sonst Bridge-Direktpfad auf Groq-Fast-Lane konfigurieren (SMEJJ_LLM_BASE_URL=https://api.groq.com/openai/v1, Modell llama-3.1-8b-instant NUR fuer Profil fast — GLM-5.2 bleibt Deep Lane).
 3. TTFT vorher/nachher messen (Ziel < 0,8 s), Live-Test, check:all, Locks pruefen, Task Capsule + Memory_Bank.
 4. Rollback: ENV-Variable entfernen + Restart = alter Zustand.
+
+## ERLEDIGT (2026-07-21, Nachmittag)
+Welle 2 ist LIVE. Key vom Betreiber eingefuegt; Bridge v97 (Commit 48ba284) mit Groq Fast Lane deployt.
+Messung: erste Antwort 0,69s (vorher 8,2s). GLM-5.2 bleibt Deep Lane (Coding/Web/explizite Wahl) — live verifiziert.
+Details und Rollback: Memory_Bank.md Eintrag job_welle2_fastlane_20260721.
