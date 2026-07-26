@@ -47,3 +47,15 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
   Nachtest: Benachrichtigungen 1:1 wie Mockup.
 - /settings unveraendert geprueft: Modelle-Bereich intakt (GLM-5.2, API-Keys,
   Cline API).
+
+## Adressleisten-Bereinigung (2026-07-26, Freigabe "mach das")
+- Neu: cleanLoginMarkers() in account-privacy.js entfernt ?login=ok und
+  ?session-handoff-complete=1 nach dem Laden per history.replaceState.
+- Befund beim Live-Test: app.js-Router (Start-Lock, Zeile ~330) haengt
+  location.search beim Ansichtswechsel wieder an — Wettlauf. Loesung:
+  Bereinigung laeuft zusaetzlich bei 800 ms und 2500 ms (idempotent, fail-safe).
+- Zweiter Befund: GitHub-Pages-CDN hielt die exakte URL ?v=2 noch auf der
+  Vorversion (Testabrufe mit anderen Query-Strings sahen frueher die neue) —
+  nach TTL-Ablauf geprueft.
+- Live verifiziert: smejj.com/profile?login=ok → Adresse nach dem Laden
+  https://smejj.com/profile. Blob-Hash 6f43dc4e… remote == lokal.
