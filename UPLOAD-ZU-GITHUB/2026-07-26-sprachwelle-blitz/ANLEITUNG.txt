@@ -1,0 +1,20 @@
+smejj.com Live-Deploy "Sprachwelle Blitz" — 3 Schritte (je: Dateien reinziehen + gruener Knopf)
+
+SCHRITT 1 (13 Dateien)
+Oeffne:  https://github.com/SmejjCom/smejj-app-frontend/upload/main/assets
+Ziehe ALLE Dateien aus dem Ordner "1-nach-assets-ziehen" ins Browserfenster.
+Klicke unten auf den gruenen Knopf "Commit changes".
+
+SCHRITT 2 (2 Dateien)
+Oeffne:  https://github.com/SmejjCom/smejj-app-frontend/upload/main/assets/ai
+Ziehe die 2 Dateien aus dem Ordner "2-nach-assets-ai-ziehen" ins Browserfenster.
+Klicke unten auf den gruenen Knopf "Commit changes".
+
+SCHRITT 3 (2 Dateien) — ZULETZT
+Oeffne:  https://github.com/SmejjCom/smejj-app-frontend/upload/main
+Ziehe die 2 Dateien aus dem Ordner "3-nach-root-ziehen" ins Browserfenster.
+Klicke unten auf den gruenen Knopf "Commit changes".
+
+FERTIG — danach uebernimmt Claude (Live-Test, Verifikation, Doku).
+Enthalten: Sprachwelle Blitz-Paket (Stufe 1e) + die bereits freigegebenen, noch
+nicht deployten Verbesserungen (Denkblase, Light-Mode-Kontrastfix, Modelle/API-Keys).
