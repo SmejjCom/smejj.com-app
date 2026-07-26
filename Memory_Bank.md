@@ -660,3 +660,20 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
   settings-runtime.buildPreferenceBlock() + chatClient (Nutzerpraeferenzen).
 - Muster: Konto-Schluessel in der Chat-Laufzeit bewusst dupliziert (fail-safe,
   1000-Zeichen-Kappung) statt Modul-Kopplung.
+
+## 2026-07-26 — Konto/Einstellungen im hellen Systemschema lesbar (job_konto_hell_20260726)
+- Befund (iPhone-PWA): Systemschema "hell" setzt --premium-text dunkel, die
+  Konto-Flaechen ueberschrieben aber per ID-Spezifitaet den hellen Hintergrund
+  → dunkler Text auf dunklem Glas, unlesbar. Der helle ::before-Unterbau der
+  Premium-Views traegt nie: er liegt mit z-index -1 UNTER dem body-Hintergrund
+  (Malreihenfolge), nur der View-eigene background wirkt.
+- Fix: account-privacy.css fuehrt --konto-*-Variablen (dunkle Werte = exakt
+  vorher, Dark-Mode regressionsfrei) + Light-Block mit deckend hellem Grund
+  (fail-safe: Text nie auf gleichfarbigem Grund). Avatar-Platzhalter und
+  Primaer-Knoepfe #saveProfile/#saveSettings (von app-surfaces.css/Lock
+  dunkelmodus-weiss gefaerbt) per hoeherer Spezifitaet hell nachgezogen.
+- Offen: gleiche Primaer-Knopf-Regel trifft auch #projects/#search/#files —
+  Fix braucht app-surfaces.css (Start-Lock, Freigabe noetig).
+- Live verifiziert (Chrome, echtes Konto, hell+dunkel, Computed Styles):
+  sw v139, account-privacy.css?v=...e, settings-surface.css?v=glas-hell-...b.
+- Deploy-Paket: UPLOAD-ZU-GITHUB/2026-07-26-konto-hell/ (Blob-Hashes geprueft).
