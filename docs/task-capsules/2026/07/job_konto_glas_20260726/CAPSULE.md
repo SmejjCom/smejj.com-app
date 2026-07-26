@@ -34,3 +34,16 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
 - Lokaler Deploy-Key hat nur Lesezugriff aufs Frontend-Repo; Live-Deploy lief
   ueber den GitHub-Web-Editor (Betreiber-Session) mit insertText + Hash-Pruefung.
 - Plaene/Stripe/Zaehler sind bewusst "Bald verfuegbar" (UI-only, fail-closed).
+
+## Nachtest + Fix (2026-07-26, zweiter Durchgang)
+- Live-Volltest aller 9 Bereiche im Betreiber-Chrome: alle Panels rendern,
+  Schalter speichern (Statuszeile bestätigt), Sicherheits-Panel zeigt korrekte
+  Google-Session mit einem Ausloggen-Knopf, keine Konsolenfehler.
+- Befund 1: Schalter-Zeilen (label.account-row) erschienen uppercase (globaler
+  Premium-Label-Stil). Befund 2: Akzent var(--premium-accent) ist im Theme
+  nicht tuerkis — Schalter/Aktiv-Balken wirkten weiss.
+- Fix v=konto-glas-20260726b: label.account-row text-transform none;
+  Akzent fest #2dd4bf. Live deployt (Blob-Hashes 38baca6c/b26dbf56 verifiziert),
+  Nachtest: Benachrichtigungen 1:1 wie Mockup.
+- /settings unveraendert geprueft: Modelle-Bereich intakt (GLM-5.2, API-Keys,
+  Cline API).
