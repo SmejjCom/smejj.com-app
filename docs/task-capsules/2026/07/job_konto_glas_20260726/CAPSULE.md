@@ -59,3 +59,16 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
   nach TTL-Ablauf geprueft.
 - Live verifiziert: smejj.com/profile?login=ok → Adresse nach dem Laden
   https://smejj.com/profile. Blob-Hash 6f43dc4e… remote == lokal.
+
+## Einstellungen im Glas-Design + Modelle-Verweis (2026-07-26, Freigabe "komplett fertig")
+- settings-surface.css: komplettes Redesign auf viereckiges Glas (gleiche
+  Formensprache wie Konto), Hell-Modus mitgezogen; settings-surface.js nur
+  Versionsmarke ?v=glas-20260726. Alle Hooks/IDs unveraendert.
+- account-privacy.js: neue Zeile "KI-Modelle & API-Keys" oben in Verbundene
+  Apps mit Knopf zu /settings (Betreiber-Frage "Wo sind die Modelle?").
+- Verifikation: check:frontend 130/0, start-lock OK; lokal geprueft
+  (Chip-Nav mobil, Hell-Modus-Panel rgba(255,255,255,0.65), Modelle-Zeile).
+- Live deployt (3 Dateien, Blob-Hashes aecbef54/5f968245/c1592290 identisch),
+  live geprueft: /settings im Glas-Design inkl. Modelle-Bereich (GLM-5.2,
+  API-Keys intakt), Konto zeigt Modelle-Verweis, Klick fuehrt zu /settings.
+- Rollback: backups/konto-glas-rollback/2026-07-26/ (settings-Dateien ergaenzt).

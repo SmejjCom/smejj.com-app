@@ -634,3 +634,13 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
   (Altlast Auth-Umbau) — tests/i18n-ui gruen, check:frontend 130/0.
 - Rollback: backups/konto-glas-rollback/2026-07-26/ (JS+CSS Stand davor).
 - Deploy-Paket: UPLOAD-ZU-GITHUB/2026-07-26-konto-glas/ (2 Dateien nach assets/).
+
+## 2026-07-26 — Einstellungen im Glas-Design, Konto-Feinschliff (job_konto_glas_20260726)
+- /settings traegt jetzt dieselbe Glas-Formensprache wie /profile (eckig,
+  Haarlinien, Akzent #2dd4bf fest); Hell-Modus-Hooks unveraendert.
+- Konto → Verbundene Apps beginnt mit "KI-Modelle & API-Keys" → /settings.
+- Login-Marker (?login=ok, ?session-handoff-complete) werden auf /profile
+  nach dem Laden entfernt — mehrfach zeitversetzt, weil der app.js-Router
+  (Start-Lock) location.search beim Ansichtswechsel wieder anhaengt.
+- Deploy-Lehre: GitHub-Pages-CDN cached pro exakter URL inkl. Query — Pruef-
+  Abrufe brauchen die ECHTE Asset-URL, sonst prueft man am Cache vorbei.
