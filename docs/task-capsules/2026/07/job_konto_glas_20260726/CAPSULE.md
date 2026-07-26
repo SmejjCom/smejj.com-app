@@ -86,3 +86,22 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
   Claude-Browser, danach entfernt). Betreiber-Chrome "Browser 1" war auf
   smejj.com nicht angemeldet — GitHub-Commits liefen dort.
 - Rollback: backups/konto-glas-rollback/2026-07-26/settings-runtime.js.vor-anbindung.
+
+## Schritt 2: Echte Nutzungszaehler (2026-07-26, Freigabe "mach Nr. 2")
+- Neu: public/usage-meter.js — lokaler Monatszaehler (smejj.usage.v1) fuer
+  Nachrichten, Sprachsekunden, Coding-Laeufe; Monatswechsel-Reset; fail-safe.
+- Start-Lock RESPEKTIERT: erste Fassung hatte chatClient.js/autonomous-coding.js
+  angefasst (Lock-Check schlug an) — zurueckgenommen. Stattdessen Beobachter:
+  #startLog (neue .entry.user) + Coding-Statuszeile ("Job wird eingeplant."),
+  eingehaengt ueber profile-dock.js (Muster auth-gate.js). Geste-Scharfschaltung
+  verhindert Mitzaehlen der Verlaufs-Wiederherstellung.
+- Konto → Nutzung & Limits zeigt echte Werte (usageRow + hydrateUsage,
+  Refresh bei Tab-Klick); Zaehlerstand im Datenexport enthalten.
+- Tests: tests/usage-meter.test.mjs (6) — Zaehlen, Monats-Reset, fail-safe,
+  Kappung/Minuten, Vertragstests (Lock-Dateien ohne recordUsage). 130+ gruen.
+- Parallel-Sitzung: Commit-Konflikt im Web-Editor erkannt (deren Cache-Buster d
+  + Speichern-Knopf-Fix) — Staende zusammengefuehrt, Versionsmarke auf e,
+  nichts ueberschrieben. sw.js-Lock-Meldung stammt aus deren Voice-Arbeit.
+- Live verifiziert (smejj.com): Senden zaehlt (messages 1), Wiederherstellung
+  zaehlt nicht, Konto zeigt 1/0/0. Alle 4 Blob-Hashes byte-identisch
+  (9cf43a5b/cb38ba0d/a82d24ff/59fef9a5). Testdaten danach entfernt.

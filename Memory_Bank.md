@@ -677,3 +677,13 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
 - Live verifiziert (Chrome, echtes Konto, hell+dunkel, Computed Styles):
   sw v139, account-privacy.css?v=...e, settings-surface.css?v=glas-hell-...b.
 - Deploy-Paket: UPLOAD-ZU-GITHUB/2026-07-26-konto-hell/ (Blob-Hashes geprueft).
+
+## 2026-07-26 — Echte Nutzungszaehler lokal-first (job_konto_glas_20260726, Schritt 2)
+- usage-meter.js zaehlt Nachrichten/Coding-Laeufe pro Monat (smejj.usage.v1),
+  Konto → Nutzung & Limits zeigt echte Werte; Export enthaelt den Stand.
+- Muster: Start-Lock-Dateien NIE anfassen — Beobachter auf #startLog und
+  Coding-Statuszeile, eingehaengt ueber profile-dock.js; Geste-Scharfschaltung
+  gegen Mitzaehlen der Verlaufs-Wiederherstellung.
+- Parallel-Sessions: Web-Editor meldet Commit-Konflikte ("has committed since
+  you started editing") — dann Live-Stand neu holen, eigene Aenderungen als
+  Transformation daraufsetzen, Versionsmarken absprechen (d-Kollision → e).
