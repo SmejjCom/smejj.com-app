@@ -98,8 +98,8 @@ test("Service Worker cached die neuen Module", () => {
   ]) {
     assert.ok(sw.includes(`"${asset}"`), `${asset} fehlt im Shell-Precache`);
   }
-  // v142 (2026-07-26): Stufe C Zwei-Wege-Betrieb (Salad + Zeabur-Reserve).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v142"/);
+  // v143 (2026-07-26): Premium-Stimme auf Zeabur-CPU (Piper, Flat-Paket).
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v143"/);
 });
 
 
