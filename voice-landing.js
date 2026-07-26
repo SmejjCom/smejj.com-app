@@ -6,6 +6,7 @@
 // Fail-Streak -> Tipp-Fallback (iOS/Safari), TTS-Unlock in der Klick-Geste,
 // Barge-in mit Echo-Textfilter und Restart-Bremse. Startseite/App unberuehrt —
 // das Modul initialisiert sich nur auf Seiten OHNE App-Composer (#startSend).
+import "./auth-gate.js?v=1";
 import { CLIENT_ROUTES } from "./config.js";
 // Stufe 1c: satzweises Vorlesen — erster Satz startet, waehrend der Rest streamt.
 import { createSpeechQueue } from "./voice-speech-queue.js?v=blitz-20260726";
