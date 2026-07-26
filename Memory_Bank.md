@@ -687,3 +687,9 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
 - Parallel-Sessions: Web-Editor meldet Commit-Konflikte ("has committed since
   you started editing") — dann Live-Stand neu holen, eigene Aenderungen als
   Transformation daraufsetzen, Versionsmarken absprechen (d-Kollision → e).
+
+## 2026-07-26 — Stripe-Testmodus live (job_konto_glas_20260726, Schritt 3a)
+- Abo & Zahlungen verkauft im Stripe-TESTMODUS ueber Zahlungslinks (kein
+  Schluessel im Frontend). IDs/Links in der Capsule. Live-Schaltung erst
+  nach Stripe-Konto-Aktivierung durch den Betreiber; dann Schritt 3b:
+  Webhook + Abo-Status am Control-Server.

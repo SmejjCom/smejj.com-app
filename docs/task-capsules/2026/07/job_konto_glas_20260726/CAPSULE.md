@@ -105,3 +105,22 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
 - Live verifiziert (smejj.com): Senden zaehlt (messages 1), Wiederherstellung
   zaehlt nicht, Konto zeigt 1/0/0. Alle 4 Blob-Hashes byte-identisch
   (9cf43a5b/cb38ba0d/a82d24ff/59fef9a5). Testdaten danach entfernt.
+
+## Schritt 3a: Stripe-Testmodus live (2026-07-26, Freigabe "Ich bin eingeloggt. Weitermachen")
+- Stripe-Sandbox (Konto acct_1TxXHLQddyxzPlSc, iMild LLC), vom Betreiber angelegt.
+- Produkte (EUR, monatlich, wiederkehrend):
+  - smejj Plus  9 €  — prod_UxSGVIRDGNdHaI
+  - smejj Pro  19 €  — prod_UxSItpgmwcvKRg
+  - smejj Max  39 €  — prod_UxSJBDqMn7QUTM
+- Zahlungslinks (Testmodus, kein Schluessel im Frontend):
+  - Plus: https://buy.stripe.com/test_5kQaEZ2Cic9C5egbiIfIs00
+  - Pro:  https://buy.stripe.com/test_28E6oJ2Ci4HabCE72sfIs01
+  - Max:  https://buy.stripe.com/test_14AdRb7WC5Le6ik2McfIs02
+- Frontend: Abo & Zahlungen — "Bald verfuegbar" → "Abonnieren (Test)"-Knoepfe
+  (window.open, noopener), TESTMODUS-Hinweis mit Testkarte 4242….
+- Verifiziert: Checkout-Seite laedt (9,00 €/Monat, Sandbox-Badge); live auf
+  smejj.com oeffnen die Knoepfe die korrekten Links; Blob-Hash ec291fce…
+  byte-identisch. KEINE Zahlung ausgefuehrt, keine Kartendaten beruehrt.
+- Offen fuer echte Zahlungen (Betreiber): Stripe-Konto aktivieren
+  (Unternehmens-/Bankdaten) → danach Live-Links + Webhook/Abo-Status
+  (Control-Server, Schritt 3b).
