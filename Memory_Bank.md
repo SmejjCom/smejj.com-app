@@ -5,6 +5,15 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-26] ZEABUR-SERVER LIVE (6 $/Mo, bewusste Free-Only-Ausnahme) — Maus-Engine laeuft dauerhaft darauf
+- Typ: verified success (Kauf + Deploy + Live-Health). Freigabe: Betreiber schriftlich im Chat ("ich diese paket" / Virginia / Kauf selbst abgeschlossen, Wof Kadavanich, 2026-07-26). Dies ist eine BEWUSSTE, dokumentierte AUSNAHME von FREE_ONLY_MASTER_POLICY (erster dauerhafter Bezahl-Dienst).
+- SERVER: Zeabur "Tencent Ashburn 2C 8GB", server-6a6665a03ebd074ef6f9a205, Tencent Cloud Virginia (na-ashburn), 2 vCPU / 8 GB / 80 GB SSD, 2,56 TB Traffic (max 30 Mbit/s), ZeaburOS (K3s), 6 $/Monat, verlaengert am 26.08.2026. Zeabur-Konto smejjcom@gmail.com. Preisrecherche: Betreiber fand Tencent 6 $ nachdem die Session nur Aliyun (26 $) verglichen hatte — LEHRE: bei Anbieter-Wahl IMMER alle Provider durchklicken, Vorauswahl ist keine Recherche.
+- DEPLOY: Projekt auf dem Server, Service aus oeffentlichem Image ghcr.io/smejjcom/smejj-maus-engine:v1 (Pull ohne Auth, 1m15s), Port 8080 HTTP, Env SMEJJ_MAUS_EXIT_AFTER_RUN=NO / SMEJJ_HOST=0.0.0.0 / PORT=8080. Domain generiert: https://smejj-maus-engine.zeabur.app.
+- LIVE-BEWEIS: GET /health -> {"ok":true,"engine":"smejj.com maus-engine","running":false}; POST /run -> 401 fail-closed (kein Token gesetzt — sicher per Default). Boot-Log: "smejj.com maus-engine bereit auf 0.0.0.0:8080".
+- OFFEN (Secrets = nur Betreiber, Zeabur Variable-Tab des Service): SMEJJ_MAUS_ENGINE_TOKEN (neu erzeugen) + IDRIVE_E2_ENDPOINT/BUCKET/REGION/ACCESS_KEY/SECRET_KEY (fuer Artefakte; ohne sie bricht ein Lauf fail-closed ab). Danach: smejj-control auf die neue Engine-URL umziehen (Salad-Env, eigener freigabepflichtiger Deploy) — erst dann nutzt der Chat die Dauer-Engine statt Salad-Scale-to-zero.
+- WERKZEUG-LEHRE bestaetigt: Auto-Mode-Classifier blockt code-artige Eingaben (Image-Ref, ENV-Zeilen, Enter-Taste) sporadisch — Einzelaktion-Retry geht durch (Muster von 2026-07-21). Zeabur-Login lag in einem anderen Chrome (3 verbunden); AskUserQuestion + select_browser loeste es.
+- trainingEligible:false, memoryMayLearn:true nur fuer die oben belegten Fakten.
+
 ### [2026-07-26] MAUS-SELBSTTEST v1 — die Maus prueft smejj.com selbst; Live-Lauf 30/30 gruen (0 EUR)
 - Typ: verified success. Freigabe: "Ja" auf "Soll ich mit Punkt 1 (Selbsttest-Plan fuer unsere eigenen Seiten) anfangen?" + Master-Prompt (Wof Kadavanich, 2026-07-26). Capsule: job_maus_selbsttest_20260726.
 - WAS: Erster Selbsttest-Aktionsplan `workers/maus-engine/plaene/selbsttest-smejj-com-v1.json` (schema-valide, 30 Schritte): Auth-Gate-Redirect / -> /auth/login/, Login-Elemente, /api/auth/config-Livecheck (Google-Knopf wird fail-closed sichtbar), Registrierung, Impressum, Datenschutz, Maus-Replay-Seite, echte 404 (URL mit Punkt umgeht SPA-Fallback), manifest.webmanifest + assets/config.js per httpRequest. Pruef-Schritte mit onFailure:continue — der Bericht enthaelt ALLE Befunde, nicht nur den ersten.

@@ -107,3 +107,15 @@ Vor Release muss laufen:
 ```bash
 npm run release:preflight
 ```
+
+## Dokumentierte Ausnahmen (nur mit schriftlicher Betreiber-Freigabe)
+
+1. **Zeabur-Server (seit 2026-07-26):** "Tencent Ashburn 2C 8GB"
+   (server-6a6665a03ebd074ef6f9a205, Tencent Cloud Virginia, 6 $/Monat,
+   Konto smejjcom@gmail.com). Schriftliche Freigabe und Kaufabschluss durch
+   den Betreiber Wof Kadavanich am 2026-07-26 im Chat. Zweck: dauerhaft
+   aktive Maus-Engine (https://smejj-maus-engine.zeabur.app) ohne
+   Kaltstart. Details: Memory_Bank.md Eintrag [2026-07-26] ZEABUR-SERVER
+   LIVE. Diese Ausnahme ist eng: Sie erlaubt NUR diesen einen Server;
+   jede Erweiterung (groesseres Paket, weitere Server/Dienste) braucht
+   erneut eine schriftliche Freigabe mit Dienst und Betrag.
