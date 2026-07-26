@@ -5,6 +5,16 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-26] SPRACHWELLE STUFE 2a LIVE (sw v136) — Sprech-Ende ~1 s frueher, Zwei-Ebenen-Unterbrechung
+- Typ: verified success (Deploy + Live-Test). Freigabe: "Du kannst die weiteren Punkte jetzt komplett uebernehmen und das System selbst wie ein Nutzer testen" (Wof Kadavanich, 2026-07-26).
+- BEFUND (gemessen): Server schnell (/api/agent und /api/chat: 0,6-1,8 s erster Token; curl mit Origin smejj.com). Desktop-App nach Stufe 1e bereits 0,6 s Senden->Sprachstart (instrumentierter Live-Test). Die Restlangsamkeit sitzt in (a) der 1-2 s Browser-Endpause der Erkennung nach dem letzten Wort und (b) Barge-in auf Handys: Browser-AEC entfernt System-TTS nicht, einstufige VAD-Schwelle lernt das Echo als Rauschen -> loest nie aus.
+- FIX 1 (voice-endpoint.js, NEU): createSilenceWatchdog — beobachtet Interim-Ergebnisse; ~850 ms ohne neues Ergebnis bei vorhandenem Text -> recognition.stop() erzwingt das finale Ergebnis sofort (~1 s frueher senden). Kein Mikrofon-Zugriff, keine Kollision, fail-safe additiv. In beiden Hosts verdrahtet (composer-tools.js, voice-landing.js).
+- FIX 2 (voice-vad.js): createInterruptTrigger — Zwei-Ebenen-VAD: WAEHREND TTS gilt der im Warmup (400 ms, schnelle Lernrate 0.3) gelernte Echo-Pegel (Faktor 2.2, Nachweis 350 ms); in den SprechPAUSEN zwischen Saetzen gilt der Umgebungs-Pegel (Faktor 2.2, min 0.015, Nachweis 180 ms) — dort ist der Lautsprecher still, normales Sprechen unterbricht. Hosts liefern isTtsActive-Getter (speechSynthesis.speaking). Asymmetrisches Lernen (langsam hoch 0.02 / schnell runter 0.25), lernt nie aus Pegeln ueber der Schwelle.
+- TESTS: tests/voice-blitz2.test.mjs (14 Checks; deckte den Warmup-Lernraten-Fehler auf, bevor er live ging). check:voice 76 gruen, check:frontend 130 gruen, check:guidelines OK, start-lock neu eingefroren (31 Dateien), Favicon-Lock OK.
+- DEPLOY: 7 Dateien via GitHub-Web-Editor-Weg (voice-endpoint.js neu; voice-vad/-landing/composer-tools/app.js/index.html/sw.js; sw zuletzt, v136); alle byte-identisch verifiziert (EOF-normalisiert). voice-landing.js brauchte einen zweiten Anlauf (Commit-Dialog beim ersten Mal nicht geklickt — Verifikation faengt so etwas).
+- LIVE-TEST (echtes Chrome, instrumentiert): Senden -> gesprochene Antwort 603 ms; Loop kehrt zu "Ich hoere zu ..." zurueck. Restrisiko ehrlich: echtes Reinsprechen mit Raumakustik kann nur ein Mensch testen.
+- Capsule: sprachwelle-blitz2-stufe-2a-2026-07-26 (lokal, IDrive-Zugriff aus Session weiterhin nicht moeglich).
+
 ### [2026-07-26] SPRACHWELLE BLITZ-PAKET (Stufe 1e) — implementiert, lokal verifiziert; Live-Upload wartet auf Betreiber/Schreibrecht
 - Typ: verified success (Code + Tests + lokale Browserpruefung). Freigabe: "Ja, Freigabe" (Wof Kadavanich, 2026-07-26) fuer 4 Massnahmen; Zeabur ($3/Mo) abgelehnt (FREE_ONLY_MASTER_POLICY).
 - MESSUNG vorab: Salad-Gateway (starfruit-*.salad.cloud) liefert ersten Token in ~0,9 s — Hosting ist NICHT der Engpass; Latenz kommt aus Browser-STT-Endpointing (~1-2 s), Satz-Wartezeit vor TTS und fehlendem Echtzeit-Barge-in.
