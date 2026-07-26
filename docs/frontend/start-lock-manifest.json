@@ -1,13 +1,13 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-26T19:46:49.997Z",
-  "confirmation": "Ich habe dir alle Rechte gegeben - mach es bitte komplett fertig und lass nichts offen. (Betreiber 2026-07-26, Konto-Light-Mode-Fix, sw.js v139)",
+  "frozenAt": "2026-07-26T20:06:35.006Z",
+  "confirmation": "Ich habe dir alle Rechte gegeben - mach es bitte komplett fertig und lass nichts offen. (Betreiber 2026-07-26, Light-Mode Primaerknoepfe app-surfaces.css, sw.js v140)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "8dc196874633ec3f24b3be26ed34d447745455f191a54c3f2a9468e94ea0cc18",
     "public/styles.css": "78f06b4a0a61b51ee90da3482cd8a6d93d02e0de7d6bc344e3f80ec67ddfb122",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
-    "public/app-surfaces.css": "f39bb760dbd544dcaa3e73c234e1610c6dd4bbb97ec174495e0977bb2f7db7ca",
+    "public/app-surfaces.css": "f72d23da088040a4a11eeb470449be41ca6d4ad428a18552d66733b8402955f6",
     "public/composer-tools.css": "2dc316dfbc73da293910b7236bf58c06c72edf325d6f7cbb5fdd2eb0fbbebddb",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
     "public/app.js": "0f1522250737fc21d916b566ed47378869ca6f8451b0bab5faefd13da1709840",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e01b579a81253ccc78f1c9e237a0491d4958f5ab40657b2851a381ea71fca29d",
+    "public/sw.js": "6d70435c92682feadbcd1ec26d4c0818bda5df03327657fa6ca5fd199eabaa19",
     "public/manifest.webmanifest": "74982e08d5ea4bb2c7042bdf5b8965ea49c823d21ea6e892193ddecff21fcc90"
   }
 }

@@ -152,6 +152,8 @@ export const ROUTES = {
     authMagicLinkRequest: "/api/auth/magic-link/request",
     authMagicLinkVerify: "/api/auth/magic-link/verify",
     authMe: "/api/auth/me",
+    billingStatus: "/api/billing/status",
+    billingStripeWebhook: "/api/billing/stripe/webhook",
     authLogout: "/api/auth/logout",
     authSessionToken: "/api/auth/session-token",
     authSessionHandoff: "/api/auth/session-handoff",

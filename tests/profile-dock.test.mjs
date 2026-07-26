@@ -99,7 +99,7 @@ test("Service Worker cached die neuen Module", () => {
     assert.ok(sw.includes(`"${asset}"`), `${asset} fehlt im Shell-Precache`);
   }
   // v138 (2026-07-26): Konto-Light-Mode-Fix, account-privacy.css im Precache.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v139"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v140"/);
 });
 
 

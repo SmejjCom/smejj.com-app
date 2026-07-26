@@ -144,7 +144,7 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: error.message || "Google Login fehlgeschlagen." });
       }
     }
-    if (url.pathname.startsWith("/api/auth/github") || url.pathname.startsWith("/api/auth/magic-link")) {
+    if (url.pathname.startsWith("/api/auth/github") || url.pathname.startsWith("/api/auth/magic-link") || url.pathname.startsWith("/api/billing/")) {
       if (await routeExtraAuth(req, res, url)) return;
     }
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return await handleAuthLogout(req, res);
