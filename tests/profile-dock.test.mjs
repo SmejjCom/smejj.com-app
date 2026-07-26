@@ -98,7 +98,7 @@ test("Service Worker cached die neuen Module", () => {
   ]) {
     assert.ok(sw.includes(`"${asset}"`), `${asset} fehlt im Shell-Precache`);
   }
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v136"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v137"/);
 });
 
 
