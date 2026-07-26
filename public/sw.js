@@ -1,3 +1,7 @@
+// v133 -> v134 (2026-07-25): Light-Mode-Kontrastfix — app-surfaces.css geaendert
+// (Menue-/Browser-Knopf waren im hellen Schema hell auf hell, Kontrast 1.03:1).
+// app-surfaces.css liegt im Precache und wird ohne Cache-Buster geladen; ohne
+// Versionssprung erreicht der Fix wiederkehrende Nutzer nicht.
 // v132 -> v133 (2026-07-21): Sende-Icon der Sprachwellen (wie ChatGPT) —
 // voice-typed-send.js neu im Shell-Cache; composer-tools.js/.css, voice-landing.js,
 // app.js und index.html geaendert; Precache muss die neuen Versionen ausliefern.
@@ -10,7 +14,7 @@
 // findet der Import offline nichts, der Fetch-Handler liefert als Fallback "/"
 // (index.html), und der Browser bricht app.js komplett ab - die App waere
 // offline tot. Non-Regression laut Change-Lock.
-const CACHE_NAME = "smejj-shell-v133";
+const CACHE_NAME = "smejj-shell-v134";
 const SHELL = [
   "/",
   "/assets/styles.css",
