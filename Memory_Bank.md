@@ -618,3 +618,19 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
 - CHECKS: alle 24 Suiten gruen (155 Tests), u.a. frontend 130/130, users 25/25, guidelines 767, release-safety 21/21. Start-Lock zuletzt von der Parallel-Session neu eingefroren (31 Dateien, inkl. composer-plus-menu.js).
 - ROLLBACK: Frontend a9b8aa6 rueckgaengig = Vorgaenger 0573032 der drei Auth-Dateien via GitHub-Web-Editor zurueckspielen (additiv); App-Repo: alle Aenderungen einzeln als Commits a25a722..a791a60.
 - trainingEligible:false, memoryMayLearn:true fuer belegte Fakten.
+
+## 2026-07-26 — Konto-Neuaufbau im Glas-Design (Mockup-Umsetzung)
+- /profile hat jetzt 9 Bereiche wie ChatGPT/Claude/Gemini: Profil, Personalisierung,
+  Sprache & Stimme, Verbundene Apps, Benachrichtigungen, Anmeldung & Sicherheit,
+  Abo & Zahlungen, Nutzung & Limits, Daten & Datenschutz (Datenschutz+Berechtigungen+
+  Daten zusammengelegt, alle IDs/Bindings unveraendert).
+- Design: viereckiges Glas (border-radius 0, backdrop-filter, Haarlinien,
+  helle Oberkante) — nur #profile-scoped, App-Huelle und Start-Lock unberuehrt.
+- Neue lokale Schluessel: smejj.personalization.v1 (eigene Anweisungen),
+  smejj.notifications.v1 (Geraete-Benachrichtigungen); beide im Datenexport.
+- Bereiche ohne Server sagen ehrlich "Bald verfuegbar" (Plaene 9/19/39 €, Stripe
+  spaeter, Aufbauphase = alles frei/unbegrenzt).
+- i18n: 2 verwaiste Google-Login-Schluessel aus allen 15 Sprachdateien entfernt
+  (Altlast Auth-Umbau) — tests/i18n-ui gruen, check:frontend 130/0.
+- Rollback: backups/konto-glas-rollback/2026-07-26/ (JS+CSS Stand davor).
+- Deploy-Paket: UPLOAD-ZU-GITHUB/2026-07-26-konto-glas/ (2 Dateien nach assets/).

@@ -37,3 +37,6 @@ scripts/model-management/run_glm_fp8_contabo_transfer 2.sh
 
 # Persoenliche Session-Einstellungen bleiben lokal
 .claude/settings.local.json
+
+# Generierte Design-Mockups (Einzeldatei > 800 Zeilen, kein Code)
+docs/mockups/*.html
