@@ -82,6 +82,35 @@ const hangingFetch = (url, init) => new Promise((resolve, reject) => {
   check("1e onRetry meldet HTTP-Grund", reasons.length === 1 && reasons[0] === "HTTP 502");
 }
 
+// --- Teil 1b: Zwei-Wege-Betrieb (Stufe C) --------------------------------------------
+
+// 1f: Liste von Endpunkten — toter Hauptserver, Reserve antwortet.
+{
+  const ziele = [];
+  const fetchFn = (url, init) => {
+    ziele.push(url);
+    if (url.includes("salad")) return hangingFetch(url, init);
+    return Promise.resolve(okResponse());
+  };
+  const response = await fetchStreamWithRetry(["https://x.salad.cloud/api", "https://x.zeabur.app/api"], {}, { fetchFn, firstByteTimeoutMs: 80, retryDelayMs: 10 });
+  check("1f toter Hauptserver -> Reserve-Endpunkt antwortet", response.ok === true && ziele.length === 2 && ziele[1].includes("zeabur"));
+}
+
+// 1g: Hauptserver gesund -> Reserve wird gar nicht angefasst.
+{
+  const ziele = [];
+  const fetchFn = (url) => { ziele.push(url); return Promise.resolve(okResponse()); };
+  await fetchStreamWithRetry(["https://x.salad.cloud/api", "https://x.zeabur.app/api"], {}, { fetchFn, firstByteTimeoutMs: 80, retryDelayMs: 10 });
+  check("1g gesunder Hauptserver -> kein Reserve-Aufruf", ziele.length === 1 && ziele[0].includes("salad"));
+}
+
+// 1h: Einzel-URL (bisherige Aufrufe) funktioniert unveraendert.
+{
+  const fetchFn = () => Promise.resolve(okResponse());
+  const response = await fetchStreamWithRetry("https://x/api", {}, { fetchFn });
+  check("1h Einzel-URL bleibt kompatibel", response.ok === true);
+}
+
 // --- Teil 2: WAV/PCM-Logik der Premium-Stimme ---------------------------------------
 
 function wavHeader({ sampleRate = 24000, channels = 1, bits = 16 } = {}) {

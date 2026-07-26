@@ -1,18 +1,18 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-26T20:15:28.393Z",
-  "confirmation": "Ich habe dir alle Rechte gegeben - mach es bitte komplett fertig und lass nichts offen. (Betreiber 2026-07-26, Abgleich lokal=live: app-surfaces.css Light-Primaerknoepfe + sw v140)",
+  "frozenAt": "2026-07-26T22:33:33.528Z",
+  "confirmation": "Geh browser zeabur.com erledige komplett lass nicht offen. Ich habe dir alle Rechte gegeben - mach es bitte komplett fertig. (Wof Kadavanich, 2026-07-26, Stufe C Zwei-Wege-Betrieb Salad+Zeabur)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8dc196874633ec3f24b3be26ed34d447745455f191a54c3f2a9468e94ea0cc18",
+    "public/index.html": "b8954d3ab647826cb820d1047ac11eaebe94135ea7740db0b8c3cead7c78f84a",
     "public/styles.css": "78f06b4a0a61b51ee90da3482cd8a6d93d02e0de7d6bc344e3f80ec67ddfb122",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
     "public/composer-tools.css": "2dc316dfbc73da293910b7236bf58c06c72edf325d6f7cbb5fdd2eb0fbbebddb",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "0f1522250737fc21d916b566ed47378869ca6f8451b0bab5faefd13da1709840",
+    "public/app.js": "586bfb56a9eff56f385c0a38ce3bd16fad17eab24d2d1e9c9e791e5db52a0343",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
-    "public/config.js": "d61a69c0eeb07f9e9399e0e43fc40e5e2e7d83261e968bc613be88aa12a76389",
+    "public/config.js": "41a1db400b9ad8917c5a6db4a1851853fefd3762a04d1c38f722332d017153eb",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
     "public/premium-surfaces.js": "20a70b5936a52ff6bcc7491dac2378dd4f6721c3742bd2087519829c960b4c28",
     "public/autonomous-coding.js": "8d749c9fb8674b91b449fe894dc6519df9139f3eebdfd899e2b20c79fd18f7c5",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "29f6b843e388d79c14f487597a6624b912b685dd2a601aa22bf4b5c55454c02c",
+    "public/sw.js": "0c935cba54f37169d557a10662959b280981620025ccbbd5323086f45154aae8",
     "public/manifest.webmanifest": "74982e08d5ea4bb2c7042bdf5b8965ea49c823d21ea6e892193ddecff21fcc90"
   }
 }
