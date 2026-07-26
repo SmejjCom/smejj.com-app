@@ -1,0 +1,29 @@
+{
+  "lauf": {
+    "startedAt": "2026-07-26T18:11:45.660Z",
+    "finishedAt": "2026-07-26T18:11:49.161Z",
+    "modus": "lokal (Playwright, 0 EUR)",
+    "ziel": "https://smejj.com live"
+  },
+  "planId": "selbsttest-smejj-com-v1",
+  "capsuleRef": "maus-selbsttest-smejj-com-2026-07-26",
+  "engineOk": true,
+  "abortReason": null,
+  "rejected": false,
+  "errors": [],
+  "schritteGesamt": 30,
+  "schritteFehlgeschlagen": [],
+  "konsole": [
+    {
+      "url": "https://smejj.com/maus-replay.html",
+      "type": "http_404",
+      "text": "https://smejj.com/selbsttest-diese-seite-gibt-es-nicht.html"
+    },
+    {
+      "url": "https://smejj.com/selbsttest-diese-seite-gibt-es-nicht.html",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()"
+    }
+  ],
+  "extracted": {}
+}

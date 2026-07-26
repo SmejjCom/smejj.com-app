@@ -5,6 +5,16 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-26] MAUS-SELBSTTEST v1 — die Maus prueft smejj.com selbst; Live-Lauf 30/30 gruen (0 EUR)
+- Typ: verified success. Freigabe: "Ja" auf "Soll ich mit Punkt 1 (Selbsttest-Plan fuer unsere eigenen Seiten) anfangen?" + Master-Prompt (Wof Kadavanich, 2026-07-26). Capsule: job_maus_selbsttest_20260726.
+- WAS: Erster Selbsttest-Aktionsplan `workers/maus-engine/plaene/selbsttest-smejj-com-v1.json` (schema-valide, 30 Schritte): Auth-Gate-Redirect / -> /auth/login/, Login-Elemente, /api/auth/config-Livecheck (Google-Knopf wird fail-closed sichtbar), Registrierung, Impressum, Datenschutz, Maus-Replay-Seite, echte 404 (URL mit Punkt umgeht SPA-Fallback), manifest.webmanifest + assets/config.js per httpRequest. Pruef-Schritte mit onFailure:continue — der Bericht enthaelt ALLE Befunde, nicht nur den ersten.
+- LIVE-LAUF (lokal, 0 EUR, kein Salad, kein Modell): echte Engine via executeRun({skipUpload:true, browserFactory}) + Playwright/Chromium im Scratchpad (Repo unberuehrt; Engine-Code 0 Zeilen geaendert). Ergebnis gegen https://smejj.com ausgeloggt: engineOk:true, 30/30, 0 Konsolenfehler auf echten Seiten (einzige 2 Eintraege = absichtlicher 404-Test), Dauer ~4-7 s. 6 Screenshots + Aktionsprotokoll + Bericht in der Capsule (result/-JSONs im Repo, PNGs unter backups/rollback-2026-07-26-maus-selbsttest/ — GitHub traegt keine Artefakte).
+- LEHRE i18n: Test-Browser ohne de-Locale bekommt Auth-Seiten auf Englisch ("Welcome back") — deutscher Text-Assert scheiterte im 1. Lauf. Selbsttest-Plaene muessen sprachneutral pruefen (Element-IDs, urlMatches, titleContains "smejj.com"); die Engine setzt keine Locale (defaultBrowserFactory ohne locale-Option, Schema kennt kein locale-Feld).
+- TESTS: tests/maus-selbsttest-plan.test.mjs (5 Checks: schema-valide, Seitenabdeckung, Auth-Gate-Assert, onFailure continue, Policy nur smejj.com/kein Vision/keine Secrets); in check:maus-engine aufgenommen — 113 gruen. check:json, check:guidelines, check:favicon-lock gruen.
+- BEFUND (fremd, offen): check:start-lock rot wegen public/sw.js v139 aus Commit 657c716 (parallele Nutzungszaehler-Session) — Lock wurde dort noch nicht neu eingefroren. Nicht von dieser Aufgabe angefasst; Neufreeze gehoert zur Session mit der zugehoerigen Freigabe.
+- SALAD-LAUF (nicht ausgefuehrt, nicht freigegeben): derselbe Plan laeuft unveraendert ueber POST /api/maus/run auf dem Worker smejj-maus-engine (pay-per-use, grob wenige Cent pro Lauf; braucht explizite Freigabe mit Dienst+Betrag).
+- trainingEligible:false, memoryMayLearn:true nur fuer die oben belegten Fakten.
+
 ### [2026-07-26] STUFE A+B LIVE (sw v137, Bridge v99) — Ausfallschutz + Premium-Stimme (ein Handgriff offen)
 - Typ: verified success mit EINEM offenen Betreiber-Handgriff. Freigabe: "Freigabe Stufe A und B" (Wof Kadavanich, 2026-07-26).
 - URSACHE "keine Antwort" (belegt): smejj-chat-bridge lief mit 1 Replika auf Salad-Community-Hardware; Salad-Doku: Knoten fallen OHNE Vorwarnung aus (90-95 % je Knoten), Empfehlung >=2-3 Replikas. Zweite moegliche Ursache beim Betreiber-Test: Auth-Gate leitet ausgeloggte Geraete auf /auth/login um.

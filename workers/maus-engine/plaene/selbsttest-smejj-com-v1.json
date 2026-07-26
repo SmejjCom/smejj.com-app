@@ -24,15 +24,15 @@
     { "id": "s03", "action": "waitFor", "condition": "urlMatches", "urlPattern": "/auth/login", "onFailure": "continue" },
     { "id": "s04", "action": "assert", "condition": "urlMatches", "urlPattern": "/auth/login", "onFailure": "continue", "note": "Beleg Auth-Gate-Redirect." },
     { "id": "s05", "action": "waitFor", "condition": "selectorVisible", "target": { "strategy": "css", "value": "#authTitle" }, "onFailure": "continue" },
-    { "id": "s06", "action": "assert", "condition": "selectorTextContains", "target": { "strategy": "css", "value": "#authTitle" }, "text": "Willkommen", "onFailure": "continue" },
+    { "id": "s06", "action": "assert", "condition": "titleContains", "text": "smejj.com", "onFailure": "continue", "note": "Sprachneutral: Login-Seite uebersetzt Titel/Texte je nach Browsersprache (i18n)." },
     { "id": "s07", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#profileEmail" }, "onFailure": "continue" },
     { "id": "s08", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#emailLogin" }, "onFailure": "continue" },
     { "id": "s09", "action": "waitFor", "condition": "selectorVisible", "target": { "strategy": "css", "value": "#googleLogin" }, "onFailure": "continue", "note": "Wird erst sichtbar, wenn /api/auth/config live antwortet (fail-closed) — prueft Frontend->Control-Server end-to-end." },
     { "id": "s10", "action": "screenshot", "name": "01-login-nach-authgate", "fullPage": true },
 
     { "id": "s11", "action": "navigate", "url": "https://smejj.com/auth/register/", "waitUntil": "domcontentloaded" },
-    { "id": "s12", "action": "assert", "condition": "selectorTextContains", "target": { "strategy": "css", "value": "#authTitle" }, "text": "Konto erstellen", "onFailure": "continue" },
-    { "id": "s13", "action": "assert", "condition": "titleContains", "text": "Registrieren", "onFailure": "continue" },
+    { "id": "s12", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#passkeyRegister" }, "onFailure": "continue", "note": "Registrier-spezifisches Element, sprachneutral." },
+    { "id": "s13", "action": "assert", "condition": "urlMatches", "urlPattern": "/auth/register", "onFailure": "continue" },
     { "id": "s14", "action": "screenshot", "name": "02-registrierung", "fullPage": true },
 
     { "id": "s15", "action": "navigate", "url": "https://smejj.com/impressum.html", "waitUntil": "domcontentloaded" },
