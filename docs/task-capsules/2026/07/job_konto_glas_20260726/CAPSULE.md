@@ -145,3 +145,29 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
 - Weiter offen (nur Betreiber): "Jetzt Ihr Live-Konto erhalten" /
   Verifizierung mit Unternehmens-/Bankdaten. Danach Schritt 3b
   (Webhook + Abo-Status am Control-Server, Live-Links im Frontend).
+
+## Schritt 5: Willkommens-Onboarding nach dem ersten Login (2026-07-26, Freigabe "mach es bitte komplett fertig")
+- Neue lock-freie Module: assets/onboarding-welcome.js (Overlay, erscheint genau
+  einmal; smejj.onboarding.v1) + assets/onboarding-welcome.css (Glas-Design,
+  eckig, tuerkiser Akzent, wie Mockup 1). Verdrahtet in account-privacy.js:
+  initOnboardingWelcome(STRIPE_PLAN_LINKS) VOR cleanLoginMarkers().
+- Ausloeser: Login-Marker ?login=ok bzw. ?session-handoff-complete; Free-Plan
+  als "Aktiv" markiert, Plus/Pro/Max mit "Abonnieren (Test)" (Stripe-Testlinks),
+  "Los geht's" schliesst dauerhaft (done=true). Fail-safe: Fehler geschluckt.
+- Live-Fehler gefunden + behoben: Beim direkten Aufruf von /profile?login=ok
+  bootet GitHub Pages ueber den 404-Fallback zuerst unter "/" — der Marker
+  steht erst nach der Routen-Wiederherstellung in der Adresse. Fix:
+  initOnboardingWelcome prueft sofort + 300 ms + 600 ms (vor der
+  800-ms-Marker-Bereinigung). Commits App-Repo: 088bf20 + Fix-Commit.
+- Deploy Frontend (Web-Editor, Browser 1): onboarding-welcome.js (neu, dann
+  Fix), onboarding-welcome.css (neu), account-privacy.js (Transformation,
+  Soll-Laenge 24991). Stolperfalle erneut: New-File-Editor haengt eine
+  Leerzeile ans Dateiende an — per cmd+Down+BackSpace entfernt. Blob-Hashes
+  byte-identisch: account-privacy e30ec044, css 84a85ed5, js fe854756.
+- Live verifiziert auf smejj.com (Test-Session, danach entfernt): Overlay
+  erscheint mit "Schoen, dass du da bist, Alan!", alle 4 Knoepfe da,
+  "Los geht's" schliesst + merkt sich das, Zweitbesuch mit ?login=ok zeigt
+  NICHTS mehr, Adresse wird bereinigt. Testdaten lokal + live entfernt.
+- Tests: tests/onboarding-welcome.test.mjs 4/4 gruen; check:frontend gruen;
+  Start-Lock: eigene Dateien unveraendert (sw.js-Meldung stammt von der
+  Parallel-Session, nicht von diesem Job).

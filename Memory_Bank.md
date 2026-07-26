@@ -708,3 +708,19 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
   Produkte + Zahlungslinks liegen weiter im Test-Modus von
   acct_1TxXHLQddyxzPlSc (verifiziert). Leere Sandbox ignorieren.
   Live-Konto-Aktivierung (Bank-/Unternehmensdaten) bleibt Betreiber-Sache.
+
+## 2026-07-26 — Willkommens-Onboarding live (job_konto_glas_20260726, Schritt 5)
+- Nach dem ersten Login erscheint auf /profile genau EINMAL ein Willkommens-
+  Overlay (onboarding-welcome.js/.css, lock-frei ueber account-privacy.js):
+  Begruessung mit Namen, Free "Aktiv", Plus/Pro/Max mit Stripe-Testlinks,
+  "Los geht's" schliesst dauerhaft (smejj.onboarding.v1).
+- WICHTIGE ERKENNTNIS fuer alle URL-Marker-Features: Direktaufrufe von
+  App-Routen (z. B. /profile?login=ok) laufen auf GitHub Pages ueber den
+  404-Fallback — die App bootet zuerst unter "/", die Query steht erst nach
+  applyPendingRestoreRoute() wieder in der Adresse. Wer beim Boot
+  location.search liest, muss kurz danach erneut pruefen (hier: 300/600 ms,
+  vor der 800-ms-Marker-Bereinigung).
+- New-File-Editor auf GitHub haengt beim Anlegen eine Leerzeile ans Datei-
+  ende (Hash weicht ab) — nach jedem Anlegen cmd+Down+BackSpace + erneuter
+  Commit; Blob-Hash-Pruefung ist Pflicht. Live byte-identisch verifiziert,
+  Live-Test mit Test-Session bestanden, Testdaten entfernt.
