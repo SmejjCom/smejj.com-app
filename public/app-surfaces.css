@@ -625,6 +625,17 @@
     repeating-linear-gradient(90deg, rgba(22, 22, 22, 0.025) 0 1px, transparent 1px 96px);
 }
 
+#projects.premium-view[data-settings-theme="light"] #projectCreate,
+#projects.premium-view[data-settings-theme="light"] #projectSave,
+#search.premium-view[data-settings-theme="light"] #searchSubmit,
+#settings.premium-view[data-settings-theme="light"] #saveSettings,
+#profile.premium-view[data-settings-theme="light"] #saveProfile,
+#files.premium-view[data-settings-theme="light"] #storageAgain {
+  border-color: rgba(15, 156, 139, 0.55);
+  background: linear-gradient(135deg, rgba(0, 200, 187, 0.2), rgba(98, 146, 255, 0.16));
+  color: #0b3f39;
+}
+
 body:has(.premium-view.is-active) .sidebar,
 body:has(.premium-view.is-active) .browser-panel {
   border-color: rgba(255, 255, 255, 0.14);
@@ -659,21 +670,6 @@ body:has(.premium-view.is-active[data-settings-theme="light"]) .split-icon {
 
 body:has(.premium-view.is-active[data-settings-theme="light"]) .split-icon span:first-child {
   background: rgba(23, 25, 29, 0.58);
-}
-
-/* Primaer-Knoepfe im hellen Schema (Befund 2026-07-26, Freigabe Betreiber
-   "mach es bitte komplett fertig"): die ID-Regeln oben faerben sie
-   dunkelmodus-weiss — auf hellem Grund Kontrast ~1:1. Gleiche helle Werte
-   wie die bereits gefixten #saveProfile/#saveSettings-Overrides. */
-#projects[data-settings-theme="light"] #projectCreate,
-#projects[data-settings-theme="light"] #projectSave,
-#search[data-settings-theme="light"] #searchSubmit,
-#settings[data-settings-theme="light"] #saveSettings,
-#profile[data-settings-theme="light"] #saveProfile,
-#files[data-settings-theme="light"] #storageAgain {
-  border-color: rgba(15, 156, 139, 0.55);
-  background: linear-gradient(135deg, rgba(0, 200, 187, 0.20), rgba(98, 146, 255, 0.16));
-  color: #0b3f39;
 }
 
 @media (max-width: 760px) {
