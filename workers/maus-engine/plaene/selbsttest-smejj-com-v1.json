@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "planId": "selbsttest-smejj-com-v1",
+  "createdAt": "2026-07-26T12:00:00.000Z",
+  "capsuleRef": "maus-selbsttest-smejj-com-2026-07-26",
+  "planner": { "modelId": "handautor-claude-fable-5", "promptTemplateVersion": "handautor-v1" },
+  "goal": "Selbsttest der live smejj.com-Seiten (ausgeloggt): Auth-Gate, Login, Registrierung, Impressum, Datenschutz, Maus-Replay, 404-Seite und zwei Kern-Assets. Jede Seite wird geprueft (assert) und als Screenshot belegt. Pruef-Fehler brechen den Lauf nicht ab (onFailure continue), damit der Bericht ALLE Befunde enthaelt.",
+  "policy": {
+    "domainAllowlist": ["smejj.com", "www.smejj.com"],
+    "budget": {
+      "maxActions": 60,
+      "maxLocalRetries": 1,
+      "maxPlannerRoundtrips": 0,
+      "maxDurationMs": 420000,
+      "defaultActionTimeoutMs": 20000
+    },
+    "visionAllowed": false,
+    "artifacts": { "trace": false, "har": false, "consoleLog": true, "screenshotOnError": true }
+  },
+  "steps": [
+    { "id": "s01", "action": "openBrowser", "viewport": { "width": 1365, "height": 900 } },
+
+    { "id": "s02", "action": "navigate", "url": "https://smejj.com/", "waitUntil": "domcontentloaded", "note": "Startseite ausgeloggt: Auth-Gate muss zu /auth/login/ umleiten (Login-Pflicht seit 2026-07-25)." },
+    { "id": "s03", "action": "waitFor", "condition": "urlMatches", "urlPattern": "/auth/login", "onFailure": "continue" },
+    { "id": "s04", "action": "assert", "condition": "urlMatches", "urlPattern": "/auth/login", "onFailure": "continue", "note": "Beleg Auth-Gate-Redirect." },
+    { "id": "s05", "action": "waitFor", "condition": "selectorVisible", "target": { "strategy": "css", "value": "#authTitle" }, "onFailure": "continue" },
+    { "id": "s06", "action": "assert", "condition": "selectorTextContains", "target": { "strategy": "css", "value": "#authTitle" }, "text": "Willkommen", "onFailure": "continue" },
+    { "id": "s07", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#profileEmail" }, "onFailure": "continue" },
+    { "id": "s08", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#emailLogin" }, "onFailure": "continue" },
+    { "id": "s09", "action": "waitFor", "condition": "selectorVisible", "target": { "strategy": "css", "value": "#googleLogin" }, "onFailure": "continue", "note": "Wird erst sichtbar, wenn /api/auth/config live antwortet (fail-closed) — prueft Frontend->Control-Server end-to-end." },
+    { "id": "s10", "action": "screenshot", "name": "01-login-nach-authgate", "fullPage": true },
+
+    { "id": "s11", "action": "navigate", "url": "https://smejj.com/auth/register/", "waitUntil": "domcontentloaded" },
+    { "id": "s12", "action": "assert", "condition": "selectorTextContains", "target": { "strategy": "css", "value": "#authTitle" }, "text": "Konto erstellen", "onFailure": "continue" },
+    { "id": "s13", "action": "assert", "condition": "titleContains", "text": "Registrieren", "onFailure": "continue" },
+    { "id": "s14", "action": "screenshot", "name": "02-registrierung", "fullPage": true },
+
+    { "id": "s15", "action": "navigate", "url": "https://smejj.com/impressum.html", "waitUntil": "domcontentloaded" },
+    { "id": "s16", "action": "assert", "condition": "selectorTextEquals", "target": { "strategy": "css", "value": "main h1", "fallbacks": [{ "strategy": "css", "value": "h1" }] }, "text": "Impressum", "onFailure": "continue" },
+    { "id": "s17", "action": "screenshot", "name": "03-impressum", "fullPage": false },
+
+    { "id": "s18", "action": "navigate", "url": "https://smejj.com/datenschutz.html", "waitUntil": "domcontentloaded" },
+    { "id": "s19", "action": "assert", "condition": "selectorTextContains", "target": { "strategy": "css", "value": "main h1", "fallbacks": [{ "strategy": "css", "value": "h1" }] }, "text": "Datenschutz", "onFailure": "continue" },
+    { "id": "s20", "action": "screenshot", "name": "04-datenschutz", "fullPage": false },
+
+    { "id": "s21", "action": "navigate", "url": "https://smejj.com/maus-replay.html", "waitUntil": "domcontentloaded", "note": "Oeffentliche Seite laut PUBLIC_PATHS im Auth-Gate." },
+    { "id": "s22", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#replayForm" }, "onFailure": "continue" },
+    { "id": "s23", "action": "screenshot", "name": "05-maus-replay", "fullPage": false },
+
+    { "id": "s24", "action": "navigate", "url": "https://smejj.com/selbsttest-diese-seite-gibt-es-nicht.html", "waitUntil": "domcontentloaded", "note": "URL mit Punkt: SPA-Fallback greift nicht, echte 404-Seite muss stehen bleiben." },
+    { "id": "s25", "action": "assert", "condition": "selectorTextEquals", "target": { "strategy": "css", "value": "main h1", "fallbacks": [{ "strategy": "css", "value": "h1" }] }, "text": "404", "onFailure": "continue" },
+    { "id": "s26", "action": "assert", "condition": "titleContains", "text": "404", "onFailure": "continue" },
+    { "id": "s27", "action": "screenshot", "name": "06-seite-404", "fullPage": false },
+
+    { "id": "s28", "action": "httpRequest", "method": "GET", "url": "https://smejj.com/manifest.webmanifest", "expectStatus": 200, "onFailure": "continue", "note": "PWA-Manifest erreichbar." },
+    { "id": "s29", "action": "httpRequest", "method": "GET", "url": "https://smejj.com/assets/config.js", "expectStatus": 200, "onFailure": "continue", "note": "Zentrale Frontend-Konfiguration erreichbar." },
+
+    { "id": "s30", "action": "closeBrowser" }
+  ]
+}

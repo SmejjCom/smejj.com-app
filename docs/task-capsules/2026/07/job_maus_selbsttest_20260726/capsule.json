@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_maus_selbsttest_20260726",
+  "createdAt": "2026-07-26T12:00:00.000Z",
+  "product": "smejj.com",
+  "ziel": "Maus-Engine-Selbsttest: die Maus prueft die live smejj.com-Seiten (ausgeloggt) selbststaendig — Auth-Gate-Redirect, Login, Registrierung, Impressum, Datenschutz, Maus-Replay, 404, Kern-Assets — mit assert + Screenshot je Seite und einem Fehlerbericht.",
+  "freigabe": {
+    "person": "Wof Kadavanich",
+    "wortlaut": "'Ja' auf den Vorschlag 'Soll ich mit Punkt 1 (Selbsttest-Plan fuer unsere eigenen Seiten) anfangen?' + Master-Prompt (eigenstaendig, live testen, 100 % Schutz)",
+    "datum": "2026-07-26",
+    "beruehrteLocks": [],
+    "budgetrelevant": false,
+    "budgetHinweis": "Lauf erfolgt LOKAL mit Playwright gegen die Live-Seite (0 EUR). Ein Salad-Worker-Lauf (smejj-maus-engine, pay-per-use) ist NICHT freigegeben und wird separat beziffert."
+  },
+  "anforderungen": [
+    "Aktionsplan schema-valide gegen schemas/maus-action-plan.schema.json (fail-closed)",
+    "Nur additive Dateien; keine gesperrten Dateien (Start-Lock, Favicon-Lock) anfassen",
+    "Pruef-Fehler brechen den Lauf nicht ab (onFailure continue) — der Bericht enthaelt ALLE Befunde",
+    "Live-Beweis: Aktionsprotokoll + Screenshots in dieser Capsule (result/)",
+    "Gefundene Live-Fehler werden gemeldet; Fixes nur mit Freigabe, ausser klare additive Regressionen"
+  ],
+  "betroffeneDateien": {
+    "neu": [
+      "workers/maus-engine/plaene/selbsttest-smejj-com-v1.json",
+      "tests/maus-selbsttest-plan.test.mjs",
+      "docs/task-capsules/2026/07/job_maus_selbsttest_20260726/capsule.json"
+    ],
+    "geaendert": ["package.json (check:maus-engine um Selbsttest-Plan-Test ergaenzt)", "Memory_Bank.md"],
+    "unveraendert": ["public/* (alle gesperrten Dateien)", "workers/maus-engine/*.mjs (Engine-Code unveraendert)"]
+  },
+  "rollback": {
+    "gitHeadVorAenderung": "5367e5ab5cd3c31609ec262da3ea147908ac5f49",
+    "backupPfad": "backups/rollback-2026-07-26-maus-selbsttest/"
+  },
+  "status": "running"
+}
