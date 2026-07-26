@@ -80,6 +80,23 @@ test("Verify: gueltiger Token -> Cookie + 303 zu /profile, danach Single-Use", a
   await assert.rejects(() => h.handleMagicLinkVerify({ headers: {} }, res2, new URL(`https://c.test/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`)), /bereits verwendet/);
 });
 
+test("Verify: verfallener Handoff wird durch frischen ersetzt (Link lebt 15 Min, Handoff nur 2)", async () => {
+  // Live-Befund 2026-07-25: E-Mail nach >2 Minuten geoeffnet -> alter Handoff
+  // geloescht -> Anmeldung schlug fehl. Jetzt: frischer Handoff, Login klappt.
+  const calls = [];
+  const store = {
+    complete: (id, data) => { calls.push(["complete", id]); return id === "FRISCH" ? { ok: true } : { ok: false, status: 404, error: "session_handoff_not_found" }; },
+    start: (origin) => { calls.push(["start", origin]); return { ok: true, status: 201, id: "FRISCH" }; }
+  };
+  const { h } = makeHandlers({ sessionHandoffStore: store });
+  const token = signMagicToken({ email: "smejjcom@gmail.com", jti: "j3", handoff: "VERFALLEN", handoffReturn: "https://smejj.com", exp: Date.now() + 60000 }, "geheim");
+  const res = mockRes();
+  await h.handleMagicLinkVerify({ headers: {} }, res, new URL(`https://c.test/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`));
+  assert.equal(res.statusCode, 303);
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login?handoff=FRISCH");
+  assert.deepEqual(calls, [["complete", "VERFALLEN"], ["start", "https://smejj.com"], ["complete", "FRISCH"]]);
+});
+
 test("Verify: Handoff-Rueckkehr zur App mit hinterlegtem Token", async () => {
   let deposited = null;
   const { h } = makeHandlers({ sessionHandoffStore: { complete: (id, data) => { deposited = { id, data }; return { ok: true }; } } });

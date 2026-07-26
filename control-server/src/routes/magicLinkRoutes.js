@@ -88,9 +88,23 @@ export function createMagicLinkHandlers({
     const headers = { ...SECURITY_HEADERS, "Cache-Control": "no-store", "Set-Cookie": serializeSessionCookie(user) };
     const handoffReturn = safeReturnOrigin(data.handoffReturn);
     if (data.handoff && handoffReturn) {
-      sessionHandoffStore.complete(data.handoff, { token: serializeSessionToken(user), user });
-      res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(data.handoff)}` });
-      return res.end();
+      // Live-Befund 2026-07-25: Der Handoff lebt nur 2 Minuten, der Link 15 —
+      // wer die E-Mail spaeter oeffnet, verlor die Anmeldung. Ist der alte
+      // Handoff verfallen, wird ein frischer erzeugt; der Link selbst bleibt
+      // durch jti-Single-Use geschuetzt.
+      let handoffId = data.handoff;
+      let completed = sessionHandoffStore.complete(handoffId, { token: serializeSessionToken(user), user });
+      if (!completed.ok) {
+        const fresh = sessionHandoffStore.start(handoffReturn);
+        if (fresh.ok) {
+          handoffId = fresh.id;
+          completed = sessionHandoffStore.complete(handoffId, { token: serializeSessionToken(user), user });
+        }
+      }
+      if (completed.ok) {
+        res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(handoffId)}` });
+        return res.end();
+      }
     }
     res.writeHead(303, { ...headers, Location: "/profile?magic=ok" });
     return res.end();
