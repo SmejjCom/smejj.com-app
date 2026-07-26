@@ -5,6 +5,14 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-26] STUFE C LIVE (sw v142) — Zwei-Wege-Betrieb: Zeabur-Mietserver als automatische Reserve
+- Typ: verified success (Deploy + Live-Test). Freigabe: "geh browser zeabur.com erledige komplett lass nicht offen" (Wof Kadavanich, 2026-07-26).
+- NEU auf Zeabur (Projekt untitled, Server Tencent Ashburn 2C 8GB, 6 USD/Mo dokumentierte Ausnahme): Dienst smejj-chat-bridge = Docker node:22-bookworm + Start-Command (curlt assets/chat-bridge.js vom Frontend-Repo, wie Salad), Port 8080, Domain https://smejj-chat-bridge.zeabur.app. Env NICHT im Erstell-Dialog speicherbar (kam leer an) — nachtraeglich via Variable-Tab "+ Add" (Bulk-Paste ins Key-Feld funktioniert) + Restart. Vorhandene Variable PASSWORD (fremd, Private) NICHT angefasst.
+- Zeabur-Bridge: v99, Router aktiv (Antworten via Control/GLM, erster Token ~1,5 s; ohne Groq-Key keine Fast-Lane). Salad-Bridge bleibt Haupt-Endpunkt (0,6-0,9 s mit Groq).
+- FRONTEND (v142): fetchStreamWithRetry akzeptiert Endpunkt-LISTEN — Versuch 1 Salad, Versuch 2 Zeabur (6,5 s Erst-Byte-Timeout, 4xx endgueltig). config.js: agentFallback/chatFallback. app.js + voice-landing reichen Listen durch. 13 Stufe-B/C-Tests gruen (u. a. toter Hauptserver -> Reserve antwortet; gesunder Hauptserver -> Reserve unberuehrt).
+- LIVE-TEST: beide Endpunkte 200; eingeloggte App beantwortet Fragen fehlerfrei (Lissabon-Test, 0 Konsolenfehler).
+- OPTIONAL OFFEN (Betreiber): (1) Groq-Key als SMEJJ_LLM_GROQ_API_KEY in Zeabur-Variablen -> Reserve wird gleich schnell wie Salad. (2) Premium-Stimme wartet weiter auf gueltigen Salad-Key/Auth-Toggle (siehe Stufe-B-Eintrag). Session darf keine Schluessel/Sicherheits-Toggles anfassen.
+
 ### [2026-07-26] ZEABUR-SERVER LIVE (6 $/Mo, bewusste Free-Only-Ausnahme) — Maus-Engine laeuft dauerhaft darauf
 - Typ: verified success (Kauf + Deploy + Live-Health). Freigabe: Betreiber schriftlich im Chat ("ich diese paket" / Virginia / Kauf selbst abgeschlossen, Wof Kadavanich, 2026-07-26). Dies ist eine BEWUSSTE, dokumentierte AUSNAHME von FREE_ONLY_MASTER_POLICY (erster dauerhafter Bezahl-Dienst).
 - SERVER: Zeabur "Tencent Ashburn 2C 8GB", server-6a6665a03ebd074ef6f9a205, Tencent Cloud Virginia (na-ashburn), 2 vCPU / 8 GB / 80 GB SSD, 2,56 TB Traffic (max 30 Mbit/s), ZeaburOS (K3s), 6 $/Monat, verlaengert am 26.08.2026. Zeabur-Konto smejjcom@gmail.com. Preisrecherche: Betreiber fand Tencent 6 $ nachdem die Session nur Aliyun (26 $) verglichen hatte — LEHRE: bei Anbieter-Wahl IMMER alle Provider durchklicken, Vorauswahl ist keine Recherche.
