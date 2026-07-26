@@ -3,18 +3,24 @@
 Der Produktions-Deploy-Schutz laesst diese Schritte bewusst nur den Betreiber
 ausfuehren (so schon dokumentiert am 2026-07-13). Alles ist vorbereitet.
 
-## Schritt 1 — Paket nach IDrive e2 hochladen
+## Schritt 1 — Paket nach IDrive e2 hochladen — ERLEDIGT (2026-07-26)
 
-Der Browser-Tab steht schon offen:
-IDrive e2 → Buckets → **smejj-app** → deployments → **control**
+Das Paket liegt geprueft und unveraendert auf IDrive e2:
 
-1. Dort **"Ordner erstellen"** (Icon links in der Leiste):
-   Name: `smejj-control-magiclink-fix-2026-07-25-rc1`
-2. In den neuen Ordner wechseln, dann **"Datei-Upload"** (2. Icon)
-   und die Datei aus diesem Ordner hier waehlen:
-   **`smejj-control-context.tar.gz`** (1.302.172 Bytes)
+```
+s3://smejj-model-files/deployments/control/smejj-control-magiclink-fix-2026-07-25-rc1/smejj-control-context.tar.gz
+SHA-256   2445eed255245add52ae98d6cde394a04c644abfb3371c86ce7883c6431e5f0c
+Groesse   1.302.172 Bytes
+```
 
-Der Finder-Ordner ist bereits geoeffnet.
+Ueber die Weboberflaeche: IDrive e2 → Buckets → **smejj-model-files** →
+deployments → **control** → `smejj-control-magiclink-fix-2026-07-25-rc1`.
+
+Die `.tar.gz` ist deshalb **nicht mehr im Git-Repo** — GitHub Free ist nur fuer
+Code, grosse Artefakte gehoeren nach IDrive e2
+(`docs/architecture/FREE_ONLY_MASTER_POLICY.md`). Wer die Datei noch einmal
+braucht, holt sie aus IDrive e2 (Pfad oben) oder aus der Git-Historie von
+Commit `7f2ad71`.
 
 ## Schritt 2 — Zwei Werte im Salad-Portal setzen
 

@@ -20,6 +20,9 @@ checksums.txt
 # Lokale Rollback- und Upload-Artefakte — gehoeren auf IDrive e2, nie ins Git
 backups/
 UPLOAD-ZU-IDRIVE/
+# Deploy-Pakete (Server-Kontext, Rollback-Archive): immer IDrive e2, nie GitHub
+*.tar.gz
+*.tgz
 
 # Local temporary output
 .DS_Store
