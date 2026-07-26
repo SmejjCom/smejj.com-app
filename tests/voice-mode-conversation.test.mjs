@@ -14,6 +14,7 @@
 // (Geraete-Echo-Unterdrueckung ohne Kopfhoerer) und iOS-Safari-Eigenheiten.
 // Standalone: node tests/voice-mode-conversation.test.mjs
 import { splitCompleteSentences, createSpeechQueue } from "../public/voice-speech-queue.js";
+import { BARGE_MIN_WORDS } from "../public/voice-echo-filter.js";
 
 let passed = 0;
 let failed = 0;
@@ -69,12 +70,13 @@ function makeVoiceHost() {
     const heardWords = h.split(" ");
     return heardWords.filter((w) => spokenWords.has(w)).length / heardWords.length >= 0.6;
   };
-  // Barge-in-Entscheidung wie im Modul: >=3 Woerter UND kein Echo.
+  // Barge-in-Entscheidung wie im Modul: >=BARGE_MIN_WORDS Woerter UND kein Echo
+  // (Stufe 1e: Schwelle kommt aus voice-echo-filter.js, aktuell 2).
   host.hear = (text, isFinal) => {
     if (!host.bargeListenerRunning) return "ignoriert (kein Listener)";
     const words = text.trim().split(/\s+/).filter(Boolean);
     if (!host.bargeConfirmed) {
-      if (words.length < 3) return "ignoriert (Rauschen)";
+      if (words.length < BARGE_MIN_WORDS) return "ignoriert (Rauschen)";
       if (host.isLikelyEcho(text)) return "ignoriert (Echo)";
       host.bargeConfirmed = true;
       host.queue.cancel();

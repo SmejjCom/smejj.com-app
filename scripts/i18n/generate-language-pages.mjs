@@ -190,7 +190,7 @@ ${faq}
         <a href="/datenschutz.html">${escapeHtml(locale.privacy)}</a>
       </footer>
     </div>
-    <script src="/assets/voice-landing.js?v=voice-landing-20260716" type="module"></script>
+    <script src="/assets/voice-landing.js?v=blitz-20260726" type="module"></script>
   </body>
 </html>
 `;

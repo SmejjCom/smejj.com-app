@@ -1,3 +1,8 @@
+// v134 -> v135 (2026-07-26): Sprachwelle Blitz-Paket (Stufe 1e) — Warm-up,
+// Sofort-Senden, fruehes Lossprechen, Mikrofonpegel-Unterbrechung. Neu im
+// Shell-Cache: voice-echo-filter.js, voice-vad.js, voice-warmup.js,
+// composer-plus-menu.js (Import-Abhaengigkeiten von composer-tools.js —
+// ohne Precache waere die App offline tot, siehe v130-Hinweis).
 // v133 -> v134 (2026-07-25): Light-Mode-Kontrastfix — app-surfaces.css geaendert
 // (Menue-/Browser-Knopf waren im hellen Schema hell auf hell, Kontrast 1.03:1).
 // app-surfaces.css liegt im Precache und wird ohne Cache-Buster geladen; ohne
@@ -14,7 +19,7 @@
 // findet der Import offline nichts, der Fetch-Handler liefert als Fallback "/"
 // (index.html), und der Browser bricht app.js komplett ab - die App waere
 // offline tot. Non-Regression laut Change-Lock.
-const CACHE_NAME = "smejj-shell-v134";
+const CACHE_NAME = "smejj-shell-v135";
 const SHELL = [
   "/",
   "/assets/styles.css",
@@ -58,8 +63,12 @@ const SHELL = [
   "/assets/view-chrome.js",
   "/assets/view-chrome.css",
   "/assets/composer-tools.js",
+  "/assets/composer-plus-menu.js",
   "/assets/voice-typed-send.js",
   "/assets/voice-speech-queue.js",
+  "/assets/voice-echo-filter.js",
+  "/assets/voice-vad.js",
+  "/assets/voice-warmup.js",
   "/assets/chat-store.js",
   "/assets/chat-history-view.js",
   "/assets/workspace-bridge.js",

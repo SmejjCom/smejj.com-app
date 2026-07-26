@@ -35,6 +35,7 @@ const PROTECTED_FILES = [
   "public/autonomous-coding.css",
   "public/search.js",
   "public/composer-tools.js",
+  "public/composer-plus-menu.js",
   "public/workspace-bridge.js",
   "public/browser-pane.js",
   "public/browser-pane-render.js",
