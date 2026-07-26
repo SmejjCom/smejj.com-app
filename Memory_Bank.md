@@ -693,3 +693,9 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
   Schluessel im Frontend). IDs/Links in der Capsule. Live-Schaltung erst
   nach Stripe-Konto-Aktivierung durch den Betreiber; dann Schritt 3b:
   Webhook + Abo-Status am Control-Server.
+- Nachtrag: Stripe-Willkommens-Fragebogen (/test/welcome) abgeschlossen —
+  Standard-Stripe gewaehlt (kein Managed Payments, kein 3,5 %-Aufschlag).
+  Der Fragebogen legte eine NEUE leere Sandbox acct_1TxXHUQYIFkMHSic an;
+  Produkte + Zahlungslinks liegen weiter im Test-Modus von
+  acct_1TxXHLQddyxzPlSc (verifiziert). Leere Sandbox ignorieren.
+  Live-Konto-Aktivierung (Bank-/Unternehmensdaten) bleibt Betreiber-Sache.

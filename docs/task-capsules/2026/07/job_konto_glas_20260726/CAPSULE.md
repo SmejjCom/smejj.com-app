@@ -124,3 +124,24 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
 - Offen fuer echte Zahlungen (Betreiber): Stripe-Konto aktivieren
   (Unternehmens-/Bankdaten) → danach Live-Links + Webhook/Abo-Status
   (Control-Server, Schritt 3b).
+
+## Schritt 3a-Nachtrag: Stripe-Willkommens-Fragebogen abgeschlossen (2026-07-26, Freigabe "mach endlich fertig")
+- /test/welcome-Fragebogen im Betreiber-Chrome komplett durchlaufen:
+  Unternehmensname iMild LLC + Standort USA (vorbefuellt), Website
+  https://smejj.com, Beschreibung "KI-Assistent … Abo-Plaene (Plus, Pro, Max)".
+- Vertriebs-Weiche: "Waehlen Sie aus, was Sie benoetigen" (Standard-Stripe,
+  nutzungsabhaengig) gewaehlt — NICHT Managed Payments (3,5 % Aufschlag);
+  passt zur bestehenden Architektur (eigene Zahlungslinks + Control-Server).
+  Laut Stripe spaeter aenderbar.
+- Stripe-Empfehlung uebernommen (Wiederkehrende Zahlungen, Rechnungsstellung,
+  Steuereinzug); Einrichtung "Im Dashboard"; Abschluss "Weiter zur Sandbox".
+- ACHTUNG Konto-Kontexte: Der Fragebogen legte eine NEUE, leere Sandbox
+  acct_1TxXHUQYIFkMHSic an ("iMild LLC Sandbox", 0 Produkte). Die Produkte
+  und Zahlungslinks aus Schritt 3a liegen weiterhin im Test-Modus des
+  Original-Kontos acct_1TxXHLQddyxzPlSc — dort verifiziert: 3 aktive
+  Produkte (Plus 9/Pro 19/Max 39 €), Plus-Zahlungslink laedt (Sandbox-Badge).
+  Die leere Sandbox ignorieren, nichts dorthin migrieren.
+- Keine Zahlung ausgefuehrt, keine Bank-/Steuer-/Ausweisdaten eingegeben.
+- Weiter offen (nur Betreiber): "Jetzt Ihr Live-Konto erhalten" /
+  Verifizierung mit Unternehmens-/Bankdaten. Danach Schritt 3b
+  (Webhook + Abo-Status am Control-Server, Live-Links im Frontend).
