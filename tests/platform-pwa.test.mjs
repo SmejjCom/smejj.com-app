@@ -54,7 +54,11 @@ test("service worker caches only small app shell assets and has offline fallback
   // Shell-Precache aufgenommen; schriftliche Freigabe des Nutzers ("Ich finde
   // deinen Vorschlag gut mit X Icon schliessen und Zurueckpfeile ... Wie
   // wuerdest du jetzt machen?" + Master-Prompt "eigenstaendig weiter").
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v135"/);
+  // v135 -> v138 am 2026-07-26: Sprachwellen-Sessions hatten v136/v137 gebumpt,
+  // ohne die Test-Erwartung nachzuziehen (Test war rot). v138 = Konto-Light-Mode-
+  // Fix (account-privacy.css im Precache; Freigabe Betreiber "eigenstaendig
+  // weiter ... live gehen").
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v138"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   assert.match(sw, /\/assets\/view-chrome\.css/);
   assert.match(sw, /\/assets\/search\.js/);

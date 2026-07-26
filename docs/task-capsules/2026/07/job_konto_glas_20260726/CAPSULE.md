@@ -72,3 +72,17 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
   live geprueft: /settings im Glas-Design inkl. Modelle-Bereich (GLM-5.2,
   API-Keys intakt), Konto zeigt Modelle-Verweis, Klick fuehrt zu /settings.
 - Rollback: backups/konto-glas-rollback/2026-07-26/ (settings-Dateien ergaenzt).
+
+## Schritt 1: Eigene Anweisungen wirken im Chat (2026-07-26, Freigabe "Ja")
+- settings-runtime.js: readAccountInstructions() liest smejj.personalization.v1
+  (fail-safe, Kappung 1000 Zeichen); buildPreferenceBlock() haengt die Zeile
+  "Eigene Anweisungen des Nutzers (Konto): …" an — chatClient.js traegt den
+  Block bereits in jeden System-Prompt (kein weiterer Eingriff noetig).
+- account-privacy.js: Hinweistexte aktualisiert ("gilt ab der naechsten Antwort").
+- Tests: tests/settings-runtime.test.mjs neu (5 Tests: Anbindung, leer,
+  fail-safe, Kappung, chatClient-Vertrag) — 5/0; check:frontend 130/0.
+- Live: Blob-Hashes c9db81a0/fcfbb3bd identisch; auf smejj.com verifiziert,
+  dass promptBlock() die Konto-Anweisungen enthaelt (Test-Session im
+  Claude-Browser, danach entfernt). Betreiber-Chrome "Browser 1" war auf
+  smejj.com nicht angemeldet — GitHub-Commits liefen dort.
+- Rollback: backups/konto-glas-rollback/2026-07-26/settings-runtime.js.vor-anbindung.

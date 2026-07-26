@@ -644,3 +644,9 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
   (Start-Lock) location.search beim Ansichtswechsel wieder anhaengt.
 - Deploy-Lehre: GitHub-Pages-CDN cached pro exakter URL inkl. Query — Pruef-
   Abrufe brauchen die ECHTE Asset-URL, sonst prueft man am Cache vorbei.
+
+## 2026-07-26 — Eigene Anweisungen wirken im Chat (job_konto_glas_20260726)
+- Konto → Personalisierung speist jetzt jeden Chat-System-Prompt:
+  settings-runtime.buildPreferenceBlock() + chatClient (Nutzerpraeferenzen).
+- Muster: Konto-Schluessel in der Chat-Laufzeit bewusst dupliziert (fail-safe,
+  1000-Zeichen-Kappung) statt Modul-Kopplung.
