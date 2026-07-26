@@ -1,6 +1,7 @@
-// v139 -> v140 (2026-07-26): Light-Mode komplett — Primaer-Knoepfe in
-// #projects/#search/#files (app-surfaces.css, Lock-Freigabe Betreiber) im
-// hellen Schema lesbar; app-surfaces.css liegt im Precache.
+// v139 -> v140 (2026-07-26): Light-Mode Nachzug 2 — restliche Primaer-Knoepfe
+// (#projectCreate/#projectSave/#searchSubmit/#storageAgain) waren im hellen
+// Schema dunkelmodus-weiss und damit unlesbar; Fix jetzt zentral fuer alle
+// sechs Knoepfe in app-surfaces.css (liegt im Precache, braucht den Sprung).
 // v138 -> v139 (2026-07-26): Light-Mode Nachzug — Primaer-Knoepfe #saveProfile/
 // #saveSettings wurden von app-surfaces.css (Lock) dunkelmodus-weiss gefaerbt
 // und waren im hellen Schema unlesbar; account-privacy.css und
