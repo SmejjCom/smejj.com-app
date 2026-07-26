@@ -389,15 +389,21 @@ export function attachCodeActions(output, documentRef = globalThis.document) {
  */
 export async function runClientChat({ task, model, output, offlineNotice = "" } = {}) {
   if (!task || !output) return false;
+  const clearThinking = () => {
+    if (output.dataset?.thinking === "true") {
+      output.innerHTML = "";
+      delete output.dataset.thinking;
+    }
+  };
   let handled = false;
   const selected = localStorage.getItem(STORAGE_KEYS.model) || "";
-  if (selected === "Cline") handled = await runClineChat({ task, output, offlineNotice });
+  if (selected === "Cline") { clearThinking(); handled = await runClineChat({ task, output, offlineNotice }); }
   if (!handled && selected.startsWith("key:")) {
     const providerId = selected.slice(4);
-    if (/^[a-z][a-z0-9-]{1,40}$/.test(providerId)) handled = await runProviderChat({ providerId, task, output, offlineNotice });
+    if (/^[a-z][a-z0-9-]{1,40}$/.test(providerId)) { clearThinking(); handled = await runProviderChat({ providerId, task, output, offlineNotice }); }
   }
-  if (!handled && model === "BYOK") handled = await runByokChat({ task, output, offlineNotice });
-  if (!handled && model === "local browser") handled = await runLocalBrowserChat({ task, output });
+  if (!handled && model === "BYOK") { clearThinking(); handled = await runByokChat({ task, output, offlineNotice }); }
+  if (!handled && model === "local browser") { clearThinking(); handled = await runLocalBrowserChat({ task, output }); }
   if (handled) attachCodeActions(output);
   return handled;
 }
