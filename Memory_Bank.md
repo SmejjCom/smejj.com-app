@@ -760,3 +760,39 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
   Start-Lock-Freigabe. (c) Das Modell weiss noch nichts vom Inhalt der
   Browser-Leiste und antwortet daher "Ich kann keine Webseiten aufrufen" —
   ebenfalls Stufe 2.
+
+## 2026-07-27 — Seiteninhalt im Modellkontext (job_stufe2_browserkontext_20260727)
+- Nennt eine Aufgabe eine Webadresse, laedt `public/browser-context.js` die Seite
+  ueber den BESTEHENDEN Proxy `/api/browser/fetch` und setzt Titel, HTTP-Status und
+  Textauszug (max 4000 Zeichen) als Kontextblock VOR die Aufgabe. Damit ist der
+  Satz "Ich kann keine Webseiten aufrufen" verschwunden; live liefert das Modell
+  jetzt einen echten Pruefbericht (HTTP 200, Titel, Navigation, Marken, Footer)
+  UND benennt von sich aus, was es aus reinem Seiteninhalt nicht pruefen kann
+  (JavaScript-Fehler, CSS-Rendering, Link-Ziele, Ladezeit).
+- Fail-closed: ohne Proxy-Urteil bleibt die Aufgabe unveraendert. Ein echter
+  Fehlerstatus (404/500) wird dagegen weitergereicht — genau das braucht "teste ob
+  alles fehlerfrei ist". Ergebnis wird je Aufgabe gemerkt, damit die zwei
+  Sendewege (Client-Chat, dann Server-Stream) nur EINMAL laden.
+- RATCHET-REGEL BEACHTET: `public/app.js` waechst nur um +1 Zeile (Import). Die
+  zwei Aufrufstellen wurden nur erweitert (`task` -> `await groundTask(task)`).
+  Baseline in `scripts/check-guidelines.mjs` 1404 -> 1405, mit Freigabe-Wortlaut
+  dokumentiert. Muster fuer kuenftige app.js-Arbeiten: Logik IMMER in ein eigenes
+  Modul, app.js bekommt hoechstens den Import.
+- `firstSafeUrl` ist jetzt aus `autonomous-intent.js` exportiert — eine
+  URL-Erkennung fuer Browser-Leiste UND Modellkontext, keine zweite Regel.
+- sw.js v146 -> v148 (v147 war der reine Live-Stand aus Stufe 1, hier nachgezogen);
+  `browser-context.js` im Precache. Start-Lock nach den Aenderungen neu eingefroren
+  (31 Dateien, 2026-07-27T23:16:58.536Z), Backup unter backups/start-design-lock/.
+- MESSWERTE (erste vollstaendige Messung, Vergleichsbasis): TTFB 3-136 ms, CLS 0,
+  INP 112 ms, Startseite 60 KB gzip — alle im Budget. LCP 3304 ms VERFEHLT das
+  1,5-s-Budget; Verdacht: spaet gerenderter Chat-Verlauf, nicht diese Aenderung.
+- KORREKTUR zur Capsule job_startseite_inline_20260727: der dort als "verfehlt"
+  gemeldete TTFB (0,36-1,38 s) stammte aus `curl` gegen den Ursprungsserver OHNE
+  Service Worker. Echte Nutzer erleben 3-136 ms. Fehlbefund zurueckgezogen.
+  MESSREGEL daraus: Web-Vitals immer im echten Browser messen, nie per curl.
+- MESSGRENZE: In einem ferngesteuerten Chrome-Tab zeichnet Chrome FCP/LCP oft NICHT
+  auf (Werte bleiben leer, weil der Tab nie sichtbar gerendert wurde). Fuer
+  belastbare LCP-Zahlen einen echten Vordergrund-Ladevorgang oder Lighthouse nutzen.
+- OFFEN: (a) LCP sauber nachmessen und Ursache pruefen. (b) Echtes Tool-Calling
+  (Modell waehlt Werkzeuge selbst, `tool_calls` im Stream) beruehrt den
+  Control-Server/die Chat-Bridge auf Zeabur und ist freigabepflichtig.
