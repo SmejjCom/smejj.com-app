@@ -80,7 +80,21 @@ Ende-zu-Ende testen, dokumentieren, committen, pushen.
 E-Mail-Link (seit 2026-07-26 repariert), Passwort, Google und Passkey
 funktionieren vollstaendig. Der GitHub-Knopf bleibt schlicht ausgeblendet.
 
-## C) iMild.com — 5 Website-Verbesserungen: gebaut + geprueft, Deploy blockiert
+## C0) iMild.com — EIN KLICK: Pull Request #1 zusammenfuehren
+
+**Das ist der einzige Punkt mit sofortigem Nutzen und ohne Passwort.**
+
+https://github.com/iMildcom/imild-site/pull/1 -> Knopf **"Merge pull request"**.
+
+Enthaelt zwei gepruefte Commits (`229ab2c`, `bafe58b`): Der Google-Vorschautext
+folgt ab dann der gewaehlten Sprache (bisher stand bei englischer Seite deutscher
+Text) — auf allen 12 Seiten und in 51 Sprachen. Dazu die CSS-Vorbereitung fuer
+echte Karten-Ueberschriften. Nach dem Merge deployt GitHub Pages automatisch.
+
+GitHub meldet "Changes can be cleanly merged". Nach dem Merge laeuft der
+Maus-Pruefbericht zur Gegenkontrolle.
+
+## C) iMild.com — restliche Website-Verbesserungen: gebaut + geprueft, noch nicht live
 
 **Zustand:** Alle 5 vom Maus-Pruefbericht gefundenen Punkte sind umgesetzt und
 lokal im echten Browser verifiziert (23/23 gruen, 0 Konsolenfehler, Design
