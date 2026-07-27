@@ -58,7 +58,8 @@ test("service worker caches only small app shell assets and has offline fallback
   // ohne die Test-Erwartung nachzuziehen (Test war rot). v138 = Konto-Light-Mode-
   // Fix (account-privacy.css im Precache; Freigabe Betreiber "eigenstaendig
   // weiter ... live gehen").
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v140"/);
+  // v143 (2026-07-26): Stand nach Abo (v141), Stufe C (v142) und Folge-Bump.
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v143"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   assert.match(sw, /\/assets\/view-chrome\.css/);
   assert.match(sw, /\/assets\/search\.js/);
