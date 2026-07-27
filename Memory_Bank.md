@@ -790,3 +790,37 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
   ende (Hash weicht ab) — nach jedem Anlegen cmd+Down+BackSpace + erneuter
   Commit; Blob-Hash-Pruefung ist Pflicht. Live byte-identisch verifiziert,
   Live-Test mit Test-Session bestanden, Testdaten entfernt.
+
+## 2026-07-27 — Startseite antwortet im Faden (job_startseite_inline_20260727)
+- Ein Auftrag im Startfeld wechselt NIE mehr die Ansicht. `routeAutonomousRequest`
+  in `public/autonomous-intent.js` liefert immer `false`; der Chat-/Agent-Pfad in
+  `app.js` antwortet im Gespraechsfaden. Der frueher erste Schritt
+  `goToView("automation")` ist entfernt — das war die Ursache des Betreiber-Befunds
+  "geh browser iMild.com teste ob alles fehlerfrei ist?" → Sprung auf /automation.
+- Werkzeuge sind jetzt Karten im Faden: erkannte Web-Ziele oeffnen die eingebettete
+  Browser-Leiste rechts (`smejj:browser-request`), der autonome Lauf erscheint als
+  Angebotskarte `[data-run-offer]` und startet erst auf Klick. Reihenfolge im
+  Klick-Handler bleibt zwingend: erst `goToView("automation")`, dann
+  `smejj:autonomous-request` — sonst fuellt die Automatik ein unsichtbares Formular.
+- URL-Erkennung akzeptiert jetzt Adressen ohne Schema (`iMild.com` →
+  `https://imild.com/`), fail-closed ueber eine TLD-Allowlist. Damit bleiben
+  Dateinamen (`app.js`), Versionen (`smejj 1.0`) und Satzreste (`morgen.Danach`)
+  ausgeschlossen. Regressionsschutz: `tests/autonomous-intent.test.mjs` (8 Faelle),
+  verdrahtet in `check:frontend`.
+- WICHTIG — Frontend-Deploy geht doch per CLI: die macOS-Keychain
+  (`credential.helper = osxkeychain`) hat SCHREIBRECHT auf
+  `https://github.com/SmejjCom/smejj-app-frontend`. Klonen, Datei kopieren,
+  committen, `git push origin main` — fertig. Der SSH-Deploy-Key
+  (`~/.ssh/smejjcom_github_ed25519`) kann das NICHT (nur smejj.com-app). Der
+  Web-Editor-Umweg mit Cmd+A/insertText ist damit ueberfluessig. Beim Deploy
+  zusaetzlich `CACHE_NAME` in `sw.js` erhoehen (jetzt `smejj-shell-v147`), sonst
+  liefert der Service Worker Bestandsnutzern die alte Datei.
+- Live verifiziert: Eingabe bleibt auf `https://smejj.com/`, imild.com rendert in
+  der rechten Leiste, Modell antwortet im Faden, keine Konsolenfehler.
+  Rollback: Tag `rollback/startseite-inline-2026-07-27`, live `71c4e99`.
+- OFFEN: (a) TTFB live 0,36–1,38 s gegen Budget 200 ms — Bestandsbefund, nicht
+  durch diese Aenderung verursacht. (b) Stufe 2 (Automatik als echtes Werkzeug im
+  Tool-Calling statt Regex-Vorfilter) beruehrt `app.js` und braucht eine
+  Start-Lock-Freigabe. (c) Das Modell weiss noch nichts vom Inhalt der
+  Browser-Leiste und antwortet daher "Ich kann keine Webseiten aufrufen" —
+  ebenfalls Stufe 2.
