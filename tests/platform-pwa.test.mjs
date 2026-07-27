@@ -67,7 +67,11 @@ test("service worker caches only small app shell assets and has offline fallback
   // 2026-07-27 gegen https://smejj.com/sw.js). Nachgezogen im Rahmen der
   // QA-Welle-1-Behebung, Freigabe des Betreibers "platform-pwa auf Service
   // Worker v146 nachziehen ... bis check:all vollstaendig gruen ist".
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v146"/);
+  // v146 -> v148 am 2026-07-28 nachgezogen: Commit 947efe0 (Startseite Stufe 2,
+  // Seiten-Kontext fuer das Modell) hat public/sw.js gebumpt, ohne diese Erwartung
+  // mitzunehmen — der Test war seitdem rot und blockierte check:all. public/sw.js
+  // selbst wurde hier NICHT angefasst.
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v148"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   assert.match(sw, /\/assets\/view-chrome\.css/);
   assert.match(sw, /\/assets\/search\.js/);

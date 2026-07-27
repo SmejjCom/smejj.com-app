@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-27T23:16:58.536Z",
-  "confirmation": "FREIGABE — Startseite Stufe 2 (Wof Kadavanich, 2026-07-27): Start-Lock fuer public/app.js (Automatik als Werkzeug im Tool-Calling, Inhalt der Browser-Leiste in den Modellkontext) und public/sw.js (Cache-Version nachziehen, danach neu einfrieren).",
+  "frozenAt": "2026-07-27T23:33:30.374Z",
+  "confirmation": "Freigabe \"smejj.com 100 % fertig\" — erteilt am 2026-07-28 von Wof Kadavanich. A) SCHUTZ-LOCKS: Freigabe zur Aenderung von public/index.html, public/styles.css, public/app.js, public/composer-tools.js, public/search.js sowie docs/frontend/favicon-lock-manifest.json zur Behebung der Befunde aus den QA-Wellen 1-3, mit Neu-Einfrieren des Locks unter diesem Wortlaut. Startseiten-Design, unteres Eingabefeld und die Favicon-DATEIEN bleiben unveraendert. B) Umgesetzt in diesem Schritt: F-04 Meta-CSP und Referrer-Policy, F-06 hreflang-Konflikt aufgeloest, F-13 Startseiten-Titel und JSON-LD, F-07 doppelte Modulinstanzen (chat-store.js, chat-markdown.js).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "b8954d3ab647826cb820d1047ac11eaebe94135ea7740db0b8c3cead7c78f84a",
+    "public/index.html": "383907ac494aec787d353f1b0a72488a03485101f4c72170cc8c9e564acc39ae",
     "public/styles.css": "78f06b4a0a61b51ee90da3482cd8a6d93d02e0de7d6bc344e3f80ec67ddfb122",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -17,7 +17,7 @@
     "public/premium-surfaces.js": "20a70b5936a52ff6bcc7491dac2378dd4f6721c3742bd2087519829c960b4c28",
     "public/autonomous-coding.js": "8d749c9fb8674b91b449fe894dc6519df9139f3eebdfd899e2b20c79fd18f7c5",
     "public/autonomous-coding.css": "5c86c7fea0aff304310c7b929cf8cc58fd1d78b1f5ce394f3e7b86cd86bdb8fe",
-    "public/search.js": "09a37f0b1a44d601b1b0dc49f852d6a7711263170b424140486e0356a1b03889",
+    "public/search.js": "c97b85fde870e3fad7d1deacc9f64b2fa1e7663590cdd5536e954264a2d0fbe3",
     "public/composer-tools.js": "a2684c77e0fff9fe4e042e67eabb440c1ea1522ffd393fc8d22e5a3224e3a089",
     "public/composer-plus-menu.js": "0a3047e090801f23bcc2d05667b27258da443f49c22e4600d0547e752df70e04",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
