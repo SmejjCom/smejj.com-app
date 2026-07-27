@@ -5,6 +5,16 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-26] MAUS-SELBSTTEST iMild.com — Betreiber-Website mitgeprueft, 46/46 gruen (0 EUR)
+- Typ: verified success. Freigabe: Betreiber gab den Ordner "iMild.com App" frei mit "mach jetzt komplett fertig, lass nichts offen" (Wof Kadavanich, 2026-07-26). Capsule: job_maus_selbsttest_20260726 (result-imild/).
+- WAS: Zweiter Plan `workers/maus-engine/plaene/selbsttest-imild-com-v1.json` (46 Schritte): Startseite + alle 11 Navigationsseiten (about/brands/careers/conax/contact/investors/legal/newsroom/smejj/smyst), Login-Formular (#auth-form/#f-email/#f-password/#auth-submit/#tab-register), Backend api.imild.com/auth/me MUSS 401 liefern (fail-closed), sw.js 200. Engine unveraendert — nur ein weiterer Plan; das belegt die Plattform-Eigenschaft der Maus-Engine projektuebergreifend.
+- LEHRE i18n (verschaerft): iMild-Seiten nutzen data-i18n, daher NULL Text-Asserts erlaubt; ein Test erzwingt das (Anzahl `selectorTextContains` muss 0 sein). Muster fuer alle kuenftigen Selbsttest-Plaene mehrsprachiger Seiten.
+- LIVE-LAUF: lokal via executeRun + Playwright gegen https://imild.com — engineOk:true, 46/46, 0 Konsolenfehler, ~5 s. 12 Screenshots unter backups/ (nicht im Repo), Aktionsprotokoll + Bericht in der Capsule.
+- LIVE-BEFUND iMild (nur verifiziert, NICHT veraendert): imild.com 200; api.imild.com/auth/me 401 (Backend lebt, korrekt fail-closed); /auth/github|google|gitlab weiterhin 404 — die drei OAuth-Secrets stehen seit 2026-07-25 offen (Backend-Auth-WP/JETZT_ZU_TUN.md), Code ist fertig und deployt. Kein Code-Handlungsbedarf.
+- TESTS: check:maus-engine 115 gruen (2 neue iMild-Tests), check:json/guidelines gruen.
+- ORGANISATORISCH: `OFFENE_PUNKTE_NUR_BETREIBER_2026-07-26.md` fasst erstmals BEIDE Projekte zusammen — alle Restpunkte sind ausschliesslich Secret-Eintraege (Zeabur-Variablen smejj-maus-engine; GitHub/Google/GitLab bei iMild). Muster projektuebergreifend bestaetigt: Sessions bauen und verifizieren alles, Secrets bleiben beim Betreiber.
+- trainingEligible:false, memoryMayLearn:true nur fuer die oben belegten Fakten.
+
 ### [2026-07-26] STUFE C LIVE (sw v142) — Zwei-Wege-Betrieb: Zeabur-Mietserver als automatische Reserve
 - Typ: verified success (Deploy + Live-Test). Freigabe: "geh browser zeabur.com erledige komplett lass nicht offen" (Wof Kadavanich, 2026-07-26).
 - NEU auf Zeabur (Projekt untitled, Server Tencent Ashburn 2C 8GB, 6 USD/Mo dokumentierte Ausnahme): Dienst smejj-chat-bridge = Docker node:22-bookworm + Start-Command (curlt assets/chat-bridge.js vom Frontend-Repo, wie Salad), Port 8080, Domain https://smejj-chat-bridge.zeabur.app. Env NICHT im Erstell-Dialog speicherbar (kam leer an) — nachtraeglich via Variable-Tab "+ Add" (Bulk-Paste ins Key-Feld funktioniert) + Restart. Vorhandene Variable PASSWORD (fremd, Private) NICHT angefasst.

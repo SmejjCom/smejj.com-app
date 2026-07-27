@@ -1,0 +1,899 @@
+{
+  "actionLog": [
+    {
+      "index": 0,
+      "id": "i01",
+      "action": "openBrowser",
+      "params": {
+        "id": "i01",
+        "action": "openBrowser",
+        "viewport": {
+          "width": 1365,
+          "height": 900
+        }
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 338,
+      "result": {
+        "tabId": "main"
+      }
+    },
+    {
+      "index": 1,
+      "id": "i02",
+      "action": "navigate",
+      "params": {
+        "id": "i02",
+        "action": "navigate",
+        "url": "https://imild.com/",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 587,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 2,
+      "id": "i03",
+      "action": "assert",
+      "params": {
+        "id": "i03",
+        "action": "assert",
+        "condition": "titleContains",
+        "text": "iMild",
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "titleContains"
+      }
+    },
+    {
+      "index": 3,
+      "id": "i04",
+      "action": "assert",
+      "params": {
+        "id": "i04",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 4,
+      "id": "i05",
+      "action": "assert",
+      "params": {
+        "id": "i05",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "a[href=\"legal.html\"]"
+        },
+        "onFailure": "continue",
+        "note": "Rechtliche Pflichtseite muss von der Startseite erreichbar sein."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 3
+      }
+    },
+    {
+      "index": 5,
+      "id": "i06",
+      "action": "screenshot",
+      "params": {
+        "id": "i06",
+        "action": "screenshot",
+        "name": "01-imild-start",
+        "fullPage": true
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 47,
+      "result": {
+        "name": "01-imild-start",
+        "bytes": 172124
+      }
+    },
+    {
+      "index": 6,
+      "id": "i07",
+      "action": "navigate",
+      "params": {
+        "id": "i07",
+        "action": "navigate",
+        "url": "https://imild.com/login.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 407,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 7,
+      "id": "i08",
+      "action": "assert",
+      "params": {
+        "id": "i08",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "#auth-form"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 8,
+      "id": "i09",
+      "action": "assert",
+      "params": {
+        "id": "i09",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "#f-email"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 9,
+      "id": "i10",
+      "action": "assert",
+      "params": {
+        "id": "i10",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "#f-password"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 10,
+      "id": "i11",
+      "action": "assert",
+      "params": {
+        "id": "i11",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "#auth-submit"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 11,
+      "id": "i12",
+      "action": "assert",
+      "params": {
+        "id": "i12",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "#tab-register"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 12,
+      "id": "i13",
+      "action": "screenshot",
+      "params": {
+        "id": "i13",
+        "action": "screenshot",
+        "name": "02-imild-login",
+        "fullPage": true
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 55,
+      "result": {
+        "name": "02-imild-login",
+        "bytes": 208860
+      }
+    },
+    {
+      "index": 13,
+      "id": "i14",
+      "action": "navigate",
+      "params": {
+        "id": "i14",
+        "action": "navigate",
+        "url": "https://imild.com/legal.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 166,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 14,
+      "id": "i15",
+      "action": "assert",
+      "params": {
+        "id": "i15",
+        "action": "assert",
+        "condition": "titleContains",
+        "text": "Legal",
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "titleContains"
+      }
+    },
+    {
+      "index": 15,
+      "id": "i16",
+      "action": "screenshot",
+      "params": {
+        "id": "i16",
+        "action": "screenshot",
+        "name": "03-imild-legal",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 37,
+      "result": {
+        "name": "03-imild-legal",
+        "bytes": 142460
+      }
+    },
+    {
+      "index": 16,
+      "id": "i17",
+      "action": "navigate",
+      "params": {
+        "id": "i17",
+        "action": "navigate",
+        "url": "https://imild.com/about.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 350,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 17,
+      "id": "i18",
+      "action": "assert",
+      "params": {
+        "id": "i18",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 18,
+      "id": "i19",
+      "action": "screenshot",
+      "params": {
+        "id": "i19",
+        "action": "screenshot",
+        "name": "04-imild-about",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 69,
+      "result": {
+        "name": "04-imild-about",
+        "bytes": 173913
+      }
+    },
+    {
+      "index": 19,
+      "id": "i20",
+      "action": "navigate",
+      "params": {
+        "id": "i20",
+        "action": "navigate",
+        "url": "https://imild.com/contact.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 157,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 20,
+      "id": "i21",
+      "action": "assert",
+      "params": {
+        "id": "i21",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 21,
+      "id": "i22",
+      "action": "screenshot",
+      "params": {
+        "id": "i22",
+        "action": "screenshot",
+        "name": "05-imild-kontakt",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 57,
+      "result": {
+        "name": "05-imild-kontakt",
+        "bytes": 156038
+      }
+    },
+    {
+      "index": 22,
+      "id": "i23",
+      "action": "navigate",
+      "params": {
+        "id": "i23",
+        "action": "navigate",
+        "url": "https://imild.com/brands.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 161,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 23,
+      "id": "i24",
+      "action": "assert",
+      "params": {
+        "id": "i24",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 24,
+      "id": "i25",
+      "action": "screenshot",
+      "params": {
+        "id": "i25",
+        "action": "screenshot",
+        "name": "06-imild-marken",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 40,
+      "result": {
+        "name": "06-imild-marken",
+        "bytes": 167703
+      }
+    },
+    {
+      "index": 25,
+      "id": "i26",
+      "action": "navigate",
+      "params": {
+        "id": "i26",
+        "action": "navigate",
+        "url": "https://imild.com/smejj.html",
+        "waitUntil": "domcontentloaded",
+        "note": "Produktseite smejj.com auf der Betreiber-Website."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 346,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 26,
+      "id": "i27",
+      "action": "assert",
+      "params": {
+        "id": "i27",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 27,
+      "id": "i28",
+      "action": "screenshot",
+      "params": {
+        "id": "i28",
+        "action": "screenshot",
+        "name": "07-imild-smejj",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 48,
+      "result": {
+        "name": "07-imild-smejj",
+        "bytes": 167238
+      }
+    },
+    {
+      "index": 28,
+      "id": "i29",
+      "action": "navigate",
+      "params": {
+        "id": "i29",
+        "action": "navigate",
+        "url": "https://imild.com/investors.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 185,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 29,
+      "id": "i30",
+      "action": "assert",
+      "params": {
+        "id": "i30",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 30,
+      "id": "i31",
+      "action": "screenshot",
+      "params": {
+        "id": "i31",
+        "action": "screenshot",
+        "name": "08-imild-investoren",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 68,
+      "result": {
+        "name": "08-imild-investoren",
+        "bytes": 187067
+      }
+    },
+    {
+      "index": 31,
+      "id": "i32",
+      "action": "navigate",
+      "params": {
+        "id": "i32",
+        "action": "navigate",
+        "url": "https://imild.com/newsroom.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 158,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 32,
+      "id": "i33",
+      "action": "assert",
+      "params": {
+        "id": "i33",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 33,
+      "id": "i34",
+      "action": "screenshot",
+      "params": {
+        "id": "i34",
+        "action": "screenshot",
+        "name": "09-imild-newsroom",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 41,
+      "result": {
+        "name": "09-imild-newsroom",
+        "bytes": 131364
+      }
+    },
+    {
+      "index": 34,
+      "id": "i35",
+      "action": "navigate",
+      "params": {
+        "id": "i35",
+        "action": "navigate",
+        "url": "https://imild.com/careers.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 161,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 35,
+      "id": "i36",
+      "action": "assert",
+      "params": {
+        "id": "i36",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 36,
+      "id": "i37",
+      "action": "screenshot",
+      "params": {
+        "id": "i37",
+        "action": "screenshot",
+        "name": "10-imild-karriere",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 44,
+      "result": {
+        "name": "10-imild-karriere",
+        "bytes": 190004
+      }
+    },
+    {
+      "index": 37,
+      "id": "i38",
+      "action": "navigate",
+      "params": {
+        "id": "i38",
+        "action": "navigate",
+        "url": "https://imild.com/conax.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 175,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 38,
+      "id": "i39",
+      "action": "assert",
+      "params": {
+        "id": "i39",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 39,
+      "id": "i40",
+      "action": "screenshot",
+      "params": {
+        "id": "i40",
+        "action": "screenshot",
+        "name": "11-imild-conax",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 48,
+      "result": {
+        "name": "11-imild-conax",
+        "bytes": 140843
+      }
+    },
+    {
+      "index": 40,
+      "id": "i41",
+      "action": "navigate",
+      "params": {
+        "id": "i41",
+        "action": "navigate",
+        "url": "https://imild.com/smyst.html",
+        "waitUntil": "domcontentloaded"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 290,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 41,
+      "id": "i42",
+      "action": "assert",
+      "params": {
+        "id": "i42",
+        "action": "assert",
+        "condition": "selectorExists",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "condition": "selectorExists",
+        "count": 1
+      }
+    },
+    {
+      "index": 42,
+      "id": "i43",
+      "action": "screenshot",
+      "params": {
+        "id": "i43",
+        "action": "screenshot",
+        "name": "12-imild-smyst",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 62,
+      "result": {
+        "name": "12-imild-smyst",
+        "bytes": 159247
+      }
+    },
+    {
+      "index": 43,
+      "id": "i44",
+      "action": "httpRequest",
+      "params": {
+        "id": "i44",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://api.imild.com/auth/me",
+        "expectStatus": 401,
+        "onFailure": "continue",
+        "note": "Backend lebt und ist fail-closed: ohne Sitzung 401 (nicht 200, nicht 5xx)."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 575,
+      "result": {
+        "status": 401,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 44,
+      "id": "i45",
+      "action": "httpRequest",
+      "params": {
+        "id": "i45",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://imild.com/sw.js",
+        "expectStatus": 200,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 159,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 45,
+      "id": "i46",
+      "action": "closeBrowser",
+      "params": {
+        "id": "i46",
+        "action": "closeBrowser"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 21,
+      "result": {}
+    }
+  ]
+}

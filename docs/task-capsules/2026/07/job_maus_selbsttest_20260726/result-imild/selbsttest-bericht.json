@@ -1,0 +1,18 @@
+{
+  "lauf": {
+    "startedAt": "2026-07-27T00:10:20.235Z",
+    "finishedAt": "2026-07-27T00:10:25.103Z",
+    "modus": "lokal (Playwright, 0 EUR)",
+    "ziel": "https://imild.com live"
+  },
+  "planId": "selbsttest-imild-com-v1",
+  "capsuleRef": "maus-selbsttest-imild-com-2026-07-26",
+  "engineOk": true,
+  "abortReason": null,
+  "rejected": false,
+  "errors": [],
+  "schritteGesamt": 46,
+  "schritteFehlgeschlagen": [],
+  "konsole": [],
+  "extracted": {}
+}

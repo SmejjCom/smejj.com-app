@@ -1,0 +1,75 @@
+# Offene Punkte — beide Projekte, Stand 2026-07-26 (live nachgeprueft)
+
+Diese Liste enthaelt **ausschliesslich** Punkte, die eine KI-Session technisch
+nicht selbst erledigen darf: das Eintragen von Zugangsschluesseln, Passwoertern
+und OAuth-Secrets. Diese Sperre ist fest eingebaut (sie verhindert, dass eine
+KI jemals Zugaenge sieht, kopiert oder weitergibt) und laesst sich nicht per
+Freigabe aufheben. Alles Uebrige ist erledigt.
+
+## A) smejj.com — Maus-Engine auf dem neuen Zeabur-Server
+
+**Zustand live:** Server laeuft, Engine antwortet
+(`https://smejj-maus-engine.zeabur.app/health` -> `ok:true`), `POST /run`
+antwortet fail-closed `401` (sicher per Default, weil noch kein Token gesetzt
+ist).
+
+**Was fehlt:** 6 Variablen im Zeabur-Service `ghcriosmejjcomsmejj-maus-enginev1`
+(Reiter *Variable* -> *+ Add*):
+
+| Variable | Woher |
+|---|---|
+| `SMEJJ_MAUS_ENGINE_TOKEN` | wird vom Hilfsskript selbst erzeugt |
+| `IDRIVE_E2_ENDPOINT` | `~/.config/smejj.com/env.local` |
+| `IDRIVE_E2_ACCESS_KEY` | `~/.config/smejj.com/env.local` |
+| `IDRIVE_E2_SECRET_KEY` | `~/.config/smejj.com/env.local` |
+| `IDRIVE_E2_BUCKET` | `~/.config/smejj.com/env.local` |
+| `IDRIVE_E2_REGION` | `~/.config/smejj.com/env.local` |
+
+**Weg in 2 Schritten (Werte werden nie angezeigt):**
+
+1. Im Chat auf den **Run**-Knopf des Hilfsskripts
+   `scratchpad/maus-selbsttest/zeabur-env-clipboard.sh` klicken. Es liest
+   `env.local`, erzeugt bei Bedarf den Token und legt alle 6 Zeilen in die
+   Zwischenablage.
+2. In Zeabur ins Feld **Key** klicken und `cmd+V` druecken — Zeabur verteilt
+   die Zeilen automatisch. Danach **Restart**.
+
+**Danach uebernimmt die Session wieder:** Neustart pruefen, echten Maus-Lauf
+ueber den Server, Control-Server auf die neue Engine-URL umziehen (eigener,
+freigabepflichtiger Deploy), Doku.
+
+**Wenn nichts davon passiert:** Es geht nichts kaputt. Die Maus laeuft
+weiterhin ueber den bestehenden Weg (Selbsttests unten sind damit gelaufen).
+Der Server kostet 6 $/Monat und kann binnen 7 Tagen ab Kauf (26.07.2026) mit
+Erstattung als Zeabur-Guthaben gekuendigt werden.
+
+## B) iMild.com — OAuth-Login (Google / GitHub / GitLab)
+
+**Zustand live nachgeprueft am 2026-07-26:** `api.imild.com/auth/me` -> `401`
+(Backend lebt, fail-closed korrekt), `imild.com` -> `200`. E-Mail/Passwort-Login
+funktioniert vollstaendig. Die drei OAuth-Routen liefern weiterhin `404` —
+exakt wie im Projektstand `Backend-Auth-WP/JETZT_ZU_TUN.md` beschrieben. Der
+Code ist fertig und deployt; es fehlen ausschliesslich Secrets:
+
+1. **GitHub:** `github.com/settings/developers` (Konto iMildcom, App
+   „iMild.com") -> *Generate a new client secret* -> Wert in Zeabur-Service
+   `imild-platform` als `GITHUB_CLIENT_SECRET` eintragen.
+2. **Google:** Google Cloud Console verlangt „Identitaet bestaetigen"
+   (reCAPTCHA + erneute Anmeldung). Das muss der Betreiber selbst tun; danach
+   kann eine Session den OAuth-Zustimmungsbildschirm nach
+   `Infra/AUTH_SETUP_GUIDE.md` §1 einrichten.
+3. **GitLab:** im Browser nicht angemeldet — Anmeldung durch den Betreiber,
+   danach kann die Session die Anwendung anlegen.
+
+Diese drei Punkte stammen nicht aus dieser Session; sie stehen seit
+2026-07-25 offen und wurden hier nur **live verifiziert**, nicht veraendert.
+
+## C) Was in dieser Session vollstaendig fertig wurde (nichts offen)
+
+- Maus-Selbsttest **smejj.com**: 30/30 Schritte gruen, 0 Konsolenfehler.
+- Maus-Selbsttest **iMild.com** (neu): 46/46 Schritte gruen, 0 Konsolenfehler —
+  Startseite, alle 11 Unterseiten, Login-Formular, Backend-API, Service Worker.
+- Beide Plaene schema-validiert und durch Tests abgesichert
+  (`npm run check:maus-engine` — 115 gruen).
+- Zeabur-Server gekauft, Maus-Engine deployt, Domain vergeben, Health live
+  belegt; Free-Only-Ausnahme eng dokumentiert.

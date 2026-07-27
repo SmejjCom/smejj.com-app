@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "planId": "selbsttest-imild-com-v1",
+  "createdAt": "2026-07-26T21:00:00.000Z",
+  "capsuleRef": "maus-selbsttest-imild-com-2026-07-26",
+  "planner": { "modelId": "handautor-claude-fable-5", "promptTemplateVersion": "handautor-v1" },
+  "goal": "Selbsttest der live iMild.com-Seiten (Betreiber-Website der Plattform): Startseite, alle Unterseiten der Hauptnavigation, Login-Formular und die Backend-API api.imild.com. Sprachneutral (Element-IDs, URLs, Status-Codes) — die Seiten sind mehrsprachig (data-i18n). Pruef-Fehler brechen den Lauf nicht ab (onFailure continue), damit der Bericht ALLE Befunde enthaelt.",
+  "policy": {
+    "domainAllowlist": ["imild.com", "www.imild.com", "api.imild.com"],
+    "budget": {
+      "maxActions": 80,
+      "maxLocalRetries": 1,
+      "maxPlannerRoundtrips": 0,
+      "maxDurationMs": 420000,
+      "defaultActionTimeoutMs": 20000
+    },
+    "visionAllowed": false,
+    "artifacts": { "trace": false, "har": false, "consoleLog": true, "screenshotOnError": true }
+  },
+  "steps": [
+    { "id": "i01", "action": "openBrowser", "viewport": { "width": 1365, "height": 900 } },
+
+    { "id": "i02", "action": "navigate", "url": "https://imild.com/", "waitUntil": "domcontentloaded" },
+    { "id": "i03", "action": "assert", "condition": "titleContains", "text": "iMild", "onFailure": "continue" },
+    { "id": "i04", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i05", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "a[href=\"legal.html\"]" }, "onFailure": "continue", "note": "Rechtliche Pflichtseite muss von der Startseite erreichbar sein." },
+    { "id": "i06", "action": "screenshot", "name": "01-imild-start", "fullPage": true },
+
+    { "id": "i07", "action": "navigate", "url": "https://imild.com/login.html", "waitUntil": "domcontentloaded" },
+    { "id": "i08", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#auth-form" }, "onFailure": "continue" },
+    { "id": "i09", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#f-email" }, "onFailure": "continue" },
+    { "id": "i10", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#f-password" }, "onFailure": "continue" },
+    { "id": "i11", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#auth-submit" }, "onFailure": "continue" },
+    { "id": "i12", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "#tab-register" }, "onFailure": "continue" },
+    { "id": "i13", "action": "screenshot", "name": "02-imild-login", "fullPage": true },
+
+    { "id": "i14", "action": "navigate", "url": "https://imild.com/legal.html", "waitUntil": "domcontentloaded" },
+    { "id": "i15", "action": "assert", "condition": "titleContains", "text": "Legal", "onFailure": "continue" },
+    { "id": "i16", "action": "screenshot", "name": "03-imild-legal", "fullPage": false },
+
+    { "id": "i17", "action": "navigate", "url": "https://imild.com/about.html", "waitUntil": "domcontentloaded" },
+    { "id": "i18", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i19", "action": "screenshot", "name": "04-imild-about", "fullPage": false },
+
+    { "id": "i20", "action": "navigate", "url": "https://imild.com/contact.html", "waitUntil": "domcontentloaded" },
+    { "id": "i21", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i22", "action": "screenshot", "name": "05-imild-kontakt", "fullPage": false },
+
+    { "id": "i23", "action": "navigate", "url": "https://imild.com/brands.html", "waitUntil": "domcontentloaded" },
+    { "id": "i24", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i25", "action": "screenshot", "name": "06-imild-marken", "fullPage": false },
+
+    { "id": "i26", "action": "navigate", "url": "https://imild.com/smejj.html", "waitUntil": "domcontentloaded", "note": "Produktseite smejj.com auf der Betreiber-Website." },
+    { "id": "i27", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i28", "action": "screenshot", "name": "07-imild-smejj", "fullPage": false },
+
+    { "id": "i29", "action": "navigate", "url": "https://imild.com/investors.html", "waitUntil": "domcontentloaded" },
+    { "id": "i30", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i31", "action": "screenshot", "name": "08-imild-investoren", "fullPage": false },
+
+    { "id": "i32", "action": "navigate", "url": "https://imild.com/newsroom.html", "waitUntil": "domcontentloaded" },
+    { "id": "i33", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i34", "action": "screenshot", "name": "09-imild-newsroom", "fullPage": false },
+
+    { "id": "i35", "action": "navigate", "url": "https://imild.com/careers.html", "waitUntil": "domcontentloaded" },
+    { "id": "i36", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i37", "action": "screenshot", "name": "10-imild-karriere", "fullPage": false },
+
+    { "id": "i38", "action": "navigate", "url": "https://imild.com/conax.html", "waitUntil": "domcontentloaded" },
+    { "id": "i39", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i40", "action": "screenshot", "name": "11-imild-conax", "fullPage": false },
+
+    { "id": "i41", "action": "navigate", "url": "https://imild.com/smyst.html", "waitUntil": "domcontentloaded" },
+    { "id": "i42", "action": "assert", "condition": "selectorExists", "target": { "strategy": "css", "value": "h1" }, "onFailure": "continue" },
+    { "id": "i43", "action": "screenshot", "name": "12-imild-smyst", "fullPage": false },
+
+    { "id": "i44", "action": "httpRequest", "method": "GET", "url": "https://api.imild.com/auth/me", "expectStatus": 401, "onFailure": "continue", "note": "Backend lebt und ist fail-closed: ohne Sitzung 401 (nicht 200, nicht 5xx)." },
+    { "id": "i45", "action": "httpRequest", "method": "GET", "url": "https://imild.com/sw.js", "expectStatus": 200, "onFailure": "continue" },
+
+    { "id": "i46", "action": "closeBrowser" }
+  ]
+}
