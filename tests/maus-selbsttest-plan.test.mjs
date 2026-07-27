@@ -110,6 +110,20 @@ test("Pruefbericht-Plan sammelt Fakten und bewertet nicht selbst", async () => {
   assert.equal(plan.policy.budget.maxPlannerRoundtrips, 0, "kein Modell im Erhebungslauf");
 });
 
+test("Pruefbericht smejj.com: erhebt nur, bewertet nicht, bleibt auf eigener Domain", async () => {
+  const plan = JSON.parse(await readFile(
+    new URL("../workers/maus-engine/plaene/pruefbericht-smejj-login-v1.json", import.meta.url), "utf8"));
+  assert.deepEqual(validatePlan(plan), { ok: true, errors: [] });
+  assert.deepEqual(plan.policy.domainAllowlist, ["smejj.com", "www.smejj.com"]);
+  assert.equal(plan.policy.budget.maxPlannerRoundtrips, 0);
+  const extrakte = plan.steps.filter((s) => s.action === "extract");
+  assert.ok(extrakte.length >= 15, `zu wenige Fakten: ${extrakte.length}`);
+  // Erhebung ohne Anmeldung: keine Eingaben, keine Secrets, kein Klick auf Knoepfe.
+  const verboten = plan.steps.filter((s) => ["type", "fillForm", "click", "uploadFile"].includes(s.action));
+  assert.equal(verboten.length, 0, "Pruefbericht darf nichts eingeben oder ausloesen");
+  assert.ok(!JSON.stringify(plan).includes("secretRef"), "keine Secrets");
+});
+
 test("Sicherheits-Policy: nur smejj.com, kein Vision, kein Planer-Roundtrip, keine Secrets", async () => {
   const plan = await loadPlan();
   assert.deepEqual(plan.policy.domainAllowlist, ["smejj.com", "www.smejj.com"]);

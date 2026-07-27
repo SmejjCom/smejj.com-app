@@ -1,0 +1,91 @@
+{
+  "lauf": {
+    "startedAt": "2026-07-27T07:37:48.115Z",
+    "finishedAt": "2026-07-27T07:41:13.330Z",
+    "modus": "lokal (Playwright, 0 EUR)",
+    "ziel": "https://smejj.com live"
+  },
+  "planId": "pruefbericht-smejj-login-v1",
+  "capsuleRef": "maus-pruefbericht-smejj-2026-07-26",
+  "engineOk": false,
+  "abortReason": null,
+  "rejected": false,
+  "errors": [],
+  "schritteGesamt": 27,
+  "schritteFehlgeschlagen": [
+    {
+      "id": "s04",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[name=\"description\"]')\n"
+    },
+    {
+      "id": "s07",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('link[rel=\"canonical\"]')\n"
+    },
+    {
+      "id": "s08",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:title\"]')\n"
+    },
+    {
+      "id": "s09",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:image\"]')\n"
+    },
+    {
+      "id": "s11",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[name=\"theme-color\"]')\n"
+    }
+  ],
+  "konsole": [],
+  "extracted": {
+    "seitentitel": "Sign in · smejj.com",
+    "sprache_html": "en",
+    "viewport_meta": "width=device-width, initial-scale=1",
+    "robots_meta": "noindex, nofollow",
+    "h1_ueberschriften": [
+      "Welcome back"
+    ],
+    "h2_ueberschriften": [],
+    "bilder_alternativtexte": [],
+    "knopf_texte": [
+      "Continue",
+      "\n            Sign in with Google\n          ",
+      "\n            Sign in with Apple\n          ",
+      "\n            Sign in with GitHub\n          ",
+      "\n            Sign in with passkey\n          ",
+      "\n            Send link by email\n          "
+    ],
+    "knopf_bedienhilfen": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "eingabefelder_typ": [
+      "email",
+      "hidden",
+      "password"
+    ],
+    "eingabefelder_autocomplete": [
+      "email",
+      null,
+      "current-password"
+    ],
+    "beschriftungen": [
+      "Email",
+      "Password"
+    ],
+    "linktexte": [
+      "smejj.com",
+      "Forgot password?",
+      "Create account",
+      "Privacy",
+      "Imprint"
+    ]
+  }
+}

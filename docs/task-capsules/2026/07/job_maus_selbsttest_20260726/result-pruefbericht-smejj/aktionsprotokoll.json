@@ -1,0 +1,560 @@
+{
+  "actionLog": [
+    {
+      "index": 0,
+      "id": "s01",
+      "action": "openBrowser",
+      "params": {
+        "id": "s01",
+        "action": "openBrowser",
+        "viewport": {
+          "width": 1365,
+          "height": 900
+        }
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 277,
+      "result": {
+        "tabId": "main"
+      }
+    },
+    {
+      "index": 1,
+      "id": "s02",
+      "action": "navigate",
+      "params": {
+        "id": "s02",
+        "action": "navigate",
+        "url": "https://smejj.com/auth/login/",
+        "waitUntil": "networkidle",
+        "note": "Eingangsseite fuer Abgemeldete (Auth-Gate leitet hierher)."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1692,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 2,
+      "id": "s03",
+      "action": "extract",
+      "params": {
+        "id": "s03",
+        "action": "extract",
+        "name": "seitentitel",
+        "target": {
+          "strategy": "css",
+          "value": "head title"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 2,
+      "result": {
+        "name": "seitentitel"
+      }
+    },
+    {
+      "index": 3,
+      "id": "s04",
+      "action": "extract",
+      "params": {
+        "id": "s04",
+        "action": "extract",
+        "name": "meta_beschreibung",
+        "target": {
+          "strategy": "css",
+          "value": "meta[name=\"description\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40507,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[name=\"description\"]')\n"
+    },
+    {
+      "index": 4,
+      "id": "s05",
+      "action": "extract",
+      "params": {
+        "id": "s05",
+        "action": "extract",
+        "name": "sprache_html",
+        "target": {
+          "strategy": "css",
+          "value": "html"
+        },
+        "attribute": "lang",
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "sprache_html"
+      }
+    },
+    {
+      "index": 5,
+      "id": "s06",
+      "action": "extract",
+      "params": {
+        "id": "s06",
+        "action": "extract",
+        "name": "viewport_meta",
+        "target": {
+          "strategy": "css",
+          "value": "meta[name=\"viewport\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "viewport_meta"
+      }
+    },
+    {
+      "index": 6,
+      "id": "s07",
+      "action": "extract",
+      "params": {
+        "id": "s07",
+        "action": "extract",
+        "name": "canonical",
+        "target": {
+          "strategy": "css",
+          "value": "link[rel=\"canonical\"]"
+        },
+        "attribute": "href",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40506,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('link[rel=\"canonical\"]')\n"
+    },
+    {
+      "index": 7,
+      "id": "s08",
+      "action": "extract",
+      "params": {
+        "id": "s08",
+        "action": "extract",
+        "name": "og_titel",
+        "target": {
+          "strategy": "css",
+          "value": "meta[property=\"og:title\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40508,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:title\"]')\n"
+    },
+    {
+      "index": 8,
+      "id": "s09",
+      "action": "extract",
+      "params": {
+        "id": "s09",
+        "action": "extract",
+        "name": "og_bild",
+        "target": {
+          "strategy": "css",
+          "value": "meta[property=\"og:image\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40508,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:image\"]')\n"
+    },
+    {
+      "index": 9,
+      "id": "s10",
+      "action": "extract",
+      "params": {
+        "id": "s10",
+        "action": "extract",
+        "name": "robots_meta",
+        "target": {
+          "strategy": "css",
+          "value": "meta[name=\"robots\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 3,
+      "result": {
+        "name": "robots_meta"
+      }
+    },
+    {
+      "index": 10,
+      "id": "s11",
+      "action": "extract",
+      "params": {
+        "id": "s11",
+        "action": "extract",
+        "name": "theme_color",
+        "target": {
+          "strategy": "css",
+          "value": "meta[name=\"theme-color\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40507,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[name=\"theme-color\"]')\n"
+    },
+    {
+      "index": 11,
+      "id": "s12",
+      "action": "extract",
+      "params": {
+        "id": "s12",
+        "action": "extract",
+        "name": "h1_ueberschriften",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 20,
+      "result": {
+        "name": "h1_ueberschriften"
+      }
+    },
+    {
+      "index": 12,
+      "id": "s13",
+      "action": "extract",
+      "params": {
+        "id": "s13",
+        "action": "extract",
+        "name": "h2_ueberschriften",
+        "target": {
+          "strategy": "css",
+          "value": "h2"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 2,
+      "result": {
+        "name": "h2_ueberschriften"
+      }
+    },
+    {
+      "index": 13,
+      "id": "s14",
+      "action": "extract",
+      "params": {
+        "id": "s14",
+        "action": "extract",
+        "name": "bilder_alternativtexte",
+        "target": {
+          "strategy": "css",
+          "value": "img"
+        },
+        "attribute": "alt",
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "bilder_alternativtexte"
+      }
+    },
+    {
+      "index": 14,
+      "id": "s15",
+      "action": "extract",
+      "params": {
+        "id": "s15",
+        "action": "extract",
+        "name": "knopf_texte",
+        "target": {
+          "strategy": "css",
+          "value": "button"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "knopf_texte"
+      }
+    },
+    {
+      "index": 15,
+      "id": "s16",
+      "action": "extract",
+      "params": {
+        "id": "s16",
+        "action": "extract",
+        "name": "knopf_bedienhilfen",
+        "target": {
+          "strategy": "css",
+          "value": "button"
+        },
+        "attribute": "aria-label",
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 2,
+      "result": {
+        "name": "knopf_bedienhilfen"
+      }
+    },
+    {
+      "index": 16,
+      "id": "s17",
+      "action": "extract",
+      "params": {
+        "id": "s17",
+        "action": "extract",
+        "name": "eingabefelder_typ",
+        "target": {
+          "strategy": "css",
+          "value": "input"
+        },
+        "attribute": "type",
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "eingabefelder_typ"
+      }
+    },
+    {
+      "index": 17,
+      "id": "s18",
+      "action": "extract",
+      "params": {
+        "id": "s18",
+        "action": "extract",
+        "name": "eingabefelder_autocomplete",
+        "target": {
+          "strategy": "css",
+          "value": "input"
+        },
+        "attribute": "autocomplete",
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "eingabefelder_autocomplete"
+      }
+    },
+    {
+      "index": 18,
+      "id": "s19",
+      "action": "extract",
+      "params": {
+        "id": "s19",
+        "action": "extract",
+        "name": "beschriftungen",
+        "target": {
+          "strategy": "css",
+          "value": "label"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "name": "beschriftungen"
+      }
+    },
+    {
+      "index": 19,
+      "id": "s20",
+      "action": "extract",
+      "params": {
+        "id": "s20",
+        "action": "extract",
+        "name": "linktexte",
+        "target": {
+          "strategy": "css",
+          "value": "a"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "linktexte"
+      }
+    },
+    {
+      "index": 20,
+      "id": "s21",
+      "action": "screenshot",
+      "params": {
+        "id": "s21",
+        "action": "screenshot",
+        "name": "01-login-oben",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 47,
+      "result": {
+        "name": "01-login-oben",
+        "bytes": 41063
+      }
+    },
+    {
+      "index": 21,
+      "id": "s22",
+      "action": "screenshot",
+      "params": {
+        "id": "s22",
+        "action": "screenshot",
+        "name": "02-login-ganze-seite",
+        "fullPage": true
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 27,
+      "result": {
+        "name": "02-login-ganze-seite",
+        "bytes": 41063
+      }
+    },
+    {
+      "index": 22,
+      "id": "s23",
+      "action": "httpRequest",
+      "params": {
+        "id": "s23",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://smejj.com/robots.txt",
+        "expectStatus": 200,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 200,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 23,
+      "id": "s24",
+      "action": "httpRequest",
+      "params": {
+        "id": "s24",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://smejj.com/sitemap.xml",
+        "expectStatus": 200,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 143,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 24,
+      "id": "s25",
+      "action": "httpRequest",
+      "params": {
+        "id": "s25",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://smejj.com/favicon.ico",
+        "expectStatus": 200,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 117,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 25,
+      "id": "s26",
+      "action": "httpRequest",
+      "params": {
+        "id": "s26",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://smejj.com/manifest.webmanifest",
+        "expectStatus": 200,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 99,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 26,
+      "id": "s27",
+      "action": "closeBrowser",
+      "params": {
+        "id": "s27",
+        "action": "closeBrowser"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 33,
+      "result": {}
+    }
+  ]
+}

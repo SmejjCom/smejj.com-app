@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "planId": "pruefbericht-smejj-login-v1",
+  "createdAt": "2026-07-27T02:00:00.000Z",
+  "capsuleRef": "maus-pruefbericht-smejj-2026-07-26",
+  "planner": { "modelId": "handautor-claude-fable-5", "promptTemplateVersion": "handautor-v1" },
+  "goal": "Pruefbericht fuer die oeffentliche Eingangsseite von smejj.com (Anmeldeseite — genau das sehen abgemeldete Besucher und Suchmaschinen). Die Maus ERHEBT nur Fakten (SEO-Angaben, Ueberschriften, Alternativtexte, Bedienhilfen, technische Standarddateien); die Bewertung macht danach ein Mensch/Modell. Erhebung ohne Anmeldung, ohne Eingaben, ohne Modellaufrufe.",
+  "policy": {
+    "domainAllowlist": ["smejj.com", "www.smejj.com"],
+    "budget": {
+      "maxActions": 60,
+      "maxLocalRetries": 1,
+      "maxPlannerRoundtrips": 0,
+      "maxDurationMs": 300000,
+      "defaultActionTimeoutMs": 20000
+    },
+    "visionAllowed": false,
+    "artifacts": { "trace": false, "har": false, "consoleLog": true, "screenshotOnError": true }
+  },
+  "steps": [
+    { "id": "s01", "action": "openBrowser", "viewport": { "width": 1365, "height": 900 } },
+    { "id": "s02", "action": "navigate", "url": "https://smejj.com/auth/login/", "waitUntil": "networkidle", "note": "Eingangsseite fuer Abgemeldete (Auth-Gate leitet hierher)." },
+
+    { "id": "s03", "action": "extract", "name": "seitentitel", "target": { "strategy": "css", "value": "head title" }, "onFailure": "continue" },
+    { "id": "s04", "action": "extract", "name": "meta_beschreibung", "target": { "strategy": "css", "value": "meta[name=\"description\"]" }, "attribute": "content", "onFailure": "continue" },
+    { "id": "s05", "action": "extract", "name": "sprache_html", "target": { "strategy": "css", "value": "html" }, "attribute": "lang", "onFailure": "continue" },
+    { "id": "s06", "action": "extract", "name": "viewport_meta", "target": { "strategy": "css", "value": "meta[name=\"viewport\"]" }, "attribute": "content", "onFailure": "continue" },
+    { "id": "s07", "action": "extract", "name": "canonical", "target": { "strategy": "css", "value": "link[rel=\"canonical\"]" }, "attribute": "href", "onFailure": "continue" },
+    { "id": "s08", "action": "extract", "name": "og_titel", "target": { "strategy": "css", "value": "meta[property=\"og:title\"]" }, "attribute": "content", "onFailure": "continue" },
+    { "id": "s09", "action": "extract", "name": "og_bild", "target": { "strategy": "css", "value": "meta[property=\"og:image\"]" }, "attribute": "content", "onFailure": "continue" },
+    { "id": "s10", "action": "extract", "name": "robots_meta", "target": { "strategy": "css", "value": "meta[name=\"robots\"]" }, "attribute": "content", "onFailure": "continue" },
+    { "id": "s11", "action": "extract", "name": "theme_color", "target": { "strategy": "css", "value": "meta[name=\"theme-color\"]" }, "attribute": "content", "onFailure": "continue" },
+
+    { "id": "s12", "action": "extract", "name": "h1_ueberschriften", "target": { "strategy": "css", "value": "h1" }, "multiple": true, "onFailure": "continue" },
+    { "id": "s13", "action": "extract", "name": "h2_ueberschriften", "target": { "strategy": "css", "value": "h2" }, "multiple": true, "onFailure": "continue" },
+
+    { "id": "s14", "action": "extract", "name": "bilder_alternativtexte", "target": { "strategy": "css", "value": "img" }, "attribute": "alt", "multiple": true, "onFailure": "continue" },
+    { "id": "s15", "action": "extract", "name": "knopf_texte", "target": { "strategy": "css", "value": "button" }, "multiple": true, "onFailure": "continue" },
+    { "id": "s16", "action": "extract", "name": "knopf_bedienhilfen", "target": { "strategy": "css", "value": "button" }, "attribute": "aria-label", "multiple": true, "onFailure": "continue" },
+    { "id": "s17", "action": "extract", "name": "eingabefelder_typ", "target": { "strategy": "css", "value": "input" }, "attribute": "type", "multiple": true, "onFailure": "continue" },
+    { "id": "s18", "action": "extract", "name": "eingabefelder_autocomplete", "target": { "strategy": "css", "value": "input" }, "attribute": "autocomplete", "multiple": true, "onFailure": "continue" },
+    { "id": "s19", "action": "extract", "name": "beschriftungen", "target": { "strategy": "css", "value": "label" }, "multiple": true, "onFailure": "continue" },
+    { "id": "s20", "action": "extract", "name": "linktexte", "target": { "strategy": "css", "value": "a" }, "multiple": true, "onFailure": "continue" },
+
+    { "id": "s21", "action": "screenshot", "name": "01-login-oben", "fullPage": false },
+    { "id": "s22", "action": "screenshot", "name": "02-login-ganze-seite", "fullPage": true },
+
+    { "id": "s23", "action": "httpRequest", "method": "GET", "url": "https://smejj.com/robots.txt", "expectStatus": 200, "onFailure": "continue" },
+    { "id": "s24", "action": "httpRequest", "method": "GET", "url": "https://smejj.com/sitemap.xml", "expectStatus": 200, "onFailure": "continue" },
+    { "id": "s25", "action": "httpRequest", "method": "GET", "url": "https://smejj.com/favicon.ico", "expectStatus": 200, "onFailure": "continue" },
+    { "id": "s26", "action": "httpRequest", "method": "GET", "url": "https://smejj.com/manifest.webmanifest", "expectStatus": 200, "onFailure": "continue" },
+
+    { "id": "s27", "action": "closeBrowser" }
+  ]
+}
