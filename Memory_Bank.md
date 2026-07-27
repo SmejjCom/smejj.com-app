@@ -5,6 +5,15 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-26] PREMIUM-STIMME LIVE auf Zeabur-CPU (Piper, sw v143, Bridge v102) — GPU-Worker gestoppt
+- Typ: verified success (E2E live: App -> Zeabur-Bridge -> Piper -> WebAudio, voice/tts:200 hoerbar). Freigabe: "Wir haben feste Server zeabur.com, nutze das 24 Stunden" (Wof Kadavanich, 2026-07-26).
+- KOSTEN: smejj-voice-tts (Salad-GPU) GESTOPPT — Premium-Stimme laeuft jetzt KOSTENLOS im Zeabur-Flat-Paket (6 USD/Mo, ohnehin bezahlt). Der Salad-Schluessel-Blocker ist damit komplett umgangen.
+- NEU Zeabur-Dienst smejj-voice-piper: python:3.11-slim, Command: pip install piper-tts flask + python -m piper.download_voices de_DE-thorsten-medium + python -m piper.http_server --host 0.0.0.0 --port 8080 -m de_DE-thorsten-medium --data-dir /tmp/piper. NUR privat erreichbar (smejj-voice-piper.zeabur.internal:8080, keine oeffentliche Domain).
+- STOLPERSTEINE (alle geloest): (1) piper-tts 1.6 laedt Stimmen NICHT mehr automatisch -> download_voices zwingend, sonst Crash+Suspend. (2) API ist POST /synthesize mit JSON {text} (GET / und Winz-Texte liefern die HTML-Demo-Seite!). (3) Probe: echter Satz + RIFF-Kopfpruefung statt Content-Type. (4) Zeabur-Restart-Klick kann auf den FALSCHEN Dienst gehen (URL-Redirect) — vor Restart Dienstnamen im DOM verifizieren; genau so wurde einmal die Maus-Engine mitgestartet (folgenlos).
+- Bridge v102: SMEJJ_VOICE_TTS_KIND=piper|xtts, SMEJJ_VOICE_TTS_LANGS=de (Sprach-Gate: andere Sprachen -> Browser-Stimme), Status nimmt {language}. Client (v143) sendet Sprache beim Status-Check; voiceStatus/voiceTts zeigen auf die Zeabur-Bridge.
+- Zeabur-Env-Dialoge: Werte im Erstell-Dialog kommen NICHT an — immer nachtraeglich via Variable-Tab (+Add, Bulk-Paste ins Key-Feld) + Restart. Start-Command aendern: Dienst -> Settings-TAB (nicht Projekt-Settings).
+- Messwerte: TTS erster Ton ~0,5-1,1 s je Satz (22 kHz WAV); Klangprobe an Betreiber geliefert (stimme3.wav). Restpunkt: XTTS-GPU-Pfad bleibt im Code (KIND=xtts) fuer spaeteres Upgrade.
+
 ### [2026-07-26] MAUS-SELBSTTEST iMild.com — Betreiber-Website mitgeprueft, 46/46 gruen (0 EUR)
 - Typ: verified success. Freigabe: Betreiber gab den Ordner "iMild.com App" frei mit "mach jetzt komplett fertig, lass nichts offen" (Wof Kadavanich, 2026-07-26). Capsule: job_maus_selbsttest_20260726 (result-imild/).
 - WAS: Zweiter Plan `workers/maus-engine/plaene/selbsttest-imild-com-v1.json` (46 Schritte): Startseite + alle 11 Navigationsseiten (about/brands/careers/conax/contact/investors/legal/newsroom/smejj/smyst), Login-Formular (#auth-form/#f-email/#f-password/#auth-submit/#tab-register), Backend api.imild.com/auth/me MUSS 401 liefern (fail-closed), sw.js 200. Engine unveraendert — nur ein weiterer Plan; das belegt die Plattform-Eigenschaft der Maus-Engine projektuebergreifend.
