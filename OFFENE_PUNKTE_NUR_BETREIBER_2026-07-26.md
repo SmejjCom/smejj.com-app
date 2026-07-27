@@ -80,7 +80,35 @@ Ende-zu-Ende testen, dokumentieren, committen, pushen.
 E-Mail-Link (seit 2026-07-26 repariert), Passwort, Google und Passkey
 funktionieren vollstaendig. Der GitHub-Knopf bleibt schlicht ausgeblendet.
 
-## B) iMild.com — OAuth-Login (Google / GitHub / GitLab)
+## C) iMild.com — 5 Website-Verbesserungen: gebaut + geprueft, Deploy blockiert
+
+**Zustand:** Alle 5 vom Maus-Pruefbericht gefundenen Punkte sind umgesetzt und
+lokal im echten Browser verifiziert (23/23 gruen, 0 Konsolenfehler, Design
+pixelgenau unveraendert). Sie sind NICHT live.
+
+**Warum blockiert:** Chrome ist bei GitHub nur als `SmejjCom` angemeldet.
+Das Live-Repo `iMildcom/imild-site` verlangt Schreibrecht des Kontos
+`iMildcom`; GitHub bietet dem falschen Konto nur "Fork" an, und der
+Kontowechsler zeigt ausschliesslich "Add account" (= Anmeldung mit Passwort).
+Ein SSH-Deploy-Key fuer iMild existiert auf dem Rechner ebenfalls nicht.
+
+**Was der Betreiber tun muss (ca. 1 Minute), eine der drei Wege:**
+
+1. In Chrome bei GitHub als `iMildcom` anmelden (Kontowechsler -> Add account).
+2. ODER in `iMildcom/imild-site` -> Settings -> Collaborators das Konto
+   `SmejjCom` mit Schreibrecht hinzufuegen.
+3. ODER einen Deploy-Key fuer `iMildcom/imild-site` hinterlegen.
+
+**Danach uebernimmt die Session:** 5 Dateien deployen (Reihenfolge und
+Soll-Pruefsummen liegen in `iMild.com App/UPLOAD-ZU-GITHUB/2026-07-26-seo-a11y/
+ANLEITUNG.md`), live per SHA-256 gegenpruefen, Maus-Pruefbericht erneut laufen
+lassen, dokumentieren.
+
+**Wenn nichts davon passiert:** Es geht nichts kaputt. Die Seite laeuft
+unveraendert weiter; die Verbesserungen (Google-Vorschautext, Teilen-Vorschau,
+Ueberschriften-Struktur, sprachrichtige Beschreibung) bleiben schlicht aus.
+
+## D) iMild.com — OAuth-Login (Google / GitHub / GitLab)
 
 **Zustand live nachgeprueft am 2026-07-26:** `api.imild.com/auth/me` -> `401`
 (Backend lebt, fail-closed korrekt), `imild.com` -> `200`. E-Mail/Passwort-Login

@@ -1,0 +1,569 @@
+{
+  "actionLog": [
+    {
+      "index": 0,
+      "id": "p01",
+      "action": "openBrowser",
+      "params": {
+        "id": "p01",
+        "action": "openBrowser",
+        "viewport": {
+          "width": 1365,
+          "height": 900
+        }
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 324,
+      "result": {
+        "tabId": "main"
+      }
+    },
+    {
+      "index": 1,
+      "id": "p02",
+      "action": "navigate",
+      "params": {
+        "id": "p02",
+        "action": "navigate",
+        "url": "https://imild.com/",
+        "waitUntil": "networkidle"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 773,
+      "result": {
+        "status": 200,
+        "bannerClosed": false
+      }
+    },
+    {
+      "index": 2,
+      "id": "p03",
+      "action": "extract",
+      "params": {
+        "id": "p03",
+        "action": "extract",
+        "name": "seitentitel",
+        "target": {
+          "strategy": "css",
+          "value": "head title"
+        },
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 2,
+      "result": {
+        "name": "seitentitel"
+      }
+    },
+    {
+      "index": 3,
+      "id": "p04",
+      "action": "extract",
+      "params": {
+        "id": "p04",
+        "action": "extract",
+        "name": "meta_beschreibung",
+        "target": {
+          "strategy": "css",
+          "value": "meta[name=\"description\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue",
+        "note": "Fehlt sie, schreibt Google sich den Vorschautext selbst."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "meta_beschreibung"
+      }
+    },
+    {
+      "index": 4,
+      "id": "p05",
+      "action": "extract",
+      "params": {
+        "id": "p05",
+        "action": "extract",
+        "name": "sprache_html",
+        "target": {
+          "strategy": "css",
+          "value": "html"
+        },
+        "attribute": "lang",
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 0,
+      "result": {
+        "name": "sprache_html"
+      }
+    },
+    {
+      "index": 5,
+      "id": "p06",
+      "action": "extract",
+      "params": {
+        "id": "p06",
+        "action": "extract",
+        "name": "viewport_meta",
+        "target": {
+          "strategy": "css",
+          "value": "meta[name=\"viewport\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue",
+        "note": "Ohne viewport ist die Seite auf Handys unbrauchbar."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "viewport_meta"
+      }
+    },
+    {
+      "index": 6,
+      "id": "p07",
+      "action": "extract",
+      "params": {
+        "id": "p07",
+        "action": "extract",
+        "name": "canonical",
+        "target": {
+          "strategy": "css",
+          "value": "link[rel=\"canonical\"]"
+        },
+        "attribute": "href",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40508,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('link[rel=\"canonical\"]')\n"
+    },
+    {
+      "index": 7,
+      "id": "p08",
+      "action": "extract",
+      "params": {
+        "id": "p08",
+        "action": "extract",
+        "name": "og_titel",
+        "target": {
+          "strategy": "css",
+          "value": "meta[property=\"og:title\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue",
+        "note": "Vorschau beim Teilen in WhatsApp/LinkedIn."
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40508,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:title\"]')\n"
+    },
+    {
+      "index": 8,
+      "id": "p09",
+      "action": "extract",
+      "params": {
+        "id": "p09",
+        "action": "extract",
+        "name": "og_bild",
+        "target": {
+          "strategy": "css",
+          "value": "meta[property=\"og:image\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40507,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:image\"]')\n"
+    },
+    {
+      "index": 9,
+      "id": "p10",
+      "action": "extract",
+      "params": {
+        "id": "p10",
+        "action": "extract",
+        "name": "og_beschreibung",
+        "target": {
+          "strategy": "css",
+          "value": "meta[property=\"og:description\"]"
+        },
+        "attribute": "content",
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 40510,
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:description\"]')\n"
+    },
+    {
+      "index": 10,
+      "id": "p11",
+      "action": "extract",
+      "params": {
+        "id": "p11",
+        "action": "extract",
+        "name": "h1_ueberschriften",
+        "target": {
+          "strategy": "css",
+          "value": "h1"
+        },
+        "multiple": true,
+        "onFailure": "continue",
+        "note": "Genau eine H1 ist die Regel."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 22,
+      "result": {
+        "name": "h1_ueberschriften"
+      }
+    },
+    {
+      "index": 11,
+      "id": "p12",
+      "action": "extract",
+      "params": {
+        "id": "p12",
+        "action": "extract",
+        "name": "h2_ueberschriften",
+        "target": {
+          "strategy": "css",
+          "value": "h2"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 2,
+      "result": {
+        "name": "h2_ueberschriften"
+      }
+    },
+    {
+      "index": 12,
+      "id": "p13",
+      "action": "extract",
+      "params": {
+        "id": "p13",
+        "action": "extract",
+        "name": "h3_ueberschriften",
+        "target": {
+          "strategy": "css",
+          "value": "h3"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 2,
+      "result": {
+        "name": "h3_ueberschriften"
+      }
+    },
+    {
+      "index": 13,
+      "id": "p14",
+      "action": "extract",
+      "params": {
+        "id": "p14",
+        "action": "extract",
+        "name": "bilder_alternativtexte",
+        "target": {
+          "strategy": "css",
+          "value": "img"
+        },
+        "attribute": "alt",
+        "multiple": true,
+        "onFailure": "continue",
+        "note": "Leere Eintraege = Bild ohne Beschreibung (Barrierefreiheit + SEO)."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "bilder_alternativtexte"
+      }
+    },
+    {
+      "index": 14,
+      "id": "p15",
+      "action": "extract",
+      "params": {
+        "id": "p15",
+        "action": "extract",
+        "name": "bilder_quellen",
+        "target": {
+          "strategy": "css",
+          "value": "img"
+        },
+        "attribute": "src",
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "bilder_quellen"
+      }
+    },
+    {
+      "index": 15,
+      "id": "p16",
+      "action": "extract",
+      "params": {
+        "id": "p16",
+        "action": "extract",
+        "name": "bilder_ladeverhalten",
+        "target": {
+          "strategy": "css",
+          "value": "img"
+        },
+        "attribute": "loading",
+        "multiple": true,
+        "onFailure": "continue",
+        "note": "lazy = spaeter laden, spart Ladezeit."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 2,
+      "result": {
+        "name": "bilder_ladeverhalten"
+      }
+    },
+    {
+      "index": 16,
+      "id": "p17",
+      "action": "extract",
+      "params": {
+        "id": "p17",
+        "action": "extract",
+        "name": "links_ziele",
+        "target": {
+          "strategy": "css",
+          "value": "a"
+        },
+        "attribute": "href",
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "links_ziele"
+      }
+    },
+    {
+      "index": 17,
+      "id": "p18",
+      "action": "extract",
+      "params": {
+        "id": "p18",
+        "action": "extract",
+        "name": "links_texte",
+        "target": {
+          "strategy": "css",
+          "value": "a"
+        },
+        "multiple": true,
+        "onFailure": "continue",
+        "note": "Linktexte wie 'hier klicken' sind schlecht fuer SEO und Screenreader."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "links_texte"
+      }
+    },
+    {
+      "index": 18,
+      "id": "p19",
+      "action": "extract",
+      "params": {
+        "id": "p19",
+        "action": "extract",
+        "name": "knopf_beschriftungen",
+        "target": {
+          "strategy": "css",
+          "value": "button"
+        },
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "knopf_beschriftungen"
+      }
+    },
+    {
+      "index": 19,
+      "id": "p20",
+      "action": "extract",
+      "params": {
+        "id": "p20",
+        "action": "extract",
+        "name": "aria_label_knoepfe",
+        "target": {
+          "strategy": "css",
+          "value": "button"
+        },
+        "attribute": "aria-label",
+        "multiple": true,
+        "onFailure": "continue"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 1,
+      "result": {
+        "name": "aria_label_knoepfe"
+      }
+    },
+    {
+      "index": 20,
+      "id": "p21",
+      "action": "screenshot",
+      "params": {
+        "id": "p21",
+        "action": "screenshot",
+        "name": "01-start-oben",
+        "fullPage": false
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 82,
+      "result": {
+        "name": "01-start-oben",
+        "bytes": 172124
+      }
+    },
+    {
+      "index": 21,
+      "id": "p22",
+      "action": "screenshot",
+      "params": {
+        "id": "p22",
+        "action": "screenshot",
+        "name": "02-start-ganze-seite",
+        "fullPage": true
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 60,
+      "result": {
+        "name": "02-start-ganze-seite",
+        "bytes": 172124
+      }
+    },
+    {
+      "index": 22,
+      "id": "p23",
+      "action": "httpRequest",
+      "params": {
+        "id": "p23",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://imild.com/robots.txt",
+        "expectStatus": 200,
+        "onFailure": "continue",
+        "note": "Steuert Suchmaschinen; fehlt sie, ist das ein SEO-Minus."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 238,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 23,
+      "id": "p24",
+      "action": "httpRequest",
+      "params": {
+        "id": "p24",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://imild.com/sitemap.xml",
+        "expectStatus": 200,
+        "onFailure": "continue",
+        "note": "Hilft Google, alle Unterseiten zu finden."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 302,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 24,
+      "id": "p25",
+      "action": "httpRequest",
+      "params": {
+        "id": "p25",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://imild.com/favicon.ico",
+        "expectStatus": 200,
+        "onFailure": "continue"
+      },
+      "ok": false,
+      "attempts": 2,
+      "durationMs": 714,
+      "error": "http_status_404_erwartet_200"
+    },
+    {
+      "index": 25,
+      "id": "p26",
+      "action": "httpRequest",
+      "params": {
+        "id": "p26",
+        "action": "httpRequest",
+        "method": "GET",
+        "url": "https://imild.com/manifest.webmanifest",
+        "expectStatus": 200,
+        "onFailure": "continue",
+        "note": "Fuer Installierbarkeit als App."
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 121,
+      "result": {
+        "status": 200,
+        "bytes": 0
+      }
+    },
+    {
+      "index": 26,
+      "id": "p27",
+      "action": "closeBrowser",
+      "params": {
+        "id": "p27",
+        "action": "closeBrowser"
+      },
+      "ok": true,
+      "attempts": 1,
+      "durationMs": 34,
+      "result": {}
+    }
+  ]
+}

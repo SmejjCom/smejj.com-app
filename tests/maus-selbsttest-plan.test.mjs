@@ -92,6 +92,24 @@ test("iMild-Plan: sprachneutrale Pruefungen, continue-Politik, enge Allowlist", 
   assert.ok(screenshots >= navigations, "jede besuchte Seite braucht einen Screenshot-Beleg");
 });
 
+test("Pruefbericht-Plan sammelt Fakten und bewertet nicht selbst", async () => {
+  const plan = JSON.parse(await readFile(
+    new URL("../workers/maus-engine/plaene/pruefbericht-imild-start-v1.json", import.meta.url), "utf8"));
+  assert.deepEqual(validatePlan(plan), { ok: true, errors: [] });
+  // Kern des Pruefbericht-Modus: die Engine ERHEBT (extract), sie urteilt nie.
+  const extrakte = plan.steps.filter((s) => s.action === "extract");
+  assert.ok(extrakte.length >= 15, `zu wenige Fakten erhoben: ${extrakte.length}`);
+  for (const pflicht of ["meta_beschreibung", "canonical", "og_titel", "h1_ueberschriften", "bilder_alternativtexte"]) {
+    assert.ok(extrakte.some((s) => s.name === pflicht), `Fakt fehlt: ${pflicht}`);
+  }
+  // Fehlende Angaben sind das ERGEBNIS, kein Abbruchgrund.
+  for (const step of plan.steps.filter((s) => ["extract", "httpRequest"].includes(s.action))) {
+    assert.equal(step.onFailure, "continue", `Schritt ${step.id} muss onFailure continue haben`);
+  }
+  assert.deepEqual(plan.policy.domainAllowlist, ["imild.com", "www.imild.com"]);
+  assert.equal(plan.policy.budget.maxPlannerRoundtrips, 0, "kein Modell im Erhebungslauf");
+});
+
 test("Sicherheits-Policy: nur smejj.com, kein Vision, kein Planer-Roundtrip, keine Secrets", async () => {
   const plan = await loadPlan();
   assert.deepEqual(plan.policy.domainAllowlist, ["smejj.com", "www.smejj.com"]);
