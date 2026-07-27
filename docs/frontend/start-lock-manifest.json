@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-27T03:40:21.789Z",
-  "confirmation": "hab (Groq-Key auf Zeabur eingefuegt), mach Rest komplett fertig (Wof Kadavanich, 2026-07-27, Salad-Abloesung Abschluss: Zeabur primaer)",
+  "frozenAt": "2026-07-27T21:25:39.856Z",
+  "confirmation": "Freigabe fuer start lock v3: Ich gebe ausdruecklich frei, dass public/search.js und public/composer-tools.js geaendert werden. 1. search.js: Die globale Suche soll den Chat-Speicher (chat-store.js listChats/getChat) durchsuchen statt nur die Nachrichten des gerade geoeffneten Chats aus dem DOM. 2. composer-tools.js: Der Sprachmodus-Dialog soll den Tastaturfokus beim Oeffnen in den Dialog holen und beim Schliessen an den ausloesenden Knopf zurueckgeben. Es wird keine bestehende Funktion entfernt, umbenannt oder in ihrem sichtbaren Verhalten veraendert. Nach der Aenderung: alle Pruefungen gruen, Start-Lock mit diesem Wortlaut neu einfrieren, danach live deployen und live testen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "b8954d3ab647826cb820d1047ac11eaebe94135ea7740db0b8c3cead7c78f84a",
@@ -17,8 +17,8 @@
     "public/premium-surfaces.js": "20a70b5936a52ff6bcc7491dac2378dd4f6721c3742bd2087519829c960b4c28",
     "public/autonomous-coding.js": "8d749c9fb8674b91b449fe894dc6519df9139f3eebdfd899e2b20c79fd18f7c5",
     "public/autonomous-coding.css": "5c86c7fea0aff304310c7b929cf8cc58fd1d78b1f5ce394f3e7b86cd86bdb8fe",
-    "public/search.js": "8a91514905e59eca1d57596aaec7968751122ff019d383a426b7710b760f2418",
-    "public/composer-tools.js": "8a55958ab82a1b5c6c99efee261b75554f0059fc29bbd769a18182b0147ee3ed",
+    "public/search.js": "09a37f0b1a44d601b1b0dc49f852d6a7711263170b424140486e0356a1b03889",
+    "public/composer-tools.js": "a2684c77e0fff9fe4e042e67eabb440c1ea1522ffd393fc8d22e5a3224e3a089",
     "public/composer-plus-menu.js": "0a3047e090801f23bcc2d05667b27258da443f49c22e4600d0547e752df70e04",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "3701222f370b9788a8d534e3be0c5a5f4df372498660f8d0e2978f152d50b0d5",
