@@ -171,3 +171,21 @@ Wiederherstellen: beide Dateien zurueckkopieren und erneut nach assets/ deployen
 - Tests: tests/onboarding-welcome.test.mjs 4/4 gruen; check:frontend gruen;
   Start-Lock: eigene Dateien unveraendert (sw.js-Meldung stammt von der
   Parallel-Session, nicht von diesem Job).
+
+## Stripe-Live-Aktivierung eingereicht (2026-07-26, Betreiber + Assistent)
+- Betreiber hat die Aktivierung ausgefuellt (EIN, ITIN, Kontovertreter) und
+  eingereicht — Live-Konto acct_1TxXHLQddyxzPlSc aktiv, Banner: "Ueberpruefung
+  laeuft, 2-3 Tage". Assistent hat NUR nicht-sensible Angaben gesetzt
+  (Registered business, Single-member LLC — Betreiber-Bestaetigung "Nur mir
+  allein"); ALLE Steuer-/Ausweis-/Bankdaten ausschliesslich vom Betreiber.
+- Sandbox-Kopieren bot nur "Billing-Einstellungen" an → uebersprungen;
+  stattdessen 3 LIVE-Produkte manuell angelegt (verifiziert, 3 Posten):
+  smejj Plus 9 EUR / smejj Pro 19 EUR / smejj Max 39 EUR, monatlich.
+- Live-Zahlungslinks NOCH NICHT moeglich: "Zahlungen sind noch nicht
+  aktiviert" — erst nach Abschluss der Stripe-Pruefung (und Bankkonto,
+  das der Betreiber spaeter nachtraegt).
+- NAECHSTE SCHRITTE sobald Pruefung durch + Bankkonto da: 3 Live-Zahlungs-
+  links erstellen → STRIPE_PLAN_LINKS in account-privacy.js auf Live-Links
+  umstellen (Achtung: Parallel-Session baut 3b client_reference_id/planLink())
+  → Testmodus-Hinweise ("Abonnieren (Test)", Testkarte) aus Konto-Panel und
+  onboarding-welcome.js entfernen → Live-Test ohne echte Zahlung.
