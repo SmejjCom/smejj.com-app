@@ -236,9 +236,9 @@ test("frontend knows remote browser route and screenshot shell", () => {
   const config = fs.readFileSync("public/config.js", "utf8");
   const pane = fs.readFileSync("public/browser-pane.js", "utf8");
   assert.match(config, /browserRemote:\s*"https:\/\/loganberry-fruit-e3n6k5n10h68cawn\.salad\.cloud\/api\/browser\/remote"/);
-  // Zwischenstand Salad-Abloesung: Salad primaer (Groq-Schnellspur), Zeabur Reserve.
-  assert.match(config, /agent:\s*"https:\/\/starfruit-thyme-cblgn6u06ca2z9d5\.salad\.cloud\/api\/agent"/);
-  assert.match(config, /agentFallback:\s*"https:\/\/smejj-chat-bridge\.zeabur\.app\/api\/agent"/);
+  // Salad-Abloesung abgeschlossen: Zeabur primaer (Groq-Key dort), Salad Reserve.
+  assert.match(config, /agent:\s*"https:\/\/smejj-chat-bridge\.zeabur\.app\/api\/agent"/);
+  assert.match(config, /agentFallback:\s*"https:\/\/starfruit-thyme-cblgn6u06ca2z9d5\.salad\.cloud\/api\/agent"/);
   assert.match(pane, /CLIENT_ROUTES\.api\.browserRemote/);
   assert.match(pane, /viewportWidth/);
   assert.match(pane, /viewportHeight/);
