@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "planId": "pruefbericht-imild-start-v1",
+  "createdAt": "2026-07-27T01:00:00.000Z",
+  "capsuleRef": "maus-pruefbericht-imild-2026-07-26",
+  "planner": { "modelId": "handautor-claude-fable-5", "promptTemplateVersion": "handautor-v1" },
+  "goal": "Pruefbericht statt Selbsttest: Die Maus SAMMELT auf der iMild.com-Startseite die Fakten, aus denen sich Verbesserungsvorschlaege ableiten lassen (SEO-Angaben, Ueberschriftenstruktur, Bild-Alternativtexte, Links, Sprachauszeichnung, Social-Preview, technische Standarddateien) und belegt sie mit Screenshots. Die Bewertung macht danach ein Mensch/Modell — die Engine bewertet nie selbst.",
+  "policy": {
+    "domainAllowlist": ["imild.com", "www.imild.com"],
+    "budget": {
+      "maxActions": 60,
+      "maxLocalRetries": 1,
+      "maxPlannerRoundtrips": 0,
+      "maxDurationMs": 300000,
+      "defaultActionTimeoutMs": 20000
+    },
+    "visionAllowed": false,
+    "artifacts": { "trace": false, "har": false, "consoleLog": true, "screenshotOnError": true }
+  },
+  "steps": [
+    { "id": "p01", "action": "openBrowser", "viewport": { "width": 1365, "height": 900 } },
+    { "id": "p02", "action": "navigate", "url": "https://imild.com/", "waitUntil": "networkidle" },
+
+    { "id": "p03", "action": "extract", "name": "seitentitel", "target": { "strategy": "css", "value": "head title" }, "onFailure": "continue" },
+    { "id": "p04", "action": "extract", "name": "meta_beschreibung", "target": { "strategy": "css", "value": "meta[name=\"description\"]" }, "attribute": "content", "onFailure": "continue", "note": "Fehlt sie, schreibt Google sich den Vorschautext selbst." },
+    { "id": "p05", "action": "extract", "name": "sprache_html", "target": { "strategy": "css", "value": "html" }, "attribute": "lang", "onFailure": "continue" },
+    { "id": "p06", "action": "extract", "name": "viewport_meta", "target": { "strategy": "css", "value": "meta[name=\"viewport\"]" }, "attribute": "content", "onFailure": "continue", "note": "Ohne viewport ist die Seite auf Handys unbrauchbar." },
+    { "id": "p07", "action": "extract", "name": "canonical", "target": { "strategy": "css", "value": "link[rel=\"canonical\"]" }, "attribute": "href", "onFailure": "continue" },
+    { "id": "p08", "action": "extract", "name": "og_titel", "target": { "strategy": "css", "value": "meta[property=\"og:title\"]" }, "attribute": "content", "onFailure": "continue", "note": "Vorschau beim Teilen in WhatsApp/LinkedIn." },
+    { "id": "p09", "action": "extract", "name": "og_bild", "target": { "strategy": "css", "value": "meta[property=\"og:image\"]" }, "attribute": "content", "onFailure": "continue" },
+    { "id": "p10", "action": "extract", "name": "og_beschreibung", "target": { "strategy": "css", "value": "meta[property=\"og:description\"]" }, "attribute": "content", "onFailure": "continue" },
+
+    { "id": "p11", "action": "extract", "name": "h1_ueberschriften", "target": { "strategy": "css", "value": "h1" }, "multiple": true, "onFailure": "continue", "note": "Genau eine H1 ist die Regel." },
+    { "id": "p12", "action": "extract", "name": "h2_ueberschriften", "target": { "strategy": "css", "value": "h2" }, "multiple": true, "onFailure": "continue" },
+    { "id": "p13", "action": "extract", "name": "h3_ueberschriften", "target": { "strategy": "css", "value": "h3" }, "multiple": true, "onFailure": "continue" },
+
+    { "id": "p14", "action": "extract", "name": "bilder_alternativtexte", "target": { "strategy": "css", "value": "img" }, "attribute": "alt", "multiple": true, "onFailure": "continue", "note": "Leere Eintraege = Bild ohne Beschreibung (Barrierefreiheit + SEO)." },
+    { "id": "p15", "action": "extract", "name": "bilder_quellen", "target": { "strategy": "css", "value": "img" }, "attribute": "src", "multiple": true, "onFailure": "continue" },
+    { "id": "p16", "action": "extract", "name": "bilder_ladeverhalten", "target": { "strategy": "css", "value": "img" }, "attribute": "loading", "multiple": true, "onFailure": "continue", "note": "lazy = spaeter laden, spart Ladezeit." },
+
+    { "id": "p17", "action": "extract", "name": "links_ziele", "target": { "strategy": "css", "value": "a" }, "attribute": "href", "multiple": true, "onFailure": "continue" },
+    { "id": "p18", "action": "extract", "name": "links_texte", "target": { "strategy": "css", "value": "a" }, "multiple": true, "onFailure": "continue", "note": "Linktexte wie 'hier klicken' sind schlecht fuer SEO und Screenreader." },
+    { "id": "p19", "action": "extract", "name": "knopf_beschriftungen", "target": { "strategy": "css", "value": "button" }, "multiple": true, "onFailure": "continue" },
+    { "id": "p20", "action": "extract", "name": "aria_label_knoepfe", "target": { "strategy": "css", "value": "button" }, "attribute": "aria-label", "multiple": true, "onFailure": "continue" },
+
+    { "id": "p21", "action": "screenshot", "name": "01-start-oben", "fullPage": false },
+    { "id": "p22", "action": "screenshot", "name": "02-start-ganze-seite", "fullPage": true },
+
+    { "id": "p23", "action": "httpRequest", "method": "GET", "url": "https://imild.com/robots.txt", "expectStatus": 200, "onFailure": "continue", "note": "Steuert Suchmaschinen; fehlt sie, ist das ein SEO-Minus." },
+    { "id": "p24", "action": "httpRequest", "method": "GET", "url": "https://imild.com/sitemap.xml", "expectStatus": 200, "onFailure": "continue", "note": "Hilft Google, alle Unterseiten zu finden." },
+    { "id": "p25", "action": "httpRequest", "method": "GET", "url": "https://imild.com/favicon.ico", "expectStatus": 200, "onFailure": "continue" },
+    { "id": "p26", "action": "httpRequest", "method": "GET", "url": "https://imild.com/manifest.webmanifest", "expectStatus": 200, "onFailure": "continue", "note": "Fuer Installierbarkeit als App." },
+
+    { "id": "p27", "action": "closeBrowser" }
+  ]
+}

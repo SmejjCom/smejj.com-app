@@ -1,0 +1,113 @@
+{
+  "lauf": {
+    "startedAt": "2026-07-27T01:05:11.752Z",
+    "finishedAt": "2026-07-27T01:07:58.167Z",
+    "modus": "lokal (Playwright, 0 EUR)",
+    "ziel": "https://imild.com Startseite"
+  },
+  "planId": "pruefbericht-imild-start-v1",
+  "capsuleRef": "maus-pruefbericht-imild-2026-07-26",
+  "engineOk": false,
+  "abortReason": null,
+  "rejected": false,
+  "errors": [],
+  "schritteGesamt": 27,
+  "schritteFehlgeschlagen": [
+    {
+      "id": "p07",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('link[rel=\"canonical\"]')\n"
+    },
+    {
+      "id": "p08",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:title\"]')\n"
+    },
+    {
+      "id": "p09",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:image\"]')\n"
+    },
+    {
+      "id": "p10",
+      "action": "extract",
+      "error": "locator.getAttribute: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('meta[property=\"og:description\"]')\n"
+    },
+    {
+      "id": "p25",
+      "action": "httpRequest",
+      "error": "http_status_404_erwartet_200"
+    }
+  ],
+  "konsole": [],
+  "extracted": {
+    "seitentitel": "iMild.com — Three products. One vision.",
+    "meta_beschreibung": "iMild.com ist die Dachmarke hinter con.ax, smejj und smyst — Technologie in 51 Sprachen für die ganze Welt.",
+    "sprache_html": "en",
+    "viewport_meta": "width=device-width, initial-scale=1.0",
+    "h1_ueberschriften": [
+      "Three products.One vision."
+    ],
+    "h2_ueberschriften": [],
+    "h3_ueberschriften": [],
+    "bilder_alternativtexte": [],
+    "bilder_quellen": [],
+    "bilder_ladeverhalten": [],
+    "links_ziele": [
+      "./",
+      "./",
+      "about.html",
+      "brands.html",
+      "newsroom.html",
+      "careers.html",
+      "investors.html",
+      "contact.html",
+      "legal.html",
+      "login.html",
+      "brands.html",
+      "about.html",
+      "conax.html",
+      "smejj.html",
+      "smyst.html",
+      "https://con.ax",
+      "https://smejj.com",
+      "https://smyst.com",
+      "newsroom.html",
+      "careers.html",
+      "investors.html",
+      "legal.html",
+      "legal.html"
+    ],
+    "links_texte": [
+      "\n    iMild.com\n  ",
+      "Home",
+      "About",
+      "Brands",
+      "Newsroom",
+      "Careers",
+      "Investors",
+      "Contact",
+      "Legal",
+      "Sign in",
+      "Discover our brands",
+      "Who we are",
+      "\n    →\n    con.ax\n    Social Networking\n    The social network with interactive maps — Clips, Market, Chat, Map and Encounters in one app. Worldwide.\n  ",
+      "\n    →\n    smejj\n    AI Coding OS\n    The autonomous AI operating system for software development. Own model, verified pipeline, full cost control.\n  ",
+      "\n    →\n    smyst\n    Digital AI Twins\n    Your digital AI twin — with your knowledge, your memories. For family, team and posterity.\n  ",
+      "con.ax ↗",
+      "smejj.com ↗",
+      "smyst.com ↗",
+      "Press",
+      "Jobs",
+      "Investors",
+      "Imprint",
+      "Privacy"
+    ],
+    "knopf_beschriftungen": [
+      "☰"
+    ],
+    "aria_label_knoepfe": [
+      "Menü öffnen"
+    ]
+  }
+}
