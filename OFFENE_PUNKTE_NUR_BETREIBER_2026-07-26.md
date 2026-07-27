@@ -54,11 +54,14 @@ smejj.com/auth/login sichtbar; Weiterleitung zu GitHub mit korrekter Client ID,
 Callback und Read-only-Scopes funktioniert; der Abbruch-Pfad (access_denied) wird
 serverseitig sauber mit 403 abgefangen. Google/E-Mail/Passkey/Magic-Link unveraendert.
 
-**LETZTER REST (10 Sekunden, nur Betreiber):** Der gruene Knopf „Authorize SmejjCom"
-auf GitHub wird aus Klickjacking-Schutz nur in einem sichtbaren, fokussierten
-Browser-Tab aktiv — das kann keine Session ausloesen. Einmalig:
-smejj.com/auth/login oeffnen -> „Mit GitHub anmelden" -> gruener Knopf
-„Authorize SmejjCom". Danach ist der Login-Ende-zu-Ende-Nachweis komplett.
+**ENDE-ZU-ENDE VERIFIZIERT 2026-07-27:** Der Betreiber hat die einmalige
+GitHub-Zustimmung erteilt (der gruene Knopf „Authorize SmejjCom" wird aus
+Klickjacking-Schutz nur in einem sichtbaren, fokussierten Tab aktiv — das
+kann keine Automatisierung ausloesen, und das ist korrektes Verhalten).
+Danach wurde der komplette Ablauf automatisch nachgefahren: „Mit GitHub
+anmelden" -> GitHub (ohne erneute Zustimmung) -> Callback -> smejj.com/profile,
+angemeldet. Beweis: Sitzungs-Token traegt `method: github` mit GitHub-eigener
+sub-ID (vorher Google-sub). OAuth-App zaehlt die Autorisierung. Kein Rest offen.
 
 **NEU (Betreiber-Anweisung 2026-07-27):** Hauptserver ist ab sofort Zeabur;
 von Salad wird schrittweise getrennt. Fuer den Auth-Umzug auf Zeabur muessen
