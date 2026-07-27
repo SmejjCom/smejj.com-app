@@ -98,8 +98,8 @@ test("Service Worker cached die neuen Module", () => {
   ]) {
     assert.ok(sw.includes(`"${asset}"`), `${asset} fehlt im Shell-Precache`);
   }
-  // v144 (2026-07-26): Salad-Abloesung Schritt 1 — Zeabur ist Haupt-Endpunkt.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v144"/);
+  // v145 (2026-07-26): Tempo-Korrektur — Salad primaer bis Groq-Key auf Zeabur liegt.
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v145"/);
 });
 
 
