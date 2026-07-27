@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "suiteId": "smejj-1-0-phase1-foundation",
-  "version": "2026-07-21.1",
+  "version": "2026-07-27.1",
   "createdAt": "2026-07-21T12:00:00Z",
   "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite.",
   "immutable": true,
@@ -9,10 +9,10 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "1467fd888de4ea30a7ed81fd28046b74ccf9f758a36ed135c233e4735a66b2e8"
+    "contentSha256": "bc60f5a3ef93ed8d26baaf3795c879a2db73e6b00d000ee61abd71b5b2f4660c"
   },
   "protection": {
-    "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-21.1/manifest.json",
+    "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-27.1/manifest.json",
     "conditionalWrite": "if-none-match-star",
     "overwriteAllowed": false,
     "evaluationArtifactsEligibleForTraining": false,
@@ -127,7 +127,7 @@
       },
       {
         "path": "scripts/check-start-lock.mjs",
-        "sha256": "12ab825f9c62c65582084f36c585d081e05a7e24f81bbf68bbf5f900cfdcc2c4"
+        "sha256": "5892399b32abf24e472a9e9687d2f85738ca8a84f73f337dec1bb4edd10bcdcc"
       },
       {
         "path": "tests/training-manifest-policy.test.mjs",
