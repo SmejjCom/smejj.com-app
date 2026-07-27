@@ -8,7 +8,7 @@ CLOUDFLARE IST VOLLSTÄNDIG ENTFERNT — aus Code, Deploy, Policies, Hosting und
 
 LIVE (alles geprüft):
 - https://smejj.com läuft auf GitHub Pages, Repo SmejjCom/smejj-app-frontend (main, root). Startseite mit vollem Design (Design-Lock intakt), Service Worker v60, keine Konsolenfehler.
-- Impressum + Datenschutz: 200, ausgefüllt (AUS2001 LLC, 30 N Gould St Ste R, Sheridan, WY 82801, USA; Verantwortlicher: Wof Kadavanich; Kontakt s@smejj.com).
+- Impressum + Datenschutz: 200, ausgefüllt (iMild LLC, 2648 International Blvd Ste 301 #285, Oakland, CA 94601, USA; Verantwortlicher: Wof Kadavanich; Kontakt s@smejj.com). Betreiber-Festlegung 2026-07-27: iMild LLC; AUS2001 LLC überall entfernt.
 - DNS bei Spaceship: 4x A auf GitHub-Pages-IPs, www-CNAME auf smejjcom.github.io, MX/SPF für E-Mail-Weiterleitung (Catch-All @smejj.com → smejjcom@gmail.com).
 - 404-Seite mit SPA-Fallback (App-Routen ohne Punkt leiten auf /, Route in sessionStorage "smejj-restore-route").
 - Site-Repo-Struktur: HTML/manifest/sw.js/icons im Root, JS/CSS unter assets/ (index.html verweist absolut auf /assets/*).
