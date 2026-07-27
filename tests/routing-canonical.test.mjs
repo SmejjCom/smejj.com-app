@@ -33,11 +33,31 @@ test("404.html speichert die angefragte App-Route fuer den SPA-Fallback", () => 
 });
 
 test("/home wird nicht als Hauptseite restauriert, sondern sauber auf Root geleitet", () => {
-  assert.match(notFound, /path\.replace\(\/\\\/\$\/,\s*""\) === "\/home"/);
+  // Schreibweise am 2026-07-27 nachgezogen: der Pfad wird jetzt einmal zentral
+  // normalisiert (location.pathname.replace(/\/+$/, "")) und danach verglichen.
+  // Die Zusicherung ist unveraendert — /home leitet ohne Restore auf Root.
+  assert.match(notFound, /path === "\/home"/);
   assert.match(notFound, /location\.replace\("\/"\);\s*\n\s*return;/);
   assert.match(app, /start:\s*"\/"/);
   assert.match(app, /home:\s*"\/"/);
   assert.doesNotMatch(app, /start:\s*"\/home"/);
+});
+
+test("nur bekannte App-Routen werden zur Shell umgeleitet, Tippfehler zeigen die 404-Seite", () => {
+  // QA-Welle 1, Befund F-05: Vorher galt "jeder Pfad ohne Punkt ist eine
+  // App-Route". Ein Vertipper (/gibtesnicht123) landete dadurch in der App,
+  // fand keine Ansicht und bekam die generische Fehlerseite "Aktion blockiert"
+  // mit Kosten-/Provider-Text. Die echte 404-Seite war unerreichbar.
+  assert.match(notFound, /var ROUTES = \[/);
+  assert.match(notFound, /ROUTES\.indexOf\(path\) === -1/);
+  // Jede in app.js gefuehrte App-Route muss in der Whitelist stehen, sonst
+  // zeigt ihr Direktaufruf ploetzlich die 404-Seite.
+  for (const route of SPA_ROUTES) {
+    assert.ok(
+      notFound.includes(`"${route}"`),
+      `App-Route ${route} fehlt in der ROUTES-Whitelist von 404.html.`
+    );
+  }
 });
 
 test("app.js wendet die gespeicherte Restore-Route beim Boot an (Deep-Link-Restore)", () => {
