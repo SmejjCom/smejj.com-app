@@ -43,9 +43,31 @@ weiterhin ueber den bestehenden Weg (Selbsttests unten sind damit gelaufen).
 Der Server kostet 6 $/Monat und kann binnen 7 Tagen ab Kauf (26.07.2026) mit
 Erstattung als Zeabur-Guthaben gekuendigt werden.
 
-## A2) smejj.com — GitHub-Login (Stand 2026-07-26, live nachgeprueft)
+## A2) smejj.com — GitHub-Login (AKTIVIERT 2026-07-27, live nachgeprueft)
 
-**Zustand live:** Alles gebaut, alles verdrahtet, nur das Secret fehlt.
+**ERLEDIGT 2026-07-27 (mit schriftlicher Betreiber-Freigabe):** Client Secret wurde
+erzeugt (Betreiber hat den GitHub-Bestaetigungscode eingegeben), per Zwischenablage
+in `~/.config/smejj.com/env.local` gesichert und per Salad-API auf `smejj-control`
+gesetzt (Version 84, alle 68 Variablen erhalten, Merge verifiziert). Live geprueft:
+`/api/auth/config` meldet `github:true`; der Knopf „Mit GitHub anmelden" ist auf
+smejj.com/auth/login sichtbar; Weiterleitung zu GitHub mit korrekter Client ID,
+Callback und Read-only-Scopes funktioniert; der Abbruch-Pfad (access_denied) wird
+serverseitig sauber mit 403 abgefangen. Google/E-Mail/Passkey/Magic-Link unveraendert.
+
+**LETZTER REST (10 Sekunden, nur Betreiber):** Der gruene Knopf „Authorize SmejjCom"
+auf GitHub wird aus Klickjacking-Schutz nur in einem sichtbaren, fokussierten
+Browser-Tab aktiv — das kann keine Session ausloesen. Einmalig:
+smejj.com/auth/login oeffnen -> „Mit GitHub anmelden" -> gruener Knopf
+„Authorize SmejjCom". Danach ist der Login-Ende-zu-Ende-Nachweis komplett.
+
+**NEU (Betreiber-Anweisung 2026-07-27):** Hauptserver ist ab sofort Zeabur;
+von Salad wird schrittweise getrennt. Fuer den Auth-Umzug auf Zeabur muessen
+mitgenommen werden: alle `SMEJJ_GITHUB_LOGIN_*`-Variablen (Werte in
+`~/.config/smejj.com/env.local`) und die Callback-URL der GitHub-OAuth-App
+(App-ID 3737209) auf den neuen Origin (`https://<zeabur-domain>/api/auth/github/callback`).
+Bis dahin bleibt Auth unveraendert auf `smejj-control` (Salad).
+
+**Urspruenglicher Zustand (2026-07-26):** Alles gebaut, alles verdrahtet, nur das Secret fehlte.
 
 - Knopf „Mit GitHub anmelden" ist im ausgelieferten HTML vorhanden
   (`hidden`, wird automatisch sichtbar sobald der Server `github:true` meldet).
@@ -61,20 +83,19 @@ Erstattung als Zeabur-Guthaben gekuendigt werden.
 - `/api/auth/config` meldet `github:false` — **einzige Ursache: es existiert
   kein Client Secret.** GitHub zeigt selbst: „You need a client secret."
 
-**Was der Betreiber tun muss (ca. 30 Sekunden):**
+**Was der Betreiber tun muss (NEU 2026-07-27, ca. 30 Sekunden, kein Salad-Portal mehr noetig):**
 
 1. github.com -> Settings -> Developer settings -> OAuth Apps ->
    „smejj.com Login" -> **Generate a new client secret**
    (GitHub verlangt dabei Passwort/Passkey — deshalb kann das keine Session).
-2. Den Code **sofort kopieren** (wird nur einmal angezeigt).
-3. Der Session Bescheid geben.
-
-**Danach uebernimmt die Session:** In Salad (Container-Gruppe `smejj-control`,
-Edit -> Environment Variables) beide Variablen anlegen —
-`SMEJJ_GITHUB_LOGIN_CLIENT_ID` = `Ov23liSqth5JlAHAtaZV` traegt die Session
-selbst ein, beim Feld `SMEJJ_GITHUB_LOGIN_CLIENT_SECRET` fuegt der Betreiber
-mit cmd+V ein. Dann speichern, deployen, `github:true` pruefen, GitHub-Login
-Ende-zu-Ende testen, dokumentieren, committen, pushen.
+   Direktlink: https://github.com/settings/applications/3737209
+2. Das neue Secret mit dem **Kopier-Symbol** kopieren (wird nur einmal angezeigt).
+3. **„smejj.com GitHub-Login-Schluessel.command" doppelklicken.** Das Skript
+   nimmt das Secret aus der Zwischenablage (zeigt es nie an), sichert es in
+   `~/.config/smejj.com/env.local`, setzt per Salad-API beide Variablen auf
+   `smejj-control` (Merge — alle bestehenden Variablen bleiben erhalten),
+   leert die Zwischenablage und wartet, bis der Server `github:true` meldet.
+4. Im Chat „weiter" schreiben — die Session testet den Login live Ende-zu-Ende.
 
 **Wenn nichts davon passiert:** Es geht nichts kaputt. Anmeldung per
 E-Mail-Link (seit 2026-07-26 repariert), Passwort, Google und Passkey
