@@ -236,7 +236,9 @@ test("frontend knows remote browser route and screenshot shell", () => {
   const config = fs.readFileSync("public/config.js", "utf8");
   const pane = fs.readFileSync("public/browser-pane.js", "utf8");
   assert.match(config, /browserRemote:\s*"https:\/\/loganberry-fruit-e3n6k5n10h68cawn\.salad\.cloud\/api\/browser\/remote"/);
-  assert.match(config, /agent:\s*"https:\/\/starfruit-thyme-cblgn6u06ca2z9d5\.salad\.cloud\/api\/agent"/);
+  // Salad-Abloesung (2026-07-26): Zeabur ist Haupt-Endpunkt, Salad nur Reserve.
+  assert.match(config, /agent:\s*"https:\/\/smejj-chat-bridge\.zeabur\.app\/api\/agent"/);
+  assert.match(config, /agentFallback:\s*"https:\/\/starfruit-thyme-cblgn6u06ca2z9d5\.salad\.cloud\/api\/agent"/);
   assert.match(pane, /CLIENT_ROUTES\.api\.browserRemote/);
   assert.match(pane, /viewportWidth/);
   assert.match(pane, /viewportHeight/);
