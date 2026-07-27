@@ -86,41 +86,30 @@ funktionieren vollstaendig. Der GitHub-Knopf bleibt schlicht ausgeblendet.
 
 https://github.com/iMildcom/imild-site/pull/1 -> Knopf **"Merge pull request"**.
 
-Enthaelt zwei gepruefte Commits (`229ab2c`, `bafe58b`): Der Google-Vorschautext
-folgt ab dann der gewaehlten Sprache (bisher stand bei englischer Seite deutscher
-Text) — auf allen 12 Seiten und in 51 Sprachen. Dazu die CSS-Vorbereitung fuer
-echte Karten-Ueberschriften. Nach dem Merge deployt GitHub Pages automatisch.
+Jetzt VOLLSTAENDIG — 4 gepruefte Commits (+33/−6 Zeilen):
 
-GitHub meldet "Changes can be cleanly merged". Nach dem Merge laeuft der
-Maus-Pruefbericht zur Gegenkontrolle.
+1. `229ab2c` CSS fuer echte Karten-Ueberschriften (pixelgleich zu vorher)
+2. `bafe58b` Google-Vorschautext folgt der gewaehlten Sprache (alle 12 Seiten,
+   51 Sprachen — behebt: englische Seite zeigte deutschen Google-Text)
+3. `96ea9c4` canonical + Open-Graph-/Twitter-Vorschau statisch (WhatsApp/
+   LinkedIn-Teilen zeigt endlich Titel, Text und Bild)
+4. `a8b4d2d` Produktkarten als echte Ueberschriften h2/h3 (Suchmaschinen +
+   Screenreader sehen die Struktur)
 
-## C) iMild.com — restliche Website-Verbesserungen: gebaut + geprueft, noch nicht live
+Vollpruefung gegen die committeten Dateien: 39/39 gruen (Konsole, Desktop,
+Mobil, DE/EN/FR/AR inkl. RTL, Navigation, Barrierefreiheit, SEO, Favicons,
+Design pixelgleich). Nach dem Merge deployt GitHub Pages automatisch; danach
+laeuft der Maus-Pruefbericht zur Gegenkontrolle.
 
-**Zustand:** Alle 5 vom Maus-Pruefbericht gefundenen Punkte sind umgesetzt und
-lokal im echten Browser verifiziert (23/23 gruen, 0 Konsolenfehler, Design
-pixelgenau unveraendert). Sie sind NICHT live.
+## C) ERLEDIGT — der fruehere Deploy-Blocker ist geloest
 
-**Warum blockiert:** Chrome ist bei GitHub nur als `SmejjCom` angemeldet.
-Das Live-Repo `iMildcom/imild-site` verlangt Schreibrecht des Kontos
-`iMildcom`; GitHub bietet dem falschen Konto nur "Fork" an, und der
-Kontowechsler zeigt ausschliesslich "Add account" (= Anmeldung mit Passwort).
-Ein SSH-Deploy-Key fuer iMild existiert auf dem Rechner ebenfalls nicht.
-
-**Was der Betreiber tun muss (ca. 1 Minute), eine der drei Wege:**
-
-1. In Chrome bei GitHub als `iMildcom` anmelden (Kontowechsler -> Add account).
-2. ODER in `iMildcom/imild-site` -> Settings -> Collaborators das Konto
-   `SmejjCom` mit Schreibrecht hinzufuegen.
-3. ODER einen Deploy-Key fuer `iMildcom/imild-site` hinterlegen.
-
-**Danach uebernimmt die Session:** 5 Dateien deployen (Reihenfolge und
-Soll-Pruefsummen liegen in `iMild.com App/UPLOAD-ZU-GITHUB/2026-07-26-seo-a11y/
-ANLEITUNG.md`), live per SHA-256 gegenpruefen, Maus-Pruefbericht erneut laufen
-lassen, dokumentieren.
-
-**Wenn nichts davon passiert:** Es geht nichts kaputt. Die Seite laeuft
-unveraendert weiter; die Verbesserungen (Google-Vorschautext, Teilen-Vorschau,
-Ueberschriften-Struktur, sprachrichtige Beschreibung) bleiben schlicht aus.
+Der Abschnitt ist Geschichte: Statt Schreibrecht auf `iMildcom/imild-site`
+zu brauchen, laufen Deploys jetzt ueber den Fork `SmejjCom/imild-site`
+(dort besteht Schreibrecht) plus Pull Request — siehe C0. Es bleibt genau
+EIN kosmetischer Rest: `favicon.ico` an der Repo-Wurzel (Binaerdatei, Upload
+in der Session gesperrt; liegt fertig in `iMild.com App/UPLOAD-ZU-GITHUB/
+2026-07-26-seo-a11y/nach-repo-wurzel/`). Wirkung gering, alle Seiten
+verlinken ihr Favicon explizit.
 
 ## D) iMild.com — OAuth-Login (Google / GitHub / GitLab)
 
