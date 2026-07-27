@@ -98,8 +98,9 @@ test("Service Worker cached die neuen Module", () => {
   ]) {
     assert.ok(sw.includes(`"${asset}"`), `${asset} fehlt im Shell-Precache`);
   }
-  // v146 (2026-07-27): Salad-Abloesung abgeschlossen — Zeabur primaer (Groq-Key dort).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v146"/);
+  // v148 (2026-07-27): Stufe 2 — Seiten-Kontext fuer das Modell (browser-context.js).
+  assert.ok(sw.includes('"/assets/browser-context.js"'), "browser-context.js fehlt im Shell-Precache");
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v148"/);
 });
 
 

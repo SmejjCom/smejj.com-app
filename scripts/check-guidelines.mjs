@@ -30,8 +30,16 @@ const MAX_LINES = 800;
 // Import-Zeile wurde nur erweitert. Die Logik liegt in public/chat-markdown.js
 // (90 Zeilen). Ab diesem Stand wieder eingefroren; die Aufteilung von app.js
 // bleibt eingeplant und braucht eine Design-Lock-Freigabe.
+// app.js-Baseline 1404 -> 1405 am 2026-07-27: Seiten-Kontext fuer das Modell
+// (Stufe 2). Schriftliche Freigabe: "FREIGABE — Startseite Stufe 2 ... Ich gebe
+// Aenderungen an public/app.js frei ... Inhalt der Browser-Leiste gelangt in den
+// Modellkontext" (Wof Kadavanich, 2026-07-27). Genau +1 Zeile: der Import von
+// groundTask. Die beiden Aufrufstellen wurden nur ERWEITERT (task -> await
+// groundTask(task)), nicht vermehrt. Die gesamte Logik liegt in
+// public/browser-context.js (137 Zeilen), damit app.js nicht weiter waechst.
+// Ab diesem Stand wieder eingefroren; die Aufteilung von app.js bleibt eingeplant.
 const LEGACY_BASELINE = new Map([
-  ["public/app.js", 1404],
+  ["public/app.js", 1405],
   // styles.css-Baseline 1552 -> 1565 am 2026-07-04: .visually-hidden fuer das
   // H1 der Startseite (Freigabe "Ja, Option A + Labels"); ab hier wieder eingefroren.
   ["public/styles.css", 1565],

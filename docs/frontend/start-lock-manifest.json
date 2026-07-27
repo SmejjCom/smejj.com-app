@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-27T21:25:39.856Z",
-  "confirmation": "Freigabe fuer start lock v3: Ich gebe ausdruecklich frei, dass public/search.js und public/composer-tools.js geaendert werden. 1. search.js: Die globale Suche soll den Chat-Speicher (chat-store.js listChats/getChat) durchsuchen statt nur die Nachrichten des gerade geoeffneten Chats aus dem DOM. 2. composer-tools.js: Der Sprachmodus-Dialog soll den Tastaturfokus beim Oeffnen in den Dialog holen und beim Schliessen an den ausloesenden Knopf zurueckgeben. Es wird keine bestehende Funktion entfernt, umbenannt oder in ihrem sichtbaren Verhalten veraendert. Nach der Aenderung: alle Pruefungen gruen, Start-Lock mit diesem Wortlaut neu einfrieren, danach live deployen und live testen.",
+  "frozenAt": "2026-07-27T23:16:58.536Z",
+  "confirmation": "FREIGABE — Startseite Stufe 2 (Wof Kadavanich, 2026-07-27): Start-Lock fuer public/app.js (Automatik als Werkzeug im Tool-Calling, Inhalt der Browser-Leiste in den Modellkontext) und public/sw.js (Cache-Version nachziehen, danach neu einfrieren).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "b8954d3ab647826cb820d1047ac11eaebe94135ea7740db0b8c3cead7c78f84a",
@@ -10,7 +10,7 @@
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
     "public/composer-tools.css": "2dc316dfbc73da293910b7236bf58c06c72edf325d6f7cbb5fdd2eb0fbbebddb",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "586bfb56a9eff56f385c0a38ce3bd16fad17eab24d2d1e9c9e791e5db52a0343",
+    "public/app.js": "d67d2edd4037af7a04b5a4a644d665b809f9b1f90201e4c7884993a875c07ae6",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "790eaf754a78ba474d93b97a119eb3eb04a64aef2adb3304ca654269301c3c68",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "4f0eb5873fe4ee39e2dc4a4285db66a231588f7ab3a18747a1ca3096bff43882",
+    "public/sw.js": "cc05231b4fe4481f67f1e1bd5accf831d923a14099077fcab2dbe67a164c5388",
     "public/manifest.webmanifest": "74982e08d5ea4bb2c7042bdf5b8965ea49c823d21ea6e892193ddecff21fcc90"
   }
 }
