@@ -43,6 +43,43 @@ weiterhin ueber den bestehenden Weg (Selbsttests unten sind damit gelaufen).
 Der Server kostet 6 $/Monat und kann binnen 7 Tagen ab Kauf (26.07.2026) mit
 Erstattung als Zeabur-Guthaben gekuendigt werden.
 
+## A2) smejj.com — GitHub-Login (Stand 2026-07-26, live nachgeprueft)
+
+**Zustand live:** Alles gebaut, alles verdrahtet, nur das Secret fehlt.
+
+- Knopf „Mit GitHub anmelden" ist im ausgelieferten HTML vorhanden
+  (`hidden`, wird automatisch sichtbar sobald der Server `github:true` meldet).
+- Frontend-Logik `startGithubLogin()` vorhanden.
+- Server-Routen live: `GET /api/auth/github` und
+  `GET /api/auth/github/callback` antworten beide `503`
+  „GitHub Login ist noch nicht konfiguriert." (fail-closed, korrekt).
+- OAuth-App „smejj.com Login" korrekt: Client ID `Ov23liSqth5JlAHAtaZV`,
+  Homepage `https://smejj.com`, Callback-URL zeichengenau identisch mit der
+  vom Server erwarteten Adresse
+  `https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/auth/github/callback`
+  (beide 76 Zeichen, verifiziert).
+- `/api/auth/config` meldet `github:false` — **einzige Ursache: es existiert
+  kein Client Secret.** GitHub zeigt selbst: „You need a client secret."
+
+**Was der Betreiber tun muss (ca. 30 Sekunden):**
+
+1. github.com -> Settings -> Developer settings -> OAuth Apps ->
+   „smejj.com Login" -> **Generate a new client secret**
+   (GitHub verlangt dabei Passwort/Passkey — deshalb kann das keine Session).
+2. Den Code **sofort kopieren** (wird nur einmal angezeigt).
+3. Der Session Bescheid geben.
+
+**Danach uebernimmt die Session:** In Salad (Container-Gruppe `smejj-control`,
+Edit -> Environment Variables) beide Variablen anlegen —
+`SMEJJ_GITHUB_LOGIN_CLIENT_ID` = `Ov23liSqth5JlAHAtaZV` traegt die Session
+selbst ein, beim Feld `SMEJJ_GITHUB_LOGIN_CLIENT_SECRET` fuegt der Betreiber
+mit cmd+V ein. Dann speichern, deployen, `github:true` pruefen, GitHub-Login
+Ende-zu-Ende testen, dokumentieren, committen, pushen.
+
+**Wenn nichts davon passiert:** Es geht nichts kaputt. Anmeldung per
+E-Mail-Link (seit 2026-07-26 repariert), Passwort, Google und Passkey
+funktionieren vollstaendig. Der GitHub-Knopf bleibt schlicht ausgeblendet.
+
 ## B) iMild.com — OAuth-Login (Google / GitHub / GitLab)
 
 **Zustand live nachgeprueft am 2026-07-26:** `api.imild.com/auth/me` -> `401`
