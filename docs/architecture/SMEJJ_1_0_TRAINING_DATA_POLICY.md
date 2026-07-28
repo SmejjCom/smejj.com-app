@@ -251,3 +251,21 @@ Datenschutzinformation, Aufbewahrungs- und Löschkonzept, Schlüsselverwaltung
 und der IDrive-e2-Writer gemeinsam abzunehmen. Erst danach darf ein kleiner
 First-Party-Seed-Datensatz erzeugt werden; Training bleibt bis zu einer eigenen
 schriftlichen Freigabe gesperrt.
+
+## Anhang: Daumen-Bewertung im Chat (entschieden 2026-07-28)
+
+Jede Antwort im Chat hat einen 👍/👎-Knopf (`public/chat-messages.js`,
+`setRating`). Das ist eine bewusst **endgültige** Architekturentscheidung, kein
+offener Punkt:
+
+- Die Bewertung bleibt ausschließlich lokal im Browser (IndexedDB über
+  `chat-store.js`) und dient dem Nutzer selbst als persönliche Markierung.
+- Sie wird **nicht** an den Control Server gesendet und **nicht** automatisch
+  zu Trainingsdaten. Das würde eine Auswertungsstrecke, Serverlast und —
+  wegen der Regel oben — eine eigene Einwilligungs- und Rechteprüfung
+  voraussetzen, die es nicht gibt.
+- Sollte der Betreiber eine Rückmeldestrecke wünschen, ist das ein neuer,
+  eigenständiger Auftrag mit eigener schriftlicher Freigabe (Capture-Umfang,
+  Aufbewahrung, Einwilligung) — kein Nachtrag zu diesem Feature.
+
+Dieser Abschnitt schließt den Punkt ab; er ist nicht als TODO zu lesen.

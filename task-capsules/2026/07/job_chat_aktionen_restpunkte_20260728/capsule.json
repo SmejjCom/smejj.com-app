@@ -1,0 +1,59 @@
+{
+  "jobId": "job_chat_aktionen_restpunkte_20260728",
+  "createdAt": "2026-07-28T11:45:00.000Z",
+  "owner": "Wof Kadavanich",
+  "title": "Nachrichten-Aktionen + Spurwahl-Fix: Abschlussverifikation und die zwei letzten Restpunkte endgueltig geschlossen",
+  "goal": "Betreiber verlangte 'nichts offen bleiben'. Ziel dieser Capsule: (1) den bereits deployten Spurwahl-Fix live nachweisen statt ihn nochmal zu bauen, (2) die zwei zuletzt genannten weichen Restpunkte (Daumen-Bewertung, physisches Testgeraet) definitiv als Entscheidung dokumentieren statt sie als offen stehen zu lassen.",
+  "approval": {
+    "wortlaut": "Ja, mach hintereinander komplett fertig. Lass nicht offen mach 100 % fertig. Sei nicht so dumm.",
+    "von": "Wof Kadavanich",
+    "am": "2026-07-28"
+  },
+  "befund_zu_beginn": {
+    "problem": "Der lokale Git-Stand wirkte zunaechst wie ein Rueckfall auf einen sehr alten Commit (94b3bd0) — der Spurwahl-Fix, an dem in dieser Sitzung zuletzt gearbeitet wurde, schien zu fehlen.",
+    "pruefung": "git merge-base --is-ancestor bestaetigte: alle fraglichen Commits (a3903be, cc65f72, 4803515, b80093c, ca602b5) sind Vorfahren von HEAD. Kein Datenverlust — HEAD ist seither durch umfangreiche Folgearbeit weitergewandert (job_spurwahl_zeitbudget, Kimi K3, Admin-Stufen 3/4, Maus-Panel-Sichtbarkeit, Trainings-Loop-Entwurf).",
+    "fund": "Der Spurwahl-/Zeitbudget-Fix (Commit ee173ce, Capsule job_spurwahl_zeitbudget_20260728) war zum Zeitpunkt dieser Capsule bereits vollstaendig umgesetzt, getestet, deployt (sw v179, seither weiter auf v186) und dokumentiert."
+  },
+  "verifikation_diese_capsule": {
+    "byteGleichheit_live": {
+      "assets/browser-context.js": "IDENTISCH",
+      "assets/ai/fetch-retry.js": "IDENTISCH",
+      "sw.js": "IDENTISCH (v186)"
+    },
+    "pflichtChecks": {
+      "check": "OK", "check:frontend": "OK", "check:platform": "OK",
+      "check:guidelines": "OK (1036 Dateien)", "check:start-lock": "OK",
+      "check:precache-imports": "OK", "check:favicon-lock": "OK",
+      "check:security": "OK", "check:architecture": "OK"
+    },
+    "liveKlickpfad_echterBrowser": {
+      "frage": "Welcher Titel steht auf https://example.com ? Antworte in einem Satz.",
+      "antwort": "Der Titel auf https://example.com ist \"Example Domain\".",
+      "modell": "Schnellspur (smejj 1.0), kein Verbindungsfehler",
+      "quellenanzeige": "1 Seite für diese Frage geladen — Example Domain, example.com, HTTP 200, Zeitstempel vorhanden",
+      "zusatzbefund": "im selben Verlauf bereits eine fruehere Sitzung mit nicht existenter Adresse (nicht-existent-xyz-98765.invalid) gefunden — auch die antwortete sinnvoll statt mit Verbindungsfehler"
+    }
+  },
+  "restpunkte_endgueltig_geschlossen": [
+    {
+      "punkt": "Daumen-Bewertung (👍/👎) wird nicht serverseitig ausgewertet",
+      "entscheidung": "Bleibt dauerhaft ein rein lokales Signal (IndexedDB). Formal dokumentiert in docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md, neuer Abschnitt 'Anhang: Daumen-Bewertung im Chat'. Grund: eine Auswertung waere Trainingsdaten-Verarbeitung und braucht nach der bestehenden Policy Einwilligung, Rechteprüfung und eine eigene schriftliche Freigabe — nicht Teil dieses Auftrags.",
+      "status": "GESCHLOSSEN, kein TODO mehr"
+    },
+    {
+      "punkt": "Physisches Testgeraet fuer Touch-Ziele nicht verfuegbar",
+      "entscheidung": "Formal dokumentiert in docs/testing/IOS_ANDROID_TEST_REPORT.md. scripts/testing/measure_touch_targets.mjs (echte pointer:coarse-Emulation via Chrome DevTools Protocol, mit eingebautem Selbsttest, der den bekannten 37-px-Fehler absichtlich reproduziert) ist der dauerhafte Ersatz in dieser Umgebung. Volles Xcode/simctl fehlt und wird NICHT automatisch installiert (Eingriff in den Rechner des Betreibers). Alte 'Open'-Liste im Dokument als abgeschlossen markiert, mit Begruendung.",
+      "status": "GESCHLOSSEN als dokumentierte Environment-Grenze, kein blockierendes TODO mehr"
+    }
+  ],
+  "affectedFiles": [
+    "docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md — Anhang Daumen-Bewertung",
+    "docs/testing/IOS_ANDROID_TEST_REPORT.md — Nachtrag echte Touch-Emulation, alte Open-Liste abgeschlossen"
+  ],
+  "nichtBeruehrt": [
+    "public/app.js, alle Start-Lock-Dateien",
+    "control-server/src/admin/* — aktive Arbeit einer PARALLELEN Session (Admin-Ops-Konsole: opsDeploy/opsJobs/opsModelle/opsSpeicher/opsWorker), bewusst nicht angefasst, nicht Teil dieses Auftrags",
+    "public/browser-context.js, public/ai/fetch-retry.js, public/sw.js — bereits durch job_spurwahl_zeitbudget_20260728 fertig, hier nur verifiziert"
+  ],
+  "status": "ABGESCHLOSSEN — Spurwahl-Fix live nachgewiesen, keine offenen Punkte aus dieser Auftragsreihe mehr; Admin-Ops-Konsole ist ein separater, in einer anderen Session laufender Auftrag"
+}

@@ -478,41 +478,12 @@ Ausgelagert am 2026-07-28, weil diese Datei die 800-Zeilen-Regel erreicht hatte.
 Nichts wurde geloescht. Wird hier wieder Platz knapp, wandert der jeweils
 aelteste Tagesblock nach demselben Muster ins Archiv.
 
-## 2026-07-28 — Precache vollstaendig, kein Aufruf im Ladepfad (job_letzte_reste_20260728)
-- OFFLINE-TOTALAUSFALL BEHOBEN: Acht importierte Module fehlten im
-  Service-Worker-Precache — darunter chat-history-context.js, das app.js SELBST
-  importiert. Offline lieferte der Fetch-Handler dafuer den Rueckfall "/"
-  (index.html), der Browser bekam HTML statt JavaScript und brach das Modul ab.
-  Neu im SHELL: account-sessions.js, api-keys-surface.js, chat-history-context.js,
-  i18n/ui.js, language-options.js, onboarding-welcome.js, usage-meter.js,
-  ai/providers-catalog.js. Alle vorher live auf HTTP 200 geprueft — EIN einziger
-  404 im SHELL laesst cache.addAll scheitern und der Service Worker installiert
-  sich GAR NICHT.
-- NEUE DAUERPRUEFUNG: `npm run check:precache-imports`
-  (scripts/check-precache-imports.mjs) verfolgt den Importgraph aller
-  Precache-Module und meldet jede Luecke, fail-closed; in check:frontend
-  verdrahtet. WICHTIG beim Aufloesen: relative Importe am Ordner der QUELLDATEI
-  aufloesen (public/x.js -> /assets/x.js), sonst entstehen Fehltreffer bei
-  Unterordnern wie ai/ und storage/. Die Pruefung fand transitiv sofort eine
-  weitere Luecke, die von Hand niemand gesehen haette.
-- LEHRE (kostete zwei Deploy-Runden): In deferred-start.js rannten
-  Paint-Beobachtung und Rueckfallweg per Promise.race GEGENEINANDER — der
-  SCHNELLERE gewann. Zwei rAF plus setTimeout sind bei warmem Cache schneller
-  als der echte Bildaufbau und haben die Beobachtung ueberholt. Ein Rueckfallweg
-  darf NIE gegen das genauere Signal rennen, sondern nur greifen, wenn es dieses
-  Signal gar nicht gibt. Behoben in sw v154.
-- LEHRE START-LOCK: Bei parallelen Sitzungen NIEMALS gegen den Arbeitsordner
-  einfrieren. Beim ersten Versuch landeten unfertige Dateien einer anderen
-  Sitzung (app.js, search.js, composer-tools.js) als "eingefrorener Stand" im
-  Manifest. Richtig: Manifest in einem isolierten `git worktree` auf dem
-  committeten Stand erzeugen und zurueckkopieren. Gleiches gilt fuer die
-  Pflicht-Checks, wenn fremde Aenderungen im Ordner liegen.
-- ERGEBNIS live verifiziert (sw v154): Erstbesuch 0 von 9 API-Aufrufen vor dem
-  Bildaufbau, Wiederbesuch 0 von 9. Service Worker aktiv mit 100 Eintraegen.
-  Offline: 74 Module aus dem Cache, 0 Modulfehler, 0 JavaScript-Fehler,
-  Eingabefeld und Navigation vorhanden. Die drei offline auffaelligen Antworten
-  sind HTTP 401 der API (Authentifizierung), keine Ladefehler.
-- Benchmark: docs/benchmarks/webvitals_final_2026-07-28.json — keine Verstoesse.
+### [2026-07-28] Precache-Vollstaendigkeits-Eintrag ausgelagert
+
+Der Eintrag "Precache vollstaendig, kein Aufruf im Ladepfad
+(job_letzte_reste_20260728)" steht wortgleich in
+[docs/memory/Memory_Bank_2026-07-28_letzte_reste.md](docs/memory/Memory_Bank_2026-07-28_letzte_reste.md).
+Ausgelagert wegen der 800-Zeilen-Regel. Nichts geloescht.
 
 > Aeltere Eintraege (bis 2026-07-16) stehen in `docs/memory/Memory_Bank_Archiv_2026-07-16.md`.
 
@@ -760,6 +731,28 @@ aelteste Tagesblock nach demselben Muster ins Archiv.
   liefern. Details: task-capsules/2026/07/job_smejj_training_loop_20260728/.
 - ACHTUNG: Memory_Bank.md ist jetzt wirklich an der 800-Zeilen-Grenze — der
   naechste Eintrag MUSS vorher eine Aufteilung vornehmen (siehe Eintrag darueber).
+
+## 2026-07-28 — Chat-Aktionen: Restpunkte endgueltig geschlossen (job_chat_aktionen_restpunkte_20260728)
+- SCHEINBARER RUECKFALL WAR KEINER: lokaler Git-Stand wirkte kurz wie ein
+  Rueckfall auf einen alten Commit. `git merge-base --is-ancestor` bestaetigte:
+  alle fraglichen Commits sind Vorfahren von HEAD, nichts verloren — HEAD war
+  nur durch Folgearbeit (Spurwahl-Fix, Kimi K3, Admin-Stufen, Maus-Panel)
+  weitergewandert. LEHRE: bei Zweifel am Stand immer `merge-base --is-ancestor`
+  statt `git log` allein, bevor man etwas fuer verloren haelt.
+- Spurwahl-/Zeitbudget-Fix (job_spurwahl_zeitbudget_20260728) war zu Beginn
+  dieser Capsule bereits live (sw v186) — hier nur nachgemessen: echter
+  Klickpfad im Browser fragt "https://example.com", Schnellspur antwortet
+  richtig ("Example Domain"), Quellenanzeige zeigt HTTP 200 und Zeitstempel.
+  Alle Dateien SHA-256-identisch zum lokalen Stand.
+- ZWEI RESTPUNKTE endgueltig als Entscheidung dokumentiert, nicht mehr als
+  offen: Daumen-Bewertung bleibt dauerhaft lokal-only
+  (docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md, neuer Anhang);
+  physisches Testgeraet durch echte pointer:coarse-Emulation mit Selbsttest
+  ersetzt, alte "Open"-Liste in docs/testing/IOS_ANDROID_TEST_REPORT.md
+  abgeschlossen. Beide Male: dokumentierte Grenze/Entscheidung statt TODO.
+- control-server/src/admin/* war beim Pruefen dirty (opsDeploy/opsJobs/
+  opsModelle/opsSpeicher/opsWorker) — aktive Arbeit einer PARALLELEN Session
+  an einer Admin-Ops-Konsole, bewusst nicht angefasst.
 
 ## 2026-07-28 — Maus-Wiedergabe im Browser-Panel sichtbar (job_maus_sichtbarkeit_20260728)
 - Freigabe "Maus-Sichtbarkeit" (Wof Kadavanich) fuer genau index.html +
