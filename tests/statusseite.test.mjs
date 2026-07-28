@@ -21,8 +21,13 @@ const sw = fs.readFileSync("public/sw.js", "utf8");
 const gate = fs.readFileSync("public/auth-gate.js", "utf8");
 const css = fs.readFileSync("public/static-pages.css", "utf8");
 
-test("die Statusseite liegt ausserhalb des Anmelde-Gates", () => {
-  assert.match(gate, /\/\^\\\/status\//, "PUBLIC_PATHS muss /status enthalten");
+test("die Statusseite liegt ausserhalb des Anmelde-Gates — aber nur sie", () => {
+  const routen = fs.readFileSync("public/view-routes.js", "utf8");
+  assert.match(gate, /\/\^\\\/status\\\.html\$\//, "PUBLIC_PATHS muss genau /status.html freigeben");
+  // Die App hat unter "/status" eine eigene, anmeldepflichtige Ansicht. Ein
+  // Praefix-Muster wuerde sie mit oeffnen — deshalb das Dollarzeichen oben.
+  assert.match(routen, /tools: "\/status"/, "Annahme geprueft: /status ist eine App-Ansicht");
+  assert.doesNotMatch(gate, /\/\^\\\/status\//, "Praefix-Muster wuerde die App-Ansicht /status oeffnen");
 });
 
 test("Seite und Skript liegen im Precache", () => {

@@ -188,6 +188,7 @@ function renderSitemap() {
   // (/home, /search, ...) antworten server-seitig mit 404 und gehoeren
   // deshalb NICHT in die Sitemap (Fix 2026-07-03, schriftlich freigegeben).
   const appRoutes = [
+    ["/hilfe.html", "monthly", "0.6"],
     ["/impressum.html", "yearly", "0.3"],
     ["/datenschutz.html", "yearly", "0.3"]
   ];

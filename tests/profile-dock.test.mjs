@@ -114,7 +114,7 @@ test("Service Worker cached die neuen Module", () => {
   // v164 -> v165 am 2026-07-28: Aktionen pro Chat-Nachricht — chat-actions.js,
   // chat-messages.js und chat-actions-menu.js neu im Precache, start-styles.css
   // enthaelt neu chat-actions.css (siehe public/sw.js).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v172"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v174"/);
 });
 
 

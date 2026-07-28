@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T09:34:41.986Z",
-  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ja' auf den Vorschlag Statusseite. Pflicht-Versionssprung sw v172, damit der geaenderte Precache (status.html, status.js) auch Bestandsnutzer erreicht.",
+  "frozenAt": "2026-07-28T09:56:39.475Z",
+  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ja' auf den Vorschlag Hilfeseite. index.html (Hilfe-Link), sw.js (hilfe.html im Precache), static-pages.css (p-hilfe).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "6a86d4637519176d6911b4f42aafe79b0b521e56f0d4e360614e872673c2a554",
+    "public/index.html": "f7e1f29d7bfba6f9c56845a851c1b9adbaf7a7adc007f3ff84216b9c5007a88e",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "be682ac4dd56dcec61371c05c3ee77a9a380013976fadd91dac63a308104d305",
+    "public/sw.js": "4dc233ce28cb46812f34361e14996e09874d948f0794a6ff8611b3a97ad72c1c",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

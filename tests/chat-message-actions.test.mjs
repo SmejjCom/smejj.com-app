@@ -26,12 +26,19 @@ import {
   isRawCandidate,
   metaOf,
   nextAssistantEntry,
+  nextMenuIndex,
   nodesFrom,
+  planEdit,
+  planRegenerate,
+  planRemoval,
+  planSettle,
   previousUserEntry,
   rawOf,
+  restoreNodes,
   roleOf,
   seedMeta,
-  setRating
+  setRating,
+  versionsToStash
 } from "../public/chat-messages.js";
 
 import {
@@ -67,16 +74,47 @@ function el(className, text = "") {
   };
 }
 
-// Geschwister verketten und einen Eltern-Knoten anhaengen.
-function chain(nodes) {
-  const parent = { firstElementChild: nodes[0] || null };
-  nodes.forEach((node, index) => {
-    node.previousElementSibling = nodes[index - 1] || null;
-    node.nextElementSibling = nodes[index + 1] || null;
-    node.parentElement = parent;
+// Ein Log, dessen Knoten sich wirklich einhaengen und entfernen lassen.
+// Damit werden Loeschen, Rueckgaengig und Bearbeiten als Verhalten geprueft,
+// nicht als Quelltext-Muster.
+function verkette(log) {
+  log.children.forEach((node, index) => {
+    node.parentElement = log;
+    node.previousElementSibling = log.children[index - 1] || null;
+    node.nextElementSibling = log.children[index + 1] || null;
+    node.after = (neu) => {
+      const position = log.children.indexOf(node);
+      if (position < 0) return; // bereits entfernt: nichts einhaengen
+      log.children.splice(position + 1, 0, neu);
+      verkette(log);
+    };
+    node.remove = () => {
+      const position = log.children.indexOf(node);
+      if (position < 0) return;
+      log.children.splice(position, 1);
+      verkette(log);
+    };
   });
-  return parent;
+  log.firstElementChild = log.children[0] || null;
 }
+
+function mkLog(nodes = []) {
+  const log = {
+    children: [...nodes],
+    firstElementChild: null,
+    prepend(node) { log.children.unshift(node); verkette(log); },
+    append(node) { log.children.push(node); verkette(log); }
+  };
+  verkette(log);
+  return log;
+}
+
+// Alte Signatur beibehalten: verkettet und liefert den Eltern-Knoten.
+function chain(nodes) {
+  return mkLog(nodes);
+}
+
+const beschriftung = (log) => log.children.map((n) => n.textContent || n.className);
 
 function fakeDocument() {
   return {
@@ -257,6 +295,138 @@ test("entriesUpTo liefert den Verlauf bis einschliesslich dieser Nachricht", () 
   chain(nodes);
   assert.deepEqual(entriesUpTo(nodes[2]), [nodes[0], nodes[2]], "Abzweigen nimmt nur Nachrichten mit");
   assert.equal(entriesUpTo(nodes[4]).length, 3);
+});
+
+// --- Verhalten der Aktionen -------------------------------------------------
+
+// Ein typischer Verlauf: Frage, Antwort, Frage, Antwort — je mit Leiste.
+function beispielLog() {
+  const f1 = el("entry user", "erste Frage");
+  const b1 = el("msg-actions is-user");
+  const a1 = el("entry assistant", "erste Antwort");
+  const b2 = el("msg-actions is-assistant");
+  const f2 = el("entry user", "zweite Frage");
+  const b3 = el("msg-actions is-user");
+  const a2 = el("entry assistant", "zweite Antwort");
+  const b4 = el("msg-actions is-assistant");
+  return { log: mkLog([f1, b1, a1, b2, f2, b3, a2, b4]), f1, b1, a1, b2, f2, b3, a2, b4 };
+}
+
+test("Ab hier loeschen entfernt Nachrichten samt Leisten und zaehlt richtig", () => {
+  const { log, f2, a1 } = beispielLog();
+  const plan = planRemoval(f2);
+  assert.equal(plan.anzahl, 2, "zwei Nachrichten ab hier");
+  assert.equal(plan.nodes.length, 4, "beide Leisten wandern mit — nichts bleibt verwaist");
+  assert.equal(plan.anker, log.children[3], "eingehaengt wird spaeter hinter der Leiste der ersten Antwort");
+  for (const node of plan.nodes) node.remove();
+  assert.deepEqual(beschriftung(log), ["erste Frage", "msg-actions is-user", "erste Antwort", "msg-actions is-assistant"]);
+  assert.equal(a1.nextElementSibling.className, "msg-actions is-assistant");
+});
+
+test("Rueckgaengig stellt die alte Reihenfolge exakt wieder her", () => {
+  const { log } = beispielLog();
+  const vorher = beschriftung(log);
+  const plan = planRemoval(log.children[4]);
+  for (const node of plan.nodes) node.remove();
+  assert.equal(log.children.length, 4);
+  const wieder = restoreNodes(log, plan.nodes, plan.anker);
+  assert.equal(wieder, 4);
+  assert.deepEqual(beschriftung(log), vorher, "Reihenfolge identisch zum Ausgangszustand");
+});
+
+test("Rueckgaengig ganz am Anfang haengt wieder vorn ein", () => {
+  const { log } = beispielLog();
+  const vorher = beschriftung(log);
+  const plan = planRemoval(log.children[0]);
+  assert.equal(plan.anker, null, "vor der ersten Nachricht gibt es keinen Anker");
+  for (const node of plan.nodes) node.remove();
+  assert.equal(log.children.length, 0);
+  restoreNodes(log, plan.nodes, plan.anker);
+  assert.deepEqual(beschriftung(log), vorher);
+});
+
+test("Neu generieren stellt dieselbe Frage und sichert die alte Antwort", () => {
+  const { log, a2, f2 } = beispielLog();
+  const plan = planRegenerate(a2);
+  assert.equal(plan.ok, true);
+  assert.equal(plan.text, "zweite Frage", "es wird die vorherige Frage erneut gestellt");
+  assert.deepEqual(plan.stash.map((v) => v.raw), ["zweite Antwort"], "die alte Antwort wird Fassung 1");
+  assert.equal(plan.entfernen.length, 4, "Frage, ihre Leiste, Antwort und deren Leiste");
+  assert.equal(plan.entfernen[0], f2);
+  for (const node of plan.entfernen) node.remove();
+  assert.deepEqual(beschriftung(log), ["erste Frage", "msg-actions is-user", "erste Antwort", "msg-actions is-assistant"]);
+});
+
+test("Neu generieren ohne vorherige Frage wird abgelehnt", () => {
+  const allein = el("entry assistant", "Antwort ohne Frage");
+  mkLog([allein]);
+  assert.deepEqual(planRegenerate(allein), { ok: false, grund: "keine_frage" });
+});
+
+test("Neu generieren behaelt bereits vorhandene Fassungen statt neu zu schnappschussen", () => {
+  const { a2 } = beispielLog();
+  addVersion(a2, { raw: "alt A", html: "<p>A</p>" });
+  addVersion(a2, { raw: "alt B", html: "<p>B</p>" });
+  const plan = planRegenerate(a2);
+  assert.deepEqual(plan.stash.map((v) => v.raw), ["alt A", "alt B"], "beide bisherigen Fassungen bleiben erhalten");
+});
+
+test("Bearbeiten sendet den bereinigten Text und sichert die folgende Antwort", () => {
+  const { log, f2, a2 } = beispielLog();
+  const plan = planEdit(f2, "   zweite Frage, praeziser   ");
+  assert.equal(plan.ok, true);
+  assert.equal(plan.text, "zweite Frage, praeziser", "Leerraum wird abgeschnitten");
+  assert.deepEqual(plan.stash.map((v) => v.raw), ["zweite Antwort"], "die Antwort darauf wird Fassung 1");
+  assert.equal(plan.entfernen.length, 4);
+  assert.equal(plan.entfernen[0], f2);
+  assert.ok(plan.entfernen.includes(a2));
+  for (const node of plan.entfernen) node.remove();
+  assert.equal(log.children.length, 4);
+});
+
+test("Bearbeiten mit leerem Text wird abgelehnt", () => {
+  const { f2 } = beispielLog();
+  assert.deepEqual(planEdit(f2, "   "), { ok: false, grund: "leer" });
+  assert.deepEqual(planEdit(f2, ""), { ok: false, grund: "leer" });
+  assert.deepEqual(planEdit(null, "Text"), { ok: false, grund: "leer" });
+});
+
+test("Bearbeiten der letzten Frage ohne Antwort sichert nichts", () => {
+  const f = el("entry user", "offene Frage");
+  const b = el("msg-actions is-user");
+  mkLog([f, b]);
+  const plan = planEdit(f, "neue Fassung");
+  assert.equal(plan.ok, true);
+  assert.deepEqual(plan.stash, [], "es gibt keine Antwort, die gesichert werden muesste");
+  assert.deepEqual(versionsToStash(null), []);
+});
+
+test("Fassungen werden erst gesetzt, wenn der Lauf wirklich fertig ist", () => {
+  const { log, a2 } = beispielLog();
+  const eintraege = log.children.filter((n) => isEntry(n));
+  assert.deepEqual(planSettle(eintraege, true), { ok: false, grund: "laeuft_noch" });
+
+  const denkend = el("entry assistant", "smejj denkt nach...");
+  denkend.dataset.thinking = "true";
+  assert.deepEqual(planSettle([denkend], false), { ok: false, grund: "denkt_noch" });
+
+  assert.deepEqual(planSettle([el("entry user", "Frage")], false), { ok: false, grund: "keine_antwort" });
+  assert.deepEqual(planSettle([el("entry assistant", "   ")], false), { ok: false, grund: "leer" });
+  assert.deepEqual(planSettle([], false), { ok: false, grund: "keine_antwort" });
+
+  const fertig = planSettle(eintraege, false);
+  assert.equal(fertig.ok, true);
+  assert.equal(fertig.ziel, a2, "die neueste Antwort bekommt die Fassungen");
+  assert.equal(fertig.raw, "zweite Antwort");
+});
+
+test("Pfeiltasten laufen im Menue um", () => {
+  assert.equal(nextMenuIndex(0, 1, 4), 1);
+  assert.equal(nextMenuIndex(3, 1, 4), 0, "hinter dem letzten Punkt geht es vorn weiter");
+  assert.equal(nextMenuIndex(0, -1, 4), 3, "vor dem ersten Punkt geht es hinten weiter");
+  assert.equal(nextMenuIndex(-1, 1, 4), 0, "ohne Fokus beginnt Pfeil-ab beim ersten Punkt");
+  assert.equal(nextMenuIndex(-1, -1, 4), 3);
+  assert.equal(nextMenuIndex(0, 1, 0), 0, "leeres Menue faellt nicht um");
 });
 
 // --- Leiste und Menue -------------------------------------------------------

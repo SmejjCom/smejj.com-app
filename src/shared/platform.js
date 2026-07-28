@@ -138,6 +138,7 @@ export const ROUTES = {
   llms: "/llms.txt",
   sitemap: "/sitemap.xml",
   status: "/status.html",
+  hilfe: "/hilfe.html",
   impressum: "/impressum.html",
   datenschutz: "/datenschutz.html",
   // Englische Hoeflichkeitsfassungen (verbindlich bleibt der deutsche Text).
