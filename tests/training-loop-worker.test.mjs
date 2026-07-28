@@ -210,6 +210,46 @@ test("loop: due eval cycle runs, checkpoint advances, second immediate tick does
   assert.equal(evalCalls, evalCallsAfterFirst, "not due yet, must not run again");
 });
 
+test("loop: unerreichbare Ablage macht eine bezahlte Messung nicht wertlos", async () => {
+  const config = loadLoopConfig({
+    SMEJJ_TRAINING_LOOP_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000"
+  });
+  let checkpointStore = JSON.stringify({});
+  const lines = [];
+  const loop = createLoop({
+    config,
+    env: {},
+    repoRoot: "/repo",
+    log: (line) => lines.push(line),
+    deps: {
+      checkpointRequest: async (_c, method, _key, body) => {
+        if (method === "GET") return checkpointStore;
+        checkpointStore = body;
+        return "";
+      },
+      callModel: async () => ({ ok: true, text: "hi there", latencyMs: 5 }),
+      readReport: async () => null,
+      readSuite: async () => validSuite(),
+      // Ablage kaputt — genau der Zustand ohne gesetzte IDRIVE_E2_*-Variablen.
+      writeReport: async () => { throw new Error("idrive_konfiguration_unvollstaendig"); }
+    }
+  });
+
+  const checkpoint = await loop.tick(() => new Date("2026-07-28T00:00:00.000Z"));
+
+  assert.equal(checkpoint.lastEvalRunAt, "2026-07-28T00:00:00.000Z", "die Messung gilt als gelaufen");
+  assert.equal(checkpoint.consecutiveEvalFailures, 0, "eine reine Ablage-Stoerung ist kein Messfehler");
+  assert.equal(checkpoint.lastEvalReportKey, null, "ohne Ablage gibt es keine Vergleichsbasis");
+
+  const joined = lines.join("\n");
+  assert.match(joined, /eval cycle done/, "Ergebnis wird gemeldet");
+  assert.match(joined, /NICHT abgelegt/, "die Ablage-Stoerung wird ausdruecklich benannt");
+  assert.match(joined, /IDRIVE_E2_/, "der Hinweis nennt die zu pruefenden Variablen");
+  assert.equal(/laufzeit|score|Suite/i.test(joined), true, "die Kennzahlen selbst stehen im Protokoll");
+});
+
 test("worker: /health answers even when the loop is disabled (fail-closed but observable)", async () => {
   const config = loadLoopConfig({});
   const loop = createLoop({ config, repoRoot: "/repo", log: () => {} });

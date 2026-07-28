@@ -59,6 +59,10 @@ async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now }
     const fileName = `modeleval-${config.suiteId}-live-default-${now().toISOString().slice(0, 10)}.json`;
     const target = reportKey(fileName);
 
+    // Eine nicht erreichbare Ablage darf eine bereits bezahlte Messung nicht
+    // wertlos machen: der Bericht wird dann ins Protokoll geschrieben statt
+    // verworfen. Die Messung selbst gilt weiter als gelaufen.
+    let persistError = null;
     const result = await runEvalCycle({
       repoRoot,
       suitePath: config.suitePath,
@@ -67,7 +71,13 @@ async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now }
       delayMs: config.evalDelayMs,
       callModel: deps.callModel,
       readSuite: deps.readSuite,
-      writeReport: (t, report) => writeReport(t, report, { env }),
+      writeReport: async (t, report) => {
+        try {
+          await writeReport(t, report, { env });
+        } catch (error) {
+          persistError = String(error?.message || error).slice(0, 160);
+        }
+      },
       now
     });
     if (!result.ok) {
@@ -75,11 +85,17 @@ async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now }
       return bumpFailure(checkpoint, "eval", now);
     }
     log(`[smejj-training-loop] eval cycle done: ${result.verdict}${result.regressed ? " (REGRESSION)" : ""}`);
+    // Die Kennzahlen immer ins Protokoll — ohne Ablage sind sie sonst weg.
+    if (result.summary) log(`[smejj-training-loop] ${String(result.summary).replace(/\n/g, " | ")}`);
+    if (persistError) {
+      log(`[smejj-training-loop] Bericht NICHT abgelegt (${persistError}) — Kennzahlen stehen nur im Protokoll. IDRIVE_E2_* pruefen.`);
+    }
     return {
       ...checkpoint,
       lastEvalRunAt: now().toISOString(),
       lastEvalVerdict: result.verdict,
-      lastEvalReportKey: target,
+      // Nur einen tatsaechlich abgelegten Bericht als naechste Vergleichsbasis merken.
+      lastEvalReportKey: persistError ? checkpoint.lastEvalReportKey : target,
       consecutiveEvalFailures: 0
     };
   } catch (error) {
