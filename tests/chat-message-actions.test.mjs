@@ -17,9 +17,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 import {
+  addSources,
   addVersion,
   captureRaw,
   clampVersionIndex,
+  hasSources,
+  normalisiereQuellen,
   entriesFrom,
   entriesUpTo,
   isEntry,
@@ -44,9 +47,12 @@ import {
 import {
   barSpecFor,
   buildMenu,
+  buildSourcePanel,
   formatStamp,
   headerTextFor,
   menuItemsFor,
+  shortUrl,
+  sourceStatusText,
   toPlainText,
   versionLabel
 } from "../public/chat-actions-menu.js";
@@ -297,6 +303,84 @@ test("entriesUpTo liefert den Verlauf bis einschliesslich dieser Nachricht", () 
   assert.equal(entriesUpTo(nodes[4]).length, 3);
 });
 
+// --- Quellen ----------------------------------------------------------------
+
+const QUELLE = {
+  url: "https://beispiel.de/seite",
+  title: "Beispielseite",
+  status: 200,
+  ok: true,
+  abgerufenAm: new Date(2026, 6, 28, 16, 30).toISOString()
+};
+
+test("Quellen ohne Adresse zaehlen nicht", () => {
+  assert.deepEqual(normalisiereQuellen([{ title: "ohne Adresse" }, null, "kaputt", { url: "   " }]), []);
+  assert.equal(normalisiereQuellen([QUELLE]).length, 1);
+  assert.deepEqual(normalisiereQuellen("keine Liste"), []);
+});
+
+test("Quellen werden nicht doppelt angehaengt", () => {
+  const antwort = el("entry assistant", "Antwort mit Beleg");
+  assert.equal(hasSources(antwort), false, "ohne Grounding gibt es keine Quelle");
+  assert.equal(addSources(antwort, [QUELLE]), 1);
+  assert.equal(addSources(antwort, [QUELLE]), 1, "dieselbe Adresse kommt kein zweites Mal hinein");
+  assert.equal(addSources(antwort, [{ ...QUELLE, url: "https://beispiel.de/andere" }]), 2);
+  assert.equal(hasSources(antwort), true);
+});
+
+test("Quellen ueberleben ein Neuladen", () => {
+  const antwort = el("entry assistant", "wiederhergestellt");
+  seedMeta(antwort, { sources: [QUELLE, { title: "ohne Adresse" }] });
+  const meta = metaOf(antwort);
+  assert.equal(meta.sources.length, 1, "kaputte Eintraege werden beim Laden aussortiert");
+  assert.equal(meta.sources[0].url, "https://beispiel.de/seite");
+  assert.equal(hasSources(antwort), true);
+});
+
+test('"Quellen anzeigen" erscheint nur mit echter Quelle', () => {
+  assert.ok(!menuItemsFor("assistant", false).some((i) => i.act === "sources"), "ohne Beleg kein Menuepunkt");
+  const mitQuelle = menuItemsFor("assistant", true);
+  assert.equal(mitQuelle[0].act, "sources", "mit Beleg steht er ganz oben");
+  assert.equal(mitQuelle.length, 5);
+  assert.ok(!menuItemsFor("user", true).some((i) => i.act === "sources"), "eigene Nachrichten haben keine Quellen");
+});
+
+test("Abrufergebnis wird ehrlich benannt, auch ein Fehler", () => {
+  assert.equal(sourceStatusText({ ok: true, status: 200 }), "geladen · HTTP 200");
+  assert.equal(sourceStatusText({ ok: true, status: 0 }), "geladen");
+  assert.equal(sourceStatusText({ ok: false, status: 404 }), "Fehler · HTTP 404");
+  assert.equal(sourceStatusText({ ok: false, status: 0 }), "nicht ladbar");
+});
+
+test("lange Adressen werden lesbar gekuerzt", () => {
+  assert.equal(shortUrl("https://beispiel.de/seite/"), "beispiel.de/seite");
+  assert.equal(shortUrl("http://beispiel.de"), "beispiel.de");
+  const lang = shortUrl(`https://beispiel.de/${"a".repeat(120)}`);
+  assert.ok(lang.length <= 58 && lang.endsWith("…"));
+});
+
+test("Quellenliste zeigt Adresse, Ergebnis und Zeitpunkt", () => {
+  const now = new Date(2026, 6, 28, 18, 0, 0);
+  const panel = buildSourcePanel(fakeDocument(), [QUELLE], now);
+  assert.equal(panel.className, "msg-sources");
+  assert.equal(panel.attributes["aria-label"], "Quellen dieser Antwort");
+
+  const kopf = panel.children[0];
+  assert.equal(kopf.children[0].textContent, "1 Quelle");
+  assert.equal(kopf.children[1].dataset.act, "sources-close");
+
+  const zeile = panel.children[1];
+  const link = zeile.children[0];
+  assert.equal(link.href, "https://beispiel.de/seite");
+  assert.equal(link.rel, "noopener noreferrer", "fremde Seiten oeffnen ohne Zugriff auf diese Seite");
+  assert.equal(link.target, "_blank");
+  assert.equal(link.textContent, "Beispielseite");
+  assert.equal(zeile.children[1].textContent, "beispiel.de/seite · geladen · HTTP 200 · abgerufen Heute, 16:30");
+
+  const zwei = buildSourcePanel(fakeDocument(), [QUELLE, { ...QUELLE, url: "https://b.de/x" }], now);
+  assert.equal(zwei.children[0].children[0].textContent, "2 Quellen");
+});
+
 // --- Verhalten der Aktionen -------------------------------------------------
 
 // Ein typischer Verlauf: Frage, Antwort, Frage, Antwort — je mit Leiste.
@@ -536,6 +620,36 @@ test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
   assert.match(store, /seedMeta\(node, \{/, "beim Wiederherstellen zurueckgeben");
   assert.match(store, /export async function createChatFrom/, "Abzweigen legt einen eigenen Chat an");
   assert.ok(!/store\.delete/.test(store.split("export async function createChatFrom")[1] || ""), "Abzweigen loescht nichts");
+});
+
+test("Quellen kommen aus echtem Grounding, nicht aus Raten", () => {
+  const grounding = fs.readFileSync("public/browser-context.js", "utf8");
+  assert.match(grounding, /export function groundingFor/, "browser-context.js gibt Auskunft, was es geladen hat");
+  assert.match(grounding, /merkeQuelle\(text, context\)/, "gemerkt wird im Ground-Pfad");
+  assert.match(grounding, /if \(!context\) return;/, "ein gescheiterter Abruf begruendet nichts und wird nicht gemerkt");
+  assert.match(grounding, /MAX_QUELLEN/, "die Karte waechst nicht unbegrenzt");
+
+  assert.match(actions, /import \{ groundingFor \}/, "die Leiste fragt die echte Quelle ab");
+  // Live-Befund 2026-07-28: mit "?v=1" entstand eine ZWEITE Modulinstanz mit
+  // eigenem Quellen-Gedaechtnis — app.js schrieb in die eine, die Leiste las aus
+  // der anderen, und "Quellen anzeigen" waere nie erschienen.
+  const appImport = /from "\.\/browser-context\.js(\?[^"]*)?"/.exec(appJs);
+  assert.ok(appImport, "app.js importiert browser-context.js");
+  const actionsImport = /from "\/assets\/browser-context\.js(\?[^"]*)?"/.exec(actions);
+  assert.ok(actionsImport, "chat-actions.js importiert browser-context.js");
+  assert.equal(
+    actionsImport[1] || "",
+    appImport[1] || "",
+    "beide muessen DENSELBEN Spezifizierer benutzen, sonst zwei Modulinstanzen"
+  );
+  assert.match(actions, /const frage = previousUserEntry\(last\);/, "zugeordnet wird ueber die Frage davor, nicht ueber die letzte Quelle");
+  assert.match(store, /sources: Array\.isArray\(meta\.sources\)/, "der Verlauf speichert die Quellen");
+  assert.match(store, /sources: message\.sources/, "und gibt sie beim Wiederherstellen zurueck");
+});
+
+test("die Quellenliste haengt neben der Nachricht, nicht darin", () => {
+  assert.match(actions, /\(barOf\(entry\) \|\| entry\)\.after\(panel\)/, "Panel als Geschwister");
+  assert.ok(!/entry\.append\(panel\)/.test(actions));
 });
 
 test("der Verlauf speichert die Fassungen mit Obergrenze", () => {
