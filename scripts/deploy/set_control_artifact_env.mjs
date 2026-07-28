@@ -51,6 +51,11 @@ async function main() {
   }
   if (!/^[a-f0-9]{64}$/.test(sha)) fail("SMEJJ_CONTROL_ARTIFACT_SHA256 fehlt oder ist kein SHA-256.");
 
+  // VOR loadSecureLocalEnv() lesen: Sonst zieht das Skript einen Wert aus
+  // ~/.config/smejj.com/env.local heran, der fuer diesen Lauf gar nicht
+  // gemeint war — und bricht an der Formatpruefung ab. Nur was der Aufrufer
+  // ausdruecklich mitgibt, wird auf den Server geschrieben.
+  const ownerAllowlistEingabe = String(process.env.SMEJJ_GITHUB_OWNER_ALLOWLIST || "").trim();
   loadSecureLocalEnv();
   const org = process.env.SALAD_ORGANIZATION_NAME;
   const project = process.env.SALAD_PROJECT_NAME;
@@ -76,7 +81,7 @@ async function main() {
   // Seit die Allowlist fuer JEDE Repository-URL gilt, muss sie gesetzt sein —
   // sonst lehnt der Server fail-closed auch eigene Repositories ab. Nur
   // Kleinbuchstaben, Ziffern, Bindestrich und Komma sind zulaessig.
-  const ownerAllowlist = String(process.env.SMEJJ_GITHUB_OWNER_ALLOWLIST || "").trim();
+  const ownerAllowlist = ownerAllowlistEingabe;
   if (ownerAllowlist) {
     if (!/^[a-z0-9-]+(,[a-z0-9-]+)*$/.test(ownerAllowlist)) {
       fail("SMEJJ_GITHUB_OWNER_ALLOWLIST: nur kleingeschriebene Owner-Namen, kommagetrennt.");
