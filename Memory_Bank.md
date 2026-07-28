@@ -796,3 +796,38 @@ Restrisiko / offen: Live-Deploy nicht aus der Session ausfuehrbar (SSH zu GitHub
 - OFFEN: (a) LCP sauber nachmessen und Ursache pruefen. (b) Echtes Tool-Calling
   (Modell waehlt Werkzeuge selbst, `tool_calls` im Stream) beruehrt den
   Control-Server/die Chat-Bridge auf Zeabur und ist freigabepflichtig.
+
+## 2026-07-27 — Web-Vitals-Messwerkzeug (job_webvitals_messung_20260727)
+- `npm run measure:vitals` misst LCP, TTFB, CLS, INP und Seitengewicht in echtem
+  Chrome headless ueber das DevTools-Protokoll. NULL neue Pakete: Chrome ist
+  installiert, Node 22+ bringt WebSocket mit (`scripts/testing/cdp-client.mjs`,
+  121 Zeilen). Puppeteer/Playwright wurden bewusst NICHT genommen — je ~150 MB
+  Chromium in node_modules, unvereinbar mit der Kilobyte-Regel und dem
+  empfindlichen Google-Drive-Git-Index.
+- DER ALARMWERT LCP 3304 ms WAR EIN ARTEFAKT. Kein Nachlauf reproduziert ihn.
+  Entstanden in einem ferngesteuerten Tab mit wiederhergestelltem Chat-Verlauf.
+- DREI MESSFEHLER, die man kennen muss (alle im Skript behoben): (a) mehrere
+  Laeufe im selben Chrome-Profil sind ab Lauf 2 NICHT kalt — Cache, Service
+  Worker und Cache Storage vorher leeren; (b) neu laden waehrend der Service
+  Worker noch installiert laesst den Wiederbesuch langsamer aussehen als den
+  Erstbesuch — auf `navigator.serviceWorker.controller` warten; (c) ein Klick auf
+  feste Koordinaten trifft nichts — gezielt `#startMessage` anklicken, sonst
+  bleibt INP leer.
+- STABIL ueber alle Laeufe: CLS 0, INP 40-48 ms, 242 KB kalt / 39 KB warm,
+  LCP-Element ist das H2 (Text, kein Bild). LCP/TTFB SCHWANKEN stark
+  (LCP p75 488-1624 ms kalt, TTFB 48-775 ms) — ein einzelner Mac an einem Netz
+  ist KEINE p75-Feldmessung. Aus diesen Zahlen laesst sich kein Budgetbruch
+  belastbar ableiten. Benchmark: docs/benchmarks/webvitals_smejj_2026-07-27.json
+- curl-Aufschluesselung: DNS 2 ms, TCP 37-134 ms, TLS 88-327 ms, reine Serverzeit
+  60-110 ms, GitHub Pages liefert per Fastly-Edge mit x-cache HIT. Der Server ist
+  schnell; die Zeit geht in den Verbindungsaufbau.
+- HARTER BEFUND (reproduzierbar): 103 Anfragen beim Erstbesuch, davon 45 VOR dem
+  ersten Bildaufbau; 16 Stylesheets (37 KB) und 37 JS-Module (54 KB). Die acht
+  render-blockierenden Stylesheets starten bei ~822 ms und sind erst bei
+  1452-1531 ms fertig. Nicht die Bytes bremsen, sondern die Dateianzahl.
+- ARCHITEKTURVERSTOSS BELEGT: Beim Seitenstart laufen fuenf Control-Server-Aufrufe
+  (/api/auth/me, /api/auth/config, /api/health, zwei Modell-Status), je 1,4-1,9 s.
+  Die Regel "Control Server steht nie im Pfad des normalen Seitenaufrufs" ist
+  damit verletzt; bei Lastspitzen trifft es den kleinen 2-vCPU-Server zuerst.
+- OFFEN, beide freigabepflichtig (beruehren index.html/Design-Lock): Anfragen
+  buendeln; Startaufrufe an den Control Server nach hinten verschieben.
