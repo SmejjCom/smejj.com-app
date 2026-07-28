@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "frozenAt": "2026-07-28T00:00:00.000Z",
-  "approval": "Das Browser-Favicon ist jetzt final und funktioniert einwandfrei. Bitte behandle es ab sofort als geschützt und unveränderlich. | 2026-07-26: Schriftliche Freigabe 'Ja, Freigabe' (Sprachwelle Blitz-Paket) — nur Cache-Buster-Version in generate-language-pages.mjs; Favicon-Dateien und -Referenzen byte-identisch. | 2026-07-28: Schriftliche Freigabe \"smejj.com 100 % fertig\" (Wof Kadavanich) — zwei NEUE Seiten aufgenommen (public/en/legal-notice.html, public/en/privacy.html, englische Hoeflichkeitsfassungen der Rechtstexte). Sie tragen denselben Favicon-Block wie die deutschen Rechtsseiten. Keine Favicon-Datei, keine Generatorquelle und keine Icon-Zeile einer bestehenden Seite wurde veraendert.",
+  "frozenAt": "2026-07-28T06:45:00.000Z",
+  "approval": "Das Browser-Favicon ist jetzt final und funktioniert einwandfrei. Bitte behandle es ab sofort als geschützt und unveränderlich. | 2026-07-26: Schriftliche Freigabe 'Ja, Freigabe' (Sprachwelle Blitz-Paket) — nur Cache-Buster-Version in generate-language-pages.mjs; Favicon-Dateien und -Referenzen byte-identisch. | 2026-07-28: Schriftliche Freigabe \"smejj.com 100 % fertig\" (Wof Kadavanich) — zwei NEUE Seiten aufgenommen (public/en/legal-notice.html, public/en/privacy.html, englische Hoeflichkeitsfassungen der Rechtstexte). Sie tragen denselben Favicon-Block wie die deutschen Rechtsseiten. Keine Favicon-Datei, keine Generatorquelle und keine Icon-Zeile einer bestehenden Seite wurde veraendert. | 2026-07-28: Schriftliche Freigabe (Wof Kadavanich, Auftrag \"Inline-Stile abloesen/CSP-Haertung\") — generate-language-pages.mjs erzeugt <link rel=stylesheet> statt <style>-Block; Favicon-Dateien und -Referenzen byte-identisch.",
   "assets": {
     "public/favicon.ico": "a514be650bd471347a9811bd3dc8ae5be8ae8372c4b1265de7d3112e9731eb15",
     "public/icons/smejj_favicon.svg": "309ac8ddec0addbf470d5bd132530321e53a4a4754b41db943a93efce9a7f680",
@@ -12,7 +12,7 @@
   },
   "sources": {
     "scripts/branding/generate-brand-assets.mjs": "8136f5009d0cc7862cff3c52e18245376e88586054b24a16c14b313caf43f6c4",
-    "scripts/i18n/generate-language-pages.mjs": "e141560461f705036937c5a555b5481c6eafea1caabb50aced88bf05c4908432",
+    "scripts/i18n/generate-language-pages.mjs": "ab79f48adad1fef75ccaf1991b5a9ea72c0830854a92a8d8c830573a1a3927dd",
     "scripts/i18n/locales.json": "4a7fd4453389d3d3162d61b53c284bba9150c70cac40dc5c6d0f6eb80ff5aff7"
   },
   "htmlHeadReferences": {

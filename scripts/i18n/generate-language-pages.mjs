@@ -25,8 +25,11 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+// F-06-Fix (2026-07-28, war zuvor nur in den erzeugten Dateien, nicht im
+// Generator): die kanonische deutsche Sprachseite ist /de/, nicht /. Die
+// Wurzel ist die App-Shell und gehoert in keinen hreflang-Cluster.
 function hreflangCluster() {
-  const lines = [`    <link rel="alternate" hreflang="${rootLang}" href="${origin}/">`];
+  const lines = [`    <link rel="alternate" hreflang="${rootLang}" href="${origin}/${rootLang}/">`];
   for (const locale of data.locales) {
     lines.push(`    <link rel="alternate" hreflang="${locale.code}" href="${origin}/${locale.code}/">`);
   }
@@ -35,7 +38,7 @@ function hreflangCluster() {
 }
 
 function languageNav(current) {
-  const entries = [["/", allLanguageNames[rootLang]]];
+  const entries = [[`/${rootLang}/`, allLanguageNames[rootLang]]];
   for (const locale of data.locales) {
     entries.push([`/${locale.code}/`, allLanguageNames[locale.code]]);
   }
@@ -99,7 +102,7 @@ function renderPage(locale) {
     )
     .join("\n");
   return `<!doctype html>
-<html lang="${locale.code}" dir="${locale.dir}">
+<html lang="${locale.code}" dir="${locale.dir}" class="p-sprachstart">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -135,32 +138,7 @@ ${hreflangCluster()}
     <script type="application/ld+json">
 ${jsonLd(locale)}
     </script>
-    <style>
-      :root { color-scheme: light; }
-      * { box-sizing: border-box; }
-      body { margin: 0; background: ${themeColor}; color: #1c1c1a; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; line-height: 1.6; }
-      .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 56px; }
-      header.top { display: flex; align-items: center; margin-bottom: 40px; }
-      header.top a { display: inline-flex; max-width: 100%; }
-      header.top img { width: clamp(26px, 4.5vw, 30px); height: auto; aspect-ratio: 2000 / 1532.335; object-fit: contain; background: transparent; }
-      h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.2; margin: 0 0 12px; }
-      p.tagline { font-size: 18px; color: #44443f; margin: 0 0 24px; }
-      a.cta { display: inline-block; background: #1c1c1a; color: #f7f7f4; text-decoration: none; padding: 12px 26px; border-radius: 999px; font-weight: 600; }
-      a.cta:hover { background: #333330; }
-      h2 { font-size: 22px; margin: 48px 0 16px; }
-      .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
-      .card { background: #ffffff; border: 1px solid #e6e6e0; border-radius: 14px; padding: 18px; }
-      .card h3 { margin: 0 0 8px; font-size: 16px; }
-      .card p { margin: 0; font-size: 14.5px; color: #44443f; }
-      details { background: #ffffff; border: 1px solid #e6e6e0; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
-      summary { cursor: pointer; font-weight: 600; }
-      details p { margin: 10px 0 4px; color: #44443f; }
-      nav.langs { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; }
-      nav.langs a { color: #1c1c1a; text-decoration: none; border-bottom: 1px solid #c9c9c2; padding-bottom: 1px; font-size: 14.5px; }
-      nav.langs a:hover { border-color: #1c1c1a; }
-      footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid #e6e6e0; font-size: 13.5px; color: #6b6b64; display: flex; flex-wrap: wrap; gap: 8px 18px; }
-      footer a { color: #6b6b64; }
-    </style>
+    <link rel="stylesheet" href="/assets/static-pages.css">
   </head>
   <body>
     <div class="wrap">
@@ -197,7 +175,7 @@ ${faq}
 }
 
 function sitemapAlternates(indent) {
-  const lines = [`${indent}<xhtml:link rel="alternate" hreflang="${rootLang}" href="${origin}/"/>`];
+  const lines = [`${indent}<xhtml:link rel="alternate" hreflang="${rootLang}" href="${origin}/${rootLang}/"/>`];
   for (const locale of data.locales) {
     lines.push(`${indent}<xhtml:link rel="alternate" hreflang="${locale.code}" href="${origin}/${locale.code}/"/>`);
   }
@@ -216,11 +194,19 @@ function renderSitemap() {
   const parts = [];
   parts.push('<?xml version="1.0" encoding="UTF-8"?>');
   parts.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">');
+  // Die Wurzel ist die App-Shell: eigener Eintrag OHNE hreflang-Cluster (F-06).
   parts.push("  <url>");
   parts.push(`    <loc>${origin}/</loc>`);
-  parts.push(sitemapAlternates("    "));
   parts.push("    <changefreq>daily</changefreq>");
   parts.push("    <priority>1.0</priority>");
+  parts.push("  </url>");
+  // /de/ wird nicht vom Generator erzeugt (Root-Sprache, eigene Datei),
+  // gehoert aber wie jede Sprachseite in die Sitemap.
+  parts.push("  <url>");
+  parts.push(`    <loc>${origin}/${rootLang}/</loc>`);
+  parts.push(sitemapAlternates("    "));
+  parts.push("    <changefreq>weekly</changefreq>");
+  parts.push("    <priority>0.9</priority>");
   parts.push("  </url>");
   for (const locale of data.locales) {
     parts.push("  <url>");
@@ -235,6 +221,18 @@ function renderSitemap() {
   }
   parts.push("</urlset>");
   return parts.join("\n") + "\n";
+}
+
+// CSP-Haertung 2026-07-28: der Seitenstil liegt jetzt in public/static-pages.css
+// (Abschnitt html.p-sprachstart) statt in einem <style>-Block je Seite.
+// Fail-closed-Abgleich: der dortige Hintergrund muss dem themeColor aus
+// locales.json entsprechen, sonst driften Meta-Angabe und Darstellung auseinander.
+const staticCss = readFileSync(join(publicDir, "static-pages.css"), "utf8");
+if (!staticCss.includes(`html.p-sprachstart body { margin: 0; background: ${themeColor};`)) {
+  throw new Error(
+    `generate-language-pages: public/static-pages.css traegt nicht den themeColor ${themeColor} ` +
+    "als Hintergrund der Sprachseiten (html.p-sprachstart body). Bitte angleichen."
+  );
 }
 
 let written = 0;
