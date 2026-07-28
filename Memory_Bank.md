@@ -471,3 +471,24 @@ SMEJJ_REMOTE_BROWSER_WORKER_URL).
   Fragen mit Adresse ("I-MILD.com" statt des echten Titels). Abgefedert durch das
   Frontend-Grounding (browser-context.js). Echte Behebung braucht den
   Zeabur-Deploy-Weg fuer public/chat-bridge.js, den es weiterhin nicht gibt.
+
+## 2026-07-28 — app.js aufgeteilt, Altlast beendet (job_appjs_aufteilung_20260728)
+- public/app.js 1411 -> 800 Zeilen; die RATCHET-AUSNAHME in check-guidelines.mjs
+  ist ERSATZLOS ENTFERNT. Fuer app.js gilt jetzt die normale 800-Zeilen-Regel.
+- Sieben neue Module (zeilengleich verschoben, kein Verhaltenswechsel):
+  google-login.js, projects-surface.js, local-workspace-surface.js,
+  uploads-surface.js, free-coding-fallback.js, panel-layout.js, view-routes.js.
+  Alle im Service-Worker-Precache (Pflicht — app.js importiert sie).
+- goToView bewusst NICHT ausgelagert: wird an viele Stellen gereicht, Umzug waere
+  reines Regressionsrisiko.
+- WICHTIGSTE LEHRE (kostete zwei zusaetzliche Deploy-Runden): Beim Herausloesen
+  von Code muessen die Helfer PRO FUNKTION durchgereicht werden, nicht pro Datei.
+  setText fehlte zuerst ganz, dann fehlten renderEmptyState und
+  refreshSessionStatus in der ZWEITEN Funktion desselben Moduls. Die Testsuite
+  war dabei durchgehend 160/160 GRUEN — solche Fehler findet nur der echte
+  Browser. Gegenprobe-Muster: je exportierter Funktion die deps-Zerlegung gegen
+  die im Rumpf aufgerufenen App-Helfer abgleichen.
+- LIVE VERIFIZIERT (sw v157, frischer Cache): Startseite, 7 Navigationsknoepfe,
+  /projects, /settings, Projektliste, Upload, Google-Feld, Automatik — alles da,
+  Chat antwortet, 0 JavaScript-Fehler.
+- OFFEN: src/server.js steht bei 799/800 Zeilen — im Limit, aber ohne Luft.
