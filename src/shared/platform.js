@@ -139,6 +139,9 @@ export const ROUTES = {
   sitemap: "/sitemap.xml",
   impressum: "/impressum.html",
   datenschutz: "/datenschutz.html",
+  // Englische Hoeflichkeitsfassungen (verbindlich bleibt der deutsche Text).
+  legalNoticeEn: "/en/legal-notice.html",
+  privacyEn: "/en/privacy.html",
   api: {
     health: "/api/health",
     capabilities: "/api/capabilities",

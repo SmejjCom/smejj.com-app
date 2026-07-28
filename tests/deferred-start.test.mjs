@@ -159,5 +159,7 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   }
     // v153 -> v154 am 2026-07-28: view-title.js neu im Precache (Seitentitel je
   // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v157"/);
+  // v157 -> v158 am 2026-07-28: englische Hoeflichkeitsfassungen der Rechtstexte
+  // im Precache (siehe tests/profile-dock.test.mjs).
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v158"/);
 });

@@ -21,7 +21,7 @@ export function createStaticHandlers({ publicDir, storageSourceDir, aiSourceDir,
   return {
     isPublicAsset(pathname) {
       if (pathname.startsWith("/icons/")) return true;
-      return [ROUTES.favicon, ROUTES.appleTouchIcon, ROUTES.socialImage, ROUTES.manifest, ROUTES.serviceWorker, ROUTES.robots, ROUTES.llms, ROUTES.sitemap, ROUTES.impressum, ROUTES.datenschutz].includes(pathname);
+      return [ROUTES.favicon, ROUTES.appleTouchIcon, ROUTES.socialImage, ROUTES.manifest, ROUTES.serviceWorker, ROUTES.robots, ROUTES.llms, ROUTES.sitemap, ROUTES.impressum, ROUTES.datenschutz, ROUTES.legalNoticeEn, ROUTES.privacyEn].includes(pathname);
     },
 
     isAppRoute(pathname) {

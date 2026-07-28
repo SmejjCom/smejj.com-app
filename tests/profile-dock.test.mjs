@@ -105,7 +105,13 @@ test("Service Worker cached die neuen Module", () => {
   assert.ok(sw.includes('"/assets/start-styles.css"'), "Stylesheet-Buendel fehlt im Shell-Precache");
     // v153 -> v154 am 2026-07-28: view-title.js neu im Precache (Seitentitel je
   // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v157"/);
+  // v157 -> v158 am 2026-07-28: die beiden englischen Hoeflichkeitsfassungen der
+  // Rechtstexte (/en/legal-notice.html, /en/privacy.html) neu im Precache. Sie
+  // gehoeren dorthin, weil die deutschen Originale ebenfalls vorab abgelegt
+  // werden — sonst waeren die Rechtstexte offline nur auf Deutsch erreichbar.
+  assert.ok(sw.includes('"/en/legal-notice.html"'), "englisches Impressum fehlt im Shell-Precache");
+  assert.ok(sw.includes('"/en/privacy.html"'), "englische Datenschutzfassung fehlt im Shell-Precache");
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v158"/);
 });
 
 
