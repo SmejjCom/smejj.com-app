@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chatReasoningEffort, latestUserPrompt } from "../src/ai/reasoningEffortPolicy.js";
+import { chatReasoningEffort, latestUserPrompt, mapUserEffort } from "../src/ai/reasoningEffortPolicy.js";
 import {
   backendSupportsReasoningEffort,
   classifyProfile,
@@ -80,6 +80,44 @@ test("die Env uebersteuert die Regel, aber nur mit gueltigem Wert", () => {
   assert.equal(chatReasoningEffort(alltag, classifyProfile, { SMEJJ_LLM_KIMI_K3_REASONING_EFFORT: "HIGH" }), "high");
   // Unsinn wird ignoriert, die Regel greift wieder.
   assert.equal(chatReasoningEffort(alltag, classifyProfile, { SMEJJ_LLM_KIMI_K3_REASONING_EFFORT: "turbo" }), "low");
+});
+
+// --- Die Einstellung "Reasoning-Aufwand" wird echt wirksam (2026-07-28) ---
+// Vorher war der Wert nur ein Satz im Prompt. Jetzt steuert er bei K3 einen
+// echten API-Parameter. Rangfolge: Env des Betreibers > Nutzerwunsch > Regel.
+
+test("die Oberflaechen-Stufen werden auf die API-Werte abgebildet", () => {
+  assert.equal(mapUserEffort("medium"), "low");
+  assert.equal(mapUserEffort("high"), "high");
+  assert.equal(mapUserEffort("max"), "max");
+  assert.equal(mapUserEffort("MAX"), "max");
+  assert.equal(mapUserEffort("turbo"), undefined);
+  assert.equal(mapUserEffort(""), undefined);
+  assert.equal(mapUserEffort(null), undefined);
+});
+
+test("der Nutzerwunsch schlaegt die Regel nach Aufgabentyp", () => {
+  const alltag = [{ role: "user", content: "Wie ist das Wetter in Berlin?" }];
+  // Ohne Wunsch greift die Regel: low.
+  assert.equal(chatReasoningEffort(alltag, classifyProfile, {}), "low");
+  // Mit Wunsch "Maximal" bekommt auch eine Alltagsfrage die volle Tiefe.
+  assert.equal(chatReasoningEffort(alltag, classifyProfile, {}, "max"), "max");
+  // Und umgekehrt: Coding mit ausdruecklichem "Mittel" wird flach.
+  const coding = [{ role: "user", content: "Schreibe eine Funktion, die zwei Zahlen addiert, als JavaScript-Code." }];
+  assert.equal(chatReasoningEffort(coding, classifyProfile, {}), undefined);
+  assert.equal(chatReasoningEffort(coding, classifyProfile, {}, "medium"), "low");
+});
+
+test("die Env des Betreibers schlaegt auch den Nutzerwunsch (Notbremse)", () => {
+  const alltag = [{ role: "user", content: "Wie ist das Wetter in Berlin?" }];
+  const env = { SMEJJ_LLM_KIMI_K3_REASONING_EFFORT: "low" };
+  assert.equal(chatReasoningEffort(alltag, classifyProfile, env, "max"), "low");
+});
+
+test("ein unsinniger Nutzerwunsch faellt auf die Regel zurueck (fail-safe)", () => {
+  const alltag = [{ role: "user", content: "Wie ist das Wetter in Berlin?" }];
+  assert.equal(chatReasoningEffort(alltag, classifyProfile, {}, "turbo"), "low");
+  assert.equal(chatReasoningEffort(alltag, classifyProfile, {}, null), "low");
 });
 
 test("latestUserPrompt nimmt die juengste Nutzerfrage", () => {

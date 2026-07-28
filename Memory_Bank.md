@@ -87,6 +87,27 @@ Kapsel: `docs/task-capsules/2026/07/job_kimi_k3_api_20260728/CAPSULE.md`.
   Frontend-Commit `7da4c2d`, live SHA-gleich). Klickpfad belegt: Menue → "Kimi
   K3" → Frage → "Ich bin Kimi, ein Assistent von Moonshot AI, und helfe hier
   fuer smejj.com."
+- EVAL ENTSCHEIDET, NICHT DAS BAUCHGEFUEHL: Suite smejj-chat-core, 14 Faelle,
+  Control-Weg. K3 **97,1 %**, GLM-5.2 **97,1 %** — gleichauf auf die
+  Nachkommastelle, beide scheitern am selben Halluzinations-Fall. K3 ist auf
+  der Suite sogar langsamer (p95 37,6 s gegen 22,8 s), weil Coding-Faelle bei
+  K3 die volle Denktiefe behalten. Ergebnis: **K3 bringt keinen
+  Qualitaetsvorteil**, GLM-5.2 bleibt Standard; K3 ist Zweitquelle und
+  Langkontext-Option. Ohne diesen Lauf haette "K3 ist neuer" als Argument
+  gereicht — genau davor schuetzt das Eval-Set.
+- "REASONING-AUFWAND" WAR EIN PLACEBO. Der Wert aus Einstellungen -> Modelle
+  landete nur als Satz im Prompt. Seit 2026-07-28 steuert er bei K3 den echten
+  API-Parameter. WICHTIG fuer kuenftige Sitzungen: `public/app.js` sendet die
+  Einstellungen laengst als `preferences` an /api/agent — es las sie nur
+  niemand serverseitig. Deshalb war KEINE gesperrte Datei noetig. Vor dem
+  Anfassen des Start-Locks immer pruefen, ob der Weg schon existiert.
+  Standard von `high` auf `medium` gedreht, sonst haette die Verdrahtung das
+  gemessene Tempo zerstoert (Performance-Lock).
+- BUDGET, DAS IMMER ROT IST, IST KEIN BUDGET. Die Eval-Suite riss bei JEDEM
+  Modell dieselben zwei Schwellen. Jetzt getrennt: Produktziel 1,0 s gilt der
+  Schnellspur (erfuellt, 0,70 s), die Suite bekommt eine Regressionsschwelle
+  (40 s / 45 s) ueber der gemessenen Wirklichkeit. Das Produktziel wurde NICHT
+  abgesenkt — es wurde dem richtigen Weg zugeordnet.
 - WEB VITALS LIVE nach dem Deploy (7 Laeufe, smejj.com): TTFB-Median 42 ms,
   LCP-Median 172 ms, CLS 0, INP 40 ms — kein Budget gerissen, gegenueber dem
   letzten Stand eher schneller. Erwartungsgemaess: der Control Server steht

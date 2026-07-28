@@ -257,7 +257,7 @@ async function handleChat(req, res) {
   return streamLLM(res, messages, {
     requestedModel: body.model,
     thinking: chatThinkingMode(messages, classifyProfile),
-    reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env)
+    reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env, body?.preferences?.reasoningEffort)
   });
 }
 
@@ -544,10 +544,13 @@ async function handleAgent(req, res) {
   // Interaktiver Chat: GLM-Thinking abschalten (sofort sichtbare Antwort statt
   // 5-20 s unsichtbarem Reasoning). Coding behaelt das Qualitaets-Reasoning.
   const thinking = codingTask ? undefined : { type: "disabled" };
+  // Denktiefe von K3: Wunsch aus den Einstellungen (Reasoning-Aufwand) schlaegt
+  // die Regel nach Aufgabentyp; die Env des Betreibers schlaegt beides.
   return streamLLM(res, messages, {
     profile,
     requestedModel: body.model,
     thinking,
+    reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env, body?.preferences?.reasoningEffort),
     ...(voiceMode && !codingTask ? { maxTokens: 400 } : {})
   });
 }

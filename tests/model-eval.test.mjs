@@ -173,11 +173,35 @@ test("die Gesamtpunktzahl ist gewichtet und die Perzentile stimmen", () => {
   assert.equal(percentile([10, 20, 30, 40], 50), 20);
 });
 
+// Die Schwellen der Suite duerfen sich aendern (Regressionsschwelle statt
+// Produktziel, 2026-07-28). Der Test prueft deshalb die LOGIK gegen ein eigenes
+// Budget und leitet die Suite-Faelle aus deren echten Werten ab — so bleibt er
+// gueltig, ohne bei jeder Schwellenanpassung mitgepflegt werden zu muessen.
 test("Budgetverletzungen werden benannt, nicht verschwiegen", () => {
+  const budget = { minScore: 0.8, latencyMsP95: 15000, firstTokenMs: 2500 };
   const summary = { weightedScore: 0.5, latencyMsP95: 30000, firstTokenMsP95: 9000, criticalFailures: 0 };
-  const codes = budgetViolations(summary, SUITE.budgets).map((entry) => entry.code);
+  const codes = budgetViolations(summary, budget).map((entry) => entry.code);
   assert.deepEqual(codes, ["score_below_budget", "latency_p95_above_budget", "first_token_above_budget"]);
-  assert.deepEqual(budgetViolations({ weightedScore: 1, latencyMsP95: 100, firstTokenMsP95: 100 }, SUITE.budgets), []);
+  assert.deepEqual(budgetViolations({ weightedScore: 1, latencyMsP95: 100, firstTokenMsP95: 100 }, budget), []);
+
+  // Gegen die echte Suite: knapp darueber reisst, knapp darunter nicht.
+  const ueber = {
+    weightedScore: SUITE.budgets.minScore - 0.01,
+    latencyMsP95: SUITE.budgets.latencyMsP95 + 1,
+    firstTokenMsP95: SUITE.budgets.firstTokenMs + 1,
+    criticalFailures: 0
+  };
+  assert.deepEqual(
+    budgetViolations(ueber, SUITE.budgets).map((entry) => entry.code),
+    ["score_below_budget", "latency_p95_above_budget", "first_token_above_budget"]
+  );
+  const unter = {
+    weightedScore: SUITE.budgets.minScore,
+    latencyMsP95: SUITE.budgets.latencyMsP95,
+    firstTokenMsP95: SUITE.budgets.firstTokenMs,
+    criticalFailures: 0
+  };
+  assert.deepEqual(budgetViolations(unter, SUITE.budgets), []);
 });
 
 test("eine Verschlechterung gegenueber dem Vorlauf gilt als Regression", () => {

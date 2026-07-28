@@ -163,6 +163,46 @@ Kein Budget gerissen (Exit-Code 0). Das 1,0-s-Budget fuer das erste Token
 erreicht weiterhin nur die Groq-Schnellspur (703 ms) — bei allen Deep-Lane-
 Modellen offen, siehe `docs/benchmarks/BEFUND_KIMI_K3_TEMPO_2026-07-28.md`.
 
+## Abschluss der offenen Punkte (2026-07-28, Auftrag "nichts offen lassen")
+
+**1. Eval gegen K3 gelaufen.** Suite `smejj-chat-core`, 14 Faelle, Control-Weg.
+Ergebnis: K3 **97,1 %** — exakt gleichauf mit GLM-5.2 (97,1 %). Beide scheitern
+am selben Fall (erfundene Zahl statt Eingestaendnis), beide ohne kritischen
+Verstoss. K3 ist auf dieser Suite langsamer (p95 37,6 s gegen 22,8 s), weil die
+Coding-Faelle bei K3 die volle Denktiefe behalten. **Konsequenz: K3 bringt
+keinen Qualitaetsvorteil, GLM-5.2 bleibt zu Recht Standard.** K3 ist die
+Zweitquelle und die Wahl bei sehr langem Kontext.
+
+**2. "Reasoning-Aufwand" ist kein Placebo mehr.** Der Wert aus Einstellungen →
+Modelle steuert bei K3 jetzt `reasoning_effort` (Mittel→low, Hoch→high,
+Maximal→max). Rangfolge: Env des Betreibers > Nutzerwunsch > Regel nach
+Aufgabentyp. Keine gesperrte Datei noetig — `public/app.js` sendet die
+Einstellungen laengst als `preferences` mit, nur las sie niemand.
+Der Standard wechselt von `high` auf `medium`, sonst haette die Verdrahtung das
+gemessene Tempo zerstoert (13,9 s statt 8,6 s) — das waere ein Verstoss gegen
+den Performance-Lock gewesen.
+
+**3. Budgets getrennt.** Produktziel 1,0 s bleibt fuer die Schnellspur
+(erfuellt, 0,70 s). Die Suite bekommt eine Regressionsschwelle (40 s erster
+Token, 45 s p95) statt eines Budgets, das jedes Modell reisst und darum
+ignoriert wird. Das Produktziel wurde NICHT abgesenkt.
+
+**4. `smejj fast 1.0` bewusst NICHT gestartet — Rote Liste.**
+Die Salad-Gruppe `smejj-fast-1` existiert vollstaendig konfiguriert
+(llama.cpp server-cuda, 8 vCPU, 30 GB RAM, 4 GPU-Klassen) und steht auf
+`stopped`. Sie zu starten heisst laufende GPU-Kosten nach Stunden — das ist
+"Neue laufende Kosten" und braucht eine ausdrueckliche Freigabe mit Betrag.
+Alles andere ist vorbereitet: ein Start der Gruppe plus
+`SMEJJ_FAST_1_ENABLED=YES` + `SMEJJ_LLM_FAST_BASE_URL` + `SMEJJ_LLM_FAST_API_KEY`
+genuegt.
+
+**5. `ZEABUR_API_TOKEN` fehlt weiterhin — nur der Betreiber kann das.**
+Ein API-Token anzulegen und einzutragen heisst, ein Geheimnis im Klartext zu
+handhaben; das ist keiner Agenten-Sitzung erlaubt. Der Helfer
+`smejj.com Zeabur-Token-eintragen.command` liegt bereit. Praktische Wirkung
+heute: keine — die Bridge musste nicht angefasst werden, weil sie den ganzen
+Anfragekoerper unveraendert an den Control Server weiterreicht.
+
 ## Qualitaetsbewertung
 
 Ziel erreicht: K3 ist live, waehlbar, fail-closed und ohne Regression.

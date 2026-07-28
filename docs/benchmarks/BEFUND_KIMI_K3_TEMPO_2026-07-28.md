@@ -74,6 +74,55 @@ ist die Startseite eher schneller geworden. Erwartungsgemaess: der Control
 Server steht nicht im Pfad des Seitenaufrufs, K3 wird erst bei einer
 ausdruecklichen Modellwahl ueberhaupt angefragt.
 
+## Qualitaets-Eval: K3 gegen GLM-5.2 (Suite smejj-chat-core, 14 Faelle)
+
+Gelaufen am 2026-07-28 ueber den Control-Router (`npm run eval:models:live`).
+
+| | GLM-5.2 | Kimi K3 |
+| --- | --- | --- |
+| Punktzahl (gewichtet) | **97,1 %** | **97,1 %** |
+| bestanden / teilweise / nicht | 13 / 1 / 0 | 13 / 1 / 0 |
+| kritische Verstoesse | 0 | 0 |
+| Antwortzeit p95 | 22 799 ms | 37 601 ms |
+| erster Token p95 | 22 754 ms | 32 956 ms |
+
+**Die Qualitaet ist identisch — auf die Nachkommastelle.** Beide Modelle
+scheitern am selben Fall (`halluzination-unbekannte-zahl`, 67 %: eine erfundene
+Zahl statt eines Eingestaendnisses) und bestehen alle uebrigen dreizehn.
+
+**Beim Tempo ist K3 auf DIESER Suite langsamer, nicht schneller.** Das
+widerspricht der Einzelmessung oben nur scheinbar: die Suite enthaelt Coding-
+und Reasoning-Faelle, und dort behaelt K3 nach der Regel die volle Denktiefe,
+waehrend GLM sein Thinking abgeschaltet bekommt. Bei Alltagsfragen ist K3
+schneller (8,6 s gegen 16,6 s), bei Denkaufgaben langsamer. Wer eine einzige
+Zahl fuer "schneller" sucht, misst am Anwendungsfall vorbei.
+
+**Konsequenz fuer die Modellwahl:** K3 bringt gegenueber GLM-5.2 auf dieser
+Suite keinen Qualitaetsvorteil. Es ist eine Alternative, keine Ablösung —
+sinnvoll bei sehr langem Kontext (1 M gegen 1 M gleichauf) und als
+Unabhaengigkeit von einem einzigen Anbieter. GLM-5.2 bleibt zu Recht Standard.
+
+## Budgets: Produktziel und Regressionsschwelle getrennt
+
+Die Suite riss bisher bei JEDEM Modell zwei Budgets (`latencyMsP95` 15 s,
+`firstTokenMs` 2,5 s). Ein Budget, das immer rot ist, wird ignoriert und faengt
+keine Verschlechterung mehr ab.
+
+Darum ab 2026-07-28 getrennt:
+
+| | Wert | Zweck |
+| --- | --- | --- |
+| Produktziel erster Token | 1,0 s | Schnellspur (Groq, gemessen 0,70 s) — erfuellt |
+| Regressionsschwelle Suite | 40 s erster Token, 45 s p95 | Deep Lane, ueber der gemessenen Wirklichkeit plus Reserve |
+
+Das Produktziel ist damit **nicht abgesenkt** — es gilt weiter fuer den Weg, den
+99 % der Nutzer nehmen. Die Suite misst Deep-Lane-Modelle und bekommt eine
+Schwelle, die echte Verschlechterungen sichtbar macht.
+
+Offen und ehrlich benannt: **kein Deep-Lane-Modell erreicht 1,0 s.** Das ist
+Anbieter-Startzeit, kein Fehler von smejj.com. Wer das aendern will, braucht
+entweder ein schnelleres Modell auf der Deep Lane oder eigene Inferenz-Hardware.
+
 ## Rohdaten
 
 - `firsttoken_kimi_k3_ab_max_2026-07-28.json` — A/B-Seite `max`

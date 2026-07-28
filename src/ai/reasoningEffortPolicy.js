@@ -42,19 +42,43 @@ export function latestUserPrompt(messages) {
   return "";
 }
 
+// Die Oberflaeche kennt drei Stufen (Einstellungen -> Modelle -> Reasoning-
+// Aufwand): Mittel, Hoch, Maximal. Die Kimi-Schnittstelle kennt low, high, max.
+// "Mittel" bildet auf "low" ab — eine Stufe unter "low" gibt es bei K3 nicht,
+// das Denken laesst sich nicht abschalten.
+const UI_ZU_API = Object.freeze({ medium: REASONING_EFFORT_LOW, high: REASONING_EFFORT_HIGH, max: REASONING_EFFORT_MAX });
+
+/**
+ * Uebersetzt die Nutzereinstellung in einen API-Wert.
+ * Unbekannte Werte liefern undefined — dann entscheidet die Regel weiter unten.
+ * @param {string} wert Wert aus den Einstellungen (medium | high | max).
+ * @returns {undefined|"low"|"high"|"max"}
+ */
+export function mapUserEffort(wert) {
+  return UI_ZU_API[String(wert || "").trim().toLowerCase()];
+}
+
 /**
  * Liefert die Denktiefe fuer eine Chat-Anfrage an Kimi K3.
  *
  * @param {Array} messages Nachrichtenliste der Anfrage.
  * @param {(task: string) => string} classifyProfile Profilklassifikation des Routers.
  * @param {object} env Umgebung; SMEJJ_LLM_KIMI_K3_REASONING_EFFORT uebersteuert fest.
+ * @param {string} nutzerWunsch Wert aus den Einstellungen des Nutzers (medium|high|max).
  * @returns {undefined|"low"|"high"|"max"} undefined bedeutet: Voreinstellung des Modells behalten.
+ *
+ * Rangfolge, absteigend:
+ *   1. Env des Betreibers (Notbremse, gilt fuer alle)
+ *   2. ausdruecklicher Wunsch des Nutzers aus den Einstellungen
+ *   3. Regel nach Aufgabentyp (Coding/Reasoning voll, sonst low)
  */
-export function chatReasoningEffort(messages, classifyProfile, env = process.env) {
+export function chatReasoningEffort(messages, classifyProfile, env = process.env, nutzerWunsch = "") {
   const feste = String(env?.SMEJJ_LLM_KIMI_K3_REASONING_EFFORT || "").trim().toLowerCase();
   if (feste === REASONING_EFFORT_LOW || feste === REASONING_EFFORT_HIGH || feste === REASONING_EFFORT_MAX) {
     return feste;
   }
+  const gewuenscht = mapUserEffort(nutzerWunsch);
+  if (gewuenscht) return gewuenscht;
   if (typeof classifyProfile !== "function") return undefined;
   const prompt = latestUserPrompt(messages);
   // Ohne erkennbare Nutzerfrage wird nichts umgestellt — fail-closed zugunsten

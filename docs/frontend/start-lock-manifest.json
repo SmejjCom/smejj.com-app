@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T12:18:35.308Z",
-  "confirmation": "FREIGABE — Maus-Sichtbarkeit (Wof Kadavanich, 2026-07-28): Ich gebe Änderungen an public/index.html und public/browser-pane.js frei, ausschließlich um die Maus-Wiedergabe im rechten Browser-Panel der Startseite anzeigen zu können.",
+  "frozenAt": "2026-07-28T12:19:38.840Z",
+  "confirmation": "Mach komplett endlich fertig, soll nichts offen bleiben (Wof Kadavanich, 2026-07-28)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "bf24f2dc8e78edb28e02a370e64d0bb1dcf2f1c3b9e9cd2e6213255e199bf2c2",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "49ae8d365f45372cfa8d80bb9bf99d6f87cc31fa9252268ad7cd966162a9fa65",
+    "public/sw.js": "6712ff1b9336eeeba91e1ecd7bfe7b3e02700e5aedf5edc893be8e30edd8817e",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
