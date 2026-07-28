@@ -1,3 +1,7 @@
+// v177 -> v178 (2026-07-28): Ehrlichere Beschriftung der Quellenliste.
+// Gegroundet wird die FRAGE. Scheitert der Antwortstrom danach (live erlebt:
+// "Verbindung zum Server unterbrochen"), waere "Quellen dieser Antwort" eine
+// Behauptung, die nicht stimmt. Jetzt "1 Seite fuer diese Frage geladen".
 // v176 -> v177 (2026-07-28): "Quellen anzeigen" pro Antwort. browser-context.js
 // merkt sich jetzt, WELCHE Seite es geladen hat (vorher wurde die Herkunft nach
 // dem Einweben in die Frage verworfen); chat-actions.js ordnet sie ueber die
@@ -223,7 +227,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v177";
+const CACHE_NAME = "smejj-shell-v178";
 const SHELL = [
   "/",
   "/assets/start-styles.css",

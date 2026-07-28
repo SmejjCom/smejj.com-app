@@ -363,10 +363,12 @@ test("Quellenliste zeigt Adresse, Ergebnis und Zeitpunkt", () => {
   const now = new Date(2026, 6, 28, 18, 0, 0);
   const panel = buildSourcePanel(fakeDocument(), [QUELLE], now);
   assert.equal(panel.className, "msg-sources");
-  assert.equal(panel.attributes["aria-label"], "Quellen dieser Antwort");
+  // Gegroundet wird die FRAGE — scheitert der Antwortstrom, waere "Quelle dieser
+  // Antwort" eine falsche Behauptung (Live-Befund 2026-07-28).
+  assert.equal(panel.attributes["aria-label"], "Für diese Frage geladene Seiten");
 
   const kopf = panel.children[0];
-  assert.equal(kopf.children[0].textContent, "1 Quelle");
+  assert.equal(kopf.children[0].textContent, "1 Seite für diese Frage geladen");
   assert.equal(kopf.children[1].dataset.act, "sources-close");
 
   const zeile = panel.children[1];
@@ -378,7 +380,7 @@ test("Quellenliste zeigt Adresse, Ergebnis und Zeitpunkt", () => {
   assert.equal(zeile.children[1].textContent, "beispiel.de/seite · geladen · HTTP 200 · abgerufen Heute, 16:30");
 
   const zwei = buildSourcePanel(fakeDocument(), [QUELLE, { ...QUELLE, url: "https://b.de/x" }], now);
-  assert.equal(zwei.children[0].children[0].textContent, "2 Quellen");
+  assert.equal(zwei.children[0].children[0].textContent, "2 Seiten für diese Frage geladen");
 });
 
 // --- Verhalten der Aktionen -------------------------------------------------
