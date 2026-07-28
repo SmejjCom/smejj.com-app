@@ -1,0 +1,88 @@
+{
+  "titel": "Adminbereich Stufe 6 — Schluessel, Sicherheitslage, Admin-Verwaltung",
+  "datum": "2026-07-28",
+  "job": "job_adminstufe6_20260728",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 109,
+  "artefakt": "deployments/control/smejj-control-stufe6b-2026-07-28.tar.gz",
+  "rueckweg": [
+    "deployments/control/smejj-control-stufe6-2026-07-28.tar.gz (ohne den Notzugang-Fix)",
+    "deployments/control/smejj-control-stufe5c-2026-07-28.tar.gz (Stand vor diesem Job)"
+  ],
+  "commits": ["d60bbd6", "5a12496"],
+  "abdeckung": {
+    "module": "19 von 26 A-Z-Modulen gebaut",
+    "neuInStufe6": ["J Schluessel & Geheimnisse", "L Sicherheit", "Z Admin-Verwaltung"],
+    "offen": ["E Abrechnung", "F Kosten & Budgets", "S Wissen", "T Sprachen", "V E-Mail", "W Analytik", "X Experimente", "Y Aufgaben"]
+  },
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "datenschutzNachweise": {
+    "schluesselwertNieAusgegeben": "Test prueft die serialisierte Antwort gegen den Klartext, gegen den Geheimtext der Huelle, gegen Initialisierungsvektor, Pruefmarke UND den Hauptschluessel.",
+    "keinSpread": "Nach dem Entschluesseln wird ein neues Objekt Feld fuer Feld gebaut. Ein Spread wuerde kuenftige Felder stillschweigend mitnehmen — und das kuenftige Feld ist irgendwann der Schluessel selbst.",
+    "grundNichtdupliziert": "Die Sicherheitslage zeigt nur Kopfdaten je Ereignis; die Begruendung bleibt im Audit-Log, wo sie gegen Aenderung gesichert ist.",
+    "kennzeichenBegrenzt": "Hoechstens die letzten vier Zeichen, und nach einem Widerruf gar keine."
+  },
+  "funktionsnachweiseLive": {
+    "ohneAnmeldung": "/api/admin/sicherheit/{schluessel,ereignisse,admins} liefern 401.",
+    "schluesselGefunden": "Ein hinterlegter Anbieter-Schluessel (cline) wird mit Konto, Zustand und Schluesselgeneration gefuehrt.",
+    "notzugangSichtbar": "Die Notzugangsliste nennt die hinterlegte Adresse und ob ein Konto dahintersteht."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Ein Notzugang wurde nicht als Zugang gezaehlt",
+      "wirkung": "Die Ansicht meldete live '0 Zugaenge' und 'Vier Augen sind NICHT besetzt' — waehrend genau in diesem Moment ein Owner angemeldet war und die Seite ansah.",
+      "ursache": "Die Rolle kommt aus SMEJJ_ADMIN_OWNER_EMAILS, nicht aus einem Rollenfeld. resolveAdminActor erteilt diesen Adressen Owner-Rechte auch ganz ohne Konto.",
+      "bewertung": "Eine Sicherheitsuebersicht, die wirksame Zugaenge uebersieht, ist schlimmer als keine: sie behauptet Leere, wo Macht liegt.",
+      "behoben": "Gezaehlt werden die effektiven Zugaenge — Verzeichnis vereinigt mit Notzugangsliste, mit derselben Logik wie in der Pruefung. Herkunft und fehlendes Konto stehen sichtbar in der Zeile."
+    },
+    {
+      "fund": "Der Testwert sah aus wie ein echter Anbieter-Schluessel",
+      "wirkung": "check:security meldete den 'sk-...'-Kanarienvogel im Test und brach den Preflight ab.",
+      "bewertung": "Der Waechter hatte recht: ein Muster, das echte Schluessel findet, muss auch dort anschlagen.",
+      "behoben": "Der Test weicht aus, nicht der Waechter — als Kanarienvogel taugt jede eindeutige Zeichenfolge."
+    },
+    {
+      "fund": "Ein Test fiel auf ein Wortfragment herein",
+      "wirkung": "Die Pruefung 'kein Initialisierungsvektor nach aussen' suchte nach 'iv' — das steckt in 'aktiv' und faerbte den Test grundlos rot.",
+      "behoben": "Geprueft wird gegen die WERTE der Huelle. Ein Test, der auf Wortfragmente hereinfaellt, verliert seine Aussagekraft."
+    },
+    {
+      "fund": "subjectId ist keine E-Mail, sondern die Konto-Kennung",
+      "wirkung": "Eine Liste aus 'u_a1b2c3' ist fuer einen Menschen unbrauchbar.",
+      "behoben": "Ein Aufruf des Nutzer-Index (30 s zwischengespeichert) macht daraus einen lesbaren Namen; bleibt der Index stumm, steht die Kennung da."
+    }
+  ],
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7 (aus dem Stufe-4-Lauf, unveraendert gueltig)",
+    "urteil": "Alle Budgets eingehalten. Erwartungsgemaess unveraendert: dieser Job hat keine Datei unter public/ angefasst."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, durchgehend gruen.",
+    "parallelSession": "Live-Artefakt heruntergeladen und dateiweise verglichen: keine fremde Arbeit enthalten.",
+    "preflight": "npm run release:preflight vollstaendig gruen inklusive check:security; check:release-imports 158 Dateien transitiv.",
+    "bestehendeRechteUnveraendert": "Nur eine Berechtigung ergaenzt (apikeys.read). Keine bestehende Zeile der Rechtematrix geaendert.",
+    "schreibwegeUnveraendert": "Eine einzige neue Schreibaktion (Schluessel widerrufen), mit Pflichtgrund und Audit-Eintrag. Kein Konto wird dabei veraendert."
+  },
+  "testabdeckung": {
+    "gesamt": 283,
+    "neuInStufe6": 26,
+    "schwerpunkte": [
+      "der Wert eines Schluessels verlaesst das Modul nie",
+      "ein Notzugang ohne Verzeichniseintrag ist trotzdem ein Owner",
+      "ein gesperrtes Konto auf der Notzugangsliste kommt NICHT herein",
+      "vier Augen brauchen zwei Menschen — eine Rolle ohne dual-Recht hilft nicht",
+      "ein nicht ermittelbarer zweiter Faktor ist nicht dasselbe wie keiner",
+      "ohne Entschluesselungs-Schluessel bleibt die Zeile stehen, mit 'unbekannt' statt 'aus'",
+      "ein unlesbares Audit-Log wird benannt, nicht als Ruhe ausgelegt",
+      "der Grund einer Aktion wird nicht dupliziert"
+    ]
+  }
+}
