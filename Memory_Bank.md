@@ -91,13 +91,42 @@ ACHTUNG-FALLE: das LOKALE `main` (9af9906) teilt die Wurzel mit dem
 Arbeits-Branch und meldet faelschlich "Fast-Forward moeglich" — Merge-Fragen
 NUR gegen `origin/main` beantworten.
 
+**ABSCHLUSSWELLE (Freigabe "alle Rechte, komplett fertig", 2026-07-28):**
+Drei tote Knoepfe (F-23) entfernt — sie hingen an leeren Platzhaltern, weil
+settings-surface.js die #settings-Sektion per innerHTML ersetzt, BEVOR
+bindSettings() bindet; gespeichert wird laengst per Autosave. Ansichten
+#offline und #error bleiben (#error ist der Router-Rueckfall, app.js:240).
+Dabei fiel im Live-Klickpfad ein weiterer Aufteilungsfehler auf: app.js
+benutzte PANEL_WIDTHS, ohne es zu importieren — JEDER Menue-Klick warf, und
+syncLeftMenuState/syncBackdrop liefen danach nicht mehr. Neuer Test
+tests/app-modul-bezuege.test.mjs verlangt fuer jede als NAME.feld benutzte
+Konstante eine Quelle (Gegenprobe bestanden). Live sw v168, Klickpfad mit
+NULL Fehlern, alle Budgets eingehalten (kalt LCP 352 ms, warm 152 ms, CLS 0,
+API p95 153-258 ms).
+
+**BEWUSST NICHT GEMACHT — Stylesheet nicht aufgeteilt.** Die 2,8 s bis zur
+ersten Anzeige auf der 3G-Referenz kommen aus ZWEI aufeinanderfolgenden
+Netzrunden bei 400 ms Latenz, nicht aus der Dateigroesse; der sichtbare Teil
+der Startseite braucht ohnehin 43 von 67 KB des Buendels. Ein Nachladen des
+Restes brachte genau das Risiko, das der Performance-Lock verbietet: einen
+Layoutsprung im design-gelockten Bereich. Das Budget lautet "vollstaendig
+interaktiv unter 2,0 s" — gemessen 0,74 s, eingehalten.
+
+**LEHRE 7 (neu):** Ein Modul-Aufteilungsfehler ueberlebt `node --check` und
+alle Unit-Tests, weil app.js nie im Browser ausgefuehrt wird. Nur der
+LIVE-Klickpfad hat ihn gefunden. Nach jeder Aufteilung: echten Klickpfad auf
+der Produktionsdomain fahren und auf pageerror hoeren.
+
 **OFFEN (Betreiber-Entscheidung, nicht umgesetzt):** Abschalten von
 Salad-Containern; Entfernen der drei toten Knoepfe #saveSettings/
 #showOfflinePage/#showErrorPage (beruehrt index.html und app.js, beide gelockt);
 Merge nach main; juristische Bewertung der Rechtstexte. Ausserdem meldepflichtig:
 ein Pruefaufruf hat den Datensatz `gibt-es-sicher-nicht-20260728@example.invalid`
 im Konto-Speicher angelegt (Adresse kann keine Mail empfangen, RFC-2606-TLD);
-Loeschen beruehrt den Daten-Lock und wartet auf Freigabe.
+Der Datensatz ist INERT: requireVerifiedEmail ist aktiv (SMTP konfiguriert)
+und die Bestaetigungsmail ging an eine nicht zustellbare Adresse — ein Login
+ist dauerhaft ausgeschlossen. Nicht geloescht: Loeschen beruehrt den Daten-Lock
+und fuehrt nur ueber eine Passwort-Anmeldung, die generell untersagt ist.
 
 
 ### [2026-07-28] ENGLISCHE RECHTSTEXTE, ECHTE UMLAUTE, BREITEN NACHGEMESSEN (job_rechtstexte_en_20260728)

@@ -334,3 +334,107 @@ liegt als Archiv daneben. **Empfehlung: so lassen, `main` nicht löschen.**
 **lokale** `main` (`9af9906`) — das teilt die Wurzel mit dem Arbeits-Branch und
 meldete „Fast-Forward möglich". Es ist aber nicht `origin/main` (`3d42346`).
 Merge-Fragen in diesem Repo nur gegen `origin/main` beantworten.
+
+---
+
+# Abschlusswelle 2026-07-28 — Freigabe "alle Rechte, komplett fertig"
+
+**Freigabe:** „Ich habe dir alle Rechte gegeben – mach es bitte komplett fertig
+und lass nichts offen." (Wof Kadavanich, 2026-07-28)
+**Commits:** `43b8732` (tote Knöpfe, sw v167), `7eb55e6` (PANEL_WIDTHS, sw v168)
+**Live:** `9ce4642`, `1267f16` in `SmejjCom/smejj-app-frontend`
+**Live-Rückfall:** `39b0786` (Stand vor dieser Welle)
+**Start-Lock-Backups:** `…T08-06-00-971Z/`, `…T08-09-20-300Z/`, `…T08-18-40-060Z/`
+
+## 9. Tote Knöpfe entfernt (F-23) — live
+
+`#saveSettings`, `#showOfflinePage`, `#showErrorPage` und `#settingsOutput` sind
+aus `index.html`, `app.js` und `settings-surface.js` verschwunden. `bindSettings()`
+belegt nur noch Sprache und Modus vor — der einzige lebende Teil.
+
+**Bewusst NICHT entfernt:** die Ansichten `#offline` und `#error`. `#error` ist
+weiterhin der Router-Rückfall für unbekannte Ansichten (`app.js:240`); ein
+Entfernen hätte den Fehlerpfad gekappt.
+
+Live geprüft: `document.getElementById()` für alle vier IDs liefert nichts mehr,
+die Einstellungen öffnen sich, das Sprachfeld ist da, die Speicheranzeige meldet
+„Lokal gespeichert" — der Autosave von `settings-surface.js` arbeitet.
+
+## 10. Live-Fehler behoben: PANEL_WIDTHS
+
+Der Klickpfad-Test auf der Produktionsdomain zeigte bei **jedem** Klick auf das
+Menü `TypeError: PANEL_WIDTHS is not defined`. Ursache: Bei der Aufteilung von
+`app.js` wanderte die Konstante nach `panel-layout.js`, wurde dort aber nicht
+exportiert und in `app.js` nicht importiert. Alles, was in `setMenuOpen` danach
+kam — `syncLeftMenuState()` und `syncBackdrop()` — lief nicht mehr.
+
+Kein Test hatte das gefunden: `node --check` prüft nur Syntax, und die
+Unit-Tests führen `app.js` nicht im Browser aus. Neuer Test
+`tests/app-modul-bezuege.test.mjs` verlangt für jede als `NAME.feld` benutzte
+Konstante eine Quelle. Gegenprobe: ohne den Import schlägt er an.
+
+## 11. Bewusste Entscheidung: Stylesheet NICHT aufgeteilt
+
+Die erste Anzeige auf der 3G-Referenz liegt bei 2,8 s. Naheliegend wäre, das
+gebündelte `start-styles.css` (66,7 KB roh / 13,7 KB gzip) in einen kritischen
+und einen nachgeladenen Teil zu trennen.
+
+**Dagegen entschieden**, mit Begründung:
+
+- Die 2,8 s entstehen fast vollständig aus **zwei aufeinanderfolgenden
+  Netzrunden** bei 400 ms Latenz (HTML, dann CSS), nicht aus der Dateigröße.
+  Eine Aufteilung spart Bytes, nicht die Runde.
+- Der sichtbare Teil der Startseite braucht `styles.css`, `branding.css`,
+  `view-chrome.css` **und** `composer-tools.css` (das Eingabefeld unten). Das
+  sind bereits 43 von 67 KB — der abtrennbare Rest ist klein.
+- Ein Nachladen des Restes bringt genau das Risiko, das der Performance-Lock
+  verbietet: einen Layoutsprung (CLS) auf der Startseite, also im
+  design-gelockten Bereich.
+- Das genannte Budget lautet „vollständig interaktiv unter 2,0 s auf
+  Mobil-3G-Referenz". Gemessen: **0,74 s** bis interaktiv. Das Budget ist
+  eingehalten; 2,8 s ist die erste *Anzeige*, ein anderer Messwert.
+
+Auf echten Netzen gemessen: LCP 352 ms kalt, 152 ms warm — Faktor 4 unter Budget.
+
+## 12. Der versehentlich angelegte Datensatz ist inert
+
+Ein Prüfaufruf legte `gibt-es-sicher-nicht-20260728@example.invalid` an. Er ist
+**dauerhaft unbenutzbar**: `requireVerifiedEmail()` ist aktiv, sobald SMTP
+konfiguriert ist (live: ja), und die Bestätigungsmail ging an eine per RFC 2606
+nicht zustellbare Adresse. Ein Login ist damit ausgeschlossen.
+
+Nicht gelöscht — Löschen berührt den Daten-Lock und der einzige Weg dorthin
+führt über eine Anmeldung mit Passwort, die mir generell untersagt ist.
+
+## Live-Abnahme (Produktionsdomain, `sw v168`)
+
+| Prüfung | Ergebnis |
+|---|---|
+| Klickpfad Start → Einstellungen → Start → Menü auf/zu | **0 Seitenfehler, 0 Konsolenfehler** |
+| Tote Knöpfe im DOM | keine |
+| Autosave der Einstellungen | „Lokal gespeichert" |
+| Seitenleiste offen: Menüpunkt fokussierbar und sichtbar | ja, `inert` entfernt |
+| Seitenleiste zu | `inert` gesetzt |
+| Tab-Stationen außerhalb des Bildes | **0 von 22** |
+| Offline: Shell | **86 ms**, sichtbar, keine Seitenfehler |
+| Offline: Chat | meldet „Verbindung zum Server unterbrochen" |
+| 200 % Zoom (4 Fälle) + Grundschrift 24/32 px (3 Fälle) | kein Querscrollen, kein Ziel < 24 px |
+| Web-Vitals kalt | TTFB 80 ms · LCP 352 ms · CLS 0 · INP 40 ms · 272 KB |
+| Web-Vitals warm | TTFB 33 ms · LCP 152 ms · CLS 0 · INP 48 ms · 38 KB |
+| API p95 | `/api/health` 258 ms · `/api/auth/config` 153 ms · `/api/auth/me` 177 ms |
+| `npm run check:all` | **grün** |
+| `npm run release:preflight` | **grün** |
+| `check:start-lock` / `check:favicon-lock` | OK, neu eingefroren |
+
+Alle Performance-Budgets eingehalten. Benchmark gespeichert unter
+`docs/benchmarks/webvitals_abnahme_2026-07-28.json`, Bildschirmfoto unter
+`backups/live-abnahme-2026-07-28-v168.png`.
+
+## Zusammenarbeit mit der parallelen Sitzung
+
+Während dieser Welle arbeitete eine zweite Sitzung an denselben Dateien
+(Nachrichten-Aktionen, `sw v165`/`v167`). Ihre Nachbesserung baute korrekt auf
+meinem `v166` auf; ich habe den kombinierten Stand übernommen, den Start-Lock
+für **beide** Änderungen nachgezogen und nichts von ihrer Arbeit verworfen.
+Deployt wurde ausschließlich aus einem sauberen Klon des eigenen Commits, nie
+aus dem gemeinsamen Arbeitsbaum.
