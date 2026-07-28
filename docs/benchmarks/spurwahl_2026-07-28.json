@@ -1,0 +1,83 @@
+{
+  "titel": "Spurwahl und Zeitbudget — Fragen mit Web-Adresse (sw v179)",
+  "datum": "2026-07-28",
+  "url": "https://smejj.com/",
+  "budgets": {
+    "ttft_ms": 1000,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200
+  },
+  "befund_vorher": {
+    "beschreibung": "modelForTask schickte jede Frage MIT Web-Adresse zwingend in die Tiefspur; fetch-retry.js brach nach 6,5 s ab",
+    "ttfb_schnellspur_kurz_s": 0.75,
+    "ttfb_tiefspur_kurz_s": 7.77,
+    "ttfb_tiefspur_gegroundet_s": 4.92,
+    "limit_frontend_s": 6.5,
+    "folge": "Fragen mit Adresse endeten regelmaessig in Verbindung zum Server unterbrochen"
+  },
+  "nachher_bridge": {
+    "ttfb_schnellspur_gegroundet_s": [
+      0.67,
+      0.52,
+      0.67
+    ],
+    "ttfb_tiefspur_gegroundet_s": 6.08,
+    "faktor": "rund zehnmal schneller"
+  },
+  "nachher_live_im_browser": {
+    "gemessen": "MutationObserver auf #startLog, Zeit vom Absenden bis zum ersten sichtbaren Token, inkl. Seitenabruf ueber den Proxy",
+    "erster_token_ms": [
+      639,
+      813,
+      477
+    ],
+    "budget_ms": 1000,
+    "antworten": [
+      "Der Titel auf https://example.com lautet Example Domain.",
+      "Die Hauptaussage auf https://example.com ist ...",
+      "Ausnahmefall nicht ladbare Adresse: sinnvolle Antwort, kein Fehler"
+    ]
+  },
+  "webvitals": [
+    {
+      "lauf": 1,
+      "kalt": {
+        "ttfb_median": 37,
+        "lcp_median": 144,
+        "lcp_p75": 440,
+        "inp_p75": 56,
+        "cls_p75": 0
+      }
+    },
+    {
+      "lauf": 2,
+      "kalt": {
+        "ttfb_median": 65,
+        "lcp_median": 292,
+        "lcp_p75": 516,
+        "inp_p75": 40,
+        "cls_p75": 0
+      }
+    },
+    {
+      "lauf": 3,
+      "kalt": {
+        "ttfb_median": 32,
+        "lcp_median": 184,
+        "lcp_p75": 252,
+        "inp_p75": 40,
+        "cls_p75": 0
+      }
+    }
+  ],
+  "touchziele": {
+    "zeigerCoarseAktiv": true,
+    "verstoesse": []
+  },
+  "bewertung": {
+    "ergebnis": "Budget fuer den ersten Token erstmals eingehalten (639/813/477 ms gegen 1000 ms), alle uebrigen Budgets unveraendert eingehalten",
+    "begruendung": "Die Aenderung nimmt einen Umweg heraus statt Arbeit hinzuzufuegen: der Seiteninhalt liegt seit Stufe 2 ohnehin in der Frage, die werkzeugfaehige Tiefspur war dafuer nicht mehr noetig. Kein zusaetzlicher Netzaufruf, keine neue Datei."
+  }
+}
