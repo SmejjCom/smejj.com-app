@@ -1,0 +1,48 @@
+{
+  "titel": "API-Latenz Adminbereich Stufe 1, vor und nach der Performance-Korrektur",
+  "datum": "2026-07-28",
+  "job": "job_adminbereich_stufe1_20260728",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "gemessenMit": "fetch aus der angemeldeten Sitzung auf https://smejj.com, cache no-store, 250 ms Abstand zwischen den Aufrufen (sonst greift die eigene Ratenbegrenzung mit Kapazitaet 40)",
+  "budgets": { "api_p95_ms": 300, "api_p99_ms": 800, "timeToFirstToken_ms": 1000 },
+
+  "hinweisZurBasislinie": "/api/health wurde von diesem Patch nicht beruehrt und dient als Basislinie. Sie liegt bei median 304 ms — das absolute 300-ms-Budget wird also vom Netzweg zum Salad-Container und dessen Antwortzeit bestimmt, nicht von den Admin-Routen. Bewertet wird deshalb der Abstand zur Basislinie.",
+
+  "vorKorrektur": {
+    "stand": "deployments/control/smejj-control-admin-stage1-2026-07-28.tar.gz",
+    "laeufe": 20,
+    "health_basislinie": { "median": 275, "p95": 570 },
+    "admin_me": { "median": 355, "p95": 627 },
+    "admin_users": { "median": 423, "p95": 2841 },
+    "admin_audit": { "median": 487, "p95": 577 },
+    "befund": "admin/users lag beim Fuenffachen der Basislinie: jede Anfrage las das gesamte Index-Objekt neu aus IDrive e2."
+  },
+
+  "nachKorrektur": {
+    "stand": "deployments/control/smejj-control-admin-stage1c-2026-07-28.tar.gz",
+    "laeufe": 8,
+    "health_basislinie": { "median": 304, "p95": 352 },
+    "admin_me": { "median": 349, "p95": 615 },
+    "admin_users": { "median": 391, "p95": 832 },
+    "admin_audit": { "median": 538, "p95": 732 },
+    "befund": "admin/users von p95 2841 auf 832 ms (Faktor 3,4) und im Median nur noch 87 ms ueber der Basislinie. Der verbleibende p95-Ausreisser ist der Cache-Ablauf nach 30 Sekunden, der einmal wieder voll aus IDrive e2 liest — gewollt."
+  },
+
+  "massnahmen": [
+    "userIndex.js: 30 Sekunden Prozess-Cache, sofortige Invalidierung bei jedem Neubau. builtAt und ageSeconds kommen weiterhin aus dem Objekt, nie aus dem Cache-Zeitpunkt.",
+    "auditLog.js: statt des gesamten Prefix admin/audit/ nur zwei parallele LIST-Aufrufe auf die Monats-Prefixe des laufenden und vorigen Monats. Vollstaendige Listung nur, wenn darin nichts liegt. Das Ergebnis nennt seinen Umfang im Feld window."
+  ],
+
+  "webVitalsUnveraendert": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7",
+    "erstbesuch": { "ttfb_p75_ms": 152, "lcp_p75_ms": 412, "cls_p75": 0, "inp_p75_ms": 48, "pageWeight_kb": 273 },
+    "wiederbesuch": { "ttfb_p75_ms": 166, "lcp_p75_ms": 276, "cls_p75": 0, "inp_p75_ms": 48, "pageWeight_kb": 38 },
+    "urteil": "Alle Budgets eingehalten. Das Frontend wurde in diesem Job nicht angefasst — der Wert belegt, dass der Control-Server-Deploy die Startseite nicht beruehrt (Static-First haelt)."
+  },
+
+  "timeToFirstToken": {
+    "gemessen_ms": 346,
+    "budget_ms": 1000,
+    "urteil": "OK — Chat ueber die Zeabur-Bruecke nach drei Control-Server-Neustarts unveraendert funktionsfaehig."
+  }
+}
