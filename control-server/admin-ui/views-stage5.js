@@ -32,13 +32,14 @@
 
   function modelle(d) {
     const zeilen = (d.modelle || []).map(function (m) {
-      const stumm = m.aktiv && m.eingerichtet && !m.erreichbar;
       return "<tr><td><b>" + e(m.name) + "</b>" + (m.standard ? " " + pille("Standard", "ok") : "")
         + '<br><span class="s mono">' + e(m.id) + "</span></td>"
         + "<td>" + e(m.anbieter || "—") + "</td>"
         + "<td>" + (m.aktiv ? pille("ein", "ok") : pille("aus", "dim")) + "</td>"
         + "<td>" + (m.eingerichtet ? pille("ja", "ok") : pille("nein", "warn")) + "</td>"
-        + "<td>" + (m.erreichbar ? pille("ja", "ok") : pille("nein", stumm ? "bad" : "dim")) + "</td>"
+        + "<td>" + (m.erreichbarkeit === "ja" ? pille("ja", "ok")
+          : m.erreichbarkeit === "nein" ? pille("nein", "bad")
+            : pille("ungeprüft", "dim")) + "</td>"
         + "<td>" + (m.fehlschlaegeInFolge > 0
           ? pille(m.fehlschlaegeInFolge + " in Folge", "bad")
           : '<span class="s">—</span>')
@@ -50,15 +51,16 @@
     // Zwei verschiedene Ursachen, die nicht in einen Topf gehoeren: ein Modell,
     // das eingerichtet ist und trotzdem schweigt, ist ein Ausfall. Eines, das
     // gar nicht erst eingerichtet wurde, ist eine Luecke in der Konfiguration.
-    const stumme = (d.modelle || []).filter(function (m) { return m.aktiv && m.eingerichtet && !m.erreichbar; });
+    const stumme = (d.modelle || []).filter(function (m) { return m.aktiv && m.erreichbarkeit === "nein"; });
     const unfertige = (d.modelle || []).filter(function (m) { return m.aktiv && !m.eingerichtet; });
+    const ungeprueft = (d.modelle || []).filter(function (m) { return m.aktiv && m.eingerichtet && m.erreichbarkeit === "ungeprueft"; });
     const aktiv = Number(d.aktiv || 0);
     const erreichbar = Number(d.erreichbar || 0);
 
     let hinweis;
     if (stumme.length) {
       hinweis = '<div class="note glass fehler"><div class="nx">▲</div><div>'
-        + '<div class="nt">' + stumme.length + " eingeschaltet und eingerichtet — antwortet trotzdem nicht</div>"
+        + '<div class="nt">' + stumme.length + " geprüft und antwortet nicht</div>"
         + '<div class="ns">Genau dieser Fall fällt im Betrieb sonst erst auf, wenn sich jemand beschwert: '
         + e(stumme.map(function (m) { return m.name; }).join(", ")) + ".</div></div></div>";
     } else if (unfertige.length) {
@@ -67,6 +69,14 @@
         + '<div class="ns">Kein Ausfall, sondern eine Lücke in der Konfiguration: '
         + e(unfertige.map(function (m) { return m.name; }).join(", "))
         + ". Ohne hinterlegten Endpunkt kann nichts antworten.</div></div></div>";
+    } else if (ungeprueft.length) {
+      // Bewusst KEIN Fehler-Ton: nie geprueft ist kein Ausfall. Ein
+      // Betriebsbildschirm, der grundlos Alarm schlägt, wird nach dem zweiten
+      // Mal nicht mehr gelesen.
+      hinweis = '<div class="note glass"><div class="nx">◆</div><div>'
+        + '<div class="nt">' + ungeprueft.length + " noch ungeprüft — kein Ausfall</div>"
+        + '<div class="ns">' + e(d.hinweis || "") + " Betroffen: "
+        + e(ungeprueft.map(function (m) { return m.name; }).join(", ")) + ".</div></div></div>";
     } else {
       hinweis = '<div class="note glass"><div class="nx">◆</div><div><div class="nt">Drei Fragen, drei Spalten</div>'
         + '<div class="ns">Eingeschaltet, eingerichtet und erreichbar sind drei verschiedene Dinge. '
@@ -79,11 +89,14 @@
       + '<div class="kpis">'
       + V.kachelBlock("Modelle", String(d.total || 0), "in der Registry")
       + V.kachelBlock("Eingeschaltet", String(d.aktiv || 0), "auswählbar")
+      // Der Ton haengt am AUSFALL, nicht an "ungeprueft": nur ein geprueftes
+      // Modell, das nicht antwortet, ist ein Problem.
       + V.kachelBlock("Erreichbar", String(erreichbar),
-        erreichbar >= aktiv && aktiv > 0 ? "alle eingeschalteten"
-          : aktiv === 0 ? "keines eingeschaltet"
-            : "von " + aktiv + " eingeschalteten",
-        erreichbar >= aktiv ? "up" : "dn")
+        aktiv === 0 ? "keines eingeschaltet"
+          : erreichbar >= aktiv ? "alle eingeschalteten"
+            : stumme.length ? stumme.length + " ausgefallen, " + ungeprueft.length + " ungeprüft"
+              : "von " + aktiv + " eingeschalteten, Rest ungeprüft",
+        stumme.length ? "dn" : erreichbar >= aktiv ? "up" : "")
       + V.kachelBlock("Standard", e(d.standard || "—"), "ohne eigene Wahl")
       + "</div>"
       + '<div class="stack">' + hinweis

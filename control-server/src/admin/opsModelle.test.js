@@ -14,10 +14,31 @@ test("die drei Fragen bleiben getrennt", () => {
   for (const m of e.modelle) {
     assert.equal(typeof m.aktiv, "boolean");
     assert.equal(typeof m.eingerichtet, "boolean");
-    assert.equal(typeof m.erreichbar, "boolean");
+    assert.equal(["ja", "nein", "ungeprueft"].includes(m.erreichbarkeit), true);
   }
   assert.equal(e.aktiv <= e.total, true);
   assert.equal(e.erreichbar <= e.total, true);
+});
+
+test("NIE GEPRUEFT ist kein Ausfall", () => {
+  // Live gefunden (28.07.2026, Version 106): die Registry meldet
+  // runtimeAvailable=false, solange niemand nachgesehen hat. Als "antwortet
+  // nicht" gemeldet, haette das bei jedem frischen Container Alarm ausgeloest —
+  // und ein Bildschirm, der grundlos Alarm schlaegt, wird nicht mehr gelesen.
+  const ohneMessung = modellUebersicht({ env: {}, gesundheit: {} });
+  for (const m of ohneMessung.modelle) {
+    assert.notEqual(m.erreichbarkeit, "nein", `${m.id} wurde nie geprueft und darf nicht als Ausfall gelten`);
+  }
+  assert.equal(ohneMessung.ausgefallen, 0);
+
+  // Erst eine echte Messung macht daraus einen Ausfall.
+  const mitMessung = modellUebersicht({
+    env: {},
+    gesundheit: { "glm-5-2": { status: "unavailable", available: false, consecutiveFailures: 2, checkedAt: "2026-07-28T12:00:00.000Z" } }
+  });
+  const glm = mitMessung.modelle.find((m) => m.id === "glm-5-2");
+  // Nur wenn das Modell ueberhaupt eingerichtet ist, ist "nein" moeglich.
+  if (glm.eingerichtet) assert.equal(glm.erreichbarkeit, "nein");
 });
 
 test("das stumme Modell steht oben — die Betreiberin soll den Ausfall nicht suchen muessen", () => {
@@ -25,10 +46,11 @@ test("das stumme Modell steht oben — die Betreiberin soll den Ausfall nicht su
   // Prozesszustand abhaengt.
   const e = modellUebersicht({ env: {}, gesundheit: {} });
   const rang = (m) => {
-    if (m.aktiv && m.eingerichtet && !m.erreichbar) return 0;
+    if (m.aktiv && m.erreichbarkeit === "nein") return 0;
     if (m.aktiv && !m.eingerichtet) return 1;
-    if (m.aktiv) return 2;
-    return 3;
+    if (m.aktiv && m.erreichbarkeit === "ungeprueft") return 2;
+    if (m.aktiv) return 3;
+    return 4;
   };
   const raenge = e.modelle.map(rang);
   const sortiert = [...raenge].sort((a, b) => a - b);

@@ -1,0 +1,86 @@
+{
+  "titel": "Adminbereich Stufe 5 — Betrieb sichtbar (Modelle, Jobs, Worker, Deploy, Speicher)",
+  "datum": "2026-07-28",
+  "job": "job_adminstufe5_20260728",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 106,
+  "artefakt": "deployments/control/smejj-control-stufe5b-2026-07-28.tar.gz",
+  "rueckweg": [
+    "deployments/control/smejj-control-stufe5-2026-07-28.tar.gz (Stufe 5 ohne den Deploy-Ansicht-Fix)",
+    "deployments/control/smejj-control-stufe4c-2026-07-28.tar.gz (Stand vor diesem Job)"
+  ],
+  "commits": ["056c73c", "8ab5367"],
+  "abdeckung": {
+    "module": "16 von 26 A-Z-Modulen gebaut",
+    "neuInStufe5": ["G Modelle & Provider", "H Jobs & Läufe", "I Worker & Kapazität", "P Betrieb & Deploy", "U Speicher"],
+    "offen": ["E Abrechnung", "F Kosten & Budgets", "J Schlüssel", "L Sicherheit", "S Wissen", "T Sprachen", "V E-Mail", "W Analytik", "X Experimente", "Y Aufgaben", "Z Admin-Verwaltung"]
+  },
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "datenschutzNachweise": {
+    "auftragstextNichtEnthalten": "Test 'kein Auftragstext, keine Kontextpfade, keine Repository-Adresse' prueft die serialisierte Antwort auf den Wortlaut — nicht nur das Feld.",
+    "fehlerwortlautNichtEnthalten": "Die Modell-Registry reicht `health.reason` durch; der Test weist nach, dass weder der Text noch das Feld in die Antwort geraten.",
+    "keineSchluesselwerte": "Die Deploy-Sicht liest aus der Umgebung ausschliesslich die zwei Release-Zeiger; Test mit gesetzten Geheimnissen bestaetigt, dass keiner in der Antwort landet.",
+    "begruendungDerBerechtigung": "ops.read ist fuer jede Adminrolle erlaubt, WEIL kein Inhalt enthalten ist. Was durchgereicht wird, entscheidet ueber die Berechtigung — nicht umgekehrt."
+  },
+  "funktionsnachweiseLive": {
+    "deploySichtDeckungsgleich": "Release smejj-control-stufe5-2026-07-28 in Soll und Ist identisch, 788 Dateien, Laufzeit 57 s, Node v22.23.1.",
+    "speicherSichtZweiEimer": "smejj-app: Nutzerkonten 5, Audit-Log 15, Adminbereich 20, Jobs 985. smejj-model-files: Release-Artefakte 62 (57,5 MB). Jeder Bereich nennt seinen Eimer.",
+    "nutzerkontenStimmen": "5 Objekte unter auth/email-users/ — deckt sich mit den 5 Konten in der Nutzerverwaltung.",
+    "ohneAnmeldung": "/admin/views-stage5.js und /api/admin/ops/* liefern 401."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Speicher-Ansicht las alles aus dem Haupteimer",
+      "wirkung": "Auf Produktion haetten die Release-Artefakte eine Null gezeigt — eine Null sieht aus wie 'nichts da', nicht wie 'am falschen Ort gesucht'.",
+      "spur": "Lokal stand 'Nutzerkonten: 0', obwohl live fuenf Konten existieren. Eine Null, die nicht zur bekannten Wirklichkeit passt, ist eine Spur — kein Messergebnis.",
+      "behoben": "Jeder Bereich kennt seinen Eimer (IDRIVE_E2_BUCKET / IDRIVE_E2_DEPLOY_BUCKET), der Eimername steht in der Ansicht."
+    },
+    {
+      "fund": "Deploy-Ansicht stellte zwei Pruefsummen nebeneinander, die nie uebereinstimmen koennen",
+      "wirkung": "b7a2997b518e gegen 579dd48aa28a unter der Ueberschrift 'Release-Abgleich' liest sich wie eine Abweichung.",
+      "ursache": "Links die Pruefsumme des gepackten Archivs, rechts die des ausgepackten Inhalts — zwei verschiedene Messungen.",
+      "behoben": "Verglichen wird nur die Release-Kennung. Die Pruefsummen haben eine eigene Tafel mit der Angabe, was sie messen."
+    },
+    {
+      "fund": "Kachel zeigte bei 'unbekannt' den Zusatz 'in Ordnung'",
+      "wirkung": "Eine Beruhigung ohne Grundlage — genau das, was ein Betriebsbildschirm nie tun darf.",
+      "behoben": "Zusatz je Zustand: 'in Ordnung' nur bei deckungsgleich."
+    },
+    {
+      "fund": "Modell-Kachel behauptete 'alle eingeschalteten' bei 0 von 1 erreichbar",
+      "behoben": "Zusatz wird aus den Zahlen gebildet: 'von 1 eingeschalteten'."
+    }
+  ],
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7 (aus dem Stufe-4-Lauf, unveraendert gueltig)",
+    "urteil": "Alle Budgets eingehalten. Erwartungsgemaess unveraendert: dieser Job hat keine Datei unter public/ angefasst, der Start-Lock blieb durchgehend gruen."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, durchgehend gruen.",
+    "parallelSession": "Live-Artefakt heruntergeladen und dateiweise verglichen. Alle 23 Abweichungen waren bereits committet — der eigene Baum war ueberall der neuere. Eine nur live vorhandene, ungetrackte Mockup-Datei wurde uebernommen, damit das Artefakt keine Datei verliert.",
+    "preflight": "npm run release:preflight vollstaendig gruen, check:release-imports 154 Dateien transitiv.",
+    "schreibrechteUnveraendert": "Stufe 5 ist rein lesend; POST auf /api/admin/ops/* antwortet 405."
+  },
+  "testabdeckung": {
+    "gesamt": 256,
+    "neuInStufe5": 32,
+    "schwerpunkte": [
+      "kein Auftragstext, keine Kontextpfade, keine Repository-Adresse in der Job-Sicht",
+      "kein Fehlerwortlaut aus der Modell-Gesundheit",
+      "keine Schluesselwerte aus der Umgebung in der Deploy-Sicht",
+      "ausgefallene Quelle ergibt 'nicht erreichbar', nie eine Null",
+      "'unbekannt' statt 'abweichend', wenn eine Seite fehlt",
+      "Release-Artefakte werden im Deploy-Eimer gesucht",
+      "abgeschnittene Zaehlung gibt sich als abgeschnitten zu erkennen",
+      "readonly behaelt ausschliesslich lesende Rechte"
+    ]
+  }
+}

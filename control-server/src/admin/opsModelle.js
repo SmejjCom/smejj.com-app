@@ -31,6 +31,14 @@ export function modellUebersicht({ env = process.env, gesundheit = null } = {}) 
     aktiv: m.active === true,
     eingerichtet: m.runtimeConfigured === true,
     erreichbar: m.runtimeAvailable === true,
+    // DREI Werte, nicht zwei. Die Registry kennt nur `runtimeAvailable`, und
+    // das ist false, solange noch niemand nachgesehen hat. "Nie geprueft" als
+    // "antwortet nicht" zu melden waere ein Fehlalarm bei jedem frischen
+    // Container — und ein Betriebsbildschirm, der grundlos Alarm schlaegt,
+    // wird nach dem zweiten Mal nicht mehr gelesen.
+    erreichbarkeit: !m.runtimeConfigured ? "ungeprueft"
+      : m.runtime?.health ? (m.runtimeAvailable === true ? "ja" : "nein")
+        : "ungeprueft",
     standard: m.default === true,
     rueckfallModellId: m.fallbackModelId || null,
     kontextTokens: m.contextTokens || null,
@@ -51,10 +59,14 @@ export function modellUebersicht({ env = process.env, gesundheit = null } = {}) 
     ok: true,
     total: modelle.length,
     aktiv: modelle.filter((m) => m.aktiv).length,
-    erreichbar: modelle.filter((m) => m.erreichbar).length,
+    erreichbar: modelle.filter((m) => m.erreichbarkeit === "ja").length,
+    ausgefallen: modelle.filter((m) => m.aktiv && m.erreichbarkeit === "nein").length,
+    ungeprueft: modelle.filter((m) => m.aktiv && m.erreichbarkeit === "ungeprueft").length,
     standard: registry?.defaultModelId || null,
     modelle: modelle.sort(sortiereNachDringlichkeit),
-    anbieter: nachAnbieter(modelle)
+    anbieter: nachAnbieter(modelle),
+    hinweis: "Geprueft wird beim ersten Aufruf eines Backends, nicht auf Vorrat. "
+      + "Nach einem Neustart ist deshalb vieles ungeprueft — das ist kein Ausfall."
   };
 }
 
@@ -64,10 +76,11 @@ export function modellUebersicht({ env = process.env, gesundheit = null } = {}) 
  */
 function sortiereNachDringlichkeit(a, b) {
   const rang = (m) => {
-    if (m.aktiv && m.eingerichtet && !m.erreichbar) return 0; // eingeschaltet, antwortet aber nicht
-    if (m.aktiv && !m.eingerichtet) return 1;                 // eingeschaltet, gar nicht eingerichtet
-    if (m.aktiv) return 2;
-    return 3;
+    if (m.aktiv && m.erreichbarkeit === "nein") return 0;      // geprueft und antwortet nicht
+    if (m.aktiv && !m.eingerichtet) return 1;                  // eingeschaltet, gar nicht eingerichtet
+    if (m.aktiv && m.erreichbarkeit === "ungeprueft") return 2; // noch niemand hat nachgesehen
+    if (m.aktiv) return 3;
+    return 4;
   };
   const unterschied = rang(a) - rang(b);
   if (unterschied !== 0) return unterschied;
@@ -82,7 +95,7 @@ function nachAnbieter(modelle) {
     const eintrag = karte.get(schluessel) || { anbieter: schluessel, total: 0, aktiv: 0, erreichbar: 0 };
     eintrag.total += 1;
     if (m.aktiv) eintrag.aktiv += 1;
-    if (m.erreichbar) eintrag.erreichbar += 1;
+    if (m.erreichbarkeit === "ja") eintrag.erreichbar += 1;
     karte.set(schluessel, eintrag);
   }
   return [...karte.values()].sort((a, b) => b.total - a.total);
