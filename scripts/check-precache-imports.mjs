@@ -57,6 +57,20 @@ function aufloesen(quellDateiPfad, spezifizierer) {
   return `/assets/${ziel.slice("public/".length)}`;
 }
 
+// EINSTIEGSPUNKTE AUS index.html (Luecke vom 2026-07-28): Der Pruefer verfolgte
+// bisher nur Modul-IMPORTE ab den SHELL-Eintraegen. Ein <script src>-Tag in
+// index.html ist aber ein EIGENER Einstiegspunkt — steht er nicht im SHELL,
+// findet der Browser ihn offline nicht, und kein Import-Pfad fuehrt dorthin.
+// Genau so fiel maus-panel.js durch: geladen, aber nie im Precache, und der
+// Pruefer meldete trotzdem "vollstaendig".
+const INDEX = readFileSync("public/index.html", "utf8");
+for (const treffer of INDEX.matchAll(/<script[^>]+src="([^"]+\.js)(?:\?[^"]*)?"/g)) {
+  const pfad = treffer[1].split("?")[0];
+  if (!pfad.startsWith("/assets/")) continue;
+  if (shell.has(pfad)) continue;
+  luecken.push({ von: "public/index.html (script-Tag)", fehlt: pfad });
+}
+
 if (luecken.length) {
   console.error(`check:precache-imports FAILED (${luecken.length} Luecken) — offline waere die App tot:`);
   for (const { von, fehlt } of luecken.sort((a, b) => a.fehlt.localeCompare(b.fehlt))) {
