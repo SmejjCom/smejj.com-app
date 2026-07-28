@@ -1,3 +1,9 @@
+// v179 -> v180 (2026-07-28): Kimi K3 im Modell-Menue. Der Picker im Eingabefeld
+// ist eine fest verdrahtete Liste (index.html + MODEL_MODES in app.js) — die
+// Server-Registry kannte K3 laengst, der Nutzer kam ueber die Oberflaeche aber
+// nicht heran. Ein Menueeintrag, eine Zeile Zuordnung, sonst nichts: Startseite,
+// Eingabefeld und Design bleiben unveraendert. Freigabe des Betreibers lag vor.
+//
 // v178 -> v179 (2026-07-28): Spurwahl und Zeitbudget. Gemessen gegen die
 // Live-Bridge: Schnellspur 0,49-1,01 s bis zum ersten Byte, Tiefspur 4,9-7,8 s —
 // bei einem gemeinsamen Limit von 6,5 s in fetch-retry.js. Deshalb endeten
@@ -235,7 +241,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v179";
+const CACHE_NAME = "smejj-shell-v180";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
