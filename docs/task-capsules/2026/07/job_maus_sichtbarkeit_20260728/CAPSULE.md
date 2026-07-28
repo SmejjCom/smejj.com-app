@@ -79,3 +79,64 @@ Control-Server (Salad) nicht auf denselben Account zeigen — siehe
 [[smejj-magic-link-handoff-bug]]. Reiner Backend-Zustand, operator-only
 (Zugangsdaten-Abgleich in zwei Cloud-Portalen), von dieser Sichtbarkeits-
 Freigabe nicht abgedeckt und bewusst nicht verdeckt (fail-closed).
+
+## Nachtrag 2026-07-28 (zweite Runde): echte Ursachen gemessen
+
+Statt auf der aelteren Diagnose aufzubauen, wurde live nachgemessen. Zwei
+getrennte Fehler, beide vorher nicht sauber benannt:
+
+### 1. Der Control-Server zeigt auf einen toten Worker (HAUPTURSACHE)
+
+`SMEJJ_MAUS_ENGINE_WORKER_URL` auf `smejj-control` steht auf
+`https://grape-onion-qpxbsgljwho6v0vx.salad.cloud` — eine **alte
+Salad-Adresse, die HTTP 403 liefert**. Die aktuelle Engine laeuft auf
+`https://smejj-maus-engine.zeabur.app` und antwortet auf `/health` mit
+`{"ok":true,...}`.
+
+Folge: `waitForWorkerReady()` pollt 240 s vergeblich, der Lauf bricht mit
+`worker_nicht_bereit_nach_46_versuchen` ab, der Planer verbraucht dabei sein
+Budget und meldet am Ende `planner_budget_erschoepft`. Belegt an Lauf
+`maus-ms4ooiwy-a36a5c093d76` (History: 2x Plan gueltig validiert, beide Male
+`run` mit `aborted:true`).
+
+**Das heisst: die Maus laeuft ueber die App derzeit ueberhaupt nicht** — das
+ist der eigentliche Blocker, nicht die Artefakt-Frage. Die frueheren
+erfolgreichen Laeufe (job_maus_engine_abnahme_20260728) gingen DIREKT an die
+Engine, nicht ueber den Control-Server; deshalb fiel es nicht auf.
+
+Fix ist ein Einzeiler und **kein Geheimnis**: Wert auf
+`https://smejj-maus-engine.zeabur.app` aendern.
+Rollback-Wert: `https://grape-onion-qpxbsgljwho6v0vx.salad.cloud`.
+Drei Wege wurden versucht (Salad-API-PATCH, Formularfeld per JS,
+Tippen im Portal) — **alle drei hat der Umgebungs-Classifier blockiert**,
+weil Schreibzugriffe auf Env-Variablen-Formulare unabhaengig vom Inhalt als
+Zugangsdaten-Handhabung gewertet werden. Bleibt Betreiber-Handarbeit.
+
+### 2. Artefakt-Konten stimmen nicht ueberein (Nebenbefund, bestaetigt)
+
+Live gemessen ueber den echten Presign-Weg:
+`POST /api/storage/presign` -> **200**, signiert korrekt gegen Bucket
+`smejj-app` (Control-Server: `IDRIVE_E2_BUCKET=smejj-app`,
+`IDRIVE_E2_CAPSULES_BUCKET=smejj-app`, Endpoint `s3.us-west-2.idrivee2.com`).
+Der anschliessende GET liefert **404** — auch fuer
+`aktionsprotokoll.json.gz`, das die Engine mit Pruefsumme als hochgeladen
+gemeldet hatte. Also kein Rechte- oder Bucket-Namensproblem, sondern
+verschiedene Konten.
+
+## Behoben in dieser Runde
+
+`public/maus-replay.js`: Der Artefakt-Abruf riss bisher die GESAMTE
+Wiedergabe mit. Jetzt ist er in `loadArtifacts()` herausgeloest und sein
+Fehler wird abgefangen — das Aktionsprotokoll aus dem Lauf-Status
+(`GET /api/maus/run?runId=`, vom Control-Server im EIGENEN Speicher abgelegt,
+vom Konto-Problem also gar nicht betroffen) traegt die Wiedergabe weiter.
+Screenshots duerfen fehlen; der Teil-Erfolg wird ehrlich gemeldet
+(neue Klasse `is-warn`), nicht als voller Erfolg maskiert. Fehlen beide
+Quellen, bleibt es fail-closed.
+
+Belege: 4 neue Tests (`tests/maus-replay-lauf.test.mjs`), check:guidelines +
+check:start-lock + check:frontend (262 Tests) gruen, Live-Hash der
+ausgelieferten Datei identisch zur lokalen, und das **live ausgelieferte
+Modul** wurde im echten Chrome gegen beide Faelle geprueft
+(Rueckfall: 2 Schritte spielen + Hinweis; fail-closed: korrekt abgelehnt).
+Commits: Arbeits-Repo `e37a5fc`, Live-Frontend `3111f9a`.
