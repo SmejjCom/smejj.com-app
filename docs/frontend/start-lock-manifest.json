@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T09:24:57.688Z",
-  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ja' auf den Vorschlag Statusseite. index.html (Link Betriebsstatus), sw.js v171 (status.html/status.js im Precache), static-pages.css (p-status).",
+  "frozenAt": "2026-07-28T09:34:41.986Z",
+  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ja' auf den Vorschlag Statusseite. Pflicht-Versionssprung sw v172, damit der geaenderte Precache (status.html, status.js) auch Bestandsnutzer erreicht.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "6a86d4637519176d6911b4f42aafe79b0b521e56f0d4e360614e872673c2a554",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "67a3886cad3dadd7b76491996320414f02d3c217f6aecee47f0bc567e646d8dc",
+    "public/sw.js": "be682ac4dd56dcec61371c05c3ee77a9a380013976fadd91dac63a308104d305",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
