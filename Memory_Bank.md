@@ -621,3 +621,25 @@ SMEJJ_REMOTE_BROWSER_WORKER_URL).
   einzelnen Laborlauf.
 - Auslesen im Live-Test: `await import("/assets/field-vitals.js")` ->
   `fieldVitalsSummary()`.
+
+## 2026-07-28 — Maus-Engine live abgenommen (job_maus_engine_abnahme_20260728)
+- ERLEDIGT: Die Engine wies seit dem 2026-07-26 jeden /run fail-closed mit 401 ab,
+  weil sechs Variablen fehlten. Jetzt zehn Variablen gesetzt, Dienst neu gestartet,
+  Abnahme mit echtem Lauf bestanden.
+- BELEG: /run liefert 200 — openBrowser (844 ms) -> navigate https://smejj.com/
+  (1142 ms, HTTP 200) -> closeBrowser (44 ms), aborted:false, uploaded:true.
+  Artefakt auf IDrive e2: capsules/maus-engine/job_maus_engine_abnahme_20260728/
+  result/abnahme-20260728-01/aktionsprotokoll.json.gz (439 B komprimiert,
+  sha256 db21e01a5ff...). Ganze Kette belegt: Token -> Browser -> Object Brain.
+- VERTRAG von POST /run: Der Plan muss UMSCHLOSSEN gesendet werden —
+  {"plan": {...}}. Direkt gesendet antwortet die Engine "Plan ist kein Objekt."
+  Pflichtfelder des Plans: schemaVersion(1), planId, createdAt, capsuleRef,
+  planner{modelId,promptTemplateVersion}, policy{domainAllowlist,budget},
+  steps[]. budget braucht maxActions, maxLocalRetries, maxPlannerRoundtrips,
+  maxDurationMs, defaultActionTimeoutMs. Beispielplan liegt neben der Capsule.
+- ARBEITSTEILUNG, die funktioniert hat (Muster fuer alle Schluessel-Aufgaben):
+  Sitzung erzeugt den Token per openssl OHNE ihn auszugeben, legt ihn in
+  env.local, fuellt die Zwischenablage, oeffnet im Portal Dienst + Reiter +
+  Dialog und setzt den Cursor ins Feld. Der Betreiber macht nur noch
+  Cmd+V / Add / Save. Danach klickt die Sitzung Restart und nimmt ab.
+- OFFENE_PUNKTE_NUR_BETREIBER_2026-07-26.md: Punkt A als ERLEDIGT markiert.

@@ -6,7 +6,16 @@ und OAuth-Secrets. Diese Sperre ist fest eingebaut (sie verhindert, dass eine
 KI jemals Zugaenge sieht, kopiert oder weitergibt) und laesst sich nicht per
 Freigabe aufheben. Alles Uebrige ist erledigt.
 
-## A) smejj.com — Maus-Engine auf dem neuen Zeabur-Server
+## A) smejj.com — Maus-Engine auf dem neuen Zeabur-Server — ERLEDIGT 2026-07-28
+
+**ABGESCHLOSSEN.** Die sechs Variablen sind gesetzt, der Dienst neu gestartet.
+Abnahme mit echtem Lauf: `/run` liefert 200, Browser oeffnet, navigiert nach
+smejj.com (HTTP 200), Protokoll liegt auf IDrive e2. Beleg und Plan:
+`docs/task-capsules/2026/07/job_maus_engine_abnahme_20260728/`.
+
+Der urspruengliche Text bleibt unten als Historie stehen.
+
+### Historie (Stand 2026-07-26)
 
 **Zustand live:** Server laeuft, Engine antwortet
 (`https://smejj-maus-engine.zeabur.app/health` -> `ok:true`), `POST /run`

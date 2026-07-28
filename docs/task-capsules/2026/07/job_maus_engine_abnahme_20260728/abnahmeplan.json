@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "planId": "abnahme-20260728-01",
+  "createdAt": "2026-07-28T08:00:00Z",
+  "capsuleRef": "job_maus_engine_abnahme_20260728",
+  "planner": { "modelId": "manuell-abnahme", "promptTemplateVersion": "1" },
+  "policy": {
+    "domainAllowlist": ["smejj.com"],
+    "budget": {
+      "maxActions": 5,
+      "maxLocalRetries": 1,
+      "maxPlannerRoundtrips": 0,
+      "maxDurationMs": 60000,
+      "defaultActionTimeoutMs": 15000
+    }
+  },
+  "steps": [
+    { "id": "s1", "action": "openBrowser", "viewport": { "width": 1280, "height": 800 } },
+    { "id": "s2", "action": "navigate", "url": "https://smejj.com/", "waitUntil": "domcontentloaded" },
+    { "id": "s3", "action": "closeBrowser" }
+  ]
+}
