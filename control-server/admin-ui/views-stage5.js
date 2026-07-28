@@ -194,22 +194,41 @@
         + '<div class="nt">' + e(urteilText(d.bewertung)) + "</div>"
         + '<div class="ns">' + e(d.hinweis || "") + "</div></div></div>";
 
+    // Verglichen wird ausschliesslich die Release-Kennung. Die beiden
+    // Pruefsummen messen VERSCHIEDENE Dinge — links das gepackte Archiv, rechts
+    // den ausgepackten Inhalt. Sie nebeneinanderzustellen sähe nach Abweichung
+    // aus, obwohl sie nie uebereinstimmen koennen.
     const tabelle = V.tabelleBlock(["", "Soll (Umgebung)", "Ist (ausgepacktes Artefakt)"], [
       "<tr><td><b>Release</b></td><td>" + e(soll.releaseId || "—") + "</td><td>" + e(ist.releaseId || "—") + "</td></tr>",
-      "<tr><td><b>Prüfsumme</b></td><td>" + e(soll.sha256Kurz || "—") + "</td><td>" + e(ist.inhaltsHashKurz || "—") + "</td></tr>",
       "<tr><td><b>Gebaut am</b></td><td>—</td><td>" + e(A.zeit(ist.gebautAm)) + "</td></tr>",
       "<tr><td><b>Dateien</b></td><td>—</td><td>" + e(String(ist.dateien || "—")) + "</td></tr>"
+    ]);
+
+    const pruefsummen = V.tabelleBlock(["", "Wert", "Was sie misst"], [
+      "<tr><td><b>Archiv</b></td><td><span class=\"mono\">" + e(soll.sha256Kurz || "—") + "</span></td>"
+      + "<td>Die hochgeladene .tar.gz-Datei — gesetzt beim Aktivieren des Release.</td></tr>",
+      "<tr><td><b>Inhalt</b></td><td><span class=\"mono\">" + e(ist.inhaltsHashKurz || "—") + "</span></td>"
+      + "<td>Alle ausgepackten Dateien zusammen — geschrieben beim Bauen.</td></tr>"
     ]);
 
     return V.kopfBlock("P", "Deploy", "Betrieb & Deploy",
       "Welcher Stand läuft gerade wirklich.")
       + '<div class="kpis">'
-      + V.kachelBlock("Abgleich", urteilKurz(d.bewertung), abweichend ? "prüfen" : "in Ordnung", abweichend ? "dn" : "up")
+      // "in Ordnung" nur, wenn wirklich verglichen werden konnte. Ein
+      // "unbekannt" mit dem Zusatz "in Ordnung" waere eine Beruhigung ohne
+      // Grundlage — genau das, was ein Betriebsbildschirm nie tun darf.
+      + V.kachelBlock("Abgleich", urteilKurz(d.bewertung),
+        d.bewertung === "deckungsgleich" ? "in Ordnung"
+          : d.bewertung === "abweichend" ? "prüfen"
+            : d.bewertung === "lokal" ? "kein Release-Artefakt"
+              : "nicht vergleichbar",
+        d.bewertung === "deckungsgleich" ? "up" : abweichend ? "dn" : "")
       + V.kachelBlock("Laufzeit", d.laufzeitMs === null ? "—" : dauerKurz(d.laufzeitMs), "seit dem Start")
       + V.kachelBlock("Node", e(d.knoten || "—"), "Laufzeitumgebung")
       + "</div>"
       + '<div class="stack">' + hinweis
-      + V.panelBlock("Release-Abgleich", "Umgebung gegen Artefakt", tabelle)
+      + V.panelBlock("Release-Abgleich", "verglichen wird die Release-Kennung", tabelle)
+      + V.panelBlock("Prüfsummen", "messen Verschiedenes — kein Abgleich", pruefsummen)
       + "</div>";
   }
 
