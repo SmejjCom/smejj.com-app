@@ -1,16 +1,16 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T07:21:38.319Z",
-  "confirmation": "Freigabe Wof Kadavanich 2026-07-28 (Master-Prompt Gruene Liste): Barrierefreiheits-Fix panel-layout.js, public/sw.js v164",
+  "frozenAt": "2026-07-28T08:09:20.300Z",
+  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ich habe dir alle Rechte gegeben - mach es bitte komplett fertig und lass nichts offen.' Umfasst das Entfernen der drei toten Knoepfe (F-23) sowie den kombinierten Stand mit der Nachbesserung am Nachrichten-Ueberlaufmenue, sw.js v167.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "115170eb6d49b9f64ecaf8ae5427f99a87804f54066647a9fd172a53e95cf35f",
+    "public/index.html": "985fc26db3d928ecd33ce897075a5c8b8fbeb723821957f7ea9d84f51d2e6cc5",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
     "public/composer-tools.css": "2dc316dfbc73da293910b7236bf58c06c72edf325d6f7cbb5fdd2eb0fbbebddb",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "f883cd23ea8c45f2320a9b703310e84307477195c4329ef6cef9f22ca3ca1710",
+    "public/app.js": "8a5da6fc1cdf28406e92687ee8fff3d40c56061fe0b325b8c123e55747aa601b",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "790eaf754a78ba474d93b97a119eb3eb04a64aef2adb3304ca654269301c3c68",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "b04bf169bd8e8ea603d02f14351d69c63d3cd0398c01641d182383c0ba4b8ecb",
+    "public/sw.js": "eb84564675947bc6cdff7ceb187274d709426fbcc70f7e0c6eef0b9612f6c5cd",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
