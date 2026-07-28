@@ -217,6 +217,23 @@ test("der Bericht urteilt korrekt und enthaelt keine Modellantwort im Klartext",
   assert.ok([EVAL_VERDICT.BLOCKED, EVAL_VERDICT.BUDGET_VIOLATED].includes(report.verdict));
 });
 
+test("der Bericht belegt, welches Backend wirklich geantwortet hat", () => {
+  const caseScores = [
+    { ...scoreCase(SUITE.cases[0], { ok: true, text: "smejj.com", latencyMs: 100 }), backend: "zhipu", resolvedModelId: "glm-5-2" },
+    { ...scoreCase(SUITE.cases[1], { ok: true, text: "IDrive e2", latencyMs: 100 }), backend: "groq", resolvedModelId: "fast-lane" }
+  ];
+  const report = buildEvalReport({
+    suite: SUITE,
+    run: { modelId: "glm-5-2", transport: "control", live: true },
+    caseScores
+  });
+  // Faellt der Router zurueck, steht das im Bericht — sonst waere die Messung
+  // einem Modell zugeschrieben, das gar nicht geantwortet hat.
+  assert.deepEqual(report.run.backendsSeen, ["groq", "zhipu"]);
+  assert.deepEqual(report.run.resolvedModelIds, ["fast-lane", "glm-5-2"]);
+  assert.equal(report.cases[0].backend, "zhipu");
+});
+
 test("ein sauberer Lauf ergibt das Urteil passed", () => {
   const evalCase = {
     id: "sauber",

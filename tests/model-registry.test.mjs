@@ -20,10 +20,14 @@ const KIMI_ENV = {
 test("registry keeps GLM-5.2 primary and Kimi K2.7 feature-flagged", () => {
   const registry = getPublicModelRegistry({});
   assert.equal(registry.defaultModelId, DEFAULT_MODEL_ID);
-  assert.deepEqual(registry.models.map((model) => model.name), ["GLM-5.2", "Kimi K2.7", "smejj fast 1.0"]);
+  assert.deepEqual(
+    registry.models.map((model) => model.name),
+    ["GLM-5.2", "Kimi K2.7", "Kimi K3", "smejj fast 1.0"]
+  );
   assert.equal(registry.models[0].active, true);
   assert.equal(registry.models[1].active, false);
   assert.equal(registry.models[2].active, false);
+  assert.equal(registry.models[3].active, false);
   assert.equal(registry.models[0].contextTokens, 1_000_000);
   assert.equal(registry.models[1].contextTokens, 262_144);
   assert.equal(JSON.stringify(registry).includes("secret"), false);
@@ -81,6 +85,74 @@ test("auto mode is prepared and selects configured Kimi only for coding", () => 
   const chat = resolveModelSelection({ requestedModel: "auto", profile: "default", env });
   assert.equal(coding.selectedModelId, "kimi-k2-7");
   assert.equal(chat.selectedModelId, "glm-5-2");
+});
+
+// --- Kimi K3 (reines API-Modell, kein Vault in IDrive e2) ---
+// Schutz-Tests: K3 ist kostenpflichtig und darf niemals ohne ausdrueckliches
+// Flag + Key greifen; GLM-5.2 bleibt Standard und Fallback.
+
+const K3_ENV_COMPLETE = Object.freeze({
+  SMEJJ_KIMI_K3_ENABLED: "YES",
+  SMEJJ_LLM_KIMI_K3_API_KEY: "secret-k3"
+});
+
+test("Kimi K3 ist ohne Konfiguration inaktiv (fail-closed)", () => {
+  const model = getModelDefinition("Kimi K3");
+  assert.equal(model.enabledByDefault, false);
+  assert.equal(model.fallbackModelId, DEFAULT_MODEL_ID);
+  assert.equal(isModelEnabled(model, {}), false);
+  assert.equal(getModelRuntimeConfig(model, {}).configured, false);
+});
+
+test("Kimi K3 nutzt den Moonshot-Endpunkt und die Modell-ID kimi-k3", () => {
+  const runtime = getModelRuntimeConfig("kimi-k3", K3_ENV_COMPLETE);
+  assert.equal(runtime.baseUrl, "https://api.moonshot.ai/v1");
+  assert.equal(runtime.runtimeModel, "kimi-k3");
+  assert.equal(runtime.apiKeyHeader, "Authorization");
+  assert.equal(runtime.provider, "kimi");
+  assert.equal(runtime.configured, true);
+});
+
+test("Kimi K3 greift NICHT ohne API-Key, auch wenn das Flag gesetzt ist", () => {
+  const env = { ...K3_ENV_COMPLETE, SMEJJ_LLM_KIMI_K3_API_KEY: "" };
+  assert.equal(getModelRuntimeConfig("kimi-k3", env).configured, false);
+});
+
+test("Kimi K3 hat keinen e2-Vault und teilt keine Env mit K2.7", () => {
+  assert.equal(getModelDefinition("kimi-k3").storage, null);
+  // K2.7 darf vom K3-Key nicht mitkonfiguriert werden und umgekehrt.
+  assert.equal(getModelRuntimeConfig("kimi-k2-7", K3_ENV_COMPLETE).configured, false);
+  assert.deepEqual(getModelRuntimeConfig("kimi-k3", KIMI_ENV).apiKeys, []);
+});
+
+test("Kimi K3 verdraengt GLM-5.2 nicht als Standard und nicht im Auto-Modus", () => {
+  const env = { ...K3_ENV_COMPLETE, SMEJJ_MODEL_AUTO_ENABLED: "YES" };
+  assert.equal(getPublicModelRegistry(env).defaultModelId, DEFAULT_MODEL_ID);
+  for (const profile of ["coding", "reasoning", "fast", "default", "web"]) {
+    const selection = resolveModelSelection({ requestedModel: "auto", profile, env });
+    assert.equal(selection.selectedModelId, DEFAULT_MODEL_ID, `Profil ${profile} muss bei GLM-5.2 bleiben`);
+  }
+});
+
+test("Kimi K3 wird ausgewaehlt, wenn der Nutzer es ausdruecklich anfragt", () => {
+  const selection = resolveModelSelection({ requestedModel: "Kimi K3", profile: "coding", env: K3_ENV_COMPLETE });
+  assert.equal(selection.selectedModelId, "kimi-k3");
+  assert.deepEqual(selection.candidateIds, ["kimi-k3", DEFAULT_MODEL_ID]);
+});
+
+test("inaktives Kimi K3 faellt auf GLM-5.2 zurueck", () => {
+  const selection = resolveModelSelection({ requestedModel: "kimi-k3", profile: "coding", env: {} });
+  assert.equal(selection.requestedModelId, "kimi-k3");
+  assert.equal(selection.selectedModelId, DEFAULT_MODEL_ID);
+  assert.equal(selection.reason, "requested_model_inactive");
+});
+
+test("Kimi K3 leakt keinen Key in die oeffentliche Registry", () => {
+  const registry = getPublicModelRegistry(K3_ENV_COMPLETE);
+  const k3 = registry.models.find((model) => model.id === "kimi-k3");
+  assert.equal(k3.runtimeConfigured, true);
+  assert.equal(k3.contextTokens, 1_000_000);
+  assert.equal(JSON.stringify(registry).includes("secret-k3"), false);
 });
 
 // --- smejj fast 1.0 (eigenes, selbst gehostetes Modell auf Salad-GPU) ---
