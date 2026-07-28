@@ -250,6 +250,85 @@ test("loop: unerreichbare Ablage macht eine bezahlte Messung nicht wertlos", asy
   assert.equal(/laufzeit|score|Suite/i.test(joined), true, "die Kennzahlen selbst stehen im Protokoll");
 });
 
+// Livegang 2026-07-28: ohne Ablage lief der Eval-Zyklus bei JEDEM Tick erneut
+// (readCheckpoint liefert dann immer Standardwerte). Das vervielfachte
+// kostenpflichtige Modellaufrufe.
+test("loop: ohne funktionierende Ablage haelt der Loop das Intervall trotzdem ein", async () => {
+  const config = loadLoopConfig({
+    SMEJJ_TRAINING_LOOP_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_INTERVAL_MS: String(6 * 60 * 60 * 1000),
+    SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000"
+  });
+  let evalRuns = 0;
+  const loop = createLoop({
+    config,
+    env: {},
+    repoRoot: "/repo",
+    log: () => {},
+    deps: {
+      // Ablage komplett tot — Lesen UND Schreiben scheitern.
+      checkpointRequest: async () => { throw new Error("idrive_tot"); },
+      callModel: async () => { evalRuns += 1; return { ok: true, text: "hi there", latencyMs: 5 }; },
+      readReport: async () => null,
+      readSuite: async () => validSuite(),
+      writeReport: async () => { throw new Error("idrive_tot"); }
+    }
+  });
+
+  const at = new Date("2026-07-28T00:00:00.000Z");
+  await loop.tick(() => at);
+  const nachErstemLauf = evalRuns;
+  assert.equal(nachErstemLauf > 0, true, "der erste Lauf findet statt");
+
+  // Drei weitere Ticks im 30-Sekunden-Takt — alle weit vor dem 6-Stunden-Intervall.
+  for (const versatz of [30_000, 60_000, 90_000]) {
+    await loop.tick(() => new Date(at.getTime() + versatz));
+  }
+  assert.equal(evalRuns, nachErstemLauf, "kein weiterer Lauf vor Ablauf des Intervalls");
+
+  // Nach Ablauf des Intervalls darf wieder gemessen werden.
+  await loop.tick(() => new Date(at.getTime() + 6 * 60 * 60 * 1000 + 1000));
+  assert.equal(evalRuns > nachErstemLauf, true, "nach dem Intervall laeuft die Messung erneut");
+});
+
+test("loop: ein laufender Zyklus wird nicht parallel erneut gestartet", async () => {
+  const config = loadLoopConfig({
+    SMEJJ_TRAINING_LOOP_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000"
+  });
+  let gestartet = 0;
+  let freigeben;
+  const blockiert = new Promise((resolve) => { freigeben = resolve; });
+
+  const loop = createLoop({
+    config,
+    env: {},
+    repoRoot: "/repo",
+    log: () => {},
+    deps: {
+      checkpointRequest: async () => JSON.stringify({}),
+      readReport: async () => null,
+      writeReport: async () => {},
+      readSuite: async () => validSuite(),
+      // Haelt den ersten Lauf offen, bis der zweite Tick versucht hat zu starten.
+      callModel: async () => { gestartet += 1; await blockiert; return { ok: true, text: "hi there", latencyMs: 5 }; }
+    }
+  });
+
+  const at = new Date("2026-07-28T00:00:00.000Z");
+  const ersterTick = loop.tick(() => at);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  // Der Takt feuert erneut, waehrend der erste Lauf noch haengt.
+  await loop.tick(() => new Date(at.getTime() + 30_000));
+  assert.equal(gestartet, 1, "der zweite Tick startet keinen zweiten Lauf");
+
+  freigeben();
+  await ersterTick;
+});
+
 test("worker: /health answers even when the loop is disabled (fail-closed but observable)", async () => {
   const config = loadLoopConfig({});
   const loop = createLoop({ config, repoRoot: "/repo", log: () => {} });

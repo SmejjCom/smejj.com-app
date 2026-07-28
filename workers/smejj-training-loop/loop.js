@@ -4,7 +4,7 @@
 // elapsed since the last checkpointed run. This is what makes the process
 // crash-safe — on restart the checkpoint (read from IDrive e2) tells it
 // exactly where it left off, no in-memory-only state to lose.
-import { readCheckpoint, writeCheckpoint } from "./checkpoint.js";
+import { defaultCheckpoint, readCheckpoint, writeCheckpoint } from "./checkpoint.js";
 import { runEvalCycle } from "./evalCycle.js";
 import { reportKey, readReportFromIdrive, writeReportToIdrive } from "./reportStore.js";
 import { runTrainingCycle } from "./trainingCycle.js";
@@ -13,25 +13,42 @@ const MAX_CONSECUTIVE_FAILURES_LOGGED = 20;
 
 export function createLoop({ config, env = process.env, repoRoot, log = console.log, deps = {} }) {
   let status = { state: "starting", lastTickAt: null, lastError: null };
+  // Zwei Schutzmechanismen, beide im Livegang 2026-07-28 als noetig belegt:
+  //   inFlight       — ein Eval-Lauf dauert laenger als der Tick-Abstand. Ohne
+  //                    Sperre startet der Takt weitere Laeufe in den laufenden
+  //                    hinein und vervielfacht die (kostenpflichtigen) Modellaufrufe.
+  //   memoryCheckpoint — faellt die Ablage aus, liefert readCheckpoint immer die
+  //                    Standardwerte; der Loop haelt sich dann bei JEDEM Tick fuer
+  //                    faellig. Der Stand im Prozess haelt das Intervall trotzdem ein.
+  let inFlight = false;
+  let memoryCheckpoint = null;
 
   async function tick(now = () => new Date()) {
-    status = { ...status, lastTickAt: now().toISOString() };
-    const checkpoint = await readCheckpoint({ env, key: config.checkpointKey, request: deps.checkpointRequest });
-    let next = checkpoint;
+    if (inFlight) return memoryCheckpoint || defaultCheckpoint();
+    inFlight = true;
+    try {
+      status = { ...status, lastTickAt: now().toISOString() };
+      const checkpoint = memoryCheckpoint
+        || await readCheckpoint({ env, key: config.checkpointKey, request: deps.checkpointRequest });
+      let next = checkpoint;
 
-    if (config.evalCycleEnabled && dueFor(checkpoint.lastEvalRunAt, config.evalIntervalMs, now)) {
-      next = await runEvalTick(next, { config, repoRoot, env, log, deps, now });
-    }
+      if (config.evalCycleEnabled && dueFor(checkpoint.lastEvalRunAt, config.evalIntervalMs, now)) {
+        next = await runEvalTick(next, { config, repoRoot, env, log, deps, now });
+      }
 
-    if (config.trainingCycleEnabled && dueFor(checkpoint.lastTrainingRunAt, config.trainingIntervalMs, now)) {
-      next = await runTrainingTick(next, { config, env, log, deps, now });
-    }
+      if (config.trainingCycleEnabled && dueFor(checkpoint.lastTrainingRunAt, config.trainingIntervalMs, now)) {
+        next = await runTrainingTick(next, { config, env, log, deps, now });
+      }
 
-    if (next !== checkpoint) {
-      await writeCheckpoint(next, { env, key: config.checkpointKey, request: deps.checkpointRequest });
+      memoryCheckpoint = next;
+      if (next !== checkpoint) {
+        await writeCheckpoint(next, { env, key: config.checkpointKey, request: deps.checkpointRequest });
+      }
+      status = { state: "running", lastTickAt: status.lastTickAt, lastError: status.lastError };
+      return next;
+    } finally {
+      inFlight = false;
     }
-    status = { state: "running", lastTickAt: status.lastTickAt, lastError: status.lastError };
-    return next;
   }
 
   function getStatus() {
