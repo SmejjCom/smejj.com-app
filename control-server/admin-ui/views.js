@@ -377,6 +377,12 @@
   }
 
   window.adminViews = {
+    // Bausteine, damit views-stage4.js sie nicht noch einmal bauen muss.
+    kopfBlock: kopf,
+    kachelBlock: kachel,
+    panelBlock: panel,
+    tabelleBlock: tabelle,
+    pilleBlock: pille,
     freigaben: freigaben,
     support: support,
     uebersicht: uebersicht,

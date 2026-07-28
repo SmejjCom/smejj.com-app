@@ -96,6 +96,18 @@
       + " " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
 
+  // Reine Kalendertage (Eingang, Faelligkeit) werden als UTC-Mitternacht
+  // gespeichert. Mit zeit() gerendert wuerde daraus in westlichen Zeitzonen der
+  // Vortag mit einer erfundenen Uhrzeit — bei einer gesetzlichen Frist ist das
+  // kein Schoenheitsfehler, sondern ein falsches Datum in der Akte.
+  function datum(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    const p = (n) => String(n).padStart(2, "0");
+    return p(d.getUTCDate()) + "." + p(d.getUTCMonth() + 1) + "." + d.getUTCFullYear();
+  }
+
   function dauer(sekunden) {
     const s = Number(sekunden);
     if (!isFinite(s) || s < 0) return "—";
@@ -110,6 +122,7 @@
     sende: sende,
     escapeHtml: escapeHtml,
     zeit: zeit,
+    datum: datum,
     dauer: dauer,
     ich: function () { return hole("/api/admin/me"); },
     nutzer: function (parameter) { return hole("/api/admin/users?" + new URLSearchParams(parameter || {}).toString()); },
@@ -136,6 +149,19 @@
     },
     eigeneVorgaenge: function () { return hole("/api/account/impersonation"); },
     einwilligen: function (id) { return sende("/api/account/impersonation/" + encodeURIComponent(id) + "/consent", {}); },
-    einwilligungAblehnen: function (id) { return sende("/api/account/impersonation/" + encodeURIComponent(id) + "/deny", {}); }
+    einwilligungAblehnen: function (id) { return sende("/api/account/impersonation/" + encodeURIComponent(id) + "/deny", {}); },
+
+    // ---- Stufe 4 ----
+    moderation: function () { return hole("/api/admin/moderation"); },
+    moderationEntscheiden: function (id, k) { return sende("/api/admin/moderation/" + encodeURIComponent(id) + "/entscheiden", k); },
+    dsgvo: function () { return hole("/api/admin/gdpr"); },
+    dsgvoErfassen: function (k) { return sende("/api/admin/gdpr/erfassen", k); },
+    dsgvoStatus: function (id, k) { return sende("/api/admin/gdpr/" + encodeURIComponent(id) + "/status", k); },
+    dsgvoVerlaengern: function (id, g) { return sende("/api/admin/gdpr/" + encodeURIComponent(id) + "/verlaengern", { begruendung: g }); },
+    ankuendigungen: function () { return hole("/api/admin/announcements"); },
+    ankuendigungErstellen: function (k) { return sende("/api/admin/announcements/erstellen", k); },
+    ankuendigungZurueck: function (id, g) { return sende("/api/admin/announcements/" + encodeURIComponent(id) + "/zurueckziehen", { reason: g }); },
+    flags: function () { return hole("/api/admin/flags"); },
+    flagSetzen: function (k) { return sende("/api/admin/flags/setzen", k); }
   };
 })();

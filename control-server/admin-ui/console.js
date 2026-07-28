@@ -18,6 +18,34 @@
     { id: "N", pfad: "compliance", gruppe: "Recht", name: "EU AI Act" }
   ];
 
+  // Stufe 4 meldet sich selbst an (console-stage4.js). So bleibt diese Datei
+  // unter der 800-Zeilen-Regel und kennt nur die Schnittstelle, nicht die
+  // Einzelheiten der vier Bereiche.
+  const STUFE4 = (window.adminStage4 || {}).seiten || {};
+  Object.keys(STUFE4).forEach(function (pfad) {
+    SEITEN.push({ id: STUFE4[pfad].id, pfad: pfad, gruppe: STUFE4[pfad].gruppe, name: STUFE4[pfad].name });
+  });
+
+  // Nach Gruppen ordnen, sonst erscheint dieselbe Ueberschrift zweimal: die
+  // Stufe-4-Seiten haengen sich hinten an, gehoeren aber teils in bestehende
+  // Gruppen.
+  const GRUPPEN_REIHENFOLGE = ["Überblick", "Menschen", "Sicherheit", "Geld", "Betrieb", "Produkt", "Recht", "Verwaltung"];
+  SEITEN.sort(function (a, b) {
+    const links = GRUPPEN_REIHENFOLGE.indexOf(a.gruppe);
+    const rechts = GRUPPEN_REIHENFOLGE.indexOf(b.gruppe);
+    return (links < 0 ? 99 : links) - (rechts < 0 ? 99 : rechts);
+  });
+
+  /** Was die Stufe-4-Ansichten vom Kern brauchen — bewusst klein gehalten. */
+  function stufe4Kontext(pfad) {
+    return {
+      zeichne: function (html) { seite.innerHTML = html; },
+      fehler: function (text) { zeigeFehler(text); },
+      meldung: function (text, istFehler) { meldung(text, istFehler); },
+      neuLaden: function () { STUFE4[pfad].laden(stufe4Kontext(pfad)); }
+    };
+  }
+
   const zustand = { akteur: null, suchbegriff: "", von: "", bis: "" };
   const nav = document.getElementById("nav");
   const seite = document.getElementById("seite");
@@ -322,6 +350,10 @@
     if (treffer.pfad === "audit") return zeigeAudit();
     if (treffer.pfad === "freigaben") return zeigeFreigaben();
     if (treffer.pfad === "support") return zeigeSupport();
+    if (STUFE4[treffer.pfad]) {
+      laedt("wird geladen …");
+      return STUFE4[treffer.pfad].laden(stufe4Kontext(treffer.pfad));
+    }
     if (treffer.pfad === "compliance") return zeigeCompliance();
     return zeigeUebersicht();
   }
