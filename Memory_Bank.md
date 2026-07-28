@@ -103,6 +103,18 @@ Kapsel: `docs/task-capsules/2026/07/job_kimi_k3_api_20260728/CAPSULE.md`.
   Anfassen des Start-Locks immer pruefen, ob der Weg schon existiert.
   Standard von `high` auf `medium` gedreht, sonst haette die Verdrahtung das
   gemessene Tempo zerstoert (Performance-Lock).
+- GESCHACHTELTE MODUL-QUERIES MUESSEN VON OBEN GEBUMPT WERDEN. Der Standardwert
+  aus settings-runtime.js kam dreimal nicht im Browser an (v183, v184), obwohl
+  die Datei live byte-identisch war und check:all gruen. Ursachen, erst im
+  Live-Test sichtbar: (1) settings-surface.js importierte settings-runtime.js
+  unter ZWEI Adressen (mit und ohne `?v=3`) — in ES-Modulen sind das zwei
+  getrennte Instanzen; (2) die eigentliche Wurzel war premium-surfaces.js mit
+  `settings-surface.js?v=3`, das die ganze Kette alt hielt. Gefunden ueber
+  `performance.getEntriesByType("resource")` im echten Browser: dort standen
+  `?v=3` UND `?v=4` nebeneinander. Kein Test findet das — lokal gibt es keinen
+  HTTP-Cache mit alten Eintraegen. Regel: beim Aendern eines Moduls mit
+  Cache-Query IMMER den obersten Importeur mitbumpen und im Browser gegen
+  performance.getEntriesByType pruefen.
 - BUDGET, DAS IMMER ROT IST, IST KEIN BUDGET. Die Eval-Suite riss bei JEDEM
   Modell dieselben zwei Schwellen. Jetzt getrennt: Produktziel 1,0 s gilt der
   Schnellspur (erfuellt, 0,70 s), die Suite bekommt eine Regressionsschwelle
