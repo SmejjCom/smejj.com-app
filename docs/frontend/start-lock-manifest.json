@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T11:38:14.973Z",
-  "confirmation": "Ja, eintragen und Lock neu einfrieren — Kimi K3 in den Modell-Picker (Wof Kadavanich, 2026-07-28)",
+  "frozenAt": "2026-07-28T11:54:33.030Z",
+  "confirmation": "Soll diese Reihenfolge sein: smejj 1.0, K3, GLM-5.2, Cline, K2.7 (Wof Kadavanich, 2026-07-28)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "566a72d651de44a662ae044a1228696670eab74a866f255dd7162ebb0a9159cd",
+    "public/index.html": "058c2d7550f166a6bb4d8def763b3893fadb5299824f4211ede1e41fdf3337be",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "0bf2b8aabf4024ab638b5181ea0390aeae236208b44f77f186d71bf00b7acc0b",
+    "public/sw.js": "49ae8d365f45372cfa8d80bb9bf99d6f87cc31fa9252268ad7cd966162a9fa65",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
