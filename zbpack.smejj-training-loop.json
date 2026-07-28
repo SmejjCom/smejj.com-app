@@ -1,0 +1,7 @@
+{
+  "_kommentar": "Bau-Konfiguration NUR fuer den Zeabur-Dienst 'smejj-training-loop'. Ohne diese Datei erkennt Zeabur das Repo als Node-App und startet 'pnpm start' = src/server.js (Control Server) — das waere der falsche Prozess. Der Dienst braucht keine Abhaengigkeiten (nur Node-Bordmittel) und keinen Build-Schritt.",
+  "node.version": "22",
+  "install_command": "true",
+  "build_command": "true",
+  "start_command": "node workers/smejj-training-loop/worker.mjs"
+}
