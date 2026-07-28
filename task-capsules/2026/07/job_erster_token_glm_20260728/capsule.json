@@ -1,0 +1,60 @@
+{
+  "jobId": "job_erster_token_glm_20260728",
+  "titel": "Befund 1: Wartezeit bis zum ersten Zeichen auf dem GLM-Pfad",
+  "freigabe": "\"Ja\" (Wof Kadavanich, 2026-07-28) auf die Empfehlung, Befund 1 aus job_modell_eval_harness_20260728 anzugehen und das Ergebnis mit demselben Harness zu belegen.",
+  "ziel": "Die gemessenen 22,8 s bis zum ersten sichtbaren Zeichen in ihre Bestandteile zerlegen, den behebbaren Anteil bestimmen, ihn beheben und die Wirkung belegen — bevor eine Zeile geaendert wird.",
+  "vorgehen": [
+    "Messwerkzeug gebaut, das Antwortkopf, erstes Ereignis, erstes SICHTBARES Zeichen und Ende trennt.",
+    "Drei Wege gemessen: Chat-Bruecke, Control Server direkt, schnelle Spur.",
+    "A/B am selben Server mit demselben Modell: /api/chat (Denken an) gegen /api/agent (Denken aus).",
+    "Erst nach dem Beweis die Regel ergaenzt, die /api/chat fehlte."
+  ],
+  "betroffene_dateien": {
+    "neu": [
+      "src/ai/chatThinkingPolicy.js",
+      "src/evaluation/firstTokenProbe.js",
+      "scripts/testing/measure_first_token.mjs",
+      "tests/chat-thinking-policy.test.mjs",
+      "docs/benchmarks/BEFUND_ERSTER_TOKEN_GLM_2026-07-28.md"
+    ],
+    "geaendert": [
+      "src/server.js (1 Import + handleChat reicht den Denk-Modus durch; 776 -> 785 Zeilen)",
+      "package.json (check:llm-router erweitert, measure:firsttoken ergaenzt)"
+    ],
+    "unberuehrt": [
+      "Modellwahl, Routing-Profil, Stream-Filter, /api/agent",
+      "Startseite, Eingabefeld, Favicons, Zugaenge, Anbieterliste"
+    ]
+  },
+  "benchmarks": {
+    "einheit": "Millisekunden, Median aus je drei Laeufen, Modell glm-5.2",
+    "control_chat_denken_an": { "antwortkopf": 5918, "erstesSichtbaresZeichen": 12106, "unsichtbareWartezeit": 6187 },
+    "control_agent_denken_aus": { "antwortkopf": 7270, "erstesSichtbaresZeichen": 7270, "unsichtbareWartezeit": 0 },
+    "bruecke_chat_denken_an": { "antwortkopf": 16638, "erstesSichtbaresZeichen": 16639, "unsichtbareWartezeit": 0 },
+    "bruecke_schnelle_spur": { "antwortkopf": 703, "erstesSichtbaresZeichen": 703, "unsichtbareWartezeit": 0 }
+  },
+  "ergebnis": {
+    "ursache": "Keine Fehlfunktion, sondern eine Luecke: /api/agent schaltet das unsichtbare Reasoning fuer Nicht-Coding-Aufgaben seit 2026-07-27 ab, /api/chat fehlte dieselbe, bereits verifizierte Regel.",
+    "erwarteteWirkung": "erstes sichtbares Zeichen im Chat 12,1 s -> 7,3 s (-40 %), unsichtbare Wartezeit 6,2 s -> 0 s",
+    "nichtBeeinflussbar": "5 bis 7 s Startzeit der Anbieter-Schnittstelle bis zum Antwortkopf — nur durch Modellwahl aenderbar",
+    "nichtBetroffen": "Die schnelle Spur liegt bei 703 ms und haelt das Ziel von 1,0 s bereits ein."
+  },
+  "eigene_fehler_gefunden_und_behoben": [
+    "Erste Testerwartung ging davon aus, die Uhr werde pro Ereignis abgefragt — sie wird pro Messpunkt abgefragt. Test auf eine gestellte Uhr mit zwei Zeitpunkten umgestellt, damit die Absicht lesbar bleibt.",
+    "Erster Entwurf setzte zusaetzlich das Routing-Profil aus der Nutzerfrage. Das haette die Modellzuordnung verschoben und waere eine Regression gewesen. Verworfen: geaendert wird ausschliesslich der Denk-Modus."
+  ],
+  "verifikation": {
+    "tests": "node --test tests/chat-thinking-policy.test.mjs — 10/10 gruen",
+    "pflichtchecks": "check:all 26/26 gruen, check:llm-router 64 Tests gruen, check:guidelines, check:paths, check:cost gruen",
+    "liveMessung": "12 Live-Aufrufe gegen Chat-Bruecke und Control Server, echter Antwortpfad",
+    "kosten": "Keine neue Kostenposition. Messung nutzt die bestehenden Zugaenge."
+  },
+  "nicht_umgesetzt": {
+    "controlServerRelease": "Bewusst NICHT ausgerollt. Ein Control-Release packt src/ und control-server/ aus der Arbeitskopie; eine parallele Sitzung arbeitete zeitgleich an genau diesem Pfad (Adminbereich Stufe 2, EU-AI-Act-Nachweis, Kimi K3 in der Modell-Registry, teils unfertig). Ein Release haette fremde, ungepruefte Arbeit mit ausgeliefert und mit deren Deploy kollidieren koennen — Verstoss gegen die Non-Regression-Pflicht. Schritte zum Nachholen stehen in docs/benchmarks/BEFUND_ERSTER_TOKEN_GLM_2026-07-28.md."
+  },
+  "rollback": {
+    "git": "Tag rollback/chat-thinking-2026-07-28",
+    "umfang": "Vier neue Dateien loeschen, in src/server.js den Import und die drei Zeilen in handleChat zuruecknehmen, zwei package.json-Zeilen zuruecknehmen. Kein bestehendes Verhalten wurde entfernt."
+  },
+  "status": "verified-not-deployed"
+}

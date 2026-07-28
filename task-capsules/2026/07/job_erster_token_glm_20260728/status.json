@@ -1,0 +1,14 @@
+{
+  "jobId": "job_erster_token_glm_20260728",
+  "status": "verified-not-deployed",
+  "aktualisiert": "2026-07-28",
+  "verlauf": [
+    { "status": "pending", "notiz": "Rollback-Punkt rollback/chat-thinking-2026-07-28 gesetzt." },
+    { "status": "running", "notiz": "Messwerkzeug gebaut, das die Wartezeit in vier Zeitpunkte zerlegt." },
+    { "status": "running", "notiz": "Drei Wege gemessen; unsichtbare Wartezeit von 6,2 s auf dem GLM-Pfad nachgewiesen." },
+    { "status": "running", "notiz": "A/B gegen /api/agent bewies die Ursache, bevor Code geaendert wurde." },
+    { "status": "running", "notiz": "chatThinkingPolicy.js ergaenzt, handleChat angepasst, 10 Tests gruen." },
+    { "status": "verified-not-deployed", "notiz": "check:all 26/26 gruen. Control-Server-Release bewusst aufgeschoben: parallele Sitzung arbeitet am selben Pfad, ein Release wuerde fremde ungepruefte Arbeit ausliefern." }
+  ],
+  "offen": "Control-Server-Release nachholen, sobald der Pfad frei ist; danach mit npm run measure:firsttoken nachmessen (Erwartung: unsichtbare Wartezeit 0 ms)."
+}

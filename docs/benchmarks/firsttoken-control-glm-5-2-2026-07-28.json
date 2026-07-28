@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-first-token-probe",
+  "endpointName": "control",
+  "model": "glm-5-2",
+  "prompt": "Nenne in einem Satz, wofuer der zentrale Objektspeicher von smejj.com zustaendig ist.",
+  "startedAt": "2026-07-28T10:31:24.613Z",
+  "finishedAt": "2026-07-28T10:32:17.442Z",
+  "backends": [
+    "zhipu:glm-5.2"
+  ],
+  "summary": {
+    "runs": 3,
+    "ok": 3,
+    "failed": 0,
+    "ttfbMsMedian": 5918,
+    "firstFrameMsMedian": 5919,
+    "firstVisibleMsMedian": 12106,
+    "firstVisibleMsP95": 16250,
+    "totalMsMedian": 12591,
+    "unsichtbarWartezeitMsMedian": 6187,
+    "charsMedian": 249
+  },
+  "probes": [
+    {
+      "ok": true,
+      "ttfbMs": 5918,
+      "firstFrameMs": 5919,
+      "firstVisibleMs": 12106,
+      "totalMs": 12591,
+      "frames": 164,
+      "chars": 286,
+      "backend": "zhipu:glm-5.2",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 6243,
+      "firstFrameMs": 6243,
+      "firstVisibleMs": 16250,
+      "totalMs": 16303,
+      "frames": 345,
+      "chars": 243,
+      "backend": "zhipu:glm-5.2",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 5096,
+      "firstFrameMs": 5096,
+      "firstVisibleMs": 10916,
+      "totalMs": 11933,
+      "frames": 156,
+      "chars": 249,
+      "backend": "zhipu:glm-5.2",
+      "error": null
+    }
+  ]
+}

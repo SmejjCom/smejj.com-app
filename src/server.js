@@ -38,6 +38,7 @@ import { classifyProfile, executeWithFallback, resolveModelRequest } from "../co
 import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability.js";
 import { streamWithTools, withAgentTools } from "../control-server/src/llm/streamFilter.js";
 import { localAssistantStream } from "../control-server/src/llm/localAssistant.js";
+import { chatThinkingMode } from "./ai/chatThinkingPolicy.js";
 import { allowedOriginsFromEnv, corsHeadersFor, handlePreflight } from "../control-server/src/http/cors.js";
 import { installCrashGuard } from "../control-server/src/http/crashGuard.js";
 import { createStaticHandlers } from "./http/staticServing.js";
@@ -265,7 +266,15 @@ async function handleRagSearch(url, res) {
 async function handleChat(req, res) {
   const body = await readJson(req);
   const messages = Array.isArray(body.messages) ? body.messages : [{ role: "user", content: String(body.message || "") }];
-  return streamLLM(res, messages, { requestedModel: body.model });
+  // Dieselbe Regel wie in /api/agent (2026-07-27), die hier bisher fehlte: im Chat
+  // kostet GLM-Thinking rund 6 s, in denen der Nutzer nichts sieht — die Denk-
+  // Abschnitte verwirft der Stream-Filter ohnehin. Gemessen 2026-07-28: erstes
+  // sichtbares Zeichen 12,1 s -> 7,3 s. Coding behaelt das Qualitaets-Reasoning.
+  // Modellwahl und Routing-Profil bleiben unveraendert.
+  return streamLLM(res, messages, {
+    requestedModel: body.model,
+    thinking: chatThinkingMode(messages, classifyProfile)
+  });
 }
 
 async function handleHealth(res) {

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-first-token-probe",
+  "endpointName": "bridge",
+  "model": null,
+  "prompt": "Nenne in einem Satz, wofuer der zentrale Objektspeicher von smejj.com zustaendig ist.",
+  "startedAt": "2026-07-28T10:32:17.499Z",
+  "finishedAt": "2026-07-28T10:32:32.168Z",
+  "backends": [
+    "groq:llama-3.1-8b-instant"
+  ],
+  "summary": {
+    "runs": 3,
+    "ok": 3,
+    "failed": 0,
+    "ttfbMsMedian": 703,
+    "firstFrameMsMedian": 703,
+    "firstVisibleMsMedian": 703,
+    "firstVisibleMsP95": 1080,
+    "totalMsMedian": 758,
+    "unsichtbarWartezeitMsMedian": 0,
+    "charsMedian": 122
+  },
+  "probes": [
+    {
+      "ok": true,
+      "ttfbMs": 641,
+      "firstFrameMs": 642,
+      "firstVisibleMs": 642,
+      "totalMs": 758,
+      "frames": 37,
+      "chars": 122,
+      "backend": "groq:llama-3.1-8b-instant",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 703,
+      "firstFrameMs": 703,
+      "firstVisibleMs": 703,
+      "totalMs": 705,
+      "frames": 37,
+      "chars": 122,
+      "backend": "groq:llama-3.1-8b-instant",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 1080,
+      "firstFrameMs": 1080,
+      "firstVisibleMs": 1080,
+      "totalMs": 1202,
+      "frames": 41,
+      "chars": 137,
+      "backend": "groq:llama-3.1-8b-instant",
+      "error": null
+    }
+  ]
+}
