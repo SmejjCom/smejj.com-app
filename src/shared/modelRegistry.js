@@ -118,6 +118,12 @@ export const MODEL_REGISTRY = Object.freeze({
     }),
     runtime: Object.freeze({
       envPrefix: "KIMI_K3",
+      // K2.7 und K3 liegen auf DEMSELBEN Moonshot-Konto. Ist kein eigener
+      // K3-Key gesetzt, wird der bereits ausgerollte K2.7-Key genutzt — sonst
+      // muesste derselbe Wert ein zweites Mal von Hand in die Umgebung
+      // getippt werden. Ein eigener SMEJJ_LLM_KIMI_K3_API_KEY hat Vorrang.
+      // Fail-closed bleibt bestehen: ohne SMEJJ_KIMI_K3_ENABLED laeuft nichts.
+      keyFallbackEnvPrefix: "KIMI",
       defaultBaseUrl: "https://api.moonshot.ai/v1",
       defaultModel: "kimi-k3",
       defaultHeader: "Authorization",
@@ -207,7 +213,13 @@ export function getModelRuntimeConfig(modelOrId, env = process.env, profile = "d
   const model = typeof modelOrId === "string" ? getModelDefinition(modelOrId) : modelOrId;
   if (!model) return null;
   const prefix = model.runtime.envPrefix;
+  const fallbackPrefix = model.runtime.keyFallbackEnvPrefix;
   const keys = uniqueKeys(env[`SMEJJ_LLM_${prefix}_API_KEY`], env[`SMEJJ_LLM_${prefix}_API_KEYS`]);
+  // Nur wenn fuer dieses Modell gar kein eigener Key gesetzt ist, wird der Key
+  // eines ausdruecklich benannten Schwestermodells beim selben Anbieter genutzt.
+  const effectiveKeys = keys.length > 0 || !fallbackPrefix
+    ? keys
+    : uniqueKeys(env[`SMEJJ_LLM_${fallbackPrefix}_API_KEY`], env[`SMEJJ_LLM_${fallbackPrefix}_API_KEYS`]);
   const profileKey = `SMEJJ_LLM_${prefix}_MODEL_${String(profile || "default").toUpperCase()}`;
   const baseUrl = trimUrl(env[`SMEJJ_LLM_${prefix}_BASE_URL`] || model.runtime.defaultBaseUrl);
   const runtimeModel = String(env[profileKey] || env[`SMEJJ_LLM_${prefix}_MODEL`] || model.runtime.defaultModel || "").trim();
@@ -218,8 +230,9 @@ export function getModelRuntimeConfig(modelOrId, env = process.env, profile = "d
     baseUrl,
     runtimeModel,
     apiKeyHeader,
-    apiKeys: keys,
-    configured: Boolean(baseUrl && runtimeModel && keys.length > 0)
+    apiKeys: effectiveKeys,
+    keySource: keys.length > 0 || effectiveKeys.length === 0 ? prefix : fallbackPrefix,
+    configured: Boolean(baseUrl && runtimeModel && effectiveKeys.length > 0)
   };
 }
 

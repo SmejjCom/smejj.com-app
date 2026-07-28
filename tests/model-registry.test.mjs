@@ -118,11 +118,39 @@ test("Kimi K3 greift NICHT ohne API-Key, auch wenn das Flag gesetzt ist", () => 
   assert.equal(getModelRuntimeConfig("kimi-k3", env).configured, false);
 });
 
-test("Kimi K3 hat keinen e2-Vault und teilt keine Env mit K2.7", () => {
+test("Kimi K3 hat keinen e2-Vault", () => {
   assert.equal(getModelDefinition("kimi-k3").storage, null);
-  // K2.7 darf vom K3-Key nicht mitkonfiguriert werden und umgekehrt.
+});
+
+// K2.7 und K3 liegen auf demselben Moonshot-Konto. Der bereits ausgerollte
+// K2.7-Key darf K3 versorgen, damit derselbe Wert nicht ein zweites Mal von
+// Hand in die Umgebung getippt werden muss. Die Richtung gilt nur so herum.
+test("Kimi K3 erbt den K2.7-Key, wenn kein eigener gesetzt ist", () => {
+  const runtime = getModelRuntimeConfig("kimi-k3", { ...KIMI_ENV, SMEJJ_KIMI_K3_ENABLED: "YES" });
+  assert.deepEqual(runtime.apiKeys, ["secret-kimi"]);
+  assert.equal(runtime.keySource, "KIMI");
+  assert.equal(runtime.configured, true);
+  // Der Endpunkt bleibt der von K3 — nur der Key wird geerbt, nicht die URL.
+  assert.equal(runtime.baseUrl, "https://api.moonshot.ai/v1");
+  assert.equal(runtime.runtimeModel, "kimi-k3");
+});
+
+test("ein eigener K3-Key hat Vorrang vor dem geerbten", () => {
+  const runtime = getModelRuntimeConfig("kimi-k3", { ...KIMI_ENV, ...K3_ENV_COMPLETE });
+  assert.deepEqual(runtime.apiKeys, ["secret-k3"]);
+  assert.equal(runtime.keySource, "KIMI_K3");
+});
+
+test("das Erben ist einseitig: der K3-Key konfiguriert K2.7 NICHT", () => {
   assert.equal(getModelRuntimeConfig("kimi-k2-7", K3_ENV_COMPLETE).configured, false);
-  assert.deepEqual(getModelRuntimeConfig("kimi-k3", KIMI_ENV).apiKeys, []);
+});
+
+test("der geerbte Key aktiviert K3 NICHT ohne Feature-Flag (fail-closed)", () => {
+  // KIMI_ENV traegt einen gueltigen Key, aber kein SMEJJ_KIMI_K3_ENABLED.
+  assert.equal(isModelEnabled("kimi-k3", KIMI_ENV), false);
+  const selection = resolveModelSelection({ requestedModel: "kimi-k3", profile: "coding", env: KIMI_ENV });
+  assert.equal(selection.selectedModelId, DEFAULT_MODEL_ID);
+  assert.equal(selection.reason, "requested_model_inactive");
 });
 
 test("Kimi K3 verdraengt GLM-5.2 nicht als Standard und nicht im Auto-Modus", () => {

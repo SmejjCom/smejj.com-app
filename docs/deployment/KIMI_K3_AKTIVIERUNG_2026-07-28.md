@@ -35,25 +35,42 @@ Endpunkt und Modell-ID laut Moonshot-Quickstart:
 Die Key-Verwaltung liegt auf `https://platform.kimi.ai` — ein eigenes Konto,
 getrennt vom Chat-Login auf kimi.com.
 
-## Schritt 1 — Key holen (nur Betreiber)
+## Schritt 1 — Konto: bereits erledigt (geprueft 2026-07-28)
 
-1. `https://platform.kimi.ai` oeffnen und anmelden (E-Mail-Code oder Google).
-   Das Konto entsteht beim ersten Login.
-2. Guthaben aufladen. K3 ist kostenpflichtig: 3 $ / 15 $ pro Mio. Token
-   (Ein-/Ausgabe), Cache-Treffer 0,30 $.
-3. API-Key erzeugen und sicher ablegen — nie ins Repo, nie in ein Ticket.
+Im Moonshot-Konto ist alles vorhanden, es muss nichts angelegt werden:
+
+| Punkt | Stand |
+|---|---|
+| API-Key | `smejj-control-prod-20260712` (ID `ak-fbbx1igmh1e111a9sue1`), angelegt 2026-07-12 |
+| Guthaben | 24,37 $ (20 $ aufgeladen, 5 $ Voucher, 0,63 $ verbraucht) |
+| Auto-Recharge | **Off** — keine automatische Abbuchung, policy-konform |
+| Tier | Tier 2: 500 RPM, 3 Mio. TPM, 100 parallel, TPD unbegrenzt |
+
+Der Live-Control-Server meldet `kimi-k2-7` als `ready` — derselbe Key ist also
+bereits produktiv ausgerollt. Ein neuer Key ist nicht noetig.
+
+K3-Preise zur Einordnung: 3 $ / 15 $ pro Mio. Token (Ein-/Ausgabe),
+Cache-Treffer 0,30 $.
 
 ## Schritt 2 — smejj-control konfigurieren
 
     SMEJJ_KIMI_K3_ENABLED=YES
+
+Das genuegt. Ist `SMEJJ_LLM_KIMI_K3_API_KEY` leer, erbt K3 den bereits
+gesetzten `SMEJJ_LLM_KIMI_API_KEY` (dasselbe Moonshot-Konto). Damit muss der
+Key-Wert nicht ein zweites Mal von Hand in die Salad-Oberflaeche getippt
+werden — jede Handeingabe eines Secrets ist eine Fehler- und Leckquelle.
+
+Ein eigener K3-Key ist weiterhin moeglich und hat Vorrang, etwa um die Kosten
+getrennt abzurechnen:
+
     SMEJJ_LLM_KIMI_K3_API_KEY=<key>
 
-`SMEJJ_LLM_KIMI_K3_BASE_URL` und `SMEJJ_LLM_KIMI_K3_MODEL` haben passende
-Vorgaben und muessen nur gesetzt werden, wenn davon abgewichen wird.
+Das Erben gilt nur in diese Richtung: ein K3-Key konfiguriert K2.7 NICHT.
 
-Ohne beide Werte bleibt K3 inaktiv und der Router nimmt GLM-5.2. Das ist
-Absicht: ein kostenpflichtiges Modell darf nie durch einen vergessenen
-Schalter anspringen.
+Ohne `SMEJJ_KIMI_K3_ENABLED=YES` bleibt K3 inaktiv und der Router nimmt
+GLM-5.2 — auch mit gueltigem geerbtem Key. Das ist Absicht: ein
+kostenpflichtiges Modell darf nie durch einen vergessenen Schalter anspringen.
 
 ## Schritt 3 — den Router ueberhaupt einschalten (leicht zu uebersehen)
 
