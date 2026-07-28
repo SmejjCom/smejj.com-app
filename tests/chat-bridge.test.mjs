@@ -103,3 +103,36 @@ test("weather context is built from Open-Meteo data and fails closed on errors",
   assert.equal(await bridge.buildWeatherContext("Wetter Nirgendwostadt", async () => ({ ok: true, json: async () => ({ results: [] }) })), "");
   assert.equal(await bridge.buildWeatherContext("Wetter Berlin", async () => { throw new Error("offline"); }), "");
 });
+
+// --- Adressen gehoeren nie in die werkzeuglose Schnellspur (2026-07-28) -------
+// Befund: "Lies https://imild.com/ und nenne den Titel" landete in der
+// Groq-Schnellspur, die keine Werkzeuge kennt, und lieferte "I-MILD.com" statt
+// des echten Titels. Die Schnellspur darf raten — aber nicht ueber Seiten, die
+// sie nie gelesen hat.
+
+test("Aufgaben mit Web-Adresse verlassen die Schnellspur", () => {
+  for (const aufgabe of [
+    "Lies https://imild.com/ und nenne mir den Seitentitel",
+    "geh browser iMild.com teste ob alles fehlerfrei ist?",
+    "pruefe smejj.com/automation",
+    "was steht auf www.example.org"
+  ]) {
+    assert.equal(bridge.shouldSearchWeb(aufgabe), true, `muss in die Tiefspur: ${aufgabe}`);
+  }
+});
+
+test("Dateinamen und Satzreste gelten weiterhin nicht als Adresse", () => {
+  for (const aufgabe of [
+    "pruefe die Datei app.js auf Fehler",
+    "lies index.html im Repo",
+    "erklaer mir Rekursion",
+    "schreib eine Funktion"
+  ]) {
+    assert.equal(bridge.mentionsWebAddress(aufgabe), false, `keine Adresse: ${aufgabe}`);
+  }
+});
+
+test("gewoehnliche Fragen bleiben in der Schnellspur", () => {
+  assert.equal(bridge.shouldSearchWeb("wie spaet ist es"), false);
+  assert.equal(bridge.shouldSearchWeb("erklaer mir kurz Rekursion"), false);
+});
