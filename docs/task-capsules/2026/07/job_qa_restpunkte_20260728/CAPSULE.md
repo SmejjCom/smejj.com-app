@@ -313,3 +313,24 @@ und `release:preflight` grün.
 - **Live-Messung von Web-Vitals streut stark.** Kalte TTFB schwankte bei
   identischem Code zwischen 75 und 603 ms (p75). Ein einzelner Lauf taugt nicht
   als Regressionsnachweis — mindestens dreimal messen.
+
+## 8. Merge nach main — Empfehlung: **nein, nicht nötig**
+
+Gemessen nach `git fetch`:
+
+| Prüfung | Ergebnis |
+|---|---|
+| Wurzel `origin/main` | `335ac7a8…` |
+| Wurzel Arbeits-Branch | `d46cfda6…` |
+| `origin/main` Vorfahr von HEAD? | **nein** (getrennte Historien) |
+| Default-Branch auf GitHub | bereits `feature/auth-redesign-github-magiclink` |
+
+Ein Merge würde an „refusing to merge unrelated histories" scheitern;
+mit `--allow-unrelated-histories` gäbe es hunderte Konflikte. Der
+Arbeits-Branch ist seit 2026-07-26 die offizielle Hauptlinie, `origin/main`
+liegt als Archiv daneben. **Empfehlung: so lassen, `main` nicht löschen.**
+
+**Eigener Fehler dabei, korrigiert:** Der erste Blick prüfte gegen das
+**lokale** `main` (`9af9906`) — das teilt die Wurzel mit dem Arbeits-Branch und
+meldete „Fast-Forward möglich". Es ist aber nicht `origin/main` (`3d42346`).
+Merge-Fragen in diesem Repo nur gegen `origin/main` beantworten.

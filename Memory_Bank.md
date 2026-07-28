@@ -83,6 +83,14 @@ INP 40 ms / 39 KB.
    W3C-Definition), **Textvergroesserung nur naeherungsweise** (Grundschrift am
    <html>-Element; feste Pixelangaben verhalten sich im echten Browser anders).
 
+**MERGE NACH MAIN: nicht noetig.** Gemessen nach `git fetch`: Wurzel
+`origin/main` = 335ac7a8, Wurzel Arbeits-Branch = d46cfda6 — getrennte
+Historien, `origin/main` ist KEIN Vorfahr. Der Default-Branch auf GitHub ist
+seit 2026-07-26 bereits der Arbeits-Branch. `main` als Archiv liegen lassen.
+ACHTUNG-FALLE: das LOKALE `main` (9af9906) teilt die Wurzel mit dem
+Arbeits-Branch und meldet faelschlich "Fast-Forward moeglich" — Merge-Fragen
+NUR gegen `origin/main` beantworten.
+
 **OFFEN (Betreiber-Entscheidung, nicht umgesetzt):** Abschalten von
 Salad-Containern; Entfernen der drei toten Knoepfe #saveSettings/
 #showOfflinePage/#showErrorPage (beruehrt index.html und app.js, beide gelockt);
