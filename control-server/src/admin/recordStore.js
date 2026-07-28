@@ -25,6 +25,13 @@ const MAX_DATENSAETZE = 500;
 // laenger braucht, hat ein anderes Problem.
 const FRISCH_MS = 10 * 60 * 1000;
 const MAX_FRISCH = 200;
+// Wie lange eine gelesene Liste wiederverwendet wird. Jeder Aufruf kostet sonst
+// einen LIST plus einen Abruf je Datensatz — live gemessen 285-450 ms, ueber dem
+// Budget von 300 ms. Beim Schreiben wird sofort verworfen, der Zwischenspeicher
+// kann eine eigene Aenderung also nie verdecken. Dasselbe Muster wie beim
+// Nutzer-Index; 20 s ist kurz genug, dass eine zweite Bedienerin nicht lange
+// auf einem alten Stand sitzt.
+const LISTE_CACHE_MS = 20_000;
 
 function idriveConfig(env = process.env) {
   const endpoint = env.IDRIVE_E2_ENDPOINT;
@@ -56,6 +63,10 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
   // gedacht — nur als Ausgleich fuer den nachhinkenden LIST-Index. Ein Eintrag
   // hier ersetzt nie einen gelesenen, er ergaenzt nur einen fehlenden.
   const frisch = new Map();
+  // Zuletzt gelesene Rohdatensaetze. Absichtlich roh: die Aufbereitung haengt
+  // an der aktuellen Uhrzeit (Restfristen, Sichtbarkeit) und muss bei jedem
+  // Aufruf neu laufen — sonst waere eine Frist so alt wie der Zwischenspeicher.
+  let listeCache = null;
   const schluessel = (id) => `${pfad}/${id}.json`;
 
   function merkeFrisch(datensatz, nowMs) {
@@ -104,6 +115,8 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
       fetchImpl
     });
     merkeFrisch(datensatz, nowMs);
+    // Wer schreibt, will danach den neuen Stand sehen — nicht den alten.
+    listeCache = null;
     return datensatz;
   }
 
@@ -121,6 +134,10 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
     let alle = [];
     if (!cfg) {
       alle = [...memory.values()];
+    } else if (listeCache && nowMs - listeCache.at < LISTE_CACHE_MS) {
+      // Auch aus dem Zwischenspeicher noch ergaenzen: er kann aelter sein als
+      // ein Schreibvorgang eines anderen Prozesses, den der Index schon kennt.
+      alle = frischeErgaenzen(listeCache.datensaetze, nowMs);
     } else {
       const schluesselListe = [];
       let continuationToken = null;
@@ -136,8 +153,12 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
         const ergebnis = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
         return ergebnis.ok && ergebnis.body ? JSON.parse(ergebnis.body) : null;
       });
+      const gelesen = geladen.filter(Boolean);
+      listeCache = { datensaetze: gelesen, at: nowMs };
       // Erst hier ergaenzen, nicht im Memory-Zweig: dort ist ohnehin alles da.
-      alle = frischeErgaenzen(geladen.filter(Boolean), nowMs);
+      // Und nicht im Zwischenspeicher ablegen — sonst wuerde ein noch nicht
+      // indizierter Datensatz ueber sein Ablaufdatum hinaus konserviert.
+      alle = frischeErgaenzen(gelesen, nowMs);
     }
 
     const fertig = alle
@@ -147,7 +168,7 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
     return { ok: true, datensaetze: fertig.slice(0, gedeckelt), total: fertig.length };
   }
 
-  function __leeren() { memory.clear(); frisch.clear(); }
+  function __leeren() { memory.clear(); frisch.clear(); listeCache = null; }
 
   return { lies, schreib, liste, __leeren, praefix: pfad };
 }
