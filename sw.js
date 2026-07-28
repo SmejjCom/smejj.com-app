@@ -1,3 +1,11 @@
+// v178 -> v179 (2026-07-28): Spurwahl und Zeitbudget. Gemessen gegen die
+// Live-Bridge: Schnellspur 0,49-1,01 s bis zum ersten Byte, Tiefspur 4,9-7,8 s —
+// bei einem gemeinsamen Limit von 6,5 s in fetch-retry.js. Deshalb endeten
+// ausgerechnet Fragen MIT Web-Adresse oft in "Verbindung zum Server
+// unterbrochen". browser-context.js waehlt die Tiefspur jetzt nur noch, wenn die
+// Seite NICHT geladen werden konnte (sonst steht ihr Inhalt schon in der Frage
+// und die Schnellspur liest ihn mit); fetch-retry.js gibt der Tiefspur ein
+// eigenes Budget. Beide Dateien liegen cache-first im Precache.
 // v177 -> v178 (2026-07-28): Ehrlichere Beschriftung der Quellenliste.
 // Gegroundet wird die FRAGE. Scheitert der Antwortstrom danach (live erlebt:
 // "Verbindung zum Server unterbrochen"), waere "Quellen dieser Antwort" eine
@@ -227,7 +235,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v178";
+const CACHE_NAME = "smejj-shell-v179";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
