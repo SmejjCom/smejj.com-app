@@ -1,5 +1,6 @@
 {
-  "_kommentar": "Bau-Konfiguration NUR fuer den Zeabur-Dienst 'smejj-training-loop'. Ohne sie erkennt Zeabur das Repo als Node-App und startet 'pnpm start' = src/server.js (Control Server) — der falsche Prozess. NUR der Startbefehl wird ueberschrieben: ein Ueberschreiben von install_command/build_command verhinderte im ersten Versuch, dass der Quellcode ueberhaupt ins Laufzeit-Abbild kopiert wird (Fehler 'Cannot find module /src/workers/...'). Der Worker selbst braucht keine Abhaengigkeiten (nur Node-Bordmittel).",
+  "_kommentar": "Bau-Konfiguration NUR fuer den Zeabur-Dienst 'smejj-training-loop'. Zwei gemessene Befunde stecken hier drin: (1) Ohne start_command startet Zeabur 'pnpm start' = src/server.js (Control Server) — der falsche Prozess. (2) install_command darf NICHT ueberschrieben werden, sonst landet der Quellbaum nicht im Laufzeit-Abbild ('Cannot find module /src/workers/...'). (3) build_command MUSS uebersprungen werden: 'pnpm build:i18n' bricht im Bau mit MODULE_NOT_FOUND ab und der Worker braucht die Sprachseiten-Erzeugung nicht.",
   "node.version": "22",
+  "build_command": "true",
   "start_command": "node workers/smejj-training-loop/worker.mjs"
 }
