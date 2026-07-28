@@ -51,7 +51,11 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
       profileMode: String(run?.profileMode || "case"),
       live: run?.live === true,
       startedAt: run?.startedAt || null,
-      finishedAt: run?.finishedAt || null
+      finishedAt: run?.finishedAt || null,
+      // Beleg, wer wirklich geantwortet hat — angefordertes und antwortendes
+      // Modell koennen wegen Router-Fallback auseinanderfallen.
+      backendsSeen: distinct(caseScores, "backend"),
+      resolvedModelIds: distinct(caseScores, "resolvedModelId")
     },
     budgets: {
       minScore: numberOrNull(budgets.minScore),
@@ -76,6 +80,8 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
       latencyMs: entry.latencyMs,
       firstTokenMs: entry.firstTokenMs,
       outputChars: entry.outputChars,
+      backend: entry.backend || null,
+      resolvedModelId: entry.resolvedModelId || null,
       // Mehr als ein Versuch heisst: der Transportweg war wackelig, nicht das Modell.
       attempts: Number.isInteger(entry.attempts) ? entry.attempts : 1,
       error: entry.error,
@@ -161,6 +167,13 @@ export function formatEvalSummary(report) {
       (report.comparison.regressed ? ` — Regression (${report.comparison.reasons.join(", ")})` : ""));
   }
   return lines.join("\n");
+}
+
+function distinct(caseScores, key) {
+  const values = (Array.isArray(caseScores) ? caseScores : [])
+    .map((entry) => String(entry?.[key] || "").trim())
+    .filter(Boolean);
+  return [...new Set(values)].sort();
 }
 
 function numberOrNull(value) {

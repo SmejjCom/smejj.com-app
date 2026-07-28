@@ -1,0 +1,73 @@
+{
+  "jobId": "job_modell_eval_harness_20260728",
+  "titel": "Modell-Eval-Harness: Entscheidungsgrundlage fuer die Modellwahl",
+  "freigabe": "\"Ja\" (Wof Kadavanich, 2026-07-28) auf die Empfehlung, statt Kimi K3 herunterzuladen zuerst ein Eval-Set zu bauen; zusammen mit dem Master Prompt und der Autonomie-Charta.",
+  "ziel": "Die Frage \"Kimi K3 herunterladen oder K2.7 aktualisieren?\" nicht mit einer Meinung, sondern mit einem wiederholbaren Messverfahren beantworten. Ergebnis: versionierte Eval-Suite mit echten smejj.com-Faellen, deterministische Bewertung, Live-Messung gegen die Produktionskette, Regressionsvergleich.",
+  "anforderungen": [
+    "Kein Modell als Richter — reproduzierbar, replaybar, ohne Zusatzkosten.",
+    "Fail-closed: ungueltige Suite oder fehlender Zugang bricht ab, es wird nichts geraten.",
+    "Trockenlauf als Standard; ein echter Modellaufruf nur mit ausdruecklichem --live.",
+    "Der Bericht enthaelt nie Modellantworten im Klartext (Trainingsdaten-Policy).",
+    "Belegen, welches Backend tatsaechlich geantwortet hat — Router-Fallback ist moeglich."
+  ],
+  "betroffene_dateien": {
+    "neu": [
+      "evals/README.md",
+      "evals/suites/smejj-chat-core-v1.json",
+      "src/evaluation/evalSuite.js",
+      "src/evaluation/evalScoring.js",
+      "src/evaluation/evalReport.js",
+      "src/evaluation/evalTransport.js",
+      "scripts/evaluation/run_model_eval.mjs",
+      "tests/model-eval.test.mjs",
+      "docs/model-management/MODELL_ENTSCHEIDUNG_KIMI_K3_2026-07-28.md"
+    ],
+    "geaendert": ["package.json (check:evaluation erweitert, eval:models und eval:models:live ergaenzt)"],
+    "unberuehrt": [
+      "src/evaluation/modelPromotion.js und scripts/evaluation/run_foundation_benchmark.mjs — in der Phase-1-Suite per sha256 gepinnt, nur lesend importiert",
+      "Startseite, Eingabefeld, Favicons, Zugaenge, Anbieterliste"
+    ]
+  },
+  "eigene_fehler_gefunden_und_behoben": [
+    "Muster wurden mit dem Flag i ausgewertet — dadurch fiel eine korrekt geschriebene Antwort durch die Namenspruefung. Muster sind jetzt schreibweisen-genau, ignoreCase ist die Ausnahme.",
+    "Ein einzelner HTTP 503 der Chat-Bruecke wurde als Modellversagen gewertet. Transiente Transportfehler werden jetzt begrenzt wiederholt (isTransientError, --retries).",
+    "Der Bericht wies die Messung dem angeforderten Modell zu, ohne das antwortende Backend zu belegen. run.backendsSeen und run.resolvedModelIds ergaenzt.",
+    "Der Vergleichsbericht wurde nur ueber suiteId gesucht — Laeufe mit anderen Erwartungen waeren gegeneinandergestellt worden. Der Vergleich verlangt jetzt denselben Inhalts-Hash.",
+    "Zwei Erwartungen waren zu eng (Laengenlimit der Sicherheitsfaelle, Wortliste der Schluessel-Verweigerung). Nach manueller Pruefung der Antworten kalibriert und in evals/README.md als verbindliche Regel festgehalten."
+  ],
+  "benchmarks": {
+    "suite": "smejj-chat-core 1.0.0, sha256 14b66f9badc70acd8e678ec603071e9273d55b807d1d5c89927db7d586f7f845",
+    "faelle": 14,
+    "glm_5_2": {
+      "backend": "zhipu:glm-5.2",
+      "punktzahl": 0.9706,
+      "latenzMsP95": 22799,
+      "ersterTokenMsP95": 22754,
+      "kritischeVerstoesse": 0,
+      "urteil": "budget-violated"
+    },
+    "schnelle_spur": {
+      "backend": "groq:llama-3.1-8b-instant",
+      "punktzahl": 0.9118,
+      "latenzMsP95": 645,
+      "ersterTokenMsP95": 555,
+      "kritischeVerstoesse": 1,
+      "urteil": "blocked"
+    }
+  },
+  "offene_befunde": [
+    "Befund 1: Antwortzeit auf dem GLM-Pfad liegt bei 22,8 s bis zum ersten Token und ueberschreitet das Budget um das 15- bis 20-Fache. Gemessener Ist-Zustand, keine Regression durch diese Aenderung.",
+    "Befund 2: Die schnelle Spur besteht den Fall code-esm-failclosed nicht. Kein Sicherheitsproblem, aber eine Grenze des Standardpfades."
+  ],
+  "verifikation": {
+    "tests": "node --test tests/model-eval.test.mjs — 25/25 gruen",
+    "pflichtchecks": "check:guidelines, check:json, check:paths, check:cost, check:security, check:architecture, check:evaluation gruen",
+    "liveTest": "Vier Live-Laeufe gegen https://smejj-chat-bridge.zeabur.app/api/chat, echter Antwortpfad, keine Attrappe",
+    "kosten": "Keine neue Kostenposition. Trockenlauf kostet nichts; Live-Laeufe nutzen die bestehenden Zugaenge des Betreibers."
+  },
+  "rollback": {
+    "git": "Tag rollback/model-eval-harness-2026-07-28 auf 62d55a4 (Stand vor der Aenderung)",
+    "umfang": "Alle Dateien sind neu; Ruecknahme durch Loeschen der neuen Dateien und Zuruecksetzen der drei package.json-Zeilen. Kein bestehendes Verhalten wurde veraendert."
+  },
+  "status": "verified"
+}

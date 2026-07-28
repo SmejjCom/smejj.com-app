@@ -94,7 +94,14 @@ export async function runEvalSuite({
       if (result?.ok === true || !isTransientError(result?.error)) break;
       if (attempt < retries && delayMs > 0) await sleep(delayMs);
     }
-    const scored = { ...scoreCase(evalCase, result), attempts };
+    // Das angeforderte Modell ist nicht zwingend das antwortende: der Router darf
+    // zurueckfallen. Ohne diese Zuordnung waere die Messung nicht belastbar.
+    const scored = {
+      ...scoreCase(evalCase, result),
+      attempts,
+      backend: String(result?.backend || "unknown"),
+      resolvedModelId: String(result?.modelId || "")
+    };
     caseScores.push(scored);
     onCase(scored, result);
     if (delayMs > 0) await sleep(delayMs);

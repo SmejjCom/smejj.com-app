@@ -742,3 +742,39 @@ aelteste Tagesblock nach demselben Muster ins Archiv.
 - BENCHMARK: docs/benchmarks/webvitals_planer_2026-07-28.json — kaltes LCP
   200/236/200 ms bei TTFB 55/55/49 ms, die ruhigste Reihe dieser Sitzung; CLS 0,
   INP p75 48-80 ms. Touch-Ziele: docs/benchmarks/touchziele_2026-07-28.json.
+
+## 2026-07-28 — Modellwahl ist jetzt messbar (job_modell_eval_harness_20260728)
+- ANLASS: Kimi K3 (2,8 Bio. Parameter, 1,4 TB, ~64 GPUs zum Betrieb) ist erschienen.
+  ENTSCHEIDUNG: kein Download, kein Neubezug von K2.7. Gewichte im Objektspeicher
+  sind kein Fundament, wenn die Rechenleistung fehlt — IDrive e2 speichert, es rechnet
+  nicht. "K3 Max" ist ausserdem keine Gewichtsdatei, sondern eine Aufwandsstufe der
+  Anbieter-Schnittstelle. Begruendung: docs/model-management/MODELL_ENTSCHEIDUNG_KIMI_K3_2026-07-28.md
+- STATTDESSEN GEBAUT: evals/suites/smejj-chat-core-v1.json (14 echte Faelle) plus
+  src/evaluation/evalSuite.js, evalScoring.js, evalReport.js, evalTransport.js und
+  scripts/evaluation/run_model_eval.mjs. `npm run eval:models` ist ein Trockenlauf
+  ohne Kosten; erst --live ruft ein Modell auf. 25 Tests in tests/model-eval.test.mjs.
+- MESSUNG STATT MEINUNG (live gegen die Produktionskette, 2026-07-28):
+  schnelle Spur groq:llama-3.1-8b-instant — 91,2 %, p95 645 ms, erster Token 555 ms,
+  1 kritischer Verstoss (Codegenerierung). GLM-5.2 ueber den Control-Router —
+  97,1 %, p95 22 799 ms, erster Token 22 754 ms, 0 kritische Verstoesse.
+  Damit ist die profilabhaengige Fuehrung erstmals belegt statt nur behauptet.
+- OFFENER BEFUND 1: Auf dem GLM-Pfad vergehen bis zum ersten Token 22,8 s — das
+  15- bis 20-Fache jedes Budgets. Gemessener Ist-Zustand, keine Regression.
+- OFFENER BEFUND 2: Die schnelle Spur besteht code-esm-failclosed nicht. Kein
+  Sicherheitsproblem, aber die Grenze des Standardpfades ohne ausdrueckliche Modellwahl.
+- FALLE, DIE ZWEI STUNDEN GEKOSTET HAETTE: Regex-Erwartungen mit dem Flag i machen die
+  Namensregel unpruefbar — `\bSMEJJ\b` trifft case-insensitive auch "smejj.com". Muster
+  sind deshalb schreibweisen-genau, ignoreCase ist die ausdrueckliche Ausnahme.
+- ZWEITE FALLE: Ein einzelner HTTP 503 der Chat-Bruecke wurde im ersten Lauf als
+  Modellversagen gezaehlt. Ohne Wiederholung transienter Fehler misst man die
+  Infrastruktur und nennt das Ergebnis Modellqualitaet. Jetzt isTransientError + --retries.
+- DRITTE FALLE: Ein Bericht ohne Backend-Beleg ist wertlos — das angeforderte und das
+  antwortende Modell koennen auseinanderfallen. run.backendsSeen/resolvedModelIds
+  belegen es. Und verglichen wird nur gegen denselben Suite-Inhalts-Hash; zwei Laeufe
+  mit unterschiedlichen Erwartungen sind nicht vergleichbar.
+- VERBINDLICHE REGEL (evals/README.md): Eine Wortliste wird nur erweitert, wenn die
+  betroffene Antwort von Hand gelesen und als sachlich richtig bestaetigt wurde.
+  Erwartungen aufzuweichen, damit ein Modell besser dasteht, ist ein Verstoss.
+- Kein Deploy noetig: reines Werkzeug, kein Frontend- und kein Control-Server-Pfad
+  beruehrt. check:all 27/27 gruen. Capsule im Object Brain unter
+  capsules/app/job_modell_eval_harness_20260728/.

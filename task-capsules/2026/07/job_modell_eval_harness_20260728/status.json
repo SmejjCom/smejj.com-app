@@ -1,0 +1,13 @@
+{
+  "jobId": "job_modell_eval_harness_20260728",
+  "status": "verified",
+  "aktualisiert": "2026-07-28",
+  "verlauf": [
+    { "status": "pending", "notiz": "Rollback-Punkt rollback/model-eval-harness-2026-07-28 auf 62d55a4 gesetzt." },
+    { "status": "running", "notiz": "Eval-Suite, Bewertung, Bericht, Transportwege und Kommandozeile gebaut; 25 Tests gruen." },
+    { "status": "running", "notiz": "Live-Lauf 1: ein HTTP 503 als Modellversagen gewertet, zwei Erwartungen zu eng. Harness korrigiert." },
+    { "status": "running", "notiz": "Live-Lauf 2 und 3: 97,1 bis 100 % ohne kritische Verstoesse; Backend-Beleg und Hash-genauer Vergleich ergaenzt." },
+    { "status": "running", "notiz": "Live-Lauf 4: schnelle Spur zum Vergleich gemessen; eine Wortliste nach manueller Antwortpruefung kalibriert." },
+    { "status": "verified", "notiz": "check:all 27/27 gruen, Endlaeufe fuer beide Pfade abgelegt, Entscheidung dokumentiert." }
+  ]
+}
