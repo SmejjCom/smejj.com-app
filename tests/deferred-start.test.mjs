@@ -18,8 +18,9 @@ const sw = fs.readFileSync("public/sw.js", "utf8");
 const bundle = fs.readFileSync("public/start-styles.css", "utf8");
 
 // Ein Fenster-Ersatz: Bildwechsel und Leerlauf lassen sich so gezielt steuern.
-function fakeScope({ paint = true, idle = true } = {}) {
+function fakeScope({ paint = true, idle = true, fcp = false } = {}) {
   return {
+    PerformanceObserver: fcp ? class { constructor(cb) { this.cb = cb; } observe() { setTimeout(() => this.cb({ getEntries: () => [{ name: "first-contentful-paint" }] }), 0); } disconnect() {} } : undefined,
     requestAnimationFrame: paint ? (fn) => setTimeout(fn, 0) : undefined,
     requestIdleCallback: idle ? (fn) => setTimeout(fn, 0) : undefined,
     setTimeout: (fn, ms) => setTimeout(fn, ms)
@@ -45,6 +46,18 @@ test("ohne Bildwechsel greift der Notausgang (Hintergrund-Tab)", async () => {
   const gelaufen = [];
   await afterFirstPaint([() => gelaufen.push("trotzdem")], { scope: fakeScope({ paint: false, idle: false }), timeoutMs: 20 });
   assert.deepEqual(gelaufen, ["trotzdem"], "in einem unsichtbaren Tab darf nichts haengenbleiben");
+});
+
+test("Paint-Ereignis des Browsers wird als Signal genutzt", async () => {
+  // Befund 2026-07-27 (live): zwei requestAnimationFrame allein reichen nicht —
+  // rAF laeuft VOR dem Malen. Im warmen Wiederbesuch starteten die Aufrufe
+  // dadurch bei 142-160 ms, der Bildaufbau lag erst bei 168 ms.
+  const gelaufen = [];
+  await afterFirstPaint([() => gelaufen.push("nach-fcp")], { scope: fakeScope({ fcp: true, paint: false, idle: false }), timeoutMs: 5000 });
+  assert.deepEqual(gelaufen, ["nach-fcp"], "das Paint-Ereignis allein muss reichen");
+  const quelle = fs.readFileSync("public/deferred-start.js", "utf8");
+  assert.match(quelle, /type: "paint", buffered: true/, "Paint-Beobachtung fehlt");
+  assert.match(quelle, /raf\(\(\) => raf\(\(\) => \(scope\.setTimeout \|\| setTimeout\)\(resolve, 0\)\)\)/, "Rueckfallweg muss nach dem Malen laufen");
 });
 
 test("leere oder ungueltige Liste tut nichts", async () => {
@@ -115,5 +128,5 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   for (const name of SOURCES) {
     assert.ok(!sw.includes(`"/assets/${name}"`), `${name} liegt unnoetig im Precache`);
   }
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v151"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v152"/);
 });
