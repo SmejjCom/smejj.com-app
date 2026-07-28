@@ -71,9 +71,11 @@ test("service worker caches only small app shell assets and has offline fallback
   // Seiten-Kontext fuer das Modell) hat public/sw.js gebumpt, ohne diese Erwartung
   // mitzunehmen — der Test war seitdem rot und blockierte check:all. public/sw.js
   // selbst wurde hier NICHT angefasst.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v149"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v150"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
-  assert.match(sw, /\/assets\/view-chrome\.css/);
+  // view-chrome.css liegt seit dem Ladezeit-Buendel (2026-07-27) in start-styles.css.
+  assert.match(sw, /\/assets\/start-styles\.css/);
+  assert.ok(fs.readFileSync("public/start-styles.css", "utf8").includes("view-chrome"), "view-chrome-CSS fehlt im Buendel");
   assert.match(sw, /\/assets\/search\.js/);
   assert.match(sw, /\/assets\/autonomous-coding\.js/);
   assert.match(sw, /\/assets\/autonomous-coding\.css/);
@@ -116,7 +118,7 @@ test("official logo, favicons, PWA icons and social card stay complete", () => {
   for (const [src] of expectedManifestIcons) assert.ok(fs.existsSync(`public${src}`), `missing ${src}`);
 
   for (const asset of [
-    "/assets/branding.css",
+    "/assets/start-styles.css",
     "/favicon.ico?v=112",
     "/apple-touch-icon.png",
     "/og-image.png",

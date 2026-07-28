@@ -52,7 +52,11 @@ const CHECK_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".md", ".json", ".html",
 // backups/ enthaelt eingefrorene 1:1-Kopien (start lock v3) — kein aktiver Quellcode.
 // UPLOAD-ZU-GITHUB/ ist der manuelle Deploy-Staging-Ordner: byte-identische Kopien
 // bereits geprüfter public/-Dateien (Quelle bleibt ratchet-geprüft, 2026-07-14).
-const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//];
+// public/start-styles.css ist ein ERZEUGTES Buendel (scripts/build/bundle-start-styles.mjs),
+// kein handgepflegter Quellcode. Die acht Quelldateien bleiben einzeln unter der
+// 800-Zeilen-Regel und werden weiterhin geprueft; das Buendel ist nur ihr Ergebnis
+// und wird von check:start-styles gegen die Quellen verifiziert (2026-07-27).
+const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/start-styles\.css$/];
 
 const failures = [];
 const files = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8" })

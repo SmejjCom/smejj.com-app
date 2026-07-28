@@ -24,7 +24,9 @@ test("Profil-Dock zeigt Profilbild und Namen unten links", () => {
   assert.match(html, /<button id="profileDockButton" class="profile-dock-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="profileDockMenu"/);
   assert.match(html, /<span id="profileDockFace" class="profile-avatar is-empty" aria-hidden="true"><\/span>/);
   assert.match(html, /<span id="profileDockName" class="profile-dock-name">Nutzer<\/span>/);
-  assert.match(html, /<link rel="stylesheet" href="\/assets\/profile-dock\.css/);
+  // Seit dem Ladezeit-Buendel (2026-07-27) liefert start-styles.css das Dock-CSS.
+  assert.match(html, /<link rel="stylesheet" href="\/assets\/start-styles\.css/);
+  assert.ok(fs.readFileSync("public/start-styles.css", "utf8").includes("profile-dock-button"), "Dock-CSS fehlt im Buendel");
   assert.match(html, /<script src="\/assets\/profile-dock\.js/);
 });
 
@@ -92,7 +94,6 @@ test("Profilbild-Steuerung ist barrierefrei beschriftet", () => {
 test("Service Worker cached die neuen Module", () => {
   for (const asset of [
     "/assets/profile-dock.js",
-    "/assets/profile-dock.css",
     "/assets/profile-picture-store.js",
     "/assets/profile-picture-control.js"
   ]) {
@@ -100,8 +101,9 @@ test("Service Worker cached die neuen Module", () => {
   }
   // v148 (2026-07-27): Stufe 2 — Seiten-Kontext fuer das Modell (browser-context.js).
   assert.ok(sw.includes('"/assets/browser-context.js"'), "browser-context.js fehlt im Shell-Precache");
-  // v148 -> v149 (2026-07-28): frame-guard.js neu im Shell-Precache (Klickjacking-Schutz, F-04).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v149"/);
+  // v149 -> v150 (2026-07-27): start-styles.css buendelt die Startseiten-Stylesheets.
+  assert.ok(sw.includes('"/assets/start-styles.css"'), "Stylesheet-Buendel fehlt im Shell-Precache");
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v150"/);
 });
 
 

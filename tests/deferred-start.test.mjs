@@ -1,0 +1,95 @@
+// smejj.com — Tests fuer Ladezeit-Arbeiten vom 2026-07-27.
+//
+// Zwei Zusagen werden hier festgehalten:
+//   1. Der Control Server steht nicht mehr im Ladepfad eines Seitenaufrufs.
+//   2. Die Startseite laedt ein Stylesheet-Buendel statt acht Einzeldateien,
+//      und das Buendel enthaelt die Quellen unveraendert und in Reihenfolge.
+
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { afterFirstPaint } from "../public/deferred-start.js";
+import { SOURCES } from "../scripts/build/bundle-start-styles.mjs";
+
+const html = fs.readFileSync("public/index.html", "utf8");
+const appJs = fs.readFileSync("public/app.js", "utf8");
+const premium = fs.readFileSync("public/premium-surfaces.js", "utf8");
+const sw = fs.readFileSync("public/sw.js", "utf8");
+const bundle = fs.readFileSync("public/start-styles.css", "utf8");
+
+// Ein Fenster-Ersatz: Bildwechsel und Leerlauf lassen sich so gezielt steuern.
+function fakeScope({ paint = true, idle = true } = {}) {
+  return {
+    requestAnimationFrame: paint ? (fn) => setTimeout(fn, 0) : undefined,
+    requestIdleCallback: idle ? (fn) => setTimeout(fn, 0) : undefined,
+    setTimeout: (fn, ms) => setTimeout(fn, ms)
+  };
+}
+
+test("Aufgaben laufen erst nach dem Bildaufbau, dann alle", async () => {
+  const gelaufen = [];
+  await afterFirstPaint([() => gelaufen.push("a"), () => gelaufen.push("b")], { scope: fakeScope() });
+  assert.deepEqual(gelaufen, ["a", "b"]);
+});
+
+test("eine fehlerhafte Aufgabe reisst die anderen nicht mit", async () => {
+  const gelaufen = [];
+  await afterFirstPaint([
+    () => { throw new Error("Netz weg"); },
+    () => gelaufen.push("zweite")
+  ], { scope: fakeScope() });
+  assert.deepEqual(gelaufen, ["zweite"]);
+});
+
+test("ohne Bildwechsel greift der Notausgang (Hintergrund-Tab)", async () => {
+  const gelaufen = [];
+  await afterFirstPaint([() => gelaufen.push("trotzdem")], { scope: fakeScope({ paint: false, idle: false }), timeoutMs: 20 });
+  assert.deepEqual(gelaufen, ["trotzdem"], "in einem unsichtbaren Tab darf nichts haengenbleiben");
+});
+
+test("leere oder ungueltige Liste tut nichts", async () => {
+  await afterFirstPaint([], { scope: fakeScope() });
+  await afterFirstPaint(null, { scope: fakeScope() });
+});
+
+test("Control-Server-Aufrufe stehen nicht mehr im Ladepfad", () => {
+  // Die fuenf Startaufrufe muessen hinter afterFirstPaint liegen.
+  assert.match(appJs, /afterFirstPaint\(\[/, "app.js verschiebt die Startaufrufe");
+  assert.match(premium, /afterFirstPaint\(\[\(\) => syncServerAiStatus\(\)\]\)/, "premium-surfaces.js verschiebt /api/health");
+  const boot = appJs.slice(appJs.indexOf("function boot()"), appJs.indexOf("function bindNavigation()"));
+  const verschoben = boot.slice(boot.indexOf("afterFirstPaint"));
+  for (const aufruf of ["initGoogleLogin", "refreshSessionStatus", "refreshKimiVaultStatus", "refreshGlmVaultStatus"]) {
+    assert.ok(verschoben.includes(aufruf), `${aufruf} muss hinter afterFirstPaint stehen`);
+    assert.ok(!boot.slice(0, boot.indexOf("afterFirstPaint")).includes(aufruf), `${aufruf} darf nicht mehr direkt beim Start laufen`);
+  }
+});
+
+test("Startseite laedt ein Buendel statt acht Stylesheets", () => {
+  const links = html.match(/<link rel="stylesheet"[^>]*>/g) || [];
+  assert.equal(links.length, 1, `genau ein Stylesheet erwartet, gefunden: ${links.length}`);
+  assert.match(links[0], /\/assets\/start-styles\.css/);
+  // Non-Regression: kein einzelnes Startseiten-Stylesheet darf zurueckkehren.
+  for (const name of SOURCES) {
+    assert.ok(!html.includes(`/assets/${name}`), `${name} wird noch einzeln geladen`);
+  }
+});
+
+test("Buendel enthaelt alle Quellen unveraendert und in Reihenfolge", () => {
+  let position = -1;
+  for (const name of SOURCES) {
+    const quelle = fs.readFileSync(`public/${name}`, "utf8").trimEnd();
+    assert.ok(bundle.includes(quelle), `${name} fehlt im Buendel oder wurde veraendert`);
+    const gefunden = bundle.indexOf(`/* ---- ${name} ---- */`);
+    assert.ok(gefunden > position, `${name} steht in falscher Reihenfolge — das aendert die Kaskade`);
+    position = gefunden;
+  }
+});
+
+test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", () => {
+  assert.ok(sw.includes('"/assets/start-styles.css"'), "Buendel fehlt im Precache");
+  assert.ok(sw.includes('"/assets/deferred-start.js"'), "deferred-start.js fehlt im Precache — App waere offline tot");
+  for (const name of SOURCES) {
+    assert.ok(!sw.includes(`"/assets/${name}"`), `${name} liegt unnoetig im Precache`);
+  }
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v150"/);
+});

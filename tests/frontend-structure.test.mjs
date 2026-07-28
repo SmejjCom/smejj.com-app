@@ -62,7 +62,7 @@ test("status views stay available outside the menus", () => {
 });
 
 test("PWA shell caches app component modules", () => {
-  for (const asset of ["/assets/app.js", "/assets/components.js", "/assets/styles.css", "/manifest.webmanifest"]) {
+  for (const asset of ["/assets/app.js", "/assets/components.js", "/assets/start-styles.css", "/manifest.webmanifest"]) {
     assert.match(sw, new RegExp(asset.replace(/[/.]/g, "\\$&")));
   }
 });

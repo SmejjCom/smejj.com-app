@@ -20,13 +20,15 @@ const paneJs = fs.readFileSync("public/browser-pane.js", "utf8");
 
 test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
   assert.match(html, /id="browserPaneRoot" class="browser-pane"/);
-  assert.match(html, /\/assets\/browser-pane\.css\?v=browser-pane-20260709-2/);
+  // Pane-CSS liegt seit 2026-07-27 im Startseiten-Buendel (start-styles.css).
+  assert.match(html, /\/assets\/start-styles\.css/);
+  assert.ok(fs.readFileSync("public/start-styles.css", "utf8").includes(".bp-frame"), "Pane-CSS fehlt im Buendel");
   assert.match(html, /\/assets\/browser-pane\.js\?v=browser-pane-20260709-2/);
   assert.match(html, /data-jump="websites"[\s\S]*>Browser<\/button>/);
 });
 
 test("Service Worker cached Browser-Pane Assets", () => {
-  assert.match(sw, /\/assets\/browser-pane\.css/);
+  assert.match(sw, /\/assets\/start-styles\.css/);
   assert.match(sw, /\/assets\/browser-pane\.js/);
   assert.match(sw, /\/assets\/browser-pane-render\.js/);
 });
