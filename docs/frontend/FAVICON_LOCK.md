@@ -20,7 +20,7 @@ Schriftliche Nutzeranweisung vom 2026-07-13:
 
 ## Technische Durchsetzung
 
-`pnpm run check:favicon-lock` vergleicht den aktuellen Stand mit
+`npm run check:favicon-lock` vergleicht den aktuellen Stand mit
 `docs/frontend/favicon-lock-manifest.json`. Die Prüfung läuft verpflichtend in
 `check:all` und damit vor jedem Release.
 

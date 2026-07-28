@@ -37,7 +37,19 @@ Zusaetzlich geschuetzte FUNKTIONEN (Feature-Lock v2, festgeschrieben 2026-07-03 
 - Mikrofon-Diktat (Toggle-Verhalten, `.is-recording`)
 - Sprachmodus-Overlay `#voiceModeOverlay` (Zustaende listening/thinking/speaking, Schliessen per X und Escape)
 - Vorlesen der letzten Antwort (Lautsprecher-Icon, `.is-speaking`)
-- Modellwahl `#modelPickerButton` mit den fuenf Modellen inkl. `BYOK` und `local browser`
+- Modellwahl `#modelPickerButton` mit den vier Modellen (smejj 1.0, GLM-5.2,
+  Kimi K2.7, Cline). Verbindungsarten — `BYOK` und `local browser` — sind KEINE
+  Menuepunkte, sondern werden unter Einstellungen -> KI-Provider (`/ai`)
+  verwaltet; das Cline-Untermenue verweist fail-closed dorthin
+  ("Cline-Key in Einstellungen verbinden").
+  Korrigiert am 2026-07-28: Hier stand vorher "fuenf Modelle inkl. BYOK und
+  local browser". Die QA-Welle 1 (Befund F-16) fand live vier Eintraege und
+  weder BYOK noch local browser im Menue — der Lock-Text beschrieb einen
+  Zustand, den es nicht mehr gab, und haette bei jeder Pruefung falschen Alarm
+  ausgeloest. Entscheidung des Betreibers: "Die Lock-Formulierung ... ist
+  veraltet — vier Eintraege plus BYOK ueber die Einstellungen sind richtig."
+  (Freigabe "smejj.com 100 % fertig", 2026-07-28). MODEL_MODES in app.js
+  fuehrt genau diese vier; der Schutz gilt unveraendert fuer alle vier.
 - Client-Chat `public/ai/chatClient.js` (BYOK-Streaming ueber allowgelistete Hosts, lokale Browser-KI, fail-closed Hinweise)
 - Module `public/composer-tools.js` und `public/composer-tools.css`
 - Service-Worker-Precache dieser Module in `public/sw.js`

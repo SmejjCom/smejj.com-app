@@ -1,0 +1,42 @@
+{
+  "jobId": "job_qa_wellen_1_3_20260728",
+  "titel": "QA-Wellen 1-3: Pruefung und vollstaendige Behebung",
+  "freigabe": "Freigabe \"smejj.com 100 % fertig\" (Wof Kadavanich, 2026-07-28) inkl. Zusatzfreigabe fuer manifest.webmanifest, sw.js, browser-pane.js und composer-plus-menu.js sowie Abschlussauftrag \"Mach komplett fertig, lass nicht offen\".",
+  "ziel": "Drei QA-Wellen (oeffentlicher Bereich, angemeldeter Bereich, Produktkern) pruefen und alle Befunde bis auf die juristisch zu klaerenden beheben, live bringen und live verifizieren.",
+  "berichte": [
+    "docs/qa/QA_WELLE_1_2026-07-27.md",
+    "docs/qa/QA_WELLE_2_2026-07-27.md",
+    "docs/qa/QA_WELLE_3_2026-07-27.md"
+  ],
+  "behoben": {
+    "recht": ["F-01 Betreiber vereinheitlicht (iMild LLC)", "F-02 Salad und Zeabur als Auftragsverarbeiter benannt", "F-03 Cookie-Fiktion durch localStorage-Wahrheit ersetzt", "F-25 Stand aktualisiert"],
+    "sicherheit": ["F-04 Meta-CSP und Klickjacking-Schutz", "F-08 no-store fuer Identitaets- und Token-Antworten"],
+    "seo": ["F-06 hreflang-Konflikt", "F-13 Startseiten-Titel und JSON-LD", "F-14 Manifest-Texte und Theme-Color", "F-15 tote API-Endpunkte in llms.txt"],
+    "bedienung": ["F-05 Tippfehler-URL zeigt 404 statt Kostenwarnung", "F-09 Login-Sackgasse", "F-20 Passwort-vergessen als Knopf", "W2-07 kein Roh-JSON", "W2-09 Projektanlage mit Namen", "W2-11 Rueckmeldung bei leerer Suche"],
+    "barrierefreiheit": ["F-10 Favicons auf Anmelde- und Registrierungsseite", "F-17 eigener Fokusstil", "F-21 Klickflaechen 24x24", "W2-03 Fokusfuehrung im Sprachmodus", "W2-04 ARIA-Reiter Einstellungen", "W2-05 Seitentitel je Ansicht", "W2-06 echte Umlaute", "W2-08 fehlendes Label"],
+    "produktkern": ["W2-01 Suche findet alle Chats", "W3-01 Kaltstart-Behandlung", "W3-02 Repository-Berechtigung vor dem Rechenpfad", "W3-03 verwaiste Jobs", "W3-04 Jobliste filtert vor limit", "W3-05 404 fuer unbekannte API-Pfade", "W3-07 verstaendliche Fehlermeldungen"],
+    "betrieb": ["zwei vorbestehende rote Pruefungen repariert", "check:all und release:preflight erstmals ausfuehrbar (pnpm nicht installiert)", "Platzhalter in workers/smejj-voice/.env.example vereinheitlicht"]
+  },
+  "eigene_fehler_gefunden_und_behoben": [
+    "W2-02 war ein Fehlbefund — Loeschknopf steckte in einem eingeklappten Mehr-Menue; im Bericht vollstaendig zurueckgezogen.",
+    "W3-02 blockierte nach dem Release ALLE Coding-Auftraege, weil SMEJJ_GITHUB_OWNER_ALLOWLIST nie gesetzt war; im Live-Test entdeckt, Allowlist gesetzt, erneut verifiziert.",
+    "F-08 'zwei Identitaeten' war ein Messfehler des HTTP-Caches; die Untersuchung legte den echten Fehler (fehlendes no-store) frei.",
+    "Deploy-Skript las die Allowlist nach loadSecureLocalEnv() statt davor."
+  ],
+  "deploy": {
+    "frontend": "SmejjCom/smejj-app-frontend, HTTPS-Push, jede Datei byte-genau gegen den lokalen Stand verifiziert",
+    "controlServer": "IDrive e2 deployments/control/ + Salad-Env-Merge; Releases v85 (Welle 3) und v87 (no-store)",
+    "swVersionen": "v146 -> v154"
+  },
+  "rollback": {
+    "frontend": "git revert im Frontend-Repo; Start-Lock-Backups unter backups/start-design-lock/",
+    "controlServer": "SMEJJ_CONTROL_ARTIFACT_KEY auf deployments/control/smejj-control-magiclink-fix-2026-07-25-rc1/smejj-control-context.tar.gz zuruecksetzen"
+  },
+  "nicht_umgesetzt": {
+    "englische_rechtstexte": "F-11 — braucht juristische Pruefung, nicht durch Entwicklung ersetzbar",
+    "juristische_bewertung": "Alle Datenschutz- und Impressumsformulierungen bleiben fachlich zu pruefen",
+    "salad_container": "Alle vier laufenden Container sind erforderlich (Zuordnung zu config.js belegt); 24 gestoppte Container kosten nichts, Loeschen waere Rote Liste"
+  },
+  "verifikation": "check:all 37/37 gruen, release:preflight gruen, Live-Tests auf https://smejj.com und gegen den Control Server",
+  "status": "verified"
+}

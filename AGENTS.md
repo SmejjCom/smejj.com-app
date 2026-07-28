@@ -28,7 +28,7 @@
 - Falls eine Favicon-Aenderung technisch notwendig erscheint, wird sie nicht
   ausgefuehrt. Zuerst ist eine ausdrueckliche schriftliche Bestaetigung des
   Nutzers einzuholen.
-- `docs/frontend/FAVICON_LOCK.md` ist verbindlich. `pnpm run check:favicon-lock`
+- `docs/frontend/FAVICON_LOCK.md` ist verbindlich. `npm run check:favicon-lock`
   muss nach jeder Aenderung und vor jedem Release erfolgreich sein. Der Lock
   darf nicht automatisch neu eingefroren oder umgangen werden.
 - `check:branding` und `check:start-lock` bleiben vor jedem Release Pflicht.

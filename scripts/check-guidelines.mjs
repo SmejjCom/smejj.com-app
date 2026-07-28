@@ -50,7 +50,14 @@ const LEGACY_BASELINE = new Map([
   ["public/app.js", 1411],
   // styles.css-Baseline 1552 -> 1565 am 2026-07-04: .visually-hidden fuer das
   // H1 der Startseite (Freigabe "Ja, Option A + Labels"); ab hier wieder eingefroren.
-  ["public/styles.css", 1565],
+  // styles.css-Baseline 1565 -> 1589 am 2026-07-28: Freigabe "smejj.com 100 %
+  // fertig" (Wof Kadavanich) — eigener Fokusstil fuer Knoepfe und Links
+  // (QA-Welle 1, Befund F-17: Fokusregeln gab es nur fuer input/select/textarea,
+  // alles andere hing am Browser-Standardring) und Mindest-Klickflaeche von
+  // 24x24 px fuer die Rechtslinks der Fusszeile (F-21, WCAG 2.2 AA).
+  // +24 Zeilen, davon 13 Kommentar. Beides sind Zusaetze, keine Umbauten:
+  // bestehende Regeln, Farben, Abstaende und Schriftbilder bleiben unveraendert.
+  ["public/styles.css", 1589],
   ["src/worker.js", 930]
 ]);
 // Praezise Verstoesse: Markenwort in Grossschreibung (das SMEJJ_-Env-Praefix mit
