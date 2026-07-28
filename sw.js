@@ -1,3 +1,8 @@
+// v171 -> v172 (2026-07-28): Pflicht-Sprung. Die Statusseite (status.html,
+// status.js) kam in denselben v171 wie die Chat-Fassungen einer parallelen
+// Sitzung — zwei verschiedene Precache-Listen unter EINEM Cache-Namen. Wer v171
+// schon installiert hatte, haette die Statusseite nie in den Cache bekommen.
+// Genau dafuer ist die Regel da: geaenderter Precache = neue Version.
 // v170 -> v171 (2026-07-28): Antwort-Fassungen ueberleben ein Neuladen.
 // chat-store.js speichert versions + active je Nachricht (Obergrenze acht) und
 // gibt sie beim Wiederherstellen zurueck; vorher war "Version 2 von 3" nach
@@ -195,7 +200,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v171";
+const CACHE_NAME = "smejj-shell-v172";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
