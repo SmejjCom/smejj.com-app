@@ -7,7 +7,7 @@ import {
   addSessionToRecord, createUserRecord, findSession, getUserByEmail, hashToken,
   isSessionDead, normalizeEmail, putUser, revokeSessions
 } from "./emailUserStore.js";
-import { sendAuthMail } from "./mailer.js";
+import { mailerConfig, sendAuthMail } from "./mailer.js";
 
 const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const RESET_TTL_MS = 30 * 60 * 1000;
@@ -39,17 +39,22 @@ export async function registerUser({ email, password, name, origin }, env = proc
   if (!emailAllowed(normalized, env)) return { ok: false, status: 403, error: "email_not_allowed" };
   const policyError = passwordPolicyError(password);
   if (policyError) return { ok: false, status: 400, error: policyError };
+  // Haengt NUR an der Serverkonfiguration, nie am konkreten Konto — deshalb
+  // fuer neue und bestehende Adressen identisch und damit enumeration-sicher.
+  const verificationMailExpected = Boolean(mailerConfig(env));
   const existing = await getUserByEmail(normalized, env);
   if (existing) {
     // Enumeration-sicher: gleiche Antwort wie Erfolg, aber keine Aenderung am Konto.
-    return { ok: true, status: 200, pendingVerification: true, mail: { sent: false, reason: "account_exists" } };
+    // Das Mailergebnis heisst `internalMail` und wird von der Route NICHT
+    // ausgeliefert — als `mail` verriet es "account_exists" nach aussen.
+    return { ok: true, status: 200, pendingVerification: true, verificationMailExpected, internalMail: { sent: false, reason: "account_exists" } };
   }
   const record = createUserRecord({ email: normalized, name, passwordHash: await hashPassword(password) });
   const token = newToken();
   record.verify = { tokenHash: hashToken(token), expiresAt: new Date(Date.now() + VERIFY_TTL_MS).toISOString() };
   await putUser(record, env);
-  const mail = await sendVerification({ email: normalized, token, origin }, env);
-  return { ok: true, status: 200, pendingVerification: true, mail };
+  const internalMail = await sendVerification({ email: normalized, token, origin }, env);
+  return { ok: true, status: 200, pendingVerification: true, verificationMailExpected, internalMail };
 }
 
 export async function loginUser({ email, password, userAgent }, env = process.env) {
@@ -100,15 +105,25 @@ export async function verifyEmailToken({ email, token }, env = process.env) {
   return { ok: true, status: 200, verified: true };
 }
 
+// Antwort ist bewusst IMMER dieselbe — sonst verraet sie, ob es das Konto gibt.
+//
+// Befund der Anmeldewege-Pruefung vom 2026-07-28 (live gegen den Control-Server
+// gemessen): die Antwort trug ein `mail`-Feld nach aussen. Fuer eine unbekannte
+// Adresse stand dort {"sent":false,"reason":"unknown_account"}, fuer eine
+// bekannte {"sent":true}. Damit konnte jeder ohne Anmeldung durchprobieren,
+// welche E-Mail-Adressen ein Konto haben (Konto-Enumeration) — die Oberflaeche
+// formuliert seit jeher datensparsam ("Wenn ein Konto existiert ..."), die
+// API widersprach ihr. Das Ergebnis des Mailversands bleibt intern (Rueckgabe
+// `internalMail`, wird von der Route NICHT ausgeliefert).
 export async function requestPasswordReset({ email, origin }, env = process.env) {
   const uniform = { ok: true, status: 200, requested: true };
   const record = await getUserByEmail(email, env);
-  if (!record) return { ...uniform, mail: { sent: false, reason: "unknown_account" } };
+  if (!record) return { ...uniform, internalMail: { sent: false, reason: "unknown_account" } };
   const token = newToken();
   record.reset = { tokenHash: hashToken(token), expiresAt: new Date(Date.now() + RESET_TTL_MS).toISOString(), usedAt: null };
   await putUser(record, env);
-  const mail = await sendReset({ email: record.email, token, origin }, env);
-  return { ...uniform, mail };
+  const internalMail = await sendReset({ email: record.email, token, origin }, env);
+  return { ...uniform, internalMail };
 }
 
 export async function confirmPasswordReset({ email, token, newPassword }, env = process.env) {

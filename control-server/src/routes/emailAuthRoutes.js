@@ -175,8 +175,14 @@ async function verifyEmail(body, env) {
   return verifyEmailToken({ email: body.email, token: body.token }, env);
 }
 
+// `internalMail` bleibt drinnen — es sagt, OB eine Mail rausging und warum
+// nicht ("unknown_account", "account_exists"). Genau das darf ein Aufrufer
+// nicht erfahren, sonst kann er Konten durchprobieren (Befund 2026-07-28).
+// Die Sperre sitzt bewusst hier an der einen Ausgangsstelle: so kann keine
+// kuenftige Route das Feld versehentlich wieder mitschicken.
 function respond(ctx, res, result) {
-  const { status, ...payload } = result;
+  const { status, internalMail, ...payload } = result;
+  void internalMail;
   ctx.json(res, status || (result.ok ? 200 : 400), payload);
   return true;
 }

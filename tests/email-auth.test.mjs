@@ -41,7 +41,8 @@ test("register + login: Erfolg, falsches Passwort, Enumeration-Schutz", async ()
   const reg = await registerUser({ email: EMAIL, password: PASSWORD, name: "Test", origin: "https://smejj.com" }, ENV);
   assert.equal(reg.ok, true);
   assert.equal(reg.pendingVerification, true);
-  assert.equal(reg.mail.sent, false); // SMTP nicht konfiguriert -> ehrlich unversendet
+  assert.equal(reg.internalMail.sent, false); // SMTP nicht konfiguriert -> ehrlich unversendet
+  assert.equal(reg.verificationMailExpected, false); // haengt nur an der Konfiguration
   const record = await getUserByEmail(EMAIL, ENV);
   assert.ok(record.passwordHash.startsWith("scrypt$v1$"));
   assert.ok(!JSON.stringify(record).includes(PASSWORD)); // niemals Klartext
