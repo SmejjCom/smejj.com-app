@@ -1,0 +1,14 @@
+{
+  "jobId": "job_smejj_training_loop_20260728",
+  "status": "blocked-pending-written-approval",
+  "aktualisiert": "2026-07-28",
+  "verlauf": [
+    { "status": "pending", "notiz": "Auftrag: dauerhaften Eval-/Trainings-Loop fuer smejj 1.0 auf Zeabur bauen." },
+    { "status": "running", "notiz": "Bestehende Bausteine recherchiert (Eval-Pipeline, Trainings-Pipeline, Consent-Ledger, Worker-Dockerfile-Konventionen, FREE_ONLY_MASTER_POLICY.md)." },
+    { "status": "running", "notiz": "Governance-Blocker gefunden: Zeabur-Ausnahme deckt nur den bestehenden Maus-Engine-Server; ein neuer Dienst braucht eine erneute schriftliche Freigabe mit Dienst und Betrag." },
+    { "status": "running", "notiz": "Worker implementiert (config/checkpoint/evalCycle/trainingCycle/loop/reportStore/worker.mjs), Dockerfile + README, package.json-Skript ergaenzt." },
+    { "status": "running", "notiz": "13 Unit-Tests geschrieben; erste Laeufe deckten vier echte Bugs auf (Signatur-Fehlannahme, unnoetige IDrive-Config-Pflicht bei injizierten Fakes, ephemere lokale Report-Ablage, fehlerhafte Testfixtures) — alle behoben, 13/13 gruen." },
+    { "status": "running", "notiz": "check:training-loop, check:guidelines, check:architecture gruen. Docker-Daemon lokal aus — Image-Layout stattdessen per Kopie verifiziert, Health-Endpoint antwortet korrekt." },
+    { "status": "blocked-pending-written-approval", "notiz": "Code fertig und lokal verifiziert. Deploy auf Zeabur ausdruecklich zurueckgehalten: fehlende schriftliche Betreiber-Freigabe (Dienst + Betrag) laut FREE_ONLY_MASTER_POLICY.md, kein ZEABUR_API_TOKEN im Environment, keine Service-ID fuer einen neuen Zeabur-Dienst." }
+  ]
+}

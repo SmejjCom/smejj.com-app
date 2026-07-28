@@ -1,0 +1,64 @@
+{
+  "jobId": "job_smejj_training_loop_20260728",
+  "titel": "smejj-training-loop — dauerhafter Eval-/Trainings-Zyklus-Worker (Zeabur)",
+  "freigabe": "Noch keine schriftliche Betreiber-Freigabe fuer einen neuen Zeabur-Dienst. Der Auftrag selbst (Chat, 2026-07-28) deckt Implementierung und lokale Verifikation; der Live-Deploy ist laut docs/architecture/FREE_ONLY_MASTER_POLICY.md eine eigene, noch offene Freigabe (Dienst + Betrag).",
+  "ziel": "Einen 24/7 laufenden Worker bauen, der den bestehenden Modell-Eval-Zyklus (scripts/evaluation/run_model_eval.mjs) und den bestehenden Trainings-Warteschlangen-Zyklus (src/training/pipeline.js) auf eigenen Intervallen wiederholt ausfuehrt, gedacht fuer den bestehenden Zeabur-Server.",
+  "anforderungen": [
+    "Wiederverwendet die bestehenden Eval-/Trainings-Bausteine statt sie neu zu implementieren",
+    "Fail-closed in mehreren Stufen: SMEJJ_TRAINING_LOOP_ENABLED, je ein Schalter pro Zyklus, plus die bestehende projektweite Sperre SMEJJ_TRAINING_CAPTURE_ENABLED",
+    "Trainings-Zyklus entscheidet selbst nie ueber Eignung/Einwilligung/Rechte — nur Frische-Pruefung und unveraenderlicher Schreibvorgang ueber bestehende, bereits getestete Funktionen",
+    "Absturzsicher: Checkpoint auf IDrive e2, kein verlaesslicher In-Memory-Zustand",
+    "Benchmarks landen auf IDrive e2, nicht auf ephemerem Container-Disk",
+    "800-Zeilen-Regel und smejj.com-Schreibweise eingehalten (check:guidelines)",
+    "Kein Deploy ohne schriftliche Freigabe fuer einen neuen Zeabur-Dienst (FREE_ONLY_MASTER_POLICY.md)"
+  ],
+  "betroffene_dateien": {
+    "neu": [
+      "workers/smejj-training-loop/config.js",
+      "workers/smejj-training-loop/checkpoint.js",
+      "workers/smejj-training-loop/evalCycle.js",
+      "workers/smejj-training-loop/trainingCycle.js",
+      "workers/smejj-training-loop/loop.js",
+      "workers/smejj-training-loop/reportStore.js",
+      "workers/smejj-training-loop/worker.mjs",
+      "workers/smejj-training-loop/Dockerfile",
+      "workers/smejj-training-loop/README.md",
+      "tests/training-loop-worker.test.mjs"
+    ],
+    "geaendert": [
+      "package.json (check:training-loop Skript, in check:all und check eingehaengt)"
+    ],
+    "unberuehrt": [
+      "src/evaluation/*, src/training/*, scripts/evaluation/run_model_eval.mjs, control-server/src/training/consentLedger.js, control-server/src/storage/s3Signer.js — nur gelesen/importiert, keine Aenderung"
+    ]
+  },
+  "eigene_fehler_gefunden_und_behoben": [
+    "checkpoint.js nahm zuerst faelschlich einen injizierbaren fetchImpl-Parameter fuer signedS3Request an; die echte Funktion (workers/glm-salad/s3.js) hat keinen solchen Parameter, wirft bei Nicht-2xx und gibt Text statt Response zurueck — vor jedem Gebrauch verifiziert und korrigiert.",
+    "trainingCycle.js loeste readTrainingIdriveConfig(env) unbedingt am Anfang von runTrainingCycle auf, auch wenn listImpl/getPlan injiziert waren — ein Test mit gefaelschten Funktionen scheiterte trotzdem an fehlenden IDRIVE_E2_TRAINING_*-Variablen. Umgebaut: env wird durchgereicht, echte IDrive-Konfiguration wird nur noch von den Standardimplementierungen selbst aufgeloest.",
+    "evalCycle.js schrieb Berichte zuerst auf lokalen Pfad relativ zu repoRoot — in einem zustandslosen Container geht das bei jedem Neustart verloren. Umgebaut auf injizierbares writeReport/baseline, Standardweg fuer den Loop ist jetzt IDrive e2 (reportStore.js), CLI-Parity (docs/benchmarks/) bleibt als Fallback erhalten.",
+    "Testfall fuer den Scheduler lief zunaechst falsch durch: das injizierte env fuer den Checkpoint hatte keine IDRIVE_E2_*-Variablen, wodurch idriveConfigFromEnv() vor jedem Request warf und readCheckpoint still auf Standardwerte zurueckfiel — der Loop hielt jeden Tick faelschlich fuer 'faellig'. Testfixture korrigiert (Fake-Env mit IDRIVE_E2_*), keine Aenderung an der Produktionslogik noetig.",
+    "Ein Testfall benutzte einen ungueltigen ASSERTION_TYPE ('contains' statt 'contains_any') und einen erfundenen contentSha256 — die Suite waere in echt nie gueltig gewesen. Durch computeEvalSuiteSha256 ersetzt und Assertion-Typ korrigiert."
+  ],
+  "benchmarks": {
+    "checks": "npm run check:training-loop (7x node --check + 13 node:test) — 13/13 gruen, ~1.1s",
+    "guidelines": "npm run check:guidelines — 1016 Dateien, OK (800-Zeilen- und smejj.com-Namensregel)",
+    "architecture": "npm run check:architecture — 7/7 gruen (unveraendert, keine Regression)",
+    "image_layout_smoke": "Docker war lokal nicht verfuegbar (Daemon aus); stattdessen der exakte COPY-Dateisatz des Dockerfiles in ein isoliertes Verzeichnis kopiert und den Worker von dort gestartet — /health antwortete 200 mit korrektem fail-closed-Status, alle relativen Importe aufgeloest"
+  },
+  "offene_befunde": [
+    "Kein echter Live-Test gegen echte IDrive-e2-/Consent-Ledger-Zugangsdaten moeglich (keine Zugangsdaten in dieser Umgebung) — Konsens-/Beleg-Frischepruefung im Trainings-Zyklus ist nur gegen injizierte Fakes getestet, nicht gegen die echte Kette.",
+    "training/queue/v1/ hat noch keinen Erzeuger — dieser Worker verarbeitet nur eine bereits bestehende Warteschlange; wer/was Schreibplaene dort ablegt, ist bewusst nicht Teil dieses Auftrags (das waere eine erneute Eignungs-/Einwilligungsentscheidung, die nicht in einen unbeaufsichtigten 24/7-Loop gehoert).",
+    "Docker-Image nicht tatsaechlich gebaut (Docker-Daemon lokal aus) — stattdessen per Datei-Layout-Simulation verifiziert, siehe benchmarks.image_layout_smoke."
+  ],
+  "verifikation": {
+    "tests": "node --test tests/training-loop-worker.test.mjs — 13/13 bestanden",
+    "pflichtchecks": "check:training-loop, check:guidelines, check:architecture — alle gruen",
+    "liveTest": "Nicht durchgefuehrt — kein Deploy (siehe Sperrgrund unten)",
+    "kosten": "Keine neuen Kosten entstanden. Ein tatsaechlicher Deploy wuerde einen vierten Dienst auf dem bestehenden 6-USD/Monat-Zeabur-Server bedeuten (oder einen neuen Server) — das ist in FREE_ONLY_MASTER_POLICY.md ausdruecklich nur mit erneuter schriftlicher Freigabe (Dienst + Betrag) erlaubt."
+  },
+  "rollback": {
+    "git": { "tag": "kein Commit erstellt (nur Freigabe fuer Code/Checks, nicht fuer Commit erteilt)", "commit": null },
+    "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt."
+  },
+  "status": "code-complete-deploy-blocked"
+}

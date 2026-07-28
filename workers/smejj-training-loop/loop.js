@@ -1,0 +1,122 @@
+// smejj.com training-loop worker — scheduling (Single Responsibility: when to run what).
+// `tick()` is cheap and idempotent: call it as often as you like (worker.mjs
+// polls every 30s) and it only actually runs a cycle once its interval has
+// elapsed since the last checkpointed run. This is what makes the process
+// crash-safe — on restart the checkpoint (read from IDrive e2) tells it
+// exactly where it left off, no in-memory-only state to lose.
+import { readCheckpoint, writeCheckpoint } from "./checkpoint.js";
+import { runEvalCycle } from "./evalCycle.js";
+import { reportKey, readReportFromIdrive, writeReportToIdrive } from "./reportStore.js";
+import { runTrainingCycle } from "./trainingCycle.js";
+
+const MAX_CONSECUTIVE_FAILURES_LOGGED = 20;
+
+export function createLoop({ config, env = process.env, repoRoot, log = console.log, deps = {} }) {
+  let status = { state: "starting", lastTickAt: null, lastError: null };
+
+  async function tick(now = () => new Date()) {
+    status = { ...status, lastTickAt: now().toISOString() };
+    const checkpoint = await readCheckpoint({ env, key: config.checkpointKey, request: deps.checkpointRequest });
+    let next = checkpoint;
+
+    if (config.evalCycleEnabled && dueFor(checkpoint.lastEvalRunAt, config.evalIntervalMs, now)) {
+      next = await runEvalTick(next, { config, repoRoot, env, log, deps, now });
+    }
+
+    if (config.trainingCycleEnabled && dueFor(checkpoint.lastTrainingRunAt, config.trainingIntervalMs, now)) {
+      next = await runTrainingTick(next, { config, env, log, deps, now });
+    }
+
+    if (next !== checkpoint) {
+      await writeCheckpoint(next, { env, key: config.checkpointKey, request: deps.checkpointRequest });
+    }
+    status = { state: "running", lastTickAt: status.lastTickAt, lastError: status.lastError };
+    return next;
+  }
+
+  function getStatus() {
+    return { ...status };
+  }
+
+  return Object.freeze({ tick, getStatus });
+}
+
+function dueFor(lastRunAt, intervalMs, now) {
+  if (!lastRunAt) return true;
+  const last = Date.parse(lastRunAt);
+  if (!Number.isFinite(last)) return true;
+  return now().getTime() - last >= intervalMs;
+}
+
+async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now }) {
+  try {
+    const readReport = deps.readReport || readReportFromIdrive;
+    const writeReport = deps.writeReport || writeReportToIdrive;
+    const baseline = checkpoint.lastEvalReportKey
+      ? await readReport(checkpoint.lastEvalReportKey, { env }).catch(() => null)
+      : null;
+
+    const fileName = `modeleval-${config.suiteId}-live-default-${now().toISOString().slice(0, 10)}.json`;
+    const target = reportKey(fileName);
+
+    const result = await runEvalCycle({
+      repoRoot,
+      suitePath: config.suitePath,
+      baseline,
+      reportTarget: target,
+      delayMs: config.evalDelayMs,
+      callModel: deps.callModel,
+      readSuite: deps.readSuite,
+      writeReport: (t, report) => writeReport(t, report, { env }),
+      now
+    });
+    if (!result.ok) {
+      log(`[smejj-training-loop] eval cycle rejected: ${result.reason}`);
+      return bumpFailure(checkpoint, "eval", now);
+    }
+    log(`[smejj-training-loop] eval cycle done: ${result.verdict}${result.regressed ? " (REGRESSION)" : ""}`);
+    return {
+      ...checkpoint,
+      lastEvalRunAt: now().toISOString(),
+      lastEvalVerdict: result.verdict,
+      lastEvalReportKey: target,
+      consecutiveEvalFailures: 0
+    };
+  } catch (error) {
+    log(`[smejj-training-loop] eval cycle error: ${String(error?.message || error).slice(0, 200)}`);
+    return bumpFailure(checkpoint, "eval", now);
+  }
+}
+
+async function runTrainingTick(checkpoint, { config, env, log, deps, now }) {
+  try {
+    const result = await runTrainingCycle({
+      env,
+      queuePrefix: config.queuePrefix,
+      batchSize: config.trainingBatchSize,
+      alreadyProcessed: checkpoint.lastTrainingProcessedKeys,
+      resolvers: deps.resolvers,
+      getPlan: deps.getPlan,
+      listImpl: deps.listImpl,
+      writePlan: deps.writePlan
+    });
+    log(`[smejj-training-loop] training cycle: ${result.succeeded}/${result.attempted} written`);
+    return {
+      ...checkpoint,
+      lastTrainingRunAt: now().toISOString(),
+      // Bounded so the checkpoint object itself never grows without limit.
+      lastTrainingProcessedKeys: result.processedKeys.slice(-2000),
+      consecutiveTrainingFailures: result.ok ? 0 : checkpoint.consecutiveTrainingFailures + 1
+    };
+  } catch (error) {
+    log(`[smejj-training-loop] training cycle error: ${String(error?.message || error).slice(0, 200)}`);
+    return bumpFailure(checkpoint, "training", now);
+  }
+}
+
+function bumpFailure(checkpoint, kind, now) {
+  const field = kind === "eval" ? "consecutiveEvalFailures" : "consecutiveTrainingFailures";
+  const runField = kind === "eval" ? "lastEvalRunAt" : "lastTrainingRunAt";
+  const count = Math.min(MAX_CONSECUTIVE_FAILURES_LOGGED, (checkpoint[field] || 0) + 1);
+  return { ...checkpoint, [field]: count, [runField]: now().toISOString() };
+}
