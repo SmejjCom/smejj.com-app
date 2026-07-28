@@ -6,7 +6,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildGroundedTask, extractReadableText, fetchPageContext, groundTask } from "../public/browser-context.js";
+import { buildGroundedTask, extractReadableText, fetchPageContext, groundTask, modelForTask } from "../public/browser-context.js";
 
 const ROUTES = { api: { browserFetch: "https://control.example/api/browser/fetch" } };
 
@@ -85,4 +85,30 @@ test("Kontextblock weist das Modell auf fehlende Grundlage hin", () => {
   const block = buildGroundedTask("teste", { url: "https://a.example/", title: "", status: 200, ok: true, text: "Inhalt" });
   assert.ok(block.includes("erfinde nichts dazu"));
   assert.ok(block.includes("echte Abfrage, keine Annahme"));
+});
+
+// --- Tiefspur bei Adressen (2026-07-28) --------------------------------------
+// Die Bridge ueberspringt ihre werkzeuglose Schnellspur, wenn das angefragte
+// Modell /glm|kimi|cline/ enthaelt. Genau darueber steuert das Frontend, dass
+// Aufgaben mit Adresse beim werkzeugfaehigen Control Server landen.
+
+test("Aufgabe mit Adresse geht in die Tiefspur", () => {
+  for (const aufgabe of [
+    "geh browser iMild.com teste ob alles fehlerfrei ist?",
+    "Lies https://imild.com/ und nenne den Titel",
+    "pruefe smejj.com/automation"
+  ]) {
+    assert.match(modelForTask(aufgabe, "smejj 1.0"), /glm|kimi|cline/i, `muss Tiefspur sein: ${aufgabe}`);
+  }
+});
+
+test("ohne Adresse bleibt die Wahl des Nutzers unangetastet", () => {
+  assert.equal(modelForTask("erklaer mir Rekursion", "smejj 1.0"), "smejj 1.0");
+  assert.equal(modelForTask("pruefe die Datei app.js", "smejj 1.0"), "smejj 1.0");
+  assert.equal(modelForTask("wie spaet ist es", ""), "");
+});
+
+test("eine bereits tiefspurfaehige Wahl wird nie ueberschrieben", () => {
+  assert.equal(modelForTask("lies imild.com", "Kimi K2.7"), "Kimi K2.7");
+  assert.equal(modelForTask("lies imild.com", "Cline"), "Cline");
 });
