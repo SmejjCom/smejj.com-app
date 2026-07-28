@@ -62,6 +62,10 @@ async function main() {
   // Optional: Owner-Bootstrap des Adminbereichs (Stufe 1, 2026-07-28). Gleiche
   // Regel wie oben — nur was der Aufrufer ausdruecklich mitgibt, wird geschrieben.
   const adminOwnerEingabe = String(process.env.SMEJJ_ADMIN_OWNER_EMAILS || "").trim().toLowerCase();
+  // Optional: Kimi K3 einschalten (2026-07-28). K3 ist kostenpflichtig und
+  // bleibt ohne dieses Flag inaktiv — auch mit gueltigem Key. Gleiche Regel wie
+  // oben: nur was der Aufrufer ausdruecklich mitgibt, wird geschrieben.
+  const kimiK3Eingabe = String(process.env.SMEJJ_KIMI_K3_ENABLED || "").trim().toUpperCase();
   loadSecureLocalEnv();
   const org = process.env.SALAD_ORGANIZATION_NAME;
   const project = process.env.SALAD_PROJECT_NAME;
@@ -106,6 +110,10 @@ async function main() {
     }
     mergedEnv.SMEJJ_ADMIN_OWNER_EMAILS = adminOwnerEingabe;
   }
+  if (kimiK3Eingabe) {
+    if (!/^(YES|NO)$/.test(kimiK3Eingabe)) fail("SMEJJ_KIMI_K3_ENABLED: nur YES oder NO.");
+    mergedEnv.SMEJJ_KIMI_K3_ENABLED = kimiK3Eingabe;
+  }
   await saladApi("PATCH", `/organizations/${org}/projects/${project}/containers/${SALAD_GROUP}`, {
     container: { environment_variables: mergedEnv }
   });
@@ -121,6 +129,7 @@ async function main() {
     ownerAllowlist: applied.SMEJJ_GITHUB_OWNER_ALLOWLIST ?? "(nicht gesetzt)",
     werkzeuge: applied.SMEJJ_AGENT_TOOLS_ENABLED ?? "(nicht gesetzt)",
     adminOwner: applied.SMEJJ_ADMIN_OWNER_EMAILS ?? "(nicht gesetzt)",
+    kimiK3: applied.SMEJJ_KIMI_K3_ENABLED ?? "(nicht gesetzt)",
     hint: "Salad rollt jetzt neu aus (~10 Minuten). Danach /api/health pruefen."
   }, null, 2));
 }
