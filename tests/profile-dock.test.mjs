@@ -105,7 +105,7 @@ test("Service Worker cached die neuen Module", () => {
   assert.ok(sw.includes('"/assets/start-styles.css"'), "Stylesheet-Buendel fehlt im Shell-Precache");
     // v153 -> v154 am 2026-07-28: view-title.js neu im Precache (Seitentitel je
   // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v155"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v156"/);
 });
 
 
