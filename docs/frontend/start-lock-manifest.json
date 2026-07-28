@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T07:11:34.350Z",
-  "confirmation": "Freigabe Wof Kadavanich 2026-07-28 (Master-Prompt, Gruene Liste): Offline-Fix local-workspace-surface.js, public/sw.js v163",
+  "frozenAt": "2026-07-28T07:21:38.319Z",
+  "confirmation": "Freigabe Wof Kadavanich 2026-07-28 (Master-Prompt Gruene Liste): Barrierefreiheits-Fix panel-layout.js, public/sw.js v164",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "115170eb6d49b9f64ecaf8ae5427f99a87804f54066647a9fd172a53e95cf35f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "52e7f8ae78fa96806b7e59b14f7fdef3550614723a7e905e4cff6d4b7ec24ef3",
+    "public/sw.js": "b04bf169bd8e8ea603d02f14351d69c63d3cd0398c01641d182383c0ba4b8ecb",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

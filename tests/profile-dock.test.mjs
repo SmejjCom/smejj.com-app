@@ -111,7 +111,7 @@ test("Service Worker cached die neuen Module", () => {
   // werden — sonst waeren die Rechtstexte offline nur auf Deutsch erreichbar.
   assert.ok(sw.includes('"/en/legal-notice.html"'), "englisches Impressum fehlt im Shell-Precache");
   assert.ok(sw.includes('"/en/privacy.html"'), "englische Datenschutzfassung fehlt im Shell-Precache");
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v163"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v164"/);
 });
 
 
