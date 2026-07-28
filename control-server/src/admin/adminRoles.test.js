@@ -40,7 +40,30 @@ test("dual und consent gelten nicht als sofort erlaubt", () => {
   assert.equal(isAllowed("admin", "users.delete"), false);
   assert.equal(can("support", "impersonation.start"), GRANT.consent);
   assert.equal(isAllowed("support", "impersonation.start"), false);
-  assert.equal(isAllowed("owner", "users.delete"), true);
+});
+
+test("NIEMAND loescht ein Konto allein — auch der Owner nicht (Stufe 3)", () => {
+  for (const rolle of ADMIN_ROLES) {
+    assert.equal(isAllowed(rolle, "users.delete"), false, `${rolle} koennte allein loeschen`);
+  }
+  assert.equal(can("owner", "users.delete"), GRANT.dual);
+  assert.equal(can("admin", "users.delete"), GRANT.dual);
+});
+
+test("NIEMAND vergibt Rollen allein — Rechteausweitung braucht vier Augen", () => {
+  for (const rolle of ADMIN_ROLES) {
+    assert.equal(isAllowed(rolle, "users.role.grant"), false, `${rolle} koennte sich selbst alles geben`);
+  }
+  assert.equal(can("owner", "users.role.grant"), GRANT.dual);
+});
+
+test("umkehrbare Supportaufgaben brauchen keine zweite Person", () => {
+  for (const recht of ["users.sessions.revoke", "users.verify", "users.unlock"]) {
+    assert.equal(isAllowed("support", recht), true, `Support braucht ${recht} im Alltag`);
+    assert.equal(isAllowed("owner", recht), true);
+    assert.equal(can("finance", recht), GRANT.deny, "Finance hat im Konto nichts zu suchen");
+    assert.equal(can("readonly", recht), GRANT.deny);
+  }
 });
 
 test("readonly darf ausschliesslich Nutzer sehen", () => {

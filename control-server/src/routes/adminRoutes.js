@@ -69,8 +69,10 @@ function respondMe(res, actor) {
     ok: true,
     actor: { email: actor.email, name: actor.name, role: actor.role, roleSource: actor.roleSource },
     permissions: permissionsFor(actor.role),
-    stage: 2,
-    writable: false // auch Stufe 2 veraendert keine Konten
+    stage: 3,
+    // Stufe 3 kann Konten veraendern — aber nur mit Grund, Nachweis und,
+    // wo es unumkehrbar wird, mit der Freigabe einer zweiten Person.
+    writable: true
   });
 }
 

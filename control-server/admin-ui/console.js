@@ -12,6 +12,8 @@
     { id: "A", pfad: "uebersicht", gruppe: "Überblick", name: "Übersicht" },
     { id: "B", pfad: "nutzer", gruppe: "Menschen", name: "Nutzerverwaltung" },
     { id: "C", pfad: "rollen", gruppe: "Menschen", name: "Rollen & Rechte" },
+    { id: "D", pfad: "support", gruppe: "Menschen", name: "Support & Impersonation" },
+    { id: "Y", pfad: "freigaben", gruppe: "Verwaltung", name: "Freigaben" },
     { id: "O", pfad: "audit", gruppe: "Recht", name: "Audit-Log" },
     { id: "N", pfad: "compliance", gruppe: "Recht", name: "EU AI Act" }
   ];
@@ -56,12 +58,13 @@
 
   async function zeigeUebersicht() {
     laedt("Betriebszustand wird geholt …");
-    const [nutzer, audit, compliance] = await Promise.all([
-      A.nutzer({ limit: 1 }), A.audit({ limit: 50 }), A.compliance()
+    const [nutzer, audit, compliance, freigaben] = await Promise.all([
+      A.nutzer({ limit: 1 }), A.audit({ limit: 50 }), A.compliance(), A.freigaben()
     ]);
     if (!nutzer.ok && nutzer.status !== 409) return zeigeFehler(nutzer.fehler);
+    const offen = ((freigaben.data || {}).approvals || []).filter(function (a) { return a.status === "pending"; }).length;
     seite.innerHTML = V.uebersicht({
-      nutzer: nutzer.data, audit: audit.data, compliance: compliance.data
+      nutzer: nutzer.data, audit: audit.data, compliance: compliance.data, freigaben: offen
     });
     zeigeStand(nutzer.data && nutzer.data.index, audit.data && audit.data.chain);
   }
@@ -102,6 +105,7 @@
     }
     seite.innerHTML = V.akte({ user: antwort.data.user, grund: String(grund).trim() });
     bindeZurueck();
+    bindeAkteAktionen(id);
   }
 
   async function zeigeAudit() {
@@ -117,6 +121,28 @@
     seite.innerHTML = V.audit(daten);
     zeigeStand(null, daten.chain);
     bindeZeitraum();
+  }
+
+  async function zeigeFreigaben() {
+    laedt("Anträge werden geholt …");
+    const antwort = await A.freigaben();
+    if (!antwort.ok) return zeigeFehler(antwort.fehler);
+    const daten = antwort.data;
+    daten.ich = (zustand.akteur || {}).email || "";
+    seite.innerHTML = V.freigaben(daten);
+    bindeFreigaben();
+  }
+
+  async function zeigeSupport() {
+    laedt("Support-Vorgänge werden geholt …");
+    const [alle, eigene] = await Promise.all([A.impersonationListe(), A.eigeneVorgaenge()]);
+    if (!alle.ok && !eigene.ok) return zeigeFehler(alle.fehler || eigene.fehler);
+    seite.innerHTML = V.support({
+      impersonations: (alle.data || {}).impersonations || [],
+      total: (alle.data || {}).total || 0,
+      eigene: (eigene.data || {}).impersonations || []
+    });
+    bindeSupport();
   }
 
   async function zeigeRollen() {
@@ -169,6 +195,98 @@
     });
   }
 
+  const AKTIONSTEXT = {
+    block: ["Sperren", "Das Konto wird gesperrt und alle Sitzungen werden beendet.", "Grund für die Sperre:"],
+    unblock: ["Entsperren", "Das Konto wird wieder freigegeben.", "Grund für die Entsperrung:"],
+    verify: ["E-Mail bestätigen", "Die Adresse gilt danach als bestätigt.", "Grund (z. B. Ticketnummer):"],
+    unlock: ["Login-Sperre aufheben", "Die Fehlversuche werden zurückgesetzt. Das Passwort bleibt unverändert.", "Grund:"],
+    "sessions.revoke": ["Sitzungen widerrufen", "Alle angemeldeten Geräte werden abgemeldet.", "Grund:"],
+    "role.grant": ["Rolle vergeben", "Rechteausweitung — braucht die Freigabe einer zweiten Person.", "Grund:"],
+    delete: ["Konto löschen", "UNUMKEHRBAR. Personenbezogene Daten werden entfernt. Braucht die Freigabe einer zweiten Person.", "Grund (z. B. DSGVO Art. 17, Ticket):"]
+  };
+
+  function bindeAkteAktionen(kennung) {
+    const leiste = document.getElementById("akteAktionen");
+    if (!leiste) return;
+    leiste.querySelectorAll("[data-aktion]").forEach(function (knopf) {
+      knopf.addEventListener("click", async function () {
+        const name = knopf.getAttribute("data-aktion");
+        if (name === "impersonation") return supportAnfragen(kennung);
+        const text = AKTIONSTEXT[name] || [name, "", "Grund:"];
+        let rolle = null;
+        if (name === "role.grant") {
+          rolle = window.prompt("Welche Rolle?\n\nuser, readonly, auditor, finance, support, admin, owner", "support");
+          if (!rolle) return;
+        }
+        const grund = window.prompt(text[0] + "\n\n" + text[1] + "\n\n" + text[2], "");
+        if (grund === null || String(grund).trim().length < 3) return;
+        knopf.textContent = "läuft …";
+        knopf.setAttribute("disabled", "disabled");
+        const antwort = await A.aktion(kennung, name, { reason: String(grund).trim(), role: rolle });
+        if (!antwort.ok) { meldung(antwort.fehler, true); return; }
+        if (antwort.data.vierAugen) {
+          meldung("Beantragt. Eine zweite Person muss freigeben — du selbst darfst das nicht. "
+            + "Antrag: " + antwort.data.approval.id, false);
+          return;
+        }
+        location.hash = "#nutzer";
+      });
+    });
+  }
+
+  async function supportAnfragen(kennung) {
+    const grund = window.prompt(
+      "Support-Zugriff anfragen\n\nDie betroffene Person muss in ihrer eigenen Sitzung einwilligen.\n\nGrund:", "");
+    if (grund === null || String(grund).trim().length < 3) return;
+    const antwort = await A.impersonationBeantragen({ subject: kennung, reason: String(grund).trim() });
+    if (!antwort.ok) { meldung(antwort.fehler, true); return; }
+    meldung("Angefragt. Der Zugriff startet erst nach der Einwilligung der betroffenen Person.", false);
+  }
+
+  function bindeFreigaben() {
+    document.querySelectorAll("[data-frei]").forEach(function (el) {
+      el.addEventListener("click", async function () {
+        if (!window.confirm("Diesen Antrag freigeben? Die Aktion wird danach sofort ausgeführt.")) return;
+        const antwort = await A.freigeben(el.getAttribute("data-frei"));
+        if (!antwort.ok) { meldung(antwort.fehler, true); return; }
+        zeigeFreigaben();
+      });
+    });
+    document.querySelectorAll("[data-ab]").forEach(function (el) {
+      el.addEventListener("click", async function () {
+        const grund = window.prompt("Warum wird der Antrag abgelehnt?", "");
+        if (grund === null || String(grund).trim().length < 3) return;
+        const antwort = await A.ablehnen(el.getAttribute("data-ab"), String(grund).trim());
+        if (!antwort.ok) { meldung(antwort.fehler, true); return; }
+        zeigeFreigaben();
+      });
+    });
+  }
+
+  function bindeSupport() {
+    const paare = [["data-ja", A.einwilligen], ["data-nein", A.einwilligungAblehnen],
+      ["data-selbstEnde", A.impersonationBeenden], ["data-ende", A.impersonationBeenden]];
+    paare.forEach(function (paar) {
+      document.querySelectorAll("[" + paar[0] + "]").forEach(function (el) {
+        el.addEventListener("click", async function () {
+          const antwort = await paar[1](el.getAttribute(paar[0]));
+          if (!antwort.ok) { meldung(antwort.fehler, true); return; }
+          zeigeSupport();
+        });
+      });
+    });
+  }
+
+  function meldung(text, istFehler) {
+    const kasten = document.createElement("div");
+    kasten.className = "note glass" + (istFehler ? " fehler" : "");
+    kasten.innerHTML = '<div class="nx">' + (istFehler ? "▲" : "✓") + '</div><div>'
+      + '<div class="nt">' + (istFehler ? "Das hat nicht geklappt" : "Erledigt") + '</div>'
+      + '<div class="ns">' + A.escapeHtml(text) + '</div></div>';
+    seite.insertBefore(kasten, seite.firstChild);
+    window.scrollTo(0, 0);
+  }
+
   function bindeZurueck() {
     const knopf = document.getElementById("zurueckKnopf");
     if (knopf) knopf.addEventListener("click", function () { location.hash = "#nutzer"; });
@@ -202,6 +320,8 @@
     if (treffer.pfad === "nutzer") return zeigeNutzer();
     if (treffer.pfad === "rollen") return zeigeRollen();
     if (treffer.pfad === "audit") return zeigeAudit();
+    if (treffer.pfad === "freigaben") return zeigeFreigaben();
+    if (treffer.pfad === "support") return zeigeSupport();
     if (treffer.pfad === "compliance") return zeigeCompliance();
     return zeigeUebersicht();
   }

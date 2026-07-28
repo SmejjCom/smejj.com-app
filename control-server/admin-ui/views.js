@@ -75,8 +75,11 @@
       '<tr><td><b>EU AI Act</b></td><td>' + (d.compliance && d.compliance.hochrisiko === false
         ? pille("kein Hochrisiko", "ok") : pille("unbekannt", "warn"))
         + '</td><td>' + e(d.compliance ? "Durchsetzung ab " + (d.compliance.rechtsrahmen || {}).durchsetzungAb : "—") + '</td></tr>',
-      '<tr><td><b>Schreibende Aktionen</b></td><td>' + pille("gesperrt", "acc")
-        + '</td><td>Stufe 2 ist bewusst rein lesend</td></tr>'
+      '<tr><td><b>Schreibende Aktionen</b></td><td>' + pille("mit Nachweis", "ok")
+        + '</td><td>Löschen und Rollenvergabe nur mit vier Augen</td></tr>',
+      '<tr><td><b>Offene Freigaben</b></td><td>' + ((d.freigaben || 0) > 0
+        ? pille(String(d.freigaben) + " warten", "warn") : pille("keine", "ok"))
+        + '</td><td>Anträge verfallen nach 24 Stunden</td></tr>'
     ]);
 
     return kopf("A", "Cockpit", "Übersicht",
@@ -276,7 +279,106 @@
       + '</div>';
   }
 
+  // ---- Y · Freigaben (Vier-Augen) ---------------------------------------------
+
+  function freigaben(d) {
+    const eintraege = d.approvals || [];
+    const zeilen = eintraege.map((a) => {
+      const offen = a.status === "pending";
+      const eigener = a.requestedBy === (d.ich || "");
+      return '<tr><td><span class="mono">' + e(A.zeit(a.requestedAt)) + '</span></td>'
+        + '<td><span class="mono">' + e(a.action) + '</span></td>'
+        + '<td><span class="mono">' + e(a.target) + '</span></td>'
+        + '<td>' + e(a.reason) + '</td>'
+        + '<td><b>' + e(a.requestedBy) + '</b></td>'
+        + '<td>' + zustandsPille(a.status) + '</td>'
+        + '<td>' + (offen
+          ? (eigener
+            ? '<span class="pill warn">dein Antrag — du darfst nicht freigeben</span>'
+            : '<span class="act" data-frei="' + e(a.id) + '">Freigeben</span>'
+              + '<span class="act dg" data-ab="' + e(a.id) + '">Ablehnen</span>')
+          : e(a.decidedBy ? "durch " + a.decidedBy : "—"))
+        + '</td></tr>';
+    });
+
+    const hinweis = '<div class="note glass"><div class="nx">⇄</div><div>'
+      + '<div class="nt">Zwei Augen reichen hier nicht</div>'
+      + '<div class="ns">Löschen und Rollenvergabe brauchen die Freigabe einer zweiten Person. '
+      + 'Wer beantragt, kann nicht selbst freigeben — auch der Owner nicht. Ein Antrag verfällt nach 24 Stunden.'
+      + '</div></div></div>';
+
+    return kopf("Y", "Freigaben", "Vier-Augen-Prinzip",
+      "Anträge, die eine zweite Person bestätigen muss. Bis dahin ist nichts passiert.")
+      + '<div class="stack">' + hinweis
+      + panel("Anträge", (d.total || 0) + " insgesamt",
+        tabelle(["Beantragt", "Aktion", "Ziel", "Grund", "Von", "Stand", ""], zeilen)) + '</div>';
+  }
+
+  function zustandsPille(status) {
+    if (status === "pending") return pille("offen", "warn");
+    if (status === "approved") return pille("freigegeben", "ok");
+    if (status === "executed") return pille("ausgeführt", "ok");
+    if (status === "rejected") return pille("abgelehnt", "bad");
+    if (status === "expired") return pille("abgelaufen", "dim");
+    return pille(status, "dim");
+  }
+
+  // ---- D · Support & Impersonation ---------------------------------------------
+
+  function support(d) {
+    const vorgaenge = d.impersonations || [];
+    const zeilen = vorgaenge.map((v) =>
+      '<tr><td><span class="mono">' + e(A.zeit(v.requestedAt)) + '</span></td>'
+      + '<td><b>' + e(v.subjectEmail) + '</b></td>'
+      + '<td>' + e(v.operatorEmail) + '</td>'
+      + '<td>' + (v.scopes || []).map((s) => pille(s, "acc")).join(" ") + '</td>'
+      + '<td>' + e(v.reason) + '</td>'
+      + '<td>' + impStatusPille(v) + '</td>'
+      + '<td>' + (["active", "awaiting_consent"].includes(v.status)
+        ? '<span class="act dg" data-ende="' + e(v.id) + '">Beenden</span>' : "—") + '</td></tr>');
+
+    const eigene = (d.eigene || []).map((v) =>
+      '<tr><td><b>' + e(v.wer) + '</b><br><span class="s">' + e(v.rolle) + '</span></td>'
+      + '<td>' + e(v.grund) + '</td>'
+      + '<td>' + (v.umfang || []).map((s) => pille(s, "acc")).join(" ") + '</td>'
+      + '<td>' + impStatusPille(v) + '</td>'
+      + '<td>' + (v.status === "awaiting_consent"
+        ? '<span class="act" data-ja="' + e(v.id) + '">Einwilligen</span>'
+          + '<span class="act dg" data-nein="' + e(v.id) + '">Ablehnen</span>'
+        : v.status === "active"
+          ? '<span class="act dg" data-selbstEnde="' + e(v.id) + '">Beenden</span>' : "—")
+      + '</td></tr>');
+
+    const regeln = '<div class="note glass"><div class="nx">◉</div><div>'
+      + '<div class="nt">Einwilligung statt Vollmacht</div>'
+      + '<div class="ns">Ein Support-Zugriff startet erst, wenn die betroffene Person in ihrer eigenen '
+      + 'Sitzung zustimmt. Höchstens 30 Minuten, nur der beantragte Umfang, jederzeit von beiden Seiten '
+      + 'beendbar. Chat-Inhalte sind nie im Standardumfang. Ohne Einwilligung geht es nur per Break-Glass — '
+      + 'mit ausführlicher Begründung, nur 10 Minuten und als Alarm markiert.</div></div></div>';
+
+    return kopf("D", "Support", "Support & Impersonation",
+      "Echte Hilfe ohne Blankoscheck. Jeder Zugriff ist beantragt, begründet, befristet und sichtbar.")
+      + '<div class="stack">' + regeln
+      + panel("Deine eigenen Vorgänge", "wer in DEIN Konto geschaut hat",
+        tabelle(["Wer", "Grund", "Umfang", "Stand", ""], eigene))
+      + panel("Alle Vorgänge", (d.total || 0) + " insgesamt",
+        tabelle(["Beantragt", "Betroffen", "Support", "Umfang", "Grund", "Stand", ""], zeilen))
+      + '</div>';
+  }
+
+  function impStatusPille(v) {
+    if (v.breakGlass && v.status === "active") return pille("BREAK-GLASS aktiv", "bad");
+    if (v.status === "active") return pille("aktiv", "ok");
+    if (v.status === "awaiting_consent") return pille("wartet auf Einwilligung", "warn");
+    if (v.status === "denied") return pille("abgelehnt", "bad");
+    if (v.status === "ended") return pille("beendet", "dim");
+    if (v.status === "expired") return pille("verfallen", "dim");
+    return pille(v.status, "dim");
+  }
+
   window.adminViews = {
+    freigaben: freigaben,
+    support: support,
     uebersicht: uebersicht,
     nutzer: nutzer,
     akte: akte,

@@ -39,6 +39,7 @@ import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability
 import { streamWithTools, withAgentTools } from "../control-server/src/llm/streamFilter.js";
 import { localAssistantStream } from "../control-server/src/llm/localAssistant.js";
 import { chatThinkingMode } from "./ai/chatThinkingPolicy.js";
+import { chatReasoningEffort } from "./ai/reasoningEffortPolicy.js";
 import { allowedOriginsFromEnv, corsHeadersFor, handlePreflight } from "../control-server/src/http/cors.js";
 import { installCrashGuard } from "../control-server/src/http/crashGuard.js";
 import { createStaticHandlers } from "./http/staticServing.js";
@@ -56,9 +57,7 @@ import { mailerConfig } from "../control-server/src/auth/mailer.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
-import { handleAdminRoute } from "../control-server/src/routes/adminRoutes.js";
-import { handleComplianceRoute } from "../control-server/src/routes/complianceRoutes.js";
-import { handleAdminUiRoute } from "../control-server/src/routes/adminUiRoutes.js";
+import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -127,11 +126,6 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
     if (readMethod && url.pathname === "/impressum") return serveFile(res, "impressum.html");
     if (readMethod && url.pathname === "/datenschutz") return serveFile(res, "datenschutz.html");
-    // EU-KI-Verordnung Art. 50: der Transparenzbericht muss OHNE Anmeldung
-    // erreichbar sein — eine Informationspflicht hinter einem Login waere keine.
-    if (url.pathname === "/api/compliance" || url.pathname.startsWith("/api/compliance/")) {
-      if (handleComplianceRoute(req, url, res)) return;
-    }
     if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res);
     if (readMethod && url.pathname === ROUTES.api.capabilities) return handleCapabilities(res);
     if (readMethod && url.pathname === ROUTES.api.authConfig) return handleAuthConfig(res);
@@ -173,25 +167,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname.startsWith("/api/providers/")) return await handleProviderRoute(req, url, res);
     if (url.pathname === "/api/keys" || url.pathname.startsWith("/api/keys/")) return await handleApiKeysRoute(req, url, res);
+    // Adminbereich, Transparenzbericht und Einwilligung — Reihenfolge und
+    // Zustaendigkeit stehen in adminSurfaceRoutes.js, nicht hier.
+    if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid: emailSessionStillValid })) return;
     // Adminbereich Stufe 1 (nur lesend). Ohne Adminrolle antwortet die Route 403 —
     // die Rolle kommt frisch aus dem Store, nie aus dem Sitzungs-Token.
-    if (url.pathname === "/api/admin" || url.pathname.startsWith("/api/admin/")) {
-      if (await handleAdminRoute(req, url, res)) return;
-    }
-    // Admin-Oberflaeche (Stufe 2). Bewusst hier und nicht unter public/: kein
-    // Service-Worker, kein Cache-Bump, kein Start-Lock-Risiko.
-    //
-    // Die Sitzung wird hier aufgeloest statt im generischen Filter, damit ein
-    // Mensch am Browser eine lesbare Seite bekommt und keine JSON-Fehlerzeile.
-    // Der Widerruf wird trotzdem geprueft — eine beendete Sitzung oeffnet die
-    // Konsole nicht.
-    if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
-      const konsolenNutzer = readSession(req);
-      if (konsolenNutzer && await emailSessionStillValid(konsolenNutzer, process.env)) {
-        req.authUser = konsolenNutzer;
-      }
-      if (await handleAdminUiRoute(req, url, res)) return;
-    }
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.browserFetch) return await handleBrowserFetch(url, res, { req });
@@ -271,9 +251,13 @@ async function handleChat(req, res) {
   // Abschnitte verwirft der Stream-Filter ohnehin. Gemessen 2026-07-28: erstes
   // sichtbares Zeichen 12,1 s -> 7,3 s. Coding behaelt das Qualitaets-Reasoning.
   // Modellwahl und Routing-Profil bleiben unveraendert.
+  // Gleiche Regel fuer Kimi K3: dort laesst sich das Denken nicht abschalten,
+  // nur seine Tiefe steuern (reasoning_effort). Gemessen 2026-07-28: erstes
+  // sichtbares Zeichen 12,0 s bei der Voreinstellung "max".
   return streamLLM(res, messages, {
     requestedModel: body.model,
-    thinking: chatThinkingMode(messages, classifyProfile)
+    thinking: chatThinkingMode(messages, classifyProfile),
+    reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env)
   });
 }
 
@@ -664,7 +648,7 @@ async function handleStorageStatus(res) {
   });
 }
 
-async function streamLLM(res, messages, { profile = "default", requestedModel = "", thinking, maxTokens } = {}) {
+async function streamLLM(res, messages, { profile = "default", requestedModel = "", thinking, reasoningEffort, maxTokens } = {}) {
   if (process.env.SMEJJ_SERVER_AI_ENABLED !== "true") {
     return localAssistantStream(res, messages);
   }
@@ -682,7 +666,8 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
   const modelOptions = withAgentTools({
     temperature: 1.0,
     maxTokens: maxTokens ?? boundedInteger(process.env.SMEJJ_PUBLIC_MODEL_MAX_TOKENS, 512, 8_192, 4_096),
-    ...(thinking === undefined ? {} : { thinking })
+    ...(thinking === undefined ? {} : { thinking }),
+    ...(reasoningEffort === undefined ? {} : { reasoningEffort })
   });
   const result = await executeWithFallback(chain, messages, modelOptions);
   if (!result.ok || !result.response.body) return json(res, 502, { error: "All model backends failed.", attempts: result.attempts });

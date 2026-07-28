@@ -36,6 +36,10 @@ export function requiresAuthenticatedControlAccess(req, url) {
     && pathname.endsWith("/status");
   if (workerCallback) return false;
   if (pathname === "/api/admin" || pathname.startsWith("/api/admin/")) return true;
+  // Einwilligung zur Impersonation: die betroffene Person handelt in ihrem
+  // eigenen Konto. Angemeldet reicht — eine Adminrolle waere hier falsch, weil
+  // sie genau denjenigen aussperren wuerde, dessen Zustimmung gebraucht wird.
+  if (pathname === "/api/account" || pathname.startsWith("/api/account/")) return true;
   // Die Admin-Oberflaeche prueft ihre Sitzung SELBST (adminUiRoutes.js) und
   // antwortet mit einer lesbaren Seite statt mit JSON. Waere sie hier gelistet,
   // bekaeme ein Mensch am Browser `{"error":"authentication_required"}` zu

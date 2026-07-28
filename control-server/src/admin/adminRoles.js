@@ -21,7 +21,17 @@ export const GRANT = Object.freeze({ allow: "allow", dual: "dual", consent: "con
 const MATRIX = Object.freeze({
   "users.read":        { owner: "allow", admin: "allow", support: "allow",   finance: "allow", auditor: "allow", readonly: "allow" },
   "users.block":       { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
-  "users.delete":      { owner: "allow", admin: "dual",  support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
+  // Loeschen ist unumkehrbar — deshalb Vier-Augen fuer JEDE Rolle, auch fuer den
+  // Owner. Eine einzelne Person kann kein Konto vernichten.
+  "users.delete":      { owner: "dual",  admin: "dual",  support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
+  // Rollenvergabe ist Rechteausweitung: wer sie allein kann, kann sich selbst
+  // alles geben. Auch hier Vier-Augen fuer jede Rolle.
+  "users.role.grant":  { owner: "dual",  admin: "dual",  support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
+  // Umkehrbar und im Supportalltag noetig: Sitzungen widerrufen, E-Mail
+  // bestaetigen, Login-Sperre aufheben. Support darf das, ohne zweite Person.
+  "users.sessions.revoke": { owner: "allow", admin: "allow", support: "allow", finance: "deny", auditor: "deny", readonly: "deny" },
+  "users.verify":      { owner: "allow", admin: "allow", support: "allow",   finance: "deny",  auditor: "deny",  readonly: "deny" },
+  "users.unlock":      { owner: "allow", admin: "allow", support: "allow",   finance: "deny",  auditor: "deny",  readonly: "deny" },
   "users.content.read":{ owner: "dual",  admin: "deny",  support: "consent", finance: "deny",  auditor: "deny",  readonly: "deny" },
   "impersonation.start":{ owner: "allow",admin: "allow", support: "consent", finance: "deny",  auditor: "deny",  readonly: "deny" },
   "billing.write":     { owner: "allow", admin: "deny",  support: "deny",    finance: "allow", auditor: "deny",  readonly: "deny" },
