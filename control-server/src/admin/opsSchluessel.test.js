@@ -22,7 +22,11 @@ const ENV = Object.freeze({
 
 const INDEX = async () => ({ ok: true, entries: [{ userId: "u_maria", email: "maria@example.de" }] });
 
-const GEHEIMER_WERT = "sk-streng-geheim-4711-niemals-anzeigen";
+// Bewusst NICHT im Format eines echten Anbieter-Schluessels: check:security
+// sucht im Repository nach schluesselartigen Zeichenfolgen und wuerde einen
+// "sk-..."-Testwert melden. Der Waechter hat recht — also weicht der Test aus,
+// nicht der Waechter. Als Kanarienvogel taugt jede eindeutige Zeichenfolge.
+const GEHEIMER_WERT = "KANARIENVOGEL-4711-DARF-NIE-ERSCHEINEN";
 
 function huelleFuer(konto, anbieter, felder = {}) {
   const config = providerCredentialEncryptionConfig(ENV);
