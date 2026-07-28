@@ -64,6 +64,30 @@ test("Control-Server-Aufrufe stehen nicht mehr im Ladepfad", () => {
   }
 });
 
+test("auch die letzten drei Startaufrufe stehen nicht im Ladepfad", () => {
+  // Zweite Welle (2026-07-27): /api/auth/me, /api/keys und die beiden
+  // Cline-Aufrufe. Alle drei Quellen muessen ueber afterFirstPaint laufen.
+  const faelle = [
+    ["public/account-privacy.js", /afterFirstPaint\(\[\(\) => hydrateAuthSession\(view\)\]\)/, /\n {2}hydrateAuthSession\(view\);/],
+    ["public/api-keys-surface.js", /afterFirstPaint\(\[\(\) => refresh\(root\)/, /\n {2}refresh\(root\)\.catch/],
+    ["public/provider-settings.js", /afterFirstPaint\(\[\(\) => load\(root\)/, /\n {2}load\(root\)\.catch/]
+  ];
+  for (const [datei, verschoben, direkt] of faelle) {
+    const quelle = fs.readFileSync(datei, "utf8");
+    assert.match(quelle, /import \{ afterFirstPaint \} from "\.\/deferred-start\.js"/, `${datei} bindet das Modul nicht ein`);
+    assert.match(quelle, verschoben, `${datei} verschiebt den Startaufruf nicht`);
+    assert.doesNotMatch(quelle, direkt, `${datei} ruft beim Start noch direkt auf`);
+  }
+});
+
+test("cline-model-menu.js laedt seinen Katalog weiterhin nur auf Klick", () => {
+  // Non-Regression: das Untermenue war nie im Ladepfad und darf es nicht werden.
+  const menu = fs.readFileSync("public/cline-model-menu.js", "utf8");
+  const openIndex = menu.indexOf("function openSubmenu");
+  assert.ok(openIndex > 0);
+  assert.ok(menu.indexOf("loadCatalog()") > openIndex, "loadCatalog gehoert in openSubmenu, nicht in init");
+});
+
 test("Startseite laedt ein Buendel statt acht Stylesheets", () => {
   const links = html.match(/<link rel="stylesheet"[^>]*>/g) || [];
   assert.equal(links.length, 1, `genau ein Stylesheet erwartet, gefunden: ${links.length}`);
@@ -91,5 +115,5 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   for (const name of SOURCES) {
     assert.ok(!sw.includes(`"/assets/${name}"`), `${name} liegt unnoetig im Precache`);
   }
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v150"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v151"/);
 });

@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T00:26:50.551Z",
-  "confirmation": "FREIGABE — Startseite Ladezeit (Wof Kadavanich, 2026-07-27): Stylesheets buendeln (public/index.html), Startaufrufe an den Control Server hinter den ersten Bildaufbau verschieben (public/app.js, public/premium-surfaces.js), Precache und Cache-Version nachziehen (public/sw.js). Danach Start-Lock neu einfrieren.",
+  "frozenAt": "2026-07-28T00:49:33.747Z",
+  "confirmation": "FREIGABE — Startaufrufe Rest (Wof Kadavanich, 2026-07-27): die vier verbliebenen Control-Server-Startaufrufe hinter den ersten Bildaufbau verschieben; Start-Lock fuer public/sw.js (Cache-Version nachziehen) ausschliesslich zu diesem Zweck, danach neu einfrieren. public/cline-model-menu.js wurde NICHT geaendert — die Cline-Aufrufe stammen aus public/provider-settings.js.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "115170eb6d49b9f64ecaf8ae5427f99a87804f54066647a9fd172a53e95cf35f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e1f5636ddf4b52db12821ba82cf5355e3409d51d144cd3d15217112e4aa4bf33",
+    "public/sw.js": "ab017f4f8aed922db03be304dfd5024d7005b98b4465df4ae42a1b12d8eae9bf",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
