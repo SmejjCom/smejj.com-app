@@ -3,7 +3,9 @@
 **Freigabe:** "smejj.com 100 % fertig" (Wof Kadavanich, 2026-07-28) und der
 Abschlussauftrag "Mach komplett fertig, lass nicht offen."
 
-**Arbeits-Commit:** `69c6df6` in `SmejjCom/smejj.com-app`
+**Arbeits-Commit:** `8158ac0` in `SmejjCom/smejj.com-app`
+(die Nachricht des Live-Commits nennt noch `69c6df6` — den Stand vor einer
+Korrektur der Commit-Nachricht; inhaltlich ist es derselbe Commit)
 **Live-Commit:** `eaa64ed` in `SmejjCom/smejj-app-frontend` (Vorgaenger `56c63be`)
 **Live-Rueckfall:** `SmejjCom/smejj-app-frontend` auf `56c63be`
 **Start-Lock-Backup:** `backups/start-design-lock/2026-07-28T04-52-21-127Z/`

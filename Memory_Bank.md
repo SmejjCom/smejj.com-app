@@ -8,7 +8,7 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ### [2026-07-28] ENGLISCHE RECHTSTEXTE, ECHTE UMLAUTE, BREITEN NACHGEMESSEN (job_rechtstexte_en_20260728)
 
 Freigabe "smejj.com 100 % fertig" (Wof Kadavanich, 2026-07-28), Abschluss.
-Arbeits-Commit `69c6df6`, Live-Commit `eaa64ed`, Rueckfall `56c63be`.
+Arbeits-Commit `8158ac0`, Live-Commit `eaa64ed`, Rueckfall `56c63be`.
 
 **Entscheidung:** englische Hoeflichkeitsfassungen der Rechtstexte
 (`public/en/legal-notice.html`, `public/en/privacy.html`) mit ausdruecklichem

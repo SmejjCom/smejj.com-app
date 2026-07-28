@@ -25,7 +25,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260726-v102-piper-riff-probe";
+const BRIDGE_VERSION = "20260728-v103-adresse-nie-schnellspur";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -422,7 +422,22 @@ function isCodingTask(task) {
 export function shouldSearchWeb(task) {
   const text = String(task || "").toLowerCase();
   if (/\b(bist du online|online\?|online$|funktionierst du|bist du da)\b/i.test(text)) return false;
+  // Nennt die Aufgabe eine Web-Adresse, gehoert sie NIE in die Schnellspur:
+  // die kennt keine Werkzeuge und wuerde den Seiteninhalt raten statt lesen.
+  // Befund 2026-07-28: "Lies https://imild.com/ und nenne den Titel" lieferte
+  // "I-MILD.com" statt "iMild.com — Drei Produkte. Eine Vision.".
+  if (mentionsWebAddress(text)) return true;
   return /\b(heute|aktuell|jetzt|news|nachricht|wetter|preis|kurs|stand|quelle|internet|web|2026)\b/i.test(text);
+}
+
+// Adresse mit oder ohne Schema. Fail-closed ueber eine Endungsliste, damit
+// Dateinamen ("app.js") und Satzreste ("morgen.Danach") nicht faelschlich
+// als Web-Ziel gelten — dieselbe Regel wie im Frontend (autonomous-intent.js).
+const WEB_TLDS = "com|net|org|info|io|co|ai|dev|app|de|at|ch|eu|uk|fr|it|es|nl|pl|se|no|dk|fi|cz|ru|jp|cn|in|br|ca|us|me|tv|cloud|tech|online|site|shop|xyz";
+export function mentionsWebAddress(task) {
+  const text = String(task || "");
+  if (/\bhttps?:\/\/[^\s<>'"`]+/i.test(text)) return true;
+  return new RegExp(`\\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+(?:${WEB_TLDS})\\b`, "i").test(text);
 }
 
 // --- Wetter-Fast-Path (Open-Meteo, frei, ohne Key) ---------------------------
