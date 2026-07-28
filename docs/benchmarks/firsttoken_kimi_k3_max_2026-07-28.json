@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-first-token-probe",
+  "endpointName": "bridge",
+  "bodyMode": "chat",
+  "model": "kimi-k3",
+  "prompt": "Schreibe eine JavaScript-Funktion, die zwei Zahlen addiert, und erklaere den Code kurz.",
+  "startedAt": "2026-07-28T11:10:12.864Z",
+  "finishedAt": "2026-07-28T11:11:30.108Z",
+  "backends": [
+    "kimi:kimi-k3"
+  ],
+  "summary": {
+    "runs": 5,
+    "ok": 5,
+    "failed": 0,
+    "ttfbMsMedian": 4927,
+    "firstFrameMsMedian": 4928,
+    "firstVisibleMsMedian": 4928,
+    "firstVisibleMsP95": 10872,
+    "totalMsMedian": 9036,
+    "unsichtbarWartezeitMsMedian": 0,
+    "charsMedian": 460
+  },
+  "probes": [
+    {
+      "ok": true,
+      "ttfbMs": 10872,
+      "firstFrameMs": 10872,
+      "firstVisibleMs": 10872,
+      "totalMs": 17064,
+      "frames": 208,
+      "chars": 624,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 4666,
+      "firstFrameMs": 4666,
+      "firstVisibleMs": 4666,
+      "totalMs": 8901,
+      "frames": 149,
+      "chars": 435,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 4927,
+      "firstFrameMs": 4928,
+      "firstVisibleMs": 4928,
+      "totalMs": 9036,
+      "frames": 150,
+      "chars": 460,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 4970,
+      "firstFrameMs": 4970,
+      "firstVisibleMs": 4970,
+      "totalMs": 8843,
+      "frames": 138,
+      "chars": 411,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 3894,
+      "firstFrameMs": 3895,
+      "firstVisibleMs": 3895,
+      "totalMs": 9394,
+      "frames": 201,
+      "chars": 603,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    }
+  ]
+}

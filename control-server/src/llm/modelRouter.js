@@ -270,6 +270,15 @@ function backendSupportsThinking(backend) {
   return /glm/i.test(String(backend?.model || "")) || /api\.z\.ai|bigmodel/i.test(String(backend?.baseUrl || ""));
 }
 
+// Nur Kimi K3 kennt reasoning_effort (low|high|max, Standard max). Das Denken
+// laesst sich bei K3 nicht abschalten — nur seine Tiefe steuern. Andere
+// Backends bekommen das Feld nicht; unbekannte Felder koennten abgelehnt werden.
+export function backendSupportsReasoningEffort(backend) {
+  return /^kimi-k3\b/i.test(String(backend?.model || "").trim());
+}
+
+export const REASONING_EFFORTS = Object.freeze(["low", "high", "max"]);
+
 function buildHeaders(backend) {
   const headers = { "Content-Type": "application/json", ...(backend.extraHeaders || {}) };
   headers[backend.apiKeyHeader] = backend.apiKeyHeader === "Authorization" ? `Bearer ${backend.apiKey}` : backend.apiKey;
@@ -292,7 +301,8 @@ export async function executeWithFallback(chain, messages, {
   toolChoice,
   maxTokens,
   responseFormat,
-  thinking
+  thinking,
+  reasoningEffort
 } = {}) {
   const attempts = [];
   const requestedLimitMs = Number(timeoutMs || process.env.SMEJJ_LLM_TIMEOUT_MS || 45000);
@@ -314,7 +324,10 @@ export async function executeWithFallback(chain, messages, {
           ...(toolChoice === undefined ? {} : { tool_choice: toolChoice }),
           ...(maxTokens === undefined ? {} : { max_tokens: maxTokens }),
           ...(responseFormat === undefined ? {} : { response_format: responseFormat }),
-          ...(thinking !== undefined && backendSupportsThinking(backend) ? { thinking } : {})
+          ...(thinking !== undefined && backendSupportsThinking(backend) ? { thinking } : {}),
+          ...(REASONING_EFFORTS.includes(reasoningEffort) && backendSupportsReasoningEffort(backend)
+            ? { reasoning_effort: reasoningEffort }
+            : {})
         })
       });
       if (response.ok) {

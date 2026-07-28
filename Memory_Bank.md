@@ -5,13 +5,14 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
-### [2026-07-28] KIMI K3 LIVE — reines API-Modell, bewusst OHNE e2-Vault
+### [2026-07-28] KIMI K3 LIVE — reines API-Modell, bewusst OHNE e2-Vault (job_kimi_k3_api_20260728)
 
 Freigabe: "oK, baue Kimi K3 mit API ein" + "Komplett live schalten"
 (Wof Kadavanich, 2026-07-28). Commits `1f00d50`, `ac409eb`, `bc1159f`.
-Live als smejj-control Version 95, Artefakt
-`deployments/control/smejj-control-kimi-k3-2026-07-28.tar.gz`
-(sha `f18ff65b…`), Rueckweg `smejj-control-stufe2-2026-07-28.tar.gz`.
+Live als smejj-control Version 98, Artefakt
+`deployments/control/smejj-control-k3-effort-2026-07-28.tar.gz`
+(sha `62bdc2dc…`), Rueckweg `smejj-control-stufe2-2026-07-28.tar.gz`.
+Kapsel: `docs/task-capsules/2026/07/job_kimi_k3_api_20260728/CAPSULE.md`.
 
 - GEGEN DEN REFLEX "GEWICHTE IN DEN VAULT". K2.7 und GLM-5.2 liegen als
   Gewichte in IDrive e2. Fuer K3 waere das Geldverbrennen: 2,8 T Parameter,
@@ -34,6 +35,28 @@ Live als smejj-control Version 95, Artefakt
   `.env.example` auf NO, live aber laengst auf YES (`multiModelRouterEnabled:
   true`). Der `.env.example`-Wert ist keine Auskunft ueber den Live-Stand —
   vor jeder Aussage die Bridge selbst fragen.
+- DENKTIEFE STATT DENKEN-AUS: K3 laesst sich das Denken NICHT abschalten (anders
+  als GLM), nur die Tiefe steuern — `reasoning_effort: low|high|max`, Standard
+  `max`. Neu `src/ai/reasoningEffortPolicy.js` als Schwestermodul zu
+  `chatThinkingPolicy.js`: Coding und Reasoning behalten die volle Tiefe, alles
+  andere bekommt `low`. Der Parameter geht NUR an K3 — andere Backends koennten
+  unbekannte Felder ablehnen.
+- METHODIK-LEHRE (eigener Fehler, dokumentiert): Ich habe zuerst Prompt UND
+  Denktiefe gleichzeitig geaendert und daraus fast geschlossen, der Parameter
+  wirke nicht. Erst der saubere A/B — identischer Prompt, identischer Weg,
+  7 Laeufe je Seite, Umschaltung ueber `SMEJJ_LLM_KIMI_K3_REASONING_EFFORT` —
+  gab die Antwort: erstes sichtbares Zeichen 13 856 ms (`max`) gegen 8 606 ms
+  (`low`), also 38 % schneller. Eine Messung mit zwei geaenderten Variablen ist
+  keine Messung.
+- TEMPO-EINORDNUNG: K3 mit `low` ist rund 48 % schneller als GLM-5.2 auf
+  demselben Weg (8,6 s gegen 16,6 s). Das 1,0-s-Budget erreicht weiterhin NUR
+  die Groq-Schnellspur (703 ms). Das Budget sollte kuenftig zwischen Schnellspur
+  und Deep Lane trennen — sonst misst es Aepfel an Birnen. Details:
+  `docs/benchmarks/BEFUND_KIMI_K3_TEMPO_2026-07-28.md`.
+- WEB VITALS LIVE nach dem Deploy (7 Laeufe, smejj.com): TTFB-Median 42 ms,
+  LCP-Median 172 ms, CLS 0, INP 40 ms — kein Budget gerissen, gegenueber dem
+  letzten Stand eher schneller. Erwartungsgemaess: der Control Server steht
+  nicht im Pfad des Seitenaufrufs.
 - VERIFIKATION: model-registry 25/25, alle Einzelchecks gruen ausser
   `check:start-lock` (public/sw.js v178 aus einer Parallel-Session, dort nicht
   neu eingefroren — in public/ wurde hier nichts angefasst). Live: Control

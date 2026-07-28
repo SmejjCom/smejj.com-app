@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-first-token-probe",
+  "endpointName": "bridge",
+  "bodyMode": "chat",
+  "model": "kimi-k3",
+  "prompt": "Nenne in einem Satz, wofuer der zentrale Objektspeicher von smejj.com zustaendig ist.",
+  "startedAt": "2026-07-28T10:59:40.315Z",
+  "finishedAt": "2026-07-28T11:01:33.898Z",
+  "backends": [
+    "kimi:kimi-k3"
+  ],
+  "summary": {
+    "runs": 5,
+    "ok": 5,
+    "failed": 0,
+    "ttfbMsMedian": 11982,
+    "firstFrameMsMedian": 11982,
+    "firstVisibleMsMedian": 11982,
+    "firstVisibleMsP95": 17661,
+    "totalMsMedian": 17849,
+    "unsichtbarWartezeitMsMedian": 0,
+    "charsMedian": 262
+  },
+  "probes": [
+    {
+      "ok": true,
+      "ttfbMs": 17660,
+      "firstFrameMs": 17661,
+      "firstVisibleMs": 17661,
+      "totalMs": 19763,
+      "frames": 72,
+      "chars": 225,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 5716,
+      "firstFrameMs": 5717,
+      "firstVisibleMs": 5717,
+      "totalMs": 17544,
+      "frames": 90,
+      "chars": 290,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 15514,
+      "firstFrameMs": 15514,
+      "firstVisibleMs": 15514,
+      "totalMs": 17849,
+      "frames": 74,
+      "chars": 262,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 11982,
+      "firstFrameMs": 11982,
+      "firstVisibleMs": 11982,
+      "totalMs": 14216,
+      "frames": 67,
+      "chars": 222,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 6929,
+      "firstFrameMs": 6929,
+      "firstVisibleMs": 6929,
+      "totalMs": 20203,
+      "frames": 102,
+      "chars": 336,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    }
+  ]
+}

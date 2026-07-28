@@ -66,6 +66,10 @@ async function main() {
   // bleibt ohne dieses Flag inaktiv — auch mit gueltigem Key. Gleiche Regel wie
   // oben: nur was der Aufrufer ausdruecklich mitgibt, wird geschrieben.
   const kimiK3Eingabe = String(process.env.SMEJJ_KIMI_K3_ENABLED || "").trim().toUpperCase();
+  // Optional: Denktiefe von K3 fest vorgeben (low|high|max) statt der Regel aus
+  // src/ai/reasoningEffortPolicy.js. Dient dem Messen im A/B-Vergleich und als
+  // Notbremse. Der Sonderwert "RULE" loescht die Vorgabe wieder.
+  const k3EffortEingabe = String(process.env.SMEJJ_LLM_KIMI_K3_REASONING_EFFORT || "").trim().toLowerCase();
   loadSecureLocalEnv();
   const org = process.env.SALAD_ORGANIZATION_NAME;
   const project = process.env.SALAD_PROJECT_NAME;
@@ -114,6 +118,13 @@ async function main() {
     if (!/^(YES|NO)$/.test(kimiK3Eingabe)) fail("SMEJJ_KIMI_K3_ENABLED: nur YES oder NO.");
     mergedEnv.SMEJJ_KIMI_K3_ENABLED = kimiK3Eingabe;
   }
+  if (k3EffortEingabe) {
+    if (!/^(low|high|max|rule)$/.test(k3EffortEingabe)) {
+      fail("SMEJJ_LLM_KIMI_K3_REASONING_EFFORT: nur low, high, max oder rule.");
+    }
+    // "rule" = keine feste Vorgabe; die Regel im Code entscheidet wieder.
+    mergedEnv.SMEJJ_LLM_KIMI_K3_REASONING_EFFORT = k3EffortEingabe === "rule" ? "" : k3EffortEingabe;
+  }
   await saladApi("PATCH", `/organizations/${org}/projects/${project}/containers/${SALAD_GROUP}`, {
     container: { environment_variables: mergedEnv }
   });
@@ -130,6 +141,7 @@ async function main() {
     werkzeuge: applied.SMEJJ_AGENT_TOOLS_ENABLED ?? "(nicht gesetzt)",
     adminOwner: applied.SMEJJ_ADMIN_OWNER_EMAILS ?? "(nicht gesetzt)",
     kimiK3: applied.SMEJJ_KIMI_K3_ENABLED ?? "(nicht gesetzt)",
+    kimiK3Denktiefe: applied.SMEJJ_LLM_KIMI_K3_REASONING_EFFORT || "(Regel im Code)",
     hint: "Salad rollt jetzt neu aus (~10 Minuten). Danach /api/health pruefen."
   }, null, 2));
 }

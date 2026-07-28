@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-first-token-probe",
+  "endpointName": "bridge",
+  "bodyMode": "chat",
+  "model": "kimi-k3",
+  "prompt": "Nenne in einem Satz, wofuer der zentrale Objektspeicher von smejj.com zustaendig ist.",
+  "startedAt": "2026-07-28T11:19:11.846Z",
+  "finishedAt": "2026-07-28T11:21:08.500Z",
+  "backends": [
+    "kimi:kimi-k3"
+  ],
+  "summary": {
+    "runs": 7,
+    "ok": 7,
+    "failed": 0,
+    "ttfbMsMedian": 8605,
+    "firstFrameMsMedian": 8606,
+    "firstVisibleMsMedian": 8606,
+    "firstVisibleMsP95": 10018,
+    "totalMsMedian": 11051,
+    "unsichtbarWartezeitMsMedian": 0,
+    "charsMedian": 249
+  },
+  "probes": [
+    {
+      "ok": true,
+      "ttfbMs": 8605,
+      "firstFrameMs": 8606,
+      "firstVisibleMs": 8606,
+      "totalMs": 10694,
+      "frames": 66,
+      "chars": 229,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 4504,
+      "firstFrameMs": 4505,
+      "firstVisibleMs": 4505,
+      "totalMs": 13583,
+      "frames": 129,
+      "chars": 373,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 3530,
+      "firstFrameMs": 3530,
+      "firstVisibleMs": 3530,
+      "totalMs": 11051,
+      "frames": 119,
+      "chars": 336,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 10017,
+      "firstFrameMs": 10018,
+      "firstVisibleMs": 10018,
+      "totalMs": 12527,
+      "frames": 72,
+      "chars": 249,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 9105,
+      "firstFrameMs": 9106,
+      "firstVisibleMs": 9106,
+      "totalMs": 11001,
+      "frames": 62,
+      "chars": 203,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 8234,
+      "firstFrameMs": 8234,
+      "firstVisibleMs": 8234,
+      "totalMs": 10084,
+      "frames": 73,
+      "chars": 242,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 9361,
+      "firstFrameMs": 9361,
+      "firstVisibleMs": 9362,
+      "totalMs": 11708,
+      "frames": 82,
+      "chars": 264,
+      "backend": "kimi:kimi-k3",
+      "error": null
+    }
+  ]
+}
