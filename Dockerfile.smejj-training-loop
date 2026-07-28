@@ -1,0 +1,53 @@
+# smejj.com Training-Loop-Worker — Bau-Abbild fuer den Zeabur-Dienst
+# 'smejj-training-loop'. Zeabur waehlt anhand des Dateinamens
+# (Dockerfile.<dienstname>) genau dieses Abbild fuer genau diesen Dienst;
+# alle anderen Dienste bleiben unberuehrt.
+#
+# Warum ueberhaupt ein eigenes Dockerfile: die automatische Erkennung (zbpack)
+# legte den Quellbaum nicht ins Laufzeit-Abbild ("Cannot find module
+# /src/workers/smejj-training-loop/worker.mjs") — dreimal live gemessen.
+# Hier wird ausdruecklich kopiert, was der Worker importiert, und nichts sonst.
+#
+# Keine npm-Abhaengigkeiten (nur Node-Bordmittel) -> kein Install-Schritt,
+# kein Lockfile-Risiko, schlankes Abbild.
+FROM node:22-slim
+
+ENV NODE_ENV=production \
+    SMEJJ_HOST=0.0.0.0 \
+    PORT=8080
+
+WORKDIR /app
+
+# package.json traegt "type": "module" — ohne sie wuerden die .js-Dateien
+# als CommonJS geladen und der Import schluege fehl.
+COPY package.json ./
+
+COPY workers/smejj-training-loop ./workers/smejj-training-loop
+COPY workers/maus-engine/artifact-uploader.mjs ./workers/maus-engine/artifact-uploader.mjs
+COPY workers/glm-salad/s3.js ./workers/glm-salad/s3.js
+COPY src/evaluation ./src/evaluation
+COPY src/training ./src/training
+COPY scripts/evaluation/run_model_eval.mjs ./scripts/evaluation/run_model_eval.mjs
+COPY control-server/src/storage/s3Signer.js ./control-server/src/storage/s3Signer.js
+COPY control-server/src/shared/hash.js ./control-server/src/shared/hash.js
+COPY control-server/src/training/consentLedger.js ./control-server/src/training/consentLedger.js
+COPY evals/suites ./evals/suites
+
+# Pflicht-Env zur Laufzeit (alles fail-closed ohne sie — der Dienst laeuft
+# dann nur mit /health und tickt nie):
+#   SMEJJ_TRAINING_LOOP_ENABLED=YES
+#   SMEJJ_TRAINING_LOOP_EVAL_ENABLED=YES
+#   SMEJJ_TRAINING_LOOP_TRAINING_ENABLED=YES
+#   SMEJJ_TRAINING_CAPTURE_ENABLED=YES   (bestehende projektweite Sperre)
+#   IDRIVE_E2_ENDPOINT / IDRIVE_E2_BUCKET / IDRIVE_E2_REGION /
+#   IDRIVE_E2_ACCESS_KEY / IDRIVE_E2_SECRET_KEY
+#   IDRIVE_E2_TRAINING_* und SMEJJ_TRAINING_CONSENT_* nur fuer den Trainings-Zyklus
+
+USER node
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+CMD ["node", "workers/smejj-training-loop/worker.mjs"]
