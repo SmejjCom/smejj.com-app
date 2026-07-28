@@ -92,14 +92,43 @@ test("Kontextblock weist das Modell auf fehlende Grundlage hin", () => {
 // Modell /glm|kimi|cline/ enthaelt. Genau darueber steuert das Frontend, dass
 // Aufgaben mit Adresse beim werkzeugfaehigen Control Server landen.
 
-test("Aufgabe mit Adresse geht in die Tiefspur", () => {
+// Eigene Adressen je Test: groundTask merkt sich geladene Seiten je Auftragstext
+// modulweit. Wer eine Aufgabe wiederverwendet, die ein frueherer Test geladen
+// hat, misst dessen Zustand mit.
+test("Aufgabe mit Adresse geht in die Tiefspur, SOLANGE die Seite nicht geladen wurde", () => {
   for (const aufgabe of [
-    "geh browser iMild.com teste ob alles fehlerfrei ist?",
-    "Lies https://imild.com/ und nenne den Titel",
-    "pruefe smejj.com/automation"
+    "geh browser ungeladen-eins.de teste ob alles fehlerfrei ist?",
+    "Lies https://ungeladen-zwei.de/ und nenne den Titel",
+    "pruefe ungeladen-drei.de/automation"
   ]) {
     assert.match(modelForTask(aufgabe, "smejj 1.0"), /glm|kimi|cline/i, `muss Tiefspur sein: ${aufgabe}`);
   }
+});
+
+test("geladene Seite bedeutet Schnellspur — der Inhalt steht schon in der Frage", async () => {
+  // Gemessen am 2026-07-28: die Tiefspur brauchte 4,9-7,8 s bis zum ersten Byte,
+  // fetch-retry.js bricht nach 6,5 s ab. Genau deshalb endeten Fragen MIT Adresse
+  // oft in "Verbindung zum Server unterbrochen". Mit eingebettetem Seiteninhalt
+  // antwortet die Schnellspur in 0,49-1,01 s und inhaltlich richtig.
+  const aufgabe = "Welcher Titel steht auf https://beispiel-schnellspur.de ?";
+  const fetchImpl = async () => ({
+    json: async () => ({ finalUrl: "https://beispiel-schnellspur.de", title: "Beispiel", status: 200, ok: true, html: "<p>Inhalt der Seite.</p>" })
+  });
+  const routes = { api: { browserFetch: "https://beispiel.invalid/api/browser/fetch" } };
+
+  assert.match(modelForTask(aufgabe, "smejj 1.0"), /glm/i, "vor dem Laden: Tiefspur");
+  const gegroundet = await groundTask(aufgabe, { fetchImpl, routes });
+  assert.ok(gegroundet.includes("Inhalt der Seite."), "der Seiteninhalt steckt jetzt in der Frage");
+  assert.equal(modelForTask(aufgabe, "smejj 1.0"), "smejj 1.0", "nach dem Laden: Wahl des Nutzers bleibt");
+});
+
+test("scheiterte der Abruf, bleibt es bei der Tiefspur", async () => {
+  const aufgabe = "Lies https://nicht-erreichbar-schnellspur.de und fasse zusammen";
+  const fetchImpl = async () => { throw new Error("Netz weg"); };
+  const routes = { api: { browserFetch: "https://beispiel.invalid/api/browser/fetch" } };
+  const unveraendert = await groundTask(aufgabe, { fetchImpl, routes });
+  assert.equal(unveraendert, aufgabe, "ohne Seiteninhalt bleibt die Aufgabe unveraendert");
+  assert.match(modelForTask(aufgabe, "smejj 1.0"), /glm/i, "nur hier hilft echtes Tool-Calling noch");
 });
 
 test("ohne Adresse bleibt die Wahl des Nutzers unangetastet", () => {
