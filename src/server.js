@@ -275,16 +275,16 @@ function handleAuthConfig(res) {
   });
 }
 
-async function handleAuthMe(req, res) {
+async function handleAuthMe(req, res) { // noStoreJson: Identitaet nie cachen (F-08)
   const user = readSession(req);
   const valid = user ? await emailSessionStillValid(user, process.env) : false;
-  json(res, 200, { authenticated: Boolean(user) && valid, user: valid ? user : null });
+  noStoreJson(res, 200, { authenticated: Boolean(user) && valid, user: valid ? user : null });
 }
 
 function handleAuthSessionToken(req, res) {
   const user = readSession(req);
-  if (!user) return json(res, 401, { authenticated: false, error: "authentication_required" });
-  return json(res, 200, {
+  if (!user) return noStoreJson(res, 401, { authenticated: false, error: "authentication_required" });
+  return noStoreJson(res, 200, {
     authenticated: true,
     user,
     accessToken: serializeSessionToken(user),

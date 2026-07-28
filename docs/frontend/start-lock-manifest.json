@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T02:00:40.913Z",
-  "confirmation": "FREIGABE (Wof Kadavanich, 2026-07-28): 'Mach komplett fertig, lass nicht offen.' — Logikfehler in deferred-start.js behoben, public/sw.js Cache-Version nachgezogen.",
+  "frozenAt": "2026-07-28T02:17:25.605Z",
+  "confirmation": "Freigabe \"smejj.com 100 % fertig\" (Wof Kadavanich, 2026-07-28). Block 6: Rueckmeldung bei leerer Suche (W2-11) in public/search.js.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "115170eb6d49b9f64ecaf8ae5427f99a87804f54066647a9fd172a53e95cf35f",
@@ -17,7 +17,7 @@
     "public/premium-surfaces.js": "63270f4777a63e8c48f0b61534b815ae128298319f897bd3a14f30326323de8c",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "5c86c7fea0aff304310c7b929cf8cc58fd1d78b1f5ce394f3e7b86cd86bdb8fe",
-    "public/search.js": "1d4c69d2603f87e9c8659183e19b9c99da9ede3cc3b3768ff5041835126d0bc3",
+    "public/search.js": "2a1947566679296dcba01800a1030d69e95d2d1ff44464ad9a18452720e754b4",
     "public/composer-tools.js": "2a17c7fdeebc4494cc7fa9357fe5e6b0bedcc32497e86be0e0ab587552d12906",
     "public/composer-plus-menu.js": "f41fe15db290dc044322648c5b2ab4d7e175754350e9c5e59d816d801236dd37",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
