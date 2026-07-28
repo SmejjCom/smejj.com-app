@@ -136,6 +136,21 @@ Kapsel: `docs/task-capsules/2026/07/job_kimi_k3_api_20260728/CAPSULE.md`.
   Anfassen des Start-Locks immer pruefen, ob der Weg schon existiert.
   Standard von `high` auf `medium` gedreht, sonst haette die Verdrahtung das
   gemessene Tempo zerstoert (Performance-Lock).
+- EIN SKRIPT-TAG IST EIN EIGENER EINSTIEGSPUNKT. `check:precache-imports`
+  verfolgte nur Modul-IMPORTE ab den SHELL-Eintraegen und meldete "Precache
+  vollstaendig", waehrend `maus-panel.js` fehlte — index.html laedt es per
+  `<script src>`, und dorthin fuehrt kein Import-Pfad. Offline war der
+  Maus-Knopf tot. Pruefer erweitert (liest jetzt die Skript-Tags), Gegenprobe
+  gemacht: ohne den Eintrag schlaegt er fehl. Live belegt (sw v186): Cache mit
+  120 Eintraegen inklusive maus-panel.js. Lehre: Ein gruener Pruefer beweist
+  nur, was er prueft — bei "unmoeglichen" Befunden zuerst den Pruefer selbst
+  gegen einen bekannten Fehler testen.
+- SALAD-PREISE FUER smejj fast 1.0 (aus der API, 2026-07-28, 1 Replika, RTX
+  3090/4090/3090 Ti/A5000): Dauerbetrieb 24/7 66-219 $/Monat, bedarfsweise
+  4 h/Tag 11-37 $/Monat. Empfehlung: Priority `batch`, bedarfsweise -> ~11 $.
+  Start bleibt Rote Liste (neue laufende Kosten) und braucht Dienst UND Betrag
+  ausdruecklich — ein pauschales "alle Rechte" ist laut AI_Guidelines KEINE
+  Budget-Freigabe.
 - GESCHACHTELTE MODUL-QUERIES MUESSEN VON OBEN GEBUMPT WERDEN. Der Standardwert
   aus settings-runtime.js kam dreimal nicht im Browser an (v183, v184), obwohl
   die Datei live byte-identisch war und check:all gruen. Ursachen, erst im

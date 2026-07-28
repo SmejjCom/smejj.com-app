@@ -187,7 +187,30 @@ den Performance-Lock gewesen.
 Token, 45 s p95) statt eines Budgets, das jedes Modell reisst und darum
 ignoriert wird. Das Produktziel wurde NICHT abgesenkt.
 
+**6. Offline-Luecke gefunden und geschlossen (sw v186).**
+`index.html` laedt `maus-panel.js` als Modul-Skript, es fehlte aber im SHELL —
+offline brach der Import ab und der Maus-Knopf war tot. Der eigentliche Fehler
+lag im Pruefer: `check:precache-imports` verfolgte nur Modul-IMPORTE ab den
+SHELL-Eintraegen und sah `<script src>`-Tags in `index.html` gar nicht an. Ein
+Skript-Tag ist aber ein EIGENER Einstiegspunkt; kein Import-Pfad fuehrt dorthin.
+Beides behoben, Gegenprobe gemacht: ohne den Eintrag schlaegt der Pruefer jetzt
+fehl. Live belegt: Cache `smejj-shell-v186`, 120 Eintraege, `maus-panel.js`
+enthalten, Service Worker aktiv.
+
 **4. `smejj fast 1.0` bewusst NICHT gestartet — Rote Liste.**
+
+Kostenrechnung (am 2026-07-28 aus der Salad-API geholt, 1 Replika, GPU-Klassen
+RTX 3090 / 4090 / 3090 Ti / A5000, je 24 GB):
+
+| Betriebsart | guenstigste Stufe | teuerste Stufe |
+| --- | --- | --- |
+| Dauerbetrieb 24/7 | **66 $/Monat** | 219 $/Monat |
+| Nur bei Bedarf, 4 h/Tag | **11 $/Monat** | 37 $/Monat |
+
+Empfehlung: Priority `batch` und bedarfsweiser Betrieb — rund 11 $/Monat, also
+weniger als der Control Server. Das Modell ist Apache-2.0 (Qwen3.6-35B-A3B) und
+damit auch fuer spaeteres Fine-Tuning frei.
+
 Die Salad-Gruppe `smejj-fast-1` existiert vollstaendig konfiguriert
 (llama.cpp server-cuda, 8 vCPU, 30 GB RAM, 4 GPU-Klassen) und steht auf
 `stopped`. Sie zu starten heisst laufende GPU-Kosten nach Stunden — das ist
