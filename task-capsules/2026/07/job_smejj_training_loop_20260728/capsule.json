@@ -57,8 +57,8 @@
     "kosten": "Keine neuen Kosten entstanden. Ein tatsaechlicher Deploy wuerde einen vierten Dienst auf dem bestehenden 6-USD/Monat-Zeabur-Server bedeuten (oder einen neuen Server) — das ist in FREE_ONLY_MASTER_POLICY.md ausdruecklich nur mit erneuter schriftlicher Freigabe (Dienst + Betrag) erlaubt."
   },
   "rollback": {
-    "git": { "tag": "kein Commit erstellt (nur Freigabe fuer Code/Checks, nicht fuer Commit erteilt)", "commit": null },
-    "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt."
+    "git": { "tag": "commit 52667c5 auf feature/auth-redesign-github-magiclink, gepusht nach origin", "commit": "52667c5" },
+    "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs, task-capsules/2026/07/job_smejj_training_loop_20260728/ und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt. Memory_Bank.md bewusst NICHT mitcommittet — ein anderer, zeitgleicher Auftrag hatte dort eine eigene, noch unfertige Aenderung im selben Arbeitsverzeichnis (Google-Drive-geteilt); siehe smejj-parallele-sessions-git.md."
   },
   "status": "code-complete-deploy-blocked"
 }
