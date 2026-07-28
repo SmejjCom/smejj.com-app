@@ -681,3 +681,37 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
   damit verletzt; bei Lastspitzen trifft es den kleinen 2-vCPU-Server zuerst.
 - OFFEN, beide freigabepflichtig (beruehren index.html/Design-Lock): Anfragen
   buendeln; Startaufrufe an den Control Server nach hinten verschieben.
+
+## 2026-07-27 — Startseite Ladezeit (job_ladezeit_20260727)
+- STYLESHEETS GEBUENDELT: `npm run build:start-styles` erzeugt public/start-styles.css
+  aus den acht unveraenderten Quelldateien in exakt der bisherigen Reihenfolge
+  (Reihenfolge IST die Kaskade). index.html laedt eine Datei statt acht. Sicher,
+  weil keine der acht @import oder url() nutzt — das Skript prueft das und bricht
+  sonst ab. `npm run check:start-styles` verifiziert das Buendel fail-closed gegen
+  die Quellen. KEIN Bundler fuer JavaScript (vom Betreiber ausgeschlossen).
+- CONTROL SERVER AUS DEM LADEPFAD: public/deferred-start.js wartet zwei
+  Bildwechsel plus eine Leerlaufphase, dann laufen die fuenf Startaufrufe.
+  BEWUSST FAIL-SAFE, NICHT FAIL-CLOSED: in einem unsichtbaren Tab gibt es keine
+  Bildwechsel, dort greift ein Notausgang nach 3 s — sonst bliebe die
+  Anmeldeanzeige im Hintergrund-Tab dauerhaft leer.
+- MESSERGEBNIS vorher/nachher (je 7 Laeufe, p75): kalt LCP 1536 -> 368 ms,
+  FCP 1536 -> 368 ms, Anfragen 102 -> 96; warm LCP 284 -> 168 ms. Kein Budget
+  verletzt. Der LCP-Gewinn ist belastbar (sieben Runden weniger im kritischen
+  Pfad); die TTFB-Differenz liegt im Netzrauschen und ist KEIN Verdienst der
+  Aenderung — nicht als Erfolg verbuchen.
+- BELEG fuer die Architekturregel: FCP kalt 592 ms, kein einziger der neun
+  API-Aufrufe davor. Warm FCP 128 ms, die fuenf verschobenen starten bei 136 ms.
+- app.js blieb bei EXAKT 1405 Zeilen (elf Zeilen durch zehn ersetzt, Import als
+  elfte). Ratchet-Baseline unangetastet — das Muster funktioniert.
+- ERZEUGTE ARTEFAKTE von der 800-Zeilen-Regel ausnehmen: public/start-styles.css
+  steht jetzt in IGNORED_PATHS von scripts/check-guidelines.mjs. Die acht Quellen
+  bleiben einzeln geprueft.
+- FALLE: Ein Build-Skript, das auf oberster Ebene schreibt, schreibt auch beim
+  Import im Test. Ausfuehrung mit
+  `if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)`
+  kapseln.
+- OFFEN (neuer Befund, freigabepflichtig): VIER weitere Startaufrufe liegen noch
+  im Ladepfad — ein zweiter /api/auth/me aus account-sessions.js (startet warm bei
+  117 ms, also 11 ms VOR dem FCP), /api/keys aus api-keys-surface.js sowie
+  /api/providers/cline/models und /status aus cline-model-menu.js. Letzteres steht
+  unter dem Start-Lock. Bewusst nicht angefasst: Scope-Treue vor Vollstaendigkeit.
