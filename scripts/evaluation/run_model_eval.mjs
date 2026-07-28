@@ -1,0 +1,278 @@
+#!/usr/bin/env node
+// smejj.com — Modell-Eval-Lauf.
+//
+// Beantwortet die einzige Frage, die bei einem neuen Modell wirklich zaehlt:
+// "Ist es fuer smejj.com messbar besser als das, was heute laeuft?"
+//
+// Standard ist ein Trockenlauf: Suite pruefen, Plan zeigen, KEIN Modellaufruf,
+// keine Kosten. Erst --live ruft wirklich ein Modell auf (Budget-Gate).
+//
+// Beispiele:
+//   node scripts/evaluation/run_model_eval.mjs
+//   node scripts/evaluation/run_model_eval.mjs --live
+//   node scripts/evaluation/run_model_eval.mjs --live --model kimi-k2-7 --transport provider
+//
+// Der Bericht landet in docs/benchmarks/ und enthaelt nur Kennzahlen — nie
+// Modellantworten im Klartext (Trainingsdaten-Policy, fail-closed).
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { selectCases, validateEvalSuite } from "../../src/evaluation/evalSuite.js";
+import { scoreCase } from "../../src/evaluation/evalScoring.js";
+import { buildEvalReport, EVAL_VERDICT, formatEvalSummary } from "../../src/evaluation/evalReport.js";
+import { callViaControl, callViaProvider, isTransientError, TRANSPORTS } from "../../src/evaluation/evalTransport.js";
+
+const SCRIPT_FILE = fileURLToPath(import.meta.url);
+const REPO_ROOT = path.resolve(path.dirname(SCRIPT_FILE), "../..");
+const DEFAULT_SUITE = "evals/suites/smejj-chat-core-v1.json";
+const REPORT_DIR = "docs/benchmarks";
+const DEFAULT_DELAY_MS = 400;
+
+export function parseArguments(argv) {
+  const options = {
+    suite: DEFAULT_SUITE,
+    model: "",
+    transport: "control",
+    live: false,
+    limit: null,
+    delayMs: DEFAULT_DELAY_MS,
+    retries: 2,
+    out: "",
+    baseline: "",
+    help: false
+  };
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    const next = () => argv[index + 1];
+    if (token === "--help" || token === "-h") options.help = true;
+    else if (token === "--live") options.live = true;
+    else if (token === "--suite") { options.suite = String(next() || ""); index += 1; }
+    else if (token === "--model") { options.model = String(next() || ""); index += 1; }
+    else if (token === "--transport") { options.transport = String(next() || ""); index += 1; }
+    else if (token === "--limit") { options.limit = Number.parseInt(next(), 10); index += 1; }
+    else if (token === "--delay-ms") { options.delayMs = Number.parseInt(next(), 10); index += 1; }
+    else if (token === "--retries") { options.retries = Number.parseInt(next(), 10); index += 1; }
+    else if (token === "--out") { options.out = String(next() || ""); index += 1; }
+    else if (token === "--baseline") { options.baseline = String(next() || ""); index += 1; }
+    else return { error: `unknown_argument:${token}` };
+  }
+  if (!TRANSPORTS.includes(options.transport)) return { error: `unknown_transport:${options.transport}` };
+  if (options.limit !== null && !(Number.isInteger(options.limit) && options.limit > 0)) {
+    return { error: "invalid_limit" };
+  }
+  if (!Number.isInteger(options.delayMs) || options.delayMs < 0) return { error: "invalid_delay" };
+  if (!Number.isInteger(options.retries) || options.retries < 0 || options.retries > 5) {
+    return { error: "invalid_retries" };
+  }
+  return { options };
+}
+
+/**
+ * Fuehrt die Suite aus. Der Modellaufruf wird injiziert, damit der Ablauf ohne
+ * Netz getestet werden kann.
+ *
+ * Transiente Transportfehler (503, Timeout, leere Antwort) werden begrenzt
+ * wiederholt: sonst wird Infrastrukturrauschen als Modellversagen gewertet und
+ * die Modellentscheidung beruht auf einem Messfehler.
+ */
+export async function runEvalSuite({
+  suite,
+  cases,
+  callModel,
+  delayMs = 0,
+  retries = 2,
+  onCase = () => {},
+  sleep = defaultSleep
+}) {
+  const caseScores = [];
+  for (const evalCase of cases) {
+    let result = null;
+    let attempts = 0;
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      attempts = attempt + 1;
+      result = await callModel(evalCase);
+      if (result?.ok === true || !isTransientError(result?.error)) break;
+      if (attempt < retries && delayMs > 0) await sleep(delayMs);
+    }
+    const scored = { ...scoreCase(evalCase, result), attempts };
+    caseScores.push(scored);
+    onCase(scored, result);
+    if (delayMs > 0) await sleep(delayMs);
+  }
+  return { suite, caseScores };
+}
+
+/**
+ * Neuester frueherer Live-Bericht desselben Modells und derselben Suite.
+ *
+ * Verglichen wird ausschliesslich gegen denselben Suite-Inhalts-Hash. Zwei Laeufe
+ * mit unterschiedlichen Erwartungen sind nicht vergleichbar — ein Vergleich waere
+ * eine Zahl ohne Aussage.
+ */
+export async function findBaselineReport({
+  dir,
+  suiteId,
+  contentSha256,
+  modelId,
+  readDir = readdir,
+  readJson = readJsonFile
+}) {
+  let entries;
+  try {
+    entries = await readDir(dir);
+  } catch {
+    return null;
+  }
+  const candidates = entries.filter((name) => name.startsWith("modeleval-") && name.endsWith(".json")).sort().reverse();
+  for (const name of candidates) {
+    const report = await readJson(path.join(dir, name)).catch(() => null);
+    if (report?.suite?.suiteId === suiteId &&
+        report?.suite?.contentSha256 === contentSha256 &&
+        report?.run?.modelId === modelId &&
+        report?.run?.live === true) {
+      return report;
+    }
+  }
+  return null;
+}
+
+function reportFileName(suiteId, modelId, isoDate) {
+  const safeModel = String(modelId || "unknown").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  return `modeleval-${suiteId}-${safeModel}-${isoDate.slice(0, 10)}.json`;
+}
+
+async function readJsonFile(file) {
+  return JSON.parse(await readFile(file, "utf8"));
+}
+
+function defaultSleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function usage() {
+  return [
+    "smejj.com Modell-Eval",
+    "",
+    "  --suite <pfad>       Eval-Suite (Standard: evals/suites/smejj-chat-core-v1.json)",
+    "  --model <id>         Modell-Kennung, z. B. glm-5-2 oder kimi-k2-7",
+    "  --transport <weg>    control (Live-Kette, Standard) oder provider (direkt, BYOK)",
+    "  --live               Modell wirklich aufrufen (ohne dieses Flag nur Trockenlauf)",
+    "  --limit <n>          hoechstens n Faelle ausfuehren",
+    "  --delay-ms <n>       Pause zwischen zwei Faellen (Standard 400)",
+    "  --retries <n>        Wiederholungen bei transienten Transportfehlern (Standard 2)",
+    "  --baseline <pfad>    Vergleichsbericht; ohne Angabe wird der neueste passende gesucht",
+    "  --out <pfad>         Zielpfad des Berichts",
+    ""
+  ].join("\n");
+}
+
+async function main() {
+  const parsed = parseArguments(process.argv.slice(2));
+  if (parsed.error) {
+    process.stderr.write(`Abbruch: ${parsed.error}\n\n${usage()}`);
+    process.exitCode = 2;
+    return;
+  }
+  const options = parsed.options;
+  if (options.help) {
+    process.stdout.write(usage());
+    return;
+  }
+
+  const suiteFile = path.resolve(REPO_ROOT, options.suite);
+  let suite;
+  try {
+    suite = await readJsonFile(suiteFile);
+  } catch (error) {
+    process.stderr.write(`Abbruch: Suite nicht lesbar (${String(error?.message || error).slice(0, 120)})\n`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const validation = validateEvalSuite(suite);
+  if (!validation.ok) {
+    process.stderr.write(`Abbruch: Suite ungueltig — ${validation.reasons.join(", ")}\n`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const cases = selectCases(suite, { limit: options.limit });
+  const modelId = options.model || "live-default";
+
+  if (!options.live) {
+    // Trockenlauf: beweist, dass die Suite gueltig und ausfuehrbar ist — ohne einen
+    // einzigen kostenpflichtigen Aufruf. Das ist der Modus fuer die Pflicht-Checks.
+    process.stdout.write([
+      `Trockenlauf — kein Modellaufruf, keine Kosten.`,
+      `Suite ${suite.suiteId} ${suite.version} (sha256 ${suite.integrity.contentSha256.slice(0, 12)}…)`,
+      `Faelle: ${cases.length} von ${suite.cases.length}, Budget minScore ${suite.budgets.minScore}`,
+      `Transportweg: ${options.transport}, Modell: ${modelId}`,
+      `Fuer einen echten Lauf: --live anhaengen.`,
+      ""
+    ].join("\n"));
+    return;
+  }
+
+  const callModel = options.transport === "control"
+    ? (evalCase) => callViaControl(evalCase, { modelId: options.model })
+    : await providerCaller(options.model);
+
+  const startedAt = new Date().toISOString();
+  process.stdout.write(`Lauf gestartet: ${cases.length} Faelle, Transportweg ${options.transport}\n`);
+  const { caseScores } = await runEvalSuite({
+    suite,
+    cases,
+    callModel,
+    delayMs: options.delayMs,
+    retries: options.retries,
+    onCase: (scored) => {
+      const marker = scored.status === "passed" ? "OK  " : scored.status === "partial" ? "TEIL" : "FEHL";
+      process.stdout.write(`  ${marker} ${scored.caseId} — ${(scored.score * 100).toFixed(0)} %` +
+        `${scored.latencyMs === null ? "" : `, ${scored.latencyMs} ms`}` +
+        `${scored.attempts > 1 ? `, ${scored.attempts} Versuche` : ""}` +
+        `${scored.error ? `, ${scored.error}` : ""}\n`);
+    }
+  });
+  const finishedAt = new Date().toISOString();
+
+  const reportDirAbs = path.resolve(REPO_ROOT, REPORT_DIR);
+  const baseline = options.baseline
+    ? await readJsonFile(path.resolve(REPO_ROOT, options.baseline)).catch(() => null)
+    : await findBaselineReport({
+      dir: reportDirAbs,
+      suiteId: suite.suiteId,
+      contentSha256: suite.integrity.contentSha256,
+      modelId
+    });
+
+  const report = buildEvalReport({
+    suite,
+    run: { modelId, transport: options.transport, profileMode: "case", live: true, startedAt, finishedAt },
+    caseScores,
+    baseline
+  });
+
+  await mkdir(reportDirAbs, { recursive: true });
+  const outRelative = options.out || path.join(REPORT_DIR, reportFileName(suite.suiteId, modelId, finishedAt));
+  await writeFile(path.resolve(REPO_ROOT, outRelative), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+
+  process.stdout.write(`\n${formatEvalSummary(report)}\nBericht: ${outRelative}\n`);
+  if (report.verdict !== EVAL_VERDICT.PASSED) process.exitCode = 1;
+}
+
+/**
+ * Baut den direkten Router-Aufruf. Der Router wird erst hier geladen, damit der
+ * Trockenlauf und die Tests ohne Control-Server-Abhaengigkeiten auskommen.
+ */
+async function providerCaller(modelId) {
+  const router = await import("../../control-server/src/llm/modelRouter.js");
+  return (evalCase) => callViaProvider(evalCase, {
+    modelId,
+    resolveModelRequest: router.resolveModelRequest,
+    executeWithFallback: router.executeWithFallback
+  });
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_FILE) {
+  await main();
+}

@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T09:56:39.475Z",
-  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ja' auf den Vorschlag Hilfeseite. index.html (Hilfe-Link), sw.js (hilfe.html im Precache), static-pages.css (p-hilfe).",
+  "frozenAt": "2026-07-28T10:00:07.000Z",
+  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ja' auf den Vorschlag Hilfeseite; enthaelt den 24-px-Fix am Logo-Link der statischen Seiten (F-21-Rest) und den zugehoerigen sw-Sprung.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "f7e1f29d7bfba6f9c56845a851c1b9adbaf7a7adc007f3ff84216b9c5007a88e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "4dc233ce28cb46812f34361e14996e09874d948f0794a6ff8611b3a97ad72c1c",
+    "public/sw.js": "6d7dfba36ec0318aa97978f26d44b6a01950ee3320865681e3d1d4102e879f31",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

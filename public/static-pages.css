@@ -45,7 +45,11 @@ html.p-recht h1 { font-size: 1.8rem; margin-bottom: 0.2em; overflow-wrap: break-
 html.p-recht h2 { font-size: 1.15rem; margin-top: 2em; }
 html.p-recht h3 { font-size: 1rem; margin-top: 1.4em; }
 html.p-recht a { color: #8fc7ff; }
-html.p-recht .legal-brand { display: inline-flex; width: 30px; margin-bottom: 18px; padding: 0; background: transparent; }
+/* min-height: der Logo-Link mass 30x23 px und blieb damit 1 px unter der
+ * WCAG-2.2-Mindestzielgroesse (Restbefund aus QA-Welle 1, F-21 — die
+ * Fusszeilen-Links waren dort schon gefixt, der Logo-Link nicht). Gilt
+ * zentral fuer alle Seiten mit p-recht. */
+html.p-recht .legal-brand { display: inline-flex; align-items: center; min-height: 24px; width: 30px; margin-bottom: 18px; padding: 0; background: transparent; }
 html.p-recht .legal-brand img { display: block; width: 100%; height: auto; aspect-ratio: 2000 / 1532.335; object-fit: contain; background: transparent; }
 html.p-recht .card {
   background: rgba(255, 255, 255, 0.04);

@@ -1,0 +1,208 @@
+// smejj.com — Transportwege des Eval-Harness zu einem Modell.
+//
+// Zwei Wege, bewusst getrennt:
+//   "control"  -> die LIVE-Kette von smejj.com (Chat-Bruecke -> Control Server ->
+//                 Modell-Router). Misst das, was Nutzer wirklich erleben, und
+//                 braucht lokal KEINE API-Schluessel. Standardweg.
+//   "provider" -> direkt gegen den Modell-Router mit lokalem BYOK-Schluessel.
+//                 Nur fuer die Bewertung eines Modells, das noch nicht live
+//                 geschaltet ist. Fail-closed ohne Konfiguration.
+//
+// Beide liefern dasselbe Ergebnisobjekt:
+//   {ok, text, latencyMs, firstTokenMs, backend, modelId, error}
+const DEFAULT_CHAT_ENDPOINT = "https://smejj-chat-bridge.zeabur.app/api/chat";
+const DEFAULT_TIMEOUT_MS = 60_000;
+
+export const TRANSPORTS = Object.freeze(["control", "provider"]);
+
+/**
+ * Unterscheidet Infrastrukturrauschen von einem echten Modellversagen.
+ * Ohne diese Unterscheidung wird ein einzelner 503 der Bruecke faelschlich als
+ * "Modell hat versagt" gezaehlt und verfaelscht jede Modellentscheidung.
+ */
+export function isTransientError(error) {
+  const reason = String(error || "");
+  if (reason === "timeout" || reason === "network_error" || reason === "empty_response") return true;
+  const http = reason.match(/^http_(\d{3})$/);
+  if (!http) return false;
+  const status = Number(http[1]);
+  return status === 408 || status === 429 || status >= 500;
+}
+
+/**
+ * Ruft die Live-Kette von smejj.com auf und liest den SSE-Stream mit.
+ * @returns {Promise<{ok: boolean, text: string, latencyMs: number, firstTokenMs: number|null, backend: string, modelId: string, error: string|null}>}
+ */
+export async function callViaControl(evalCase, {
+  endpoint = DEFAULT_CHAT_ENDPOINT,
+  modelId = "",
+  fetchImpl = fetch,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  now = () => Date.now()
+} = {}) {
+  const started = now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        Origin: "https://smejj.com"
+      },
+      body: JSON.stringify({ messages: buildMessages(evalCase), ...(modelId ? { model: modelId } : {}) })
+    });
+    if (!response.ok) {
+      return failure(`http_${response.status}`, now() - started, {
+        backend: "control",
+        modelId: response.headers?.get?.("x-smejj-model-id") || modelId
+      });
+    }
+    const stream = await readSseStream(response, { started, now });
+    return {
+      ok: stream.text.trim().length > 0,
+      text: stream.text,
+      latencyMs: now() - started,
+      firstTokenMs: stream.firstTokenMs,
+      backend: response.headers?.get?.("x-smejj-model-backend") || "control",
+      modelId: response.headers?.get?.("x-smejj-model-id") || modelId,
+      error: stream.text.trim().length > 0 ? null : "empty_response"
+    };
+  } catch (error) {
+    const reason = error?.name === "AbortError" ? "timeout" : String(error?.message || error).slice(0, 120);
+    return failure(reason, now() - started, { backend: "control", modelId });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Ruft den Modell-Router direkt auf (BYOK, kein Streaming noetig).
+ * @param {object} deps.resolveModelRequest  aus control-server/src/llm/modelRouter.js
+ * @param {object} deps.executeWithFallback  aus control-server/src/llm/modelRouter.js
+ */
+export async function callViaProvider(evalCase, {
+  modelId = "",
+  env = process.env,
+  resolveModelRequest,
+  executeWithFallback,
+  fetchImpl = fetch,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  now = () => Date.now()
+} = {}) {
+  if (typeof resolveModelRequest !== "function" || typeof executeWithFallback !== "function") {
+    return failure("router_unavailable", 0, { backend: "provider", modelId });
+  }
+  const { chain } = resolveModelRequest(evalCase?.profile || "default", modelId, env);
+  if (!Array.isArray(chain) || chain.length === 0) {
+    // Fail-closed: ohne konfigurierten Zugang wird nichts geraten und nichts gestartet.
+    return failure("model_not_configured", 0, { backend: "provider", modelId });
+  }
+  const started = now();
+  const outcome = await executeWithFallback(chain, buildMessages(evalCase), {
+    fetchImpl,
+    stream: false,
+    maxTokens: evalCase?.maxTokens,
+    timeoutMs
+  });
+  if (!outcome?.ok) {
+    const reason = outcome?.attempts?.[outcome.attempts.length - 1]?.error || "all_backends_failed";
+    return failure(String(reason).slice(0, 120), now() - started, { backend: "provider", modelId });
+  }
+  let payload;
+  try {
+    payload = await outcome.response.json();
+  } catch {
+    return failure("invalid_json_response", now() - started, { backend: outcome.backend, modelId });
+  }
+  const text = String(payload?.choices?.[0]?.message?.content || "");
+  const latencyMs = now() - started;
+  return {
+    ok: text.trim().length > 0,
+    text,
+    latencyMs,
+    // Ohne Streaming gibt es keinen echten Erst-Token-Wert; null ist ehrlicher als eine Schaetzung.
+    firstTokenMs: null,
+    backend: outcome.backend || "provider",
+    modelId: outcome.logicalModelId || modelId,
+    error: text.trim().length > 0 ? null : "empty_response"
+  };
+}
+
+/** Nachrichtenliste eines Falls im OpenAI-kompatiblen Format. */
+export function buildMessages(evalCase) {
+  const messages = [];
+  if (typeof evalCase?.system === "string" && evalCase.system.trim()) {
+    messages.push({ role: "system", content: evalCase.system.trim() });
+  }
+  messages.push({ role: "user", content: String(evalCase?.prompt || "") });
+  return messages;
+}
+
+/**
+ * Liest einen OpenAI-kompatiblen SSE-Stream und setzt den sichtbaren Text zusammen.
+ * Exportiert, damit der Parser ohne Netz getestet werden kann.
+ */
+export async function readSseStream(response, { started = 0, now = () => Date.now() } = {}) {
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+  let firstTokenMs = null;
+
+  const appendFrame = (frame) => {
+    const data = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6);
+    if (!data || data === "[DONE]") return;
+    let parsed;
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      return;
+    }
+    const delta = parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.message?.content ?? "";
+    if (!delta) return;
+    if (firstTokenMs === null) firstTokenMs = now() - started;
+    text += delta;
+  };
+
+  for await (const chunk of iterateBody(response.body)) {
+    buffer += typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true });
+    let splitAt = buffer.indexOf("\n\n");
+    while (splitAt !== -1) {
+      appendFrame(buffer.slice(0, splitAt));
+      buffer = buffer.slice(splitAt + 2);
+      splitAt = buffer.indexOf("\n\n");
+    }
+  }
+  buffer += decoder.decode();
+  if (buffer.trim()) appendFrame(buffer);
+  return { text, firstTokenMs };
+}
+
+/** Body sowohl als Web-ReadableStream als auch als Node-Iterable lesbar machen. */
+async function* iterateBody(body) {
+  if (!body) return;
+  if (typeof body[Symbol.asyncIterator] === "function") {
+    yield* body;
+    return;
+  }
+  const reader = body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    yield value;
+  }
+}
+
+function failure(error, latencyMs, { backend, modelId }) {
+  return {
+    ok: false,
+    text: "",
+    latencyMs: Number.isFinite(latencyMs) ? latencyMs : 0,
+    firstTokenMs: null,
+    backend: backend || "unknown",
+    modelId: modelId || "",
+    error
+  };
+}
