@@ -600,3 +600,24 @@ SMEJJ_REMOTE_BROWSER_WORKER_URL).
   /tmp/smejj-chat-bridge.mjs im Container, ueber Files einsehbar und editierbar.
   Das Bearbeiten per Browser ist in Agent-Sitzungen gesperrt; ein Zeabur-API-Token
   existiert nicht. Der bridge-seitige Fix liegt fertig als Commit 653b5f9 bereit.
+
+## 2026-07-28 — Felddaten statt Laborzahlen (job_feldmessung_20260728)
+- public/field-vitals.js misst LCP, INP, CLS, TTFB bei echten Besuchen und legt sie
+  NUR LOKAL ab (localStorage, rollierend 50 Besuche, Festhalten bei
+  visibilitychange->hidden — der einzige Zeitpunkt, den auch Handys liefern).
+- KEIN DATENABFLUSS: kein fetch, kein sendBeacon, kein Endpunkt. Ein Test prueft
+  die Quelldatei genau darauf. Keine Server-Komponente, keine Kosten, keine Last
+  fuer den Control Server. Nur fuenf Zahlen und ein Zeitstempel je Besuch.
+- WICHTIGE REGEL im Modul: Ein Budget gilt erst ab ZEHN Besuchen als verfehlt.
+  Darunter ist ein p75 statistisch bedeutungslos — vorher nichts behaupten.
+- Eingehaengt ueber usage-meter.js (nicht start-locked), damit index.html und
+  app.js unberuehrt bleiben. sw.js v161 -> v162, Modul im Precache (Pflicht).
+- ERSTE ECHTE FELDDATEN (24 Besuche, live): TTFB p75 1 ms (max 125), LCP p75 96 ms
+  (max 1008), INP p75 40 ms (max 152), CLS 0. Alle Budgets eingehalten,
+  verstoesse leer, fremdeAnfragen leer.
+- ERKENNTNIS: Die Spannen zeigen, was Einzelmessungen verschleierten — Erstbesuch
+  kostet (LCP bis 1008 ms), Wiederbesuch ist praktisch sofort da (Median 96 ms).
+  Ab jetzt gilt: Budgets NUR gegen fieldVitalsSummary() bewerten, nie gegen einen
+  einzelnen Laborlauf.
+- Auslesen im Live-Test: `await import("/assets/field-vitals.js")` ->
+  `fieldVitalsSummary()`.
