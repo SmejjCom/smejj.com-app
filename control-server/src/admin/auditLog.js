@@ -13,6 +13,7 @@
 // neuen Vorgaenger — statt die Kette still zu gabeln.
 import crypto from "node:crypto";
 import { signedS3Get, signedS3List, signedS3Put, parseS3ListPage } from "../storage/s3Signer.js";
+import { mapMitGrenze } from "../shared/parallelFetch.js";
 
 const PREFIX = "admin/audit";
 const HEAD_KEY = `${PREFIX}/head.json`;
@@ -185,13 +186,13 @@ export async function readAuditPage({
 
   // Der Schluessel traegt den Zeitstempel — lexikografisch sortieren reicht.
   keys.sort().reverse();
-  const entries = [];
-  for (const key of keys.slice(0, capped)) {
-    try {
-      const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
-      if (result.ok && result.body) entries.push(JSON.parse(result.body));
-    } catch { /* einzelner unlesbarer Eintrag darf die Seite nicht kippen */ }
-  }
+  // Begrenzt nebenlaeufig statt nacheinander: bei 50 Eintraegen waeren das sonst
+  // 50 Rundreisen hintereinander (live gemessen: 11 Eintraege = 1115 ms).
+  const geladen = await mapMitGrenze(keys.slice(0, capped), async (key) => {
+    const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
+    return result.ok && result.body ? JSON.parse(result.body) : null;
+  });
+  const entries = geladen.filter(Boolean);
   return { ok: true, entries, total: keys.length, window };
 }
 

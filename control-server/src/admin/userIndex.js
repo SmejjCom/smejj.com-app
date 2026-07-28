@@ -12,6 +12,7 @@
 // und traegt sein Alter sichtbar mit sich.
 import { userRole, userStatus } from "../auth/emailUserStore.js";
 import { parseS3ListPage, signedS3Get, signedS3List, signedS3Put } from "../storage/s3Signer.js";
+import { mapMitGrenze } from "../shared/parallelFetch.js";
 
 const USER_PREFIX = "auth/email-users/";
 const INDEX_KEY = "admin/index/users.json";
@@ -73,19 +74,16 @@ export async function rebuildUserIndex({ env = process.env, fetchImpl = fetch, n
     continuationToken = page.isTruncated ? page.nextContinuationToken : null;
   } while (continuationToken && keys.length < MAX_ENTRIES);
 
-  const entries = [];
-  let unreadable = 0;
-  for (const key of keys.slice(0, MAX_ENTRIES)) {
-    try {
-      const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
-      if (!result.ok || !result.body) { unreadable += 1; continue; }
-      const entry = indexEntryFrom(JSON.parse(result.body));
-      if (entry.email) entries.push(entry);
-      else unreadable += 1;
-    } catch {
-      unreadable += 1;
-    }
-  }
+  // Begrenzt nebenlaeufig: der Neubau holt je Konto ein Objekt. Nacheinander
+  // waere er bei vielen Konten unbrauchbar langsam.
+  const geladen = await mapMitGrenze(keys.slice(0, MAX_ENTRIES), async (key) => {
+    const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
+    if (!result.ok || !result.body) return null;
+    const entry = indexEntryFrom(JSON.parse(result.body));
+    return entry.email ? entry : null;
+  });
+  const entries = geladen.filter(Boolean);
+  const unreadable = geladen.length - entries.length;
 
   entries.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   const index = {

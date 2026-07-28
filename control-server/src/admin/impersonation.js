@@ -20,6 +20,7 @@
 // Wer daraus eine echte Sitzung baut, muss das ausdruecklich und getrennt tun.
 import crypto from "node:crypto";
 import { parseS3ListPage, signedS3Get, signedS3List, signedS3Put } from "../storage/s3Signer.js";
+import { mapMitGrenze } from "../shared/parallelFetch.js";
 
 const PREFIX = "admin/impersonation";
 const CONSENT_TTL_MS = 15 * 60 * 1000;   // so lange darf die Anfrage auf Antwort warten
@@ -240,12 +241,11 @@ export async function listImpersonations({
       for (const key of page.keys) if (key.endsWith(".json")) keys.push(key);
       continuationToken = page.isTruncated ? page.nextContinuationToken : null;
     } while (continuationToken && keys.length < 200);
-    for (const key of keys.slice(0, 200)) {
-      try {
-        const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
-        if (result.ok && result.body) alle.push(JSON.parse(result.body));
-      } catch { /* ein unlesbarer Vorgang darf die Liste nicht kippen */ }
-    }
+    const geladen = await mapMitGrenze(keys.slice(0, 200), async (key) => {
+      const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
+      return result.ok && result.body ? JSON.parse(result.body) : null;
+    });
+    alle = geladen.filter(Boolean);
   }
 
   const sichtbar = alle

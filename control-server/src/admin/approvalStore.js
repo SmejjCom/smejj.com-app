@@ -18,6 +18,7 @@
 // keine Geheimnisse.
 import crypto from "node:crypto";
 import { parseS3ListPage, signedS3Get, signedS3List, signedS3Put } from "../storage/s3Signer.js";
+import { mapMitGrenze } from "../shared/parallelFetch.js";
 
 const PREFIX = "admin/approvals";
 const TTL_MS = 24 * 60 * 60 * 1000;
@@ -204,16 +205,13 @@ export async function listApprovals({ env = process.env, fetchImpl = fetch, nowM
     continuationToken = page.isTruncated ? page.nextContinuationToken : null;
   } while (continuationToken && keys.length < MAX_OFFEN);
 
-  const approvals = [];
-  for (const key of keys.slice(0, MAX_OFFEN)) {
-    try {
-      const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
-      if (result.ok && result.body) {
-        const record = JSON.parse(result.body);
-        approvals.push({ ...record, status: effectiveStatus(record, nowMs) });
-      }
-    } catch { /* ein unlesbarer Antrag darf die Liste nicht kippen */ }
-  }
+  const geladen = await mapMitGrenze(keys.slice(0, MAX_OFFEN), async (key) => {
+    const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
+    if (!result.ok || !result.body) return null;
+    const record = JSON.parse(result.body);
+    return { ...record, status: effectiveStatus(record, nowMs) };
+  });
+  const approvals = geladen.filter(Boolean);
   approvals.sort((a, b) => String(b.requestedAt).localeCompare(String(a.requestedAt)));
   return { ok: true, approvals: approvals.slice(0, capped), total: approvals.length };
 }
