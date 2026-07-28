@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T12:31:27.863Z",
+  "frozenAt": "2026-07-28T12:36:21.732Z",
   "confirmation": "Mach komplett endlich fertig, soll nichts offen bleiben (Wof Kadavanich, 2026-07-28)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "db17daaeca21b50930da67de35e6f71d06d9b3ce4ab24ce42518b25e8d66a7c1",
+    "public/sw.js": "01775a2c4ea9437939f55e374b524c1b3f0b4cf363df14a9c202918f2a39d1fe",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
