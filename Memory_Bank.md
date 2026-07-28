@@ -5,6 +5,29 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-28] ADMINBEREICH STUFE 3 LIVE — schreibend, mit Vier-Augen und Einwilligung (job_adminstufe3_20260728)
+
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-07-28_adminstufe3.md](docs/memory/Memory_Bank_2026-07-28_adminstufe3.md).
+Commits `e0a83bb`/`ef12ce8`, Control-Server **Version 101**. Kurzfassung:
+
+- **Loeschen und Rollenvergabe sind fuer JEDE Rolle Vier-Augen — auch fuer den
+  Owner.** Der Antragsteller darf weder freigeben noch ablehnen; Freigabe und
+  Ausfuehrung sind ein Schritt; ein Antrag verfaellt nach 24 Stunden.
+- **Impersonation nur mit Einwilligung der betroffenen Person in IHRER eigenen
+  Sitzung.** Chat-Inhalte nie im Standardumfang. Break-Glass nur 10 Minuten, mit
+  Pflichtbegruendung und als Alarm markiert.
+- FALLE: Die Einwilligung lag zuerst hinter dem Admin-Gate — damit war genau
+  derjenige ausgesperrt, dessen Zustimmung gebraucht wird. **Aktionen, die von
+  der betroffenen Person ausgehen, gehoeren nicht in den Adminbereich**
+  (jetzt `/api/account/impersonation/...`).
+- FALLE: Jede Schleife, die pro Eintrag ein Objekt aus IDrive e2 holt, ist ein
+  Latenzproblem in Wartestellung. Audit stieg auf 1115 ms bei elf Eintraegen;
+  `shared/parallelFetch.js` (hoechstens acht gleichzeitig) bringt es auf 460 ms.
+- **Vor dem Aktivieren eines Releases das laufende Artefakt aus IDrive e2
+  herunterladen und dateiweise vergleichen**, solange eine andere Sitzung im
+  selben Repository arbeitet. So blieb Kimi K3 der Parallel-Session unangetastet.
+
 ### [2026-07-28] KIMI K3 LIVE — reines API-Modell, bewusst OHNE e2-Vault (job_kimi_k3_api_20260728)
 
 Freigabe: "oK, baue Kimi K3 mit API ein" + "Komplett live schalten"

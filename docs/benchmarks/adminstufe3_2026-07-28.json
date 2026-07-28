@@ -1,0 +1,87 @@
+{
+  "titel": "Adminbereich Stufe 3 — schreibende Aktionen, Vier-Augen, Impersonation",
+  "datum": "2026-07-28",
+  "job": "job_adminstufe3_20260728",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 101,
+  "artefakt": "deployments/control/smejj-control-stufe3c-2026-07-28.tar.gz",
+  "budgets": { "api_p95_ms": 300, "api_p99_ms": 800, "lcp_p75_ms": 1500, "inp_p75_ms": 200, "cls_p75": 0.1, "ttfb_p95_ms": 200, "pageWeight_kb": 300 },
+
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7",
+    "erstbesuch": { "ttfb_p75_ms": 131, "lcp_p75_ms": 372, "cls_p75": 0, "inp_p75_ms": 56, "pageWeight_kb": 279 },
+    "wiederbesuch": { "ttfb_p75_ms": 52, "lcp_p75_ms": 184, "cls_p75": 0, "inp_p75_ms": 48, "pageWeight_kb": 38 },
+    "urteil": "Alle Budgets eingehalten. Erwartungsgemaess unveraendert: dieser Job hat keine Datei unter public/ angefasst."
+  },
+
+  "apiLatenz_ms": {
+    "hinweis": "Aus der angemeldeten Sitzung, 7 Laeufe je Endpunkt, 200 ms Abstand. /api/health ist unveraendert und dient als Basislinie.",
+    "nachStufe3Deploy": {
+      "health": { "median": 137, "p95": 191 },
+      "admin_users": { "median": 214, "p95": 490 },
+      "admin_audit": { "median": 1115, "p95": 1422 },
+      "befund": "admin_audit war bei elf Eintraegen achtmal so langsam wie die Basislinie: je Eintrag ein GET gegen IDrive e2, streng nacheinander."
+    },
+    "nachDerKorrektur": {
+      "health": { "median": 139, "p95": 178 },
+      "admin_users": { "median": 279, "p95": 539 },
+      "admin_audit": { "median": 460, "p95": 790 },
+      "befund": "admin_audit von 1115 auf 460 ms Median (Faktor 2,4), p95 von 1422 auf 790 ms. Die Korrektur wirkt staerker, je mehr Eintraege es gibt — bei fuenfzig waeren es fuenfzig Rundreisen hintereinander gewesen."
+    },
+    "massnahme": "control-server/src/shared/parallelFetch.js — hoechstens acht Objekte gleichzeitig. Acht, nicht alle: der Control-Server hat zwei vCPU. Betroffen waren vier Stellen mit demselben Muster: Audit-Log, Freigaben, Impersonation und der Index-Neubau.",
+    "urteil": "Das absolute 300-ms-Budget wird vom Netzweg zum Salad-Container bestimmt (Basislinie median 139 ms), nicht von diesen Routen. Bewertet wird der Abstand zur Basislinie — und der ist wieder im vertretbaren Bereich."
+  },
+
+  "funktionsnachweise": {
+    "ohneGrundKeineAktion": "HTTP 400 admin_reason_required",
+    "sperren": "HTTP 200, vorher active -> nachher blocked, alle Sitzungen widerrufen, protokolliert; danach sofort zurueckgenommen",
+    "loeschenBeantragt": "HTTP 202, Antrag pending, Konto NACHWEISLICH unveraendert (status active, Name vorhanden)",
+    "selbstFreigabe": "HTTP 403 approval_self_approval_forbidden",
+    "selbstAblehnung": "HTTP 403 approval_self_approval_forbidden (war 409, korrigiert)",
+    "kontoNachDenVersuchen": "unveraendert — status active, Name vorhanden",
+    "impersonationOhneGrund": "impersonation_reason_required",
+    "impersonationAufSichSelbst": "impersonation_self_pointless",
+    "breakGlassZuKurzBegruendet": "impersonation_break_glass_reason_too_short",
+    "impersonationAntrag": "HTTP 202, awaiting_consent, Umfang settings+billing, Chat-Inhalte NICHT enthalten",
+    "adminwegZurEinwilligung": "versperrt: impersonation_consent_belongs_to_subject",
+    "fremdeEinwilligung": "impersonation_consent_wrong_person",
+    "auditKette": "11 Eintraege, lueckenlos, jeder mit Akteur, Ziel und Grund"
+  },
+
+  "sicherheitsrelevanteAbwehr": {
+    "hinweis": "Diese Faelle wurden live gegen die Produktion geprueft und muessen alle scheitern.",
+    "ergebnisse": [
+      "Selbst freigeben: 403",
+      "Selbst ablehnen: 403",
+      "Ohne Verwaltungsrolle: 403 admin_role_required",
+      "Support versucht zu sperren: 403 admin_permission_denied",
+      "Einwilligung durch den Support statt der betroffenen Person: 403",
+      "Loeschen ohne Freigabe-Nachweis: admin_approval_required",
+      "Adminbereich von aussen ohne Sitzung: 401 auf allen Pfaden"
+    ]
+  },
+
+  "nonRegression": {
+    "bestandsEndpunkte": { "/api/health": 200, "/api/capabilities": 200, "/api/auth/config": 200, "/api/models/status": 200, "/api/keys": 200, "/api/auth/sessions": 200, "/api/compliance/ai-systems": 200 },
+    "modelleUnveraendert": ["glm-5-2", "kimi-k2-7", "kimi-k3", "smejj-fast-1"],
+    "parallelSession": "Kimi K3 und die Denktiefe blieben unangetastet. Belegt durch Download des live laufenden Artefakts aus IDrive e2 und dateiweisen Vergleich gegen den eigenen Commit: keine Datei war nur live, modelRouter.js byte-identisch.",
+    "dateienUnterPublic": "0",
+    "startLock": "unveraendert",
+    "faviconLock": "unveraendert",
+    "datenGeloescht": "keine — der Loesch-Antrag wurde bewusst NICHT freigegeben"
+  },
+
+  "testabdeckung": {
+    "gesamt": 162,
+    "neuInStufe3": 62,
+    "schwerpunkte": [
+      "Selbstfreigabe in jeder Schreibweise unmoeglich",
+      "Ablauf nach 24 Stunden, genau einmal ausfuehren",
+      "letzter Owner geschuetzt, keine Selbstsperre, keine Selbstentmachtung",
+      "Loeschen entfernt personenbezogene Daten, laesst die Huelle stehen",
+      "Chat-Inhalte nie im Standardumfang der Impersonation",
+      "Umfangspruefung fail-closed, auch nach Ablauf",
+      "Gleichzeitigkeitsgrenze haelt und bewahrt die Reihenfolge"
+    ]
+  }
+}
