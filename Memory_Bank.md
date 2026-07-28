@@ -374,69 +374,20 @@ Sprachseiten — Begruendung in der Kapsel.
 
 ---
 
-### [2026-07-28] QA-WELLEN 1-3 VOLLSTAENDIG BEHOBEN (job_qa_wellen_1_3_20260728)
+### [2026-07-28] QA-Wellen 1-3 ausgelagert
 
-Freigabe "smejj.com 100 % fertig" (Wof Kadavanich, 2026-07-28) plus
-Abschlussauftrag "Mach komplett fertig, lass nicht offen".
+Der vollstaendige Eintrag "QA-WELLEN 1-3 VOLLSTAENDIG BEHOBEN"
+(job_qa_wellen_1_3_20260728) steht wortgleich in
+[docs/memory/Memory_Bank_2026-07-28_qa_wellen.md](docs/memory/Memory_Bank_2026-07-28_qa_wellen.md).
+Ausgelagert am 2026-07-28 wegen der 800-Zeilen-Regel. Nichts geloescht.
 
-Verifizierte Ergebnisse (alle live auf https://smejj.com, check:all 37/37 und
-release:preflight gruen):
 
-- Recht: Impressum und Datenschutz nannten ZWEI verschiedene Gesellschaften
-  (iMild LLC vs. AUS2001 LLC) — vereinheitlicht auf iMild LLC. Salad und Zeabur
-  als Auftragsverarbeiter ergaenzt. Die Erklaerung versprach ein HttpOnly-Cookie
-  smejj_session, das es nicht gibt; jetzt beschreibt sie den localStorage-Token.
-- Sicherheit: Meta-CSP + Klickjacking-Schutz (GitHub Pages kann keine Header).
-  /api/auth/me und /api/auth/session-token tragen jetzt no-store — sie trugen
-  Identitaet bzw. einen gueltigen Token und waren cachebar.
-- Produktkern: Coding-Jobs scheiterten nach jeder Ruhephase, weil der Runner
-  Kaltstart-Fehler sofort dreimal wiederholte. Jetzt Wartezeit 45/90 s mit
-  sichtbarem Zustand. Repository-Berechtigung greift VOR dem Rechenpfad.
-  Ein seit 15 Tagen haengender Job wird beim Hydrieren als failed markiert.
-- Suche fand nur den gerade geoeffneten Chat (DOM statt Speicher) — jetzt den
-  ganzen Chat-Speicher, Treffer oeffnet die Unterhaltung.
-- Barrierefreiheit: Fokusfuehrung im Sprachmodus, ARIA-Reiter in den
-  Einstellungen, Seitentitel je Ansicht, eigener Fokusstil, Klickflaechen 24x24.
+### [2026-07-27] Salad-Abloesung ausgelagert
 
-WICHTIGE LEHREN (verifiziert, gelten weiter):
-
-1. Aufklappmenues bei UI-Pruefungen OEFFNEN. Die Zaehlung nach
-   offsetParent !== null uebersieht alles in einem geschlossenen <details> —
-   dadurch meldete ich "Projekte nicht loeschbar", obwohl der Knopf im
-   "Mehr"-Menue sass (W2-02, im Bericht zurueckgezogen).
-2. offsetParent ist bei position:fixed IMMER null. Sichtbarkeit dort ueber
-   getBoundingClientRect() pruefen, sonst gilt ein offener Dialog als geschlossen.
-3. Vor dem Deploy den Live-Stand gegen den EIGENEN Vorzustand hashen. So fiel
-   auf, dass die i18n-Buendel live 2 Schluessel voraus waren — ein Upload der
-   lokalen Datei haette sie in 14 Sprachen geloescht.
-4. Eine Verschaerfung kann fail-closed zum Totalausfall werden: W3-02 blockierte
-   nach dem Release ALLE Coding-Auftraege, weil SMEJJ_GITHUB_OWNER_ALLOWLIST nie
-   gesetzt war. Nur der Live-Test hat es gefunden. Allowlist steht jetzt auf
-   "smejjcom" (Salad-Env, Version 86).
-5. Fehlendes Cache-Control taeuscht Messungen vor: Ein vermeintlicher
-   Identitaets-Bug war der HTTP-Cache, der eine angemeldete Antwort auf eine
-   anonyme Anfrage auslieferte.
-6. check:all und release:preflight riefen pnpm auf, das auf dem Rechner des
-   Betreibers fehlt — der Release-Gate war nie ausfuehrbar. Beide nutzen jetzt
-   npm; AGENTS.md und FAVICON_LOCK.md nachgezogen.
-
-OFFEN (nicht durch Entwicklung loesbar): englische Rechtstexte und die
-juristische Bewertung aller Datenschutz-/Impressumsformulierungen.
-Alle vier laufenden Salad-Container sind erforderlich (Zuordnung zu config.js
-belegt; die Browser-Bruecke ruft cherry-wasabi ueber
-SMEJJ_REMOTE_BROWSER_WORKER_URL).
-
-### [2026-07-27] SALAD-ABLOESUNG ABGESCHLOSSEN (sw v146) — Zeabur traegt Chat UND Stimme
-- Typ: verified success (Live-Messung, byte-verifiziert). Betreiber hat den Groq-Key selbst als SMEJJ_LLM_GROQ_API_KEY beim Zeabur-Dienst smejj-chat-bridge hinterlegt ("hab", 2026-07-27); nach Bridge-Restart Schnellspur aktiv (groq:llama-3.1-8b-instant).
-- ERGEBNIS: Zeabur primaer fuer Chat/Agent mit 0,3-0,8 s erstem Token (SCHNELLER als Salad 0,57-0,8 s — Rechenzentrum + Groq). Salad-Bridge (1 Replika) nur noch automatische Reserve via fetch-retry-Mehrfachendpunkt. Premium-Stimme (Piper de) weiter auf Zeabur, premiumVoice:true. config.js/sw.js v146 live byte-identisch.
-- Auf Salad verbleiben NUR: Control-Server (Auth/Router/Jobs, redbean) + Reserve-Bridge + gestoppte Worker. Deren Umzug = eigenes Projekt (Betreiber-Secrets).
-
-### [2026-07-27] SALAD-ABLOESUNG ZWISCHENSTAND (sw v145) — Stimme komplett auf Zeabur, Chat gemessen und korrigiert
-- Typ: verified success (Live-Messung entschied die Topologie). Freigabe: "Kannst du langsam von Salad trennen ... geh zeabur.com und erledige komplett" (Wof Kadavanich, 2026-07-26/27).
-- STAND: (1) Premium-Stimme laeuft VOLL auf Zeabur (Piper de_DE-thorsten-medium auf smejj-voice-piper, intern via zeabur.internal:8080; Bridge v100 KIND=piper, Sprach-Gate SMEJJ_VOICE_TTS_LANGS=de; TTS-Beleg: 110 KB WAV in 0,9 s). Salad-GPU-Worker smejj-voice-tts GESTOPPT (spart 1-2 $/Tag). (2) Chat/Agent: v144 hatte Zeabur primaer — LIVE-MESSUNG: Zeabur 2,2-3,2 s erster Token (kein Groq-Key dort, Weg ueber Control-Router) vs. Salad 0,57-0,8 s (Groq-Schnellspur). v145 = Tempo-Korrektur: Salad primaer, Zeabur automatische Reserve (fetch-retry Mehrfach-Endpunkt). (3) Salad-Bridge von 3 auf 1 Replika (Reserve-Groesse; Ausfallschutz kommt jetzt vom Zeabur-Fallback).
-- PIPER-STOLPERFALLE: piper-tts 1.6 laedt Stimmen NICHT mehr automatisch — erst `python -m piper.download_voices <stimme>`, dann `python -m piper.http_server --host 0.0.0.0 --port 8080 -m <stimme> --data-dir ...`; sonst Crash-Loop ("Unable to find voice") und Zeabur suspendiert den Dienst (im Portal: Restart). Zeabur-Dienst: python:3.11-slim + Start-Command, KEIN oeffentliches Domain-Binding noetig (nur intern).
-- OFFEN (Betreiber, 30 Sek, fuer VOLL-Trennung des Chats): Groq-API-Key als GROQ/SMEJJ_LLM_GROQ_API_KEY-Variable beim Zeabur-Dienst smejj-chat-bridge einfuegen (Variable-Tab) -> danach config.js wieder auf Zeabur-primaer drehen (sw-Bump) — dann ist Chat blitzschnell OHNE Salad. Control-Server (Auth/Router/Jobs) liegt weiterhin auf Salad; dessen Umzug ist ein eigenes Projekt (viele Secrets, nur Betreiber).
-- ZEABUR-VORSICHT: Service-Seitenleiste kann beim Navigieren den falschen Dienst treffen — vor Restart IMMER den Dienstnamen auf der Seite verifizieren (einmal versehentlich Maus-Engine neu gestartet, folgenlos).
+Die beiden Eintraege zur Salad-Abloesung (sw v145 und v146, Zeabur traegt Chat
+und Stimme) stehen wortgleich in
+[docs/memory/Memory_Bank_2026-07-27.md](docs/memory/Memory_Bank_2026-07-27.md).
+Ausgelagert am 2026-07-28 wegen der 800-Zeilen-Regel. Nichts geloescht.
 
 ### [2026-07-26] Aeltere Eintraege ausgelagert
 

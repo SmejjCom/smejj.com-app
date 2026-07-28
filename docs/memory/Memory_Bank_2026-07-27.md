@@ -182,3 +182,20 @@ Tages-Eintraege, die jeweils ihre Task Capsule referenzieren.
   Service-Worker-Precache, wird aber von settings-surface.js importiert (die im
   Precache liegt). Offline findet der Import nichts.
 
+
+
+---
+
+## Nachtrag, ausgelagert am 2026-07-28
+
+### [2026-07-27] SALAD-ABLOESUNG ABGESCHLOSSEN (sw v146) — Zeabur traegt Chat UND Stimme
+- Typ: verified success (Live-Messung, byte-verifiziert). Betreiber hat den Groq-Key selbst als SMEJJ_LLM_GROQ_API_KEY beim Zeabur-Dienst smejj-chat-bridge hinterlegt ("hab", 2026-07-27); nach Bridge-Restart Schnellspur aktiv (groq:llama-3.1-8b-instant).
+- ERGEBNIS: Zeabur primaer fuer Chat/Agent mit 0,3-0,8 s erstem Token (SCHNELLER als Salad 0,57-0,8 s — Rechenzentrum + Groq). Salad-Bridge (1 Replika) nur noch automatische Reserve via fetch-retry-Mehrfachendpunkt. Premium-Stimme (Piper de) weiter auf Zeabur, premiumVoice:true. config.js/sw.js v146 live byte-identisch.
+- Auf Salad verbleiben NUR: Control-Server (Auth/Router/Jobs, redbean) + Reserve-Bridge + gestoppte Worker. Deren Umzug = eigenes Projekt (Betreiber-Secrets).
+
+### [2026-07-27] SALAD-ABLOESUNG ZWISCHENSTAND (sw v145) — Stimme komplett auf Zeabur, Chat gemessen und korrigiert
+- Typ: verified success (Live-Messung entschied die Topologie). Freigabe: "Kannst du langsam von Salad trennen ... geh zeabur.com und erledige komplett" (Wof Kadavanich, 2026-07-26/27).
+- STAND: (1) Premium-Stimme laeuft VOLL auf Zeabur (Piper de_DE-thorsten-medium auf smejj-voice-piper, intern via zeabur.internal:8080; Bridge v100 KIND=piper, Sprach-Gate SMEJJ_VOICE_TTS_LANGS=de; TTS-Beleg: 110 KB WAV in 0,9 s). Salad-GPU-Worker smejj-voice-tts GESTOPPT (spart 1-2 $/Tag). (2) Chat/Agent: v144 hatte Zeabur primaer — LIVE-MESSUNG: Zeabur 2,2-3,2 s erster Token (kein Groq-Key dort, Weg ueber Control-Router) vs. Salad 0,57-0,8 s (Groq-Schnellspur). v145 = Tempo-Korrektur: Salad primaer, Zeabur automatische Reserve (fetch-retry Mehrfach-Endpunkt). (3) Salad-Bridge von 3 auf 1 Replika (Reserve-Groesse; Ausfallschutz kommt jetzt vom Zeabur-Fallback).
+- PIPER-STOLPERFALLE: piper-tts 1.6 laedt Stimmen NICHT mehr automatisch — erst `python -m piper.download_voices <stimme>`, dann `python -m piper.http_server --host 0.0.0.0 --port 8080 -m <stimme> --data-dir ...`; sonst Crash-Loop ("Unable to find voice") und Zeabur suspendiert den Dienst (im Portal: Restart). Zeabur-Dienst: python:3.11-slim + Start-Command, KEIN oeffentliches Domain-Binding noetig (nur intern).
+- OFFEN (Betreiber, 30 Sek, fuer VOLL-Trennung des Chats): Groq-API-Key als GROQ/SMEJJ_LLM_GROQ_API_KEY-Variable beim Zeabur-Dienst smejj-chat-bridge einfuegen (Variable-Tab) -> danach config.js wieder auf Zeabur-primaer drehen (sw-Bump) — dann ist Chat blitzschnell OHNE Salad. Control-Server (Auth/Router/Jobs) liegt weiterhin auf Salad; dessen Umzug ist ein eigenes Projekt (viele Secrets, nur Betreiber).
+- ZEABUR-VORSICHT: Service-Seitenleiste kann beim Navigieren den falschen Dienst treffen — vor Restart IMMER den Dienstnamen auf der Seite verifizieren (einmal versehentlich Maus-Engine neu gestartet, folgenlos).
