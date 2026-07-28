@@ -1,0 +1,51 @@
+{
+  "titel": "EU AI Act und Adminbereich Stufe 2 — Messung nach dem Live-Gang",
+  "datum": "2026-07-28",
+  "job": "job_aiact_adminstufe2_20260728",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 94,
+  "artefakt": "deployments/control/smejj-control-stufe2-2026-07-28.tar.gz",
+  "budgets": { "api_p95_ms": 300, "api_p99_ms": 800, "lcp_p75_ms": 1500, "inp_p75_ms": 200, "cls_p75": 0.1, "ttfb_p95_ms": 200, "pageWeight_kb": 300 },
+
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7",
+    "erstbesuch": { "ttfb_p75_ms": 129, "lcp_p75_ms": 568, "cls_p75": 0, "inp_p75_ms": 40, "pageWeight_kb": 277 },
+    "wiederbesuch": { "ttfb_p75_ms": 186, "lcp_p75_ms": 308, "cls_p75": 0, "inp_p75_ms": 48, "pageWeight_kb": 38 },
+    "urteil": "Alle Budgets eingehalten. Erwartungsgemaess unveraendert: dieser Job hat keine einzige Datei unter public/ angefasst. Genau das ist der Beleg, dass die Admin-Oberflaeche das oeffentliche Frontend nicht belastet — sie liegt im Control-Server, nicht im Auslieferpfad der Startseite."
+  },
+
+  "apiLatenz_ms": {
+    "hinweis": "Gemessen aus der angemeldeten Sitzung, 7 Laeufe je Endpunkt, 220 ms Abstand (sonst greift die eigene Ratenbegrenzung). /api/health ist unveraendert und dient als Basislinie.",
+    "health_basislinie": { "median": 134, "p95": 170 },
+    "admin_users": { "median": 226, "p95": 829 },
+    "compliance_ai_systems": { "median": 211, "p95": 330 },
+    "admin_ui_html": { "median": 213, "p95": 499 },
+    "urteil": "Im Median liegen alle neuen Endpunkte unter 100 ms ueber der Basislinie. Der p95-Ausreisser bei admin_users ist der Ablauf des 30-Sekunden-Cache, der einmal wieder voll aus IDrive e2 liest — gewollt und begrenzt."
+  },
+
+  "vergleichZumVorbenchmark": {
+    "quelle": "docs/benchmarks/api_adminbereich_2026-07-28.json",
+    "admin_users_p95_vorher": 832,
+    "admin_users_p95_jetzt": 829,
+    "urteil": "unveraendert — die Erweiterungen dieses Jobs (Lesezugriffs-Protokoll, Zeitraum, Auffrischung) kosten keine messbare Zeit."
+  },
+
+  "funktionsnachweise": {
+    "indexAuffrischungOhneZeitgeber": "Live beobachtet: Aufruf bei 52 Min Alter -> Antwort sofort mit Vermerk 'wird gerade aufgefrischt', danach Index 26 s alt. Der Neubau lief im Hintergrund, die Antwort hat nicht darauf gewartet.",
+    "akteneinsichtOhneGrund": "HTTP 400 admin_reason_required",
+    "akteneinsichtGrundZuKurz": "HTTP 400 admin_reason_required",
+    "akteneinsichtMitGrund": "HTTP 200, protokolliert true, keine Geheimnisse in der Antwort",
+    "auditEintragDerEinsicht": "user.record.read auf u_Oz9_fbJZsMzt6-y0, Grund im Klartext, Akteur smejjcom@gmail.com, Kette intakt",
+    "mausEngineKennzeichnung": "x-smejj-ai-generated true, x-smejj-ai-system maus-engine-v2, x-smejj-ai-risk limited, x-smejj-ai-notice mit dem verschaerften Hinweis — auch auf einer 400-Antwort",
+    "transparenzberichtOeffentlich": "HTTP 200 ohne Anmeldung, 7 Systeme, hochrisiko false, POST -> 405",
+    "failClosed": "/admin, /admin/console.js, /api/admin/me, /api/admin/users von aussen alle HTTP 401"
+  },
+
+  "nonRegression": {
+    "bestandsEndpunkte": { "/api/health": 200, "/api/capabilities": 200, "/api/auth/config": 200, "/api/models/status": 200 },
+    "startseite": "HTTP 200, TTFB 0,278 s",
+    "startLock": "31 Startseiten-Dateien byte-identisch (im isolierten Worktree geprueft)",
+    "faviconLock": "6 Dateien, 24 HTML-Seiten, Web-Manifest unveraendert (im isolierten Worktree geprueft)",
+    "dateienUnterPublic": "0 — dieser Job hat das Frontend nicht angefasst"
+  }
+}

@@ -5,6 +5,24 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-28] EU AI ACT NACHGEWIESEN + ADMINBEREICH STUFE 2 LIVE (job_aiact_adminstufe2_20260728)
+
+Volltext wegen der 800-Zeilen-Regel ausgelagert nach
+[docs/memory/Memory_Bank_2026-07-28_aiact_adminstufe2.md](docs/memory/Memory_Bank_2026-07-28_aiact_adminstufe2.md).
+Commit `c450fbf`, Control-Server **Version 94**, Konsole unter `/admin`. Kurzfassung:
+
+- AI-Act-Ausgangslage war NULL (kein Treffer im ganzen Repository). Jetzt Bestands-
+  verzeichnis, Risikoeinstufung Maus-Engine (**kein Hochrisiko, aber verschaerfte
+  Transparenz**) und `/api/compliance/ai-systems` ohne Anmeldung.
+- **Die Admin-Oberflaeche liegt im Control-Server, nicht unter `public/`** — kein DNS,
+  kein Frontend-Deploy, kein Service-Worker, kein Start-Lock-Risiko.
+- FALLE: Routen, die HTML an Menschen ausliefern, gehoeren NICHT in
+  `requiresAuthenticatedControlAccess` — sonst kommt rohes JSON statt einer Erklaerung.
+- Lesezugriffe auf Nutzerakten sind jetzt protokollpflichtig (`user.record.read`);
+  ohne Nachweis keine Daten. Der offene Punkt aus Stufe 1 ist geschlossen.
+- **Artefakt IMMER aus einem isolierten Worktree des eigenen Commits bauen**, nie aus
+  dem Hauptbaum — sonst geht fremder, unverbuchter Arbeitsstand mit live.
+
 ### [2026-07-28] HILFESEITE LIVE — Inhalte gegen den Quelltext getestet (job_hilfeseite_20260728)
 
 Freigabe: "Ja" auf den Vorschlag Hilfeseite (Wof Kadavanich, 2026-07-28).
