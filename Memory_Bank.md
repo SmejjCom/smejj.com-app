@@ -5,6 +5,27 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-28] ADMINBEREICH STUFE 7 LIVE — Geld (job_adminstufe7_20260728)
+
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-07-28_adminstufe7.md](docs/memory/Memory_Bank_2026-07-28_adminstufe7.md).
+Commit `ad34cc5`, Control-Server **Version 110**. Damit sind 21 der 26 A-Z-Module
+gebaut; offen bleibt nur noch Produkt. Kurzfassung:
+
+- **E Abrechnung:** ein Zahlungsausfall ist eine Aufgabe, kein Logeintrag — er
+  steht oben und sagt, was zu tun ist. Der Kunden-Datensatz kennt nur sha256 der
+  Adresse; bleibt die Zuordnung offen, steht die Kennung da, **nie eine geratene
+  Adresse**. Betraege und Zahlungsmittel bleiben bei Stripe.
+- **F Kosten:** **das Modul sagt ausdruecklich, was es nicht weiss.** Es gibt
+  keine Token-Erfassung je Konto und keine Preisliste je Modell. Statt
+  "0,00 USD" steht eine benannte Fehlanzeige. **Eine Luecke gehoert benannt,
+  nicht mit einer Null gefuellt: wer die Luecke sieht, kann sie schliessen; wer
+  eine Null sieht, haelt sie fuer ein Ergebnis.** Getrennt gefuehrt werden
+  GEMESSEN, UEBERNOMMEN (Zitat mit Quelle) und NICHT ERFASST.
+- FALLE: ein **automatischer Umlaut-Umbau ueber Fliesstext** erzeugte halb
+  konvertierten Text und brach drei Tests — vollstaendig zurueckgenommen.
+  **Eine automatische Ersetzung ueber Fliesstext ist keine Refaktorierung.**
+
 ### [2026-07-28] ADMINBEREICH STUFE 6 LIVE — Sicherheit (job_adminstufe6_20260728)
 
 Volltext ausgelagert nach

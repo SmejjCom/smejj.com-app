@@ -1,0 +1,70 @@
+{
+  "titel": "Adminbereich Stufe 7 — Abrechnung & Abos, Kosten & Budgets",
+  "datum": "2026-07-28",
+  "job": "job_adminstufe7_20260728",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 110,
+  "artefakt": "deployments/control/smejj-control-stufe7-2026-07-28.tar.gz",
+  "rueckweg": ["deployments/control/smejj-control-stufe6b-2026-07-28.tar.gz (Stand vor diesem Job)"],
+  "commits": ["ad34cc5"],
+  "abdeckung": {
+    "module": "21 von 26 A-Z-Modulen gebaut",
+    "neuInStufe7": ["E Abrechnung & Abos", "F Kosten & Budgets"],
+    "offen": ["S Wissen", "T Sprachen", "V E-Mail", "W Analytik", "X Experimente", "Y Aufgaben"]
+  },
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "leitentscheidungen": {
+    "lueckeStattNull": "Es gibt keine Token-Erfassung je Konto und keine Preisliste je Modell. Statt '0,00 USD' zeigt das Modul eine benannte Fehlanzeige. Eine Luecke gehoert benannt, nicht mit einer Null gefuellt: wer die Luecke sieht, kann sie schliessen; wer eine Null sieht, haelt sie fuer ein Ergebnis.",
+    "dreiEbenen": "GEMESSEN (Budget-Grenzen, Reservierungen), UEBERNOMMEN (Kostenpositionen als Zitat mit Quellenangabe), NICHT ERFASST (die Luecken) bleiben sauber getrennt.",
+    "keinZweiterSchreibweg": "Beide Module sind rein lesend. Abrechnung wird bei Stripe geaendert — eine zweite Stelle waere eine zweite Wahrheit ueber Geld.",
+    "keineBetraege": "Betraege, Zahlungsmittel und Rechnungen werden nicht gespiegelt; Test prueft die Antwort gegen betrag/amount/karte/card/iban.",
+    "adresseNieGeraten": "Der Kunden-Datensatz kennt nur sha256 der Adresse. Bleibt die Zuordnung offen, steht die Kunden-Kennung da — nie eine geratene Adresse."
+  },
+  "funktionsnachweiseLive": {
+    "budgetGateScharf": "Live gemessen: scharf, Hoechstbetrag 0,10 USD je Lauf, Hoechstlaufzeit 30 Min, 1 gleichzeitiger Worker, neuer Lauf zulaessig.",
+    "reservierungFehlanzeige": "Kapazitaetsspeicher nicht eingerichtet — die Ansicht zeigt 'nicht erreichbar', keine Null.",
+    "abos": "Keine Stripe-Abos vorhanden; die Ansicht sagt 'keine offenen Zahlungen' und nennt die Quelle der Daten.",
+    "ohneAnmeldung": "/api/admin/geld/{abos,kosten} liefern 401; POST liefert 405 mit dem Hinweis auf Stripe."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Automatischer Umlaut-Umbau ueber Fliesstext",
+      "wirkung": "Ein Skript sollte serverseitige Hinweistexte von 'waere' auf 'wäre' umstellen. Ergebnis: halb konvertierter Text ('wäre die gefaehrlichste Zahl') und drei gebrochene Tests — die Wortliste konnte nicht jede Beugung treffen.",
+      "behoben": "Vollstaendig zurueckgenommen. Die ASCII-Schreibweise bleibt einheitlich mit dem uebrigen Servercode.",
+      "regel": "Eine automatische Ersetzung ueber Fliesstext ist keine Refaktorierung. Entweder man liest jede Stelle, oder man laesst es — ein halb umgestellter Text ist schlechter als ein durchgaengig einfacher."
+    }
+  ],
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7 (aus dem Stufe-4-Lauf, unveraendert gueltig)",
+    "urteil": "Alle Budgets eingehalten. Erwartungsgemaess unveraendert: dieser Job hat keine Datei unter public/ angefasst."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, durchgehend gruen.",
+    "parallelSession": "Live-Artefakt heruntergeladen und dateiweise verglichen: keine fremde Arbeit enthalten.",
+    "preflight": "npm run release:preflight vollstaendig gruen; check:release-imports 161 Dateien transitiv.",
+    "bestehendeRechteUnveraendert": "Nur eine Berechtigung ergaenzt (billing.read). Keine bestehende Zeile der Rechtematrix geaendert.",
+    "keineNeuenSchreibwege": "Stufe 7 fuegt keine einzige Schreibaktion hinzu."
+  },
+  "testabdeckung": {
+    "gesamt": 300,
+    "neuInStufe7": 17,
+    "schwerpunkte": [
+      "keine erfundene Ausgaben-Zahl — es gibt kein Feld, das man als Null missdeuten kann",
+      "die Token-Luecke wird beim Namen genannt",
+      "gemessen und uebernommen bleiben getrennt, mit Quellenangabe",
+      "ist das Budget-Gate scharf — und was fehlt, wenn nicht",
+      "ein Zahlungsausfall steht oben und sagt, was zu tun ist",
+      "die Kunden-Kennung wird ueber den Hash zur Adresse; unbekannt bleibt offen",
+      "Betraege und Zahlungsmittel werden nicht gespiegelt",
+      "Testabos werden getrennt gezaehlt"
+    ]
+  }
+}
