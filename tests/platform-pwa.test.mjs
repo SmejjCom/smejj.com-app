@@ -78,7 +78,7 @@ test("service worker caches only small app shell assets and has offline fallback
   // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
   // v157 -> v158 am 2026-07-28: englische Hoeflichkeitsfassungen der Rechtstexte
   // im Precache (siehe tests/profile-dock.test.mjs).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v162"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v163"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   // view-chrome.css liegt seit dem Ladezeit-Buendel (2026-07-27) in start-styles.css.
   assert.match(sw, /\/assets\/start-styles\.css/);
