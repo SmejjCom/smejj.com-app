@@ -36,7 +36,7 @@ import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/sr
 import { createRateLimiter } from "./shared/rateLimiter.js";
 import { classifyProfile, executeWithFallback, resolveModelRequest } from "../control-server/src/llm/modelRouter.js";
 import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability.js";
-import { pipeVisibleModelStream } from "../control-server/src/llm/streamFilter.js";
+import { streamWithTools, withAgentTools } from "../control-server/src/llm/streamFilter.js";
 import { allowedOriginsFromEnv, corsHeadersFor, handlePreflight } from "../control-server/src/http/cors.js";
 import { installCrashGuard } from "../control-server/src/http/crashGuard.js";
 import { createStaticHandlers } from "./http/staticServing.js";
@@ -642,14 +642,13 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
       requestedModelId: selection.requestedModelId
     });
   }
-  const result = await executeWithFallback(chain, messages, {
+  const modelOptions = withAgentTools({
     temperature: 1.0,
     maxTokens: maxTokens ?? boundedInteger(process.env.SMEJJ_PUBLIC_MODEL_MAX_TOKENS, 512, 8_192, 4_096),
     ...(thinking === undefined ? {} : { thinking })
   });
-  if (!result.ok || !result.response.body) {
-    return json(res, 502, { error: "All model backends failed.", attempts: result.attempts });
-  }
+  const result = await executeWithFallback(chain, messages, modelOptions);
+  if (!result.ok || !result.response.body) return json(res, 502, { error: "All model backends failed.", attempts: result.attempts });
   res.writeHead(200, {
     ...SECURITY_HEADERS,
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -660,7 +659,7 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
     "x-smejj-requested-model-id": selection.requestedModelId,
     "x-smejj-model-fallback": String(result.logicalModelId !== selection.requestedModelId)
   });
-  await pipeVisibleModelStream(result.response.body, res);
+  await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback });
   res.end();
 }
 

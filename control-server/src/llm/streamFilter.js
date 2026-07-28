@@ -1,3 +1,7 @@
+// Weiterreichung fuer src/server.js: die Datei steht hart an der 800-Zeilen-Grenze
+// und darf keine zusaetzliche Import-Zeile bekommen (2026-07-28).
+export { streamWithTools, withAgentTools } from "./toolLoop.js";
+
 const OPEN_THINK = "<think>";
 const CLOSE_THINK = "</think>";
 const INTERNAL_REASONING_FIELDS = Object.freeze([
