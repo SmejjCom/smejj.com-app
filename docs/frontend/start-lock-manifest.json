@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T11:54:33.030Z",
-  "confirmation": "Soll diese Reihenfolge sein: smejj 1.0, K3, GLM-5.2, Cline, K2.7 (Wof Kadavanich, 2026-07-28)",
+  "frozenAt": "2026-07-28T12:18:35.308Z",
+  "confirmation": "FREIGABE — Maus-Sichtbarkeit (Wof Kadavanich, 2026-07-28): Ich gebe Änderungen an public/index.html und public/browser-pane.js frei, ausschließlich um die Maus-Wiedergabe im rechten Browser-Panel der Startseite anzeigen zu können.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "058c2d7550f166a6bb4d8def763b3893fadb5299824f4211ede1e41fdf3337be",
+    "public/index.html": "bf24f2dc8e78edb28e02a370e64d0bb1dcf2f1c3b9e9cd2e6213255e199bf2c2",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -21,7 +21,7 @@
     "public/composer-tools.js": "2a17c7fdeebc4494cc7fa9357fe5e6b0bedcc32497e86be0e0ab587552d12906",
     "public/composer-plus-menu.js": "f41fe15db290dc044322648c5b2ab4d7e175754350e9c5e59d816d801236dd37",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "269734a1fe3180df3cc505edce66658cf1fd4d3eba78cc3e2c2b3fb2f5c3ba13",
+    "public/browser-pane.js": "c77c5e316f7c07cb77191a5b4a1ab08e72c2c75a03b417eac70d513bb7917982",
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
     "public/panel-backdrop.js": "9c5fa67cc79f6cc22373e604b2c7a83ecbd06372bbd72b566adb6413d23b78cd",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
