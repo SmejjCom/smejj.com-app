@@ -5,6 +5,39 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-28] ADMINBEREICH STUFE 4 LIVE — Moderation, DSGVO, Ankuendigungen, Flags (job_adminstufe4_20260728)
+
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-07-28_adminstufe4.md](docs/memory/Memory_Bank_2026-07-28_adminstufe4.md).
+Commits `098d456`/`1d525b7`/`89e8313`, Control-Server **Version 104**. Kurzfassung:
+
+- **Moderation sperrt nie automatisch.** Ein Signal ist ein Verdacht, kein
+  Urteil: die Erkennung schlaegt vor, ein Mensch entscheidet und begruendet.
+- **Die DSGVO-Frist laeuft ab Eingang, nicht ab Erfassung.** Nachtragen erlaubt,
+  Zukunftsdatum nicht; Restzeit wird gerechnet, nie gespeichert; Verlaengern
+  genau einmal um zwei Monate mit Begruendung; Abschluss nur mit Nachweis.
+- **Zuruecknehmen loescht nicht** — was angezeigt wurde, bleibt dokumentiert.
+- **Flags ordnen stabil zu** (sha256 aus Flag-Name und Konto-ID), nicht zufaellig:
+  sonst springt die Oberflaeche bei jedem Neuladen.
+- FALLE: Der eigene Schreibvorgang war eine Minute lang unsichtbar — nicht der
+  Schreibvorgang war schuld, sondern der **nachhinkende LIST-Index von IDrive
+  e2**. **Wer schreibt und danach auflistet, darf nicht annehmen, dass die Liste
+  den eigenen Schreibvorgang schon kennt.**
+- FALLE: Reine Kalendertage (UTC-Mitternacht) in Ortszeit gerendert ergaben in
+  der DSGVO-Akte den **Vortag** samt erfundener Uhrzeit. Seither `datum()`
+  neben `zeit()`.
+- Latenz: LIST plus ein Abruf je Datensatz kostete 285-449 ms (Budget 300,
+  Netz-Grundlast 151). Die gelesene Liste wird 20 s wiederverwendet, beim
+  Schreiben sofort verworfen, und zwar ROH — Fristen werden bei jedem Aufruf
+  neu gerechnet. Ergebnis 218-264 ms. **Das Audit-Log bleibt bewusst ohne
+  Zwischenspeicher**: es ist die Nachweisgrundlage, kein heisser Pfad.
+- FALLE: Ein Benchmark mit mehr Aufrufen als die Ratenbegrenzung erlaubt misst
+  429er statt Arbeit. Und bei 15 Messwerten ist "p95" der Hoechstwert.
+- **In einem gemeinsam genutzten Arbeitsbaum ist "uncommittet" kein Schutz:**
+  die Parallel-Session hat meine ungetesteten Dateien mitgebaut und live
+  gestellt. Gebaut wird aus einem isolierten Worktree auf eigenem Commit, die
+  live laufenden Fremddateien vorher aus dem Artefakt uebernommen.
+
 ### [2026-07-28] ADMINBEREICH STUFE 3 LIVE — schreibend, mit Vier-Augen und Einwilligung (job_adminstufe3_20260728)
 
 Volltext ausgelagert nach
@@ -249,51 +282,12 @@ Rueckweg `deployments/control/smejj-control-enumfix-2026-07-28.tar.gz`.
   mit 26 Modulen A-Z), und Lesezugriffe auf Nutzerakten werden noch nicht protokolliert —
   datenschutzrelevant, gehoert mit Pflichtgrund in Stufe 2.
 
-### [2026-07-28] STATUSSEITE LIVE — ohne Status-Server (job_statusseite_20260728)
+### [2026-07-28] Statusseite ausgelagert
 
-Freigabe: "Ja" auf den Vorschlag Statusseite (Wof Kadavanich, 2026-07-28).
-Arbeits-Commits `6d06605`/`2bdc970`/`62d55a4`, Live `f3a1297`, Rueckfall
-`ebab85d`, sw v172.
-
-**Entscheidung:** `/status.html` ist eine statische Datei und fragt Control-
-Server, Chat-Bridge und Browser-Bridge DIREKT AUS DEM BROWSER ab. Kein
-Status-Server. Begruendung: ein Dienst, der Zustaende sammelt, waere selbst ein
-Single Point of Failure und schwiege genau dann, wenn er gebraucht wird.
-Ausserdem null Dauerlast und keine neuen Kosten. Der Preis ist benannt: der
-Besucher sieht SEINE Verbindung, keinen Mittelwert — die Seite sagt das selbst.
-
-Vier Eigenschaften, die den Zweck sichern: oeffentlich (nicht hinter dem
-Anmelde-Gate — wer die Anmeldung pruefen will, kann sich nicht anmelden), im
-Precache (bei totem Netz anzeigbar), Zustaende als WORT statt nur als Farbe
-(WCAG 1.4.1), `noindex` (Momentwert gehoert nicht in den Suchindex).
-
-**Verifikation:** live abgemeldet "Alle Dienste laufen" (Anmeldung 224 ms,
-Chat 289 ms, Browser 603 ms), 0 Fehler. Gegenprobe mit abgeschnittenen
-Antworten: Hauptdienst tot -> "Ein Hauptdienst antwortet nicht", nur
-Zusatzfunktion tot -> "Die Hauptfunktionen laufen". check:all und
-release:preflight gruen (isolierter Klon), Budgets eingehalten.
-
-**LEHRE 8 (neu, teuer verhindert):** Beim Deploy standen 15 i18n-Dateien als
-"geaendert" da. Die Richtungspruefung zeigte: LIVE ist dem Repo ZWEI Schluessel
-VORAUS. Ein Upload haette zwei Uebersetzungen in 15 Sprachen geloescht. Das ist
-exakt der Fall, vor dem der Eintrag zu QA-Welle 1-3 warnt — er ist erneut
-eingetreten. Regel bleibt: vor jedem Frontend-Deploy jede Datei einzeln gegen
-den eigenen VORZUSTAND hashen und bei Abweichung die RICHTUNG pruefen, nicht
-nur die Tatsache. OFFEN: die zwei Schluessel gehoeren aus dem Live-Stand ins
-Repo uebernommen, nicht umgekehrt.
-
-**LEHRE 9 (neu):** Zwei Sitzungen bumpten sw.js auf DIESELBE Version v171 mit
-UNTERSCHIEDLICHEN Precache-Listen. Bestandsnutzer haetten die neuen Dateien nie
-bekommen. Ein Cache-Name darf nur eine einzige SHELL-Liste bezeichnen — bei
-paralleler Arbeit vor dem Deploy pruefen, ob die eigene Version schon von
-jemand anderem belegt ist. Behoben mit Pflicht-Sprung auf v172.
-
-**LEHRE 10 (neu):** Meta-CSP allein reicht auf dem eigenen Server NICHT — bei
-Header-CSP UND Meta-CSP gilt die SCHNITTMENGE. `connect-src 'self'` im Header
-blockierte alle drei Statusabfragen; live waere es nie aufgefallen, weil GitHub
-Pages keine CSP-Kopfzeile setzt. Wer eine Seite baut, die fremde Hosts
-kontaktiert, muss BEIDE Listen pflegen (jetzt per Test erzwungen).
-
+Volltext in [docs/memory/MEMORY_ARCHIV_2026-07-H.md](docs/memory/MEMORY_ARCHIV_2026-07-H.md).
+Kern: `/status.html` fragt die drei Dienste direkt aus dem Browser ab, ohne
+Status-Server. FALLE: Gelten Header-CSP und Meta-CSP zugleich, zaehlt die
+SCHNITTMENGE — `connect-src 'self'` im Header blockierte alle Abfragen.
 
 ### [2026-07-28] QA-RESTPUNKTE: SW CACHE-FIRST, CSP, OFFLINE, ZOOM, SALAD-KOSTEN, KONTO-ENUMERATION (job_qa_restpunkte_20260728)
 

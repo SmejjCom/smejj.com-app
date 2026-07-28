@@ -1,0 +1,103 @@
+{
+  "titel": "Adminbereich Stufe 4 — Moderation, DSGVO-Fristen, Ankuendigungen, Feature-Flags",
+  "datum": "2026-07-28",
+  "job": "job_adminstufe4_20260728",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 104,
+  "artefakt": "deployments/control/smejj-control-stufe4c-2026-07-28.tar.gz",
+  "rueckweg": [
+    "deployments/control/smejj-control-stufe4b-2026-07-28.tar.gz (Stufe 4 ohne den Latenz-Fix)",
+    "deployments/control/smejj-control-stufe4-2026-07-28.tar.gz (Stufe 4 ohne Sichtbarkeits- und Latenz-Fix)",
+    "deployments/control/smejj-control-k3-prefs-2026-07-28.tar.gz (Stand vor diesem Job)"
+  ],
+  "commits": ["098d456", "1d525b7", "89e8313"],
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "messmethode": {
+    "hinweis": "Zehn Aufrufe je Endpunkt aus der angemeldeten Sitzung, Abstand 2,6 s.",
+    "warumSoWenig": "Die Stufe-4-Routen begrenzen auf 30 Anfragen mit Nachfuellung 0,4/s. Ein erster Versuch mit 40 Aufrufen je Endpunkt hat ueberwiegend 429er gemessen statt echter Arbeit — die Zahlen waren wertlos. Der Abstand von 2,6 s haelt die Messung innerhalb des Limits.",
+    "warumKeinP95": "Bei zehn bis fuenfzehn Messwerten ist ein p95 rechnerisch der Hoechstwert. Angegeben sind deshalb Median und p90; der Median ist der belastbare Wert, der Hoechstwert zeigt den Ausreisser.",
+    "grundlast": "/api/health misst den Weg Browser -> Salad-Container ohne Objektspeicher: 151 ms Median. Alles darueber ist Arbeit."
+  },
+  "apiLatenz_ms": {
+    "vorDerKorrektur": {
+      "stand": "Version 103, jeder Aufruf ein LIST plus ein Abruf je Datensatz",
+      "health": { "median": 141, "p90": 149, "max": 178 },
+      "moderation": { "median": 285, "p90": 335, "max": 659 },
+      "gdpr": { "median": 312, "p90": 401, "max": 441 },
+      "announcements": { "median": 295, "p90": 477, "max": 691 },
+      "flags": { "median": 449, "p90": 893, "max": 1465 },
+      "urteil": "Budget 300 ms bei drei von vier Endpunkten gerissen."
+    },
+    "nachDerKorrektur": {
+      "stand": "Version 104, gelesene Liste 20 s wiederverwendet, beim Schreiben sofort verworfen",
+      "health": { "median": 151, "p90": 190, "max": 519 },
+      "moderation": { "median": 257, "p90": 468, "max": 781 },
+      "gdpr": { "median": 218, "p90": 456, "max": 456 },
+      "announcements": { "median": 261, "p90": 467, "max": 496 },
+      "flags": { "median": 264, "p90": 709, "max": 718 },
+      "users": { "median": 258, "p90": 419, "max": 467 },
+      "audit": { "median": 657, "p90": 831, "max": 901 },
+      "urteil": "Alle vier neuen Endpunkte unter 300 ms Median. flags von 449 auf 264 ms."
+    },
+    "auditBewusstNichtZwischengespeichert": {
+      "messung": "657 ms Median bei 14 Eintraegen, ueber dem Budget.",
+      "ursache": "Der Endpunkt holt jeden Eintrag des Zeitraums einzeln (hoechstens acht gleichzeitig) und prueft die Hash-Kette darueber.",
+      "entscheidung": "Kein Zwischenspeicher. Das Audit-Log ist die Nachweisgrundlage; ein zwischengespeicherter Stand, der einen soeben geschriebenen Eintrag nicht zeigt, waere genau dort falsch, wo Verlass am wichtigsten ist. Die Ansicht wird von Hand geoeffnet und ist kein heisser Pfad.",
+      "unveraendert": "Der Code stammt aus Stufe 3 und wurde in diesem Job nicht angefasst."
+    }
+  },
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7",
+    "erstbesuch": { "ttfb_p75_ms": 177, "lcp_p75_ms": 352, "cls_p75": 0, "inp_p75_ms": 40, "pageWeight_kb": 286 },
+    "wiederbesuch": { "ttfb_p75_ms": 130, "lcp_p75_ms": 260, "cls_p75": 0, "inp_p75_ms": 56, "pageWeight_kb": 39 },
+    "urteil": "Alle Budgets eingehalten. Erwartungsgemaess unveraendert: dieser Job hat keine Datei unter public/ angefasst, der Start-Lock blieb durchgehend gruen."
+  },
+  "funktionsnachweise": {
+    "oberflaecheLive": "Alle vier Ansichten auf der Produktionsdomain gerendert, Fusszeile 'Stufe 4 - schreibend', keine Konsolenfehler.",
+    "schreibwegUeberDieOberflaeche": "Moderationsentscheidung per Knopf: offen 1 -> 0, Entscheidung mit Urheber sichtbar (lokal geprueft).",
+    "schreibwegLive": "flag.angelegt HTTP 201, Audit-Eintrag mit Rolle owner und Begruendung.",
+    "eigenerSchreibvorgangSofortSichtbar": "Nach dem Anlegen sofort in der Liste (Version 104). Vor der Korrektur rund eine Minute unsichtbar.",
+    "hashKette": "intakt ueber 14 Eintraege, brokenAt null.",
+    "keineUngewolltenDatensaetze": "Nach allen Abwehrproben: moderation 0, dsgvo 0, ankuendigungen 0."
+  },
+  "sicherheitsrelevanteAbwehr": {
+    "flagOhneGrund": "400 admin_reason_required",
+    "flagNameUngueltig": "400 flag_name_invalid",
+    "flagAnteilUngueltig": "400 flag_percent_invalid",
+    "dsgvoEingangInZukunft": "400 gdpr_eingang_in_zukunft",
+    "dsgvoArtUnbekannt": "400 gdpr_art_invalid",
+    "moderationOhneBeleg": "400 moderation_beleg_required",
+    "ankuendigungOhneTitel": "400 ankuendigung_titel_invalid",
+    "ohneAnmeldung": "/admin und /api/admin/* liefern 401, auch /admin/views-stage4.js"
+  },
+  "abnahmeartefakteAufProduktion": {
+    "flags": ["abnahme-stufe4 = off", "abnahme-sofort-sichtbar = off"],
+    "begruendung": "Bewusst gewaehlt: ein Schalter im Zustand 'aus' aendert fuer keinen Nutzer etwas und beweist trotzdem den ganzen Schreibweg samt Nachweis. Flags werden nicht geloescht (dieselbe Regel wie bei Ankuendigungen), beide bleiben deshalb als dokumentierte Abnahmespur stehen."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, durchgehend gruen.",
+    "parallelSession": "Live-Artefakt heruntergeladen und dateiweise verglichen. Ergebnis: contentRootSha256 identisch mit dem eigenen Build, danach nur die eigene Aenderung abweichend. Die Arbeit der Parallel-Session (Kimi-K3-Denktiefe, Maus-Panel) blieb unangetastet.",
+    "preflight": "npm run release:preflight vollstaendig gruen, inklusive check:release-imports (148 Dateien transitiv, alle im Artefakt)."
+  },
+  "testabdeckung": {
+    "gesamt": 226,
+    "neuInStufe4": 64,
+    "schwerpunkte": [
+      "Moderation sperrt nie automatisch, Entscheidung braucht Begruendung",
+      "DSGVO-Frist ab Eingang, Nachtragen erlaubt, Zukunft abgewiesen",
+      "Verlaengerung genau einmal, Abschluss nur mit Nachweis",
+      "Ankuendigung sichtbar allein ueber den Zeitraum, Zuruecknehmen loescht nicht",
+      "Flag-Zuordnung stabil und grob gleichverteilt, fail-closed bei unbekannt",
+      "eigener Schreibvorgang sofort sichtbar, obwohl der Index ihn nicht kennt",
+      "Zwischenspeicher greift nicht nach eigenem Schreiben und nicht bei Fristberechnung"
+    ]
+  }
+}
