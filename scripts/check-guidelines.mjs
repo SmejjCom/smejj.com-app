@@ -38,8 +38,16 @@ const MAX_LINES = 800;
 // groundTask(task)), nicht vermehrt. Die gesamte Logik liegt in
 // public/browser-context.js (137 Zeilen), damit app.js nicht weiter waechst.
 // Ab diesem Stand wieder eingefroren; die Aufteilung von app.js bleibt eingeplant.
+// app.js-Baseline 1405 -> 1411 am 2026-07-28: Freigabe "smejj.com 100 % fertig"
+// (Wof Kadavanich, 2026-07-28) — Seitentitel je Ansicht (W2-05), Namensfeld
+// beim Projektanlegen (W2-09) und verstaendliche Rueckmeldung statt Roh-JSON
+// (W2-07). Netto +6 Zeilen. Die Titel-Logik wurde NICHT in app.js gelegt,
+// sondern nach public/view-title.js ausgelagert (24 Zeilen, im Precache) —
+// ohne diese Auslagerung waeren es +25 gewesen. Der Rest sind die Namensabfrage
+// und ihre Absicherung, die zwingend im Projekt-Handler stehen.
+// Ab diesem Stand wieder eingefroren; die Aufteilung von app.js bleibt eingeplant.
 const LEGACY_BASELINE = new Map([
-  ["public/app.js", 1405],
+  ["public/app.js", 1411],
   // styles.css-Baseline 1552 -> 1565 am 2026-07-04: .visually-hidden fuer das
   // H1 der Startseite (Freigabe "Ja, Option A + Labels"); ab hier wieder eingefroren.
   ["public/styles.css", 1565],
