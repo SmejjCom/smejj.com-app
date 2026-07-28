@@ -23,7 +23,18 @@ test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
   // Pane-CSS liegt seit 2026-07-27 im Startseiten-Buendel (start-styles.css).
   assert.match(html, /\/assets\/start-styles\.css/);
   assert.ok(fs.readFileSync("public/start-styles.css", "utf8").includes(".bp-frame"), "Pane-CSS fehlt im Buendel");
-  assert.match(html, /\/assets\/browser-pane\.js\?v=browser-pane-20260709-2/);
+  // Cache-Version 2026-07-28 auf -3 erhoeht: browser-pane.js exportiert seitdem
+  // sein state-Objekt, das maus-panel.js braucht. Ohne den Sprung haetten
+  // Bestandsnutzer die alte Datei unter der alten Query behalten (live erlebt).
+  // maus-panel.js MUSS dieselbe Query importieren — zwei Spezifizierer waeren
+  // zwei getrennte Modul-Instanzen mit getrenntem state.
+  assert.match(html, /\/assets\/browser-pane\.js\?v=browser-pane-20260728-3/);
+  assert.match(html, /\/assets\/maus-panel\.js\?v=/);
+  assert.match(
+    fs.readFileSync("public/maus-panel.js", "utf8"),
+    /\.\/browser-pane\.js\?v=browser-pane-20260728-3/,
+    "maus-panel.js muss dieselbe browser-pane-Version importieren wie index.html"
+  );
   assert.match(html, /data-jump="websites"[\s\S]*>Browser<\/button>/);
 });
 
