@@ -260,5 +260,58 @@
       "frontendRepoCommit": "a0b7de7"
     },
     "status": "ABGESCHLOSSEN — live auf https://smejj.com (sw v174), 45 Tests gruen, Touch-Ziele auf emuliertem Handy belegt"
+  },
+  "nachtrag_welle4": {
+    "titel": "Welle 4 — Quellen pro Antwort (sw v177, korrigiert in v178)",
+    "freigabe": {
+      "wortlaut": "Ja (auf die Empfehlung: Quellen anzeigen als letzter Punkt mit echtem Nutzerwert)",
+      "von": "Wof Kadavanich",
+      "am": "2026-07-28"
+    },
+    "problem": "browser-context.js laedt bei Auftraegen mit Web-Adresse die Seite und webt sie in die Frage — die Herkunft wurde danach verworfen. Die Nachrichten-Leiste konnte deshalb kein Quellen anzeigen bieten, ohne zu raten. Genau deshalb war der Punkt in Welle 1 bewusst weggelassen.",
+    "loesung": "browser-context.js merkt sich je Auftragstext, WAS geladen wurde (Adresse, Titel, HTTP-Status, Zeitpunkt), rein lokal und ohne zusaetzlichen Netzverkehr, mit Obergrenze 30. chat-actions.js ordnet die Quelle ueber die Frage DIREKT VOR der Antwort zu — nicht ueber die letzte Quelle, die bei schnellem Nachfassen zur falschen Antwort gehoeren koennte. Der Menuepunkt erscheint nur bei echtem Grounding; ein gescheiterter Abruf begruendet nichts und wird nicht gemerkt.",
+    "gefundene_fehler": [
+      "ZWEI MODULINSTANZEN (lokal gefunden, waere live nie aufgefallen): chat-actions.js importierte browser-context.js mit ?v=1, app.js ohne Query. Getrennte Quellen-Gedaechtnisse — app.js schrieb in das eine, die Leiste las aus dem anderen, der Menuepunkt waere NIE erschienen. Ein Test vergleicht jetzt beide Spezifizierer.",
+      "FALSCHE BEHAUPTUNG (live gefunden, sw v178): Gegroundet wird die FRAGE. Scheitert der Antwortstrom danach, stand neben der Fehlermeldung 1 Quelle mit example.com. Statt Fehlertexte zu erraten (bruechig, sie stehen in app.js) sagt die Liste jetzt was stimmt: 1 Seite fuer diese Frage geladen."
+    ],
+    "live_test": {
+      "domain": "https://smejj.com/",
+      "echtes_grounding": "example.com ueber den Server-Proxy geladen, Titel Example Domain, HTTP 200 — die Quellenliste zeigt genau das",
+      "panel_ist_geschwister": true,
+      "modellkontext_sauber": "collectConversationHistory enthaelt keinen Panel-Text (Ausblenden, HTTP-Status, Seitenzahl)",
+      "keine_falsche_zuordnung": "eine aeltere Antwort ohne Grounding hat den Menuepunkt nicht",
+      "nach_reload": "Quellen aus dem Verlauf wiederhergestellt, Menuepunkt und Panel wieder da, Ausblenden funktioniert",
+      "hinweis": "Der Antwortstrom fuer Fragen MIT Adresse scheiterte waehrend des Tests wiederholt (Verbindung zum Server unterbrochen) — modelForTask erzwingt dafuer die Tiefspur ueber den Control Server. Backend-seitig, nicht durch diese Aenderung verursacht; Fragen ohne Adresse wurden normal beantwortet. Das Grounding selbst lief fehlerfrei."
+    },
+    "tests": "45 -> 54",
+    "benchmark": {
+      "datei": "docs/benchmarks/webvitals_quellen_2026-07-28.json",
+      "kalt_lcp_median_ms": [
+        136,
+        164,
+        188
+      ],
+      "kalt_ttfb_median_ms": [
+        27,
+        32,
+        53
+      ],
+      "cls_p75": 0,
+      "touchziele": "unveraendert eingehalten",
+      "bewertung": "schnellste Reihe der Sitzung; kein zusaetzlicher Netzaufruf, die Seite wird ohnehin fuers Grounding geholt"
+    },
+    "rollback": {
+      "verzeichnis": "backups/rollback-2026-07-28-quellen/",
+      "liveCommitVorDeploy": "66b7e06b",
+      "appRepoCommits": [
+        "491ef9b",
+        "b80c441"
+      ],
+      "frontendRepoCommits": [
+        "c9228e6 (v177)",
+        "0870007 (v178)"
+      ]
+    },
+    "status": "ABGESCHLOSSEN — live auf https://smejj.com (sw v178), 54 Tests gruen"
   }
 }
