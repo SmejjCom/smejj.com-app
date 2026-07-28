@@ -71,7 +71,9 @@ test("service worker caches only small app shell assets and has offline fallback
   // Seiten-Kontext fuer das Modell) hat public/sw.js gebumpt, ohne diese Erwartung
   // mitzunehmen — der Test war seitdem rot und blockierte check:all. public/sw.js
   // selbst wurde hier NICHT angefasst.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v153"/);
+    // v153 -> v154 am 2026-07-28: view-title.js neu im Precache (Seitentitel je
+  // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v154"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   // view-chrome.css liegt seit dem Ladezeit-Buendel (2026-07-27) in start-styles.css.
   assert.match(sw, /\/assets\/start-styles\.css/);

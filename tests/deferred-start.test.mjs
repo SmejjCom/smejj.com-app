@@ -60,6 +60,27 @@ test("Paint-Ereignis des Browsers wird als Signal genutzt", async () => {
   assert.match(quelle, /raf\(\(\) => raf\(\(\) => \(scope\.setTimeout \|\| setTimeout\)\(resolve, 0\)\)\)/, "Rueckfallweg muss nach dem Malen laufen");
 });
 
+test("der Rueckfallweg darf die Paint-Beobachtung nicht ueberholen", async () => {
+  // Fehler in sw v152 (live gemessen): Promise.race liess den schnelleren
+  // gewinnen. Zwei rAF plus setTimeout waren beim warmen Wiederbesuch schneller
+  // als der echte Bildaufbau — sechs Aufrufe bei 112 ms, Bildaufbau bei 140 ms.
+  const reihenfolge = [];
+  const scope = {
+    // Paint meldet sich SPAET.
+    PerformanceObserver: class {
+      constructor(cb) { this.cb = cb; }
+      observe() { setTimeout(() => { reihenfolge.push("paint"); this.cb({ getEntries: () => [{ name: "first-contentful-paint" }] }); }, 60); }
+      disconnect() {}
+    },
+    // Bildwechsel meldet sich SOFORT — darf trotzdem nicht gewinnen.
+    requestAnimationFrame: (fn) => setTimeout(fn, 0),
+    requestIdleCallback: (fn) => setTimeout(fn, 0),
+    setTimeout: (fn, ms) => setTimeout(fn, ms)
+  };
+  await afterFirstPaint([() => reihenfolge.push("aufgabe")], { scope, timeoutMs: 5000 });
+  assert.deepEqual(reihenfolge, ["paint", "aufgabe"], "die Aufgabe lief vor dem Bildaufbau");
+});
+
 test("leere oder ungueltige Liste tut nichts", async () => {
   await afterFirstPaint([], { scope: fakeScope() });
   await afterFirstPaint(null, { scope: fakeScope() });
@@ -136,5 +157,7 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   for (const name of SOURCES) {
     assert.ok(!sw.includes(`"/assets/${name}"`), `${name} liegt unnoetig im Precache`);
   }
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v153"/);
+    // v153 -> v154 am 2026-07-28: view-title.js neu im Precache (Seitentitel je
+  // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v154"/);
 });
