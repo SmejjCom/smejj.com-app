@@ -53,6 +53,17 @@ Kapsel: `docs/task-capsules/2026/07/job_kimi_k3_api_20260728/CAPSULE.md`.
   die Groq-Schnellspur (703 ms). Das Budget sollte kuenftig zwischen Schnellspur
   und Deep Lane trennen — sonst misst es Aepfel an Birnen. Details:
   `docs/benchmarks/BEFUND_KIMI_K3_TEMPO_2026-07-28.md`.
+- DER PICKER IM EINGABEFELD IST FEST VERDRAHTET — nicht registry-gesteuert.
+  Menueeintraege in `public/index.html`, Zuordnung in `MODEL_MODES` in
+  `public/app.js`. Ein neues Modell erscheint dort NICHT automatisch, auch wenn
+  die Server-Registry es laengst kennt. `#systemModelSelect` im
+  Einstellungs-Panel ist ein ANDERES Element und baut sich sehr wohl aus der
+  Registry — wer nur das prueft, haelt ein Modell faelschlich fuer waehlbar.
+  Genau dieser Fehler ist mir hier passiert: DOM-Abfrage ist kein Klickpfad.
+  Behoben mit Freigabe (drei Start-Lock-Dateien, sw v180, Lock neu eingefroren,
+  Frontend-Commit `7da4c2d`, live SHA-gleich). Klickpfad belegt: Menue → "Kimi
+  K3" → Frage → "Ich bin Kimi, ein Assistent von Moonshot AI, und helfe hier
+  fuer smejj.com."
 - WEB VITALS LIVE nach dem Deploy (7 Laeufe, smejj.com): TTFB-Median 42 ms,
   LCP-Median 172 ms, CLS 0, INP 40 ms — kein Budget gerissen, gegenueber dem
   letzten Stand eher schneller. Erwartungsgemaess: der Control Server steht

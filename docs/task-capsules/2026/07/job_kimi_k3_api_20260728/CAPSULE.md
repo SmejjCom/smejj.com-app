@@ -87,6 +87,41 @@ Die `NO`-Vorgabe in `.env.example` ist keine Auskunft ueber den Live-Stand.
   `kimi:kimi-k3`, Antwort "Ich bin Kimi, ein Modell von Moonshot AI."
 - Auf smejj.com: "Kimi K3 · 1M Kontext · flagship · **Bereit**", waehlbar.
 
+## Der Fund, den erst der echte Klickpfad brachte
+
+Ich hatte "live und waehlbar" gemeldet, weil `#systemModelSelect` K3 korrekt
+zeigte. Das ist die Liste im Einstellungs-Panel — sie baut sich aus der
+Server-Registry auf. Der Picker, den Nutzer tatsaechlich benutzen, sitzt im
+Eingabefeld und ist eine **fest verdrahtete Liste**: die Menueeintraege stehen
+in `public/index.html`, die Zuordnung in `MODEL_MODES` in `public/app.js`.
+
+Ich hatte das falsche Element geprueft. Backend, Registry, Router und API waren
+einwandfrei — nur kam der Nutzer ueber die Oberflaeche nicht an K3 heran. Kein
+curl-Test der Welt haette das gezeigt.
+
+**Lehre:** Eine DOM-Abfrage ist kein Klickpfad. Wenn ein Auftrag "live testen"
+sagt, heisst das: das Menue oeffnen, das anklicken, was ein Nutzer anklickt.
+
+Behoben mit ausdruecklicher Freigabe des Betreibers (drei Start-Lock-Dateien):
+
+| Datei | Aenderung |
+| --- | --- |
+| `public/index.html` | ein `<button data-model="Kimi K3">` |
+| `public/app.js` | `"Kimi K3": AI_MODES.byok` — kein Vault, darum byok wie Cline |
+| `public/sw.js` | Cache v179 → v180 |
+| `tests/{deferred-start,platform-pwa,profile-dock}.test.mjs` | Pin-Erwartung auf v180 |
+
+Start-Lock danach neu eingefroren (31 Dateien, Backup
+`backups/start-design-lock/2026-07-28T11-38-14-973Z/`), Rollback-Punkt
+`backups/rollback-2026-07-28-k3-picker/before/`.
+
+Frontend-Deploy nach `SmejjCom/smejj-app-frontend` (Commit `7da4c2d`), live per
+SHA-256 gegen die lokalen Dateien geprueft: alle drei byte-identisch.
+
+**Klickpfad live belegt:** Menue geoeffnet → "Kimi K3" gewaehlt → Frage getippt
+→ Antwort erschien: *"Ich bin Kimi, ein Assistent von Moonshot AI, und helfe
+hier fuer smejj.com."* Picker zeigt "Kimi K3", 0 Konsolenfehler.
+
 ## Nicht-Regression
 
 - Standardanfrage ohne Modellwahl: unveraendert Groq-Schnellspur

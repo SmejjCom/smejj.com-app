@@ -1,16 +1,16 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T11:18:46.292Z",
-  "confirmation": "Ja, mach hintereinander komplett fertig. Lass nicht offen mach 100 % fertig. (Wof Kadavanich, 2026-07-28) — Spurwahl und Zeitbudget bei Fragen mit Web-Adresse; betrifft public/sw.js (Cache v179)",
+  "frozenAt": "2026-07-28T11:38:14.973Z",
+  "confirmation": "Ja, eintragen und Lock neu einfrieren — Kimi K3 in den Modell-Picker (Wof Kadavanich, 2026-07-28)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "f7e1f29d7bfba6f9c56845a851c1b9adbaf7a7adc007f3ff84216b9c5007a88e",
+    "public/index.html": "566a72d651de44a662ae044a1228696670eab74a866f255dd7162ebb0a9159cd",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
     "public/composer-tools.css": "2dc316dfbc73da293910b7236bf58c06c72edf325d6f7cbb5fdd2eb0fbbebddb",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "570c65069bd2a455362db69a13828f8aaac1529b1b385bbfcb7d211f154af903",
+    "public/app.js": "a06765177ce56813da225f8b0001b396b984c987de102e004525cddeca9b263f",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "790eaf754a78ba474d93b97a119eb3eb04a64aef2adb3304ca654269301c3c68",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "01219306e864def135a325283fb08ef09142c174aae2b22831fc170e8e9788f5",
+    "public/sw.js": "0bf2b8aabf4024ab638b5181ea0390aeae236208b44f77f186d71bf00b7acc0b",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
