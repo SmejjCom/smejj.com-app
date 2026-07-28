@@ -6,7 +6,10 @@ const html = fs.readFileSync("public/index.html", "utf8");
 // Seit der Aufteilung vom 2026-07-28 liegen die Ansichtstabellen in
 // public/view-routes.js. Geprueft wird weiterhin dieselbe Zusage.
 const app = fs.readFileSync("public/app.js", "utf8")
-  + fs.readFileSync("public/view-routes.js", "utf8");
+  + fs.readFileSync("public/view-routes.js", "utf8")
+  + fs.readFileSync("public/google-login.js", "utf8")
+  + fs.readFileSync("public/projects-surface.js", "utf8")
+  + fs.readFileSync("public/local-workspace-surface.js", "utf8");
 const server = fs.readFileSync("src/server.js", "utf8");
 const googleAuth = fs.readFileSync("src/auth/googleAuth.js", "utf8");
 // rc2 (2026-07-15, freigegeben): Google-Login-Routen verhaltensgleich aus
@@ -37,7 +40,7 @@ test("UI keeps BYOK and session state separated", () => {
 });
 
 test("Google login uses popup callback flow without redirect URI registration", () => {
-  assert.match(app, /callback: handleGoogleCredential/);
+  assert.match(app, /callback: \(antwort\) => handleGoogleCredential\(antwort, deps\)|callback: handleGoogleCredential/);
   assert.match(app, /ux_mode: "popup"/);
   assert.match(app, /use_fedcm_for_button: true/);
   assert.match(app, /use_fedcm_for_prompt: true/);
