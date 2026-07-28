@@ -1,0 +1,68 @@
+{
+  "jobId": "job_spurwahl_zeitbudget_20260728",
+  "createdAt": "2026-07-28T11:20:00.000Z",
+  "owner": "Wof Kadavanich",
+  "title": "Fragen mit Web-Adresse antworten wieder — Spurwahl und Zeitbudget korrigiert",
+  "goal": "Fragen mit Web-Adresse endeten regelmaessig in 'Verbindung zum Server unterbrochen'. Ursache finden und beheben, ohne bestehende Funktionen zu gefaehrden.",
+  "approval": {
+    "wortlaut": "Ja, mach hintereinander komplett fertig. Lass nicht offen mach 100 % fertig.",
+    "von": "Wof Kadavanich",
+    "am": "2026-07-28"
+  },
+  "diagnose": {
+    "vorgehen": "Direktmessung gegen die Live-Bridge (https://smejj-chat-bridge.zeabur.app/api/agent) mit identischem Anfragekoerper, nur das Modell variiert. CORS verlangt den Origin-Kopf.",
+    "messwerte": {
+      "schnellspur_smejj_1_0_kurze_frage_s": 0.75,
+      "tiefspur_glm_5_2_kurze_frage_s": 7.77,
+      "tiefspur_glm_5_2_gegroundet_s": 4.92,
+      "schnellspur_gegroundet_s": [0.49, 0.49, 1.01],
+      "frontend_limit_s": 6.5
+    },
+    "ursache": "modelForTask erzwang fuer JEDE Frage mit Web-Adresse die Tiefspur (GLM-5.2 ueber den Control Server). Deren erste Antwort kam regelmaessig NACH dem Erstbyte-Limit von fetch-retry.js — der Nutzer sah einen Verbindungsfehler, obwohl der Server sauber antwortete. Kein Ausfall, sondern ein Zeitbudget-Konflikt.",
+    "warum_der_zwang_ueberholt_war": "Der Zwang stammt aus der Zeit, als die Schnellspur den Seiteninhalt raten musste (Befund 'I-MILD.com' statt des echten Titels). Seit Stufe 2 webt browser-context.js den echten Seitentext IN die Frage. Werkzeuge braucht dafuer niemand mehr — nachgemessen antwortete die Schnellspur mit eingebettetem Inhalt inhaltlich richtig ('Example Domain') in unter einer Sekunde."
+  },
+  "loesung": {
+    "eins": "browser-context.js: modelForTask waehlt die Tiefspur nur noch, wenn groundingFor(task) LEER ist — also die Seite nicht geladen werden konnte und nur echtes Tool-Calling noch helfen kann. Steht der Inhalt in der Frage, bleibt die Wahl des Nutzers.",
+    "zwei": "public/ai/fetch-retry.js: eigenes Erstbyte-Budget von 15 s fuer die Tiefspur (erkannt am Modellnamen im Anfragekoerper), damit auch der Ausnahmefall nicht mehr an einem Limit scheitert, das fuer die Schnellspur gedacht war. Eine ausdrueckliche Vorgabe des Aufrufers schlaegt die automatische Wahl."
+  },
+  "affectedFiles": [
+    "public/browser-context.js — modelForTask haengt an groundingFor",
+    "public/ai/fetch-retry.js — firstByteBudgetFor, eigenes Tiefspur-Budget",
+    "public/sw.js — Cache v178 -> v179",
+    "tests/spurwahl-zeitbudget.test.mjs (neu, 8 Tests)",
+    "tests/browser-context.test.mjs — zwei neue Faelle, ein Test praezisiert",
+    "package.json — neuer Test in check:frontend"
+  ],
+  "nichtBeruehrt": ["public/app.js (Start-Lock)", "die Tiefspur selbst — sie bleibt unveraendert erreichbar", "Control Server und Bridge (keine Serveraenderung noetig)"],
+  "verification": {
+    "pflichtChecks": {"check": "OK", "check:frontend": "OK", "check:llm-router": "OK", "check:platform": "OK", "check:guidelines": "OK", "check:precache-imports": "OK", "check:voice": "OK", "check:start-lock": "OK (neu eingefroren)"},
+    "neueTests": "tests/spurwahl-zeitbudget.test.mjs — 8 Tests inkl. Fall 'HTTP 404 zaehlt als geladen' und 'ausdrueckliche Vorgabe schlaegt Automatik'",
+    "liveTest": {
+      "domain": "https://smejj.com/",
+      "vorher": "Welcher Titel steht auf https://example.com ? -> 'Verbindung zum Server unterbrochen'",
+      "nachher": "Der Titel auf https://example.com lautet \"Example Domain\".",
+      "erster_token_ms": [639, 813, 477],
+      "budget_ms": 1000,
+      "ausnahmefall": "nicht ladbare Adresse: sinnvolle Antwort in 477 ms, kein Fehler",
+      "quellenanzeige": "1 Seite fuer diese Frage geladen — Example Domain, example.com, HTTP 200",
+      "byteGleichheit": "browser-context.js und ai/fetch-retry.js live SHA-256-identisch zum lokalen Stand"
+    }
+  },
+  "benchmark": {
+    "datei": "docs/benchmarks/spurwahl_2026-07-28.json",
+    "erster_token_ms": [639, 813, 477],
+    "bridge_ttfb_schnellspur_s": [0.67, 0.52, 0.67],
+    "bridge_ttfb_tiefspur_s": 6.08,
+    "webvitals_kalt_lcp_median_ms": [144, 292, 184],
+    "cls_p75": 0,
+    "touchziele": "unveraendert eingehalten",
+    "bewertung": "Das Budget fuer den ersten Token (unter 1 s) wird bei Fragen mit Web-Adresse erstmals eingehalten."
+  },
+  "rollback": {
+    "verzeichnis": "backups/rollback-2026-07-28-spurwahl/",
+    "liveCommitVorDeploy": "08700079 (sw v178)",
+    "appRepoCommits": ["ee173ce", "5cc85ce"],
+    "frontendRepoCommit": "d9f768c"
+  },
+  "status": "ABGESCHLOSSEN — live auf https://smejj.com (sw v179), Ursache gemessen statt geraten, Budget eingehalten"
+}
