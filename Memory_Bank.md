@@ -767,3 +767,59 @@ SMEJJ_REMOTE_BROWSER_WORKER_URL).
   Dialog und setzt den Cursor ins Feld. Der Betreiber macht nur noch
   Cmd+V / Add / Save. Danach klickt die Sitzung Restart und nimmt ab.
 - OFFENE_PUNKTE_NUR_BETREIBER_2026-07-26.md: Punkt A als ERLEDIGT markiert.
+
+## 2026-07-28 — Aktionen pro Chat-Nachricht live (job_nachrichten_aktionen_20260728)
+- ERLEDIGT: Der Chat kann jetzt je Nachricht kopieren (Roh-Markdown), eigene
+  Nachrichten bearbeiten, neu generieren mit lesbarem Versionswaehler
+  ("Version 2 von 3"), bewerten, vorlesen, "Ab hier neuen Chat starten" und
+  "Ab hier loeschen" mit 5 Sekunden Rueckgaengig. Live auf smejj.com, sw v169.
+- KERN, der alles moeglich macht: public/chat-messages.js haelt je Nachricht
+  Kennung, Zeitstempel, Modell und ROHTEXT. Der Rohtext wird per
+  MutationObserver gesichert, SOLANGE der Eintrag reiner Text ist (keine
+  Elementkinder) — renderChatMarkdown ersetzt den Text am Streamende durch HTML,
+  ab dann ist das Markdown weg. Ohne diesen Schnappschuss kopiert jeder
+  Copy-Knopf gerenderten Text und zerreisst Codebloecke.
+- REGEL FUER ALLE KUENFTIGEN CHAT-BEDIENELEMENTE: Sie gehoeren NEBEN die
+  Nachricht (Geschwister), nie hinein. chat-store.js (`:scope > .entry`),
+  chat-history-context.js (Modellkontext) und das Vorlesen in composer-tools.js
+  lesen den textContent eines Eintrags. Ein "Version 2 von 3" im Eintrag waere
+  im gespeicherten Verlauf UND in der naechsten Frage an das Modell gelandet.
+  Der Bearbeiten-Editor liegt aus demselben Grund daneben; die Nachricht wird
+  nur per Klasse ausgeblendet, damit ihr textContent unberuehrt bleibt.
+- FALLE MutationObserver: Eine textContent-Zuweisung ist auch dann eine
+  Mutation, wenn derselbe Text zugewiesen wird. Das Auffrischen der Leiste
+  loeste dadurch sich selbst aus — Endlosschleife, Renderer stand still (live
+  erlebt). Zwei Sicherungen: nur bei echter Aenderung schreiben (setText) UND
+  observer.takeRecords() am Ende jedes Durchlaufs.
+- FALLE Knopfgroesse: styles.css setzt projektweit `button { min-height: 42px }`
+  als Touch-Ziel. Eigene `height`-Angaben ohne `min-height` ergeben verzogene
+  Knoepfe (28 breit / 42 hoch). Voreinstellung bleibt das 42-px-Ziel, kompakt
+  nur hinter `@media (pointer: fine)`.
+- FALLE Popover im Chat-Log: #startLog hat overflow: auto und schneidet
+  absolut positionierte Menues an seiner Kante ab; bei kurzem Verlauf gibt es
+  auch keinen Scrollweg dorthin. Popover gehoeren an den body und werden am
+  Viewport ausgerichtet (schliessen beim Scrollen/Resize). Beim Messen der
+  Fenstergroesse auf documentElement.clientHeight zurueckfallen — eingebettete,
+  nicht dargestellte Ansichten melden innerHeight 0.
+- BEWUSST NICHT GEBAUT: "Quellen anzeigen" — das Frontend fuehrt keine
+  Quellenliste pro Antwort (browser-context.js webt Seitenkontext in die FRAGE
+  ein, ohne ihn der Antwort zuzuordnen). Ein geratener Quellen-Menuepunkt waere
+  schlechter als keiner. Auch nicht: Geminis parallele Entwuerfe (dreifache
+  Generierung, unvereinbar mit Free-only).
+- MARKTVERGLEICH (Juli 2026, recherchiert): ChatGPT hat das Bearbeiten einzelner
+  Nachrichten im Mai 2026 ENTFERNT; alle drei Grossen haengen ihre Leiste an
+  :hover (WCAG 2.1.1); keiner loescht einzelne Nachrichten. ChatGPTs Antwort auf
+  das Loesch-Beduerfnis ist "Ab hier neuen Chat starten" — nicht destruktiv,
+  uebernommen und als Standard gesetzt; echtes Loeschen bleibt als Extra.
+- app.js WURDE NICHT ANGEFASST (Start-Lock, 799 von 800 Zeilen). Die Module
+  haengen sich selbst an #startLog; erneutes Senden laeuft ueber den bestehenden
+  Composer (#startMessage + #startSend). Dasselbe Muster wie chat-store.js.
+- BENCHMARK: docs/benchmarks/webvitals_msgactions_2026-07-28.json — kaltes LCP
+  Median 312/200/172 ms in drei Laeufen (Referenz 172), p75 max 392 ms gegen
+  Budget 1500 ms, CLS 0, INP p75 40-56 ms. Die Streuung ist Netzstreuung, nicht
+  Regression: Anfragezahl unveraendert, chat-actions.css liegt im bestehenden
+  Buendel start-styles.css (+~1,5 KB komprimiert, kein zweites <link>).
+- PARALLEL-SESSION: Im selben Arbeitsverzeichnis lief eine zweite Sitzung und
+  belegte die Cache-Versionen v166-v168; dieser Auftrag sprang deshalb von v165
+  auf v169. Vor jedem Deploy Live-Stand per SHA-256 gegen den lokalen Vor-Stand
+  pruefen und nur Eigenes deployen — hat hier zweimal getragen.

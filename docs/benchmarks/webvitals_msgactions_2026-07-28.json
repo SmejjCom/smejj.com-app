@@ -1,0 +1,74 @@
+{
+  "titel": "Web-Vitals nach Einbau der Nachrichten-Aktionen (sw v169)",
+  "datum": "2026-07-28",
+  "url": "https://smejj.com/",
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll (scripts/testing/measure_web_vitals.mjs), 3 Laeufe x 7 Aufrufe",
+  "budgets": {
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200
+  },
+  "laeufe": [
+    {
+      "lauf": 1,
+      "kalt": {
+        "ttfb_median": 45,
+        "lcp_median": 312,
+        "lcp_p75": 392,
+        "inp_p75": 40,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 160,
+        "ttfb_median": 51
+      }
+    },
+    {
+      "lauf": 2,
+      "kalt": {
+        "ttfb_median": 83,
+        "lcp_median": 200,
+        "lcp_p75": 348,
+        "inp_p75": 48,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 140,
+        "ttfb_median": 34
+      }
+    },
+    {
+      "lauf": 3,
+      "kalt": {
+        "ttfb_median": 27,
+        "lcp_median": 172,
+        "lcp_p75": 236,
+        "inp_p75": 56,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 156,
+        "ttfb_median": 30
+      }
+    }
+  ],
+  "referenz": {
+    "datei": "webvitals_final_2026-07-28.json",
+    "kalt_lcp_median": 172,
+    "kalt_lcp_p75": 180,
+    "kalt_ttfb_median": 50,
+    "kalt_inp_p75": 56
+  },
+  "bewertung": {
+    "ergebnis": "alle Budgets eingehalten, keine belastbare Verschlechterung",
+    "kalt_lcp_median_laeufe": [
+      312,
+      200,
+      172
+    ],
+    "begruendung": "Lauf 1 lag mit 312 ms ueber der Referenz (172 ms), Lauf 3 traf sie exakt. Dieselbe Codebasis streute in frueheren Messungen zwischen 172 und 268 ms (webvitals_swcachefirst_2026-07-28.json: 268 ms). Die Anzahl der Anfragen vor dem ersten Bildaufbau ist unveraendert: chat-actions.css wurde in das bestehende Buendel start-styles.css aufgenommen (kein zusaetzliches render-blockierendes Stylesheet), das Buendel waechst um rund 1,5 KB komprimiert. chat-actions.js laedt als type=module am Seitenende und blockiert den Bildaufbau nicht.",
+    "cls": "0 in allen Laeufen — die Aktionsleiste entsteht erst mit der ersten Nachricht und verschiebt nichts",
+    "inp": "p75 40-56 ms, unveraendert gegenueber der Referenz (56 ms)"
+  }
+}

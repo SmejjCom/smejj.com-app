@@ -1,0 +1,136 @@
+{
+  "jobId": "job_nachrichten_aktionen_20260728",
+  "createdAt": "2026-07-28T08:35:00.000Z",
+  "owner": "Wof Kadavanich",
+  "title": "Aktionen pro Chat-Nachricht — kopieren, bearbeiten, neu generieren, bewerten, vorlesen, abzweigen, ab hier loeschen",
+  "goal": "Im Chat konnte man Nachrichten nicht kopieren, nicht bearbeiten und nicht loeschen. Ziel: der recherchierte Stand von ChatGPT, Gemini und Claude (Juli 2026) plus die Punkte, die dort fehlen — bei voller Bedienbarkeit ohne Maus und ohne Regression an bestehenden Funktionen.",
+  "approval": {
+    "wortlaut": "Ja, Ich finde deinen Vorschlag gut, kannst du jetzt hintereinander komplett umsetzen bis nicht komplett fertig online hoer nicht auf",
+    "von": "Wof Kadavanich",
+    "am": "2026-07-28",
+    "umfasst": [
+      "public/index.html (Start-Lock) — Modul-Einbindung und Stylesheet-Version",
+      "public/sw.js (Start-Lock) — Cache-Version und Precache",
+      "Deploy auf die Produktionsdomain smejj.com"
+    ]
+  },
+  "recherche": {
+    "quellen": [
+      "ChatGPT Live-Screenshot des Betreibers (2026-07-28): Leiste mit Kopieren, Bewertung, Speichern, Neu generieren, Ueberlaufmenue mit Zeitstempel, Quellen anzeigen, Ab hier neuen Chat starten, Vorlesen",
+      "aiproductivity.ai — ChatGPT hat das Bearbeiten einzelner Nachrichten im Mai 2026 entfernt",
+      "aiqnahub.com — Retry seit Mai 2026 in einer erst bei Hover erscheinenden Leiste",
+      "support.google.com/gemini — Antwort-Optionen inkl. Modify Response und Entwuerfe",
+      "nodea.ai — Claude.ai kann Branching, zeigt es aber nur als winzige Pfeile",
+      "boia.org / a11y-guidelines.orange.com — Hover-only-Bedienelemente verletzen WCAG 2.1.1"
+    ],
+    "befund": "Niemand der drei loescht einzelne Nachrichten (es zerreisst den Kontext); alle drei haengen ihre Leiste an :hover. ChatGPT loest das Loesch-Bedduerfnis stattdessen ueber 'Ab hier neuen Chat starten' — nicht destruktiv, uebernommen."
+  },
+  "scope": {
+    "included": [
+      "Nachrichten-Modell mit Kennung, Zeitstempel, Modellname und ROHTEXT je Nachricht",
+      "Aktionsleiste je Nachricht (icon-only, Reihenfolge nach Haeufigkeit)",
+      "Ueberlaufmenue mit Kopfzeile (Zeitstempel + Modell)",
+      "Kopieren als Roh-Markdown, Ohne Formatierung kopieren",
+      "Bearbeiten der eigenen Nachricht (inline, erzeugt eine neue Version)",
+      "Neu generieren mit lesbarem Versionswaehler",
+      "Bewerten (nur lokal), Vorlesen je Nachricht",
+      "Ab hier neuen Chat starten (nicht destruktiv)",
+      "Ab hier loeschen mit 5 Sekunden Rueckgaengig",
+      "Rohtext, Zeitstempel, Modell und Bewertung im Verlauf-Speicher (IndexedDB)"
+    ],
+    "excluded": [
+      "Quellen anzeigen — das Frontend fuehrt keine Quellenliste pro Antwort; ein geratener Menuepunkt waere schlechter als keiner",
+      "Gemini-artige parallele Entwuerfe — dreifache Generierung, unvereinbar mit Free-only",
+      "Branch-Baum als Diagramm — Anthropic laesst es bewusst weg",
+      "Aenderung an public/app.js — Start-Lock und 799 von 800 erlaubten Zeilen"
+    ]
+  },
+  "architektur": {
+    "entscheidung_1": "Kein Umbau von app.js. Die Module haengen sich selbst an #startLog (Muster von chat-store.js seit Welle 1); erneutes Senden laeuft ueber den bestehenden Composer (#startMessage + #startSend).",
+    "entscheidung_2": "Rohtext ueber einen MutationObserver sichern, solange ein Eintrag reiner Text ist (keine Elementkinder). renderChatMarkdown ersetzt den Text am Streamende durch HTML — ab dann waere das Markdown verloren.",
+    "entscheidung_3": "Aktionsleiste, Editor und Rueckgaengig-Streifen sind GESCHWISTER der Nachricht, niemals Kinder. chat-store.js, chat-history-context.js und das Vorlesen in composer-tools.js lesen den textContent eines Eintrags; ein 'Version 2 von 3' darin waere im gespeicherten Verlauf und im Modellkontext gelandet.",
+    "entscheidung_4": "chat-actions.css liegt im bestehenden Buendel start-styles.css statt als zweites <link> — die Startseite laedt genau ein render-blockierendes Stylesheet (Performance-Lock).",
+    "entscheidung_5": "Das Ueberlaufmenue haengt am body und ist am Viewport ausgerichtet, nicht in der Leiste: #startLog hat overflow: auto und schnitt es an seiner Kante ab."
+  },
+  "affectedFiles": [
+    "public/chat-messages.js (neu, 277 Zeilen) — Nachrichten-Modell",
+    "public/chat-actions.js (neu, ~520 Zeilen) — Leiste, Menue, Aktionen, Versionen",
+    "public/chat-actions-menu.js (neu, 175 Zeilen) — Menue und reine, pruefbare Bausteine",
+    "public/chat-actions.css (neu, ~330 Zeilen)",
+    "public/chat-store.js — speichert Rohtext/Zeitstempel/Modell/Bewertung, seedMeta beim Wiederherstellen, createChatFrom fuer das Abzweigen",
+    "public/index.html (Start-Lock) — Modul-Einbindung, Stylesheet-Version",
+    "public/sw.js (Start-Lock) — Precache + Cache v164 -> v165, danach v169",
+    "public/start-styles.css — neu erzeugt",
+    "scripts/build/bundle-start-styles.mjs — chat-actions.css in SOURCES",
+    "tests/chat-message-actions.test.mjs (neu, 28 Tests)",
+    "tests/deferred-start.test.mjs, tests/platform-pwa.test.mjs, tests/profile-dock.test.mjs — Cache-Version nachgezogen",
+    "package.json — neue Dateien in check, neuer Test in check:frontend"
+  ],
+  "nichtBeruehrt": [
+    "public/app.js — unveraendert (Test haelt das fest)",
+    "public/composer-tools.js, public/styles.css und alle uebrigen Lock-Dateien",
+    "public/panel-layout.js, mockups/admin-console-mockup.html und weitere Dateien einer parallel laufenden Session"
+  ],
+  "verification": {
+    "pflichtChecks": {
+      "check": "OK",
+      "check:frontend": "OK (204 Tests)",
+      "check:platform": "OK",
+      "check:start-lock": "OK (31 Dateien, neu eingefroren mit Freigabe-Wortlaut)",
+      "check:start-styles": "OK",
+      "check:precache-imports": "OK (85 Module)",
+      "check:favicon-lock": "OK",
+      "check:json": "OK",
+      "check:security": "OK",
+      "check:architecture": "OK",
+      "check:voice": "OK",
+      "check:llm-router": "OK",
+      "check:branding": "OK",
+      "check:guidelines": "FEHLER — mockups/admin-console-mockup.html (1057 Zeilen), unversionierte Datei einer PARALLELEN Session, nicht Teil dieses Auftrags und bewusst nicht angefasst"
+    },
+    "neueTests": "tests/chat-message-actions.test.mjs — 28 Tests, alle gruen",
+    "liveTest": {
+      "domain": "https://smejj.com/",
+      "echteAntwortVomModell": true,
+      "kopiertRohMarkdown": "**Static-First** bezeichnet ... — waehrend die Seite <strong>Static-First</strong> zeigt",
+      "menueKopf": "Heute, 01:03 · smejj 1.0",
+      "menuePunkte": 4,
+      "hakenNachKopieren": "erscheint nach 300 ms, weg nach 2 s",
+      "modellkontextSauber": "collectConversationHistory liefert genau die Nachrichten, kein Bedienelement-Text",
+      "verlaufNachNeuladen": "Rohtext, Zeitstempel und Modell wiederhergestellt; Kopieren liefert wieder das Markdown",
+      "abzweigen": "2 Chats, Original mit beiden Nachrichten unveraendert erhalten",
+      "loeschenRueckgaengig": "3 Nachrichten -> 2 -> nach Rueckgaengig wieder 3, keine verwaiste Leiste",
+      "byteGleichheit": "alle deployten Dateien live SHA-256-identisch zum lokalen Stand"
+    },
+    "gefundeneUndBehobeneFehler": [
+      "Endlosschleife: syncVersions schrieb das Versions-Label bei jedem Auffrischen neu; eine textContent-Zuweisung ist auch bei gleichem Text eine Mutation — der Beobachter rief sich selbst endlos auf, der Renderer stand still. Fix: nur bei echter Aenderung schreiben, zusaetzlich observer.takeRecords() am Ende jedes Durchlaufs.",
+      "Knopfgroesse: styles.css setzt projektweit button{min-height:42px}; die Leiste war 28 breit und 42 hoch, sichtbar verzogen. Fix: Voreinstellung bleibt das 42-px-Touch-Ziel, kompakt nur hinter (pointer: fine).",
+      "Menue abgeschnitten (live gefunden): lag in #startLog (overflow: auto), passte bei der ersten Antwort weder darunter noch darueber. Fix: am body, am Viewport ausgerichtet, schliesst beim Scrollen und Groessenwechsel.",
+      "Platzierung ohne messbare Fenstergroesse: eingebettete, nicht dargestellte Ansichten melden innerHeight 0 — damit lief das Menue aus dem Bild. Fix: Rueckfall auf documentElement.clientHeight, ohne Messwerte einfach unter dem Ausloeser."
+    ]
+  },
+  "benchmark": {
+    "datei": "docs/benchmarks/webvitals_msgactions_2026-07-28.json",
+    "referenz": "docs/benchmarks/webvitals_final_2026-07-28.json",
+    "kalt_lcp_median_ms": [312, 200, 172],
+    "referenz_kalt_lcp_median_ms": 172,
+    "kalt_lcp_p75_ms": [392, 348, 236],
+    "budget_lcp_p75_ms": 1500,
+    "cls_p75": 0,
+    "inp_p75_ms": [40, 48, 56],
+    "bewertung": "Alle Budgets eingehalten. Lauf 3 traf die Referenz exakt; dieselbe Codebasis streute frueher zwischen 172 und 268 ms. Anzahl der Anfragen vor dem ersten Bildaufbau unveraendert (chat-actions.css im bestehenden Buendel, +~1,5 KB komprimiert); chat-actions.js laedt als type=module am Seitenende und blockiert nicht."
+  },
+  "rollback": {
+    "verzeichnis": "backups/rollback-2026-07-28-chat-message-actions/",
+    "liveCommitVorDeploy": "e1113ec83f80417e84df1e3f7ffe2bbad766ce05 (sw v164)",
+    "inhalt": "index.html, sw.js, assets/chat-store.js, assets/start-styles.css im Live-Stand vor dem Deploy, plus Anleitung",
+    "startLockBackup": "backups/start-design-lock/2026-07-28T08-31-55-426Z/",
+    "appRepoCommits": ["4c4fa18 (Einbau)", "b7e1f3a (Menue-Fix)"],
+    "frontendRepoCommits": ["39b0786 (sw v165)", "bde22ad (sw v169)"]
+  },
+  "besonderheiten": [
+    "Im selben Arbeitsverzeichnis lief parallel eine zweite Session (tote Knoepfe F-23, PANEL_WIDTHS-Fix, Admin-Mockup). Vor jedem Deploy wurde der Live-Stand per SHA-256 gegen den lokalen Vor-Stand geprueft; es wurde ausschliesslich Eigenes deployt. Die Cache-Versionen v166-v168 gehoeren dieser Session, daher springt dieser Auftrag von v165 auf v169.",
+    "Der Live-Test lief mit einer rein lokalen Sitzungskennung im Testbrowser (mode local-only). Es wurden keine Zugangsdaten eingegeben und kein Konto angelegt."
+  ],
+  "status": "ABGESCHLOSSEN — live auf https://smejj.com, byte-verifiziert, Klickpfad geprueft"
+}
