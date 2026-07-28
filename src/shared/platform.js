@@ -137,6 +137,7 @@ export const ROUTES = {
   robots: "/robots.txt",
   llms: "/llms.txt",
   sitemap: "/sitemap.xml",
+  status: "/status.html",
   impressum: "/impressum.html",
   datenschutz: "/datenschutz.html",
   // Englische Hoeflichkeitsfassungen (verbindlich bleibt der deutsche Text).
@@ -234,7 +235,12 @@ export const CAPABILITIES = {
 export const SECURITY_HEADERS = {
   "Content-Security-Policy": [
     "default-src 'self'",
-    "connect-src 'self' https://accounts.google.com",
+    // Die drei Betriebsdienste stehen hier, weil /status.html sie direkt aus
+    // dem Browser abfragt. Ohne sie blockiert der eigene Server die Abfrage
+    // und die Statusseite meldet falschen Alarm — live faellt das nicht auf,
+    // weil GitHub Pages keine CSP-Kopfzeile setzt. Dieselben Hosts stehen in
+    // der Meta-CSP von status.html; tests/statusseite.test.mjs erzwingt das.
+    "connect-src 'self' https://accounts.google.com https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud https://smejj-chat-bridge.zeabur.app https://loganberry-fruit-e3n6k5n10h68cawn.salad.cloud",
     "frame-src https://accounts.google.com",
     "img-src 'self' data:",
     "style-src 'self'",
