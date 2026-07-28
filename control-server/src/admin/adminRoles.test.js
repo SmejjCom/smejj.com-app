@@ -66,10 +66,18 @@ test("umkehrbare Supportaufgaben brauchen keine zweite Person", () => {
   }
 });
 
-test("readonly darf ausschliesslich Nutzer sehen", () => {
+test("readonly darf sehen und sonst nichts", () => {
   const rights = permissionsFor("readonly");
   const erlaubt = PERMISSIONS.filter((permission) => rights[permission] !== GRANT.deny);
-  assert.deepEqual(erlaubt, ["users.read"]);
+  // Die vollstaendige Liste, absichtlich fest verdrahtet: kommt eine
+  // Berechtigung dazu und rutscht versehentlich an readonly durch, faellt es
+  // hier auf und nicht erst im Betrieb.
+  assert.deepEqual(erlaubt, ["users.read", "ops.read"]);
+  // Und die Eigenschaft dahinter, damit der Test nicht nur eine Liste abhakt:
+  // nichts, was den Namen "readonly" verletzt.
+  for (const recht of erlaubt) {
+    assert.equal(/\.(read)$/.test(recht), true, `${recht} klingt nicht nach nur lesen`);
+  }
 });
 
 test("Auditor liest Nachweise, greift aber nirgends ein", () => {

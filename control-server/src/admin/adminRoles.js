@@ -38,7 +38,14 @@ const MATRIX = Object.freeze({
   "models.write":      { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   "apikeys.revoke":    { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   "audit.read":        { owner: "allow", admin: "allow", support: "deny",    finance: "allow", auditor: "allow", readonly: "deny" },
-  "index.rebuild":     { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" }
+  "index.rebuild":     { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
+  // Betriebszustand lesen: Modelle, Jobs, Worker, Deploy-Stand, Speicher.
+  // Fuer JEDE Adminrolle erlaubt, und zwar aus einem Grund, der in den Modulen
+  // durchgesetzt wird: dort steht ausschliesslich Betriebs-Metadatum — kein
+  // Auftragstext, keine Fehlermeldung im Wortlaut, keine Repository-Adresse,
+  // kein Schluesselwert. Wer den Adminbereich betreten darf, darf sehen, ob
+  // etwas haengt. Alles darueber hinaus faellt unter users.content.read.
+  "ops.read":          { owner: "allow", admin: "allow", support: "allow",   finance: "allow", auditor: "allow", readonly: "allow" }
 });
 
 // Das Audit-Log ist fuer JEDE Rolle unveraenderlich — auch fuer den Owner.

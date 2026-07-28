@@ -1,0 +1,284 @@
+// smejj.com Operations Console — Ansichten der Stufe 5 (Betrieb).
+//
+// Eigene Datei wegen der 800-Zeilen-Regel. Gleiches Muster wie Stufe 4: reine
+// Funktionen, Daten rein, HTML raus, kein Zustand, keine style="..."-Attribute
+// (die eigene CSP verbietet sie).
+//
+// Durchgaengige Haltung dieser fuenf Ansichten: was auffaellig ist, steht oben
+// und ist benannt. Eine Betriebsansicht, die nur Zahlen zeigt und das Deuten
+// der Betreiberin ueberlaesst, verschiebt die Arbeit nur.
+(function () {
+  "use strict";
+  const A = window.adminApi;
+  const V = window.adminViews;
+  const e = A.escapeHtml;
+  const pille = (t, ton) => '<span class="pill ' + (ton || "") + '">' + e(t) + "</span>";
+
+  function bytes(zahl) {
+    const n = Number(zahl || 0);
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + " MB";
+    return (n / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+  }
+
+  function dauerKurz(ms) {
+    const n = Number(ms);
+    if (!isFinite(n) || n < 0) return "—";
+    return A.dauer(n / 1000);
+  }
+
+  // ---- G · Modelle & Provider --------------------------------------------------
+
+  function modelle(d) {
+    const zeilen = (d.modelle || []).map(function (m) {
+      const stumm = m.aktiv && m.eingerichtet && !m.erreichbar;
+      return "<tr><td><b>" + e(m.name) + "</b>" + (m.standard ? " " + pille("Standard", "ok") : "")
+        + '<br><span class="s mono">' + e(m.id) + "</span></td>"
+        + "<td>" + e(m.anbieter || "—") + "</td>"
+        + "<td>" + (m.aktiv ? pille("ein", "ok") : pille("aus", "dim")) + "</td>"
+        + "<td>" + (m.eingerichtet ? pille("ja", "ok") : pille("nein", "warn")) + "</td>"
+        + "<td>" + (m.erreichbar ? pille("ja", "ok") : pille("nein", stumm ? "bad" : "dim")) + "</td>"
+        + "<td>" + (m.fehlschlaegeInFolge > 0
+          ? pille(m.fehlschlaegeInFolge + " in Folge", "bad")
+          : '<span class="s">—</span>')
+        + (m.zuletztGeprueftAm ? '<br><span class="s">geprüft ' + e(A.zeit(m.zuletztGeprueftAm)) + "</span>" : "")
+        + "</td>"
+        + "<td>" + e(m.rueckfallModellId || "—") + "</td></tr>";
+    });
+
+    // Zwei verschiedene Ursachen, die nicht in einen Topf gehoeren: ein Modell,
+    // das eingerichtet ist und trotzdem schweigt, ist ein Ausfall. Eines, das
+    // gar nicht erst eingerichtet wurde, ist eine Luecke in der Konfiguration.
+    const stumme = (d.modelle || []).filter(function (m) { return m.aktiv && m.eingerichtet && !m.erreichbar; });
+    const unfertige = (d.modelle || []).filter(function (m) { return m.aktiv && !m.eingerichtet; });
+    const aktiv = Number(d.aktiv || 0);
+    const erreichbar = Number(d.erreichbar || 0);
+
+    let hinweis;
+    if (stumme.length) {
+      hinweis = '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">' + stumme.length + " eingeschaltet und eingerichtet — antwortet trotzdem nicht</div>"
+        + '<div class="ns">Genau dieser Fall fällt im Betrieb sonst erst auf, wenn sich jemand beschwert: '
+        + e(stumme.map(function (m) { return m.name; }).join(", ")) + ".</div></div></div>";
+    } else if (unfertige.length) {
+      hinweis = '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">' + unfertige.length + " eingeschaltet, aber nicht eingerichtet</div>"
+        + '<div class="ns">Kein Ausfall, sondern eine Lücke in der Konfiguration: '
+        + e(unfertige.map(function (m) { return m.name; }).join(", "))
+        + ". Ohne hinterlegten Endpunkt kann nichts antworten.</div></div></div>";
+    } else {
+      hinweis = '<div class="note glass"><div class="nx">◆</div><div><div class="nt">Drei Fragen, drei Spalten</div>'
+        + '<div class="ns">Eingeschaltet, eingerichtet und erreichbar sind drei verschiedene Dinge. '
+        + "Ein Modell kann eingeschaltet und eingerichtet sein und trotzdem nicht antworten — "
+        + "deshalb stehen sie nebeneinander statt in einem gemeinsamen Status.</div></div></div>";
+    }
+
+    return V.kopfBlock("G", "Modelle", "Modelle & Provider",
+      "Welches Modell antwortet gerade — und welches nicht.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Modelle", String(d.total || 0), "in der Registry")
+      + V.kachelBlock("Eingeschaltet", String(d.aktiv || 0), "auswählbar")
+      + V.kachelBlock("Erreichbar", String(erreichbar),
+        erreichbar >= aktiv && aktiv > 0 ? "alle eingeschalteten"
+          : aktiv === 0 ? "keines eingeschaltet"
+            : "von " + aktiv + " eingeschalteten",
+        erreichbar >= aktiv ? "up" : "dn")
+      + V.kachelBlock("Standard", e(d.standard || "—"), "ohne eigene Wahl")
+      + "</div>"
+      + '<div class="stack">' + hinweis
+      + V.panelBlock("Modelle", "auffällige zuerst",
+        V.tabelleBlock(["Modell", "Anbieter", "Ein", "Eingerichtet", "Erreichbar", "Fehlschläge", "Rückfall"], zeilen))
+      + "</div>";
+  }
+
+  // ---- H · Jobs & Läufe --------------------------------------------------------
+
+  function jobs(d) {
+    const zeilen = (d.jobs || []).map(function (j) {
+      return '<tr><td><span class="mono">' + e(j.id) + "</span>"
+        + (j.elternJobId ? '<br><span class="s">aus ' + e(j.elternJobId) + "</span>" : "")
+        + "</td>"
+        + "<td>" + statusPille(j) + "</td>"
+        + "<td>" + e(j.modellId || "—") + '<br><span class="s">' + e(j.ausfuehrungsart || "") + "</span></td>"
+        + '<td><span class="mono">' + e(j.nutzerId || "—") + "</span></td>"
+        + "<td>" + e(A.zeit(j.erstelltAm)) + "</td>"
+        + "<td>" + (j.alterMs === null ? "—" : e(dauerKurz(j.alterMs)) + " her") + "</td>"
+        + "<td>" + (j.dauerhafteKapsel ? pille("gesichert", "ok") : pille("nur flüchtig", "warn"))
+        + (j.mitRepository ? " " + pille("Repo", "dim") : "") + "</td></tr>";
+    });
+
+    const inhalt = '<div class="note glass"><div class="nx">◆</div><div>'
+      + '<div class="nt">Betriebszustand, nicht Inhalt</div>'
+      + '<div class="ns">' + e(d.inhaltHinweis || "") + " " + e(d.hinweis || "") + "</div></div></div>";
+
+    return V.kopfBlock("H", "Jobs", "Jobs & Läufe",
+      "Was läuft, was hängt, was ist gescheitert.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Laufend", String(d.laufend || 0), "nicht abgeschlossen")
+      + V.kachelBlock("Hängt", String(d.haengt || 0), (d.haengt || 0) > 0 ? "seit über 30 Min ohne Lebenszeichen" : "keiner", (d.haengt || 0) > 0 ? "dn" : "up")
+      + V.kachelBlock("Gescheitert", String(d.fehlgeschlagen || 0), "in dieser Liste")
+      + V.kachelBlock("Aktive Worker", String(d.aktiveWorker || 0), "gerade beschäftigt")
+      + "</div>"
+      + '<div class="stack">' + inhalt
+      + V.panelBlock("Läufe", "auffällige zuerst · " + (d.angezeigt || 0) + " von " + (d.total || 0),
+        V.tabelleBlock(["Job", "Stand", "Modell", "Konto", "Erstellt", "Letzte Meldung", "Kapsel"], zeilen))
+      + "</div>";
+  }
+
+  function statusPille(j) {
+    if (j.haengt) return pille("hängt", "bad");
+    if (j.status === "failed" || j.status === "error") return pille(j.status, "bad");
+    if (!j.abgeschlossen) return pille(j.status, "warn");
+    return pille(j.status, "ok");
+  }
+
+  // ---- I · Worker & Kapazität --------------------------------------------------
+
+  function worker(d) {
+    const k = d.kapazitaet || {};
+    const c = d.container || {};
+
+    const kapazitaetBlock = k.erreichbar
+      ? V.tabelleBlock(["", ""], [
+        zeile("Belegte Plätze", k.belegtePlaetze + " von " + k.maximalePlaetze),
+        zeile("Reserviertes Budget", k.reserviertUsd.toFixed(2) + " USD von " + k.obergrenzeUsd.toFixed(2) + " USD"),
+        zeile("Freie Plätze", String(k.freiePlaetze))
+      ])
+      : nichtErreichbar("Kapazität", k.grund);
+
+    const containerBlock = c.erreichbar
+      ? V.tabelleBlock(["", ""], [
+        zeile("Gruppe", c.name || "—"),
+        zeile("Zustand", c.zustand || "—"),
+        zeile("Laufende Instanzen", String(c.laufend)),
+        zeile("Version", c.version === null || c.version === undefined ? "—" : String(c.version))
+      ])
+      : nichtErreichbar("Maschine", c.grund);
+
+    const laeufe = (k.laeufe || []).map(function (l) {
+      return '<tr><td><span class="mono">' + e(l.jobId) + "</span></td>"
+        + "<td>" + e(l.gruppe || "—") + "</td>"
+        + "<td>" + e(A.zeit(l.fristAm)) + "</td></tr>";
+    });
+
+    const auffaellig = d.bewertung && d.bewertung !== "unauffaellig";
+    const hinweis = '<div class="note glass' + (auffaellig ? " fehler" : "") + '"><div class="nx">'
+      + (auffaellig ? "▲" : "◆") + "</div><div>"
+      + '<div class="nt">' + e(d.bewertung || "—") + "</div>"
+      + '<div class="ns">Fällt eine Quelle aus, steht hier „nicht erreichbar“ statt einer Null. '
+      + "Eine Null liest sich wie „alles ruhig“, obwohl niemand nachsehen konnte.</div></div></div>";
+
+    return V.kopfBlock("I", "Worker", "Worker & Kapazität",
+      "Wie viele Läufe einen Platz samt Budget halten — und ob die Maschine überhaupt läuft.")
+      + '<div class="stack">' + hinweis
+      + V.panelBlock("Kapazität", "Bremse gegen Kosten", kapazitaetBlock)
+      + V.panelBlock("GPU-Maschine", "Salad-Container-Gruppe", containerBlock)
+      + V.panelBlock("Reservierte Läufe", "nur Kennungen und Fristen",
+        V.tabelleBlock(["Job", "Gruppe", "Frist"], laeufe))
+      + "</div>";
+  }
+
+  // ---- P · Betrieb & Deploy ----------------------------------------------------
+
+  function deploy(d) {
+    const soll = d.soll || {};
+    const ist = d.ist || {};
+    const abweichend = d.bewertung === "abweichend";
+
+    const hinweis = abweichend
+      ? '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">Soll und Ist zeigen auf verschiedene Stände</div>'
+        + '<div class="ns">' + e(d.hinweis || "") + "</div></div></div>"
+      : '<div class="note glass"><div class="nx">◆</div><div>'
+        + '<div class="nt">' + e(urteilText(d.bewertung)) + "</div>"
+        + '<div class="ns">' + e(d.hinweis || "") + "</div></div></div>";
+
+    const tabelle = V.tabelleBlock(["", "Soll (Umgebung)", "Ist (ausgepacktes Artefakt)"], [
+      "<tr><td><b>Release</b></td><td>" + e(soll.releaseId || "—") + "</td><td>" + e(ist.releaseId || "—") + "</td></tr>",
+      "<tr><td><b>Prüfsumme</b></td><td>" + e(soll.sha256Kurz || "—") + "</td><td>" + e(ist.inhaltsHashKurz || "—") + "</td></tr>",
+      "<tr><td><b>Gebaut am</b></td><td>—</td><td>" + e(A.zeit(ist.gebautAm)) + "</td></tr>",
+      "<tr><td><b>Dateien</b></td><td>—</td><td>" + e(String(ist.dateien || "—")) + "</td></tr>"
+    ]);
+
+    return V.kopfBlock("P", "Deploy", "Betrieb & Deploy",
+      "Welcher Stand läuft gerade wirklich.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Abgleich", urteilKurz(d.bewertung), abweichend ? "prüfen" : "in Ordnung", abweichend ? "dn" : "up")
+      + V.kachelBlock("Laufzeit", d.laufzeitMs === null ? "—" : dauerKurz(d.laufzeitMs), "seit dem Start")
+      + V.kachelBlock("Node", e(d.knoten || "—"), "Laufzeitumgebung")
+      + "</div>"
+      + '<div class="stack">' + hinweis
+      + V.panelBlock("Release-Abgleich", "Umgebung gegen Artefakt", tabelle)
+      + "</div>";
+  }
+
+  function urteilKurz(bewertung) {
+    if (bewertung === "deckungsgleich") return "deckt sich";
+    if (bewertung === "abweichend") return "weicht ab";
+    if (bewertung === "lokal") return "lokal";
+    return "unbekannt";
+  }
+
+  function urteilText(bewertung) {
+    if (bewertung === "deckungsgleich") return "Der laufende Stand entspricht dem gesetzten Release";
+    if (bewertung === "lokal") return "Kein Release-Artefakt — der Server läuft aus dem Arbeitsverzeichnis";
+    return "Nicht beide Seiten bekannt — es wird nichts behauptet";
+  }
+
+  // ---- U · Speicher ------------------------------------------------------------
+
+  function speicher(d) {
+    if (d.ok === false) {
+      return V.kopfBlock("U", "Speicher", "Speicher", "Belegung im Object Brain.")
+        + '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">Speicher nicht eingerichtet</div>'
+        + '<div class="ns">Ohne IDrive-e2-Zugang wird hier nichts geraten.</div></div></div>';
+    }
+
+    const zeilen = (d.bereiche || []).map(function (b) {
+      if (!b.erreichbar) {
+        return "<tr><td><b>" + e(b.name) + "</b><br><span class=\"s mono\">" + e(b.praefix) + "</span></td>"
+          + '<td colspan="3">' + pille("nicht erreichbar", "bad") + " " + e(b.grund || "") + "</td></tr>";
+      }
+      return "<tr><td><b>" + e(b.name) + '</b><br><span class="s mono">' + e(b.eimer || "") + " · " + e(b.praefix) + "</span></td>"
+        + "<td>" + e(String(b.objekte)) + (b.abgeschnitten ? " " + pille("mindestens", "warn") : "") + "</td>"
+        + "<td>" + e(bytes(b.bytes)) + "</td>"
+        + "<td>" + e(A.zeit(b.zuletztGeaendertAm)) + "</td></tr>";
+    });
+
+    const hinweis = '<div class="note glass"><div class="nx">◆</div><div>'
+      + '<div class="nt">' + (d.unvollstaendig ? "Teilweise abgeschnitten — die Zahlen sind Untergrenzen" : "Vollständig gezählt") + "</div>"
+      + '<div class="ns">' + e(d.hinweis || "") + " Eine Zahl, der man nicht ansieht, dass sie unvollständig ist, "
+      + "ist schlimmer als gar keine — deshalb steht „mindestens“ daneben.</div></div></div>";
+
+    return V.kopfBlock("U", "Speicher", "Speicher",
+      "Belegung je Bereich im Object Brain.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Objekte", String(d.objekteGesamt || 0), d.unvollstaendig ? "mindestens" : "gezählt")
+      + V.kachelBlock("Belegung", bytes(d.bytesGesamt), "in den gezeigten Bereichen")
+      + V.kachelBlock("Eimer", e(d.eimer || "—"),
+        d.deployEimer && d.deployEimer !== d.eimer ? "Artefakte in " + e(d.deployEimer) : "IDrive e2")
+      + "</div>"
+      + '<div class="stack">' + hinweis
+      + V.panelBlock("Bereiche", "feste Auswahl",
+        V.tabelleBlock(["Bereich", "Objekte", "Belegung", "Zuletzt geändert"], zeilen))
+      + "</div>";
+  }
+
+  // ---- Helfer ------------------------------------------------------------------
+
+  function zeile(name, wert) {
+    return "<tr><td><b>" + e(name) + "</b></td><td>" + e(wert) + "</td></tr>";
+  }
+
+  function nichtErreichbar(was, grund) {
+    return V.tabelleBlock(["", ""], [
+      "<tr><td><b>" + e(was) + "</b></td><td>" + pille("nicht erreichbar", "bad") + " " + e(grund || "") + "</td></tr>"
+    ]);
+  }
+
+  window.adminViewsStage5 = {
+    modelle: modelle, jobs: jobs, worker: worker, deploy: deploy, speicher: speicher
+  };
+})();

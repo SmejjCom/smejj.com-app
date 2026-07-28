@@ -21,9 +21,15 @@
   // Stufe 4 meldet sich selbst an (console-stage4.js). So bleibt diese Datei
   // unter der 800-Zeilen-Regel und kennt nur die Schnittstelle, nicht die
   // Einzelheiten der vier Bereiche.
-  const STUFE4 = (window.adminStage4 || {}).seiten || {};
-  Object.keys(STUFE4).forEach(function (pfad) {
-    SEITEN.push({ id: STUFE4[pfad].id, pfad: pfad, gruppe: STUFE4[pfad].gruppe, name: STUFE4[pfad].name });
+  // Stufe 5 (Betrieb) meldet sich auf demselben Weg an. Beide Register werden
+  // zusammengefuehrt, damit der Kern nur EINE Nachschlagetabelle kennt.
+  const ANGEMELDET = Object.assign(
+    {},
+    (window.adminStage4 || {}).seiten || {},
+    (window.adminStage5 || {}).seiten || {}
+  );
+  Object.keys(ANGEMELDET).forEach(function (pfad) {
+    SEITEN.push({ id: ANGEMELDET[pfad].id, pfad: pfad, gruppe: ANGEMELDET[pfad].gruppe, name: ANGEMELDET[pfad].name });
   });
 
   // Nach Gruppen ordnen, sonst erscheint dieselbe Ueberschrift zweimal: die
@@ -36,13 +42,13 @@
     return (links < 0 ? 99 : links) - (rechts < 0 ? 99 : rechts);
   });
 
-  /** Was die Stufe-4-Ansichten vom Kern brauchen — bewusst klein gehalten. */
-  function stufe4Kontext(pfad) {
+  /** Was die angemeldeten Ansichten vom Kern brauchen — bewusst klein gehalten. */
+  function seitenKontext(pfad) {
     return {
       zeichne: function (html) { seite.innerHTML = html; },
       fehler: function (text) { zeigeFehler(text); },
       meldung: function (text, istFehler) { meldung(text, istFehler); },
-      neuLaden: function () { STUFE4[pfad].laden(stufe4Kontext(pfad)); }
+      neuLaden: function () { ANGEMELDET[pfad].laden(seitenKontext(pfad)); }
     };
   }
 
@@ -350,9 +356,9 @@
     if (treffer.pfad === "audit") return zeigeAudit();
     if (treffer.pfad === "freigaben") return zeigeFreigaben();
     if (treffer.pfad === "support") return zeigeSupport();
-    if (STUFE4[treffer.pfad]) {
+    if (ANGEMELDET[treffer.pfad]) {
       laedt("wird geladen …");
-      return STUFE4[treffer.pfad].laden(stufe4Kontext(treffer.pfad));
+      return ANGEMELDET[treffer.pfad].laden(seitenKontext(treffer.pfad));
     }
     if (treffer.pfad === "compliance") return zeigeCompliance();
     return zeigeUebersicht();
