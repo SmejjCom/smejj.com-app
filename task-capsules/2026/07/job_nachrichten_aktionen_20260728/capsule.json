@@ -112,12 +112,24 @@
   "benchmark": {
     "datei": "docs/benchmarks/webvitals_msgactions_2026-07-28.json",
     "referenz": "docs/benchmarks/webvitals_final_2026-07-28.json",
-    "kalt_lcp_median_ms": [312, 200, 172],
+    "kalt_lcp_median_ms": [
+      312,
+      200,
+      172
+    ],
     "referenz_kalt_lcp_median_ms": 172,
-    "kalt_lcp_p75_ms": [392, 348, 236],
+    "kalt_lcp_p75_ms": [
+      392,
+      348,
+      236
+    ],
     "budget_lcp_p75_ms": 1500,
     "cls_p75": 0,
-    "inp_p75_ms": [40, 48, 56],
+    "inp_p75_ms": [
+      40,
+      48,
+      56
+    ],
     "bewertung": "Alle Budgets eingehalten. Lauf 3 traf die Referenz exakt; dieselbe Codebasis streute frueher zwischen 172 und 268 ms. Anzahl der Anfragen vor dem ersten Bildaufbau unveraendert (chat-actions.css im bestehenden Buendel, +~1,5 KB komprimiert); chat-actions.js laedt als type=module am Seitenende und blockiert nicht."
   },
   "rollback": {
@@ -125,12 +137,78 @@
     "liveCommitVorDeploy": "e1113ec83f80417e84df1e3f7ffe2bbad766ce05 (sw v164)",
     "inhalt": "index.html, sw.js, assets/chat-store.js, assets/start-styles.css im Live-Stand vor dem Deploy, plus Anleitung",
     "startLockBackup": "backups/start-design-lock/2026-07-28T08-31-55-426Z/",
-    "appRepoCommits": ["4c4fa18 (Einbau)", "b7e1f3a (Menue-Fix)"],
-    "frontendRepoCommits": ["39b0786 (sw v165)", "bde22ad (sw v169)"]
+    "appRepoCommits": [
+      "4c4fa18 (Einbau)",
+      "b7e1f3a (Menue-Fix)"
+    ],
+    "frontendRepoCommits": [
+      "39b0786 (sw v165)",
+      "bde22ad (sw v169)"
+    ]
   },
   "besonderheiten": [
     "Im selben Arbeitsverzeichnis lief parallel eine zweite Session (tote Knoepfe F-23, PANEL_WIDTHS-Fix, Admin-Mockup). Vor jedem Deploy wurde der Live-Stand per SHA-256 gegen den lokalen Vor-Stand geprueft; es wurde ausschliesslich Eigenes deployt. Die Cache-Versionen v166-v168 gehoeren dieser Session, daher springt dieser Auftrag von v165 auf v169.",
     "Der Live-Test lief mit einer rein lokalen Sitzungskennung im Testbrowser (mode local-only). Es wurden keine Zugangsdaten eingegeben und kein Konto angelegt."
   ],
-  "status": "ABGESCHLOSSEN — live auf https://smejj.com, byte-verifiziert, Klickpfad geprueft"
+  "status": "ABGESCHLOSSEN — live auf https://smejj.com, byte-verifiziert, Klickpfad geprueft",
+  "nachtrag_welle2": {
+    "titel": "Welle 2 — Fassungen persistieren, Touch-Ziele halten (sw v171)",
+    "freigabe": {
+      "wortlaut": "Ja (auf die Frage: Versions-Persistenz und Mobil-Durchgang nachziehen)",
+      "von": "Wof Kadavanich",
+      "am": "2026-07-28"
+    },
+    "geschlossene_luecken": [
+      "versions wurde nicht gespeichert: \"Version 2 von 3\" war nach einem Neuladen weg, weil die Fassungen nur im Arbeitsspeicher lagen. chat-store.js speichert jetzt versions + active je Nachricht (Obergrenze acht) und gibt beides beim Wiederherstellen zurueck; clampVersionIndex verschiebt den Zeiger mit, wenn gekuerzt wurde. Ein abgezweigter Chat nimmt die Fassungen mit.",
+      "Touch-Ziele wurden gequetscht: auf 375 px ergaben fuenf Aktionen, zwei Versionspfeile und das Label rund 366 px in einer 359 px breiten Zeile — Flexbox schrumpfte die Knoepfe von 42 auf 37 px, unter das Touch-Ziel des Projekts. Jetzt flex-wrap auf der Leiste und flex: 0 0 auto auf dem Knopf."
+    ],
+    "geaenderte_dateien": [
+      "public/chat-messages.js (clampVersionIndex, seedMeta mit versions/active)",
+      "public/chat-store.js (MAX_VERSIONS, Persistenz, seedMeta)",
+      "public/chat-actions.js (abgezweigter Chat nimmt Fassungen mit)",
+      "public/chat-actions.css + public/start-styles.css (Umbruch statt Quetschen)",
+      "public/sw.js (v169 -> v171 live)",
+      "tests/chat-message-actions.test.mjs (33 -> 34 Tests)"
+    ],
+    "live_test": {
+      "domain": "https://smejj.com/",
+      "neu_generieren": "erzeugte eine echt andere Antwort (\"ist ein Webentwicklungsansatz\" statt \"bezeichnet eine Webentwicklungsstrategie\"), Waehler zeigte Version 2 von 2",
+      "nach_reload": "Version 2 von 2 erhalten; Wechsel auf Version 1 von 2 zeigt die andere echte Antwort; Kopieren liefert je Fassung das passende Roh-Markdown",
+      "mobil": "375x812 geprueft: Menues vollstaendig im Bild (221 und 232 px breit), Editor 359 px ohne Ueberlauf, mit erzwungenen Touch-Maßen alle fuenf Aktionen volle 42 px und Umbruch in zwei Zeilen (78 px hoch), kein Ueberlauf",
+      "echter_mausklick": "Klick auf die Koordinaten des Kopieren-Knopfes kopierte die angezeigte Fassung",
+      "byte_gleichheit": "alle vier deployten Dateien live SHA-256-identisch zum lokalen Stand"
+    },
+    "nicht_geprueft": [
+      "Ein echtes Touch-Geraet. Der Zweig (pointer: coarse) wurde durch erzwungene Maße gemessen, nicht auf einem Handy gefahren."
+    ],
+    "benchmark": {
+      "datei": "docs/benchmarks/webvitals_versionen_2026-07-28.json",
+      "kalt_lcp_median_ms": [
+        328,
+        332,
+        128
+      ],
+      "kalt_ttfb_median_ms": [
+        124,
+        112,
+        23
+      ],
+      "cls_p75": 0,
+      "inp_p75_ms": 48,
+      "gewicht_kerndateien_kb": 58,
+      "budget_kb": 300,
+      "bewertung": "alle Budgets eingehalten; LCP folgt dem TTFB, Lauf 3 lag unter dem Referenzwert — Netzstreuung, kein Code-Effekt"
+    },
+    "offen": [
+      "Bewertung (Daumen) wird gespeichert und nach dem Neuladen wieder angezeigt, aber von keiner Auswertung gelesen. Eine Rueckmeldestrecke wuerde neue Serverlast und eine Trainingsdaten-Freigabe erfordern (Policy fail-closed) — bewusst nicht gebaut.",
+      "Quellen anzeigen: unveraendert offen, siehe scope.excluded."
+    ],
+    "rollback": {
+      "verzeichnis": "backups/rollback-2026-07-28-versionen-persistenz/",
+      "liveCommitVorDeploy": "bde22ad1aab3388ed372aad8ef81192609cd1a70 (sw v169)",
+      "appRepoCommit": "04990f9",
+      "frontendRepoCommit": "ebab85d"
+    },
+    "status": "ABGESCHLOSSEN — live auf https://smejj.com (sw v171), byte-verifiziert, Reload-Ueberleben und Mobil-Layout geprueft"
+  }
 }

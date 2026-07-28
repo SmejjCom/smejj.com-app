@@ -1,0 +1,88 @@
+{
+  "titel": "Web-Vitals nach Versions-Persistenz und Touch-Ziel-Fix (sw v171)",
+  "datum": "2026-07-28",
+  "url": "https://smejj.com/",
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll (scripts/testing/measure_web_vitals.mjs), 3 Laeufe x 7 Aufrufe",
+  "budgets": {
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "startseite_kb_komprimiert": 300
+  },
+  "laeufe": [
+    {
+      "lauf": 1,
+      "kalt": {
+        "ttfb_median": 124,
+        "lcp_median": 328,
+        "lcp_p75": 496,
+        "inp_p75": 48,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 168,
+        "ttfb_median": 51
+      }
+    },
+    {
+      "lauf": 2,
+      "kalt": {
+        "ttfb_median": 112,
+        "lcp_median": 332,
+        "lcp_p75": 416,
+        "inp_p75": 48,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 180,
+        "ttfb_median": 56
+      }
+    },
+    {
+      "lauf": 3,
+      "kalt": {
+        "ttfb_median": 23,
+        "lcp_median": 128,
+        "lcp_p75": 300,
+        "inp_p75": 48,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 140,
+        "ttfb_median": 24
+      }
+    }
+  ],
+  "gewicht": {
+    "gemessen": "curl mit Accept-Encoding: br, gzip gegen die Live-Domain",
+    "kerndateien_bytes": 59473,
+    "kerndateien_kb": 58,
+    "davon_eigene_module_bytes": 13669,
+    "hinweis": "index.html, start-styles.css, app.js, sw.js, chat-store.js und die drei neuen Chat-Module. 58 KB gegen ein Budget von 300 KB. Die drei neuen Module (13,3 KB) laden als type=module am Seitenende und blockieren den Bildaufbau nicht."
+  },
+  "bewertung": {
+    "ergebnis": "alle Budgets eingehalten",
+    "kalt_lcp_median_laeufe": [
+      328,
+      332,
+      128
+    ],
+    "kalt_ttfb_median_laeufe": [
+      124,
+      112,
+      23
+    ],
+    "begruendung": "Das kalte LCP folgt sichtbar dem TTFB: 124/112/23 ms TTFB ergaben 328/332/128 ms LCP. Lauf 3 lag mit 128 ms UNTER dem Referenzwert von 172 ms — die Streuung kommt vom Netz bzw. vom GitHub-Pages-Edge, nicht vom Code. Diese Aenderung fuegt keinen einzigen Netzaufruf hinzu: die vier betroffenen Dateien lagen schon vorher im Precache, chat-store.js und chat-messages.js wuchsen um wenige Zeilen, der CSS-Zuwachs sind zwei Flexbox-Eigenschaften.",
+    "inp": "p75 48 ms in allen drei Laeufen — unveraendert",
+    "cls": "0 in allen Laeufen"
+  },
+  "referenz": {
+    "datei": "webvitals_msgactions_2026-07-28.json",
+    "kalt_lcp_median_laeufe": [
+      312,
+      200,
+      172
+    ]
+  }
+}
