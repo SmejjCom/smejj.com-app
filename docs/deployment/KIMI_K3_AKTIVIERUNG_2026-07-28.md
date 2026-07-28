@@ -72,7 +72,41 @@ Ohne `SMEJJ_KIMI_K3_ENABLED=YES` bleibt K3 inaktiv und der Router nimmt
 GLM-5.2 — auch mit gueltigem geerbtem Key. Das ist Absicht: ein
 kostenpflichtiges Modell darf nie durch einen vergessenen Schalter anspringen.
 
-## Schritt 3 — den Router ueberhaupt einschalten (leicht zu uebersehen)
+## LIVE seit 2026-07-28 — ausgefuehrt, nichts mehr offen
+
+Freigabe: "Komplett live schalten" (Wof Kadavanich, 2026-07-28).
+
+| Schritt | Ergebnis |
+|---|---|
+| Artefakt gebaut | `smejj-control-kimi-k3-2026-07-28.tar.gz`, 1.618.096 Bytes, 713 Dateien, `secretsIncluded: false` |
+| SHA-256 | `f18ff65b0ef09a4a66556c645562d1c9fda0bf750b96daa04f2a9acb2201e9c7` |
+| Auf e2 | `s3://smejj-model-files/deployments/control/…`, `immutable: true`, `contentVerified: true` |
+| Salad | Gruppe `smejj-control` Version **95**, 72 Variablen, `SMEJJ_KIMI_K3_ENABLED=YES` |
+| Vorgaenger (Rueckweg) | `deployments/control/smejj-control-stufe2-2026-07-28.tar.gz` |
+
+Live-Belege:
+
+- `/api/models/status`: `kimi-k3` → `active=true`, `selectable=true`,
+  `runtimeConfigured=true`. Kein Key im Payload.
+- Control-Server direkt: `x-smejj-model-backend: kimi:kimi-k3`,
+  `x-smejj-model-id: kimi-k3`, `x-smejj-model-fallback: false`.
+- Ueber die Bridge (echter Nutzerweg): `x-smejj-bridge: multi-model-router`,
+  `kimi:kimi-k3`, Antwort "Ich bin Kimi, ein Modell von Moonshot AI."
+- Auf smejj.com: "Kimi K3 · 1M Kontext · flagship · **Bereit**", waehlbar.
+- Nicht-Regression: Standardanfrage ohne Modellwahl geht unveraendert auf die
+  Groq-Schnellspur, `kimi-k2-7` unveraendert auf `kimi:kimi-k2.7-code`.
+
+**Das Key-Erbe hat getragen:** es wurde kein zweiter Key gesetzt. K3 laeuft auf
+dem bereits vorhandenen `SMEJJ_LLM_KIMI_API_KEY`.
+
+## Schritt 3 — Router-Schalter: war bereits an
+
+Nachtrag zur Pruefung: die Bridge meldet `multiModelRouterEnabled: true`. Der
+Schalter stand live schon auf YES — die `NO`-Vorgabe steht nur in `.env.example`.
+Es war also nichts auf Zeabur zu tun. Der folgende Abschnitt bleibt als
+Erklaerung des Mechanismus stehen.
+
+## Der Mechanismus dahinter (leicht zu uebersehen)
 
 Der Live-Chat laeuft ueber die Container Group der **chat-bridge**, nicht
 direkt ueber smejj-control. Die Bridge fragt den Modell-Router nur, wenn dort

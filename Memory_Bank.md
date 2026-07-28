@@ -5,6 +5,43 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-28] KIMI K3 LIVE — reines API-Modell, bewusst OHNE e2-Vault
+
+Freigabe: "oK, baue Kimi K3 mit API ein" + "Komplett live schalten"
+(Wof Kadavanich, 2026-07-28). Commits `1f00d50`, `ac409eb`, `bc1159f`.
+Live als smejj-control Version 95, Artefakt
+`deployments/control/smejj-control-kimi-k3-2026-07-28.tar.gz`
+(sha `f18ff65b…`), Rueckweg `smejj-control-stufe2-2026-07-28.tar.gz`.
+
+- GEGEN DEN REFLEX "GEWICHTE IN DEN VAULT". K2.7 und GLM-5.2 liegen als
+  Gewichte in IDrive e2. Fuer K3 waere das Geldverbrennen: 2,8 T Parameter,
+  ~594 GB bis 1,4 TB, laeuft weder auf einer GPU noch auf einem 8-GPU-Knoten.
+  e2 ist Speicher, kein Rechner. Darum `storage: null` und nur API.
+- DAS ERBE STATT DES ZWEITEN KEYS. K2.7 und K3 liegen auf demselben
+  Moonshot-Konto, und `SMEJJ_LLM_KIMI_API_KEY` war live bereits gesetzt.
+  Neu: `runtime.keyFallbackEnvPrefix` — ohne eigenen K3-Key erbt K3 den
+  K2.7-Key. Einseitig (ein K3-Key konfiguriert K2.7 nicht), eigener Key hat
+  Vorrang. Wirkung: die Aktivierung schrumpfte auf EIN Flag, und niemand
+  musste ein Secret ein zweites Mal von Hand eintippen.
+- FAIL-CLOSED BLEIBT. Ohne `SMEJJ_KIMI_K3_ENABLED=YES` ist K3 auch mit
+  gueltigem geerbtem Key inaktiv; der Router nimmt GLM-5.2. Auto-Modus waehlt
+  K3 nie — nur ausdrueckliche Wahl. K3 ist kostenpflichtig (3 $/15 $ pro Mio.
+  Token), Auto-Recharge im Moonshot-Konto steht auf Off.
+- NEBENBEFUND BEHOBEN: `handleWorkerPreflight` stuerzte bei Modellen ohne
+  e2-Vault ab (`definition.storage.vaultStatusId` auf null) — betraf schon
+  vorher `smejj fast 1.0`. Jetzt 409 `model_not_vault_backed`.
+- KORREKTUR EINER ANNAHME: `SMEJJ_MULTI_MODEL_ROUTER_ENABLED` steht in
+  `.env.example` auf NO, live aber laengst auf YES (`multiModelRouterEnabled:
+  true`). Der `.env.example`-Wert ist keine Auskunft ueber den Live-Stand —
+  vor jeder Aussage die Bridge selbst fragen.
+- VERIFIKATION: model-registry 25/25, alle Einzelchecks gruen ausser
+  `check:start-lock` (public/sw.js v178 aus einer Parallel-Session, dort nicht
+  neu eingefroren — in public/ wurde hier nichts angefasst). Live: Control
+  direkt und ueber die Bridge `x-smejj-model-backend: kimi:kimi-k3`,
+  `model-fallback: false`, Antwort "Ich bin Kimi, ein Modell von Moonshot AI.";
+  auf smejj.com "Kimi K3 · 1M · flagship · Bereit". Nicht-Regression belegt:
+  Standardanfrage unveraendert Groq-Schnellspur, K2.7 unveraendert.
+
 ### [2026-07-28] EU AI ACT NACHGEWIESEN + ADMINBEREICH STUFE 2 LIVE (job_aiact_adminstufe2_20260728)
 
 Volltext wegen der 800-Zeilen-Regel ausgelagert nach
