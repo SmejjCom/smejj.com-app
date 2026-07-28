@@ -5,6 +5,93 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-28] QA-RESTPUNKTE: SW CACHE-FIRST, CSP, OFFLINE, ZOOM, SALAD-KOSTEN, KONTO-ENUMERATION (job_qa_restpunkte_20260728)
+
+Freigabe: Auftrag Wof Kadavanich 2026-07-28 (acht Punkte mit ausdruecklicher
+Dateifreigabe) plus "Ja" auf den Master-Prompt (Autonomie-Charta).
+Arbeits-Commits `2c20138`, `5ca69bf`, `7fb74d4`, `2a24da3`, `58921ba`;
+Live-Frontend bis `e1113ec` (sw v164); Control-Server Version 90.
+
+**Entscheidung 1 — Service Worker cache-first fuer Precache-Dateien.** Gemessen
+(lokal, Server-Zaehlung, HTTP-Cache aus): 108 Anfragen/668 KB -> 15/53 KB je
+warmem Seitenaufruf. HTML und /api/ bleiben network-first. **Preis, bewusst
+akzeptiert:** eine geaenderte Precache-Datei erreicht Bestandsnutzer NUR noch
+ueber einen CACHE_NAME-Sprung. Nebenbefund: auth-gate.js (Import mit ?v=1, dem
+Import-Waechter entgangen) und api-keys-surface.css (Laufzeit-<link>) fehlten
+im Precache — offline haetten beide HTML statt JS/CSS bekommen.
+
+**Entscheidung 2 — ein Stylesheet fuer alle 20 statischen Seiten.** Nicht 17:
+`/de/` gehoert dazu, es wird nur nicht vom Generator erzeugt. Geltungsbereich
+ueber eine Klasse am <html>-Element (p-recht / p-404 / p-sprachstart). Der
+Generator prueft fail-closed, dass der Hintergrund dem themeColor entspricht.
+Darstellung byte-identisch belegt (8 Seiten, 375 und 1280 px, vorher/nachher
+und live/lokal).
+
+**Drei Fehler, die erst die MESSUNG gefunden hat:**
+1. *Offline warf die Statusanzeige.* `addEventListener("offline", fn)` uebergibt
+   das EVENT als erstes Argument — die Funktion erwartete dort ihre deps.
+   Ausgerechnet im Moment des Netzwechsels fiel die Anzeige aus. Regel: eine
+   Funktion mit deps NIE direkt als Listener uebergeben.
+2. *11 von 22 Tab-Stationen lagen ausserhalb des Bildes.* Zugeklappte Panels
+   stehen bei -208 px bzw. 1309 px und waren weiter fokussierbar. Fruehere
+   Wellen zaehlten die Tab-Folge, prueften aber nie, ob die Station SICHTBAR
+   ist. Fix per Klassen-Beobachter in panel-layout.js (app.js klappt mit
+   eigenen Funktionen und steht unter dem Start-Lock). Live 0 von 22.
+3. *Konto-Enumeration in der Auth-API.* /api/auth/email/reset/request antwortete
+   fuer unbekannte Adressen mit mail.reason="unknown_account", fuer bekannte mit
+   sent=true; dasselbe in der Registrierung ("account_exists"). Jeder konnte
+   ohne Anmeldung durchprobieren, welche Adressen ein Konto haben. Die
+   Oberflaeche war datensparsam formuliert — die API widersprach ihr. Fix:
+   Mailergebnis heisst `internalMail`, respond() entfernt es an EINER Stelle
+   fuer alle Routen; die Oberflaeche entscheidet ueber
+   `verificationMailExpected` (haengt nur an der Serverkonfiguration). Live
+   verifiziert: Antwort fuer bestehende und neue Adresse byte-identisch.
+
+**SALAD-KOSTEN erstmals aus dem Portal belegt (nicht geschaetzt):** Juli 2026
+Zwischensumme 61,72 USD, vollstaendig aus Guthaben gedeckt; Restguthaben
+87,28 USD; **Auto-Recharge AUS** — leeres Guthaben stoppt ALLE Container, auch
+den Control-Server. Es laufen VIER, nicht drei: smejj-control (≈3,60 $/Mo,
+unverzichtbar, Default-Origin jedes /api/-Pfads), smejj-chat-bridge-v88b-live
+(≈2,40 $, Reserve hinter Zeabur), smejj-remote-browser-bridge-live (≈2,40 $)
+und smejj-remote-browser-live (≈6,60 $, GPU, nur GTX 1650/1050 Ti erlaubt).
+Laufende Rate ≈ 15 $/Monat. Der grosse Posten der Rechnung (RTX 4090,
+44,65 $) stammt von den inzwischen GESTOPPTEN GPU-Containern und wiederholt
+sich nicht. Zuordnung ist abgeleitet — die Rechnung gruppiert nach Projekt,
+nicht nach Container.
+
+**Verifikation:** check:all und release:preflight gruen (isolierter Klon des
+eigenen Commits — im gemeinsamen Arbeitsordner rot durch eine parallele
+Sitzung, die index.html/sw.js fuer Chat-Aktionen v165 geaendert hat). Locks
+viermal neu eingefroren. Live: sw v164, Offline 99 ms ohne Seitenfehler,
+Tastatur 0/22 ausserhalb, Web-Vitals warm TTFB 33 ms / LCP 156 ms / CLS 0 /
+INP 40 ms / 39 KB.
+
+**LEHREN (verifiziert, gelten weiter):**
+1. **Vergleichsbasis nie ueber HEAD~1 bestimmen.** Eine parallele Sitzung kann
+   ueber den eigenen Commit hinweg committen; HEAD~1 ist dann der eigene neue
+   Stand. Der Abgleich meldete faelschlich "alle 20 Live-Dateien weichen ab".
+   Immer den ausdruecklichen Commit-Hash vor der eigenen Aenderung nehmen.
+2. **Nie `git add` auf eine geteilte Datei ohne Blick auf den Inhalt.** So ging
+   eine package.json-Zeile der parallelen Sitzung mit in einen eigenen Commit.
+3. **Der eigene Nachweis gehoert in einen Klon.** `git clone --shared` plus
+   node_modules-Symlink trennt die eigene Arbeit sauber von fremdem WIP.
+4. **Live-Web-Vitals streuen stark.** Kalte TTFB schwankte bei IDENTISCHEM Code
+   zwischen 75 und 603 ms (p75). Ein Lauf taugt nicht als Regressionsnachweis.
+5. **Der Bauer des Control-Artefakts ueberschreibt nichts** — ohne eigenen
+   SMEJJ_CONTROL_RELEASE_ID und Ausgabepfad bricht er am Artefakt vom 11.07. ab.
+6. **Zoom ist echt messbar** (deviceScaleFactor 2 bei halber CSS-Breite =
+   W3C-Definition), **Textvergroesserung nur naeherungsweise** (Grundschrift am
+   <html>-Element; feste Pixelangaben verhalten sich im echten Browser anders).
+
+**OFFEN (Betreiber-Entscheidung, nicht umgesetzt):** Abschalten von
+Salad-Containern; Entfernen der drei toten Knoepfe #saveSettings/
+#showOfflinePage/#showErrorPage (beruehrt index.html und app.js, beide gelockt);
+Merge nach main; juristische Bewertung der Rechtstexte. Ausserdem meldepflichtig:
+ein Pruefaufruf hat den Datensatz `gibt-es-sicher-nicht-20260728@example.invalid`
+im Konto-Speicher angelegt (Adresse kann keine Mail empfangen, RFC-2606-TLD);
+Loeschen beruehrt den Daten-Lock und wartet auf Freigabe.
+
+
 ### [2026-07-28] ENGLISCHE RECHTSTEXTE, ECHTE UMLAUTE, BREITEN NACHGEMESSEN (job_rechtstexte_en_20260728)
 
 Freigabe "smejj.com 100 % fertig" (Wof Kadavanich, 2026-07-28), Abschluss.
