@@ -139,8 +139,10 @@
     }
 
     const zeilen = (d.admins || []).map(function (a) {
-      return "<tr><td><b>" + e(a.email) + "</b>" + (a.name ? '<br><span class="s">' + e(a.name) + "</span>" : "") + "</td>"
-        + "<td>" + pille(a.rolle, a.rolle === "owner" ? "ok" : "dim") + "</td>"
+      return "<tr><td><b>" + e(a.email) + "</b>" + (a.name ? '<br><span class="s">' + e(a.name) + "</span>" : "")
+        + (a.imVerzeichnis === false ? '<br><span class="s">kein Konto im Verzeichnis</span>' : "") + "</td>"
+        + "<td>" + pille(a.rolle, a.rolle === "owner" ? "ok" : "dim")
+        + (a.herkunft && a.herkunft !== "verzeichnis" ? " " + pille("Notzugang", "warn") : "") + "</td>"
         + "<td>" + (a.status === "active" ? pille("aktiv", "ok") : pille(a.status, "bad")) + "</td>"
         + "<td>" + faktorPille(a.zweiterFaktor) + "</td>"
         + "<td>" + e(String(a.offeneSitzungen)) + "</td>"

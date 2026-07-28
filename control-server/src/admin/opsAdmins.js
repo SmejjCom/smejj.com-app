@@ -26,13 +26,13 @@ export async function adminUebersicht({
   if (!index?.ok) return { ok: false, error: index?.error || "index_nicht_lesbar", admins: [] };
 
   const alle = Array.isArray(index.entries) ? index.entries : [];
-  const rollen = new Set(ADMIN_ROLES);
-  const admins = alle.filter((e) => rollen.has(String(e.role || "").toLowerCase()));
+  const admins = effektiveZugaenge(alle, env);
 
   // Zweiter Faktor je Zugang. Begrenzt parallel: das sind wenige Konten, aber
   // eine Schleife mit einem GET je Eintrag ist genau die Falle aus Stufe 3.
   const mitFaktor = await mapMitGrenze(admins, async (a) => {
     let faktoren = 0;
+    if (!a.userId) return { ...oeffentlich(a, jetztMs), zweiterFaktor: -1 };
     try {
       const liste = await leseFaktoren(a.userId, env);
       faktoren = Array.isArray(liste) ? liste.length : 0;
@@ -56,6 +56,57 @@ export async function adminUebersicht({
     rollen: nachRollen(fertig),
     gemessenAm: new Date(jetztMs).toISOString()
   };
+}
+
+/**
+ * WER KANN TATSAECHLICH HEREIN — nicht: wer steht mit einer Rolle im Verzeichnis.
+ *
+ * Live gefunden (28.07.2026): die Ansicht meldete "0 Zugaenge", waehrend ein
+ * Owner angemeldet war. Grund: dessen Rolle kommt aus
+ * SMEJJ_ADMIN_OWNER_EMAILS, nicht aus einem Rollenfeld. `resolveAdminActor`
+ * erteilt diesen Adressen Owner-Rechte auch ganz ohne Verzeichniseintrag —
+ * sie sind also vollwertige Zugaenge und muessen mitgezaehlt werden.
+ *
+ * Eine Sicherheitsuebersicht, die wirksame Zugaenge uebersieht, ist schlimmer
+ * als keine: sie behauptet Leere, wo Macht liegt.
+ *
+ * Der Status wird dabei genau so abgebildet wie in der Pruefung: ein
+ * hinterlegtes, aber gesperrtes Konto kommt NICHT herein, auch nicht als
+ * Notzugang. Ohne Konto gibt es nichts zu sperren — dann gilt der Zugang.
+ */
+export function effektiveZugaenge(alleKonten, env) {
+  const rollen = new Set(ADMIN_ROLES);
+  const bootstrap = new Set([...bootstrapOwnerEmails(env)]);
+  const nachEmail = new Map(alleKonten.map((e) => [String(e.email || "").toLowerCase(), e]));
+  const ergebnis = new Map();
+
+  for (const eintrag of alleKonten) {
+    const email = String(eintrag.email || "").toLowerCase();
+    const gespeichert = String(eintrag.role || "").toLowerCase();
+    const istNotzugang = bootstrap.has(email);
+    if (!rollen.has(gespeichert) && !istNotzugang) continue;
+    ergebnis.set(email, {
+      ...eintrag,
+      // Bootstrap gewinnt nur nach oben — genau wie in resolveAdminActor.
+      role: istNotzugang ? "owner" : gespeichert,
+      herkunft: istNotzugang ? (rollen.has(gespeichert) ? "beides" : "notzugang") : "verzeichnis",
+      imVerzeichnis: true
+    });
+  }
+
+  for (const email of bootstrap) {
+    if (ergebnis.has(email)) continue;
+    if (nachEmail.has(email)) continue;
+    ergebnis.set(email, {
+      userId: "", email, name: "", method: "", role: "owner",
+      // Ohne Konto gibt es nichts zu sperren: der Zugang steht.
+      status: "active", emailVerified: false, createdAt: null,
+      activeSessions: 0, loginLockedUntil: null,
+      herkunft: "notzugang", imVerzeichnis: false
+    });
+  }
+
+  return [...ergebnis.values()];
 }
 
 /**
@@ -101,9 +152,11 @@ export function notzugangsLage(env, admins) {
     const konto = bekannt.get(adresse);
     return {
       email: adresse,
-      kontoVorhanden: Boolean(konto),
-      rolleImVerzeichnis: konto?.rolle || null,
-      status: konto?.status || null
+      kontoVorhanden: Boolean(konto) && konto.imVerzeichnis !== false,
+      rolleImVerzeichnis: konto && konto.imVerzeichnis !== false ? konto.rolle : null,
+      status: konto?.status || null,
+      // Wirksam heisst: kommt tatsaechlich herein. Ein gesperrtes Konto nicht.
+      wirksam: !konto || konto.status === "active"
     };
   });
   return {
@@ -130,7 +183,9 @@ function oeffentlich(eintrag, jetztMs) {
     emailBestaetigt: eintrag.emailVerified === true,
     seit: eintrag.createdAt || null,
     offeneSitzungen: Number(eintrag.activeSessions || 0),
-    angemeldetGesperrt: Number.isFinite(gesperrtBis) && gesperrtBis > jetztMs
+    angemeldetGesperrt: Number.isFinite(gesperrtBis) && gesperrtBis > jetztMs,
+    herkunft: eintrag.herkunft || "verzeichnis",
+    imVerzeichnis: eintrag.imVerzeichnis !== false
   };
 }
 

@@ -7,7 +7,7 @@
 // Ausfuehren: node --test control-server/src/admin/opsAdmins.test.js
 import test from "node:test";
 import assert from "node:assert/strict";
-import { adminUebersicht, notzugangsLage, vierAugenLage } from "./opsAdmins.js";
+import { adminUebersicht, effektiveZugaenge, notzugangsLage, vierAugenLage } from "./opsAdmins.js";
 
 const JETZT = Date.parse("2026-07-28T12:00:00.000Z");
 
@@ -34,6 +34,58 @@ test("nur Konten mit Adminrolle erscheinen — ein gewoehnliches Konto ist kein 
   assert.equal(e.total, 2);
   assert.deepEqual(e.admins.map((a) => a.email), ["chefin@example.de", "pruefer@example.de"]);
   assert.equal(e.admins[0].rolle, "owner", "Owner steht oben");
+});
+
+test("EIN NOTZUGANG OHNE VERZEICHNISEINTRAG IST TROTZDEM EIN OWNER", async () => {
+  // Live gefunden (28.07.2026, Version 108): die Ansicht meldete "0 Zugaenge",
+  // waehrend ein Owner angemeldet war. Dessen Rolle kommt aus
+  // SMEJJ_ADMIN_OWNER_EMAILS, nicht aus einem Rollenfeld. Eine
+  // Sicherheitsuebersicht, die wirksame Zugaenge uebersieht, ist schlimmer als
+  // keine: sie behauptet Leere, wo Macht liegt.
+  const e = await adminUebersicht({
+    env: { SMEJJ_ADMIN_OWNER_EMAILS: "chefin@example.de" },
+    jetztMs: JETZT, leseFaktoren: OHNE_FAKTOR,
+    leseIndex: async () => ({ ok: true, entries: [konto({ userId: "u_9", email: "gast@example.de", role: "user" })] })
+  });
+  assert.equal(e.total, 1, "der Notzugang zaehlt als Zugang");
+  assert.equal(e.admins[0].email, "chefin@example.de");
+  assert.equal(e.admins[0].rolle, "owner");
+  assert.equal(e.admins[0].imVerzeichnis, false, "sichtbar, dass kein Konto dahintersteht");
+  assert.equal(e.admins[0].herkunft, "notzugang");
+});
+
+test("ein gewoehnliches Konto auf der Notzugangsliste wird zum Owner hochgestuft", () => {
+  // Genau wie resolveAdminActor: Bootstrap gewinnt nur nach oben.
+  const zugaenge = effektiveZugaenge(
+    [{ userId: "u_1", email: "chefin@example.de", role: "user", status: "active" }],
+    { SMEJJ_ADMIN_OWNER_EMAILS: "chefin@example.de" }
+  );
+  assert.equal(zugaenge.length, 1);
+  assert.equal(zugaenge[0].role, "owner");
+  assert.equal(zugaenge[0].herkunft, "notzugang");
+  assert.equal(zugaenge[0].imVerzeichnis, true, "ein Konto gibt es ja");
+});
+
+test("ein gesperrtes Konto auf der Notzugangsliste kommt NICHT herein", () => {
+  const zugaenge = effektiveZugaenge(
+    [{ userId: "u_1", email: "alt@example.de", role: "owner", status: "blocked" }],
+    { SMEJJ_ADMIN_OWNER_EMAILS: "alt@example.de" }
+  );
+  assert.equal(zugaenge[0].status, "blocked", "die Sperre bleibt sichtbar");
+  const lage = vierAugenLage([{ email: "alt@example.de", rolle: "owner", status: "blocked" }]);
+  assert.equal(lage.rechte[0].berechtigte, 0, "gesperrt heisst gesperrt, auch als Notzugang");
+});
+
+test("kein Konto ohne Kennung wird nach Passkeys gefragt", async () => {
+  let gefragt = 0;
+  const e = await adminUebersicht({
+    env: { SMEJJ_ADMIN_OWNER_EMAILS: "chefin@example.de" },
+    jetztMs: JETZT,
+    leseFaktoren: async () => { gefragt += 1; return []; },
+    leseIndex: async () => ({ ok: true, entries: [] })
+  });
+  assert.equal(gefragt, 0, "ohne Kennung gibt es nichts abzufragen");
+  assert.equal(e.admins[0].zweiterFaktor, -1, "und das Ergebnis ist unbekannt, nicht null");
 });
 
 test("EIN EINZIGER BERECHTIGTER MACHT VIER AUGEN UNMOEGLICH", () => {
