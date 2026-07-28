@@ -40,6 +40,24 @@ export function newUserId() {
   return `u_${crypto.randomBytes(12).toString("base64url")}`;
 }
 
+// Verwaltungsrolle und Kontostand. Bestandskonten wurden ohne diese Felder
+// angelegt; die Normalisierer liefern deshalb den sichersten Rueckfall, damit
+// keine Migration noetig ist. Ein unbekannter Wert ist NIE ein Vorteil.
+export const DEFAULT_ROLE = "user";
+export const DEFAULT_STATUS = "active";
+const KNOWN_ROLES = new Set(["user", "readonly", "auditor", "finance", "support", "admin", "owner"]);
+const KNOWN_STATUS = new Set(["active", "blocked", "deleted"]);
+
+export function userRole(record) {
+  const role = String(record?.role || "").trim().toLowerCase();
+  return KNOWN_ROLES.has(role) ? role : DEFAULT_ROLE;
+}
+
+export function userStatus(record) {
+  const status = String(record?.status || "").trim().toLowerCase();
+  return KNOWN_STATUS.has(status) ? status : DEFAULT_STATUS;
+}
+
 export async function getUserByEmail(email, env = process.env) {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
@@ -80,6 +98,8 @@ export function createUserRecord({ email, name, passwordHash }) {
     method: "email",
     passwordHash,
     emailVerifiedAt: null,
+    role: DEFAULT_ROLE,      // Verwaltungsrolle; Vergabe ausschliesslich ueber den Adminbereich
+    status: DEFAULT_STATUS,  // "active" | "blocked" | "deleted"
     createdAt: now,
     updatedAt: now,
     verify: null,   // { tokenHash, expiresAt }

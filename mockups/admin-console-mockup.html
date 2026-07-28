@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>smejj.com — Operations Console (Mockup A–Z)</title>
+<link rel="stylesheet" href="admin-console/console.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-brand">
+      <div class="mark"><div class="dot"></div><b>smejj.com</b></div>
+      <div class="sub">Operations Console</div>
+    </div>
+    <div class="rail-env"><span class="live"></span> Produktion · EU-Frankfurt</div>
+    <nav class="rail-nav" id="nav"></nav>
+    <div class="rail-foot">
+      <div class="rail-user">
+        <div class="av">WK</div>
+        <div><div class="nm">Wof Kadavanich</div><div class="rl">Owner</div></div>
+      </div>
+      <div class="pill acc" style="justify-content:center">Passkey · Sitzung 24:12</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumb">Operations Console · <b id="crumb">Übersicht</b></div>
+      <div class="spacer"></div>
+      <div class="search">⌕ Nutzer, Job-ID, Rechnung, Audit-Ereignis …</div>
+      <div class="pill ok">Alle Dienste OK</div>
+      <div class="pill warn">3 Vorgänge offen</div>
+    </header>
+    <div id="pages"></div>
+  </div>
+</div>
+
+<script src="admin-console/console-modules.js"></script>
+<script src="admin-console/console-render.js"></script>
+</body>
+</html>

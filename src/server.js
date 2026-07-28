@@ -55,6 +55,7 @@ import { mailerConfig } from "../control-server/src/auth/mailer.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
+import { handleAdminRoute } from "../control-server/src/routes/adminRoutes.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -164,6 +165,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname.startsWith("/api/providers/")) return await handleProviderRoute(req, url, res);
     if (url.pathname === "/api/keys" || url.pathname.startsWith("/api/keys/")) return await handleApiKeysRoute(req, url, res);
+    // Adminbereich Stufe 1 (nur lesend). Ohne Adminrolle antwortet die Route 403 —
+    // die Rolle kommt frisch aus dem Store, nie aus dem Sitzungs-Token.
+    if (url.pathname === "/api/admin" || url.pathname.startsWith("/api/admin/")) {
+      if (await handleAdminRoute(req, url, res)) return;
+    }
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.browserFetch) return await handleBrowserFetch(url, res, { req });

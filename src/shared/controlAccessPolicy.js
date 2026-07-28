@@ -35,6 +35,7 @@ export function requiresAuthenticatedControlAccess(req, url) {
     && pathname.startsWith(`${ROUTES.api.jobs}/`)
     && pathname.endsWith("/status");
   if (workerCallback) return false;
+  if (pathname === "/api/admin" || pathname.startsWith("/api/admin/")) return true;
   if (pathname.startsWith("/api/providers/")) return true;
   if (pathname === "/api/keys" || pathname.startsWith("/api/keys/")) return true;
   if (USER_PROTECTED_EXACT_PATHS.has(pathname)) return true;
