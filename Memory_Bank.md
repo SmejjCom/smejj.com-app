@@ -553,3 +553,26 @@ SMEJJ_REMOTE_BROWSER_WORKER_URL).
 - STAND BEIDER DATEIEN NACH PUNKT 1: public/app.js 1411 -> 800 (Ratchet-Ausnahme
   entfernt), src/server.js 799 -> 750. Beide unterliegen jetzt der normalen
   800-Zeilen-Regel ohne Sonderbehandlung.
+
+## 2026-07-28 — Bridge-Schnellspur: Fix fertig, Deploy-Weg fehlt (job_bridge_schnellspur_20260728)
+- BEFUND: shouldSearchWeb() in public/chat-bridge.js kennt keine Adressen. "Lies
+  https://imild.com/ und nenne den Titel" landete in der werkzeuglosen
+  Groq-Schnellspur und RIET ("I-MILD.com" statt des echten Titels).
+- FIX FERTIG UND GETESTET (Commit 653b5f9, NICHT ausgeliefert): mentionsWebAddress()
+  erkennt Adressen mit/ohne Schema, fail-closed ueber Endungsliste — dieselbe Regel
+  wie autonomous-intent.js. check:llm-router 54/54.
+- ZEABUR-BEFUNDLAGE (im Portal untersucht, wichtig fuer den naechsten Versuch):
+  Dienst smejj-chat-bridge laeuft auf NACKTEM docker.io/library/node:22-bookworm.
+  /root hat nur .bashrc/.profile, /srv ist leer, kein Volume hervorgehoben, das
+  Laufzeitprotokoll zeigt KEINEN Download beim Start. Der Quelltext kommt also
+  ueber die STARTBEDINGUNG in den Container. Der Reiter "Settings" des Dienstes
+  markiert sich, rendert aber keinen Inhalt — die Startbedingung war so nicht
+  einsehbar. Projekt-ID 6a6666899949111176cddefb, Service-ID
+  6a6680070d0b094201bb9ce4. Ein Projekt-Export als YAML (Projekt-Einstellungen ->
+  Export) wuerde die Startbedingung zeigen; ein Zeabur-API-Token gibt es nicht.
+- BEWUSST NICHT GETAN: in der Command-Konsole des laufenden Produktionscontainers
+  herumprobieren. Ohne verstandenen Startvertrag waere das ein Eingriff auf
+  Verdacht in den Live-Chat aller Nutzer.
+- WIRKUNG AUF NUTZER: keine. Ueber die App greift das Frontend-Grounding
+  (browser-context.js, seit sw v148) und liefert der Schnellspur echten
+  Seiteninhalt. Betroffen sind nur direkte API-Aufrufer an der App vorbei.
