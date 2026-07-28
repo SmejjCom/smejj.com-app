@@ -6,10 +6,11 @@
 ## [2026-07-28] ADMINBEREICH STUFE 5 LIVE — Modelle, Jobs, Worker, Deploy, Speicher
 
 Freigabe: Auswahl "Alles der Reihe nach" auf die Frage nach den 16 offenen
-A-Z-Modulen (Wof Kadavanich, 2026-07-28). Commit `056c73c`, live als
-Control-Server **Version 105**, Artefakt
-`deployments/control/smejj-control-stufe5-2026-07-28.tar.gz`.
-Rueckweg: `smejj-control-stufe4c-2026-07-28.tar.gz`.
+A-Z-Modulen (Wof Kadavanich, 2026-07-28). Commits `056c73c`, `8ab5367` und `3ae4e39`, live als
+Control-Server **Version 107**, Artefakt
+`deployments/control/smejj-control-stufe5c-2026-07-28.tar.gz`.
+Rueckweg: `smejj-control-stufe5b-...`, `smejj-control-stufe5-...` bzw.
+`smejj-control-stufe4c-2026-07-28.tar.gz` (Stand vor diesem Job).
 
 Damit sind 16 der 26 A-Z-Module gebaut. Offen bleiben Geld (E, F),
 Sicherheit (J, L, Z) und Produkt (S, T, V, W, X, Y).
@@ -71,9 +72,35 @@ Aufgefallen ist es nur, weil lokal "Nutzerkonten: 0" stand, obwohl live fuenf
 Konten existieren. **Eine Null, die nicht zur bekannten Wirklichkeit passt, ist
 immer eine Spur — nie ein Messergebnis.**
 
+### FALLE: "nie geprueft" als "antwortet nicht" gemeldet
+
+Erst die Live-Daten haben es gezeigt: die Ansicht meldete zwei Ausfaelle
+(GLM-5.2, Kimi K3) — daneben stand aber `gesundheitsstand: null`,
+`zuletztGeprueftAm: null`, `fehlschlaegeInFolge: 0`. **Es war gar nichts
+gemessen worden.** Die Registry setzt `runtimeAvailable` auf false, solange
+niemand nachgesehen hat; geprueft wird beim ersten Aufruf eines Backends, nicht
+auf Vorrat.
+
+Unbehoben haette der Bildschirm nach JEDEM Neustart grundlos Alarm geschlagen.
+Erreichbarkeit hat deshalb drei Werte: ja, nein, ungeprueft — nur "nein" ist ein
+Ausfall.
+
+**Das ist dieselbe Regel wie in der Deploy-Sicht ("unbekannt" ist nicht
+"abweichend"): ein Betriebsbildschirm darf nur behaupten, was er gemessen hat.
+Und: ein Bildschirm, der grundlos Alarm schlaegt, wird nach dem zweiten Mal
+nicht mehr gelesen — dann ist er schlechter als keiner.**
+
+### FALLE: zwei Pruefsummen, die nie zusammenpassen koennen
+
+In der Deploy-Ansicht standen unter "Release-Abgleich" die Pruefsumme des
+gepackten Archivs und die des ausgepackten Inhalts nebeneinander. Zwei
+verschiedene Messungen, die nie uebereinstimmen — es sah aus wie eine
+Abweichung. Verglichen wird jetzt nur die Release-Kennung; die Pruefsummen
+haben eine eigene Tafel mit der Angabe, was sie messen.
+
 ### Verifikation
 
-- 256 Unit-Tests gruen (32 neu), `check:guidelines` OK (1042 Dateien), voller
+- 257 Unit-Tests gruen (33 neu), `check:guidelines` OK (1045 Dateien), voller
   `release:preflight` gruen inklusive Start-Lock und `check:release-imports`
   (154 Dateien transitiv).
 - Lokal alle fuenf Ansichten durchgeklickt, keine Konsolenfehler; ohne

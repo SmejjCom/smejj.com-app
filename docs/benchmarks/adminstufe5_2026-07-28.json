@@ -3,17 +3,40 @@
   "datum": "2026-07-28",
   "job": "job_adminstufe5_20260728",
   "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
-  "controlServerVersion": 106,
-  "artefakt": "deployments/control/smejj-control-stufe5b-2026-07-28.tar.gz",
+  "controlServerVersion": 107,
+  "artefakt": "deployments/control/smejj-control-stufe5c-2026-07-28.tar.gz",
   "rueckweg": [
-    "deployments/control/smejj-control-stufe5-2026-07-28.tar.gz (Stufe 5 ohne den Deploy-Ansicht-Fix)",
+    "deployments/control/smejj-control-stufe5b-2026-07-28.tar.gz (ohne den Ungeprueft-Fix)",
+    "deployments/control/smejj-control-stufe5-2026-07-28.tar.gz (ohne Deploy-Ansicht- und Ungeprueft-Fix)",
     "deployments/control/smejj-control-stufe4c-2026-07-28.tar.gz (Stand vor diesem Job)"
   ],
-  "commits": ["056c73c", "8ab5367"],
+  "commits": [
+    "056c73c",
+    "8ab5367",
+    "3ae4e39"
+  ],
   "abdeckung": {
     "module": "16 von 26 A-Z-Modulen gebaut",
-    "neuInStufe5": ["G Modelle & Provider", "H Jobs & Läufe", "I Worker & Kapazität", "P Betrieb & Deploy", "U Speicher"],
-    "offen": ["E Abrechnung", "F Kosten & Budgets", "J Schlüssel", "L Sicherheit", "S Wissen", "T Sprachen", "V E-Mail", "W Analytik", "X Experimente", "Y Aufgaben", "Z Admin-Verwaltung"]
+    "neuInStufe5": [
+      "G Modelle & Provider",
+      "H Jobs & Läufe",
+      "I Worker & Kapazität",
+      "P Betrieb & Deploy",
+      "U Speicher"
+    ],
+    "offen": [
+      "E Abrechnung",
+      "F Kosten & Budgets",
+      "J Schlüssel",
+      "L Sicherheit",
+      "S Wissen",
+      "T Sprachen",
+      "V E-Mail",
+      "W Analytik",
+      "X Experimente",
+      "Y Aufgaben",
+      "Z Admin-Verwaltung"
+    ]
   },
   "budgets": {
     "api_p95_ms": 300,
@@ -37,6 +60,13 @@
     "ohneAnmeldung": "/admin/views-stage5.js und /api/admin/ops/* liefern 401."
   },
   "gefundeneFehler": [
+    {
+      "fund": "'Nie geprueft' wurde als 'antwortet nicht' gemeldet",
+      "wirkung": "Die Ansicht meldete live 2 Ausfaelle (GLM-5.2, Kimi K3), obwohl gar nichts gemessen war: gesundheitsstand null, zuletztGeprueftAm null, fehlschlaegeInFolge 0.",
+      "ursache": "Die Registry setzt runtimeAvailable auf false, solange niemand nachgesehen hat — geprueft wird beim ersten Aufruf eines Backends, nicht auf Vorrat.",
+      "wirkungWennUnbehoben": "Nach JEDEM Neustart grundloser Alarm. Ein Bildschirm, der grundlos Alarm schlaegt, wird nach dem zweiten Mal nicht mehr gelesen.",
+      "behoben": "Erreichbarkeit hat drei Werte: ja, nein, ungeprueft. Nur 'nein' ist ein Ausfall und faerbt die Kachel."
+    },
     {
       "fund": "Speicher-Ansicht las alles aus dem Haupteimer",
       "wirkung": "Auf Produktion haetten die Release-Artefakte eine Null gezeigt — eine Null sieht aus wie 'nichts da', nicht wie 'am falschen Ort gesucht'.",
@@ -70,9 +100,10 @@
     "schreibrechteUnveraendert": "Stufe 5 ist rein lesend; POST auf /api/admin/ops/* antwortet 405."
   },
   "testabdeckung": {
-    "gesamt": 256,
-    "neuInStufe5": 32,
+    "gesamt": 257,
+    "neuInStufe5": 33,
     "schwerpunkte": [
+      "'nie geprueft' gilt nie als Ausfall",
       "kein Auftragstext, keine Kontextpfade, keine Repository-Adresse in der Job-Sicht",
       "kein Fehlerwortlaut aus der Modell-Gesundheit",
       "keine Schluesselwerte aus der Umgebung in der Deploy-Sicht",
