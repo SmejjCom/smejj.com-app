@@ -56,6 +56,9 @@ async function main() {
   // gemeint war — und bricht an der Formatpruefung ab. Nur was der Aufrufer
   // ausdruecklich mitgibt, wird auf den Server geschrieben.
   const ownerAllowlistEingabe = String(process.env.SMEJJ_GITHUB_OWNER_ALLOWLIST || "").trim();
+  // Optional: echtes Tool-Calling einschalten (2026-07-28). Gleiche Regel wie
+  // oben — nur was der Aufrufer ausdruecklich mitgibt, wird geschrieben.
+  const werkzeugeEingabe = String(process.env.SMEJJ_AGENT_TOOLS_ENABLED || "").trim().toUpperCase();
   loadSecureLocalEnv();
   const org = process.env.SALAD_ORGANIZATION_NAME;
   const project = process.env.SALAD_PROJECT_NAME;
@@ -88,6 +91,10 @@ async function main() {
     }
     mergedEnv.SMEJJ_GITHUB_OWNER_ALLOWLIST = ownerAllowlist;
   }
+  if (werkzeugeEingabe) {
+    if (!/^(YES|NO)$/.test(werkzeugeEingabe)) fail("SMEJJ_AGENT_TOOLS_ENABLED: nur YES oder NO.");
+    mergedEnv.SMEJJ_AGENT_TOOLS_ENABLED = werkzeugeEingabe;
+  }
   await saladApi("PATCH", `/organizations/${org}/projects/${project}/containers/${SALAD_GROUP}`, {
     container: { environment_variables: mergedEnv }
   });
@@ -101,6 +108,7 @@ async function main() {
     previousArtifactKey: previousKey,
     artifactKey: applied.SMEJJ_CONTROL_ARTIFACT_KEY,
     ownerAllowlist: applied.SMEJJ_GITHUB_OWNER_ALLOWLIST ?? "(nicht gesetzt)",
+    werkzeuge: applied.SMEJJ_AGENT_TOOLS_ENABLED ?? "(nicht gesetzt)",
     hint: "Salad rollt jetzt neu aus (~10 Minuten). Danach /api/health pruefen."
   }, null, 2));
 }
