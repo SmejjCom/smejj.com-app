@@ -51,7 +51,17 @@ export async function handleModelsStatus(res, { env = process.env } = {}) {
 export async function handleWorkerPreflight(url, res, { env = process.env } = {}) {
   const requested = url.searchParams.get("model") || DEFAULT_MODEL_ID;
   const definition = getModelDefinition(requested) || getModelDefinition(DEFAULT_MODEL_ID);
-  const model = resolveVaultStatus(definition.storage.vaultStatusId);
+  const model = resolveVaultStatus(definition.storage?.vaultStatusId);
+  // Nur Vault-Modelle (GLM-5.2, K2.7) haben einen e2-Abzug fuer den Worker-Start.
+  // Reine API-Modelle wie Kimi K3 und selbst gehostete wie smejj fast 1.0 haben
+  // keinen — sauber ablehnen statt am fehlenden Vault-Status abzustuerzen.
+  if (!model) {
+    return json(res, 409, {
+      ok: false,
+      error: "model_not_vault_backed",
+      modelId: definition.id
+    });
+  }
   const mode = url.searchParams.get("mode") || "planner-vault";
   const modelStatus = await readModelStatus(model, env);
   const preflight = evaluateWorkerPreflight({

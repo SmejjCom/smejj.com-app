@@ -85,6 +85,49 @@ export const MODEL_REGISTRY = Object.freeze({
       recommendedRamGb: 128
     })
   }),
+  // Kimi K3 — REIN ueber die Anbieter-API (Moonshot), KEIN Vault in IDrive e2.
+  // Bewusste Abweichung von GLM-5.2/K2.7: die offenen Gewichte sind ~594 GB bis
+  // 1,4 TB (MXFP4) und brauchen ein Mehr-Knoten-GPU-Cluster; ein e2-Abzug waere
+  // Speicher ohne Laufzeit. Darum storage: null und ausschliesslich API-Betrieb.
+  // Endpunkt und Modell-ID laut Moonshot-Quickstart: https://api.moonshot.ai/v1
+  // mit model "kimi-k3" (OpenAI-kompatibel, Bearer-Auth).
+  // FAIL-CLOSED: ohne SMEJJ_KIMI_K3_ENABLED + API-Key ist das Modell inaktiv und
+  // der Router faellt auf GLM-5.2 zurueck. K3 ist kostenpflichtig — es wird nie
+  // automatisch aktiv und verdraengt GLM-5.2 nicht als Standard.
+  "kimi-k3": Object.freeze({
+    id: "kimi-k3",
+    name: "Kimi K3",
+    aliases: Object.freeze(["kimi k3", "kimi-k3", "k3", "kimi k3 max"]),
+    provider: "kimi",
+    status: "api-only-runtime-configurable",
+    contextTokens: 1_000_000,
+    codingCapability: "flagship",
+    enabledByDefault: false,
+    featureFlag: "SMEJJ_KIMI_K3_ENABLED",
+    fallbackModelId: DEFAULT_MODEL_ID,
+    storage: null,
+    capabilities: Object.freeze({
+      chat: true,
+      coding: true,
+      fileAnalysis: true,
+      projectAnalysis: true,
+      agentTasks: true,
+      streaming: true,
+      patchPlanning: true,
+      testExplanation: true
+    }),
+    runtime: Object.freeze({
+      envPrefix: "KIMI_K3",
+      defaultBaseUrl: "https://api.moonshot.ai/v1",
+      defaultModel: "kimi-k3",
+      defaultHeader: "Authorization",
+      storageFirstMode: null,
+      engines: Object.freeze(["openai-compatible"]),
+      workerEngines: Object.freeze([]),
+      requiredLocalCacheGb: 0,
+      recommendedRamGb: 0
+    })
+  }),
   // smejj fast 1.0 — EIGENES, selbst gehostetes Modell auf gemieteter Salad-GPU.
   // Zweck: kurze Chat-Antworten (Profil "fast"), waehrend GLM-5.2 das
   // Qualitaets-/Coding-Fundament bleibt. Basis: Qwen/Qwen3.6-35B-A3B

@@ -73,9 +73,14 @@ export const PROVIDER_CATALOG = Object.freeze({
     baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
     models: { default: "qwen-plus", coding: "qwen3-coder-plus" }
   },
+  // Legacy-Eintrag der Env-Kette. Der gepflegte Weg zu Kimi ist die Registry
+  // (src/shared/modelRegistry.js: kimi-k2-7, kimi-k3) — dieser Eintrag greift nur,
+  // wenn jemand ausdruecklich SMEJJ_LLM_MOONSHOT_API_KEY setzt. Das Default-Modell
+  // stand auf dem abgekuendigten "kimi-k2-turbo-preview" (K2-Zeit) und lief damit
+  // ins Leere; korrigiert auf die aktuelle, gueltige Modell-ID.
   moonshot: {
     baseUrl: "https://api.moonshot.ai/v1",
-    models: { default: "kimi-k2-turbo-preview" }
+    models: { default: "kimi-k3" }
   },
   together: {
     baseUrl: "https://api.together.xyz/v1",
