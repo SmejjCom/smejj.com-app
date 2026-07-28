@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "frozenAt": "2026-07-28T06:45:00.000Z",
-  "approval": "Das Browser-Favicon ist jetzt final und funktioniert einwandfrei. Bitte behandle es ab sofort als geschützt und unveränderlich. | 2026-07-26: Schriftliche Freigabe 'Ja, Freigabe' (Sprachwelle Blitz-Paket) — nur Cache-Buster-Version in generate-language-pages.mjs; Favicon-Dateien und -Referenzen byte-identisch. | 2026-07-28: Schriftliche Freigabe \"smejj.com 100 % fertig\" (Wof Kadavanich) — zwei NEUE Seiten aufgenommen (public/en/legal-notice.html, public/en/privacy.html, englische Hoeflichkeitsfassungen der Rechtstexte). Sie tragen denselben Favicon-Block wie die deutschen Rechtsseiten. Keine Favicon-Datei, keine Generatorquelle und keine Icon-Zeile einer bestehenden Seite wurde veraendert. | 2026-07-28: Schriftliche Freigabe (Wof Kadavanich, Auftrag \"Inline-Stile abloesen/CSP-Haertung\") — generate-language-pages.mjs erzeugt <link rel=stylesheet> statt <style>-Block; Favicon-Dateien und -Referenzen byte-identisch.",
+  "frozenAt": "2026-07-28T08:40:00.000Z",
+  "approval": "Das Browser-Favicon ist jetzt final und funktioniert einwandfrei. Bitte behandle es ab sofort als geschützt und unveränderlich. | 2026-07-26: Schriftliche Freigabe 'Ja, Freigabe' (Sprachwelle Blitz-Paket) — nur Cache-Buster-Version in generate-language-pages.mjs; Favicon-Dateien und -Referenzen byte-identisch. | 2026-07-28: Schriftliche Freigabe \"smejj.com 100 % fertig\" (Wof Kadavanich) — zwei NEUE Seiten aufgenommen (public/en/legal-notice.html, public/en/privacy.html, englische Hoeflichkeitsfassungen der Rechtstexte). Sie tragen denselben Favicon-Block wie die deutschen Rechtsseiten. Keine Favicon-Datei, keine Generatorquelle und keine Icon-Zeile einer bestehenden Seite wurde veraendert. | 2026-07-28: Schriftliche Freigabe (Wof Kadavanich, Auftrag \"Inline-Stile abloesen/CSP-Haertung\") — generate-language-pages.mjs erzeugt <link rel=stylesheet> statt <style>-Block; Favicon-Dateien und -Referenzen byte-identisch. | 2026-07-28: Schriftliche Freigabe (Wof Kadavanich, \"Ja\" auf den Vorschlag Statusseite) — EINE neue Seite public/status.html aufgenommen; Favicon-Dateien, -Referenzen bestehender Seiten, Manifest-Icons und Generatorquellen byte-identisch.",
   "assets": {
     "public/favicon.ico": "a514be650bd471347a9811bd3dc8ae5be8ae8372c4b1265de7d3112e9731eb15",
     "public/icons/smejj_favicon.svg": "309ac8ddec0addbf470d5bd132530321e53a4a4754b41db943a93efce9a7f680",
@@ -157,6 +157,13 @@
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
     "public/ru/index.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/status.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
       "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",

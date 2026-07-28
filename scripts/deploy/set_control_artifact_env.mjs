@@ -59,6 +59,9 @@ async function main() {
   // Optional: echtes Tool-Calling einschalten (2026-07-28). Gleiche Regel wie
   // oben — nur was der Aufrufer ausdruecklich mitgibt, wird geschrieben.
   const werkzeugeEingabe = String(process.env.SMEJJ_AGENT_TOOLS_ENABLED || "").trim().toUpperCase();
+  // Optional: Owner-Bootstrap des Adminbereichs (Stufe 1, 2026-07-28). Gleiche
+  // Regel wie oben — nur was der Aufrufer ausdruecklich mitgibt, wird geschrieben.
+  const adminOwnerEingabe = String(process.env.SMEJJ_ADMIN_OWNER_EMAILS || "").trim().toLowerCase();
   loadSecureLocalEnv();
   const org = process.env.SALAD_ORGANIZATION_NAME;
   const project = process.env.SALAD_PROJECT_NAME;
@@ -95,6 +98,14 @@ async function main() {
     if (!/^(YES|NO)$/.test(werkzeugeEingabe)) fail("SMEJJ_AGENT_TOOLS_ENABLED: nur YES oder NO.");
     mergedEnv.SMEJJ_AGENT_TOOLS_ENABLED = werkzeugeEingabe;
   }
+  // Adminbereich Stufe 1: die einzige Adresse(n), die als Owner einsteigen
+  // duerfen. Ohne diese Variable antwortet /api/admin/* fail-closed mit 403.
+  if (adminOwnerEingabe) {
+    if (!/^[^\s@,]+@[^\s@,]+\.[^\s@,]{2,}(,[^\s@,]+@[^\s@,]+\.[^\s@,]{2,})*$/.test(adminOwnerEingabe)) {
+      fail("SMEJJ_ADMIN_OWNER_EMAILS: nur gueltige E-Mail-Adressen, kommagetrennt.");
+    }
+    mergedEnv.SMEJJ_ADMIN_OWNER_EMAILS = adminOwnerEingabe;
+  }
   await saladApi("PATCH", `/organizations/${org}/projects/${project}/containers/${SALAD_GROUP}`, {
     container: { environment_variables: mergedEnv }
   });
@@ -109,6 +120,7 @@ async function main() {
     artifactKey: applied.SMEJJ_CONTROL_ARTIFACT_KEY,
     ownerAllowlist: applied.SMEJJ_GITHUB_OWNER_ALLOWLIST ?? "(nicht gesetzt)",
     werkzeuge: applied.SMEJJ_AGENT_TOOLS_ENABLED ?? "(nicht gesetzt)",
+    adminOwner: applied.SMEJJ_ADMIN_OWNER_EMAILS ?? "(nicht gesetzt)",
     hint: "Salad rollt jetzt neu aus (~10 Minuten). Danach /api/health pruefen."
   }, null, 2));
 }

@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T08:33:21.711Z",
-  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ich habe dir alle Rechte gegeben - mach es bitte komplett fertig und lass nichts offen.' Nachziehen des Start-Locks fuer den committeten Stand sw v169 (Ueberlaufmenue-Fix der parallelen Sitzung, Commit b7e1f3a).",
+  "frozenAt": "2026-07-28T09:22:46.701Z",
+  "confirmation": "Freigabe Wof Kadavanich 2026-07-28: 'Ja' auf den Vorschlag Statusseite. Umfasst public/index.html (Link 'Betriebsstatus' in der Rechtliches-Zeile), public/sw.js v170 (status.html und status.js im Precache), public/static-pages.css (p-status-Block).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "985fc26db3d928ecd33ce897075a5c8b8fbeb723821957f7ea9d84f51d2e6cc5",
+    "public/index.html": "6a86d4637519176d6911b4f42aafe79b0b521e56f0d4e360614e872673c2a554",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "f529351581a98ef0ee9b0a8e2136f8db8c723e2b10ae78a001f01d5e7f1709de",
+    "public/sw.js": "41ab6f384260dabb04ffbea2cfe332a1fe17c7043ecb3893e4ccdb5cbada6877",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
