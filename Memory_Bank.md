@@ -715,3 +715,38 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
   117 ms, also 11 ms VOR dem FCP), /api/keys aus api-keys-surface.js sowie
   /api/providers/cline/models und /status aus cline-model-menu.js. Letzteres steht
   unter dem Start-Lock. Bewusst nicht angefasst: Scope-Treue vor Vollstaendigkeit.
+
+## 2026-07-27 — Letzte Startaufrufe aus dem Ladepfad (job_startaufrufe_rest_20260727)
+- VERSCHOBEN ueber afterFirstPaint: /api/auth/me (account-privacy.js,
+  hydrateAuthSession), /api/keys (api-keys-surface.js, refresh),
+  /api/providers/cline/models+status (provider-settings.js, load). Die
+  Oberflaechen werden weiterhin SOFORT aufgebaut, nur die Daten kommen danach —
+  Deep-Links auf /settings und /konto bleiben nutzbar.
+- KORREKTUR eines eigenen Befunds: Die Cline-Startaufrufe stammen NICHT aus
+  cline-model-menu.js, sondern aus provider-settings.js Zeile 22.
+  cline-model-menu.js laedt seinen Katalog schon immer erst beim Oeffnen des
+  Untermenues. Vor einer Freigabe die Aufrufkette wirklich bis zum Ausloeser
+  verfolgen, nicht beim erstbesten Treffer stehenbleiben.
+- WICHTIGSTE LEHRE (Live-Befund, kostete einen zweiten Deploy):
+  `requestAnimationFrame` laeuft VOR dem Malen seines Frames. Zwei rAF
+  GARANTIEREN NICHT, dass gemalt wurde — im warmen Wiederbesuch starteten
+  dadurch sechs Aufrufe bei 142-160 ms, waehrend der Bildaufbau erst bei 168 ms
+  lag. Richtig ist: auf das Paint-Ereignis des Browsers warten
+  (`PerformanceObserver`, `type: "paint"`, `buffered: true`); als Rueckfallweg
+  zwei rAF PLUS `setTimeout(0)` — der laeuft garantiert nach dem Malen.
+  Behoben in public/deferred-start.js, sw v152.
+- ERGEBNIS: Erstbesuch 0 von 9 API-Aufrufen vor dem Bildaufbau. Wiederbesuch
+  1 von 9. Warm LCP p75 168 -> 128-140 ms (stabil ueber drei Kontrollaeufe).
+- MESSDISZIPLIN: Kalte LCP-Werte auf DEMSELBEN Build streuten 120/308/408 ms.
+  Aus einer einzelnen Kaltmessung darf KEINE Verbesserung oder Verschlechterung
+  abgeleitet werden — immer mehrere Kontrollaeufe, und den Warmwert als
+  belastbaren Indikator nehmen.
+- OFFEN, freigabepflichtig: Der letzte fruehe Aufruf ist /api/auth/me aus
+  public/autonomous-coding.js Zeile 27 (refreshSession in
+  initAutonomousCodingSurface), warm 11 ms vor dem Bildaufbau. Datei steht unter
+  dem Start-Lock und war in keiner Freigabe genannt. Der Umweg ueber
+  premium-surfaces.js waere moeglich, haette aber die ganze Oberflaechen-
+  Erzeugung verzoegert (Deep-Link auf /automation kurz leer) — bewusst verworfen.
+- NEBENBEFUND (aelter, nicht behoben): public/api-keys-surface.js liegt NICHT im
+  Service-Worker-Precache, wird aber von settings-surface.js importiert (die im
+  Precache liegt). Offline findet der Import nichts.
