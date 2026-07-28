@@ -16,6 +16,13 @@ import { parseS3ListPage, signedS3Get, signedS3List, signedS3Put } from "../stor
 const USER_PREFIX = "auth/email-users/";
 const INDEX_KEY = "admin/index/users.json";
 const MAX_ENTRIES = 50_000;
+// Der Index ist eine Projektion, die sich nur beim Neubau aendert. Ohne Cache
+// laedt JEDE Anfrage das ganze Objekt aus IDrive e2 — live gemessen 2026-07-28:
+// p95 2841 ms gegen 570 ms Basislinie (/api/health). 30 Sekunden reichen, um
+// das Blaettern in der Liste fluessig zu machen, ohne den Stand zu verschleiern:
+// builtAt und ageSeconds werden weiterhin aus dem Objekt selbst berichtet.
+const CACHE_TTL_MS = 30_000;
+let cache = null; // { atMs, value }
 
 function idriveConfig(env = process.env) {
   const endpoint = env.IDRIVE_E2_ENDPOINT;
@@ -97,29 +104,45 @@ export async function rebuildUserIndex({ env = process.env, fetchImpl = fetch, n
     contentType: "application/json; charset=utf-8",
     fetchImpl
   });
+  invalidateUserIndexCache();
   return { ok: true, builtAt: nowIso, count: entries.length, unreadable, truncated: index.truncated };
 }
 
 /** Liest den Index. Liefert ok:false, solange nie gebaut wurde — kein stilles leeres Ergebnis. */
-export async function readUserIndex({ env = process.env, fetchImpl = fetch } = {}) {
+export async function readUserIndex({ env = process.env, fetchImpl = fetch, nowMs = Date.now() } = {}) {
   const cfg = idriveConfig(env);
   if (!cfg) return { ok: false, error: "index_requires_object_storage" };
+  if (cache && nowMs - cache.atMs < CACHE_TTL_MS) {
+    // ageSeconds neu rechnen, damit das Alter des INDEX stimmt, nicht das des Caches.
+    return { ...cache.value, ageSeconds: ageSecondsOf(cache.value.builtAt, nowMs) };
+  }
   try {
     const result = await signedS3Get({ ...cfg, key: INDEX_KEY, allowNotFound: true, fetchImpl });
     if (!result.ok || !result.body) return { ok: false, error: "index_not_built" };
     const parsed = JSON.parse(result.body);
-    return {
+    const value = {
       ok: true,
       builtAt: parsed.builtAt || null,
-      ageSeconds: parsed.builtAt ? Math.max(0, Math.round((Date.now() - new Date(parsed.builtAt).getTime()) / 1000)) : null,
+      ageSeconds: ageSecondsOf(parsed.builtAt, nowMs),
       count: Number(parsed.count) || 0,
       unreadable: Number(parsed.unreadable) || 0,
       truncated: parsed.truncated === true,
       entries: Array.isArray(parsed.entries) ? parsed.entries : []
     };
+    cache = { atMs: nowMs, value };
+    return value;
   } catch {
     return { ok: false, error: "index_unreadable" };
   }
+}
+
+function ageSecondsOf(builtAt, nowMs) {
+  return builtAt ? Math.max(0, Math.round((nowMs - new Date(builtAt).getTime()) / 1000)) : null;
+}
+
+/** Nach einem Neubau muss die naechste Anfrage den frischen Stand sehen. */
+export function invalidateUserIndexCache() {
+  cache = null;
 }
 
 /** Filtern und Blaettern auf dem gelesenen Index — reine Funktion, keine I/O. */

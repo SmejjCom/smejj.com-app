@@ -146,35 +146,65 @@ async function readHead(cfg) {
   }
 }
 
-/** Liest die juengsten Eintraege. Bewusst gedeckelt — das Log waechst unbegrenzt. */
-export async function readAuditPage({ limit = 50, env = process.env } = {}) {
+/**
+ * Liest die juengsten Eintraege.
+ *
+ * Das Log waechst unbegrenzt, deshalb wird NICHT das ganze Prefix gelistet.
+ * Gescannt werden die Monats-Prefixe des laufenden und des vorigen Monats —
+ * zwei parallele LIST-Aufrufe statt eines Durchlaufs ueber alles. Nur wenn
+ * darin gar nichts liegt (Log aelter als der Zeitraum), wird einmalig
+ * vollstaendig gelistet. Das Ergebnis nennt seinen eigenen Umfang in "window".
+ */
+export async function readAuditPage({ limit = 50, env = process.env, nowMs = Date.now(), fetchImpl = fetch } = {}) {
   const capped = Math.min(200, Math.max(1, Number(limit) || 50));
   const cfg = idriveConfig(env);
   if (!cfg) {
     const entries = memoryEntries.slice(-capped).reverse().map((item) => item.entry);
-    return { ok: true, entries, total: memoryEntries.length };
+    return { ok: true, entries, total: memoryEntries.length, window: "memory" };
   }
 
-  const keys = [];
-  let continuationToken = null;
-  do {
-    const { response, body } = await signedS3List({ ...cfg, prefix: `${PREFIX}/`, continuationToken });
-    if (!response.ok) return { ok: false, error: "audit_list_failed", entries: [] };
-    const page = parseS3ListPage(body);
-    for (const key of page.keys) if (key !== HEAD_KEY) keys.push(key);
-    continuationToken = page.isTruncated ? page.nextContinuationToken : null;
-  } while (continuationToken);
+  const monthPrefixes = [0, 1].map((back) => {
+    const date = new Date(nowMs);
+    date.setUTCDate(1);
+    date.setUTCMonth(date.getUTCMonth() - back);
+    return `${PREFIX}/${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, "0")}/`;
+  });
 
-  // Der Schluessel beginnt mit dem Zeitstempel — lexikografisch sortieren reicht.
+  const scanned = await Promise.all(monthPrefixes.map((prefix) => listKeys(cfg, prefix, fetchImpl)));
+  if (scanned.some((result) => !result.ok)) return { ok: false, error: "audit_list_failed", entries: [] };
+  let keys = scanned.flatMap((result) => result.keys);
+  let window = "2m";
+
+  if (keys.length === 0) {
+    const all = await listKeys(cfg, `${PREFIX}/`, fetchImpl);
+    if (!all.ok) return { ok: false, error: "audit_list_failed", entries: [] };
+    keys = all.keys;
+    window = "all";
+  }
+
+  // Der Schluessel traegt den Zeitstempel — lexikografisch sortieren reicht.
   keys.sort().reverse();
   const entries = [];
   for (const key of keys.slice(0, capped)) {
     try {
-      const result = await signedS3Get({ ...cfg, key, allowNotFound: true });
+      const result = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
       if (result.ok && result.body) entries.push(JSON.parse(result.body));
     } catch { /* einzelner unlesbarer Eintrag darf die Seite nicht kippen */ }
   }
-  return { ok: true, entries, total: keys.length };
+  return { ok: true, entries, total: keys.length, window };
+}
+
+async function listKeys(cfg, prefix, fetchImpl = fetch) {
+  const keys = [];
+  let continuationToken = null;
+  do {
+    const { response, body } = await signedS3List({ ...cfg, prefix, continuationToken, fetchImpl });
+    if (!response.ok) return { ok: false, keys: [] };
+    const page = parseS3ListPage(body);
+    for (const key of page.keys) if (key !== HEAD_KEY) keys.push(key);
+    continuationToken = page.isTruncated ? page.nextContinuationToken : null;
+  } while (continuationToken);
+  return { ok: true, keys };
 }
 
 /**

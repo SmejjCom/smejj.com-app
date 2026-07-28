@@ -117,3 +117,80 @@ test("die Seite ist gedeckelt", async () => {
   assert.equal(page.total, 12);
   assert.equal(verifyAuditChain(page.entries).ok, true, "auch ein Ausschnitt muss in sich stimmig sein");
 });
+
+// ---- Begrenzung des Listings (Performance-Lock) ------------------------------
+
+const S3_ENV = {
+  IDRIVE_E2_ENDPOINT: "https://s3.example.com",
+  IDRIVE_E2_REGION: "us-west-2",
+  IDRIVE_E2_ACCESS_KEY: "zugang",
+  IDRIVE_E2_SECRET_KEY: "geheim",
+  IDRIVE_E2_BUCKET: "testeimer"
+};
+
+function antwort(status, body) {
+  const bytes = Buffer.from(String(body), "utf8");
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    headers: { get: () => '"etag-test"' },
+    text: async () => bytes.toString("utf8"),
+    arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+  };
+}
+
+function s3MitZaehler(objekte, protokoll) {
+  return async (rawUrl, init = {}) => {
+    const url = new URL(rawUrl);
+    const schluessel = decodeURIComponent(url.pathname.replace(`/${S3_ENV.IDRIVE_E2_BUCKET}/`, ""));
+    if ((init.method || "GET") === "PUT") { objekte.set(schluessel, String(init.body)); return antwort(200, ""); }
+    if (url.searchParams.get("list-type") === "2") {
+      const prefix = url.searchParams.get("prefix") || "";
+      protokoll.push(prefix);
+      const keys = [...objekte.keys()].filter((key) => key.startsWith(prefix));
+      return antwort(200, `<?xml version="1.0"?><ListBucketResult>${
+        keys.map((key) => `<Key>${key}</Key>`).join("")
+      }<IsTruncated>false</IsTruncated></ListBucketResult>`);
+    }
+    if (!objekte.has(schluessel)) return antwort(404, "");
+    return antwort(200, objekte.get(schluessel));
+  };
+}
+
+function auditObjekt(iso) {
+  const eintrag = { version: 1, at: iso, action: "user.block", target: "x", prevHash: "0".repeat(64) };
+  eintrag.hash = entryHash(eintrag);
+  return [`admin/audit/${iso.slice(0, 4)}/${iso.slice(5, 7)}/${iso.slice(8, 10)}/${iso.replace(/[:.]/g, "-")}-aa.json`,
+    JSON.stringify(eintrag)];
+}
+
+test("das Listing scannt nur zwei Monats-Prefixe statt des ganzen Logs", async () => {
+  const objekte = new Map([
+    auditObjekt("2026-07-28T09:00:00.000Z"),
+    auditObjekt("2026-07-02T09:00:00.000Z"),
+    auditObjekt("2026-06-30T09:00:00.000Z"),
+    auditObjekt("2023-01-05T09:00:00.000Z") // uraltes Log, darf nicht mitgescannt werden
+  ]);
+  const protokoll = [];
+  const page = await readAuditPage({
+    env: S3_ENV, limit: 50, nowMs: Date.parse("2026-07-28T10:00:00.000Z"),
+    fetchImpl: s3MitZaehler(objekte, protokoll)
+  });
+  assert.deepEqual(protokoll, ["admin/audit/2026/07/", "admin/audit/2026/06/"]);
+  assert.equal(page.window, "2m");
+  assert.equal(page.entries.length, 3, "der Eintrag von 2023 liegt ausserhalb des Zeitraums");
+  assert.equal(page.entries[0].at, "2026-07-28T09:00:00.000Z", "juengster zuerst");
+});
+
+test("liegt im Zeitraum nichts, wird einmalig vollstaendig gelistet", async () => {
+  const objekte = new Map([auditObjekt("2023-01-05T09:00:00.000Z")]);
+  const protokoll = [];
+  const page = await readAuditPage({
+    env: S3_ENV, limit: 50, nowMs: Date.parse("2026-07-28T10:00:00.000Z"),
+    fetchImpl: s3MitZaehler(objekte, protokoll)
+  });
+  assert.equal(protokoll.length, 3, "zwei Monate, dann einmal vollstaendig");
+  assert.equal(protokoll[2], "admin/audit/");
+  assert.equal(page.window, "all");
+  assert.equal(page.entries.length, 1);
+});

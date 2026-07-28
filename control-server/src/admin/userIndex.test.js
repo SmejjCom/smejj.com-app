@@ -7,7 +7,9 @@
 // nicht gegen das Netz.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { indexEntryFrom, readUserIndex, rebuildUserIndex, selectFromIndex } from "./userIndex.js";
+import {
+  indexEntryFrom, invalidateUserIndexCache, readUserIndex, rebuildUserIndex, selectFromIndex
+} from "./userIndex.js";
 
 const ENV = {
   IDRIVE_E2_ENDPOINT: "https://s3.example.com",
@@ -67,6 +69,8 @@ function konto(email, patch = {}) {
     ...patch
   });
 }
+
+invalidateUserIndexCache();
 
 test("ohne Objektspeicher gibt es keinen Index — und keine stille Leere", async () => {
   const leer = await rebuildUserIndex({ env: {} });
@@ -167,4 +171,53 @@ test("Filtern und Blaettern arbeiten auf dem gelesenen Index", () => {
 
   // Deckel: mehr als 200 je Seite gibt es nicht.
   assert.equal(selectFromIndex(entries, { limit: 9999 }).limit, 200);
+});
+
+test("Cache: der Index wird nicht bei jeder Anfrage neu geladen", async () => {
+  invalidateUserIndexCache();
+  const objekte = new Map([["auth/email-users/aaa.json", konto("a@example.de")]]);
+  let getAufrufe = 0;
+  const basis = s3Doppelgaenger(objekte);
+  const fetchImpl = async (url, init) => {
+    const u = new URL(url);
+    if ((init?.method || "GET") === "GET" && u.searchParams.get("list-type") !== "2"
+      && u.pathname.includes("admin/index/users.json")) getAufrufe += 1;
+    return basis(url, init);
+  };
+  await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:00.000Z" });
+
+  const t0 = Date.parse("2026-07-28T10:00:05.000Z");
+  await readUserIndex({ env: ENV, fetchImpl, nowMs: t0 });
+  await readUserIndex({ env: ENV, fetchImpl, nowMs: t0 + 1_000 });
+  await readUserIndex({ env: ENV, fetchImpl, nowMs: t0 + 20_000 });
+  assert.equal(getAufrufe, 1, "drei Anfragen innerhalb von 30 s duerfen nur einmal laden");
+
+  await readUserIndex({ env: ENV, fetchImpl, nowMs: t0 + 31_000 });
+  assert.equal(getAufrufe, 2, "nach Ablauf der 30 s wird wieder geladen");
+});
+
+test("Cache verschleiert das Alter des Index nicht", async () => {
+  invalidateUserIndexCache();
+  const objekte = new Map([["auth/email-users/aaa.json", konto("a@example.de")]]);
+  const fetchImpl = s3Doppelgaenger(objekte);
+  await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:00.000Z" });
+
+  const frueh = await readUserIndex({ env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T10:00:05.000Z") });
+  const spaet = await readUserIndex({ env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T10:00:25.000Z") });
+  assert.equal(frueh.ageSeconds, 5);
+  assert.equal(spaet.ageSeconds, 25, "aus dem Cache, aber das Alter bleibt ehrlich");
+});
+
+test("ein Neubau macht den Cache sofort ungueltig", async () => {
+  invalidateUserIndexCache();
+  const objekte = new Map([["auth/email-users/aaa.json", konto("a@example.de")]]);
+  const fetchImpl = s3Doppelgaenger(objekte);
+  await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:00.000Z" });
+  const vorher = await readUserIndex({ env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T10:00:01.000Z") });
+  assert.equal(vorher.count, 1);
+
+  objekte.set("auth/email-users/bbb.json", konto("b@example.de"));
+  await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:02.000Z" });
+  const nachher = await readUserIndex({ env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T10:00:03.000Z") });
+  assert.equal(nachher.count, 2, "der frische Stand muss sofort sichtbar sein");
 });
