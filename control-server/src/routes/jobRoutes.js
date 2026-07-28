@@ -49,11 +49,14 @@ export async function handleCreateJob(req, res, { env = process.env, writeEnvelo
   }
   if (!String(body.task || "").trim()) return json(res, 400, { error: "Missing task" });
   const repository = body.repository || body.repo;
-  const guardedRepository = repository?.visibility === "private"
-    || repository?.private === true
-    || repository?.publishMode === "draft-pr"
-    || env.SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST === "YES";
-  if (repository?.url && guardedRepository) {
+  // QA-Welle 3, Befund W3-02: Die Allowlist galt frueher nur fuer private
+  // Repositories und Draft-PR-Auftraege. Ein OEFFENTLICHES fremdes Repository
+  // mit diff-only (live belegt mit torvalds/linux) wurde angenommen, hat einen
+  // Job erzeugt und Worker-Budget verbraucht — abgelehnt wurde es erst durch
+  // Zufall am Worker. Berechtigung ist eine Frage VOR dem Rechenpfad: Jede
+  // Repository-URL laeuft jetzt durch die Owner-/Repo-Allowlist, fail-closed
+  // (leere Allowlist lehnt ab). Jobs ohne Repository bleiben unberuehrt.
+  if (repository?.url) {
     try {
       assertGithubRepositoryAllowed(repository, env);
     } catch {
@@ -115,11 +118,20 @@ export async function handleListJobs(url, res, {
     await hydrateJobs({ env, limit: Number(url.searchParams.get("limit") || 50) }).catch(() => null);
   }
   const status = String(url.searchParams.get("status") || "").trim();
-  const allJobs = listJobs({ status, limit: Number(url.searchParams.get("limit") || 100) });
-  const jobs = (authUser ? filterJobsForUser(allJobs, authUser) : allJobs).map(jobSummary);
+  // QA-Welle 3, Befund W3-04: Frueher wurde ZUERST auf limit abgeschnitten und
+  // DANACH nach Nutzer gefiltert — limit=5 lieferte nur 3 von 11 eigenen Jobs,
+  // weil 2 der 5 neuesten anderen gehoerten. Jetzt: erst filtern, dann
+  // begrenzen. "count" bleibt die Zahl der zurueckgegebenen Eintraege; neu
+  // meldet "total" die Gesamtzahl der sichtbaren Jobs, damit Clients erkennen,
+  // dass die Liste abgeschnitten ist.
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit")) || 100));
+  const allJobs = listJobs({ status, limit: 200 });
+  const visible = authUser ? filterJobsForUser(allJobs, authUser) : allJobs;
+  const jobs = visible.slice(0, limit).map(jobSummary);
   return json(res, 200, {
     ok: true,
     count: jobs.length,
+    total: visible.length,
     jobs,
     queue: visibleQueue(authUser, currentScheduler(env).snapshot())
   });

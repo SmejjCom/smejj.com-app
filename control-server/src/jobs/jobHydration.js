@@ -4,6 +4,25 @@ import { getJob, saveJob } from "./jobStore.js";
 
 const DURABLE_STATUSES = new Set(["queued", "planning", "running", "verifying", "passed", "failed", "cancelled", "blocked"]);
 
+// QA-Welle 3, Befund W3-03: Ein Job stand 15 Tage auf "queued". Der Scheduler
+// lebt nur im Speicher — ein laufender oder wartender Status, der aus IDrive
+// hydriert wird, stammt zwingend aus einem FRUEHEREN Serverlauf und wird nie
+// wieder aufgegriffen. Solche Zombie-Eintraege verwirren die Jobliste und
+// lassen unklar, ob noch Budget reserviert ist. Zur doppelten Absicherung
+// gegen Uhrenfehler gilt zusaetzlich eine Zeitschwelle deutlich oberhalb des
+// Worker-Timeouts (65 min): erst nach 2 Stunden ohne Fortschritt wird der
+// Status beim Hydrieren auf "failed" gesetzt. Idempotent — die Ablage auf
+// IDrive bleibt unveraendert (Daten-Lock), nur die Sicht im Server aendert sich.
+const STALE_IN_FLIGHT_MS = 2 * 60 * 60 * 1000;
+const IN_FLIGHT_STATUSES = new Set(["queued", "planning", "running", "verifying"]);
+
+export function staleInFlight(status, updatedAt, { nowMs = Date.now(), staleMs = STALE_IN_FLIGHT_MS } = {}) {
+  if (!IN_FLIGHT_STATUSES.has(status)) return false;
+  const parsed = Date.parse(String(updatedAt || ""));
+  if (!Number.isFinite(parsed)) return true; // ohne Zeitstempel: fail-closed als verwaist behandeln
+  return nowMs - parsed > staleMs;
+}
+
 export async function hydrateJobFromIdrive(jobId, { env = process.env, getObject } = {}) {
   if (!safeJobId(jobId) || !hasIdrive(env)) return null;
   const reader = getObject || ((key) => signedS3Get({
@@ -46,13 +65,19 @@ export async function hydrateJobFromIdrive(jobId, { env = process.env, getObject
       replay: input.replay || null
     });
     if (job.taskCapsule.rootPrefix !== root) return null;
-    const durableStatus = DURABLE_STATUSES.has(status.status) ? status.status : "queued";
+    let durableStatus = DURABLE_STATUSES.has(status.status) ? status.status : "queued";
+    let durableMessage = status.message || "Hydrated from IDrive e2";
+    if (staleInFlight(durableStatus, status.updatedAt || input.createdAt)) {
+      // W3-03: verwaister Lauf aus einem frueheren Serverprozess.
+      durableMessage = `Wegen Inaktivitaet als fehlgeschlagen markiert — Job stand seit ${String(status.updatedAt || input.createdAt || "unbekannt").slice(0, 16)} ohne Fortschritt (frueherer Serverlauf). Bitte neu starten.`;
+      durableStatus = "failed";
+    }
     return saveJob({
       ...job,
       status: durableStatus,
-      phase: status.phase || durableStatus,
+      phase: durableStatus === "failed" && status.phase !== "failed" ? "failed" : (status.phase || durableStatus),
       progress: Number(status.progress || 0),
-      message: status.message || "Hydrated from IDrive e2",
+      message: durableMessage,
       updatedAt: status.updatedAt || input.createdAt,
       durableTaskCapsule: true,
       approval: approval?.status ? { ...job.approval, ...approval, mergeAllowed: false } : job.approval,

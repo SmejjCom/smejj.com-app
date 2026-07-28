@@ -8,6 +8,50 @@ import { hashActionLog } from "../shared/hash.js";
 
 const MAX_SELF_FIX_ATTEMPTS = 3;
 
+// Kaltstart-Behandlung (QA-Welle 3, Befund W3-01): Nach einer Ruhephase liefert
+// der ephemere Worker zunaechst worker_http status_5xx oder einen Dispatch-
+// Fehler, weil die Salad-Instanz erst hochfaehrt. Die Schleife wiederholte
+// bisher SOFORT und verbrannte alle Versuche in unter einer Minute — der Nutzer
+// sah einen harten Fehler, obwohl der Worker Minuten spaeter bereitgestanden
+// haette. Historisch: alle 8 Jobs vom 11./12.07. so gescheitert, live am
+// 27.07. reproduziert (2x failed, danach 4x passed).
+// Vor einer Wiederholung nach einem INFRASTRUKTUR-Fehler wird jetzt gewartet
+// (45 s, dann 90 s), der Zustand ist im Job sichtbar, und Abbruch bleibt
+// jederzeit moeglich. Aufgaben-Fehler (Modell lieferte Falsches) wiederholen
+// unveraendert sofort — dort ist Warten sinnlos.
+const COLD_START_BACKOFF_MS = Object.freeze([45_000, 90_000]);
+const INFRA_ERROR_PATTERN = /^status_5\d\d$|request_failed|readiness_timeout|worker_request_timeout|fetch failed|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|socket hang up|aborted/i;
+
+export function isInfrastructureFailure(outcome) {
+  const errors = Array.isArray(outcome?.errors) ? outcome.errors : [];
+  if (!errors.length) return false;
+  return errors.every((entry) =>
+    (entry?.source === "worker_http" || entry?.source === "dispatch")
+    && INFRA_ERROR_PATTERN.test(String(entry?.detail || "")));
+}
+
+// Menschlich lesbare Deutung fuer die Job-Meldung (QA-Welle 3, Befund W3-07):
+// "Autonomous loop failed after 3 attempt(s)" nannte weder Ursache noch
+// naechsten Schritt — das auswertbare Detail stand nur im Rohdatensatz.
+export function describeFailure(outcome) {
+  const first = (Array.isArray(outcome?.errors) ? outcome.errors : [])[0];
+  if (!first) return "";
+  const detail = String(first.detail || "").slice(0, 80);
+  if (isInfrastructureFailure(outcome)) {
+    return ` — Rechen-Worker nicht erreichbar (${detail}). Bitte in 2-3 Minuten erneut starten; der Worker faehrt nach einer Ruhephase erst hoch.`;
+  }
+  return ` — ${String(first.source || "worker")}: ${detail}`;
+}
+
+async function coldStartWait(ms, isCancelled) {
+  const step = 2_000;
+  for (let waited = 0; waited < ms; waited += step) {
+    if (isCancelled()) return false;
+    await new Promise((resolve) => setTimeout(resolve, Math.min(step, ms - waited)));
+  }
+  return !isCancelled();
+}
+
 export function createAutonomousRunner({
   dispatch,
   loadJob = getJob,
@@ -19,6 +63,7 @@ export function createAutonomousRunner({
   persistPublicationAttempt = async () => ({ ok: true, mode: "persistence_not_requested" }),
   prepareWorkerPayload = async (payload) => payload,
   maxSelfFixAttempts = MAX_SELF_FIX_ATTEMPTS,
+  coldStartBackoffMs = COLD_START_BACKOFF_MS,
   now = () => new Date().toISOString()
 } = {}) {
   if (typeof dispatch !== "function") throw new Error("createAutonomousRunner requires a dispatch function");
@@ -113,7 +158,20 @@ export function createAutonomousRunner({
       }
 
       previousErrors = lastOutcome.errors || [];
-      if (attempt < attemptLimit) current = applyTransition(current, "running", `Self-fix attempt ${attempt + 1}/${attemptLimit}`);
+      if (attempt < attemptLimit) {
+        // Kaltstart (W3-01): Vor der Wiederholung eines Infrastruktur-Fehlers
+        // warten, sichtbar im Job, abbrechbar in 2-Sekunden-Schritten.
+        if (isInfrastructureFailure(lastOutcome)) {
+          const waitMs = coldStartBackoffMs[Math.min(attempt - 1, coldStartBackoffMs.length - 1)];
+          current = applyTransition(current, "running",
+            `Rechen-Worker startet (Kaltstart) — Versuch ${attempt + 1}/${attemptLimit} folgt in ${Math.round(waitMs / 1000)} s`);
+          const proceed = await coldStartWait(waitMs, () => loadJob(jobId)?.status === "cancelled");
+          if (!proceed) {
+            return { ok: false, stage: "cancelled", attempts, memoryMayLearn: false, memoryUpdate: null, finishedAt: now() };
+          }
+        }
+        current = applyTransition(current, "running", `Self-fix attempt ${attempt + 1}/${attemptLimit}`);
+      }
     }
 
     if (publicationRun) {
@@ -147,7 +205,7 @@ export function createAutonomousRunner({
     current = replaceJob({ ...current, result: resultForJob(lastOutcome || {}), artifactPersistence: persistence }, { emitEvent: false });
     const message = workerVerified
       ? "Worker verification passed, but durable Task Capsule persistence failed"
-      : `Autonomous loop failed after ${attemptLimit} attempt(s)`;
+      : `Autonomous loop failed after ${attemptLimit} attempt(s)${describeFailure(lastOutcome)}`;
     applyTransition(current, "failed", message);
     return { ok: false, stage: workerVerified ? "artifact_persistence" : "failed", attempts, persistence, memoryMayLearn: false, memoryUpdate: null, finishedAt: now() };
   };

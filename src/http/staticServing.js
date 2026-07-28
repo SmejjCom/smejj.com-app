@@ -25,6 +25,12 @@ export function createStaticHandlers({ publicDir, storageSourceDir, aiSourceDir,
     },
 
     isAppRoute(pathname) {
+      // QA-Welle 3, Befund W3-05: "/api/..." ist nie eine App-Route. Vorher
+      // fing dieser SPA-Fallback auch unbekannte API-Pfade (kein Punkt im
+      // Namen) und lieferte index.html mit HTTP 200 — ein Client, der nur den
+      // Statuscode prueft, hielt jeden Tippfehler im Pfad fuer einen Erfolg.
+      // Unbekannte API-Pfade fallen jetzt auf die 404-JSON-Antwort durch.
+      if (pathname.startsWith("/api/")) return false;
       return !path.extname(pathname);
     },
 
