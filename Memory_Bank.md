@@ -576,3 +576,27 @@ SMEJJ_REMOTE_BROWSER_WORKER_URL).
 - WIRKUNG AUF NUTZER: keine. Ueber die App greift das Frontend-Grounding
   (browser-context.js, seit sw v148) und liefert der Schnellspur echten
   Seiteninhalt. Betroffen sind nur direkte API-Aufrufer an der App vorbei.
+
+## 2026-07-28 — Tiefspur bei Adressen, ohne Zeabur geloest (job_tiefspur_adresse_20260728)
+- PROBLEM: Aufgaben mit Web-Adresse landeten in der werkzeuglosen Groq-Schnellspur
+  der Bridge und wurden GERATEN ("I-MILD.com" statt des echten Titels).
+- DER TRICK, der ohne Zeabur-Deploy auskommt: Die LIVE laufende Bridge (v102) hat
+  in streamFastLane() bereits einen Ausstieg —
+  `if (/glm|kimi|cline/i.test(requestedModel)) return false;` — und reicht dann an
+  den Control Server weiter, wo Tool-Calling laeuft. modelForTask() in
+  public/browser-context.js waehlt deshalb GLM-5.2, sobald die Aufgabe eine Adresse
+  nennt. Ohne Adresse bleibt die Nutzerwahl unangetastet; eine bereits
+  tiefspurfaehige Wahl wird nie ueberschrieben.
+- LEHRE: Bevor man einen Deploy-Blocker akzeptiert, den VERTRAG der laufenden
+  Gegenstelle lesen. Hier gab es eine dokumentierte Hintertuer, die das Ziel ohne
+  jede Aenderung an der blockierten Komponente erreicht.
+- app.js WAECHST NICHT (800 Zeilen, keine Ratchet-Ausnahme mehr): Import an eine
+  bestehende Zeile gehaengt, Modellzeile erweitert, eine doppelte Leerzeile weg.
+- LIVE VERIFIZIERT im echten Chrome, sw v159, mit der urspruenglich gemeldeten
+  Eingabe: strukturierter Testbericht mit HTTP 200, korrektem Titel, Navigation,
+  3/3 Marken, Footer, Copyright — plus selbst benannter Grenze (Unterseiten nicht
+  geprueft). check:frontend 163/163.
+- ZEABUR-BEFUND (fuer spaeter): Bridge-Quelltext liegt in
+  /tmp/smejj-chat-bridge.mjs im Container, ueber Files einsehbar und editierbar.
+  Das Bearbeiten per Browser ist in Agent-Sitzungen gesperrt; ein Zeabur-API-Token
+  existiert nicht. Der bridge-seitige Fix liegt fertig als Commit 653b5f9 bereit.
