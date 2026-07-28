@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>smejj.com — Operations Console</title>
+<link rel="stylesheet" href="/admin/console.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-brand">
+      <div class="mark"><div class="dot"></div><b>smejj.com</b></div>
+      <div class="sub">Operations Console</div>
+    </div>
+    <div class="rail-env"><span class="live"></span> <span id="umgebung">Produktion</span></div>
+    <nav class="rail-nav" id="nav"></nav>
+    <div class="rail-foot">
+      <div class="rail-user">
+        <div class="av" id="akteurKuerzel">··</div>
+        <div><div class="nm" id="akteurName">wird geladen …</div><div class="rl" id="akteurRolle">—</div></div>
+      </div>
+      <div class="pill acc" id="stufe">Stufe 2 · nur lesend</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumb">Operations Console · <b id="crumb">Übersicht</b></div>
+      <div class="spacer"></div>
+      <div class="pill" id="indexStand">Index —</div>
+      <div class="pill" id="ketteStand">Kette —</div>
+    </header>
+    <div id="seite"></div>
+  </div>
+</div>
+
+<script src="/admin/api.js"></script>
+<script src="/admin/views.js"></script>
+<script src="/admin/console.js"></script>
+</body>
+</html>

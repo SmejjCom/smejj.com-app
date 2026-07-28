@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  __clearAuditMemoryForTests, appendAuditEntry, entryHash, readAuditPage, redact, verifyAuditChain
+  __clearAuditMemoryForTests, appendAuditEntry, entryHash, monthSpan, readAuditPage, redact, verifyAuditChain
 } from "./auditLog.js";
 
 const ENV = {}; // keine IDrive-Konfiguration -> Memory-Zweig
@@ -193,4 +193,63 @@ test("liegt im Zeitraum nichts, wird einmalig vollstaendig gelistet", async () =
   assert.equal(protokoll[2], "admin/audit/");
   assert.equal(page.window, "all");
   assert.equal(page.entries.length, 1);
+});
+
+// ---- Waehlbarer Zeitraum -----------------------------------------------------
+
+test("monthSpan: ohne Zeitraum genau zwei Monate, mit Zeitraum genau die dazwischen", () => {
+  const ohne = monthSpan({ nowMs: Date.parse("2026-07-28T10:00:00Z") });
+  assert.deepEqual(ohne.prefixes, ["admin/audit/2026/07/", "admin/audit/2026/06/"]);
+  assert.equal(ohne.label, "2m");
+
+  const mit = monthSpan({ from: "2026-04-15", to: "2026-07-03", nowMs: Date.parse("2026-07-28T10:00:00Z") });
+  assert.deepEqual(mit.prefixes, [
+    "admin/audit/2026/07/", "admin/audit/2026/06/", "admin/audit/2026/05/", "admin/audit/2026/04/"
+  ]);
+  assert.equal(mit.label, "4m");
+});
+
+test("monthSpan: der Jahreswechsel wird korrekt zurueckgerechnet", () => {
+  const span = monthSpan({ from: "2025-11-20", to: "2026-01-10" });
+  assert.deepEqual(span.prefixes, ["admin/audit/2026/01/", "admin/audit/2025/12/", "admin/audit/2025/11/"]);
+});
+
+test("monthSpan: ein absurder Zeitraum wird gedeckelt statt das Log abzuklappern", () => {
+  const span = monthSpan({ from: "1970-01-01", to: "2026-07-28", maxMonths: 24 });
+  assert.equal(span.prefixes.length, 24);
+  assert.equal(span.truncated, true, "die Deckelung muss sichtbar sein");
+});
+
+test("monthSpan: unbrauchbare Datumsangaben ergeben keinen Scan", () => {
+  const span = monthSpan({ from: "kein-datum", to: "2026-07-28" });
+  assert.deepEqual(span.prefixes, []);
+  assert.equal(span.label, "invalid");
+});
+
+test("mit Zeitraum wird NICHT auf das gesamte Log zurueckgefallen", async () => {
+  const objekte = new Map([auditObjekt("2023-01-05T09:00:00.000Z")]);
+  const protokoll = [];
+  const page = await readAuditPage({
+    env: S3_ENV, from: "2026-07-01", to: "2026-07-31",
+    nowMs: Date.parse("2026-07-28T10:00:00.000Z"),
+    fetchImpl: s3MitZaehler(objekte, protokoll)
+  });
+  assert.equal(page.entries.length, 0, "der Eintrag von 2023 liegt ausserhalb");
+  assert.equal(protokoll.includes("admin/audit/"), false,
+    "eine leere Antwort auf einen Zeitraum darf nicht in eine Antwort ueber alles umschlagen");
+});
+
+test("der Zeitraum filtert auch tagesgenau, nicht nur monatsweise", async () => {
+  const objekte = new Map([
+    auditObjekt("2026-07-05T09:00:00.000Z"),
+    auditObjekt("2026-07-20T09:00:00.000Z"),
+    auditObjekt("2026-07-28T09:00:00.000Z")
+  ]);
+  const page = await readAuditPage({
+    env: S3_ENV, from: "2026-07-10", to: "2026-07-25",
+    nowMs: Date.parse("2026-07-28T10:00:00.000Z"),
+    fetchImpl: s3MitZaehler(objekte, [])
+  });
+  assert.equal(page.entries.length, 1);
+  assert.equal(page.entries[0].at, "2026-07-20T09:00:00.000Z");
 });

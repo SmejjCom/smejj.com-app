@@ -155,32 +155,33 @@ async function readHead(cfg) {
  * darin gar nichts liegt (Log aelter als der Zeitraum), wird einmalig
  * vollstaendig gelistet. Das Ergebnis nennt seinen eigenen Umfang in "window".
  */
-export async function readAuditPage({ limit = 50, env = process.env, nowMs = Date.now(), fetchImpl = fetch } = {}) {
+export async function readAuditPage({
+  limit = 50, env = process.env, nowMs = Date.now(), fetchImpl = fetch, from = "", to = ""
+} = {}) {
   const capped = Math.min(200, Math.max(1, Number(limit) || 50));
   const cfg = idriveConfig(env);
   if (!cfg) {
-    const entries = memoryEntries.slice(-capped).reverse().map((item) => item.entry);
-    return { ok: true, entries, total: memoryEntries.length, window: "memory" };
+    const gefiltert = memoryEntries.filter((item) => inRange(item.entry.at, from, to));
+    const entries = gefiltert.slice(-capped).reverse().map((item) => item.entry);
+    return { ok: true, entries, total: gefiltert.length, window: from || to ? "range" : "memory" };
   }
 
-  const monthPrefixes = [0, 1].map((back) => {
-    const date = new Date(nowMs);
-    date.setUTCDate(1);
-    date.setUTCMonth(date.getUTCMonth() - back);
-    return `${PREFIX}/${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, "0")}/`;
-  });
-
-  const scanned = await Promise.all(monthPrefixes.map((prefix) => listKeys(cfg, prefix, fetchImpl)));
+  const spanne = monthSpan({ from, to, nowMs });
+  const scanned = await Promise.all(spanne.prefixes.map((prefix) => listKeys(cfg, prefix, fetchImpl)));
   if (scanned.some((result) => !result.ok)) return { ok: false, error: "audit_list_failed", entries: [] };
   let keys = scanned.flatMap((result) => result.keys);
-  let window = "2m";
+  let window = spanne.label;
 
-  if (keys.length === 0) {
+  // Nur ohne ausdruecklichen Zeitraum darf vollstaendig gelistet werden. Wer
+  // einen Zeitraum nennt, bekommt genau diesen — sonst waere eine leere
+  // Antwort plötzlich eine Antwort ueber das gesamte Log.
+  if (keys.length === 0 && !from && !to) {
     const all = await listKeys(cfg, `${PREFIX}/`, fetchImpl);
     if (!all.ok) return { ok: false, error: "audit_list_failed", entries: [] };
     keys = all.keys;
     window = "all";
   }
+  if (from || to) keys = keys.filter((key) => inRange(keyTimestamp(key), from, to));
 
   // Der Schluessel traegt den Zeitstempel — lexikografisch sortieren reicht.
   keys.sort().reverse();
@@ -192,6 +193,50 @@ export async function readAuditPage({ limit = 50, env = process.env, nowMs = Dat
     } catch { /* einzelner unlesbarer Eintrag darf die Seite nicht kippen */ }
   }
   return { ok: true, entries, total: keys.length, window };
+}
+
+/**
+ * Welche Monats-Prefixe muessen gescannt werden?
+ * Ohne Zeitraum: laufender und voriger Monat. Mit Zeitraum: genau die Monate
+ * dazwischen, hart gedeckelt — sonst koennte eine Anfrage mit from=1970 das
+ * ganze Log Monat fuer Monat abklappern.
+ */
+export function monthSpan({ from = "", to = "", nowMs = Date.now(), maxMonths = 24 } = {}) {
+  const ende = to ? new Date(`${String(to).slice(0, 10)}T23:59:59.999Z`) : new Date(nowMs);
+  const start = from ? new Date(`${String(from).slice(0, 10)}T00:00:00.000Z`) : null;
+  if (Number.isNaN(ende.getTime()) || (start && Number.isNaN(start.getTime()))) {
+    return { prefixes: [], label: "invalid", truncated: false };
+  }
+
+  const prefixes = [];
+  const cursor = new Date(Date.UTC(ende.getUTCFullYear(), ende.getUTCMonth(), 1));
+  const grenze = start ? Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1) : null;
+  while (prefixes.length < maxMonths) {
+    prefixes.push(`${PREFIX}/${cursor.getUTCFullYear()}/${String(cursor.getUTCMonth() + 1).padStart(2, "0")}/`);
+    if (grenze === null) { if (prefixes.length >= 2) break; } else if (cursor.getTime() <= grenze) break;
+    cursor.setUTCMonth(cursor.getUTCMonth() - 1);
+  }
+  const truncated = grenze !== null && prefixes.length >= maxMonths && cursor.getTime() > grenze;
+  return {
+    prefixes,
+    label: from || to ? `${prefixes.length}m` : "2m",
+    truncated
+  };
+}
+
+/** Liegt ein Zeitstempel im Zeitraum? Leere Grenzen sind offen. */
+function inRange(iso, from, to) {
+  const stamp = String(iso || "");
+  if (!stamp) return false;
+  if (from && stamp.slice(0, 10) < String(from).slice(0, 10)) return false;
+  if (to && stamp.slice(0, 10) > String(to).slice(0, 10)) return false;
+  return true;
+}
+
+/** Aus admin/audit/2026/07/28/2026-07-28T09-26-27-724Z-ab12.json wird das Datum. */
+function keyTimestamp(key) {
+  const match = String(key).match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : "";
 }
 
 async function listKeys(cfg, prefix, fetchImpl = fetch) {

@@ -143,6 +143,38 @@ function ageSecondsOf(builtAt, nowMs) {
 /** Nach einem Neubau muss die naechste Anfrage den frischen Stand sehen. */
 export function invalidateUserIndexCache() {
   cache = null;
+  rebuildLaeuft = false;
+}
+
+// Auffrischung ohne Zeitgeber: ein Timer liefe auch dann, wenn niemand hinsieht,
+// und kostet bei jedem Lauf ein LIST plus ein GET je Konto. Stattdessen stoesst
+// die erste Anfrage, die einen veralteten Index vorfindet, den Neubau im
+// Hintergrund an und bekommt sofort den alten Stand — mit dem Vermerk, dass
+// gerade aufgefrischt wird. Kostet nichts, wenn niemand in die Konsole schaut.
+const STALE_AFTER_SECONDS = 900;
+let rebuildLaeuft = false;
+
+/**
+ * Liest den Index und frischt ihn bei Bedarf im Hintergrund auf.
+ * Blockiert NIE: die Antwort kommt immer aus dem vorhandenen Stand.
+ */
+export async function readUserIndexFresh({
+  env = process.env, fetchImpl = fetch, nowMs = Date.now(), staleAfterSeconds = STALE_AFTER_SECONDS
+} = {}) {
+  const index = await readUserIndex({ env, fetchImpl, nowMs });
+  if (!index.ok) return index;
+
+  const veraltet = Number(index.ageSeconds) >= staleAfterSeconds;
+  if (!veraltet || rebuildLaeuft) return { ...index, refreshing: rebuildLaeuft };
+
+  rebuildLaeuft = true;
+  // Bewusst ohne await: der Aufrufer wartet nicht auf den Neubau.
+  Promise.resolve()
+    .then(() => rebuildUserIndex({ env, fetchImpl }))
+    .catch(() => { /* ein fehlgeschlagener Neubau darf die Liste nicht kippen */ })
+    .finally(() => { rebuildLaeuft = false; });
+
+  return { ...index, refreshing: true };
 }
 
 /** Filtern und Blaettern auf dem gelesenen Index — reine Funktion, keine I/O. */

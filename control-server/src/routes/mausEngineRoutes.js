@@ -8,6 +8,7 @@ import crypto from "node:crypto";
 import { json } from "../http/respond.js";
 import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
 import { evaluateWorkerBudget } from "../budget/budgetGate.js";
+import { aiTransparencyHeaders, transparencyNotice } from "../compliance/aiTransparency.js";
 import { resolveModelRequest, executeWithFallback } from "../llm/modelRouter.js";
 import { planAndExecute } from "../../../workers/maus-engine/planner-roundtrip.mjs";
 import { createMacroStore } from "../../../workers/maus-engine/macro-store.mjs";
@@ -349,6 +350,11 @@ export async function handleMausRun(req, res, {
   // Planer-Proxy des Loop-Modus (additiv): Anfragen des stateless Workers
   // tragen das Engine-Token statt einer Nutzer-Sitzung. Sie duerfen NUR den
   // Proxy ausloesen, nie einen Lauf starten (kein Task-Dispatch ohne Nutzer).
+  // EU-KI-Verordnung Art. 50: Hier bedient ein KI-System eigenstaendig einen
+  // Browser. Jede Antwort dieses Endpunkts traegt deshalb die maschinenlesbare
+  // Kennzeichnung und den verschaerften Hinweis â auch die Fehlerantworten,
+  // damit der Hinweis nicht ausgerechnet dann fehlt, wenn etwas schiefgeht.
+  for (const [name, value] of Object.entries(aiTransparencyHeaders("maus-engine-v2"))) res.setHeader?.(name, value);
   const fromWorker = isWorkerRequest(req, config);
   if (!req?.authUser && !fromWorker) return json(res, 401, { ok: false, error: "authentication_required" });
   if (limiter) {
@@ -430,7 +436,11 @@ export async function handleMausRun(req, res, {
     rememberAsyncRun(runId, { status: "laeuft", capsuleRef, startedAt });
     const store = runStore || defaultRunStore(env);
     void runAsyncInBackground({ runId, capsuleRef, execute, store });
-    return json(res, 202, { ok: true, async: true, runId, capsuleRef, status: "laeuft", startedAt, statusPath: `/api/maus/run?runId=${runId}` });
+    return json(res, 202, {
+      ok: true, async: true, runId, capsuleRef, status: "laeuft", startedAt,
+      statusPath: `/api/maus/run?runId=${runId}`,
+      transparenzhinweis: transparencyNotice("maus-engine-v2")
+    });
   }
 
   try {
@@ -447,6 +457,7 @@ export async function handleMausRun(req, res, {
         loopSteps: outcome.loopSteps ?? 0,
         ...(outcome.macroSaved ? { macroSaved: outcome.macroSaved } : {}),
         history: outcome.history,
+        transparenzhinweis: transparencyNotice("maus-engine-v2"),
         result: resultSummary
       });
     }

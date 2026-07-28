@@ -8,7 +8,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  indexEntryFrom, invalidateUserIndexCache, readUserIndex, rebuildUserIndex, selectFromIndex
+  indexEntryFrom, invalidateUserIndexCache, readUserIndex, readUserIndexFresh, rebuildUserIndex, selectFromIndex
 } from "./userIndex.js";
 
 const ENV = {
@@ -220,4 +220,70 @@ test("ein Neubau macht den Cache sofort ungueltig", async () => {
   await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:02.000Z" });
   const nachher = await readUserIndex({ env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T10:00:03.000Z") });
   assert.equal(nachher.count, 2, "der frische Stand muss sofort sichtbar sein");
+});
+
+// ---- Auffrischung ohne Zeitgeber ---------------------------------------------
+
+test("ein frischer Index loest keinen Neubau aus", async () => {
+  invalidateUserIndexCache();
+  const objekte = new Map([["auth/email-users/aaa.json", konto("a@example.de")]]);
+  let neubauten = 0;
+  const basis = s3Doppelgaenger(objekte);
+  const fetchImpl = async (url, init) => {
+    if ((init?.method || "GET") === "PUT" && String(url).includes("admin/index/users.json")) neubauten += 1;
+    return basis(url, init);
+  };
+  await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:00.000Z" });
+  assert.equal(neubauten, 1);
+
+  const ergebnis = await readUserIndexFresh({
+    env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T10:01:00.000Z"), staleAfterSeconds: 900
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.refreshing, false);
+  assert.equal(neubauten, 1, "60 Sekunden alt ist nicht veraltet");
+});
+
+test("ein veralteter Index wird im Hintergrund erneuert — die Antwort wartet nicht", async () => {
+  invalidateUserIndexCache();
+  const objekte = new Map([["auth/email-users/aaa.json", konto("a@example.de")]]);
+  let neubauten = 0;
+  const basis = s3Doppelgaenger(objekte);
+  const fetchImpl = async (url, init) => {
+    if ((init?.method || "GET") === "PUT" && String(url).includes("admin/index/users.json")) neubauten += 1;
+    return basis(url, init);
+  };
+  await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:00.000Z" });
+  invalidateUserIndexCache(); // Cache leeren, damit das ECHTE Alter zaehlt
+
+  const ergebnis = await readUserIndexFresh({
+    env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T11:00:00.000Z"), staleAfterSeconds: 900
+  });
+  assert.equal(ergebnis.ok, true, "die Liste kommt sofort, trotz Neubau");
+  assert.equal(ergebnis.refreshing, true, "der Vermerk muss mit");
+  assert.equal(ergebnis.count, 1, "geliefert wird der vorhandene Stand, nicht nichts");
+
+  await new Promise((fertig) => setTimeout(fertig, 30));
+  assert.equal(neubauten, 2, "der Neubau ist im Hintergrund gelaufen");
+});
+
+test("ein fehlgeschlagener Neubau kippt die Liste nicht", async () => {
+  invalidateUserIndexCache();
+  const objekte = new Map([["auth/email-users/aaa.json", konto("a@example.de")]]);
+  const basis = s3Doppelgaenger(objekte);
+  let erlaubeNeubau = true;
+  const fetchImpl = async (url, init) => {
+    if (!erlaubeNeubau && new URL(url).searchParams.get("list-type") === "2") throw new Error("IDrive weg");
+    return basis(url, init);
+  };
+  await rebuildUserIndex({ env: ENV, fetchImpl, nowIso: "2026-07-28T10:00:00.000Z" });
+  invalidateUserIndexCache();
+  erlaubeNeubau = false;
+
+  const ergebnis = await readUserIndexFresh({
+    env: ENV, fetchImpl, nowMs: Date.parse("2026-07-28T11:00:00.000Z"), staleAfterSeconds: 900
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.count, 1, "der alte Stand bleibt bedienbar");
+  await new Promise((fertig) => setTimeout(fertig, 30)); // darf nicht unbehandelt werfen
 });

@@ -56,6 +56,8 @@ import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSessio
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminRoute } from "../control-server/src/routes/adminRoutes.js";
+import { handleComplianceRoute } from "../control-server/src/routes/complianceRoutes.js";
+import { handleAdminUiRoute } from "../control-server/src/routes/adminUiRoutes.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -124,6 +126,11 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
     if (readMethod && url.pathname === "/impressum") return serveFile(res, "impressum.html");
     if (readMethod && url.pathname === "/datenschutz") return serveFile(res, "datenschutz.html");
+    // EU-KI-Verordnung Art. 50: der Transparenzbericht muss OHNE Anmeldung
+    // erreichbar sein — eine Informationspflicht hinter einem Login waere keine.
+    if (url.pathname === "/api/compliance" || url.pathname.startsWith("/api/compliance/")) {
+      if (handleComplianceRoute(req, url, res)) return;
+    }
     if (readMethod && url.pathname === ROUTES.api.health) return handleHealth(res);
     if (readMethod && url.pathname === ROUTES.api.capabilities) return handleCapabilities(res);
     if (readMethod && url.pathname === ROUTES.api.authConfig) return handleAuthConfig(res);
@@ -169,6 +176,20 @@ const server = http.createServer(async (req, res) => {
     // die Rolle kommt frisch aus dem Store, nie aus dem Sitzungs-Token.
     if (url.pathname === "/api/admin" || url.pathname.startsWith("/api/admin/")) {
       if (await handleAdminRoute(req, url, res)) return;
+    }
+    // Admin-Oberflaeche (Stufe 2). Bewusst hier und nicht unter public/: kein
+    // Service-Worker, kein Cache-Bump, kein Start-Lock-Risiko.
+    //
+    // Die Sitzung wird hier aufgeloest statt im generischen Filter, damit ein
+    // Mensch am Browser eine lesbare Seite bekommt und keine JSON-Fehlerzeile.
+    // Der Widerruf wird trotzdem geprueft — eine beendete Sitzung oeffnet die
+    // Konsole nicht.
+    if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
+      const konsolenNutzer = readSession(req);
+      if (konsolenNutzer && await emailSessionStillValid(konsolenNutzer, process.env)) {
+        req.authUser = konsolenNutzer;
+      }
+      if (await handleAdminUiRoute(req, url, res)) return;
     }
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);

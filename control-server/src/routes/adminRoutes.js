@@ -1,20 +1,22 @@
-// smejj.com — Adminbereich, Stufe 1: ausschliesslich lesende Routen.
+// smejj.com — Adminbereich, Stufe 2: ausschliesslich lesende Routen.
 //
 // Bewusst ohne jede schreibende Aktion auf Nutzerkonten. Wer hier nichts kaputt
 // machen kann, kann auch nichts kaputt machen, waehrend das Fundament reift.
 // Sperren, Loeschen, Rollenvergabe und Rueckerstattung folgen in Stufe 3 —
 // zusammen mit Vier-Augen-Prinzip und Einwilligung.
 //
-// Die einzige Ausnahme ist der Neubau des Nutzer-Index: er beruehrt keine
-// Konten, ist aber teuer genug, um Berechtigung, Grund und Audit-Eintrag zu
-// verlangen.
+// Zwei Ausnahmen vom reinen Lesen, beide mit Pflichtgrund und Audit-Eintrag:
+//   - Neubau des Nutzer-Index: beruehrt keine Konten, ist aber teuer.
+//   - Einsicht in eine Nutzerakte: liest zwar nur, ist aber ein Zugriff auf
+//     personenbezogene Daten und gehoert deshalb nachgewiesen. Ohne Grund
+//     keine Einsicht; schlaegt der Nachweis fehl, gibt es keine Daten.
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { privateJson, readJson } from "../http/respond.js";
 import { getUserByEmail, userRole, userStatus } from "../auth/emailUserStore.js";
 import { permissionsFor } from "../admin/adminRoles.js";
 import { checkActorPermission, resolveAdminActor } from "../admin/adminAuth.js";
 import { appendAuditEntry, readAuditPage, verifyAuditChain } from "../admin/auditLog.js";
-import { readUserIndex, rebuildUserIndex, selectFromIndex } from "../admin/userIndex.js";
+import { readUserIndex, readUserIndexFresh, rebuildUserIndex, selectFromIndex } from "../admin/userIndex.js";
 
 const PREFIX = "/api/admin";
 const requestGate = createRateLimiter({ capacity: 40, refillPerSec: 0.5, maxKeys: 5_000 });
@@ -45,7 +47,7 @@ export async function handleAdminRoute(req, url, res, { env = process.env } = {}
     if (readMethod && rest === "me") return respondMe(res, actor), true;
     if (readMethod && rest === "users") return await respondUsers(res, actor, url, env), true;
     if (readMethod && rest.startsWith("users/") && rest !== "users/index/rebuild") {
-      return await respondUserDetail(res, actor, decodeURIComponent(rest.slice("users/".length)), env), true;
+      return await respondUserDetail(req, res, actor, decodeURIComponent(rest.slice("users/".length)), url, env), true;
     }
     if (req.method === "POST" && rest === "users/index/rebuild") {
       return await respondRebuild(req, res, actor, env), true;
@@ -67,8 +69,8 @@ function respondMe(res, actor) {
     ok: true,
     actor: { email: actor.email, name: actor.name, role: actor.role, roleSource: actor.roleSource },
     permissions: permissionsFor(actor.role),
-    stage: 1,
-    writable: false // Stufe 1 ist bewusst rein lesend
+    stage: 2,
+    writable: false // auch Stufe 2 veraendert keine Konten
   });
 }
 
@@ -76,7 +78,8 @@ async function respondUsers(res, actor, url, env) {
   const gate = checkActorPermission(actor, "users.read");
   if (!gate.ok) return privateJson(res, gate.status, { ok: false, error: gate.error });
 
-  const index = await readUserIndex({ env });
+  // Frischt bei Bedarf im Hintergrund auf und antwortet trotzdem sofort.
+  const index = await readUserIndexFresh({ env });
   if (!index.ok) return privateJson(res, 409, { ok: false, error: index.error, hint: "POST /api/admin/users/index/rebuild" });
 
   const page = selectFromIndex(index.entries, {
@@ -93,15 +96,28 @@ async function respondUsers(res, actor, url, env) {
       ageSeconds: index.ageSeconds,
       count: index.count,
       unreadable: index.unreadable,
+      refreshing: index.refreshing === true,
       truncated: index.truncated
     },
     ...page
   });
 }
 
-async function respondUserDetail(res, actor, identifier, env) {
+async function respondUserDetail(req, res, actor, identifier, url, env) {
   const gate = checkActorPermission(actor, "users.read");
   if (!gate.ok) return privateJson(res, gate.status, { ok: false, error: gate.error });
+
+  // Die Einsicht in eine Nutzerakte ist ein Zugriff auf personenbezogene Daten.
+  // Sie verlangt deshalb einen Grund und wird protokolliert — anders als das
+  // Blaettern in der Liste, die nur Metadaten zeigt. Ohne Grund keine Einsicht.
+  const reason = String(url.searchParams.get("reason") || "").trim();
+  if (reason.length < 3) {
+    return privateJson(res, 400, {
+      ok: false,
+      error: "admin_reason_required",
+      hinweis: "Die Einsicht in eine Nutzerakte wird protokolliert. Bitte Grund angeben (?reason=...)."
+    });
+  }
 
   // Der Index bildet userId -> E-Mail ab; direkte E-Mail-Angabe ist ebenfalls erlaubt.
   let email = identifier.includes("@") ? identifier : "";
@@ -119,7 +135,21 @@ async function respondUserDetail(res, actor, identifier, env) {
     return privateJson(res, 503, { ok: false, error: "admin_directory_unavailable" });
   }
   if (!record) return privateJson(res, 404, { ok: false, error: "admin_user_not_found" });
-  return privateJson(res, 200, { ok: true, user: redactUserRecord(record) });
+
+  // Erst protokollieren, dann herausgeben. Schlaegt der Nachweis fehl, gibt es
+  // keine Einsicht — ein Zugriff ohne Spur waere schlimmer als kein Zugriff.
+  const audit = await appendAuditEntry({
+    actor,
+    action: "user.record.read",
+    target: record.userId || email,
+    before: null,
+    after: null,
+    reason,
+    ip: clientIp(req)
+  }, { env });
+  if (!audit.ok) return privateJson(res, 503, { ok: false, error: "admin_audit_unavailable" });
+
+  return privateJson(res, 200, { ok: true, user: redactUserRecord(record), protokolliert: true });
 }
 
 async function respondRebuild(req, res, actor, env) {
@@ -149,7 +179,12 @@ async function respondAudit(res, actor, url, env) {
   const gate = checkActorPermission(actor, "audit.read");
   if (!gate.ok) return privateJson(res, gate.status, { ok: false, error: gate.error });
 
-  const page = await readAuditPage({ limit: url.searchParams.get("limit"), env });
+  const page = await readAuditPage({
+    limit: url.searchParams.get("limit"),
+    from: url.searchParams.get("from") || "",
+    to: url.searchParams.get("to") || "",
+    env
+  });
   if (!page.ok) return privateJson(res, 503, { ok: false, error: page.error });
   const chain = verifyAuditChain(page.entries);
   // "window" muss mit: die Seite zeigt standardmaessig nur den laufenden und den

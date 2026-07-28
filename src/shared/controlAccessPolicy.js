@@ -36,6 +36,12 @@ export function requiresAuthenticatedControlAccess(req, url) {
     && pathname.endsWith("/status");
   if (workerCallback) return false;
   if (pathname === "/api/admin" || pathname.startsWith("/api/admin/")) return true;
+  // Die Admin-Oberflaeche prueft ihre Sitzung SELBST (adminUiRoutes.js) und
+  // antwortet mit einer lesbaren Seite statt mit JSON. Waere sie hier gelistet,
+  // bekaeme ein Mensch am Browser `{"error":"authentication_required"}` zu
+  // sehen und wuesste nicht, was zu tun ist. Die Pruefung dort ist strenger:
+  // sie verlangt zusaetzlich eine Verwaltungsrolle.
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return false;
   if (pathname.startsWith("/api/providers/")) return true;
   if (pathname === "/api/keys" || pathname.startsWith("/api/keys/")) return true;
   if (USER_PROTECTED_EXACT_PATHS.has(pathname)) return true;
