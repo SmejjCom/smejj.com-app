@@ -46,8 +46,12 @@ const MAX_LINES = 800;
 // ohne diese Auslagerung waeren es +25 gewesen. Der Rest sind die Namensabfrage
 // und ihre Absicherung, die zwingend im Projekt-Handler stehen.
 // Ab diesem Stand wieder eingefroren; die Aufteilung von app.js bleibt eingeplant.
+// public/app.js ist seit dem 2026-07-28 KEINE Altlast mehr: aufgeteilt in acht
+// eigene Module (google-login.js, projects-surface.js, local-workspace-surface.js,
+// uploads-surface.js, free-coding-fallback.js, panel-layout.js, view-routes.js)
+// und damit von 1411 auf unter 800 Zeilen gebracht. Die Ausnahme ist entfernt —
+// ab jetzt gilt fuer app.js die normale 800-Zeilen-Regel wie fuer jede Datei.
 const LEGACY_BASELINE = new Map([
-  ["public/app.js", 1411],
   // styles.css-Baseline 1552 -> 1565 am 2026-07-04: .visually-hidden fuer das
   // H1 der Startseite (Freigabe "Ja, Option A + Labels"); ab hier wieder eingefroren.
   // styles.css-Baseline 1565 -> 1589 am 2026-07-28: Freigabe "smejj.com 100 %

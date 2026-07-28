@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const html = fs.readFileSync("public/index.html", "utf8");
-const app = fs.readFileSync("public/app.js", "utf8");
+// Seit der Aufteilung vom 2026-07-28 liegen die Ansichtstabellen in
+// public/view-routes.js. Geprueft wird weiterhin dieselbe Zusage.
+const app = fs.readFileSync("public/app.js", "utf8")
+  + fs.readFileSync("public/view-routes.js", "utf8");
 const css = fs.readFileSync("public/styles.css", "utf8");
 const sw = fs.readFileSync("public/sw.js", "utf8");
 const composerTools = fs.readFileSync("public/composer-tools.js", "utf8");
@@ -171,6 +174,10 @@ test("buttons declare an explicit type", () => {
 
 test("file upload advertises the same safe text-first formats that runtime validation allows", () => {
   assert.match(html, /id="upload"[^>]*accept="[^"]*application\/json[^"]*image\/svg\+xml[^"]*"/);
-  assert.match(app, /maxBytes: 1_000_000/);
-  assert.match(app, /allowedTypes: new Set/);
+  // Die Grenzen leben seit der Aufteilung vom 2026-07-28 in uploads-surface.js —
+  // bei der einzigen Stelle, die sie auch durchsetzt.
+  const uploads = fs.readFileSync("public/uploads-surface.js", "utf8");
+  assert.match(uploads, /maxBytes: 1_000_000/);
+  assert.match(uploads, /allowedTypes: new Set/);
+  assert.match(uploads, /export function bindUploads/);
 });

@@ -5,7 +5,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 const html = fs.readFileSync("public/index.html", "utf8");
-const app = fs.readFileSync("public/app.js", "utf8");
+// Seit der Aufteilung vom 2026-07-28 liegen die Ansichtstabellen in
+// public/view-routes.js. Geprueft wird weiterhin dieselbe Zusage.
+const app = fs.readFileSync("public/app.js", "utf8")
+  + fs.readFileSync("public/view-routes.js", "utf8");
 const css = fs.readFileSync("public/styles.css", "utf8");
 const brandingCss = fs.readFileSync("public/branding.css", "utf8");
 const sw = fs.readFileSync("public/sw.js", "utf8");
@@ -73,7 +76,7 @@ test("service worker caches only small app shell assets and has offline fallback
   // selbst wurde hier NICHT angefasst.
     // v153 -> v154 am 2026-07-28: view-title.js neu im Precache (Seitentitel je
   // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v154"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v155"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   // view-chrome.css liegt seit dem Ladezeit-Buendel (2026-07-27) in start-styles.css.
   assert.match(sw, /\/assets\/start-styles\.css/);

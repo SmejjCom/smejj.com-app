@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const html = fs.readFileSync("public/index.html", "utf8");
-const app = fs.readFileSync("public/app.js", "utf8");
+// Seit der Aufteilung vom 2026-07-28 liegen die Ansichtstabellen in
+// public/view-routes.js. Geprueft wird weiterhin dieselbe Zusage.
+const app = fs.readFileSync("public/app.js", "utf8")
+  + fs.readFileSync("public/view-routes.js", "utf8");
 const server = fs.readFileSync("src/server.js", "utf8");
 const googleAuth = fs.readFileSync("src/auth/googleAuth.js", "utf8");
 // rc2 (2026-07-15, freigegeben): Google-Login-Routen verhaltensgleich aus

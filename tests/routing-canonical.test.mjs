@@ -9,7 +9,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const app = fs.readFileSync("public/app.js", "utf8");
+const app = fs.readFileSync("public/app.js", "utf8") + fs.readFileSync("public/view-routes.js", "utf8");
 const notFound = fs.readFileSync("public/404.html", "utf8");
 const html = fs.readFileSync("public/index.html", "utf8");
 const sitemap = fs.readFileSync("public/sitemap.xml", "utf8");
