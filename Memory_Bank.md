@@ -492,3 +492,19 @@ SMEJJ_REMOTE_BROWSER_WORKER_URL).
   /projects, /settings, Projektliste, Upload, Google-Feld, Automatik — alles da,
   Chat antwortet, 0 JavaScript-Fehler.
 - OFFEN: src/server.js steht bei 799/800 Zeilen — im Limit, aber ohne Luft.
+
+## 2026-07-28 — server.js aufgeteilt (job_appjs_aufteilung_20260728, Nachtrag)
+- src/server.js 799 -> 750 Zeilen. Neu: control-server/src/llm/localAssistant.js
+  (modellloser Rueckfall, zeilengleich verschoben, einzige Abhaengigkeit
+  SECURITY_HEADERS). Der Pfad war bisher UNGETESTET — jetzt vier Tests in
+  check:llm-router (51/51).
+- Deploy ueber den bewaehrten skriptbaren Weg: Artefakt bauen -> IDrive e2
+  (Prefix deployments/control/) -> set_control_artifact_env.mjs.
+  Salad-Version 88 -> 89, 70 Variablen erhalten, SMEJJ_AGENT_TOOLS_ENABLED
+  bleibt YES. Rollout dauert ~7-10 Minuten.
+- LIVE NACH ROLLOUT VERIFIZIERT: /api/health 200, Tool-Calling liefert weiterhin
+  woertlich "Drei Produkte. Eine Vision.", Klickpfad auf smejj.com fehlerfrei,
+  0 JavaScript-Fehler.
+- STAND BEIDER DATEIEN NACH PUNKT 1: public/app.js 1411 -> 800 (Ratchet-Ausnahme
+  entfernt), src/server.js 799 -> 750. Beide unterliegen jetzt der normalen
+  800-Zeilen-Regel ohne Sonderbehandlung.

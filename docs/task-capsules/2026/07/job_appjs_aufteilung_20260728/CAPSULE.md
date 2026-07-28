@@ -76,3 +76,37 @@ Git-Tag `rollback/appjs-aufteilung-2026-07-28` (`b280f78`), Dateikopien in
 
 `src/server.js` steht bei 799 von 800 Zeilen — im Limit, aber ohne Luft. Fuer
 die naechste Aenderung dort empfiehlt sich dieselbe Behandlung.
+
+---
+
+## Nachtrag 2026-07-28: server.js aufgeteilt
+
+Zweite Haelfte von Punkt 1. `src/server.js` stand auf 799 von 800 Zeilen — im
+Limit, aber ohne jede Luft.
+
+**Neu:** `control-server/src/llm/localAssistant.js` — der modelllose Rueckfall
+(`localAssistantStream`, `buildLocalAssistantReply`, `latestUserMessage`). Code
+zeilengleich uebernommen; einzige Abhaengigkeit `SECURITY_HEADERS` wird jetzt
+ausdruecklich importiert. **server.js 799 -> 750 Zeilen, 50 Zeilen Luft.**
+
+Dieser Pfad haelt die Seite bedienbar, wenn kein Modell verfuegbar ist
+(Graceful Degradation) — und war bisher **ungetestet**. Jetzt vier Tests.
+
+**Deploy:** Artefakt `smejj-control-aufteilung-20260728.tar.gz` unveraenderlich
+auf IDrive e2, Salad-Version 88 -> **89**, 70 Variablen erhalten,
+`SMEJJ_AGENT_TOOLS_ENABLED` bleibt `YES`.
+
+**Live verifiziert nach dem Rollout:**
+- Control Server `/api/health` 200
+- Tool-Calling weiterhin aktiv: liefert woertlich „Drei Produkte. Eine Vision."
+- Klickpfad auf smejj.com: alle Ansichten, Chat antwortet, **0 JavaScript-Fehler**
+
+`check:llm-router` 51/51, `check:release-imports` 125 Dateien, alle uebrigen
+Pflicht-Checks gruen.
+
+### Beide Dateien nach Punkt 1
+
+| Datei | vorher | nachher | Ausnahme |
+|---|---|---|---|
+| `public/app.js` | 1411 | **800** | entfernt |
+| `src/server.js` | 799 | **750** | nie noetig gewesen |
