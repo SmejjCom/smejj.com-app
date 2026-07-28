@@ -35,7 +35,13 @@ test("Config exposes Browser-Proxy route used by Browser-Pane", () => {
   assert.match(configJs, /browserFetch:\s*"\/api\/browser\/fetch"/);
   assert.match(configJs, /browserRemote:\s*"https:\/\/loganberry-fruit-e3n6k5n10h68cawn\.salad\.cloud\/api\/browser\/remote"/);
   assert.match(paneJs, /CLIENT_ROUTES\.api\.browserFetch/);
-  assert.match(paneJs, /\.\/config\.js\?v=browser-pane-20260709-2/);
+  // config.js wird bewusst OHNE Cache-Version importiert (QA-Welle 1, Befund F-07).
+  // Der frueher hier erzwungene Spezifizierer "./config.js?v=browser-pane-..." war
+  // der einzige abweichende unter 26 Importen und liess config.js ein zweites Mal
+  // als eigenstaendiges Modul laden — mit getrennten CLIENT_ROUTES. Die uebrigen
+  // browser-pane-Module behalten ihre Version, weil sie nur hier importiert werden.
+  assert.match(paneJs, /from "\.\/config\.js"/);
+  assert.doesNotMatch(paneJs, /\.\/config\.js\?v=/);
   assert.match(paneJs, /\.\/browser-pane-render\.js\?v=browser-pane-20260709-2/);
 });
 

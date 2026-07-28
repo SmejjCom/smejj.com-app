@@ -71,7 +71,7 @@ test("service worker caches only small app shell assets and has offline fallback
   // Seiten-Kontext fuer das Modell) hat public/sw.js gebumpt, ohne diese Erwartung
   // mitzunehmen — der Test war seitdem rot und blockierte check:all. public/sw.js
   // selbst wurde hier NICHT angefasst.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v148"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v149"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   assert.match(sw, /\/assets\/view-chrome\.css/);
   assert.match(sw, /\/assets\/search\.js/);

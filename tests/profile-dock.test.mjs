@@ -100,7 +100,8 @@ test("Service Worker cached die neuen Module", () => {
   }
   // v148 (2026-07-27): Stufe 2 — Seiten-Kontext fuer das Modell (browser-context.js).
   assert.ok(sw.includes('"/assets/browser-context.js"'), "browser-context.js fehlt im Shell-Precache");
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v148"/);
+  // v148 -> v149 (2026-07-28): frame-guard.js neu im Shell-Precache (Klickjacking-Schutz, F-04).
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v149"/);
 });
 
 
