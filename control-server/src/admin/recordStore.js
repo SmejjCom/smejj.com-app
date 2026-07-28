@@ -18,6 +18,13 @@ import { parseS3ListPage, signedS3Get, signedS3List, signedS3Put } from "../stor
 import { mapMitGrenze } from "../shared/parallelFetch.js";
 
 const MAX_DATENSAETZE = 500;
+// Wie lange ein frisch geschriebener Datensatz aus dem Prozess ergaenzt wird.
+// Live gemessen (28.07.2026): IDrive e2 braucht nach dem Schreiben bis zu einer
+// Minute, bis das Objekt in der LIST-Antwort auftaucht. Das Objekt selbst ist
+// sofort da — nur der Index hinkt. Zehn Minuten sind grosszuegig gewaehlt; wer
+// laenger braucht, hat ein anderes Problem.
+const FRISCH_MS = 10 * 60 * 1000;
+const MAX_FRISCH = 200;
 
 function idriveConfig(env = process.env) {
   const endpoint = env.IDRIVE_E2_ENDPOINT;
@@ -45,7 +52,31 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
   const pfad = String(praefix || "").replace(/\/+$/, "");
   if (!pfad) throw new Error("record_store_prefix_required");
   const memory = new Map();
+  // Was dieser Prozess gerade geschrieben hat. Nicht als Zwischenspeicher
+  // gedacht — nur als Ausgleich fuer den nachhinkenden LIST-Index. Ein Eintrag
+  // hier ersetzt nie einen gelesenen, er ergaenzt nur einen fehlenden.
+  const frisch = new Map();
   const schluessel = (id) => `${pfad}/${id}.json`;
+
+  function merkeFrisch(datensatz, nowMs) {
+    frisch.set(datensatz.id, { datensatz, at: nowMs });
+    if (frisch.size <= MAX_FRISCH) return;
+    // Aeltesten zuerst raus: Map behaelt die Einfuegereihenfolge.
+    for (const key of frisch.keys()) {
+      frisch.delete(key);
+      if (frisch.size <= MAX_FRISCH) break;
+    }
+  }
+
+  function frischeErgaenzen(gelesen, nowMs) {
+    const bekannt = new Set(gelesen.map((d) => d?.id).filter(Boolean));
+    const ergaenzt = [...gelesen];
+    for (const [id, eintrag] of [...frisch.entries()]) {
+      if (nowMs - eintrag.at > FRISCH_MS) { frisch.delete(id); continue; }
+      if (!bekannt.has(id)) ergaenzt.push(eintrag.datensatz);
+    }
+    return ergaenzt;
+  }
 
   async function lies(id, { env = process.env, fetchImpl = fetch } = {}) {
     const kennung = String(id || "");
@@ -61,7 +92,7 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
     }
   }
 
-  async function schreib(datensatz, { env = process.env, fetchImpl = fetch } = {}) {
+  async function schreib(datensatz, { env = process.env, fetchImpl = fetch, nowMs = Date.now() } = {}) {
     if (!datensatz?.id) throw new Error("record_store_id_required");
     const cfg = idriveConfig(env);
     if (!cfg) { memory.set(datensatz.id, datensatz); return datensatz; }
@@ -72,6 +103,7 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
       contentType: "application/json; charset=utf-8",
       fetchImpl
     });
+    merkeFrisch(datensatz, nowMs);
     return datensatz;
   }
 
@@ -80,7 +112,9 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
    * @param {Function} [optionen.aufbereiten] wird auf jeden Datensatz angewandt
    *   (z. B. um einen berechneten Zustand zu ergaenzen)
    */
-  async function liste({ env = process.env, fetchImpl = fetch, aufbereiten = null, limit = maximal } = {}) {
+  async function liste({
+    env = process.env, fetchImpl = fetch, aufbereiten = null, limit = maximal, nowMs = Date.now()
+  } = {}) {
     const gedeckelt = Math.min(maximal, Math.max(1, Number(limit) || maximal));
     const cfg = idriveConfig(env);
 
@@ -102,7 +136,8 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
         const ergebnis = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl });
         return ergebnis.ok && ergebnis.body ? JSON.parse(ergebnis.body) : null;
       });
-      alle = geladen.filter(Boolean);
+      // Erst hier ergaenzen, nicht im Memory-Zweig: dort ist ohnehin alles da.
+      alle = frischeErgaenzen(geladen.filter(Boolean), nowMs);
     }
 
     const fertig = alle
@@ -112,7 +147,7 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
     return { ok: true, datensaetze: fertig.slice(0, gedeckelt), total: fertig.length };
   }
 
-  function __leeren() { memory.clear(); }
+  function __leeren() { memory.clear(); frisch.clear(); }
 
   return { lies, schreib, liste, __leeren, praefix: pfad };
 }
