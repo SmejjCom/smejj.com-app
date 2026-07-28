@@ -152,7 +152,10 @@ async function respondAudit(res, actor, url, env) {
   const page = await readAuditPage({ limit: url.searchParams.get("limit"), env });
   if (!page.ok) return privateJson(res, 503, { ok: false, error: page.error });
   const chain = verifyAuditChain(page.entries);
-  return privateJson(res, 200, { ok: true, total: page.total, chain, entries: page.entries });
+  // "window" muss mit: die Seite zeigt standardmaessig nur den laufenden und den
+  // vorigen Monat. Ohne diese Angabe liest sich eine kurze Liste faelschlich als
+  // "mehr ist nie passiert" — bei einem Nachweis-Register waere das fatal.
+  return privateJson(res, 200, { ok: true, total: page.total, window: page.window, chain, entries: page.entries });
 }
 
 // ---- Helfer ------------------------------------------------------------------
