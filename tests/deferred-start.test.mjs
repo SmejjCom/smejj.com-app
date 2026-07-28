@@ -93,6 +93,14 @@ test("auch die letzten drei Startaufrufe stehen nicht im Ladepfad", () => {
   }
 });
 
+test("auch der letzte Startaufruf steht nicht mehr im Ladepfad", () => {
+  // /api/auth/me aus autonomous-coding.js — war zuletzt 11 ms vor dem Bildaufbau.
+  const quelle = fs.readFileSync("public/autonomous-coding.js", "utf8");
+  assert.match(quelle, /import \{ afterFirstPaint \} from "\.\/deferred-start\.js"/);
+  assert.match(quelle, /afterFirstPaint\(\[\(\) => refreshSession\(\)\.catch\(showError\)\]\)/);
+  assert.doesNotMatch(quelle, /\n {2}refreshSession\(\)\.catch\(showError\);/, "laeuft noch direkt beim Start");
+});
+
 test("cline-model-menu.js laedt seinen Katalog weiterhin nur auf Klick", () => {
   // Non-Regression: das Untermenue war nie im Ladepfad und darf es nicht werden.
   const menu = fs.readFileSync("public/cline-model-menu.js", "utf8");
@@ -128,5 +136,5 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   for (const name of SOURCES) {
     assert.ok(!sw.includes(`"/assets/${name}"`), `${name} liegt unnoetig im Precache`);
   }
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v152"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v153"/);
 });
