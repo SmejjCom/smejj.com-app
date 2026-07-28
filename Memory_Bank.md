@@ -767,3 +767,30 @@ Ausgelagert wegen der 800-Zeilen-Regel. Nichts geloescht.
   Maus-Engine (Zeabur) und Control-Server (Salad) — ohne den bleibt die
   Wiedergabe selbst fail-closed bei "Artefakt nicht ladbar" (erwartet, siehe
   job_maus_engine_abnahme_20260728).
+
+## 2026-07-28 — Training-Loop-Dienst LIVE (job_smejj_training_loop_20260728)
+- ERLEDIGT und live verifiziert: fuenfter Zeabur-Dienst `smejj-training-loop`
+  (service-6a68f0449949111176cec372) auf dem BESTEHENDEN 6-$-Server, Status
+  "Running 1/1". Keine neue Kostenposition, kein neuer Anbieter.
+- BELEG: Laufzeit-Protokoll zeigt den eigenen Worker, nicht den Control Server —
+  "[smejj-training-loop] SMEJJ_TRAINING_LOOP_ENABLED != YES — Server laeuft, Loop
+  bleibt aus (fail-closed)" + "listening on 0.0.0.0:8080". Echter Klickpfad im
+  Container-Terminal: /health => HTTP 200 {ok:true, loopEnabled:false, ...}.
+- ZUGANG: Zeabur-GitHub-App, vom Betreiber freigegeben. Den GitHub-Sicherheitscode
+  gab der Betreiber selbst ein — Anmeldecodes gibt der Agent nie ein.
+- VIER FALLEN, je ein Ship-Loop-Durchlauf, alle am Live-Protokoll gemessen:
+  (1) Ohne Konfiguration startet Zeabur `pnpm start` = src/server.js, also den
+  CONTROL SERVER statt des Workers. (2) zbpack `install_command` ueberschreiben
+  verhindert den Quellcode-Kopiervorgang ("Cannot find module /src/workers/...").
+  (3) `pnpm build:i18n` bricht im Bau mit MODULE_NOT_FOUND ab. (4) WURZEL:
+  `.dockerignore` schloss `scripts` komplett und `workers/*` per Erlaubnisliste
+  aus — neue Worker dort EINTRAGEN, sonst "failed to calculate checksum";
+  `scripts` -> `scripts/*`, damit Ausnahmen ueberhaupt greifen.
+- LOESUNG: `Dockerfile.<dienstname>` im Repo-Wurzelverzeichnis — Zeabur waehlt es
+  gezielt fuer diesen einen Dienst, andere Dienste bleiben unberuehrt.
+- NON-REGRESSION: maus-engine, chat-bridge, voice-piper unveraendert "Running 1/1".
+  `smejj-remote-browser` = "Service Image Pull Failed", VORBESTEHEND aus einer
+  anderen Sitzung von heute (Image-Pull, kein Bau), nicht angefasst.
+- NOCH AUS (Absicht): Scharfschalten im Zeabur-Tab "Variable" mit
+  SMEJJ_TRAINING_LOOP_ENABLED=YES, SMEJJ_TRAINING_LOOP_EVAL_ENABLED=YES plus
+  IDRIVE_E2_*; Trainings-Zyklus zusaetzlich hinter SMEJJ_TRAINING_CAPTURE_ENABLED.

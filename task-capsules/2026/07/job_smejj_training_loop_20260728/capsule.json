@@ -52,13 +52,21 @@
   ],
   "verifikation": {
     "tests": "node --test tests/training-loop-worker.test.mjs — 13/13 bestanden",
-    "pflichtchecks": "check:training-loop, check:guidelines, check:architecture — alle gruen",
-    "liveTest": "Nicht durchgefuehrt — kein Deploy (siehe Sperrgrund unten)",
-    "kosten": "Keine neuen Kosten entstanden. Ein tatsaechlicher Deploy wuerde einen vierten Dienst auf dem bestehenden 6-USD/Monat-Zeabur-Server bedeuten (oder einen neuen Server) — das ist in FREE_ONLY_MASTER_POLICY.md ausdruecklich nur mit erneuter schriftlicher Freigabe (Dienst + Betrag) erlaubt."
+    "pflichtchecks": "check:training-loop, check:guidelines (1044 Dateien), check:architecture — alle gruen",
+    "liveTest": "BESTANDEN. Dienst smejj-training-loop (service-6a68f0449949111176cec372) im Zeabur-Projekt 'untitled', Server Tencent Ashburn 2C 8GB, Status 'Running 1/1'. Laufzeit-Protokoll belegt den eigenen Worker (nicht den Control Server): '[smejj-training-loop] SMEJJ_TRAINING_LOOP_ENABLED != YES — Server laeuft, Loop bleibt aus (fail-closed).' + 'listening on 0.0.0.0:8080 (loopEnabled=false)'. Echter Klickpfad im Container-Terminal: /health -> HTTP 200 {ok:true, loopEnabled:false, evalCycleEnabled:false, trainingCycleEnabled:false, state:'starting', lastError:null}.",
+    "nonRegression": "maus-engine (Running 1/1, unveraendert 1d), chat-bridge (Running 1/1, unveraendert 1d), voice-piper (Running 1/1, unveraendert 1d). smejj-remote-browser zeigt 'Service Image Pull Failed' — VORBESTEHEND und nicht von diesem Auftrag verursacht: heute von einer anderen Sitzung angelegt, zieht ein Docker-Image (kein Bau), die .dockerignore-Aenderung wirkt ausschliesslich auf Bau-Kontexte. Nicht angefasst.",
+    "kosten": "Keine neue Kostenposition. Fuenfter Dienst auf dem bereits bezahlten 6-USD/Monat-Server (Tencent Ashburn 2C 8GB), kein neuer Server, kein neuer Anbieter. Betreiber-Freigabe im Chat am 2026-07-28 erteilt."
   },
   "rollback": {
     "git": { "tag": "commit 52667c5 auf feature/auth-redesign-github-magiclink, gepusht nach origin", "commit": "52667c5" },
     "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs, task-capsules/2026/07/job_smejj_training_loop_20260728/ und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt. Memory_Bank.md bewusst NICHT mitcommittet — ein anderer, zeitgleicher Auftrag hatte dort eine eigene, noch unfertige Aenderung im selben Arbeitsverzeichnis (Google-Drive-geteilt); siehe smejj-parallele-sessions-git.md."
   },
-  "status": "code-complete-deploy-blocked"
+  "livegang": {
+    "zeaburProjekt": "untitled (project-6a6666899949111176cddefb), Server Tencent Ashburn 2C 8GB",
+    "dienst": "smejj-training-loop (service-6a68f0449949111176cec372)",
+    "quelle": "SmejjCom/smejj.com-app, Branch feature/auth-redesign-github-magiclink, Bau ueber Dockerfile.smejj-training-loop",
+    "zugang": "Zeabur-GitHub-App vom Betreiber freigegeben (AskUserQuestion, 2026-07-28); GitHub-Sicherheitscode gab der Betreiber selbst ein.",
+    "einSchalterFehltNoch": "Der Dienst laeuft bewusst im Aus-Zustand. Zum Scharfschalten im Zeabur-Tab 'Variable' setzen: SMEJJ_TRAINING_LOOP_ENABLED=YES, SMEJJ_TRAINING_LOOP_EVAL_ENABLED=YES sowie IDRIVE_E2_* (Checkpoint/Benchmarks). Der Trainings-Zyklus zusaetzlich hinter SMEJJ_TRAINING_LOOP_TRAINING_ENABLED und der projektweiten Sperre SMEJJ_TRAINING_CAPTURE_ENABLED."
+  },
+  "status": "live-verified"
 }
