@@ -34,7 +34,10 @@ export const SOURCES = Object.freeze([
   "browser-pane.css",
   "view-chrome.css",
   "profile-dock.css",
-  "chat-markdown.css"
+  "chat-markdown.css",
+  // Aktionen pro Nachricht (2026-07-28). Bewusst im Buendel statt als eigenes
+  // <link>: die Startseite soll genau EIN render-blockierendes Stylesheet laden.
+  "chat-actions.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

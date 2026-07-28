@@ -161,5 +161,8 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   // Ansicht, QA-Welle 2 Befund W2-05). public/sw.js selbst siehe dort.
   // v157 -> v158 am 2026-07-28: englische Hoeflichkeitsfassungen der Rechtstexte
   // im Precache (siehe tests/profile-dock.test.mjs).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v164"/);
+  // v164 -> v165 am 2026-07-28: Aktionen pro Chat-Nachricht — chat-actions.js,
+  // chat-messages.js und chat-actions-menu.js neu im Precache, start-styles.css
+  // enthaelt neu chat-actions.css (siehe public/sw.js).
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v165"/);
 });
