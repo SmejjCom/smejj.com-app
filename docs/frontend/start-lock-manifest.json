@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T13:01:00.467Z",
-  "confirmation": "Ich habe dir alle Rechte gegeben - mach es bitte komplett fertig und lass nichts offen (Wof Kadavanich, 2026-07-28)",
+  "frozenAt": "2026-07-28T23:49:38.274Z",
+  "confirmation": "FREIGABE — Maus-Sichtbarkeit (Wof Kadavanich, 2026-07-28): Ich gebe Änderungen an public/index.html und public/browser-pane.js frei, ausschließlich um die Maus-Wiedergabe im rechten Browser-Panel der Startseite anzeigen zu können.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "4cede42f09db5366fd405e6b7e398281ae1193963fff8f4da9fce979e23267ee",
@@ -21,7 +21,7 @@
     "public/composer-tools.js": "2a17c7fdeebc4494cc7fa9357fe5e6b0bedcc32497e86be0e0ab587552d12906",
     "public/composer-plus-menu.js": "f41fe15db290dc044322648c5b2ab4d7e175754350e9c5e59d816d801236dd37",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "c77c5e316f7c07cb77191a5b4a1ab08e72c2c75a03b417eac70d513bb7917982",
+    "public/browser-pane.js": "e68f3c7964373d7938571bb3590571755f34be67e0b46a4f9642607b89c2bd65",
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
     "public/panel-backdrop.js": "9c5fa67cc79f6cc22373e604b2c7a83ecbd06372bbd72b566adb6413d23b78cd",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
