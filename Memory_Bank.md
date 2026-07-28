@@ -723,3 +723,47 @@ aelteste Tagesblock nach demselben Muster ins Archiv.
   CORS-Schutz faelschlich fuer einen Ausfall.
 - BENCHMARK: docs/benchmarks/spurwahl_2026-07-28.json — dazu Web-Vitals
   144/292/184 ms kaltes LCP, CLS 0, Touch-Ziele unveraendert eingehalten.
+
+## 2026-07-28 — Training-Loop-Worker gebaut, Deploy BLOCKIERT (job_smejj_training_loop_20260728)
+- Code fertig: workers/smejj-training-loop/ (Eval-Zyklus + Trainings-Warteschlangen-
+  Zyklus, mehrstufig fail-closed, Checkpoint+Benchmarks auf IDrive e2, nie eigene
+  Eignungs-/Einwilligungsentscheidung). 13/13 Tests gruen, check:guidelines und
+  check:architecture gruen. Docker-Daemon lokal aus — Image-COPY-Satz stattdessen
+  per Dateikopie simuliert, /health lief korrekt.
+- NICHT deployt: FREE_ONLY_MASTER_POLICY.md deckt die Zeabur-Ausnahme NUR fuer den
+  bestehenden Maus-Engine-Server ab ("jede Erweiterung... braucht erneut eine
+  schriftliche Freigabe mit Dienst und Betrag"). Ausserdem fehlt lokal ein
+  ZEABUR_API_TOKEN und eine Service-ID fuer einen neuen Dienst.
+- NAECHSTER SCHRITT braucht den Betreiber: schriftliche Freigabe (Dienstname
+  "smejj-training-loop", Kosten) + Dienst im Zeabur-Portal anlegen + Token/IDs
+  liefern. Details: task-capsules/2026/07/job_smejj_training_loop_20260728/.
+- ACHTUNG: Memory_Bank.md ist jetzt wirklich an der 800-Zeilen-Grenze — der
+  naechste Eintrag MUSS vorher eine Aufteilung vornehmen (siehe Eintrag darueber).
+
+## 2026-07-28 — Maus-Wiedergabe im Browser-Panel sichtbar (job_maus_sichtbarkeit_20260728)
+- Freigabe "Maus-Sichtbarkeit" (Wof Kadavanich) fuer genau index.html +
+  browser-pane.js umgesetzt: neuer #mausButton bettet die bestehende
+  public/maus-replay.html direkt (nicht ueber den HTML-umschreibenden
+  Server-Proxy) als Iframe im rechten Panel ein. Logik in neuer, ungesperrter
+  Datei public/maus-panel.js (SRP) — browser-pane.js blieb bei 795/800 Zeilen
+  (nur 8x `export` auf bestehende Bausteine, 0 Netto-Zeilen).
+- Erste Live-Pruefung im echten Chrome deckte einen Folgefehler auf: neuer
+  Knopf lag deckungsgleich auf #browserButton (`.browser-button` setzt
+  `position:fixed; right:0` fest, ohne Ruecksicht auf Geschwister). Fix per
+  Inline-`style="right: 36px"` in index.html (CSP erlaubt unsafe-inline
+  styles) — keine CSS-Datei angefasst, noch innerhalb derselben Freigabe.
+  Live per Bounding-Rect (`ueberlappt:false`) und echtem Klick-Test
+  (Iframe auf /maus-replay.html bestaetigt geladen) verifiziert.
+- Deploy: Arbeits-Repo 8bbc517+2f25c84, Live-Frontend chirurgisch auf dem
+  jeweils aktuellen Live-Stand gepatcht (nicht blind ueberschrieben, andere
+  Sessions hatten zwischenzeitlich weiterdeployt) — Commit 4519a3b,
+  CACHE_NAME smejj-shell-v183.
+- Gelernt: Bildschirmfoto-Pixel und CSS-Pixel-Koordinatenraum stimmen in
+  diesem Chrome-Setup NICHT 1:1 ueberein (devicePixelRatio 2, aber
+  Screenshot-Breite passte weder zu innerWidth noch zu innerWidth*dpr) —
+  Klicks auf UI-Elemente im echten Chrome zuverlässig per `element.click()`
+  in javascript_exec statt per rohen Screenshot-Koordinaten ausloesen.
+- Weiterhin offen, operator-only: IDrive-e2-Zugangsdaten-Abgleich zwischen
+  Maus-Engine (Zeabur) und Control-Server (Salad) — ohne den bleibt die
+  Wiedergabe selbst fail-closed bei "Artefakt nicht ladbar" (erwartet, siehe
+  job_maus_engine_abnahme_20260728).
