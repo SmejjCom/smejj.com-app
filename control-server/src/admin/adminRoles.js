@@ -35,6 +35,12 @@ const MATRIX = Object.freeze({
   "users.content.read":{ owner: "dual",  admin: "deny",  support: "consent", finance: "deny",  auditor: "deny",  readonly: "deny" },
   "impersonation.start":{ owner: "allow",admin: "allow", support: "consent", finance: "deny",  auditor: "deny",  readonly: "deny" },
   "billing.write":     { owner: "allow", admin: "deny",  support: "deny",    finance: "allow", auditor: "deny",  readonly: "deny" },
+  // Abo-Zustaende und Budget-Lage LESEN. Bewusst weiter gefasst als
+  // billing.write: der Support muss sehen koennen, ob ein Abo offen ist, wenn
+  // sich jemand beschwert — aendern darf er nichts. Der Auditor sieht die
+  // Zahlen, die in einer Pruefung ohnehin aufschlagen. readonly bleibt draussen:
+  // Geld ist kein Nebenbei-Blick.
+  "billing.read":      { owner: "allow", admin: "allow", support: "allow",   finance: "allow", auditor: "allow", readonly: "deny" },
   "models.write":      { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   "apikeys.revoke":    { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   // Schluessel-METADATEN lesen: welcher Anbieter, welches Konto, aktiv oder
