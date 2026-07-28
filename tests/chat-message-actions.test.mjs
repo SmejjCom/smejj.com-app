@@ -19,6 +19,7 @@ import fs from "node:fs";
 import {
   addVersion,
   captureRaw,
+  clampVersionIndex,
   entriesFrom,
   entriesUpTo,
   isEntry,
@@ -154,6 +155,48 @@ test("addVersion zeigt immer die neueste Fassung", () => {
   assert.equal(meta.versions.length, 2);
   assert.equal(meta.active, 1);
   assert.equal(versionLabel(meta.active, meta.versions.length), "Version 2 von 2");
+});
+
+test("Fassungen ueberleben ein Neuladen (seedMeta stellt sie wieder her)", () => {
+  const entry = el("entry assistant", "Fassung B");
+  entry.children = [el("p")];
+  seedMeta(entry, {
+    raw: "Fassung B mit `code`",
+    versions: [
+      { raw: "Fassung A mit **fett**", html: "<p>Fassung A</p>" },
+      { raw: "Fassung B mit `code`", html: "<p>Fassung B</p>" }
+    ],
+    active: 1
+  });
+  const meta = metaOf(entry);
+  assert.equal(meta.versions.length, 2);
+  assert.equal(meta.active, 1);
+  assert.equal(versionLabel(meta.active, meta.versions.length), "Version 2 von 2");
+  assert.equal(rawOf(entry), "Fassung B mit `code`", "Kopieren liefert das Markdown der angezeigten Fassung");
+});
+
+test("seedMeta haertet kaputte Fassungslisten ab", () => {
+  const entry = el("entry assistant", "x");
+  seedMeta(entry, { versions: [null, { raw: "A" }, "kaputt", { html: "<p>B</p>" }], active: 99 });
+  const meta = metaOf(entry);
+  assert.equal(meta.versions.length, 2, "nur echte Objekte werden uebernommen");
+  assert.deepEqual(meta.versions, [{ raw: "A", html: "" }, { raw: "", html: "<p>B</p>" }]);
+  assert.equal(meta.active, 1, "ein zu grosser Zeiger wird auf die letzte Fassung begrenzt");
+});
+
+test("seedMeta ohne Zeiger zeigt die neueste Fassung", () => {
+  const entry = el("entry assistant", "x");
+  seedMeta(entry, { versions: [{ raw: "A" }, { raw: "B" }, { raw: "C" }] });
+  assert.equal(metaOf(entry).active, 2);
+});
+
+test("clampVersionIndex verschiebt den Zeiger mit abgeschnittenen Fassungen", () => {
+  assert.equal(clampVersionIndex(0, 3), 0);
+  assert.equal(clampVersionIndex(2, 3), 2);
+  assert.equal(clampVersionIndex(7, 3), 2, "zu gross wird begrenzt");
+  assert.equal(clampVersionIndex(-3, 3), 0, "negativ nach dem Abschneiden wird 0");
+  assert.equal(clampVersionIndex(1, 0), 0, "ohne Fassungen immer 0");
+  assert.equal(clampVersionIndex(NaN, 3), 0);
 });
 
 // --- Non-Regression: Bedienelemente sind Geschwister ------------------------
@@ -325,6 +368,15 @@ test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
   assert.ok(!/store\.delete/.test(store.split("export async function createChatFrom")[1] || ""), "Abzweigen loescht nichts");
 });
 
+test("der Verlauf speichert die Fassungen mit Obergrenze", () => {
+  assert.match(store, /const MAX_VERSIONS = \d+;/, "Obergrenze gegen unbegrenztes Wachstum des lokalen Speichers");
+  assert.match(store, /slice\(-MAX_VERSIONS\)/, "die juengsten Fassungen behalten");
+  assert.match(store, /active: clampVersionIndex\(/, "Zeiger auf die gekuerzte Liste umrechnen");
+  assert.match(store, /versions: message\.versions/, "beim Wiederherstellen zurueckgeben");
+  assert.match(store, /active: message\.active/);
+  assert.match(actions, /versions: meta\.versions/, "ein abgezweigter Chat nimmt die Fassungen mit");
+});
+
 test("app.js bleibt unangetastet und unter der Zeilengrenze", () => {
   assert.ok(!appJs.includes("chat-actions"), "die Funktion haengt sich selbst ein, app.js kennt sie nicht");
   assert.ok(appJs.split("\n").length <= 800, "800-Zeilen-Regel (Start-Lock, check-guidelines)");
@@ -363,6 +415,15 @@ test("die Leiste haengt nicht an :hover allein (WCAG 2.1.1)", () => {
   assert.match(actionsCss, /:focus-within/, "Tastaturfokus zeigt die Leiste genauso wie die Maus");
   assert.match(actionsCss, /:focus-visible/, "sichtbarer Fokusring");
   assert.ok(!/opacity:\s*0;/.test(actionsCss), "nicht per opacity ausblenden — sonst ist der Fokusring unsichtbar");
+});
+
+test("die Leiste bricht um statt die Touch-Ziele zu quetschen", () => {
+  // Gemessen 2026-07-28 auf 375 px mit Touch-Maßen: fuenf Aktionen, zwei
+  // Versionspfeile und "Version 2 von 3" ergeben rund 366 px in einer 359 px
+  // breiten Zeile — Flexbox schrumpfte die Knoepfe auf 37 px, unter das
+  // Touch-Ziel. Umbruch plus flex: 0 0 auto haelt die Groesse.
+  assert.match(actionsCss, /\.msg-actions \{[\s\S]*?flex-wrap: wrap;/, "die Leiste darf umbrechen");
+  assert.match(actionsCss, /\.msg-act \{[\s\S]*?flex: 0 0 auto;/, "ein Knopf darf nie schrumpfen");
 });
 
 test("das Touch-Ziel bleibt 42 px, kompakt wird nur mit Maus", () => {
