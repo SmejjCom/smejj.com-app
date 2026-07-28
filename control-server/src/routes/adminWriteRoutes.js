@@ -185,7 +185,14 @@ async function entscheideFreigabe(req, res, actor, id, schritt, body, env) {
     const grund = String(body?.reason || "").trim();
     if (grund.length < 3) return privateJson(res, 400, { ok: false, error: "admin_reason_required" });
     const ab = await rejectRequest(id, actor.email, grund, { env });
-    if (!ab.ok) return privateJson(res, 409, { ok: false, error: ab.error });
+    // Dieselbe Regel wie beim Freigeben, deshalb derselbe Statuscode: wer
+    // beantragt hat, darf auch nicht ablehnen. 409 wuerde "spaeter nochmal
+    // versuchen" bedeuten — hier gilt aber "nie".
+    if (!ab.ok) {
+      const status = ab.error === "approval_self_approval_forbidden" ? 403
+        : ab.error === "approval_expired" ? 410 : 409;
+      return privateJson(res, status, { ok: false, error: ab.error });
+    }
     await schreibeNachweis(actor, "approval.reject", antrag.target, { status: AP_STATUS.pending },
       { status: AP_STATUS.rejected, approvalId: id }, grund, req, env, id);
     return privateJson(res, 200, { ok: true, approval: ab.approval });

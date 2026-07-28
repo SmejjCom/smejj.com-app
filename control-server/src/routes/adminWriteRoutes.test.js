@@ -284,3 +284,18 @@ test("fremde Pfade und GET werden durchgereicht, nicht beantwortet", async () =>
   const neubau = await post("/api/admin/users/index/rebuild", OWNER, { reason: "Turnus" });
   assert.equal(neubau.behandelt, false, "der Index-Neubau bleibt bei den lesenden Routen");
 });
+
+test("wer beantragt, darf auch nicht ablehnen — und zwar mit 403, nicht 409", async () => {
+  await aufbauen();
+  const antrag = await post("/api/admin/users/kundin@example.de/actions/delete", OWNER, { reason: "Grund" });
+  const id = antrag.body.approval.id;
+
+  const selbst = await post(`/api/admin/approvals/${id}/reject`, OWNER, { reason: "Doch nicht" });
+  assert.equal(selbst.status, 403, "403 heisst nie, 409 hiesse spaeter nochmal");
+  assert.equal(selbst.body.error, "approval_self_approval_forbidden");
+
+  // Der Antrag ist unveraendert offen — und eine zweite Person kann weiterhin entscheiden.
+  const ab = await post(`/api/admin/approvals/${id}/reject`, ZWEITE, { reason: "Beleg reicht nicht" });
+  assert.equal(ab.status, 200);
+  assert.equal(ab.body.approval.status, "rejected");
+});
