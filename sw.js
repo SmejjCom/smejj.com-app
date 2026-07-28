@@ -1,3 +1,14 @@
+// v170 -> v171 (2026-07-28): Antwort-Fassungen ueberleben ein Neuladen.
+// chat-store.js speichert versions + active je Nachricht (Obergrenze acht) und
+// gibt sie beim Wiederherstellen zurueck; vorher war "Version 2 von 3" nach
+// einem Reload verschwunden, weil die Fassungen nur im Arbeitsspeicher lagen.
+// chat-store.js und chat-messages.js liegen cache-first im Precache — ohne
+// Versionssprung erreicht die Aenderung Bestandsnutzer nicht.
+// v169 -> v170 (2026-07-28): Statusseite. /status.html und status.js neu im
+// Precache — die Seite muss gerade dann noch laden, wenn Dienste ausgefallen
+// sind, also auch aus dem Cache. static-pages.css traegt neu den p-status-Teil
+// und braucht denselben Sprung, sonst bleibt die Seite bei Bestandsnutzern
+// unformatiert. auth-gate.js ebenfalls (neuer oeffentlicher Pfad /status).
 // v168 -> v169 (2026-07-28): Nachbesserung am Ueberlaufmenue der
 // Nachrichten-Aktionen (Live-Befund). Das Menue lag in der Aktionsleiste und
 // damit in #startLog, das overflow: auto hat — bei der ersten Antwort passte es
@@ -184,7 +195,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v169";
+const CACHE_NAME = "smejj-shell-v171";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -298,6 +309,8 @@ const SHELL = [
   "/icons/maskable-512x512.png",
   "/robots.txt",
   "/llms.txt",
+  "/status.html",
+  "/assets/status.js",
   "/impressum.html",
   "/datenschutz.html",
   "/en/legal-notice.html",
