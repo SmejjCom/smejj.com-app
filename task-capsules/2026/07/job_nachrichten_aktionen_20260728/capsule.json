@@ -210,5 +210,55 @@
       "frontendRepoCommit": "ebab85d"
     },
     "status": "ABGESCHLOSSEN — live auf https://smejj.com (sw v171), byte-verifiziert, Reload-Ueberleben und Mobil-Layout geprueft"
+  },
+  "nachtrag_welle3": {
+    "titel": "Welle 3 — Verhalten pruefbar gemacht, Touch-Ziele echt gemessen (sw v174)",
+    "freigabe": {
+      "wortlaut": "Ja (auf den Vorschlag: DOM-Tests zuerst, dann der Simulator-Durchgang)",
+      "von": "Wof Kadavanich",
+      "am": "2026-07-28"
+    },
+    "problem": "Die 34 Tests deckten reine Logik und Quelltext-Struktur ab. Loeschen mit Rueckgaengig, Bearbeiten, Menue-Tastatur und Versionswechsel waren NUR von Hand im Browser geprueft, weil chat-actions.js seine Abhaengigkeiten ueber absolute /assets/-Pfade laedt und in node nicht importierbar ist. Ein Refactoring haette diese Wege stillschweigend brechen koennen.",
+    "loesung": "Die Entscheidungen liegen jetzt als reine Funktionen in chat-messages.js (planRegenerate, planEdit, planRemoval, restoreNodes, planSettle, nextMenuIndex, versionsToStash); chat-actions.js wendet sie nur noch an. Das Fake-DOM der Tests haengt Knoten wirklich ein und aus, sodass die Reihenfolge nach Rueckgaengig gegen den Ausgangszustand verglichen wird.",
+    "gefundener_randfall": "Pfeil-auf ohne fokussierten Menuepunkt landete auf dem VORLETZTEN statt dem letzten Punkt (indexOf liefert -1). Behoben in nextMenuIndex.",
+    "tests": "34 -> 45, alle gruen",
+    "touch_messung": {
+      "problem": "resize_window auf 375 px macht aus einem Desktop-Browser kein Touch-Geraet — pointer bleibt fine, der coarse-Zweig wird nie ausgeloest. Genau deshalb war der 37-px-Fehler unsichtbar.",
+      "werkzeug": "scripts/testing/measure_touch_targets.mjs — DevTools-Protokoll mit Emulation.setEmulatedMedia (pointer/any-pointer coarse), setDeviceMetricsOverride (375x812, mobile) und Touch-Emulation",
+      "ergebnis_live": "user: copy/edit/menu je 42x42, eine Zeile. assistant: fuenf Aktionen je 42x42, Versionspfeile 34x34, Leiste bricht auf zwei Zeilen (78 px), kein Ueberlauf. Keine Verstoesse.",
+      "gegenprobe": "--selbsttest entfernt flex-wrap und flex: 0 0 auto zur Laufzeit und erkennt genau die 37x42 px wieder (5 Verstoesse) — die Messung ist nachweislich scharf.",
+      "ios_simulator": "NICHT moeglich: auf diesem Rechner sind nur Xcode Command Line Tools installiert, simctl fehlt. Xcode nachzuinstallieren waere ein Eingriff in den Rechner des Betreibers und wurde bewusst unterlassen."
+    },
+    "live_test": "Nach dem Deploy auf smejj.com gegengeprueft: Kopieren liefert Markdown, Loeschen entfernt Nachricht und Leiste, Rueckgaengig stellt die exakte Reihenfolge wieder her, der Versionswaehler ueberlebt das Rueckgaengig, Menue schliesst sauber.",
+    "benchmark": {
+      "datei": "docs/benchmarks/webvitals_planer_2026-07-28.json",
+      "kalt_lcp_median_ms": [
+        200,
+        236,
+        200
+      ],
+      "kalt_ttfb_median_ms": [
+        55,
+        55,
+        49
+      ],
+      "inp_p75_ms": [
+        80,
+        48,
+        56
+      ],
+      "cls_p75": 0,
+      "bewertung": "ruhigste Messreihe dieser Sitzung, alle Budgets eingehalten"
+    },
+    "rollback": {
+      "verzeichnis": "backups/rollback-2026-07-28-planer-tests/",
+      "liveCommitVorDeploy": "f3a12979513eea64cd105e05aa8d63d5702e60f9",
+      "appRepoCommits": [
+        "a3903be",
+        "cc65f72"
+      ],
+      "frontendRepoCommit": "a0b7de7"
+    },
+    "status": "ABGESCHLOSSEN — live auf https://smejj.com (sw v174), 45 Tests gruen, Touch-Ziele auf emuliertem Handy belegt"
   }
 }

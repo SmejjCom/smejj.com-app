@@ -1,0 +1,108 @@
+{
+  "titel": "Web-Vitals und Touch-Ziele nach dem Planer-Umbau (sw v174)",
+  "datum": "2026-07-28",
+  "url": "https://smejj.com/",
+  "budgets": {
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200
+  },
+  "laeufe": [
+    {
+      "lauf": 1,
+      "kalt": {
+        "ttfb_median": 55,
+        "lcp_median": 200,
+        "lcp_p75": 344,
+        "inp_p75": 80,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 152
+      }
+    },
+    {
+      "lauf": 2,
+      "kalt": {
+        "ttfb_median": 55,
+        "lcp_median": 236,
+        "lcp_p75": 388,
+        "inp_p75": 48,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 188
+      }
+    },
+    {
+      "lauf": 3,
+      "kalt": {
+        "ttfb_median": 49,
+        "lcp_median": 200,
+        "lcp_p75": 364,
+        "inp_p75": 56,
+        "cls_p75": 0
+      },
+      "warm": {
+        "lcp_median": 144
+      }
+    }
+  ],
+  "touchziele": {
+    "gemessenMit": "scripts/testing/measure_touch_targets.mjs — DevTools-Protokoll, pointer/any-pointer coarse, 375x812 mobile",
+    "zeigerCoarseAktiv": true,
+    "leisten": [
+      {
+        "rolle": "user",
+        "knoepfe": [
+          "copy 42x42",
+          "edit 42x42",
+          "menu 42x42"
+        ],
+        "leisteHoehe": 42,
+        "laeuftUeber": false
+      },
+      {
+        "rolle": "assistant",
+        "knoepfe": [
+          "copy 42x42",
+          "rate-up 42x42",
+          "rate-down 42x42",
+          "regen 42x42",
+          "menu 42x42",
+          "version-prev 34x34",
+          "version-next 34x34"
+        ],
+        "leisteHoehe": 78,
+        "laeuftUeber": false
+      }
+    ],
+    "verstoesse": [],
+    "gegenprobe": "--selbsttest entfernt flex-wrap und flex: 0 0 auto zur Laufzeit und erkennt genau die 37x42 px wieder, die der Fehler erzeugte (5 Verstoesse). Die Messung ist damit nachweislich scharf."
+  },
+  "bewertung": {
+    "ergebnis": "alle Budgets eingehalten, ruhigste Messreihe dieser Sitzung",
+    "kalt_lcp_median_laeufe": [
+      200,
+      236,
+      200
+    ],
+    "kalt_ttfb_median_laeufe": [
+      55,
+      55,
+      49
+    ],
+    "begruendung": "200/236/200 ms bei sehr gleichmaessigem TTFB (55/55/49 ms) — deutlich enger als die vorherigen Reihen, was die frueher beobachtete Streuung erneut dem Netz zuordnet und nicht dem Code. Der Umbau verschiebt nur Funktionen zwischen zwei Modulen, die beide ohnehin geladen werden; es kam keine Datei und kein Netzaufruf hinzu.",
+    "inp": "p75 48-80 ms gegen ein Budget von 200 ms",
+    "cls": "0 in allen Laeufen"
+  },
+  "referenz": {
+    "datei": "webvitals_versionen_2026-07-28.json",
+    "kalt_lcp_median_laeufe": [
+      328,
+      332,
+      128
+    ]
+  }
+}

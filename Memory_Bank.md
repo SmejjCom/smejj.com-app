@@ -761,3 +761,32 @@ aelteste Tagesblock nach demselben Muster ins Archiv.
   Referenz von 172 ms), CLS 0, INP p75 48 ms. Kerndateien der Startseite 58 KB
   komprimiert gegen ein Budget von 300 KB; die drei Chat-Module davon 13,3 KB,
   geladen als type=module am Seitenende.
+
+## 2026-07-28 — Verhalten pruefbar, Touch-Ziele echt gemessen (job_nachrichten_aktionen_20260728, Welle 3)
+- ERLEDIGT, live (sw v174): Tests 34 -> 45; Loeschen/Rueckgaengig, Bearbeiten,
+  Neu generieren, Menue-Tastatur und Versionswechsel sind jetzt automatisch geprueft
+  statt nur von Hand im Browser.
+- MUSTER FUER NICHT IMPORTIERBARE MODULE: Wer /assets/-Pfade absolut importiert
+  (Pflicht hier, sonst zweite Modulinstanzen), ist in node nicht importierbar. Loesung:
+  die ENTSCHEIDUNG in ein importierbares Modul legen (planRegenerate, planEdit,
+  planRemoval, restoreNodes, planSettle, nextMenuIndex in chat-messages.js), das
+  ANWENDEN im DOM-Modul lassen. Das Fake-DOM der Tests haengt Knoten wirklich ein und
+  aus, damit die Reihenfolge nach Rueckgaengig gegen den Ausgangszustand vergleichbar ist.
+- DABEI GEFUNDEN: Pfeil-auf ohne fokussierten Menuepunkt landete auf dem VORLETZTEN
+  Punkt, weil indexOf -1 liefert und -1 + -1 modulo 4 = 2 ergibt. Behoben.
+- TOUCH-MESSFALLE (wichtig fuer jede kuenftige Mobil-Pruefung): resize_window auf
+  375 px macht aus einem Desktop-Browser KEIN Touch-Geraet. `pointer: fine` bleibt
+  wahr, der coarse-Zweig wird nie ausgeloest — deshalb war der 37-px-Fehler unsichtbar.
+  Richtig geht es ueber das DevTools-Protokoll: Emulation.setEmulatedMedia mit
+  pointer/any-pointer = coarse plus setDeviceMetricsOverride mit mobile: true.
+  Werkzeug dafuer: `npm run measure:touch` (scripts/testing/measure_touch_targets.mjs).
+- JEDER WAECHTER BRAUCHT EINE GEGENPROBE: `npm run measure:touch:selbsttest` nimmt
+  flex-wrap und flex: 0 0 auto zur Laufzeit heraus und ERWARTET Verstoesse. Er
+  reproduziert exakt die 37x42 px und erkennt sie. Ohne diese Probe waere unklar, ob
+  die Messung ueberhaupt scharf ist — ein Check, der immer gruen ist, ist kein Check.
+- KEIN iOS-SIMULATOR auf diesem Rechner: nur Xcode Command Line Tools, simctl fehlt
+  (`xcode-select -p` zeigt /Library/Developer/CommandLineTools). Xcode nachinstallieren
+  waere ein Eingriff in den Rechner des Betreibers — bewusst unterlassen.
+- BENCHMARK: docs/benchmarks/webvitals_planer_2026-07-28.json — kaltes LCP
+  200/236/200 ms bei TTFB 55/55/49 ms, die ruhigste Reihe dieser Sitzung; CLS 0,
+  INP p75 48-80 ms. Touch-Ziele: docs/benchmarks/touchziele_2026-07-28.json.
