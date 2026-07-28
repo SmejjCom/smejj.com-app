@@ -1,3 +1,5 @@
+// v174 -> v175 (2026-07-28): static-pages.css — Logo-Link der statischen Seiten
+// auf 24 px Mindesthoehe (Restbefund QA-Welle 1, F-21: er mass 30x23).
 // v173 -> v174 (2026-07-28): Die Entscheidungen der Nachrichten-Aktionen
 // (Loeschen, Rueckgaengig, Bearbeiten, Neu generieren, Menue-Tastatur,
 // Versionswechsel) liegen jetzt als pruefbare Funktionen in chat-messages.js;
@@ -210,7 +212,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v174";
+const CACHE_NAME = "smejj-shell-v175";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
