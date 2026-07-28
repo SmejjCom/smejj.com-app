@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T10:49:29.257Z",
-  "confirmation": "Ja (Wof Kadavanich, 2026-07-28) — Freigabe fuer 'Quellen anzeigen' pro Antwort; betrifft public/sw.js (Cache v177/v178 fuer den erweiterten Precache-Stand)",
+  "frozenAt": "2026-07-28T11:18:46.292Z",
+  "confirmation": "Ja, mach hintereinander komplett fertig. Lass nicht offen mach 100 % fertig. (Wof Kadavanich, 2026-07-28) — Spurwahl und Zeitbudget bei Fragen mit Web-Adresse; betrifft public/sw.js (Cache v179)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "f7e1f29d7bfba6f9c56845a851c1b9adbaf7a7adc007f3ff84216b9c5007a88e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "0d19933e55a28f4e78b40bee00da2c36d5b17c8faf084d559e3b8809f9d78860",
+    "public/sw.js": "01219306e864def135a325283fb08ef09142c174aae2b22831fc170e8e9788f5",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
