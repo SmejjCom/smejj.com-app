@@ -1,0 +1,94 @@
+{
+  "titel": "Web-Vitals und Touch-Ziele nach Quellen-Anzeige (sw v178)",
+  "datum": "2026-07-28",
+  "url": "https://smejj.com/",
+  "budgets": {
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200
+  },
+  "laeufe": [
+    {
+      "lauf": 1,
+      "kalt": {
+        "ttfb_median": 27,
+        "lcp_median": 136,
+        "lcp_p75": 384,
+        "inp_p75": 56,
+        "cls_p75": 0
+      }
+    },
+    {
+      "lauf": 2,
+      "kalt": {
+        "ttfb_median": 32,
+        "lcp_median": 164,
+        "lcp_p75": 224,
+        "inp_p75": 48,
+        "cls_p75": 0
+      }
+    },
+    {
+      "lauf": 3,
+      "kalt": {
+        "ttfb_median": 53,
+        "lcp_median": 188,
+        "lcp_p75": 348,
+        "inp_p75": 56,
+        "cls_p75": 0
+      }
+    }
+  ],
+  "touchziele": {
+    "zeigerCoarseAktiv": true,
+    "verstoesse": [],
+    "leisten": [
+      {
+        "rolle": "user",
+        "knoepfe": [
+          "copy 42x42",
+          "edit 42x42",
+          "menu 42x42"
+        ],
+        "leisteHoehe": 42
+      },
+      {
+        "rolle": "assistant",
+        "knoepfe": [
+          "copy 42x42",
+          "rate-up 42x42",
+          "rate-down 42x42",
+          "regen 42x42",
+          "menu 42x42",
+          "version-prev 34x34",
+          "version-next 34x34"
+        ],
+        "leisteHoehe": 78
+      }
+    ]
+  },
+  "bewertung": {
+    "ergebnis": "alle Budgets eingehalten",
+    "kalt_lcp_median_laeufe": [
+      136,
+      164,
+      188
+    ],
+    "kalt_ttfb_median_laeufe": [
+      27,
+      32,
+      53
+    ],
+    "begruendung": "136/164/188 ms — die schnellste Reihe dieser Sitzung. Die Quellen-Anzeige fuegt keinen Netzaufruf hinzu: browser-context.js holt die Seite ohnehin fuer das Grounding, gemerkt wird nur das Ergebnis im Speicher. Kein neues Modul, keine neue Datei im Ladepfad.",
+    "cls": "0 in allen Laeufen — die Quellenliste entsteht erst auf Klick und verschiebt nichts beim Laden"
+  },
+  "referenz": {
+    "datei": "webvitals_planer_2026-07-28.json",
+    "kalt_lcp_median_laeufe": [
+      200,
+      236,
+      200
+    ]
+  }
+}

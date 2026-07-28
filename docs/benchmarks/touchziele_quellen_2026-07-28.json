@@ -1,0 +1,89 @@
+{
+  "url": "https://smejj.com/",
+  "geraet": "375x812, mobile, pointer coarse",
+  "viewport": "375x812",
+  "zeiger": {
+    "fine": false,
+    "coarse": true,
+    "anyCoarse": true
+  },
+  "leisten": [
+    {
+      "rolle": "user",
+      "knoepfe": [
+        {
+          "aktion": "copy",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        },
+        {
+          "aktion": "edit",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        },
+        {
+          "aktion": "menu",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        }
+      ],
+      "leisteHoehe": 42,
+      "zeilen": 1,
+      "laeuftUeber": false
+    },
+    {
+      "rolle": "assistant",
+      "knoepfe": [
+        {
+          "aktion": "copy",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        },
+        {
+          "aktion": "rate-up",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        },
+        {
+          "aktion": "rate-down",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        },
+        {
+          "aktion": "regen",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        },
+        {
+          "aktion": "menu",
+          "breite": 42,
+          "hoehe": 42,
+          "versionsschritt": false
+        },
+        {
+          "aktion": "version-prev",
+          "breite": 34,
+          "hoehe": 34,
+          "versionsschritt": true
+        },
+        {
+          "aktion": "version-next",
+          "breite": 34,
+          "hoehe": 34,
+          "versionsschritt": true
+        }
+      ],
+      "leisteHoehe": 78,
+      "zeilen": 2,
+      "laeuftUeber": false
+    }
+  ],
+  "verstoesse": []
+}
