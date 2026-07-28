@@ -37,6 +37,12 @@ const MATRIX = Object.freeze({
   "billing.write":     { owner: "allow", admin: "deny",  support: "deny",    finance: "allow", auditor: "deny",  readonly: "deny" },
   "models.write":      { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   "apikeys.revoke":    { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
+  // Schluessel-METADATEN lesen: welcher Anbieter, welches Konto, aktiv oder
+  // widerrufen, letzte vier Zeichen. Nie der Wert. Ein Auditor muss nachweisen
+  // koennen, dass ein Schluessel widerrufen wurde — deshalb lesend erlaubt,
+  // ohne dass er widerrufen darf. Support und readonly bleiben draussen: wer
+  // Schluessel eines fremden Kontos sieht, sieht mehr als sein Auftrag verlangt.
+  "apikeys.read":      { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "allow", readonly: "deny" },
   "audit.read":        { owner: "allow", admin: "allow", support: "deny",    finance: "allow", auditor: "allow", readonly: "deny" },
   "index.rebuild":     { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   // Betriebszustand lesen: Modelle, Jobs, Worker, Deploy-Stand, Speicher.

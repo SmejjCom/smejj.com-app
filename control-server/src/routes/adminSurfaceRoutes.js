@@ -10,7 +10,8 @@
 //   4. /api/admin (POST) — schreibende Kontoaktionen (Stufe 3).
 //   5. /api/admin/{moderation,gdpr,announcements,flags} — Stufe 4.
 //   6. /api/admin/ops/... — Betriebszustand, rein lesend (Stufe 5).
-//   7. /api/admin (GET)  — lesende Aktionen (Stufe 2).
+//   7. /api/admin/sicherheit/... — Schluessel, Ereignisse, Admins (Stufe 6).
+//   8. /api/admin (GET)  — lesende Aktionen (Stufe 2).
 //
 // Schreibend vor lesend ist Absicht: was die Schreibrouten nicht beanspruchen,
 // faellt durch. Andersherum wuerde eine Leseroute eine Schreibanfrage schlucken.
@@ -20,6 +21,7 @@ import { handleAdminUiRoute } from "./adminUiRoutes.js";
 import { handleAdminWriteRoute } from "./adminWriteRoutes.js";
 import { handleAdminStage4Route } from "./adminStage4Routes.js";
 import { handleAdminOpsRoute } from "./adminOpsRoutes.js";
+import { handleAdminSicherheitRoute } from "./adminSicherheitRoutes.js";
 import { handleAdminRoute } from "./adminRoutes.js";
 
 /**
@@ -51,6 +53,7 @@ export async function handleAdminSurface(req, url, res, { readSession, sessionSt
     if (await handleAdminWriteRoute(req, url, res, { env })) return true;
     if (await handleAdminStage4Route(req, url, res, { env })) return true;
     if (await handleAdminOpsRoute(req, url, res, { env })) return true;
+    if (await handleAdminSicherheitRoute(req, url, res, { env })) return true;
     if (await handleAdminRoute(req, url, res, { env })) return true;
   }
 

@@ -69,7 +69,7 @@ function respondMe(res, actor) {
     ok: true,
     actor: { email: actor.email, name: actor.name, role: actor.role, roleSource: actor.roleSource },
     permissions: permissionsFor(actor.role),
-    stage: 5,
+    stage: 6,
     // Schreibend seit Stufe 3 — aber nur mit Grund, Nachweis und, wo es
     // unumkehrbar wird, mit der Freigabe einer zweiten Person. Stufe 5 hat
     // daran nichts geaendert: der Betriebsbereich ist rein lesend.
