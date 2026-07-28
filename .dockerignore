@@ -6,7 +6,12 @@ node_modules
 backups
 tmp
 tests
-scripts
+# "scripts/*" statt "scripts": schliesst genauso alles aus, erlaubt aber gezielte
+# Ausnahmen darunter (Docker ignoriert Negationen, wenn schon das Verzeichnis
+# selbst ausgeschlossen ist). Der Control-Server kopiert scripts/ ohnehin nicht.
+scripts/*
+!scripts/evaluation
+!scripts/evaluation/run_model_eval.mjs
 idrive-layout
 examples
 workers/*
@@ -18,6 +23,8 @@ workers/*
 !workers/maus-engine/**
 !workers/glm-salad
 !workers/glm-salad/s3.js
+!workers/smejj-training-loop
+!workers/smejj-training-loop/**
 schemas/*
 !schemas/maus-action-plan.schema.json
 *.xlsx
