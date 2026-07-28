@@ -72,6 +72,17 @@ async function main() {
     SMEJJ_CONTROL_ARTIFACT_KEY: key,
     SMEJJ_CONTROL_ARTIFACT_SHA256: sha
   };
+  // Optional: Owner-Allowlist fuer Coding-Auftraege (QA-Welle 3, Befund W3-02).
+  // Seit die Allowlist fuer JEDE Repository-URL gilt, muss sie gesetzt sein —
+  // sonst lehnt der Server fail-closed auch eigene Repositories ab. Nur
+  // Kleinbuchstaben, Ziffern, Bindestrich und Komma sind zulaessig.
+  const ownerAllowlist = String(process.env.SMEJJ_GITHUB_OWNER_ALLOWLIST || "").trim();
+  if (ownerAllowlist) {
+    if (!/^[a-z0-9-]+(,[a-z0-9-]+)*$/.test(ownerAllowlist)) {
+      fail("SMEJJ_GITHUB_OWNER_ALLOWLIST: nur kleingeschriebene Owner-Namen, kommagetrennt.");
+    }
+    mergedEnv.SMEJJ_GITHUB_OWNER_ALLOWLIST = ownerAllowlist;
+  }
   await saladApi("PATCH", `/organizations/${org}/projects/${project}/containers/${SALAD_GROUP}`, {
     container: { environment_variables: mergedEnv }
   });
@@ -84,6 +95,7 @@ async function main() {
     variableCount: Object.keys(applied).length,
     previousArtifactKey: previousKey,
     artifactKey: applied.SMEJJ_CONTROL_ARTIFACT_KEY,
+    ownerAllowlist: applied.SMEJJ_GITHUB_OWNER_ALLOWLIST ?? "(nicht gesetzt)",
     hint: "Salad rollt jetzt neu aus (~10 Minuten). Danach /api/health pruefen."
   }, null, 2));
 }
