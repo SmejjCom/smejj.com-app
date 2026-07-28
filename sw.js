@@ -1,3 +1,10 @@
+// v182 -> v183 (2026-07-28): Nachbesserung an v182. Der neue Standard fuer den
+// Reasoning-Aufwand erreichte Bestandsnutzer NICHT: die Oberflaeche schreibt alle
+// Voreinstellungen mit, also stand bei praktisch jedem "high" im Speicher, ohne
+// dass es je jemand gewaehlt hatte. Einmalige Umstellung auf settingsVersion 2 —
+// ein vor Version 2 gespeicherter Wert gilt nicht als bewusste Wahl. Ohne das
+// waere K3 fuer Bestandsnutzer von 8,6 s auf 13,9 s gefallen.
+//
 // v181 -> v182 (2026-07-28): Reasoning-Aufwand wird echt wirksam. Der Wert aus
 // Einstellungen -> Modelle war bisher nur ein Satz im Prompt; fuer Kimi K3 steuert
 // er jetzt den API-Parameter reasoning_effort (Mittel->low, Hoch->high,
@@ -255,7 +262,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v182";
+const CACHE_NAME = "smejj-shell-v183";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
