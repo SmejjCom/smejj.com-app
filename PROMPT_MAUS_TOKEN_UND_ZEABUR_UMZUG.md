@@ -1,8 +1,9 @@
 # Auftrag: Maus-Engine zum Laufen bringen + Umzug von Salad nach Zeabur
 
-Du arbeitest an **smejj.com** (immer klein, nie "SMEJJ"). Projektordner ist die
-lokale Arbeitskopie; Arbeits-Repo `SmejjCom/smejj.com-app`, Branch
-`feature/auth-redesign-github-magiclink`.
+Du arbeitest an **smejj.com**. Der Name wird immer genau so geschrieben — nie in
+Grossbuchstaben, nie mit grossem Anfangsbuchstaben, in Code, Text und Oberflaeche
+gleichermassen. Projektordner ist die lokale Arbeitskopie; Arbeits-Repo
+`SmejjCom/smejj.com-app`, Branch `feature/auth-redesign-github-magiclink`.
 
 Lies zuerst `AI_Guidelines.md`, `Memory_Bank.md`, `Project_Goals.md` und
 `docs/task-capsules/2026/07/job_maus_sichtbarkeit_20260728/CAPSULE.md`.
