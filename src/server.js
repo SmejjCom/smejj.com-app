@@ -38,7 +38,7 @@ import { classifyProfile, executeWithFallback, resolveModelRequest } from "../co
 import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability.js";
 import { streamWithTools, withAgentTools, agentToolsEnabled } from "../control-server/src/llm/streamFilter.js";
 import { localAssistantStream } from "../control-server/src/llm/localAssistant.js";
-import { chatThinkingMode } from "./ai/chatThinkingPolicy.js";
+import { chatThinkingMode, latestUserPrompt } from "./ai/chatThinkingPolicy.js";
 import { chatReasoningEffort } from "./ai/reasoningEffortPolicy.js";
 import { allowedOriginsFromEnv, corsHeadersFor, handlePreflight } from "../control-server/src/http/cors.js";
 import { installCrashGuard } from "../control-server/src/http/crashGuard.js";
@@ -254,7 +254,22 @@ async function handleChat(req, res) {
   // Gleiche Regel fuer Kimi K3: dort laesst sich das Denken nicht abschalten,
   // nur seine Tiefe steuern (reasoning_effort). Gemessen 2026-07-28: erstes
   // sichtbares Zeichen 12,0 s bei der Voreinstellung "max".
+  //
+  // Routing-Profil steuert ab 2026-07-29 auch die MODELLWAHL, nicht nur das
+  // Denken. Vorher rief handleChat streamLLM ohne `profile` auf; damit lief
+  // JEDE Chat-Anfrage auf "default" und eine Coding-Frage konnte das
+  // Coding-Modell eines Anbieters nie erreichen, obwohl der Katalog es kennt
+  // (deepseek, mistral, zhipu/GLM, qwen, openai). /api/agent macht es seit
+  // immer richtig (classifyProfile(task) weiter unten) — die Ungleichheit
+  // zwischen den beiden Wegen war ein Fehler, kein Entwurf.
+  // Weisung des Betreibers: "Coding auf die tiefe Spur" (2026-07-29).
+  // Fail-closed bleibt es: hat ein Anbieter kein Coding-Modell, greift wie
+  // bisher sein Default (PROVIDER_CATALOG) — es wird nichts geraten und kein
+  // Anbieter neu aktiviert.
+  const prompt = latestUserPrompt(messages);
   return streamLLM(res, messages, {
+    // Ohne erkennbare Nutzerfrage bleibt es beim bisherigen "default".
+    ...(prompt ? { profile: classifyProfile(prompt) } : {}),
     requestedModel: body.model,
     thinking: chatThinkingMode(messages, classifyProfile),
     reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env, body?.preferences?.reasoningEffort)

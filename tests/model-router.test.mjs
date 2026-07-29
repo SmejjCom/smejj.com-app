@@ -198,3 +198,35 @@ test("thinking parameter reaches only GLM/Z.ai backends (interactive no-think pr
   assert.equal("thinking" in bodies[2], false, "Ohne Option bleibt der Request unveraendert (Non-Regression)");
   resetModelRuntimeHealth();
 });
+
+test("Coding-Profil waehlt das Coding-Modell des Anbieters, default waehlt sein Standardmodell", () => {
+  // Der eigentliche Grund fuer diesen Test: bis 2026-07-29 rief /api/chat
+  // streamLLM ohne `profile` auf. Jede Anfrage lief auf "default", und dieser
+  // Unterschied hier — der im Katalog seit immer angelegt ist — kam nie zum
+  // Tragen. Der Test haelt fest, DASS er zum Tragen kommt.
+  const env = { SMEJJ_LLM_PROVIDER_ORDER: "deepseek", SMEJJ_LLM_DEEPSEEK_API_KEY: "k" };
+  const coding = resolveChain("coding", env);
+  const standard = resolveChain("default", env);
+  assert.equal(coding[0].model, "deepseek-chat");
+  assert.equal(standard[0].model, "deepseek-chat");
+
+  // mistral zeigt den Unterschied deutlich: eigenes Coding-Modell.
+  const mistralEnv = { SMEJJ_LLM_PROVIDER_ORDER: "mistral", SMEJJ_LLM_MISTRAL_API_KEY: "k" };
+  assert.equal(resolveChain("coding", mistralEnv)[0].model, "codestral-latest");
+  assert.equal(resolveChain("default", mistralEnv)[0].model, "mistral-small-latest");
+});
+
+test("Coding-Profil bei einem Anbieter OHNE Coding-Modell faellt auf dessen Standard zurueck, nie ins Leere", () => {
+  // groq hat kein Coding-Modell. Fail-closed heisst hier: der Standard greift,
+  // es wird nichts geraten und kein anderer Anbieter heimlich aktiviert.
+  const env = { SMEJJ_LLM_PROVIDER_ORDER: "groq", SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const chain = resolveChain("coding", env);
+  assert.equal(chain.length, 1);
+  assert.equal(chain[0].model, "llama-3.3-70b-versatile");
+});
+
+test("classifyProfile erkennt die Coding-Absicht des fehlgeschlagenen Eval-Falls", () => {
+  // Genau der Fall, der im Live-Eval als kritisch scheitert (code-esm-failclosed).
+  assert.equal(classifyProfile("Schreibe eine ESM-Funktion parseBudget(text)"), "coding");
+  assert.equal(classifyProfile("Implement a patch for this bug"), "coding");
+});
