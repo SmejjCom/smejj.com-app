@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-28T23:58:49.536Z",
+  "frozenAt": "2026-07-29T00:04:33.308Z",
   "confirmation": "FREIGABE — Maus-Sichtbarkeit (Wof Kadavanich, 2026-07-28): Ich gebe Änderungen an public/index.html und public/browser-pane.js frei, ausschließlich um die Maus-Wiedergabe im rechten Browser-Panel der Startseite anzeigen zu können.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8ca56a8bb7235383f93228beda0a671f5df2b0a7f308d20629bfb32006274b50",
+    "public/index.html": "a341eee71567af1865d7f201dd4c66f85b3b3faf695f9db87aa6291e2b1e5cbc",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
