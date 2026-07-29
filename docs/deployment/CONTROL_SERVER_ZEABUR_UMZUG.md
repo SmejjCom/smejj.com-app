@@ -15,7 +15,8 @@ und was der Umzug **kostet**.
 | `.dockerignore` fuer den Control-Server tauglich | erledigt (zweites Maus-Schema ergaenzt) |
 | Freigabe nach FREE_ONLY_MASTER_POLICY | **erteilt 2026-07-29** (Ausnahme 2) |
 | Zeabur-Dienst angelegt | **ja, 2026-07-29** — `service-6a697bf60d0b094201bcc1ee` |
-| Erster Bau | **erfolgreich**, Bereitstellung "Running" |
+| Erster Bau | **erfolgreich**, "Running 1/1" |
+| Gesundheitsabruf im Container | **bestanden** — `ok=true, app=smejj.com Code` |
 | Env-Werte im neuen Dienst | **offen — nur der Betreiber** |
 | Domain vergeben | nein (erst nach den Env-Werten sinnvoll) |
 | Frontend auf neue Adresse umgestellt | nein — braucht **Start-Lock-Freigabe** |
@@ -37,11 +38,25 @@ und was der Umzug **kostet**.
 - Der Dienst wurde bewusst **ohne Env-Werte** angelegt. Das ist gefahrlos,
   weil der Control-Server ohne sie sauber startet statt in einen
   Absturz-Kreislauf zu laufen (lokal gemessen, siehe Schritt 1 unten).
-- **Noch nicht bestaetigt:** ein Gesundheitsabruf von innerhalb des
-  Containers. Die Browser-Verbindung brach vorher ab. Die Kopfzeile des
-  Dienstes stand noch auf "Building", waehrend die Bereitstellung bereits
-  "Running" meldete — das ist erst geklaert, wenn Schritt 3 unten einmal
-  gelaufen ist.
+- **Bestaetigt im Container** (Dienst-Tab "Command"):
+  `HEALTH ok= true app= smejj.com Code`. Laufzeit-Protokoll zeigt
+  `smejj.com Code MVP: http://0.0.0.0:8080` — also der richtige Prozess auf
+  dem richtigen Port.
+- **Beide Dockerfile-Korrekturen im Abbild nachgewiesen:**
+  `ls schemas/` -> maus-action-plan **und maus-step-decision** (die zuvor
+  fehlende Datei), `ls workers/` -> glm-salad, maus-engine, remote-browser,
+  smejj-training-loop, smejj-worker. Und der Plan-Validator hat sein Schema
+  zur Laufzeit wirklich gelesen (`PLAN-SCHEMA lesbar: true`) — kein ENOENT.
+- **Kopfzeile hinkt nach.** Sie stand noch auf "Building", als die
+  Bereitstellung schon "Running" meldete, und der erste Container wurde nach
+  zwei Minuten mit "Killing: Stopping container" beendet. **Das war kein
+  Absturz:** ein weiterer `git push` hatte einen neuen Bau ausgeloest, der den
+  alten Container ersetzt. Erst danach stand "Running 1/1".
+- **WICHTIG, betrieblich:** Ein `git push` auf diesen Branch loest einen
+  Neubau **aller** Dienste aus, die daran haengen — auch
+  `smejj-training-loop`. Waehrend einer Umzugsphase also sparsam pushen und
+  nach dem Push den Dienst-Zustand nachsehen, statt eine alte Anzeige zu
+  glauben.
 - Non-Regression direkt danach geprueft: `smejj-maus-engine` HTTP 200,
   `smejj-chat-bridge` HTTP 200, Salad-Control HTTP 200, smejj.com HTTP 200.
 
