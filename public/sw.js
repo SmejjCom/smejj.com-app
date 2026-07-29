@@ -1,3 +1,12 @@
+// v186 -> v187 (2026-07-29): Codeblock im Chat mit EINEM Klick kopieren. Neu im
+// Precache: chat-code-copy.js; start-styles.css enthaelt die zugehoerigen Regeln
+// aus chat-markdown.css. Die Aktionsleiste kopierte bisher nur die GANZE
+// Antwort — der haeufigste Fall ist aber ein einzelner Codeblock, und im
+// horizontal scrollenden <pre> reisst Markieren mit der Maus regelmaessig ab.
+// Der Knopf traegt bewusst keinen Textknoten (Beschriftung aus CSS): sonst waere
+// "Kopieren" ueber entry.textContent im gespeicherten Verlauf und im
+// Modellkontext gelandet.
+//
 // v185 -> v186 (2026-07-28): maus-panel.js in den Precache. index.html laedt es
 // als Modul-Skript (Zeile 655), es fehlte aber in SHELL — offline brach der
 // Import ab und der Maus-Knopf war tot. check:precache-imports meldete trotzdem
@@ -283,7 +292,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v186";
+const CACHE_NAME = "smejj-shell-v187";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -359,6 +368,7 @@ const SHELL = [
   "/assets/chat-messages.js",
   "/assets/chat-actions.js",
   "/assets/chat-actions-menu.js",
+  "/assets/chat-code-copy.js",
   "/assets/workspace-bridge.js",
   "/assets/storage/index.js",
   "/assets/storage/localWorkspace.js",
