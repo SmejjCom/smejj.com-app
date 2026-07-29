@@ -168,6 +168,31 @@ test("keine Endlosschleife: letzte Runde fragt ohne Werkzeuge", async () => {
   assert.match(res.gesendet(), /data: \[DONE\]/);
 });
 
+// Befund 2026-07-29, live reproduziert: Schoepft das Modell alle Runden aus,
+// wurde die werkzeugfreie Schlussantwort zwar GEHOLT, aber nie gestreamt — der
+// Nutzer bekam nach 24 Sekunden nur "data: [DONE]". Der Test oben hat das nicht
+// gefangen, weil er nur auf [DONE] geprueft hat, nicht auf eine Antwort.
+test("nach der letzten Runde wird die Schlussantwort auch wirklich gesendet", async () => {
+  const res = sammelAntwort();
+  let aufrufe = 0;
+  await streamWithTools({
+    result: { response: { body: stream([toolEvent(0, { id: "c", function: { name: "web_suche", arguments: '{"anfrage":"x"}' } }), "data: [DONE]"]) } },
+    chain: [], messages: [], res, options: { temperature: 1, tools: AGENT_TOOLS },
+    executeWithFallback: async () => {
+      aufrufe += 1;
+      // Die ersten Runden wollen weiter Werkzeuge, die letzte antwortet mit Text.
+      const body = aufrufe < 3
+        ? stream([toolEvent(0, { id: "c", function: { name: "web_suche", arguments: '{"anfrage":"x"}' } }), "data: [DONE]"])
+        : stream([textEvent("Dazu habe ich nichts gefunden."), "data: [DONE]"]);
+      return { ok: true, response: { body } };
+    },
+    runTool: async () => "Keine Treffer"
+  });
+  const gesendet = res.gesendet();
+  assert.match(gesendet, /Dazu habe ich nichts gefunden\./, "die Schlussantwort muss beim Nutzer ankommen");
+  assert.match(gesendet, /data: \[DONE\]/);
+});
+
 test("faellt das Modell in einer Folgerunde aus, bekommt der Nutzer eine Erklaerung", async () => {
   const res = sammelAntwort();
   await streamWithTools({

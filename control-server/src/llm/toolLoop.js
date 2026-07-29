@@ -124,6 +124,16 @@ export async function streamWithTools({ result, chain, messages, res, options, e
     }
     current = naechste;
   }
+  // Die letzte Schleifenrunde HOLT die werkzeugfreie Antwort, streamt sie aber
+  // nicht mehr — danach endet die Schleife. Ohne diesen Abschluss bekam der
+  // Nutzer nur "data: [DONE]", also eine leere Antwort.
+  //
+  // Befund 2026-07-29: Live reproduziert mit "Gibt es eine Verspaetung bei der
+  // S-Bahn in Berlin?" — 24 Sekunden Wartezeit, dann nichts. Sichtbar wurde der
+  // Fehler erst durch das neue Werkzeug web_suche: liefert die Suche nichts,
+  // versucht das Modell es erneut und schoepft damit alle MAX_ROUNDS aus. Vorher
+  // erreichte fast keine Anfrage die letzte Runde.
+  await pumpRound(current.response.body, res, env);
   return finishStream(res);
 }
 
