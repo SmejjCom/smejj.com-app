@@ -7,33 +7,33 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 
 ### [2026-07-29] WEBSUCHE: ZWEI WEICHEN, EINE WAHRHEIT (job_websuche_selbstkorrektur_20260729)
 
-Commit `c476fd6`, Control-Server **Version 116**. Capsule:
-`docs/task-capsules/2026/07/job_websuche_selbstkorrektur_20260729/CAPSULE.md`.
+Commits `c476fd6`..`677dc53`, Control-Server **Version 118**, Bridge **v104**.
+Volltext/Messwerte: `docs/task-capsules/2026/07/job_websuche_selbstkorrektur_20260729/CAPSULE.md`.
 
-- **Befund:** "Schlagzeile ueber Berlin" loeste keine Suche aus, "Schlagzeilen"
-  schon. Zweiter Fehler: Ausloeser transliteriert notiert (`oeffnungszeiten`),
-  Umlaut-Eingaben trafen nie. **Fix: Normalisierung + Wortstaemme.**
-- **DIE WICHTIGSTE ERKENNTNIS:** Es gibt **zwei** Such-Weichen. Die in
-  `public/chat-bridge.js` entscheidet Schnellspur **oder** Control-Server.
-  Sagt sie nein, erreicht die Frage den Control-Server **nie** — ein Fix nur
-  dort ist wirkungslos. Live belegt: `x-smejj-bridge: chat-fast-lane`,
-  `groq:llama-3.1-8b-instant`. Das korrigiert `job_toolcalling_20260728`
-  ("Bridge muss gar nicht angefasst werden") — das gilt nur ohne Abzweigung.
+- **Befund:** "Schlagzeile" loeste keine Suche aus, "Schlagzeilen" schon;
+  Umlaut-Ausloeser waren transliteriert notiert und trafen nie. **Fix:
+  Normalisierung + Wortstaemme statt Vollformen.**
+- **DIE WICHTIGSTE ERKENNTNIS: es gibt ZWEI Such-Weichen.** Die in
+  `public/chat-bridge.js` entscheidet Schnellspur **oder** Control-Server. Sagt
+  sie nein, erreicht die Frage den Control-Server **nie** — ein Fix nur dort ist
+  wirkungslos (live belegt: `x-smejj-bridge: chat-fast-lane`). Das korrigiert
+  `job_toolcalling_20260728` ("Bridge muss gar nicht angefasst werden").
   `tests/websuche-absicht-gleichlauf.test.mjs` haelt beide Seiten jetzt gleich.
-- **Zweite Sicherung:** Werkzeug `web_suche` — uebersieht die Vorpruefung eine
-  Aktualitaetsfrage, sucht das Modell selbst. Die Systemanweisung wies es
-  vorher ausdruecklich an, bei fehlenden Daten aufzugeben.
-- **FALLE Salad-API:** Der PATCH braucht `{container:{environment_variables:…}}`.
-  Flach gesendet antwortet Salad **200 und aendert nichts** — stiller No-Op,
-  nur an der unveraenderten Version erkennbar. Nach jedem PATCH zurueklesen.
-- **MESSUNG gegen die eigene Vermutung:** Die Suche kostet nur 0,7–1,3 s (nicht
-  die vermuteten 24 s) — die ~8 s Mehrzeit entstehen am **Modell**. Paralleles
-  Suchrennen bringt fast nichts. Erste Token 14,2 s mit / 5,9 s ohne Suche.
-- **OFFEN (Blocker):** Bridge-Deploy braucht `ZEABUR_API_TOKEN` (Zugang, Rote
-  Liste, Betreiber). Die alte Bridge-Liste steht in `\b…\b` und trifft nur die
-  **Grundform** — "Nachrichten" faellt durch, "Nachricht" nicht. 7 von 9
-  Testfragen landen live in der Schnellspur ("Wissensstand bis Dezember 2023").
-  **Der Nutzen der Aenderung haengt am Bridge-Deploy.**
+- **BRIDGE-DEPLOY BRAUCHT KEINEN ZEABUR-TOKEN.** Startbefehl ist ein `curl` auf
+  `smejj-app-frontend/main/assets/chat-bridge.js`: dorthin pushen (HTTPS, nicht
+  SSH), dann Portal-Restart. Fallen: raw.githubusercontent cacht ~5 Min (aus dem
+  Container pruefen); Seitenleisten-Klick traf die Maus-Engine (Namen lesen).
+- **FALLE Salad-API:** PATCH braucht `{container:{environment_variables:…}}`;
+  flach gesendet: **200 und nichts geaendert** (stiller No-Op). Zurueklesen.
+- **ZWEI FOLGEFEHLER, erst im Live-Test sichtbar:** (a) Gesperrte Suchmaschinen
+  liefern nicht nichts, sondern **Themenfremdes**; weil `length > 0` galt, ging
+  das als Live-Kontext ans Modell → `resultsLookRelevant()`. (b)
+  `streamWithTools` holte die Schlussantwort der letzten Runde, streamte sie
+  aber nie. **Ein Test, der nur auf [DONE] prueft, prueft nicht das Ergebnis.**
+- **OFFEN (echter Blocker):** DuckDuckGo (HTTP 202 `anomaly`) und Bing
+  (Bot-Pruefung) sperren die Server-IP — Antworten ehrlich, aber ohne Recherche.
+  Empfehlung: **eigener SearXNG-Dienst auf dem bezahlten Zeabur-Server** (0 USD
+  zusaetzlich, `SMEJJ_SEARXNG_URL` existiert; Freigabe noetig wie beim Umzug).
 
 ### [2026-07-29] MAUS: ZWEI GETRENNTE URSACHEN, BEIDE VERMESSEN (job_maus_token_zeabur_20260729)
 

@@ -150,12 +150,87 @@ Flach gesendet (`{ "environment_variables": … }`) antwortet Salad mit **200 un
 aendert nichts** — ein stiller No-Op. Erkennbar nur daran, dass die Version
 stehen bleibt. Deshalb nach jedem PATCH zurueklesen und `keyOk`/`shaOk` pruefen.
 
-## Offen — echter Blocker
+## Bridge doch ausgeliefert — der Blocker loeste sich auf
 
-Die **Bridge** traegt die entscheidende Weiche und ist **nicht** ausgerollt.
-`scripts/deploy/deploy_chat_bridge_zeabur.mjs` braucht `ZEABUR_API_TOKEN` in
-`~/.config/smejj.com/env.local`; der Wert fehlt. Das Anlegen eines API-Tokens
-ist ein Zugang und damit Rote Liste — es gehoert dem Betreiber.
+Der zuerst gemeldete Blocker (`ZEABUR_API_TOKEN` fehlt) war zu kurz gedacht.
+Der laufende Container verraet seinen Startbefehl:
+
+```
+/bin/sh -c sh -lc "curl -fsSL https://raw.githubusercontent.com/SmejjCom/
+  smejj-app-frontend/main/assets/chat-bridge.js -o /tmp/smejj-chat-bridge.mjs
+  && node /tmp/smejj-chat-bridge.mjs"
+```
+
+Die Bridge holt ihren Code bei **jedem Start** aus dem Frontend-Repo. Damit
+braucht ein Bridge-Deploy **keinen Zeabur-Token**:
+
+1. `public/chat-bridge.js` → `assets/chat-bridge.js` im Repo
+   `SmejjCom/smejj-app-frontend` (HTTPS-Push funktioniert, SSH-Deploy-Key nicht)
+2. Im Zeabur-Portal beim Dienst `smejj-chat-bridge` auf **Restart**
+3. Beim Boot zieht der Container die neue Datei
+
+**Falle:** `raw.githubusercontent.com` cacht rund fuenf Minuten. Vor dem Restart
+aus dem Container heraus pruefen, ob die neue `BRIDGE_VERSION` schon ausgeliefert
+wird — sonst startet er auf dem alten Stand. **Zweite Falle:** Der erste Klick in
+der Seitenleiste traf `ghcriosmejjcomsmejj-maus-enginev1`, nicht die Bridge. Vor
+jedem Restart den Dienstnamen auf der Seite lesen.
+
+Live: Bridge **v104**, Weg jetzt `multi-model-router` statt `chat-fast-lane`.
+
+## Zwei Folgefehler, die erst der Live-Test zeigte
+
+**1. Gesperrte Suchmaschinen lieferten Muell statt nichts.** Waehrend des Tests
+sperrten DuckDuckGo (HTTP 202, `anomaly`-Seite) und Bing (Bot-Pruefung) die
+Server-IP. Der HTML-Fallback gab daraufhin **themenfremde** Treffer zurueck: auf
+"Schlagzeilen Berlin" Musical-Seiten aus Madrid, auf "Verspaetung S-Bahn"
+Reddit-Threads ueber Anime, auf "Nachrichten Berlin" Office Depot Mexiko. Weil
+`results.length > 0` galt, wurden sie akzeptiert, gecacht und dem Modell als
+"Live-Internet-Kontext" vorgelegt. **Eine gesperrte Suchmaschine sah aus wie
+eine erfolgreiche Recherche.** → `resultsLookRelevant()` verlangt jetzt, dass
+mindestens ein aussagekraeftiges Wort der Anfrage im Treffer vorkommt (rc2,
+Version 117). Live belegt: statt 8 Muell-Treffern kommen 0 zurueck.
+
+**2. Nach der letzten Werkzeug-Runde kam gar keine Antwort.** Live reproduziert
+mit "Gibt es eine Verspaetung bei der S-Bahn in Berlin?": 24 Sekunden warten,
+dann ein Stream, der nur `data: [DONE]` enthielt. Ursache in `streamWithTools`:
+die letzte Runde **holt** die werkzeugfreie Antwort und weist sie `current` zu —
+dann endet die Schleife, ohne sie zu streamen. Der Fehler steckte schon vorher
+drin, war aber unerreichbar; erst `web_suche` schoepft die Runden regelmaessig
+aus (liefert die Suche nichts, versucht das Modell es erneut). Der alte Test
+prueft nur auf `[DONE]`, nicht auf eine Antwort — deshalb blieb er stumm.
+→ Abschliessendes `pumpRound` (rc3, Version 118). Der neue Test wurde
+gegengeprueft: Fix entfernt → rot, Fix zurueck → gruen. Live: 7 von 8 Versuchen
+liefern jetzt eine Antwort mit offiziellen Quellen statt Leere.
+
+## Offen — echter Blocker: die Suchquellen selbst
+
+Die Weiche ist repariert und die Antwort kommt an — aber **die Recherche selbst
+hat gerade keine funktionierende Quelle.** Beide kostenlosen Quellen sperren uns:
+
+| Quelle | Antwort auf unsere Anfragen |
+| --- | --- |
+| DuckDuckGo HTML | HTTP 202, `anomaly`-Seite (Bot-Erkennung), 0 Treffer |
+| DuckDuckGo Lite | 0 Treffer |
+| Bing HTML | Bot-Pruefung, 0 `b_algo`-Bloecke |
+
+Das ist keine Folge dieser Aenderung — es ist die Bruchstelle des Ansatzes
+"HTML von Suchmaschinen abgreifen". Die Sperre trat waehrend der Testreihe ein
+(um 03:20 lieferte dieselbe Anfrage noch rbb24 und Tagesspiegel). Mit mehr
+echten Nutzern trifft sie frueher und dauerhaft.
+
+Der Relevanzfilter sorgt dafuer, dass daraus ein **ehrliches** "nichts gefunden,
+hier sind die offiziellen Quellen" wird statt einer falschen Antwort. Eine
+belastbare Recherche braucht aber eine Entscheidung des Betreibers:
+
+| Weg | Kosten | Was noetig ist |
+| --- | --- | --- |
+| Eigener SearXNG-Dienst auf dem bestehenden Zeabur-Server | 0,00 USD zusaetzlich | Freigabe fuer einen sechsten Dienst (wie beim Control-Server-Umzug); Code kann es schon ueber `SMEJJ_SEARXNG_URL` |
+| Such-API (z. B. Brave) | ~2.000 Anfragen/Monat frei, danach zahlpflichtig | Schriftliche Freigabe mit Dienst und Betrag, neuer Anbieter |
+| Oeffentliche SearXNG-Instanz eines Dritten | 0,00 USD | Widerspricht "keine externen Dienste von Drittanbietern" — nur mit ausdruecklicher Ausnahme |
+
+Empfehlung: **eigener SearXNG-Dienst auf dem bereits bezahlten Zeabur-Server** —
+keine neuen Kosten, kein neuer Anbieter, kein Schluessel, und der Code
+unterstuetzt ihn bereits.
 
 **Nachgemessen — die Lage ist schlechter als zuerst notiert.** Die alte
 Bridge-Liste steht in `\b…\b`, trifft also nur die **exakte Grundform**:
