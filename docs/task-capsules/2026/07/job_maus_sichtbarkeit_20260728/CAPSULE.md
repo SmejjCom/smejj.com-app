@@ -195,3 +195,45 @@ Arbeits-Repo bis HEAD auf `feature/auth-redesign-github-magiclink`.
 2. **Konto-Abgleich** (nur fuer NEUE Laeufe noetig): die IDrive-e2-Zugangsdaten
    der Zeabur-Engine auf dasselbe Konto zeigen lassen wie der Control-Server.
    Alte Laeufe spielen auch ohne das.
+
+## Nachtrag 3: Worker-Adresse korrigiert — ein Schritt weiter, ein Rest bleibt
+
+Der Betreiber hat `SMEJJ_MAUS_ENGINE_WORKER_URL` auf
+`https://smejj-maus-engine.zeabur.app` gesetzt (per Salad-API verifiziert).
+
+**Wirkung sofort messbar:** Lauf `job_maus_abnahme_20260728_final` ueber
+`POST /api/maus/run` — der Planer erzeugt dreimal einen **gueltigen** Plan
+(`validate: true`), und der Worker wird jetzt auch **erreicht**:
+`worker_nicht_bereit_nach_46_versuchen` ist weg, `aborted` ist `false`.
+
+**Es bleibt aber bei `ok:false`** — mit `failedStep: null`, `aborted: false`,
+leerem `actionLog`. Genau diese Kombination kann der Interpreter gar nicht
+erzeugen (`const ok = !aborted && failedStep === null`). Sie entsteht nur,
+wenn `worker.mjs` seinen 500-Zweig nimmt:
+`respondJson(res, 500, { ok:false, error })`. `buildRunPlan()` prueft den
+HTTP-Status nicht und reicht diesen Body als `summary` weiter — die
+`error`-Meldung wird danach nirgends aufbewahrt.
+
+**Observability-Luecke (dokumentiert, nicht behoben):** Weder
+`planner-roundtrip.mjs` (`lastFailure` kennt nur failedStep/aborted/
+abortReason/actionLog/domExcerpt) noch `mausEngineRoutes.js` uebernehmen
+`result.error`. Der eigentliche Grund des Fehlschlags ist damit **unsichtbar**
+— man raet. Ein Zweizeiler wuerde das beheben, doch der Control-Server-Deploy
+endet in `set_control_artifact_env.mjs`, also wieder in einem
+Env-Variablen-Schreibzugriff — vom Classifier blockiert.
+
+**Wahrscheinlichste Ursache des 500 (nicht bewiesen):** `uploadRunArtifacts()`
+ist Pflicht und fail-closed; scheitert der S3-PUT, fliegt die Ausnahme bis in
+den 500-Zweig. Dazu passt: nach dem Lauf ist unter
+`capsules/maus-engine/` im Konto des Betreibers **kein neuer Ordner**
+entstanden (weiterhin 14, alle vom 14./15. Juli). Die Engine-Container wurde
+seit 07/28 04:27 nicht neu gestartet; ihre Laufzeitprotokolle enthalten zu den
+Laeufen nichts (die Engine loggt pro Lauf nicht).
+
+**Naechster Schritt (Betreiber):** die IDrive-e2-Zugangsdaten des
+Zeabur-Dienstes exakt auf dieselben Werte setzen wie beim Control-Server
+(`IDRIVE_E2_ACCESS_KEY`, `IDRIVE_E2_SECRET_KEY`; Endpoint
+`https://s3.us-west-2.idrivee2.com`, Region `us-west-2`, Bucket `smejj-app`).
+**Selbst pruefbar ohne Programmierkenntnisse:** danach einen Lauf starten und
+in der IDrive-Console unter `capsules/maus-engine/` nachsehen — erscheint ein
+neuer Ordner, stimmt es; erscheint keiner, stimmen die Werte noch nicht.
