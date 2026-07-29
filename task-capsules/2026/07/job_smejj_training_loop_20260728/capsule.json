@@ -61,6 +61,13 @@
     "git": { "tag": "commit 52667c5 auf feature/auth-redesign-github-magiclink, gepusht nach origin", "commit": "52667c5" },
     "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs, task-capsules/2026/07/job_smejj_training_loop_20260728/ und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt. Memory_Bank.md bewusst NICHT mitcommittet — ein anderer, zeitgleicher Auftrag hatte dort eine eigene, noch unfertige Aenderung im selben Arbeitsverzeichnis (Google-Drive-geteilt); siehe smejj-parallele-sessions-git.md."
   },
+  "betreiberEntscheidungArchivierung": {
+    "datum": "2026-07-29",
+    "entscheidung": "SO LASSEN. Der Verlauf unter GET /verlauf genuegt; die dauerhafte Archivierung der vollen Eval-Berichte wird NICHT eingerichtet.",
+    "folge": "Die fuenf IDRIVE_E2_*-Variablen bleiben am Dienst smejj-training-loop bewusst ungesetzt. Jede Messung meldet daher 'Bericht NICHT abgelegt' und 'abgelegt:false' im Verlauf — das ist der gewollte Zustand, KEIN Fehler und kein offener Punkt.",
+    "nichtWiederAufrollen": "Weder das Einfuegen der Zugangsdaten noch ein kostenpflichtiges Zeabur-Volume noch ein Ersatz-Ablageweg sind vorzuschlagen, solange der Betreiber das nicht von sich aus wieder aufgreift. Die Entscheidung ist getroffen und begruendet: fuer die Trendbeobachtung sind die vollen Berichte nicht noetig.",
+    "nachruestbar": "Jederzeit nachtraeglich moeglich, ohne Codeaenderung: Werte per 'smejj.com Training-Loop-Schluessel.command' einfuegen, dann REDEPLOY. Der Ablage-Pfad ist fertig gebaut und getestet, er ist nur nicht scharf geschaltet."
+  },
   "verlaufOhneZugangsdaten": {
     "datum": "2026-07-29",
     "anlass": "Der Betreiber ist kein Programmierer und will die Zugangsdaten nicht selbst eintragen. Der Agent traegt grundsaetzlich keine Schluessel ein. Frage also: was vom Ziel laesst sich OHNE Zugangsdaten und OHNE neue Kosten erreichen?",
