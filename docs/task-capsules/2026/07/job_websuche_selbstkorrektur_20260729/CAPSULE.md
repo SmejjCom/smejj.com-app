@@ -157,8 +157,35 @@ Die **Bridge** traegt die entscheidende Weiche und ist **nicht** ausgerollt.
 `~/.config/smejj.com/env.local`; der Wert fehlt. Das Anlegen eines API-Tokens
 ist ein Zugang und damit Rote Liste — es gehoert dem Betreiber.
 
-Bis dahin gilt: Fragen, die schon die **alte** Bridge-Liste erkannte
-(`heute`, `aktuell`, `news`, `nachricht`, `wetter`, `preis`, `kurs`, `stand`,
-`quelle`, `internet`, `web`, `jetzt`, `2026`), laufen ueber den Control-Server
-und profitieren sofort. Alles andere — darunter `Schlagzeile` — bleibt in der
-Schnellspur.
+**Nachgemessen — die Lage ist schlechter als zuerst notiert.** Die alte
+Bridge-Liste steht in `\b…\b`, trifft also nur die **exakte Grundform**:
+`\bnachricht\b` passt auf "Nachricht", **nicht** auf "Nachrichten";
+`\baktuell\b` nicht auf "aktuelle"/"aktuellen". Von neun realistischen Fragen
+fallen sieben durch:
+
+```
+ALT    NEU    Frage
+false  true   Was sind die aktuellen Nachrichten aus Berlin?
+false  true   Aktuelle Nachrichten
+true   true   Nachricht aus Berlin
+true   true   Bitcoin Preis
+false  true   Was kosten Aktien gerade
+false  true   kannst du Schlagzeile über Berlin mir hier schreiben
+false  true   Öffnungszeiten Zoo Berlin
+false  true   Neueste Meldung zum Streik
+false  true   Gibt es eine Verspätung
+```
+
+Live gegengeprueft am 2026-07-29 nach dem Control-Server-Deploy, Frage
+"Was sind die aktuellen Nachrichten aus Berlin?":
+
+```
+x-smejj-bridge: chat-fast-lane
+x-smejj-model-backend: groq:llama-3.1-8b-instant
+Antwort: "Ich habe keine aktuellen Nachrichten aus Berlin.
+          Mein Wissensstand ist bis Dezember 2023."
+```
+
+Der Control-Server-Deploy wirkt damit heute nur auf den schmalen Rest, den die
+alte Bridge-Weiche durchlaesst (Wetter laeuft ueber den eigenen Open-Meteo-Pfad
+und ist nicht betroffen). **Der Nutzen der Aenderung haengt am Bridge-Deploy.**

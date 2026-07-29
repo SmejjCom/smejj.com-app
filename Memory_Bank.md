@@ -11,9 +11,8 @@ Commit `c476fd6`, Control-Server **Version 116**. Capsule:
 `docs/task-capsules/2026/07/job_websuche_selbstkorrektur_20260729/CAPSULE.md`.
 
 - **Befund:** "Schlagzeile ueber Berlin" loeste keine Suche aus, "Schlagzeilen"
-  schon — beide Wortlisten kannten nur die Plural-Vollform. Zweiter Fehler:
-  Ausloeser transliteriert notiert (`oeffnungszeiten`), Umlaut-Eingaben trafen
-  nie. **Fix: Normalisierung + Wortstaemme.**
+  schon. Zweiter Fehler: Ausloeser transliteriert notiert (`oeffnungszeiten`),
+  Umlaut-Eingaben trafen nie. **Fix: Normalisierung + Wortstaemme.**
 - **DIE WICHTIGSTE ERKENNTNIS:** Es gibt **zwei** Such-Weichen. Die in
   `public/chat-bridge.js` entscheidet Schnellspur **oder** Control-Server.
   Sagt sie nein, erreicht die Frage den Control-Server **nie** — ein Fix nur
@@ -27,13 +26,14 @@ Commit `c476fd6`, Control-Server **Version 116**. Capsule:
 - **FALLE Salad-API:** Der PATCH braucht `{container:{environment_variables:…}}`.
   Flach gesendet antwortet Salad **200 und aendert nichts** — stiller No-Op,
   nur an der unveraenderten Version erkennbar. Nach jedem PATCH zurueklesen.
-- **MESSUNG gegen die eigene Vermutung:** Die Suche kostet nur 0,7–1,3 s, nicht
-  die vermuteten bis zu 24 s. Die ~8 s Mehrzeit einer Suchfrage entstehen am
-  **Modell** — ein paralleles Suchrennen bringt fast nichts, die naechste
-  Optimierung gehoert an den Modellpfad. Erste Token: 14,2 s mit Suche, 5,9 s
-  ohne (Budget 1,0 s, auf diesem Pfad schon vorher verfehlt).
+- **MESSUNG gegen die eigene Vermutung:** Die Suche kostet nur 0,7–1,3 s (nicht
+  die vermuteten 24 s) — die ~8 s Mehrzeit entstehen am **Modell**. Paralleles
+  Suchrennen bringt fast nichts. Erste Token 14,2 s mit / 5,9 s ohne Suche.
 - **OFFEN (Blocker):** Bridge-Deploy braucht `ZEABUR_API_TOKEN` (Zugang, Rote
-  Liste, Betreiber). Bis dahin bleibt `Schlagzeile` in der Schnellspur.
+  Liste, Betreiber). Die alte Bridge-Liste steht in `\b…\b` und trifft nur die
+  **Grundform** — "Nachrichten" faellt durch, "Nachricht" nicht. 7 von 9
+  Testfragen landen live in der Schnellspur ("Wissensstand bis Dezember 2023").
+  **Der Nutzen der Aenderung haengt am Bridge-Deploy.**
 
 ### [2026-07-29] MAUS: ZWEI GETRENNTE URSACHEN, BEIDE VERMESSEN (job_maus_token_zeabur_20260729)
 
