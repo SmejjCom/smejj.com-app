@@ -30,10 +30,30 @@ if [ ! -f "$ENVFILE" ]; then
 fi
 source "$ENVFILE"
 
+# Fehlt der Schluessel, wird er hier EINMAL abgefragt und selbst weggeschrieben.
+# Absichtlich so gebaut: "with hidden answer" zeigt die Eingabe nicht an, der Wert
+# geht direkt in die Datei und erscheint nie am Bildschirm, nie im Protokoll und
+# nie im Kontext eines Agenten. Der Betreiber ist kein Programmierer — ihn eine
+# versteckte Textdatei von Hand bearbeiten zu lassen waere die fehleranfälligere
+# Variante, nicht die sicherere.
 if [ -z "${SMEJJ_LLM_ZHIPU_API_KEY:-}" ]; then
-  osascript -e "display dialog \"Es fehlt noch der GLM-Schluessel.\n\nSo geht es:\n1. $SCHLUESSELSEITE oeffnen (Du bist eingeloggt)\n2. Schluessel erstellen und kopieren\n3. Diese Zeile unten an ~/.config/smejj.com/env.local anhaengen:\n\n   SMEJJ_LLM_ZHIPU_API_KEY=DEIN_SCHLUESSEL\n\n4. Diese Datei nochmal doppelklicken\n\nDen Schluessel traegt der Agent grundsaetzlich nicht selbst ein.\" buttons {\"Verstanden\"} default button 1 with title \"smejj.com — Tiefe Spur\""
   open "$SCHLUESSELSEITE" 2>/dev/null || true
-  exit 0
+  # mktemp statt eines vorhersagbaren /tmp-Pfads: durch diese Datei laeuft ein
+  # Schluessel, also keine Datei, die ein anderer Prozess vorher anlegen kann.
+  ANTWORT="$(mktemp "${TMPDIR:-/tmp}/smejj-glm.XXXXXXXX")"
+  chmod 600 "$ANTWORT"
+  trap 'rm -f "$ANTWORT"' EXIT INT TERM
+  osascript -e "display dialog \"Schritt 1 von 2 — GLM-Schluessel\n\nDie Schluesselseite ist offen. Dort auf 'Add API Key', Schluessel erstellen und kopieren.\n\nDann hier einfuegen (Cmd+V). Die Eingabe bleibt unsichtbar und wird nur in ~/.config/smejj.com/env.local gespeichert.\" default answer \"\" with hidden answer buttons {\"Abbrechen\",\"Speichern\"} default button 2 with title \"smejj.com — Tiefe Spur\"" > "$ANTWORT" 2>/dev/null || exit 0
+  EINGABE="$(sed 's/.*text returned://' "$ANTWORT" | tr -d '\n')"
+  rm -f "$ANTWORT"
+  # Wegwerf-Eingaben nicht speichern: Z.AI-Schluessel sind deutlich laenger.
+  if [ ${#EINGABE} -lt 20 ]; then
+    osascript -e 'display alert "Das sieht nicht nach einem Schluessel aus" message "Nichts gespeichert. Datei einfach nochmal doppelklicken." as critical'
+    exit 1
+  fi
+  printf '\nSMEJJ_LLM_ZHIPU_API_KEY=%s\n' "$EINGABE" >> "$ENVFILE"
+  unset EINGABE
+  SMEJJ_LLM_ZHIPU_API_KEY="$(grep -E '^SMEJJ_LLM_ZHIPU_API_KEY=' "$ENVFILE" | tail -1 | sed 's/^SMEJJ_LLM_ZHIPU_API_KEY=//')"
 fi
 
 pbcopy <<EOF
@@ -45,4 +65,4 @@ SMEJJ_LLM_ZHIPU_MODEL_CODING=glm-4.7-flash
 EOF
 
 osascript -e 'tell application "Google Chrome" to activate' \
-          -e 'display dialog "Fuenf Zeilen liegen in der Zwischenablage (Werte bleiben unsichtbar).\n\nZIEL IST smejj-control, NICHT smejj-training-loop:\n1. In Zeabur den Dienst smejj-control waehlen\n2. Reiter Variable -> Edit Raw Variables\n3. Cursor ans Ende, neue Zeile, Cmd+V\n4. Speichern, dann REDEPLOY (Restart genuegt NICHT)\n\nKosten: 0,00 USD — glm-4.7-flash ist gratis.\n\nDanach im Chat: weiter" buttons {"Verstanden"} default button 1 with title "smejj.com — Tiefe Spur (GLM, kostenlos)"'
+          -e 'display dialog "Schritt 2 von 2 — in Zeabur einfuegen\n\nFuenf Zeilen liegen in der Zwischenablage (Werte bleiben unsichtbar).\n\nZIEL IST smejj-control, NICHT smejj-training-loop:\n1. In Zeabur den Dienst smejj-control waehlen\n2. Reiter Variable -> Edit Raw Variables\n3. Cursor ans Ende, neue Zeile, Cmd+V\n4. Speichern, dann REDEPLOY (Restart genuegt NICHT)\n\nKosten: 0,00 USD — glm-4.7-flash ist gratis.\n\nDanach im Chat: weiter" buttons {"Verstanden"} default button 1 with title "smejj.com — Tiefe Spur (GLM, kostenlos)"'
