@@ -1,0 +1,67 @@
+# smejj.com Control Server — Bau-Abbild fuer einen Zeabur-Dienst 'smejj-control'.
+# Zeabur waehlt anhand des Dateinamens (Dockerfile.<dienstname>) genau dieses
+# Abbild fuer genau diesen Dienst; alle anderen Dienste bleiben unberuehrt.
+#
+# STAND: VORBEREITET, NICHT AUSGEROLLT.
+# docs/architecture/FREE_ONLY_MASTER_POLICY.md deckt die Zeabur-Ausnahme nur
+# fuer die bestehende Maus-Engine ab ("jede Erweiterung braucht erneut eine
+# schriftliche Freigabe mit Dienst und Betrag"). Ein Dienst darf hieraus erst
+# entstehen, wenn diese Freigabe vorliegt — siehe
+# docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md.
+#
+# Keine npm-Abhaengigkeiten (nur Node-Bordmittel) -> kein Install-Schritt,
+# kein Lockfile-Risiko, schlankes Abbild.
+FROM node:22-slim
+
+ENV NODE_ENV=production \
+    SMEJJ_HOST=0.0.0.0 \
+    PORT=8080
+
+WORKDIR /app
+
+# package.json traegt "type": "module" — ohne sie wuerden die .js-Dateien als
+# CommonJS geladen und jeder Import schluege fehl.
+COPY --chown=node:node package.json ./
+COPY --chown=node:node src ./src
+COPY --chown=node:node control-server ./control-server
+COPY --chown=node:node gatekeeper ./gatekeeper
+COPY --chown=node:node worker-templates ./worker-templates
+COPY --chown=node:node public ./public
+COPY --chown=node:node docs ./docs
+COPY --chown=node:node Memory_Bank.md AI_Guidelines.md Project_Goals.md AGENTS.md README.md ./
+
+# ACHTUNG, rc1-Absturzklasse (2026-07-17): Diese beiden Zeilen fehlen im alten
+# deploy/control-server/Dockerfile. src/server.js laedt ueber
+# control-server/src/routes/mausEngineRoutes.js STATISCH workers/maus-engine/*
+# und workers/glm-salad/s3.js; src/agent/roleRegistry.js laedt
+# workers/smejj-worker/role-registry.mjs. Ohne 'workers' bootet der Server
+# ueberhaupt nicht (ERR_MODULE_NOT_FOUND, Endlos-Neustart).
+# 'schemas' wird zur LAUFZEIT per fs gelesen (Plan- und Schritt-Schema) —
+# ohne den Ordner bootet der Server zwar, aber der erste Maus-Lauf endet in
+# ENOENT. Die verbindliche Liste steht in scripts/deploy/release-include-paths.mjs;
+# wer dort etwas ergaenzt, ergaenzt es auch hier.
+COPY --chown=node:node workers ./workers
+COPY --chown=node:node schemas ./schemas
+
+# Nicht als root laufen (Sicherheit ist Pflicht).
+USER node
+
+EXPOSE 8080
+
+# Pflicht-Env zur Laufzeit (der Server ist ohne sie fail-closed):
+#   SMEJJ_SESSION_SECRET
+#   IDRIVE_E2_ENDPOINT / IDRIVE_E2_BUCKET / IDRIVE_E2_REGION /
+#   IDRIVE_E2_ACCESS_KEY / IDRIVE_E2_SECRET_KEY
+#   SMEJJ_MAUS_ENGINE_ENABLED=YES / SMEJJ_MAUS_ENGINE_WORKER_URL /
+#   SMEJJ_MAUS_ENGINE_TOKEN  (muss WORTGLEICH dem Wert beim Dienst
+#                             'smejj-maus-engine' entsprechen — ein
+#                             Unterschied erzeugt HTTP 401 nicht_autorisiert)
+# Pruefbar mit: node scripts/diagnose/maus-abgleich.mjs
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+# Startbefehl festnageln: ohne ihn fuehrt Zeaburs Auto-Erkennung 'pnpm start'
+# aus — was zufaellig ebenfalls der Control Server waere, bei anderen Diensten
+# aber schon dreimal den falschen Prozess gestartet hat (Memory 2026-07-28).
+CMD ["node", "src/server.js"]

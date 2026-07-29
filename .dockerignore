@@ -26,6 +26,11 @@ workers/*
 !workers/smejj-training-loop
 !workers/smejj-training-loop/**
 schemas/*
+# Beide Maus-Schemata werden zur LAUFZEIT per fs gelesen (plan-validator und
+# interactive-loop). Fehlt eines im Abbild, bootet der Dienst zwar, aber der
+# erste Maus-Lauf endet in ENOENT. Verbindliche Liste:
+# scripts/deploy/release-include-paths.mjs (CONTROL_RELEASE_RUNTIME_RESOURCES).
 !schemas/maus-action-plan.schema.json
+!schemas/maus-step-decision.schema.json
 *.xlsx
 .DS_Store

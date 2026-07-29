@@ -108,6 +108,21 @@ console.log("\nEngine-Gegenprobe (nimmt die Engine den lokalen Token an?):");
 const lokal = await engineTokenProbe(workerUrl, process.env.SMEJJ_MAUS_ENGINE_TOKEN);
 console.log(`  lokaler Token -> ${lokal.pruefbar ? `HTTP ${lokal.status} (${lokal.akzeptiert ? "akzeptiert" : "ABGELEHNT"})` : `nicht pruefbar: ${lokal.grund ?? "kein Token/keine URL"}`}`);
 
+// Zweiter, unabhaengiger Fehler: die Engine kann laufen und trotzdem in einen
+// ANDEREN Eimer schreiben als der Control-Server liest. Dann erscheint nie ein
+// neuer Ordner, und die Wiedergabe meldet "Artefakt nicht ladbar". Das sah
+// lange wie ein Konto-Problem aus, ist aber ein Eimer-Name.
+const capsulesEimer = salad.env.IDRIVE_E2_CAPSULES_BUCKET || salad.env.IDRIVE_E2_BUCKET || null;
+const lokalerEimer = process.env.IDRIVE_E2_BUCKET || null;
+console.log("\nEimer fuer Maus-Artefakte:");
+console.log(`  Control-Server liest aus: ${capsulesEimer ?? "(nicht gesetzt)"}`);
+console.log(`  lokale Ablage zeigt auf:  ${lokalerEimer ?? "(nicht gesetzt)"}`);
+if (capsulesEimer && lokalerEimer && capsulesEimer !== lokalerEimer) {
+  console.log(`  -> ACHTUNG: verschiedene Eimer. Traegt der Zeabur-Dienst denselben`);
+  console.log(`     IDRIVE_E2_BUCKET wie hier (${lokalerEimer}), landen die Artefakte`);
+  console.log(`     dort, wo der Control-Server (${capsulesEimer}) NICHT nachsieht.`);
+}
+
 const tokenGleich = gleichheit[0];
 console.log("\nBefund:");
 if (tokenGleich) {
