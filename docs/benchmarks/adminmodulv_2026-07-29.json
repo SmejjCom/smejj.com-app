@@ -3,14 +3,24 @@
   "datum": "2026-07-29",
   "job": "job_adminmodulv_20260729",
   "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
-  "controlServerVersion": 114,
-  "artefakt": "deployments/control/smejj-control-modul-v-2026-07-29.tar.gz",
-  "rueckweg": ["deployments/control/smejj-control-stufe8-2026-07-29.tar.gz (Stand vor diesem Job)"],
-  "commits": ["2d1e65e"],
+  "controlServerVersion": 115,
+  "artefakt": "deployments/control/smejj-control-modul-vb-2026-07-29.tar.gz",
+  "rueckweg": [
+    "deployments/control/smejj-control-modul-v-2026-07-29.tar.gz (ohne den Widerspruch-Fix)",
+    "deployments/control/smejj-control-stufe8-2026-07-29.tar.gz (Stand vor diesem Job)"
+  ],
+  "commits": [
+    "2d1e65e",
+    "2c8bbce"
+  ],
   "abdeckung": {
     "module": "25 von 26 Buchstaben gebaut",
-    "neu": ["V E-Mail-Zustellung"],
-    "offen": ["W Analytik — ohne eigene Erfassung nicht baubar; braucht eine Entscheidung des Betreibers"]
+    "neu": [
+      "V E-Mail-Zustellung"
+    ],
+    "offen": [
+      "W Analytik — ohne eigene Erfassung nicht baubar; braucht eine Entscheidung des Betreibers"
+    ]
   },
   "budgets": {
     "api_p95_ms": 300,
@@ -30,9 +40,16 @@
   },
   "funktionsnachweiseLive": {
     "endpunkt": "/api/admin/ops/email liefert 200 mit Anmeldung, 401 ohne.",
-    "ansicht": "Kachel 'Versand: fehlt' mit Begruendung; unbestaetigte Konten als '—' wenn das Verzeichnis nicht lesbar ist, nie als Null."
+    "ansicht": "Kachel 'Versand: fehlt' mit Begruendung; unbestaetigte Konten als '—' wenn das Verzeichnis nicht lesbar ist, nie als Null.",
+    "befund": "Live gemessen: 5 aktive Konten, ALLE fuenf unbestaetigt, 2 davon aus den letzten 24 Stunden, aeltester Fall 15 Tage. Versand eingerichtet ueber smtp.gmail.com:465. Nicht ein einziges Konto wurde je bestaetigt — ein Hinweis auf ein Zustellproblem, kein Beweis."
   },
   "gefundeneFehler": [
+    {
+      "fund": "Der Satz widersprach der Kachel",
+      "wirkung": "Die Kachel zeigte 'Davon frisch: 2', der Satz sagte 'keines davon frisch'. Die Schwelle (<3) hatte 'wenige' in 'keine' verwandelt.",
+      "bewertung": "Ein Bildschirm, der sich selbst widerspricht, ist schlimmer als einer, der schweigt: man weiss danach nicht mehr, welcher Zahl man glauben soll.",
+      "behoben": "Der Satz nennt die tatsaechliche Zahl. Der Fall 'alle aktiven Konten betroffen' bekam eine eigene, deutlichere Formulierung."
+    },
     {
       "fund": "Der eigene Test stolperte ueber den eigenen Hinweistext",
       "wirkung": "Die Pruefung 'keine erfundene Zustellquote' suchte im gesamten JSON nach dem Wort 'Zustellquote' — und fand es im Hinweis, der ja gerade erklaert, dass es keine gibt.",
@@ -52,9 +69,11 @@
     "keineSchreibaktion": "Modul V ist rein lesend; es verschickt nichts."
   },
   "testabdeckung": {
-    "gesamt": 345,
-    "neu": 9,
+    "gesamt": 351,
+    "neu": 11,
     "schwerpunkte": [
+      "der Satz muss zur Kachel passen",
+      "haengen ALLE aktiven Konten unbestaetigt, ist das kein Einzelfall mehr",
       "weder Passwort noch SMTP-Benutzer verlassen das Modul",
       "kein Feld, das eine Zustellmessung vortaeuscht",
       "nicht eingerichteter Versand ist der wichtigste Befund",
