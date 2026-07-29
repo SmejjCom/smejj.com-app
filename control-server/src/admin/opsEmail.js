@@ -108,12 +108,29 @@ function bewerte(versand, konten) {
       + "Solange das so ist, kann sich niemand neu bestaetigen.";
   }
   if (!konten.erreichbar) return "Versand eingerichtet. Das Verzeichnis ist gerade nicht lesbar.";
-  if (konten.unbestaetigtHeuteOderGestern >= 3) {
-    return `${konten.unbestaetigtHeuteOderGestern} Konten aus den letzten 24 Stunden sind unbestaetigt. `
+  if (konten.unbestaetigt === 0) return "Versand eingerichtet, kein Konto haengt unbestaetigt.";
+
+  // Der Satz muss zur Kachel passen. Eine Schwelle darf "wenige" nicht in
+  // "keine" verwandeln — live stand einmal "keines davon frisch" neben einer
+  // Kachel, die 2 frische zeigte. Ein Bildschirm, der sich selbst
+  // widerspricht, ist schlimmer als einer, der schweigt.
+  const frisch = konten.unbestaetigtHeuteOderGestern || 0;
+  if (frisch >= 3) {
+    return `${frisch} Konten aus den letzten 24 Stunden sind unbestaetigt. `
       + "Das kann Zufall sein — oder der Versand kommt nicht durch.";
   }
-  if (konten.unbestaetigt === 0) return "Versand eingerichtet, kein Konto haengt unbestaetigt.";
-  return `Versand eingerichtet. ${konten.unbestaetigt} Konto(en) unbestaetigt, keines davon frisch.`;
+  const frischText = frisch === 0
+    ? "keines davon aus den letzten 24 Stunden"
+    : `${frisch} davon aus den letzten 24 Stunden`;
+
+  // Haengen ALLE aktiven Konten unbestaetigt, ist das kein Einzelfall mehr.
+  if (konten.gesamt > 0 && konten.unbestaetigt === konten.gesamt) {
+    return `Versand eingerichtet, aber ALLE ${konten.gesamt} aktiven Konten sind unbestaetigt `
+      + `(${frischText}). Bei jedem einzelnen Konto ist der Link nie bestaetigt worden — `
+      + "das spricht eher fuer ein Zustellproblem als fuer Zufall.";
+  }
+  return `Versand eingerichtet. ${konten.unbestaetigt} von ${konten.gesamt} aktiven Konten `
+    + `unbestaetigt, ${frischText}.`;
 }
 
 function sichereKonfiguration(env) {

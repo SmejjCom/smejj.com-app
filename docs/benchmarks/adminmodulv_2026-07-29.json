@@ -1,0 +1,66 @@
+{
+  "titel": "Adminbereich Modul V — E-Mail-Zustellung",
+  "datum": "2026-07-29",
+  "job": "job_adminmodulv_20260729",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 114,
+  "artefakt": "deployments/control/smejj-control-modul-v-2026-07-29.tar.gz",
+  "rueckweg": ["deployments/control/smejj-control-stufe8-2026-07-29.tar.gz (Stand vor diesem Job)"],
+  "commits": ["2d1e65e"],
+  "abdeckung": {
+    "module": "25 von 26 Buchstaben gebaut",
+    "neu": ["V E-Mail-Zustellung"],
+    "offen": ["W Analytik — ohne eigene Erfassung nicht baubar; braucht eine Entscheidung des Betreibers"]
+  },
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "leitentscheidungen": {
+    "keinZustellprotokoll": "sendAuthMail liefert {sent, reason}, aber niemand schreibt es weg. Ob eine einzelne Mail ankam, weiss das System nicht — eine Zustellquote muesste erfunden werden und fehlt deshalb.",
+    "zweiMessbareDinge": "1) Ist der Versand eingerichtet (ohne SMTP geht fail-closed gar nichts). 2) Wie viele Konten haengen unbestaetigt und wie frisch sind sie.",
+    "hinweisKeinBeweis": "Frische unbestaetigte Konten sind das beste verfuegbare Signal, nicht der Beweis. Das steht woertlich in der Bewertung.",
+    "keineZugangsdaten": "Weder SMTP-Passwort noch SMTP-Benutzer verlassen das Modul; gemeldet wird nur, OB sie gesetzt sind. Server, Port, Absender und Verschluesselungsart stehen drin — keine Geheimnisse, aber noetig beim Suchen.",
+    "keinTestversand": "Eine Mail zu verschicken ist eine Aussenwirkung und gehoert nicht in einen Lese-Bereich."
+  },
+  "funktionsnachweiseLive": {
+    "endpunkt": "/api/admin/ops/email liefert 200 mit Anmeldung, 401 ohne.",
+    "ansicht": "Kachel 'Versand: fehlt' mit Begruendung; unbestaetigte Konten als '—' wenn das Verzeichnis nicht lesbar ist, nie als Null."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Der eigene Test stolperte ueber den eigenen Hinweistext",
+      "wirkung": "Die Pruefung 'keine erfundene Zustellquote' suchte im gesamten JSON nach dem Wort 'Zustellquote' — und fand es im Hinweis, der ja gerade erklaert, dass es keine gibt.",
+      "behoben": "Geprueft werden jetzt FELDNAMEN statt Prosa.",
+      "regel": "Ein Test, der die Erklaerung misst statt der Sache, schlaegt aus dem falschen Grund an. Dieselbe Klasse wie das Wortfragment 'iv' in 'aktiv' aus Stufe 6."
+    }
+  ],
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7 (aus dem Stufe-4-Lauf, unveraendert gueltig)",
+    "urteil": "Alle Budgets eingehalten. Dieser Job hat keine Datei unter public/ veraendert."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, durchgehend gruen.",
+    "parallelSession": "Live-Artefakt heruntergeladen und dateiweise verglichen: keine fremde Arbeit enthalten.",
+    "preflight": "npm run release:preflight vollstaendig gruen; check:release-imports 167 Dateien transitiv.",
+    "rechteUnveraendert": "Keine neue Berechtigung — V laeuft unter ops.read.",
+    "keineSchreibaktion": "Modul V ist rein lesend; es verschickt nichts."
+  },
+  "testabdeckung": {
+    "gesamt": 345,
+    "neu": 9,
+    "schwerpunkte": [
+      "weder Passwort noch SMTP-Benutzer verlassen das Modul",
+      "kein Feld, das eine Zustellmessung vortaeuscht",
+      "nicht eingerichteter Versand ist der wichtigste Befund",
+      "eine unvollstaendige Konfiguration gilt als nicht eingerichtet",
+      "frische unbestaetigte Konten sind das Signal — mit 'kann Zufall sein' im Satz",
+      "ein unlesbares Verzeichnis zeigt keine Null"
+    ]
+  }
+}

@@ -107,6 +107,36 @@ test("FRISCHE UNBESTAETIGTE KONTEN SIND DAS SIGNAL", async () => {
     "ein Hinweis ist kein Beweis — das gehoert in den Satz");
 });
 
+test("DER SATZ MUSS ZUR KACHEL PASSEN", async () => {
+  // Live gefunden (29.07.2026): die Kachel zeigte "Davon frisch: 2", der Satz
+  // sagte "keines davon frisch". Die Schwelle (<3) hatte "wenige" in "keine"
+  // verwandelt. Ein Bildschirm, der sich selbst widerspricht, ist schlimmer
+  // als einer, der schweigt.
+  const e = await emailUebersicht({
+    env: SMTP, jetztMs: JETZT,
+    leseIndex: async () => ({ ok: true, entries: [
+      konto({ email: "frisch@example.de", createdAt: new Date(JETZT - 3 * 60 * 60 * 1000).toISOString() }),
+      konto({ email: "alt1@example.de", createdAt: new Date(JETZT - 10 * TAG_MS).toISOString() }),
+      konto({ email: "fertig@example.de", emailVerified: true })
+    ] })
+  });
+  assert.equal(e.konten.unbestaetigtHeuteOderGestern, 1);
+  assert.equal(e.bewertung.includes("keines davon"), false, "1 ist nicht 0");
+  assert.equal(e.bewertung.includes("1 davon aus den letzten 24 Stunden"), true);
+});
+
+test("haengen ALLE aktiven Konten unbestaetigt, ist das kein Einzelfall mehr", async () => {
+  const e = await emailUebersicht({
+    env: SMTP, jetztMs: JETZT,
+    leseIndex: async () => ({ ok: true, entries: [
+      konto({ email: "a@example.de" }), konto({ email: "b@example.de" })
+    ] })
+  });
+  assert.equal(e.konten.unbestaetigt, e.konten.gesamt);
+  assert.equal(e.bewertung.includes("ALLE 2 aktiven Konten"), true);
+  assert.equal(e.bewertung.includes("Zustellproblem"), true);
+});
+
 test("bestaetigte und gesperrte Konten zaehlen nicht als offen", async () => {
   const e = await emailUebersicht({
     env: SMTP, jetztMs: JETZT,
