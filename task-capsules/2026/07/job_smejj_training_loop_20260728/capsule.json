@@ -61,6 +61,27 @@
     "git": { "tag": "commit 52667c5 auf feature/auth-redesign-github-magiclink, gepusht nach origin", "commit": "52667c5" },
     "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs, task-capsules/2026/07/job_smejj_training_loop_20260728/ und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt. Memory_Bank.md bewusst NICHT mitcommittet — ein anderer, zeitgleicher Auftrag hatte dort eine eigene, noch unfertige Aenderung im selben Arbeitsverzeichnis (Google-Drive-geteilt); siehe smejj-parallele-sessions-git.md."
   },
+  "verlaufOhneZugangsdaten": {
+    "datum": "2026-07-29",
+    "anlass": "Der Betreiber ist kein Programmierer und will die Zugangsdaten nicht selbst eintragen. Der Agent traegt grundsaetzlich keine Schluessel ein. Frage also: was vom Ziel laesst sich OHNE Zugangsdaten und OHNE neue Kosten erreichen?",
+    "geprueftUndVerworfen": [
+      "Signier-Endpunkt des Control-Servers (POST /api/storage/presign): faellt aus, weil ROUTES.api.storagePresign in USER_PROTECTED_EXACT_PATHS steht und eine angemeldete Nutzersitzung verlangt. Fuer einen Hintergrunddienst nicht nutzbar. Der einzige auth-freie Worker-Pfad (POST /api/jobs/<id>/status) braeuchte ebenfalls ein Token, also wieder ein Geheimnis.",
+      "Zeabur-Volume: technisch der sauberste Weg ohne Zugangsdaten, aber laut Zeabur-Dokumentation kostenpflichtig ('For pricing information on Volumes, please refer to our pricing page', waehrend der Config-Editor ausdruecklich 'incurs no additional cost' ist). Neue Kostenposition = schriftliche Freigabe des Betreibers noetig, siehe FREE_ONLY_MASTER_POLICY. NICHT angelegt."
+    ],
+    "erkenntnis": "Die Archivierung der vollen Berichte braucht Zugangsdaten. Der TREND — wird das Modell besser oder schlechter — ist aber die eigentliche Frage und darf davon nicht abhaengen. Genau das war vorher nicht getrennt gedacht.",
+    "umgesetzt": "Verlauf im Prozess (begrenzt auf config.verlaufMax, Standard 60 = gut zwei Wochen bei 6-Stunden-Takt), abrufbar unter GET /verlauf. Zusaetzlich eine Protokollzeile mit festen Feldnamen pro Messung, damit der Trend notfalls per 'grep VERLAUF' aus den Zeabur-Protokollen kommt. Die Kennzahlen stammen aus report.summary, werden also nicht neu berechnet — nur eine Wahrheit fuer diese Zahlen.",
+    "datenschutz": "/verlauf gibt ausschliesslich Kennzahlen heraus, nie Prompts, Modellantworten oder Zugangsdaten. Als Test zugesichert, nicht nur als Absicht.",
+    "liveBeleg": "Container 6865bcdd8c-hw9mn, GET /verlauf => {ok:true, anzahl:1, verlauf:[{zeitpunkt:'2026-07-29T23:20:29.815Z', urteil:'blocked', abgelegt:false, punktzahl:0.9118, faelle:14, bestanden:13, nichtBestanden:1, kritischeFehler:1, p95Ms:1051, medianMs:210}]}. 'abgelegt:false' ist ehrlich: die Messung steht im Verlauf, obwohl das Ablegen scheiterte — genau der Fall, fuer den das gebaut wurde.",
+    "tests": "21/21 gruen, drei neu: Verlauf haelt Kennzahlen trotz kaputter Ablage; Verlauf ist begrenzt (kein Speicherleck im Dauerbetrieb); /verlauf gibt keine Prompts oder Antworten heraus."
+  },
+  "aufgeraeumtKaputtePlatzhalter": {
+    "datum": "2026-07-29",
+    "befund": "Die fuenf IDRIVE_E2_*-Variablen am Dienst waren NICHT leer — sie enthielten den literalen Platzhaltertext ${...} aus dem gescheiterten Verweis-Versuch. Im Zeabur-Fenster sahen sie wie fuenf saubere Eintraege aus (****** und 'Private'). Gemessen im Container: gesetzt=true, laenge 53-57, istPlatzhalter=true fuer alle fuenf. DAS war die Ursache der Meldung 'Invalid URL', nicht fehlende Variablen.",
+    "lehre": "Ein halb aufgeraeumtes Experiment ist schlimmer als ein nicht begonnenes: der Zustand sah eingerichtet aus und verdeckte die echte Ursache. Wer Verweis-Variablen testet, muss sie im Fehlerfall LOESCHEN, nicht stehenlassen.",
+    "erledigt": "Alle fuenf Platzhalter geloescht. Uebrig am Dienst: PASSWORD, PORT und die drei SMEJJ_TRAINING_LOOP_*-Schalter. Zustand jetzt ehrlich 'nicht eingerichtet' statt scheinbar eingerichtet.",
+    "offenFuerDenBetreiber": "Fuer die volle Archivierung fehlen weiter die echten Werte. Hilfsdatei dafuer: 'smejj.com Training-Loop-Schluessel.command' (kopiert genau die fuenf noetigen Zeilen, zeigt keine Werte). Nach dem Einfuegen zwingend REDEPLOY, nicht Restart.",
+    "hinweisPasswort": "Zeaburs automatisch erzeugtes PASSWORD stand im Rohtext-Editor im Klartext und ist dabei in den Agenten-Kontext geraten. Das Feld musste geoeffnet werden, um die Platzhalter zu bestaetigen. Falls dieser Wert irgendwo zaehlt: tauschen."
+  },
   "dauerbetriebHaertung": {
     "datum": "2026-07-29",
     "commit": "e94126f",
