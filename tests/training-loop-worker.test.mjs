@@ -329,6 +329,75 @@ test("loop: ein laufender Zyklus wird nicht parallel erneut gestartet", async ()
   await ersterTick;
 });
 
+// Dauerbetrieb: ein haengender Zyklus darf den Loop nicht dauerhaft anhalten.
+// Ohne Waechter bliebe inFlight fuer immer gesetzt — der Dienst waere still tot.
+test("loop: ein haengender Zyklus blockiert den Loop nicht dauerhaft", async () => {
+  const basis = loadLoopConfig({
+    SMEJJ_TRAINING_LOOP_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000",
+    SMEJJ_TRAINING_LOOP_TICK_MAX_MS: "60000"
+  });
+  assert.equal(basis.tickMaxMs, 60000, "die Obergrenze ist konfigurierbar");
+
+  const lines = [];
+  let modellaufrufe = 0;
+  // Der Hänger wird am Ende kontrolliert freigegeben, damit der Testlauf
+  // nicht selbst an einem offenen Versprechen haengenbleibt.
+  let hangerLoesen;
+  const hanger = new Promise((resolve) => { hangerLoesen = resolve; });
+
+  const loop = createLoop({
+    config: { ...basis, tickMaxMs: 40 },
+    env: {},
+    repoRoot: "/repo",
+    log: (line) => lines.push(line),
+    deps: {
+      checkpointRequest: async () => JSON.stringify({}),
+      readReport: async () => null,
+      writeReport: async () => {},
+      readSuite: async () => validSuite(),
+      callModel: async () => { modellaufrufe += 1; await hanger; return { ok: true, text: "hi there", latencyMs: 5 }; }
+    }
+  });
+
+  const at = new Date("2026-07-29T00:00:00.000Z");
+  const haengenderTick = loop.tick(() => at);
+  await new Promise((resolve) => setTimeout(resolve, 15));
+  assert.equal(modellaufrufe, 1, "der erste Zyklus haengt im Modellaufruf");
+
+  // Vor Ablauf der Obergrenze bleibt die Sperre bestehen.
+  await loop.tick(() => new Date(at.getTime() + 5_000));
+  assert.equal(modellaufrufe, 1, "vor Ablauf der Obergrenze kein zweiter Lauf");
+
+  // Nach Ablauf gibt der Waechter frei und der Loop darf wieder anlaufen.
+  await new Promise((resolve) => setTimeout(resolve, 90));
+  assert.match(lines.join("\n"), /Sperre freigegeben/, "die Freigabe wird gemeldet");
+  assert.equal(loop.getStatus().lastError, "zyklus_zeitueberschreitung", "der Zustand nennt die Ursache");
+
+  // Nicht awaiten: dieser Tick wartet auf denselben Hänger, der erst danach
+  // freigegeben wird — sonst verklemmt der Test sich selbst.
+  const zweiterTick = loop.tick(() => new Date(at.getTime() + 10_000));
+  await new Promise((resolve) => setTimeout(resolve, 15));
+  assert.equal(modellaufrufe, 2, "nach der Obergrenze laeuft der Loop wieder an");
+
+  hangerLoesen();
+  await Promise.allSettled([haengenderTick, zweiterTick]);
+});
+
+test("worker: Takt-Geber wird NICHT unref'ed — er haelt den Dauerbetrieb", () => {
+  const config = loadLoopConfig({ SMEJJ_TRAINING_LOOP_ENABLED: "YES" });
+  let unrefAufgerufen = false;
+  const fakeTimer = { unref: () => { unrefAufgerufen = true; } };
+  const loop = { tick: async () => ({}), getStatus: () => ({}) };
+
+  startTicking(loop, { config, log: () => {}, setIntervalImpl: () => fakeTimer });
+  assert.equal(unrefAufgerufen, false, "im Betrieb darf der Timer die Ereignisschleife halten");
+
+  startTicking(loop, { config, log: () => {}, setIntervalImpl: () => fakeTimer, unrefTimer: true });
+  assert.equal(unrefAufgerufen, true, "nur Tests duerfen ihn freigeben");
+});
+
 test("worker: /health answers even when the loop is disabled (fail-closed but observable)", async () => {
   const config = loadLoopConfig({});
   const loop = createLoop({ config, repoRoot: "/repo", log: () => {} });

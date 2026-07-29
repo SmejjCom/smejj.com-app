@@ -33,6 +33,11 @@ export function loadLoopConfig(env = process.env) {
     evalIntervalMs: boundedInt(env.SMEJJ_TRAINING_LOOP_EVAL_INTERVAL_MS, 30 * 60 * 1000, 5 * 60 * 1000, 24 * 60 * 60 * 1000),
     trainingIntervalMs: boundedInt(env.SMEJJ_TRAINING_LOOP_TRAINING_INTERVAL_MS, 5 * 60 * 1000, 60 * 1000, 24 * 60 * 60 * 1000),
     trainingBatchSize: boundedInt(env.SMEJJ_TRAINING_LOOP_BATCH_SIZE, 5, 1, 50),
+    // Obergrenze fuer EINEN Zyklus. Ein Eval-Lauf braucht ~2 Minuten; 15 Minuten
+    // sind reichlich Luft. Wird sie ueberschritten, gibt der Waechter in loop.js
+    // die Sperre frei — ohne ihn koennte eine haengende Verbindung den Loop
+    // dauerhaft und lautlos anhalten (Dauerbetrieb-Anforderung).
+    tickMaxMs: boundedInt(env.SMEJJ_TRAINING_LOOP_TICK_MAX_MS, 15 * 60 * 1000, 60 * 1000, 60 * 60 * 1000),
     suiteId: env.SMEJJ_TRAINING_LOOP_SUITE_ID || "smejj-chat-core",
     suitePath: env.SMEJJ_TRAINING_LOOP_SUITE_PATH || "evals/suites/smejj-chat-core-v1.json",
     baselineDir: env.SMEJJ_TRAINING_LOOP_BASELINE_DIR || "docs/benchmarks",

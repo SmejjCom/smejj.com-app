@@ -26,6 +26,18 @@ export function createLoop({ config, env = process.env, repoRoot, log = console.
   async function tick(now = () => new Date()) {
     if (inFlight) return memoryCheckpoint || defaultCheckpoint();
     inFlight = true;
+    // Waechter fuer den Dauerbetrieb: haengt ein Zyklus (z. B. eine Verbindung
+    // ohne Timeout), bliebe inFlight sonst fuer immer gesetzt — der Loop waere
+    // still tot, ohne Absturz und ohne Meldung. Nach der Obergrenze wird die
+    // Sperre freigegeben, damit der naechste Takt wieder greifen kann.
+    let freigegeben = false;
+    const freigeben = () => { if (!freigegeben) { freigegeben = true; inFlight = false; } };
+    const waechter = setTimeout(() => {
+      log(`[smejj-training-loop] Zyklus laeuft laenger als ${config.tickMaxMs} ms — Sperre freigegeben, damit der Loop nicht dauerhaft stehenbleibt.`);
+      status = { ...status, lastError: "zyklus_zeitueberschreitung" };
+      freigeben();
+    }, config.tickMaxMs);
+    if (typeof waechter?.unref === "function") waechter.unref();
     try {
       status = { ...status, lastTickAt: now().toISOString() };
       const checkpoint = memoryCheckpoint
@@ -47,7 +59,8 @@ export function createLoop({ config, env = process.env, repoRoot, log = console.
       status = { state: "running", lastTickAt: status.lastTickAt, lastError: status.lastError };
       return next;
     } finally {
-      inFlight = false;
+      clearTimeout(waechter);
+      freigeben();
     }
   }
 

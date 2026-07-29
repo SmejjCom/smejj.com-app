@@ -38,7 +38,22 @@ export function createServer({ config, loop, readyCheck = () => true }) {
   });
 }
 
-export function startTicking(loop, { intervalMs = TICK_POLL_MS, config, log = console.log, setIntervalImpl = setInterval } = {}) {
+/**
+ * Startet den Takt-Geber.
+ *
+ * `unrefTimer` ist absichtlich standardmaessig AUS: dieser Timer IST der Dienst.
+ * Wird er unref'ed, haelt er die Ereignisschleife nicht mehr — der Prozess
+ * koennte sich beenden, sobald sonst nichts mehr offen ist, und der
+ * Dauerbetrieb endet lautlos. Nur Tests setzen ihn auf true, damit der
+ * Testlauf nicht am Timer haengenbleibt.
+ */
+export function startTicking(loop, {
+  intervalMs = TICK_POLL_MS,
+  config,
+  log = console.log,
+  setIntervalImpl = setInterval,
+  unrefTimer = false
+} = {}) {
   if (!config.loopEnabled) {
     log("[smejj-training-loop] SMEJJ_TRAINING_LOOP_ENABLED != YES — Server laeuft, Loop bleibt aus (fail-closed).");
     return null;
@@ -46,7 +61,7 @@ export function startTicking(loop, { intervalMs = TICK_POLL_MS, config, log = co
   const timer = setIntervalImpl(() => {
     loop.tick().catch((error) => log(`[smejj-training-loop] tick failed: ${String(error?.message || error).slice(0, 200)}`));
   }, intervalMs);
-  if (typeof timer?.unref === "function") timer.unref();
+  if (unrefTimer && typeof timer?.unref === "function") timer.unref();
   return timer;
 }
 
