@@ -19,6 +19,9 @@ import { workerUebersicht } from "../admin/opsWorker.js";
 import { deployUebersicht } from "../admin/opsDeploy.js";
 import { speicherUebersicht } from "../admin/opsSpeicher.js";
 import { kontingentUebersicht } from "../admin/opsKontingent.js";
+import { wissenUebersicht } from "../admin/opsWissen.js";
+import { sprachUebersicht } from "../admin/opsSprachen.js";
+import { experimentUebersicht } from "../admin/opsExperimente.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -30,7 +33,9 @@ const gate = createRateLimiter({ capacity: 60, refillPerSec: 1, maxKeys: 5_000 }
 // die Laufzeit zeigen kann.
 const GESTARTET_MS = Date.now();
 
-const BEREICHE = Object.freeze(["modelle", "jobs", "worker", "deploy", "speicher", "kontingent"]);
+const BEREICHE = Object.freeze([
+  "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen", "experimente"
+]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
   if (url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
@@ -65,6 +70,9 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "deploy") return privateJson(res, 200, deployUebersicht({ env, startzeitMs: GESTARTET_MS })), true;
     if (bereich === "speicher") return privateJson(res, 200, await speicherUebersicht({ env })), true;
     if (bereich === "kontingent") return privateJson(res, 200, await kontingentUebersicht({ env })), true;
+    if (bereich === "wissen") return privateJson(res, 200, await wissenUebersicht()), true;
+    if (bereich === "sprachen") return privateJson(res, 200, await sprachUebersicht()), true;
+    if (bereich === "experimente") return privateJson(res, 200, await experimentUebersicht({ env })), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {

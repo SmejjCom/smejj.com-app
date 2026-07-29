@@ -19,6 +19,7 @@ import { entscheide, listeSignale, meldeSignal } from "../admin/moderationQueue.
 import { erfasseAnfrage, listeAnfragen, setzeStatus, verlaengereFrist } from "../admin/gdprRequests.js";
 import { erstelleAnkuendigung, listeAnkuendigungen, ziehZurueck } from "../admin/announcements.js";
 import { listFlags, upsertFlag } from "../admin/featureFlags.js";
+import { erfasseAufgabe, listeAufgaben, setzeAufgabenStatus } from "../admin/aufgaben.js";
 
 const PREFIX = "/api/admin";
 const gate = createRateLimiter({ capacity: 30, refillPerSec: 0.4, maxKeys: 5_000 });
@@ -27,7 +28,9 @@ const BEREICHE = Object.freeze({
   moderation: "users.block",
   gdpr: "users.block",
   announcements: "models.write",
-  flags: "models.write"
+  flags: "models.write",
+  // Betreiber-Aufgabenliste: wer den Betrieb steuert, fuehrt auch die Liste.
+  aufgaben: "models.write"
 });
 
 export async function handleAdminStage4Route(req, url, res, { env = process.env } = {}) {
@@ -61,6 +64,7 @@ export async function handleAdminStage4Route(req, url, res, { env = process.env 
     if (bereich === "gdpr") return await dsgvo(req, res, actor, teile, body, lesen, env), true;
     if (bereich === "announcements") return await ankuendigungen(req, res, actor, teile, body, lesen, env), true;
     if (bereich === "flags") return await flags(req, res, actor, teile, body, lesen, env), true;
+    if (bereich === "aufgaben") return await aufgaben(req, res, actor, teile, body, lesen, env), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {
@@ -190,6 +194,38 @@ async function flags(req, res, actor, teile, body, lesen, env) {
     await nachweis(actor, ergebnis.neu ? "flag.angelegt" : "flag.geaendert", ergebnis.after.name,
       ergebnis.before, ergebnis.after, grund, req, env);
     return privateJson(res, ergebnis.neu ? 201 : 200, { ok: true, ...ergebnis });
+  }
+  return privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
+}
+
+// ---- Y · Aufgaben ------------------------------------------------------------
+
+async function aufgaben(req, res, actor, teile, body, lesen, env) {
+  if (lesen && teile.length === 1) {
+    const liste = await listeAufgaben({ env });
+    if (!liste.ok) return privateJson(res, 503, { ok: false, error: liste.error });
+    return privateJson(res, 200, { ok: true, ...liste });
+  }
+  if (!lesen && teile[1] === "erfassen") {
+    const ergebnis = await erfasseAufgabe(body, { actor, env });
+    if (!ergebnis.ok) {
+      return privateJson(res, 400, { ok: false, error: ergebnis.error, hinweis: ergebnis.hinweis, erlaubt: ergebnis.erlaubt });
+    }
+    await nachweis(actor, "aufgabe.erfasst", ergebnis.aufgabe.id, null,
+      { titel: ergebnis.aufgabe.titel, bereich: ergebnis.aufgabe.bereich },
+      ergebnis.aufgabe.titel, req, env);
+    return privateJson(res, 201, { ok: true, aufgabe: ergebnis.aufgabe });
+  }
+  if (!lesen && teile[2] === "status") {
+    const ergebnis = await setzeAufgabenStatus(teile[1], body.status, { nachweis: body.nachweis, actor, env });
+    if (!ergebnis.ok) {
+      const status = ergebnis.error === "aufgabe_not_found" ? 404
+        : ergebnis.error === "aufgabe_no_change" ? 409 : 400;
+      return privateJson(res, status, { ok: false, error: ergebnis.error, hinweis: ergebnis.hinweis });
+    }
+    await nachweis(actor, "aufgabe.status", teile[1], ergebnis.before, ergebnis.after,
+      body.nachweis || `Stand: ${body.status}`, req, env);
+    return privateJson(res, 200, { ok: true, ...ergebnis });
   }
   return privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
 }

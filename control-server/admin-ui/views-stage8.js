@@ -1,0 +1,220 @@
+// smejj.com Operations Console — Ansichten der Stufe 8 (Produkt).
+//
+// Eigene Datei wegen der 800-Zeilen-Regel. Reine Funktionen, kein Zustand,
+// keine style="..."-Attribute (die eigene CSP verbietet sie).
+(function () {
+  "use strict";
+  const A = window.adminApi;
+  const V = window.adminViews;
+  const e = A.escapeHtml;
+  const pille = (t, ton) => '<span class="pill ' + (ton || "") + '">' + e(t) + "</span>";
+
+  function fehlerSeite(id, kurz, titel, unterzeile, meldung) {
+    return V.kopfBlock(id, kurz, titel, unterzeile)
+      + '<div class="note glass fehler"><div class="nx">▲</div><div>'
+      + '<div class="nt">Nicht lesbar</div><div class="ns">' + e(meldung || "") + "</div></div></div>";
+  }
+
+  // ---- S · Inhalte & Wissen ----------------------------------------------------
+
+  function wissen(d) {
+    if (d.ok === false) return fehlerSeite("S", "Wissen", "Inhalte & Wissen", "Was die Agenten lesen.", d.error);
+
+    const zeilen = (d.quellen || []).map(function (q) {
+      return '<tr><td><span class="mono">' + e(q.quelle) + "</span></td>"
+        + "<td>" + e(String(q.chunks)) + "</td>"
+        + "<td>" + e(Math.round(q.zeichen / 1000) + " k") + "</td>"
+        + "<td>" + (q.alterTage === null
+          ? '<span class="s">nicht messbar</span>'
+          : (q.alterTage >= (d.altAbTagen || 180) ? pille(q.alterTage + " T", "warn") : e(q.alterTage + " T")))
+        + "</td></tr>";
+    });
+
+    const hinweis = d.alterMessbar
+      ? ((d.alt || 0) > 0
+        ? '<div class="note glass fehler"><div class="nx">▲</div><div>'
+          + '<div class="nt">' + d.alt + " Dokument(e) seit über " + d.altAbTagen + " Tagen unberührt</div>"
+          + '<div class="ns">Ein Wissensstand, den niemand nachzieht, wird nicht falsch gemeldet — '
+          + "er veraltet still und färbt trotzdem jede Antwort.</div></div></div>"
+        : '<div class="note glass"><div class="nx">◆</div><div><div class="nt">Nichts liegt länger als '
+          + d.altAbTagen + " Tage brach</div>"
+          + '<div class="ns">' + e(d.hinweis || "") + "</div></div></div>")
+      : '<div class="note glass"><div class="nx">◆</div><div>'
+        + '<div class="nt">Das Alter ist hier nicht messbar — und wird deshalb nicht behauptet</div>'
+        + '<div class="ns">' + e(d.hinweis || "") + "</div></div></div>";
+
+    return V.kopfBlock("S", "Wissen", "Inhalte & Wissen",
+      "Was die Agenten tatsächlich lesen — und was davon alt ist.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Quellen", String(d.quellenGesamt || 0), "eingelesene Dokumente")
+      + V.kachelBlock("Abschnitte", String(d.chunksGesamt || 0), "durchsuchbare Stücke")
+      + V.kachelBlock("Umfang", Math.round((d.zeichenGesamt || 0) / 1000) + " k", "Zeichen insgesamt")
+      + V.kachelBlock("Unberührt", d.alterMessbar ? String(d.alt || 0) : "—",
+        d.alterMessbar ? "über " + d.altAbTagen + " Tage" : "Alter nicht messbar",
+        d.alterMessbar && (d.alt || 0) > 0 ? "dn" : "")
+      + "</div>"
+      + '<div class="stack">' + hinweis
+      + V.panelBlock("Quellen", e(d.sortierung || ""),
+        V.tabelleBlock(["Datei", "Abschnitte", "Zeichen", "Unberührt seit"], zeilen))
+      + "</div>";
+  }
+
+  // ---- T · Sprachen & Übersetzungen --------------------------------------------
+
+  function sprachen(d) {
+    if (d.ok === false) return fehlerSeite("T", "Sprachen", "Sprachen & Übersetzungen", "Was fehlt wo.", d.error);
+
+    const zeilen = (d.liste || []).map(function (s) {
+      return "<tr><td><b>" + e(s.code) + "</b></td>"
+        + "<td>" + (s.fehlend === 0
+          ? pille(s.abdeckungProzent + " %", "ok")
+          : pille(s.abdeckungProzent + " %", s.abdeckungProzent < 90 ? "bad" : "warn")) + "</td>"
+        + "<td>" + (s.fehlend > 0 ? pille(String(s.fehlend), "bad") : "—")
+        + (s.beispieleFehlend && s.beispieleFehlend.length
+          ? '<br><span class="s">' + e(s.beispieleFehlend.slice(0, 2).join(" · ")) + "</span>" : "")
+        + "</td>"
+        // Wortgleich faerbt bewusst NICHT: es ist oft richtig so.
+        + "<td>" + (s.wortgleich > 0 ? '<span class="s">' + e(String(s.wortgleich)) + "</span>" : "—")
+        + (s.beispieleWortgleich && s.beispieleWortgleich.length
+          ? '<br><span class="s">' + e(s.beispieleWortgleich.slice(0, 2).join(" · ")) + "</span>" : "")
+        + "</td>"
+        + "<td>" + e(String(s.eintraege)) + "</td></tr>";
+    });
+
+    const kaputt = (d.nichtLesbar || []).length
+      ? '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">' + d.nichtLesbar.length + " Sprachdatei(en) nicht ladbar</div>"
+        + '<div class="ns">' + e(d.nichtLesbar.map(function (n) { return n.code + ": " + n.grund; }).join(" · ")) + "</div></div></div>"
+      : "";
+
+    const hinweis = '<div class="note glass"><div class="nx">◆</div><div>'
+      + '<div class="nt">Nur „fehlt" ist ein Mangel</div>'
+      + '<div class="ns"><b>Fehlt</b> heißt: der Schlüssel steht gar nicht in der Datei — die Oberfläche '
+      + "zeigt dann deutschen Text mitten in einer fremden Sprache. <b>Wortgleich</b> heißt nur, dass der "
+      + "Wert dem deutschen Quelltext entspricht — das ist oft völlig richtig, weil Eigennamen und "
+      + "Fachbegriffe in vielen Sprachen genau so heißen. Es wird deshalb gezeigt, aber nicht als Lücke "
+      + "gezählt. " + e(d.hinweis || "") + "</div></div></div>";
+
+    return V.kopfBlock("T", "Sprachen", "Sprachen & Übersetzungen",
+      "Wo die Oberfläche noch deutsch ist, obwohl sie es nicht sein soll.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Sprachen", String(d.sprachen || 0), "neben " + e(d.quellsprache || "Deutsch"))
+      + V.kachelBlock("Schlüssel", String(d.schluesselGesamt || 0), "insgesamt bekannt")
+      + V.kachelBlock("Ohne Lücke", String(d.vollstaendig || 0), "kein Schlüssel fehlt", (d.vollstaendig || 0) > 0 ? "up" : "")
+      + V.kachelBlock("Mit Lücken", String(d.mitLuecken || 0), (d.mitLuecken || 0) > 0 ? "nacharbeiten" : "keine", (d.mitLuecken || 0) > 0 ? "dn" : "up")
+      + "</div>"
+      + '<div class="stack">' + kaputt + hinweis
+      + V.panelBlock("Sprachen", "schlechteste Abdeckung zuerst",
+        V.tabelleBlock(["Sprache", "Abdeckung", "Fehlt", "Wortgleich", "Einträge"], zeilen))
+      + "</div>";
+  }
+
+  // ---- X · Experimente ---------------------------------------------------------
+
+  function experimente(d) {
+    if (d.ok === false) return fehlerSeite("X", "Experimente", "Experimente", "Was gerade geteilt läuft.", d.error);
+
+    const zeilen = (d.experimente || []).map(function (x) {
+      const lange = (x.laeuftSeitTagen ?? 0) >= 90;
+      return "<tr><td><b>" + e(x.name) + "</b></td>"
+        + "<td>" + e(x.anteilProzent + " %") + "</td>"
+        + "<td>" + (x.testkonten > 0 ? e(String(x.testkonten)) : "—") + "</td>"
+        + "<td>" + (x.laeuftSeitTagen === null ? "—"
+          : lange ? pille(x.laeuftSeitTagen + " T", "warn") : e(x.laeuftSeitTagen + " T")) + "</td>"
+        + "<td>" + (x.unveraendertSeitTagen === null ? "—" : e(x.unveraendertSeitTagen + " T")) + "</td>"
+        + "<td>" + e(x.geaendertVon || "—") + "</td></tr>";
+    });
+
+    const ergebnis = '<div class="note glass"><div class="nx">◆</div><div>'
+      + '<div class="nt">Ergebnisse stehen hier bewusst nicht</div>'
+      + '<div class="ns">' + e(d.ergebnisHinweis || "") + "</div></div></div>";
+
+    const dauerlaeufer = (d.laengsteLaufzeitTage ?? 0) >= 90
+      ? '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">Ein Experiment läuft seit ' + d.laengsteLaufzeitTage + " Tagen</div>"
+        + '<div class="ns">Ein Experiment, das niemand beendet, ist kein Experiment mehr, sondern ein '
+        + "Dauerzustand, in dem ein Teil der Leute etwas anderes sieht als der Rest.</div></div></div>"
+      : "";
+
+    return V.kopfBlock("X", "Experimente", "Experimente",
+      "Was gerade nicht bei allen gleich ist.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Laufend", String(d.laufend || 0), "geteilt ausgerollt")
+      + V.kachelBlock("Ausgerollt", String(d.ausgerollt || 0), "für alle an")
+      + V.kachelBlock("Aus", String(d.aus || 0), "für alle aus")
+      + V.kachelBlock("Längste Laufzeit", d.laengsteLaufzeitTage === null ? "—" : d.laengsteLaufzeitTage + " T",
+        (d.laengsteLaufzeitTage ?? 0) >= 90 ? "beenden" : "unauffällig",
+        (d.laengsteLaufzeitTage ?? 0) >= 90 ? "dn" : "")
+      + "</div>"
+      + '<div class="stack">' + dauerlaeufer + ergebnis
+      + V.panelBlock("Laufende Experimente", "längste zuerst · geändert wird in Modul R",
+        V.tabelleBlock(["Flag", "Anteil", "Testkonten", "Läuft seit", "Unverändert", "Zuletzt von"], zeilen))
+      + "</div>";
+  }
+
+  // ---- Y · Aufgaben & Notizen --------------------------------------------------
+
+  function aufgaben(d) {
+    if (d.ok === false) return fehlerSeite("Y", "Aufgaben", "Aufgaben & Notizen", "Die Betreiberliste.", d.error);
+
+    const zeilen = (d.aufgaben || []).map(function (a) {
+      return "<tr><td><b>" + e(a.titel) + "</b>"
+        + (a.notiz ? '<br><span class="s">' + e(a.notiz) + "</span>" : "") + "</td>"
+        + "<td>" + pille(a.bereich, "dim") + "</td>"
+        + "<td>" + statusPille(a) + "</td>"
+        + "<td>" + e(a.zustaendig || "—") + "</td>"
+        + "<td>" + fristZelle(a) + "</td>"
+        + "<td>" + (a.nachweis ? e(a.nachweis) : "—") + "</td>"
+        + "<td>" + (a.abgeschlossen
+          ? "—"
+          : '<span class="act" data-aufgabeArbeit="' + e(a.id) + '">In Arbeit</span>'
+            + '<span class="act" data-aufgabeFertig="' + e(a.id) + '">Erledigt</span>'
+            + '<span class="act" data-aufgabeWeg="' + e(a.id) + '">Verwerfen</span>')
+        + "</td></tr>";
+    });
+
+    const warnung = (d.ueberfaellig || 0) > 0
+      ? '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">' + d.ueberfaellig + " Aufgabe(n) über der Frist</div>"
+        + '<div class="ns">Fristen sind selbst gesetzt — aber eine überschrittene Frist, die niemand '
+        + "sieht, ist keine Frist.</div></div></div>"
+      : '<div class="note glass"><div class="nx">◆</div><div><div class="nt">Nichts über der Frist</div>'
+        + '<div class="ns">' + e(d.hinweis || "") + "</div></div></div>";
+
+    return V.kopfBlock("Y", "Aufgaben", "Aufgaben & Notizen",
+      "Die Betreiber-Aufgabenliste im System statt in einer Datei.")
+      + '<div class="bar"><span class="btn" id="aufgabeNeu">Aufgabe erfassen</span></div>'
+      + '<div class="kpis">'
+      + V.kachelBlock("Offen", String(d.offen || 0), "noch zu tun")
+      + V.kachelBlock("Über der Frist", String(d.ueberfaellig || 0), (d.ueberfaellig || 0) > 0 ? "sofort ansehen" : "keine", (d.ueberfaellig || 0) > 0 ? "dn" : "up")
+      + V.kachelBlock("Ohne Zuständige", String(d.ohneZustaendige || 0), (d.ohneZustaendige || 0) > 0 ? "macht sonst niemand" : "alle zugeteilt", (d.ohneZustaendige || 0) > 0 ? "dn" : "up")
+      + V.kachelBlock("Insgesamt", String(d.total || 0), "inkl. erledigter")
+      + "</div>"
+      + '<div class="stack">' + warnung
+      + V.panelBlock("Aufgaben", "offene zuerst, darin die dringendsten",
+        V.tabelleBlock(["Aufgabe", "Bereich", "Stand", "Zuständig", "Frist", "Nachweis", ""], zeilen))
+      + "</div>";
+  }
+
+  function statusPille(a) {
+    if (a.status === "offen") return pille("offen", "warn");
+    if (a.status === "in_arbeit") return pille("in Arbeit", "warn");
+    if (a.status === "erledigt") return pille("erledigt", "ok");
+    if (a.status === "verworfen") return pille("verworfen", "dim");
+    return pille(a.status, "dim");
+  }
+
+  function fristZelle(a) {
+    if (!a.faelligAm) return "—";
+    const rest = a.restfristTage;
+    const datum = e(A.datum(a.faelligAm));
+    if (rest === null) return datum;
+    if (rest < 0) return pille(Math.abs(rest) + " T über", "bad") + '<br><span class="s">' + datum + "</span>";
+    if (rest <= 3) return pille(rest + " T", "warn") + '<br><span class="s">' + datum + "</span>";
+    return datum + '<br><span class="s">in ' + rest + " T</span>";
+  }
+
+  window.adminViewsStage8 = {
+    wissen: wissen, sprachen: sprachen, experimente: experimente, aufgaben: aufgaben
+  };
+})();
