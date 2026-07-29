@@ -1,11 +1,11 @@
-# Control Server: Umzug von Salad nach Zeabur — vorbereitet, nicht ausgerollt
+# Control Server: Umzug von Salad nach Zeabur — Dienst laeuft, Werte fehlen
 
 Stand: 2026-07-29 · Capsule `job_maus_token_zeabur_20260729`
 
 Der Betreiber hat entschieden: Salad wird schrittweise abgeloest, Zeabur ist
 Hauptserver. Der Control-Server `smejj-control` ist das letzte grosse Stueck auf
-Salad. Dieses Dokument haelt fest, was **fertig vorbereitet** ist, was **noch
-fehlt** und was der Umzug **kostet**.
+Salad. Dieses Dokument haelt fest, was **erledigt** ist, was **noch fehlt**
+und was der Umzug **kostet**.
 
 ## Status
 
@@ -14,9 +14,36 @@ fehlt** und was der Umzug **kostet**.
 | `Dockerfile.smejj-control` | fertig, im Repo-Wurzelverzeichnis |
 | `.dockerignore` fuer den Control-Server tauglich | erledigt (zweites Maus-Schema ergaenzt) |
 | Freigabe nach FREE_ONLY_MASTER_POLICY | **erteilt 2026-07-29** (Ausnahme 2) |
-| Zeabur-Dienst angelegt | siehe Ablauf unten |
+| Zeabur-Dienst angelegt | **ja, 2026-07-29** — `service-6a697bf60d0b094201bcc1ee` |
+| Erster Bau | **erfolgreich**, Bereitstellung "Running" |
 | Env-Werte im neuen Dienst | **offen — nur der Betreiber** |
+| Domain vergeben | nein (erst nach den Env-Werten sinnvoll) |
 | Frontend auf neue Adresse umgestellt | nein — braucht **Start-Lock-Freigabe** |
+
+### Was beim Anlegen gemessen wurde (2026-07-29)
+
+- Dienstname **muss** `smejj-control` heissen. Zeaburs Vorschlag war
+  `smejj.com-app` (aus dem Repo-Namen). Nur unter dem richtigen Namen greift
+  `Dockerfile.smejj-control`. Der Name wird im Dialog "Configure Build Plan"
+  gesetzt, **bevor** man auf Deploy klickt.
+- Die "Build Plan Preview" zeigt trotzdem weiter zbpack (nodejs, pnpm,
+  `pnpm build:i18n`, `pnpm start`). **Das ist nur eine Schaetzung** und kein
+  Grund abzubrechen: die Auswahl nach Dateinamen passiert erst im Bau.
+  Beleg, dass das Dockerfile gewonnen hat: Docker-Symbol am Dienst und
+  Abbildgroesse **81.689.535 Byte** — ein pnpm-Install-Bau waere ein
+  Vielfaches davon.
+- Branch `feature/auth-redesign-github-magiclink` waehlen, **nicht** `main`:
+  `main` hat im Arbeits-Repo eine getrennte Historie.
+- Der Dienst wurde bewusst **ohne Env-Werte** angelegt. Das ist gefahrlos,
+  weil der Control-Server ohne sie sauber startet statt in einen
+  Absturz-Kreislauf zu laufen (lokal gemessen, siehe Schritt 1 unten).
+- **Noch nicht bestaetigt:** ein Gesundheitsabruf von innerhalb des
+  Containers. Die Browser-Verbindung brach vorher ab. Die Kopfzeile des
+  Dienstes stand noch auf "Building", waehrend die Bereitstellung bereits
+  "Running" meldete — das ist erst geklaert, wenn Schritt 3 unten einmal
+  gelaufen ist.
+- Non-Regression direkt danach geprueft: `smejj-maus-engine` HTTP 200,
+  `smejj-chat-bridge` HTTP 200, Salad-Control HTTP 200, smejj.com HTTP 200.
 
 ## Was die Freigabe deckt — und was nicht
 
@@ -61,7 +88,8 @@ schriftliche Freigabe mit Dienst und Betrag**. Das ist hier ein sechster Dienst.
 > `smejj-control` auf dem bestehenden Zeabur-Server (Projekt "untitled",
 > 6 USD pro Monat, keine zusaetzlichen Kosten) frei.
 
-Ohne diesen Satz wird der Dienst nicht angelegt.
+**Erteilt am 2026-07-29** durch Wof Kadavanich; festgehalten in
+`docs/architecture/FREE_ONLY_MASTER_POLICY.md`, Ausnahme 2.
 
 ## Was sich beim Umzug zwingend mitaendert
 
@@ -84,15 +112,16 @@ Der Rollback ist bis zum letzten Schritt ein Frontend-Deploy zurueck.
 
 ## Ablauf in der Reihenfolge, die keinen Ausfall erzeugt
 
-1. **Dienst anlegen** (Zeabur-Portal, GitHub-App, Repo `SmejjCom/smejj.com-app`,
-   Branch `feature/auth-redesign-github-magiclink`). Zeabur waehlt
-   `Dockerfile.smejj-control` automatisch anhand des Dienstnamens.
+1. **Dienst anlegen** — ERLEDIGT am 2026-07-29 (Zeabur-Portal, GitHub-App,
+   Repo `SmejjCom/smejj.com-app`, Branch
+   `feature/auth-redesign-github-magiclink`). Zeabur waehlt
+   `Dockerfile.smejj-control` anhand des Dienstnamens.
    **Gemessen und wichtig:** Der Control-Server startet auch **ohne** gesetzte
    Env-Werte sauber durch — `/api/health` antwortet mit HTTP 200, die
    einzelnen Funktionen bleiben fail-closed aus. Es gibt also **keinen
    Absturz-Kreislauf**, der den geteilten 2-vCPU-Server belasten wuerde.
    Der Dienst darf daher gefahrlos vor den Env-Werten existieren.
-2. **Env-Werte eintragen** (nur Betreiber — Zugangsdaten). Mindestens:
+2. **Env-Werte eintragen** — OFFEN, nur Betreiber (Zugangsdaten). Mindestens:
    `SMEJJ_SESSION_SECRET`, `IDRIVE_E2_*`, `SMEJJ_MAUS_ENGINE_*`,
    `SMEJJ_GITHUB_LOGIN_*`. Am einfachsten aus der Salad-Gruppe
    `smejj-control` uebernehmen — dieselben Werte, damit sich beim Umzug
