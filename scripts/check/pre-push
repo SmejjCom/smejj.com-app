@@ -7,8 +7,30 @@
 # Er warnt und blockiert, er loescht nichts. Bewusst uebergehen:
 #   git push --no-verify
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
-[ -f "$ROOT/scripts/check/github_kostenfrei.sh" ] || exit 0
-sh "$ROOT/scripts/check/github_kostenfrei.sh" || {
+PRUEFER="$ROOT/scripts/check/github_kostenfrei.sh"
+
+# Linked worktrees teilen sich .git/hooks mit der Haupt-Arbeitskopie, haben
+# aber einen eigenen Checkout — steht der auf einem aelteren Commit, fehlt das
+# Pruefskript dort. Dann auf die Kopie der Haupt-Arbeitskopie zurueckfallen.
+# (Real gemessen 2026-07-29: ohne diesen Rueckfall winkte der Hook in beiden
+# .claude/worktrees/* stillschweigend jeden Push durch.)
+if [ ! -f "$PRUEFER" ]; then
+  COMMON=$(git rev-parse --git-common-dir 2>/dev/null || echo "")
+  case "$COMMON" in
+    "") ;;
+    /*) PRUEFER="$(dirname "$COMMON")/scripts/check/github_kostenfrei.sh" ;;
+    *)  PRUEFER="$(dirname "$ROOT/$COMMON")/scripts/check/github_kostenfrei.sh" ;;
+  esac
+fi
+
+# Nie stillschweigend durchwinken: ein fehlender Waechter muss auffallen.
+if [ ! -f "$PRUEFER" ]; then
+  echo "github_kostenfrei: Pruefskript nicht gefunden — dieser Push wurde NICHT geprueft." >&2
+  echo "  Erwartet unter scripts/check/github_kostenfrei.sh. Siehe docs/policy/GITHUB_KOSTENFREI.md" >&2
+  exit 0
+fi
+
+sh "$PRUEFER" || {
   echo ""
   echo "PUSH ABGEBROCHEN — docs/policy/GITHUB_KOSTENFREI.md" >&2
   exit 1
