@@ -5,6 +5,36 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-29] WEBSUCHE: ZWEI WEICHEN, EINE WAHRHEIT (job_websuche_selbstkorrektur_20260729)
+
+Commit `c476fd6`, Control-Server **Version 116**. Capsule:
+`docs/task-capsules/2026/07/job_websuche_selbstkorrektur_20260729/CAPSULE.md`.
+
+- **Befund:** "Schlagzeile ueber Berlin" loeste keine Suche aus, "Schlagzeilen"
+  schon — beide Wortlisten kannten nur die Plural-Vollform. Zweiter Fehler:
+  Ausloeser transliteriert notiert (`oeffnungszeiten`), Umlaut-Eingaben trafen
+  nie. **Fix: Normalisierung + Wortstaemme.**
+- **DIE WICHTIGSTE ERKENNTNIS:** Es gibt **zwei** Such-Weichen. Die in
+  `public/chat-bridge.js` entscheidet Schnellspur **oder** Control-Server.
+  Sagt sie nein, erreicht die Frage den Control-Server **nie** — ein Fix nur
+  dort ist wirkungslos. Live belegt: `x-smejj-bridge: chat-fast-lane`,
+  `groq:llama-3.1-8b-instant`. Das korrigiert `job_toolcalling_20260728`
+  ("Bridge muss gar nicht angefasst werden") — das gilt nur ohne Abzweigung.
+  `tests/websuche-absicht-gleichlauf.test.mjs` haelt beide Seiten jetzt gleich.
+- **Zweite Sicherung:** Werkzeug `web_suche` — uebersieht die Vorpruefung eine
+  Aktualitaetsfrage, sucht das Modell selbst. Die Systemanweisung wies es
+  vorher ausdruecklich an, bei fehlenden Daten aufzugeben.
+- **FALLE Salad-API:** Der PATCH braucht `{container:{environment_variables:…}}`.
+  Flach gesendet antwortet Salad **200 und aendert nichts** — stiller No-Op,
+  nur an der unveraenderten Version erkennbar. Nach jedem PATCH zurueklesen.
+- **MESSUNG gegen die eigene Vermutung:** Die Suche kostet nur 0,7–1,3 s, nicht
+  die vermuteten bis zu 24 s. Die ~8 s Mehrzeit einer Suchfrage entstehen am
+  **Modell** — ein paralleles Suchrennen bringt fast nichts, die naechste
+  Optimierung gehoert an den Modellpfad. Erste Token: 14,2 s mit Suche, 5,9 s
+  ohne (Budget 1,0 s, auf diesem Pfad schon vorher verfehlt).
+- **OFFEN (Blocker):** Bridge-Deploy braucht `ZEABUR_API_TOKEN` (Zugang, Rote
+  Liste, Betreiber). Bis dahin bleibt `Schlagzeile` in der Schnellspur.
+
 ### [2026-07-29] MAUS: ZWEI GETRENNTE URSACHEN, BEIDE VERMESSEN (job_maus_token_zeabur_20260729)
 
 Commits `6c322d2` + `a77febc`. Capsule:
