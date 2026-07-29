@@ -73,6 +73,7 @@
       sprachen: { id: "T", gruppe: "Produkt", name: "Sprachen", laden: lade("/api/admin/ops/sprachen", S.sprachen) },
       experimente: { id: "X", gruppe: "Produkt", name: "Experimente", laden: lade("/api/admin/ops/experimente", S.experimente) },
       email: { id: "V", gruppe: "Produkt", name: "E-Mail-Zustellung", laden: lade("/api/admin/ops/email", S.email) },
+      analytik: { id: "W", gruppe: "Produkt", name: "Analytik", laden: lade("/api/admin/ops/analytik?tage=14", S.analytik) },
       aufgaben: { id: "Y", gruppe: "Produkt", name: "Aufgaben & Notizen", laden: lade("/api/admin/aufgaben", S.aufgaben, aufgabenKnoepfe) }
     }
   };

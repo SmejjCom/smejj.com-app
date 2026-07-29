@@ -279,8 +279,13 @@
         + "registriert und nie bestätigt, hat den Link ignoriert oder nie bekommen. Ein Hinweis "
         + "ist kein Beweis.</div></div></div>";
 
+    // Die Überschrift wird aus dem Zustand abgeleitet, nicht festgeschrieben.
+    // Vorher stand hier fest „Es gibt kein Zustellprotokoll" — seit es eines
+    // gibt, wäre das eine Falschaussage direkt über der Tabelle, die es zeigt.
     const lueckenHinweis = '<div class="note glass"><div class="nx">◆</div><div>'
-      + '<div class="nt">Es gibt kein Zustellprotokoll</div>'
+      + '<div class="nt">' + (pr.erreichbar
+        ? "Protokolliert wird der Versand, nicht der Empfang"
+        : "Noch kein Eintrag im Zustellprotokoll") + "</div>"
       + '<div class="ns">' + e((d.nichtErfasst || {}).hinweis || "") + "</div></div></div>";
 
     return V.kopfBlock("V", "E-Mail", "E-Mail-Zustellung",
@@ -307,11 +312,115 @@
       + "</div>";
   }
 
+  // ---- W · Analytik ------------------------------------------------------------
+
+  function analytik(d) {
+    if (d.ok === false) return fehlerSeite("W", "Analytik", "Analytik", "Was tatsächlich passiert ist.", d.error);
+
+    const r = d.reihen || {};
+    const b = d.bestand || {};
+    const tage = d.tage || [];
+
+    // Ein Balken aus Blockzeichen statt aus CSS-Breiten: die eigene CSP verbietet
+    // style="..."-Attribute, und ein Balken, der die Zahl nur wiederholt, muss
+    // nicht schön sein — er muss stimmen.
+    const hoechst = Math.max(1, ...tage.map(function (t) {
+      return Math.max(t.registrierungen || 0, t.verwaltung || 0, t.mails || 0, t.laeufe || 0);
+    }));
+    const balken = function (wert) {
+      if (wert === null || wert === undefined) return '<span class="s">—</span>';
+      if (wert === 0) return '<span class="s">0</span>';
+      const laenge = Math.max(1, Math.round((wert / hoechst) * 10));
+      return e(String(wert)) + ' <span class="mono s">' + "█".repeat(laenge) + "</span>";
+    };
+
+    const tagZeilen = tage.map(function (t) {
+      return '<tr><td><span class="mono">' + e(t.tag) + "</span></td>"
+        + "<td>" + balken(t.laeufe) + "</td>"
+        + "<td>" + balken(t.registrierungen) + "</td>"
+        + "<td>" + balken(t.mails) + "</td>"
+        + "<td>" + balken(t.verwaltung) + "</td></tr>";
+    });
+
+    const reihenZeilen = [
+      ["Läufe", r.laeufe], ["Registrierungen", r.registrierungen],
+      ["Mailversand", r.mails], ["Verwaltung", r.verwaltung]
+    ].map(function (paar) {
+      const name = paar[0];
+      const reihe = paar[1] || {};
+      const stand = !reihe.erreichbar
+        ? pille("nicht erreichbar", "bad") + " " + e(reihe.grund || "")
+        : reihe.unvollstaendig
+          ? pille("Untergrenze", "warn") + " " + e(reihe.grundUnvollstaendig || "")
+          : pille("vollständig gelesen", "ok");
+      return "<tr><td><b>" + e(name) + "</b></td>"
+        + "<td>" + (reihe.erreichbar ? e(String(reihe.summeImZeitraum)) : "—") + "</td>"
+        + "<td>" + (reihe.erreichbar && reihe.ohneDatum ? e(String(reihe.ohneDatum)) : "0") + "</td>"
+        + "<td>" + e(reihe.quelle || "") + "</td>"
+        + "<td>" + stand + "</td></tr>";
+    });
+
+    const bestandZeilen = b.erreichbar
+      ? [
+        zeile("Konten", String(b.konten)),
+        zeile("davon bestätigt", String(b.bestaetigt)),
+        zeile("Aktive Sitzungen (jetzt)", String(b.aktiveSitzungenJetzt)),
+        zeile("Nach Rolle", Object.keys(b.nachRolle || {}).map(function (k) {
+          return k + ": " + b.nachRolle[k];
+        }).join(" · ")),
+        zeile("Nach Status", Object.keys(b.nachStatus || {}).map(function (k) {
+          return k + ": " + b.nachStatus[k];
+        }).join(" · "))
+      ]
+      : ["<tr><td><b>Bestand</b></td><td>" + pille("nicht lesbar", "bad") + " " + e(b.grund || "") + "</td></tr>"];
+
+    const luecken = (d.nichtGemessen && d.nichtGemessen.punkte || []).map(function (p) {
+      return "<tr><td><b>" + e(p.was) + "</b></td><td>" + e(p.warum) + "</td></tr>";
+    });
+
+    const schlimm = Object.keys(r).some(function (k) { return r[k] && r[k].erreichbar === false; });
+    const kopf = '<div class="note glass' + (schlimm ? " fehler" : "") + '">'
+      + '<div class="nx">' + (schlimm ? "▲" : "◆") + "</div><div>"
+      + '<div class="nt">' + e(d.bewertung || "") + "</div>"
+      + '<div class="ns">Ein „—" heißt: die Quelle war nicht lesbar. Eine 0 heißt: gemessen und leer. '
+      + "Diese beiden Dinge werden hier nie vermischt.</div></div></div>";
+
+    const grundsatz = '<div class="note glass"><div class="nx">◆</div><div>'
+      + '<div class="nt">Hier werden keine Besucher gezählt</div>'
+      + '<div class="ns">' + e((d.nichtGemessen || {}).hinweis || "") + "</div></div></div>";
+
+    return V.kopfBlock("W", "Analytik", "Analytik",
+      "Nur Spuren, die der Betrieb ohnehin hinterlässt — kein Tracking.")
+      + '<div class="kpis">'
+      + V.kachelBlock("Läufe", r.laeufe && r.laeufe.erreichbar ? String(r.laeufe.summeImZeitraum) : "—",
+        r.laeufe && r.laeufe.erreichbar ? "letzte " + d.zeitraumTage + " Tage" : "Kapseln nicht lesbar")
+      + V.kachelBlock("Registrierungen", r.registrierungen && r.registrierungen.erreichbar
+        ? String(r.registrierungen.summeImZeitraum) : "—",
+        r.registrierungen && r.registrierungen.unvollstaendig ? "Untergrenze" : "letzte " + d.zeitraumTage + " Tage",
+        r.registrierungen && r.registrierungen.unvollstaendig ? "dn" : "")
+      + V.kachelBlock("Konten", b.erreichbar ? String(b.konten) : "—", "Bestand jetzt")
+      + V.kachelBlock("Sitzungen", b.erreichbar ? String(b.aktiveSitzungenJetzt) : "—",
+        "Momentaufnahme, keine Reihe")
+      + "</div>"
+      + '<div class="stack">' + kopf
+      + V.panelBlock("Verlauf", "jüngster Tag zuerst · Balken relativ zum höchsten Wert",
+        V.tabelleBlock(["Tag", "Läufe", "Registrierungen", "Mails", "Verwaltung"], tagZeilen))
+      + V.panelBlock("Woher die Zahlen kommen", "und wie belastbar sie sind",
+        V.tabelleBlock(["Reihe", "Summe", "ohne Datum", "Quelle", "Stand"], reihenZeilen))
+      + V.panelBlock("Bestand", "Momentaufnahme aus dem Nutzer-Index",
+        V.tabelleBlock(["", ""], bestandZeilen))
+      + grundsatz
+      + V.panelBlock("Nicht gemessen", "was dieses System über Nutzung nicht weiß",
+        V.tabelleBlock(["Was fehlt", "Warum"], luecken))
+      + "</div>";
+  }
+
   function zeile(name, wert) {
     return "<tr><td><b>" + e(name) + "</b></td><td>" + e(wert) + "</td></tr>";
   }
 
   window.adminViewsStage8 = {
-    wissen: wissen, sprachen: sprachen, experimente: experimente, aufgaben: aufgaben, email: email
+    wissen: wissen, sprachen: sprachen, experimente: experimente, aufgaben: aufgaben,
+    email: email, analytik: analytik
   };
 })();

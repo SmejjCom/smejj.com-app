@@ -54,6 +54,7 @@ import { signGoogleAuthState, verifyGoogleAuthState, verifyGoogleIdToken } from 
 import { createGoogleAuthHandlers } from "./auth/googleAuthRoutes.js";
 import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
 import { mailerConfig } from "../control-server/src/auth/mailer.js";
+import { starteMailLogAufraeumen } from "../control-server/src/auth/mailLogJanitor.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
@@ -234,6 +235,11 @@ server.listen(config.port, listenHost, () => {
   console.log(`smejj.com Code MVP: http://${listenHost}:${config.port}`);
   console.log(`Sandbox: ${config.projectRoot}`);
 });
+
+// Zustellprotokoll: 90 Tage aufbewahren, danach loeschen — so vom Betreiber am
+// 2026-07-29 freigegeben. Der Taktgeber laeuft verzoegert an, haelt den Prozess
+// nicht wach und bleibt ohne Objektspeicher ganz aus.
+starteMailLogAufraeumen({ env: process.env });
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {

@@ -23,6 +23,7 @@ import { wissenUebersicht } from "../admin/opsWissen.js";
 import { sprachUebersicht } from "../admin/opsSprachen.js";
 import { experimentUebersicht } from "../admin/opsExperimente.js";
 import { emailUebersicht } from "../admin/opsEmail.js";
+import { analytikUebersicht } from "../admin/opsAnalytik.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -36,7 +37,7 @@ const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
   "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
-  "experimente", "email"
+  "experimente", "email", "analytik"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -76,6 +77,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "sprachen") return privateJson(res, 200, await sprachUebersicht()), true;
     if (bereich === "experimente") return privateJson(res, 200, await experimentUebersicht({ env })), true;
     if (bereich === "email") return privateJson(res, 200, await emailUebersicht({ env })), true;
+    if (bereich === "analytik") return privateJson(res, 200, await analytikUebersicht({ env, tage: tageAus(url) })), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {
@@ -84,6 +86,17 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     privateJson(res, 503, { ok: false, error: String(error?.message || "admin_unavailable").slice(0, 160) });
     return true;
   }
+}
+
+/**
+ * Zeitraum fuer Modul W. Wird bewusst NICHT hier geklemmt: analytikUebersicht
+ * entscheidet allein, was eine brauchbare Spanne ist — zwei Stellen mit je
+ * eigener Regel driften auseinander, und dann klemmt die Route auf 1, waehrend
+ * das Modul auf 14 zurueckfallen wollte.
+ */
+function tageAus(url) {
+  const roh = url.searchParams.get("tage");
+  return roh === null ? undefined : roh;
 }
 
 function grenze(url) {
