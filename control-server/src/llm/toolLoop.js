@@ -24,11 +24,13 @@
 
 import { filterSseEvent } from "./streamFilter.js";
 import { parseBrowserTarget, extractTitle } from "../routes/browserProxyRoutes.js";
+import { searchWeb, cleanSnippet } from "../../../src/search/webSearch.js";
 
 const MAX_ROUNDS = 3;
 const MAX_PAGE_CHARS = 6000;
 const PAGE_TIMEOUT_MS = 8000;
 const MAX_PAGE_BYTES = 2_000_000;
+const MAX_SUCHTREFFER = 6;
 
 /** Werkzeuge im OpenAI-Format. Weitere Werkzeuge sind ein zusaetzlicher Eintrag. */
 export const AGENT_TOOLS = Object.freeze([
@@ -45,6 +47,32 @@ export const AGENT_TOOLS = Object.freeze([
           url: { type: "string", description: "Vollstaendige https-Adresse, zum Beispiel https://imild.com/" }
         },
         required: ["url"]
+      }
+    }
+  }),
+  // Zweite Sicherung gegen "Ich habe keine Informationen" (Befund 2026-07-29):
+  // Die Vorpruefung shouldSearchWeb() kann eine Aktualitaetsfrage uebersehen.
+  // Dann muss das Modell selbst nachsuchen koennen, statt aufzugeben — genau so
+  // arbeiten fuehrende Assistenten. Die Beschreibung ist bewusst als Verbot
+  // formuliert, weil Modelle "du darfst" schwaecher gewichten als "nie ohne".
+  Object.freeze({
+    type: "function",
+    function: {
+      name: "web_suche",
+      description: "Sucht live im Internet und liefert die besten Treffer mit Titel, Adresse und Kurztext. "
+        + "Nutze das IMMER, wenn dir Fakten fehlen oder unsicher sind: Nachrichten, Schlagzeilen, Ereignisse, "
+        + "Preise, Kurse, Wetter, Oeffnungszeiten, Termine, Sportergebnisse, Software-Versionen. "
+        + "Antworte NIEMALS mit 'ich habe keine Informationen', 'ich bin nicht auf dem neuesten Stand' oder "
+        + "'ich kann dir dabei nicht helfen', ohne vorher web_suche aufgerufen zu haben.",
+      parameters: {
+        type: "object",
+        properties: {
+          anfrage: {
+            type: "string",
+            description: "Kurze Suchanfrage in der Sprache des Nutzers, zum Beispiel 'Schlagzeilen Berlin heute'."
+          }
+        },
+        required: ["anfrage"]
       }
     }
   })
@@ -177,16 +205,41 @@ function finishStream(res) {
 }
 
 /** Fuehrt ein Werkzeug aus. Unbekannte Werkzeuge werden abgelehnt (fail-closed). */
-export async function runAgentTool(call, { fetchImpl = fetch } = {}) {
+export async function runAgentTool(call, { fetchImpl = fetch, sucheImpl = searchWeb } = {}) {
   const name = call?.function?.name || "";
-  if (name !== "seite_lesen") return `Unbekanntes Werkzeug: ${name}`;
+  if (name !== "seite_lesen" && name !== "web_suche") return `Unbekanntes Werkzeug: ${name}`;
   let args;
   try {
     args = JSON.parse(call.function.arguments || "{}");
   } catch {
     return "Die Werkzeug-Argumente waren kein gueltiges JSON.";
   }
+  if (name === "web_suche") return sucheImWeb(String(args?.anfrage || ""), sucheImpl);
   return leseSeite(String(args?.url || ""), fetchImpl);
+}
+
+// Liefert die Treffer als nummerierte Liste mit Abrufzeit. Der Zeitstempel ist
+// Pflicht: ohne ihn kann das Modell die Aktualitaet nicht belegen und schreibt
+// "Stand unbekannt". Fail-safe: ein Fehler ergibt einen erklaerenden Text als
+// Werkzeugergebnis, nie einen Abbruch — das Modell kann darauf reagieren.
+async function sucheImWeb(anfrage, sucheImpl) {
+  const bereinigt = anfrage.trim();
+  if (!bereinigt) return "Leere Suchanfrage — bitte mit einem konkreten Suchbegriff erneut aufrufen.";
+  let treffer;
+  try {
+    treffer = await sucheImpl(bereinigt, { limit: MAX_SUCHTREFFER });
+  } catch (error) {
+    return `Die Suche ist fehlgeschlagen: ${String(error?.message || error).slice(0, 160)}`;
+  }
+  if (!Array.isArray(treffer) || treffer.length === 0) {
+    return `Keine Treffer fuer "${bereinigt}". Formuliere die Anfrage kuerzer oder mit anderen Stichworten.`;
+  }
+  const zeilen = treffer.map((eintrag, index) => {
+    const kurz = cleanSnippet(eintrag?.snippet || "");
+    const kopf = `${index + 1}. ${eintrag?.title || "(ohne Titel)"}\n   ${eintrag?.url || ""}`;
+    return kurz ? `${kopf}\n   ${kurz}` : kopf;
+  });
+  return [`Suchergebnisse fuer "${bereinigt}" (abgerufen ${new Date().toISOString()}):`, ...zeilen].join("\n");
 }
 
 // Nutzt bewusst parseBrowserTarget aus dem Browser-Proxy: dieselbe gepruefte

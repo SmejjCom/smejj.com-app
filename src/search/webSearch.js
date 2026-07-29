@@ -291,36 +291,11 @@ export async function fetchPageExcerpt(target) {
   return looksLikeProse(text) ? text : "";
 }
 
-// Reine Smalltalk-/Begruessungs-Eingaben brauchen keine Websuche.
-const SMALLTALK_PATTERN = /^(hi|hallo|hey|servus|moin|hey smejj|danke|dankeschoen|merci|ok|okay|alles klar|tschuess|tschuss|bye|ciao|gute nacht|guten morgen|guten tag)\b[\s!.?]*$/i;
-// Klare Coding-Absicht wird separat behandelt und braucht keine Websuche.
-const CODING_SKIP_PATTERN = /unified diff|\bpatch\b|\brefactor|\bdebug\b|\bstack ?trace\b/i;
-
-// Zeitkritische/veraenderliche Fakten -> Websuche ist Pflicht.
-const RECENCY_PATTERN = /\b(aktuell|aktuelle|aktuelles|aktuellen|aktueller|heute|heutige|heutigen|gestern|morgen|jetzt|gerade|momentan|derzeit|neu|neue|neuen|neueste|neuesten|letzte|letzten|live|news|nachrichten|schlagzeilen|wetter|temperatur|vorhersage|regen|schnee|sturm|preis|preise|kosten|kurs|kurse|aktie|aktien|bitcoin|wechselkurs|inflation|oeffnungszeit|oeffnungszeiten|fahrplan|verspaetung|spielstand|ergebnis|ergebnisse|tabelle|wahl|wahlen|umfrage|version|release|changelog|verfuegbar|stand|trend|trends)\b/i;
-// Jahres- oder Monatsbezug deutet auf eine Aktualitaetsfrage hin.
-const DATE_PATTERN = /\b(19|20)\d{2}\b|\b(januar|februar|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/i;
-// Nutzer verlangt ausdruecklich Quellen, Links oder eine Recherche.
-const EXPLICIT_SEARCH_PATTERN = /\b(quelle|quellen|beleg|belege|belegt|link|links|url|website|webseite|internet|google|recherche|recherchier|nachschlagen|zusammenfass)\b|\bsuch(e|en)\b/i;
-// Eine konkrete Adresse im Text soll immer live geholt werden.
-const URL_IN_TEXT_PATTERN = /https?:\/\/[^\s)]+/i;
-
-// smejj.com sucht wie fuehrende Assistenten NUR dann live im Internet, wenn die
-// Frage Aktualitaet, eine konkrete Adresse oder einen ausdruecklichen Beleg braucht.
-// Statisches Allgemeinwissen beantwortet das Modell direkt: schneller, guenstiger
-// und ohne unnoetigen Traffic. Fail-safe: im Zweifel keine Suche.
-export function shouldSearchWeb(task) {
-  const text = String(task || "").trim();
-  if (text.length < 3 || text.length > 400) return false;
-  if (text.includes(String.fromCharCode(96, 96, 96))) return false;
-  if (SMALLTALK_PATTERN.test(text)) return false;
-  if (CODING_SKIP_PATTERN.test(text)) return false;
-  if (URL_IN_TEXT_PATTERN.test(text)) return true;
-  if (EXPLICIT_SEARCH_PATTERN.test(text)) return true;
-  if (RECENCY_PATTERN.test(text)) return true;
-  if (DATE_PATTERN.test(text)) return true;
-  return false;
-}
+// Die Absichtserkennung (wann ueberhaupt gesucht wird) liegt in einem eigenen
+// Modul: sie ist reine Textlogik, dieses Modul macht Netzwerk-I/O. Getrennt,
+// weil die Absichtsregeln sich haeufig aendern und einzeln testbar bleiben
+// muessen (Single Responsibility). Re-Export haelt bestehende Importe gueltig.
+export { shouldSearchWeb, normalizeForIntent } from "./searchIntent.js";
 
 // Snippet aufraeumen: Pipe-/Menue-Ketten und Navigationsreste entschaerfen, kuerzen.
 // So bekommt das Modell weniger Roh-Ticker-Text zum Wiedergeben (bessere Zusammenfassung).

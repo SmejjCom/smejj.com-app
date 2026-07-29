@@ -39,11 +39,49 @@ test("ohne Freigabe-Flag werden keine Werkzeuge angeboten", () => {
 });
 
 test("Werkzeugbeschreibung ist vollstaendig und stabil", () => {
-  assert.equal(AGENT_TOOLS.length, 1);
-  const werkzeug = AGENT_TOOLS[0].function;
-  assert.equal(werkzeug.name, "seite_lesen");
-  assert.deepEqual(werkzeug.parameters.required, ["url"]);
-  assert.ok(werkzeug.description.length > 40, "das Modell braucht eine klare Anleitung");
+  assert.equal(AGENT_TOOLS.length, 2);
+  const namen = AGENT_TOOLS.map((eintrag) => eintrag.function.name);
+  assert.deepEqual(namen, ["seite_lesen", "web_suche"]);
+  const seite = AGENT_TOOLS[0].function;
+  assert.equal(seite.name, "seite_lesen");
+  assert.deepEqual(seite.parameters.required, ["url"]);
+  assert.ok(seite.description.length > 40, "das Modell braucht eine klare Anleitung");
+  const suche = AGENT_TOOLS[1].function;
+  assert.deepEqual(suche.parameters.required, ["anfrage"]);
+  // Der Verbotssatz ist die eigentliche Wirkung des Werkzeugs (Befund 2026-07-29):
+  // ohne ihn antwortet das Modell weiter mit "ich habe keine Informationen".
+  assert.ok(/NIEMALS/.test(suche.description), "Aufgeben ohne Suche muss ausdruecklich verboten sein");
+});
+
+// Zweite Sicherung gegen "Ich habe keine Informationen" (Befund 2026-07-29).
+test("web_suche liefert nummerierte Treffer mit Abrufzeit", async () => {
+  const ergebnis = await runAgentTool(
+    { function: { name: "web_suche", arguments: '{"anfrage":"Schlagzeilen Berlin"}' } },
+    {
+      sucheImpl: async (anfrage, optionen) => {
+        assert.equal(anfrage, "Schlagzeilen Berlin");
+        assert.equal(optionen.limit, 6);
+        return [{ title: "Berlin aktuell", url: "https://www.tagesschau.de/berlin", snippet: "Meldung | Berlin | heute" }];
+      }
+    }
+  );
+  assert.ok(ergebnis.includes("1. Berlin aktuell"));
+  assert.ok(ergebnis.includes("https://www.tagesschau.de/berlin"));
+  assert.ok(ergebnis.includes("Meldung - Berlin - heute"), "Snippet muss durch cleanSnippet laufen");
+  assert.ok(/abgerufen \d{4}-\d{2}-\d{2}T/.test(ergebnis), "ohne Abrufzeit kann das Modell den Stand nicht belegen");
+});
+
+test("web_suche bleibt fail-safe bei leerer Anfrage, Nulltreffern und Fehlern", async () => {
+  const leer = await runAgentTool({ function: { name: "web_suche", arguments: '{"anfrage":"  "}' } }, { sucheImpl: async () => [] });
+  assert.match(leer, /Leere Suchanfrage/);
+  const keine = await runAgentTool({ function: { name: "web_suche", arguments: '{"anfrage":"xyzq"}' } }, { sucheImpl: async () => [] });
+  assert.match(keine, /Keine Treffer/);
+  const kaputt = await runAgentTool(
+    { function: { name: "web_suche", arguments: '{"anfrage":"test"}' } },
+    { sucheImpl: async () => { throw new Error("Netz weg"); } }
+  );
+  assert.match(kaputt, /Suche ist fehlgeschlagen/);
+  assert.ok(!/undefined/.test(kaputt));
 });
 
 test("normale Antwort ohne Werkzeug laeuft unveraendert durch", async () => {

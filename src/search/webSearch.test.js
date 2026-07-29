@@ -2,7 +2,7 @@
 // Ausfuehren: node --test src/search/webSearch.test.js
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isSafePublicUrl, isAdOrRedirectUrl, shouldSearchWeb, searchWeb, clearSearchCache, parseSearxngResults, looksLikeProse, cleanSnippet, resolveBingLink, parseBingHtml } from "./webSearch.js";
+import { isSafePublicUrl, isAdOrRedirectUrl, shouldSearchWeb, searchWeb, clearSearchCache, parseSearxngResults, looksLikeProse, cleanSnippet, resolveBingLink, parseBingHtml, normalizeForIntent } from "./webSearch.js";
 import { createTtlCache } from "./searchCache.js";
 import { createRateLimiter } from "../shared/rateLimiter.js";
 
@@ -59,6 +59,39 @@ test("shouldSearchWeb ignoriert Smalltalk, Coding-Aufgaben und Codebloecke", () 
   assert.equal(shouldSearchWeb("Hallo"), false);
   assert.equal(shouldSearchWeb("danke!"), false);
   assert.equal(shouldSearchWeb("ok"), false);
+});
+
+// Regressionstest zum Live-Befund vom 2026-07-29: Singular loeste keine Suche
+// aus, Plural schon. Ursache war eine Liste aus Vollformen statt Wortstaemmen.
+test("shouldSearchWeb trifft bei Singular UND Plural (Befund Schlagzeile)", () => {
+  assert.equal(shouldSearchWeb("kannst du Schlagzeile ueber Berlin mir hier schreiben"), true);
+  assert.equal(shouldSearchWeb("kannst du Schlagzeilen ueber Berlin mir hier schreiben"), true);
+  assert.equal(shouldSearchWeb("Nachricht aus Hamburg"), true);
+  assert.equal(shouldSearchWeb("Nachrichten aus Hamburg"), true);
+  assert.equal(shouldSearchWeb("Neueste Meldung zum Streik"), true);
+});
+
+// Zweiter Teil desselben Befunds: Auslöser waren transliteriert notiert
+// (oeffnungszeiten/verspaetung) und konnten bei echter Umlaut-Eingabe nie feuern.
+test("shouldSearchWeb trifft mit echten Umlauten genauso wie transliteriert", () => {
+  assert.equal(shouldSearchWeb("Was sind die Öffnungszeiten vom Zoo Berlin"), true);
+  assert.equal(shouldSearchWeb("Was sind die Oeffnungszeiten vom Zoo Berlin"), true);
+  assert.equal(shouldSearchWeb("Gibt es eine Verspätung bei der S-Bahn"), true);
+  assert.equal(shouldSearchWeb("Gibt es eine Verspaetung bei der S-Bahn"), true);
+  assert.equal(shouldSearchWeb("Störung bei der Deutschen Bahn?"), true);
+});
+
+test("normalizeForIntent macht Umlaute und Akzente vergleichbar", () => {
+  assert.equal(normalizeForIntent("Öffnungszeiten Café Straße"), "oeffnungszeiten cafe strasse");
+  assert.equal(normalizeForIntent("Verspätung ÜBER"), "verspaetung ueber");
+  assert.equal(normalizeForIntent(""), "");
+});
+
+// Wortstaemme duerfen nicht in fremde Woerter hineintreffen.
+test("shouldSearchWeb erzeugt keine Fehltreffer bei aehnlichen Woertern", () => {
+  assert.equal(shouldSearchWeb("Ich war letztes Jahr in Neuseeland"), false);
+  assert.equal(shouldSearchWeb("Er hat viel Verstand bewiesen"), false);
+  assert.equal(shouldSearchWeb("Write such a function for me"), false);
 });
 
 test("parseSearxngResults filtert Ads/private Ziele und begrenzt", () => {

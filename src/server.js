@@ -36,7 +36,7 @@ import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/sr
 import { createRateLimiter } from "./shared/rateLimiter.js";
 import { classifyProfile, executeWithFallback, resolveModelRequest } from "../control-server/src/llm/modelRouter.js";
 import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability.js";
-import { streamWithTools, withAgentTools } from "../control-server/src/llm/streamFilter.js";
+import { streamWithTools, withAgentTools, agentToolsEnabled } from "../control-server/src/llm/streamFilter.js";
 import { localAssistantStream } from "../control-server/src/llm/localAssistant.js";
 import { chatThinkingMode } from "./ai/chatThinkingPolicy.js";
 import { chatReasoningEffort } from "./ai/reasoningEffortPolicy.js";
@@ -514,7 +514,13 @@ async function handleAgent(req, res) {
     systemLines = [
       "Du bist der Assistent von smejj.com.",
       "Beantworte die Frage hilfreich, korrekt und kompakt in der Sprache des Nutzers.",
-      "Wenn dir fuer tagesaktuelle Fakten (Wetter, News, Preise, Oeffnungszeiten) aktuelle Daten fehlen, sage das ehrlich statt zu raten."
+      // Befund 2026-07-29: Diese Stelle wies das Modell frueher an, bei fehlenden
+      // Daten schlicht "das weiss ich nicht" zu antworten. Genau diese Antwort hat
+      // der Betreiber im Live-Chat gesehen. Steht ein Suchwerkzeug bereit, ist
+      // Aufgeben keine erlaubte Option mehr — erst suchen, dann antworten.
+      agentToolsEnabled(process.env)
+        ? "Fehlen dir tagesaktuelle Fakten (Nachrichten, Schlagzeilen, Wetter, Preise, Oeffnungszeiten, Termine, Versionen), dann rufe zuerst das Werkzeug web_suche auf und antworte danach mit den gefundenen Angaben samt Quelle. Antworte nie mit 'ich habe keine Informationen' oder 'ich bin nicht auf dem neuesten Stand', ohne vorher gesucht zu haben."
+        : "Wenn dir fuer tagesaktuelle Fakten (Wetter, News, Preise, Oeffnungszeiten) aktuelle Daten fehlen, sage das ehrlich statt zu raten."
     ];
   }
   systemLines.push(
