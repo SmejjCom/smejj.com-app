@@ -244,6 +244,25 @@
       })
       : [];
 
+    const pr = d.versandprotokoll || {};
+    const protokollZeilen = pr.erreichbar
+      ? (pr.letzte || []).map(function (x) {
+        return '<tr><td><span class="mono">' + e(A.zeit(x.am)) + "</span></td>"
+          + "<td>" + e(x.empfaenger) + "</td>"
+          + "<td>" + (x.verlassen ? pille("verlassen", "ok") : pille("gescheitert", "bad")) + "</td>"
+          + "<td>" + e(x.grund || "—") + "</td></tr>";
+      })
+      : [];
+
+    const protokollBlock = pr.erreichbar
+      ? V.panelBlock("Versandprotokoll",
+        pr.versendet + " Mails in " + pr.zeitraumTage + " Tagen · Aufbewahrung " + pr.aufbewahrungTage + " Tage",
+        V.tabelleBlock(["Zeit", "Empfänger", "Server verlassen", "Grund"], protokollZeilen))
+      : V.panelBlock("Versandprotokoll", "noch keine Einträge",
+        V.tabelleBlock(["", ""], [
+          "<tr><td><b>Protokoll</b></td><td>" + pille("keine Einträge", "dim") + " " + e(pr.grund || "") + "</td></tr>"
+        ]));
+
     const luecken = (d.nichtErfasst && d.nichtErfasst.punkte || []).map(function (p) {
       return "<tr><td><b>" + e(p.was) + "</b></td><td>" + e(p.warum) + "</td></tr>";
     });
@@ -273,11 +292,13 @@
         k.erreichbar ? "aktive Konten" : "Verzeichnis nicht lesbar")
       + V.kachelBlock("Davon frisch", k.erreichbar ? String(k.unbestaetigtHeuteOderGestern || 0) : "—",
         "letzte 24 Stunden", (k.unbestaetigtHeuteOderGestern || 0) >= 3 ? "dn" : "")
-      + V.kachelBlock("Ältester Fall", k.erreichbar && k.aeltesteTage !== null ? k.aeltesteTage + " T" : "—",
-        "seit der Registrierung")
+      + V.kachelBlock("Gescheiterter Versand", pr.erreichbar ? String(pr.gescheitert || 0) : "—",
+        pr.erreichbar ? "gemessen, letzte " + pr.zeitraumTage + " Tage" : "noch kein Protokoll",
+        pr.erreichbar && (pr.gescheitert || 0) > 0 ? "dn" : "")
       + "</div>"
       + '<div class="stack">' + kopf
       + V.panelBlock("Versand", "gemessen aus der Umgebung", versandBlock)
+      + protokollBlock
       + V.panelBlock("Unbestätigte Konten", k.erreichbar ? "älteste zuerst" : "Verzeichnis nicht lesbar",
         V.tabelleBlock(["Konto", "Offen seit", "Registriert"], kontoZeilen))
       + lueckenHinweis

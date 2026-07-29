@@ -116,6 +116,56 @@ export async function signedS3Put({
   };
 }
 
+/**
+ * Loescht EIN Objekt. Bewusst nackt und ohne jede Bequemlichkeit: kein
+ * Praefix-Loeschen, kein Batch, keine Rekursion. Wer loescht, soll genau ein
+ * Objekt benennen muessen.
+ *
+ * WICHTIG: Diese Funktion kennt keine Regeln darueber, WAS geloescht werden
+ * darf — das ist Aufgabe des Aufrufers. Der Daten-Lock von smejj.com verlangt
+ * fuer jede Loeschung eine schriftliche Freigabe; der einzige heutige Aufrufer
+ * (mailDeliveryLog.js) prueft deshalb selbst, dass der Schluessel im
+ * freigegebenen Bereich liegt. Kommt ein zweiter Aufrufer dazu, muss er
+ * dasselbe tun.
+ */
+export async function signedS3Delete({
+  endpoint, region, accessKey, secretKey, bucket, key, fetchImpl = fetch, timeoutMs
+}) {
+  const endpointUrl = new URL(endpoint);
+  const host = endpointUrl.host;
+  const method = "DELETE";
+  const canonicalUri = `/${bucket}/${encodeS3Key(key)}`;
+  const { amzDate, dateStamp } = getS3Dates(new Date());
+  const payloadHash = crypto.createHash("sha256").update("").digest("hex");
+  const canonicalHeaders = [
+    `host:${host}`,
+    `x-amz-content-sha256:${payloadHash}`,
+    `x-amz-date:${amzDate}`,
+    ""
+  ].join("\n");
+  const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
+  const canonicalRequest = [method, canonicalUri, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const algorithm = "AWS4-HMAC-SHA256";
+  const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
+  const stringToSign = [algorithm, amzDate, credentialScope, crypto.createHash("sha256").update(canonicalRequest).digest("hex")].join("\n");
+  const signature = hmac(signingKey(secretKey, dateStamp, region), stringToSign, "hex");
+  const authorization = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  const response = await fetchImpl(`${endpoint.replace(/\/$/, "")}${canonicalUri}`, {
+    method,
+    signal: requestTimeoutSignal(timeoutMs),
+    headers: {
+      Authorization: authorization,
+      "x-amz-content-sha256": payloadHash,
+      "x-amz-date": amzDate
+    }
+  });
+  // S3 antwortet auf DELETE mit 204, auch wenn das Objekt nicht existierte.
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`IDrive e2 delete failed for ${key}: ${response.status}`);
+  }
+  return { ok: true, key, status: response.status };
+}
+
 export async function signedS3Get({
   endpoint, region, accessKey, secretKey, bucket, key, fetchImpl = fetch, timeoutMs,
   allowNotFound = false, responseType = "text"

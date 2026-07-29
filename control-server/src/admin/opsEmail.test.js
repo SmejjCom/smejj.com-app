@@ -21,6 +21,8 @@ const SMTP = Object.freeze({
 });
 
 const LEER = async () => ({ ok: true, entries: [] });
+// Kein Protokoll vorhanden: der Standardfall in den meisten Tests.
+const OHNE_PROTOKOLL = async () => ({ ok: false, error: "speicher_nicht_eingerichtet", eintraege: [] });
 
 function konto(felder = {}) {
   return {
@@ -30,7 +32,7 @@ function konto(felder = {}) {
 }
 
 test("WEDER PASSWORT NOCH SMTP-BENUTZER VERLASSEN DAS MODUL", async () => {
-  const e = await emailUebersicht({ env: SMTP, jetztMs: JETZT, leseIndex: LEER });
+  const e = await emailUebersicht({ env: SMTP, jetztMs: JETZT, leseIndex: LEER, leseProtokoll: OHNE_PROTOKOLL });
   const text = JSON.stringify(e);
   assert.equal(text.includes(SMTP.SMEJJ_SMTP_PASS), false, "das Passwort darf nirgends auftauchen");
   assert.equal(text.includes(SMTP.SMEJJ_SMTP_USER), false, "auch der SMTP-Benutzer nicht");
@@ -41,7 +43,7 @@ test("WEDER PASSWORT NOCH SMTP-BENUTZER VERLASSEN DAS MODUL", async () => {
 });
 
 test("KEINE ERFUNDENE ZUSTELLQUOTE", async () => {
-  const e = await emailUebersicht({ env: SMTP, jetztMs: JETZT, leseIndex: LEER });
+  const e = await emailUebersicht({ env: SMTP, jetztMs: JETZT, leseIndex: LEER, leseProtokoll: OHNE_PROTOKOLL });
 
   // Geprueft werden FELDER, nicht Prosa: der Hinweistext darf das Wort
   // "Zustellquote" nennen — er erklaert ja gerade, dass es keine gibt. Ein
@@ -58,11 +60,41 @@ test("KEINE ERFUNDENE ZUSTELLQUOTE", async () => {
   assert.deepEqual(verdaechtig, [], "kein Feld, das eine Zustellmessung vortaeuscht");
 
   assert.equal(e.nichtErfasst.punkte.length, NICHT_ERFASST.length);
-  assert.equal(e.nichtErfasst.hinweis.includes("waere erfunden"), true);
+  // Seit dem Zustellprotokoll ist "Zustellung je Mail" KEINE Luecke mehr —
+  // was offen bleibt, ist der Weg NACH dem Server.
+  assert.equal(e.nichtErfasst.punkte.some((p) => /Bounce/i.test(p.was)), true);
+  assert.equal(e.nichtErfasst.hinweis.includes("kein Rueckkanal") || e.nichtErfasst.hinweis.includes("keinen Rueckkanal"), true);
+});
+
+test("DAS PROTOKOLL SCHLAEGT DEN HINWEIS — gemessen vor gefolgert", async () => {
+  const e = await emailUebersicht({
+    env: SMTP, jetztMs: JETZT,
+    leseIndex: async () => ({ ok: true, entries: [konto()] }),
+    leseProtokoll: async () => ({
+      ok: true, total: 5, zugestellt: 3, fehlgeschlagen: 2, zeitraumTage: 14, aufbewahrungTage: 90,
+      eintraege: [{ am: "2026-07-29T10:00:00.000Z", empfaenger: "a@example.de", zugestellt: false, grund: "smtp_unexpected_status:550" }]
+    })
+  });
+  assert.equal(e.versandprotokoll.erreichbar, true);
+  assert.equal(e.versandprotokoll.gescheitert, 2);
+  assert.equal(e.bewertung.includes("NICHT verlassen"), true);
+  assert.equal(e.bewertung.includes("gemessen"), true, "der Unterschied zum Hinweis gehoert in den Satz");
+});
+
+test("das Protokoll gibt nur Kopfdaten heraus, nie den Mailtext", async () => {
+  const e = await emailUebersicht({
+    env: SMTP, jetztMs: JETZT, leseIndex: LEER,
+    leseProtokoll: async () => ({
+      ok: true, total: 1, zugestellt: 1, fehlgeschlagen: 0, zeitraumTage: 14, aufbewahrungTage: 90,
+      eintraege: [{ am: "2026-07-29T10:00:00.000Z", empfaenger: "a@example.de", betreff: "Bestaetigung", zugestellt: true, grund: null, text: "GEHEIMER ANMELDELINK" }]
+    })
+  });
+  assert.equal(JSON.stringify(e).includes("GEHEIMER ANMELDELINK"), false);
+  assert.deepEqual(Object.keys(e.versandprotokoll.letzte[0]).sort(), ["am", "betreff", "empfaenger", "grund", "verlassen"]);
 });
 
 test("nicht eingerichteter Versand ist der wichtigste Befund", async () => {
-  const e = await emailUebersicht({ env: {}, jetztMs: JETZT, leseIndex: LEER });
+  const e = await emailUebersicht({ env: {}, jetztMs: JETZT, leseIndex: LEER, leseProtokoll: OHNE_PROTOKOLL });
   assert.equal(e.versand.eingerichtet, false);
   assert.equal(e.versand.zugangsdatenGesetzt, false);
   assert.equal(e.bewertung.includes("NICHT eingerichtet"), true);
@@ -72,17 +104,17 @@ test("nicht eingerichteter Versand ist der wichtigste Befund", async () => {
 test("eine unvollstaendige Konfiguration gilt als nicht eingerichtet", async () => {
   // mailerConfig ist fail-closed: fehlt ein Teil, wird gar nichts verschickt.
   const e = await emailUebersicht({
-    env: { ...SMTP, SMEJJ_SMTP_PASS: "" }, jetztMs: JETZT, leseIndex: LEER
+    env: { ...SMTP, SMEJJ_SMTP_PASS: "" }, jetztMs: JETZT, leseIndex: LEER, leseProtokoll: OHNE_PROTOKOLL
   });
   assert.equal(e.versand.eingerichtet, false);
 });
 
 test("die Verschluesselung wird aus dem Port abgeleitet und benannt", async () => {
-  const implizit = await emailUebersicht({ env: SMTP, jetztMs: JETZT, leseIndex: LEER });
+  const implizit = await emailUebersicht({ env: SMTP, jetztMs: JETZT, leseIndex: LEER, leseProtokoll: OHNE_PROTOKOLL });
   assert.equal(implizit.versand.verschluesselung.includes("465"), true);
 
   const starttls = await emailUebersicht({
-    env: { ...SMTP, SMEJJ_SMTP_PORT: "587" }, jetztMs: JETZT, leseIndex: LEER
+    env: { ...SMTP, SMEJJ_SMTP_PORT: "587" }, jetztMs: JETZT, leseIndex: LEER, leseProtokoll: OHNE_PROTOKOLL
   });
   assert.equal(starttls.versand.verschluesselung.includes("STARTTLS"), true);
 });

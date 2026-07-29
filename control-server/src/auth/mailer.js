@@ -6,6 +6,7 @@
 //   SMEJJ_SMTP_HOST, SMEJJ_SMTP_PORT (465=implizites TLS, 587=STARTTLS),
 //   SMEJJ_SMTP_USER, SMEJJ_SMTP_PASS, SMEJJ_SMTP_FROM
 import net from "node:net";
+import { protokolliereVersand } from "./mailDeliveryLog.js";
 import tls from "node:tls";
 
 const COMMAND_TIMEOUT_MS = 15_000;
@@ -20,17 +21,26 @@ export function mailerConfig(env = process.env) {
   return { host, port, user, pass, from, implicitTls: port === 465 };
 }
 
-export async function sendAuthMail({ to, subject, text }, env = process.env, transport = smtpSend) {
+export async function sendAuthMail({ to, subject, text, art = "" }, env = process.env, transport = smtpSend) {
   const cfg = mailerConfig(env);
   if (!cfg) return { sent: false, reason: "email_delivery_unconfigured" };
   const recipient = String(to || "").trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(recipient)) return { sent: false, reason: "recipient_invalid" };
+  let ergebnis;
   try {
     await transport(cfg, buildMessage({ from: cfg.from, to: recipient, subject, text }), recipient);
-    return { sent: true };
+    ergebnis = { sent: true };
   } catch (error) {
-    return { sent: false, reason: sanitizeError(error) };
+    ergebnis = { sent: false, reason: sanitizeError(error) };
   }
+  // Nachweis, keine Voraussetzung: das Protokoll wirft nie und wird bewusst
+  // NICHT abgewartet-mit-Konsequenz. Ob eine Registrierung klappt, darf nicht
+  // davon abhaengen, dass ein Logeintrag gelingt (Freigabe 2026-07-29).
+  await protokolliereVersand(
+    { to: recipient, subject, sent: ergebnis.sent, reason: ergebnis.reason, art },
+    { env }
+  ).catch(() => {});
+  return ergebnis;
 }
 
 function buildMessage({ from, to, subject, text }) {
