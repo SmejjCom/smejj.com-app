@@ -23,6 +23,49 @@ Durchgesetzt wird diese Regel maschinell durch
 
 Es laeuft heute keine einzige GitHub Action. **Kosten heute: 0,00 €.**
 
+## 1b. Nachweis aus der GitHub-Rechnung (abgelesen 2026-07-29, eingeloggt)
+
+`Settings → Billing`, Zeitraum 1.–31. Juli 2026:
+
+```
+Gross metered usage      $10.47
+Discounts              - $10.47
+Billable usage             $0        <- das ist die Zahl, die zaehlt
+Actions minutes         0 min used / 2.000 min included
+Actions storage         0 GB used / 0,5 GB included
+```
+
+In der Tagesaufstellung steht bei **jedem** der 22 Tage mit Verbrauch
+`Billed amount $0`. Verbrauch nach Repo: `smejj-app-frontend` $10,21,
+`smejj-control` $0,23, `smejj-site` $0,02, `smejj.com-app` unter $0,01.
+
+Der Verbrauch von $10,47 entsteht durch **GitHub-Pages-Bauten**: Pages laeuft
+intern auf Actions. Er ist vollstaendig rabattiert, weil die drei betroffenen
+Repos oeffentlich sind (per API geprueft: alle drei HTTP 200).
+
+### Zweite Schutzschicht: die Konten-Budgets stehen bereits auf 0
+
+`Settings → Billing → Budgets and alerts` — fuenf Budgets, alle **$0 mit
+"Stop usage: Yes"**, plus "Included usage alerts: On":
+
+| Produkt | Budget | Stop usage |
+| --- | --- | --- |
+| Actions | $0 | ja |
+| Packages | $0 | ja |
+| Codespaces | $0 | ja |
+| Git LFS | $0 | ja |
+| All AI Credit SKUs | $0 | ja |
+
+**Diese Budgets nicht anfassen.** Sie sind der Notaus: selbst wenn der
+Pre-Push-Hook umgangen wird (Web-Editor, fremder Rechner, `--no-verify`),
+stoppt GitHub die Nutzung, bevor ein Cent anfaellt. Der Hook verhindert den
+Fehler, die Budgets begrenzen den Schaden — beide werden gebraucht.
+
+Empirisch belegt, dass die Budgets nichts kaputt machen: sie stehen den
+ganzen Juli auf $0, und die Pages-Bauten des Frontends liefen trotzdem
+durch ($10,21 Verbrauch, $0 berechnet). Rabattierter Verbrauch in
+oeffentlichen Repos zaehlt nicht gegen ein Ausgabenbudget.
+
 ## 2. Preislogik GitHub Free (Stand 2026)
 
 - **Oeffentliche Repos**: Actions unbegrenzt kostenlos, Git-Hosting kostenlos,
@@ -119,15 +162,47 @@ Job in einen bezahlten Actions-Lauf verwandeln.
 
 ---
 
+## 7b. Regel E — Diese drei Repos muessen oeffentlich bleiben
+
+`SmejjCom/smejj-app-frontend`, `SmejjCom/smejj-control`, `SmejjCom/smejj-site`.
+
+**Warum das Geld spart:** Ihr gesamter Actions-Verbrauch — im Juli 2026
+$10,46, praktisch alles Pages-Bauten — ist nur deshalb kostenlos, weil sie
+oeffentlich sind. Wuerde eines davon auf privat gestellt, faellt der Rabatt
+sofort weg. Das Actions-Budget steht auf $0 mit hartem Stopp, es entstuenden
+also **keine Kosten, sondern ein Ausfall**: GitHub wuerde die Pages-Bauten
+anhalten und smejj.com bekaeme keine Aktualisierungen mehr. Der Fehler saehe
+nicht wie eine Kostenfrage aus, sondern wie eine kaputte Website.
+
+Der einzige Grund, warum das private Repo `smejj.com-app` unter $0,01 liegt:
+dort laeuft nichts. Genau so bleibt es (Regel A).
+
+## 7c. Regel F — Das private Paket smejj-remote-browser bleibt beobachtet
+
+Stand 2026-07-29 liegen drei Container-Pakete unter `SmejjCom`:
+
+| Paket | Sichtbarkeit | zuletzt veroeffentlicht |
+| --- | --- | --- |
+| `smejj-control` | oeffentlich | — |
+| `smejj-maus-engine` | oeffentlich | — |
+| `smejj-remote-browser` | **privat**, Tag `latest`, 4 Downloads | vor 20 Tagen |
+
+Das ist der einzige heute offene Punkt bei Kostenweg 2. Er kostet aktuell
+nichts, weil das Packages-Budget auf $0 mit hartem Stopp steht — GitHub
+wuerde eher den Zugriff sperren als eine Rechnung stellen. Trotzdem gilt:
+**neue private Pakete werden nicht angelegt.** Ob dieses eine oeffentlich
+gemacht oder entfernt wird, entscheidet der Betreiber; beides ist eine
+Veroeffentlichungs- bzw. Loeschentscheidung und wird nicht nebenbei getroffen.
+
 ## 8. Was diese Regel NICHT verbietet
 
 - GitHub Pages fuer das **oeffentliche** Frontend-Repo (`has_pages: true`,
   `CNAME` + `.nojekyll` vorhanden) — fuer oeffentliche Repos kostenlos.
-- Den `gh-pages`-Branch im privaten Repo als reines Deploy-Artefakt. Er wird
-  nicht als Pages-Quelle bedient (Pages fuer private Repos ist auf dem Free-Plan
-  ohnehin nicht verfuegbar). **Ungeprueft:** ob im privaten Repo eine
-  Pages-Konfiguration hinterlegt ist, laesst sich ohne Token nicht abfragen —
-  einmalig in den Repo-Einstellungen nachsehen.
+- Den `gh-pages`-Branch im privaten Repo als reines Deploy-Artefakt. **Geprueft
+  2026-07-29** unter `smejj.com-app → Settings → Pages`; GitHub antwortet dort
+  woertlich: "Upgrade or make this repository public to enable Pages". Pages
+  ist im privaten Repo auf dem Free-Plan also gar nicht einschaltbar — der
+  Kostenweg existiert nicht, er ist nicht nur ungenutzt.
 - Issues, PRs, Releases, Dependabot-*Alerts*, Code-Scanning-Alerts fuer
   oeffentliche Repos.
 
