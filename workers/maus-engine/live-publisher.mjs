@@ -12,6 +12,12 @@ import { signedS3Request, assertSafeObjectKey } from "../glm-salad/s3.js";
 
 const LIVE_STATUS_NAME = "live/status.json";
 const LIVE_SHOT_PREFIX = "live/shots";
+// Weg A (Live-Bild): EIN Objekt, das laufend ueberschrieben wird — nicht ein
+// Objekt je Einzelbild. Der Speicherbedarf bleibt dadurch konstant statt mit
+// der Laufzeit zu wachsen, und die Anzeige kann eine einmal signierte
+// Download-Adresse fuer die ganze Gueltigkeitsdauer weiterbenutzen (der
+// Control Server sieht so nur einen Aufruf alle paar Minuten statt einen je Bild).
+const LIVE_FRAME_NAME = "live/frame.jpg";
 
 // Gleiche Praefix-Logik wie artifact-uploader.mjs (eine Quelle der Wahrheit fuer
 // die Capsule-Ablage; bewusst dupliziert statt Export zu aendern — Non-Regression).
@@ -88,6 +94,13 @@ export function createLivePublisher({ capsuleRef, planId, total, config, putObje
 
   return {
     startedAt,
+    // Weg A: ein Einzelbild des laufenden Browsers. Bewusst OHNE gzip — JPEG ist
+    // bereits komprimiert, ein zweiter Durchgang kostet nur Rechenzeit auf dem
+    // kleinen Server. Wie alles hier fail-safe.
+    async publishFrame(jpeg) {
+      if (!jpeg?.length) return false;
+      return safePut(`${prefix}/${LIVE_FRAME_NAME}`, jpeg, "image/jpeg");
+    },
     // Wird vom Interpreter nach JEDEM Schritt aufgerufen (fire-and-forget).
     async onStep({ entry, index, artifacts } = {}) {
       await publishShotIfAny(entry, artifacts);

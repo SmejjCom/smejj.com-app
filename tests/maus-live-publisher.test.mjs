@@ -137,3 +137,31 @@ test("unsafe keys are rejected by assertSafeObjectKey and skipped fail-safe (no 
   assert.equal(puts.length, 0, "unsicherer Key darf NICHT hochgeladen werden");
   // kein throw = fail-safe bestanden
 });
+
+// --- Weg A: Live-Bild ----------------------------------------------------------
+
+test("Live-Bild landet unter EINEM Schluessel und wird ueberschrieben", async () => {
+  const { puts, putObject } = collector();
+  const publisher = createLivePublisher({
+    capsuleRef: "maus-demo", planId: "plan-1", total: 3, putObject
+  });
+
+  await publisher.publishFrame(Buffer.from("jpeg-1"));
+  await publisher.publishFrame(Buffer.from("jpeg-2"));
+
+  assert.equal(puts.length, 2);
+  assert.equal(puts[0].key, puts[1].key, "konstanter Speicherbedarf statt ein Objekt je Bild");
+  assert.equal(puts[0].key, "capsules/maus-engine/maus-demo/result/plan-1/live/frame.jpg");
+  assert.equal(puts[0].contentType, "image/jpeg");
+  assert.equal(puts[1].body.toString(), "jpeg-2");
+});
+
+test("Live-Bild bleibt fail-safe: leer wird verworfen, e2-Fehler wirft nie", async () => {
+  const publisher = createLivePublisher({
+    capsuleRef: "maus-demo", planId: "plan-1", total: 1,
+    putObject: async () => { throw new Error("e2 nicht erreichbar"); }
+  });
+
+  assert.equal(await publisher.publishFrame(Buffer.alloc(0)), false);
+  assert.equal(await publisher.publishFrame(Buffer.from("jpeg")), false, "Fehler wird geschluckt, nicht geworfen");
+});
