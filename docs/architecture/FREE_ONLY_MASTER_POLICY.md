@@ -167,3 +167,23 @@ npm run release:preflight
    LIVE. Diese Ausnahme ist eng: Sie erlaubt NUR diesen einen Server;
    jede Erweiterung (groesseres Paket, weitere Server/Dienste) braucht
    erneut eine schriftliche Freigabe mit Dienst und Betrag.
+
+2. **Control-Server auf Zeabur (seit 2026-07-29):** Dienst `smejj-control`
+   auf dem BESTEHENDEN Server aus Ausnahme 1 (Projekt "untitled",
+   project-6a6666899949111176cddefb). Schriftliche Freigabe durch den
+   Betreiber Wof Kadavanich am 2026-07-29 im Chat, Wortlaut:
+
+   > FREIGABE — Control-Server auf Zeabur: Ich gebe den Betrieb des Dienstes
+   > smejj-control auf dem bestehenden Zeabur-Server (Projekt "untitled",
+   > 6 USD pro Monat, keine zusaetzlichen Kosten) frei.
+
+   Betrag: **0,00 USD zusaetzlich** — der Server ist bereits bezahlt und
+   laeuft; es kommt kein Paket und kein Anbieter hinzu. Zweck: Ablieferung
+   des letzten Salad-Dienstes (Auth, API-Gateway, Modell-Router, Presign).
+   Der Umzug **senkt** die Gesamtkosten, weil die Salad-Container-Gruppe
+   `smejj-control` danach entfaellt.
+   Diese Ausnahme bleibt eng: Sie erlaubt NUR diesen einen zusaetzlichen
+   Dienst auf dem bestehenden Server. Ein groesseres Paket, ein zweiter
+   Server oder ein weiterer Anbieter braucht erneut eine schriftliche
+   Freigabe mit Dienst und Betrag.
+   Umsetzungsplan: `docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md`.

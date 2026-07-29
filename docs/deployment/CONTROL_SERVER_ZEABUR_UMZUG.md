@@ -13,9 +13,29 @@ fehlt** und was der Umzug **kostet**.
 | --- | --- |
 | `Dockerfile.smejj-control` | fertig, im Repo-Wurzelverzeichnis |
 | `.dockerignore` fuer den Control-Server tauglich | erledigt (zweites Maus-Schema ergaenzt) |
-| Freigabe nach FREE_ONLY_MASTER_POLICY | **fehlt — blockiert den Rollout** |
-| Zeabur-Dienst angelegt | nein (braucht die Freigabe) |
-| Frontend auf neue Adresse umgestellt | nein (kommt nach dem Rollout) |
+| Freigabe nach FREE_ONLY_MASTER_POLICY | **erteilt 2026-07-29** (Ausnahme 2) |
+| Zeabur-Dienst angelegt | siehe Ablauf unten |
+| Env-Werte im neuen Dienst | **offen — nur der Betreiber** |
+| Frontend auf neue Adresse umgestellt | nein — braucht **Start-Lock-Freigabe** |
+
+## Was die Freigabe deckt — und was nicht
+
+Die Freigabe vom 2026-07-29 ist eine **Kosten- und Dienste-Freigabe**. Sie
+erlaubt, den Dienst `smejj-control` auf dem bestehenden Zeabur-Server zu
+betreiben.
+
+Sie deckt **nicht** die Aenderung von `public/config.js` und
+`public/index.html`. Beide stehen im Start-Lock
+(`docs/frontend/start-lock-manifest.json`, 31 eingefrorene Dateien) und
+brauchen einen eigenen, ausdruecklichen Satz des Betreibers. Vorschlag:
+
+> FREIGABE — Start-Lock fuer den Umzug: Ich gebe Aenderungen an
+> public/config.js und public/index.html frei, ausschliesslich um die
+> API-Adresse auf den Zeabur-Control-Server umzustellen.
+
+Das ist keine Formalie: `config.js` und die CSP in `index.html` entscheiden,
+ob die Seite ueberhaupt noch mit einem Server sprechen darf. Ein Fehler dort
+legt die App fuer alle lahm.
 
 ## Was die Freigabe kosten wuerde
 
@@ -61,6 +81,32 @@ Reihenfolge, die Ausfall vermeidet: erst den Zeabur-Dienst hochfahren und
 messen, dann Callback ergaenzen (nicht ersetzen — beide Adressen duerfen
 gleichzeitig eingetragen sein), dann Frontend umstellen, dann Salad abschalten.
 Der Rollback ist bis zum letzten Schritt ein Frontend-Deploy zurueck.
+
+## Ablauf in der Reihenfolge, die keinen Ausfall erzeugt
+
+1. **Dienst anlegen** (Zeabur-Portal, GitHub-App, Repo `SmejjCom/smejj.com-app`,
+   Branch `feature/auth-redesign-github-magiclink`). Zeabur waehlt
+   `Dockerfile.smejj-control` automatisch anhand des Dienstnamens.
+   **Gemessen und wichtig:** Der Control-Server startet auch **ohne** gesetzte
+   Env-Werte sauber durch — `/api/health` antwortet mit HTTP 200, die
+   einzelnen Funktionen bleiben fail-closed aus. Es gibt also **keinen
+   Absturz-Kreislauf**, der den geteilten 2-vCPU-Server belasten wuerde.
+   Der Dienst darf daher gefahrlos vor den Env-Werten existieren.
+2. **Env-Werte eintragen** (nur Betreiber — Zugangsdaten). Mindestens:
+   `SMEJJ_SESSION_SECRET`, `IDRIVE_E2_*`, `SMEJJ_MAUS_ENGINE_*`,
+   `SMEJJ_GITHUB_LOGIN_*`. Am einfachsten aus der Salad-Gruppe
+   `smejj-control` uebernehmen — dieselben Werte, damit sich beim Umzug
+   nichts anderes aendert als die Adresse.
+3. **Messen, bevor irgendetwas umgestellt wird.** Dienst-Tab "Command":
+   `node -e "fetch('http://127.0.0.1:8080/api/health').then(r=>r.text()).then(console.log)"`.
+   Erst wenn `ok:true` kommt, geht es weiter.
+4. **GitHub-OAuth-Callback ergaenzen** (App-ID 3737209) — **ergaenzen, nicht
+   ersetzen.** Beide Adressen duerfen gleichzeitig eingetragen sein. Damit
+   funktioniert die Anmeldung waehrend der Umstellung auf beiden Wegen.
+5. **Frontend umstellen** (braucht die Start-Lock-Freigabe): `config.js` und
+   CSP `connect-src`. Bis hierher ist der Rollback ein Frontend-Deploy zurueck.
+6. **Salad abschalten** — erst nach mehreren Tagen stabilem Betrieb, und als
+   eigener Schritt mit eigener Freigabe (Rueckbau einer laufenden Funktion).
 
 ## Vier gemessene Fallen bei neuen Zeabur-Diensten
 
