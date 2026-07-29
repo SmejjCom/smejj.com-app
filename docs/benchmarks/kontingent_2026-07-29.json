@@ -1,0 +1,63 @@
+{
+  "titel": "Speicher-Kontingent: Anzeige und Upload-Sperre fuer IDrive e2",
+  "datum": "2026-07-29",
+  "job": "job_kontingent_20260729",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 112,
+  "artefakt": "deployments/control/smejj-control-kontingent-2026-07-29.tar.gz",
+  "rueckweg": ["deployments/control/smejj-control-stufe7-2026-07-28.tar.gz (Stand vor diesem Job)"],
+  "commits": ["607c3ed"],
+  "anlass": {
+    "befund": "IDrive e2 blockiert nicht, wenn das Paket voll ist — es nimmt weiter an und rechnet 0,006 USD je GB und Monat ab (Preis-FAQ des Anbieters, nachgesehen 2026-07-28).",
+    "bewertung": "Das ist der einzige Auto-Billing-Fallback im Betrieb und er war scharf. Die Kostenpolitik verbietet genau das.",
+    "messungVorher": "1,23 TB von 2 TB belegt (61,4 %), rund 790 GB frei. Ein weiteres grosses Modell passt nicht mehr hinein."
+  },
+  "umsetzung": {
+    "anzeige": "Adminbereich Modul U: Belegung gegen Paket, Ampel bei 80/95/100 Prozent, Mehrkosten in USD je Monat sobald ueberschritten.",
+    "sperre": "scripts/deploy/idrive-quota-guard.mjs, fest eingehaengt in scripts/model-management/stream_hf_model_to_idrive.mjs. Gerechnet wird vor dem ersten Byte.",
+    "eineBewertung": "Anzeige und Sperre nutzen dieselbe Rechenfunktion bewerte(). Zwei Rechenwege waeren zwei Wahrheiten.",
+    "stellschrauben": "SMEJJ_IDRIVE_PLAN_TIB (Vorgabe 2), SMEJJ_IDRIVE_GRENZE_PROZENT (Vorgabe 95)"
+  },
+  "leitentscheidungen": {
+    "failClosed": "Laesst sich die Belegung nicht messen, wird nicht hochgeladen. Lieber ein Upload, der nicht startet, als eine Rechnung, die niemand kommen sah.",
+    "mindestwert": "Ein Zugangsschluessel sieht nicht zwingend alle Eimer. Eine unvollstaendige Summe wird als Mindestwert gefuehrt und winkt nahe der Grenze nicht durch — eine zu niedrige Zahl beruhigt genau dann, wenn es eng wird.",
+    "keineNullUsd": "Solange nichts ueberschritten ist, bleibt das Mehrkosten-Feld leer statt 0,00 USD. Eine 0,00 saehe aus wie eine Zusage."
+  },
+  "funktionsnachweiseLive": {
+    "anzeige": "1,23 TB von 2,00 TB belegt — 61,4 %, Ampel ok, vollstaendig gezaehlt. Beide Eimer sichtbar: smejj-app 1247 Objekte / 8,0 MB, smejj-model-files 820 Objekte / 1,23 TB.",
+    "sperreFreigabe": "1 GiB Vorhaben -> 61,5 %, Freigabe, Exit-Code 0.",
+    "sperreBlockade": "800 GiB Vorhaben -> 100,5 %, Sperre, Exit-Code 1, Meldung nennt 0,06 USD/Monat.",
+    "deckungMitPortal": "Die Anzeige deckt sich mit dem IDrive-Portal (dort 1,23 TB von 2 TB)."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Die Byte-Anzeige kannte keine TB-Stufe",
+      "wirkung": "Das Paket stand als '1258.20 GB von 2048.00 GB' statt '1,23 TB von 2,00 TB' — schwer lesbar und nicht deckungsgleich mit dem Portal.",
+      "behoben": "TB-Stufe ergaenzt; IDrive rechnet und beschriftet binaer, die Anzeige tut dasselbe."
+    }
+  ],
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7 (aus dem Stufe-4-Lauf, unveraendert gueltig)",
+    "urteil": "Alle Budgets eingehalten. Dieser Job hat keine Datei unter public/ angefasst."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, gruen.",
+    "parallelSession": "Live-Artefakt heruntergeladen und dateiweise verglichen: keine fremde Arbeit enthalten.",
+    "preflight": "npm run release:preflight vollstaendig gruen; check:release-imports 162 Dateien transitiv; check:architecture gruen nach der Politik-Ergaenzung.",
+    "keineDatenAngefasst": "Rein lesende Messung. Kein Objekt auf IDrive e2 geloescht oder ueberschrieben.",
+    "sperreBlocktNichtsBestehendes": "Bei 61,4 % Belegung greift die Sperre erst ab rund 690 GB Vorhaben; laufende Deploys (rund 1,8 MB) sind unberuehrt."
+  },
+  "testabdeckung": {
+    "gesamt": 317,
+    "neu": 17,
+    "schwerpunkte": [
+      "fail-closed: ohne Messung kein Upload",
+      "ein Mindestwert nahe der Grenze winkt nicht durch",
+      "keine 0,00 USD, wenn nichts ueberschritten ist",
+      "das Paket wird binaer gerechnet — 1258 GiB sind 61 % von 2 TiB",
+      "ein Vorhaben wird eingerechnet, bevor es hochgeladen wird",
+      "ein unlesbarer Eimer macht die Summe zum Mindestwert",
+      "Paketgroesse und Grenze einstellbar, mit sicheren Vorgaben"
+    ]
+  }
+}

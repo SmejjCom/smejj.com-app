@@ -5,6 +5,36 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-29] KONTINGENT-WAECHTER IDRIVE E2 (job_kontingent_20260729)
+
+Commit `607c3ed`, Control-Server **Version 112**.
+
+**IDrive e2 blockiert nicht, wenn das Paket voll ist.** Es nimmt weiter an und
+rechnet 0,006 USD je GB und Monat ab (Preis-FAQ, nachgesehen 2026-07-28). Das
+war der einzige Auto-Billing-Fallback im Betrieb — und er war scharf. Gemessen:
+1,23 TB von 2 TB belegt, rund 790 GB frei; ein weiteres grosses Modell passt
+nicht mehr hinein.
+
+- **Anzeige** in Modul U: Belegung gegen Paket, Ampel bei 80/95/100 Prozent,
+  Mehrkosten in USD je Monat sobald ueberschritten.
+- **Sperre** `scripts/deploy/idrive-quota-guard.mjs`, fest im Modell-Upload:
+  gerechnet wird VOR dem ersten Byte. Live geprueft — 1 GiB Freigabe (Exit 0),
+  800 GiB Sperre (Exit 1) mit dem Betrag im Klartext.
+- **Eine Bewertung fuer beides.** Anzeige und Sperre nutzen dieselbe Funktion;
+  zwei Rechenwege waeren zwei Wahrheiten.
+- **Fail-closed**: ohne Messung kein Upload. Und eine unvollstaendige Messung
+  ist ein **Mindestwert** — nahe der Grenze winkt sie nicht durch. Ein
+  Zugangsschluessel sieht nicht zwingend alle Eimer; eine zu niedrige Summe
+  beruhigt genau dann, wenn es eng wird.
+- **Keine 0,00 USD**, solange nichts ueberschritten ist: das Feld bleibt leer.
+  Eine 0,00 saehe aus wie eine Zusage.
+
+Dazu in der Kostenpolitik festgehalten, warum GitHub strukturell kostenlos
+bleibt: **nicht ein Budget-Limit, sondern das fehlende Zahlungsmittel.** GitHub
+sperrt bei erschoepftem Kontingent, statt zu berechnen; Budgets fuer
+Privatkonten warnen laut Doku nur per E-Mail. Vier Regeln: kein Zahlungsmittel
+hinterlegen, Actions-Repos oeffentlich, GHCR-Pakete oeffentlich, kein LFS/Codespaces.
+
 ### [2026-07-28] ADMINBEREICH STUFE 7 LIVE — Geld (job_adminstufe7_20260728)
 
 Volltext ausgelagert nach

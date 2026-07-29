@@ -19,6 +19,54 @@ Diese Datei ist die zentrale Architekturregel fuer smejj.com.
 - Keine Funktion, die nach einem kostenlosen Limit automatisch Geld kosten kann.
 - Keine kostenpflichtigen Zusatzdienste als Kernbestandteil der Architektur.
 
+### IDrive e2: die einzige Stelle, an der Untaetigkeit Geld kostet (gemessen 2026-07-28)
+
+IDrive e2 BLOCKIERT NICHT, wenn das gebuchte Paket voll ist. Es nimmt weiter an
+und rechnet ab — laut Preis-FAQ des Anbieters:
+
+- Speicher ueber dem Paket: **0,006 USD je GB und Monat**
+- Egress ueber dem Freibetrag (3x Speichervolumen je Monat): 0,01 USD je GB
+- Keine Gebuehren fuer API-Anfragen, Ingress oder Loeschen
+
+Damit ist IDrive e2 der einzige Dienst im Betrieb, bei dem die Regel "keine
+Funktion, die automatisch Geld kosten kann" nicht vom Anbieter, sondern von
+smejj.com selbst durchgesetzt werden muss. Umgesetzt seit 2026-07-29:
+
+- **Anzeige**: Adminbereich, Modul U — Belegung gegen Paket, Ampel bei
+  80/95/100 Prozent, Mehrkosten in USD je Monat sobald ueberschritten.
+- **Sperre**: `scripts/deploy/idrive-quota-guard.mjs`, fest eingehaengt in den
+  Modell-Upload. Gerechnet wird VOR dem ersten Byte. Fail-closed: ohne Messung
+  kein Upload. Eine unvollstaendige Messung gilt als Mindestwert und winkt
+  nahe der Grenze nicht durch.
+- Stellschrauben: `SMEJJ_IDRIVE_PLAN_TIB` (Vorgabe 2), `SMEJJ_IDRIVE_GRENZE_PROZENT`
+  (Vorgabe 95).
+
+Stand der Messung am 2026-07-29: 1,23 TB von 2 TB belegt (61,4 %), rund 790 GB
+frei. Ein weiteres grosses Modell passt nicht mehr hinein.
+
+### GitHub: warum der Free-Tarif strukturell haelt (gemessen 2026-07-28)
+
+Die Absicherung ist nicht ein Budget-Limit, sondern das FEHLENDE Zahlungsmittel.
+GitHub schreibt fuer Actions und Packages wortgleich: "If your account does not
+have a valid payment method on file, usage is blocked once you use up your
+quota." Im Konto SmejjCom ist kein Zahlungsmittel hinterlegt — Ueberschreitung
+wird gesperrt, nicht berechnet.
+
+Budgets fuer Privatkonten warnen laut Doku nur per E-Mail und stoppen nichts;
+sie sind daher KEIN Ersatz fuer diese Absicherung.
+
+Daraus folgen vier Regeln:
+
+1. Nie ein Zahlungsmittel hinterlegen.
+2. Repos, in denen Actions laufen, oeffentlich lassen (oeffentliche Repos mit
+   Standard-Runnern sind unbegrenzt frei; privat waeren es 2.000 Minuten).
+3. GHCR-Pakete oeffentlich lassen (oeffentlicher Paket-Traffic zaehlt nicht).
+4. Kein LFS, keine Codespaces.
+
+GitHub Pages: 1 GB Seite, 100 GB Bandbreite je Monat, 10 Builds je Stunde —
+weiche Grenzen. Werden sie ueberschritten, drosselt GitHub oder bittet um
+Umzug; abgerechnet wird nie.
+
 ## Speicherregel
 
 IDrive e2 / S3-kompatibler Storage ist der Hauptspeicher fuer:
