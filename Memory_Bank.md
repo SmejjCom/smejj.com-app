@@ -5,6 +5,46 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-29] MAUS: ZWEI GETRENNTE URSACHEN, BEIDE VERMESSEN (job_maus_token_zeabur_20260729)
+
+Commits `6c322d2` + `a77febc`. Capsule:
+`docs/task-capsules/2026/07/job_maus_token_zeabur_20260729/CAPSULE.md`.
+
+- **Die Engine ist intakt.** Direkter Lauf gegen
+  `smejj-maus-engine.zeabur.app` mit dem lokalen Token: HTTP 200, `ok:true`,
+  4 Schritte, 2 Artefakte — und beide **zurueckgelesen** (Protokoll entpackt,
+  Screenshot 39.374 Byte). Nur die Verbindung Control-Server -> Engine fehlt.
+- **Token:** beide Seiten 64 Zeichen, beide sauber getrimmt, aber
+  verschiedene Werte (SHA-8 `c4e4ab90` vs `4cbb7a1f`). Die Engine akzeptiert
+  den lokalen — also sendet der Control-Server einen anderen -> HTTP 401.
+- **DIE ALTE DIAGNOSE "verschiedene Konten" WAR FALSCH.** Unterschiedliche
+  Schluessel-Fingerabdruecke beweisen kein anderes Konto — ein Konto darf
+  mehrere Zugangsschluessel haben. Gemessen ist es ein **Eimer**: die Engine
+  schreibt nach `smejj-model-files`, der Control-Server liest Capsules aus
+  `smejj-app`. Das erklaert die 14 Altordner vom 14./15. Juli und keinen
+  einzigen neuen. Zu tun ist ein Eimer-NAME, kein Zugangsdaten-Abgleich.
+- **LEHRE: einen Fingerabdruck-Unterschied nicht zur Ursache befoerdern.**
+  Er sagt "nicht gleich", nicht "anderes Konto". Der Beweis kam erst aus
+  einem echten Lauf plus HEAD auf beide Eimer.
+- **Fehlermeldung entluegt:** `buildRunPlan()` prueft jetzt den HTTP-Status;
+  Infrastruktur-Abbrueche tragen `infra:true` (markiert, NICHT geraten).
+  Zwei Fehlversuche unterwegs, beide lehrreich: (1) `response.ok !== true`
+  machte erfolgreiche Laeufe zu Fehlern, sobald eine Antwort nur `status`
+  traegt — ein Fehler muss POSITIV belegt werden; (2) "abgebrochen ohne
+  gelaufenen Schritt = Infrastruktur" stufte auch korrekt abgelehnte Plaene
+  als Infrastrukturfehler ein.
+- **Release aus sauberem Checkout bauen, nie aus der Arbeitskopie**, wenn
+  parallele Sitzungen laufen — hier arbeiteten zwei fremde gleichzeitig im
+  Baum. `git archive <commit> | tar -x` statt Arbeitsbaum.
+- **`deploy/control-server/Dockerfile` ist kaputt:** kopiert `workers/` und
+  `schemas/` nicht; damit bootet der heutige Code nicht (rc1-Klasse).
+  Neu: `Dockerfile.smejj-control` (nachgebaut und gestartet, /api/health 200).
+- Werkzeug: `node scripts/diagnose/maus-abgleich.mjs` — vergleicht Token und
+  Eimer, fragt die Engine gegen, zeigt nie einen Geheimwert (nur Laenge +
+  SHA-8). Ersetzt das Raten dauerhaft durch eine Messung.
+- OFFEN (Betreiber): Token gleichmachen, Eimer gleichmachen. Der Fehlergrund-
+  Fix ist committet und faehrt mit dem naechsten Control-Release mit.
+
 ### [2026-07-29] MODUL V LIVE — E-Mail-Zustellung (job_adminmodulv_20260729)
 
 Volltext ausgelagert nach
