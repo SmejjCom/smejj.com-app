@@ -24,8 +24,13 @@ export const BEREICHE = Object.freeze([
   { schluessel: "users/index/", name: "Nutzer-Index", eimer: "haupt" },
   { schluessel: "admin/audit/", name: "Audit-Log", eimer: "haupt" },
   { schluessel: "admin/", name: "Adminbereich gesamt", eimer: "haupt" },
-  { schluessel: "capsules/app/", name: "Task Capsules", eimer: "haupt" },
-  { schluessel: "jobs/", name: "Jobs", eimer: "haupt" },
+  // Gemessen 2026-07-29 beim Bau von Modul W: diese Kapseln liegen NICHT im
+  // Hauptspeicher. Geschrieben werden sie vom Entwicklungsrechner ueber
+  // scripts/agent/upload_capsule_to_idrive.mjs, und dessen IDRIVE_E2_BUCKET ist
+  // der Deploy-Eimer. Als "haupt" gefuehrt zeigte dieser Bereich dauerhaft 0 —
+  // exakt der Fall, vor dem der Kommentar oben warnt.
+  { schluessel: "capsules/app/", name: "Task Capsules (Doku)", eimer: "deploy" },
+  { schluessel: "jobs/", name: "Jobs und Laeufe", eimer: "haupt" },
   { schluessel: "training/consents/", name: "Trainings-Einwilligungen", eimer: "haupt" },
   { schluessel: "deployments/control/", name: "Release-Artefakte", eimer: "deploy" }
 ]);

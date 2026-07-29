@@ -10,7 +10,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  NICHT_GEMESSEN, __zaehleNachTagFuerTests, analytikUebersicht, eintraegeMitDatum
+  NICHT_GEMESSEN, __zaehleNachTagFuerTests, analytikUebersicht, auftragAusSchluessel, eintraegeMitDatum
 } from "./opsAnalytik.js";
 
 const JETZT = Date.parse("2026-07-29T12:00:00.000Z");
@@ -39,7 +39,7 @@ test("EINE NICHT LESBARE QUELLE ZEIGT KEINE NULL", async () => {
     jetztMs: JETZT, tage: 3,
     leseIndex: async () => ({ ok: false, error: "index_not_built" }),
     zaehleSchluessel: async () => ({ ok: false, error: "listing_fehlgeschlagen" }),
-    zaehleKapseln: async () => ({ ok: false, error: "speicher_nicht_eingerichtet" })
+    zaehleLaeufe: async () => ({ ok: false, error: "speicher_nicht_eingerichtet" })
   });
 
   assert.equal(e.ok, true, "die Ansicht bleibt bedienbar");
@@ -59,7 +59,7 @@ test("eine erreichbare Quelle DARF eine Null zeigen — das ist ein Messergebnis
     jetztMs: JETZT, tage: 2,
     leseIndex: async () => ({ ok: true, builtAt: new Date(JETZT).toISOString(), ageSeconds: 0, entries: [] }),
     zaehleSchluessel: LEERE_ZAEHLUNG,
-    zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.tage[0].verwaltung, 0, "gemessen und leer ist 0, nicht null");
   assert.equal(e.reihen.verwaltung.erreichbar, true);
@@ -69,7 +69,7 @@ test("eine erreichbare Quelle DARF eine Null zeigen — das ist ein Messergebnis
 test("Registrierungen werden nach Tag gezaehlt, aeltere fallen aus dem Zeitraum", async () => {
   const e = await analytikUebersicht({
     jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
-    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.tage[0].tag, "2026-07-29", "juengster Tag zuerst");
   assert.equal(e.tage[0].registrierungen, 2);
@@ -87,7 +87,7 @@ test("EIN VERALTETER INDEX WIRD BENANNT, NICHT STILL UNTERSCHLAGEN", async () =>
     leseIndex: async () => ({
       ok: true, builtAt: "2026-07-25T08:00:00.000Z", ageSeconds: 4 * 86400, entries: [konto(5)]
     }),
-    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.reihen.registrierungen.unvollstaendig, true);
   assert.equal(e.reihen.registrierungen.grundUnvollstaendig.includes("2026-07-25"), true);
@@ -100,7 +100,7 @@ test("eine abgeschnittene Liste ist eine Untergrenze und sagt das", async () => 
     zaehleSchluessel: async () => ({
       ok: true, nachTag: new Map([["2026-07-29", 12]]), unvollstaendig: true
     }),
-    zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.reihen.verwaltung.unvollstaendig, true);
   assert.equal(e.reihen.verwaltung.grundUnvollstaendig.includes("Untergrenze"), true);
@@ -117,7 +117,7 @@ test("EIN EINTRAG OHNE DATUM LANDET NICHT AUF HEUTE", async () => {
       entries: [konto(0), konto(0, { createdAt: null }), konto(0, { createdAt: "1970-01-01T00:00:00.000Z" })]
     }),
     zaehleSchluessel: LEERE_ZAEHLUNG,
-    zaehleKapseln: async () => ({ ok: true, nachTag: new Map([["", 4], ["2026-07-29", 1]]), unvollstaendig: false })
+    zaehleLaeufe: async () => ({ ok: true, nachTag: new Map([["", 4], ["2026-07-29", 1]]), unvollstaendig: false })
   });
   assert.equal(e.tage[0].registrierungen, 1, "nur das Konto mit brauchbarem Datum");
   assert.equal(e.reihen.registrierungen.ohneDatum, 2);
@@ -136,7 +136,7 @@ test("der Bestand ist eine Momentaufnahme und heisst auch so", async () => {
         konto(3, { role: "user", activeSessions: 2 })
       ]
     }),
-    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.bestand.konten, 3);
   assert.equal(e.bestand.bestaetigt, 2);
@@ -149,7 +149,7 @@ test("der Bestand ist eine Momentaufnahme und heisst auch so", async () => {
 test("KEINE ERFUNDENE BESUCHERZAHL — weder als Feld noch als Wert", async () => {
   const e = await analytikUebersicht({
     jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
-    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
 
   // Geprueft werden FELDNAMEN, nicht Prosa: der Hinweistext MUSS die Woerter
@@ -210,7 +210,7 @@ test("die Spanne ist gedeckelt und kippt nicht bei Unsinn", async () => {
   for (const [eingabe, erwartet] of [[0, 14], [-5, 14], [500, 90], [7, 7], ["3", 3]]) {
     const e = await analytikUebersicht({
       jetztMs: JETZT, tage: eingabe, leseIndex: INDEX_FRISCH,
-      zaehleSchluessel: LEERE_ZAEHLUNG, zaehleKapseln: LEERE_ZAEHLUNG
+      zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
     });
     assert.equal(e.zeitraumTage, erwartet, `tage=${eingabe}`);
     assert.equal(e.tage.length, erwartet);
@@ -222,7 +222,7 @@ test("eine geworfene Ausnahme kippt die Ansicht nicht", async () => {
     jetztMs: JETZT, tage: 2,
     leseIndex: async () => { throw new Error("Netz weg"); },
     zaehleSchluessel: async () => { throw new Error("S3 weg"); },
-    zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.ok, true);
   assert.equal(e.reihen.registrierungen.erreichbar, false);
@@ -233,7 +233,7 @@ test("eine geworfene Ausnahme kippt die Ansicht nicht", async () => {
 test("die Rohdaten-Map verlaesst das Modul nicht", async () => {
   const e = await analytikUebersicht({
     jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
-    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleKapseln: LEERE_ZAEHLUNG
+    zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal("nachTag" in e.reihen.registrierungen, false, "nach draussen geht die Summe");
   assert.equal(typeof e.reihen.registrierungen.summeImZeitraum, "number");
@@ -242,6 +242,46 @@ test("die Rohdaten-Map verlaesst das Modul nicht", async () => {
   const durchJson = JSON.parse(JSON.stringify(e));
   assert.equal(durchJson.reihen.registrierungen.summeImZeitraum, 2);
   assert.equal(durchJson.tage[0].registrierungen, 2);
+});
+
+test("EIN ZUSTANDSORDNER IST KEIN LAUF", async () => {
+  // Live gefunden 2026-07-29: die Reihe stand auf `capsules/app/` — ein Prefix,
+  // das der Entwicklungsrechner in den DEPLOY-Eimer schreibt, waehrend der
+  // Server den Hauptspeicher liest. Ergebnis: 14 Tage lang "Laeufe: 0", obwohl
+  // das System arbeitet. Ein dauerhaft nullwertiger Zaehler sieht wie ein
+  // Befund aus. Gezaehlt wird jetzt `jobs/` — und dort darf "open" kein Lauf
+  // sein, sonst zaehlt der Zustandsordner selbst mit.
+  assert.equal(auftragAusSchluessel("jobs/open/job_abc.json"), "job_abc");
+  assert.equal(auftragAusSchluessel("jobs/succeeded/job_abc.json"), "job_abc",
+    "derselbe Lauf, nur ein anderer Zustand — nicht zwei Laeufe");
+  assert.equal(auftragAusSchluessel("jobs/claims/job_abc.json"), "job_abc");
+  assert.equal(auftragAusSchluessel("jobs/job_xyz/status.json"), "job_xyz",
+    "die zweite Ablageform: Kapsel eines Laufs");
+  assert.equal(auftragAusSchluessel("jobs/job_xyz/claims/0001-start-c1.json"), "job_xyz");
+
+  for (const fremd of ["jobs/", "jobs", "capsules/app/job_a/CAPSULE.md", "auth/email-users/x.json", "", null]) {
+    assert.equal(auftragAusSchluessel(fremd), "", `${fremd} ist kein Lauf`);
+  }
+
+  // Und der Zaehler darf dieselbe Kennung nur EINMAL zaehlen, mit dem
+  // FRUEHESTEN Schreibvorgang: der letzte waere der Abschluss, nicht der Beginn.
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 3, leseIndex: INDEX_FRISCH, zaehleSchluessel: LEERE_ZAEHLUNG,
+    fetchImpl: async () => ({
+      ok: true, status: 200, text: async () => '<?xml version="1.0"?><ListBucketResult>'
+        + "<Contents><Key>jobs/open/job_a.json</Key><LastModified>2026-07-28T09:00:00.000Z</LastModified></Contents>"
+        + "<Contents><Key>jobs/succeeded/job_a.json</Key><LastModified>2026-07-29T09:00:00.000Z</LastModified></Contents>"
+        + "<Contents><Key>jobs/job_b/status.json</Key><LastModified>2026-07-29T10:00:00.000Z</LastModified></Contents>"
+        + "<IsTruncated>false</IsTruncated></ListBucketResult>"
+    }),
+    env: {
+      IDRIVE_E2_ENDPOINT: "https://beispiel.example", IDRIVE_E2_ACCESS_KEY: "a",
+      IDRIVE_E2_SECRET_KEY: "b", IDRIVE_E2_BUCKET: "c"
+    }
+  });
+  assert.equal(e.reihen.laeufe.summeImZeitraum, 2, "job_a und job_b — nicht drei Objekte");
+  assert.equal(e.tage[0].laeufe, 1, "job_b am 29.");
+  assert.equal(e.tage[1].laeufe, 1, "job_a zaehlt zum 28., seinem ersten Schreibvorgang");
 });
 
 test("eintraegeMitDatum liest Schluessel und Zeitstempel paarweise", () => {

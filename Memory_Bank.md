@@ -105,54 +105,53 @@ Commits `6c322d2`, `a77febc`, `9bfd907`. Kurzfassung:
   eigenen Browser durchtesten; genau dafuer muss die CSP vorher stimmen.
 - OFFEN: Env-Werte im Zeabur-Dienst, danach `config.js` drehen.
 
+### [2026-07-29] MODUL W LIVE — ALLE 26 BUCHSTABEN GEBAUT (job_adminmodulw_20260729)
+
+Volltext: [docs/memory/Memory_Bank_2026-07-29_modulw.md](docs/memory/Memory_Bank_2026-07-29_modulw.md).
+Commit `54a7793`, Control-Server **Version 120**. Kurzfassung:
+
+- **Selbst entschieden (kein Kaestchen angekreuzt): kein Besucher-Tracking.**
+  Gemessen wird nur, was ohnehin entsteht (Kapseln, Nutzer-Index,
+  Zustellprotokoll, Audit-Log) — gezaehlt werden SCHLUESSEL, nie Inhalte.
+  **"—" heisst nicht lesbar, 0 heisst gemessen und leer.** Nie vermischt.
+- FALLE: ein vertauschtes Argument schrieb **den ganzen Quelltext von `fetch` in
+  den Fehlergrund**. Ein angezeigter Grund wird gebaut, nie von aussen gesetzt.
+  Ein stiller `catch` tarnte denselben Programmierfehler als "Speicher nicht
+  erreichbar"; `signedS3List` meldet jeden Fehler als `http_0` (Ursache nur im Body).
+- **Das 90-Tage-Aufraeumen laeuft jetzt wirklich** (`mailLogJanitor.js`) — eine
+  zugesagte Aufbewahrungsfrist ohne Taktgeber ist bloss eine Absicht.
+
 ### [2026-07-29] MODUL V LIVE — E-Mail-Zustellung (job_adminmodulv_20260729)
 
-Volltext ausgelagert nach
-[docs/memory/Memory_Bank_2026-07-29_modulv.md](docs/memory/Memory_Bank_2026-07-29_modulv.md).
-Commits `2d1e65e`, `2c8bbce`, Control-Server **Version 115**. Damit sind **25 der
-26 Buchstaben** gebaut; offen bleibt nur noch W (Analytik). Kurzfassung:
+Volltext: [docs/memory/Memory_Bank_2026-07-29_modulv.md](docs/memory/Memory_Bank_2026-07-29_modulv.md).
+Commits `2d1e65e`, `2c8bbce`, Version **115** (Zustellprotokoll v119). Kurzfassung:
 
-- **Es gibt kein Zustellprotokoll.** `sendAuthMail` liefert `{sent, reason}`,
-  aber niemand schreibt es weg. Eine Zustellquote muesste erfunden werden und
-  fehlt deshalb. Gezeigt wird, ob der Versand eingerichtet ist und wie viele
-  Konten unbestaetigt haengen — **ein Hinweis, kein Beweis.**
-- **BEFUND: alle fuenf aktiven Konten sind unbestaetigt**, zwei davon aus den
-  letzten 24 Stunden, der aelteste Fall 15 Tage. Wenn NICHT EIN EINZIGES Konto
-  je bestaetigt wurde, spricht das eher fuer ein Zustellproblem als fuer
-  Zufall (Versand laeuft ueber smtp.gmail.com).
-- FALLE: **der Satz widersprach der Kachel** — "Davon frisch: 2" neben
-  "keines davon frisch". Eine Schwelle hatte "wenige" in "keine" verwandelt.
-  **Ein Bildschirm, der sich selbst widerspricht, ist schlimmer als einer, der
-  schweigt.**
+- **BEFUND: alle fuenf aktiven Konten sind unbestaetigt**, aeltester Fall 15 Tage.
+  Wenn NICHT EIN EINZIGES je bestaetigt wurde, spricht das eher fuer ein
+  Zustellproblem als fuer Zufall (Versand ueber smtp.gmail.com). FALLE: **der
+  Satz widersprach der Kachel** ("Davon frisch: 2" neben "keines davon frisch").
 - FALLE: der Test durchsuchte Prosa statt Feldnamen und stolperte ueber den
   eigenen Hinweistext. Gleiche Klasse wie "iv" in "aktiv" aus Stufe 6.
 
 ### [2026-07-29] ADMINBEREICH STUFE 8 LIVE — Produkt (job_adminstufe8_20260729)
 
-Volltext ausgelagert nach
-[docs/memory/Memory_Bank_2026-07-29_adminstufe8.md](docs/memory/Memory_Bank_2026-07-29_adminstufe8.md).
-Commit `45a8e6d`, Control-Server **Version 113**. Damit sind **24 der 26
-Buchstaben** gebaut; offen bleiben V (E-Mail, eingeschraenkt) und W (Analytik,
-ohne eigene Erfassung nicht baubar). Kurzfassung:
+Volltext: [docs/memory/Memory_Bank_2026-07-29_adminstufe8.md](docs/memory/Memory_Bank_2026-07-29_adminstufe8.md).
+Commit `45a8e6d`, Control-Server **Version 113**. Kurzfassung:
 
-- **S Wissen:** das Dokumentenalter ist im Artefakt NICHT messbar — der
-  Release-Bau ist deterministisch und setzt ueberall denselben Zeitstempel.
-  Das Modul erkennt das und meldet "nicht messbar" statt rund 9.700 Tagen.
-  **Vor dem Deploy gefunden, im entpackten Live-Artefakt geprueft.**
-- **T Sprachen:** FALLE — wortgleiche Werte als "unuebersetzt" zu zaehlen
-  meldete live ALLE 14 Sprachen als lueckenhaft. "Free-safe", "System",
-  "Maximal" heissen in vielen Sprachen genau so. **Eine Heuristik, die
-  "gleich" mit "falsch" verwechselt, erzeugt Fehlalarm in genau den Faellen,
-  die richtig sind.** Nach dem Fix: 14 von 14 ohne Luecke.
-- **X Experimente:** kein eigener Speicher (ein Experiment IST ein Flag im
-  Zustand "teilweise") und keine erfundenen Ergebnisse — die Messung dafuer
-  gibt es nicht. Gezeigt wird die Laufzeit: ein Experiment, das niemand
-  beendet, ist ein Dauerzustand.
-- **Y Aufgaben:** nichts verschwindet spurlos; Abschluss und Verwerfen
-  brauchen einen Nachweis ab 5 Zeichen.
+- **S Wissen:** das Dokumentenalter ist im Artefakt NICHT messbar (der
+  Release-Bau setzt ueberall denselben Zeitstempel). Das Modul meldet "nicht
+  messbar" statt rund 9.700 Tagen — vor dem Deploy im Artefakt geprueft.
+- **T Sprachen:** FALLE — wortgleiche Werte als "unuebersetzt" zu zaehlen meldete
+  live ALLE 14 Sprachen als lueckenhaft ("System", "Maximal" heissen vielfach
+  genau so). **Eine Heuristik, die "gleich" mit "falsch" verwechselt, erzeugt
+  Fehlalarm in genau den Faellen, die richtig sind.** Nach dem Fix: 14 von 14.
+- **X Experimente:** kein eigener Speicher, keine erfundenen Ergebnisse; gezeigt
+  wird die Laufzeit — ein Experiment, das niemand beendet, ist ein Dauerzustand.
+- **Y Aufgaben:** nichts verschwindet spurlos; Abschluss und Verwerfen brauchen
+  einen Nachweis ab 5 Zeichen.
 - FALLE: `recordStore.lies()` liefert den Datensatz DIREKT, nicht
-  `{ok, datensatz}`. **Bei einem gemeinsamen Baustein die vorhandene
-  Verwendung nachlesen, nicht die Signatur raten.**
+  `{ok, datensatz}`. **Bei einem gemeinsamen Baustein die vorhandene Verwendung
+  nachlesen, nicht die Signatur raten.**
 
 ### [2026-07-29] KONTINGENT-WAECHTER IDRIVE E2 (job_kontingent_20260729)
 

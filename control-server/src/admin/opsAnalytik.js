@@ -17,7 +17,17 @@
 //   1. REGISTRIERUNGEN je Tag  — aus dem Nutzer-Index (createdAt).
 //   2. VERWALTUNGSAKTIVITAET je Tag — aus dem Audit-Log (ein Schluessel je Eintrag).
 //   3. MAILVERSAND je Tag — aus dem Zustellprotokoll (seit 29.07.2026).
-//   4. LAEUFE je Tag — aus den Task Capsules (dauerhafte Quelle je Auftrag).
+//   4. LAEUFE je Tag — aus der Job-Ablage `jobs/` im Hauptspeicher.
+//
+// Zu 4 gehoert eine Korrektur, die erst der Live-Lauf gezeigt hat: zuerst stand
+// hier `capsules/app/`. Das ist aber die Ablage, in die ein ENTWICKLUNGSRECHNER
+// seine Dokumentations-Kapseln schiebt (Skript
+// `scripts/agent/upload_capsule_to_idrive.mjs`, dort landet sie im
+// Deploy-Eimer). Der Control-Server liest den Hauptspeicher — dort ist dieses
+// Prefix leer. Ergebnis live: "Laeufe: 0" fuer 14 Tage, obwohl das System
+// arbeitet. Ein dauerhaft nullwertiger Zaehler ist schlimmer als keiner: er
+// sieht wie ein Befund aus. Gezaehlt wird deshalb `jobs/` — dort legt die
+// Laufzeit jeden Auftrag ab (`assertSafeJobPrefix` erzwingt dieses Prefix).
 //
 // Gezaehlt werden SCHLUESSEL, nicht Inhalte: bei 2 und 3 wird nur gelistet, nie
 // gelesen. Das ist billig und es kommt kein Inhalt in die Naehe dieser Ansicht.
@@ -32,8 +42,8 @@
 //   c) DER NUTZER-INDEX IST EINE PROJEKTION. Ist er aelter als der juengste Tag
 //      im Zeitraum, koennen die letzten Registrierungen fehlen — dann wird das
 //      gesagt, statt eine zu niedrige Zahl als Tatsache zu zeigen.
-//   d) EIN UNBRAUCHBARER ZEITSTEMPEL WIRD NICHT GERATEN. Kapseln ohne
-//      verwertbares Datum zaehlen unter "ohne Datum" und landen NICHT auf heute.
+//   d) EIN UNBRAUCHBARER ZEITSTEMPEL WIRD NICHT GERATEN. Was kein verwertbares
+//      Datum hat, zaehlt unter "ohne Datum" und landet NICHT auf heute.
 import { parseS3ListPage, signedS3List } from "../storage/s3Signer.js";
 import { mapMitGrenze } from "../shared/parallelFetch.js";
 import { readUserIndex } from "./userIndex.js";
@@ -43,7 +53,13 @@ const MAX_TAGE = 90;
 const MAX_SEITEN = 8;
 const AUDIT_PREFIX = "admin/audit";
 const MAIL_PREFIX = "mail/zustellung";
-const KAPSEL_PREFIX = "capsules/app/";
+const JOB_PREFIX = "jobs/";
+// Die Ablage kennt zwei Formen: `jobs/<status>/<id>.json` (Warteschlange) und
+// `jobs/<id>/…` (Kapsel eines Laufs). Diese Ordner sind Zustaende, keine
+// Auftraege — sonst zaehlte "open" als ein Lauf.
+const JOB_ZUSTAENDE = new Set([
+  "open", "queued", "claims", "cancelled", "succeeded", "failed", "completed", "error", "moved"
+]);
 // Frueher als das gibt es dieses Projekt nicht. Ein Zeitstempel davor ist kaputt,
 // kein alter Eintrag — genau diese Klasse hat in Modul S einmal Alter von rund
 // 9700 Tagen erzeugt.
@@ -78,7 +94,7 @@ export async function analytikUebersicht({
   fetchImpl = fetch,
   leseIndex = readUserIndex,
   zaehleSchluessel = null,
-  zaehleKapseln = null
+  zaehleLaeufe = null
 } = {}) {
   const spanne = spanneAus(tage);
   const tagListe = tageAbsteigend(jetztMs, spanne);
@@ -87,20 +103,20 @@ export async function analytikUebersicht({
 
   const zaehler = zaehleSchluessel
     || ((praefixe, art) => zaehleNachTagUeberS3(cfg, praefixe, art, fetchImpl));
-  const kapselZaehler = zaehleKapseln || (() => zaehleKapselnUeberS3(cfg, fetchImpl));
+  const laufZaehler = zaehleLaeufe || (() => zaehleLaeufeUeberS3(cfg, fetchImpl));
 
-  const [index, audit, mail, kapseln] = await Promise.all([
+  const [index, audit, mail, laeufe] = await Promise.all([
     sicher(() => leseIndex({ env, nowMs: jetztMs })),
     sicher(() => zaehler(monatsPraefixe(AUDIT_PREFIX, tagListe), "audit")),
     sicher(() => zaehler([`${MAIL_PREFIX}/`], "mail")),
-    sicher(() => kapselZaehler())
+    sicher(() => laufZaehler())
   ]);
 
   const reihen = {
     registrierungen: registrierungenReihe(index, erlaubt, tagListe),
     verwaltung: schluesselReihe(audit, erlaubt, "Audit-Log"),
     mails: schluesselReihe(mail, erlaubt, "Zustellprotokoll"),
-    laeufe: kapselReihe(kapseln, erlaubt)
+    laeufe: laufReihe(laeufe, erlaubt)
   };
 
   return {
@@ -191,13 +207,13 @@ function schluesselReihe(ergebnis, erlaubt, quelle) {
   };
 }
 
-function kapselReihe(ergebnis, erlaubt) {
-  const reihe = schluesselReihe(ergebnis, erlaubt, "Task Capsules auf IDrive e2");
+function laufReihe(ergebnis, erlaubt) {
+  const reihe = schluesselReihe(ergebnis, erlaubt, "Job-Ablage jobs/ im Hauptspeicher");
   if (!reihe.erreichbar) return reihe;
   return {
     ...reihe,
-    hinweis: "Ein Lauf wird dem Tag zugeordnet, an dem seine Kapsel zuerst geschrieben wurde. "
-      + "Kapseln ohne verwertbaren Zeitstempel zaehlen unter \"ohne Datum\" und werden NICHT "
+    hinweis: "Ein Lauf wird dem Tag zugeordnet, an dem sein erstes Objekt geschrieben wurde. "
+      + "Laeufe ohne verwertbaren Zeitstempel zaehlen unter \"ohne Datum\" und werden NICHT "
       + "auf heute gebucht."
   };
 }
@@ -265,19 +281,20 @@ async function zaehleNachTagUeberS3(cfg, praefixe, art, fetchImpl = fetch) {
 }
 
 /**
- * Laeufe je Tag. Anders als Audit und Mail tragen Kapsel-Schluessel kein Datum,
+ * Laeufe je Tag. Anders als Audit und Mail tragen Job-Schluessel kein Datum,
  * deshalb ist hier LastModified die Quelle — und zwar der FRUEHESTE Wert je
- * Auftrag: eine Kapsel wird waehrend eines Laufs mehrfach beschrieben.
+ * Auftrag: ein Lauf schreibt mehrfach (Warteschlange, Zustandswechsel, Kapsel),
+ * und der letzte Schreibvorgang waere der Abschluss, nicht der Beginn.
  */
-async function zaehleKapselnUeberS3(cfg, fetchImpl) {
+async function zaehleLaeufeUeberS3(cfg, fetchImpl) {
   if (!cfg) return { ok: false, error: "speicher_nicht_eingerichtet" };
   const ersterSchreibvorgang = new Map();
   let token = null;
   let seiten = 0;
   try {
     do {
-      const { response, body } = await signedS3List({ ...cfg, prefix: KAPSEL_PREFIX, continuationToken: token, fetchImpl });
-      if (!response.ok) return { ok: false, error: `kapseln_listing_http_${response.status}` };
+      const { response, body } = await signedS3List({ ...cfg, prefix: JOB_PREFIX, continuationToken: token, fetchImpl });
+      if (!response.ok) return { ok: false, error: `laeufe_listing_${listenGrund(response, body)}` };
       const text = String(body);
       for (const eintrag of eintraegeMitDatum(text)) {
         const auftrag = auftragAusSchluessel(eintrag.key);
@@ -291,7 +308,7 @@ async function zaehleKapselnUeberS3(cfg, fetchImpl) {
       seiten += 1;
     } while (token && seiten < MAX_SEITEN);
   } catch (error) {
-    return { ok: false, error: String(error?.message || "kapseln_listing_fehlgeschlagen").slice(0, 120) };
+    return { ok: false, error: `laeufe_listing_${String(error?.message || "fehlgeschlagen").slice(0, 60)}` };
   }
 
   const nachTag = new Map();
@@ -363,10 +380,19 @@ function brauchbaresDatum(roh) {
   return Number(iso.slice(0, 4)) < FRUEHESTES_JAHR ? "" : iso;
 }
 
-function auftragAusSchluessel(key) {
-  // capsules/app/<auftrag>/... — der Auftrag ist das dritte Segment.
-  const teile = String(key || "").split("/");
-  return teile.length >= 4 && teile[2] ? teile[2] : "";
+/**
+ * Welcher Auftrag steht hinter diesem Schluessel? Beide beobachteten Formen:
+ *   jobs/<zustand>/<id>.json   — Warteschlangeneintrag
+ *   jobs/<id>/…                — Kapsel eines Laufs
+ * Ein Zustandsordner ist KEIN Auftrag, sonst zaehlte "open" als ein Lauf.
+ */
+export function auftragAusSchluessel(key) {
+  const teile = String(key || "").split("/").filter(Boolean);
+  if (teile[0] !== "jobs" || teile.length < 2) return "";
+  if (JOB_ZUSTAENDE.has(teile[1])) {
+    return teile.length >= 3 ? teile[2].replace(/\.json$/i, "") : "";
+  }
+  return teile[1].replace(/\.json$/i, "");
 }
 
 function tagAusSchluessel(key) {
