@@ -72,6 +72,7 @@
       wissen: { id: "S", gruppe: "Produkt", name: "Inhalte & Wissen", laden: lade("/api/admin/ops/wissen", S.wissen) },
       sprachen: { id: "T", gruppe: "Produkt", name: "Sprachen", laden: lade("/api/admin/ops/sprachen", S.sprachen) },
       experimente: { id: "X", gruppe: "Produkt", name: "Experimente", laden: lade("/api/admin/ops/experimente", S.experimente) },
+      email: { id: "V", gruppe: "Produkt", name: "E-Mail-Zustellung", laden: lade("/api/admin/ops/email", S.email) },
       aufgaben: { id: "Y", gruppe: "Produkt", name: "Aufgaben & Notizen", laden: lade("/api/admin/aufgaben", S.aufgaben, aufgabenKnoepfe) }
     }
   };

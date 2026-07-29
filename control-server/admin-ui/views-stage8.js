@@ -214,7 +214,83 @@
     return datum + '<br><span class="s">in ' + rest + " T</span>";
   }
 
+  // ---- V · E-Mail-Zustellung ---------------------------------------------------
+
+  function email(d) {
+    if (d.ok === false) return fehlerSeite("V", "E-Mail", "E-Mail-Zustellung", "Kommt die Post an.", d.error);
+
+    const v = d.versand || {};
+    const k = d.konten || {};
+
+    const versandBlock = v.eingerichtet
+      ? V.tabelleBlock(["", ""], [
+        zeile("Server", v.server + " : " + v.port),
+        zeile("Verschlüsselung", v.verschluesselung),
+        zeile("Absender", v.absender),
+        zeile("Zugangsdaten", "hinterlegt (Werte werden nie angezeigt)")
+      ])
+      : V.tabelleBlock(["", ""], [
+        "<tr><td><b>Versand</b></td><td>" + pille("nicht eingerichtet", "bad") + "</td></tr>",
+        zeile("Folge", v.folge || "")
+      ]);
+
+    const kontoZeilen = k.erreichbar
+      ? (k.liste || []).map(function (x) {
+        const frisch = (x.seitTagen ?? 99) <= 1;
+        return "<tr><td>" + e(x.email) + "</td>"
+          + "<td>" + (x.seitTagen === null ? "—"
+            : frisch ? pille(x.seitTagen + " T", "warn") : e(x.seitTagen + " T")) + "</td>"
+          + "<td>" + e(A.datum(x.erstelltAm)) + "</td></tr>";
+      })
+      : [];
+
+    const luecken = (d.nichtErfasst && d.nichtErfasst.punkte || []).map(function (p) {
+      return "<tr><td><b>" + e(p.was) + "</b></td><td>" + e(p.warum) + "</td></tr>";
+    });
+
+    const kopf = !v.eingerichtet
+      ? '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">' + e(d.bewertung || "") + "</div>"
+        + '<div class="ns">Ohne vollständige SMTP-Angaben verschickt smejj.com fail-closed gar nichts. '
+        + "Das ist sicher, heißt hier aber: niemand kann sich neu bestätigen.</div></div></div>"
+      : '<div class="note glass' + ((k.unbestaetigtHeuteOderGestern || 0) >= 3 ? " fehler" : "") + '">'
+        + '<div class="nx">' + ((k.unbestaetigtHeuteOderGestern || 0) >= 3 ? "▲" : "◆") + "</div><div>"
+        + '<div class="nt">' + e(d.bewertung || "") + "</div>"
+        + '<div class="ns">Unbestätigte Konten sind der beste verfügbare Hinweis — wer sich '
+        + "registriert und nie bestätigt, hat den Link ignoriert oder nie bekommen. Ein Hinweis "
+        + "ist kein Beweis.</div></div></div>";
+
+    const lueckenHinweis = '<div class="note glass"><div class="nx">◆</div><div>'
+      + '<div class="nt">Es gibt kein Zustellprotokoll</div>'
+      + '<div class="ns">' + e((d.nichtErfasst || {}).hinweis || "") + "</div></div></div>";
+
+    return V.kopfBlock("V", "E-Mail", "E-Mail-Zustellung",
+      "Der häufigste Supportfall: „Der Link kommt nicht an.“")
+      + '<div class="kpis">'
+      + V.kachelBlock("Versand", v.eingerichtet ? "eingerichtet" : "fehlt",
+        v.eingerichtet ? "SMTP hinterlegt" : "es geht nichts hinaus", v.eingerichtet ? "up" : "dn")
+      + V.kachelBlock("Unbestätigt", k.erreichbar ? String(k.unbestaetigt || 0) : "—",
+        k.erreichbar ? "aktive Konten" : "Verzeichnis nicht lesbar")
+      + V.kachelBlock("Davon frisch", k.erreichbar ? String(k.unbestaetigtHeuteOderGestern || 0) : "—",
+        "letzte 24 Stunden", (k.unbestaetigtHeuteOderGestern || 0) >= 3 ? "dn" : "")
+      + V.kachelBlock("Ältester Fall", k.erreichbar && k.aeltesteTage !== null ? k.aeltesteTage + " T" : "—",
+        "seit der Registrierung")
+      + "</div>"
+      + '<div class="stack">' + kopf
+      + V.panelBlock("Versand", "gemessen aus der Umgebung", versandBlock)
+      + V.panelBlock("Unbestätigte Konten", k.erreichbar ? "älteste zuerst" : "Verzeichnis nicht lesbar",
+        V.tabelleBlock(["Konto", "Offen seit", "Registriert"], kontoZeilen))
+      + lueckenHinweis
+      + V.panelBlock("Nicht erfasst", "was dieses System über die Zustellung nicht weiß",
+        V.tabelleBlock(["Was fehlt", "Warum"], luecken))
+      + "</div>";
+  }
+
+  function zeile(name, wert) {
+    return "<tr><td><b>" + e(name) + "</b></td><td>" + e(wert) + "</td></tr>";
+  }
+
   window.adminViewsStage8 = {
-    wissen: wissen, sprachen: sprachen, experimente: experimente, aufgaben: aufgaben
+    wissen: wissen, sprachen: sprachen, experimente: experimente, aufgaben: aufgaben, email: email
   };
 })();

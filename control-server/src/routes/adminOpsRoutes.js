@@ -22,6 +22,7 @@ import { kontingentUebersicht } from "../admin/opsKontingent.js";
 import { wissenUebersicht } from "../admin/opsWissen.js";
 import { sprachUebersicht } from "../admin/opsSprachen.js";
 import { experimentUebersicht } from "../admin/opsExperimente.js";
+import { emailUebersicht } from "../admin/opsEmail.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -34,7 +35,8 @@ const gate = createRateLimiter({ capacity: 60, refillPerSec: 1, maxKeys: 5_000 }
 const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
-  "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen", "experimente"
+  "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
+  "experimente", "email"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -73,6 +75,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "wissen") return privateJson(res, 200, await wissenUebersicht()), true;
     if (bereich === "sprachen") return privateJson(res, 200, await sprachUebersicht()), true;
     if (bereich === "experimente") return privateJson(res, 200, await experimentUebersicht({ env })), true;
+    if (bereich === "email") return privateJson(res, 200, await emailUebersicht({ env })), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {
