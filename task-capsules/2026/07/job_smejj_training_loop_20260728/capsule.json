@@ -61,6 +61,16 @@
     "git": { "tag": "commit 52667c5 auf feature/auth-redesign-github-magiclink, gepusht nach origin", "commit": "52667c5" },
     "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs, task-capsules/2026/07/job_smejj_training_loop_20260728/ und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt. Memory_Bank.md bewusst NICHT mitcommittet — ein anderer, zeitgleicher Auftrag hatte dort eine eigene, noch unfertige Aenderung im selben Arbeitsverzeichnis (Google-Drive-geteilt); siehe smejj-parallele-sessions-git.md."
   },
+  "dauerbetriebHaertung": {
+    "datum": "2026-07-29",
+    "commit": "e94126f",
+    "anlass": "Anforderung: 24/7 unbefristet. Gezielte Suche nach allem, was den Dienst nach Tagen oder Wochen lautlos beenden koennte.",
+    "befund1_waechter": "Der Trainings-Zyklus hat keinen Timeout — signedS3Get/signedS3List nutzen fetch ohne AbortController. Eine haengende Verbindung haette inFlight FUER IMMER gesetzt gelassen: der Loop waere still tot, ohne Absturz, ohne Meldung, mit weiterhin gruenem /health. Behoben: Waechter gibt die Sperre nach config.tickMaxMs frei (Standard 15 min, steuerbar ueber SMEJJ_TRAINING_LOOP_TICK_MAX_MS), meldet das im Protokoll und setzt lastError='zyklus_zeitueberschreitung'.",
+    "befund2_taktgeber": "Der Intervall-Timer war unref'ed — genau der Timer, der den Dienst ausmacht. Damit haette der Prozess sich beenden koennen, sobald sonst nichts mehr die Ereignisschleife haelt (heute haelt sie der HTTP-Server, aber das ist eine stille Abhaengigkeit). Behoben: unref standardmaessig AUS, per unrefTimer-Option nur fuer Tests einschaltbar.",
+    "geprueftUndInOrdnung": "Checkpoint waechst nicht unbegrenzt (lastTrainingProcessedKeys auf 2000 begrenzt); Modellaufrufe haben 60-s-Timeout via AbortController in evalTransport.js.",
+    "tests": "18/18 gruen, davon zwei neue Regressionstests: 'ein haengender Zyklus blockiert den Loop nicht dauerhaft' und 'Takt-Geber wird NICHT unref'ed'.",
+    "liveBeleg": "Neuer Container 5656849ff4-gvdjt nach dem Neubau: /health => {ok:true, loopEnabled:true, evalCycleEnabled:true, trainingCycleEnabled:false, state:'running', lastTickAt:'2026-07-29T22:23:49.422Z', lastError:null}."
+  },
   "erstesLiveMessergebnis": {
     "datum": "2026-07-29",
     "bericht": "docs/benchmarks/modeleval-smejj-chat-core-live-default-2026-07-29.json",
