@@ -1,8 +1,21 @@
 # Maus-Engine: von der Registry auf Git-Bau umstellen
 
-Stand: 2026-07-29. **Vorbereitet, NICHT ausgerollt.**
-Die Umstellung ist eine Produktionsaenderung und braucht die ausdrueckliche
-schriftliche Freigabe des Betreibers.
+Stand: 2026-07-29. **Vorbereitet, NICHT ausgerollt — bewusste Entscheidung.**
+
+Der Betreiber hat am 2026-07-29 entschieden: **vorerst nicht umstellen.**
+Begruendung, damit sie niemand neu aufrollen muss:
+
+- Fuer das Null-Euro-Ziel ist die Umstellung **nicht noetig**. Das Paket
+  `ghcr.io/smejjcom/smejj-maus-engine` ist oeffentlich (also gratis), und das
+  Packages-Budget des Kontos steht auf $0 mit hartem Stopp. Kostenweg 2 ist
+  doppelt zu.
+- Der Bau liess sich vorher nirgends testen (kein Docker-Daemon auf dem Mac),
+  der Dienst laeuft dagegen nachweislich sauber (`/health` 200, `/run` ohne
+  Token 401, gemessen 2026-07-29 vor jeder Aenderung).
+
+Der Weg unten bleibt gueltig und einsatzbereit. Sinnvoller Zeitpunkt: wenn die
+Maus-Engine ohnehin geaendert werden muss — dann faellt der Bau ohne
+zusaetzliches Ausfallrisiko mit an. Bis dahin gilt: **nicht anfassen.**
 
 Ablage in `docs/deployment/` (nicht `docs/deploy/`), damit der Weg neben dem
 direkten Gegenstueck `CONTROL_SERVER_ZEABUR_UMZUG.md` liegt.

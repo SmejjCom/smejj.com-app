@@ -194,6 +194,11 @@ wuerde eher den Zugriff sperren als eine Rechnung stellen. Trotzdem gilt:
 gemacht oder entfernt wird, entscheidet der Betreiber; beides ist eine
 Veroeffentlichungs- bzw. Loeschentscheidung und wird nicht nebenbei getroffen.
 
+**Entscheidung des Betreibers vom 2026-07-29: so lassen.** Das Paket bleibt
+privat und wird nur beobachtet. Es kostet nichts, solange das Packages-Budget
+auf $0 mit hartem Stopp steht — deshalb haengt Regel F an dem Budget. Wird das
+Budget je angehoben, muss dieser Punkt neu entschieden werden.
+
 ## 8. Was diese Regel NICHT verbietet
 
 - GitHub Pages fuer das **oeffentliche** Frontend-Repo (`has_pages: true`,
