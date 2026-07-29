@@ -432,61 +432,14 @@ Ausgelagert wegen der 800-Zeilen-Regel. Nichts geloescht.
 > Aeltere Eintraege (bis 2026-07-16) stehen in `docs/memory/Memory_Bank_Archiv_2026-07-16.md`.
 
 ## 2026-07-28 — Echtes Tool-Calling live (job_toolcalling_20260728)
-- WICHTIGSTE ERKENNTNIS: `/api/agent` wird von der Bridge nur ANGENOMMEN und an den
-  CONTROL SERVER weitergereicht (CONTROL_ORIGIN, multiModelRouterEnabled). Fuer
-  Aenderungen an der Modell-Kette muss die Bridge NICHT angefasst werden — und der
-  Control Server hat einen vollstaendig skriptbaren Deploy-Weg ohne Browser:
-  build_control_release_artifact.mjs -> upload_control_release_to_idrive.mjs
-  (Key MUSS mit `deployments/control/` beginnen, sonst fail-closed) ->
-  set_control_artifact_env.mjs (Salad-API GET+Merge+PATCH). Salad-Version 87 -> 88.
-- Ein zuvor gemeldeter "Blocker" (Zeabur-Portal fehlt) war damit gegenstandslos.
-  LEHRE: vor dem Melden eines Blockers die Aufrufkette bis zum ausfuehrenden
-  Dienst verfolgen, nicht beim ersten Hop stehenbleiben.
-- NEU: control-server/src/llm/toolLoop.js — Werkzeug `seite_lesen`, sammelt die in
-  Bruchstuecken gestreamten tool_calls (Index-basiert!), fuehrt aus, reicht als
-  tool-Nachricht zurueck. Fail-closed hinter SMEJJ_AGENT_TOOLS_ENABLED=YES.
-  Max 3 Runden, letzte Runde OHNE Werkzeuge -> keine Endlosschleife.
-  SSRF-Schutz per parseBrowserTarget aus dem Browser-Proxy (eine Regel, eine Quelle).
-- src/server.js stand auf exakt 800 Zeilen (hartes Limit, KEINE Ratchet-Ausnahme).
-  Trick: streamFilter.js re-exportiert die zwei neuen Funktionen, dadurch nur die
-  bestehende Import-Zeile erweitert; die dreizeilige Fehlerwache wurde einzeilig.
-  Ergebnis 799 Zeilen. Muster fuer kuenftige Arbeiten an server.js.
-- LIVE VERIFIZIERT: Control-Server direkt liefert woertlich "Drei Produkte. Eine
-  Vision." + con.ax/smejj/smyst (steht nicht in der Frage -> nur aus der Seite).
-  Ganze Kette ueber smejj.com: Testbericht mit HTTP 200, Titel, Navigation, Marken.
-- OFFEN: Die Groq-Schnellspur der Bridge kennt keine Werkzeuge und raet bei kurzen
-  Fragen mit Adresse ("I-MILD.com" statt des echten Titels). Abgefedert durch das
-  Frontend-Grounding (browser-context.js). Echte Behebung braucht den
-  Zeabur-Deploy-Weg fuer public/chat-bridge.js, den es weiterhin nicht gibt.
+
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-07-28_toolcalling.md](docs/memory/Memory_Bank_2026-07-28_toolcalling.md).
 
 ## 2026-07-28 — app.js aufgeteilt, Altlast beendet (job_appjs_aufteilung_20260728)
-- public/app.js 1411 -> 800 Zeilen; die RATCHET-AUSNAHME in check-guidelines.mjs
-  ist ERSATZLOS ENTFERNT. Fuer app.js gilt jetzt die normale 800-Zeilen-Regel.
-- Sieben neue Module (zeilengleich verschoben, kein Verhaltenswechsel):
-  google-login.js, projects-surface.js, local-workspace-surface.js,
-  uploads-surface.js, free-coding-fallback.js, panel-layout.js, view-routes.js.
-  Alle im Service-Worker-Precache (Pflicht — app.js importiert sie).
-- goToView bewusst NICHT ausgelagert: wird an viele Stellen gereicht, Umzug waere
-  reines Regressionsrisiko.
-- WICHTIGSTE LEHRE (kostete zwei zusaetzliche Deploy-Runden): Beim Herausloesen
-> Aeltere Eintraege vom 2026-07-28 (Tool-Calling, app.js- und server.js-Aufteilung,
-> Bridge-Schnellspur, Tiefspur bei Adressen, Felddaten statt Laborzahlen) stehen in
-> [docs/memory/MEMORY_ARCHIV_2026-07-G.md](docs/memory/MEMORY_ARCHIV_2026-07-G.md).
-> Nichts geloescht — nur verschoben, damit diese Datei unter 800 Zeilen bleibt.
 
-  still (live erlebt). Nur bei echter Aenderung schreiben PLUS observer.takeRecords().
-- FALLE Knopfgroesse: styles.css setzt projektweit `button { min-height: 42px }`. Eigene
-  height ohne min-height ergibt verzogene Knoepfe. 42-px-Touch-Ziel bleibt Standard,
-  kompakt nur hinter `@media (pointer: fine)`.
-- FALLE Popover im Chat-Log: #startLog hat overflow: auto und schneidet Menues an seiner
-  Kante ab; bei kurzem Verlauf gibt es keinen Scrollweg dorthin. Popover gehoeren an den
-  body, am Viewport ausgerichtet, schliessen bei Scroll/Resize. Fenstergroesse auf
-  documentElement.clientHeight zurueckfallen — nicht dargestellte Ansichten melden 0.
-- NICHT GEBAUT: "Quellen anzeigen" (keine Quellenliste pro Antwort vorhanden — browser-context.js webt Seitenkontext in die FRAGE) und Geminis parallele Entwuerfe.
-- app.js UNANGETASTET (Start-Lock, 799/800): Module haengen sich selbst an #startLog,
-  erneutes Senden ueber #startMessage + #startSend. Ein Test haelt das fest.
-- PARALLEL-SESSION belegte sw v166-v168, daher Sprung v165 -> v169. Vor jedem Deploy Live-Stand per SHA-256 gegen den lokalen Vor-Stand pruefen, nur Eigenes deployen.
-- Memory_Bank.md stiess hier an die 800-Zeilen-Regel: naechster Eintrag braucht eine Archiv-Aufteilung (docs/memory/Memory_Bank_2026-07.md mit Zeiger von hier).
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-07-28_appjs_aufteilung.md](docs/memory/Memory_Bank_2026-07-28_appjs_aufteilung.md).
 
 ## 2026-07-28 — Fassungen ueberleben das Neuladen, Touch-Ziele halten (job_nachrichten_aktionen_20260728, Welle 2)
 - ERLEDIGT, live (sw v171): zwei Luecken der ersten Welle geschlossen.
@@ -752,3 +705,26 @@ Ausgelagert wegen der 800-Zeilen-Regel. Nichts geloescht.
 - NOCH AUS (Absicht): Scharfschalten im Zeabur-Tab "Variable" mit
   SMEJJ_TRAINING_LOOP_ENABLED=YES, SMEJJ_TRAINING_LOOP_EVAL_ENABLED=YES plus
   IDRIVE_E2_*; Trainings-Zyklus zusaetzlich hinter SMEJJ_TRAINING_CAPTURE_ENABLED.
+
+## 2026-07-29 — Live-Bild der Maus: Kern gebaut, Deploy blockiert (job_maus_livebild_20260729)
+- Weg A gewaehlt: Chrome filmt sich per CDP selbst (`Page.startScreencast`) statt
+  wiederholtem `page.screenshot()` — letzteres blockiert den Renderer und wuerde
+  den Lauf ausbremsen. Neu `workers/maus-engine/screencast.mjs` (ohne
+  Playwright-Bezug, CDP-Sitzung wird hineingereicht -> ohne Browser testbar).
+- **Wichtigste Erkenntnis, per Test abgesichert:** JEDES Einzelbild muss mit
+  `Page.screencastFrameAck` bestaetigt werden, auch ein gedrosselt verworfenes.
+  Ohne Ack stellt Chrome den Strom nach wenigen Bildern ein — das ist die
+  klassische Ursache fuer "Live-Bild bleibt nach zwei Sekunden stehen".
+- Uebertragung bewusst OHNE WebSocket und ohne neuen Dienst: EIN Objekt
+  `live/frame.jpg`, laufend ueberschrieben; die Anzeige signiert die Adresse
+  einmal (300 s) und pollt danach direkt gegen IDrive e2. Ergebnis: konstanter
+  Speicher statt ein Objekt je Bild, und der Control Server sieht einen Aufruf
+  alle paar Minuten statt einen je Bild.
+- Fail-closed: ohne `SMEJJ_MAUS_LIVE_FPS` ist alles AUS; Obergrenze hart 10/s.
+  Fail-safe: Veroeffentlichungsfehler beruehren den Lauf nie.
+- 20 Tests gruen; check:guidelines/start-lock/architecture/frontend gruen.
+- **NICHT live.** Engine-Deploy braucht ein neues ghcr.io-Abbild; gemessen:
+  Docker-Daemon aus, und `~/.docker/config.json` kennt nur Docker Hub, kein
+  ghcr.io. Verbleibende Verdrahtung (`onPageReady` im Interpreter) bewusst NICHT
+  blind eingebaut — sie liesse sich ohne lauffaehige Engine kein einziges Mal
+  ausfuehren. Details: task-capsules/2026/07/job_maus_livebild_20260729/.
