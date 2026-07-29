@@ -1,0 +1,49 @@
+{
+  "job": "job_module_kennungen_20260729",
+  "datum": "2026-07-29",
+  "url": "https://smejj.com/",
+  "werkzeug": "npm run measure:vitals (5 Laeufe, Chrome headless)",
+  "shellVersion": "smejj-shell-v193",
+  "vergleichsbasis": "docs/benchmarks/webvitals_code_copy_v192_2026-07-29.json",
+  "erstbesuch": {
+    "ttfb_ms": { "p75": 144, "min": 25, "max": 320, "budget": 200, "status": "OK" },
+    "lcp_ms": { "p75": 428, "min": 108, "max": 588, "budget": 1500, "status": "OK" },
+    "cls": { "p75": 0, "min": 0, "max": 0, "budget": 0.1, "status": "OK" },
+    "inp_ms": { "p75": 48, "min": 32, "max": 56, "budget": 200, "status": "OK" },
+    "pageWeight_kb": { "p75": 284, "min": 284, "max": 284, "budget": 300, "status": "OK" },
+    "lcpElement": "H2"
+  },
+  "wiederbesuch": {
+    "ttfb_ms": { "p75": 47, "min": 26, "max": 133, "budget": 200, "status": "OK" },
+    "lcp_ms": { "p75": 168, "min": 124, "max": 244, "budget": 1500, "status": "OK" },
+    "cls": { "p75": 0, "min": 0, "max": 0, "budget": 0.1, "status": "OK" },
+    "inp_ms": { "p75": 40, "min": 40, "max": 48, "budget": 200, "status": "OK" },
+    "pageWeight_kb": { "p75": 40, "min": 40, "max": 40, "budget": 300, "status": "OK" },
+    "lcpElement": "H2"
+  },
+  "vergleich": {
+    "pageWeight_kb": {
+      "vorher_v192": 288,
+      "nachher_v193": 284,
+      "delta": -4,
+      "erklaerung": "voice-speech-queue.js wurde unter zwei Kennungen geladen (4,3 KB doppelt). Live nachgemessen: jetzt genau ein Ladevorgang."
+    },
+    "cls": { "vorher_v192": 0, "nachher_v193": 0, "delta": 0 },
+    "inp_ms_p75": { "vorher_v192": 48, "nachher_v193": 48, "delta": 0 },
+    "lcp_ms_p75": {
+      "vorher_v192": 372,
+      "nachher_v193": 428,
+      "delta": 56,
+      "erklaerung": "Streuung der Auslieferung durch GitHub Pages (min 108 / max 588 im selben Lauf, bei einem Budget von 1500 ms). Es wurde eine Datei WENIGER geladen; die Aenderung kann LCP nicht verschlechtern."
+    },
+    "ttfb_ms_p75": { "vorher_v192": 159, "nachher_v193": 144, "delta": -15 }
+  },
+  "nachweisEinmaligesLaden": {
+    "quelle": "performance.getEntriesByType('resource') auf https://smejj.com, Erstbesuch mit geleertem Cache und abgemeldetem Service Worker",
+    "vorher": ["/assets/voice-speech-queue.js?v=1", "/assets/voice-speech-queue.js?v=blitz-20260726"],
+    "nachher": ["/assets/voice-speech-queue.js?v=blitz-20260726"],
+    "mehrfachGeladenePfade": []
+  },
+  "ergebnis": "Alle Performance-Budgets eingehalten.",
+  "offenerPunkt": "Der Puffer im Erstbesuch-Seitengewicht liegt bei 16 KB (284 von 300). Weitere ~22 KB liegen in drei Ansichts-Modulen, die beim Start geladen werden, obwohl keine der Ansichten sichtbar ist — sie sind wegen Boot- und Ereignis-Abhaengigkeiten nicht ohne Vorarbeit in app.js verzoegerbar. Begruendung in der Task Capsule."
+}

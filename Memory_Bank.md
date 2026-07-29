@@ -5,6 +5,30 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-29] EIN MODUL, EINE KENNUNG — plus Waechter (job_module_kennungen_20260729)
+
+Live smejj.com, **sw v193** (Frontend `7136de5`, App-Repo `5531619`). Volltext:
+`docs/task-capsules/2026/07/job_module_kennungen_20260729/CAPSULE.md`.
+- **Beim Nachmessen des Seitengewichts gefunden:** `voice-speech-queue.js` wurde
+  ZWEIMAL geladen (chat-actions.js `?v=1` gegen composer-tools.js
+  `?v=blitz-20260726`) — 4,3 KB doppelt und zwei Modulinstanzen mit getrenntem
+  Zustand. Kaputt war nichts, weil dort nur die reine Funktion
+  `sanitizeForSpeech` benutzt wird; die Warteschlange haette es zerrissen.
+- **Zweiter Fund in HTML:** `public/de/index.html` lud `voice-landing.js` unter
+  `?v=voice-send-20260721` — sechs Aenderungen alt, waehrend die 14 anderen
+  Sprachseiten die aktuelle nutzten. Deutsche Seite lief live auf altem Stand.
+- **DRITTER Fall derselben Ursache nach sw v184/v185, deshalb ein Waechter:**
+  `scripts/check-module-queries.mjs` (in `check:all`, 7 Tests). Er liest auch
+  `<script src>`-Tags (der zweite Fund steckte in HTML) und zaehlt `./x.js`,
+  `/assets/x.js`, `../x.js` als EIN Modul — daran scheiterte die Handpruefung.
+- **Gewicht geprueft, Lazy-Load begruendet VERWORFEN:** 284/300 KB. Weitere
+  ~22 KB liegen in settings-surface/account-privacy/autonomous-coding, die beim
+  Start unsichtbar mitladen — aber `bindSettings()`/`bindProfile()` in app.js
+  greifen beim Boot auf Elemente zu, die erst deren `init()` rendert (boot
+  braeche ab), und autonomous-coding.js registriert beim Init
+  `smejj:autonomous-request` und `message` (Magic-Link-Handoff). Erst app.js
+  loesen, dann verzoegern.
+
 ### [2026-07-29] CODEBLOCK MIT EINEM KLICK KOPIEREN (job_chat_code_copy_20260729)
 
 Live smejj.com, **sw v192** (Frontend `4697269`, App-Repo `5af5738`). Volltext:
@@ -455,34 +479,11 @@ Am 2026-07-29 zu einem Block zusammengefasst (800-Zeilen-Regel). Alle Verweise g
 - Rechtstexte EN, job_rechtstexte_en_20260728 → [docs/memory/Memory_Bank_rechtstexte_en_2026-07-28.md](docs/memory/Memory_Bank_rechtstexte_en_2026-07-28.md)
 - "QA-WELLEN 1-3 VOLLSTAENDIG BEHOBEN", job_qa_wellen_1_3_20260728 → [docs/memory/Memory_Bank_2026-07-28_qa_wellen.md](docs/memory/Memory_Bank_2026-07-28_qa_wellen.md)
 - Salad-Abloesung (sw v145/v146, Zeabur traegt Chat und Stimme) → [docs/memory/Memory_Bank_2026-07-27.md](docs/memory/Memory_Bank_2026-07-27.md)
+- Eintraege vom 2026-07-26 (Premium-Stimme auf Zeabur, Merge-Grenze, iMild-PR, Maus-Pruefbericht und -Selbsttests, Stufe C, Zeabur-Server, Sprachwelle 1e/2a, Stufe A+B) → `docs/memory/MEMORY_ARCHIV_2026-07-F.md`
+- Sieben Eintraege vom 2026-07-21 (Magic-Link live, Auth-Extra-Deploy, Konto und Einstellungen im Codex-Stil, Auth-Redesign, Repo-Reparatur, Browser-Button) → [docs/memory/Memory_Bank_2026-07-21.md](docs/memory/Memory_Bank_2026-07-21.md)
+- Fuenf Tages-Eintraege vom 2026-07-27 (Startseite antwortet im Faden, Seiteninhalt im Modellkontext, Web-Vitals-Messwerkzeug, Startseite Ladezeit, letzte Startaufrufe) → [docs/memory/Memory_Bank_2026-07-27.md](docs/memory/Memory_Bank_2026-07-27.md)
 
-### [2026-07-26] Aeltere Eintraege ausgelagert
-
-Die Eintraege vom 2026-07-26 (Premium-Stimme auf Zeabur, Merge-Grenze,
-iMild-PR, Maus-Pruefbericht und -Selbsttests, Stufe C, Zeabur-Server,
-Sprachwelle Stufe 1e/2a, Stufe A+B) stehen vollstaendig in
-`docs/memory/MEMORY_ARCHIV_2026-07-F.md`. Nichts geloescht — nur verschoben,
-damit Memory_Bank.md unter der 800-Zeilen-Regel bleibt.
-
-### [2026-07-21] Aeltere Architekturentscheidungen ausgelagert
-
-Die sieben Eintraege vom 2026-07-21 (Magic-Link live, Auth-Extra-Deploy, Konto
-und Einstellungen im Codex-Stil, Auth-Redesign, Repo-Reparatur, Browser-Button)
-stehen wortgleich in
-[docs/memory/Memory_Bank_2026-07-21.md](docs/memory/Memory_Bank_2026-07-21.md).
-Ausgelagert am 2026-07-28 wegen der 800-Zeilen-Regel. Nichts geloescht.
-Wird hier wieder Platz knapp, wandert der naechstaeltere Block nach demselben
-Muster ins Archiv.
-
-## Ausgelagerte Tages-Eintraege
-
-Die fuenf Tages-Eintraege vom 2026-07-27 (Startseite antwortet im Faden,
-Seiteninhalt im Modellkontext, Web-Vitals-Messwerkzeug, Startseite Ladezeit,
-letzte Startaufrufe) stehen wortgleich in
-[docs/memory/Memory_Bank_2026-07-27.md](docs/memory/Memory_Bank_2026-07-27.md).
-Ausgelagert am 2026-07-28, weil diese Datei die 800-Zeilen-Regel erreicht hatte.
-Nichts wurde geloescht. Wird hier wieder Platz knapp, wandert der jeweils
-aelteste Tagesblock nach demselben Muster ins Archiv.
+Wird hier wieder Platz knapp, wandert der naechstaeltere Block nach demselben Muster ins Archiv.
 
 ### [2026-07-28] Precache-Vollstaendigkeits-Eintrag ausgelagert
 

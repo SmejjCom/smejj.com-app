@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-29T20:48:00.329Z",
-  "confirmation": "Freigeben und live stellen (Freigabe 2026-07-29 auf die Rueckfrage zum Start-Lock: index.html eine Zeile <script>, sw.js Precache + v187 fuer 'Codeblock mit einem Klick kopieren')",
+  "frozenAt": "2026-07-29T22:10:29.604Z",
+  "confirmation": "Live stellen (Freigabe 2026-07-29, zweite Runde: sw.js v187->v188 fuer 'EIN Modul, EINE Kennung' — Doppelinstanz voice-speech-queue.js und alte Kennung auf der deutschen Sprachseite)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "75e61fc97141274143447e3aa326ce9b14ee3940245f775d332200994c770456",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "755416f31944672fc32abd6062abd38d1474e37d3ee31958f7ec42d0ff2dbb40",
+    "public/sw.js": "bd90ec840e885985f22bec9e31906291e39e6e8da9d9be511438f110d806801c",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
