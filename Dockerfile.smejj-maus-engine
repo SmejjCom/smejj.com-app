@@ -1,0 +1,80 @@
+# smejj.com Maus-Engine — Bau-Abbild fuer den Zeabur-Dienst 'smejj-maus-engine'.
+#
+# STAND: VORBEREITET, NICHT AUSGEROLLT. Der laufende Dienst zieht weiterhin
+# ghcr.io/smejjcom/smejj-maus-engine:v1. Die Umstellung auf Git-Bau ist eine
+# Produktionsaenderung und braucht die schriftliche Freigabe des Betreibers —
+# Weg und Rueckfall: docs/deployment/MAUS_ENGINE_GIT_BAU.md.
+#
+# WARUM Git-Bau statt Registry (docs/policy/GITHUB_KOSTENFREI.md, Regel B):
+#   - beseitigt die Blockade "kein Docker-Daemon, kein ghcr-Login" dauerhaft,
+#   - haelt Kostenweg 2 (GitHub Packages) strukturell zu,
+#   - Quelltext und laufendes Abbild koennen nicht mehr auseinanderlaufen.
+#
+# DATEINAME: Zeabur waehlt das Abbild ueber 'Dockerfile.<dienstname>'. Der
+# Dienst heisst 'smejj-maus-engine' (Domain smejj-maus-engine.zeabur.app),
+# deshalb NICHT 'Dockerfile.maus-engine' — der wuerde von Zeabur nicht
+# zugeordnet, zbpack uebernaehme, und zbpack fuehrt 'npm start' aus. 'npm
+# start' ist in diesem Repo aber der CONTROL SERVER (package.json:
+# "start": "node src/server.js"). Ergebnis waere ein Dienst, der aussieht wie
+# die Maus-Engine und in Wahrheit der Control Server ist.
+
+# Playwright-Basis: Browser-Binaries sind bereits im Abbild. Version muss zur
+# unten installierten npm-Version passen, sonst sucht Playwright zur Laufzeit
+# einen Browser-Ordner, den es nicht gibt.
+FROM mcr.microsoft.com/playwright:v1.45.3-jammy
+
+WORKDIR /app
+
+# package.json traegt "type": "module" — ohne sie wuerden die .mjs-Importe
+# ihrer .js-Geschwister (workers/glm-salad/s3.js) als CommonJS geladen und
+# fehlschlagen. Sie ist zugleich die einzige noetige Manifest-Datei: das
+# Projekt hat KEINE Laufzeit-Abhaengigkeiten ("dependencies": {}), Playwright
+# wird hier gezielt einzeln installiert.
+COPY package.json /app/package.json
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    npm install --omit=dev --no-audit --no-fund playwright@1.45.3
+
+# Engine + wiederverwendete S3-Schicht. 'workers/maus-engine' vollstaendig,
+# weil worker.mjs ueber 20 Geschwistermodule und den Ordner 'plaene/' laedt.
+COPY workers/maus-engine /app/workers/maus-engine
+COPY workers/glm-salad/s3.js /app/workers/glm-salad/s3.js
+
+# Beide Schemata werden zur LAUFZEIT per fs gelesen, aufgeloest relativ zur
+# Moduldatei (plan-validator.mjs / prompt-template.mjs / interactive-loop.mjs
+# bauen jeweils '../../schemas/...'). Deshalb muss die Ordnertiefe unter /app
+# exakt der im Repo entsprechen. Fehlt eine Datei, bootet der Dienst zwar,
+# aber der erste Lauf endet in ENOENT.
+COPY schemas/maus-action-plan.schema.json /app/schemas/maus-action-plan.schema.json
+COPY schemas/maus-step-decision.schema.json /app/schemas/maus-step-decision.schema.json
+
+ENV NODE_ENV=production \
+    PORT=8080 \
+    SMEJJ_HOST=0.0.0.0
+
+# ENTSCHEIDEND fuer Zeabur: der Worker beendet sich nach jeder Aufgabe
+# (worker.mjs Zeile 19: EXIT_AFTER_RUN = SMEJJ_MAUS_EXIT_AFTER_RUN !== "NO").
+# Das war fuer Salad-Scale-to-zero richtig; ein Zeabur-Dienst wuerde dadurch
+# nach jedem Lauf neu starten. "NO" haelt ihn am Leben — derselbe Wert ist
+# heute schon von Hand in den Zeabur-Variablen gesetzt.
+# Eigene ENV-Zeile statt Fortsetzung: Kommentare innerhalb einer mit "\"
+# fortgesetzten Instruktion sind je nach Parser nicht zulaessig.
+ENV SMEJJ_MAUS_EXIT_AFTER_RUN=NO
+
+# 'npm run build:i18n' wird hier BEWUSST NICHT ausgefuehrt. Es erzeugt die
+# Sprachseiten unter public/ und gehoert zum Frontend-Deploy; die Engine
+# kopiert public/ gar nicht. Ein Aufruf wuerde nur die Bauzeit verlaengern.
+
+# Pflicht-Env zur Laufzeit — im Zeabur-Portal setzen, NIE im Abbild:
+#   SMEJJ_MAUS_ENGINE_TOKEN   (identisch mit dem Wert im Control Server)
+#   IDRIVE_E2_ENDPOINT / IDRIVE_E2_BUCKET / IDRIVE_E2_REGION
+#   IDRIVE_E2_ACCESS_KEY / IDRIVE_E2_SECRET_KEY
+#   optional: SMEJJ_MAUS_SECRET_* fuer secretRef-Aufloesung
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+# Absoluter Pfad und ausdruecklicher CMD: nichts darf auf 'npm start'
+# zurueckfallen (siehe Hinweis zum Dateinamen oben).
+CMD ["node", "/app/workers/maus-engine/worker.mjs"]

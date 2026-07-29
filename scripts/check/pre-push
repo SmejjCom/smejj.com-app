@@ -1,0 +1,16 @@
+#!/bin/sh
+# smejj.com Pre-Push-Hook — Vorlage.
+#
+# Installieren (pro Arbeitskopie einmal, .git/hooks wird nicht versioniert):
+#   sh scripts/check/install-hooks.sh
+#
+# Er warnt und blockiert, er loescht nichts. Bewusst uebergehen:
+#   git push --no-verify
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$ROOT/scripts/check/github_kostenfrei.sh" ] || exit 0
+sh "$ROOT/scripts/check/github_kostenfrei.sh" || {
+  echo ""
+  echo "PUSH ABGEBROCHEN — docs/policy/GITHUB_KOSTENFREI.md" >&2
+  exit 1
+}
+exit 0
