@@ -43,7 +43,19 @@ if [ -z "${SMEJJ_LLM_ZHIPU_API_KEY:-}" ]; then
   ANTWORT="$(mktemp "${TMPDIR:-/tmp}/smejj-glm.XXXXXXXX")"
   chmod 600 "$ANTWORT"
   trap 'rm -f "$ANTWORT"' EXIT INT TERM
-  osascript -e "display dialog \"Schritt 1 von 2 — GLM-Schluessel\n\nDie Schluesselseite ist offen. Dort auf 'Add API Key', Schluessel erstellen und kopieren.\n\nDann hier einfuegen (Cmd+V). Die Eingabe bleibt unsichtbar und wird nur in ~/.config/smejj.com/env.local gespeichert.\" default answer \"\" with hidden answer buttons {\"Abbrechen\",\"Speichern\"} default button 2 with title \"smejj.com — Tiefe Spur\"" > "$ANTWORT" 2>/dev/null || exit 0
+  # Ueber System Events, damit das Fenster VOR dem Browser landet. Ein reines
+  # `osascript -e "display dialog"` kann hinter Chrome auftauchen und sieht dann
+  # aus, als waere nichts passiert.
+  osascript \
+    -e 'tell application "System Events"' \
+    -e 'activate' \
+    -e "display dialog \"Schritt 1 von 2 — GLM-Schluessel\n\nDie Schluesselseite ist im Browser offen. Dort auf 'Add API Key', Schluessel erstellen und kopieren.\n\nDann hier einfuegen (Cmd+V). Die Eingabe bleibt unsichtbar und wird nur in ~/.config/smejj.com/env.local gespeichert.\n\nNoch keinen Schluessel? Ruhig auf Abbrechen — die Datei laesst sich jederzeit neu doppelklicken.\" default answer \"\" with hidden answer buttons {\"Abbrechen\",\"Speichern\"} default button 2 with title \"smejj.com — Tiefe Spur\"" \
+    -e 'end tell' > "$ANTWORT" 2>/dev/null || {
+      # Bei Abbruch NICHT stumm aussteigen: sonst sieht es aus, als sei das
+      # Skript kaputt. Der Betreiber soll wissen, dass nichts passiert ist.
+      osascript -e 'display alert "Abgebrochen — nichts gespeichert" message "Erst den Schluessel auf z.ai erstellen und kopieren, dann diese Datei nochmal doppelklicken."'
+      exit 0
+    }
   EINGABE="$(sed 's/.*text returned://' "$ANTWORT" | tr -d '\n')"
   rm -f "$ANTWORT"
   # Wegwerf-Eingaben nicht speichern: Z.AI-Schluessel sind deutlich laenger.
