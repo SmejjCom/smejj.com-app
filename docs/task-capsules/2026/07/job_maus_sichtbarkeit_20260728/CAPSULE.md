@@ -140,3 +140,58 @@ ausgelieferten Datei identisch zur lokalen, und das **live ausgelieferte
 Modul** wurde im echten Chrome gegen beide Faelle geprueft
 (Rueckfall: 2 Schritte spielen + Hinweis; fail-closed: korrekt abgelehnt).
 Commits: Arbeits-Repo `e37a5fc`, Live-Frontend `3111f9a`.
+
+## Nachtrag 2 (2026-07-28 abends): Die Wiedergabe LAEUFT — mit Bildern
+
+Im IDrive-e2-Konto des Betreibers nachgesehen (Console, nur lesend). Befund:
+
+- Bucket `smejj-app`, Region **us-west-2** — exakt wie der Control-Server
+  konfiguriert ist. Dessen Zugang ist also korrekt.
+- `capsules/maus-engine/` existiert dort und enthaelt **14 Lauf-Ordner**,
+  alle vom 14./15. Juli (Salad-Zeit der Engine).
+- `job_maus_engine_abnahme_20260728` fehlt. Der neue Lauf der **Zeabur**-Engine
+  ist also in einem ANDEREN Konto gelandet — damit ist der Konto-Unterschied
+  nicht mehr Vermutung, sondern durch Sichtprüfung belegt.
+
+**Damit funktioniert die Wiedergabe fuer alle Laeufe im richtigen Konto —
+sofort und vollstaendig.** Live verifiziert mit
+`capsuleRef=maus-demo-sprachwelle-2026-07-15-r5`,
+`planId=httpbin-form-post-demo`:
+"Lauf geladen — **10 Schritte, 2 Screenshots**" (gruen, kein Teil-Erfolg), und
+im rechten Panel der Startseite laeuft die Animation samt Mauszeiger ueber den
+echten Screenshots ("Schritt 4/10 Tippe in Feld").
+
+## Drei Fehler, die dabei gefunden und behoben wurden
+
+1. **Fehlermeldung ueber laufender Wiedergabe.** `openPane()` holt
+   wiederhergestellte Tabs mit leerem Frame per `navigate()` nach und schickt
+   sie durch den Server-Proxy; die relative Adresse `/maus-replay.html` lehnt
+   der fail-closed als "Ungueltige URL." ab. Wiederhergestellte Maus-Tabs
+   werden jetzt beim Start geleert (Speicher UND localStorage).
+   `browser-pane.js` exportiert dafuer nur sein `state` (0 Netto-Zeilen).
+2. **Der Fix kam nicht im Browser an.** index.html laedt die Module mit
+   `?v=`-Query; unter der ALTEN Query behaelt der Browser seine alte Kopie —
+   dieselbe Falle wie sw v184/v185. Erhoeht auf
+   `browser-pane.js?v=browser-pane-20260728-3` und `maus-panel.js?v=3`,
+   im Import von maus-panel.js identisch (sonst zwei Modul-Instanzen mit
+   getrenntem `state`). Der Test prueft diese Gleichheit jetzt aktiv.
+3. **Das Aufraeumen lief trotzdem nie.** Der `init()`-Aufruf stand OBERHALB
+   der `const`-Deklarationen der Datei — Funktionsdeklarationen werden
+   gehoben, `const` nicht. Beim Aufruf lagen sie in der temporalen Totzone,
+   der Zugriff warf einen ReferenceError, und der `catch` (fuer gesperrten
+   localStorage gedacht) verschluckte ihn lautlos. **Alle Checks waren gruen;
+   gefunden nur durch Live-Messung von localStorage.** Start jetzt am
+   Dateiende. Lehre: ein weiter `catch` verbirgt auch Programmierfehler.
+
+Live-Stand: sw v190, Frontend-Commits bis `assets/maus-panel.js?v=3`,
+Arbeits-Repo bis HEAD auf `feature/auth-redesign-github-magiclink`.
+262 Frontend-Tests gruen, Start-Lock eingefroren, Live-Hashes identisch.
+
+## Was noch offen ist (beides Betreiber-Handarbeit)
+
+1. **Worker-Adresse** (blockiert die Maus komplett):
+   `SMEJJ_MAUS_ENGINE_WORKER_URL` auf `smejj-control` auf
+   `https://smejj-maus-engine.zeabur.app` setzen.
+2. **Konto-Abgleich** (nur fuer NEUE Laeufe noetig): die IDrive-e2-Zugangsdaten
+   der Zeabur-Engine auf dasselbe Konto zeigen lassen wie der Control-Server.
+   Alte Laeufe spielen auch ohne das.
