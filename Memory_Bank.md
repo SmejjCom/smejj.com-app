@@ -743,15 +743,11 @@ Volltext ausgelagert nach
   job_maus_engine_abnahme_20260728).
 
 ## 2026-07-28 — Training-Loop-Dienst LIVE (job_smejj_training_loop_20260728)
-- ERLEDIGT und live verifiziert: fuenfter Zeabur-Dienst `smejj-training-loop`
-  (service-6a68f0449949111176cec372) auf dem BESTEHENDEN 6-$-Server, Status
-  "Running 1/1". Keine neue Kostenposition, kein neuer Anbieter.
-- BELEG: Laufzeit-Protokoll zeigt den eigenen Worker, nicht den Control Server —
-  "[smejj-training-loop] SMEJJ_TRAINING_LOOP_ENABLED != YES — Server laeuft, Loop
-  bleibt aus (fail-closed)" + "listening on 0.0.0.0:8080". Echter Klickpfad im
-  Container-Terminal: /health => HTTP 200 {ok:true, loopEnabled:false, ...}.
-- ZUGANG: Zeabur-GitHub-App, vom Betreiber freigegeben. Den GitHub-Sicherheitscode
-  gab der Betreiber selbst ein — Anmeldecodes gibt der Agent nie ein.
+- ERLEDIGT: fuenfter Zeabur-Dienst `smejj-training-loop`
+  (service-6a68f0449949111176cec372) auf dem BESTEHENDEN 6-$-Server. Keine neue
+  Kostenposition, kein neuer Anbieter. Zugang ueber die Zeabur-GitHub-App; den
+  GitHub-Sicherheitscode gab der Betreiber selbst ein — Anmeldecodes gibt der
+  Agent nie ein.
 - VIER FALLEN, je ein Ship-Loop-Durchlauf, alle am Live-Protokoll gemessen:
   (1) Ohne Konfiguration startet Zeabur `pnpm start` = src/server.js, also den
   CONTROL SERVER statt des Workers. (2) zbpack `install_command` ueberschreiben
@@ -763,11 +759,22 @@ Volltext ausgelagert nach
 - LOESUNG: `Dockerfile.<dienstname>` im Repo-Wurzelverzeichnis — Zeabur waehlt es
   gezielt fuer diesen einen Dienst, andere Dienste bleiben unberuehrt.
 - NON-REGRESSION: maus-engine, chat-bridge, voice-piper unveraendert "Running 1/1".
-  `smejj-remote-browser` = "Service Image Pull Failed", VORBESTEHEND aus einer
-  anderen Sitzung von heute (Image-Pull, kein Bau), nicht angefasst.
-- NOCH AUS (Absicht): Scharfschalten im Zeabur-Tab "Variable" mit
-  SMEJJ_TRAINING_LOOP_ENABLED=YES, SMEJJ_TRAINING_LOOP_EVAL_ENABLED=YES plus
-  IDRIVE_E2_*; Trainings-Zyklus zusaetzlich hinter SMEJJ_TRAINING_CAPTURE_ENABLED.
+  `smejj-remote-browser` = "Image Pull Failed", VORBESTEHEND (andere Sitzung).
+- SEIT 2026-07-29 SCHARF UND MESSEND. /health: loopEnabled=true, state=running.
+  Autonomer Lauf im Protokoll: 07:30:27 "listening (loopEnabled=true)" ->
+  07:32:24 "eval cycle done: blocked" + "Punktzahl 85.3 % (Budget 80 %) |
+  12 bestanden, 2 nicht bestanden". GENAU EIN Lauf, keine Doppellaeufe. 6-h-Takt.
+- FALLE: Zeaburs "Restart" laedt die Umgebung NICHT neu (gleicher Container, alte
+  Variablen). Nur ein echter Neubau per Commit-Webhook zieht neue Variablen.
+- URTEIL "blocked" IST KORREKT: entsteht nur durch criticalFailures > 0
+  (evalReport.js:38). Vollauf: 91,2 %, 13/14 Faelle 100 %, p95 1022 ms. Einziger
+  Ausfall code-esm-failclosed, von der SCHNELLSPUR (groq:llama-3.1-8b-instant)
+  beantwortet, die "export function parseBudget" nicht liefert. Suite bewusst
+  NICHT gelockert — Schoenrechnen waere der eigentliche Fehler. Konsequenz waere
+  Routing (Coding in die Tiefspur) = eigener Auftrag.
+- OHNE IDRIVE trotzdem nuetzlich: Kennzahlen gehen ins Protokoll, mit Hinweis
+  "IDRIVE_E2_* pruefen". Zugangsdaten traegt der Betreiber direkt beim Dienst ein
+  ("smejj.com Zeabur-Schluessel.command" -> Edit Raw Variables).
 
 ## 2026-07-29 — Live-Bild der Maus: Kern gebaut, Deploy blockiert (job_maus_livebild_20260729)
 - Weg A gewaehlt: Chrome filmt sich per CDP selbst (`Page.startScreencast`) statt
