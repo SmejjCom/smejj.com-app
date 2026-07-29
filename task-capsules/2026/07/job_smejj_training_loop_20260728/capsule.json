@@ -61,6 +61,17 @@
     "git": { "tag": "commit 52667c5 auf feature/auth-redesign-github-magiclink, gepusht nach origin", "commit": "52667c5" },
     "umfang": "Nur neue Dateien unter workers/smejj-training-loop/, tests/training-loop-worker.test.mjs, task-capsules/2026/07/job_smejj_training_loop_20260728/ und eine additive package.json-Aenderung. Nichts Bestehendes veraendert oder entfernt. Memory_Bank.md bewusst NICHT mitcommittet — ein anderer, zeitgleicher Auftrag hatte dort eine eigene, noch unfertige Aenderung im selben Arbeitsverzeichnis (Google-Drive-geteilt); siehe smejj-parallele-sessions-git.md."
   },
+  "erstesLiveMessergebnis": {
+    "datum": "2026-07-29",
+    "bericht": "docs/benchmarks/modeleval-smejj-chat-core-live-default-2026-07-29.json",
+    "punktzahl": "91,2 % (Budget 80 % — bestanden)",
+    "faelle": "13 von 14 mit 100 %, 1 nicht bestanden",
+    "antwortzeit": "p95 1022 ms, erster Token p95 733 ms",
+    "urteil": "blocked",
+    "urteilIstKorrekt": "JA — 'blocked' entsteht ausschliesslich durch criticalFailures > 0 (src/evaluation/evalReport.js:38). Der Fall code-esm-failclosed scheitert an der kritischen Erwartung matches /export\\s+function\\s+parseBudget/. Antwortendes Backend laut Bericht: groq:llama-3.1-8b-instant, also die SCHNELLSPUR. Sie liefert bei der Codegenerierung die geforderte Signatur nicht (215 Zeichen Ausgabe, 432 ms).",
+    "bewussteNichtAenderung": "Die Suite wurde NICHT angepasst. Eine Erwartung zu lockern, damit das Urteil gruen wird, waere Schoenrechnen — genau das, was die Projektregel zur Suite-Pflege ausdruecklich verbietet. 'blocked' ist hier die richtige, ehrliche Meldung eines echten Qualitaetsbefunds und deckt sich mit dem frueheren Befund in smejj-modell-eval-harness.",
+    "empfehlung": "Fachliche Konsequenz waere eine Routing-Entscheidung (Coding-Aufgaben in die Tiefspur GLM-5.2), keine Aenderung an der Messung. Das ist ein eigener Auftrag und wurde hier bewusst nicht mitentschieden."
+  },
   "livegang": {
     "zeaburProjekt": "untitled (project-6a6666899949111176cddefb), Server Tencent Ashburn 2C 8GB",
     "dienst": "smejj-training-loop (service-6a68f0449949111176cec372)",
