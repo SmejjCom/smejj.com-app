@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-07-29T04:41:15.157Z",
-  "confirmation": "FREIGABE — Start-Lock fuer den Umzug: Ich gebe Aenderungen an public/config.js und public/index.html frei, ausschliesslich um die API-Adresse auf den Zeabur-Control-Server umzustellen.",
+  "frozenAt": "2026-07-29T20:48:00.329Z",
+  "confirmation": "Freigeben und live stellen (Freigabe 2026-07-29 auf die Rueckfrage zum Start-Lock: index.html eine Zeile <script>, sw.js Precache + v187 fuer 'Codeblock mit einem Klick kopieren')",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "12fe0c3cb6ce3e1b9bc9c71b2240f309b6df7c613032a567e7a83a19372bba97",
+    "public/index.html": "75e61fc97141274143447e3aa326ce9b14ee3940245f775d332200994c770456",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "2974e8514973fec0a1a8f39baadc39c2eb9271ba3e237d67be8c46abe3215e0a",
+    "public/sw.js": "755416f31944672fc32abd6062abd38d1474e37d3ee31958f7ec42d0ff2dbb40",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

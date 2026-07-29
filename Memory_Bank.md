@@ -5,6 +5,19 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-29] CODEBLOCK MIT EINEM KLICK KOPIEREN (job_chat_code_copy_20260729)
+
+Live smejj.com, **sw v192** (Frontend `4697269`, App-Repo `5af5738`). Volltext:
+[docs/memory/Memory_Bank_2026-07-29_chat_code_copy.md](docs/memory/Memory_Bank_2026-07-29_chat_code_copy.md).
+- **REGEL: kein Textknoten in einem Bedienelement INNERHALB einer Nachricht** —
+  `chat-store.js` speichert `entry.textContent`, daraus baut
+  `chat-history-context.js` den Modellkontext. Beschriftung aus CSS `::after`.
+- Nur per Browsertest gefunden: Touch-Ziel 31x23 statt 42 px (`min-height: 0`
+  hebelt die Projektregel aus), 17 px Ueberlappung durch hoehere Spezifitaet
+  von `.entry.assistant .chat-code`.
+- **Deploy auf LIVE-Basis:** live v191, Repo v186 — lokale `sw.js` hochladen
+  haette fuenf Fremdversionen zurueckgerollt. Erstbesuch-Gewicht 288/300 KB.
+
 ### [2026-07-29] WEBSUCHE: ZWEI WEICHEN, EINE WAHRHEIT (job_websuche_selbstkorrektur_20260729)
 
 Commits `c476fd6`..`677dc53`, Control-Server **Version 118**, Bridge **v104**.
@@ -435,27 +448,13 @@ Volltext in [docs/memory/MEMORY_ARCHIV_2026-07-J.md](docs/memory/MEMORY_ARCHIV_2
 Kern: Service-Worker cache-first, CSP, Offline, Zoom, Salad-Kosten und die
 geschlossene Konto-Enumeration — alle sechs mit Live-Nachweis.
 
-### [2026-07-28] Rechtstexte EN ausgelagert
+### Ausgelagerte Eintraege 2026-07-27/28 (wortgleich, nichts geloescht)
 
-Der Eintrag zu den englischen Rechtstexten (echte Umlaute, nachgemessene
-Breiten, job_rechtstexte_en_20260728) steht wortgleich in
-[docs/memory/Memory_Bank_rechtstexte_en_2026-07-28.md](docs/memory/Memory_Bank_rechtstexte_en_2026-07-28.md).
-Ausgelagert am 2026-07-28 wegen der 800-Zeilen-Regel. Nichts geloescht.
+Am 2026-07-29 zu einem Block zusammengefasst (800-Zeilen-Regel). Alle Verweise gelten unveraendert.
 
-### [2026-07-28] QA-Wellen 1-3 ausgelagert
-
-Der vollstaendige Eintrag "QA-WELLEN 1-3 VOLLSTAENDIG BEHOBEN"
-(job_qa_wellen_1_3_20260728) steht wortgleich in
-[docs/memory/Memory_Bank_2026-07-28_qa_wellen.md](docs/memory/Memory_Bank_2026-07-28_qa_wellen.md).
-Ausgelagert am 2026-07-28 wegen der 800-Zeilen-Regel. Nichts geloescht.
-
-
-### [2026-07-27] Salad-Abloesung ausgelagert
-
-Die beiden Eintraege zur Salad-Abloesung (sw v145 und v146, Zeabur traegt Chat
-und Stimme) stehen wortgleich in
-[docs/memory/Memory_Bank_2026-07-27.md](docs/memory/Memory_Bank_2026-07-27.md).
-Ausgelagert am 2026-07-28 wegen der 800-Zeilen-Regel. Nichts geloescht.
+- Rechtstexte EN, job_rechtstexte_en_20260728 → [docs/memory/Memory_Bank_rechtstexte_en_2026-07-28.md](docs/memory/Memory_Bank_rechtstexte_en_2026-07-28.md)
+- "QA-WELLEN 1-3 VOLLSTAENDIG BEHOBEN", job_qa_wellen_1_3_20260728 → [docs/memory/Memory_Bank_2026-07-28_qa_wellen.md](docs/memory/Memory_Bank_2026-07-28_qa_wellen.md)
+- Salad-Abloesung (sw v145/v146, Zeabur traegt Chat und Stimme) → [docs/memory/Memory_Bank_2026-07-27.md](docs/memory/Memory_Bank_2026-07-27.md)
 
 ### [2026-07-26] Aeltere Eintraege ausgelagert
 

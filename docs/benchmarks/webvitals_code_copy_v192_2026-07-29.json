@@ -1,0 +1,43 @@
+{
+  "job": "job_chat_code_copy_20260729",
+  "datum": "2026-07-29",
+  "url": "https://smejj.com/",
+  "werkzeug": "npm run measure:vitals (5 Laeufe, Chrome headless)",
+  "shellVersion": "smejj-shell-v192",
+  "vergleichsbasis": "docs/benchmarks/webvitals_abschluss_v186_2026-07-28.json",
+  "erstbesuch": {
+    "ttfb_ms": { "p75": 159, "min": 25, "max": 184, "budget": 200, "status": "OK" },
+    "lcp_ms": { "p75": 372, "min": 176, "max": 516, "budget": 1500, "status": "OK" },
+    "cls": { "p75": 0, "min": 0, "max": 0, "budget": 0.1, "status": "OK" },
+    "inp_ms": { "p75": 48, "min": 48, "max": 56, "budget": 200, "status": "OK" },
+    "pageWeight_kb": { "p75": 288, "min": 288, "max": 288, "budget": 300, "status": "OK" },
+    "lcpElement": "H2"
+  },
+  "wiederbesuch": {
+    "ttfb_ms": { "p75": 78, "min": 26, "max": 101, "budget": 200, "status": "OK" },
+    "lcp_ms": { "p75": 200, "min": 148, "max": 216, "budget": 1500, "status": "OK" },
+    "cls": { "p75": 0, "min": 0, "max": 0, "budget": 0.1, "status": "OK" },
+    "inp_ms": { "p75": 48, "min": 40, "max": 48, "budget": 200, "status": "OK" },
+    "pageWeight_kb": { "p75": 40, "min": 40, "max": 40, "budget": 300, "status": "OK" },
+    "lcpElement": "H2"
+  },
+  "vergleich": {
+    "pageWeight_kb": {
+      "vorher_v186": 283,
+      "nachher_v192": 288,
+      "delta": 5,
+      "erklaerung": "chat-code-copy.js plus die Regeln im gebuendelten start-styles.css. Budget 300 KB eingehalten, Puffer aber nur noch 12 KB."
+    },
+    "lcp_ms_p75": { "vorher_v186": 412, "nachher_v192": 372, "delta": -40 },
+    "inp_ms_p75": { "vorher_v186": 48, "nachher_v192": 48, "delta": 0 },
+    "cls": { "vorher_v186": 0, "nachher_v192": 0, "delta": 0 },
+    "ttfb_ms_p75": {
+      "vorher_v186": 94,
+      "nachher_v192": 159,
+      "delta": 65,
+      "erklaerung": "Streuung der Auslieferung durch GitHub Pages (min 25 / max 184 im selben Lauf). Die Aenderung liegt vollstaendig hinter dem ersten Byte des HTML und kann TTFB nicht beeinflussen."
+    }
+  },
+  "ergebnis": "Alle Performance-Budgets eingehalten.",
+  "beobachtung": "Der Puffer im Erstbesuch-Seitengewicht ist auf 12 KB geschrumpft (288 von 300 KB). Die naechste Ergaenzung an der Startseite sollte das Budget vorher rechnen."
+}
