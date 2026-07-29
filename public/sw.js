@@ -1,3 +1,19 @@
+// v187 -> v188 (2026-07-29): EIN Modul, EINE Kennung. chat-actions.js
+// importierte voice-speech-queue.js?v=1, waehrend composer-tools.js und
+// voice-landing.js ?v=blitz-20260726 nutzen — live gemessen wurde die Datei
+// ZWEIMAL geladen (4,3 KB doppelt) und lag als zwei Modulinstanzen mit
+// getrenntem Zustand im Speicher. Hier wurde nur die reine Funktion
+// sanitizeForSpeech benutzt, es ging also nichts kaputt; die Warteschlange aus
+// demselben Modul haette es zerrissen. Dritter Fall derselben Ursache nach
+// v184 und v185 — deshalb gibt es jetzt scripts/check-module-queries.mjs.
+// chat-actions.js liegt cache-first im Precache; ohne Versionssprung erreicht
+// die Aenderung Bestandsnutzer nicht.
+//
+// Ausserhalb des Precache im selben Zug behoben: public/de/index.html lud
+// voice-landing.js unter ?v=voice-send-20260721 — einer Kennung, die sechs
+// Aenderungen alt war, waehrend die 14 anderen Sprachseiten ?v=blitz-20260726
+// nutzten. Ausgerechnet die deutsche Seite lief damit auf altem Stand.
+//
 // v186 -> v187 (2026-07-29): Codeblock im Chat mit EINEM Klick kopieren. Neu im
 // Precache: chat-code-copy.js; start-styles.css enthaelt die zugehoerigen Regeln
 // aus chat-markdown.css. Die Aktionsleiste kopierte bisher nur die GANZE
@@ -292,7 +308,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v187";
+const CACHE_NAME = "smejj-shell-v188";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
