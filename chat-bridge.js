@@ -25,7 +25,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260728-v103-adresse-nie-schnellspur";
+const BRIDGE_VERSION = "20260729-v104-suchweiche-wortstaemme";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -419,15 +419,33 @@ function isCodingTask(task) {
     && /\b(funktion|function|klasse|class|script|komponente|component|endpoint|modul|module|css|html|javascript|typescript|python|react|node|bug|fehler|datei|file|repo)\b/i.test(text);
 }
 
+// Absichtserkennung — inhaltsgleiche Spiegelung von src/search/searchIntent.js
+// (Kopie unvermeidbar: die Bridge geht als EINE Datei nach Zeabur). Gleichlauf
+// sichert tests/websuche-absicht-gleichlauf.test.mjs. Befund 2026-07-29: sagt
+// diese Weiche nein, geht die Frage in die Schnellspur (kleines Modell, kein
+// Internet) und erreicht den Control-Server nie — die alte Liste kannte
+// "nachricht", nicht "schlagzeil". Daher Wortstaemme statt Vollformen.
+const STAMM = /\b(aktuell|heutig|gestrig|morgig|momentan|derzeit|neuest|juengst|kuerzlich|soeben|inzwischen|mittlerweile|nachricht|schlagzeil|meldung|eilmeldung|pressemitteilung|berichterstattung|geschehen|ereignis|headline|breaking|wetter|temperatur|vorhersage|niederschlag|unwetter|regenradar|wettervorhersage|forecast|preis|kosten|kurse|aktie|boerse|bitcoin|kryptowaehrung|wechselkurs|inflation|zinssatz|spritpreis|benzinpreis|strompreis|gaspreis|oeffnungszeit|fahrplan|verspaet|ausfall|stoerung|streik|baustelle|verkehrslage|termin|veranstaltung|programm|spielstand|ergebnis|tabellenstand|spieltag|anstosszeit|wahlergebnis|umfragewert|abstimmung|changelog|verfuegbar|erschien|veroeffentlich|aktualisier|quelle|beleg|nachweis|recherch|nachschlag|zusammenfass|webseite|website|internet|google|wikipedia|linkliste)/;
+const WORT = /\b(heute|gestern|morgen|jetzt|gerade|aktuell|live|news|neu|neue|neuen|neuer|neues|letzte|letzten|letzter|stand|trend|trends|wahl|wahlen|umfrage|umfragen|version|release|tabelle|lage|situation|kurs|preise|today|latest|current|now|recent|weather|price|stock|link|links|url|web|online|source|sources)\b/;
+const WENDUNG = /\bsuch(e|en|st|t|ne)\b|\bfinde\b|\bfind heraus\b|\bschau nach\b|\bsieh nach\b|\bwas (gibt es|gibts|ist) (neues|los|passiert)\b|\bwie (steht|laeuft) es\b|\bwas passiert\b|\b(19|20)\d{2}\b|\b(januar|februar|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/;
+
+// Umlaute und Akzente auf ASCII, damit "Öffnungszeiten" und "Oeffnungszeiten"
+// dasselbe treffen. Ohne diesen Schritt feuerten Umlaut-Ausloeser nie.
+export function normalizeForIntent(text) {
+  return String(text || "").normalize("NFC").toLowerCase()
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
 export function shouldSearchWeb(task) {
-  const text = String(task || "").toLowerCase();
-  if (/\b(bist du online|online\?|online$|funktionierst du|bist du da)\b/i.test(text)) return false;
+  const roh = String(task || "");
+  if (/\b(bist du online|online\?|online$|funktionierst du|bist du da)\b/i.test(roh)) return false;
   // Nennt die Aufgabe eine Web-Adresse, gehoert sie NIE in die Schnellspur:
-  // die kennt keine Werkzeuge und wuerde den Seiteninhalt raten statt lesen.
-  // Befund 2026-07-28: "Lies https://imild.com/ und nenne den Titel" lieferte
-  // "I-MILD.com" statt "iMild.com — Drei Produkte. Eine Vision.".
-  if (mentionsWebAddress(text)) return true;
-  return /\b(heute|aktuell|jetzt|news|nachricht|wetter|preis|kurs|stand|quelle|internet|web|2026)\b/i.test(text);
+  // die kennt keine Werkzeuge und wuerde den Seiteninhalt raten statt lesen
+  // (Befund 2026-07-28, "Lies https://imild.com/ und nenne den Titel").
+  if (mentionsWebAddress(roh)) return true;
+  const text = normalizeForIntent(roh);
+  return WENDUNG.test(text) || STAMM.test(text) || WORT.test(text);
 }
 
 // Adresse mit oder ohne Schema. Fail-closed ueber eine Endungsliste, damit
