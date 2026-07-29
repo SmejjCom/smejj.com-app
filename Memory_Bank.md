@@ -5,6 +5,33 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-29] ADMINBEREICH STUFE 8 LIVE — Produkt (job_adminstufe8_20260729)
+
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-07-29_adminstufe8.md](docs/memory/Memory_Bank_2026-07-29_adminstufe8.md).
+Commit `45a8e6d`, Control-Server **Version 113**. Damit sind **24 der 26
+Buchstaben** gebaut; offen bleiben V (E-Mail, eingeschraenkt) und W (Analytik,
+ohne eigene Erfassung nicht baubar). Kurzfassung:
+
+- **S Wissen:** das Dokumentenalter ist im Artefakt NICHT messbar — der
+  Release-Bau ist deterministisch und setzt ueberall denselben Zeitstempel.
+  Das Modul erkennt das und meldet "nicht messbar" statt rund 9.700 Tagen.
+  **Vor dem Deploy gefunden, im entpackten Live-Artefakt geprueft.**
+- **T Sprachen:** FALLE — wortgleiche Werte als "unuebersetzt" zu zaehlen
+  meldete live ALLE 14 Sprachen als lueckenhaft. "Free-safe", "System",
+  "Maximal" heissen in vielen Sprachen genau so. **Eine Heuristik, die
+  "gleich" mit "falsch" verwechselt, erzeugt Fehlalarm in genau den Faellen,
+  die richtig sind.** Nach dem Fix: 14 von 14 ohne Luecke.
+- **X Experimente:** kein eigener Speicher (ein Experiment IST ein Flag im
+  Zustand "teilweise") und keine erfundenen Ergebnisse — die Messung dafuer
+  gibt es nicht. Gezeigt wird die Laufzeit: ein Experiment, das niemand
+  beendet, ist ein Dauerzustand.
+- **Y Aufgaben:** nichts verschwindet spurlos; Abschluss und Verwerfen
+  brauchen einen Nachweis ab 5 Zeichen.
+- FALLE: `recordStore.lies()` liefert den Datensatz DIREKT, nicht
+  `{ok, datensatz}`. **Bei einem gemeinsamen Baustein die vorhandene
+  Verwendung nachlesen, nicht die Signatur raten.**
+
 ### [2026-07-29] KONTINGENT-WAECHTER IDRIVE E2 (job_kontingent_20260729)
 
 Commit `607c3ed`, Control-Server **Version 112**.

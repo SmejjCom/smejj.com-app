@@ -1,0 +1,86 @@
+{
+  "titel": "Adminbereich Stufe 8 — Wissen, Sprachen, Experimente, Aufgaben",
+  "datum": "2026-07-29",
+  "job": "job_adminstufe8_20260729",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 113,
+  "artefakt": "deployments/control/smejj-control-stufe8-2026-07-29.tar.gz",
+  "rueckweg": ["deployments/control/smejj-control-kontingent-2026-07-29.tar.gz (Stand vor diesem Job)"],
+  "commits": ["45a8e6d"],
+  "abdeckung": {
+    "module": "24 von 26 Buchstaben gebaut",
+    "neuInStufe8": ["S Inhalte & Wissen", "T Sprachen", "X Experimente", "Y Aufgaben & Notizen"],
+    "offen": [
+      "V E-Mail-Zustellung (nur eingeschraenkt moeglich: es gibt keine Zustellprotokolle)",
+      "W Analytik (ohne eigene Erfassung nicht baubar — es wird nichts gemessen)"
+    ]
+  },
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "leitentscheidungen": {
+    "alterNurWennMessbar": "Der Release-Bau ist deterministisch und setzt bei jeder Datei denselben Zeitstempel. Das Modul prueft, ob die Zeitstempel ueberhaupt etwas aussagen, und meldet sonst 'Alter nicht messbar' statt einer Phantomzahl von rund 9.700 Tagen.",
+    "wortgleichIstKeinMangel": "Nur ein fehlender Schluessel ist eine Luecke. Ein Wert, der dem deutschen Quelltext entspricht, ist oft richtig — 'Free-safe', 'System', 'Maximal' heissen in vielen Sprachen genau so.",
+    "keinZweiterSpeicherFuerExperimente": "Ein Experiment IST ein Feature-Flag im Zustand 'teilweise'. Ein zweiter Ort dafuer waere ein zweiter Stand, der abweichen kann.",
+    "keineErfundenenErgebnisse": "A/B-Ergebnisse fehlen bewusst: sie braeuchten eine Messung, die es nicht gibt. Zahlen ohne Messung waeren schlimmer als keine — man wuerde nach ihnen entscheiden.",
+    "nichtsVerschwindetSpurlos": "Erledigt und verworfen sind Zustaende, keine Entfernung; beide brauchen einen Nachweis ab 5 Zeichen."
+  },
+  "funktionsnachweiseLive": {
+    "wissen": "200 Quellen, 1.893 Abschnitte, 1.595 k Zeichen. Alter korrekt als 'nicht messbar' gemeldet, Kachel zeigt '—', Sortierung nach Groesse, Grund steht daneben.",
+    "sprachen": "14 Sprachen, 245 Schluessel, 14 ohne Luecke, 0 mit Luecken. Wortgleiches (en 4, fr 3) wird gezeigt, aber nicht gefaerbt.",
+    "experimente": "0 laufend, 0 ausgerollt, 2 aus. Hinweis 'Ergebnisse stehen hier bewusst nicht' sichtbar.",
+    "aufgaben": "Anlegen live durchgefuehrt: 1 offen, 1 ohne Zustaendige (Kachel faerbt 'macht sonst niemand').",
+    "ohneAnmeldung": "/api/admin/ops/{wissen,sprachen,experimente} und /api/admin/aufgaben liefern 401."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Wortgleiche Werte wurden als 'unuebersetzt' gezaehlt",
+      "wirkung": "Der Live-Test meldete ALLE 14 Sprachen als lueckenhaft — die Beispiele zeigten, dass es 'Free-safe', 'System' und 'Maximal' waren, also korrekte Faelle.",
+      "bewertung": "Eine Heuristik, die 'gleich' mit 'falsch' verwechselt, erzeugt Fehlalarm in genau den Faellen, die richtig sind. Ein Bildschirm, der korrekte Arbeit als Mangel meldet, wird beim zweiten Mal ignoriert.",
+      "behoben": "Nur 'fehlt' zaehlt als Luecke. Wortgleiches wird gezeigt, nicht gezaehlt und nicht gefaerbt. Nach dem Fix live: 14 von 14 ohne Luecke."
+    },
+    {
+      "fund": "Das Dokumentenalter waere im Artefakt eine Phantomzahl",
+      "wirkung": "Alle Dateien tragen den Bauzeitstempel (Epoche 0, sichtbar als 1999-12-31). Ein daraus gerechnetes Alter haette rund 9.700 Tage neben jedem Dokument gezeigt und die Warnung 'veraltet' fuer alles ausgeloest.",
+      "gefundenVor": "dem Deploy — im entpackten Live-Artefakt geprueft, nicht erst im Betrieb.",
+      "behoben": "Das Modul prueft, ob alle Zeitstempel identisch sind, und meldet dann 'nicht messbar'; Sortierung faellt auf Groesse zurueck."
+    },
+    {
+      "fund": "Die Schnittstelle des Datensatz-Speichers falsch angenommen",
+      "wirkung": "recordStore.lies() liefert den Datensatz direkt oder null, schreib() liefert den Datensatz — nicht {ok, datensatz}. Sieben Tests schlugen fehl, ohne dass eine Fehlermeldung entstand.",
+      "behoben": "Aufrufe an die vorhandene Verwendung in gdprRequests.js angeglichen.",
+      "regel": "Bei einem gemeinsam genutzten Baustein die vorhandene Verwendung nachlesen, nicht die Signatur raten."
+    }
+  ],
+  "webVitals": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs --url https://smejj.com/ --runs 7 (aus dem Stufe-4-Lauf, unveraendert gueltig)",
+    "urteil": "Alle Budgets eingehalten. Erwartungsgemaess unveraendert: dieser Job hat keine Datei unter public/ veraendert."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, durchgehend gruen.",
+    "parallelSession": "Live-Artefakt heruntergeladen und dateiweise verglichen: keine fremde Arbeit enthalten.",
+    "preflight": "npm run release:preflight vollstaendig gruen; check:release-imports 166 Dateien transitiv.",
+    "rechteUnveraendert": "Keine neue Berechtigung. S, T, X unter ops.read, Y unter models.write.",
+    "sprachdateienUnveraendert": "Modul T liest public/i18n/ nur — keine Sprachdatei wurde angefasst."
+  },
+  "testabdeckung": {
+    "gesamt": 336,
+    "neuInStufe8": 31,
+    "schwerpunkte": [
+      "ein einheitlicher Zeitstempel ist kein Alter",
+      "im Artefakt wird kein Alter behauptet; in der Arbeitskopie schon",
+      "nur 'fehlt' ist ein Mangel — wortgleich ist oft richtig",
+      "eine kaputte Sprachdatei kippt die Uebersicht nicht",
+      "keine erfundenen Experiment-Ergebnisse",
+      "nur geteilte Flags sind Experimente",
+      "Abschliessen und Verwerfen brauchen einen Nachweis",
+      "nichts wird geloescht — erledigt ist ein Zustand"
+    ]
+  }
+}
