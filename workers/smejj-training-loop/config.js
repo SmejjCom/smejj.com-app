@@ -38,6 +38,10 @@ export function loadLoopConfig(env = process.env) {
     // die Sperre frei — ohne ihn koennte eine haengende Verbindung den Loop
     // dauerhaft und lautlos anhalten (Dauerbetrieb-Anforderung).
     tickMaxMs: boundedInt(env.SMEJJ_TRAINING_LOOP_TICK_MAX_MS, 15 * 60 * 1000, 60 * 1000, 60 * 60 * 1000),
+    // Wie viele Messungen der Verlauf im Prozess behaelt. 60 reichen bei einem
+    // 6-Stunden-Takt fuer gut zwei Wochen Trend. Begrenzt, weil der Prozess
+    // unbefristet laeuft — eine unbegrenzte Liste waere ein Speicherleck.
+    verlaufMax: boundedInt(env.SMEJJ_TRAINING_LOOP_VERLAUF_MAX, 60, 1, 500),
     suiteId: env.SMEJJ_TRAINING_LOOP_SUITE_ID || "smejj-chat-core",
     suitePath: env.SMEJJ_TRAINING_LOOP_SUITE_PATH || "evals/suites/smejj-chat-core-v1.json",
     baselineDir: env.SMEJJ_TRAINING_LOOP_BASELINE_DIR || "docs/benchmarks",

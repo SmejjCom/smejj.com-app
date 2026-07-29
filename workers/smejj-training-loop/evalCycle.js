@@ -82,7 +82,20 @@ export async function runEvalCycle({
     verdict: report.verdict,
     regressed: report.verdict === EVAL_VERDICT.REGRESSION || report.verdict === EVAL_VERDICT.BUDGET_VIOLATED,
     summary: formatEvalSummary(report),
-    reportTarget: target
+    reportTarget: target,
+    // Die nackten Zahlen zusaetzlich zum lesbaren Text: der Loop fuehrt daraus
+    // seinen Verlauf (loop.js), damit der Trend auch dann sichtbar bleibt, wenn
+    // die Ablage nicht erreichbar ist. Bewusst aus report.summary abgeleitet und
+    // nicht neu berechnet — es darf nur EINE Wahrheit fuer diese Zahlen geben.
+    kennzahlen: {
+      punktzahl: report.summary.weightedScore,
+      faelle: report.summary.cases,
+      bestanden: report.summary.passed,
+      nichtBestanden: report.summary.failed,
+      kritischeFehler: report.summary.criticalFailures,
+      p95Ms: report.summary.latencyMsP95,
+      medianMs: report.summary.latencyMsMedian
+    }
   };
 }
 

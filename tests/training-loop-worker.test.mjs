@@ -418,3 +418,92 @@ test("worker: /health answers even when the loop is disabled (fail-closed but ob
   assert.equal(body.json.loopEnabled, false);
   server.close();
 });
+
+test("loop: Verlauf haelt die Kennzahlen fest, AUCH wenn die Ablage nicht erreichbar ist", async () => {
+  // Der Kern der Sache: ohne Zugangsdaten fuer die Ablage gehen die vollen
+  // Berichte verloren, der TREND darf aber nicht verloren gehen.
+  const config = loadLoopConfig({
+    SMEJJ_TRAINING_LOOP_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_INTERVAL_MS: String(5 * 60 * 1000),
+    SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000"
+  });
+  const loop = createLoop({
+    config,
+    env: {},
+    repoRoot: "/repo",
+    log: () => {},
+    deps: {
+      checkpointRequest: async () => { throw new Error("Ablage nicht erreichbar"); },
+      callModel: async () => ({ ok: true, text: "hi", latencyMs: 7 }),
+      writeReport: async () => { throw new Error("Invalid URL"); },
+      readReport: async () => null,
+      readSuite: async () => validSuite()
+    }
+  });
+  await loop.tick(() => new Date("2026-07-29T00:00:00.000Z"));
+
+  const verlauf = loop.getVerlauf();
+  assert.equal(verlauf.length, 1, "die Messung steht im Verlauf, obwohl das Ablegen scheiterte");
+  assert.equal(verlauf[0].abgelegt, false, "und ist ehrlich als nicht abgelegt markiert");
+  assert.equal(typeof verlauf[0].punktzahl, "number");
+  assert.equal(verlauf[0].faelle, 1);
+  assert.equal(verlauf[0].bestanden, 1);
+  assert.equal(loop.getStatus().verlaufAnzahl, 1);
+});
+
+test("loop: Verlauf ist begrenzt — im Dauerbetrieb kein wachsender Speicher", async () => {
+  const config = loadLoopConfig({
+    SMEJJ_TRAINING_LOOP_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_INTERVAL_MS: String(5 * 60 * 1000),
+    SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000",
+    SMEJJ_TRAINING_LOOP_VERLAUF_MAX: "3"
+  });
+  assert.equal(config.verlaufMax, 3);
+  const loop = createLoop({
+    config,
+    env: {},
+    repoRoot: "/repo",
+    log: () => {},
+    deps: {
+      checkpointRequest: async () => { throw new Error("keine Ablage"); },
+      callModel: async () => ({ ok: true, text: "hi", latencyMs: 7 }),
+      writeReport: async () => {},
+      readReport: async () => null,
+      readSuite: async () => validSuite()
+    }
+  });
+  const start = new Date("2026-07-29T00:00:00.000Z").getTime();
+  for (let i = 0; i < 5; i += 1) {
+    await loop.tick(() => new Date(start + i * 10 * 60 * 1000));
+  }
+  const verlauf = loop.getVerlauf();
+  assert.equal(verlauf.length, 3, "aelteste Eintraege fallen heraus, die Liste waechst nicht");
+  assert.equal(verlauf[0].zeitpunkt < verlauf[2].zeitpunkt, true, "Reihenfolge bleibt alt -> neu");
+});
+
+test("worker: /verlauf liefert die Kennzahlen und keine Prompts oder Antworten", async () => {
+  const config = loadLoopConfig({});
+  const loop = {
+    getStatus: () => ({ state: "running", verlaufAnzahl: 1 }),
+    getVerlauf: () => ([{ zeitpunkt: "2026-07-29T00:00:00.000Z", urteil: "blocked", punktzahl: 0.912, faelle: 14, bestanden: 13, abgelegt: false }])
+  };
+  const server = createServer({ config, loop });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+  const body = await new Promise((resolve, reject) => {
+    http.get(`http://127.0.0.1:${port}/verlauf`, (res) => {
+      let data = "";
+      res.on("data", (chunk) => { data += chunk; });
+      res.on("end", () => resolve({ status: res.statusCode, raw: data, json: JSON.parse(data) }));
+    }).on("error", reject);
+  });
+  assert.equal(body.status, 200);
+  assert.equal(body.json.anzahl, 1);
+  assert.equal(body.json.verlauf[0].punktzahl, 0.912);
+  // Datenschutz-Zusicherung, nicht nur Absicht: der Endpunkt darf niemals
+  // Eingaben oder Modellantworten preisgeben.
+  assert.equal(/prompt|answer|text|IDRIVE|SECRET/i.test(body.raw), false);
+  server.close();
+});

@@ -33,6 +33,16 @@ export function createServer({ config, loop, readyCheck = () => true }) {
       res.end(body);
       return;
     }
+    // Verlauf der Messungen. Getrennt von /health, weil /health knapp und
+    // billig bleiben muss (der Takt-Waechter fragt es haeufig ab), der Verlauf
+    // aber wachsen darf. Enthaelt ausschliesslich Kennzahlen — keine Prompts,
+    // keine Modellantworten, keine Zugangsdaten.
+    if (req.method === "GET" && req.url === "/verlauf") {
+      const verlauf = typeof loop.getVerlauf === "function" ? loop.getVerlauf() : [];
+      res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ ok: true, anzahl: verlauf.length, verlauf }));
+      return;
+    }
     res.writeHead(404, { "content-type": "application/json; charset=utf-8" });
     res.end(JSON.stringify({ ok: false, error: "not_found" }));
   });

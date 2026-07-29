@@ -22,6 +22,16 @@ export function createLoop({ config, env = process.env, repoRoot, log = console.
   //                    faellig. Der Stand im Prozess haelt das Intervall trotzdem ein.
   let inFlight = false;
   let memoryCheckpoint = null;
+  // Verlauf im Prozess. Grund: die Archivierung der vollen Berichte braucht
+  // Zugangsdaten fuer die Ablage, die der Loop nicht zwingend hat. Der TREND —
+  // wird das Modell besser oder schlechter — ist aber die eigentliche Frage und
+  // darf davon nicht abhaengen. Bewusst begrenzt (config.verlaufMax), damit der
+  // Speicherbedarf im Dauerbetrieb nicht waechst.
+  const verlauf = [];
+  function aufzeichnen(eintrag) {
+    verlauf.push(eintrag);
+    while (verlauf.length > config.verlaufMax) verlauf.shift();
+  }
 
   async function tick(now = () => new Date()) {
     if (inFlight) return memoryCheckpoint || defaultCheckpoint();
@@ -45,7 +55,7 @@ export function createLoop({ config, env = process.env, repoRoot, log = console.
       let next = checkpoint;
 
       if (config.evalCycleEnabled && dueFor(checkpoint.lastEvalRunAt, config.evalIntervalMs, now)) {
-        next = await runEvalTick(next, { config, repoRoot, env, log, deps, now });
+        next = await runEvalTick(next, { config, repoRoot, env, log, deps, now, aufzeichnen });
       }
 
       if (config.trainingCycleEnabled && dueFor(checkpoint.lastTrainingRunAt, config.trainingIntervalMs, now)) {
@@ -65,10 +75,14 @@ export function createLoop({ config, env = process.env, repoRoot, log = console.
   }
 
   function getStatus() {
-    return { ...status };
+    return { ...status, verlaufAnzahl: verlauf.length };
   }
 
-  return Object.freeze({ tick, getStatus });
+  function getVerlauf() {
+    return verlauf.map((eintrag) => ({ ...eintrag }));
+  }
+
+  return Object.freeze({ tick, getStatus, getVerlauf });
 }
 
 function dueFor(lastRunAt, intervalMs, now) {
@@ -78,7 +92,7 @@ function dueFor(lastRunAt, intervalMs, now) {
   return now().getTime() - last >= intervalMs;
 }
 
-async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now }) {
+async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now, aufzeichnen = () => {} }) {
   try {
     const readReport = deps.readReport || readReportFromIdrive;
     const writeReport = deps.writeReport || writeReportToIdrive;
@@ -117,8 +131,23 @@ async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now }
     log(`[smejj-training-loop] eval cycle done: ${result.verdict}${result.regressed ? " (REGRESSION)" : ""}`);
     // Die Kennzahlen immer ins Protokoll — ohne Ablage sind sie sonst weg.
     if (result.summary) log(`[smejj-training-loop] ${String(result.summary).replace(/\n/g, " | ")}`);
+
+    const eintrag = {
+      zeitpunkt: now().toISOString(),
+      urteil: result.verdict,
+      abgelegt: !persistError,
+      ...(result.kennzahlen || {})
+    };
+    aufzeichnen(eintrag);
+    // EINE Zeile mit festen Feldnamen. Zweck: selbst wenn nur die Zeabur-
+    // Protokolle uebrig sind, laesst sich der Trend mit `grep VERLAUF` in
+    // Sekunden herausziehen. Freitext waere dafuer unbrauchbar.
+    log(`[smejj-training-loop] VERLAUF zeitpunkt=${eintrag.zeitpunkt} urteil=${eintrag.urteil}`
+      + ` punktzahl=${eintrag.punktzahl ?? "?"} bestanden=${eintrag.bestanden ?? "?"}/${eintrag.faelle ?? "?"}`
+      + ` kritisch=${eintrag.kritischeFehler ?? "?"} p95ms=${eintrag.p95Ms ?? "?"} abgelegt=${eintrag.abgelegt}`);
+
     if (persistError) {
-      log(`[smejj-training-loop] Bericht NICHT abgelegt (${persistError}) — Kennzahlen stehen nur im Protokoll. IDRIVE_E2_* pruefen.`);
+      log(`[smejj-training-loop] Bericht NICHT abgelegt (${persistError}) — Kennzahlen stehen im Verlauf (/verlauf) und im Protokoll. IDRIVE_E2_* pruefen.`);
     }
     return {
       ...checkpoint,
