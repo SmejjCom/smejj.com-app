@@ -237,3 +237,54 @@ Zeabur-Dienstes exakt auf dieselben Werte setzen wie beim Control-Server
 **Selbst pruefbar ohne Programmierkenntnisse:** danach einen Lauf starten und
 in der IDrive-Console unter `capsules/maus-engine/` nachsehen — erscheint ein
 neuer Ordner, stimmt es; erscheint keiner, stimmen die Werte noch nicht.
+
+## Nachtrag 4: Die echte Ursache heisst `nicht_autorisiert` (Token-Unterschied)
+
+Die Vermutung aus Nachtrag 3 (Artefakt-Upload) war **falsch**. Der Trick, der
+es aufgeklaert hat: derselbe Auftrag noch einmal, aber mit `mode:"interaktiv"`.
+
+Warum das hilft: Im Plan-Pfad reicht `buildRunPlan()` den Worker-Body
+unveraendert als `summary` weiter, und `planner-roundtrip.mjs` behaelt davon
+nur failedStep/aborted/abortReason — `error` faellt weg. Im **Loop**-Pfad
+dagegen gibt die Schleifen-Rueckgabe `error: loopResult.error` durch bis in
+die gespeicherte Antwort. Ergebnis, Lauf `job_maus_diagnose_loop_20260728`:
+
+```
+status: fehlgeschlagen
+error:  nicht_autorisiert
+history: ["loop:false"]
+```
+
+`nicht_autorisiert` ist woertlich die 401-Antwort aus `worker.mjs`:
+`if (!isAuthorized(req)) respondJson(res, 401, { ok:false, error:"nicht_autorisiert" })`.
+Geprueft wird dort exakt
+`String(req.headers.authorization) === "Bearer " + SMEJJ_MAUS_ENGINE_TOKEN`.
+
+**Damit ist auch die Signatur aus Nachtrag 3 erklaert:** `buildRunPlan()`
+prueft den HTTP-Status nicht. Die 401 kommt als `{ok:false,
+error:"nicht_autorisiert"}` durch, wird zu `result.ok = false` — ohne
+`failedStep`, ohne `aborted`, mit leerem `actionLog`. Kein Upload-Problem,
+kein IDrive-Problem, keine kaputte Maus: **der Control-Server und die Engine
+benutzen unterschiedliche Werte fuer `SMEJJ_MAUS_ENGINE_TOKEN`.**
+
+Passend dazu: Auf dem Zeabur-Dienst fehlt inzwischen die Variable `PORT`, die
+dort am 2026-07-28 vormittags noch stand (harmlos, das Image setzt
+`ENV PORT=8080`) — bei der letzten Bearbeitung der Variablen wurde also
+tatsaechlich etwas veraendert. Der Token duerfte dabei mitgelitten haben
+(haeufigste Ursache: mitkopiertes Leerzeichen oder Zeilenumbruch).
+
+**Zu tun (Betreiber, ein einziger Wert):** `SMEJJ_MAUS_ENGINE_TOKEN` auf
+beiden Seiten identisch machen — Salad `smejj-control` und Zeabur
+`smejj-maus-engine`. Ohne Leerzeichen, ohne Zeilenumbruch.
+**Selbst pruefbar:** danach in der App einen Maus-Auftrag starten; verschwindet
+`nicht_autorisiert`, stimmt es.
+
+### Aufgedeckte Schwachstelle (offen, nicht behoben)
+
+`buildRunPlan()` in `control-server/src/routes/mausEngineRoutes.js` ignoriert
+den HTTP-Status der Worker-Antwort und wirft `summary.error` weg. Eine 401
+sieht dadurch aus wie ein inhaltlich gescheiterter Lauf — und kostete hier
+mehrere Runden. Zwei Zeilen wuerden reichen (Status pruefen, `error`
+durchreichen). Nicht umgesetzt, weil der Control-Server-Deploy ueber
+`set_control_artifact_env.mjs` laeuft und damit wieder an einem
+Env-Variablen-Schreibzugriff endet, den der Classifier blockiert.
