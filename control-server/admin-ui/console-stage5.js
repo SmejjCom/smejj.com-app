@@ -24,7 +24,20 @@
     jobs: { id: "H", gruppe: "Betrieb", name: "Jobs & Läufe", laden: lade("jobs", S.jobs) },
     worker: { id: "I", gruppe: "Betrieb", name: "Worker & Kapazität", laden: lade("worker", S.worker) },
     deploy: { id: "P", gruppe: "Betrieb", name: "Betrieb & Deploy", laden: lade("deploy", S.deploy) },
-    speicher: { id: "U", gruppe: "Betrieb", name: "Speicher", laden: lade("speicher", S.speicher) }
+    speicher: {
+      id: "U", gruppe: "Betrieb", name: "Speicher",
+      // Zwei Quellen: die Bereiche (was liegt wo) und das Kontingent (wie voll
+      // ist das gebuchte Paket). Beide zusammen, weil die eine Frage ohne die
+      // andere unvollstaendig ist — und weil nur die zweite Geld kostet.
+      async laden(ctx) {
+        const [bereiche, kontingent] = await Promise.all([
+          A.hole("/api/admin/ops/speicher"),
+          A.hole("/api/admin/ops/kontingent")
+        ]);
+        if (!bereiche.ok) return ctx.fehler(bereiche.fehler);
+        ctx.zeichne(S.speicher(bereiche.data, kontingent.ok ? kontingent.data : { ok: false, error: kontingent.fehler }));
+      }
+    }
   };
 
   window.adminStage5 = { seiten: seiten };

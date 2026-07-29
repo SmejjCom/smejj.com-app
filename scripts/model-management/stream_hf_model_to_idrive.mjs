@@ -2,6 +2,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import { secureLocalEnvPath } from "../../src/shared/env.js";
+import { alsText, pruefeKontingent } from "../deploy/idrive-quota-guard.mjs";
 
 const FIVE_MIB = 5 * 1024 * 1024;
 
@@ -283,6 +284,22 @@ const config = {
 const hfToken = process.env.HF_TOKEN || "";
 const metadata = await fetchJson(`https://huggingface.co/api/models/${modelRepo}?blobs=true`, retryAttempts);
 const files = selectedFiles(metadata.siblings || [], includeRegex);
+
+// Kontingent-Sperre VOR dem ersten Byte. IDrive e2 blockiert nicht, wenn das
+// Paket voll ist — es nimmt weiter an und rechnet 0,006 USD je GB und Monat ab.
+// Ein Modell dieser Groesse kann das Paket im Alleingang reissen, ohne dass
+// irgendwo etwas aufleuchtet. Deshalb wird hier gerechnet, bevor der erste
+// Teil hochgeht, und nicht hinterher gestaunt.
+const geplanteBytes = files.reduce((summe, datei) => summe + (Number(datei.size) || 0), 0);
+const kontingent = await pruefeKontingent({ zusaetzlicheBytes: geplanteBytes });
+console.log(`Kontingent: ${alsText(kontingent)}`);
+if (!kontingent.ok) {
+  console.error(`\nSPERRE: ${kontingent.grund}`);
+  console.error("Kein Upload. Entweder aufraeumen, das Paket vergroessern (braucht Freigabe) "
+    + "oder SMEJJ_IDRIVE_GRENZE_PROZENT bewusst anheben.");
+  process.exit(1);
+}
+
 const generatedAt = new Date().toISOString();
 const checksums = [];
 

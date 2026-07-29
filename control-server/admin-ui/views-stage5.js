@@ -19,7 +19,11 @@
     if (n < 1024) return n + " B";
     if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
     if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + " MB";
-    return (n / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+    // TB-Stufe, damit das Paket so dasteht wie im Portal: "1,23 TB von 2,00 TB"
+    // statt "1258.20 GB von 2048.00 GB". IDrive rechnet binaer und beschriftet
+    // binaer — diese Anzeige tut dasselbe.
+    if (n < 1024 * 1024 * 1024 * 1024) return (n / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+    return (n / (1024 * 1024 * 1024 * 1024)).toFixed(2) + " TB";
   }
 
   function dauerKurz(ms) {
@@ -260,7 +264,7 @@
 
   // ---- U · Speicher ------------------------------------------------------------
 
-  function speicher(d) {
+  function speicher(d, k) {
     if (d.ok === false) {
       return V.kopfBlock("U", "Speicher", "Speicher", "Belegung im Object Brain.")
         + '<div class="note glass fehler"><div class="nx">▲</div><div>'
@@ -285,17 +289,71 @@
       + "ist schlimmer als gar keine — deshalb steht „mindestens“ daneben.</div></div></div>";
 
     return V.kopfBlock("U", "Speicher", "Speicher",
-      "Belegung je Bereich im Object Brain.")
+      "Wie voll das gebuchte Paket ist — und was wo liegt.")
       + '<div class="kpis">'
+      + kontingentKachel(k)
       + V.kachelBlock("Objekte", String(d.objekteGesamt || 0), d.unvollstaendig ? "mindestens" : "gezählt")
       + V.kachelBlock("Belegung", bytes(d.bytesGesamt), "in den gezeigten Bereichen")
       + V.kachelBlock("Eimer", e(d.eimer || "—"),
         d.deployEimer && d.deployEimer !== d.eimer ? "Artefakte in " + e(d.deployEimer) : "IDrive e2")
       + "</div>"
-      + '<div class="stack">' + hinweis
+      + '<div class="stack">' + kontingentBlock(k) + hinweis
       + V.panelBlock("Bereiche", "feste Auswahl",
         V.tabelleBlock(["Bereich", "Objekte", "Belegung", "Zuletzt geändert"], zeilen))
       + "</div>";
+  }
+
+  // ---- Kontingent: der einzige Ort im Adminbereich, an dem Untätigkeit Geld kostet ----
+
+  function kontingentKachel(k) {
+    if (!k || k.ok === false) return V.kachelBlock("Paket", "—", "nicht messbar", "dn");
+    const ton = k.ampel === "ok" ? "up" : "dn";
+    return V.kachelBlock("Paket belegt", k.auslastungProzent + " %",
+      k.vollstaendig ? ampelText(k.ampel) : "mindestens — " + ampelText(k.ampel), ton);
+  }
+
+  function ampelText(ampel) {
+    if (ampel === "ueberschritten") return "überschritten, es läuft Geld";
+    if (ampel === "kritisch") return "kritisch";
+    if (ampel === "warnung") return "aufräumen einplanen";
+    return "im Rahmen";
+  }
+
+  function kontingentBlock(k) {
+    if (!k || k.ok === false) {
+      return '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">Kontingent nicht messbar</div>'
+        + '<div class="ns">' + e((k && k.error) || "unbekannt")
+        + " — solange das so ist, verweigert die Upload-Sperre große Uploads (fail-closed).</div></div></div>";
+    }
+
+    const eimerZeilen = (k.eimer || []).map(function (b) {
+      if (!b.erreichbar) {
+        return "<tr><td><b>" + e(b.name) + "</b></td>"
+          + '<td colspan="3">' + pille("nicht lesbar", "bad") + " " + e(b.grund || "") + "</td></tr>";
+      }
+      return "<tr><td><b>" + e(b.name) + "</b></td>"
+        + "<td>" + e(String(b.objekte)) + (b.abgeschnitten ? " " + pille("abgeschnitten", "warn") : "") + "</td>"
+        + "<td>" + e(bytes(b.bytes)) + "</td>"
+        + "<td>" + e(A.zeit(b.zuletztGeaendertAm)) + "</td></tr>";
+    });
+
+    const kopf = k.ampel === "ok"
+      ? '<div class="note glass"><div class="nx">◆</div><div><div class="nt">'
+        + e(bytes(k.bytesGesamt)) + " von " + e(bytes(k.paketBytes)) + " belegt — " + k.auslastungProzent + " %</div>"
+      : '<div class="note glass fehler"><div class="nx">▲</div><div><div class="nt">'
+        + e(bytes(k.bytesGesamt)) + " von " + e(bytes(k.paketBytes)) + " belegt — " + k.auslastungProzent + " %</div>";
+
+    const folge = k.mehrkostenUsdProMonat !== null && k.mehrkostenUsdProMonat !== undefined
+      ? "Überschreitung: " + e(String(k.mehrkostenUsdProMonat)) + " USD je Monat, laufend."
+      : "Frei: " + e(bytes(k.freiBytes)) + ".";
+
+    return kopf
+      + '<div class="ns">IDrive e2 blockiert nicht, wenn das Paket voll ist — es nimmt weiter an und '
+      + "rechnet ab. " + folge + " " + e(k.vollstaendig ? "" : k.hinweis || "")
+      + '</div></div></div>'
+      + V.panelBlock("Eimer im Konto", e(k.quelle || ""),
+        V.tabelleBlock(["Eimer", "Objekte", "Belegung", "Zuletzt geändert"], eimerZeilen));
   }
 
   // ---- Helfer ------------------------------------------------------------------
