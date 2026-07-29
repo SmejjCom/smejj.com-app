@@ -142,6 +142,26 @@ Architektur-Regeln, die aus diesen Zielen folgen (verbindlich):
 * Keine blockierenden Skripte, keine externen Fonts/CDNs, keine Render-Blocker.
 * Jede neue Abhängigkeit muss ihr Gewicht in Kilobyte rechtfertigen.
 
+SKALIEREN AUF ZURUF (verbindlich): Skalieren ist ein Zahlenwechsel, kein Umbau.
+Sobald Bedarf entsteht, wird nur hochgestellt und danach erweitert — nie umgebaut.
+* Zustandslos zwingend: kein Sitzungs-, Job- oder Zählstand im Serverspeicher.
+  Alles auf IDrive e2. Erst dann sind 1 und 50 Instanzen technisch dasselbe.
+* Kapazität pro Instanz vorher messen (Lasttest): "eine Instanz = X Anfragen/s".
+  Danach ist Skalieren Rechnen, nicht Raten.
+* Skalieren als Konfiguration, nicht als Release: Replica-Anzahl als
+  Umgebungswert (Zeabur-Instanzen, Salad-Container-Group). Kein Code, kein Deploy.
+* Schwellen vorher festlegen, nicht im Störfall: z. B. "API-p95 über 300 ms für
+  5 Minuten → eine Instanz mehr", "Warteschlange über N → Salad-Worker starten".
+* Ventil statt Bruch: Rate Limiting, Warteschlange und Load Shedding an jedem
+  öffentlichen Endpunkt. Bei Überlast wird gedrosselt und selektiv abgewiesen —
+  es fällt nichts aus.
+* Drei Ebenen skalieren getrennt: statisch (GitHub Pages, skaliert von selbst),
+  API (Zeabur, horizontal), Rechenarbeit (Salad, stundenweise). Bezahlt wird nur
+  die Ebene, die klemmt.
+* Kostengrenze: Jede Erweiterung über den bestehenden 6-USD-Control-Server hinaus
+  ist eine neue laufende Kostenposition und damit Rote Liste — vorher schriftliche
+  Freigabe des Betreibers einholen.
+
 Messpflicht: Bei jedem Live-Test werden LCP, INP, CLS, TTFB und API-p95 gemessen
 und in der Task Capsule als Benchmark gespeichert. Eine Verschlechterung gegenüber
 dem letzten Benchmark gilt als Fehler und löst den Ship-Loop erneut aus.
