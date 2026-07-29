@@ -2,7 +2,7 @@
 // Ausfuehren: node --test src/search/webSearch.test.js
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isSafePublicUrl, isAdOrRedirectUrl, shouldSearchWeb, searchWeb, clearSearchCache, parseSearxngResults, looksLikeProse, cleanSnippet, resolveBingLink, parseBingHtml, normalizeForIntent } from "./webSearch.js";
+import { isSafePublicUrl, isAdOrRedirectUrl, shouldSearchWeb, searchWeb, clearSearchCache, parseSearxngResults, looksLikeProse, cleanSnippet, resolveBingLink, parseBingHtml, normalizeForIntent, resultsLookRelevant } from "./webSearch.js";
 import { createTtlCache } from "./searchCache.js";
 import { createRateLimiter } from "../shared/rateLimiter.js";
 
@@ -92,6 +92,42 @@ test("shouldSearchWeb erzeugt keine Fehltreffer bei aehnlichen Woertern", () => 
   assert.equal(shouldSearchWeb("Ich war letztes Jahr in Neuseeland"), false);
   assert.equal(shouldSearchWeb("Er hat viel Verstand bewiesen"), false);
   assert.equal(shouldSearchWeb("Write such a function for me"), false);
+});
+
+// Befund 2026-07-29: gesperrte Suchmaschinen liefern nicht nichts, sondern
+// Themenfremdes. Ohne diese Pruefung landete "Office Depot Mexiko" als
+// "Live-Internet-Kontext" beim Modell.
+test("resultsLookRelevant verwirft themenfremde Treffer gesperrter Quellen", () => {
+  const muell = [
+    { title: "El Rey Leon - Musicales Madrid", url: "https://www.madridmusicals.com/es/musicals/the", snippet: "Entradas" },
+    { title: "Office Depot Mexico", url: "https://www.officedepot.com.mx/", snippet: "Papeleria" }
+  ];
+  assert.equal(resultsLookRelevant("Schlagzeilen Berlin", muell), false);
+  assert.equal(resultsLookRelevant("Verspaetung S-Bahn Berlin", muell), false);
+});
+
+test("resultsLookRelevant laesst echte Treffer durch", () => {
+  const echt = [
+    { title: "rbb24 - Nachrichten aus Berlin und Brandenburg", url: "https://www.rbb24.de/", snippet: "Informationsportal" },
+    { title: "Irgendwas", url: "https://example.org/", snippet: "" }
+  ];
+  assert.equal(resultsLookRelevant("Schlagzeilen Berlin", echt), true);
+  // Treffer nur im Auszug oder nur in der Adresse zaehlt ebenfalls.
+  assert.equal(resultsLookRelevant("Bitcoin Kurs", [{ title: "Kurse", url: "https://x.de/bitcoin", snippet: "" }]), true);
+  assert.equal(resultsLookRelevant("Zoo Berlin", [{ title: "Tierpark", url: "https://x.de/", snippet: "Der Zoo in Berlin oeffnet" }]), true);
+});
+
+test("resultsLookRelevant ist fail-safe bei leerer Liste und ohne pruefbare Begriffe", () => {
+  assert.equal(resultsLookRelevant("Schlagzeilen", []), false);
+  assert.equal(resultsLookRelevant("Schlagzeilen", null), false);
+  // Nur Stoppwoerter/kurze Woerter -> nicht filtern, sonst faelschlich verworfen.
+  assert.equal(resultsLookRelevant("was ist das", [{ title: "Irgendwas", url: "https://x.de/", snippet: "" }]), true);
+});
+
+// Umlaute duerfen die Pruefung nicht aushebeln (dieselbe Normalisierung).
+test("resultsLookRelevant vergleicht mit Umlaut-Normalisierung", () => {
+  assert.equal(resultsLookRelevant("Öffnungszeiten Zoo", [{ title: "Oeffnungszeiten des Zoo", url: "https://x.de/", snippet: "" }]), true);
+  assert.equal(resultsLookRelevant("Verspätung", [{ title: "Verspaetung der Bahn", url: "https://x.de/", snippet: "" }]), true);
 });
 
 test("parseSearxngResults filtert Ads/private Ziele und begrenzt", () => {

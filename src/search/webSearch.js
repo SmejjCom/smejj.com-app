@@ -5,6 +5,9 @@
 // Ergebnisse werden kurz gecacht (TTL), damit identische Anfragen die Suchmaschinen
 // nicht wiederholt treffen (Schutz vor Blocking, schnellere Antworten).
 import { createTtlCache } from "./searchCache.js";
+// Lokal gebraucht fuer resultsLookRelevant. Ein blosser Re-Export (unten)
+// stellt den Namen in dieser Datei NICHT bereit — deshalb zusaetzlich importiert.
+import { normalizeForIntent } from "./searchIntent.js";
 
 const SEARCH_CACHE_TTL_MS = 600000;
 const searchResultCache = createTtlCache({ ttlMs: SEARCH_CACHE_TTL_MS, maxEntries: 500 });
@@ -222,6 +225,48 @@ async function searxngJson(query, limit) {
   }
 }
 
+// Wortarten ohne Aussagekraft — sie duerfen einen Treffer nicht rechtfertigen.
+const STOPWOERTER = new Set([
+  "was", "wer", "wie", "wo", "wann", "warum", "welche", "welcher", "welches",
+  "sind", "ist", "war", "waren", "gibt", "hat", "habe", "haben", "kann", "kannst",
+  "die", "der", "das", "den", "dem", "des", "ein", "eine", "einen", "einem",
+  "und", "oder", "aber", "auch", "nicht", "mir", "mich", "dir", "sich", "aus",
+  "von", "vom", "fuer", "mit", "bei", "auf", "ueber", "unter", "nach", "zum",
+  "zur", "bitte", "danke", "hier", "there", "what", "which", "where", "when",
+  "the", "and", "for", "with", "about", "from", "you", "are", "can", "please"
+]);
+
+// Traegt das Ergebnis ueberhaupt etwas zur Frage bei?
+//
+// Befund 2026-07-29: Als DuckDuckGo und Bing die Server-IP sperrten, lieferte
+// der HTML-Fallback keine leere Liste, sondern **themenfremde** Treffer — auf
+// "Schlagzeilen Berlin" kamen Musical-Seiten aus Madrid, auf "Verspaetung
+// S-Bahn" Reddit-Threads ueber Anime. Weil `results.length > 0` galt, wurden
+// sie akzeptiert, zwischengespeichert und dem Modell als "Live-Internet-
+// Kontext" vorgelegt. Eine gesperrte Suchmaschine sah damit aus wie eine
+// erfolgreiche Recherche.
+//
+// Regel: Mindestens ein aussagekraeftiges Wort der Anfrage (ab 4 Zeichen, kein
+// Stoppwort) muss in Titel, Adresse oder Auszug eines Treffers vorkommen. Sonst
+// gilt die Quelle als gescheitert und die naechste wird versucht. Fail-closed:
+// lieber kein Kontext als falscher Kontext — ohne Kontext sagt das Modell
+// ehrlich, dass es nichts gefunden hat, statt Fremdes zu verwerten.
+export function resultsLookRelevant(query, results) {
+  if (!Array.isArray(results) || results.length === 0) return false;
+  const begriffe = normalizeForIntent(query)
+    .split(/[^a-z0-9]+/)
+    .filter((wort) => wort.length >= 4 && !STOPWOERTER.has(wort));
+  // Ohne pruefbare Begriffe (z. B. reine Zahlen) nicht filtern — sonst wuerden
+  // gueltige Suchen faelschlich verworfen.
+  if (begriffe.length === 0) return true;
+  return results.some((eintrag) => {
+    const heuhaufen = normalizeForIntent(
+      String(eintrag?.title || "") + " " + String(eintrag?.url || "") + " " + String(eintrag?.snippet || "")
+    );
+    return begriffe.some((wort) => heuhaufen.includes(wort));
+  });
+}
+
 export async function searchWeb(query, options) {
   const settings = options || {};
   const limit = Math.min(Math.max(Number(settings.limit) || 5, 1), 10);
@@ -233,7 +278,7 @@ export async function searchWeb(query, options) {
   // Bevorzugt SearXNG (falls konfiguriert), sonst HTML-Suchmaschinen als Fallback.
   if (SEARXNG_URL) {
     const sx = await searxngJson(trimmed, limit);
-    if (sx.length > 0) {
+    if (sx.length > 0 && resultsLookRelevant(trimmed, sx)) {
       searchResultCache.set(cacheKey, sx);
       return sx.slice();
     }
@@ -248,7 +293,10 @@ export async function searchWeb(query, options) {
     const html = await fetchText(attempt.url, SEARCH_TIMEOUT_MS);
     if (!html) continue;
     const results = attempt.parse(html);
-    if (results.length > 0) {
+    // Eine gesperrte Suchmaschine liefert Treffer, die nichts mit der Anfrage
+    // zu tun haben. Solche Quellen gelten als gescheitert (siehe
+    // resultsLookRelevant) — es wird die naechste versucht, nicht Muell gecacht.
+    if (results.length > 0 && resultsLookRelevant(trimmed, results)) {
       const limited = results.slice(0, limit);
       searchResultCache.set(cacheKey, limited);
       return limited.slice();
