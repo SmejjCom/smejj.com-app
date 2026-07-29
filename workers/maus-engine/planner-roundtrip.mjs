@@ -83,6 +83,20 @@ async function recordLoopMacro({ task, policyInput, macroStore, loopResult }) {
   }
 }
 
+// Trennt "die Maus hat es versucht und es ging schief" von "die Maus kam nie
+// zum Zug". Bewusst KEINE Heuristik: der Dispatcher markiert Infrastruktur-
+// Abbrueche (toter Worker, HTTP-Fehler, Zeitueberschreitung) selbst mit
+// `infra: true`. Ein abgelehnter Plan traegt die Markierung nicht — das ist
+// ein Planungsfehler und gehoert weiter unter "Budget erschoepft".
+// Raten waere hier gefaehrlich: eine Regel, die "abgebrochen" mit "kaputte
+// Infrastruktur" verwechselt, erzeugt Fehlalarm genau bei den Faellen, in
+// denen der Planer korrekt fail-closed abgelehnt hat.
+export function infrastrukturFehler(lastFailure) {
+  if (lastFailure?.infra !== true) return null;
+  const grund = lastFailure.error ?? lastFailure.abortReason;
+  return grund ? String(grund) : null;
+}
+
 // task: Aufgabentext ODER { text, mode }; policyInput: { capsuleRef,
 // domainAllowlist, budget, files?, visionAllowed? }; plannerClient:
 // async (prompt) => Antworttext; runPlan: async (plan) => Engine-Ergebnis;
@@ -149,6 +163,8 @@ export async function planAndExecute({ task, policyInput, plannerClient, runPlan
           failedStep: result.failedStep,
           aborted: result.aborted,
           abortReason: result.abortReason,
+          infra: result.infra === true,
+          error: result.error ?? null,
           actionLog: result.actionLog,
           domExcerpt: result.failureContext?.domExcerpt
         };
@@ -179,15 +195,19 @@ export async function planAndExecute({ task, policyInput, plannerClient, runPlan
       result: loopResult,
       ...(macroSaved ? { macroSaved } : {}),
       ...(loopResult.ok === true ? {} : { error: loopResult.error ?? loopResult.abortReason ?? "loop_fehlgeschlagen", lastFailure }),
-      planPhase: { error: "planner_budget_erschoepft", lastFailure },
+      planPhase: { error: infrastrukturFehler(lastFailure) ?? "planner_budget_erschoepft", lastFailure },
       history
     };
   }
 
   // Budget erschoepft: fail-closed, keine weiteren Modell-Aufrufe.
+  // ABER: ein Infrastruktur-Abbruch (z. B. 401 der Engine, toter Worker) ist
+  // KEIN erschoepftes Planungsbudget. Wer dann "planner_budget_erschoepft"
+  // meldet, schickt die Fehlersuche ans falsche Ende — genau das hat hier
+  // mehrere Runden gekostet. Der echte Grund steht vorn, das Budget dahinter.
   return {
     ok: false,
-    error: "planner_budget_erschoepft",
+    error: infrastrukturFehler(lastFailure) ?? "planner_budget_erschoepft",
     promptTemplateVersion: PROMPT_TEMPLATE_VERSION,
     plannerCalls,
     modelCalls: plannerCalls,

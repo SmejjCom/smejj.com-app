@@ -176,13 +176,38 @@ export async function waitForWorkerReady({ config, fetchImpl = fetch, maxWaitMs 
   return { ready: false, attempts };
 }
 
+// Eine Deutung fuer Plan- und Loop-Pfad: zwei Rechenwege waeren zwei
+// Wahrheiten. `error` bleibt maschinenlesbar (z. B. "nicht_autorisiert"),
+// `abortReason` traegt den Status zusaetzlich fuer die Anzeige.
+// Klartext-Regel: 401/403 heisst Token-Unterschied, nicht "Maus kaputt".
+// Gibt den Fehlerstatus zurueck oder 0, wenn kein Fehler BELEGT ist.
+// Bewusst vorsichtig: nur ein positiv erkannter Nicht-2xx-Status gilt als
+// Fehler. `waitForWorkerReady` akzeptiert oben ebenso `ok` ODER `status` —
+// wer hier strenger prueft, erklaert erfolgreiche Laeufe zu Fehlern, sobald
+// eine Antwort nur eines von beiden Feldern traegt.
+export function workerStatusFehler(response) {
+  if (response?.ok === true) return 0;
+  const status = Number(response?.status ?? 0);
+  if (status >= 200 && status < 300) return 0;
+  return status > 0 ? status : 0;
+}
+
+export function workerHttpFehler(status, summary) {
+  const roh = summary && typeof summary === "object" ? summary.error ?? summary.abortReason : null;
+  const error = String(roh || `worker_http_${status}`).slice(0, 160);
+  const hinweis = status === 401 || status === 403
+    ? " (Token von Control-Server und Maus-Engine stimmen nicht ueberein)"
+    : "";
+  return { infra: true, aborted: true, error, abortReason: `worker_http_${status}: ${error}${hinweis}` };
+}
+
 // Worker-Aufruf: Ausfuehrung ausschliesslich im stateless Salad-Worker.
 // 422 (Plan abgelehnt) wird als Abbruch an den Roundtrip zurueckgemeldet.
 function buildRunPlan({ config, fetchImpl, saveAsMacro, readiness }) {
   return async (plan) => {
     const gate = await waitForWorkerReady({ config, fetchImpl, ...(readiness || {}) });
     if (!gate.ready) {
-      return { ok: false, aborted: true, abortReason: `worker_nicht_bereit_nach_${gate.attempts}_versuchen` };
+      return { ok: false, infra: true, aborted: true, abortReason: `worker_nicht_bereit_nach_${gate.attempts}_versuchen` };
     }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), WORKER_TIMEOUT_MS);
@@ -195,15 +220,24 @@ function buildRunPlan({ config, fetchImpl, saveAsMacro, readiness }) {
       });
       const summary = await response.json().catch(() => null);
       if (!summary || typeof summary !== "object") {
-        return { ok: false, aborted: true, abortReason: `worker_antwort_ungueltig_http_${response.status}` };
+        return { ok: false, infra: true, aborted: true, abortReason: `worker_antwort_ungueltig_http_${response.status}` };
       }
       if (summary.rejected === true) {
         return { ok: false, aborted: true, abortReason: `plan_abgelehnt: ${(summary.errors || []).slice(0, 3).join(" | ")}` };
       }
+      // HTTP-Status pruefen. Eine 401/403/500 der Engine ist KEIN inhaltlich
+      // gescheiterter Lauf: ohne diese Pruefung kam der Fehler-Body als
+      // `summary` durch und erzeugte {ok:false} ohne failedStep, ohne aborted,
+      // mit leerem actionLog — eine Signatur, die der Interpreter gar nicht
+      // erzeugen kann. Der echte Grund (z. B. nicht_autorisiert) fiel weg.
+      const fehlerStatus = workerStatusFehler(response);
+      if (fehlerStatus) {
+        return { ok: false, ...workerHttpFehler(fehlerStatus, summary) };
+      }
       return summary;
     } catch (error) {
       const reason = error?.name === "AbortError" ? "worker_timeout" : `worker_fehler: ${String(error?.message || error).slice(0, 160)}`;
-      return { ok: false, aborted: true, abortReason: reason };
+      return { ok: false, infra: true, aborted: true, abortReason: reason };
     } finally {
       clearTimeout(timer);
     }
@@ -218,7 +252,7 @@ function buildRunLoop({ config, fetchImpl, readiness }) {
   return async ({ task, policyInput }) => {
     const gate = await waitForWorkerReady({ config, fetchImpl, ...(readiness || {}) });
     if (!gate.ready) {
-      return { ok: false, aborted: true, abortReason: `worker_nicht_bereit_nach_${gate.attempts}_versuchen`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
+      return { ok: false, infra: true, aborted: true, abortReason: `worker_nicht_bereit_nach_${gate.attempts}_versuchen`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
     }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), WORKER_TIMEOUT_MS);
@@ -231,15 +265,19 @@ function buildRunLoop({ config, fetchImpl, readiness }) {
       });
       const summary = await response.json().catch(() => null);
       if (!summary || typeof summary !== "object") {
-        return { ok: false, aborted: true, abortReason: `worker_antwort_ungueltig_http_${response.status}`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
+        return { ok: false, infra: true, aborted: true, abortReason: `worker_antwort_ungueltig_http_${response.status}`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
       }
       if (summary.rejected === true) {
         return { ok: false, aborted: true, abortReason: `loop_abgelehnt: ${(summary.errors || []).slice(0, 3).join(" | ")}`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
       }
+      const fehlerStatusLoop = workerStatusFehler(response);
+      if (fehlerStatusLoop) {
+        return { ok: false, ...workerHttpFehler(fehlerStatusLoop, summary), loopSteps: 0, modelCalls: 0, recordedSteps: [] };
+      }
       return summary;
     } catch (error) {
       const reason = error?.name === "AbortError" ? "worker_timeout" : `worker_fehler: ${String(error?.message || error).slice(0, 160)}`;
-      return { ok: false, aborted: true, abortReason: reason, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
+      return { ok: false, infra: true, aborted: true, abortReason: reason, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
     } finally {
       clearTimeout(timer);
     }
@@ -470,7 +508,7 @@ export async function handleMausRun(req, res, {
       loopSteps: outcome.loopSteps ?? 0,
       history: outcome.history || [],
       lastFailure: outcome.lastFailure
-        ? { failedStep: outcome.lastFailure.failedStep ?? null, aborted: outcome.lastFailure.aborted === true, abortReason: outcome.lastFailure.abortReason ?? null, errors: outcome.lastFailure.errors }
+        ? { failedStep: outcome.lastFailure.failedStep ?? null, aborted: outcome.lastFailure.aborted === true, abortReason: outcome.lastFailure.abortReason ?? null, error: outcome.lastFailure.error ?? null, errors: outcome.lastFailure.errors }
         : null
     });
   } catch (error) {
@@ -508,7 +546,7 @@ async function runAsyncInBackground({ runId, capsuleRef, execute, store }) {
         plannerCalls: outcome?.plannerCalls ?? null,
         history: outcome?.history || [],
         lastFailure: outcome?.lastFailure
-          ? { failedStep: outcome.lastFailure.failedStep ?? null, aborted: outcome.lastFailure.aborted === true, abortReason: outcome.lastFailure.abortReason ?? null, errors: outcome.lastFailure.errors }
+          ? { failedStep: outcome.lastFailure.failedStep ?? null, aborted: outcome.lastFailure.aborted === true, abortReason: outcome.lastFailure.abortReason ?? null, error: outcome.lastFailure.error ?? null, errors: outcome.lastFailure.errors }
           : null,
         finishedAt: new Date().toISOString()
       };
