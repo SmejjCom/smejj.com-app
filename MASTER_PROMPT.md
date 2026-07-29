@@ -80,12 +80,33 @@ Zielbild: smejj.com wird für Milliarden Besucher pro Tag gebaut — maximal sta
 blitzschnell und ausfallsicher. Jede Architektur-, Code- und Deploy-Entscheidung
 muss diesem Zielbild standhalten und darf es nie verbauen.
 
+ERWARTUNGSWERT (verbindliche Planungsgrundlage): 1 MILLIARDE BESUCHER PRO TAG.
+Das System muss so stabil gebaut sein, dass es 1 Milliarde Besuchern pro Tag
+perfekten Service bietet — ohne Ausfall, ohne Verlangsamung, ohne Warteschlange
+und ohne manuelles Eingreifen. Jede Architektur-, Code- und Deploy-Entscheidung
+wird an dieser Zahl gemessen und darf sie nie verbauen. Wer eine Lösung baut, die
+bei 1 Milliarde Besuchern pro Tag zusammenbricht, hat die Aufgabe nicht erfüllt.
+
+Was 1 Milliarde Besucher pro Tag konkret bedeutet (immer mitrechnen):
+* Durchschnitt: ca. 11.600 Besucher pro Sekunde, rund um die Uhr, weltweit verteilt.
+* Tagesspitze (Faktor 10 auf den Durchschnitt): ca. 116.000 Besucher pro Sekunde.
+* Bei 5 Anfragen je Besuch: ca. 58.000 Anfragen pro Sekunde im Schnitt,
+  ca. 580.000 Anfragen pro Sekunde in der Spitze.
+* Jede dieser Anfragen muss die Geschwindigkeits-Budgets unten einhalten —
+  Durchschnittswerte genügen nicht, gemessen wird p75/p95/p99.
+* Der Control Server (2 vCPU / 8 GB) kann diese Last niemals tragen. Deshalb ist
+  Static-First keine Empfehlung, sondern Pflicht: der weit überwiegende Teil der
+  Anfragen wird statisch und aus dem Cache beantwortet, ohne Serverbeteiligung.
+
 Last-Ziele:
-* Auslegung auf Milliarden Seitenaufrufe pro Tag, weltweit verteilt.
+* Auslegung auf 1 Milliarde Besucher und mehr pro Tag, weltweit verteilt;
+  Kopfraum für Wachstum auf Milliarden Seitenaufrufe pro Tag.
 * Lastspitzen (10-facher Normalwert) müssen ohne Ausfall und ohne manuelles
   Eingreifen abgefangen werden.
 * Millionen parallele Aufgaben und Agenten-Jobs.
 * Horizontale Skalierung: nie eine Komponente, die nur vertikal wachsen kann.
+* Kein Engpass darf mit der Besucherzahl linear mitwachsen (keine zentrale
+  Zählung, keine gemeinsame Sperre, keine Sitzungsdaten im Serverspeicher).
 
 Geschwindigkeits-Ziele (harte Budgets, messbar im Live-Test):
 * TTFB: unter 200 ms (p95)
