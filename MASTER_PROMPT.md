@@ -176,12 +176,14 @@ SERVER- UND DIENSTE-ÜBERSICHT FÜR smejj.com (verbindlich — Stand 29.07.2026)
 
 5) zeabur.com / tencent.com — NOTFALLSERVER
    * Ausschließlich für Notfälle und den minimalen Control Server nutzen.
+   * Nur für die unbedingt notwendigen laufenden Dienste verwenden.
    * Spezifikationen: 2 vCPU | 8 GB RAM | 80 GB SSD | 2,6 TB Egress.
    * Kosten: 6 USD pro Monat (feste, eingeplante Ausgabe).
    * Keine großen Dateien, keine Modelle, keine rechenintensiven Prozesse.
-   * Große Dateien und dauerhafte Daten gehören nach IDrive e2.
+   * Große Dateien und dauerhafte Daten möglichst in IDrive e2 speichern.
 
 6) portal.salad.com — NOT- UND SPITZENBEDARF
+   * Ausschließlich für Notfälle oder kurzfristig benötigte Rechenleistung verwenden.
    * Nur bei akutem Mehrbedarf starten, z. B. Einsatz von Kimi K3 oder GLM-5.2 als Fundament,
      wenn die eigenen Kapazitäten nicht ausreichen.
    * Abrechnung flexibel nach Stunden (pay-per-use), immer hinter aktivem Budget-Gate.
