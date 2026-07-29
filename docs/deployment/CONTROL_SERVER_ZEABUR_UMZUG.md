@@ -18,8 +18,9 @@ und was der Umzug **kostet**.
 | Erster Bau | **erfolgreich**, "Running 1/1" |
 | Gesundheitsabruf im Container | **bestanden** — `ok=true, app=smejj.com Code` |
 | Env-Werte im neuen Dienst | **offen — nur der Betreiber** |
-| Domain vergeben | nein (erst nach den Env-Werten sinnvoll) |
-| Frontend auf neue Adresse umgestellt | nein — braucht **Start-Lock-Freigabe** |
+| Domain vergeben | **ja** — https://smejj-control.zeabur.app (HTTP 200) |
+| CSP `connect-src` vorbereitet | **ja, live** (sw v191) — additiv, ohne Wirkung |
+| Frontend auf neue Adresse umgestellt | **nein — wartet auf die Env-Werte** |
 
 ### Was beim Anlegen gemessen wurde (2026-07-29)
 
@@ -147,8 +148,21 @@ Der Rollback ist bis zum letzten Schritt ein Frontend-Deploy zurueck.
 4. **GitHub-OAuth-Callback ergaenzen** (App-ID 3737209) — **ergaenzen, nicht
    ersetzen.** Beide Adressen duerfen gleichzeitig eingetragen sein. Damit
    funktioniert die Anmeldung waehrend der Umstellung auf beiden Wegen.
-5. **Frontend umstellen** (braucht die Start-Lock-Freigabe): `config.js` und
-   CSP `connect-src`. Bis hierher ist der Rollback ein Frontend-Deploy zurueck.
+5. **Frontend umstellen.** Start-Lock-Freigabe liegt seit 2026-07-29 vor.
+   In zwei Haelften geteilt, damit nicht alles auf einmal kippen kann:
+   - **CSP `connect-src`: ERLEDIGT und live** (sw v191). Rein additiv — ein
+     Eintrag erlaubt eine Verbindung, er stellt keine her. Live gemessen:
+     `fetch('https://smejj-control.zeabur.app/api/health')` aus der laufenden
+     Seite heraus -> HTTP 200, `ok:true`. Gleichzeitig unveraendert 13 Anfragen
+     an Salad, alle 200, Anmeldung intakt.
+   - **`config.js` `DEFAULT_API_ORIGIN`: OFFEN.** Erst drehen, wenn Schritt 2
+     erledigt und Schritt 3 gruen ist — sonst ist die App sofort tot.
+   **Vorher risikolos testen:** in der Browser-Konsole auf smejj.com
+   `localStorage.setItem("smejj.apiOrigin.v1","https://smejj-control.zeabur.app")`
+   setzen, Seite neu laden, anmelden und klicken. Das betrifft nur den eigenen
+   Browser. Zuruecknehmen mit `localStorage.removeItem("smejj.apiOrigin.v1")`.
+   Erst wenn das sauber laeuft, lohnt sich die Umstellung fuer alle.
+   Bis dahin ist der Rollback ein Frontend-Deploy zurueck.
 6. **Salad abschalten** — erst nach mehreren Tagen stabilem Betrieb, und als
    eigener Schritt mit eigener Freigabe (Rueckbau einer laufenden Funktion).
 

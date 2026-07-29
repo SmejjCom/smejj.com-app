@@ -195,3 +195,66 @@ node scripts/diagnose/maus-abgleich.mjs
 
 Er vergleicht Token und Eimer, fragt die Engine gegen und nennt den Befund im
 Klartext — ohne je einen Geheimwert anzuzeigen (nur Laenge und Hash-Praefix).
+
+
+## Nachtrag: Control-Server laeuft auf Zeabur, Frontend halb vorbereitet
+
+Beide Freigaben kamen am 2026-07-29 nacheinander: erst die Kostenfreigabe fuer
+den Dienst, dann die Start-Lock-Freigabe fuer die zwei Frontend-Dateien.
+
+### Dienst live
+
+`smejj-control` (`service-6a697bf60d0b094201bcc1ee`), Running 1/1,
+oeffentlich unter https://smejj-control.zeabur.app — `/api/health` HTTP 200,
+TTFB **0,43 s** gegen **0,92 s** bei Salad.
+
+Im Container nachgewiesen (Tab "Command"):
+
+```
+HEALTH ok= true app= smejj.com Code
+ls schemas/  -> maus-action-plan.schema.json  maus-step-decision.schema.json
+ls workers/  -> glm-salad maus-engine remote-browser smejj-training-loop smejj-worker
+PLAN-SCHEMA lesbar: true
+```
+
+Damit sind beide Dockerfile-Korrekturen im laufenden Abbild belegt — der alte
+`deploy/control-server/Dockerfile` haette ohne `workers/` nicht einmal gebootet.
+
+### Warum das Frontend NICHT umgestellt wurde
+
+Die Freigabe deckt die Umstellung. Trotzdem waere sie jetzt falsch gewesen:
+**der Zeabur-Dienst hat noch keine Zugangsdaten.** Ein Dreh an
+`DEFAULT_API_ORIGIN` haette die App fuer alle Nutzer sofort unbrauchbar
+gemacht. Also in zwei Haelften geteilt:
+
+- **Erledigt und live:** `smejj-control.zeabur.app` in der CSP `connect-src`
+  (sw v190 -> v191, Live-Hash identisch zur lokalen Datei). Rein additiv: ein
+  connect-src-Eintrag ERLAUBT eine Verbindung, er STELLT keine her.
+- **Offen:** `config.js`. Wird erst gedreht, wenn die Env-Werte stehen.
+
+**Live gemessen nach dem Deploy** (echter Klickpfad im angemeldeten Chrome):
+
+| Pruefung | Ergebnis |
+| --- | --- |
+| Zeabur-Host in Live-CSP | ja |
+| `API_ORIGIN` der Seite | weiter Salad (unveraendert) |
+| `fetch()` auf Zeabur aus der Seite | HTTP 200, `ok:true` — CSP blockt nicht |
+| Anfragen an Salad | 13, alle 200, `/api/auth/me` inklusive |
+| Konsolenfehler | keine |
+| Service Worker | `smejj-shell-v191` |
+
+### Risikoloser Testweg vor dem Umschalten
+
+`config.js` kennt eine Uebersteuerung per `localStorage` ("smejj.apiOrigin.v1").
+Damit laesst sich der Zeabur-Server im eigenen Browser vollstaendig
+durchtesten, ohne dass ein anderer Nutzer etwas merkt. Das ist der Grund, die
+CSP vorab zu erweitern: ohne den Eintrag scheitert selbst dieser Test.
+
+### Nebenbefund (kein Blocker, aber notiert)
+
+`isAllowedBrowserCaller()` in `browserProxyRoutes.js` gibt `true` zurueck, wenn
+eine Anfrage WEDER `Origin` NOCH `Referer` traegt (Kommentar: fuer native
+Health-Checks gedacht). Fuer Nicht-Browser-Aufrufe ist `/api/browser/fetch`
+damit offen — begrenzt nur durch Ratenbremse und SSRF-Schutz. Das gilt seit
+jeher auch fuer den Salad-Server, ist also keine neue Luecke und war nicht
+Teil dieses Auftrags. Sollte separat bewertet werden.

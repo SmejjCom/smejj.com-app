@@ -58,8 +58,15 @@ Commits `6c322d2`, `a77febc`, `9bfd907`. Kurzfassung:
   hinkt nach. Bereitstellung und Protokoll lesen, nicht die Kopfzeile.
 - Werkzeug: `node scripts/diagnose/maus-abgleich.mjs` (nur lesend, zeigt nie
   einen Geheimwert).
-- OFFEN: Env-Werte im Zeabur-Dienst; Frontend-Umstellung braucht eine EIGENE
-  Start-Lock-Freigabe (die Kostenfreigabe deckt sie nicht).
+- **Frontend halb umgestellt (Start-Lock-Freigabe 2026-07-29).** Bewusst in
+  zwei Haelften: CSP `connect-src` ist live (sw v191, additiv, ohne Wirkung),
+  `config.js` bleibt auf Salad. Ein Dreh an `DEFAULT_API_ORIGIN` HAETTE DIE APP
+  SOFORT GETOETET, weil der Zeabur-Dienst noch keine Zugangsdaten hat — eine
+  Freigabe zu haben heisst nicht, dass der Moment richtig ist.
+- Testweg ohne Risiko: `config.js` kennt die Uebersteuerung
+  `localStorage["smejj.apiOrigin.v1"]`. Damit laesst sich der neue Server im
+  eigenen Browser durchtesten; genau dafuer muss die CSP vorher stimmen.
+- OFFEN: Env-Werte im Zeabur-Dienst, danach `config.js` drehen.
 
 ### [2026-07-29] MODUL V LIVE — E-Mail-Zustellung (job_adminmodulv_20260729)
 
