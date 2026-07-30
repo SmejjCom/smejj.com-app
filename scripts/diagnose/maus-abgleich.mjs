@@ -193,17 +193,28 @@ if (eimerFalsch) {
 
 // Handlungsanweisung (Wortlaut und Reihenfolge in maus-befund.mjs, damit sie
 // unter Test steht). Aendern von Zugangsdaten ist Sache des Betreibers.
-const schritte = handlungsanweisung({
+const argumente = {
   tokenGleich,
   eimerFalsch,
   zielEimer: capsulesEimer,
+  engineEimer: liegtIn || lokalerEimer,
   region: salad.env.IDRIVE_E2_REGION ?? "us-west-2",
   endpoint: salad.env.IDRIVE_E2_ENDPOINT ?? "(siehe oben)"
-});
+};
+const schritte = handlungsanweisung({ ...argumente, weg: "B" });
 if (schritte.length) {
-  console.log("\nZu tun (nur der Betreiber — Zugangsdaten), alles beim Zeabur-Dienst 'smejj-maus-engine':");
+  console.log("\nZu tun (nur der Betreiber — Zugangsdaten). Empfohlener Weg B, kuerzester Eingriff:");
   schritte.forEach((s, i) => console.log(`  ${i + 1}. ${s}`));
-  console.log("  Danach erneut: node scripts/diagnose/maus-abgleich.mjs");
+  if (eimerFalsch) {
+    console.log("  Wirkung: gatekeeper/presignIdrive.js lenkt NUR den Prefix capsules/maus-engine/");
+    console.log("           auf diesen Eimer. IDRIVE_E2_BUCKET und alle anderen Daten bleiben unberuehrt.");
+    console.log("  Preis:   Laeufe im alten Eimer sind in der Wiedergabe nicht mehr auffindbar");
+    console.log("           (geloescht wird nichts, ein Zuruecksetzen macht sie wieder sichtbar).");
+    const wegA = handlungsanweisung({ ...argumente, weg: "A" });
+    console.log("\n  Alternative Weg A (Engine umziehen, drei Geheimwerte wandern):");
+    wegA.forEach((s, i) => console.log(`    ${i + 1}. ${s}`));
+  }
+  console.log("\n  Danach erneut: node scripts/diagnose/maus-abgleich.mjs");
 }
 // Fail-closed: Unterschied ist ein Befund, kein Erfolg.
 process.exit(gleichheit.every(Boolean) && !eimerFalsch ? 0 : 2);

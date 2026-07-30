@@ -151,19 +151,60 @@ Kommandozeilen-Werkzeuge und werden nie an Besucher ausgeliefert.
 Rueckweg: die drei neuen Dateien entfernen, die drei gesicherten
 zuruecklegen. Es gibt keinen Deploy, der zurueckgenommen werden muesste.
 
+## Nachtrag: der Eingriff ist halb so gross wie gedacht
+
+Nach dem ersten Befund weiter gemessen — mit einem Ergebnis, das die Arbeit des
+Betreibers von vier Werten (drei davon geheim) auf **zwei Werte (einer geheim)**
+senkt.
+
+**Fund 1: es gibt einen gebauten Schalter genau fuer diesen Fall.**
+`gatekeeper/presignIdrive.js`, `resolveBucketForKey()`: **nur** Schluessel mit
+dem Prefix `capsules/maus-engine/` folgen `IDRIVE_E2_CAPSULES_BUCKET`, alles
+andere bleibt bei `IDRIVE_E2_BUCKET`. Der Leseweg der Maus-Wiedergabe laesst
+sich damit einzeln umlenken, ohne Nutzerdaten, Anmeldung oder sonstige Ablage
+zu beruehren. Kommentar im Code: die Artefakte liegen im Capsule-Bucket, nicht
+im Standard-Bucket — der Fall war vorgesehen.
+
+**Fund 2: der Control-Server kann `smejj-model-files` beweisbar lesen.**
+Er laedt sein eigenes Release-Artefakt aus `IDRIVE_E2_DEPLOY_BUCKET`
+(= `smejj-model-files`, gemessen) mit denselben
+`IDRIVE_E2_ACCESS_KEY`/`SECRET_KEY`, mit denen er alles andere signiert
+(`public/deploy/idrive-control-bootstrap.mjs`). Er laeuft (Version 119/120),
+**also hat er dort Zugang** — kein weiterer Test noetig. Damit ist kein
+Schluessel-Umzug erforderlich.
+
+**Fund 3: Capsules liegen dort ohnehin schon.**
+`scripts/agent/upload_capsule_to_idrive.mjs` hat `BUCKET_DEFAULT =
+"smejj-model-files"` — die Task Capsule dieses Auftrags liegt selbst dort. Weg B
+ist deshalb kein Bruch der Ablage-Ordnung, sondern deren Fortsetzung.
+
+**Gegenprobe, dass Weg B nichts anderes verschiebt:** Der Async-Lauf-Status des
+Control-Servers (`capsules/maus-engine/runs/<runId>.json`) wird ueber
+`idriveConfigFromEnv()` und damit `IDRIVE_E2_BUCKET` geschrieben und ueber
+`GET /api/maus/run?runId=` gelesen — nicht ueber Presign. Er ist von Weg B
+nicht betroffen.
+
 ## Offen — nur der Betreiber (Rote Liste: Zugangsdaten)
 
-Alles bei **Zeabur -> Dienst `smejj-maus-engine`**. Der Control-Server wird
-ausdruecklich **nicht** angefasst: in seinem Eimer `smejj-app` liegt der
-gesamte Bestand, ihn umzustellen wuerde die Historie abschneiden.
+**Weg B — empfohlen, zwei Werte, nur einer davon geheim:**
 
-1. `SMEJJ_MAUS_ENGINE_TOKEN` = Wert des Control-Servers (64 Zeichen, ohne
-   Leerzeichen und ohne Zeilenumbruch)
-2. `IDRIVE_E2_BUCKET` = `smejj-app`
-3. `IDRIVE_E2_ACCESS_KEY` / `IDRIVE_E2_SECRET_KEY` = die Werte des
-   Control-Servers
-4. `IDRIVE_E2_REGION` = `us-west-2`,
-   `IDRIVE_E2_ENDPOINT` = `https://s3.us-west-2.idrivee2.com`
+1. **Control-Server (Salad, `smejj-control`): `IDRIVE_E2_CAPSULES_BUCKET` =
+   `smejj-model-files`** — kein Geheimwert, nur ein Eimername. Umkehrbar durch
+   Zuruecksetzen; es wird nichts geloescht und nichts verschoben.
+2. **`SMEJJ_MAUS_ENGINE_TOKEN` auf beiden Seiten gleich** — ein Geheimwert,
+   64 Zeichen, ohne Leerzeichen und ohne Zeilenumbruch.
+
+Preis von Weg B: die 14 Lauf-Ordner vom 14./15. Juli in `smejj-app` sind in der
+Wiedergabe nicht mehr auffindbar. Geloescht wird nichts.
+
+**Weg A — Alternative, falls die Artefakte zwingend nach `smejj-app` sollen:**
+alles beim Zeabur-Dienst `smejj-maus-engine`, `SMEJJ_MAUS_ENGINE_TOKEN`,
+`IDRIVE_E2_BUCKET` = `smejj-app`, dazu `IDRIVE_E2_ACCESS_KEY` und
+`IDRIVE_E2_SECRET_KEY` des Control-Servers sowie Region/Endpoint. Drei
+Geheimwerte wandern — deshalb nicht die erste Wahl.
+
+`node scripts/diagnose/maus-abgleich.mjs` zeigt beide Wege am Ende seines
+Berichts an und nennt Weg B zuerst.
 
 Danach genuegt **ein Befehl** als Abnahme:
 

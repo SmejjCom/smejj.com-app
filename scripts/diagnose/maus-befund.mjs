@@ -60,17 +60,41 @@ export function laufBefund({ ok, objekte }) {
   return "lauf_gescheitert";
 }
 
-// Alle Abweichungen werden auf EINER Seite geradegezogen — beim Zeabur-Dienst.
-// Der Control-Server bleibt unangetastet, denn in seinem Eimer liegt der
-// gesamte Bestand; ihn umzustellen wuerde die Historie abschneiden.
-export function handlungsanweisung({ tokenGleich, eimerFalsch, zielEimer, region, endpoint }) {
+// Der Eimer-Unterschied hat ZWEI Loesungen. Gemessen am 2026-07-29 ist die
+// zweite deutlich billiger, und `gatekeeper/presignIdrive.js` hat den Schalter
+// dafuer schon eingebaut (`resolveBucketForKey`: nur der Prefix
+// `capsules/maus-engine/` folgt `IDRIVE_E2_CAPSULES_BUCKET`).
+//
+//   Weg A — Engine umziehen: IDRIVE_E2_BUCKET plus BEIDE IDrive-Schluessel
+//            beim Zeabur-Dienst tauschen. Drei Geheimwerte wandern.
+//   Weg B — Leseweg umlenken: EIN Wert beim Control-Server,
+//            `IDRIVE_E2_CAPSULES_BUCKET` auf den Eimer, in den die Engine
+//            ohnehin schreibt. KEIN Geheimwert wandert.
+//
+// Weg B ist empfohlen, und zwar nicht nur weil er kuerzer ist:
+//   - Der Control-Server kann diesen Eimer BEWEISBAR lesen — er laedt sein
+//     eigenes Release-Artefakt daraus (IDRIVE_E2_DEPLOY_BUCKET, siehe
+//     public/deploy/idrive-control-bootstrap.mjs). Laeuft er, hat er Zugang.
+//   - Task Capsules liegen dort ohnehin schon
+//     (scripts/agent/upload_capsule_to_idrive.mjs). Es ist also kein Bruch der
+//     Ablage-Ordnung, sondern deren Fortsetzung.
+//   - `IDRIVE_E2_BUCKET` bleibt unangetastet: Nutzer, Anmeldung und alle
+//     anderen Daten ruehrt Weg B nicht an.
+//   - Umkehrbar durch Zuruecksetzen eines einzigen Wertes. Nichts wird
+//     geloescht oder verschoben.
+// Preis von Weg B: Laeufe, die noch im alten Eimer liegen, sind in der
+// Wiedergabe nicht mehr auffindbar (geloescht wird nichts).
+export function handlungsanweisung({ tokenGleich, eimerFalsch, zielEimer, region, endpoint, engineEimer, weg = "B" }) {
   if (tokenGleich && !eimerFalsch) return [];
   const schritte = [];
-  if (!tokenGleich) schritte.push("SMEJJ_MAUS_ENGINE_TOKEN = Wert des Control-Servers (64 Zeichen, ohne Leerzeichen)");
-  if (eimerFalsch) {
-    schritte.push(`IDRIVE_E2_BUCKET = ${zielEimer}`);
-    schritte.push("IDRIVE_E2_ACCESS_KEY / IDRIVE_E2_SECRET_KEY = die Werte des Control-Servers");
-    schritte.push(`IDRIVE_E2_REGION = ${region}, IDRIVE_E2_ENDPOINT = ${endpoint}`);
+  if (eimerFalsch && weg === "B") {
+    schritte.push(`Control-Server: IDRIVE_E2_CAPSULES_BUCKET = ${engineEimer} (kein Geheimwert)`);
+  }
+  if (!tokenGleich) schritte.push("SMEJJ_MAUS_ENGINE_TOKEN auf beiden Seiten gleich setzen (64 Zeichen, ohne Leerzeichen)");
+  if (eimerFalsch && weg === "A") {
+    schritte.push(`Engine: IDRIVE_E2_BUCKET = ${zielEimer}`);
+    schritte.push("Engine: IDRIVE_E2_ACCESS_KEY / IDRIVE_E2_SECRET_KEY = die Werte des Control-Servers");
+    schritte.push(`Engine: IDRIVE_E2_REGION = ${region}, IDRIVE_E2_ENDPOINT = ${endpoint}`);
   }
   return schritte;
 }

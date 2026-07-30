@@ -88,26 +88,45 @@ test("Handlungsanweisung nennt nur die tatsaechlich abweichenden Werte", () => {
   const nurToken = handlungsanweisung({ tokenGleich: false, eimerFalsch: false });
   assert.equal(nurToken.length, 1);
   assert.match(nurToken[0], /SMEJJ_MAUS_ENGINE_TOKEN/);
-
-  const nurEimer = handlungsanweisung({
-    tokenGleich: true, eimerFalsch: true,
-    zielEimer: "smejj-app", region: "us-west-2", endpoint: "https://s3.us-west-2.idrivee2.com"
-  });
-  assert.equal(nurEimer.length, 3);
-  assert.match(nurEimer[0], /IDRIVE_E2_BUCKET = smejj-app/);
-  assert.match(nurEimer[2], /us-west-2/);
-  // Der Control-Server wird nie als Aenderungsort genannt: sein Eimer traegt
-  // den Bestand, umgestellt wird immer die Engine.
-  assert.ok(!nurEimer.join(" ").toLowerCase().includes("salad"));
 });
 
-test("Beide Abweichungen zusammen ergeben vier Schritte in fester Reihenfolge", () => {
-  const alle = handlungsanweisung({
-    tokenGleich: false, eimerFalsch: true,
-    zielEimer: "smejj-app", region: "us-west-2", endpoint: "https://s3.us-west-2.idrivee2.com"
-  });
-  assert.equal(alle.length, 4);
-  assert.match(alle[0], /TOKEN/);
-  assert.match(alle[1], /BUCKET/);
-  assert.match(alle[2], /ACCESS_KEY/);
+const EIMER = {
+  zielEimer: "smejj-app",
+  engineEimer: "smejj-model-files",
+  region: "us-west-2",
+  endpoint: "https://s3.us-west-2.idrivee2.com"
+};
+
+test("Weg B ist der Standard und braucht fuer den Eimer genau EINEN Wert ohne Geheimnis", () => {
+  const b = handlungsanweisung({ tokenGleich: true, eimerFalsch: true, ...EIMER });
+  assert.equal(b.length, 1);
+  assert.match(b[0], /IDRIVE_E2_CAPSULES_BUCKET = smejj-model-files/);
+  assert.match(b[0], /kein Geheimwert/);
+  // Entscheidend: Weg B fasst weder die Schluessel noch IDRIVE_E2_BUCKET an —
+  // sonst wuerde er Nutzerdaten und Anmeldung mitverschieben.
+  const text = b.join(" ");
+  assert.ok(!text.includes("ACCESS_KEY"));
+  assert.ok(!text.includes("SECRET_KEY"));
+  assert.ok(!/IDRIVE_E2_BUCKET\b/.test(text));
+});
+
+test("Weg A bleibt vollstaendig verfuegbar, nennt aber drei Geheimwerte", () => {
+  const a = handlungsanweisung({ tokenGleich: true, eimerFalsch: true, weg: "A", ...EIMER });
+  assert.equal(a.length, 3);
+  assert.match(a[0], /IDRIVE_E2_BUCKET = smejj-app/);
+  assert.match(a[1], /ACCESS_KEY/);
+  assert.match(a[2], /us-west-2/);
+  assert.ok(!a.join(" ").includes("CAPSULES_BUCKET"));
+});
+
+test("Beide Abweichungen zusammen: Weg B braucht zwei Schritte, Weg A vier", () => {
+  const b = handlungsanweisung({ tokenGleich: false, eimerFalsch: true, ...EIMER });
+  assert.equal(b.length, 2);
+  // Eimer zuerst: er ist ungefaehrlich und umkehrbar, der Token danach.
+  assert.match(b[0], /CAPSULES_BUCKET/);
+  assert.match(b[1], /TOKEN/);
+
+  const a = handlungsanweisung({ tokenGleich: false, eimerFalsch: true, weg: "A", ...EIMER });
+  assert.equal(a.length, 4);
+  assert.match(a[0], /TOKEN/);
 });
