@@ -1,0 +1,125 @@
+{
+  "titel": "Modul W — Tagesprojektion auf IDrive e2 statt Zaehlstand im Arbeitsspeicher",
+  "datum": "2026-07-30",
+  "job": "job_analytik_projektion_20260730",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 124,
+  "artefakt": "deployments/control/smejj-control-projektion-b-2026-07-30.tar.gz",
+  "artefaktSha256": "0cfa79d362cb8ff6ad20a465abbefc6111f6b18c3e9f4bc9ab6c1a0ccd6482b0",
+  "artefaktBytes": 1927662,
+  "artefaktDateien": 868,
+  "rueckweg": [
+    "deployments/control/smejj-control-projektion-2026-07-30.tar.gz (Version 123, Projektion ohne Lesedurchgriff)",
+    "deployments/control/smejj-control-modul-w-c-2026-07-30.tar.gz (Version 122, Zaehlstand im Arbeitsspeicher)",
+    "deployments/control/smejj-control-mailprotokoll-2026-07-29.tar.gz (Version 119, Stand vor Modul W)"
+  ],
+  "commits": ["fcabd1b", "5d568ef", "e4ce5dc"],
+  "aufgabe": "Der kalte Aufruf von Modul W kostete 824 ms — knapp ueber dem p99-Budget von 800 ms.",
+  "architektur": {
+    "entscheidung": "Tagesprojektion als EIN Objekt admin/index/analytik-tage.json auf IDrive e2, plus 20-Sekunden-Lesedurchgriff je Instanz.",
+    "verworfen": "Der 60-s-Zaehlstand im Arbeitsspeicher aus b558456. Er wirkte nur JE INSTANZ: bei 50 Instanzen 50 kalte Aufrufe pro Minute — ein Engpass, der mit der Instanzzahl mitwaechst. Genau das verbietet die Skalierungsregel ('kein Sitzungs-, Job- oder Zaehlstand im Serverspeicher, alles auf IDrive e2').",
+    "unterschied": "Der Lesedurchgriff merkt die ANTWORT eines GET, nicht eine eigene Rechnung. Mit 50 Instanzen halten 50 Prozesse denselben Stand; keiner rechnet eigene Zahlen.",
+    "liveGeblieben": "Registrierungen und Bestand kommen weiter direkt aus dem Nutzer-Index. Der Index muss fuer den Bestand ohnehin gelesen werden (eine Momentaufnahme darf nicht zehn Minuten alt sein), und wenn er in der Hand ist, kostet die Tagesreihe daraus nichts extra — und ist frischer.",
+    "kostenwirkung": "0,00 USD. Ein Objekt von rund 1 KB, ein GET je 20 Sekunden je Instanz statt vier Auflistungen je Aufruf. Weniger Last auf IDrive e2 als vorher."
+  },
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "ttfb_p95_ms": 200
+  },
+  "messungLive": {
+    "methode": "14 Aufrufe je Endpunkt aus derselben Sitzung, Client in Europa, Ziel Salad. Gemessen wird der EIGENANTEIL: die Differenz zu einem Endpunkt auf demselben Host ohne Speicherzugriff.",
+    "warum_methode": "Die absoluten Zahlen sind von diesem Standort aus nicht budgettauglich. Belegt im Lauf gegen Version 123: /api/health — kein S3, keine Anmeldung, keine Rechenarbeit — kam auf p95 492 ms, /api/admin/ops/modelle auf p95 674 ms. Die Strecke Client->Salad dominiert. Wer diese Zahlen als 'Budget verletzt' oder 'eingehalten' liest, liest sie falsch.",
+    "vor_der_projektion": { "n": 9, "p50_ms": 611, "p95_ms": 747, "stand": "Version 120, jeder Aufruf zaehlte frisch" },
+    "mit_zaehlstand_im_speicher": { "n": 12, "kalt_ms": 824, "warm_p50_ms": 214, "warm_p95_ms": 284, "stand": "Version 122" },
+    "mit_projektion_ohne_durchgriff": {
+      "stand": "Version 123",
+      "modul_w": { "n": 12, "p50_ms": 293, "p95_ms": 497 },
+      "grundlast_ops_modelle": { "n": 12, "p50_ms": 214, "p95_ms": 674 },
+      "grundlast_health": { "n": 8, "p50_ms": 135, "p95_ms": 492 },
+      "eigenanteil_p50_ms": 79
+    },
+    "mit_projektion_und_durchgriff": {
+      "stand": "Version 124 (live)",
+      "erster_aufruf_nach_neustart_ms": 676,
+      "modul_w": { "n": 14, "min_ms": 203, "p50_ms": 213, "p95_ms": 289, "max_ms": 289 },
+      "grundlast_ops_modelle": { "n": 14, "min_ms": 204, "p50_ms": 218, "p95_ms": 265, "max_ms": 265 },
+      "eigenanteil_p50_ms": -5,
+      "urteil": "Der Eigenanteil ist nicht mehr messbar — Modul W ist so schnell wie ein Endpunkt ohne Speicherzugriff auf demselben Host (213 gegen 218 ms p50). Der absolute p95 von 289 ms liegt in diesem Lauf unter dem Budget, ist aber wegen der Client-Strecke kein Beweis dafuer."
+    },
+    "lokal_gegen_echtes_idrive_e2": { "erster_aufruf_ms": 459, "danach_ms": [64, 45] }
+  },
+  "regeln": {
+    "gescheiterteQuelleWirdGespeichert": "Eine nicht lesbare Quelle wird als nicht lesbar in die Projektion geschrieben, nie als 0. Sonst friert ein Ausfall als 'an dem Tag war nichts' ein und bleibt stehen, auch wenn die Quelle langst wieder antwortet.",
+    "alterFaehrtMit": "gebautAm, alterSekunden und wirdAufgefrischt gehen an den Aufrufer und stehen sichtbar am Verlauf in der Oberflaeche. Der Lesedurchgriff rechnet das Alter NEU — es ist das Alter der Projektion, nicht des Durchgriffs.",
+    "fehlgeschlagenerNeubauUeberschreibtNichts": "Liefert das Zaehlen keine einzige lesbare Quelle, bleibt die alte Projektion stehen. Ein Netzausfall darf gute Zahlen nicht durch Luecken ersetzen.",
+    "einmalFuer90Tage": "Die Projektion haelt 90 Tage; jede Anfrage schneidet sich ihren Ausschnitt heraus. Sonst haette jeder Zeitraum seine eigene Projektion.",
+    "summeNurImZeitraum": "Summiert wird ausschliesslich der angefragte Zeitraum — eine Summe ueber alle 90 Tage waere bei tage=2 schlicht falsch.",
+    "ausfallWirdNichtGemerkt": "Der Lesedurchgriff merkt nur gelungene Lesevorgaenge. Ein Ausfall zwanzig Sekunden lang festzuschreiben hiesse, eine Stoerung zu verlaengern.",
+    "neubauEntwertetDenDurchgriff": "Sonst zeigt die naechste Anfrage den alten Stand, obwohl gerade ein neuer geschrieben wurde."
+  },
+  "funktionsnachweiseLive": {
+    "ohneAnmeldung": "GET /api/admin/ops/analytik -> 401",
+    "POST": "-> 405 (der Betriebsbereich ist rein lesend)",
+    "zeitraumWechsel": "?tage=7 liefert dieselbe Projektion ohne Neubau (Alter waechst weiter, kein zweites Zaehlen).",
+    "alterSichtbar": "Der Verlauf traegt 'Tagesprojektion N s alt' bzw. 'wird gerade erneuert' bzw. 'nicht lesbar (Grund)'.",
+    "befund": "9 Laeufe in 14 Tagen, 15 Verwaltungsereignisse, 2 Registrierungen, 0 Mails. Bestand 5 Konten, davon 0 bestaetigt, 0 aktive Sitzungen."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Die Grundlast reisst das Budget selbst",
+      "wirkung": "/api/health kam von diesem Standort aus auf p95 492 ms — ohne Speicherzugriff, ohne Anmeldung. Eine Messung von hier aus kann das 300-ms-Budget also weder bestaetigen noch widerlegen.",
+      "bewertung": "Wer absolute Zahlen ohne Grundlast-Vergleich meldet, meldet die Netzstrecke des Messenden als Eigenschaft des Servers.",
+      "behoben": "Gemessen wird ab jetzt der Eigenanteil gegen einen Endpunkt ohne Speicherzugriff auf demselben Host, im selben Lauf."
+    },
+    {
+      "fund": "Der Lesedurchgriff schlug zwischen unabhaengigen Testfaellen durch",
+      "wirkung": "Der Test 'kaputter Inhalt gilt als unlesbar' bekam den gemerkten Stand eines frueheren Falls und wurde gruen, ohne die Sache zu pruefen.",
+      "behoben": "Die Faelle, in denen der Durchgriff nicht die Sache ist, laufen mit leseCacheMs: 0.",
+      "regel": "Ein prozessweiter Zwischenspeicher braucht in Tests einen ausdruecklichen Ausschalter, sonst prueft der zweite Fall den ersten mit."
+    },
+    {
+      "fund": "check:paths war rot — fremde Datei, gemeinsamer Branch",
+      "wirkung": "docs/architecture/CODEBERG_SPIEGEL.md enthielt seit 22eef72 den vollen Projektordner in einer Cron-Zeile. release:preflight endete damit fuer JEDE Sitzung mit Code 1.",
+      "behoben": "Der Pfad wird zur Laufzeit aus pwd genommen statt festgeschrieben; die Anleitung bleibt vollstaendig. Commit 5d568ef.",
+      "hinweis": "Der zweite Blocker (0-Byte-JSON) hat sich von selbst geloest — die Parallel-Session hat die Datei inzwischen beschrieben."
+    }
+  ],
+  "nonRegression": {
+    "endpunkte": "20 Admin-Endpunkte live geprueft, alle 200.",
+    "frontend": "smejj.com 200, sw.js 200, /api/health 200.",
+    "startLock": "31 Startseiten-Dateien byte-identisch.",
+    "preflight": "npm run release:preflight Exit-Code 0 — erstmals in dieser Sitzung vollstaendig gruen.",
+    "rechteUnveraendert": "Keine neue Berechtigung; W laeuft weiter unter ops.read.",
+    "keineSchreibaktion": "Modul W bleibt rein lesend. Neu geschrieben wird ausschliesslich das eigene Projektionsobjekt.",
+    "datenLock": "Kein bestehendes Objekt geloescht oder ueberschrieben. admin/index/analytik-tage.json ist neu und ausschliesslich abgeleitet — jederzeit verwerfbar.",
+    "parallelSession": "Artefakt aus isoliertem git-worktree auf HEAD gebaut. Kein `git add -A`."
+  },
+  "testabdeckung": {
+    "gesamt": 381,
+    "neu": 26,
+    "schwerpunkte": [
+      "eine gescheiterte Quelle wird als gescheitert gespeichert, nicht als 0",
+      "ein fehlgeschlagener Neubau ueberschreibt nichts",
+      "eine geworfene Ausnahme beim Zaehlen schreibt nichts",
+      "nur die letzten 90 Tage, kein Sammelposten ohne Datum",
+      "das Alter faehrt mit — auch durch den Lesedurchgriff",
+      "kaputter Inhalt gilt als unlesbar, nicht als leer",
+      "eine veraltete Projektion wird sofort geliefert und im Hintergrund erneuert",
+      "ohne Projektion wird einmal blockierend gebaut",
+      "der Lesedurchgriff spart den GET, aber nicht das Alter",
+      "ein Ausfall wird nicht zwanzig Sekunden festgeschrieben",
+      "ein Neubau entwertet den Lesedurchgriff",
+      "einmal fuer 90 Tage gezaehlt, nicht je Zeitraum",
+      "die Summe gilt nur fuer den angefragten Zeitraum",
+      "eine unlesbare Projektion zeigt '—', der Bestand bleibt live"
+    ]
+  },
+  "offenePunkte": [
+    "Der erste Aufruf nach einem Container-Neustart kostet 676 ms (Lesedurchgriff und Nutzer-Index-Cache sind leer). Einmal je Instanz, danach nicht mehr messbar.",
+    "Die uebrigen Admin-Endpunkte wurden nicht auf ihren Eigenanteil vermessen. E-Mail und Kontingent fielen vorher mit 541 bzw. 1270 ms auf — das gehoert mit derselben Methode nachgemessen.",
+    "Eine Messung des p95-Budgets braucht einen Messpunkt NAHE am Server (Container-Kommando gegen 127.0.0.1). Von aussen ist das Budget nicht pruefbar.",
+    "Maus-Token angleichen: weiter blockiert, ZEABUR_API_TOKEN fehlt in ~/.config/smejj.com/env.local.",
+    "Zwei rc9-Staging-Eimer und sechs kurzlebige Zugangsschluessel vom 11./12. Juli — Loeschung braucht schriftliche Freigabe."
+  ]
+}

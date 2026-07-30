@@ -1,0 +1,76 @@
+{
+  "jobId": "job_analytik_projektion_20260730",
+  "createdAt": "2026-07-30",
+  "owner": "smejj.com Betreiber",
+  "title": "Modul W: Tagesprojektion auf IDrive e2 — kalter Aufruf 824 ms, Eigenanteil jetzt nicht messbar",
+  "goal": "Den kalten Aufruf von Modul W unter das Budget bringen, ohne einen Zaehlstand im Arbeitsspeicher zu halten.",
+  "approval": {
+    "weisung": "Betreiber am 2026-07-30: 'Ja' auf den Vorschlag, den kalten Aufruf (824 ms) anzugehen, mit dem Auftrag eigenstaendig weiterzuarbeiten.",
+    "roteListe": "Kein Punkt beruehrt: nichts geloescht, kein Secret rotiert, keine neue Kostenposition, kein neuer Anbieter, kein Force-Push, kein Merge nach main, keine Startseiten- oder Favicon-Aenderung. Neu geschrieben wird ausschliesslich ein eigenes, abgeleitetes Objekt."
+  },
+  "diagnose": {
+    "befund1_engpassWaechstMit": "Der 60-s-Zaehlstand aus b558456 hat den kalten Aufruf verdeckt, aber nur JE INSTANZ. Bei 50 Instanzen waeren es 50 kalte Aufrufe pro Minute — der Engpass waechst mit der Instanzzahl mit. Die Skalierungsregel des Master Prompts verbietet genau das: 'kein Sitzungs-, Job- oder Zaehlstand im Serverspeicher. Alles auf IDrive e2. Erst dann sind 1 und 50 Instanzen technisch dasselbe.'",
+    "befund2_grundlastReisstDasBudget": "Beim Nachmessen gegen Version 123 gefunden: /api/health kommt von diesem Standort aus auf p95 492 ms — ohne Speicherzugriff, ohne Anmeldung, ohne Rechenarbeit. /api/admin/ops/modelle auf p95 674 ms. Die absoluten Zahlen sagen also mehr ueber die Netzstrecke des Messenden als ueber den Server.",
+    "befund3_durchgriffSchlugDurch": "Der neue Lesedurchgriff wirkte zwischen zwei logisch unabhaengigen Testfaellen: 'kaputter Inhalt gilt als unlesbar' bekam den gemerkten Stand eines frueheren Falls und wurde gruen, ohne die Sache zu pruefen.",
+    "befund4_fremderWaechterRot": "check:paths war seit 22eef72 rot, weil docs/architecture/CODEBERG_SPIEGEL.md den vollen Projektordner in einer Cron-Zeile enthielt. release:preflight endete damit fuer JEDE Sitzung mit Code 1 — nicht meine Datei, aber ein Blocker fuer jeden Release-Lauf."
+  },
+  "loesung": {
+    "projektion": "Neu control-server/src/admin/analytikProjektion.js: die drei teuren Auflistungs-Reihen liegen als EIN Objekt admin/index/analytik-tage.json (rund 1 KB) auf IDrive e2. Lesen kostet einen GET; gezaehlt wird im Hintergrund und nur, wenn jemand hinsieht (10 Minuten Frist, gleiche Bauart wie readUserIndexFresh).",
+    "lesedurchgriff": "20 Sekunden je Instanz. Er merkt die ANTWORT eines GET, nicht eine eigene Rechnung — das ist der Unterschied zum verworfenen Zaehlstand: 50 Instanzen halten denselben Stand, keiner rechnet eigene Zahlen.",
+    "liveGeblieben": "Registrierungen und Bestand kommen weiter direkt aus dem Nutzer-Index. Der wird fuer den Bestand ohnehin gebraucht (eine Momentaufnahme darf nicht zehn Minuten alt sein), und daraus die Tagesreihe zu bilden kostet nichts extra.",
+    "messmethode": "Gemessen wird der Eigenanteil: die Differenz zu einem Endpunkt ohne Speicherzugriff auf demselben Host, im selben Lauf. Absolute Zahlen ohne diesen Vergleich sind wertlos.",
+    "waechterFix": "Der Pfad in der Cron-Zeile wird zur Laufzeit aus pwd genommen statt festgeschrieben; die Anleitung bleibt vollstaendig und kopierbar."
+  },
+  "affectedFiles": [
+    "control-server/src/admin/analytikProjektion.js (neu)",
+    "control-server/src/admin/analytikProjektion.test.js (neu)",
+    "control-server/src/admin/opsAnalytik.js (liest die Projektion statt selbst zu zaehlen)",
+    "control-server/src/admin/opsAnalytik.test.js (Projektion einspielbar, neue Faelle)",
+    "control-server/admin-ui/views-stage8.js (Alter der Projektion am Verlauf)",
+    "package.json (neue Datei in check aufgenommen)",
+    "docs/architecture/CODEBERG_SPIEGEL.md (fremde Datei, check:paths-Fix)",
+    "docs/benchmarks/analytikprojektion_2026-07-30.json"
+  ],
+  "nichtBeruehrt": [
+    "Startseite und Eingabefeld (Design-Lock) — 31 Dateien byte-identisch.",
+    "Favicons (Favicon-Lock).",
+    "Zugaenge, Secrets, API-Keys, Deploy-Keys — nichts geschrieben; gelesen wurde nur der Sitzungsschluessel fuer den Live-Test, im Prozess.",
+    "Bestehende Daten auf IDrive e2 — kein Objekt geloescht oder ueberschrieben.",
+    "origin/main — kein Merge (getrennte Wurzel).",
+    "Laufende Arbeit der Parallel-Session (nur eigene Dateien committet, kein `git add -A`)."
+  ],
+  "verification": {
+    "tests": "381 Unit-Tests gruen (26 neu).",
+    "preflight": "npm run release:preflight Exit-Code 0 — erstmals in dieser Sitzung vollstaendig gruen (guidelines 1135 Dateien, start-lock 31 byte-identisch, release-imports 172 transitiv, json, paths, cost, security, branding, favicon-lock, Free-Tier-Guard).",
+    "lokalGegenEchtesIDrive": "Erster Aufruf 459 ms (Bau der Projektion), danach 64 und 45 ms.",
+    "liveKlickpfad": "401 ohne Anmeldung, 405 auf POST, 200 mit Anmeldung. ?tage=7 nutzt dieselbe Projektion ohne Neubau. 20 Admin-Endpunkte alle 200. smejj.com und sw.js 200.",
+    "eigenanteil": "Version 123: +79 ms (p50) gegenueber einem Endpunkt ohne Speicherzugriff. Version 124: -5 ms, also nicht mehr messbar (213 gegen 218 ms p50)."
+  },
+  "benchmark": {
+    "datei": "docs/benchmarks/analytikprojektion_2026-07-30.json",
+    "verlauf_p50_ms": [611, 214, 293, 213],
+    "verlauf_beschriftung": ["v120 ohne Cache", "v122 Zaehlstand im Speicher", "v123 Projektion", "v124 Projektion + Durchgriff"],
+    "eigenanteil_p50_ms": -5,
+    "erster_aufruf_nach_neustart_ms": 676,
+    "urteil": "Der Eigenanteil ist nicht mehr messbar. Das absolute p95-Budget bleibt von aussen unpruefbar, weil /api/health selbst p95 492 ms zeigt."
+  },
+  "rollback": {
+    "artefakt": "deployments/control/smejj-control-projektion-b-2026-07-30.tar.gz (sha256 0cfa79d3…, Version 124)",
+    "rueckweg": [
+      "smejj-control-projektion-2026-07-30.tar.gz (Version 123)",
+      "smejj-control-modul-w-c-2026-07-30.tar.gz (Version 122)",
+      "smejj-control-mailprotokoll-2026-07-29.tar.gz (Version 119)"
+    ],
+    "weg": "CONFIRM_CONTROL_ARTIFACT_SWITCH=YES mit KEY und SHA256 des Rueckwegs, dann node scripts/deploy/set_control_artifact_env.mjs. Ausrollen gemessen: 180–300 s.",
+    "hinweis": "Ein Rueckweg vor Version 123 laesst das Objekt admin/index/analytik-tage.json unbenutzt liegen. Es stoert nicht und kostet rund 1 KB.",
+    "commits": ["fcabd1b", "5d568ef", "e4ce5dc"]
+  },
+  "offenePunkte": [
+    "Erster Aufruf je Instanz 676 ms — einmalig, danach nicht messbar.",
+    "E-Mail (541 ms) und Kontingent (1270 ms) mit derselben Eigenanteil-Methode nachmessen.",
+    "Fuer eine belastbare Budget-Messung braucht es einen Messpunkt am Server (Container-Kommando gegen 127.0.0.1).",
+    "Maus-Token: ZEABUR_API_TOKEN fehlt weiter in ~/.config/smejj.com/env.local.",
+    "Zwei rc9-Staging-Eimer und sechs kurzlebige Zugangsschluessel — Loeschung braucht Freigabe."
+  ],
+  "status": "abgeschlossen"
+}

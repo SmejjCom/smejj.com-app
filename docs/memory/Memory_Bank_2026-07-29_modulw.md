@@ -139,6 +139,66 @@ Ohne Objektspeicher startet der Taktgeber gar nicht, statt jeden Tag ins Leere z
 greifen. Was geloescht werden darf, entscheidet weiter **allein**
 `darfGeloeschtWerden()` — dieses Modul kennt keine Schluessel und bildet keine.
 
+## [2026-07-30] NACHTRAG: Tagesprojektion statt Zaehlstand im Arbeitsspeicher
+
+Capsule `job_analytik_projektion_20260730`, Commits `fcabd1b`, `5d568ef`,
+`e4ce5dc`, live als **Version 124**.
+
+Der 60-s-Zwischenspeicher von oben war die falsche Loesung. Er wirkte nur **je
+Instanz** — bei 50 Instanzen 50 kalte Aufrufe pro Minute, also ein Engpass, der
+mit der Instanzzahl mitwaechst. Genau das verbietet die Skalierungsregel: "kein
+Sitzungs-, Job- oder Zaehlstand im Serverspeicher. Alles auf IDrive e2."
+
+Jetzt liegen die drei teuren Reihen als EIN Objekt
+`admin/index/analytik-tage.json` (rund 1 KB) auf IDrive e2, mit 20-Sekunden-
+Lesedurchgriff je Instanz. Der Durchgriff merkt die **Antwort eines GET**, nicht
+eine eigene Rechnung — deshalb halten 50 Instanzen denselben Stand statt eigene
+Zahlen zu bilden. Registrierungen und Bestand bleiben live aus dem Nutzer-Index,
+der fuer den Bestand ohnehin gelesen wird.
+
+### DIE WICHTIGSTE MESS-LEHRE DIESER SITZUNG
+
+**Die Grundlast reisst das Budget selbst.** `/api/health` — kein Speicherzugriff,
+keine Anmeldung, keine Rechenarbeit — kam von diesem Standort aus auf **p95
+492 ms**, `/api/admin/ops/modelle` auf **p95 674 ms**. Das 300-ms-p95-Budget ist
+von aussen also **nicht pruefbar**; die Strecke Client->Salad dominiert. Wer
+absolute Zahlen ohne Grundlast-Vergleich meldet, meldet die Netzstrecke des
+Messenden als Eigenschaft des Servers.
+
+Aussagekraeftig ist der **Eigenanteil**: die Differenz zu einem Endpunkt ohne
+Speicherzugriff auf demselben Host, im selben Lauf.
+
+| Stand | p50 | Eigenanteil |
+| --- | --- | --- |
+| v120 ohne alles | 611 ms | — |
+| v122 Zaehlstand im Speicher | 214 ms (warm), 824 ms kalt | — |
+| v123 Projektion | 293 ms | +79 ms |
+| **v124 Projektion + Durchgriff** | **213 ms** | **-5 ms (nicht messbar)** |
+
+Erster Aufruf je Instanz: 676 ms. Einmalig, danach nicht mehr messbar.
+
+### Drei Regeln, damit die Projektion keine zweite Wahrheit wird
+
+1. **Eine gescheiterte Quelle wird als gescheitert gespeichert, nie als 0** —
+   sonst friert ein Ausfall als "an dem Tag war nichts" ein.
+2. **Das Alter faehrt mit**, auch durch den Lesedurchgriff: gerechnet wird das
+   Alter der PROJEKTION, nicht des Durchgriffs.
+3. **Ein fehlgeschlagener Neubau ueberschreibt nichts.** Ohne eine einzige
+   lesbare Quelle bleibt die alte Projektion stehen.
+
+Dazu: ein Neubau entwertet den Durchgriff, und ein Ausfall wird nicht gemerkt.
+
+### Zwei Nebenfunde
+
+- **Der Lesedurchgriff schlug zwischen unabhaengigen Testfaellen durch.** Ein
+  prozessweiter Zwischenspeicher braucht in Tests einen ausdruecklichen
+  Ausschalter, sonst prueft der zweite Fall den ersten mit.
+- **`check:paths` war rot — fremde Datei, gemeinsamer Branch.**
+  `docs/architecture/CODEBERG_SPIEGEL.md` enthielt seit `22eef72` den vollen
+  Projektordner in einer Cron-Zeile; `release:preflight` endete damit fuer JEDE
+  Sitzung mit Code 1. Behoben (Pfad zur Laufzeit aus `pwd`). Danach erstmals
+  Exit-Code 0.
+
 ## Was gepruefte Regel bleibt
 
 - **Ein Fehlergrund, der in der Oberflaeche landet, wird gebaut, nicht
@@ -150,3 +210,8 @@ greifen. Was geloescht werden darf, entscheidet weiter **allein**
   Zustand abgeleitet.
 - **Eine zugesagte Aufbewahrungsfrist braucht einen Taktgeber**, sonst ist sie
   eine Absicht.
+- **Ein Zwischenspeicher im Arbeitsspeicher loest nichts, was mit der
+  Instanzzahl waechst.** Ein abgeleitetes Objekt auf IDrive e2 schon.
+- **Eine Antwortzeit ohne Grundlast-Vergleich ist keine Messung.** Erst die
+  Differenz zu einem Endpunkt ohne Speicherzugriff auf demselben Host sagt
+  etwas ueber den eigenen Anteil.

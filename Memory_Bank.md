@@ -5,6 +5,27 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-30] MODUL W: TAGESPROJEKTION STATT ZAEHLSTAND IM SPEICHER (job_analytik_projektion_20260730)
+
+Volltext: [docs/memory/Memory_Bank_2026-07-29_modulw.md](docs/memory/Memory_Bank_2026-07-29_modulw.md).
+Commits `fcabd1b`, `5d568ef`, `e4ce5dc`, Control-Server **Version 124**.
+
+- **Ein Zwischenspeicher im Arbeitsspeicher loest nichts, was mit der Instanzzahl
+  waechst.** Der 60-s-Cache wirkte nur je Instanz — bei 50 Instanzen 50 kalte
+  Aufrufe pro Minute. Jetzt EIN abgeleitetes Objekt `admin/index/analytik-tage.json`
+  auf IDrive e2, plus 20-s-Lesedurchgriff (merkt die ANTWORT eines GET, nicht eine
+  eigene Rechnung).
+- **WICHTIGSTE MESS-LEHRE: die Grundlast reisst das Budget selbst.** `/api/health`
+  — kein S3, keine Auth — zeigt von aussen p95 492 ms. Das 300-ms-Budget ist von
+  dort nicht pruefbar. Aussagekraeftig ist der EIGENANTEIL gegen einen Endpunkt
+  ohne Speicherzugriff auf demselben Host: v123 +79 ms, **v124 -5 ms**.
+- Eine gescheiterte Quelle wird als gescheitert GESPEICHERT (nie als 0), das Alter
+  faehrt mit, und ein fehlgeschlagener Neubau ueberschreibt nichts.
+- FALLE: der Lesedurchgriff schlug zwischen unabhaengigen Testfaellen durch — ein
+  prozessweiter Zwischenspeicher braucht in Tests einen Ausschalter.
+- `check:paths` war seit `22eef72` rot (absoluter Pfad in CODEBERG_SPIEGEL.md) und
+  brach `release:preflight` fuer JEDE Sitzung. Behoben; danach Exit-Code 0.
+
 ### [2026-07-29] TIEFE SPUR: DREI SPERREN, ZWEI BEHOBEN (job_tiefe_spur_routing_20260729)
 
 Volltext + Benchmarks: `task-capsules/2026/07/job_tiefe_spur_routing_20260729/`.
