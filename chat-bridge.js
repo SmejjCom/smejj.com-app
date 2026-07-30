@@ -217,12 +217,13 @@ export function fastLaneEnabled() {
   return Boolean(GROQ_API_KEY && GROQ_BASE_URL && GROQ_MODEL);
 }
 
-// Schnelle Konversations-Spur: liefert true nur, wenn Groq erfolgreich streamt.
-// Bei false wurde noch KEIN Byte gesendet — der Aufrufer faellt auf den
-// bisherigen Pfad (Control-Router bzw. GLM-5.2 direkt) zurueck.
+// Schnelle Konversations-Spur: true nur, wenn Groq erfolgreich streamt. Bei false wurde
+// noch KEIN Byte gesendet — der Aufrufer faellt auf den bisherigen Pfad (Control-Router
+// bzw. GLM-5.2 direkt) zurueck. Coding gibt die Spur ab, ABER nur bei konfigurierter
+// tiefer Spur — sonst antwortet streamModel 503 statt zu antworten (daher LLM_-Pruefung).
 export async function streamFastLane(res, messages, profile, requestedModel = "") {
   if (!fastLaneEnabled()) return false;
-  if (/glm|kimi|cline/i.test(String(requestedModel || ""))) return false;
+  if (/glm|kimi|cline/i.test(String(requestedModel || "")) || (profile === "coding" && Boolean(LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))) return false;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(REQUEST_TIMEOUT_MS, FAST_LANE_TIMEOUT_MS));
   let upstream;
