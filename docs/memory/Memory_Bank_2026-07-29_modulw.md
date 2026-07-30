@@ -10,11 +10,13 @@ Freigabe: "Ja" mit dem Auftrag, fachlich sinnvoll selbst zu entscheiden
 Freigabeliste **kein Kaestchen angekreuzt**; die Entscheidung liegt damit
 dokumentiert bei mir und steht unten mit Begruendung.
 
-Commit `54a7793`, live als Control-Server **Version 120**, Artefakt
-`deployments/control/smejj-control-modul-w-2026-07-29.tar.gz`
-(sha256 `3b15d302…`, 1.895.268 Byte, 856 Dateien).
-Rueckweg: `deployments/control/smejj-control-mailprotokoll-2026-07-29.tar.gz`
-(sha256 `8c8fdb10…`, Version 119).
+Commits `54a7793`, `98d0c44`, `b558456`, `1fa5280`; live als Control-Server
+**Version 122**, Artefakt
+`deployments/control/smejj-control-modul-w-c-2026-07-30.tar.gz`
+(sha256 `a4e86d5c…`, 1.900.256 Byte, 857 Dateien).
+Rueckweg: Version 121 (`…-modul-w-b-…`, ohne Zwischenspeicher), Version 120
+(`…-modul-w-…`, mit dem Eimer-Fehler) und Version 119
+(`…-mailprotokoll-…`, sha256 `8c8fdb10…`, Stand vor diesem Job).
 
 ### DIE ENTSCHEIDUNG: kein Besucher-Tracking, auch nicht "nur ein bisschen"
 
@@ -30,14 +32,13 @@ liegt:
 
 | Reihe | Quelle | Wie gezaehlt |
 | --- | --- | --- |
-| Laeufe je Tag | Task Capsules `capsules/app/` | frueheste `LastModified` je Auftrag |
+| Laeufe je Tag | Job-Ablage `jobs/` im Hauptspeicher | fruehester `LastModified` je Auftrags-Kennung |
 | Registrierungen je Tag | Nutzer-Index `admin/index/users.json` | `createdAt` |
 | Mailversand je Tag | Zustellprotokoll `mail/zustellung/` | ein Schluessel je Mail |
 | Verwaltung je Tag | Audit-Log `admin/audit/` | ein Schluessel je Eintrag |
 
 Gezaehlt werden **Schluessel, nie Inhalte**: bei Audit und Mail wird nur
-gelistet, nie gelesen. Das ist billig (live 231–313 ms fuer 14 Tage) und es kommt
-kein Inhalt in die Naehe dieser Ansicht.
+gelistet, nie gelesen. Es kommt kein Inhalt in die Naehe dieser Ansicht.
 
 Kein neues Recht: W laeuft unter `ops.read`, rein lesend, ohne Audit-Eintrag je
 Aufruf.
@@ -63,7 +64,7 @@ den Standard 14 zurueck und wird **nicht auf 1 geklemmt**: eine
 Ein-Tages-Ansicht sieht wie eine gueltige Antwort aus. Nach oben wird geklemmt
 (90), weil 500 Tage eine echte Frage sind, nur eine zu teure.
 
-### ZWEI FEHLER, die erst der Live-Lauf gezeigt hat
+### VIER FEHLER, die erst der Live-Lauf gezeigt hat
 
 **1. Der Fehlertext enthielt den kompletten Quelltext von `fetch`.**
 Ein vertauschtes Argument (`fetchImpl` landete auf dem Parameter `art`) sorgte
@@ -78,6 +79,35 @@ Die Auflistung machte jede Ausnahme stumm zu `!ok`. Zusaetzlich verschluckt
 DNS- und Programmierfehler gleich `http_0`. Die echte Ursache steht nur im Body
 und wird jetzt von dort geholt und gekuerzt mitgenannt. Ohne diesen Griff sucht
 man an der falschen Stelle: ein ReferenceError sah aus wie ein toter Speicher.
+
+**3. "Laeufe: 0" war ein Eimer-Fehler, kein Befund.**
+Die Reihe zaehlte zuerst `capsules/app/`. Das ist aber das Prefix, in das der
+ENTWICKLUNGSRECHNER seine Dokumentations-Kapseln schiebt
+(`upload_capsule_to_idrive.mjs`, lokal ist `IDRIVE_E2_BUCKET=smejj-model-files`).
+Der Server liest den Hauptspeicher `smejj-app` — dort ist das Prefix leer.
+Live stand 14 Tage "Laeufe: 0", waehrend das Audit-Log 15 Eintraege derselben
+Tage auswies. Nachgemessen: 55 Schluessel im Deploy-Eimer, 0 im Hauptspeicher.
+**Ein dauerhaft nullwertiger Zaehler ist schlimmer als gar keiner: er sieht wie
+ein Befund aus.** Gezaehlt wird jetzt `jobs/` (erzwungen durch
+`assertSafeJobPrefix`), wobei ein Zustandsordner wie `open` KEIN Lauf ist —
+sonst zaehlt derselbe Auftrag mehrfach. Live danach: 9 Laeufe.
+
+**4. MODUL I hatte denselben Fehler, vorbestehend.**
+`opsSpeicher` fuehrte `capsules/app/` als `eimer: "haupt"` und zeigte dort
+dauerhaft 0 Objekte — genau der Fall, vor dem der Kommentar in derselben Datei
+warnt. Jetzt `eimer: "deploy"` (live 55 Objekte), und `jobs/` heisst dort
+"Jobs und Laeufe" (985 Objekte). **Dritter Fall dieser Klasse im Adminbereich:**
+Speicher las einen Eimer statt zwei, Wissen hielt Epoche-0-Zeitstempel fuer
+Alter, hier suchte eine Zahl am falschen Ort. Alle drei sahen live wie eine
+Aussage ueber das System aus.
+
+**Leistung: p95 747 ms gegen ein Budget von 300 ms.** Vier Prefix-Auflistungen
+je Aufruf, `jobs/` allein mit 985 Objekten. Behoben mit 60 s Zwischenspeicher je
+Zeitraum — dieselbe Loesung wie beim Nutzer-Index. Danach kalt 824 ms, warm p50
+214 / **p95 284 ms**. Der Speicher versteckt nichts: `gemessenAm` bleibt der
+Zeitpunkt der MESSUNG, `zwischengespeichert` und `alterSekunden` stehen in der
+Antwort, und ein Ausfall wird NICHT gemerkt (sonst waere eine Stoerung eine
+Minute lang festgeschrieben). Der kalte Aufruf bleibt als offener Punkt stehen.
 
 **Nebenbefund in Modul V berichtigt:** die Ueberschrift stand fest auf "Es gibt
 kein Zustellprotokoll". Seit dem 29.07. gibt es eines — damit war das eine
