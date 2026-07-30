@@ -73,8 +73,13 @@ gestellt, ist das eine Betreiber-Entscheidung mit dieser Klausel im Blick.
   einen Agenten setzen. Die Zeile ist fertig und richtet einen täglichen Abgleich
   um 04:20 Uhr ein — der Betreiber trägt sie selbst ein:
 
+  Der Projektordner steht bewusst als Platzhalter: `check:paths` verbietet
+  absolute Pfade in Dateien, die im Repository liegen. Im Terminal einmal
+  `pwd` im Projektordner ausführen und den ausgegebenen Pfad einsetzen.
+
   ```bash
-  (crontab -l 2>/dev/null; echo '20 4 * * * cd "/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App" && /bin/bash scripts/deploy/codeberg_spiegel_sync.sh alles >> "$HOME/Library/Logs/smejj-codeberg-spiegel.log" 2>&1') | crontab -
+  PROJEKT="$(pwd)"   # im Projektordner ausführen
+  (crontab -l 2>/dev/null; echo "20 4 * * * cd '$PROJEKT' && /bin/bash scripts/deploy/codeberg_spiegel_sync.sh alles >> \"\$HOME/Library/Logs/smejj-codeberg-spiegel.log\" 2>&1") | crontab -
   ```
 
   Rückgängig mit `crontab -r`. Protokoll unter
