@@ -191,3 +191,24 @@ test("mit tiefer Spur behaelt der normale Chat die Schnellspur — Tempo bleibt"
   const { angefragt } = await spurVersuch(modul, "chat");
   assert.match(String(angefragt), /groq\.invalid/, "Chat laeuft weiter schnell");
 });
+
+test("Control-Router zaehlt als tiefe Spur — nicht nur die generischen LLM-Variablen", async () => {
+  // Live belegt: die Bridge liefert ueber den Router zhipu:glm-5.2. Die erste
+  // Fassung dieser Regel prueft nur LLM_BASE_URL/KEY/MODEL und waere deshalb
+  // wirkungslos geblieben, obwohl eine funktionierende tiefe Spur existiert.
+  const modul = await frischeBridge({
+    ...GROQ_AN,
+    SMEJJ_MULTI_MODEL_ROUTER_ENABLED: "YES",
+    SMEJJ_CONTROL_ORIGIN: "https://control.invalid"
+  }, "router-zaehlt");
+  const { abgegeben, angefragt } = await spurVersuch(modul, "coding");
+  assert.equal(abgegeben, true, "Coding gibt die Spur ab, weil der Router bereitsteht");
+  assert.equal(angefragt, null, "Groq wurde nicht gefragt");
+});
+
+test("handleChat erkennt eine Code-Frage — vorher lief sie immer als \"chat\"", async () => {
+  // Der eigentliche Fehler: handleChat uebergab fest "chat", die Coding-Regel
+  // konnte dort also nie greifen. isCodingTask muss die Frage erkennen.
+  assert.equal(bridge.isCodingTask("Schreibe eine ESM-Funktion parseBudget(value) fuer Node 20."), true);
+  assert.equal(bridge.isCodingTask("Wie geht es Dir heute?"), false);
+});
