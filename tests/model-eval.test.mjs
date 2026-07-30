@@ -22,6 +22,8 @@ import {
   callViaProvider,
   isTransientError,
   readSseStream,
+  chatEndpointFromEnv,
+  DEFAULT_CHAT_ENDPOINT,
   THINKING_MIN_TOKEN_BUDGET
 } from "../src/evaluation/evalTransport.js";
 import { findBaselineReport, parseArguments, runEvalSuite } from "../scripts/evaluation/run_model_eval.mjs";
@@ -473,4 +475,52 @@ test("reichliches Token-Budget laesst das Denken unangetastet — Antwortguete b
     }
   });
   assert.equal("thinking" in gesehen, false, "ohne Not wird die Voreinstellung des Modells nicht angetastet");
+});
+
+test("Messweg ist umstellbar, bleibt ohne Angabe aber auf der Schnellspur", () => {
+  // Umstellen muss eine ausdrueckliche Entscheidung sein, keine Nebenwirkung.
+  assert.equal(chatEndpointFromEnv({}), DEFAULT_CHAT_ENDPOINT);
+  assert.equal(chatEndpointFromEnv({ SMEJJ_EVAL_CHAT_ENDPOINT: "  " }), DEFAULT_CHAT_ENDPOINT);
+  assert.equal(
+    chatEndpointFromEnv({ SMEJJ_EVAL_CHAT_ENDPOINT: "https://smejj-control.zeabur.app/api/chat" }),
+    "https://smejj-control.zeabur.app/api/chat"
+  );
+});
+
+test("der Notfall-Assistent wird als Infrastrukturzustand erkannt, nicht als Modellversagen", async () => {
+  // Antwortet localAssistantStream, fehlt der Kopf x-smejj-model-backend. Ohne
+  // diesen Waechter kaemen fluessige Konservensaetze zurueck, die Zusicherungen
+  // reissen — eine unfertige Spur saehe aus wie ein schlechtes Modell.
+  const antwort = {
+    ok: true,
+    headers: { get: () => null },
+    body: (async function* () { yield 'data: {"choices":[{"delta":{"content":"Hallo"}}]}\n\n'; })()
+  };
+  const ergebnis = await callViaControl(SUITE.cases[0], {
+    endpoint: "https://beispiel.invalid/api/chat",
+    fetchImpl: async () => antwort
+  });
+  assert.equal(ergebnis.ok, false);
+  assert.equal(ergebnis.error, "notfall_assistent");
+  assert.equal(ergebnis.backend, "notfall-assistent");
+  assert.equal(isTransientError("notfall_assistent"), true, "zaehlt als Infrastruktur, nicht als Modellfehler");
+});
+
+test("ein Bericht einer anderen Spur wird NICHT als Vergleichswert akzeptiert", async () => {
+  // Sonst waere ein Spurwechsel als Regression gemeldet worden.
+  const bericht = (endpoint) => ({
+    suite: { suiteId: "s", contentSha256: "a".repeat(64) },
+    run: { modelId: "live-default", live: true, ...(endpoint ? { endpoint } : {}) },
+    summary: { weightedScore: 0.9 }
+  });
+  const suchen = (endpoint, gespeichert) => findBaselineReport({
+    dir: "/egal", suiteId: "s", contentSha256: "a".repeat(64), modelId: "live-default", endpoint,
+    readDir: async () => ["modeleval-s-live-default-2026-07-29.json"],
+    readJson: async () => gespeichert
+  });
+  const control = "https://smejj-control.zeabur.app/api/chat";
+  assert.equal(await suchen(control, bericht(DEFAULT_CHAT_ENDPOINT)), null, "Schnellspur-Bericht taugt nicht fuer die Control-Spur");
+  assert.notEqual(await suchen(control, bericht(control)), null, "gleiche Spur bleibt vergleichbar");
+  // Aeltere Berichte ohne das Feld zaehlen als der historische Standardweg.
+  assert.notEqual(await suchen(DEFAULT_CHAT_ENDPOINT, bericht(null)), null, "alte Berichte bleiben auf der unveraenderten Spur vergleichbar");
 });

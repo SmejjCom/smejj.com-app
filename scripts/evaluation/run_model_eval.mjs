@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { selectCases, validateEvalSuite } from "../../src/evaluation/evalSuite.js";
 import { scoreCase } from "../../src/evaluation/evalScoring.js";
 import { buildEvalReport, EVAL_VERDICT, formatEvalSummary } from "../../src/evaluation/evalReport.js";
-import { callViaControl, callViaProvider, isTransientError, TRANSPORTS } from "../../src/evaluation/evalTransport.js";
+import { callViaControl, callViaProvider, chatEndpointFromEnv, DEFAULT_CHAT_ENDPOINT, isTransientError, TRANSPORTS } from "../../src/evaluation/evalTransport.js";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(SCRIPT_FILE), "../..");
@@ -121,6 +121,12 @@ export async function findBaselineReport({
   suiteId,
   contentSha256,
   modelId,
+  // Gemessener Weg. Zwei Berichte ueber verschiedene Spuren (Schnellspur gegen
+  // Control Server) sind NICHT vergleichbar — ein Spurwechsel wuerde sonst als
+  // Regression gemeldet. Aeltere Berichte haben das Feld noch nicht; sie zaehlen
+  // als der historische Standardweg, damit die unveraenderte Spur weiter
+  // vergleichbar bleibt und nur ein echter Wechsel die Kette trennt.
+  endpoint = DEFAULT_CHAT_ENDPOINT,
   readDir = readdir,
   readJson = readJsonFile
 }) {
@@ -133,9 +139,11 @@ export async function findBaselineReport({
   const candidates = entries.filter((name) => name.startsWith("modeleval-") && name.endsWith(".json")).sort().reverse();
   for (const name of candidates) {
     const report = await readJson(path.join(dir, name)).catch(() => null);
+    const berichtEndpunkt = report?.run?.endpoint || DEFAULT_CHAT_ENDPOINT;
     if (report?.suite?.suiteId === suiteId &&
         report?.suite?.contentSha256 === contentSha256 &&
         report?.run?.modelId === modelId &&
+        berichtEndpunkt === endpoint &&
         report?.run?.live === true) {
       return report;
     }

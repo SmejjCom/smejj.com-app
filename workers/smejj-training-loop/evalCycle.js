@@ -9,7 +9,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { selectCases, validateEvalSuite } from "../../src/evaluation/evalSuite.js";
 import { buildEvalReport, EVAL_VERDICT, formatEvalSummary } from "../../src/evaluation/evalReport.js";
-import { callViaControl } from "../../src/evaluation/evalTransport.js";
+import { callViaControl, chatEndpointFromEnv } from "../../src/evaluation/evalTransport.js";
 import { findBaselineReport, runEvalSuite } from "../../scripts/evaluation/run_model_eval.mjs";
 
 function reportFileName(suiteId, modelId, isoDate) {
@@ -36,6 +36,7 @@ export async function runEvalCycle({
   reportTarget,
   baseline: baselineOverride,
   modelId = "live-default",
+  chatEndpoint,
   delayMs = 6000,
   retries = 2,
   callModel,
@@ -52,7 +53,8 @@ export async function runEvalCycle({
   }
 
   const cases = selectCases(suite, {});
-  const call = callModel || ((evalCase) => callViaControl(evalCase, { modelId }));
+  const gemessenerWeg = chatEndpoint || chatEndpointFromEnv();
+  const call = callModel || ((evalCase) => callViaControl(evalCase, { modelId, endpoint: gemessenerWeg }));
 
   const startedAt = now().toISOString();
   const { caseScores } = await runEvalSuite({ suite, cases, callModel: call, delayMs, retries });
@@ -63,13 +65,14 @@ export async function runEvalCycle({
     suiteId: suite.suiteId,
     contentSha256: suite.integrity.contentSha256,
     modelId,
+    endpoint: gemessenerWeg,
     readDir: async (dir) => (await import("node:fs/promises")).readdir(dir),
     readJson: defaultReadJson
   }).catch(() => null);
 
   const report = buildEvalReport({
     suite,
-    run: { modelId, transport: "control", profileMode: "case", live: true, startedAt, finishedAt },
+    run: { modelId, transport: "control", profileMode: "case", live: true, startedAt, finishedAt, endpoint: gemessenerWeg },
     caseScores,
     baseline
   });

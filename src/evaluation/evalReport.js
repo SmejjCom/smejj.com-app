@@ -52,6 +52,11 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
       live: run?.live === true,
       startedAt: run?.startedAt || null,
       finishedAt: run?.finishedAt || null,
+      // Gemessener Weg. Pflicht, seit der Messweg umstellbar ist: zwei Berichte
+      // ueber verschiedene Spuren sind NICHT vergleichbar, und ohne dieses Feld
+      // wuerde findBaselineReport sie trotzdem gegeneinander stellen und eine
+      // Regression melden, die nur ein Spurwechsel ist.
+      endpoint: run?.endpoint ? String(run.endpoint) : null,
       // Beleg, wer wirklich geantwortet hat — angefordertes und antwortendes
       // Modell koennen wegen Router-Fallback auseinanderfallen.
       backendsSeen: distinct(caseScores, "backend"),

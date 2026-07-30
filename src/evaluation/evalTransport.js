@@ -10,8 +10,22 @@
 //
 // Beide liefern dasselbe Ergebnisobjekt:
 //   {ok, text, latencyMs, firstTokenMs, backend, modelId, error}
-const DEFAULT_CHAT_ENDPOINT = "https://smejj-chat-bridge.zeabur.app/api/chat";
+// Historischer Standard-Messweg: die Schnellspur. Bewusst als Standard belassen,
+// damit eine Umstellung eine ausdrueckliche Entscheidung ist und nicht als
+// Nebenwirkung eines Deploys passiert — ein gewechselter Messweg verschiebt den
+// Massstab und macht Berichte untereinander unvergleichbar.
+export const DEFAULT_CHAT_ENDPOINT = "https://smejj-chat-bridge.zeabur.app/api/chat";
 const DEFAULT_TIMEOUT_MS = 60_000;
+
+/**
+ * Messweg aus der Umgebung. Umstellen ist damit ein Zahlenwechsel, kein Release:
+ *   SMEJJ_EVAL_CHAT_ENDPOINT=https://smejj-control.zeabur.app/api/chat
+ * Ohne Angabe bleibt es beim historischen Standard.
+ */
+export function chatEndpointFromEnv(env = process.env) {
+  const wert = String(env?.SMEJJ_EVAL_CHAT_ENDPOINT || "").trim();
+  return wert || DEFAULT_CHAT_ENDPOINT;
+}
 
 export const TRANSPORTS = Object.freeze(["control", "provider"]);
 
@@ -41,6 +55,10 @@ export const THINKING_MIN_TOKEN_BUDGET = 2000;
 export function isTransientError(error) {
   const reason = String(error || "");
   if (reason === "timeout" || reason === "network_error" || reason === "empty_response") return true;
+  // Der Notfall-Assistent ist ein KONFIGURATIONSZUSTAND, kein Modellversagen.
+  // Wuerde er als Modellfehler gezaehlt, saehe eine falsch eingestellte Spur wie
+  // ein schlechtes Modell aus — genau die Verwechslung, die dieses Modul verhindert.
+  if (reason === "notfall_assistent") return true;
   const http = reason.match(/^http_(\d{3})$/);
   if (!http) return false;
   const status = Number(http[1]);
@@ -52,7 +70,7 @@ export function isTransientError(error) {
  * @returns {Promise<{ok: boolean, text: string, latencyMs: number, firstTokenMs: number|null, backend: string, modelId: string, error: string|null}>}
  */
 export async function callViaControl(evalCase, {
-  endpoint = DEFAULT_CHAT_ENDPOINT,
+  endpoint = chatEndpointFromEnv(),
   modelId = "",
   fetchImpl = fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -77,6 +95,16 @@ export async function callViaControl(evalCase, {
         backend: "control",
         modelId: response.headers?.get?.("x-smejj-model-id") || modelId
       });
+    }
+    // Waechter gegen die schlimmste Fehlmessung: antwortet der Notfall-Assistent
+    // (localAssistantStream, greift wenn SMEJJ_SERVER_AI_ENABLED nicht "true" ist),
+    // kommen fluessige Konservensaetze zurueck, die Zusicherungen reissen — und das
+    // saehe aus wie ein schlechtes Modell statt wie eine unfertige Spur.
+    // Erkennungsmerkmal: streamLLM setzt x-smejj-model-backend, der
+    // Notfall-Assistent antwortet VOR diesem Kopf und hat ihn daher nie.
+    const backendKopf = response.headers?.get?.("x-smejj-model-backend") || "";
+    if (!backendKopf) {
+      return failure("notfall_assistent", now() - started, { backend: "notfall-assistent", modelId });
     }
     const stream = await readSseStream(response, { started, now });
     return {

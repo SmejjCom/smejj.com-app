@@ -4,6 +4,8 @@
 // (SMEJJ_TRAINING_CAPTURE_ENABLED, see src/training/constants.js#isCaptureEnabled).
 // An unset or misconfigured environment never starts real work.
 
+import { chatEndpointFromEnv } from "../../src/evaluation/evalTransport.js";
+
 function flag(env, name) {
   return String(env[name] || "NO").trim().toUpperCase() === "YES";
 }
@@ -42,6 +44,12 @@ export function loadLoopConfig(env = process.env) {
     // 6-Stunden-Takt fuer gut zwei Wochen Trend. Begrenzt, weil der Prozess
     // unbefristet laeuft — eine unbegrenzte Liste waere ein Speicherleck.
     verlaufMax: boundedInt(env.SMEJJ_TRAINING_LOOP_VERLAUF_MAX, 60, 1, 500),
+    // Gemessener Weg. Umstellen ist ein Zahlenwechsel, kein Release:
+    //   SMEJJ_EVAL_CHAT_ENDPOINT=https://smejj-control.zeabur.app/api/chat
+    // Ohne Angabe bleibt es bei der Schnellspur. Der Wechsel trennt bewusst die
+    // Vergleichskette (siehe findBaselineReport) — zwei Spuren sind nicht
+    // vergleichbar, und ein Wechsel darf nicht als Regression erscheinen.
+    chatEndpoint: chatEndpointFromEnv(env),
     suiteId: env.SMEJJ_TRAINING_LOOP_SUITE_ID || "smejj-chat-core",
     suitePath: env.SMEJJ_TRAINING_LOOP_SUITE_PATH || "evals/suites/smejj-chat-core-v1.json",
     baselineDir: env.SMEJJ_TRAINING_LOOP_BASELINE_DIR || "docs/benchmarks",

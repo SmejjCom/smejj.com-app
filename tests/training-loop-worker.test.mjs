@@ -507,3 +507,11 @@ test("worker: /verlauf liefert die Kennzahlen und keine Prompts oder Antworten",
   assert.equal(/prompt|answer|text|IDRIVE|SECRET/i.test(body.raw), false);
   server.close();
 });
+
+test("config: Messweg ist per Umgebungswert umstellbar, Standard bleibt die Schnellspur", () => {
+  assert.equal(loadLoopConfig({}).chatEndpoint, "https://smejj-chat-bridge.zeabur.app/api/chat");
+  assert.equal(
+    loadLoopConfig({ SMEJJ_EVAL_CHAT_ENDPOINT: "https://smejj-control.zeabur.app/api/chat" }).chatEndpoint,
+    "https://smejj-control.zeabur.app/api/chat"
+  );
+});
