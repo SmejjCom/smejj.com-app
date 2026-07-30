@@ -1,0 +1,97 @@
+{
+  "jobId": "job_adminmodulw_20260729",
+  "createdAt": "2026-07-29",
+  "owner": "smejj.com Betreiber",
+  "title": "Modul W — Analytik ohne Besucher-Tracking; damit sind alle 26 Buchstaben gebaut",
+  "goal": "Das letzte offene Mockup-Modul bauen, obwohl smejj.com bewusst nichts ueber Besucher erhebt — und dabei keine Zahl zeigen, die mehr behauptet als sie weiss.",
+  "approval": {
+    "weisung": "Betreiber am 2026-07-29: 'Ja' mit dem Auftrag, eigenstaendig weiterzuarbeiten, fachlich sinnvolle Entscheidungen zu treffen und ohne unnoetige Rueckfragen fertig zu werden.",
+    "moduleWOhneKaestchen": "In der zurueckgeschickten Freigabeliste war bei Modul W KEIN Kaestchen angekreuzt. Die Entscheidung wurde daher selbst getroffen und ist hier mit Begruendung festgehalten, damit sie niemand neu aufrollen muss.",
+    "zustellprotokollAufraeumen": "Gedeckt durch die Freigabe vom 2026-07-29: 'Aufbewahrung 90 Tage, danach automatische Loeschung.' Der Taktgeber setzt genau diese Zusage um; die Loeschregel selbst wurde nicht angefasst.",
+    "roteListe": "Kein Punkt der Roten Liste beruehrt: nichts geloescht, kein Secret rotiert oder ueberschrieben, keine neue Kostenposition, kein Force-Push, keine History-Aenderung, kein Merge nach main, keine Startseiten- oder Favicon-Aenderung."
+  },
+  "entscheidung": {
+    "gewaehlt": "Kein Besucher-Tracking. Gemessen wird ausschliesslich, was im Betrieb ohnehin entsteht und schon auf IDrive e2 liegt: Laeufe (jobs/), Registrierungen (Nutzer-Index), Mailversand (Zustellprotokoll), Verwaltung (Audit-Log).",
+    "begruendung": "Besucher zaehlen braeuchte ein Skript, eine Kennung und ein Einverstaendnis auf jeder Seite. Die Startseite hat heute keines davon. Ein Analytik-Bildschirm, der dafuer eigens Tracking einbaut, macht das Wichtigste am Produkt kaputt, um eine Kachel zu fuellen.",
+    "kostenwirkung": "0,00 USD. Keine neue Abhaengigkeit, kein neuer Dienst, kein zusaetzlicher Speicher — es wird nur gelistet, was bereits liegt."
+  },
+  "diagnose": {
+    "befund1_vertauschtesArgument": "Der erste Live-Lauf schrieb den GESAMTEN Quelltext von `fetch` in den Fehlergrund, der in der Oberflaeche steht: `fetchImpl` war auf dem Parameter `art` gelandet, und `${art}_listing_fehlgeschlagen` druckte die Funktion aus.",
+    "befund2_stillerCatch": "Derselbe Programmierfehler sah aus wie ein toter Speicher, weil die Auflistung jede Ausnahme stumm zu !ok machte. Verstaerkend: signedS3List verschluckt eine Ausnahme und meldet Status 0 — jeder Netz-, DNS- und Programmierfehler hiess deshalb gleich 'http_0'. Die echte Ursache steht nur im Body.",
+    "befund3_falscherEimer": "Live zeigte die Kachel 'Laeufe: 0' fuer 14 Tage, waehrend das Audit-Log 15 Eintraege derselben Tage auswies. Die Reihe zaehlte capsules/app/ — das Prefix, in das der ENTWICKLUNGSRECHNER seine Dokumentations-Kapseln schiebt (upload_capsule_to_idrive.mjs, Deploy-Eimer smejj-model-files). Der Server liest den Hauptspeicher smejj-app. Nachgemessen: 55 Schluessel im Deploy-Eimer, 0 im Hauptspeicher.",
+    "befund4_modulIGleicheKlasse": "opsSpeicher fuehrte capsules/app/ ebenfalls als eimer 'haupt' und zeigte dort dauerhaft 0 Objekte — vorbestehend, und genau der Fall, vor dem der Kommentar in derselben Datei warnt.",
+    "befund5_modulVWidersprach": "Ueber der Zustellprotokoll-Tabelle stand fest 'Es gibt kein Zustellprotokoll'. Seit Version 119 gibt es eines.",
+    "befund6_budget": "p95 747 ms gegen ein Budget von 300 ms — vier Prefix-Auflistungen je Aufruf, jobs/ allein mit 985 Objekten.",
+    "befund7_aufraeumenLiefNie": "raeumeAuf() war seit Version 119 fertig, wurde aber von niemandem aufgerufen. Damit war die zugesagte 90-Tage-Frist eine Absicht, kein Verhalten."
+  },
+  "loesung": {
+    "modulW": "control-server/src/admin/opsAnalytik.js — vier Reihen aus vorhandenen Quellen, gezaehlt werden SCHLUESSEL, nie Inhalte. Vier Regeln: eine nicht lesbare Quelle zeigt '—' und nie 0; eine abgeschnittene Liste nennt sich Untergrenze; ein veralteter Nutzer-Index wird benannt; ein unbrauchbarer Zeitstempel wird nicht geraten.",
+    "fehlergrund": "Kurze, gepruefte Kennung (/^[a-z]{1,20}$/, sonst 'quelle') plus gekuerzte Ursache aus dem Body. Kein Wert von aussen gelangt in einen angezeigten Text.",
+    "laeufe": "jobs/ im Hauptspeicher. Ein Zustandsordner (open, succeeded, claims, …) ist kein Lauf; gezaehlt werden Auftrags-Kennungen, jede einmal, mit dem fruehesten Schreibvorgang — der letzte waere der Abschluss, nicht der Beginn.",
+    "modulI": "capsules/app/ auf eimer 'deploy' umgestellt und in 'Task Capsules (Doku)' umbenannt; jobs/ heisst jetzt 'Jobs und Laeufe'.",
+    "modulV": "Die Ueberschrift wird aus dem Zustand abgeleitet statt festgeschrieben.",
+    "leistung": "60 s Zwischenspeicher je Zeitraum — dieselbe Loesung wie beim Nutzer-Index. gemessenAm bleibt der Zeitpunkt der MESSUNG; zwischengespeichert und alterSekunden stehen in der Antwort; ein Ausfall wird NICHT gemerkt.",
+    "aufraeumen": "control-server/src/auth/mailLogJanitor.js, verdrahtet in src/server.js nach server.listen. Erster Lauf verzoegert (5 min), danach taeglich, unref, ohne Objektspeicher gar nicht — und auch die Null wird gemeldet, sonst ist 'laeuft und hat nichts zu tun' nicht von 'laeuft gar nicht' zu unterscheiden."
+  },
+  "affectedFiles": [
+    "control-server/src/admin/opsAnalytik.js (neu)",
+    "control-server/src/admin/opsAnalytik.test.js (neu)",
+    "control-server/src/auth/mailLogJanitor.js (neu)",
+    "control-server/src/auth/mailLogJanitor.test.js (neu)",
+    "control-server/src/admin/opsSpeicher.js (Eimer-Korrektur)",
+    "control-server/src/routes/adminOpsRoutes.js (Bereich analytik)",
+    "control-server/admin-ui/views-stage8.js (Ansicht W, Ueberschrift V)",
+    "control-server/admin-ui/console-stage8.js (Seite W)",
+    "src/server.js (Taktgeber gestartet)",
+    "package.json (beide neuen Dateien in check aufgenommen)",
+    "Memory_Bank.md, docs/memory/Memory_Bank_2026-07-29_modulw.md",
+    "docs/benchmarks/adminmodulw_2026-07-29.json"
+  ],
+  "nichtBeruehrt": [
+    "Startseite und Eingabefeld (Design-Lock) — 31 Dateien byte-identisch.",
+    "Favicons (Favicon-Lock).",
+    "Zugaenge, Secrets, API-Keys, Deploy-Keys — nichts gelesen ausser dem Sitzungsschluessel fuer den Live-Test, nichts geschrieben.",
+    "Daten auf IDrive e2 — kein Objekt geloescht oder ueberschrieben; nur gelistet und ein neues Release-Artefakt angelegt.",
+    "origin/main — kein Merge (getrennte Wurzel, 386 kollidierende Dateien).",
+    "scripts/diagnose/maus-direktlauf.mjs und docs/benchmarks/webvitals-tiefe-spur-2026-07-29.json — fremde, noch laufende Arbeit einer Parallel-Sitzung, bewusst unangetastet.",
+    "Die Loeschregel darfGeloeschtWerden() im Zustellprotokoll."
+  ],
+  "verification": {
+    "tests": "363 Unit-Tests gruen (23 neu). node --test control-server/src/**/*.test.js",
+    "checks": "check:guidelines OK (1122 Dateien), check:start-lock OK (31 Dateien byte-identisch), check:release-imports OK (171 Dateien transitiv), check:architecture, check:cost, check:security, check:paths, check:branding, check:favicon-lock und der Free-Tier-Guard gruen.",
+    "checkJsonRot": "check:json schlaegt an genau EINER Stelle an: docs/benchmarks/webvitals-tiefe-spur-2026-07-29.json ist 0 Byte, ungetrackt und um 17:12 von einer Parallel-Sitzung angelegt worden. Fremde Arbeit im Fluss, deshalb NICHT angefasst. Dadurch endet npm run release:preflight mit Code 1.",
+    "korrekturZuFrueherenMeldungen": "In den Commit-Meldungen 98d0c44 und b558456 steht 'Preflight vollstaendig gruen'. Das war falsch — ich hatte die Ausgabe nach 'FAILED|Verstoesse' gefiltert, waehrend check:json 'JSON validation failed' schreibt. Berichtigt hier und im Benchmark statt durch eine History-Aenderung.",
+    "liveKlickpfad": "GET /api/admin/ops/analytik ohne Anmeldung -> 401. Mit Anmeldung -> 200. POST -> 405. ?tage=-5 -> 200 mit zeitraumTage=14. Bereichsliste nennt analytik. 12 Admin-Endpunkte geprueft, alle 200. smejj.com und sw.js 200.",
+    "liveBefund": "9 Laeufe in 14 Tagen, 15 Verwaltungsereignisse, 2 Registrierungen (als Untergrenze markiert), 0 Mails. Bestand 5 Konten, davon 0 bestaetigt, 0 aktive Sitzungen. Modul I zeigt jetzt 55 Kapseln im Deploy-Eimer und 985 Objekte unter jobs/ statt zwei Nullen.",
+    "artefaktGeprueft": "Aus isoliertem git-worktree auf HEAD gebaut, entpackt und dateiweise gegen die Arbeitskopie verglichen: 0 Abweichungen. secretsIncluded=false."
+  },
+  "benchmark": {
+    "datei": "docs/benchmarks/adminmodulw_2026-07-29.json",
+    "api_kalt_ms": 824,
+    "api_warm_p50_ms": 214,
+    "api_warm_p95_ms": 284,
+    "api_warm_p99_ms": 284,
+    "budget_p95_ms": 300,
+    "vorher_p95_ms": 747,
+    "urteil": "Warm innerhalb des Budgets. Der kalte Aufruf (824 ms) liegt knapp ueber dem p99-Budget von 800 ms und bleibt als offener Punkt stehen — er wird nicht als erledigt gemeldet."
+  },
+  "rollback": {
+    "artefakt": "deployments/control/smejj-control-modul-w-c-2026-07-30.tar.gz (sha256 a4e86d5c…, Version 122)",
+    "rueckweg": [
+      "deployments/control/smejj-control-modul-w-b-2026-07-29.tar.gz (Version 121, ohne Zwischenspeicher)",
+      "deployments/control/smejj-control-modul-w-2026-07-29.tar.gz (Version 120, mit dem Eimer-Fehler)",
+      "deployments/control/smejj-control-mailprotokoll-2026-07-29.tar.gz (sha256 8c8fdb10…, Version 119, Stand vor diesem Job)"
+    ],
+    "weg": "CONFIRM_CONTROL_ARTIFACT_SWITCH=YES mit SMEJJ_CONTROL_ARTIFACT_KEY und _SHA256 des Rueckwegs, dann node scripts/deploy/set_control_artifact_env.mjs. Salad rollt in etwa 5–6 Minuten neu aus; gemessen bei diesem Job: 300 s und 330 s.",
+    "commits": ["54a7793", "98d0c44", "b558456"]
+  },
+  "offenePunkte": [
+    "Kalter Aufruf 824 ms. Naechster Schritt: jobs/ nicht vollstaendig listen, sondern eine Tagesprojektion fuehren wie beim Nutzer-Index.",
+    "Andere Admin-Endpunkte liegen ebenfalls ueber 300 ms (email 541 ms, kontingent 1270 ms) — vorbestehend, gehoert gemessen und behoben.",
+    "Maus-Token angleichen (Freigabe liegt vor): blockiert, weil ZEABUR_API_TOKEN in ~/.config/smejj.com/env.local fehlt. Der Betreiber hat dafuer das Skript 'smejj.com Zeabur-Token-eintragen.command'.",
+    "Zwei Staging-Eimer (smejj-rc9-deploy-staging-20260711, smejj-rc9-watchdog-staging-20260711) und sechs ausdruecklich kurzlebige Zugangsschluessel vom 11./12. Juli — Loeschung braucht schriftliche Freigabe (Daten-Lock, Zugangs-Lock).",
+    "Memory_Bank.md steht bei 799 von 800 Zeilen; der naechste Eintrag muss ausgelagert werden.",
+    "check:json ist gegen eine leere Datei nicht robust — sie bricht den ganzen Preflight. Waere ein eigener kleiner Job."
+  ],
+  "status": "abgeschlossen"
+}

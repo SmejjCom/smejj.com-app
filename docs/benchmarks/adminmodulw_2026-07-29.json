@@ -1,0 +1,154 @@
+{
+  "titel": "Adminbereich Modul W — Analytik (ohne Besucher-Tracking)",
+  "datum": "2026-07-29",
+  "job": "job_adminmodulw_20260729",
+  "ziel": "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud",
+  "controlServerVersion": 122,
+  "artefakt": "deployments/control/smejj-control-modul-w-c-2026-07-30.tar.gz",
+  "artefaktSha256": "a4e86d5c79b2175c68b35d2bc3771fc9b23def544f6f77495546d5ba45b2e666",
+  "artefaktBytes": 1900256,
+  "artefaktDateien": 857,
+  "rueckweg": [
+    "deployments/control/smejj-control-modul-w-b-2026-07-29.tar.gz (Version 121, ohne Zwischenspeicher)",
+    "deployments/control/smejj-control-modul-w-2026-07-29.tar.gz (Version 120, mit dem Eimer-Fehler)",
+    "deployments/control/smejj-control-mailprotokoll-2026-07-29.tar.gz (Version 119, Stand vor diesem Job)"
+  ],
+  "commits": ["54a7793", "98d0c44", "b558456"],
+  "abdeckung": {
+    "module": "26 von 26 Buchstaben gebaut — Modul W war das letzte offene",
+    "neu": ["W Analytik"],
+    "offen": []
+  },
+  "entscheidung": {
+    "frage": "Wie baut man Analytik, wenn nichts gemessen wird?",
+    "lage": "Der Betreiber hat in der Freigabeliste bei Modul W KEIN Kaestchen angekreuzt. Der Auftrag lautete, fachlich sinnvoll selbst zu entscheiden.",
+    "gewaehlt": "Kein Besucher-Tracking. Kein Skript, keine Kennung, kein Cookie, kein Aufruf an Dritte. Gemessen wird ausschliesslich, was im Betrieb ohnehin entsteht und schon auf IDrive e2 liegt.",
+    "begruendung": "Analytik heisst ueblicherweise Besucher zaehlen. Dafuer braeuchte es ein Einverstaendnis auf jeder Seite. Ein Analytik-Bildschirm, der dafuer eigens ein Tracking einbaut, macht das Wichtigste am Produkt kaputt, um eine Kachel zu fuellen.",
+    "verworfen": [
+      "Eigener Zaehler im Frontend — waere eine neue Datenerhebung ohne Freigabe und ein neues Skript im Render-Pfad.",
+      "Modul gar nicht bauen — die vier vorhandenen Quellen beantworten echte Fragen; sie ungenutzt zu lassen waere Verschwendung.",
+      "Jobs aus dem Arbeitsspeicher (jobStore) zaehlen — der ist nach jedem Neustart leer, eine Reihe daraus waere frei erfunden. Modul H zeigt ihn ausdruecklich als Zwischenspeicher."
+    ]
+  },
+  "reihen": {
+    "laeufe": { "quelle": "jobs/ im Hauptspeicher smejj-app", "zuordnung": "fruehester Schreibvorgang je Auftrags-Kennung" },
+    "registrierungen": { "quelle": "Nutzer-Index admin/index/users.json", "feld": "createdAt" },
+    "mails": { "quelle": "Zustellprotokoll mail/zustellung/", "zuordnung": "Tag aus dem Schluesselpfad" },
+    "verwaltung": { "quelle": "Audit-Log admin/audit/", "zuordnung": "Tag aus dem Schluesselpfad" }
+  },
+  "regeln": {
+    "nullIstMessergebnis": "Eine nicht lesbare Quelle liefert null und die Reihe sagt 'nicht erreichbar'. Eine 0 heisst 'gemessen und leer' und darf nur von einer erreichbaren Quelle kommen.",
+    "untergrenze": "Eine abgeschnittene Auflistung nennt sich Untergrenze, nie Summe.",
+    "projektion": "Der Nutzer-Index ist eine abgeleitete Projektion. Ist er aelter als der juengste Tag im Zeitraum, wird das gesagt statt eine zu niedrige Zahl als Tatsache zu zeigen.",
+    "keinGeratenesDatum": "Ohne verwertbaren Zeitstempel (oder mit einem vor 2020) zaehlt ein Eintrag unter 'ohne Datum' und landet NICHT auf heute.",
+    "unsinnigeSpanne": "tage=0, negativ oder kein Zahlwert faellt auf 14 zurueck und wird bewusst NICHT auf 1 geklemmt — eine Ein-Tages-Ansicht sieht wie eine gueltige Antwort aus.",
+    "keineInhalte": "Bei Audit und Mail wird nur gelistet, nie gelesen. Kein Inhalt kommt in die Naehe dieser Ansicht."
+  },
+  "budgets": {
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "lcp_p75_ms": 1500,
+    "inp_p75_ms": 200,
+    "cls_p75": 0.1,
+    "ttfb_p95_ms": 200,
+    "startseite_kb": 300
+  },
+  "messungLive": {
+    "endpunkt": "GET /api/admin/ops/analytik?tage=14 gegen Version 122",
+    "kalt_ms": 824,
+    "warm_n": 12,
+    "warm_min_ms": 204,
+    "warm_p50_ms": 214,
+    "warm_p95_ms": 284,
+    "warm_p99_ms": 284,
+    "warm_max_ms": 284,
+    "budgetEingehalten": true,
+    "einordnung": "Der erste Aufruf je Zeitraum listet vier Prefixe (jobs/ allein 985 Objekte) und kostet 824 ms. Danach greift 60 s Zwischenspeicher: p95 284 ms, unter dem 300-ms-Budget. Der kalte Aufruf liegt ueber p95, aber unter dem p99-Budget von 800 ms nur knapp — er wird deshalb als offener Punkt gefuehrt, nicht als erledigt.",
+    "vorher_ohne_cache": { "n": 9, "min_ms": 389, "p50_ms": 611, "p95_ms": 747 }
+  },
+  "funktionsnachweiseLive": {
+    "ohneAnmeldung": "GET /api/admin/ops/analytik -> 401",
+    "POST": "-> 405 (der Betriebsbereich ist rein lesend)",
+    "bereichsliste": "GET /api/admin/ops nennt analytik als 11. Bereich",
+    "unsinnigeSpanne": "?tage=-5 -> 200 mit zeitraumTage=14, keine Ein-Tages-Ansicht",
+    "zwischenspeicherSichtbar": "zwischengespeichert=true, alterSekunden=3, gemessenAm bleibt der Zeitpunkt der Messung",
+    "befund": "Live gemessen: 9 Laeufe in 14 Tagen, 15 Verwaltungsereignisse, 2 Registrierungen (als Untergrenze markiert, weil der Nutzer-Index aelter ist als der neueste Tag), 0 Mails. Bestand 5 Konten, davon 0 bestaetigt, 0 aktive Sitzungen."
+  },
+  "gefundeneFehler": [
+    {
+      "fund": "Der Fehlergrund enthielt den kompletten Quelltext von `fetch`",
+      "wirkung": "Ein vertauschtes Argument liess `fetchImpl` auf dem Parameter `art` landen. Der daraus gebaute Text `${art}_listing_fehlgeschlagen` druckte die ganze Funktion aus — sichtbar in der Oberflaeche.",
+      "bewertung": "Ein Fehlergrund, der angezeigt wird, darf nie einen Wert von aussen einsetzen.",
+      "behoben": "Kurze, gepruefte Kennung (/^[a-z]{1,20}$/, sonst 'quelle') plus gekuerzte Ursache. Test dagegen."
+    },
+    {
+      "fund": "Derselbe Programmierfehler war als 'Speicher nicht erreichbar' getarnt",
+      "wirkung": "Die Auflistung machte jede Ausnahme stumm zu !ok. Zusaetzlich verschluckt signedS3List eine Ausnahme und meldet Status 0 — dadurch hiess jeder Netz-, DNS- und Programmierfehler gleich 'http_0'.",
+      "bewertung": "Ein stiller catch verwandelt einen Programmierfehler in eine Infrastruktur-Diagnose. Man sucht dann an der falschen Stelle.",
+      "behoben": "Die echte Ursache steht im Body von signedS3List und wird von dort geholt und gekuerzt mitgenannt."
+    },
+    {
+      "fund": "'Laeufe: 0' war ein Eimer-Fehler, kein Befund",
+      "wirkung": "Die Reihe zaehlte capsules/app/ — ein Prefix, das der Entwicklungsrechner in den DEPLOY-Eimer schreibt, waehrend der Server den Hauptspeicher liest. Live 14 Tage 'Laeufe: 0', obwohl das Audit-Log 15 Eintraege derselben Tage auswies. Nachgemessen: 55 Schluessel im Deploy-Eimer, 0 im Hauptspeicher.",
+      "bewertung": "Ein dauerhaft nullwertiger Zaehler ist schlimmer als gar keiner: er sieht wie ein Befund aus.",
+      "behoben": "Gezaehlt wird jobs/ im Hauptspeicher. Ein Zustandsordner (open, succeeded, claims, …) zaehlt dabei nicht als Lauf; gezaehlt werden Auftrags-Kennungen, jede einmal, mit dem fruehesten Schreibvorgang. Live danach: 9 Laeufe."
+    },
+    {
+      "fund": "MODUL I hatte denselben Fehler — vorbestehend",
+      "wirkung": "opsSpeicher fuehrte capsules/app/ als eimer 'haupt' und zeigte dort dauerhaft 0 Objekte. Genau der Fall, vor dem der Kommentar in derselben Datei warnt.",
+      "behoben": "eimer 'deploy'; live danach 55 Objekte. jobs/ heisst dort jetzt 'Jobs und Laeufe' (985 Objekte) — dieselbe Sache, die Modul W zaehlt.",
+      "regel": "Dritter Fall dieser Klasse im Adminbereich: Speicher las einen Eimer statt zwei, Wissen hielt Epoche-0-Zeitstempel fuer Alter, hier suchte eine Zahl am falschen Ort. Alle drei sahen live wie eine Aussage ueber das System aus."
+    },
+    {
+      "fund": "MODUL V widersprach sich in der Ueberschrift",
+      "wirkung": "Ueber der Zustellprotokoll-Tabelle stand fest 'Es gibt kein Zustellprotokoll'. Seit v119 gibt es eines.",
+      "behoben": "Die Ueberschrift wird aus dem Zustand abgeleitet. Gleiche Klasse wie 'Davon frisch: 2' neben 'keines davon frisch'."
+    },
+    {
+      "fund": "p95 747 ms gegen ein Budget von 300 ms",
+      "wirkung": "Vier Prefix-Auflistungen je Aufruf, jobs/ allein mit 985 Objekten.",
+      "behoben": "60 s Zwischenspeicher je Zeitraum — dieselbe Loesung wie beim Nutzer-Index (30 s gegen p95 2841 ms). gemessenAm bleibt der Zeitpunkt der Messung, zwischengespeichert und alterSekunden stehen in der Antwort, und ein Ausfall wird NICHT gemerkt. Danach p95 284 ms."
+    }
+  ],
+  "zusatzarbeit": {
+    "zustellprotokollAufraeumen": "raeumeAuf() war seit v119 fertig, wurde aber von niemandem aufgerufen — die Zusage 'Aufbewahrung 90 Tage, danach automatische Loeschung' war eine Absicht, kein Verhalten. Neu control-server/src/auth/mailLogJanitor.js, verdrahtet in src/server.js. Erster Lauf verzoegert (5 min), danach taeglich, unref, ohne Objektspeicher gar nicht, und auch die Null wird gemeldet."
+  },
+  "nonRegression": {
+    "startLock": "31 Startseiten-Dateien byte-identisch, durchgehend gruen.",
+    "parallelSession": "Artefakt aus isoliertem git-worktree auf HEAD gebaut und dateiweise gegen die Arbeitskopie geprueft: 0 Abweichungen. Kein `git add -A`; die fremde Datei scripts/diagnose/maus-direktlauf.mjs blieb unangetastet.",
+    "v119Frage_geklaert": "Die frueher geaeusserte Sorge, das v119-Artefakt haette neuere Dateien der Parallel-Session zurueckgesetzt, ist WIDERLEGT. Das Live-Artefakt entsprach fuer public/index.html, docs/frontend/start-lock-manifest.json und public/sw.js byte-genau dem Commit c8cc628 — meinem eigenen, der die damalige Arbeit der Parallel-Session bereits enthielt. Nach c8cc628 wurde KEINE Datei des Control-Servers mehr geaendert, nur der Training-Loop-Worker (eigener Zeabur-Dienst) und Frontend/Doku.",
+    "preflight": "check:guidelines, check:start-lock, check:release-imports (171 Dateien transitiv), check:architecture, check:cost, check:security, check:paths, check:branding, check:favicon-lock und der Free-Tier-Guard sind gruen. check:json schlaegt an EINER Stelle an, und zwar nicht an dieser Arbeit: docs/benchmarks/webvitals-tiefe-spur-2026-07-29.json ist 0 Byte gross, ungetrackt und um 17:12 von einer parallel laufenden Sitzung angelegt worden — offenbar noch nicht beschrieben. Die Datei wurde NICHT angefasst (fremde Arbeit im Fluss). Damit endet `npm run release:preflight` mit Code 1.",
+    "korrektur": "In den Commit-Meldungen 98d0c44 und b558456 steht 'Preflight vollstaendig gruen'. Das war falsch: ich hatte die Ausgabe nach 'FAILED|Verstoesse' gefiltert, waehrend check:json 'JSON validation failed' schreibt. Die Aussage wird hier berichtigt statt die Historie umzuschreiben.",
+    "rechteUnveraendert": "Keine neue Berechtigung — W laeuft unter ops.read.",
+    "keineSchreibaktion": "Modul W ist rein lesend; POST -> 405.",
+    "endpunkte": "12 Admin-Endpunkte live geprueft, alle 200. smejj.com und sw.js 200.",
+    "merge": "NICHT durchgefuehrt: origin/main hat eine getrennte Wurzel, keinen gemeinsamen Vorfahren, 386 kollidierende Dateien. Die Freigabe galt nur mit Beleg, dass nichts verlorengeht — der Beleg sagt das Gegenteil."
+  },
+  "testabdeckung": {
+    "gesamt": 363,
+    "neu": 23,
+    "schwerpunkte": [
+      "eine nicht lesbare Quelle zeigt null, keine 0",
+      "eine erreichbare Quelle DARF eine 0 zeigen",
+      "ein veralteter Nutzer-Index wird benannt, nicht unterschlagen",
+      "eine abgeschnittene Liste ist eine Untergrenze",
+      "ein Eintrag ohne Datum landet nicht auf heute",
+      "kein Feld, das eine Besuchermessung vortaeuscht",
+      "der Fehlergrund ist kurz und enthaelt keinen Quelltext",
+      "ein Zustandsordner ist kein Lauf, und ein Lauf zaehlt nur einmal",
+      "der Zwischenspeicher verschleiert nichts und merkt keinen Ausfall",
+      "die Rohdaten-Map verlaesst das Modul nicht",
+      "der Loeschwaechter des Zustellprotokolls",
+      "ohne Objektspeicher startet kein Taktgeber",
+      "auch die Null wird gemeldet",
+      "eine geworfene Ausnahme reisst den Server nicht mit"
+    ]
+  },
+  "offenePunkte": [
+    "Der kalte Aufruf kostet 824 ms. Innerhalb des p99-Budgets (800 ms) ist das knapp verfehlt. Naechster Schritt waere, jobs/ nicht vollstaendig zu listen, sondern die Warteschlangen-Ordner einzeln — oder eine Tagesprojektion zu fuehren wie beim Nutzer-Index.",
+    "Die uebrigen Admin-Endpunkte liegen ebenfalls ueber 300 ms (email 541 ms, kontingent 1270 ms). Das ist vorbestehend und nicht Teil dieses Jobs, gehoert aber gemessen und behoben.",
+    "Maus-Token angleichen: blockiert, ZEABUR_API_TOKEN fehlt in ~/.config/smejj.com/env.local.",
+    "Zwei Staging-Eimer und sechs kurzlebige Zugangsschluessel vom 11./12. Juli auf IDrive e2 — Loeschung braucht Freigabe (Daten-Lock, Zugangs-Lock).",
+    "Memory_Bank.md steht bei 799 von 800 Zeilen. Der naechste Eintrag muss ausgelagert werden."
+  ]
+}
