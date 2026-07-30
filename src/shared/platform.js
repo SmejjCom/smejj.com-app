@@ -138,6 +138,8 @@ export const ROUTES = {
   llms: "/llms.txt",
   sitemap: "/sitemap.xml",
   status: "/status.html",
+  verlauf: "/verlauf.html",
+  verlaufMesswerte: "/verlauf-messwerte.json",
   hilfe: "/hilfe.html",
   impressum: "/impressum.html",
   datenschutz: "/datenschutz.html",
