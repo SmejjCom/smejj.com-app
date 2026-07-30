@@ -68,6 +68,23 @@ gestellt, ist das eine Betreiber-Entscheidung mit dieser Klausel im Blick.
 
 * **Zwei-Faktor-Anmeldung** unter `codeberg.org/user/settings/security` — dafür
   ist das Konto-Passwort nötig, das ausschließlich der Betreiber eingibt.
-* **Automatischer Zeitplan** für den Abgleich. Ein Cron- oder launchd-Eintrag
-  wäre eine dauerhafte Systemänderung und braucht die ausdrückliche Freigabe des
-  Betreibers. Bis dahin gilt: Skript nach größeren Änderungen laufen lassen.
+* **Automatischer Zeitplan** für den Abgleich. Ein Cron-Eintrag ist eine dauerhafte
+  Systemänderung; die Sicherheitsschicht der Arbeitsumgebung lässt sie nicht durch
+  einen Agenten setzen. Die Zeile ist fertig und richtet einen täglichen Abgleich
+  um 04:20 Uhr ein — der Betreiber trägt sie selbst ein:
+
+  ```bash
+  (crontab -l 2>/dev/null; echo '20 4 * * * cd "/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App" && /bin/bash scripts/deploy/codeberg_spiegel_sync.sh alles >> "$HOME/Library/Logs/smejj-codeberg-spiegel.log" 2>&1') | crontab -
+  ```
+
+  Rückgängig mit `crontab -r`. Protokoll unter
+  `~/Library/Logs/smejj-codeberg-spiegel.log`. Der Eintrag läuft nur, wenn der
+  Rechner wach ist — ohne ihn gilt: Skript nach größeren Änderungen laufen lassen.
+
+## Standardbranch
+
+Der erste Push setzte auf Codeberg `main` als Standardbranch. `main` trägt in
+diesem Repo eine fremde Historie (zwei Commits, siehe Warnung „nie blind mergen"),
+der Spiegel sah deshalb fast leer aus. Standardbranch ist jetzt
+`feature/auth-redesign-github-magiclink` — derselbe wie auf GitHub. Bei den vier
+migrierten Repos hat die Migration den GitHub-Standard (`main`) korrekt übernommen.
