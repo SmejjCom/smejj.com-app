@@ -10,7 +10,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  NICHT_GEMESSEN, __zaehleNachTagFuerTests, analytikUebersicht, auftragAusSchluessel, eintraegeMitDatum
+  NICHT_GEMESSEN, __analytikCacheLeeren, __zaehleNachTagFuerTests, analytikUebersicht,
+  auftragAusSchluessel, eintraegeMitDatum
 } from "./opsAnalytik.js";
 
 const JETZT = Date.parse("2026-07-29T12:00:00.000Z");
@@ -36,7 +37,7 @@ const LEERE_ZAEHLUNG = async () => ({ ok: true, nachTag: new Map(), unvollstaend
 
 test("EINE NICHT LESBARE QUELLE ZEIGT KEINE NULL", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 3,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 3,
     leseIndex: async () => ({ ok: false, error: "index_not_built" }),
     zaehleSchluessel: async () => ({ ok: false, error: "listing_fehlgeschlagen" }),
     zaehleLaeufe: async () => ({ ok: false, error: "speicher_nicht_eingerichtet" })
@@ -56,7 +57,7 @@ test("EINE NICHT LESBARE QUELLE ZEIGT KEINE NULL", async () => {
 
 test("eine erreichbare Quelle DARF eine Null zeigen — das ist ein Messergebnis", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
     leseIndex: async () => ({ ok: true, builtAt: new Date(JETZT).toISOString(), ageSeconds: 0, entries: [] }),
     zaehleSchluessel: LEERE_ZAEHLUNG,
     zaehleLaeufe: LEERE_ZAEHLUNG
@@ -68,7 +69,7 @@ test("eine erreichbare Quelle DARF eine Null zeigen — das ist ein Messergebnis
 
 test("Registrierungen werden nach Tag gezaehlt, aeltere fallen aus dem Zeitraum", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.tage[0].tag, "2026-07-29", "juengster Tag zuerst");
@@ -83,7 +84,7 @@ test("EIN VERALTETER INDEX WIRD BENANNT, NICHT STILL UNTERSCHLAGEN", async () =>
   // koennen ganz frische Registrierungen fehlen — dann ist die Zahl eine
   // Untergrenze und darf nicht als Tatsache dastehen.
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 3,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 3,
     leseIndex: async () => ({
       ok: true, builtAt: "2026-07-25T08:00:00.000Z", ageSeconds: 4 * 86400, entries: [konto(5)]
     }),
@@ -96,7 +97,7 @@ test("EIN VERALTETER INDEX WIRD BENANNT, NICHT STILL UNTERSCHLAGEN", async () =>
 
 test("eine abgeschnittene Liste ist eine Untergrenze und sagt das", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: async () => ({
       ok: true, nachTag: new Map([["2026-07-29", 12]]), unvollstaendig: true
     }),
@@ -111,7 +112,7 @@ test("EIN EINTRAG OHNE DATUM LANDET NICHT AUF HEUTE", async () => {
   // Genau diese Klasse hat in Modul S Alter von rund 9700 Tagen erzeugt: ein
   // unbrauchbarer Zeitstempel, der stillschweigend zu einem Wert wurde.
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
     leseIndex: async () => ({
       ok: true, builtAt: new Date(JETZT).toISOString(), ageSeconds: 0,
       entries: [konto(0), konto(0, { createdAt: null }), konto(0, { createdAt: "1970-01-01T00:00:00.000Z" })]
@@ -127,7 +128,7 @@ test("EIN EINTRAG OHNE DATUM LANDET NICHT AUF HEUTE", async () => {
 
 test("der Bestand ist eine Momentaufnahme und heisst auch so", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
     leseIndex: async () => ({
       ok: true, builtAt: new Date(JETZT).toISOString(), ageSeconds: 0,
       entries: [
@@ -148,7 +149,7 @@ test("der Bestand ist eine Momentaufnahme und heisst auch so", async () => {
 
 test("KEINE ERFUNDENE BESUCHERZAHL — weder als Feld noch als Wert", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
 
@@ -209,7 +210,7 @@ test("DER FEHLERGRUND IST KURZ UND KENNT SICH — kein Quelltext in der Oberflae
 test("die Spanne ist gedeckelt und kippt nicht bei Unsinn", async () => {
   for (const [eingabe, erwartet] of [[0, 14], [-5, 14], [500, 90], [7, 7], ["3", 3]]) {
     const e = await analytikUebersicht({
-      jetztMs: JETZT, tage: eingabe, leseIndex: INDEX_FRISCH,
+      cacheTtlMs: 0, jetztMs: JETZT, tage: eingabe, leseIndex: INDEX_FRISCH,
       zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
     });
     assert.equal(e.zeitraumTage, erwartet, `tage=${eingabe}`);
@@ -219,7 +220,7 @@ test("die Spanne ist gedeckelt und kippt nicht bei Unsinn", async () => {
 
 test("eine geworfene Ausnahme kippt die Ansicht nicht", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
     leseIndex: async () => { throw new Error("Netz weg"); },
     zaehleSchluessel: async () => { throw new Error("S3 weg"); },
     zaehleLaeufe: LEERE_ZAEHLUNG
@@ -232,7 +233,7 @@ test("eine geworfene Ausnahme kippt die Ansicht nicht", async () => {
 
 test("die Rohdaten-Map verlaesst das Modul nicht", async () => {
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal("nachTag" in e.reihen.registrierungen, false, "nach draussen geht die Summe");
@@ -266,7 +267,7 @@ test("EIN ZUSTANDSORDNER IST KEIN LAUF", async () => {
   // Und der Zaehler darf dieselbe Kennung nur EINMAL zaehlen, mit dem
   // FRUEHESTEN Schreibvorgang: der letzte waere der Abschluss, nicht der Beginn.
   const e = await analytikUebersicht({
-    jetztMs: JETZT, tage: 3, leseIndex: INDEX_FRISCH, zaehleSchluessel: LEERE_ZAEHLUNG,
+    cacheTtlMs: 0, jetztMs: JETZT, tage: 3, leseIndex: INDEX_FRISCH, zaehleSchluessel: LEERE_ZAEHLUNG,
     fetchImpl: async () => ({
       ok: true, status: 200, text: async () => '<?xml version="1.0"?><ListBucketResult>'
         + "<Contents><Key>jobs/open/job_a.json</Key><LastModified>2026-07-28T09:00:00.000Z</LastModified></Contents>"
@@ -282,6 +283,44 @@ test("EIN ZUSTANDSORDNER IST KEIN LAUF", async () => {
   assert.equal(e.reihen.laeufe.summeImZeitraum, 2, "job_a und job_b — nicht drei Objekte");
   assert.equal(e.tage[0].laeufe, 1, "job_b am 29.");
   assert.equal(e.tage[1].laeufe, 1, "job_a zaehlt zum 28., seinem ersten Schreibvorgang");
+});
+
+test("DER ZWISCHENSPEICHER VERSCHLEIERT NICHTS — und merkt keinen Ausfall", async () => {
+  // Live gemessen: p95 747 ms gegen 300 ms Budget, weil vier Prefixe gelistet
+  // werden (jobs/ allein hat fast 1000 Objekte). Ein kurzer Zwischenspeicher
+  // loest das — aber er darf nicht verstecken, WANN gemessen wurde, und er
+  // darf eine Stoerung nicht eine Minute lang festschreiben.
+  __analytikCacheLeeren();
+  let gezaehlt = 0;
+  const zaehler = async () => { gezaehlt += 1; return { ok: true, nachTag: new Map([["2026-07-29", 3]]), unvollstaendig: false }; };
+
+  const erst = await analytikUebersicht({ jetztMs: JETZT, tage: 5, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
+  assert.equal(erst.zwischengespeichert, false);
+  assert.equal(gezaehlt, 3, "audit, mail, laeufe");
+
+  const zweit = await analytikUebersicht({ jetztMs: JETZT + 10_000, tage: 5, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
+  assert.equal(gezaehlt, 3, "innerhalb der Frist wird nicht neu gelistet");
+  assert.equal(zweit.zwischengespeichert, true, "das steht in der Antwort");
+  assert.equal(zweit.alterSekunden, 10, "und wie alt die Messung ist");
+  assert.equal(zweit.gemessenAm, erst.gemessenAm, "gemessenAm bleibt der Zeitpunkt der MESSUNG");
+
+  const spaeter = await analytikUebersicht({ jetztMs: JETZT + 61_000, tage: 5, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
+  assert.equal(gezaehlt, 6, "nach Ablauf wird neu gemessen");
+  assert.equal(spaeter.zwischengespeichert, false);
+
+  // Ein anderer Zeitraum ist eine andere Frage und darf nicht den Treffer erben.
+  await analytikUebersicht({ jetztMs: JETZT + 61_000, tage: 7, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
+  assert.equal(gezaehlt, 9, "tage=7 wird eigenstaendig gemessen");
+
+  // Ein Totalausfall wird NICHT gemerkt.
+  __analytikCacheLeeren();
+  const kaputt = async () => ({ ok: false, error: "listing_fehlgeschlagen" });
+  let versuche = 0;
+  const zaehleKaputt = async () => { versuche += 1; return kaputt(); };
+  await analytikUebersicht({ jetztMs: JETZT, tage: 5, leseIndex: async () => ({ ok: false, error: "index_not_built" }), zaehleSchluessel: zaehleKaputt, zaehleLaeufe: zaehleKaputt });
+  await analytikUebersicht({ jetztMs: JETZT + 1000, tage: 5, leseIndex: async () => ({ ok: false, error: "index_not_built" }), zaehleSchluessel: zaehleKaputt, zaehleLaeufe: zaehleKaputt });
+  assert.equal(versuche, 6, "eine Stoerung wird bei jedem Aufruf neu geprueft");
+  __analytikCacheLeeren();
 });
 
 test("eintraegeMitDatum liest Schluessel und Zeitstempel paarweise", () => {

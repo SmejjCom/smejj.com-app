@@ -65,6 +65,16 @@ const JOB_ZUSTAENDE = new Set([
 // 9700 Tagen erzeugt.
 const FRUEHESTES_JAHR = 2020;
 
+// Diese Ansicht listet vier Prefixe, eines davon (`jobs/`) mit fast tausend
+// Objekten. Live gemessen 2026-07-29: p95 747 ms gegen ein Budget von 300 ms.
+// Die Zahlen aendern sich im Minutentakt nicht, und wer einen Verlauf ansieht,
+// wechselt den Zeitraum mehrmals hintereinander — genau dafuer ist ein kurzer
+// Zwischenspeicher da. Er verschleiert nichts: `gemessenAm` bleibt der
+// Zeitpunkt der MESSUNG, nicht der der Antwort, und `zwischengespeichert`
+// sagt es ausdruecklich. Dieselbe Loesung wie beim Nutzer-Index (30 s).
+const CACHE_TTL_MS = 60_000;
+const cache = new Map(); // spanne -> { bisMs, wert }
+
 export const NICHT_GEMESSEN = Object.freeze([
   {
     was: "Besucher und Seitenaufrufe",
@@ -94,9 +104,14 @@ export async function analytikUebersicht({
   fetchImpl = fetch,
   leseIndex = readUserIndex,
   zaehleSchluessel = null,
-  zaehleLaeufe = null
+  zaehleLaeufe = null,
+  cacheTtlMs = CACHE_TTL_MS
 } = {}) {
   const spanne = spanneAus(tage);
+  const gemerkt = cacheTtlMs > 0 ? cache.get(spanne) : null;
+  if (gemerkt && gemerkt.bisMs > jetztMs) {
+    return { ...gemerkt.wert, zwischengespeichert: true, alterSekunden: Math.round((jetztMs - gemerkt.abMs) / 1000) };
+  }
   const tagListe = tageAbsteigend(jetztMs, spanne);
   const erlaubt = new Set(tagListe);
   const cfg = idriveConfig(env);
@@ -119,7 +134,7 @@ export async function analytikUebersicht({
     laeufe: laufReihe(laeufe, erlaubt)
   };
 
-  return {
+  const antwort = {
     ok: true,
     zeitraumTage: spanne,
     tage: tagListe.map((tag) => ({
@@ -143,8 +158,24 @@ export async function analytikUebersicht({
         + "wurde dafuer eingebaut."
     },
     bewertung: bewerte(reihen, spanne),
-    gemessenAm: new Date(jetztMs).toISOString()
+    gemessenAm: new Date(jetztMs).toISOString(),
+    zwischengespeichert: false,
+    alterSekunden: 0
   };
+
+  // Nur eine gelungene Messung wird gemerkt. Einen Ausfall zwischenzuspeichern
+  // hiesse, eine Stoerung eine Minute lang festzuschreiben, obwohl sie
+  // vielleicht schon vorbei ist.
+  if (cacheTtlMs > 0 && Object.values(reihen).some((r) => r.erreichbar)) {
+    cache.set(spanne, { abMs: jetztMs, bisMs: jetztMs + cacheTtlMs, wert: antwort });
+    if (cache.size > 32) cache.clear();
+  }
+  return antwort;
+}
+
+/** Nur fuer Tests: der Zwischenspeicher darf nicht zwischen Faellen durchschlagen. */
+export function __analytikCacheLeeren() {
+  cache.clear();
 }
 
 /* ------------------------------------------------------------------ Reihen */
