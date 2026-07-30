@@ -136,3 +136,58 @@ test("gewoehnliche Fragen bleiben in der Schnellspur", () => {
   assert.equal(bridge.shouldSearchWeb("wie spaet ist es"), false);
   assert.equal(bridge.shouldSearchWeb("erklaer mir kurz Rekursion"), false);
 });
+
+// Coding auf die tiefe Spur — drei Faelle, weil der entscheidende davon der
+// NICHT-Fall ist: ohne konfigurierte tiefe Spur antwortet streamModel 503, eine
+// Code-Frage bekaeme also einen Fehler statt einer Antwort. Die Regel muss
+// deshalb fail-closed sein und darf ohne tiefe Spur gar nichts aendern.
+async function frischeBridge(env, nummer) {
+  const alt = {};
+  for (const [k, v] of Object.entries(env)) { alt[k] = process.env[k]; process.env[k] = v; }
+  const modul = await import(`../public/chat-bridge.js?spurwahl=${nummer}`);
+  for (const [k] of Object.entries(env)) { if (alt[k] === undefined) delete process.env[k]; else process.env[k] = alt[k]; }
+  return modul;
+}
+
+const GROQ_AN = {
+  SMEJJ_LLM_GROQ_API_KEY: "test-groq",
+  SMEJJ_LLM_GROQ_BASE_URL: "https://groq.invalid/openai/v1",
+  SMEJJ_LLM_GROQ_MODEL: "llama-3.1-8b-instant"
+};
+const TIEFE_SPUR_AN = {
+  SMEJJ_LLM_BASE_URL: "https://api.z.ai/api/paas/v4",
+  SMEJJ_LLM_API_KEY: "test-glm",
+  SMEJJ_LLM_MODEL: "glm-4.7-flash"
+};
+
+async function spurVersuch(modul, profile) {
+  const echterFetch = globalThis.fetch;
+  let angefragt = null;
+  globalThis.fetch = async (url) => { angefragt = String(url); throw new Error("Netz im Test gesperrt"); };
+  try {
+    const abgegeben = await modul.streamFastLane({}, [{ role: "user", content: "Schreibe eine ESM-Funktion." }], profile, "");
+    return { abgegeben: abgegeben === false, angefragt };
+  } finally {
+    globalThis.fetch = echterFetch;
+  }
+}
+
+test("ohne tiefe Spur behaelt Coding die Schnellspur — sonst gaebe es 503 statt Antwort", async () => {
+  const modul = await frischeBridge(GROQ_AN, "ohne-tiefe");
+  assert.equal(modul.fastLaneEnabled(), true, "Groq ist im Test konfiguriert");
+  const { angefragt } = await spurVersuch(modul, "coding");
+  assert.match(String(angefragt), /groq\.invalid/, "die Schnellspur wurde weiterhin versucht");
+});
+
+test("mit tiefer Spur gibt Coding die Schnellspur ab, ohne ein Byte zu senden", async () => {
+  const modul = await frischeBridge({ ...GROQ_AN, ...TIEFE_SPUR_AN }, "mit-tiefe");
+  const { abgegeben, angefragt } = await spurVersuch(modul, "coding");
+  assert.equal(abgegeben, true, "streamFastLane liefert false, der Aufrufer nimmt die tiefe Spur");
+  assert.equal(angefragt, null, "Groq wurde gar nicht erst gefragt");
+});
+
+test("mit tiefer Spur behaelt der normale Chat die Schnellspur — Tempo bleibt", async () => {
+  const modul = await frischeBridge({ ...GROQ_AN, ...TIEFE_SPUR_AN }, "chat-bleibt");
+  const { angefragt } = await spurVersuch(modul, "chat");
+  assert.match(String(angefragt), /groq\.invalid/, "Chat laeuft weiter schnell");
+});
