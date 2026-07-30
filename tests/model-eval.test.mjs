@@ -21,7 +21,8 @@ import {
   callViaControl,
   callViaProvider,
   isTransientError,
-  readSseStream
+  readSseStream,
+  THINKING_MIN_TOKEN_BUDGET
 } from "../src/evaluation/evalTransport.js";
 import { findBaselineReport, parseArguments, runEvalSuite } from "../scripts/evaluation/run_model_eval.mjs";
 
@@ -441,3 +442,35 @@ async function* asyncChunks(parts) {
   const encoder = new TextEncoder();
   for (const part of parts) yield encoder.encode(part);
 }
+
+test("knappes Token-Budget schaltet das Denken ab — sonst frisst es die Antwort auf", async () => {
+  // Gemessen am 2026-07-29 gegen glm-4.7-flash, Fall code-esm-failclosed:
+  // Denken an mit max_tokens 600 verbrauchte alle 600 Token und lieferte LEEREN
+  // content. Ein gutes Modell waere damit als Totalausfall gemessen worden.
+  const knapp = { ...SUITE.cases[0], maxTokens: 600 };
+  let gesehen = null;
+  await callViaProvider(knapp, {
+    modelId: "glm-5-2",
+    resolveModelRequest: () => ({ chain: [{ name: "zhipu", model: "glm-4.7-flash" }] }),
+    executeWithFallback: async (_chain, _messages, options) => {
+      gesehen = options;
+      return { ok: true, backend: "zhipu", logicalModelId: "glm-5-2", response: { json: async () => ({ choices: [{ message: { content: "export function x() { throw new Error('x'); }" } }] }) } };
+    }
+  });
+  assert.deepEqual(gesehen.thinking, { type: "disabled" });
+  assert.equal(knapp.maxTokens < THINKING_MIN_TOKEN_BUDGET, true);
+});
+
+test("reichliches Token-Budget laesst das Denken unangetastet — Antwortguete bleibt", async () => {
+  const reichlich = { ...SUITE.cases[0], maxTokens: THINKING_MIN_TOKEN_BUDGET + 500 };
+  let gesehen = null;
+  await callViaProvider(reichlich, {
+    modelId: "glm-5-2",
+    resolveModelRequest: () => ({ chain: [{ name: "zhipu", model: "glm-4.7-flash" }] }),
+    executeWithFallback: async (_chain, _messages, options) => {
+      gesehen = options;
+      return { ok: true, backend: "zhipu", logicalModelId: "glm-5-2", response: { json: async () => ({ choices: [{ message: { content: "ausreichend lange Antwort mit throw" } }] }) } };
+    }
+  });
+  assert.equal("thinking" in gesehen, false, "ohne Not wird die Voreinstellung des Modells nicht angetastet");
+});

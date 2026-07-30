@@ -16,6 +16,24 @@ const DEFAULT_TIMEOUT_MS = 60_000;
 export const TRANSPORTS = Object.freeze(["control", "provider"]);
 
 /**
+ * Ab dieser Ausgabe-Obergrenze darf ein denkendes Modell weiterdenken.
+ *
+ * Gemessen am 2026-07-29 gegen glm-4.7-flash mit dem Fall code-esm-failclosed:
+ *   Denken AN,  max_tokens  600 -> 600 Token verbraucht, content LEER
+ *   Denken AN,  max_tokens 2500 -> 1565 Token, content 525 Zeichen, alle Zusicherungen bestanden
+ *   Denken AUS, max_tokens  600 ->  199 Token, content 827 Zeichen, alle Zusicherungen bestanden
+ *
+ * Die Denk-Abschnitte zaehlen also gegen dasselbe Budget wie die Antwort. Ist das
+ * Budget knapp, frisst das Denken die Antwort vollstaendig auf — der Harness
+ * bekommt leeren Text und wertet ein gutes Modell als Totalausfall. Genau so
+ * entstehen falsche Modellentscheidungen aus richtiger Messmechanik.
+ *
+ * Darum wird das Denken NUR bei knappem Budget abgeschaltet, nicht generell: wo
+ * Platz ist, bleibt die Antwortguete unangetastet.
+ */
+export const THINKING_MIN_TOKEN_BUDGET = 2000;
+
+/**
  * Unterscheidet Infrastrukturrauschen von einem echten Modellversagen.
  * Ohne diese Unterscheidung wird ein einzelner 503 der Bruecke faelschlich als
  * "Modell hat versagt" gezaehlt und verfaelscht jede Modellentscheidung.
@@ -101,10 +119,16 @@ export async function callViaProvider(evalCase, {
     return failure("model_not_configured", 0, { backend: "provider", modelId });
   }
   const started = now();
+  const budget = Number(evalCase?.maxTokens);
+  const knappesBudget = Number.isFinite(budget) && budget < THINKING_MIN_TOKEN_BUDGET;
   const outcome = await executeWithFallback(chain, buildMessages(evalCase), {
     fetchImpl,
     stream: false,
     maxTokens: evalCase?.maxTokens,
+    // Siehe THINKING_MIN_TOKEN_BUDGET: bei knappem Budget wuerde das Denken die
+    // Antwort auffressen und leeren Text hinterlassen. executeWithFallback gibt
+    // das Feld ohnehin nur an GLM/Z.ai-Backends weiter, andere sehen es nie.
+    ...(knappesBudget ? { thinking: { type: "disabled" } } : {}),
     timeoutMs
   });
   if (!outcome?.ok) {
