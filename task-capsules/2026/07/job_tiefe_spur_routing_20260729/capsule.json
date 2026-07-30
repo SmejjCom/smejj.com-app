@@ -1,0 +1,78 @@
+{
+  "jobId": "job_tiefe_spur_routing_20260729",
+  "createdAt": "2026-07-29",
+  "owner": "smejj.com Betreiber",
+  "title": "Coding auf die tiefe Spur — Routing-Profil, Denk-Budget und kostenloses GLM",
+  "goal": "Coding-Anfragen sollen das Qualitaetsmodell erreichen, damit der Eval-Fall code-esm-failclosed besteht und das Urteil von 'blocked' auf gruen wechselt.",
+  "approval": {
+    "weisung": "Betreiber am 2026-07-29: 'Coding auf die tiefe Spur', danach 'geh chrome browser https://z.ai/ ich bin eingeloggt und erledige'.",
+    "kostenfreigabe": "NICHT erforderlich geworden. Recherche ergab ein kostenloses Modell (glm-4.7-flash, Eingabe und Ausgabe FREE). Damit bleibt die Free-only-Policy gewahrt; glm-5.2 (1,40/4,40 USD je 1 Mio Token) wurde bewusst NICHT eingetragen.",
+    "roteListe": "Kein Punkt der Roten Liste beruehrt: nichts geloescht, kein Secret rotiert, keine neue Kostenposition, kein Force-Push, kein Merge nach main, keine Startseiten- oder Favicon-Aenderung."
+  },
+  "diagnose": {
+    "befund1_zweiDienste": "Die Schnellspur ist ein EIGENER Dienst, nicht src/server.js. Belegt durch die Antwortkoepfe von smejj-chat-bridge.zeabur.app: x-smejj-bridge=chat-fast-lane, x-smejj-profile=chat, x-smejj-model-backend=groq:llama-3.1-8b-instant. Dort gibt es kein /api/health (404) — der volle Router ist smejj-control.",
+    "befund2_tiefeSpurNichtAngeschlossen": "GET /api/health auf smejj-control: defaultModelId=glm-5-2, aber glm-5-2 status='fallback-only' (eingeschaltet, KEIN Zugang konfiguriert), ai=false, kimi-k2-7/kimi-k3/smejj-fast-1 alle 'inactive'. Coding dorthin umzuleiten hiesse, es INS LEERE umzuleiten und die Coding-Antworten echter Nutzer kaputtzumachen. Deshalb bewusst NICHT umgeleitet.",
+    "befund3_profilNieGebildet": "handleChat rief streamLLM OHNE profile auf. Damit lief jede Chat-Anfrage auf 'default' und eine Coding-Frage konnte das Coding-Modell eines Anbieters nie erreichen, obwohl PROVIDER_CATALOG es kennt (deepseek, mistral=codestral-latest, zhipu=glm-5.2, qwen=qwen3-coder-plus, openai). classifyProfile wurde nur fuer thinking und reasoning_effort ausgewertet. /api/agent macht es seit immer richtig — die Ungleichheit war ein Fehler, kein Entwurf.",
+    "befund4_denkenFrisstAntwort": "Live gegen glm-4.7-flash mit Fall code-esm-failclosed gemessen: Denken AN mit max_tokens 600 verbrauchte alle 600 Token und lieferte LEEREN content. Da callViaProvider die Obergrenze des Falls durchgibt, waere ein voll brauchbares Modell als Totalausfall gemessen worden — eine falsche Modellentscheidung aus scheinbar richtiger Messmechanik.",
+    "befund5_gesundheitLuegt": "evaluateAiAvailability laesst einen Registry-Schluessel allein genuegen (registryByokOk), streamLLM verlangt zusaetzlich SMEJJ_SERVER_AI_ENABLED=true UND ein positives SMEJJ_SERVER_AI_REMAINING. Mit nur dem Schluessel meldet /api/health also ai=true, waehrend der Chat weiter die Notfall-Antwort ausliefert. Dokumentiert, nicht stillschweigend umgebaut — eine Aenderung der AI-Torlogik am laufenden Dienst waere ohne Auftrag zu riskant."
+  },
+  "loesung": {
+    "profilFuerModellwahl": "handleChat bildet das Routing-Profil jetzt aus der letzten Nutzerfrage (classifyProfile) und gibt es an streamLLM weiter. Fail-closed unveraendert: ohne erkennbare Nutzerfrage bleibt 'default'; hat ein Anbieter kein Coding-Modell, greift sein Default (mit groq belegt). Es wird kein Anbieter neu aktiviert.",
+    "denkBudgetWaechter": "THINKING_MIN_TOKEN_BUDGET=2000 in src/evaluation/evalTransport.js. Bei knappem Budget wird das Denken abgeschaltet, sonst nicht — wo Platz ist, bleibt die Antwortguete unangetastet. Die Suite selbst wurde NICHT angefasst; der Messstab bleibt scharf.",
+    "kostenloserZugang": "Hilfsskript 'smejj.com Tiefe-Spur-GLM.command': fragt den Schluessel ueber ein verstecktes Eingabefeld ab (Wert erscheint nie am Bildschirm, nie im Protokoll, nie im Agenten-Kontext), schreibt ihn nach ~/.config/smejj.com/env.local und legt die vier noetigen Zeabur-Zeilen in die Zwischenablage. Gehaertet mit mktemp + chmod 600 + trap und einer Laengenwache."
+  },
+  "affectedFiles": [
+    "src/server.js — Routing-Profil an streamLLM durchgereicht",
+    "src/evaluation/evalTransport.js — THINKING_MIN_TOKEN_BUDGET und Waechter in callViaProvider",
+    "tests/model-router.test.mjs — 3 neue Tests zur Profil-Modellwahl",
+    "tests/model-eval.test.mjs — 2 neue Tests zum Denk-Budget",
+    "smejj.com Tiefe-Spur-GLM.command — neues Hilfsskript"
+  ],
+  "nichtBeruehrt": [
+    "Die Eval-Suite evals/suites/smejj-chat-core-v1.json — bewusst unveraendert, kein Schoenrechnen.",
+    "chatThinkingMode in src/ai/chatThinkingPolicy.js — die Denk-Regel des Chats bleibt, wie sie am 2026-07-28 gemessen wurde.",
+    "Die AI-Torlogik (SMEJJ_SERVER_AI_ENABLED / _REMAINING) — Befund 5 ist dokumentiert, nicht umgebaut.",
+    "public/chat-bridge.js und der Dienst smejj-chat-bridge — die Schnellspur bleibt unveraendert.",
+    "Startseite und Favicons — Start-Lock und Favicon-Lock nachweislich unberuehrt.",
+    "Die unfertige Aenderung einer parallelen Sitzung in src/server.js (mailLogJanitor) — nicht mitcommittet."
+  ],
+  "verification": {
+    "liveMessungModell": "Direkt gegen https://api.z.ai/api/paas/v4 mit dem Fall code-esm-failclosed, Modell glm-4.7-flash, HTTP 200. Denken AUS, max_tokens 600: 2094 ms, 199 Ausgabe-Token, 827 Zeichen — ALLE VIER Zusicherungen bestanden (matches export function parseBudget [kritisch], contains_none require( [kritisch], contains_any throw [kritisch], min_length 60). Denken AN, max_tokens 2500: 14204 ms, 1565 Token — ebenfalls alle bestanden. Denken AN, max_tokens 600: content LEER, alle Zusicherungen gerissen.",
+    "tests": "337 Tests gruen: check:llm-router 87/87, check:control-server 190/190, check:evaluation 39/39, check:training-loop 21/21. Dazu npm run check (Syntaxpruefung aller Quelldateien) ohne Fehler.",
+    "locks": "check:guidelines OK (1123 Dateien), check:architecture 7/7, check:frontend 277/277, check:start-lock OK (31 Startseiten-Dateien byte-identisch zum eingefrorenen Stand), check:favicon-lock OK (6 Dateien, 25 HTML-Seiten, Manifest und Generatorquellen unveraendert).",
+    "liveKlickpfad": "https://smejj.com/ in echtem Chrome geladen und gemessen (nicht per curl — curl misst den Ursprungsserver ohne Service Worker und liefert irrefuehrende Werte). Beide Dienste nach dem Deploy gesund: smejj-control /api/health ok=true, Schnellspur antwortet HTTP 200."
+  },
+  "benchmark": {
+    "webVitals": {
+      "quelle": "npm run measure:vitals, 5 Laeufe, Chrome headless, https://smejj.com/",
+      "erstbesuch": { "ttfb_ms_p75": 135, "lcp_ms_p75": 384, "cls_p75": 0, "inp_ms_p75": 40, "pageWeight_kb_p75": 284, "lcpElement": "H2" },
+      "wiederbesuch": { "ttfb_ms_p75": 29, "lcp_ms_p75": 156, "cls_p75": 0, "inp_ms_p75": 40, "pageWeight_kb_p75": 40 },
+      "budgets": { "ttfb_ms": 200, "lcp_ms": 1500, "cls": 0.1, "inp_ms": 200, "pageWeight_kb": 300 },
+      "ergebnis": "Alle Performance-Budgets eingehalten. Keine Verschlechterung gegenueber dem letzten Stand (284 KB)."
+    },
+    "apiLatenz": {
+      "quelle": "20 Anfragen je Ziel, 150 ms Abstand, damit keine Ratengrenze reisst",
+      "smejj-control /api/health": { "p50_ms": 94, "p95_ms": 151, "p99_ms": 370, "fehler": 0 },
+      "smejj.com Startseite": { "p50_ms": 25, "p95_ms": 47, "p99_ms": 206, "fehler": 0 },
+      "budgets": { "api_p95_ms": 300, "api_p99_ms": 800, "fehlerrate_prozent": 0.1 },
+      "ergebnis": "Alle Budgets eingehalten, null Fehler."
+    },
+    "modellVergleich": {
+      "schnellspur_groq_llama-3.1-8b-instant": { "punktzahl_prozent": 91.18, "bestanden": "13/14", "p95_ms": 1051, "median_ms": 210, "urteil": "blocked", "kritischerFehlschlag": "code-esm-failclosed" },
+      "tiefeSpur_glm-4.7-flash_denkenAus": { "fall": "code-esm-failclosed", "dauer_ms": 2094, "ausgabeToken": 199, "ergebnis": "alle vier Zusicherungen bestanden", "kosten_usd": 0 },
+      "handel": "Etwa doppelte Antwortzeit (2094 ms gegen 1051 ms p95) gegen den bestandenen kritischen Fall. Zeitbudget der Suite ist 45000 ms, also reichlich Luft."
+    }
+  },
+  "rollback": {
+    "punkt": "Commit 86a2335 ist der erste Schritt dieses Jobs; der Stand davor ist ca58d96.",
+    "weg": "git revert der Commits dieses Jobs (Routing-Profil, Denk-Waechter, Hilfsskript). Alle Aenderungen sind rein additiv und hinter bestehenden Fail-closed-Toren; ein Rueckbau stellt genau das vorherige Verhalten wieder her.",
+    "rto": "unter 15 Minuten (Push loest den Zeabur-Neubau aus).",
+    "datenverlust": "keiner — es wurden keine Daten geschrieben, geloescht oder ueberschrieben."
+  },
+  "status": {
+    "stand": "umgesetzt-und-gemessen-ein-schritt-offen",
+    "offen": "Die vier Zeilen muss der Betreiber selbst bei smejj-control eintragen (Variable -> Edit Raw Variables -> Cmd+V -> Save -> REDEPLOY). Der Agent traegt grundsaetzlich keine Zugangsdaten ein — ein GLM-Schluessel ist Zahlungsmittel. Der Schluessel liegt bereits in env.local, die Zeilen liegen in der Zwischenablage.",
+    "danachErwartet": "x-smejj-model-backend wechselt von groq:llama-3.1-8b-instant auf zhipu:glm-4.7-flash; glm-5-2 wechselt von 'fallback-only' auf 'ready'; das Eval-Urteil sollte von 'blocked' auf gruen wechseln, weil code-esm-failclosed nachweislich besteht.",
+    "wichtigerHinweis": "Der Eval-Harness ruft die Schnellspur-URL fest an (DEFAULT_CHAT_ENDPOINT in evalTransport.js). Solange das so ist, misst der Loop weiter die Schnellspur — eine Umstellung des Messwegs verschiebt den Messmassstab und ist eine Betreiber-Entscheidung, keine Nebenbei-Aenderung."
+  }
+}

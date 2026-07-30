@@ -1,0 +1,115 @@
+{
+  "url": "https://smejj.com/",
+  "runs": 3,
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+  "kalt": {
+    "ttfb_ms": {
+      "median": 89,
+      "p75": 91,
+      "min": 31,
+      "max": 91
+    },
+    "fcp_ms": {
+      "median": 236,
+      "p75": 420,
+      "min": 184,
+      "max": 420
+    },
+    "lcp_ms": {
+      "median": 236,
+      "p75": 420,
+      "min": 184,
+      "max": 420
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "inp_ms": {
+      "median": 48,
+      "p75": 56,
+      "min": 40,
+      "max": 56
+    },
+    "domInteractive_ms": {
+      "median": 132,
+      "p75": 335,
+      "min": 98,
+      "max": 335
+    },
+    "pageWeight_kb": {
+      "median": 284,
+      "p75": 284,
+      "min": 284,
+      "max": 284
+    },
+    "resources": {
+      "median": 111,
+      "p75": 111,
+      "min": 111,
+      "max": 111
+    },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": {
+      "median": 66,
+      "p75": 68,
+      "min": 16,
+      "max": 68
+    },
+    "fcp_ms": {
+      "median": 168,
+      "p75": 188,
+      "min": 120,
+      "max": 188
+    },
+    "lcp_ms": {
+      "median": 168,
+      "p75": 188,
+      "min": 120,
+      "max": 188
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "inp_ms": {
+      "median": 40,
+      "p75": 48,
+      "min": 32,
+      "max": 48
+    },
+    "domInteractive_ms": {
+      "median": 125,
+      "p75": 125,
+      "min": 80,
+      "max": 125
+    },
+    "pageWeight_kb": {
+      "median": 40,
+      "p75": 40,
+      "min": 40,
+      "max": 40
+    },
+    "resources": {
+      "median": 111,
+      "p75": 111,
+      "min": 111,
+      "max": 111
+    },
+    "lcpElement": "H2"
+  },
+  "budgets": {
+    "ttfb_ms": 200,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "verstoesse": []
+}

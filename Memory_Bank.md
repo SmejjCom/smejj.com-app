@@ -5,6 +5,28 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-29] TIEFE SPUR: DREI SPERREN, ZWEI BEHOBEN (job_tiefe_spur_routing_20260729)
+
+Volltext + Benchmarks: `task-capsules/2026/07/job_tiefe_spur_routing_20260729/`.
+- **ZWEI Dienste, nicht einer:** `smejj-chat-bridge` ist nicht `src/server.js` —
+  Kopf `x-smejj-bridge: chat-fast-lane`, fest `groq:llama-3.1-8b-instant`, kein
+  `/api/health` (404). Dort den Zustand suchen heisst falschen Dienst fragen.
+- **Tiefe Spur live NICHT angeschlossen:** `glm-5-2` = `fallback-only` (kein
+  Zugang), `ai=false`. Coding dorthin umleiten hiesse **ins Leere** umleiten.
+- **Behoben (Fehler, kein Entwurf):** `handleChat` rief `streamLLM` ohne `profile`
+  → alles lief auf `default`, Coding-Modelle unerreichbar; `/api/agent` nicht.
+- **Behoben, gefaehrlichster Fund:** Denken zaehlt gegen dasselbe Token-Budget wie
+  die Antwort. `glm-4.7-flash`, `max_tokens 600`, Denken an → **600 Token
+  verbraucht, content LEER**. `callViaProvider` gibt die Fall-Obergrenze durch —
+  ein brauchbares Modell waere als Totalausfall gemessen worden. Jetzt
+  `THINKING_MIN_TOKEN_BUDGET`; Suite unangetastet.
+- **Kosten beantwortet:** `glm-4.7-flash` ist gratis und besteht
+  `code-esm-failclosed` (2094 ms, 199 Token, alle vier Zusicherungen) — den Fall,
+  den die Schnellspur reisst. `glm-5.2` waere 1,40/4,40 USD je 1 Mio Token.
+  337 Tests gruen, alle Locks halten, kalt ttfb 91 / lcp 420 / 284 KB, API p95
+  151 ms. **Diese Datei ist am 800-Zeilen-Limit: vor dem naechsten Eintrag nach
+  `docs/memory/` auslagern.**
+
 ### [2026-07-29] EIN MODUL, EINE KENNUNG — plus Waechter (job_module_kennungen_20260729)
 
 Live smejj.com, **sw v193** (Frontend `7136de5`, App-Repo `5531619`). Volltext:
