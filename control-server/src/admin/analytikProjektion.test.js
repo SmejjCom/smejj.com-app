@@ -40,7 +40,7 @@ test("ohne Objektspeicher wird das gesagt, nicht geraten", async () => {
 });
 
 test("solange nie gebaut wurde, ist die Antwort ok:false — kein leeres Ergebnis", async () => {
-  const e = await leseProjektion({ env: ENV, jetztMs: JETZT, fetchImpl: async () => antwort("", 404) });
+  const e = await leseProjektion({ env: ENV, jetztMs: JETZT, leseCacheMs: 0, fetchImpl: async () => antwort("", 404) });
   assert.equal(e.ok, false);
   assert.equal(e.error, "projektion_nicht_gebaut");
 });
@@ -115,7 +115,7 @@ test("nur die letzten 90 Tage werden behalten, und der Sammelposten ohne Datum f
 
 test("DAS ALTER FAEHRT MIT — eine alte Projektion behauptet nicht, frisch zu sein", async () => {
   const gelesen = await leseProjektion({
-    env: ENV, jetztMs: JETZT,
+    env: ENV, jetztMs: JETZT, leseCacheMs: 0,
     fetchImpl: async () => antwort(JSON.stringify({
       version: 1, gebautAm: "2026-07-29T11:45:00.000Z",
       reihen: { laeufe: { erreichbar: true, tage: { "2026-07-29": 3 } } }
@@ -128,7 +128,7 @@ test("DAS ALTER FAEHRT MIT — eine alte Projektion behauptet nicht, frisch zu s
 
 test("kaputter Inhalt gilt als unlesbar, nicht als leer", async () => {
   for (const inhalt of ["kein json", "{}", '{"gebautAm":"x"}', "null"]) {
-    const e = await leseProjektion({ env: ENV, jetztMs: JETZT, fetchImpl: async () => antwort(inhalt) });
+    const e = await leseProjektion({ env: ENV, jetztMs: JETZT, leseCacheMs: 0, fetchImpl: async () => antwort(inhalt) });
     assert.equal(e.ok, false, `${inhalt} muss ok:false ergeben`);
   }
 });
@@ -184,6 +184,54 @@ test("FRISCH: gibt es noch keine Projektion, wird einmal blockierend gebaut", as
   assert.equal(e.ersterBau, true, "ein langsamer erster Aufruf ist besser als eine leere Ansicht");
   assert.equal(gezaehlt, 1);
   assert.deepEqual(e.reihen.laeufe.tage, { "2026-07-29": 2 });
+});
+
+test("DER LESEDURCHGRIFF SPART DEN GET, ABER NICHT DAS ALTER", async () => {
+  // Der Durchgriff merkt die ANTWORT eines GET, nicht eine eigene Rechnung.
+  // Zwei Dinge muessen stimmen: er spart den zweiten GET, und das Alter bleibt
+  // das Alter der PROJEKTION — sonst wuerde ein gemerkter Stand mit jeder
+  // Sekunde juenger erscheinen, als er ist.
+  __neubauMerkerLeeren();
+  let gets = 0;
+  const inhalt = JSON.stringify({
+    version: 1, gebautAm: "2026-07-29T11:59:00.000Z",
+    reihen: { laeufe: { erreichbar: true, tage: { "2026-07-29": 3 } } }
+  });
+  const fetchImpl = async () => { gets += 1; return antwort(inhalt); };
+
+  const erst = await leseProjektion({ env: ENV, jetztMs: JETZT, fetchImpl });
+  assert.equal(gets, 1);
+  assert.equal(erst.alterSekunden, 60);
+
+  const zweit = await leseProjektion({ env: ENV, jetztMs: JETZT + 5000, fetchImpl });
+  assert.equal(gets, 1, "innerhalb von 20 s kein zweiter GET");
+  assert.equal(zweit.alterSekunden, 65, "das Alter waechst weiter — es ist das der Projektion");
+  assert.equal(zweit.gebautAm, "2026-07-29T11:59:00.000Z");
+
+  const spaeter = await leseProjektion({ env: ENV, jetztMs: JETZT + 21_000, fetchImpl });
+  assert.equal(gets, 2, "nach 20 s wird wieder gelesen");
+  assert.equal(spaeter.alterSekunden, 81);
+
+  // Ein Neubau macht den Durchgriff ungueltig — sonst zeigt die naechste
+  // Anfrage den alten Stand, obwohl gerade ein neuer geschrieben wurde.
+  await baueProjektion({
+    env: ENV, jetztMs: JETZT + 22_000,
+    fetchImpl: async () => antwort("", 200),
+    zaehleAlles: async () => ({ laeufe: reihe({ "2026-07-29": 99 }) })
+  });
+  await leseProjektion({ env: ENV, jetztMs: JETZT + 23_000, fetchImpl });
+  assert.equal(gets, 3, "nach dem Neubau wird frisch gelesen");
+  __neubauMerkerLeeren();
+});
+
+test("ein Ausfall wird NICHT zwanzig Sekunden lang festgeschrieben", async () => {
+  __neubauMerkerLeeren();
+  let versuche = 0;
+  const fetchImpl = async () => { versuche += 1; return antwort("", 404); };
+  await leseProjektion({ env: ENV, jetztMs: JETZT, fetchImpl });
+  await leseProjektion({ env: ENV, jetztMs: JETZT + 1000, fetchImpl });
+  assert.equal(versuche, 2, "jeder Aufruf prueft neu, ob es wieder geht");
+  __neubauMerkerLeeren();
 });
 
 test("FRISCH: ohne Objektspeicher wird nicht gebaut, sondern gemeldet", async () => {

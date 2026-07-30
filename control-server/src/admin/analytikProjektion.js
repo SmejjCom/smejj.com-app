@@ -41,13 +41,30 @@ export const AUFFRISCHEN_AB_SEKUNDEN = 600;
 
 let neubauLaeuft = false;
 
+// Lesedurchgriff auf DASSELBE Objekt, 20 Sekunden. Das ist ausdruecklich KEIN
+// Zaehlstand im Arbeitsspeicher: gerechnet wird nichts, gemerkt wird nur die
+// Antwort eines GET, den sonst jeder Seitenaufruf erneut stellt. Mit 50
+// Instanzen halten 50 Prozesse denselben Stand — keiner rechnet eigene Zahlen.
+// Gemessen 2026-07-30: der GET kostet rund 79 ms (p50) je Aufruf. Gleiche
+// Bauart und gleiche Begruendung wie der 30-s-Durchgriff im Nutzer-Index.
+const LESE_CACHE_MS = 20_000;
+let leseCache = null; // { bisMs, wert }
+
 /**
  * Liest die Projektion. `ok:false`, solange nie gebaut wurde — kein stilles
  * leeres Ergebnis, das wie "gemessen und nichts gefunden" aussieht.
  */
-export async function leseProjektion({ env = process.env, fetchImpl = fetch, jetztMs = Date.now() } = {}) {
+export async function leseProjektion({
+  env = process.env, fetchImpl = fetch, jetztMs = Date.now(), leseCacheMs = LESE_CACHE_MS
+} = {}) {
   const cfg = idriveConfig(env);
   if (!cfg) return { ok: false, error: "speicher_nicht_eingerichtet" };
+  if (leseCacheMs > 0 && leseCache && leseCache.bisMs > jetztMs) {
+    // Das Alter wird NEU gerechnet: es ist das Alter der PROJEKTION, nicht das
+    // des Durchgriffs. Sonst wuerde ein gemerkter Stand mit jeder Sekunde
+    // juenger erscheinen, als er ist.
+    return { ...leseCache.wert, alterSekunden: alterVon(leseCache.wert.gebautAm, jetztMs) };
+  }
   try {
     const ergebnis = await signedS3Get({ ...cfg, key: PROJEKTION_KEY, allowNotFound: true, fetchImpl });
     if (!ergebnis.ok || !ergebnis.body) return { ok: false, error: "projektion_nicht_gebaut" };
@@ -55,12 +72,16 @@ export async function leseProjektion({ env = process.env, fetchImpl = fetch, jet
     if (!gelesen || typeof gelesen !== "object" || !gelesen.reihen) {
       return { ok: false, error: "projektion_unlesbar" };
     }
-    return {
+    const wert = {
       ok: true,
       gebautAm: gelesen.gebautAm || null,
       alterSekunden: alterVon(gelesen.gebautAm, jetztMs),
       reihen: gelesen.reihen
     };
+    // Nur ein gelungener Lesevorgang wird gemerkt. Ein Ausfall zwanzig Sekunden
+    // lang festzuschreiben hiesse, eine Stoerung zu verlaengern.
+    if (leseCacheMs > 0) leseCache = { bisMs: jetztMs + leseCacheMs, wert };
+    return wert;
   } catch {
     return { ok: false, error: "projektion_unlesbar" };
   }
@@ -121,6 +142,8 @@ export async function baueProjektion({
   } catch (error) {
     return { ok: false, error: String(error?.message || "schreiben_fehlgeschlagen").slice(0, 120) };
   }
+  // Nach einem Neubau muss der naechste Lesevorgang den frischen Stand sehen.
+  leseCache = null;
   return { ok: true, gebautAm, reihen, alterSekunden: 0 };
 }
 
@@ -160,6 +183,7 @@ export async function projektionFrisch({
 /** Nur fuer Tests: der Hintergrund-Merker darf nicht zwischen Faellen durchschlagen. */
 export function __neubauMerkerLeeren() {
   neubauLaeuft = false;
+  leseCache = null;
 }
 
 /**
