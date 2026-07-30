@@ -46,6 +46,7 @@
 //      Datum hat, zaehlt unter "ohne Datum" und landet NICHT auf heute.
 import { parseS3ListPage, signedS3List } from "../storage/s3Signer.js";
 import { mapMitGrenze } from "../shared/parallelFetch.js";
+import { projektionFrisch } from "./analytikProjektion.js";
 import { readUserIndex } from "./userIndex.js";
 
 const TAG_MS = 24 * 60 * 60 * 1000;
@@ -65,15 +66,20 @@ const JOB_ZUSTAENDE = new Set([
 // 9700 Tagen erzeugt.
 const FRUEHESTES_JAHR = 2020;
 
-// Diese Ansicht listet vier Prefixe, eines davon (`jobs/`) mit fast tausend
-// Objekten. Live gemessen 2026-07-29: p95 747 ms gegen ein Budget von 300 ms.
-// Die Zahlen aendern sich im Minutentakt nicht, und wer einen Verlauf ansieht,
-// wechselt den Zeitraum mehrmals hintereinander — genau dafuer ist ein kurzer
-// Zwischenspeicher da. Er verschleiert nichts: `gemessenAm` bleibt der
-// Zeitpunkt der MESSUNG, nicht der der Antwort, und `zwischengespeichert`
-// sagt es ausdruecklich. Dieselbe Loesung wie beim Nutzer-Index (30 s).
-const CACHE_TTL_MS = 60_000;
-const cache = new Map(); // spanne -> { bisMs, wert }
+// WOHER DIE ZAHLEN KOMMEN — und warum nicht bei jedem Aufruf frisch.
+//
+// Die drei Auflistungs-Reihen (Verwaltung, Mails, Laeufe) liegen als
+// Tagesprojektion auf IDrive e2 (`analytikProjektion.js`). Zuerst wurde bei
+// JEDEM Aufruf gezaehlt: live 824 ms, ueber dem p99-Budget. Ein Zaehlstand im
+// Arbeitsspeicher haette das nur JE INSTANZ geloest — bei 50 Instanzen 50 kalte
+// Aufrufe pro Minute, also ein Engpass, der mit der Instanzzahl mitwaechst.
+// Genau das verbietet die Skalierungsregel ("kein Zaehlstand im Serverspeicher,
+// alles auf IDrive e2").
+//
+// Die Registrierungs-Reihe und der Bestand kommen dagegen LIVE aus dem
+// Nutzer-Index. Grund: der Index muss fuer den Bestand ohnehin gelesen werden
+// (eine Momentaufnahme darf nicht zehn Minuten alt sein), und wenn er schon in
+// der Hand ist, kostet die Tagesreihe daraus nichts extra — und ist frischer.
 
 export const NICHT_GEMESSEN = Object.freeze([
   {
@@ -105,13 +111,9 @@ export async function analytikUebersicht({
   leseIndex = readUserIndex,
   zaehleSchluessel = null,
   zaehleLaeufe = null,
-  cacheTtlMs = CACHE_TTL_MS
+  holeProjektion = projektionFrisch
 } = {}) {
   const spanne = spanneAus(tage);
-  const gemerkt = cacheTtlMs > 0 ? cache.get(spanne) : null;
-  if (gemerkt && gemerkt.bisMs > jetztMs) {
-    return { ...gemerkt.wert, zwischengespeichert: true, alterSekunden: Math.round((jetztMs - gemerkt.abMs) / 1000) };
-  }
   const tagListe = tageAbsteigend(jetztMs, spanne);
   const erlaubt = new Set(tagListe);
   const cfg = idriveConfig(env);
@@ -120,21 +122,36 @@ export async function analytikUebersicht({
     || ((praefixe, art) => zaehleNachTagUeberS3(cfg, praefixe, art, fetchImpl));
   const laufZaehler = zaehleLaeufe || (() => zaehleLaeufeUeberS3(cfg, fetchImpl));
 
-  const [index, audit, mail, laeufe] = await Promise.all([
+  // Was die Projektion neu zaehlt, wenn sie zu alt ist. Absichtlich ohne
+  // Zeitraum: die Projektion haelt 90 Tage, jede Anfrage schneidet sich ihren
+  // Ausschnitt heraus. Sonst haette jeder Zeitraum seine eigene Projektion.
+  const alleTage = new Set(tageAbsteigend(jetztMs, 90));
+  async function zaehleAlles() {
+    const [audit, mail, laeufe] = await Promise.all([
+      sicher(() => zaehler(monatsPraefixe(AUDIT_PREFIX, [...alleTage]), "audit")),
+      sicher(() => zaehler([`${MAIL_PREFIX}/`], "mail")),
+      sicher(() => laufZaehler())
+    ]);
+    return {
+      verwaltung: schluesselReihe(audit, alleTage, "Audit-Log"),
+      mails: schluesselReihe(mail, alleTage, "Zustellprotokoll"),
+      laeufe: laufReihe(laeufe, alleTage)
+    };
+  }
+
+  const [index, projektion] = await Promise.all([
     sicher(() => leseIndex({ env, nowMs: jetztMs })),
-    sicher(() => zaehler(monatsPraefixe(AUDIT_PREFIX, tagListe), "audit")),
-    sicher(() => zaehler([`${MAIL_PREFIX}/`], "mail")),
-    sicher(() => laufZaehler())
+    sicher(() => holeProjektion({ env, fetchImpl, jetztMs, zaehleAlles }))
   ]);
 
   const reihen = {
     registrierungen: registrierungenReihe(index, erlaubt, tagListe),
-    verwaltung: schluesselReihe(audit, erlaubt, "Audit-Log"),
-    mails: schluesselReihe(mail, erlaubt, "Zustellprotokoll"),
-    laeufe: laufReihe(laeufe, erlaubt)
+    verwaltung: ausProjektion(projektion, "verwaltung", "Audit-Log"),
+    mails: ausProjektion(projektion, "mails", "Zustellprotokoll"),
+    laeufe: ausProjektion(projektion, "laeufe", "Job-Ablage jobs/ im Hauptspeicher")
   };
 
-  const antwort = {
+  return {
     ok: true,
     zeitraumTage: spanne,
     tage: tagListe.map((tag) => ({
@@ -145,37 +162,57 @@ export async function analytikUebersicht({
       laeufe: wertOderNull(reihen.laeufe, tag)
     })),
     reihen: {
-      registrierungen: ohneRohdaten(reihen.registrierungen),
-      verwaltung: ohneRohdaten(reihen.verwaltung),
-      mails: ohneRohdaten(reihen.mails),
-      laeufe: ohneRohdaten(reihen.laeufe)
+      registrierungen: ohneRohdaten(reihen.registrierungen, tagListe),
+      verwaltung: ohneRohdaten(reihen.verwaltung, tagListe),
+      mails: ohneRohdaten(reihen.mails, tagListe),
+      laeufe: ohneRohdaten(reihen.laeufe, tagListe)
     },
     bestand: bestandsLage(index),
+    // Das Alter der Projektion faehrt sichtbar mit — eine alte Reihe darf nie
+    // behaupten, gerade gemessen worden zu sein.
+    projektion: projektion?.ok
+      ? {
+        erreichbar: true,
+        gebautAm: projektion.gebautAm || null,
+        alterSekunden: projektion.alterSekunden ?? null,
+        wirdAufgefrischt: projektion.wirdAufgefrischt === true,
+        ersterBau: projektion.ersterBau === true,
+        hinweis: "Verwaltung, Mails und Laeufe kommen aus einer Tagesprojektion auf IDrive e2. "
+          + "Registrierungen und Bestand sind live aus dem Nutzer-Index."
+      }
+      : { erreichbar: false, grund: String(projektion?.error || "unbekannt").slice(0, 120) },
     nichtGemessen: {
       punkte: NICHT_GEMESSEN,
       hinweis: "smejj.com zaehlt keine Besucher. Diese Ansicht zeigt ausschliesslich Spuren, "
         + "die der Betrieb ohnehin hinterlaesst — kein Skript, keine Kennung, kein Cookie "
         + "wurde dafuer eingebaut."
     },
-    bewertung: bewerte(reihen, spanne),
-    gemessenAm: new Date(jetztMs).toISOString(),
-    zwischengespeichert: false,
-    alterSekunden: 0
+    bewertung: bewerte(reihen, spanne, tagListe),
+    gemessenAm: new Date(jetztMs).toISOString()
   };
-
-  // Nur eine gelungene Messung wird gemerkt. Einen Ausfall zwischenzuspeichern
-  // hiesse, eine Stoerung eine Minute lang festzuschreiben, obwohl sie
-  // vielleicht schon vorbei ist.
-  if (cacheTtlMs > 0 && Object.values(reihen).some((r) => r.erreichbar)) {
-    cache.set(spanne, { abMs: jetztMs, bisMs: jetztMs + cacheTtlMs, wert: antwort });
-    if (cache.size > 32) cache.clear();
-  }
-  return antwort;
 }
 
-/** Nur fuer Tests: der Zwischenspeicher darf nicht zwischen Faellen durchschlagen. */
-export function __analytikCacheLeeren() {
-  cache.clear();
+/**
+ * Holt eine Reihe aus der Projektion. Ist die Projektion selbst nicht lesbar,
+ * ist die Reihe nicht lesbar — und zeigt "—", nie 0. Eine Projektion, die man
+ * nicht lesen kann, sagt nichts darueber aus, ob an einem Tag etwas passiert ist.
+ */
+function ausProjektion(projektion, name, quelle) {
+  if (!projektion?.ok) {
+    return { erreichbar: false, grund: String(projektion?.error || "projektion_nicht_lesbar").slice(0, 120), quelle };
+  }
+  const reihe = projektion.reihen?.[name];
+  if (!reihe) return { erreichbar: false, grund: "reihe_fehlt_in_projektion", quelle };
+  if (!reihe.erreichbar) return { erreichbar: false, grund: String(reihe.grund || "unbekannt").slice(0, 120), quelle };
+  return {
+    erreichbar: true,
+    quelle: reihe.quelle || quelle,
+    tage: reihe.tage || {},
+    ohneDatum: Number(reihe.ohneDatum) || 0,
+    unvollstaendig: reihe.unvollstaendig === true,
+    grundUnvollstaendig: reihe.grundUnvollstaendig || null,
+    hinweis: reihe.hinweis || null
+  };
 }
 
 /* ------------------------------------------------------------------ Reihen */
@@ -184,12 +221,12 @@ function registrierungenReihe(index, erlaubt, tagListe) {
   if (!index?.ok) {
     return { erreichbar: false, grund: index?.error || "unbekannt", quelle: "Nutzer-Index" };
   }
-  const nachTag = new Map();
+  const tageZaehler = {};
   let ohneDatum = 0;
   for (const eintrag of Array.isArray(index.entries) ? index.entries : []) {
     const tag = tagAusIso(eintrag?.createdAt);
     if (!tag) { ohneDatum += 1; continue; }
-    if (erlaubt.has(tag)) nachTag.set(tag, (nachTag.get(tag) || 0) + 1);
+    if (erlaubt.has(tag)) tageZaehler[tag] = (tageZaehler[tag] || 0) + 1;
   }
 
   // Regel (c): der Index ist eine Projektion. Ist er aelter als der juengste
@@ -202,7 +239,7 @@ function registrierungenReihe(index, erlaubt, tagListe) {
   return {
     erreichbar: true,
     quelle: "Nutzer-Index (abgeleitete Projektion, kein Protokoll)",
-    nachTag,
+    tage: tageZaehler,
     ohneDatum,
     indexGebautAm: index.builtAt || null,
     indexAlterSekunden: Number.isFinite(Number(index.ageSeconds)) ? Number(index.ageSeconds) : null,
@@ -464,22 +501,28 @@ function monatsPraefixe(basis, tagListe) {
   return [...monate];
 }
 
-// Regel (a): nur eine erreichbare Quelle darf eine Null zeigen.
+// Regel (a): nur eine erreichbare Quelle darf eine Null zeigen. Ein Tag, der in
+// der Projektion FEHLT, ist bei erreichbarer Quelle eine gemessene 0 — deshalb
+// wird dort nichts gespeichert, was von einer Luecke nicht zu unterscheiden waere.
 function wertOderNull(reihe, tag) {
   if (!reihe?.erreichbar) return null;
-  return reihe.nachTag.get(tag) || 0;
+  return Number(reihe.tage?.[tag]) || 0;
 }
 
-/** Die Map bleibt intern — nach draussen geht die Summe, nicht die Rohdaten. */
-function ohneRohdaten(reihe) {
+/**
+ * Die Tagesreihe bleibt intern — nach draussen geht die Summe. Summiert wird
+ * ausschliesslich der ANGEFRAGTE Zeitraum: die Projektion haelt 90 Tage, und
+ * eine Summe ueber alles waere bei `tage=7` schlicht falsch.
+ */
+function ohneRohdaten(reihe, tagListe) {
   if (!reihe?.erreichbar) return { erreichbar: false, grund: reihe?.grund || "unbekannt", quelle: reihe?.quelle || null };
-  const { nachTag, ...rest } = reihe;
+  const { tage, ...rest } = reihe;
   let summe = 0;
-  for (const anzahl of nachTag.values()) summe += anzahl;
+  for (const tag of tagListe) summe += Number(tage?.[tag]) || 0;
   return { ...rest, summeImZeitraum: summe };
 }
 
-function bewerte(reihen, spanne) {
+function bewerte(reihen, spanne, tagListe) {
   const nichtErreichbar = Object.entries(reihen).filter(([, r]) => !r.erreichbar).map(([name]) => name);
   if (nichtErreichbar.length === Object.keys(reihen).length) {
     return "Keine einzige Quelle ist lesbar — diese Ansicht sagt gerade nichts ueber den Betrieb aus.";
@@ -490,9 +533,8 @@ function bewerte(reihen, spanne) {
   }
 
   const unvollstaendig = Object.entries(reihen).filter(([, r]) => r.unvollstaendig).map(([name]) => name);
-  const laeufe = reihen.laeufe.nachTag;
   let summeLaeufe = 0;
-  for (const a of laeufe.values()) summeLaeufe += a;
+  for (const tag of tagListe) summeLaeufe += Number(reihen.laeufe.tage?.[tag]) || 0;
 
   const kern = summeLaeufe === 0
     ? `In den letzten ${spanne} Tagen ist kein neuer Lauf angelegt worden.`

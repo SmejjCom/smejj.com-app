@@ -10,8 +10,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  NICHT_GEMESSEN, __analytikCacheLeeren, __zaehleNachTagFuerTests, analytikUebersicht,
-  auftragAusSchluessel, eintraegeMitDatum
+  NICHT_GEMESSEN, __zaehleNachTagFuerTests, analytikUebersicht, auftragAusSchluessel,
+  eintraegeMitDatum
 } from "./opsAnalytik.js";
 
 const JETZT = Date.parse("2026-07-29T12:00:00.000Z");
@@ -35,9 +35,25 @@ const INDEX_FRISCH = async () => ({
 
 const LEERE_ZAEHLUNG = async () => ({ ok: true, nachTag: new Map(), unvollstaendig: false });
 
+/**
+ * Ersetzt die Tagesprojektion auf IDrive e2: zaehlt sofort und liefert das
+ * Ergebnis in der Projektionsform. Damit pruefen die Faelle unten weiter das
+ * ZAEHLEN und die Anzeige, ohne dass ein Objektspeicher im Spiel ist.
+ */
+const SOFORT = async ({ zaehleAlles, jetztMs }) => {
+  const gezaehlt = await zaehleAlles();
+  const reihen = {};
+  for (const [name, reihe] of Object.entries(gezaehlt)) {
+    if (!reihe.erreichbar) { reihen[name] = { erreichbar: false, grund: reihe.grund }; continue; }
+    const { nachTag, ...rest } = reihe;
+    reihen[name] = { ...rest, tage: Object.fromEntries([...nachTag].filter(([t]) => t)) };
+  }
+  return { ok: true, gebautAm: new Date(jetztMs).toISOString(), alterSekunden: 0, reihen };
+};
+
 test("EINE NICHT LESBARE QUELLE ZEIGT KEINE NULL", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 3,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 3,
     leseIndex: async () => ({ ok: false, error: "index_not_built" }),
     zaehleSchluessel: async () => ({ ok: false, error: "listing_fehlgeschlagen" }),
     zaehleLaeufe: async () => ({ ok: false, error: "speicher_nicht_eingerichtet" })
@@ -57,7 +73,7 @@ test("EINE NICHT LESBARE QUELLE ZEIGT KEINE NULL", async () => {
 
 test("eine erreichbare Quelle DARF eine Null zeigen — das ist ein Messergebnis", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2,
     leseIndex: async () => ({ ok: true, builtAt: new Date(JETZT).toISOString(), ageSeconds: 0, entries: [] }),
     zaehleSchluessel: LEERE_ZAEHLUNG,
     zaehleLaeufe: LEERE_ZAEHLUNG
@@ -69,7 +85,7 @@ test("eine erreichbare Quelle DARF eine Null zeigen — das ist ein Messergebnis
 
 test("Registrierungen werden nach Tag gezaehlt, aeltere fallen aus dem Zeitraum", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal(e.tage[0].tag, "2026-07-29", "juengster Tag zuerst");
@@ -84,7 +100,7 @@ test("EIN VERALTETER INDEX WIRD BENANNT, NICHT STILL UNTERSCHLAGEN", async () =>
   // koennen ganz frische Registrierungen fehlen — dann ist die Zahl eine
   // Untergrenze und darf nicht als Tatsache dastehen.
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 3,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 3,
     leseIndex: async () => ({
       ok: true, builtAt: "2026-07-25T08:00:00.000Z", ageSeconds: 4 * 86400, entries: [konto(5)]
     }),
@@ -97,7 +113,7 @@ test("EIN VERALTETER INDEX WIRD BENANNT, NICHT STILL UNTERSCHLAGEN", async () =>
 
 test("eine abgeschnittene Liste ist eine Untergrenze und sagt das", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: async () => ({
       ok: true, nachTag: new Map([["2026-07-29", 12]]), unvollstaendig: true
     }),
@@ -112,7 +128,7 @@ test("EIN EINTRAG OHNE DATUM LANDET NICHT AUF HEUTE", async () => {
   // Genau diese Klasse hat in Modul S Alter von rund 9700 Tagen erzeugt: ein
   // unbrauchbarer Zeitstempel, der stillschweigend zu einem Wert wurde.
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2,
     leseIndex: async () => ({
       ok: true, builtAt: new Date(JETZT).toISOString(), ageSeconds: 0,
       entries: [konto(0), konto(0, { createdAt: null }), konto(0, { createdAt: "1970-01-01T00:00:00.000Z" })]
@@ -128,7 +144,7 @@ test("EIN EINTRAG OHNE DATUM LANDET NICHT AUF HEUTE", async () => {
 
 test("der Bestand ist eine Momentaufnahme und heisst auch so", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2,
     leseIndex: async () => ({
       ok: true, builtAt: new Date(JETZT).toISOString(), ageSeconds: 0,
       entries: [
@@ -149,7 +165,7 @@ test("der Bestand ist eine Momentaufnahme und heisst auch so", async () => {
 
 test("KEINE ERFUNDENE BESUCHERZAHL — weder als Feld noch als Wert", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
 
@@ -210,7 +226,7 @@ test("DER FEHLERGRUND IST KURZ UND KENNT SICH — kein Quelltext in der Oberflae
 test("die Spanne ist gedeckelt und kippt nicht bei Unsinn", async () => {
   for (const [eingabe, erwartet] of [[0, 14], [-5, 14], [500, 90], [7, 7], ["3", 3]]) {
     const e = await analytikUebersicht({
-      cacheTtlMs: 0, jetztMs: JETZT, tage: eingabe, leseIndex: INDEX_FRISCH,
+      jetztMs: JETZT, holeProjektion: SOFORT, tage: eingabe, leseIndex: INDEX_FRISCH,
       zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
     });
     assert.equal(e.zeitraumTage, erwartet, `tage=${eingabe}`);
@@ -220,7 +236,7 @@ test("die Spanne ist gedeckelt und kippt nicht bei Unsinn", async () => {
 
 test("eine geworfene Ausnahme kippt die Ansicht nicht", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2,
     leseIndex: async () => { throw new Error("Netz weg"); },
     zaehleSchluessel: async () => { throw new Error("S3 weg"); },
     zaehleLaeufe: LEERE_ZAEHLUNG
@@ -233,7 +249,7 @@ test("eine geworfene Ausnahme kippt die Ansicht nicht", async () => {
 
 test("die Rohdaten-Map verlaesst das Modul nicht", async () => {
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 2, leseIndex: INDEX_FRISCH,
     zaehleSchluessel: LEERE_ZAEHLUNG, zaehleLaeufe: LEERE_ZAEHLUNG
   });
   assert.equal("nachTag" in e.reihen.registrierungen, false, "nach draussen geht die Summe");
@@ -267,7 +283,7 @@ test("EIN ZUSTANDSORDNER IST KEIN LAUF", async () => {
   // Und der Zaehler darf dieselbe Kennung nur EINMAL zaehlen, mit dem
   // FRUEHESTEN Schreibvorgang: der letzte waere der Abschluss, nicht der Beginn.
   const e = await analytikUebersicht({
-    cacheTtlMs: 0, jetztMs: JETZT, tage: 3, leseIndex: INDEX_FRISCH, zaehleSchluessel: LEERE_ZAEHLUNG,
+    jetztMs: JETZT, holeProjektion: SOFORT, tage: 3, leseIndex: INDEX_FRISCH, zaehleSchluessel: LEERE_ZAEHLUNG,
     fetchImpl: async () => ({
       ok: true, status: 200, text: async () => '<?xml version="1.0"?><ListBucketResult>'
         + "<Contents><Key>jobs/open/job_a.json</Key><LastModified>2026-07-28T09:00:00.000Z</LastModified></Contents>"
@@ -285,42 +301,97 @@ test("EIN ZUSTANDSORDNER IST KEIN LAUF", async () => {
   assert.equal(e.tage[1].laeufe, 1, "job_a zaehlt zum 28., seinem ersten Schreibvorgang");
 });
 
-test("DER ZWISCHENSPEICHER VERSCHLEIERT NICHTS — und merkt keinen Ausfall", async () => {
-  // Live gemessen: p95 747 ms gegen 300 ms Budget, weil vier Prefixe gelistet
-  // werden (jobs/ allein hat fast 1000 Objekte). Ein kurzer Zwischenspeicher
-  // loest das — aber er darf nicht verstecken, WANN gemessen wurde, und er
-  // darf eine Stoerung nicht eine Minute lang festschreiben.
-  __analytikCacheLeeren();
-  let gezaehlt = 0;
-  const zaehler = async () => { gezaehlt += 1; return { ok: true, nachTag: new Map([["2026-07-29", 3]]), unvollstaendig: false }; };
+test("DIE PROJEKTION WIRD EINMAL FUER 90 TAGE GEZAEHLT, NICHT JE ZEITRAUM", async () => {
+  // Sonst haette jeder Zeitraum seine eigene Projektion, und ein Wechsel von
+  // 14 auf 7 Tage wuerde vier Auflistungen ausloesen.
+  const aufrufe = [];
+  await analytikUebersicht({
+    jetztMs: JETZT, tage: 7, leseIndex: INDEX_FRISCH,
+    zaehleSchluessel: async (praefixe, art) => {
+      aufrufe.push({ art, praefixe });
+      return { ok: true, nachTag: new Map(), unvollstaendig: false };
+    },
+    zaehleLaeufe: LEERE_ZAEHLUNG,
+    holeProjektion: SOFORT
+  });
+  const audit = aufrufe.find((a) => a.art === "audit");
+  // 90 Tage zurueck vom 29.07.2026 reichen bis zum 02.05. — also die Monate
+  // Juli, Juni und Mai, obwohl nur 7 Tage angefragt wurden.
+  assert.deepEqual(audit.praefixe, ["admin/audit/2026/07/", "admin/audit/2026/06/", "admin/audit/2026/05/"]);
+  assert.equal(aufrufe.filter((a) => a.art === "mail").length, 1, "das Zustellprotokoll wird einmal gelistet");
+});
 
-  const erst = await analytikUebersicht({ jetztMs: JETZT, tage: 5, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
-  assert.equal(erst.zwischengespeichert, false);
-  assert.equal(gezaehlt, 3, "audit, mail, laeufe");
+test("DIE SUMME GILT NUR FUER DEN ANGEFRAGTEN ZEITRAUM", async () => {
+  // Die Projektion haelt 90 Tage. Eine Summe ueber alles waere bei tage=2 falsch.
+  const projektionMitVielenTagen = async ({ jetztMs }) => ({
+    ok: true, gebautAm: new Date(jetztMs).toISOString(), alterSekunden: 0,
+    reihen: {
+      verwaltung: { erreichbar: true, tage: { "2026-07-29": 1, "2026-07-28": 2, "2026-07-20": 90 } },
+      mails: { erreichbar: true, tage: {} },
+      laeufe: { erreichbar: true, tage: { "2026-07-29": 3, "2026-06-01": 500 } }
+    }
+  });
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH, holeProjektion: projektionMitVielenTagen
+  });
+  assert.equal(e.reihen.verwaltung.summeImZeitraum, 3, "1 + 2, nicht 93");
+  assert.equal(e.reihen.laeufe.summeImZeitraum, 3, "die 500 vom Juni gehoeren nicht dazu");
+  assert.equal(e.bewertung.includes("3 Laeufe in 2 Tagen"), true);
+  assert.equal("tage" in e.reihen.verwaltung, false, "die Rohreihe verlaesst das Modul nicht");
+});
 
-  const zweit = await analytikUebersicht({ jetztMs: JETZT + 10_000, tage: 5, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
-  assert.equal(gezaehlt, 3, "innerhalb der Frist wird nicht neu gelistet");
-  assert.equal(zweit.zwischengespeichert, true, "das steht in der Antwort");
-  assert.equal(zweit.alterSekunden, 10, "und wie alt die Messung ist");
-  assert.equal(zweit.gemessenAm, erst.gemessenAm, "gemessenAm bleibt der Zeitpunkt der MESSUNG");
+test("EINE UNLESBARE PROJEKTION ZEIGT '—', NICHT 0 — und der Bestand bleibt live", async () => {
+  // Wichtig: dass die Projektion fehlt, sagt NICHTS darueber aus, ob an einem
+  // Tag etwas passiert ist. Registrierungen und Bestand kommen aus dem
+  // Nutzer-Index und muessen weiter funktionieren.
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 3, leseIndex: INDEX_FRISCH,
+    holeProjektion: async () => ({ ok: false, error: "projektion_nicht_gebaut" })
+  });
+  assert.equal(e.ok, true);
+  assert.equal(e.projektion.erreichbar, false);
+  assert.equal(e.projektion.grund, "projektion_nicht_gebaut");
+  for (const tag of e.tage) {
+    assert.equal(tag.verwaltung, null);
+    assert.equal(tag.mails, null);
+    assert.equal(tag.laeufe, null);
+  }
+  assert.equal(e.tage[0].registrierungen, 2, "der Nutzer-Index ist davon unberuehrt");
+  assert.equal(e.bestand.erreichbar, true);
+  assert.equal(e.bestand.konten, 3);
+});
 
-  const spaeter = await analytikUebersicht({ jetztMs: JETZT + 61_000, tage: 5, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
-  assert.equal(gezaehlt, 6, "nach Ablauf wird neu gemessen");
-  assert.equal(spaeter.zwischengespeichert, false);
+test("DAS ALTER DER PROJEKTION FAEHRT MIT", async () => {
+  // Eine zehn Minuten alte Reihe darf nicht behaupten, gerade gemessen zu sein.
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    holeProjektion: async () => ({
+      ok: true, gebautAm: "2026-07-29T11:45:00.000Z", alterSekunden: 900, wirdAufgefrischt: true,
+      reihen: { verwaltung: { erreichbar: true, tage: {} }, mails: { erreichbar: true, tage: {} }, laeufe: { erreichbar: true, tage: {} } }
+    })
+  });
+  assert.equal(e.projektion.gebautAm, "2026-07-29T11:45:00.000Z");
+  assert.equal(e.projektion.alterSekunden, 900);
+  assert.equal(e.projektion.wirdAufgefrischt, true);
+  assert.notEqual(e.projektion.gebautAm, e.gemessenAm, "gebautAm ist nicht der Zeitpunkt der Anfrage");
+});
 
-  // Ein anderer Zeitraum ist eine andere Frage und darf nicht den Treffer erben.
-  await analytikUebersicht({ jetztMs: JETZT + 61_000, tage: 7, leseIndex: INDEX_FRISCH, zaehleSchluessel: zaehler, zaehleLaeufe: zaehler });
-  assert.equal(gezaehlt, 9, "tage=7 wird eigenstaendig gemessen");
-
-  // Ein Totalausfall wird NICHT gemerkt.
-  __analytikCacheLeeren();
-  const kaputt = async () => ({ ok: false, error: "listing_fehlgeschlagen" });
-  let versuche = 0;
-  const zaehleKaputt = async () => { versuche += 1; return kaputt(); };
-  await analytikUebersicht({ jetztMs: JETZT, tage: 5, leseIndex: async () => ({ ok: false, error: "index_not_built" }), zaehleSchluessel: zaehleKaputt, zaehleLaeufe: zaehleKaputt });
-  await analytikUebersicht({ jetztMs: JETZT + 1000, tage: 5, leseIndex: async () => ({ ok: false, error: "index_not_built" }), zaehleSchluessel: zaehleKaputt, zaehleLaeufe: zaehleKaputt });
-  assert.equal(versuche, 6, "eine Stoerung wird bei jedem Aufruf neu geprueft");
-  __analytikCacheLeeren();
+test("eine einzelne gescheiterte Reihe in der Projektion reisst die anderen nicht mit", async () => {
+  const e = await analytikUebersicht({
+    jetztMs: JETZT, tage: 2, leseIndex: INDEX_FRISCH,
+    holeProjektion: async ({ jetztMs }) => ({
+      ok: true, gebautAm: new Date(jetztMs).toISOString(), alterSekunden: 0,
+      reihen: {
+        verwaltung: { erreichbar: false, grund: "audit_listing_fehlgeschlagen:http_503" },
+        mails: { erreichbar: true, tage: { "2026-07-29": 4 } },
+        laeufe: { erreichbar: true, tage: { "2026-07-29": 1 } }
+      }
+    })
+  });
+  assert.equal(e.tage[0].verwaltung, null);
+  assert.equal(e.tage[0].mails, 4);
+  assert.equal(e.reihen.verwaltung.grund.includes("http_503"), true);
+  assert.equal(e.bewertung.includes("verwaltung"), true, "die Reihe wird namentlich genannt");
 });
 
 test("eintraegeMitDatum liest Schluessel und Zeitstempel paarweise", () => {

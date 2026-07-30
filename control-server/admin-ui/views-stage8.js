@@ -403,7 +403,7 @@
         "Momentaufnahme, keine Reihe")
       + "</div>"
       + '<div class="stack">' + kopf
-      + V.panelBlock("Verlauf", "jüngster Tag zuerst · Balken relativ zum höchsten Wert",
+      + V.panelBlock("Verlauf", "jüngster Tag zuerst · Balken relativ zum höchsten Wert · " + projektionsAlter(d),
         V.tabelleBlock(["Tag", "Läufe", "Registrierungen", "Mails", "Verwaltung"], tagZeilen))
       + V.panelBlock("Woher die Zahlen kommen", "und wie belastbar sie sind",
         V.tabelleBlock(["Reihe", "Summe", "ohne Datum", "Quelle", "Stand"], reihenZeilen))
@@ -413,6 +413,20 @@
       + V.panelBlock("Nicht gemessen", "was dieses System über Nutzung nicht weiß",
         V.tabelleBlock(["Was fehlt", "Warum"], luecken))
       + "</div>";
+  }
+
+  // Das Alter der Tagesprojektion gehört sichtbar an den Verlauf. Eine zehn
+  // Minuten alte Reihe darf nicht wie eine Live-Messung dastehen — und wenn die
+  // Projektion gar nicht lesbar ist, muss das dort stehen, wo die Zahlen fehlen.
+  function projektionsAlter(d) {
+    const p = d.projektion || {};
+    if (!p.erreichbar) return "Tagesprojektion nicht lesbar (" + (p.grund || "unbekannt") + ")";
+    if (p.ersterBau) return "Tagesprojektion gerade erstmals gebaut";
+    const s = Number(p.alterSekunden);
+    const alter = !Number.isFinite(s)
+      ? "Alter unbekannt"
+      : s < 90 ? s + " s alt" : Math.round(s / 60) + " min alt";
+    return "Tagesprojektion " + alter + (p.wirdAufgefrischt ? ", wird gerade erneuert" : "");
   }
 
   function zeile(name, wert) {
