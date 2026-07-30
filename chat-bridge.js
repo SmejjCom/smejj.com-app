@@ -109,7 +109,8 @@ function boundedInteger(value, min, max, fallback) {
 async function handleChat(req, res) {
   const body = await readJson(req);
   const messages = Array.isArray(body.messages) ? body.messages : [{ role: "user", content: String(body.message || "") }];
-  if (await streamFastLane(res, hardenMessages(messages), "chat", body.model)) return;
+  // handleAgent schloss Coding immer aus; handleChat uebergab fest "chat".
+  if (await streamFastLane(res, hardenMessages(messages), isCodingTask(String(messages[messages.length - 1]?.content || "")) ? "coding" : "chat", body.model)) return;
   if (await streamViaControl(res, "/api/chat", body)) return;
   return streamModel(res, hardenMessages(messages), "chat", body.model);
 }
@@ -217,13 +218,12 @@ export function fastLaneEnabled() {
   return Boolean(GROQ_API_KEY && GROQ_BASE_URL && GROQ_MODEL);
 }
 
-// Schnelle Konversations-Spur: true nur, wenn Groq erfolgreich streamt. Bei false wurde
-// noch KEIN Byte gesendet — der Aufrufer faellt auf den bisherigen Pfad (Control-Router
-// bzw. GLM-5.2 direkt) zurueck. Coding gibt die Spur ab, ABER nur bei konfigurierter
-// tiefer Spur — sonst antwortet streamModel 503 statt zu antworten (daher LLM_-Pruefung).
+// Schnelle Konversations-Spur: true nur wenn Groq streamt; bei false wurde noch KEIN Byte
+// gesendet und der Aufrufer nimmt den bisherigen Pfad. Coding gibt die Spur ab, aber NUR
+// bei vorhandener tiefer Spur — sonst antwortet streamModel 503 statt einer Antwort.
 export async function streamFastLane(res, messages, profile, requestedModel = "") {
   if (!fastLaneEnabled()) return false;
-  if (/glm|kimi|cline/i.test(String(requestedModel || "")) || (profile === "coding" && Boolean(LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))) return false;
+  if (/glm|kimi|cline/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL)))) return false;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(REQUEST_TIMEOUT_MS, FAST_LANE_TIMEOUT_MS));
   let upstream;
@@ -412,7 +412,7 @@ function keepTail(text, tag) {
   return "";
 }
 
-function isCodingTask(task) {
+export function isCodingTask(task) {
   const text = String(task || "");
   if (/```/.test(text)) return true;
   if (/\b(refactor|debug|stack ?trace|compile|dockerfile|commit|deploy|npm |pnpm |yarn |git )\b/i.test(text)) return true;
