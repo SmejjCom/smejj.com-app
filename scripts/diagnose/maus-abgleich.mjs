@@ -12,8 +12,9 @@
 // Wert nicht. Geschrieben wird nichts — kein PATCH, kein Formular.
 //
 // Aufruf:  node scripts/diagnose/maus-abgleich.mjs
-import crypto from "node:crypto";
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
+import { signedS3Request } from "../../workers/glm-salad/s3.js";
+import { fingerabdruck, gleicherWert, deuteEimerStatus, handlungsanweisung } from "./maus-befund.mjs";
 
 const SALAD_GRUPPE = "smejj-control";
 // Diese Werte sind keine Geheimnisse und duerfen im Klartext erscheinen.
@@ -28,18 +29,8 @@ const OFFEN = [
 // Diese nie im Klartext — nur Fingerabdruck.
 const GEHEIM = ["SMEJJ_MAUS_ENGINE_TOKEN", "IDRIVE_E2_ACCESS_KEY", "IDRIVE_E2_SECRET_KEY"];
 
-function fingerabdruck(wert) {
-  const s = String(wert ?? "");
-  return {
-    vorhanden: s.length > 0,
-    laenge: s.length,
-    sha8: s ? crypto.createHash("sha256").update(s).digest("hex").slice(0, 8) : "-",
-    sauber: s === s.trim()
-  };
-}
-
 function zeile(name, a, b) {
-  const gleich = a.vorhanden && b.vorhanden && a.laenge === b.laenge && a.sha8 === b.sha8;
+  const gleich = gleicherWert(a, b);
   console.log(`  ${name}`);
   console.log(`    salad: laenge=${a.laenge} sha=${a.sha8} ohne_leerzeichen=${a.sauber}`);
   console.log(`    lokal: laenge=${b.laenge} sha=${b.sha8} ohne_leerzeichen=${b.sauber}`);
@@ -66,9 +57,14 @@ async function saladEnv() {
   };
 }
 
-// Der entscheidende Test: nimmt die Engine den lokal hinterlegten Token an?
+// Der entscheidende Test: nimmt die Engine diesen Token an?
 // Ein leerer Plan ist Absicht — die Engine lehnt ihn mit 422 ab, NACHDEM sie
 // die Anmeldung geprueft hat. 401 = Token falsch, 422 = Token richtig.
+//
+// Er wird mit BEIDEN Token gefahren: mit dem lokalen UND mit dem des
+// Control-Servers. Nur die zweite Probe beweist unmittelbar, was der
+// Control-Server im Ernstfall erlebt — vorher war das ein Rueckschluss aus
+// zwei Fingerabdruecken, und ein Rueckschluss ist kein Beweis.
 async function engineTokenProbe(workerUrl, token) {
   if (!workerUrl || !token) return { pruefbar: false };
   try {
@@ -82,6 +78,38 @@ async function engineTokenProbe(workerUrl, token) {
   } catch (fehler) {
     return { pruefbar: false, grund: String(fehler?.message || fehler).slice(0, 120) };
   }
+}
+
+// Eimer-Gegenprobe: In WELCHEM Eimer liegen die Lauf-Artefakte wirklich?
+// Der Eimername ist kein Geheimnis, deshalb darf er im Klartext erscheinen.
+// Gelesen wird mit den LOKALEN Zugangsdaten; ein 403 heisst "anderes Konto",
+// ein 404 heisst "dieses Konto, aber dort nicht abgelegt". Beides ist ein
+// Befund, keines ist ein Fehler des Skripts.
+// Gemessen 2026-07-29: Die Engine schrieb nach smejj-model-files, der
+// Control-Server liest smejj-app — der Lauf war fehlerfrei und trotzdem
+// unsichtbar ("Artefakt nicht ladbar (404)" in der Wiedergabe).
+async function eimerGegenprobe(kandidaten, schluessel) {
+  const befunde = [];
+  for (const eimer of kandidaten.filter(Boolean)) {
+    const config = {
+      idrive: {
+        endpoint: process.env.IDRIVE_E2_ENDPOINT || "",
+        bucket: eimer,
+        region: process.env.IDRIVE_E2_REGION || "us-west-2",
+        accessKey: process.env.IDRIVE_E2_ACCESS_KEY || "",
+        secretKey: process.env.IDRIVE_E2_SECRET_KEY || ""
+      }
+    };
+    try {
+      const manifest = JSON.parse(await signedS3Request(config, "GET", schluessel));
+      befunde.push({ eimer, gefunden: true, objekte: manifest?.objects?.length ?? 0 });
+    } catch (fehler) {
+      const text = String(fehler?.message || fehler);
+      const status = text.match(/idrive_get_(\d+)/)?.[1] ?? "?";
+      befunde.push({ eimer, gefunden: false, status, deutung: deuteEimerStatus(status) });
+    }
+  }
+  return befunde;
 }
 
 loadSecureLocalEnv();
@@ -104,9 +132,16 @@ const gleichheit = GEHEIM.map((name) =>
 );
 
 const workerUrl = salad.env.SMEJJ_MAUS_ENGINE_WORKER_URL;
-console.log("\nEngine-Gegenprobe (nimmt die Engine den lokalen Token an?):");
+console.log("\nEngine-Gegenprobe (welchen Token nimmt die Engine an?):");
 const lokal = await engineTokenProbe(workerUrl, process.env.SMEJJ_MAUS_ENGINE_TOKEN);
-console.log(`  lokaler Token -> ${lokal.pruefbar ? `HTTP ${lokal.status} (${lokal.akzeptiert ? "akzeptiert" : "ABGELEHNT"})` : `nicht pruefbar: ${lokal.grund ?? "kein Token/keine URL"}`}`);
+const vomControl = await engineTokenProbe(workerUrl, salad.env.SMEJJ_MAUS_ENGINE_TOKEN);
+const zeigeProbe = (name, probe) =>
+  console.log(`  ${name} -> ${probe.pruefbar ? `HTTP ${probe.status} (${probe.akzeptiert ? "akzeptiert" : "ABGELEHNT"})` : `nicht pruefbar: ${probe.grund ?? "kein Token/keine URL"}`}`);
+zeigeProbe("lokaler Token         ", lokal);
+zeigeProbe("Token des Control-Servers", vomControl);
+if (vomControl.pruefbar && !vomControl.akzeptiert) {
+  console.log("  -> BEWIESEN: die Engine weist genau den Wert ab, den der Control-Server sendet.");
+}
 
 // Zweiter, unabhaengiger Fehler: die Engine kann laufen und trotzdem in einen
 // ANDEREN Eimer schreiben als der Control-Server liest. Dann erscheint nie ein
@@ -123,7 +158,24 @@ if (capsulesEimer && lokalerEimer && capsulesEimer !== lokalerEimer) {
   console.log(`     dort, wo der Control-Server (${capsulesEimer}) NICHT nachsieht.`);
 }
 
+// Nachweis am echten Objekt statt an der Konfiguration. Referenzlauf ist der
+// Selbsttest aus scripts/diagnose/maus-direktlauf.mjs; ein anderer Praefix
+// kann als erstes Argument uebergeben werden.
+const referenzPraefix = process.argv[2]
+  || "capsules/maus-engine/maus-selbsttest-smejj-com-2026-07-26/result/selbsttest-smejj-com-v1";
+console.log(`\nNachweis am Objekt (Referenzlauf ${referenzPraefix.split("/")[2]}):`);
+const eimerBefunde = await eimerGegenprobe([lokalerEimer, capsulesEimer], `${referenzPraefix}/manifest.json`);
+let liegtIn = null;
+for (const b of eimerBefunde) {
+  console.log(`  ${b.eimer}: ${b.gefunden ? `GEFUNDEN (${b.objekte} Objekte)` : `nicht lesbar (HTTP ${b.status} — ${b.deutung})`}`);
+  if (b.gefunden) liegtIn = b.eimer;
+}
+if (!eimerBefunde.some((b) => b.gefunden)) {
+  console.log("  (kein Referenzlauf vorhanden — erst 'node scripts/diagnose/maus-direktlauf.mjs' laufen lassen)");
+}
+
 const tokenGleich = gleichheit[0];
+const eimerFalsch = Boolean(liegtIn && capsulesEimer && liegtIn !== capsulesEimer);
 console.log("\nBefund:");
 if (tokenGleich) {
   console.log("  SMEJJ_MAUS_ENGINE_TOKEN ist auf beiden Seiten gleich.");
@@ -134,5 +186,24 @@ if (tokenGleich) {
     console.log("  -> jeder Maus-Auftrag ueber die App endet an der Engine mit HTTP 401 nicht_autorisiert.");
   }
 }
+if (eimerFalsch) {
+  console.log(`  Die Lauf-Beweise liegen in ${liegtIn}, der Control-Server liest ${capsulesEimer}.`);
+  console.log("  -> Ein fehlerfreier Lauf bleibt unsichtbar; die Wiedergabe meldet 'Artefakt nicht ladbar (404)'.");
+}
+
+// Handlungsanweisung (Wortlaut und Reihenfolge in maus-befund.mjs, damit sie
+// unter Test steht). Aendern von Zugangsdaten ist Sache des Betreibers.
+const schritte = handlungsanweisung({
+  tokenGleich,
+  eimerFalsch,
+  zielEimer: capsulesEimer,
+  region: salad.env.IDRIVE_E2_REGION ?? "us-west-2",
+  endpoint: salad.env.IDRIVE_E2_ENDPOINT ?? "(siehe oben)"
+});
+if (schritte.length) {
+  console.log("\nZu tun (nur der Betreiber — Zugangsdaten), alles beim Zeabur-Dienst 'smejj-maus-engine':");
+  schritte.forEach((s, i) => console.log(`  ${i + 1}. ${s}`));
+  console.log("  Danach erneut: node scripts/diagnose/maus-abgleich.mjs");
+}
 // Fail-closed: Unterschied ist ein Befund, kein Erfolg.
-process.exit(gleichheit.every(Boolean) ? 0 : 2);
+process.exit(gleichheit.every(Boolean) && !eimerFalsch ? 0 : 2);
