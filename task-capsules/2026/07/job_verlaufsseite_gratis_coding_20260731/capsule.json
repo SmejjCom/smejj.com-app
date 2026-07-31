@@ -1,0 +1,63 @@
+{
+  "jobId": "job_verlaufsseite_gratis_coding_20260731",
+  "createdAt": "2026-07-31",
+  "owner": "smejj.com Betreiber",
+  "title": "Qualitaetsverlauf live auf smejj.com + Coding auf das kostenlose GLM",
+  "goal": "Der Betreiber wollte den Qualitaetstrend selbst im Browser sehen und Coding-Anfragen auf ein besseres Modell leiten — ohne neue laufende Kosten.",
+  "approval": {
+    "verlaufsseite": "Betreiber: 'Verlaufsseite auf smejj.com' (2026-07-30).",
+    "modellwahl": "Betreiber: 'Coding auf glm-4.7-flash, kostenlos' (2026-07-31). Die kostenpflichtige Alternative glm-5.2 (1,40/4,40 USD je 1 Mio Token) wurde ausdruecklich NICHT gewaehlt.",
+    "kosten": "0,00 USD. glm-4.7-flash ist bei Z.AI Eingabe und Ausgabe kostenlos. Keine neue Kostenposition, keine Rote-Liste-Freigabe noetig."
+  },
+  "diagnose": {
+    "topologieKorrigiert": "Der LIVE-Control-Server ist NICHT der Zeabur-Dienst 'smejj-control' (der hat nur PASSWORD und PORT, ai=false), sondern der gleichnamige Salad-Container (Version 124, running). Dort: ai=true, aiBackend zhipu:glm-5.2, glm-5-2/kimi-k2-7/kimi-k3 auf 'ready'. Die Bridge erreicht ihn ueber SMEJJ_CONTROL_ORIGIN (redbean-caesar-...salad.cloud). Frueher in dieser Sitzung wurde faelschlich der Zeabur-Dienst als Ziel benannt — dort einzutragen waere wirkungslos geblieben.",
+    "ursacheCodingAufBezahltemModell": "Von 73 Umgebungsvariablen fehlte genau eine: SMEJJ_LLM_ZHIPU_MODEL_CODING. Der Profil-Schalter existiert seit langem im Code (getModelRuntimeConfig liest SMEJJ_LLM_<PREFIX>_MODEL_<PROFIL>), war aber nie gesetzt. Live gemessen antworteten Coding UND normale Anfragen beide mit zhipu:glm-5.2.",
+    "warumNurCoding": "SMEJJ_LLM_ZHIPU_MODEL (der Standard fuer alle Profile) ist bewusst NICHT gesetzt und wurde auch nicht gesetzt. Dadurch wechselt ausschliesslich das Coding-Profil; alles andere bleibt bei glm-5.2."
+  },
+  "loesung": {
+    "verlaufsseite": "public/verlauf.html + public/verlauf.js + public/verlauf-messwerte.json, nach dem Muster von status.html: Seite UND Daten sind statische Dateien von GitHub Pages. Kein Verlaufs-Server, kein oeffentlicher Endpunkt am Messdienst — null Dauerlast, keine neue Angriffsflaeche, kein Single Point of Failure. connect-src 'self': die Seite bleibt bei komplettem Dienstausfall vollstaendig lesbar.",
+    "ehrlichkeitAufDerSeite": "Die Seite benennt offen, dass die Zahlen ein Stand und keine Echtzeit sind (mit Erhebungsdatum), und dass hier NICHT smejj 1.0 gemessen wird, sondern ein eingekauftes Fremdmodell — und dass der Trainingszyklus aus ist. Ohne diesen Absatz klingt '24/7 gemessen' wie '24/7 gelernt'.",
+    "codingModell": "Eine Variable auf dem Salad-Container: SMEJJ_LLM_ZHIPU_MODEL_CODING=glm-4.7-flash."
+  },
+  "nichtBeruehrt": [
+    "SMEJJ_LLM_ZHIPU_MODEL bleibt ungesetzt — nur Coding wechselt, nicht der Rest.",
+    "Die 73 bestehenden Umgebungsvariablen: per Pruefsumme nachgewiesen unveraendert.",
+    "Der Favicon-Lock: verlauf.html traegt ABSICHTLICH keine Favicon-Verweise, weil der Lock die Liste aller Seiten mit solchen Verweisen einfriert. Der Grund steht als Warnung im HTML-Kopf.",
+    "auth-gate.js PUBLIC_PATHS: verlauf.html wurde NICHT aufgenommen — Qualitaetszahlen gehoeren hinter die Anmeldung, anders als der Betriebsstatus.",
+    "Die Bridge-Aenderung (Coding verlaesst die Schnellspur) ist committet, aber BEWUSST NICHT deployt: Chat-Code-Fragen laufen ueber /api/chat, wo die alte Profilbildung noch glm-5.2 waehlen wuerde — also kostenpflichtig. Erst Gratis-Modell, dann Bridge.",
+    "Der lokale Frontend-Klon ~/smejj-app-frontend (Juli-Branch, sw.js v133) wurde nicht benutzt."
+  ],
+  "verification": {
+    "modellwechsel": "Live gemessen nach der Aenderung. Coding-Aufgabe ueber /api/agent => x-smejj-model-backend: zhipu:glm-4.7-flash. Kontrolle mit einer normalen Frage => zhipu:glm-5.2, also unveraendert. Genau der gewuenschte chirurgische Wechsel.",
+    "keineZugangsdatenVerloren": "Vor der Aenderung wurden alle 73 Variablen gesichert; danach zurueckgelesen und jeder Wert per SHA-256 verglichen. Ergebnis: 74 Variablen (73 + 1 neue), keine verloren, keine veraendert.",
+    "verlaufsseiteLive": "https://smejj.com/verlauf.html => HTTP 200, https://smejj.com/verlauf-messwerte.json => HTTP 200. Im Browser geprueft: neueste Messung oben, Absturz als kritisch markiert, Trenddelta -14,71 Punkte, Stand der Daten sichtbar. Mobil und Desktop geprueft, keine Konsolenfehler, kein Seitwaerts-Scrollen.",
+    "serviceWorker": "Live von v193 auf v194 gehoben, aufgesetzt auf den LIVE-Stand. Das App-Repo stand auf v188; von dort zu bumpen haette fuenf Versionen fremder Arbeit verworfen.",
+    "tests": "10 neue Tests (tests/verlaufsseite.test.mjs). check:guidelines OK (1142 Dateien), check:frontend 277/277, check:module-queries OK (83 Module), check:precache-imports OK (88 Module), start-lock OK (31 Dateien byte-identisch), favicon-lock OK und unveraendert bei 25 Seiten, check:json OK."
+  },
+  "benchmark": {
+    "hinweisZumErstenLauf": "Direkt nach dem Deploy riss warm ttfb p75 mit 265 ms das 200-ms-Budget. Ursache war die Installation des neuen Service Workers v194, der die Shell neu holt — genau seine Aufgabe. NICHT als 'wird schon' abgetan, sondern nach 60 s nachgemessen.",
+    "nachmessung": {
+      "quelle": "node scripts/testing/measure_web_vitals.mjs --runs 5, Chrome headless, https://smejj.com/",
+      "erstbesuch": { "ttfb_ms_p75": 27, "lcp_ms_p75": 548, "cls_p75": 0, "inp_ms_p75": 40, "pageWeight_kb_p75": 284 },
+      "wiederbesuch": { "ttfb_ms_p75": 40, "lcp_ms_p75": 132, "cls_p75": 0, "inp_ms_p75": 48, "pageWeight_kb_p75": 40 },
+      "verstoesse": [],
+      "ergebnis": "Alle Performance-Budgets eingehalten. Keine Verschlechterung gegenueber dem letzten Benchmark (284 KB unveraendert)."
+    },
+    "datei": "docs/benchmarks/webvitals-verlaufsseite-2026-07-31.json"
+  },
+  "rollback": {
+    "codingModell": "Variable SMEJJ_LLM_ZHIPU_MODEL_CODING auf dem Salad-Container loeschen oder auf glm-5.2 setzen — dann ist der vorherige Zustand exakt wiederhergestellt. Vollstaendige Sicherung aller 73 Variablen liegt auf dem Schreibtisch des Betreibers (smejj-control-Sicherung-20260731-020514.json).",
+    "verlaufsseite": "git revert des Frontend-Commits; die Seite ist rein additiv, es wurde keine bestehende Datei ausser static-pages.css (Anhang) und sw.js (Versionssprung) angefasst.",
+    "rto": "unter 15 Minuten."
+  },
+  "blocker": {
+    "beschreibung": "ZWEI Produktions-Schreibzugriffe wurden in dieser Sitzung von der Berechtigungspruefung der Agenten-Umgebung blockiert: der Push ins Frontend-Repo und der PATCH auf die Salad-API. Kein Umgehungsversuch.",
+    "loesung": "Beides als Doppelklick-Datei bereitgestellt und vom Betreiber ausgeloest: 'smejj.com Verlaufsseite-live-stellen.command' und 'smejj.com Coding-auf-Gratis-Modell.command'. Beide idempotent, beide mit Sicherung und Rueckleseprobe.",
+    "warumNichtUeberDasPortal": "Das Salad-Bearbeitungsformular hat 265 Eingabefelder und zeigt alle 73 Zugangsdaten im Klartext. Blind zu bedienen heisst, Schluessel zu riskieren — der schlimmste Fall der Roten Liste. Der API-Weg fasst genau ein Feld an und beweist danach die Unversehrtheit der uebrigen."
+  },
+  "status": {
+    "stand": "live-und-verifiziert",
+    "offen": "Die Bridge-Aenderung (Coding verlaesst die Schnellspur im Chat) ist committet, aber nicht deployt — sie wuerde Chat-Code-Fragen an /api/chat schicken, wo noch die alte Profilbildung glm-5.2 waehlt. Sinnvoll erst, wenn der Control Server die Profilbildung aus src/server.js mitbringt.",
+    "naechsterSchritt": "Messwerte der Verlaufsseite regelmaessig nachfuehren: GET /verlauf im Container abrufen und durch scripts/verlauf/aktualisiere-messwerte.mjs geben. Das Skript fuehrt zusammen statt zu ersetzen."
+  }
+}
