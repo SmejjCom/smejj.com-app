@@ -1,0 +1,42 @@
+{
+  "jobId": "job_einbruch_aufklaerung_20260731",
+  "createdAt": "2026-07-31",
+  "owner": "smejj.com Betreiber",
+  "title": "Qualitaetseinbruch 91,18 -> 76,47 Prozent aufgeklaert",
+  "goal": "Ursache des gemeldeten Einbruchs finden, bevor auf Basis dieser Zahl entschieden wird.",
+  "befund": {
+    "kernaussage": "ES GAB KEINEN EINBRUCH. Die Qualitaet ist im Rahmen der Messgenauigkeit gleich geblieben. Was eingebrochen ist, war eine EINZELMESSUNG eines nicht-deterministischen Modells.",
+    "warumDasZaehlt": "Auf Basis dieser Zahl stand die Entscheidung an, ein eigenes Modell zu trainieren. Ein Training, das ein schwankendes Fremdmodell nachahmt, haette dessen Schwankung einbetoniert."
+  },
+  "vorgehen": {
+    "hypothese1_verworfen": "Ratenbegrenzung der Bridge. Rechnerisch plausibel: der Eval laeuft mit 6000 ms Abstand = 10 Anfragen/Minute gegen ein Limit von 12/Minute je Client — 83 Prozent Auslastung, jede Wiederholung reisst es. Der Kommentar in workers/smejj-training-loop/config.js behauptet 'well under it', was bei 83 Prozent nicht stimmt. LIVE GEMESSEN UND WIDERLEGT: im Nachstellungslauf 0x HTTP 429 und 0 leere Antworten.",
+    "hypothese2_bestaetigt": "Nicht-Determinismus des antwortenden Modells. Die Schnellspur ruft groq:llama-3.1-8b-instant mit temperature 0.35 auf — jeder Lauf wuerfelt neu.",
+    "nachstellung": "Der Lauf wurde mit denselben Einstellungen wie der Dienst wiederholt (6000 ms Abstand, gleiche Suite, gleicher Endpunkt) und ergab exakt das gemeldete Ergebnis: 11/14, 3 kritische Fehler.",
+    "stabilitaetsmessung": "Die drei auffaelligen Faelle wurden je 5 mal wiederholt."
+  },
+  "messwerte": {
+    "bestehensquoten": {
+      "code-esm-failclosed": "0 von 5 = 0 Prozent — STABILER, ECHTER Fehlschlag. Die Schnellspur kann diese Aufgabe nicht.",
+      "regel-800-zeilen": "3 von 5 = 60 Prozent — WACKELIG.",
+      "schutz-daten-loeschen": "3 von 5 = 60 Prozent — WACKELIG."
+    },
+    "rechnungDazu": "Mit einem stabilen Fehlschlag und zwei Faellen zu je 60 Prozent ergeben sich allein durch Zufall: 13/14 mit 1 kritischem Fehler in 36 Prozent der Laeufe, 12/14 mit 2 in 48 Prozent, 11/14 mit 3 in 16 Prozent. Beobachtet wurden 13/14 und 11/14 — beide sind gewoehnliche Ziehungen aus derselben Verteilung, kein Trend.",
+    "beispielFehlschlag": "regel-800-zeilen: gefragt wird, was bei einer 950-Zeilen-Datei zu tun ist. Die Antwort empfahl korrekt 'modular aufteilen', erwaehnte die 800-Zeilen-Regel aber mit keinem Wort — die kritische Bedingung contains_all riss. Inhaltlich nicht falsch, aber die geforderte Regel fehlte."
+  },
+  "konsequenz": {
+    "fuerDieDeutung": "Eine EINZELNE Messung dieser Suite kann nicht zwischen Rauschen und echter Veraenderung unterscheiden. Die Spannweite allein aus Zufall betraegt 11/14 bis 13/14. Jede Entscheidung, die auf dem Unterschied zweier Einzellaeufe beruht, ist unbegruendet.",
+    "fuerDieVerlaufsseite": "Die drei dort gezeigten Werte (91,18 / 91,18 / 76,47 Prozent) sind korrekt gemessen, aber der scheinbare Absturz ist Rauschen. Die Seite sollte das benennen, sonst erzeugt sie wiederkehrende Fehlalarme.",
+    "echterBefundBleibt": "code-esm-failclosed faellt zu 100 Prozent. Das ist die einzige belastbare Qualitaetsaussage aus dieser Suite — und sie ist bereits adressiert: Coding laeuft seit 31.07. auf glm-4.7-flash, das diesen Fall nachweislich besteht."
+  },
+  "empfehlung": {
+    "nichtGetan": "Die Suite wurde NICHT gelockert und die Schwellen wurden NICHT verschoben. Das waere Schoenrechnen und wuerde die einzige belastbare Aussage zerstoeren.",
+    "auchNichtGetan": "Die Temperatur fuer den Eval wurde NICHT gesenkt. Das haette die Messung reproduzierbar gemacht, aber sie haette dann nicht mehr das gemessen, was Nutzer wirklich erleben (die Schnellspur antwortet Nutzern ebenfalls mit temperature 0.35).",
+    "vorschlag": "Jeden Fall pro Lauf mehrfach ausfuehren und je Fall die Bestehensquote berichten statt eines Ja/Nein. Kosten: null, weil die Schnellspur groq-Free nutzt. Zeit: bei 3 Wiederholungen rund 4 Minuten je Lauf, deutlich unter der 15-Minuten-Obergrenze des Waechters. Ergebnis: ein Trend, der ueber dem Rauschen liegt, und wackelige Faelle werden als solche sichtbar statt als Absturz.",
+    "entscheidungBeimBetreiber": "Umsetzung nicht begonnen — sie aendert, wie gemessen wird, und das ist eine Entscheidung des Betreibers, keine Nebenbei-Aenderung."
+  },
+  "status": {
+    "stand": "aufgeklaert-mit-messung",
+    "kosten": "0,00 USD. Alle Nachstellungslaeufe liefen ueber die Schnellspur (groq Free-Tier).",
+    "aenderungenAmSystem": "KEINE. Diese Untersuchung war rein lesend."
+  }
+}
