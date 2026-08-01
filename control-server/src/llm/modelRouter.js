@@ -270,6 +270,42 @@ function backendSupportsThinking(backend) {
   return /glm/i.test(String(backend?.model || "")) || /api\.z\.ai|bigmodel/i.test(String(backend?.baseUrl || ""));
 }
 
+/**
+ * Das eigene Modell laeuft auf llama.cpp und kennt `thinking` NICHT — es faellt
+ * durch backendSupportsThinking und der Parameter wird stillschweigend
+ * verworfen.
+ *
+ * GEMESSENE FOLGE (2026-08-01, Fall code-esm-failclosed, 0 von 5):
+ * Das Basismodell Qwen3-14B ist ein denkendes Modell. Der Eval-Harness setzt
+ * bei knappem Budget `thinking: {type:"disabled"}` (siehe
+ * src/evaluation/evalTransport.js#THINKING_MIN_TOKEN_BUDGET), aber auf diesem
+ * Weg kommt die Abschaltung nie an. Das Modell denkt also weiter, das Denken
+ * frisst die 600 Token des Falls, und zurueck kommen 234 Zeichen Rest, in denen
+ * die geforderte Form `export function parseBudget` nie auftaucht. Genau das
+ * Fehlerbild, das evalTransport.js fuer GLM bereits dokumentiert:
+ * "Denken AN, max_tokens 600 -> content LEER; Denken AUS -> alle Zusicherungen
+ * bestanden."
+ *
+ * llama.cpp versteht statt `thinking` das Feld `chat_template_kwargs`; dort
+ * schaltet `enable_thinking: false` das Denken der Qwen3-Vorlage ab.
+ *
+ * STANDARDMAESSIG AUS. Es liegt noch keine Live-Messung vor, dass der
+ * llama.cpp-Stand dieses Feld akzeptiert — wuerde er es mit HTTP 400 ablehnen,
+ * fiele die Kette auf das naechste Backend zurueck und das eigene Modell waere
+ * praktisch abgeschaltet. Ein solcher Eingriff in den Live-Chat-Pfad gehoert
+ * nicht ungemessen scharf. Einschalten mit
+ * SMEJJ_LLM_SALAD_DENKEN_VORLAGE=YES, danach `npm run eval:models:live` gegen
+ * smejj-fast-1 und den Fall code-esm-failclosed vergleichen.
+ */
+function backendNutztVorlagenDenken(backend, env = process.env) {
+  if (String(env?.SMEJJ_LLM_SALAD_DENKEN_VORLAGE || "NO").trim().toUpperCase() !== "YES") return false;
+  return String(backend?.name || "") === "salad";
+}
+
+function denkenAusgeschaltet(thinking) {
+  return String(thinking?.type || "") === "disabled";
+}
+
 // Nur Kimi K3 kennt reasoning_effort (low|high|max, Standard max). Das Denken
 // laesst sich bei K3 nicht abschalten — nur seine Tiefe steuern. Andere
 // Backends bekommen das Feld nicht; unbekannte Felder koennten abgelehnt werden.
@@ -302,7 +338,10 @@ export async function executeWithFallback(chain, messages, {
   maxTokens,
   responseFormat,
   thinking,
-  reasoningEffort
+  reasoningEffort,
+  // Einreichbar, damit der Schalter geprueft werden kann, ohne process.env
+  // im Test zu veraendern.
+  env = process.env
 } = {}) {
   const attempts = [];
   const requestedLimitMs = Number(timeoutMs || process.env.SMEJJ_LLM_TIMEOUT_MS || 45000);
@@ -325,6 +364,10 @@ export async function executeWithFallback(chain, messages, {
           ...(maxTokens === undefined ? {} : { max_tokens: maxTokens }),
           ...(responseFormat === undefined ? {} : { response_format: responseFormat }),
           ...(thinking !== undefined && backendSupportsThinking(backend) ? { thinking } : {}),
+          // Dasselbe Ziel, andere Sprache: llama.cpp kennt `thinking` nicht.
+          ...(denkenAusgeschaltet(thinking) && backendNutztVorlagenDenken(backend, env)
+            ? { chat_template_kwargs: { enable_thinking: false } }
+            : {}),
           ...(REASONING_EFFORTS.includes(reasoningEffort) && backendSupportsReasoningEffort(backend)
             ? { reasoning_effort: reasoningEffort }
             : {})
