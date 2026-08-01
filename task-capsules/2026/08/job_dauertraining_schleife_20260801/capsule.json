@@ -1,0 +1,170 @@
+{
+  "jobId": "job_dauertraining_schleife_20260801",
+  "createdAt": "2026-08-01",
+  "owner": "smejj.com Betreiber",
+  "title": "Dauertrainings-Schleife gebaut und geprueft — GPU-Start bleibt gesperrt bis zur schriftlichen Freigabe",
+  "goal": "Eine dauerhaft laufende Trainingsschleife fuer das eigene Modell smejj 1.0 bauen, die jeden Zyklus gegen die bestehende Pruefsuite misst, ihr Budget einhaelt und ohne Freigabe keine GPU-Zeit kauft.",
+
+  "ehrlicheEinordnung": {
+    "nichtErreichbar": "Das Niveau von Codex, Claude oder Gemini ist mit dieser Infrastruktur nicht erreichbar. Solche Modelle kosten dreistellige Millionenbetraege an Rechenzeit auf tausenden GPUs; eine gemietete 24-GB-Karte fuer 180 USD im Monat ist davon rund sechs Groessenordnungen entfernt. Das wurde dem Betreiber ausdruecklich gesagt und nicht versprochen.",
+    "erreichbar": "Das eigene Modell schlaegt die eingekaufte Kette auf evals/suites/smejj-chat-core-v1.json. Vergleichswert: groq:llama-3.1-8b-instant erreicht dort 73,53 bis 85,29 Prozent (14 Faelle). Genau das misst die Schleife.",
+    "nochNichtGemessen": "Es liegt KEIN Messwert des eigenen Modells vor. Es wurde bis heute nie trainiert, es gibt keine Gewichte und keine GPU-Freigabe. Jede Zahl zum eigenen Modell waere an dieser Stelle erfunden."
+  },
+
+  "gemesseneAusgangslage": {
+    "modellLager": "model-files/smejj-1-0/ enthaelt 5 Objekte: vier Rechte-/Attestierungsdateien unter base/glm-5-2/70311cfa.../notices/ und EIN Objekt model-files/smejj-1-0/original/params. Keine Gewichte. Gemessen ueber signedS3List gegen s3://smejj-model-files am 2026-08-01. Der Befund des Auftrags ist bestaetigt: das Modell existiert nicht.",
+    "fremdmodelle": "glm-5-2-fp8 und kimi-k2-7 liegen vollstaendig im selben Eimer (266 Objekte unter model-files/ insgesamt).",
+    "training": "Es hat nie ein Training stattgefunden."
+  },
+
+  "befundA_gguf_nicht_trainierbar": {
+    "befund": "src/shared/modelRegistry.js zeigt fuer smejj-fast-1 auf das GGUF-UD-Q4_K_XL-Artefakt von Qwen/Qwen3-Coder-30B-A3B-Instruct (17,7 GB) unter model-files/smejj-1-0/original/. Das ist die richtige Wahl fuers Ausliefern auf einer 24-GB-Karte — aber auf einer GGUF-Q4-Datei laesst sich kein LoRA trainieren. LoRA/QLoRA braucht safetensors.",
+    "warumWichtig": "Ohne diesen Befund haette die Schleife eine GPU gemietet und waere am Ladeschritt gescheitert — bezahlte Zeit ohne Ergebnis.",
+    "messungHuggingFaceApi2026_08_01": [
+      { "modell": "Qwen/Qwen3-Coder-30B-A3B-Instruct", "lizenz": "apache-2.0", "safetensorsBytes": 61066575656, "dateien": 16, "loraAuf24Gb": "nur 4-bit und sehr eng; sinnvoll erst auf 32 GB (RTX 5090)" },
+      { "modell": "Qwen/Qwen2.5-Coder-7B-Instruct", "lizenz": "apache-2.0", "safetensorsBytes": 15231272864, "dateien": 4, "loraAuf24Gb": "ja, bequem" },
+      { "modell": "Qwen/Qwen3-Coder-Next", "lizenz": "apache-2.0", "safetensorsBytes": 159362601248, "dateien": 40, "loraAuf24Gb": "nein" }
+    ],
+    "konsequenz": "SMEJJ_LORA_BASIS_HF_REPO ist ein Konfigurationswert und kein fester Eintrag im Code. Welches Modell trainierbar ist, haengt an der GPU-Klasse, und die entscheidet der Betreiber mit der Kostenfreigabe. Ein fest verdrahtetes Modell haette diese Entscheidung stillschweigend vorweggenommen."
+  },
+
+  "befundB_offene_datensaetze_sind_meist_modellausgabe": {
+    "befund": "Die bekannten offenen Instruktionsdatensaetze (Alpaca, ShareGPT, OpenHermes, WizardLM, Capybara, UltraChat, Dolphin, CodeAlpaca) tragen zwar permissive Lizenzen, ihr INHALT ist aber GPT-4-/ChatGPT-Ausgabe. docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md verbietet Rohantworten von Z.ai-, Kimi- oder 'anderen Provider-APIs' — das schliesst OpenAI und Anthropic ein.",
+    "warumWichtig": "Eine reine Lizenzpruefung haette all diese Datensaetze durchgewunken und die eigene Richtlinie des Projekts verletzt. Ein Apache-2.0-Aufkleber auf destilliertem Modelloutput macht ihn nicht zulaessig — genau wie ein Redaction-Token laut Policy unzulaessige Herkunft nicht zulaessig macht.",
+    "konsequenz": "Das Tor in src/training/opencorpus/licenses.js prueft ZWEI Bedingungen: Lizenz UND nachgewiesene menschliche Urheberschaft."
+  },
+
+  "datensatzLizenzen": {
+    "geprueftUeberHuggingFaceApi": "2026-08-01",
+    "gewaehlt": [
+      {
+        "datensatz": "OpenAssistant/oasst2",
+        "lizenz": "apache-2.0",
+        "urheberschaft": "human (Tag 'human-feedback', von Freiwilligen geschrieben)",
+        "sprachen": "35 Sprachen, darunter ausdruecklich 'language:de'",
+        "eignung": "Bewegt die allgemeinen Faelle der Suite (antwortsprache-deutsch, Instruktionsbefolgung).",
+        "falle": "Der Datensatz fuehrt ein Feld 'synthetic'. Einzelne Zeilen sind maschinell erzeugt, obwohl die Quelle als menschlich gilt. Die Zeilenpruefung verlangt deshalb ausdruecklich synthetic===false; ein fehlendes Feld zaehlt als synthetisch, nicht als sauber."
+      }
+    ],
+    "geprueftUndAbgelehnt": [
+      {
+        "datensatz": "databricks/databricks-dolly-15k",
+        "lizenz": "cc-by-sa-3.0",
+        "urheberschaft": "human",
+        "ablehnungsgrund": "Share-Alike. Der Betreiber nannte Apache-2.0, MIT und CC-BY — CC-BY-SA ist nicht CC-BY. Ob ein trainiertes Modell ein abgeleitetes Werk im Sinne der Copyleft-Klausel ist, ist ungeklaert, und ein ungeklaertes Risiko ist nach Projektrichtlinie ein Grund zu sperren, nicht abzuwaegen."
+      }
+    ]
+  },
+
+  "befundC_die_suite_misst_projektwissen": {
+    "befund": "Von den 14 Suite-Faellen pruefen etwa neun projektspezifisches Wissen und projektspezifisches Verweigern, nicht allgemeine Faehigkeit: speicher-hauptserver, budget-lcp-grounding, kosten-github-free, regel-800-zeilen, naming-schreibweise, architektur-static-first sowie die vier Schutzfaelle (schutz-daten-loeschen, schutz-api-schluessel, schutz-design-lock, halluzination-unbekannte-zahl). Nur vier Faelle messen allgemeine Faehigkeit.",
+    "konsequenz": "Offene Datensaetze bewegen nur diese vier Faelle. Kein Datensatz auf HuggingFace enthaelt das LCP-Budget von smejj.com. Die Mehrheit der Punkte haengt an Erstpartei-Projektwissen aus der Dokumentation des Betreibers — rechtlich sauber, weil es ihm gehoert, aber ein eigener Arbeitsschritt und nicht Teil des offenen Korpus.",
+    "empfehlung": "Vor dem Kauf von GPU-Zeit einen Projektkorpus aus der eigenen Dokumentation bauen. Ohne ihn ist der erwartbare Zugewinn auf der Suite klein, und 180 USD im Monat waeren schlecht angelegt. Das ist ein eigener Auftrag und wurde hier NICHT erledigt."
+  },
+
+  "wasGebautWurde": {
+    "1_offeneKorpusSpur": "src/training/opencorpus/ mit drei Modulen: licenses.js (Lizenz- UND Urheberschafts-Tor), contamination.js (Verunreinigungs-Tor gegen die Pruefsuite), corpus.js (Zeile -> geprueftem Record + Manifest).",
+    "2_warumEigeneSpur": "src/training/policy.js verlangt pro Record eine frische Einwilligung eines authentifizierten Menschen, eine Widerrufsreferenz, bestaetigte Repository-Rechte und zehn Qualitaets-Gates (build, typecheck, lint, Tests, Rollback ...). Eine Zeile aus einem oeffentlichen Datensatz hat nichts davon und kann es nicht haben. Durch policy.js gegeben wuerde JEDE Zeile 'denied' — die Spur waere nicht streng, sondern unbenutzbar. Die neue Spur lockert policy.js NICHT und ruft es nicht auf; sie ist additiv mit eigenem, ebenso fail-closed Massstab.",
+    "3_wiederverwendet": "sanitizeTrainingValue aus src/training/sanitize.js (Secret-/PII-Filter samt Residual Scan) und assignDatasetSplit/assertNoDatasetLeakage aus src/training/split.js. Es gibt weiterhin nur EINE Split-Logik im Projekt.",
+    "4_verunreinigungsTor": "Mechanische Fassung der Regel 'Testdaten NIE ins Training': jede Trainingszeile wird gegen 8-Wort-N-Gramme aller Suite-Prompts geprueft. Geprueft werden die Prompts, nicht die Erwartungswerte — 'smejj.com' ist ein Erwartungswert, und ihn zu sperren haette ausgerechnet den wichtigsten Teil eines Projektkorpus verboten. Ausdruecklich markierte unterscheidende Werte (z. B. eine Budgetzahl) fallen zusaetzlich unter das Tor.",
+    "5_schleife": "workers/smejj-lora-loop/ mit neun Modulen: budget.js, sweep.js, trainerClient.js, cycle.js, state.js, config.js, loop.js, evalAdapter.js, worker.mjs.",
+    "6_gitter": "Deterministisches Gitter aus 3 Lernraten x 3 LoRA-Raengen x 2 Datenmischungen = 18 Kombinationen, plus Epochen-Steigerung je Runde. Kein Math.random(): jeder Push ersetzt den Container, und nach dem Neustart muss Zyklus 37 wieder exakt Zyklus 37 sein, sonst werden Konfigurationen doppelt bezahlt und andere nie geprueft.",
+    "7_messung": "evalAdapter.js ruft runEvalCycle aus dem bestehenden workers/smejj-training-loop/evalCycle.js auf — dieselbe Strecke wie npm run eval:models:live. Es gibt bewusst KEINE zweite Messimplementierung; das ist der sicherste Schutz davor, sich die Zahlen schoenzurechnen.",
+    "8_rauschschwelle": "Ein neuer Bester braucht mehr als 3 Prozentpunkte Vorsprung. Eine Einzelziehung je Fall streut um bis zu 12 Prozentpunkte (temperature 0.35, Beleg: task-capsules/2026/07/job_einbruch_aufklaerung_20260731/). Ohne die Schwelle fuellte sich die Bestenliste mit Zufall und jede folgende Messung haette eine zu hohe Latte. Ein kritischer Fehler schliesst grundsaetzlich aus, unabhaengig von der Punktzahl."
+  },
+
+  "vierBremsen": {
+    "1_freigabeTor": "Ohne SMEJJ_LORA_FREIGABE_ID, _GPU_KLASSE und _MONATSBETRAG_USD sperrt budget.js#pruefeFreigabe jeden Zyklus. Die freigegebene Klasse muss zur gebuchten passen (eine 3090-Freigabe deckt keine 5090 — 180 gegen 324 USD) und der Betrag die echten Monatskosten decken.",
+    "2_gesamtdeckel": "Harte USD-Obergrenze. Der Verbrauch liegt dauerhaft auf IDrive e2 (ops/smejj-lora-loop/zustand.json), nicht im Arbeitsspeicher. Ein Zyklus muss VOLLSTAENDIG ins Restbudget passen — ihn zu starten und am Deckel abzubrechen kostet dasselbe und liefert keine Messung.",
+    "3_laufzeitdeckel": "Je Zyklus. Wird er ueberschritten, wird der Lauf abgebrochen und der Dienst zum Beenden aufgefordert. Bestaetigt der Dienst nicht, steht das ausdruecklich im Protokoll statt eines behaupteten Abbruchs.",
+    "4_notaus": "SMEJJ_LORA_NOTAUS=YES sperrt sofort und greift auch mitten in einem laufenden Zyklus.",
+    "keineAutomatischeAufladung": "Bleibt aus. Das leere Guthaben ist die letzte, vom Anbieter erzwungene Bremse und soll scharf bleiben."
+  },
+
+  "kostenJeZyklus": {
+    "preisquelle": "Salad-Konto des Betreibers, gemessen 2026-08-01. Die Tabelle in budget.js#GPU_PREISE_USD_PRO_STUNDE ist kein Listenpreis aus dem Netz.",
+    "proStundeUsd": { "rtx3090": 0.25, "rtxa5000": 0.25, "rtx4090": 0.30, "rtx5090": 0.45 },
+    "monatDauerbetriebUsd": { "rtx3090": 180, "rtxa5000": 180, "rtx4090": 216, "rtx5090": 324 },
+    "zyklusBei45MinutenUsd": { "rtx3090": 0.1875, "rtx4090": 0.225, "rtx5090": 0.3375 },
+    "vollesGitter18Zyklen": "auf einer RTX 3090 rund 3,38 USD und gut 14 Stunden; drei Runden (54 Zyklen) rund 10,13 USD.",
+    "heutigerGesamtbetrieb": "6 USD/Monat. Dauertraining ist das Dreissigfache.",
+    "guthaben": "83,91 USD, automatische Aufladung aus. Auf einer RTX 3090 im Dauerbetrieb rund 14 Tage (geprueft in tests/lora-loop-budget.test.mjs)."
+  },
+
+  "hartGrenzenEingehalten": {
+    "pruefsuiteNichtGelockert": "Kein Fall entfernt, keine Schwelle verschoben. tests/lora-loop-freigabe.test.mjs prueft zusaetzlich, dass kein Modul der Schleife in evals/ schreibt.",
+    "testdatenNieInsTraining": "Mechanisch erzwungen durch contamination.js; der Korpus wird ohne gueltigen Suite-Fingerabdruck gar nicht gebaut (fail-closed, ein fehlender Fingerabdruck sperrt statt durchzuwinken).",
+    "keineTrainingsdatenAusFremdmodellApis": "Urheberschafts-Tor in licenses.js; model-generated, llm-distilled, gpt-generated und synthetic sind permanent gesperrt.",
+    "keineBefoerderungOhneMenschlicheFreigabe": "schreibeBestenStand stempelt IMMER promotionStatus 'not-approved', auch wenn der Aufrufer etwas anderes behauptet. assessModelPromotion gibt nie automaticDeploymentAllowed=true. tests/lora-loop-freigabe.test.mjs prueft zusaetzlich, dass die Schleife keinen Befoerderungspfad ueberhaupt aufruft.",
+    "failClosedUeberall": "Ohne Daten, ohne Budget, ohne erreichbaren Dienst passiert nichts. Zusaetzlich: ist der Kostenzaehler nicht lesbar, wird nicht trainiert — lieber Stillstand als ein Deckel, der nach dem naechsten Deploy bei null anfaengt.",
+    "maximal800Zeilen": "check:guidelines gruen, 1190 Dateien geprueft.",
+    "schreibweise": "durchgaengig smejj.com; nur SMEJJ_-Env-Praefixe in Grossschreibung."
+  },
+
+  "gefundenerFehler": {
+    "was": "trainerClient.js setzte je Anfrage einen Abbruch-Timer, ohne ihn im Erfolgsfall zu loeschen.",
+    "wieAufgefallen": "Der Zyklustest lief 20 Sekunden statt Millisekunden — jeder offene Timer hielt die Ereignisschleife.",
+    "wirkungImDauerbetrieb": "Bei einer Statusabfrage alle 30 Sekunden waeren dauerhaft offene Handles entstanden, und der Prozess haette sich beim Herunterfahren nicht beenden koennen.",
+    "behoben": "clearTimeout in einem finally-Block. Testlaufzeit danach 40 ms."
+  },
+
+  "geaenderteDateien": {
+    "neu": [
+      "src/training/opencorpus/licenses.js",
+      "src/training/opencorpus/contamination.js",
+      "src/training/opencorpus/corpus.js",
+      "workers/smejj-lora-loop/budget.js",
+      "workers/smejj-lora-loop/sweep.js",
+      "workers/smejj-lora-loop/trainerClient.js",
+      "workers/smejj-lora-loop/cycle.js",
+      "workers/smejj-lora-loop/state.js",
+      "workers/smejj-lora-loop/config.js",
+      "workers/smejj-lora-loop/loop.js",
+      "workers/smejj-lora-loop/evalAdapter.js",
+      "workers/smejj-lora-loop/worker.mjs",
+      "workers/smejj-lora-loop/README.md",
+      "tests/opencorpus-lizenz.test.mjs",
+      "tests/opencorpus-korpus.test.mjs",
+      "tests/lora-loop-budget.test.mjs",
+      "tests/lora-loop-zyklus.test.mjs",
+      "tests/lora-loop-takt.test.mjs",
+      "tests/lora-loop-freigabe.test.mjs"
+    ],
+    "geaendert": [
+      "package.json (check:training erweitert, check:lora-loop neu, check:all erweitert)",
+      ".env.example (Schalter der Schleife, alle fail-closed)"
+    ],
+    "nichtAngefasst": [
+      "src/training/policy.js und pipeline.js — die Erstpartei-Spur bleibt unveraendert streng",
+      "evals/suites/smejj-chat-core-v1.json — die Messlatte bleibt, wie sie war",
+      "src/evaluation/modelPromotion.js — das Freigabe-Tor bleibt, wie es war"
+    ]
+  },
+
+  "pruefungen": {
+    "check:guidelines": "gruen — 1190 Dateien",
+    "check:architecture": "gruen — 7 Tests",
+    "check:training": "gruen — 85 Tests (inkl. 16 neue Korpus-Tests)",
+    "check:evaluation": "gruen — 58 Tests",
+    "check:training-loop": "gruen — 28 Tests",
+    "check:lora-loop": "gruen — 42 Tests (neu)",
+    "check:cost": "gruen",
+    "check:security": "gruen",
+    "check:json": "gruen",
+    "check:paths": "gruen",
+    "gefordertNegativfaelle": "kein Budget, keine Daten, Dienst nicht erreichbar — je einmal auf Budget-Ebene (tests/lora-loop-budget.test.mjs) und einmal auf Zyklus-Ebene mit dem Nachweis kostenUsd===0 (tests/lora-loop-zyklus.test.mjs)."
+  },
+
+  "liveTestAmDienst": "NICHT durchgefuehrt und bewusst nicht durchgefuehrt. Ein Livetest haette GPU-Zeit gekauft, und dafuer liegt keine Freigabe vor. Gemessen wurde nur lesend: die IDrive-Ablage (signedS3List) und die HuggingFace-API (Lizenzen und Dateigroessen).",
+
+  "offenerPunkt": {
+    "1_freigabe": "GPU-Start ist ein Punkt der Roten Liste. Erforderlich ist eine schriftliche Freigabe mit GPU-Klasse und Monatsbetrag. Empfehlung: RTX 3090, 180 USD/Monat, Gesamtdeckel 50 USD fuer den ersten Durchlauf — das deckt drei volle Gitterrunden mit reichlich Reserve und laesst vom Guthaben ueber 30 USD unberuehrt.",
+    "2_projektkorpus": "Der eigentliche Hebel auf der Suite. Eigener Auftrag, hier nicht erledigt. Ohne ihn ist der erwartbare Zugewinn klein.",
+    "3_trainingsContainer": "Der GPU-Container (peft/transformers) ist NICHT gebaut. Der Vertrag dazu steht im README (vier Routen). Zu pruefen ist ausserdem der Registry-Zugang: laut Memory smejj-maus-engine-deploy-blockiert besteht kein ghcr.io-Schreibzugang, was das Ausliefern eines neuen Abbilds blockieren wuerde.",
+    "4_basismodellLaden": "Noch nicht geschehen. Vorhandenes Werkzeug scripts/model-management/stream_hf_model_to_idrive.mjs (HF_MODEL_REPO, MODEL_S3_PREFIX, CONFIRM_STREAM_MODEL_UPLOAD=YES) — nicht neu bauen. Welches Modell geladen wird, haengt an der freigegebenen GPU-Klasse (siehe befundA)."
+  },
+
+  "gitHinweis": "Im Arbeitsbaum lagen bereits fremde, nicht committete Aenderungen (u. a. src/shared/modelRegistry.js mit der Qwen3-Coder-30B-Entscheidung und der gesamte maus-engine-Bereich). Diese Arbeit hat davon nichts angefasst. Nie 'git add -A' verwenden; add und commit verketten (Memory: smejj-parallele-sessions-git).",
+
+  "status": "Schritt 3 gebaut und geprueft, Schritt 4 abgesichert. Schritt 1 und 2 sind entschieden und belegt, aber noch nicht ausgefuehrt — Basismodell nicht geladen, Korpus nicht erzeugt. Die Schleife ist im Aus-Zustand sicher deploybar und startet ohne schriftliche Freigabe keine Sekunde GPU-Zeit."
+}

@@ -1,0 +1,90 @@
+{
+  "jobId": "job_eigenes_modell_live_20260801",
+  "createdAt": "2026-08-01",
+  "owner": "smejj.com Betreiber",
+  "title": "Eigenes Modell beschafft, eingehaengt und gegen die Schnellspur gemessen",
+  "goal": "Ein eigenes, selbst gehostetes Modell soll wirklich existieren, ueber den Router antworten und mit derselben Suite gemessen werden wie die eingekauften Modelle. Messziel: die heutige Schnellspur (groq:llama-3.1-8b-instant) schlagen.",
+
+  "ehrlicheEinordnung": {
+    "nichtVersprochen": "Kein Modell auf dem Niveau von ChatGPT, Claude oder Gemini. Modelle dieser Klasse kosten dreistellige Millionenbetraege an Rechenzeit. Wer das in vier Tagen auf einer Einzel-GPU zusagt, taeuscht den Betreiber.",
+    "gemessenWirdStattdessen": "Die Punktzahl auf evals/suites/smejj-chat-core-v1.json gegen die heutige Schnellspur — eine ueberpruefbare Zahl."
+  },
+
+  "basismodell": {
+    "gewaehlt": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+    "lizenz": "Apache-2.0",
+    "lizenzQuelle": "https://huggingface.co/api/models/Qwen/Qwen3-Coder-30B-A3B-Instruct — cardData.license, am 2026-08-01 abgefragt; nicht aus dem Modellnamen geschlossen",
+    "lizenzFolge": "Kommerzielle Nutzung UND Feintuning erlaubt. Der spaetere LoRA-Weg fuer smejj 1.0 bleibt offen.",
+    "architektur": "Mixture-of-Experts, 30,5 Mrd Parameter gesamt, rund 3,3 Mrd aktiv je Token",
+    "gewichte": "GGUF UD-Q4_K_XL, 17,7 GB, Quelle unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF (ebenfalls Apache-2.0)",
+    "ablage": "s3://smejj-model-files/model-files/smejj-1-0/original/",
+
+    "verworfen_qwen36": {
+      "kandidat": "Qwen/Qwen3.6-35B-A3B — stand vorher in src/shared/modelRegistry.js und in der Salad-Umgebung",
+      "grund": "UD-Q4_K_XL ist 22,4 GB. Auf einer 24-GB-Karte bleibt damit kein Platz fuer den KV-Zwischenspeicher bei 32k Kontext; llama.cpp haette Schichten auf die CPU ausgelagert und waere langsamer geworden als die eingekaufte Schnellspur.",
+      "lizenz": "ebenfalls Apache-2.0 — die Entscheidung ist eine Speicherrechnung, keine Lizenzfrage",
+      "nebenbefund": "Die Container Group smejj-fast-1 war auf genau dieses zu grosse Abbild eingestellt. Der Fehler waere erst beim Start aufgefallen, und zwar als Langsamkeit, nicht als Absturz."
+    },
+
+    "verworfen_eigenesLager": {
+      "kandidaten": "GLM-5.2 FP8 (755,7 GB) und Kimi K2.7 (595,2 GB), beide bereits im Lager",
+      "grund": "Beide brauchen einen Verbund aus rund zehn 80-GB-Karten. Der Salad-Katalog umfasst 42 GPU-Klassen (am 2026-08-01 ueber die Salad-API abgefragt); die groesste ist eine RTX 5090 mit 32 GB. Es ist keine Preisfrage — es ist nicht bestellbar.",
+      "folge": "GLM-5.2 bleibt ueber die Anbieter-API das Fundament. Die 1,35 TB im Lager sind Unabhaengigkeits-Reserve, nicht Laufzeit."
+    }
+  },
+
+  "routerEintrag": {
+    "datei": "src/shared/modelRegistry.js",
+    "vorher": "storage.prefix = model-files/qwen3-6-35b-a3b/original/ — ein Pfad, der im Lager nie existierte",
+    "nachher": "storage.prefix = model-files/smejj-1-0/original/",
+    "weitere": [
+      "contextTokens 262144 -> 32768: ausgeliefert wird, was der Dienst wirklich oeffnet (LLAMA_ARG_CTX_SIZE), nicht was das Basismodell koennte",
+      "aliases qwen3.6-35b-a3b -> qwen3-coder-30b-a3b",
+      "Begruendung der Modellwahl samt Messwerten als Kommentar hinterlegt, damit die Frage nicht erneut aufkommt"
+    ],
+    "failClosedBewusstNichtGelockert": "Die Laufzeit-Adresse wurde NICHT als defaultBaseUrl fest eingetragen, obwohl das bequemer waere. Das haette die dreiteilige Zusicherung (Feature-Flag + Adresse + Schluessel) auf zwei verkuerzt und den Test 'greift NICHT ohne BASE_URL' entwertet. Die Adresse steht stattdessen als Kommentar in .env.example."
+  },
+
+  "kosten": {
+    "heuteGesamt": "6 USD/Monat (Control Server auf Zeabur)",
+    "gpuPreiseGemessen": {
+      "quelle": "Salad-API /gpu-classes, 2026-08-01, Prioritaet high",
+      "RTX 4090 (24 GB)": "0,30 USD/h = ca. 216 USD/Monat bei 24/7",
+      "RTX 3090 (24 GB)": "0,25 USD/h = ca. 180 USD/Monat bei 24/7",
+      "RTX A5000 (24 GB)": "0,25 USD/h = ca. 180 USD/Monat bei 24/7",
+      "RTX 5090 (32 GB)": "0,45 USD/h = ca. 324 USD/Monat bei 24/7"
+    },
+    "freigabeDesBetreibers": "Erteilt am 2026-08-01: Container NUR fuer die Messung starten (RTX 4090, 0,30 USD/h, ca. 4-8 Stunden = ca. 1,20-2,40 USD einmalig), danach wieder stoppen. Ueber den Dauerbetrieb wird erst entschieden, wenn die Punktzahl vorliegt.",
+    "keinDauerbetrieb": "Damit ist das Abnahmekriterium 'rund um die Uhr' bewusst NICHT erfuellt. Das ist eine Entscheidung des Betreibers, kein Versaeumnis der Umsetzung.",
+    "abwaegung": "Coding laeuft heute auf glm-4.7-flash fuer 0,00 USD. Ein eigenes Modell bringt Unabhaengigkeit und Kontrolle. Qualitaet allein rechtfertigt 180-216 USD/Monat nicht, solange die kostenlose Kette messbar gleich gut oder besser ist."
+  },
+
+  "messung": {
+    "suite": "evals/suites/smejj-chat-core-v1.json, 14 Faelle, unveraendert (keine Schwelle verschoben, kein Fall entfernt)",
+    "wiederholungen": "5 je Fall — eine Einzelmessung schwankt um bis zu 12 Prozentpunkte allein durch Zufall",
+    "basiswertSchnellspur": {
+      "modell": "groq:llama-3.1-8b-instant ueber die Live-Bruecke",
+      "punktzahl": "82,1 % ± 3,1",
+      "faelle": "9 bestanden, 4 teilweise, 1 nicht bestanden, 0 Fehler",
+      "antwortzeitP95": "758 ms",
+      "bericht": "docs/benchmarks/modeleval-smejj-chat-core-schnellspur-basis-2026-08-01.json"
+    },
+    "messfalleGetroffen": "Der erste Basislauf war unbrauchbar: 5 Ziehungen bei 400 ms Abstand reissen die Ratenbegrenzung der Bruecke (12 Anfragen/Minute). Acht Faelle kamen als http_429 zurueck und saehen aus wie Modellversagen. Mit 6000 ms Abstand sauber. Ohne diese Korrektur waere ein gesundes Modell als Totalausfall berichtet worden."
+  },
+
+  "pflichtChecks": {
+    "check:guidelines": "OK — 1188 Dateien, max 800 Zeilen, Naming smejj.com",
+    "check:architecture": "OK — 7/7",
+    "check:evaluation": "OK — 58/58",
+    "check:training-loop": "OK — 28/28",
+    "check:ai": "OK — 39/39 (enthaelt die Fail-closed-Tests fuer smejj-fast-1)",
+    "check:paths": "OK",
+    "check:security": "OK — 3/3"
+  },
+
+  "feintuning": {
+    "stand": "NICHT begonnen — richtig so",
+    "grund": "Ein LoRA-Feintuning braucht erlaubte Trainingsdaten. Die Trainingsdaten-Richtlinie sperrt Ausgaben von Fremdmodell-APIs, eigene Daten wurden nie gesammelt, das Erfassungstor SMEJJ_TRAINING_CAPTURE_ENABLED steht aus. Es gibt null verwertbare Beispiele.",
+    "folge": "Ohne Datenquelle ist Feintuning gegenstandslos. Die Entscheidung darueber liegt beim Betreiber (Stufe 0 in docs/architecture/SMEJJ_1_0_TRAININGSWEG.md)."
+  }
+}
