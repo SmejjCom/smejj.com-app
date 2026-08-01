@@ -63,11 +63,19 @@
     "check:json": "OK.",
     "check": "OK — alle Syntaxpruefungen."
   },
+  "gitHinweis": {
+    "was": "Diese Aenderung liegt im Commit c69f69f3b259cf0032ec76b4115695423691cc41 — unter der IRREFUEHRENDEN Nachricht 'docs(auftrag): Maus im eigenen Browser — kopierfertiger Auftrag'.",
+    "wieEsDazuKam": "Eine parallel laufende Sitzung hat committet und gepusht, waehrend dieser Auftrag im Index gestagt war. Ihr Commit hat alle 15 Dateien dieses Auftrags mitgenommen und dazu ihre eigene Datei PROMPT_MAUS_EIGENER_BROWSER.md.",
+    "inhaltlichVollstaendig": "Ja. Alle 15 Dateien sind unveraendert und vollstaendig enthalten; nichts ging verloren, nichts wurde ueberschrieben.",
+    "nichtKorrigiert": "Die Historie wurde NICHT umgeschrieben. Der Commit liegt bereits auf origin; ein Aufteilen braeuchte Force-Push — Rote Liste, ohne schriftliche Freigabe unzulaessig.",
+    "merkregel": "Bestaetigt die bekannte Falle: in diesem Repo laufen parallele Sitzungen. Niemals `git add -A`, und zwischen `git add` und `git commit` darf kein Wartezustand liegen."
+  },
   "status": {
-    "stand": "gebaut, geprueft, live gemessen — NICHT ausgerollt",
+    "stand": "gebaut, geprueft, live gemessen, committet und auf origin gepusht",
     "kosten": "0,00 USD. Beide Live-Laeufe ueber die Schnellspur (groq Free-Tier), 84 Aufrufe.",
-    "nichtGetan": "Kein Push, kein Deploy. Ein Push auf den Arbeits-Branch loest einen Zeabur-Neubau aus und setzt den Verlauf im Arbeitsspeicher auf Null — das ist eine Entscheidung des Betreibers.",
-    "nichtMoeglich": "Der im Auftrag verlangte Test im Zeabur-Container-Terminal (GET /health, GET /verlauf) wurde nicht ausgefuehrt: dafuer braucht es Zugang zur Zeabur-Oberflaeche. Ersatzweise wurde derselbe Codeweg zweimal live gegen dieselbe Antwortkette gemessen (siehe liveBeleg).",
-    "naechsterSchritt": "Nach Freigabe: pushen, dann im Zeabur-Container GET /verlauf abrufen und die Antwort durch scripts/verlauf/aktualisiere-messwerte.mjs geben. SMEJJ_EVAL_WIEDERHOLUNGEN braucht keinen Eintrag — der Standard ist 3. Wird er gesetzt, gilt: Zeaburs Restart laedt Umgebungsvariablen nicht neu, nur Redeploy."
+    "rollbackPunkt": "27885ce156db158796e38239317fedf7d2663469 — der Stand unmittelbar vor dieser Aenderung.",
+    "deploy": "Der Push auf feature/auth-redesign-github-magiclink loest den Zeabur-Neubau des Dienstes smejj-training-loop aus. SMEJJ_EVAL_WIEDERHOLUNGEN braucht keinen Eintrag — der Standard ist 3. Wird er doch gesetzt, gilt: Zeaburs Restart laedt Umgebungsvariablen NICHT neu, nur Redeploy oder ein neuer Commit.",
+    "offenNachDeploy": "Der Dienst misst im 6-Stunden-Takt und hat absichtlich keine oeffentliche Adresse. Die erste Messung mit Quoten entsteht deshalb erst mit dem naechsten faelligen Zyklus. Beleg dann: `grep VERLAUF` und `grep WACKELIG` im Zeabur-Protokoll, danach GET /verlauf im Container-Terminal durch scripts/verlauf/aktualisiere-messwerte.mjs geben.",
+    "frontend": "public/verlauf.js liegt in diesem Repo, ausgeliefert wird smejj.com aber aus smejj-app-frontend (assets/). Die Anzeige der Quoten wird erst mit dem naechsten Frontend-Deploy sichtbar — und zeigt ohnehin erst etwas, wenn eine Messung mit Quoten vorliegt."
   }
 }
