@@ -17,11 +17,11 @@
 // Fail-closed: ohne Bestaetigung, ohne Token oder bei jedem Fehler wird nichts
 // veraendert. Die laufende Bridge bleibt in jedem Fehlerfall unberuehrt.
 
-import { readFile } from "node:fs/promises";
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
+import { BRIDGE_ENTRY, buildChatBridgeArtifact } from "./bundle_chat_bridge.mjs";
 
 const API = "https://api.zeabur.com/graphql";
-const QUELLE = "public/chat-bridge.js";
+const QUELLE = BRIDGE_ENTRY;
 const ZIEL = "/tmp/smejj-chat-bridge.mjs";
 const PROJEKT_ID = "6a6666899949111176cddefb";
 const SERVICE_ID = "6a6680070d0b094201bb9ce4";
@@ -86,9 +86,18 @@ async function main() {
     ].join("\n"));
   }
 
-  const inhalt = await readFile(QUELLE, "utf8");
-  const version = inhalt.match(/const BRIDGE_VERSION = "([^"]+)"/)?.[1];
-  if (!version) abbruch(`${QUELLE}: BRIDGE_VERSION nicht gefunden — Abbruch, nichts veraendert.`);
+  // Seit 2026-08-01 geht nicht mehr die Rohdatei raus, sondern ein Buendel:
+  // die Bridge besteht im Repository aus mehreren Modulen (800-Zeilen-Regel) und
+  // traegt das Wissensartefakt mit. Der Buendler bricht bei allem ab, was er nicht
+  // sicher aufloesen kann — dann wird hier nichts veraendert.
+  let buendel;
+  try {
+    buendel = await buildChatBridgeArtifact({ projectRoot: process.cwd() });
+  } catch (fehler) {
+    abbruch(`Buendeln fehlgeschlagen (${fehler.message}) — Abbruch, nichts veraendert.`);
+  }
+  const inhalt = buendel.code;
+  const version = buendel.version;
 
   const befehle = await findeBefehle();
   if (!befehle.datei.length) {
@@ -104,6 +113,9 @@ async function main() {
     quelle: QUELLE,
     ziel: ZIEL,
     version,
+    module: buendel.moduleCount,
+    wissensabschnitte: buendel.chunkCount,
+    wissenSha256: buendel.sha256,
     bytes: Buffer.byteLength(inhalt),
     dateiBefehle: befehle.datei,
     neustartBefehle: befehle.neustart
