@@ -23,6 +23,10 @@ WORKDIR /app
 COPY package.json ./
 
 COPY workers/smejj-training-loop ./workers/smejj-training-loop
+# Anbau der Dauertrainings-Schleife. Kein eigener Dienst — ein zweiter Container
+# waere eine neue laufende Kostenposition (Rote Liste). Ohne
+# SMEJJ_LORA_LOOP_ENABLED=YES ist der Anbau totes Gewicht und tickt nie.
+COPY workers/smejj-lora-loop ./workers/smejj-lora-loop
 COPY workers/maus-engine/artifact-uploader.mjs ./workers/maus-engine/artifact-uploader.mjs
 COPY workers/glm-salad/s3.js ./workers/glm-salad/s3.js
 COPY src/evaluation ./src/evaluation

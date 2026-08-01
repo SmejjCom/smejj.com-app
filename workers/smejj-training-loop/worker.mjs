@@ -13,12 +13,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadLoopConfig } from "./config.js";
 import { createLoop } from "./loop.js";
+import { baueLoraAnbau, beantworteLoraRoute, starteLoraTakt } from "./loraAnbau.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const TICK_POLL_MS = 30_000;
 
-export function createServer({ config, loop, readyCheck = () => true }) {
+export function createServer({ config, loop, readyCheck = () => true, loraAnbau = null }) {
   return http.createServer(async (req, res) => {
+    // Der Anbau beantwortet nur /lora/*. Alles andere laeuft unveraendert
+    // durch die bestehenden Zweige — der Eval-Zyklus merkt nichts davon.
+    if (beantworteLoraRoute(req, res, loraAnbau)) return;
+
     if (req.method === "GET" && req.url === "/health") {
       const ready = readyCheck();
       const status = loop.getStatus();
@@ -78,13 +83,21 @@ export function startTicking(loop, {
 async function main() {
   const config = loadLoopConfig(process.env);
   const loop = createLoop({ config, repoRoot: REPO_ROOT });
-  const server = createServer({ config, loop });
+  // Additiv: scheitert der Anbau, ist loraAnbau null und der Dienst laeuft
+  // exakt wie vorher weiter.
+  const loraAnbau = await baueLoraAnbau({ repoRoot: REPO_ROOT });
+  const server = createServer({ config, loop, loraAnbau });
   startTicking(loop, { config });
+  starteLoraTakt(loraAnbau);
   await new Promise((resolve, reject) => {
     server.on("error", reject);
     server.listen(config.port, config.host, resolve);
   });
   console.log(`[smejj-training-loop] listening on ${config.host}:${config.port} (loopEnabled=${config.loopEnabled})`);
+  if (loraAnbau) {
+    console.log(`[smejj-lora-loop] Anbau geladen (loopEnabled=${loraAnbau.config.loopEnabled}).`
+      + (loraAnbau.hindernisse.length ? ` Trainiert NICHT weil: ${loraAnbau.hindernisse.join(", ")}` : " Training frei."));
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -40,19 +40,28 @@ muss aus der eigenen Dokumentation des Betreibers kommen — rechtlich sauber,
 weil es ihm gehoert, aber es ist ein eigener Arbeitsschritt und nicht Teil des
 offenen Korpus.
 
-## Kosten — echte Preise, Salad-Konto des Betreibers, 01.08.2026
+## Kosten — aus der Salad-API des Betreibers gelesen, 01.08.2026
 
-| GPU | pro Stunde | Dauerbetrieb 30 Tage |
-|---|---|---|
-| RTX 3090 (24 GB) | 0,25 USD | **180 USD/Monat** |
-| RTX A5000 (24 GB) | 0,25 USD | 180 USD/Monat |
-| RTX 4090 (24 GB) | 0,30 USD | **216 USD/Monat** |
-| RTX 5090 (32 GB) | 0,45 USD | 324 USD/Monat |
+Salad verkauft dieselbe Karte in **vier Prioritaetsstufen**. Die urspruengliche
+Projektrechnung kannte nur die teuerste ("high") — daher die 180 USD/Monat.
 
-Heutiger Gesamtbetrieb: 6 USD/Monat. Dauertraining ist das **Dreissigfache**.
-Guthaben 83,91 USD, automatische Aufladung **aus** — auf einer RTX 3090 reicht
-das fuer rund **14 Tage**, dann stoppen die Container von selbst. Das ist ein
-Schutz, kein Fehler; die automatische Aufladung bleibt bewusst aus.
+| GPU | high | batch | Dauerbetrieb high | Dauerbetrieb **batch** |
+|---|---|---|---|---|
+| RTX 3090 (24 GB) | 0,25 | **0,09** | 180 USD/Monat | **64,80 USD/Monat** |
+| RTX A5000 (24 GB) | 0,25 | 0,09 | 180 USD/Monat | 64,80 USD/Monat |
+| RTX 4090 (24 GB) | 0,30 | 0,11 | 216 USD/Monat | 79,20 USD/Monat |
+| RTX 5090 (32 GB) | 0,45 | 0,16 | 324 USD/Monat | 115,20 USD/Monat |
+
+Training ist ein **Batch-Vorgang**: es muss nicht sofort starten und darf
+unterbrochen werden. Deshalb ist `batch` die Standardstufe
+(`SMEJJ_LORA_PRIORITAET`). Wird ein Zyklus unterbrochen, verbucht die Schleife
+ihn als fehlgeschlagen und macht weiter — verloren ist hoechstens die
+Rechenzeit EINES Zyklus, nie der beste Stand (der liegt auf IDrive e2).
+
+Heutiger Gesamtbetrieb: 6 USD/Monat. Guthaben 83,91 USD, automatische Aufladung
+**aus** — auf einer RTX 3090 reicht das in der Stufe batch fuer rund
+**38,8 Tage** statt 14. Das leere Guthaben ist die letzte, vom Anbieter
+erzwungene Bremse und bleibt bewusst scharf.
 
 **Ohne schriftliche Freigabe mit GPU-Klasse und Monatsbetrag startet diese
 Schleife nicht.** Das ist keine Konvention, sondern ein Tor im Code
@@ -90,6 +99,7 @@ statt dass geraten wird. Zusaetzlich:
 | `SMEJJ_LORA_TRAINING_ENABLED` | `NO` | es darf Geld ausgegeben werden |
 | `SMEJJ_LORA_NOTAUS` | `NO` | Notaus |
 | `SMEJJ_LORA_GPU_KLASSE` | — | `rtx3090` \| `rtxa5000` \| `rtx4090` \| `rtx5090` |
+| `SMEJJ_LORA_PRIORITAET` | `batch` | `high` \| `medium` \| `low` \| `batch` |
 | `SMEJJ_LORA_MAX_USD_GESAMT` | — | harte Obergrenze der Kampagne |
 | `SMEJJ_LORA_MAX_ZYKLUS_MINUTEN` | — | Laufzeitdeckel je Zyklus |
 | `SMEJJ_LORA_MAX_ZYKLEN` | — | optionale Zyklus-Obergrenze |

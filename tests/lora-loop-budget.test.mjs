@@ -6,6 +6,7 @@ import {
   leseKostengrenzen,
   monatskostenUsd,
   mussNotausAusloesen,
+  preisProStunde,
   pruefeFreigabe,
   reichweiteTage,
   tatsaechlicheKostenUsd
@@ -35,15 +36,44 @@ function start(overrides = {}, torOverrides = {}) {
   });
 }
 
-test("gemessene Preise: RTX 3090 kostet 180 USD im Monat bei Dauerbetrieb", () => {
-  assert.equal(monatskostenUsd("rtx3090"), 180);
-  assert.equal(monatskostenUsd("rtx4090"), 216);
-  assert.equal(monatskostenUsd("rtx5090"), 324);
+test("gemessene Preise je Prioritaetsstufe (Salad-API 2026-08-01)", () => {
+  assert.equal(monatskostenUsd("rtx3090", "high"), 180);
+  assert.equal(monatskostenUsd("rtx4090", "high"), 216);
+  assert.equal(monatskostenUsd("rtx5090", "high"), 324);
+  // Der eigentliche Fund: dieselbe Karte in der Batch-Stufe.
+  assert.equal(monatskostenUsd("rtx3090", "batch"), 64.8);
+  assert.equal(preisProStunde("rtx3090", "batch"), 0.09);
+  assert.equal(preisProStunde("rtx3090", "high"), 0.25);
 });
 
-test("Guthaben 83,91 USD reicht auf einer RTX 3090 rund 14 Tage", () => {
-  // Die Zahl, die dem Betreiber vor dem Start vorgerechnet werden muss.
-  assert.equal(reichweiteTage("rtx3090", 83.91), 14);
+test("Standardstufe ist batch — Training hat es nie eilig", () => {
+  assert.equal(monatskostenUsd("rtx3090"), 64.8);
+});
+
+test("eine unbekannte Prioritaetsstufe sperrt, statt still auf teuer zu fallen", () => {
+  const tor = start({ SMEJJ_LORA_PRIORITAET: "sofort" });
+  assert.equal(tor.darfStarten, false);
+  assert.ok(tor.gruende.some((g) => g.includes("unbekannte_stufe")), tor.gruende.join(","));
+});
+
+test("Guthaben 83,91 USD: 14 Tage in der Stufe high, 38,8 Tage in batch", () => {
+  // Die Zahlen, die dem Betreiber vor dem Start vorgerechnet werden muessen.
+  assert.equal(reichweiteTage("rtx3090", 83.91, "high"), 14);
+  assert.equal(reichweiteTage("rtx3090", 83.91, "batch"), 38.8);
+});
+
+test("eine Freigabe ueber die teure Stufe deckt die guenstigere", () => {
+  // 180 USD freigegeben, 64,80 USD tatsaechlich — weniger auszugeben als
+  // freigegeben braucht keine neue Freigabe.
+  const tor = start({ SMEJJ_LORA_PRIORITAET: "batch", SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD: "180" });
+  assert.equal(tor.darfStarten, true, tor.gruende.join(","));
+});
+
+test("eine Freigabe deckt NICHT die teurere Stufe", () => {
+  // 64,80 USD freigegeben, aber high gebucht = 180 USD. Muss auffallen.
+  const tor = start({ SMEJJ_LORA_PRIORITAET: "high", SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD: "64.80" });
+  assert.equal(tor.darfStarten, false);
+  assert.ok(tor.gruende.some((g) => g.includes("freigabe_monatsbetrag_zu_klein")), tor.gruende.join(","));
 });
 
 test("vollstaendig freigegebene Umgebung darf starten", () => {
@@ -89,6 +119,7 @@ test("Freigabe fuer eine 3090 deckt keine 5090", () => {
 test("Freigabebetrag muss die echten Monatskosten decken", () => {
   const freigabe = pruefeFreigabe(leseKostengrenzen(env({
     SMEJJ_LORA_GPU_KLASSE: "rtx4090",
+    SMEJJ_LORA_PRIORITAET: "high",
     SMEJJ_LORA_FREIGABE_GPU_KLASSE: "rtx4090",
     SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD: "180"
   })));
@@ -105,18 +136,18 @@ test("unbekannte GPU-Klasse sperrt statt mit Preis 0 zu rechnen", () => {
 // --- Deckel ---
 
 test("ein Zyklus muss vollstaendig ins Restbudget passen", () => {
-  // 45 Minuten auf einer 3090 = 0,1875 USD. Bei 49,9 von 50 USD verbraucht
-  // bleiben 0,1 USD — zu wenig. Ein angefangener, am Deckel abgebrochener
-  // Lauf kostet dasselbe und liefert keine Messung.
-  const tor = start({}, { verbrauchtUsd: 49.9 });
+  // 45 Minuten auf einer 3090 in der Batch-Stufe = 0,0675 USD. Bei 49,98 von
+  // 50 USD verbraucht bleiben 0,02 USD — zu wenig. Ein angefangener, am Deckel
+  // abgebrochener Lauf kostet dasselbe und liefert keine Messung.
+  const tor = start({}, { verbrauchtUsd: 49.98 });
   assert.equal(tor.darfStarten, false);
   assert.ok(tor.gruende.some((g) => g.startsWith("budget_erschoepft")), tor.gruende.join(","));
 });
 
 test("Zykluskosten und tatsaechliche Kosten rechnen mit dem gemessenen Preis", () => {
   const grenzen = leseKostengrenzen(env());
-  assert.equal(geschaetzteZykluskostenUsd(grenzen), 0.1875);
-  assert.equal(tatsaechlicheKostenUsd(grenzen, 60), 0.25);
+  assert.equal(geschaetzteZykluskostenUsd(grenzen), 0.0675);
+  assert.equal(tatsaechlicheKostenUsd(grenzen, 60), 0.09);
   assert.equal(tatsaechlicheKostenUsd(grenzen, 0), 0);
 });
 

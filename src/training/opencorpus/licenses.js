@@ -49,7 +49,12 @@ export const ERLAUBTE_LIZENZEN = Object.freeze(new Set([
   "cc-by-4.0",
   "cc-by-3.0",
   "cc0-1.0",
-  "unlicense"
+  "unlicense",
+  // Eigene Inhalte des Betreibers (Dokumentation im eigenen Repository). Keine
+  // Fremdlizenz, sondern Eigentum — deshalb ein eigener Wert statt eines
+  // erfundenen Lizenzaufklebers. Nur gueltig zusammen mit der Urheberschaft
+  // "human-first-party"; siehe die Kreuzpruefung in pruefeDatensatzQuelle.
+  "first-party-owned"
 ]));
 
 /**
@@ -80,7 +85,11 @@ export const ABGELEHNTE_LIZENZEN = Object.freeze(new Map([
  */
 export const ERLAUBTE_URHEBERSCHAFTEN = Object.freeze(new Set([
   "human",
-  "permissively-licensed-source-code"
+  "permissively-licensed-source-code",
+  // Vom Betreiber selbst geschriebene Projektdokumentation. policy.js kennt
+  // diese Kategorie bereits ("human-first-party" passiert dort die
+  // Rechtepruefung ohne Ledger-Eintrag) — hier gilt derselbe Begriff.
+  "human-first-party"
 ]));
 
 /**
@@ -142,6 +151,16 @@ export function pruefeDatensatzQuelle(quelle) {
     gruende.push(`urheberschaft_gesperrt:${GESPERRTE_URHEBERSCHAFTEN.get(authorship)}`);
   } else if (!ERLAUBTE_URHEBERSCHAFTEN.has(authorship)) {
     gruende.push(`urheberschaft_nicht_auf_allowlist:${authorship}`);
+  }
+
+  // Kreuzpruefung: "first-party-owned" und "human-first-party" gehoeren
+  // zusammen. Einzeln waeren sie ein Schlupfloch — ein Fremddatensatz mit dem
+  // Aufkleber "first-party-owned" wuerde sonst am Lizenz-Tor vorbeikommen,
+  // und eigene Dokumentation mit einer Fremdlizenz waere falsch etikettiert.
+  const eigenLizenz = license === "first-party-owned";
+  const eigenUrheber = authorship === "human-first-party";
+  if (eigenLizenz !== eigenUrheber) {
+    gruende.push("erstpartei_kennzeichnung_unvollstaendig");
   }
 
   return {

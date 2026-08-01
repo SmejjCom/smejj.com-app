@@ -23,17 +23,47 @@
 // Bremse, und die soll scharf bleiben.
 
 /**
- * Preise je GPU-Stunde. Gemessen im Salad-Konto des Betreibers am 2026-08-01.
- * Kein Schaetzwert und kein Listenpreis aus dem Netz — wenn Salad die Preise
- * aendert, MUSS diese Tabelle nachgemessen werden, sonst rechnet der Deckel
- * mit falschen Zahlen und haelt nicht, was er verspricht.
+ * Preise je GPU-Stunde und PRIORITAETSSTUFE. Am 2026-08-01 direkt aus der
+ * Salad-API des Betreibers gelesen (/organizations/<org>/gpu-classes), nicht
+ * aus einer Preisliste im Netz.
+ *
+ * DIE STUFEN SIND DER PUNKT: Salad verkauft dieselbe Karte in vier Stufen.
+ * Fuer die RTX 3090 sind das 0,25 / 0,197 / 0,143 / 0,09 USD je Stunde.
+ * Die urspruengliche Kostenrechnung dieses Projekts kannte nur die teuerste
+ * Stufe ("high") — daher die 180 USD/Monat.
+ *
+ * Training ist ein BATCH-Vorgang: es muss nicht sofort starten und darf
+ * unterbrochen werden. Genau dafuer ist die Stufe "batch" gedacht, und sie
+ * kostet 0,09 statt 0,25 USD je Stunde — 64,80 statt 180 USD im Monat, also
+ * rund 64 Prozent weniger fuer dieselbe Karte.
+ *
+ * Der Preis fuer eine Unterbrechung ist hier gering: ein abgebrochener Zyklus
+ * wird von der Schleife als fehlgeschlagen verbucht und der naechste laeuft
+ * weiter (siehe cycle.js). Es geht hoechstens die Rechenzeit EINES Zyklus
+ * verloren, nicht der beste Stand — der liegt auf IDrive e2.
  */
 export const GPU_PREISE_USD_PRO_STUNDE = Object.freeze({
-  "rtx3090": 0.25,
-  "rtxa5000": 0.25,
-  "rtx4090": 0.30,
-  "rtx5090": 0.45
+  "rtx3090": Object.freeze({ high: 0.25, medium: 0.197, low: 0.143, batch: 0.09 }),
+  "rtxa5000": Object.freeze({ high: 0.25, medium: 0.197, low: 0.143, batch: 0.09 }),
+  "rtx4090": Object.freeze({ high: 0.30, medium: 0.24, low: 0.17, batch: 0.11 }),
+  "rtx5090": Object.freeze({ high: 0.45, medium: 0.36, low: 0.26, batch: 0.16 })
 });
+
+export const PRIORITAETEN = Object.freeze(["high", "medium", "low", "batch"]);
+
+/**
+ * Standardstufe fuer das Dauertraining. Bewusst die guenstigste: die Schleife
+ * laeuft unbefristet und hat es nie eilig.
+ */
+export const STANDARD_PRIORITAET = "batch";
+
+/** Preis je Stunde fuer Klasse und Stufe, 0 wenn eines von beidem unbekannt ist. */
+export function preisProStunde(gpuKlasse, prioritaet = STANDARD_PRIORITAET) {
+  const klasse = GPU_PREISE_USD_PRO_STUNDE[String(gpuKlasse || "").toLowerCase()];
+  if (!klasse) return 0;
+  const stufe = String(prioritaet || STANDARD_PRIORITAET).toLowerCase();
+  return PRIORITAETEN.includes(stufe) ? klasse[stufe] || 0 : 0;
+}
 
 /** VRAM je Klasse — fuer die Vorpruefung, ob das Basismodell ueberhaupt passt. */
 export const GPU_VRAM_GB = Object.freeze({
@@ -55,8 +85,8 @@ function flagJa(env, name) {
 }
 
 /** Monatskosten bei Dauerbetrieb — die Zahl, die dem Betreiber genannt wird. */
-export function monatskostenUsd(gpuKlasse) {
-  const preis = GPU_PREISE_USD_PRO_STUNDE[String(gpuKlasse || "").toLowerCase()];
+export function monatskostenUsd(gpuKlasse, prioritaet = STANDARD_PRIORITAET) {
+  const preis = preisProStunde(gpuKlasse, prioritaet);
   return preis ? Number((preis * STUNDEN_PRO_MONAT).toFixed(2)) : 0;
 }
 
@@ -64,8 +94,8 @@ export function monatskostenUsd(gpuKlasse) {
  * Wie lange das vorhandene Guthaben bei Dauerbetrieb reicht. Der Auftrag
  * verlangt ausdruecklich, das dem Betreiber VOR dem Start vorzurechnen.
  */
-export function reichweiteTage(gpuKlasse, guthabenUsd) {
-  const preis = GPU_PREISE_USD_PRO_STUNDE[String(gpuKlasse || "").toLowerCase()];
+export function reichweiteTage(gpuKlasse, guthabenUsd, prioritaet = STANDARD_PRIORITAET) {
+  const preis = preisProStunde(gpuKlasse, prioritaet);
   const guthaben = positiveZahl(guthabenUsd);
   if (!preis || !guthaben) return 0;
   return Number((guthaben / (preis * 24)).toFixed(1));
@@ -81,9 +111,11 @@ export function reichweiteTage(gpuKlasse, guthabenUsd) {
  */
 export function leseKostengrenzen(env = process.env) {
   const gpuKlasse = String(env.SMEJJ_LORA_GPU_KLASSE || "").trim().toLowerCase();
+  const prioritaet = String(env.SMEJJ_LORA_PRIORITAET || STANDARD_PRIORITAET).trim().toLowerCase();
   const grenzen = {
     gpuKlasse,
-    preisProStundeUsd: GPU_PREISE_USD_PRO_STUNDE[gpuKlasse] || 0,
+    prioritaet,
+    preisProStundeUsd: preisProStunde(gpuKlasse, prioritaet),
     vramGb: GPU_VRAM_GB[gpuKlasse] || 0,
     maxGesamtUsd: positiveZahl(env.SMEJJ_LORA_MAX_USD_GESAMT),
     maxZyklusMinuten: positiveZahl(env.SMEJJ_LORA_MAX_ZYKLUS_MINUTEN),
@@ -96,7 +128,9 @@ export function leseKostengrenzen(env = process.env) {
 
   const fehlend = [
     !grenzen.gpuKlasse && "SMEJJ_LORA_GPU_KLASSE",
-    grenzen.gpuKlasse && !grenzen.preisProStundeUsd && `SMEJJ_LORA_GPU_KLASSE:unbekannte_klasse:${grenzen.gpuKlasse}`,
+    !PRIORITAETEN.includes(prioritaet) && `SMEJJ_LORA_PRIORITAET:unbekannte_stufe:${prioritaet}`,
+    grenzen.gpuKlasse && PRIORITAETEN.includes(prioritaet) && !grenzen.preisProStundeUsd
+      && `SMEJJ_LORA_GPU_KLASSE:unbekannte_klasse:${grenzen.gpuKlasse}`,
     !grenzen.maxGesamtUsd && "SMEJJ_LORA_MAX_USD_GESAMT",
     !grenzen.maxZyklusMinuten && "SMEJJ_LORA_MAX_ZYKLUS_MINUTEN"
   ].filter(Boolean);
@@ -126,7 +160,10 @@ export function pruefeFreigabe(grenzen) {
   if (!grenzen.freigabeMonatsbetragUsd) {
     gruende.push("freigabe_ohne_monatsbetrag");
   } else {
-    const tatsaechlich = monatskostenUsd(grenzen.gpuKlasse);
+    // Gegen die TATSAECHLICH gebuchte Stufe pruefen. Eine Freigabe ueber
+    // 180 USD (Stufe high) deckt die guenstigere Stufe batch problemlos —
+    // weniger auszugeben als freigegeben braucht keine neue Freigabe.
+    const tatsaechlich = monatskostenUsd(grenzen.gpuKlasse, grenzen.prioritaet);
     // Toleranz nach oben: der freigegebene Betrag muss die echten Kosten
     // decken. Ist er kleiner, wurde etwas anderes freigegeben als gebucht wird.
     if (tatsaechlich && grenzen.freigabeMonatsbetragUsd + 0.01 < tatsaechlich) {

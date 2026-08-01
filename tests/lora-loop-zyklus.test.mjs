@@ -149,8 +149,8 @@ test("erfolgreicher Zyklus misst, behaelt und rechnet die Kosten ab", async () =
   assert.equal(ergebnis.alsBestemGespeichert, true);
   assert.equal(gespeichert.length, 1);
   assert.equal(gespeichert[0].adapterSchluessel, "checkpoints/smejj-1-0/lauf-1/adapter.safetensors");
-  // 12 Minuten auf einer 3090 = 0,05 USD.
-  assert.equal(ergebnis.kostenUsd, 0.05);
+  // 12 Minuten auf einer 3090 in der Batch-Stufe = 0,018 USD.
+  assert.equal(ergebnis.kostenUsd, 0.018);
 });
 
 test("schlechteres Ergebnis wird verworfen und der Grund protokolliert", async () => {

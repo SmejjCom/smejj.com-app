@@ -93,13 +93,13 @@ test("Kostenzaehler ueberlebt einen Container-Neustart", async () => {
   const loop1 = erzeugeLoop({ config, env: {}, log: () => {}, deps: deps(speicher) });
   const nach1 = await loop1.tick();
   assert.equal(nach1.zyklusIndex, 1);
-  assert.equal(nach1.verbrauchtUsd, 0.125); // 30 Minuten auf einer 3090
+  assert.equal(nach1.verbrauchtUsd, 0.045); // 30 Minuten auf einer 3090, Stufe batch
 
   // Neustart: neuer Prozess, dieselbe Ablage, kein Arbeitsspeicher.
   const loop2 = erzeugeLoop({ config, env: {}, log: () => {}, deps: deps(speicher) });
   const nach2 = await loop2.tick(() => new Date(Date.now() + 3_600_000));
   assert.equal(nach2.zyklusIndex, 2, "Zyklus-Index wurde aus der Ablage gelesen");
-  assert.equal(nach2.verbrauchtUsd, 0.25, "Kosten wurden aufaddiert, nicht zurueckgesetzt");
+  assert.equal(nach2.verbrauchtUsd, 0.09, "Kosten wurden aufaddiert, nicht zurueckgesetzt");
 });
 
 test("ein nicht lesbarer Kostenzaehler sperrt das Training", async () => {
@@ -139,7 +139,7 @@ test("der Verlauf enthaelt Kennzahlen, aber keine Prompts oder Antworten", async
   const verlauf = loop.getVerlauf();
   assert.equal(verlauf.length, 1);
   assert.equal(verlauf[0].punktzahl, 0.9);
-  assert.equal(verlauf[0].kostenUsd, 0.125);
+  assert.equal(verlauf[0].kostenUsd, 0.045);
   const text = JSON.stringify(verlauf);
   assert.ok(!/prompt|antwort|content|messages/i.test(text), text);
 });
@@ -156,9 +156,9 @@ test("/kosten meldet Verbrauch, Rest und Monatskosten", async () => {
     const antwort = await fetch(`http://127.0.0.1:${port}/kosten`);
     const daten = await antwort.json();
     assert.equal(daten.gpuKlasse, "rtx3090");
-    assert.equal(daten.monatskostenUsdBeiDauerbetrieb, 180);
-    assert.equal(daten.verbrauchtUsd, 0.125);
-    assert.equal(daten.restUsd, 49.875);
+    assert.equal(daten.monatskostenUsdBeiDauerbetrieb, 64.8);
+    assert.equal(daten.verbrauchtUsd, 0.045);
+    assert.equal(daten.restUsd, 49.955);
     assert.equal(daten.freigabeId, "freigabe-2026-08-01-dauertraining");
   } finally {
     await new Promise((r) => server.close(r));

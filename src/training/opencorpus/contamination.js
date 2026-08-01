@@ -63,7 +63,14 @@ export function baueSuiteFingerabdruck(suite, { unterscheidendeWerte = [] } = {}
   const werte = new Set();
   for (const fall of suite?.cases || []) {
     for (const gramm of nGramme(fall?.prompt)) gramme.add(gramm);
-    for (const gramm of nGramme(fall?.system)) gramme.add(gramm);
+    // Die SYSTEMZEILE gehoert ausdruecklich NICHT in den Fingerabdruck.
+    // Sie ist geteilter Betriebskontext ("Antworte auf Deutsch, kurz und
+    // praezise"), keine Testfrage — und sie steht absichtlich woertlich auch
+    // ueber jeder Trainingszeile, damit das Modell unter derselben Anweisung
+    // lernt, unter der es gemessen wird.
+    // Gemessen am 2026-08-01: mit der Systemzeile im Fingerabdruck wurden
+    // 1971 von 1971 Projektzeilen abgewiesen — das Tor sperrte alles und war
+    // damit wirkungslos statt streng.
   }
   for (const wert of unterscheidendeWerte) {
     const normalisiert = normalisiereText(wert);

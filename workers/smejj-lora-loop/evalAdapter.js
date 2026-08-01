@@ -66,6 +66,22 @@ export function baueMesser({ config, repoRoot, log = () => {} }) {
  * Manifests, nicht seinen Inhalt — der Inhalt wurde bereits beim Bau des
  * Korpus geprueft (src/training/opencorpus/corpus.js).
  */
+/**
+ * Standard-Manifestleser gegen IDrive e2. Getrennt von baueDatenPruefung, damit
+ * Tests die Ablage ersetzen koennen, ohne Zugangsdaten zu brauchen.
+ */
+export function baueManifestLeser({ env = process.env, idriveConfig, request } = {}) {
+  return async function leseManifest(schluessel) {
+    const [{ idriveConfigFromEnv }, { signedS3Request }] = await Promise.all([
+      import("../maus-engine/artifact-uploader.mjs"),
+      import("../glm-salad/s3.js")
+    ]);
+    const config = idriveConfig || idriveConfigFromEnv(env);
+    const anfrage = request || signedS3Request;
+    return JSON.parse(await anfrage(config, "GET", schluessel));
+  };
+}
+
 export function baueDatenPruefung({ config, leseManifest }) {
   return async function pruefeDaten() {
     if (!config.datensatz.schluessel || !config.datensatz.manifestSchluessel) {

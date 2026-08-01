@@ -98,7 +98,13 @@ export function baueKorpusRecord({
   }
   if (bereinigt.rawPersisted !== false) return { ok: false, gruende: ["raw_data_persisted"] };
 
-  const volltext = bereinigt.value.messages.map((n) => n.content).join("\n");
+  // Nur Nutzer- und Antworttext pruefen. Die Systemzeile ist geteilter
+  // Betriebskontext und in jeder Zeile identisch (siehe contamination.js) —
+  // sie mitzupruefen wuerde jede Zeile abweisen.
+  const volltext = bereinigt.value.messages
+    .filter((n) => n.role !== "system")
+    .map((n) => n.content)
+    .join("\n");
   const verunreinigung = pruefeVerunreinigung(volltext, fingerabdruck);
   if (!verunreinigung.sauber) return { ok: false, gruende: verunreinigung.gruende };
 
