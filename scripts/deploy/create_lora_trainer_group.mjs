@@ -60,7 +60,12 @@ async function api(pfad, methode = "GET", koerper = null) {
     headers: {
       "Salad-Api-Key": API_KEY,
       accept: "application/json",
-      ...(koerper ? { "content-type": "application/json" } : {})
+      // PATCH verlangt application/merge-patch+json. Mit application/json
+      // antwortet die API HTTP 415 "Unsupported Media Type" — gemessen am
+      // 2026-08-01. Der Anlegepfad (POST) fiel nie darauf herein, weil er
+      // application/json nutzt; der Aktualisierungspfad waere beim ersten
+      // echten Einsatz gescheitert.
+      ...(koerper ? { "content-type": methode === "PATCH" ? "application/merge-patch+json" : "application/json" } : {})
     },
     body: koerper ? JSON.stringify(koerper) : undefined
   });
