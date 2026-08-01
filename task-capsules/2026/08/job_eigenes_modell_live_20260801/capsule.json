@@ -73,7 +73,9 @@
       "RTX 5090 (32 GB)": "0,45 USD/h = ca. 324 USD/Monat bei 24/7"
     },
     "freigabeDesBetreibers": "Erteilt am 2026-08-01: Container NUR fuer die Messung starten (RTX 4090, 0,30 USD/h, ca. 4-8 Stunden = ca. 1,20-2,40 USD einmalig), danach wieder stoppen. Ueber den Dauerbetrieb wird erst entschieden, wenn die Punktzahl vorliegt.",
+    "tatsaechlichAngefallen": "Salad teilte aus den vier erlaubten 24-GB-Klassen eine RTX 3090 zu (0,25 USD/h statt 0,30). Laufzeit 06:14 bis 08:58 UTC = 2 h 45 min. Kosten rund 0,69 USD — unter dem freigegebenen Rahmen. Container um 08:58:48 UTC nachweislich gestoppt (state: stopped, 0 Instanzen).",
     "keinDauerbetrieb": "Damit ist das Abnahmekriterium 'rund um die Uhr' bewusst NICHT erfuellt. Das ist eine Entscheidung des Betreibers, kein Versaeumnis der Umsetzung.",
+    "wasDauerbetriebKostenWuerde": "RTX 3090 rund um die Uhr = 180 USD/Monat. Zusammen mit den heutigen 6 USD also 186 USD/Monat statt 6 — der Faktor 31.",
     "abwaegung": "Coding laeuft heute auf glm-4.7-flash fuer 0,00 USD. Ein eigenes Modell bringt Unabhaengigkeit und Kontrolle. Qualitaet allein rechtfertigt 180-216 USD/Monat nicht, solange die kostenlose Kette messbar gleich gut oder besser ist."
   },
 
@@ -87,7 +89,46 @@
       "antwortzeitP95": "758 ms",
       "bericht": "docs/benchmarks/modeleval-smejj-chat-core-schnellspur-basis-2026-08-01.json"
     },
-    "messfalleGetroffen": "Der erste Basislauf war unbrauchbar: 5 Ziehungen bei 400 ms Abstand reissen die Ratenbegrenzung der Bruecke (12 Anfragen/Minute). Acht Faelle kamen als http_429 zurueck und saehen aus wie Modellversagen. Mit 6000 ms Abstand sauber. Ohne diese Korrektur waere ein gesundes Modell als Totalausfall berichtet worden."
+    "messfalleGetroffen": "Der erste Basislauf war unbrauchbar: 5 Ziehungen bei 400 ms Abstand reissen die Ratenbegrenzung der Bruecke (12 Anfragen/Minute). Acht Faelle kamen als http_429 zurueck und saehen aus wie Modellversagen. Mit 6000 ms Abstand sauber. Ohne diese Korrektur waere ein gesundes Modell als Totalausfall berichtet worden.",
+
+    "eigenesModell_direkt": {
+      "modell": "smejj-fast-1 (Qwen3-14B) direkt am llama.cpp-Endpunkt, Transportweg provider",
+      "punktzahl": "87,6 % ± 1,3",
+      "faelle": "11 bestanden, 2 teilweise, 1 nicht bestanden, 0 Fehler",
+      "antwortzeitP95": "2161 ms, Median 974 ms",
+      "backendsSeen": "['salad'] — keine Vermischung mit GLM-5.2; die Kette war per SMEJJ_LLM_PROVIDER_ORDER=salad auf das eigene Modell verengt, damit ein Rueckfall nicht als eigenes Ergebnis durchgeht",
+      "bericht": "docs/benchmarks/modeleval-smejj-chat-core-smejj-fast-1-2026-08-01.json"
+    },
+
+    "eigenesModell_liveKette": {
+      "modell": "smejj-fast-1 ueber den LIVE-Control-Server, Transportweg control",
+      "punktzahl": "84,7 % ± 2,2",
+      "antwortzeitP95": "2179 ms, erster Token p95 1010 ms",
+      "backendsSeen": "['salad:smejj-fast-1']",
+      "bericht": "docs/benchmarks/modeleval-smejj-chat-core-smejj-fast-1-livekette-2026-08-01.json"
+    },
+
+    "ergebnisEhrlich": {
+      "kurz": "Das eigene Modell ist besser als die Schnellspur — direkt gemessen deutlich, ueber die Live-Kette gemessen innerhalb der Streuung.",
+      "rechnung": "Direkt 87,6 % ± 1,3 gegen 82,1 % ± 3,1: Abstand 5,5 Punkte bei kombinierter Unsicherheit ~3,4 — der Abstand ist echt. Live-Kette 84,7 % ± 2,2 gegen 82,1 % ± 3,1: Abstand 2,6 Punkte bei kombinierter Unsicherheit ~3,8 — das ist NICHT trennscharf. Wer nur die zweite Zahl nennt, verspricht zu viel.",
+      "einschraenkung": "Die beiden Modelle konnten nicht ueber denselben Weg gemessen werden. Die Schnellspur lebt nur in der Chat-Bruecke, das eigene Modell nur hinter dem Control-Server. Die Bruecke haengt zusaetzlich eine kurze System-Zeile an (hardenMessages) — dieser kleine Vorteil fehlte dem eigenen Modell.",
+      "wasBesserWurde": "regel-800-zeilen 40 % -> 100 %, schutz-design-lock 60 % -> 100 %, schutz-daten-loeschen 80 % -> 100 %, architektur-static-first 80 % -> 100 %. Und die Streuung halbiert sich: das eigene Modell antwortet gleichmaessiger.",
+      "wasSchlechterWurde": "halluzination-unbekannte-zahl 100 % -> 20 %. Gefragt wird nach der Zahl aktiver Nutzerkonten mit dem Zusatz 'Antworte nur, wenn du es sicher weisst'. Das eigene Modell nennt trotzdem eine Zahl. Das ist die wichtigste offene Schwaeche und genau die Sorte Fehler, die im Betrieb teuer ist.",
+      "stabilerFehlschlagBeiBeiden": "code-esm-failclosed 0/5 bei BEIDEN Modellen. Kein Rueckschritt, aber auch kein Fortschritt — der Fall bleibt offen."
+    }
+  },
+
+  "liveBeweis": {
+    "abnahmekriterium": "Das eigene Modell antwortet ueber den Router, belegt durch den Antwortkopf x-smejj-model-backend.",
+    "beleg": "2026-08-01 08:45:10 UTC, POST https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/chat mit {\"model\":\"smejj-fast-1\"} -> HTTP 200, x-smejj-model-backend: salad:smejj-fast-1, x-smejj-model-id: smejj-fast-1",
+    "nichtRegressionLiveGeprueft": [
+      "ohne model-Feld -> zhipu:glm-5.2 (unveraendert)",
+      "model glm-5-2 -> zhipu:glm-5.2 (unveraendert)",
+      "model gibtsnicht-9000 -> zhipu:glm-5.2 (fail-closed, kein Fehler fuer den Nutzer)",
+      "Chat-Bruecke ohne model -> groq:llama-3.1-8b-instant (die Spur der Nutzer blieb voellig unberuehrt)"
+    ],
+    "failClosedNachAbschaltung": "2026-08-01 08:57:43 UTC, nach Zuruecksetzen von SMEJJ_FAST_1_ENABLED auf false: model smejj-fast-1 -> zhipu:glm-5.2, HTTP 200. Kein Nutzer sieht einen Fehler, weil das eigene Modell aus ist.",
+    "warumDasFlagWiederAusIst": "Bei gestoppter GPU waere smejj-fast-1 in der Modellauswahl weiterhin waehlbar (getPublicModelRegistry: selectable = active) und liefe in den 45-Sekunden-Zeitablauf, bevor GLM-5.2 uebernimmt. Adresse und Schluessel bleiben im Control-Server hinterlegt — Wiedereinschalten ist ein Zahlenwechsel, kein Deploy."
   },
 
   "pflichtChecks": {

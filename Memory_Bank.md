@@ -5,6 +5,28 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-01] EIGENES MODELL EXISTIERT UND SCHLAEGT DIE SCHNELLSPUR (job_eigenes_modell_live_20260801)
+
+Volltext: [docs/memory/Memory_Bank_2026-08-01_eigenes_modell.md](docs/memory/Memory_Bank_2026-08-01_eigenes_modell.md).
+Capsule `job_eigenes_modell_live_20260801`, Rollback `095dbcd`, Commits `c7fc4b4`, `87ab3e0`.
+
+- **Gemessen, 5 Ziehungen je Fall:** Schnellspur `groq:llama-3.1-8b-instant`
+  **82,1 % ± 3,1**, eigenes Modell direkt **87,6 % ± 1,3**, ueber die Live-Kette
+  **84,7 % ± 2,2**. Der direkte Abstand ist echt, der Live-Abstand liegt in der
+  Streuung — beide Zahlen nennen, nicht nur die schoenere.
+- **Live belegt** (08:45 UTC): `x-smejj-model-backend: salad:smejj-fast-1`; ohne
+  `model` weiter `zhipu:glm-5.2`, die Nutzer-Bruecke blieb unberuehrt.
+- **DIE STARTSONDE IST DIE HAERTERE GRENZE ALS DIE GRAFIKKARTE.** llama.cpp laedt
+  die Gewichte beim Start; das laeuft gegen Salads `startup_probe`, Maximum hart
+  60 min. Ein 17,7-GB-Abbild wurde darin zweimal nicht fertig und startete den
+  Download von vorn. Salad meldet dabei **RUNNING, 1/1 Replica** — nur `ready`
+  bleibt false. Basis darum Qwen3-14B UD-Q4_K_XL (9,2 GB); auf 24 GB VRAM haette
+  auch das 30B-Abbild gepasst, entschieden hat die Ladezeit.
+- **Eigenes Lager ist nicht selbst hostbar:** GLM-5.2 (755,7 GB) und Kimi K2.7
+  (595,2 GB) brauchen 80-GB-Karten, der Salad-Katalog endet bei 32 GB.
+- **Offene Schwaeche:** `halluzination-unbekannte-zahl` 100 % -> 20 %.
+- Kosten belegt: RTX 3090, 2 h 45 min, ~0,69 USD; Container gestoppt, Flag zurueck.
+
 ### [2026-07-31] MAUS: SITZUNG BLEIBT STEHEN, ZWEITER ADAPTER AN DERSELBEN NAHT (job_maus_eigener_browser_20260731)
 
 Volltext: [docs/memory/Memory_Bank_2026-07-31_maus_sitzung.md](docs/memory/Memory_Bank_2026-07-31_maus_sitzung.md).
@@ -17,23 +39,15 @@ HEAD vor der Aenderung `e603802`. **Noch nicht ausgerollt** (siehe unten).
 - **Gemessen, nicht behauptet** (`scripts/diagnose/maus-sitzung-beweis.mjs`, echter
   Browser, kein Modell): zwei Auftraege, **1 Browserstart statt 2**, Auftrag 2 in
   **0,0 s statt 3,3 s**, gleiche aktive Seite. Abnahmepunkt 4 der Auftragsdatei.
-- **Kein zweiter Sitzungs-Motor.** `workers/remote-browser/session-engine.js`
-  gehoert zum Live-Browser-Dienst (andere Aktionssprache, anderer Worker).
-  Uebernommen wurde sein MUSTER (Idle + Hartlimit + Obergrenze), nicht sein Code.
-- **Zwei leicht uebersehene Punkte:** `executedActions` gehoert zum Auftrag, nicht
-  zur Sitzung (sonst ist Auftrag 2 beim Start verbraucht); und exit-after-run darf
-  nicht feuern, solange eine Sitzung lebt.
-- **Live zuschauen scheiterte an der planId**, nicht am Live-Publisher: der
-  Control-Server kannte sie erst am Laufende. Neuer, fail-safe gekapselter
-  `onPlan`-Rueckruf meldet den gueltigen Plan VOR der Ausfuehrung; seitdem reicht
-  `?runId=...&live=1` allein.
-- **Chrome-Adapter an der `browserFactory`-Naht:** dadurch gelten Allowlist,
-  Budget, Datei-Grenzen und Vault bauartbedingt fuer BEIDE Adapter — es gibt
-  keinen zweiten Interpreter, an dem man vorbeikaeme. **Nie
-  `--remote-debugging-port`**: der Port kennt keine Herkunftspruefung.
-- **Startseiten-Budget:** `maus-auftrag.js` wird dynamisch importiert, nicht eager.
-  Mehraufwand der Startseite gesamt **+711 Byte gzip (0,24 %)**, LCP/CLS/INP/TTFB
-  unveraendert im Budget (`docs/benchmarks/webvitals-maus-sitzung-2026-07-31.json`).
+- **Kein zweiter Sitzungs-Motor:** `workers/remote-browser/session-engine.js` gehoert
+  zum Live-Browser-Dienst; uebernommen wurde sein MUSTER, nicht sein Code.
+  `executedActions` gehoert zum Auftrag, nicht zur Sitzung; exit-after-run darf nicht
+  feuern, solange eine Sitzung lebt. Live zuschauen scheiterte an der planId (der
+  Control-Server kannte sie erst am Laufende) — `onPlan`-Rueckruf meldet sie vorher.
+- **Chrome-Adapter an der `browserFactory`-Naht:** Allowlist, Budget, Datei-Grenzen
+  und Vault gelten dadurch bauartbedingt fuer BEIDE Adapter. **Nie
+  `--remote-debugging-port`** — der Port kennt keine Herkunftspruefung.
+  Startseiten-Mehraufwand +711 Byte gzip (0,24 %), Web Vitals unveraendert.
 - Verifikation: `check:maus-engine` **189/189** (vorher 139), alle Pflichtchecks
   gruen, groesste neue Datei 254 Zeilen.
 - **NICHT LIVE:** Teil 0 (Token + Eimer) am 2026-07-31 nachgemessen und weiterhin
@@ -557,19 +571,11 @@ Kapsel: `docs/task-capsules/2026/07/job_kimi_k3_api_20260728/CAPSULE.md`.
 
 Volltext wegen der 800-Zeilen-Regel ausgelagert nach
 [docs/memory/Memory_Bank_2026-07-28_aiact_adminstufe2.md](docs/memory/Memory_Bank_2026-07-28_aiact_adminstufe2.md).
-Commit `c450fbf`, Control-Server **Version 94**, Konsole unter `/admin`. Kurzfassung:
-
-- AI-Act-Ausgangslage war NULL (kein Treffer im ganzen Repository). Jetzt Bestands-
-  verzeichnis, Risikoeinstufung Maus-Engine (**kein Hochrisiko, aber verschaerfte
-  Transparenz**) und `/api/compliance/ai-systems` ohne Anmeldung.
-- **Die Admin-Oberflaeche liegt im Control-Server, nicht unter `public/`** — kein DNS,
-  kein Frontend-Deploy, kein Service-Worker, kein Start-Lock-Risiko.
-- FALLE: Routen, die HTML an Menschen ausliefern, gehoeren NICHT in
-  `requiresAuthenticatedControlAccess` — sonst kommt rohes JSON statt einer Erklaerung.
-- Lesezugriffe auf Nutzerakten sind jetzt protokollpflichtig (`user.record.read`);
-  ohne Nachweis keine Daten. Der offene Punkt aus Stufe 1 ist geschlossen.
-- **Artefakt IMMER aus einem isolierten Worktree des eigenen Commits bauen**, nie aus
-  dem Hauptbaum — sonst geht fremder, unverbuchter Arbeitsstand mit live.
+Commit `c450fbf`, Control-Server **Version 94**, Konsole unter `/admin`. Merkregeln:
+Admin-Oberflaeche liegt im Control-Server (kein Frontend-Deploy, kein Start-Lock-Risiko);
+HTML-Routen gehoeren NICHT in `requiresAuthenticatedControlAccess`; Lesezugriffe auf
+Nutzerakten sind protokollpflichtig; Artefakt IMMER aus einem isolierten Worktree des
+eigenen Commits bauen, nie aus dem Hauptbaum.
 
 ### [2026-07-28] Hilfeseite ausgelagert
 
