@@ -63,6 +63,14 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
       // wuerde findBaselineReport sie trotzdem gegeneinander stellen und eine
       // Regression melden, die nur ein Spurwechsel ist.
       endpoint: run?.endpoint ? String(run.endpoint) : null,
+      // Projektwissen (RAG) im Prompt. Gehoert aus demselben Grund in den Bericht
+      // wie endpoint: ein Lauf mit Kontext ist mit einem ohne nicht vergleichbar.
+      rag: run?.rag === true,
+      // Die Schwelle gehoert zwingend dazu: sie entscheidet, WIE OFT Kontext
+      // ueberhaupt entsteht, und ist damit der Unterschied zwischen einem Lauf,
+      // der 48 von 48 Aufrufen Kontext gibt, und einem, der 16 von 48 gibt.
+      ragSchwelle: Number.isFinite(run?.ragSchwelle) ? Number(run.ragSchwelle) : null,
+      ragStats: run?.ragStats && typeof run.ragStats === "object" ? { ...run.ragStats } : null,
       // Beleg, wer wirklich geantwortet hat — angefordertes und antwortendes
       // Modell koennen wegen Router-Fallback auseinanderfallen.
       backendsSeen: distinct(caseScores, "backend"),

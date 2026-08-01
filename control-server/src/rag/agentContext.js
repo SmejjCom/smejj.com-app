@@ -3,8 +3,12 @@
 // FAIL-CLOSED: Jeder Fehler ergibt einen leeren Block — RAG darf Chat/Agent nie brechen.
 import { buildIndex, searchIndex } from "./bm25Index.js";
 import { loadKnowledgeChunks } from "./knowledgeLoader.js";
+import { rankHits } from "./ragRanking.js";
 
 const INDEX_TTL_MS = 300_000; // 5 Minuten — Projektwissen aendert sich selten pro Sitzung.
+// Aus mehr Rohtreffern nachgewichtet als am Ende eingespeist werden: sonst kann ein
+// Leitdokument auf Platz 6 die Nachgewichtung gar nicht erst erreichen.
+const RAW_HIT_POOL = 10;
 let cache = null;
 
 export async function ensureKnowledgeIndex(projectRoot) {
@@ -15,19 +19,26 @@ export async function ensureKnowledgeIndex(projectRoot) {
   return cache.index;
 }
 
-/** Sucht Wissens-Treffer; Output wie searchIndex ([{id, source, heading, score, snippet}]). */
-export async function searchKnowledge(projectRoot, query, k = 5) {
+/**
+ * Sucht Wissens-Treffer; Output wie searchIndex ([{id, source, heading, score, snippet}]),
+ * zusaetzlich nach Quellen-Autoritaet nachgewichtet (ragRanking.js).
+ * Leeres Ergebnis, wenn kein Treffer die Relevanzschwelle erreicht.
+ */
+export async function searchKnowledge(projectRoot, query, k = 5, { minTopScore } = {}) {
   const index = await ensureKnowledgeIndex(projectRoot);
-  return searchIndex(index, query, k);
+  return rankHits(searchIndex(index, query, RAW_HIT_POOL), {
+    limit: k,
+    ...(Number.isFinite(minTopScore) ? { minTopScore } : {})
+  });
 }
 
 /**
  * Baut den Prompt-Kontextblock aus den besten Treffern zur Aufgabe.
  * Leerer String, wenn nichts gefunden wird oder ein Fehler auftritt.
  */
-export async function buildRagContextBlock(projectRoot, task, k = 3) {
+export async function buildRagContextBlock(projectRoot, task, k = 3, options = {}) {
   try {
-    const hits = await searchKnowledge(projectRoot, task, k);
+    const hits = await searchKnowledge(projectRoot, task, k, options);
     if (hits.length === 0) return "";
     const blocks = hits.map((hit) => `[intern: ${hit.source}${hit.heading ? ` — ${hit.heading}` : ""}]\n${hit.snippet}`);
     return [

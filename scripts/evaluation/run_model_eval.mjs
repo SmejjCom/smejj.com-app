@@ -28,6 +28,8 @@ import {
 } from "../../src/evaluation/evalScoring.js";
 import { buildEvalReport, EVAL_VERDICT, formatEvalSummary } from "../../src/evaluation/evalReport.js";
 import { callViaControl, callViaProvider, chatEndpointFromEnv, DEFAULT_CHAT_ENDPOINT, isTransientError, TRANSPORTS } from "../../src/evaluation/evalTransport.js";
+import { wrapCallerWithRag } from "../../src/evaluation/evalRagContext.js";
+import { MIN_TOP_SCORE } from "../../control-server/src/rag/ragRanking.js";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(SCRIPT_FILE), "../..");
@@ -47,6 +49,13 @@ export function parseArguments(argv, env = process.env) {
     // Dieselbe Einstellung wie im Training-Loop, damit Kommandozeile und Dienst
     // nie unterschiedlich messen.
     wiederholungen: wiederholungenAusEnv(env),
+    // Projektwissen (RAG) als System-Kontext voranstellen. Aus, solange die
+    // Live-Kette es nicht ausliefert — sonst misst der Harness etwas, das der
+    // Dienst nicht kann, und der Bericht wuerde die Realitaet beschoenigen.
+    rag: false,
+    // Leer = Produktionsschwelle aus ragRanking.js. Ein abweichender Wert ist eine
+    // Messung, kein Betriebszustand — er landet darum im Bericht.
+    ragSchwelle: null,
     out: "",
     baseline: "",
     help: false
@@ -56,6 +65,8 @@ export function parseArguments(argv, env = process.env) {
     const next = () => argv[index + 1];
     if (token === "--help" || token === "-h") options.help = true;
     else if (token === "--live") options.live = true;
+    else if (token === "--rag") options.rag = true;
+    else if (token === "--rag-schwelle") { options.ragSchwelle = Number.parseFloat(next()); index += 1; }
     else if (token === "--suite") { options.suite = String(next() || ""); index += 1; }
     else if (token === "--model") { options.model = String(next() || ""); index += 1; }
     else if (token === "--transport") { options.transport = String(next() || ""); index += 1; }
@@ -74,6 +85,12 @@ export function parseArguments(argv, env = process.env) {
   if (!Number.isInteger(options.delayMs) || options.delayMs < 0) return { error: "invalid_delay" };
   if (!Number.isInteger(options.retries) || options.retries < 0 || options.retries > 5) {
     return { error: "invalid_retries" };
+  }
+  if (options.ragSchwelle !== null) {
+    if (!Number.isFinite(options.ragSchwelle) || options.ragSchwelle < 0) return { error: "invalid_rag_schwelle" };
+    // Eine Schwelle ohne --rag waere wirkungslos und liesse den Bericht behaupten,
+    // es sei etwas gemessen worden, was nie lief.
+    if (!options.rag) return { error: "rag_schwelle_ohne_rag" };
   }
   // Streng statt stillschweigend begrenzt: auf der Kommandozeile ist ein Wert
   // ausserhalb des Bereichs ein Tippfehler, kein Wunsch.
@@ -170,6 +187,12 @@ export async function findBaselineReport({
   // obwohl sich am System nichts geaendert hatte.
   // Aeltere Berichte kennen das Feld nicht; sie zaehlen als eine Ziehung.
   wiederholungen = 1,
+  // Projektwissen im Prompt. Aus demselben Grund Teil der Vergleichbarkeit wie
+  // Endpunkt und Wiederholungen: ein Lauf MIT Kontext gegen einen OHNE gestellt
+  // misst nicht das Modell, sondern den Kontext — und meldet den Unterschied als
+  // Fortschritt oder Regression des Modells. Das ist genau die Verwechslung, die
+  // dieser Vergleichsschluessel verhindern soll.
+  rag = false,
   readDir = readdir,
   readJson = readJsonFile
 }) {
@@ -186,11 +209,14 @@ export async function findBaselineReport({
     const berichtWiederholungen = Number.isInteger(report?.summary?.wiederholungen)
       ? report.summary.wiederholungen
       : 1;
+    // Aeltere Berichte kennen das Feld nicht; sie entstanden ohne Projektwissen.
+    const berichtRag = report?.run?.rag === true;
     if (report?.suite?.suiteId === suiteId &&
         report?.suite?.contentSha256 === contentSha256 &&
         report?.run?.modelId === modelId &&
         berichtEndpunkt === endpoint &&
         berichtWiederholungen === wiederholungen &&
+        berichtRag === rag &&
         report?.run?.live === true) {
       return report;
     }
@@ -198,9 +224,11 @@ export async function findBaselineReport({
   return null;
 }
 
-function reportFileName(suiteId, modelId, isoDate) {
+function reportFileName(suiteId, modelId, isoDate, rag = false) {
   const safeModel = String(modelId || "unknown").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
-  return `modeleval-${suiteId}-${safeModel}-${isoDate.slice(0, 10)}.json`;
+  // Der Zusatz haelt die beiden Spuren desselben Tages auseinander; ohne ihn
+  // ueberschriebe der zweite Lauf den ersten und der A/B-Vergleich waere weg.
+  return `modeleval-${suiteId}-${safeModel}${rag ? "-rag" : ""}-${isoDate.slice(0, 10)}.json`;
 }
 
 async function readJsonFile(file) {
@@ -219,6 +247,13 @@ function usage() {
     "  --model <id>         Modell-Kennung, z. B. glm-5-2 oder kimi-k2-7",
     "  --transport <weg>    control (Live-Kette, Standard) oder provider (direkt, BYOK)",
     "  --live               Modell wirklich aufrufen (ohne dieses Flag nur Trockenlauf)",
+    "  --rag                Projektwissen als System-Kontext voranstellen (BM25 ueber",
+    "                       die Regeldokumente). Fuer den A/B-Vergleich: derselbe Lauf",
+    "                       einmal ohne und einmal mit --rag. Berichte werden nur",
+    "                       gegen Berichte derselben Messart verglichen.",
+    `  --rag-schwelle <n>   Mindestpunktzahl fuer RAG-Kontext (Standard ${MIN_TOP_SCORE}).`,
+    "                       Nur mit --rag. Ein abweichender Wert ist eine Messung und",
+    "                       wird im Bericht festgehalten.",
     "  --limit <n>          hoechstens n Faelle ausfuehren",
     "  --delay-ms <n>       Pause zwischen zwei Faellen (Standard 400)",
     "  --retries <n>        Wiederholungen bei transienten Transportfehlern (Standard 2)",
@@ -274,15 +309,21 @@ async function main() {
       `Wiederholungen je Fall: ${options.wiederholungen}` +
         ` — ${cases.length * options.wiederholungen} Modellaufrufe im Livelauf`,
       `Transportweg: ${options.transport}, Modell: ${modelId}`,
+      `Projektwissen (RAG) im Prompt: ${options.rag ? "ja" : "nein"}`,
       `Fuer einen echten Lauf: --live anhaengen.`,
       ""
     ].join("\n"));
     return;
   }
 
-  const callModel = options.transport === "control"
+  const basisAufruf = options.transport === "control"
     ? (evalCase) => callViaControl(evalCase, { modelId: options.model })
     : await providerCaller(options.model);
+  const ragHuelle = options.rag
+    ? wrapCallerWithRag(basisAufruf, REPO_ROOT,
+      Number.isFinite(options.ragSchwelle) ? { minTopScore: options.ragSchwelle } : {})
+    : null;
+  const callModel = ragHuelle ? ragHuelle.callModel : basisAufruf;
 
   const startedAt = new Date().toISOString();
   process.stdout.write(`Lauf gestartet: ${cases.length} Faelle je ${options.wiederholungen}x` +
@@ -315,20 +356,41 @@ async function main() {
       suiteId: suite.suiteId,
       contentSha256: suite.integrity.contentSha256,
       modelId,
-      wiederholungen: options.wiederholungen
+      wiederholungen: options.wiederholungen,
+      endpoint: chatEndpointFromEnv(),
+      rag: options.rag
     });
 
   const report = buildEvalReport({
     suite,
-    run: { modelId, transport: options.transport, profileMode: "case", live: true, startedAt, finishedAt },
+    run: {
+      modelId,
+      transport: options.transport,
+      profileMode: "case",
+      live: true,
+      startedAt,
+      finishedAt,
+      // Beide Felder gehoeren in den Bericht, weil findBaselineReport spaeter
+      // genau danach vergleicht. Ohne sie waeren Laeufe verschiedener Messart
+      // nicht auseinanderzuhalten.
+      endpoint: chatEndpointFromEnv(),
+      rag: options.rag,
+      ragSchwelle: options.rag ? (options.ragSchwelle ?? MIN_TOP_SCORE) : null,
+      ...(ragHuelle ? { ragStats: ragHuelle.stats } : {})
+    },
     caseScores,
     baseline
   });
 
   await mkdir(reportDirAbs, { recursive: true });
-  const outRelative = options.out || path.join(REPORT_DIR, reportFileName(suite.suiteId, modelId, finishedAt));
+  const outRelative = options.out || path.join(REPORT_DIR, reportFileName(suite.suiteId, modelId, finishedAt, options.rag));
   await writeFile(path.resolve(REPO_ROOT, outRelative), `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
+  if (ragHuelle) {
+    process.stdout.write(`\nProjektwissen: ${ragHuelle.stats.aufrufeMitKontext} von ` +
+      `${ragHuelle.stats.aufrufeMitKontext + ragHuelle.stats.aufrufeOhneKontext} Aufrufen mit Kontext ` +
+      `(${ragHuelle.stats.zeichenGesamt} Zeichen gesamt)\n`);
+  }
   process.stdout.write(`\n${formatEvalSummary(report)}\nBericht: ${outRelative}\n`);
   if (report.verdict !== EVAL_VERDICT.PASSED) process.exitCode = 1;
 }
