@@ -127,6 +127,28 @@
     }
   },
 
+  "dauerbetriebHergestellt": {
+    "stand": "Seit 2026-08-01 19:54 UTC laeuft smejj-fast-1 dauerhaft. Instanz ready=true, Gruppe running, 1/1 Replika. Im Router aktiv seit Control-Server-Version 128; live belegt 19:59:49 UTC mit x-smejj-model-backend: salad:smejj-fast-1.",
+    "zweiAnlaeufeVorher": "Der erste Startversuch (18:36 UTC) wurde nach 15 Minuten unterbrochen, danach fand Salad ueber 35 Minuten ueberhaupt keinen Rechner. Ursache: die Container Group durfte nur vier GPU-Klassen benutzen.",
+    "behebung": "GPU-Pool von 4 auf 7 NVIDIA-Klassen erweitert (RTX 4090, 3090 Ti, 3090, A5000, 4080, 4070 Ti Super, 4060 Ti). Danach war binnen 7 Minuten ein Rechner zugeteilt und der Dienst nach 19 Minuten bereit.",
+    "bewusstNichtAufgenommen": "Die 50er-Serie (5090, 5090 Laptop, 5080, 5070 Ti, 5060 Ti) bleibt draussen, obwohl sie billiger waere und den Pool weiter vergroessern wuerde: Salad weist im Portal darauf hin, dass 50xx-Karten ein mit CUDA 12.8 gebautes Abbild brauchen. Ob ghcr.io/ggml-org/llama.cpp:server-cuda das erfuellt, ist ungeprueft — ein ungetesteter Ausfallgrund im Dauerbetrieb ist teurer als ein paar Cent pro Stunde.",
+    "kostenspanne": "Je nach zugeteilter Karte 158 bis 216 USD/Monat (RTX 4060 Ti 0,22 bis RTX 4090 0,30 USD/h). Die guenstigsten neu aufgenommenen Karten sind billiger als alles, was vorher erlaubt war.",
+    "risikoBegrenzungUnveraendert": "SMEJJ_MODEL_DEFAULT bleibt glm-5-2, SMEJJ_MODEL_AUTO_ENABLED bleibt NO. Live nachgeprueft: ohne model-Feld antwortet weiter zhipu:glm-5.2, eine unbekannte Modell-ID faellt zurueck, und die Chat-Bruecke der Nutzer liefert unveraendert groq:llama-3.1-8b-instant."
+  },
+
+  "befundEchteNutzung": {
+    "kernaussage": "DIE PRUEFUNGSNOTE SAGT DAS VERHALTEN IM ECHTEN GESPRAECH NICHT VORHER. Das eigene Modell gewinnt die Suite mit 87,6 gegen 82,1 Prozent — und verliert bei echten Fragen deutlich gegen GLM-5.2.",
+    "warum": "Jeder Suite-Fall liefert die noetige Projektkenntnis in seinem eigenen System-Prompt mit. Ein echter Nutzer stellt seine Frage ohne diesen Beipackzettel. Gemessen wird damit 'kann das Modell einer mitgelieferten Regel folgen', nicht 'kennt es smejj.com'.",
+    "gemessenAm2026-08-01_20-00_UTC": [
+      "Frage: Welchen Speicherdienst nutzt smejj.com als Hauptserver? — GLM-5.2: 'IDrive e2' mit Zitat. Eigenes Modell: 'Die genannten Ergebnisse liefern keine direkte Information dazu.'",
+      "Frage: Was kostet der Control Server im Monat? — GLM-5.2 antwortet inhaltlich. Eigenes Modell: 'nicht direkt in den Suchergebnissen verzeichnet'.",
+      "Frage: Darf man den Deploy ueber GitHub Actions automatisieren? — GLM-5.2: 'grundsaetzlich moeglich, aber mit wichtigen Einschraenkungen'. Eigenes Modell: 'Ja, es ist moeglich' — das ist FALSCH und verstoesst gegen die Free-only-Policy (GitHub Pages Deploy-from-Branch, keine Actions). Genau dieser Fall steht als kosten-github-free in der Suite und wurde dort 5 von 5 bestanden."
+    ],
+    "entscheidend": "Beide Modelle bekamen denselben Kontext — das eigene Modell erwaehnt die Suchergebnisse ausdruecklich und schafft es trotzdem nicht, die Antwort daraus zu ziehen. Das ist keine Wissensluecke, sondern eine Schwaeche im Verwerten von mitgeliefertem Kontext.",
+    "folgeFuerDieMessung": "Die Suite braucht mindestens einen Fall OHNE mitgelieferte Projektkenntnis, sonst misst sie an der Wirklichkeit vorbei. Das ist eine Suite-Aenderung und gehoert dem Betreiber.",
+    "empfehlung": "Das eigene Modell in diesem Zustand nicht als Auswahl fuer Nutzer stehen lassen. Es ist nicht Standard und nicht im Auto-Routing — ein Nutzer muss es bewusst waehlen — aber wer es waehlt, bekommt sichtbar schlechtere und teils falsche Antworten. Der Betreiber hat den Dauerbetrieb angeordnet; dieser Befund ist die Gegenrede dazu, nicht seine Aufhebung."
+  },
+
   "liveBeweis": {
     "abnahmekriterium": "Das eigene Modell antwortet ueber den Router, belegt durch den Antwortkopf x-smejj-model-backend.",
     "beleg": "2026-08-01 08:45:10 UTC, POST https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/chat mit {\"model\":\"smejj-fast-1\"} -> HTTP 200, x-smejj-model-backend: salad:smejj-fast-1, x-smejj-model-id: smejj-fast-1",

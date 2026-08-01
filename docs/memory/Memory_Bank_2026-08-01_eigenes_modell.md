@@ -126,3 +126,57 @@ Dauerbetrieb würde 180 USD/Monat kosten; zusammen mit den heutigen 6 USD also
 - Feintuning bleibt gegenstandslos: null erlaubte Trainingsbeispiele, das
   Erfassungstor steht aus. Stufe 0 in `docs/architecture/SMEJJ_1_0_TRAININGSWEG.md`
   ist weiterhin die Blockade.
+
+## Nachtrag 20:00 UTC — Dauerbetrieb an, und der Befund, der alles relativiert
+
+Der Betreiber hat den Dauerbetrieb angeordnet, nachdem zweimal abgeraten wurde.
+Seit 19:54 UTC läuft `smejj-fast-1` dauerhaft (ready=true, 1/1 Replika), im
+Router aktiv seit Control-Server-Version 128, live belegt um 19:59:49 UTC mit
+`x-smejj-model-backend: salad:smejj-fast-1`.
+
+### Der GPU-Pool war der Grund für zwei Fehlstarts
+
+Der erste Startversuch wurde nach 15 Minuten unterbrochen, danach fand Salad
+über 35 Minuten **überhaupt keinen Rechner**. Die Container Group durfte nur
+vier GPU-Klassen benutzen. Nach der Erweiterung auf **sieben NVIDIA-Klassen**
+(4090, 3090 Ti, 3090, A5000, 4080, 4070 Ti Super, 4060 Ti) war binnen 7 Minuten
+ein Rechner da und der Dienst nach 19 Minuten bereit.
+
+Die 50er-Serie bleibt bewusst draussen: Salad weist darauf hin, dass 50xx-Karten
+ein mit CUDA 12.8 gebautes Abbild brauchen, und ob das llama.cpp-Abbild das
+erfüllt, ist ungeprüft. Ein ungetesteter Ausfallgrund im Dauerbetrieb ist
+teurer als ein paar Cent pro Stunde.
+
+Kostenspanne jetzt **158 bis 216 USD/Monat**, je nach zugeteilter Karte.
+
+### DIE PRÜFUNGSNOTE SAGT DAS ECHTE VERHALTEN NICHT VORHER
+
+Das ist die wichtigste Erkenntnis des Tages und sie gilt über dieses Modell
+hinaus.
+
+Das eigene Modell gewinnt die Suite mit 87,6 gegen 82,1 Prozent — und verliert
+bei echten Fragen deutlich gegen GLM-5.2. Gemessen am 2026-08-01, 20:00 UTC,
+beide über denselben Endpunkt, mit demselben Kontext:
+
+| Frage | GLM-5.2 | eigenes Modell |
+|---|---|---|
+| Welchen Speicherdienst nutzt smejj.com? | „IDrive e2" mit Zitat | „keine direkte Information dazu" |
+| Was kostet der Control Server? | antwortet inhaltlich | „nicht in den Suchergebnissen verzeichnet" |
+| GitHub Actions für den Deploy erlaubt? | „möglich, aber mit Einschränkungen" | **„Ja, es ist möglich" — falsch** |
+
+Die letzte Antwort verstösst gegen die Free-only-Policy. Und genau dieser Fall
+steht als `kosten-github-free` in der Suite — dort **5 von 5 bestanden**.
+
+**Der Grund:** Jeder Suite-Fall liefert die nötige Projektkenntnis in seinem
+eigenen System-Prompt mit. Ein echter Nutzer stellt seine Frage ohne diesen
+Beipackzettel. Die Suite misst damit „kann das Modell einer mitgelieferten Regel
+folgen", nicht „kennt es smejj.com".
+
+Beide Modelle bekamen denselben Kontext — das eigene Modell **erwähnt die
+Suchergebnisse ausdrücklich** und zieht die Antwort trotzdem nicht daraus. Das
+ist keine Wissenslücke, sondern eine Schwäche im Verwerten von mitgeliefertem
+Kontext. Genau die Fähigkeit, die ein Assistent mit RAG braucht.
+
+**Folge für die Messung:** Die Suite braucht mindestens einen Fall ohne
+mitgelieferte Projektkenntnis, sonst misst sie an der Wirklichkeit vorbei. Das
+ist eine Suite-Änderung und gehört dem Betreiber.

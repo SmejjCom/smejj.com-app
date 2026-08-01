@@ -25,7 +25,16 @@ Capsule `job_eigenes_modell_live_20260801`, Rollback `095dbcd`, Commits `c7fc4b4
 - **Eigenes Lager ist nicht selbst hostbar:** GLM-5.2 (755,7 GB) und Kimi K2.7
   (595,2 GB) brauchen 80-GB-Karten, der Salad-Katalog endet bei 32 GB.
 - **Offene Schwaeche:** `halluzination-unbekannte-zahl` 100 % -> 20 %.
-- Kosten belegt: RTX 3090, 2 h 45 min, ~0,69 USD; Container gestoppt, Flag zurueck.
+- **NACHTRAG 20:00 UTC — Dauerbetrieb an (Anordnung gegen zweimalige Empfehlung).
+  DIE PRUEFUNGSNOTE SAGT DAS ECHTE VERHALTEN NICHT VORHER:** bei drei echten Fragen
+  ueber denselben Endpunkt verliert das eigene Modell klar gegen GLM-5.2 — es
+  antwortet auf "GitHub Actions erlaubt?" mit "Ja" (falsch), waehrend genau dieser
+  Fall in der Suite 5/5 besteht. Grund: jeder Suite-Fall liefert die Projektkenntnis
+  im eigenen System-Prompt mit, ein echter Nutzer nicht. **Die Suite braucht einen
+  Fall ohne mitgelieferte Projektkenntnis.**
+- **GPU-Pool ist Verfuegbarkeit:** mit 4 erlaubten Klassen fand Salad 35 Minuten
+  keinen Rechner, mit 7 binnen 7 Minuten. 50er-Serie draussen (CUDA 12.8 ungeprueft).
+  Kosten 158-216 USD/Monat.
 
 ### [2026-07-31] MAUS: SITZUNG BLEIBT STEHEN, ZWEITER ADAPTER AN DERSELBEN NAHT (job_maus_eigener_browser_20260731)
 
@@ -39,17 +48,12 @@ HEAD vor der Aenderung `e603802`. **Noch nicht ausgerollt** (siehe unten).
 - **Gemessen, nicht behauptet** (`scripts/diagnose/maus-sitzung-beweis.mjs`, echter
   Browser, kein Modell): zwei Auftraege, **1 Browserstart statt 2**, Auftrag 2 in
   **0,0 s statt 3,3 s**, gleiche aktive Seite. Abnahmepunkt 4 der Auftragsdatei.
-- **Kein zweiter Sitzungs-Motor:** `workers/remote-browser/session-engine.js` gehoert
-  zum Live-Browser-Dienst; uebernommen wurde sein MUSTER, nicht sein Code.
-  `executedActions` gehoert zum Auftrag, nicht zur Sitzung; exit-after-run darf nicht
-  feuern, solange eine Sitzung lebt. Live zuschauen scheiterte an der planId (der
-  Control-Server kannte sie erst am Laufende) — `onPlan`-Rueckruf meldet sie vorher.
+- **Kein zweiter Sitzungs-Motor:** Muster von `remote-browser/session-engine.js`
+  uebernommen, nicht der Code. `executedActions` gehoert zum Auftrag, nicht zur
+  Sitzung; exit-after-run darf nicht feuern, solange eine Sitzung lebt.
 - **Chrome-Adapter an der `browserFactory`-Naht:** Allowlist, Budget, Datei-Grenzen
-  und Vault gelten dadurch bauartbedingt fuer BEIDE Adapter. **Nie
-  `--remote-debugging-port`** — der Port kennt keine Herkunftspruefung.
-  Startseiten-Mehraufwand +711 Byte gzip (0,24 %), Web Vitals unveraendert.
-- Verifikation: `check:maus-engine` **189/189** (vorher 139), alle Pflichtchecks
-  gruen, groesste neue Datei 254 Zeilen.
+  und Vault gelten dadurch fuer BEIDE Adapter. **Nie `--remote-debugging-port`** —
+  der Port kennt keine Herkunftspruefung. `check:maus-engine` 189/189.
 - **NICHT LIVE:** Teil 0 (Token + Eimer) am 2026-07-31 nachgemessen und weiterhin
   offen (`maus-abgleich.mjs` Exit 2, Rote Liste). Engine laeuft aus ghcr.io-Abbild,
   Control-Release endet im gesperrten Env-Schreibzugriff, Frontend bewusst
