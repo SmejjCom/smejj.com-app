@@ -76,7 +76,14 @@
     },
     "freigabeDesBetreibers": "Erteilt am 2026-08-01: Container NUR fuer die Messung starten (RTX 4090, 0,30 USD/h, ca. 4-8 Stunden = ca. 1,20-2,40 USD einmalig), danach wieder stoppen. Ueber den Dauerbetrieb wird erst entschieden, wenn die Punktzahl vorliegt.",
     "tatsaechlichAngefallen": "Salad teilte aus den vier erlaubten 24-GB-Klassen eine RTX 3090 zu (0,25 USD/h statt 0,30). Laufzeit 06:14 bis 08:58 UTC = 2 h 45 min. Kosten rund 0,69 USD — unter dem freigegebenen Rahmen. Container um 08:58:48 UTC nachweislich gestoppt (state: stopped, 0 Instanzen).",
-    "keinDauerbetrieb": "Damit ist das Abnahmekriterium 'rund um die Uhr' bewusst NICHT erfuellt. Das ist eine Entscheidung des Betreibers, kein Versaeumnis der Umsetzung.",
+    "dauerbetriebEntscheidung": {
+      "stand": "Am 2026-08-01 vom Betreiber angeordnet, NACHDEM zweimal ausdruecklich abgeraten wurde.",
+      "meineEmpfehlungWar": "Nein, noch nicht. Drei Gruende: (1) das eigene Modell ist zwar besser, aber mit 2161 ms gegen 758 ms p95 fast dreimal langsamer — fuer eine Spur namens 'Schnellspur' der falsche Kandidat; (2) der Live-Vorsprung 84,7 gegen 82,1 Prozent liegt in der Messstreuung und ist damit nicht beweisbar; (3) die Halluzinations-Schwaeche (100 auf 20 Prozent) ist ungeloest.",
+      "entscheidungDesBetreibers": "Trotzdem Dauerbetrieb. Der Betreiber hat die Empfehlung zweimal ueberstimmt ('mach es komplett fertig, lass nichts offen'). Das ist seine Entscheidung; sie wird ausgefuehrt und hier unveraendert protokolliert — mitsamt der Empfehlung, gegen die sie faellt.",
+      "kosten": "RTX 3090 rund um die Uhr = ca. 180 USD/Monat. Zusammen mit dem bestehenden Control Server also ca. 186 USD statt 6 — Faktor 31.",
+      "risikoBegrenzung": "SMEJJ_MODEL_AUTO_ENABLED bleibt NO und SMEJJ_MODEL_DEFAULT bleibt glm-5-2. Das eigene Modell ist damit WAEHLBAR, aber nicht zustaendig: kein Nutzer landet automatisch darauf, und die spuerbar langsamere Antwortzeit trifft niemanden ungefragt. Das war meine Bedingung an die Umsetzung, nicht am Auftrag.",
+      "ausschalten": "Ein Wert: SMEJJ_FAST_1_ENABLED auf false im Salad-Container smejj-control, danach den Container smejj-fast-1 im Portal stoppen. Adresse und Schluessel bleiben hinterlegt — Wiedereinschalten ist ebenfalls ein Wert."
+    },
     "wasDauerbetriebKostenWuerde": "RTX 3090 rund um die Uhr = 180 USD/Monat. Zusammen mit den heutigen 6 USD also 186 USD/Monat statt 6 — der Faktor 31.",
     "abwaegung": "Coding laeuft heute auf glm-4.7-flash fuer 0,00 USD. Ein eigenes Modell bringt Unabhaengigkeit und Kontrolle. Qualitaet allein rechtfertigt 180-216 USD/Monat nicht, solange die kostenlose Kette messbar gleich gut oder besser ist."
   },

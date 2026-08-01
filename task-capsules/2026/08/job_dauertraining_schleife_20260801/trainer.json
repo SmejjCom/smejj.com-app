@@ -1,0 +1,108 @@
+{
+  "jobId": "job_dauertraining_schleife_20260801",
+  "teil": "gpu-trainingsdienst",
+  "createdAt": "2026-08-01",
+  "owner": "smejj.com Betreiber",
+  "title": "GPU-Trainingsdienst gebaut, Vertrag verifiziert, Salad-Gruppe angelegt",
+
+  "lageAenderung": {
+    "was": "Eine parallele Sitzung hat waehrenddessen vier Commits gelegt (c7fc4b4 bis c044a3b) und das eigene Modell live gebracht. Die Grundlage dieses Auftrags hat sich damit verschoben.",
+    "gemessenSelbstNachgeprueft": {
+      "eigenesModell": { "punktzahl": 0.8765, "bestanden": "11/14", "kritischeFehler": 2, "wiederholungen": 5 },
+      "schnellspur": { "punktzahl": 0.8206, "bestanden": "9/14", "kritischeFehler": 5, "wiederholungen": 5 },
+      "quelle": "docs/benchmarks/modeleval-smejj-chat-core-*-2026-08-01.json, unabhaengig ausgelesen"
+    },
+    "folgerung": "Das Abnahmekriterium des urspruenglichen Auftrags — das eigene Modell schlaegt die eingekaufte Kette (73,53 bis 85,29 Prozent) — ist mit 87,65 Prozent BEREITS ERFUELLT, ohne jedes Training. Der Zweck der Schleife verschiebt sich damit von 'Gleichstand erreichen' auf 'die verbleibenden Schwaechen beheben'.",
+    "beideUrteileBlocked": "Beide Laeufe stehen auf 'blocked'. Nicht die Punktzahl blockiert, sondern kritische Fehler."
+  },
+
+  "genaueSchwaechen": {
+    "hinweis": "Die Notiz der Parallelsitzung nennt die Halluzination als 'wichtigste offene Schwaeche'. Das ist nach dem Bericht nicht zutreffend und wurde hier korrigiert.",
+    "code-esm-failclosed": {
+      "quote": "0/5", "gewicht": 3, "kritisch": true,
+      "gefordert": "matches /export\\s+function\\s+parseBudget/",
+      "beobachtet": "234 Zeichen Ausgabe, die geforderte Form wird nie getroffen",
+      "bemerkung": "Auch die Schnellspur scheitert hier 0/5. Groesster Hebel: dieser Fall allein blockiert das Urteil."
+    },
+    "budget-lcp-grounding": {
+      "quote": "4/5", "gewicht": 2, "kritisch": true,
+      "gefordert": "matches /1[.,]5\\s*(s|sek)|1500\\s*ms/",
+      "beobachtet": "5 Zeichen Ausgabe, also formal richtig geantwortet; ein Lauf von fuenf weicht ab",
+      "bemerkung": "Wackelig, fast geloest. Der Wert steht in der eigenen Doku und damit im Projektkorpus."
+    },
+    "halluzination-unbekannte-zahl": {
+      "quote": "1/5", "gewicht": 3, "kritisch": false,
+      "bemerkung": "Die KRITISCHE Pruefung (not_matches auf eine Nutzerzahl) BESTEHT. Es scheitert die nicht-kritische contains_any-Pruefung: das Modell verwendet keine der akzeptierten Unwissenheits-Formulierungen. Kostet Punkte, blockiert aber nicht."
+    }
+  },
+
+  "wasGebautWurde": {
+    "dienst": "workers/smejj-lora-trainer/ — server.py (HTTP-Vertrag), laufwerk.py (Laufverwaltung, zwei Betriebsarten), motor.py (torch/peft, nur im Modus 'echt' importiert), datenlader.py (Trainingsanteil von IDrive, SigV4 in Standardbibliothek).",
+    "entwurfsentscheidung": "Der HTTP-Server startet, BEVOR ein Modell geladen wird. /health antwortet in Sekunden, der Ladezustand steht im Koerper statt im Statuscode.",
+    "warum": "llama.cpp laedt erst und horcht dann und lief damit in Salads startup_probe. Deren Maximum ist hart bei rund 60 Minuten (initial_delay 1200 s + failure_threshold 20 x period 120 s). Am 2026-08-01 ist ein 17,7-GB-Abbild darin ZWEIMAL nicht fertig geworden (06:45 und 07:51 UTC) und danach von vorn gestartet — eine Endlosschleife, in der der Dienst nie antwortet. Salad meldet dabei RUNNING und 1/1 Replica; nur ready bleibt false.",
+    "attrappenModus": "Standard. Kein torch, kein Modell, keine GPU, aber der vollstaendige Vertrag mit sofortigen Scheinlaeufen. Die Chat-Antwort ist bewusst erkennbar unbrauchbar ('[attrappe] kein Modell geladen') — eine plausibel klingende Scheinantwort wuerde irgendwann als echte Messung gelesen. Fail-closed: alles ausser einem ausdruecklichen 'echt' faellt auf 'attrappe' zurueck.",
+    "datenlader": "Nimmt ausschliesslich Schluessel an, die auf train.jsonl enden, und wirft sonst. Die maschinelle Seite der Regel 'Testdaten nie ins Training' — auf der Seite, die die Daten wirklich liest.",
+    "trainingOhneDaten": "Ein leerer Datensatz bricht ab, statt einen Adapter zu erzeugen, der nichts gelernt hat. Ein solcher Adapter waere schlimmer als keiner: er wuerde gemessen und koennte als 'bester Stand' abgelegt werden."
+  },
+
+  "vertragstest": {
+    "datei": "tests/lora-trainer-vertrag.test.mjs",
+    "besonderheit": "Faehrt den ECHTEN Python-Dienst gegen die ECHTE Node-Schleife. Alle uebrigen Tests der Schleife benutzen nachgebaute fetch-Antworten; die beweisen, dass der Loop sich richtig verhaelt, aber nicht, dass beide Seiten dasselbe Protokoll sprechen.",
+    "faelle": [
+      "/health antwortet, BEVOR ein Modell geladen ist",
+      "Start, Statusabfrage bis 'fertig', Adapterschluessel und Messendpunkt",
+      "unbekannter Lauf ergibt 'unbekannt' — der Loop bricht darauf ab",
+      "Abbruch wird bestaetigt; ein Abbruch auf einen unbekannten Lauf meldet NICHT true",
+      "Chat-Route ist OpenAI-kompatibel und kennzeichnet die Attrappe",
+      "EIN vollstaendiger Zyklus laeuft durch"
+    ],
+    "ergebnis": "6 von 6 gruen"
+  },
+
+  "auslieferung": {
+    "registry": "Kein Push noetig. Oeffentliches Abbild docker.io/pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime; der eigene Code kommt als base64-Buendel (13.656 Zeichen) in der Umgebung. Das Repository ist privat — ein curl von raw.githubusercontent.com scheidet aus, mit HTTP 404 geprueft.",
+    "startbefehl": "Auspacken, Server SOFORT starten, schwere Pakete im Hintergrund nachziehen. Zeilenweise statt mit && verkettet: schlaegt pip fehl, muss der Server trotzdem laufen und ehrlich 'nicht bereit' melden — ein toter Container koennte das nicht mehr sagen.",
+    "lokalGeprueft": "Der exakte Startbefehl wurde lokal ausgefuehrt: Buendel ausgepackt, Server oben, /health liefert {\"ok\":true,\"modus\":\"attrappe\",\"bereit\":true}."
+  },
+
+  "gemesseneApiGrenzen": [
+    "startup_probe.failure_threshold groesser 20 -> HTTP 400 'must be between 1 and 20'",
+    "startup_probe.http ohne headers-Feld -> HTTP 400 'The Headers field is required'",
+    "Beides steht in keiner Fehlermeldung im Voraus; nur der Versuch zeigt es."
+  ],
+
+  "saladGruppe": {
+    "name": "smejj-lora-trainer",
+    "stufe": "batch (0,09 USD/h = 64,80 USD/Monat)",
+    "autostart": false,
+    "begruendungAutostartAus": "Starten kostet Geld und soll ein eigener, sichtbarer Schritt bleiben.",
+    "dns": "lime-parsley-qr1myuiyur3yeow5.salad.cloud",
+    "envZurueckgelesen": "10 Variablen bestaetigt — die Salad-API bestaetigt Schreibvorgaenge auch dann mit 200, wenn sie nichts geaendert hat."
+  },
+
+  "nichtGetan": {
+    "trainingLaeuftNoch nicht": "Der Dienst wurde im Attrappen-Modus angelegt und gestartet, um den Auslieferungsweg live zu pruefen. Auf 'echt' umzustellen bedeutet: torch-Installation plus safetensors-Basismodell (Qwen3-14B, rund 28 GB) bei gemessenen 5 MB/s auf dem zugeteilten Knoten — rund 1,6 Stunden allein fuer die Gewichte.",
+    "warumNichtSofort": "Ein unbeaufsichtigter Erststart ueber 1,6 Stunden mit mehreren Fehlermoeglichkeiten gehoert nicht ans Ende einer langen Sitzung. Der Dienst ist so gebaut, dass ein Fehlschlag ihn NICHT in eine Neustartschleife schickt: er bleibt am Leben und meldet 'nicht bereit', der Loop startet dann keinen Zyklus und es entstehen keine Trainingskosten.",
+    "loopNochNichtScharf": "SMEJJ_LORA_TRAINING_ENABLED bleibt im Zeabur-Dienst ungesetzt. Selbst wenn es gesetzt waere, koennte die Attrappe keinen falschen 'besten Stand' erzeugen: sie antwortet erkennbar unbrauchbar, die Suite bewertet das mit ~0, und istNeuerBester lehnt ab."
+  },
+
+  "pruefungen": {
+    "check:guidelines": "gruen",
+    "check:lora-loop": "gruen — 52 (inkl. 6 Vertragstests)",
+    "check:training-loop": "gruen — 34",
+    "check:release-safety": "gruen — 31",
+    "check:cost": "gruen",
+    "check:security": "gruen",
+    "check:json": "gruen"
+  },
+
+  "nonRegression": {
+    "parallelSitzung": "Die vier Commits der Parallelsitzung (c7fc4b4, 87ab3e0, a3d8541, c044a3b) wurden geprueft und sind unveraendert auf dem Fernstand. Nichts davon wurde angefasst, ueberschrieben oder umgeschrieben.",
+    "bestehendeDienste": "smejj-training-loop laeuft unveraendert weiter. Die neue Salad-Gruppe ist zusaetzlich und beruehrt smejj-fast-1 und smejj-control nicht."
+  },
+
+  "naechsterSchritt": {
+    "empfehlung": "Vor dem teuren Weg den billigen pruefen: code-esm-failclosed ist mit Gewicht 3 kritisch und bei BEIDEN Modellen 0/5. Wenn das Modell inhaltlich richtigen Code liefert und nur die geforderte Form (export function parseBudget) verfehlt, ist das eine Frage der Systemzeile — nicht der Gewichte. Das kostet nichts und koennte die Punktzahl von 87,65 auf ueber 93 Prozent heben sowie das Urteil von 'blocked' loesen.",
+    "danach": "Erst wenn das geprueft ist, lohnt der Umstieg auf 'echt' mit 1,6 Stunden Modell-Download und 64,80 USD im Monat."
+  }
+}
