@@ -46,6 +46,16 @@ Daraus folgt fuer JEDE Session:
 ## 3. Code-Stil
 
 - Sprache: TypeScript/JavaScript (ESM), Node LTS.
+- **Exporte sind benannt: `export function foo`, nie `export default`.** Gemessen am
+  2026-08-01 stehen in `src/`, `control-server/src/` und `workers/` 1012 benannte
+  Exporte und 0 Default-Exporte — die Regel wurde bisher nur gelebt, nicht
+  aufgeschrieben. Das ist kein Geschmack: Default-Exporte lassen den Namen an der
+  Importstelle frei, wodurch dieselbe Funktion in verschiedenen Dateien anders
+  heisst und `grep` sie nicht mehr findet. Einzige Ausnahme sind die generierten
+  Sprachdateien unter `public/i18n/`.
+  Warum das hier steht: solange die Regel nirgends stand, haben Modelle geraten —
+  GLM-4.7-flash lieferte in drei Laeufen zweimal `export function` und einmal
+  `export default function` auf dieselbe Aufgabe.
 - Benennung: `kebab-case` fuer Dateien/Ordner, `camelCase` fuer Funktionen/Variablen, `PascalCase` fuer Typen/Klassen.
 - Funktionen klein und pur, Seiteneffekte an den Raendern (I/O-Schicht).
 - Fehler explizit behandeln: fail-closed, keine stillen Fallbacks.
