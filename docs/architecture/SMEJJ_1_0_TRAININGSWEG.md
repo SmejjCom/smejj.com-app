@@ -37,6 +37,38 @@ eigene Einträge, aber nur einer davon ist trainierbar:
 | `kimi-k2-7` | `model-files/kimi-k2-7/original/` | **555 GB** | Fundament, ebenso |
 | **`smejj-fast-1`** | `model-files/qwen3-6-35b-a3b/original/` | **20 GB** | **Das eigene, trainierbare Modell** |
 
+### Nachtrag 01.08.2026 — das Lager gemessen statt aus der Registrierung gelesen
+
+Die Tabelle oben nennt die Werte aus `src/shared/modelRegistry.js`. Eine
+Messung des tatsächlichen Lagers auf IDrive e2 (Eimer `smejj-model-files`)
+ergibt ein anderes Bild:
+
+| Ordner | gemessen | Dateien |
+|---|---|---|
+| `model-files/glm-5-2-fp8/` | **755,7 GB** | 158 |
+| `model-files/kimi-k2-7/` | **595,2 GB** | 102 |
+| `model-files/smejj-1-0/` | **0,0 GB** | 0 — leerer Ordner |
+| `model-files/qwen3-6-35b-a3b/` | **existiert nicht** | — |
+| **Gesamt** | **1 350,9 GB** | |
+
+Zwei Folgen für diesen Plan:
+
+1. **Das eigene Modell existiert noch nicht als Datei.** `smejj-1-0` ist ein
+   leerer Ordner. Es gibt keine Gewichte, kein LoRA, nichts. Damit ist die
+   Frage „wie schlau ist smejj 1.0" derzeit nicht beantwortbar — es antwortet
+   nirgends.
+2. **Der in Stufe 3 angenommene Ausgangspunkt fehlt.** Die Registrierung zeigt
+   für `smejj-fast-1` auf `model-files/qwen3-6-35b-a3b/original/`; dieser Pfad
+   ist im Lager nicht vorhanden. Vor jedem Feintuning muss also erst ein
+   Basismodell beschafft und abgelegt werden — das ist ein zusätzlicher
+   Schritt vor Stufe 3, nicht Teil davon. Er kostet Zeit und Bandbreite,
+   aber kein Geld (offene Gewichte, IDrive-Jahrespaket).
+
+Ausserdem liegen **1,35 TB gemietete Fremdmodell-Gewichte** im Lager, die
+derzeit nicht für Inferenz genutzt werden — die Antworten kommen über die APIs
+der Anbieter, nicht aus diesen Dateien. Ob dieser Speicher weiter vorgehalten
+werden soll, ist eine eigene Kostenfrage an den Betreiber.
+
 Ein 704-GB-Modell selbst zu trainieren ist für diesen Betrieb keine Option —
 weder rechnerisch noch finanziell. **Der realistische Weg ist ein LoRA-Feintuning
 von `smejj-fast-1`** (Qwen3-35B-A3B, ein Mixture-of-Experts-Modell mit rund 3 Mrd
