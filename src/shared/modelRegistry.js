@@ -138,18 +138,31 @@ export const MODEL_REGISTRY = Object.freeze({
   // Zweck: kurze Chat-Antworten (Profil "fast"), waehrend GLM-5.2 das
   // Qualitaets-/Coding-Fundament bleibt.
   //
-  // BASIS: Qwen/Qwen3-Coder-30B-A3B-Instruct, Apache-2.0 (kommerzielle Nutzung
-  // UND Fine-Tuning erlaubt — der spaetere smejj-1-0-Pfad bleibt offen).
-  // MoE mit 30,5B gesamt / ~3,3B aktiv je Token: Antworttempo einer 3B-Klasse
-  // bei der Guete einer 30B-Klasse. Gewichte als GGUF UD-Q4_K_XL (17,7 GB) im
-  // Eimer IDRIVE_E2_MODEL_BUCKET unter model-files/smejj-1-0/original/.
+  // BASIS: Qwen/Qwen3-14B, Apache-2.0 (kommerzielle Nutzung UND Fine-Tuning
+  // erlaubt — der spaetere smejj-1-0-Pfad bleibt offen). Dichtes 14B-Modell,
+  // GGUF UD-Q4_K_XL (9,2 GB) im Eimer IDRIVE_E2_MODEL_BUCKET unter
+  // model-files/smejj-1-0/original/.
   //
-  // WARUM NICHT Qwen3.6-35B-A3B (der frueher hier eingetragene Kandidat):
-  // gemessen am 2026-08-01 ist dessen UD-Q4_K_XL 22,4 GB gross. Auf einer
-  // 24-GB-Karte bleibt damit kein Platz mehr fuer den KV-Zwischenspeicher bei
-  // 32k Kontext — llama.cpp muesste Schichten auf die CPU auslagern und waere
-  // langsamer als die eingekaufte Schnellspur. Der Coder mit 17,7 GB laesst
-  // ~6 GB Luft. Das ist der ganze Grund; die Lizenz war bei beiden Apache-2.0.
+  // DIE GROESSE IST EINE STARTZEIT-ENTSCHEIDUNG, KEINE VRAM-ENTSCHEIDUNG.
+  // Gemessen am 2026-08-01: llama.cpp laedt die Gewichte beim Start von
+  // Hugging Face, und diese Ladezeit laeuft gegen die Salad-Startsonde. Deren
+  // Obergrenze ist hart — initial_delay max 1200 s + failure_threshold max 20 x
+  // period max 120 s = 60 Minuten. Ein 17,7-GB-Abbild
+  // (Qwen3-Coder-30B-A3B-Instruct, ebenfalls Apache-2.0) wurde auf dem
+  // zugeteilten Knoten in 60 Minuten NICHT fertig: Salad meldete zweimal
+  // "Instance Interrupted (Startup Probe Failure)" und begann den Download von
+  // vorn — eine Endlosschleife, in der der Dienst nie antwortet. 9,2 GB laufen
+  // dagegen mit Reserve durch. Wer die Gewichtsgroesse waehlt, waehlt die
+  // Startzeit mit; auf 24 GB VRAM haette auch das 30B-Abbild gepasst.
+  //
+  // Ebenfalls verworfen: Qwen3.6-35B-A3B (der frueher hier eingetragene
+  // Kandidat) — dessen UD-Q4_K_XL ist 22,4 GB und laesst auf einer 24-GB-Karte
+  // keinen Platz fuer den KV-Zwischenspeicher bei 32k Kontext.
+  //
+  // Qwen3 denkt standardmaessig. Die Container Group setzt darum
+  // LLAMA_ARG_CHAT_TEMPLATE_KWARGS={"enable_thinking":false} — sonst frisst der
+  // Denkabschnitt das Token-Budget kurzer Anfragen auf und die Antwort bleibt
+  // leer (dieselbe Falle wie in src/evaluation/evalTransport.js beschrieben).
   //
   // WARUM NICHT GLM-5.2 oder Kimi K2.7 aus dem eigenen Lager: deren Gewichte
   // sind 755,7 GB bzw. 595,2 GB und brauchen ein Mehr-Knoten-GPU-Cluster mit
@@ -166,7 +179,7 @@ export const MODEL_REGISTRY = Object.freeze({
   "smejj-fast-1": Object.freeze({
     id: "smejj-fast-1",
     name: "smejj fast 1.0",
-    aliases: Object.freeze(["smejj fast", "smejj-fast", "qwen3-coder-30b-a3b"]),
+    aliases: Object.freeze(["smejj fast", "smejj-fast", "qwen3-14b"]),
     provider: "salad",
     status: "self-hosted-runtime-configurable",
     // Ausgeliefert wird, was der Dienst wirklich oeffnet (LLAMA_ARG_CTX_SIZE),

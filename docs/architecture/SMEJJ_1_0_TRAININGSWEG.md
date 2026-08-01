@@ -219,23 +219,31 @@ Der in Abschnitt 2 als fehlend gemeldete Ausgangspunkt ist beschafft. Damit ist
 der Zusatzschritt vor Stufe 3 erledigt; an der eigentlichen Blockade ändert das
 nichts.
 
-**Gewähltes Basismodell:** `Qwen/Qwen3-Coder-30B-A3B-Instruct`, Lizenz
+**Gewähltes Basismodell:** `Qwen/Qwen3-14B`, Lizenz
 **Apache-2.0** (über die Hugging-Face-API geprüft, nicht aus dem Modellnamen
 geschlossen). Kommerzielle Nutzung und Feintuning sind erlaubt — der spätere
-LoRA-Weg bleibt offen. Mixture-of-Experts: 30,5 Mrd Parameter gesamt, rund
-3,3 Mrd aktiv je Token.
+LoRA-Weg bleibt offen. Dichtes Modell mit 14 Mrd Parametern.
 
 **Ablage:** `model-files/smejj-1-0/original/` im Eimer `smejj-model-files`,
-Quantisierung GGUF `UD-Q4_K_XL` (17,7 GB, Quelle `unsloth/…-GGUF`, ebenfalls
-Apache-2.0). Der bisher in der Registrierung genannte Pfad
+Quantisierung GGUF `UD-Q4_K_XL` (9,2 GB, Quelle `unsloth/Qwen3-14B-GGUF`,
+ebenfalls Apache-2.0). Der bisher in der Registrierung genannte Pfad
 `model-files/qwen3-6-35b-a3b/original/` existierte nie und ist korrigiert.
 
+**Die Modellgrösse ist eine Startzeit-Entscheidung, keine VRAM-Entscheidung.**
+Zuerst gewählt und tatsächlich ausprobiert war `Qwen3-Coder-30B-A3B-Instruct`
+(17,7 GB, ebenfalls Apache-2.0). Es passt auf eine 24-GB-Karte — aber nicht in
+die Salad-Startsonde: llama.cpp lädt die Gewichte beim Start von Hugging Face,
+und diese Ladezeit läuft gegen die Sonde. Deren Obergrenze ist hart
+(`initial_delay` max 1200 s + `failure_threshold` max 20 × `period` max 120 s
+= 60 Minuten). Der Download wurde darin nicht fertig; Salad meldete zweimal
+*Instance Interrupted (Startup Probe Failure)* und begann von vorn — eine
+Endlosschleife, in welcher der Dienst nie antwortet. Mit 9,2 GB genügen rund
+2,6 MB/s statt 4,9 MB/s. **Wer die Gewichtsgrösse wählt, wählt die Startzeit
+mit; die Sonde ist die härtere Grenze als die Grafikkarte.**
+
 **Warum nicht Qwen3.6-35B-A3B**, der zuvor in `src/shared/modelRegistry.js`
-eingetragene Kandidat: dessen `UD-Q4_K_XL` ist 22,4 GB gross. Auf einer
-24-GB-Karte bliebe damit kein Platz für den KV-Zwischenspeicher bei 32k
-Kontext; llama.cpp müsste Schichten auf die CPU auslagern. Der Coder mit
-17,7 GB lässt rund 6 GB Luft. Beide Modelle stehen unter Apache-2.0 — die
-Entscheidung ist eine Speicherrechnung, keine Lizenzfrage.
+eingetragene Kandidat: dessen `UD-Q4_K_XL` ist 22,4 GB gross und lässt auf
+einer 24-GB-Karte keinen Platz für den KV-Zwischenspeicher bei 32k Kontext.
 
 **Warum kein Selbsthosten von GLM-5.2 oder Kimi K2.7**, obwohl beide im Lager
 liegen: die Gewichte sind 755,7 GB bzw. 595,2 GB und brauchen einen Verbund

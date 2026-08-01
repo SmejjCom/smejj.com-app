@@ -11,13 +11,20 @@
   },
 
   "basismodell": {
-    "gewaehlt": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+    "gewaehlt": "Qwen/Qwen3-14B",
     "lizenz": "Apache-2.0",
-    "lizenzQuelle": "https://huggingface.co/api/models/Qwen/Qwen3-Coder-30B-A3B-Instruct — cardData.license, am 2026-08-01 abgefragt; nicht aus dem Modellnamen geschlossen",
+    "lizenzQuelle": "https://huggingface.co/api/models/unsloth/Qwen3-14B-GGUF — cardData.license, am 2026-08-01 abgefragt; nicht aus dem Modellnamen geschlossen",
     "lizenzFolge": "Kommerzielle Nutzung UND Feintuning erlaubt. Der spaetere LoRA-Weg fuer smejj 1.0 bleibt offen.",
-    "architektur": "Mixture-of-Experts, 30,5 Mrd Parameter gesamt, rund 3,3 Mrd aktiv je Token",
-    "gewichte": "GGUF UD-Q4_K_XL, 17,7 GB, Quelle unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF (ebenfalls Apache-2.0)",
+    "architektur": "dicht, 14 Mrd Parameter",
+    "gewichte": "GGUF UD-Q4_K_XL, 9,2 GB, Quelle unsloth/Qwen3-14B-GGUF (ebenfalls Apache-2.0)",
     "ablage": "s3://smejj-model-files/model-files/smejj-1-0/original/",
+    "denkenAbgeschaltet": "Qwen3 denkt standardmaessig. LLAMA_ARG_CHAT_TEMPLATE_KWARGS={\"enable_thinking\":false} ist gesetzt — sonst frisst der Denkabschnitt das Token-Budget kurzer Anfragen auf und die Antwort bleibt leer (dieselbe Falle, die in src/evaluation/evalTransport.js fuer GLM dokumentiert ist).",
+
+    "verworfen_qwen3coder30b": {
+      "kandidat": "Qwen/Qwen3-Coder-30B-A3B-Instruct, GGUF UD-Q4_K_XL, 17,7 GB — zuerst gewaehlt und tatsaechlich ausprobiert",
+      "grund": "Der Download passt nicht in die Salad-Startsonde. Zweimal 'Instance Interrupted (Startup Probe Failure)' (06:45 und 07:51 UTC), danach beginnt der Download von vorn — Endlosschleife. Auf 24 GB VRAM haette das Modell gepasst; die Startzeit war das Hindernis, nicht der Speicher.",
+      "merkregel": "Bei selbst gehosteten Modellen begrenzt die Startsonde die Modellgroesse haerter als die Grafikkarte."
+    },
 
     "verworfen_qwen36": {
       "kandidat": "Qwen/Qwen3.6-35B-A3B — stand vorher in src/shared/modelRegistry.js und in der Salad-Umgebung",
@@ -43,6 +50,17 @@
       "Begruendung der Modellwahl samt Messwerten als Kommentar hinterlegt, damit die Frage nicht erneut aufkommt"
     ],
     "failClosedBewusstNichtGelockert": "Die Laufzeit-Adresse wurde NICHT als defaultBaseUrl fest eingetragen, obwohl das bequemer waere. Das haette die dreiteilige Zusicherung (Feature-Flag + Adresse + Schluessel) auf zwei verkuerzt und den Test 'greift NICHT ohne BASE_URL' entwertet. Die Adresse steht stattdessen als Kommentar in .env.example."
+  },
+
+  "befundStartsonde": {
+    "kernaussage": "Die Container Group smejj-fast-1 konnte ein Modell dieser Groesse NIE starten. Nicht wegen des Modells — wegen der Startsonde.",
+    "gemessen": "Instanz gestartet 06:20:50 UTC. Um 06:45:23, exakt 25 Minuten spaeter, wurde sie verworfen und neu zugeteilt; der 17,7-GB-Download begann wieder bei null. Das wiederholt sich endlos.",
+    "rechnung": "startup_probe war initial_delay 300 s + failure_threshold 20 x period 60 s = 1500 s = 25 Minuten. Der Download braucht auf einem Salad-Knoten laenger.",
+    "warumUnsichtbar": "Der Zustand heisst waehrenddessen RUNNING und 1/1 Replica Running. Nur ready bleibt false. Von aussen sieht ein Container, der sich alle 25 Minuten selbst neu startet, aus wie einer, der gerade noch hochfaehrt.",
+    "behebung1_reichteNicht": "startup_probe auf initial_delay 1200 s + 20 x 120 s = 60 Minuten angehoben (Salad-Grenzen: failure_threshold max 20, period max 120 s, initial_delay max 1200 s — alle drei einzeln ausgereizt, mehr laesst die API nicht zu). liveness_probe initial_delay 300 -> 1200 s. Auch 60 Minuten reichten fuer 17,7 GB NICHT: zweiter Abbruch um 07:51 UTC.",
+    "behebung2_wirksam": "Basismodell auf ein 9,2-GB-Abbild gewechselt (Qwen3-14B UD-Q4_K_XL). Damit braucht der Download nur noch etwa 2,6 MB/s statt 4,9 MB/s, um in die 60 Minuten zu passen.",
+    "merkregel": "Bei selbst gehosteten Modellen ist die Startsonde ein Teil der Modellwahl. Wer die Gewichtsgroesse waehlt, waehlt die Startzeit mit — und die Startsonde ist die haertere Grenze, nicht die Grafikkarte.",
+    "offenerPunkt": "Der abgebrochene 17,7-GB-Upload hat unvollstaendige Multipart-Teile unter model-files/smejj-1-0/original/ hinterlassen. Diese kosten Speicher, bis sie abgebrochen werden: npm run model:abort-incomplete mit MODEL_S3_PREFIX=model-files/smejj-1-0 — ERST NACH Abschluss des laufenden 14B-Uploads, sonst reisst es diesen mit ab."
   },
 
   "kosten": {
