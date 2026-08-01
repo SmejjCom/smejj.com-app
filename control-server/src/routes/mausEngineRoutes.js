@@ -303,7 +303,16 @@ export async function handleMausStatus(req, res, { env = process.env, activeWork
   if (runId) {
     const memory = asyncRuns.get(runId);
     if (memory && memory.status === "laeuft") {
-      return json(res, 200, { ok: true, runId, status: "laeuft", capsuleRef: memory.capsuleRef ?? null, startedAt: memory.startedAt ?? null });
+      // planId wird mitgegeben, SOBALD der Plan steht (onPlan) — nicht erst am
+      // Ende. Ohne sie kann die Wiedergabe den Live-Pfad in der Capsule nicht
+      // bilden und muesste bis zum Schluss warten; genau das war die Luecke
+      // zwischen "Lauf laeuft" und "zuschauen".
+      return json(res, 200, {
+        ok: true, runId, status: "laeuft",
+        capsuleRef: memory.capsuleRef ?? null,
+        planId: memory.planId ?? null,
+        startedAt: memory.startedAt ?? null
+      });
     }
     if (memory && memory.payload) {
       return json(res, 200, { ok: true, runId, status: memory.status, result: memory.payload });
@@ -457,11 +466,12 @@ export async function handleMausRun(req, res, {
     policyInput.budget.maxLoopSteps = LOOP_DEFAULT_STEPS;
   }
   const loopEnabled = interactive || policyInput.budget.maxLoopSteps > 0;
-  const execute = () => planAndExecute({
+  const execute = (onPlan = null) => planAndExecute({
     task: interactive ? { text: task, mode: "interaktiv" } : task,
     policyInput,
     plannerClient: plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }),
     runPlan: buildRunPlan({ config, fetchImpl, saveAsMacro }),
+    ...(onPlan ? { onPlan } : {}),
     ...(loopEnabled ? { runLoop: buildRunLoop({ config, fetchImpl }), macroStore: buildMacroStore(env) } : {})
   });
 
@@ -521,8 +531,19 @@ export async function handleMausRun(req, res, {
 // aktualisieren. Harte Zeitobergrenze, damit kein Lauf ewig "laeuft".
 async function runAsyncInBackground({ runId, capsuleRef, execute, store }) {
   let payload;
+  // Sobald der Plan steht, wird die planId veroeffentlicht — im Spiegel UND
+  // auf e2. Damit findet die Wiedergabe den Live-Pfad, waehrend der Lauf noch
+  // laeuft. Fail-safe: schlaegt das Schreiben fehl, laeuft der Lauf weiter.
+  const onPlan = async ({ planId }) => {
+    rememberAsyncRun(runId, { status: "laeuft", capsuleRef, planId });
+    try {
+      await store.put(runId, { ok: true, status: "laeuft", runId, capsuleRef, planId, startedAt: new Date().toISOString() });
+    } catch {
+      // absichtlich still — der In-Memory-Spiegel traegt die Anzeige weiter
+    }
+  };
   try {
-    const outcome = await Promise.race([execute(), asyncTimeoutMarker()]);
+    const outcome = await Promise.race([execute(onPlan), asyncTimeoutMarker()]);
     if (outcome && outcome.ok) {
       const { artifacts, ...resultSummary } = outcome.result || {};
       payload = {

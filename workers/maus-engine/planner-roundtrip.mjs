@@ -29,7 +29,7 @@ function taskModeOf(task) {
 // Stufe 0: gespeichertes Makro als synthetischen Plan abspielen.
 // Fail-closed: nur wenn der synthetische Plan gegen Schema + Semantik des
 // AKTIVEN Tasks validiert. Fehlschlag => normaler Weg (Stufe 1/2).
-async function tryMacroStage({ task, policyInput, macroStore, runPlan }) {
+async function tryMacroStage({ task, policyInput, macroStore, runPlan, meldePlan = null }) {
   const name = deriveMacroName(task);
   let macro = null;
   try {
@@ -54,6 +54,7 @@ async function tryMacroStage({ task, policyInput, macroStore, runPlan }) {
   };
   const validation = validatePlan(plan);
   if (!validation.ok) return null;
+  if (meldePlan) await meldePlan(plan, "makro");
   const result = await runPlan(plan);
   if (!result.ok) return null; // Makro veraltet? -> normal weiterplanen
   return { ok: true, mode: "makro", macroName: name, plan, result, plannerCalls: 0, modelCalls: 0, loopSteps: 0, history: [{ phase: "makro", ok: true, macroName: name }] };
@@ -103,14 +104,30 @@ export function infrastrukturFehler(lastFailure) {
 // optional (additiv): runLoop: async ({ task, policyInput }) => Loop-
 // Ergebnis (interactive-loop.observeDecideAct-Vertrag); macroStore:
 // createMacroStore(...) fuer Stufe 0 und den Makro-Recorder.
-export async function planAndExecute({ task, policyInput, plannerClient, runPlan, runLoop = null, macroStore = null }) {
+/**
+ * @param {object} p
+ * @param {Function} [p.onPlan] Additiv (2026-07-31): wird aufgerufen, sobald ein
+ *   Plan gueltig ist — VOR der Ausfuehrung. Damit kennt der Aufrufer die planId
+ *   bereits waehrend des Laufs und die Wiedergabe kann live mitlaufen, statt
+ *   bis zum Ende zu warten. Fail-safe gekapselt: ein Fehler hier darf den Lauf
+ *   niemals stoeren (dieselbe Regel wie beim Live-Publisher).
+ */
+export async function planAndExecute({ task, policyInput, plannerClient, runPlan, runLoop = null, macroStore = null, onPlan = null }) {
   if (typeof plannerClient !== "function" || typeof runPlan !== "function") {
     throw new Error("planner_roundtrip_parameter_fehlen");
   }
+  const meldePlan = async (plan, modus) => {
+    if (typeof onPlan !== "function") return;
+    try {
+      await onPlan({ planId: plan.planId, capsuleRef: plan.capsuleRef, modus });
+    } catch {
+      // absichtlich still: die Anzeige darf den Lauf nie beeinflussen
+    }
+  };
 
   // Stufe 0: Makro-Treffer -> 0 Modell-Aufrufe.
   if (macroStore) {
-    const macroOutcome = await tryMacroStage({ task, policyInput, macroStore, runPlan });
+    const macroOutcome = await tryMacroStage({ task, policyInput, macroStore, runPlan, meldePlan });
     if (macroOutcome) return macroOutcome;
   }
 
@@ -155,6 +172,10 @@ export async function planAndExecute({ task, policyInput, plannerClient, runPlan
         previousPlan = plan;
       } else {
         history.push({ call, phase: "validate", ok: true, planId: plan.planId });
+        // planId JETZT melden, nicht erst am Ende: nur so kann die Wiedergabe
+        // waehrend des Laufs zuschauen (sie braucht capsuleRef + planId fuer
+        // den Live-Pfad in der Capsule).
+        await meldePlan(plan, "plan");
         const result = await runPlan(plan);
         if (result.ok) {
           return { ok: true, plan, result, plannerCalls: call + 1, history, mode: "plan", modelCalls: call + 1, loopSteps: 0 };

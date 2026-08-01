@@ -11,6 +11,8 @@ import { createLivePublisher } from "./live-publisher.mjs";
 import { createSessionStore } from "./session-store.mjs";
 import { createMacroStore } from "./macro-store.mjs";
 import { runLoopTask, buildEnvPlannerClient } from "./loop-runner.mjs";
+import { createSessionRegistry } from "./session-registry.mjs";
+import { createLeaseStore } from "./session-lease.mjs";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.SMEJJ_HOST || "0.0.0.0";
@@ -19,11 +21,43 @@ const MAX_BODY_BYTES = 512_000;
 const EXIT_AFTER_RUN = process.env.SMEJJ_MAUS_EXIT_AFTER_RUN !== "NO";
 let running = false;
 
+// Lebende Sitzungen dieses Prozesses. Lazy, damit ein Lauf ohne sessionId
+// weiterhin ohne jede Sitzungslogik durchlaeuft (Non-Regression) und Tests
+// ohne e2-Zugangsdaten nicht am Lease-Store scheitern.
+let registry = null;
+
+export function getSessionRegistry({ browserFactory = defaultBrowserFactory, leaseStore } = {}) {
+  if (registry) return registry;
+  let store = leaseStore;
+  let storageStore = null;
+  if (store === undefined) {
+    try {
+      const config = idriveConfigFromEnv();
+      store = createLeaseStore({ config });
+      // Cookie-Krug der Sitzungen: derselbe e2-Store wie die Plan-Aktionen
+      // saveSession/restoreSession, nur unter einem eigenen Capsule-Namen.
+      storageStore = createSessionStore("sitzungen", { config });
+    } catch {
+      // Ohne e2-Konfiguration gibt es weder Lease noch Cookie-Krug. Die Sitzung
+      // lebt dann nur im Prozess — das ist ehrlicher als eine Zustandslosigkeit
+      // vorzutaeuschen, die es nicht gibt.
+      store = null;
+    }
+  }
+  registry = createSessionRegistry({ browserFactory, leaseStore: store, storageStore });
+  return registry;
+}
+
+// Nur fuer Tests: Registry zuruecksetzen, damit jeder Test frisch startet.
+export function resetSessionRegistry(next = null) {
+  registry = next;
+}
+
 async function loadPlaywright() {
   return import("playwright");
 }
 
-export async function defaultBrowserFactory({ viewport } = {}) {
+export async function defaultBrowserFactory({ viewport, storageState } = {}) {
   const playwright = await loadPlaywright();
   const browser = await playwright.chromium.launch({
     headless: true,
@@ -31,7 +65,11 @@ export async function defaultBrowserFactory({ viewport } = {}) {
   });
   const context = await browser.newContext({
     viewport: viewport || { width: 1365, height: 900 },
-    acceptDownloads: true
+    acceptDownloads: true,
+    // Teil 4: gespeicherter Cookie-Krug einer Sitzung. Kommt ausschliesslich
+    // aus dem Sitzungs-Store auf IDrive e2 (session-store.mjs) — nie aus einem
+    // Plan, nie aus einem Prompt.
+    ...(storageState ? { storageState } : {})
   });
   return { browser, context };
 }
@@ -80,6 +118,10 @@ export async function executeRun(plan, deps = {}) {
       sessionStore: deps.sessionStore || (config ? createSessionStore(plan.capsuleRef, { config }) : undefined),
       macroStore,
       vaultOptions: deps.vaultOptions,
+      // Sitzungs-Modus (additiv 2026-07-31): lebender Browser-Zustand aus der
+      // Registry. Ohne beides ist der Ablauf unveraendert.
+      sessionState: deps.sessionState || null,
+      keepAlive: deps.keepAlive === true,
       onStep: livePublisher ? (event) => livePublisher.onStep(event) : null
     });
     result = await interpreter.run();
@@ -105,6 +147,40 @@ export async function executeRun(plan, deps = {}) {
   if (deps.skipUpload === true) return { ...result, uploaded: false };
   const manifest = await uploadRunArtifacts(result, { config: deps.idriveConfig, putObject: deps.putObject });
   return { ...result, uploaded: true, manifest };
+}
+
+/**
+ * Lauf INNERHALB einer lebenden Sitzung. Der Browser bleibt danach offen, die
+ * Seite bleibt stehen — der naechste Auftrag mit derselben sessionId findet
+ * sie vor. Fail-closed: ohne gueltigen Lease oder bei fremdem Halter wird
+ * nicht gestartet, statt still einen zweiten Browser zu oeffnen.
+ * @param {object} plan validierter Aktionsplan
+ * @param {{sessionId:string}} auftrag
+ * @returns {Promise<object>} Lauf-Ergebnis plus sitzung-Beschreibung
+ */
+export async function executeRunInSession(plan, { sessionId, ...deps } = {}) {
+  const reg = deps.registry || getSessionRegistry();
+  const uebernahme = await reg.acquire({
+    sessionId,
+    capsuleRef: plan?.capsuleRef ?? null,
+    viewport: deps.viewport ?? null
+  });
+  if (!uebernahme.ok) {
+    return { ok: false, rejected: true, sessionId, status: uebernahme.status, errors: [uebernahme.error] };
+  }
+  const { session, neu } = uebernahme;
+  try {
+    const result = await executeRun(plan, {
+      ...deps,
+      registry: undefined,
+      browserFactory: deps.browserFactory || reg.browserFactoryFuer(sessionId),
+      sessionState: session.state,
+      keepAlive: true
+    });
+    return { ...result, sessionId, sitzungNeu: neu, sitzung: reg.status(sessionId) };
+  } finally {
+    await reg.release({ sessionId });
+  }
 }
 
 // Interaktiver Loop-Modus (additiv, 2026-07-15): POST /run mit
@@ -164,18 +240,58 @@ function readBody(req) {
   });
 }
 
+/**
+ * POST /session — Sitzungen ansehen und beenden. Bewusst klein: Sitzungen
+ * entstehen ausschliesslich durch einen Auftrag mit sessionId, nie durch einen
+ * eigenen "oeffne Browser"-Aufruf. Ein Browser ohne Auftrag waere Leerlauf,
+ * der Geld kostet und nichts beweist.
+ * @param {{op?:string, sessionId?:string}} auftrag
+ */
+export async function handleSessionOp(auftrag = {}) {
+  const reg = getSessionRegistry();
+  const op = String(auftrag.op || "list");
+  const sessionId = typeof auftrag.sessionId === "string" ? auftrag.sessionId.trim() : "";
+  await reg.aufraeumen();
+  if (op === "list") return { ok: true, holder: reg.holder, sitzungen: reg.list() };
+  if (!sessionId) return { ok: false, error: "sessionId_fehlt" };
+  if (op === "status") {
+    const status = reg.status(sessionId);
+    return status ? { ok: true, sitzung: status } : { ok: false, error: "sitzung_unbekannt" };
+  }
+  if (op === "close") return { ok: true, ...(await reg.close(sessionId)) };
+  return { ok: false, error: `op_unbekannt: ${op.slice(0, 40)}` };
+}
+
 export function createServer() {
   return http.createServer(async (req, res) => {
     if (req.method === "GET" && req.url === "/health") {
-      respondJson(res, 200, { ok: true, engine: "smejj.com maus-engine", running });
+      respondJson(res, 200, {
+        ok: true,
+        engine: "smejj.com maus-engine",
+        running,
+        sitzungen: registry ? registry.count() : 0
+      });
       return;
     }
-    if (req.method !== "POST" || req.url !== "/run") {
+    const sessionEndpunkt = req.method === "POST" && req.url === "/session";
+    if (!sessionEndpunkt && (req.method !== "POST" || req.url !== "/run")) {
       respondJson(res, 404, { ok: false, error: "unbekannter_endpunkt" });
       return;
     }
     if (!isAuthorized(req)) {
       respondJson(res, 401, { ok: false, error: "nicht_autorisiert" });
+      return;
+    }
+    // Sitzungs-Verwaltung (status/list/close) laeuft NICHT durch das
+    // single-run-Schloss: sie startet keinen Browser und muss auch waehrend
+    // eines laufenden Auftrags Auskunft geben koennen.
+    if (sessionEndpunkt) {
+      try {
+        const parsed = JSON.parse(await readBody(req));
+        respondJson(res, 200, await handleSessionOp(parsed));
+      } catch (error) {
+        respondJson(res, 400, { ok: false, error: String(error.message || error).slice(0, 200) });
+      }
       return;
     }
     if (running) {
@@ -188,26 +304,33 @@ export function createServer() {
       let plan;
       let saveAsMacro;
       let loopTask;
+      let sessionId;
       try {
         const parsed = JSON.parse(body);
         plan = parsed.plan;
         loopTask = parsed.loopTask && typeof parsed.loopTask === "object" ? parsed.loopTask : undefined;
         saveAsMacro = typeof parsed.saveAsMacro === "string" ? parsed.saveAsMacro : undefined;
+        sessionId = typeof parsed.sessionId === "string" ? parsed.sessionId.trim() : undefined;
       } catch {
         respondJson(res, 400, { ok: false, error: "kein_gueltiges_json" });
         return;
       }
-      const result = loopTask
-        ? await executeLoopRun(loopTask)
-        : await executeRun(plan, { saveAsMacro });
+      let result;
+      if (loopTask) result = await executeLoopRun(loopTask);
+      else if (sessionId) result = await executeRunInSession(plan, { sessionId, saveAsMacro });
+      else result = await executeRun(plan, { saveAsMacro });
       // Keine Artefakt-Rohdaten in der HTTP-Antwort — Beweise liegen auf e2.
       const { artifacts, ...summary } = result;
-      respondJson(res, result.rejected ? 422 : 200, summary);
+      const status = result.rejected ? (result.status || 422) : 200;
+      respondJson(res, status, summary);
     } catch (error) {
       respondJson(res, 500, { ok: false, error: String(error.message || error).slice(0, 300) });
     } finally {
       running = false;
-      if (EXIT_AFTER_RUN) {
+      // Solange eine Sitzung lebt, waere ein Sofort-Ende genau der Kaltstart,
+      // den der Sitzungs-Modus abschafft. Die Registry baut die Sitzung nach
+      // Leerlauf bzw. Hartlimit selbst ab — danach greift exit-after-run wieder.
+      if (EXIT_AFTER_RUN && !(registry && registry.hasLiveSessions())) {
         // Stateless: Worker beendet sich nach der Aufgabe sofort
         // (Scale-to-zero, keine laufenden Fixkosten).
         setTimeout(() => process.exit(0), 250).unref();

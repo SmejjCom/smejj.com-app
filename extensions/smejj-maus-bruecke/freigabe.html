@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>smejj.com Maus-Bruecke</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 0; padding: 14px; width: 300px; }
+  h1 { font-size: 15px; margin: 0 0 8px; }
+  p { margin: 0 0 10px; color: #444; }
+  .herkunft { font-weight: 600; word-break: break-all; }
+  button { font: inherit; padding: 7px 10px; border-radius: 7px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
+  button.ja { background: #145f3a; border-color: #145f3a; color: #fff; }
+  ul { padding-left: 18px; margin: 8px 0 0; }
+  li { word-break: break-all; }
+  .hinweis { font-size: 12px; color: #666; margin-top: 12px; }
+</style>
+</head>
+<body>
+  <h1>Maus im echten Chrome</h1>
+  <p>Aktuelle Seite: <span class="herkunft" id="herkunft">-</span></p>
+  <p>
+    <button class="ja" id="erlauben">Für 30 Minuten erlauben</button>
+    <button id="entziehen">Entziehen</button>
+  </p>
+  <p id="stand"></p>
+  <div>
+    <strong>Aktive Freigaben</strong>
+    <ul id="liste"></ul>
+  </div>
+  <p class="hinweis">
+    Die Maus darf nur klicken, tippen, navigieren, prüfen und ein Bild machen.
+    Passwortfelder, Cookies und Dateien bleiben gesperrt. Jede Freigabe läuft
+    von selbst ab.
+  </p>
+  <script type="module" src="freigabe.js"></script>
+</body>
+</html>

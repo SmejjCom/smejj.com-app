@@ -280,6 +280,57 @@ export async function loadRun({ capsuleRef, planId, runId }, {
 
 // --- Live-Modus (Stufe B) ------------------------------------------------------
 
+// Lauf-Status roh lesen (auch waehrend "laeuft"). resolveRunViaRunId wirft in
+// dem Fall bewusst — fuer den Live-Weg brauchen wir genau diesen Zwischenstand.
+export async function fetchRunStatus(runId, { fetchImpl = fetch, token = null } = {}) {
+  const auth = token ?? await resolveApiToken();
+  const response = await fetchImpl(`${API_ORIGIN}${MAUS_RUN_PATH}?runId=${encodeURIComponent(runId)}`, {
+    credentials: "include",
+    headers: auth ? { Authorization: `Bearer ${auth}` } : {}
+  });
+  if (response.status === 401) throw new Error("Bitte zuerst auf smejj.com anmelden.");
+  return await response.json().catch(() => ({}));
+}
+
+/**
+ * Wartet, bis ein gestarteter Lauf capsuleRef UND planId kennt. Der
+ * Control-Server veroeffentlicht die planId, sobald der Plan steht (onPlan) —
+ * vorher gibt es sie schlicht noch nicht. Ohne dieses Warten muesste der
+ * Betreiber beide Werte von Hand eintragen, und genau das soll wegfallen.
+ * Pur genug zum Testen: Statusabruf und Warten sind injizierbar.
+ * @returns {Promise<{capsuleRef:string, planId:string, fertig:boolean}>}
+ */
+export async function warteAufLaufKennung(runId, {
+  holeStatus = fetchRunStatus,
+  sleepImpl = (ms) => new Promise((r) => setTimeout(r, ms)),
+  maxWaitMs = 120_000,
+  pollMs = LIVE_POLL_MS,
+  jetzt = () => Date.now()
+} = {}) {
+  const ende = jetzt() + maxWaitMs;
+  let letzterFehler = null;
+  while (jetzt() <= ende) {
+    let daten;
+    try {
+      daten = await holeStatus(runId);
+    } catch (error) {
+      // 401 ist kein Wartefall, sondern ein Abbruch — sonst pollt die Anzeige
+      // zwei Minuten lang gegen eine Anmeldeschranke.
+      if (/anmelden/i.test(String(error?.message || ""))) throw error;
+      letzterFehler = error;
+      daten = null;
+    }
+    const quelle = daten?.result || daten || {};
+    const capsuleRef = quelle.capsuleRef || daten?.capsuleRef || "";
+    const planId = quelle.planId || daten?.planId || "";
+    if (capsuleRef && planId) {
+      return { capsuleRef, planId, fertig: (daten?.status ?? quelle.status) !== "laeuft" };
+    }
+    await sleepImpl(pollMs);
+  }
+  throw letzterFehler || new Error("Lauf meldet keine planId — laeuft er noch, oder ist er nie gestartet?");
+}
+
 // Liest live/status.json der Capsule. Rueckgabe null = (noch) kein Live-Status
 // (z. B. Lauf laeuft nicht oder Worker hat noch nichts geschrieben).
 export async function fetchLiveStatus(prefix, { presign = presignDownload, fetchImpl = fetch } = {}) {
@@ -561,10 +612,26 @@ async function onLoadRun(event, { silent = false } = {}) {
 async function onWatchLive(event) {
   event?.preventDefault?.();
   pause();
-  const capsuleRef = refs.capsuleInput.value.trim();
-  const planId = refs.planInput.value.trim();
+  let capsuleRef = refs.capsuleInput.value.trim();
+  let planId = refs.planInput.value.trim();
+  const runId = refs.runInput.value.trim();
+  // Nur eine runId? Dann die fehlenden Werte selbst holen, statt sie vom
+  // Betreiber zu verlangen — das ist der Kern von "haengt sich automatisch an".
+  if ((!capsuleRef || !planId) && runId) {
+    setMessage("Lauf gestartet — warte auf den Plan, dann geht die Ansicht live ...", "ok");
+    try {
+      const kennung = await warteAufLaufKennung(runId);
+      capsuleRef = kennung.capsuleRef;
+      planId = kennung.planId;
+      refs.capsuleInput.value = capsuleRef;
+      refs.planInput.value = planId;
+    } catch (error) {
+      setMessage(String(error?.message || error).slice(0, 200), "error");
+      return;
+    }
+  }
   if (!capsuleRef || !planId) {
-    setMessage("Für Live bitte capsuleRef + planId angeben.", "error");
+    setMessage("Für Live bitte capsuleRef + planId (oder eine runId) angeben.", "error");
     return;
   }
   if (state.run) state.run.shots.forEach((shot) => URL.revokeObjectURL(shot.url));
@@ -618,8 +685,9 @@ function init() {
   if (params.get("capsuleRef")) refs.capsuleInput.value = params.get("capsuleRef");
   if (params.get("planId")) refs.planInput.value = params.get("planId");
   if (params.get("runId")) refs.runInput.value = params.get("runId");
-  // ?live=1 startet direkt die Live-Ansicht (Stufe B).
-  if (params.get("live") === "1" && refs.capsuleInput.value && refs.planInput.value) onWatchLive();
+  // ?live=1 startet direkt die Live-Ansicht (Stufe B). Seit 2026-07-31 reicht
+  // dafuer auch eine runId allein — capsuleRef und planId holt onWatchLive sich.
+  if (params.get("live") === "1" && ((refs.capsuleInput.value && refs.planInput.value) || refs.runInput.value)) onWatchLive();
   else if ((refs.capsuleInput.value && refs.planInput.value) || refs.runInput.value) onLoadRun();
 }
 

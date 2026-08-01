@@ -5,6 +5,42 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-07-31] MAUS: SITZUNG BLEIBT STEHEN, ZWEITER ADAPTER AN DERSELBEN NAHT (job_maus_eigener_browser_20260731)
+
+Volltext: [docs/memory/Memory_Bank_2026-07-31_maus_sitzung.md](docs/memory/Memory_Bank_2026-07-31_maus_sitzung.md).
+HEAD vor der Aenderung `e603802`. **Noch nicht ausgerollt** (siehe unten).
+
+- **Zustandslos bleibt moeglich, wenn man trennt:** der Browser lebt zwangslaeufig
+  im Prozess, aber die WAHRHEIT ueber eine Sitzung (wer haelt sie, bis wann) liegt
+  als Lease auf IDrive e2. Fremd gehaltene Sitzung => 409, nie still ein zweiter
+  Browser. Abgelaufener Lease = frei: der Selbstheilungspfad nach Scale-to-zero.
+- **Gemessen, nicht behauptet** (`scripts/diagnose/maus-sitzung-beweis.mjs`, echter
+  Browser, kein Modell): zwei Auftraege, **1 Browserstart statt 2**, Auftrag 2 in
+  **0,0 s statt 3,3 s**, gleiche aktive Seite. Abnahmepunkt 4 der Auftragsdatei.
+- **Kein zweiter Sitzungs-Motor.** `workers/remote-browser/session-engine.js`
+  gehoert zum Live-Browser-Dienst (andere Aktionssprache, anderer Worker).
+  Uebernommen wurde sein MUSTER (Idle + Hartlimit + Obergrenze), nicht sein Code.
+- **Zwei leicht uebersehene Punkte:** `executedActions` gehoert zum Auftrag, nicht
+  zur Sitzung (sonst ist Auftrag 2 beim Start verbraucht); und exit-after-run darf
+  nicht feuern, solange eine Sitzung lebt.
+- **Live zuschauen scheiterte an der planId**, nicht am Live-Publisher: der
+  Control-Server kannte sie erst am Laufende. Neuer, fail-safe gekapselter
+  `onPlan`-Rueckruf meldet den gueltigen Plan VOR der Ausfuehrung; seitdem reicht
+  `?runId=...&live=1` allein.
+- **Chrome-Adapter an der `browserFactory`-Naht:** dadurch gelten Allowlist,
+  Budget, Datei-Grenzen und Vault bauartbedingt fuer BEIDE Adapter — es gibt
+  keinen zweiten Interpreter, an dem man vorbeikaeme. **Nie
+  `--remote-debugging-port`**: der Port kennt keine Herkunftspruefung.
+- **Startseiten-Budget:** `maus-auftrag.js` wird dynamisch importiert, nicht eager.
+  Mehraufwand der Startseite gesamt **+711 Byte gzip (0,24 %)**, LCP/CLS/INP/TTFB
+  unveraendert im Budget (`docs/benchmarks/webvitals-maus-sitzung-2026-07-31.json`).
+- Verifikation: `check:maus-engine` **189/189** (vorher 139), alle Pflichtchecks
+  gruen, groesste neue Datei 254 Zeilen.
+- **NICHT LIVE:** Teil 0 (Token + Eimer) am 2026-07-31 nachgemessen und weiterhin
+  offen (`maus-abgleich.mjs` Exit 2, Rote Liste). Engine laeuft aus ghcr.io-Abbild,
+  Control-Release endet im gesperrten Env-Schreibzugriff, Frontend bewusst
+  zurueckgehalten, bis die Kette live nachweisbar ist.
+
 ### [2026-07-30] MODUL W: TAGESPROJEKTION STATT ZAEHLSTAND IM SPEICHER (job_analytik_projektion_20260730)
 
 Volltext: [docs/memory/Memory_Bank_2026-07-29_modulw.md](docs/memory/Memory_Bank_2026-07-29_modulw.md).

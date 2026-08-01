@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-webvitals",
+  "anlass": "job_maus_eigener_browser_20260731 — Sitzung am Leben halten + Live-Panel",
+  "gemessenAm": "2026-07-31",
+  "url": "http://localhost:62897/",
+  "runs": 5,
+  "gemessenMit": "scripts/testing/measure_web_vitals.mjs, Chrome headless ueber DevTools-Protokoll",
+  "hinweisZurMessstelle": "Gemessen am lokalen Dev-Server, weil der geaenderte Frontend-Stand noch nicht ausgerollt ist. Der lokale Server liefert unkomprimiert und ohne CDN — nur die Laufzeitwerte (LCP/CLS/INP/TTFB) sind mit der Live-Referenz vergleichbar, pageWeight_kb NICHT.",
+  "kalt": {
+    "ttfb_ms": { "p75": 1, "min": 0, "max": 2 },
+    "lcp_ms": { "p75": 84, "min": 68, "max": 128 },
+    "cls": { "p75": 0, "min": 0, "max": 0 },
+    "inp_ms": { "p75": 56, "min": 40, "max": 64 },
+    "pageWeight_kb": { "p75": 799, "hinweis": "lokal unkomprimiert — live 284 KB, siehe Referenz" },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": { "p75": 4, "min": 3, "max": 4 },
+    "lcp_ms": { "p75": 92, "min": 80, "max": 96 },
+    "cls": { "p75": 0, "min": 0, "max": 0 },
+    "inp_ms": { "p75": 40, "min": 32, "max": 56 },
+    "pageWeight_kb": { "p75": 40 },
+    "lcpElement": "H2"
+  },
+  "referenz": {
+    "datei": "docs/benchmarks/webvitals-verlaufsseite-2026-07-31.json",
+    "url": "https://smejj.com/",
+    "kalt": { "ttfb_ms_p75": 27, "lcp_ms_p75": 168, "cls_p75": 0, "inp_ms_p75": 40, "pageWeight_kb_p75": 284 }
+  },
+  "regressionsanalyse": {
+    "methode": "Statt eines Vergleichs zweier verschieden gehosteter Zahlen wird die EINZIGE Ursache eines moeglichen Mehrgewichts exakt beziffert: die Byte-Differenz der von der Startseite geladenen Dateien.",
+    "geaenderteFrontendDateien": [
+      {
+        "datei": "public/maus-panel.js",
+        "aufDerStartseiteGeladen": true,
+        "deltaBytes": 1812,
+        "deltaBytesGzip": 711
+      },
+      {
+        "datei": "public/maus-replay.js",
+        "aufDerStartseiteGeladen": false,
+        "deltaBytes": 3031,
+        "hinweis": "wird nur innerhalb von maus-replay.html geladen, nie auf der Startseite"
+      },
+      {
+        "datei": "public/maus-auftrag.js",
+        "aufDerStartseiteGeladen": false,
+        "deltaBytes": 0,
+        "hinweis": "NEU, aber bewusst dynamisch importiert (maus-panel.js starteAuftrag) — erst beim tatsaechlichen Auftrag, nie beim Seitenaufbau"
+      }
+    ],
+    "startseiteKaltNachher_kb": 284.7,
+    "budget_kb": 300,
+    "ergebnis": "keine Verschlechterung",
+    "begruendung": "Die Startseite laedt genau eine geaenderte Datei; sie waechst um 711 Byte gzip (0,24 % des Kaltgewichts). LCP, CLS, INP und TTFB liegen unveraendert weit innerhalb der Budgets, das LCP-Element ist unveraendert H2, CLS bleibt 0."
+  },
+  "offen": "Nach dem Frontend-Deploy erneut gegen https://smejj.com/ messen und diese Datei um den Live-Nachlauf ergaenzen."
+}

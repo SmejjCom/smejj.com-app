@@ -65,15 +65,25 @@ export function createInterpreter(plan, options = {}) {
     // Live-Ansicht. Rein additiv, Default no-op — ohne ihn verhaelt sich der
     // Interpreter byte-identisch wie zuvor. Der Aufruf ist fail-safe gekapselt
     // (siehe notifyStep): ein Fehler in der Anzeige darf den Lauf nie stoeren.
-    onStep = null
+    onStep = null,
+    // Sitzungs-Modus (additiv 2026-07-31): sessionState ist der lebende
+    // Zustand einer Sitzung aus session-registry.mjs. Mit keepAlive bleibt der
+    // Browser am Ende des Laufs OFFEN — der Folgeauftrag findet die Seite so
+    // vor, wie der vorige sie verlassen hat. Ohne beides verhaelt sich der
+    // Interpreter exakt wie zuvor (Non-Regression).
+    sessionState = null,
+    keepAlive = false
   } = options;
 
   const budget = plan.policy.budget;
-  const state = {
+  const state = sessionState || {
     browser: null, context: null, pages: new Map(),
     activeTabId: null, downloads: [], extracted: {},
     executedActions: 0
   };
+  // Budget gilt je Auftrag, nicht je Sitzung: sonst waere der zweite Auftrag
+  // einer langen Sitzung schon beim Start "verbraucht".
+  state.executedActions = 0;
   const artifacts = [];
   const actionLog = [];
 
@@ -81,6 +91,9 @@ export function createInterpreter(plan, options = {}) {
     plan,
     policy: plan.policy,
     state,
+    // nav-actions liest das: bei laufender Sitzung wird ein bereits offener
+    // Browser wiederverwendet statt als Fehler gemeldet.
+    keepAlive,
     vault,
     fetchImpl,
     sessionStore,
@@ -249,7 +262,10 @@ export function createInterpreter(plan, options = {}) {
       }
     }
 
-    if (state.browser) {
+    // Sitzungs-Modus: der Browser bleibt bewusst offen. Genau das laesst die
+    // Seite stehen; die Registry baut die Sitzung nach Leerlauf oder Hartlimit
+    // ab (session-registry.mjs), damit trotzdem nichts ewig laeuft.
+    if (state.browser && !keepAlive) {
       try { await state.browser.close(); } catch { /* Worker beendet sich ohnehin */ }
       state.browser = null;
     }
@@ -262,6 +278,7 @@ export function createInterpreter(plan, options = {}) {
       aborted,
       abortReason,
       failedStep,
+      sitzungOffen: Boolean(keepAlive && state.browser),
       actionLog,
       extracted: state.extracted,
       artifacts,

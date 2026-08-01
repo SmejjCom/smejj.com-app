@@ -7,7 +7,20 @@ import { closeCookieBanner } from "../cookie-banner.mjs";
 
 export const navActions = {
   async openBrowser(ctx, step) {
-    if (ctx.state.browser) throw new Error("browser_bereits_offen");
+    // Sitzungs-Modus (2026-07-31): Laeuft die Sitzung schon, wird der offene
+    // Browser samt aktueller Seite WEITERBENUTZT statt neu gestartet. Ohne
+    // Sitzung bleibt es beim bisherigen fail-closed Fehler — ein zweites
+    // openBrowser waere dort ein Planungsfehler.
+    if (ctx.state.browser) {
+      if (!ctx.keepAlive) throw new Error("browser_bereits_offen");
+      const tabId = ctx.state.activeTabId || "main";
+      if (!ctx.state.pages.has(tabId)) {
+        const page = await ctx.state.context.newPage();
+        ctx.state.pages.set(tabId, page);
+      }
+      ctx.state.activeTabId = tabId;
+      return { tabId, wiederverwendet: true };
+    }
     const { browser, context } = await ctx.browserFactory({ viewport: step.viewport });
     ctx.state.browser = browser;
     ctx.state.context = context;
