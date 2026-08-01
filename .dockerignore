@@ -25,6 +25,13 @@ workers/*
 !workers/glm-salad/s3.js
 !workers/smejj-training-loop
 !workers/smejj-training-loop/**
+# Anbau der Dauertrainings-Schleife. OHNE diese beiden Zeilen bricht der Bau ab:
+# "failed to compute cache key" bei COPY workers/smejj-lora-loop — der Ordner
+# liegt dann gar nicht im Bau-Kontext. Live gemessen am 2026-08-01
+# (deployment-6a6d95059cd65e28a34344dd). Wer hier einen Worker ergaenzt, MUSS
+# ihn auch hier freistellen; `workers/*` schliesst sonst alles Neue stumm aus.
+!workers/smejj-lora-loop
+!workers/smejj-lora-loop/**
 schemas/*
 # Beide Maus-Schemata werden zur LAUFZEIT per fs gelesen (plan-validator und
 # interactive-loop). Fehlt eines im Abbild, bootet der Dienst zwar, aber der
