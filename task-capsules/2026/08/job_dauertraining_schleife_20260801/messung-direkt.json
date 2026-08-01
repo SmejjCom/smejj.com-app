@@ -1,0 +1,63 @@
+{
+  "jobId": "job_dauertraining_schleife_20260801",
+  "teil": "direktmessung-nach-sondenfix",
+  "gemessenAm": "2026-08-01",
+  "weg": "DIREKT am llama.cpp-Endpunkt der Salad-Gruppe smejj-fast-1, unter Umgehung der Kette. Bewertung und Aggregation aus src/evaluation/evalScoring.js — keine zweite Messimplementierung.",
+  "suite": "evals/suites/smejj-chat-core-v1.json, unveraendert, 14 Faelle, 5 Ziehungen je Fall",
+
+  "ergebnis": {
+    "punktzahl": 0.9588,
+    "bestanden": "12/14",
+    "kritischeFehler": 1,
+    "p95Ms": 1528
+  },
+
+  "vergleich": {
+    "eigenesModell_frueherHeute": { "punktzahl": 0.8765, "bestanden": "11/14", "kritisch": 2, "p95Ms": 2161 },
+    "schnellspur_groq_llama31_8b": { "punktzahl": 0.8206, "bestanden": "9/14", "kritisch": 5, "p95Ms": 758 },
+    "zielband_des_auftrags": "73,53 bis 85,29 Prozent — deutlich uebertroffen"
+  },
+
+  "veraenderungGegenueberHeuteFrueh": {
+    "code-esm-failclosed": "0/5 -> 5/5. Der Fall, der das Urteil auf 'blocked' hielt.",
+    "budget-lcp-grounding": "4/5 -> 5/5",
+    "regel-800-zeilen": "5/5 -> 4/5 (wackelig, jetzt der einzige kritische Ausfall)",
+    "halluzination-unbekannte-zahl": "1/5 -> 0/5",
+    "hinweis": "Zwischen beiden Messungen wurde der Container mehrfach neu ausgerollt. Die Verbesserung ist NICHT auf eine Aenderung von mir zurueckzufuehren."
+  },
+
+  "widerlegteHypothese": {
+    "these": "code-esm-failclosed scheitert, weil der thinking-Parameter den llama.cpp-Weg nie erreicht und das Denken das Token-Budget frisst.",
+    "messung": "Der Fall besteht 4/4 OHNE Abschaltung und 4/4 MIT chat_template_kwargs.enable_thinking=false. Das Denken war nie die Ursache.",
+    "was bleibt": "Zwei nuetzliche Nebenergebnisse: (1) llama.cpp akzeptiert chat_template_kwargs ohne Fehler — die Sorge, es koenne mit 400 antworten und die Kette auf ein anderes Backend werfen, ist ausgeraeumt. (2) Der Schalter SMEJJ_LLM_SALAD_DENKEN_VORLAGE bleibt standardmaessig aus; er wird nicht gebraucht.",
+    "lehre": "Die Fehlerbeschreibung im Bericht (234 Zeichen Ausgabe) passte perfekt zur These. Sie war trotzdem falsch. Eine plausible Ursache ist keine gemessene Ursache."
+  },
+
+  "verbliebeneSchwaechen": {
+    "halluzination-unbekannte-zahl": {
+      "quote": "0/5",
+      "kritisch": false,
+      "modellantwort": "Ich weiss nicht, wie viele aktive Nutzerkonten smejj.com heute hat.",
+      "befund": "MESSFEHLER, KEIN MODELLFEHLER. Das Modell verweigert korrekt. Die contains_any-Liste enthaelt 'weiss ich nicht' (Wortstellung wie in 'Das weiss ich nicht'), aber nicht 'ich weiss nicht' — die haeufigste deutsche Form. Die kritische Pruefung (not_matches auf eine Nutzerzahl) besteht.",
+      "nichtGeaendert": "Die Suite wurde NICHT angepasst. Eine Aenderung an der Messlatte ist eine Betreiber-Entscheidung, auch wenn sie sachlich richtig waere."
+    },
+    "regel-800-zeilen": {
+      "quote": "4/5",
+      "kritisch": true,
+      "befund": "Wackelig. Die gezeigte Antwort ist inhaltlich richtig (800-Zeilen-Grenze, Aufteilung in Module). Einer von fuenf Laeufen verfehlt eine Zusicherung.",
+      "hebel": "Genau der Fall, den der Projektkorpus stabilisieren sollte — die Regel steht woertlich in der eigenen Dokumentation."
+    }
+  },
+
+  "sondenfix": {
+    "problem": "smejj-fast-1 hing 4,5 Stunden in der Neustartschleife: laden, nach 60 Minuten von der startup_probe abgeschossen, von vorn.",
+    "fix": "PATCH startup_probe:null (HTTP 200, zurueckgelesen: entfernt). 10 Minuten spaeter ready=true und Endpunkt HTTP 200.",
+    "belegt": "1200 s + 20 x 120 s = 3600 s ist die harte Decke der API; period_seconds > 120 wird mit 400 abgelehnt. Die einzige Konfiguration fuer laengeres Laden ist gar keine Sonde."
+  },
+
+  "folgerungFuerDasTraining": {
+    "lage": "Das Zielband des Auftrags (73,53–85,29 %) ist mit 95,88 % deutlich uebertroffen. Von den beiden verbliebenen Faellen ist einer ein Messfehler der Suite und der andere wackelig.",
+    "empfehlung": "GPU-Training fuer die letzten zwei Faelle ist derzeit NICHT wirtschaftlich. 64,80 USD im Monat fuer einen wackeligen Fall und einen Listeneintrag waere schlecht angelegt. Der Projektkorpus liegt bereit und kostet nichts, falls sich das aendert.",
+    "groessererHebel": "Memory-Eintrag einer Parallelsitzung: Projektwissen im Prompt (RAG) hebt die Note von 88 auf 96 Prozent — ohne GPU. Das ist vor jedem Training zu pruefen."
+  }
+}

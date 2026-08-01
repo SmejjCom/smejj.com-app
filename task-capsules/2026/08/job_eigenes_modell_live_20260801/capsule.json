@@ -149,6 +149,24 @@
     "empfehlung": "Das eigene Modell in diesem Zustand nicht als Auswahl fuer Nutzer stehen lassen. Es ist nicht Standard und nicht im Auto-Routing — ein Nutzer muss es bewusst waehlen — aber wer es waehlt, bekommt sichtbar schlechtere und teils falsche Antworten. Der Betreiber hat den Dauerbetrieb angeordnet; dieser Befund ist die Gegenrede dazu, nicht seine Aufhebung."
   },
 
+  "zweiSitzungenEinContainer": {
+    "kernaussage": "ZWEI SITZUNGEN AN DERSELBEN CONTAINER GROUP SIND EINE MESSFALLE ERSTER GUETE. Eine fremde Aenderung an smejj-fast-1 hat die startup_probe geloescht — nicht veraendert, geloescht.",
+    "gemessen": "Container-Version sprang von 6 (meine 8B-Umstellung) auf 7, ohne dass ich etwas getan haette. Danach: startup_probe = undefined, liveness_probe = initial_delay 1200 s + 5 x 30 s. Ohne Startsonde greift die Lebendsonde mitten im Modell-Download und toetet den Container, bevor er je bereit war.",
+    "folge": "Zwischen 22:42 und 23:13 UTC wurde die Instanz viermal ersetzt (22:42:09, 22:47:42, 23:06:16, 23:12:43). Kein Durchlauf wurde fertig.",
+    "zerstoerteMessung": "Der erste 8B-Messlauf lief in genau dieses Fenster: alle 14 Faelle mit http_503 nach je 6 Versuchen, Ergebnis 7,1 Prozent. Das ist KEINE Modellnote, sondern ein toter Endpunkt. Waere sie ungeprueft berichtet worden, haette das 8B-Modell als voellig unbrauchbar dagestanden.",
+    "behebung": "startup_probe wiederhergestellt (1200 s + 20 x 120 s = 60 min), Container-Version 8. Der Messlauf wird ausserdem mit einem Waechter gefahren: Container-Version vor UND nach dem Lauf; weichen sie ab, gilt die Messung als ungueltig.",
+    "merkregel": "Bei einer geteilten Container Group gehoert die Versionsnummer in jedes Messprotokoll. Ein Salad-PATCH, der nicht als merge-patch+json gesendet wird, ersetzt das Objekt und loescht dabei alles, was nicht mitgeschickt wurde — Sonden zuerst.",
+    "nichtRegressionTrotzdemGehalten": "Waehrend der gesamten Instabilitaet live geprueft: Standardanfrage -> zhipu:glm-5.2, ausdrueckliche Wahl von smejj-fast-1 bei totem Dienst -> zhipu:glm-5.2 (kein Fehler), Chat-Bruecke -> groq:llama-3.1-8b-instant, smejj.com -> 200. Fail-closed hat jeden Ausfall aufgefangen."
+  },
+
+  "ergaenzungDurchParallelsitzung": {
+    "commit": "a69b198 'feat(rag): Projektwissen hebt die Note auf 96,1 % — aber nur als Ausnahme'",
+    "warumDasHierZaehlt": "Die Parallelsitzung hat unabhaengig genau die Schwaeche geloest, die ich im Abschnitt befundEchteNutzung gemessen habe: das Modell kennt smejj.com nicht. Ihre Messung zeigt, dass abrufbares Projektwissen die Note von 88,2 auf 96,1 Prozent hebt.",
+    "ihrWichtigsterNebenbefund": "Kein Kontext ist besser als falscher Kontext. Bei niedriger Relevanzschwelle brachen genau die Faelle ein, die Projektwissen gar nicht beantworten kann. Eine BM25-Punktzahl allein ist kein Relevanzsignal.",
+    "folgeFuerDieModellwahl": "Die richtige Antwort auf meine Live-Schwaeche ist NICHT eine andere Modellgroesse, sondern der RAG-Weg. Ein kleineres oder groesseres Modell ohne Projektwissen bleibt bei echten Fragen schwach.",
+    "nochNichtLive": "Ihre Messung lief ueber den Eval-Harness, nicht ueber den echten Chat. Der Umbau der Bruecke ist bei ihnen durch die 800-Zeilen-Grenze blockiert."
+  },
+
   "korrekturAnParallelsitzung": {
     "betrifft": "Commit 8bdb8a7 'fix(router): Denken-Aus erreicht das eigene Modell nicht'.",
     "dortBehauptet": "Qwen3-14B denke, das Denken fresse die 600 Token des Falls code-esm-failclosed, zurueck kaemen 234 Zeichen ohne die geforderte Form — daher 0 von 5.",
