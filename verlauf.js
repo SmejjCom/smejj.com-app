@@ -48,6 +48,23 @@ export function trendFuer(messung, vorige) {
   return { richtung: delta > 0 ? "besser" : "schlechter", delta };
 }
 
+/**
+ * Benennt die wackeligen Faelle — die, die mal bestehen und mal nicht.
+ * Sie sind die eigentliche Information: sie erklaeren, warum sich die Punktzahl
+ * zwischen zwei unveraenderten Laeufen bewegt. Null, wenn nichts gemessen wurde.
+ */
+export function wackeligText(messung) {
+  const anzahl = Number(messung?.wackelig);
+  if (!Number.isFinite(anzahl) || anzahl <= 0) return null;
+  const liste = Array.isArray(messung?.wackeligeFaelle) ? messung.wackeligeFaelle : [];
+  const namen = liste
+    .filter((f) => f && f.fall)
+    .map((f) => `${f.fall} ${f.bestanden}/${f.laeufe}`)
+    .join(", ");
+  const wort = anzahl === 1 ? "1 wackeliger Fall" : `${anzahl} wackelige Fälle`;
+  return namen ? `${wort} (${namen})` : wort;
+}
+
 export function zeichneTabelle(daten, wurzel) {
   const messungen = Array.isArray(daten?.messungen) ? daten.messungen : [];
   wurzel.textContent = "";
@@ -79,7 +96,12 @@ export function zeichneTabelle(daten, wurzel) {
     const teile = [
       `${m.bestanden} von ${m.faelle} bestanden`,
       Number(m.kritischeFehler) === 1 ? "1 kritischer Fehler" : `${m.kritischeFehler} kritische Fehler`,
-      Number.isFinite(m.p95Ms) ? `p95 ${m.p95Ms} ms` : null
+      Number.isFinite(m.p95Ms) ? `p95 ${m.p95Ms} ms` : null,
+      // Ohne diese beiden Angaben liest sich eine schwankende Punktzahl wie ein
+      // Einbruch. Aeltere Messungen kennen sie nicht — dann steht dort nichts,
+      // statt eine Eins zu erfinden.
+      Number(m.wiederholungen) > 1 ? `${m.wiederholungen} Läufe je Fall` : null,
+      wackeligText(m)
     ].filter(Boolean);
     if (trend && trend.richtung !== "gleich") {
       const zeichen = trend.richtung === "besser" ? "+" : "−";
