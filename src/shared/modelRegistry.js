@@ -138,10 +138,19 @@ export const MODEL_REGISTRY = Object.freeze({
   // Zweck: kurze Chat-Antworten (Profil "fast"), waehrend GLM-5.2 das
   // Qualitaets-/Coding-Fundament bleibt.
   //
-  // BASIS: Qwen/Qwen3-14B, Apache-2.0 (kommerzielle Nutzung UND Fine-Tuning
-  // erlaubt — der spaetere smejj-1-0-Pfad bleibt offen). Dichtes 14B-Modell,
-  // GGUF UD-Q4_K_XL (9,2 GB) im Eimer IDRIVE_E2_MODEL_BUCKET unter
+  // BASIS: Qwen/Qwen3-8B, Apache-2.0 (kommerzielle Nutzung UND Fine-Tuning
+  // erlaubt — der spaetere smejj-1-0-Pfad bleibt offen). Dichtes 8B-Modell,
+  // GGUF UD-Q4_K_XL (5,14 GB) im Eimer IDRIVE_E2_MODEL_BUCKET unter
   // model-files/smejj-1-0/original/.
+  //
+  // DAS KLEINERE MODELL IST DAS BESSERE — gemessen, nicht vermutet. Beide mit
+  // derselben Quantisierung (UD-Q4_K_XL) und derselben Suite (14 Faelle, je 5
+  // Ziehungen, Transportweg provider, Kette auf salad verengt):
+  //   Qwen3-8B  (5,14 GB)  92,9 % ± 2,3   0 Totalausfaelle   Median  659 ms
+  //   Qwen3-14B (9,2  GB)  87,6 % ± 1,3   1 Totalausfall     Median  974 ms
+  // Das 8B ist zusaetzlich 44 % kleiner und startet damit nach einer Salad-
+  // Umverteilung deutlich frueher wieder — auf einer Plattform aus fremden
+  // Privatrechnern ist die Kaltstartzeit ein Verfuegbarkeitswert.
   //
   // DIE GROESSE IST EINE STARTZEIT-ENTSCHEIDUNG, KEINE VRAM-ENTSCHEIDUNG.
   // Gemessen am 2026-08-01: llama.cpp laedt die Gewichte beim Start von
@@ -151,9 +160,9 @@ export const MODEL_REGISTRY = Object.freeze({
   // (Qwen3-Coder-30B-A3B-Instruct, ebenfalls Apache-2.0) wurde auf dem
   // zugeteilten Knoten in 60 Minuten NICHT fertig: Salad meldete zweimal
   // "Instance Interrupted (Startup Probe Failure)" und begann den Download von
-  // vorn — eine Endlosschleife, in der der Dienst nie antwortet. 9,2 GB laufen
-  // dagegen mit Reserve durch. Wer die Gewichtsgroesse waehlt, waehlt die
-  // Startzeit mit; auf 24 GB VRAM haette auch das 30B-Abbild gepasst.
+  // vorn — eine Endlosschleife, in der der Dienst nie antwortet. 5,14 GB laufen
+  // dagegen mit grosser Reserve durch. Wer die Gewichtsgroesse waehlt, waehlt
+  // die Startzeit mit; auf 24 GB VRAM haette auch das 30B-Abbild gepasst.
   //
   // Ebenfalls verworfen: Qwen3.6-35B-A3B (der frueher hier eingetragene
   // Kandidat) — dessen UD-Q4_K_XL ist 22,4 GB und laesst auf einer 24-GB-Karte
@@ -179,7 +188,7 @@ export const MODEL_REGISTRY = Object.freeze({
   "smejj-fast-1": Object.freeze({
     id: "smejj-fast-1",
     name: "smejj fast 1.0",
-    aliases: Object.freeze(["smejj fast", "smejj-fast", "qwen3-14b"]),
+    aliases: Object.freeze(["smejj fast", "smejj-fast", "qwen3-8b"]),
     provider: "salad",
     status: "self-hosted-runtime-configurable",
     // Ausgeliefert wird, was der Dienst wirklich oeffnet (LLAMA_ARG_CTX_SIZE),

@@ -149,6 +149,22 @@
     "empfehlung": "Das eigene Modell in diesem Zustand nicht als Auswahl fuer Nutzer stehen lassen. Es ist nicht Standard und nicht im Auto-Routing — ein Nutzer muss es bewusst waehlen — aber wer es waehlt, bekommt sichtbar schlechtere und teils falsche Antworten. Der Betreiber hat den Dauerbetrieb angeordnet; dieser Befund ist die Gegenrede dazu, nicht seine Aufhebung."
   },
 
+  "modellwechselAuf8B": {
+    "anlass": "Der Betreiber wollte wissen, ob ein kleineres Modell reicht — Ziel war eigentlich nur eine kuerzere Kaltstartzeit und damit hoehere Verfuegbarkeit nach einer Salad-Umverteilung.",
+    "ergebnisUeberraschend": "Das kleinere Modell ist auch das BESSERE. Gleiche Quantisierung (UD-Q4_K_XL), gleiche Suite, je 5 Ziehungen, Kette auf salad verengt:",
+    "messwerte": {
+      "Qwen3-8B (5,14 GB)": "92,9 % ± 2,3 — 11 bestanden, 3 teilweise, 0 nicht bestanden, Median 659 ms",
+      "Qwen3-14B (9,2 GB)": "87,6 % ± 1,3 — 11 bestanden, 2 teilweise, 1 nicht bestanden, Median 974 ms",
+      "Schnellspur (Vergleich)": "82,1 % ± 3,1"
+    },
+    "besondersBemerkenswert": "code-esm-failclosed besteht beim 8B 5 von 5 — der Fall, der bei llama-3.1-8b, GLM-4.7-flash und Qwen3-14B durchfiel. Das 8B schreibt 'export function' ohne ueberfluessiges async. Damit ist auch belegt, dass der Fall loesbar ist und nicht grundsaetzlich kaputt.",
+    "gewinnAufAllenBetriebsachsen": "besser (92,9 gegen 87,6), schneller (Median 659 gegen 974 ms), 44 % kleiner (schnellerer Kaltstart = hoehere Verfuegbarkeit), passt auf mehr Karten (mehr Zuteilungschancen).",
+    "waeserNichtLoest": "Die Live-Schwaeche bleibt identisch. Ueber dieselbe Kette gefragt, welchen Speicherdienst smejj.com nutzt: GLM-5.2 antwortet 'IDrive e2', das 8B sagt 'Die Suchergebnisse liefern keine direkten Informationen'. Direkt gefragt erfindet es sogar 'Amazon S3'. Auf die Frage nach GitHub Actions antwortet es weiterhin faelschlich 'Ja'. DIE MODELLGROESSE IST NICHT DIE ANTWORT — das Projektwissen ist es (siehe ergaenzungDurchParallelsitzung).",
+    "messungAbgesichert": "Container-Version vor dem Lauf 8, nach dem Lauf 8 — unveraendert, Messung gueltig. backendsSeen ['salad'], keine Vermischung. Der erste 8B-Versuch war ungueltig (siehe zweiSitzungenEinContainer) und wurde verworfen, nicht berichtet.",
+    "liveBelegtNachDemWechsel": "2026-08-01 nach 23:30 UTC: model smejj-fast-1 -> salad:smejj-fast-1 in 1270 ms; ohne model-Feld weiter zhipu:glm-5.2 (3613 ms); unbekannte Modell-ID faellt zurueck; Chat-Bruecke unveraendert groq:llama-3.1-8b-instant; smejj.com 200. Das eigene Modell ist ueber die Kette inzwischen SCHNELLER als GLM-5.2.",
+    "lagerHinweis": "Die 8B-Gewichte werden nach model-files/smejj-1-0/original/ hochgeladen. Die 14B-Datei bleibt dort liegen — Loeschen waere Rote Liste und ist ohne Freigabe nicht erfolgt."
+  },
+
   "zweiSitzungenEinContainer": {
     "kernaussage": "ZWEI SITZUNGEN AN DERSELBEN CONTAINER GROUP SIND EINE MESSFALLE ERSTER GUETE. Eine fremde Aenderung an smejj-fast-1 hat die startup_probe geloescht — nicht veraendert, geloescht.",
     "gemessen": "Container-Version sprang von 6 (meine 8B-Umstellung) auf 7, ohne dass ich etwas getan haette. Danach: startup_probe = undefined, liveness_probe = initial_delay 1200 s + 5 x 30 s. Ohne Startsonde greift die Lebendsonde mitten im Modell-Download und toetet den Container, bevor er je bereit war.",

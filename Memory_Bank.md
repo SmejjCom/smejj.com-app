@@ -25,54 +25,54 @@ blockiert durch 800-Zeilen-Grenze, Ein-Datei-Deploy und fehlendes Index-Artefakt
 Volltext: [docs/memory/Memory_Bank_2026-08-01_eigenes_modell.md](docs/memory/Memory_Bank_2026-08-01_eigenes_modell.md).
 Capsule `job_eigenes_modell_live_20260801`, Rollback `095dbcd`, Commits `c7fc4b4`, `87ab3e0`.
 
-- **Gemessen, 5 Ziehungen je Fall:** Schnellspur `groq:llama-3.1-8b-instant`
-  **82,1 % ± 3,1**, eigenes Modell direkt **87,6 % ± 1,3**, ueber die Live-Kette
-  **84,7 % ± 2,2**. Der direkte Abstand ist echt, der Live-Abstand liegt in der
-  Streuung — beide Zahlen nennen, nicht nur die schoenere.
-- **Live belegt** (08:45 UTC): `x-smejj-model-backend: salad:smejj-fast-1`; ohne
-  `model` weiter `zhipu:glm-5.2`, die Nutzer-Bruecke blieb unberuehrt.
+- **Gemessen, 5 Ziehungen je Fall:** Schnellspur **82,1 % ± 3,1**, eigenes Modell
+  direkt **87,6 % ± 1,3** (14B), ueber die Live-Kette **84,7 % ± 2,2**. Der direkte
+  Abstand ist echt, der Live-Abstand liegt in der Streuung — beide Zahlen nennen.
+- **Live belegt:** `x-smejj-model-backend: salad:smejj-fast-1`; ohne `model` weiter `zhipu:glm-5.2`, Nutzer-Bruecke unberuehrt.
 - **DIE STARTSONDE IST DIE HAERTERE GRENZE ALS DIE GRAFIKKARTE.** llama.cpp laedt
   die Gewichte beim Start; das laeuft gegen Salads `startup_probe`, Maximum hart
   60 min. Ein 17,7-GB-Abbild wurde darin zweimal nicht fertig und startete den
   Download von vorn. Salad meldet dabei **RUNNING, 1/1 Replica** — nur `ready`
-  bleibt false. Basis darum Qwen3-14B UD-Q4_K_XL (9,2 GB); auf 24 GB VRAM haette
-  auch das 30B-Abbild gepasst, entschieden hat die Ladezeit.
-- **Eigenes Lager ist nicht selbst hostbar:** GLM-5.2 (755,7 GB) und Kimi K2.7
-  (595,2 GB) brauchen 80-GB-Karten, der Salad-Katalog endet bei 32 GB.
-- **Offene Schwaeche:** `halluzination-unbekannte-zahl` 100 % -> 20 %.
-- **NACHTRAG 20:00 UTC — Dauerbetrieb an (Anordnung gegen zweimalige Empfehlung).
-  DIE PRUEFUNGSNOTE SAGT DAS ECHTE VERHALTEN NICHT VORHER:** bei drei echten Fragen
-  ueber denselben Endpunkt verliert das eigene Modell klar gegen GLM-5.2 — es
-  antwortet auf "GitHub Actions erlaubt?" mit "Ja" (falsch), waehrend genau dieser
-  Fall in der Suite 5/5 besteht. Grund: jeder Suite-Fall liefert die Projektkenntnis
-  im eigenen System-Prompt mit, ein echter Nutzer nicht. **Die Suite braucht einen
-  Fall ohne mitgelieferte Projektkenntnis.**
+  bleibt false. Auf 24 GB VRAM haette es gepasst — entschieden hat die Ladezeit.
+- **Eigenes Lager ist nicht selbst hostbar:** GLM-5.2 und Kimi K2.7 brauchen
+  80-GB-Karten, der Salad-Katalog endet bei 32 GB.
+- **DAS KLEINERE MODELL IST DAS BESSERE** (23:30 UTC, gleiche Quantisierung,
+  gleiche Suite): **Qwen3-8B 5,14 GB -> 92,9 % ± 2,3, Median 659 ms, 0 Ausfaelle**
+  gegen Qwen3-14B 9,2 GB -> 87,6 % ± 1,3, Median 974 ms, 1 Ausfall. Beim 8B
+  besteht sogar `code-esm-failclosed` 5/5. Basis ist jetzt das 8B — besser,
+  schneller, 44 % kleiner (= schnellerer Kaltstart = hoehere Verfuegbarkeit).
+- **ZWEI SITZUNGEN AN EINER CONTAINER GROUP:** eine fremde Aenderung LOESCHTE die
+  `startup_probe`; danach viermal Instanzwechsel in 30 Minuten. Der erste 8B-Lauf
+  fiel hinein: 14/14 `http_503`, 7,1 % — keine Modellnote, ein toter Endpunkt.
+  **Container-Version vor UND nach jedem Messlauf protokollieren.** Salad-PATCH
+  ohne `merge-patch+json` ersetzt das Objekt und loescht Sonden.
+- **DIE PRUEFUNGSNOTE SAGT DAS ECHTE VERHALTEN NICHT VORHER:** bei echten Fragen
+  verliert das eigene Modell klar gegen GLM-5.2 — es antwortet auf "GitHub Actions
+  erlaubt?" mit "Ja" (falsch), waehrend genau dieser Fall in der Suite 5/5 besteht.
+  Grund: jeder Suite-Fall liefert die Projektkenntnis im eigenen System-Prompt mit,
+  ein echter Nutzer nicht. Gilt fuer 8B UND 14B — **nicht die Modellgroesse ist die
+  Antwort, sondern das Projektwissen** (Parallelsitzung `a69b198`: 88,2 -> 96,1 %).
 - **GPU-Pool ist Verfuegbarkeit:** mit 4 erlaubten Klassen fand Salad 35 Minuten
   keinen Rechner, mit 7 binnen 7 Minuten. 50er-Serie draussen (CUDA 12.8 ungeprueft).
-  Kosten 158-216 USD/Monat.
+  Dauerbetrieb seit 2026-08-01 auf Anordnung, 158-216 USD/Monat.
 
 ### [2026-07-31] MAUS: SITZUNG BLEIBT STEHEN, ZWEITER ADAPTER AN DERSELBEN NAHT (job_maus_eigener_browser_20260731)
 
 Volltext: [docs/memory/Memory_Bank_2026-07-31_maus_sitzung.md](docs/memory/Memory_Bank_2026-07-31_maus_sitzung.md).
 HEAD vor der Aenderung `e603802`. **Noch nicht ausgerollt** (siehe unten).
 
-- **Zustandslos bleibt moeglich, wenn man trennt:** der Browser lebt zwangslaeufig
-  im Prozess, aber die WAHRHEIT ueber eine Sitzung (wer haelt sie, bis wann) liegt
-  als Lease auf IDrive e2. Fremd gehaltene Sitzung => 409, nie still ein zweiter
-  Browser. Abgelaufener Lease = frei: der Selbstheilungspfad nach Scale-to-zero.
-- **Gemessen, nicht behauptet** (`scripts/diagnose/maus-sitzung-beweis.mjs`, echter
-  Browser, kein Modell): zwei Auftraege, **1 Browserstart statt 2**, Auftrag 2 in
-  **0,0 s statt 3,3 s**, gleiche aktive Seite. Abnahmepunkt 4 der Auftragsdatei.
+- **Zustandslos bleibt moeglich, wenn man trennt:** der Browser lebt im Prozess,
+  aber die WAHRHEIT ueber eine Sitzung liegt als Lease auf IDrive e2. Fremd
+  gehalten => 409; abgelaufener Lease = frei (Selbstheilung nach Scale-to-zero).
+  Gemessen: zwei Auftraege, 1 Browserstart statt 2, Auftrag 2 in 0,0 s statt 3,3 s.
 - **Kein zweiter Sitzungs-Motor:** Muster von `remote-browser/session-engine.js`
   uebernommen, nicht der Code. `executedActions` gehoert zum Auftrag, nicht zur
   Sitzung; exit-after-run darf nicht feuern, solange eine Sitzung lebt.
 - **Chrome-Adapter an der `browserFactory`-Naht:** Allowlist, Budget, Datei-Grenzen
   und Vault gelten dadurch fuer BEIDE Adapter. **Nie `--remote-debugging-port`** —
   der Port kennt keine Herkunftspruefung. `check:maus-engine` 189/189.
-- **NICHT LIVE:** Teil 0 (Token + Eimer) am 2026-07-31 nachgemessen und weiterhin
-  offen (`maus-abgleich.mjs` Exit 2, Rote Liste). Engine laeuft aus ghcr.io-Abbild,
-  Control-Release endet im gesperrten Env-Schreibzugriff, Frontend bewusst
-  zurueckgehalten, bis die Kette live nachweisbar ist.
+- **NICHT LIVE:** Teil 0 (Token + Eimer) weiterhin offen (Exit 2, Rote Liste);
+  Frontend bewusst zurueckgehalten, bis die Kette live nachweisbar ist.
 
 ### [2026-07-30] MODUL W: TAGESPROJEKTION STATT ZAEHLSTAND IM SPEICHER (job_analytik_projektion_20260730)
 

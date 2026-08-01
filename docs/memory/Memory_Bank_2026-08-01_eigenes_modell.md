@@ -216,3 +216,57 @@ verlangt eine bestimmte Schreibweise davon:
 | Qwen3-14B | `export async function` | nein |
 
 Alle drei liefern korrektes, fail-closed ESM mit `throw`.
+
+## Nachtrag 23:30 UTC — das kleinere Modell ist das bessere
+
+Gefragt war nur, ob ein kleineres Modell für kürzere Kaltstarts reicht. Es reicht
+nicht nur — es gewinnt. Gleiche Quantisierung (UD-Q4_K_XL), gleiche Suite, je 5
+Ziehungen, Kette auf `salad` verengt:
+
+| Modell | Grösse | Punktzahl | Median | Totalausfälle |
+|---|---|---|---|---|
+| **Qwen3-8B** | **5,14 GB** | **92,9 % ± 2,3** | **659 ms** | **0** |
+| Qwen3-14B | 9,2 GB | 87,6 % ± 1,3 | 974 ms | 1 |
+| Schnellspur (Vergleich) | — | 82,1 % ± 3,1 | — | — |
+
+Besonders bemerkenswert: `code-esm-failclosed` besteht beim 8B **5 von 5** — der
+Fall, der bei llama-3.1-8b, GLM-4.7-flash und Qwen3-14B durchfiel. Das 8B
+schreibt `export function` ohne überflüssiges `async`. Der Fall ist also lösbar
+und nicht grundsätzlich kaputt.
+
+Gewinn auf allen Betriebsachsen: besser, schneller, 44 % kleiner (schnellerer
+Kaltstart = höhere Verfügbarkeit), passt auf mehr Karten.
+
+**Was es NICHT löst:** Die Live-Schwäche ist identisch. Über dieselbe Kette
+gefragt, welchen Speicherdienst smejj.com nutzt — GLM-5.2: „IDrive e2". Das 8B:
+„Die Suchergebnisse liefern keine direkten Informationen". Direkt gefragt
+erfindet es sogar „Amazon S3". Auf die GitHub-Actions-Frage antwortet es
+weiterhin falsch „Ja".
+
+**Die Modellgrösse ist nicht die Antwort. Das Projektwissen ist es** — genau der
+Weg, den die Parallelsitzung in `a69b198` gemessen hat (88,2 → 96,1 %).
+
+Live nach dem Wechsel: `model: smejj-fast-1` → `salad:smejj-fast-1` in 1270 ms,
+ohne `model` weiter `zhipu:glm-5.2` (3613 ms), unbekannte ID fällt zurück,
+Brücke unverändert, smejj.com 200. **Das eigene Modell ist über die Kette
+inzwischen schneller als GLM-5.2.**
+
+## Zwei Sitzungen an einer Container Group
+
+Die Container-Version sprang ohne mein Zutun von 6 auf 7 — und dabei wurde
+`startup_probe` **gelöscht**, nicht geändert. Ohne Startsonde greift die
+Lebendsonde mitten im Modell-Download und tötet den Container, bevor er je
+bereit war. Zwischen 22:42 und 23:13 UTC wurde die Instanz viermal ersetzt.
+
+Der erste 8B-Messlauf fiel genau in dieses Fenster: alle 14 Fälle `http_503`
+nach je 6 Versuchen, Ergebnis **7,1 %**. Das ist keine Modellnote, sondern ein
+toter Endpunkt. Ungeprüft berichtet hätte das 8B als unbrauchbar dagestanden.
+
+**Merkregel:** Bei einer geteilten Container Group gehört die Versionsnummer in
+jedes Messprotokoll — vor UND nach dem Lauf. Ein Salad-PATCH, der nicht als
+`merge-patch+json` gesendet wird, ersetzt das Objekt und löscht dabei alles,
+was nicht mitgeschickt wurde. Sonden zuerst.
+
+Während der gesamten Instabilität hielt die Nicht-Regression: Standardanfrage →
+`zhipu:glm-5.2`, ausdrückliche Wahl bei totem Dienst → `zhipu:glm-5.2` ohne
+Fehler, Brücke → `groq:llama-3.1-8b-instant`, smejj.com → 200.
