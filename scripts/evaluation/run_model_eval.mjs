@@ -18,7 +18,14 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { selectCases, validateEvalSuite } from "../../src/evaluation/evalSuite.js";
-import { scoreCase } from "../../src/evaluation/evalScoring.js";
+import {
+  aggregateCaseRuns,
+  begrenzeWiederholungen,
+  scoreCase,
+  WIEDERHOLUNGEN_MAX,
+  WIEDERHOLUNGEN_MIN,
+  wiederholungenAusEnv
+} from "../../src/evaluation/evalScoring.js";
 import { buildEvalReport, EVAL_VERDICT, formatEvalSummary } from "../../src/evaluation/evalReport.js";
 import { callViaControl, callViaProvider, chatEndpointFromEnv, DEFAULT_CHAT_ENDPOINT, isTransientError, TRANSPORTS } from "../../src/evaluation/evalTransport.js";
 
@@ -28,7 +35,7 @@ const DEFAULT_SUITE = "evals/suites/smejj-chat-core-v1.json";
 const REPORT_DIR = "docs/benchmarks";
 const DEFAULT_DELAY_MS = 400;
 
-export function parseArguments(argv) {
+export function parseArguments(argv, env = process.env) {
   const options = {
     suite: DEFAULT_SUITE,
     model: "",
@@ -37,6 +44,9 @@ export function parseArguments(argv) {
     limit: null,
     delayMs: DEFAULT_DELAY_MS,
     retries: 2,
+    // Dieselbe Einstellung wie im Training-Loop, damit Kommandozeile und Dienst
+    // nie unterschiedlich messen.
+    wiederholungen: wiederholungenAusEnv(env),
     out: "",
     baseline: "",
     help: false
@@ -52,6 +62,7 @@ export function parseArguments(argv) {
     else if (token === "--limit") { options.limit = Number.parseInt(next(), 10); index += 1; }
     else if (token === "--delay-ms") { options.delayMs = Number.parseInt(next(), 10); index += 1; }
     else if (token === "--retries") { options.retries = Number.parseInt(next(), 10); index += 1; }
+    else if (token === "--wiederholungen") { options.wiederholungen = Number.parseInt(next(), 10); index += 1; }
     else if (token === "--out") { options.out = String(next() || ""); index += 1; }
     else if (token === "--baseline") { options.baseline = String(next() || ""); index += 1; }
     else return { error: `unknown_argument:${token}` };
@@ -64,6 +75,12 @@ export function parseArguments(argv) {
   if (!Number.isInteger(options.retries) || options.retries < 0 || options.retries > 5) {
     return { error: "invalid_retries" };
   }
+  // Streng statt stillschweigend begrenzt: auf der Kommandozeile ist ein Wert
+  // ausserhalb des Bereichs ein Tippfehler, kein Wunsch.
+  if (!Number.isInteger(options.wiederholungen) ||
+      options.wiederholungen < WIEDERHOLUNGEN_MIN || options.wiederholungen > WIEDERHOLUNGEN_MAX) {
+    return { error: "invalid_wiederholungen" };
+  }
   return { options };
 }
 
@@ -74,6 +91,11 @@ export function parseArguments(argv) {
  * Transiente Transportfehler (503, Timeout, leere Antwort) werden begrenzt
  * wiederholt: sonst wird Infrastrukturrauschen als Modellversagen gewertet und
  * die Modellentscheidung beruht auf einem Messfehler.
+ *
+ * `wiederholungen` fuehrt JEDEN Fall mehrfach aus und berichtet die
+ * Bestehensquote. Das ist etwas anderes als `retries`: retries wiederholt einen
+ * kaputten TRANSPORT, wiederholungen misst dasselbe Modell mehrfach, weil es mit
+ * temperature 0.35 antwortet und jede Ziehung anders ausfallen darf.
  */
 export async function runEvalSuite({
   suite,
@@ -81,30 +103,42 @@ export async function runEvalSuite({
   callModel,
   delayMs = 0,
   retries = 2,
+  wiederholungen = 1,
   onCase = () => {},
   sleep = defaultSleep
 }) {
+  const durchgaenge = begrenzeWiederholungen(Number.isInteger(wiederholungen) ? wiederholungen : 1);
   const caseScores = [];
   for (const evalCase of cases) {
-    let result = null;
-    let attempts = 0;
-    for (let attempt = 0; attempt <= retries; attempt += 1) {
-      attempts = attempt + 1;
-      result = await callModel(evalCase);
-      if (result?.ok === true || !isTransientError(result?.error)) break;
-      if (attempt < retries && delayMs > 0) await sleep(delayMs);
+    const laeufe = [];
+    let letztesErgebnis = null;
+    for (let durchgang = 0; durchgang < durchgaenge; durchgang += 1) {
+      let result = null;
+      let attempts = 0;
+      for (let attempt = 0; attempt <= retries; attempt += 1) {
+        attempts = attempt + 1;
+        result = await callModel(evalCase);
+        if (result?.ok === true || !isTransientError(result?.error)) break;
+        if (attempt < retries && delayMs > 0) await sleep(delayMs);
+      }
+      // Das angeforderte Modell ist nicht zwingend das antwortende: der Router darf
+      // zurueckfallen. Ohne diese Zuordnung waere die Messung nicht belastbar.
+      laeufe.push({
+        ...scoreCase(evalCase, result),
+        attempts,
+        backend: String(result?.backend || "unknown"),
+        resolvedModelId: String(result?.modelId || "")
+      });
+      letztesErgebnis = result;
+      // Der Abstand gilt zwischen JEDEM Modellaufruf, nicht je Fall. Mehr
+      // Wiederholungen erhoehen damit die Gesamtzahl der Aufrufe, nicht das
+      // Tempo — die Ratenbegrenzung der Bruecke (12 Anfragen/Minute) bleibt
+      // eingehalten. Nicht schneller machen.
+      if (delayMs > 0) await sleep(delayMs);
     }
-    // Das angeforderte Modell ist nicht zwingend das antwortende: der Router darf
-    // zurueckfallen. Ohne diese Zuordnung waere die Messung nicht belastbar.
-    const scored = {
-      ...scoreCase(evalCase, result),
-      attempts,
-      backend: String(result?.backend || "unknown"),
-      resolvedModelId: String(result?.modelId || "")
-    };
+    const scored = aggregateCaseRuns(laeufe);
     caseScores.push(scored);
-    onCase(scored, result);
-    if (delayMs > 0) await sleep(delayMs);
+    onCase(scored, letztesErgebnis);
   }
   return { suite, caseScores };
 }
@@ -127,6 +161,15 @@ export async function findBaselineReport({
   // als der historische Standardweg, damit die unveraenderte Spur weiter
   // vergleichbar bleibt und nur ein echter Wechsel die Kette trennt.
   endpoint = DEFAULT_CHAT_ENDPOINT,
+  // Wiederholungen je Fall. Aus demselben Grund Teil der Vergleichbarkeit wie
+  // der Endpunkt: mit drei Ziehungen zaehlt ein Fall schon dann als kritisch
+  // gescheitert, wenn er EINMAL reisst — mit einer Ziehung nur, wenn genau diese
+  // riss. Ein Bericht ueber drei Ziehungen gegen einen ueber eine gestellt meldet
+  // deshalb eine Regression, die nur ein Wechsel der Messart ist. Live belegt am
+  // 2026-07-31: 89,2 % gegen 91,2 %, gemeldet als critical_failure_regression,
+  // obwohl sich am System nichts geaendert hatte.
+  // Aeltere Berichte kennen das Feld nicht; sie zaehlen als eine Ziehung.
+  wiederholungen = 1,
   readDir = readdir,
   readJson = readJsonFile
 }) {
@@ -140,10 +183,14 @@ export async function findBaselineReport({
   for (const name of candidates) {
     const report = await readJson(path.join(dir, name)).catch(() => null);
     const berichtEndpunkt = report?.run?.endpoint || DEFAULT_CHAT_ENDPOINT;
+    const berichtWiederholungen = Number.isInteger(report?.summary?.wiederholungen)
+      ? report.summary.wiederholungen
+      : 1;
     if (report?.suite?.suiteId === suiteId &&
         report?.suite?.contentSha256 === contentSha256 &&
         report?.run?.modelId === modelId &&
         berichtEndpunkt === endpoint &&
+        berichtWiederholungen === wiederholungen &&
         report?.run?.live === true) {
       return report;
     }
@@ -175,6 +222,9 @@ function usage() {
     "  --limit <n>          hoechstens n Faelle ausfuehren",
     "  --delay-ms <n>       Pause zwischen zwei Faellen (Standard 400)",
     "  --retries <n>        Wiederholungen bei transienten Transportfehlern (Standard 2)",
+    `  --wiederholungen <n> Durchgaenge je Fall, ${WIEDERHOLUNGEN_MIN} bis ${WIEDERHOLUNGEN_MAX}`,
+    "                       (Standard aus SMEJJ_EVAL_WIEDERHOLUNGEN). Berichtet wird die",
+    "                       Bestehensquote je Fall statt eines einzelnen Ja/Nein.",
     "  --baseline <pfad>    Vergleichsbericht; ohne Angabe wird der neueste passende gesucht",
     "  --out <pfad>         Zielpfad des Berichts",
     ""
@@ -221,6 +271,8 @@ async function main() {
       `Trockenlauf — kein Modellaufruf, keine Kosten.`,
       `Suite ${suite.suiteId} ${suite.version} (sha256 ${suite.integrity.contentSha256.slice(0, 12)}…)`,
       `Faelle: ${cases.length} von ${suite.cases.length}, Budget minScore ${suite.budgets.minScore}`,
+      `Wiederholungen je Fall: ${options.wiederholungen}` +
+        ` — ${cases.length * options.wiederholungen} Modellaufrufe im Livelauf`,
       `Transportweg: ${options.transport}, Modell: ${modelId}`,
       `Fuer einen echten Lauf: --live anhaengen.`,
       ""
@@ -233,16 +285,21 @@ async function main() {
     : await providerCaller(options.model);
 
   const startedAt = new Date().toISOString();
-  process.stdout.write(`Lauf gestartet: ${cases.length} Faelle, Transportweg ${options.transport}\n`);
+  process.stdout.write(`Lauf gestartet: ${cases.length} Faelle je ${options.wiederholungen}x` +
+    ` (${cases.length * options.wiederholungen} Aufrufe), Transportweg ${options.transport}\n`);
   const { caseScores } = await runEvalSuite({
     suite,
     cases,
     callModel,
     delayMs: options.delayMs,
     retries: options.retries,
+    wiederholungen: options.wiederholungen,
     onCase: (scored) => {
-      const marker = scored.status === "passed" ? "OK  " : scored.status === "partial" ? "TEIL" : "FEHL";
+      // WACK statt FEHL, sobald ein Fall schwankt: die Unterscheidung zwischen
+      // "faellt immer durch" und "faellt manchmal durch" ist die Aussage.
+      const marker = scored.wackelig ? "WACK" : scored.status === "passed" ? "OK  " : scored.status === "partial" ? "TEIL" : "FEHL";
       process.stdout.write(`  ${marker} ${scored.caseId} — ${(scored.score * 100).toFixed(0)} %` +
+        `${scored.laeufe > 1 ? `, ${scored.bestanden}/${scored.laeufe} bestanden` : ""}` +
         `${scored.latencyMs === null ? "" : `, ${scored.latencyMs} ms`}` +
         `${scored.attempts > 1 ? `, ${scored.attempts} Versuche` : ""}` +
         `${scored.error ? `, ${scored.error}` : ""}\n`);
@@ -257,7 +314,8 @@ async function main() {
       dir: reportDirAbs,
       suiteId: suite.suiteId,
       contentSha256: suite.integrity.contentSha256,
-      modelId
+      modelId,
+      wiederholungen: options.wiederholungen
     });
 
   const report = buildEvalReport({

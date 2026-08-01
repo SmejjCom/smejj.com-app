@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-import { alsProzent, alsZeit, ladeVerlauf, stufeFuer, trendFuer, zeichneKopf, zeichneTabelle } from "../public/verlauf.js";
+import { alsProzent, alsZeit, ladeVerlauf, stufeFuer, trendFuer, wackeligText, zeichneKopf, zeichneTabelle } from "../public/verlauf.js";
 import { baueDatei, fuegeZusammen, uebernehmeMessung } from "../scripts/verlauf/aktualisiere-messwerte.mjs";
 
 const MESSWERTE = JSON.parse(await readFile(new URL("../public/verlauf-messwerte.json", import.meta.url), "utf8"));
@@ -10,10 +10,19 @@ const MESSWERTE = JSON.parse(await readFile(new URL("../public/verlauf-messwerte
 test("die ausgelieferte Messwert-Datei ist gueltig und enthaelt nur Kennzahlen", () => {
   assert.equal(MESSWERTE.kind, "smejj.com-qualitaetsverlauf");
   assert.ok(MESSWERTE.messungen.length >= 1);
-  const erlaubt = new Set(["zeitpunkt", "punktzahl", "faelle", "bestanden", "nichtBestanden", "kritischeFehler", "p95Ms", "medianMs", "urteil", "abgelegt"]);
+  const erlaubt = new Set([
+    "zeitpunkt", "punktzahl", "faelle", "bestanden", "nichtBestanden", "kritischeFehler",
+    "p95Ms", "medianMs", "urteil", "abgelegt",
+    // Seit 2026-07-31: Wiederholungen je Fall und die Bestehensquoten.
+    "wiederholungen", "wackelig", "wackeligeFaelle"
+  ]);
   for (const m of MESSWERTE.messungen) {
     for (const feld of Object.keys(m)) assert.ok(erlaubt.has(feld), `unerwartetes Feld ${feld}`);
     assert.ok(m.punktzahl >= 0 && m.punktzahl <= 1);
+    // Auch in den Quoten stehen nur Fallkennungen und Zahlen.
+    for (const f of m.wackeligeFaelle || []) {
+      assert.deepEqual(Object.keys(f).sort(), ["bestanden", "fall", "laeufe"]);
+    }
   }
   // Datenschutz-Zusicherung: niemals Eingaben, Antworten oder Zugangsdaten.
   assert.equal(/prompt|antwort|content|IDRIVE|SECRET|API_KEY/i.test(JSON.stringify(MESSWERTE.messungen)), false);
@@ -87,6 +96,35 @@ test("das Skript schreibt nichts bei unerwarteter Eingabe (fail-closed)", () => 
   assert.throws(() => baueDatei({}, { verlauf: [{ zeitpunkt: "kaputt", punktzahl: 2 }] }), /Keine gueltige Messung/);
   assert.equal(uebernehmeMessung({ zeitpunkt: "2026-07-30T01:00:00.000Z", punktzahl: 1.5 }), null);
   assert.equal(fuegeZusammen([], []).length, 0);
+});
+
+test("wackelige Faelle werden benannt, nicht nur gezaehlt", () => {
+  // Sie sind die Erklaerung fuer jede Schwankung der Punktzahl. Ohne Namen
+  // muesste man raten, welcher Fall gerade wackelt.
+  assert.equal(wackeligText({ wackelig: 0 }), null);
+  assert.equal(wackeligText({}), null, "aeltere Messungen kennen das Feld nicht");
+  assert.equal(wackeligText({ wackelig: 1 }), "1 wackeliger Fall");
+  assert.equal(
+    wackeligText({ wackelig: 2, wackeligeFaelle: [{ fall: "regel-800-zeilen", bestanden: 3, laeufe: 5 }, { fall: "schutz-daten-loeschen", bestanden: 3, laeufe: 5 }] }),
+    "2 wackelige Fälle (regel-800-zeilen 3/5, schutz-daten-loeschen 3/5)"
+  );
+});
+
+test("das Aktualisierungs-Skript traegt die Quoten mit, erfindet sie aber nicht", () => {
+  const mit = uebernehmeMessung({
+    zeitpunkt: "2026-07-31T00:00:00.000Z",
+    punktzahl: 0.9,
+    wiederholungen: 3,
+    wackelig: 1,
+    wackeligeFaelle: [{ fall: "regel-800-zeilen", bestanden: 2, laeufe: 3, quote: 0.6667 }]
+  });
+  assert.equal(mit.wiederholungen, 3);
+  assert.deepEqual(mit.wackeligeFaelle, [{ fall: "regel-800-zeilen", bestanden: 2, laeufe: 3 }]);
+
+  // Aeltere Messungen ohne die Felder bekommen null, keine erfundene Eins.
+  const ohne = uebernehmeMessung({ zeitpunkt: "2026-07-30T00:00:00.000Z", punktzahl: 0.9 });
+  assert.equal(ohne.wiederholungen, null);
+  assert.equal(ohne.wackeligeFaelle, null);
 });
 
 test("doppelte Zeitpunkte werden nicht doppelt gezaehlt", () => {

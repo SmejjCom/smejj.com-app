@@ -5,6 +5,7 @@
 // An unset or misconfigured environment never starts real work.
 
 import { chatEndpointFromEnv } from "../../src/evaluation/evalTransport.js";
+import { wiederholungenAusEnv } from "../../src/evaluation/evalScoring.js";
 
 function flag(env, name) {
   return String(env[name] || "NO").trim().toUpperCase() === "YES";
@@ -20,6 +21,28 @@ export function isTrainingLoopEnabled(env = process.env) {
   return flag(env, "SMEJJ_TRAINING_LOOP_ENABLED");
 }
 
+/**
+ * Anteil von tickMaxMs, ab dem gewarnt wird. Bewusst unter 1: die Schaetzung
+ * kennt nur die Abstaende, nicht die Antwortzeiten der Modellaufrufe. Bei 14
+ * Faellen und 10 Wiederholungen sind allein die Abstaende 14 Minuten von 15 —
+ * rechnerisch "passt" das, in Wirklichkeit laeuft der Zyklus in den Abbruch.
+ */
+export const ZYKLUS_SICHERHEITSANTEIL = 0.8;
+
+/**
+ * Grobe Dauer eines Eval-Zyklus, nur aus den Abstaenden — die Antwortzeiten der
+ * Modellaufrufe kommen obendrauf. Zweck: der Waechter in loop.js bricht einen
+ * Zyklus nach tickMaxMs ab. Bei 14 Faellen, 3 Wiederholungen und 6000 ms sind es
+ * rund 4 Minuten gegen 15 Minuten Limit — das passt. Bei hoeheren Werten muss
+ * die Rechnung erneut aufgehen, und genau das prueft diese Funktion.
+ */
+export function evalDauerSchaetzungMs({ faelle, wiederholungen, delayMs }) {
+  const n = Math.max(0, Number(faelle) || 0);
+  const w = Math.max(1, Number(wiederholungen) || 1);
+  const d = Math.max(0, Number(delayMs) || 0);
+  return n * w * d;
+}
+
 export function loadLoopConfig(env = process.env) {
   return Object.freeze({
     port: boundedInt(env.PORT, 8080, 1, 65535),
@@ -29,9 +52,16 @@ export function loadLoopConfig(env = process.env) {
     // touching anything training/consent related.
     evalCycleEnabled: flag(env, "SMEJJ_TRAINING_LOOP_EVAL_ENABLED"),
     trainingCycleEnabled: flag(env, "SMEJJ_TRAINING_LOOP_TRAINING_ENABLED"),
-    // Bridge rate limit is 12 req/min/client (measured 2026-07-28); default
-    // delay keeps eval calls well under it without needing a live probe.
+    // Bridge rate limit is 12 req/min/client (measured 2026-07-28). 6000 ms is
+    // 10/min = 83 % of that — NOT "well under it", as this comment claimed until
+    // 2026-07-31. Nachgemessen wurde es damals trotzdem: 0 mal HTTP 429 in einem
+    // vollen Lauf. Der Abstand darf deshalb nicht verkleinert werden.
     evalDelayMs: boundedInt(env.SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS, 6000, 1000, 60000),
+    // Wie oft jeder Fall JE LAUF ausgefuehrt wird. Mehr Wiederholungen machen die
+    // Messung ruhiger, nicht schneller: evalDelayMs bleibt zwischen JEDEM Aufruf,
+    // die Ratenbegrenzung wird also nicht staerker belastet — nur die Gesamtzahl
+    // der Aufrufe und damit die Dauer steigen (siehe evalDauerSchaetzungMs).
+    evalWiederholungen: wiederholungenAusEnv(env),
     evalIntervalMs: boundedInt(env.SMEJJ_TRAINING_LOOP_EVAL_INTERVAL_MS, 30 * 60 * 1000, 5 * 60 * 1000, 24 * 60 * 60 * 1000),
     trainingIntervalMs: boundedInt(env.SMEJJ_TRAINING_LOOP_TRAINING_INTERVAL_MS, 5 * 60 * 1000, 60 * 1000, 24 * 60 * 60 * 1000),
     trainingBatchSize: boundedInt(env.SMEJJ_TRAINING_LOOP_BATCH_SIZE, 5, 1, 50),

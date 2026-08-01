@@ -36,9 +36,28 @@ export function uebernehmeMessung(eintrag) {
     kritischeFehler: zahl(eintrag?.kritischeFehler),
     p95Ms: zahl(eintrag?.p95Ms),
     medianMs: zahl(eintrag?.medianMs),
+    // Wiederholungen und Quoten. Aeltere Messungen haben die Felder nicht — sie
+    // bleiben dann null statt auf 1 geraten zu werden. Was nicht gemessen wurde,
+    // wird nicht erfunden.
+    wiederholungen: zahl(eintrag?.wiederholungen),
+    wackelig: zahl(eintrag?.wackelig),
+    wackeligeFaelle: uebernehmeWackelige(eintrag?.wackeligeFaelle),
     urteil: String(eintrag?.urteil || "unbekannt"),
     abgelegt: eintrag?.abgelegt === true
   };
+}
+
+/** Nur Fallkennung und Zahlen durchlassen — nie Eingaben oder Antworten. */
+function uebernehmeWackelige(liste) {
+  if (!Array.isArray(liste)) return null;
+  const sauber = liste
+    .map((eintrag) => ({
+      fall: String(eintrag?.fall || "").slice(0, 60),
+      bestanden: Number(eintrag?.bestanden),
+      laeufe: Number(eintrag?.laeufe)
+    }))
+    .filter((eintrag) => eintrag.fall && Number.isFinite(eintrag.bestanden) && Number.isFinite(eintrag.laeufe));
+  return sauber.length > 0 ? sauber : null;
 }
 
 /**

@@ -114,6 +114,9 @@ async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now, 
       reportTarget: target,
       chatEndpoint: config.chatEndpoint,
       delayMs: config.evalDelayMs,
+      wiederholungen: config.evalWiederholungen,
+      tickMaxMs: config.tickMaxMs,
+      log,
       callModel: deps.callModel,
       readSuite: deps.readSuite,
       writeReport: async (t, report) => {
@@ -145,7 +148,15 @@ async function runEvalTick(checkpoint, { config, repoRoot, env, log, deps, now, 
     // Sekunden herausziehen. Freitext waere dafuer unbrauchbar.
     log(`[smejj-training-loop] VERLAUF zeitpunkt=${eintrag.zeitpunkt} urteil=${eintrag.urteil}`
       + ` punktzahl=${eintrag.punktzahl ?? "?"} bestanden=${eintrag.bestanden ?? "?"}/${eintrag.faelle ?? "?"}`
-      + ` kritisch=${eintrag.kritischeFehler ?? "?"} p95ms=${eintrag.p95Ms ?? "?"} abgelegt=${eintrag.abgelegt}`);
+      + ` kritisch=${eintrag.kritischeFehler ?? "?"} p95ms=${eintrag.p95Ms ?? "?"}`
+      + ` wiederholungen=${eintrag.wiederholungen ?? "?"} wackelig=${eintrag.wackelig ?? "?"}`
+      + ` abgelegt=${eintrag.abgelegt}`);
+    // Eigene Zeile fuer die wackeligen Faelle: sie sind die Erklaerung fuer jede
+    // Schwankung der Gesamtpunktzahl. Ohne sie liest sich Rauschen wie ein Einbruch.
+    if (Array.isArray(eintrag.wackeligeFaelle) && eintrag.wackeligeFaelle.length > 0) {
+      log(`[smejj-training-loop] WACKELIG ${eintrag.wackeligeFaelle
+        .map((f) => `${f.fall}=${f.bestanden}/${f.laeufe}`).join(" ")}`);
+    }
 
     if (persistError) {
       log(`[smejj-training-loop] Bericht NICHT abgelegt (${persistError}) — Kennzahlen stehen im Verlauf (/verlauf) und im Protokoll. IDRIVE_E2_* pruefen.`);

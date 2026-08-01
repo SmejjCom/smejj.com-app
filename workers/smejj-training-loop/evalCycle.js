@@ -11,6 +11,7 @@ import { selectCases, validateEvalSuite } from "../../src/evaluation/evalSuite.j
 import { buildEvalReport, EVAL_VERDICT, formatEvalSummary } from "../../src/evaluation/evalReport.js";
 import { callViaControl, chatEndpointFromEnv } from "../../src/evaluation/evalTransport.js";
 import { findBaselineReport, runEvalSuite } from "../../scripts/evaluation/run_model_eval.mjs";
+import { evalDauerSchaetzungMs, ZYKLUS_SICHERHEITSANTEIL } from "./config.js";
 
 function reportFileName(suiteId, modelId, isoDate) {
   const safeModel = String(modelId || "unknown").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
@@ -39,9 +40,12 @@ export async function runEvalCycle({
   chatEndpoint,
   delayMs = 6000,
   retries = 2,
+  wiederholungen = 1,
+  tickMaxMs = null,
   callModel,
   readSuite = defaultReadJson,
   writeReport = defaultWriteJson,
+  log = () => {},
   now = () => new Date()
 }) {
   const suiteFile = path.resolve(repoRoot, suitePath);
@@ -56,16 +60,32 @@ export async function runEvalCycle({
   const gemessenerWeg = chatEndpoint || chatEndpointFromEnv();
   const call = callModel || ((evalCase) => callViaControl(evalCase, { modelId, endpoint: gemessenerWeg }));
 
+  // Ehrlich melden statt still zu ueberziehen: der Waechter in loop.js gibt die
+  // Sperre nach tickMaxMs frei. Wird das ueberschritten, laeuft die Messung ins
+  // Leere — das muss im Protokoll stehen, bevor es passiert.
+  if (Number.isFinite(tickMaxMs)) {
+    const schaetzung = evalDauerSchaetzungMs({ faelle: cases.length, wiederholungen, delayMs });
+    if (schaetzung >= tickMaxMs * ZYKLUS_SICHERHEITSANTEIL) {
+      log(`[smejj-training-loop] WARNUNG: geschaetzte Zyklusdauer ${Math.round(schaetzung / 1000)} s` +
+        ` (nur Abstaende, Antwortzeiten kommen obendrauf) erreicht das Limit ${Math.round(tickMaxMs / 1000)} s` +
+        ` (${cases.length} Faelle x ${wiederholungen} x ${delayMs} ms).` +
+        ` SMEJJ_EVAL_WIEDERHOLUNGEN senken oder SMEJJ_TRAINING_LOOP_TICK_MAX_MS anheben.`);
+    }
+  }
+
   const startedAt = now().toISOString();
-  const { caseScores } = await runEvalSuite({ suite, cases, callModel: call, delayMs, retries });
+  const { caseScores } = await runEvalSuite({ suite, cases, callModel: call, delayMs, retries, wiederholungen });
   const finishedAt = now().toISOString();
 
-  const baseline = baselineOverride !== undefined ? baselineOverride : await findBaselineReport({
+  const baseline = baselineOverride !== undefined
+    ? vergleichbarerVorlauf(baselineOverride, wiederholungen)
+    : await findBaselineReport({
     dir: path.resolve(repoRoot, baselineDir || "docs/benchmarks"),
     suiteId: suite.suiteId,
     contentSha256: suite.integrity.contentSha256,
     modelId,
     endpoint: gemessenerWeg,
+    wiederholungen,
     readDir: async (dir) => (await import("node:fs/promises")).readdir(dir),
     readJson: defaultReadJson
   }).catch(() => null);
@@ -97,9 +117,35 @@ export async function runEvalCycle({
       nichtBestanden: report.summary.failed,
       kritischeFehler: report.summary.criticalFailures,
       p95Ms: report.summary.latencyMsP95,
-      medianMs: report.summary.latencyMsMedian
+      medianMs: report.summary.latencyMsMedian,
+      wiederholungen: report.summary.wiederholungen,
+      wackelig: report.summary.wackelig,
+      // Nur die wackeligen Faelle mit ihrer Quote — stabile Faelle stehen ohnehin
+      // bei 0 % oder 100 % und wuerden den Verlauf nur aufblaehen. Ausschliesslich
+      // Fallkennungen und Zahlen, nie Eingaben oder Antworten.
+      wackeligeFaelle: report.cases
+        .filter((eintrag) => eintrag.wackelig === true)
+        .map((eintrag) => ({
+          fall: eintrag.caseId,
+          quote: eintrag.quote,
+          bestanden: eintrag.bestanden,
+          laeufe: eintrag.laeufe
+        }))
     }
   };
+}
+
+/**
+ * Ein Vorlauf mit anderer Wiederholungszahl ist kein Vergleichswert.
+ * Der Loop reicht seinen Vorlauf aus dem Checkpoint herein (nicht ueber
+ * findBaselineReport), deshalb muss die Pruefung auch hier stehen. Sonst
+ * meldete die erste Messung nach einer Aenderung von SMEJJ_EVAL_WIEDERHOLUNGEN
+ * eine Regression, die nur ein Wechsel der Messart ist.
+ */
+function vergleichbarerVorlauf(bericht, wiederholungen) {
+  if (!bericht) return bericht;
+  const gemessen = Number.isInteger(bericht?.summary?.wiederholungen) ? bericht.summary.wiederholungen : 1;
+  return gemessen === wiederholungen ? bericht : null;
 }
 
 async function defaultReadJson(file) {

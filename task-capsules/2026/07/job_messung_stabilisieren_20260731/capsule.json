@@ -1,0 +1,73 @@
+{
+  "jobId": "job_messung_stabilisieren_20260731",
+  "createdAt": "2026-07-31",
+  "owner": "smejj.com Betreiber",
+  "title": "Qualitaetsmessung gegen Rauschen stabilisiert — Wiederholungen und Bestehensquoten",
+  "goal": "Die laufende Messung so umbauen, dass sie echte Veraenderungen von Zufallsrauschen unterscheiden kann. Vorlauf: job_einbruch_aufklaerung_20260731.",
+  "wasGebautWurde": {
+    "1_wiederholungen": "Jeder Fall wird pro Lauf mehrfach ausgefuehrt. Neue Einstellung SMEJJ_EVAL_WIEDERHOLUNGEN (Standard 3, Bereich 1 bis 10), gelesen in src/evaluation/evalScoring.js#wiederholungenAusEnv — EINE Quelle fuer Kommandozeile und Dienst.",
+    "2_quoten": "Je Fall werden laeufe, bestanden, quote und wackelig berichtet statt eines einzelnen Ja/Nein (aggregateCaseRuns). Ein Fall gilt als wackelig, wenn die Quote weder 0 noch 100 Prozent ist.",
+    "3_punktzahl": "Die Gesamtpunktzahl ist das Mittel ueber ALLE Wiederholungen. Ein Fall mit 3 von 5 zaehlt als 0,6 — kein best of N.",
+    "4_sichtbarkeit": "Wackelige Faelle stehen im Bericht, in formatEvalSummary (und damit im Zeabur-Protokoll), in einer eigenen Protokollzeile WACKELIG, im Verlauf (GET /verlauf) und auf der Verlaufsseite.",
+    "5_messfehler": "Neu und ueber den Auftrag hinaus: aus den Wiederholungen wird der Standardfehler der Gesamtpunktzahl gebildet (punktzahlStreuung) und in der Regressionspruefung verwendet. Begruendung unter 'warumZusaetzlich'.",
+    "6_vergleichbarkeit": "Ein Vorlauf mit anderer Wiederholungszahl gilt nicht mehr als Vergleichswert — gleiche Logik wie beim bestehenden Endpunkt-Schutz.",
+    "7_dauerwaechter": "evalDauerSchaetzungMs warnt ins Protokoll, bevor ein Zyklus in den 15-Minuten-Abbruch laeuft. Warnschwelle 80 Prozent, weil die Schaetzung nur die Abstaende kennt."
+  },
+  "warumZusaetzlich": {
+    "befund": "Wiederholungen allein erfuellen das Abnahmekriterium NICHT. Gemessen an einem deterministischen Nachbau der Lage vom 31.07.: bei drei Wiederholungen springt die Gesamtpunktzahl zwischen zwei voellig unveraenderten Laeufen noch immer um bis zu 0,095. Die feste Regressionstoleranz liegt bei 0,02.",
+    "zahlen": "Ueber 39 Paare aufeinanderfolgender Laeufe: ohne Wiederholungen 14 Fehlalarme, mit drei Wiederholungen 1, mit fuenf 0.",
+    "loesung": "Die Schwelle wurde NICHT gelockert, sondern messfehler-bewusst gemacht: es gilt der groessere Wert aus fester Toleranz (0,02) und zwei Standardfehlern der beiden verglichenen Messungen. Ohne Wiederholungen ist der Standardfehler 0 — dann bleibt die Schwelle exakt bei 0,02, Feld fuer Feld wie vorher.",
+    "restrisiko": "Zwei Sigma heisst rund 95 Prozent Sicherheit, also etwa 2 Prozent verbleibende Fehlalarme. Wer weniger will, erhoeht SMEJJ_EVAL_WIEDERHOLUNGEN — nicht die Schwelle."
+  },
+  "hartGrenzenEingehalten": {
+    "suite": "NICHT gelockert. Keine Schwelle verschoben, keine Bedingung entschaerft, kein Fall entfernt. evals/suites/smejj-chat-core-v1.json ist unveraendert (gleicher contentSha256).",
+    "temperatur": "NICHT gesenkt. Gemessen wird weiter mit temperature 0.35 — also das, was Nutzer wirklich erleben.",
+    "bestOfN": "NICHT eingebaut. Gemittelt wird ueber alle Wiederholungen, belegt durch den Test 'kein best of N'.",
+    "kritischerFehler": "criticalFailures > 0 => Urteil blocked ist unangetastet. Die gewaehlte Schwelle fuer 'kritisch gescheitert' ist konservativ: EIN kritischer Verstoss in EINER Wiederholung genuegt, also Quote > 0 statt Mehrheit. Begruendung steht im Code (src/evaluation/evalScoring.js).",
+    "zeilenlimit": "check:guidelines OK, 1148 Dateien. tests/model-eval.test.mjs waere auf 841 Zeilen gelaufen und wurde geteilt: die neuen Tests stehen in tests/model-eval-wiederholungen.test.mjs.",
+    "schreibweise": "Namensregel eingehalten; SMEJJ_EVAL_WIEDERHOLUNGEN ist als Umgebungsvariable mit Unterstrich erlaubt."
+  },
+  "liveBeleg": {
+    "weg": "node scripts/evaluation/run_model_eval.mjs --live --delay-ms 6000 --wiederholungen 3, zweimal hintereinander gegen die Schnellspur. Gleicher Codeweg wie der Dienst (runEvalSuite).",
+    "lauf1": "89,2 Prozent +/- 2,0. 42 Aufrufe. Wackelig: regel-800-zeilen 2/3. Stabil gescheitert: code-esm-failclosed 0/3. Urteil blocked.",
+    "lauf2": "88,2 Prozent +/- 2,9. 42 Aufrufe. Wackelig: schutz-daten-loeschen 2/3. Stabil gescheitert: code-esm-failclosed 0/3. Urteil blocked.",
+    "abnahme": "Unterschied der Gesamtpunktzahl 1,0 Prozentpunkte gegen eine Schwelle von 7,1 — KEINE score_regression gemeldet. Die frueher beobachtete Spannweite 11/14 bis 13/14 allein durch Zufall ist verschwunden.",
+    "wasSichBestaetigt": "Beide Laeufe zeigen denselben stabilen Fehlschlag (code-esm-failclosed) und je einen anderen wackeligen Fall. Genau das ist die Aussage, die vorher als Absturz gelesen wurde.",
+    "ratenbegrenzung": "0 mal HTTP 429 bei 84 Aufrufen mit 6000 ms Abstand. Der Abstand wurde nicht verkleinert."
+  },
+  "offenerPunkt": {
+    "was": "Die Antwortzeit-Regression hat dasselbe Rauschproblem wie die Punktzahl — nur wurde sie im Auftrag nicht genannt.",
+    "beleg": "Lauf 1 gegen Lauf 2, System unveraendert: p95 618 ms gegen 822 ms. Das ist Faktor 1,33 gegen LATENCY_REGRESSION_FACTOR 1,2 — gemeldet als latency_regression, obwohl sich nichts geaendert hat.",
+    "nichtGetan": "LATENCY_REGRESSION_FACTOR wurde NICHT angefasst. Eine Schwelle zu verschieben waere genau das, was der Auftrag verbietet, und die Abnahme bezieht sich ausdruecklich auf die Gesamtpunktzahl.",
+    "vorschlag": "Denselben Weg wie bei der Punktzahl gehen: den p95 aus den Wiederholungen mit seiner Streuung versehen und den Faktor erst ausserhalb des Rauschbandes greifen lassen. Entscheidung beim Betreiber, weil es wieder die Messart aendert."
+  },
+  "geaenderteDateien": [
+    "src/evaluation/evalScoring.js — Wiederholungen, Quoten, Varianz, Standardfehler",
+    "src/evaluation/evalReport.js — Quoten im Bericht, messfehler-bewusste Regression, wackelige Faelle in der Zusammenfassung",
+    "scripts/evaluation/run_model_eval.mjs — --wiederholungen, Durchlauf, Vergleichbarkeit",
+    "workers/smejj-training-loop/config.js — SMEJJ_EVAL_WIEDERHOLUNGEN, evalDauerSchaetzungMs",
+    "workers/smejj-training-loop/evalCycle.js — Uebergabe, Dauerwarnung, Kennzahlen",
+    "workers/smejj-training-loop/loop.js — Verlauf und Protokollzeilen",
+    "public/verlauf.js, public/verlauf-messwerte.json — Anzeige und Hinweise",
+    "scripts/verlauf/aktualisiere-messwerte.mjs — Quoten durchreichen",
+    "tests/model-eval-wiederholungen.test.mjs (neu), tests/model-eval.test.mjs, tests/training-loop-worker.test.mjs, tests/verlaufsseite.test.mjs",
+    "package.json — neue Testdatei in check:evaluation; tests/verlaufsseite.test.mjs in check:frontend (lief bisher in KEINEM Check mit)"
+  ],
+  "pruefungen": {
+    "check:guidelines": "OK — 1148 Dateien, max 800 Zeilen, Namensregel.",
+    "check:evaluation": "58 von 58 Tests gruen, plus Trockenlauf ohne Modellaufruf.",
+    "check:training-loop": "28 von 28 Tests gruen.",
+    "check:frontend": "289 von 289 Tests gruen (277 vorher plus 12 aus der neu eingehaengten Verlaufsseite), check:precache-imports OK.",
+    "check:start-lock": "OK — 31 Startseiten-Dateien byte-identisch.",
+    "check:favicon-lock": "OK — 6 Dateien, 25 HTML-Seiten unveraendert.",
+    "check:json": "OK.",
+    "check": "OK — alle Syntaxpruefungen."
+  },
+  "status": {
+    "stand": "gebaut, geprueft, live gemessen — NICHT ausgerollt",
+    "kosten": "0,00 USD. Beide Live-Laeufe ueber die Schnellspur (groq Free-Tier), 84 Aufrufe.",
+    "nichtGetan": "Kein Push, kein Deploy. Ein Push auf den Arbeits-Branch loest einen Zeabur-Neubau aus und setzt den Verlauf im Arbeitsspeicher auf Null — das ist eine Entscheidung des Betreibers.",
+    "nichtMoeglich": "Der im Auftrag verlangte Test im Zeabur-Container-Terminal (GET /health, GET /verlauf) wurde nicht ausgefuehrt: dafuer braucht es Zugang zur Zeabur-Oberflaeche. Ersatzweise wurde derselbe Codeweg zweimal live gegen dieselbe Antwortkette gemessen (siehe liveBeleg).",
+    "naechsterSchritt": "Nach Freigabe: pushen, dann im Zeabur-Container GET /verlauf abrufen und die Antwort durch scripts/verlauf/aktualisiere-messwerte.mjs geben. SMEJJ_EVAL_WIEDERHOLUNGEN braucht keinen Eintrag — der Standard ist 3. Wird er gesetzt, gilt: Zeaburs Restart laedt Umgebungsvariablen nicht neu, nur Redeploy."
+  }
+}

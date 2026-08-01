@@ -2,7 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 
-import { isTrainingLoopEnabled, loadLoopConfig } from "../workers/smejj-training-loop/config.js";
+import {
+  evalDauerSchaetzungMs,
+  isTrainingLoopEnabled,
+  loadLoopConfig,
+  ZYKLUS_SICHERHEITSANTEIL
+} from "../workers/smejj-training-loop/config.js";
 import { defaultCheckpoint, readCheckpoint, writeCheckpoint } from "../workers/smejj-training-loop/checkpoint.js";
 import { runEvalCycle } from "../workers/smejj-training-loop/evalCycle.js";
 import { runTrainingCycle } from "../workers/smejj-training-loop/trainingCycle.js";
@@ -458,7 +463,10 @@ test("loop: Verlauf ist begrenzt — im Dauerbetrieb kein wachsender Speicher", 
     SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
     SMEJJ_TRAINING_LOOP_EVAL_INTERVAL_MS: String(5 * 60 * 1000),
     SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000",
-    SMEJJ_TRAINING_LOOP_VERLAUF_MAX: "3"
+    SMEJJ_TRAINING_LOOP_VERLAUF_MAX: "3",
+    // Hier geht es um die Begrenzung der Liste, nicht um Wiederholungen — eine
+    // Ziehung je Fall haelt den Testlauf kurz.
+    SMEJJ_EVAL_WIEDERHOLUNGEN: "1"
   });
   assert.equal(config.verlaufMax, 3);
   const loop = createLoop({
@@ -506,6 +514,143 @@ test("worker: /verlauf liefert die Kennzahlen und keine Prompts oder Antworten",
   // Eingaben oder Modellantworten preisgeben.
   assert.equal(/prompt|answer|text|IDRIVE|SECRET/i.test(body.raw), false);
   server.close();
+});
+
+test("config: Wiederholungen je Fall sind einstellbar und begrenzt", () => {
+  assert.equal(loadLoopConfig({}).evalWiederholungen, 3, "Standard: drei Ziehungen je Fall");
+  assert.equal(loadLoopConfig({ SMEJJ_EVAL_WIEDERHOLUNGEN: "1" }).evalWiederholungen, 1, "Rueckfallebene");
+  assert.equal(loadLoopConfig({ SMEJJ_EVAL_WIEDERHOLUNGEN: "7" }).evalWiederholungen, 7);
+  assert.equal(loadLoopConfig({ SMEJJ_EVAL_WIEDERHOLUNGEN: "99" }).evalWiederholungen, 10, "auf den Bereich begrenzt");
+  assert.equal(loadLoopConfig({ SMEJJ_EVAL_WIEDERHOLUNGEN: "viel" }).evalWiederholungen, 3);
+});
+
+test("config: die Dauer eines Zyklus bleibt nachrechenbar", () => {
+  // Die Rechnung aus dem Auftrag: 14 Faelle, 3 Wiederholungen, 6000 ms Abstand.
+  assert.equal(evalDauerSchaetzungMs({ faelle: 14, wiederholungen: 3, delayMs: 6000 }), 252_000);
+  assert.ok(evalDauerSchaetzungMs({ faelle: 14, wiederholungen: 3, delayMs: 6000 }) < loadLoopConfig({}).tickMaxMs,
+    "rund 4 Minuten gegen 15 Minuten Limit — das passt");
+  // Bei 10 Wiederholungen sind allein die Abstaende 14 von 15 Minuten. Die
+  // Schaetzung bleibt formal unter dem Limit — in Wirklichkeit laeuft der Zyklus
+  // in den Abbruch, weil 140 Antwortzeiten obendrauf kommen. Deshalb wird schon
+  // ab ZYKLUS_SICHERHEITSANTEIL gewarnt und nicht erst am harten Limit.
+  const zehn = evalDauerSchaetzungMs({ faelle: 14, wiederholungen: 10, delayMs: 6000 });
+  const limit = loadLoopConfig({}).tickMaxMs;
+  assert.equal(zehn, 840_000);
+  assert.ok(zehn < limit, "die reine Abstandsrechnung taeuscht Sicherheit vor");
+  assert.ok(zehn >= limit * ZYKLUS_SICHERHEITSANTEIL, "die Warnschwelle greift trotzdem");
+});
+
+test("evalCycle: warnt, bevor ein Zyklus in den Abbruch laeuft", async () => {
+  const meldungen = [];
+  await runEvalCycle({
+    repoRoot: "/repo",
+    suitePath: "evals/suites/unit-suite.json",
+    reportTarget: "ops/unit.json",
+    // Gleiche Rechnung, nur in Millisekunden statt Minuten: der Test darf die
+    // Wartezeit pruefen, ohne sie abzuwarten.
+    delayMs: 1,
+    wiederholungen: 10,
+    tickMaxMs: 5,
+    readSuite: async () => validSuite(),
+    callModel: async () => ({ ok: true, text: "hi", latencyMs: 5 }),
+    writeReport: async () => {},
+    log: (zeile) => meldungen.push(zeile),
+    now: () => new Date("2026-07-31T00:00:00.000Z")
+  });
+  assert.match(meldungen.join(" "), /WARNUNG: geschaetzte Zyklusdauer/);
+  assert.match(meldungen.join(" "), /SMEJJ_EVAL_WIEDERHOLUNGEN senken/);
+});
+
+test("evalCycle: Wiederholungen fuehren zu Quoten in den Kennzahlen", async () => {
+  let aufrufe = 0;
+  const result = await runEvalCycle({
+    repoRoot: "/repo",
+    suitePath: "evals/suites/unit-suite.json",
+    reportTarget: "ops/unit.json",
+    delayMs: 0,
+    wiederholungen: 4,
+    readSuite: async () => validSuite(),
+    // Zwei von vier Ziehungen bestehen — ein wackeliger Fall.
+    callModel: async () => {
+      aufrufe += 1;
+      return { ok: true, text: aufrufe % 2 === 0 ? "hi there" : "nope", latencyMs: 10 };
+    },
+    writeReport: async () => {},
+    now: () => new Date("2026-07-31T00:00:00.000Z")
+  });
+  assert.equal(aufrufe, 4, "ein Fall, vier Ziehungen");
+  assert.equal(result.kennzahlen.wiederholungen, 4);
+  assert.equal(result.kennzahlen.wackelig, 1);
+  assert.deepEqual(result.kennzahlen.wackeligeFaelle, [{ fall: "case-1", quote: 0.5, bestanden: 2, laeufe: 4 }]);
+  assert.equal(result.kennzahlen.punktzahl, 0.5, "die Quote ist die Punktzahl, keine Einzelziehung");
+});
+
+test("evalCycle: ein Vorlauf aus dem Checkpoint mit anderer Messart wird verworfen", async () => {
+  // Der Loop reicht seinen Vorlauf am findBaselineReport vorbei herein. Ohne
+  // diese Pruefung meldete die erste Messung nach einer Aenderung von
+  // SMEJJ_EVAL_WIEDERHOLUNGEN eine Regression, die keine ist.
+  const alterVorlauf = {
+    suite: { suiteId: "unit-suite", contentSha256: "x" },
+    run: { modelId: "live-default", live: true },
+    summary: { weightedScore: 1, wiederholungen: 1, criticalFailures: 0, latencyMsP95: 5 }
+  };
+  const lauf = async (wiederholungen) => runEvalCycle({
+    repoRoot: "/repo",
+    suitePath: "evals/suites/unit-suite.json",
+    reportTarget: "ops/unit.json",
+    delayMs: 0,
+    wiederholungen,
+    baseline: alterVorlauf,
+    readSuite: async () => validSuite(),
+    callModel: async () => ({ ok: true, text: "nope", latencyMs: 10 }),
+    writeReport: async (_t, report) => { zuletzt = report; },
+    now: () => new Date("2026-07-31T00:00:00.000Z")
+  });
+  let zuletzt = null;
+  await lauf(1);
+  assert.equal(zuletzt.comparison.hasBaseline, true, "gleiche Messart: der Vorlauf zaehlt");
+  await lauf(3);
+  assert.equal(zuletzt.comparison.hasBaseline, false, "andere Messart: kein Vergleich statt eines falschen");
+});
+
+test("loop: der Verlauf und das Protokoll fuehren die Quoten mit", async () => {
+  const config = loadLoopConfig({
+    SMEJJ_TRAINING_LOOP_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_ENABLED: "YES",
+    SMEJJ_TRAINING_LOOP_EVAL_DELAY_MS: "1000",
+    SMEJJ_EVAL_WIEDERHOLUNGEN: "2"
+  });
+  assert.equal(config.evalWiederholungen, 2);
+  const zeilen = [];
+  let aufrufe = 0;
+  const loop = createLoop({
+    config,
+    env: {},
+    repoRoot: "/repo",
+    log: (zeile) => zeilen.push(zeile),
+    deps: {
+      checkpointRequest: async () => { throw new Error("keine Ablage"); },
+      callModel: async () => {
+        aufrufe += 1;
+        return { ok: true, text: aufrufe === 1 ? "hi there" : "nope", latencyMs: 7 };
+      },
+      writeReport: async () => {},
+      readReport: async () => null,
+      readSuite: async () => validSuite()
+    }
+  });
+  await loop.tick(() => new Date("2026-07-31T00:00:00.000Z"));
+
+  const verlauf = loop.getVerlauf();
+  assert.equal(verlauf[0].wiederholungen, 2);
+  assert.equal(verlauf[0].wackelig, 1);
+  assert.deepEqual(verlauf[0].wackeligeFaelle, [{ fall: "case-1", quote: 0.5, bestanden: 1, laeufe: 2 }]);
+  // Selbst wenn nur die Zeabur-Protokolle uebrig sind, muss `grep` den Trend UND
+  // die Erklaerung dafuer herausziehen koennen.
+  const protokoll = zeilen.join("\n");
+  assert.match(protokoll, /VERLAUF .*wiederholungen=2 wackelig=1/);
+  assert.match(protokoll, /WACKELIG case-1=1\/2/);
+  assert.match(protokoll, /Wackelige Faelle: 1 — case-1 50 %/);
 });
 
 test("config: Messweg ist per Umgebungswert umstellbar, Standard bleibt die Schnellspur", () => {

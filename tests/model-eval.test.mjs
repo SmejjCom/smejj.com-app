@@ -16,6 +16,7 @@ import {
   compareWithBaseline,
   EVAL_VERDICT
 } from "../src/evaluation/evalReport.js";
+// Wiederholungen und Bestehensquoten stehen in tests/model-eval-wiederholungen.test.mjs.
 import {
   buildMessages,
   callViaControl,
@@ -444,6 +445,7 @@ async function* asyncChunks(parts) {
   const encoder = new TextEncoder();
   for (const part of parts) yield encoder.encode(part);
 }
+
 
 test("knappes Token-Budget schaltet das Denken ab — sonst frisst es die Antwort auf", async () => {
   // Gemessen am 2026-07-29 gegen glm-4.7-flash, Fall code-esm-failclosed:
