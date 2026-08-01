@@ -15,9 +15,10 @@ import test from "node:test";
 import http from "node:http";
 import { gzipSync } from "node:zlib";
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { MIN_TOP_SCORE } from "../control-server/src/rag/ragRanking.js";
+import { withRagContext } from "../src/evaluation/evalRagContext.js";
 import { buildRagIndexArtifact } from "../scripts/rag/export_rag_index_to_idrive.mjs";
 import { buildChatBridgeArtifact, bundleModules, splitImports, topLevelNames } from "../scripts/deploy/bundle_chat_bridge.mjs";
 
@@ -103,6 +104,31 @@ test("gesucht wird zur letzten nutzerfrage, nicht zum gesamten verlauf", () => {
   // Umgekehrte Reihenfolge: die letzte Frage ist ungedeckt, also kein Kontext —
   // sonst wuerde ein alter Gespraechsabschnitt die aktuelle Frage faerben.
   assert.equal(rag.withRagContext([...verlauf].reverse()).contextChars, 0);
+});
+
+// Der Vergleich, an dem die ganze Messung haengt: Der Gewinn von 88,2 % auf
+// 96,1 % wurde mit `--rag` gemessen, wo der Eval-Harness den Block selbst baut
+// und voranstellt. Nach dem Umbau soll ein Lauf OHNE `--rag` denselben Wert
+// erreichen, weil die Live-Kette den Block nun selbst traegt. Das gilt aber nur,
+// wenn beide Wege denselben Block bauen — sonst vergleicht die Wiederholung zwei
+// verschiedene Dinge und meldet den Unterschied als Fortschritt oder Regression.
+test("live-kette und messweg bauen denselben kontextblock", async () => {
+  rag.installRagIndex(NUTZLAST);
+  const suite = JSON.parse(await readFile("evals/suites/smejj-chat-core-v1.json", "utf8"));
+  let mitKontext = 0;
+  for (const fall of suite.cases) {
+    const messweg = await withRagContext(fall, process.cwd());
+    const livekette = rag.buildRagBlock(fall.prompt);
+    if (messweg.contextChars > 0) {
+      mitKontext += 1;
+      assert.equal(livekette, messweg.case.system.slice(0, livekette.length), `${fall.id}: Block weicht ab`);
+      assert.equal(livekette.length, messweg.contextChars, `${fall.id}: Blocklaenge weicht ab`);
+    } else {
+      assert.equal(livekette, "", `${fall.id}: Live-Kette baut Kontext, den der Messweg nicht baut`);
+    }
+  }
+  // Nicht jede Frage bekommt Kontext — genau das ist die Regel (gemessen: 16 von 48).
+  assert.ok(mitKontext > 0 && mitKontext < suite.cases.length, `${mitKontext} von ${suite.cases.length} Faellen gedeckt`);
 });
 
 test("buendler loest relative importe auf und liefert abhaengigkeiten zuerst", async () => {
