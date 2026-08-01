@@ -1,0 +1,116 @@
+{
+  "jobId": "job_dauertraining_schleife_20260801",
+  "teil": "umsetzung-nach-freigabe",
+  "createdAt": "2026-08-01",
+  "owner": "smejj.com Betreiber",
+  "title": "Freigabe erteilt, Umsetzung live — Projektkorpus abgelegt, Schleife angebaut, Batch-Preisstufe gefunden",
+
+  "freigabe": {
+    "wortlaut": "Ja, Ich nehme deine Empfehlung an.",
+    "erteiltAm": "2026-08-01",
+    "inhalt": "RTX 3090, 180 USD/Monat, Gesamtdeckel 50 USD fuer den ersten Durchlauf.",
+    "hinterlegtAls": {
+      "SMEJJ_LORA_FREIGABE_ID": "freigabe-2026-08-01-rtx3090-180usd",
+      "SMEJJ_LORA_FREIGABE_GPU_KLASSE": "rtx3090",
+      "SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD": "180",
+      "SMEJJ_LORA_MAX_USD_GESAMT": "50"
+    },
+    "hinweis": "Die Freigabe deckt auch die guenstigere Batch-Stufe (64,80 USD/Monat) — weniger auszugeben als freigegeben braucht keine neue Freigabe. Der umgekehrte Fall (teurere Stufe) wird vom Tor gesperrt und ist getestet."
+  },
+
+  "befundD_batch_preisstufe": {
+    "befund": "Salad verkauft dieselbe Karte in vier Prioritaetsstufen. Aus der API des Betreibers gelesen (/organizations/smejjcom/gpu-classes, 2026-08-01): RTX 3090 kostet 0,25 (high) / 0,197 (medium) / 0,143 (low) / 0,09 (batch) USD je Stunde. Die gesamte bisherige Projektrechnung kannte nur die teuerste Stufe.",
+    "wirkung": "Training ist ein Batch-Vorgang: es muss nicht sofort starten und darf unterbrochen werden. In der Stufe batch kostet Dauerbetrieb 64,80 statt 180 USD im Monat — 64 Prozent weniger fuer dieselbe Karte. Das Guthaben von 83,91 USD reicht damit 38,8 statt 14 Tage.",
+    "risiko": "Eine Batch-Instanz kann eher verdraengt werden. Der Schaden ist gering: die Schleife verbucht einen unterbrochenen Zyklus als fehlgeschlagen und macht weiter. Verloren ist hoechstens die Rechenzeit EINES Zyklus, nie der beste Stand — der liegt auf IDrive e2.",
+    "umgesetzt": "SMEJJ_LORA_PRIORITAET, Standardwert 'batch'. Eine unbekannte Stufe sperrt, statt still auf die teure zu fallen (getestet)."
+  },
+
+  "befundE_registry_kein_blocker": {
+    "befund": "Der befuerchtete Blocker 'kein ghcr.io-Schreibzugang' trifft fuer den Trainer nicht zu. Die laufende Container-Gruppe smejj-fast-1 benutzt das OEFFENTLICHE Fremdabbild ghcr.io/ggml-org/llama.cpp:server-cuda. Salad zieht oeffentliche Abbilder problemlos; es muss nichts gepusht werden.",
+    "konsequenz": "Der GPU-Trainer laeuft nach demselben Muster: oeffentliches Basisabbild plus Laufzeitbuendel von IDrive e2 (das Projekt hat diesen Weg mit scripts/deploy/publish-ephemeral-runtime-to-idrive.mjs bereits gebaut)."
+  },
+
+  "befundF_smejj_fast_1_laeuft": {
+    "befund": "Der Auftrag nannte smejj-fast-1 als STOPPED. Gemessen am 2026-08-01 ueber die Salad-API steht die Gruppe auf running, seit 2026-08-01T06:15:41Z, 1 Instanz, Abbild ghcr.io/ggml-org/llama.cpp:server-cuda.",
+    "warumWichtig": "Diese Gruppe verbraucht laufend Guthaben, unabhaengig vom Training. Das schmaelert die 83,91 USD und damit die Reichweite des Dauertrainings.",
+    "nichtGetan": "Nicht gestoppt. Das Stoppen eines laufenden Dienstes waere ein Rueckbau bestehender Funktion (Rote Liste) und braucht eine eigene Entscheidung des Betreibers."
+  },
+
+  "projektkorpus": {
+    "warum": "Befund C des ersten Teils: etwa neun der 14 Suite-Faelle pruefen Projektwissen und Verweigern. Offene Datensaetze bewegen die nicht.",
+    "policyFalle": "Der naheliegende Weg — ein Sprachmodell formuliert Frage/Antwort-Paare aus der Doku — ist verboten. Die Trainingsdaten-Richtlinie sperrt Ausgaben von Provider-APIs, und der Assistent, der diesen Code schreibt, IST ein solches Modell. Von ihm formulierte Antworten waeren Distillation aus einem Fremdmodell.",
+    "loesung": "Streng deterministische Extraktion (src/training/projectcorpus/extract.js): die ANTWORT ist ein woertlicher Abschnitt aus der Doku des Betreibers, die FRAGE entsteht aus der Ueberschrift desselben Dokuments nach festen Schablonen. Es entsteht kein Token aus einem Modell. Ein Test prueft woertlich, dass jedes laengere Wort der Antwort im Quelldokument vorkommt.",
+    "ergebnisLive": {
+      "dateien": 109,
+      "rohzeilen": 1971,
+      "records": 1971,
+      "split": { "train": 1494, "validation": 198, "test": 279 },
+      "abgelehnt": {},
+      "ablage": "s3://smejj-model-files/datasets/smejj-1-0/projektwissen/2ec96b05dcbb/",
+      "objekte": ["train.jsonl", "validation.jsonl", "test.jsonl", "manifest.json"],
+      "verifiziert": "Rueckgelesen ueber signedS3List — 4 Objekte vorhanden."
+    },
+    "familienSplit": "Familie ist die DATEI, nicht der Abschnitt. Alle Varianten eines Dokuments landen im selben Split, sonst pruefte der Testteil Wissen, das der Trainingsteil woertlich enthielt."
+  },
+
+  "gefundeneFehler": [
+    {
+      "was": "Das Verunreinigungs-Tor wies 1971 von 1971 Projektzeilen ab.",
+      "ursache": "Die SYSTEMZEILE lag im Suite-Fingerabdruck. Sie ist in jeder Trainingszeile woertlich identisch — also ueberschnitt sich jede Zeile mit der Suite.",
+      "warumWichtig": "Das Tor war damit nicht streng, sondern wirkungslos: es sperrte alles. Ein Tor, das alles sperrt, wird beim naechsten Mal abgeschaltet statt korrigiert.",
+      "behoben": "Systemzeile aus dem Fingerabdruck genommen und die Pruefung auf Nutzer- und Antworttext beschraenkt. Sie ist geteilter Betriebskontext, keine Testfrage. Gegenprobe im Test: ein echter Suite-Prompt wird weiterhin abgewiesen."
+    },
+    {
+      "was": "trainerClient.js loeschte seinen Abbruch-Timer nicht.",
+      "wieAufgefallen": "Der Zyklustest lief 20 Sekunden statt Millisekunden.",
+      "wirkung": "Bei einer Statusabfrage alle 30 Sekunden waeren dauerhaft offene Handles entstanden; der Prozess haette sich nicht sauber beenden koennen.",
+      "behoben": "clearTimeout in einem finally-Block. Testlaufzeit danach 40 ms."
+    },
+    {
+      "was": "Der erste Deploy schlug fehl (deployment-6a6d95059cd65e28a34344dd).",
+      "ursache": "COPY workers/smejj-lora-loop brach ab mit 'failed to compute cache key: failed to calculate checksum'. .dockerignore schliesst workers/* pauschal aus; der neue Ordner fehlte in der Ausnahmeliste.",
+      "nonRegression": "Der laufende Stand blieb unberuehrt — Zeabur behaelt bei einem Fehlschlag das alte Abbild. Der Eval-Zyklus lief durchgehend weiter.",
+      "behoben": "Negationen ergaenzt PLUS ein Waechter (tests/dockerignore-bau-kontext.test.mjs), der jeden ausdruecklichen COPY-Unterpfad gegen die Negationen prueft. Diese Falle faellt kuenftig im Test auf, nicht im Deploy. Der Waechter hat beim ersten Lauf zwei Falschmeldungen erzeugt (bare 'COPY workers'/'COPY schemas' in Dockerfile.smejj-control) und wurde praezisiert: nur ausdrueckliche Unterpfade werden geprueft."
+    }
+  ],
+
+  "anbauStattNeuerDienst": {
+    "entscheidung": "Die Schleife haengt additiv im bestehenden Dienst smejj-training-loop, statt einen eigenen Zeabur-Dienst zu bekommen.",
+    "grund": "Ein neuer Dienst waere eine neue laufende Kostenposition und damit Rote Liste. Freigegeben wurde die GPU, nicht ein zweiter Container. Der bestehende Dienst laeuft ohnehin 24/7 und ist die meiste Zeit untaetig; die Orchestrierung kostet dort nichts, weil die Rechenarbeit die GPU macht.",
+    "nonRegressionVorkehrungen": [
+      "Der Anbau wird in try/catch ERZEUGT — scheitert er, laeuft der Dienst ohne ihn weiter statt zu sterben.",
+      "Eigener Takt mit eigenem catch: ein Fehler dort erreicht den Eval-Takt nicht.",
+      "Ohne SMEJJ_LORA_LOOP_ENABLED=YES wird kein Takt gestartet — Auslieferungszustand ist totes Gewicht, kein Risiko.",
+      "Der Anbau beantwortet ausschliesslich /lora/* ; /health und /verlauf antworten unveraendert (getestet mit und ohne Anbau)."
+    ]
+  },
+
+  "liveTest": {
+    "lokal": "Vollstaendiger Dienstlauf mit echter Konfiguration: /health unveraendert, /lora/health meldet loopEnabled true und als einzigen Blocker 'keine_trainer_adresse', /lora/kosten meldet rtx3090, Deckel 50 USD, Rest 50 USD, Freigabe-Kennung.",
+    "zeabur": "Deploy 1 fehlgeschlagen (.dockerignore), Deploy 2 nach dem Fix ausgeloest. Der Dienst hat bewusst KEINE Domain; /health ist nur containerintern erreichbar (siehe Memory smejj-dauerbetrieb-loop), der Nachweis laeuft ueber Bauergebnis und Laufzeitprotokoll.",
+    "idrive": "Korpus rueckgelesen und bestaetigt."
+  },
+
+  "pruefungen": {
+    "check:guidelines": "gruen — 1200 Dateien",
+    "check:architecture": "gruen — 7",
+    "check:training": "gruen — 93 (inkl. 8 Projektkorpus-Tests)",
+    "check:evaluation": "gruen — 58",
+    "check:training-loop": "gruen — 34 (inkl. 6 Anbau-/Non-Regression-Tests)",
+    "check:lora-loop": "gruen — 46",
+    "check:release-safety": "gruen — 31 (inkl. 3 Bau-Kontext-Tests)",
+    "check:cost": "gruen",
+    "check:security": "gruen",
+    "check:json": "gruen",
+    "check:paths": "gruen"
+  },
+
+  "offenerPunkt": {
+    "1_gpuTrainer": "Der Trainingsdienst auf der GPU ist NICHT gebaut. Solange SMEJJ_LORA_TRAINER_URL fehlt, sperrt die Schleife jeden Zyklus (nachgewiesen: /lora/health meldet genau das) und es entsteht keine Sekunde GPU-Zeit. Weg ist geklaert (oeffentliches Basisabbild, kein Registry-Push).",
+    "2_basismodell": "Qwen/Qwen2.5-Coder-7B-Instruct (Apache-2.0, 15,23 GB safetensors) ist die Wahl fuer die freigegebene 24-GB-Karte. Noch nicht geladen; der Trainingscontainer kann es direkt von HuggingFace ziehen, eine Zwischenablage auf IDrive ist nicht noetig.",
+    "3_offenerKorpus": "oasst2 ist geprueft und zulaessig, aber noch nicht eingelesen. Er bewegt nur vier der 14 Faelle — der Projektkorpus war die wirksamere Arbeit und wurde vorgezogen.",
+    "4_smejjFast1": "Laeuft und verbraucht Guthaben. Stoppen waere Rueckbau bestehender Funktion und braucht eine Entscheidung des Betreibers."
+  },
+
+  "status": "Projektkorpus live auf IDrive e2. Schleife gebaut, getestet, in den bestehenden Dienst angebaut und deployt. Freigabe hinterlegt, Batch-Stufe senkt die Kosten auf 64,80 USD/Monat. Es laeuft noch kein Training, weil der GPU-Trainingsdienst fehlt — die Schleife meldet genau diesen Grund und gibt kein Geld aus."
+}
