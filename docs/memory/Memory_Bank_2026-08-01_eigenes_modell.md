@@ -180,3 +180,39 @@ Kontext. Genau die Fähigkeit, die ein Assistent mit RAG braucht.
 **Folge für die Messung:** Die Suite braucht mindestens einen Fall ohne
 mitgelieferte Projektkenntnis, sonst misst sie an der Wirklichkeit vorbei. Das
 ist eine Suite-Änderung und gehört dem Betreiber.
+
+## Korrektur an der Parallelsitzung (Commit 8bdb8a7)
+
+Commit `8bdb8a7` erklärt den Dauerfehlschlag von `code-esm-failclosed` damit,
+dass Qwen3-14B denke und das Denken die 600 Token auffresse. **Am laufenden
+Dienst gemessen stimmt das nicht.**
+
+Fünf Läufe direkt gegen den llama.cpp-Endpunkt, 2026-08-01 20:15 UTC:
+
+| | Ergebnis |
+|---|---|
+| Läufe mit Denk-Text (`reasoning_content` oder `<think>`) | **0 von 5** |
+| verbrauchte Antwort-Token (von 600 erlaubten) | **57 bis 87** |
+| zusätzliches `chat_template_kwargs {enable_thinking:false}` | ändert nichts (57 statt 59 Token) |
+| Läufe mit `export **async** function parseBudget` | **5 von 5** |
+
+Die echte Ursache ist ein überflüssiges `async`. Die Zusicherung verlangt
+`export\s+function\s+parseBudget` und passt darauf nicht. Kein Denk-Problem,
+kein Budget-Problem.
+
+Die Container Group setzt `LLAMA_ARG_CHAT_TEMPLATE_KWARGS={"enable_thinking":false}`
+— das wirkt, trotz der Verwarnung im Startprotokoll („deprecated, use --reasoning").
+Der Schalter `SMEJJ_LLM_SALAD_DENKEN_VORLAGE` aus `8bdb8a7` ist harmlos
+(standardmässig aus), würde diesen Fall aber nicht heilen.
+
+**Damit scheitert `code-esm-failclosed` bei allen drei geprüften Modellen aus
+demselben Grund** — der Prompt verlangt „eine ESM-Funktion", die Zusicherung
+verlangt eine bestimmte Schreibweise davon:
+
+| Modell | schreibt | besteht |
+|---|---|---|
+| llama-3.1-8b-instant | `export default parseBudget` | nein |
+| GLM-4.7-flash | mal so, mal so | 2 von 3 |
+| Qwen3-14B | `export async function` | nein |
+
+Alle drei liefern korrektes, fail-closed ESM mit `throw`.

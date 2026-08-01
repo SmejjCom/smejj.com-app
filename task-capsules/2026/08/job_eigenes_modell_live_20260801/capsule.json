@@ -149,6 +149,15 @@
     "empfehlung": "Das eigene Modell in diesem Zustand nicht als Auswahl fuer Nutzer stehen lassen. Es ist nicht Standard und nicht im Auto-Routing — ein Nutzer muss es bewusst waehlen — aber wer es waehlt, bekommt sichtbar schlechtere und teils falsche Antworten. Der Betreiber hat den Dauerbetrieb angeordnet; dieser Befund ist die Gegenrede dazu, nicht seine Aufhebung."
   },
 
+  "korrekturAnParallelsitzung": {
+    "betrifft": "Commit 8bdb8a7 'fix(router): Denken-Aus erreicht das eigene Modell nicht'.",
+    "dortBehauptet": "Qwen3-14B denke, das Denken fresse die 600 Token des Falls code-esm-failclosed, zurueck kaemen 234 Zeichen ohne die geforderte Form — daher 0 von 5.",
+    "amLaufendenDienstGemessen_2026-08-01_20-15_UTC": "Fuenf Laeufe direkt gegen den llama.cpp-Endpunkt: 0 von 5 mit Denk-Text (weder reasoning_content noch <think>), completion_tokens 57 bis 87 von 600 erlaubten. Das Token-Budget wird nicht einmal zu einem Fuenftel ausgeschoepft. Ein zusaetzliches chat_template_kwargs {enable_thinking:false} aenderte nichts (57 gegen 59 Token).",
+    "echteUrsache": "Das Modell schreibt in 5 von 5 Laeufen 'export ASYNC function parseBudget'. Die Zusicherung verlangt das Muster 'export\\\\s+function\\\\s+parseBudget' und passt darauf nicht. Es ist kein Denk-Problem und kein Budget-Problem, sondern ein ueberfluessiges async.",
+    "folge": "Die Container Group setzt LLAMA_ARG_CHAT_TEMPLATE_KWARGS={\"enable_thinking\":false}; das wirkt, trotz der Verwarnung im Startprotokoll. Der Schalter SMEJJ_LLM_SALAD_DENKEN_VORLAGE aus 8bdb8a7 ist harmlos (standardmaessig aus), wuerde diesen Fall aber nicht heilen. Wer ihn einschaltet und Besserung erwartet, sucht an der falschen Stelle weiter.",
+    "gemeinsamerNenner": "Damit scheitert code-esm-failclosed bei allen drei geprueften Modellen aus DEMSELBEN Grund: Der Prompt verlangt eine ESM-Funktion, die Zusicherung verlangt eine bestimmte Schreibweise davon. llama-3.1-8b schreibt 'export default', GLM-4.7-flash wechselt zwischen beiden, Qwen3-14B schreibt 'export async function'. Alle drei liefern korrektes, fail-closed ESM mit throw."
+  },
+
   "liveBeweis": {
     "abnahmekriterium": "Das eigene Modell antwortet ueber den Router, belegt durch den Antwortkopf x-smejj-model-backend.",
     "beleg": "2026-08-01 08:45:10 UTC, POST https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/chat mit {\"model\":\"smejj-fast-1\"} -> HTTP 200, x-smejj-model-backend: salad:smejj-fast-1, x-smejj-model-id: smejj-fast-1",
