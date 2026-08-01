@@ -136,21 +136,43 @@ export const MODEL_REGISTRY = Object.freeze({
   }),
   // smejj fast 1.0 — EIGENES, selbst gehostetes Modell auf gemieteter Salad-GPU.
   // Zweck: kurze Chat-Antworten (Profil "fast"), waehrend GLM-5.2 das
-  // Qualitaets-/Coding-Fundament bleibt. Basis: Qwen/Qwen3.6-35B-A3B
-  // (Apache-2.0, 35,95B gesamt / ~3B aktiv pro Token = MoE -> schnell und guenstig).
-  // Lizenz erlaubt kommerzielle Nutzung UND Fine-Tuning (spaeterer smejj-1-0-Pfad).
-  // Laufzeit: llama.cpp-Server auf Salad (Container Group smejj-fast-1), GGUF
-  // Q4_K_XL; der runtimeModel-Wert MUSS dem LLAMA_ARG_ALIAS der Container Group
-  // entsprechen (dort auf "smejj-fast-1" gesetzt), sonst antwortet der Server 404.
-  // FAIL-CLOSED: ohne SMEJJ_FAST_1_ENABLED + BASE_URL + KEY ist das Modell inaktiv;
-  // der Router faellt dann automatisch auf GLM-5.2 zurueck (fallbackModelId).
+  // Qualitaets-/Coding-Fundament bleibt.
+  //
+  // BASIS: Qwen/Qwen3-Coder-30B-A3B-Instruct, Apache-2.0 (kommerzielle Nutzung
+  // UND Fine-Tuning erlaubt — der spaetere smejj-1-0-Pfad bleibt offen).
+  // MoE mit 30,5B gesamt / ~3,3B aktiv je Token: Antworttempo einer 3B-Klasse
+  // bei der Guete einer 30B-Klasse. Gewichte als GGUF UD-Q4_K_XL (17,7 GB) im
+  // Eimer IDRIVE_E2_MODEL_BUCKET unter model-files/smejj-1-0/original/.
+  //
+  // WARUM NICHT Qwen3.6-35B-A3B (der frueher hier eingetragene Kandidat):
+  // gemessen am 2026-08-01 ist dessen UD-Q4_K_XL 22,4 GB gross. Auf einer
+  // 24-GB-Karte bleibt damit kein Platz mehr fuer den KV-Zwischenspeicher bei
+  // 32k Kontext — llama.cpp muesste Schichten auf die CPU auslagern und waere
+  // langsamer als die eingekaufte Schnellspur. Der Coder mit 17,7 GB laesst
+  // ~6 GB Luft. Das ist der ganze Grund; die Lizenz war bei beiden Apache-2.0.
+  //
+  // WARUM NICHT GLM-5.2 oder Kimi K2.7 aus dem eigenen Lager: deren Gewichte
+  // sind 755,7 GB bzw. 595,2 GB und brauchen ein Mehr-Knoten-GPU-Cluster mit
+  // 80-GB-Karten. Der Salad-Katalog hat (gemessen am 2026-08-01) 42 GPU-Klassen,
+  // die groesste ist eine RTX 5090 mit 32 GB. Selbst hosten ist dort also nicht
+  // teuer, sondern schlicht nicht bestellbar. GLM-5.2 bleibt darum ueber die
+  // Anbieter-API das Fundament; das Lager ist Unabhaengigkeits-Reserve.
+  //
+  // Laufzeit: llama.cpp-Server auf Salad (Container Group smejj-fast-1); der
+  // runtimeModel-Wert MUSS dem LLAMA_ARG_ALIAS der Container Group entsprechen
+  // (dort auf "smejj-fast-1" gesetzt), sonst antwortet der Server 404.
+  // FAIL-CLOSED: ohne SMEJJ_FAST_1_ENABLED + KEY ist das Modell inaktiv; der
+  // Router faellt dann automatisch auf GLM-5.2 zurueck (fallbackModelId).
   "smejj-fast-1": Object.freeze({
     id: "smejj-fast-1",
     name: "smejj fast 1.0",
-    aliases: Object.freeze(["smejj fast", "smejj-fast", "qwen3.6-35b-a3b"]),
+    aliases: Object.freeze(["smejj fast", "smejj-fast", "qwen3-coder-30b-a3b"]),
     provider: "salad",
     status: "self-hosted-runtime-configurable",
-    contextTokens: 262_144,
+    // Ausgeliefert wird, was der Dienst wirklich oeffnet (LLAMA_ARG_CTX_SIZE),
+    // nicht was das Basismodell koennte (262 144). Ein zu grosser Wert hier
+    // laesst die Oberflaeche Kontext versprechen, den der Server abschneidet.
+    contextTokens: 32_768,
     codingCapability: "agentic-coding",
     enabledByDefault: false,
     featureFlag: "SMEJJ_FAST_1_ENABLED",
@@ -158,7 +180,7 @@ export const MODEL_REGISTRY = Object.freeze({
     storage: Object.freeze({
       provider: "idrive-e2",
       bucketEnv: "IDRIVE_E2_MODEL_BUCKET",
-      prefix: "model-files/qwen3-6-35b-a3b/original/",
+      prefix: "model-files/smejj-1-0/original/",
       vaultStatusId: null
     }),
     capabilities: Object.freeze({
@@ -173,6 +195,12 @@ export const MODEL_REGISTRY = Object.freeze({
     }),
     runtime: Object.freeze({
       envPrefix: "FAST",
+      // Bleibt bewusst LEER. Die Laufzeit-Adresse der Container Group kommt
+      // ausschliesslich aus SMEJJ_LLM_FAST_BASE_URL (siehe .env.example).
+      // Ein hier fest eingetragener Standard wuerde die dreiteilige
+      // Fail-closed-Zusicherung (Flag + Adresse + Schluessel) auf zwei Teile
+      // verkuerzen — dann genuegte ein versehentlich gesetztes Flag samt Key,
+      // um Anfragen an eine Adresse zu schicken, die niemand bestaetigt hat.
       defaultBaseUrl: "",
       // Muss exakt dem LLAMA_ARG_ALIAS der Salad Container Group entsprechen.
       defaultModel: "smejj-fast-1",

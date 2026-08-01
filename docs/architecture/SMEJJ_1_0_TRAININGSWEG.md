@@ -210,3 +210,41 @@ Ein eigenes Modell zu trainieren, das ein schwankendes Fremdmodell nachahmt,
 verankert dessen Schwankung.
 
 **Empfehlung: erst den Einbruch aufklären, dann Daten sammeln, dann trainieren.**
+
+---
+
+## Nachtrag 01.08.2026 — Basismodell beschafft, Stufe 0 bleibt der Blocker
+
+Der in Abschnitt 2 als fehlend gemeldete Ausgangspunkt ist beschafft. Damit ist
+der Zusatzschritt vor Stufe 3 erledigt; an der eigentlichen Blockade ändert das
+nichts.
+
+**Gewähltes Basismodell:** `Qwen/Qwen3-Coder-30B-A3B-Instruct`, Lizenz
+**Apache-2.0** (über die Hugging-Face-API geprüft, nicht aus dem Modellnamen
+geschlossen). Kommerzielle Nutzung und Feintuning sind erlaubt — der spätere
+LoRA-Weg bleibt offen. Mixture-of-Experts: 30,5 Mrd Parameter gesamt, rund
+3,3 Mrd aktiv je Token.
+
+**Ablage:** `model-files/smejj-1-0/original/` im Eimer `smejj-model-files`,
+Quantisierung GGUF `UD-Q4_K_XL` (17,7 GB, Quelle `unsloth/…-GGUF`, ebenfalls
+Apache-2.0). Der bisher in der Registrierung genannte Pfad
+`model-files/qwen3-6-35b-a3b/original/` existierte nie und ist korrigiert.
+
+**Warum nicht Qwen3.6-35B-A3B**, der zuvor in `src/shared/modelRegistry.js`
+eingetragene Kandidat: dessen `UD-Q4_K_XL` ist 22,4 GB gross. Auf einer
+24-GB-Karte bliebe damit kein Platz für den KV-Zwischenspeicher bei 32k
+Kontext; llama.cpp müsste Schichten auf die CPU auslagern. Der Coder mit
+17,7 GB lässt rund 6 GB Luft. Beide Modelle stehen unter Apache-2.0 — die
+Entscheidung ist eine Speicherrechnung, keine Lizenzfrage.
+
+**Warum kein Selbsthosten von GLM-5.2 oder Kimi K2.7**, obwohl beide im Lager
+liegen: die Gewichte sind 755,7 GB bzw. 595,2 GB und brauchen einen Verbund
+aus rund zehn 80-GB-Karten. Der Salad-Katalog umfasst (gemessen am 01.08.2026
+über die Salad-API) 42 GPU-Klassen; die grösste ist eine RTX 5090 mit 32 GB.
+Es ist also keine Preisfrage, sondern schlicht nicht bestellbar. Die 1,35 TB
+im Lager bleiben Unabhängigkeits-Reserve, nicht Laufzeit.
+
+**Unverändert gilt:** Stufe 0 ist weiterhin die Blockade. Es gibt null
+erlaubte Trainingsbeispiele, das Erfassungstor steht aus, und ein Basismodell
+zu besitzen erzeugt keine Daten. Feintuning bleibt gegenstandslos, bis der
+Betreiber eine Datenquelle entscheidet.
