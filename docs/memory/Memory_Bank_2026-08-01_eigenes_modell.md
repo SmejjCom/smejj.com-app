@@ -118,10 +118,11 @@ Dauerbetrieb würde 180 USD/Monat kosten; zusammen mit den heutigen 6 USD also
 
 ## Offene Punkte
 
-- Der abgebrochene 17,7-GB-Upload hinterliess unvollständige Multipart-Teile
-  unter `model-files/smejj-1-0/original/`. Aufräumen mit
-  `npm run model:abort-incomplete` und `MODEL_S3_PREFIX=model-files/smejj-1-0`
-  — **erst nach** Abschluss des laufenden 14B-Uploads, sonst reisst es diesen mit.
+- **Erledigt:** Gewichte liegen im Lager (`model-files/smejj-1-0/original/`),
+  `idrive:verify-model-complete` meldet OK. Der abgebrochene 17,7-GB-Upload
+  hinterliess einen unvollständigen Multipart-Upload; nach Abschluss des
+  14B-Uploads abgebrochen (1 gefunden, 1 abgebrochen, Nachlauf 0). Kontingent
+  1266,8 von 2048 GiB = 61,9 %.
 - Feintuning bleibt gegenstandslos: null erlaubte Trainingsbeispiele, das
   Erfassungstor steht aus. Stufe 0 in `docs/architecture/SMEJJ_1_0_TRAININGSWEG.md`
   ist weiterhin die Blockade.

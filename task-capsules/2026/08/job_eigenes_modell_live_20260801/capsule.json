@@ -17,7 +17,9 @@
     "lizenzFolge": "Kommerzielle Nutzung UND Feintuning erlaubt. Der spaetere LoRA-Weg fuer smejj 1.0 bleibt offen.",
     "architektur": "dicht, 14 Mrd Parameter",
     "gewichte": "GGUF UD-Q4_K_XL, 9,2 GB, Quelle unsloth/Qwen3-14B-GGUF (ebenfalls Apache-2.0)",
-    "ablage": "s3://smejj-model-files/model-files/smejj-1-0/original/",
+    "ablage": "s3://smejj-model-files/model-files/smejj-1-0/original/Qwen3-14B-UD-Q4_K_XL.gguf",
+    "ablageVerifiziert": "npm run idrive:verify-model-complete gegen unsloth/Qwen3-14B-GGUF: 'Model IDrive verification OK'. sha256 der uebertragenen Datei 7f371adeaaf51dc97da927c61e6573e75e3ea33d76ec09dddb8cad00d0d5b6cb, Pruefsummen-Datei unter model-files/smejj-1-0/checksums/streamed-checksums.sha256.",
+    "hinweisLagerstand": "Der Ordner model-files/smejj-1-0/ war NICHT voellig leer: er enthielt bereits base/glm-5-2/<commit>/notices/ (LICENSE, NOTICE.md, Attestierung vom 2026-07-17). Die Ausgangslage '0 Byte' bezog sich auf die Gewichte, nicht auf den Ordner.",
     "denkenAbgeschaltet": "Qwen3 denkt standardmaessig. LLAMA_ARG_CHAT_TEMPLATE_KWARGS={\"enable_thinking\":false} ist gesetzt — sonst frisst der Denkabschnitt das Token-Budget kurzer Anfragen auf und die Antwort bleibt leer (dieselbe Falle, die in src/evaluation/evalTransport.js fuer GLM dokumentiert ist).",
 
     "verworfen_qwen3coder30b": {
@@ -60,7 +62,7 @@
     "behebung1_reichteNicht": "startup_probe auf initial_delay 1200 s + 20 x 120 s = 60 Minuten angehoben (Salad-Grenzen: failure_threshold max 20, period max 120 s, initial_delay max 1200 s — alle drei einzeln ausgereizt, mehr laesst die API nicht zu). liveness_probe initial_delay 300 -> 1200 s. Auch 60 Minuten reichten fuer 17,7 GB NICHT: zweiter Abbruch um 07:51 UTC.",
     "behebung2_wirksam": "Basismodell auf ein 9,2-GB-Abbild gewechselt (Qwen3-14B UD-Q4_K_XL). Damit braucht der Download nur noch etwa 2,6 MB/s statt 4,9 MB/s, um in die 60 Minuten zu passen.",
     "merkregel": "Bei selbst gehosteten Modellen ist die Startsonde ein Teil der Modellwahl. Wer die Gewichtsgroesse waehlt, waehlt die Startzeit mit — und die Startsonde ist die haertere Grenze, nicht die Grafikkarte.",
-    "offenerPunkt": "Der abgebrochene 17,7-GB-Upload hat unvollstaendige Multipart-Teile unter model-files/smejj-1-0/original/ hinterlassen. Diese kosten Speicher, bis sie abgebrochen werden: npm run model:abort-incomplete mit MODEL_S3_PREFIX=model-files/smejj-1-0 — ERST NACH Abschluss des laufenden 14B-Uploads, sonst reisst es diesen mit ab."
+    "aufgeraeumt": "Der abgebrochene 17,7-GB-Upload hinterliess einen unvollstaendigen Multipart-Upload unter model-files/smejj-1-0/original/. Nach Abschluss des 14B-Uploads abgebrochen (npm run model:abort-incomplete, MODEL_S3_PREFIX=model-files/smejj-1-0): 1 gefunden, 1 abgebrochen, Nachlauf meldet 0. Kontingent danach 1266,8 von 2048 GiB = 61,9 %."
   },
 
   "kosten": {
