@@ -318,7 +318,17 @@ function nachGesundheitSortiert(ids, health) {
  *   Funktion exakt wie zuvor — die Reihenfolge haengt dann allein an der Konfiguration.
  */
 export function resolveModelSelection({ requestedModel, profile = "default", env = process.env, health = null } = {}) {
-  const requestedId = normalizeModelId(requestedModel);
+  // KEINE ANGABE IST KEINE WAHL (Live-Befund 2026-08-02).
+  // normalizeModelId("") liefert das fest eingebaute DEFAULT_MODEL_ID. Reicht man
+  // das ungeprueft weiter, sieht eine Anfrage OHNE Modellangabe aus wie die
+  // ausdrueckliche Wahl von glm-5-2 (reason "explicit_model") — und
+  // SMEJJ_MODEL_DEFAULT wird ausgerechnet im haeufigsten Fall wirkungslos.
+  // Live belegt: der Betreiber stellte den Standard auf kimi-k2-7, /api/health
+  // meldete ihn auch, aber 7 von 8 Anfragen gingen weiter an glm-5-2 — nur die,
+  // die ausdruecklich "auto" schickten, landeten richtig. Coding antwortete
+  // dadurch in 19,7 s (glm-4.7-flash) statt in 3,5 s (Kimi).
+  const rohAngabe = String(requestedModel ?? "").trim();
+  const requestedId = rohAngabe ? normalizeModelId(rohAngabe) : "";
   const defaultId = enabledDefaultModelId(env);
   const autoRequested = requestedId === AUTO_MODEL_ID;
   const autoEnabled = readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, false);

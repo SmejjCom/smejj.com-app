@@ -302,3 +302,23 @@ test("nur einsatzbereite Modelle kommen als Ersatz in die Kette", () => {
   });
   assert.ok(!selection.candidateIds.includes("kimi-k2-7"));
 });
+
+test("keine Modellangabe ist keine Wahl — SMEJJ_MODEL_DEFAULT greift", () => {
+  // Live-Befund 2026-08-02: normalizeModelId("") liefert das fest eingebaute
+  // glm-5-2. Wurde das ungeprueft weitergereicht, sah eine Anfrage OHNE
+  // Modellangabe aus wie die ausdrueckliche Wahl von glm-5-2 — und der
+  // konfigurierte Standard war ausgerechnet im haeufigsten Fall wirkungslos.
+  const env = { ...KETTEN_ENV, SMEJJ_MODEL_DEFAULT: "kimi-k2-7" };
+  for (const angabe of ["", "   ", null, undefined]) {
+    const selection = resolveModelSelection({ requestedModel: angabe, profile: "coding", env });
+    assert.equal(selection.selectedModelId, "kimi-k2-7", `Angabe ${JSON.stringify(angabe)}`);
+    assert.equal(selection.reason, "default_model", `Angabe ${JSON.stringify(angabe)}`);
+  }
+});
+
+test("eine ausdrueckliche Wahl schlaegt den Standard weiterhin", () => {
+  const env = { ...KETTEN_ENV, SMEJJ_MODEL_DEFAULT: "kimi-k2-7" };
+  const selection = resolveModelSelection({ requestedModel: "glm-5.2", profile: "coding", env });
+  assert.equal(selection.selectedModelId, "glm-5-2");
+  assert.equal(selection.reason, "explicit_model");
+});
