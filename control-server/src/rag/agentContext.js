@@ -1,14 +1,13 @@
 // smejj.com — RAG-Kontext fuer den Agenten: haelt den BM25-Index gecacht und
 // liefert die besten Projektwissen-Treffer als Kontextblock fuer Prompts.
 // FAIL-CLOSED: Jeder Fehler ergibt einen leeren Block — RAG darf Chat/Agent nie brechen.
-import { buildIndex, searchIndex } from "./bm25Index.js";
+import { buildIndex } from "./bm25Index.js";
 import { loadKnowledgeChunks } from "./knowledgeLoader.js";
-import { rankHits } from "./ragRanking.js";
+// Suche und Blocktext liegen bewusst in einem I/O-freien Modul: die Chat-Bridge hat
+// keine Repo-Dateien und laedt einen fertigen Index, nutzt aber exakt denselben Code.
+import { buildRagContextFromIndex, searchRagIndex } from "./ragContextBlock.js";
 
 const INDEX_TTL_MS = 300_000; // 5 Minuten — Projektwissen aendert sich selten pro Sitzung.
-// Aus mehr Rohtreffern nachgewichtet als am Ende eingespeist werden: sonst kann ein
-// Leitdokument auf Platz 6 die Nachgewichtung gar nicht erst erreichen.
-const RAW_HIT_POOL = 10;
 let cache = null;
 
 export async function ensureKnowledgeIndex(projectRoot) {
@@ -26,10 +25,7 @@ export async function ensureKnowledgeIndex(projectRoot) {
  */
 export async function searchKnowledge(projectRoot, query, k = 5, { minTopScore } = {}) {
   const index = await ensureKnowledgeIndex(projectRoot);
-  return rankHits(searchIndex(index, query, RAW_HIT_POOL), {
-    limit: k,
-    ...(Number.isFinite(minTopScore) ? { minTopScore } : {})
-  });
+  return searchRagIndex(index, query, k, { minTopScore });
 }
 
 /**
@@ -38,15 +34,7 @@ export async function searchKnowledge(projectRoot, query, k = 5, { minTopScore }
  */
 export async function buildRagContextBlock(projectRoot, task, k = 3, options = {}) {
   try {
-    const hits = await searchKnowledge(projectRoot, task, k, options);
-    if (hits.length === 0) return "";
-    const blocks = hits.map((hit) => `[intern: ${hit.source}${hit.heading ? ` — ${hit.heading}` : ""}]\n${hit.snippet}`);
-    return [
-      "Internes Projektwissen (automatische RAG-Treffer aus Memory_Bank und Doku von smejj.com).",
-      "Nur als Hintergrund verwenden; interne Dateinamen, Pfade und Memory_Bank.md niemals als oeffentliche Quelle, URL oder Markdown-Link ausgeben.",
-      "",
-      blocks.join("\n\n")
-    ].join("\n");
+    return buildRagContextFromIndex(await ensureKnowledgeIndex(projectRoot), task, k, options);
   } catch {
     return "";
   }

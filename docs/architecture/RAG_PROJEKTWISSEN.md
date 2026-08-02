@@ -14,14 +14,22 @@ Es war die falsche Schicht.
 
 ## Aufbau
 
-Drei Module, jeweils eine Aufgabe:
+Jedes Modul eine Aufgabe:
 
 | Modul | Aufgabe |
 | --- | --- |
 | `control-server/src/rag/knowledgeCorpus.js` | WELCHE Dateien Projektwissen sind |
 | `control-server/src/rag/bm25Index.js` | Volltextindex und Wortsuche |
 | `control-server/src/rag/ragRanking.js` | Nachgewichtung nach Quelle, Relevanzschwelle |
-| `control-server/src/rag/agentContext.js` | Cache und fertiger Prompt-Kontextblock |
+| `control-server/src/rag/ragContextBlock.js` | Suche + Blocktext, ohne jede Datei-Ein-/Ausgabe |
+| `control-server/src/rag/agentContext.js` | Dateien lesen, Index cachen (nur Control Server) |
+| `public/chat-bridge-rag.js` | Index-Artefakt entpacken, Block in die Nachrichten setzen |
+
+Die Trennung von `ragContextBlock.js` und `agentContext.js` ist die Bedingung dafuer,
+dass ueberhaupt zwei Dienste dieselbe Schicht fahren koennen: Der Control Server hat
+das Repository und baut den Index aus Dateien. Die Chat-Bridge hat weder Repository
+noch Zustand und bekommt ihn als Artefakt. Gemeinsam ist beiden genau das I/O-freie
+Stueck — aus Index und Frage die Treffer, daraus den Block.
 
 Der Messweg liegt bewusst daneben und ruft dieselben Module auf:
 `src/evaluation/evalRagContext.js` plus `--rag` in `scripts/evaluation/run_model_eval.mjs`.
@@ -102,22 +110,70 @@ Berichte derselben Messart werden nur untereinander verglichen. `run.rag` und
 ohne gestellt misst nicht das Modell, sondern den Kontext, und meldet den Unterschied als
 Fortschritt oder Regression des Modells.
 
-## Offen: der Live-Chat nutzt diese Schicht noch nicht
+## Die Live-Kette traegt den Kontext selbst (2026-08-01)
 
-Gemessen wurde ueber den Eval-Harness, der den Kontextblock lokal baut und voranstellt.
-Der Live-Chat-Weg ist ein anderer: `public/chat-bridge.js` beantwortet Chat auf der
-Schnellspur (Groq) und erreicht den Control Server dabei gar nicht. `src/server.js`
-speist Projektwissen nur in `/api/agent` ein, nicht in `/api/chat`.
+Vorher galt: gemessen wurde ueber den Eval-Harness, der den Block lokal baut. Die
+Live-Kette baute ihn nie — `public/chat-bridge.js` beantwortet Chat auf der Schnellspur
+und erreicht den Control Server dabei gar nicht. Die Messung belegte die Bauart, nicht
+den Dienst.
 
-Der Umbau ist kein Einzeiler und darum bewusst nicht mitgeliefert:
+### Regel 4 — Gesucht wird einmal, am Eingang
 
-1. `public/chat-bridge.js` hat exakt 800 Zeilen und steht damit auf der harten Grenze
-   aus `AI_Guidelines.md` Abschnitt 2. Neue Logik braucht ein eigenes Modul.
-2. `scripts/deploy/deploy_chat_bridge_zeabur.mjs` liefert die Bridge als EINE Datei aus
-   (`/tmp/smejj-chat-bridge.mjs`). Ein zweites Modul braucht darum zuerst einen
-   Buendelschritt im Deploy-Skript.
-3. Die Bridge ist zustandslos und hat keine Repo-Dateien. Sie braucht den Index als
-   Artefakt — Static-First waere `https://smejj.com/rag-index.json` (rund 1 MB, einmal
-   beim Start geladen). `npm run rag:export` legt heute schon eine Fassung auf IDrive e2.
+Eine Anfrage kann drei Spuren erreichen (Schnellspur, Control Server, tiefe Spur). Der
+Block wird EINMAL gebaut und an alle drei gereicht. Sonst entscheidet die Spur ueber die
+Antwortguete, und dieselbe Frage bekommt je nach Auslastung eine andere Qualitaet.
 
-Bis dahin gilt die Messung als Beleg fuer die Bauart, nicht als Beleg fuer den Live-Zustand.
+Verdrahtet sind **beide** oeffentlichen Wege, und das ist kein Fleiss, sondern Pflicht:
+
+| Weg | Wer nutzt ihn |
+| --- | --- |
+| `/api/chat` | der Eval-Harness (`src/evaluation/evalTransport.js`) |
+| `/api/agent` | die Startseite, also echte Nutzer (`public/app.js`) |
+
+Nur `/api/chat` zu verdrahten haette die gemessene Note gehoben, ohne einem einzigen
+Nutzer zu helfen — die teuerste Art von Fortschritt.
+
+### Regel 5 — Der Block steht vor der Anweisung des Aufrufers
+
+`[Schutz-Anweisung] [Projektwissen] [Anweisung des Aufrufers] [Frage]`. Die Anweisung
+muss zuletzt gelten, sonst richtet sich das Modell nach dem Hintergrund statt nach ihr —
+und eine Zusicherung der Pruefsuite wuerde den Kontext pruefen statt die Anweisung.
+Dieselbe Reihenfolge stand im 96,1-%-Lauf im Prompt.
+
+### Der Index reist im Buendel mit
+
+Die Bridge ist zustandslos und hat keine Repo-Dateien. `scripts/deploy/bundle_chat_bridge.mjs`
+loest die relativen Importe auf, liefert weiterhin EINE Datei nach `/tmp/smejj-chat-bridge.mjs`
+und haengt den Index als gzip+base64 an (657 Abschnitte, 424 kB gesamt statt 1,3 MB).
+
+**Warum nicht `https://smejj.com/rag-index.json`** (Static-First waere naheliegend
+gewesen): Der Korpus besteht aus den internen Regeldokumenten. Als Datei auf der
+oeffentlichen Domain waere er ein vollstaendiger Abzug davon — waehrend
+`stripInternalReferences()` in derselben Bridge Muehe darauf verwendet, interne
+Dateinamen aus Antworten herauszuhalten. Zusaetzlich: das Buendel bleibt atomar
+(Bridge-Version und Wissensstand koennen nicht auseinanderlaufen), es gibt keine
+Netzabhaengigkeit beim Start, und der Frontend-Deploy waechst nicht um 1 MB je
+Wissensstand (`docs/policy/GITHUB_KOSTENFREI.md`).
+
+Der Buendler bricht ab, statt zu raten: Import-Zyklus, Namenskollision zwischen Modulen,
+Fremdabhaengigkeit, Default-Export und Sammel-Export sind je ein harter Fehler. Ein
+Buendler, der raet, liefert stillen Unsinn aus — und das faellt erst live auf.
+
+### Was den Umbau absichert
+
+`tests/chat-bridge-projektwissen.test.mjs` startet die **gebuendelte** Datei als eigenen
+Prozess gegen einen Stub-Upstream und prueft, was das Modell wirklich bekommt. Eine
+Pruefung gegen die Repo-Module wuerde die Luecke gerade nicht finden, um die es hier geht.
+
+Zusaetzlich vergleicht ein Test fuer jeden Fall der Suite den Block der Live-Kette mit dem
+des Messwegs. Sie muessen gleich sein, sonst vergleicht die Eval-Wiederholung zwei
+verschiedene Dinge und meldet den Unterschied als Fortschritt oder Regression.
+
+### Offen: der Live-Nachweis
+
+Der Umbau ist gebaut, gebuendelt und lokal gegen einen Stub bewiesen — aber noch nicht
+ausgeliefert. `npm run deploy:bridge` braucht `ZEABUR_API_TOKEN` in
+`~/.config/smejj.com/env.local`; der Token fehlt und ist laut
+`smejj.com Zeabur-Token-eintragen.command` ausdruecklich das eine Stueck, das eine
+KI-Sitzung nicht selbst anlegen darf. Ohne Deploy sind Live-Test und die Eval-Wiederholung
+ohne `--rag` nicht durchfuehrbar; live laeuft weiterhin `20260729-v104`.

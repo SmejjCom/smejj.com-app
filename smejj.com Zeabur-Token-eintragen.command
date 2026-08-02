@@ -19,12 +19,23 @@ echo ""
 echo "  smejj.com — Zeabur-Token eintragen"
 echo "  ═══════════════════════════════════════════════════════"
 echo ""
-echo "  1. Oeffne im Browser:  https://zeabur.com/account/api-keys"
-echo "  2. Klicke:             Create Access Token"
-echo "  3. Kopiere den Wert    (er wird nur EINMAL angezeigt)"
+
+# Die Seite selbst aufmachen, damit niemand sie suchen muss (2026-08-01).
+# Das Erzeugen und Einfuegen des Tokens bleibt bewusst Handarbeit: der Wert
+# darf nicht durch eine KI-Sitzung laufen. Genau dafuer gibt es dieses Skript.
+SEITE="https://zeabur.com/account/api-keys"
+if open "$SEITE" 2>/dev/null; then
+  echo "  Der Browser ist gerade aufgegangen: $SEITE"
+else
+  echo "  Bitte im Browser oeffnen: $SEITE"
+fi
+echo "  (Falls die Seite leer bleibt, stattdessen: https://zeabur.com/account/developer)"
 echo ""
-echo "  Fuege ihn jetzt hier ein und druecke Enter."
-echo "  Die Eingabe bleibt unsichtbar — das ist normal."
+echo "  1. Dort klicken:       Create Access Token"
+echo "  2. Wert kopieren       (er wird nur EINMAL angezeigt)"
+echo "  3. Hier einfuegen:     Cmd+V, dann Enter"
+echo ""
+echo "  Die Eingabe bleibt unsichtbar — das ist normal, sie kommt trotzdem an."
 echo ""
 printf "  Token: "
 read -rs TOKEN

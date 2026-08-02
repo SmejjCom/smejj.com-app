@@ -3,6 +3,9 @@ import test from "node:test";
 
 process.env.SMEJJ_CHAT_BRIDGE_NO_START = "1";
 const bridge = await import("../public/chat-bridge.js");
+// Der Wetterpfad ist seit 2026-08-01 ein eigenes Modul (chat-bridge.js stand auf
+// der 800-Zeilen-Grenze). Verhalten unveraendert, nur der Wohnort ist neu.
+const wetter = await import("../public/chat-bridge-weather.js");
 
 test("chat bridge strips think blocks and empty model deltas", () => {
   const state = { pending: "", insideThink: false };
@@ -63,15 +66,15 @@ test("fast lane steps aside when an explicit deep-lane model is requested", asyn
 });
 
 test("weather fast path detects weather tasks, location and day offset", () => {
-  assert.equal(bridge.isWeatherTask("Wie ist das Wetter morgen in Berlin?"), true);
-  assert.equal(bridge.isWeatherTask("What is the weather in Paris tomorrow?"), true);
-  assert.equal(bridge.isWeatherTask("Erzaehl mir einen Witz."), false);
-  assert.equal(bridge.extractWeatherLocation("Wie ist das Wetter morgen in Berlin?"), "Berlin");
-  assert.equal(bridge.extractWeatherLocation("wie ist Wetter uebermorgen in Hamburg"), "Hamburg");
-  assert.equal(bridge.extractWeatherLocation("Wetter"), "Berlin");
-  assert.equal(bridge.extractWeatherDayOffset("Wetter morgen in Berlin"), 1);
-  assert.equal(bridge.extractWeatherDayOffset("Wetter übermorgen in Berlin"), 2);
-  assert.equal(bridge.extractWeatherDayOffset("Guten Morgen, wie ist das Wetter?"), 0);
+  assert.equal(wetter.isWeatherTask("Wie ist das Wetter morgen in Berlin?"), true);
+  assert.equal(wetter.isWeatherTask("What is the weather in Paris tomorrow?"), true);
+  assert.equal(wetter.isWeatherTask("Erzaehl mir einen Witz."), false);
+  assert.equal(wetter.extractWeatherLocation("Wie ist das Wetter morgen in Berlin?"), "Berlin");
+  assert.equal(wetter.extractWeatherLocation("wie ist Wetter uebermorgen in Hamburg"), "Hamburg");
+  assert.equal(wetter.extractWeatherLocation("Wetter"), "Berlin");
+  assert.equal(wetter.extractWeatherDayOffset("Wetter morgen in Berlin"), 1);
+  assert.equal(wetter.extractWeatherDayOffset("Wetter übermorgen in Berlin"), 2);
+  assert.equal(wetter.extractWeatherDayOffset("Guten Morgen, wie ist das Wetter?"), 0);
 });
 
 test("weather context is built from Open-Meteo data and fails closed on errors", async () => {
@@ -92,16 +95,16 @@ test("weather context is built from Open-Meteo data and fails closed on errors",
           }
         })
   });
-  const context = await bridge.buildWeatherContext("Wie ist das Wetter morgen in Berlin?", fetchOk);
+  const context = await wetter.buildWeatherContext("Wie ist das Wetter morgen in Berlin?", fetchOk);
   assert.match(context, /Live-Internet-Ergebnisse/);
   assert.match(context, /Berlin, Deutschland/);
   assert.match(context, /Tagesversatz: morgen/);
   assert.match(context, /2026-07-22: bewoelkt, 14\.8 bis 23\.9 °C/);
   assert.match(context, /open-meteo\.com/);
   // Fail-closed: HTTP-Fehler, leeres Geocoding und Netzwerkfehler liefern "".
-  assert.equal(await bridge.buildWeatherContext("Wetter Berlin", async () => ({ ok: false, json: async () => ({}) })), "");
-  assert.equal(await bridge.buildWeatherContext("Wetter Nirgendwostadt", async () => ({ ok: true, json: async () => ({ results: [] }) })), "");
-  assert.equal(await bridge.buildWeatherContext("Wetter Berlin", async () => { throw new Error("offline"); }), "");
+  assert.equal(await wetter.buildWeatherContext("Wetter Berlin", async () => ({ ok: false, json: async () => ({}) })), "");
+  assert.equal(await wetter.buildWeatherContext("Wetter Nirgendwostadt", async () => ({ ok: true, json: async () => ({ results: [] }) })), "");
+  assert.equal(await wetter.buildWeatherContext("Wetter Berlin", async () => { throw new Error("offline"); }), "");
 });
 
 // --- Adressen gehoeren nie in die werkzeuglose Schnellspur (2026-07-28) -------
