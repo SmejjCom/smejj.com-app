@@ -244,3 +244,61 @@ test("smejj fast 1.0 bleibt aus, wenn das Feature-Flag ausgeschaltet ist", () =>
   const selection = resolveModelSelection({ requestedModel: "auto", profile: "fast", env });
   assert.equal(selection.selectedModelId, DEFAULT_MODEL_ID);
 });
+
+// --- Live-Ausfall vom 2026-08-02: Kette mit genau einem Eintrag ---------------
+
+const KETTEN_ENV = Object.freeze({
+  SMEJJ_GLM_5_2_ENABLED: "YES",
+  SMEJJ_KIMI_K2_7_ENABLED: "YES",
+  SMEJJ_MODEL_DEFAULT: "glm-5-2",
+  SMEJJ_LLM_ZHIPU_API_KEY: "test",
+  SMEJJ_LLM_KIMI_API_KEY: "test",
+  SMEJJ_LLM_KIMI_BASE_URL: "https://api.moonshot.ai/v1"
+});
+
+test("das Standardmodell ist nie der einzige Kandidat, wenn Fallback erlaubt ist", () => {
+  // Genau dieser Fall stand am 2026-08-02 live: gewaehltes Modell == Standard,
+  // Kette hatte einen Eintrag, das Modell war tot -> jeder Nutzer bekam HTTP 502.
+  const selection = resolveModelSelection({ profile: "coding", env: KETTEN_ENV });
+  assert.ok(selection.candidateIds.length > 1,
+    `Kette muss einen Ersatz enthalten, war: ${selection.candidateIds.join(",")}`);
+  assert.equal(selection.candidateIds[0], "glm-5-2", "ohne Gesundheitsdaten bleibt die Reihenfolge unveraendert");
+  assert.ok(selection.candidateIds.includes("kimi-k2-7"));
+});
+
+test("ein bekannt ausgefallenes Modell rutscht ans Ende der Kette", () => {
+  const selection = resolveModelSelection({
+    profile: "coding",
+    env: KETTEN_ENV,
+    health: { "glm-5-2": { available: false } }
+  });
+  assert.equal(selection.candidateIds[0], "kimi-k2-7");
+  assert.equal(selection.candidateIds[selection.candidateIds.length - 1], "glm-5-2");
+  assert.equal(selection.selectedModelId, "kimi-k2-7", "gewaehlt wird der erste gesunde Kandidat");
+});
+
+test("abgeschalteter Fallback bleibt abgeschaltet", () => {
+  // Der Schalter muss weiter gelten — sonst waere die Korrektur eine
+  // Umgehung der Betreiber-Einstellung statt einer Verbesserung.
+  const selection = resolveModelSelection({
+    profile: "coding",
+    env: { ...KETTEN_ENV, SMEJJ_MODEL_FALLBACK_ENABLED: "NO" }
+  });
+  assert.deepEqual(selection.candidateIds, ["glm-5-2"]);
+});
+
+test("ohne Gesundheitsdaten aendert sich die Reihenfolge nicht", () => {
+  const ohne = resolveModelSelection({ profile: "coding", env: KETTEN_ENV });
+  const leer = resolveModelSelection({ profile: "coding", env: KETTEN_ENV, health: {} });
+  assert.deepEqual(leer.candidateIds, ohne.candidateIds);
+});
+
+test("nur einsatzbereite Modelle kommen als Ersatz in die Kette", () => {
+  // Kimi ohne Basis-Adresse ist nicht konfiguriert und darf nicht auftauchen —
+  // ein unkonfigurierter Ersatz waere ein zweiter Ausfall statt einer Rettung.
+  const selection = resolveModelSelection({
+    profile: "coding",
+    env: { ...KETTEN_ENV, SMEJJ_LLM_KIMI_BASE_URL: "" }
+  });
+  assert.ok(!selection.candidateIds.includes("kimi-k2-7"));
+});

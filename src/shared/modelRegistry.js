@@ -286,7 +286,38 @@ export function getModelRuntimeConfig(modelOrId, env = process.env, profile = "d
   };
 }
 
-export function resolveModelSelection({ requestedModel, profile = "default", env = process.env } = {}) {
+/**
+ * Weitere einsatzbereite Modelle als Ersatz, in Registry-Reihenfolge.
+ * Nur Modelle, die aktiv UND vollstaendig konfiguriert sind — geraten wird nichts.
+ */
+function weitereErsatzmodelle(bereits, profile, env) {
+  const zusatz = [];
+  for (const model of Object.values(MODEL_REGISTRY)) {
+    if (model.id === AUTO_MODEL_ID || bereits.includes(model.id)) continue;
+    if (!isModelEnabled(model, env)) continue;
+    if (!getModelRuntimeConfig(model, env, profile).configured) continue;
+    zusatz.push(model.id);
+  }
+  return zusatz;
+}
+
+/**
+ * Bekannt ausgefallene Modelle ans ENDE. Stabil, damit die Reihenfolge sonst
+ * unveraendert bleibt: ohne Gesundheitsdaten aendert sich gar nichts.
+ */
+function nachGesundheitSortiert(ids, health) {
+  if (!health || typeof health !== "object") return ids;
+  const ausgefallen = (id) => health[id] && health[id].available === false;
+  return [...ids.filter((id) => !ausgefallen(id)), ...ids.filter(ausgefallen)];
+}
+
+/**
+ * @param {object} options.health optionaler Laufzeit-Gesundheitsstand
+ *   ({ [modelId]: { available: boolean } }), z. B. aus
+ *   control-server/src/llm/modelRuntimeHealth.js. Fehlt er, verhaelt sich die
+ *   Funktion exakt wie zuvor — die Reihenfolge haengt dann allein an der Konfiguration.
+ */
+export function resolveModelSelection({ requestedModel, profile = "default", env = process.env, health = null } = {}) {
   const requestedId = normalizeModelId(requestedModel);
   const defaultId = enabledDefaultModelId(env);
   const autoRequested = requestedId === AUTO_MODEL_ID;
@@ -305,12 +336,20 @@ export function resolveModelSelection({ requestedModel, profile = "default", env
   const candidateIds = [];
   if (enabled) candidateIds.push(selected.id);
   if ((!enabled || selected.id !== defaultId) && fallbackAllowed && !candidateIds.includes(defaultId)) candidateIds.push(defaultId);
+  // Live gemessen am 2026-08-02: Ist das gewaehlte Modell zugleich das Standard-
+  // modell, war die zweite Bedingung falsch und die Kette hatte GENAU EINEN
+  // Eintrag — der Fallback zeigte auf sich selbst. Faellt dieses eine Modell aus,
+  // bekam jeder Nutzer HTTP 502, obwohl zwei gesunde Modelle konfiguriert waren.
+  // Darum: bei erlaubtem Fallback kommen alle weiteren einsatzbereiten Modelle
+  // dahinter, und bekannt ausgefallene rutschen ans Ende.
+  if (fallbackAllowed) candidateIds.push(...weitereErsatzmodelle(candidateIds, profile, env));
+  const geordnet = nachGesundheitSortiert(candidateIds, health);
 
   return {
     requestedModel: String(requestedModel || ""),
     requestedModelId: requestedId || defaultId,
-    selectedModelId: enabled ? selected.id : defaultId,
-    candidateIds,
+    selectedModelId: geordnet[0] || (enabled ? selected.id : defaultId),
+    candidateIds: geordnet,
     fallbackAllowed,
     autoRequested,
     autoEnabled,

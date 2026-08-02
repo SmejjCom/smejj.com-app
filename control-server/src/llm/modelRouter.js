@@ -24,6 +24,7 @@ import {
   resolveModelSelection
 } from "../../../src/shared/modelRegistry.js";
 import {
+  getModelRuntimeHealthSnapshot,
   markModelRuntimeFailure,
   markModelRuntimeSuccess
 } from "./modelRuntimeHealth.js";
@@ -240,7 +241,17 @@ export function resolveChain(profile = "default", env = process.env) {
 /** Registry-gesteuerte Kette fuer eine konkrete Modellwahl inklusive stabilem Fallback. */
 export function resolveModelRequest(profile = "default", requestedModel = "", env = process.env) {
   const safeProfile = ROUTING_PROFILES.includes(profile) ? profile : "default";
-  const selection = resolveModelSelection({ requestedModel, profile: safeProfile, env });
+  // Die Laufzeit-Gesundheit wird hier hineingereicht, damit ein bekannt
+  // ausgefallenes Modell ans Ende der Kette rutscht statt an den Anfang.
+  // Ohne diesen Wert waehlte der Router am 2026-08-02 live weiter GLM-5.2,
+  // obwohl derselbe Prozess dafuer bereits available=false gespeichert hatte —
+  // Gesundheitsdaten helfen nur, wenn die Auswahl sie auch liest.
+  const selection = resolveModelSelection({
+    requestedModel,
+    profile: safeProfile,
+    env,
+    health: getModelRuntimeHealthSnapshot()
+  });
   const modelChain = [];
   for (const modelId of selection.candidateIds) {
     const runtime = getModelRuntimeConfig(modelId, env, safeProfile);
