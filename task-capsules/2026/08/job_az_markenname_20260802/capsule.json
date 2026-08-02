@@ -1,0 +1,70 @@
+{
+  "jobId": "job_az_markenname_20260802",
+  "createdAt": "2026-08-02",
+  "owner": "smejj.com Betreiber",
+  "title": "A-bis-Z-Pruefung: die Wurzel war ein Markenname, der auf einen Anbieter zeigte",
+  "goal": "Auftrag des Betreibers: smejj.com von A bis Z gruendlich testen, Fehler iterativ beheben, bis die Plattform einwandfrei laeuft — Ziel ist das Niveau von ChatGPT bzw. Gemini.",
+
+  "oberflaeche": {
+    "ansichten": "Alle 19 Ansichten einzeln aufgerufen (start, search, websites, smejjClaw, automation, chatHistory, browser, code, projects, files, storageView, memory, ai, cost, tools, settings, profile, offline, error): jede wird aktiv, keine ist leer, 0 Konsolenfehler, 0 Netzfehler.",
+    "grundcheck": "3 Bilder, keins kaputt; keine leeren Links; kein Knopf ohne zugaenglichen Namen; genau eine h1; Meta-Beschreibung und Favicon vorhanden.",
+    "sprachen": "12 vorgesehene Sprachen (ar de en es fr it ja ko pt ru tr zh) liefern HTTP 200 mit korrektem lang-Attribut und korrekter Schreibweise smejj.com. /pl/ und /nl/ geben 404 — das ist richtig, diese Sprachen existieren nicht. Meine Annahme von 14 Sprachen war falsch, nicht die Plattform.",
+    "mobilUndDunkel": "375x812, dunkles Schema: keine waagerechte Scrollleiste, kein schwacher Kontrast, Eingabefeld sichtbar. Einziges ueberlaufendes Element ist h1.visually-hidden — gewollt (nur fuer Screenreader).",
+    "tippziele": "Meine 44-px-Faustregel meldete 23 Treffer. Das projekteigene Mass `measure:touch` sagt 'Alle Touch-Ziele eingehalten' (42x42, Versionspfeile 34x34). Der Massstab des Projekts gilt, nicht meiner.",
+    "pwa": "125 Dateien im Cache smejj-shell-v198, Startseite offline verfuegbar, Manifest vorhanden, installierbar, theme-color gesetzt."
+  },
+
+  "antwortqualitaet": {
+    "vorgehen": "Acht Kategorien ueber die echte Nutzerkette (Bruecke, model 'smejj 1.0'), jede mit einem nachpruefbaren Kriterium statt eines Bauchgefuehls.",
+    "ergebnis": "8 von 8 bestanden",
+    "einzeln": [
+      "coding-korrekt: export + null-Fall erfuellt, 5682 ms",
+      "coding-edge: wirft bei b===0, 5156 ms",
+      "mehrschritt: 90 min a 80 km/h + 30 min a 120 km/h = 180 km, richtig gerechnet und begruendet, 5672 ms",
+      "faktentreue: Schreibweise smejj.com eingehalten, 807 ms",
+      "websuche: 'Example Domain' korrekt gelesen, 9140 ms",
+      "verweigern/belegen: Aktienfrage mit Quellenangabe beantwortet, 6328 ms",
+      "struktur: drei Aufzaehlungspunkte wie gefordert, 991 ms",
+      "sprache: englische Frage auf Englisch beantwortet, 762 ms"
+    ],
+    "halluzinationsprobe": {
+      "vorgehen": "Drei Fragen nach Dingen, die es nicht gibt.",
+      "ergebnis": "Alle drei korrekt zurueckgewiesen: 'keine Informationen zu der ISO-Norm 48219-7 ... moeglicherweise existiert diese Norm nicht', 'Es gibt keine eingebaute JavaScript-Funktion Array.prototype.shuffleStable()', 'keine oeffentlich verfuegbare Information'.",
+      "messfalle": "Mein Erkennungsmuster meldete zuerst 'ERFINDET moeglicherweise' — das war mein zu enges Muster, nicht die Plattform. Erst der Blick in den vollen Antworttext hat es geklaert. Ein automatisches Kriterium ersetzt das Lesen nicht.",
+      "nebenbefund": "Bei der Frage nach den GitHub-Kosten des eigenen Projekts antwortet die Plattform 'keine oeffentlich verfuegbare Information' — obwohl die Projektunterlagen es festhalten (GitHub bleibt bei 0,00 EUR). Das ist die bekannte Projektwissens-Luecke (RAG), kein Halluzinieren."
+    }
+  },
+
+  "dieWurzel": {
+    "befund": "\"smejj 1.0\" stand als Alias beim Modell glm-5-2.",
+    "warumDasAllesErklaert": "public/app.js schickt bei JEDER Anfrage `model: modelForTask(...) || \"smejj 1.0\"`. Der Server loeste das ueber die Alias-Tabelle zu glm-5-2 auf und wertete es als AUSDRUECKLICHE Anbieterwahl (reason 'explicit_model'). Eine ausdrueckliche Wahl schlaegt den Standard — deshalb konnte SMEJJ_MODEL_DEFAULT nie greifen, obwohl der Betreiber ihn auf kimi-k2-7 gestellt hatte und /api/health ihn auch so meldete.",
+    "gemesseneFolge": "Coding wurde weiter von zhipu:glm-4.7-flash beantwortet, im Median 19667 ms. Kimi loest dieselbe Aufgabe in 3495 ms und korrekt.",
+    "dasFrontendMeinteEsLaengstRichtig": "public/premium-surfaces.js prueft `selectedName === \"smejj 1.0\" && model.id === registry.defaultModelId` — dort bezeichnet die Marke bereits das Standardmodell. Nur die Alias-Tabelle des Servers widersprach.",
+    "fix": "BRAND_ALIASES (\"smejj 1.0\", \"smejj code\") werden in resolveModelSelection wie 'keine Angabe' behandelt; dann entscheidet enabledDefaultModelId(env). Aus der Alias-Liste von glm-5-2 entfernt. Gegenprobe im Test: wer glm-5.2 ausdruecklich nennt, bekommt weiterhin glm-5.2.",
+    "merkregel": "Ein Markenname ist keine Anbieterwahl. Wo der oeffentliche Name eines Produkts auf einen konkreten Lieferanten zeigt, kann kein Konfigurationswert der Welt ihn mehr umlenken."
+  },
+
+  "zweiterFix": {
+    "befund": "normalizeModelId(\"\") liefert das fest eingebaute DEFAULT_MODEL_ID. Eine leere Angabe sah dadurch ebenfalls wie eine ausdrueckliche Wahl aus.",
+    "fix": "Leere Angabe wird vor der Normalisierung abgefangen — 'keine Angabe' bedeutet 'Standard', reason 'default_model'."
+  },
+
+  "releaseVorbereitetNichtAusgefuehrt": {
+    "artefakt": "tmp/release-2026-08-02/smejj-control-markenname-2026-08-02.tar.gz — 929 Dateien, 2086227 B, sha256 09e559dce6e3ee0df80d91f157729d0e1ab343f04481fcd01034493f55883e61, secretsIncluded: false.",
+    "tore": "release:preflight gruen — check:all vollstaendig, check:release-imports OK (175 Dateien transitiv, 2 Laufzeit-Ressourcen bestaetigt), release:guard OK.",
+    "warumNichtAusgeliefert": "Der Builder schreibt in JEDES Manifest `productionDeployAuthorized: false` und `separateApprovalEvidenceRequired: true` — und verweigert den Bau, wenn das Flag anders stuende. Das ist eine ausdrueckliche Projektregel: ein Produktions-Release des Control Servers verlangt eine getrennt festgehaltene menschliche Freigabe. Ein allgemeiner Autonomie-Auftrag hebelt eine projekteigene Freigaberegel nicht aus.",
+    "zweiterGrund": "Eine Parallelsitzung arbeitet am selben Bereich (fd442f0, b92502d) und hat ihr eigenes Umstellskript bewusst NICHT ausgefuehrt, sondern dem Betreiber ueberlassen.",
+    "rueckweg": "Denkbar einfach: der Container zieht das Artefakt ueber SMEJJ_CONTROL_ARTIFACT_KEY und SMEJJ_CONTROL_ARTIFACT_SHA256. Beide Altwerte liegen im Rueckrollpunkt backups/salad/smejj-control-2026-08-02-vor-auto-schalter.json — Zuruecksetzen sind zwei Werte.",
+    "hinweis": "Das LIVE laufende Artefakt stammt vom 2026-07-30. Alle Korrekturen seither — meine wie die der Parallelsitzung — sind unveroeffentlicht."
+  },
+
+  "wasLiveBereitsWirkt": "Die Env-Umstellung SMEJJ_MODEL_DEFAULT glm-5-2 -> kimi-k2-7 (v128 -> v129) ist aktiv und hat den Coding-Totalausfall beendet — von der Parallelsitzung unabhaengig bestaetigt. Sie wirkt aber nur fuer Anfragen, die nicht den Markennamen schicken; der Rest wartet auf den Release.",
+
+  "offen": [
+    "Control-Release: haengt an der getrennten Freigabe. Danach faellt Coding von ~19,7 s auf ~3,5 s und laeuft ueber Kimi K2.7.",
+    "Bruecken-Deploy (Zeabur): Gespraechsgedaechtnis (Fix der Parallelsitzung) und Projektwissen im Prompt (RAG). Braucht ZEABUR_API_TOKEN — Zugangsschluessel lege ich grundsaetzlich nicht an.",
+    "Die Bruecke meldet modelConfigured:false und hat keine eigene Tiefspur; faellt der Control-Router aus, antwortet sie 503 statt zurueckzufallen."
+  ],
+
+  "merkregel": "Zwei Messfallen an einem Tag, beide selbst ausgeloest: die eigene Last gehoert zur Messung (40 Anfragen/min gegen ein 12er-Limit ergaben ein Scheinbild von 13 Fehlschlaegen aus 15), und ein automatisches Pruefkriterium ersetzt das Lesen der Antwort nicht (drei richtige Zurueckweisungen wurden von meinem eigenen Muster als Halluzination gemeldet)."
+}
