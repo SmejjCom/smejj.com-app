@@ -54,13 +54,43 @@ export async function fetchStreamWithRetry(url, init = {}, {
   const urls = (Array.isArray(url) ? url : [url]).filter(Boolean);
   if (!urls.length) throw new Error("bridge_unreachable: keine Endpunkte");
   // Ausdrueckliche Vorgabe gewinnt; sonst entscheidet die angefragte Spur.
-  const budgetMs = Number.isFinite(firstByteTimeoutMs) ? firstByteTimeoutMs : firstByteBudgetFor(init);
-  const versuche = Math.max(attempts, urls.length);
+  const explizit = Number.isFinite(firstByteTimeoutMs);
+  const budgetMs = explizit ? firstByteTimeoutMs : firstByteBudgetFor(init);
+  // DER LETZTE VERSUCH IST GEDULDIG (Live-Befund 2026-08-02).
+  // firstByteBudgetFor entscheidet am MODELLNAMEN im Anfragekoerper — welche
+  // Spur der Server nimmt, haengt aber an der FRAGE: alles mit Suchbedarf oder
+  // Web-Adresse geht ueber den Control Server und braucht dort gemessene ~15 s
+  // bis zum ersten Byte. Steht im Modellfeld nicht glm/kimi/cline, galten
+  // trotzdem 6,5 s — der Klient gab nach 2 x 6,5 s auf und zeigte "Verbindung
+  // zum Server unterbrochen", obwohl der Server eine Sekunde spaeter geantwortet
+  // haette. Live im Browser reproduziert: zwei Fehlversuche, dritter Versuch OK
+  // (da griff der Suchcache).
+  // Die Spur laesst sich im Klienten nicht zuverlaessig vorhersagen, und eine
+  // dritte Kopie der Suchwort-Liste waere genau der Fehler, den
+  // tests/websuche-absicht-gleichlauf.test.mjs verhindern soll. Deshalb bleibt
+  // der SCHNELLE Wechsel auf den Reserve-Endpunkt erhalten (dafuer sind die
+  // 6,5 s da: eine tote Replika soll nicht warten lassen) — nur der letzte
+  // Versuch wartet lange. Haben alle Endpunkte schnell versagt, ist "langsam
+  // aber lebendig" die einzige verbliebene Moeglichkeit, und Abbrechen ist dann
+  // strikt schlechter als Warten.
+  const letzterBudgetMs = explizit ? budgetMs : Math.max(budgetMs, DEEP_LANE_FIRST_BYTE_TIMEOUT_MS);
+  // JEDER ENDPUNKT EINMAL, PLUS EIN ZWEITER ANLAUF (Live-Messung 2026-08-02).
+  // Gemessen an Coding-Fragen ueber die Live-Kette: die Bruecke antwortete bei
+  // 2 von 6 Anfragen mit HTTP 503 ("Model backend is not configured" — ihre
+  // eigene Tiefspur ist nicht konfiguriert, und wenn der Control-Router
+  // aussetzt, faellt sie ins Leere), der Reserve-Endpunkt bei 1 von 3 mit 502.
+  // Beide Ausfaelle sind kurz und unabhaengig. Mit genau einem Versuch je
+  // Endpunkt trifft man beide schlechten Wuerfe zusammen in rund 11 % der
+  // Faelle — der Nutzer sieht dann "Verbindung zum Server unterbrochen",
+  // obwohl ein einziger weiterer Anlauf gereicht haette.
+  // Ein zusaetzlicher Durchgang kostet nichts, wo ohnehin keine Antwort kam
+  // (4xx ausser 429 wird weiterhin NICHT wiederholt, siehe unten).
+  const versuche = Math.max(attempts, urls.length > 1 ? urls.length + 1 : urls.length);
   let lastReason = "";
   for (let attempt = 1; attempt <= versuche; attempt += 1) {
     const ziel = urls[(attempt - 1) % urls.length];
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), budgetMs);
+    const timer = setTimeout(() => controller.abort(), attempt === versuche ? letzterBudgetMs : budgetMs);
     try {
       const response = await fetchFn(ziel, { ...init, signal: controller.signal });
       clearTimeout(timer);

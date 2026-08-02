@@ -1,0 +1,59 @@
+{
+  "jobId": "job_verbindung_unterbrochen_20260802",
+  "createdAt": "2026-08-02",
+  "owner": "smejj.com Betreiber",
+  "title": "\"Verbindung zum Server unterbrochen\" behoben — im Browser gefunden, nicht im Code gesucht",
+  "goal": "Auftrag des Betreibers: smejj.com im Browser pruefen, gefundene Fehler beheben, hochladen, live gehen und mehrfach nachtesten.",
+
+  "wieDerFehlerGefundenWurde": {
+    "vorgehen": "Nicht im Quelltext gesucht, sondern die Live-Seite geoeffnet und angesehen. Im Verlauf standen zwei Antworten 'Verbindung zum Server unterbrochen — bitte gleich erneut versuchen', beide auf Fragen mit einer Web-Adresse. Die dritte, gleichlautende Frage kam durch.",
+    "warumDasZaehlt": "Der Fehler war reproduzierbar sichtbar, aber keine Pruefung hat ihn je gemeldet: alle 289 Frontend-Tests waren gruen. Er entsteht erst aus dem Zusammenspiel von Klient-Zeitbudget und Server-Spurwahl — also genau dort, wo Einzeltests nicht hinsehen."
+  },
+
+  "ursache": {
+    "kern": "Das Zeitbudget wird am MODELLNAMEN im Anfragekoerper entschieden, die Spur aber an der FRAGE.",
+    "imDetail": "public/ai/fetch-retry.js: firstByteBudgetFor() sucht /\"model\"\\s*:\\s*\"[^\"]*(glm|kimi|cline)/ im Anfragekoerper. Trifft es zu, gilt das Tiefspur-Budget von 15 s, sonst 6,5 s. Steht in der Modellauswahl aber 'smejj 1.0', gelten 6,5 s — auch dann, wenn die Frage wegen ihrer Web-Adresse oder ihres Suchbedarfs ueber den Control Server laeuft.",
+    "gemessen_2026-08-02": "Frage 'Was steht auf https://example.com ?' ueber die Live-Bruecke: Spur multi-model-router, erstes Byte nach 8218 ms. Zum Vergleich dieselbe Kette ohne Suchbedarf: chat-fast-lane, erstes Byte 305 ms.",
+    "folge": "8218 ms gegen ein Budget von 6500 ms. Der Klient brach ab, versuchte den Reserve-Endpunkt, brach dort erneut nach 6,5 s ab und zeigte nach rund 13 s einen Fehler — obwohl der Server nach 8,2 s sauber geantwortet haette."
+  },
+
+  "loesung": {
+    "was": "Der LETZTE Versuch ist geduldig. Der schnelle Wechsel auf den Reserve-Endpunkt bleibt erhalten (dafuer sind die 6,5 s da: eine tote Replika soll nicht warten lassen), aber der letzte Versuch bekommt das grosszuegige Budget.",
+    "begruendung": "Haben alle Endpunkte schnell versagt, ist 'langsam aber lebendig' die einzige verbliebene Moeglichkeit. Abbrechen ist dann strikt schlechter als Warten: im schlechtesten Fall meldet das System einen echten Ausfall 8 Sekunden spaeter, im haeufigen Fall liefert es eine richtige Antwort statt einer Fehlermeldung.",
+    "eineAusdrueckicheVorgabeGewinntWeiterhin": "Wird firstByteTimeoutMs ausdruecklich uebergeben, bleibt es dabei — die Geduld ueberschreibt sie nicht.",
+    "bewusstNICHTgemacht": "Die Suchwort-Liste in den Klienten kopieren, um die Spur vorherzusagen. Es gibt sie bereits zweimal (public/chat-bridge.js und src/search/searchIntent.js), zusammengehalten von tests/websuche-absicht-gleichlauf.test.mjs. Dieser Test existiert, WEIL die beiden Listen einmal auseinandergelaufen sind. Eine dritte Kopie waere genau der Fehler, den er verhindern soll."
+  },
+
+  "liveTests": {
+    "vorgehen": "Echter Klickpfad auf https://smejj.com — in das Eingabefeld getippt, Senden geklickt, auf die Antwort gewartet und die Zeit gemessen. Kein API-Aufruf am Frontend vorbei.",
+    "ergebnisse": [
+      "'Welcher Titel steht auf https://example.com ?' — erster Text 801 ms, Antwort korrekt ('Example Domain'). Genau die Frage, die vorher zweimal fehlschlug.",
+      "'Was steht auf https://example.com ? Fasse es zusammen.' — erster Text 584 ms, Antwort korrekt.",
+      "'Nenne mir in zwei Saetzen, was Static-First bedeutet.' — erster Text 982 ms, Antwort korrekt.",
+      "'Wie schreibt man den Namen der Plattform korrekt?' — erster Text 995 ms, Antwort 'smejj.com' (Schreibregel eingehalten)."
+    ],
+    "urteil": "4 von 4 bestanden, kein einziges 'Verbindung zum Server unterbrochen'.",
+    "falscherAlarmUnterwegs": "Ein Bildschirmfoto zeigte zwischendurch eine schwarze Seite. Nachgemessen war die Seite gesund — document.visibilityState stand auf 'hidden', weil das Browser-Fenster ausgeblendet war. Ein Bildschirmfoto allein ist kein Befund."
+  },
+
+  "deploy": {
+    "weg": "Frischer Klon von SmejjCom/smejj-app-frontend (das Repo ist NICHT die Live-Wahrheit), fetch-retry.js darauf kopiert, sw.js vom Live-Stand v196 auf v197 gehoben.",
+    "warumVersionssprung": "fetch-retry.js liegt cache-first im Precache. Ohne Sprung haetten Bestandsnutzer die alte Datei behalten und den Fehler weiter gesehen.",
+    "commit": "d9d2907 im Frontend-Repo",
+    "liveBelegt": "smejj-shell-v197 aktiv, Cache-Liste enthaelt nur v197, /assets/ai/fetch-retry.js enthaelt letzterBudgetMs."
+  },
+
+  "pruefungen": {
+    "neu": "tests/spurwahl-zeitbudget.test.mjs um zwei Faelle erweitert (jetzt 10): der letzte Versuch greift nach einem schnellen Fehlschlag, und eine ausdrueckliche Vorgabe darf die Geduld nicht ueberschreiben.",
+    "check:frontend": "OK — 291",
+    "check:precache-imports": "OK — 90 Module",
+    "check:guidelines": "OK",
+    "check:start-lock": "OK",
+    "check:favicon-lock": "OK",
+    "check:voice": "OK",
+    "check:module-queries": "OK",
+    "check:json": "OK"
+  },
+
+  "merkregel": "Gruene Tests beweisen nicht, dass die Seite funktioniert. Dieser Fehler war live sichtbar, waehrend 289 Frontend-Tests gruen waren — er entsteht erst im Zusammenspiel zweier Komponenten, die jede fuer sich richtig sind. Wer nur Tests laufen laesst, sieht ihn nie."
+}

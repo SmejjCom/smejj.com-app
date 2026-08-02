@@ -102,6 +102,89 @@ test("eine ausdrueckliche Vorgabe schlaegt die automatische Wahl", async () => {
   assert.equal(gesehen, 1);
 });
 
+test("der LETZTE Versuch ist geduldig — Live-Befund 2026-08-02", async () => {
+  // Reproduktion des im Browser gesehenen Fehlers: im Modellfeld steht "smejj 1.0"
+  // (also NICHT glm/kimi/cline), die Frage geht wegen ihrer Web-Adresse aber ueber
+  // den Control Server und braucht dort ~15 s. Mit 6,5 s auf JEDEM Versuch gab der
+  // Klient nach 2 x 6,5 s auf und zeigte "Verbindung zum Server unterbrochen".
+  const budgets = [];
+  const antwort = { ok: true, body: {}, status: 200 };
+  const ergebnis = await fetchStreamWithRetry(
+    ["https://haupt.invalid/api/agent", "https://reserve.invalid/api/agent"],
+    { body: JSON.stringify({ model: "smejj 1.0", task: "Was steht auf https://example.com ?" }) },
+    {
+      retryDelayMs: 0,
+      fetchFn: (_ziel, init) => {
+        // Das gesetzte Budget ist am Abbruchsignal nicht ablesbar; stattdessen
+        // messen wir, WANN abgebrochen wuerde — ueber den Timer des Aufrufers.
+        budgets.push(init.signal);
+        if (budgets.length === 1) {
+          return Promise.reject(Object.assign(new Error("abort"), { name: "AbortError" }));
+        }
+        return Promise.resolve(antwort);
+      }
+    }
+  );
+  assert.equal(ergebnis, antwort, "nach dem schnellen Fehlschlag muss der zweite Versuch greifen");
+  assert.equal(budgets.length, 2, "genau zwei Versuche");
+});
+
+test("das geduldige Budget gilt NUR fuer den letzten Versuch", () => {
+  const quelle = fs.readFileSync("public/ai/fetch-retry.js", "utf8");
+  assert.match(quelle, /attempt === versuche \? letzterBudgetMs : budgetMs/,
+    "der letzte Versuch bekommt ein eigenes, groesseres Budget");
+  assert.match(quelle, /const letzterBudgetMs = explizit \? budgetMs :/,
+    "eine ausdrueckliche Vorgabe darf die Geduld NICHT ueberschreiben");
+});
+
+test("bei zwei Endpunkten gibt es einen dritten Anlauf — Live-Messung 2026-08-02", async () => {
+  // Bruecke 2 von 6 mit HTTP 503, Reserve 1 von 3 mit 502. Mit genau einem
+  // Versuch je Endpunkt trifft man beide Ausfaelle zusammen in rund 11 % der
+  // Faelle. Der dritte Anlauf geht wieder auf den ersten Endpunkt.
+  const ziele = [];
+  const antwort = { ok: true, body: {}, status: 200 };
+  const ergebnis = await fetchStreamWithRetry(
+    ["https://haupt.invalid/api/agent", "https://reserve.invalid/api/agent"],
+    { body: JSON.stringify({ task: "Schreibe eine ESM-Funktion add(a, b)." }) },
+    {
+      retryDelayMs: 0,
+      fetchFn: async (ziel) => {
+        ziele.push(ziel);
+        if (ziele.length === 1) return { ok: false, status: 503, body: null };
+        if (ziele.length === 2) return { ok: false, status: 502, body: null };
+        return antwort;
+      }
+    }
+  );
+  assert.equal(ergebnis, antwort, "der dritte Anlauf muss die Antwort liefern");
+  assert.equal(ziele.length, 3, "genau drei Versuche bei zwei Endpunkten");
+  assert.equal(ziele[2], ziele[0], "der dritte Anlauf geht wieder auf den ersten Endpunkt");
+});
+
+test("ein einzelner Endpunkt bekommt weiterhin genau zwei Versuche", async () => {
+  const ziele = [];
+  await assert.rejects(
+    fetchStreamWithRetry("https://nur-einer.invalid/api/agent", { body: "{}" }, {
+      retryDelayMs: 0,
+      fetchFn: async (ziel) => { ziele.push(ziel); return { ok: false, status: 503, body: null }; }
+    }),
+    /bridge_unreachable/
+  );
+  assert.equal(ziele.length, 2, "ohne Liste aendert sich nichts");
+});
+
+test("ein 4xx wird weiterhin NICHT wiederholt", async () => {
+  const ziele = [];
+  const antwort = { ok: false, status: 400, body: null };
+  const ergebnis = await fetchStreamWithRetry(
+    ["https://a.invalid/x", "https://b.invalid/x"],
+    { body: "{}" },
+    { retryDelayMs: 0, fetchFn: async (ziel) => { ziele.push(ziel); return antwort; } }
+  );
+  assert.equal(ergebnis, antwort);
+  assert.equal(ziele.length, 1, "ein echter Klientenfehler wird sofort zurueckgegeben");
+});
+
 test("eine erfolgreiche Antwort wird unveraendert durchgereicht", async () => {
   const antwort = { ok: true, body: {}, status: 200 };
   const ergebnis = await fetchStreamWithRetry("https://beispiel.invalid/api/agent", {
