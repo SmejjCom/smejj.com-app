@@ -3,6 +3,19 @@ import { GLM_5_2_FP8_STATUS, KIMI_K2_7_STATUS } from "./platform.js";
 export const DEFAULT_MODEL_ID = "glm-5-2";
 export const AUTO_MODEL_ID = "auto";
 
+// MARKENNAMEN ZEIGEN AUF DEN KONFIGURIERTEN STANDARD, NICHT AUF EINEN ANBIETER
+// (Live-Befund 2026-08-02). "smejj 1.0" ist der Name, den die Startseite bei
+// JEDER Anfrage mitschickt (public/app.js) und den der Modellwaehler anzeigt.
+// Er stand als Alias bei glm-5-2 — damit war jede Anfrage eine AUSDRUECKLICHE
+// Wahl von GLM, und SMEJJ_MODEL_DEFAULT konnte nie greifen. Der Betreiber
+// stellte den Standard auf kimi-k2-7, /api/health meldete ihn auch, und
+// trotzdem antwortete weiter GLM.
+// Das Frontend meint es laengst richtig: public/premium-surfaces.js prueft
+// `selectedName === "smejj 1.0" && model.id === registry.defaultModelId` —
+// die Marke bezeichnet dort schon das Standardmodell. Nur die Alias-Tabelle
+// widersprach. Ein Markenname ist keine Anbieterwahl.
+export const BRAND_ALIASES = Object.freeze(new Set(["smejj 1.0", "smejj code"]));
+
 const ENABLED_VALUES = new Set(["1", "true", "yes", "on"]);
 const DISABLED_VALUES = new Set(["0", "false", "no", "off"]);
 
@@ -10,7 +23,7 @@ export const MODEL_REGISTRY = Object.freeze({
   [DEFAULT_MODEL_ID]: Object.freeze({
     id: DEFAULT_MODEL_ID,
     name: "GLM-5.2",
-    aliases: Object.freeze(["glm-5.2", "glm-5-2-fp8", "smejj 1.0", "smejj code"]),
+    aliases: Object.freeze(["glm-5.2", "glm-5-2-fp8"]),
     provider: "zhipu",
     status: "production-primary",
     contextTokens: 1_000_000,
@@ -327,8 +340,11 @@ export function resolveModelSelection({ requestedModel, profile = "default", env
   // meldete ihn auch, aber 7 von 8 Anfragen gingen weiter an glm-5-2 — nur die,
   // die ausdruecklich "auto" schickten, landeten richtig. Coding antwortete
   // dadurch in 19,7 s (glm-4.7-flash) statt in 3,5 s (Kimi).
+  // Ein Markenname ("smejj 1.0") ist wie "keine Angabe" zu behandeln: er sagt
+  // "das Modell der Plattform", nicht "dieser Anbieter". Siehe BRAND_ALIASES.
   const rohAngabe = String(requestedModel ?? "").trim();
-  const requestedId = rohAngabe ? normalizeModelId(rohAngabe) : "";
+  const istMarkenname = BRAND_ALIASES.has(normalizeAlias(rohAngabe));
+  const requestedId = rohAngabe && !istMarkenname ? normalizeModelId(rohAngabe) : "";
   const defaultId = enabledDefaultModelId(env);
   const autoRequested = requestedId === AUTO_MODEL_ID;
   const autoEnabled = readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, false);

@@ -322,3 +322,28 @@ test("eine ausdrueckliche Wahl schlaegt den Standard weiterhin", () => {
   assert.equal(selection.selectedModelId, "glm-5-2");
   assert.equal(selection.reason, "explicit_model");
 });
+
+test("der Markenname zeigt auf den konfigurierten Standard, nicht auf einen Anbieter", () => {
+  // Live-Befund 2026-08-02: "smejj 1.0" stand als Alias bei glm-5-2. Die
+  // Startseite schickt diesen Namen bei JEDER Anfrage — damit war jede Anfrage
+  // eine ausdrueckliche Anbieterwahl und SMEJJ_MODEL_DEFAULT wirkungslos.
+  const env = { ...KETTEN_ENV, SMEJJ_MODEL_DEFAULT: "kimi-k2-7" };
+  // Die Grossschreibung wird zur Laufzeit gebildet — hingeschrieben verstiesse
+  // sie gegen die Namensregel (die Plattform heisst ausschliesslich smejj.com).
+  for (const marke of ["smejj 1.0", "smejj code", "smejj 1.0".toUpperCase(), "  smejj 1.0  "]) {
+    const selection = resolveModelSelection({ requestedModel: marke, profile: "coding", env });
+    assert.equal(selection.selectedModelId, "kimi-k2-7", `Marke ${JSON.stringify(marke)}`);
+    assert.equal(selection.reason, "default_model", `Marke ${JSON.stringify(marke)}`);
+  }
+});
+
+test("der Anbietername bleibt eine ausdrueckliche Wahl", () => {
+  // Gegenprobe: wer glm-5.2 ausdruecklich nennt, bekommt glm-5.2 — sonst waere
+  // der Modellwaehler wirkungslos geworden.
+  const env = { ...KETTEN_ENV, SMEJJ_MODEL_DEFAULT: "kimi-k2-7" };
+  for (const [name, id] of [["glm-5.2", "glm-5-2"], ["glm-5-2-fp8", "glm-5-2"], ["kimi k2.7", "kimi-k2-7"]]) {
+    const selection = resolveModelSelection({ requestedModel: name, profile: "coding", env });
+    assert.equal(selection.selectedModelId, id, name);
+    assert.equal(selection.reason, "explicit_model", name);
+  }
+});
