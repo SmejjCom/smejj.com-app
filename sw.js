@@ -1,20 +1,39 @@
-// v187 -> v188 (2026-07-29): EIN Modul, EINE Kennung. chat-actions.js
+// v195 -> v196 (2026-08-02): Sprachwelle Stufe 3a jetzt auch auf der Startseite.
+// composer-tools.js reicht dem Waechter den erkannten TEXT statt eines Ja/Nein
+// (adaptive Wartezeit) und macht den Denk-Laut scharf. Damit importiert eine
+// Precache-Datei erstmals voice-thinking-cue.js — die Datei MUSS deshalb in den
+// SHELL, sonst liefert der Rueckfall offline "/" (HTML) statt JavaScript und
+// bricht composer-tools.js komplett ab. Genau davor warnt check:precache-imports;
+// die Pruefung hat die Luecke gemeldet, bevor sie live ging.
+// v194 -> v195 (2026-08-02): Sprachwelle Stufe 3a. Zwei Aenderungen im
+// Precache: voice-endpoint.js (semantisches Sprech-Ende — die Wartezeit nach
+// dem letzten Wort richtet sich nach dem Gesagten statt starr 850 ms zu sein)
+// und voice-speech-queue.js (sayAhead: eine Ansage kann VOR der Antwort in
+// dieselbe Warteschlange, damit sie nicht hineinredet). Ohne diesen
+// Versionssprung bekaemen Bestandsnutzer beide Dateien weiter aus dem Cache —
+// cache-first seit v160. Der alte Aufrufweg von voice-endpoint.js bleibt
+// unveraendert, damit die eingefrorene composer-tools.js (Start-Lock) exakt ihr
+// heutiges Verhalten behaelt. NICHT im Precache: voice-thinking-cue.js
+// (Denk-Laut) — nur voice-landing.js importiert es, und voice-landing.js steht
+// selbst nicht im SHELL; beide kommen aus dem Netz, der Stand bleibt stimmig.
+// v192 -> v193 (2026-07-29): EIN Modul, EINE Kennung. chat-actions.js
 // importierte voice-speech-queue.js?v=1, waehrend composer-tools.js und
 // voice-landing.js ?v=blitz-20260726 nutzen — live gemessen wurde die Datei
 // ZWEIMAL geladen (4,3 KB doppelt) und lag als zwei Modulinstanzen mit
-// getrenntem Zustand im Speicher. Hier wurde nur die reine Funktion
-// sanitizeForSpeech benutzt, es ging also nichts kaputt; die Warteschlange aus
-// demselben Modul haette es zerrissen. Dritter Fall derselben Ursache nach
-// v184 und v185 — deshalb gibt es jetzt scripts/check-module-queries.mjs.
+// getrenntem Zustand im Speicher. Kaputt war nichts: hier wird aus dem Modul
+// nur die reine Funktion sanitizeForSpeech benutzt. Die Warteschlange aus
+// derselben Datei haette es zerrissen — genau das ist in v184 und v185 zweimal
+// passiert. Dritter Fall derselben Ursache, deshalb gibt es jetzt
+// scripts/check-module-queries.mjs (laeuft in check:all).
 // chat-actions.js liegt cache-first im Precache; ohne Versionssprung erreicht
 // die Aenderung Bestandsnutzer nicht.
 //
-// Ausserhalb des Precache im selben Zug behoben: public/de/index.html lud
+// Im selben Zug, ausserhalb des Precache: public/de/index.html lud
 // voice-landing.js unter ?v=voice-send-20260721 — einer Kennung, die sechs
 // Aenderungen alt war, waehrend die 14 anderen Sprachseiten ?v=blitz-20260726
 // nutzten. Ausgerechnet die deutsche Seite lief damit auf altem Stand.
 //
-// v186 -> v187 (2026-07-29): Codeblock im Chat mit EINEM Klick kopieren. Neu im
+// v191 -> v192 (2026-07-29): Codeblock im Chat mit EINEM Klick kopieren. Neu im
 // Precache: chat-code-copy.js; start-styles.css enthaelt die zugehoerigen Regeln
 // aus chat-markdown.css. Die Aktionsleiste kopierte bisher nur die GANZE
 // Antwort — der haeufigste Fall ist aber ein einzelner Codeblock, und im
@@ -23,6 +42,29 @@
 // "Kopieren" ueber entry.textContent im gespeicherten Verlauf und im
 // Modellkontext gelandet.
 //
+// v189 -> v190 (2026-07-28): Das Aufraeumen der Maus-Tabs lief nie. Der
+// init()-Aufruf stand oberhalb der const-Deklarationen von maus-panel.js —
+// temporale Totzone, ReferenceError, vom catch fuer gesperrten localStorage
+// lautlos verschluckt. Alle Checks waren gruen; gefunden nur per Live-Messung.
+// Start jetzt am Dateiende, maus-panel.js auf ?v=3.
+// v188 -> v189 (2026-07-28): Der v188-Fix kam im Browser nicht an. index.html
+// laedt browser-pane.js und maus-panel.js mit ?v=-Query — unter der ALTEN Query
+// behaelt der Browser seine alte Kopie, egal was am Pfad neu ist (dieselbe
+// Falle wie v184/v185). Jetzt browser-pane.js ?v=browser-pane-20260728-3 und
+// maus-panel.js ?v=2; maus-panel.js importiert exakt dieselbe Query, sonst
+// waeren es zwei Modul-Instanzen mit getrenntem state.
+// v187 -> v188 (2026-07-28): Wurzelfix zur "Ungueltige URL."-Meldung. v187
+// raeumte nur localStorage — zu spaet, browser-pane.js hatte den alten
+// Maus-Tab da schon im Speicher. Jetzt werden wiederhergestellte Maus-Tabs in
+// BEIDEN Ablagen geleert, bevor das Panel oeffnet. browser-pane.js exportiert
+// dafuer sein state-Objekt (nur das Schluesselwort, 0 Netto-Zeilen). Beide
+// Dateien liegen im Precache.
+// v186 -> v187 (2026-07-28): maus-panel.js leert beim Start eine gespeicherte
+// /maus-replay.html-Adresse. Beim Wiederherstellen verliert der Maus-Tab seinen
+// Modus, browser-pane.js schickte die relative Adresse dann durch den
+// Server-Proxy, und im Panel stand "Ungueltige URL." UEBER einer korrekt
+// laufenden Wiedergabe. maus-panel.js liegt im Precache — ohne Versionssprung
+// erreicht der Fix Bestandsnutzer nicht.
 // v185 -> v186 (2026-07-28): maus-panel.js in den Precache. index.html laedt es
 // als Modul-Skript (Zeile 655), es fehlte aber in SHELL — offline brach der
 // Import ab und der Maus-Knopf war tot. check:precache-imports meldete trotzdem
@@ -308,7 +350,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v188";
+const CACHE_NAME = "smejj-shell-v196";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -375,6 +417,7 @@ const SHELL = [
   "/assets/voice-echo-filter.js",
   "/assets/voice-vad.js",
   "/assets/voice-endpoint.js",
+  "/assets/voice-thinking-cue.js",
   "/assets/voice-premium-tts.js",
   "/assets/voice-warmup.js",
   "/assets/ai/fetch-retry.js",
@@ -427,6 +470,9 @@ const SHELL = [
   "/status.html",
   "/hilfe.html",
   "/assets/status.js",
+  "/verlauf.html",
+  "/assets/verlauf.js",
+  "/verlauf-messwerte.json",
   "/impressum.html",
   "/datenschutz.html",
   "/en/legal-notice.html",
