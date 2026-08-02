@@ -743,53 +743,53 @@ Volltext wortgleich in
   styles) — keine CSS-Datei angefasst, noch innerhalb derselben Freigabe.
   Live per Bounding-Rect (`ueberlappt:false`) und echtem Klick-Test
   (Iframe auf /maus-replay.html bestaetigt geladen) verifiziert.
-- Deploy: Arbeits-Repo 8bbc517+2f25c84, Live-Frontend chirurgisch auf dem
-  jeweils aktuellen Live-Stand gepatcht (nicht blind ueberschrieben, andere
-  Sessions hatten zwischenzeitlich weiterdeployt) — Commit 4519a3b,
-  CACHE_NAME smejj-shell-v183.
-- Gelernt: Bildschirmfoto-Pixel und CSS-Pixel-Koordinatenraum stimmen in
-  diesem Chrome-Setup NICHT 1:1 ueberein (devicePixelRatio 2, aber
-  Screenshot-Breite passte weder zu innerWidth noch zu innerWidth*dpr) —
-  Klicks auf UI-Elemente im echten Chrome zuverlässig per `element.click()`
-  in javascript_exec statt per rohen Screenshot-Koordinaten ausloesen.
+- Deploy: Live-Frontend chirurgisch auf dem jeweils aktuellen Live-Stand gepatcht
+  (nicht blind ueberschrieben, andere Sessions hatten weiterdeployt) — 4519a3b, v183.
+- Gelernt: Bildschirmfoto-Pixel und CSS-Pixel stimmen in diesem Chrome-Setup NICHT
+  1:1 ueberein — Klicks per `element.click()` in javascript_exec ausloesen, nicht
+  per rohen Screenshot-Koordinaten.
 - Weiterhin offen, operator-only: IDrive-e2-Zugangsdaten-Abgleich zwischen
   Maus-Engine (Zeabur) und Control-Server (Salad) — ohne den bleibt die
-  Wiedergabe selbst fail-closed bei "Artefakt nicht ladbar" (erwartet, siehe
-  job_maus_engine_abnahme_20260728).
+  Wiedergabe fail-closed bei "Artefakt nicht ladbar" (erwartet).
 
 ## 2026-07-28 — Training-Loop-Dienst LIVE (job_smejj_training_loop_20260728)
-- ERLEDIGT: fuenfter Zeabur-Dienst `smejj-training-loop`
-  (service-6a68f0449949111176cec372) auf dem BESTEHENDEN 6-$-Server. Keine neue
-  Kostenposition, kein neuer Anbieter. Zugang ueber die Zeabur-GitHub-App; den
-  GitHub-Sicherheitscode gab der Betreiber selbst ein — Anmeldecodes gibt der
-  Agent nie ein.
-- VIER FALLEN, je ein Ship-Loop-Durchlauf, alle am Live-Protokoll gemessen:
-  (1) Ohne Konfiguration startet Zeabur `pnpm start` = src/server.js, also den
-  CONTROL SERVER statt des Workers. (2) zbpack `install_command` ueberschreiben
-  verhindert den Quellcode-Kopiervorgang ("Cannot find module /src/workers/...").
-  (3) `pnpm build:i18n` bricht im Bau mit MODULE_NOT_FOUND ab. (4) WURZEL:
-  `.dockerignore` schloss `scripts` komplett und `workers/*` per Erlaubnisliste
-  aus — neue Worker dort EINTRAGEN, sonst "failed to calculate checksum";
-  `scripts` -> `scripts/*`, damit Ausnahmen ueberhaupt greifen.
-- LOESUNG: `Dockerfile.<dienstname>` im Repo-Wurzelverzeichnis — Zeabur waehlt es
-  gezielt fuer diesen einen Dienst, andere Dienste bleiben unberuehrt.
-- NON-REGRESSION: maus-engine, chat-bridge, voice-piper unveraendert "Running 1/1".
-  `smejj-remote-browser` = "Image Pull Failed", VORBESTEHEND (andere Sitzung).
+- ERLEDIGT: fuenfter Zeabur-Dienst `smejj-training-loop` auf dem BESTEHENDEN
+  6-$-Server. Keine neue Kostenposition, kein neuer Anbieter. Zugang ueber die
+  Zeabur-GitHub-App; den GitHub-Sicherheitscode gab der Betreiber selbst ein —
+  Anmeldecodes gibt der Agent nie ein.
+- VIER FALLEN, am Live-Protokoll gemessen: (1) ohne Konfiguration startet Zeabur
+  `pnpm start` = CONTROL SERVER statt Worker; (2) zbpack `install_command`
+  ueberschreiben verhindert den Quellcode-Kopiervorgang; (3) `pnpm build:i18n`
+  bricht mit MODULE_NOT_FOUND ab; (4) WURZEL: `.dockerignore` schloss `scripts`
+  komplett und `workers/*` per Erlaubnisliste aus — neue Worker dort EINTRAGEN,
+  `scripts` -> `scripts/*`, damit Ausnahmen greifen.
+- LOESUNG: `Dockerfile.<dienstname>` im Repo-Wurzelverzeichnis — gilt gezielt fuer
+  diesen einen Dienst. NON-REGRESSION: maus-engine, chat-bridge, voice-piper
+  unveraendert "Running 1/1"; `smejj-remote-browser` Image Pull Failed, vorbestehend.
 - SEIT 2026-07-29 SCHARF UND MESSEND. /health: loopEnabled=true, state=running.
   Autonomer Lauf im Protokoll: 07:30:27 "listening (loopEnabled=true)" ->
   07:32:24 "eval cycle done: blocked" + "Punktzahl 85.3 % (Budget 80 %) |
   12 bestanden, 2 nicht bestanden". GENAU EIN Lauf, keine Doppellaeufe. 6-h-Takt.
 - FALLE: Zeaburs "Restart" laedt die Umgebung NICHT neu (gleicher Container, alte
   Variablen). Nur ein echter Neubau per Commit-Webhook zieht neue Variablen.
-- URTEIL "blocked" IST KORREKT: entsteht nur durch criticalFailures > 0
-  (evalReport.js:38). Vollauf: 91,2 %, 13/14 Faelle 100 %, p95 1022 ms. Einziger
-  Ausfall code-esm-failclosed, von der SCHNELLSPUR (groq:llama-3.1-8b-instant)
-  beantwortet, die "export function parseBudget" nicht liefert. Suite bewusst
-  NICHT gelockert — Schoenrechnen waere der eigentliche Fehler. Konsequenz waere
-  Routing (Coding in die Tiefspur) = eigener Auftrag.
-- OHNE IDRIVE trotzdem nuetzlich: Kennzahlen gehen ins Protokoll, mit Hinweis
-  "IDRIVE_E2_* pruefen". Zugangsdaten traegt der Betreiber direkt beim Dienst ein
-  ("smejj.com Zeabur-Schluessel.command" -> Edit Raw Variables).
+- URTEIL "blocked" IST KORREKT: nur durch criticalFailures > 0 (evalReport.js:38).
+  Vollauf 91,2 %, 13/14 Faelle 100 %, p95 1022 ms; einziger Ausfall
+  code-esm-failclosed von der Schnellspur. Suite bewusst NICHT gelockert.
+- OHNE IDRIVE nuetzlich: Kennzahlen ins Protokoll; Zugangsdaten traegt der
+  Betreiber selbst ein ("smejj.com Zeabur-Schluessel.command").
+
+## 2026-08-02 — "Verbindung unterbrochen": Klient behoben, Wurzel liegt bei GLM-Coding
+
+Volltext: [docs/memory/Memory_Bank_2026-08-02_verbindung.md](docs/memory/Memory_Bank_2026-08-02_verbindung.md).
+Kapsel task-capsules/2026/08/job_verbindung_unterbrochen_20260802/. Commits ffd7b4e, ab21d80.
+- KLIENT (live sw v198): Zeitbudget haengt am MODELLNAMEN, die Spur an der FRAGE —
+  8218 ms gegen 6500 ms. Letzter Versuch geduldig, `urls.length + 1` Versuche.
+- WURZEL, verschraenkt gemessen (feste Rotation, sonst sieht ein schlechtes
+  Zeitfenster wie ein schlechtes Modell aus): kimi-k2-7 6/6, smejj-fast-1 6/6,
+  **glm-5.2 0/6, auto 0/6**; glm-5.2 normal 5/5, coding 1/5. Umstellung des
+  Coding-Standards = Kosten = Rote Liste, dem Betreiber vorgelegt.
+- MERKREGELN: ein gesundes /api/health widerlegt keinen gemessenen Ausfall; nach
+  einem sw-Versionssprung erst NEU LADEN, dann messen.
 
 ## 2026-07-29 — Live-Bild der Maus: Kern gebaut, Deploy blockiert (job_maus_livebild_20260729)
 
