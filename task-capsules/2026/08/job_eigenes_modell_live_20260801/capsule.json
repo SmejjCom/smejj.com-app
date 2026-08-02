@@ -4,12 +4,10 @@
   "owner": "smejj.com Betreiber",
   "title": "Eigenes Modell beschafft, eingehaengt und gegen die Schnellspur gemessen",
   "goal": "Ein eigenes, selbst gehostetes Modell soll wirklich existieren, ueber den Router antworten und mit derselben Suite gemessen werden wie die eingekauften Modelle. Messziel: die heutige Schnellspur (groq:llama-3.1-8b-instant) schlagen.",
-
   "ehrlicheEinordnung": {
     "nichtVersprochen": "Kein Modell auf dem Niveau von ChatGPT, Claude oder Gemini. Modelle dieser Klasse kosten dreistellige Millionenbetraege an Rechenzeit. Wer das in vier Tagen auf einer Einzel-GPU zusagt, taeuscht den Betreiber.",
     "gemessenWirdStattdessen": "Die Punktzahl auf evals/suites/smejj-chat-core-v1.json gegen die heutige Schnellspur — eine ueberpruefbare Zahl."
   },
-
   "basismodell": {
     "gewaehlt": "Qwen/Qwen3-14B",
     "lizenz": "Apache-2.0",
@@ -21,27 +19,23 @@
     "ablageVerifiziert": "npm run idrive:verify-model-complete gegen unsloth/Qwen3-14B-GGUF: 'Model IDrive verification OK'. sha256 der uebertragenen Datei 7f371adeaaf51dc97da927c61e6573e75e3ea33d76ec09dddb8cad00d0d5b6cb, Pruefsummen-Datei unter model-files/smejj-1-0/checksums/streamed-checksums.sha256.",
     "hinweisLagerstand": "Der Ordner model-files/smejj-1-0/ war NICHT voellig leer: er enthielt bereits base/glm-5-2/<commit>/notices/ (LICENSE, NOTICE.md, Attestierung vom 2026-07-17). Die Ausgangslage '0 Byte' bezog sich auf die Gewichte, nicht auf den Ordner.",
     "denkenAbgeschaltet": "Qwen3 denkt standardmaessig. LLAMA_ARG_CHAT_TEMPLATE_KWARGS={\"enable_thinking\":false} ist gesetzt — sonst frisst der Denkabschnitt das Token-Budget kurzer Anfragen auf und die Antwort bleibt leer (dieselbe Falle, die in src/evaluation/evalTransport.js fuer GLM dokumentiert ist).",
-
     "verworfen_qwen3coder30b": {
       "kandidat": "Qwen/Qwen3-Coder-30B-A3B-Instruct, GGUF UD-Q4_K_XL, 17,7 GB — zuerst gewaehlt und tatsaechlich ausprobiert",
       "grund": "Der Download passt nicht in die Salad-Startsonde. Zweimal 'Instance Interrupted (Startup Probe Failure)' (06:45 und 07:51 UTC), danach beginnt der Download von vorn — Endlosschleife. Auf 24 GB VRAM haette das Modell gepasst; die Startzeit war das Hindernis, nicht der Speicher.",
       "merkregel": "Bei selbst gehosteten Modellen begrenzt die Startsonde die Modellgroesse haerter als die Grafikkarte."
     },
-
     "verworfen_qwen36": {
       "kandidat": "Qwen/Qwen3.6-35B-A3B — stand vorher in src/shared/modelRegistry.js und in der Salad-Umgebung",
       "grund": "UD-Q4_K_XL ist 22,4 GB. Auf einer 24-GB-Karte bleibt damit kein Platz fuer den KV-Zwischenspeicher bei 32k Kontext; llama.cpp haette Schichten auf die CPU ausgelagert und waere langsamer geworden als die eingekaufte Schnellspur.",
       "lizenz": "ebenfalls Apache-2.0 — die Entscheidung ist eine Speicherrechnung, keine Lizenzfrage",
       "nebenbefund": "Die Container Group smejj-fast-1 war auf genau dieses zu grosse Abbild eingestellt. Der Fehler waere erst beim Start aufgefallen, und zwar als Langsamkeit, nicht als Absturz."
     },
-
     "verworfen_eigenesLager": {
       "kandidaten": "GLM-5.2 FP8 (755,7 GB) und Kimi K2.7 (595,2 GB), beide bereits im Lager",
       "grund": "Beide brauchen einen Verbund aus rund zehn 80-GB-Karten. Der Salad-Katalog umfasst 42 GPU-Klassen (am 2026-08-01 ueber die Salad-API abgefragt); die groesste ist eine RTX 5090 mit 32 GB. Es ist keine Preisfrage — es ist nicht bestellbar.",
       "folge": "GLM-5.2 bleibt ueber die Anbieter-API das Fundament. Die 1,35 TB im Lager sind Unabhaengigkeits-Reserve, nicht Laufzeit."
     }
   },
-
   "routerEintrag": {
     "datei": "src/shared/modelRegistry.js",
     "vorher": "storage.prefix = model-files/qwen3-6-35b-a3b/original/ — ein Pfad, der im Lager nie existierte",
@@ -53,7 +47,6 @@
     ],
     "failClosedBewusstNichtGelockert": "Die Laufzeit-Adresse wurde NICHT als defaultBaseUrl fest eingetragen, obwohl das bequemer waere. Das haette die dreiteilige Zusicherung (Feature-Flag + Adresse + Schluessel) auf zwei verkuerzt und den Test 'greift NICHT ohne BASE_URL' entwertet. Die Adresse steht stattdessen als Kommentar in .env.example."
   },
-
   "befundStartsonde": {
     "kernaussage": "Die Container Group smejj-fast-1 konnte ein Modell dieser Groesse NIE starten. Nicht wegen des Modells — wegen der Startsonde.",
     "gemessen": "Instanz gestartet 06:20:50 UTC. Um 06:45:23, exakt 25 Minuten spaeter, wurde sie verworfen und neu zugeteilt; der 17,7-GB-Download begann wieder bei null. Das wiederholt sich endlos.",
@@ -64,7 +57,6 @@
     "merkregel": "Bei selbst gehosteten Modellen ist die Startsonde ein Teil der Modellwahl. Wer die Gewichtsgroesse waehlt, waehlt die Startzeit mit — und die Startsonde ist die haertere Grenze, nicht die Grafikkarte.",
     "aufgeraeumt": "Der abgebrochene 17,7-GB-Upload hinterliess einen unvollstaendigen Multipart-Upload unter model-files/smejj-1-0/original/. Nach Abschluss des 14B-Uploads abgebrochen (npm run model:abort-incomplete, MODEL_S3_PREFIX=model-files/smejj-1-0): 1 gefunden, 1 abgebrochen, Nachlauf meldet 0. Kontingent danach 1266,8 von 2048 GiB = 61,9 %."
   },
-
   "kosten": {
     "heuteGesamt": "6 USD/Monat (Control Server auf Zeabur)",
     "gpuPreiseGemessen": {
@@ -87,7 +79,6 @@
     "wasDauerbetriebKostenWuerde": "RTX 3090 rund um die Uhr = 180 USD/Monat. Zusammen mit den heutigen 6 USD also 186 USD/Monat statt 6 — der Faktor 31.",
     "abwaegung": "Coding laeuft heute auf glm-4.7-flash fuer 0,00 USD. Ein eigenes Modell bringt Unabhaengigkeit und Kontrolle. Qualitaet allein rechtfertigt 180-216 USD/Monat nicht, solange die kostenlose Kette messbar gleich gut oder besser ist."
   },
-
   "messung": {
     "suite": "evals/suites/smejj-chat-core-v1.json, 14 Faelle, unveraendert (keine Schwelle verschoben, kein Fall entfernt)",
     "wiederholungen": "5 je Fall — eine Einzelmessung schwankt um bis zu 12 Prozentpunkte allein durch Zufall",
@@ -99,7 +90,6 @@
       "bericht": "docs/benchmarks/modeleval-smejj-chat-core-schnellspur-basis-2026-08-01.json"
     },
     "messfalleGetroffen": "Der erste Basislauf war unbrauchbar: 5 Ziehungen bei 400 ms Abstand reissen die Ratenbegrenzung der Bruecke (12 Anfragen/Minute). Acht Faelle kamen als http_429 zurueck und saehen aus wie Modellversagen. Mit 6000 ms Abstand sauber. Ohne diese Korrektur waere ein gesundes Modell als Totalausfall berichtet worden.",
-
     "eigenesModell_direkt": {
       "modell": "smejj-fast-1 (Qwen3-14B) direkt am llama.cpp-Endpunkt, Transportweg provider",
       "punktzahl": "87,6 % ± 1,3",
@@ -108,7 +98,6 @@
       "backendsSeen": "['salad'] — keine Vermischung mit GLM-5.2; die Kette war per SMEJJ_LLM_PROVIDER_ORDER=salad auf das eigene Modell verengt, damit ein Rueckfall nicht als eigenes Ergebnis durchgeht",
       "bericht": "docs/benchmarks/modeleval-smejj-chat-core-smejj-fast-1-2026-08-01.json"
     },
-
     "eigenesModell_liveKette": {
       "modell": "smejj-fast-1 ueber den LIVE-Control-Server, Transportweg control",
       "punktzahl": "84,7 % ± 2,2",
@@ -116,7 +105,6 @@
       "backendsSeen": "['salad:smejj-fast-1']",
       "bericht": "docs/benchmarks/modeleval-smejj-chat-core-smejj-fast-1-livekette-2026-08-01.json"
     },
-
     "ergebnisEhrlich": {
       "kurz": "Das eigene Modell ist besser als die Schnellspur — direkt gemessen deutlich, ueber die Live-Kette gemessen innerhalb der Streuung.",
       "rechnung": "Direkt 87,6 % ± 1,3 gegen 82,1 % ± 3,1: Abstand 5,5 Punkte bei kombinierter Unsicherheit ~3,4 — der Abstand ist echt. Live-Kette 84,7 % ± 2,2 gegen 82,1 % ± 3,1: Abstand 2,6 Punkte bei kombinierter Unsicherheit ~3,8 — das ist NICHT trennscharf. Wer nur die zweite Zahl nennt, verspricht zu viel.",
@@ -126,7 +114,6 @@
       "stabilerFehlschlagBeiBeiden": "code-esm-failclosed 0/5 bei BEIDEN Modellen. Kein Rueckschritt, aber auch kein Fortschritt — der Fall bleibt offen."
     }
   },
-
   "dauerbetriebHergestellt": {
     "stand": "Seit 2026-08-01 19:54 UTC laeuft smejj-fast-1 dauerhaft. Instanz ready=true, Gruppe running, 1/1 Replika. Im Router aktiv seit Control-Server-Version 128; live belegt 19:59:49 UTC mit x-smejj-model-backend: salad:smejj-fast-1.",
     "zweiAnlaeufeVorher": "Der erste Startversuch (18:36 UTC) wurde nach 15 Minuten unterbrochen, danach fand Salad ueber 35 Minuten ueberhaupt keinen Rechner. Ursache: die Container Group durfte nur vier GPU-Klassen benutzen.",
@@ -135,7 +122,6 @@
     "kostenspanne": "Je nach zugeteilter Karte 158 bis 216 USD/Monat (RTX 4060 Ti 0,22 bis RTX 4090 0,30 USD/h). Die guenstigsten neu aufgenommenen Karten sind billiger als alles, was vorher erlaubt war.",
     "risikoBegrenzungUnveraendert": "SMEJJ_MODEL_DEFAULT bleibt glm-5-2, SMEJJ_MODEL_AUTO_ENABLED bleibt NO. Live nachgeprueft: ohne model-Feld antwortet weiter zhipu:glm-5.2, eine unbekannte Modell-ID faellt zurueck, und die Chat-Bruecke der Nutzer liefert unveraendert groq:llama-3.1-8b-instant."
   },
-
   "befundEchteNutzung": {
     "kernaussage": "DIE PRUEFUNGSNOTE SAGT DAS VERHALTEN IM ECHTEN GESPRAECH NICHT VORHER. Das eigene Modell gewinnt die Suite mit 87,6 gegen 82,1 Prozent — und verliert bei echten Fragen deutlich gegen GLM-5.2.",
     "warum": "Jeder Suite-Fall liefert die noetige Projektkenntnis in seinem eigenen System-Prompt mit. Ein echter Nutzer stellt seine Frage ohne diesen Beipackzettel. Gemessen wird damit 'kann das Modell einer mitgelieferten Regel folgen', nicht 'kennt es smejj.com'.",
@@ -148,7 +134,6 @@
     "folgeFuerDieMessung": "Die Suite braucht mindestens einen Fall OHNE mitgelieferte Projektkenntnis, sonst misst sie an der Wirklichkeit vorbei. Das ist eine Suite-Aenderung und gehoert dem Betreiber.",
     "empfehlung": "Das eigene Modell in diesem Zustand nicht als Auswahl fuer Nutzer stehen lassen. Es ist nicht Standard und nicht im Auto-Routing — ein Nutzer muss es bewusst waehlen — aber wer es waehlt, bekommt sichtbar schlechtere und teils falsche Antworten. Der Betreiber hat den Dauerbetrieb angeordnet; dieser Befund ist die Gegenrede dazu, nicht seine Aufhebung."
   },
-
   "modellwechselAuf8B": {
     "anlass": "Der Betreiber wollte wissen, ob ein kleineres Modell reicht — Ziel war eigentlich nur eine kuerzere Kaltstartzeit und damit hoehere Verfuegbarkeit nach einer Salad-Umverteilung.",
     "ergebnisUeberraschend": "Das kleinere Modell ist auch das BESSERE. Gleiche Quantisierung (UD-Q4_K_XL), gleiche Suite, je 5 Ziehungen, Kette auf salad verengt:",
@@ -162,9 +147,8 @@
     "waeserNichtLoest": "Die Live-Schwaeche bleibt identisch. Ueber dieselbe Kette gefragt, welchen Speicherdienst smejj.com nutzt: GLM-5.2 antwortet 'IDrive e2', das 8B sagt 'Die Suchergebnisse liefern keine direkten Informationen'. Direkt gefragt erfindet es sogar 'Amazon S3'. Auf die Frage nach GitHub Actions antwortet es weiterhin faelschlich 'Ja'. DIE MODELLGROESSE IST NICHT DIE ANTWORT — das Projektwissen ist es (siehe ergaenzungDurchParallelsitzung).",
     "messungAbgesichert": "Container-Version vor dem Lauf 8, nach dem Lauf 8 — unveraendert, Messung gueltig. backendsSeen ['salad'], keine Vermischung. Der erste 8B-Versuch war ungueltig (siehe zweiSitzungenEinContainer) und wurde verworfen, nicht berichtet.",
     "liveBelegtNachDemWechsel": "2026-08-01 nach 23:30 UTC: model smejj-fast-1 -> salad:smejj-fast-1 in 1270 ms; ohne model-Feld weiter zhipu:glm-5.2 (3613 ms); unbekannte Modell-ID faellt zurueck; Chat-Bruecke unveraendert groq:llama-3.1-8b-instant; smejj.com 200. Das eigene Modell ist ueber die Kette inzwischen SCHNELLER als GLM-5.2.",
-    "lagerHinweis": "Die 8B-Gewichte werden nach model-files/smejj-1-0/original/ hochgeladen. Die 14B-Datei bleibt dort liegen — Loeschen waere Rote Liste und ist ohne Freigabe nicht erfolgt."
+    "lagerHinweis": "ERLEDIGT: Die 8B-Gewichte liegen vollstaendig unter model-files/smejj-1-0/original/Qwen3-8B-UD-Q4_K_XL.gguf (4,78 GiB, sha256 34a514d08f7449cb4a694a707aaa2eedccb7bb68290121bf5e5a569b2abe71c3); idrive:verify-model-complete meldet OK. Der erste Versuch scheiterte an einem Netz-Aussetzer (getaddrinfo ENOTFOUND huggingface.co) nach fuenf Wiederholversuchen; der zweite lief mit zwoelf durch. Unvollstaendige Multipart-Reste beider Anlaeufe abgebrochen, Nachlauf meldet 0. Die 14B-Datei bleibt liegen — Loeschen waere Rote Liste und ist ohne Freigabe nicht erfolgt. Kontingent 1271,5 von 2048 GiB = 62,1 %."
   },
-
   "zweiSitzungenEinContainer": {
     "kernaussage": "ZWEI SITZUNGEN AN DERSELBEN CONTAINER GROUP SIND EINE MESSFALLE ERSTER GUETE. Eine fremde Aenderung an smejj-fast-1 hat die startup_probe geloescht — nicht veraendert, geloescht.",
     "gemessen": "Container-Version sprang von 6 (meine 8B-Umstellung) auf 7, ohne dass ich etwas getan haette. Danach: startup_probe = undefined, liveness_probe = initial_delay 1200 s + 5 x 30 s. Ohne Startsonde greift die Lebendsonde mitten im Modell-Download und toetet den Container, bevor er je bereit war.",
@@ -174,7 +158,6 @@
     "merkregel": "Bei einer geteilten Container Group gehoert die Versionsnummer in jedes Messprotokoll. Ein Salad-PATCH, der nicht als merge-patch+json gesendet wird, ersetzt das Objekt und loescht dabei alles, was nicht mitgeschickt wurde — Sonden zuerst.",
     "nichtRegressionTrotzdemGehalten": "Waehrend der gesamten Instabilitaet live geprueft: Standardanfrage -> zhipu:glm-5.2, ausdrueckliche Wahl von smejj-fast-1 bei totem Dienst -> zhipu:glm-5.2 (kein Fehler), Chat-Bruecke -> groq:llama-3.1-8b-instant, smejj.com -> 200. Fail-closed hat jeden Ausfall aufgefangen."
   },
-
   "ergaenzungDurchParallelsitzung": {
     "commit": "a69b198 'feat(rag): Projektwissen hebt die Note auf 96,1 % — aber nur als Ausnahme'",
     "warumDasHierZaehlt": "Die Parallelsitzung hat unabhaengig genau die Schwaeche geloest, die ich im Abschnitt befundEchteNutzung gemessen habe: das Modell kennt smejj.com nicht. Ihre Messung zeigt, dass abrufbares Projektwissen die Note von 88,2 auf 96,1 Prozent hebt.",
@@ -182,7 +165,6 @@
     "folgeFuerDieModellwahl": "Die richtige Antwort auf meine Live-Schwaeche ist NICHT eine andere Modellgroesse, sondern der RAG-Weg. Ein kleineres oder groesseres Modell ohne Projektwissen bleibt bei echten Fragen schwach.",
     "nochNichtLive": "Ihre Messung lief ueber den Eval-Harness, nicht ueber den echten Chat. Der Umbau der Bruecke ist bei ihnen durch die 800-Zeilen-Grenze blockiert."
   },
-
   "korrekturAnParallelsitzung": {
     "betrifft": "Commit 8bdb8a7 'fix(router): Denken-Aus erreicht das eigene Modell nicht'.",
     "dortBehauptet": "Qwen3-14B denke, das Denken fresse die 600 Token des Falls code-esm-failclosed, zurueck kaemen 234 Zeichen ohne die geforderte Form — daher 0 von 5.",
@@ -191,7 +173,6 @@
     "folge": "Die Container Group setzt LLAMA_ARG_CHAT_TEMPLATE_KWARGS={\"enable_thinking\":false}; das wirkt, trotz der Verwarnung im Startprotokoll. Der Schalter SMEJJ_LLM_SALAD_DENKEN_VORLAGE aus 8bdb8a7 ist harmlos (standardmaessig aus), wuerde diesen Fall aber nicht heilen. Wer ihn einschaltet und Besserung erwartet, sucht an der falschen Stelle weiter.",
     "gemeinsamerNenner": "Damit scheitert code-esm-failclosed bei allen drei geprueften Modellen aus DEMSELBEN Grund: Der Prompt verlangt eine ESM-Funktion, die Zusicherung verlangt eine bestimmte Schreibweise davon. llama-3.1-8b schreibt 'export default', GLM-4.7-flash wechselt zwischen beiden, Qwen3-14B schreibt 'export async function'. Alle drei liefern korrektes, fail-closed ESM mit throw."
   },
-
   "liveBeweis": {
     "abnahmekriterium": "Das eigene Modell antwortet ueber den Router, belegt durch den Antwortkopf x-smejj-model-backend.",
     "beleg": "2026-08-01 08:45:10 UTC, POST https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/chat mit {\"model\":\"smejj-fast-1\"} -> HTTP 200, x-smejj-model-backend: salad:smejj-fast-1, x-smejj-model-id: smejj-fast-1",
@@ -204,7 +185,6 @@
     "failClosedNachAbschaltung": "2026-08-01 08:57:43 UTC, nach Zuruecksetzen von SMEJJ_FAST_1_ENABLED auf false: model smejj-fast-1 -> zhipu:glm-5.2, HTTP 200. Kein Nutzer sieht einen Fehler, weil das eigene Modell aus ist.",
     "warumDasFlagWiederAusIst": "Bei gestoppter GPU waere smejj-fast-1 in der Modellauswahl weiterhin waehlbar (getPublicModelRegistry: selectable = active) und liefe in den 45-Sekunden-Zeitablauf, bevor GLM-5.2 uebernimmt. Adresse und Schluessel bleiben im Control-Server hinterlegt — Wiedereinschalten ist ein Zahlenwechsel, kein Deploy."
   },
-
   "pflichtChecks": {
     "check:guidelines": "OK — 1188 Dateien, max 800 Zeilen, Naming smejj.com",
     "check:architecture": "OK — 7/7",
@@ -214,7 +194,6 @@
     "check:paths": "OK",
     "check:security": "OK — 3/3"
   },
-
   "feintuning": {
     "stand": "NICHT begonnen — richtig so",
     "grund": "Ein LoRA-Feintuning braucht erlaubte Trainingsdaten. Die Trainingsdaten-Richtlinie sperrt Ausgaben von Fremdmodell-APIs, eigene Daten wurden nie gesammelt, das Erfassungstor SMEJJ_TRAINING_CAPTURE_ENABLED steht aus. Es gibt null verwertbare Beispiele.",
