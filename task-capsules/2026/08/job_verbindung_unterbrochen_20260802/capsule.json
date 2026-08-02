@@ -36,11 +36,26 @@
     "falscherAlarmUnterwegs": "Ein Bildschirmfoto zeigte zwischendurch eine schwarze Seite. Nachgemessen war die Seite gesund — document.visibilityState stand auf 'hidden', weil das Browser-Fenster ausgeblendet war. Ein Bildschirmfoto allein ist kein Befund."
   },
 
+  "zweiteUrsache": {
+    "kern": "Genau ein Versuch je Endpunkt trifft beide schlechten Wuerfe zusammen.",
+    "gemessen_2026-08-02": "Coding-Fragen ueber die Live-Kette: die Zeabur-Bruecke antwortete bei 2 von 6 Anfragen mit HTTP 503 ('Model backend is not configured'), der Reserve-Endpunkt bei 1 von 3 mit HTTP 502. Beide Ausfaelle sind kurz und voneinander unabhaengig.",
+    "rechnung": "2/6 x 1/3 ist rund 11 % — bei jeder neunten Coding-Frage sah der Nutzer einen Fehler, obwohl ein einziger weiterer Anlauf gereicht haette.",
+    "loesung": "urls.length + 1 Versuche statt urls.length. Kostet nichts, wo ohnehin keine Antwort kam; 4xx ausser 429 wird weiterhin nicht wiederholt.",
+    "wurzel_beim_betreiber": "Das eigentliche Uebel sitzt auf der Bruecke, nicht im Klienten. /health zeigt es direkt: die Salad-Bruecke (starfruit) meldet modelConfigured:true, die Zeabur-Bruecke modelConfigured:false. Die Zeabur-Bruecke traegt also keine eigene Tiefspur — sie funktioniert nur, solange streamViaControl durchkommt. Setzt der Control Server kurz aus (am 2026-08-02 mehrfach beobachtet: HTTP 502 am Salad-Gateway, obwohl Salad 'running, ready=true' meldete), faellt sie ins Leere und antwortet 503 statt auf die Schnellspur zurueckzufallen. Der Klient kann das abfedern, aber nicht heilen."
+  },
+
   "deploy": {
-    "weg": "Frischer Klon von SmejjCom/smejj-app-frontend (das Repo ist NICHT die Live-Wahrheit), fetch-retry.js darauf kopiert, sw.js vom Live-Stand v196 auf v197 gehoben.",
+    "weg": "Frischer Klon von SmejjCom/smejj-app-frontend (das Repo ist NICHT die Live-Wahrheit), fetch-retry.js darauf kopiert, sw.js vom Live-Stand v196 auf v197, danach v198 gehoben.",
     "warumVersionssprung": "fetch-retry.js liegt cache-first im Precache. Ohne Sprung haetten Bestandsnutzer die alte Datei behalten und den Fehler weiter gesehen.",
-    "commit": "d9d2907 im Frontend-Repo",
-    "liveBelegt": "smejj-shell-v197 aktiv, Cache-Liste enthaelt nur v197, /assets/ai/fetch-retry.js enthaelt letzterBudgetMs."
+    "commits": "d9d2907 (v197, Geduld) und cd38138 (v198, zweiter Anlauf) im Frontend-Repo; ffd7b4e im App-Repo.",
+    "liveBelegt": "smejj-shell-v198 aktiv, Cache-Liste enthaelt nur v198, /assets/ai/fetch-retry.js enthaelt letzterBudgetMs und urls.length + 1."
+  },
+
+  "messfalleBeimNachtesten": {
+    "was": "Der erste Nachtest zeigte einen Fehlschlag nach 802 ms — zu schnell fuer drei Versuche, die mindestens 13 s brauchen wuerden.",
+    "ursache": "Nicht der Fix war schuld: der Cache stand auf v198, aber die GELADENE Seite lief noch mit den Modulen von vor dem Update. Ein Service-Worker-Update wechselt den Cache, nicht den laufenden Modulgraphen.",
+    "merkregel": "Nach einem sw-Versionssprung erst neu laden, dann messen. Sonst misst man den alten Stand und haelt den Fix fuer wirkungslos.",
+    "zweiteFalle": "Der Testselektor ('[data-role=assistant]') traf im DOM nichts; der echte ist 'article.entry.assistant'. Die Antworten waren korrekt da, der Zaehler blieb bei 0. Ein Testlauf, der 0 Ergebnisse meldet, ist zuerst ein Verdacht gegen den Test."
   },
 
   "pruefungen": {
@@ -53,6 +68,31 @@
     "check:voice": "OK",
     "check:module-queries": "OK",
     "check:json": "OK"
+  },
+
+  "dritteUrsache_wurzel": {
+    "kern": "GLM-5.2 — das Ziel von 'auto' und der Standard — beantwortet normale Fragen zuverlaessig, faellt bei CODING-Fragen aber fast immer aus.",
+    "gemessen_2026-08-02_gegen_den_Control_Server": {
+      "verschraenkt_je_6_Anfragen_gleiche_Coding-Frage": {
+        "kimi-k2-7": "6 von 6 OK",
+        "smejj-fast-1": "6 von 6 OK",
+        "glm-5.2": "0 von 6 — alle HTTP 502",
+        "auto": "0 von 6 — alle HTTP 502"
+      },
+      "glm-5.2_nach_Fragenart": { "coding": "1 von 5 OK", "normal": "5 von 5 OK" },
+      "warumVerschraenktGemessen": "Der erste Durchgang lief in Bloecken je Modell. Dann waere ein schlechtes Zeitfenster nicht von einem schlechten Modell zu unterscheiden. Erst die feste Rotation ueber alle Modelle schliesst das aus.",
+      "fehlerbild": "HTTP 502 nach nur 715-1187 ms mit 'retry-after: 60' und Cloudflare-Fehlerseite — also eine Abweisung auf dem Weg, kein langsamer Zeitablauf. Zum Vergleich: ein gelungener Lauf braucht 1802 ms."
+    },
+    "warumDieAbsicherungNichtGreift": "Der Control Server haelt GLM zeitgleich fuer gesund: /api/health meldet status ready, available true, consecutiveFailures 0, source 'inference'. markModelRuntimeFailure wird auf diesem Weg also nie aufgerufen — die Verbindung stirbt, bevor der Zaehler sie sieht. executeWithFallback selbst ist in Ordnung; es bekommt den Fehlschlag nur nie zu sehen.",
+    "zweiterBefund": "Die Absicht im Code lautet bereits 'Coding gehoert Kimi' (src/shared/modelRegistry.js: autoModelId, profile === 'coding' -> kimi-k2-7). Kimi ist live aktiviert, konfiguriert und gesund. Trotzdem landet 'auto' bei einer Coding-Frage auf GLM-5.2 — das Profil kommt auf diesem Weg also nicht als 'coding' an. Von aussen belegt: Kimi ausdruecklich angefragt 6 von 6 OK, 'auto' bei derselben Frage 0 von 6.",
+    "folgeFuerDenNutzer": "Die Bruecke leitet Coding an den Control Server. Faellt der dort aus, hat die Zeabur-Bruecke wegen modelConfigured:false keine eigene Tiefspur und antwortet 503. Der Klient wechselt dann auf den Reserve-Endpunkt — der aber ebenfalls ueber denselben Control Server geht. Alle drei Versuche laufen in dieselbe Wurzel.",
+    "entscheidungFuerDenBetreiber": "Den Coding-Standard von GLM-5.2 auf Kimi K2.7 umstellen. Kimi ist bereits aktiviert, konfiguriert, gesund und laut Code fuer genau diesen Fall vorgesehen. NICHT eigenmaechtig gemacht: das aendert, welches bezahlte Modell jede Coding-Anfrage beantwortet, beruehrt also laufende Kosten — Rote Liste."
+  },
+
+  "wasDerKlientFixBelegtLeistet": {
+    "beweis": "Live-Mitschnitt der Versuche je Frage: 'smejj-cha:503 > starfruit:TypeError > smejj-cha:503'. Vor v198 waeren es zwei Versuche gewesen. Die drei Anlaeufe laufen also nachweislich.",
+    "grenze": "Sie helfen nur, solange irgendein Ziel gesund ist. Am 2026-08-02 fuehrten alle drei Wege in dieselbe kaputte Wurzel (GLM-Coding), deshalb blieb bei Coding-Fragen ein Rest an Fehlern. Das ist keine Schwaeche des Fixes, sondern seine ehrliche Reichweite.",
+    "starfruitImBrowser": "Der Reserve-Endpunkt meldet sich im Browser als 'TypeError', nicht als 502. Grund: die Cloudflare-Fehlerseite traegt keinen CORS-Kopf, also verwirft der Browser sie als Netzfehler. Serverseitig ist CORS sauber (OPTIONS 204, allow-origin https://smejj.com). Merkregel: ein TypeError im Browser kann ein ganz normaler 5xx sein."
   },
 
   "merkregel": "Gruene Tests beweisen nicht, dass die Seite funktioniert. Dieser Fehler war live sichtbar, waehrend 289 Frontend-Tests gruen waren — er entsteht erst im Zusammenspiel zweier Komponenten, die jede fuer sich richtig sind. Wer nur Tests laufen laesst, sieht ihn nie."
