@@ -17,6 +17,12 @@ const USER_PROTECTED_EXACT_PATHS = new Set([
   ROUTES.api.gitCommit,
   ROUTES.api.storagePresign,
   ROUTES.api.saladStatus,
+  // Wissenssuche: gibt Auszuege aus den internen Regeldokumenten samt Quellpfad
+  // heraus. Ohne diesen Eintrag war die Route fuer JEDEN erreichbar, der die
+  // Adresse kennt — waehrend der Chat auf derselben Maschine interne Dateinamen
+  // ausdruecklich aus den Antworten filtert. Gefunden am 2026-08-01; kein
+  // Frontend, kein Worker und kein Test ruft sie auf, sie war reine Diagnose.
+  ROUTES.api.ragSearch,
   ROUTES.api.trainingConsent,
   ROUTES.api.trainingConsentDecision,
   ROUTES.api.trainingConsentRevoke

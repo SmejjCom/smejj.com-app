@@ -67,3 +67,11 @@ test("control mutation origin keeps local HTTP and Google callback exceptions sc
     headers: { host: "control.example", origin: "https://accounts.google.com", "x-forwarded-proto": "https" }
   }, new URL("https://control.example/api/jobs")), false);
 });
+
+test("die Wissenssuche verlangt eine Anmeldung", () => {
+  // Die Route gibt Auszuege aus den internen Regeldokumenten samt Quellpfad
+  // heraus. Offen erreichbar war sie ein Leck: derselbe Dienst filtert interne
+  // Dateinamen ausdruecklich aus den Chat-Antworten heraus. Gefunden 2026-08-01.
+  assert.equal(protectedAccess("/api/rag/search", "GET"), true);
+  assert.equal(protectedAccess("/api/rag/search", "HEAD"), true);
+});
