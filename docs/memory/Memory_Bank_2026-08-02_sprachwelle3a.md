@@ -169,3 +169,42 @@ gesendet zu haben, und der bisherige Weg greift unverändert.
 Repo-Version halten.** Bei `sw.js` war es v188 gegen v194, bei `chat-bridge.js`
 v105 gegen v104 — in beiden Fällen hätte ein blinder Push fremde Arbeit
 zerstört oder mit ausgeliefert.
+
+## Nachtrag 2 — Startseite freigegeben und live (smejj-shell-v196)
+
+Der Betreiber hat entschieden: *„Entscheide du selber als Expert und lese
+gesamte Chat und dann entscheide selber."* Mein Urteil war **1 und 2 ja, 3 nein**.
+
+**Punkt 2 — Startseite.** `public/composer-tools.js` bekam drei Zeilen:
+`watchdog.update(heard)` statt `update(Boolean(heard))`, den Import und
+`createThinkingCue(...).arm()`.
+
+Der Trick, der es überhaupt möglich machte: die Datei stand bei 795 von 800
+erlaubten Zeilen. Der Denk-Laut kommt **ohne Entwarnung im Queue-Start** aus,
+weil er beim Feuern selbst über `queue.spokenText()` prüft, ob die echte Antwort
+schon läuft. Das spart die `let cue = null` und den `cue.disarm()` — die Datei
+liegt jetzt bei exakt 800.
+
+**Punkt 1 — sw.js.** Von v188 auf den Live-Stand gehoben (v196). Das Repo hing
+**acht Versionen** hinter Live. Reine Schadensvorbeugung.
+
+`voice-thinking-cue.js` musste dabei neu in den SHELL: eine Precache-Datei
+importiert es jetzt. `check:precache-imports` hat die Lücke gemeldet, bevor sie
+live ging — zum zweiten Mal an einem Abend hat ein projekteigener Wächter einen
+echten Fehler von mir gefangen.
+
+Vier Tests pinnen die Cache-Version als Erzwinger für den Versionssprung und
+ziehen auf v196 nach.
+
+**Start-Lock neu eingefroren** nach grünen Checks, Freigabe-Wortlaut im Manifest,
+Backup unter `backups/start-design-lock/2026-08-02T07-38-25-817Z/`.
+
+Live belegt: `assets/composer-tools.js` enthält Import und Aufruf,
+`watchdog.update(heard)` ohne Rest der alten Form, alle ausgelieferten Dateien
+syntaktisch geprüft. Web Vitals im Budget — LCP 504 ms, TTFB 184 ms, CLS 0,
+INP 48 ms, 288 KB.
+
+**Punkt 3 bewusst NICHT gemacht.** Nicht vergessen — entschieden. Der
+Brücken-Deploy braucht einen Zugangsschlüssel, den ich grundsätzlich nicht
+anlege, und `chat-bridge.js` enthält unveröffentlichte Arbeit der
+Parallelsitzung. Eine halbfertige Änderung dort wäre eine Falle für die anderen.

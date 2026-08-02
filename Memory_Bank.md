@@ -31,16 +31,16 @@ Commit `7226116`, Frontend `32f352f`, live als `smejj-shell-v195`.
   gesperrtes Byte. **Vor einer Freigabe-Anfrage erst suchen, wo gesperrte und
   freie Seite sich treffen.**
 - **Semantisches Sprech-Ende** (`idleFor`): Satzzeichen 420 ms, Bindewort 1500 ms,
-  kurzer Anfang 1500 ms, sonst 850 ms. Rueckwaertskompatibel — `update()` mit
-  Wahrheitswert bleibt bei 850 ms, live nachgemessen.
-- **Denk-Laut** bei Antwort ueber 700 ms: spricht die Statuszeile, in 14 Sprachen
-  schon uebersetzt. Laeuft durch DIESELBE Warteschlange wie die Antwort
-  (`sayAhead`) — sonst redet sie hinein und der Echo-Filter haelt den eigenen
-  Lautsprecher fuer den Nutzer.
-- **Falle, vom eigenen Waechter gefangen:** Import mit `?v=` waehrend die gesperrte
-  Datei ohne Kennung laedt -> zwei Modulinstanzen (`check:module-queries`).
-- **Das Repo ist NICHT die Live-Wahrheit:** `sw.js` Repo v188, live v195. Deploys
-  immer auf Live-Basis bauen (frischer Klon), sonst rollt man die Seite zurueck.
+  kurzer Anfang 1500 ms, sonst 850 ms. Rueckwaertskompatibel gebaut — deshalb war
+  die Startseite spaeter mit DREI Zeilen nachruestbar.
+- **Denk-Laut** bei Antwort ueber 700 ms: spricht die Statuszeile (14 Sprachen).
+  Laeuft durch DIESELBE Warteschlange wie die Antwort (`sayAhead`) — sonst redet
+  sie hinein und der Echo-Filter haelt den Lautsprecher fuer den Nutzer.
+- **Zweimal vom eigenen Waechter gefangen:** doppelte Modul-Kennung und fehlender
+  SHELL-Eintrag — beide Male vor dem Livegang.
+- **Das Repo ist NICHT die Live-Wahrheit:** `sw.js` hing ACHT Versionen zurueck.
+  Deploys immer auf Live-Basis bauen (frischer Klon). Am 2026-08-02 angeglichen
+  und die Startseite freigegeben — beides live als `smejj-shell-v196`.
 
 ### [2026-08-01] EIGENES MODELL EXISTIERT UND LAEUFT (job_eigenes_modell_live_20260801)
 
