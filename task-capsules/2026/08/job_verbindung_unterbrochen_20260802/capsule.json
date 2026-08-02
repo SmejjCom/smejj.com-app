@@ -137,6 +137,36 @@
     "derRichtigeFix": "Ein Schalter auf dem Control Server: SMEJJ_MODEL_AUTO_ENABLED aktivieren. Dann greift autoModelId() und Coding landet wie vorgesehen bei Kimi K2.7. Status heute: auto = prepared-inactive."
   },
 
+  "nachtrag3_2026-08-02_umstellungUndEinVerdeckterFehler": {
+    "freigabe": "Der Betreiber hat entschieden: SMEJJ_MODEL_DEFAULT von glm-5-2 auf kimi-k2-7, auto bleibt AUS.",
+    "warumNICHTderAutoSchalter": "Die Simulation gegen die ECHTE Live-Umgebung (aus dem Rueckrollpunkt gelesen) zeigte eine Nebenwirkung, die vorher niemand gemessen hatte: SMEJJ_MODEL_AUTO_ENABLED=YES leitet nicht nur coding zu Kimi, sondern auch das Profil 'fast' auf smejj-fast-1 — und classifyProfile stuft JEDE Frage unter 80 Zeichen als 'fast' ein. Das waere eine Befoerderung des eigenen Modells und damit gegen die stehende Regel. Das eigene Modell einfach abzuschalten war auch keine Loesung: resolveModelSelection haette dann sogar AUSDRUECKLICHE Anfragen umgeleitet und die Pruefsuite zerrissen.",
+    "durchgefuehrt": {
+      "rueckrollpunkt": "backups/salad/smejj-control-2026-08-02-vor-auto-schalter.json (vollstaendige Container-Beschreibung vor der Aenderung)",
+      "patch": "PATCH mit der VOLLSTAENDIGEN Variablenliste statt nur des einen Schluessels — weil eine fruehere Fremdsitzung mit einem Teil-Patch schon einmal die startup_probe geloescht hat. So liefert Merge- wie Replace-Semantik dasselbe Ergebnis.",
+      "ergebnis": "HTTP 200, Version 128 -> 129, alle 77 Variablen erhalten, startup_probe und liveness_probe unveraendert, SMEJJ_MODEL_AUTO_ENABLED weiterhin NO, SMEJJ_FAST_1_ENABLED unveraendert."
+    },
+    "derVerdeckteFehler": {
+      "befund": "Die Umstellung wirkt nur zur Haelfte. /api/health meldet zwar defaultModelId: kimi-k2-7, aber activeModelId bleibt glm-5-2 — und 7 von 8 Anfragen landen weiter bei glm-5-2.",
+      "ursache": "src/shared/modelRegistry.js:251 — `normalizeModelId(value)` gibt bei leerer Eingabe das FEST EINGEBAUTE `DEFAULT_MODEL_ID = \"glm-5-2\"` zurueck, nicht den konfigurierten Standard. In resolveModelSelection wird daraus ein `requestedId`, das wie eine ausdrueckliche Modellwahl behandelt wird. Damit ist SMEJJ_MODEL_DEFAULT in genau dem haeufigsten Fall — Anfrage OHNE Modellangabe — wirkungslos.",
+      "lokalReproduziert": "normalizeModelId(\"\") -> \"glm-5-2\"; resolveModelSelection({requestedModel:\"\"}) -> glm-5-2, waehrend resolveModelSelection({requestedModel:\"auto\"}) -> kimi-k2-7 liefert. Beide mit derselben Umgebung.",
+      "folge": "Der Env-Wert greift heute nur fuer Anfragen, die ausdruecklich \"auto\" schicken. Genau deshalb sah man nach der Umstellung ein GEMISCHTES Bild (mal Kimi, mal GLM) statt eines sauberen Umschlags.",
+      "merkregel": "Ein Konfigurationswert, der 'gesetzt' aussieht, ist noch lange nicht wirksam. Erst der Weg vom Aufrufer bis zur Auswahl beweist es — hier verdeckte eine Normalisierungsfunktion den Wert.",
+      "offen": "Der saubere Fix ist eine Zeile: leere Eingabe darf nicht wie eine ausdrueckliche Wahl von glm-5-2 behandelt werden. Das ist eine Codeaenderung im Control Server und braucht einen Release — nicht im selben Zug erledigt, weil dort eine Parallelsitzung arbeitet."
+    }
+  },
+
+  "nachtrag4_2026-08-02_ergebnisUndUebergabe": {
+    "liveTestNachDerUmstellung": "Echter Klickpfad auf https://smejj.com, aus dem DOM ausgewertet: 20 von 20 fehlerfrei — 10 Coding-Fragen, 10 andere, 0 Konsolenfehler. Erster vollstaendig sauberer Durchlauf MIT Coding.",
+    "einschraenkung": "Coding antwortet noch langsam (6,2 s und 19,0 s gemessen) statt der 3,5 s, die Kimi ausdruecklich angefragt liefert. Grund ist der verdeckte Fehler oben: ohne Modellangabe greift der neue Standard nicht.",
+    "eineParallelsitzungArbeitetAmSelbenFehler": {
+      "gefunden": "Waehrend meiner Messungen erschienen zwei fremde Commits im Repo: fd442f0 'Coding-Ausfall auf smejj.com eingegrenzt und Weiche gebaut' und b92502d 'der Fallback zeigte auf sich selbst — Kette heilt sich jetzt selbst'.",
+      "inhalt": "Dieselbe Wurzel, unabhaengig gefunden: die Kette hatte ohne angefragtes Modell genau EINEN Eintrag, weil der Standard nur angehaengt wurde, wenn er vom gewaehlten Modell abwich. Faellt der eine aus, gibt es keinen zweiten Versuch. b92502d ergaenzt jetzt weitere gesunde Modelle.",
+      "meineEntscheidung": "Serverseitig gestoppt. Ein Control-Server-Release wuerde deren noch unveroeffentlichte Arbeit mit ausliefern, ohne dass sie sie verifiziert haben — genau der Fehler, den ich bei public/chat-bridge.js bewusst vermieden habe. Auch KEINE eigene dritte Aenderung an resolveModelSelection eingebaut, um keine Kollision zu erzeugen.",
+      "waszusammenpasst": "Meine Env-Umstellung (Standard = kimi-k2-7) und deren selbstheilende Kette widersprechen sich nicht — zusammen ergibt das Kimi als Kopf einer Kette mit gesunden Ersatzmodellen. Die Parallelsitzung sollte von der Umstellung wissen."
+    },
+    "offenUndUebergeben": "Der verdeckte Fehler in normalizeModelId/resolveModelSelection: eine leere Modellangabe wird als reason 'explicit_model' behandelt und pinnt glm-5-2. Die Ersatzkette der Parallelsitzung mildert die FOLGE, der Konfigurationswert bleibt aber verdeckt. Ein Satz genuegt: leere Eingabe vor der Normalisierung abfangen, dann entscheidet enabledDefaultModelId(env)."
+  },
+
   "wasDerKlientFixBelegtLeistet": {
     "beweis": "Live-Mitschnitt der Versuche je Frage: 'smejj-cha:503 > starfruit:TypeError > smejj-cha:503'. Vor v198 waeren es zwei Versuche gewesen. Die drei Anlaeufe laufen also nachweislich.",
     "grenze": "Sie helfen nur, solange irgendein Ziel gesund ist. Am 2026-08-02 fuehrten alle drei Wege in dieselbe kaputte Wurzel (GLM-Coding), deshalb blieb bei Coding-Fragen ein Rest an Fehlern. Das ist keine Schwaeche des Fixes, sondern seine ehrliche Reichweite.",
