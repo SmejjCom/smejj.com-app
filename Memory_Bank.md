@@ -20,41 +20,58 @@ und er enthielt den ANTWORTSCHLUESSEL der eigenen Pruefung — beides behoben, W
 `check:rag`. **NICHT LIVE:** der echte Chat laeuft ueber die Bridge (Schnellspur), Umbau
 blockiert durch 800-Zeilen-Grenze, Ein-Datei-Deploy und fehlendes Index-Artefakt.
 
-### [2026-08-01] EIGENES MODELL EXISTIERT UND SCHLAEGT DIE SCHNELLSPUR (job_eigenes_modell_live_20260801)
+### [2026-08-02] SPRACHWELLE 3a LIVE — die geteilte Naht schlaegt die Sperre (job_sprachwelle_stufe3a_20260802)
+
+Volltext: [docs/memory/Memory_Bank_2026-08-02_sprachwelle3a.md](docs/memory/Memory_Bank_2026-08-02_sprachwelle3a.md).
+Commit `7226116`, Frontend `32f352f`, live als `smejj-shell-v195`.
+
+- **DIE GETEILTE NAHT SCHLAEGT DIE SPERRE.** `composer-tools.js` steht unter
+  Start-Lock, importiert aber dieselben Sprach-Module wie die freien Sprachseiten.
+  Verbesserung in `voice-endpoint.js` + `voice-speech-queue.js` wirkt ohne ein
+  gesperrtes Byte. **Vor einer Freigabe-Anfrage erst suchen, wo gesperrte und
+  freie Seite sich treffen.**
+- **Semantisches Sprech-Ende** (`idleFor`): Satzzeichen 420 ms, Bindewort 1500 ms,
+  kurzer Anfang 1500 ms, sonst 850 ms. Rueckwaertskompatibel — `update()` mit
+  Wahrheitswert bleibt bei 850 ms, live nachgemessen.
+- **Denk-Laut** bei Antwort ueber 700 ms: spricht die Statuszeile, in 14 Sprachen
+  schon uebersetzt. Laeuft durch DIESELBE Warteschlange wie die Antwort
+  (`sayAhead`) — sonst redet sie hinein und der Echo-Filter haelt den eigenen
+  Lautsprecher fuer den Nutzer.
+- **Falle, vom eigenen Waechter gefangen:** Import mit `?v=` waehrend die gesperrte
+  Datei ohne Kennung laedt -> zwei Modulinstanzen (`check:module-queries`).
+- **Das Repo ist NICHT die Live-Wahrheit:** `sw.js` Repo v188, live v195. Deploys
+  immer auf Live-Basis bauen (frischer Klon), sonst rollt man die Seite zurueck.
+
+### [2026-08-01] EIGENES MODELL EXISTIERT UND LAEUFT (job_eigenes_modell_live_20260801)
 
 Volltext: [docs/memory/Memory_Bank_2026-08-01_eigenes_modell.md](docs/memory/Memory_Bank_2026-08-01_eigenes_modell.md).
-Capsule `job_eigenes_modell_live_20260801`, Rollback `095dbcd`, Commits `c7fc4b4`, `87ab3e0`.
+Commits `c7fc4b4`, `87ab3e0`, `a3d8541`, `b970fcf`.
 
-- **Gemessen, 5 Ziehungen je Fall:** Schnellspur **82,1 % ± 3,1**, eigenes Modell
-  direkt **87,6 % ± 1,3** (14B), ueber die Live-Kette **84,7 % ± 2,2**. Der direkte
-  Abstand ist echt, der Live-Abstand liegt in der Streuung — beide Zahlen nennen.
-- **Live belegt:** `x-smejj-model-backend: salad:smejj-fast-1`; ohne `model` weiter `zhipu:glm-5.2`, Nutzer-Bruecke unberuehrt.
+- **Gemessen, 5 Ziehungen je Fall:** Schnellspur 82,1 % ± 3,1. Eigenes Modell
+  **Qwen3-8B (5,14 GB) 92,9 % ± 2,3** — besser, schneller (Median 659 ms) und
+  44 % kleiner als das zuerst gewaehlte Qwen3-14B (87,6 %, 974 ms).
+  **Das kleinere Modell war das bessere.**
+- **Live belegt:** `x-smejj-model-backend: salad:smejj-fast-1`; ohne `model` weiter
+  `zhipu:glm-5.2`, Nutzer-Bruecke unberuehrt. Dauerbetrieb seit 2026-08-01 auf
+  Anordnung (gegen zweimalige Empfehlung), 158-216 USD/Monat.
+- **DIE PRUEFUNGSNOTE SAGT DAS ECHTE VERHALTEN NICHT VORHER:** bei echten Fragen
+  verliert das eigene Modell klar gegen GLM-5.2 (antwortet auf "GitHub Actions
+  erlaubt?" faelschlich "Ja", waehrend genau dieser Fall in der Suite 5/5 besteht).
+  Grund: jeder Suite-Fall liefert die Projektkenntnis im System-Prompt mit, ein
+  echter Nutzer nicht. **Nicht die Modellgroesse ist die Antwort, sondern das
+  Projektwissen** (Parallelsitzung `a69b198`: 88,2 -> 96,1 %).
 - **DIE STARTSONDE IST DIE HAERTERE GRENZE ALS DIE GRAFIKKARTE.** llama.cpp laedt
   die Gewichte beim Start; das laeuft gegen Salads `startup_probe`, Maximum hart
-  60 min. Ein 17,7-GB-Abbild wurde darin zweimal nicht fertig und startete den
-  Download von vorn. Salad meldet dabei **RUNNING, 1/1 Replica** — nur `ready`
-  bleibt false. Auf 24 GB VRAM haette es gepasst — entschieden hat die Ladezeit.
-- **Eigenes Lager ist nicht selbst hostbar:** GLM-5.2 und Kimi K2.7 brauchen
-  80-GB-Karten, der Salad-Katalog endet bei 32 GB.
-- **DAS KLEINERE MODELL IST DAS BESSERE** (23:30 UTC, gleiche Quantisierung,
-  gleiche Suite): **Qwen3-8B 5,14 GB -> 92,9 % ± 2,3, Median 659 ms, 0 Ausfaelle**
-  gegen Qwen3-14B 9,2 GB -> 87,6 % ± 1,3, Median 974 ms, 1 Ausfall. Beim 8B
-  besteht sogar `code-esm-failclosed` 5/5. Basis ist jetzt das 8B — besser,
-  schneller, 44 % kleiner (= schnellerer Kaltstart = hoehere Verfuegbarkeit).
-- **ZWEI SITZUNGEN AN EINER CONTAINER GROUP:** eine fremde Aenderung LOESCHTE die
-  `startup_probe`; danach viermal Instanzwechsel in 30 Minuten. Der erste 8B-Lauf
-  fiel hinein: 14/14 `http_503`, 7,1 % — keine Modellnote, ein toter Endpunkt.
-  **Container-Version vor UND nach jedem Messlauf protokollieren.** Salad-PATCH
-  ohne `merge-patch+json` ersetzt das Objekt und loescht Sonden.
-- **DIE PRUEFUNGSNOTE SAGT DAS ECHTE VERHALTEN NICHT VORHER:** bei echten Fragen
-  verliert das eigene Modell klar gegen GLM-5.2 — es antwortet auf "GitHub Actions
-  erlaubt?" mit "Ja" (falsch), waehrend genau dieser Fall in der Suite 5/5 besteht.
-  Grund: jeder Suite-Fall liefert die Projektkenntnis im eigenen System-Prompt mit,
-  ein echter Nutzer nicht. Gilt fuer 8B UND 14B — **nicht die Modellgroesse ist die
-  Antwort, sondern das Projektwissen** (Parallelsitzung `a69b198`: 88,2 -> 96,1 %).
+  60 min. Ein 17,7-GB-Abbild wurde darin zweimal nicht fertig. Salad meldet dabei
+  RUNNING, 1/1 Replica — nur `ready` bleibt false.
 - **GPU-Pool ist Verfuegbarkeit:** mit 4 erlaubten Klassen fand Salad 35 Minuten
   keinen Rechner, mit 7 binnen 7 Minuten. 50er-Serie draussen (CUDA 12.8 ungeprueft).
-  Dauerbetrieb seit 2026-08-01 auf Anordnung, 158-216 USD/Monat.
+- **ZWEI SITZUNGEN AN EINER CONTAINER GROUP:** eine fremde Aenderung LOESCHTE die
+  `startup_probe`; der erste 8B-Lauf fiel hinein (14/14 `http_503`, 7,1 % — keine
+  Modellnote, ein toter Endpunkt). **Container-Version vor UND nach jedem Messlauf
+  protokollieren.** Salad-PATCH ohne `merge-patch+json` loescht Sonden.
+- **Eigenes Lager ist nicht selbst hostbar:** GLM-5.2 und Kimi K2.7 brauchen
+  80-GB-Karten, der Salad-Katalog endet bei 32 GB.
 
 ### [2026-07-31] MAUS: SITZUNG BLEIBT STEHEN, ZWEITER ADAPTER AN DERSELBEN NAHT (job_maus_eigener_browser_20260731)
 
@@ -65,14 +82,10 @@ HEAD vor der Aenderung `e603802`. **Noch nicht ausgerollt** (siehe unten).
   aber die WAHRHEIT ueber eine Sitzung liegt als Lease auf IDrive e2. Fremd
   gehalten => 409; abgelaufener Lease = frei (Selbstheilung nach Scale-to-zero).
   Gemessen: zwei Auftraege, 1 Browserstart statt 2, Auftrag 2 in 0,0 s statt 3,3 s.
-- **Kein zweiter Sitzungs-Motor:** Muster von `remote-browser/session-engine.js`
-  uebernommen, nicht der Code. `executedActions` gehoert zum Auftrag, nicht zur
-  Sitzung; exit-after-run darf nicht feuern, solange eine Sitzung lebt.
-- **Chrome-Adapter an der `browserFactory`-Naht:** Allowlist, Budget, Datei-Grenzen
-  und Vault gelten dadurch fuer BEIDE Adapter. **Nie `--remote-debugging-port`** —
-  der Port kennt keine Herkunftspruefung. `check:maus-engine` 189/189.
-- **NICHT LIVE:** Teil 0 (Token + Eimer) weiterhin offen (Exit 2, Rote Liste);
-  Frontend bewusst zurueckgehalten, bis die Kette live nachweisbar ist.
+- **Kein zweiter Sitzungs-Motor:** Muster uebernommen, nicht der Code.
+  `executedActions` gehoert zum Auftrag; exit-after-run darf nicht feuern, solange
+  eine Sitzung lebt. **Nie `--remote-debugging-port`** — der Port kennt keine
+  Herkunftspruefung. NICHT LIVE: Teil 0 (Token + Eimer) offen, Rote Liste.
 
 ### [2026-07-30] MODUL W: TAGESPROJEKTION STATT ZAEHLSTAND IM SPEICHER (job_analytik_projektion_20260730)
 
@@ -85,47 +98,34 @@ Commits `fcabd1b`, `5d568ef`, `e4ce5dc`, Control-Server **Version 124**.
   auf IDrive e2, plus 20-s-Lesedurchgriff (merkt die ANTWORT eines GET, nicht eine
   eigene Rechnung).
 - **WICHTIGSTE MESS-LEHRE: die Grundlast reisst das Budget selbst.** `/api/health`
-  — kein S3, keine Auth — zeigt von aussen p95 492 ms. Das 300-ms-Budget ist von
-  dort nicht pruefbar. Aussagekraeftig ist der EIGENANTEIL gegen einen Endpunkt
-  ohne Speicherzugriff auf demselben Host: v123 +79 ms, **v124 -5 ms**.
-- Eine gescheiterte Quelle wird als gescheitert GESPEICHERT (nie als 0), das Alter
-  faehrt mit, und ein fehlgeschlagener Neubau ueberschreibt nichts.
-- FALLE: der Lesedurchgriff schlug zwischen unabhaengigen Testfaellen durch — ein
+  zeigt von aussen p95 492 ms — das 300-ms-Budget ist von dort nicht pruefbar.
+  Aussagekraeftig ist der EIGENANTEIL gegen einen Endpunkt ohne Speicherzugriff
+  auf demselben Host: v123 +79 ms, **v124 -5 ms**.
+- Gescheiterte Quelle wird als gescheitert GESPEICHERT (nie als 0). FALLE: ein
   prozessweiter Zwischenspeicher braucht in Tests einen Ausschalter.
-- `check:paths` war seit `22eef72` rot (absoluter Pfad in CODEBERG_SPIEGEL.md) und
-  brach `release:preflight` fuer JEDE Sitzung. Behoben; danach Exit-Code 0.
 
 ### [2026-07-29] TIEFE SPUR: DREI SPERREN, ZWEI BEHOBEN (job_tiefe_spur_routing_20260729)
 
 Volltext + Benchmarks: `task-capsules/2026/07/job_tiefe_spur_routing_20260729/`.
 - **ZWEI Dienste, nicht einer:** `smejj-chat-bridge` ist nicht `src/server.js` —
-  Kopf `x-smejj-bridge: chat-fast-lane`, fest `groq:llama-3.1-8b-instant`, kein
-  `/api/health` (404). Dort den Zustand suchen heisst falschen Dienst fragen.
-- **Tiefe Spur live NICHT angeschlossen:** `glm-5-2` = `fallback-only` (kein
-  Zugang), `ai=false`. Coding dorthin umleiten hiesse **ins Leere** umleiten.
-- **Behoben (Fehler, kein Entwurf):** `handleChat` rief `streamLLM` ohne `profile`
-  → alles lief auf `default`, Coding-Modelle unerreichbar; `/api/agent` nicht.
+  fest `groq:llama-3.1-8b-instant`, kein `/api/health` (404).
+- **Tiefe Spur NICHT angeschlossen:** `glm-5-2` = `fallback-only` — ins Leere.
+- **Behoben:** `handleChat` rief `streamLLM` ohne `profile` → alles lief auf
+  `default`, Coding-Modelle unerreichbar.
 - **Behoben, gefaehrlichster Fund:** Denken zaehlt gegen dasselbe Token-Budget wie
-  die Antwort. `glm-4.7-flash`, `max_tokens 600`, Denken an → **600 Token
-  verbraucht, content LEER**. `callViaProvider` gibt die Fall-Obergrenze durch —
-  ein brauchbares Modell waere als Totalausfall gemessen worden. Jetzt
+  die Antwort — `max_tokens 600` + Denken an = 600 Token verbraucht, content LEER.
+  Ein brauchbares Modell waere als Totalausfall gemessen worden. Jetzt
   `THINKING_MIN_TOKEN_BUDGET`; Suite unangetastet.
-- **Kosten beantwortet:** `glm-4.7-flash` ist gratis und besteht
-  `code-esm-failclosed` (2094 ms, 199 Token, alle vier Zusicherungen) — den Fall,
-  den die Schnellspur reisst. `glm-5.2` waere 1,40/4,40 USD je 1 Mio Token.
-  337 Tests gruen, alle Locks halten, kalt ttfb 91 / lcp 420 / 284 KB, API p95
-  151 ms. **Diese Datei ist am 800-Zeilen-Limit: vor dem naechsten Eintrag nach
-  `docs/memory/` auslagern.**
+- **Kosten beantwortet:** `glm-4.7-flash` ist gratis. **Diese Datei ist am
+  800-Zeilen-Limit: neue Eintraege nach `docs/memory/` auslagern.**
 
 ### [2026-07-29] EIN MODUL, EINE KENNUNG — plus Waechter (job_module_kennungen_20260729)
 
 Live smejj.com, **sw v193** (Frontend `7136de5`, App-Repo `5531619`). Volltext:
 `docs/task-capsules/2026/07/job_module_kennungen_20260729/CAPSULE.md`.
 - **Beim Nachmessen des Seitengewichts gefunden:** `voice-speech-queue.js` wurde
-  ZWEIMAL geladen (chat-actions.js `?v=1` gegen composer-tools.js
-  `?v=blitz-20260726`) — 4,3 KB doppelt und zwei Modulinstanzen mit getrenntem
-  Zustand. Kaputt war nichts, weil dort nur die reine Funktion
-  `sanitizeForSpeech` benutzt wird; die Warteschlange haette es zerrissen.
+  ZWEIMAL geladen (zwei Kennungen) — doppeltes Gewicht und zwei Modulinstanzen mit
+  getrenntem Zustand. Daher `check:module-queries`.
 - **Zweiter Fund in HTML:** `public/de/index.html` lud `voice-landing.js` unter
   `?v=voice-send-20260721` — sechs Aenderungen alt, waehrend die 14 anderen
   Sprachseiten die aktuelle nutzten. Deutsche Seite lief live auf altem Stand.

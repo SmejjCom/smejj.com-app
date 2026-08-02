@@ -1,0 +1,96 @@
+{
+  "jobId": "job_sprachwelle_stufe3a_20260802",
+  "createdAt": "2026-08-02",
+  "owner": "smejj.com Betreiber",
+  "title": "Sprachwelle Stufe 3a — Denk-Laut und semantisches Sprech-Ende, live",
+  "goal": "Die zwei groessten Bruchstellen im Sprachgespraech schliessen, ohne die eingefrorene Startseite anzufassen und ohne neue laufende Kosten.",
+
+  "ausgangslage": {
+    "recherche": "Vergleich mit Codex Voice und Gemini Live: die beiden koennen Ton direkt zu Ton (ein Modell, Audio rein/raus), smejj.com laeuft ueber eine Kette aus vier Systemen. Ein eigenes Voll-Duplex-Audiomodell ist ausser Reichweite.",
+    "erkenntnis": "Der gefuehlte Unterschied entsteht nicht nur am Modell, sondern am Gespraechsablauf. Genau dort ist smejj.com auch gegen die Grossen verbesserbar — und zwar kostenlos.",
+    "gemessenVorher": "Stille-Waechter starr 850 ms nach dem letzten Wort. Zwischen abgeschickter Frage und erstem Wort der Antwort 0,8 s im guten Fall, bis 9,5 s mit Websuche — akustisch passiert in dieser Zeit NICHTS."
+  },
+
+  "architektur": {
+    "kernentscheidung": "Die Verbesserungen sitzen in den GETEILTEN Modulen, die beide Hosts importieren — public/voice-endpoint.js und public/voice-speech-queue.js. Dadurch wirken sie, ohne ein Byte in public/composer-tools.js zu aendern, das unter Start-Lock steht.",
+    "warumDasZaehlt": "Der naheliegende Weg waere gewesen, die gesperrte Datei anzufassen und dafuer eine Freigabe zu erbitten. Der Umweg ueber die geteilte Naht liefert dasselbe Ergebnis ohne Sperre und ohne Wartezeit.",
+    "geaenderteDateien": [
+      "public/voice-endpoint.js — idleFor() + adaptiver Waechter",
+      "public/voice-thinking-cue.js — NEU, Denk-Laut",
+      "public/voice-speech-queue.js — sayAhead()",
+      "public/voice-landing.js — Verdrahtung",
+      "tests/voice-sprachwelle3.test.mjs — NEU, 41 Pruefungen",
+      "package.json — check:voice erweitert"
+    ],
+    "nichtAngefasst": "public/composer-tools.js, public/composer-tools.css, public/composer-plus-menu.js und public/sw.js im Repo — alle vier stehen unter Start-Lock. check:start-lock ist gruen."
+  },
+
+  "umsetzung1_sprechEnde": {
+    "problem": "Eine feste Stille-Schwelle ist immer falsch: nach einem fertigen Satz wartet sie zu lange, mitten im Satz schneidet sie ab.",
+    "loesung": "idleFor(text) — die Wartezeit richtet sich nach dem Gesagten. Satzzeichen am Ende 420 ms, Bindewort oder Fuellwort am Ende 1500 ms, sehr kurzer Anfang 1500 ms, sonst unveraendert 850 ms.",
+    "abgrenzung": "Die grossen Anbieter loesen das mit einem eigenen Modell (semantische VAD). Hier genuegt eine Textregel im Browser: kostet nichts, verschickt nichts, laeuft offline.",
+    "rueckwaertskompatibel": "update() nimmt weiterhin einen Wahrheitswert entgegen und verhaelt sich dann exakt wie bisher. Genau so ruft die eingefrorene composer-tools.js auf — ihr Verhalten aendert sich dadurch NICHT. Erst wer den Text uebergibt, bekommt die adaptive Wartezeit."
+  },
+
+  "umsetzung2_denkLaut": {
+    "problem": "Zwischen Frage und Antwort steht nur Stille. Ein Mensch wuerde in derselben Lage 'Moment, ich schau nach' sagen.",
+    "loesung": "Braucht die Antwort laenger als 700 ms, spricht die Sprachwelle dieselbe Zeile, die schon im Status steht ('Einen Moment ...') — in allen 14 Sprachen bereits uebersetzt, kein neuer Uebersetzungsbestand.",
+    "zurueckhaltend": "Der Laut kommt NUR bei langsamer Antwort, hoechstens EINMAL je Frage, und nie in eine laufende Antwort hinein (zweite Pruefung im Moment des Feuerns).",
+    "keinUebersprechen": "Die Ansage laeuft durch dieselbe Warteschlange wie die Antwort (sayAhead). Dadurch kann sie technisch nicht hineinreden — und der Echo-Filter kennt sie ueber spokenText() als eigene Ausgabe. Ohne das haette die Erkennung den eigenen Lautsprecher fuer den Nutzer gehalten und sich selbst unterbrochen."
+  },
+
+  "fehlerDenDerWaechterFand": {
+    "was": "Ich hatte den Import mit ?v=sprachwelle3-20260802 versehen, waehrend die gesperrte composer-tools.js dasselbe Modul ohne Kennung laedt.",
+    "folge": "check:module-queries meldete: 'voice-endpoint.js wird unter 2 Kennungen angesprochen'. Zwei Kennungen bedeuten zwei Modulinstanzen mit getrenntem Zustand und im Browser-Cache zwei Staende.",
+    "behebung": "Import ohne Kennung, wie in der gesperrten Datei. Der Cache wird ueber die Version in sw.js gebrochen, nicht ueber die Import-URL.",
+    "lehre": "Der Waechter existiert genau wegen dieses Fehlers (sw.js v187 -> v188). Er hat ihn ein zweites Mal gefangen."
+  },
+
+  "deployWeg": {
+    "befundVorher": "Das Repo stand auf sw.js v188, LIVE lief bereits v194. Ein Push des Repo-Standes haette die Seite um sechs Versionen zurueckgerollt.",
+    "vorgehen": "Frischer Klon von SmejjCom/smejj-app-frontend, die drei geaenderten Sprach-Dateien darauf kopiert (vorher geprueft: alle drei live und im Repo byte-identisch), sw.js vom LIVE-Stand v194 auf v195 gehoben. git hat das Zusammenfuehren gemacht, nichts wurde ueberschrieben.",
+    "commit": "32f352f im Frontend-Repo",
+    "versionssprungPflicht": "voice-endpoint.js und voice-speech-queue.js liegen im Precache. Seit v160 ist der Precache cache-first — ohne Versionssprung haetten Bestandsnutzer die alten Dateien behalten. sw.js sagt das selbst als dokumentierte Pflicht."
+  },
+
+  "liveBeleg": {
+    "url": "https://smejj.com/de/",
+    "serviceWorker": "smejj-shell-v195 aktiv, Cache-Liste enthaelt nur v195",
+    "gemessenImBrowser_2026-08-02_00-35_UTC": {
+      "fertiger Satz": "420 ms",
+      "Bindewort am Ende": "1500 ms",
+      "kurzer Anfang": "1500 ms",
+      "normaler Satz": "850 ms",
+      "alter Aufrufweg (Wahrheitswert)": "850 ms — unveraendert, Nicht-Regression belegt",
+      "Denk-Laut": "eingereiht: true",
+      "Reihenfolge": "['Einen Moment ...', 'Das ist die echte Antwort.'] — Ansage steht VOR der Antwort",
+      "Echo-Filter": "kennt die Ansage als eigene Ausgabe"
+    },
+    "startseite": "https://smejj.com/ laedt fehlerfrei, 0 Konsolenfehler, alle Composer-Symbole vorhanden, Design unveraendert (Bildschirmfoto)."
+  },
+
+  "benchmarks": {
+    "quelle": "npm run measure:vitals, 5 Laeufe, Chrome headless, https://smejj.com/",
+    "erstbesuch": "TTFB 135 ms (Budget 200) | LCP 668 ms (Budget 1500) | CLS 0 (Budget 0,1) | INP 40 ms (Budget 200) | 286 KB (Budget 300)",
+    "wiederbesuch": "TTFB 29 ms | LCP 144 ms | CLS 0 | INP 48 ms | 40 KB",
+    "urteil": "Alle Performance-Budgets eingehalten, keine Verschlechterung."
+  },
+
+  "pruefungen": {
+    "check:voice": "OK — 54 Pruefungen (13 bestehende + 41 neue)",
+    "check:frontend": "OK — 289",
+    "check:module-queries": "OK — 88 Module, jedes unter genau einer Kennung",
+    "check:precache-imports": "OK — 88 Module erreichbar",
+    "check:start-lock": "OK — 31 Dateien byte-identisch",
+    "check:favicon-lock": "OK",
+    "check:guidelines": "OK",
+    "check:json": "OK",
+    "check:architecture": "OK"
+  },
+
+  "offenePunkte": {
+    "startseiteProfitiertNochNicht": "Der Denk-Laut und das semantische Sprech-Ende wirken auf den 14 Sprachseiten. Die Startseite behaelt ihr heutiges Verhalten, weil public/composer-tools.js unter Start-Lock steht. Fuer die Aktivierung dort braucht es genau drei Zeilen in der gesperrten Datei (Import, watchdog.update(heard) statt Boolean(heard), Denk-Laut verdrahten) — das ist Rote Liste und braucht die schriftliche Freigabe des Betreibers.",
+    "swDriftRepoGegenLive": "public/sw.js steht im Repo auf v188 (eingefroren), live laeuft v195. Der Unterschied sind drei Precache-Eintraege einer Parallelsitzung (/verlauf.html und zwei Dateien) plus die Changelog-Eintraege. Ein spaeterer Deploy AUS DEM REPO wuerde die Seite zurueckrollen. Das Angleichen ist eine Aenderung an einer gesperrten Datei und braucht ebenfalls die Freigabe: node scripts/check-start-lock.mjs --freeze --confirm \"<Wortlaut>\".",
+    "websuche": "Der dritte Punkt aus der Recherche (Websuche 9,5 s entschaerfen) sitzt im Control Server und ist nicht Teil dieser Stufe."
+  }
+}
