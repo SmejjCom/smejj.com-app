@@ -89,6 +89,21 @@
     "entscheidungFuerDenBetreiber": "Den Coding-Standard von GLM-5.2 auf Kimi K2.7 umstellen. Kimi ist bereits aktiviert, konfiguriert, gesund und laut Code fuer genau diesen Fall vorgesehen. NICHT eigenmaechtig gemacht: das aendert, welches bezahlte Modell jede Coding-Anfrage beantwortet, beruehrt also laufende Kosten — Rote Liste."
   },
 
+  "abschlussLauf_2026-08-02": {
+    "vorgehen": "Echter Klickpfad auf https://smejj.com nach dem v198-Neuladen; ausgewertet wurde am Ende der sichtbare Verlauf im DOM (#startLog, article.entry.assistant), nicht der Zaehler der Testschleife — der blieb haengen, die Antworten standen aber vollstaendig da.",
+    "letzte12Antworten": {
+      "nichtCoding": "8 von 8 richtig, 0 Fehler — erster Text je rund 1 s (992-1101 ms)",
+      "coding": "1 von 4 richtig, 3 Fehler"
+    },
+    "einzelbelege": [
+      "'Welcher Titel steht auf https://example.com ?' — 995 ms, 'Example Domain'. Genau die Frage, die den Auftrag ausgeloest hat.",
+      "'Wie schreibt man den Namen der Plattform korrekt?' — 994 ms, 'smejj.com' (Schreibregel eingehalten).",
+      "'Nenne mir in zwei Saetzen, was Static-First bedeutet.' — 1101 ms, richtig.",
+      "'Erklaere in zwei Saetzen, was ein Service Worker macht.' — 992 ms, richtig."
+    ],
+    "urteil": "Der Klient-Anteil ist behoben und belegt. Die verbliebenen Fehler sind AUSSCHLIESSLICH Coding-Fragen und decken sich exakt mit der serverseitig gemessenen Wurzel (glm-5.2 coding 1/5, normal 5/5). Ein '100 % fehlerfrei' waere hier geschoent — es fehlt eine Entscheidung des Betreibers, keine Technik."
+  },
+
   "wasDerKlientFixBelegtLeistet": {
     "beweis": "Live-Mitschnitt der Versuche je Frage: 'smejj-cha:503 > starfruit:TypeError > smejj-cha:503'. Vor v198 waeren es zwei Versuche gewesen. Die drei Anlaeufe laufen also nachweislich.",
     "grenze": "Sie helfen nur, solange irgendein Ziel gesund ist. Am 2026-08-02 fuehrten alle drei Wege in dieselbe kaputte Wurzel (GLM-Coding), deshalb blieb bei Coding-Fragen ein Rest an Fehlern. Das ist keine Schwaeche des Fixes, sondern seine ehrliche Reichweite.",
