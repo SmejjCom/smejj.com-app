@@ -121,3 +121,51 @@ Prüfungen grün: `check:voice` 54, `check:frontend` 289, `module-queries`,
   Deploy AUS DEM REPO würde zurückrollen. Angleichen ist eine Änderung an einer
   gesperrten Datei und braucht ebenfalls die Freigabe.
 - Der dritte Punkt aus der Recherche (Websuche 9,5 s) sitzt im Control Server.
+
+## Nachtrag — die Websuche ist nicht das Problem, der Spurwechsel ist es
+
+Der dritte Punkt aus der Recherche („9,5-Sekunden-Websuche entschärfen") trifft
+so nicht mehr zu. Live gemessen am 2026-08-02 über die Brücke:
+
+| Frage | Spur | Backend | gesamt |
+|---|---|---|---|
+| ohne Suchbedarf | chat-fast-lane | groq:llama-3.1-8b | 4,3 s |
+| Wetter | chat-fast-lane (Profil `web`) | groq:llama-3.1-8b | **2,1 s** |
+| **mit Suchbedarf** | **multi-model-router** | **zhipu:glm-5.2** | **28,7 s** |
+
+`/api/search/web` direkt gemessen: 2121 ms kalt, danach **262 und 376 ms** aus
+dem Cache. Die Suche ist unschuldig.
+
+**Die Ursache ist der Spurwechsel.** In `public/chat-bridge.js` gilt
+`fastTask = !coding && !shouldSearchWeb(task)` — sobald eine Frage Suchbedarf
+hat, wird die Schnellspur übersprungen und die Frage landet mit grossem
+Suchkontext bei GLM-5.2. Siebenmal langsamer.
+
+**Das richtige Muster existiert bereits — für Wetter.** Dort holt die Brücke den
+Kontext und beantwortet ihn auf der SCHNELLSPUR (`isWeatherTask` →
+`buildWeatherContext` → `streamFastLane` mit Profil `web`). Ergebnis 2,1 s. Für
+die allgemeine Websuche fehlen dieselben drei Zeilen:
+
+```js
+if (!coding && shouldSearchWeb(task)) {
+  const webContext = await buildWebContext(task);
+  if (webContext && await streamFastLane(
+        res, buildAgentMessages({ task, coding: false, webContext }), "web", body.model)) return;
+}
+```
+
+Fail-safe wie der Wetterpfad: `streamFastLane` liefert `false`, ohne ein Byte
+gesendet zu haben, und der bisherige Weg greift unverändert.
+
+**Warum nicht umgesetzt** — zwei Blocker, beide keine Technikfrage:
+1. Der Brücken-Deploy braucht `ZEABUR_API_TOKEN`; der fehlt, und Zugangsschlüssel
+   lege ich grundsätzlich nicht an.
+2. Schwerwiegender: `public/chat-bridge.js` steht im Repo auf
+   `20260801-v105-projektwissen-rag`, **live läuft `20260729-v104`**. Die Datei
+   enthält unveröffentlichte Arbeit der Parallelsitzung. Ein Deploy von mir würde
+   deren Änderungen ungefragt mit ausliefern.
+
+**Merkregel: vor jedem Deploy einer geteilten Datei die Live-Version gegen die
+Repo-Version halten.** Bei `sw.js` war es v188 gegen v194, bei `chat-bridge.js`
+v105 gegen v104 — in beiden Fällen hätte ein blinder Push fremde Arbeit
+zerstört oder mit ausgeliefert.

@@ -88,6 +88,26 @@
     "check:architecture": "OK"
   },
 
+  "befundWebsuche": {
+    "kernaussage": "Der dritte Punkt aus der Recherche ist NICHT die Suche. Die Suche ist schnell. Was 28 Sekunden kostet, ist der SPURWECHSEL: sobald eine Frage Suchbedarf hat, verlaesst sie die Schnellspur komplett.",
+    "gemessen_2026-08-02_live_ueber_die_Bruecke": {
+      "ohne Suchbedarf ('Was ist ein AI Coding OS?')": "chat-fast-lane, groq:llama-3.1-8b-instant, erstes Wort 1062 ms, gesamt 4282 ms",
+      "Wetter ('Wie ist das Wetter morgen in Berlin?')": "chat-fast-lane mit Profil 'web', groq, erstes Wort 2026 ms, gesamt 2141 ms",
+      "mit Suchbedarf ('Was sind die Schlagzeilen aus Berlin?')": "multi-model-router, zhipu:glm-5.2, erstes Wort 14976 ms, GESAMT 28687 ms"
+    },
+    "dieSucheIstUnschuldig": "/api/search/web direkt gemessen: 2121 ms kalt, danach 262 und 376 ms aus dem Cache, jeweils 8 Treffer. Der urspruengliche Befund '9,5 s Websuche' trifft heute nicht mehr zu — der Cache greift.",
+    "dieEigentlicheUrsache": "public/chat-bridge.js: bei Suchbedarf wird die Schnellspur uebersprungen (fastTask = !coding && !shouldSearchWeb(task)). Die Frage landet ueber streamViaControl bei GLM-5.2 mit einem grossen Suchkontext im Prompt. Das ist 7-mal langsamer als dieselbe Frage auf der Schnellspur.",
+    "dasMusterExistiertBEREITS": "Fuer Wetter macht die Bruecke genau das Richtige: Kontext holen, dann auf der SCHNELLSPUR beantworten (isWeatherTask -> buildWeatherContext -> streamFastLane mit Profil 'web'). Ergebnis 2,1 s. Fuer die allgemeine Websuche fehlt dieselben drei Zeilen.",
+    "vorgeschlageneAenderung": "In handleAgent, direkt nach dem Wetter-Block: if (!coding && shouldSearchWeb(task)) { const webContext = await buildWebContext(task); if (webContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext }), 'web', body.model)) return; } — dieselbe Form wie der Wetter-Pfad, derselbe fail-safe Rueckfall (streamFastLane liefert false, ohne ein Byte gesendet zu haben).",
+    "erwarteterGewinn": "28,7 s -> geschaetzt 2-3 s, analog zum Wetterpfad. NICHT gemessen, weil nicht deploybar (siehe Blocker).",
+    "abwaegung": "Nachrichtenfragen wuerden dann von llama-3.1-8b statt GLM-5.2 beantwortet. Fuer das Zusammenfassen bereits geholter Schlagzeilen ist das vertretbar — der Wetterpfad tut seit Wochen genau das. Wer die hoehere Guete will, behaelt die heutige Langsamkeit.",
+    "warumIchEsNICHTUMGESETZTHABE": [
+      "1. Der Deploy-Weg der Bruecke braucht ZEABUR_API_TOKEN in ~/.config/smejj.com/env.local. Der fehlt, und Zugangsschluessel lege ich grundsaetzlich nicht an.",
+      "2. Schwerwiegender: public/chat-bridge.js steht im Repo auf BRIDGE_VERSION 20260801-v105-projektwissen-rag, LIVE laeuft 20260729-v104. Die Datei enthaelt also unveroeffentlichte Arbeit der Parallelsitzung (RAG-Projektwissen). Ein Deploy von mir wuerde deren Aenderungen ungefragt mit ausliefern. Das ist nicht meine Entscheidung."
+    ],
+    "sofortWirksamerTeilTrotzdem": "Der Denk-Laut aus dieser Stufe deckt genau diesen Fall ab: statt 15 Sekunden Stille sagt die Sprachwelle nach 0,7 s hoerbar Bescheid. Das behebt die Ursache nicht, aber es nimmt dem schlimmsten Fall die Ratlosigkeit."
+  },
+
   "offenePunkte": {
     "startseiteProfitiertNochNicht": "Der Denk-Laut und das semantische Sprech-Ende wirken auf den 14 Sprachseiten. Die Startseite behaelt ihr heutiges Verhalten, weil public/composer-tools.js unter Start-Lock steht. Fuer die Aktivierung dort braucht es genau drei Zeilen in der gesperrten Datei (Import, watchdog.update(heard) statt Boolean(heard), Denk-Laut verdrahten) — das ist Rote Liste und braucht die schriftliche Freigabe des Betreibers.",
     "swDriftRepoGegenLive": "public/sw.js steht im Repo auf v188 (eingefroren), live laeuft v195. Der Unterschied sind drei Precache-Eintraege einer Parallelsitzung (/verlauf.html und zwei Dateien) plus die Changelog-Eintraege. Ein spaeterer Deploy AUS DEM REPO wuerde die Seite zurueckrollen. Das Angleichen ist eine Aenderung an einer gesperrten Datei und braucht ebenfalls die Freigabe: node scripts/check-start-lock.mjs --freeze --confirm \"<Wortlaut>\".",
