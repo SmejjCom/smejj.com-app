@@ -122,6 +122,21 @@
     "empfehlung": "SMEJJ_MODEL_AUTO_ENABLED aktivieren, damit Coding wie vorgesehen bei Kimi K2.7 landet. Der Status 'prepared-inactive' sagt es selbst: vorbereitet, bewusst aus. Das Umlegen entscheidet, welches bezahlte Modell Coding beantwortet — laufende Kosten, Rote Liste, deshalb nicht eigenmaechtig gemacht."
   },
 
+  "nachtrag2_2026-08-02_derBeweisUeberDieEchteNutzerkette": {
+    "messung": "Ueber die Bruecke (genau der Weg, den der Browser nimmt), je 4 Anfragen mit derselben Coding-Frage, 6 s Abstand:",
+    "ergebnis": {
+      "model=kimi-k2-7": "4 von 4 in Ordnung, Backend kimi:kimi-k2.7-code",
+      "model=glm-5.2": "0 von 4",
+      "ohne Modellangabe (Standard)": "0 von 4"
+    },
+    "zusaetzlich": "10 Coding-Anfragen ohne Modellangabe, 6 s Abstand: 10 x HTTP 503. Coding ist ueber den Standardweg derzeit vollstaendig unten.",
+    "schlussfolgerung": "Die Bruecke reicht eine ausdrueckliche Modellwahl durch. Coding funktioniert also SOFORT — es wird nur nie angefragt, weil die Profilwahl (auto) abgeschaltet ist und der Standard auf dem toten glm-5-2 steht.",
+    "messfalleDieIchSelbstAusgeloestHabe": "Ein erster Lauf ergab 13 von 15 Fehlschlaegen. Ungueltig: ich hatte 15 Anfragen im 1,5-s-Takt geschickt (40/min) waehrend gleichzeitig der 24-Fragen-Browserlauf lief — die Bruecke deckelt bei 12 Anfragen pro Minute. Erst mit 6 s Abstand und ohne Parallellast ist die Zahl belastbar. Merkregel: die eigene Last ist Teil der Messung.",
+    "browserlaufImGutenFenster": "16 von 16 fehlerfrei (5 Coding, 11 Nicht-Coding), 0 Konsolenfehler — aufgenommen in einem Zeitfenster, in dem die Kette gerade ueber das Ausweichmodell glm-4.7-flash lief. Das ist kein Beleg fuer Gesundheit, sondern fuer die Wellenform des Ausfalls.",
+    "warumKeinKlient-Umweg": "Der naheliegende Notnagel waere, im Browser bei Coding-Fragen ausdruecklich kimi-k2-7 anzufragen. Dagegen sprechen drei Dinge: public/app.js (wo die Fehlermeldung entsteht) steht im Start-Lock; ein Modellname im ausgelieferten Frontend waere eine DRITTE Kopie der Routing-Logik — genau der Fehler, den tests/websuche-absicht-gleichlauf.test.mjs verhindern soll; und der Umweg muesste sofort wieder zurueckgebaut werden, sobald der Server-Schalter steht.",
+    "derRichtigeFix": "Ein Schalter auf dem Control Server: SMEJJ_MODEL_AUTO_ENABLED aktivieren. Dann greift autoModelId() und Coding landet wie vorgesehen bei Kimi K2.7. Status heute: auto = prepared-inactive."
+  },
+
   "wasDerKlientFixBelegtLeistet": {
     "beweis": "Live-Mitschnitt der Versuche je Frage: 'smejj-cha:503 > starfruit:TypeError > smejj-cha:503'. Vor v198 waeren es zwei Versuche gewesen. Die drei Anlaeufe laufen also nachweislich.",
     "grenze": "Sie helfen nur, solange irgendein Ziel gesund ist. Am 2026-08-02 fuehrten alle drei Wege in dieselbe kaputte Wurzel (GLM-Coding), deshalb blieb bei Coding-Fragen ein Rest an Fehlern. Das ist keine Schwaeche des Fixes, sondern seine ehrliche Reichweite.",
