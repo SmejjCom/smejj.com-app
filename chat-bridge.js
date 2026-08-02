@@ -1,6 +1,11 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
 import { buildRagBlock, lastUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
+// Gespraechsgedaechtnis. Bewusst DIESELBE gepruefte Bereinigung wie der Control
+// Server (src/server.js) statt einer zweiten Umsetzung: sie verwirft insbesondere
+// eine vom Client gesendete "system"-Rolle (Prompt-Injection) und begrenzt Anzahl
+// und Zeichen gegen Kontextfenster und BYOK-Kosten.
+import { sanitizeHistory } from "../src/agent/conversationHistory.js";
 
 const APP = "smejj.com chat-bridge";
 const PORT = Number(process.env.PORT || 8080);
@@ -141,21 +146,35 @@ async function handleAgent(req, res) {
   // erreicht ihn aber gar nicht und blieb darum ohne. Suche einmal, gleicher
   // Block fuer jede Spur.
   const wissen = buildRagBlock(task);
-  if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen }), "fast", body.model)) return;
+  if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen, history: body.history }), "fast", body.model)) return;
   // Wetter-Fast-Path (Welle 2b): Live-Daten direkt von Open-Meteo (~0,3s, frei,
   // ohne Key) statt Control-Router mit Suchmaschinen-Scraping (8-12s). Fail-safe:
   // ohne Kontext oder bei Fast-Lane-Fehler laeuft unveraendert der alte Pfad.
   if (!coding && isWeatherTask(task)) {
     const weatherContext = await buildWeatherContext(task);
-    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen }), "web", body.model)) return;
+    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, history: body.history }), "web", body.model)) return;
   }
   if (await streamViaControl(res, "/api/agent", body)) return;
   const webContext = !coding && shouldSearchWeb(task) ? await buildWebContext(task) : "";
-  const messages = buildAgentMessages({ task, coding, webContext, wissen });
+  const messages = buildAgentMessages({ task, coding, webContext, wissen, history: body.history });
   return streamModel(res, messages, coding ? "coding" : webContext ? "web" : "fast", body.model);
 }
 
-function buildAgentMessages({ task, coding, webContext, wissen = "" }) {
+/**
+ * Baut die Nachrichten fuer /api/agent.
+ *
+ * `history` war hier bis zum 2026-08-02 NICHT verdrahtet. Das Frontend schickte
+ * den Verlauf korrekt mit (public/app.js -> collectConversationHistory), der
+ * Control-Server-Pfad wertete ihn aus (src/server.js) — nur die Schnellspur, also
+ * genau der Weg, den die Startseite wirklich nimmt, warf ihn weg. Live gemessen:
+ * dritte Nachricht im selben Gespraech, Antwort "Leider habe ich keine
+ * Informationen ueber deine erste Frage, da dies unser erstes Gespraech ist",
+ * waehrend zwei Austausche sichtbar darueber standen.
+ *
+ * Ohne `history` verhaelt sich die Funktion exakt wie vorher (sanitizeHistory
+ * liefert dann eine leere Liste) — die Aenderung ist rein additiv.
+ */
+function buildAgentMessages({ task, coding, webContext, wissen = "", history }) {
   const system = [
     coding ? "You are smejj.com Code Agent." : "Du bist der Assistent von smejj.com.",
     "Antworte sofort sichtbar und direkt. Gib keine Denk-Tags, kein <think>, keine internen Notizen und keine Rohdaten aus.",
@@ -169,7 +188,11 @@ function buildAgentMessages({ task, coding, webContext, wissen = "" }) {
   const user = ["Frage/Aufgabe:", task, webContext].filter(Boolean).join("\n\n");
   // Projektwissen steht VOR der Aufgaben-Anweisung: die Anweisung muss zuletzt
   // gelten, sonst richtet sich das Modell nach dem Hintergrund statt nach ihr.
-  return withRagBlock([{ role: "system", content: system }, { role: "user", content: user }], wissen, 0);
+  return withRagBlock(
+    [{ role: "system", content: system }, ...sanitizeHistory(history), { role: "user", content: user }],
+    wissen,
+    0
+  );
 }
 
 function hardenMessages(messages) {
