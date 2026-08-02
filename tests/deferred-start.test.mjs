@@ -164,5 +164,8 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   // v164 -> v165 am 2026-07-28: Aktionen pro Chat-Nachricht — chat-actions.js,
   // chat-messages.js und chat-actions-menu.js neu im Precache, start-styles.css
   // enthaelt neu chat-actions.css (siehe public/sw.js).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v188"/);
+  // v195 -> v196 am 2026-08-02: Sprachwelle Stufe 3a auf der Startseite —
+  // voice-thinking-cue.js neu im Precache, weil composer-tools.js es importiert
+  // (siehe public/sw.js). Diese Zusicherung erzwingt genau diesen Versionssprung.
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v196"/);
 });
