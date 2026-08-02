@@ -1,0 +1,63 @@
+{
+  "jobId": "job_livetest_plattform_20260802",
+  "createdAt": "2026-08-02",
+  "owner": "smejj.com Betreiber",
+  "title": "Live-Test smejj.com von A bis Z — zwei echte Fehler, einer behoben",
+
+  "leistung": {
+    "gemessenImBrowser": "https://smejj.com, Navigation-Timing-API",
+    "ttfbMs": 27,
+    "domInteraktivMs": 54,
+    "ladenKomplettMs": 307,
+    "cls": 0,
+    "uebertragenKb": 0,
+    "ressourcen": 102,
+    "urteil": "Alle Budgets des Master Prompts eingehalten (TTFB<200, interaktiv<2000, CLS<0.1, <300 KB). Die 0 KB kommen aus dem Service-Worker-Cache — Caching-First wirkt."
+  },
+
+  "fehler1_gespraechsgedaechtnis": {
+    "befund": "Dritte Nachricht im selben Gespraech, Antwort: 'Leider habe ich keine Informationen ueber deine erste Frage, da dies unser erstes Gespraech ist' — waehrend zwei Austausche sichtbar darueber standen.",
+    "diagnose": "NICHT das Frontend. Die ausgehende Anfrage wurde im Browser abgefangen: public/app.js schickt den Verlauf korrekt als history mit (6 Nachrichten, role/content sauber). src/server.js wertet ihn aus. Nur buildAgentMessages in public/chat-bridge.js las ihn nie — und /api/agent ueber die Bruecke ist der Weg, den die Startseite nimmt.",
+    "warumSoLangeUnbemerkt": "Der Control-Server-Pfad hatte das Gedaechtnis seit 2026-07-17. Getestet wurde offenbar dort, ausgeliefert wird ueber die Bruecke.",
+    "behoben": "Import von sanitizeHistory aus src/agent/conversationHistory.js (die bestehende gepruefte Bereinigung, keine zweite Umsetzung). Alle drei Aufrufstellen in handleAgent versorgt. Rein additiv.",
+    "tests": "tests/chat-bridge-gedaechtnis.test.mjs, 6 Faelle — inkl. Nachweis, dass der Import die Buendelung fuer Zeabur ueberlebt.",
+    "status": "im Repo, NICHT ausgeliefert (Bruecke braucht ZEABUR_API_TOKEN)"
+  },
+
+  "fehler2_coding_503": {
+    "befund": "Coding-Anfragen zeigten 'Verbindung zum Server unterbrochen'. Netzwerkspur: Bruecke 503 (306 ms) -> Control direkt 'Failed to fetch' (3052 ms) -> Bruecke 503 (150 ms).",
+    "gegenprobe": "Dieselbe Anfrage per curl: HTTP 200 — aber in 12,03 s. Eine normale Frage braucht 0,40 s.",
+    "ursache": "Die Gesundheitsabfrage der Bruecke meldet modelConfigured:false. Die Bruecke hat KEINE eigene Tiefspur. Faellt der Control-Router aus, hat sie nichts zum Zurueckfallen und antwortet 503. Genau das dokumentiert auch sw.js v198.",
+    "sporadisch": "Spaeter im selben Test lieferte eine Coding-Anfrage eine gute Antwort mit Plan und Diff. Der Ausfall ist also nicht dauerhaft, sondern haengt an der Verfuegbarkeit des Control-Routers.",
+    "zweiterBefund": "12 s Antwortzeit fuer Coding liegt weit ueber dem Budget (erster Token < 1 s).",
+    "status": "Ursache belegt, nicht behoben — Fix erfordert Konfiguration der Bruecke"
+  },
+
+  "fehler3_rohwerte_systemansicht": {
+    "befund": "Die System-Ansicht zeigt Entwickler-Rohwerte: 'Storage: true', 'AI Mode: disabled', 'Sync: local', Reiter 'Capabilities'/'Health'.",
+    "bewertung": "Qualitaetsmangel gegenueber dem gesetzten Massstab — ChatGPT/Gemini zeigen so etwas Nutzern nie.",
+    "nichtBehoben": "Gerendert von public/app.js, und diese Datei steht auf der Start-Lock-Liste. Aenderung braucht ausdrueckliche Freigabe.",
+    "status": "gemeldet, nicht angefasst"
+  },
+
+  "sonstigeBeobachtungen": {
+    "startseitenTitel": "'Was sollen wir in smejj entwickeln?' — nach der Namensregel muesste dort smejj.com stehen. Design-Lock, nicht angefasst.",
+    "bruecke_veraltet": "Live laeuft v104 (20260729), das Repo steht bei v105 (20260801). Weder die RAG-Arbeit einer Parallelsitzung noch der Gedaechtnis-Fix sind ausgeliefert.",
+    "funktioniertEinwandfrei": [
+      "Chat sendet und antwortet",
+      "Enter sendet",
+      "Verlauf bleibt ueber Neuladen erhalten",
+      "Statusseite laedt ohne Konsolenfehler",
+      "keine JavaScript-Fehler auf der Startseite"
+    ]
+  },
+
+  "auslieferungsblocker": {
+    "was": "ZEABUR_API_TOKEN fehlt in ~/.config/smejj.com/env.local",
+    "wirkung": "Die Bruecke wird nicht per Git deployt. Ohne den Token bleibt der Gedaechtnis-Fix im Repo liegen.",
+    "browserWegGeprueft": "Das fertige Buendel ist 431.561 Zeichen. Ein Einfuegen ueber den Zeabur-Datei-Editor ist nicht zuverlaessig moeglich; ein halb eingefuegter Text wuerde den Live-Chat abschalten. Weg verworfen.",
+    "buendelBereit": "/tmp/smejj-chat-bridge-neu.mjs, node --check gueltig, enthaelt sanitizeHistory"
+  },
+
+  "status": "Leistung einwandfrei und ueber Budget. Ein Fehler behoben und getestet, aber nicht ausgeliefert. Ein Fehler in der Ursache belegt, Behebung erfordert Bruecken-Konfiguration. Ein Qualitaetsmangel gemeldet, Datei unter Design-Lock."
+}
