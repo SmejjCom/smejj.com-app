@@ -104,6 +104,24 @@
     "urteil": "Der Klient-Anteil ist behoben und belegt. Die verbliebenen Fehler sind AUSSCHLIESSLICH Coding-Fragen und decken sich exakt mit der serverseitig gemessenen Wurzel (glm-5.2 coding 1/5, normal 5/5). Ein '100 % fehlerfrei' waere hier geschoent — es fehlt eine Entscheidung des Betreibers, keine Technik."
   },
 
+  "nachtrag_2026-08-02_dieWurzelIstEinAbgeschalteterSchalter": {
+    "befund": "Die automatische Profilwahl ist live NICHT aktiv. /api/health meldet woertlich: auto = {\"id\":\"auto\",\"active\":false,\"status\":\"prepared-inactive\"}.",
+    "imCode": "src/shared/modelRegistry.js, resolveModelSelection: `const autoEnabled = readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, false)` — Standard AUS. Ist der Schalter nicht gesetzt, gilt `selectedId = defaultId` und autoModelId() wird NIE aufgerufen. Die Regel 'Coding gehoert Kimi' laeuft deshalb ueberhaupt nicht.",
+    "damitKorrigiertSichEineFrueherAnnahme": "Es ist kein Fehler in der Profilerkennung. classifyProfile() erkennt 'Schreibe eine ESM-Funktion ...' korrekt als coding (Treffer auf 'funktion' und 'code'). Die Profilwahl wird nur nie befragt.",
+    "zweiterBefund_dieKetteHumpeltStill": {
+      "gemessen": "12 Coding-Anfragen mit model=auto: 9 x beantwortet von zhipu:glm-4.7-flash mit x-smejj-model-fallback=true, 3 x HTTP 502, 0 x von glm-5.2 selbst.",
+      "bedeutung": "GLM-5.2 ist als Primaerweg fuer Coding praktisch tot. Die Plattform laeuft still auf dem schwaecheren Flash-Ausweichmodell — sichtbar nur an den Kopfzeilen x-smejj-model-backend und x-smejj-model-fallback. Das erklaert die Coding-Qualitaet besser als jede Vermutung ueber Prompts.",
+      "merkregel": "Die Antwortkopfzeilen verraten, WER geantwortet hat. Ohne sie haelt man ein humpelndes System fuer ein gesundes."
+    },
+    "ausfallIstZEITWEISE": "Am selben Tag spaeter gemessen: glm-5.2 coding 4/5 statt 0/6. Der Ausfall kommt in Wellen (502 mit retry-after: 60), er ist nicht dauerhaft. Der Klient-Fix federt einzelne Wellen ab, eine 60-Sekunden-Welle aber nicht — dagegen hilft nur ein gesunder Primaerweg.",
+    "qualitaetsvergleich_gleicheAufgabe_parseBudget": {
+      "kimi-k2-7": "3495 ms, korrekt (export + null)",
+      "glm-5.2": "10038 ms, korrekt, aber dreimal langsamer",
+      "smejj-fast-1": "7169 ms, FALSCH — liefert 0 statt null; scheidet als Ausweichweg aus"
+    },
+    "empfehlung": "SMEJJ_MODEL_AUTO_ENABLED aktivieren, damit Coding wie vorgesehen bei Kimi K2.7 landet. Der Status 'prepared-inactive' sagt es selbst: vorbereitet, bewusst aus. Das Umlegen entscheidet, welches bezahlte Modell Coding beantwortet — laufende Kosten, Rote Liste, deshalb nicht eigenmaechtig gemacht."
+  },
+
   "wasDerKlientFixBelegtLeistet": {
     "beweis": "Live-Mitschnitt der Versuche je Frage: 'smejj-cha:503 > starfruit:TypeError > smejj-cha:503'. Vor v198 waeren es zwei Versuche gewesen. Die drei Anlaeufe laufen also nachweislich.",
     "grenze": "Sie helfen nur, solange irgendein Ziel gesund ist. Am 2026-08-02 fuehrten alle drei Wege in dieselbe kaputte Wurzel (GLM-Coding), deshalb blieb bei Coding-Fragen ein Rest an Fehlern. Das ist keine Schwaeche des Fixes, sondern seine ehrliche Reichweite.",
