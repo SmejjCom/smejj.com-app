@@ -139,5 +139,28 @@ function machEarSend(host, serverText, { totesOhr = false } = {}) {
   check("3j Datenschutz EN nennt Groq im Sprachmodus", privacy.includes("Groq"));
 }
 
+// --- 5. Vokabular-Hinweis (Freigabe 2026-08-03) ------------------------------
+{
+  const { EAR_PROMPT } = await import("../public/chat-bridge-voice-ear.js");
+  check("5a Hinweis nennt den Eigennamen", EAR_PROMPT.includes("smejj.com"));
+  check("5b Hinweis bleibt kurz (Halluzinations-Schutz)", EAR_PROMPT.length <= 60);
+  check("5c Hinweis enthaelt keine Fuellsaetze/Satzzeichen ausser Komma",
+    !/[.!?]/.test(EAR_PROMPT.replace(/smejj\.com/g, "")));
+
+  let gesehen = null;
+  await transcribeWithGroq(Buffer.from("x".repeat(2000)), {
+    contentType: "audio/webm", apiKey: "k", baseUrl: "https://x",
+    fetchFn: async (_u, init) => { gesehen = init.body.get("prompt"); return { ok: true, json: async () => ({ text: "ok" }) }; }
+  });
+  check("5d Hinweis reist standardmaessig mit", gesehen === EAR_PROMPT);
+
+  let ohne = "nicht gesetzt";
+  await transcribeWithGroq(Buffer.from("x".repeat(2000)), {
+    contentType: "audio/webm", apiKey: "k", baseUrl: "https://x", prompt: "",
+    fetchFn: async (_u, init) => { ohne = init.body.get("prompt"); return { ok: true, json: async () => ({ text: "ok" }) }; }
+  });
+  check("5e leerer Hinweis => Feld wird weggelassen", ohne === null);
+}
+
 console.log(`\n${passed} bestanden, ${failed} fehlgeschlagen`);
 if (failed > 0) process.exit(1);

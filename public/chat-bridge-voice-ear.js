@@ -16,6 +16,18 @@ export const EAR_MAX_BYTES = 3_000_000;
 export const EAR_MODEL = "whisper-large-v3-turbo";
 export const EAR_TIMEOUT_MS = 10_000;
 
+// Vokabular-Hinweis fuer Whisper (Freigabe Betreiber 2026-08-03). Gemessen:
+// "smejj.com" wurde als "smel.com" transkribiert — Whisper kennt den Eigennamen
+// nicht. Das prompt-Feld der Groq-API ist genau dafuer da: Es nennt dem Modell
+// die erwartete Schreibweise, ohne den Inhalt zu erzwingen.
+//
+// BEWUSST KURZ UND NEUTRAL: Ein Prompt faerbt die Erkennung. Zu viele Woerter
+// oder ganze Beispielsaetze verleiten Whisper dazu, sie auch dann zu "hoeren",
+// wenn sie nicht gesagt wurden (Halluzination bei Stille oder Rauschen). Hier
+// stehen deshalb nur die Eigennamen des Projekts — keine Fuellsaetze, keine
+// Themenwoerter, nichts, was ein Gespraech in eine Richtung ziehen koennte.
+export const EAR_PROMPT = "smejj.com, smejj";
+
 // Formate, die MediaRecorder in den unterstuetzten Browsern liefert und die
 // Groq laut API-Dokumentation annimmt.
 const AUDIO_TYPES = new Map([
@@ -64,6 +76,7 @@ export async function transcribeWithGroq(audio, {
   baseUrl,
   model = EAR_MODEL,
   timeoutMs = EAR_TIMEOUT_MS,
+  prompt = EAR_PROMPT,
   fetchFn = fetch
 } = {}) {
   if (!apiKey) return { ok: false, status: 503, error: "ear_not_configured" };
@@ -75,6 +88,9 @@ export async function transcribeWithGroq(audio, {
   form.append("model", model);
   form.append("response_format", "json");
   form.append("temperature", "0");
+  // Leerer Hinweis = Feld weglassen (Whisper faerbt dann garantiert nichts).
+  const hinweis = String(prompt || "").trim();
+  if (hinweis) form.append("prompt", hinweis);
   const abbruch = new AbortController();
   const wecker = setTimeout(() => abbruch.abort(), timeoutMs);
   let antwort;
