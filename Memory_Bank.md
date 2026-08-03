@@ -662,35 +662,10 @@ Volltext wortgleich in
 [docs/memory/Memory_Bank_2026-07-28_modelleval_ersterToken_quellen.md](docs/memory/Memory_Bank_2026-07-28_modelleval_ersterToken_quellen.md)
 (Eval-Harness und vier Messfallen, 6,2 s verworfene Denk-Abschnitte, Quellenliste je Antwort).
 ## 2026-07-28 — Fragen mit Web-Adresse antworten wieder (job_spurwahl_zeitbudget_20260728)
-- ERLEDIGT, live (sw v179): Fragen mit Adresse endeten regelmaessig in "Verbindung
-  zum Server unterbrochen". Kein Ausfall — ein Zeitbudget-Konflikt.
-- GEMESSEN statt geraten (Direktaufruf der Live-Bridge, Origin-Kopf noetig, sonst
-  403 "Origin not allowed"): Schnellspur 0,75 s bis zum ersten Byte, Tiefspur
-  7,77 s (kurze Frage) bzw. 4,92 s (gegroundet). Limit in fetch-retry.js: 6,5 s.
-  Die Tiefspur lag also regelmaessig JENSEITS des Limits.
-- KERNEINSICHT: modelForTask erzwang die Tiefspur fuer jede Frage mit Adresse,
-  weil die Schnellspur den Seiteninhalt frueher raten musste. Seit Stufe 2 webt
-  browser-context.js den echten Seitentext IN die Frage — Werkzeuge braucht dafuer
-  niemand mehr. Nachgemessen: Schnellspur mit eingebettetem Inhalt antwortete
-  inhaltlich richtig ("Example Domain") in 0,49-1,01 s statt 4,9 s.
-- REGEL JETZT: Tiefspur nur noch, wenn groundingFor(task) LEER ist — die Seite
-  also nicht geladen werden konnte und nur echtes Tool-Calling noch hilft. Eine
-  Fehlerseite (HTTP 404) zaehlt als geladen; ein erneuter Abruf per Werkzeug
-  braechte nur wieder 404.
-- ZWEITER TEIL: fetch-retry.js gibt der Tiefspur ein eigenes Erstbyte-Budget
-  (15 s statt 6,5 s), erkannt am Modellnamen im Anfragekoerper. Damit scheitert
-  auch der Ausnahmefall nicht mehr an einem Limit, das fuer die Schnellspur
-  gedacht war. Eine ausdrueckliche Vorgabe des Aufrufers schlaegt die Automatik.
-- LIVE BELEGT: "Der Titel auf https://example.com lautet Example Domain." Erster
-  Token 639 / 813 / 477 ms (gemessen per MutationObserver im Browser, inklusive
-  Seitenabruf) gegen ein Budget von 1000 ms — erstmals eingehalten. Auch der
-  Ausnahmefall (nicht ladbare Adresse) antwortet in 477 ms ohne Fehler.
-- MESSFALLE fuer kuenftige Bridge-Tests: /api/agent antwortet ohne
-  `Origin: https://smejj.com` mit 403. Wer das vergisst, haelt einen
-  CORS-Schutz faelschlich fuer einen Ausfall.
-- BENCHMARK: docs/benchmarks/spurwahl_2026-07-28.json — dazu Web-Vitals
-  144/292/184 ms kaltes LCP, CLS 0, Touch-Ziele unveraendert eingehalten.
-
+Volltext: [docs/memory/Memory_Bank_2026-07-28_spurwahl_zeitbudget.md](docs/memory/Memory_Bank_2026-07-28_spurwahl_zeitbudget.md).
+Kern: Tiefspur nur noch bei leerem groundingFor(task); Tiefspur-Erstbyte-Budget 15 s in
+fetch-retry.js; Schnellspur mit eingebettetem Seitentext 0,49-1,01 s statt 4,9 s. MESSFALLE:
+/api/agent ohne Origin-Kopf = 403, das ist CORS-Schutz, kein Ausfall. Benchmark: docs/benchmarks/spurwahl_2026-07-28.json.
 ## 2026-07-28 — Training-Loop-Worker gebaut, Deploy BLOCKIERT (job_smejj_training_loop_20260728)
 - Code fertig: workers/smejj-training-loop/ (Eval-Zyklus + Trainings-Warteschlangen-
   Zyklus, mehrstufig fail-closed, Checkpoint+Benchmarks auf IDrive e2, nie eigene
@@ -798,3 +773,19 @@ Kern: Chrome filmt sich per CDP selbst; JEDES Einzelbild braucht `Page.screencas
 sonst stellt Chrome den Strom nach wenigen Bildern ein. Uebertragung ueber EIN Objekt
 `live/frame.jpg` statt WebSocket. 20 Tests gruen, NICHT live (ghcr.io-Abbild fehlt).
 Details: task-capsules/2026/07/job_maus_livebild_20260729/.
+
+## 2026-08-03 — Browser-Panel: Klick ins Schreibfeld schloss den Split-View (job_browser_panel_backdrop_20260803)
+- ERLEDIGT, live (sw v206, Frontend 9abf654): Im Split-View lag #sidebarBackdrop
+  (panel-backdrop.js, inset 0, z 65) ueber dem linken Arbeitsbereich; JEDER Klick
+  links traf das Backdrop und dessen Wegklick-Handler schloss das Panel.
+  Beweis: elementFromPoint auf dem Schreibfeld = #sidebarBackdrop.
+- FIX: neues Modul browser-pane-backdrop.js (SRP wie maus-panel.js; browser-pane.js
+  steht bei 795/800, panel-backdrop.js unter Start-Lock). Unterdrueckt das Backdrop
+  bei body.browser-pane-open; Ausnahme offenes linkes Menue (Non-Regression).
+  Panel schliesst nur noch manuell (X, Knopf, Escape, Navigation) — schriftliche
+  Freigabe des Betreibers vom 2026-08-03 liegt im Modulkopf.
+- LIVE BELEGT (echter Klickpfad in Chrome): Klick ins Schreibfeld fokussiert und
+  tippt, Panel bleibt offen; X schliesst; linkes Menue behaelt Abdunkeln/Wegklick.
+  TTFB 64 ms, Laden 326 ms, 40 KB, keine Konsolenfehler.
+- MERKREGEL: Ein unsichtbares Overlay prueft man mit elementFromPoint — ein
+  "toter" Klick ist sonst nicht vom Backdrop-Wegklicken zu unterscheiden.
