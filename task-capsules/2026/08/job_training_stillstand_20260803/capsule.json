@@ -1,0 +1,60 @@
+{
+  "jobId": "job_training_stillstand_20260803",
+  "createdAt": "2026-08-03",
+  "owner": "smejj.com Betreiber",
+  "title": "Das Training lief 24/7 — und hat nie etwas gelernt",
+  "goal": "Frage des Betreibers: wie laeuft das Training, wie lange schon, was wurde gelernt, laeuft es weiter?",
+
+  "begriffsklaerung": {
+    "sprachwelleLerntNicht": "Die Sprachwelle ist keine trainierte Komponente. Sie ist Spracherkennung im Browser (webkitSpeechRecognition) plus Sprachausgabe (speechSynthesis) mit Textregeln — semantisches Satzende (420/850/1500 ms) und Denk-Laut. Dort gibt es nichts zu trainieren. Die Salad-Dienste smejj-voice-stt und smejj-voice-tts sind gestoppt.",
+    "wasWirklichLaeuft": "Der Zeabur-Dienst smejj-training-loop: ein Mess-Zyklus (Eval) und ein angehaengter LoRA-Zyklus (das eigentliche Lernen). Der Training-Cycle im selben Dienst trainiert NICHT — er schreibt nur freigegebene Trainingskandidaten dauerhaft weg (steht so im Kopf von trainingCycle.js)."
+  },
+
+  "befund": {
+    "schleifeLaeuft": "Ja, wie angeordnet rund um die Uhr. letzterZyklusAm sprang waehrend der Pruefung von 04:19:15 auf 04:40:15 UTC — der Takt wandert also nachweislich.",
+    "gelernt": "NICHTS. ops/smejj-lora-loop/zustand.json: zyklusIndex 0, zyklenGestartet 0, zyklenAbgebrochen 0, verbrauchtUsd 0.",
+    "grund": "letzteGruende: [\"trainer_nicht_erreichbar\"] — und NUR das. Der zweite moegliche Grund 'keine_trainingsdaten' fehlt, es liegen also Daten bereit; allein der Trainer fehlte.",
+    "keinerleiMessung": "Unter ops/ liegt genau EIN Objekt: die LoRA-Zustandsdatei. Kein Pruefpunkt, kein einziger Messbericht. Die Mess-Haelfte der Schleife schreibt seit dem Start am 2026-07-29 nichts nach IDrive."
+  },
+
+  "wurzel": {
+    "kern": "Der Trainer-Container lief, die Anwendung darin nicht — und niemand konnte es sehen, weil KEINE EINZIGE SONDE eingerichtet war.",
+    "belege": [
+      "Salad meldete fuer smejj-lora-trainer: state running, ready TRUE, started TRUE.",
+      "Der Container hatte startup_probe false, readiness_probe false, liveness_probe false. Ohne Sonde hat Salad keine Moeglichkeit zu pruefen, ob die Anwendung bedient — es meldet 'bereit', sobald der Prozess startet.",
+      "GET /health am Gateway (mit Salad-Api-Key): HTTP 503. Laut server.py antwortet /health ABSICHTLICH IMMER 200, solange der Prozess lebt — genau als Schutz gegen die Startsonde. Ein 503 heisst deshalb: der Prozess bedient nicht."
+    ],
+    "gegenprobe": "Damit das kein Fehlurteil ueber mein eigenes Pruefverfahren wird, dieselbe Methode gegen den funktionierenden Container smejj-fast-1: GET /v1/models mit demselben Schluessel -> HTTP 200 mit gueltiger Modell-Liste. Das Verfahren stimmt, der Trainer antwortet wirklich nicht.",
+    "wasAusgeschlossenWurde": [
+      "Buendel kaputt: SMEJJ_TRAINER_BUNDLE_B64 lokal entpackt — 10240 B, sauber, Verzeichnis smejj-lora-trainer/ mit vier Dateien. Das `cd` im Startbefehl trifft also.",
+      "Import-Wettlauf mit pip: server.py importiert nur Standardbibliothek, laufwerk.py und motor.py ebenfalls. Der Server braucht die im Hintergrund installierten Pakete beim Start gar nicht.",
+      "Falsche Bindeadresse: server.py liest SMEJJ_HOST (0.0.0.0) und PORT (8080) — beide im Container korrekt gesetzt.",
+      "Code kaputt: das Modul laedt lokal fehlerfrei ('IMPORT OK')."
+    ],
+    "offen": "Warum der Prozess im Container nicht bedient, ist von aussen nicht weiter eingrenzbar — dafuer braucht es das Container-Protokoll aus dem Salad-Portal. Die oeffentliche Salad-API liefert keine Logs."
+  },
+
+  "umgesetzt": {
+    "rueckrollpunkt": "backups/salad/smejj-lora-trainer-2026-08-03-vor-sonden.json (vollstaendige Container-Beschreibung vor der Aenderung).",
+    "sondenNachgeruestet": "startup_probe und liveness_probe auf GET /health, Port 8080. Startfenster 30 s + 20 x 15 s = 5,5 Minuten, danach ersetzt Salad die Instanz. Version 3 -> 4; Umgebung (10 Variablen) und Startbefehl unveraendert.",
+    "sofortWirksam": "Die Sonde hat die Wahrheit sichtbar gemacht: aus 'ready=true' wurde 'ready=false, started=false', und um 04:37 hat Salad die Instanz zum ersten Mal selbst ersetzt. Genau das war 28 Stunden lang unmoeglich.",
+    "schemaFallen": "Salad weist failure_threshold ueber 20 mit HTTP 400 ab, und das Feld http.headers ist PFLICHT (auch leer). Beides erst beim Versuch sichtbar geworden.",
+    "trainerGestoppt": "Nach Freigabe des Betreibers gestoppt (HTTP 202, Status stopped, 0 Replikas). Es ist ein GPU-Container: er hat seit 2026-08-01T23:58 Rechenzeit gekostet, ohne einen einzigen Trainingszyklus zu starten. Sonden und Umgebung bleiben erhalten, der Dienst ist startklar."
+  },
+
+  "nichtRegression": {
+    "geprueftNachDerAenderung": "smejj.com HTTP 200 (251 ms), Control Server /api/health 200 (872 ms), Bruecke /health 200 (342 ms).",
+    "coding": "3 von 3 ueber kimi:kimi-k2.7-code in 2044/2437/2959 ms — der Release vom Vortag haelt.",
+    "urteil": "Keine bestehende Funktion beruehrt. Der Trainer war nachweislich nicht funktionsfaehig; sein Stopp baut keine verifizierte Funktion zurueck."
+  },
+
+  "messfallen": [
+    "Meine erste IDrive-Abfrage meldete 'keine Berichte'. Falsch: die verwendete Hilfsfunktion idriveConfigFromEnv() lieferte bucket: undefined — ich habe gegen eine kaputte Konfiguration gefragt. Ein 404 beweist nichts, solange die Abfrage selbst nicht steht.",
+    "Ein 'running, ready=true' von Salad ist ohne Sonde eine INHALTSLEERE Aussage. Es bedeutet nur 'Prozess gestartet', nicht 'Anwendung bedient'.",
+    "Bevor man einem Dienst Krankheit bescheinigt, misst man mit derselben Methode gegen einen gesunden — sonst diagnostiziert man sein eigenes Pruefverfahren."
+  ],
+
+  "naechsterSchritt": "Container-Protokoll im Salad-Portal lesen (Logs gibt es nur dort, nicht ueber die API). Erst danach ist ein Neustart sinnvoll — sonst laeuft wieder eine GPU fuer nichts. Zusaetzlich offen: warum die Mess-Haelfte der Schleife seit dem 2026-07-29 keinen einzigen Bericht nach IDrive schreibt.",
+
+  "merkregel": "Ein Dienst, der niemand fragt, ob er gesund ist, meldet sich nie krank. 28 Stunden Stillstand blieben unbemerkt, weil kein einziger Wert geprueft wurde — nicht weil etwas Ungewoehnliches passiert waere."
+}
