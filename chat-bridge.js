@@ -34,7 +34,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260803-v106-groq-ohr";
+const BRIDGE_VERSION = "20260803-v107-premium-stimme";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -582,6 +582,12 @@ const VOICE_TTS_ORIGIN = trimUrl(process.env.SMEJJ_VOICE_TTS_ORIGIN || "");
 // Der TTS-Worker laeuft mit Salad-Gateway-Authentifizierung (kein offener
 // GPU-Endpunkt). Die Bridge nutzt den bereits vorhandenen Org-API-Key.
 const VOICE_TTS_API_KEY = process.env.SMEJJ_VOICE_TTS_API_KEY || process.env.SMEJJ_LLM_SALAD_API_KEY || "";
+// Premium-Stimme ueber den Control-Proxy (v107): Der Worker haengt hinter dem
+// Salad-Gateway und akzeptiert nur den Org-Schluessel — den traegt NUR der
+// Control-Server. Mit gesetztem internen Token laufen Sprecher-Daten und
+// tts_stream ueber /api/voice/worker/*; der Control weckt und stoppt die
+// GPU-Gruppen (Idle-Abschaltung, Budget-Gate). Ohne Token: alter Direktweg.
+const VOICE_CONTROL_TOKEN = String(process.env.SMEJJ_VOICE_CONTROL_TOKEN || "").trim();
 const VOICE_TTS_TIMEOUT_MS = Number(process.env.SMEJJ_VOICE_TTS_TIMEOUT_MS || 20000);
 // Upstream-Art: "xtts" (Salad-GPU-Worker) oder "piper" (CPU-Stimme auf dem
 // Zeabur-Mietserver — GET /?text=... liefert WAV; laeuft im Flat-Paket).
@@ -607,16 +613,33 @@ export function xttsLanguage(lang) {
   return XTTS_LANGS.has(base) ? base : "en";
 }
 
+const XTTS_PROXY_PATHS = { "/studio_speakers": "/api/voice/worker/speakers", "/tts_stream": "/api/voice/worker/speak" };
+
 async function xttsFetch(path, init = {}, timeoutMs = VOICE_TTS_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const headers = { ...(init.headers || {}) };
-  if (VOICE_TTS_API_KEY) headers["Salad-Api-Key"] = VOICE_TTS_API_KEY;
+  const viaControl = Boolean(VOICE_CONTROL_TOKEN && CONTROL_ORIGIN && XTTS_PROXY_PATHS[path]);
+  if (viaControl) headers["x-smejj-voice-token"] = VOICE_CONTROL_TOKEN;
+  else if (VOICE_TTS_API_KEY) headers["Salad-Api-Key"] = VOICE_TTS_API_KEY;
+  const ziel = viaControl ? `${CONTROL_ORIGIN}${XTTS_PROXY_PATHS[path]}` : `${VOICE_TTS_ORIGIN}${path}`;
   try {
-    return await fetch(`${VOICE_TTS_ORIGIN}${path}`, { ...init, headers, signal: controller.signal });
+    return await fetch(ziel, { ...init, headers, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Weck-Ruf an den Control (fire-and-forget): startet die GPU-Gruppen hinter
+// Budget-Gate und Idle-Abschaltung. Fehler sind egal — dann bleibt es bei der
+// Browser-Stimme, und der naechste Sprachmodus-Start versucht es erneut.
+function wakeVoiceWorkers() {
+  if (!VOICE_CONTROL_TOKEN || !CONTROL_ORIGIN) return;
+  fetch(`${CONTROL_ORIGIN}/api/voice/session/start`, {
+    method: "POST",
+    headers: { "x-smejj-voice-token": VOICE_CONTROL_TOKEN },
+    signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined
+  }).catch(() => {});
 }
 
 // Studio-Sprecher des XTTS-Workers einmal laden und im Prozess cachen.
@@ -682,6 +705,7 @@ async function handleVoiceStatus(req, res) {
     up = false;
     reason = String(error?.message || "worker").slice(0, 80);
     xttsSpeakerCache = null; // Worker weg — beim naechsten Versuch neu laden.
+    wakeVoiceWorkers(); // v107: GPU-Gruppen wecken; naechster Start findet sie oben.
   }
   voiceStatusCache = { at: now, up };
   return json(res, 200, up ? { ok: true, premiumVoice: true } : { ok: true, premiumVoice: false, reason });
