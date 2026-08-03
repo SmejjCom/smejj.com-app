@@ -74,7 +74,10 @@ export async function callViaControl(evalCase, {
   modelId = "",
   fetchImpl = fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
-  now = () => Date.now()
+  now = () => Date.now(),
+  // Zusatzkoepfe fuer Endpunkte hinter einem Gateway mit Zugangsschutz —
+  // der Salad-Gateway des LoRA-Trainers verlangt Salad-Api-Key (auth:true).
+  headers: zusatzKoepfe = {}
 } = {}) {
   const started = now();
   const controller = new AbortController();
@@ -86,7 +89,8 @@ export async function callViaControl(evalCase, {
       headers: {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
-        Origin: "https://smejj.com"
+        Origin: "https://smejj.com",
+        ...zusatzKoepfe
       },
       body: JSON.stringify({ messages: buildMessages(evalCase), ...(modelId ? { model: modelId } : {}) })
     });

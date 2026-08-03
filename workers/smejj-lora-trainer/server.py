@@ -54,6 +54,23 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(rohdaten)
 
+    def _antworte_sse(self, vollantwort):
+        """Vollstaendige Antwort als ein SSE-Delta-Frame plus [DONE]."""
+        try:
+            text = vollantwort["choices"][0]["message"]["content"]
+            modell = vollantwort.get("model", "smejj-1-0")
+        except (KeyError, IndexError, TypeError):
+            text, modell = "", "smejj-1-0"
+        frame = json.dumps({"choices": [{"delta": {"content": text}}]})
+        rohdaten = f"data: {frame}\n\ndata: [DONE]\n\n".encode("utf-8")
+        self.send_response(200)
+        self.send_header("content-type", "text/event-stream; charset=utf-8")
+        self.send_header("x-smejj-model-backend", "smejj-lora-trainer")
+        self.send_header("x-smejj-model-id", modell)
+        self.send_header("content-length", str(len(rohdaten)))
+        self.end_headers()
+        self.wfile.write(rohdaten)
+
     def _koerper(self):
         laenge = int(self.headers.get("content-length") or 0)
         if laenge <= 0:
@@ -101,7 +118,10 @@ class Handler(BaseHTTPRequestHandler):
                 })
             auftrag = self._koerper()
             lauf_id = uuid.uuid4().hex[:16]
-            laufwerk.starte(lauf_id, auftrag, OEFFENTLICHE_URL)
+            # Der Messweg zeigt auf die SSE-Route, nicht auf die Wurzel:
+            # evalTransport#callViaControl POSTet unveraendert an diese Adresse.
+            mess_url = f"{OEFFENTLICHE_URL}/api/chat" if OEFFENTLICHE_URL else ""
+            laufwerk.starte(lauf_id, auftrag, mess_url)
             return self._antworte(200, {"laufId": lauf_id})
 
         if pfad.startswith("/training/abort/"):
@@ -116,6 +136,19 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as fehler:  # noqa: BLE001 - nie den Dienst reissen
                 return self._antworte(503, {"error": {"message": str(fehler)[:200]}})
             return self._antworte(200, antwort)
+
+        # Der Messweg der Pruefsuite (callViaControl in evalTransport.js)
+        # spricht den Bridge-Vertrag: SSE-Frames im OpenAI-Delta-Format und
+        # der Kopf x-smejj-model-backend als Beweis, dass NICHT der
+        # Notfall-Assistent geantwortet hat. Ohne diese Route ist jeder
+        # trainierte Stand unmessbar.
+        if pfad == "/api/chat":
+            anfrage = self._koerper()
+            try:
+                antwort = laufwerk.chat(anfrage)
+            except Exception as fehler:  # noqa: BLE001
+                return self._antworte(503, {"error": {"message": str(fehler)[:200]}})
+            return self._antworte_sse(antwort)
 
         return self._antworte(404, {"ok": False, "error": "not_found"})
 

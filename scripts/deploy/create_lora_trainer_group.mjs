@@ -115,8 +115,11 @@ function startBefehl() {
     // Qwen3 wiederum braucht transformers>=4.51. Deshalb ein kohaerenter
     // Stand vom April 2025 samt torch-Upgrade; das laeuft im Hintergrund und
     // der Marker haelt den Motor-Import solange zurueck.
-    "  ( pip install --no-cache-dir torch==2.6.0 transformers==4.51.3 peft==0.15.2"
-      + " accelerate==1.6.0 bitsandbytes==0.45.5 'safetensors>=0.4.5'"
+    // torchvision MUSS mitgezogen werden: das Abbild traegt torchvision 0.19
+    // (gebaut gegen torch 2.4); mit torch 2.6 bricht der transformers-Import
+    // mit "operator torchvision::nms does not exist" (Portal-Log 2026-08-03).
+    "  ( pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 transformers==4.51.3"
+      + " peft==0.15.2 accelerate==1.6.0 bitsandbytes==0.45.5 'safetensors>=0.4.5'"
       + " > /tmp/pip.log 2>&1; echo $? > /tmp/smejj-pip.rc ) &",
     "fi",
     "exec python3 server.py"
@@ -132,6 +135,11 @@ function umgebung() {
     // das Gateway auf 503 und die Instanz pendelt running -> creating.
     SMEJJ_HOST: "::",
     SMEJJ_TRAINER_MODUS: MODUS,
+    // Adresse, unter der der Loop den frisch trainierten Stand misst. Der
+    // Dienst haengt selbst /api/chat an. Ohne diesen Wert liefert
+    // /training/status messEndpunkt=null und jede Messung schlaegt fehl.
+    SMEJJ_TRAINER_PUBLIC_URL: process.env.SMEJJ_TRAINER_PUBLIC_URL
+      || "https://lime-parsley-qr1myuiyur3yeow5.salad.cloud",
     SMEJJ_TRAINER_BUNDLE_B64: baueBuendel(),
     SMEJJ_TRAINER_BASIS_REPO: process.env.SMEJJ_LORA_BASIS_HF_REPO || "",
     IDRIVE_E2_ENDPOINT: process.env.IDRIVE_E2_ENDPOINT || "",

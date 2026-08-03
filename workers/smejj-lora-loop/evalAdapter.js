@@ -13,6 +13,7 @@
 // sichtbar waere.
 
 import { runEvalCycle } from "../smejj-training-loop/evalCycle.js";
+import { callViaControl } from "../../src/evaluation/evalTransport.js";
 
 /**
  * Baut die `messe`-Funktion, die cycle.js einreicht.
@@ -31,15 +32,24 @@ export function baueMesser({ config, repoRoot, log = () => {} }) {
       // Ergebnis, keine Uebernahme in die Bestenliste.
       return { ok: false, gruende: ["kein_mess_endpunkt"] };
     }
+    const modelId = `smejj-1-0-${konfiguration?.kennung || "kandidat"}`;
     try {
       const ergebnis = await runEvalCycle({
         repoRoot,
         suitePath: config.suitePath,
+        // Eigener Aufrufer statt des Standardwegs, aus genau einem Grund:
+        // der Salad-Gateway vor dem Trainer verlangt den Salad-Api-Key-Kopf
+        // (auth:true). Die Messstrecke selbst bleibt callViaControl.
+        callModel: (fall) => callViaControl(fall, {
+          modelId,
+          endpoint: messEndpunkt,
+          headers: config.trainer.apiKey ? { "Salad-Api-Key": config.trainer.apiKey } : {}
+        }),
         // Der Vergleich mit dem bisher Besten passiert in sweep.js#istNeuerBester,
         // nicht ueber den Regressions-Vergleich der Suite: hier wird jeder
         // Kandidat gegen DIESELBE Latte gemessen, nicht gegen seinen Vorgaenger.
         baseline: null,
-        modelId: `smejj-1-0-${konfiguration?.kennung || "kandidat"}`,
+        modelId,
         chatEndpoint: messEndpunkt,
         delayMs: config.evalDelayMs,
         wiederholungen: config.evalWiederholungen,

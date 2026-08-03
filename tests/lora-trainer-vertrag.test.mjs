@@ -86,7 +86,28 @@ test("der Loop-Client spricht dasselbe Protokoll wie der Dienst", { skip: !pytho
     }
     assert.equal(zustand.zustand, "fertig", JSON.stringify(zustand));
     assert.ok(zustand.adapterSchluessel);
-    assert.equal(zustand.messEndpunkt, dienst.basisUrl);
+    // Der Messweg zeigt auf die SSE-Route des Dienstes, nicht auf die Wurzel.
+    assert.equal(zustand.messEndpunkt, `${dienst.basisUrl}/api/chat`);
+  } finally {
+    await beende(dienst);
+  }
+});
+
+test("die Messstrecke der Pruefsuite kann den Dienst wirklich messen", { skip: !python }, async () => {
+  // Der Beweis, der bis zum 2026-08-03 fehlte: callViaControl (dieselbe
+  // Funktion wie in eval:models:live) gegen den ECHTEN Dienst. Ohne die
+  // SSE-Route und den x-smejj-model-backend-Kopf faellt das als
+  // "notfall_assistent" durch — genau der Fehler, den dieser Test fixiert.
+  const { callViaControl } = await import("../src/evaluation/evalTransport.js");
+  const dienst = await starteDienst();
+  try {
+    const ergebnis = await callViaControl(
+      { id: "vertrag", prompt: "Sag etwas." },
+      { endpoint: `${dienst.basisUrl}/api/chat`, modelId: "smejj-1-0-vertrag", headers: { "Salad-Api-Key": "test" } }
+    );
+    assert.equal(ergebnis.ok, true, JSON.stringify(ergebnis));
+    assert.equal(ergebnis.backend, "smejj-lora-trainer");
+    assert.match(ergebnis.text, /attrappe/);
   } finally {
     await beende(dienst);
   }
@@ -162,7 +183,7 @@ test("EIN ganzer Zyklus laeuft gegen den echten Dienst durch", { skip: !python }
       // Nur die Messung bleibt nachgebaut: eine echte Suite-Messung gegen die
       // Attrappe waere sinnlos, weil die Attrappe bewusst Unsinn antwortet.
       messe: async ({ messEndpunkt }) => {
-        assert.equal(messEndpunkt, dienst.basisUrl, "der Messendpunkt kommt vom Dienst");
+        assert.equal(messEndpunkt, `${dienst.basisUrl}/api/chat`, "der Messendpunkt kommt vom Dienst");
         return { ok: true, kennzahlen: { punktzahl: 0.9, kritischeFehler: 0 } };
       },
       speichereBesten: async () => true,
