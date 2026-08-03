@@ -34,7 +34,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260803-v108-weckruf-bei-tts-fehler";
+const BRIDGE_VERSION = "20260803-v109-sprecher-budget";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -640,7 +640,7 @@ function wakeVoiceWorkers() {
 // Studio-Sprecher einmal laden und im Prozess cachen.
 async function loadXttsSpeaker() {
   if (xttsSpeakerCache) return xttsSpeakerCache;
-  const response = await xttsFetch("/studio_speakers", {}, 8000);
+  const response = await xttsFetch("/studio_speakers", {}, VOICE_TTS_TIMEOUT_MS);
   if (!response.ok) throw new Error(`studio_speakers ${response.status}`);
   const speakers = await response.json();
   const name = Object.keys(speakers || {})[0];
