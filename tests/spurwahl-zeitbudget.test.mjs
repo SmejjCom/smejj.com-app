@@ -131,7 +131,7 @@ test("der LETZTE Versuch ist geduldig — Live-Befund 2026-08-02", async () => {
 
 test("das geduldige Budget gilt NUR fuer den letzten Versuch", () => {
   const quelle = fs.readFileSync("public/ai/fetch-retry.js", "utf8");
-  assert.match(quelle, /attempt === versuche \? letzterBudgetMs : budgetMs/,
+  assert.match(quelle, /attempt === versuche \? Math\.max\(zielBudgetMs, letzterBudgetMs\) : zielBudgetMs/,
     "der letzte Versuch bekommt ein eigenes, groesseres Budget");
   assert.match(quelle, /const letzterBudgetMs = explizit \? budgetMs :/,
     "eine ausdrueckliche Vorgabe darf die Geduld NICHT ueberschreiben");

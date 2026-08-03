@@ -1,8 +1,9 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
+import { buildWebContext } from "./chat-bridge-websuche.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { readAudioBody, transcribeWithGroq } from "./chat-bridge-voice-ear.js";
-import { buildRagBlock, lastUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
+import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
 // Gespraechsgedaechtnis. Bewusst DIESELBE gepruefte Bereinigung wie der Control
 // Server (src/server.js) statt einer zweiten Umsetzung: sie verwirft insbesondere
 // eine vom Client gesendete "system"-Rolle (Prompt-Injection) und begrenzt Anzahl
@@ -34,7 +35,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260803-v111-schnellspur-70b";
+const BRIDGE_VERSION = "20260804-v112-verlauf-reserve-anschlussfrage";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -128,7 +129,8 @@ function boundedInteger(value, min, max, fallback) {
 async function handleChat(req, res) {
   const body = await readJson(req);
   const messages = Array.isArray(body.messages) ? body.messages : [{ role: "user", content: String(body.message || "") }];
-  const wissen = buildRagBlock(lastUserContent(messages));
+  // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
+  const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
   const angereichert = withRagBlock(hardenMessages(messages), wissen, 1);
   // handleAgent schloss Coding immer aus; handleChat uebergab fest "chat".
   if (await streamFastLane(res, angereichert, isCodingTask(String(messages[messages.length - 1]?.content || "")) ? "coding" : "chat", body.model)) return;
@@ -148,8 +150,10 @@ async function handleAgent(req, res) {
   // /api/agent ist der Weg, den die Startseite wirklich nutzt (public/app.js).
   // Der Control Server ergaenzt hier bereits Projektwissen — die Schnellspur
   // erreicht ihn aber gar nicht und blieb darum ohne. Suche einmal, gleicher
-  // Block fuer jede Spur.
-  const wissen = buildRagBlock(task);
+  // Block fuer jede Spur. `body.history` endet mit der Frage VOR der aktuellen
+  // (app.js schickt die aktuelle nur als `task`), trifft also das Thema, auf
+  // das sich eine Anschlussfrage bezieht.
+  const wissen = buildRagBlockMitVerlauf(task, lastUserContent(body.history));
   if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen, history: body.history }), "fast", body.model)) return;
   // Wetter-Fast-Path (Welle 2b): Live-Daten direkt von Open-Meteo (~0,3s, frei,
   // ohne Key) statt Control-Router mit Suchmaschinen-Scraping (8-12s). Fail-safe:
@@ -159,7 +163,7 @@ async function handleAgent(req, res) {
     if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, history: body.history }), "web", body.model)) return;
   }
   if (await streamViaControl(res, "/api/agent", body)) return;
-  const webContext = !coding && shouldSearchWeb(task) ? await buildWebContext(task) : "";
+  const webContext = !coding && shouldSearchWeb(task) ? await buildWebContext(task, CONTROL_ORIGIN) : "";
   const messages = buildAgentMessages({ task, coding, webContext, wissen, history: body.history });
   return streamModel(res, messages, coding ? "coding" : webContext ? "web" : "fast", body.model);
 }
@@ -205,27 +209,6 @@ function hardenMessages(messages) {
     content: "Du bist der Assistent von smejj.com. Antworte direkt sichtbar, ohne <think>, ohne interne Notizen und ohne leere Vorrede."
   };
   return [guard, ...messages.filter((message) => message && message.role && typeof message.content === "string").slice(-12)];
-}
-
-async function buildWebContext(task) {
-  if (!CONTROL_ORIGIN) return "";
-  try {
-    const url = `${CONTROL_ORIGIN}/api/search/web?q=${encodeURIComponent(task)}`;
-    const response = await fetch(url, { headers: { Accept: "application/json", Origin: "https://smejj.com" } });
-    if (!response.ok) return "";
-    const payload = await response.json();
-    const results = Array.isArray(payload.results) ? payload.results.slice(0, 6) : [];
-    if (!results.length) return "";
-    const lines = results.map((item, index) => {
-      const title = String(item.title || "").replace(/\s+/g, " ").slice(0, 160);
-      const snippet = String(item.snippet || item.text || "").replace(/\s+/g, " ").slice(0, 320);
-      const href = String(item.url || item.href || "").slice(0, 260);
-      return `${index + 1}. ${title}\nURL: ${href}\nAuszug: ${snippet}`;
-    });
-    return `Live-Internet-Ergebnisse, Stand ${new Date().toISOString()}:\n${lines.join("\n\n")}`;
-  } catch {
-    return "";
-  }
 }
 
 async function streamViaControl(res, route, body) {

@@ -13,6 +13,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import http from "node:http";
+import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -271,4 +272,94 @@ test("gebuendelte bridge reicht projektwissen an das modell durch", async (t) =>
   const gesund = await (await fetch(`http://127.0.0.1:${port}/health`)).json();
   assert.equal(gesund.projektwissen.enabled, true);
   assert.equal(gesund.version, artefakt.version);
+});
+
+// ---------------------------------------------------------------------------
+// 2026-08-04 — Anschlussfragen: das Thema steht in der Nachricht davor.
+//
+// Offener Punkt seit dem 2026-08-01: gesucht wurde immer nur mit der LETZTEN
+// Nachricht. "Und wie sichere ich das ab?" traegt sein Thema aber nicht selbst —
+// die Suche lief gegen sechs bedeutungsarme Woerter (gemessen 7,65 Punkte, weit
+// unter der Schwelle 20) und lieferte nichts, obwohl das Thema davor mit 22,51
+// klar gedeckt war.
+//
+// Alle Zahlen unten sind am 2026-08-04 gegen den ECHTEN Korpus gemessen.
+// ---------------------------------------------------------------------------
+
+const THEMA_GEDECKT = "Wo speichert smejj.com grosse Dateien, Modelle und Artefakte dauerhaft?"; // 22,51
+const ANSCHLUSS = "Und wie sichere ich das ab?";                                                 // 7,65 allein
+const THEMA_UNGEDECKT = "Erzaehl mir einen Witz ueber Katzen.";                                  // 4,62
+
+test("Anschlussfrage: das Thema der vorigen Frage traegt den Kontext", () => {
+  assert.equal(rag.buildRagBlock(ANSCHLUSS), "", "allein bleibt die Frage unter der Schwelle");
+  const block = rag.buildRagBlockMitVerlauf(ANSCHLUSS, THEMA_GEDECKT);
+  assert.ok(block.length > 0, "mit dem Thema davor muss Kontext entstehen");
+  assert.equal(block, rag.buildRagBlock(THEMA_GEDECKT),
+    "es muss GENAU der Block des Themas sein — keine dritte, zusammengesetzte Suche");
+});
+
+test("ist das Thema ungedeckt, bleibt es bei KEINEM Kontext", () => {
+  // Der teuerste Fehler vom 2026-08-01 war Kontext fuer ungedeckte Fragen
+  // (96,1 % -> 86,0 %). Eine Anschlussfrage darf ihn nicht wieder oeffnen.
+  assert.equal(rag.buildRagBlockMitVerlauf("Und warum ist das so?", THEMA_UNGEDECKT), "");
+});
+
+test("gedeckte Fragen verhalten sich EXAKT wie vorher", () => {
+  // Die Aenderung ist rein additiv: erst die bisherige Suche, nur bei leerem
+  // Ergebnis der zweite Anlauf.
+  for (const frage of [GEDECKT, FAST_GEDECKT, UNGEDECKT]) {
+    assert.equal(rag.buildRagBlockMitVerlauf(frage, THEMA_GEDECKT), rag.buildRagBlock(frage),
+      `Verhalten geaendert bei: ${frage}`);
+  }
+});
+
+test("kurz ist nicht gleich Anschlussfrage", () => {
+  // "Was ist ein Passkey?" ist kurz, traegt sein Thema aber selbst. Wuerde
+  // stattdessen im Vorherigen gesucht, bekaeme die Frage fremden Kontext.
+  assert.equal(rag.istAnschlussfrage("Was ist ein Passkey?"), false);
+  assert.equal(rag.istAnschlussfrage("Wie melde ich mich an?"), false);
+  assert.equal(rag.buildRagBlockMitVerlauf("Was ist ein Passkey?", THEMA_GEDECKT), "");
+});
+
+test("rueckverweisende und anknuepfende Fragen werden erkannt", () => {
+  for (const frage of ["Und wie sichere ich das ab?", "Warum?", "Und dabei?", "Ok, und wo genau?"]) {
+    assert.equal(rag.istAnschlussfrage(frage), true, `nicht erkannt: ${frage}`);
+  }
+});
+
+test("lange Fragen gelten nie als Anschlussfrage", () => {
+  // Ab neun Woertern traegt eine Frage genug eigenes Wortmaterial; dann ist die
+  // erste Suche die richtige Aussage.
+  assert.equal(rag.istAnschlussfrage(
+    "Und erklaere mir bitte ausfuehrlich, warum das so gebaut worden ist und was es kostet"), false);
+});
+
+test("dieselbe Frage zweimal loest keinen zweiten Anlauf aus", () => {
+  assert.equal(rag.buildRagBlockMitVerlauf(ANSCHLUSS, ANSCHLUSS), "");
+  assert.equal(rag.buildRagBlockMitVerlauf(ANSCHLUSS, ""), "");
+  assert.equal(rag.buildRagBlockMitVerlauf(ANSCHLUSS, null), "");
+});
+
+test("previousUserContent trifft die Frage VOR der aktuellen", () => {
+  // /api/chat bekommt die aktuelle Frage in der Liste, /api/agent nicht —
+  // wer die Position raet, greift die falsche Nachricht ab.
+  const messages = [
+    { role: "user", content: "Erste" },
+    { role: "assistant", content: "Antwort" },
+    { role: "user", content: "Zweite" }
+  ];
+  assert.equal(rag.lastUserContent(messages), "Zweite");
+  assert.equal(rag.previousUserContent(messages), "Erste");
+  assert.equal(rag.previousUserContent([{ role: "user", content: "Nur eine" }]), "");
+  assert.equal(rag.previousUserContent(undefined), "");
+});
+
+test("beide Live-Wege nutzen die Anschluss-Suche", () => {
+  const quelle = readFileSync(new URL("../public/chat-bridge.js", import.meta.url), "utf8");
+  assert.match(quelle, /buildRagBlockMitVerlauf\(task, lastUserContent\(body\.history\)\)/,
+    "/api/agent: der Verlauf endet mit der Frage davor");
+  assert.match(quelle, /buildRagBlockMitVerlauf\(lastUserContent\(messages\), previousUserContent\(messages\)\)/,
+    "/api/chat: die Liste enthaelt die aktuelle Frage bereits");
+  assert.ok(!/buildRagBlock\(/.test(quelle.replace(/buildRagBlockMitVerlauf\(/g, "")),
+    "keine Aufrufstelle darf auf der alten Suche stehenbleiben");
 });

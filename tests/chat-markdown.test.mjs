@@ -9,6 +9,7 @@ import fs from "node:fs";
 const source = fs.readFileSync("public/chat-markdown.js", "utf8");
 const appJs = fs.readFileSync("public/app.js", "utf8");
 const components = fs.readFileSync("public/components.js", "utf8");
+const chatStream = fs.readFileSync("public/ai/chat-stream.js", "utf8");
 
 // Minimales DOM: der Renderer nutzt nur textContent, innerHTML und window.
 function fakeNode(text) {
@@ -120,10 +121,14 @@ test("Renderer ist fail-safe: nie eine leere Antwort", async () => {
 });
 
 test("Verdrahtung: gerendert wird erst am ENDE des Streams", () => {
-  // Waehrend des Streams baut app.js per `textContent +=` auf — ein Rendern
-  // mittendrin wuerde die Rohquelle zerstoeren.
-  assert.match(appJs, /\n  renderChatMarkdown\(output\);\n\}/);
-  assert.doesNotMatch(appJs, /renderChatMarkdown\(output\);\s*\n\s*output\.textContent \+=/);
+  // Waehrend des Streams baut der Empfaenger per `textContent +=` auf — ein
+  // Rendern mittendrin wuerde die Rohquelle zerstoeren.
+  // Seit 2026-08-04 liegt der Empfang in public/ai/chat-stream.js (app.js stand
+  // an der 800-Zeilen-Grenze); app.js reicht den Renderer nur noch hinein.
+  assert.match(chatStream, /\n  renderMarkdown\?\.\(output\);\n\}/);
+  assert.doesNotMatch(chatStream, /renderMarkdown\?\.\(output\);\s*\n\s*output\.textContent \+=/);
+  assert.match(appJs, /renderMarkdown: renderChatMarkdown/,
+    "app.js muss den Markdown-Renderer an den Empfaenger uebergeben");
   // Der Import kam ohne neue Zeile aus (Ratchet): components.js re-exportiert.
   assert.match(components, /export \{ renderChatMarkdown \} from "\.\/chat-markdown\.js/);
   assert.match(appJs, /import \{ Icons, closeModal, openModal, renderChatMarkdown, renderEmptyState, setButtonIcon, showToast \}/);

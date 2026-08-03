@@ -89,6 +89,89 @@ export function lastUserContent(messages) {
   return "";
 }
 
+/** Vorletzte Nutzernachricht — das Thema, auf das sich eine Anschlussfrage bezieht. */
+export function previousUserContent(messages) {
+  if (!Array.isArray(messages)) return "";
+  let seen = 0;
+  for (let position = messages.length - 1; position >= 0; position -= 1) {
+    const message = messages[position];
+    if (message?.role !== "user" || typeof message.content !== "string" || !message.content.trim()) continue;
+    seen += 1;
+    if (seen === 2) return message.content;
+  }
+  return "";
+}
+
+/** Rueckverweisende Woerter: sie tragen das Thema NICHT, sie zeigen nur darauf. */
+const RUECKVERWEIS = /\b(das|dem|den|dies|diese|dieses|dort|dabei|davon|damit|dazu|dafuer|dafür|darauf|darueber|darüber|deren|dessen|es|sie|ihn|ihm)\b/i;
+const ANSCHLUSS_START = /^(und|oder|aber|auch|warum|wieso|weshalb|wozu|womit|wobei|was noch|und was|und wie|und wo|ok|okay|ja|nein)\b/i;
+
+/**
+ * Ist die Frage ohne das Vorherige gar nicht zu verstehen?
+ *
+ * Zwei Bedingungen, beide noetig: kurz UND rueckverweisend. "Was ist ein
+ * Passkey?" ist kurz, traegt sein Thema aber selbst — dafuer waere die Suche im
+ * Vorherigen falsch. "Und wie sichere ich das ab?" traegt es nicht.
+ *
+ * @param {string} task
+ * @returns {boolean}
+ */
+export function istAnschlussfrage(task) {
+  const text = String(task || "").trim();
+  if (!text) return false;
+  const woerter = text.split(/\s+/).filter(Boolean);
+  if (woerter.length > 8) return false;
+  return ANSCHLUSS_START.test(text) || RUECKVERWEIS.test(text);
+}
+
+/**
+ * Kontextblock zu einer Frage, die auf dem Vorherigen aufbaut.
+ *
+ * Das Problem (offen seit dem 2026-08-01): gesucht wurde immer nur mit der
+ * LETZTEN Nachricht. Bei "Und wie sichere ich das ab?" steht das Thema aber in
+ * der Nachricht davor — die Suche lief also gegen acht bedeutungsarme Woerter
+ * und fand entweder nichts oder, schlimmer, irgendein Dokument, das zufaellig
+ * dieselben Fuellwoerter enthaelt.
+ *
+ * Warum NICHT einfach beides zusammen gesucht wird — das ist der Kern:
+ * Die BM25-Punktzahl ist eine SUMME ueber die Suchbegriffe (bm25Index.js:86-95),
+ * aber nur INNERHALB eines Dokuments. Am 2026-08-04 gegen den echten Korpus
+ * nachgemessen (5 Paare): treffen Frage und Thema verschiedene Dokumente, ist die
+ * Punktzahl der zusammengesetzten Anfrage genau das Maximum der beiden einzelnen
+ * (10,66 / 4,62 -> 10,66; 7,47 / 5,06 -> 7,47; 22,51 / 7,65 -> 22,51). Aufblaehen
+ * kann sie sich nur dort, wo beide Haelften DASSELBE Dokument treffen.
+ *
+ * Der Grund fuer die Trennung ist deshalb nicht die Punktzahl, sondern die
+ * Zurechenbarkeit: bei einer zusammengesetzten Anfrage entscheidet die Haelfte
+ * mit der groesseren Wortdeckung ueber den Treffer, und niemand kann hinterher
+ * sagen, ob der Kontext zur Frage oder nur zum Wortmaterial gehoerte. Getrennt
+ * gesucht steht die Aussage fest: entweder ist die aktuelle Frage gedeckt, oder
+ * das Thema, auf das sie sich bezieht. Nur so bleibt die am 2026-08-01 teuer
+ * erkaufte Regel "kein Kontext ist besser als falscher Kontext" pruefbar.
+ *
+ * Die Reihenfolge macht die Aenderung rein additiv: zuerst exakt die bisherige
+ * Suche. Nur wenn die NICHTS liefert und die Frage ohne das Vorherige gar nicht
+ * verstaendlich ist, wird das Vorherige als Thema gesucht. Ein Fall, der heute
+ * Kontext bekommt, bekommt danach denselben.
+ *
+ * Das vorherige Thema wird als Text uebergeben, nicht als Liste: /api/agent
+ * bekommt den Verlauf OHNE die aktuelle Frage, /api/chat MIT ihr. Wer die
+ * Position raten muss, greift frueher oder spaeter die falsche Nachricht ab.
+ *
+ * @param {string} task aktuelle Frage
+ * @param {string} vorherigesThema letzte Nutzerfrage davor (lastUserContent /
+ *   previousUserContent, je nach Aufrufer)
+ * @returns {string} leer, wenn keine der beiden Suchen die Schwelle erreicht
+ */
+export function buildRagBlockMitVerlauf(task, vorherigesThema = "", options = {}) {
+  const direkt = buildRagBlock(task, options);
+  if (direkt) return direkt;
+  if (!istAnschlussfrage(task)) return "";
+  const thema = String(vorherigesThema || "").trim();
+  if (!thema || thema === String(task || "").trim()) return "";
+  return buildRagBlock(thema, options);
+}
+
 /**
  * Setzt einen fertigen Kontextblock als System-Nachricht in eine Nachrichtenliste.
  *
