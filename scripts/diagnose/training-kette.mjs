@@ -64,13 +64,22 @@ export async function pruefeTuer(basisUrl, apiKey, fetchImpl = fetch) {
   return { ohne: await versuch({}), mit: await versuch({ "Salad-Api-Key": apiKey }) };
 }
 
-/** Uebersetzt die beiden Statuswerte in eine Aussage, die man ohne Fachwissen versteht. */
-export function deuteTuer({ ohne, mit }) {
+/**
+ * Uebersetzt die Statuswerte in eine Aussage, die man ohne Fachwissen versteht.
+ * `gruppenZustand` gehoert zwingend dazu: dieselbe 404 bedeutet bei einer
+ * laufenden Gruppe etwas anderes als bei einer gestoppten. Ohne diesen Zusatz
+ * meldete das Werkzeug am 2026-08-02 "Unklarer Zustand", obwohl die Lage
+ * eindeutig war — die Gruppe war schlicht aus.
+ */
+export function deuteTuer({ ohne, mit }, gruppenZustand = "") {
+  const aus = String(gruppenZustand).toLowerCase() === "stopped";
   if (mit === 200) return { ok: true, text: "Trainer ist bereit und antwortet." };
+  if (aus) return { ok: false, text: "Die Trainer-Gruppe ist GESTOPPT — sie kostet nichts, trainiert aber auch nichts. Zum Trainieren muss sie starten." };
   if (ohne === 403 && mit === 403) return { ok: false, text: "Schluessel wird abgelehnt — falscher oder abgelaufener Zugang." };
   if (ohne === 403 && mit === 503) {
     return { ok: false, text: "Anmeldung stimmt, aber der Trainer antwortet nicht: er laedt noch, ist abgestuerzt oder scheitert an der Startsonde. EIN SCHLUESSEL ALLEIN HILFT HIER NICHT." };
   }
+  if (mit === 404) return { ok: false, text: "Adresse erreichbar, aber dort laeuft kein Trainer (HTTP 404)." };
   if (mit === 503 || mit === 502) return { ok: false, text: "Trainer nicht bereit (HTTP " + mit + ")." };
   return { ok: false, text: `Unklarer Zustand (ohne ${ohne}, mit ${mit}).` };
 }
@@ -112,6 +121,7 @@ async function main() {
   const basis = `/organizations/${env.SALAD_ORGANIZATION_NAME}/projects/${env.SALAD_PROJECT_NAME}/containers/${TRAINER_GRUPPE}`;
   const gruppe = await saladGet(basis, env);
   let trainerUrl = "";
+  let gruppenZustand = "";
   if (!gruppe.ok) {
     zeile("Gruppe", `nicht lesbar (HTTP ${gruppe.status})`);
     befunde.push("Trainer-Gruppe nicht lesbar");
@@ -119,7 +129,8 @@ async function main() {
     const d = gruppe.daten;
     const genv = d.container?.environment_variables || {};
     trainerUrl = d.networking?.dns ? `https://${d.networking.dns}` : "";
-    zeile("Zustand", d.current_state?.status || "?");
+    gruppenZustand = d.current_state?.status || "";
+    zeile("Zustand", gruppenZustand || "?");
     zeile("Laeuft seit", d.current_state?.start_time || "?");
     zeile("Basismodell", genv.SMEJJ_TRAINER_BASIS_REPO || "(nicht gesetzt)");
     zeile("Modus", genv.SMEJJ_TRAINER_MODUS || "(Standard: attrappe)");
@@ -140,7 +151,7 @@ async function main() {
     const status = await pruefeTuer(trainerUrl, env.SALAD_API_KEY);
     zeile("ohne Schluessel", status.ohne);
     zeile("mit Schluessel", status.mit);
-    const deutung = deuteTuer(status);
+    const deutung = deuteTuer(status, gruppenZustand);
     console.log(`  -> ${deutung.text}`);
     if (!deutung.ok) befunde.push(deutung.text);
   }
