@@ -81,7 +81,7 @@ test("service worker caches only small app shell assets and has offline fallback
   // v164 -> v165 am 2026-07-28: Aktionen pro Chat-Nachricht — chat-actions.js,
   // chat-messages.js und chat-actions-menu.js neu im Precache, start-styles.css
   // enthaelt neu chat-actions.css (siehe public/sw.js).
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v200"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v201"/);
   assert.match(sw, /\/assets\/view-chrome\.js/);
   // view-chrome.css liegt seit dem Ladezeit-Buendel (2026-07-27) in start-styles.css.
   assert.match(sw, /\/assets\/start-styles\.css/);

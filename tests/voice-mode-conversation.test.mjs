@@ -59,7 +59,8 @@ function makeVoiceHost() {
     });
     return host.queue;
   };
-  // Echo-Filter identisch zur Modul-Heuristik (normalisiert, >=60% Wortdeckung).
+  // Echo-Filter identisch zur Modul-Heuristik (normalisiert, >=50% Wortdeckung;
+  // Stufe 2: 0.6 -> 0.5, siehe voice-echo-filter.js).
   host.isLikelyEcho = (heard) => {
     const norm = (t) => (t || "").toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
     const h = norm(heard);
@@ -68,10 +69,10 @@ function makeVoiceHost() {
     if (spokenText.includes(h)) return true;
     const spokenWords = new Set(spokenText.split(" "));
     const heardWords = h.split(" ");
-    return heardWords.filter((w) => spokenWords.has(w)).length / heardWords.length >= 0.6;
+    return heardWords.filter((w) => spokenWords.has(w)).length / heardWords.length >= 0.5;
   };
   // Barge-in-Entscheidung wie im Modul: >=BARGE_MIN_WORDS Woerter UND kein Echo
-  // (Stufe 1e: Schwelle kommt aus voice-echo-filter.js, aktuell 2).
+  // (Schwelle kommt aus voice-echo-filter.js, seit Stufe 2: 3).
   host.hear = (text, isFinal) => {
     if (!host.bargeListenerRunning) return "ignoriert (kein Listener)";
     const words = text.trim().split(/\s+/).filter(Boolean);

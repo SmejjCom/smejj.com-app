@@ -110,15 +110,22 @@ await (async () => {
   check("3e Grundrauschen wird mitgelernt (12% ueber Floor reicht nicht)", fired === false);
 }
 
-// --- Teil 4: geteilter Echo-/Rausch-Filter mit 2-Wort-Schwelle ---------------------
-check("4a Schwelle ist 2 Woerter (schnelleres Unterbrechen)", BARGE_MIN_WORDS === 2);
-check("4b zwei Woerter reichen fuer eine Unterbrechung", enoughForBarge("stopp bitte", "de") === true);
+// --- Teil 4: geteilter Echo-/Rausch-Filter -----------------------------------------
+// Stufe 2 (2026-08-02): Schwelle 2 -> 3 Woerter. Live gemessen: "smeeting nach"
+// (verhoertes Selbst-Echo, zwei Woerter, 50 % Deckung) brach die Antwort ab.
+check("4a Schwelle ist 3 Woerter (Fehlausloesung kostet die ganze Antwort)", BARGE_MIN_WORDS === 3);
+check("4b zwei Woerter bleiben unter der Schwelle", enoughForBarge("stopp bitte", "de") === false);
+check("4b2 drei Woerter reichen fuer eine Unterbrechung", enoughForBarge("stopp mal bitte", "de") === true);
 check("4c ein Wort bleibt Rauschen", enoughForBarge("ja", "de") === false);
-check("4d zh: 3 Zeichen reichen", enoughForBarge("等一下", "zh") === true);
-check("4e Echo bleibt Echo (Filter unveraendert)",
+check("4d zh: 4 Zeichen reichen", enoughForBarge("请等一下", "zh") === true);
+check("4d2 zh: 3 Zeichen bleiben unter der Schwelle", enoughForBarge("等一下", "zh") === false);
+check("4e Echo bleibt Echo",
   isLikelyEcho("heute ist es bewoelkt", "Heute ist es in Berlin bewoelkt.") === true);
 check("4f echte Zwischenfrage ist kein Echo",
   isLikelyEcho("was kostet das Abo", "Heute ist es in Berlin bewoelkt.") === false);
+// Der gemessene Fall vom 2026-08-02: 50 % Deckung ist jetzt Echo (0.6 -> 0.5).
+check("4g verhoertes Selbst-Echo mit halber Deckung gilt als Echo",
+  isLikelyEcho("smeeting nach", "smejj denkt nach und antwortet gleich.") === true);
 
 console.log(`\nvoice-fast-lane: ${passed} ok, ${failed} fehlgeschlagen`);
 if (failed > 0) process.exit(1);
