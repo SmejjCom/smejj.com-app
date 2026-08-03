@@ -1,3 +1,14 @@
+// v199 -> v200 (2026-08-02): Sprachwelle brach sich selbst ab. Der Denk-
+// Platzhalter aus app.js ("smejj denkt nach ...") ist ein normaler
+// .entry.assistant und galt dem Sprachmodus als Antwort: Status nach 68 ms auf
+// "Ich spreche ...", Platzhalter vorgelesen, Mikrofon mitten in der Denkphase
+// offen, Erkennung hoerte den eigenen Lautsprecher und brach ab; dazu fehlten
+// die ersten ~20 Zeichen jeder Antwort und der Denk-Laut kam nie. Gefixt in
+// composer-tools.js (Selektor, Scharfschalten erst bei echtem Text, Schonfrist,
+// Mute sendet nicht mehr). voice-overlay-ui.js neu im SHELL — composer-tools.js
+// importiert es, ohne Precache-Eintrag liefert der Rueckfall offline "/" (HTML)
+// statt JavaScript und bricht das Modul ab. Freigabe des Betreibers ("Freigabe
+// Stufe 1") vom 2026-08-02.
 // v198 -> v199 (2026-08-02): System-Ansicht zeigte Entwicklerwerte —
 // "Storage: true", "AI Mode: disabled", "Sync: local". Fuer Nutzer unlesbar.
 // Uebersetzung in system-status-text.js (eigene Datei, weil app.js bei 797 von
@@ -377,7 +388,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v199";
+const CACHE_NAME = "smejj-shell-v200";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -441,6 +452,7 @@ const SHELL = [
   "/assets/composer-tools.js",
   "/assets/composer-plus-menu.js",
   "/assets/voice-typed-send.js",
+  "/assets/voice-overlay-ui.js",
   "/assets/voice-speech-queue.js",
   "/assets/voice-echo-filter.js",
   "/assets/voice-vad.js",
