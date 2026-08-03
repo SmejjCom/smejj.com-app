@@ -1,3 +1,10 @@
+// v198 -> v199 (2026-08-02): System-Ansicht zeigte Entwicklerwerte —
+// "Storage: true", "AI Mode: disabled", "Sync: local". Fuer Nutzer unlesbar.
+// Uebersetzung in system-status-text.js (eigene Datei, weil app.js bei 797 von
+// 800 Zeilen stand). Die Datei MUSS in den SHELL: app.js importiert sie, und
+// ohne Precache-Eintrag liefert der Rueckfall offline "/" (HTML) statt
+// JavaScript und bricht app.js komplett ab. Freigabe des Betreibers vom
+// 2026-08-02, beschraenkt auf die Texte der System-Ansicht.
 // v197 -> v198 (2026-08-02): Jeder Endpunkt einmal, plus ein zweiter Anlauf.
 // Live gemessen: die Chat-Bruecke antwortete bei 2 von 6 Coding-Fragen mit
 // HTTP 503 ("Model backend is not configured" — ihre eigene Tiefspur ist nicht
@@ -370,7 +377,7 @@
 // Shell-Cache. PFLICHT, keine Kosmetik: index.html und beide Auth-Seiten laden
 // das Modul; ohne Precache findet der Import offline nichts. Zusammen mit der
 // Meta-CSP aus derselben Freigabe (QA-Welle 1, Befund F-04).
-const CACHE_NAME = "smejj-shell-v198";
+const CACHE_NAME = "smejj-shell-v199";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -391,6 +398,7 @@ const SHELL = [
   "/assets/api-keys-surface.css",
   "/assets/auth-gate.js",
   "/assets/chat-history-context.js",
+  "/assets/system-status-text.js",
   "/assets/i18n/ui.js",
   "/assets/language-options.js",
   "/assets/onboarding-welcome.js",
