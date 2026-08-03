@@ -71,6 +71,9 @@
       "gesamt": "10 von 10, 0 Fehler"
     },
     "derWiderspruchIstWeg": "/api/health meldete vorher defaultModelId: kimi-k2-7, waehrend activeModelId auf glm-5-2 stehenblieb — genau der sichtbare Abdruck des Markennamen-Fehlers. Jetzt zeigen defaultModelId, activeModelId und aiBackend alle auf Kimi.",
+    "browserNachDemRelease": "Echter Klickpfad, 8 Fragen: 8 von 8 ohne Fehler, 0 Konsolenfehler. Coding erster Text 998-2998 ms (vorher 6-19 s), Erklaerfragen 754-998 ms, Schreibregel eingehalten ('smejj.com'), Websuche korrekt.",
+    "dauerprobe": "8 Coding-Anfragen ueber rund eine Minute: 8 von 8 in Ordnung, Median 3758 ms, langsamster 5923 ms, ausnahmslos ueber kimi:kimi-k2.7-code. Kein einziger Rueckfall auf das Ausweichmodell — die fruehere Wellenform ist verschwunden.",
+    "webVitalsNachDemRelease": "Alle Budgets eingehalten: TTFB 107 ms, LCP 228 ms, CLS 0, INP 40 ms, 40 KB im Wiederbesuch.",
     "rueckrollenNichtNoetig": "Der Rueckweg bleibt gueltig: backups/salad/smejj-control-2026-08-02-vor-release.json, zwei Werte (SMEJJ_CONTROL_ARTIFACT_KEY und _SHA256)."
   },
 
