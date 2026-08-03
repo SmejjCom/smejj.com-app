@@ -25,7 +25,7 @@ const REQUEST_TIMEOUT_MS = Number(process.env.SMEJJ_CHAT_BRIDGE_TIMEOUT_MS || 60
 // Fail-safe: ohne Key oder bei jedem Fehler greift unveraendert der bisherige Pfad.
 const GROQ_API_KEY = process.env.SMEJJ_LLM_GROQ_API_KEY || "";
 const GROQ_BASE_URL = trimUrl(process.env.SMEJJ_LLM_GROQ_BASE_URL || "https://api.groq.com/openai/v1");
-const GROQ_MODEL = process.env.SMEJJ_LLM_GROQ_MODEL || "llama-3.1-8b-instant";
+const GROQ_MODEL = process.env.SMEJJ_LLM_GROQ_MODEL || "llama-3.3-70b-versatile"; // 70B statt 8B: gemessen 2026-08-03, gleicher Free-Tier
 const FAST_LANE_TIMEOUT_MS = Number(process.env.SMEJJ_FAST_LANE_TIMEOUT_MS || 15000);
 const MAX_BODY_BYTES = 256 * 1024;
 const RATE_WINDOW_MS = 60_000;
@@ -34,7 +34,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260803-v110-whisper-vokabular";
+const BRIDGE_VERSION = "20260803-v111-schnellspur-70b";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
