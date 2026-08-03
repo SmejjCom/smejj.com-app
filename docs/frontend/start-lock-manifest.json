@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-03T21:56:25.167Z",
-  "confirmation": "Betreiber 2026-08-03: 'geh chrome browser smejj.com behebe Fehler, soll wie Chatgpt, gemini und soweiter oder noch besser sein' + 'muss jede link klickbar sein' + 'Nach der Umsetzung bitte live gehen' — config.js Endpunkt-Ruecktausch auf Salad-Bridge v111, sw.js Cache v205",
+  "frozenAt": "2026-08-03T22:20:03.263Z",
+  "confirmation": "Wof Kadavanich, 2026-08-03: 'soll immer an bleiben bis ich manuel zu klappe' + 'geh chrome browser smejj.com teste und fehler behebe' + 'Ja' zur Nacharbeitsliste (lokale Verdrahtung browser-pane-backdrop.js in index.html/sw.js, sw v206 — live deployt und im echten Klickpfad verifiziert)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "75e61fc97141274143447e3aa326ce9b14ee3940245f775d332200994c770456",
+    "public/index.html": "9e1fb2fced86f78bacadf1c44634bbc1673d44e5326df78e80754ccca969006a",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "2cef05bd6c8ab057ee45d110b57543470c601e397cd5c05bc739ef9566eab1b5",
+    "public/sw.js": "ee657a20a1aa8712093fc8e436a244b48e6b6b956d62d1e0bf25ad4e485fed82",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
