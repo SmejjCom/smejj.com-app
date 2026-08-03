@@ -59,6 +59,25 @@ Keine Verschlechterung gegen den letzten Stand.
 Waehrend der Arbeit pushte eine Parallel-Session eb101c9 (sw v205, Chat v111).
 Dieser Fix wurde fast-forward OBEN DRAUF gebaut (v206) — nichts ueberschrieben.
 
+## Nacharbeit (2026-08-03, Freigabe "Ja" des Betreibers)
+
+1. Lokale Verdrahtung nachgezogen: public/index.html und public/sw.js auf den
+   live bewiesenen v206-Stand (byte-identisch zum Frontend-Repo). Versionspin in
+   5 Tests v205 -> v206.
+2. NEU: tests/browser-pane-backdrop.test.mjs (4/4 gruen) — Verdrahtung,
+   gefahrloser Node-Import, Waechter-Regeln; in check:frontend aufgenommen.
+3. Start-Lock-Manifest mit dokumentiertem Freigabe-Wortlaut neu eingefroren
+   (31 Dateien gruen, Backup backups/start-design-lock/2026-08-03T22-20-03-263Z/).
+4. Codeberg-Spiegel synchronisiert (committete Skriptfassung; smejj-app-frontend
+   main auf 9abf654).
+5. End-Abnahme live: sw v206 aktiv, Backdrop im Split-View hidden, Klick links
+   traf Inhalt (P), Panel blieb offen, X schloss.
+
+Bewusst NICHT gemacht: app.js-Aufraeumen der stale Klasse browser-pane-open
+(kein sichtbarer Effekt, app.js an der Ratchet-Baseline — beim naechsten
+app.js-Job miterledigen); Wegklicken bei offenem linkem Menue schliesst
+weiterhin Menue UND Panel (bewusste Non-Regression, Aenderung nur auf Zuruf).
+
 ## Merkregel
 
 Ein unsichtbares Vollflaechen-Overlay findet man mit `elementFromPoint()`; ein
