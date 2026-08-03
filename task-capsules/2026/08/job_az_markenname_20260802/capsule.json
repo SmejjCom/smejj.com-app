@@ -58,6 +58,22 @@
     "hinweis": "Das LIVE laufende Artefakt stammt vom 2026-07-30. Alle Korrekturen seither — meine wie die der Parallelsitzung — sind unveroeffentlicht."
   },
 
+  "releaseAusgefuehrt_2026-08-02": {
+    "freigabe": "Der Betreiber hat den Release im Wortlaut freigegeben; der Nachweis liegt getrennt vom Artefakt unter docs/approvals/2026-08-02-control-release-markenname.md — genau so, wie der Builder es mit separateApprovalEvidenceRequired verlangt.",
+    "upload": "s3://smejj-model-files/deployments/control/smejj-control-markenname-2026-08-02.tar.gz — created true, immutable true, contentVerified true, overwriteProofStatus 412 (der Ueberschreibschutz wurde aktiv nachgewiesen, nicht nur angenommen).",
+    "umschaltung": "PATCH mit der VOLLSTAENDIGEN Variablenliste: v129 -> v130, alle 77 Variablen erhalten, startup_probe und liveness_probe unveraendert, SMEJJ_MODEL_DEFAULT weiterhin kimi-k2-7.",
+    "ausfallzeit": "Eine Messung sah HTTP 503, die naechste 34 s spaeter war fertig.",
+    "abnahme": {
+      "weg": "echte Nutzerkette ueber die Bruecke, model 'smejj 1.0' — also genau das, was die Startseite schickt",
+      "coding": "6 von 6, Median 4537 ms, Backend kimi:kimi-k2.7-code (vorher 19667 ms ueber zhipu:glm-4.7-flash)",
+      "normal": "2 von 2, 641 ms",
+      "websuche": "2 von 2, 7919 ms",
+      "gesamt": "10 von 10, 0 Fehler"
+    },
+    "derWiderspruchIstWeg": "/api/health meldete vorher defaultModelId: kimi-k2-7, waehrend activeModelId auf glm-5-2 stehenblieb — genau der sichtbare Abdruck des Markennamen-Fehlers. Jetzt zeigen defaultModelId, activeModelId und aiBackend alle auf Kimi.",
+    "rueckrollenNichtNoetig": "Der Rueckweg bleibt gueltig: backups/salad/smejj-control-2026-08-02-vor-release.json, zwei Werte (SMEJJ_CONTROL_ARTIFACT_KEY und _SHA256)."
+  },
+
   "wasLiveBereitsWirkt": "Die Env-Umstellung SMEJJ_MODEL_DEFAULT glm-5-2 -> kimi-k2-7 (v128 -> v129) ist aktiv und hat den Coding-Totalausfall beendet — von der Parallelsitzung unabhaengig bestaetigt. Sie wirkt aber nur fuer Anfragen, die nicht den Markennamen schicken; der Rest wartet auf den Release.",
 
   "offen": [
