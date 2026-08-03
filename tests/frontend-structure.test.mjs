@@ -123,7 +123,11 @@ test("start composer lower tools are functional", () => {
   assert.match(app, /import \{ initComposerTools \} from "\.\/composer-tools\.js(\?[^"]*)?"/);
   assert.ok(app.includes('initComposerTools()'));
   assert.ok(composerTools.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
-  assert.ok(composerTools.includes('SpeechSynthesisUtterance'));
+  // Die Browser-Sprachausgabe liegt seit Stufe 3 in voice-browser-tts.js
+  // (800-Zeilen-Regel) — der Host muss sie importieren, die Utterance lebt dort.
+  assert.match(composerTools, /import \{ createBrowserTts \} from "\.\/voice-browser-tts\.js"/);
+  const browserTts = fs.readFileSync("public/voice-browser-tts.js", "utf8");
+  assert.ok(browserTts.includes('SpeechSynthesisUtterance'));
   assert.ok(composerTools.includes('lastAssistantEntryText()'));
   assert.ok(composerCss.includes('[data-start-tool="speaker"].is-speaking'));
   assert.doesNotMatch(app, /Kommt als naechstes/);
