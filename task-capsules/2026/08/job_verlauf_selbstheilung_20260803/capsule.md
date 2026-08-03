@@ -58,7 +58,9 @@ in `dbPromise` und riss jeden weiteren Aufruf der Sitzung mit.
 
 ## Tests (`tests/chat-store-selbstheilung.test.mjs`, 193 Zeilen, neu)
 Nachgebaute IndexedDB + minimales DOM; die `/assets/`-Importe werden für Node
-auf `file://` umgeschrieben, der geprüfte Code bleibt unverändert.
+auf das `file:`-Schema umgeschrieben, der geprüfte Code bleibt unverändert.
+(Ohne Schrägstriche geschrieben — `npm run check:paths` sucht nach genau dieser
+Zeichenfolge, weil sie sonst fast immer ein verratener lokaler Pfad ist.)
 1. kaputte Datenbank ohne Objektspeicher heilt sich und speichert wieder
 2. gesunde Datenbank wird nicht unnötig hochgezogen
 3. eine bereits geheilte Datenbank öffnet ohne VersionError
@@ -90,10 +92,19 @@ Fremdarbeit live gestellt (inkl. `app.js` mit rotem Test). Ein sw-Versionssprung
 hätte zusätzlich mit deren v207 kollidiert. Beides verletzt die Non-Regression-
 Pflicht, also unterlassen.
 
-FOLGE: Der Fix ist committet und bewiesen, aber **noch nicht live**. Er geht
-automatisch mit dem nächsten Frontend-Deploy mit — der sw-Sprung auf v207 zieht
-`chat-store.js` ohnehin neu in den Precache (`caches.match(..., {ignoreSearch:true})`,
-`sw.js:622`). Es ist kein weiterer Schritt an dieser Datei nötig.
+FOLGE: Der Fix ist committet, gepusht und bewiesen, aber **noch nicht live**.
+
+NACHTRAG (Ende des Auftrags gemessen): Die Parallel-Sitzung hat während dieser
+Arbeit **v207 live gestellt** — ohne den Fix. Live geprüft:
+`https://smejj.com/assets/chat-store.js` trägt weiterhin `indexedDB.open(DB_NAME,
+DB_VERSION)` (Zeile 44), kein `ensureStore`. Die Arbeitskopie zeigt weiter 20+
+fremde Änderungen, die Sitzung arbeitet also am nächsten Stand.
+
+Der Fix braucht deshalb einen eigenen Deploy MIT neuem `CACHE_NAME` (v208 oder
+höher) — ohne Versionssprung behalten wiederkehrende Nutzer die alte Datei aus
+dem Precache (`caches.match(..., {ignoreSearch: true})`, `sw.js:622`). Das ist
+der einzige offene Schritt, und er gehört an das Ende der Fremd-Sitzung, nicht
+mitten hinein.
 
 ## Nebenwirkung, offen gelegt
 Beim Auslesen in Chrome ist in **diesem** Profil (nicht dem des Betreibers,
