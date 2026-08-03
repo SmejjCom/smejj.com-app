@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-03T08:42:47.860Z",
-  "confirmation": "Freigabe Variante B / Sprachwelle Stufe 4 (Betreiber, 2026-08-03, 'B / Ja' zur Entscheidungsvorlage): Groq-Whisper-Transkription ueber den bestehenden Groq-Free-Tier-Zugang (0-Euro-Deckel, kein Zahlungsmittel), Bridge-Route + Browser-Aufnahmepfad mit Web-Speech-Fallback, Datenschutz-Hinweis DE/EN; sw v203.",
+  "frozenAt": "2026-08-03T09:12:22.758Z",
+  "confirmation": "Freigabe Variante B, Sprachwelle Stufe 4 Teil 2 (Betreiber, 2026-08-03): voiceTranscribe in config.js auf die Salad-Bridge v106; sw v204 fuer den Precache.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "75e61fc97141274143447e3aa326ce9b14ee3940245f775d332200994c770456",
@@ -12,7 +12,7 @@
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
     "public/app.js": "c6986ae508630ff2ac984cefbb8f9edad97ffc3c55d25b31dc1eafe03a71e2e2",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
-    "public/config.js": "c696b594a54e21203bc151aa2da0ac621fc4f7e3f1d67ac0f014725c7358fdbd",
+    "public/config.js": "d1f72a89ee7834fd978c6b497d752a0f33c27cbcc49722ec8bf72b20b9216ba6",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
     "public/premium-surfaces.js": "6017499c5fcd1c2f189f4ca550e1604c0479de8070137815ddcaa32572f31832",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6d82d6453e334919c82044ec069e7703201ccd2ed6119f955decd9e5a5700810",
+    "public/sw.js": "eb0fedd7d2ef3cf04609369242b395cf6d36edd31b0504424ccf30ca614366bb",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
