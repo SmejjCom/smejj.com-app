@@ -21,6 +21,11 @@ export function readVoiceWorkerConfig(env = {}) {
   const sttUrl = safeUrl(env.SMEJJ_VOICE_STT_URL || "");
   const ttsUrl = safeUrl(env.SMEJJ_VOICE_TTS_URL || "");
   const enabled = env.SMEJJ_VOICE_WORKERS_ENABLED === "YES";
+  // Freigabe Sprachserver-Optimierung (Betreiber, 2026-08-03): Die Transkription
+  // macht seit Stufe 4 das Groq-Ohr in der Bridge — die STT-GPU mitzustarten
+  // kostet Geld und Startzeit, ohne je benutzt zu werden. Standard daher AUS;
+  // "YES" holt sie zurueck, ohne Code-Aenderung (Rueckweg bleibt offen).
+  const sttEnabled = env.SMEJJ_VOICE_STT_ENABLED === "YES";
   const idleShutdownSeconds = boundedNumber(env.SMEJJ_VOICE_IDLE_SHUTDOWN_SECONDS, 120, 30, 3600);
   // Voice-eigener Laufzeit-Deckel (2026-08-03): Der globale 30-min-Deckel
   // gehoert den Coding-Jobs — der XTTS-Kaltstart (Modell-Download ~2 GB auf
@@ -34,7 +39,8 @@ export function readVoiceWorkerConfig(env = {}) {
     !organization && "SALAD_ORGANIZATION_NAME",
     !project && "SALAD_PROJECT_NAME",
     !apiKey && "SALAD_API_KEY",
-    !sttUrl && "SMEJJ_VOICE_STT_URL",
+    // STT-URL nur verlangen, wenn die STT-GPU ueberhaupt genutzt wird.
+    (env.SMEJJ_VOICE_STT_ENABLED === "YES") && !sttUrl && "SMEJJ_VOICE_STT_URL",
     !ttsUrl && "SMEJJ_VOICE_TTS_URL",
     !maxRuntimeMinutes && "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
     !enabled && "SMEJJ_VOICE_WORKERS_ENABLED"
@@ -48,6 +54,7 @@ export function readVoiceWorkerConfig(env = {}) {
     apiKey,
     sttGroup,
     ttsGroup,
+    sttEnabled,
     sttUrl,
     ttsUrl,
     // VERIFY im Live-Test: Whisper-Pfad ist dokumentiert; XTTS-Pfad konfigurierbar.
@@ -101,19 +108,34 @@ export async function startVoiceWorkers({ config, fetchImpl = fetch } = {}) {
   if (config?.configured !== true) {
     return { ok: false, reason: "voice_workers_not_configured", missing: config?.missing || [] };
   }
+  // Die STT-GPU wird nur gestartet, wenn sie ausdruecklich aktiviert ist
+  // (sonst uebernimmt das Groq-Ohr die Transkription — siehe readVoiceWorkerConfig).
   const [stt, tts] = await Promise.all([
-    saladGroupRequest(config, "POST", config.sttGroup, "start", fetchImpl),
+    config.sttEnabled
+      ? saladGroupRequest(config, "POST", config.sttGroup, "start", fetchImpl)
+      : Promise.resolve({ ok: true, status: 0, data: null, skipped: true }),
     saladGroupRequest(config, "POST", config.ttsGroup, "start", fetchImpl)
   ]);
   const ok = stt.ok === true && tts.ok === true;
-  // Fail-safe: startet nur eine der beiden Gruppen, wird sofort wieder gestoppt,
-  // damit keine halbe (unbrauchbare, aber bezahlte) Umgebung weiterlaeuft.
-  if (!ok && (stt.ok === true || tts.ok === true)) {
+  // Fail-safe, bewusst streng: JEDER unvollstaendige Start wird zurueckgestoppt.
+  // Frueher lief der Rollback nur bei "halbem Erfolg" — mit abgeschalteter
+  // STT-GPU blieb ein fehlgeschlagener TTS-Start damit ungeprueft stehen.
+  // Ein Stop auf eine bereits gestoppte Gruppe ist wirkungslos und kostenlos;
+  // eine uebersehene laufende GPU waere teuer. Deshalb im Zweifel stoppen.
+  if (!ok) {
     await stopVoiceWorkers({ config, fetchImpl, reason: "partial_start_rollback" });
   }
-  return { ok, reason: ok ? "accepted" : "voice_start_failed", stt: groupSummary(stt), tts: groupSummary(tts) };
+  return {
+    ok,
+    reason: ok ? "accepted" : "voice_start_failed",
+    stt: stt.skipped ? { ok: true, skipped: true, reason: "stt_disabled_groq_ear" } : groupSummary(stt),
+    tts: groupSummary(tts)
+  };
 }
 
+// Stoppen gilt IMMER fuer BEIDE Gruppen — auch wenn die STT-GPU gar nicht
+// gestartet wird. Sicherheitsnetz: eine von Hand oder versehentlich laufende
+// Gruppe muss der Supervisor trotzdem abschalten koennen (Kostenbremse).
 export async function stopVoiceWorkers({ config, fetchImpl = fetch, reason = "manual_stop" } = {}) {
   if (!config?.organization || !config?.project || !config?.apiKey) {
     return { ok: false, reason: "voice_workers_not_configured" };
@@ -140,9 +162,11 @@ export async function getVoiceWorkersStatus({ config, fetchImpl = fetch } = {}) 
   ]);
   const sttSummary = groupSummary(stt);
   const ttsSummary = groupSummary(tts);
+  // Bei abgeschalteter STT-GPU haengt "laeuft" allein an der TTS-Gruppe —
+  // sonst meldete der Status dauerhaft false und die Weck-Logik liefe leer.
   return {
-    ok: sttSummary.ok && ttsSummary.ok,
-    running: sttSummary.running && ttsSummary.running,
+    ok: config.sttEnabled ? (sttSummary.ok && ttsSummary.ok) : ttsSummary.ok,
+    running: config.sttEnabled ? (sttSummary.running && ttsSummary.running) : ttsSummary.running,
     stt: sttSummary,
     tts: ttsSummary
   };

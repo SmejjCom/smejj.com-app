@@ -56,8 +56,8 @@ test("config: vollstaendig => configured mit Defaults", () => {
   assert.equal(config.sttPath, "/v1/audio/transcriptions");
 });
 
-test("start: beide Gruppen ok => ok", async () => {
-  const config = readVoiceWorkerConfig(FULL_ENV);
+test("start: beide Gruppen ok => ok (STT ausdruecklich aktiviert)", async () => {
+  const config = readVoiceWorkerConfig({ ...FULL_ENV, SMEJJ_VOICE_STT_ENABLED: "YES" });
   const impl = fakeFetch(() => ({ status: 202, data: {} }));
   const result = await startVoiceWorkers({ config, fetchImpl: impl });
   assert.equal(result.ok, true);
@@ -65,8 +65,8 @@ test("start: beide Gruppen ok => ok", async () => {
   assert.ok(impl.calls.every((call) => call.url.includes("/start")));
 });
 
-test("start: halber Erfolg => Rollback-Stop beider Gruppen", async () => {
-  const config = readVoiceWorkerConfig(FULL_ENV);
+test("start: halber Erfolg => Rollback-Stop beider Gruppen (STT aktiviert)", async () => {
+  const config = readVoiceWorkerConfig({ ...FULL_ENV, SMEJJ_VOICE_STT_ENABLED: "YES" });
   const impl = fakeFetch((url) => {
     if (url.includes("smejj-voice-tts/start")) return { status: 500, data: {} };
     return { status: 202, data: {} };
@@ -163,4 +163,46 @@ test("voice-eigener Laufzeit-Deckel uebersteuert den globalen (XTTS-Kaltstart-Be
   assert.equal(readVoiceWorkerConfig({ ...basis, SMEJJ_VOICE_MAX_RUNTIME_MINUTES: "60" }).maxRuntimeMinutes, 60);
   // Grenzen gelten weiter (max 1440).
   assert.equal(readVoiceWorkerConfig({ ...basis, SMEJJ_VOICE_MAX_RUNTIME_MINUTES: "99999" }).maxRuntimeMinutes, 1440);
+});
+
+test("STT-GPU wird ohne SMEJJ_VOICE_STT_ENABLED nicht gestartet (Groq-Ohr uebernimmt)", async () => {
+  const basis = {
+    SALAD_ORGANIZATION_NAME: "org", SALAD_PROJECT_NAME: "proj", SALAD_API_KEY: "k",
+    SMEJJ_VOICE_TTS_URL: "https://tts.example", SMEJJ_VOICE_WORKERS_ENABLED: "YES",
+    SMEJJ_BUDGET_MAX_RUNTIME_MINUTES: "30"
+  };
+  const config = readVoiceWorkerConfig(basis);
+  assert.equal(config.sttEnabled, false);
+  assert.equal(config.configured, true, "ohne STT-GPU ist auch ohne STT-URL alles konfiguriert");
+
+  const gerufen = [];
+  const fetchImpl = async (url, init) => {
+    gerufen.push(`${init?.method || "GET"} ${url.split("/containers/")[1]}`);
+    return { ok: true, status: 202, text: async () => JSON.stringify({ current_state: { status: "running" } }) };
+  };
+  const start = await startVoiceWorkers({ config, fetchImpl });
+  assert.equal(start.ok, true);
+  assert.equal(start.stt.skipped, true, "STT wird uebersprungen");
+  assert.deepEqual(gerufen, ["POST smejj-voice-tts/start"], "NUR die TTS-GPU wird gestartet");
+
+  // Stoppen bleibt beidseitig — Sicherheitsnetz gegen versehentlich laufende Gruppen.
+  gerufen.length = 0;
+  await stopVoiceWorkers({ config, fetchImpl });
+  assert.equal(gerufen.length, 2, "Stop trifft weiterhin BEIDE Gruppen");
+
+  // Mit "YES" ist der Rueckweg ohne Code-Aenderung offen.
+  const zurueck = readVoiceWorkerConfig({ ...basis, SMEJJ_VOICE_STT_ENABLED: "YES", SMEJJ_VOICE_STT_URL: "https://stt.example" });
+  assert.equal(zurueck.sttEnabled, true);
+  gerufen.length = 0;
+  await startVoiceWorkers({ config: zurueck, fetchImpl });
+  assert.equal(gerufen.length, 2, "mit YES starten wieder beide");
+});
+
+test("start: nur TTS aktiv und TTS scheitert => Rollback-Stop (kein bezahlter Rest)", async () => {
+  const config = readVoiceWorkerConfig(FULL_ENV); // STT aus (Standard seit 2026-08-03)
+  const impl = fakeFetch((url) => (url.includes("smejj-voice-tts/start") ? { status: 500, data: {} } : { status: 202, data: {} }));
+  const result = await startVoiceWorkers({ config, fetchImpl: impl });
+  assert.equal(result.ok, false);
+  const stops = impl.calls.filter((call) => call.url.includes("/stop"));
+  assert.equal(stops.length, 2, "Sicherheitsnetz: Stop trifft beide Gruppen");
 });

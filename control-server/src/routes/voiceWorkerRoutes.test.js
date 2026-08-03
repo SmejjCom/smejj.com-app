@@ -95,7 +95,7 @@ test("start: Budget verletzt => 402, kein Start", async () => {
   assert.equal(impl.calls.length, 0);
 });
 
-test("start: konfiguriert + Budget ok => startet beide Gruppen", async () => {
+test("start: konfiguriert + Budget ok => startet nur die TTS-GPU (Groq-Ohr macht STT)", async () => {
   const impl = fakeFetch(() => ({ status: 202 }));
   const res = fakeRes();
   await handleVoiceSessionStart(fakeReq(), res, { env: FULL_ENV, fetchImpl: impl });
@@ -103,8 +103,22 @@ test("start: konfiguriert + Budget ok => startet beide Gruppen", async () => {
   const payload = JSON.parse(res.body);
   assert.equal(payload.paidServicesStarted, true);
   assert.equal(payload.idleShutdownSeconds, 120);
-  assert.equal(impl.calls.filter((c) => c.url.includes("/start")).length, 2);
+  const starts = impl.calls.filter((c) => c.url.includes("/start"));
+  assert.equal(starts.length, 1, "Freigabe 2026-08-03: die STT-GPU wird nicht mehr mitgestartet");
+  assert.ok(starts[0].url.includes("smejj-voice-tts"), "und zwar die TTS-Gruppe");
   voiceLifecycle.noteStopped(); // Testzustand aufraeumen
+});
+
+test("start: mit SMEJJ_VOICE_STT_ENABLED=YES starten wieder beide Gruppen", async () => {
+  const impl = fakeFetch(() => ({ status: 202 }));
+  const res = fakeRes();
+  await handleVoiceSessionStart(fakeReq(), res, {
+    env: { ...FULL_ENV, SMEJJ_VOICE_STT_ENABLED: "YES" },
+    fetchImpl: impl
+  });
+  assert.equal(res.statusCode, 200);
+  assert.equal(impl.calls.filter((c) => c.url.includes("/start")).length, 2);
+  voiceLifecycle.noteStopped();
 });
 
 test("status: meldet running nur wenn beide Gruppen laufen", async () => {
