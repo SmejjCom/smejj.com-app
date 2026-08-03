@@ -104,7 +104,22 @@ async function main() {
   }
   console.log(`  OK — ${pruefung.id} ist oeffentlich erreichbar.`);
 
-  await saladApi("PATCH", basis, { container: { environment_variables: { SMEJJ_TRAINER_BASIS_REPO: ziel } } });
+  // LESEN, ERGAENZEN, GANZ ZURUECKSCHREIBEN — niemals nur den einen Wert senden.
+  //
+  // GEMESSEN AM 2026-08-02: Genau dieser Aufruf, mit nur einem Schluessel im
+  // Koerper, hat die Umgebung dieser Gruppe von zehn auf einen Wert reduziert —
+  // samt `SMEJJ_TRAINER_BUNDLE_B64`, dem base64-Code des Trainers. Salads PATCH
+  // ERSETZT die Abbildung `environment_variables`, es fuehrt sie nicht zusammen.
+  // Wiederherstellbar war es nur, weil create_lora_trainer_group.mjs die ganze
+  // Umgebung neu aus dem Repository baut. Verlass dich nicht darauf.
+  const bestehend = vorher?.container?.environment_variables || {};
+  if (Object.keys(bestehend).length === 0) {
+    fail("Abbruch: Die Gruppe meldet keine Umgebungswerte. Das ist unplausibel — " +
+      "es wird nichts geschrieben, um nicht versehentlich alles zu ueberschreiben.");
+  }
+  await saladApi("PATCH", basis, {
+    container: { environment_variables: { ...bestehend, SMEJJ_TRAINER_BASIS_REPO: ziel } }
+  });
   const nachher = await saladApi("GET", basis);
   const neu = String(nachher?.container?.environment_variables?.SMEJJ_TRAINER_BASIS_REPO || "");
   if (neu !== ziel) fail(`Abbruch: Wert steht nach dem Schreiben auf "${neu}" statt "${ziel}".`);

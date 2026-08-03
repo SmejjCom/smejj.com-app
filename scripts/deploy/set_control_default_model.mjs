@@ -105,7 +105,24 @@ async function main() {
   }
   console.log(`  OK — ${probe.zeichen} Zeichen Antwort.`);
 
-  await saladApi("PATCH", basis, { container: { environment_variables: { SMEJJ_MODEL_DEFAULT: ziel } } });
+  // LESEN, ERGAENZEN, GANZ ZURUECKSCHREIBEN — niemals nur den einen Wert senden.
+  //
+  // GEMESSEN AM 2026-08-02, teuer bezahlt: Salads PATCH ERSETZT die Abbildung
+  // `environment_variables` vollstaendig, es fuehrt sie NICHT zusammen. Ein
+  // Aufruf mit einem einzigen Schluessel loeschte bei smejj-lora-trainer alle
+  // uebrigen neun Werte — darunter das base64-Code-Buendel des Dienstes. Bei
+  // diesem Server haengen 77 Werte daran, inklusive aller Modell-Zugaenge.
+  // Der Name "merge-patch" bezieht sich auf die Ebene der Felder, nicht auf den
+  // Inhalt einer Abbildung. Wer das verwechselt, loescht eine Produktionsumgebung
+  // mit einem Einzeiler.
+  const bestehend = vorher?.container?.environment_variables || {};
+  if (Object.keys(bestehend).length === 0) {
+    fail("Abbruch: Der Server meldet keine Umgebungswerte. Das ist unplausibel — " +
+      "es wird nichts geschrieben, um nicht versehentlich alles zu ueberschreiben.");
+  }
+  await saladApi("PATCH", basis, {
+    container: { environment_variables: { ...bestehend, SMEJJ_MODEL_DEFAULT: ziel } }
+  });
   const nachher = await saladApi("GET", basis);
   const neu = String(nachher?.container?.environment_variables?.SMEJJ_MODEL_DEFAULT || "");
   if (neu !== ziel) fail(`Abbruch: Wert steht nach dem Schreiben auf "${neu}" statt "${ziel}".`);
