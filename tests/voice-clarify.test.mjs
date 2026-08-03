@@ -66,7 +66,11 @@ check("2c Gross-/Kleinschreibung egal", clarifyLine("DE") === clarifyLine("de"))
 
   for (const [name, quelle] of [["composer-tools", composer], ["voice-landing", landing]]) {
     check(`4a ${name} importiert voice-clarify.js`, quelle.includes('from "./voice-clarify.js"'));
-    check(`4b ${name} entscheidet mit sollNachfragen`, (quelle.match(/sollNachfragen\(\{ text: task/g) || []).length === 2);
+    // Seit Stufe 4 laeuft die Entscheidung durch den gemeinsamen Abschluss
+    // earSend (voice-ear.js) — die Regel bleibt sollNachfragen, nur die Naht wandert.
+    check(`4b ${name} entscheidet mit sollNachfragen (via earSend)`,
+      quelle.includes("sollNachfragenFn: sollNachfragen")
+      && (quelle.match(/earSend\(task, bestConfidence\)/g) || []).length === 2);
     check(`4c ${name} erfasst die Konfidenz der finalen Ergebnisse`, quelle.includes("bestConfidence"));
     check(`4d ${name} schuetzt nur erkannte Fragen (getippt laeuft durch)`,
       quelle.includes("getippt: true") && quelle.includes("doppelschutz.blockiert(task)"));

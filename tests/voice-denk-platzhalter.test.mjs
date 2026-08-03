@@ -148,11 +148,15 @@ function struktur() {
   const ungeschuetzt = quelle.match(/querySelectorAll\("#startLog \.entry\.assistant"\)/g) || [];
   check("3b kein ungeschuetzter .entry.assistant-Zugriff mehr", ungeschuetzt.length === 0);
 
-  // Stummschalten darf nicht senden: das Mute-Return muss VOR voiceModeSend stehen.
+  // Stummschalten darf nicht senden: das Mute-Return muss VOR dem Abschluss
+  // stehen (seit Stufe 4 heisst der Abschluss earSend; er prueft istStumm nach
+  // der Server-Ohr-Wartezeit ein zweites Mal — doppelte Sicherung).
   const onend = quelle.slice(quelle.indexOf("recognition.onend = () => {\n              watchdog.stop();"));
   const mutePos = onend.indexOf("if (state.voiceMuted) return;");
-  const sendPos = onend.indexOf("voiceModeSend(task)");
+  const sendPos = onend.indexOf("earSend(task");
   check("3c Mute-Pruefung steht vor dem Senden", mutePos > -1 && sendPos > -1 && mutePos < sendPos);
+  check("3c2 earSend prueft Mute nach der Wartezeit erneut",
+    quelle.includes("istStumm: () => state.voiceMuted"));
 
   check("3d Stummschalten verwirft (abort) statt abzuliefern (stop)",
     /state\.voiceRecognition\?\.abort\?\.\(\);/.test(quelle));

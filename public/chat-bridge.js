@@ -1,5 +1,7 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
+// Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
+import { readAudioBody, transcribeWithGroq } from "./chat-bridge-voice-ear.js";
 import { buildRagBlock, lastUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
 // Gespraechsgedaechtnis. Bewusst DIESELBE gepruefte Bereinigung wie der Control
 // Server (src/server.js) statt einer zweiten Umsetzung: sie verwirft insbesondere
@@ -44,10 +46,11 @@ export function createChatBridgeServer() {
       if (url.pathname === "/health") return json(res, 200, healthPayload());
       if (req.method !== "POST") return json(res, 404, { ok: false, error: "Not found" });
       if (!cors["Access-Control-Allow-Origin"]) return json(res, 403, { ok: false, error: "Origin not allowed" });
-      if ((url.pathname === "/api/chat" || url.pathname === "/api/agent" || url.pathname === "/api/voice/tts") && !allowModelRequest(req, res)) return;
+      if ((url.pathname === "/api/chat" || url.pathname === "/api/agent" || url.pathname === "/api/voice/tts" || url.pathname === "/api/voice/transcribe") && !allowModelRequest(req, res)) return;
       if (url.pathname === "/api/chat") return await handleChat(req, res);
       if (url.pathname === "/api/agent") return await handleAgent(req, res);
       if (url.pathname === "/api/voice/status") return await handleVoiceStatus(req, res);
+      if (url.pathname === "/api/voice/transcribe") return await handleVoiceTranscribe(req, res);
       if (url.pathname === "/api/voice/tts") return await handleVoiceTts(req, res);
       return json(res, 404, { ok: false, error: "Not found" });
     } catch (error) {
@@ -70,6 +73,7 @@ function healthPayload() {
     role: "stateless-chat-stream-bridge",
     costProfile: "cpu-only-no-gpu-no-storage",
     premiumVoiceConfigured: Boolean(trimUrl(process.env.SMEJJ_VOICE_TTS_ORIGIN || "")),
+    earConfigured: Boolean(GROQ_API_KEY),
     publicRateLimit: { perClientPerMinute: RATE_PER_CLIENT, globalPerMinute: RATE_GLOBAL },
     startedAt: STARTED_AT.toISOString()
   };
@@ -697,6 +701,22 @@ async function pipeWav(res, upstream) {
     // Klient hat abgebrochen (Barge-in) oder Upstream-Stream riss ab — sauber beenden.
   }
   res.end();
+}
+
+// Stufe 4 (Groq-Ohr): rohes Aufnahme-Audio -> Transkript. Der Browser schickt
+// den MediaRecorder-Blob unveraendert; Format- und Groessenpruefung, Timeout und
+// Fehlerbilder liegen in chat-bridge-voice-ear.js (dort ohne Netz testbar).
+async function handleVoiceTranscribe(req, res) {
+  if (!GROQ_API_KEY) return json(res, 503, { ok: false, error: "ear_not_configured" });
+  const audio = await readAudioBody(req);
+  if (audio === null) return json(res, 413, { ok: false, error: "audio_too_large" });
+  const ergebnis = await transcribeWithGroq(audio, {
+    contentType: req.headers["content-type"],
+    apiKey: GROQ_API_KEY,
+    baseUrl: GROQ_BASE_URL
+  });
+  if (!ergebnis.ok) return json(res, ergebnis.status || 502, { ok: false, error: ergebnis.error });
+  return json(res, 200, { ok: true, text: ergebnis.text });
 }
 
 async function handleVoiceTts(req, res) {
