@@ -150,3 +150,17 @@ test("supervisor: ruft stopAll genau einmal bei Idle", async () => {
   assert.equal(stops.length, 1, "nach Stop kein weiterer Stop (noteStopped)");
   supervisor.stop();
 });
+
+test("voice-eigener Laufzeit-Deckel uebersteuert den globalen (XTTS-Kaltstart-Befund 2026-08-03)", () => {
+  const basis = {
+    SALAD_ORGANIZATION_NAME: "org", SALAD_PROJECT_NAME: "proj", SALAD_API_KEY: "k",
+    SMEJJ_VOICE_STT_URL: "https://stt.example", SMEJJ_VOICE_TTS_URL: "https://tts.example",
+    SMEJJ_VOICE_WORKERS_ENABLED: "YES", SMEJJ_BUDGET_MAX_RUNTIME_MINUTES: "30"
+  };
+  // Ohne eigenen Wert: globaler Deckel gilt unveraendert (fail-closed bleibt).
+  assert.equal(readVoiceWorkerConfig(basis).maxRuntimeMinutes, 30);
+  // Mit eigenem Wert: Voice darf laenger (Kaltstart), Jobs bleiben bei 30.
+  assert.equal(readVoiceWorkerConfig({ ...basis, SMEJJ_VOICE_MAX_RUNTIME_MINUTES: "60" }).maxRuntimeMinutes, 60);
+  // Grenzen gelten weiter (max 1440).
+  assert.equal(readVoiceWorkerConfig({ ...basis, SMEJJ_VOICE_MAX_RUNTIME_MINUTES: "99999" }).maxRuntimeMinutes, 1440);
+});

@@ -22,7 +22,13 @@ export function readVoiceWorkerConfig(env = {}) {
   const ttsUrl = safeUrl(env.SMEJJ_VOICE_TTS_URL || "");
   const enabled = env.SMEJJ_VOICE_WORKERS_ENABLED === "YES";
   const idleShutdownSeconds = boundedNumber(env.SMEJJ_VOICE_IDLE_SHUTDOWN_SECONDS, 120, 30, 3600);
-  const maxRuntimeMinutes = boundedNumber(env.SMEJJ_BUDGET_MAX_RUNTIME_MINUTES, 0, 1, 1440);
+  // Voice-eigener Laufzeit-Deckel (2026-08-03): Der globale 30-min-Deckel
+  // gehoert den Coding-Jobs — der XTTS-Kaltstart (Modell-Download ~2 GB auf
+  // Salad-Knoten) brauchte im ersten Produktionslauf mehr als 30 min und wurde
+  // vom Supervisor hart beendet, bevor die Stimme je antwortete. Ohne eigenen
+  // Wert gilt unveraendert der globale Deckel (fail-closed bleibt bestehen).
+  const maxRuntimeMinutes = boundedNumber(
+    env.SMEJJ_VOICE_MAX_RUNTIME_MINUTES ?? env.SMEJJ_BUDGET_MAX_RUNTIME_MINUTES, 0, 1, 1440);
   const supervisorPollSeconds = boundedNumber(env.SMEJJ_VOICE_LIFECYCLE_POLL_SECONDS, 15, 5, 300);
   const missing = [
     !organization && "SALAD_ORGANIZATION_NAME",
