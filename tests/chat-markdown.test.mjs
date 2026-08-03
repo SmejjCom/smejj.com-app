@@ -68,6 +68,34 @@ test("Listen und Absaetze", async () => {
   assert.match(node.innerHTML, /<ul class="chat-list"><li><strong>eins<\/strong><\/li><li>zwei<\/li><\/ul>/);
 });
 
+test("Links sind klickbar: Markdown-Link und nackte URL (Betreiber-Auftrag 2026-08-03)", async () => {
+  const render = await load();
+  const md = fakeNode("Die offizielle Website: [Wells Fargo](https://www.wellsfargo.com/index.htm)");
+  render(md);
+  assert.match(md.innerHTML, /<a class="chat-link" href="https:\/\/www\.wellsfargo\.com\/index\.htm" target="_blank" rel="noopener noreferrer">Wells Fargo<\/a>/);
+
+  const bare = fakeNode("Die Website lautet: https://www.wellsfargo.com. Dort anmelden.");
+  render(bare);
+  // Der Satzpunkt gehoert NICHT zur URL.
+  assert.match(bare.innerHTML, /<a class="chat-link" href="https:\/\/www\.wellsfargo\.com"[^>]*>https:\/\/www\.wellsfargo\.com<\/a>\./);
+
+  const fett = fakeNode("**https://www.wellsfargo.com**");
+  render(fett);
+  assert.match(fett.innerHTML, /<strong><a class="chat-link" href="https:\/\/www\.wellsfargo\.com"/);
+});
+
+test("Nur http/https wird verlinkt — javascript:/data: niemals (XSS)", async () => {
+  const render = await load();
+  const boese = fakeNode("Klick [hier](javascript:alert(1)) oder [da](data:text/html,x) fuer **mehr**.");
+  render(boese);
+  assert.doesNotMatch(boese.innerHTML, /<a /);
+  assert.doesNotMatch(boese.innerHTML, /javascript:alert\(1\)"/);
+  // href entsteht aus escaptem Text — Anfuehrungszeichen koennen nie ausbrechen.
+  const kaputt = fakeNode('Siehe https://x.com/a"onmouseover="alert(1) **hier**.');
+  render(kaputt);
+  assert.doesNotMatch(kaputt.innerHTML, /"onmouseover="/);
+});
+
 test("Text ohne Auszeichnung bleibt unveraendert (kein unnoetiges Rendern)", async () => {
   const render = await load();
   const node = fakeNode("Ein ganz normaler Satz.");
