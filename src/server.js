@@ -27,6 +27,7 @@ import { handleBrowserRemote } from "../control-server/src/routes/browserRemoteR
 import { handleBrowserSession } from "../control-server/src/routes/browserSessionRoutes.js";
 import { handleMausRun, handleMausStatus } from "../control-server/src/routes/mausEngineRoutes.js";
 import { handlePasskeyLoginOptions, handlePasskeyLoginVerify, handlePasskeyRegisterOptions, handlePasskeyRegisterVerify } from "../control-server/src/routes/passkeyRoutes.js";
+import { handleVoiceRoute } from "../control-server/src/routes/voiceWorkerRoutes.js";
 import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "../control-server/src/routes/modelRoutes.js";
 import { handleWorkerModelAction, handleWorkerValidate } from "../control-server/src/routes/workerModelRoutes.js";
 import { refreshModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
@@ -161,18 +162,17 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyRegisterVerify) return await handlePasskeyRegisterVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeSessionToken });
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginOptions) return await handlePasskeyLoginOptions(req, res, { env: process.env });
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginVerify) return await handlePasskeyLoginVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeSessionToken });
-    // smejj.com Agent API — fail-closed hinter SMEJJ_AGENT_API_ENABLED. Ist das Flag
-    // aus, liefert die Route false und der bestehende Provider-Pfad bleibt zustaendig.
+    // Agent API — fail-closed hinter SMEJJ_AGENT_API_ENABLED (aus => Provider-Pfad bleibt zustaendig).
     if (url.pathname.startsWith("/api/agent/")) {
       if (await handleAgentRoute(req, url, res)) return;
     }
     if (url.pathname.startsWith("/api/providers/")) return await handleProviderRoute(req, url, res);
     if (url.pathname === "/api/keys" || url.pathname.startsWith("/api/keys/")) return await handleApiKeysRoute(req, url, res);
-    // Adminbereich, Transparenzbericht und Einwilligung — Reihenfolge und
-    // Zustaendigkeit stehen in adminSurfaceRoutes.js, nicht hier.
+    // Sprachserver (Wecken/Idle-Stopp/Audio-Proxy, Token-gepflichtig) — voiceWorkerRoutes.js.
+    if (await handleVoiceRoute(req, url, res)) return;
+    // Adminbereich, Transparenzbericht, Einwilligung — Zustaendigkeit: adminSurfaceRoutes.js.
     if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid: emailSessionStillValid })) return;
-    // Adminbereich Stufe 1 (nur lesend). Ohne Adminrolle antwortet die Route 403 —
-    // die Rolle kommt frisch aus dem Store, nie aus dem Sitzungs-Token.
+    // Adminbereich Stufe 1 (nur lesend): ohne frische Adminrolle aus dem Store => 403.
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.browserFetch) return await handleBrowserFetch(url, res, { req });

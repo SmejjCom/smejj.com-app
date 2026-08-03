@@ -219,4 +219,45 @@ function readLimitedBody(req) {
   });
 }
 
+// Sprecher-Daten des XTTS-Workers (GET /studio_speakers) — Teil des Audio-
+// Proxys: die Bridge braucht die Latents fuer /tts_stream, darf den Worker
+// aber nie direkt erreichen (Org-Schluessel bleibt hier).
+export async function handleVoiceSpeakers(req, res, { env = process.env, fetchImpl = fetch } = {}) {
+  const gate = requireVoiceToken(req, env);
+  if (!gate.ok) return privateJson(res, gate.status, { ok: false, reason: gate.reason });
+  const config = readVoiceWorkerConfig(env);
+  if (!config.configured) return privateJson(res, 503, { ok: false, reason: "voice_workers_not_configured" });
+  voiceLifecycle.touch();
+  let upstream;
+  try {
+    upstream = await fetchImpl(`${config.ttsUrl}${String(env.SMEJJ_VOICE_TTS_SPEAKERS_PATH || "/studio_speakers")}`, {
+      headers: { "Salad-Api-Key": config.apiKey, accept: "application/json" }
+    });
+  } catch {
+    return privateJson(res, 502, { ok: false, reason: "voice_tts_unreachable" });
+  }
+  const text = await upstream.text();
+  res.writeHead(upstream.status, {
+    "Content-Type": upstream.headers.get("content-type") || "application/json; charset=utf-8",
+    "Cache-Control": "private, no-store"
+  });
+  return res.end(text);
+}
+
+// Eine Kante fuer den Server: true = Voice-Route hat geantwortet.
+// Alle Pfade sind Token-gepflichtig (requireVoiceToken in jedem Handler).
+export async function handleVoiceRoute(req, url, res, { env = process.env } = {}) {
+  const p = url.pathname;
+  if (!p.startsWith("/api/voice/")) return false;
+  const post = req.method === "POST";
+  if (p === "/api/voice/worker/status") { await handleVoiceStatus(req, res, { env }); return true; }
+  if (post && p === "/api/voice/session/start") { await handleVoiceSessionStart(req, res, { env }); return true; }
+  if (post && p === "/api/voice/session/heartbeat") { await handleVoiceHeartbeat(req, res, { env }); return true; }
+  if (post && p === "/api/voice/session/stop") { await handleVoiceSessionStop(req, res, { env }); return true; }
+  if (post && p === "/api/voice/worker/transcribe") { await handleVoiceTranscribe(req, res, { env }); return true; }
+  if (post && p === "/api/voice/worker/speak") { await handleVoiceSpeak(req, res, { env }); return true; }
+  if (p === "/api/voice/worker/speakers") { await handleVoiceSpeakers(req, res, { env }); return true; }
+  return false;
+}
+
 export { json };
