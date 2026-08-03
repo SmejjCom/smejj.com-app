@@ -789,3 +789,12 @@ Details: task-capsules/2026/07/job_maus_livebild_20260729/.
   TTFB 64 ms, Laden 326 ms, 40 KB, keine Konsolenfehler.
 - MERKREGEL: Ein unsichtbares Overlay prueft man mit elementFromPoint — ein
   "toter" Klick ist sonst nicht vom Backdrop-Wegklicken zu unterscheiden.
+
+## 2026-08-03 — Chat: Kontext, Deutsch, klickbare Links (job_chat_qualitaet_links_20260803)
+- ERLEDIGT, live belegt (Bridge v111, Frontend eb101c9, sw v206): Salad primär
+  (Zeabur-v104 warf History weg), Schnellspur 8B→llama-3.3-70b (gemessen, Free-Tier),
+  chat-markdown rendert http(s)-Links (escape-first, noopener, 2 XSS-Tests).
+- Beweise: „Privat konto?" mit Verlauf korrekt; Klick öffnete bankofamerica.com;
+  Header x-smejj-model-backend groq:llama-3.3-70b-versatile.
+- MERKREGEL: chat-markdown.js trägt absichtlich NUL-Bytes (BLOCK-Spoofing-Schutz)
+  — git meldet „Bin", grep braucht -a. Details: task-capsules/2026/08/….
