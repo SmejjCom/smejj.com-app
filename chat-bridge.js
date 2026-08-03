@@ -34,7 +34,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260803-v107-premium-stimme";
+const BRIDGE_VERSION = "20260803-v108-weckruf-bei-tts-fehler";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -579,18 +579,14 @@ function bridgeModelBackend() {
 // Kostenprofil: GPU nur waehrend aktiver Nutzung (Worker-Start ist Betreiber-
 // Entscheidung); die Bridge selbst bleibt CPU-only.
 const VOICE_TTS_ORIGIN = trimUrl(process.env.SMEJJ_VOICE_TTS_ORIGIN || "");
-// Der TTS-Worker laeuft mit Salad-Gateway-Authentifizierung (kein offener
-// GPU-Endpunkt). Die Bridge nutzt den bereits vorhandenen Org-API-Key.
+// Gateway-Auth des TTS-Workers (kein offener GPU-Endpunkt) — Org-Key-Fallback.
 const VOICE_TTS_API_KEY = process.env.SMEJJ_VOICE_TTS_API_KEY || process.env.SMEJJ_LLM_SALAD_API_KEY || "";
-// Premium-Stimme ueber den Control-Proxy (v107): Der Worker haengt hinter dem
-// Salad-Gateway und akzeptiert nur den Org-Schluessel — den traegt NUR der
-// Control-Server. Mit gesetztem internen Token laufen Sprecher-Daten und
-// tts_stream ueber /api/voice/worker/*; der Control weckt und stoppt die
-// GPU-Gruppen (Idle-Abschaltung, Budget-Gate). Ohne Token: alter Direktweg.
+// v107: Mit internem Token laufen Sprecher-Daten und tts_stream ueber den
+// Control-Proxy (/api/voice/worker/*) — nur der Control traegt den Org-Schluessel
+// und weckt/stoppt die GPU-Gruppen. Ohne Token: alter Direktweg.
 const VOICE_CONTROL_TOKEN = String(process.env.SMEJJ_VOICE_CONTROL_TOKEN || "").trim();
 const VOICE_TTS_TIMEOUT_MS = Number(process.env.SMEJJ_VOICE_TTS_TIMEOUT_MS || 20000);
-// Upstream-Art: "xtts" (Salad-GPU-Worker) oder "piper" (CPU-Stimme auf dem
-// Zeabur-Mietserver — GET /?text=... liefert WAV; laeuft im Flat-Paket).
+// Upstream-Art: "xtts" (Salad-GPU) oder "piper" (CPU, GET /?text=... -> WAV).
 const VOICE_TTS_KIND = String(process.env.SMEJJ_VOICE_TTS_KIND || "xtts").toLowerCase();
 // Piper spricht EINE Stimme je Instanz — nur freigegebene Sprachen bedienen,
 // alle anderen nutzen unveraendert die Browser-Stimme (leer = alle Sprachen).
@@ -630,9 +626,8 @@ async function xttsFetch(path, init = {}, timeoutMs = VOICE_TTS_TIMEOUT_MS) {
   }
 }
 
-// Weck-Ruf an den Control (fire-and-forget): startet die GPU-Gruppen hinter
-// Budget-Gate und Idle-Abschaltung. Fehler sind egal — dann bleibt es bei der
-// Browser-Stimme, und der naechste Sprachmodus-Start versucht es erneut.
+// Weck-Ruf an den Control (fire-and-forget, hinter Budget-Gate/Idle-Stopp);
+// Fehler egal — Browser-Stimme bleibt, naechster Versuch weckt erneut.
 function wakeVoiceWorkers() {
   if (!VOICE_CONTROL_TOKEN || !CONTROL_ORIGIN) return;
   fetch(`${CONTROL_ORIGIN}/api/voice/session/start`, {
@@ -642,7 +637,7 @@ function wakeVoiceWorkers() {
   }).catch(() => {});
 }
 
-// Studio-Sprecher des XTTS-Workers einmal laden und im Prozess cachen.
+// Studio-Sprecher einmal laden und im Prozess cachen.
 async function loadXttsSpeaker() {
   if (xttsSpeakerCache) return xttsSpeakerCache;
   const response = await xttsFetch("/studio_speakers", {}, 8000);
@@ -727,9 +722,8 @@ async function pipeWav(res, upstream) {
   res.end();
 }
 
-// Stufe 4 (Groq-Ohr): rohes Aufnahme-Audio -> Transkript. Der Browser schickt
-// den MediaRecorder-Blob unveraendert; Format- und Groessenpruefung, Timeout und
-// Fehlerbilder liegen in chat-bridge-voice-ear.js (dort ohne Netz testbar).
+// Stufe 4 (Groq-Ohr): rohes Aufnahme-Audio -> Transkript; Pruefungen und
+// Fehlerbilder liegen in chat-bridge-voice-ear.js (ohne Netz testbar).
 async function handleVoiceTranscribe(req, res) {
   if (!GROQ_API_KEY) return json(res, 503, { ok: false, error: "ear_not_configured" });
   const audio = await readAudioBody(req);
@@ -765,6 +759,7 @@ async function handleVoiceTts(req, res) {
     speaker = await loadXttsSpeaker();
   } catch (error) {
     voiceStatusCache = { at: Date.now(), up: false };
+    wakeVoiceWorkers(); // v108: Worker weg -> wecken; naechste Nutzung findet ihn oben.
     return json(res, 503, { ok: false, error: `premium_voice_unavailable: ${error?.message || "worker"}` });
   }
   let upstream;
@@ -784,9 +779,15 @@ async function handleVoiceTts(req, res) {
   } catch (error) {
     xttsSpeakerCache = null;
     voiceStatusCache = { at: Date.now(), up: false };
+    // v108: Bridge-Sprecher-Cache ueberlebt den GPU-Stopp — dann scheitert erst
+    // die TTS; OHNE Weckruf hier wacht die GPU nie wieder auf.
+    wakeVoiceWorkers();
     return json(res, 502, { ok: false, error: `tts_upstream_failed: ${error?.message || "fetch"}` });
   }
   if (!upstream.ok || !upstream.body) {
+    xttsSpeakerCache = null;
+    voiceStatusCache = { at: Date.now(), up: false };
+    wakeVoiceWorkers(); // v108: siehe oben — Gateway-5xx heisst GPU schlaeft.
     return json(res, 502, { ok: false, error: `tts_upstream_${upstream.status}` });
   }
   return pipeWav(res, upstream);
