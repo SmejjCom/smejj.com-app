@@ -728,30 +728,12 @@ fetch-retry.js; Schnellspur mit eingebettetem Seitentext 0,49-1,01 s statt 4,9 s
   Wiedergabe fail-closed bei "Artefakt nicht ladbar" (erwartet).
 
 ## 2026-07-28 — Training-Loop-Dienst LIVE (job_smejj_training_loop_20260728)
-- ERLEDIGT: fuenfter Zeabur-Dienst `smejj-training-loop` auf dem BESTEHENDEN
-  6-$-Server. Keine neue Kostenposition, kein neuer Anbieter. Zugang ueber die
-  Zeabur-GitHub-App; den GitHub-Sicherheitscode gab der Betreiber selbst ein —
-  Anmeldecodes gibt der Agent nie ein.
-- VIER FALLEN, am Live-Protokoll gemessen: (1) ohne Konfiguration startet Zeabur
-  `pnpm start` = CONTROL SERVER statt Worker; (2) zbpack `install_command`
-  ueberschreiben verhindert den Quellcode-Kopiervorgang; (3) `pnpm build:i18n`
-  bricht mit MODULE_NOT_FOUND ab; (4) WURZEL: `.dockerignore` schloss `scripts`
-  komplett und `workers/*` per Erlaubnisliste aus — neue Worker dort EINTRAGEN,
-  `scripts` -> `scripts/*`, damit Ausnahmen greifen.
-- LOESUNG: `Dockerfile.<dienstname>` im Repo-Wurzelverzeichnis — gilt gezielt fuer
-  diesen einen Dienst. NON-REGRESSION: maus-engine, chat-bridge, voice-piper
-  unveraendert "Running 1/1"; `smejj-remote-browser` Image Pull Failed, vorbestehend.
-- SEIT 2026-07-29 SCHARF UND MESSEND. /health: loopEnabled=true, state=running.
-  Autonomer Lauf im Protokoll: 07:30:27 "listening (loopEnabled=true)" ->
-  07:32:24 "eval cycle done: blocked" + "Punktzahl 85.3 % (Budget 80 %) |
-  12 bestanden, 2 nicht bestanden". GENAU EIN Lauf, keine Doppellaeufe. 6-h-Takt.
-- FALLE: Zeaburs "Restart" laedt die Umgebung NICHT neu (gleicher Container, alte
-  Variablen). Nur ein echter Neubau per Commit-Webhook zieht neue Variablen.
-- URTEIL "blocked" IST KORREKT: nur durch criticalFailures > 0 (evalReport.js:38).
-  Vollauf 91,2 %, 13/14 Faelle 100 %, p95 1022 ms; einziger Ausfall
-  code-esm-failclosed von der Schnellspur. Suite bewusst NICHT gelockert.
-- OHNE IDRIVE nuetzlich: Kennzahlen ins Protokoll; Zugangsdaten traegt der
-  Betreiber selbst ein ("smejj.com Zeabur-Schluessel.command").
+Volltext: [docs/memory/Memory_Bank_2026-07-28_training_loop_dienst.md](docs/memory/Memory_Bank_2026-07-28_training_loop_dienst.md).
+Kern: fuenfter Zeabur-Dienst auf dem BESTEHENDEN 6-$-Server (keine neue Kosten),
+seit 2026-07-29 scharf im 6-h-Takt. Vier Deploy-Fallen, WURZEL war `.dockerignore`
+(schloss `scripts` komplett und `workers/*` per Erlaubnisliste aus). FALLE:
+Zeaburs "Restart" laedt die Umgebung NICHT neu — nur ein echter Neubau per
+Commit-Webhook zieht neue Variablen.
 
 ## 2026-08-02 — "Verbindung unterbrochen": Klient behoben, Wurzel liegt bei GLM-Coding
 
@@ -798,3 +780,21 @@ Details: task-capsules/2026/07/job_maus_livebild_20260729/.
   Header x-smejj-model-backend groq:llama-3.3-70b-versatile.
 - MERKREGEL: chat-markdown.js trägt absichtlich NUL-Bytes (BLOCK-Spoofing-Schutz)
   — git meldet „Bin", grep braucht -a. Details: task-capsules/2026/08/….
+
+## 2026-08-03 — Verlauf konnte lautlos sterben (job_verlauf_selbstheilung_20260803)
+- BEHOBEN + bewiesen, committet `7e1cab4`, aber NOCH NICHT LIVE. `chat-store.js:
+  openDb` oeffnete mit fester Version 1: fehlt der Objektspeicher `chats`
+  (Abbruch waehrend onupgradeneeded, Speicher-Raeumung, Quota), feuert
+  `onupgradeneeded` NIE wieder, jede Transaktion wirft NotFoundError — und da
+  alle Aufrufer fail-safe abfangen, speichert der Chat in diesem Browser fuer
+  immer nichts mehr, ohne jeden Hinweis. Fix: OHNE feste Version oeffnen (eine
+  feste 1 scheitert nach der Heilung dauerhaft mit VersionError!), fehlenden
+  Speicher eine Version hoeher anlegen, `dbPromise` nach Fehlern zuruecksetzen.
+  `tests/chat-store-selbstheilung.test.mjs` 5/5 gruen, Gegenbeweis 4/5 rot.
+- DATENSCHUTZ GEMESSEN: Chat-Verlauf liegt AUSSCHLIESSLICH lokal in `smejj-chats`.
+  Training-Capture fail-closed aus, Bridge/agentRoutes schreiben keinen Chatinhalt
+  weg — nichts auf IDrive e2; unterwegs nur fluechtig (Groq-Whisper, `history`).
+- MERKREGEL (teuer): `git status` LOG hier — sauber gemeldet, nach
+  `git update-index --really-refresh` 16 fremde Aenderungen einer laufenden
+  Parallel-Sitzung. VOR Commit/Deploy refresh erzwingen, sonst stellt ein Deploy
+  fremde Halbfertigware live. Deshalb bewusst KEIN Deploy, KEIN sw-Sprung.
