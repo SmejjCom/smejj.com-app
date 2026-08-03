@@ -97,13 +97,27 @@ function startBefehl() {
   // Container koennte das nicht mehr sagen.
   const skript = [
     "set -eu",
+    // bash -l setzt PATH ueber /etc/profile zurueck; /opt/conda/bin (python3,
+    // pip im pytorch-Abbild) muss danach wieder vorn stehen.
+    'export PATH="/opt/conda/bin:$PATH"',
     "mkdir -p /app",
     "cd /app",
     'printf %s "$SMEJJ_TRAINER_BUNDLE_B64" | base64 -d | tar xzf -',
     "cd /app/smejj-lora-trainer",
     'if [ "${SMEJJ_TRAINER_MODUS:-attrappe}" = "echt" ]; then',
-    "  pip install --no-cache-dir transformers peft accelerate bitsandbytes safetensors"
-      + " > /tmp/pip.log 2>&1 &",
+    // Exit-Code als Markerdatei: laufwerk.py wartet darauf, bevor es die
+    // Pakete importiert. Ohne den Marker verliert der Import den Wettlauf
+    // gegen pip (gemessen am 2026-08-03: ModuleNotFoundError: transformers).
+    //
+    // PINS statt neuester Stand, gemessen am 2026-08-03: ungepinnt zieht pip
+    // transformers/accelerate, die torch>=2.5 erwarten — das Abbild hat 2.4.0
+    // ("cannot import name 'DTensor' from 'torch.distributed.tensor'").
+    // Qwen3 wiederum braucht transformers>=4.51. Deshalb ein kohaerenter
+    // Stand vom April 2025 samt torch-Upgrade; das laeuft im Hintergrund und
+    // der Marker haelt den Motor-Import solange zurueck.
+    "  ( pip install --no-cache-dir torch==2.6.0 transformers==4.51.3 peft==0.15.2"
+      + " accelerate==1.6.0 bitsandbytes==0.45.5 'safetensors>=0.4.5'"
+      + " > /tmp/pip.log 2>&1; echo $? > /tmp/smejj-pip.rc ) &",
     "fi",
     "exec python3 server.py"
   ].join("\n");
@@ -113,7 +127,10 @@ function startBefehl() {
 function umgebung() {
   const werte = {
     PORT: "8080",
-    SMEJJ_HOST: "0.0.0.0",
+    // "::" statt "0.0.0.0": Salads Gateway und Sonden sprechen nur IPv6
+    // (gemessen am Sprachserver, Control v103). Mit reinem IPv4-Bind bleibt
+    // das Gateway auf 503 und die Instanz pendelt running -> creating.
+    SMEJJ_HOST: "::",
     SMEJJ_TRAINER_MODUS: MODUS,
     SMEJJ_TRAINER_BUNDLE_B64: baueBuendel(),
     SMEJJ_TRAINER_BASIS_REPO: process.env.SMEJJ_LORA_BASIS_HF_REPO || "",

@@ -18,9 +18,19 @@ liegen im Loop (workers/smejj-lora-loop/budget.js). Zwei Stellen, die beide
 abbrechen duerfen, waeren zwei Stellen, an denen man es vergessen kann.
 """
 
+import os
 import threading
 import time
 import traceback
+
+# Der Startbefehl installiert die torch-Pakete im Hintergrund und schreibt
+# danach ihren Exit-Code in diese Markerdatei. Gemessen am 2026-08-03: ohne
+# Warten darauf verliert der Motor-Import den Wettlauf gegen pip
+# (ModuleNotFoundError: transformers) und der Trainer bleibt dauerhaft
+# im Zustand 'fehler'.
+PIP_MARKER = os.environ.get("SMEJJ_TRAINER_PIP_MARKER", "/tmp/smejj-pip.rc")
+PIP_PROTOKOLL = "/tmp/pip.log"
+PIP_WARTEZEIT_S = int(os.environ.get("SMEJJ_TRAINER_PIP_WARTEZEIT_S", "1800"))
 
 
 class Laufwerk:
@@ -54,6 +64,7 @@ class Laufwerk:
             self._setze_ladezustand("attrappe-bereit", bereit=True)
             return
         try:
+            self._warte_auf_pakete()
             self._setze_ladezustand("laedt-motor")
             from motor import Motor  # noqa: PLC0415 - torch bewusst spaet laden
 
@@ -69,6 +80,30 @@ class Laufwerk:
             # Container nicht in eine Neustartschleife schickt.
             self._setze_ladezustand(f"fehler:{str(fehler)[:120]}")
             traceback.print_exc()
+
+    def _warte_auf_pakete(self):
+        """Wartet, bis die Hintergrund-Installation ihren Exit-Code gemeldet hat.
+
+        Fehlt die Markerdatei (alter Startbefehl ohne Marker), wird nach Ablauf
+        der Wartezeit trotzdem importiert — dann meldet der Import selbst einen
+        ehrlichen Fehler statt eines stummen Haengens.
+        """
+        frist = time.time() + PIP_WARTEZEIT_S
+        self._setze_ladezustand("wartet-auf-pakete")
+        while time.time() < frist:
+            if os.path.exists(PIP_MARKER):
+                with open(PIP_MARKER, encoding="utf-8") as datei:
+                    code = datei.read().strip()
+                if code != "0":
+                    schwanz = ""
+                    try:
+                        with open(PIP_PROTOKOLL, encoding="utf-8", errors="replace") as datei:
+                            schwanz = datei.read()[-300:]
+                    except OSError:
+                        pass
+                    raise RuntimeError(f"pip-exit={code}: {schwanz}")
+                return
+            time.sleep(5)
 
     # --- Laeufe --------------------------------------------------------
 

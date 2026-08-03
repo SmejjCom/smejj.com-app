@@ -19,6 +19,7 @@ Hier laedt deshalb nichts im Startpfad. Der Server antwortet binnen Sekunden auf
 
 import json
 import os
+import socket
 import threading
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -27,7 +28,11 @@ from laufwerk import Laufwerk
 
 MODUS = os.environ.get("SMEJJ_TRAINER_MODUS", "attrappe").strip().lower()
 PORT = int(os.environ.get("PORT", "8080"))
-HOST = os.environ.get("SMEJJ_HOST", "0.0.0.0")
+# "::" statt "0.0.0.0": Salads Gateway und Sonden erreichen den Container nur
+# ueber IPv6 (gemessen am Sprachserver, Control v103). Ein reiner IPv4-Bind
+# laesst jede Anfrage von aussen scheitern, waehrend der Prozess gesund wirkt —
+# Fehlbild: Gateway 503, Instanz pendelt running -> creating.
+HOST = os.environ.get("SMEJJ_HOST", "::")
 # Adresse, unter der der Loop diesen Dienst zum Messen erreicht. Muss von aussen
 # gueltig sein; im Container ist sie nicht ableitbar.
 OEFFENTLICHE_URL = os.environ.get("SMEJJ_TRAINER_PUBLIC_URL", "").rstrip("/")
@@ -115,8 +120,20 @@ class Handler(BaseHTTPRequestHandler):
         return self._antworte(404, {"ok": False, "error": "not_found"})
 
 
+class DualStackServer(ThreadingHTTPServer):
+    address_family = socket.AF_INET6
+
+    def server_bind(self):
+        try:
+            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        except OSError:
+            pass  # Kernel ohne Dual-Stack: reines IPv6 genuegt fuer Salad
+        super().server_bind()
+
+
 def main():
-    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    server_klasse = DualStackServer if ":" in HOST else ThreadingHTTPServer
+    server = server_klasse((HOST, PORT), Handler)
     print(f"[smejj-lora-trainer] hoert auf {HOST}:{PORT} (modus={MODUS})", flush=True)
 
     # ERST horchen, DANN laden. Die Reihenfolge ist der Kern dieses Dienstes.
