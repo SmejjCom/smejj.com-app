@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ladeLoopKonfiguration, startHindernisse } from "./config.js";
 import { erzeugeLoop } from "./loop.js";
-import { baueDatenPruefung, baueMesser } from "./evalAdapter.js";
+import { baueDatenPruefung, baueManifestLeser, baueMesser } from "./evalAdapter.js";
 import { geschaetzteZykluskostenUsd, monatskostenUsd, reichweiteTage } from "./budget.js";
 import {
   bewerteWacht,
@@ -194,7 +194,12 @@ async function main() {
     config,
     deps: {
       messe: baueMesser({ config, repoRoot: REPO_ROOT, log: console.log }),
-      pruefeDaten: baueDatenPruefung({ config, leseManifest: null })
+      // Der Manifestleser MUSS verdrahtet sein. Stand bis 2026-08-04 hier
+      // `leseManifest: null` — damit meldete pruefeDaten() immer
+      // "manifest_leser_fehlt", der Zyklus brach mit `keine_trainingsdaten` ab,
+      // und die Schleife konnte NIE einen Lauf starten. Von aussen sah das aus
+      // wie ein fehlender Datensatz; der Datensatz lag die ganze Zeit bereit.
+      pruefeDaten: baueDatenPruefung({ config, leseManifest: baueManifestLeser({ env: process.env }) })
     }
   });
   const server = erzeugeServer({ config, loop });
