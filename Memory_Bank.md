@@ -667,3 +667,36 @@ kaputt, sondern grundsaetzlich — vier von sechs Standardfragen null Treffer,
   gesperrter Eingabe, nicht ein Eintrag in PUBLIC_PATHS.
 - EINSCHRAENKUNG: de/en verantwortet der Agent; die 13 weiteren Sprachen sind
   maschinell erstellt und nicht muttersprachlich gegengelesen.
+
+## 2026-08-04 — Konto-Sicherheit ohne Browser-Dialoge (job_konto_formulare_20260804)
+
+Commit `14f1a3d` + `20011ef`, Frontend `dd626c7`, live als `smejj-shell-v212`.
+Freigabe des Betreibers vom 2026-08-04. `check:all` gruen (1718 + 1764 in zwei
+Laeufen), Start-Lock neu eingefroren.
+
+- **DERSELBE BEFUND WIE AUF DER ANMELDESEITE, NUR HINTER DER ANMELDUNG.**
+  `account-sessions.js` fragte Passwoerter mit `window.prompt()` ab (unmaskiert,
+  Klartext auf dem Schirm, keine Passwortverwaltung) und stapelte fuer die
+  Loeschung `confirm` + zwei `prompt`. Chrome bietet nach dem zweiten Dialog an,
+  weitere zu unterdruecken — wer das anklickte, kam nie ans Passwortfeld und
+  stand vor einer Aktion, die scheinbar nichts tat. Jetzt Seitenformulare mit
+  maskierten Feldern, Wiederholfeld und Abbrechen-Weg.
+- **ALLE PRUEFUNGEN VOR DEM SERVERAUFRUF.** Live im Browser gegen den
+  ausgelieferten Code bewiesen: falsches Loeschwort -> 0 Netzaufrufe, fehlendes
+  Passwort -> 0 Netzaufrufe, ungleiche neue Passwoerter -> 0 Netzaufrufe. Vorher
+  ging jede Eingabe ans Netz, auch eine leere.
+- **MERKREGEL: ein Label als Flex-Spalte macht aus jedem eigenen Element eine
+  eigene Zeile.** Ein `<code>`-Element in der Beschriftung brach
+  "Zur Bestätigung KONTO LÖSCHEN eingeben" in DREI Zeilen — im Browser gesehen,
+  nicht im Test. Beschriftungen in solchen Labels bleiben EIN Textstueck.
+- **MERKREGEL: `?v=` allein erreicht Bestandsnutzer NICHT.** Precache-Dateien
+  liegen cache-first mit `ignoreSearch`; nur ein CACHE_NAME-Sprung wirkt. Darum
+  zwei Sprünge (v211 fuer die Formulare, v212 fuer die Nachbesserung).
+- **MERKREGEL: eine Testbuehne ohne die echte Ansichtsklasse misst falsch.** Die
+  Konto-Variablen haengen an `#profile.premium-view`; ohne die Klasse loesen
+  `var(--konto-line)` und Co. zu leer auf und Raender verschwinden — das sah wie
+  ein CSS-Fehler aus, war aber die Buehne.
+- OFFEN (fremd): `tests/lora-trainer-vertrag.test.mjs` startet einen lokalen
+  Dienst und wartet 15 s auf `/health`. Unter der Last eines vollen `check:all`
+  reicht das manchmal nicht — dreimal an einem Tag rot, isoliert immer gruen.
+  Ein Pflicht-Gate darf nicht vom Zufall abhaengen; Startfenster erhoehen.
