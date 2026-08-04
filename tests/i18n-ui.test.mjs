@@ -137,3 +137,28 @@ test("settings-surface nutzt die i18n-Runtime und setzt lang/dir nur auf der Vie
 test("Sprachwechsel rendert die Oberflaeche neu", () => {
   assert.match(settingsSurface, /settingsLanguage"\s*\)\s*\{\s*\n?\s*loadUiLanguage\(event\.target\.value\)\.then\(\(\) => render\(view\)\)/);
 });
+
+// Live gemessen am 2026-08-04 auf https://smejj.com mit einem en-US-Browser:
+// Die Oberflaeche lief englisch, die Sprachauswahl zeigte "Deutsch". Ursache ist
+// app.js (Start-Lock, bindSettings): sie belegt #settingsLanguage NACH dem
+// Render mit `state.settings.language || "de"`. Weil save() hier ALLE Felder
+// wegschreibt, hat schon ein Wechsel des Farbschemas dem Nutzer ungefragt "de"
+// festgeschrieben — beim naechsten Besuch stand die ganze App auf Deutsch.
+test("die Sprache wird NICHT aus dem Feld gespeichert (app.js belegt es vor)", () => {
+  assert.match(settingsSurface, /next\.language = sprachwahlVomNutzer \|\| uiLanguage\(\)/,
+    "save() muss die Laufzeitsprache schreiben, nicht den Feldwert");
+  // Die bewusste Wahl des Nutzers muss VOR dem Speichern gemerkt werden,
+  // sonst ginge genau diese Wahl verloren.
+  assert.match(settingsSurface, /if \(event\.target\?\.id === "settingsLanguage"\) sprachwahlVomNutzer = event\.target\.value;\s*\n\s*save\(view\);/,
+    "handleChange muss die Wahl vor save() merken");
+  // Zuruecksetzen bleibt eine bewusste Wahl und stellt die Quellsprache her.
+  assert.match(settingsSurface, /sprachwahlVomNutzer = DEFAULTS\.language;\s*\n\s*save\(view, t\("Standardeinstellungen wiederhergestellt"\)\)/);
+});
+
+test("die Sprachauswahl zeigt die Sprache, die wirklich laeuft", () => {
+  assert.match(settingsSurface, /function zeigeAktiveSprache\(view\) \{/);
+  assert.match(settingsSurface, /feld\.value !== uiLanguage\(\)\) feld\.value = uiLanguage\(\)/);
+  // Einmal beim Render und einmal nach dem synchronen app.js-Boot-Stapel.
+  assert.match(settingsSurface, /queueMicrotask\(\(\) => zeigeAktiveSprache\(view\)\)/);
+  assert.match(settingsSurface, /applyValues\(view, readSettings\(\)\);\s*\n\s*zeigeAktiveSprache\(view\);/);
+});
