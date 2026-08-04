@@ -788,3 +788,33 @@ Berichte: modeleval-smejj-chat-breit-{glm-5-2,kimi-k3}-2026-08-04.json.
 - Kimi K3 ist seit dem Lauf nicht mehr erreichbar: jede Anfrage kommt als
   `x-smejj-model-fallback: true` mit kimi-k2-7 zurueck. K2.7 erreichte auf seinen
   115 Faellen 72,5 % — praktisch gleichauf mit K3.
+
+## 2026-08-04 — Der halbe Anmeldezustand (job_abgelaufene_anmeldung_20260804)
+
+Commits `2b0e9e4` + Nachbesserung, Frontend `aef96fd`, live als `smejj-shell-v219`.
+`check:all` gruen (1880). Beide Sperren neu eingefroren.
+
+- **EIN TOKEN UEBERLEBT LAENGER ALS DIE SITZUNG DAHINTER.** `auth-gate.js`
+  prueft nur, OB ein Token im Speicher liegt, nie ob es gilt. Im Browser des
+  Betreibers lag ein Token, das der Server ablehnte (`/api/auth/me` ->
+  authenticated=false): die App liess ihn herein, der Server kannte ihn nicht.
+  Unsichtbar, solange nichts danach fragt — und toedlich, sobald etwas fragt.
+  Genau daran ist am selben Tag die Anmeldepflicht der Bruecke gescheitert.
+- **DIE WICHTIGSTE REGEL EINER SITZUNGSPRUEFUNG: nur eine EINDEUTIGE Absage
+  zaehlt.** Netzfehler, Zeitueberschreitung, 5xx, kaputtes JSON aendern nichts.
+  Waere das anders, sperrte ein Aussetzer alle Nutzer aus — schlimmer als der
+  Fehler, den die Pruefung behebt. Vier Faelle im Test, drei davon live im
+  Browser des Betreibers gegen den ausgelieferten Code nachgestellt.
+- **MERKREGEL zur Reihenfolge:** `t()` faellt auf den deutschen Quelltext
+  zurueck, solange das Woerterbuch nicht geladen ist. Der Hinweis stand deutsch
+  unter einer englischen Seite. Erst `loadUiLanguage()`, dann melden.
+- **MERKREGEL zum Vorgehen (teuer bezahlt):** Die Anmeldepflicht wurde scharf
+  geschaltet, OHNE den positiven Weg gemessen zu haben — mit dem Argument, er sei
+  "durch Konstruktion sicher". Er war es nicht. **Eine Aenderung, die im
+  Fehlerfall ALLE aussperrt, wird im angemeldeten Browser geprueft, bevor sie
+  live geht, nicht danach.** Diesmal so gemacht: vor dem Deploy gemessen, dass
+  der neue Code den Betreiber nicht stoert.
+- OFFEN: Die Anmeldepflicht der Bruecke ist ausgebaut (`chat-bridge-auth.js`
+  bleibt fertig und geprueft liegen). Mit der Sitzungspruefung ist der Weg dafuer
+  jetzt frei — aber erst messen, wie viele echte Anfragen ein gueltiges Token
+  tragen, dann scharf schalten.
