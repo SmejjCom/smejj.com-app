@@ -125,6 +125,70 @@ Servern laeuft das?" kam "auf eigenen Servern mit modernen Cloud-Technologien"
 statt GitHub Pages / IDrive e2 / Zeabur / Salad. Bekannt und dokumentiert: das
 Projektwissen (RAG) haengt nicht im Live-Chat-Pfad.
 
+## Nachtrag 2026-08-04 — Befund B behoben, Befund A neu bewertet
+
+Freigabe: "Ja" zur Empfehlung (Punkt 2 zuerst, Uebersetzungen von mir erstellt).
+
+### Befund B BEHOBEN — Kontoansicht und Einstellungen vollstaendig uebersetzt
+
+Der Code rief `t()` bereits an allen Stellen auf; es fehlten ausschliesslich die
+Eintraege in den Sprachdateien. Deshalb **keine Code-Aenderung, nur Daten**:
+63 neue Texte in allen 14 Sprachen (882 Uebersetzungen), Schluesselsatz je
+Sprache jetzt 314 und in allen Dateien identisch. Rein additiv — in keiner Datei
+wurde eine Zeile entfernt oder geaendert.
+
+Markennamen (GitHub, Slack, Google Drive) bleiben bewusst ohne Eintrag: `t()`
+faellt fail-safe auf den Quelltext zurueck, der in allen Sprachen gleich ist.
+Beim Platzhalter fuer eigene Anweisungen ist das Beispiel je Sprache angepasst
+("Antworte kurz und auf Deutsch" -> "Answer briefly and in English" usw.).
+
+Kein sw-Sprung noetig: die Sprachdateien liegen NICHT im Precache, sie werden
+dynamisch geladen (600-s-HTTP-Cache) und die i18n-Runtime frischt ihren
+localStorage-Cache bei jedem Laden im Hintergrund auf.
+
+**Verifikation live** (`0cbeb48`): Gegen die AUSGELIEFERTEN Dateien geprueft —
+alle 217 uebersetzbaren Texte aus `account-privacy.js` und
+`settings-surface.js` haben in en, ja und ar eine Uebersetzung, 0 Luecken
+(vorher 48). Im Browser gegengelesen: 314 Schluessel je Sprache, Stichproben
+korrekt ("Verbundene Apps" -> "Connected apps" / "連携アプリ" /
+"التطبيقات المتصلة"). check:frontend 336/336 gruen.
+
+**Offen:** Der Sicht-Test der gerenderten Kontoansicht fehlt — die
+Chrome-Erweiterung war ab diesem Zeitpunkt nicht mehr erreichbar. Die
+Auslieferung ist strukturell und im Browser belegt, ein Screenshot der Ansicht
+steht aus.
+
+**Einschraenkung, ausdruecklich:** Deutsch und Englisch verantworte ich; die
+13 weiteren Sprachen sind von mir erstellt und NICHT von Muttersprachlern
+gegengelesen. Fachbegriffe (Abo, Coding-Agent, Sprachminuten) wurden bewusst
+nah am Original gehalten.
+
+### Befund A NEU BEWERTET — die Sitemap ist das Problem, nicht das Gate
+
+Bei der Detailpruefung kam ein Punkt dazu, der die urspruengliche Empfehlung
+umdreht: Die 15 Sprachseiten sind **keine reinen Marketingseiten**.
+`voice-landing.js` ruft `CLIENT_ROUTES.api.agent`, `api.chatFallback`,
+`api.voiceTranscribe` und `api.voiceTts` auf — also den Modell-Router und die
+Sprach-Server.
+
+Sie oeffentlich zu schalten hiesse: jeder anonyme Besucher (und jeder Bot) kann
+Modell- und Transkriptionsaufrufe ausloesen. Das ist eine Kosten- und
+Missbrauchsfrage und damit Rote Liste. **Nicht eigenmaechtig geaendert.**
+
+Damit bleiben drei Wege, alle mit Betreiber-Entscheidung:
+1. **Sitemap ehrlich machen** — die 15 Sprachseiten austragen. Sicher und
+   sofort machbar, aber die mehrsprachige SEO-Investition (hreflang, eigene
+   Beschreibungen) faellt weg; es blieben 4 indexierbare Adressen.
+2. **Oeffentliche Marketing-Huelle bauen** — Sprachseiten zeigen Inhalt und
+   hreflang fuer alle, die Eingabe/Sprachbedienung fordert Anmeldung. Fachlich
+   die richtige Loesung, aber echte Arbeit, kein Einzeiler.
+3. **Sprachseiten oeffnen** — ein Eintrag in `PUBLIC_PATHS`. Schnell, aber
+   oeffnet die kostenpflichtigen Routen fuer Anonyme. Nur mit Budget-Deckel und
+   Rate-Limit vertretbar.
+
+Empfehlung: Weg 2, notfalls Weg 1 als Zwischenschritt. Weg 3 nicht ohne
+Drosselung.
+
 ## Benchmark (Messpflicht)
 
 Kalt: Startseite TTFB 50-190 ms (Budget 200), 40 631 B (Budget 300 KB).
