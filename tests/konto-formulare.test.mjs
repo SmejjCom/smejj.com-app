@@ -21,6 +21,9 @@ import fs from "node:fs";
 
 const QUELLE = fs.readFileSync("public/account-sessions.js", "utf8");
 const CSS = fs.readFileSync("public/account-privacy.css", "utf8");
+// Kommentare beschreiben auch alte Fehler (z. B. die frueher benutzte, nie
+// definierte Variable) — geprueft werden darf nur, was der Browser wirklich liest.
+const CSS_CODE = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
 // Kommentare beschreiben den alten Zustand — geprueft wird der ausgefuehrte Code.
 const CODE = QUELLE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
@@ -193,4 +196,45 @@ test("die Beschriftung mit dem Loeschwort bleibt EINE Zeile", () => {
   // verlangt der Text ein anderes Wort als der Code akzeptiert.
   assert.match(label, /\$\{LOESCH_WORT\}/,
     "die Beschriftung muss LOESCH_WORT einsetzen, nicht den Text doppelt pflegen");
+});
+
+// --- Helles Farbschema --------------------------------------------------------
+//
+// Der Kontobereich kennt ZWEI Schemata (#profile.premium-view und
+// …[data-settings-theme="light"]). Die Historie des Projekts haengt voller
+// Light-Mode-Fehler; darum wird hier geprueft, dass die neuen Formulare nur
+// Werte benutzen, die BEIDE Schemata kennen.
+
+test("die Formulare benutzen keine erfundene Variable", () => {
+  // Erster Entwurf schrieb `var(--konto-panel, …)` — die Variable gibt es nicht,
+  // der weisse Rueckfallwert galt also immer und haette im hellen Schema eine
+  // fremde Flaeche erzeugt.
+  const block = CSS_CODE.match(/#profile \.account-inline-form \{[\s\S]*?\n\}/)[0];
+  const benutzt = [...CSS_CODE.matchAll(/var\((--konto-[a-z-]+)/g)].map((m) => m[1]);
+  const definiert = new Set([...CSS_CODE.matchAll(/^\s*(--konto-[a-z-]+):/gm)].map((m) => m[1]));
+  for (const name of new Set(benutzt)) {
+    assert.ok(definiert.has(name), `${name} wird benutzt, ist aber nirgends definiert`);
+  }
+  assert.match(block, /background: var\(--konto-glass\)/,
+    "die Formularflaeche muss dieselbe Glas-Variable nehmen wie die uebrigen Flaechen");
+});
+
+test("der Fokusring ist in BEIDEN Schemata sichtbar", () => {
+  // --konto-edge ist im hellen Schema rgba(255,255,255,0.9): ein weisser Ring
+  // auf hellem Grund ist kein Ring. Tastaturnutzer verlieren damit die Position.
+  const regel = CSS_CODE.match(/#profile \.account-inline-form input:focus-visible \{[\s\S]*?\n\}/)[0];
+  assert.ok(!/var\(--konto-edge\)/.test(regel),
+    "der Fokusring darf nicht an der Kantenfarbe haengen");
+  assert.match(regel, /outline: 2px solid #2dd4bf/,
+    "Akzentfarbe traegt in hell und dunkel");
+});
+
+test("beide Schemata definieren jede benutzte Konto-Variable", () => {
+  // Ein Wert, den nur das dunkle Schema kennt, faellt im hellen still auf den
+  // Erbwert zurueck — genau so entstehen unlesbare Flaechen.
+  const dunkel = CSS_CODE.match(/#profile\.premium-view \{([\s\S]*?)\n\}/)[1];
+  const hell = CSS_CODE.match(/#profile\.premium-view\[data-settings-theme="light"\] \{([\s\S]*?)\n\}/)[1];
+  const namen = (s) => new Set([...s.matchAll(/(--konto-[a-z-]+):/g)].map((m) => m[1]));
+  const nurDunkel = [...namen(dunkel)].filter((n) => !namen(hell).has(n));
+  assert.deepEqual(nurDunkel, [], `nur im dunklen Schema definiert: ${nurDunkel.join(", ")}`);
 });
