@@ -724,3 +724,25 @@ Betreiber-Freigabe: „Ja, mach die Suchquelle mit Schlüssel." Nachweis in
   -> rbb24, BZ, Tagesspiegel. `Öffnungszeiten Zoo Berlin` -> zoo-berlin.de.
 - Der Schluessel selbst ist Betreibersache: `smejj.com Suchschluessel-setzen.command`
   (zeigt ihn nie an, prueft das Format, schreibt genau einen Wert).
+
+## 2026-08-04 — Sprachseiten: Inhalt oeffentlich, Sprachmodus angemeldet (job_livetest_a_bis_z_20260804)
+- ERLEDIGT, live (`e59ef13`, Commit `d452310`). Eine Parallel-Session hatte die
+  15 Sprachseiten mit `f8d98c4` (sw v213) oeffentlich geschaltet — richtig, denn
+  sie tragen `index,follow`, Canonical und 16 hreflang-Verweise. Die Interaktion
+  blieb dabei OFFEN: `voice-landing.js` kannte keine Sitzungspruefung.
+- GEMESSEN, nicht vermutet: `POST /api/chat` an die Bridge OHNE jedes Token gab
+  HTTP 200 und eine vollstaendige Modellantwort in 1,3 s. Auf 15 indexierten
+  Seiten stand damit eine bedienbare, kostenpflichtige Oberflaeche fuer jeden
+  Bot. **Eine Seite oeffentlich zu schalten heisst nicht, ihre Bedienung
+  oeffentlich zu schalten — beides muss getrennt entschieden werden.**
+- FIX: NEU `voice-landing-signin.js`. `darfSprechen()` fail-closed ueber
+  `hasSession()`; fuer Abgemeldete NUR ein `<a>` auf `/auth/login/` — kein
+  Overlay, keine Verdrahtung, kein Vorwaermen. Live belegt: 20 Anfragen, alle
+  statisch, NULL Aufrufe an salad.cloud/zeabur.app/api. Angemeldete unveraendert.
+- SITEMAP: dadurch stimmig — 19/19 liefern 200, 18 rendern fuer Abgemeldete
+  Inhalt, `x-default` zeigt auf das jetzt oeffentliche `/en/`. Der Eintrag `/`
+  bleibt die App-Shell (Entscheidung F-06), bewusst nicht ausgetragen.
+- OFFEN (eigener Auftrag): Die Bridge nimmt weiterhin Anfragen ohne Token an.
+  Die UI-Sperre nimmt die Bedienbarkeit, macht den Endpunkt aber nicht dicht.
+  Token-Pflicht + Rate-Limit wuerde ohne Umbau ALLE angemeldeten Nutzer
+  aussperren (das Frontend schickt heute kein Token an die Bridge).

@@ -189,6 +189,80 @@ Damit bleiben drei Wege, alle mit Betreiber-Entscheidung:
 Empfehlung: Weg 2, notfalls Weg 1 als Zwischenschritt. Weg 3 nicht ohne
 Drosselung.
 
+## Nachtrag 2 (2026-08-04) — Befund A umgesetzt: Marketing-Huelle + Sitemap
+
+Freigabe: "Nummer — 1, 2" (Sitemap in Einklang bringen UND oeffentliche
+Marketing-Huelle bauen).
+
+### Lage bei Arbeitsbeginn — es war dringender als gedacht
+
+Eine Parallel-Session hatte die 15 Sprachseiten mit `f8d98c4` (sw v213) bereits
+oeffentlich geschaltet — inhaltlich richtig. Die Interaktion war dabei aber
+NICHT gesperrt: `voice-landing.js` kannte keine Sitzungspruefung.
+
+**Live gemessen:** ein Aufruf an die Bridge OHNE jedes Token beantwortete
+`POST /api/chat` mit HTTP 200 und einer vollstaendigen Modellantwort in 1,3 s.
+Seit v213 lag damit auf 15 indexierten Seiten eine bedienbare, kostenpflichtige
+Oberflaeche fuer jeden anonymen Besucher und jeden Bot.
+
+### Umsetzung
+
+NEU `public/voice-landing-signin.js` (eigenes Modul; `voice-landing.js` steht an
+der 800-Zeilen-Grenze — dieselbe SRP-Loesung wie `browser-pane-backdrop.js`):
+
+- `darfSprechen()` liest die Sitzung fail-closed ueber `hasSession()` aus dem
+  Gate. Kein Storage, gesperrter Storage, halbes Sitzungsobjekt oder kaputtes
+  JSON gelten als abgemeldet.
+- `buildLoginCta()` setzt fuer Abgemeldete NUR einen `<a>` auf `/auth/login/` —
+  kein Overlay, keine Verdrahtung, kein `warmUpAgentConnection()`. Beschriftung
+  in allen 15 Sprachen, als Textknoten gesetzt (Sprachtexte sind Daten).
+- `initVoiceLanding()` prueft VOR `buildUi()`. Angemeldete merken nichts.
+
+Bewusst ein `<a>` statt `<button>`: Suchmaschinen und Screenreader sollen den
+Weg in die App als Verweis sehen, Mittelklick und "in neuem Tab" funktionieren.
+
+### Verifikation live auf https://smejj.com/de/
+
+**Abgemeldet:** Seite rendert vollstaendig — Titel, H1 "smejj.com — dein KI- &
+Code-Assistent", 813 Zeichen Inhalt, Funktionen und FAQ sichtbar. KEIN
+Sprach-Knopf, KEIN Overlay; stattdessen "Anmelden und sprechen" ->
+`/auth/login/` mit aria-label. **Netzwerkprotokoll: 20 Anfragen, ausschliesslich
+statische Dateien derselben Domain — NULL Aufrufe an salad.cloud, zeabur.app
+oder irgendeine /api/-Route.**
+
+**Angemeldet (Gegenprobe):** Sprach-Knopf, Overlay und Eingabefeld unveraendert
+vorhanden, kein Anmelde-Knopf. Non-Regression bestaetigt.
+
+**Tests:** `tests/sprachseiten-interaktion.test.mjs` NEU (8 Faelle, darunter
+fail-closed und "das Signin-Modul enthaelt im CODE keine bezahlte Route" —
+Kommentare werden vor der Pruefung entfernt), `tests/auth-gate.test.mjs` auf die
+neue Verdrahtung gehoben. Beide in `check:frontend`. 355/355 gruen.
+
+### Punkt 1 (Sitemap) — durch Punkt 2 erledigt, nichts zu aendern
+
+Nachgemessen: alle 19 Sitemap-Adressen liefern HTTP 200, 18 davon rendern fuer
+Abgemeldete Inhalt. `/de/` traegt Canonical, 16 hreflang-Verweise und
+`index,follow`; `x-default` zeigt auf das jetzt oeffentliche `/en/`. Der
+Widerspruch "beworben, aber nicht lesbar" ist damit aufgeloest.
+
+Bewusst NICHT geaendert: der Eintrag `/` ist laut Generator ausdruecklich die
+App-Shell (dokumentierte Entscheidung F-06, eigener Eintrag ohne
+hreflang-Cluster). Ihn auszutragen waere die Umkehr einer frueheren Entscheidung
+ohne Not — die Marketing-Inhalte tragen jetzt die Sprachseiten.
+
+### OFFEN und wichtig: die Bridge nimmt Anfragen ohne Anmeldung an
+
+Die Sperre oben nimmt der Oberflaeche die Bedienbarkeit — sie macht den
+Endpunkt aber nicht dicht. Wer die Bridge-Adresse kennt, kann sie weiterhin
+per curl ohne Token benutzen (live belegt, HTTP 200). Das ist vorbestehend und
+unabhaengig von den Sprachseiten, aber es bleibt eine offene Kosten- und
+Missbrauchsflanke.
+
+Richtige Loesung: Token-Pflicht plus Rate-Limit an der Bridge. Das ist ein
+Server-Eingriff, der ohne sorgfaeltigen Umbau ALLE angemeldeten Nutzer
+aussperren wuerde (das Frontend schickt heute kein Token an die Bridge) —
+deshalb ein eigener Auftrag mit eigener Absicherung, nicht nebenbei.
+
 ## Benchmark (Messpflicht)
 
 Kalt: Startseite TTFB 50-190 ms (Budget 200), 40 631 B (Budget 300 KB).
