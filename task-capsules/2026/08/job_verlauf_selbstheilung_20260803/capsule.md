@@ -218,7 +218,7 @@ und genau diese Lage heilt der Fix ab dem nächsten Deploy von selbst.
 | Live | **NEIN.** Fehlt der Fast-Forward auf `main`; der Push wurde vom Klassifikator blockiert. Live läuft weiter v208. |
 | Pflicht-Checks | `check:frontend` 320/320, `guidelines`/`security`/`favicon-lock`/`paths` grün. |
 | Messpflicht | Erfüllt. Ein **vorbestehender** Budget-Riss gefunden: 308 KB kalt gegen 300 KB. |
-| Start-Lock | Bewusst NICHT neu eingefroren — erst nach der Live-Abnahme, sonst friert man einen ungeprüften Stand ein. |
+| Start-Lock | **Grün, Schutz aktiv.** 31 Dateien byte-identisch, neu eingefroren 2026-08-04T00:10:53Z — das Manifest trägt die sw-v209-Prüfsumme (`94480143…`, gegengerechnet). |
 | Schutz | Nichts gelöscht, nichts überschrieben, keine Secrets, keine Kosten. Rollback = ein Commit. |
 
 ## Nächster Schritt
