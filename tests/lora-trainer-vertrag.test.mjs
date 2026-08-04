@@ -18,16 +18,34 @@ import { brichTrainingAb, starteTraining, trainerErreichbar, trainingZustand } f
 
 const TRAINER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../workers/smejj-lora-trainer");
 
-async function starteDienstEinmal(env, port, fristMs) {
+/** Letzte Zeilen der Dienstausgabe — mehr braucht keine Fehlermeldung. */
+const AUSGABE_MAX = 4000;
+
+async function starteDienstEinmal(env, port, fristMs, protokoll) {
   const prozess = spawn("python3", ["server.py"], {
     cwd: TRAINER,
     env: { ...process.env, PORT: String(port), SMEJJ_TRAINER_MODUS: "attrappe",
       SMEJJ_TRAINER_PUBLIC_URL: `http://127.0.0.1:${port}`, ...env },
     stdio: ["ignore", "pipe", "pipe"]
   });
+
+  // Beide Roehren MUESSEN gelesen werden. Eine Roehre, die niemand leert, laeuft
+  // voll — und dann blockiert der Kindprozess beim naechsten print() fuer immer.
+  // Von aussen sieht das exakt wie "Dienst startet nicht" aus, obwohl er laeuft.
+  // Nebenwirkung, die genauso wichtig ist: die Ausgabe steht damit fuer die
+  // Fehlermeldung zur Verfuegung. Ein Test, der nur "trainer_startete_nicht"
+  // sagt, zwingt zum Nachstellen von Hand — genau das hat am 2026-08-04 Zeit
+  // gekostet.
+  const sammle = (stroem) => stroem.on("data", (stueck) => {
+    protokoll.text = (protokoll.text + stueck.toString()).slice(-AUSGABE_MAX);
+  });
+  sammle(prozess.stdout);
+  sammle(prozess.stderr);
+
   // Stirbt der Prozess sofort (belegter Port), nicht bis zur Frist warten.
   let beendet = false;
-  prozess.once("exit", () => { beendet = true; });
+  prozess.once("exit", (code) => { beendet = true; protokoll.letzterCode = code; });
+  prozess.once("error", (fehler) => { beendet = true; protokoll.text += `\nspawn-Fehler: ${fehler.message}`; });
 
   const basisUrl = `http://127.0.0.1:${port}`;
   const frist = Date.now() + fristMs;
@@ -57,16 +75,27 @@ async function starteDienstEinmal(env, port, fristMs) {
  */
 async function starteDienst(env = {}) {
   const gesehen = new Set();
+  const protokoll = { text: "", letzterCode: null };
   for (let versuch = 1; versuch <= 3; versuch += 1) {
     let port;
     do { port = 8300 + Number(process.hrtime.bigint() % 1200n); } while (gesehen.has(port));
     gesehen.add(port);
     // Erster Versuch kurz: ein belegter Port zeigt sich sofort, und die
-    // Wiederholung kostet dann keine 15 Sekunden.
-    const dienst = await starteDienstEinmal(env, port, versuch === 3 ? 15_000 : 6_000);
+    // Wiederholung kostet dann keine 15 Sekunden. Der letzte Versuch bekommt
+    // reichlich Luft — er kostet nichts, solange der Dienst normal startet
+    // (gemessen: rund 150 ms), und rettet den Lauf auf einer ausgelasteten
+    // Maschine. Ein Vertragstest darf nicht an der Tagesform des Rechners
+    // scheitern.
+    const dienst = await starteDienstEinmal(env, port, versuch === 3 ? 30_000 : 6_000, protokoll);
     if (dienst) return dienst;
   }
-  throw new Error("trainer_startete_nicht");
+  // Die Fehlermeldung traegt jetzt, was zum Verstehen noetig ist: getestete
+  // Ports, letzter Exit-Code und die Ausgabe des Dienstes.
+  const ausgabe = protokoll.text.trim() || "(keine Ausgabe)";
+  throw new Error(
+    `trainer_startete_nicht — Ports ${[...gesehen].join(", ")}, letzter Exit-Code ${protokoll.letzterCode}\n` +
+    `Ausgabe des Dienstes:\n${ausgabe}`
+  );
 }
 
 function beende(dienst) {
