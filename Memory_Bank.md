@@ -761,3 +761,40 @@ Commit `199449e`, Frontend `c788e47`, live und nachgemessen. `check:all` gruen
   Kontoloeschung. Bewusst NICHT blind mitgeliefert: hinter der Anmeldung, aus
   einer Sitzung nicht pruefbar, und eine ungetestete Aenderung an der
   Kontoloeschung waere schlimmer als der Befund.
+
+## 2026-08-04 — Die Websuche suchte im falschen Markt (job_websuche_markt_20260804)
+
+Befund: Die Frage nach einem Buero im Silicon Valley beantwortete smejj.com mit
+ImmobilienScout24. Live nachgemessen war die Suche nicht bei dieser einen Frage
+kaputt, sondern grundsaetzlich — vier von sechs Standardfragen null Treffer,
+„office space for sale San Jose" acht Microsoft-Office-Seiten.
+
+- **EIN FESTVERDRAHTETER SPRACHKOPF IST EINE MARKTENTSCHEIDUNG.** `kl=de-de`,
+  `setlang=de` und `Accept-Language: de,en` sahen aus wie Darstellungsdetails.
+  Sie bestimmen, WELCHE Welt die Suchmaschine zeigt. NEU `src/search/searchRegion.js`:
+  Markt aus dem Ortsbezug (17 Maerkte); bei zwei Orten gewinnt der ZULETZT genannte.
+- **EIN FEHLENDER PARAMETER IST SCHLIMMER ALS EIN FALSCHER.** `lite.duckduckgo.com`
+  hatte gar keine Region und antwortete nach der Server-IP — daher spanische
+  Treffer. Bei mehreren Quellen muss JEDE den Parameter bekommen.
+- **EIN GANZER SATZ IST KEINE SUCHANFRAGE.** Der rohe Fragesatz ging als Suchbegriff
+  hinaus: 0 Treffer — die Suche war nie gestellt. NEU `buildSearchQuery` (nie leer).
+- **EIN WORT IST KEIN BELEG — EIN SCHWACHER FILTER VERSTECKT EINEN TOTEN DIENST.**
+  Acht microsoft.com-Treffer kamen durch, weil „office" vorkam. Ab drei pruefbaren
+  Begriffen muessen jetzt zwei in DEMSELBEN Treffer stehen. Erst dadurch wurde
+  sichtbar, dass beide Suchmaschinen laengst nichts Brauchbares liefern.
+- **HTTP 200 HEISST NICHT „ANTWORT".** Bing liefert erkannten Automaten
+  absichtliche Taeuschtreffer (brasilianische Motorrad-Preistabellen auf
+  „Schlagzeilen Berlin", Tom-Hanks-Filmografie auf „Zoo Berlin"). Cookies,
+  `Referer`, sauberer Browser-Kennstring: nachgemessen ohne Wirkung.
+  DuckDuckGo antwortet aus dem Rechenzentrum mit HTTP 202 + Sperrseite.
+- **AUS DER ARBEITSKOPIE BAUEN IST GEFAEHRLICH.** Der Release-Builder nimmt die
+  Arbeitskopie; eine Parallel-Sitzung hatte 20 Dateien in Release-Pfaden offen. Weg:
+  `git archive <commit> | tar -x`, dann `buildControlReleaseArtifact({ rootDir })`.
+- Ergebnis live: `Bitcoin Kurs` jetzt finanzen.net/coinmarketcap.com/**de**/ statt
+  `/es/`; `office space for sale San Jose` 0 statt 8 falscher Treffer; Antwort auf
+  die Originalfrage nennt den US-Markt, ist vollstaendig und nennt LoopNet/Crexi
+  mit Suchbegriffen. Control 133 -> 135, `check:all` gruen (1473 Zusicherungen).
+- OFFEN (Rote Liste): Ohne Suchquelle mit Schluessel (BYOK, z. B. Brave Search
+  API oder Tavily im Gratiskontingent) kann die Suche keine Objektlinks liefern.
+  Mojeek, Marginalia, Brave-HTML, acht oeffentliche SearXNG-Instanzen geprueft und
+  ausgeschieden. Neuer Anbieter = getrennte schriftliche Freigabe.

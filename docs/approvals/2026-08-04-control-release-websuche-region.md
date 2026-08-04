@@ -119,4 +119,73 @@ Wird 1 oder 2 nicht erreicht, wird ohne Rueckfrage zurueckgerollt.
 
 ## Durchfuehrung und Ergebnis
 
-(wird nach dem Livegang ergaenzt)
+Zwei Runden des Ship-Loops, beide live abgenommen.
+
+### Runde 1 — Markt, Suchbegriff, Relevanz (Commit `d13e510`)
+
+| Schritt | Ergebnis |
+|---|---|
+| Artefakt auf IDrive e2 | `created: true`, `immutable: true`, `contentVerified: true`, `overwriteProofStatus: 412` |
+| Container `smejj-control` | Version 133 -> 134, alle 85 Variablen erhalten, `startup_probe` unveraendert |
+| Neustart | ~70 s (18:05:26 alt, 18:06:33 neue Version) |
+
+### Runde 2 — gesperrte Quellen beenden die Suche (Commit `3299067`)
+
+Live-Befund nach Runde 1: Das Modell suchte jetzt korrekt im US-Markt mit
+englischen Fachbegriffen, bekam aber von keiner Quelle etwas, formulierte immer
+weiter um, verbrauchte alle drei Werkzeugrunden und **brach mitten im Satz ab**.
+
+| Schritt | Ergebnis |
+|---|---|
+| Artefakt | `smejj-control-websuche-region-b-2026-08-04.tar.gz`, sha256 `7363d25dcbc5c064566fe577fedb74f22a81f089fecd61104477707b3d2503cc`, 951 Dateien, 2 145 846 Bytes |
+| `check:all` vor dem Bau | **gruen**, 1473 Zusicherungen, 0 Fehler |
+| Container | Version 134 -> 135, 85 Variablen erhalten |
+| Neustart | ~80 s, danach vier Messungen in Folge HTTP 200 |
+
+### Abnahme
+
+| Kriterium | Ergebnis |
+|---|---|
+| 1. keine microsoft.com-Treffer mehr auf `office space for sale San Jose` | **bestanden** — 0 Treffer, Markt korrekt `us` |
+| 2. `Bitcoin Kurs` weiterhin Treffer, nicht mehr spanisch | **bestanden** — 8 Treffer: `finanzen.net`, `coinmarketcap.com/de/`, `bisonapp.com` (vorher `coinmarketcap.com/es/`) |
+| 3. `region`, `source`, `attempts` sichtbar | **bestanden** |
+| 4. Antwort bricht nicht mehr mitten im Satz ab | **bestanden** (Runde 2) |
+
+Ende-zu-Ende ueber die echte Nutzerkette (Bruecke -> Control -> Modell):
+
+- „Was kostet ein Bitcoin aktuell in Euro?" -> 15,7 s, Antwort mit **deutscher**
+  Quelle `finanzen.net` und klickbarem Link.
+- Die Originalfrage des Betreibers (Buero im Silicon Valley) -> vollstaendige
+  Antwort, benennt offen „Der Markt ‚us' lieferte in der Suche keine aktuellen
+  Treffer", nennt LoopNet/Crexi mit konkreten Suchbegriffen, Entwicklernamen und
+  eine Rueckfrage. **Kein deutsches Immobilienportal mehr.**
+
+Ein Rueckrollen war nicht noetig. Der Rueckweg oben bleibt gueltig.
+
+## Offener Blocker (Rote Liste — Entscheidung des Betreibers)
+
+Die Diagnose macht sichtbar, was vorher unsichtbar war: **beide freien
+Suchquellen antworten dem Rechenzentrum nicht mehr.**
+
+| Quelle | Verhalten aus dem Salad-Container | belegt |
+|---|---|---|
+| `html.duckduckgo.com` | HTTP 202 mit Sperrseite | jede Messung |
+| `lite.duckduckgo.com` | HTTP 202 mit Sperrseite | jede Messung |
+| `www.bing.com` | HTTP 200 mit **absichtlichen Taeuschtreffern** | 5 von 6 Fragen |
+
+Bing liefert auf „Schlagzeilen Berlin heute" brasilianische Motorrad-Preistabellen,
+auf „Öffnungszeiten Zoo Berlin" die Tom-Hanks-Filmografie, auf „office … San Jose"
+Microsoft-Office-Anmeldeseiten. Session-Cookies, `Referer` und ein sauberer
+Browser-Kennstring aendern daran nichts — nachgemessen. Nur sehr haeufige,
+generische Anfragen („Bitcoin Kurs") bekommen die echte Trefferliste.
+
+Ebenfalls geprueft und ausgeschieden: Mojeek (leere Seiten), Marginalia (eigener
+Nischenindex, fuer Angebote unbrauchbar), Brave HTML (erste Anfrage 200, zweite
+429), acht oeffentliche SearXNG-Instanzen (429/403, JSON meist abgeschaltet).
+
+**Folge:** Der Fix ist richtig und wirkt, aber ohne antwortende Quelle kann die
+Suche keine Objektlinks liefern. Verlaessliche Websuche braucht eine Quelle mit
+Schluessel (BYOK) — z. B. Brave Search API oder Tavily im Gratiskontingent.
+Das ist ein **neuer Anbieter** und damit Rote Liste: es braucht eine getrennte
+schriftliche Freigabe mit Dienst und Betrag, siehe
+`docs/architecture/FREE_ONLY_MASTER_POLICY.md`.
