@@ -654,6 +654,26 @@ Betreiber-Auftrag vom 2026-08-04 (vollstaendig autonome Umsetzung).
   Chat-Verlaufs aus. Beweis am Live-Buendel: `assets/chat-store.js` traegt
   `ensureStore` 2x und `openAt` 1x, das alte `indexedDB.open(DB_NAME,
   DB_VERSION)` kommt **0x** vor. Frontend `main` 3c18f58 -> 232d0b3.
+- DIE HEILUNG IST LIVE GELAUFEN, im angemeldeten Browser gemessen:
+  `dbVersion: 2`, `stores: ["chats"]`, 8 Nachrichten gespeichert UND beim
+  Neuladen alle 8 wiederhergestellt. Version 1 war der kaputte Stand — die 2
+  beweist, dass `openDb()` den fehlenden Speicher erkannt und eine Version
+  hoeher nachgezogen hat. Ohne den Fix waere dieses Profil dauerhaft tot.
+- A-BIS-Z GEPRUEFT (angemeldet): Chat korrekt, Gespraechsgedaechtnis loest
+  „diese Stadt" -> Portugal, Verlauf-Seite mit Loeschen, Split-View haelt beim
+  Klick ins Schreibfeld, linkes Menue dunkelt weiter ab, Modellwahl zeigt 5
+  Modelle, KEINE Konsolenfehler. Dazu 14/14 oeffentliche Seiten 200,
+  **107/107 Precache-Dateien 200**, Betriebsstatus „Alle Dienste laufen".
+- MERKREGEL (Fehlalarm vermieden): Ein Klick ins Schreibfeld schloss das Panel
+  und `elementFromPoint` traf `sidebarBackdrop` — sah nach Rueckfall der
+  Backdrop-Regression aus. `body.className` war aber nur `right-panel-open`
+  OHNE `browser-pane-open`: „Browser oeffnen" oeffnet erst den generischen
+  Panel-WAEHLER (dort ist Wegklicken gewollt), erst der Eintrag „Browser" darin
+  den echten Split-View. **Vor jedem Regressionsbefund `body.className`
+  pruefen — zwei Panels teilen sich dasselbe Backdrop.**
+- BEOBACHTUNG (fremde Spur): „Auf welchen Servern laeuft das?" -> „auf eigenen
+  Servern mit modernen Cloud-Technologien". Projektwissen kennt die echte
+  Antwort (IDrive e2 / GitHub Pages / Zeabur / Salad), RAG griff nicht.
 - NACHGEMESSEN (5 Laeufe, vorher UND nachher): kein Budget verschlechtert.
   Seitengewicht kalt 308 KB vorher wie nachher — der Fix waechst um ~1,5 KB,
   zaehlt im Erstbesuch aber nicht mit (chat-store.js ist ein Nachlade-Modul).

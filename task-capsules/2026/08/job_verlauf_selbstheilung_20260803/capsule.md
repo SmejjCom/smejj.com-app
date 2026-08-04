@@ -253,6 +253,73 @@ und genau diese Lage heilt der Fix ab dem nächsten Deploy von selbst.
 | Start-Lock | **Grün, Schutz aktiv.** 31 Dateien byte-identisch, neu eingefroren 2026-08-04T00:10:53Z — das Manifest trägt die sw-v209-Prüfsumme (`94480143…`, gegengerechnet). |
 | Schutz | Nichts gelöscht, nichts überschrieben, keine Secrets, keine Kosten. Rollback = ein Commit. |
 
+---
+
+# Runde 3 (2026-08-04) — A-bis-Z-Test im angemeldeten Browser
+
+Auftrag: „geh chrome browser und mach weiter" — der Betreiber hatte sich
+angemeldet, damit war der Teil hinter dem Login erstmals prüfbar.
+
+## DER BEWEIS: die Selbstheilung ist live gelaufen
+
+In genau diesem Chrome-Profil hatte ich am 2026-08-03 beim Auslesen der
+Datenbank den kaputten Zustand ausgelöst (leere `smejj-chats` auf Version 1
+**ohne** Objektspeicher) und konnte ihn nicht mehr aufräumen — der
+Berechtigungs-Klassifikator blockierte das Löschen. Genau dieses Profil ist
+jetzt der Zeuge. Live gemessen nach dem Neuladen:
+
+```
+{"dbVersion": 2, "stores": ["chats"], "anzahlChats": 1,
+ "juengster": {"nachrichten": 8}, "wiederhergestellt": 8,
+ "swVersion": "registriert"}
+```
+
+**`dbVersion: 2`** ist der Beweis. Version 1 war der kaputte Stand; die
+Datenbank steht auf 2, weil `openDb()` den fehlenden Speicher erkannt, den
+Griff geschlossen und eine Version höher neu angelegt hat. Ohne den Fix wäre
+der Verlauf in diesem Browser dauerhaft tot geblieben — nichts gespeichert,
+Verlauf-Seite für immer leer, ohne jeden Hinweis.
+
+Dazu: 8 Nachrichten gespeichert **und** beim Neuladen alle 8 wiederhergestellt.
+Die Verlauf-Seite listet die Unterhaltung mit „8 Nachrichten · smejj 1.0" samt
+Öffnen/Umbenennen/**Löschen**.
+
+## A bis Z — was geprüft wurde
+
+| Bereich | Ergebnis |
+|---|---|
+| Chat senden/antworten | „Welche Hauptstadt hat Portugal?" → „Die Hauptstadt Portugals ist Lissabon." (< 3 s) |
+| Gesprächsgedächtnis | „Und in welchem Land liegt **diese Stadt**?" → „Portugal." — Kontext aufgelöst |
+| Verlauf-Speicher | 8/8 gespeichert und wiederhergestellt, Datenbank selbstgeheilt |
+| Verlauf-Seite | Liste, Öffnen/Umbenennen/Löschen vorhanden |
+| Split-View | öffnet; `body` trägt `right-panel-open browser-pane-open`, Backdrop `display:none` |
+| Klick ins Schreibfeld im Split-View | `elementFromPoint` trifft `startMessage` (das Feld), Text landet, **Panel bleibt offen** |
+| Linkes Menü | öffnet, dunkelt ab, Wegklicken schließt es (Non-Regression erhalten) |
+| Modellwahl | smejj 1.0, Kimi K3, GLM-5.2, Cline, Kimi K2.7 |
+| Service Worker | registriert, v209 |
+| Konsolenfehler | **keine**, auf keiner geprüften Seite |
+| Öffentliche Seiten | 14/14 → HTTP 200 |
+| Precache-Integrität | **107/107 Dateien → 200** (fehlt eine, ist die App offline tot) |
+| Betriebsstatus live | „Alle Dienste laufen" — Anmeldung 207 ms, Chat 86 ms, Browser 360 ms |
+| 404 | korrekt |
+
+## Ein Fehlalarm, sauber ausgeräumt
+Ein Zwischenbefund lautete „Backdrop-Regression zurück": Klick ins Schreibfeld
+schloss das Panel, `elementFromPoint` traf `sidebarBackdrop`. Nachgemessen war
+`body.className` dabei nur `right-panel-open` — **ohne** `browser-pane-open`.
+Der Grund: Der Knopf „Browser öffnen" öffnet zuerst den generischen
+Panel-Wähler (Browser/Quellen/GitHub/Vorschau/Status); dort ist Wegklicken das
+gewollte Verhalten. Erst der Eintrag „Browser" darin öffnet den echten
+Split-View — und dort ist das Backdrop korrekt aus. **Keine Regression.**
+MERKREGEL: Vor einem Regressionsbefund IMMER `document.body.className` prüfen —
+zwei Panels teilen sich dasselbe Backdrop.
+
+## Beobachtung ohne Fix (nicht mein Auftrag)
+Auf die Frage „Auf welchen Servern läuft das?" antwortete die Kette
+„auf eigenen Servern mit modernen Cloud-Technologien". Das Projektwissen kennt
+die echte Antwort (IDrive e2, GitHub Pages, Zeabur, Salad) — RAG hat hier nicht
+gegriffen. Gehört zur Projektwissen-Spur, nicht hierher.
+
 ## Nächster Schritt
 Dieser Auftrag ist geschlossen. Offen bleibt, was nicht dazugehört:
 1. **Eigener Auftrag: Seitengewicht des Erstbesuchs unter 300 KB.** Der
