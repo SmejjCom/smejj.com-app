@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-04T01:53:18.503Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-04: 'account-sessions.js auf richtige Passwortfelder umstellen (Passwort aendern und Konto loeschen).' Der Ausliefern-Sprung sw v211 -> v212 ist die einzige Lock-Datei, die dieser Auftrag beruehrt.",
+  "frozenAt": "2026-08-04T02:00:55.420Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-04: Sprachseiten oeffentlich machen und CSP auf allen Seiten nachziehen; danach alles 100% schuetzen — nichts darf ohne schriftliche Bestaetigung geaendert werden",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "b8fc9298f80f589d4ed4b12a84a28014ca040bda36bda6c612c08dbc0d78d852",
+    "public/sw.js": "511ed50699b5838a08a612e6e665448e9cef3925bb1b536856ca3e111f4abb37",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
