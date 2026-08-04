@@ -132,6 +132,26 @@ Live auf `https://smejj.com` (sw v207 aktiv, echter Klickpfad in Chrome), 5/5:
 
 Keine Konsolenfehler.
 
+### Nachverifikation nach dem Fremd-Deploy (sw v208)
+
+Kurz nach dem Deploy von v207 legte eine Parallel-Session `3c18f58`
+("Gespraechsgedaechtnis repariert", sw v208) darueber — mit 79 geaenderten
+Zeilen in `assets/app.js`, also genau in der Datei, die den Split-View
+verdrahtet. Deshalb wurde der Klickpfad auf dem neuen Live-Stand WIEDERHOLT:
+
+- Ausgeliefert bleibt unveraendert: `index.html` -> `browser-pane-backdrop.js?v=2`,
+  `app.js` -> `panel-backdrop.js?v=panel-backdrop-20260803`, beide Waechter-Dateien
+  live mit `backdropCloseTarget` bzw. `clearClosedSplitViewState`.
+- Punkt 2 auf v208: Split-View + Menue geoeffnet, daneben geklickt -> Menue zu,
+  Panel offen, Backdrop wieder unterdrueckt, Schreibfeld weiter erreichbar.
+- Punkt 1 auf v208: ueber den Browser-Knopf geschlossen -> `body.classList` leer,
+  `is-browser-mode` weg, `--right-panel-width` entfernt, `aria-expanded=false`.
+- Keine Konsolenfehler.
+
+Merkregel daraus: Ein Deploy ist erst dann abgenommen, wenn er auf dem
+AKTUELLEN Live-Stand nachgemessen wurde — bei parallelen Sessions kann zwischen
+Deploy und Abnahme eine fremde Version dazwischenkommen.
+
 ### Benchmark Runde 2 (Messpflicht)
 
 Kalt ueber das Netz: TTFB 147 ms (Budget 200), Startseite 40 631 Bytes
