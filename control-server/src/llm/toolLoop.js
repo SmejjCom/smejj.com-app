@@ -90,6 +90,58 @@ export const AGENT_TOOLS = Object.freeze([
   })
 ]);
 
+/**
+ * Schreibt einen Fortschritts-Schritt in den Antwortstrom.
+ *
+ * Bewusst ein EIGENES Feld (`smejj_schritt`) statt eines `choices[].delta`:
+ * Ein aelterer Client liest `payload.choices?.[0]?.delta?.content`, bekommt
+ * hier `undefined` und haengt nichts an. Der Schritt ist damit unsichtbar,
+ * aber niemals stoerend — die Anzeige kann nachgeruestet werden, ohne dass ein
+ * Zwischenstand kaputte Antworten erzeugt.
+ *
+ * @param {{write: Function}} res Antwortstrom (Header sind bereits geschrieben).
+ * @param {{art:string, text:string, markt?:string, zustand:string, treffer?:number}} schritt
+ */
+export function sendeSchritt(res, schritt) {
+  try {
+    res.write(`data: ${JSON.stringify({ smejj_schritt: schritt })}\n\n`);
+  } catch {
+    // Ein abgebrochener Strom darf den Werkzeuglauf nicht mitreissen.
+  }
+}
+
+/**
+ * Beschreibt einen Werkzeugaufruf fuer die Anzeige — ohne ihn auszufuehren.
+ * Rein und testbar; kaputte Argumente ergeben eine leere Beschreibung, nie einen Fehler.
+ * @param {object} call Werkzeugaufruf des Modells.
+ */
+export function beschreibeWerkzeug(call) {
+  const name = String(call?.function?.name || "");
+  let args = {};
+  try {
+    args = JSON.parse(call?.function?.arguments || "{}") || {};
+  } catch {
+    args = {};
+  }
+  if (name === "web_suche") {
+    return { art: "suche", text: String(args.anfrage || "").slice(0, 120), markt: normalizeRegion(args.region || "") };
+  }
+  if (name === "seite_lesen") {
+    return { art: "seite", text: String(args.url || "").slice(0, 160), markt: "" };
+  }
+  return { art: name || "werkzeug", text: "", markt: "" };
+}
+
+/**
+ * Zaehlt die Treffer in einem Werkzeugergebnis. Grundlage ist das eigene
+ * Ausgabeformat ("1. Titel"), nicht der Text des Anbieters — deshalb stabil.
+ * @param {string} ergebnis Rueckgabe von runAgentTool.
+ */
+export function zaehleTreffer(ergebnis) {
+  const zeilen = String(ergebnis || "").match(/^\s*\d+\.\s/gm);
+  return zeilen ? zeilen.length : 0;
+}
+
 /** Ist Tool-Calling eingeschaltet? Default NEIN (fail-closed, Non-Regression). */
 export function agentToolsEnabled(env = process.env) {
   return String(env.SMEJJ_AGENT_TOOLS_ENABLED || "").trim().toUpperCase() === "YES";
@@ -123,7 +175,16 @@ export async function streamWithTools({ result, chain, messages, res, options, e
     // Das Modell will ein Werkzeug. Sein bisheriger Text bleibt sichtbar.
     verlauf.push({ role: "assistant", content: sawContent || null, tool_calls: toolCalls });
     for (const call of toolCalls) {
+      // Betreiber-Befund 2026-08-04: "Man merkt nicht, ob es funktioniert" und
+      // "dann denkt man, es hat aufgehoert, aber im Hintergrund arbeitet es
+      // weiter". Genau hier entsteht diese Luecke: das Modell hat schon Text
+      // geschrieben, und dann laeuft sekundenlang ein Werkzeug, von dem der
+      // Nutzer nichts sieht. Ab jetzt wird jeder Schritt gemeldet — vorher und
+      // nachher, damit ein laufender Schritt von einem fertigen unterscheidbar ist.
+      const schritt = beschreibeWerkzeug(call);
+      sendeSchritt(res, { ...schritt, zustand: "laeuft" });
       const ergebnis = await runTool(call, { env }).catch((error) => `Werkzeugfehler: ${String(error?.message || error).slice(0, 200)}`);
+      sendeSchritt(res, { ...schritt, zustand: "fertig", treffer: zaehleTreffer(ergebnis) });
       verlauf.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: String(ergebnis).slice(0, MAX_PAGE_CHARS + 500) });
     }
 
