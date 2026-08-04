@@ -27,11 +27,51 @@ function fakeWindow(pathname, entries = {}) {
 }
 
 test("Abgemeldete auf App-Seiten werden zur Anmeldung geleitet", () => {
-  for (const path of ["/", "/index.html", "/en/", "/fr/", "/profile"]) {
+  for (const path of ["/", "/index.html", "/profile", "/chat", "/settings"]) {
     const win = fakeWindow(path);
     assert.equal(enforceAuthGate(win), true, path);
     assert.deepEqual(win.calls, ["/auth/login/"]);
   }
+});
+
+// Betreiber-Entscheidung 2026-08-04: Die Sprach-Landeseiten sind oeffentlich.
+// Bis dahin standen "/en/" und "/fr/" in der Liste oben — sie wurden also
+// umgeleitet, obwohl sie robots "index,follow" tragen und mit hreflang in der
+// Sitemap stehen. Live reproduziert: /ja/ lud sichtbar und sprang dann auf
+// /auth/login/. Jeder Besucher aus der Suche verlor die Seite.
+test("Sprach-Landeseiten sind oeffentlich — sie sind der Einstieg aus der Suche", () => {
+  const sprachen = ["ar", "bn", "de", "en", "es", "fr", "hi", "id", "it", "ja", "ko", "pt", "ru", "tr", "zh"];
+  assert.equal(sprachen.length, 15, "alle 15 Sprachen aus language-options.js");
+  for (const code of sprachen) {
+    for (const path of [`/${code}/`, `/${code}/index.html`]) {
+      assert.equal(isPublicPath(path), true, path);
+      const win = fakeWindow(path);
+      assert.equal(enforceAuthGate(win), false, path);
+      assert.deepEqual(win.calls, [], path);
+    }
+  }
+});
+
+// Bewusst eng: nur das Verzeichnis selbst. Ein Praefix-Muster wuerde jede
+// kuenftige Unterseite mit oeffnen — dieselbe Falle wie bei /status.html.
+test("unter den Sprachpfaden bleibt alles andere anmeldepflichtig", () => {
+  for (const path of ["/en/konto", "/ja/chat", "/de/einstellungen", "/en/index.htm", "/xx/"]) {
+    assert.equal(isPublicPath(path), false, path);
+    const win = fakeWindow(path);
+    assert.equal(enforceAuthGate(win), true, path);
+    assert.deepEqual(win.calls, ["/auth/login/"], path);
+  }
+});
+
+// Die Sprachliste im Gate muss zur ausgelieferten Sprachliste passen. Laufen sie
+// auseinander, faellt eine neue Sprache still hinter das Gate zurueck.
+test("die Sprachliste des Gates deckt sich mit language-options.js", () => {
+  const optionen = fs.readFileSync("public/language-options.js", "utf8");
+  // Format: LANGUAGE_OPTIONS = [["de", "Deutsch"], ["en", "English"], …]
+  const ausgeliefert = [...new Set([...optionen.matchAll(/\[\s*"([a-z]{2})"\s*,/g)].map((m) => m[1]))].sort();
+  assert.equal(ausgeliefert.length, 15, "language-options.js muss 15 Sprachen fuehren");
+  const imGate = (gateJs.match(/const LANGUAGE_CODES = "([^"]+)"/) || [, ""])[1].split("|").sort();
+  assert.deepEqual(imGate, ausgeliefert, "Gate und Sprachliste muessen dieselben Codes fuehren");
 });
 
 test("Oeffentliche Seiten bleiben ohne Anmeldung erreichbar", () => {
