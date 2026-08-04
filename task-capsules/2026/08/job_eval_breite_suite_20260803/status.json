@@ -1,0 +1,12 @@
+{
+  "jobId": "job_eval_breite_suite_20260803",
+  "status": "verified",
+  "aktualisiert": "2026-08-03",
+  "verlauf": [
+    { "status": "pending", "notiz": "Kontext gelesen (Eval-Harness, Guidelines, RAG-Korpusregel); Bauart Manifest + Pakete festgelegt. Alle Aenderungen additiv, Kern-Suite bleibt unangetastet." },
+    { "status": "running", "notiz": "evalPacks.js (Expander, fail-closed) und 15 Fallpakete mit 295 Faellen geschrieben; rehash-Werkzeug und Manifest-Suite angelegt." },
+    { "status": "running", "notiz": "Eigene Fehler ueber die eigenen Waechter gefunden und behoben: Tippfehler-Felder, Schreibweisen-Muster, Unicode-Muster, ein Rechenfehler." },
+    { "status": "running", "notiz": "Livestichprobe 1: 10/12 — zwei Naming-Prompts unterspezifiziert. Prompts geschaerft statt Erwartung aufgeweicht, Hash erneuert." },
+    { "status": "verified", "notiz": "Livestichprobe 2: 12/12 passed (p95 775 ms). check:evaluation, check:guidelines, check:json gruen. Memory_Bank aktualisiert (Altblock regelkonform ausgelagert, 649/800 Zeilen)." }
+  ]
+}

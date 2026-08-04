@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "smejj-chat-breit",
+  "version": "1.0.0",
+  "createdAt": "2026-08-03T00:00:00Z",
+  "description": "Breite Messlatte fuer die Modellwahl und das Training von smejj 1.0: 295 Faelle in 15 Fachgebieten (Naming, Architektur, Kosten, Schutz-Locks, Sicherheit, Coding, strukturierte Ausgabe, Ehrlichkeit, Deployment, Performance, Trainingsdaten, Router, Sprache, Logik, RAG). Ergaenzt smejj-chat-core-v1, ersetzt sie nicht.",
+  "eligibleForTraining": false,
+  "notes": [
+    "Manifest-Form: die Faelle liegen in evals/packs/*.json und werden beim Laden zusammengefuehrt (src/evaluation/evalPacks.js). Der Inhalts-Hash deckt die ZUSAMMENGEFUEHRTE Suite ab — eine Aenderung in irgendeinem Paket macht die Suite ungueltig, bis scripts/evaluation/rehash_eval_suite.mjs den Hash erneuert.",
+    "Die Reihenfolge der packs-Liste ist Teil des Hashes. Nicht umsortieren.",
+    "Budgets: minScore 0.75 ist bewusst unter dem 0.8 der Kern-Suite — die breite Suite ist haerter (Logik-, Ehrlichkeits- und Sicherheitsfaelle mit exakten kritischen Erwartungen). Die Schwelle wird angehoben, sobald zwei Basislaeufe vorliegen; eine Schwelle, die vor der ersten Messung unerreichbar ist, misst nichts.",
+    "Zeitbudgets identisch zur Kern-Suite begruendet: Regressionsschwelle an der gemessenen Deep Lane, kein Produktziel.",
+    "maxCasesPerRun deckt alle Faelle ab. Fuer Stichproben --limit verwenden; die Ratenbegrenzung der Bruecke (12/min) verlangt --delay-ms 6000, ein voller Lauf mit 3 Wiederholungen ist damit ein Nachtlauf (~15 Stunden) — geplant, kein Versehen."
+  ],
+  "budgets": {
+    "minScore": 0.75,
+    "latencyMsP95": 45000,
+    "firstTokenMs": 40000,
+    "maxCasesPerRun": 300
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "b7cad635edbb544407cb1ea9a184e2796353995c1e168941cd09a86fdc8d528c"
+  },
+  "packs": [
+    "../packs/naming-marke.json",
+    "../packs/architektur-dienste.json",
+    "../packs/kosten-policy.json",
+    "../packs/schutz-locks.json",
+    "../packs/sicherheit-abwehr.json",
+    "../packs/codequalitaet.json",
+    "../packs/strukturierte-ausgabe.json",
+    "../packs/halluzination-ehrlichkeit.json",
+    "../packs/deployment-shiploop.json",
+    "../packs/performance-budgets.json",
+    "../packs/training-daten-policy.json",
+    "../packs/modell-router.json",
+    "../packs/sprache-kommunikation.json",
+    "../packs/logik-rechnen.json",
+    "../packs/rag-projektwissen.json"
+  ]
+}

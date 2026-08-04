@@ -19,6 +19,24 @@ evals/
     smejj-chat-core-v1.json        # 14 Fälle: Namensregel, Architektur, Kosten,
                                    # Codequalität, JSON-Ausgabe, Sicherheit,
                                    # Schutz-Locks, Halluzinationsneigung
+    smejj-chat-breit-v1.json       # Manifest: 295 Fälle in 15 Fachgebieten,
+                                   # zusammengeführt aus evals/packs/
+  packs/                           # je Fachgebiet ein Paket in Kurzschreibweise
+    naming-marke.json              # 25 Fälle Schreibweise in jedem Kontext
+    architektur-dienste.json       # 20 Fälle Dienste-Topologie und Static-First
+    kosten-policy.json             # 20 Fälle Free-Only und Budget-Gate
+    schutz-locks.json              # 20 Fälle Locks, Grüne/Rote Liste
+    sicherheit-abwehr.json         # 25 Fälle Injection, Secrets, unsichere Muster
+    codequalitaet.json             # 25 Fälle JavaScript/Node am Projekt-Stack
+    strukturierte-ausgabe.json     # 20 Fälle JSON nach Vorgabe, exakte Felder
+    halluzination-ehrlichkeit.json # 20 Fälle Nichtwissen zugeben statt erfinden
+    deployment-shiploop.json       # 20 Fälle Ship-Loop und Deploy-Regeln
+    performance-budgets.json       # 20 Fälle Web Vitals und Lastrechnung
+    training-daten-policy.json     # 15 Fälle Trainingsdaten und Modellkollaps
+    modell-router.json             # 15 Fälle BYOK, Fallback, Beförderung
+    sprache-kommunikation.json     # 15 Fälle Nutzerkommunikation, Mehrsprachig
+    logik-rechnen.json             # 20 Fälle exaktes Rechnen an Betriebszahlen
+    rag-projektwissen.json         # 15 Fälle Umgang mit eingespieltem Kontext
 ```
 
 Code dazu:
@@ -26,11 +44,32 @@ Code dazu:
 | Datei | Aufgabe |
 | --- | --- |
 | `src/evaluation/evalSuite.js` | Suite laden, validieren, Inhalts-Hash |
+| `src/evaluation/evalPacks.js` | Pakete expandieren, Manifest zusammenführen |
 | `src/evaluation/evalScoring.js` | Antworten gegen Erwartungen bewerten |
 | `src/evaluation/evalReport.js` | Budgets, Regressionsvergleich, Urteil |
 | `src/evaluation/evalTransport.js` | Weg zum Modell (Live-Kette oder BYOK) |
 | `scripts/evaluation/run_model_eval.mjs` | Kommandozeile |
+| `scripts/evaluation/rehash_eval_suite.mjs` | Inhalts-Hash nachrechnen/eintragen |
 | `tests/model-eval.test.mjs` | 25 Tests, ohne Netz und ohne Schlüssel |
+| `tests/eval-packs.test.mjs` | 8 Tests für Pakete und die breite Suite |
+
+## Pakete und Kurzschreibweise
+
+Ein Paket bündelt die Fälle EINES Fachgebiets und setzt System-Text, Profil,
+Gewicht und maxTokens einmal als Standard. Je Fall steht nur, was den Fall
+ausmacht. Die Kurzschreibweisen (`muss`, `mussEines`, `darfNicht`, `mussMuster`,
+`darfNichtMuster`, `json` = kritisch; `sollte`, `sollteEines`, `sollteNicht`,
+`minZeichen`, `maxZeichen` = weich) werden beim Laden zu den normalen
+Erwartungstypen expandiert — die Bewertung bleibt exakt dieselbe.
+
+Nach jeder Änderung an einem Paket:
+
+```bash
+node scripts/evaluation/rehash_eval_suite.mjs evals/suites/smejj-chat-breit-v1.json
+```
+
+Ohne neuen Hash wird die Suite fail-closed abgelehnt. Das ist Absicht: der Hash
+beweist, dass niemand still eine Erwartung aufgeweicht hat.
 
 ## Benutzung
 

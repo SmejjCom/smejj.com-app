@@ -29,6 +29,7 @@ import {
 import { buildEvalReport, EVAL_VERDICT, formatEvalSummary } from "../../src/evaluation/evalReport.js";
 import { callViaControl, callViaProvider, chatEndpointFromEnv, DEFAULT_CHAT_ENDPOINT, isTransientError, TRANSPORTS } from "../../src/evaluation/evalTransport.js";
 import { wrapCallerWithRag } from "../../src/evaluation/evalRagContext.js";
+import { loadEvalSuite } from "../../src/evaluation/evalPacks.js";
 import { MIN_TOP_SCORE } from "../../control-server/src/rag/ragRanking.js";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
@@ -282,7 +283,9 @@ async function main() {
   const suiteFile = path.resolve(REPO_ROOT, options.suite);
   let suite;
   try {
-    suite = await readJsonFile(suiteFile);
+    // Manifest-Suiten (Feld `packs`) werden hier zusammengefuehrt; eine einzelne
+    // Suite-Datei laedt unveraendert wie vorher. Fail-closed in beiden Faellen.
+    ({ suite } = await loadEvalSuite(suiteFile, { lesen: readJsonFile }));
   } catch (error) {
     process.stderr.write(`Abbruch: Suite nicht lesbar (${String(error?.message || error).slice(0, 120)})\n`);
     process.exitCode = 1;

@@ -1,0 +1,65 @@
+{
+  "jobId": "job_eval_breite_suite_20260803",
+  "titel": "Breite Eval-Suite: 295 Faelle in 15 Fachgebieten als Messlatte fuer das smejj-1.0-Training",
+  "freigabe": "\"Ja, fang an.\" (Wof Kadavanich, 2026-08-03) auf die Empfehlung, vor jedem Trainingsschritt zuerst die Messlatte von 14 auf 300+ echte Prueffaelle auszubauen; zusammen mit dem Master Prompt und der Autonomie-Charta.",
+  "ziel": "Die Eval-Suite von 14 auf 295 Faelle erweitern, damit Trainingsfortschritt von smejj 1.0 und jede Modellwahl breit und je Fachgebiet messbar wird — ohne die bestehende Kern-Suite und ihre Vergleichskette anzutasten.",
+  "anforderungen": [
+    "Kern-Suite smejj-chat-core-v1 bleibt Byte fuer Byte unveraendert (Vergleichbarkeit alter Berichte).",
+    "Kompakte, wartbare Fallpakete je Fachgebiet statt einer 10.000-Zeilen-Datei.",
+    "Kein neues Bewertungsschema: Pakete expandieren zu den bestehenden Erwartungstypen, evalScoring.js bleibt unveraendert.",
+    "Inhalts-Hash deckt die zusammengefuehrte Suite ab; jede stille Paket-Aenderung macht die Suite fail-closed ungueltig.",
+    "Jeder Fall hat mindestens eine kritische Erwartung (Regel aus evals/README.md, jetzt maschinell erzwungen)."
+  ],
+  "betroffene_dateien": {
+    "neu": [
+      "src/evaluation/evalPacks.js",
+      "evals/suites/smejj-chat-breit-v1.json",
+      "evals/packs/naming-marke.json (25 Faelle)",
+      "evals/packs/architektur-dienste.json (20)",
+      "evals/packs/kosten-policy.json (20)",
+      "evals/packs/schutz-locks.json (20)",
+      "evals/packs/sicherheit-abwehr.json (25)",
+      "evals/packs/codequalitaet.json (25)",
+      "evals/packs/strukturierte-ausgabe.json (20)",
+      "evals/packs/halluzination-ehrlichkeit.json (20)",
+      "evals/packs/deployment-shiploop.json (20)",
+      "evals/packs/performance-budgets.json (20)",
+      "evals/packs/training-daten-policy.json (15)",
+      "evals/packs/modell-router.json (15)",
+      "evals/packs/sprache-kommunikation.json (15)",
+      "evals/packs/logik-rechnen.json (20)",
+      "evals/packs/rag-projektwissen.json (15)",
+      "scripts/evaluation/rehash_eval_suite.mjs",
+      "tests/eval-packs.test.mjs",
+      "docs/memory/Memory_Bank_2026-07-28_training_loop_worker.md (Archiv-Auslagerung)"
+    ],
+    "geaendert": [
+      "scripts/evaluation/run_model_eval.mjs (laedt Manifest-Suiten ueber loadEvalSuite; Einzeldateien unveraendert)",
+      "package.json (check:evaluation um evalPacks, rehash --check und Trockenlauf der breiten Suite erweitert)",
+      "evals/README.md (Pakete und Kurzschreibweise dokumentiert)",
+      "Memory_Bank.md (neuer Eintrag; Training-Loop-Block 2026-07-28 regelkonform ausgelagert)"
+    ],
+    "unberuehrt": [
+      "evals/suites/smejj-chat-core-v1.json — bewusst nicht angefasst",
+      "src/evaluation/evalSuite.js, evalScoring.js, evalReport.js, evalTransport.js — nur importiert",
+      "Startseite, Eingabefeld, Favicons, Zugaenge, Anbieterliste, Live-Frontend"
+    ]
+  },
+  "eigene_fehler_gefunden_und_behoben": [
+    "Drei Tippfehler-Felder (mussEines2, mussMuster2) in Paketen — genau die Fehlerklasse, die der Expander abfangen soll; er wirft jetzt eval_pack_case_unknown_field, und die Feldpruefung laeuft VOR der Erwartungspruefung, damit die Meldung den Tippfehler nennt.",
+    "Ein Muster prueften die falsche Schreibweise (deletedat statt deletedAt) — als kritische Erwartung waere jeder korrekte Fall durchgefallen. Auf ignoreCase-Rohform umgestellt.",
+    "Ein \\p{...}-Unicode-Muster, das die Regex-Engine ohne u-Flag still zur Literalsuche macht — entfernt.",
+    "Rechenfehler in einem Logik-Fall (Montag + 45 Tage ist Donnerstag, nicht Mittwoch).",
+    "Zwei Naming-Prompts verlangten den Markennamen nicht ausdruecklich; der Live-Lauf bewertete sachlich richtige Antworten als Verstoss. Prompts geschaerft, Erwartung NICHT aufgeweicht."
+  ],
+  "benchmarks": {
+    "suite": "smejj-chat-breit 1.0.0, sha256 b7cad635edbb (Kurzform; voll in der Suite-Datei)",
+    "faelle": 295,
+    "kategorien": 15,
+    "livestichprobe": "12 Faelle gegen die Produktionskette am 2026-08-03: 12/12 bestanden, Urteil passed, Antwortzeit p95 775 ms, erster Token p95 687 ms, Backend groq:llama-3.1-8b-instant",
+    "bericht": "docs/benchmarks/modeleval-smejj-chat-breit-stichprobe-2026-08-03.json",
+    "vollauf_hinweis": "885 Aufrufe bei 3 Wiederholungen hinter 12/min-Begrenzung — als Nachtlauf einplanen"
+  },
+  "rollback": "Alle Aenderungen additiv; Rueckbau = die neuen Dateien entfernen und die vier geaenderten Dateien aus dem Commit davor wiederherstellen. Kern-Suite und ihre Berichte sind unberuehrt.",
+  "qualitaet": "check:evaluation gruen (inkl. 8 neuer Tests), check:guidelines gruen (1312 Dateien), check:json gruen, Trockenlauf beider Suiten gruen, Livestichprobe passed."
+}
