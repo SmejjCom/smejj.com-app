@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-04T03:42:24.428Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-04 ('Weiter', stehende Freigabe zur autonomen Umsetzung): Konto-Formulare im hellen Schema repariert; einzige beruehrte Lock-Datei ist public/sw.js (Cache-Version v213 -> v214), noetig damit der Fix Bestandsnutzer erreicht.",
+  "frozenAt": "2026-08-04T04:36:35.664Z",
+  "confirmation": "Freigabe Seitengewicht, 2026-08-04: Du darfst das Gewicht des Erstbesuchs von 311 KB unter das Budget von 300 KB bringen. Dafuer gebe ich ausdruecklich frei: Aenderungen an Start-Lock-Dateien, soweit sie nur das Ladeverhalten betreffen (index.html, app.js, sw.js, config.js): Module spaeter laden, aufteilen, entbuendeln. Danach den Start-Lock mit diesem Wortlaut neu einfrieren. Bedingungen: Aussehen und Bedienung der Startseite bleiben unveraendert. Keine Funktion darf wegfallen. Vorher/nachher messen und mir beides zeigen. Bei Zweifel: nicht anfassen und mich fragen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "dab8426beaaebcc9f5bb3f3840156d1671ed9187874e06d3cb76497032000e70",
+    "public/sw.js": "6c58184f71b6af48e0fa94f2c2aa6debdabc4442802afeb6c3af1cc9754acd92",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

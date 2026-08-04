@@ -476,60 +476,12 @@ Volltext ausgelagert nach
 Stand seither: der Loop laeuft im Dauerbetrieb seit 2026-07-29 (Eintraege unten).
 
 ## 2026-08-04 — GitHub Pages baut aus `main` (job_verlauf_selbstheilung_20260803)
-- ERLEDIGT + LIVE ABGENOMMEN: sw v209 liefert die Selbstheilung des
-  Chat-Verlaufs aus. Beweis am Live-Buendel: `assets/chat-store.js` traegt
-  `ensureStore` 2x und `openAt` 1x, das alte `indexedDB.open(DB_NAME,
-  DB_VERSION)` kommt **0x** vor. Frontend `main` 3c18f58 -> 232d0b3.
-- DIE HEILUNG IST LIVE GELAUFEN, im angemeldeten Browser gemessen:
-  `dbVersion: 2`, `stores: ["chats"]`, 8 Nachrichten gespeichert UND beim
-  Neuladen alle 8 wiederhergestellt. Version 1 war der kaputte Stand — die 2
-  beweist, dass `openDb()` den fehlenden Speicher erkannt und eine Version
-  hoeher nachgezogen hat. Ohne den Fix waere dieses Profil dauerhaft tot.
-- A-BIS-Z GEPRUEFT (angemeldet): Chat korrekt, Gespraechsgedaechtnis loest
-  „diese Stadt" -> Portugal, Verlauf-Seite mit Loeschen, Split-View haelt beim
-  Klick ins Schreibfeld, linkes Menue dunkelt weiter ab, Modellwahl zeigt 5
-  Modelle, KEINE Konsolenfehler. Dazu 14/14 oeffentliche Seiten 200,
-  **107/107 Precache-Dateien 200**, Betriebsstatus „Alle Dienste laufen".
-- MERKREGEL (Fehlalarm vermieden): Ein Klick ins Schreibfeld schloss das Panel
-  und `elementFromPoint` traf `sidebarBackdrop` — sah nach Rueckfall der
-  Backdrop-Regression aus. `body.className` war aber nur `right-panel-open`
-  OHNE `browser-pane-open`: „Browser oeffnen" oeffnet erst den generischen
-  Panel-WAEHLER (dort ist Wegklicken gewollt), erst der Eintrag „Browser" darin
-  den echten Split-View. **Vor jedem Regressionsbefund `body.className`
-  pruefen — zwei Panels teilen sich dasselbe Backdrop.**
-- BEOBACHTUNG (fremde Spur): „Auf welchen Servern laeuft das?" -> „auf eigenen
-  Servern mit modernen Cloud-Technologien". Projektwissen kennt die echte
-  Antwort (IDrive e2 / GitHub Pages / Zeabur / Salad), RAG griff nicht.
-- NACHGEMESSEN (5 Laeufe, vorher UND nachher): kein Budget verschlechtert.
-  Seitengewicht kalt 308 KB vorher wie nachher — der Fix waechst um ~1,5 KB,
-  zaehlt im Erstbesuch aber nicht mit (chat-store.js ist ein Nachlade-Modul).
-  Bewegung bei LCP/TTFB ist Streuung (kalt 84-576 ms Einzelwerte), kein Signal.
-- WURZEL, teuer gemessen: Ein Push auf den Deploy-Branch
-  `deploy-voice-send-20260721-rebased` aendert die WEBSITE NICHT. Pages baut im
-  Repo `smejj-app-frontend` aus **`main`**. Belegt mit `git ls-remote --heads`:
-  `main` stand auf `3c18f58` (= das live laufende sw v208), mein Push lag auf dem
-  Arbeits-Branch. Live blieb 220 s lang unveraendert — kein Bau-Fehler, sondern
-  der Ursprung selbst war nie angefasst worden.
-- MESSFALLE dabei: Der Antwortkopf zeigte `age: 507` bei `max-age=600`. Das sieht
-  nach "CDN haelt noch die alte Kopie" aus und kostete Wartezeit — der Cache lief
-  ab, ohne dass sich etwas aenderte. **Ein ablaufender CDN-Cache beweist nichts
-  ueber den Ursprung.** Erst `git ls-remote` gegen die Live-Datei haelt.
-- WEG: Nach dem Commit auf dem Deploy-Branch zusaetzlich
-  `git push origin <commit>:main` — ein reiner Fast-Forward
-  (`git merge-base --is-ancestor origin/main <commit>` vorher pruefen). Kein
-  Merge, kein Rewrite. In der Sitzung 2026-08-04 hat der Berechtigungs-
-  Klassifikator diesen Push blockiert; er ist dem Betreiber vorzulegen.
-- FALLE beim Auslieferungs-Umfang: `smejj.com Deploy.command` kopiert
-  EINZELNE Dateien per `cp`. Wer eine Datei aendert, die dort nicht gelistet ist,
-  deployt sie nicht — v208 ging deshalb ohne `chat-store.js` live, obwohl der Fix
-  laengst committet war. Nach jedem Deploy die geaenderte Datei LIVE nachlesen.
-- MERKREGEL: 5 Tests fordern `CACHE_NAME` woertlich ein (`deferred-start`,
-  `platform-pwa`, `chat-code-copy`, `system-status-text`, `profile-dock`). Ein
-  Cache-Sprung ohne sie ist rot — das ist Absicht, kein Hindernis.
-- MESSUNG (Live v208, 5 Laeufe): TTFB 16 ms, LCP 176/140 ms, CLS 0, INP 56/48 ms
-  — alle weit im Budget. **Seitengewicht kalt 308 KB gegen Budget 300 KB:
-  VERFEHLT, vorbestehend.** Warm 40 KB. Eigener Auftrag noetig.
-  Beleg: docs/benchmarks/webvitals_verlauf_selbstheilung_2026-08-04.json
+Volltext: [docs/memory/Memory_Bank_2026-08-04_pages_main.md](docs/memory/Memory_Bank_2026-08-04_pages_main.md).
+Kern: Pages baut aus `main`, NICHT aus dem Deploy-Branch — ein Push dorthin
+aendert die Website nicht. `git ls-remote --heads origin` haelt, ein ablaufender
+CDN-Cache beweist nichts. `smejj.com Deploy.command` kopiert EINZELNE Dateien:
+was dort nicht gelistet ist, veraltet live still. 5 Tests fordern `CACHE_NAME`
+woertlich ein. Betreiber-Freigabe fuer den Fast-Forward liegt im Wortlaut vor.
 
 ## 2026-08-04 — A-bis-Z-Livetest: Sprache wurde ungefragt auf Deutsch gestellt (job_livetest_a_bis_z_20260804)
 - BEHOBEN + live bewiesen (sw v210, Frontend `0d7e3c1`, Commit `b4b5202`).
@@ -798,3 +750,32 @@ Neun Dateien byte-genau eingefroren: beide Anmeldeseiten samt `auth-page.js`,
   Boot Handler an genau dieses Markup haengt. Merkregel: **wenn ein fremdes,
   gesperrtes Modul Handler an dein Markup haengt, ist innerHTML kein Werkzeug
   mehr** — dann Textknoten tauschen oder die Sprache vor dem Rendern kennen.
+
+## 2026-08-04 — Seitengewicht unter Budget (sw v215, job_seitengewicht_20260804)
+- ERLEDIGT + LIVE BEWIESEN: Erstbesuch **311 -> 297 KB** (Budget 300).
+  Messwerkzeug meldet "Alle Performance-Budgets eingehalten". Warm unveraendert
+  40 KB. Beleg: docs/benchmarks/webvitals_seitengewicht_v215_2026-08-04.json
+- WEG: Aufschluesselung ueber ALLE 119 Ressourcen (echtes Chrome, transferSize)
+  statt Raten. Gefunden: api-keys-surface.js (6,9 KB), provider-settings.js
+  (3,7 KB) + ihr selbst nachgeladenes CSS (3,2 KB) lagen im Ladepfad JEDES
+  Seitenaufrufs, obwohl beide NUR in das Einstellungs-Panel "models" rendern
+  und der Startreiter "general" ist. settings-surface.js (NICHT gesperrt)
+  importiert sie jetzt dynamisch, ausgeloest von `activate("models")`.
+- SCHLUESSELERKENNTNIS: **Precache-Ladungen zaehlen NICHT ins Seitengewicht.**
+  Belegt daran, dass voice-conversation.js, status.js und verlauf.js im
+  Precache liegen, in den 119 Ressourcen aber fehlen. Verschobene Module
+  bleiben deshalb im Precache — beim Reiterwechsel kommen sie aus dem Cache,
+  ohne Netz. Das ist der ganze Trick: verschieben, nicht entfernen.
+- PRUEFUNG VOR DEM UMBAU (damit nichts wegfaellt): app.js (Start-Lock) bindet
+  KEINE der erzeugten Kennungen (ak*, apiKeysSurface, cline*), applyValues()
+  greift nur auf die eigenen FIELDS zu, beide init-Funktionen sind idempotent.
+  Live gegengeprueft: 0 Module auf der Startseite, nach Klick auf "Models"
+  laden genau die vier Dateien und BEIDE Oberflaechen rendern vollstaendig.
+- BEWUSST NICHT ANGEFASST (Freigabe sagt "bei Zweifel nicht anfassen"):
+  account-privacy.js MUSS synchron rendern (app.js bindet #saveProfile,
+  #registerLocal, #loginLocal an sein Markup); die 25 KB Sprach-Module haengen
+  auf Modulebene an composer-tools.js (800/800 Zeilen) und haetten die
+  Warm-up-Logik ausgehebelt. Beides waere Funktionsrisiko fuer wenige KB.
+- FALLE, wieder bestaetigt: Nach dem sw-Sprung brauchte es VIER Reloads plus
+  ein `registration.update()`, bis der alte Cache v214 abgeloest war. Vorher
+  misst man die alte Datei und haelt den Fix fuer wirkungslos.

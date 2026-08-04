@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-webvitals",
+  "anlass": "job_seitengewicht_20260804 — Modell-Bereiche laden erst bei Bedarf (sw v215)",
+  "gemessenAm": "2026-08-04",
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "scripts/testing/measure_web_vitals.mjs, Chrome headless ueber DevTools-Protokoll",
+  "budgets": {
+    "ttfb_ms": 200,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "vorher": {
+    "stand": "sw v214",
+    "kalt": {
+      "ttfb_ms": { "p75": 111 },
+      "lcp_ms": { "p75": 196 },
+      "cls": { "p75": 0 },
+      "inp_ms": { "p75": 48 },
+      "pageWeight_kb": { "p75": 311, "min": 311, "max": 311 },
+      "ressourcen": 119
+    },
+    "warm": { "pageWeight_kb": { "p75": 40 } },
+    "urteil": "pageWeight_kb VERFEHLT (311 > 300)"
+  },
+  "nachher": {
+    "stand": "sw v215",
+    "kalt": {
+      "ttfb_ms": { "p75": 111, "min": 37, "max": 206 },
+      "lcp_ms": { "p75": 288, "min": 116, "max": 836 },
+      "cls": { "p75": 0 },
+      "inp_ms": { "p75": 64, "min": 40, "max": 152 },
+      "pageWeight_kb": { "p75": 297, "min": 297, "max": 297 }
+    },
+    "warm": {
+      "ttfb_ms": { "p75": 45, "min": 12, "max": 111 },
+      "lcp_ms": { "p75": 164, "min": 108, "max": 248 },
+      "cls": { "p75": 0 },
+      "inp_ms": { "p75": 40, "min": 32, "max": 48 },
+      "pageWeight_kb": { "p75": 40 }
+    },
+    "urteil": "ALLE Performance-Budgets eingehalten"
+  },
+  "ersparnis_kb": 14,
+  "wasVerschobenWurde": [
+    { "datei": "api-keys-surface.js", "kb": 6.9 },
+    { "datei": "provider-settings.js", "kb": 3.7 },
+    { "datei": "api-keys-surface.css", "kb": 2.6 },
+    { "datei": "provider-settings.css", "kb": 0.6 }
+  ],
+  "methode": "Aufschluesselung ueber alle 119 Ressourcen mit transferSize im echten Chrome. Beide Module rendern ausschliesslich in das Einstellungs-Panel 'models'; der Startreiter ist 'general'. settings-surface.js importiert sie jetzt dynamisch, ausgeloest von activate('models').",
+  "belegPrecacheZaehltNicht": "voice-conversation.js, status.js und verlauf.js liegen im Precache, tauchen aber in den 119 geladenen Ressourcen NICHT auf. Verschobene Module bleiben deshalb im Precache: beim Reiterwechsel kommen sie aus dem Cache, ohne Netz.",
+  "liveAbnahme": {
+    "cachesNachUebernahme": ["smejj-shell-v215"],
+    "modellModuleAufStartseite": 0,
+    "nachKlickAufModels": ["api-keys-surface.js", "provider-settings.js", "api-keys-surface.css", "provider-settings.css"],
+    "apiKeysGerendert": true,
+    "clineGerendert": true,
+    "hinweis": "Nach dem sw-Sprung brauchte es vier Reloads, bis der alte Cache v214 abgeloest war — die bekannte Falle: lebende Instanz != Precache != Netz."
+  },
+  "nichtAngefasst": "account-privacy.js muss synchron rendern (app.js bindet #saveProfile/#registerLocal/#loginLocal); die 25 KB Sprach-Module haengen auf Modulebene an composer-tools.js (800/800 Zeilen) mit eigener Warm-up-Logik. Beides haette Funktionen gefaehrdet — bewusst liegengelassen."
+}
