@@ -285,10 +285,66 @@ Gehaertet gegen die Arten, wie eine Bremse still ausfaellt:
 - Die verzoegerte Ruecklese-Konsistenz (aus dem Vorfenster) erneut getroffen:
   das Gegenlesen meldete faelschlich „NICHT uebernommen", obwohl der Schreib-
   vorgang gelungen war. Jetzt mit Wiederholung, bis der Abdruck erscheint.
+- **Ein leeres Listing beweist NICHTS.** `signedS3List` liefert auf dem Eimer
+  `smejj-model-files` 0 Objekte — sogar auf der Wurzel — waehrend `signedS3Get`
+  denselben Eimer problemlos liest und PUT ebenfalls erlaubt ist. Die
+  Zugangsdaten haben Lese- und Schreibrecht, aber kein Listenrecht. Beinahe
+  haette ich daraus geschlossen, der Datensatz fehle. Immer gezielt per GET
+  gegen einen bekannten Schluessel gegenpruefen.
 - **Buendellaenge bleibt kein Inhaltsbeweis** — `tar czf -` in eine Pipe fuellt
   blockweise auf (hier konstant 20480 Byte). Deshalb jetzt der Quelltext-
   Fingerabdruck `SMEJJ_TRAINER_CODE_ABDRUCK` in der Container-Umgebung: er
   sagt jederzeit, welcher Stand wirklich laeuft.
+
+## Erstes echtes Training — und der Fund dahinter
+
+Am 2026-08-04 lief der **erste echte LoRA-Trainingslauf** dieses Projekts durch:
+`laufId 78ec2b5a915949ff`, Qwen3-8B 4-Bit auf RTX 3090, Rang 8, lr 5e-5,
+1 Epoche ueber 1494 Zeilen Projektwissen — **fertig nach 8,74 Minuten**. Der
+Dienst blieb dabei durchgehend `bereit: true`.
+
+**Die Wirkung ist am STIL belegt, nicht am Inhalt.** Dieselbe Frage zweimal:
+ohne Systemprompt ~1900 Zeichen englischer `<think>`-Block und eine erfundene
+Antwort; mit dem Systemprompt der Trainingsdaten ein **9 Zeichen** langer
+Denkblock und knappes Deutsch. Den Namen nennt der Systemprompt selbst — daraus
+laesst sich nichts ableiten. Aber der Zusammenbruch des Denkblocks und der
+Sprachwechsel sind die Form der Trainingsdaten; das Basismodell gruebelt von
+sich aus lang und englisch.
+
+**MESSFALLE:** `max_tokens: 64` schneidet mitten im Denkblock ab — man sieht nur
+Gruebeln und haelt es fuer eine falsche Antwort. Bei einem Reasoning-Modell
+genug Budget geben und erst den Teil hinter `</think>` bewerten.
+
+### DER FUND: der Adapter ueberlebte den Container nicht
+
+`motor.py` legte den Adapter mit `save_pretrained` unter `/tmp/smejj-lora/<kennung>`
+ab — Container-Platte. Kein Upload (per `grep` belegt). Der Loop haette diesen
+lokalen Pfad als `adapterSchluessel` in `bester-stand.json` auf IDrive
+geschrieben: ein Verweis, der aussieht wie ein Ergebnis und keines ist.
+
+**Der Dauerbetrieb haette rund um die Uhr trainiert und nichts behalten** —
+Salad ersetzt Instanzen regelmaessig. Genau die Art stiller Fehlschlag, die
+dieses Projekt schon zweimal Tage gekostet hat; sichtbar wurde sie erst, weil
+das Training wirklich lief.
+
+### Behoben
+
+- **`s3.py` (neu)** — SigV4 an einer Stelle, benutzt von Lesen UND Schreiben.
+  Zwei Kopien der Signaturlogik waeren zwei Stellen fuer denselben Sonderfall,
+  und Signaturfehler melden sich als nichtssagendes HTTP 403.
+- **`ablage.py` (neu)** — laedt das Adapterverzeichnis nach IDrive, mit
+  Wiederholungen und Groessengrenze. Ein halb hochgeladener Adapter gilt NIE
+  als Erfolg.
+- **`datenlader.py`** — nutzt jetzt `s3.py`; der Lesepfad wurde gegen die
+  echten Daten gegengeprueft (1494 Zeilen, unveraendert).
+- **`motor.py`** — laedt nach `save_pretrained` hoch und gibt den
+  IDrive-Schluessel als `adapterSchluessel` zurueck statt des Containerpfads.
+  Schlaegt der Upload fehl, WIRFT es und der Lauf gilt als fehlgeschlagen:
+  ohne dauerhaftes Artefakt kein dauerhafter Eintrag.
+
+Vorher gepruefte Voraussetzung: die Zugangsdaten duerfen **schreiben**
+(PUT + Zuruecklesen gegen `ops/smejj-lora-trainer/selbsttest/` bestaetigt) —
+obwohl sie NICHT auflisten duerfen (siehe Messfalle unten).
 
 ## Karte laeuft durch (Entscheidung des Betreibers)
 

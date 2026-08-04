@@ -47,6 +47,23 @@ trainieren. Der Download ist damit groesser, aber er blockiert nichts mehr.
 `zustand` ist `laeuft` | `fertig` | `fehlgeschlagen`. Alles andere gilt dem Loop
 als unbekannt und fuehrt zum Abbruch — das ist Absicht.
 
+`adapterSchluessel` ist ein **IDrive-Schluessel**, kein Containerpfad
+(Standardpraefix `model-files/smejj-1-0/adapter/<kennung>`, umstellbar ueber
+`SMEJJ_TRAINER_ADAPTER_PRAEFIX`).
+
+Das war bis zum 2026-08-04 anders und ein stiller Fehlschlag: der Adapter lag
+nur unter `/tmp/smejj-lora/<kennung>` auf der Container-Platte. Salad ersetzt
+Instanzen regelmaessig — der Dauerbetrieb haette rund um die Uhr trainiert und
+nichts behalten, waehrend der Loop den lokalen Pfad als „bester Stand" nach
+IDrive schreibt. Ein Verweis, der aussieht wie ein Ergebnis und keines ist.
+
+Scheitert der Upload, meldet der Lauf `fehlgeschlagen` statt `fertig`: ohne
+dauerhaftes Artefakt darf es keinen dauerhaften Eintrag geben.
+
+Zusaetzlich: `GET /diagnose` liefert das ungekuerzte Fehlerbild (Rueckverfolgung,
+pip-Protokoll, installierte Fassungen, CUDA-Zustand) — die oeffentliche
+Salad-API hat keine Container-Protokolle.
+
 ## Betriebsarten
 
 `SMEJJ_TRAINER_MODUS`:

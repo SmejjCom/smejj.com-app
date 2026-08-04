@@ -20,6 +20,10 @@ import time
 BASIS_REPO = os.environ.get("SMEJJ_TRAINER_BASIS_REPO", "")
 MAX_LAENGE = int(os.environ.get("SMEJJ_TRAINER_MAX_LAENGE", "1024"))
 AUSGABE_WURZEL = os.environ.get("SMEJJ_TRAINER_AUSGABE", "/tmp/smejj-lora")
+# Praefix im Object Brain, unter dem trainierte Adapter dauerhaft liegen.
+# Der Loop bekommt diesen Schluessel als adapterSchluessel zurueck — nicht mehr
+# den Containerpfad, der jeden Neustart verliert.
+ADAPTER_PRAEFIX = os.environ.get("SMEJJ_TRAINER_ADAPTER_PRAEFIX", "model-files/smejj-1-0/adapter")
 
 
 class Motor:
@@ -103,11 +107,25 @@ class Motor:
         # in den Konfigurations-kwargs, das Modell kaeme in fp32 (rund 32 GB) und
         # spraengte die 24-GB-Karte — ein Fehler, der wie ein Speicherproblem
         # aussieht und keins ist.
+        # ALLES AUF DIE KARTE, oder ehrlich scheitern.
+        #
+        # Gemessen am 2026-08-04: mit `device_map="auto"` verteilte accelerate
+        # Schichten auf die CPU. Das faellt von aussen nicht auf — `/health`
+        # meldete `bereit`, `/diagnose` meldete "CUDA verfuegbar, RTX 3090" —
+        # aber der Lauf brauchte 20 statt 9 Minuten bei 1500 % CPU-Last und
+        # 15 GB Hauptspeicher. Eine gemietete GPU, die danebensteht, waehrend
+        # die CPU rechnet.
+        #
+        # Bei einer einzelnen Karte ist die Verteilung keine Optimierungsfrage:
+        # ein 8B-Modell in 4 Bit belegt rund 6 GB von 24 GB. Passt es wider
+        # Erwarten nicht, ist ein lautes CUDA-out-of-memory die bessere Meldung
+        # als ein stilles Zehnfaches an Rechenzeit.
+        verteilung = {"": 0} if torch.cuda.is_available() else "auto"
         return AutoModelForCausalLM.from_pretrained(
             BASIS_REPO,
             quantization_config=quantisierung,
             torch_dtype=torch.bfloat16,
-            device_map="auto",
+            device_map=verteilung,
         )
 
     def trainiere(self, auftrag, abbruch=lambda: False):
@@ -144,7 +162,24 @@ class Motor:
             task_type="CAUSAL_LM",
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
         )
-        modell = get_peft_model(self.modell, konfiguration)
+        # JEDER Lauf beginnt beim BASISMODELL, nie beim Ergebnis des vorigen.
+        #
+        # `self.modell` ist nach einem Lauf die PEFT-Huelle (das ist gewollt,
+        # damit /api/chat den trainierten Stand misst). Ohne das Abstreifen hier
+        # wickelte der naechste Lauf eine zweite Huelle um die erste, der
+        # uebernaechste eine dritte — im Dauerbetrieb stapeln sich die Adapter.
+        #
+        # Das waere ein lautloser Totalschaden: die Schleife vergleicht
+        # Konfigurationen gegeneinander (sweep.js), und jeder Vergleich waere
+        # verfaelscht, weil Zyklus 2 auf dem Ergebnis von Zyklus 1 sitzt. Die
+        # Punktzahlen wuerden wandern, ohne dass jemand sagen koennte woran.
+        basis = self.modell
+        if hasattr(basis, "peft_config") and hasattr(basis, "unload"):
+            print("[smejj-lora-trainer] vorigen Adapter abgestreift", flush=True)
+            basis = basis.unload()
+            self.modell = basis
+
+        modell = get_peft_model(basis, konfiguration)
         modell.train()
         optimierer = torch.optim.AdamW(
             [p for p in modell.parameters() if p.requires_grad], lr=lernrate
@@ -176,8 +211,25 @@ class Motor:
         modell.save_pretrained(ziel)
         modell.eval()
         self.modell = modell
-        print(f"[smejj-lora-trainer] Adapter abgelegt: {ziel}", flush=True)
-        return ziel
+
+        # Der trainierte Stand MUSS das Ende dieses Containers ueberleben.
+        #
+        # Gemessen am 2026-08-04: bis hierher lag der Adapter nur unter
+        # /tmp/smejj-lora/<kennung>, also auf der Container-Platte. Salad ersetzt
+        # Instanzen regelmaessig — der Adapter waere beim naechsten Neustart weg
+        # gewesen, waehrend der Loop den lokalen Pfad als "bester Stand" nach
+        # IDrive geschrieben haette. Ein Verweis, der aussieht wie ein Ergebnis
+        # und keines ist; der Dauerbetrieb haette rund um die Uhr trainiert und
+        # nichts behalten.
+        #
+        # Schlaegt der Upload fehl, wird hier GEWORFEN und der Lauf gilt als
+        # fehlgeschlagen. Das ist Absicht: ohne dauerhaftes Artefakt darf es
+        # keinen dauerhaften Eintrag geben.
+        from ablage import lege_adapter_ab  # noqa: PLC0415 - nur im echten Lauf noetig
+
+        schluessel = lege_adapter_ab(ziel, f"{ADAPTER_PRAEFIX.rstrip('/')}/{kennung}")
+        print(f"[smejj-lora-trainer] Adapter dauerhaft: {schluessel}", flush=True)
+        return schluessel
 
     def _buendel(self, batch):
         texte = [

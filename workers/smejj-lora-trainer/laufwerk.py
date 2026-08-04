@@ -173,10 +173,60 @@ class Laufwerk:
                 "fehler": self._fehler_text,
                 "spur": self._fehler_spur,
             }
+        bericht["modell"] = self._modell_bericht()
         bericht["pip"] = self._pip_bericht()
         bericht["pakete"] = _paketfassungen()
         bericht["bitsandbytes"] = _importprobe("bitsandbytes")
         bericht["cuda"] = _cuda_bericht()
+        return bericht
+
+    def _modell_bericht(self):
+        """WO liegt das Modell wirklich — Karte oder Hauptspeicher?
+
+        Am 2026-08-04 zeigte die Instanz waehrend eines Laufs 1500 % CPU und
+        15,1 GB RAM (von 16 GB), waehrend ein frueherer Lauf mit 0,2 % CPU und
+        2 GB auskam. `/diagnose` meldete beide Male brav "CUDA verfuegbar,
+        RTX 3090" — die Frage "verfuegbar?" beantwortet eben nicht die Frage
+        "benutzt?".
+
+        `device_map="auto"` legt Schichten auf die CPU, sobald ihm der Platz auf
+        der Karte knapp erscheint. Das faellt nirgends auf: das Training laeuft
+        weiter, nur um ein Vielfaches langsamer und am Rand des Hauptspeichers.
+        Deshalb steht die Verteilung jetzt hier.
+        """
+        motor = self._motor
+        modell = getattr(motor, "modell", None)
+        if modell is None:
+            return {"geladen": False}
+
+        bericht = {"geladen": True, "typ": type(modell).__name__}
+        try:
+            bericht["dtype"] = str(getattr(modell, "dtype", ""))
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            verteilung = getattr(modell, "hf_device_map", None)
+            if isinstance(verteilung, dict) and verteilung:
+                zaehler = {}
+                for geraet in verteilung.values():
+                    schluessel = str(geraet)
+                    zaehler[schluessel] = zaehler.get(schluessel, 0) + 1
+                bericht["geraete"] = zaehler
+                # Die eine Zahl, auf die es ankommt.
+                bericht["schichtenAufCpu"] = sum(
+                    anzahl for geraet, anzahl in zaehler.items()
+                    if geraet in ("cpu", "disk")
+                )
+        except Exception as fehler:  # noqa: BLE001
+            bericht["geraeteFehler"] = str(fehler)[:120]
+        try:
+            import torch  # noqa: PLC0415
+
+            if torch.cuda.is_available():
+                bericht["gpuBelegtMb"] = round(torch.cuda.memory_allocated() / 1e6)
+                bericht["gpuReserviertMb"] = round(torch.cuda.memory_reserved() / 1e6)
+        except Exception:  # noqa: BLE001
+            pass
         return bericht
 
     def _pip_bericht(self):
