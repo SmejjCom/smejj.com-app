@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-04T23:34:36.205Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-04 ('Weiter', stehende Freigabe zur autonomen Umsetzung; dazu 'Wenn du Fehler findest, behebe sie sofort'): abgelaufene Anmeldung sichtbar machen. Geaendert: auth-gate.js (Pruefung), auth-page.js (Hinweis), sw.js v218 -> v219.",
+  "frozenAt": "2026-08-04T23:40:58.850Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-04 ('Weiter'): Nachbesserung am Hinweis fuer die abgelaufene Anmeldung — er erschien deutsch auf einer englischen Seite. Sprache wird jetzt vor der Meldung geladen.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "3a5d1b06a96265be4ed4fc43681ccb9367bda17264503ce13f631abd3d2017d5",
-    "public/auth/register/index.html": "ce46bd55cf369f50afed1bfb01aa92dcf883570ad0aaefe2eca9acd5678d4559",
-    "public/auth/auth-page.js": "6649f8f8093bf57be492f5ea61eca105d924b81f6d165aa870e313b817ba22d6",
+    "public/auth/login/index.html": "65435eddbd0a154777805fe836ffc8ce9858bddd19e31f322c47b55de373b436",
+    "public/auth/register/index.html": "2a73cdf79edd7ec8ffda01736c729f3d29f7ebe7506b399922d7642d1bab7ba6",
+    "public/auth/auth-page.js": "ea029edad98c7a92bd0e80dbd466b5c170070b89c944a0cfbdba74b0973e976d",
     "public/auth/auth.css": "582576014a5a9177bc7bff9e9df9622fa94a411e3b428047bd14a238179341c0",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "157f34c1a998a30153bc0f404be3f135bdbd69e093ff25d1ea63a36d7e436b66",

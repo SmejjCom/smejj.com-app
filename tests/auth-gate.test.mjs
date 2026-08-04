@@ -219,3 +219,13 @@ test("die Anmeldeseite nennt den Grund", async () => {
   assert.match(seite, /params\.get\("abgelaufen"\)/);
   assert.match(seite, /Deine Anmeldung ist abgelaufen/);
 });
+
+test("der Hinweis erscheint in der Sprache des Nutzers, nicht auf Deutsch", () => {
+  // Live gesehen: die Anmeldeseite stand englisch da, der Hinweis darunter
+  // deutsch. t() faellt auf den Quelltext zurueck, solange das Woerterbuch
+  // nicht geladen ist — also erst laden, dann melden.
+  const seite = readFileSync(new URL("../public/auth/auth-page.js", import.meta.url), "utf8");
+  const zweig = seite.match(/if \(params\.get\("abgelaufen"\)\) \{[\s\S]*?\n  \}/)[0];
+  assert.ok(zweig.indexOf("await loadUiLanguage") < zweig.indexOf("status("),
+    "die Sprache muss VOR der Meldung geladen sein");
+});
