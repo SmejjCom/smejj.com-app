@@ -1,16 +1,16 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-03T22:20:03.263Z",
-  "confirmation": "Wof Kadavanich, 2026-08-03: 'soll immer an bleiben bis ich manuel zu klappe' + 'geh chrome browser smejj.com teste und fehler behebe' + 'Ja' zur Nacharbeitsliste (lokale Verdrahtung browser-pane-backdrop.js in index.html/sw.js, sw v206 — live deployt und im echten Klickpfad verifiziert)",
+  "frozenAt": "2026-08-03T23:58:05.089Z",
+  "confirmation": "Wof Kadavanich, 2026-08-03: 'Ja' zur Nacharbeitsliste aus der Abschlussmeldung — Punkt 1 (Restzustand body.browser-pane-open beim Schliessen ueber den Browser-Knopf) und Punkt 2 (Wegklicken bei offenem Split-View schliesst nur noch das linke Menue, nicht mehr das Panel). Betrifft public/index.html (?v=2) und public/panel-backdrop.js; live deployt als sw v207 und im echten Klickpfad auf https://smejj.com verifiziert (5/5). MIT EINGEFROREN, aber NICHT von dieser Freigabe gedeckt: public/app.js und public/sw.js (v208) aus der Parallel-Session-Commit c518e44 'Gespraechsgedaechtnis an drei Stellen repariert' — im Repo committet, zum Zeitpunkt des Einfrierens noch NICHT live deployt.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9e1fb2fced86f78bacadf1c44634bbc1673d44e5326df78e80754ccca969006a",
+    "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
     "public/composer-tools.css": "2dc316dfbc73da293910b7236bf58c06c72edf325d6f7cbb5fdd2eb0fbbebddb",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "c6986ae508630ff2ac984cefbb8f9edad97ffc3c55d25b31dc1eafe03a71e2e2",
+    "public/app.js": "590f1dddaefe8d27a9991092fe8fba0254e279d364979102f0c42f215d157974",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "41985ef889b830b1b0263d37e0c27f8d2eb5a0c1dc0e3b049524df9b3bbf4959",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
@@ -23,7 +23,7 @@
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "e68f3c7964373d7938571bb3590571755f34be67e0b46a4f9642607b89c2bd65",
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
-    "public/panel-backdrop.js": "9c5fa67cc79f6cc22373e604b2c7a83ecbd06372bbd72b566adb6413d23b78cd",
+    "public/panel-backdrop.js": "6d0246e8b6ffe00337d64c7f9ad93a9e1b36d3ef7c7e614ca3600ab66b191ae3",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
     "public/cline-model-menu.js": "1bc22d8e0c9fd5200031d893dd774a2c3879db8092a7a4f63b354d74bcc8fdb3",
     "public/cline-model-menu.css": "e440d1b7fed003a9147d0f339173966f02ddad128d139f080f191f0edf313d07",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ee657a20a1aa8712093fc8e436a244b48e6b6b956d62d1e0bf25ad4e485fed82",
+    "public/sw.js": "2f0542f668ee3b65628eb812cbac3e2d4449c87dfc0fa58de981951e5e1e9306",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

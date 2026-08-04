@@ -757,20 +757,20 @@ sonst stellt Chrome den Strom nach wenigen Bildern ein. Uebertragung ueber EIN O
 Details: task-capsules/2026/07/job_maus_livebild_20260729/.
 
 ## 2026-08-03 — Browser-Panel: Klick ins Schreibfeld schloss den Split-View (job_browser_panel_backdrop_20260803)
-- ERLEDIGT, live (sw v206, Frontend 9abf654): Im Split-View lag #sidebarBackdrop
+- ERLEDIGT, live (sw v207, Frontend ba76029): Im Split-View lag #sidebarBackdrop
   (panel-backdrop.js, inset 0, z 65) ueber dem linken Arbeitsbereich; JEDER Klick
-  links traf das Backdrop und dessen Wegklick-Handler schloss das Panel.
-  Beweis: elementFromPoint auf dem Schreibfeld = #sidebarBackdrop.
-- FIX: neues Modul browser-pane-backdrop.js (SRP wie maus-panel.js; browser-pane.js
-  steht bei 795/800, panel-backdrop.js unter Start-Lock). Unterdrueckt das Backdrop
-  bei body.browser-pane-open; Ausnahme offenes linkes Menue (Non-Regression).
-  Panel schliesst nur noch manuell (X, Knopf, Escape, Navigation) — schriftliche
-  Freigabe des Betreibers vom 2026-08-03 liegt im Modulkopf.
-- LIVE BELEGT (echter Klickpfad in Chrome): Klick ins Schreibfeld fokussiert und
-  tippt, Panel bleibt offen; X schliesst; linkes Menue behaelt Abdunkeln/Wegklick.
-  TTFB 64 ms, Laden 326 ms, 40 KB, keine Konsolenfehler.
-- MERKREGEL: Ein unsichtbares Overlay prueft man mit elementFromPoint — ein
-  "toter" Klick ist sonst nicht vom Backdrop-Wegklicken zu unterscheiden.
+  links traf es und sein Wegklick-Handler schloss das Panel (Beweis: elementFromPoint
+  auf dem Schreibfeld = #sidebarBackdrop). FIX: browser-pane-backdrop.js (eigenes
+  Modul) unterdrueckt das Backdrop bei body.browser-pane-open.
+- NACHARBEIT (Freigabe "Ja", sw v207): (1) Wegklicken bei offenem Split-View UND
+  offenem Menue schliesst nur noch das MENUE — reine Funktion backdropCloseTarget()
+  in panel-backdrop.js; sonst weiter "alles zu" (Non-Regression 2026-07-18), Escape
+  bewusst unveraendert. (2) Schliessen laeuft ueber app.js statt closePane()
+  und liess body.browser-pane-open, .is-browser-mode, --right-panel-width stehen —
+  der Waechter raeumt das jetzt ab. LIVE 5/5 (Chrome): Menue weggeklickt -> Panel
+  blieb offen; Schreibfeld tippbar; Browser-Knopf liess die body-Klassen LEER;
+  Escape schloss. TTFB 147 ms kalt, LCP 84 ms, CLS 0, 40 KB, 320/320, 0 Fehler.
+- MERKREGEL: Unsichtbares Overlay -> elementFromPoint; und Zustand, den ZWEI Stellen setzen (app.js + browser-pane.js), driftet, sobald nur ein Weg aufraeumt.
 
 ## 2026-08-03 — Chat: Kontext, Deutsch, klickbare Links (job_chat_qualitaet_links_20260803)
 - ERLEDIGT, live belegt (Bridge v111, Frontend eb101c9, sw v206): Salad primär

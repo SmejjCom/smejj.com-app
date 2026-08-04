@@ -73,12 +73,94 @@ Dieser Fix wurde fast-forward OBEN DRAUF gebaut (v206) — nichts ueberschrieben
 5. End-Abnahme live: sw v206 aktiv, Backdrop im Split-View hidden, Klick links
    traf Inhalt (P), Panel blieb offen, X schloss.
 
-Bewusst NICHT gemacht: app.js-Aufraeumen der stale Klasse browser-pane-open
-(kein sichtbarer Effekt, app.js an der Ratchet-Baseline — beim naechsten
-app.js-Job miterledigen); Wegklicken bei offenem linkem Menue schliesst
-weiterhin Menue UND Panel (bewusste Non-Regression, Aenderung nur auf Zuruf).
+Zu diesem Zeitpunkt bewusst NICHT gemacht: das Aufraeumen der stehengebliebenen
+Klasse browser-pane-open und das Wegklicken bei offenem linkem Menue. Beides ist
+mit der zweiten Nacharbeitsrunde erledigt (siehe unten).
+
+## Nacharbeit Runde 2 (2026-08-03, Freigabe "Ja" auf die Restpunktliste)
+
+Erledigt sind damit beide Restpunkte aus der Abschlussmeldung.
+
+### Punkt 2 — Wegklicken schliesst nur noch die oberste Ebene
+
+`panel-backdrop.js` bekommt die reine Funktion `backdropCloseTarget({splitView,
+menuOpen})`. Ist der Browser-Split-View offen UND zusaetzlich das linke Menue,
+liefert sie `"menu"` — der Klick neben das Menue schliesst nur das Menue, das
+Panel bleibt stehen. In jedem anderen Fall `"all"`, also das bisherige Verhalten
+(Non-Regression zum Sidebar-Fix vom 2026-07-18). Escape bleibt bewusst
+unveraendert: das ist eine ausdrueckliche Nutzeraktion und schliesst weiterhin
+beides.
+
+### Punkt 1 — kein Restzustand mehr nach dem Schliessen
+
+Schliessen ueber Browser-Knopf, Backdrop oder Navigation laeuft durch
+`setBrowserPanelOpen(false)` in `app.js` und nicht durch `closePane()` in
+`browser-pane.js`. Dabei blieben `body.browser-pane-open`, `.is-browser-mode` am
+Panel und `--right-panel-width` stehen — unsichtbar, aber jeder, der den Zustand
+liest, sah einen Split-View, der in Wahrheit zu war. `browser-pane-backdrop.js`
+raeumt diesen Rest jetzt ab (genau das, was `backToMenu()` sonst tut). Statt
+`app.js` anzufassen (Ratchet-Baseline) liegt die Regel im Waechter, der den
+Zustand ohnehin liest. `syncSplitViewBackdrop()` nimmt das Dokument jetzt als
+Parameter — dadurch ohne Browser testbar.
+
+### Geaenderte Dateien
+
+- `assets/panel-backdrop.js` — `backdropCloseTarget()` + `closeFromBackdrop`
+- `assets/browser-pane-backdrop.js` — Restzustand abraeumen, Dokument injizierbar
+- `assets/app.js` — Import `panel-backdrop.js?v=panel-backdrop-20260803`
+- `index.html` — `browser-pane-backdrop.js?v=2`
+- `sw.js` — `smejj-shell-v206` -> `smejj-shell-v207`
+
+### Verifikation Runde 2
+
+Pflicht-Checks: `check:frontend` 320/320 gruen (`browser-pane-backdrop.test.mjs`
+von 4 auf 12 Faelle), `check:guidelines`, `check:favicon-lock` gruen.
+
+Live auf `https://smejj.com` (sw v207 aktiv, echter Klickpfad in Chrome), 5/5:
+
+1. Split-View geoeffnet -> `backdrop.hidden = true`, `elementFromPoint` auf dem
+   Schreibfeld traf `#startMessage`.
+2. Linkes Menue geoeffnet -> Backdrop sichtbar (Menue behaelt sein Abdunkeln);
+   daneben geklickt (260/300, dort lag `#sidebarBackdrop`) -> Menue zu, **Panel
+   blieb offen**, Backdrop wieder unterdrueckt.
+3. Ins Schreibfeld geklickt und getippt -> Fokus `#startMessage`, Text stand
+   drin, Panel blieb offen (der urspruengliche Fehler bleibt behoben).
+4. Ueber den Browser-Knopf geschlossen -> `body.classList` LEER,
+   `is-browser-mode` weg, `--right-panel-width` entfernt, `aria-expanded=false`.
+5. Ohne Split-View: Menue geoeffnet, daneben geklickt -> Menue zu (unveraendert).
+   Escape im Split-View -> Panel zu.
+
+Keine Konsolenfehler.
+
+### Benchmark Runde 2 (Messpflicht)
+
+Kalt ueber das Netz: TTFB 147 ms (Budget 200), Startseite 40 631 Bytes
+(Budget 300 KB). Warm mit aktivem Service Worker: FCP/LCP 84 ms (Budget 1,5 s),
+CLS 0 (Budget 0,1), domInteractive 19 ms, load 133 ms, 118 Ressourcen.
+`panel-backdrop.js` 4 416 Bytes, `browser-pane-backdrop.js` 4 289 Bytes —
+zusammen +2,3 KB gegenueber v206. Keine Budgetverletzung, keine
+Verschlechterung gegenueber dem letzten Benchmark.
+
+### Absicherung Runde 2
+
+Start-Lock neu eingefroren (31/31 gruen, Backup
+`backups/start-design-lock/2026-08-03T23-58-05-089Z/`). Der Freigabe-Wortlaut im
+Manifest haelt ausdruecklich fest, dass `app.js` und `sw.js` (v208) aus dem
+Parallel-Session-Commit `c518e44` mit eingefroren, aber NICHT von dieser Freigabe
+gedeckt sind und zum Zeitpunkt des Einfrierens noch nicht live waren.
+
+### Testumgebung (offen dokumentiert)
+
+Das benutzte Chrome-Profil hatte keine smejj.com-Sitzung. Anmelden nimmt der
+Agent dem Betreiber nicht ab; fuer den Klickpfad wurde deshalb nur der lokale
+UI-Schalter `smejj.session.v1` im Browser gesetzt (kein Serverzugang) und
+danach zusammen mit dem Testartefakt `smejj.browser.tabs.v1` wieder entfernt.
+Alle geprueften Dateien kamen unveraendert von `https://smejj.com`.
 
 ## Merkregel
 
 Ein unsichtbares Vollflaechen-Overlay findet man mit `elementFromPoint()`; ein
 "toter" Klick ist sonst nicht vom Backdrop-Wegklicken zu unterscheiden.
+
+Und: Zustand, den ZWEI Stellen setzen (hier `app.js` und `browser-pane.js`),
+driftet zwangslaeufig, sobald nur einer der Wege ihn wieder abraeumt.
