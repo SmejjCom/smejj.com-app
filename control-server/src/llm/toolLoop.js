@@ -24,7 +24,7 @@
 
 import { filterSseEvent } from "./streamFilter.js";
 import { parseBrowserTarget, extractTitle } from "../routes/browserProxyRoutes.js";
-import { searchWeb, cleanSnippet, normalizeRegion } from "../../../src/search/webSearch.js";
+import { searchWebDetailed, cleanSnippet, normalizeRegion } from "../../../src/search/webSearch.js";
 
 const MAX_ROUNDS = 3;
 const MAX_PAGE_CHARS = 6000;
@@ -227,7 +227,7 @@ function finishStream(res) {
 }
 
 /** Fuehrt ein Werkzeug aus. Unbekannte Werkzeuge werden abgelehnt (fail-closed). */
-export async function runAgentTool(call, { fetchImpl = fetch, sucheImpl = searchWeb } = {}) {
+export async function runAgentTool(call, { fetchImpl = fetch, sucheImpl = searchWebDetailed } = {}) {
   const name = call?.function?.name || "";
   if (name !== "seite_lesen" && name !== "web_suche") return `Unbekanntes Werkzeug: ${name}`;
   let args;
@@ -251,16 +251,34 @@ async function sucheImWeb(anfrage, sucheImpl, region = "") {
   // Fehler gemeldet: die Suche laeuft dann mit erkannter oder Standard-Region
   // weiter. Ein Tippfehler des Modells darf keine Recherche verhindern.
   const markt = normalizeRegion(region);
-  let treffer;
+  let roh;
   try {
-    treffer = await sucheImpl(bereinigt, markt ? { limit: MAX_SUCHTREFFER, region: markt } : { limit: MAX_SUCHTREFFER });
+    roh = await sucheImpl(bereinigt, markt ? { limit: MAX_SUCHTREFFER, region: markt } : { limit: MAX_SUCHTREFFER });
   } catch (error) {
     return `Die Suche ist fehlgeschlagen: ${String(error?.message || error).slice(0, 160)}`;
   }
-  if (!Array.isArray(treffer) || treffer.length === 0) {
+  // Die Standard-Implementierung liefert einen Befund mit Quellenzustand, eine
+  // eingespeiste (Tests, aeltere Aufrufer) eine blosse Trefferliste. Beides gilt.
+  const befund = Array.isArray(roh) ? { results: roh, attempts: [] } : (roh || { results: [], attempts: [] });
+  const treffer = Array.isArray(befund.results) ? befund.results : [];
+  if (treffer.length === 0) {
+    // Befund 2026-08-04, live: Liefert keine Quelle etwas, versuchte das Modell
+    // es mit anderen Worten erneut, verbrauchte alle Runden und brach mitten im
+    // Satz ab — der Nutzer sah eine angefangene Antwort und dachte, es haenge.
+    // Sind ALLE Quellen gesperrt, hilft kein anderer Suchbegriff. Dann muss das
+    // Modell aufhoeren zu suchen und die Lage erklaeren.
+    const versuche = Array.isArray(befund.attempts) ? befund.attempts : [];
+    const alleGesperrt = versuche.length > 0 && versuche.every((v) => v.status === "gesperrt" || v.status === "keine antwort");
+    if (alleGesperrt) {
+      return `Die Live-Suche ist derzeit nicht verfuegbar: alle Suchquellen antworten mit einer Sperrseite `
+        + `(gepruefte Quellen: ${versuche.map((v) => v.source).join(", ")}). `
+        + "Suche NICHT erneut — ein anderer Suchbegriff aendert daran nichts. "
+        + "Sage dem Nutzer offen, dass die Live-Suche gerade keine Treffer liefert, und nenne ihm "
+        + "stattdessen die passenden Portale und die konkreten Suchbegriffe, mit denen er selbst sucht.";
+    }
     return `Keine Treffer fuer "${bereinigt}"${markt ? ` (Markt ${markt})` : ""}. `
       + "Formuliere die Anfrage kuerzer, mit anderen Stichworten oder in der Sprache des Zielmarktes "
-      + "und pruefe die region-Angabe.";
+      + "und pruefe die region-Angabe. Bleibt es dabei, sage dem Nutzer ehrlich, dass du nichts gefunden hast.";
   }
   const zeilen = treffer.map((eintrag, index) => {
     const kurz = cleanSnippet(eintrag?.snippet || "");

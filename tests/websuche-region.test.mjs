@@ -203,6 +203,50 @@ test("eine unbekannte Regionsangabe des Modells verhindert keine Suche", async (
   assert.match(ergebnis, /rbb24/);
 });
 
+// Befund 2026-08-04, live: Lieferte keine Quelle etwas, formulierte das Modell
+// die Anfrage immer wieder um, verbrauchte alle drei Runden und brach mitten im
+// Satz ab. Der Nutzer sah eine angefangene Antwort und dachte, es haenge.
+test("sind alle Quellen gesperrt, wird das Modell zum Aufhoeren angewiesen", async () => {
+  const ergebnis = await runAgentTool(
+    { function: { name: "web_suche", arguments: '{"anfrage":"office san jose","region":"us"}' } },
+    {
+      sucheImpl: async () => ({
+        results: [],
+        attempts: [
+          { source: "duckduckgo-html", parsed: 0, status: "gesperrt" },
+          { source: "duckduckgo-lite", parsed: 0, status: "gesperrt" },
+          { source: "bing", parsed: 0, status: "keine antwort" }
+        ]
+      })
+    }
+  );
+  assert.match(ergebnis, /nicht verfuegbar/);
+  assert.match(ergebnis, /Suche NICHT erneut/, "ein anderer Suchbegriff hilft gegen eine Sperre nicht");
+  assert.match(ergebnis, /duckduckgo-html/, "die geprueften Quellen muessen benannt sein");
+});
+
+test("themenfremde Treffer sind KEINE Sperre — hier darf umformuliert werden", async () => {
+  const ergebnis = await runAgentTool(
+    { function: { name: "web_suche", arguments: '{"anfrage":"office san jose","region":"us"}' } },
+    {
+      sucheImpl: async () => ({
+        results: [],
+        attempts: [{ source: "bing", parsed: 10, status: "themenfremd" }]
+      })
+    }
+  );
+  assert.match(ergebnis, /Keine Treffer/);
+  assert.ok(!/Suche NICHT erneut/.test(ergebnis));
+});
+
+test("eine blosse Trefferliste bleibt gueltig (Non-Regression der Schnittstelle)", async () => {
+  const ergebnis = await runAgentTool(
+    { function: { name: "web_suche", arguments: '{"anfrage":"Bitcoin Kurs"}' } },
+    { sucheImpl: async () => [{ title: "finanzen.net", url: "https://www.finanzen.net/x", snippet: "Bitcoin Euro" }] }
+  );
+  assert.match(ergebnis, /finanzen\.net/);
+});
+
 test("das Werkzeugergebnis fordert anklickbare Trefferadressen", async () => {
   const ergebnis = await runAgentTool(
     { function: { name: "web_suche", arguments: '{"anfrage":"office san jose","region":"us"}' } },

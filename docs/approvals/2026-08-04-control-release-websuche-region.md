@@ -1,0 +1,122 @@
+# Freigabe-Nachweis — Control-Server-Release 2026-08-04 (Websuche: Markt und Suchbegriff)
+
+Der Release-Builder schreibt in jedes Manifest `productionDeployAuthorized: false`
+und `separateApprovalEvidenceRequired: true`. Die Freigabe wird deshalb hier
+getrennt festgehalten, nicht im Artefakt.
+
+## Wortlaut des Betreibers
+
+Der Betreiber hat am 2026-08-04 einen konkreten Umsetzungsplan bekommen
+(Stufe 1: Region und Sprache als Parameter; Stufe 2: Suchbegriff und Markt vom
+Modell bestimmen lassen, Trefferadressen statt Portal-Startseiten) und darauf
+geantwortet:
+
+```
+Ja,
+
+... Nach der Umsetzung bitte live gehen, live testen und prüfen, ob alles
+richtig funktioniert. Fehler sofort beheben und erneut testen, bis alles 100 %
+sauber läuft.
+
+Zum Schluss bitte 100 % Schutz aktivieren: nichts darf kaputtgehen, gelöscht
+oder ohne meine schriftliche Freigabe geändert werden. Bestehende Funktionen,
+Daten, Design, Einstellungen und Zugänge müssen sicher bleiben.
+```
+
+**Einordnung:** Das ist keine allgemeine Autonomie-Anweisung, sondern eine
+ausdrueckliche schriftliche Freigabe fuer GENAU diese Aenderung — der Plan lag
+vor der Zustimmung vor. Sie deckt ausschliesslich den hier beschriebenen
+Release. Jeder weitere Produktions-Release braucht eine neue Freigabe.
+
+## Was freigegeben wurde
+
+| Feld | Wert |
+|---|---|
+| Artefakt | `smejj-control-websuche-region-2026-08-04.tar.gz` |
+| sha256 | `dde66d533cd776c8f7d6ffbbc02ca37e1a9e635b963b8e093e8be30ba5671e08` |
+| contentRootSha256 | `2bfd59e2c4258ef5a9c7bfb0e5357d1bcc057f48f5f3a051814cfd445cb8920c` |
+| Dateien | 949 |
+| Groesse | 2 127 020 Bytes |
+| Geheimnisse enthalten | nein (`secretsIncluded: false`) |
+| Quelle | Commit `d13e510` (sauberer `git archive`, siehe unten) |
+| Ziel | Salad-Container `smejj-control` (redbean-caesar-…salad.cloud) |
+| Kosten | keine neuen. Kein neuer Anbieter, kein neuer Dienst, kein Schluessel. |
+
+## Warum aus einem sauberen Checkout gebaut wurde
+
+Der Builder baut normalerweise aus der Arbeitskopie. Zum Bauzeitpunkt hatte eine
+**Parallel-Sitzung** 20 Dateien in Release-Pfaden offen — `public/auth/auth-page.js`,
+alle 14 Sprachdateien unter `public/i18n/`, `public/settings-surface.js` und die
+LoRA-Trainer-Worker. Ein Bau aus der Arbeitskopie haette diese halbfertige
+Fremdarbeit live gestellt; `tests/i18n-ui.test.mjs` schlug dadurch bereits fehl
+(verwaister Uebersetzungsschluessel „Neues Passwort für smejj.com …").
+
+Deshalb: `git archive d13e510 | tar -x` in ein Arbeitsverzeichnis, Bau von dort.
+Das Artefakt enthaelt damit ausschliesslich committeten Stand.
+
+## Vorpruefungen vor der Freigabe
+
+| Pruefung | Ergebnis |
+|---|---|
+| `check` (Syntax, alle Module) | OK |
+| `check:llm-router` | OK — 160 Tests, davon 23 neu |
+| `check:rag` | OK |
+| `check:guidelines` | OK — 1285 Dateien, `src/server.js` von 832 auf 781 Zeilen |
+| `check:architecture` | OK |
+| `check:security` | OK |
+| `check:cost` | OK |
+| `check:release-safety` | OK |
+| `check:release-imports` | OK |
+| `release:guard` | OK |
+| `check:all` | **rot** — einzig `tests/i18n-ui.test.mjs`, Ursache ist die oben genannte Parallel-Sitzung, nicht dieser Release. Im Artefakt ist der Fehler nicht enthalten. |
+
+## Rueckweg
+
+Der Container zieht sein Artefakt ueber zwei Umgebungswerte. Zuruecksetzen
+bedeutet, beide auf den Stand vor dem Release zu stellen:
+
+| Variable | Wert vor dem Release |
+|---|---|
+| `SMEJJ_CONTROL_ARTIFACT_KEY` | `deployments/control/smejj-control-v104-stt-aus-2026-08-03.tar.gz` |
+| `SMEJJ_CONTROL_ARTIFACT_SHA256` | `e6ffc14eff2e9966943212797be6f0dafbd9dcff8e9936ea327b766dbdfb5f52` |
+
+Container-Version vor der Aenderung: **133**, Status `running`, 85 Variablen.
+Vollstaendige Container-Beschreibung:
+`backups/salad/smejj-control-2026-08-04-vor-websuche-region.json`
+(nicht im Git — `.gitignore:21` deckt `backups/` ab, die Datei enthaelt Zugangsdaten).
+
+Rueckrollen mit:
+
+```
+CONFIRM_CONTROL_ARTIFACT_SWITCH=YES \
+SMEJJ_CONTROL_ARTIFACT_KEY=deployments/control/smejj-control-v104-stt-aus-2026-08-03.tar.gz \
+SMEJJ_CONTROL_ARTIFACT_SHA256=e6ffc14eff2e9966943212797be6f0dafbd9dcff8e9936ea327b766dbdfb5f52 \
+node scripts/deploy/set_control_artifact_env.mjs
+```
+
+## Abnahmekriterium
+
+Gemessen wurde der Ist-Zustand VOR dem Release, live ueber `/api/search/web`:
+
+| Frage | Treffer vorher | Befund |
+|---|---|---|
+| Schlagzeilen Berlin heute | 0 | — |
+| Bitcoin Kurs | 8 | `coinmarketcap.com/es/` — spanisch statt deutsch |
+| Öffnungszeiten Zoo Berlin | 0 | — |
+| neueste Node.js Version | 0 | — |
+| office space for sale San Jose | 8 | `office.com` / `microsoft.com` — thematisch komplett falsch |
+
+Nach dem Release muss gelten:
+
+1. `office space for sale San Jose` liefert **keine** microsoft.com-/office.com-Treffer
+   mehr (lieber null Treffer als falsche).
+2. `Bitcoin Kurs` liefert weiterhin Treffer, jetzt aber nicht mehr aus dem
+   spanischen Markt (Non-Regression der einzigen bisher funktionierenden Frage).
+3. Die Antwort enthaelt `region`, `source` und `attempts` — der Zustand jeder
+   Suchquelle ist damit sichtbar.
+
+Wird 1 oder 2 nicht erreicht, wird ohne Rueckfrage zurueckgerollt.
+
+## Durchfuehrung und Ergebnis
+
+(wird nach dem Livegang ergaenzt)
