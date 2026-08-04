@@ -32,7 +32,7 @@ import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "..
 import { handleWorkerModelAction, handleWorkerValidate } from "../control-server/src/routes/workerModelRoutes.js";
 import { refreshModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
 import { buildRagContextBlock, searchKnowledge } from "../control-server/src/rag/agentContext.js";
-import { shouldSearchWeb } from "./search/webSearch.js";
+import { keyProviderUsage, shouldSearchWeb } from "./search/webSearch.js";
 import { buildAgentWebContext, handleWebSearch } from "./search/webSearchRoute.js";
 import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/src/live/liveInternet.js";
 import { classifyProfile, executeWithFallback, resolveModelRequest } from "../control-server/src/llm/modelRouter.js";
@@ -294,7 +294,11 @@ async function handleHealth(res) {
     aiBackend: aiStatus.aiBackend,
     activeModelId: aiStatus.activeModelId,
     modelRegistry: aiStatus.registry,
-    storage: Boolean(process.env.IDRIVE_E2_ENDPOINT && process.env.IDRIVE_E2_ACCESS_KEY && process.env.IDRIVE_E2_SECRET_KEY && process.env.IDRIVE_E2_BUCKET)
+    storage: Boolean(process.env.IDRIVE_E2_ENDPOINT && process.env.IDRIVE_E2_ACCESS_KEY && process.env.IDRIVE_E2_SECRET_KEY && process.env.IDRIVE_E2_BUCKET),
+    // Suchquelle mit Schluessel: NUR Zustand und Verbrauch, nie der Schluessel.
+    // Ohne diese Anzeige ist "konfiguriert" von "Kontingent aufgebraucht" nicht
+    // zu unterscheiden — beides sieht im Chat wie "nichts gefunden" aus.
+    suchquelle: keyProviderUsage(process.env)
   });
 }
 

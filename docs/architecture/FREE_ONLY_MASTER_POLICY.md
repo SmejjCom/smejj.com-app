@@ -187,3 +187,32 @@ npm run release:preflight
    Server oder ein weiterer Anbieter braucht erneut eine schriftliche
    Freigabe mit Dienst und Betrag.
    Umsetzungsplan: `docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md`.
+
+3. **Tavily als Suchquelle (seit 2026-08-04):** Websuche ueber
+   `https://api.tavily.com/search` mit einem vom Betreiber hinterlegten
+   Schluessel (BYOK). Schriftliche Freigabe durch den Betreiber am
+   2026-08-04 im Chat: „Ja, mach die Suchquelle mit Schlüssel."
+
+   Betrag: **0,00 USD.** Tavily gewaehrt 1000 API-Credits pro Monat gratis
+   und verlangt dafuer **keine Zahlungsart**. Ohne hinterlegte Karte kann
+   dort nichts abgerechnet werden — das ist die eigentliche Kostengarantie.
+
+   Anlass: Am 2026-08-04 wurde live aus dem Salad-Container gemessen, dass
+   die schluessellosen Quellen dem Rechenzentrum nicht mehr antworten:
+   DuckDuckGo (HTML und Lite) liefert HTTP 202 mit einer Sperrseite, Bing
+   liefert HTTP 200 mit absichtlichen Taeuschtreffern. Vier von sechs
+   Standardfragen ergaben null Treffer. Geprueft und ausgeschieden:
+   Brave Search API (Gratiskontingent im Februar 2026 abgeschafft, Karte
+   pflicht, metered), Google Custom Search (fuer Neukunden geschlossen,
+   Abschaltung 2027-01-01), Mojeek, Marginalia und acht oeffentliche
+   SearXNG-Instanzen.
+
+   Zweite Sicherung im Code: `src/search/searchKeyProvider.js` zaehlt mit
+   und macht bei `SMEJJ_SEARCH_API_MONTHLY_MAX` dicht (Standard 900 von
+   1000). `search_depth: "basic"` kostet 1 Credit statt 2. Ohne Schluessel
+   findet kein einziger Netzaufruf dorthin statt (fail-closed).
+
+   Diese Ausnahme bleibt eng: Sie erlaubt NUR dieses eine Gratiskontingent
+   ohne hinterlegte Zahlungsart. Ein bezahlter Tarif, ein Pay-as-you-go-
+   Zusatz oder ein weiterer Such-Anbieter braucht erneut eine schriftliche
+   Freigabe mit Dienst und Betrag.

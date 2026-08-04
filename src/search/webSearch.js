@@ -1,7 +1,17 @@
-// smejj.com — Live-Internet-Suche (free-only, ohne API-Key, fail-closed).
-// Quellen: DuckDuckGo HTML, DuckDuckGo Lite, Bing HTML — alle kostenlos, keine Keys,
-// keine Paid-Fallbacks. Sicherheit: nur https, keine privaten Ziele (SSRF-Schutz),
-// harte Timeouts, begrenzte Antwortgroessen. Fehler ergeben leere Resultate, nie Abbruch.
+// smejj.com — Live-Internet-Suche, fail-closed und in dieser Reihenfolge:
+//   1. Quelle mit Schluessel (BYOK, src/search/searchKeyProvider.js) — nur wenn
+//      der Betreiber einen Schluessel hinterlegt hat. Gratiskontingent, kein
+//      Zahlungsmittel hinterlegt, zusaetzlich ein Monatsdeckel im Code.
+//   2. SearXNG, falls ein eigener Endpunkt gesetzt ist (frei, kein Schluessel).
+//   3. DuckDuckGo HTML, DuckDuckGo Lite, Bing HTML — frei, ohne Schluessel.
+//
+// Stufe 3 ist seit dem 2026-08-04 aus dem Rechenzentrum praktisch tot
+// (DuckDuckGo HTTP 202 Sperrseite, Bing absichtliche Taeuschtreffer) und bleibt
+// nur als Rueckfall stehen. Ohne Schluessel verhaelt sich alles wie vorher —
+// Stufe 1 macht dann keinen einzigen Netzaufruf.
+//
+// Sicherheit unveraendert: nur https, keine privaten Ziele (SSRF-Schutz), harte
+// Timeouts, begrenzte Antwortgroessen. Fehler ergeben leere Resultate, nie Abbruch.
 // Ergebnisse werden kurz gecacht (TTL), damit identische Anfragen die Suchmaschinen
 // nicht wiederholt treffen (Schutz vor Blocking, schnellere Antworten).
 import { createTtlCache } from "./searchCache.js";
@@ -10,6 +20,9 @@ import { createTtlCache } from "./searchCache.js";
 import { normalizeForIntent } from "./searchIntent.js";
 // WO gesucht wird, ist eine eigene Entscheidung und liegt in einem eigenen Modul.
 import { DEFAULT_REGION, detectSearchRegion, normalizeRegion, regionSearchParams } from "./searchRegion.js";
+// Quelle mit Schluessel (BYOK). Eigenes Modul: sie hat eine andere Kostenlage
+// und ein eigenes Budget-Gate — das gehoert nicht in die Scraping-Logik.
+import { keyProviderConfigured, keyProviderUsage, searchWithKey } from "./searchKeyProvider.js";
 
 const SEARCH_CACHE_TTL_MS = 600000;
 const searchResultCache = createTtlCache({ ttlMs: SEARCH_CACHE_TTL_MS, maxEntries: 500 });
@@ -335,6 +348,25 @@ export async function searchWebDetailed(query, options) {
   const cached = searchResultCache.get(cacheKey);
   if (cached) return { results: cached.slice(), region: params.region, source: "cache", cached: true, attempts: [] };
   const attempts = [];
+  // ERSTE Stufe: Quelle mit Schluessel (BYOK), falls konfiguriert. Sie steht
+  // vorn, weil die kostenlosen Quellen dem Rechenzentrum seit 2026-08-04 nicht
+  // mehr antworten (DuckDuckGo HTTP 202 Sperrseite, Bing Taeuschtreffer).
+  // Ohne Schluessel passiert hier nichts — kein Netzaufruf, keine Kosten, und
+  // der bisherige Weg laeuft unveraendert weiter.
+  const mitSchluessel = await searchWithKey(trimmed, { limit, region: params.region });
+  if (mitSchluessel.status !== "kein schluessel") {
+    const brauchbar = mitSchluessel.results.length > 0 && resultsLookRelevant(trimmed, mitSchluessel.results);
+    attempts.push({
+      source: mitSchluessel.source,
+      parsed: mitSchluessel.results.length,
+      status: brauchbar ? "ok" : mitSchluessel.results.length ? "themenfremd" : mitSchluessel.status
+    });
+    if (brauchbar) {
+      const begrenzt = mitSchluessel.results.slice(0, limit);
+      searchResultCache.set(cacheKey, begrenzt);
+      return { results: begrenzt.slice(), region: params.region, source: mitSchluessel.source, cached: false, attempts };
+    }
+  }
   // Bevorzugt SearXNG (falls konfiguriert), sonst HTML-Suchmaschinen als Fallback.
   if (SEARXNG_URL) {
     const sx = await searxngJson(trimmed, limit, params);
@@ -442,6 +474,7 @@ export { shouldSearchWeb, normalizeForIntent } from "./searchIntent.js";
 // Dasselbe Prinzip fuer die Region und den Suchbegriff: eigene Module, hier nur
 // weitergereicht, damit Aufrufer eine einzige Anlaufstelle behalten.
 export { buildSearchQuery, detectSearchRegion, normalizeRegion, regionSearchParams, SEARCH_REGIONS } from "./searchRegion.js";
+export { keyProviderConfigured, keyProviderUsage } from "./searchKeyProvider.js";
 
 // Snippet aufraeumen: Pipe-/Menue-Ketten und Navigationsreste entschaerfen, kuerzen.
 // So bekommt das Modell weniger Roh-Ticker-Text zum Wiedergeben (bessere Zusammenfassung).

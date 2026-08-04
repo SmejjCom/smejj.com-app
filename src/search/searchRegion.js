@@ -26,29 +26,34 @@ import { normalizeForIntent } from "./searchIntent.js";
 export const DEFAULT_REGION = "de";
 
 /**
- * Regionstabelle. Pro Markt die Parameter aller drei kostenlosen Quellen:
+ * Regionstabelle. Pro Markt die Parameter aller Quellen:
  * `ddg` = DuckDuckGo `kl`, `cc` = Bing `cc`, `lang` = Bing `setlang`/SearXNG,
- * `accept` = HTTP-Kopf `Accept-Language`.
+ * `accept` = HTTP-Kopf `Accept-Language`, `country` = Tavily-Landesname.
+ *
+ * `country` ist bewusst der ausgeschriebene Name in Kleinbuchstaben: Tavily
+ * erwartet "united states", NICHT "us" (Doku 2026-08-04 geprueft). Ein falsches
+ * Format wird dort still ignoriert — der Markt waere dann wirkungslos, ohne dass
+ * es auffaellt. `wt` (weltweit) traegt bewusst KEIN Land.
  */
 export const SEARCH_REGIONS = Object.freeze({
-  de: { ddg: "de-de", cc: "DE", lang: "de", accept: "de-DE,de;q=0.9,en;q=0.6" },
-  at: { ddg: "at-de", cc: "AT", lang: "de", accept: "de-AT,de;q=0.9,en;q=0.6" },
-  ch: { ddg: "ch-de", cc: "CH", lang: "de", accept: "de-CH,de;q=0.9,en;q=0.6" },
-  us: { ddg: "us-en", cc: "US", lang: "en", accept: "en-US,en;q=0.9" },
-  uk: { ddg: "uk-en", cc: "GB", lang: "en", accept: "en-GB,en;q=0.9" },
-  ca: { ddg: "ca-en", cc: "CA", lang: "en", accept: "en-CA,en;q=0.9" },
-  au: { ddg: "au-en", cc: "AU", lang: "en", accept: "en-AU,en;q=0.9" },
-  fr: { ddg: "fr-fr", cc: "FR", lang: "fr", accept: "fr-FR,fr;q=0.9,en;q=0.6" },
-  es: { ddg: "es-es", cc: "ES", lang: "es", accept: "es-ES,es;q=0.9,en;q=0.6" },
-  it: { ddg: "it-it", cc: "IT", lang: "it", accept: "it-IT,it;q=0.9,en;q=0.6" },
-  nl: { ddg: "nl-nl", cc: "NL", lang: "nl", accept: "nl-NL,nl;q=0.9,en;q=0.6" },
-  pl: { ddg: "pl-pl", cc: "PL", lang: "pl", accept: "pl-PL,pl;q=0.9,en;q=0.6" },
-  tr: { ddg: "tr-tr", cc: "TR", lang: "tr", accept: "tr-TR,tr;q=0.9,en;q=0.6" },
-  br: { ddg: "br-pt", cc: "BR", lang: "pt", accept: "pt-BR,pt;q=0.9,en;q=0.6" },
-  jp: { ddg: "jp-jp", cc: "JP", lang: "ja", accept: "ja-JP,ja;q=0.9,en;q=0.6" },
-  in: { ddg: "in-en", cc: "IN", lang: "en", accept: "en-IN,en;q=0.9" },
+  de: { ddg: "de-de", cc: "DE", lang: "de", accept: "de-DE,de;q=0.9,en;q=0.6", country: "germany" },
+  at: { ddg: "at-de", cc: "AT", lang: "de", accept: "de-AT,de;q=0.9,en;q=0.6", country: "austria" },
+  ch: { ddg: "ch-de", cc: "CH", lang: "de", accept: "de-CH,de;q=0.9,en;q=0.6", country: "switzerland" },
+  us: { ddg: "us-en", cc: "US", lang: "en", accept: "en-US,en;q=0.9", country: "united states" },
+  uk: { ddg: "uk-en", cc: "GB", lang: "en", accept: "en-GB,en;q=0.9", country: "united kingdom" },
+  ca: { ddg: "ca-en", cc: "CA", lang: "en", accept: "en-CA,en;q=0.9", country: "canada" },
+  au: { ddg: "au-en", cc: "AU", lang: "en", accept: "en-AU,en;q=0.9", country: "australia" },
+  fr: { ddg: "fr-fr", cc: "FR", lang: "fr", accept: "fr-FR,fr;q=0.9,en;q=0.6", country: "france" },
+  es: { ddg: "es-es", cc: "ES", lang: "es", accept: "es-ES,es;q=0.9,en;q=0.6", country: "spain" },
+  it: { ddg: "it-it", cc: "IT", lang: "it", accept: "it-IT,it;q=0.9,en;q=0.6", country: "italy" },
+  nl: { ddg: "nl-nl", cc: "NL", lang: "nl", accept: "nl-NL,nl;q=0.9,en;q=0.6", country: "netherlands" },
+  pl: { ddg: "pl-pl", cc: "PL", lang: "pl", accept: "pl-PL,pl;q=0.9,en;q=0.6", country: "poland" },
+  tr: { ddg: "tr-tr", cc: "TR", lang: "tr", accept: "tr-TR,tr;q=0.9,en;q=0.6", country: "turkey" },
+  br: { ddg: "br-pt", cc: "BR", lang: "pt", accept: "pt-BR,pt;q=0.9,en;q=0.6", country: "brazil" },
+  jp: { ddg: "jp-jp", cc: "JP", lang: "ja", accept: "ja-JP,ja;q=0.9,en;q=0.6", country: "japan" },
+  in: { ddg: "in-en", cc: "IN", lang: "en", accept: "en-IN,en;q=0.9", country: "india" },
   // Weltweit ohne Landesfilter — fuer Fragen ohne Ortsbezug.
-  wt: { ddg: "wt-wt", cc: "US", lang: "en", accept: "en-US,en;q=0.9" }
+  wt: { ddg: "wt-wt", cc: "US", lang: "en", accept: "en-US,en;q=0.9", country: "" }
 });
 
 // Ortsmarker je Markt. Bewusst nur eindeutige Namen: ein mehrdeutiges Wort
