@@ -20,9 +20,23 @@ import { ladeLoopKonfiguration, startHindernisse } from "./config.js";
 import { erzeugeLoop } from "./loop.js";
 import { baueDatenPruefung, baueMesser } from "./evalAdapter.js";
 import { geschaetzteZykluskostenUsd, monatskostenUsd, reichweiteTage } from "./budget.js";
+import {
+  bewerteWacht,
+  erzeugeWachtGedaechtnis,
+  leseSaladKoordinaten,
+  leseWachtGrenzen,
+  stoppeContainerGruppe
+} from "./waechter.js";
+import { trainerErreichbar } from "./trainerClient.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const TAKT_MS = 30_000;
+/**
+ * Eigener, langsamerer Takt fuer den Waechter. Er misst nur /health; alle zwei
+ * Minuten genuegt, um eine Stundenfrist auf die Minute genau einzuhalten, und
+ * belastet den Trainer waehrend eines Laufs nicht unnoetig.
+ */
+const WACHT_TAKT_MS = 120_000;
 
 export function erzeugeServer({ config, loop }) {
   return http.createServer((req, res) => {
@@ -90,6 +104,73 @@ export function starteTakt(loop, { intervalMs = TAKT_MS, config, log = console.l
   return timer;
 }
 
+/**
+ * Der Anlaufwaechter: beendet eine Karte, die dauerhaft nichts leistet.
+ *
+ * Sitzt hier und nicht im Trainer, weil nur dieser Prozess den Salad-Schluessel
+ * halten darf — der Trainer laeuft auf einer fremden Community-GPU. Er koennte
+ * sich dort ohnehin nur selbst beenden, und restart_policy=always startete ihn
+ * sofort wieder: eine Schleife zum selben Preis wie der Stillstand.
+ *
+ * Laeuft AUCH, wenn das Training abgeschaltet ist. Eine laufende Karte kostet
+ * Geld, unabhaengig davon, ob die Schleife sie benutzen darf.
+ */
+export function starteWachtTakt({
+  config,
+  env = process.env,
+  log = console.log,
+  intervalMs = WACHT_TAKT_MS,
+  setIntervalImpl = setInterval,
+  fetchImpl = undefined,
+  unrefTimer = false
+} = {}) {
+  const grenzen = leseWachtGrenzen(env);
+  const koordinaten = leseSaladKoordinaten(env);
+  const gedaechtnis = erzeugeWachtGedaechtnis();
+
+  if (!grenzen.aktiv) {
+    log("[smejj-lora-loop] Anlaufwaechter AUS (SMEJJ_LORA_WAECHTER=AUS) — eine haengende Karte laeuft unbegrenzt weiter.");
+    return null;
+  }
+  if (!config.trainer.basisUrl) {
+    log("[smejj-lora-loop] Anlaufwaechter untaetig: keine Trainer-Adresse (SMEJJ_LORA_TRAINER_URL).");
+    return null;
+  }
+  if (!koordinaten.vollstaendig) {
+    // Laut und unmissverstaendlich: ein Waechter, der nur zusehen kann,
+    // taeuscht Sicherheit vor.
+    log(`[smejj-lora-loop] WARNUNG: Anlaufwaechter kann NICHT stoppen — es fehlen ${koordinaten.fehlend.join(", ")}.`
+      + " Eine haengende GPU muss dann von Hand beendet werden.");
+  }
+
+  log(`[smejj-lora-loop] Anlaufwaechter scharf: stoppt ${koordinaten.gruppe},`
+    + ` wenn der Trainer ${Math.round(grenzen.bereitFristMs / 60000)} min lang nicht bereit meldet.`);
+
+  const timer = setIntervalImpl(() => {
+    (async () => {
+      const erreichbar = await trainerErreichbar({
+        basisUrl: config.trainer.basisUrl, apiKey: config.trainer.apiKey, fetchImpl
+      });
+      // trainerErreichbar sagt nur "antwortet /health mit 2xx". Genau das ist
+      // hier gemeint: der Trainer haelt /health absichtlich immer auf 200,
+      // solange sein Prozess lebt — ein Fehlschlag heisst also wirklich tot.
+      const nichtBereitSeitMs = gedaechtnis.melde(erreichbar);
+      const entscheidung = bewerteWacht({ erreichbar, bereit: erreichbar, nichtBereitSeitMs }, grenzen);
+      if (!entscheidung.stoppen) return;
+
+      const ergebnis = await stoppeContainerGruppe({ koordinaten, fetchImpl });
+      log(ergebnis.ok
+        ? `[smejj-lora-loop] ANLAUFWAECHTER: ${koordinaten.gruppe} gestoppt (${entscheidung.grund}). Keine weitere GPU-Zeit.`
+        : `[smejj-lora-loop] ANLAUFWAECHTER KONNTE NICHT STOPPEN (${entscheidung.grund}): ${ergebnis.fehler}.`
+          + " Die Karte laeuft WEITER — von Hand im Salad-Portal beenden.");
+      if (ergebnis.ok) gedaechtnis.zuruecksetzen();
+    })().catch((error) => log(`[smejj-lora-loop] Waechter-Fehler: ${String(error?.message || error).slice(0, 200)}`));
+  }, intervalMs);
+
+  if (unrefTimer && typeof timer?.unref === "function") timer.unref();
+  return timer;
+}
+
 async function main() {
   const config = ladeLoopKonfiguration(process.env);
   const loop = erzeugeLoop({
@@ -101,6 +182,9 @@ async function main() {
   });
   const server = erzeugeServer({ config, loop });
   starteTakt(loop, { config });
+  // Bewusst VOR dem listen und unabhaengig von loopEnabled: eine laufende Karte
+  // kostet auch dann Geld, wenn die Schleife selbst abgeschaltet ist.
+  starteWachtTakt({ config });
   await new Promise((resolve, reject) => {
     server.on("error", reject);
     server.listen(config.port, config.host, resolve);

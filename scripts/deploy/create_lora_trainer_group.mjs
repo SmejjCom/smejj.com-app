@@ -30,16 +30,14 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
+// Abbild und Startbefehl stehen in einem eigenen Modul, weil das
+// Erneuerungsskript denselben Bauplan braucht. Dort steht auch, warum die
+// torch-Fassung ins Abbild gehoert und nicht in den Startbefehl.
+import { ABBILD, startBefehl } from "./lora_trainer_rezept.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const GRUPPE = process.env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer";
 const MODUS = process.env.SMEJJ_TRAINER_MODUS || "attrappe";
-
-// Oeffentliches Abbild mit CUDA und Python. Bewusst ein Laufzeit-Abbild
-// (kein devel): es ist kleiner und laedt damit schneller — die Ladezeit ist
-// laut Messung die knappe Ressource, nicht der Plattenplatz.
-const ABBILD = process.env.SMEJJ_TRAINER_ABBILD
-  || "docker.io/pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime";
 
 loadSecureLocalEnv();
 
@@ -83,48 +81,6 @@ function baueBuendel() {
     { cwd: path.join(REPO, "workers"), maxBuffer: 8 * 1024 * 1024 }
   );
   return roh.toString("base64");
-}
-
-/**
- * Startbefehl. Reihenfolge ist der Kern: auspacken, HTTP-Server SOFORT starten,
- * die schweren Pakete erst danach im Hintergrund nachziehen. Der Dienst
- * antwortet damit binnen Sekunden auf /health, lange bevor torch bereit ist.
- */
-function startBefehl() {
-  // Zeilenweise statt mit && verkettet: die Hintergrund-Installation darf den
-  // Startpfad nicht an eine Erfolgsbedingung haengen. Schlaegt pip fehl, muss
-  // der Server trotzdem laufen und ehrlich 'nicht bereit' melden — ein toter
-  // Container koennte das nicht mehr sagen.
-  const skript = [
-    "set -eu",
-    // bash -l setzt PATH ueber /etc/profile zurueck; /opt/conda/bin (python3,
-    // pip im pytorch-Abbild) muss danach wieder vorn stehen.
-    'export PATH="/opt/conda/bin:$PATH"',
-    "mkdir -p /app",
-    "cd /app",
-    'printf %s "$SMEJJ_TRAINER_BUNDLE_B64" | base64 -d | tar xzf -',
-    "cd /app/smejj-lora-trainer",
-    'if [ "${SMEJJ_TRAINER_MODUS:-attrappe}" = "echt" ]; then',
-    // Exit-Code als Markerdatei: laufwerk.py wartet darauf, bevor es die
-    // Pakete importiert. Ohne den Marker verliert der Import den Wettlauf
-    // gegen pip (gemessen am 2026-08-03: ModuleNotFoundError: transformers).
-    //
-    // PINS statt neuester Stand, gemessen am 2026-08-03: ungepinnt zieht pip
-    // transformers/accelerate, die torch>=2.5 erwarten — das Abbild hat 2.4.0
-    // ("cannot import name 'DTensor' from 'torch.distributed.tensor'").
-    // Qwen3 wiederum braucht transformers>=4.51. Deshalb ein kohaerenter
-    // Stand vom April 2025 samt torch-Upgrade; das laeuft im Hintergrund und
-    // der Marker haelt den Motor-Import solange zurueck.
-    // torchvision MUSS mitgezogen werden: das Abbild traegt torchvision 0.19
-    // (gebaut gegen torch 2.4); mit torch 2.6 bricht der transformers-Import
-    // mit "operator torchvision::nms does not exist" (Portal-Log 2026-08-03).
-    "  ( pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 transformers==4.51.3"
-      + " peft==0.15.2 accelerate==1.6.0 bitsandbytes==0.45.5 'safetensors>=0.4.5'"
-      + " > /tmp/pip.log 2>&1; echo $? > /tmp/smejj-pip.rc ) &",
-    "fi",
-    "exec python3 server.py"
-  ].join("\n");
-  return ["bash", "-lc", skript];
 }
 
 function umgebung() {

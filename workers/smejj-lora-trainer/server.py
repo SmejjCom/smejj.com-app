@@ -95,6 +95,12 @@ class Handler(BaseHTTPRequestHandler):
                 "ladezustand": laufwerk.ladezustand(),
             })
 
+        # Ungekuerztes Fehlerbild. Das Gateway steht auf auth=true, diese Route
+        # ist also nur mit dem Salad-Api-Key erreichbar; sie gibt bewusst keine
+        # Umgebungswerte heraus, nur Rueckverfolgung, Fassungen und CUDA-Zustand.
+        if pfad == "/diagnose":
+            return self._antworte(200, laufwerk.diagnose())
+
         if pfad.startswith("/training/status/"):
             lauf_id = pfad[len("/training/status/"):]
             zustand = laufwerk.zustand(lauf_id)

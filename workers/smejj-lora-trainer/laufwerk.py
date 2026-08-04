@@ -41,6 +41,12 @@ class Laufwerk:
         self._bereit = False
         self._ladezustand = "vorbereitung"
         self._motor = None
+        # Vollstaendiger Fehlertext und Rueckverfolgung. `ladezustand` wird auf
+        # 120 Zeichen gekuerzt, damit /health knapp bleibt — genau diese Kuerzung
+        # hat am 2026-08-03 die eigentliche Ursache verborgen ("...because of the
+        # following error:\nF"). Hier steht sie ungekuerzt.
+        self._fehler_text = ""
+        self._fehler_spur = ""
 
     # --- Ladezustand ---------------------------------------------------
 
@@ -65,6 +71,7 @@ class Laufwerk:
             return
         try:
             self._warte_auf_pakete()
+            self._pruefe_torch_stimmig()
             self._setze_ladezustand("laedt-motor")
             from motor import Motor  # noqa: PLC0415 - torch bewusst spaet laden
 
@@ -78,6 +85,9 @@ class Laufwerk:
             # keinen Zyklus und es entstehen keine Trainingskosten. Der Prozess
             # bleibt am Leben, damit /health weiter antwortet und Salad den
             # Container nicht in eine Neustartschleife schickt.
+            with self._sperre:
+                self._fehler_text = str(fehler)
+                self._fehler_spur = traceback.format_exc()
             self._setze_ladezustand(f"fehler:{str(fehler)[:120]}")
             traceback.print_exc()
 
@@ -104,6 +114,85 @@ class Laufwerk:
                     raise RuntimeError(f"pip-exit={code}: {schwanz}")
                 return
             time.sleep(5)
+
+    def _pruefe_torch_stimmig(self):
+        """Meldet eine MISCHINSTALLATION von torch, bevor sie Folgefehler wirft.
+
+        Am 2026-08-03 stand im Container:
+            importlib.metadata.version("torch") == "2.6.0"   (pip-Metadaten)
+            torch.__version__                  == "2.4.0"    (wirklich geladen)
+
+        pip hatte die neue Fassung ueber die conda-Installation des Abbilds
+        gelegt, ohne die alte entfernen zu koennen. Sichtbar wurde das erst
+        drei Ebenen tiefer als "cannot import name 'get_proxy_mode'" und
+        "No module named 'torch._C._dynamo.guards'" — Meldungen, die auf
+        transformers und bitsandbytes zeigen und nicht auf die Ursache.
+
+        Zwei Zeilen Vergleich ersparen diese Suche.
+        """
+        from importlib.metadata import PackageNotFoundError, version  # noqa: PLC0415
+
+        import torch  # noqa: PLC0415
+
+        try:
+            gemeldet = version("torch")
+        except PackageNotFoundError:
+            return  # Ohne Metadaten gibt es nichts zu vergleichen.
+
+        # "2.6.0+cu124" und "2.6.0" sind dieselbe Fassung: der Teil hinter dem
+        # Pluszeichen benennt nur den CUDA-Bau.
+        def basis(fassung):
+            return str(fassung).split("+")[0]
+
+        if basis(gemeldet) != basis(torch.__version__):
+            raise RuntimeError(
+                "torch-Mischinstallation: pip meldet "
+                f"{gemeldet}, geladen wird aber {torch.__version__}. "
+                "Die torch-Fassung gehoert ins Abbild, nicht in den Startbefehl "
+                "(siehe scripts/deploy/lora_trainer_rezept.mjs)."
+            )
+
+    # --- Diagnose ------------------------------------------------------
+
+    def diagnose(self):
+        """Vollstaendiges Fehlerbild — der Ersatz fuer das Salad-Portalprotokoll.
+
+        Am 2026-08-03 hat genau dieses Loch einen Tag gekostet: der Ladezustand
+        in /health ist auf 120 Zeichen gekuerzt, und die oeffentliche Salad-API
+        liefert keine Container-Protokolle. Die Ursache stand nur im Portal.
+        Diese Route holt sie an die Oberflaeche: ungekuerzte Rueckverfolgung,
+        das pip-Protokoll und die tatsaechlich installierten Fassungen.
+
+        Bewusst OHNE Geheimnisse: keine Umgebungswerte, keine Schluessel.
+        """
+        with self._sperre:
+            bericht = {
+                "modus": self.modus,
+                "bereit": self._bereit,
+                "ladezustand": self._ladezustand,
+                "fehler": self._fehler_text,
+                "spur": self._fehler_spur,
+            }
+        bericht["pip"] = self._pip_bericht()
+        bericht["pakete"] = _paketfassungen()
+        bericht["bitsandbytes"] = _importprobe("bitsandbytes")
+        bericht["cuda"] = _cuda_bericht()
+        return bericht
+
+    def _pip_bericht(self):
+        ergebnis = {"marker": PIP_MARKER, "exitCode": None, "protokollSchwanz": ""}
+        try:
+            with open(PIP_MARKER, encoding="utf-8") as datei:
+                ergebnis["exitCode"] = datei.read().strip()
+        except OSError:
+            pass
+        try:
+            with open(PIP_PROTOKOLL, encoding="utf-8", errors="replace") as datei:
+                # Der Schwanz traegt die Fehlermeldung; der Kopf nur Downloads.
+                ergebnis["protokollSchwanz"] = datei.read()[-4000:]
+        except OSError:
+            pass
+        return ergebnis
 
     # --- Laeufe --------------------------------------------------------
 
@@ -201,6 +290,62 @@ class Laufwerk:
             temperature=float((anfrage or {}).get("temperature") or 0.35),
         )
         return _openai_huelle("smejj-1-0", text)
+
+
+def _paketfassungen():
+    """Welche Fassungen liegen wirklich im Container?
+
+    Ueber importlib.metadata statt ueber einen Import: das Ablesen einer Fassung
+    darf nicht dieselbe schwere Bibliothek laden, deren Import gerade untersucht
+    wird — sonst diagnostiziert die Diagnose sich selbst kaputt.
+    """
+    from importlib.metadata import PackageNotFoundError, version  # noqa: PLC0415
+
+    fassungen = {}
+    for name in (
+        "torch", "torchvision", "transformers", "peft",
+        "accelerate", "bitsandbytes", "safetensors", "numpy",
+    ):
+        try:
+            fassungen[name] = version(name)
+        except PackageNotFoundError:
+            fassungen[name] = None
+        except Exception as fehler:  # noqa: BLE001
+            fassungen[name] = f"fehler:{str(fehler)[:80]}"
+    return fassungen
+
+
+def _importprobe(modulname):
+    """Importiert ein Modul GEZIELT und gibt die ungekuerzte Rueckverfolgung zurueck.
+
+    transformers verpackt Importfehler seiner Zusatzmodule in ein RuntimeError
+    mit dem Text 'look up to see its traceback' — die eigentliche Meldung geht
+    dabei verloren. Der direkte Import zeigt sie im Klartext.
+    """
+    import importlib  # noqa: PLC0415
+
+    try:
+        importlib.import_module(modulname)
+        return {"ok": True, "spur": ""}
+    except BaseException:  # noqa: BLE001 - auch ein exit() im Modul darf nicht durchschlagen
+        return {"ok": False, "spur": traceback.format_exc()}
+
+
+def _cuda_bericht():
+    """Sieht torch ueberhaupt eine Karte? Ein 'nein' erklaert die meisten Ladefehler."""
+    try:
+        import torch  # noqa: PLC0415
+
+        verfuegbar = torch.cuda.is_available()
+        return {
+            "torch": torch.__version__,
+            "gebautMitCuda": torch.version.cuda,
+            "verfuegbar": verfuegbar,
+            "karten": torch.cuda.device_count() if verfuegbar else 0,
+            "name": torch.cuda.get_device_name(0) if verfuegbar else "",
+        }
+    except Exception as fehler:  # noqa: BLE001
+        return {"fehler": str(fehler)[:300]}
 
 
 def _openai_huelle(modell, text):
