@@ -728,3 +728,15 @@ Die letzten drei Punkte der Betreiber-Liste. Volltext in der Kapsel.
   `chat-stream.js` rendert („🔍 Suche: … · Markt us ✓ 8 Treffer"), CSS im
   Buendel. NICHT abgenommen: der angemeldete Durchlauf am Stueck — ein gemintetes
   Token wird abgewiesen und eine Sitzung darf sich nicht anmelden.
+## 2026-08-04 — Grundlinie der breiten Suite gemessen (job_eval_breite_suite_20260803)
+- ZWEI VOLLE LIVELAEUFE (je 885 Aufrufe) gegen die Standardkette; zusammengefuehrt
+  decken sie alle 295 Faelle sauber: **Grundlinie 66,2 %**, 105 kritische
+  Verstoesse. Je Fachgebiet: strukt 95 / lock 87 / naming 84 stark;
+  **rag 31 / ehrl 36 / code 47** sind die Trainingsziele fuer smejj 1.0.
+  Berichte: modeleval-smejj-chat-breit-live-default{,-wdh}-2026-08-04.json.
+- ZWEI MESSFALLEN fuer lange Laeufe: (1) ein ~7-min-Netzausfall macht ganze
+  Kategorien zu 0 %-Fehlern (`fetch failed`) — Kategorien mit lauter errors sind
+  KEINE Modellaussage; (2) nach ~2 h Laufzeit kippt die Kette auf `http_401`
+  (Zugang laeuft aus) — lange Laeufe halbieren oder Laeufe zusammenfuehren
+  (Fall fuer Fall: fehlerfreie Messung gewinnt). --retries hilft nur bei
+  Sekunden-Aussetzern, nicht bei Minuten.
