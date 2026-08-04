@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-03T23:58:05.089Z",
-  "confirmation": "Wof Kadavanich, 2026-08-03: 'Ja' zur Nacharbeitsliste aus der Abschlussmeldung — Punkt 1 (Restzustand body.browser-pane-open beim Schliessen ueber den Browser-Knopf) und Punkt 2 (Wegklicken bei offenem Split-View schliesst nur noch das linke Menue, nicht mehr das Panel). Betrifft public/index.html (?v=2) und public/panel-backdrop.js; live deployt als sw v207 und im echten Klickpfad auf https://smejj.com verifiziert (5/5). MIT EINGEFROREN, aber NICHT von dieser Freigabe gedeckt: public/app.js und public/sw.js (v208) aus der Parallel-Session-Commit c518e44 'Gespraechsgedaechtnis an drei Stellen repariert' — im Repo committet, zum Zeitpunkt des Einfrierens noch NICHT live deployt.",
+  "frozenAt": "2026-08-04T00:10:53.247Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-04: 'Triff alle technischen Entscheidungen selbst und arbeite vollstaendig autonom. […] Nach Abschluss aktiviere einen Change-Lock: Ohne meine ausdrueckliche schriftliche Freigabe duerfen keine Aenderungen mehr vorgenommen werden.'",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "2f0542f668ee3b65628eb812cbac3e2d4449c87dfc0fa58de981951e5e1e9306",
+    "public/sw.js": "94480143a9df4116719493dc953a3f3dd6d0777090a6bde5b1ea8653364a466e",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
