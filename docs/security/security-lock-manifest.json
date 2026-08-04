@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-04T06:01:31.589Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-04: 'Anmeldepflicht jetzt live stellen ... und danach beide Sperren neu einfrieren.' — public/chat-bridge.js traegt die Wache und die Stromauslagerung der Parallelsitzung.",
+  "frozenAt": "2026-08-04T09:51:30.190Z",
+  "confirmation": "Ruecknahme nach Live-Befund 2026-08-04: Die Anmeldepflicht wies gueltig angemeldete Nutzer ab (Token im Browser, aber /api/auth/me -> authenticated=false). Wache ausgebaut, Baustein bleibt. Deckung durch die Betreiber-Freigabe 'Wenn du Fehler findest, behebe sie sofort'.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "9344804982b9eeb5003f0b3d6abfaa564aee72c7c6f57adc49ba53de055b79dd",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "157f34c1a998a30153bc0f404be3f135bdbd69e093ff25d1ea63a36d7e436b66",
     "public/chat-history-context.js": "00a993819d26a2cc282154d07f1161b10532eaea9348e92645acbe9133f0db15",
-    "public/chat-bridge.js": "7373c0cf85e0167b3d19160b7e1c435975ac916b9904b3d14b0634ad2b680974",
+    "public/chat-bridge.js": "d6112a911679744574a9d93c0d6832972582fbdce33a9da3344e2cc4bd03f35f",
     "public/ai/fetch-retry.js": "15a1e631825913af8186f0d75b332f79e08e91f70f2db774c2a111ec06d9c506"
   }
 }

@@ -91,16 +91,23 @@ test("die Wache antwortet selbst mit 401 und einem brauchbaren Hinweis", async (
   assert.equal(typeof erlaubt, "boolean");
 });
 
-test("die Wache steht VOR den modellkostenden Routen — und nur dort", () => {
+test("die Wache ist gebaut, aber bewusst NICHT verdrahtet", () => {
+  // Am 2026-08-04 live zurueckgenommen. Sie wies gueltig ANGEMELDETE Nutzer ab —
+  // nicht wegen eines Fehlers in der Wache, sondern wegen eines aelteren:
+  // auth-gate.js prueft nur, OB ein Token im Speicher liegt, nie ob es gilt.
+  // Im Browser des Betreibers lag ein Token, das der Control Server ablehnt
+  // (/api/auth/me -> authenticated=false). Die App zeigte ihn als angemeldet,
+  // der Server nicht. Mit der Wache war sein Chat tot.
+  //
+  // Dieser Test haelt den Zwischenzustand fest, damit ihn niemand fuer ein
+  // Versehen haelt und die Zeile "aufraeumend" wieder einschaltet: erst muss
+  // ein ungueltiges Token zur Anmeldung fuehren, dann darf die Wache zurueck.
   const quelle = fs.readFileSync("public/chat-bridge.js", "utf8");
-  const wache = quelle.indexOf("allowAuthenticated(req, res");
-  for (const route of ["handleChat(req, res)", "handleAgent(req, res)", "handleVoiceTts(req, res)", "handleVoiceTranscribe(req, res)"]) {
-    assert.ok(wache < quelle.indexOf(route), `die Wache muss vor ${route} stehen`);
-  }
-  // /health bleibt offen: ohne sie ist von aussen nicht mehr feststellbar, ob
-  // der Dienst lebt — und sie kostet kein Modell.
-  assert.ok(quelle.indexOf('url.pathname === "/health"') < wache, "/health bleibt ohne Anmeldung erreichbar");
-  assert.match(quelle, /kostetModell && !\(await allowAuthenticated/);
+  assert.match(quelle, /ANMELDEPFLICHT VORUEBERGEHEND AUSGEBAUT/,
+    "der Zwischenzustand muss im Quelltext begruendet stehen");
+  const aktiv = quelle.split("\n").some((z) => !z.trim().startsWith("//") && /await allowAuthenticated\(/.test(z));
+  assert.equal(aktiv, false, "die Wache darf nicht verdrahtet sein, solange der halbe Anmeldezustand moeglich ist");
+  assert.ok(fs.existsSync("public/chat-bridge-auth.js"), "der geprüfte Baustein bleibt erhalten");
 });
 
 test("das Frontend schickt den Token ueberall mit, wo es die Bruecke ruft", () => {

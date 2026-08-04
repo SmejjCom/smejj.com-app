@@ -2,8 +2,6 @@ import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
 import { pipeVisibleStream } from "./chat-bridge-strom.js";
-// Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen.
-import { allowAuthenticated } from "./chat-bridge-auth.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { readAudioBody, transcribeWithGroq } from "./chat-bridge-voice-ear.js";
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
@@ -38,7 +36,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260804-v114-arbeitsschritte";
+const BRIDGE_VERSION = "20260804-v115-ohne-anmeldepflicht";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -53,9 +51,24 @@ export function createChatBridgeServer() {
       const kostetModell = url.pathname === "/api/chat" || url.pathname === "/api/agent"
         || url.pathname === "/api/voice/tts" || url.pathname === "/api/voice/transcribe";
       if (kostetModell && !allowModelRequest(req, res)) return;
-      // Anmeldung vor dem Modell: der Origin-Kopf allein schuetzt NICHT (er ist
-      // ausserhalb eines Browsers frei setzbar, am 2026-08-04 mit curl bewiesen).
-      if (kostetModell && !(await allowAuthenticated(req, res, { json, controlOrigin: CONTROL_ORIGIN }))) return;
+      // ANMELDEPFLICHT VORUEBERGEHEND AUSGEBAUT (2026-08-04, nach Live-Rueckname).
+      //
+      // Die Wache lag hier und wies gueltig ANGEMELDETE Nutzer ab. Ursache ist
+      // NICHT die Wache, sondern ein aelterer Fehler, den sie sichtbar gemacht
+      // hat: `auth-gate.js` prueft nur, OB ein Token im Speicher liegt, nie ob
+      // es gilt. Im Browser des Betreibers lag ein Token, das der Control Server
+      // ablehnt (`/api/auth/me` -> authenticated=false) — die App zeigte ihn als
+      // angemeldet, der Server nicht. Mit der Wache war der Chat fuer ihn tot.
+      //
+      // Solange dieser halbe Anmeldezustand moeglich ist, wuerde jede
+      // Anmeldepflicht genau die Nutzer aussperren, die glauben angemeldet zu
+      // sein. Erst muss das Frontend ein ungueltiges Token erkennen und zur
+      // Anmeldung fuehren; danach kann die Zeile hier zurueck.
+      //
+      // chat-bridge-auth.js und tests/bridge-anmeldepflicht.test.mjs bleiben
+      // absichtlich stehen — der Baustein ist fertig und geprueft, nur nicht
+      // verdrahtet.
+      // if (kostetModell && !(await allowAuthenticated(req, res, { json, controlOrigin: CONTROL_ORIGIN }))) return;
       if (url.pathname === "/api/chat") return await handleChat(req, res);
       if (url.pathname === "/api/agent") return await handleAgent(req, res);
       if (url.pathname === "/api/voice/status") return await handleVoiceStatus(req, res);
