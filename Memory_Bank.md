@@ -780,3 +780,21 @@ Neun Dateien byte-genau eingefroren: beide Anmeldeseiten samt `auth-page.js`,
   jetzt `realpathSync`.
   MERKREGEL: **eine Sperre immer gegen eine absichtlich veraenderte Datei
   testen** — sonst prueft man nur, dass sie nicht abstuerzt.
+
+## 2026-08-04 — Zweite Abnahme auf sw v214: sauber, ein bewusst offener Punkt (job_livetest_a_bis_z_20260804)
+- GEPRUEFT UND GRUEN: 20 Adressen, 19/19 Sitemap-Adressen, 4 Backends,
+  17 App-Ansichten, Chat (402 ms bis zur Antwort), Verlauf, Split-View-Fix,
+  Sprachseiten-Sperre, Uebersetzungen, CSP auf allen oeffentlichen Seiten,
+  0 Konsolenfehler, 355/355 Tests. Warm: LCP 88 ms, CLS 0, TTFB 3 ms.
+- SEITENGEWICHT gemessen (gzip, 107 Shell-Dateien + HTML): **278 KB gegen
+  Budget 300 KB — eingehalten, aber nur 22 KB Luft.** Vor jedem neuen
+  Shell-Modul nachrechnen; `curl -H "Accept-Encoding: gzip"` ueber die
+  SHELL-Liste aus sw.js ist der ehrliche Messweg.
+- BEFUND, BEWUSST NICHT BEHOBEN: Beim ERSTEN Aufruf ohne i18n-Cache rendert
+  `#profile` in der Quellsprache (de), waehrend `#settings` nach dem asynchronen
+  Laden auf en umrendert — eine Seitenladung lang zwei Sprachen. Ab dem zweiten
+  Laden korrekt. **Ein Neu-Rendern von #profile wuerde `#saveProfile`,
+  `#registerLocal` und `#loginLocal` totlegen**, weil app.js (Start-Lock) beim
+  Boot Handler an genau dieses Markup haengt. Merkregel: **wenn ein fremdes,
+  gesperrtes Modul Handler an dein Markup haengt, ist innerHTML kein Werkzeug
+  mehr** — dann Textknoten tauschen oder die Sprache vor dem Rendern kennen.

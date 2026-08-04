@@ -263,6 +263,72 @@ Server-Eingriff, der ohne sorgfaeltigen Umbau ALLE angemeldeten Nutzer
 aussperren wuerde (das Frontend schickt heute kein Token an die Bridge) —
 deshalb ein eigener Auftrag mit eigener Absicherung, nicht nebenbei.
 
+## Zweiter A-bis-Z-Durchlauf (2026-08-04, sw v214)
+
+Auftrag: dieselbe Pruefung erneut, nach den Aenderungen der letzten Runden.
+
+### Auslieferungsstand
+
+Alles hochgeladen (Arbeits-Branch deckungsgleich mit origin), Frontend-Repo auf
+`e59ef13`, live sw v214. Offene Dateien in der Arbeitskopie gehoeren
+Parallel-Sessions (Deploy-Skripte, Benchmarks, fremde Task Capsules).
+
+### Ergebnis: kein neuer Fehler
+
+- **20 Adressen** je HTTP 200, 404-Seite korrekt 404. **19/19 Sitemap-Adressen**
+  liefern 200.
+- **4 Backends** gesund: Bridge Salad v112, Bridge Zeabur v104, Control Server,
+  Remote-Browser-Bridge.
+- **17 App-Ansichten** ueber den echten Router: alle sichtbar, alle mit Inhalt,
+  **0 JavaScript-Fehler**, 0 Konsolenfehler.
+- **Chat:** "Nenne mir in einem Satz die Hauptstadt von Portugal." -> "Die
+  Hauptstadt von Portugal ist Lissabon." nach **402 ms** (Budget 1,0 s).
+- **Verlauf:** `smejj-chats v2`, Eintrag mit Titel, Datum und Modell gelistet.
+- **Split-View (Fix vom 2026-08-03):** Menue weggeklickt -> Panel blieb offen,
+  Backdrop wieder unterdrueckt, Schreibfeld traf `#startMessage`. Nach dem
+  Schliessen `body.classList` LEER und `--right-panel-width` entfernt.
+- **Sprachseiten (Fix von heute):** abgemeldet -> voller Inhalt, kein
+  Sprach-Knopf, kein Overlay, "Anmelden und sprechen"; Canonical und 16
+  hreflang-Verweise vorhanden.
+- **Uebersetzungen (Fix von heute):** Kontoansicht englisch mit "Language &
+  voice", "Connected apps", "Subscription & payments", "Usage & limits",
+  "Data & privacy".
+- **Sicherheit:** CSP auf allen oeffentlichen Seiten inkl. der neu oeffentlichen
+  Sprachseiten; 0 Inline-Skripte, 0 `onclick`-Attribute.
+
+### Messwerte
+
+Warm (Service Worker aktiv): TTFB 3 ms, FCP/LCP 88 ms (Budget 1,5 s), CLS 0
+(Budget 0,1), domInteractive 19 ms, load 129 ms, 119 Ressourcen.
+Kalt ueber das Netz: TTFB 130-270 ms (Budget 200 ms p95), Startseite 40 631 B roh
+/ 9 633 B gzip.
+**Seitengewicht gzip gemessen: 107 Shell-Dateien + HTML = 278 KB gegen Budget
+300 KB — eingehalten**, aber nur noch 22 KB Luft. Jedes neue Shell-Modul zaehlt.
+
+### Ein Befund, bewusst NICHT behoben
+
+**Erstbesuch: Kontoansicht deutsch, Einstellungen englisch.**
+Bei einem en-US-Browser OHNE i18n-Cache rendert `#profile` in der Quellsprache
+(`lang="de"`), waehrend `#settings` nach dem asynchronen Laden auf `lang="en"`
+umrendert. Ergebnis: beim allerersten Seitenaufruf stehen beide Ansichten in
+verschiedenen Sprachen. Ab dem zweiten Laden ist alles englisch — live
+nachgemessen und bestaetigt.
+
+Ursache: `settings-surface.js` rendert nach `loadUiLanguage()` neu,
+`account-privacy.js` bewusst nicht.
+
+Warum nicht behoben: `#saveProfile`, `#registerLocal` und `#loginLocal` liegen
+im Markup von `account-privacy.js`, und `app.js` (Start-Lock) haengt beim Boot
+Klick-Handler daran. Ein Neu-Rendern wuerde diese drei Knoepfe still
+totlegen — genau davor warnt der Kommentar im Modul. Der Schaden des Fixes waere
+groesser als der des Fehlers (eine Seitenladung in der falschen Sprache).
+
+Saubere Loesung fuer einen eigenen Auftrag: die Texte NACH dem Laden der
+Sprachdatei an Ort und Stelle tauschen (Textknoten-Durchlauf statt
+`innerHTML`), damit alle Ereignis-Verknuepfungen erhalten bleiben. Alternativ
+die aktive Sprachdatei serverseitig in die Seite einbetten, dann ist beim
+ersten Rendern nichts mehr asynchron.
+
 ## Benchmark (Messpflicht)
 
 Kalt: Startseite TTFB 50-190 ms (Budget 200), 40 631 B (Budget 300 KB).
