@@ -62,14 +62,14 @@ export function leseWachtGrenzen(env = process.env) {
  * @param {boolean} lage.bereit            Meldet der Trainer bereit=true?
  * @param {number}  lage.nichtBereitSeitMs Wie lange ist er schon nicht bereit?
  * @param {boolean} lage.zyklusLaeuft      Laeuft gerade ein Trainingszyklus?
- * @param {boolean} lage.netzBestaetigt    Ist das eigene Netz nachweislich in Ordnung?
- *   Nur noetig, wenn der Trainer UNERREICHBAR ist. Der Aufrufer belegt das mit
- *   einer zweiten, unabhaengigen Abfrage (z. B. der Salad-API). Fehlt der Beleg,
- *   wird NICHT gestoppt — siehe Begruendung bei `unerreichbar_ohne_netzbeleg`.
+ * @param {boolean} lage.ausfallBestaetigt Bestaetigt eine zweite, unabhaengige
+ *   Quelle den Ausfall? Nur noetig, wenn der Trainer UNERREICHBAR ist; der
+ *   Aufrufer belegt es mit `saladBestaetigtAusfall()`. Ohne Bestaetigung wird
+ *   NICHT gestoppt — siehe `unerreichbar_ohne_zweitmeinung`.
  * @param {object}  grenzen                aus leseWachtGrenzen()
  * @returns {{stoppen: boolean, grund: string|null}}
  */
-export function bewerteWacht({ erreichbar, bereit, nichtBereitSeitMs, zyklusLaeuft = false, netzBestaetigt = true } = {}, grenzen = leseWachtGrenzen()) {
+export function bewerteWacht({ erreichbar, bereit, nichtBereitSeitMs, zyklusLaeuft = false, ausfallBestaetigt = true } = {}, grenzen = leseWachtGrenzen()) {
   if (!grenzen.aktiv) return { stoppen: false, grund: null };
 
   // Ein laufender Zyklus wird NIE vom Waechter abgeraeumt. Dafuer gibt es den
@@ -93,18 +93,19 @@ export function bewerteWacht({ erreichbar, bereit, nichtBereitSeitMs, zyklusLaeu
 
   const minuten = Math.round(seit / 60000);
 
-  // GEMESSEN AM 2026-08-04: die Dauerwache meldete "fetch failed" und damit
-  // einen Ausfall — der Trainer war in derselben Sekunde nachweislich gesund
-  // (3x HTTP 200, Instanz ready). Es war ein Netzaussetzer auf der Seite des
-  // Waechters.
+  // GEMESSEN AM 2026-08-04, dreimal: die Dauerwache meldete "fetch failed" und
+  // damit einen Ausfall — der Trainer war jedes Mal in derselben Minute
+  // nachweislich gesund (5x HTTP 200, unveraenderte Instanz-id, ready=true).
+  // Es waren Aussetzer auf der Leitung des Waechters, einer davon laenger als
+  // die eingebaute Wiederholung.
   //
   // Ein Waechter, der die eigene Leitung nicht von einem kranken Dienst
   // unterscheidet, beendet frueher oder spaeter eine gesunde, bezahlte GPU —
   // und zwar genau dann, wenn er selbst offline ist und es niemand sieht.
   // "unerreichbar" ist deshalb nur dann ein Stoppgrund, wenn eine ZWEITE,
-  // unabhaengige Abfrage belegt, dass das eigene Netz steht.
-  if (!erreichbar && !netzBestaetigt) {
-    return { stoppen: false, grund: `unerreichbar_ohne_netzbeleg_seit_${minuten}min` };
+  // unabhaengige Quelle den Ausfall bestaetigt (saladBestaetigtAusfall).
+  if (!erreichbar && !ausfallBestaetigt) {
+    return { stoppen: false, grund: `unerreichbar_ohne_zweitmeinung_seit_${minuten}min` };
   }
 
   return {
@@ -142,25 +143,39 @@ export function leseSaladKoordinaten(env = process.env) {
 }
 
 /**
- * Steht die eigene Leitung? Zweite, UNABHAENGIGE Abfrage gegen die Salad-API.
+ * Bestaetigt eine ZWEITE, unabhaengige Quelle den Ausfall?
  *
- * Bewusst ein anderer Wirt (api.salad.com) als der Trainer (*.salad.cloud):
- * antwortet er, ist das Netz des Waechters in Ordnung und ein unerreichbarer
- * Trainer ist wirklich ein Trainerproblem. Antwortet er nicht, ist der Waechter
- * selbst blind — und ein Blinder schaltet keine bezahlte GPU ab.
+ * Gefragt wird Salads eigenes Bereitschaftsurteil ueber die Instanzen. Das ist
+ * die belastbarste verfuegbare Gegenmeinung: Salads Readiness-Sonde ruft
+ * dieselbe `/health`-Route auf, aber VON INNEN — sie haengt nicht an der
+ * Leitung des Waechters.
+ *
+ * Drei Faelle, und nur einer rechtfertigt das Abschalten:
+ *   API nicht erreichbar        -> false. Der Waechter ist blind, nicht der Trainer.
+ *   API sagt eine Instanz ready -> false. Der Dienst bedient; das Problem liegt
+ *                                  auf dem Weg dorthin, also beim Waechter.
+ *   API sagt KEINE Instanz ready-> true.  Jetzt sind sich beide Seiten einig.
+ *
+ * Am 2026-08-04 dreimal live gebraucht: der Waechter meldete "fetch failed",
+ * waehrend dieselbe Instanz (unveraenderte id) durchgehend `ready=true` war und
+ * direkte Abfragen 5/5 HTTP 200 lieferten.
  */
-export async function saladErreichbar({ koordinaten, fetchImpl = fetch, zeitgrenzeMs = 15_000 } = {}) {
+export async function saladBestaetigtAusfall({ koordinaten, fetchImpl = fetch, zeitgrenzeMs = 15_000 } = {}) {
   if (!koordinaten?.vollstaendig) return false;
   const steuerung = new AbortController();
   const uhr = setTimeout(() => steuerung.abort(), zeitgrenzeMs);
   try {
     const url = `https://api.salad.com/api/public/organizations/${koordinaten.organisation}`
-      + `/projects/${koordinaten.projekt}/containers/${koordinaten.gruppe}`;
+      + `/projects/${koordinaten.projekt}/containers/${koordinaten.gruppe}/instances`;
     const antwort = await fetchImpl(url, {
       headers: { "Salad-Api-Key": koordinaten.apiKey, accept: "application/json" },
       signal: steuerung.signal
     });
-    return antwort.ok === true || antwort.status === 200;
+    if (!antwort.ok) return false;
+    const daten = await antwort.json();
+    const instanzen = Array.isArray(daten?.instances) ? daten.instances : [];
+    // Keine einzige bereite Instanz -> der Ausfall ist bestaetigt.
+    return !instanzen.some((instanz) => instanz?.ready === true);
   } catch {
     return false;
   } finally {

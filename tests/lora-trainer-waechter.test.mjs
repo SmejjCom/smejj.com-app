@@ -6,6 +6,7 @@ import {
   erzeugeWachtGedaechtnis,
   leseSaladKoordinaten,
   leseWachtGrenzen,
+  saladBestaetigtAusfall,
   stoppeContainerGruppe
 } from "../workers/smejj-lora-loop/waechter.js";
 
@@ -119,39 +120,39 @@ test("Gedaechtnis und Bewertung ergeben zusammen den 60-Minuten-Selbststopp", ()
   assert.equal(entscheidung().stoppen, true);
 });
 
-// ─── Der Waechter darf nicht sein eigenes Netz diagnostizieren ──────────────
+// ─── Der Waechter darf nicht seine eigene Leitung diagnostizieren ──────────
 
-test("ohne Netzbeleg wird eine unerreichbare Karte NICHT gestoppt", () => {
+test("ohne bestaetigten Ausfall wird eine unerreichbare Karte NICHT gestoppt", () => {
   // Gemessen am 2026-08-04: die Dauerwache meldete "fetch failed", waehrend der
   // Trainer nachweislich gesund war (3x HTTP 200). Ein laengerer Netzausfall auf
   // der Waechterseite haette so eine gesunde, bezahlte GPU beendet.
   const ergebnis = bewerteWacht({
-    erreichbar: false, bereit: false, nichtBereitSeitMs: 5 * STUNDE, netzBestaetigt: false
+    erreichbar: false, bereit: false, nichtBereitSeitMs: 5 * STUNDE, ausfallBestaetigt: false
   });
   assert.equal(ergebnis.stoppen, false);
-  assert.match(ergebnis.grund, /unerreichbar_ohne_netzbeleg_seit_300min/);
+  assert.match(ergebnis.grund, /unerreichbar_ohne_zweitmeinung_seit_300min/);
 });
 
-test("mit Netzbeleg wird dieselbe Lage sehr wohl gestoppt", () => {
+test("mit bestaetigtem Ausfall wird dieselbe Lage sehr wohl gestoppt", () => {
   const ergebnis = bewerteWacht({
-    erreichbar: false, bereit: false, nichtBereitSeitMs: 5 * STUNDE, netzBestaetigt: true
+    erreichbar: false, bereit: false, nichtBereitSeitMs: 5 * STUNDE, ausfallBestaetigt: true
   });
   assert.equal(ergebnis.stoppen, true);
   assert.match(ergebnis.grund, /unerreichbar_seit_300min/);
 });
 
-test("der Netzbeleg entschuldigt einen ERREICHBAREN, aber nicht bereiten Trainer nicht", () => {
+test("die Zweitmeinung entschuldigt einen ERREICHBAREN, aber nicht bereiten Trainer nicht", () => {
   // Antwortet der Trainer und meldet dabei 'nicht bereit', ist das Netz
   // offensichtlich in Ordnung — der fehlende Beleg darf hier nichts retten,
   // sonst waere die Bremse mit einem Feldwert abschaltbar.
   const ergebnis = bewerteWacht({
-    erreichbar: true, bereit: false, nichtBereitSeitMs: 5 * STUNDE, netzBestaetigt: false
+    erreichbar: true, bereit: false, nichtBereitSeitMs: 5 * STUNDE, ausfallBestaetigt: false
   });
   assert.equal(ergebnis.stoppen, true);
   assert.match(ergebnis.grund, /nicht_bereit_seit_300min/);
 });
 
-test("der Netzbeleg ist standardmaessig angenommen (alte Aufrufer bleiben gueltig)", () => {
+test("die Zweitmeinung ist standardmaessig angenommen (alte Aufrufer bleiben gueltig)", () => {
   const ergebnis = bewerteWacht({ erreichbar: false, bereit: false, nichtBereitSeitMs: 2 * STUNDE });
   assert.equal(ergebnis.stoppen, true);
 });
@@ -224,4 +225,55 @@ test("ein fehlgeschlagener Stopp wird NICHT als erledigt gemeldet", async () => 
   });
   assert.equal(geplatzt.ok, false);
   assert.match(geplatzt.fehler, /netz weg/);
+});
+
+// ─── Die Zweitmeinung: Salads eigenes Bereitschaftsurteil ───────────────────
+
+const KOORD = leseSaladKoordinaten({
+  SALAD_ORGANIZATION_NAME: "smejjcom", SALAD_PROJECT_NAME: "default", SMEJJ_LORA_TRAINER_KEY: "k"
+});
+
+test("Salad meldet eine bereite Instanz -> Ausfall NICHT bestaetigt", async () => {
+  // Der Fall vom 2026-08-04: der Waechter kam nicht durch, Salads Sonde schon.
+  const bestaetigt = await saladBestaetigtAusfall({
+    koordinaten: KOORD,
+    fetchImpl: async () => ({ ok: true, json: async () => ({ instances: [{ ready: true, state: "running" }] }) })
+  });
+  assert.equal(bestaetigt, false, "eine bediente Instanz darf nie abgeschaltet werden");
+});
+
+test("Salad meldet KEINE bereite Instanz -> Ausfall bestaetigt", async () => {
+  const bestaetigt = await saladBestaetigtAusfall({
+    koordinaten: KOORD,
+    fetchImpl: async () => ({ ok: true, json: async () => ({ instances: [{ ready: false, state: "running" }] }) })
+  });
+  assert.equal(bestaetigt, true);
+});
+
+test("gar keine Instanz -> Ausfall bestaetigt", async () => {
+  const bestaetigt = await saladBestaetigtAusfall({
+    koordinaten: KOORD, fetchImpl: async () => ({ ok: true, json: async () => ({ instances: [] }) })
+  });
+  assert.equal(bestaetigt, true);
+});
+
+test("Salad-API unerreichbar -> Ausfall NICHT bestaetigt (Waechter ist blind)", async () => {
+  const geplatzt = await saladBestaetigtAusfall({
+    koordinaten: KOORD, fetchImpl: async () => { throw new Error("fetch failed"); }
+  });
+  assert.equal(geplatzt, false);
+
+  const abgelehnt = await saladBestaetigtAusfall({
+    koordinaten: KOORD, fetchImpl: async () => ({ ok: false, status: 500 })
+  });
+  assert.equal(abgelehnt, false, "eine kaputte API ist kein Beweis fuer einen kaputten Trainer");
+});
+
+test("ohne Koordinaten wird nichts bestaetigt und nichts gesendet", async () => {
+  let gerufen = 0;
+  const bestaetigt = await saladBestaetigtAusfall({
+    koordinaten: leseSaladKoordinaten({}), fetchImpl: async () => { gerufen += 1; return { ok: true }; }
+  });
+  assert.equal(bestaetigt, false);
+  assert.equal(gerufen, 0);
 });

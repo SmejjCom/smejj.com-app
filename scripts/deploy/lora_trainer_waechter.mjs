@@ -17,7 +17,7 @@
 // Umgebung unvollstaendig ist, laeuft der Waechter hier von Hand — eine
 // laufende Karte ohne Abbruchbedingung ist die eine Lage, die nicht warten darf.
 
-import { leseWachtGrenzen, bewerteWacht, erzeugeWachtGedaechtnis } from "../../workers/smejj-lora-loop/waechter.js";
+import { leseWachtGrenzen, bewerteWacht, erzeugeWachtGedaechtnis, leseSaladKoordinaten, saladBestaetigtAusfall } from "../../workers/smejj-lora-loop/waechter.js";
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
 
 loadSecureLocalEnv();
@@ -42,6 +42,7 @@ const NUR_BEOBACHTEN = String(process.env.SMEJJ_WAECHTER_NUR_BEOBACHTEN || "NO")
 const DAUERBETRIEB = String(process.env.SMEJJ_WAECHTER_DAUERBETRIEB || "NO").toUpperCase() === "YES";
 
 const grenzen = leseWachtGrenzen(process.env);
+const koordinaten = leseSaladKoordinaten(process.env);
 const gedaechtnis = erzeugeWachtGedaechtnis();
 
 function zeit() {
@@ -94,30 +95,6 @@ async function frageTrainer() {
   return zweite;
 }
 
-/**
- * Steht die eigene Leitung? Zweite, UNABHAENGIGE Abfrage gegen die Salad-API.
- *
- * Sie geht an einen anderen Wirt (api.salad.com statt *.salad.cloud) als die
- * Trainer-Abfrage. Antwortet sie, ist das Netz des Waechters in Ordnung und ein
- * unerreichbarer Trainer ist wirklich ein Trainerproblem. Antwortet sie nicht,
- * ist der Waechter selbst blind — dann darf er nichts abschalten.
- */
-async function netzStehtWirklich() {
-  const steuerung = new AbortController();
-  const uhr = setTimeout(() => steuerung.abort(), 15_000);
-  try {
-    const antwort = await fetch(`${BASIS}/${GRUPPE}`, {
-      headers: { "Salad-Api-Key": API_KEY, accept: "application/json" },
-      signal: steuerung.signal
-    });
-    return antwort.ok;
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(uhr);
-  }
-}
-
 async function stoppeGruppe(grund) {
   if (NUR_BEOBACHTEN) {
     console.log(`[waechter] ${zeit()} WUERDE STOPPEN (${grund}) — nur beobachtend, nichts getan.`);
@@ -151,13 +128,13 @@ async function main() {
         + " Wiederholung erfolgreich — kein Ausfall.");
     }
     const nichtBereitSeitMs = gedaechtnis.melde(lage.bereit);
-    // Der Netzbeleg wird nur geholt, wenn er die Entscheidung aendern kann —
+    // Die Zweitmeinung wird nur geholt, wenn sie die Entscheidung aendern kann —
     // also wenn der Trainer unerreichbar ist UND die Frist schon abgelaufen ist.
     // Sonst waere es eine zusaetzliche Abfrage im Minutentakt ohne Nutzen.
-    const netzBestaetigt = (!lage.erreichbar && nichtBereitSeitMs >= grenzen.bereitFristMs)
-      ? await netzStehtWirklich()
+    const ausfallBestaetigt = (!lage.erreichbar && nichtBereitSeitMs >= grenzen.bereitFristMs)
+      ? await saladBestaetigtAusfall({ koordinaten })
       : true;
-    const entscheidung = bewerteWacht({ ...lage, nichtBereitSeitMs, netzBestaetigt }, grenzen);
+    const entscheidung = bewerteWacht({ ...lage, nichtBereitSeitMs, ausfallBestaetigt }, grenzen);
 
     // Nur Zustandswechsel protokollieren; ein Takt von 30 s wuerde sonst in
     // einer Stunde 120 identische Zeilen erzeugen und das Wesentliche zudecken.
@@ -193,7 +170,7 @@ async function main() {
 
     // Kein Stopp, aber auch kein gesunder Zustand: der Waechter ist blind.
     // Das muss sichtbar sein, sonst haelt man Schweigen fuer Sicherheit.
-    if (entscheidung.grund?.startsWith("unerreichbar_ohne_netzbeleg")) {
+    if (entscheidung.grund?.startsWith("unerreichbar_ohne_zweitmeinung")) {
       console.log(`[waechter] ${zeit()} Frist abgelaufen, aber die EIGENE Leitung steht nicht`
         + ` (${entscheidung.grund}). Es wird NICHTS gestoppt — der Trainer ist von hier aus`
         + " nicht beurteilbar.");

@@ -25,7 +25,7 @@ import {
   erzeugeWachtGedaechtnis,
   leseSaladKoordinaten,
   leseWachtGrenzen,
-  saladErreichbar,
+  saladBestaetigtAusfall,
   stoppeContainerGruppe
 } from "./waechter.js";
 import { trainerErreichbar } from "./trainerClient.js";
@@ -160,15 +160,15 @@ export function starteWachtTakt({
       // Ohne ihn wuerde ein Netzausfall AUF DIESER SEITE eine gesunde GPU
       // beenden (am 2026-08-04 einmal live erlebt: "fetch failed", waehrend der
       // Trainer in derselben Sekunde 3x HTTP 200 lieferte).
-      const netzBestaetigt = (!erreichbar && nichtBereitSeitMs >= grenzen.bereitFristMs)
-        ? await saladErreichbar({ koordinaten, fetchImpl })
+      const ausfallBestaetigt = (!erreichbar && nichtBereitSeitMs >= grenzen.bereitFristMs)
+        ? await saladBestaetigtAusfall({ koordinaten, fetchImpl })
         : true;
       const entscheidung = bewerteWacht(
-        { erreichbar, bereit: erreichbar, nichtBereitSeitMs, netzBestaetigt }, grenzen
+        { erreichbar, bereit: erreichbar, nichtBereitSeitMs, ausfallBestaetigt }, grenzen
       );
       if (!entscheidung.stoppen) {
-        if (entscheidung.grund?.startsWith("unerreichbar_ohne_netzbeleg")) {
-          log(`[smejj-lora-loop] Anlaufwaechter blind: eigene Leitung steht nicht`
+        if (entscheidung.grund?.startsWith("unerreichbar_ohne_zweitmeinung")) {
+          log(`[smejj-lora-loop] Anlaufwaechter blind: Salad bestaetigt den Ausfall nicht`
             + ` (${entscheidung.grund}) — es wird NICHTS gestoppt.`);
         }
         return;

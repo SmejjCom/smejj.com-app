@@ -18,18 +18,20 @@ import { brichTrainingAb, starteTraining, trainerErreichbar, trainingZustand } f
 
 const TRAINER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../workers/smejj-lora-trainer");
 
-async function starteDienst(env = {}) {
-  // Wechselnder Port, damit parallel laufende Tests sich nicht behindern.
-  const port = 8300 + Number(process.hrtime.bigint() % 400n);
+async function starteDienstEinmal(env, port, fristMs) {
   const prozess = spawn("python3", ["server.py"], {
     cwd: TRAINER,
     env: { ...process.env, PORT: String(port), SMEJJ_TRAINER_MODUS: "attrappe",
       SMEJJ_TRAINER_PUBLIC_URL: `http://127.0.0.1:${port}`, ...env },
     stdio: ["ignore", "pipe", "pipe"]
   });
+  // Stirbt der Prozess sofort (belegter Port), nicht bis zur Frist warten.
+  let beendet = false;
+  prozess.once("exit", () => { beendet = true; });
+
   const basisUrl = `http://127.0.0.1:${port}`;
-  const frist = Date.now() + 15_000;
-  while (Date.now() < frist) {
+  const frist = Date.now() + fristMs;
+  while (Date.now() < frist && !beendet) {
     try {
       const antwort = await fetch(`${basisUrl}/health`);
       if (antwort.ok) return { prozess, basisUrl, port };
@@ -37,6 +39,33 @@ async function starteDienst(env = {}) {
     await new Promise((r) => setTimeout(r, 100));
   }
   prozess.kill("SIGKILL");
+  return null;
+}
+
+/**
+ * Startet den Dienst und versucht es bei Fehlschlag mit einem NEUEN Port erneut.
+ *
+ * Gemessen am 2026-08-04: dieser Test fiel im vollen `check:lora-loop`
+ * unregelmaessig mit "trainer_startete_nicht" aus (rund jeder dritte Lauf),
+ * lief aber isoliert durch. Ursache ist der zufaellig gewaehlte Port: `node --test`
+ * fuehrt Testdateien parallel aus, und der Port eines gerade beendeten
+ * Dienstes ist noch belegt. Ein zufaelliger Port ist eben nicht zwingend ein
+ * freier Port.
+ *
+ * Ein Vertragstest, der ohne Grund rot wird, ist schlimmer als kein Test: er
+ * gewoehnt einen daran, rote Laeufe zu ignorieren.
+ */
+async function starteDienst(env = {}) {
+  const gesehen = new Set();
+  for (let versuch = 1; versuch <= 3; versuch += 1) {
+    let port;
+    do { port = 8300 + Number(process.hrtime.bigint() % 1200n); } while (gesehen.has(port));
+    gesehen.add(port);
+    // Erster Versuch kurz: ein belegter Port zeigt sich sofort, und die
+    // Wiederholung kostet dann keine 15 Sekunden.
+    const dienst = await starteDienstEinmal(env, port, versuch === 3 ? 15_000 : 6_000);
+    if (dienst) return dienst;
+  }
   throw new Error("trainer_startete_nicht");
 }
 
