@@ -12,6 +12,7 @@
 // docs/architecture/RAG_PROJEKTWISSEN.md fuer den Harness bereits ausschliesst.
 import { searchIndex } from "./bm25Index.js";
 import { rankHits } from "./ragRanking.js";
+import { erweitereInfrastrukturfrage } from "./infrastrukturFrage.js";
 
 /**
  * Aus mehr Rohtreffern nachgewichtet als am Ende eingespeist werden: sonst kann ein
@@ -29,7 +30,12 @@ export const RAW_HIT_POOL = 10;
  *          leer, wenn kein Treffer die Relevanzschwelle erreicht
  */
 export function searchRagIndex(index, query, k = 5, { minTopScore } = {}) {
-  return rankHits(searchIndex(index, query, RAW_HIT_POOL), {
+  // Fragen nach dem eigenen Betrieb werden fuer die SUCHE um das Vokabular der
+  // Dienste-Uebersicht ergaenzt. Die Relevanzschwelle bleibt dabei unveraendert:
+  // die angereicherte Frage erreicht sie aus eigener Kraft (8,5 -> 35,4), und
+  // der beste Treffer ist dann die Uebersicht selbst statt einer Zufallspassage.
+  // Jede andere Frage laeuft unveraendert durch. Messwerte in infrastrukturFrage.js.
+  return rankHits(searchIndex(index, erweitereInfrastrukturfrage(query), RAW_HIT_POOL), {
     limit: k,
     ...(Number.isFinite(minTopScore) ? { minTopScore } : {})
   });
