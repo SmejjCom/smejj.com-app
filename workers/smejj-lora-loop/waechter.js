@@ -224,21 +224,39 @@ export async function stoppeContainerGruppe({ koordinaten, fetchImpl = fetch, ze
  * Trainer: der Trainer wird beim Stopp neu aufgesetzt und verliert seinen
  * Zeitstempel; der Waechter muss ueber genau diesen Neustart hinweg zaehlen.
  */
-export function erzeugeWachtGedaechtnis(jetzt = () => Date.now()) {
+export function erzeugeWachtGedaechtnis(jetzt = () => Date.now(), { maxLueckeMs = 0 } = {}) {
   let nichtBereitSeit = null;
+  let letzteMeldung = null;
 
   return Object.freeze({
-    /** @returns {number} Millisekunden ununterbrochener Nichtbereitschaft. */
+    /** @returns {number} Millisekunden ununterbrochener, BEOBACHTETER Nichtbereitschaft. */
     melde(bereit) {
+      const nun = jetzt();
+
+      // MESSLUECKE. Beobachtet am 2026-08-04: zwischen zwei Meldungen lagen
+      // 2 h 45 min statt einer Minute — der Rechner des Waechters hatte
+      // geschlafen. Die Uhr misst aber "wie lange ist der Trainer schon nicht
+      // bereit", nicht "wieviel Zeit ist vergangen".
+      //
+      // Ohne diese Bremse stuende die Uhr nach dem Aufwachen sofort ueber der
+      // Frist, und eine EINZIGE danebengegangene Abfrage koennte eine gesunde
+      // Karte beenden. Was nicht beobachtet wurde, darf nicht als beobachtete
+      // Nichtbereitschaft zaehlen.
+      if (maxLueckeMs > 0 && letzteMeldung !== null && nun - letzteMeldung > maxLueckeMs) {
+        nichtBereitSeit = null;
+      }
+      letzteMeldung = nun;
+
       if (bereit === true) {
         nichtBereitSeit = null;
         return 0;
       }
-      if (nichtBereitSeit === null) nichtBereitSeit = jetzt();
-      return jetzt() - nichtBereitSeit;
+      if (nichtBereitSeit === null) nichtBereitSeit = nun;
+      return nun - nichtBereitSeit;
     },
     zuruecksetzen() {
       nichtBereitSeit = null;
+      letzteMeldung = null;
     }
   });
 }

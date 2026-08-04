@@ -127,7 +127,8 @@ export function starteWachtTakt({
 } = {}) {
   const grenzen = leseWachtGrenzen(env);
   const koordinaten = leseSaladKoordinaten(env);
-  const gedaechtnis = erzeugeWachtGedaechtnis();
+  // Vier Takte Toleranz gegen Messluecken (angehaltener Container, Migration).
+  const gedaechtnis = erzeugeWachtGedaechtnis(undefined, { maxLueckeMs: intervalMs * 4 });
 
   if (!grenzen.aktiv) {
     log("[smejj-lora-loop] Anlaufwaechter AUS (SMEJJ_LORA_WAECHTER=AUS) — eine haengende Karte laeuft unbegrenzt weiter.");

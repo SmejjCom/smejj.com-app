@@ -43,7 +43,9 @@ const DAUERBETRIEB = String(process.env.SMEJJ_WAECHTER_DAUERBETRIEB || "NO").toU
 
 const grenzen = leseWachtGrenzen(process.env);
 const koordinaten = leseSaladKoordinaten(process.env);
-const gedaechtnis = erzeugeWachtGedaechtnis();
+// Vier Takte Toleranz: laenger heisst, der Waechter hat NICHT gemessen
+// (Ruhezustand, Prozess angehalten) — dann beginnt die Zaehlung neu.
+const gedaechtnis = erzeugeWachtGedaechtnis(undefined, { maxLueckeMs: TAKT_MS * 4 });
 
 function zeit() {
   return new Date().toISOString().slice(11, 19);

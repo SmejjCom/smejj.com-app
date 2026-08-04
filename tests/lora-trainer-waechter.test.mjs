@@ -277,3 +277,51 @@ test("ohne Koordinaten wird nichts bestaetigt und nichts gesendet", async () => 
   assert.equal(bestaetigt, false);
   assert.equal(gerufen, 0);
 });
+
+// ─── Messluecken: was nicht beobachtet wurde, zaehlt nicht ──────────────────
+
+test("eine Messluecke setzt die Uhr zurueck statt sie weiterlaufen zu lassen", () => {
+  // Beobachtet am 2026-08-04: zwischen zwei Meldungen lagen 2 h 45 min statt
+  // einer Minute — der Rechner hatte geschlafen. Ohne diese Bremse stuende die
+  // Uhr nach dem Aufwachen sofort ueber der Frist, und EINE danebengegangene
+  // Abfrage koennte eine gesunde Karte beenden.
+  let uhr = 0;
+  const takt = 60 * 1000;
+  const gedaechtnis = erzeugeWachtGedaechtnis(() => uhr, { maxLueckeMs: takt * 4 });
+
+  gedaechtnis.melde(false);
+  uhr += takt;
+  assert.equal(gedaechtnis.melde(false), takt, "im Takt zaehlt die Uhr normal");
+
+  // Der Rechner schlaeft 2 h 45 min.
+  uhr += 165 * 60 * 1000;
+  assert.equal(gedaechtnis.melde(false), 0, "nach der Luecke beginnt die Zaehlung neu");
+
+  uhr += takt;
+  assert.equal(gedaechtnis.melde(false), takt, "danach laeuft sie wieder normal");
+});
+
+test("kleine Schwankungen im Takt gelten NICHT als Luecke", () => {
+  // Ein verzoegerter Takt darf die Uhr nicht zuruecksetzen, sonst kaeme eine
+  // langsam schleichende Stoerung nie ueber die Frist.
+  let uhr = 0;
+  const takt = 60 * 1000;
+  const gedaechtnis = erzeugeWachtGedaechtnis(() => uhr, { maxLueckeMs: takt * 4 });
+
+  gedaechtnis.melde(false);
+  // Fuenf Takte, jeder doppelt so lang wie geplant — aber JEDER wird gemeldet,
+  // also ist keine Luecke groesser als die Grenze.
+  for (let i = 0; i < 5; i += 1) {
+    uhr += takt * 2;
+    gedaechtnis.melde(false);
+  }
+  assert.equal(gedaechtnis.melde(false), takt * 10, "zaehlt durch");
+});
+
+test("ohne maxLueckeMs verhaelt sich das Gedaechtnis wie bisher", () => {
+  let uhr = 0;
+  const gedaechtnis = erzeugeWachtGedaechtnis(() => uhr);
+  gedaechtnis.melde(false);
+  uhr += 5 * 60 * 60 * 1000;
+  assert.equal(gedaechtnis.melde(false), 5 * 60 * 60 * 1000);
+});
