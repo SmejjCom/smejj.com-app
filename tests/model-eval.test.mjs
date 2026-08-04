@@ -14,7 +14,8 @@ import {
   budgetViolations,
   buildEvalReport,
   compareWithBaseline,
-  EVAL_VERDICT
+  EVAL_VERDICT,
+  modellAbweichung
 } from "../src/evaluation/evalReport.js";
 // Wiederholungen und Bestehensquoten stehen in tests/model-eval-wiederholungen.test.mjs.
 import {
@@ -260,6 +261,37 @@ test("der Bericht belegt, welches Backend wirklich geantwortet hat", () => {
   assert.deepEqual(report.run.backendsSeen, ["groq", "zhipu"]);
   assert.deepEqual(report.run.resolvedModelIds, ["fast-lane", "glm-5-2"]);
   assert.equal(report.cases[0].backend, "zhipu");
+  // Der Beleg allein genuegt nicht: ein Rueckfall MUSS als Verletzung erscheinen.
+  assert.ok(report.violations.some((eintrag) => eintrag.code === "model_mismatch"));
+});
+
+test("ein stiller Modellwechsel wird als Verletzung gemeldet, nicht nur belegt", () => {
+  // Der Fall, der am 2026-08-04 live auftrat: kimi-k3 angefordert, ohne
+  // Moonshot-Schluessel antwortete glm-5-2. Ohne diesen Waechter haette der
+  // Bericht GLM-Zahlen unter dem Namen Kimi ausgewiesen.
+  const caseScores = [
+    { ...scoreCase(SUITE.cases[0], { ok: true, text: "smejj.com", latencyMs: 100 }), backend: "zhipu", resolvedModelId: "glm-5-2" }
+  ];
+  const report = buildEvalReport({
+    suite: SUITE,
+    run: { modelId: "kimi-k3", transport: "provider", live: true },
+    caseScores
+  });
+  const treffer = report.violations.find((eintrag) => eintrag.code === "model_mismatch");
+  assert.ok(treffer, "ein Rueckfall auf ein anderes Modell muss eine Verletzung sein");
+  assert.equal(treffer.angefordert, "kimi-k3");
+  assert.deepEqual(treffer.geantwortet, ["glm-5-2"]);
+  assert.notEqual(report.verdict, EVAL_VERDICT.PASSED);
+});
+
+test("live-default und ein sauber antwortendes Modell loesen keinen Fehlalarm aus", () => {
+  const treffer = scoreCase(SUITE.cases[0], { ok: true, text: "smejj.com", latencyMs: 100 });
+  // 1) Ohne ausdrueckliche Modellwahl ist jedes Backend die richtige Antwort.
+  assert.equal(modellAbweichung({ modelId: "live-default" }, [{ ...treffer, resolvedModelId: "fast-lane" }]), null);
+  // 2) Antwortet das angeforderte Modell, gibt es nichts zu melden.
+  assert.equal(modellAbweichung({ modelId: "glm-5-2" }, [{ ...treffer, resolvedModelId: "glm-5-2" }]), null);
+  // 3) Reine Transportfehler tragen keine Modell-Kennung — Unwissen ist kein Verstoss.
+  assert.equal(modellAbweichung({ modelId: "glm-5-2" }, [{ ...treffer, resolvedModelId: "" }]), null);
 });
 
 test("ein sauberer Lauf ergibt das Urteil passed", () => {

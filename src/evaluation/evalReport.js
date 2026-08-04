@@ -36,6 +36,15 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
   const summary = aggregateCaseScores(caseScores);
   const budgets = suite?.budgets || {};
   const violations = budgetViolations(summary, budgets);
+  // Ein stiller Modellwechsel ist die gefaehrlichste Fehlmessung ueberhaupt: der
+  // Bericht traegt den angeforderten Namen, die Zahlen stammen aber von einem
+  // anderen Modell. Live belegt am 2026-08-04: `--model kimi-k3` fiel ohne
+  // Moonshot-Schluessel auf zhipu/glm-5-2 zurueck und haette GLM-Zahlen als
+  // Kimi-Zahlen ausgewiesen. Der Beleg stand schon immer im Bericht
+  // (backendsSeen), aber niemand las ihn — deshalb ist er ab jetzt eine
+  // Verletzung und kein Fussnoteneintrag.
+  const abweichung = modellAbweichung(run, caseScores);
+  if (abweichung) violations.push(abweichung);
   const comparison = compareWithBaseline(summary, baseline);
 
   let verdict = EVAL_VERDICT.PASSED;
@@ -117,6 +126,26 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
         .map((assertion) => ({ type: assertion.type, critical: assertion.critical }))
     }))
   };
+}
+
+/**
+ * Prueft, ob wirklich das angeforderte Modell geantwortet hat.
+ *
+ * Nur pruefbar, wenn ein Modell ausdruecklich angefordert wurde: bei
+ * `live-default` misst man absichtlich "was die Kette liefert", da ist jedes
+ * Backend die richtige Antwort. Berichte ohne aufgeloeste Modell-Kennung
+ * (aeltere Laeufe, reine Transportfehler) ergeben ebenfalls kein Urteil —
+ * Unwissen darf sich nicht als Verstoss ausgeben.
+ *
+ * @returns {{code: string, angefordert: string, geantwortet: string[]}|null}
+ */
+export function modellAbweichung(run, caseScores) {
+  const angefordert = String(run?.modelId || "").trim();
+  if (!angefordert || angefordert === "live-default") return null;
+  const geantwortet = distinct(caseScores, "resolvedModelId");
+  if (geantwortet.length === 0) return null;
+  if (geantwortet.every((id) => id === angefordert)) return null;
+  return { code: "model_mismatch", angefordert, geantwortet };
 }
 
 /** Harte Budgetverletzungen. Leeres Array bedeutet: alle Budgets eingehalten. */
