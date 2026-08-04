@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "İstek şu anda kullanılamıyor.",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "E-posta adresi doğrulandı. Artık giriş yapabilirsin.",
   "Bestätigung fehlgeschlagen.": "Doğrulama başarısız.",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "smejj.com için yeni parola (en az 10 karakter):",
-  "Passwort-Reset abgebrochen.": "Parola sıfırlama iptal edildi.",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "Parola değiştirildi. Önceki tüm oturumlar sonlandırıldı — lütfen yeniden giriş yap.",
   "Reset fehlgeschlagen.": "Sıfırlama başarısız.",
   "Nutzer": "Kullanıcı",
@@ -244,5 +242,13 @@ export default {
   "Okay": "Orta",
   "Gut": "İyi",
   "Stark": "Güçlü",
-  "mindestens 10 Zeichen": "en az 10 karakter"
+  "mindestens 10 Zeichen": "en az 10 karakter",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "Parola sıfırlama bu sayfada kullanılamıyor.",
+  "Neues Passwort, mindestens 10 Zeichen": "Yeni parola, en az 10 karakter",
+  "Neues Passwort setzen": "Yeni parolayı ayarla",
+  "Bitte ein neues Passwort vergeben.": "Lütfen yeni bir parola belirleyin.",
+  "Die beiden Passwörter stimmen nicht überein.": "İki parola birbiriyle eşleşmiyor.",
+  "Bitte ein neues Passwort eingeben.": "Lütfen yeni bir parola girin.",
+  "Passwort wiederholen": "Parolayı tekrarla",
+  "Zur Sicherheit noch einmal": "Güvenlik için bir kez daha",
 };

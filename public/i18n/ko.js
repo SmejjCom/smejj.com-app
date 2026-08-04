@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "요청을 현재 이용할 수 없습니다.",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "이메일 주소가 확인되었습니다. 이제 로그인할 수 있습니다.",
   "Bestätigung fehlgeschlagen.": "확인에 실패했습니다.",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "smejj.com의 새 비밀번호(최소 10자):",
-  "Passwort-Reset abgebrochen.": "비밀번호 재설정이 취소되었습니다.",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "비밀번호가 변경되었습니다. 이전 세션이 모두 종료되었습니다 — 다시 로그인하세요.",
   "Reset fehlgeschlagen.": "재설정에 실패했습니다.",
   "Nutzer": "사용자",
@@ -244,5 +242,13 @@ export default {
   "Okay": "보통",
   "Gut": "좋음",
   "Stark": "강함",
-  "mindestens 10 Zeichen": "최소 10자"
+  "mindestens 10 Zeichen": "최소 10자",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "이 페이지에서는 비밀번호를 재설정할 수 없습니다.",
+  "Neues Passwort, mindestens 10 Zeichen": "새 비밀번호, 10자 이상",
+  "Neues Passwort setzen": "새 비밀번호 설정",
+  "Bitte ein neues Passwort vergeben.": "새 비밀번호를 설정해 주세요.",
+  "Die beiden Passwörter stimmen nicht überein.": "두 비밀번호가 일치하지 않습니다.",
+  "Bitte ein neues Passwort eingeben.": "새 비밀번호를 입력해 주세요.",
+  "Passwort wiederholen": "비밀번호 다시 입력",
+  "Zur Sicherheit noch einmal": "확인을 위해 한 번 더",
 };

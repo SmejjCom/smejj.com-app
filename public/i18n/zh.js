@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "请求当前不可用。",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "邮箱地址已确认。你现在可以登录。",
   "Bestätigung fehlgeschlagen.": "确认失败。",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "smejj.com 的新密码(至少 10 个字符):",
-  "Passwort-Reset abgebrochen.": "密码重置已取消。",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "密码已更改。所有现有会话已结束——请重新登录。",
   "Reset fehlgeschlagen.": "重置失败。",
   "Nutzer": "用户",
@@ -244,5 +242,13 @@ export default {
   "Okay": "一般",
   "Gut": "良好",
   "Stark": "强",
-  "mindestens 10 Zeichen": "至少 10 个字符"
+  "mindestens 10 Zeichen": "至少 10 个字符",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "此页面无法重置密码。",
+  "Neues Passwort, mindestens 10 Zeichen": "新密码，至少 10 个字符",
+  "Neues Passwort setzen": "设置新密码",
+  "Bitte ein neues Passwort vergeben.": "请设置一个新密码。",
+  "Die beiden Passwörter stimmen nicht überein.": "两次输入的密码不一致。",
+  "Bitte ein neues Passwort eingeben.": "请输入新密码。",
+  "Passwort wiederholen": "再次输入密码",
+  "Zur Sicherheit noch einmal": "为安全起见，请再输入一次",
 };

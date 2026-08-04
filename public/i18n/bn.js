@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "অনুরোধ এখন উপলব্ধ নয়।",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "ইমেইল ঠিকানা নিশ্চিত হয়েছে। এখন লগইন করতে পারেন।",
   "Bestätigung fehlgeschlagen.": "নিশ্চিতকরণ ব্যর্থ।",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "smejj.com-এর নতুন পাসওয়ার্ড (কমপক্ষে ১০ অক্ষর):",
-  "Passwort-Reset abgebrochen.": "পাসওয়ার্ড রিসেট বাতিল হয়েছে।",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "পাসওয়ার্ড পরিবর্তিত হয়েছে। আগের সব সেশন শেষ করা হয়েছে — আবার লগইন করুন।",
   "Reset fehlgeschlagen.": "রিসেট ব্যর্থ।",
   "Nutzer": "ব্যবহারকারী",
@@ -244,5 +242,13 @@ export default {
   "Okay": "মোটামুটি",
   "Gut": "ভালো",
   "Stark": "শক্তিশালী",
-  "mindestens 10 Zeichen": "কমপক্ষে ১০ অক্ষর"
+  "mindestens 10 Zeichen": "কমপক্ষে ১০ অক্ষর",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "এই পৃষ্ঠায় পাসওয়ার্ড রিসেট করা যাবে না।",
+  "Neues Passwort, mindestens 10 Zeichen": "নতুন পাসওয়ার্ড, অন্তত ১০ অক্ষর",
+  "Neues Passwort setzen": "নতুন পাসওয়ার্ড সেট করুন",
+  "Bitte ein neues Passwort vergeben.": "অনুগ্রহ করে একটি নতুন পাসওয়ার্ড দিন।",
+  "Die beiden Passwörter stimmen nicht überein.": "দুটি পাসওয়ার্ড মিলছে না।",
+  "Bitte ein neues Passwort eingeben.": "অনুগ্রহ করে একটি নতুন পাসওয়ার্ড লিখুন।",
+  "Passwort wiederholen": "পাসওয়ার্ড আবার লিখুন",
+  "Zur Sicherheit noch einmal": "নিরাপত্তার জন্য আরও একবার",
 };

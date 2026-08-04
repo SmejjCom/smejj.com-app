@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "الطلب غير متاح حاليًا.",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "تم تأكيد البريد الإلكتروني. يمكنك تسجيل الدخول الآن.",
   "Bestätigung fehlgeschlagen.": "فشل التأكيد.",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "كلمة مرور جديدة لـ smejj.com (10 أحرف على الأقل):",
-  "Passwort-Reset abgebrochen.": "أُلغيت إعادة تعيين كلمة المرور.",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "تم تغيير كلمة المرور. أُنهيت جميع الجلسات السابقة — يرجى تسجيل الدخول مجددًا.",
   "Reset fehlgeschlagen.": "فشلت إعادة التعيين.",
   "Nutzer": "مستخدم",
@@ -244,5 +242,13 @@ export default {
   "Okay": "مقبولة",
   "Gut": "جيدة",
   "Stark": "قوية",
-  "mindestens 10 Zeichen": "10 أحرف على الأقل"
+  "mindestens 10 Zeichen": "10 أحرف على الأقل",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "إعادة تعيين كلمة المرور غير متاحة في هذه الصفحة.",
+  "Neues Passwort, mindestens 10 Zeichen": "كلمة مرور جديدة، 10 أحرف على الأقل",
+  "Neues Passwort setzen": "تعيين كلمة مرور جديدة",
+  "Bitte ein neues Passwort vergeben.": "يرجى اختيار كلمة مرور جديدة.",
+  "Die beiden Passwörter stimmen nicht überein.": "كلمتا المرور غير متطابقتين.",
+  "Bitte ein neues Passwort eingeben.": "يرجى إدخال كلمة مرور جديدة.",
+  "Passwort wiederholen": "كرّر كلمة المرور",
+  "Zur Sicherheit noch einmal": "مرة أخرى للتأكيد",
 };

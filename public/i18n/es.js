@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "La solicitud no está disponible en este momento.",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "Dirección de correo confirmada. Ya puedes iniciar sesión.",
   "Bestätigung fehlgeschlagen.": "Error de confirmación.",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "Nueva contraseña para smejj.com (al menos 10 caracteres):",
-  "Passwort-Reset abgebrochen.": "Restablecimiento de contraseña cancelado.",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "Contraseña cambiada. Se cerraron todas las sesiones anteriores; inicia sesión de nuevo.",
   "Reset fehlgeschlagen.": "Error al restablecer.",
   "Nutzer": "Usuario",
@@ -244,5 +242,13 @@ export default {
   "Okay": "Aceptable",
   "Gut": "Buena",
   "Stark": "Fuerte",
-  "mindestens 10 Zeichen": "mínimo 10 caracteres"
+  "mindestens 10 Zeichen": "mínimo 10 caracteres",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "El restablecimiento de contraseña no está disponible en esta página.",
+  "Neues Passwort, mindestens 10 Zeichen": "Nueva contraseña, al menos 10 caracteres",
+  "Neues Passwort setzen": "Establecer nueva contraseña",
+  "Bitte ein neues Passwort vergeben.": "Elige una nueva contraseña.",
+  "Die beiden Passwörter stimmen nicht überein.": "Las dos contraseñas no coinciden.",
+  "Bitte ein neues Passwort eingeben.": "Introduce una nueva contraseña.",
+  "Passwort wiederholen": "Repetir contraseña",
+  "Zur Sicherheit noch einmal": "Una vez más, por seguridad",
 };
