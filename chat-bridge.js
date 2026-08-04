@@ -1,6 +1,7 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
+import { pipeVisibleStream } from "./chat-bridge-strom.js";
 // Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen.
 import { allowAuthenticated } from "./chat-bridge-auth.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
@@ -37,7 +38,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260804-v113-anmeldepflicht";
+const BRIDGE_VERSION = "20260804-v114-arbeitsschritte";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -351,104 +352,6 @@ async function streamModel(res, messages, profile, requestedModel = "") {
   });
   await pipeVisibleStream(upstream.body, res);
   res.end();
-}
-
-export async function pipeVisibleStream(body, res) {
-  const decoder = new TextDecoder();
-  const state = { buffer: "", pending: "", insideThink: false };
-  for await (const chunk of body) {
-    state.buffer += decoder.decode(chunk, { stream: true });
-    drainEvents(state, res, false);
-  }
-  state.buffer += decoder.decode();
-  drainEvents(state, res, true);
-  res.write("data: [DONE]\n\n");
-}
-
-function drainEvents(state, res, flush) {
-  let splitAt = state.buffer.indexOf("\n\n");
-  while (splitAt !== -1) {
-    const event = state.buffer.slice(0, splitAt);
-    state.buffer = state.buffer.slice(splitAt + 2);
-    handleSseEvent(event, state, res);
-    splitAt = state.buffer.indexOf("\n\n");
-  }
-  if (flush && state.buffer.trim()) {
-    handleSseEvent(state.buffer, state, res);
-    state.buffer = "";
-  }
-}
-
-export function filterSsePayload(payload, state = { pending: "", insideThink: false }) {
-  if (payload === "[DONE]") return null;
-  let parsed;
-  try {
-    parsed = JSON.parse(payload);
-  } catch {
-    return "";
-  }
-  const choice = parsed?.choices?.[0] || {};
-  const delta = choice.delta || {};
-  const raw = typeof delta.content === "string" ? delta.content : "";
-  if (!raw) return "";
-  const visible = stripInternalReferences(stripThinking(raw, state));
-  return visible;
-}
-
-function handleSseEvent(event, state, res) {
-  const data = event.split("\n").find((line) => line.startsWith("data: "))?.slice(6);
-  if (!data || data === "[DONE]") return;
-  const visible = filterSsePayload(data, state);
-  if (visible) writeDelta(res, visible);
-}
-
-function writeDelta(res, content) {
-  if (!content) return;
-  res.write(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`);
-}
-
-export function stripThinking(content, state = { pending: "", insideThink: false }) {
-  state.pending += String(content || "");
-  let visible = "";
-  while (state.pending) {
-    const lower = state.pending.toLowerCase();
-    if (state.insideThink) {
-      const closeAt = lower.indexOf("</think>");
-      if (closeAt === -1) {
-        state.pending = keepTail(state.pending, "</think>");
-        return visible;
-      }
-      state.pending = state.pending.slice(closeAt + "</think>".length);
-      state.insideThink = false;
-      continue;
-    }
-    const openAt = lower.indexOf("<think>");
-    if (openAt !== -1) {
-      visible += state.pending.slice(0, openAt);
-      state.pending = state.pending.slice(openAt + "<think>".length);
-      state.insideThink = true;
-      continue;
-    }
-    const tail = keepTail(state.pending, "<think>");
-    visible += state.pending.slice(0, state.pending.length - tail.length);
-    state.pending = tail;
-    return visible;
-  }
-  return visible;
-}
-
-function stripInternalReferences(text) {
-  return String(text || "")
-    .replace(/(?:Memory_Bank|Project_Goals|AI_Guidelines)\.md|docs\/[^\s)\]]+\.md/g, "interne Projektquelle")
-    .replace(/https?:\/\/smejj\.com\/(?:docs\/)?[^\s)\]]+\.md/g, "interne Projektquelle");
-}
-
-function keepTail(text, tag) {
-  const lower = text.toLowerCase();
-  for (let length = Math.min(tag.length - 1, lower.length); length > 0; length -= 1) {
-    if (tag.startsWith(lower.slice(-length))) return text.slice(-length);
-  }
-  return "";
 }
 
 export function isCodingTask(task) {
