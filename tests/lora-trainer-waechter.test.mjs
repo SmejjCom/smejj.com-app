@@ -119,6 +119,43 @@ test("Gedaechtnis und Bewertung ergeben zusammen den 60-Minuten-Selbststopp", ()
   assert.equal(entscheidung().stoppen, true);
 });
 
+// ─── Der Waechter darf nicht sein eigenes Netz diagnostizieren ──────────────
+
+test("ohne Netzbeleg wird eine unerreichbare Karte NICHT gestoppt", () => {
+  // Gemessen am 2026-08-04: die Dauerwache meldete "fetch failed", waehrend der
+  // Trainer nachweislich gesund war (3x HTTP 200). Ein laengerer Netzausfall auf
+  // der Waechterseite haette so eine gesunde, bezahlte GPU beendet.
+  const ergebnis = bewerteWacht({
+    erreichbar: false, bereit: false, nichtBereitSeitMs: 5 * STUNDE, netzBestaetigt: false
+  });
+  assert.equal(ergebnis.stoppen, false);
+  assert.match(ergebnis.grund, /unerreichbar_ohne_netzbeleg_seit_300min/);
+});
+
+test("mit Netzbeleg wird dieselbe Lage sehr wohl gestoppt", () => {
+  const ergebnis = bewerteWacht({
+    erreichbar: false, bereit: false, nichtBereitSeitMs: 5 * STUNDE, netzBestaetigt: true
+  });
+  assert.equal(ergebnis.stoppen, true);
+  assert.match(ergebnis.grund, /unerreichbar_seit_300min/);
+});
+
+test("der Netzbeleg entschuldigt einen ERREICHBAREN, aber nicht bereiten Trainer nicht", () => {
+  // Antwortet der Trainer und meldet dabei 'nicht bereit', ist das Netz
+  // offensichtlich in Ordnung — der fehlende Beleg darf hier nichts retten,
+  // sonst waere die Bremse mit einem Feldwert abschaltbar.
+  const ergebnis = bewerteWacht({
+    erreichbar: true, bereit: false, nichtBereitSeitMs: 5 * STUNDE, netzBestaetigt: false
+  });
+  assert.equal(ergebnis.stoppen, true);
+  assert.match(ergebnis.grund, /nicht_bereit_seit_300min/);
+});
+
+test("der Netzbeleg ist standardmaessig angenommen (alte Aufrufer bleiben gueltig)", () => {
+  const ergebnis = bewerteWacht({ erreichbar: false, bereit: false, nichtBereitSeitMs: 2 * STUNDE });
+  assert.equal(ergebnis.stoppen, true);
+});
+
 // ─── Koordinaten und der tatsaechliche Stopp ────────────────────────────────
 
 test("fehlende Salad-Koordinaten machen den Waechter erkennbar zahnlos", () => {

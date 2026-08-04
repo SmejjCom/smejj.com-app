@@ -71,6 +71,30 @@ async function frageTrainer() {
   }
 }
 
+/**
+ * Steht die eigene Leitung? Zweite, UNABHAENGIGE Abfrage gegen die Salad-API.
+ *
+ * Sie geht an einen anderen Wirt (api.salad.com statt *.salad.cloud) als die
+ * Trainer-Abfrage. Antwortet sie, ist das Netz des Waechters in Ordnung und ein
+ * unerreichbarer Trainer ist wirklich ein Trainerproblem. Antwortet sie nicht,
+ * ist der Waechter selbst blind — dann darf er nichts abschalten.
+ */
+async function netzStehtWirklich() {
+  const steuerung = new AbortController();
+  const uhr = setTimeout(() => steuerung.abort(), 15_000);
+  try {
+    const antwort = await fetch(`${BASIS}/${GRUPPE}`, {
+      headers: { "Salad-Api-Key": API_KEY, accept: "application/json" },
+      signal: steuerung.signal
+    });
+    return antwort.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(uhr);
+  }
+}
+
 async function stoppeGruppe(grund) {
   if (NUR_BEOBACHTEN) {
     console.log(`[waechter] ${zeit()} WUERDE STOPPEN (${grund}) — nur beobachtend, nichts getan.`);
@@ -97,7 +121,13 @@ async function main() {
   for (;;) {
     const lage = await frageTrainer();
     const nichtBereitSeitMs = gedaechtnis.melde(lage.bereit);
-    const entscheidung = bewerteWacht({ ...lage, nichtBereitSeitMs }, grenzen);
+    // Der Netzbeleg wird nur geholt, wenn er die Entscheidung aendern kann —
+    // also wenn der Trainer unerreichbar ist UND die Frist schon abgelaufen ist.
+    // Sonst waere es eine zusaetzliche Abfrage im Minutentakt ohne Nutzen.
+    const netzBestaetigt = (!lage.erreichbar && nichtBereitSeitMs >= grenzen.bereitFristMs)
+      ? await netzStehtWirklich()
+      : true;
+    const entscheidung = bewerteWacht({ ...lage, nichtBereitSeitMs, netzBestaetigt }, grenzen);
 
     // Nur Zustandswechsel protokollieren; ein Takt von 30 s wuerde sonst in
     // einer Stunde 120 identische Zeilen erzeugen und das Wesentliche zudecken.
@@ -129,6 +159,14 @@ async function main() {
     if (entscheidung.stoppen) {
       await stoppeGruppe(entscheidung.grund);
       return;
+    }
+
+    // Kein Stopp, aber auch kein gesunder Zustand: der Waechter ist blind.
+    // Das muss sichtbar sein, sonst haelt man Schweigen fuer Sicherheit.
+    if (entscheidung.grund?.startsWith("unerreichbar_ohne_netzbeleg")) {
+      console.log(`[waechter] ${zeit()} Frist abgelaufen, aber die EIGENE Leitung steht nicht`
+        + ` (${entscheidung.grund}). Es wird NICHTS gestoppt — der Trainer ist von hier aus`
+        + " nicht beurteilbar.");
     }
 
     await new Promise((fertig) => setTimeout(fertig, TAKT_MS));
