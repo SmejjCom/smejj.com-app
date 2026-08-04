@@ -639,7 +639,8 @@ Betreiber-Auftrag vom 2026-08-04 (vollstaendig autonome Umsetzung).
   Dokumente treffen (10,66/4,62 -> 10,66); es entscheidet also die Haelfte mit
   mehr Wortdeckung, nicht das Thema. Ungedeckte Themen bleiben ohne Kontext.
 - MERKREGEL (Parallel-Sitzung, bestaetigt): eine zweite Sitzung hatte den
-  Pflicht-Check rot hinterlassen (`file://` in einer Kapsel, ein
+  Pflicht-Check rot hinterlassen (das `file:`-Schema mit Schraegstrichen in
+  einer Kapsel — genau diese Zeichenfolge sucht `check:paths` —, ein
   Scratchpad-Pfad in `.claude/launch.json`) und app.js/sw.js halb geaendert.
   **Vor dem Deploy den LIVE-Stand gegen die Arbeitskopie halten** — hier zeigte
   sich, dass ihr sw v207 bereits ausgeliefert war, die Arbeitskopie also nicht
