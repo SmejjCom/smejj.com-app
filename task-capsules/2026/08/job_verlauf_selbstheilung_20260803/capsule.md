@@ -100,11 +100,96 @@ Arbeit **v207 live gestellt** — ohne den Fix. Live geprüft:
 DB_VERSION)` (Zeile 44), kein `ensureStore`. Die Arbeitskopie zeigt weiter 20+
 fremde Änderungen, die Sitzung arbeitet also am nächsten Stand.
 
-Der Fix braucht deshalb einen eigenen Deploy MIT neuem `CACHE_NAME` (v208 oder
-höher) — ohne Versionssprung behalten wiederkehrende Nutzer die alte Datei aus
-dem Precache (`caches.match(..., {ignoreSearch: true})`, `sw.js:622`). Das ist
-der einzige offene Schritt, und er gehört an das Ende der Fremd-Sitzung, nicht
-mitten hinein.
+Der Fix braucht deshalb einen eigenen Deploy MIT neuem `CACHE_NAME` — ohne
+Versionssprung behalten wiederkehrende Nutzer die alte Datei aus dem Precache
+(`caches.match(..., {ignoreSearch: true})`). Das ist der einzige offene Schritt,
+und er gehört an das Ende der Fremd-Sitzung, nicht mitten hinein.
+
+---
+
+# Runde 2 (2026-08-04) — ausgeliefert
+
+Freigabe: „Ja" + „Nach der Umsetzung bitte live gehen, live testen und prüfen,
+ob alles richtig funktioniert."
+
+## Lage bei Wiederaufnahme
+Die Parallel-Sitzung hat ihre Frontend-Arbeit abgeschlossen und committet
+(`c518e44` sw v208, `f680821`, `6f1e7e7`, `46ed4b1`). `public/` war **sauber** —
+damit war das Fenster offen. Gemessen:
+
+| | lokal | live |
+|---|---|---|
+| `sw.js` | v208 | v208 |
+| `chat-store.js` Fix | vorhanden | **fehlt** |
+
+Ihr v208-Deploy kopiert gezielt einzelne Dateien (`cp` je Datei in
+`smejj.com Deploy.command`) — `chat-store.js` war nicht dabei. Der Diff zwischen
+ausgeliefertem und lokalem Stand betrug exakt meinen Fix, 55 Zeilen, sonst nichts.
+
+## Umsetzung Runde 2
+- `public/sw.js`: `CACHE_NAME` v208 → **v209** plus Versionsnotiz. Sonst keine
+  Zeile — kein Eingriff in Startseite oder Design.
+- **5 Tests fordern die Cache-Version wörtlich ein** (`deferred-start`,
+  `platform-pwa`, `chat-code-copy`, `system-status-text`, `profile-dock`) — der
+  eingebaute Wächter gegen unbemerkte Sprünge. Mitgezogen.
+- `Memory_Bank.md`: `check:paths` war **rot** — eine Merkregel der Fremd-Sitzung
+  schrieb das `file:`-Schema mit Schrägstrichen aus, also genau die Zeichenfolge,
+  nach der der Check sucht (die Zeile beschrieb ironischerweise diesen Fehler).
+  Umformuliert, Aussage unverändert.
+
+## Checks vor dem Deploy — alle grün
+`check:frontend` **320/320** · `check:guidelines` OK (1281 Dateien) ·
+`check:security` OK · `check:favicon-lock` OK · `check:paths` OK ·
+`check:start-lock` erwartungsgemäß rot durch die eigene `sw.js`-Änderung,
+nach der Live-Abnahme mit Betreiber-Wortlaut neu eingefroren.
+
+## Deploy
+`smejj.com-app 26b26d6` → Frontend-Repo `232d0b3`, Branch
+`deploy-voice-send-20260721-rebased`, gepusht und auf dem Remote bestätigt.
+Genau zwei Dateien: `assets/chat-store.js`, `sw.js`. Geheimnis-Scan wie in
+`smejj.com Deploy.command` durchlaufen — sauber.
+**Rollback-Punkt: `3c18f58`** (Frontend), `46ed4b1` (App-Repo).
+
+## BLOCKER — der letzte Schritt fehlt: `main`
+
+Nach dem Push blieb live 220 s lang v208. Ursache gefunden, nicht geraten:
+
+**GitHub Pages baut aus `main`, nicht aus dem Deploy-Branch.**
+`git ls-remote --heads origin` zeigte `main = 3c18f58` (= das live laufende v208)
+und `deploy-voice-send-20260721-rebased = 232d0b3` (mein Stand). Ein Push auf den
+Arbeits-Branch allein verändert die Website also **nicht**. Der Zwischenbefund
+„CDN-Alter 507 s bei max-age 600" war eine Fährte — der Cache lief ab, ohne dass
+sich etwas änderte, weil der Ursprung selbst unverändert war.
+
+Geprüft und sauber: `git merge-base --is-ancestor origin/main 232d0b3` = **ja**.
+Es ist ein reiner **Fast-Forward** um genau einen Commit, kein Merge, kein
+History-Rewrite, und er berührt nur `assets/chat-store.js` und `sw.js`.
+
+Der Push `origin 232d0b3:main` wurde vom **Berechtigungs-Klassifikator der
+Sitzung blockiert** (jeder Push auf `main` gilt ihm als geschützt). Das ist
+bewusst NICHT umgangen worden. Der Auftrag steht damit einen Befehl vor dem Ziel.
+
+FREIZUGEBENDER BEFEHL:
+```
+cd ~/smejj-app-frontend && git push origin 232d0b3:main
+```
+
+## Messpflicht — erfüllt, mit einem vorbestehenden Befund
+Gemessen auf dem Live-Stand v208 (also VOR dieser Auslieferung), 5 Läufe,
+Chrome headless: `docs/benchmarks/webvitals_verlauf_selbstheilung_2026-08-04.json`
+
+| Kennzahl | kalt | warm | Budget | |
+|---|---|---|---|---|
+| TTFB | 16 ms | 16 ms | 200 ms | OK |
+| LCP | 176 ms | 140 ms | 1500 ms | OK |
+| CLS | 0 | 0 | 0,1 | OK |
+| INP | 56 ms | 48 ms | 200 ms | OK |
+| Seitengewicht | **308 KB** | 40 KB | 300 KB | **VERFEHLT** |
+
+Der Performance-Lock ist also **schon heute gerissen** — beim Erstbesuch, vor
+und unabhängig von diesem Auftrag. Der Wiederbesuch liegt mit 40 KB weit im
+Budget, der Service Worker trägt seine Aufgabe. Das gehört in einen eigenen
+Auftrag: Startseiten-Module verschlanken oder später laden.
 
 ## Nebenwirkung, offen gelegt
 Beim Auslesen in Chrome ist in **diesem** Profil (nicht dem des Betreibers,
@@ -126,8 +211,19 @@ und genau diese Lage heilt der Fix ab dem nächsten Deploy von selbst.
 | Verlauf-Selbstheilung | Behoben, 5/5 bewiesen, committet `7e1cab4`, gepusht. Live mit nächstem Deploy. |
 | GitHub-Push | `587bdf5` + `7e1cab4` auf `feature/auth-redesign-github-magiclink`. |
 
+## Ergebnis Runde 2
+| Punkt | Stand |
+|---|---|
+| Auslieferung vorbereitet | **Fertig.** sw v209, 5 Versions-Tests mitgezogen, `check:paths` entsperrt. App-Repo `26b26d6`, Frontend-Repo `232d0b3` — beide gepusht. |
+| Live | **NEIN.** Fehlt der Fast-Forward auf `main`; der Push wurde vom Klassifikator blockiert. Live läuft weiter v208. |
+| Pflicht-Checks | `check:frontend` 320/320, `guidelines`/`security`/`favicon-lock`/`paths` grün. |
+| Messpflicht | Erfüllt. Ein **vorbestehender** Budget-Riss gefunden: 308 KB kalt gegen 300 KB. |
+| Start-Lock | Bewusst NICHT neu eingefroren — erst nach der Live-Abnahme, sonst friert man einen ungeprüften Stand ein. |
+| Schutz | Nichts gelöscht, nichts überschrieben, keine Secrets, keine Kosten. Rollback = ein Commit. |
+
 ## Nächster Schritt
-Sobald die Parallel-Sitzung ihren Stand abgeschlossen hat: `check:all` grün
-bekommen, `app.js`/`chat-bridge.js`/`voice-landing.js` unter 800 Zeilen bringen,
-Start-Lock mit Betreiber-Wortlaut neu einfrieren, deployen — dieser Fix fährt
-dabei mit und ist dann live prüfbar (Verlauf-Seite nach Speicher-Räumung).
+1. **Den einen Befehl freigeben** (siehe BLOCKER) — danach live prüfen:
+   `sw.js` muss v209 zeigen und `assets/chat-store.js` `ensureStore` enthalten.
+2. Danach Start-Lock mit dem Betreiber-Wortlaut neu einfrieren
+   (`node scripts/check-start-lock.mjs --freeze --confirm "…"`).
+3. Eigener Auftrag: Seitengewicht des Erstbesuchs unter 300 KB bringen.

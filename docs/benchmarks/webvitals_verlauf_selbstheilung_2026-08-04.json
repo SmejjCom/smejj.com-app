@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-webvitals",
+  "anlass": "job_verlauf_selbstheilung_20260803 — Messpflicht vor der Auslieferung von sw v209",
+  "gemessenAm": "2026-08-04",
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "scripts/testing/measure_web_vitals.mjs, Chrome headless ueber DevTools-Protokoll",
+  "gemessenerLiveStand": "sw v208 (Frontend main 3c18f58) — der Stand VOR dieser Auslieferung",
+  "kalt": {
+    "ttfb_ms": { "p75": 16, "min": 9, "max": 44 },
+    "lcp_ms": { "p75": 176, "min": 84, "max": 496 },
+    "cls": { "p75": 0, "min": 0, "max": 0 },
+    "inp_ms": { "p75": 56, "min": 32, "max": 64 },
+    "pageWeight_kb": { "p75": 308, "min": 308, "max": 308 },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": { "p75": 16, "min": 10, "max": 28 },
+    "lcp_ms": { "p75": 140, "min": 116, "max": 140 },
+    "cls": { "p75": 0, "min": 0, "max": 0 },
+    "inp_ms": { "p75": 48, "min": 32, "max": 56 },
+    "pageWeight_kb": { "p75": 40, "min": 40, "max": 40 },
+    "lcpElement": "H2"
+  },
+  "budgets": {
+    "ttfb_ms": 200,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "urteil": "1 Budget verfehlt",
+  "verfehlt": [
+    {
+      "kennzahl": "pageWeight_kb",
+      "zustand": "kalt",
+      "gemessen": 308,
+      "budget": 300,
+      "bewertung": "VORBESTEHEND — gemessen auf dem Live-Stand v208, also VOR dieser Auslieferung. Nicht durch diesen Auftrag verursacht.",
+      "hinweis": "Der Performance-Lock ist damit schon heute gerissen. Der Erstbesuch traegt 308 KB komprimiert (ohne Bilder); der Wiederbesuch liegt mit 40 KB weit im Budget, der Service Worker traegt also. Eigener Auftrag noetig: Startseiten-Module verschlanken oder spaeter laden."
+    }
+  ],
+  "alleAnderenGruen": "TTFB, LCP, CLS und INP halten ihre Budgets in beiden Zustaenden mit grossem Abstand."
+}
