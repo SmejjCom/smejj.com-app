@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-04T03:57:35.850Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-04, wörtlich: 'Freigabe: Change-Lock auf die sicherheitskritischen Dateien ausweiten — Anmeldeseiten, account-sessions.js, chat-history-context.js, chat-bridge.js und fetch-retry.js. Danach byte-genau einfrieren wie die Startseite.'",
+  "frozenAt": "2026-08-04T05:34:34.374Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-04, woertlich: 'Token-Pflicht an der Chat-Bridge umsetzen. Die andere Sitzung soll das Thema abgeben. Start-Lock und Security-Lock duerfen dafuer einmalig geloest und danach neu eingefroren werden.' — Geaendert wurde nur public/chat-bridge.js (Anmeldepflicht vor den modellkostenden Routen).",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "9344804982b9eeb5003f0b3d6abfaa564aee72c7c6f57adc49ba53de055b79dd",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "157f34c1a998a30153bc0f404be3f135bdbd69e093ff25d1ea63a36d7e436b66",
     "public/chat-history-context.js": "00a993819d26a2cc282154d07f1161b10532eaea9348e92645acbe9133f0db15",
-    "public/chat-bridge.js": "fe61863cbaa1d54ec82ca0087a04fb8b25fd5b9f76e7aabbf400b8c55fccdfd6",
+    "public/chat-bridge.js": "5cfeff80ed1dad4933d272703e12e2ae5746068283cd09bc63803755fa4a4ad6",
     "public/ai/fetch-retry.js": "15a1e631825913af8186f0d75b332f79e08e91f70f2db774c2a111ec06d9c506"
   }
 }

@@ -9,6 +9,12 @@ test("chat bridge proxies model choice to the registry router and keeps legacy G
   const upstream = http.createServer(async (req, res) => {
     let raw = "";
     for await (const chunk of req) raw += chunk;
+    // Seit 2026-08-04 fragt die Bruecke vor jeder Modell-Route hier nach, ob das
+    // Token gilt (Anmeldepflicht). Ohne diese Antwort bekaeme der Test 401.
+    if (req.url === "/api/auth/me") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ authenticated: req.headers.authorization === "Bearer test-token", user: { email: "test@smejj.com" } }));
+    }
     const body = JSON.parse(raw || "{}");
     state.bodies.push({ url: req.url, body });
     if (req.url === "/api/chat" && state.controlFails) {
@@ -66,7 +72,7 @@ test("chat bridge proxies model choice to the registry router and keeps legacy G
 function request(port, model) {
   return fetch(`http://127.0.0.1:${port}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Origin: "https://smejj.com" },
+    headers: { "Content-Type": "application/json", Origin: "https://smejj.com", Authorization: "Bearer test-token" },
     body: JSON.stringify({ model, message: "test" })
   });
 }

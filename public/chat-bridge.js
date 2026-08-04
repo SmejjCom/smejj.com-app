@@ -1,6 +1,8 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
+// Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen.
+import { allowAuthenticated } from "./chat-bridge-auth.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { readAudioBody, transcribeWithGroq } from "./chat-bridge-voice-ear.js";
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
@@ -35,7 +37,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260804-v112-verlauf-reserve-anschlussfrage";
+const BRIDGE_VERSION = "20260804-v113-anmeldepflicht";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -47,7 +49,12 @@ export function createChatBridgeServer() {
       if (url.pathname === "/health") return json(res, 200, healthPayload());
       if (req.method !== "POST") return json(res, 404, { ok: false, error: "Not found" });
       if (!cors["Access-Control-Allow-Origin"]) return json(res, 403, { ok: false, error: "Origin not allowed" });
-      if ((url.pathname === "/api/chat" || url.pathname === "/api/agent" || url.pathname === "/api/voice/tts" || url.pathname === "/api/voice/transcribe") && !allowModelRequest(req, res)) return;
+      const kostetModell = url.pathname === "/api/chat" || url.pathname === "/api/agent"
+        || url.pathname === "/api/voice/tts" || url.pathname === "/api/voice/transcribe";
+      if (kostetModell && !allowModelRequest(req, res)) return;
+      // Anmeldung vor dem Modell: der Origin-Kopf allein schuetzt NICHT (er ist
+      // ausserhalb eines Browsers frei setzbar, am 2026-08-04 mit curl bewiesen).
+      if (kostetModell && !(await allowAuthenticated(req, res, { json, controlOrigin: CONTROL_ORIGIN }))) return;
       if (url.pathname === "/api/chat") return await handleChat(req, res);
       if (url.pathname === "/api/agent") return await handleAgent(req, res);
       if (url.pathname === "/api/voice/status") return await handleVoiceStatus(req, res);

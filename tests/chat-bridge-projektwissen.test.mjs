@@ -206,6 +206,12 @@ test("gebuendelte bridge reicht projektwissen an das modell durch", async (t) =>
     let roh = "";
     req.on("data", (stueck) => { roh += stueck; });
     req.on("end", () => {
+      // Seit 2026-08-04 fragt die Bruecke vor jeder Modell-Route nach, ob das
+      // Token gilt (Anmeldepflicht). Derselbe Stub beantwortet das mit.
+      if (req.url === "/api/auth/me") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ authenticated: req.headers.authorization === "Bearer test-token", user: { email: "test@smejj.com" } }));
+      }
       gesehen.push(JSON.parse(roh));
       res.writeHead(200, { "Content-Type": "text/event-stream" });
       res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "ok" } }] })}\n\n`);
@@ -226,6 +232,9 @@ test("gebuendelte bridge reicht projektwissen an das modell durch", async (t) =>
       SMEJJ_HOST: "127.0.0.1",
       SMEJJ_LLM_GROQ_API_KEY: "test-schluessel",
       SMEJJ_LLM_GROQ_BASE_URL: `http://127.0.0.1:${stub.address().port}/v1`,
+      // Die Anmeldepruefung laeuft ueber den Control Server — hier derselbe Stub,
+      // sonst fragte der Test die ECHTE Produktion und bekaeme 401.
+      SMEJJ_CONTROL_ORIGIN: `http://127.0.0.1:${stub.address().port}`,
       SMEJJ_MULTI_MODEL_ROUTER_ENABLED: "NO"
     },
     stdio: ["ignore", "pipe", "pipe"]
@@ -242,7 +251,7 @@ test("gebuendelte bridge reicht projektwissen an das modell durch", async (t) =>
     gesehen.length = 0;
     const antwort = await fetch(`http://127.0.0.1:${port}${route}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Origin: "https://smejj.com" },
+      headers: { "Content-Type": "application/json", Origin: "https://smejj.com", Authorization: "Bearer test-token" },
       body: JSON.stringify(rumpf)
     });
     await antwort.text();

@@ -128,10 +128,15 @@ function machEarSend(host, serverText, { totesOhr = false } = {}) {
     check(`3c ${name} startet die Aufnahme beim Zuhoeren`, quelle.includes("serverEar.start()"));
     check(`3d ${name} verwirft die Aufnahme beim Aufraeumen`, (quelle.match(/serverEar\.cancel\(\)/g) || []).length >= 2);
   }
-  check("3e Bridge fuehrt die Route und haelt sie hinter dem Rate-Gate",
-    bridge.includes('"/api/voice/transcribe"') && bridge.includes('url.pathname === "/api/voice/transcribe") && !allowModelRequest'.replace('&& !allowModelRequest', '') )
-    && /"\/api\/voice\/transcribe"\) return await handleVoiceTranscribe/.test(bridge)
-    && /"\/api\/voice\/transcribe"\s*\)\s*&&\s*!allowModelRequest/.test(bridge.replace(/\n/g, " ")));
+  // Seit 2026-08-04 stehen Rate-Gate UND Anmeldepflicht gemeinsam vor allen
+  // modellkostenden Routen (Sammelbedingung `kostetModell` in chat-bridge.js).
+  // Geprueft wird die Absicht: die Route gehoert dazu und liegt hinter beiden.
+  const einzeilig = bridge.replace(/\n/g, " ");
+  check("3e Bridge fuehrt die Route und haelt sie hinter Rate-Gate und Anmeldung",
+    /"\/api\/voice\/transcribe"\) return await handleVoiceTranscribe/.test(bridge)
+    && /const kostetModell =[^;]*"\/api\/voice\/transcribe"/.test(einzeilig)
+    && /kostetModell && !allowModelRequest\(req, res\)/.test(einzeilig)
+    && /kostetModell && !\(await allowAuthenticated\(req, res/.test(einzeilig));
   check("3f Bridge meldet earConfigured im /health", bridge.includes("earConfigured: Boolean(GROQ_API_KEY)"));
   check("3g sw.js fuehrt voice-ear.js im Precache", sw.includes('"/assets/voice-ear.js"'));
   check("3h config.js kennt die Transkriptions-Route", config.includes("voiceTranscribe:"));
