@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-04T06:01:31.559Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-04: 'Anmeldepflicht jetzt live stellen (Frontend und Bridge in einer Welle) und danach beide Sperren neu einfrieren.' — Beruehrt wurde public/sw.js (v216 -> v217), noetig damit Bestandsnutzer den Token mitschicken.",
+  "frozenAt": "2026-08-04T09:20:50.978Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-04 (stehender Auftrag: 'Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter'). Beruehrt: public/sw.js v217 -> v218 fuer den Klartext-Hinweis bei abgelehnter Anmeldung.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "c94c8831057465cbc85d5921becce1054e306b247e3a7504f296233412e2ee7b",
+    "public/sw.js": "f99757073e2ef3f606f9ca8e1d73e1c28fb57ab42aaf0d75b340335053ad131b",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
