@@ -704,3 +704,29 @@ Betreiber-Auftrag vom 2026-08-04 (vollstaendig autonome Umsetzung).
   — alle weit im Budget. **Seitengewicht kalt 308 KB gegen Budget 300 KB:
   VERFEHLT, vorbestehend.** Warm 40 KB. Eigener Auftrag noetig.
   Beleg: docs/benchmarks/webvitals_verlauf_selbstheilung_2026-08-04.json
+
+## 2026-08-04 — A-bis-Z-Livetest: Sprache wurde ungefragt auf Deutsch gestellt (job_livetest_a_bis_z_20260804)
+- BEHOBEN + live bewiesen (sw v210, Frontend `0d7e3c1`, Commit `b4b5202`).
+  Browser en-US: Oberflaeche korrekt englisch, Sprachauswahl zeigte "Deutsch".
+  Ursache: `app.js:551` (Start-Lock, bindSettings) belegt `#settingsLanguage`
+  NACH dem Render mit `state.settings.language || "de"`, waehrend die
+  i18n-Laufzeit die Browsersprache erkennt. Weil `save()` ALLE Felder wegschreibt,
+  hat schon ein Wechsel des FARBSCHEMAS `language:"de"` festgeschrieben — nach dem
+  Neuladen stand die ganze App auf Deutsch. Traf jeden nicht-deutschen Nutzer.
+- FIX ohne Lock-Eingriff in `settings-surface.js`: `save()` nimmt `uiLanguage()`
+  statt des Feldwerts, `sprachwahlVomNutzer` traegt die echte Wahl (in
+  handleChange VOR save gesetzt), `zeigeAktiveSprache()` korrigiert die Anzeige
+  nach dem app.js-Boot. Gegenprobe live: "Deutsch" und "Francais" greifen weiter.
+- MERKREGEL 1: **Ein Formularfeld ist keine Wahrheitsquelle**, wenn ein zweites
+  Modul es nachtraeglich belegt — und zwei Stellen mit demselben "Standard"
+  driften, sobald eine rechnet (Browsersprache) und die andere raet ("de").
+- MERKREGEL 2: `?v=`-Sprung wirkt NICHT — der Cache-Treffer laeuft mit
+  `ignoreSearch`. Nur `CACHE_NAME` erreicht Bestandsnutzer.
+- GEPRUEFT UND GRUEN: 23 Adressen, 4 Backends, 17 App-Ansichten, Chat inkl.
+  Anschlussfrage, Verlauf (`smejj-chats v2`), 133 Precache-Eintraege, 0
+  Konsolenfehler. TTFB 50 ms, LCP 84 ms, CLS 0.
+- OFFEN (Betreiber-Entscheidung, Details in der Capsule): 16/19 Sitemap-Adressen
+  leiten Abgemeldete zur Anmeldung; Kontoansicht ~37 Stellen unuebersetzt bei
+  `lang="en"`; Passwortdialog fuer alle Sprachen deutsch; Qualitaetsverlauf steht
+  seit 30.07.; der Assistent kennt seine eigene Infrastruktur nicht (RAG nicht im
+  Live-Pfad).
