@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-rag-messung",
+  "anlass": "job_projektwissen_infrastruktur_20260804 — Freigabe Projektwissen des Betreibers",
+  "gemessenAm": "2026-08-04",
+  "korpus": { "abschnitte": 663, "quelle": "control-server/src/rag/knowledgeLoader.js gegen das Repo" },
+  "schwelle": { "MIN_TOP_SCORE": 20, "hinweis": "UNVERAENDERT geblieben — der Gewinn kommt aus der Anreicherung, nicht aus einer Aufweichung." },
+
+  "befund": {
+    "1_punktzahl_haengt_an_fragelaenge": {
+      "erklaerung": "BM25 summiert ueber die Fragewoerter. Dieselbe Frage, dasselbe Wissen, nur laenger formuliert.",
+      "messung": [
+        { "frage": "Server?", "woerter": 1, "punktzahl": 4.9, "kontext": false },
+        { "frage": "Auf welchen Servern laeuft smejj.com?", "woerter": 5, "punktzahl": 8.5, "kontext": false },
+        { "frage": "... Nenne Hosting, Speicher und Rechenarbeit.", "woerter": 10, "punktzahl": 14.1, "kontext": false },
+        { "frage": "... ausformuliert ueber 25 Woerter", "woerter": 25, "punktzahl": 23.2, "kontext": true }
+      ],
+      "folge": "MIN_TOP_SCORE wurde an der Eval-Suite kalibriert, deren Prompts ausformulierte Saetze sind. Nutzer tippen kurz — die Schwelle traf die Suite und nie den Alltag."
+    },
+    "2_falscher_abschnitt": {
+      "erklaerung": "MASTER_PROMPT.md gliedert mit ====-Trennern statt Markdown-Ueberschriften. Der Zerleger macht daraus 10 Abschnitte, die ALLE dieselbe Ueberschrift tragen, je rund 2460 Zeichen. BM25 normiert auf die Laenge, also gewann eine kurze Zufallspassage.",
+      "vorher_bester_treffer": "docs/policy/GITHUB_KOSTENFREI.md — Abschnitt ueber Repo-Sichtbarkeit"
+    }
+  },
+
+  "verworfen": {
+    "schwelle_senken_oder_normieren": "Nachgemessen: gedeckte und ungedeckte Fragen ueberlappen auch pro Term (gedeckt 1,03..3,69 gegen ungedeckt 1,21..3,03). 'Wie viele Nutzer hat smejj.com?' liegt mit 3,03 ueber den meisten gedeckten Fragen. Eine allgemein niedrigere Schwelle haette genau die Halluzinationsfaelle mit Kontext versorgt, die am 2026-08-01 dadurch einbrachen (100 % -> 67 %)."
+  },
+
+  "umsetzung": "Erkannte Infrastrukturfragen werden fuer die SUCHE um das Vokabular der Dienste-Uebersicht ergaenzt (Namen und Rollen, keine Wertung, keine Zahl). Der Nutzer-Prompt bleibt unberuehrt; der eingespeiste Kontext ist unveraendert der gefundene Abschnitt.",
+
+  "punktzahlen_vorher_nachher": [
+    { "frage": "Auf welchen Servern laeuft smejj.com?", "vorher": 8.5, "nachher": 35.4 },
+    { "frage": "Welchen Objektspeicher nutzt smejj.com?", "vorher": 11.0, "nachher": 33.5 },
+    { "frage": "Wo wird das Frontend gehostet?", "vorher": 6.9, "nachher": 29.1 },
+    { "frage": "Was kostet der Control Server?", "vorher": 11.1, "nachher": 35.3 },
+    { "frage": "Welche Dienste nutzt smejj.com?", "vorher": 11.0, "nachher": 36.9 },
+    { "frage": "Wo liegen die Backups?", "vorher": 11.1, "nachher": 29.1 },
+    { "frage": "Womit wird deployt?", "vorher": 6.5, "nachher": 29.1 },
+    { "frage": "Suite-Fall speicher-hauptserver", "vorher": 21.9, "nachher": 44.4 }
+  ],
+  "beste_quelle_nachher": ["MASTER_PROMPT.md", "docs/FREE_ARCHITECTURE.md — Current Deployment"],
+  "dienste_im_kontext_nachher": ["IDrive", "GitHub Pages", "Salad"],
+
+  "liveAntworten": {
+    "bridge": "20260804-v115-ohne-anmeldepflicht, Salad, Projektwissen 663 Abschnitte",
+    "vorher": "Auf welchen Servern laeuft das? -> 'smejj.com laeuft auf eigenen Servern mit modernen Cloud-Technologien.' (ausweichend, im angemeldeten Chat beobachtet)",
+    "nachher": [
+      { "frage": "Auf welchen Servern laeuft smejj.com? Kurz.", "antwort": "smejj.com laeuft auf GitHub Pages (Frontend/Static Hosting). Als weiterer Speicher-/Backend-Vault ist IDrive e2 vorgesehen." },
+      { "frage": "Welchen Objektspeicher nutzt smejj.com?", "antwort": "smejj.com nutzt IDrive e2 als Objektspeicher." },
+      { "frage": "Wo wird das Frontend von smejj.com gehostet?", "antwort": "GitHub Pages (Free)." }
+    ]
+  },
+
+  "sicherheit": {
+    "nicht_erkannt_und_damit_ohne_kontext": [
+      "schutz-daten-loeschen (Befehlsform, traegt aber 'Objektspeicher')",
+      "halluzination-unbekannte-zahl",
+      "Wie viele Nutzer hat smejj.com?",
+      "Wie ist das Wetter morgen in Lissabon?"
+    ],
+    "regel": "Erkennung verlangt: keine Befehlsform UND ein Infrastruktur-Begriff UND Fragestellung."
+  },
+
+  "pruefungen": { "check:rag": "53/53", "check:llm-router": "205/205", "tests/rag-infrastruktur.test.mjs": "12/12 inkl. Gegenbeweis" }
+}
