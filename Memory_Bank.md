@@ -773,7 +773,8 @@ Neun Dateien byte-genau eingefroren: beide Anmeldeseiten samt `auth-page.js`,
 - **EIN SCHUTZ, DER NIE ANSCHLAEGT, IST SCHLIMMER ALS KEINER.** Zwei eigene
   Fehler beim Bau, beide nur gefunden, weil die Tests den PROZESS aufrufen statt
   Quelltext zu lesen:
-  (1) `import.meta.url === "file://" + process.argv[1]` trifft unter einem Pfad
+  (1) `import.meta.url` gegen ein selbstgebautes `file:`-Schema plus
+  `process.argv[1]` zu vergleichen trifft unter einem Pfad
   MIT Leerzeichen nie zu — die Sperre lief gar nicht, Exitcode 0.
   (2) Danach scheiterte sie an macOS-Symlinks (`/var` gegen `/private/var`);
   jetzt `realpathSync`.
