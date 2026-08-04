@@ -100,6 +100,12 @@ test("Kaputter Storage gilt als abgemeldet (fail-closed)", () => {
 
 test("Gate haengt an App-Shell und Sprachseiten, ohne Start-Lock-Dateien", () => {
   assert.match(dockJs, /import "\.\/auth-gate\.js\?v=1";/);
-  assert.match(landingJs, /import "\.\/auth-gate\.js\?v=1";/);
+  // Die Sprachseiten haengen seit dem 2026-08-04 UEBER voice-landing-signin.js
+  // am Gate: das Modul importiert hasSession und entscheidet, ob der
+  // Sprachmodus oder nur ein Anmelde-Knopf gebaut wird. Dieselbe Kennung ?v=1
+  // wie ueberall sonst — zwei Kennungen waeren zwei Modulinstanzen.
+  assert.match(landingJs, /import \{ darfSprechen, buildLoginCta \} from "\.\/voice-landing-signin\.js\?v=1";/);
+  const signinJs = fs.readFileSync("public/voice-landing-signin.js", "utf8");
+  assert.match(signinJs, /import \{ hasSession \} from "\.\/auth-gate\.js\?v=1";/);
   assert.match(gateJs, /fail-closed|Fail-closed/);
 });
