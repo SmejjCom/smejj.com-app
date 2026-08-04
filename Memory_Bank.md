@@ -791,3 +791,31 @@ Die letzten drei Punkte der Betreiber-Liste. Volltext in der Kapsel.
   kalibriert am Alltag vorbei. Vor dem Nachjustieren pruefen, ob das Kriterium
   ueberhaupt trennt — hier tat es das nicht, und die richtige Antwort war eine
   bessere SUCHE statt einer weicheren Schwelle.
+
+## 2026-08-04 — Dreiervergleich der breiten Suite (job_eval_breite_suite_20260803)
+
+Auf den 180 Faellen, die nachweislich echtes K3 beantwortet hat (fairer Massstab):
+**GLM-5.2 78,0 % > Kimi K3 72,2 % > Schnellspur 66,4 %.** Ueber alle 295 Faelle:
+GLM 76,1 % ± 0,6 (0 Fehler, Backend verifiziert), Schnellspur 66,2 %.
+Berichte: modeleval-smejj-chat-breit-{glm-5-2,kimi-k3}-2026-08-04.json.
+
+- **GLM-5.2 bleibt das Fundament.** Es gewinnt 7 von 9 Kategorien, ist dreimal
+  schneller (p95 9,3 s gegen 29,1 s) und schlaegt Kimi besonders bei Sicherheit
+  (76,9 gegen 66,2) und Kosten-Policy (62,0 gegen 42,3).
+- **WO EIN BESSERES FUNDAMENT NICHTS BRINGT:** ship (−2,1), router (+0,2),
+  kosten (+1,1) gegenueber der Schnellspur. Das ist reines Hauswissen — kein
+  Fremdmodell kennt es. MERKREGEL: **Modellwahl hebt Faehigkeiten, nicht
+  Projektwissen. Dafuer sind RAG und Nachtraining zustaendig.** Genau diese drei
+  Kategorien sind der Auftrag fuer smejj 1.0.
+- **DER WAECHTER HAT SICH SOFORT BEZAHLT GEMACHT.** Der Kimi-Lauf lieferte
+  180 Faelle als kimi-k3 und 115 als kimi-k2-7 — ein stiller Wechsel MITTEN im
+  Lauf (Router-Gesundheit stuft ein ausgefallenes Modell zurueck). Seit c73d115
+  meldet modellAbweichung() das als `model_mismatch`; nachtraeglich angewandt
+  greift es korrekt. Der Lauf selbst startete Minuten vor dem Einbau und trug
+  ihn noch nicht.
+- **FALLE fuer kuenftige Vergleiche:** Modelle NIE ueber die Gesamtnote
+  vergleichen, wenn resolvedModelIds mehr als einen Eintrag hat. Richtig ist der
+  Vergleich auf der Fallmenge, die das gewuenschte Modell wirklich beantwortet hat.
+- Kimi K3 ist seit dem Lauf nicht mehr erreichbar: jede Anfrage kommt als
+  `x-smejj-model-fallback: true` mit kimi-k2-7 zurueck. K2.7 erreichte auf seinen
+  115 Faellen 72,5 % — praktisch gleichauf mit K3.
