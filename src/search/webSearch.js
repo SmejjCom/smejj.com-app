@@ -277,16 +277,33 @@ const STOPWOERTER = new Set([
 // weil "office" vorkam. Deshalb gilt jetzt: ab drei pruefbaren Begriffen muessen
 // ZWEI davon in DEMSELBEN Treffer stehen. Bei ein bis zwei Begriffen bleibt es
 // bei einem Treffer — sonst wuerde "Zoo Berlin" faelschlich verworfen.
-export function resultsLookRelevant(query, results) {
-  if (!Array.isArray(results) || results.length === 0) return false;
+/**
+ * Behaelt nur die Treffer, die wirklich zur Anfrage gehoeren.
+ *
+ * Befund 2026-08-04 (live, zweiter Durchlauf): Auf "commercial office for sale
+ * Santa Clara" lieferte Bing acht Treffer — darunter LoopNet und Crexi (richtig),
+ * aber auch "COMMERCIAL Definition & Meaning – Merriam-Webster", das Cambridge
+ * Dictionary und eine TV-Werbeseite. Alle acht gingen ans Modell.
+ *
+ * Ursache war NICHT der Schwellwert, sondern die Bauart: `resultsLookRelevant`
+ * war ein Tor fuer die GANZE Liste (`results.some`). Ein einziger guter Treffer
+ * machte die Liste gueltig — und der Muell fuhr als blinder Passagier mit.
+ * Jeder Treffer wird jetzt einzeln geprueft.
+ *
+ * @param {string} query Suchbegriff.
+ * @param {Array} results Rohe Trefferliste.
+ * @returns {Array} nur die passenden Treffer, Reihenfolge unveraendert.
+ */
+export function relevanteTreffer(query, results) {
+  if (!Array.isArray(results) || results.length === 0) return [];
   const begriffe = normalizeForIntent(query)
     .split(/[^a-z0-9]+/)
     .filter((wort) => wort.length >= 4 && !STOPWOERTER.has(wort));
   // Ohne pruefbare Begriffe (z. B. reine Zahlen) nicht filtern — sonst wuerden
   // gueltige Suchen faelschlich verworfen.
-  if (begriffe.length === 0) return true;
+  if (begriffe.length === 0) return results.slice();
   const noetig = begriffe.length >= 3 ? 2 : 1;
-  return results.some((eintrag) => {
+  return results.filter((eintrag) => {
     const heuhaufen = normalizeForIntent(
       String(eintrag?.title || "") + " " + String(eintrag?.url || "") + " " + String(eintrag?.snippet || "")
     );
@@ -297,6 +314,16 @@ export function resultsLookRelevant(query, results) {
     }
     return false;
   });
+}
+
+/**
+ * Traegt die Liste ueberhaupt etwas zur Anfrage bei? Das Tor bleibt unveraendert:
+ * ein einziger passender Treffer genuegt, damit die Quelle als brauchbar gilt.
+ * Was danach weitergereicht wird, entscheidet `relevanteTreffer` je Eintrag.
+ */
+export function resultsLookRelevant(query, results) {
+  if (!Array.isArray(results) || results.length === 0) return false;
+  return relevanteTreffer(query, results).length > 0;
 }
 
 /**
@@ -355,14 +382,18 @@ export async function searchWebDetailed(query, options) {
   // der bisherige Weg laeuft unveraendert weiter.
   const mitSchluessel = await searchWithKey(trimmed, { limit, region: params.region });
   if (mitSchluessel.status !== "kein schluessel") {
-    const brauchbar = mitSchluessel.results.length > 0 && resultsLookRelevant(trimmed, mitSchluessel.results);
+    // Je Treffer filtern, nicht die Liste als Ganzes durchwinken: ein guter
+    // Treffer darf keine themenfremden mitziehen (Befund 2026-08-04).
+    const passend = relevanteTreffer(trimmed, mitSchluessel.results);
+    const brauchbar = passend.length > 0;
     attempts.push({
       source: mitSchluessel.source,
       parsed: mitSchluessel.results.length,
+      kept: passend.length,
       status: brauchbar ? "ok" : mitSchluessel.results.length ? "themenfremd" : mitSchluessel.status
     });
     if (brauchbar) {
-      const begrenzt = mitSchluessel.results.slice(0, limit);
+      const begrenzt = passend.slice(0, limit);
       searchResultCache.set(cacheKey, begrenzt);
       return { results: begrenzt.slice(), region: params.region, source: mitSchluessel.source, cached: false, attempts };
     }
@@ -370,11 +401,13 @@ export async function searchWebDetailed(query, options) {
   // Bevorzugt SearXNG (falls konfiguriert), sonst HTML-Suchmaschinen als Fallback.
   if (SEARXNG_URL) {
     const sx = await searxngJson(trimmed, limit, params);
-    const brauchbar = sx.length > 0 && resultsLookRelevant(trimmed, sx);
-    attempts.push({ source: "searxng", parsed: sx.length, status: brauchbar ? "ok" : sx.length ? "themenfremd" : "leer" });
+    const passendSx = relevanteTreffer(trimmed, sx);
+    const brauchbar = passendSx.length > 0;
+    attempts.push({ source: "searxng", parsed: sx.length, kept: passendSx.length, status: brauchbar ? "ok" : sx.length ? "themenfremd" : "leer" });
     if (brauchbar) {
-      searchResultCache.set(cacheKey, sx);
-      return { results: sx.slice(), region: params.region, source: "searxng", cached: false, attempts };
+      const begrenztSx = passendSx.slice(0, limit);
+      searchResultCache.set(cacheKey, begrenztSx);
+      return { results: begrenztSx.slice(), region: params.region, source: "searxng", cached: false, attempts };
     }
   }
   for (const attempt of searchAttempts(trimmed, params)) {
@@ -389,15 +422,21 @@ export async function searchWebDetailed(query, options) {
     }
     const results = attempt.parse(html);
     // Eine gesperrte Suchmaschine liefert Treffer, die nichts mit der Anfrage
-    // zu tun haben. Solche Quellen gelten als gescheitert (siehe
-    // resultsLookRelevant) — es wird die naechste versucht, nicht Muell gecacht.
-    if (results.length > 0 && resultsLookRelevant(trimmed, results)) {
-      const limited = results.slice(0, limit);
-      attempts.push({ source: attempt.source, parsed: results.length, status: "ok" });
+    // zu tun haben. Solche Quellen gelten als gescheitert — es wird die naechste
+    // versucht, nicht Muell gecacht.
+    //
+    // Je Treffer filtern, nicht die Liste als Ganzes durchwinken: Bing lieferte
+    // am 2026-08-04 auf "commercial office for sale Santa Clara" LoopNet UND das
+    // Merriam-Webster-Woerterbuch. Ein guter Treffer machte die Liste gueltig,
+    // und der Muell fuhr als blinder Passagier zum Modell mit.
+    const passendeTreffer = relevanteTreffer(trimmed, results);
+    if (passendeTreffer.length > 0) {
+      const limited = passendeTreffer.slice(0, limit);
+      attempts.push({ source: attempt.source, parsed: results.length, kept: passendeTreffer.length, status: "ok" });
       searchResultCache.set(cacheKey, limited);
       return { results: limited.slice(), region: params.region, source: attempt.source, cached: false, attempts };
     }
-    attempts.push({ source: attempt.source, parsed: results.length, status: results.length ? "themenfremd" : "leer" });
+    attempts.push({ source: attempt.source, parsed: results.length, kept: 0, status: results.length ? "themenfremd" : "leer" });
   }
   return { results: [], region: params.region, source: "", cached: false, attempts };
 }

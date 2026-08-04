@@ -256,3 +256,49 @@ test("das Werkzeugergebnis fordert anklickbare Trefferadressen", async () => {
   assert.match(ergebnis, /anklicken/, "ohne diese Anweisung nennt das Modell nur die Portal-Startseiten");
   assert.match(ergebnis, /Erfinde keine Adressen/);
 });
+
+// Befund 2026-08-04, zweiter Livedurchlauf: Auf "commercial office for sale
+// Santa Clara" lieferte Bing acht Treffer — LoopNet und Crexi (richtig), aber
+// auch das Merriam-Webster-Woerterbuch, das Cambridge Dictionary und eine
+// TV-Werbeseite. ALLE acht gingen ans Modell.
+//
+// Ursache war nicht der Schwellwert, sondern die Bauart: die Pruefung war ein
+// Tor fuer die GANZE Liste. Ein guter Treffer machte sie gueltig, der Muell fuhr
+// als blinder Passagier mit.
+test("ein guter Treffer zieht keine themenfremden mit", async () => {
+  const { relevanteTreffer } = await import("../src/search/webSearch.js");
+  const echteBingAntwort = [
+    { title: "COMMERCIAL Definition & Meaning - Merriam-Webster", url: "https://www.merriam-webster.com/dictionary/commercial", snippet: "the meaning of commercial" },
+    { title: "Browse TV Commercials & TV Ads - iSpot", url: "https://www.ispot.tv/browse", snippet: "TV commercials" },
+    { title: "LoopNet: #1 in Commercial Real Estate for Sale & Lease", url: "https://www.loopnet.com/", snippet: "properties for sale" },
+    { title: "COMMERCIAL | English meaning - Cambridge Dictionary", url: "https://dictionary.cambridge.org/dictionary/english/commercial", snippet: "commercial definition" },
+    { title: "Santa Clara, CA Commercial Real Estate For Sale", url: "https://www.crexi.com/properties/CA/Santa_Clara", snippet: "office space for sale" }
+  ];
+  const behalten = relevanteTreffer("commercial office for sale Santa Clara", echteBingAntwort);
+  const adressen = behalten.map((t) => t.url);
+  assert.ok(adressen.some((u) => u.includes("loopnet")), "der richtige Treffer bleibt");
+  assert.ok(adressen.some((u) => u.includes("crexi")), "der zweite richtige Treffer bleibt");
+  assert.ok(!adressen.some((u) => u.includes("merriam-webster")), "das Woerterbuch faellt raus");
+  assert.ok(!adressen.some((u) => u.includes("cambridge")), "das zweite Woerterbuch faellt raus");
+  assert.ok(!adressen.some((u) => u.includes("ispot")), "die Werbeseite faellt raus");
+  // Das Tor selbst bleibt unveraendert: die Quelle gilt weiter als brauchbar.
+  assert.equal(resultsLookRelevant("commercial office for sale Santa Clara", echteBingAntwort), true);
+});
+
+test("bei ein bis zwei Begriffen bleibt alles Passende erhalten (Non-Regression)", async () => {
+  const { relevanteTreffer } = await import("../src/search/webSearch.js");
+  const treffer = [
+    { title: "rbb24 - Nachrichten aus Berlin", url: "https://www.rbb24.de/", snippet: "" },
+    { title: "Voellig anderes Thema", url: "https://beispiel.de/", snippet: "nichts davon" }
+  ];
+  const behalten = relevanteTreffer("Schlagzeilen Berlin", treffer);
+  assert.equal(behalten.length, 1);
+  assert.equal(behalten[0].url, "https://www.rbb24.de/");
+  // Ohne pruefbare Begriffe wird NICHT gefiltert — sonst fiele eine gueltige
+  // Suche komplett durch. ("2026" waere UEBRIGENS einer: vier Zeichen, kein
+  // Stoppwort. Nur zu kurze Woerter zaehlen nicht.)
+  assert.equal(relevanteTreffer("wie ist das", treffer).length, 2);
+  assert.equal(relevanteTreffer("2026", treffer).length, 0, "eine Jahreszahl IST ein pruefbarer Begriff");
+  assert.deepEqual(relevanteTreffer("test", []), []);
+  assert.deepEqual(relevanteTreffer("test", null), []);
+});
