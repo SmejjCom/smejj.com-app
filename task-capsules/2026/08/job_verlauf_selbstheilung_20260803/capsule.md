@@ -150,7 +150,40 @@ Genau zwei Dateien: `assets/chat-store.js`, `sw.js`. Geheimnis-Scan wie in
 `smejj.com Deploy.command` durchlaufen — sauber.
 **Rollback-Punkt: `3c18f58`** (Frontend), `46ed4b1` (App-Repo).
 
-## BLOCKER — der letzte Schritt fehlt: `main`
+## LIVE — abgenommen (2026-08-04)
+
+Der Betreiber hat den blockierten Befehl freigegeben und wörtlich erteilt:
+`cd ~/smejj-app-frontend && git push origin 232d0b3:main` → `3c18f58..232d0b3`.
+Pages baute in ~30 s, live nach 3 Prüfversuchen bestätigt.
+
+**Beweis am ausgelieferten Stand:**
+| Prüfung | Ergebnis |
+|---|---|
+| `sw.js` | `smejj-shell-v209` |
+| `assets/chat-store.js` | `ensureStore` 2×, `openAt` 1× |
+| alte feste Version | `indexedDB.open(DB_NAME, DB_VERSION)` **0×** — restlos ersetzt |
+| `/` · `/verlauf.html` · `/auth/login/` | 200 · 200 · 200 (TTFB 142/253/155 ms) |
+
+**Messpflicht nach dem Deploy** (5 Läufe, Chrome headless), gegen die Messung
+davor — voller Beleg in
+`docs/benchmarks/webvitals_verlauf_selbstheilung_2026-08-04.json`:
+
+| Kennzahl | vorher (v208) | nachher (v209) | Budget | |
+|---|---|---|---|---|
+| Seitengewicht kalt | 308 KB | **308 KB** | 300 KB | verfehlt, **unverändert** |
+| Seitengewicht warm | 40 KB | 40 KB | 300 KB | OK |
+| TTFB kalt / warm | 16 / 16 ms | 27 / 17 ms | 200 ms | OK |
+| LCP kalt / warm | 176 / 140 ms | 212 / 120 ms | 1500 ms | OK |
+| INP kalt / warm | 56 / 48 ms | 48 / 48 ms | 200 ms | OK |
+| CLS | 0 | 0 | 0,1 | OK |
+
+**Performance-Lock gehalten: kein Budget verschlechtert.** Das Seitengewicht ist
+mit 308 KB auf das Kilobyte identisch — der Fix wächst um rund 1,5 KB, zählt im
+Erstbesuch aber nicht mit, weil `chat-store.js` ein nachgeladenes Modul ist.
+Die Bewegung bei LCP und TTFB ist Streuung, kein Signal: kalt reichen die
+Einzelwerte von 84 bis 576 ms, der Abstand zum Budget bleibt Faktor 2,6+.
+
+## Der Weg dorthin — Blocker und Wurzel
 
 Nach dem Push blieb live 220 s lang v208. Ursache gefunden, nicht geraten:
 
@@ -167,12 +200,11 @@ History-Rewrite, und er berührt nur `assets/chat-store.js` und `sw.js`.
 
 Der Push `origin 232d0b3:main` wurde vom **Berechtigungs-Klassifikator der
 Sitzung blockiert** (jeder Push auf `main` gilt ihm als geschützt). Das ist
-bewusst NICHT umgangen worden. Der Auftrag steht damit einen Befehl vor dem Ziel.
+bewusst NICHT umgangen, sondern dem Betreiber vorgelegt worden — der ihn
+freigegeben und wörtlich erteilt hat. **Erledigt**, siehe Abschnitt LIVE oben.
 
-FREIZUGEBENDER BEFEHL:
-```
-cd ~/smejj-app-frontend && git push origin 232d0b3:main
-```
+MERKREGEL für die nächste Auslieferung: Der Deploy ist erst fertig, wenn
+`main` steht. Ein Push auf den Deploy-Branch allein ändert die Website nicht.
 
 ## Messpflicht — erfüllt, mit einem vorbestehenden Befund
 Gemessen auf dem Live-Stand v208 (also VOR dieser Auslieferung), 5 Läufe,
@@ -214,16 +246,16 @@ und genau diese Lage heilt der Fix ab dem nächsten Deploy von selbst.
 ## Ergebnis Runde 2
 | Punkt | Stand |
 |---|---|
-| Auslieferung vorbereitet | **Fertig.** sw v209, 5 Versions-Tests mitgezogen, `check:paths` entsperrt. App-Repo `26b26d6`, Frontend-Repo `232d0b3` — beide gepusht. |
-| Live | **NEIN.** Fehlt der Fast-Forward auf `main`; der Push wurde vom Klassifikator blockiert. Live läuft weiter v208. |
+| Auslieferung | **Fertig.** sw v209, 5 Versions-Tests mitgezogen, `check:paths` entsperrt. App-Repo `26b26d6`, Frontend `232d0b3`, `main` fast-forwarded. |
+| Live | **JA, abgenommen.** sw v209 ausgeliefert, `ensureStore` 2× im Live-Bündel, die alte feste Version 0×. Drei Seiten je 200. |
 | Pflicht-Checks | `check:frontend` 320/320, `guidelines`/`security`/`favicon-lock`/`paths` grün. |
-| Messpflicht | Erfüllt. Ein **vorbestehender** Budget-Riss gefunden: 308 KB kalt gegen 300 KB. |
+| Messpflicht | Erfüllt, vorher **und** nachher. Kein Budget verschlechtert. Ein **vorbestehender** Riss: 308 KB kalt gegen 300 KB — vorher wie nachher identisch. |
 | Start-Lock | **Grün, Schutz aktiv.** 31 Dateien byte-identisch, neu eingefroren 2026-08-04T00:10:53Z — das Manifest trägt die sw-v209-Prüfsumme (`94480143…`, gegengerechnet). |
 | Schutz | Nichts gelöscht, nichts überschrieben, keine Secrets, keine Kosten. Rollback = ein Commit. |
 
 ## Nächster Schritt
-1. **Den einen Befehl freigeben** (siehe BLOCKER) — danach live prüfen:
-   `sw.js` muss v209 zeigen und `assets/chat-store.js` `ensureStore` enthalten.
-2. Danach Start-Lock mit dem Betreiber-Wortlaut neu einfrieren
-   (`node scripts/check-start-lock.mjs --freeze --confirm "…"`).
-3. Eigener Auftrag: Seitengewicht des Erstbesuchs unter 300 KB bringen.
+Dieser Auftrag ist geschlossen. Offen bleibt, was nicht dazugehört:
+1. **Eigener Auftrag: Seitengewicht des Erstbesuchs unter 300 KB.** Der
+   Performance-Lock ist dort gerissen — vorbestehend, gemessen, belegt.
+2. Betreiber: Raumgesprächs-Eintrag im Verlauf löschen (zwei Klicks, rein lokal).
+3. Betreiber: `ZEABUR_API_TOKEN` — erst dann zieht die Reserve-Bridge gleich.

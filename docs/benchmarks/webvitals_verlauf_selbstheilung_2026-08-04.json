@@ -1,28 +1,11 @@
 {
   "schemaVersion": 1,
   "kind": "smejj.com-webvitals",
-  "anlass": "job_verlauf_selbstheilung_20260803 — Messpflicht vor der Auslieferung von sw v209",
+  "anlass": "job_verlauf_selbstheilung_20260803 — Messpflicht vor und nach der Auslieferung von sw v209",
   "gemessenAm": "2026-08-04",
   "url": "https://smejj.com/",
   "runs": 5,
   "gemessenMit": "scripts/testing/measure_web_vitals.mjs, Chrome headless ueber DevTools-Protokoll",
-  "gemessenerLiveStand": "sw v208 (Frontend main 3c18f58) — der Stand VOR dieser Auslieferung",
-  "kalt": {
-    "ttfb_ms": { "p75": 16, "min": 9, "max": 44 },
-    "lcp_ms": { "p75": 176, "min": 84, "max": 496 },
-    "cls": { "p75": 0, "min": 0, "max": 0 },
-    "inp_ms": { "p75": 56, "min": 32, "max": 64 },
-    "pageWeight_kb": { "p75": 308, "min": 308, "max": 308 },
-    "lcpElement": "H2"
-  },
-  "warm": {
-    "ttfb_ms": { "p75": 16, "min": 10, "max": 28 },
-    "lcp_ms": { "p75": 140, "min": 116, "max": 140 },
-    "cls": { "p75": 0, "min": 0, "max": 0 },
-    "inp_ms": { "p75": 48, "min": 32, "max": 56 },
-    "pageWeight_kb": { "p75": 40, "min": 40, "max": 40 },
-    "lcpElement": "H2"
-  },
   "budgets": {
     "ttfb_ms": 200,
     "lcp_ms": 1500,
@@ -30,16 +13,60 @@
     "inp_ms": 200,
     "pageWeight_kb": 300
   },
-  "urteil": "1 Budget verfehlt",
+  "vorher": {
+    "stand": "sw v208 (Frontend main 3c18f58) — vor dieser Auslieferung",
+    "kalt": {
+      "ttfb_ms": { "p75": 16, "min": 9, "max": 44 },
+      "lcp_ms": { "p75": 176, "min": 84, "max": 496 },
+      "cls": { "p75": 0, "min": 0, "max": 0 },
+      "inp_ms": { "p75": 56, "min": 32, "max": 64 },
+      "pageWeight_kb": { "p75": 308, "min": 308, "max": 308 },
+      "lcpElement": "H2"
+    },
+    "warm": {
+      "ttfb_ms": { "p75": 16, "min": 10, "max": 28 },
+      "lcp_ms": { "p75": 140, "min": 116, "max": 140 },
+      "cls": { "p75": 0, "min": 0, "max": 0 },
+      "inp_ms": { "p75": 48, "min": 32, "max": 56 },
+      "pageWeight_kb": { "p75": 40, "min": 40, "max": 40 },
+      "lcpElement": "H2"
+    }
+  },
+  "nachher": {
+    "stand": "sw v209 (Frontend main 232d0b3) — live bestaetigt: assets/chat-store.js traegt ensureStore, kein indexedDB.open(DB_NAME, DB_VERSION) mehr",
+    "kalt": {
+      "ttfb_ms": { "p75": 27, "min": 9, "max": 144 },
+      "lcp_ms": { "p75": 212, "min": 96, "max": 576 },
+      "cls": { "p75": 0, "min": 0, "max": 0 },
+      "inp_ms": { "p75": 48, "min": 40, "max": 48 },
+      "pageWeight_kb": { "p75": 308, "min": 308, "max": 308 },
+      "lcpElement": "H2"
+    },
+    "warm": {
+      "ttfb_ms": { "p75": 17, "min": 10, "max": 25 },
+      "lcp_ms": { "p75": 120, "min": 104, "max": 148 },
+      "cls": { "p75": 0, "min": 0, "max": 0 },
+      "inp_ms": { "p75": 48, "min": 32, "max": 48 },
+      "pageWeight_kb": { "p75": 40, "min": 40, "max": 40 },
+      "lcpElement": "H2"
+    }
+  },
+  "urteil": "Kein Budget durch diese Auslieferung verschlechtert. Ein Budget bleibt verfehlt — vorbestehend.",
+  "bewertungDerVeraenderung": {
+    "pageWeight_kb": "UNVERAENDERT 308 kalt / 40 warm. Der Fix waechst um rund 1,5 KB, faellt im Erstbesuch aber nicht ins Gewicht: chat-store.js ist ein nachgeladenes Modul und zaehlt nicht zum gemessenen Erstgewicht.",
+    "lcp_ms": "kalt 176 -> 212, warm 140 -> 120. Beides Streuung, kein Signal: die Einzelwerte reichen kalt von 84 bis 576 ms. Abstand zum Budget (1500 ms) bleibt in jedem Lauf mindestens Faktor 2,6.",
+    "ttfb_ms": "kalt 16 -> 27 (ein Ausreisser bei 144 ms zieht den p75). Budget 200 ms in jedem Lauf gehalten.",
+    "inp_ms": "56 -> 48 kalt, unveraendert 48 warm.",
+    "cls": "0 in allen Laeufen, vorher wie nachher."
+  },
   "verfehlt": [
     {
       "kennzahl": "pageWeight_kb",
       "zustand": "kalt",
       "gemessen": 308,
       "budget": 300,
-      "bewertung": "VORBESTEHEND — gemessen auf dem Live-Stand v208, also VOR dieser Auslieferung. Nicht durch diesen Auftrag verursacht.",
-      "hinweis": "Der Performance-Lock ist damit schon heute gerissen. Der Erstbesuch traegt 308 KB komprimiert (ohne Bilder); der Wiederbesuch liegt mit 40 KB weit im Budget, der Service Worker traegt also. Eigener Auftrag noetig: Startseiten-Module verschlanken oder spaeter laden."
+      "bewertung": "VORBESTEHEND — vorher wie nachher exakt 308 KB. Nicht durch diesen Auftrag verursacht und durch ihn auch nicht verschlechtert.",
+      "hinweis": "Der Performance-Lock ist beim Erstbesuch schon heute gerissen. Der Wiederbesuch liegt mit 40 KB weit im Budget, der Service Worker traegt also. Eigener Auftrag noetig: Startseiten-Module verschlanken oder spaeter laden."
     }
-  ],
-  "alleAnderenGruen": "TTFB, LCP, CLS und INP halten ihre Budgets in beiden Zustaenden mit grossem Abstand."
+  ]
 }

@@ -650,6 +650,14 @@ Betreiber-Auftrag vom 2026-08-04 (vollstaendig autonome Umsetzung).
   eine Sitzung darf sich nicht anmelden.
 
 ## 2026-08-04 — GitHub Pages baut aus `main` (job_verlauf_selbstheilung_20260803)
+- ERLEDIGT + LIVE ABGENOMMEN: sw v209 liefert die Selbstheilung des
+  Chat-Verlaufs aus. Beweis am Live-Buendel: `assets/chat-store.js` traegt
+  `ensureStore` 2x und `openAt` 1x, das alte `indexedDB.open(DB_NAME,
+  DB_VERSION)` kommt **0x** vor. Frontend `main` 3c18f58 -> 232d0b3.
+- NACHGEMESSEN (5 Laeufe, vorher UND nachher): kein Budget verschlechtert.
+  Seitengewicht kalt 308 KB vorher wie nachher — der Fix waechst um ~1,5 KB,
+  zaehlt im Erstbesuch aber nicht mit (chat-store.js ist ein Nachlade-Modul).
+  Bewegung bei LCP/TTFB ist Streuung (kalt 84-576 ms Einzelwerte), kein Signal.
 - WURZEL, teuer gemessen: Ein Push auf den Deploy-Branch
   `deploy-voice-send-20260721-rebased` aendert die WEBSITE NICHT. Pages baut im
   Repo `smejj-app-frontend` aus **`main`**. Belegt mit `git ls-remote --heads`:
