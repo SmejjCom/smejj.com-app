@@ -3,28 +3,30 @@ import test from "node:test";
 
 process.env.SMEJJ_CHAT_BRIDGE_NO_START = "1";
 const bridge = await import("../public/chat-bridge.js");
+// Der Antwortstrom liegt seit dem 2026-08-04 in einem eigenen Modul.
+const strom = await import("../public/chat-bridge-strom.js");
 // Der Wetterpfad ist seit 2026-08-01 ein eigenes Modul (chat-bridge.js stand auf
 // der 800-Zeilen-Grenze). Verhalten unveraendert, nur der Wohnort ist neu.
 const wetter = await import("../public/chat-bridge-weather.js");
 
 test("chat bridge strips think blocks and empty model deltas", () => {
   const state = { pending: "", insideThink: false };
-  assert.equal(bridge.filterSsePayload('{"choices":[{"delta":{"content":"<think>"}}]}', state), "");
-  assert.equal(bridge.filterSsePayload('{"choices":[{"delta":{"content":"hidden"}}]}', state), "");
-  assert.equal(bridge.filterSsePayload('{"choices":[{"delta":{"content":"</think>Antwort"}}]}', state), "Antwort");
-  assert.equal(bridge.filterSsePayload('{"choices":[{"delta":{"content":""}}]}', state), "");
+  assert.equal(strom.filterSsePayload('{"choices":[{"delta":{"content":"<think>"}}]}', state), "");
+  assert.equal(strom.filterSsePayload('{"choices":[{"delta":{"content":"hidden"}}]}', state), "");
+  assert.equal(strom.filterSsePayload('{"choices":[{"delta":{"content":"</think>Antwort"}}]}', state), "Antwort");
+  assert.equal(strom.filterSsePayload('{"choices":[{"delta":{"content":""}}]}', state), "");
 });
 
 test("chat bridge preserves whitespace-only deltas for code block formatting", () => {
   const state = { pending: "", insideThink: false };
-  assert.equal(bridge.filterSsePayload('{"choices":[{"delta":{"content":"\\n"}}]}', state), "\n");
-  assert.equal(bridge.filterSsePayload('{"choices":[{"delta":{"content":"  "}}]}', state), "  ");
+  assert.equal(strom.filterSsePayload('{"choices":[{"delta":{"content":"\\n"}}]}', state), "\n");
+  assert.equal(strom.filterSsePayload('{"choices":[{"delta":{"content":"  "}}]}', state), "  ");
 });
 
 test("chat bridge keeps partial opening think tag private", () => {
   const state = { pending: "", insideThink: false };
-  assert.equal(bridge.stripThinking("Hallo <thi", state), "Hallo ");
-  assert.equal(bridge.stripThinking("nk>intern</think> Welt", state), " Welt");
+  assert.equal(strom.stripThinking("Hallo <thi", state), "Hallo ");
+  assert.equal(strom.stripThinking("nk>intern</think> Welt", state), " Welt");
 });
 
 test("chat bridge only searches web for explicit current/source questions", () => {

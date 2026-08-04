@@ -225,3 +225,65 @@ test("ohne Elternknoten passiert nichts (fail-safe)", () => {
   assert.doesNotThrow(() => zeigeSchritt(null, { art: "suche", text: "x", zustand: "laeuft" }));
   assert.doesNotThrow(() => zeigeSchritt(einzeln, null));
 });
+
+// --- Bruecke: Arbeitsschritte muessen durch -------------------------------
+// Befund 2026-08-04: Der Control Server sendete die Schritte, live kamen sie
+// trotzdem nicht an. Ursache: pipeVisibleStream baut JEDEN Event neu und behaelt
+// nur choices[0].delta.content — alles andere fiel weg.
+
+// Ohne diese Umgebungsvariable startet der Import einen echten HTTP-Server
+// und der Testlauf haengt (dieselbe Zeile steht in tests/chat-bridge.test.mjs).
+// Direkt aus dem Strom-Modul: chat-bridge.js darf keine Re-Export-Liste tragen
+// (der Buendler fuer Zeabur lehnt sie ab — sie verstecken die Namensherkunft).
+const { schrittDurchreichen, pipeVisibleStream } = await import("../public/chat-bridge-strom.js");
+
+test("die Bruecke erkennt einen Arbeitsschritt und nur diesen", () => {
+  const gut = schrittDurchreichen(JSON.stringify({ smejj_schritt: { art: "suche", text: "x", markt: "us", zustand: "laeuft" } }));
+  assert.deepEqual(gut, { art: "suche", zustand: "laeuft", text: "x", markt: "us" });
+  assert.equal(schrittDurchreichen(JSON.stringify({ choices: [{ delta: { content: "Text" } }] })), null);
+  assert.equal(schrittDurchreichen("kein json"), null);
+  assert.equal(schrittDurchreichen(JSON.stringify({ smejj_schritt: "kein objekt" })), null);
+  assert.equal(schrittDurchreichen(JSON.stringify({ smejj_schritt: { text: "ohne art" } })), null);
+});
+
+test("die Bruecke reicht NUR geprueftes weiter, nie fremde Nutzlast", () => {
+  const geschmuggelt = schrittDurchreichen(JSON.stringify({
+    smejj_schritt: { art: "suche", zustand: "fertig", text: "y", markt: "de", treffer: 5, boeses: "<script>", tief: { a: 1 } }
+  }));
+  assert.deepEqual(geschmuggelt, { art: "suche", zustand: "fertig", text: "y", markt: "de", treffer: 5 });
+  assert.equal("boeses" in geschmuggelt, false);
+  assert.equal("tief" in geschmuggelt, false);
+});
+
+test("Laengen und Zahlen werden begrenzt", () => {
+  const lang = schrittDurchreichen(JSON.stringify({
+    smejj_schritt: { art: "suche", zustand: "laeuft", text: "z".repeat(500), markt: "m".repeat(50), treffer: 99999 }
+  }));
+  assert.equal(lang.text.length, 200);
+  assert.equal(lang.markt.length, 8);
+  const viele = schrittDurchreichen(JSON.stringify({ smejj_schritt: { art: "suche", zustand: "fertig", treffer: 99999 } }));
+  assert.equal(viele.treffer, 999);
+});
+
+test("im Strom kommen Schritt UND Antworttext an", async () => {
+  const gesendet = [];
+  const res = { write: (t) => gesendet.push(t) };
+  const encoder = new TextEncoder();
+  const quelle = {
+    async *[Symbol.asyncIterator]() {
+      yield encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "Ich suche." } }] })}\n\n`);
+      yield encoder.encode(`data: ${JSON.stringify({ smejj_schritt: { art: "suche", text: "berlin", markt: "de", zustand: "laeuft" } })}\n\n`);
+      yield encoder.encode(`data: ${JSON.stringify({ smejj_schritt: { art: "suche", text: "berlin", zustand: "fertig", treffer: 8 } })}\n\n`);
+      yield encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "Hier ist die Antwort." } }] })}\n\n`);
+    }
+  };
+  await pipeVisibleStream(quelle, res);
+  const alles = gesendet.join("");
+  assert.match(alles, /Ich suche\./);
+  assert.match(alles, /Hier ist die Antwort\./);
+  assert.equal((alles.match(/smejj_schritt/g) || []).length, 2, "beide Schritte muessen durchkommen");
+  // Reihenfolge bleibt erhalten: erst Text, dann laeuft, dann fertig, dann Text.
+  assert.ok(alles.indexOf("Ich suche") < alles.indexOf("laeuft"));
+  assert.ok(alles.indexOf("laeuft") < alles.indexOf("fertig"));
+  assert.ok(alles.indexOf("fertig") < alles.indexOf("Hier ist die Antwort"));
+});
