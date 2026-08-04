@@ -677,25 +677,25 @@
   font-size: 13px;
 }
 
+/* Exakt die Optik der vorhandenen Konto-Felder (.account-grid input, Zeile 370):
+   gleiche Polsterung, gleiche Linie, gleicher Feldgrund. Ein eigener Stil waere
+   hier ein zweiter Ort, an dem das Konto-Glas gepflegt werden muesste. */
 #profile .account-inline-form input {
-  padding: 11px 14px;
+  width: 100%;
+  padding: 13px 14px;
   border: 1px solid var(--konto-line);
-  border-top-color: var(--konto-edge);
   border-radius: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
+  background: var(--konto-field-bg);
+  color: var(--premium-text, #eef1f2);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 #profile .account-inline-form input:focus-visible {
   outline: 2px solid var(--konto-edge);
   outline-offset: 2px;
-}
-
-#profile .account-inline-form code {
-  padding: 1px 6px;
-  border: 1px solid var(--konto-line-soft);
-  font-size: 0.95em;
 }
 
 #profile .account-inline-form .account-actions {

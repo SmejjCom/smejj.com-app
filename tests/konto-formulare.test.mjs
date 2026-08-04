@@ -181,3 +181,16 @@ test("VERHALTEN: ungleiche neue Passwoerter loesen KEINEN Serveraufruf aus", asy
   assert.equal(dom.gesendet.length, 1, "erst wenn alles stimmt, geht die Anfrage raus");
   assert.match(dom.gesendet[0].url, /password\/change$/);
 });
+
+test("die Beschriftung mit dem Loeschwort bleibt EINE Zeile", () => {
+  // Das Label ist eine Flex-Spalte: ohne umschliessendes span wird jedes
+  // Textstueck eine eigene Zeile ("Zur Bestätigung" / "KONTO LÖSCHEN" /
+  // "eingeben"). Live im Browser gesehen und behoben.
+  const label = QUELLE.match(/<label for="delConfirm">([\s\S]*?)<input/)[1];
+  assert.ok(!/<[a-z]/i.test(label),
+    `die Beschriftung darf kein eigenes Element enthalten, gefunden: ${label}`);
+  // Beschriftung UND Pruefung muessen dieselbe Konstante benutzen — sonst
+  // verlangt der Text ein anderes Wort als der Code akzeptiert.
+  assert.match(label, /\$\{LOESCH_WORT\}/,
+    "die Beschriftung muss LOESCH_WORT einsetzen, nicht den Text doppelt pflegen");
+});
