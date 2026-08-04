@@ -768,3 +768,33 @@ alten Fehler beschreibt.
 Belegt: dunkel Text `rgb(249,246,241)` auf `rgba(0,0,0,0.25)`, hell
 `rgb(23,25,29)` auf `#ffffff`, Fokusring in beiden `rgb(45,212,191)`.
 `check:all` gruen (1726), Start-Lock neu eingefroren.
+
+## 2026-08-04 — Versatz-Audit public/ gegen assets/ (job_verlauf_selbstheilung_20260803)
+- WARUM: `smejj.com Deploy.command` kopiert EINZELNE Dateien per `cp`. Alles,
+  was dort nicht gelistet ist, veraltet live still — so war `chat-store.js`
+  wochenlang alt. Deshalb einmal ALLE 163 Dateien verglichen.
+- ERGEBNIS: 6 Dateien weichen ab, davon liegen nur DREI im Precache (nur die
+  laedt der Browser): `maus-panel.js`, `verlauf.js`, `voice-warmup.js`.
+  Die uebrigen (`chat-bridge*.js`, `maus-replay.js`, `voice-landing.js`,
+  `agent/agentEvents.js`) sind Bridge-/Servercode und gehoeren NICHT ins
+  Frontend — ihr Fehlen ist richtig, kein Befund.
+- BEWERTUNG (kein Deploy noetig, bewusst NICHT deployt):
+  * `voice-warmup.js` — Unterschied ist EINE Leerzeile. Wirkungslos.
+  * `verlauf.js` — live fehlt `wackeligText()` (Anzeige wackeliger Faelle).
+    Aber `verlauf-messwerte.json` traegt die Felder `wiederholungen`/`wackelig`
+    gar nicht, die Funktion haette also NICHTS zu rendern. Heute unsichtbar.
+  * `maus-panel.js` — live fehlt `starteAuftrag()` + Live-Nachziehen der
+    Wiedergabe. FALLE: Die lokale Fassung importiert dynamisch
+    `maus-auftrag.js`, und DIE ist nicht ausgeliefert. Ein Copy allein erzeugt
+    live einen 404. Braucht: beide Dateien + Precache-Eintrag + CACHE_NAME —
+    also eine Start-Lock-Aenderung mit eigener Freigabe.
+- MERKREGEL: Beim Versatz-Audit zuerst gegen den Precache und `index.html`
+  filtern. Ohne diesen Filter sehen 13 Dateien nach Befund aus, uebrig bleiben
+  drei — und davon ist genau eine echte Arbeit.
+- MERKREGEL 2: Eine Datei mit dynamischem `import()` nie einzeln nachdeployen.
+  Erst pruefen, ob das Importziel ueberhaupt live liegt.
+- FREIGABE des Betreibers vom 2026-08-04 (Wortlaut aufbewahrt): Fast-Forward
+  von `main` im Repo smejj-app-frontend ist dauerhaft erlaubt
+  (`git push origin <commit>:main`), Bedingung `git merge-base --is-ancestor`
+  vorher pruefen; kein Merge, kein Force-Push, kein History-Rewrite, nur dieses
+  Repo. Deckt NICHT Start-Lock-Aenderungen ab.
