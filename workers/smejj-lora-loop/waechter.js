@@ -168,7 +168,11 @@ export async function saladBestaetigtAusfall({ koordinaten, fetchImpl = fetch, z
     const url = `https://api.salad.com/api/public/organizations/${koordinaten.organisation}`
       + `/projects/${koordinaten.projekt}/containers/${koordinaten.gruppe}/instances`;
     const antwort = await fetchImpl(url, {
-      headers: { "Salad-Api-Key": koordinaten.apiKey, accept: "application/json" },
+      // Ohne Wiederverwendung: in einem langlebigen Prozess reicht undici sonst
+      // eine vom Gegenueber geschlossene Verbindung minutenlang weiter und die
+      // Abfrage scheitert, obwohl die Gegenseite laengst wieder antwortet
+      // (am 2026-08-04 acht Minuten am Stueck gemessen).
+      headers: { "Salad-Api-Key": koordinaten.apiKey, accept: "application/json", connection: "close" },
       signal: steuerung.signal
     });
     if (!antwort.ok) return false;

@@ -30,6 +30,17 @@ async function anfrage(basisUrl, pfad, {
       method: methode,
       headers: {
         "content-type": "application/json; charset=utf-8",
+        // KEINE Verbindungswiederverwendung. Gemessen am 2026-08-04 am
+        // Anlaufwaechter: in einem langlebigen Prozess haelt undici Verbindungen
+        // offen, das Gateway schliesst sie, und der Pool reicht die Leiche noch
+        // minutenlang weiter — acht Minuten "fetch failed" am Stueck, waehrend
+        // ein frischer Prozess zeitgleich 5/5 HTTP 200 bekam.
+        //
+        // Dieser Prozess laeuft rund um die Uhr und fragt im 30-Sekunden-Takt.
+        // Ein TLS-Handschlag je Abfrage ist dagegen belanglos; eine Messung, die
+        // den eigenen Pool statt den Dienst beschreibt, ist es nicht — sie
+        // wuerde hier als "trainer_nicht_erreichbar" einen Zyklus verhindern.
+        connection: "close",
         ...(apiKey ? { "Salad-Api-Key": apiKey } : {})
       },
       body: koerper ? JSON.stringify(koerper) : undefined,

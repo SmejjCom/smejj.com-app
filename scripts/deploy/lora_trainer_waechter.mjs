@@ -55,7 +55,19 @@ async function frageTrainerEinmal() {
   const uhr = setTimeout(() => steuerung.abort(), 15_000);
   try {
     const antwort = await fetch(`${TRAINER_URL}/health`, {
-      headers: { "Salad-Api-Key": API_KEY },
+      // "connection: close" ist hier der eigentliche Fix, nicht Kosmetik.
+      //
+      // GEMESSEN AM 2026-08-04: der Waechter meldete acht Minuten am Stueck
+      // "fetch failed", waehrend zeitgleich `curl` aus einem frischen Prozess
+      // 5/5 HTTP 200 lieferte. Nicht die Leitung war kaputt, sondern der
+      // Verbindungs-Pool IN DIESEM langlebigen Node-Prozess: undici haelt
+      // Verbindungen offen, das Gateway schliesst sie, und der Pool reicht die
+      // Leiche noch minutenlang weiter.
+      //
+      // Ohne Wiederverwendung kostet jede Abfrage einen TLS-Handschlag — bei
+      // einem Takt von 60 Sekunden ist das belanglos, und die Messung sagt
+      // dafuer die Wahrheit ueber den Dienst statt ueber den eigenen Pool.
+      headers: { "Salad-Api-Key": API_KEY, connection: "close" },
       signal: steuerung.signal
     });
     if (!antwort.ok) return { erreichbar: false, bereit: false, ladezustand: `http_${antwort.status}` };
@@ -72,27 +84,34 @@ async function frageTrainerEinmal() {
   }
 }
 
+/** Abstaende der Wiederholungen in Millisekunden. Deckt Aussetzer bis ~12 s ab. */
+const WIEDERHOLUNGEN_MS = [2000, 4000, 6000];
+
 /**
- * /health mit EINER Wiederholung.
+ * /health mit mehreren Wiederholungen.
  *
- * GEMESSEN AM 2026-08-04: im 60-Sekunden-Takt scheiterte etwa alle zehn Minuten
- * genau eine Abfrage mit "fetch failed", die naechste lief wieder sauber. Zehn
- * Abfragen im Abstand von 1,5 s ergaben zeitgleich 10/10 HTTP 200 bei 162-286 ms.
- * Der Dienst war also nie weg — es ist eine wiederverwendete Verbindung, die das
- * Gateway zwischenzeitlich geschlossen hat (Keep-Alive in undici).
+ * GEMESSEN AM 2026-08-04, vier Vorfaelle in gut drei Stunden: die Dauerwache
+ * meldete "fetch failed", waehrend der Trainer jedes Mal in derselben Minute
+ * nachweislich gesund war (5/5 HTTP 200, unveraenderte Instanz-id, ready=true).
+ * Ein Aussetzer ueberlebte sogar eine einzelne 2-Sekunden-Wiederholung.
  *
- * Eine EINZELNE Fehlmessung darf deshalb keinen Ausfall bedeuten. Sie erzeugt
- * sonst Fehlalarme, und Fehlalarme sind teuer: man gewoehnt sich an sie und
- * uebersieht den echten Ausfall. Erst wenn auch die Wiederholung scheitert,
- * gilt der Trainer als nicht erreichbar.
+ * Der Dienst war nie weg — es ist die Leitung zwischen Waechter und Gateway.
+ * Deshalb wird bis zu dreimal nachgefasst (2 s, 4 s, 6 s). Erst wenn ALLE
+ * Versuche scheitern, gilt der Trainer als nicht erreichbar.
+ *
+ * Fehlalarme sind teuer: man gewoehnt sich an sie und uebersieht darueber den
+ * echten Ausfall. Ein Waechter, dem man nicht glaubt, ist wirkungslos.
  */
 async function frageTrainer() {
-  const erste = await frageTrainerEinmal();
-  if (erste.erreichbar) return erste;
-  await new Promise((fertig) => setTimeout(fertig, 2000));
-  const zweite = await frageTrainerEinmal();
-  if (zweite.erreichbar) return { ...zweite, einmalDaneben: erste.ladezustand };
-  return zweite;
+  let letzte = await frageTrainerEinmal();
+  if (letzte.erreichbar) return letzte;
+  const ersterFehler = letzte.ladezustand;
+  for (const pause of WIEDERHOLUNGEN_MS) {
+    await new Promise((fertig) => setTimeout(fertig, pause));
+    letzte = await frageTrainerEinmal();
+    if (letzte.erreichbar) return { ...letzte, einmalDaneben: ersterFehler };
+  }
+  return letzte;
 }
 
 async function stoppeGruppe(grund) {
