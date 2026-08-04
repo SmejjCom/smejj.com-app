@@ -112,3 +112,27 @@ test("das Frontend schickt den Token ueberall mit, wo es die Bruecke ruft", () =
   // Ohne Anmeldung bleibt der Kopf leer — sonst ginge ein "Bearer " ohne Wert raus.
   assert.match(strom, /token \? \{ Authorization: `Bearer \$\{token\}` \} : \{\}/);
 });
+
+test("der Nutzer sieht Klartext, nicht die Maschinen-Kennung", async () => {
+  // Live gesehen am 2026-08-04 beim ersten Durchlauf: im Chat stand nackt
+  // "authentication_required". Daraus erfaehrt niemand, was zu tun ist.
+  const { readableError } = await import("../public/ai/chat-stream.js");
+  const antwort = {
+    text: async () => JSON.stringify({
+      ok: false,
+      error: "authentication_required",
+      hinweis: "Bitte auf smejj.com anmelden. Der Chat steht angemeldeten Konten zur Verfuegung."
+    })
+  };
+  const text = await readableError(antwort, "offline");
+  assert.match(text, /anmelden/i, "der Klartext muss gewinnen");
+  assert.doesNotMatch(text, /authentication_required/, "die Kennung gehoert nicht auf den Schirm");
+});
+
+test("ohne Klartext bleibt die Kennung als Rueckfall", async () => {
+  const { readableError } = await import("../public/ai/chat-stream.js");
+  const nur = { text: async () => JSON.stringify({ error: "rate_limit" }) };
+  assert.equal(await readableError(nur, "offline"), "rate_limit");
+  const html = { text: async () => "<html>Gateway</html>" };
+  assert.equal(await readableError(html, "offline"), "offline");
+});
