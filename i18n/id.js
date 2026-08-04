@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "Permintaan saat ini tidak tersedia.",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "Alamat email dikonfirmasi. Anda sekarang dapat masuk.",
   "Bestätigung fehlgeschlagen.": "Konfirmasi gagal.",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "Kata sandi baru untuk smejj.com (minimal 10 karakter):",
-  "Passwort-Reset abgebrochen.": "Reset kata sandi dibatalkan.",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "Kata sandi diubah. Semua sesi sebelumnya diakhiri — silakan masuk lagi.",
   "Reset fehlgeschlagen.": "Reset gagal.",
   "Nutzer": "Pengguna",
@@ -244,5 +242,13 @@ export default {
   "Okay": "Cukup",
   "Gut": "Baik",
   "Stark": "Kuat",
-  "mindestens 10 Zeichen": "minimal 10 karakter"
+  "mindestens 10 Zeichen": "minimal 10 karakter",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "Atur ulang kata sandi tidak tersedia di halaman ini.",
+  "Neues Passwort, mindestens 10 Zeichen": "Kata sandi baru, minimal 10 karakter",
+  "Neues Passwort setzen": "Setel kata sandi baru",
+  "Bitte ein neues Passwort vergeben.": "Silakan pilih kata sandi baru.",
+  "Die beiden Passwörter stimmen nicht überein.": "Kedua kata sandi tidak cocok.",
+  "Bitte ein neues Passwort eingeben.": "Silakan masukkan kata sandi baru.",
+  "Passwort wiederholen": "Ulangi kata sandi",
+  "Zur Sicherheit noch einmal": "Sekali lagi, untuk memastikan",
 };

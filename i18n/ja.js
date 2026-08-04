@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "リクエストは現在利用できません。",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "メールアドレスを確認しました。ログインできます。",
   "Bestätigung fehlgeschlagen.": "確認に失敗しました。",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "smejj.com の新しいパスワード(10文字以上):",
-  "Passwort-Reset abgebrochen.": "パスワードリセットを中止しました。",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "パスワードを変更しました。以前のセッションはすべて終了しました — もう一度ログインしてください。",
   "Reset fehlgeschlagen.": "リセットに失敗しました。",
   "Nutzer": "ユーザー",
@@ -244,5 +242,13 @@ export default {
   "Okay": "普通",
   "Gut": "良い",
   "Stark": "強い",
-  "mindestens 10 Zeichen": "10文字以上"
+  "mindestens 10 Zeichen": "10文字以上",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "このページではパスワードの再設定はできません。",
+  "Neues Passwort, mindestens 10 Zeichen": "新しいパスワード（10文字以上）",
+  "Neues Passwort setzen": "新しいパスワードを設定",
+  "Bitte ein neues Passwort vergeben.": "新しいパスワードを設定してください。",
+  "Die beiden Passwörter stimmen nicht überein.": "2つのパスワードが一致しません。",
+  "Bitte ein neues Passwort eingeben.": "新しいパスワードを入力してください。",
+  "Passwort wiederholen": "パスワードの再入力",
+  "Zur Sicherheit noch einmal": "確認のためもう一度",
 };

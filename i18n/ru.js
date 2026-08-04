@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "Запрос временно недоступен.",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "Адрес эл. почты подтверждён. Теперь можно войти.",
   "Bestätigung fehlgeschlagen.": "Подтверждение не выполнено.",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "Новый пароль для smejj.com (не менее 10 символов):",
-  "Passwort-Reset abgebrochen.": "Сброс пароля отменён.",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "Пароль изменён. Все прежние сессии завершены — войдите заново.",
   "Reset fehlgeschlagen.": "Сброс не выполнен.",
   "Nutzer": "Пользователь",
@@ -244,5 +242,13 @@ export default {
   "Okay": "Нормальный",
   "Gut": "Хороший",
   "Stark": "Надёжный",
-  "mindestens 10 Zeichen": "не менее 10 символов"
+  "mindestens 10 Zeichen": "не менее 10 символов",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "Сброс пароля на этой странице недоступен.",
+  "Neues Passwort, mindestens 10 Zeichen": "Новый пароль, не менее 10 символов",
+  "Neues Passwort setzen": "Установить новый пароль",
+  "Bitte ein neues Passwort vergeben.": "Пожалуйста, задайте новый пароль.",
+  "Die beiden Passwörter stimmen nicht überein.": "Пароли не совпадают.",
+  "Bitte ein neues Passwort eingeben.": "Пожалуйста, введите новый пароль.",
+  "Passwort wiederholen": "Повторите пароль",
+  "Zur Sicherheit noch einmal": "Ещё раз, для надёжности",
 };

@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "अनुरोध अभी उपलब्ध नहीं है।",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "ईमेल पता सत्यापित। अब आप लॉगिन कर सकते हैं।",
   "Bestätigung fehlgeschlagen.": "पुष्टिकरण विफल।",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "smejj.com के लिए नया पासवर्ड (कम से कम 10 अक्षर):",
-  "Passwort-Reset abgebrochen.": "पासवर्ड रीसेट रद्द किया गया।",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "पासवर्ड बदल गया। सभी पिछले सत्र समाप्त कर दिए गए — कृपया फिर से लॉगिन करें।",
   "Reset fehlgeschlagen.": "रीसेट विफल।",
   "Nutzer": "उपयोगकर्ता",
@@ -244,5 +242,13 @@ export default {
   "Okay": "ठीक",
   "Gut": "अच्छा",
   "Stark": "मज़बूत",
-  "mindestens 10 Zeichen": "कम से कम 10 अक्षर"
+  "mindestens 10 Zeichen": "कम से कम 10 अक्षर",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "इस पेज पर पासवर्ड रीसेट उपलब्ध नहीं है।",
+  "Neues Passwort, mindestens 10 Zeichen": "नया पासवर्ड, कम से कम 10 वर्ण",
+  "Neues Passwort setzen": "नया पासवर्ड सेट करें",
+  "Bitte ein neues Passwort vergeben.": "कृपया एक नया पासवर्ड चुनें।",
+  "Die beiden Passwörter stimmen nicht überein.": "दोनों पासवर्ड मेल नहीं खाते।",
+  "Bitte ein neues Passwort eingeben.": "कृपया एक नया पासवर्ड दर्ज करें।",
+  "Passwort wiederholen": "पासवर्ड दोहराएँ",
+  "Zur Sicherheit noch einmal": "सुरक्षा के लिए एक बार और",
 };

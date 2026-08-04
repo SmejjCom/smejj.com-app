@@ -204,8 +204,6 @@ export default {
   "Anfrage ist momentan nicht erreichbar.": "La demande est momentanément indisponible.",
   "E-Mail-Adresse bestätigt. Du kannst dich jetzt anmelden.": "Adresse e-mail confirmée. Vous pouvez maintenant vous connecter.",
   "Bestätigung fehlgeschlagen.": "Échec de la confirmation.",
-  "Neues Passwort für smejj.com (mindestens 10 Zeichen):": "Nouveau mot de passe pour smejj.com (au moins 10 caractères) :",
-  "Passwort-Reset abgebrochen.": "Réinitialisation du mot de passe annulée.",
   "Passwort geändert. Alle bisherigen Sitzungen wurden beendet – bitte neu anmelden.": "Mot de passe modifié. Toutes les sessions précédentes ont été fermées — veuillez vous reconnecter.",
   "Reset fehlgeschlagen.": "Échec de la réinitialisation.",
   "Nutzer": "Utilisateur",
@@ -244,5 +242,13 @@ export default {
   "Okay": "Correct",
   "Gut": "Bon",
   "Stark": "Fort",
-  "mindestens 10 Zeichen": "au moins 10 caractères"
+  "mindestens 10 Zeichen": "au moins 10 caractères",
+  "Passwort-Reset ist auf dieser Seite nicht verfügbar.": "La réinitialisation du mot de passe n'est pas disponible sur cette page.",
+  "Neues Passwort, mindestens 10 Zeichen": "Nouveau mot de passe, au moins 10 caractères",
+  "Neues Passwort setzen": "Définir le nouveau mot de passe",
+  "Bitte ein neues Passwort vergeben.": "Veuillez choisir un nouveau mot de passe.",
+  "Die beiden Passwörter stimmen nicht überein.": "Les deux mots de passe ne correspondent pas.",
+  "Bitte ein neues Passwort eingeben.": "Veuillez saisir un nouveau mot de passe.",
+  "Passwort wiederholen": "Répéter le mot de passe",
+  "Zur Sicherheit noch einmal": "Encore une fois, par sécurité",
 };
