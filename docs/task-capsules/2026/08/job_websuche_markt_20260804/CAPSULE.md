@@ -149,3 +149,28 @@ braucht eine getrennte schriftliche Freigabe mit Dienst und Betrag.
 Ebenfalls offen, weil nicht freigegeben (Stufen 3 und 4 des Plans): sichtbarer
 Suchfortschritt in der Oberflaeche und der autonome Lauf als Karte im
 Gespraechsfaden statt Ansichtswechsel.
+
+## Nachtrag 2026-08-04, A-bis-Z-Durchlauf: der blinde Passagier
+
+Beim Livetest fiel auf: Auf `commercial office for sale Santa Clara` lieferte
+Bing acht Treffer — LoopNet und Crexi (richtig), aber auch das
+Merriam-Webster-Woerterbuch, das Cambridge Dictionary und eine TV-Werbeseite.
+**Alle acht gingen ans Modell.**
+
+Die Ursache war nicht der Schwellwert, den ich vormittags geschaerft hatte,
+sondern die **Bauart**: `resultsLookRelevant` war ein Tor fuer die GANZE Liste
+(`results.some`). Ein einziger guter Treffer machte sie gueltig — und der Muell
+fuhr als blinder Passagier mit.
+
+NEU `relevanteTreffer` prueft jeden Eintrag EINZELN. Das Tor bleibt unveraendert
+(eine Quelle mit mindestens einem passenden Treffer gilt weiter als brauchbar),
+nur was danach weitergereicht wird, ist gefiltert. Die Diagnose nennt es mit:
+`attempts[].kept` neben `parsed`.
+
+**MERKREGEL: Ein Filter, der die Liste als Ganzes bewertet, ist kein Filter,
+sondern ein Tor. Wer Muell aussortieren will, muss jeden Eintrag einzeln
+ansehen.**
+
+Live belegt (Control 138): `geparst=10 behalten=3` — nur LoopNet und Crexi
+bleiben. Gegenprobe ueber sechs Fragen ohne Verlust; `neueste Node.js Version`
+liefert seitdem sogar 3 Treffer statt 0.
