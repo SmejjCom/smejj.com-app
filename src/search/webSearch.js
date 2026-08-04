@@ -8,6 +8,8 @@ import { createTtlCache } from "./searchCache.js";
 // Lokal gebraucht fuer resultsLookRelevant. Ein blosser Re-Export (unten)
 // stellt den Namen in dieser Datei NICHT bereit — deshalb zusaetzlich importiert.
 import { normalizeForIntent } from "./searchIntent.js";
+// WO gesucht wird, ist eine eigene Entscheidung und liegt in einem eigenen Modul.
+import { DEFAULT_REGION, detectSearchRegion, normalizeRegion, regionSearchParams } from "./searchRegion.js";
 
 const SEARCH_CACHE_TTL_MS = 600000;
 const searchResultCache = createTtlCache({ ttlMs: SEARCH_CACHE_TTL_MS, maxEntries: 500 });
@@ -28,6 +30,8 @@ const PAGE_TIMEOUT_MS = 6000;
 const MAX_BODY_BYTES = 600000;
 const MAX_EXCERPT_CHARS = 2200;
 const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 smejj-live-search";
+// Rueckfall-Sprachkopf, wenn eine Anfrage ohne Region hereinkommt (Seitenabruf).
+const DEFAULT_ACCEPT_LANGUAGE = regionSearchParams(DEFAULT_REGION).accept;
 
 const PRIVATE_HOST_PATTERN = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|\[?::1)/i;
 
@@ -68,7 +72,7 @@ export function isSafePublicUrl(target) {
   return true;
 }
 
-async function fetchText(target, timeoutMs) {
+async function fetchText(target, timeoutMs, acceptLanguage = DEFAULT_ACCEPT_LANGUAGE) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -77,7 +81,9 @@ async function fetchText(target, timeoutMs) {
       redirect: "follow",
       headers: {
         "User-Agent": USER_AGENT,
-        "Accept-Language": "de,en;q=0.8",
+        // Frueher fest "de,en;q=0.8". Genau dieser Kopf hat die Suche nach einem
+        // Buero im Silicon Valley auf deutsche Immobilienportale gelenkt.
+        "Accept-Language": acceptLanguage,
         Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.5"
       }
     });
@@ -198,7 +204,7 @@ export function parseSearxngResults(data, limit = 8) {
 
 // Konfigurierten SearXNG-Endpunkt abfragen (JSON). Trusted Operator-Config:
 // die Basis-URL darf http/https sein; Ergebnis-URLs bleiben SSRF-gefiltert.
-async function searxngJson(query, limit) {
+async function searxngJson(query, limit, params) {
   if (!SEARXNG_URL) return [];
   let base;
   try {
@@ -207,7 +213,8 @@ async function searxngJson(query, limit) {
   } catch {
     return [];
   }
-  const target = SEARXNG_URL + "/search?format=json&language=de&safesearch=1&q=" + encodeURIComponent(query);
+  const target = SEARXNG_URL + "/search?format=json&language=" + encodeURIComponent(params.lang)
+    + "&safesearch=1&q=" + encodeURIComponent(query);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);
   try {
@@ -251,6 +258,12 @@ const STOPWOERTER = new Set([
 // gilt die Quelle als gescheitert und die naechste wird versucht. Fail-closed:
 // lieber kein Kontext als falscher Kontext — ohne Kontext sagt das Modell
 // ehrlich, dass es nichts gefunden hat, statt Fremdes zu verwerten.
+// Nachschaerfung 2026-08-04 (live nachgemessen): Ein einziges gemeinsames Wort
+// reichte als Beleg. Auf "office condo for sale San Jose CA" lieferte die Suche
+// acht Treffer — alle microsoft.com/office.com auf Spanisch. Sie kamen durch,
+// weil "office" vorkam. Deshalb gilt jetzt: ab drei pruefbaren Begriffen muessen
+// ZWEI davon in DEMSELBEN Treffer stehen. Bei ein bis zwei Begriffen bleibt es
+// bei einem Treffer — sonst wuerde "Zoo Berlin" faelschlich verworfen.
 export function resultsLookRelevant(query, results) {
   if (!Array.isArray(results) || results.length === 0) return false;
   const begriffe = normalizeForIntent(query)
@@ -259,50 +272,131 @@ export function resultsLookRelevant(query, results) {
   // Ohne pruefbare Begriffe (z. B. reine Zahlen) nicht filtern — sonst wuerden
   // gueltige Suchen faelschlich verworfen.
   if (begriffe.length === 0) return true;
+  const noetig = begriffe.length >= 3 ? 2 : 1;
   return results.some((eintrag) => {
     const heuhaufen = normalizeForIntent(
       String(eintrag?.title || "") + " " + String(eintrag?.url || "") + " " + String(eintrag?.snippet || "")
     );
-    return begriffe.some((wort) => heuhaufen.includes(wort));
+    let getroffen = 0;
+    for (const wort of begriffe) {
+      if (heuhaufen.includes(wort)) getroffen += 1;
+      if (getroffen >= noetig) return true;
+    }
+    return false;
   });
 }
 
+/**
+ * Sucht live im Internet.
+ *
+ * Der Markt (`region`) ist seit 2026-08-04 ein ECHTER Parameter und wird an alle
+ * drei kostenlosen Quellen durchgereicht — vorher stand "de" fest im Code, und
+ * zwar dreifach: `kl=de-de`, `setlang=de` und im `Accept-Language`-Kopf. Wird
+ * keine Region uebergeben, wird sie aus dem Fragetext erkannt; erkennt auch das
+ * nichts, bleibt es beim bisherigen Standard (kein Rueckschritt).
+ *
+ * Zweite Aenderung am selben Tag: `lite.duckduckgo.com` bekam ueberhaupt keinen
+ * Regionsparameter. Ohne ihn antwortet DuckDuckGo nach der IP des Servers — der
+ * Salad-Container steht nicht in Deutschland, und genau dort kamen spanische
+ * Microsoft-Seiten als Immobilientreffer heraus.
+ *
+ * @param {string} query Suchbegriff (kurz halten, siehe buildSearchQuery).
+ * @param {{limit?:number, region?:string}} [options]
+ * @returns {Promise<Array<{title:string,url:string,snippet:string}>>}
+ */
 export async function searchWeb(query, options) {
+  return (await searchWebDetailed(query, options)).results;
+}
+
+/**
+ * Wie `searchWeb`, liefert zusaetzlich aber den Zustand jeder Quelle.
+ *
+ * Warum das noetig wurde (Messung 2026-08-04): Live lieferten vier von sechs
+ * Standardfragen null Treffer — ohne dass irgendwo sichtbar gewesen waere,
+ * WARUM. DuckDuckGo antwortet auf Anfragen aus dem Rechenzentrum mit HTTP 202
+ * und einer Sperrseite (kein Fehler, kein leeres Ergebnis: eine Seite ohne
+ * Treffer), Bing antwortet mit HTTP 200 und themenfremden Zufallstreffern.
+ * Beide Faelle sahen von aussen aus wie "nichts gefunden". Der Zustand jeder
+ * Quelle gehoert deshalb ins Ergebnis, nicht in eine Vermutung.
+ *
+ * @param {string} query Suchbegriff.
+ * @param {{limit?:number, region?:string}} [options]
+ * @returns {Promise<{results:Array, region:string, source:string, cached:boolean, attempts:Array}>}
+ */
+export async function searchWebDetailed(query, options) {
   const settings = options || {};
   const limit = Math.min(Math.max(Number(settings.limit) || 5, 1), 10);
   const trimmed = String(query || "").trim().slice(0, 300);
-  if (!trimmed) return [];
-  const cacheKey = trimmed.toLowerCase() + "|" + limit;
+  if (!trimmed) return { results: [], region: DEFAULT_REGION, source: "", cached: false, attempts: [] };
+  const params = regionSearchParams(normalizeRegion(settings.region) || detectSearchRegion(trimmed));
+  // Der Markt gehoert in den Cache-Schluessel: dieselbe Frage liefert je nach
+  // Region andere Treffer, und ein gemeinsamer Eintrag wuerde sie vermischen.
+  const cacheKey = trimmed.toLowerCase() + "|" + limit + "|" + params.region;
   const cached = searchResultCache.get(cacheKey);
-  if (cached) return cached.slice();
+  if (cached) return { results: cached.slice(), region: params.region, source: "cache", cached: true, attempts: [] };
+  const attempts = [];
   // Bevorzugt SearXNG (falls konfiguriert), sonst HTML-Suchmaschinen als Fallback.
   if (SEARXNG_URL) {
-    const sx = await searxngJson(trimmed, limit);
-    if (sx.length > 0 && resultsLookRelevant(trimmed, sx)) {
+    const sx = await searxngJson(trimmed, limit, params);
+    const brauchbar = sx.length > 0 && resultsLookRelevant(trimmed, sx);
+    attempts.push({ source: "searxng", parsed: sx.length, status: brauchbar ? "ok" : sx.length ? "themenfremd" : "leer" });
+    if (brauchbar) {
       searchResultCache.set(cacheKey, sx);
-      return sx.slice();
+      return { results: sx.slice(), region: params.region, source: "searxng", cached: false, attempts };
     }
   }
-  const encoded = encodeURIComponent(trimmed);
-  const attempts = [
-    { url: "https://html.duckduckgo.com/html/?q=" + encoded + "&kl=de-de", parse: parseDuckDuckGoHtml },
-    { url: "https://lite.duckduckgo.com/lite/?q=" + encoded, parse: parseDuckDuckGoLite },
-    { url: "https://www.bing.com/search?q=" + encoded + "&setlang=de", parse: parseBingHtml }
-  ];
-  for (const attempt of attempts) {
-    const html = await fetchText(attempt.url, SEARCH_TIMEOUT_MS);
-    if (!html) continue;
+  for (const attempt of searchAttempts(trimmed, params)) {
+    const html = await fetchText(attempt.url, SEARCH_TIMEOUT_MS, params.accept);
+    if (!html) {
+      attempts.push({ source: attempt.source, parsed: 0, status: "keine antwort" });
+      continue;
+    }
+    if (looksBlocked(html)) {
+      attempts.push({ source: attempt.source, parsed: 0, status: "gesperrt" });
+      continue;
+    }
     const results = attempt.parse(html);
     // Eine gesperrte Suchmaschine liefert Treffer, die nichts mit der Anfrage
     // zu tun haben. Solche Quellen gelten als gescheitert (siehe
     // resultsLookRelevant) — es wird die naechste versucht, nicht Muell gecacht.
     if (results.length > 0 && resultsLookRelevant(trimmed, results)) {
       const limited = results.slice(0, limit);
+      attempts.push({ source: attempt.source, parsed: results.length, status: "ok" });
       searchResultCache.set(cacheKey, limited);
-      return limited.slice();
+      return { results: limited.slice(), region: params.region, source: attempt.source, cached: false, attempts };
     }
+    attempts.push({ source: attempt.source, parsed: results.length, status: results.length ? "themenfremd" : "leer" });
   }
-  return [];
+  return { results: [], region: params.region, source: "", cached: false, attempts };
+}
+
+// Sperrseiten erkennen. DuckDuckGo antwortet aus Rechenzentren mit HTTP 202 und
+// einer rund 14 KB grossen Hinweisseite — ohne diese Pruefung sieht eine Sperre
+// aus wie ein Suchergebnis ohne Treffer, und niemand kann die Ursache sehen.
+export function looksBlocked(html) {
+  const text = String(html || "");
+  if (text.length > 40_000) return false;
+  return /anomaly|unusual traffic|are you a robot|captcha|access denied|blocked/i.test(text);
+}
+
+/**
+ * Baut die Abfrage-Adressen der drei kostenlosen Quellen fuer einen Markt.
+ * Ausgelagert und exportiert, damit die Regionsparameter ohne Netzwerkzugriff
+ * pruefbar sind — ein fehlender Parameter faellt sonst erst live auf.
+ * @param {string} query Suchbegriff.
+ * @param {{ddg:string,cc:string,lang:string}} params Regionsparameter.
+ */
+export function searchAttempts(query, params) {
+  const encoded = encodeURIComponent(query);
+  return [
+    { source: "duckduckgo-html", url: "https://html.duckduckgo.com/html/?q=" + encoded + "&kl=" + params.ddg, parse: parseDuckDuckGoHtml },
+    { source: "duckduckgo-lite", url: "https://lite.duckduckgo.com/lite/?q=" + encoded + "&kl=" + params.ddg, parse: parseDuckDuckGoLite },
+    {
+      source: "bing",
+      url: "https://www.bing.com/search?q=" + encoded + "&setlang=" + params.lang + "&cc=" + params.cc,
+      parse: parseBingHtml
+    }
+  ];
 }
 
 // Prueft, ob ein Text ueberwiegend Fliesstext (Prosa) ist und nicht Roh-Markup,
@@ -345,6 +439,10 @@ export async function fetchPageExcerpt(target) {
 // muessen (Single Responsibility). Re-Export haelt bestehende Importe gueltig.
 export { shouldSearchWeb, normalizeForIntent } from "./searchIntent.js";
 
+// Dasselbe Prinzip fuer die Region und den Suchbegriff: eigene Module, hier nur
+// weitergereicht, damit Aufrufer eine einzige Anlaufstelle behalten.
+export { buildSearchQuery, detectSearchRegion, normalizeRegion, regionSearchParams, SEARCH_REGIONS } from "./searchRegion.js";
+
 // Snippet aufraeumen: Pipe-/Menue-Ketten und Navigationsreste entschaerfen, kuerzen.
 // So bekommt das Modell weniger Roh-Ticker-Text zum Wiedergeben (bessere Zusammenfassung).
 export function cleanSnippet(text) {
@@ -359,7 +457,7 @@ export function cleanSnippet(text) {
 export async function buildWebContextBlock(query, options) {
   try {
     const settings = options || {};
-    const results = await searchWeb(query, { limit: settings.maxResults || 5 });
+    const results = await searchWeb(query, { limit: settings.maxResults || 5, region: settings.region });
     if (results.length === 0) return "";
     const lines = results.map(function (result, index) {
       const head = (index + 1) + ". " + result.title;

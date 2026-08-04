@@ -32,9 +32,9 @@ import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "..
 import { handleWorkerModelAction, handleWorkerValidate } from "../control-server/src/routes/workerModelRoutes.js";
 import { refreshModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
 import { buildRagContextBlock, searchKnowledge } from "../control-server/src/rag/agentContext.js";
-import { buildWebContextBlock, searchWeb, shouldSearchWeb } from "./search/webSearch.js";
+import { shouldSearchWeb } from "./search/webSearch.js";
+import { buildAgentWebContext, handleWebSearch } from "./search/webSearchRoute.js";
 import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/src/live/liveInternet.js";
-import { createRateLimiter } from "./shared/rateLimiter.js";
 import { classifyProfile, executeWithFallback, resolveModelRequest } from "../control-server/src/llm/modelRouter.js";
 import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability.js";
 import { streamWithTools, withAgentTools, agentToolsEnabled } from "../control-server/src/llm/streamFilter.js";
@@ -436,9 +436,6 @@ function emailAuthContext(url) {
   };
 }
 
-// Rate-Limit fuer die offene Websuche: 20 Anfragen / 60s pro IP (free-safe, in-memory).
-const webSearchRateLimiter = createRateLimiter({ windowMs: 60000, max: 20 });
-
 function allowPublicModelRequest(req, res) {
   const gate = publicModelRateGate.check(req);
   if (gate.allowed) return true;
@@ -446,26 +443,6 @@ function allowPublicModelRequest(req, res) {
   res.setHeader("Access-Control-Expose-Headers", "x-smejj-model-backend, Retry-After");
   json(res, 429, { error: "public_ai_rate_limit_reached" });
   return false;
-}
-
-function clientIpFrom(req) {
-  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  return forwarded || req.socket?.remoteAddress || "unknown";
-}
-
-// Live-Internet-Suche als eigener Endpunkt (GET /api/search/web?q=...). Free-only,
-// fail-closed: Fehler liefern eine leere Ergebnisliste, niemals Kosten oder Abbruch.
-async function handleWebSearch(req, url, res) {
-  const gate = webSearchRateLimiter.check(clientIpFrom(req));
-  if (!gate.allowed) {
-    res.setHeader("Retry-After", String(Math.ceil(gate.retryAfterMs / 1000)));
-    res.setHeader("Access-Control-Expose-Headers", "Retry-After");
-    return json(res, 429, { error: "Zu viele Suchanfragen. Bitte kurz warten." });
-  }
-  const query = String(url.searchParams.get("q") || "").trim();
-  if (!query) return json(res, 400, { error: "Missing q" });
-  const results = await searchWeb(query, { limit: 8 });
-  return json(res, 200, { ok: true, query, count: results.length, results });
 }
 
 // Erkennt echte Coding-Aufgaben (nur dann Code-Agent-Modus mit Plan/Diff).
@@ -504,11 +481,9 @@ async function handleAgent(req, res) {
       const live = await answerLiveIntent(liveIntent, task).catch(() => null);
       if (live && live.ok) webContext = "Live-Wetterdaten (Open-Meteo):\n" + live.answer;
     }
-    // Intent-Gate: nur bei Aktualitaet/URL/Quellenbitte suchen. Ohne Seiten-Exzerpte (withPages: 0),
-    // denn die kosteten bis zu 2x6s; Titel+Snippets reichen dem Modell fuer die Antwort.
-    if (!webContext && shouldSearchWeb(task)) {
-      webContext = await buildWebContextBlock(task, { maxResults: 5, withPages: 0 });
-    }
+    // Intent-Gate: nur bei Aktualitaet/URL/Quellenbitte suchen. Suchbegriff und
+    // Markt baut buildAgentWebContext (src/search/webSearchRoute.js).
+    if (!webContext && shouldSearchWeb(task)) webContext = await buildAgentWebContext(task);
   }
   // Projektwissen (RAG) ergaenzt, ersetzt aber nie die Live-Suche.
   const ragContext = await buildRagContextBlock(config.projectRoot, task, 3);
@@ -528,6 +503,11 @@ async function handleAgent(req, res) {
       "Nutze VORRANGIG die Live-Internet-Ergebnisse unten und fasse die relevanten Infos zusammen.",
       "Fasse in EIGENEN WORTEN und klaren, vollstaendigen Saetzen zusammen; gib NIEMALS rohen Seitentext, Code-, JSON- oder Markup-Fragmente wieder.",
       "Beispiel: aus der Kontext-Zeile 'Bitcoin 54.792 -0,7% Euro' antwortest du 'Ein Bitcoin kostet aktuell rund 54.792 Euro.' - kopiere niemals ganze Ticker-, Snippet- oder Menue-Zeilen.",
+      // Betreiber-Befund 2026-08-04: Der Nutzer bekam nur die Startseiten der
+      // Portale ("loopnet.com", "crexi.com") statt der gefundenen Treffer und
+      // konnte nichts anklicken. Die Adressen der Treffer SIND das Ergebnis.
+      "Nenne die passenden Treffer einzeln mit ihrer vollstaendigen Adresse aus den Ergebnissen, damit der Nutzer sie anklicken kann.",
+      "Gib niemals nur die Startseite eines Portals an, wenn in den Ergebnissen eine konkrete Trefferadresse steht. Erfinde niemals Adressen.",
       "Nenne am Ende die genutzte(n) Quelle(n) als URL samt Abrufzeit (Stand).",
       "Wenn die Ergebnisse die Antwort nicht enthalten, sage das ehrlich und nenne, was du gefunden hast; erfinde nichts."
     ];

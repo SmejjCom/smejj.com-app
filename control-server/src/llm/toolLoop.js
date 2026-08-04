@@ -24,7 +24,7 @@
 
 import { filterSseEvent } from "./streamFilter.js";
 import { parseBrowserTarget, extractTitle } from "../routes/browserProxyRoutes.js";
-import { searchWeb, cleanSnippet } from "../../../src/search/webSearch.js";
+import { searchWeb, cleanSnippet, normalizeRegion } from "../../../src/search/webSearch.js";
 
 const MAX_ROUNDS = 3;
 const MAX_PAGE_CHARS = 6000;
@@ -61,7 +61,11 @@ export const AGENT_TOOLS = Object.freeze([
       name: "web_suche",
       description: "Sucht live im Internet und liefert die besten Treffer mit Titel, Adresse und Kurztext. "
         + "Nutze das IMMER, wenn dir Fakten fehlen oder unsicher sind: Nachrichten, Schlagzeilen, Ereignisse, "
-        + "Preise, Kurse, Wetter, Oeffnungszeiten, Termine, Sportergebnisse, Software-Versionen. "
+        + "Preise, Kurse, Wetter, Oeffnungszeiten, Termine, Sportergebnisse, Software-Versionen, "
+        + "Angebote und Objekte (Immobilien, Fahrzeuge, Produkte). "
+        + "Suche in der Sprache und im Markt des ZIELS, nicht in der Sprache der Frage: "
+        + "Fragt jemand auf Deutsch nach einem Buero in Kalifornien, suchst du auf Englisch mit region 'us'. "
+        + "Bringt eine Anfrage nichts Brauchbares, formuliere sie um und rufe das Werkzeug erneut auf. "
         + "Antworte NIEMALS mit 'ich habe keine Informationen', 'ich bin nicht auf dem neuesten Stand' oder "
         + "'ich kann dir dabei nicht helfen', ohne vorher web_suche aufgerufen zu haben.",
       parameters: {
@@ -69,7 +73,15 @@ export const AGENT_TOOLS = Object.freeze([
         properties: {
           anfrage: {
             type: "string",
-            description: "Kurze Suchanfrage in der Sprache des Nutzers, zum Beispiel 'Schlagzeilen Berlin heute'."
+            description: "Kurze Suchanfrage (2 bis 8 Stichworte) in der Sprache des Zielmarktes, "
+              + "zum Beispiel 'Schlagzeilen Berlin heute' oder 'office condo for sale San Jose CA'. "
+              + "Keine ganzen Saetze und keine Hoeflichkeitsfloskeln — sie verwaessern jede Suchmaschine."
+          },
+          region: {
+            type: "string",
+            description: "Zielmarkt als Laenderkuerzel: 'us', 'de', 'at', 'ch', 'uk', 'fr', 'es', 'it', "
+              + "'nl', 'pl', 'tr', 'ca', 'au', 'br', 'jp', 'in' oder 'wt' fuer weltweit. "
+              + "Richte dich nach dem Ort in der Frage, nicht nach ihrer Sprache. Ohne Angabe wird 'de' benutzt."
           }
         },
         required: ["anfrage"]
@@ -224,7 +236,7 @@ export async function runAgentTool(call, { fetchImpl = fetch, sucheImpl = search
   } catch {
     return "Die Werkzeug-Argumente waren kein gueltiges JSON.";
   }
-  if (name === "web_suche") return sucheImWeb(String(args?.anfrage || ""), sucheImpl);
+  if (name === "web_suche") return sucheImWeb(String(args?.anfrage || ""), sucheImpl, String(args?.region || ""));
   return leseSeite(String(args?.url || ""), fetchImpl);
 }
 
@@ -232,24 +244,37 @@ export async function runAgentTool(call, { fetchImpl = fetch, sucheImpl = search
 // Pflicht: ohne ihn kann das Modell die Aktualitaet nicht belegen und schreibt
 // "Stand unbekannt". Fail-safe: ein Fehler ergibt einen erklaerenden Text als
 // Werkzeugergebnis, nie einen Abbruch — das Modell kann darauf reagieren.
-async function sucheImWeb(anfrage, sucheImpl) {
+async function sucheImWeb(anfrage, sucheImpl, region = "") {
   const bereinigt = anfrage.trim();
   if (!bereinigt) return "Leere Suchanfrage — bitte mit einem konkreten Suchbegriff erneut aufrufen.";
+  // Eine unbekannte Regionsangabe des Modells wird still verworfen, nicht als
+  // Fehler gemeldet: die Suche laeuft dann mit erkannter oder Standard-Region
+  // weiter. Ein Tippfehler des Modells darf keine Recherche verhindern.
+  const markt = normalizeRegion(region);
   let treffer;
   try {
-    treffer = await sucheImpl(bereinigt, { limit: MAX_SUCHTREFFER });
+    treffer = await sucheImpl(bereinigt, markt ? { limit: MAX_SUCHTREFFER, region: markt } : { limit: MAX_SUCHTREFFER });
   } catch (error) {
     return `Die Suche ist fehlgeschlagen: ${String(error?.message || error).slice(0, 160)}`;
   }
   if (!Array.isArray(treffer) || treffer.length === 0) {
-    return `Keine Treffer fuer "${bereinigt}". Formuliere die Anfrage kuerzer oder mit anderen Stichworten.`;
+    return `Keine Treffer fuer "${bereinigt}"${markt ? ` (Markt ${markt})` : ""}. `
+      + "Formuliere die Anfrage kuerzer, mit anderen Stichworten oder in der Sprache des Zielmarktes "
+      + "und pruefe die region-Angabe.";
   }
   const zeilen = treffer.map((eintrag, index) => {
     const kurz = cleanSnippet(eintrag?.snippet || "");
     const kopf = `${index + 1}. ${eintrag?.title || "(ohne Titel)"}\n   ${eintrag?.url || ""}`;
     return kurz ? `${kopf}\n   ${kurz}` : kopf;
   });
-  return [`Suchergebnisse fuer "${bereinigt}" (abgerufen ${new Date().toISOString()}):`, ...zeilen].join("\n");
+  const kopfzeile = `Suchergebnisse fuer "${bereinigt}"${markt ? `, Markt ${markt}` : ""} `
+    + `(abgerufen ${new Date().toISOString()}):`;
+  // Die Adressen sind das eigentliche Ergebnis fuer den Nutzer — ohne diese
+  // Anweisung fasste das Modell nur zusammen und nannte am Ende die Startseiten
+  // der Portale statt der Treffer selbst (Betreiber-Befund 2026-08-04).
+  const hinweis = "Gib die fuer die Frage passenden Treffer mit ihrer vollstaendigen Adresse an, "
+    + "damit der Nutzer sie anklicken kann. Erfinde keine Adressen.";
+  return [kopfzeile, ...zeilen, "", hinweis].join("\n");
 }
 
 // Nutzt bewusst parseBrowserTarget aus dem Browser-Proxy: dieselbe gepruefte
