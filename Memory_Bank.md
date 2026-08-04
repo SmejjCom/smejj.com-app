@@ -736,3 +736,35 @@ A-bis-Z-Livetest nach dem Websuche-Release. Zwei Befunde, beide freigegeben und 
 - OFFEN: `tests/lora-trainer-vertrag.test.mjs` flackert unter Volllast (15 s
   Startbudget fuer python3; standalone 1,2 s). Kein Produktfehler, aber ein
   unzuverlaessiges Release-Tor. Fremder Arbeitsbereich, nicht angefasst.
+
+## 2026-08-04 — Heller Modus der Konto-Formulare (Nacharbeit, sw v214)
+
+Commit `f0caadb` + `031f6a5`, Frontend `00a67e1`. Zwei EIGENE Fehler, gefunden
+beim Nachpruefen des zweiten Farbschemas — beide haetten nur Nutzer mit hellem
+Systemschema getroffen und keinen Test ausgeloest:
+
+- **EIN RUECKFALLWERT VERSTECKT EINE ERFUNDENE VARIABLE.**
+  `var(--konto-panel, rgba(255,255,255,0.03))` — `--konto-panel` ist nirgends
+  definiert, der weisse Rueckfallwert galt also IMMER. Im dunklen Schema faellt
+  das nicht auf. MERKREGEL: **ein `var()` mit Rueckfallwert ist unfehlbar und
+  darum gefaehrlich** — der Waechter prueft jetzt, dass jede benutzte
+  `--konto-*`-Variable auch definiert ist.
+- **DIE KANTENFARBE TAUGT NICHT ALS FOKUSRING.** `--konto-edge` ist im hellen
+  Schema `rgba(255,255,255,0.9)`: ein weisser Ring auf hellem Grund ist kein
+  Ring. Jetzt `#2dd4bf` wie beim Bildwaehler. Dritter Waechter: beide Schemata
+  muessen JEDE Variable definieren, sonst faellt sie still auf den Erbwert.
+
+**MERKREGEL zur Messung selbst (zweimal in Folge hereingefallen):** eine
+Testbuehne, die nur EIN Stilblatt laedt, misst falsch. `--konto-*` haengt an
+`#profile.premium-view` (account-privacy.css), `--premium-text` aber an
+`app-surfaces.css`. Ohne beide sah heller Text auf weissem Grund wie ein Fehler
+aus und war nur die Buehne. Immer alle beteiligten Stilblaetter laden und die
+echte Ansichtsklasse setzen.
+
+**MERKREGEL, zum zweiten Mal:** Pruefmuster muessen Kommentare ausblenden — der
+erste Lauf des neuen Waechters schlug auf den eigenen Kommentar an, der den
+alten Fehler beschreibt.
+
+Belegt: dunkel Text `rgb(249,246,241)` auf `rgba(0,0,0,0.25)`, hell
+`rgb(23,25,29)` auf `#ffffff`, Fokusring in beiden `rgb(45,212,191)`.
+`check:all` gruen (1726), Start-Lock neu eingefroren.
