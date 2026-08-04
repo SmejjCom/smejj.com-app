@@ -48,8 +48,8 @@ function zeit() {
   return new Date().toISOString().slice(11, 19);
 }
 
-/** /health des Trainers. Ein Fehlschlag ist "nicht erreichbar", nie ein Absturz. */
-async function frageTrainer() {
+/** Eine einzelne /health-Abfrage. Ein Fehlschlag ist "nicht erreichbar", nie ein Absturz. */
+async function frageTrainerEinmal() {
   const steuerung = new AbortController();
   const uhr = setTimeout(() => steuerung.abort(), 15_000);
   try {
@@ -69,6 +69,29 @@ async function frageTrainer() {
   } finally {
     clearTimeout(uhr);
   }
+}
+
+/**
+ * /health mit EINER Wiederholung.
+ *
+ * GEMESSEN AM 2026-08-04: im 60-Sekunden-Takt scheiterte etwa alle zehn Minuten
+ * genau eine Abfrage mit "fetch failed", die naechste lief wieder sauber. Zehn
+ * Abfragen im Abstand von 1,5 s ergaben zeitgleich 10/10 HTTP 200 bei 162-286 ms.
+ * Der Dienst war also nie weg — es ist eine wiederverwendete Verbindung, die das
+ * Gateway zwischenzeitlich geschlossen hat (Keep-Alive in undici).
+ *
+ * Eine EINZELNE Fehlmessung darf deshalb keinen Ausfall bedeuten. Sie erzeugt
+ * sonst Fehlalarme, und Fehlalarme sind teuer: man gewoehnt sich an sie und
+ * uebersieht den echten Ausfall. Erst wenn auch die Wiederholung scheitert,
+ * gilt der Trainer als nicht erreichbar.
+ */
+async function frageTrainer() {
+  const erste = await frageTrainerEinmal();
+  if (erste.erreichbar) return erste;
+  await new Promise((fertig) => setTimeout(fertig, 2000));
+  const zweite = await frageTrainerEinmal();
+  if (zweite.erreichbar) return { ...zweite, einmalDaneben: erste.ladezustand };
+  return zweite;
 }
 
 /**
@@ -120,6 +143,13 @@ async function main() {
   let warBereit = false;
   for (;;) {
     const lage = await frageTrainer();
+    // Eine ueberstandene Fehlmessung wird vermerkt, aber NICHT als Ausfall
+    // gewertet. Sichtbar bleiben soll sie trotzdem: haeufen sich diese Zeilen,
+    // stimmt etwas mit der Leitung oder dem Gateway nicht.
+    if (lage.einmalDaneben) {
+      console.log(`[waechter] ${zeit()} eine Abfrage daneben (${lage.einmalDaneben}),`
+        + " Wiederholung erfolgreich — kein Ausfall.");
+    }
     const nichtBereitSeitMs = gedaechtnis.melde(lage.bereit);
     // Der Netzbeleg wird nur geholt, wenn er die Entscheidung aendern kann —
     // also wenn der Trainer unerreichbar ist UND die Frist schon abgelaufen ist.
