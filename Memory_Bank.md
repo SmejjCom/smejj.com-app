@@ -532,36 +532,9 @@ Freigabe des Betreibers (Wortlaut in beiden Sperr-Manifesten). `check:all` gruen
 
 ## 2026-08-04 — Fortschritt sichtbar, Lauf im Faden (job_fortschritt_faden_20260804)
 
-Die letzten drei Punkte der Betreiber-Liste. Volltext in der Kapsel.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-04_fortschritt_faden.md](docs/memory/Memory_Bank_2026-08-04_fortschritt_faden.md).
 
-- **EIN EREIGNIS, DAS DER SERVER SENDET, IST NOCH LANGE NICHT EINES, DAS DER
-  NUTZER SIEHT.** Der Control Server sendete die Arbeitsschritte nachweislich
-  (6 im Rohstrom), beim Nutzer kam keiner an: `pipeVisibleStream` in der Bruecke
-  baut JEDEN Event neu und behaelt nur `choices[0].delta.content`. Zwischen
-  Server und Auge liegt jeder Filter auf dem Weg — jeden einzeln pruefen.
-- **RUECKWAERTSKOMPATIBEL PER BAUART:** Der Schritt steht in einem eigenen Feld
-  (`smejj_schritt`), nicht in `choices[].delta`. Ein alter Client liest
-  `delta.content`, bekommt `undefined` und haengt nichts an — unsichtbar, aber
-  nie stoerend.
-- **DIE SCHRITTLISTE IST GESCHWISTER DER ANTWORT, NICHT IHR KIND.** Der
-  Markdown-Renderer ersetzt am Ende das `innerHTML` des Antwort-Knotens und
-  liest dessen `textContent`. Ein Kind waere weg — und wuerde vorher die Antwort
-  faelschen.
-- **Punkt 6:** Der autonome Lauf brauchte die Formularfelder der Automatik-
-  Ansicht; der Job-Endpunkt braucht sie gar nicht. NEU
-  `public/autonomous-thread-run.js` startet im Faden. Fail-safe: bei jedem
-  Fehler `false` -> der alte Weg uebernimmt. Ein Test nagelt fest, dass der
-  Ansichtswechsel HINTER dem Rueckfall-Abbruch steht.
-- **DER ZEABUR-BUENDLER LEHNT RE-EXPORT-LISTEN AB** (`bundle_export_list_unsupported`):
-  sie verstecken die Namensherkunft und entziehen der Kollisionspruefung den
-  Boden. Beim Auslagern aus `chat-bridge.js` (824 Zeilen) deshalb direkte
-  Importe in den Tests, kein `export { … } from`.
-- Der Import von `chat-bridge.js` startet einen echten HTTP-Server —
-  `SMEJJ_CHAT_BRIDGE_NO_START = "1"` VOR dem Import setzen, sonst haengt der Test.
-- Live belegt: Control sendet, Bruecke v114 reicht durch, ausgeliefertes
-  `chat-stream.js` rendert („🔍 Suche: … · Markt us ✓ 8 Treffer"), CSS im
-  Buendel. NICHT abgenommen: der angemeldete Durchlauf am Stueck — ein gemintetes
-  Token wird abgewiesen und eine Sitzung darf sich nicht anmelden.
 ## 2026-08-04 — Grundlinie der breiten Suite gemessen (job_eval_breite_suite_20260803)
 - ZWEI VOLLE LIVELAEUFE (je 885 Aufrufe) gegen die Standardkette; zusammengefuehrt
   decken sie alle 295 Faelle sauber: **Grundlinie 66,2 %**, 105 kritische
@@ -792,3 +765,26 @@ vor** (234 ohne Becken + 221 abgelehnt von 885). Ein Nachsortierer kann nichts
 finden, was BM25 nicht ins Becken gelegt hat — damit ist die in der
 Entscheidungsvorlage genannte Bedingung fuer Stufe 2 erfuellt.
 Volltext: [docs/memory/Memory_Bank_2026-08-05_nachsortierer.md](docs/memory/Memory_Bank_2026-08-05_nachsortierer.md).
+
+## 2026-08-05 — Stufe 2 verworfen: Begriffserweiterung wirkt nicht (job_eval_breite_suite_20260803)
+
+Semantische Suche OHNE Einbettungsmodell versucht: Nachbarschaftstabelle aus dem
+Korpus (PMI), Frage vor der Suche um ihr Themenvokabular ergaenzt. 1.480 Begriffe,
+96 KB Artefakt, 188 ms Bauzeit, keine Abhaengigkeit.
+**Verworfen VOR dem ersten Modellaufruf, kostenlos gemessen.**
+- Von drei diagnostizierten Faellen: einer besser, einer unveraendert schlecht,
+  einer KAPUTT (AGENTS.md :: Change-Lock fiel aus den Top 3).
+- Ausschlaggebend: Faelle mit Becken 217 -> **292 von 295**. Die Erweiterung hebt
+  praktisch JEDE Frage ueber die Schwelle, auch "Was ist 12 mal 8?" (ergaenzt um
+  `rollback test`). Genau dieser Zustand war am 2026-08-01 und am 2026-08-04
+  schon zweimal schaedlich.
+- MERKREGEL: **eine gute Begriffstabelle ist noch keine gute Suche.** Die Nachbarn
+  stimmen (trainingsdaten -> rechtepruefung, sanitization, rechtefreigabe); sie an
+  die Frage zu haengen, verschiebt die Trefferliste trotzdem ins Beliebige.
+- Ursache: PMI ueber 663 kurze Abschnitte trennt Thema und Zufall nicht scharf
+  genug; haeufige Allerweltswoerter rutschen unter die Haeufigkeitsgrenze.
+- Der Modulentwurf wurde NICHT eingecheckt (keine unnoetige Infrastruktur), der
+  Befund schon: docs/architecture/RAG_STUFE2_BEFUND_2026-08-05.md.
+- OFFEN vor jedem weiteren Retrieval-Umbau: die Deckenfrage. Wie viele der 295
+  Faelle sind ueberhaupt durch ein vorhandenes Dokument beantwortbar? Ohne diese
+  Zahl ist unbekannt, wie viel Luft bleibt.

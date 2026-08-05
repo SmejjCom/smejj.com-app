@@ -10,6 +10,16 @@
 > Wer besser waehlt, findet nichts, was nicht da ist.
 > **Damit ist die in Abschnitt 6 genannte Bedingung fuer Stufe 2 erfuellt.**
 > Details: `docs/memory/Memory_Bank_2026-08-05_nachsortierer.md`.
+>
+> **NACHTRAG 2 (2026-08-05) — Stufe 2 in der abhaengigkeitsfreien Variante
+> ebenfalls verworfen.** Begriffserweiterung aus dem Korpus (PMI) wurde gebaut
+> und KOSTENLOS gemessen: Faelle mit Trefferbecken steigen von 217 auf 292 von
+> 295, d. h. praktisch jede Frage bekommt Kontext — auch "Was ist 12 mal 8?".
+> Genau dieser Zustand war zweimal messbar schaedlich. Von drei diagnostizierten
+> Faellen wurde einer besser, einer blieb schlecht, einer ging kaputt.
+> **Damit bleibt nur Option B in ihrer urspruenglichen Form (echtes
+> Einbettungsmodell) — mit unveraendertem Preis: erste Laufzeit-Abhaengigkeit.**
+> Details: `docs/architecture/RAG_STUFE2_BEFUND_2026-08-05.md`.
 
 Diese Vorlage beantwortet eine Frage: **Womit sucht smejj.com kuenftig sein
 Projektwissen?** Alle Zahlen darin sind gemessen, nicht geschaetzt. Die Messwege
