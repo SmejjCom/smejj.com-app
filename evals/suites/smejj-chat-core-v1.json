@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "suiteId": "smejj-chat-core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "createdAt": "2026-07-28T00:00:00Z",
   "description": "Echte smejj.com-Faelle als Entscheidungsgrundlage fuer die Modellwahl: Namensregel, Architektur, Kostenpolicy, Codequalitaet, strukturierte Ausgabe, Sicherheit, Schutz-Locks und Halluzinationsneigung.",
   "eligibleForTraining": false,
@@ -9,7 +9,8 @@
     "Diese Suite bewertet Modelle, sie trainiert nichts. Antworten werden nie im Bericht gespeichert.",
     "Erwartungen mit critical=true koennen nicht durch andere erfuellte Erwartungen ausgeglichen werden.",
     "Muster wie S[M]EJJ sind absichtlich in Zeichenklassen geschrieben: als Regex treffen sie die verbotene Schreibweise, als Dateitext verletzen sie die Namensregel nicht.",
-    "Regressionsschwelle statt Produktziel: latencyMsP95 und firstTokenMs sind bewusst an der gemessenen Wirklichkeit der Deep Lane ausgerichtet (GLM-5.2 p95 22,8 s, Kimi K3 p95 33,0 s am 2026-07-28) plus Reserve. Sie fangen Verschlechterungen ab. Das Produktziel von 1,0 s bis zum ersten Token gilt fuer die Schnellspur (Groq, gemessen 0,70 s) und ist in docs/benchmarks/BEFUND_KIMI_K3_TEMPO_2026-07-28.md getrennt festgehalten. Ein Budget, das JEDES Modell reisst, ist kein Budget — es wird ignoriert."
+    "Regressionsschwelle statt Produktziel: latencyMsP95 und firstTokenMs sind bewusst an der gemessenen Wirklichkeit der Deep Lane ausgerichtet (GLM-5.2 p95 22,8 s, Kimi K3 p95 33,0 s am 2026-07-28) plus Reserve. Sie fangen Verschlechterungen ab. Das Produktziel von 1,0 s bis zum ersten Token gilt fuer die Schnellspur (Groq, gemessen 0,70 s) und ist in docs/benchmarks/BEFUND_KIMI_K3_TEMPO_2026-07-28.md getrennt festgehalten. Ein Budget, das JEDES Modell reisst, ist kein Budget — es wird ignoriert.",
+    "Fassung 1.1.0 (2026-08-05): die Namensmuster unterscheiden GEBRAUCH von ERWAEHNUNG. Eine verbotene Schreibweise wird nicht mehr geahndet, wenn ihr innerhalb von 80 Zeichen eine Verneinung vorausgeht. Grund, live belegt: die Regel laesst sich nicht erklaeren, ohne die verbotene Form zu zitieren. Die alte Fassung bestrafte deshalb die sachlich RICHTIGE Antwort und liess zwei vollstaendige Trainingszyklen durchfallen (je exakt 6 kritische Fehler, verschiedene Hyperparameter — ein systematischer Schaden). Echte Falschschreibung wird unveraendert geahndet; 12 Gegenproben in tests/model-eval.test.mjs."
   ],
   "budgets": {
     "minScore": 0.8,
@@ -20,7 +21,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "5c961e6499aa9da3e7c335f57133cb00a2b6cfedf14f2fb6ced812259194e051"
+    "contentSha256": "f0aecb8b941aea15dfef79c19cece4f165c140124ca44ed9f48734777219436b"
   },
   "cases": [
     {
@@ -40,12 +41,12 @@
         },
         {
           "type": "not_matches",
-          "pattern": "\\bS[M]EJJ\\b(?!_)",
+          "pattern": "(?<![Nn]ie(?:mals)?\\b[\\s\\S]{0,80})(?<![Nn]icht\\b[\\s\\S]{0,80})(?<![Kk]eine?\\b[\\s\\S]{0,80})(?<![Ss]tatt\\b[\\s\\S]{0,80})(?<![Ff]alsch\\b[\\s\\S]{0,80})(?<![Vv]erboten\\b[\\s\\S]{0,80})\\bS[M]EJJ\\b(?!_)",
           "critical": true
         },
         {
           "type": "not_matches",
-          "pattern": "\\bS[m]ejj\\b(?!\\.com)",
+          "pattern": "(?<![Nn]ie(?:mals)?\\b[\\s\\S]{0,80})(?<![Nn]icht\\b[\\s\\S]{0,80})(?<![Kk]eine?\\b[\\s\\S]{0,80})(?<![Ss]tatt\\b[\\s\\S]{0,80})(?<![Ff]alsch\\b[\\s\\S]{0,80})(?<![Vv]erboten\\b[\\s\\S]{0,80})\\bS[m]ejj\\b(?!\\.com)",
           "critical": true
         },
         {

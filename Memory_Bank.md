@@ -435,34 +435,9 @@ Volltext ausgelagert nach
 [docs/memory/Memory_Bank_2026-08-04_fortschritt_faden.md](docs/memory/Memory_Bank_2026-08-04_fortschritt_faden.md).
 
 ## 2026-08-04 — Grundlinie der breiten Suite gemessen (job_eval_breite_suite_20260803)
-- ZWEI VOLLE LIVELAEUFE (je 885 Aufrufe) gegen die Standardkette; zusammengefuehrt
-  decken sie alle 295 Faelle sauber: **Grundlinie 66,2 %**, 105 kritische
-  Verstoesse. Je Fachgebiet: strukt 95 / lock 87 / naming 84 stark;
-  **rag 31 / ehrl 36 / code 47** sind die Trainingsziele fuer smejj 1.0.
-  Berichte: modeleval-smejj-chat-breit-live-default{,-wdh}-2026-08-04.json.
-- ZWEI MESSFALLEN fuer lange Laeufe: (1) ein ~7-min-Netzausfall macht ganze
-  Kategorien zu 0 %-Fehlern (`fetch failed`) — Kategorien mit lauter errors sind
-  KEINE Modellaussage; (2) die letzten 25 Faelle von Lauf 2 kippten auf
-  `http_401` — lange Laeufe halbieren oder Laeufe zusammenfuehren (Fall fuer
-  Fall: fehlerfreie Messung gewinnt). --retries hilft nur bei
-  Sekunden-Aussetzern, nicht bei Minuten.
-- KORREKTUR der ersten Diagnose (2026-08-04, nachgemessen): die 401 waren NICHT
-  ein "auslaufender Zugang". Die Anmeldepflicht der Chat-Bruecke (Bridge v114)
-  ging WAEHREND des Laufs live — die Fehler stehen alle am ENDE der Suite, nicht
-  verstreut. Seither gibt `/api/chat` auf BEIDEN Spuren (Zeabur und Salad) 401,
-  auch mit `Origin`-Kopf; `/health` bleibt 200. MERKREGEL: **ein Deploy waehrend
-  eines Messlaufs sieht aus wie ein Infrastrukturfehler** — Fehler am Stueck am
-  Ende deuten auf eine Umstellung, verstreute Fehler auf eine Stoerung.
-- FOLGE fuer den Harness: der `control`-Transport ist bis auf Weiteres NICHT
-  nutzbar (eine Sitzung kann sich nicht anmelden, ein geminteltes Token wird
-  abgewiesen). Modellvergleiche laufen darum ueber `--transport provider` mit
-  dem BYOK-Schluessel aus der bestehenden lokalen Konfiguration. Belegt:
-  glm-5-2 antwortet dort als `zhipu`/`glm-5-2`.
-- FALLE, live belegt: `--model kimi-k3` ueber `provider` faellt STILL auf
-  `zhipu`/`glm-5-2` zurueck, weil der Moonshot-Schluessel lokal fehlt. Ohne den
-  Blick auf `run.backendsSeen` haette der Bericht GLM-Zahlen als Kimi-Zahlen
-  ausgewiesen. MERKREGEL: **bei jedem Modellvergleich zuerst backendsSeen und
-  resolvedModelIds lesen, nicht den angeforderten Namen.**
+
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-04_grundlinie_breit.md](docs/memory/Memory_Bank_2026-08-04_grundlinie_breit.md).
 
 ## 2026-08-04 — Projektwissen: Infrastrukturfragen (job_projektwissen_infrastruktur_20260804)
 
@@ -626,18 +601,8 @@ Volltext ausgelagert nach
 
 ## 2026-08-05 — Stufe 1 gemessen: Nachsortierer bringt nichts (job_eval_breite_suite_20260803)
 
-Zwei volle Laeufe. Auf 275 sauberen Faellen: ohne RAG 77,2 % / RAG-12 78,3 % /
-Nachsortierer v1 79,0 % / v2 78,7 % — Rauschband 1,7, **alles innerhalb**.
-Die zwei Stellschrauben reparierten die MECHANIK (Ausfaelle 63->1,
-Ablehnungen 51->34 %, Kontext 317->430), aber nicht das ERGEBNIS.
-MERKREGEL: **eine reparierte Mechanik ist noch kein besseres Ergebnis.**
-Erfolgskriterium nach zwei Runden verfehlt (training -4,1, schutz -7,5 gegen
-ohne RAG) -> Schluss, Schalter bleibt aus, Code bleibt als Messwerkzeug.
-**Der eigentliche Befund: in 51 % der Aufrufe liegt gar keine brauchbare Quelle
-vor** (234 ohne Becken + 221 abgelehnt von 885). Ein Nachsortierer kann nichts
-finden, was BM25 nicht ins Becken gelegt hat — damit ist die in der
-Entscheidungsvorlage genannte Bedingung fuer Stufe 2 erfuellt.
-Volltext: [docs/memory/Memory_Bank_2026-08-05_nachsortierer.md](docs/memory/Memory_Bank_2026-08-05_nachsortierer.md).
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_stufe1_nachsortierer.md](docs/memory/Memory_Bank_2026-08-05_stufe1_nachsortierer.md).
 
 ## 2026-08-05 — Stufe 2 verworfen: Begriffserweiterung wirkt nicht (job_eval_breite_suite_20260803)
 
@@ -798,3 +763,30 @@ Volltext: [docs/memory/Memory_Bank_2026-08-05_zeitbudget.md](docs/memory/Memory_
   bei 6500 ms Budget. Das Budget hing am MODELLNAMEN — jetzt an der ROUTE.
 - MERKREGELN: `grep … | head -1` traf einen KOMMENTAR statt der Konstante. Ein
   Beweistest mit nur EINEM Ziel besteht auch gegen den alten Code.
+
+## 2026-08-05 — Trainings-Loop entblockt: Gebrauch gegen Erwaehnung
+
+Schritt 2 des Trainingsplans begonnen. Der erste Fund war kein Datenproblem,
+sondern ein Defekt im Messinstrument — und er machte JEDES Training sinnlos.
+- **DIE URSACHE:** die Regel "schreibe smejj.com, niemals die Grossform" laesst
+  sich nicht ERKLAEREN, ohne die verbotene Form zu ZITIEREN. Die kritische
+  Zusicherung ahndete jedes Vorkommen und bestrafte damit die sachlich RICHTIGE
+  Antwort. Zwei vollstaendige Zyklen fielen mit je exakt 6 kritischen Fehlern
+  durch — verschiedene Hyperparameter, gleiche Zahl: ein systematischer Schaden.
+- **DIE LOESUNG (Variante A aus [[smejj-korpus-widerspricht-suite]]):** die
+  Muster tragen jetzt sechs Verneinungs-Lookbehinds. Eine verbotene Schreibweise
+  wird nicht geahndet, wenn ihr innerhalb von 80 Zeichen `nie/niemals/nicht/
+  kein(e)/statt/falsch/verboten` vorausgeht. **Kein `i`-Flag moeglich** — die
+  Gross-/Kleinschreibung IST die Pruefung; darum `[Nn]iemals` statt `niemals`.
+  Genau daran scheiterte der erste Entwurf.
+- **GEGENPROBE, 12 Faelle:** alle 5 echten Verstoesse werden weiter erkannt
+  ("Die Plattform heisst <Grossform>"), alle 7 Erklaerungen nicht mehr.
+  Dauerhaft in tests/model-eval.test.mjs.
+- BEIDE Suiten angepasst: chat-core-v1 auf 1.1.0 (2 Muster, die der Loop nutzt)
+  und chat-breit-v1 auf 1.1.0 (22 Muster). Inhalts-Hashes neu berechnet.
+  **Berichte der Fassung 1.0.0 sind nicht mehr vergleichbar — das ist sicher,
+  weil findBaselineReport ausschliesslich gegen denselben contentSha256
+  vergleicht.** Die Grundlinien muessen fuer die neue Fassung neu gemessen werden.
+- MERKREGEL: **eine Zusicherung, die jedes Vorkommen eines Wortes verbietet,
+  verwechselt Gebrauch mit Erwaehnung** — und bestraft dann die beste Antwort.
+  Vor dem Dauerbetrieb jedes Veto-Tor gegen den eigenen Korpus gegenpruefen.

@@ -136,6 +136,38 @@ test("die Namensregel der Suite erkennt eine falsche Schreibweise wirklich", () 
   assert.equal(schlecht.criticalFailed, true);
 });
 
+test("die Namensregel unterscheidet GEBRAUCH von ERWAEHNUNG", () => {
+  // Der teuerste gemessene Fehler dieser Suite (2026-08-05): die Regel
+  // "schreibe smejj.com, niemals die Grossform" laesst sich nicht ERKLAEREN,
+  // ohne die verbotene Form zu ZITIEREN. Die alte Zusicherung ahndete jedes
+  // Vorkommen und bestrafte damit die sachlich richtige Antwort. Folge: zwei
+  // vollstaendige Trainingszyklen fielen mit je exakt 6 kritischen Fehlern
+  // durch — bei verschiedenen Hyperparametern, also systematisch. Der
+  // Dauerbetrieb konnte konstruktionsbedingt NIE eine Konfiguration annehmen.
+  const namingCase = SUITE.cases.find((item) => item.id === "naming-schreibweise");
+
+  // Diese Antworten ERKLAEREN die Regel und muessen bestehen.
+  for (const text of [
+    "Die Plattform wird ausnahmslos als smejj.com geschrieben. " + `Niemals ${VERBOTENE_SCHREIBWEISE}.`,
+    `Richtig ist smejj.com, nicht ${VERBOTENE_SCHREIBWEISE}.`,
+    `Schreibe nie ${VERBOTENE_SCHREIBWEISE} — immer smejj.com.`,
+    "Die Umgebungsvariable heisst " + `${VERBOTENE_SCHREIBWEISE}_LORA_TRAINER_KEY; die Plattform bleibt smejj.com.`
+  ]) {
+    const bewertet = scoreCase(namingCase, { ok: true, text, latencyMs: 500 });
+    assert.equal(bewertet.criticalFailed, false, `Erklaerung faelschlich geahndet: ${text}`);
+  }
+
+  // Diese BENUTZEN die falsche Schreibweise und muessen weiterhin durchfallen.
+  for (const text of [
+    `Die Plattform heisst ${VERBOTENE_SCHREIBWEISE} und speichert auf IDrive e2. smejj.com`,
+    `Willkommen bei ${VERBOTENE_SCHREIBWEISE}! Alles aus einer Hand. smejj.com`
+  ]) {
+    const bewertet = scoreCase(namingCase, { ok: true, text, latencyMs: 500 });
+    assert.equal(bewertet.criticalFailed, true, `echter Verstoss durchgelassen: ${text}`);
+    assert.equal(bewertet.score, 0);
+  }
+});
+
 test("ein Transportfehler wird als Fehlerfall gezaehlt, nicht als bestanden", () => {
   const scored = scoreCase(SUITE.cases[0], { ok: false, error: "timeout", latencyMs: 60000 });
   assert.equal(scored.status, "error");
