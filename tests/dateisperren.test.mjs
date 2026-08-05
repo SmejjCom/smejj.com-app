@@ -18,6 +18,16 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { PROTECTED_FILES as SECURITY_FILES, SECURITY_LOCK } from "../scripts/check-security-lock.mjs";
+import { PROTECTED_FILES as DEPLOY_FILES } from "../scripts/check-deploy-lock.mjs";
+
+// Alle Sperren, die als echter Prozess anschlagen muessen. Neue Sperre? Hier
+// eintragen — sonst ist sie ungeprueft, und eine ungeprueft Sperre ist genau
+// das, was am 2026-08-04 lautlos gar nichts tat.
+const ALLE_SPERREN = [
+  "scripts/check-start-lock.mjs",
+  "scripts/check-security-lock.mjs",
+  "scripts/check-deploy-lock.mjs"
+];
 
 // Die Startseiten-Liste wird NICHT aus dem Skript importiert: check-start-lock.mjs
 // ist digest-gepinnt (siehe unten) und exportiert bewusst nichts. Massgeblich ist
@@ -36,20 +46,50 @@ function sperreAufrufen(skript, args = []) {
   }
 }
 
-test("beide Sperren melden sich ueberhaupt — kein stiller Exitcode 0", () => {
+test("alle Sperren melden sich ueberhaupt — kein stiller Exitcode 0", () => {
   // Der Fehler beim Bau: kein Wort Ausgabe, Exitcode 0, Schutz nur auf dem
   // Papier. Eine leere Ausgabe ist deshalb selbst ein Fehler.
-  for (const skript of ["scripts/check-start-lock.mjs", "scripts/check-security-lock.mjs"]) {
+  for (const skript of ALLE_SPERREN) {
     const { ausgabe } = sperreAufrufen(skript);
     assert.ok(ausgabe.trim().length > 0, `${skript} gibt nichts aus — laeuft der Einstiegspunkt?`);
   }
 });
 
-test("beide Sperren sind aktuell erfuellt", () => {
-  for (const skript of ["scripts/check-start-lock.mjs", "scripts/check-security-lock.mjs"]) {
+test("alle Sperren sind aktuell erfuellt", () => {
+  for (const skript of ALLE_SPERREN) {
     const { code, ausgabe } = sperreAufrufen(skript);
     assert.equal(code, 0, `${skript} ist verletzt:\n${ausgabe}`);
     assert.match(ausgabe, /OK —/, `${skript} meldet keinen OK-Stand`);
+  }
+});
+
+test("die Deploy-Sperre schlaegt bei einer geaenderten Spiegel-Datei an", () => {
+  // Dieselbe Zusicherung wie unten fuer den Security-Lock, nur fuer die dritte
+  // Sperre: der Schutz muss MERKEN und die Datei NENNEN. Genau hier war der
+  // Bau-Fehler von 2026-08-04 (Exitcode 0 ohne jede Ausgabe) — deshalb wird
+  // jede neue Sperre als echter Prozess geprueft, nicht am Quelltext.
+  const opfer = "scripts/deploy/codeberg_spiegel_sync.sh";
+  const original = fs.readFileSync(opfer);
+  try {
+    fs.appendFileSync(opfer, "\n# Testaenderung\n");
+    const { code, ausgabe } = sperreAufrufen("scripts/check-deploy-lock.mjs");
+    assert.equal(code, 1, "geaenderte Spiegel-Datei muss die Sperre ausloesen");
+    assert.match(ausgabe, /VERLETZT/, "die Sperre muss die Verletzung benennen");
+    assert.match(ausgabe, /codeberg_spiegel_sync\.sh/, "die betroffene Datei muss genannt werden");
+  } finally {
+    fs.writeFileSync(opfer, original);
+  }
+  const { code } = sperreAufrufen("scripts/check-deploy-lock.mjs");
+  assert.equal(code, 0, "nach dem Zuruecksetzen muss die Sperre wieder erfuellt sein");
+});
+
+test("die drei Sperren teilen sich keine Datei — sonst gaebe es zwei Wahrheiten", () => {
+  // Eine Datei unter zwei Manifesten hiesse: zwei Stellen, die sie freigeben
+  // koennen, und zwei Staende, die auseinanderlaufen duerfen.
+  const deployFiles = DEPLOY_FILES;
+  for (const datei of deployFiles) {
+    assert.ok(!START_FILES.includes(datei), `${datei} liegt schon im Start-Lock`);
+    assert.ok(!SECURITY_FILES.includes(datei), `${datei} liegt schon im Security-Lock`);
   }
 });
 

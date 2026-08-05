@@ -1,0 +1,10 @@
+{
+  "lock": "smejj deploy lock v1 (100% Schutz)",
+  "frozenAt": "2026-08-05T23:22:09.857Z",
+  "confirmation": "Freigabe Deploy-Skript-Sperre, 2026-08-05: Lege eine eigene, dritte Dateisperre fuer scripts/deploy/codeberg_spiegel_sync.sh und scripts/deploy/codeberg_spiegel_geplant.sh an, mit eigenem Manifest, ohne Aenderung am Start-Lock oder am Security-Lock. Nimm sie in check:all auf.",
+  "rule": "Keine Aenderung am Spiegelweg (was gespiegelt wird, ob gespiegelt wird) ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
+  "files": {
+    "scripts/deploy/codeberg_spiegel_sync.sh": "b2aa55f3c336bd61796c122394919e58ffb02e42a5a56e1f330be6cdfbabeaba",
+    "scripts/deploy/codeberg_spiegel_geplant.sh": "23a3dbc3b6a6019f308154c2b291a82ed1bd552bed9c0c0071f525247020fcee"
+  }
+}
