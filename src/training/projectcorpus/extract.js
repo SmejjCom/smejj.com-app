@@ -31,15 +31,38 @@ const MAX_ANTWORT_ZEICHEN = 1200;
 const MIN_UEBERSCHRIFT_ZEICHEN = 8;
 
 /**
- * Fragen-Schablonen. Bewusst kurz, deutsch und ohne Fantasie: sie sollen die
- * Ueberschrift in eine Frage verwandeln, nicht Inhalt hinzufuegen. Mehrere
- * Formen je Abschnitt, damit das Modell nicht auf eine einzige Formulierung
- * konditioniert wird.
+ * Fragen-Schablonen. Rein mechanisch: sie verwandeln die Ueberschrift in eine
+ * Frage, ohne Inhalt hinzuzufuegen. Mehrere Formen je Abschnitt, damit das
+ * Modell nicht auf eine einzige Formulierung konditioniert wird.
+ *
+ * Am 2026-08-05 von 3 auf 15 Formen erweitert (Betreiber-Freigabe im Chat,
+ * Auftrag PROMPT_TRAINING_KORPUS_BLOCKER.md): drei starre Formen erzeugten
+ * einen Verteilungsbruch gegen die 295 natuerlichen Fragen der Pruefsuite —
+ * das Modell lernte "auf eine Ueberschrift den Abschnitt aufsagen" und wurde
+ * MESSBAR schlechter (95,88 % -> 67,89 %). Die neuen Formen variieren Laenge
+ * und Perspektive (Ich-Frage, Verbots-, Erlaubnisfrage, Szenario, englisch).
+ * Die englische Form trainiert den Suite-Fall antwortsprache-deutsch:
+ * englische Frage, deutsche Antwort.
+ * Bewusst KEINE Folgenfragen ("Was passiert, wenn ..."): die woertliche
+ * Abschnitts-Antwort beantwortet sie oft nicht — das waere der naechste
+ * Verteilungsbruch.
  */
 export const FRAGE_SCHABLONEN = Object.freeze([
   (t) => `Was gilt bei smejj.com zum Thema ${t}?`,
   (t) => `Erklaere kurz: ${t}`,
-  (t) => `${t} — was ist dazu im Projekt festgelegt?`
+  (t) => `${t} — was ist dazu im Projekt festgelegt?`,
+  (t) => `Welche Regeln gelten bei smejj.com fuer ${t}?`,
+  (t) => `Ich arbeite gerade an ${t} — was muss ich beachten?`,
+  (t) => `Darf ich bei ${t} einfach loslegen, oder gibt es Vorgaben?`,
+  (t) => `Was ist bei smejj.com zu ${t} verboten oder eingeschraenkt?`,
+  (t) => `Worauf muss ich bei ${t} achten?`,
+  (t) => `Gib mir die wichtigsten Punkte zu ${t}.`,
+  (t) => `Ein neues Teammitglied fragt nach ${t} — was gilt?`,
+  (t) => `Wie ist ${t} bei smejj.com geregelt?`,
+  (t) => `Kannst du mir kurz sagen, was zum Thema ${t} festgelegt ist?`,
+  (t) => `${t} bei smejj.com — bitte kurz erklaeren.`,
+  (t) => `What are the rules for ${t} at smejj.com?`,
+  (t) => `Quick question: ${t} — was gilt?`
 ]);
 
 /**

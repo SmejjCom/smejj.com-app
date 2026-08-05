@@ -115,9 +115,12 @@ test("zu kurze Abschnitte und Tabellen liefern keine Zeilen", () => {
 
 test("jeder Abschnitt bekommt mehrere Frageformen, alle in derselben Familie", () => {
   const zeilen = zeilenAusDokument({ pfad: "docs/test.md", inhalt: DOKUMENT, systemText: SYSTEM });
-  assert.equal(zeilen.length, 3, "ein tauglicher Abschnitt x drei Schablonen");
+  assert.equal(zeilen.length, 15, "ein tauglicher Abschnitt x fuenfzehn Schablonen");
   assert.equal(new Set(zeilen.map((z) => z.gruppe)).size, 1);
-  assert.equal(new Set(zeilen.map((z) => z.messages[1].content)).size, 3);
+  assert.equal(new Set(zeilen.map((z) => z.messages[1].content)).size, 15);
+  // Alle Antworten identisch: die Formenvielfalt liegt in der FRAGE, die
+  // Antwort bleibt der eine woertliche Abschnitt.
+  assert.equal(new Set(zeilen.map((z) => z.messages[2].content)).size, 1);
 });
 
 test("Erstpartei-Zeilen tragen synthetic=false und laufen durch den Korpus", () => {
@@ -134,7 +137,7 @@ test("Erstpartei-Zeilen tragen synthetic=false und laufen durch den Korpus", () 
     fingerabdruck: FINGERABDRUCK,
     fingerprintKey: KEY
   });
-  assert.equal(ergebnis.manifest.anzahl, 3);
+  assert.equal(ergebnis.manifest.anzahl, 15);
   assert.deepEqual(ergebnis.manifest.abgelehnt, {});
 });
 
@@ -155,7 +158,7 @@ test("die Systemzeile allein loest das Verunreinigungs-Tor NICHT aus", () => {
     fingerabdruck: FINGERABDRUCK,
     fingerprintKey: KEY
   });
-  assert.equal(ergebnis.manifest.anzahl, 3, JSON.stringify(ergebnis.manifest.abgelehnt));
+  assert.equal(ergebnis.manifest.anzahl, 15, JSON.stringify(ergebnis.manifest.abgelehnt));
 });
 
 test("Erstpartei-Kennzeichnung muss vollstaendig sein — kein Schlupfloch", () => {
