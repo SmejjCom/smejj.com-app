@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-05T00:00:26.974Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-04, woertlich: 'Anmeldepflicht an der Bridge erneut vorbereiten — erst messen, wie viele echte Anfragen ein gueltiges Token tragen, dann mit mir abstimmen.' Umgesetzt als reine Beobachtung: Zaehler in /health, keine Wache, kein await, kein Einfluss auf den Ablauf.",
+  "frozenAt": "2026-08-05T00:56:35.959Z",
+  "confirmation": "Freigabe: Rechenwerkzeug einbauen, damit Zins- und Finanzierungsfragen exakt gerechnet werden statt geschaetzt. Danach live testen.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "65435eddbd0a154777805fe836ffc8ce9858bddd19e31f322c47b55de373b436",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "157f34c1a998a30153bc0f404be3f135bdbd69e093ff25d1ea63a36d7e436b66",
     "public/chat-history-context.js": "00a993819d26a2cc282154d07f1161b10532eaea9348e92645acbe9133f0db15",
-    "public/chat-bridge.js": "836abea215d03da9145668ec6c9a07af9984502e9c8381c68452be02ff1d4be4",
+    "public/chat-bridge.js": "9db5a87719042babb43ceb94e54356b3730bfd03fea4b73438646e77c5ea55e5",
     "public/ai/fetch-retry.js": "15a1e631825913af8186f0d75b332f79e08e91f70f2db774c2a111ec06d9c506"
   }
 }
