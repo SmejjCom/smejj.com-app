@@ -222,3 +222,57 @@ test("die Zaehler verraten nichts ueber einzelne Nutzer", () => {
     assert.ok(v === null || typeof v === "number", `${k} muss eine Zahl sein`);
   }
 });
+
+// --- Nur ein deutliches Nein sperrt (2026-08-05) ------------------------------
+//
+// Die erste Fassung war fail-closed und hat am 2026-08-04 den Chat des
+// Betreibers getoetet: kein Kontakt zum Control Server = jeder abgewiesen.
+// Diese Tests halten die neue Regel fest — Schweigen ist kein Urteil.
+
+/** Antwortet mit einem beliebigen HTTP-Status statt mit einem Urteil. */
+function stubStatus(status) {
+  return async () => ({ ok: status < 400, status, json: async () => ({}) });
+}
+
+test("Netzfehler laesst durch statt auszusperren", async () => {
+  const antwort = { code: 0, rumpf: null };
+  const res = { setHeader() {} };
+  const json = (_res, code, rumpf) => { antwort.code = code; antwort.rumpf = rumpf; };
+  const durch = await allowAuthenticated(
+    { headers: { authorization: "Bearer irgendein.token" } }, res,
+    { json, controlOrigin: "https://control.test", fetchFn: async () => { throw new Error("network"); } }
+  );
+  assert.equal(durch, true, "ein Ausfall des Control Servers darf niemanden aussperren");
+  assert.equal(antwort.code, 0, "es darf gar keine Fehlerantwort geschrieben werden");
+});
+
+test("5xx sagt etwas ueber den Server, nichts ueber das Token", async () => {
+  const { pruefeToken } = await import("../public/chat-bridge-auth.js");
+  const basis = { controlOrigin: "https://control.test", jetzt: 5_000 };
+  assert.equal(await pruefeToken("t1", { ...basis, fetchFn: stubStatus(503) }), "unbekannt");
+  assert.equal(await pruefeToken("t2", { ...basis, fetchFn: stubStatus(500) }), "unbekannt");
+  // 401/403 dagegen IST ein Urteil ueber das Token.
+  assert.equal(await pruefeToken("t3", { ...basis, fetchFn: stubStatus(401) }), "nein");
+});
+
+test("ein unbekanntes Urteil setzt sich nicht im Zwischenspeicher fest", async () => {
+  const { pruefeToken } = await import("../public/chat-bridge-auth.js");
+  const basis = { controlOrigin: "https://control.test", jetzt: 9_000 };
+  assert.equal(await pruefeToken("wackel.token", { ...basis, fetchFn: stubStatus(503) }), "unbekannt");
+  // Derselbe Schluessel, jetzt antwortet der Server: das Ergebnis muss zaehlen,
+  // nicht das gemerkte "unbekannt".
+  assert.equal(
+    await pruefeToken("wackel.token", { ...basis, fetchFn: async () => ({ ok: true, status: 200, json: async () => ({ authenticated: true }) }) }),
+    "ja"
+  );
+});
+
+test("ohne Token bleibt die Tuer zu — das ist der Zweck der Wache", async () => {
+  const antwort = { code: 0, rumpf: null };
+  const json = (_res, code, rumpf) => { antwort.code = code; antwort.rumpf = rumpf; };
+  const durch = await allowAuthenticated({ headers: {} }, { setHeader() {} },
+    { json, controlOrigin: "https://control.test", fetchFn: async () => { throw new Error("darf nicht gerufen werden"); } });
+  assert.equal(durch, false);
+  assert.equal(antwort.code, 401);
+  assert.equal(antwort.rumpf.error, "authentication_required");
+});

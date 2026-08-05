@@ -22,10 +22,23 @@ import { createHash } from "node:crypto";
 //
 // KOSTEN: ein Rundlauf je Token und Zwischenspeicher-Fenster, nicht je Anfrage.
 //
-// FAIL-CLOSED, bewusst: ist der Control Server nicht erreichbar, wird
-// abgewiesen. Der Zwischenspeicher (10 Minuten) traegt aktive Nutzer durch kurze
-// Aussetzer; laenger ist der Preis fuer einen Schutz, der sich nicht durch einen
-// Ausfall aushebeln laesst.
+// NUR EIN DEUTLICHES NEIN SPERRT (geaendert 2026-08-05, aus Schaden gelernt).
+//
+// Die erste Fassung war fail-closed: kein Kontakt zum Control Server = abgewiesen.
+// Genau das hat am 2026-08-04 den Chat des Betreibers getoetet. Ein Ausfall des
+// Control Servers darf nicht dazu fuehren, dass angemeldete Nutzer vor
+// verschlossener Tuer stehen — der Zweck der Wache ist, FREMDE draussen zu
+// halten, nicht eine Sicherheitsgrenze auf Leben und Tod zu ziehen.
+//
+// Darum jetzt drei Zustaende statt zwei: "ja", "nein" und "unbekannt". Gesperrt
+// wird bei "nein" (der Server sagt ausdruecklich: dieses Token gilt nicht) und
+// wenn gar kein Token mitkommt. Bei "unbekannt" — Netzfehler, Zeitueberschreitung,
+// 5xx — laeuft die Anfrage durch. Dieselbe Regel wie in auth-gate.js im Frontend:
+// nur ein eindeutiges Urteil zaehlt, Schweigen ist keines.
+//
+// Der Preis ist bekannt und bewusst gewaehlt: Wer den Control Server lahmlegt,
+// kommt an der Wache vorbei. Das ist ein Angreifer mit ganz anderen Mitteln;
+// dagegen schuetzt das Rate-Limit, nicht diese Pruefung.
 const AUTH_CACHE_OK_MS = 10 * 60_000;
 const AUTH_CACHE_BAD_MS = 30_000;
 const AUTH_CACHE_MAX = 5_000;
@@ -53,29 +66,40 @@ export function bearerToken(headers = {}) {
  * Gilt das Token? Fragt den Control Server und merkt sich das Ergebnis kurz.
  * @returns {Promise<boolean>}
  */
-export async function tokenGueltig(token, { jetzt = Date.now(), fetchFn = fetch, controlOrigin = "" } = {}) {
-  if (!token || !controlOrigin) return false;
+export async function pruefeToken(token, { jetzt = Date.now(), fetchFn = fetch, controlOrigin = "" } = {}) {
+  if (!token) return "nein";
+  if (!controlOrigin) return "unbekannt"; // ohne Adresse ist keine Aussage moeglich
   const schluessel = createHash("sha256").update(token).digest("hex");
   const gemerkt = cacheLesen(schluessel, jetzt);
-  if (gemerkt !== null) return gemerkt;
-  let ok = false;
+  if (gemerkt !== null) return gemerkt ? "ja" : "nein";
+  let urteil = "unbekannt";
   try {
     const antwort = await fetchFn(`${controlOrigin}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json", Origin: "https://smejj.com" },
       signal: AbortSignal.timeout(5_000)
     });
-    ok = antwort.ok && (await antwort.json())?.authenticated === true;
+    // 5xx sagt etwas ueber den Server, nichts ueber das Token.
+    if (antwort.status >= 500) urteil = "unbekannt";
+    else if (!antwort.ok) urteil = "nein";
+    else urteil = (await antwort.json())?.authenticated === true ? "ja" : "nein";
   } catch {
-    // Control nicht erreichbar: fail-closed (siehe Kopf dieses Abschnitts).
-    ok = false;
+    urteil = "unbekannt"; // Netzfehler oder Zeitueberschreitung
   }
-  cacheSchreiben(schluessel, ok, jetzt);
-  return ok;
+  // Nur eindeutige Urteile werden gemerkt — ein "unbekannt" darf sich nicht
+  // festsetzen und die naechsten zehn Minuten mitbestimmen.
+  if (urteil !== "unbekannt") cacheSchreiben(schluessel, urteil === "ja", jetzt);
+  return urteil;
+}
+
+/** Boolesche Kurzform fuer die Zaehler: gilt das Token sicher? */
+export async function tokenGueltig(token, optionen = {}) {
+  return (await pruefeToken(token, optionen)) === "ja";
 }
 
 /** Wache vor den modellkostenden Routen. Antwortet selbst mit 401. */
-export async function allowAuthenticated(req, res, { json, controlOrigin }) {
-  if (await tokenGueltig(bearerToken(req.headers), { controlOrigin })) return true;
+export async function allowAuthenticated(req, res, { json, controlOrigin, fetchFn = fetch }) {
+  const urteil = await pruefeToken(bearerToken(req.headers), { controlOrigin, fetchFn });
+  if (urteil !== "nein") return true; // "ja" und "unbekannt" duerfen durch
   json(res, 401, {
     ok: false,
     error: "authentication_required",
