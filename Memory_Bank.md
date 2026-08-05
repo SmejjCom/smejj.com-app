@@ -762,3 +762,17 @@ Volltext: [task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md](tas
   suchbezogen; `SMEJJ_SEARCH_TAVILY_API_KEY` fehlt. Anbieter seit 2026-08-04
   freigegeben (0,00 USD, keine Karte), alles gebaut inkl.
   `smejj.com Suchschluessel-eingeben.command`. Schluessel gibt nur er ein.
+
+## 2026-08-05 — Abschlussmessung 15-Formen-Korpus: verworfen, aber verunreinigt gemessen
+
+Volltext: [docs/memory/Memory_Bank_2026-08-05_abschlussmessung_15formen.md](docs/memory/Memory_Bank_2026-08-05_abschlussmessung_15formen.md).
+Alle drei Korpus-Blocker umgesetzt (Zerleger ====/Kopier-Zaun, Regeldokumente
+als Quellen, 15 Schablonen freigegeben); Korpus 10.845 Zeilen auf IDrive
+(`1d415f97a6f1`). Zyklus 3 (lr5e-5, r8): **62,75 %, kritisch 8 — verworfen**
+(Grundlinie 95,88 %). ABER: der gemessene Korpus enthielt noch 12 %
+SW_VERSIONSVERLAUF-Rauschen (Ausschluss kam erst mit `eefb216`). Die
+eigentliche Frage ist damit ungemessen — naechster Schritt: sauberer Neubau +
+EIN Messzyklus (~6 Cent). Nebenbei behoben: EIN Statusabfrage-Timeout
+verwarf einen bezahlten Lauf (jetzt 3er-Toleranz, `deae025`); Salad-batch
+verdraengte den Trainer real (0 USD, korrektes Fail-closed). Verbrauch
+0,13/50 USD.
