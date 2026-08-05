@@ -20,6 +20,9 @@ import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { baueKorpus } from "../../src/training/opencorpus/corpus.js";
 import { baueSuiteFingerabdruck } from "../../src/training/opencorpus/contamination.js";
 import { zeilenAusDokument } from "../../src/training/projectcorpus/extract.js";
+// Eine einzige Quelle fuer "was ist ein Aenderungsprotokoll" — siehe
+// istAenderungsprotokoll() weiter unten.
+import { CHANGELOG_FILE_PATTERN } from "../../control-server/src/rag/knowledgeCorpus.js";
 import { signedS3Request } from "../../workers/glm-salad/s3.js";
 import { idriveConfigFromEnv } from "../../workers/maus-engine/artifact-uploader.mjs";
 
@@ -56,6 +59,32 @@ const SONDERBEHANDLUNG = Object.freeze({
 
 /** Ausdruecklich ausgeschlossen, auch wenn sie unter den Quellen liegen. */
 const AUSGESCHLOSSEN = [/task-capsules/i, /benchmarks/i, /CHANGELOG/i];
+
+/**
+ * Aenderungsprotokolle gehoeren nicht ins TRAINING — dieselbe Regel, die am
+ * 2026-08-05 fuer das Projektwissen gezogen wurde (Commit `fdafbeb`).
+ *
+ * WARUM DAS HIER NOCH GEFEHLT HAT: `AUSGESCHLOSSEN` prueft nur auf das Wort
+ * "CHANGELOG". Die Auslagerung des sw.js-Kommentarblocks nach
+ * `docs/frontend/SW_VERSIONSVERLAUF.md` rutschte damit durch — und war beim
+ * Nachmessen am 2026-08-05 die GROESSTE Trainingsquelle ueberhaupt:
+ *
+ *     93 Fakten  docs/frontend/SW_VERSIONSVERLAUF.md   (Versionsverlauf)
+ *     14 Fakten  MASTER_PROMPT.md                      (die Regeln selbst)
+ *
+ * Das Regelwerk lieferte also ein Fuenfzehntel dessen, was ein Verlauf von
+ * Cache-Versionsnummern beisteuerte. Genau solche Verteilung ist der gemessene
+ * Grund, warum Training bisher VERSCHLECHTERT (95,88 % -> 67,89 %): das Modell
+ * lernt "sw v214 hat X geaendert" statt "was gilt bei smejj.com".
+ *
+ * Das Muster wird bewusst IMPORTIERT (siehe Kopf) statt hier zweitgeschrieben —
+ * zwei Listen laufen auseinander, und genau das ist oben schon passiert.
+ */
+
+/** Ist die Datei ein Aenderungsprotokoll? Prueft den DATEINAMEN, nicht den Pfad. */
+function istAenderungsprotokoll(vollerPfad) {
+  return CHANGELOG_FILE_PATTERN.test(path.basename(vollerPfad));
+}
 
 /**
  * Systemzeile. Woertlich dieselbe wie in der Pruefsuite — das Modell soll
@@ -95,7 +124,8 @@ async function main() {
   const fingerabdruck = baueSuiteFingerabdruck(suite, { unterscheidendeWerte: [] });
 
   const dateien = [...new Set(QUELLEN.flatMap(sammleDateien))]
-    .filter((d) => !AUSGESCHLOSSEN.some((muster) => muster.test(d)));
+    .filter((d) => !AUSGESCHLOSSEN.some((muster) => muster.test(d)))
+    .filter((d) => !istAenderungsprotokoll(d));
 
   const zeilen = [];
   for (const datei of dateien) {

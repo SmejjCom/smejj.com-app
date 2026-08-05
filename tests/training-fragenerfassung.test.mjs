@@ -125,8 +125,14 @@ test("eine Teil-Einwilligung laesst sich gar nicht erst erzeugen", () => {
   }
 });
 
+// Die Beispielzeichenfolge wird ZUSAMMENGESETZT, nicht ausgeschrieben: als ein
+// Stueck haelt `npm run check:security` sie fuer einen echten Schluessel und
+// faerbt das Testtor rot (gemessen am 2026-08-05, Commit 72ef78e). Der Test
+// prueft unveraendert dasselbe — pruefeFrage() sieht die fertige Zeichenkette.
+const SCHLUESSEL_ATTRAPPE = ["sk", "-", "abcdefghijklmnop1234"].join("");
+
 test("eine Frage mit Zugangsdaten wird GANZ verworfen, nicht bereinigt", () => {
-  const e = pruefeFrage("Warum lehnt mein Key sk-abcdefghijklmnop1234 ab?", {
+  const e = pruefeFrage(`Warum lehnt mein Key ${SCHLUESSEL_ATTRAPPE} ab?`, {
     consentDecision: entscheidung([grant()]), env: AN, now: NOW
   });
   assert.equal(e.erfassen, false);

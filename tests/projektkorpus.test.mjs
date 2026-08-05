@@ -5,6 +5,7 @@ import { zeilenAusDokument, zerlegeMarkdown, zuFliesstext } from "../src/trainin
 import { pruefeDatensatzQuelle } from "../src/training/opencorpus/licenses.js";
 import { baueSuiteFingerabdruck } from "../src/training/opencorpus/contamination.js";
 import { baueKorpus } from "../src/training/opencorpus/corpus.js";
+import { CHANGELOG_FILE_PATTERN } from "../control-server/src/rag/knowledgeCorpus.js";
 
 const KEY = Buffer.alloc(32, 11);
 const SUITE = JSON.parse(readFileSync(new URL("../evals/suites/smejj-chat-core-v1.json", import.meta.url), "utf8"));
@@ -177,4 +178,41 @@ test("Erstpartei-Kennzeichnung muss vollstaendig sein — kein Schlupfloch", () 
   });
   assert.equal(nurUrheber.erlaubt, false);
   assert.ok(nurUrheber.gruende.includes("erstpartei_kennzeichnung_unvollstaendig"));
+});
+
+// --- Aenderungsprotokolle gehoeren nicht ins Training -------------------------
+//
+// Regression vom 2026-08-05: Der sw.js-Kommentarblock wurde nach
+// docs/frontend/SW_VERSIONSVERLAUF.md ausgelagert und war damit ueber Nacht die
+// GROESSTE Trainingsquelle (93 Fakten — sechseinhalbmal MASTER_PROMPT.md mit 14).
+// Fuers Projektwissen wurde das am selben Tag behoben (Commit fdafbeb), fuer den
+// Trainingskorpus nicht: dessen Ausschlussliste kannte nur das Wort "CHANGELOG".
+//
+// Diese Tests halten BEIDE Seiten fest: das Muster faengt Verlaufsdateien, und
+// gewoehnliche Sachdokumente bleiben unangetastet.
+test("das Verlaufsmuster faengt Aenderungsprotokolle am Dateinamen", () => {
+  for (const name of ["CHANGELOG.md", "SW_VERSIONSVERLAUF.md", "VERSIONSVERLAUF.md", "BRIDGE_VERSIONSVERLAUF.md"]) {
+    assert.equal(CHANGELOG_FILE_PATTERN.test(name), true, `${name} muesste als Verlauf erkannt werden`);
+  }
+});
+
+test("Sachdokumente werden NICHT als Verlauf aussortiert", () => {
+  for (const name of ["MASTER_PROMPT.md", "AGENTS.md", "RAG_PROJEKTWISSEN.md", "MAUS_ENGINE.md", "VERLAUF_UND_QUALITAET.md"]) {
+    assert.equal(CHANGELOG_FILE_PATTERN.test(name), false, `${name} ist ein Sachdokument, kein Verlauf`);
+  }
+});
+
+test("Trainingskorpus und Projektwissen benutzen dasselbe Verlaufsmuster", () => {
+  // Zwei getrennte Listen sind genau der Fehler, der hier passiert ist: fuers
+  // Projektwissen gepflegt, fuers Training vergessen. Der Bauer muss das
+  // Muster IMPORTIEREN, nicht neu hinschreiben.
+  const bauer = readFileSync(new URL("../scripts/training/build_project_corpus.mjs", import.meta.url), "utf8");
+  assert.ok(
+    /import\s*\{[^}]*CHANGELOG_FILE_PATTERN[^}]*\}\s*from/.test(bauer),
+    "build_project_corpus.mjs muss CHANGELOG_FILE_PATTERN importieren"
+  );
+  assert.ok(
+    bauer.includes("istAenderungsprotokoll(d)"),
+    "der Dateifilter muss istAenderungsprotokoll() tatsaechlich anwenden"
+  );
 });
