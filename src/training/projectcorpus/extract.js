@@ -46,25 +46,75 @@ export const FRAGE_SCHABLONEN = Object.freeze([
  * Zerlegt ein Markdown-Dokument in Abschnitte.
  * Ein Abschnitt ist eine Ueberschrift plus der Text bis zur naechsten
  * Ueberschrift gleicher oder hoeherer Ebene.
+ *
+ * Neben #-Ueberschriften werden `====`-gerahmte Titel erkannt
+ * (Zeile aus Gleichheitszeichen, Titelzeile, Zeile aus Gleichheitszeichen) —
+ * die Gliederungsform von MASTER_PROMPT.md. Gemessen am 2026-08-05: keine
+ * einzige Bestandsquelle enthaelt solche Zeilen, die Erkennung ist darum
+ * regressionsfrei immer aktiv.
+ *
+ * `optionen.textZaeuneTransparent` behandelt ```text-Zaeune als Prosa statt
+ * als Code (MASTER_PROMPT.md traegt seinen gesamten Inhalt in einem
+ * Kopier-Zaun). Bewusst opt-in je Datei: 24 Bestandsquellen nutzen
+ * ```text fuer Beispielausgaben, die weiterhin Code bleiben muessen.
+ * Nur innerhalb eines transparenten Zauns gelten zwei Zusatzformen:
+ * GROSSBUCHSTABEN-Zeilen mit Doppelpunkt am Ende und `N)`-Eintraege.
  */
-export function zerlegeMarkdown(text) {
+export function zerlegeMarkdown(text, optionen = {}) {
+  const transparentErlaubt = optionen.textZaeuneTransparent === true;
   const zeilen = String(text || "").split(/\r?\n/);
   const abschnitte = [];
   let aktuell = null;
   let inCodeblock = false;
+  let inTransparentZaun = false;
 
-  for (const zeile of zeilen) {
-    if (/^```/.test(zeile)) inCodeblock = !inCodeblock;
-    const treffer = !inCodeblock && /^(#{1,6})\s+(.+?)\s*$/.exec(zeile);
-    if (treffer) {
-      if (aktuell) abschnitte.push(aktuell);
-      aktuell = { ebene: treffer[1].length, ueberschrift: treffer[2].trim(), zeilen: [] };
+  const beginne = (ebene, ueberschrift) => {
+    if (aktuell) abschnitte.push(aktuell);
+    aktuell = { ebene, ueberschrift: String(ueberschrift).trim(), zeilen: [] };
+  };
+
+  for (let i = 0; i < zeilen.length; i++) {
+    const zeile = zeilen[i];
+
+    if (/^```/.test(zeile)) {
+      if (inTransparentZaun) { inTransparentZaun = false; continue; }
+      if (!inCodeblock && transparentErlaubt && /^```text\s*$/.test(zeile)) {
+        inTransparentZaun = true;
+        continue;
+      }
+      inCodeblock = !inCodeblock;
+      if (aktuell) aktuell.zeilen.push(zeile);
       continue;
     }
+
+    if (!inCodeblock) {
+      const md = /^(#{1,6})\s+(.+?)\s*$/.exec(zeile);
+      if (md) { beginne(md[1].length, md[2]); continue; }
+
+      const rahmen = /^={4,}\s*$/.test(zeile)
+        && i + 2 < zeilen.length
+        && zeilen[i + 1].trim().length > 0
+        && !/^={4,}\s*$/.test(zeilen[i + 1])
+        && /^={4,}\s*$/.test(zeilen[i + 2]);
+      if (rahmen) { beginne(2, zeilen[i + 1]); i += 2; continue; }
+
+      if (inTransparentZaun) {
+        const caps = /:$/.test(zeile.trim()) && istGrossToken(zeile.trim().split(/\s+/)[0]);
+        if (caps) { beginne(3, zeile.trim().replace(/:$/, "")); continue; }
+        const nummer = /^(\d{1,2})\)\s+(.{4,})$/.exec(zeile);
+        if (nummer) { beginne(3, nummer[2]); continue; }
+      }
+    }
+
     if (aktuell) aktuell.zeilen.push(zeile);
   }
   if (aktuell) abschnitte.push(aktuell);
   return abschnitte;
+}
+
+/** Erstes Wort einer Gliederungszeile: mindestens 4 Zeichen, alle gross. */
+function istGrossToken(token) {
+  return /^[A-Z0-9ÄÖÜ][A-Z0-9ÄÖÜ\-]{3,}$/.test(String(token || ""));
 }
 
 /**
@@ -109,11 +159,12 @@ function kuerze(text, max) {
  * @param {string} eingabe.pfad     Repository-relativer Pfad (wird zur Familie)
  * @param {string} eingabe.inhalt   Markdown-Rohtext
  * @param {string} eingabe.systemText Systemzeile, woertlich aus der Suite-Konvention
+ * @param {object} [eingabe.optionen] Durchgereicht an zerlegeMarkdown (z. B. textZaeuneTransparent)
  * @returns {object[]} Zeilen im Format, das corpus.js#baueKorpusRecord erwartet
  */
-export function zeilenAusDokument({ pfad, inhalt, systemText }) {
+export function zeilenAusDokument({ pfad, inhalt, systemText, optionen }) {
   const zeilen = [];
-  for (const abschnitt of zerlegeMarkdown(inhalt)) {
+  for (const abschnitt of zerlegeMarkdown(inhalt, optionen || {})) {
     const ueberschrift = abschnitt.ueberschrift.replace(/[#*`]/g, "").trim();
     if (ueberschrift.length < MIN_UEBERSCHRIFT_ZEICHEN) continue;
 

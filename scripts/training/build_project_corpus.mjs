@@ -34,11 +34,25 @@ const QUELLEN = Object.freeze([
   "AI_Guidelines.md",
   "Project_Goals.md",
   "README.md",
+  // Die Traeger von Roter Liste, Change-Lock und Autonomie-Charta. Vier der
+  // sechs am 2026-08-05 durchgefallenen Pruefaelle betreffen genau diese
+  // Regeln — sie fehlten als Quellen (TRAININGSKORPUS_VERMESSUNG_2026-08-05).
+  "MASTER_PROMPT.md",
+  "AGENTS.md",
   "docs/architecture",
   "docs/frontend",
   "docs/deployment",
   "docs/security"
 ]);
+
+/**
+ * Datei-spezifische Zerleger-Optionen. MASTER_PROMPT.md traegt seinen
+ * gesamten Inhalt in einem ```text-Kopier-Zaun und gliedert mit
+ * ====-Rahmen — ohne Sonderbehandlung liefert es genau 1 Fakt.
+ */
+const SONDERBEHANDLUNG = Object.freeze({
+  "MASTER_PROMPT.md": Object.freeze({ textZaeuneTransparent: true })
+});
 
 /** Ausdruecklich ausgeschlossen, auch wenn sie unter den Quellen liegen. */
 const AUSGESCHLOSSEN = [/task-capsules/i, /benchmarks/i, /CHANGELOG/i];
@@ -89,7 +103,8 @@ async function main() {
     zeilen.push(...zeilenAusDokument({
       pfad: rel,
       inhalt: readFileSync(datei, "utf8"),
-      systemText: SYSTEM_TEXT
+      systemText: SYSTEM_TEXT,
+      optionen: SONDERBEHANDLUNG[rel]
     }));
   }
 

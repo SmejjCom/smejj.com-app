@@ -31,6 +31,63 @@ test("Ueberschriften werden zu Abschnitten, Codebloecke stoeren nicht", () => {
   assert.deepEqual(abschnitte.map((a) => a.ueberschrift), ["A", "B"]);
 });
 
+// Gliederungsformen von MASTER_PROMPT.md (Vermessung 2026-08-05: ohne diese
+// Erkennung liefert das Dokument genau 1 Fakt, mit ihr 13).
+const GERAHMT = [
+  "# Kopf",
+  "Einleitung vor dem Zaun.",
+  "```text",
+  "======================================================================",
+  "AUTONOMIE-REGELN (verbindlich)",
+  "======================================================================",
+  "Grundtext der Regeln, lang genug fuer einen Abschnitt und noch ein paar",
+  "Worte mehr, damit die Mindestlaenge sicher erreicht ist.",
+  "GRUENE LISTE — dauerhaft freigegeben, nie nachfragen:",
+  "- Code schreiben und aendern, Builds und Tests ausfuehren, deploys",
+  "- Livetests durchfuehren und Ergebnisse dokumentieren, ohne Ausnahme",
+  "1) beispiel.com — nur kostenlos",
+  "   Ausschliesslich dauerhaft kostenlose Dienste dieses Anbieters nutzen,",
+  "   keine Trials, keine Upgrades, keine automatischen Verlaengerungen.",
+  "```",
+  "Nachtext ausserhalb des Zauns."
+].join("\n");
+
+test("====-gerahmte Titel werden Abschnitte — auch ausserhalb von Zaeunen", () => {
+  const abschnitte = zerlegeMarkdown("====\nGERAHMTER TITEL\n====\nInhalt darunter");
+  assert.deepEqual(abschnitte.map((a) => a.ueberschrift), ["GERAHMTER TITEL"]);
+  assert.equal(abschnitte[0].ebene, 2);
+});
+
+test("ohne Option bleibt ein text-Zaun Code — exakt das alte Verhalten", () => {
+  const abschnitte = zerlegeMarkdown(GERAHMT);
+  assert.deepEqual(abschnitte.map((a) => a.ueberschrift), ["Kopf"]);
+});
+
+test("mit textZaeuneTransparent liefert der Zaun Rahmen-, Listen- und Nummern-Abschnitte", () => {
+  const abschnitte = zerlegeMarkdown(GERAHMT, { textZaeuneTransparent: true });
+  assert.deepEqual(abschnitte.map((a) => a.ueberschrift), [
+    "Kopf",
+    "AUTONOMIE-REGELN (verbindlich)",
+    "GRUENE LISTE — dauerhaft freigegeben, nie nachfragen",
+    "beispiel.com — nur kostenlos"
+  ]);
+  // Der Inhalt des Zauns ist Prosa geworden: kein Zaunzeichen in den Zeilen.
+  assert.ok(abschnitte.every((a) => a.zeilen.every((z) => !z.startsWith("```"))));
+});
+
+test("gewoehnliche Codebloecke bleiben auch mit der Option Code", () => {
+  const doc = "# Kopf\n```js\nGROSSE ZEILE MIT DOPPELPUNKT:\n```\ndanach";
+  const abschnitte = zerlegeMarkdown(doc, { textZaeuneTransparent: true });
+  assert.deepEqual(abschnitte.map((a) => a.ueberschrift), ["Kopf"]);
+  assert.ok(abschnitte[0].zeilen.includes("```js"), "Zaunzeichen bleibt fuer zuFliesstext erhalten");
+});
+
+test("Kleingeschriebenes mit Doppelpunkt wird NICHT zur Ueberschrift", () => {
+  const doc = "```text\nNutzung: nur intern\nLast-Ziele:\nmehr text\n```";
+  const abschnitte = zerlegeMarkdown(doc, { textZaeuneTransparent: true });
+  assert.equal(abschnitte.length, 0);
+});
+
 test("Fliesstext entfernt Auszeichnung, aber kein Wort", () => {
   const text = zuFliesstext(["Die **Regel** gilt fuer `alle` [Dateien](x.md)."]);
   assert.equal(text, "Die Regel gilt fuer alle Dateien.");
