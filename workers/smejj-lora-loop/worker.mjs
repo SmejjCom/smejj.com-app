@@ -227,7 +227,24 @@ async function main() {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
     console.error(`[smejj-lora-loop] fatal: ${String(error?.stack || error)}`);
-    process.exitCode = 1;
+    // HART beenden, nicht nur den Rueckgabewert setzen.
+    //
+    // Gemessen am 2026-08-05: `process.exitCode = 1` beendet NICHTS. Der
+    // Takt-Zeitgeber (starteTakt) und der Waechter-Takt laufen bereits, bevor
+    // `listen` ueberhaupt versucht wird — sie halten die Ereignisschleife am
+    // Leben. Der Prozess lief nach "fatal: EADDRINUSE" noch 20 Minuten weiter.
+    //
+    // WAS DAS ANRICHTET: Eine zweite Schleife bekommt zwar den Port nicht,
+    // schreibt aber weiter in dieselbe Zustandsdatei auf IDrive
+    // (ops/smejj-lora-loop/zustand.json). Beobachtet: die ECHTE Schleife
+    // konnte ihren Kostenzaehler nicht mehr ablegen ("abgelegt=false"), und
+    // die 0,0868 USD eines abgebrochenen Zyklus gingen verloren. Ein zu
+    // niedriger Zaehler laesst den 50-USD-Deckel zu spaet greifen — aus einem
+    // harmlosen Startfehler wird ein Loch in der Kostenbremse.
+    //
+    // Ein fehlgeschlagener Start MUSS deshalb den Prozess beenden. Genau das
+    // ist der Sinn der Portsperre: eine Schleife, nicht zwei.
+    process.exit(1);
   });
 }
 
