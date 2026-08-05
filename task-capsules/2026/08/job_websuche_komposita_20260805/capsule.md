@@ -187,6 +187,57 @@ Schlüssel selbst. **Ich gebe grundsätzlich keine API-Schlüssel ein** — das 
 der Betreiber tun, und das Skript zeigt ihn nie an und schreibt ihn nie ins
 Protokoll.
 
+## Rückbau (Freigabe Betreiber, 2026-08-05: „nimm die wirkungslose Änderung wieder raus")
+
+`a6f7d62` — `begriffTrifft` entfernt, `relevanteTreffer` wieder wortgleich.
+`git diff 11c4af8 HEAD` auf `src/search/webSearch.js` und
+`tests/websuche-region.test.mjs`: **leer**, also byte-identisch mit dem Stand
+vor dem Fix. Tests 27 → 23, alle grün; `webSearch.test.js` 26/26.
+
+Bewusst **nicht** einfach auf das alte Artefakt zurückgeschaltet: zwischen ihm
+und dem Fix liegen weitere Code-Commits (u. a. `c7ae103`), die dabei
+mitgerollt wären. Stattdessen sauber im Code zurückgebaut und neu ausgeliefert.
+
+### Zwei Funde beim Rückbau, die nichts mit der Suche zu tun haben
+
+**1. Eigene Regression, behoben (`fdafbeb`).** Die Vorprüfung war rot in
+`tests/rag-infrastruktur`. Nicht vom Rückbau — Gegenprobe an `HEAD~1` war
+ebenfalls rot. Ursache war mein eigener Commit `2345e68` von heute: Er lagerte
+den Changelog aus `sw.js` nach `docs/frontend/SW_VERSIONSVERLAUF.md` aus. Damit
+wechselte der Text von einer `.js`-Datei (nie im Korpus) in eine `.md`-Datei in
+einem Sachordner und wurde **Projektwissen**. Gemessene Folge: „Lösche bitte
+alle alten Dateien im Objektspeicher" erreichte 21,1 Punkte gegen die Schwelle
+20 und bekam Projektkontext — ein Fall, der ohne Kontext bleiben MUSS.
+Behoben, indem die bestehende Verlaufsregel dort ergänzt wurde, wo sie eine
+Lücke hatte: Änderungsprotokolle werden am **Dateinamen** erkannt, nicht nur am
+Ordner. Betrifft genau zwei Dateien. Trefferquote 4/6 vorher wie nachher,
+Gegenbeweis 1 rot, `rag-search` 21/21, `rag-infrastruktur` 12/12.
+
+**2. Auslieferung blockiert — nicht durch eigenen Code.** `check:security`
+meldet `Secret-like value found in tests/training-fragenerfassung.test.mjs`.
+Auslöser ist der Attrappen-Schlüssel `sk-abcdefghijklmnop1234` in einer
+Testdatei einer **parallel laufenden Sitzung**. Der Wächter kann echt und
+unecht nicht unterscheiden und blockt korrekt. Die Datei landet **nicht** im
+Artefakt (Wurzel-`tests/` wird nicht mitgeliefert) — es ist rein das
+Freigabe-Tor. Betreiberentscheidung 2026-08-05: **warten, bis die
+Parallelsitzung fertig ist.** Kein Umgehen der Sicherheitsprüfung, kein
+Eingriff in fremde, aktive Arbeit.
+
+### Zwei eigene Git-Fehler, beide bereinigt
+
+- **`git commit` schrieb fremde vorgemerkte Arbeit mit.** `tests/training-
+  fragenerfassung.test.mjs` war von der Parallelsitzung bereits vorgemerkt, als
+  ich `git add <pfade> && git commit` verkettete — und `commit` schreibt den
+  **ganzen Index**, nicht nur meine Pfade. Ihre Arbeit ist unversehrt (sie haben
+  darauf aufbauend selbst committet). **Regelkorrektur: `git commit -- <pfade>`,
+  nicht nur `add` verketten.** Die bisherige Merkregel war zu schwach.
+- **`git stash -u` in einem fehlerhaften Schleifenversuch räumte sieben fremde
+  Dateien weg** (u. a. `codeberg_spiegel_sync.sh`, `Maus-freischalten.command`,
+  `freigabe-suchschluessel.md`). Alle zurückgeholt und byte-identisch gegen die
+  Sicherung geprüft; die Stashes bleiben als Netz liegen.
+  **Merkregel: kein `stash` in einer geteilten Arbeitskopie — für
+  Vorher/Nachher-Vergleiche einen `git worktree` nehmen.**
+
 ## Was bewusst offen bleibt
 - **Parallelisierung** der Werkzeuge: 0,2–1,4 s Gewinn, Eingriff in die
   Werkzeugschleife. Erst neu bewerten, wenn die Suche verlässlich ist — dann

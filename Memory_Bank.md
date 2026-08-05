@@ -733,62 +733,32 @@ Volltext ausgelagert nach
 Volltext: [task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md](task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md).
 - **Bing liefert dem Rechenzentrum Attrappen: vom Server 9 von 9 frischen
   Suchen** (3 von 12 Fragen hatten Treffer, alle drei aus dem Zwischenspeicher).
-  Lokal gemessen 7 von 12 — dieser Arbeitsplatz haengt hinter einer
-  TLS-abfangenden Fortinet-Firewall (blockt sogar smejj.com mit 403), deshalb
-  zaehlt nur die Servermessung. **Messungen aus diesem Netz sind angreifbar.**
-  Die SERP ist
-  echt (Titel, Suchfeld, 10x `b_algo`), nur der Inhalt ist Fremdmuell — auf
-  "Einwohnerzahl Wien 2024" kamen Justin-Bieber-Songtexte auf Chinesisch, bei
-  jeder Wiederholung anderer Muell. **"current news Germany" scheitert genauso
-  — es liegt an der IP, nicht an der Sprache.** `&format=rss` hilft nicht.
+  Die SERP ist echt (Titel, Suchfeld, 10x `b_algo`), nur der Inhalt ist
+  Fremdmuell — auf "Einwohnerzahl Wien 2024" kamen Justin-Bieber-Songtexte auf
+  Chinesisch. Englische Fragen scheitern genauso. `&format=rss` hilft nicht.
+- **MESSUNGEN AUS DIESEM NETZ SIND ANGREIFBAR:** der Arbeitsplatz haengt hinter
+  einer TLS-abfangenden Fortinet-Firewall (blockt sogar smejj.com mit 403). Nur
+  die Messung ueber `/api/search/web` auf dem Server zaehlt.
 - **MEINE DIAGNOSE WAR FALSCH und ich habe sie ausgeliefert, bevor ich sie an
-  echten Daten geprueft habe.** Ich schloss vom Filter (`kept 0`) auf ein
-  Kompositum-Problem, statt die 10 verworfenen Treffer einmal auszudrucken.
-  A/B an identischen Rohtreffern: **0 Unterschiede von 8** — die Aenderung
-  wirkt nicht, schadet aber auch nicht; stehen gelassen statt Neustart Nr. 2.
-- **Die Antwort stand schon im Projekt**: Kopf von `searchKeyProvider.js` seit
-  2026-08-04 — "HTTP 200 mit ABSICHTLICHEN Taeuschtreffern". Vor dem Raten die
-  Nachbardatei lesen.
-- **MERKREGEL: erst Rohdaten ausdrucken, dann erklaeren.** `kept 0` heisst nicht
-  "Filter zu streng", es heisst "hier ist etwas verworfen worden — sieh nach was".
+  echten Daten geprueft habe.** Ich schloss von `kept 0` auf einen zu strengen
+  Filter, statt die 10 verworfenen Treffer auszudrucken. A/B an identischen
+  Rohtreffern: 0 Unterschiede von 8. **MERKREGEL: erst Rohdaten ausdrucken,
+  dann erklaeren.** Die Antwort stand zudem schon im Kopf von
+  `searchKeyProvider.js` (seit 2026-08-04). Vor dem Raten die Nachbardatei lesen.
+- **RUECKBAU auf Betreiberwunsch (a6f7d62)**, byte-identisch mit davor.
+  Auslieferung wartet: `check:security` rot wegen eines Attrappen-Schluessels
+  in der Testdatei einer PARALLELSITZUNG — Betreiber entschied warten.
+- **ZWEI EIGENE GIT-FEHLER, bereinigt.** (1) `git add <pfade> && git commit`
+  reicht NICHT — war Fremdes schon vorgemerkt, schreibt `commit` den GANZEN
+  Index mit. **Richtig: `git commit -- <pfade>`.** (2) `git stash -u` raeumte
+  sieben fremde Dateien weg. **Kein stash in geteilter Arbeitskopie — fuer
+  Vorher/Nachher `git worktree`.**
+- **EIGENE RAG-REGRESSION behoben (fdafbeb):** 2345e68 verschob den
+  sw.js-Changelog nach .md — damit wurde er Projektwissen, und "Loesche alle
+  alten Dateien im Objektspeicher" kam mit 21,1 ueber die Schwelle 20.
+  Changelogs jetzt am DATEINAMEN ausgeschlossen. **MERKREGEL: .js nach .md zu
+  verschieben aendert, wer die Datei liest.**
 - **BLOCKER beim Betreiber:** von 85 Container-Variablen ist **keine**
   suchbezogen; `SMEJJ_SEARCH_TAVILY_API_KEY` fehlt. Anbieter seit 2026-08-04
   freigegeben (0,00 USD, keine Karte), alles gebaut inkl.
   `smejj.com Suchschluessel-eingeben.command`. Schluessel gibt nur er ein.
-
-## 2026-08-05 — Geruest fuer Fragevarianten gebaut (Schritt 2, Empfehlung 1)
-
-Volltext ausgelagert nach
-[docs/memory/Memory_Bank_2026-08-05_fragevarianten_geruest.md](docs/memory/Memory_Bank_2026-08-05_fragevarianten_geruest.md).
-
-## 2026-08-05 — Nutzerfragen-Erfassung: der Schalter ist WIRKUNGSLOS
-
-Volltext ausgelagert nach
-[docs/memory/Memory_Bank_2026-08-05_schalter_wirkungslos.md](docs/memory/Memory_Bank_2026-08-05_schalter_wirkungslos.md).
-
-## 2026-08-05 — Fragenerfassung: Entscheidungskern gebaut, Transport blockiert
-
-`src/training/fragenerfassung.js` + 9 Tests, in `check:training` verdrahtet.
-- **NUR DIE FRAGE, NIE DIE ANTWORT.** Antworten stammen aus Fremdmodellen und
-  sind fuers Training ohnehin gesperrt — sie zu erfassen waere unbrauchbar UND
-  das groessere Datenschutzrisiko. Die Frage ist genau das, was dem Korpus fehlt.
-- **EINWILLIGUNG DELEGIERT, NICHT NACHGEBAUT:** `capturePersistenceAllowed`
-  (policy.js) prueft sieben Bedingungen inkl. `recordedBy === "authenticated-human"`.
-  Mein erster Entwurf pruefte selbst `granted === true` — ein Feld, das es gar
-  nicht gibt (es heisst `captureAllowed`). MERKREGEL: **bei personenbezogenen
-  Daten nie eine zweite, eigene Pruefung danebenstellen.**
-- STAERKER ALS ERWARTET: `createConsentGrant` weigert sich, einen Grant mit
-  unvollstaendigem Umfang auszustellen (`consent_explicit_scope_required`). Eine
-  Einwilligung, die Erfassung erlaubt und Training verbietet, kann nicht
-  entstehen.
-- **BLOCKER FUER PUNKT 2 (Oberflaeche):** KEIN Endpunkt gibt
-  `privacyNoticeSha256` heraus. Der Grant-Endpunkt vergleicht den vom Klienten
-  gesendeten Hash gegen die Env und antwortet sonst 409
-  `consent_privacy_notice_not_current`. Die Oberflaeche kann den Wert also nicht
-  erfahren — Punkt 2 haengt an einer veroeffentlichten Datenschutzerklaerung mit
-  bekanntem Hash. Das ist eine inhaltliche Entscheidung des Betreibers, keine
-  technische.
-- **ARBEITSKOPIE-FALLE, live erlebt:** zwei frisch geschriebene, uncommittete
-  Dateien waren nach dem naechsten Schritt WEG (Parallelsitzung raeumt auf).
-  Bestaetigt [[smejj-parallele-sessions-git]]: **hier ist uncommittet kein
-  Schutz, sondern ein Risiko** — nach jeder neuen Datei sofort committen.
