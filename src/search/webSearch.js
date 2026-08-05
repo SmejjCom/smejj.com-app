@@ -294,6 +294,46 @@ const STOPWOERTER = new Set([
  * @param {Array} results Rohe Trefferliste.
  * @returns {Array} nur die passenden Treffer, Reihenfolge unveraendert.
  */
+/**
+ * Ab dieser Laenge gilt ein Begriff als moegliches Kompositum und darf auch
+ * ueber seinen Wortstamm treffen. Kuerzere Woerter muessen wortgleich stehen —
+ * ein Stamm von "sale" oder "jose" waere kein Stamm mehr, sondern Zufall.
+ */
+const KOMPOSITUM_AB_LAENGE = 8;
+
+/**
+ * Trifft ein Suchbegriff diesen Text — wortgleich oder ueber seinen Stamm?
+ *
+ * DER GRUND, gemessen am 2026-08-05 gegen die Live-Kette:
+ * Auf "Vergleiche die Einwohnerzahl von Wien und Zuerich" lieferten die ersten
+ * VIER Suchen 0 Treffer, die fuenfte und sechste (auf Englisch, "Wien
+ * population") je 6. Nicht die Suchquelle war schuld, sondern dieser Filter:
+ *
+ *   "Einwohnerzahl Wien 2024"   -> 3 Begriffe, also 2 noetig
+ *   Wikipedia-Wien: "...zaehlt rund 2,0 Millionen Einwohner."
+ *   -> "wien" trifft, "einwohnerzahl" NICHT (es steht "einwohner")
+ *   -> 1 von 2 -> der Treffer, der die Frage beantwortet, fliegt raus.
+ *
+ * Deutsche Komposita sind der Kern: sie stehen fast nie wortgleich im Text.
+ * Englische Anfragen zerfallen dagegen in zwei kurze Woerter ("wien",
+ * "population"), brauchen damit nur EINEN Treffer und kommen durch. Der Filter
+ * war also nicht streng gegen Muell, sondern streng gegen Deutsch.
+ *
+ * Der Stamm ist bewusst lang (60 % des Wortes, mindestens 6 Zeichen): er soll
+ * "Einwohnerzahl" mit "Einwohner" verbinden, nicht zwei fremde Woerter mit
+ * gleichem Anfang. Die Mindestpunktzahl bleibt unangetastet — der Schutz gegen
+ * blinde Passagiere (Befund oben) gilt unveraendert weiter.
+ *
+ * @param {string} heuhaufen bereits normalisierter Text des Treffers
+ * @param {string} wort bereits normalisierter Suchbegriff
+ * @returns {boolean}
+ */
+export function begriffTrifft(heuhaufen, wort) {
+  if (heuhaufen.includes(wort)) return true;
+  if (wort.length < KOMPOSITUM_AB_LAENGE) return false;
+  return heuhaufen.includes(wort.slice(0, Math.max(6, Math.floor(wort.length * 0.6))));
+}
+
 export function relevanteTreffer(query, results) {
   if (!Array.isArray(results) || results.length === 0) return [];
   const begriffe = normalizeForIntent(query)
@@ -309,7 +349,7 @@ export function relevanteTreffer(query, results) {
     );
     let getroffen = 0;
     for (const wort of begriffe) {
-      if (heuhaufen.includes(wort)) getroffen += 1;
+      if (begriffTrifft(heuhaufen, wort)) getroffen += 1;
       if (getroffen >= noetig) return true;
     }
     return false;
