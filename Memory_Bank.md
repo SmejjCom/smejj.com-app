@@ -731,7 +731,12 @@ Volltext ausgelagert nach
 
 ## 2026-08-05 — Die Suchmaschine luegt, nicht der Filter (job_websuche_komposita_20260805)
 Volltext: [task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md](task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md).
-- **Bing liefert dem Rechenzentrum Attrappen: 7 von 12 Fragen.** Die SERP ist
+- **Bing liefert dem Rechenzentrum Attrappen: vom Server 9 von 9 frischen
+  Suchen** (3 von 12 Fragen hatten Treffer, alle drei aus dem Zwischenspeicher).
+  Lokal gemessen 7 von 12 — dieser Arbeitsplatz haengt hinter einer
+  TLS-abfangenden Fortinet-Firewall (blockt sogar smejj.com mit 403), deshalb
+  zaehlt nur die Servermessung. **Messungen aus diesem Netz sind angreifbar.**
+  Die SERP ist
   echt (Titel, Suchfeld, 10x `b_algo`), nur der Inhalt ist Fremdmuell — auf
   "Einwohnerzahl Wien 2024" kamen Justin-Bieber-Songtexte auf Chinesisch, bei
   jeder Wiederholung anderer Muell. **"current news Germany" scheitert genauso

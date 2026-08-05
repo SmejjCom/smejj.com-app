@@ -7,8 +7,8 @@ aber nicht.
 
 ## Ergebnis in einem Satz
 Der Engpass ist **nicht** die Werkzeugschleife und **nicht** der Relevanzfilter,
-sondern die Suchquelle selbst: **Bing liefert dem Rechenzentrum in 7 von 12
-Fällen absichtlich themenfremde Treffer**, DuckDuckGo sperrt vollständig. Der
+sondern die Suchquelle selbst: **vom Server aus liefert Bing bei 9 von 9
+frischen Suchen themenfremde Treffer**, DuckDuckGo sperrt vollständig. Der
 Filter erkennt das korrekt und meldet ehrlich „nichts gefunden". Behebbar ist
 das nur mit der bereits freigegebenen Quelle mit Schlüssel — dort fehlt **allein
 der Schlüssel**, und den darf nur der Betreiber eingeben.
@@ -58,7 +58,9 @@ beschreibt seit dem 2026-08-04 exakt dieses Verhalten („HTTP 200 mit
 ABSICHTLICHEN Taeuschtreffern"). **Ich habe eine gemessene, dokumentierte
 Erkenntnis im Nachbarmodul übersehen und stattdessen neu geraten.**
 
-## Die Messung, die zählt (12 realistische Fragen, Bing direkt)
+## Die Messung, die zählt — zweimal, weil die erste angreifbar war
+
+### Erst lokal (12 realistische Fragen, Bing direkt)
 
 | | Roh → behalten | Frage |
 |---|---|---|
@@ -76,12 +78,40 @@ Erkenntnis im Nachbarmodul übersehen und stattdessen neu geraten.**
 | OK | 10 → 1 | best restaurants Zurich |
 
 **5 gut, 7 Attrappe.** Entscheidend: **„current news Germany" ist Englisch und
-scheitert genauso.** Die Sprachthese ist damit widerlegt — es liegt an der IP,
-nicht an der Anfrage.
+scheitert genauso.** Die Sprachthese ist damit widerlegt.
 
 Gegenprobe: Bings maschinenlesbare RSS-Ausgabe (`&format=rss`, kein neuer
 Anbieter, kostenfrei) liefert **dieselben** Attrappen. Es ist nicht die
 Darstellung, es ist die Adresse, von der gefragt wird.
+
+### Dann noch einmal vom Server — weil die erste Messung angreifbar war
+Beim Abschlusstest fiel auf, dass dieser Arbeitsplatz hinter einer
+**TLS-abfangenden Fortinet-Firewall** hängt (Zertifikatsaussteller
+`O=Fortinet`; sie blockt sogar smejj.com selbst mit HTTP 403). Damit lief die
+Messung oben durch einen fremden Proxy — sie konnte also genauso gut **mein
+Netz** vermessen haben statt Bings Verhalten gegenüber dem Server. Das entwertet
+den Befund nicht, macht ihn aber unbrauchbar als Beweis. Also dieselben zwölf
+Fragen noch einmal, diesmal über `GET /api/search/web` **auf dem Salad-Server**:
+
+| Ergebnis | roh | Quelle | Frage |
+|---|---|---|---|
+| LEER | 10 | themenfremd | Einwohnerzahl Wien 2024 |
+| TREFFER 1 | – | **Zwischenspeicher** | Wetter Berlin morgen |
+| TREFFER 4 | – | **Zwischenspeicher** | Bundesliga Tabelle aktuell |
+| LEER | 10 | themenfremd | Zugverbindung München Hamburg |
+| LEER | 10 | themenfremd | Krankenversicherung Vergleich 2026 |
+| LEER | 10 | themenfremd | Schlagzeilen Deutschland heute |
+| LEER | 10 | themenfremd | Wien Bevölkerung |
+| TREFFER 8 | – | **Zwischenspeicher** | Berlin Einwohner |
+| LEER | 10 | themenfremd | Zürich Einwohnerzahl |
+| LEER | 6 | themenfremd | population of Vienna |
+| LEER | 10 | themenfremd | current news Germany |
+| LEER | 10 | themenfremd | best restaurants Zurich |
+
+**3 von 12 — und alle drei kommen aus dem Zwischenspeicher, nicht aus einer
+frischen Suche. Von neun frischen Bing-Abfragen sind neun Attrappen.** Auch
+alle drei englischen. Der Server ist damit schlechter dran als mein Netz, und
+das Ergebnis hängt nachweislich nicht am Fortinet-Proxy.
 
 ## Was mit der ausgelieferten Änderung geschieht
 `begriffTrifft` (Stammtreffer ab 8 Zeichen, 60 % des Wortes, mind. 6) ist live.
