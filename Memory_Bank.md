@@ -743,13 +743,8 @@ Volltext ausgelagert nach
 
 ## 2026-08-05 — Punkt 2 gemessen und zurueckgenommen (Banner-Zerleger)
 
-Beide Zerleger bekamen eine `====`/Titel/`====`-Erkennung. Beide Befunde gingen
-gegen die Erwartung, beides ist zurueckgenommen. Volltext:
-[docs/memory/Memory_Bank_2026-08-05_banner_zerleger.md](docs/memory/Memory_Bank_2026-08-05_banner_zerleger.md).
-- **MERKREGEL: eine sauberere Struktur ist nicht automatisch eine bessere
-  Suche.** Kuerzere Abschnitte gewinnen ueber die Laengennormierung — wer ein
-  Allerwelts-Dokument feiner gliedert, gibt ihm MEHR Gewicht (32 % -> 31 %).
-- Es bleibt Empfehlung 1: mehr Fragenformen je Fakt.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_punkt2_banner.md](docs/memory/Memory_Bank_2026-08-05_punkt2_banner.md).
 
 ## 2026-08-05 — Die Suchmaschine luegt, nicht der Filter (job_websuche_komposita_20260805)
 Volltext: [task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md](task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md).
