@@ -147,6 +147,14 @@ function knoten(tag = "div") {
     tagName: tag, className: "", textContent: "", dataset: {}, children: [], parentElement: null,
     attribute: {},
     setAttribute(name, wert) { self.attribute[name] = wert; },
+    getAttribute(name) { return Object.hasOwn(self.attribute, name) ? self.attribute[name] : null; },
+    remove() {
+      const eltern = self.parentElement;
+      if (!eltern) return;
+      const i = eltern.children.indexOf(self);
+      if (i >= 0) eltern.children.splice(i, 1);
+      self.parentElement = null;
+    },
     append(...kinder) { for (const k of kinder) { if (!self.children.includes(k)) self.children.push(k); k.parentElement = self; } },
     insertBefore(neu, vor) {
       const i = self.children.indexOf(vor);
@@ -172,7 +180,7 @@ function buehne() {
   return { log, antwort };
 }
 
-const { zeigeSchritt } = await import("../public/ai/chat-stream.js");
+const { zeigeSchritt, starteWartesignal } = await import("../public/ai/chat-stream.js");
 
 test("die Schrittliste steht NEBEN der Antwort, nicht darin", () => {
   const { log, antwort } = buehne();
@@ -286,4 +294,105 @@ test("im Strom kommen Schritt UND Antworttext an", async () => {
   assert.ok(alles.indexOf("Ich suche") < alles.indexOf("laeuft"));
   assert.ok(alles.indexOf("laeuft") < alles.indexOf("fertig"));
   assert.ok(alles.indexOf("fertig") < alles.indexOf("Hier ist die Antwort"));
+});
+
+// --- Das erste Lebenszeichen -------------------------------------------------
+//
+// GEMESSEN 2026-08-05 an einer echten Werkzeug-Frage: der erste Server-Schritt
+// kam nach 5750 ms, der erste Antworttext nach 19 061 ms. Davor sah der Nutzer
+// 5,75 s lang nur "smejj denkt nach ..." — der vom Betreiber gemeldete blinde
+// Fleck. Diese Tests halten fest, dass das Signal kommt, wieder verschwindet
+// und bei schnellen Antworten gar nicht erst erscheint.
+//
+// Die Zeitgeber werden eingespeist: ein Test, der echte Sekunden abwartet, ist
+// langsam UND unzuverlaessig.
+
+function zeitgeber() {
+  const wecker = new Map();
+  const takte = new Map();
+  let naechste = 1;
+  let uhr = 0;
+  return {
+    uhr: () => uhr,
+    vorspulen(ms) { uhr += ms; },
+    ausloesen() { for (const fn of [...wecker.values()]) fn(); },
+    ticken() { for (const fn of [...takte.values()]) fn(); },
+    offeneTakte: () => takte.size,
+    deps: {
+      verzoegern: (fn) => { const id = naechste++; wecker.set(id, fn); return id; },
+      abbrechen: (id) => wecker.delete(id),
+      takten: (fn) => { const id = naechste++; takte.set(id, fn); return id; },
+      stoppen: (id) => takte.delete(id),
+      jetzt: () => uhr,
+      abMs: 1200
+    }
+  };
+}
+
+test("nach kurzer Stille erscheint ein Lebenszeichen in der Schrittliste", () => {
+  const { log, antwort } = buehne();
+  const z = zeitgeber();
+  starteWartesignal(antwort, z.deps);
+  assert.equal(log.children.length, 1, "vor Ablauf der Stille darf nichts erscheinen");
+
+  z.ausloesen();
+  assert.equal(log.children.length, 2, "die Liste steht jetzt VOR der Antwort");
+  const zeile = log.children[0].children[0];
+  assert.match(zeile.textContent, /Anfrage laeuft/);
+  assert.equal(zeile.dataset.zustand, "laeuft");
+});
+
+test("der Sekundenzaehler laeuft — bleibt aber fuer Screenreader stumm", () => {
+  const { log, antwort } = buehne();
+  const z = zeitgeber();
+  starteWartesignal(antwort, z.deps);
+  z.ausloesen();
+  const zeile = log.children[0].children[0];
+  const stand = zeile.children.find((k) => k.dataset.stand === "true");
+
+  // Die Liste traegt aria-live "polite". Ein tickender Zaehler wuerde sonst
+  // jede Sekunde vorgelesen — deshalb ist genau dieser Teil aria-hidden.
+  assert.equal(stand.getAttribute("aria-hidden"), "true");
+
+  z.vorspulen(3000);
+  z.ticken();
+  assert.match(stand.textContent, /3 s/);
+});
+
+test("das Signal verschwindet restlos, sobald der Server sich meldet", () => {
+  const { log, antwort } = buehne();
+  const z = zeitgeber();
+  const stopp = starteWartesignal(antwort, z.deps);
+  z.ausloesen();
+  assert.equal(log.children[0].children.length, 1);
+
+  stopp();
+  assert.equal(log.children[0].children.length, 0, "die Wartezeile muss weg sein");
+  assert.equal(z.offeneTakte(), 0, "der Sekundentakt darf nicht weiterlaufen");
+});
+
+test("eine schnelle Antwort sieht das Signal nie", () => {
+  // Die Schnellspur antwortet in rund 850 ms. Wer sofort ein Wartesymbol zeigt,
+  // blinkt bei jeder kurzen Frage unnoetig.
+  const { log, antwort } = buehne();
+  const z = zeitgeber();
+  const stopp = starteWartesignal(antwort, z.deps);
+  stopp();
+  z.ausloesen();
+  assert.equal(log.children.length, 1, "keine Schrittliste, keine Zeile");
+});
+
+test("zweimal stoppen ist harmlos", () => {
+  const { antwort } = buehne();
+  const z = zeitgeber();
+  const stopp = starteWartesignal(antwort, z.deps);
+  z.ausloesen();
+  stopp();
+  stopp();
+});
+
+test("ohne Antwort-Knoten passiert nichts", () => {
+  const stopp = starteWartesignal(null);
+  assert.equal(typeof stopp, "function");
+  stopp();
 });
