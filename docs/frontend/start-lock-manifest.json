@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-05T16:46:30.798Z",
-  "confirmation": "A, B und C freigegeben (Betreiber, 2026-08-05): sw v223 fuer dauerhafte Anmeldung (Freigabe C)",
+  "frozenAt": "2026-08-05T19:21:09.069Z",
+  "confirmation": "Freigabe Cache-Sprung, 2026-08-05: sw.js von v224 auf v225 heben, damit das Arbeitssignal in ai/chat-stream.js auch Bestandsnutzer erreicht. Nur die Versionszeile und die zugehoerige Notiz aendern, sonst nichts. Danach Start-Lock mit diesem Wortlaut neu einfrieren.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "922a05bacdc032e69116d96ecf277251f040bd52b2605f0e59e34f6116a90d4d",
+    "public/sw.js": "e9dcef80c4d8ee25497574b852bd7aa4836db777759ac7541047dfd6a7f2e41d",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
