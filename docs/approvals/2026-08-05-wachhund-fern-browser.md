@@ -149,3 +149,56 @@ Der Dienst kam **von selbst** zurück; ein Neustart war nicht nötig.
 Nach der Rückkehr geprüft: Version v121, Modell/Control/Schnellspur verdrahtet,
 663 Abschnitte Projektwissen, Wache aktiv (ohne Token HTTP 401), und ein realer
 Nutzer mit gültigem Token ist durchgekommen.
+
+---
+
+# Nachtrag 2 — Staging-Versuch konnte nicht durchgeführt werden
+
+**Betreiber-Freigabe 2026-08-05:** „FREIGABE — Sondenversuch an einer
+Staging-Kopie". Ziel: die Ursache des Control-Ausfalls gefahrlos nachstellen.
+
+## Ergebnis: kein Ergebnis
+
+`smejj-control-chat-agent-rc1-staging` wurde um 19:05 UTC gestartet und stand
+**30 Minuten durchgehend auf `deploying`** — es wurde ihr nie ein Rechner
+zugeteilt. Der Versuch konnte deshalb gar nicht beginnen.
+
+Ausgeschlossen als Ursache: die Bootstrap-Adresse der Kopie
+(`raw.githubusercontent.com/SmejjCom/smejj-control/5db5c86…`) antwortet mit
+HTTP 200 und 7 408 Zeichen. Das Programm ist also erreichbar.
+
+Wahrscheinlich: die Kopie verlangt **2 Rechenkerne** (der Produktionsdienst nur
+1), Priorität `batch` bei beiden. Auf Salads Restkapazitätsnetz wartet der
+größere Wunsch länger. Die Rechenleistung wurde **bewusst nicht** geändert —
+dafür müsste `container` gepatcht werden, und genau dieses Feld hat schon
+einmal eine ganze Umgebung gelöscht.
+
+## Aufgeräumt
+
+Container gestoppt, ursprüngliche TCP-Sonden wiederhergestellt, alle 29
+Umgebungswerte unverändert. Kein Staging-Container läuft mehr.
+
+## Die Ursache bleibt offen — mit einer zweiten Erklärung
+
+Drei Vorfälle desselben Abends sehen gleich aus:
+
+| Dienst | Bild | mein Zutun |
+|---|---|---|
+| Chat-Bridge | 20 min HTTP 503, Zustand `running` | keines |
+| Staging-Kopie | 30 min `deploying`, kein Rechner | nur gestartet |
+| Control | 7 min HTTP 503 nach der Sondenänderung | die Änderung |
+
+**Zweite Erklärung, einfacher als die erste:** Nicht die *Art* der Sonde war
+schuld, sondern dass **jede** Änderung an einem laufenden Container eine
+Neuzuteilung auslöst — und die dauerte an diesem Abend lange. Unter dieser
+Erklärung wäre auch ein Wechsel von TCP auf TCP schiefgegangen.
+
+Welche der beiden Erklärungen stimmt, ist **nicht entschieden**. Beide sind mit
+allen Messungen vereinbar.
+
+## Empfehlung
+
+Control und Chat-Bridge bei ihren TCP-Sonden belassen. Ein Wachhund dort ist
+eine Verbesserung, kein Notstand — Control läuft seit 2026-07-14 ununterbrochen.
+Der Versuch ist an einem Tag mit ruhigerer Salad-Kapazität zu wiederholen,
+möglichst an einer Kopie mit 1 Rechenkern.
