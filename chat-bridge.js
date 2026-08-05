@@ -4,9 +4,10 @@ import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
 // 2026-08-05, Monatsrate 40 % daneben). Der Rechner legt exakte Werte vor.
 import { baueRechenKontext } from "./chat-bridge-rechner.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
-// Nur ZAEHLEN, nicht sperren: wie viele echte Anfragen tragen ein gueltiges
-// Token? Freigabe 2026-08-04 — erst messen, dann ueber die Wache entscheiden.
-import { anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
+// Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit
+// 2026-08-05 wieder scharf, Freigabe des Betreibers — siehe Fundstelle unten).
+// Der Zaehler laeuft daneben weiter: er zeigt in /health, was wirklich ankommt.
+import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
 import { pipeVisibleStream } from "./chat-bridge-strom.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { readAudioBody, transcribeWithGroq } from "./chat-bridge-voice-ear.js";
@@ -42,7 +43,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260805-v119-rechner-vier-arten";
+const BRIDGE_VERSION = "20260805-v120-anmeldepflicht-scharf";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -60,24 +61,33 @@ export function createChatBridgeServer() {
       // Messung ohne Wirkung: bewusst OHNE await, damit die Antwortzeit des
       // Chats nicht an einem Rundlauf zum Control Server haengt.
       if (kostetModell) void beobachteAnmeldung(req, { controlOrigin: CONTROL_ORIGIN });
-      // ANMELDEPFLICHT VORUEBERGEHEND AUSGEBAUT (2026-08-04, nach Live-Rueckname).
+      // ANMELDEPFLICHT WIEDER SCHARF (2026-08-05).
       //
-      // Die Wache lag hier und wies gueltig ANGEMELDETE Nutzer ab. Ursache ist
-      // NICHT die Wache, sondern ein aelterer Fehler, den sie sichtbar gemacht
-      // hat: `auth-gate.js` prueft nur, OB ein Token im Speicher liegt, nie ob
-      // es gilt. Im Browser des Betreibers lag ein Token, das der Control Server
-      // ablehnt (`/api/auth/me` -> authenticated=false) — die App zeigte ihn als
+      // Vorgeschichte: Am 2026-08-04 wies die Wache gueltig ANGEMELDETE Nutzer
+      // ab und musste zurueck. Ursache war NICHT die Wache, sondern ein
+      // aelterer Fehler, den sie sichtbar machte: `auth-gate.js` prueft nur, OB
+      // ein Token im Speicher liegt, nie ob es gilt. Im Browser des Betreibers
+      // lag ein Token, das der Control Server ablehnt — die App zeigte ihn als
       // angemeldet, der Server nicht. Mit der Wache war der Chat fuer ihn tot.
       //
-      // Solange dieser halbe Anmeldezustand moeglich ist, wuerde jede
-      // Anmeldepflicht genau die Nutzer aussperren, die glauben angemeldet zu
-      // sein. Erst muss das Frontend ein ungueltiges Token erkennen und zur
-      // Anmeldung fuehren; danach kann die Zeile hier zurueck.
+      // DIE VORBEDINGUNG IST ERFUELLT: `auth-gate.js` traegt seit dem
+      // 2026-08-05 `verifyStoredSession` und ist damit LIVE ausgeliefert. Ein
+      // ungueltiges Token wird jetzt erkannt und fuehrt zur Anmeldung, statt
+      // einen halben Anmeldezustand stehen zu lassen.
       //
-      // chat-bridge-auth.js und tests/bridge-anmeldepflicht.test.mjs bleiben
-      // absichtlich stehen — der Baustein ist fertig und geprueft, nur nicht
-      // verdrahtet.
-      // if (kostetModell && !(await allowAuthenticated(req, res, { json, controlOrigin: CONTROL_ORIGIN }))) return;
+      // OFFEN GELEGT: Der positive Weg (angemeldeter Nutzer kommt durch) ist
+      // NICHT live gemessen — der Zaehler `anmeldung` in /health stand bei 0,
+      // und eine Sitzung darf sich nicht anmelden. Der Betreiber hat das
+      // ausdruecklich abgewogen und schriftlich freigegeben (Wortlaut unten).
+      // Bei Fehlverhalten ist der Rueckbau ein Neustart mit der vorigen
+      // Fassung; `anmeldung` in /health zeigt danach, was wirklich ankam.
+      //
+      // Freigabe Wof Kadavanich, 2026-08-05: "Schalte die Anmeldepflicht der
+      // Chat-Bruecke jetzt scharf, ohne die vorherige Messung. Mir ist bewusst,
+      // dass der positive Weg (angemeldeter Nutzer kommt durch) nicht geprueft
+      // werden konnte, weil du dich nicht anmelden darfst. Wenn der Chat danach
+      // abweist, nimm die Wache sofort wieder zurueck und melde dich."
+      if (kostetModell && !(await allowAuthenticated(req, res, { json, controlOrigin: CONTROL_ORIGIN }))) return;
       if (url.pathname === "/api/chat") return await handleChat(req, res);
       if (url.pathname === "/api/agent") return await handleAgent(req, res);
       if (url.pathname === "/api/voice/status") return await handleVoiceStatus(req, res);
