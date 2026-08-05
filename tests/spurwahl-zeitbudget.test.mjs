@@ -207,3 +207,79 @@ test("die Messwerte stehen im Quelltext, nicht nur im Kopf des Autors", () => {
     assert.ok(retry.includes(wert), `fetch-retry.js soll "${wert}" nennen`);
   }
 });
+
+// --- Die Route entscheidet mit (Befund 2026-08-05) ---------------------------
+//
+// Freigabe Wof Kadavanich, 2026-08-05: "Untersuche und behebe, warum langsame
+// Werkzeug-Antworten abbrechen."
+//
+// GEMESSEN im angemeldeten Browser, Zeit bis zu den ANTWORT-KOPFZEILEN:
+//   "Welche Hauptstadt hat Italien?"          852 ms   (Schnellspur)
+//   "Auf welchen Servern laeuft smejj.com?"  4704 ms   (Werkzeug-Pfad)
+// Gegen 6500 ms blieben 1,8 s Luft. Die Latenz der Kette schwankt an einem Tag
+// zwischen 258 und 864 ms — genau dort riss es sporadisch.
+//
+// Der Modellname konnte das nicht auffangen: er sagt, WELCHES Modell antwortet,
+// nicht ob vorher gesucht und eine Seite geholt wird. Das entscheidet die Route.
+
+test("die Route /api/agent bekommt das geduldige Budget, auch ohne Tiefspur-Modell", () => {
+  const kurz = JSON.stringify({ task: "Auf welchen Servern laeuft smejj.com?" });
+  // ohne Adresse: unveraendert das schnelle Budget (Rueckwaertskompatibilitaet)
+  assert.equal(firstByteBudgetFor({ body: kurz }), 6500);
+  // mit Adresse: die Route hebt es an
+  assert.equal(firstByteBudgetFor({ body: kurz }, 15000, "https://x.salad.cloud/api/agent"), 15000);
+});
+
+test("/api/chat bleibt schnell budgetiert — nur die Werkzeug-Route ist langsam", () => {
+  const kurz = JSON.stringify({ messages: [{ role: "user", content: "Hallo" }] });
+  assert.equal(firstByteBudgetFor({ body: kurz }, 15000, "https://x.salad.cloud/api/chat"), 6500);
+  assert.equal(firstByteBudgetFor({ body: kurz }, 15000, "https://x.zeabur.app/api/chat"), 6500);
+});
+
+test("die Erkennung trifft die Route, nicht zufaellige Zeichenketten", () => {
+  const kurz = JSON.stringify({ task: "Hallo" });
+  // Pfadgrenze: /api/agentur ist NICHT die Agenten-Route
+  assert.equal(firstByteBudgetFor({ body: kurz }, 15000, "https://x/api/agentur"), 6500);
+  // mit Abfrage und Fragment bleibt sie erkannt
+  assert.equal(firstByteBudgetFor({ body: kurz }, 15000, "https://x/api/agent?v=1"), 15000);
+  assert.equal(firstByteBudgetFor({ body: kurz }, 15000, "https://x/api/agent"), 15000);
+});
+
+test("mit Haupt- UND Reserve-Server wartet schon der ERSTE Versuch geduldig", async () => {
+  // Der eigentliche Beweis. Bei nur EINEM Ziel ist der erste Versuch zugleich
+  // der letzte und war deshalb immer schon geduldig — das verdeckt den Fehler.
+  // Die App fragt aber zwei Endpunkte (Haupt-Server und Reserve, siehe
+  // buildChatTargets). Dort galten fuer die ersten beiden Versuche 6,5 s, und
+  // genau die rissen bei gemessenen 4,7 s Antwortzeit sporadisch.
+  const grenzen = [];
+  const echtesSetTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (fn, ms) => { grenzen.push(ms); return echtesSetTimeout(fn, 0); };
+  try {
+    await fetchStreamWithRetry(
+      ["https://haupt.salad.cloud/api/agent", "https://reserve.zeabur.app/api/agent"],
+      { body: JSON.stringify({ task: "Auf welchen Servern laeuft smejj.com?" }) },
+      { fetchFn: async () => ({ ok: true, body: {} }), retryDelayMs: 0 }
+    );
+  } finally {
+    globalThis.setTimeout = echtesSetTimeout;
+  }
+  assert.equal(grenzen[0], 15000, "der ERSTE Versuch muss geduldig sein — vorher waren es 6500");
+});
+
+test("/api/chat mit zwei Endpunkten bleibt beim schnellen Wechsel", async () => {
+  // Gegenprobe: der schnelle Wechsel auf die Reserve ist gewollt und bleibt.
+  // Eine tote Replika soll nicht 15 s lang warten lassen.
+  const grenzen = [];
+  const echtesSetTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (fn, ms) => { grenzen.push(ms); return echtesSetTimeout(fn, 0); };
+  try {
+    await fetchStreamWithRetry(
+      ["https://haupt.salad.cloud/api/chat", "https://reserve.zeabur.app/api/chat"],
+      { body: JSON.stringify({ messages: [{ role: "user", content: "Hallo" }] }) },
+      { fetchFn: async () => ({ ok: true, body: {} }), retryDelayMs: 0 }
+    );
+  } finally {
+    globalThis.setTimeout = echtesSetTimeout;
+  }
+  assert.equal(grenzen[0], 6500, "der schnelle Wechsel auf die Reserve muss erhalten bleiben");
+});
