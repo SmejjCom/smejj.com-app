@@ -83,3 +83,65 @@ export async function allowAuthenticated(req, res, { json, controlOrigin }) {
   });
   return false;
 }
+
+// --- Messen statt erzwingen ----------------------------------------------------
+//
+// Freigabe des Betreibers vom 2026-08-04: "erst messen, wie viele echte
+// Anfragen ein gueltiges Token tragen, dann mit mir abstimmen."
+//
+// Der Grund fuer diesen Zwischenschritt ist teuer bezahlt: Am selben Tag wurde
+// die Wache scharf geschaltet, ohne den positiven Weg gemessen zu haben — mit
+// dem Argument, er sei "durch Konstruktion sicher". Er war es nicht (abgelaufene
+// Token, siehe auth-gate.js), und der Chat war fuer den Betreiber tot. Diese
+// Zaehler beantworten vorher, was damals angenommen wurde.
+//
+// DREI EIGENSCHAFTEN, alle noetig, damit die Messung selbst nichts kaputt macht:
+//   1. Sie AENDERT NICHTS. Die Anfrage laeuft unabhaengig vom Ergebnis weiter.
+//   2. Sie WARTET NICHT. Der Aufruf laeuft nebenher; die Antwortzeit des Chats
+//      bleibt unberuehrt (sonst maesse man die Messung mit).
+//   3. Sie SPEICHERT NICHTS. Nur vier Zahlen; kein Token, kein Inhalt, keine
+//      Kennung eines Nutzers. Der Zwischenspeicher arbeitet ohnehin mit einem
+//      Hash.
+const zaehler = { gesamt: 0, gueltig: 0, ohneToken: 0, ungueltig: 0 };
+
+/**
+ * Zaehlt, ob eine Anfrage ein gueltiges Token traegt — ohne sie zu beeinflussen.
+ * Bewusst NICHT `await`en: die Antwortzeit des Chats darf nicht daran haengen.
+ *
+ * @returns {Promise<void>} erfuellt sich immer, auch im Fehlerfall
+ */
+export async function beobachteAnmeldung(req, { controlOrigin, fetchFn = fetch } = {}) {
+  zaehler.gesamt += 1;
+  const token = bearerToken(req.headers || {});
+  if (!token) {
+    zaehler.ohneToken += 1;
+    return;
+  }
+  try {
+    if (await tokenGueltig(token, { controlOrigin, fetchFn })) zaehler.gueltig += 1;
+    else zaehler.ungueltig += 1;
+  } catch {
+    // Eine Messung darf nie den Dienst stoeren.
+  }
+}
+
+/**
+ * Stand der Messung fuer /health. Der Anteil ist die Zahl, auf die es ankommt:
+ * er sagt, wie viele echte Nutzer eine Anmeldepflicht aussperren wuerde.
+ */
+export function anmeldeStatistik() {
+  const { gesamt, gueltig, ohneToken, ungueltig } = zaehler;
+  return {
+    gesamt,
+    mitGueltigemToken: gueltig,
+    ohneToken,
+    mitUngueltigemToken: ungueltig,
+    anteilGueltig: gesamt ? Math.round((gueltig / gesamt) * 1000) / 10 : null,
+    hinweis: "nur Zaehler, keine Wache — Freigabe 2026-08-04: erst messen, dann abstimmen"
+  };
+}
+
+/** Nur fuer Tests: Zaehler zuruecksetzen. */
+export function _zaehlerZuruecksetzen() {
+  zaehler.gesamt = 0; zaehler.gueltig = 0; zaehler.ohneToken = 0; zaehler.ungueltig = 0;
+}

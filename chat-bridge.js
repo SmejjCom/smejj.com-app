@@ -1,6 +1,9 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
+// Nur ZAEHLEN, nicht sperren: wie viele echte Anfragen tragen ein gueltiges
+// Token? Freigabe 2026-08-04 — erst messen, dann ueber die Wache entscheiden.
+import { anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
 import { pipeVisibleStream } from "./chat-bridge-strom.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { readAudioBody, transcribeWithGroq } from "./chat-bridge-voice-ear.js";
@@ -36,7 +39,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260804-v115-ohne-anmeldepflicht";
+const BRIDGE_VERSION = "20260804-v116-anmeldung-messen";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -51,6 +54,9 @@ export function createChatBridgeServer() {
       const kostetModell = url.pathname === "/api/chat" || url.pathname === "/api/agent"
         || url.pathname === "/api/voice/tts" || url.pathname === "/api/voice/transcribe";
       if (kostetModell && !allowModelRequest(req, res)) return;
+      // Messung ohne Wirkung: bewusst OHNE await, damit die Antwortzeit des
+      // Chats nicht an einem Rundlauf zum Control Server haengt.
+      if (kostetModell) void beobachteAnmeldung(req, { controlOrigin: CONTROL_ORIGIN });
       // ANMELDEPFLICHT VORUEBERGEHEND AUSGEBAUT (2026-08-04, nach Live-Rueckname).
       //
       // Die Wache lag hier und wies gueltig ANGEMELDETE Nutzer ab. Ursache ist
@@ -97,6 +103,7 @@ function healthPayload() {
     premiumVoiceConfigured: Boolean(trimUrl(process.env.SMEJJ_VOICE_TTS_ORIGIN || "")),
     earConfigured: Boolean(GROQ_API_KEY),
     publicRateLimit: { perClientPerMinute: RATE_PER_CLIENT, globalPerMinute: RATE_GLOBAL },
+    anmeldung: anmeldeStatistik(),
     startedAt: STARTED_AT.toISOString()
   };
 }
