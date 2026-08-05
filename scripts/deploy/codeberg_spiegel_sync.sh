@@ -6,22 +6,30 @@
 # automatischer Abgleich alle 8 h). Der Abgleich muss daher von hier
 # angestossen werden.
 #
-# WARUM HTTPS DER STANDARD IST (Messung 2026-08-05):
-# Im Netz des Betreibers ist Port 22 zu — `ssh git@codeberg.org` endet mit
-# "No route to host" (github.com ebenso: "Operation timed out"). Fuer GitHub
-# gibt es den Ausweg `-p 443 -o HostName=ssh.github.com`; fuer Codeberg gibt
-# es den NICHT: codeberg.org:443 spricht HTTPS statt SSH ("Connection closed
-# by 217.197.84.140 port 443") und ssh.codeberg.org existiert nicht (NXDOMAIN).
-# Deshalb laeuft die Spiegelung ueber HTTPS. Der SSH-Weg bleibt waehlbar, falls
-# Port 22 wieder aufgeht:  CODEBERG_PROTOKOLL=ssh bash scripts/deploy/…
+# PROTOKOLL: SSH ist Standard, HTTPS ist der Ausweg (Messung 2026-08-05).
+# Der SSH-Schluessel ist bei Codeberg registriert und funktioniert; dieser Weg
+# braucht KEINE weiteren Zugangsdaten.
 #
-# EINMALIG durch den Betreiber (eine Session darf das nicht):
+# Am 2026-08-05 war ausgehendes SSH (Port 22) zeitweise gesperrt — bei
+# codeberg.org ("No route to host") UND github.com ("Operation timed out").
+# Wenige Stunden spaeter war der Port wieder offen und die Anmeldung lief
+# ("Hi there, smejj!"). Die Sperre war also VORUEBERGEHEND; wer sie einmal
+# misst, darf daraus keinen Dauerzustand schliessen.
+#
+# Fuer GitHub gaebe es dabei den Ausweg `-p 443 -o HostName=ssh.github.com`;
+# fuer Codeberg gibt es den NICHT: codeberg.org:443 spricht HTTPS statt SSH
+# ("Connection closed by 217.197.84.140 port 443") und ssh.codeberg.org loest
+# nicht auf (NXDOMAIN). Der einzige Ausweg bei gesperrtem Port 22 ist deshalb
+# HTTPS:  CODEBERG_PROTOKOLL=https bash scripts/deploy/…
+#
+# HTTPS braucht aber einen Token, und der ist NICHT hinterlegt. Einmalig durch
+# den Betreiber (eine Session darf das nicht):
 #   1. Auf codeberg.org einen Zugriffs-Token mit Schreibrecht auf Repositories
 #      anlegen (Einstellungen -> Anwendungen -> Zugriffs-Token).
 #   2. Einmal interaktiv anmelden, damit der osxkeychain den Token speichert:
 #        git ls-remote https://codeberg.org/smejj/smejj.com-app.git
 #      Benutzername: smejj    Passwort: der Token (NICHT das Konto-Passwort).
-#   Danach laeuft dieses Skript ohne weitere Eingabe.
+#   Solange das nicht geschehen ist, ist HTTPS kein nutzbarer Rueckfall.
 #
 # Nutzung:
 #   bash scripts/deploy/codeberg_spiegel_sync.sh            # alles
@@ -34,7 +42,7 @@ SSH_KEY="${HOME}/.ssh/codeberg_smejj_ed25519"
 CODEBERG_USER="smejj"
 CACHE_DIR="${HOME}/.cache/smejj-codeberg-spiegel"
 LOKALES_REPO="smejj.com-app"
-CODEBERG_PROTOKOLL="${CODEBERG_PROTOKOLL:-https}"
+CODEBERG_PROTOKOLL="${CODEBERG_PROTOKOLL:-ssh}"
 
 # Repos, die nur auf GitHub liegen und ueber einen Zwischen-Klon gespiegelt werden.
 GITHUB_REPOS=(
@@ -106,10 +114,14 @@ HINWEIS
     cat >&2 <<'HINWEIS'
 
   Der SSH-Weg setzt einen offenen Port 22 voraus. Am 2026-08-05 war er im Netz
-  des Betreibers zu ("No route to host"), und Codeberg bietet keinen
-  SSH-Endpunkt auf 443. Ohne offenen Port 22:
+  des Betreibers zeitweise zu ("No route to host") und wenige Stunden spaeter
+  wieder offen — eine solche Sperre kann also voruebergehen. Codeberg bietet
+  keinen SSH-Endpunkt auf 443, der einzige Ausweg ist HTTPS:
 
     CODEBERG_PROTOKOLL=https bash scripts/deploy/codeberg_spiegel_sync.sh
+
+  ACHTUNG: HTTPS braucht einen Codeberg-Token im Schluesselbund. Ist keiner
+  hinterlegt, bricht auch dieser Weg ab (mit Anleitung).
 HINWEIS
   fi
   exit 1
