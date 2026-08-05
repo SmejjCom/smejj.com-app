@@ -19,6 +19,19 @@
 # ALLE GELDRELEVANTEN WERTE stehen hier sichtbar. Der Deckel (50 USD) und die
 # Freigabe-Referenz sind bewusst NICHT versteckt: wer den Dauerbetrieb startet,
 # soll sehen, wieviel er hoechstens kostet und worauf sich das stuetzt.
+#
+# ZYKLUSLAUFZEIT MUSS ZUR KORPUSGROESSE PASSEN — gemessen am 2026-08-05:
+# 1494 Trainingszeilen brauchten 9,81 min, also rund 0,39 s je Beispiel. Der
+# neue 15-Formen-Korpus hat 7560 Zeilen -> rund 50 min, bei Rang 32 mehr.
+# Mit dem alten Deckel von 45 min waere JEDER Zyklus kurz vor dem Ziel
+# abgebrochen worden: 45 Minuten GPU bezahlt, kein Adapter, kein Ergebnis —
+# und das bei jedem Durchgang bis zum 50-USD-Deckel.
+#
+# Deshalb 90 min: rund das Doppelte des Erwarteten, also weiterhin eine echte
+# Bremse gegen einen HAENGENDEN Lauf, aber kein Fallbeil fuer einen gesunden.
+# Der Gesamtdeckel (50 USD) bleibt unveraendert — er ist die Geldbremse, die
+# Zykluslaufzeit ist die Haenger-Bremse. Wer den Korpus vergroessert, muss
+# diesen Wert nachrechnen.
 
 set -euo pipefail
 
@@ -58,7 +71,7 @@ case "${1:-start}" in
     export PORT=8099 SMEJJ_HOST=127.0.0.1 \
       SMEJJ_LORA_LOOP_ENABLED=YES SMEJJ_LORA_TRAINING_ENABLED=YES \
       SMEJJ_LORA_GPU_KLASSE=rtx3090 SMEJJ_LORA_PRIORITAET=batch \
-      SMEJJ_LORA_MAX_USD_GESAMT=50 SMEJJ_LORA_MAX_ZYKLUS_MINUTEN=45 \
+      SMEJJ_LORA_MAX_USD_GESAMT=50 SMEJJ_LORA_MAX_ZYKLUS_MINUTEN=90 \
       SMEJJ_LORA_FREIGABE_ID=freigabe-2026-08-01-dauertraining \
       SMEJJ_LORA_FREIGABE_GPU_KLASSE=rtx3090 SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD=180 \
       SMEJJ_LORA_BASIS_HF_REPO=Qwen/Qwen3-8B \
