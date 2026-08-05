@@ -115,7 +115,50 @@ export function zeichneTabelle(daten, wurzel) {
   return messungen.length;
 }
 
-export function zeichneKopf(daten, knoten) {
+// --- Wie alt sind diese Zahlen? ---------------------------------------------
+//
+// Befund 2026-08-04 (Betreiber): Die Seite meldete „Letzte Messung 76,47 % …
+// die Kette liefert GERADE nicht die geforderte Qualität" — mit Daten vom
+// 30.07., also fünf Tage alt. Das Urteil stammte aus der Zeit VOR mehreren
+// Korrekturen und galt längst nicht mehr. Gleichzeitig versprach der Text
+// „alle sechs Stunden läuft ein Prüflauf", obwohl die Datei von Hand
+// eingespielt wird und seit fünf Tagen niemand das getan hatte.
+//
+// Eine veraltete Zahl ist kein Fehler. Sie als AKTUELL auszugeben schon.
+// Ab hier sagt die Seite das Alter zuerst und das Urteil danach.
+
+/** Wie viele Stunden liegt der Messzeitpunkt zurück? null, wenn unlesbar. */
+export function alterInStunden(iso, jetzt = Date.now()) {
+  const zeit = Date.parse(String(iso || ""));
+  if (!Number.isFinite(zeit)) return null;
+  return Math.max(0, (jetzt - zeit) / 3_600_000);
+}
+
+/** Ab 24 Stunden gilt eine Messung nicht mehr als Aussage über den Jetzt-Zustand. */
+export const VERALTET_AB_STUNDEN = 24;
+
+export function istVeraltet(iso, jetzt = Date.now()) {
+  const alter = alterInStunden(iso, jetzt);
+  return alter === null || alter >= VERALTET_AB_STUNDEN;
+}
+
+/** „vor 5 Tagen“ / „vor 7 Stunden“ / „vor 40 Minuten“ — für Menschen. */
+export function alterText(iso, jetzt = Date.now()) {
+  const stunden = alterInStunden(iso, jetzt);
+  if (stunden === null) return "unbekannten Alters";
+  if (stunden < 1) {
+    const minuten = Math.max(1, Math.round(stunden * 60));
+    return `vor ${minuten} ${minuten === 1 ? "Minute" : "Minuten"}`;
+  }
+  if (stunden < 48) {
+    const ganze = Math.round(stunden);
+    return `vor ${ganze} ${ganze === 1 ? "Stunde" : "Stunden"}`;
+  }
+  const tage = Math.round(stunden / 24);
+  return `vor ${tage} ${tage === 1 ? "Tag" : "Tagen"}`;
+}
+
+export function zeichneKopf(daten, knoten, jetzt = Date.now()) {
   if (!knoten) return;
   const messungen = Array.isArray(daten?.messungen) ? daten.messungen : [];
   const letzte = messungen[messungen.length - 1];
@@ -125,13 +168,41 @@ export function zeichneKopf(daten, knoten) {
     return;
   }
   const stufe = stufeFuer(letzte, daten.suite);
+  const veraltet = istVeraltet(daten?.erzeugtAm ?? letzte.zeitpunkt, jetzt);
+
+  // Veraltet: Das Alter steht ZUERST, und das Urteil wird ausdruecklich in die
+  // Vergangenheit gesetzt. `data-stufe="veraltet"` statt der Bewertung — sonst
+  // faerbt die Seite ein Urteil ein, das sie selbst nicht mehr vertritt.
+  if (veraltet) {
+    knoten.dataset.stufe = "veraltet";
+    knoten.dataset.veraltet = "true";
+    knoten.textContent =
+      `Diese Zahlen sind ${alterText(daten?.erzeugtAm ?? letzte.zeitpunkt, jetzt)} gemessen worden `
+      + "und sagen nichts über den heutigen Zustand. "
+      + `Damals gemessen: ${alsProzent(letzte.punktzahl)}`
+      + (letzte.kritischeFehler ? ` mit ${letzte.kritischeFehler} kritischen Fehlern` : "")
+      + ".";
+    return;
+  }
+
   knoten.dataset.stufe = stufe;
+  delete knoten.dataset.veraltet;
   const texte = {
     kritisch: `Letzte Messung ${alsProzent(letzte.punktzahl)} mit ${letzte.kritischeFehler} kritischen Fehlern — die Kette liefert gerade nicht die geforderte Qualität.`,
     gerissen: `Letzte Messung ${alsProzent(letzte.punktzahl)} — unter der geforderten Mindestpunktzahl.`,
     gut: `Letzte Messung ${alsProzent(letzte.punktzahl)} — alle Budgets eingehalten.`
   };
   knoten.textContent = texte[stufe] || `Letzte Messung ${alsProzent(letzte.punktzahl)}.`;
+}
+
+/** Standzeile: Zeitpunkt UND Alter, bei veralteten Daten zusätzlich benannt. */
+export function standText(daten, jetzt = Date.now()) {
+  const iso = daten?.erzeugtAm;
+  const wann = alsZeit(iso);
+  const alter = alterText(iso, jetzt);
+  return istVeraltet(iso, jetzt)
+    ? `Stand der Daten: ${wann} — ${alter}. Seitdem wurde nicht neu gemessen.`
+    : `Stand der Daten: ${wann} — ${alter}.`;
 }
 
 export async function ladeVerlauf(fetchImpl = fetch, quelle = QUELLE) {
@@ -164,7 +235,7 @@ export async function starte(dokument = document, fetchImpl = fetch) {
   }
   zeichneKopf(daten, kopf);
   if (liste) zeichneTabelle(daten, liste);
-  if (stand) stand.textContent = `Stand der Daten: ${alsZeit(daten.erzeugtAm)}`;
+  if (stand) stand.textContent = standText(daten);
 }
 
 if (typeof document !== "undefined" && document.getElementById("verlaufListe")) {
