@@ -629,30 +629,8 @@ Korpus (PMI), Frage vor der Suche um ihr Themenvokabular ergaenzt. 1.480 Begriff
 
 ## 2026-08-05 — Decke gemessen, Live-Schaden gefunden (job_eval_breite_suite_20260803)
 
-**157 von 295 Fragen sind aus dem Korpus beantwortbar; die Produktionssuche
-erreicht 42 — Trefferquote 27 %.** 115 Faelle (39 %) haben ihre Antwort im
-Korpus, aber die Suche liefert sie nicht. Trefferquote je Schwelle: 20 -> 27 %,
-12 -> 60 %, 8 -> 75 %. Werkzeug: `npm run eval:rag-decke`.
-Bericht: docs/benchmarks/rag-decke-schwelle20-2026-08-05.json.
-- GUELTIGKEITSBELEG der Messung: die 138 ungedeckten Faelle liegen in coding (23),
-  struktur (16), logik (14), sprache (12) — allgemeine Faehigkeiten. Die Luft
-  liegt vollstaendig im Hauswissen.
-- **SCHWELLE OHNE NEUEN LAUF RECHENBAR:** `rankHits` benutzt minTopScore nur als
-  TOR, nicht zum Sortieren. Ein Fall mit Spitzenwert >= 20 bekommt bei 12 und 20
-  denselben Kontext. Damit ist das Ergebnis jeder Schwelle exakt aus zwei
-  vorhandenen Laeufen ableitbar. MERKREGEL: **erst pruefen, ob eine Zahl schon in
-  den Daten steckt, bevor drei Stunden gemessen werden.**
-  Ergebnis: RAG aus 76,1 % / Schwelle 20 (live) 77,0 % / Schwelle 12 77,5 %.
-  Gewinn 20->12 nur +0,5 auf die Gesamtnote, +2,2 auf den 127 betroffenen Faellen.
-- **DER EIGENTLICHE FUND — der Schaden bei training/schutz ist SCHON LIVE:**
-  12 Faelle bekommen bereits bei Schwelle 20 Kontext und verlieren dadurch
-  **-19,4 Punkte**; die Schwellensenkung fuegt nur weitere -5,6 auf 17 Faellen
-  hinzu. Der Defekt liegt also im Betrieb, nicht in der geplanten Aenderung.
-  VORRANG hat darum die Untersuchung dieser 12 Quellen — kostet keinen
-  Modellaufruf.
-- Nebenbefund: selbst UNGEDECKTE Fragen verlieren durch Kontext nicht
-  (+1,4 auf 66 Faellen). Die These "irrelevanter Kontext schadet immer" ist in
-  dieser Form widerlegt.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_decke_liveschaden.md](docs/memory/Memory_Bank_2026-08-05_decke_liveschaden.md).
 
 ## 2026-08-05 — Die zwoelf Faelle: das Ranking war nie das Problem
 
@@ -705,32 +683,8 @@ Deckenmessung. Volltext: [docs/architecture/RAG_EINBETTUNG_GEPRUEFT_2026-08-05.m
 
 ## 2026-08-05 — Weg B: Regelfragen-Anreicherung statt Schwellensenkung
 
-Freigabe des Betreibers ("Ja, mach Weg B"). `control-server/src/rag/regelfragen.js`
-+ Verdrahtung in `ragContextBlock.reichereFrageAn()`. **MIN_TOP_SCORE bleibt 20.**
-- VORGESCHICHTE: die allgemeine Senkung auf 12 wurde gebaut und ZURUECKGENOMMEN.
-  Sie brach `tests/rag-infrastruktur.test.mjs` — "Wie viele aktive Nutzerkonten
-  hat smejj.com heute?" bekam bei 12 einen Auszug aus FREE_ONLY_MASTER_POLICY ::
-  Skalierungsregel (13,3). MERKREGEL: **einen Waechter passend zu machen, damit
-  die eigene Aenderung durchgeht, ist Rote Liste** — das schaltet eine
-  verifizierte Schutzfunktion ab.
-- VERFAHREN (gespiegelt von infrastrukturFrage.js): erkannte Frage wird um die
-  NAMEN und ROLLEN ihres Regeldokuments ergaenzt, erreicht die UNVERAENDERTE
-  Schwelle aus eigener Kraft. Drei Klassen: schutz, trainingsdaten, memory.
-  Aufnahmekriterium ist eine Bauartaussage (MASTER_PROMPT/AI_Guidelines/AGENTS
-  benennen ein verbindliches Dokument), NICHT die Eval-Suite — sonst bestaetigte
-  die Suite sich selbst.
-- WIRKUNG gemessen gegen die Deckenmessung: Trefferquote 27 % -> **32 %**
-  (51 von 157), falsch geoeffnet 22 % -> 25 % (34 von 138). **+9 gefunden gegen
-  +4 falsch** — deutlich besseres Verhaeltnis als die Schwellensenkung (52:66).
-- ZWEI EIGENE FEHLER, die die eigenen Tests fingen: "niemals" stand als WERTUNG
-  im Vokabular (haette dem Modell die Antwort in den Mund gelegt), und die
-  Change-Lock-Formulierung ("verifizierte Funktion ausbauen") fehlte in der
-  Erkennung.
-- BUENDEL-FALLE: der Bridge-Bundler flacht alle Module in EINEN Namensraum;
-  ein zweites `BEFEHLSFORM` brach `bundle_duplicate_symbol`. Geloest durch
-  TEILEN statt Kopieren — eine sicherheitskritische Regex an zwei Stellen
-  driftet unbemerkt auseinander.
-- NOCH NICHT AUSGELIEFERT: wirkt erst nach Bridge-Buendel + Control-Release.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_wegb_regelfragen.md](docs/memory/Memory_Bank_2026-08-05_wegb_regelfragen.md).
 
 ## 2026-08-05 — Regelfragen-Anreicherung LIVE (Bruecke v122)
 
@@ -798,3 +752,38 @@ Volltext: [task-capsules/2026/08/job_arbeitssignal_20260805/capsule.md](task-cap
 - KLIENTSEITIG, weil Bruecke und Control Server ihre Kopfzeilen erst nach der
   naechsten Stufe schreiben und daraus x-smejj-model-backend fuellen; frueher
   senden haette die Diagnose gekostet. Zaehler aria-hidden, Start ab 1200 ms.
+
+## 2026-08-05 — Punkt 3 gemessen: das Tor war NICHT die Ursache
+
+Die reparierte Suite gegen das trainierte Modell gefahren (Trainer laeuft,
+PeftModelForCausalLM geladen, 14 Faelle je 3 Wiederholungen, 0 Transportfehler).
+
+    naming-schreibweise   92 %, NICHT mehr kritisch   <- die Reparatur wirkt
+    Punktzahl             67,89 %
+    kritische Verstoesse  6   — aber SECHS ANDERE Faelle
+
+Betroffen sind jetzt: speicher-hauptserver, regel-800-zeilen,
+code-esm-failclosed, schutz-daten-loeschen, schutz-api-schluessel,
+schutz-design-lock.
+
+- **KORREKTUR der Diagnose in [[smejj-korpus-widerspricht-suite]]:** die dortige
+  Zahl 6 bezog sich auf 6 KORPUSZEILEN, welche die verbotene Grossform schreiben. Die 6 KRITISCHEN
+  VERSTOESSE sind etwas anderes — `criticalFailures` zaehlt FAELLE, und ein
+  einzelner Fall kann nur einen beitragen. Die Namensregel war also EINER der
+  Blocker, nicht die Ursache aller sechs. **Zwei gleiche Zahlen aus zwei
+  verschiedenen Quellen sahen aus wie eine Kausalkette.**
+- **DER EIGENTLICHE BEFUND: das Training macht das Modell SCHLECHTER.**
+  Grundlinie laut Memory 95,88 %, trainiert 67,89 %. Das Tor verwirft nicht aus
+  Uebereifer — es tut genau seine Arbeit. Der Adapter ist eine Verschlechterung.
+- MERKREGEL: **wenn ein Qualitaetstor dauerhaft schliesst, ist die erste Frage
+  nicht, ob das Tor zu streng ist, sondern ob das Ergebnis wirklich schlechter
+  ist.** Hier war es das.
+- Die Suiten-Reparatur bleibt trotzdem richtig und noetig: sie bestrafte
+  nachweislich die sachlich korrekte Antwort. Sie war nur nicht der Engpass.
+- OFFEN: warum verschlechtert das Training? Kandidaten (ungeprueft):
+  Korpusgroesse, Lernrate, zu wenige Beispiele fuer die betroffenen Themen.
+  Das ist die eigentliche Aufgabe von Schritt 2 — mehr und bessere Daten.
+- INFRASTRUKTUR-BLOCKER fuer einen ECHTEN Zyklus: die Suite steckt im Abbild
+  (`COPY evals/suites` in Dockerfile.smejj-training-loop), es laeuft KEIN
+  Loop-Container (nur smejj-lora-trainer), Docker-Daemon lokal aus und kein
+  Registry-Token. Ein Abbild-Neubau ist von hier nicht moeglich.
