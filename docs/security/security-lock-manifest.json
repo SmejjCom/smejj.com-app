@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-05T18:35:37.699Z",
-  "confirmation": "Zwei Freigaben des Betreibers vom 2026-08-05. (1) chat-bridge.js: 'Schalte die Anmeldepflicht der Chat-Bruecke jetzt scharf, ohne die vorherige Messung. Mir ist bewusst, dass der positive Weg (angemeldeter Nutzer kommt durch) nicht geprueft werden konnte, weil du dich nicht anmelden darfst. Wenn der Chat danach abweist, nimm die Wache sofort wieder zurueck und melde dich.' (2) ai/fetch-retry.js: 'Freigabe Zeitbudget, 2026-08-05: Untersuche und behebe, warum langsame Werkzeug-Antworten abbrechen. Aenderungen am Zeitbudget des Klienten und an der Spurwahl sind frei.'",
+  "frozenAt": "2026-08-05T22:10:51.155Z",
+  "confirmation": "BESTÄTIGUNG — Änderung an einer gesperrten Datei, 2026-08-05",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "65435eddbd0a154777805fe836ffc8ce9858bddd19e31f322c47b55de373b436",
@@ -9,7 +9,7 @@
     "public/auth/auth-page.js": "ea029edad98c7a92bd0e80dbd466b5c170070b89c944a0cfbdba74b0973e976d",
     "public/auth/auth.css": "582576014a5a9177bc7bff9e9df9622fa94a411e3b428047bd14a238179341c0",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
-    "public/account-sessions.js": "9b7d1ea6f8273876d25a1b2bc1cc47c73afe715c4bdc7445cbe396dbc81f538c",
+    "public/account-sessions.js": "16837ad84f7ee7240a00d9dceebd84e2922f83f6825714581b706acb98f640a6",
     "public/chat-history-context.js": "00a993819d26a2cc282154d07f1161b10532eaea9348e92645acbe9133f0db15",
     "public/chat-bridge.js": "81a1a8a01f23e07a288a28e4329ab21023ff41e6571b626b1555ba800e7a21f0",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
