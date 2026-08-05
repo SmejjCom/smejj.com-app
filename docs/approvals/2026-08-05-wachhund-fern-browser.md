@@ -98,3 +98,54 @@ Der Bridge-Startbefehl zieht `main` **unfixiert**. Wird dort eine defekte
 wiederholt in genau diesen Defekt. Vorher war der Defekt erst beim nächsten
 Neustart sichtbar — die Sonde macht ihn schneller sichtbar, nicht schlimmer.
 Ein Fixieren auf einen Commit wäre eine eigene Änderung und eigene Freigabe.
+
+---
+
+# Nachtrag — derselbe Eingriff an Control ist GESCHEITERT und zurückgenommen
+
+**Betreiber-Anweisung 2026-08-05:** „Mach die Sonden für Control und Chat-Bridge."
+
+## Was passiert ist
+
+Bei `smejj-control` wurden die TCP-Sonden durch HTTP-Sonden auf
+`/api/capabilities` (Port 3000) ersetzt. Ergebnis: **rund sieben Minuten
+HTTP 503 auf allen Wegen**, auch auf `/api/health`.
+
+- Der Container lief durchgehend weiter — `running`, Startzeit unverändert seit
+  2026-07-14, **kein Neustart**. Salads Zugangsschicht nahm die Instanz nur aus
+  dem Verkehr.
+- Vor dem Eingriff: derselbe Pfad 5× HTTP 200 in 175–500 ms.
+- **Rücknahme auf die gesicherten TCP-Werte → sofort 8/8 HTTP 200**, Umgebung
+  mit allen 85 Werten unversehrt. Der Zusammenhang ist damit bewiesen.
+
+Die Chat-Bridge hat **keine** Sonden bekommen — sie war zu diesem Zeitpunkt aus
+einem unabhängigen Grund unten (siehe unten), und in einen nicht laufenden
+Dienst hinein zu ändern hätte die Ursache verschleiert.
+
+## Ursache: offen
+
+Widerlegt ist die naheliegende Vermutung IPv4/IPv6 — alle vier Dienste haben
+`SMEJJ_HOST = "::"`. Das Sondenziel war bewusst `/api/capabilities` und nicht
+`/api/health`, weil letzteres eine Guthabenabfrage ins Ausland auslöst (bis 15 s).
+
+**Merkregel: Ein an Dienst A belegter Eingriff ist an Dienst B nicht belegt.**
+Die zwei Fern-Browser-Dienste vertragen exakt dieselben Sondenwerte problemlos.
+
+**Empfehlung für einen zweiten Versuch:** zuerst an einem der gestoppten
+Staging-Container (`smejj-control-rc9-staging` o. ä.) ausprobieren, nie am
+laufenden Produktionsdienst, und nur in einem angekündigten Wartungsfenster.
+
+## Unabhängiger Vorfall am selben Abend: Chat 20 Minuten unten
+
+Die Chat-Bridge war von 17:09 bis 17:29 UTC nicht erreichbar (HTTP 503 von
+Salads Zugangsschicht, Zustand `running`, TCP-Sonde zufrieden). Auslöser war
+die Veröffentlichung von `v121-wache-nur-bei-nein`; der Container startete neu,
+um sie zu laden, und fand ~20 Minuten keinen Platz.
+
+**Der Code war nicht schuld:** genau das Bündel, das der Container lädt, wurde
+heruntergeladen und lokal gestartet — läuft, antwortet mit HTTP 200.
+Der Dienst kam **von selbst** zurück; ein Neustart war nicht nötig.
+
+Nach der Rückkehr geprüft: Version v121, Modell/Control/Schnellspur verdrahtet,
+663 Abschnitte Projektwissen, Wache aktiv (ohne Token HTTP 401), und ein realer
+Nutzer mit gültigem Token ist durchgekommen.
