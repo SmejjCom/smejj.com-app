@@ -509,37 +509,8 @@ Betreiber-Freigabe: „Ja, mach die Suchquelle mit Schlüssel." Nachweis in
 
 ## 2026-08-04 — Zweite Sperre: sicherheitskritische Dateien (job_security_lock_20260804)
 
-Commit `1e4ebdd`. Freigabe des Betreibers vom 2026-08-04 (Wortlaut im Manifest
-`docs/security/security-lock-manifest.json`). `check:all` gruen (1808).
-Keine Live-Datei beruehrt — reine Repo-Absicherung.
-
-Neun Dateien byte-genau eingefroren: beide Anmeldeseiten samt `auth-page.js`,
-`auth.css`, `passkey.js`; `account-sessions.js`; `chat-history-context.js`;
-`chat-bridge.js`; `ai/fetch-retry.js`. Aufruf wie beim Start-Lock:
-`node scripts/check-security-lock.mjs --freeze --confirm "<Wortlaut>"`.
-
-- **ZWEI MANIFESTE, NICHT EINE LISTE.** Der Start-Lock wird bei JEDEM
-  sw.js-Sprung neu eingefroren (am 2026-08-03/04 mehrfach). Laegen die
-  Sicherheitsdateien darin, wuerde jedes dieser Einfrieren eine Aenderung an
-  einem Passwortfeld still mit absegnen. MERKREGEL: **eine Sperre, die oft
-  aufgesperrt wird, darf nichts Seltenes mitschuetzen.**
-- **check-start-lock.mjs IST DIGEST-GEPINNT** — eine von 19 Dateien in
-  `idrive-layout/manifests/evaluations/phase1-foundation-benchmark.json`
-  (`immutable: true`, `overwriteAllowed: false`). Der Versuch, beide Sperren auf
-  eine gemeinsame Mechanik umzustellen, brach den Digest. MERKREGEL: **den Pin
-  nachzuziehen, um das eigene Refactoring durchzubekommen, ist genau die
-  Manipulation, gegen die er gebaut ist.** Zurueckgenommen, Doppelung
-  dokumentiert, Test haelt sie fest.
-- **EIN SCHUTZ, DER NIE ANSCHLAEGT, IST SCHLIMMER ALS KEINER.** Zwei eigene
-  Fehler beim Bau, beide nur gefunden, weil die Tests den PROZESS aufrufen statt
-  Quelltext zu lesen:
-  (1) `import.meta.url` gegen ein selbstgebautes `file:`-Schema plus
-  `process.argv[1]` zu vergleichen trifft unter einem Pfad
-  MIT Leerzeichen nie zu — die Sperre lief gar nicht, Exitcode 0.
-  (2) Danach scheiterte sie an macOS-Symlinks (`/var` gegen `/private/var`);
-  jetzt `realpathSync`.
-  MERKREGEL: **eine Sperre immer gegen eine absichtlich veraenderte Datei
-  testen** — sonst prueft man nur, dass sie nicht abstuerzt.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-04_security_lock.md](docs/memory/Memory_Bank_2026-08-04_security_lock.md).
 
 ## 2026-08-04 — Zweite Abnahme auf sw v214: sauber, ein bewusst offener Punkt (job_livetest_a_bis_z_20260804)
 - GEPRUEFT UND GRUEN: 20 Adressen, 19/19 Sitemap-Adressen, 4 Backends,
@@ -781,3 +752,28 @@ das ueber Quellen-Prioritaeten zu heilen, wurde gemessen und ZURUECKGENOMMEN.
 **Empfehlung: MIN_TOP_SCORE nicht pauschal senken; die Suchart ist die
 Entscheidung, nicht die Zahl.**
 Volltext: [docs/memory/Memory_Bank_2026-08-04_rag_ab.md](docs/memory/Memory_Bank_2026-08-04_rag_ab.md).
+
+## 2026-08-04 — Entscheidungsvorlage Suchart (job_eval_breite_suite_20260803)
+
+Vorlage: [docs/architecture/RAG_SUCHART_ENTSCHEIDUNG_2026-08-04.md](docs/architecture/RAG_SUCHART_ENTSCHEIDUNG_2026-08-04.md).
+NICHTS umgesetzt — Entscheidung liegt beim Betreiber, ragRanking.js unveraendert.
+
+- **NACHSORTIERER SCHLAEGT SEMANTISCHE SUCHE** — als Prototyp gemessen (12 Faelle,
+  GLM-5.2 waehlt aus einem Becken von 10 BM25-Treffern): 5x BM25 korrigiert
+  (Platz 2/4/5/5/7 nach vorn, jedes Mal ein zustaendiges Regeldokument), 5x
+  "keine Passage passt" -> fail-closed kein Kontext, 1x BM25 bestaetigt. Er
+  repariert BEIDE gemessenen Fehlerarten ohne neue Abhaengigkeit, ohne neuen
+  Anbieter, ohne laufende Kosten.
+- **ZEITKOSTEN Nachsortierer: Median 1,2 s, p95 2,1 s.** Das reisst das
+  1-Sekunden-Budget fuer den ersten Token. Darum: Schnellspur als Nachsortierer
+  (0,70 s gemessen), nur fuer die tiefe Spur.
+- **KORPUS IST WINZIG: 663 Abschnitte, 95 Dateien, 397 KB.** Einbettungen
+  waeren ~1 MB, ein voller Vektorvergleich unter 1 ms. MERKREGEL: **bei dieser
+  Groesse braucht es NIE eine Vektordatenbank** — die Frage ist allein, WIE
+  eingebettet wird, nicht wo gesucht.
+- **GEMESSEN: der Zhipu-Schluessel hat KEINEN Zugang zu Einbettungsmodellen**
+  (embedding-3 und embedding-2 beide "Modell existiert nicht"). Eine
+  Einbettungs-API waere damit ein NEUER ANBIETER = Rote Liste.
+- **DAS PROJEKT HAT NULL LAUFZEIT-ABHAENGIGKEITEN.** Ein lokales
+  Einbettungsmodell waere die erste ueberhaupt (onnxruntime ~50-150 MB plus
+  ~120 MB Modell). Das ist der eigentliche Preis von Option B, nicht die Rechenzeit.
