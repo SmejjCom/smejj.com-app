@@ -72,7 +72,11 @@ const FRAGEWORT = /\b(wo|wohin|woher|worauf|womit|wodurch|welche[rsnm]?|was|wie|
  * verschlechterte sich am 2026-08-01 mit Kontext von 67 % auf 33 %. Er darf
  * deshalb keinen bekommen.
  */
-const BEFEHLSFORM = /^\s*(loesche|lösche|entferne|starte|stoppe|baue|erzeuge|schreibe|aendere|ändere|mach|setze|lege|installiere|deploye|kopiere|verschiebe)\b/i;
+// Exportiert, weil regelfragen.js dieselbe Sperre braucht. Sie zweimal zu
+// schreiben waere die schlechtere Wahl: eine sicherheitskritische Regel, die an
+// zwei Stellen steht, driftet frueher oder spaeter auseinander — und zwar
+// unbemerkt, weil beide Seiten fuer sich gruen bleiben.
+export const BEFEHLSFORM = /^\s*(loesche|lösche|entferne|starte|stoppe|baue|erzeuge|schreibe|aendere|ändere|mach|setze|lege|installiere|deploye|kopiere|verschiebe)\b/i;
 
 /**
  * Das Vokabular, in dem die Dienste-Uebersicht geschrieben ist.

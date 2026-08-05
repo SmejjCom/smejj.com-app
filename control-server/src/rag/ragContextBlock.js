@@ -13,6 +13,7 @@
 import { searchIndex } from "./bm25Index.js";
 import { rankHits } from "./ragRanking.js";
 import { erweitereInfrastrukturfrage } from "./infrastrukturFrage.js";
+import { erweitereRegelfrage } from "./regelfragen.js";
 
 /**
  * Aus mehr Rohtreffern nachgewichtet als am Ende eingespeist werden: sonst kann ein
@@ -30,15 +31,33 @@ export const RAW_HIT_POOL = 10;
  *          leer, wenn kein Treffer die Relevanzschwelle erreicht
  */
 export function searchRagIndex(index, query, k = 5, { minTopScore } = {}) {
-  // Fragen nach dem eigenen Betrieb werden fuer die SUCHE um das Vokabular der
-  // Dienste-Uebersicht ergaenzt. Die Relevanzschwelle bleibt dabei unveraendert:
-  // die angereicherte Frage erreicht sie aus eigener Kraft (8,5 -> 35,4), und
-  // der beste Treffer ist dann die Uebersicht selbst statt einer Zufallspassage.
-  // Jede andere Frage laeuft unveraendert durch. Messwerte in infrastrukturFrage.js.
-  return rankHits(searchIndex(index, erweitereInfrastrukturfrage(query), RAW_HIT_POOL), {
+  return rankHits(searchIndex(index, reichereFrageAn(query), RAW_HIT_POOL), {
     limit: k,
     ...(Number.isFinite(minTopScore) ? { minTopScore } : {})
   });
+}
+
+/**
+ * Reichert eine erkannte Frage fuer die SUCHE um das Vokabular ihres
+ * zustaendigen Dokuments an. Jede nicht erkannte Frage laeuft unveraendert durch.
+ *
+ * Die Relevanzschwelle bleibt dabei unangetastet: die angereicherte Frage
+ * erreicht sie aus eigener Kraft (gemessen 8,5 -> 35,4), und der beste Treffer
+ * ist dann das zustaendige Dokument statt einer Zufallspassage. Damit gilt die
+ * Regel "kein Kontext ist besser als falscher Kontext" fuer alle anderen Fragen
+ * unveraendert — insbesondere fuer Halluzinations- und Befehlsfaelle.
+ *
+ * AUSSCHLIESSLICH, nicht kumulativ: trifft die Infrastrukturerkennung, wird NICHT
+ * zusaetzlich Regelvokabular angehaengt. Zwei Vokabulare zu mischen waere
+ * schlechter als eines — die Anreicherung soll die Suche auf EIN Dokument lenken,
+ * nicht auf zwei halbe.
+ *
+ * Exportiert, damit die Anreicherung fuer sich testbar ist.
+ */
+export function reichereFrageAn(query) {
+  const infrastruktur = erweitereInfrastrukturfrage(query);
+  if (infrastruktur !== query) return infrastruktur;
+  return erweitereRegelfrage(query);
 }
 
 /**

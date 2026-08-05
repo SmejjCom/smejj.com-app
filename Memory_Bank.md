@@ -350,34 +350,8 @@ woertlich ein. Betreiber-Freigabe fuer den Fast-Forward liegt im Wortlaut vor.
 
 ## 2026-08-04 — A-bis-Z-Pruefung: Passwort im Klartext-Dialog, Auth-Seiten ohne CSP (job_auth_haertung_20260804)
 
-Commit `199449e`, Frontend `c788e47`, live und nachgemessen. `check:all` gruen
-(1743 Zusicherungen). Kapsel: `task-capsules/2026/08/job_auth_haertung_20260804/`.
-
-- **EIN BROWSER-DIALOG IST KEIN PASSWORTFELD.** Der Reset fragte das neue Passwort
-  mit `window.prompt()` ab: keine Maskierung (Klartext auf dem Schirm), keine
-  Passwortverwaltung, blockiert die Seite, von Chrome dauerhaft unterdrueckbar —
-  und ohne zweites Feld sperrt ein unsichtbarer Tippfehler den Nutzer aus dem
-  eigenen Konto, bei bereits verbrauchtem Token. Jetzt Seitenformular mit
-  Bestaetigungsfeld; der Vergleich steht VOR dem Serveraufruf, damit ein
-  Tippfehler den Token nicht verbrennt. Live belegt: bei ungleichen Eingaben
-  geht KEIN Netzaufruf raus.
-- **DIE SICHERSTE SEITE WAR DIE UNGESCHUETZTESTE.** `index.html` trug CSP und
-  Referrer-Regel, `/auth/login/` und `/auth/register/` nicht — dort, wo E-Mail,
-  Passwort, OAuth-Rueckkehr und Passkey durchlaufen. MERKREGEL: **Schutz, der an
-  EINER Seite haengt, ist keine Richtlinie** — beim Anlegen einer neuen Seite
-  gegen die Startseite abgleichen, nicht gegen die Nachbarseite.
-- **EINE ZU STRENGE CSP IST SCHLIMMER ALS KEINE.** `connect-src` muss den
-  Control-Server fuehren, sonst schlaegt jede Anmeldung STUMM fehl. Der Schutztest
-  liest die Adresse aus `config.js`, damit beides nicht auseinanderlaufen kann.
-- **MERKREGEL Sprachdateien:** der i18n-Waechter prueft nur Woerterbuch → Quelltext.
-  Ein entfernter `t()`-Aufruf hinterlaesst einen verwaisten Schluessel und macht
-  `check:all` rot; ein NEUER Text ohne Uebersetzung faellt dagegen nie auf.
-  Ausserdem liefen die AUSGELIEFERTEN Sprachdateien dem Repo voraus (zwei tote
-  Schluessel) — vor dem Ueberschreiben gepflegter Dateien gegen live halten.
-- OFFEN: `account-sessions.js` nutzt dieselbe Bauart fuer Passwortwechsel und
-  Kontoloeschung. Bewusst NICHT blind mitgeliefert: hinter der Anmeldung, aus
-  einer Sitzung nicht pruefbar, und eine ungetestete Aenderung an der
-  Kontoloeschung waere schlimmer als der Befund.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-04_auth_haertung.md](docs/memory/Memory_Bank_2026-08-04_auth_haertung.md).
 
 ## 2026-08-04 — Die Websuche suchte im falschen Markt (job_websuche_markt_20260804)
 
@@ -786,3 +760,32 @@ Deckenmessung. Volltext: [docs/architecture/RAG_EINBETTUNG_GEPRUEFT_2026-08-05.m
   Nachsortierer, Begriffserweiterung, Einbettung). Gesicherter Gewinn bleibt
   +4,0 aus der bestehenden Suche. EMPFEHLUNG: Retrieval-Optimierung beenden —
   `rag` ist 15 von 295 Faellen, die Note haengt an der Modellfaehigkeit.
+
+## 2026-08-05 — Weg B: Regelfragen-Anreicherung statt Schwellensenkung
+
+Freigabe des Betreibers ("Ja, mach Weg B"). `control-server/src/rag/regelfragen.js`
++ Verdrahtung in `ragContextBlock.reichereFrageAn()`. **MIN_TOP_SCORE bleibt 20.**
+- VORGESCHICHTE: die allgemeine Senkung auf 12 wurde gebaut und ZURUECKGENOMMEN.
+  Sie brach `tests/rag-infrastruktur.test.mjs` — "Wie viele aktive Nutzerkonten
+  hat smejj.com heute?" bekam bei 12 einen Auszug aus FREE_ONLY_MASTER_POLICY ::
+  Skalierungsregel (13,3). MERKREGEL: **einen Waechter passend zu machen, damit
+  die eigene Aenderung durchgeht, ist Rote Liste** — das schaltet eine
+  verifizierte Schutzfunktion ab.
+- VERFAHREN (gespiegelt von infrastrukturFrage.js): erkannte Frage wird um die
+  NAMEN und ROLLEN ihres Regeldokuments ergaenzt, erreicht die UNVERAENDERTE
+  Schwelle aus eigener Kraft. Drei Klassen: schutz, trainingsdaten, memory.
+  Aufnahmekriterium ist eine Bauartaussage (MASTER_PROMPT/AI_Guidelines/AGENTS
+  benennen ein verbindliches Dokument), NICHT die Eval-Suite — sonst bestaetigte
+  die Suite sich selbst.
+- WIRKUNG gemessen gegen die Deckenmessung: Trefferquote 27 % -> **32 %**
+  (51 von 157), falsch geoeffnet 22 % -> 25 % (34 von 138). **+9 gefunden gegen
+  +4 falsch** — deutlich besseres Verhaeltnis als die Schwellensenkung (52:66).
+- ZWEI EIGENE FEHLER, die die eigenen Tests fingen: "niemals" stand als WERTUNG
+  im Vokabular (haette dem Modell die Antwort in den Mund gelegt), und die
+  Change-Lock-Formulierung ("verifizierte Funktion ausbauen") fehlte in der
+  Erkennung.
+- BUENDEL-FALLE: der Bridge-Bundler flacht alle Module in EINEN Namensraum;
+  ein zweites `BEFEHLSFORM` brach `bundle_duplicate_symbol`. Geloest durch
+  TEILEN statt Kopieren — eine sicherheitskritische Regex an zwei Stellen
+  driftet unbemerkt auseinander.
+- NOCH NICHT AUSGELIEFERT: wirkt erst nach Bridge-Buendel + Control-Release.
