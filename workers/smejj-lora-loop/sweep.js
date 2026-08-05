@@ -27,10 +27,24 @@
 export const GITTER = Object.freeze({
   lernrate: Object.freeze([1e-4, 5e-5, 2e-5]),
   loraRang: Object.freeze([8, 16, 32]),
-  // Anteil des Projektkorpus an der Mischung. Der Rest kommt aus dem offenen
-  // Datensatz. Zwei Punkte statt vieler, weil dieser Regler die groesste
-  // Wirkung auf die Pruefsuite hat und schnell beantwortet sein soll.
-  projektAnteil: Object.freeze([0.3, 0.6])
+  // Anteil des Projektkorpus an der Mischung. Der Rest kaeme aus dem offenen
+  // Datensatz.
+  //
+  // NUR EIN WERT, SOLANGE ES NUR EINE QUELLE GIBT — gemessen am 2026-08-05:
+  // `datenlader.lade_trainingszeilen()` nimmt `projekt_anteil` entgegen und
+  // schreibt ihn ins Protokoll, WENDET IHN ABER NICHT AN; es ist nur eine
+  // Quelle konfiguriert, also wird sie immer vollstaendig verwendet.
+  //
+  // Mit zwei Werten war deshalb die HAELFTE des Gitters doppelt: jedes
+  // (Lernrate, Rang)-Paar lief zweimal mit identischen Daten. Das kostet nicht
+  // nur GPU-Zeit, es verfaelscht die Suche — zwei identische Laeufe liefern
+  // durch Rauschen verschiedene Punktzahlen, und der Vergleich schriebe den
+  // Unterschied einem Regler zu, der nichts bewegt hat. Ein Suchgitter darf nur
+  // variieren, was auch wirklich wirkt.
+  //
+  // Sobald der offene Korpus verdrahtet und in datenlader.py ausgewertet ist,
+  // gehoert hier wieder ein zweiter Wert hinein.
+  projektAnteil: Object.freeze([1.0])
 });
 
 /** Alpha folgt der ueblichen Faustregel alpha = 2 * rang. */
