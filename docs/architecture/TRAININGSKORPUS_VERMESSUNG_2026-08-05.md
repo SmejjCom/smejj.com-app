@@ -2,6 +2,32 @@
 
 **Stand 2026-08-05 · reine Messung · nichts geaendert**
 
+> **NACHTRAG (2026-08-05) — Empfehlung 2 wurde umgesetzt, gemessen und
+> ZURUECKGENOMMEN.** Beide Zerleger bekamen eine Banner-Erkennung
+> (`====`/Titel/`====`). Zwei Befunde, beide gegen die Erwartung:
+>
+> * **Trainingsseite: wirkungslos, und die Diagnose war falsch.**
+>   MASTER_PROMPT.md liefert nicht deshalb 1 Fakt, weil Banner unerkannt
+>   bleiben, sondern weil **das gesamte Dokument absichtlich in einem
+>   ```text-Codeblock steht** (Zeile 6 oeffnet, 503 schliesst). Die Datei sagt
+>   den Grund selbst: sie ist zum Kopieren gedacht. Der Extraktor ueberspringt
+>   Codebloecke bewusst. Zwei Entwurfsentscheidungen, die sich beissen — kein
+>   Parser-Defekt.
+> * **RAG-Seite: messbar SCHLECHTER.** Die Banner-Erkennung teilte
+>   MASTER_PROMPT.md in 4 statt 1 Ueberschrift — und machte die kuerzeren
+>   Abschnitte in BM25 konkurrenzfaehiger. Trefferquote 32 % -> 31 %,
+>   und der Anteil, in dem dieses Dokument Platz 1 belegt, stieg von 48 % auf
+>   **61 %**. Bessere Gliederung verstaerkte genau die Pathologie.
+>
+> **MERKREGEL: eine sauberere Struktur ist nicht automatisch eine bessere
+> Suche.** Kuerzere Abschnitte gewinnen bei BM25 ueber die Laengennormierung —
+> wer ein Allerwelts-Dokument feiner gliedert, gibt ihm mehr Gewicht, nicht
+> weniger.
+>
+> Beides zurueckgenommen, Produktionscode im Stand von HEAD. Empfehlung 3
+> (Quellenliste erweitern) ist damit ebenfalls hinfaellig: sie setzte auf
+> Empfehlung 2 auf.
+
 Anlass: das Training verschlechtert das Modell (Grundlinie 95,88 %, trainiert
 67,89 %). Das Qualitaetstor verwirft zu Recht. Die Frage ist, WARUM.
 
