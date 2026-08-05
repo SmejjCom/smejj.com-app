@@ -30,6 +30,9 @@ class Motor:
     def __init__(self):
         self.modell = None
         self.zerleger = None
+        # Anteil der Zeichen, die ueberhaupt Lernziel sind. Ohne Maskierung
+        # waeren es 100 % — die Zahl in /diagnose beweist, dass sie greift.
+        self.letzte_ziel_quote = None
 
     def lade(self):
         import torch
@@ -232,12 +235,41 @@ class Motor:
         return schluessel
 
     def _buendel(self, batch):
-        texte = [
-            self.zerleger.apply_chat_template(
-                eintrag["messages"], tokenize=False, add_generation_prompt=False
+        """Baut den Trainingsstapel — und blendet den Vorspann aus.
+
+        BIS ZUM 2026-08-05 stand hier `labels = input_ids.clone()`: der Verlust
+        lief ueber die GANZE Sequenz, also auch ueber Systemprompt und
+        Nutzerfrage. Das Modell wurde damit darauf trainiert, die FRAGEN zu
+        erzeugen, nicht nur die Antworten.
+
+        Bei 15 Frageschablonen ueber 699 Fakten ist das kein Randeffekt: ein
+        grosser Teil der Kapazitaet geht ins Auswendiglernen von Frageformen.
+        Gemessen wurde in vier Zyklen ausschliesslich Verschlechterung
+        (Grundlinie 95,88 %, danach 61,8-68,6 %), ueber zwei Lernraten, zwei
+        Raenge und zwei Korpora hinweg — also nichts, was Hyperparameter
+        erklaeren.
+
+        Ueblich und hier nachgeholt: alles vor der Antwort auf -100 setzen, dann
+        zaehlt nur noch, was das Modell wirklich sagen soll.
+        """
+        texte = []
+        vorspann_zeichen = []
+        for eintrag in batch:
+            nachrichten = eintrag["messages"]
+            texte.append(
+                self.zerleger.apply_chat_template(
+                    nachrichten, tokenize=False, add_generation_prompt=False
+                )
             )
-            for eintrag in batch
-        ]
+            # Exakt der Text, den das Modell zur Laufzeit vorgesetzt bekommt:
+            # dieselbe Vorlage ohne die Antwort, mit Generierungs-Aufforderung.
+            vorspann = self.zerleger.apply_chat_template(
+                nachrichten[:-1], tokenize=False, add_generation_prompt=True
+            )
+            vorspann_zeichen.append(
+                self.zerleger(vorspann, add_special_tokens=False)["input_ids"]
+            )
+
         kodiert = self.zerleger(
             texte,
             return_tensors="pt",
@@ -245,7 +277,49 @@ class Motor:
             truncation=True,
             max_length=MAX_LAENGE,
         )
-        kodiert["labels"] = kodiert["input_ids"].clone()
+        labels = kodiert["input_ids"].clone()
+        laenge = labels.shape[1]
+
+        sichtbar = 0
+        for zeile, vorspann in enumerate(vorspann_zeichen):
+            vorspann_laenge = len(vorspann)
+            # Schutz gegen das Schlimmste: waere der Vorspann laenger als die
+            # abgeschnittene Sequenz, bliebe KEIN Ziel uebrig und der Verlust
+            # waere NaN. Dann lieber diese Zeile ungemaskt lassen und es sagen.
+            if vorspann_laenge >= laenge:
+                print(
+                    f"[smejj-lora-trainer] Vorspann laenger als die Sequenz "
+                    f"({vorspann_laenge} >= {laenge}) — Zeile ungemaskt",
+                    flush=True,
+                )
+                continue
+            # SELBSTPRUEFUNG statt Vertrauen: der Vorspann MUSS Zeichen fuer
+            # Zeichen der Anfang der vollen Sequenz sein. Zwei getrennte
+            # Zerleger-Aufrufe koennen sich um Sonderzeichen unterscheiden — und
+            # eine um wenige Stellen verschobene Maske wuerde stillschweigend das
+            # Falsche ausblenden. Passt es nicht, wird NICHT maskiert, sondern
+            # gemeldet: lieber der alte Zustand als ein unbemerkt falscher.
+            tatsaechlich = kodiert["input_ids"][zeile, :vorspann_laenge].tolist()
+            if tatsaechlich != list(vorspann):
+                print(
+                    "[smejj-lora-trainer] WARNUNG: Vorspann ist kein Praefix der "
+                    "Sequenz — Maskierung fuer diese Zeile ausgesetzt",
+                    flush=True,
+                )
+                continue
+            labels[zeile, :vorspann_laenge] = -100
+            sichtbar += laenge - vorspann_laenge
+
+        # Fuellzeichen zaehlen nie mit. Bei batch_size=1 gibt es keine, aber ein
+        # groesserer Stapel wuerde sonst auf Fuellzeichen trainieren.
+        maske = kodiert.get("attention_mask")
+        if maske is not None:
+            labels[maske == 0] = -100
+
+        kodiert["labels"] = labels
+        # Fuer /diagnose: wieviel Prozent der Zeichen sind ueberhaupt Lernziel?
+        # Ohne Maskierung waeren es 100 — die Zahl beweist, dass sie greift.
+        self.letzte_ziel_quote = round(sichtbar / max(1, labels.numel()) * 100, 1)
         return kodiert
 
     def antworte(self, nachrichten, max_tokens=512, temperature=0.35):

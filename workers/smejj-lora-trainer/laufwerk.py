@@ -200,6 +200,11 @@ class Laufwerk:
             return {"geladen": False}
 
         bericht = {"geladen": True, "typ": type(modell).__name__}
+        # Beweist, dass die Vorspann-Maskierung greift: ohne sie waeren 100 %
+        # der Zeichen Lernziel, mit ihr nur der Antwortanteil.
+        quote = getattr(motor, "letzte_ziel_quote", None)
+        if quote is not None:
+            bericht["zielQuoteProzent"] = quote
         try:
             bericht["dtype"] = str(getattr(modell, "dtype", ""))
         except Exception:  # noqa: BLE001
