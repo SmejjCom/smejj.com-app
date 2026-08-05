@@ -776,3 +776,24 @@ EIN Messzyklus (~6 Cent). Nebenbei behoben: EIN Statusabfrage-Timeout
 verwarf einen bezahlten Lauf (jetzt 3er-Toleranz, `deae025`); Salad-batch
 verdraengte den Trainer real (0 USD, korrektes Fail-closed). Verbrauch
 0,13/50 USD.
+
+## 2026-08-05 — Datenschutzerklaerung um Fragen-Erfassung ergaenzt (NICHT ausgeliefert)
+
+Abschnitt 10 nennt jetzt ausdruecklich die an den Assistenten gerichteten Fragen
+— **ohne die Antworten**, weil die von Fremdmodellen stammen — und beschreibt,
+dass Eingaben mit Zugangsdaten VOLLSTAENDIG verworfen statt bereinigt werden.
+Stand auf 5. August 2026 gesetzt.
+
+    alter Hash  d0172df62819934b0f8a0610985b5026185b86d527635bc596f54785019aeeb2
+    neuer Hash  89cccf58e723113c0b9a4e17290e3136885f082bf9094238f69f6236258d4c8b
+
+- **REIHENFOLGE IST HIER SICHERHEITSRELEVANT.** `SMEJJ_TRAINING_PRIVACY_NOTICE_SHA256`
+  im Control Server MUSS auf den neuen Hash gesetzt werden. Geht das Dokument
+  vorher live, veroeffentlicht `/api/training/consent/notice` weiter den ALTEN
+  Hash — Nutzer lesen dann den neuen Text und willigen unter dem alten ein.
+  Umgekehrt genauso falsch. **Beides gehoert in denselben Wartungsschritt.**
+- Darum ist die Aenderung committet, aber BEWUSST NICHT ins Frontend-Repo
+  ausgeliefert. Das ist kein vergessener Schritt.
+- FOLGE fuer bestehende Einwilligungen: sie sind an den alten Hash gebunden und
+  werden mit der Umstellung ungueltig. Das ist das gewollte Verhalten — eine
+  Einwilligung gilt fuer den Text, den der Nutzer gelesen hat.
