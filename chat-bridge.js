@@ -42,7 +42,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260805-v117-rechenwerkzeug";
+const BRIDGE_VERSION = "20260805-v118-rechner-anschlussfragen";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -188,7 +188,10 @@ async function handleAgent(req, res) {
   // Rechen-Fast-Path: eine Finanzierungsfrage bekommt die Zahlen EXAKT vorgelegt,
   // statt sie das Modell schaetzen zu lassen. Leer, wenn die Werte nicht
   // eindeutig erkennbar sind — dann laeuft alles unveraendert weiter.
-  const rechnung = coding ? "" : baueRechenKontext(task);
+  // Der Verlauf gehoert dazu: Menschen nennen die Zahlen EINMAL und fragen
+  // danach nur noch "und bei 15 Jahren?". Neueste Frage zuerst — neue Werte
+  // gewinnen, der Verlauf fuellt nur Luecken.
+  const rechnung = coding ? "" : baueRechenKontext(task, nutzerfragenRueckwaerts(body.history));
   if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen, rechnung, history: body.history }), "fast", body.model)) return;
   // Wetter-Fast-Path (Welle 2b): Live-Daten direkt von Open-Meteo (~0,3s, frei,
   // ohne Key) statt Control-Router mit Suchmaschinen-Scraping (8-12s). Fail-safe:
@@ -217,6 +220,16 @@ async function handleAgent(req, res) {
  * Ohne `history` verhaelt sich die Funktion exakt wie vorher (sanitizeHistory
  * liefert dann eine leere Liste) — die Aenderung ist rein additiv.
  */
+/** Fruehere Nutzerfragen, neueste zuerst — Rohstoff fuer Anschlussfragen. */
+function nutzerfragenRueckwaerts(history, grenze = 6) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter((n) => n?.role === "user" && typeof n.content === "string")
+    .slice(-grenze)
+    .reverse()
+    .map((n) => n.content);
+}
+
 function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = "", history }) {
   const system = [
     coding ? "You are smejj.com Code Agent." : "Du bist der Assistent von smejj.com.",

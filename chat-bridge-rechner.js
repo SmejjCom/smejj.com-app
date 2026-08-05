@@ -143,24 +143,79 @@ export function annuitaet({ darlehen, zinsProJahr, jahre }) {
 
 const geld = (wert) => wert.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/** Liest alle vier Werte aus EINEM Text. Fehlende bleiben undefined. */
+function werteAus(text) {
+  return {
+    preis: betragAus(text) ?? undefined,
+    zins: prozentBei(text, ZINS_WORT, EIGENKAPITAL_WORT) ?? undefined,
+    jahre: jahreAus(text) ?? undefined,
+    eigenkapitalProzent: prozentBei(text, EIGENKAPITAL_WORT, ZINS_WORT) ?? undefined
+  };
+}
+
+/** Sind Betrag, Zins und Laufzeit da — und plausibel? */
+function vollstaendig(w) {
+  return Number.isFinite(w.preis) && Number.isFinite(w.zins) && Number.isFinite(w.jahre)
+    && w.zins >= 0 && w.zins <= 30 && w.jahre >= 1 && w.jahre <= 50 && w.preis > 0;
+}
+
+// Eine Anschlussfrage muss das Thema noch ausdruecklich benennen. "Und wenn ich
+// stattdessen nur 15 Jahre finanziere?" ja — "Wie war das Wetter vor 5 Jahren?"
+// nein, obwohl beide eine Jahreszahl tragen. Ohne dieses Wort wuerde der Rechner
+// nach einem Finanzgespraech jede beiläufige Zahl an sich reissen.
+const ANSCHLUSS_WORT = /finanzier\w*|zins\w*|darlehen|kredit|hypothek\w*|tilgung\w*|eigenkapital|anzahlung|laufzeit|monatsrate|rate\b|loan|mortgage|interest|equity|down\s?payment/i;
+
+/**
+ * Werte der aktuellen Frage, bei Bedarf ergaenzt aus dem Gespraechsverlauf.
+ *
+ * BEFUND 2026-08-05, live in der Oberflaeche gemessen: Auf "Und wenn ich
+ * stattdessen nur 15 Jahre finanziere?" antwortete das Modell 8.221,74 statt
+ * 7.839,97 — 68.719 Euro zu viel bei den Gesamtzinsen. Der Rechner sah nur die
+ * aktuelle Frage, und die trug keine Zahlen mehr; also schaetzte das Modell
+ * wieder. Genau so fragen Menschen aber: einmal alles, danach nur noch das
+ * Geaenderte.
+ *
+ * NEUE WERTE GEWINNEN. Der Verlauf fuellt ausschliesslich Luecken — sonst
+ * bliebe im Beispiel die alte Laufzeit von 20 Jahren stehen und die Antwort
+ * waere falsch, nur anders falsch.
+ *
+ * @param {string} text aktuelle Frage
+ * @param {string[]} verlauf fruehere Nutzerfragen, neueste zuerst
+ * @returns {object|null} null, wenn nicht sicher gerechnet werden kann
+ */
+function werteMitVerlauf(text, verlauf) {
+  const jetzt = werteAus(text);
+  if (istFinanzierungsfrage(text) && vollstaendig(jetzt)) return jetzt;
+
+  // Ab hier: Anschlussfrage. Drei Bedingungen, alle noetig.
+  if (!ANSCHLUSS_WORT.test(text)) return null;
+  const geaendert = Object.values(jetzt).some((w) => Number.isFinite(w));
+  if (!geaendert) return null; // "Danke!" aendert nichts und rechnet nichts
+
+  const gemischt = { ...jetzt };
+  for (const frueher of Array.isArray(verlauf) ? verlauf : []) {
+    const alt = werteAus(String(frueher || ""));
+    for (const feld of ["preis", "zins", "jahre", "eigenkapitalProzent"]) {
+      if (!Number.isFinite(gemischt[feld]) && Number.isFinite(alt[feld])) gemischt[feld] = alt[feld];
+    }
+    // Bewusst KEIN vorzeitiger Abbruch, sobald Betrag/Zins/Laufzeit stehen: das
+    // Eigenkapital kann eine Runde weiter hinten liegen, und wer es uebersieht,
+    // rechnet den vollen Kaufpreis als Darlehen — zu hoch, aber plausibel.
+  }
+  return vollstaendig(gemischt) ? gemischt : null;
+}
+
 /**
  * Baut den Rechen-Kontext fuer das Modell.
  *
  * @param {string} task Frage des Nutzers
  * @returns {string} leer, wenn die Werte nicht eindeutig erkennbar sind
  */
-export function baueRechenKontext(task) {
-  const text = String(task || "");
-  if (!istFinanzierungsfrage(text)) return "";
+export function baueRechenKontext(task, verlauf = []) {
+  const werte = werteMitVerlauf(String(task || ""), verlauf);
+  if (!werte) return "";
+  const { zins, jahre, preis, eigenkapitalProzent } = werte;
 
-  const zins = prozentBei(text, ZINS_WORT, EIGENKAPITAL_WORT);
-  const jahre = jahreAus(text);
-  const preis = betragAus(text);
-  if (!Number.isFinite(zins) || !Number.isFinite(jahre) || !Number.isFinite(preis)) return "";
-  if (zins < 0 || zins > 30 || jahre < 1 || jahre > 50) return "";
-
-  // Eigenkapital ist optional: fehlt es, gilt der Betrag als Darlehen.
-  const eigenkapitalProzent = prozentBei(text, EIGENKAPITAL_WORT, ZINS_WORT);
   const hatEigenkapital = Number.isFinite(eigenkapitalProzent) && eigenkapitalProzent > 0 && eigenkapitalProzent < 100;
   const eigenkapital = hatEigenkapital ? preis * (eigenkapitalProzent / 100) : 0;
   const darlehen = preis - eigenkapital;
