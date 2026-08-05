@@ -1,5 +1,8 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
+// Rechnen statt schaetzen: Sprachmodelle koennen Potenzen nicht (Befund
+// 2026-08-05, Monatsrate 40 % daneben). Der Rechner legt exakte Werte vor.
+import { baueRechenKontext } from "./chat-bridge-rechner.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
 // Nur ZAEHLEN, nicht sperren: wie viele echte Anfragen tragen ein gueltiges
 // Token? Freigabe 2026-08-04 — erst messen, dann ueber die Wache entscheiden.
@@ -39,7 +42,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260804-v116-anmeldung-messen";
+const BRIDGE_VERSION = "20260805-v117-rechenwerkzeug";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -182,17 +185,21 @@ async function handleAgent(req, res) {
   // (app.js schickt die aktuelle nur als `task`), trifft also das Thema, auf
   // das sich eine Anschlussfrage bezieht.
   const wissen = buildRagBlockMitVerlauf(task, lastUserContent(body.history));
-  if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen, history: body.history }), "fast", body.model)) return;
+  // Rechen-Fast-Path: eine Finanzierungsfrage bekommt die Zahlen EXAKT vorgelegt,
+  // statt sie das Modell schaetzen zu lassen. Leer, wenn die Werte nicht
+  // eindeutig erkennbar sind — dann laeuft alles unveraendert weiter.
+  const rechnung = coding ? "" : baueRechenKontext(task);
+  if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen, rechnung, history: body.history }), "fast", body.model)) return;
   // Wetter-Fast-Path (Welle 2b): Live-Daten direkt von Open-Meteo (~0,3s, frei,
   // ohne Key) statt Control-Router mit Suchmaschinen-Scraping (8-12s). Fail-safe:
   // ohne Kontext oder bei Fast-Lane-Fehler laeuft unveraendert der alte Pfad.
   if (!coding && isWeatherTask(task)) {
     const weatherContext = await buildWeatherContext(task);
-    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, history: body.history }), "web", body.model)) return;
+    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, rechnung, history: body.history }), "web", body.model)) return;
   }
   if (await streamViaControl(res, "/api/agent", body)) return;
   const webContext = !coding && shouldSearchWeb(task) ? await buildWebContext(task, CONTROL_ORIGIN) : "";
-  const messages = buildAgentMessages({ task, coding, webContext, wissen, history: body.history });
+  const messages = buildAgentMessages({ task, coding, webContext, wissen, rechnung, history: body.history });
   return streamModel(res, messages, coding ? "coding" : webContext ? "web" : "fast", body.model);
 }
 
@@ -210,7 +217,7 @@ async function handleAgent(req, res) {
  * Ohne `history` verhaelt sich die Funktion exakt wie vorher (sanitizeHistory
  * liefert dann eine leere Liste) — die Aenderung ist rein additiv.
  */
-function buildAgentMessages({ task, coding, webContext, wissen = "", history }) {
+function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = "", history }) {
   const system = [
     coding ? "You are smejj.com Code Agent." : "Du bist der Assistent von smejj.com.",
     "Antworte sofort sichtbar und direkt. Gib keine Denk-Tags, kein <think>, keine internen Notizen und keine Rohdaten aus.",
@@ -219,9 +226,15 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", history }) 
       : "Beantworte in der Sprache des Nutzers korrekt, knapp und hilfreich.",
     webContext
       ? "Nutze nur die Live-Internet-Ergebnisse. Antworte in maximal 5 kurzen Saetzen. Schreibe am Ende genau eine Zeile: Quellen: URL1, URL2 (Stand: ISO-Zeit)."
-      : "Wenn tagesaktuelle Fakten fehlen, sage das ehrlich statt zu raten."
-  ].join("\n");
-  const user = ["Frage/Aufgabe:", task, webContext].filter(Boolean).join("\n\n");
+      : "Wenn tagesaktuelle Fakten fehlen, sage das ehrlich statt zu raten.",
+    // Der Chat zeigt reinen Text — rohes LaTeX stand am 2026-08-05 sichtbar in
+    // der Antwort ("\\[ A = P \\times \\frac{...} \\]") und ist fuer Nutzer unlesbar.
+    "Schreibe Formeln in normaler Schreibweise (z. B. Rate = Betrag * Faktor). Niemals LaTeX, kein \\frac, kein \\times, keine eckigen Formelklammern.",
+    rechnung
+      ? "Die exakt berechneten Werte liegen dir vor. Uebernimm sie ZIFFERNGENAU und rechne sie NICHT nach; erklaere nur den Weg und nenne die Ergebnisse."
+      : ""
+  ].filter(Boolean).join("\n");
+  const user = ["Frage/Aufgabe:", task, rechnung, webContext].filter(Boolean).join("\n\n");
   // Projektwissen steht VOR der Aufgaben-Anweisung: die Anweisung muss zuletzt
   // gelten, sonst richtet sich das Modell nach dem Hintergrund statt nach ihr.
   return withRagBlock(
