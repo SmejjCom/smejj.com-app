@@ -36,6 +36,23 @@ export function chatEndpointFromEnv(env = process.env) {
   return wert || DEFAULT_CHAT_ENDPOINT;
 }
 
+/**
+ * Anmelde-Kopf fuer den Messweg.
+ *
+ * WARUM ES DAS BRAUCHT: Seit dem 2026-08-05 (Bridge v121) weist `/api/chat`
+ * jede Anfrage OHNE gueltiges Token mit HTTP 401 ab. Der Messlauf trug keinen
+ * Nachweis und haette ab sofort ausschliesslich Fehler gemessen — also gar
+ * nichts mehr, denn ein Lauf mit Fehlern veroeffentlicht bewusst nichts.
+ *
+ * Das Token wird NIE hier erzeugt und nie gespeichert: es kommt kurzlebig aus
+ * `scripts/verlauf/mint-eval-token.mjs` ueber die Umgebung. Ohne gesetztes
+ * `SMEJJ_EVAL_SESSION_TOKEN` verhaelt sich der Messweg exakt wie vorher.
+ */
+export function sessionHeadersFromEnv(env = process.env) {
+  const token = String(env?.SMEJJ_EVAL_SESSION_TOKEN || "").trim();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const TRANSPORTS = Object.freeze(["control", "provider"]);
 
 /**
@@ -99,6 +116,8 @@ export async function callViaControl(evalCase, {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
         Origin: "https://smejj.com",
+        // Anmeldung zuerst, damit ausdrueckliche Zusatzkoepfe sie ueberschreiben duerfen.
+        ...sessionHeadersFromEnv(),
         ...zusatzKoepfe
       },
       body: JSON.stringify({ messages: buildMessages(evalCase), ...(modelId ? { model: modelId } : {}) })

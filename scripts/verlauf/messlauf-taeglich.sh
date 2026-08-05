@@ -23,10 +23,19 @@
 # Es wird ausschliesslich die eine Messwert-Datei aufgenommen.
 set -u
 
-APP="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
+# Arbeitsordner aus dem EIGENEN Ort ableiten, nicht fest verdrahten.
+# Grund: ein zeitgesteuerter Lauf darf nichts aus dem Google-Drive-Ordner lesen
+# (macOS verweigert das jedem Hintergrunddienst — am 2026-08-05 gemessen:
+# "Operation not permitted", und zwar bei cron UND launchd). Der geplante Lauf
+# arbeitet deshalb in einer Kopie ausserhalb von Drive; derselbe Text muss in
+# beiden Kopien funktionieren.
+APP="$(cd "$(dirname "$0")/../.." && pwd)"
 FRONTEND="$HOME/smejj-app-frontend"
 DATEI="public/verlauf-messwerte.json"
-SSH_SCHLUESSEL="$HOME/.ssh/smejjcom_github_ed25519"
+# Hochladen ueber HTTPS, NICHT ueber SSH: der SSH-Deploy-Key dieses Macs wird
+# von GitHub abgewiesen ("Permission denied (publickey)", am 2026-08-05 erneut
+# gemessen). Das Schluesselbund traegt das HTTPS-Schreibrecht.
+APP_REPO_HTTPS="https://github.com/SmejjCom/smejj.com-app.git"
 
 cd "$APP" || { echo "Arbeitsordner nicht gefunden."; exit 1; }
 
@@ -44,6 +53,16 @@ command -v node >/dev/null 2>&1 || { echo "$(date -u +%FT%TZ) ABBRUCH: node nich
 
 echo "===== $(date -u +%FT%TZ) Messlauf beginnt ====="
 
+# --- 0. Anmelde-Nachweis -----------------------------------------------------
+# Seit Bridge v121 (2026-08-05) weist /api/chat jede Anfrage ohne gueltiges
+# Token mit HTTP 401 ab. Ohne diesen Schritt misst der Lauf nur noch Fehler und
+# veroeffentlicht — richtigerweise — gar nichts mehr.
+if ! SMEJJ_EVAL_SESSION_TOKEN="$(node scripts/verlauf/mint-eval-token.mjs)"; then
+  echo "$(date -u +%FT%TZ) ABBRUCH: kein Anmelde-Nachweis. Bisheriger Stand bleibt."
+  exit 1
+fi
+export SMEJJ_EVAL_SESSION_TOKEN
+
 # --- 1. Messen -------------------------------------------------------------
 if ! node scripts/verlauf/messlauf.mjs; then
   echo "$(date -u +%FT%TZ) ABBRUCH: Messlauf nicht brauchbar. Bisheriger Stand bleibt."
@@ -58,14 +77,23 @@ fi
 
 # --- 3. Commit im App-Repo, NUR diese Datei --------------------------------
 PUNKTE=$(node -e "const d=require('./$DATEI');const m=d.messungen[d.messungen.length-1];console.log((m.punktzahl*100).toFixed(2)+' %, '+m.kritischeFehler+' kritisch, '+m.urteil)")
-git add -- "$DATEI" || { echo "ABBRUCH: git add fehlgeschlagen."; exit 1; }
-git commit -q -m "chore(qualitaet): Messlauf $(date -u +%F) — $PUNKTE
+
+# Der GEPLANTE Lauf ueberspringt diesen Schritt (SMEJJ_MESSLAUF_NUR_LIVE=1):
+# an diesem Arbeitsplatz laufen mehrere Sitzungen auf demselben Arbeitszweig,
+# und ein Hintergrundjob, der dort committet und schiebt, kollidiert mit ihnen.
+# Fuers Livegehen zaehlt ohnehin nur das Frontend-Repo (Schritt 4).
+if [ "${SMEJJ_MESSLAUF_NUR_LIVE:-0}" = "1" ]; then
+  echo "$(date -u +%FT%TZ) App-Repo uebersprungen (geplanter Lauf) — es wird nur live veroeffentlicht."
+else
+  git add -- "$DATEI" || { echo "ABBRUCH: git add fehlgeschlagen."; exit 1; }
+  git commit -q -m "chore(qualitaet): Messlauf $(date -u +%F) — $PUNKTE
 
 Automatisch erzeugt von scripts/verlauf/messlauf-taeglich.sh (Betreiber-Freigabe
 2026-08-04). Gemessen wurde die Live-Kette; ein technisch gescheiterter Lauf
 haette nichts geschrieben." || { echo "ABBRUCH: git commit fehlgeschlagen."; exit 1; }
 
-GIT_SSH_COMMAND="ssh -i $SSH_SCHLUESSEL" git push -q origin HEAD 2>&1 | tail -3
+  git push -q "$APP_REPO_HTTPS" HEAD 2>&1 | tail -3
+fi
 
 # --- 4. Ins Frontend-Repo und live -----------------------------------------
 if [ ! -d "$FRONTEND/.git" ]; then
