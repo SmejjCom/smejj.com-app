@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-import { alsProzent, alsZeit, ladeVerlauf, stufeFuer, trendFuer, wackeligText, zeichneKopf, zeichneTabelle } from "../public/verlauf.js";
+import { VERALTET_AB_STUNDEN, alsProzent, alsZeit, alterText, istVeraltet, ladeVerlauf, standText, stufeFuer, trendFuer, wackeligText, zeichneKopf, zeichneTabelle } from "../public/verlauf.js";
 import { baueDatei, fuegeZusammen, uebernehmeMessung } from "../scripts/verlauf/aktualisiere-messwerte.mjs";
 
 const MESSWERTE = JSON.parse(await readFile(new URL("../public/verlauf-messwerte.json", import.meta.url), "utf8"));
@@ -66,29 +66,124 @@ test("die neueste Messung steht oben und der Absturz ist als kritisch markiert",
   try {
     const anzahl = zeichneTabelle(MESSWERTE, wurzel);
     assert.equal(anzahl, MESSWERTE.messungen.length);
-    assert.equal(zeilen[0].dataset.stufe, "kritisch", "der Absturz mit 3 kritischen Fehlern steht oben");
+    // Bewusst OHNE feste Zahl: die Datei wird bei jeder Messung neu geschrieben.
+    // Geprueft wird die Zusage — die NEUESTE Messung steht oben und traegt ihre
+    // eigene Bewertung, nicht eine fest eingetragene.
+    const neueste = MESSWERTE.messungen[MESSWERTE.messungen.length - 1];
+    assert.equal(zeilen[0].dataset.stufe, stufeFuer(neueste, MESSWERTE.suite),
+      "oben steht die neueste Messung mit ihrer eigenen Bewertung");
   } finally {
     globalThis.document = echtesDocument;
   }
 });
 
-test("die Kopfzeile benennt einen kritischen Stand als solchen", () => {
+// Eine FRISCHE Messung wird weiterhin als aktueller Zustand benannt.
+// `jetzt` liegt eine Stunde nach der letzten Messung der Datei.
+const FRISCH = Date.parse(MESSWERTE.erzeugtAm) + 60 * 60 * 1000;
+
+test("die Kopfzeile benennt einen kritischen Stand als solchen — solange er frisch ist", () => {
+  // Eigene Daten statt der ausgelieferten Datei: die aendert sich bei jeder
+  // Messung, die ZUSAGE nicht.
+  const kritisch = {
+    suite: { mindestPunktzahl: 0.8 },
+    erzeugtAm: "2026-08-04T12:00:00.000Z",
+    messungen: [{ zeitpunkt: "2026-08-04T12:00:00.000Z", punktzahl: 0.7647, kritischeFehler: 3 }]
+  };
   const knoten = { dataset: {}, textContent: "" };
-  zeichneKopf(MESSWERTE, knoten);
+  zeichneKopf(kritisch, knoten, Date.parse(kritisch.erzeugtAm) + 60 * 60 * 1000);
   assert.equal(knoten.dataset.stufe, "kritisch");
   assert.match(knoten.textContent, /76,47 %/);
   assert.match(knoten.textContent, /kritischen Fehlern/);
+  assert.match(knoten.textContent, /gerade nicht/, "frisch darf im Praesens stehen");
+});
+
+test("ein frischer GUTER Stand wird auch als solcher benannt", () => {
+  const gut = {
+    suite: { mindestPunktzahl: 0.8 },
+    erzeugtAm: "2026-08-04T12:00:00.000Z",
+    messungen: [{ zeitpunkt: "2026-08-04T12:00:00.000Z", punktzahl: 0.9804, kritischeFehler: 0 }]
+  };
+  const knoten = { dataset: {}, textContent: "" };
+  zeichneKopf(gut, knoten, Date.parse(gut.erzeugtAm) + 60 * 60 * 1000);
+  assert.equal(knoten.dataset.stufe, "gut");
+  assert.match(knoten.textContent, /98,04 %/);
+  assert.match(knoten.textContent, /alle Budgets eingehalten/);
+});
+
+// ---------------------------------------------------------------------------
+// Befund 2026-08-04 (Betreiber): Die Seite meldete „die Kette liefert GERADE
+// nicht die geforderte Qualitaet" mit Daten vom 30.07. — fuenf Tage alt und
+// aus der Zeit VOR mehreren Korrekturen. Eine veraltete Zahl ist kein Fehler.
+// Sie als aktuell auszugeben schon.
+// ---------------------------------------------------------------------------
+
+test("eine veraltete Messung wird NICHT als aktueller Zustand ausgegeben", () => {
+  const fuenfTageSpaeter = Date.parse(MESSWERTE.erzeugtAm) + 5 * 24 * 60 * 60 * 1000;
+  const knoten = { dataset: {}, textContent: "" };
+  zeichneKopf(MESSWERTE, knoten, fuenfTageSpaeter);
+  assert.equal(knoten.dataset.stufe, "veraltet", "die Bewertung darf die Seite nicht mehr einfaerben");
+  assert.equal(knoten.dataset.veraltet, "true");
+  assert.match(knoten.textContent, /vor 5 Tagen/, "das Alter steht zuerst");
+  assert.match(knoten.textContent, /sagen nichts ueber den heutigen Zustand|sagen nichts über den heutigen Zustand/);
+  assert.match(knoten.textContent, /Damals gemessen/, "das Urteil gehoert in die Vergangenheit");
+  assert.ok(!/gerade nicht/.test(knoten.textContent), "kein Praesens-Urteil bei alten Daten");
+});
+
+test("die 24-Stunden-Grenze sitzt genau", () => {
+  const basis = Date.parse(MESSWERTE.erzeugtAm);
+  assert.equal(istVeraltet(MESSWERTE.erzeugtAm, basis + 23.9 * 3_600_000), false);
+  assert.equal(istVeraltet(MESSWERTE.erzeugtAm, basis + 24.1 * 3_600_000), true);
+  assert.equal(VERALTET_AB_STUNDEN, 24);
+  // Unlesbares Datum gilt als veraltet — fail-closed, nie als „aktuell".
+  assert.equal(istVeraltet("kein datum"), true);
+  assert.equal(istVeraltet(undefined), true);
+});
+
+test("das Alter wird fuer Menschen benannt", () => {
+  const basis = Date.parse("2026-08-04T12:00:00.000Z");
+  assert.equal(alterText("2026-08-04T11:20:00.000Z", basis), "vor 40 Minuten");
+  assert.equal(alterText("2026-08-04T05:00:00.000Z", basis), "vor 7 Stunden");
+  assert.equal(alterText("2026-07-30T12:00:00.000Z", basis), "vor 5 Tagen");
+  assert.equal(alterText("2026-08-04T11:00:00.000Z", basis), "vor 1 Stunde", "Einzahl");
+  assert.equal(alterText("kein datum", basis), "unbekannten Alters");
+});
+
+test("die Standzeile nennt Zeitpunkt UND Alter", () => {
+  const basis = Date.parse(MESSWERTE.erzeugtAm);
+  const frisch = standText(MESSWERTE, basis + 2 * 3_600_000);
+  assert.match(frisch, /Stand der Daten:/);
+  assert.match(frisch, /vor 2 Stunden/);
+  assert.ok(!/Seitdem wurde nicht neu gemessen/.test(frisch));
+  const alt = standText(MESSWERTE, basis + 5 * 24 * 3_600_000);
+  assert.match(alt, /vor 5 Tagen/);
+  assert.match(alt, /Seitdem wurde nicht neu gemessen/);
+});
+
+test("die Seite verspricht keinen Zeitplan mehr, den es nicht gibt", async () => {
+  const seite = await readFile(new URL("../public/verlauf.html", import.meta.url), "utf8");
+  const sichtbar = seite.replace(/<!--[\s\S]*?-->/g, "");
+  assert.ok(!/Alle sechs Stunden/.test(sichtbar), "das unhaltbare Versprechen muss weg sein");
+  assert.match(sichtbar, /von Hand\s+angestoßen|von Hand angestoßen/, "stattdessen steht dort, wie es wirklich laeuft");
+  assert.match(sichtbar, /älter als 24 Stunden/);
 });
 
 test("das Aktualisierungs-Skript fuehrt zusammen statt zu ersetzen", () => {
   // Der Verlauf des Dienstes beginnt bei jedem Neubau bei Null. Wuerde ersetzt,
   // ginge bei jedem Deploy die ganze Geschichte verloren.
   const bestand = { messungen: MESSWERTE.messungen };
-  const neu = { verlauf: [{ zeitpunkt: "2026-07-30T07:00:00.000Z", punktzahl: 0.88, faelle: 14, bestanden: 12, kritischeFehler: 0 }] };
+  // Der neue Eintrag liegt bewusst NACH allem Bestehenden — sonst prueft der
+  // Test nur die Sortierung mit. Der Zeitpunkt wird aus der Datei abgeleitet,
+  // damit er nicht bei jeder neuen Messung nachgezogen werden muss.
+  const spaeter = new Date(Date.parse(MESSWERTE.erzeugtAm) + 3_600_000).toISOString();
+  const neu = { verlauf: [{ zeitpunkt: spaeter, punktzahl: 0.88, faelle: 14, bestanden: 12, kritischeFehler: 0 }] };
   const datei = baueDatei(bestand, neu);
-  assert.equal(datei.messungen.length, MESSWERTE.messungen.length + 1);
-  assert.equal(datei.messungen[datei.messungen.length - 1].zeitpunkt, "2026-07-30T07:00:00.000Z");
-  assert.equal(datei.erzeugtAm, "2026-07-30T07:00:00.000Z");
+  assert.equal(datei.messungen.length, MESSWERTE.messungen.length + 1, "nichts darf verloren gehen");
+  assert.equal(datei.messungen[datei.messungen.length - 1].zeitpunkt, spaeter);
+  assert.equal(datei.erzeugtAm, spaeter);
+  // Und die alten Eintraege stehen unveraendert weiter drin.
+  for (const alt of MESSWERTE.messungen) {
+    assert.ok(datei.messungen.some((m) => m.zeitpunkt === alt.zeitpunkt), `${alt.zeitpunkt} fehlt`);
+  }
 });
 
 test("das Skript schreibt nichts bei unerwarteter Eingabe (fail-closed)", () => {

@@ -14,7 +14,16 @@
 // damit eine Umstellung eine ausdrueckliche Entscheidung ist und nicht als
 // Nebenwirkung eines Deploys passiert — ein gewechselter Messweg verschiebt den
 // Massstab und macht Berichte untereinander unvergleichbar.
-export const DEFAULT_CHAT_ENDPOINT = "https://smejj-chat-bridge.zeabur.app/api/chat";
+// Befund 2026-08-04: Hier stand die ZEABUR-Bruecke — also die RESERVE, nicht
+// die Kette, die Nutzer wirklich bekommen. `public/config.js` fuehrt seit dem
+// 2026-08-03 die Salad-Bruecke als primaer und Zeabur nur als Rueckfall.
+// Gemessen wurde damit monatelang der falsche Weg; am 2026-08-04 fiel es auf,
+// weil die Reserve mit HTTP 401 antwortete und der ganze Lauf 0 % ergab.
+//
+// MERKREGEL: Ein Messweg, der nicht der Nutzerweg ist, misst etwas anderes als
+// das Produkt. Wechselt der primaere Endpunkt, muss diese Zeile mitwandern —
+// `tests/model-eval.test.mjs` haelt sie deshalb gegen public/config.js.
+export const DEFAULT_CHAT_ENDPOINT = "https://starfruit-thyme-cblgn6u06ca2z9d5.salad.cloud/api/chat";
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 /**

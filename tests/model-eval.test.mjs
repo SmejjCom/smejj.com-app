@@ -327,7 +327,9 @@ test("der SSE-Leser setzt den Text zusammen und misst den ersten Token", async (
 
 test("der Live-Weg liefert Text, Kennzahlen und meldet HTTP-Fehler sauber", async () => {
   const fetchImpl = async (url, init) => {
-    assert.equal(url, "https://smejj-chat-bridge.zeabur.app/api/chat");
+    // Nicht die Adresse festnageln, sondern DASS der Standardweg genommen
+    // wird. Die Adresse selbst prueft der Test unten gegen public/config.js.
+    assert.equal(url, DEFAULT_CHAT_ENDPOINT);
     const body = JSON.parse(init.body);
     assert.equal(body.messages[0].role, "system");
     assert.equal(body.model, "glm-5-2");
@@ -557,4 +559,19 @@ test("ein Bericht einer anderen Spur wird NICHT als Vergleichswert akzeptiert", 
   assert.notEqual(await suchen(control, bericht(control)), null, "gleiche Spur bleibt vergleichbar");
   // Aeltere Berichte ohne das Feld zaehlen als der historische Standardweg.
   assert.notEqual(await suchen(DEFAULT_CHAT_ENDPOINT, bericht(null)), null, "alte Berichte bleiben auf der unveraenderten Spur vergleichbar");
+});
+
+// Befund 2026-08-04: Der Standard-Messweg zeigte auf die ZEABUR-Reserve, nicht
+// auf die Kette, die Nutzer bekommen. Der ganze Prueflauf ergab 0 %, weil die
+// Reserve mit HTTP 401 antwortete — und niemand haette gemerkt, dass hier gar
+// nicht das Produkt gemessen wird.
+test("der Standard-Messweg ist der NUTZERWEG, nicht die Reserve", async () => {
+  const { DEFAULT_CHAT_ENDPOINT } = await import("../src/evaluation/evalTransport.js");
+  const config = await readFile(new URL("../public/config.js", import.meta.url), "utf8");
+  const primaer = (config.match(/\n\s*chat:\s*"([^"]+)"/) || [, ""])[1];
+  const reserve = (config.match(/chatFallback:\s*"([^"]+)"/) || [, ""])[1];
+  assert.ok(primaer, "public/config.js muss einen primaeren Chat-Endpunkt fuehren");
+  assert.equal(DEFAULT_CHAT_ENDPOINT, primaer,
+    "gemessen wird, was der Nutzer bekommt — sonst misst der Prueflauf ein anderes Produkt");
+  assert.notEqual(DEFAULT_CHAT_ENDPOINT, reserve, "die Reserve ist nicht der Nutzerweg");
 });
