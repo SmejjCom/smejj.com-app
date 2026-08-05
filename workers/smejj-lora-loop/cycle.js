@@ -26,6 +26,14 @@ import { gitterErschoepft, istNeuerBester, konfigurationFuer } from "./sweep.js"
 import { brichTrainingAb, starteTraining, trainerErreichbar, trainingZustand } from "./trainerClient.js";
 
 const ABFRAGE_ABSTAND_MS = 30_000;
+/**
+ * Wie viele Statusabfragen IN FOLGE unklar sein duerfen, bevor der Lauf
+ * abgebrochen wird. 3 x (30 s Abstand + 20 s Zeitgrenze) ≈ 2,5 Minuten —
+ * lang genug fuer einen Gateway-Schluckauf waehrend des Trainings, kurz
+ * genug, dass die Karte nie unbeaufsichtigt weiterlaeuft (Laufzeit- und
+ * Kostendeckel gelten waehrenddessen unveraendert).
+ */
+const UNBEKANNT_TOLERANZ = 3;
 
 function jetztMinuten(start, jetzt) {
   return (jetzt().getTime() - start) / 60_000;
@@ -108,7 +116,8 @@ export async function fuehreZyklusAus({
   // --- ab hier laeuft die Karte und kostet Geld ---
   let zustand = { zustand: "laeuft", gelaufeneMinuten: 0 };
   let abgebrochen = null;
-  while (zustand.zustand === "laeuft") {
+  let unbekanntInFolge = 0;
+  while (zustand.zustand === "laeuft" || zustand.zustand === "unbekannt") {
     const laufendeMinuten = jetztMinuten(startZeit, jetzt);
     const notaus = mussNotausAusloesen({ grenzen, verbrauchtUsd, laufendeMinuten });
     if (notaus.notaus) {
@@ -120,12 +129,21 @@ export async function fuehreZyklusAus({
       () => trainingZustand({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.laufId, fetchImpl }),
       { zustand: "unbekannt", gelaufeneMinuten: 0 }
     );
-    // Ein unklarer Zustand ist ein Abbruchgrund. Weiterfragen hiesse, eine
-    // laufende Karte unbeaufsichtigt zu lassen.
+    // Ein unklarer Zustand bleibt ein Abbruchgrund — aber erst nach mehreren
+    // Fehlversuchen IN FOLGE. Gemessen am 2026-08-05: EIN 20-s-Timeout einer
+    // Statusabfrage (Zyklus 2, r32, Minute 24,8 — davor 24 Minuten saubere
+    // Antworten) hat einen bezahlten Lauf verworfen. Die Karte bleibt dabei
+    // nie unbeaufsichtigt: das Toleranzfenster ist auf rund 2,5 Minuten
+    // begrenzt, und Laufzeit- und Kostendeckel oben im Takt greifen weiter.
     if (zustand.zustand === "unbekannt") {
-      abgebrochen = [`trainer_zustand_unbekannt:${zustand.fehler || ""}`];
-      break;
+      unbekanntInFolge += 1;
+      if (unbekanntInFolge >= UNBEKANNT_TOLERANZ) {
+        abgebrochen = [`trainer_zustand_unbekannt:${zustand.fehler || ""}`];
+        break;
+      }
+      continue;
     }
+    unbekanntInFolge = 0;
   }
 
   const gelaufeneMinuten = Math.max(zustand.gelaufeneMinuten || 0, jetztMinuten(startZeit, jetzt));

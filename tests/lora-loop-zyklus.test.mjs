@@ -167,6 +167,19 @@ test("schlechteres Ergebnis wird verworfen und der Grund protokolliert", async (
 
 // --- Zyklus: Abbruchwege ---
 
+test("EIN Statusabfrage-Schluckauf verwirft den bezahlten Lauf NICHT", async () => {
+  // Gemessen am 2026-08-05 (Zyklus 2, r32): nach 24 Minuten sauberer Antworten
+  // genuegte ein einzelner 20-s-Timeout, um 25 Minuten GPU-Zeit zu verwerfen.
+  // Ein voruebergehend unklarer Zustand muss ueberbrueckt werden, solange die
+  // naechsten Abfragen wieder antworten.
+  const ergebnis = await fuehreZyklusAus(basis({
+    fetchImpl: trainerFetch({ zustandsfolge: ["laeuft", "kaputtgeredet", "laeuft", "kaputtgeredet", "kaputtgeredet", "fertig"] })
+  }));
+  assert.equal(ergebnis.gestartet, true);
+  assert.equal(ergebnis.ok, true, ergebnis.gruende ? ergebnis.gruende.join(",") : "");
+  assert.ok(!ergebnis.gruende.some((g) => g.startsWith("trainer_zustand_unbekannt")));
+});
+
 test("unklarer Trainerzustand bricht ab, statt die Karte weiterlaufen zu lassen", async () => {
   const ergebnis = await fuehreZyklusAus(basis({
     fetchImpl: trainerFetch({ zustandsfolge: ["kaputtgeredet"] })
