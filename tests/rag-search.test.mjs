@@ -117,6 +117,14 @@ test("corpus rule keeps rule documents and drops history and dated snapshots", (
   assert.equal(isKnowledgeFile("docs/task-capsules/2026/07/job_x/CAPSULE.md"), false);
   // Datierte Momentaufnahme, auch in einem erlaubten Ordner
   assert.equal(isKnowledgeFile("docs/architecture/BEFUND_2026-07-25.md"), false);
+  // Aenderungsprotokolle sind Verlauf, auch wenn sie in einem Sachordner liegen.
+  // Befund 2026-08-05: sw.js aufgeraeumt -> Changelog wurde .md -> wurde Wissen,
+  // und ein Loeschbefehl kam dadurch ueber die Relevanzschwelle.
+  assert.equal(isKnowledgeFile("docs/frontend/SW_VERSIONSVERLAUF.md"), false);
+  assert.equal(isKnowledgeFile("docs/frontend/CHANGELOG.md"), false);
+  // Die Regel darf nur Protokolle treffen, keine Sachdokumente mit aehnlichem Namen
+  assert.equal(isKnowledgeFile("docs/frontend/START_LOCK.md"), true);
+  assert.equal(isKnowledgeFile("docs/architecture/VERSIONIERUNG.md"), true);
   // Nicht-Markdown und Dateien ausserhalb des Wissensbereichs
   assert.equal(isKnowledgeFile("docs/architecture/diagram.png"), false);
   assert.equal(isKnowledgeFile("src/server.js"), false);

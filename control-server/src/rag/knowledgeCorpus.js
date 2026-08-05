@@ -46,6 +46,22 @@ export const HISTORY_DIRECTORIES = Object.freeze([
 /** Dateiname mit ISO-Datum = Momentaufnahme, kein geltendes Regeldokument. */
 export const DATED_FILE_PATTERN = /\d{4}-\d{2}-\d{2}/;
 
+/**
+ * Aenderungsprotokolle am DATEINAMEN erkennen, nicht nur am Ordner.
+ *
+ * Befund 2026-08-05: Ein Aufraeumen von sw.js verschob dessen Changelog nach
+ * docs/frontend/SW_VERSIONSVERLAUF.md. Der Text wechselte damit von einer
+ * .js-Datei (nie im Korpus) in eine .md-Datei in einem Sachordner — und war ab
+ * da Projektwissen. Gemessene Folge: die Frage "Loesche bitte alle alten
+ * Dateien im Objektspeicher" kam mit 21,1 Punkten ueber die Schwelle von 20
+ * und bekam Projektkontext, obwohl sie ohne bleiben MUSS.
+ *
+ * Ein Changelog ist genau das, was HISTORY_DIRECTORIES draussen halten soll —
+ * er lag nur im falschen Ordner. Die Regel wird deshalb nicht gelockert,
+ * sondern dort ergaenzt, wo sie luecken hatte.
+ */
+export const CHANGELOG_FILE_PATTERN = /^(CHANGELOG|.*_VERSIONSVERLAUF|VERSIONSVERLAUF)\.md$/i;
+
 // Obergrenze bleibt bestehen (der Kontext eines Prompts ist endlich), aber sie wird
 // gemeldet statt still angewendet — siehe `truncated` im Rueckgabewert.
 export const MAX_KNOWLEDGE_FILES = 400;
@@ -63,7 +79,9 @@ export function isKnowledgeFile(relativePath) {
   if (!normalized.startsWith("docs/")) return false;
   const segments = normalized.split("/");
   if (segments.slice(1, -1).some((segment) => HISTORY_DIRECTORIES.includes(segment))) return false;
-  return !DATED_FILE_PATTERN.test(segments[segments.length - 1]);
+  const dateiname = segments[segments.length - 1];
+  if (CHANGELOG_FILE_PATTERN.test(dateiname)) return false;
+  return !DATED_FILE_PATTERN.test(dateiname);
 }
 
 /**
