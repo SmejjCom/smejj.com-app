@@ -772,3 +772,28 @@ Commits `2b0e9e4` + Nachbesserung, Frontend `aef96fd`, live als `smejj-shell-v21
   bleibt fertig und geprueft liegen). Mit der Sitzungspruefung ist der Weg dafuer
   jetzt frei — aber erst messen, wie viele echte Anfragen ein gueltiges Token
   tragen, dann scharf schalten.
+
+## 2026-08-05 — Anmeldung MESSEN statt erzwingen (Bridge v116)
+
+Commit `d52de88`, Frontend `9950793`. `check:all` gruen (1885), Sperre neu
+eingefroren. Freigabe: "erst messen, wie viele echte Anfragen ein gueltiges
+Token tragen, dann mit mir abstimmen."
+
+`/health` traegt jetzt `anmeldung: { gesamt, mitGueltigemToken, ohneToken,
+mitUngueltigemToken, anteilGueltig }`.
+
+- **MERKREGEL, teuer bezahlt: eine Aenderung, die im Fehlerfall ALLE aussperrt,
+  wird vorher gemessen — nicht begruendet.** Die Wache lief am 2026-08-04 mit
+  dem Argument live, sie sei "durch Konstruktion sicher". War sie nicht. Diese
+  Zaehler beantworten vorher, was damals angenommen wurde.
+- **Eine Messung darf den gemessenen Dienst nicht veraendern.** Drei
+  Eigenschaften, alle noetig: sie aendert nichts am Ablauf, sie wartet nicht
+  (`void`, kein await — sonst haenge die Antwortzeit des Chats am Rundlauf und
+  man maesse die Messung mit), und sie speichert nur vier Zahlen.
+- **Live beidseitig belegt:** anonyme curl-Anfrage -> `ohneToken`, echte Anfrage
+  aus dem angemeldeten Browser -> `mitGueltigemToken`, Chat antwortet normal.
+- Die Zaehler sind im Speicher und starten bei jedem Container-Neustart bei
+  null; `startedAt` im selben `/health` sagt, ueber welchen Zeitraum sie gelten.
+- NAECHSTER SCHRITT: Zahlen sammeln lassen, dann mit dem Betreiber entscheiden.
+  Die Wache liegt fertig in `chat-bridge-auth.js`, ein Test haelt fest, dass sie
+  bewusst nicht verdrahtet ist.
