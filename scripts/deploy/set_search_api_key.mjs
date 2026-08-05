@@ -129,9 +129,18 @@ async function main() {
     });
   }
 
-  const alleBestaetigt = berichte.every((b) => b.bestaetigt !== false);
+  const alleBestaetigt = berichte.every((b) => b.bestaetigt === true);
   console.log(JSON.stringify({
     ok: alleBestaetigt,
+    // Ziel mit ausgeben: am 2026-08-05 meldete ein Lauf Erfolg, waehrend eine
+    // Nachmessung den Schluessel nirgends fand. Ohne Organisation/Projekt in der
+    // Ausgabe ist "es hat geklappt" und "es hat woanders geklappt" nicht zu
+    // unterscheiden. Enthaelt keinen Zugangsschluessel, nur die Namen.
+    ziel: {
+      organisation: process.env.SALAD_ORGANIZATION_NAME,
+      projekt: process.env.SALAD_PROJECT_NAME,
+      zugangsschluesselLaenge: String(process.env.SALAD_API_KEY || "").length
+    },
     ...(alleBestaetigt ? {} : { fehler: "Salad hat den Schluessel nach dem Schreiben NICHT zurueckgeliefert — nichts wirksam geworden." }),
     schluessel: entfernen ? "(entfernt)" : fingerabdruck(schluessel),
     container: berichte,
