@@ -61,10 +61,50 @@ test("ohne Eigenkapital gilt der Betrag selbst als Darlehen", () => {
   assert.match(kontext, /Monatsrate \(Annuitaet\): 2\.896,8/); // von Hand: 2896,82
 });
 
+// Anschlussfragen — der Fall, an dem die erste Fassung live scheiterte:
+// "Und wenn ich stattdessen nur 15 Jahre finanziere?" ergab 8.221,74 statt
+// 7.839,97, weil der Rechner nur die aktuelle Frage sah.
+test("Anschlussfrage: neue Laufzeit gewinnt, der Rest kommt aus dem Verlauf", () => {
+  const kontext = baueRechenKontext("Und wenn ich stattdessen nur 15 Jahre finanziere?", [ECHTE_FRAGE]);
+  assert.match(kontext, /Laufzeit: 15 Jahre \(180 Monatsraten\)/);
+  assert.match(kontext, /Darlehensbetrag: 900\.000,00/);   // Eigenkapital mitgenommen
+  assert.match(kontext, /Monatsrate \(Annuitaet\): 7\.839,97/);
+  assert.doesNotMatch(kontext, /Laufzeit: 20 Jahre/);      // alte Laufzeit darf NICHT stehenbleiben
+});
+
+test("Anschlussfrage: geaendertes Eigenkapital gewinnt ebenfalls", () => {
+  const kontext = baueRechenKontext("Und mit 40 % Eigenkapital?", [ECHTE_FRAGE]);
+  assert.match(kontext, /Eigenkapital \(40 %\): 480\.000,00/);
+  assert.match(kontext, /Laufzeit: 20 Jahre/); // unveraendert aus dem Verlauf
+});
+
+test("das Eigenkapital wird auch aus einer aelteren Runde geholt", () => {
+  const kontext = baueRechenKontext("Und bei 15 Jahren Laufzeit?", [
+    "Rechne mit 6,5 % Zins ueber 20 Jahre.",
+    "Ich will ein Buero fuer 1.200.000 Euro kaufen, 25 % Eigenkapital, Kredit."
+  ]);
+  // Ohne Blick in die zweite Runde waere der volle Kaufpreis das Darlehen —
+  // zu hoch, aber plausibel, und damit die gefaehrlichste Sorte Fehler.
+  assert.match(kontext, /Darlehensbetrag: 900\.000,00/);
+  assert.match(kontext, /Laufzeit: 15 Jahre/);
+});
+
+test("der Verlauf reisst NICHT jede Zahl an sich", () => {
+  for (const frage of [
+    "Wie war das Wetter vor 5 Jahren?", // Jahreszahl, aber kein Finanzthema
+    "Danke, sehr hilfreich!",           // aendert gar nichts
+    "Erzaehl mir einen Witz."
+  ]) {
+    assert.equal(baueRechenKontext(frage, [ECHTE_FRAGE]), "", frage);
+  }
+  // Und ohne Verlauf bleibt eine Anschlussfrage folgenlos.
+  assert.equal(baueRechenKontext("Und wenn ich stattdessen nur 15 Jahre finanziere?", []), "");
+});
+
 test("die Bruecke haengt den Rechen-Kontext an und verbietet LaTeX", async () => {
   const quelle = await import("node:fs/promises").then((fs) => fs.readFile("public/chat-bridge.js", "utf8"));
   const ohneKommentare = quelle.replace(/^\s*\/\/.*$/gm, "");
-  assert.match(ohneKommentare, /baueRechenKontext\(task\)/);
+  assert.match(ohneKommentare, /baueRechenKontext\(task, nutzerfragenRueckwaerts\(body\.history\)\)/);
   assert.match(ohneKommentare, /task, rechnung, webContext/); // liegt im Nutzertext an
   assert.match(ohneKommentare, /Niemals LaTeX/);
   // Coding-Anfragen bleiben unberuehrt.
