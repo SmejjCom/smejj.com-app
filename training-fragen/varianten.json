@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "beschreibung": "Zusaetzliche Fragenformen zu den Fakten des Projektkorpus. Bewusst LEER ausgeliefert: die Fragen muessen von Menschen geschrieben oder aus echten Nutzerfragen entnommen sein. Ein Sprachmodell darf sie nicht erzeugen (docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md).",
+  "format": {
+    "quelle": "repo-relativer Pfad des Dokuments, z. B. AI_Guidelines.md",
+    "ueberschrift": "die Abschnittsueberschrift, woertlich wie im Dokument",
+    "antwort": "optional: der Antworttext. Nur zur Pruefung auf Antwortverrat — er wird NICHT aus dieser Datei ins Training uebernommen, die Antwort kommt weiterhin aus dem Dokument.",
+    "fragen": [
+      {
+        "text": "die Frage, mit Fragezeichen",
+        "herkunft": "hand | nutzerfrage — jeder andere Wert wird abgewiesen",
+        "erfasstAm": "ISO-Datum",
+        "notiz": "optional, z. B. woher die Nutzerfrage stammt"
+      }
+    ]
+  },
+  "regeln": [
+    "herkunft ist Pflicht. Zulaessig sind ausschliesslich 'hand' (ein Mensch hat sie geschrieben) und 'nutzerfrage' (eine echte Frage aus dem Betrieb). Von einem Sprachmodell erzeugte Fragen sind gesperrt — ein Modell, das auf seinen eigenen Fragen trainiert, lernt nur seine eigene Verteilung.",
+    "Varianten desselben Fakts muessen sich in der FORM unterscheiden, nicht nur in einem Wort. Geprueft wird die Wortueberlappung.",
+    "Die Frage darf die Antwort nicht schon enthalten — sonst lehrt sie Abschreiben statt Wissen.",
+    "Geprueft wird mit: npm run training:fragen-pruefen"
+  ],
+  "eintraege": []
+}

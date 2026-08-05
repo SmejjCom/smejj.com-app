@@ -216,7 +216,10 @@ export function zeilenAusDokument({ pfad, inhalt, systemText, optionen }) {
   return zeilen;
 }
 
-function slug(text) {
+// Exportiert, weil der Anschlusspruefer (scripts/training/pruefe_fragevarianten.mjs)
+// denselben Schluessel bilden muss. Zwei Kopien derselben Bildung wuerden
+// auseinanderlaufen, und die Pruefung meldete dann stumm alles als verwaist.
+export function slug(text) {
   return text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60)
     || crypto.createHash("sha256").update(text).digest("hex").slice(0, 8);
 }
