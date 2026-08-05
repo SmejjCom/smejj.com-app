@@ -28,6 +28,20 @@
 > (Quellenliste erweitern) ist damit ebenfalls hinfaellig: sie setzte auf
 > Empfehlung 2 auf.
 
+> **ZWEITER NACHTRAG (2026-08-05) — der vollstaendige Umbau wirkt, anders als
+> der Banner-Versuch.** Nach dem Trainings-Zerleger (====-Rahmen PLUS
+> transparente ```text-Zaeune, 1 -> 13 Fakten) bekam auch der RAG-Zerleger
+> (`control-server/src/rag/knowledgeLoader.js`) dieselben Formen, opt-in nur
+> fuer MASTER_PROMPT.md. Unterschied zum zurueckgenommenen Versuch: statt 4
+> anonymer Banner-Abschnitte entstehen 19 Chunks mit 13 ECHTEN Ueberschriften
+> (ROTE LISTE, AUTONOMIE-CHARTA, SHIP-LOOP ...), die als Suchbegriffe tragen.
+> Gemessen (smejj-chat-breit, Schwelle 20): Deckung 39,0 % -> 39,7 %
+> (+1 schutz, +1 deployment), Platz-1-Anteil von MASTER_PROMPT unter den
+> Kontextfaellen 52,2 % -> 50,4 % — die Pathologie des ersten Versuchs
+> (48 % -> 61 %) tritt nicht auf. Alle anderen 95 Korpusquellen werden
+> bit-identisch zerlegt; ein Regressionstest in tests/rag-search.test.mjs
+> haelt diese Zusage und die Deckung beider Zerleger fest.
+
 Anlass: das Training verschlechtert das Modell (Grundlinie 95,88 %, trainiert
 67,89 %). Das Qualitaetstor verwirft zu Recht. Die Frage ist, WARUM.
 
