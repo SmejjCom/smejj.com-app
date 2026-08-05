@@ -775,25 +775,32 @@ Volltext: [task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md](tas
 
 ## 2026-08-05 — Geruest fuer Fragevarianten gebaut (Schritt 2, Empfehlung 1)
 
-`training-fragen/varianten.json` (leer ausgeliefert) +
-`src/training/projectcorpus/fragevarianten.js` + `npm run training:fragen-pruefen`,
-in `check:training` verdrahtet. 9 Tests.
-- **DIE REGEL RICHTET SICH AUCH GEGEN MICH:** ich bin selbst ein Fremdmodell.
-  Haette ich die Varianten geschrieben, waeren sie modellerzeugt — genau das,
-  was die Trainingsdaten-Policy sperrt. Das Geruest wird darum LEER
-  ausgeliefert, und `herkunft` ist Pflichtfeld: nur `hand` und `nutzerfrage`,
-  alles andere faellt fail-closed durch (Exit-Code 1, live geprueft).
-- Drei Pruefungen: Herkunft, Form (Wortueberlappung < 0,7 zwischen Varianten;
-  Antwortverrat; Laenge; Fragezeichen) und ANSCHLUSS an einen real vorhandenen
-  Korpusabschnitt.
-- **ANTWORTVERRAT braucht ZWEI Bedingungen.** Eine feste Wortzahl allein taugt
-  nicht: jede gute Frage nennt ihr Thema, und das Thema steht auch in der
-  Antwort. Verraeterisch ist erst eine lange gemeinsame Folge, die zugleich
-  ueber die Haelfte der FRAGE ausmacht — dann ist die Frage die umgestellte
-  Antwort.
-- **STILLER FEHLER, den die eigene Probe fing:** die Korpuszeile hat KEIN Feld
-  `ueberschrift`, sondern eine Kennung `pfad#ebene-slug-index`. Der erste
-  Anschlusspruefer fand deshalb 0 Fakten und haette jeden Eintrag als verwaist
-  gemeldet. MERKREGEL: **ein Pruefer, der nichts findet, ist nicht
-  automatisch ein Pruefer, der nichts zu beanstanden hat** — erst gegen echte
-  Daten gegenpruefen. Jetzt 705 Fakten erkannt; `slug` wird geteilt statt kopiert.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_fragevarianten_geruest.md](docs/memory/Memory_Bank_2026-08-05_fragevarianten_geruest.md).
+
+## 2026-08-05 — Nutzerfragen-Erfassung: der Schalter ist WIRKUNGSLOS
+
+Auftrag war, `SMEJJ_TRAINING_CAPTURE_ENABLED` einzuschalten. NICHT getan — er
+haette nichts bewirkt, und ein gesetzter Schalter ohne Wirkung ist gefaehrlicher
+als ein ausgeschalteter: er sieht aus wie eine laufende Erfassung.
+- **GEMESSEN:** `isCaptureEnabled` wird ausschliesslich von
+  `src/training/pipeline.js` gelesen. Die Pipeline-Funktionen
+  (`prepareTrainingCandidate`, `buildTrainingCandidateWritePlan`) werden NUR aus
+  Tests aufgerufen. **Kein einziger Aufruf im Live-Chatpfad** (control-server,
+  public/, src/server.js). Es gibt keinen Weg, auf dem ein echtes Gespraech in
+  die Pipeline gelangt.
+- VORHANDEN: die Bibliothek (Sanitization, Verschluesselung, Schreibplan), das
+  strenge Tor `evaluateTrainingEligibility` ("denied unless every condition is
+  explicitly proven") und die Einwilligungs-Endpunkte am Control Server
+  (`/api/training/consent`, `/revoke`, `/decision`; live, 401 ohne Anmeldung).
+- **DIE OBERFLAECHE TAEUSCHT NICHT, ABER SIE ZAEHLT AUCH NICHT:** der Schalter
+  "Modelltraining erlauben" in account-privacy.js sagt selbst, er sei lokal und
+  "ersetzt keine serverseitige, signierte Einwilligung". Er schreibt nichts an
+  den Consent-Endpunkt.
+- ES FEHLT FUER EINE ECHTE ERFASSUNG: (1) ein Erfassungspunkt im Live-Chat,
+  (2) die Verdrahtung des Schalters an den Consent-Endpunkt, (3) eine aktuelle
+  Datenschutzerklaerung mit Hash (der Endpunkt erwartet `privacyNoticeSha256`),
+  (4) das signierte Consent-Ledger auf IDrive e2.
+- MERKREGEL: **bevor ein Feature-Schalter umgelegt wird, pruefen, ob ihn
+  ueberhaupt jemand liest.** Ein wirkungsloser Schalter erzeugt die Illusion
+  einer Funktion — hier bei personenbezogenen Daten besonders folgenreich.
