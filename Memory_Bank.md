@@ -755,35 +755,33 @@ Volltext: [task-capsules/2026/08/job_arbeitssignal_20260805/capsule.md](task-cap
 
 ## 2026-08-05 — Punkt 3 gemessen: das Tor war NICHT die Ursache
 
-Die reparierte Suite gegen das trainierte Modell gefahren (Trainer laeuft,
-PeftModelForCausalLM geladen, 14 Faelle je 3 Wiederholungen, 0 Transportfehler).
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_punkt3_tor.md](docs/memory/Memory_Bank_2026-08-05_punkt3_tor.md).
 
-    naming-schreibweise   92 %, NICHT mehr kritisch   <- die Reparatur wirkt
-    Punktzahl             67,89 %
-    kritische Verstoesse  6   — aber SECHS ANDERE Faelle
+## 2026-08-05 — Projektkorpus vermessen: 699 Fakten, drei Fragenformen
 
-Betroffen sind jetzt: speicher-hauptserver, regel-800-zeilen,
-code-esm-failclosed, schutz-daten-loeschen, schutz-api-schluessel,
-schutz-design-lock.
-
-- **KORREKTUR der Diagnose in [[smejj-korpus-widerspricht-suite]]:** die dortige
-  Zahl 6 bezog sich auf 6 KORPUSZEILEN, welche die verbotene Grossform schreiben. Die 6 KRITISCHEN
-  VERSTOESSE sind etwas anderes — `criticalFailures` zaehlt FAELLE, und ein
-  einzelner Fall kann nur einen beitragen. Die Namensregel war also EINER der
-  Blocker, nicht die Ursache aller sechs. **Zwei gleiche Zahlen aus zwei
-  verschiedenen Quellen sahen aus wie eine Kausalkette.**
-- **DER EIGENTLICHE BEFUND: das Training macht das Modell SCHLECHTER.**
-  Grundlinie laut Memory 95,88 %, trainiert 67,89 %. Das Tor verwirft nicht aus
-  Uebereifer — es tut genau seine Arbeit. Der Adapter ist eine Verschlechterung.
-- MERKREGEL: **wenn ein Qualitaetstor dauerhaft schliesst, ist die erste Frage
-  nicht, ob das Tor zu streng ist, sondern ob das Ergebnis wirklich schlechter
-  ist.** Hier war es das.
-- Die Suiten-Reparatur bleibt trotzdem richtig und noetig: sie bestrafte
-  nachweislich die sachlich korrekte Antwort. Sie war nur nicht der Engpass.
-- OFFEN: warum verschlechtert das Training? Kandidaten (ungeprueft):
-  Korpusgroesse, Lernrate, zu wenige Beispiele fuer die betroffenen Themen.
-  Das ist die eigentliche Aufgabe von Schritt 2 — mehr und bessere Daten.
-- INFRASTRUKTUR-BLOCKER fuer einen ECHTEN Zyklus: die Suite steckt im Abbild
-  (`COPY evals/suites` in Dockerfile.smejj-training-loop), es laeuft KEIN
-  Loop-Container (nur smejj-lora-trainer), Docker-Daemon lokal aus und kein
-  Registry-Token. Ein Abbild-Neubau ist von hier nicht moeglich.
+Volltext: [docs/architecture/TRAININGSKORPUS_VERMESSUNG_2026-08-05.md](docs/architecture/TRAININGSKORPUS_VERMESSUNG_2026-08-05.md).
+- **2.097 Zeilen sind 699 FAKTEN, dreimal gefragt.** Der Bauer hat drei fest
+  verdrahtete Schablonen ("Was gilt bei smejj.com zum Thema X?", "Erklaere
+  kurz: X", "X — was ist dazu im Projekt festgelegt?"). Rund 2 % der im Plan
+  veranschlagten 30.000 Beispiele.
+- **WAHRSCHEINLICHE URSACHE DER VERSCHLECHTERUNG:** die Trainingsverteilung
+  kennt drei Fragenformen, die Pruefsuite stellt 295 natuerliche Fragen. Das
+  Modell lernt "auf eine Ueberschrift den Abschnitt aufsagen" und verliert, was
+  das Basismodell konnte. MERKREGEL: **drei Formulierungen derselben Frage sind
+  keine drei Beispiele — sie sind ein Beispiel mit drei Etiketten.**
+- **MASTER_PROMPT.md und AGENTS.md fehlen in den Quellen** (QUELLEN in
+  build_project_corpus.mjs) — genau die Traeger von Roter Liste und
+  Change-Lock. Vier der sechs durchgefallenen Faelle betreffen diese Regeln.
+- **Nachtragen genuegt NICHT:** gemessen wuerden sie 1 bzw. 5 Fakten beitragen.
+  Grund ist derselbe Defekt wie im RAG-Index: **MASTER_PROMPT.md gliedert mit
+  `====`-Trennern statt Markdown-Ueberschriften**, der Zerleger findet darin
+  fast nichts. Dieselbe Datei zerfiel im RAG-Index in 10 Abschnitte mit
+  identischer Ueberschrift. **Ein Strukturdefekt, zwei Systeme betroffen.**
+- Groesste Beitraege heute sind Entwurfsdokumente und ein Vorfallsbericht, nicht
+  die gemessenen Regeln: der Korpus bildet ab, worueber am meisten geschrieben
+  wurde, nicht was am haeufigsten gefragt wird.
+- REIHENFOLGE fuer Schritt 2: (1) mehr Fragenformen je Fakt — von Hand oder aus
+  echten Nutzerfragen, NICHT vom Fremdmodell (Policy); (2) Zerleger fuer
+  `====`-Gliederungen ertuechtigen; (3) Quellenliste erweitern; (4) erst dann
+  ueber Menge reden.
