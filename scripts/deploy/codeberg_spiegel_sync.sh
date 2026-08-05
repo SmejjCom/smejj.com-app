@@ -6,19 +6,35 @@
 # automatischer Abgleich alle 8 h). Der Abgleich muss daher von hier
 # angestossen werden.
 #
+# WARUM HTTPS DER STANDARD IST (Messung 2026-08-05):
+# Im Netz des Betreibers ist Port 22 zu — `ssh git@codeberg.org` endet mit
+# "No route to host" (github.com ebenso: "Operation timed out"). Fuer GitHub
+# gibt es den Ausweg `-p 443 -o HostName=ssh.github.com`; fuer Codeberg gibt
+# es den NICHT: codeberg.org:443 spricht HTTPS statt SSH ("Connection closed
+# by 217.197.84.140 port 443") und ssh.codeberg.org existiert nicht (NXDOMAIN).
+# Deshalb laeuft die Spiegelung ueber HTTPS. Der SSH-Weg bleibt waehlbar, falls
+# Port 22 wieder aufgeht:  CODEBERG_PROTOKOLL=ssh bash scripts/deploy/…
+#
+# EINMALIG durch den Betreiber (eine Session darf das nicht):
+#   1. Auf codeberg.org einen Zugriffs-Token mit Schreibrecht auf Repositories
+#      anlegen (Einstellungen -> Anwendungen -> Zugriffs-Token).
+#   2. Einmal interaktiv anmelden, damit der osxkeychain den Token speichert:
+#        git ls-remote https://codeberg.org/smejj/smejj.com-app.git
+#      Benutzername: smejj    Passwort: der Token (NICHT das Konto-Passwort).
+#   Danach laeuft dieses Skript ohne weitere Eingabe.
+#
 # Nutzung:
 #   bash scripts/deploy/codeberg_spiegel_sync.sh            # alles
 #   bash scripts/deploy/codeberg_spiegel_sync.sh lokal      # nur dieses Repo
 #   bash scripts/deploy/codeberg_spiegel_sync.sh github     # nur die GitHub-Repos
-#
-# Voraussetzung: ~/.ssh/codeberg_smejj_ed25519 (Schluessel ist bei Codeberg
-# unter dem Konto smejj registriert, Fingerprint SHA256:c7vHhee...).
 
 set -euo pipefail
 
 SSH_KEY="${HOME}/.ssh/codeberg_smejj_ed25519"
 CODEBERG_USER="smejj"
 CACHE_DIR="${HOME}/.cache/smejj-codeberg-spiegel"
+LOKALES_REPO="smejj.com-app"
+CODEBERG_PROTOKOLL="${CODEBERG_PROTOKOLL:-https}"
 
 # Repos, die nur auf GitHub liegen und ueber einen Zwischen-Klon gespiegelt werden.
 GITHUB_REPOS=(
@@ -28,24 +44,91 @@ GITHUB_REPOS=(
   "imild-site"
 )
 
-if [ ! -f "${SSH_KEY}" ]; then
-  echo "FEHLER: SSH-Schluessel fehlt: ${SSH_KEY}" >&2
+# Kein interaktiver Prompt: fehlt der Zugang, soll das Skript SOFORT mit einer
+# lesbaren Meldung abbrechen statt unbeaufsichtigt an einer Passwortfrage zu
+# haengen. Die Pruefung unten faengt genau diesen Fall ab.
+export GIT_TERMINAL_PROMPT=0
+
+# Protokoll HIER pruefen, nicht in codeberg_url(): die Funktion laeuft in einer
+# Kommandosubstitution, und ein 'exit' beendet dort nur die Subshell. Das Skript
+# liefe weiter und meldete stattdessen einen "fehlenden Zugang" — eine falsche
+# Spur. (Beim Bau genau so passiert.)
+case "${CODEBERG_PROTOKOLL}" in
+  https|ssh) ;;
+  *)
+    echo "FEHLER: CODEBERG_PROTOKOLL muss 'https' oder 'ssh' sein, ist '${CODEBERG_PROTOKOLL}'." >&2
+    exit 1
+    ;;
+esac
+
+codeberg_url() {
+  local name="$1"
+  if [ "${CODEBERG_PROTOKOLL}" = "https" ]; then
+    printf 'https://codeberg.org/%s/%s.git' "${CODEBERG_USER}" "${name}"
+  else
+    printf 'ssh://git@codeberg.org/%s/%s.git' "${CODEBERG_USER}" "${name}"
+  fi
+}
+
+pruefe_zugang() {
+  if [ "${CODEBERG_PROTOKOLL}" = "ssh" ]; then
+    if [ ! -f "${SSH_KEY}" ]; then
+      echo "FEHLER: SSH-Schluessel fehlt: ${SSH_KEY}" >&2
+      exit 1
+    fi
+    export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+  fi
+
+  # Fail-closed: ohne lesbaren Zugang gar nicht erst anfangen. Alle fuenf
+  # Spiegel liegen unter demselben Konto, eine Probe genuegt.
+  if git ls-remote "$(codeberg_url "${LOKALES_REPO}")" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo "FEHLER: kein Codeberg-Zugang ueber ${CODEBERG_PROTOKOLL}." >&2
+  if [ "${CODEBERG_PROTOKOLL}" = "https" ]; then
+    cat >&2 <<'HINWEIS'
+
+  Es liegt kein Codeberg-Zugang im Schluesselbund. Einmalig durch den
+  Betreiber (eine Session darf keine Zugangsdaten anlegen oder eingeben):
+
+    1. codeberg.org -> Einstellungen -> Anwendungen -> Zugriffs-Token
+       erzeugen, Schreibrecht auf Repositories.
+    2. Einmal interaktiv anmelden, damit der Schluesselbund ihn speichert:
+
+         git ls-remote https://codeberg.org/smejj/smejj.com-app.git
+
+       Benutzername: smejj    Passwort: der Token (NICHT das Konto-Passwort).
+
+  Danach dieses Skript erneut starten.
+HINWEIS
+  else
+    cat >&2 <<'HINWEIS'
+
+  Der SSH-Weg setzt einen offenen Port 22 voraus. Am 2026-08-05 war er im Netz
+  des Betreibers zu ("No route to host"), und Codeberg bietet keinen
+  SSH-Endpunkt auf 443. Ohne offenen Port 22:
+
+    CODEBERG_PROTOKOLL=https bash scripts/deploy/codeberg_spiegel_sync.sh
+HINWEIS
+  fi
   exit 1
-fi
-
-export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-
-modus="${1:-alles}"
+}
 
 spiegle_lokales_repo() {
-  local repo_root
+  local repo_root ziel
   repo_root="$(git rev-parse --show-toplevel)"
+  ziel="$(codeberg_url "${LOKALES_REPO}")"
   echo "==> lokales Repo: ${repo_root}"
 
   # Bewusst kein 'git push --mirror': ein beschaedigtes Objekt in der Historie
   # laesst --mirror und gc scheitern. Branches und Tags einzeln sind robust.
-  git push codeberg --all
-  git push codeberg --tags
+  #
+  # Bewusst die URL statt des Remote-Namens 'codeberg': dessen URL steht in
+  # .git/config und ist dort noch ssh://. Ueber die URL haengt die Spiegelung
+  # nicht daran, ob ein Arbeitsbaum den Remote schon umgestellt hat.
+  git push "${ziel}" --all
+  git push "${ziel}" --tags
 
   # Branches, die nur bei origin liegen (z. B. gh-pages), sonst waere der
   # Spiegel unvollstaendig. origin/HEAD ist ein Symref und wird ausgelassen.
@@ -54,7 +137,7 @@ spiegle_lokales_repo() {
     [ "${zweig}" = "HEAD" ] && continue
     git show-ref --verify --quiet "refs/heads/${zweig}" && continue
     echo "    nur bei origin, wird mitgespiegelt: ${zweig}"
-    git push codeberg "refs/remotes/origin/${zweig}:refs/heads/${zweig}"
+    git push "${ziel}" "refs/remotes/origin/${zweig}:refs/heads/${zweig}"
   done < <(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin)
 
   echo "    fertig: $(git rev-parse --abbrev-ref HEAD) und alle weiteren Branches"
@@ -73,10 +156,23 @@ spiegle_github_repo() {
   fi
 
   git -C "${bare}" push --prune \
-    "ssh://git@codeberg.org/${CODEBERG_USER}/${name}.git" \
+    "$(codeberg_url "${name}")" \
     "+refs/heads/*:refs/heads/*" "+refs/tags/*:refs/tags/*"
   echo "    fertig: ${name}"
 }
+
+modus="${1:-alles}"
+
+case "${modus}" in
+  lokal|github|alles) ;;
+  *)
+    echo "FEHLER: unbekannter Modus '${modus}' (erwartet: alles | lokal | github)" >&2
+    exit 1
+    ;;
+esac
+
+echo "Codeberg-Spiegelung ueber ${CODEBERG_PROTOKOLL} (Konto ${CODEBERG_USER})."
+pruefe_zugang
 
 case "${modus}" in
   lokal)
@@ -92,10 +188,6 @@ case "${modus}" in
     for name in "${GITHUB_REPOS[@]}"; do
       spiegle_github_repo "${name}"
     done
-    ;;
-  *)
-    echo "FEHLER: unbekannter Modus '${modus}' (erwartet: alles | lokal | github)" >&2
-    exit 1
     ;;
 esac
 
