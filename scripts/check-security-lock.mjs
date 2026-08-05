@@ -26,6 +26,9 @@
 //     und Origin-Pruefung.
 //   - ai/fetch-retry.js: waehlt den Endpunkt. Wer hier den Reserve-Weg
 //     verbiegt, schickt Gespraeche an einen anderen Server.
+//   - chat-bridge-rechner.js: erzeugt die Zahlen, nach denen jemand eine
+//     Finanzierung plant. Eine still veraenderte Formel faellt niemandem auf —
+//     die Antwort sieht danach genauso serioes aus wie vorher.
 //
 // Aenderungsprozess (nur mit ausdruecklicher schriftlicher Bestaetigung):
 //   1. Bestaetigung einholen (Wortlaut aufbewahren).
@@ -48,7 +51,8 @@ export const PROTECTED_FILES = [
   "public/chat-history-context.js",
   // Der antwortende Dienst und die Endpunktwahl.
   "public/chat-bridge.js",
-  "public/ai/fetch-retry.js"
+  "public/ai/fetch-retry.js",
+  "public/chat-bridge-rechner.js"
 ];
 
 export const SECURITY_LOCK = {
