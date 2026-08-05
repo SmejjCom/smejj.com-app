@@ -790,3 +790,11 @@ sondern ein Defekt im Messinstrument — und er machte JEDES Training sinnlos.
 - MERKREGEL: **eine Zusicherung, die jedes Vorkommen eines Wortes verbietet,
   verwechselt Gebrauch mit Erwaehnung** — und bestraft dann die beste Antwort.
   Vor dem Dauerbetrieb jedes Veto-Tor gegen den eigenen Korpus gegenpruefen.
+
+## 2026-08-05 — Das erste Lebenszeichen (job_arbeitssignal_20260805)
+Volltext: [task-capsules/2026/08/job_arbeitssignal_20260805/capsule.md](task-capsules/2026/08/job_arbeitssignal_20260805/capsule.md).
+- LIVE bewiesen (sw v225): bei 2 s "⏳ Anfrage laeuft …", bei 3 s weg. Der erste
+  Server-Schritt kam gemessen erst nach **5750 ms** — davor volle Stille.
+- KLIENTSEITIG, weil Bruecke und Control Server ihre Kopfzeilen erst nach der
+  naechsten Stufe schreiben und daraus x-smejj-model-backend fuellen; frueher
+  senden haette die Diagnose gekostet. Zaehler aria-hidden, Start ab 1200 ms.
