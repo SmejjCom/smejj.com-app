@@ -696,34 +696,8 @@ Nachweis: `docs/approvals/2026-08-04-qualitaetsseite-ehrlich.md`.
 
 ## 2026-08-04 — Qualitaetsmessung laeuft jetzt von allein
 
-Betreiber-Freigabe. Nachweis: `docs/approvals/2026-08-04-qualitaetsmessung-automatisch.md`.
-
-- **EINE AUTOMATIK, DEREN ERGEBNIS IM CACHE HAENGENBLEIBT, MELDET ERFOLG UND
-  BEWIRKT NICHTS.** `/verlauf-messwerte.json` lag cache-first im Precache. Ohne
-  Aenderung haette kein Messlauf je einen wiederkehrenden Nutzer erreicht — und
-  niemand haette es gemerkt. Jetzt netz-zuerst (`LIVE_DATEN_PFADE` in sw.js),
-  Cache nur als Rueckfall. Ein Test haelt fest, dass die Weiche VOR der
-  Precache-Weiche steht; dahinter griffe sie nie.
-  MERKREGEL: Vor dem Einrichten eines Zeitplans pruefen, ob sein Ergebnis den
-  Nutzer ueberhaupt erreicht.
-- **EIN GESCHEITERTER TRANSPORT IST KEINE SCHLECHTE NOTE.** `laufIstBrauchbar`
-  bricht bei JEDEM Fall mit Transportfehler ab und schreibt nichts (der 401-Lauf
-  vom selben Tag ergab 0,0 %). Ein echtes „blocked" geht sehr wohl durch — der
-  Schutz gilt dem Transport, nicht der Note.
-- Drei getrennte Teile: `messlauf.mjs` misst NUR, `messlauf-taeglich.sh`
-  veroeffentlicht und liefert aus, die `.command`-Datei richtet den Zeitplan
-  ein/ab. Ein Skript, das alles macht, ist im Fehlerfall nicht zerlegbar.
-- Zeitplan `10 7,19 * * *`. Taktung 5,5 s zwischen den Aufrufen — die Bruecke
-  laesst 12/Minute, 42 Aufrufe ohne Taktung enden in HTTP 429.
-- **crontab braucht einen KURZEN Pfad:** `crontab "<langer Google-Drive-Pfad>"`
-  schneidet ab und meldet „No such file"; Umweg ueber `/tmp/kurz.txt`. Ausserdem
-  kann `crontab -` haengen (macOS-Berechtigung) — immer mit Zeitlimit aufrufen.
-- Abnahme: ein echter Automatik-Lauf durchgefuehrt, 97,06 % / 1 kritisch /
-  blocked, live in der Datei und auf der Seite. Er meldete ein SCHLECHTERES
-  Ergebnis als der Lauf davor (98,04 %) — genau das war der Zweck. Der
-  Unterschied ist bekanntes Rauschen (temperature 0.35), der wackelige Fall wird
-  jeweils namentlich genannt.
-- sw v221, check:all 1598 gruen, Start-Lock neu eingefroren.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-04_qualitaetsmessung.md](docs/memory/Memory_Bank_2026-08-04_qualitaetsmessung.md).
 
 ## 2026-08-05 — Stufe 1 gemessen: Nachsortierer bringt nichts (job_eval_breite_suite_20260803)
 
@@ -789,3 +763,30 @@ Bericht: docs/benchmarks/rag-decke-schwelle20-2026-08-05.json.
 - Nebenbefund: selbst UNGEDECKTE Fragen verlieren durch Kontext nicht
   (+1,4 auf 66 Faellen). Die These "irrelevanter Kontext schadet immer" ist in
   dieser Form widerlegt.
+
+## 2026-08-05 — Die zwoelf Faelle: das Ranking war nie das Problem
+
+Analyse ohne einen einzigen Modellaufruf.
+Volltext: [docs/architecture/RAG_ZWOELF_FAELLE_BEFUND_2026-08-05.md](docs/architecture/RAG_ZWOELF_FAELLE_BEFUND_2026-08-05.md).
+- **MASTER_PROMPT.md zerfaellt in 10 Abschnitte a 2.460 Zeichen mit IDENTISCHER
+  Ueberschrift** und traegt Gewicht 1,5. Folge: **48 % aller Kontext-Lieferungen
+  haben einen dieser Abschnitte auf Platz 1.** Es aus dem Korpus zu nehmen ist
+  gemessen SCHLECHTER (27 % -> 22 %) — es ist oft genuin zustaendig.
+- **KEINE Ranking-Stellschraube bewegt mehr als 1-3 Punkte** (Gewichte, limit,
+  minRelativeScore, Tor-ohne-MASTER_PROMPT — alle gegen die Wahrheitsgrundlage
+  der Deckenmessung geprueft). Damit ist rueckwirkend erklaert, warum die drei
+  frueheren Versuche scheiterten: **alle drei drehten am Ranking.**
+- MECHANISMUS des Schadens: 3 der 4 schlimmsten Faelle sind UNGEDECKT. Ohne
+  Kontext antwortet das Modell richtig aus seiner Anweisung; mit einem
+  autoritaetsstark aussehenden, aber unzustaendigen Auszug folgt es dem Auszug.
+- TOR-QUALITAET beziffert: Schwelle 20 = 41/157 richtig, 30/138 falsch geoeffnet.
+  Schwelle 12 = 93/157 richtig, 96/138 falsch. Von 20 auf 12 kommen 52 richtige
+  und 66 FALSCHE Oeffnungen hinzu.
+- **KERNBEFUND DER GANZEN UNTERSUCHUNG: die BM25-Punktzahl ist ein schlechter
+  Vorhersager dafuer, ob der Korpus die Frage ueberhaupt beantworten kann.** Sie
+  misst Wortdeckung, gefragt ist Deckung. Kein Schwellenwert loest das auf.
+- FOLGE fuer Stufe 2: ein Einbettungsmodell wird NICHT zum besseren Sortieren
+  gebraucht (Ranking ist nicht der Engpass), sondern als besserer
+  DECKUNGSANZEIGER — der Nutzen liegt im TOR. Vorher billig pruefbar mit
+  demselben Aufbau (Trefferquote + Falsch-Oeffnungsrate gegen dieselbe
+  Wahrheitsgrundlage).
