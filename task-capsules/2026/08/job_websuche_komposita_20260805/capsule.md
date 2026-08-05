@@ -238,6 +238,64 @@ Eingriff in fremde, aktive Arbeit.
   **Merkregel: kein `stash` in einer geteilten Arbeitskopie — für
   Vorher/Nachher-Vergleiche einen `git worktree` nehmen.**
 
+## ÜBERGABE an die Parallelsitzung (Betreiber, 2026-08-05: „lass die Parallelsitzung das machen")
+
+**Der Rückbau ist im Code fertig (`a6f7d62`) — live läuft weiterhin die
+wirkungslose Fassung.** Es fehlt nur die Umschaltung des Control Servers.
+
+Vorbereitet und geprüft liegen zwei Artefakte:
+
+| | schmal (empfohlen) | voll |
+|---|---|---|
+| Inhalt | Live-Stand **minus nur diese Änderung** | Stand von HEAD, 38 Commits |
+| Abweichung zum Laufenden | 2 Dateien | u. a. 3 neue Einwilligungs-Endpunkte, `account-sessions.js` |
+| Bytes / Dateien | 2 380 388 / 1016 | 2 415 994 / 1030 |
+| sha256 | `2a20db66…36a22968` | `7c46fd56…04352981` |
+| auf IDrive e2 | nein (nur lokal gebaut) | ja, `deployments/control/smejj-control-websuche-rueckbau-2026-08-05.tar.gz` |
+
+In beiden ist `src/search/webSearch.js` byte-identisch mit dem Stand vor dem
+Fix — gegengeprüft über `0d538b45a0483862cb36e30f3719236ec75bc6e33fbfd7447c6d222542489c2f`.
+
+**Warum schmal empfohlen ist:** Die volle Fassung enthält 38 fremde Commits,
+darunter neue Endpunkte auf dem Server, der die ANMELDUNG trägt. Live wären sie
+inert (keine der 85 Container-Variablen ist trainingsbezogen, die
+Einwilligungs-API bleibt fail-closed aus) — aber sie auszuliefern ist eine
+eigene Entscheidung mit eigener Freigabe, nicht der Nebeneffekt eines Rückbaus.
+
+Die schmale Fassung neu bauen (der Worktree ist aufgeräumt):
+```
+git worktree add --detach <pfad> 1ed22db
+cd <pfad> && git revert --no-commit 1ed22db
+SMEJJ_CONTROL_RELEASE_ID=<name> node scripts/deploy/build_control_release_artifact.mjs <ziel>.tar.gz
+```
+
+**Aufrufformen, die hier Zeit gekostet haben** — beide nehmen KEIN `RELEASE_NAME`:
+- Bauen: `SMEJJ_CONTROL_RELEASE_ID=<name> node …/build_control_release_artifact.mjs <ausgabepfad>`
+- Hochladen: alles über Env (`CONFIRM_CONTROL_RELEASE_UPLOAD=YES`,
+  `SMEJJ_CONTROL_RELEASE_FILE`, `SMEJJ_CONTROL_ARTIFACT_KEY`,
+  `SMEJJ_CONTROL_ARTIFACT_SHA256`); ein Pfad als Argument wird ignoriert.
+
+**RÜCKROLLPUNKT (läuft jetzt live):**
+```
+KEY    = deployments/control/smejj-control-websuche-komposita-2026-08-05.tar.gz
+SHA256 = 3ea6c65b692a015e5ea0aa02f4eac2cdf1b2a166a36f26b0af8de24ffbb08fb9
+```
+
+**Zwei Tore, die den Weg blockiert hatten** — inzwischen grün, kommen aber
+wieder: `check:security` (Attrappen-Schlüssel im Muster `sk-`+20 Zeichen in
+einer Testdatei) und `check:security-lock` (`public/account-sessions.js`,
+mit `22aea68` neu eingefroren).
+
+**Nicht enthalten, bewusst:** die RAG-Korrektur `fdafbeb` (ein Löschbefehl bekam
+Projektkontext) steckt nur in der vollen Fassung. Wer sie live haben will,
+braucht eine dritte Fassung: Live-Stand + Rückbau + genau dieser Commit.
+
+**Nach der Umschaltung:** prüfen, dass **85 Variablen** erhalten sind, dann
+~10 min Ausrollzeit abwarten. Salad ersetzt rollierend — `/api/health` fällt
+dabei NICHT aus, ein Erreichbarkeits-Poll beweist also nichts. Wirkung ohne
+Modelllauf messen über `GET /api/search/web?q=…&raw=1`: derselbe Filterpfad,
+und `attempts[]` zeigt je Quelle `parsed` und `kept`.
+
 ## Was bewusst offen bleibt
 - **Parallelisierung** der Werkzeuge: 0,2–1,4 s Gewinn, Eingriff in die
   Werkzeugschleife. Erst neu bewerten, wenn die Suche verlässlich ist — dann
