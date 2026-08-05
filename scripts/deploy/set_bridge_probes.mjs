@@ -116,8 +116,31 @@ async function main() {
     abbruch("Die Gruppe hat keine Umgebung oder keinen Startbefehl — hier wird nichts angefasst.");
   }
 
-  const rumpf = zurueck ? TCP_SONDEN : HTTP_SONDEN;
-  console.log(`\nSetze ${zurueck ? "TCP" : "HTTP"}-Sonden ...`);
+  // EIN VERSUCH, EINE VARIABLE.
+  //
+  // Der erste Anlauf am 2026-08-05 stellte BEIDE Sonden zugleich um; danach
+  // flatterte der Container, und die Ursache war nicht zuzuordnen — zumal eine
+  // Parallel-Sitzung im selben Fenster auslieferte.
+  //
+  // `--nur-lebend` aendert deshalb ausschliesslich die Lebendsonde und laesst
+  // die bewaehrte TCP-Startsonde in Ruhe. Dazu eine sehr geduldige Schwelle:
+  // 20 Fehlversuche x 30 s = 10 Minuten, bevor Salad eingreift. Kommt die
+  // Sonde gar nicht durch, bleiben also zehn Minuten zum Zusehen und
+  // Zuruecknehmen, bevor irgendjemand etwas merkt.
+  const NUR_LEBENDSONDE = {
+    liveness_probe: {
+      http: { path: "/health", port: PORT, scheme: "http", headers: [] },
+      tcp: null,
+      initial_delay_seconds: 120,
+      period_seconds: 30,
+      failure_threshold: 20,
+      success_threshold: 1,
+      timeout_seconds: 15
+    }
+  };
+  const nurLebend = process.argv.includes("--nur-lebend");
+  const rumpf = zurueck ? TCP_SONDEN : (nurLebend ? NUR_LEBENDSONDE : HTTP_SONDEN);
+  console.log(`\nSetze ${zurueck ? "TCP" : (nurLebend ? "HTTP-Lebendsonde (Startsonde bleibt TCP)" : "HTTP")}-Sonden ...`);
   const antwort = await fetch(basis, {
     method: "PATCH",
     headers: { ...kopf, "Content-Type": "application/merge-patch+json" },
