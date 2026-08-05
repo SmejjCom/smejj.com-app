@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-04T23:34:36.173Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-04 ('Weiter', stehende Freigabe zur autonomen Umsetzung; dazu 'Wenn du Fehler findest, behebe sie sofort'): abgelaufene Anmeldung sichtbar machen. Geaendert: auth-gate.js (Pruefung), auth-page.js (Hinweis), sw.js v218 -> v219.",
+  "frozenAt": "2026-08-05T01:30:56.235Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-04: Qualitätsseite ehrlich machen — Alter der Messdaten sichtbar, Sechs-Stunden-Versprechen entfällt; Cache-Versionssprung und Nachziehen der Sperren eingeschlossen",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "c97988331031e7526062bafb616b0508d70b46896b8aaaab38429342058cf1e7",
+    "public/sw.js": "05d6c760aad128528fffc672938274df4a2c83d0bd0495cd7175453ec02b492c",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

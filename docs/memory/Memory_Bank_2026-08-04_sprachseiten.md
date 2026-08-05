@@ -1,36 +1,71 @@
+# Memory_Bank — Auslagerung 2026-08-04: Sprachseiten waren unerreichbar
+
+Wortgleich aus Memory_Bank.md ausgelagert (800-Zeilen-Grenze).
+Kapsel: `docs/task-capsules/2026/08/job_livetest_az_websuche_20260804/CAPSULE.md`.
+
 ## 2026-08-04 — Sprachseiten waren unerreichbar (job_livetest_az_websuche_20260804)
 
-A-bis-Z-Livetest nach dem Websuche-Release. Zwei Befunde, beide freigegeben und live.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-04_sprachseiten.md](docs/memory/Memory_Bank_2026-08-04_sprachseiten.md).
 
-- **EIN DYNAMISCHER IMPORT VERSTECKT SICH VOR JEDER TEXTSUCHE.** `/ja/` sprang auf
-  `/auth/login/`, obwohl der Quelltext kein `auth-gate` enthielt und die Umleitung
-  auch OHNE Service Worker auftrat. Erst das Netzwerkprotokoll zeigte
-  `GET /assets/auth-gate.js?v=1`: `voice-landing.js:9` holt es per
-  `import "./auth-gate.js"` — ohne `from`, also unsichtbar fuer jeden Grep.
-  MERKREGEL: Tut eine Seite etwas, das ihr Quelltext nicht erklaert, ist das
-  Netzwerkprotokoll das Werkzeug, nicht die naechste Textsuche.
-- **EIN TEST KANN EINEN FEHLER ALS ABSICHT FESTSCHREIBEN.** `tests/auth-gate.test.mjs`
-  fuehrte `/en/` und `/fr/` als App-Seiten, die umleiten SOLLEN. Ein gruener Test
-  beweist, dass ein Verhalten gewollt war — nicht, dass es richtig ist. Fix deshalb
-  erst zurueckgenommen und den Betreiber gefragt (zwei gegensaetzliche Reparaturen
-  moeglich: oeffentlich machen ODER aus dem Index nehmen).
-- **"INDEXIERE MICH" UND "MELDE DICH AN" SCHLIESSEN SICH AUS.** Die 15 Sprachseiten
-  trugen `robots: index,follow` und standen mit hreflang in der Sitemap — und warfen
-  jeden Suchbesucher zur Anmeldung. Jetzt in PUBLIC_PATHS, Muster bewusst eng
-  (`^/(code)/(index.html)?$`), damit kein kuenftiger Unterpfad mitoeffnet.
-- **CSP fehlte auf 18 Seiten** (14 Sprachseiten + Hilfe/Impressum/Datenschutz/
-  Maus-Replay), waehrend Startseite und Auth-Seiten sie trugen. Jetzt im
-  Sprachseiten-GENERATOR, sonst waere sie beim naechsten Lauf wieder weg.
-- **DER FAVICON-LOCK HASHT DEN SPRACHSEITEN-GENERATOR** — jede Aenderung daran
-  verletzt ihn, auch ohne Favicon-Bezug. Nachziehen: nur diesen einen Hash, und
-  nachweisen, dass Assets, HTML-Kopfbezuege und Web-Manifest unveraendert sind.
-- **VERSIONSPINS SIND TEIL DES CACHE-SPRUNGS:** fuenf Testdateien pinnen CACHE_NAME.
-  Parallel-Sitzungen vergaben waehrenddessen v210 -> v211 -> v212; vor der eigenen
-  Vergabe die LIVE-Datei pruefen, nicht nur `git log`.
-- Ergebnis live: 15/15 Sprachen offen, `/`, `/profile`, `/en/konto`, `/ja/chat`
-  weiterhin anmeldepflichtig; 16/16 Seiten mit CSP; sw v213; `check:all` gruen
-  (1494 Zusicherungen); Start-Lock und Favicon-Lock neu eingefroren.
-- OFFEN: `tests/lora-trainer-vertrag.test.mjs` flackert unter Volllast (15 s
-  Startbudget fuer python3; standalone 1,2 s). Kein Produktfehler, aber ein
-  unzuverlaessiges Release-Tor. Fremder Arbeitsbereich, nicht angefasst.
+## 2026-08-04 — Heller Modus der Konto-Formulare (Nacharbeit, sw v214)
 
+Commit `f0caadb` + `031f6a5`, Frontend `00a67e1`. Zwei EIGENE Fehler, gefunden
+beim Nachpruefen des zweiten Farbschemas — beide haetten nur Nutzer mit hellem
+Systemschema getroffen und keinen Test ausgeloest:
+
+- **EIN RUECKFALLWERT VERSTECKT EINE ERFUNDENE VARIABLE.**
+  `var(--konto-panel, rgba(255,255,255,0.03))` — `--konto-panel` ist nirgends
+  definiert, der weisse Rueckfallwert galt also IMMER. Im dunklen Schema faellt
+  das nicht auf. MERKREGEL: **ein `var()` mit Rueckfallwert ist unfehlbar und
+  darum gefaehrlich** — der Waechter prueft jetzt, dass jede benutzte
+  `--konto-*`-Variable auch definiert ist.
+- **DIE KANTENFARBE TAUGT NICHT ALS FOKUSRING.** `--konto-edge` ist im hellen
+  Schema `rgba(255,255,255,0.9)`: ein weisser Ring auf hellem Grund ist kein
+  Ring. Jetzt `#2dd4bf` wie beim Bildwaehler. Dritter Waechter: beide Schemata
+  muessen JEDE Variable definieren, sonst faellt sie still auf den Erbwert.
+
+**MERKREGEL zur Messung selbst (zweimal in Folge hereingefallen):** eine
+Testbuehne, die nur EIN Stilblatt laedt, misst falsch. `--konto-*` haengt an
+`#profile.premium-view` (account-privacy.css), `--premium-text` aber an
+`app-surfaces.css`. Ohne beide sah heller Text auf weissem Grund wie ein Fehler
+aus und war nur die Buehne. Immer alle beteiligten Stilblaetter laden und die
+echte Ansichtsklasse setzen.
+
+**MERKREGEL, zum zweiten Mal:** Pruefmuster muessen Kommentare ausblenden — der
+erste Lauf des neuen Waechters schlug auf den eigenen Kommentar an, der den
+alten Fehler beschreibt.
+
+Belegt: dunkel Text `rgb(249,246,241)` auf `rgba(0,0,0,0.25)`, hell
+`rgb(23,25,29)` auf `#ffffff`, Fokusring in beiden `rgb(45,212,191)`.
+`check:all` gruen (1726), Start-Lock neu eingefroren.
+
+## 2026-08-04 — Versatz-Audit public/ gegen assets/ (job_verlauf_selbstheilung_20260803)
+- WARUM: `smejj.com Deploy.command` kopiert EINZELNE Dateien per `cp`. Alles,
+  was dort nicht gelistet ist, veraltet live still — so war `chat-store.js`
+  wochenlang alt. Deshalb einmal ALLE 163 Dateien verglichen.
+- ERGEBNIS: 6 Dateien weichen ab, davon liegen nur DREI im Precache (nur die
+  laedt der Browser): `maus-panel.js`, `verlauf.js`, `voice-warmup.js`.
+  Die uebrigen (`chat-bridge*.js`, `maus-replay.js`, `voice-landing.js`,
+  `agent/agentEvents.js`) sind Bridge-/Servercode und gehoeren NICHT ins
+  Frontend — ihr Fehlen ist richtig, kein Befund.
+- BEWERTUNG (kein Deploy noetig, bewusst NICHT deployt):
+  * `voice-warmup.js` — Unterschied ist EINE Leerzeile. Wirkungslos.
+  * `verlauf.js` — live fehlt `wackeligText()` (Anzeige wackeliger Faelle).
+    Aber `verlauf-messwerte.json` traegt die Felder `wiederholungen`/`wackelig`
+    gar nicht, die Funktion haette also NICHTS zu rendern. Heute unsichtbar.
+  * `maus-panel.js` — live fehlt `starteAuftrag()` + Live-Nachziehen der
+    Wiedergabe. FALLE: Die lokale Fassung importiert dynamisch
+    `maus-auftrag.js`, und DIE ist nicht ausgeliefert. Ein Copy allein erzeugt
+    live einen 404. Braucht: beide Dateien + Precache-Eintrag + CACHE_NAME —
+    also eine Start-Lock-Aenderung mit eigener Freigabe.
+- MERKREGEL: Beim Versatz-Audit zuerst gegen den Precache und `index.html`
+  filtern. Ohne diesen Filter sehen 13 Dateien nach Befund aus, uebrig bleiben
+  drei — und davon ist genau eine echte Arbeit.
+- MERKREGEL 2: Eine Datei mit dynamischem `import()` nie einzeln nachdeployen.
+  Erst pruefen, ob das Importziel ueberhaupt live liegt.
+- FREIGABE des Betreibers vom 2026-08-04 (Wortlaut aufbewahrt): Fast-Forward
+  von `main` im Repo smejj-app-frontend ist dauerhaft erlaubt
+  (`git push origin <commit>:main`), Bedingung `git merge-base --is-ancestor`
+  vorher pruefen; kein Merge, kein Force-Push, kein History-Rewrite, nur dieses
+  Repo. Deckt NICHT Start-Lock-Aenderungen ab.
