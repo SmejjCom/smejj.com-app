@@ -763,27 +763,32 @@ Volltext ausgelagert nach
 
 ## 2026-08-05 — Nutzerfragen-Erfassung: der Schalter ist WIRKUNGSLOS
 
-Auftrag war, `SMEJJ_TRAINING_CAPTURE_ENABLED` einzuschalten. NICHT getan — er
-haette nichts bewirkt, und ein gesetzter Schalter ohne Wirkung ist gefaehrlicher
-als ein ausgeschalteter: er sieht aus wie eine laufende Erfassung.
-- **GEMESSEN:** `isCaptureEnabled` wird ausschliesslich von
-  `src/training/pipeline.js` gelesen. Die Pipeline-Funktionen
-  (`prepareTrainingCandidate`, `buildTrainingCandidateWritePlan`) werden NUR aus
-  Tests aufgerufen. **Kein einziger Aufruf im Live-Chatpfad** (control-server,
-  public/, src/server.js). Es gibt keinen Weg, auf dem ein echtes Gespraech in
-  die Pipeline gelangt.
-- VORHANDEN: die Bibliothek (Sanitization, Verschluesselung, Schreibplan), das
-  strenge Tor `evaluateTrainingEligibility` ("denied unless every condition is
-  explicitly proven") und die Einwilligungs-Endpunkte am Control Server
-  (`/api/training/consent`, `/revoke`, `/decision`; live, 401 ohne Anmeldung).
-- **DIE OBERFLAECHE TAEUSCHT NICHT, ABER SIE ZAEHLT AUCH NICHT:** der Schalter
-  "Modelltraining erlauben" in account-privacy.js sagt selbst, er sei lokal und
-  "ersetzt keine serverseitige, signierte Einwilligung". Er schreibt nichts an
-  den Consent-Endpunkt.
-- ES FEHLT FUER EINE ECHTE ERFASSUNG: (1) ein Erfassungspunkt im Live-Chat,
-  (2) die Verdrahtung des Schalters an den Consent-Endpunkt, (3) eine aktuelle
-  Datenschutzerklaerung mit Hash (der Endpunkt erwartet `privacyNoticeSha256`),
-  (4) das signierte Consent-Ledger auf IDrive e2.
-- MERKREGEL: **bevor ein Feature-Schalter umgelegt wird, pruefen, ob ihn
-  ueberhaupt jemand liest.** Ein wirkungsloser Schalter erzeugt die Illusion
-  einer Funktion — hier bei personenbezogenen Daten besonders folgenreich.
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_schalter_wirkungslos.md](docs/memory/Memory_Bank_2026-08-05_schalter_wirkungslos.md).
+
+## 2026-08-05 — Fragenerfassung: Entscheidungskern gebaut, Transport blockiert
+
+`src/training/fragenerfassung.js` + 9 Tests, in `check:training` verdrahtet.
+- **NUR DIE FRAGE, NIE DIE ANTWORT.** Antworten stammen aus Fremdmodellen und
+  sind fuers Training ohnehin gesperrt — sie zu erfassen waere unbrauchbar UND
+  das groessere Datenschutzrisiko. Die Frage ist genau das, was dem Korpus fehlt.
+- **EINWILLIGUNG DELEGIERT, NICHT NACHGEBAUT:** `capturePersistenceAllowed`
+  (policy.js) prueft sieben Bedingungen inkl. `recordedBy === "authenticated-human"`.
+  Mein erster Entwurf pruefte selbst `granted === true` — ein Feld, das es gar
+  nicht gibt (es heisst `captureAllowed`). MERKREGEL: **bei personenbezogenen
+  Daten nie eine zweite, eigene Pruefung danebenstellen.**
+- STAERKER ALS ERWARTET: `createConsentGrant` weigert sich, einen Grant mit
+  unvollstaendigem Umfang auszustellen (`consent_explicit_scope_required`). Eine
+  Einwilligung, die Erfassung erlaubt und Training verbietet, kann nicht
+  entstehen.
+- **BLOCKER FUER PUNKT 2 (Oberflaeche):** KEIN Endpunkt gibt
+  `privacyNoticeSha256` heraus. Der Grant-Endpunkt vergleicht den vom Klienten
+  gesendeten Hash gegen die Env und antwortet sonst 409
+  `consent_privacy_notice_not_current`. Die Oberflaeche kann den Wert also nicht
+  erfahren — Punkt 2 haengt an einer veroeffentlichten Datenschutzerklaerung mit
+  bekanntem Hash. Das ist eine inhaltliche Entscheidung des Betreibers, keine
+  technische.
+- **ARBEITSKOPIE-FALLE, live erlebt:** zwei frisch geschriebene, uncommittete
+  Dateien waren nach dem naechsten Schritt WEG (Parallelsitzung raeumt auf).
+  Bestaetigt [[smejj-parallele-sessions-git]]: **hier ist uncommittet kein
+  Schutz, sondern ein Risiko** — nach jeder neuen Datei sofort committen.
