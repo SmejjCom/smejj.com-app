@@ -460,3 +460,33 @@ function fakeRes() {
     json() { return JSON.parse(this.chunks.join("")); }
   };
 }
+
+test("der Hinweis-Endpunkt veroeffentlicht den geltenden Hash — und schweigt ohne Konfiguration", async () => {
+  // Ohne diesen Endpunkt kann die Oberflaeche gar keine Einwilligung absenden:
+  // handleGrant vergleicht den Hash und antwortet sonst 409. Der Hash eines
+  // oeffentlich abrufbaren Dokuments ist selbst nicht schutzwuerdig.
+  const { handleNotice } = await import("../control-server/src/routes/trainingConsentRoutes.js");
+
+  const ok = fakeResponse();
+  handleNotice({}, ok, { env: ENV });
+  assert.equal(ok.statusCode, 200);
+  assert.equal(ok.body.privacyNoticeSha256, NOTICE_HASH);
+  assert.equal(ok.body.privacyNoticeUrl, "/datenschutz.html");
+  assert.deepEqual(ok.body.umfang, ["captureReviewConsent", "modelTrainingConsent", "sourceRightsConfirmed"]);
+
+  // Fail-closed: ein Hash ohne funktionierende Schluessel wuerde behaupten,
+  // Einwilligungen seien moeglich, waehrend jeder Grant scheitert.
+  const kaputt = fakeResponse();
+  handleNotice({}, kaputt, { env: { ...ENV, SMEJJ_TRAINING_CONSENT_SIGNING_KEY_B64: "keine-gueltige-basis" } });
+  assert.equal(kaputt.statusCode, 503);
+  assert.equal(kaputt.body.privacyNoticeSha256, undefined, "ohne Konfiguration darf kein Hash genannt werden");
+});
+
+function fakeResponse() {
+  return {
+    statusCode: 0,
+    body: null,
+    writeHead(status) { this.statusCode = status; },
+    end(payload) { this.body = JSON.parse(payload); }
+  };
+}
