@@ -1,6 +1,7 @@
 # Autopilot-Charta: Dauertrainings-Schleife (smejj-lora-loop)
 
-Version 1.0 — Stand 2026-08-05
+Version 1.1 — Stand 2026-08-05 (Abschnitt 7 aktualisiert: alte Blocker
+geloest, neue Messlage eingetragen)
 Geltungsbereich: `workers/smejj-lora-loop` (Steuerung) und `workers/smejj-lora-trainer` (GPU-Trainer).
 
 Diese Datei ist der verbindliche Auftrag des Trainings-Autopiloten. Sie gilt
@@ -70,18 +71,26 @@ gegen die Pruefsuite messen**; nur messbar bessere Staende werden befoerdert.
 * Container laden Code nur beim Start: nach jedem Deploy `/health`-Version
   gegen den Repo-HEAD pruefen, sonst laeuft alter Code als Geist weiter.
 
-## 7. Bekannte Blocker (Stand 2026-08-05 — vor Betrieb aufloesen)
+## 7. Bekannte Blocker (Stand 2026-08-05, nachmittags — vor Dauerbetrieb aufloesen)
 
-1. **`SMEJJ_LORA_TRAINER_KEY` fehlt** in der Loop-Umgebung. Der Betreiber
-   setzt ihn (Browser ist im Zeabur-Konto "iMild Com" — falsches Konto).
-   Der Autopilot setzt ihn ausdruecklich NICHT selbst (dreimal abgewiesen).
-2. **Korpus widerspricht der Pruefsuite**: Der offene Korpus lehrt die
-   Schreibweise "niemals SMEJJ" in einer Form, an der die Suite jeden Stand
-   scheitern laesst. Solange das gilt, kann KEINE Konfiguration je befoerdert
-   werden — Training waere Geldverbrennung. Erst Korpus bereinigen.
-3. **Adapter-Persistenz**: Der trainierte Adapter liegt in `/tmp` im Container
-   und ueberlebt keinen Neustart. Ablage auf IDrive e2 muss der Standardweg
-   sein, bevor Dauerbetrieb sinnvoll ist.
+Geloest und bewiesen (nur zur Abgrenzung): Trainer-Schluessel + erster Zyklus
+(1,8 Cent), Adapter-Persistenz auf IDrive e2, Suiten-Reparatur der Namensregel
+(Commit `bc0c299`, Gebrauch vs. Erwaehnung).
+
+Offen — Arbeitsauftrag in `PROMPT_TRAINING_KORPUS_BLOCKER.md`:
+
+1. **Training verschlechtert das Modell** (Grundlinie 95,88 %, trainiert
+   67,89 %, sechs kritische Faelle). Ursache ist der Korpus: 699 Fakten mal
+   drei starre Frage-Schablonen — Verteilungsbruch gegen die 295 natuerlichen
+   Fragen der Suite. Das Tor verwirft zu Recht.
+2. **Die Regeldokumente fehlen im Korpus**: MASTER_PROMPT.md und AGENTS.md
+   sind keine Quellen, und der Abschnitts-Zerleger versteht ihre
+   `====`-Gliederung nicht (ergaebe nur 1 bzw. 5 Fakten). Vier der sechs
+   kritischen Faelle betreffen genau diese Regeln.
+3. **Kein echter Dauerbetrieb**: Die Schleife lief als lokaler Prozess auf
+   dem Mac und ueberlebt weder Neustart noch Ruhezustand. Dauerhafte
+   Infrastruktur ist eine Betreiberentscheidung (moeglicher neuer Dienst =
+   Rote Liste) und lohnt erst, wenn Training nachweislich verbessert.
 
 ## 8. Abbruchkriterien
 
