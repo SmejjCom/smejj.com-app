@@ -215,8 +215,8 @@ Gegenbeweis 1 rot, `rag-search` 21/21, `rag-infrastruktur` 12/12.
 
 **2. Auslieferung blockiert — nicht durch eigenen Code.** `check:security`
 meldet `Secret-like value found in tests/training-fragenerfassung.test.mjs`.
-Auslöser ist der Attrappen-Schlüssel `sk-abcdefghijklmnop1234` in einer
-Testdatei einer **parallel laufenden Sitzung**. Der Wächter kann echt und
+Auslöser ist ein Attrappen-Schlüssel im OpenAI-Format (`sk-` + 20 Zeichen) in
+einer Testdatei einer **parallel laufenden Sitzung**. Der Wächter kann echt und
 unecht nicht unterscheiden und blockt korrekt. Die Datei landet **nicht** im
 Artefakt (Wurzel-`tests/` wird nicht mitgeliefert) — es ist rein das
 Freigabe-Tor. Betreiberentscheidung 2026-08-05: **warten, bis die
