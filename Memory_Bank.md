@@ -789,3 +789,28 @@ Freigabe des Betreibers ("Ja, mach Weg B"). `control-server/src/rag/regelfragen.
   TEILEN statt Kopieren — eine sicherheitskritische Regex an zwei Stellen
   driftet unbemerkt auseinander.
 - NOCH NICHT AUSGELIEFERT: wirkt erst nach Bridge-Buendel + Control-Release.
+
+## 2026-08-05 — Regelfragen-Anreicherung LIVE (Bruecke v122)
+
+Freigabe des Betreibers ("Ja, fahr den Deploy mit vollem Ship-Loop").
+Buendel v122 nach smejj.com/assets/chat-bridge.js (Frontend-Repo `9c7ba4e`),
+Salad-Container neu gestartet, LIVE nach 80 s.
+- BELEG: das live ausgelieferte Buendel ist BYTE-IDENTISCH zum lokal gebauten
+  (gleiche sha256, 491.909 Bytes). Funktionsprobe am heruntergeladenen
+  Live-Artefakt: 5/5 — drei Regelklassen erkannt, Halluzinationsfrage und
+  Befehlsform bekommen weiterhin KEINEN Kontext.
+- Live-Health: `20260805-v122-regelfragen`, Projektwissen 663 Abschnitte.
+- **CHAT-KLICKPFAD NICHT TESTBAR:** /api/chat gibt 401 (Anmeldepflicht seit
+  v114), eine Sitzung kann sich nicht anmelden und ein gepraegtes Token gilt
+  nicht. Ersatzweg ist die Artefakt-Verifikation oben — sie belegt, dass der
+  gemessene Code live laeuft, aber nicht die Antwortguete im Browser.
+- NUR DIE BRUECKE ist ausgeliefert. Der Control Server laeuft weiter mit dem
+  alten `ragContextBlock` — der Nutzerpfad geht ueber die Bruecke
+  (config.js -> /api/agent), der Control Server ist davon nicht betroffen.
+  Ein Control-Release ist offen, aber fuer die Nutzerwirkung nicht noetig.
+- FALLE, wieder bestaetigt: unmittelbar nach dem Neustart liefert das
+  Salad-Gateway HTML statt JSON. Das ist Flattern, kein Fehlschlag — einmal
+  nachfassen genuegte.
+- **check:guidelines ist ROT, aber NICHT durch diese Aenderung:** `public/sw.js`
+  hat mit 8ad258f (Parallelsitzung, sw v223) 810 Zeilen erreicht (vorher 795).
+  sw.js ist nicht Teil des Bruecken-Buendels. Als eigene Aufgabe gemeldet.
