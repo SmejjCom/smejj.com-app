@@ -114,14 +114,30 @@ test("ohne Sonderbehandlung bleibt ein text-Zaun Teil des Fliesstextes", () => {
   assert.ok(chunks[0].text.includes("```text"), "Zaunzeichen bleibt erhalten");
 });
 
+test("eine #-Zeile in einem Codezaun ist keine Ueberschrift", () => {
+  // Der Defekt vor dem Nachzug vom 2026-08-05: Shell-Kommentare wie
+  // "# erwartet: ..." wurden Chunk-Ueberschriften (betraf docs/mail/* und
+  // docs/voice/VOICE_WORKER_CONTROL.md).
+  const doc = "# Kopf\n```bash\nkurl /health\n# erwartet: 200\n```\ndanach";
+  const chunks = chunkMarkdown(doc, "x.md");
+  assert.equal(chunks.length, 1, "der Zauninhalt darf keinen Abschnitt beginnen");
+  assert.equal(chunks[0].heading, "Kopf");
+  assert.ok(chunks[0].text.includes("# erwartet: 200"), "der Kommentar bleibt Inhalt");
+  assert.ok(chunks[0].text.includes("```bash"), "Zaunzeichen bleibt erhalten");
+});
+
 test("RAG- und Trainings-Zerleger liefern fuer die MASTER_PROMPT-Formen dieselben Ueberschriften", () => {
   // Driftwaechter: die Formen sind in knowledgeLoader.js nachgebaut, nicht
-  // importiert (der Trainings-Zerleger ist codeblock-bewusst, der RAG-Zerleger
-  // darf es aus Regressionsgruenden nicht sein). Dieser Test haelt beide in
-  // Deckung, solange kein Codeblock im Spiel ist.
+  // importiert. Seit dem Nachzug vom 2026-08-05 sind beide Zerleger auch
+  // codeblock-bewusst — der Beispieltext enthaelt darum ausdruecklich einen
+  // gewoehnlichen Zaun mit #-Kommentar.
   const doc = [
     "# Kopf",
     "Einleitung vor dem Zaun.",
+    "```bash",
+    "# kommentar, keine ueberschrift",
+    "kurl /health",
+    "```",
     "```text",
     "======================================================================",
     "AUTONOMIE-REGELN (verbindlich)",
@@ -158,10 +174,14 @@ test("MASTER_PROMPT.md zerfaellt in echte Abschnitte statt in Chunks mit identis
   assert.ok(ueberschriften.has("AUTONOMIE-CHARTA (verbindlich — gilt ab dem ersten Prompt)"));
 });
 
-test("Regressionszusage: alle Quellen ausser MASTER_PROMPT.md werden bit-identisch zum alten Zerleger zerlegt", async () => {
+test("Regressionszusage: nur die benannten Ausnahmen weichen vom Ur-Zerleger ab", async () => {
   // Referenz: der Zerleger-Algorithmus VOR dem Umbau vom 2026-08-05, woertlich
-  // uebernommen. Er kennt nur #-Ueberschriften. Solange diese Zusage gilt,
-  // veraendert der Umbau ausschliesslich MASTER_PROMPT.md im Index.
+  // uebernommen. Er kennt nur #-Ueberschriften und ist nicht codeblock-bewusst.
+  // Abweichen duerfen genau: MASTER_PROMPT.md (====-Rahmen + transparenter
+  // text-Zaun) und die drei Quellen, deren Shell-Kommentare der Ur-Zerleger
+  // faelschlich zu Ueberschriften machte (Nachzug der Codeblock-Erkennung,
+  // 2026-08-05). Jede weitere Abweichung ist ein Regressionsbefund; ebenso,
+  // wenn eine benannte Ausnahme NICHT mehr abweicht — dann ist die Liste stale.
   const MAX = 2400;
   const alterZerleger = (text, source) => {
     const chunks = [];
@@ -191,16 +211,31 @@ test("Regressionszusage: alle Quellen ausser MASTER_PROMPT.md werden bit-identis
     flush();
     return chunks;
   };
+  const AUSNAHMEN = new Set([
+    "MASTER_PROMPT.md",
+    "docs/mail/CODEX_PROMPT_send-as.md",
+    "docs/mail/MAIL_SETUP_smejj.md",
+    "docs/voice/VOICE_WORKER_CONTROL.md"
+  ]);
   const { files } = await listKnowledgeFiles(process.cwd());
   for (const file of files) {
-    if (file === "MASTER_PROMPT.md") continue;
     const text = await readFile(file, "utf8").catch(() => null);
     if (text === null) continue;
-    assert.deepEqual(
-      chunkMarkdown(text, file, SONDERBEHANDLUNG[file]),
-      alterZerleger(text, file),
-      `Chunks von ${file} haben sich veraendert`
-    );
+    const neu = chunkMarkdown(text, file, SONDERBEHANDLUNG[file]);
+    const alt = alterZerleger(text, file);
+    if (!AUSNAHMEN.has(file)) {
+      assert.deepEqual(neu, alt, `Chunks von ${file} haben sich veraendert`);
+      continue;
+    }
+    assert.notDeepEqual(neu, alt, `${file} steht in der Ausnahmeliste, weicht aber nicht mehr ab`);
+    if (file === "MASTER_PROMPT.md") continue;
+    // Die Codeblock-Erkennung darf Ueberschriften nur ENTFERNEN (die falschen
+    // aus Zaunkommentaren), nie neue erfinden.
+    const alteUeberschriften = new Set(alt.map((c) => c.heading));
+    for (const chunk of neu) {
+      assert.ok(alteUeberschriften.has(chunk.heading),
+        `${file}: neue Ueberschrift "${chunk.heading}" kannte der Ur-Zerleger nicht`);
+    }
   }
 });
 

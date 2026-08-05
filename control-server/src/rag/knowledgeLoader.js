@@ -34,12 +34,14 @@ export const SONDERBEHANDLUNG = Object.freeze({
  *
  * `optionen.textZaeuneTransparent` behandelt ```text-Zaeune als Prosa statt als
  * Code; nur innerhalb eines transparenten Zauns gelten zwei Zusatzformen:
- * GROSSBUCHSTABEN-Zeilen mit Doppelpunkt am Ende und `N)`-Eintraege. Die drei
+ * GROSSBUCHSTABEN-Zeilen mit Doppelpunkt am Ende und `N)`-Eintraege. Die
  * Formen sind wortgleich aus zerlegeMarkdown in extract.js uebernommen —
- * tests/rag-search.test.mjs haelt beide Zerleger in Deckung. Absichtlich NICHT
- * uebernommen ist dessen Codeblock-Erkennung fuer #-Ueberschriften: sie wuerde
- * die Chunks dreier Bestandsquellen veraendern, und die Regressionszusage
- * dieses Umbaus lautet "alle anderen Quellen bit-identisch".
+ * tests/rag-search.test.mjs haelt beide Zerleger in Deckung. Seit dem
+ * Nachzug vom 2026-08-05 gilt das auch fuer dessen Codeblock-Erkennung:
+ * innerhalb gewoehnlicher ```-Zaeune ist keine Zeile eine Ueberschrift.
+ * Vorher wurden Shell-Kommentare ("# erwartet: ...") zu Chunk-Ueberschriften;
+ * das veraenderte die Chunks genau dreier Bestandsquellen (siehe
+ * Regressionstest), alle anderen bleiben bit-identisch zum Ur-Zerleger.
  */
 export function chunkMarkdown(text, source, optionen = {}) {
   const transparentErlaubt = optionen.textZaeuneTransparent === true;
@@ -64,33 +66,41 @@ export function chunkMarkdown(text, source, optionen = {}) {
     heading = String(ueberschrift).trim();
   };
   const zeilen = String(text || "").split("\n");
+  let inCodeblock = false;
   let inTransparentZaun = false;
   for (let i = 0; i < zeilen.length; i++) {
     const zeile = zeilen[i];
 
-    if (transparentErlaubt && /^```/.test(zeile)) {
+    if (/^```/.test(zeile)) {
       if (inTransparentZaun) { inTransparentZaun = false; continue; }
-      if (/^```text\s*$/.test(zeile)) { inTransparentZaun = true; continue; }
-      // Andere Zaunzeichen bleiben wie bisher gewoehnliche Textzeilen.
-    }
-
-    if (/^#{1,4}\s/.test(zeile)) {
-      beginne(zeile.replace(/^#{1,4}\s*/, ""));
+      if (!inCodeblock && transparentErlaubt && /^```text\s*$/.test(zeile)) {
+        inTransparentZaun = true;
+        continue;
+      }
+      inCodeblock = !inCodeblock;
+      buffer.push(zeile);
       continue;
     }
 
-    const rahmen = /^={4,}\s*$/.test(zeile)
-      && i + 2 < zeilen.length
-      && zeilen[i + 1].trim().length > 0
-      && !/^={4,}\s*$/.test(zeilen[i + 1])
-      && /^={4,}\s*$/.test(zeilen[i + 2]);
-    if (rahmen) { beginne(zeilen[i + 1]); i += 2; continue; }
+    if (!inCodeblock) {
+      if (/^#{1,4}\s/.test(zeile)) {
+        beginne(zeile.replace(/^#{1,4}\s*/, ""));
+        continue;
+      }
 
-    if (inTransparentZaun) {
-      const caps = /:$/.test(zeile.trim()) && istGrossToken(zeile.trim().split(/\s+/)[0]);
-      if (caps) { beginne(zeile.trim().replace(/:$/, "")); continue; }
-      const nummer = /^(\d{1,2})\)\s+(.{4,})$/.exec(zeile);
-      if (nummer) { beginne(nummer[2]); continue; }
+      const rahmen = /^={4,}\s*$/.test(zeile)
+        && i + 2 < zeilen.length
+        && zeilen[i + 1].trim().length > 0
+        && !/^={4,}\s*$/.test(zeilen[i + 1])
+        && /^={4,}\s*$/.test(zeilen[i + 2]);
+      if (rahmen) { beginne(zeilen[i + 1]); i += 2; continue; }
+
+      if (inTransparentZaun) {
+        const caps = /:$/.test(zeile.trim()) && istGrossToken(zeile.trim().split(/\s+/)[0]);
+        if (caps) { beginne(zeile.trim().replace(/:$/, "")); continue; }
+        const nummer = /^(\d{1,2})\)\s+(.{4,})$/.exec(zeile);
+        if (nummer) { beginne(nummer[2]); continue; }
+      }
     }
 
     buffer.push(zeile);

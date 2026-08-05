@@ -42,6 +42,23 @@
 > bit-identisch zerlegt; ein Regressionstest in tests/rag-search.test.mjs
 > haelt diese Zusage und die Deckung beider Zerleger fest.
 
+> **DRITTER NACHTRAG (2026-08-05) — Codeblock-Erkennung nachgezogen, Kosten
+> gemessen.** Der RAG-Zerleger uebernimmt jetzt auch die Codeblock-Erkennung
+> aus extract.js: `#`-Zeilen in ```-Zaeunen sind keine Ueberschriften mehr.
+> Betroffen sind exakt drei Quellen (docs/mail/CODEX_PROMPT_send-as.md,
+> docs/mail/MAIL_SETUP_smejj.md, docs/voice/VOICE_WORKER_CONTROL.md), deren
+> Shell-Kommentare ("# erwartet: ...") vorher Chunk-Ueberschriften wurden;
+> alle anderen 92 Quellen bleiben bit-identisch, MASTER_PROMPT.md unveraendert.
+> Gemessen (smejj-chat-breit, Schwelle 20): Deckung 39,7 % -> 39,0 %
+> (117 -> 115), Platz-1-Anteil MASTER_PROMPT 50,4 % -> 52,2 % (59 -> 60
+> absolut, kleinerer Nenner). Die zwei verlorenen Faelle
+> (lock-rollback-pflicht, ship-kontext-vorher) lagen vorher mit ihrem
+> Bestplatz-Chunk aus AI_Guidelines.md EXAKT auf der Schwelle 20,000 und
+> liegen jetzt bei 19,989 — Rangfolge und Chunk unveraendert, der Abstand ist
+> Korpusstatistik-Rauschen (0,06 %), keine Retrieval-Verschlechterung wie
+> beim zurueckgenommenen Banner-Versuch. Die Regressionszusage in
+> tests/rag-search.test.mjs benennt die drei Quellen jetzt als Ausnahmen.
+
 Anlass: das Training verschlechtert das Modell (Grundlinie 95,88 %, trainiert
 67,89 %). Das Qualitaetstor verwirft zu Recht. Die Frage ist, WARUM.
 
