@@ -324,7 +324,15 @@ function handleAuthConfig(res) {
 async function handleAuthMe(req, res) { // noStoreJson: Identitaet nie cachen (F-08)
   const user = readSession(req);
   const valid = user ? await emailSessionStillValid(user, process.env) : false;
-  noStoreJson(res, 200, { authenticated: Boolean(user) && valid, user: valid ? user : null });
+  // Gleitende Verlaengerung (Freigabe C, 2026-08-05): jede Nutzung gibt ein
+  // frisches Token mit voller Laufzeit zurueck. Der Client ersetzt sein
+  // gespeichertes Token nur, wenn er selbst eines dauerhaft haelt —
+  // Passkey-Sitzungen (session-only) bleiben session-only.
+  noStoreJson(res, 200, {
+    authenticated: Boolean(user) && valid,
+    user: valid ? user : null,
+    ...(valid ? { accessToken: serializeSessionToken(user) } : {})
+  });
 }
 
 function handleAuthSessionToken(req, res) {

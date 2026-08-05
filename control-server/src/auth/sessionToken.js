@@ -1,6 +1,11 @@
 import crypto from "node:crypto";
 
-const MAX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+// 180 Tage statt 7 (Freigabe C des Betreibers, 2026-08-05: "eingeloggt bleiben
+// bis zur manuellen Abmeldung"). Die Dauer allein reicht nicht — /api/auth/me
+// gibt zusaetzlich bei jeder Nutzung ein frisches Token zurueck (gleitende
+// Verlaengerung); nur wer 180 Tage GAR NICHT kommt, muss sich neu anmelden.
+// Abmelden widerruft serverseitig (E-Mail-Sitzungen) bzw. loescht das Token.
+const MAX_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
 export function issueSessionToken({ secret, user, nowMs = Date.now(), ttlMs = MAX_TTL_MS } = {}) {
   if (!String(secret || "")) throw new Error("session_token_secret_missing");
