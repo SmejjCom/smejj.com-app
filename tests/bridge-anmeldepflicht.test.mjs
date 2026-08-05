@@ -91,22 +91,30 @@ test("die Wache antwortet selbst mit 401 und einem brauchbaren Hinweis", async (
   assert.equal(typeof erlaubt, "boolean");
 });
 
-test("die Wache ist gebaut, aber bewusst NICHT verdrahtet", () => {
-  // Am 2026-08-04 live zurueckgenommen. Sie wies gueltig ANGEMELDETE Nutzer ab —
-  // nicht wegen eines Fehlers in der Wache, sondern wegen eines aelteren:
+test("die Wache ist verdrahtet — und ihre Vorbedingung steht im Quelltext", () => {
+  // Vorgeschichte: Am 2026-08-04 wies die Wache gueltig ANGEMELDETE Nutzer ab —
+  // nicht wegen eines Fehlers in ihr, sondern wegen eines aelteren:
   // auth-gate.js prueft nur, OB ein Token im Speicher liegt, nie ob es gilt.
-  // Im Browser des Betreibers lag ein Token, das der Control Server ablehnt
-  // (/api/auth/me -> authenticated=false). Die App zeigte ihn als angemeldet,
-  // der Server nicht. Mit der Wache war sein Chat tot.
+  // Sie musste zurueck, bis das Frontend ein ungueltiges Token erkennt.
   //
-  // Dieser Test haelt den Zwischenzustand fest, damit ihn niemand fuer ein
-  // Versehen haelt und die Zeile "aufraeumend" wieder einschaltet: erst muss
-  // ein ungueltiges Token zur Anmeldung fuehren, dann darf die Wache zurueck.
+  // Seit 2026-08-05 ist genau das erfuellt (verifyStoredSession in
+  // auth-gate.js), und der Betreiber hat das Scharfschalten schriftlich
+  // freigegeben. Dieser Test haelt BEIDES fest: dass die Wache wirklich
+  // verdrahtet ist UND dass ihre Vorbedingung im Frontend existiert. Faellt
+  // die Pruefung im Frontend jemals weg, faellt dieser Test — dann darf die
+  // Wache nicht stehen bleiben.
   const quelle = fs.readFileSync("public/chat-bridge.js", "utf8");
-  assert.match(quelle, /ANMELDEPFLICHT VORUEBERGEHEND AUSGEBAUT/,
-    "der Zwischenzustand muss im Quelltext begruendet stehen");
   const aktiv = quelle.split("\n").some((z) => !z.trim().startsWith("//") && /await allowAuthenticated\(/.test(z));
-  assert.equal(aktiv, false, "die Wache darf nicht verdrahtet sein, solange der halbe Anmeldezustand moeglich ist");
+  assert.equal(aktiv, true, "die Wache muss verdrahtet sein");
+  assert.match(quelle, /import \{[^}]*allowAuthenticated[^}]*\} from "\.\/chat-bridge-auth\.js"/,
+    "sie muss auch importiert sein — sonst faellt sie erst zur Laufzeit auf");
+  assert.match(quelle, /Freigabe Wof Kadavanich, 2026-08-05/,
+    "die Freigabe gehoert im Wortlaut an die Fundstelle");
+
+  // Die Vorbedingung: das Frontend muss ein ungueltiges Token erkennen.
+  const gate = fs.readFileSync("public/auth-gate.js", "utf8");
+  assert.match(gate, /verifyStoredSession/,
+    "ohne Token-Pruefung im Frontend darf die Wache nicht scharf sein");
   assert.ok(fs.existsSync("public/chat-bridge-auth.js"), "der geprüfte Baustein bleibt erhalten");
 });
 
