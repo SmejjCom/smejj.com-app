@@ -11,8 +11,38 @@ import { listKnowledgeFiles } from "./knowledgeCorpus.js";
 
 const MAX_CHUNK_CHARS = 2400;
 
-// Zerlegt Markdown an Ueberschriften; ueberlange Abschnitte werden hart geteilt.
-export function chunkMarkdown(text, source) {
+/**
+ * Datei-spezifische Zerleger-Optionen — gleicher Optionsname und gleiche Formen
+ * wie der Trainings-Zerleger (src/training/projectcorpus/extract.js) und dessen
+ * SONDERBEHANDLUNG in scripts/training/build_project_corpus.mjs.
+ * MASTER_PROMPT.md traegt seinen gesamten Inhalt in einem ```text-Kopier-Zaun
+ * und gliedert mit ====-Rahmen — ohne Sonderbehandlung zerfiel es in 10 Chunks
+ * mit identischer Ueberschrift (TRAININGSKORPUS_VERMESSUNG_2026-08-05).
+ * Bewusst opt-in je Datei: andere Quellen nutzen ```text fuer Beispielausgaben.
+ */
+export const SONDERBEHANDLUNG = Object.freeze({
+  "MASTER_PROMPT.md": Object.freeze({ textZaeuneTransparent: true })
+});
+
+/**
+ * Zerlegt Markdown an Ueberschriften; ueberlange Abschnitte werden hart geteilt.
+ *
+ * Neben #-Ueberschriften werden `====`-gerahmte Titel erkannt (Zeile aus
+ * Gleichheitszeichen, Titelzeile, Zeile aus Gleichheitszeichen). Gemessen am
+ * 2026-08-05 ueber alle 96 Korpusdateien: solche Rahmen kommen ausser in
+ * MASTER_PROMPT.md nirgends vor, die Erkennung ist darum immer aktiv.
+ *
+ * `optionen.textZaeuneTransparent` behandelt ```text-Zaeune als Prosa statt als
+ * Code; nur innerhalb eines transparenten Zauns gelten zwei Zusatzformen:
+ * GROSSBUCHSTABEN-Zeilen mit Doppelpunkt am Ende und `N)`-Eintraege. Die drei
+ * Formen sind wortgleich aus zerlegeMarkdown in extract.js uebernommen —
+ * tests/rag-search.test.mjs haelt beide Zerleger in Deckung. Absichtlich NICHT
+ * uebernommen ist dessen Codeblock-Erkennung fuer #-Ueberschriften: sie wuerde
+ * die Chunks dreier Bestandsquellen veraendern, und die Regressionszusage
+ * dieses Umbaus lautet "alle anderen Quellen bit-identisch".
+ */
+export function chunkMarkdown(text, source, optionen = {}) {
+  const transparentErlaubt = optionen.textZaeuneTransparent === true;
   const chunks = [];
   let heading = "";
   let buffer = [];
@@ -29,16 +59,49 @@ export function chunkMarkdown(text, source) {
       });
     }
   };
-  for (const line of String(text || "").split("\n")) {
-    if (/^#{1,4}\s/.test(line)) {
-      flush();
-      heading = line.replace(/^#{1,4}\s*/, "").trim();
-    } else {
-      buffer.push(line);
+  const beginne = (ueberschrift) => {
+    flush();
+    heading = String(ueberschrift).trim();
+  };
+  const zeilen = String(text || "").split("\n");
+  let inTransparentZaun = false;
+  for (let i = 0; i < zeilen.length; i++) {
+    const zeile = zeilen[i];
+
+    if (transparentErlaubt && /^```/.test(zeile)) {
+      if (inTransparentZaun) { inTransparentZaun = false; continue; }
+      if (/^```text\s*$/.test(zeile)) { inTransparentZaun = true; continue; }
+      // Andere Zaunzeichen bleiben wie bisher gewoehnliche Textzeilen.
     }
+
+    if (/^#{1,4}\s/.test(zeile)) {
+      beginne(zeile.replace(/^#{1,4}\s*/, ""));
+      continue;
+    }
+
+    const rahmen = /^={4,}\s*$/.test(zeile)
+      && i + 2 < zeilen.length
+      && zeilen[i + 1].trim().length > 0
+      && !/^={4,}\s*$/.test(zeilen[i + 1])
+      && /^={4,}\s*$/.test(zeilen[i + 2]);
+    if (rahmen) { beginne(zeilen[i + 1]); i += 2; continue; }
+
+    if (inTransparentZaun) {
+      const caps = /:$/.test(zeile.trim()) && istGrossToken(zeile.trim().split(/\s+/)[0]);
+      if (caps) { beginne(zeile.trim().replace(/:$/, "")); continue; }
+      const nummer = /^(\d{1,2})\)\s+(.{4,})$/.exec(zeile);
+      if (nummer) { beginne(nummer[2]); continue; }
+    }
+
+    buffer.push(zeile);
   }
   flush();
   return chunks;
+}
+
+/** Erstes Wort einer Gliederungszeile: mindestens 4 Zeichen, alle gross. */
+function istGrossToken(token) {
+  return /^[A-Z0-9ÄÖÜ][A-Z0-9ÄÖÜ\-]{3,}$/.test(String(token || ""));
 }
 
 /** Laedt alle Wissens-Chunks des Projekts. Input: projectRoot (absolut). */
@@ -52,7 +115,7 @@ export async function loadKnowledgeChunks(projectRoot) {
     } catch {
       continue; // Datei fehlt oder unlesbar — kein Fehler, nur weniger Wissen.
     }
-    chunks.push(...chunkMarkdown(text, relative));
+    chunks.push(...chunkMarkdown(text, relative, SONDERBEHANDLUNG[relative]));
   }
   return chunks;
 }

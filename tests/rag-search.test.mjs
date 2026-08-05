@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { buildIndex, searchIndex, tokenize } from "../control-server/src/rag/bm25Index.js";
-import { chunkMarkdown, loadKnowledgeChunks } from "../control-server/src/rag/knowledgeLoader.js";
+import { chunkMarkdown, loadKnowledgeChunks, SONDERBEHANDLUNG } from "../control-server/src/rag/knowledgeLoader.js";
+import { zerlegeMarkdown } from "../src/training/projectcorpus/extract.js";
 import { buildRagContextBlock, searchKnowledge } from "../control-server/src/rag/agentContext.js";
 import {
   DATED_FILE_PATTERN,
@@ -91,6 +92,116 @@ test("markdown chunking splits at headings and keeps the source reference", () =
   assert.equal(chunks[0].heading, "Titel");
   assert.equal(chunks[1].heading, "Abschnitt");
   assert.ok(chunks[1].text.includes("Absatz zwei."));
+});
+
+// ---------------------------------------------------------------------------
+// Gliederungsformen von MASTER_PROMPT.md (====-Rahmen, transparente text-Zaeune)
+// — dieselben Formen wie im Trainings-Zerleger (extract.js), siehe
+// TRAININGSKORPUS_VERMESSUNG_2026-08-05.md.
+// ---------------------------------------------------------------------------
+
+test("====-gerahmte Titel werden Chunk-Ueberschriften", () => {
+  const chunks = chunkMarkdown("====\nGERAHMTER TITEL\n====\nInhalt darunter", "x.md");
+  assert.equal(chunks.length, 1);
+  assert.equal(chunks[0].heading, "GERAHMTER TITEL");
+  assert.ok(chunks[0].text.includes("Inhalt darunter"));
+});
+
+test("ohne Sonderbehandlung bleibt ein text-Zaun Teil des Fliesstextes", () => {
+  const doc = "# Kopf\nvorher\n```text\nGROSSE LISTE:\n1) eintrag eins\n```\nnachher";
+  const chunks = chunkMarkdown(doc, "x.md");
+  assert.equal(chunks.length, 1, "keine neuen Abschnitte aus dem Zauninhalt");
+  assert.ok(chunks[0].text.includes("```text"), "Zaunzeichen bleibt erhalten");
+});
+
+test("RAG- und Trainings-Zerleger liefern fuer die MASTER_PROMPT-Formen dieselben Ueberschriften", () => {
+  // Driftwaechter: die Formen sind in knowledgeLoader.js nachgebaut, nicht
+  // importiert (der Trainings-Zerleger ist codeblock-bewusst, der RAG-Zerleger
+  // darf es aus Regressionsgruenden nicht sein). Dieser Test haelt beide in
+  // Deckung, solange kein Codeblock im Spiel ist.
+  const doc = [
+    "# Kopf",
+    "Einleitung vor dem Zaun.",
+    "```text",
+    "======================================================================",
+    "AUTONOMIE-REGELN (verbindlich)",
+    "======================================================================",
+    "Grundtext der Regeln.",
+    "GRUENE LISTE — dauerhaft freigegeben, nie nachfragen:",
+    "- Code schreiben und aendern",
+    "1) beispiel.com — nur kostenlos",
+    "   Ausschliesslich kostenlose Dienste nutzen.",
+    "```",
+    "Nachtext ausserhalb des Zauns."
+  ].join("\n");
+  const option = { textZaeuneTransparent: true };
+  const ausRag = chunkMarkdown(doc, "x.md", option).map((c) => c.heading);
+  const ausTraining = zerlegeMarkdown(doc, option)
+    .filter((a) => a.zeilen.join("\n").trim().length > 0)
+    .map((a) => a.ueberschrift);
+  assert.deepEqual(ausRag, ausTraining);
+  assert.deepEqual(ausRag, [
+    "Kopf",
+    "AUTONOMIE-REGELN (verbindlich)",
+    "GRUENE LISTE — dauerhaft freigegeben, nie nachfragen",
+    "beispiel.com — nur kostenlos"
+  ]);
+});
+
+test("MASTER_PROMPT.md zerfaellt in echte Abschnitte statt in Chunks mit identischer Ueberschrift", async () => {
+  // Der gemessene Defekt: 10 Chunks, alle mit der Dokument-Ueberschrift.
+  assert.deepEqual(SONDERBEHANDLUNG["MASTER_PROMPT.md"], { textZaeuneTransparent: true });
+  const chunks = (await loadKnowledgeChunks(process.cwd())).filter((c) => c.source === "MASTER_PROMPT.md");
+  const ueberschriften = new Set(chunks.map((c) => c.heading));
+  assert.ok(ueberschriften.size >= 10, `erwartet >= 10 verschiedene Ueberschriften, gefunden ${ueberschriften.size}`);
+  assert.ok(ueberschriften.has("ROTE LISTE — immer vorher schriftliche Freigabe einholen"));
+  assert.ok(ueberschriften.has("AUTONOMIE-CHARTA (verbindlich — gilt ab dem ersten Prompt)"));
+});
+
+test("Regressionszusage: alle Quellen ausser MASTER_PROMPT.md werden bit-identisch zum alten Zerleger zerlegt", async () => {
+  // Referenz: der Zerleger-Algorithmus VOR dem Umbau vom 2026-08-05, woertlich
+  // uebernommen. Er kennt nur #-Ueberschriften. Solange diese Zusage gilt,
+  // veraendert der Umbau ausschliesslich MASTER_PROMPT.md im Index.
+  const MAX = 2400;
+  const alterZerleger = (text, source) => {
+    const chunks = [];
+    let heading = "";
+    let buffer = [];
+    const flush = () => {
+      const body = buffer.join("\n").trim();
+      buffer = [];
+      if (!body) return;
+      for (let offset = 0; offset < body.length; offset += MAX) {
+        chunks.push({
+          id: `${source}#${chunks.length}`,
+          source,
+          heading,
+          text: `${heading ? heading + "\n" : ""}${body.slice(offset, offset + MAX)}`
+        });
+      }
+    };
+    for (const line of String(text || "").split("\n")) {
+      if (/^#{1,4}\s/.test(line)) {
+        flush();
+        heading = line.replace(/^#{1,4}\s*/, "").trim();
+      } else {
+        buffer.push(line);
+      }
+    }
+    flush();
+    return chunks;
+  };
+  const { files } = await listKnowledgeFiles(process.cwd());
+  for (const file of files) {
+    if (file === "MASTER_PROMPT.md") continue;
+    const text = await readFile(file, "utf8").catch(() => null);
+    if (text === null) continue;
+    assert.deepEqual(
+      chunkMarkdown(text, file, SONDERBEHANDLUNG[file]),
+      alterZerleger(text, file),
+      `Chunks von ${file} haben sich veraendert`
+    );
+  }
 });
 
 test("project knowledge loads and answers a real architecture question", async () => {
