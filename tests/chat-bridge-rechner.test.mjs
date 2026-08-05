@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { annuitaet, baueRechenKontext, istFinanzierungsfrage, leseZahl } from "../public/chat-bridge-rechner.js";
+import {
+  annuitaet, baueRechenKontext, istFinanzierungsfrage, leseZahl,
+  restschuld, sparplanEndwert, zinseszins
+} from "../public/chat-bridge-rechner.js";
 
 // Die Frage des Betreibers vom 2026-08-05, an der der Fehler gemessen wurde.
 const ECHTE_FRAGE = "Ein Buero kostet 1.200.000 USD. Ich habe 25 % Eigenkapital, "
@@ -109,4 +112,49 @@ test("die Bruecke haengt den Rechen-Kontext an und verbietet LaTeX", async () =>
   assert.match(ohneKommentare, /Niemals LaTeX/);
   // Coding-Anfragen bleiben unberuehrt.
   assert.match(ohneKommentare, /coding \? "" : baueRechenKontext/);
+});
+
+// --- Die drei anderen Potenzrechnungen ---------------------------------------
+// Alle drei am 2026-08-05 live gemessen und alle drei falsch beantwortet.
+// Sollwerte von Hand nachgerechnet, nicht vom Modell uebernommen.
+
+test("Zinseszins: 50.000 zu 4,5 % ueber 12 Jahre", () => {
+  const { endwert } = zinseszins({ betrag: 50_000, zinsProJahr: 4.5, jahre: 12 });
+  assert.ok(Math.abs(endwert - 84_794.07) < 1, `Endwert ${endwert}`);
+  assert.ok(Math.abs(endwert - 64_800.59) > 1000); // NICHT die geschaetzte Zahl
+  assert.match(
+    baueRechenKontext("Wie viel sind 50.000 Euro nach 12 Jahren bei 4,5 % Zinseszins pro Jahr wert?"),
+    /ENDWERT nach 12 Jahren: 84\.794,07/
+  );
+});
+
+test("Sparplan: 300 im Monat, 15 Jahre, 5 %", () => {
+  const { endwert, eingezahlt } = sparplanEndwert({ monatsbetrag: 300, zinsProJahr: 5, jahre: 15 });
+  assert.equal(eingezahlt, 54_000);
+  assert.ok(Math.abs(endwert - 80_186.68) < 1, `Endwert ${endwert}`);
+  assert.match(
+    baueRechenKontext("Ich spare 300 Euro im Monat ueber 15 Jahre bei 5 % Rendite pro Jahr. Wie viel habe ich am Ende?"),
+    /ENDWERT nach 15 Jahren: 80\.186,68/
+  );
+});
+
+test("Restschuld: 400.000 zu 3,5 %, nach 10 von 30 Jahren", () => {
+  const w = restschuld({ darlehen: 400_000, zinsProJahr: 3.5, jahre: 30, nachJahren: 10 });
+  assert.ok(Math.abs(w.monatsrate - 1796.18) < 0.5);
+  assert.ok(Math.abs(w.rest - 309_707.5) < 5, `Restschuld ${w.rest}`);
+  // Getilgt + Restschuld muss wieder das Darlehen ergeben — die Probe aufs Exempel.
+  assert.ok(Math.abs(w.getilgt + w.rest - 400_000) < 0.01);
+});
+
+test("die Arten nehmen einander die Frage nicht weg", () => {
+  // Eine Annuitaetsfrage darf NICHT beim Zinseszins landen (Kreditwort schuetzt).
+  assert.match(baueRechenKontext(ECHTE_FRAGE), /Monatsrate \(Annuitaet\): 6\.710,16/);
+  // Und ohne erkennbare Art bleibt alles leer.
+  assert.equal(baueRechenKontext("Wie wird das Wetter in 3 Jahren?"), "");
+  assert.equal(baueRechenKontext("Was kostet ein Kaffee bei 5 % Aufschlag?"), "");
+});
+
+test("unsinnige Zeitpunkte werden abgewiesen", () => {
+  // Restschuld NACH dem Ende der Laufzeit ist keine sinnvolle Frage.
+  assert.equal(baueRechenKontext("Darlehen 400.000 Euro, 3,5 % Zins, 10 Jahre Laufzeit. Restschuld nach 20 Jahren?"), "");
 });

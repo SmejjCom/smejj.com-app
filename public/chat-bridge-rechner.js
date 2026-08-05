@@ -76,7 +76,7 @@ export function leseZahl(roh) {
   return Number.isFinite(zahl) ? zahl : null;
 }
 
-const ZINS_WORT = /zins\w*|interest|p\.\s?a\.|per\s?annum/gi;
+const ZINS_WORT = /zins\w*|rendite|interest|p\.\s?a\.|per\s?annum/gi;
 const EIGENKAPITAL_WORT = /eigenkapital|eigenanteil|anzahlung|down\s?payment|equity/gi;
 /** Ab dieser Entfernung gehoert ein Stichwort erkennbar nicht mehr zur Zahl. */
 const MAX_ABSTAND = 40;
@@ -205,14 +205,150 @@ function werteMitVerlauf(text, verlauf) {
   return vollstaendig(gemischt) ? gemischt : null;
 }
 
+// --- Die drei anderen Potenzrechnungen -----------------------------------------
+//
+// BEFUND 2026-08-05, alle drei live gemessen und alle drei falsch:
+//
+//   Zinseszins 50.000 / 12 J. / 4,5 %   -> 64.800,59  statt 84.794,07 (-24 %)
+//   Sparplan   300/Monat / 15 J. / 5 %  -> 101.385,00 statt 80.186,68 (+26 %)
+//   Restschuld nach 10 von 30 Jahren    -> 215.942,16 statt 309.700   (-30 %)
+//
+// Immer dieselbe Wurzel wie bei der Annuitaet: in jeder dieser Formeln steckt
+// eine Potenz. Nur die Annuitaet zu rechnen haette bloss den Fall repariert,
+// der zufaellig zuerst aufgefallen ist.
+
+/** Ein Betrag, der ausdruecklich pro Monat genannt ist (Sparrate). */
+function monatsbetragAus(text) {
+  const t = text.match(/([0-9][0-9.,]*)\s*(?:eur|euro|dollar|usd|\$|\u20ac)?\s*(?:im|pro|je)\s+Monat|monatlich\s+([0-9][0-9.,]*)/i);
+  if (!t) return null;
+  const zahl = leseZahl(t[1] || t[2]);
+  return Number.isFinite(zahl) && zahl > 0 ? zahl : null;
+}
+
+/** "nach 10 Jahren" — der Zeitpunkt, nicht die Laufzeit. */
+function nachJahrenAus(text) {
+  const t = text.match(/nach\s+([0-9]{1,2})\s*Jahren?/i);
+  return t ? Number(t[1]) : null;
+}
+
+/** Endwert einer einmaligen Anlage: Betrag * (1 + p)^Jahre. */
+export function zinseszins({ betrag, zinsProJahr, jahre }) {
+  const endwert = betrag * (1 + zinsProJahr / 100) ** jahre;
+  return { endwert, ertrag: endwert - betrag };
+}
+
+/** Endwert eines Sparplans (nachschuessig, monatliche Verzinsung). */
+export function sparplanEndwert({ monatsbetrag, zinsProJahr, jahre }) {
+  const n = Math.round(jahre * 12);
+  const i = zinsProJahr / 100 / 12;
+  const endwert = i === 0 ? monatsbetrag * n : monatsbetrag * ((1 + i) ** n - 1) / i;
+  const eingezahlt = monatsbetrag * n;
+  return { endwert, eingezahlt, ertrag: endwert - eingezahlt };
+}
+
+/**
+ * Restschuld eines Annuitaetendarlehens nach k Jahren.
+ * B = P*(1+r)^k - A*((1+r)^k - 1)/r
+ */
+export function restschuld({ darlehen, zinsProJahr, jahre, nachJahren }) {
+  const r = zinsProJahr / 100 / 12;
+  const k = Math.round(nachJahren * 12);
+  const { monatsrate } = annuitaet({ darlehen, zinsProJahr, jahre });
+  const wachstum = (1 + r) ** k;
+  const rest = r === 0
+    ? darlehen - monatsrate * k
+    : darlehen * wachstum - monatsrate * (wachstum - 1) / r;
+  const gezahlt = monatsrate * k;
+  const getilgt = darlehen - rest;
+  return { monatsrate, rest: Math.max(0, rest), gezahlt, getilgt, zinsenBisher: gezahlt - getilgt };
+}
+
+const ART_RESTSCHULD = /restschuld|restdarlehen|remaining\s+balance|noch\s+offen/i;
+const ART_SPARPLAN = /sparplan|sparen|spare\b|anspar\w*|savings\s+plan|zuruecklegen|zur\u00fccklegen|einzahl\w*/i;
+const ART_ZINSESZINS = /zinseszins|compound\s+interest|angelegt|anlegen|verzinst|festgeld|tagesgeld/i;
+const KREDIT_WORT = /darlehen|kredit|hypothek|finanzier|tilgung|mortgage|loan/i;
+
+const KOPF = [
+  "Exakt berechnete Werte (vom Rechner der Plattform, nicht geschaetzt).",
+  "Uebernimm diese Zahlen unveraendert; rechne sie NICHT selbst nach.",
+  ""
+];
+
+/**
+ * Die drei Sonderfaelle. Bewusst NUR aus der aktuellen Frage — anders als bei
+ * der Annuitaet gibt es hier keinen Rueckgriff auf den Verlauf. Der Nutzen
+ * waere klein, das Risiko einer falsch zusammengesuchten Rechnung gross.
+ *
+ * @returns {string} leer, wenn dieser Text keiner der drei Faelle ist
+ */
+function sonderfallKontext(text) {
+  const zins = prozentBei(text, ZINS_WORT, EIGENKAPITAL_WORT);
+  const jahre = jahreAus(text);
+  if (!Number.isFinite(zins) || !Number.isFinite(jahre) || zins < 0 || zins > 30 || jahre < 1 || jahre > 60) return "";
+
+  if (ART_RESTSCHULD.test(text)) {
+    const darlehen = betragAus(text);
+    const nachJahren = nachJahrenAus(text);
+    if (!Number.isFinite(darlehen) || !Number.isFinite(nachJahren) || nachJahren >= jahre) return "";
+    const w = restschuld({ darlehen, zinsProJahr: zins, jahre, nachJahren });
+    return [...KOPF,
+      `Darlehensbetrag: ${geld(darlehen)}`,
+      `Zinssatz: ${String(zins).replace(".", ",")} % pro Jahr`,
+      `Gesamtlaufzeit: ${jahre} Jahre`,
+      `Monatsrate (Annuitaet): ${geld(w.monatsrate)}`,
+      `Nach ${nachJahren} Jahren gezahlt: ${geld(w.gezahlt)}`,
+      `davon getilgt: ${geld(w.getilgt)}`,
+      `davon Zinsen: ${geld(w.zinsenBisher)}`,
+      `RESTSCHULD nach ${nachJahren} Jahren: ${geld(w.rest)}`
+    ].join("\n");
+  }
+
+  const monatsbetrag = monatsbetragAus(text);
+  if (ART_SPARPLAN.test(text) && Number.isFinite(monatsbetrag)) {
+    const w = sparplanEndwert({ monatsbetrag, zinsProJahr: zins, jahre });
+    return [...KOPF,
+      `Sparrate: ${geld(monatsbetrag)} pro Monat`,
+      `Rendite: ${String(zins).replace(".", ",")} % pro Jahr`,
+      `Laufzeit: ${jahre} Jahre (${Math.round(jahre * 12)} Einzahlungen)`,
+      `Eingezahlt insgesamt: ${geld(w.eingezahlt)}`,
+      `Ertrag durch Verzinsung: ${geld(w.ertrag)}`,
+      `ENDWERT nach ${jahre} Jahren: ${geld(w.endwert)}`
+    ].join("\n");
+  }
+
+  // Zinseszins zuletzt: ein Kreditwort schliesst ihn aus, sonst naehme er der
+  // Annuitaet die Frage weg und legte den falschen Wert vor.
+  const betrag = betragAus(text);
+  if (ART_ZINSESZINS.test(text) && !KREDIT_WORT.test(text) && !Number.isFinite(monatsbetrag) && Number.isFinite(betrag)) {
+    const w = zinseszins({ betrag, zinsProJahr: zins, jahre });
+    return [...KOPF,
+      `Anlagebetrag: ${geld(betrag)}`,
+      `Zinssatz: ${String(zins).replace(".", ",")} % pro Jahr`,
+      `Laufzeit: ${jahre} Jahre`,
+      `ENDWERT nach ${jahre} Jahren: ${geld(w.endwert)}`,
+      `Zinsertrag insgesamt: ${geld(w.ertrag)}`
+    ].join("\n");
+  }
+  return "";
+}
+
 /**
  * Baut den Rechen-Kontext fuer das Modell.
  *
  * @param {string} task Frage des Nutzers
+ * @param {string[]} verlauf fruehere Nutzerfragen, neueste zuerst
  * @returns {string} leer, wenn die Werte nicht eindeutig erkennbar sind
  */
 export function baueRechenKontext(task, verlauf = []) {
-  const werte = werteMitVerlauf(String(task || ""), verlauf);
+  const text = String(task || "");
+  const sonderfall = sonderfallKontext(text);
+  if (sonderfall) return sonderfall;
+  // Wer nach der RESTSCHULD fragt und keine bekommt, darf nicht ersatzweise die
+  // Monatsrate vorgelegt bekommen: das sind korrekte Zahlen zu einer anderen
+  // Frage, und genau daraus entsteht eine falsche Antwort, die stimmig aussieht.
+  if (ART_RESTSCHULD.test(text)) return "";
+
+  const werte = werteMitVerlauf(text, verlauf);
   if (!werte) return "";
   const { zins, jahre, preis, eigenkapitalProzent } = werte;
 

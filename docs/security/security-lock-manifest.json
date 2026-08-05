@@ -1,6 +1,6 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-05T01:24:22.055Z",
+  "frozenAt": "2026-08-05T07:08:39.552Z",
   "confirmation": "Freigabe: Rechenwerkzeug einbauen, damit Zins- und Finanzierungsfragen exakt gerechnet werden statt geschaetzt. Danach live testen.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "157f34c1a998a30153bc0f404be3f135bdbd69e093ff25d1ea63a36d7e436b66",
     "public/chat-history-context.js": "00a993819d26a2cc282154d07f1161b10532eaea9348e92645acbe9133f0db15",
-    "public/chat-bridge.js": "a9c6f62606348d4a75a1e1355e1d0e8cc6b094f71d06d45928409b0a44b40571",
+    "public/chat-bridge.js": "24d1ae2561a7138af7bd89713f0910a819a546d02d4829cc71698fc535702495",
     "public/ai/fetch-retry.js": "15a1e631825913af8186f0d75b332f79e08e91f70f2db774c2a111ec06d9c506"
   }
 }
