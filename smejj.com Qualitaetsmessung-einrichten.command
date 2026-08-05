@@ -22,7 +22,15 @@
 set -u
 
 APP="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
-SKRIPT="$APP/scripts/verlauf/messlauf-taeglich.sh"
+# WICHTIG: Der zeitgesteuerte Lauf darf NICHT im Google-Drive-Ordner liegen.
+# macOS verweigert jedem Hintergrunddienst das Lesen daraus ("Operation not
+# permitted" — am 2026-08-05 mit cron UND launchd gemessen). Deshalb wird die
+# Vorlage aus dem Projekt nach ~/.local/share kopiert, und der Zeitplan ruft
+# die Kopie auf. Die Kopie holt sich das Projekt bei jedem Lauf frisch von
+# GitHub, kann also nicht veralten.
+VORLAGE="$APP/scripts/verlauf/messlauf-geplant.sh"
+BASIS="$HOME/.local/share/smejj-qualitaet"
+SKRIPT="$BASIS/messlauf.sh"
 PROTOKOLL="$HOME/Library/Logs/smejj-qualitaetsmessung.log"
 KENNUNG="smejj-qualitaetsmessung"
 
@@ -66,12 +74,15 @@ echo "Keine neuen Kosten: die Aufrufe laufen ueber deine vorhandenen Zugaenge."
 echo
 read -r -p "Einrichten? Weiter mit Enter, abbrechen mit Strg+C. " _
 
-[ -x "$SKRIPT" ] || chmod +x "$SKRIPT" 2>/dev/null
-if [ ! -f "$SKRIPT" ]; then
-  echo "ABBRUCH: $SKRIPT fehlt. Nichts geaendert."
+if [ ! -f "$VORLAGE" ]; then
+  echo "ABBRUCH: $VORLAGE fehlt. Nichts geaendert."
   read -r -p "Fenster mit Enter schliessen. " _
   exit 1
 fi
+mkdir -p "$BASIS"
+cp "$VORLAGE" "$SKRIPT" || { echo "ABBRUCH: Kopieren nach $BASIS fehlgeschlagen."; read -r -p "Fenster mit Enter schliessen. " _; exit 1; }
+chmod +x "$SKRIPT"
+echo "Lauf-Datei ausserhalb von Google Drive abgelegt: $SKRIPT"
 
 # Bestehende Eintraege bleiben unangetastet — es wird nur ergaenzt.
 { crontab -l 2>/dev/null; \
