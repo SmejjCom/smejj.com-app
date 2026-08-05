@@ -2,6 +2,15 @@
 
 **Stand 2026-08-04 · Entscheidung liegt beim Betreiber · nichts umgesetzt**
 
+> **NACHTRAG 2026-08-05 — Stufe 1 wurde gebaut und gemessen. Sie hat nicht
+> gewirkt.** Zwei volle Laeufe: RAG-12 78,3 %, mit Nachsortierer 79,0 % bzw.
+> 78,7 % — alles innerhalb des Rauschbands von 1,7. Der Nachsortierer bewegt die
+> Note nicht. Grund gemessen: in **51 %** der Aufrufe legt BM25 gar keine
+> brauchbare Quelle ins Becken (234 unter der Schwelle, 221 abgelehnt von 885).
+> Wer besser waehlt, findet nichts, was nicht da ist.
+> **Damit ist die in Abschnitt 6 genannte Bedingung fuer Stufe 2 erfuellt.**
+> Details: `docs/memory/Memory_Bank_2026-08-05_nachsortierer.md`.
+
 Diese Vorlage beantwortet eine Frage: **Womit sucht smejj.com kuenftig sein
 Projektwissen?** Alle Zahlen darin sind gemessen, nicht geschaetzt. Die Messwege
 stehen jeweils dabei, damit jede Zahl nachpruefbar bleibt.
