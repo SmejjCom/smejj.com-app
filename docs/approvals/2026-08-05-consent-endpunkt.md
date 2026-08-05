@@ -45,3 +45,39 @@ Text, den der Nutzer gelesen hat.
 Zwei Werte am Salad-Container `smejj-control`: `SMEJJ_CONTROL_ARTIFACT_KEY` und
 `SMEJJ_CONTROL_ARTIFACT_SHA256` auf den vorherigen Stand zuruecksetzen. Die
 Container-Beschreibung wird vor dem PATCH gesichert.
+
+---
+
+## NACHTRAG 2026-08-05: Ausrollen angehalten — Konfiguration fehlt vollstaendig
+
+Die Freigabe wurde erteilt und das Artefakt gebaut und hochgeladen:
+
+    deployments/control/consent-endpunkt-2026-08-05.tar.gz
+    sha256 af8ca7992f920a7016c5b9bd2e2fcbcb484d558bbeb27d9b14da3c927a90d9dd
+    2.417.115 Bytes, 1031 Dateien, secretsIncluded: false, immutable
+
+**Der Salad-PATCH wurde NICHT ausgefuehrt.** Die Pruefung der Container-Umgebung
+(85 Werte, Sicherung unter /tmp/smejj-control-sicherung.json) ergab:
+
+    FEHLT   SMEJJ_TRAINING_CONSENT_API_ENABLED
+    FEHLT   SMEJJ_TRAINING_PRIVACY_NOTICE_SHA256
+    FEHLT   SMEJJ_TRAINING_CONSENT_SIGNING_KEY_ID
+    FEHLT   SMEJJ_TRAINING_CONSENT_SIGNING_KEY_B64
+    FEHLT   SMEJJ_TRAINING_CONSENT_BINDING_KEY_ID
+    FEHLT   SMEJJ_TRAINING_CONSENT_BINDING_KEY_B64
+
+Es ist KEIN einziger `SMEJJ_TRAINING_*`-Wert gesetzt. Die Einwilligungs-API war
+auf diesem Container nie konfiguriert — es fehlt nicht nur der neue Hash.
+
+Ein Ausrollen haette einen Endpunkt geliefert, der dauerhaft 503
+`consent_configuration_incomplete` antwortet (fail-closed, wie gebaut), und eine
+Oberflaeche, die jedem Nutzer "Einwilligung derzeit nicht moeglich" zeigt. Das
+waere kein ausgeliefertes Feature, sondern ein sichtbarer Fehlzustand.
+
+**Die beiden Schluesselpaare kann und darf der Agent nicht erzeugen:** das ist
+Schluesselmaterial (Zugangs-Lock, Rote Liste). Sie muessen zudem VERSCHIEDEN
+sein — `trainingConsentConfig` prueft die Schluesseltrennung und meldet sonst
+`ready: false`.
+
+Das Artefakt bleibt unveraendert liegen und ist jederzeit ausrollbar, sobald die
+sechs Werte gesetzt sind.
