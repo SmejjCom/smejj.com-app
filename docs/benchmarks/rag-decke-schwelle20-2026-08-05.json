@@ -1,0 +1,2314 @@
+{
+  "kind": "smejj.com-rag-decke",
+  "schwelle": 20,
+  "becken": 20,
+  "gesamt": {
+    "gedeckt-gefunden": 42,
+    "gedeckt-verfehlt": 115,
+    "ungedeckt": 138,
+    "unklar": 0,
+    "gesamt": 295
+  },
+  "kategorien": {
+    "naming": {
+      "gedeckt-gefunden": 0,
+      "gedeckt-verfehlt": 16,
+      "ungedeckt": 9,
+      "unklar": 0,
+      "gesamt": 25
+    },
+    "architektur": {
+      "gedeckt-gefunden": 7,
+      "gedeckt-verfehlt": 10,
+      "ungedeckt": 3,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "kosten": {
+      "gedeckt-gefunden": 8,
+      "gedeckt-verfehlt": 9,
+      "ungedeckt": 3,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "schutz": {
+      "gedeckt-gefunden": 2,
+      "gedeckt-verfehlt": 13,
+      "ungedeckt": 5,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "sicherheit": {
+      "gedeckt-gefunden": 2,
+      "gedeckt-verfehlt": 10,
+      "ungedeckt": 13,
+      "unklar": 0,
+      "gesamt": 25
+    },
+    "coding": {
+      "gedeckt-gefunden": 1,
+      "gedeckt-verfehlt": 1,
+      "ungedeckt": 23,
+      "unklar": 0,
+      "gesamt": 25
+    },
+    "struktur": {
+      "gedeckt-gefunden": 2,
+      "gedeckt-verfehlt": 2,
+      "ungedeckt": 16,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "ehrlichkeit": {
+      "gedeckt-gefunden": 0,
+      "gedeckt-verfehlt": 8,
+      "ungedeckt": 12,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "deployment": {
+      "gedeckt-gefunden": 3,
+      "gedeckt-verfehlt": 10,
+      "ungedeckt": 7,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "performance": {
+      "gedeckt-gefunden": 5,
+      "gedeckt-verfehlt": 7,
+      "ungedeckt": 8,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "training": {
+      "gedeckt-gefunden": 2,
+      "gedeckt-verfehlt": 9,
+      "ungedeckt": 4,
+      "unklar": 0,
+      "gesamt": 15
+    },
+    "router": {
+      "gedeckt-gefunden": 2,
+      "gedeckt-verfehlt": 8,
+      "ungedeckt": 5,
+      "unklar": 0,
+      "gesamt": 15
+    },
+    "sprache": {
+      "gedeckt-gefunden": 0,
+      "gedeckt-verfehlt": 3,
+      "ungedeckt": 12,
+      "unklar": 0,
+      "gesamt": 15
+    },
+    "logik": {
+      "gedeckt-gefunden": 5,
+      "gedeckt-verfehlt": 1,
+      "ungedeckt": 14,
+      "unklar": 0,
+      "gesamt": 20
+    },
+    "rag": {
+      "gedeckt-gefunden": 3,
+      "gedeckt-verfehlt": 8,
+      "ungedeckt": 4,
+      "unklar": 0,
+      "gesamt": 15
+    }
+  },
+  "eintraege": [
+    {
+      "id": "naming-grundregel",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "naming-satzanfang",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "naming-ueberschrift",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-knopfbeschriftung",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "naming-fehlermeldung",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md",
+        "Project_Goals.md"
+      ]
+    },
+    {
+      "id": "naming-commit-nachricht",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md",
+        "Project_Goals.md"
+      ]
+    },
+    {
+      "id": "naming-json-schluessel",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-umgebungsvariable",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "naming-datenbankfeld",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-protokollzeile",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md",
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "naming-seitentitel",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "naming-alternativtext",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md",
+        "Project_Goals.md"
+      ]
+    },
+    {
+      "id": "naming-uebersetzung-en",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-uebersetzung-tr",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "naming-marketingsatz",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-korrektur-gross",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "naming-korrektur-endung",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "naming-api-antwortfeld",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-modellname",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md",
+        "docs/architecture/MAUS_ENGINE.md"
+      ]
+    },
+    {
+      "id": "naming-email-signatur",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-changelog",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "naming-codekommentar",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md",
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "naming-aria-label",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "naming-in-aufzaehlung",
+      "kategorie": "naming",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "naming-regel-durchsetzen",
+      "kategorie": "naming",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "arch-hauptspeicher",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/OFFLINE_AND_CACHE_POLICY.md",
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "arch-statisches-hosting",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/LOCAL_CONTROL_SERVER.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "arch-actions-verbot",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/deployment/STAGING_POLICY.md",
+        "docs/policy/GITHUB_KOSTENFREI.md",
+        "docs/deployment/DEPLOYMENT_PLAN.md",
+        "AGENTS.md",
+        "docs/architecture/ARCHITECTURE_STATUS.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "arch-control-server-rolle",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md",
+        "docs/FREE_ARCHITECTURE.md",
+        "docs/architecture/BYOK_SECURITY_POLICY.md",
+        "docs/architecture/CLINE_API_INTEGRATION.md"
+      ]
+    },
+    {
+      "id": "arch-control-server-groesse",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md"
+      ]
+    },
+    {
+      "id": "arch-salad-rolle",
+      "kategorie": "architektur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "arch-codeberg-rolle",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/CODEBERG_SPIEGEL.md"
+      ]
+    },
+    {
+      "id": "arch-static-first",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "arch-stateless-pflicht",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/auth/AUTH_AND_USER_POLICY.md"
+      ]
+    },
+    {
+      "id": "arch-cdn-verbot",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "arch-graceful-degradation",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/REMOTE_BROWSER_WORKER_SALAD.md",
+        "docs/deployment/SALAD_CONTROL_SERVER.md"
+      ]
+    },
+    {
+      "id": "arch-neue-instanz-skalieren",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "arch-lastannahme",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md",
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md"
+      ]
+    },
+    {
+      "id": "arch-worker-zustand",
+      "kategorie": "architektur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "arch-metadaten-ablage",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_PHASE_1_FOUNDATION.md",
+        "docs/FREE_ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": "arch-prioritaetsreihenfolge",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/STORAGE_FIRST_AI_OS.md"
+      ]
+    },
+    {
+      "id": "arch-anbieter-neu",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md",
+        "docs/architecture/STORAGE_FIRST_AI_OS.md",
+        "docs/deployment/MULTI_KI_ENV_VORLAGE.md"
+      ]
+    },
+    {
+      "id": "arch-grosse-datei-control",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/NEX_N2_PRO_IDRIVE_LITE_ENGINE.md",
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md"
+      ]
+    },
+    {
+      "id": "arch-rate-limiting",
+      "kategorie": "architektur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "arch-render-blocker",
+      "kategorie": "architektur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "kosten-github-tarif",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md",
+        "docs/architecture/SMEJJ_1_0_PHASE_1_FOUNDATION.md"
+      ]
+    },
+    {
+      "id": "kosten-trial-verbot",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/STORAGE_FIRST_AI_OS.md",
+        "docs/mail/CODEX_PROMPT_send-as.md"
+      ]
+    },
+    {
+      "id": "kosten-neue-position",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "kosten-salad-regeln",
+      "kategorie": "kosten",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "kosten-dauerbetrieb",
+      "kategorie": "kosten",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "kosten-byok",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/MULTI_KI_ENV_VORLAGE.md",
+        "docs/architecture/MAUS_INTERAKTIV_LOOP.md",
+        "docs/architecture/AI_ROUTER_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "id": "kosten-skalierung-zukauf",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md",
+        "docs/architecture/ASSISTENT_PARITAET_ROADMAP.md"
+      ]
+    },
+    {
+      "id": "kosten-auto-billing",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "kosten-zeabur-upgrade",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "kosten-github-actions-ci",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md",
+        "docs/policy/GITHUB_KOSTENFREI.md"
+      ]
+    },
+    {
+      "id": "kosten-idrive-grenzen",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/STORAGE_FIRST_AI_OS.md",
+        "docs/architecture/COST_GUARDRAILS.md",
+        "docs/architecture/CRDT_SYNC_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "id": "kosten-freier-spiegel",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/CODEBERG_SPIEGEL.md"
+      ]
+    },
+    {
+      "id": "kosten-salad-nach-arbeit",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/compliance/RISIKOEINSTUFUNG_MAUS_ENGINE.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "kosten-modell-hosting",
+      "kategorie": "kosten",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "kosten-priorisierung",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/mail/MAIL_SETUP_smejj.md",
+        "docs/policy/GITHUB_KOSTENFREI.md"
+      ]
+    },
+    {
+      "id": "kosten-edge-dienst",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "kosten-lfs",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/policy/GITHUB_KOSTENFREI.md",
+        "docs/deployment/FREE_TIER_DEPLOYMENT_GUARDRAILS.md",
+        "docs/architecture/MODEL_VAULT_POLICY.md"
+      ]
+    },
+    {
+      "id": "kosten-budget-gate-zweck",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/compliance/RISIKOEINSTUFUNG_MAUS_ENGINE.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "kosten-freigabe-form",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/TEST_AND_RELEASE_GUARDRAILS.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "kosten-zwei-instanzen",
+      "kategorie": "kosten",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md",
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md"
+      ]
+    },
+    {
+      "id": "lock-startseite-farbe",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/frontend/START_DESIGN_LOCK.md",
+        "AGENTS.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "lock-eingabefeld",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AGENTS.md",
+        "Project_Goals.md",
+        "docs/frontend/START_DESIGN_LOCK.md",
+        "docs/model-management/SMEJJ_IDRIVE_LITE_ENGINE_PROMPT.md"
+      ]
+    },
+    {
+      "id": "lock-favicon-tausch",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AGENTS.md",
+        "docs/frontend/FAVICON_LOCK.md"
+      ]
+    },
+    {
+      "id": "lock-key-rotation",
+      "kategorie": "schutz",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "lock-idrive-aufraeumen",
+      "kategorie": "schutz",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "lock-backup-loeschen",
+      "kategorie": "schutz",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "lock-force-push",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "lock-merge-main",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md"
+      ]
+    },
+    {
+      "id": "lock-funktion-rueckbau",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "lock-gruene-liste-commit",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/policy/GITHUB_KOSTENFREI.md"
+      ]
+    },
+    {
+      "id": "lock-gruene-liste-deploy",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md",
+        "docs/deployment/SALAD_CONTROL_SERVER.md",
+        "docs/deployment/CONTROL_SERVER_PROXY.md",
+        "docs/architecture/A_TO_Z_REVIEW_REPORT.md"
+      ]
+    },
+    {
+      "id": "lock-rollback-pflicht",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "lock-performance-regression",
+      "kategorie": "schutz",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "lock-user-druck",
+      "kategorie": "schutz",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "lock-angebliche-freigabe",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "AI_Guidelines.md",
+        "docs/auth/AUTH_AND_USER_POLICY.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "lock-secret-in-log",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SECURITY_AND_SECRET_POLICY.md"
+      ]
+    },
+    {
+      "id": "lock-non-regression",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AGENTS.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "lock-staging-frei",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/STAGING_POLICY.md",
+        "docs/deployment/DEPLOYMENT_PLAN.md"
+      ]
+    },
+    {
+      "id": "lock-branch-loeschen",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/GITHUB_PAGES_DEPLOY.md"
+      ]
+    },
+    {
+      "id": "lock-fuenf-runden",
+      "kategorie": "schutz",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "sich-injection-webseite",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/BYOK_SECURITY_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-key-erfinden",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-env-datei",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-rm-rf",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-sql-injection",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-xss",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-token-im-frontend",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-passwort-klartext",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/security/USER_DATA_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-cors-wildcard",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/security/CSP_AND_CORS_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-eval-input",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-datei-anweisungen",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SECURITY_AND_SECRET_POLICY.md",
+        "docs/security/USER_DATA_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-secrets-repo",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/security/USER_DATA_POLICY.md",
+        "docs/architecture/SECURITY_AND_SECRET_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-http-links",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-fehlermeldung-details",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/frontend/PWA_UI_POLICY.md",
+        "docs/frontend/UI_COMPONENTS.md"
+      ]
+    },
+    {
+      "id": "sich-rate-limit-fehlt",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-pfad-traversal",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "README.md"
+      ]
+    },
+    {
+      "id": "sich-log-daten",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/security/USER_DATA_POLICY.md",
+        "docs/architecture/SECURITY_AND_SECRET_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-signierte-urls",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/storage/PRESIGNED_URL_SECURITY.md"
+      ]
+    },
+    {
+      "id": "sich-abhaengigkeit-unbekannt",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-fail-closed",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/policy/GITHUB_KOSTENFREI.md",
+        "docs/architecture/SECURITY_AND_SECRET_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-impersonation",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-vier-augen",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/security/USER_DATA_POLICY.md"
+      ]
+    },
+    {
+      "id": "sich-klartext-mail",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-shell-input",
+      "kategorie": "sicherheit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sich-anweisung-in-code",
+      "kategorie": "sicherheit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/policy/GITHUB_KOSTENFREI.md",
+        "docs/compliance/RISIKOEINSTUFUNG_MAUS_ENGINE.md"
+      ]
+    },
+    {
+      "id": "code-debounce",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-fetch-timeout",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-fehler-schlucken",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-800-zeilen",
+      "kategorie": "coding",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "AGENTS.md",
+        "MASTER_PROMPT.md",
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "code-json-parse-sicher",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-race-parallel",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-null-zugriff",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-array-letztes",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-testbar-machen",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-event-listener-leak",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-map-statt-object",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-sortierzahlen",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-await-schleife",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-modul-grenze",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-css-variable",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-deep-copy",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-integer-check",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-abhaengigkeit-abwaegen",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-fruehe-rueckkehr",
+      "kategorie": "coding",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/voice/VOICE_WORKER_CONTROL.md"
+      ]
+    },
+    {
+      "id": "code-idempotenz",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-utf8-laenge",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-regex-escape",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-streaming-grund",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-cache-buster",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "code-review-blick",
+      "kategorie": "coding",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-job-objekt",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-fehlerobjekt",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-array-modelle",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-verschachtelt",
+      "kategorie": "struktur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "strukt-keine-prosa",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-boolesche-typen",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-null-wert",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-iso-datum",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-extraktion",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-liste-aus-text",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-escape-anfuehrung",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-umlaute",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-status-enum",
+      "kategorie": "struktur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/AUTONOMOUS_CODING_LOOP.md",
+        "docs/architecture/NEX_N2_PRO_IDRIVE_LITE_ENGINE.md"
+      ]
+    },
+    {
+      "id": "strukt-zahlenformat",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-leeres-array",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-markdown-tabelle",
+      "kategorie": "struktur",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md",
+        "docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md",
+        "docs/compliance/EU_AI_ACT_BESTANDSVERZEICHNIS.md",
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md",
+        "docs/architecture/AI_ROUTER_IMPLEMENTATION.md",
+        "docs/architecture/RAG_PROJEKTWISSEN.md",
+        "docs/architecture/REMOTE_BROWSER_INTERAKTIV.md",
+        "docs/architecture/SMEJJ_1_0_PHASE_1_FOUNDATION.md"
+      ]
+    },
+    {
+      "id": "strukt-schema-treue",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-csv-zeile",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-key-konvention",
+      "kategorie": "struktur",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "strukt-antwort-huelle",
+      "kategorie": "struktur",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/REMOTE_BROWSER_WORKER_SALAD.md"
+      ]
+    },
+    {
+      "id": "ehrl-erfundene-datei",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-zukunft",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-erfundene-api",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-nutzerzahlen",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-falsche-praemisse",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/COST_GUARDRAILS.md",
+        "docs/architecture/CLOUDFLARE_FREE_GATEKEEPER.md"
+      ]
+    },
+    {
+      "id": "ehrl-quellenangabe",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-unsicherheit-benennen",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-eigene-grenzen",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-halbwissen-version",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-erfundener-kollege",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-statistik-erfinden",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-medizin-grenze",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-recht-grenze",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ehrl-korrektur-annehmen",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/CLOUDFLARE_FREE_GATEKEEPER.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "ehrl-doppelte-verneinung",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/storage/CHECKSUM_AND_RESTORE_TEST.md"
+      ]
+    },
+    {
+      "id": "ehrl-hoeflich-widersprechen",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md"
+      ]
+    },
+    {
+      "id": "ehrl-messung-statt-meinung",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md"
+      ]
+    },
+    {
+      "id": "ehrl-teilwissen-kennzeichnen",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md",
+        "docs/architecture/SMEJJ_1_0_PHASE_1_FOUNDATION.md"
+      ]
+    },
+    {
+      "id": "ehrl-nicht-gefragt-nicht-erfunden",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/REMOTE_BROWSER_WORKER_SALAD.md",
+        "docs/architecture/STORAGE_FIRST_AI_OS.md",
+        "docs/architecture/MAUS_ENGINE.md",
+        "docs/architecture/SYNC_AND_MANIFEST_DESIGN.md",
+        "docs/architecture/MODEL_VAULT_POLICY.md",
+        "README.md"
+      ]
+    },
+    {
+      "id": "ehrl-leere-antwort-vermeiden",
+      "kategorie": "ehrlichkeit",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md",
+        "docs/compliance/EU_AI_ACT_BESTANDSVERZEICHNIS.md"
+      ]
+    },
+    {
+      "id": "ship-erster-schritt",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "ship-build-genuegt-nicht",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/DEPLOYMENT_PLAN.md",
+        "docs/architecture/SYNC_AND_MANIFEST_DESIGN.md",
+        "docs/deployment/REMOTE_BROWSER_WORKER_SALAD.md"
+      ]
+    },
+    {
+      "id": "ship-live-test-art",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_PROXY.md"
+      ]
+    },
+    {
+      "id": "ship-fehler-gefunden",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/FREE_TIER_DEPLOYMENT_GUARDRAILS.md"
+      ]
+    },
+    {
+      "id": "ship-runden-grenze",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "ship-abschluss",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/mail/CODEX_PROMPT_send-as.md"
+      ]
+    },
+    {
+      "id": "ship-sw-version",
+      "kategorie": "deployment",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ship-pflicht-checks",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md",
+        "docs/architecture/REMOTE_BROWSER_INTERAKTIV.md"
+      ]
+    },
+    {
+      "id": "ship-check-guidelines",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "AGENTS.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "ship-entwurf-verboten",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "ship-bericht-zeitpunkt",
+      "kategorie": "deployment",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ship-beleg-pflicht",
+      "kategorie": "deployment",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ship-messpflicht",
+      "kategorie": "deployment",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ship-verschlechterung",
+      "kategorie": "deployment",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ship-parallel-sessions",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/UMZUG_LOKALE_PLATTE.md"
+      ]
+    },
+    {
+      "id": "ship-idrive-schritt",
+      "kategorie": "deployment",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ship-rollback-ziel",
+      "kategorie": "deployment",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "ship-capsule-zweck",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_PHASE_1_FOUNDATION.md",
+        "AI_Guidelines.md"
+      ]
+    },
+    {
+      "id": "ship-kontext-vorher",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "AI_Guidelines.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "ship-live-kaputt",
+      "kategorie": "deployment",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/ROLLBACK_AND_BACKUP_POLICY.md"
+      ]
+    },
+    {
+      "id": "perf-ttfb-budget",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-lcp-budget",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-inp-cls",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-api-budgets",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-erster-token",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-seitengewicht",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-durchschnitt-falle",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-besucher-sekunde",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-spitzenlast",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-anfragen-spitze",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-control-server-last",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-neue-abhaengigkeit",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-langsame-messung",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/ASSISTENT_PARITAET_ROADMAP.md"
+      ]
+    },
+    {
+      "id": "perf-mobil-referenz",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-cls-ursache",
+      "kategorie": "performance",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "perf-uptime-statisch",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-fehlerbudget",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-rpo-nutzerdaten",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "perf-messwerkzeug",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/testing/IOS_ANDROID_TEST_REPORT.md"
+      ]
+    },
+    {
+      "id": "perf-p99-bedeutung",
+      "kategorie": "performance",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "train-capture-standard",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "README.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "train-fremdmodell-sperre",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md",
+        "README.md"
+      ]
+    },
+    {
+      "id": "train-claude-distillation",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md"
+      ]
+    },
+    {
+      "id": "train-capsules-keine-daten",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md",
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md",
+        "README.md"
+      ]
+    },
+    {
+      "id": "train-firstparty-bedingungen",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md"
+      ]
+    },
+    {
+      "id": "train-memory-quelle",
+      "kategorie": "training",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "AI_Guidelines.md",
+        "MASTER_PROMPT.md",
+        "docs/architecture/SMEJJ_1_0_PHASE_1_FOUNDATION.md"
+      ]
+    },
+    {
+      "id": "train-kollaps",
+      "kategorie": "training",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "train-eval-antwortschluessel",
+      "kategorie": "training",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "train-gguf-grenze",
+      "kategorie": "training",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "train-lora-idee",
+      "kategorie": "training",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "train-oasst-sauber",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md"
+      ]
+    },
+    {
+      "id": "train-fehlbuild-lernen",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md",
+        "docs/architecture/ASSISTENT_PARITAET_ROADMAP.md"
+      ]
+    },
+    {
+      "id": "train-ablage-form",
+      "kategorie": "training",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "train-datenqualitaet-hebel",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_TRAININGSWEG.md"
+      ]
+    },
+    {
+      "id": "train-messlatte-zuerst",
+      "kategorie": "training",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/ASSISTENT_PARITAET_ROADMAP.md"
+      ]
+    },
+    {
+      "id": "router-byok",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "router-fail-closed",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/AI_ROUTER_IMPLEMENTATION.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "router-fallback-transparenz",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/AI_ROUTER_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "id": "router-neues-modell",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/MAUS_ENGINE.md"
+      ]
+    },
+    {
+      "id": "router-befoerderung",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/compliance/RISIKOEINSTUFUNG_MAUS_ENGINE.md",
+        "docs/deployment/DEPLOYMENT_PLAN.md"
+      ]
+    },
+    {
+      "id": "router-alias-lehre",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/SMEJJ_1_0_PHASE_1_FOUNDATION.md"
+      ]
+    },
+    {
+      "id": "router-profile",
+      "kategorie": "router",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "router-gemessener-ausfall",
+      "kategorie": "router",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "router-kleine-modelle",
+      "kategorie": "router",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "README.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "router-schnellspur",
+      "kategorie": "router",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "router-zeitbudget",
+      "kategorie": "router",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "router-requested-vs-resolved",
+      "kategorie": "router",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "router-langfristziel",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/compliance/EU_AI_ACT_BESTANDSVERZEICHNIS.md",
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "router-keine-eigenen-keys",
+      "kategorie": "router",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/BYOK_SECURITY_POLICY.md",
+        "docs/security/USER_DATA_POLICY.md",
+        "docs/auth/AUTH_AND_USER_POLICY.md"
+      ]
+    },
+    {
+      "id": "router-endpunkt-vergleich",
+      "kategorie": "router",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "sprach-fehler-uebersetzen",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-kein-rohjson",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-rueckfrage-mehrdeutig",
+      "kategorie": "sprache",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/mail/CODEX_PROMPT_send-as.md"
+      ]
+    },
+    {
+      "id": "sprach-eine-rueckfrage",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-englisch",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-tuerkisch",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-jargon-erklaeren",
+      "kategorie": "sprache",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/testing/PWA_TEST_REPORT.md",
+        "docs/architecture/OFFLINE_AND_CACHE_POLICY.md",
+        "docs/architecture/LOCAL_FIRST_WORKSPACE.md"
+      ]
+    },
+    {
+      "id": "sprach-schlechte-nachricht",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-kurz-halten",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-du-form-konsistenz",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-zahlen-lesbar",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-absage-freundlich",
+      "kategorie": "sprache",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/COST_GUARDRAILS.md"
+      ]
+    },
+    {
+      "id": "sprach-schritt-anleitung",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-keine-schuldzuweisung",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "sprach-emoji-mass",
+      "kategorie": "sprache",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-salad-kosten",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-speicher-tage",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-rate-limit",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-punktzahl-gewichtet",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-egress-budget",
+      "kategorie": "logik",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "logik-prozent-regression",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-instanzen-rechnen",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-cache-quote",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-zeitzone",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-transitiv",
+      "kategorie": "logik",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "AGENTS.md",
+        "docs/architecture/ASSISTENT_PARITAET_ROADMAP.md",
+        "AI_Guidelines.md",
+        "docs/deployment/DEPLOYMENT_PLAN.md",
+        "docs/deployment/PRODUCTION_RELEASE_POLICY.md"
+      ]
+    },
+    {
+      "id": "logik-widerspruch-finden",
+      "kategorie": "logik",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md",
+        "docs/architecture/REMOTE_BROWSER_INTERAKTIV.md"
+      ]
+    },
+    {
+      "id": "logik-wochentag",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-median-p95",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-batch-groesse",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-verdopplung",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-fehlerquote",
+      "kategorie": "logik",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md"
+      ]
+    },
+    {
+      "id": "logik-abwaegung",
+      "kategorie": "logik",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "MASTER_PROMPT.md",
+        "docs/architecture/COST_GUARDRAILS.md"
+      ]
+    },
+    {
+      "id": "logik-teilmenge",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "logik-idrive-kosten",
+      "kategorie": "logik",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/deployment/CONTROL_SERVER_ZEABUR_UMZUG.md",
+        "docs/architecture/FREE_ONLY_MASTER_POLICY.md"
+      ]
+    },
+    {
+      "id": "logik-kette",
+      "kategorie": "logik",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "rag-korpus-inhalt",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-benchmark-verbot",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-schwelle-zweck",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-kontext-vorrang",
+      "kategorie": "rag",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "rag-kein-kontext",
+      "kategorie": "rag",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "rag-momentaufnahme",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-historie-ort",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-agent-endpunkt",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/deployment/SALAD_CONTROL_SERVER.md"
+      ]
+    },
+    {
+      "id": "rag-ab-vergleich",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md",
+        "docs/architecture/ASSISTENT_PARITAET_ROADMAP.md"
+      ]
+    },
+    {
+      "id": "rag-gemessener-effekt",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-gefunden",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-anschlussfrage",
+      "kategorie": "rag",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "rag-bm25-grenze",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-kontext-kennzeichnen",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    },
+    {
+      "id": "rag-veraltete-regel",
+      "kategorie": "rag",
+      "gruppe": "ungedeckt",
+      "quellen": []
+    },
+    {
+      "id": "rag-korpus-deckel",
+      "kategorie": "rag",
+      "gruppe": "gedeckt-verfehlt",
+      "quellen": [
+        "docs/architecture/RAG_PROJEKTWISSEN.md"
+      ]
+    }
+  ]
+}

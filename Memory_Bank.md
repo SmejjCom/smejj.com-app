@@ -396,34 +396,8 @@ nur im Netzwerkprotokoll sichtbar; dazu CSP auf allen 24 Seiten.
 
 ## 2026-08-04 — Suchquelle mit Schluessel (Tavily, BYOK)
 
-Betreiber-Freigabe: „Ja, mach die Suchquelle mit Schlüssel." Nachweis in
-`docs/approvals/2026-08-04-suchquelle-mit-schluessel.md`, Policy-Ausnahme 3.
-
-- **ANBIETERWAHL IST EINE MESSUNG, KEINE ERINNERUNG.** Am selben Tag geprueft:
-  Brave hat sein Gratiskontingent im **Februar 2026 abgeschafft** (Karte pflicht,
-  metered), Google Custom Search ist **fuer Neukunden geschlossen** und wird zum
-  2027-01-01 abgeschaltet. Beides waere aus dem Gedaechtnis heraus falsch gewaehlt
-  worden. Geblieben: **Tavily, 1000 Credits/Monat, KEINE Karte noetig.**
-- **DIE KOSTENGARANTIE IST DIE FEHLENDE KARTE, NICHT DER CODE.** Ohne hinterlegte
-  Zahlungsart kann beim Anbieter nichts abgerechnet werden. Der Monatsdeckel im
-  Code (`SMEJJ_SEARCH_API_MONTHLY_MAX`, 900 von 1000, greift VOR dem Aufruf) ist
-  bewusst die ZWEITE Linie — sein Zaehler liegt im Speicher und faellt beim
-  Neustart zurueck. `search_depth: "basic"` kostet 1 Credit statt 2.
-- **Tavily erwartet den ausgeschriebenen Landesnamen** (`"united states"`), NICHT
-  das Kuerzel — ein Kuerzel wird still ignoriert, der Markt waere wirkungslos.
-- Fail-closed: ohne Schluessel kein einziger Netzaufruf dorthin, alter Weg
-  unveraendert. Live belegt (Control 136): `suchquelle.konfiguriert: false`,
-  Suche laeuft weiter ueber DuckDuckGo.
-- **DIE DUCKDUCKGO-SPERRE WAR ZEITWEILIG.** Am selben Tag lieferten dieselben
-  Fragen erst 0 Treffer (HTTP 202 Sperrseite), Stunden spaeter wieder 8 gute.
-  Merkregel: Eine Sperre EINMAL messen reicht nicht — vor „der Dienst ist tot"
-  zeitversetzt nachmessen. Die Schluesselquelle ist damit kein Ersatz, sondern
-  eine Absicherung gegen die Laune einer fremden Suchmaschine.
-- Ergebnis der Suchkette nach allen Korrekturen, live: `office space for sale
-  San Jose` -> loopnet.com, crexi.com, realmo.com. `Schlagzeilen Berlin heute`
-  -> rbb24, BZ, Tagesspiegel. `Öffnungszeiten Zoo Berlin` -> zoo-berlin.de.
-- Der Schluessel selbst ist Betreibersache: `smejj.com Suchschluessel-setzen.command`
-  (zeigt ihn nie an, prueft das Format, schreibt genau einen Wert).
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-04_suchquelle_schluessel.md](docs/memory/Memory_Bank_2026-08-04_suchquelle_schluessel.md).
 
 ## 2026-08-04 — Sprachseiten: Inhalt oeffentlich, Sprachmodus angemeldet (job_livetest_a_bis_z_20260804)
 - ERLEDIGT, live (`e59ef13`, Commit `d452310`). Eine Parallel-Session hatte die
@@ -788,3 +762,30 @@ Korpus (PMI), Frage vor der Suche um ihr Themenvokabular ergaenzt. 1.480 Begriff
 - OFFEN vor jedem weiteren Retrieval-Umbau: die Deckenfrage. Wie viele der 295
   Faelle sind ueberhaupt durch ein vorhandenes Dokument beantwortbar? Ohne diese
   Zahl ist unbekannt, wie viel Luft bleibt.
+
+## 2026-08-05 — Decke gemessen, Live-Schaden gefunden (job_eval_breite_suite_20260803)
+
+**157 von 295 Fragen sind aus dem Korpus beantwortbar; die Produktionssuche
+erreicht 42 — Trefferquote 27 %.** 115 Faelle (39 %) haben ihre Antwort im
+Korpus, aber die Suche liefert sie nicht. Trefferquote je Schwelle: 20 -> 27 %,
+12 -> 60 %, 8 -> 75 %. Werkzeug: `npm run eval:rag-decke`.
+Bericht: docs/benchmarks/rag-decke-schwelle20-2026-08-05.json.
+- GUELTIGKEITSBELEG der Messung: die 138 ungedeckten Faelle liegen in coding (23),
+  struktur (16), logik (14), sprache (12) — allgemeine Faehigkeiten. Die Luft
+  liegt vollstaendig im Hauswissen.
+- **SCHWELLE OHNE NEUEN LAUF RECHENBAR:** `rankHits` benutzt minTopScore nur als
+  TOR, nicht zum Sortieren. Ein Fall mit Spitzenwert >= 20 bekommt bei 12 und 20
+  denselben Kontext. Damit ist das Ergebnis jeder Schwelle exakt aus zwei
+  vorhandenen Laeufen ableitbar. MERKREGEL: **erst pruefen, ob eine Zahl schon in
+  den Daten steckt, bevor drei Stunden gemessen werden.**
+  Ergebnis: RAG aus 76,1 % / Schwelle 20 (live) 77,0 % / Schwelle 12 77,5 %.
+  Gewinn 20->12 nur +0,5 auf die Gesamtnote, +2,2 auf den 127 betroffenen Faellen.
+- **DER EIGENTLICHE FUND — der Schaden bei training/schutz ist SCHON LIVE:**
+  12 Faelle bekommen bereits bei Schwelle 20 Kontext und verlieren dadurch
+  **-19,4 Punkte**; die Schwellensenkung fuegt nur weitere -5,6 auf 17 Faellen
+  hinzu. Der Defekt liegt also im Betrieb, nicht in der geplanten Aenderung.
+  VORRANG hat darum die Untersuchung dieser 12 Quellen — kostet keinen
+  Modellaufruf.
+- Nebenbefund: selbst UNGEDECKTE Fragen verlieren durch Kontext nicht
+  (+1,4 auf 66 Faellen). Die These "irrelevanter Kontext schadet immer" ist in
+  dieser Form widerlegt.
