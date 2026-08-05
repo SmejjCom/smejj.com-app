@@ -143,3 +143,74 @@ test("ohne Klartext bleibt die Kennung als Rueckfall", async () => {
   const html = { text: async () => "<html>Gateway</html>" };
   assert.equal(await readableError(html, "offline"), "offline");
 });
+
+// ---------------------------------------------------------------------------
+// Messen statt erzwingen (Freigabe 2026-08-04: "erst messen, wie viele echte
+// Anfragen ein gueltiges Token tragen, dann mit mir abstimmen").
+//
+// Der Zwischenschritt existiert, weil die Wache am selben Tag scharf geschaltet
+// wurde, OHNE den positiven Weg gemessen zu haben — der Chat war danach fuer den
+// Betreiber tot. Diese Zaehler beantworten vorher, was damals angenommen wurde.
+// ---------------------------------------------------------------------------
+
+const auth = await import("../public/chat-bridge-auth.js");
+
+test("die Messung zaehlt alle drei Faelle richtig", async () => {
+  auth._zaehlerZuruecksetzen();
+  // EIGENE Token: der Zwischenspeicher lebt im Modul und ueberdauert Tests.
+  // Ein frueherer Test hat GUELTIG mit dem echten fetch geprueft (Netzfehler ->
+  // 30 s als ungueltig gemerkt) — wer denselben Namen nimmt, misst dessen Rest.
+  const meinGueltig = "mess.gueltig.token";
+  const meinFalsch = "mess.falsch.token";
+  const fetchFn = async (_url, o) => ({
+    ok: true,
+    json: async () => ({ authenticated: o?.headers?.Authorization === `Bearer ${meinGueltig}` })
+  });
+  const basis = { controlOrigin: "https://control.test", fetchFn };
+  await auth.beobachteAnmeldung({ headers: { authorization: `Bearer ${meinGueltig}` } }, basis);
+  await auth.beobachteAnmeldung({ headers: { authorization: `Bearer ${meinFalsch}` } }, basis);
+  await auth.beobachteAnmeldung({ headers: {} }, basis);
+  const s = auth.anmeldeStatistik();
+  assert.equal(s.gesamt, 3);
+  assert.equal(s.mitGueltigemToken, 1);
+  assert.equal(s.mitUngueltigemToken, 1);
+  assert.equal(s.ohneToken, 1);
+  assert.equal(s.anteilGueltig, 33.3, "der Anteil ist die Zahl, auf die es ankommt");
+});
+
+test("ohne Anfragen gibt es keinen erfundenen Anteil", () => {
+  auth._zaehlerZuruecksetzen();
+  assert.equal(auth.anmeldeStatistik().anteilGueltig, null, "0 von 0 ist nicht 0 Prozent");
+});
+
+test("die Messung stoert den Dienst nie", async () => {
+  auth._zaehlerZuruecksetzen();
+  const kaputt = { controlOrigin: "https://control.test", fetchFn: async () => { throw new Error("weg"); } };
+  await assert.doesNotReject(() => auth.beobachteAnmeldung({ headers: { authorization: "Bearer x" } }, kaputt));
+  assert.equal(auth.anmeldeStatistik().gesamt, 1, "gezaehlt wird trotzdem");
+});
+
+test("die Messung ist NICHT verdrahtet wie eine Wache", () => {
+  const quelle = fs.readFileSync("public/chat-bridge.js", "utf8");
+  // Ohne await: sonst haengt die Antwortzeit des Chats an einem Rundlauf.
+  assert.match(quelle, /if \(kostetModell\) void beobachteAnmeldung\(req/,
+    "die Messung darf nicht erwartet werden");
+  assert.ok(!/await beobachteAnmeldung/.test(quelle), "kein await auf der Messung");
+  // Sie darf keine Antwort erzeugen und keinen Rueckgabewert auswerten.
+  const zeile = quelle.split("\n").find((z) => z.includes("beobachteAnmeldung(req"));
+  assert.ok(!/return|!|\?/.test(zeile.replace("void beobachteAnmeldung(req, { controlOrigin: CONTROL_ORIGIN });", "")),
+    "die Messung darf den Ablauf nicht verzweigen");
+  assert.match(quelle, /anmeldung: anmeldeStatistik\(\)/, "der Stand gehoert in /health");
+});
+
+test("die Zaehler verraten nichts ueber einzelne Nutzer", () => {
+  auth._zaehlerZuruecksetzen();
+  const s = auth.anmeldeStatistik();
+  assert.deepEqual(Object.keys(s).sort(),
+    ["anteilGueltig", "gesamt", "hinweis", "mitGueltigemToken", "mitUngueltigemToken", "ohneToken"],
+    "nur Zahlen und ein Hinweis — kein Token, keine Kennung, kein Inhalt");
+  for (const [k, v] of Object.entries(s)) {
+    if (k === "hinweis") continue;
+    assert.ok(v === null || typeof v === "number", `${k} muss eine Zahl sein`);
+  }
+});
