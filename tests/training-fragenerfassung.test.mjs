@@ -101,8 +101,6 @@ test("ohne belastbare Einwilligung wird NICHT erfasst", () => {
     ["gar keine", undefined],
     ["leeres Objekt", {}],
     ["handgebaute Attrappe", { status: "granted", captureAllowed: true, trainingAllowed: true, verified: true }],
-    ["ohne Erfassungs-Einwilligung", entscheidung([grant({ captureReviewConsent: false })])],
-    ["ohne Trainings-Einwilligung", entscheidung([grant({ modelTrainingConsent: false })])],
     ["widerrufen", entscheidung(widerrufen)],
     ["veraltet", entscheidung([grant()], "2026-07-10T12:00:00.000Z")]
   ];
@@ -113,6 +111,17 @@ test("ohne belastbare Einwilligung wird NICHT erfasst", () => {
     assert.equal(e.erfassen, false, `faelschlich erfasst: ${name}`);
     assert.equal(e.grund, ABLEHNUNG.KEINE_EINWILLIGUNG, name);
     assert.equal(e.satz, null, "ohne Deckung darf kein Satz entstehen");
+  }
+});
+
+test("eine Teil-Einwilligung laesst sich gar nicht erst erzeugen", () => {
+  // Staerker als erwartet: createConsentGrant WEIGERT sich, einen Grant mit
+  // unvollstaendigem Umfang auszustellen. Es gibt also keine Einwilligung, die
+  // Erfassung erlaubt und Training verbietet (oder umgekehrt) — der Fall kann
+  // nicht entstehen, statt spaeter abgefangen zu werden.
+  for (const teil of [{ captureReviewConsent: false }, { modelTrainingConsent: false }, { sourceRightsConfirmed: false }]) {
+    assert.throws(() => grant(teil), /consent_explicit_scope_required/,
+      `Teil-Einwilligung wurde ausgestellt: ${JSON.stringify(teil)}`);
   }
 });
 
