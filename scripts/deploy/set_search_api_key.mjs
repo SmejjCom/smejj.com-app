@@ -111,17 +111,28 @@ async function main() {
     // VOLLSTAENDIGE Variablenliste zurueckschreiben (Teil-Patch hat schon einmal
     // die startup_probe geloescht).
     const ergebnis = await saladApi("PATCH", pfad, { container: { environment_variables: bestand } });
+
+    // NACHPRUEFEN statt glauben. Am 2026-08-05 meldete dieser Lauf "ok: true"
+    // samt Fingerabdruck, waehrend der Schluessel im Container fehlte — der
+    // PATCH-Statuscode allein beweist nichts. Jetzt wird zurueckgelesen: das
+    // Ergebnis heisst nur dann ok, wenn die Variable danach wirklich dort steht.
+    const kontrolle = await saladApi("GET", pfad);
+    const jetztDa = Boolean(kontrolle.container?.environment_variables?.[VARIABLE]);
+    const bestaetigt = entfernen ? !jetztDa : jetztDa;
     berichte.push({
       gruppe,
       version: ergebnis.version ?? null,
       aktion: entfernen ? "entfernt" : vorherVorhanden ? "ersetzt" : "neu gesetzt",
-      variablen: Object.keys(bestand).length,
-      monatsdeckel: bestand[DECKEL_VARIABLE] || "(nicht gesetzt)"
+      variablen: Object.keys(kontrolle.container?.environment_variables || {}).length,
+      monatsdeckel: bestand[DECKEL_VARIABLE] || "(nicht gesetzt)",
+      bestaetigt
     });
   }
 
+  const alleBestaetigt = berichte.every((b) => b.bestaetigt !== false);
   console.log(JSON.stringify({
-    ok: true,
+    ok: alleBestaetigt,
+    ...(alleBestaetigt ? {} : { fehler: "Salad hat den Schluessel nach dem Schreiben NICHT zurueckgeliefert — nichts wirksam geworden." }),
     schluessel: entfernen ? "(entfernt)" : fingerabdruck(schluessel),
     container: berichte,
     hinweis: "Salad startet geaenderte Container neu (~60-90 s). Danach pruefen: Control /api/health -> suchquelle.konfiguriert, und im Chat eine Schlagzeilen-Frage stellen."
