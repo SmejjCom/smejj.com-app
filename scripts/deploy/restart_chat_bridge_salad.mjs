@@ -43,6 +43,29 @@ async function saladApi(methode, pfad) {
   }
 }
 
+/** Die Adresse, von der der Container sein Buendel wirklich laedt. */
+const QUELLE = process.env.SMEJJ_CHAT_BRIDGE_BUNDLE_URL
+  || "https://raw.githubusercontent.com/SmejjCom/smejj-app-frontend/main/assets/chat-bridge.js";
+
+/**
+ * Wartet, bis die QUELLE die erwartete Version ausliefert.
+ * Ohne diesen Schritt startet der Container in die alte Fassung zurueck.
+ */
+async function warteAufQuelle(erwartet, versuche = 20) {
+  for (let i = 1; i <= versuche; i += 1) {
+    const text = await fetch(`${QUELLE}?stand=${i}`, { signal: AbortSignal.timeout(20_000) })
+      .then((r) => (r.ok ? r.text() : ""))
+      .catch(() => "");
+    if (text.includes(erwartet)) {
+      console.log(`Quelle liefert ${erwartet} (Versuch ${i}).`);
+      return;
+    }
+    console.log(`  Quelle noch nicht auf ${erwartet} — Versuch ${i}/${versuche}`);
+    await new Promise((r) => setTimeout(r, 15_000));
+  }
+  abbruch(`Die Quelle liefert ${erwartet} nicht. Nicht neu gestartet — ein Neustart wuerde die alte Fassung zurueckholen.`);
+}
+
 /** Wartet, bis /health die erwartete Version meldet. */
 async function warteAufVersion(erwartet, versuche = 30) {
   for (let i = 1; i <= versuche; i += 1) {
@@ -74,6 +97,18 @@ async function main() {
     console.log("Bereits auf dem Zielstand — kein Neustart noetig.");
     return;
   }
+
+  // ERST DIE QUELLE PRUEFEN, DANN NEU STARTEN.
+  //
+  // Befund 2026-08-05: Ein Neustart holte die ALTE Fassung zurueck und kostete
+  // 25 Minuten Suche. Grund war eine falsche Annahme darueber, WOHER der
+  // Container sein Buendel laedt: nicht von smejj.com, sondern von
+  // raw.githubusercontent.com (siehe Startbefehl der Container Group). Beide
+  // haben eigene Zwischenspeicher, und raw hinkt regelmaessig ein paar Minuten
+  // hinterher. Wer smejj.com prueft und dann neu startet, startet ins Leere.
+  //
+  // Darum wird hier die Adresse befragt, die der Container wirklich benutzt.
+  await warteAufQuelle(erwartet);
 
   console.log(`Stoppe ${GRUPPE} ...`);
   await saladApi("POST", `${basis}/stop`);
