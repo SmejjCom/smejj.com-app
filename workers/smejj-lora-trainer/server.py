@@ -127,7 +127,15 @@ class Handler(BaseHTTPRequestHandler):
             # Der Messweg zeigt auf die SSE-Route, nicht auf die Wurzel:
             # evalTransport#callViaControl POSTet unveraendert an diese Adresse.
             mess_url = f"{OEFFENTLICHE_URL}/api/chat" if OEFFENTLICHE_URL else ""
-            laufwerk.starte(lauf_id, auftrag, mess_url)
+            if laufwerk.starte(lauf_id, auftrag, mess_url) is None:
+                # EINE KARTE, EIN LAUF. 409 statt 200: der Aufrufer bekaeme
+                # sonst eine laufId, die zu keinem Training gehoert, und wartete
+                # auf ein Ergebnis, das nie kommt.
+                return self._antworte(409, {
+                    "ok": False,
+                    "error": "lauf_laeuft_bereits",
+                    "aktiverLauf": laufwerk.aktiver_lauf(),
+                })
             return self._antworte(200, {"laufId": lauf_id})
 
         if pfad.startswith("/training/abort/"):

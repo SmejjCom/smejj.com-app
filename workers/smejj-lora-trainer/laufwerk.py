@@ -246,8 +246,42 @@ class Laufwerk:
 
     # --- Laeufe --------------------------------------------------------
 
-    def starte(self, lauf_id, auftrag, oeffentliche_url):
+    def aktiver_lauf(self):
+        """Die Kennung des gerade laufenden Trainings, sonst None."""
         with self._sperre:
+            for kennung, lauf in self._laeufe.items():
+                if lauf["zustand"] == "laeuft":
+                    return kennung
+        return None
+
+    def starte(self, lauf_id, auftrag, oeffentliche_url):
+        """Startet einen Lauf. Gibt None zurueck, wenn schon einer laeuft.
+
+        EINE KARTE, EIN LAUF — am 2026-08-05 teuer gelernt. Nach drei
+        Neustarts der Schleife in wenigen Minuten liefen mehrere Trainings
+        gleichzeitig auf derselben GPU. Folgen, alle gemessen:
+
+        * `trainiere()` arbeitet auf dem GETEILTEN `self.modell`: es streift den
+          Adapter ab, ersetzt das Feld und wickelt neu ein. Zwei Threads darin
+          nehmen sich gegenseitig den Adapter weg — kein Fehler, sondern ein
+          stilles Durcheinander, das erst in den Punktzahlen auftaucht.
+        * Die Trainings-Threads hungern den HTTP-Thread aus (Python-GIL):
+          `/health` brauchte 0,6-1,4 s statt 0,2-0,3 s, und die Statusabfrage
+          der Schleife lief in ihre 20-Sekunden-Grenze. Die Schleife brach den
+          Zyklus daraufhin ab — `trainer_zustand_unbekannt:zeitgrenze`.
+          Gleichzeitigkeit zerstoert also genau die Messung, fuer die sie da war.
+
+        Fail-closed: im Zweifel NICHT starten. Ein abgewiesener Start kostet
+        nichts, ein zweiter paralleler Lauf kostet die Ergebnisse beider.
+        """
+        with self._sperre:
+            for kennung, lauf in self._laeufe.items():
+                if lauf["zustand"] == "laeuft":
+                    print(
+                        f"[smejj-lora-trainer] Start abgewiesen: Lauf {kennung} laeuft noch",
+                        flush=True,
+                    )
+                    return None
             self._laeufe[lauf_id] = {
                 "zustand": "laeuft",
                 "beginn": time.time(),
@@ -258,6 +292,7 @@ class Laufwerk:
         threading.Thread(
             target=self._fuehre_aus, args=(lauf_id, auftrag), daemon=True
         ).start()
+        return lauf_id
 
     def zustand(self, lauf_id):
         with self._sperre:
