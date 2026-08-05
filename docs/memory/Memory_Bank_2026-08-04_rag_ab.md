@@ -22,12 +22,59 @@ Kontext hilft, wo Hauswissen fehlt, und schadet, wo das Modell es schon wusste.
 Damit ist die Begruendung von MIN_TOP_SCORE = 20 (ragRanking.js) auf einem
 20-fach groesseren Instrument bestaetigt statt widerlegt.
 
-## Empfehlung: MIN_TOP_SCORE NICHT pauschal auf 12 senken
+## KORREKTUR mit Kontrollgruppe: die Wirkung ist +4,0, nicht +1,4
 
-Eine globale Schwelle kauft Gewinne in sechs Kategorien mit Verlusten in vier.
-Der Hebel ist nicht die Hoehe der Schwelle, sondern WELCHE Quelle zu WELCHER
-Frage gezogen wird. Naechster Schritt ist quellenbewusstes Retrieval, kein
-Zahlenwechsel.
+Der erste Schluss ("Gewinn im Rauschen") war zu vorsichtig. 78 der 295 Faelle
+bekamen bei Schwelle 12 GAR KEINEN Kontext — sie sind eine echte Kontrollgruppe,
+denn RAG kann sie nicht beeinflusst haben:
+
+    MIT Kontext            217 Faelle   74,3 % -> 76,8 %   (+2,5)
+    OHNE (Kontrollgruppe)   78 Faelle   80,9 % -> 79,4 %   (-1,4)
+    Differenz von Differenzen                              (+4,0)
+
+Die Kontrollgruppe driftete um -1,4 nach unten. Dieselbe Drift steckt auch in der
+Kontextgruppe; abgezogen bleiben +4,0 Punkte echte Wirkung — deutlich ausserhalb
+des Rauschbands von 1,7.
+
+MERKREGEL: **Faelle ohne Kontext sind bei einem RAG-A/B keine Fuellmasse, sondern
+die Kontrollgruppe.** Ohne sie wird die Wirkung systematisch unterschaetzt.
+
+Auf Faellen MIT Kontext, je Kategorie: sprache +18,5 (nur 3 Faelle), router +15,0,
+ehrlichkeit +12,7, kosten +10,5, performance +8,1, logik +7,6, rag +7,0.
+Echte Verluste bleiben: training -14,4 und schutz -9,2.
+
+## Diagnose der zwei Verlierer: BM25 trifft Wortdeckung, nicht Zustaendigkeit
+
+    train-capsules-keine-daten  ->  AI_Guidelines.md :: 7. Kosten-Guardrails (32,9)
+    lock-funktion-rueckbau      ->  FREE_ONLY_MASTER_POLICY :: Skalierungsregel (16,1)
+                                    AGENTS.md :: Change-Lock erst auf Platz 3 (10,3)
+    lock-key-rotation           ->  zwei Deploy-Vorlagen statt des Zugangs-Locks
+
+Das zustaendige Dokument taucht gar nicht auf oder verliert gegen eines, das nur
+dieselben Woerter enthaelt.
+
+## VERWORFENER VERSUCH: Quellen-Prioritaet erweitern
+
+Der MASTER_PROMPT benennt fuenf Dokumente als verbindlich; nur eines davon stand
+in SOURCE_PRIORITY. Naheliegender Schluss: die vier fehlenden ergaenzen
+(TRAINING_DATA_POLICY, DEPLOYMENT_PLAN, START_DESIGN_LOCK, FAVICON_LOCK).
+
+GEMESSEN UND ZURUECKGENOMMEN: es half nicht und schadete stellenweise. Bei
+lock-funktion-rueckbau rutschte danach die Trainingsdaten-Policy auf Platz 2 —
+bei einer Frage zum Change-Lock. Autoritaetsgewichte mischen nur um, WELCHES
+themenfremde Dokument gewinnt; sie stellen kein Thema fest.
+
+MERKREGEL: **Autoritaet ist kein Ersatz fuer Themenbezug.** Eine Gewichtung kann
+zwischen zwei zustaendigen Quellen entscheiden, aber keine unzustaendige aussortieren.
+
+## Empfehlung
+
+1. MIN_TOP_SCORE NICHT pauschal auf 12 senken, solange training und schutz dabei
+   verlieren. Der Netto-Gewinn von +4,0 ist echt, aber erkauft.
+2. Der Hebel liegt nicht in Schwelle oder Gewicht, sondern darin, dass BM25
+   keinen Themenbegriff kennt. Das ist eine Entscheidung ueber die Suchart
+   (z. B. semantische Einbettungen), keine Zahlenaenderung — und damit eine
+   Frage an den Betreiber, kein Nebenbei-Umbau.
 
 ## Belege und Merkregeln
 

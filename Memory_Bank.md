@@ -771,10 +771,13 @@ mitUngueltigemToken, anteilGueltig }`.
 
 ## 2026-08-04 — A/B: Projektwissen im Prompt (job_eval_breite_suite_20260803)
 
-GLM-5.2 ohne Kontext 76,1 % gegen mit Kontext (Schwelle 12) 77,5 % — der Gewinn
-liegt INNERHALB des Rauschbands. Kritische Verstoesse 61 -> 47 ist der echte
-Befund. Kontext hilft, wo Hauswissen fehlt (ehrlichkeit +11,7, router +11,3),
-und schadet, wo das Modell es schon wusste (training -12,2, schutz -10,8).
-**Empfehlung: MIN_TOP_SCORE NICHT pauschal senken** — der Hebel ist
-quellenbewusstes Retrieval, kein Zahlenwechsel.
+GLM-5.2 ohne Kontext 76,1 % gegen mit Kontext (Schwelle 12) 77,5 %. Mit
+KONTROLLGRUPPE gerechnet (78 Faelle bekamen nie Kontext, drifteten -1,4) betraegt
+die echte Wirkung **+4,0 Punkte** — ausserhalb des Rauschbands. Kritische
+Verstoesse 61 -> 47. Kontext hilft, wo Hauswissen fehlt (router +15,0,
+ehrlichkeit +12,7), und schadet weiter bei training (-14,4) und schutz (-9,2).
+Ursache gemessen: BM25 trifft Wortdeckung, nicht Zustaendigkeit. Ein Versuch,
+das ueber Quellen-Prioritaeten zu heilen, wurde gemessen und ZURUECKGENOMMEN.
+**Empfehlung: MIN_TOP_SCORE nicht pauschal senken; die Suchart ist die
+Entscheidung, nicht die Zahl.**
 Volltext: [docs/memory/Memory_Bank_2026-08-04_rag_ab.md](docs/memory/Memory_Bank_2026-08-04_rag_ab.md).
