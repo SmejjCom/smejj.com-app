@@ -62,8 +62,8 @@ case "${1:-start}" in
       SMEJJ_LORA_FREIGABE_ID=freigabe-2026-08-01-dauertraining \
       SMEJJ_LORA_FREIGABE_GPU_KLASSE=rtx3090 SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD=180 \
       SMEJJ_LORA_BASIS_HF_REPO=Qwen/Qwen3-8B \
-      SMEJJ_LORA_DATENSATZ_SCHLUESSEL=datasets/smejj-1-0/projektwissen/2ec96b05dcbb/train.jsonl \
-      SMEJJ_LORA_DATENSATZ_MANIFEST=datasets/smejj-1-0/projektwissen/2ec96b05dcbb/manifest.json \
+      SMEJJ_LORA_DATENSATZ_SCHLUESSEL=datasets/smejj-1-0/projektwissen/1d415f97a6f1/train.jsonl \
+      SMEJJ_LORA_DATENSATZ_MANIFEST=datasets/smejj-1-0/projektwissen/1d415f97a6f1/manifest.json \
       SMEJJ_LORA_TRAINER_URL=https://lime-parsley-qr1myuiyur3yeow5.salad.cloud \
       SMEJJ_LORA_TRAINER_KEY="$SALAD_API_KEY" \
       IDRIVE_E2_MODEL_BUCKET=smejj-model-files
