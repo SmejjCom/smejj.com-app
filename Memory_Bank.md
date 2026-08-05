@@ -419,33 +419,10 @@ Volltext ausgelagert nach
   mehr** — dann Textknoten tauschen oder die Sprache vor dem Rendern kennen.
 
 ## 2026-08-04 — Seitengewicht unter Budget (sw v215, job_seitengewicht_20260804)
-- ERLEDIGT + LIVE BEWIESEN: Erstbesuch **311 -> 297 KB** (Budget 300).
-  Messwerkzeug meldet "Alle Performance-Budgets eingehalten". Warm unveraendert
-  40 KB. Beleg: docs/benchmarks/webvitals_seitengewicht_v215_2026-08-04.json
-- WEG: Aufschluesselung ueber ALLE 119 Ressourcen (echtes Chrome, transferSize)
-  statt Raten. Gefunden: api-keys-surface.js (6,9 KB), provider-settings.js
-  (3,7 KB) + ihr selbst nachgeladenes CSS (3,2 KB) lagen im Ladepfad JEDES
-  Seitenaufrufs, obwohl beide NUR in das Einstellungs-Panel "models" rendern
-  und der Startreiter "general" ist. settings-surface.js (NICHT gesperrt)
-  importiert sie jetzt dynamisch, ausgeloest von `activate("models")`.
-- SCHLUESSELERKENNTNIS: **Precache-Ladungen zaehlen NICHT ins Seitengewicht.**
-  Belegt daran, dass voice-conversation.js, status.js und verlauf.js im
-  Precache liegen, in den 119 Ressourcen aber fehlen. Verschobene Module
-  bleiben deshalb im Precache — beim Reiterwechsel kommen sie aus dem Cache,
-  ohne Netz. Das ist der ganze Trick: verschieben, nicht entfernen.
-- PRUEFUNG VOR DEM UMBAU (damit nichts wegfaellt): app.js (Start-Lock) bindet
-  KEINE der erzeugten Kennungen (ak*, apiKeysSurface, cline*), applyValues()
-  greift nur auf die eigenen FIELDS zu, beide init-Funktionen sind idempotent.
-  Live gegengeprueft: 0 Module auf der Startseite, nach Klick auf "Models"
-  laden genau die vier Dateien und BEIDE Oberflaechen rendern vollstaendig.
-- BEWUSST NICHT ANGEFASST (Freigabe sagt "bei Zweifel nicht anfassen"):
-  account-privacy.js MUSS synchron rendern (app.js bindet #saveProfile,
-  #registerLocal, #loginLocal an sein Markup); die 25 KB Sprach-Module haengen
-  auf Modulebene an composer-tools.js (800/800 Zeilen) und haetten die
-  Warm-up-Logik ausgehebelt. Beides waere Funktionsrisiko fuer wenige KB.
-- FALLE, wieder bestaetigt: Nach dem sw-Sprung brauchte es VIER Reloads plus
-  ein `registration.update()`, bis der alte Cache v214 abgeloest war. Vorher
-  misst man die alte Datei und haelt den Fix fuer wirkungslos.
+Volltext: [docs/memory/Memory_Bank_2026-08-04_seitengewicht.md](docs/memory/Memory_Bank_2026-08-04_seitengewicht.md).
+Kern: Erstbesuch 311 -> 297 KB (Budget 300). Hebel war VERSCHIEBEN statt entfernen —
+Precache-Ladungen zaehlen NICHT ins Seitengewicht. api-keys-surface.js und
+provider-settings.js laden erst bei `activate("models")`, bleiben aber im Precache.
 
 ## 2026-08-04 — Anmeldepflicht an der Chat-Bruecke LIVE (Bridge v114, sw v217)
 
@@ -814,3 +791,10 @@ Salad-Container neu gestartet, LIVE nach 80 s.
 - **check:guidelines ist ROT, aber NICHT durch diese Aenderung:** `public/sw.js`
   hat mit 8ad258f (Parallelsitzung, sw v223) 810 Zeilen erreicht (vorher 795).
   sw.js ist nicht Teil des Bruecken-Buendels. Als eigene Aufgabe gemeldet.
+
+## 2026-08-05 — Zeitbudget: die ROUTE entscheidet (job_zeitbudget_route_20260805)
+Volltext: [docs/memory/Memory_Bank_2026-08-05_zeitbudget.md](docs/memory/Memory_Bank_2026-08-05_zeitbudget.md).
+- LIVE (sw v224). Bis Kopfzeilen 852 ms einfach gegen **4704 ms** auf `/api/agent`
+  bei 6500 ms Budget. Das Budget hing am MODELLNAMEN — jetzt an der ROUTE.
+- MERKREGELN: `grep … | head -1` traf einen KOMMENTAR statt der Konstante. Ein
+  Beweistest mit nur EINEM Ziel besteht auch gegen den alten Code.
