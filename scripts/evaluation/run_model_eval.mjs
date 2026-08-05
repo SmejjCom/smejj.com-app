@@ -57,6 +57,10 @@ export function parseArguments(argv, env = process.env) {
     // Leer = Produktionsschwelle aus ragRanking.js. Ein abweichender Wert ist eine
     // Messung, kein Betriebszustand — er landet darum im Bericht.
     ragSchwelle: null,
+    // Nachsortierer: ein Modellaufruf waehlt aus einem groesseren Trefferbecken die
+    // zustaendige Passage — oder lehnt alle ab. Aus heisst: Byte fuer Byte der
+    // bisherige Weg, damit frueher gemessene Berichte vergleichbar bleiben.
+    rerank: false,
     out: "",
     baseline: "",
     help: false
@@ -67,6 +71,7 @@ export function parseArguments(argv, env = process.env) {
     if (token === "--help" || token === "-h") options.help = true;
     else if (token === "--live") options.live = true;
     else if (token === "--rag") options.rag = true;
+    else if (token === "--rerank") options.rerank = true;
     else if (token === "--rag-schwelle") { options.ragSchwelle = Number.parseFloat(next()); index += 1; }
     else if (token === "--suite") { options.suite = String(next() || ""); index += 1; }
     else if (token === "--model") { options.model = String(next() || ""); index += 1; }
@@ -93,6 +98,9 @@ export function parseArguments(argv, env = process.env) {
     // es sei etwas gemessen worden, was nie lief.
     if (!options.rag) return { error: "rag_schwelle_ohne_rag" };
   }
+  // Ein Nachsortierer ohne Kontext haette nichts zu sortieren. Still durchlassen
+  // hiesse, der Bericht traegt "rerank: true" ueber einen Lauf, in dem nie einer lief.
+  if (options.rerank && !options.rag) return { error: "rerank_ohne_rag" };
   // Streng statt stillschweigend begrenzt: auf der Kommandozeile ist ein Wert
   // ausserhalb des Bereichs ein Tippfehler, kein Wunsch.
   if (!Number.isInteger(options.wiederholungen) ||
@@ -194,6 +202,11 @@ export async function findBaselineReport({
   // Fortschritt oder Regression des Modells. Das ist genau die Verwechslung, die
   // dieser Vergleichsschluessel verhindern soll.
   rag = false,
+  // Nachsortierer. Aus demselben Grund Teil des Vergleichsschluessels wie rag:
+  // ein Lauf, in dem ein Modell die Passage waehlt, ist mit einem, der BM25 folgt,
+  // nicht vergleichbar — der Unterschied waere sonst als Modellfortschritt gelesen.
+  // Aeltere Berichte kennen das Feld nicht; sie entstanden ohne Nachsortierer.
+  rerank = false,
   readDir = readdir,
   readJson = readJsonFile
 }) {
@@ -212,12 +225,14 @@ export async function findBaselineReport({
       : 1;
     // Aeltere Berichte kennen das Feld nicht; sie entstanden ohne Projektwissen.
     const berichtRag = report?.run?.rag === true;
+    const berichtRerank = report?.run?.rerank === true;
     if (report?.suite?.suiteId === suiteId &&
         report?.suite?.contentSha256 === contentSha256 &&
         report?.run?.modelId === modelId &&
         berichtEndpunkt === endpoint &&
         berichtWiederholungen === wiederholungen &&
         berichtRag === rag &&
+        berichtRerank === rerank &&
         report?.run?.live === true) {
       return report;
     }
@@ -225,11 +240,11 @@ export async function findBaselineReport({
   return null;
 }
 
-function reportFileName(suiteId, modelId, isoDate, rag = false) {
+function reportFileName(suiteId, modelId, isoDate, rag = false, rerank = false) {
   const safeModel = String(modelId || "unknown").replace(/[^a-z0-9-]/gi, "-").toLowerCase();
   // Der Zusatz haelt die beiden Spuren desselben Tages auseinander; ohne ihn
   // ueberschriebe der zweite Lauf den ersten und der A/B-Vergleich waere weg.
-  return `modeleval-${suiteId}-${safeModel}${rag ? "-rag" : ""}-${isoDate.slice(0, 10)}.json`;
+  return `modeleval-${suiteId}-${safeModel}${rag ? "-rag" : ""}${rerank ? "-rerank" : ""}-${isoDate.slice(0, 10)}.json`;
 }
 
 async function readJsonFile(file) {
@@ -255,6 +270,9 @@ function usage() {
     `  --rag-schwelle <n>   Mindestpunktzahl fuer RAG-Kontext (Standard ${MIN_TOP_SCORE}).`,
     "                       Nur mit --rag. Ein abweichender Wert ist eine Messung und",
     "                       wird im Bericht festgehalten.",
+    "  --rerank             Nachsortierer: ein Modellaufruf waehlt aus einem groesseren",
+    "                       Trefferbecken die zustaendige Passage — oder lehnt alle ab.",
+    "                       Nur mit --rag. Ohne dieses Flag laeuft der bisherige Weg.",
     "  --limit <n>          hoechstens n Faelle ausfuehren",
     "  --delay-ms <n>       Pause zwischen zwei Faellen (Standard 400)",
     "  --retries <n>        Wiederholungen bei transienten Transportfehlern (Standard 2)",
@@ -312,7 +330,8 @@ async function main() {
       `Wiederholungen je Fall: ${options.wiederholungen}` +
         ` — ${cases.length * options.wiederholungen} Modellaufrufe im Livelauf`,
       `Transportweg: ${options.transport}, Modell: ${modelId}`,
-      `Projektwissen (RAG) im Prompt: ${options.rag ? "ja" : "nein"}`,
+      `Projektwissen (RAG) im Prompt: ${options.rag ? "ja" : "nein"}` +
+        `${options.rerank ? " — mit Nachsortierer" : ""}`,
       `Fuer einen echten Lauf: --live anhaengen.`,
       ""
     ].join("\n"));
@@ -322,9 +341,20 @@ async function main() {
   const basisAufruf = options.transport === "control"
     ? (evalCase) => callViaControl(evalCase, { modelId: options.model })
     : await providerCaller(options.model);
+  // Der Nachsortierer laeuft ueber DENSELBEN Transportweg wie die Messung selbst.
+  // Ein zweiter, eigener Weg waere eine zweite Fehlerquelle — und die Zeitkosten
+  // waeren nicht die, die spaeter im Betrieb anfallen.
+  const nachsortierer = options.rerank
+    ? async (prompt, { maxTokens }) => {
+      const ergebnis = await basisAufruf({ profile: "fast", prompt, maxTokens });
+      return ergebnis?.ok === true ? String(ergebnis.text || "") : "";
+    }
+    : null;
   const ragHuelle = options.rag
-    ? wrapCallerWithRag(basisAufruf, REPO_ROOT,
-      Number.isFinite(options.ragSchwelle) ? { minTopScore: options.ragSchwelle } : {})
+    ? wrapCallerWithRag(basisAufruf, REPO_ROOT, {
+      ...(Number.isFinite(options.ragSchwelle) ? { minTopScore: options.ragSchwelle } : {}),
+      ...(nachsortierer ? { nachsortierer } : {})
+    })
     : null;
   const callModel = ragHuelle ? ragHuelle.callModel : basisAufruf;
 
@@ -361,7 +391,8 @@ async function main() {
       modelId,
       wiederholungen: options.wiederholungen,
       endpoint: chatEndpointFromEnv(),
-      rag: options.rag
+      rag: options.rag,
+      rerank: options.rerank
     });
 
   const report = buildEvalReport({
@@ -378,6 +409,7 @@ async function main() {
       // nicht auseinanderzuhalten.
       endpoint: chatEndpointFromEnv(),
       rag: options.rag,
+      rerank: options.rerank,
       ragSchwelle: options.rag ? (options.ragSchwelle ?? MIN_TOP_SCORE) : null,
       ...(ragHuelle ? { ragStats: ragHuelle.stats } : {})
     },
@@ -386,7 +418,7 @@ async function main() {
   });
 
   await mkdir(reportDirAbs, { recursive: true });
-  const outRelative = options.out || path.join(REPORT_DIR, reportFileName(suite.suiteId, modelId, finishedAt, options.rag));
+  const outRelative = options.out || path.join(REPORT_DIR, reportFileName(suite.suiteId, modelId, finishedAt, options.rag, options.rerank));
   await writeFile(path.resolve(REPO_ROOT, outRelative), `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
   if (ragHuelle) {

@@ -75,6 +75,11 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
       // Projektwissen (RAG) im Prompt. Gehoert aus demselben Grund in den Bericht
       // wie endpoint: ein Lauf mit Kontext ist mit einem ohne nicht vergleichbar.
       rag: run?.rag === true,
+      // Nachsortierer. Aus demselben Grund Teil der Messart: ein Lauf, in dem ein
+      // Modell die Passage waehlt, misst etwas anderes als einer, der BM25 folgt.
+      // Ohne dieses Feld wuerden die beiden gegeneinander gestellt und der
+      // Unterschied als Fortschritt des MODELLS gelesen.
+      rerank: run?.rerank === true,
       // Die Schwelle gehoert zwingend dazu: sie entscheidet, WIE OFT Kontext
       // ueberhaupt entsteht, und ist damit der Unterschied zwischen einem Lauf,
       // der 48 von 48 Aufrufen Kontext gibt, und einem, der 16 von 48 gibt.
