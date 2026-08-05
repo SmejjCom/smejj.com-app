@@ -202,3 +202,30 @@ Control und Chat-Bridge bei ihren TCP-Sonden belassen. Ein Wachhund dort ist
 eine Verbesserung, kein Notstand — Control läuft seit 2026-07-14 ununterbrochen.
 Der Versuch ist an einem Tag mit ruhigerer Salad-Kapazität zu wiederholen,
 möglichst an einer Kopie mit 1 Rechenkern.
+
+---
+
+# Abschluss — Entscheidung des Betreibers
+
+**Betreiber 2026-08-05:** „Stopp sie und lass es bei den TCP-Sonden."
+
+Damit ist das Thema geschlossen. Endstand:
+
+| Dienst | Sonden | Zustand |
+|---|---|---|
+| `smejj-control` | TCP / TCP (unverändert) | running, HTTP 200 |
+| `smejj-chat-bridge-v88b-live` | TCP / TCP (nie angefasst) | running, HTTP 200 |
+| `smejj-remote-browser-bridge-live` | HTTP `/health` | running, HTTP 200 |
+| `smejj-remote-browser-live` | HTTP `/health` | running, HTTP 200 |
+| `smejj-control-chat-agent-rc1-staging` | TCP / TCP (zurückgesetzt) | **stopped**, 29 Umgebungswerte unverändert |
+
+Die HTTP-Sonden der beiden Fern-Browser-Dienste **bleiben** — sie sind separat
+freigegeben, adressieren einen gemessenen Ausfall und laufen seit Stunden ohne
+Beanstandung. Die Entscheidung „bei den TCP-Sonden bleiben" wurde auf Control
+und Chat-Bridge bezogen, wo der Versuch gescheitert ist.
+
+**Keine weiteren Sondenversuche ohne neue Freigabe.**
+
+Offen und bewusst offen gelassen: warum die HTTP-Sonde `smejj-control` aus der
+Rotation genommen hat. Zwei Erklärungen sind mit allen Messungen vereinbar
+(Sondenart vs. Neuzuteilung bei jeder Änderung); entschieden ist keine.
