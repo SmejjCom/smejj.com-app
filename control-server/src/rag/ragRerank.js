@@ -63,6 +63,19 @@ export function beckenFuerNachsortierung(index, frage, { minTopScore } = {}) {
 /**
  * Formt die Auswahlfrage an das Modell.
  * Bewusst knapp und ohne Spielraum: es wird eine Zahl erwartet, nichts sonst.
+ *
+ * Der Wortlaut ist gemessen, nicht geraten. Die erste Fassung lautete "Welche
+ * Passage BEANTWORTET die Frage? ... Beantwortet KEINE die Frage, antworte 0."
+ * Sie lud zum Ablehnen ein: im vollen Lauf ueber 651 Becken lehnte sie 51 % ab
+ * und halbierte damit den Kontext, der laut A/B +4,0 Punkte wert ist. Direkt
+ * gegeneinander gemessen (40 Becken, gleiche Faelle, gleiches Modell):
+ *
+ *   "beantwortet die Frage"     33 % Ablehnungen
+ *   "hilft bei der Beantwortung" 10 % Ablehnungen
+ *
+ * Der Unterschied ist die Messlatte, nicht die Strenge: eine Passage muss nicht
+ * die ganze Antwort enthalten, um sie zu stuetzen. Die Ablehnung bleibt erhalten
+ * — sie ist der halbe Zweck —, aber sie greift erst bei echter Themenfremdheit.
  */
 export function baueAuswahlPrompt(frage, kandidaten) {
   const liste = kandidaten.map((treffer, index) => {
@@ -76,8 +89,9 @@ export function baueAuswahlPrompt(frage, kandidaten) {
     "Passagen:",
     liste,
     "",
-    "Welche Passage beantwortet die Frage am ehesten? Antworte NUR mit der Nummer.",
-    "Beantwortet KEINE der Passagen die Frage, antworte 0."
+    "Welche Passage hilft am ehesten, die Frage zu beantworten? Antworte NUR mit der Nummer.",
+    "Waehle 0 NUR, wenn keine einzige Passage etwas mit dem Thema der Frage zu tun hat.",
+    "Im Zweifel waehle die beste Passage statt 0."
   ].join("\n");
 }
 

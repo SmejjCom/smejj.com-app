@@ -346,8 +346,20 @@ async function main() {
   // waeren nicht die, die spaeter im Betrieb anfallen.
   const nachsortierer = options.rerank
     ? async (prompt, { maxTokens }) => {
-      const ergebnis = await basisAufruf({ profile: "fast", prompt, maxTokens });
-      return ergebnis?.ok === true ? String(ergebnis.text || "") : "";
+      // Dieselbe Wiederholung wie beim Antwortaufruf. Ohne sie zaehlte jeder
+      // einzelne Netzaussetzer als "Nachsortierer hat versagt": im Lauf vom
+      // 2026-08-04 waren das 63 von 651 Becken (10 %), obwohl eine isolierte
+      // Probe ueber 45 Becken NULL Ausfaelle zeigte. Der Unterschied war allein
+      // die fehlende Wiederholung — ETIMEDOUT gegen open.bigmodel.cn.
+      for (let versuch = 0; versuch <= options.retries; versuch += 1) {
+        const ergebnis = await basisAufruf({ profile: "fast", prompt, maxTokens });
+        if (ergebnis?.ok === true) return String(ergebnis.text || "");
+        if (!isTransientError(ergebnis?.error)) break;
+        if (versuch < options.retries && options.delayMs > 0) {
+          await new Promise((fertig) => setTimeout(fertig, options.delayMs));
+        }
+      }
+      return "";
     }
     : null;
   const ragHuelle = options.rag

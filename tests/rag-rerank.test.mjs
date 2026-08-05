@@ -89,8 +89,20 @@ test("der Auswahl-Prompt nummeriert ab 1 und nennt die Quelle", () => {
   assert.match(prompt, /\[1\] docs\/architecture\/FREE_ONLY_MASTER_POLICY\.md :: Skalierungsregel/);
   assert.match(prompt, /\[2\] AGENTS\.md :: Change-Lock/);
   assert.match(prompt, /Antworte NUR mit der Nummer/);
-  assert.match(prompt, /antworte 0/);
   assert.ok(ANTWORT_TOKEN > 0 && NACHSORTIER_BECKEN >= 3);
+});
+
+test("der Wortlaut haelt die Ablehnung eng — sie ist die Ausnahme, nicht der Standard", () => {
+  // Gemessen am 2026-08-04: "Welche Passage BEANTWORTET die Frage ... beantwortet
+  // KEINE, antworte 0" lehnte 33 % der Becken ab, im vollen Lauf sogar 51 % — und
+  // halbierte damit den Kontext, der +4,0 Punkte wert ist. Die Fassung unten kam
+  // auf 10 %. Der Wortlaut ist deshalb Teil der Messung und darf nicht beilaeufig
+  // zurueckgedreht werden; wer ihn aendert, misst neu.
+  const prompt = baueAuswahlPrompt("Frage", BECKEN);
+  assert.match(prompt, /hilft am ehesten/, "die Messlatte ist Hilfe, nicht vollstaendige Beantwortung");
+  assert.match(prompt, /Waehle 0 NUR, wenn/, "die Ablehnung braucht eine enge Bedingung");
+  assert.match(prompt, /Im Zweifel waehle die beste Passage statt 0/);
+  assert.doesNotMatch(prompt, /Beantwortet KEINE der Passagen die Frage/, "die abgeloeste Fassung darf nicht zurueckkehren");
 });
 
 test("die Statistik zaehlt jeden Ausgang getrennt", () => {
