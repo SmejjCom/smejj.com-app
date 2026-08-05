@@ -765,21 +765,32 @@ Volltext ausgelagert nach
 
 ## 2026-08-05 — Punkt 2 gemessen und zurueckgenommen (Banner-Zerleger)
 
-Beide Zerleger bekamen eine `====`/Titel/`====`-Erkennung. Zwei Befunde, beide
-gegen die Erwartung — Volltext im Nachtrag von
-[docs/architecture/TRAININGSKORPUS_VERMESSUNG_2026-08-05.md](docs/architecture/TRAININGSKORPUS_VERMESSUNG_2026-08-05.md).
-- **Trainingsseite wirkungslos, DIAGNOSE WAR FALSCH:** MASTER_PROMPT.md liefert
-  1 Fakt, weil **das ganze Dokument absichtlich in einem ```text-Codeblock
-  steht** (Zeile 6 bis 503) — die Datei sagt selbst, sie sei zum Kopieren
-  gedacht. Der Extraktor ueberspringt Codebloecke bewusst. Zwei
-  Entwurfsentscheidungen, die sich beissen; kein Parser-Defekt.
-- **RAG-Seite messbar SCHLECHTER:** 4 statt 1 Ueberschrift machte die kuerzeren
-  Abschnitte in BM25 konkurrenzfaehiger. Trefferquote 32 % -> 31 %, Anteil
-  MASTER_PROMPT auf Platz 1 **48 % -> 61 %**. Die Gliederung verstaerkte genau
-  die Pathologie, die sie beheben sollte.
+Beide Zerleger bekamen eine `====`/Titel/`====`-Erkennung. Beide Befunde gingen
+gegen die Erwartung, beides ist zurueckgenommen. Volltext:
+[docs/memory/Memory_Bank_2026-08-05_banner_zerleger.md](docs/memory/Memory_Bank_2026-08-05_banner_zerleger.md).
 - **MERKREGEL: eine sauberere Struktur ist nicht automatisch eine bessere
   Suche.** Kuerzere Abschnitte gewinnen ueber die Laengennormierung — wer ein
-  Allerwelts-Dokument feiner gliedert, gibt ihm MEHR Gewicht.
-- Beides zurueckgenommen (auch das neue Modul geloescht — keine unnoetige
-  Infrastruktur). Empfehlung 3 der Vermessung ist damit hinfaellig, sie setzte
-  auf Empfehlung 2 auf. **Es bleibt Empfehlung 1: mehr Fragenformen je Fakt.**
+  Allerwelts-Dokument feiner gliedert, gibt ihm MEHR Gewicht (32 % -> 31 %).
+- Es bleibt Empfehlung 1: mehr Fragenformen je Fakt.
+
+## 2026-08-05 — Die Suchmaschine luegt, nicht der Filter (job_websuche_komposita_20260805)
+Volltext: [task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md](task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md).
+- **Bing liefert dem Rechenzentrum Attrappen: 7 von 12 Fragen.** Die SERP ist
+  echt (Titel, Suchfeld, 10x `b_algo`), nur der Inhalt ist Fremdmuell — auf
+  "Einwohnerzahl Wien 2024" kamen Justin-Bieber-Songtexte auf Chinesisch, bei
+  jeder Wiederholung anderer Muell. **"current news Germany" scheitert genauso
+  — es liegt an der IP, nicht an der Sprache.** `&format=rss` hilft nicht.
+- **MEINE DIAGNOSE WAR FALSCH und ich habe sie ausgeliefert, bevor ich sie an
+  echten Daten geprueft habe.** Ich schloss vom Filter (`kept 0`) auf ein
+  Kompositum-Problem, statt die 10 verworfenen Treffer einmal auszudrucken.
+  A/B an identischen Rohtreffern: **0 Unterschiede von 8** — die Aenderung
+  wirkt nicht, schadet aber auch nicht; stehen gelassen statt Neustart Nr. 2.
+- **Die Antwort stand schon im Projekt**: Kopf von `searchKeyProvider.js` seit
+  2026-08-04 — "HTTP 200 mit ABSICHTLICHEN Taeuschtreffern". Vor dem Raten die
+  Nachbardatei lesen.
+- **MERKREGEL: erst Rohdaten ausdrucken, dann erklaeren.** `kept 0` heisst nicht
+  "Filter zu streng", es heisst "hier ist etwas verworfen worden — sieh nach was".
+- **BLOCKER beim Betreiber:** von 85 Container-Variablen ist **keine**
+  suchbezogen; `SMEJJ_SEARCH_TAVILY_API_KEY` fehlt. Anbieter seit 2026-08-04
+  freigegeben (0,00 USD, keine Karte), alles gebaut inkl.
+  `smejj.com Suchschluessel-eingeben.command`. Schluessel gibt nur er ein.
