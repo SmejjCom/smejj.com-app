@@ -19,7 +19,12 @@
 //   CONFIRM_SEARCH_KEY=YES SMEJJ_SEARCH_KEY_REMOVE=YES node scripts/deploy/set_search_api_key.mjs
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
 
-const GRUPPE = "smejj-control";
+// BEIDE Container brauchen den Schluessel: der Control-Server beantwortet
+// /api/search/web, aber Chat und Sprachwelle suchen aus der CHAT-BRIDGE heraus
+// (gleiches Modul src/search/searchKeyProvider.js im Buendel). Live gemessen am
+// 2026-08-05: Schluessel nur im Control -> die Sprachwelle sagt weiter
+// "kein Zugriff auf Echtzeit-Nachrichten", sobald DuckDuckGo sperrt.
+const GRUPPEN = ["smejj-control", "smejj-chat-bridge-v88b-live"];
 const VARIABLE = "SMEJJ_SEARCH_TAVILY_API_KEY";
 const DECKEL_VARIABLE = "SMEJJ_SEARCH_API_MONTHLY_MAX";
 const KEY_MUSTER = /^tvly-[A-Za-z0-9_-]{8,}$/;
@@ -79,41 +84,47 @@ async function main() {
   if (!process.env.SALAD_API_KEY || !process.env.SALAD_ORGANIZATION_NAME || !process.env.SALAD_PROJECT_NAME) {
     abbruch("Salad-Zugang fehlt (SALAD_API_KEY / SALAD_ORGANIZATION_NAME / SALAD_PROJECT_NAME).");
   }
-  const pfad = `/organizations/${process.env.SALAD_ORGANIZATION_NAME}/projects/${process.env.SALAD_PROJECT_NAME}/containers/${GRUPPE}`;
+  const berichte = [];
+  for (const gruppe of GRUPPEN) {
+    const pfad = `/organizations/${process.env.SALAD_ORGANIZATION_NAME}/projects/${process.env.SALAD_PROJECT_NAME}/containers/${gruppe}`;
 
-  const definition = await saladApi("GET", pfad);
-  const bestand = { ...(definition.container?.environment_variables || {}) };
-  const vorherVorhanden = Boolean(bestand[VARIABLE]);
+    const definition = await saladApi("GET", pfad);
+    const bestand = { ...(definition.container?.environment_variables || {}) };
+    const vorherVorhanden = Boolean(bestand[VARIABLE]);
 
-  if (entfernen) {
-    if (!vorherVorhanden) {
-      console.log(JSON.stringify({ ok: true, hinweis: "Der Schluessel war nicht gesetzt — nichts geaendert." }, null, 2));
-      return;
+    if (entfernen) {
+      if (!vorherVorhanden) {
+        berichte.push({ gruppe, aktion: "war nicht gesetzt — nichts geaendert" });
+        continue;
+      }
+      delete bestand[VARIABLE];
+    } else {
+      if (bestand[VARIABLE] === schluessel) {
+        berichte.push({ gruppe, aktion: "derselbe Schluessel stand bereits dort — nichts geaendert" });
+        continue;
+      }
+      bestand[VARIABLE] = schluessel;
+      // Deckel nur setzen, wenn er fehlt — einen bewusst gewaehlten Wert nie ueberschreiben.
+      if (!bestand[DECKEL_VARIABLE]) bestand[DECKEL_VARIABLE] = "900";
     }
-    delete bestand[VARIABLE];
-  } else {
-    if (bestand[VARIABLE] === schluessel) {
-      console.log(JSON.stringify({ ok: true, hinweis: "Derselbe Schluessel steht bereits dort — nichts geaendert." }, null, 2));
-      return;
-    }
-    bestand[VARIABLE] = schluessel;
-    // Deckel nur setzen, wenn er fehlt — einen bewusst gewaehlten Wert nie ueberschreiben.
-    if (!bestand[DECKEL_VARIABLE]) bestand[DECKEL_VARIABLE] = "900";
+
+    // VOLLSTAENDIGE Variablenliste zurueckschreiben (Teil-Patch hat schon einmal
+    // die startup_probe geloescht).
+    const ergebnis = await saladApi("PATCH", pfad, { container: { environment_variables: bestand } });
+    berichte.push({
+      gruppe,
+      version: ergebnis.version ?? null,
+      aktion: entfernen ? "entfernt" : vorherVorhanden ? "ersetzt" : "neu gesetzt",
+      variablen: Object.keys(bestand).length,
+      monatsdeckel: bestand[DECKEL_VARIABLE] || "(nicht gesetzt)"
+    });
   }
-
-  // VOLLSTAENDIGE Variablenliste zurueckschreiben (Teil-Patch hat schon einmal
-  // die startup_probe geloescht).
-  const ergebnis = await saladApi("PATCH", pfad, { container: { environment_variables: bestand } });
 
   console.log(JSON.stringify({
     ok: true,
-    gruppe: GRUPPE,
-    version: ergebnis.version ?? null,
-    aktion: entfernen ? "entfernt" : vorherVorhanden ? "ersetzt" : "neu gesetzt",
-    variablen: Object.keys(bestand).length,
     schluessel: entfernen ? "(entfernt)" : fingerabdruck(schluessel),
-    monatsdeckel: bestand[DECKEL_VARIABLE] || "(nicht gesetzt)",
-    hinweis: "Salad startet den Container neu (~60-90 s). Danach /api/health pruefen: suchquelle.konfiguriert"
+    container: berichte,
+    hinweis: "Salad startet geaenderte Container neu (~60-90 s). Danach pruefen: Control /api/health -> suchquelle.konfiguriert, und im Chat eine Schlagzeilen-Frage stellen."
   }, null, 2));
 }
 

@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-05T02:13:04.033Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-04: zeitgesteuerter Qualitaets-Messlauf; Cache-Versionssprung und Nachziehen der Sperren eingeschlossen",
+  "frozenAt": "2026-08-05T16:40:44.760Z",
+  "confirmation": "A, B und C freigegeben (Betreiber, 2026-08-05): Stimm-Endpunkte in config.js auf Salad-Bridge, sw v222",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "00487eb0d84311eeb2272103de8935ad8fc475d5441f0eeaf832ba04c4cd3c2e",
@@ -12,7 +12,7 @@
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
     "public/app.js": "590f1dddaefe8d27a9991092fe8fba0254e279d364979102f0c42f215d157974",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
-    "public/config.js": "41985ef889b830b1b0263d37e0c27f8d2eb5a0c1dc0e3b049524df9b3bbf4959",
+    "public/config.js": "2e503fb05eb88d90460501edd51ad0129d83855f02801d5b7b3970474dbbf107",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
     "public/premium-surfaces.js": "6017499c5fcd1c2f189f4ca550e1604c0479de8070137815ddcaa32572f31832",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "d2307316ff662572bf86f43195826bc15580f1fa3befed244e5360e19d912114",
+    "public/sw.js": "ebeebc9c9adb2e54eca76a4612497d5a68612c98d4b755caaf9841fe963062f5",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
