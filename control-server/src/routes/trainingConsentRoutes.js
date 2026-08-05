@@ -21,6 +21,9 @@ export async function handleTrainingConsentRoute(req, url, res, dependencies = {
   if (url.pathname === ROUTES.api.trainingConsentDecision && (req.method === "GET" || req.method === "HEAD")) {
     return handleDecision(req, url, res, dependencies);
   }
+  if (url.pathname === ROUTES.api.trainingConsentNotice && (req.method === "GET" || req.method === "HEAD")) {
+    return handleNotice(req, res, dependencies);
+  }
   return json(res, 404, { ok: false, error: "training_consent_route_not_found" });
 }
 
@@ -159,4 +162,37 @@ function consentError(res, error) {
   ]);
   if (clientErrors.has(code)) return json(res, 400, { ok: false, error: code });
   return json(res, 503, { ok: false, error: "consent_request_failed" });
+}
+
+/**
+ * Veroeffentlicht den geltenden Datenschutzhinweis: seinen Hash und wo er steht.
+ *
+ * WARUM OHNE ANMELDUNG: Ein Klient MUSS den geltenden Hash kennen, um ueberhaupt
+ * eine Einwilligung absenden zu koennen — handleGrant vergleicht ihn und
+ * antwortet sonst 409 consent_privacy_notice_not_current. Ohne diesen Endpunkt
+ * ist die Einwilligung technisch unerreichbar. Der Hash eines oeffentlich
+ * abrufbaren Dokuments ist selbst keine schutzwuerdige Angabe; er verraet
+ * nichts ueber Nutzer.
+ *
+ * FAIL-CLOSED: Ist die Einwilligungs-Konfiguration nicht vollstaendig (fehlende
+ * oder fehlerhafte Schluessel, kein gueltiger Hash), wird KEIN Hash genannt.
+ * Ein ausgelieferter Hash wuerde sonst behaupten, Einwilligungen seien moeglich,
+ * waehrend jeder Grant scheitert.
+ */
+export function handleNotice(req, res, { env = process.env } = {}) {
+  const config = trainingConsentConfig(env);
+  if (!config?.ready) {
+    return json(res, 503, { ok: false, error: "consent_configuration_incomplete" });
+  }
+  return json(res, 200, {
+    ok: true,
+    privacyNoticeSha256: config.privacyNoticeSha256,
+    // Der Ort des Dokuments, damit die Oberflaeche darauf verweisen kann, statt
+    // den Pfad ein zweites Mal zu kennen.
+    privacyNoticeUrl: String(env.SMEJJ_TRAINING_PRIVACY_NOTICE_URL || "/datenschutz.html"),
+    // Die drei Teil-Einwilligungen, wortgleich zur Datenschutzerklaerung
+    // ("dreifach getrennt"). createConsentGrant verlangt sie ALLE — eine
+    // Teil-Einwilligung laesst sich nicht ausstellen.
+    umfang: ["captureReviewConsent", "modelTrainingConsent", "sourceRightsConfirmed"]
+  });
 }

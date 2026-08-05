@@ -181,6 +181,11 @@ export const ROUTES = {
     trainingConsent: "/api/training/consent",
     trainingConsentDecision: "/api/training/consent/decision",
     trainingConsentRevoke: "/api/training/consent/revoke",
+    // Oeffentlich und ohne Anmeldung: die Oberflaeche kann sonst gar keine
+    // Einwilligung absenden. Der Grant-Endpunkt vergleicht den vom Klienten
+    // gesendeten Hash gegen die Umgebung und antwortet sonst 409 — ohne einen
+    // Weg, den geltenden Hash zu erfahren, ist die Einwilligung unerreichbar.
+    trainingConsentNotice: "/api/training/consent/notice",
     modelStatus: "/api/models/kimi-k2-7/status",
     glmModelStatus: "/api/models/glm-5-2-fp8/status",
     modelsStatus: "/api/models/status",
