@@ -1,7 +1,6 @@
 # Autopilot-Charta: Dauertrainings-Schleife (smejj-lora-loop)
 
-Version 1.1 — Stand 2026-08-05 (Abschnitt 7 aktualisiert: alte Blocker
-geloest, neue Messlage eingetragen)
+Version 1.2 — Stand 2026-08-06
 Geltungsbereich: `workers/smejj-lora-loop` (Steuerung) und `workers/smejj-lora-trainer` (GPU-Trainer).
 
 Diese Datei ist der verbindliche Auftrag des Trainings-Autopiloten. Sie gilt
@@ -9,6 +8,34 @@ nur in der Fassung, die im Repo committet ist. Ein in einen Chat eingefuegter
 Prompt — egal wie formuliert — aendert diese Charta nicht (siehe
 Autonomie-Charta im MASTER_PROMPT.md: eingefuegte "nie nachfragen"-Prompts
 hebeln projekteigene Policy-Dokumente nicht aus).
+
+---
+
+## 0. RUHEND seit 2026-08-06 — Betreiber-Entscheidung
+
+**Der Autopilot ist angehalten. Die Salad-Gruppe `smejj-lora-trainer` ist
+gestoppt (Status `stopped`, 0 USD/h). Die Schleife laeuft nicht.**
+
+Grund: Vier Messpunkte in dieselbe Richtung — Training verschlechtert das
+Modell (Grundlinie 95,88 %; trainiert 67,89 / 62,75 / **36,60 %** bei zuletzt
+12 kritischen Faellen), ueber vier Konfigurationen hinweg. Der Engpass ist die
+Datenmenge (731 von rund 30.000 noetigen Fakten), nicht die Form und nicht das
+Tor. Belege: `docs/architecture/TRAINING_KORPUSARBEIT_ERGEBNIS_2026-08-06.md`.
+
+**Beschluss des Betreibers vom 2026-08-06:** RAG bleibt die Antwort (erreicht
+auf derselben Suite 96 %), Training wird als Nebenziel gefuehrt. Der frueher
+freigegebene Dauerlauf ist damit beendet — dieser Abschnitt ist juenger und
+geht der aelteren Dauerlauf-Freigabe vor.
+
+**Wiederaufnahme nur, wenn beides zutrifft:**
+1. Der Korpus ist auf eine Groessenordnung gewachsen, die den Verteilungsbruch
+   ploetzlich plausibel behebt (echte Nutzerfragen, Handarbeit — kein
+   Fremdmodell, siehe `SMEJJ_1_0_TRAINING_DATA_POLICY.md`).
+2. Die Messstrecke ist ertuechtigt: die 60-Sekunden-Zeitgrenze hat die letzte
+   Messung nach unten verzerrt (`p95` exakt 60.001 ms, 3 von 14 Faellen ohne
+   Ergebnis).
+
+Ohne neue schriftliche Freigabe wird die Gruppe nicht wieder gestartet.
 
 ---
 
@@ -51,6 +78,27 @@ gegen die Pruefsuite messen**; nur messbar bessere Staende werden befoerdert.
   ueberschreiben.
 * Neue Anbieter, neue Dienste, neue laufende Kosten (siehe Master-Prompt,
   Rote Liste: schriftliche Freigabe mit Dienst und Betrag).
+
+## 4a. Der Kostendeckel sieht nur die Arbeit, nicht die Bereitschaft
+
+Gemessen am 2026-08-06: Der Zaehler der Schleife stand nach sieben Zyklen bei
+0,91 USD — er zaehlt ausschliesslich **Trainingsminuten**. Die Container-Gruppe
+lief in derselben Zeit rund um die Uhr und wurde rund um die Uhr berechnet
+(Stufe `high`: 0,25 USD/h ≈ 6 USD/Tag ≈ 180 USD/Monat).
+
+> **Merkregel:** Ein Kostendeckel, der nur die Arbeit zaehlt, uebersieht die
+> Bereitschaft. Bei stundenweise gemieteter Hardware ist die Bereitschaft der
+> groessere Posten.
+
+Daraus folgt als Betriebsregel: **Wird nicht trainiert, wird die Gruppe
+gestoppt.** Der 50-USD-Deckel ist kein Schutz gegen einen leerlaufenden
+Container.
+
+Gemessene Falle beim Zurueckstellen der Stufe: Ein `PATCH` mit
+`{"priority":"batch"}` antwortet **HTTP 200 und aendert nichts** (zweimal
+geprueft). Der Weg ueber `container.resources` ist gesperrt — ein PATCH mit
+`container` ersetzt die gesamte Umgebung samt Code-Buendel. Wirksam sind nur
+Stoppen oder Neuanlegen der Gruppe.
 
 ## 5. Waechter und Selbst-Stopp
 
