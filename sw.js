@@ -23,7 +23,7 @@
 // ACHTUNG: check:precache-imports liest das SHELL-Array per Regex direkt aus
 // dieser Datei. Wird das Array ausgelagert, findet die Regex nichts, die
 // Menge ist leer und der Pruefer meldet gruen, waehrend er nichts mehr prueft.
-const CACHE_NAME = "smejj-shell-v228";
+const CACHE_NAME = "smejj-shell-v229";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
