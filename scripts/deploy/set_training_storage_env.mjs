@@ -123,8 +123,13 @@ if (!accessKey || !secretKey) {
       "  1. Bei IDrive e2 einen neuen Access Key anlegen, beschraenkt auf",
       `     Schreiben unter  ${bucket || "<eimer>"}/training/`,
       "  2. In ~/.config/smejj.com/env.local eintragen:",
-      "       IDRIVE_E2_TRAINING_ACCESS_KEY=…",
-      "       IDRIVE_E2_TRAINING_SECRET_KEY=…",
+      // Platzhalter bewusst als DREI PUNKTE, nicht als typografisches "…":
+      // `check:security` erlaubt nach SECRET_KEY= genau `replace_me`, `<set>`
+      // oder `...` — jedes andere Zeichen gilt als echter Schluessel. Mit dem
+      // Auslassungszeichen faerbte diese Hilfezeile das Testtor rot, obwohl
+      // hier nie ein Geheimnis stand.
+      "       IDRIVE_E2_TRAINING_ACCESS_KEY=...",
+      "       IDRIVE_E2_TRAINING_SECRET_KEY=...",
       "  3. Dieses Skript erneut aufrufen.",
       "",
       "Der schnelle Weg: --gleiche-zugangsdaten verwendet die allgemeinen",
