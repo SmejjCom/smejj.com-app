@@ -85,7 +85,44 @@ geänderten Dateien sind in der Basis byte-identisch mit Repo-HEAD vor der
 
 ## Nachweise nach dem Ausrollen
 
-_(wird nach der Aktivierung ergänzt)_
+Ausgerollt am 2026-08-06 als Salad-Version **150**, 91 Variablen unverändert,
+`previousArtifactKey` = `smejj-control-erfassung-erreichbar-2026-08-05`
+(sha `f3660899…` — das ist der Rückweg). Upload `created: true`,
+`immutable: true`.
+
+**Live gegen die Produktion gemessen** (Sitzungs-Token aus dem Salad-Env,
+`method: "local-e2e"`, TTL 5 min):
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| `GET /api/admin/me` | 200, Rolle `owner`, Stufe 8 — Lesen bleibt frei |
+| `GET /api/admin/flags` | 200 — Stufe-4-Lesen bleibt frei |
+| `POST …/actions/block` ohne Fenster | **403 `admin_step_up_required`** |
+| `POST /api/admin/flags/setzen` ohne Fenster | **403 `admin_step_up_required`** |
+| `POST /api/admin/step-up/confirm` ohne Anforderung | 403 |
+| Vortür: 160 parallele Anfragen an `/admin` | **70× 429** gedrosselt |
+
+**Mail-Durchstich bewiesen** — die kritische Frage war, ob ein Admin nach
+diesem Release überhaupt noch schreiben kann:
+
+- SMTP auf dem Server vollständig gesetzt (`smtp.gmail.com:465`, Absender
+  `smejjcom@gmail.com`).
+- `POST /api/admin/step-up/request` → **200**, „Code an die Admin-Adresse
+  geschickt", `gueltigSek: 600`.
+- Im **Live-Audit-Log** steht der Eintrag `step_up.requested` |
+  `smejjcom@gmail.com` | `2026-08-06T10:56:26.902Z`.
+
+Ohne diesen Nachweis wäre der Adminbereich schreibunfähig gewesen, ohne dass
+es jemand vor dem ersten echten Löschversuch gemerkt hätte.
+
+## Change-Lock
+
+`scripts/check-admin-lock.mjs` (admin lock v1) friert **12 Dateien** der
+Adminbereich-Sicherheitskette byte-genau ein. Manifest:
+`docs/security/admin-lock-manifest.json`, eingefroren 2026-08-06T10:50:15Z mit
+dem Wortlaut des Betreibers. Verdrahtet in `npm run check:all` und in
+`tests/dateisperren.test.mjs` als echter Prozess geprüft (die Sperre schlägt
+an einer geänderten `stepUp.js` an und nennt die Datei).
 
 ## Rücknahme
 
