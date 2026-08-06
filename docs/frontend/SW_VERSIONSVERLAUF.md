@@ -783,3 +783,13 @@ bekommt die Chip-Optik, index.html neue ?v=paste-attach-20260806-Queries.
 Hinweis: v224-v227 wurden in Parallelsitzungen nur im Live-Repo dokumentiert;
 dieser Eintrag setzt direkt auf v227 auf. Freigabe Betreiber 2026-08-06
 (Radar-Bericht 01, V1 — gilt als Start-Lock-Freigabe).
+
+## v228 -> v229 (2026-08-06, Konkurrenz-Radar V4 Stufe 1): Verlauf anpinnen
+
+chat-store.js: togglePinChat() + Pins-zuerst-Sortierung, angepinnte Chats sind
+von der 100er-Aufraeumung ausgenommen, updatedAt bleibt beim Pinnen unveraendert.
+chat-history-view.js: Anpinnen/Loesen-Knopf, Pin-Markierung, is-pinned-Optik.
+WICHTIG: Alle chat-store-Importeure (chat-actions.js, search.js,
+chat-history-view.js, index.html) springen GEMEINSAM auf ?v=pin-20260806 —
+ein abweichender Spezifizierer erzeugt eine zweite Store-Instanz (F-07).
+Freigabe Betreiber 2026-08-06 (Radar-Bericht 01, V4; kein Start-Lock betroffen).
