@@ -773,3 +773,13 @@ Precache — ohne Versionssprung erreicht der Fix wiederkehrende Nutzer nie.
 liefert bei jeder Nutzung ein frisches Token (180 Tage), account-sessions.js
 speichert es (nur bestehende localStorage-Tokens; Passkey bleibt
 session-only). Import-Query auf ?v=6, damit auch der HTTP-Cache mitzieht.
+
+## v227 -> v228 (2026-08-06, Konkurrenz-Radar V1): Riesen-Einfuegung wird Anhang-Chip
+
+composer-paste-attach.js NEU im SHELL (Import in app.js): eingefuegter Text
+ab 8000 Zeichen landet als Chip ueber der Eingabezeile statt in ihr; beim
+Senden verbindet composePastedTask() Chips und getippten Text. start-styles.css
+bekommt die Chip-Optik, index.html neue ?v=paste-attach-20260806-Queries.
+Hinweis: v224-v227 wurden in Parallelsitzungen nur im Live-Repo dokumentiert;
+dieser Eintrag setzt direkt auf v227 auf. Freigabe Betreiber 2026-08-06
+(Radar-Bericht 01, V1 — gilt als Start-Lock-Freigabe).
