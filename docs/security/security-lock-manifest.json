@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-05T22:10:51.155Z",
-  "confirmation": "BESTÄTIGUNG — Änderung an einer gesperrten Datei, 2026-08-05",
+  "frozenAt": "2026-08-06T10:28:00.128Z",
+  "confirmation": "Ich bestätige die Änderungen an public/account-sessions.js und public/chat-bridge.js. Beide stammen aus parallelen Sitzungen: die Einwilligungs-Aufrufe fürs Training und die Auslieferung v124-codeblock-zerleger, die seit gestern 22:17 Uhr live und geprüft ist. Der Security-Lock darf auf diesen Stand neu eingefroren werden.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "65435eddbd0a154777805fe836ffc8ce9858bddd19e31f322c47b55de373b436",
@@ -9,9 +9,9 @@
     "public/auth/auth-page.js": "ea029edad98c7a92bd0e80dbd466b5c170070b89c944a0cfbdba74b0973e976d",
     "public/auth/auth.css": "582576014a5a9177bc7bff9e9df9622fa94a411e3b428047bd14a238179341c0",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
-    "public/account-sessions.js": "16837ad84f7ee7240a00d9dceebd84e2922f83f6825714581b706acb98f640a6",
+    "public/account-sessions.js": "087864904c3f37cf85082a2691d2e642ba69ccd7b82d2b35ebbdce443f3ed98e",
     "public/chat-history-context.js": "00a993819d26a2cc282154d07f1161b10532eaea9348e92645acbe9133f0db15",
-    "public/chat-bridge.js": "81a1a8a01f23e07a288a28e4329ab21023ff41e6571b626b1555ba800e7a21f0",
+    "public/chat-bridge.js": "e597320299a768db0129012a5e92f4796fda09b83ed590957df0b6dda7bddf94",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
