@@ -28,7 +28,7 @@
     }
   }
 
-  async function sende(pfad, koerper) {
+  async function sendeDirekt(pfad, koerper) {
     try {
       const antwort = await fetch(pfad, {
         method: "POST",
@@ -45,6 +45,24 @@
     }
   }
 
+  // Step-up: verlangt der Server fuer eine aendernde Aktion einen frischen
+  // Besitznachweis, holt dieser Umweg den Mail-Code, fragt ihn ab und
+  // wiederholt die urspruengliche Anfrage genau einmal. Fuer alle Ansichten
+  // unsichtbar — sie rufen weiter einfach sende() auf.
+  async function sende(pfad, koerper) {
+    const antwort = await sendeDirekt(pfad, koerper);
+    if (!(antwort.status === 403 && antwort.data && antwort.data.error === "admin_step_up_required")) return antwort;
+    const anforderung = await sendeDirekt("/api/admin/step-up/request", {});
+    if (!anforderung.ok) return anforderung;
+    const code = window.prompt(
+      "Sicherheitsbestätigung\n\nFür diese Aktion wurde ein 6-stelliger Code an deine Admin-E-Mail geschickt.\n"
+      + "Er gilt 10 Minuten und öffnet ein Schreibfenster von 15 Minuten.\n\nCode eingeben:", "");
+    if (code === null || !String(code).trim()) return antwort;
+    const bestaetigung = await sendeDirekt("/api/admin/step-up/confirm", { code: String(code).trim() });
+    if (!bestaetigung.ok) return bestaetigung;
+    return sendeDirekt(pfad, koerper);
+  }
+
   // Aus einem Fehlercode wird ein Satz, den ein Mensch versteht.
   function fehlertext(status, data) {
     const code = data && data.error ? String(data.error) : "";
@@ -59,6 +77,12 @@
       admin_directory_unavailable: "Das Nutzerverzeichnis ist nicht erreichbar.",
       admin_audit_unavailable: "Der Nachweis liess sich nicht schreiben, deshalb keine Ausgabe.",
       admin_rate_limit: "Zu viele Anfragen. Bitte kurz warten.",
+      admin_step_up_required: "Sicherheitsbestätigung nötig — Code wurde angefordert.",
+      step_up_code_wrong: "Der Code stimmt nicht.",
+      step_up_code_expired: "Der Code ist abgelaufen (10 Minuten). Bitte neu anfordern.",
+      step_up_code_missing: "Es ist kein Code angefordert. Aktion einfach erneut ausführen.",
+      step_up_too_many_attempts: "Zu oft falsch eingegeben — der Code ist verbrannt. Bitte neu anfordern.",
+      step_up_mail_failed: "Der Code konnte nicht per E-Mail zugestellt werden.",
       admin_user_not_found: "Dieses Konto gibt es nicht.",
       admin_no_change: "Das ist bereits so — nichts zu tun.",
       admin_action_unknown: "Diese Aktion gibt es nicht.",

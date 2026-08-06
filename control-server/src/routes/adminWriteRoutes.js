@@ -26,6 +26,7 @@ import {
   ACTIONS, clearLoginLock, deleteUserData, markEmailVerified, revokeUserSessions, setUserRole, setUserStatus
 } from "../admin/userActions.js";
 import { endImpersonation, listImpersonations, requestImpersonation } from "../admin/impersonation.js";
+import { bestaetigeCode, fordereCode, istErhoeht } from "../admin/stepUp.js";
 
 const PREFIX = "/api/admin";
 // Enger als beim Lesen: schreibende Aktionen sind selten und teuer.
@@ -47,7 +48,7 @@ export async function handleAdminWriteRoute(req, url, res, { env = process.env }
   const rest = url.pathname.startsWith(`${PREFIX}/`) ? url.pathname.slice(PREFIX.length + 1) : "";
   const zustaendig = rest.startsWith("users/") && rest.includes("/actions/")
     || rest.startsWith("approvals/") || rest === "approvals"
-    || rest.startsWith("impersonation");
+    || rest.startsWith("impersonation") || rest.startsWith("step-up/");
   if (!zustaendig) return false;
   // Der Index-Neubau bleibt in den Leseruten — er beruehrt keine Konten.
   if (rest === "users/index/rebuild") return false;
@@ -65,6 +66,31 @@ export async function handleAdminWriteRoute(req, url, res, { env = process.env }
 
   try {
     const body = await readJson(req).catch(() => ({}));
+
+    // ---- Step-up: frischer Besitznachweis vor jeder aendernden Aktion ------
+    // Die beiden Step-up-Routen selbst und die reinen Listen bleiben frei;
+    // alles, was Konten oder Vorgaenge AENDERT, verlangt ein offenes Fenster.
+    if (rest === "step-up/request") {
+      const anforderung = await fordereCode(actor.email, { env });
+      if (!anforderung.ok) return privateJson(res, 503, { ok: false, error: anforderung.error }), true;
+      await schreibeNachweis(actor, "step_up.requested", actor.email, null, { gueltigSek: anforderung.gueltigSek }, "step-up", req, env);
+      return privateJson(res, 200, { ok: true, gueltigSek: anforderung.gueltigSek, hinweis: "Code an die Admin-Adresse geschickt." }), true;
+    }
+    if (rest === "step-up/confirm") {
+      const bestaetigung = bestaetigeCode(actor.email, body?.code);
+      if (!bestaetigung.ok) return privateJson(res, 403, { ok: false, error: bestaetigung.error, ...(bestaetigung.verbleibend != null ? { verbleibend: bestaetigung.verbleibend } : {}) }), true;
+      await schreibeNachweis(actor, "step_up.confirmed", actor.email, null, { fensterSek: bestaetigung.fensterSek }, "step-up", req, env);
+      return privateJson(res, 200, { ok: true, fensterSek: bestaetigung.fensterSek }), true;
+    }
+    const nurListe = rest === "approvals" || rest === "impersonation/list";
+    if (!nurListe && !istErhoeht(actor.email)) {
+      return privateJson(res, 403, {
+        ok: false,
+        error: "admin_step_up_required",
+        hinweis: "Frische Bestaetigung noetig: Code unter /api/admin/step-up/request anfordern und unter /api/admin/step-up/confirm bestaetigen."
+      }), true;
+    }
+
     if (rest.startsWith("users/") && rest.includes("/actions/")) {
       const [, kennung, , aktion] = rest.split("/");
       return await kontoAktion(req, res, actor, decodeURIComponent(kennung), aktion, body, env), true;

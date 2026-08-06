@@ -1,0 +1,71 @@
+# Freigabe: Control-Release „Admin-Step-up" (2026-08-06)
+
+## Wortlaut des Betreibers
+
+Auf die Empfehlung „Step-up-Authentifizierung für Admins … für schreibende
+Admin-Aktionen (Löschen, Rollen) wäre eine frische Bestätigung der
+professionelle Standard" antwortete der Betreiber:
+
+> **„Ja"**
+
+## Was es ist
+
+Sitzungen laufen bis zu 180 Tage. Für LESEN ist das vertretbar — für Sperren,
+Löschen, Rollenvergabe und Impersonation-Anträge verlangt der Server jetzt
+zusätzlich einen **frischen Besitznachweis**: einen 6-stelligen Code an die
+Admin-E-Mail (10 Minuten gültig, max. 5 Versuche), der ein **Schreibfenster
+von 15 Minuten** öffnet. Danach schließt es sich von selbst.
+
+Warum E-Mail-Code und nicht Passkey: WebAuthn bindet an die Domain; die
+Konsole läuft auf salad.cloud, die Passkeys gehören zu smejj.com. Passkey-
+Step-up wird möglich, sobald die Konsole eine smejj.com-Subdomain bekommt.
+
+Entwurfsentscheidungen:
+
+- Fenster in-memory (eine Replika; Neustart = Fenster zu, fail-closed).
+- Reine Listen (`approvals`, `impersonation/list`) bleiben ohne Step-up.
+- Ohne Mail-Zustellung entsteht kein Code (`step_up_mail_failed`, 503) —
+  ein offenes Fenster bleibt davon unberührt.
+- Jede Anforderung und jede Bestätigung schreibt einen Audit-Eintrag
+  (`step_up.requested`, `step_up.confirmed`).
+- Konsole: `api.js` fängt `admin_step_up_required` zentral ab — Code
+  anfordern, abfragen, Aktion einmal wiederholen. Kein View wurde angefasst.
+
+## Umfang — fünf Dateien
+
+Basis ist das **laufende Live-Artefakt**
+`deployments/control/smejj-control-erfassung-erreichbar-2026-08-05.tar.gz`
+(Salad-Version 149, 91 Variablen), heruntergeladen und SHA-geprüft. Die drei
+geänderten Dateien sind in der Basis byte-identisch mit Repo-HEAD vor der
+Änderung — nichts Fremdes zu mergen.
+
+| Datei | Änderung |
+| --- | --- |
+| `control-server/src/admin/stepUp.js` | neu: Code-Erzeugung, Bestätigung, Fensterverwaltung |
+| `control-server/src/routes/adminWriteRoutes.js` | Step-up-Routen + Fenster-Pflicht vor jeder ändernden Aktion |
+| `control-server/src/routes/adminWriteRoutes.test.js` | Testaufbau öffnet das Fenster für die Test-Admins |
+| `control-server/src/routes/adminStepUp.test.js` | neu: 7 Tests (Abweisung, Listen frei, Vollfluss, Mail-Ausfall, Ablauf, Fehlversuche, Selbstschluss) |
+| `control-server/admin-ui/api.js` | zentraler Step-up-Fluss + Fehlertexte |
+
+## Artefakt
+
+- Release-Id: `smejj-control-admin-stepup-2026-08-06`
+- sha256: `78b6f6e4784bd766968b70452df9ccfd48dd08001fcea56e7fc6aeb92b2ac688`
+- 1022 Dateien, 2.398.319 Bytes, `secretsIncluded: false`
+
+## Nachweise vor dem Upload
+
+- `diff -rq` entpacktes Live-Artefakt ↔ entpacktes neues Artefakt: genau die
+  fünf Dateien + Manifest.
+- 26/26 Tests grün **im entpackten Release-Baum** (Step-up, Schreibrouten,
+  Vortür).
+
+## Nachweise nach dem Ausrollen
+
+_(wird nach der Aktivierung ergänzt)_
+
+## Rücknahme
+
+Zeiger zurück auf `smejj-control-erfassung-erreichbar-2026-08-05.tar.gz`
+(Salad-Env `SMEJJ_CONTROL_ARTIFACT_KEY` + `_SHA256`). Kein Datenverlust,
+keine Migration.

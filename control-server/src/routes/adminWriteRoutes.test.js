@@ -13,6 +13,16 @@ import { __clearApprovalMemoryForTests } from "../admin/approvalStore.js";
 import { __clearImpersonationMemoryForTests } from "../admin/impersonation.js";
 import { handleAdminWriteRoute } from "./adminWriteRoutes.js";
 import { handleAccountImpersonationRoute } from "./accountImpersonationRoutes.js";
+import { __clearStepUpForTests, bestaetigeCode, fordereCode } from "../admin/stepUp.js";
+
+/** Oeffnet das Schreibfenster fuer einen Test-Admin — der Weg, den auch die
+ *  Konsole geht: Code anfordern (Mail-Attrappe faengt ihn ab), dann bestaetigen. */
+async function erhoehe(email) {
+  let code = "";
+  await fordereCode(email, { mail: async (nachricht) => { code = nachricht.text.match(/\d{6}/)[0]; return { sent: true }; } });
+  const ok = bestaetigeCode(email, code);
+  if (!ok.ok) throw new Error("Step-up im Test fehlgeschlagen: " + ok.error);
+}
 
 const ENV = {};
 
@@ -65,6 +75,12 @@ async function aufbauen() {
   const kundin = createUserRecord({ email: "kundin@example.de", name: "Kundin", passwordHash: "h" });
   addSessionToRecord(kundin, { sid: "s1", expiresAt: Date.now() + 3_600_000, userAgent: "Mac" });
   await putUser(kundin, ENV);
+  // Schreibfenster fuer alle Test-Admins oeffnen — der Step-up selbst hat
+  // eigene Tests (adminStepUp.test.js); hier geht es um die Aktionen dahinter.
+  __clearStepUpForTests();
+  await erhoehe("owner@example.de");
+  await erhoehe("zweite@example.de");
+  await erhoehe("helfer@example.de");
 }
 
 const OWNER = { email: "owner@example.de" };
