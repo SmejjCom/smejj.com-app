@@ -108,7 +108,14 @@ export async function starteTraining({
     }
   });
   if (!ergebnis.ok || !ergebnis.daten?.laufId) {
-    return { ok: false, gruende: [`training_start_fehlgeschlagen:${ergebnis.status || ergebnis.fehler || "unbekannt"}`] };
+    return {
+      ok: false,
+      gruende: [`training_start_fehlgeschlagen:${ergebnis.status || ergebnis.fehler || "unbekannt"}`],
+      // Bei 409 nennt der Trainer den Lauf, der noch belegt. Der Aufrufer
+      // braucht die Kennung, um ihn aufzuraeumen — sonst blockiert ein
+      // verwaister Lauf jeden weiteren Zyklus, bis jemand von Hand eingreift.
+      aktiverLauf: ergebnis.daten?.aktiverLauf || null
+    };
   }
   return { ok: true, laufId: String(ergebnis.daten.laufId) };
 }

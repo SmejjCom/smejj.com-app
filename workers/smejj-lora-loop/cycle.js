@@ -125,6 +125,26 @@ export async function fuehreZyklusAus({
     basisUrl: trainerBasisUrl, apiKey: trainerApiKey, konfiguration, basismodell, datensatz, fetchImpl
   });
   if (!start.ok) {
+    // VERWAISTEN LAUF AUFRAEUMEN.
+    //
+    // Stirbt die Schleife mitten in einem Zyklus (am 2026-08-06 viermal durch
+    // Sitzungsende), rechnet der Lauf auf dem Trainer ungestoert weiter — nur
+    // misst ihn niemand mehr. Zweimal gemessen: 69,7 und 72,2 Minuten bezahlte
+    // Rechenzeit fuer nichts, und ueber die Einzellauf-Sperre blockierte er
+    // zusaetzlich JEDEN weiteren Zyklus, bis jemand von Hand eingriff.
+    //
+    // Der Trainer nennt bei 409 die Kennung des Blockierers. Eine frisch
+    // gestartete Schleife verfolgt per Definition keinen Lauf — was hier noch
+    // laeuft, gehoert also niemandem mehr und wird beendet. Der naechste Takt
+    // startet dann sauber.
+    if (start.aktiverLauf) {
+      const beendet = await sicher(
+        () => brichTrainingAb({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.aktiverLauf, fetchImpl }),
+        false
+      );
+      log(`[smejj-lora-loop] Verwaister Lauf ${start.aktiverLauf} belegte den Trainer —`
+        + ` Abbruch ${beendet ? "bestaetigt" : "NICHT bestaetigt, Container-Gruppe pruefen"}.`);
+    }
     return ergebnis({ gestartet: false, gruende: start.gruende, zyklusIndex, konfiguration, kostenUsd: 0, jetzt });
   }
 
@@ -148,8 +168,13 @@ export async function fuehreZyklusAus({
     // Fehlversuchen IN FOLGE. Gemessen am 2026-08-05: EIN 20-s-Timeout einer
     // Statusabfrage (Zyklus 2, r32, Minute 24,8 — davor 24 Minuten saubere
     // Antworten) hat einen bezahlten Lauf verworfen. Die Karte bleibt dabei
-    // nie unbeaufsichtigt: das Toleranzfenster ist auf rund 2,5 Minuten
-    // begrenzt, und Laufzeit- und Kostendeckel oben im Takt greifen weiter.
+    // nie unbeaufsichtigt: das Fenster ist begrenzt (siehe UNBEKANNT_TOLERANZ
+    // — Stand 2026-08-06 rund 8 Minuten), und Laufzeit- und Kostendeckel oben
+    // im Takt greifen bei JEDEM Durchgang weiter.
+    //
+    // Die Dauer bewusst NICHT zweimal hingeschrieben: hier stand bis zum
+    // 2026-08-06 „rund 2,5 Minuten", waehrend die Konstante darueber laengst
+    // auf 8 Minuten stand. Eine Zahl an zwei Stellen laeuft auseinander.
     if (zustand.zustand === "unbekannt") {
       unbekanntInFolge += 1;
       if (unbekanntInFolge >= UNBEKANNT_TOLERANZ) {
