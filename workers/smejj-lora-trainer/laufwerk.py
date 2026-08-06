@@ -31,6 +31,10 @@ import traceback
 PIP_MARKER = os.environ.get("SMEJJ_TRAINER_PIP_MARKER", "/tmp/smejj-pip.rc")
 PIP_PROTOKOLL = "/tmp/pip.log"
 PIP_WARTEZEIT_S = int(os.environ.get("SMEJJ_TRAINER_PIP_WARTEZEIT_S", "1800"))
+# Harte Obergrenze fuer EINEN Trainingslauf, unabhaengig vom Loop. Siehe
+# _abbruch_gewuenscht(): die Loop-Grenze (150 min) greift im Normalfall zuerst,
+# das hier faengt den Fall ab, dass der Loop den Lauf aufgibt.
+MAX_LAUF_MINUTEN = int(os.environ.get("SMEJJ_TRAINER_MAX_LAUF_MINUTEN", "180"))
 
 
 class Laufwerk:
@@ -323,9 +327,39 @@ class Laufwerk:
         return True
 
     def _abbruch_gewuenscht(self, lauf_id):
+        """Soll dieser Lauf aufhoeren? Zwei Gruende: Anforderung oder Alter.
+
+        DER EIGENE SELBST-STOPP DES LAUFS — am 2026-08-06 teuer gelernt.
+        Die Laufzeitgrenze lag ausschliesslich im Loop. Als dieser einen Lauf
+        aufgab (Statusabfrage scheiterte, der anschliessende Abbruch ebenfalls),
+        rechnete der Lauf ungestoert weiter: **69,7 Minuten unbeaufsichtigt**,
+        von niemandem gemessen, und er blockierte ueber die Einzellauf-Sperre
+        jeden weiteren Zyklus. Ein Lauf, den niemand mehr beobachtet, hatte
+        damit gar keine Abbruchbedingung.
+
+        Die Regel des Betreibers — nichts laeuft ohne eingebauten Selbst-Stopp —
+        gilt jetzt auch hier, unabhaengig davon, ob der Loop noch zusieht.
+        Bewusst grosszuegig ueber der Loop-Grenze (150 min): der Loop soll im
+        Normalfall zuerst greifen, das hier ist das Netz darunter.
+        """
         with self._sperre:
             lauf = self._laeufe.get(lauf_id)
-            return bool(lauf and lauf["abbruch"])
+            if not lauf:
+                return False
+            if lauf["abbruch"]:
+                return True
+            if MAX_LAUF_MINUTEN and (time.time() - lauf["beginn"]) / 60.0 > MAX_LAUF_MINUTEN:
+                lauf["abbruch"] = True
+                melde = True
+            else:
+                melde = False
+        if melde:
+            print(
+                f"[smejj-lora-trainer] Lauf {lauf_id} ueberschreitet "
+                f"{MAX_LAUF_MINUTEN} min — Selbst-Stopp",
+                flush=True,
+            )
+        return melde
 
     def _abschluss(self, lauf_id, zustand, adapter=None):
         with self._sperre:

@@ -17,6 +17,14 @@ fuer die Auslieferung konvertiert.
 import os
 import time
 
+# Der schnelle Zerleger von HuggingFace startet sonst Threads ueber ALLE Kerne.
+# Gemessen am 2026-08-06: waehrend eines Laufs 1500 % CPU-Last, obwohl das
+# Modell vollstaendig auf der GPU lag (schichtenAufCpu=0). Ursache ist die
+# Vorspann-Maskierung, die je Beispiel zusaetzlich zerlegt — bei Stapelgroesse 1
+# sind das tausende winziger Aufrufe, deren Thread-Verwaltung mehr kostet als
+# die Arbeit selbst. Muss VOR dem transformers-Import gesetzt sein.
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 BASIS_REPO = os.environ.get("SMEJJ_TRAINER_BASIS_REPO", "")
 MAX_LAENGE = int(os.environ.get("SMEJJ_TRAINER_MAX_LAENGE", "1024"))
 AUSGABE_WURZEL = os.environ.get("SMEJJ_TRAINER_AUSGABE", "/tmp/smejj-lora")
@@ -33,6 +41,9 @@ class Motor:
         # Anteil der Zeichen, die ueberhaupt Lernziel sind. Ohne Maskierung
         # waeren es 100 % — die Zahl in /diagnose beweist, dass sie greift.
         self.letzte_ziel_quote = None
+        # Wie viele Zeilen noch praefix-geprueft werden. Die Vorlage ist fuer
+        # alle gleich — ein Fehler zeigte sich in den ersten Zeilen oder nie.
+        self._pruefungen_offen = 20
 
     def lade(self):
         import torch
@@ -299,6 +310,15 @@ class Motor:
             # eine um wenige Stellen verschobene Maske wuerde stillschweigend das
             # Falsche ausblenden. Passt es nicht, wird NICHT maskiert, sondern
             # gemeldet: lieber der alte Zustand als ein unbemerkt falscher.
+            #
+            # Nur auf den ERSTEN Stapeln: die Vorlage ist fuer alle Zeilen
+            # dieselbe, ein Fehler zeigte sich also sofort. Ueber 8100 Beispiele
+            # waere der Vergleich reine CPU-Last neben der Karte.
+            if self._pruefungen_offen <= 0:
+                labels[zeile, :vorspann_laenge] = -100
+                sichtbar += laenge - vorspann_laenge
+                continue
+            self._pruefungen_offen -= 1
             tatsaechlich = kodiert["input_ids"][zeile, :vorspann_laenge].tolist()
             if tatsaechlich != list(vorspann):
                 print(
