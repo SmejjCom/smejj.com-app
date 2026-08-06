@@ -146,12 +146,37 @@ Im ausgelieferten Artefakt geprueft (entpackt, nicht im Arbeitsbaum):
 - `trainingConsentRoutes.js` traegt `handleNotice`, `fragenerfassung.js` liegt
   im Artefakt.
 
+## Umgebungswerte gesetzt — Freigabe „Ja, führ es aus"
+
+Mit `scripts/deploy/set_training_consent_env.mjs --setzen` und aktiver
+Reihenfolge-Sicherung. Die Schluessel entstanden auf dem Rechner des
+Betreibers; das Skript zeigt nur Fingerabdruecke, nie Werte.
+
+- **85 → 91** Variablen, `fehlend: []` (nach dem Schreiben zurueckgelesen)
+- Signatur- und Bindungsschluessel getrennt, je 32 Byte — vom Skript geprueft,
+  identische Schluessel waeren ein Abbruch gewesen
+
+## Abschluss — die Kette ist geschlossen
+
+30 s nach dem Neustart:
+
+| Probe | Ergebnis |
+| --- | --- |
+| `/api/training/consent/notice` | **200**, `umfang`: die drei Zustimmungen |
+| gemeldeter Hash | `89cccf58e723113c…` |
+| **tatsaechlich ausgelieferte** `/datenschutz.html` | `89cccf58e723113c…` |
+| `POST /api/training/consent` unangemeldet | **401** `authentication_required` |
+| `/api/admin` | 401 (Vortuer steht) |
+| `/api/health` | `ok: true` |
+
+Die entscheidende Zeile ist die dritte gegen die vierte: der Hash, den der
+Server als verbindlich meldet, ist der Hash des Textes, den ein Nutzer
+tatsaechlich abrufen kann. Genau das kann serverseitig niemand nachpruefen —
+darum ist es hier einmal von aussen gemessen.
+
 ## Offen
 
-Die sechs `SMEJJ_TRAINING_*`-Werte. Danach muss
-`/api/training/consent/notice` **200** liefern mit
-`89cccf58e723113c0b9a4e17290e3136885f082bf9094238f69f6236258d4c8b`.
-
-Danach fehlt noch Teil 3 der Fragen-Erfassung: die Route, die
-`pruefeFrage()` im Betrieb aufruft. Bis dahin ist das Modul gebaut, getestet
-und ausgeliefert, aber von nichts aufgerufen — es erfasst nichts.
+Teil 3 der Fragen-Erfassung: die Route, die `pruefeFrage()` im Betrieb
+aufruft. Das Modul ist gebaut, getestet und ausgeliefert, aber von nichts
+aufgerufen — **es erfasst nichts**. Die Einwilligung kann bereits erteilt und
+widerrufen werden; sie laeuft nur noch ins Leere.
