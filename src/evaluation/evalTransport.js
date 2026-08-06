@@ -24,7 +24,28 @@
 // das Produkt. Wechselt der primaere Endpunkt, muss diese Zeile mitwandern —
 // `tests/model-eval.test.mjs` haelt sie deshalb gegen public/config.js.
 export const DEFAULT_CHAT_ENDPOINT = "https://starfruit-thyme-cblgn6u06ca2z9d5.salad.cloud/api/chat";
-const DEFAULT_TIMEOUT_MS = 60_000;
+/**
+ * Zeitgrenze je Messfall.
+ *
+ * Am 2026-08-06 von 60 auf 180 Sekunden erhoeht. Die Abschlussmessung des
+ * Trainings lief exakt in diese Grenze: `p95` bei 60.001 ms und 3 von 14
+ * Faellen ohne Ergebnis. Ein Fall ohne Antwort zaehlt wie ein falsch
+ * beantworteter — die 36,60 % waren dadurch zusaetzlich nach unten verzerrt,
+ * und niemand konnte sagen, wieviel davon Qualitaet und wieviel Latenz war.
+ *
+ * Das ist die zweite Bedingung fuer eine Wiederaufnahme des Trainings
+ * (docs/policy/AUTOPILOT_TRAINING_CHARTA.md v1.2, „Messstrecke ertuechtigt").
+ *
+ * 180 s sind grosszuegig gewaehlt: ein Denkmodell auf einer geteilten Karte
+ * braucht fuer einen langen Fall durchaus ueber eine Minute. Die Grenze soll
+ * einen HAENGENDEN Aufruf beenden, nicht einen langsamen abschneiden —
+ * andernfalls misst die Suite Geschwindigkeit und nennt es Qualitaet.
+ *
+ * Umstellbar ohne Release: SMEJJ_EVAL_TIMEOUT_MS.
+ */
+const DEFAULT_TIMEOUT_MS = Number(process.env.SMEJJ_EVAL_TIMEOUT_MS) > 0
+  ? Number(process.env.SMEJJ_EVAL_TIMEOUT_MS)
+  : 180_000;
 
 /**
  * Messweg aus der Umgebung. Umstellen ist damit ein Zahlenwechsel, kein Release:
