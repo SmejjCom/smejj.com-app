@@ -16,6 +16,9 @@
 //
 // Schreibend vor lesend ist Absicht: was die Schreibrouten nicht beanspruchen,
 // faellt durch. Andersherum wuerde eine Leseroute eine Schreibanfrage schlucken.
+import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
+import { SECURITY_HEADERS } from "../../../src/shared/platform.js";
+import { privateJson } from "../http/respond.js";
 import { handleComplianceRoute } from "./complianceRoutes.js";
 import { handleAccountImpersonationRoute } from "./accountImpersonationRoutes.js";
 import { handleAdminUiRoute } from "./adminUiRoutes.js";
@@ -31,8 +34,42 @@ import { handleAdminRoute } from "./adminRoutes.js";
  * @param {Function} ctx.sessionStillValid Prueft, ob die Sitzung nicht widerrufen wurde.
  * @returns {Promise<boolean>} true, wenn die Anfrage hier beantwortet wurde.
  */
+// Vortuer fuer /admin und /api/admin: EIN Budget pro Client-IP, geprueft bevor
+// irgendeine Sitzung aufgeloest oder eine Datei angefasst wird. Die bestehenden
+// Gates in den Einzelrouten zaehlen pro Admin-Konto und greifen erst NACH der
+// Anmeldung — ein unangemeldeter Scanner lief bisher ungebremst gegen die Tuer.
+// Grosszuegig bemessen (Konsole laedt beim Start einen Schwung Dateien und
+// API-Antworten), aber hart genug, dass Abklopfen auf ~1,5 Anfragen/s faellt.
+// /api/compliance (Transparenzpflicht) und /api/account/* (die betroffene
+// Person selbst) bleiben bewusst davor.
+const vortuerGate = createRateLimiter({ capacity: 90, refillPerSec: 1.5, maxKeys: 20_000 });
+
+function vortuerAbweisen(res, pfad, retryAfterSec) {
+  if (pfad.startsWith("/api/")) {
+    res.setHeader("Retry-After", String(retryAfterSec));
+    return privateJson(res, 429, { ok: false, error: "admin_vortuer_rate_limit", retryAfterSec });
+  }
+  res.writeHead(429, {
+    ...SECURITY_HEADERS,
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "private, no-store",
+    "Retry-After": String(retryAfterSec)
+  });
+  res.end("<!doctype html><html lang=\"de\"><meta charset=\"utf-8\"><title>Zu viele Anfragen</title>" +
+    `<body style="font-family:system-ui;margin:4rem auto;max-width:32rem"><h1>Zu viele Anfragen</h1>` +
+    `<p>Bitte in ${retryAfterSec} Sekunden erneut versuchen.</p></body></html>`);
+}
+
 export async function handleAdminSurface(req, url, res, { readSession, sessionStillValid, env = process.env } = {}) {
   const pfad = url.pathname;
+
+  if (pfad === "/admin" || pfad.startsWith("/admin/") || pfad === "/api/admin" || pfad.startsWith("/api/admin/")) {
+    const limit = vortuerGate.take(clientKeyFromRequest(req), 1);
+    if (!limit.allowed) {
+      vortuerAbweisen(res, pfad, limit.retryAfterSec);
+      return true;
+    }
+  }
 
   if (pfad === "/api/compliance" || pfad.startsWith("/api/compliance/")) {
     if (handleComplianceRoute(req, url, res)) return true;
