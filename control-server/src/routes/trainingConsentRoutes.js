@@ -8,6 +8,7 @@ import {
   createConsentRevocation,
   trainingConsentConfig
 } from "../../../src/training/consent.js";
+import { TRAINING_CONSENT_REPOSITORY } from "../../../src/training/constants.js";
 import { json, readJson } from "../http/respond.js";
 import { createIdriveConsentLedger } from "../training/consentLedger.js";
 
@@ -190,6 +191,13 @@ export function handleNotice(req, res, { env = process.env } = {}) {
     // Der Ort des Dokuments, damit die Oberflaeche darauf verweisen kann, statt
     // den Pfad ein zweites Mal zu kennen.
     privacyNoticeUrl: String(env.SMEJJ_TRAINING_PRIVACY_NOTICE_URL || "/datenschutz.html"),
+    // Der Geltungsbereich, an den die Einwilligung gebunden wird. Er steht hier,
+    // weil createConsentGrant ohne ihn 400 consent_repository_invalid wirft —
+    // die erste Fassung der Oberflaeche schickte keinen mit und konnte darum
+    // gar keine Einwilligung erteilen (gemessen 2026-08-05). Der Server nennt
+    // ihn, die Oberflaeche schickt ihn zurueck; so gibt es nur EINEN Ort, der
+    // ihn kennt.
+    repository: TRAINING_CONSENT_REPOSITORY,
     // Die drei Teil-Einwilligungen, wortgleich zur Datenschutzerklaerung
     // ("dreifach getrennt"). createConsentGrant verlangt sie ALLE — eine
     // Teil-Einwilligung laesst sich nicht ausstellen.

@@ -50,6 +50,7 @@ import { isSafeMutatingControlRequest, requiresAuthenticatedControlAccess } from
 import { createPublicModelRateGate } from "./shared/modelRatePolicy.js";
 import { bearerSessionToken, issueSessionToken, verifySessionToken } from "../control-server/src/auth/sessionToken.js";
 import { createSessionHandoffStore, isSessionHandoffId } from "../control-server/src/auth/sessionHandoff.js";
+import { handleTrainingCaptureRoute } from "../control-server/src/routes/trainingCaptureRoutes.js";
 import { handleTrainingConsentRoute } from "../control-server/src/routes/trainingConsentRoutes.js";
 import { signGoogleAuthState, verifyGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
 import { createGoogleAuthHandlers } from "./auth/googleAuthRoutes.js";
@@ -198,6 +199,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && url.pathname === ROUTES.api.storagePresign) return await handleStoragePresign(req, res);
     if (readMethod && url.pathname === ROUTES.api.storageStatus) return await handleStorageStatus(res);
     if (url.pathname.startsWith(ROUTES.api.trainingConsent)) return await handleTrainingConsentRoute(req, url, res);
+    if (url.pathname === ROUTES.api.trainingCapture) return await handleTrainingCaptureRoute(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.modelStatus) return await handleModelStatus(res, "kimi-k2-7");
     if (readMethod && url.pathname === ROUTES.api.glmModelStatus) return await handleModelStatus(res, "glm-5-2");
     if (readMethod && url.pathname === ROUTES.api.modelsStatus) return await handleModelsStatus(res);

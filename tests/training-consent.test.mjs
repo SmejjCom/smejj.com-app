@@ -482,6 +482,39 @@ test("der Hinweis-Endpunkt veroeffentlicht den geltenden Hash — und schweigt o
   assert.equal(kaputt.body.privacyNoticeSha256, undefined, "ohne Konfiguration darf kein Hash genannt werden");
 });
 
+test("was der Hinweis-Endpunkt nennt, ergibt auch WIRKLICH einen gueltigen Grant", async () => {
+  // Der Wachhund fuer einen echten Fehler (2026-08-05): der Endpunkt meldete
+  // 200 und nannte Hash und Umfang — aber KEIN repository. createConsentGrant
+  // verlangt eines und wirft sonst consent_repository_invalid, die Route
+  // antwortet 400. Die Einwilligung war damit live technisch unmoeglich, und
+  // kein Test hat es bemerkt: alle prueften Felder, keiner den Durchstich.
+  //
+  // Dieser Test nimmt AUSSCHLIESSLICH, was der Endpunkt herausgibt, und baut
+  // daraus eine Einwilligung. Faellt kuenftig ein Pflichtfeld aus der Antwort,
+  // faellt hier der Grant.
+  const { handleNotice } = await import("../control-server/src/routes/trainingConsentRoutes.js");
+  const antwort = fakeResponse();
+  handleNotice({}, antwort, { env: ENV });
+  assert.equal(antwort.statusCode, 200);
+
+  const felder = Object.fromEntries(antwort.body.umfang.map((name) => [name, true]));
+  const grant = createConsentGrant({
+    subjectId: SUBJECT,
+    repository: antwort.body.repository,
+    privacyNoticeSha256: antwort.body.privacyNoticeSha256,
+    ...felder
+  }, { config: CONFIG, now: NOW, randomUUID: () => "00000000-0000-4000-8000-00000000beef" });
+
+  const scope = bindConsentScope({
+    subjectId: SUBJECT,
+    repository: antwort.body.repository,
+    privacyNoticeSha256: antwort.body.privacyNoticeSha256
+  }, CONFIG);
+  const entscheidung = consentDecision({ entries: [grant], scope }, { config: CONFIG, now: NOW });
+  assert.equal(entscheidung.status, "granted");
+  assert.equal(entscheidung.captureAllowed, true);
+});
+
 function fakeResponse() {
   return {
     statusCode: 0,

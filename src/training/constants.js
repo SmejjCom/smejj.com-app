@@ -58,6 +58,25 @@ export const MODEL_LABEL_SOURCES = Object.freeze(new Set([
   "provider-api"
 ]));
 
+/**
+ * Der Geltungsbereich, an den eine Trainings-Einwilligung gebunden wird.
+ *
+ * WARUM ES DIESE KONSTANTE GIBT (gemessen am 2026-08-05):
+ * Das Einwilligungsmodell stammt aus der Code-Arbeit und bindet jede Zustimmung
+ * an ein Repository — `createConsentGrant` wirft ohne eines
+ * `consent_repository_invalid`, und die Route antwortet 400. Die erste Fassung
+ * der Oberflaeche schickte keines mit: der Schalter war fail-closed, aber die
+ * Einwilligung liess sich gar nicht erteilen.
+ *
+ * Eine Chat-Frage hat kein Repository. Sie hat aber sehr wohl einen
+ * Geltungsbereich, und das ist dieses Projekt: "meine Fragen duerfen smejj
+ * trainieren". Darum EIN fester Wert, serverseitig — und der Endpunkt
+ * `/api/training/consent/notice` nennt ihn, damit die Oberflaeche ihn nicht
+ * raten oder doppelt pflegen muss. Ein zweiter Ort waere ein zweiter Ort, der
+ * driften kann.
+ */
+export const TRAINING_CONSENT_REPOSITORY = "smejjcom/smejj-app";
+
 export function isCaptureEnabled(env = process.env) {
   return String(env.SMEJJ_TRAINING_CAPTURE_ENABLED || "NO").trim().toUpperCase() === "YES";
 }

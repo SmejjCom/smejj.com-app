@@ -186,6 +186,10 @@ export const ROUTES = {
     // gesendeten Hash gegen die Umgebung und antwortet sonst 409 — ohne einen
     // Weg, den geltenden Hash zu erfahren, ist die Einwilligung unerreichbar.
     trainingConsentNotice: "/api/training/consent/notice",
+    // Die Erfassung liegt bewusst NICHT unter /api/training/consent: dort faengt
+    // ein startsWith() alles ab, und die Erfassung hat andere Regeln als die
+    // Einwilligung (eigener Schalter, eigener Speicher, eigene Fehlerbilder).
+    trainingCapture: "/api/training/capture",
     modelStatus: "/api/models/kimi-k2-7/status",
     glmModelStatus: "/api/models/glm-5-2-fp8/status",
     modelsStatus: "/api/models/status",
