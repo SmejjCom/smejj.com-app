@@ -66,7 +66,7 @@ Wichtig: Mehrere Vorschläge berühren Dateien unter dem Start-Lock (31 eingefro
 | V1 Riesen-Einfügung als Anhang | **JA — umgesetzt und live** | Freigabe 2026-08-06 (inkl. Start-Lock); live als sw v228, Commit b4678d7 (Frontend-Repo) / 9ce211b (lokal) |
 | V2 Live-Mitschrift Sprachmodus | | |
 | V3 Modellwahl Schnell/Auto/Gründlich | | |
-| V4 Verlauf: Anpinnen + Suche | | |
+| V4 Verlauf: Anpinnen + Suche | **JA (Stufe 1) — umgesetzt und live** | Freigabe 2026-08-06; Anpinnen live als sw v229, Commit 11c5fd3 (Frontend-Repo) / d7a61ca (lokal); Stufe 2 (breitere Suche) noch offen |
 | V5 Quellen-Panel koppeln | | |
 
 *Nächster Radar-Durchgang: Vorschlag — Anfang September 2026 (monatliche Bündelung), sofern die Automatik bis dahin eingerichtet ist.*
