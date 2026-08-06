@@ -25,7 +25,13 @@ const USER_PROTECTED_EXACT_PATHS = new Set([
   ROUTES.api.ragSearch,
   ROUTES.api.trainingConsent,
   ROUTES.api.trainingConsentDecision,
-  ROUTES.api.trainingConsentRevoke
+  ROUTES.api.trainingConsentRevoke,
+  // Ohne diesen Eintrag setzt src/server.js `req.authUser` nie — und die
+  // Erfassungsroute, die genau darauf prueft, antwortet JEDEM 401, auch einem
+  // angemeldeten Nutzer. Gefunden am 2026-08-05 beim Live-Durchstich: die Route
+  // war ausgerollt, verdrahtet und getestet, aber unerreichbar. Ein Test mit
+  // gesetztem authUser findet das nicht; nur der Weg von aussen.
+  ROUTES.api.trainingCapture
 ]);
 
 const USER_PROTECTED_MUTATIONS = new Set([

@@ -36,11 +36,26 @@ import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { signedS3List } from "../../control-server/src/storage/s3Signer.js";
 
 const GRUPPE = "smejj-control";
-// MIT abschliessendem Schraegstrich. Ohne ihn lehnt readTrainingIdriveConfig
-// den Wert mit `training_idrive_prefix_invalid` ab — gemessen, nicht vermutet.
-// Der Schraegstrich ist auch inhaltlich richtig: "training/fragen" wuerde sonst
-// auch auf "training/fragenarchiv" passen.
-const PREFIX = "training/fragen/";
+// ZWEI Praefixe, kommagetrennt — und das ist der Punkt, an dem eine falsche
+// Annahme teuer geworden waere:
+//
+//   training/consents/v1/  gehoert dem EINWILLIGUNGS-Ledger
+//   training/fragen/       gehoert der Erfassung
+//
+// Der Ledger benutzt dieselben IDRIVE_E2_TRAINING_*-Werte wie die Erfassung
+// (createIdriveConsentLedger ruft readTrainingIdriveConfig auf) und prueft, ob
+// seine eigene Wurzel erlaubt ist. Waere hier nur `training/fragen/` gesetzt,
+// haette die Erfassung funktioniert und die EINWILLIGUNG waere mit
+// `consent_idrive_prefix_not_allowed` gestorben — also genau die Schutzschicht,
+// um derentwillen es die Erfassung ueberhaupt gibt.
+//
+// Abschliessender Schraegstrich ist Pflicht: ohne ihn lehnt
+// readTrainingIdriveConfig mit `training_idrive_prefix_invalid` ab (gemessen).
+// Er ist auch inhaltlich richtig — "training/fragen" passte sonst auch auf
+// "training/fragenarchiv".
+const PREFIX_EINWILLIGUNG = "training/consents/v1/";
+const PREFIX_FRAGEN = "training/fragen/";
+const PREFIX = `${PREFIX_EINWILLIGUNG},${PREFIX_FRAGEN}`;
 const MIN_ENV = 10;
 
 const args = new Set(process.argv.slice(2));
@@ -106,7 +121,7 @@ if (!accessKey || !secretKey) {
       "Der empfohlene Weg — ein Schluessel, der NUR das darf, was die Erfassung",
       "braucht:",
       "  1. Bei IDrive e2 einen neuen Access Key anlegen, beschraenkt auf",
-      `     Schreiben unter  ${bucket || "<eimer>"}/${PREFIX}`,
+      `     Schreiben unter  ${bucket || "<eimer>"}/training/`,
       "  2. In ~/.config/smejj.com/env.local eintragen:",
       "       IDRIVE_E2_TRAINING_ACCESS_KEY=…",
       "       IDRIVE_E2_TRAINING_SECRET_KEY=…",
@@ -140,14 +155,14 @@ console.log("Speicher fuer die Fragen-Erfassung");
 console.log(`  Endpunkt      ${endpoint}`);
 console.log(`  Region        ${region}`);
 console.log(`  Eimer         ${bucket}`);
-console.log(`  Praefix       ${PREFIX}`);
+console.log(`  Praefixe      ${PREFIX}`);
 console.log(`  Zugangsdaten  ${herkunft}`);
 
 // Erreichbarkeitsprobe: signierte Auflistung, schreibt nichts.
 try {
-  const liste = await signedS3List({ endpoint, region, accessKey, secretKey, bucket, prefix: PREFIX, timeoutMs: 15_000 });
+  const liste = await signedS3List({ endpoint, region, accessKey, secretKey, bucket, prefix: PREFIX_FRAGEN, timeoutMs: 15_000 });
   const anzahl = Array.isArray(liste?.keys) ? liste.keys.length : 0;
-  console.log(`\nProbe: Auflistung erfolgreich — ${anzahl} Objekt(e) unter ${PREFIX}`);
+  console.log(`\nProbe: Auflistung erfolgreich — ${anzahl} Objekt(e) unter ${PREFIX_FRAGEN}`);
 } catch (fehler) {
   abbruch([
     "ABBRUCH — die Probe ist fehlgeschlagen, nichts geaendert.",

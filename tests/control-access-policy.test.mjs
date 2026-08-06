@@ -75,3 +75,28 @@ test("die Wissenssuche verlangt eine Anmeldung", () => {
   assert.equal(protectedAccess("/api/rag/search", "GET"), true);
   assert.equal(protectedAccess("/api/rag/search", "HEAD"), true);
 });
+
+test("jede Route, die req.authUser LIEST, muss hier gelistet sein", async () => {
+  // Der Waechter fuer einen echten Fehler (2026-08-05): die Erfassungsroute
+  // prueft `req.authUser` und antwortet sonst 401 — aber src/server.js setzt
+  // authUser NUR fuer Pfade, die diese Policy schuetzt. /api/training/capture
+  // fehlte. Die Route war ausgerollt, verdrahtet, 12 Tests gruen — und fuer
+  // JEDEN unerreichbar, auch fuer angemeldete Nutzer.
+  //
+  // Ein Test mit gesetztem authUser findet das nie: er setzt genau die
+  // Bedingung, die in Wirklichkeit fehlt. Darum wird hier die LISTE geprueft,
+  // nicht das Verhalten einer einzelnen Route.
+  const { ROUTES } = await import("../src/shared/platform.js");
+  for (const pfad of [
+    ROUTES.api.trainingCapture,
+    ROUTES.api.trainingConsent,
+    ROUTES.api.trainingConsentDecision,
+    ROUTES.api.trainingConsentRevoke
+  ]) {
+    assert.equal(protectedAccess(pfad, "POST"), true, `${pfad} bekaeme nie ein authUser`);
+  }
+
+  // Gegenprobe: der Hinweis-Endpunkt MUSS offen bleiben. Ohne ihn kann niemand
+  // den geltenden Hash erfahren, und die Einwilligung waere unerreichbar.
+  assert.equal(protectedAccess(ROUTES.api.trainingConsentNotice, "GET"), false);
+});
