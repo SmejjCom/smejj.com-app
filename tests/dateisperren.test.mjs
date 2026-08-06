@@ -19,6 +19,7 @@ import os from "node:os";
 import path from "node:path";
 import { PROTECTED_FILES as SECURITY_FILES, SECURITY_LOCK } from "../scripts/check-security-lock.mjs";
 import { PROTECTED_FILES as DEPLOY_FILES } from "../scripts/check-deploy-lock.mjs";
+import { PROTECTED_FILES as ADMIN_FILES } from "../scripts/check-admin-lock.mjs";
 
 // Alle Sperren, die als echter Prozess anschlagen muessen. Neue Sperre? Hier
 // eintragen — sonst ist sie ungeprueft, und eine ungeprueft Sperre ist genau
@@ -26,7 +27,8 @@ import { PROTECTED_FILES as DEPLOY_FILES } from "../scripts/check-deploy-lock.mj
 const ALLE_SPERREN = [
   "scripts/check-start-lock.mjs",
   "scripts/check-security-lock.mjs",
-  "scripts/check-deploy-lock.mjs"
+  "scripts/check-deploy-lock.mjs",
+  "scripts/check-admin-lock.mjs"
 ];
 
 // Die Startseiten-Liste wird NICHT aus dem Skript importiert: check-start-lock.mjs
@@ -83,7 +85,7 @@ test("die Deploy-Sperre schlaegt bei einer geaenderten Spiegel-Datei an", () => 
   assert.equal(code, 0, "nach dem Zuruecksetzen muss die Sperre wieder erfuellt sein");
 });
 
-test("die drei Sperren teilen sich keine Datei — sonst gaebe es zwei Wahrheiten", () => {
+test("die vier Sperren teilen sich keine Datei — sonst gaebe es zwei Wahrheiten", () => {
   // Eine Datei unter zwei Manifesten hiesse: zwei Stellen, die sie freigeben
   // koennen, und zwei Staende, die auseinanderlaufen duerfen.
   const deployFiles = DEPLOY_FILES;
@@ -91,6 +93,30 @@ test("die drei Sperren teilen sich keine Datei — sonst gaebe es zwei Wahrheite
     assert.ok(!START_FILES.includes(datei), `${datei} liegt schon im Start-Lock`);
     assert.ok(!SECURITY_FILES.includes(datei), `${datei} liegt schon im Security-Lock`);
   }
+  for (const datei of ADMIN_FILES) {
+    assert.ok(!START_FILES.includes(datei), `${datei} liegt schon im Start-Lock`);
+    assert.ok(!SECURITY_FILES.includes(datei), `${datei} liegt schon im Security-Lock`);
+    assert.ok(!deployFiles.includes(datei), `${datei} liegt schon im Deploy-Lock`);
+  }
+});
+
+test("die Admin-Sperre schlaegt am Step-up an und nennt die Datei", () => {
+  // Der Step-up ist die juengste Schutzschicht des Adminbereichs. Wer sein
+  // Zeitfenster still aufdreht, hebt ihn auf, ohne dass eine Zeile fehlt —
+  // genau dafuer ist die Sperre da.
+  const opfer = "control-server/src/admin/stepUp.js";
+  const original = fs.readFileSync(opfer);
+  try {
+    fs.appendFileSync(opfer, "\n// Probe der Sperre\n");
+    const { code, ausgabe } = sperreAufrufen("scripts/check-admin-lock.mjs");
+    assert.equal(code, 1, "eine Aenderung MUSS den Lauf fehlschlagen lassen");
+    assert.match(ausgabe, /VERLETZT \(1\)/);
+    assert.match(ausgabe, new RegExp(`${opfer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}: VERAENDERT`));
+  } finally {
+    fs.writeFileSync(opfer, original);
+  }
+  assert.equal(sperreAufrufen("scripts/check-admin-lock.mjs").code, 0,
+    "nach dem Zuruecksetzen muss die Sperre wieder erfuellt sein");
 });
 
 test("eine geaenderte Datei schlaegt an und wird namentlich genannt", () => {

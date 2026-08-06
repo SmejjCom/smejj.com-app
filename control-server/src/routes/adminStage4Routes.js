@@ -20,6 +20,7 @@ import { erfasseAnfrage, listeAnfragen, setzeStatus, verlaengereFrist } from "..
 import { erstelleAnkuendigung, listeAnkuendigungen, ziehZurueck } from "../admin/announcements.js";
 import { listFlags, upsertFlag } from "../admin/featureFlags.js";
 import { erfasseAufgabe, listeAufgaben, setzeAufgabenStatus } from "../admin/aufgaben.js";
+import { istErhoeht } from "../admin/stepUp.js";
 
 const PREFIX = "/api/admin";
 const gate = createRateLimiter({ capacity: 30, refillPerSec: 0.4, maxKeys: 5_000 });
@@ -56,6 +57,19 @@ export async function handleAdminStage4Route(req, url, res, { env = process.env 
   }
 
   const lesen = req.method === "GET" || req.method === "HEAD";
+
+  // Step-up wie bei den Kontoaktionen: eine bis zu 180 Tage alte Sitzung
+  // allein reicht fuer AENDERUNGEN nicht. Lesen bleibt frei — wer nur schaut,
+  // soll nicht bei jedem Blick sein Postfach aufmachen muessen.
+  if (!lesen && !istErhoeht(actor.email)) {
+    privateJson(res, 403, {
+      ok: false,
+      error: "admin_step_up_required",
+      hinweis: "Frische Bestaetigung noetig: Code unter /api/admin/step-up/request anfordern und unter /api/admin/step-up/confirm bestaetigen."
+    });
+    return true;
+  }
+
   const teile = rest.split("/");
   const body = lesen ? {} : await readJson(req).catch(() => ({}));
 

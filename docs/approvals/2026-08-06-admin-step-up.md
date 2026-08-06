@@ -31,7 +31,30 @@ Entwurfsentscheidungen:
 - Konsole: `api.js` fängt `admin_step_up_required` zentral ab — Code
   anfordern, abfragen, Aktion einmal wiederholen. Kein View wurde angefasst.
 
-## Umfang — fünf Dateien
+## Nachtrag 2026-08-06: Ausweitung + Change-Lock
+
+Auf den Auftrag „arbeite jede Aufgabe bis zur vollständigen Fertigstellung …
+nach Abschluss aktiviere einen Change-Lock" wurde der Umfang erweitert:
+
+- **Stufe-4-Schreibrouten** (Moderation, DSGVO, Ankündigungen, Feature-Flags,
+  Aufgaben) verlangen jetzt ebenfalls ein offenes Step-up-Fenster. Lesen
+  bleibt frei. Damit ist **jede** ändernde Adminroute abgedeckt.
+- **Change-Lock** `scripts/check-admin-lock.mjs` (admin lock v1) friert die
+  12 Dateien der Adminbereich-Sicherheitskette byte-genau ein. Eigenes
+  Manifest, weil Start- und Security-Lock `public/` in einem anderen Takt
+  einfrieren; überschneidungsfrei per Test zugesichert.
+- Der Ersatz-Release trägt daher die Id `…-stepup-v2-…`; das zuerst gebaute
+  Artefakt `…-stepup-…` (sha `78b6f6e4…`) wurde nie ausgerollt und ist
+  gegenstandslos.
+
+Neues Artefakt: `smejj-control-admin-stepup-v2-2026-08-06`,
+sha256 `66ab8e9c6b4b0bbc414fde1f37025eeadd2bc7ba854273749ebf07bb824b600e`,
+1022 Dateien, 2.398.690 Bytes, `secretsIncluded: false`.
+Basis: laufendes Live-Artefakt `smejj-control-erfassung-erreichbar-2026-08-05`
+(Salad 149, 91 Variablen). `diff -rq` gegen Live: genau 7 Dateien + Manifest.
+45/45 Tests grün im entpackten Release-Baum.
+
+## Umfang — fünf Dateien (Erstfassung, siehe Nachtrag oben)
 
 Basis ist das **laufende Live-Artefakt**
 `deployments/control/smejj-control-erfassung-erreichbar-2026-08-05.tar.gz`

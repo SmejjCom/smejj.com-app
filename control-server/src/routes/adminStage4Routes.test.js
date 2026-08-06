@@ -9,6 +9,15 @@ import { __clearGdprForTests } from "../admin/gdprRequests.js";
 import { __clearAnnouncementsForTests } from "../admin/announcements.js";
 import { __clearFlagsForTests } from "../admin/featureFlags.js";
 import { handleAdminStage4Route } from "./adminStage4Routes.js";
+import { __clearStepUpForTests, bestaetigeCode, fordereCode } from "../admin/stepUp.js";
+
+/** Oeffnet das Schreibfenster wie die Konsole: Code holen, Code bestaetigen. */
+async function erhoehe(email) {
+  let code = "";
+  await fordereCode(email, { mail: async (n) => { code = n.text.match(/\d{6}/)[0]; return { sent: true }; } });
+  const ok = bestaetigeCode(email, code);
+  if (!ok.ok) throw new Error("Step-up im Test fehlgeschlagen: " + ok.error);
+}
 
 const ENV = {};
 const OWNER = { email: "owner@example.de" };
@@ -42,7 +51,22 @@ async function aufbauen() {
   __clearAnnouncementsForTests(); __clearFlagsForTests();
   await putUser({ ...createUserRecord({ email: "owner@example.de", name: "O", passwordHash: "h" }), role: "owner" }, ENV);
   await putUser({ ...createUserRecord({ email: "finance@example.de", name: "F", passwordHash: "h" }), role: "finance" }, ENV);
+  // Aendernde Stufe-4-Routen verlangen ein offenes Step-up-Fenster; der
+  // Step-up selbst ist in adminStepUp.test.js geprueft.
+  __clearStepUpForTests();
+  await erhoehe("owner@example.de");
+  await erhoehe("finance@example.de");
 }
+
+test("ohne offenes Fenster wird eine Stufe-4-Aenderung abgewiesen", async () => {
+  await aufbauen();
+  __clearStepUpForTests();
+  const a = await ruf("POST", "/api/admin/flags/setzen", OWNER, { name: "test", status: "on", reason: "Versuch" });
+  assert.equal(a.status, 403);
+  assert.equal(a.body.error, "admin_step_up_required");
+  // Lesen bleibt frei — sonst muesste man fuer jeden Blick sein Postfach oeffnen.
+  assert.equal((await ruf("GET", "/api/admin/flags", OWNER)).status, 200);
+});
 
 test("fremde Pfade werden durchgereicht", async () => {
   await aufbauen();
