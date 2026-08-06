@@ -51,8 +51,17 @@ strikt daran:
   `~/.config/smejj.com/env.local` (Werte nie ausgeben).
 * Naming exakt `smejj.com`; jede Datei unter 800 Zeilen; nichts als bestanden
   dokumentieren, was nicht live gemessen wurde.
-* Kosten: nur GPU-Stufe `batch`, Deckel 50 USD gilt weiter. Ein Messzyklus
-  kostet rund 1,8 Cent — Messlaeufe sind damit freigegeben, Dauerlauf nicht.
+* Kosten: Deckel 50 USD gilt weiter. Ein Messzyklus in der Stufe `batch` kostet
+  rund 1,8 Cent.
+* **DAUERLAUF IST FREIGEGEBEN (Betreiber, 2026-08-05): „Dauerlauf ist
+  freigegeben, mach weiter."** Der Satz „Messlaeufe sind freigegeben, Dauerlauf
+  nicht" von heute frueh ist damit ueberholt — die Schleife darf durchlaufen.
+  Wer sie stoppt, stoppt sie gegen eine ausdrueckliche Freigabe.
+* Die Gruppe steht seit dem 2026-08-05 auf Stufe `high` (0,25 statt 0,09 USD/h,
+  also 180 statt 64,80 USD/Monat). Das ist von der Freigabe
+  `freigabe-2026-08-01-dauertraining` (180 USD/Monat) noch gedeckt, liegt aber
+  AUF deren Obergrenze statt darunter: der 50-USD-Deckel kauft damit rund 200
+  statt 555 GPU-Stunden.
 
 ## Die drei Blocker — Aufgaben in dieser Reihenfolge
 
@@ -127,10 +136,13 @@ was das Basismodell konnte (Verteilungsbruch, gemessen: 95,88 → 67,89 %).
 
 ## Ausdruecklich NICHT Teil dieses Auftrags
 
-* Dauerbetrieb-Infrastruktur (LaunchAgent/Container fuer die Schleife): die
-  Schleife lief bisher als lokaler Prozess und ueberlebt keinen Neustart.
-  Das ist eine eigene Betreiberentscheidung (moeglicher neuer Dienst = Rote
-  Liste) und kommt erst, wenn das Training nachweislich verbessert.
+* Dauerbetrieb-INFRASTRUKTUR (LaunchAgent/Container fuer die Schleife): kommt
+  erst, wenn das Training nachweislich verbessert; ein neuer Dienst waere Rote
+  Liste.
+  **Nicht zu verwechseln mit dem Dauerlauf selbst — der ist freigegeben.**
+  Die Schleife laeuft ueber `scripts/deploy/lora_dauerbetrieb_starten.sh`
+  (nohup + disown) und ueberlebt das Sitzungsende, aber keinen Neustart des
+  Rechners. Reboot-Festigkeit waere die Infrastruktur-Frage oben.
 * Skalierung auf 30.000 Beispiele — erst wenn Form und Quellen stimmen.
 * Aenderungen an Suite-Zusicherungen oder am Veto in `sweep.js`.
 

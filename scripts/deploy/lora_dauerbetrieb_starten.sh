@@ -20,18 +20,30 @@
 # Freigabe-Referenz sind bewusst NICHT versteckt: wer den Dauerbetrieb startet,
 # soll sehen, wieviel er hoechstens kostet und worauf sich das stuetzt.
 #
-# ZYKLUSLAUFZEIT MUSS ZUR KORPUSGROESSE PASSEN — gemessen am 2026-08-05:
-# 1494 Trainingszeilen brauchten 9,81 min, also rund 0,39 s je Beispiel. Der
-# neue 15-Formen-Korpus hat 7560 Zeilen -> rund 50 min, bei Rang 32 mehr.
-# Mit dem alten Deckel von 45 min waere JEDER Zyklus kurz vor dem Ziel
-# abgebrochen worden: 45 Minuten GPU bezahlt, kein Adapter, kein Ergebnis —
-# und das bei jedem Durchgang bis zum 50-USD-Deckel.
+# ZYKLUSLAUFZEIT MUSS ZUR KORPUSGROESSE PASSEN.
 #
-# Deshalb 90 min: rund das Doppelte des Erwarteten, also weiterhin eine echte
-# Bremse gegen einen HAENGENDEN Lauf, aber kein Fallbeil fuer einen gesunden.
-# Der Gesamtdeckel (50 USD) bleibt unveraendert — er ist die Geldbremse, die
-# Zykluslaufzeit ist die Haenger-Bremse. Wer den Korpus vergroessert, muss
-# diesen Wert nachrechnen.
+# Zwei Anlaeufe, beide zu knapp — und die Fehlrechnung dahinter ist die
+# eigentliche Lehre:
+#   45 min: der 15-Formen-Korpus hat 7560 statt 1494 Zeilen. JEDER Zyklus waere
+#           kurz vor dem Ziel abgebrochen worden.
+#   90 min: Zyklus 5 (Rang 32, Korpus 22aea68077e4 mit 8100 Zeilen) lief 90,3 min
+#           und wurde 18 Sekunden vor Ablauf abgeschnitten — 0,3762 USD ohne
+#           Ergebnis.
+#
+# Die Hochrechnung "0,39 s je Beispiel" stammte aus dem ALTEN Korpus und ergab
+# 69 min. Sie war falsch, weil eine Zeit-pro-BEISPIEL zwischen Korpora nicht
+# uebertragbar ist: der bereinigte Korpus hat laengere Antworten, und Rechenzeit
+# haengt an ZEICHEN, nicht an Beispielen. Sichtbar ist das an der Zielquote
+# (77,6 % statt 61,5 % — mehr Antwortanteil je Beispiel).
+#
+# Deshalb 150 min: grosszuegig ueber dem gemessenen Bedarf des langsamsten
+# Falls (Rang 32), damit ein gesunder Lauf durchkommt. Der Gesamtdeckel
+# (50 USD) bleibt unveraendert — ER ist die Geldbremse, die Zykluslaufzeit ist
+# nur die Haenger-Bremse.
+#
+# ACHTUNG STUFE: steht die Gruppe auf `high` (0,25 statt 0,09 USD/h), kostet ein
+# ausgereizter Zyklus bis zu 0,63 statt 0,23 USD. Wer die Stufe aendert, aendert
+# damit auch, wie schnell der Deckel aufgebraucht ist.
 
 set -euo pipefail
 
@@ -70,8 +82,8 @@ case "${1:-start}" in
 
     export PORT=8099 SMEJJ_HOST=127.0.0.1 \
       SMEJJ_LORA_LOOP_ENABLED=YES SMEJJ_LORA_TRAINING_ENABLED=YES \
-      SMEJJ_LORA_GPU_KLASSE=rtx3090 SMEJJ_LORA_PRIORITAET=batch \
-      SMEJJ_LORA_MAX_USD_GESAMT=50 SMEJJ_LORA_MAX_ZYKLUS_MINUTEN=90 \
+      SMEJJ_LORA_GPU_KLASSE=rtx3090 SMEJJ_LORA_PRIORITAET=high \
+      SMEJJ_LORA_MAX_USD_GESAMT=50 SMEJJ_LORA_MAX_ZYKLUS_MINUTEN=150 \
       SMEJJ_LORA_FREIGABE_ID=freigabe-2026-08-01-dauertraining \
       SMEJJ_LORA_FREIGABE_GPU_KLASSE=rtx3090 SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD=180 \
       SMEJJ_LORA_BASIS_HF_REPO=Qwen/Qwen3-8B \
@@ -92,7 +104,17 @@ case "${1:-start}" in
     echo "$KIND" > "$PIDDATEI"
     sleep 3
     echo "gestartet (PID $(cat "$PIDDATEI")), Protokoll: $PROTOKOLL"
-    echo "Deckel 50 USD, Stufe batch (0,09 USD/h), Freigabe freigabe-2026-08-01-dauertraining"
+    # Die Stufe wird ABGELESEN, nicht behauptet. Bis zum 2026-08-05 stand hier
+    # fest "Stufe batch (0,09 USD/h)" — nachdem die Gruppe auf `high` gestellt
+    # worden war, meldete der Start also 0,09, waehrend tatsaechlich 0,25
+    # abgerechnet wurde. Eine Startmeldung, die den Preis raet, ist schlimmer
+    # als keine: sie wird geglaubt.
+    echo "Deckel ${SMEJJ_LORA_MAX_USD_GESAMT} USD, Stufe ${SMEJJ_LORA_PRIORITAET}," \
+      "Zyklusgrenze ${SMEJJ_LORA_MAX_ZYKLUS_MINUTEN} min, Freigabe ${SMEJJ_LORA_FREIGABE_ID}"
+    echo "Tatsaechlicher Preis laut Schleife:"
+    sleep 2
+    curl -s --max-time 5 "http://127.0.0.1:${PORT}/kosten" 2>/dev/null \
+      | sed 's/.*"preisProStundeUsd":\([^,]*\).*/  \1 USD je Stunde/' || true
     ;;
   *)
     echo "unbekannt: ${1}. Erlaubt: start | stop | status" >&2
