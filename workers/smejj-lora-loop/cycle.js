@@ -28,12 +28,27 @@ import { brichTrainingAb, starteTraining, trainerErreichbar, trainingZustand } f
 const ABFRAGE_ABSTAND_MS = 30_000;
 /**
  * Wie viele Statusabfragen IN FOLGE unklar sein duerfen, bevor der Lauf
- * abgebrochen wird. 3 x (30 s Abstand + 20 s Zeitgrenze) ≈ 2,5 Minuten —
- * lang genug fuer einen Gateway-Schluckauf waehrend des Trainings, kurz
- * genug, dass die Karte nie unbeaufsichtigt weiterlaeuft (Laufzeit- und
- * Kostendeckel gelten waehrenddessen unveraendert).
+ * abgebrochen wird.
+ *
+ * Am 2026-08-06 von 3 auf 16 erhoeht (Betreiber-Freigabe „Toleranz der
+ * Trainingsschleife", Nachweis docs/approvals/2026-08-06-toleranz-trainingsschleife.md).
+ *
+ * WARUM: 3 Abfragen sind rund 90 Sekunden. In der Nacht auf den 2026-08-06
+ * wurden Ausfaelle der Salad-Zugangsschicht von 7 bis 78 Minuten gemessen —
+ * die Statusabfrage der Schleife 24-mal ueber 12 Minuten nachgestellt ergab
+ * 14 mal HTTP 503 AM STUECK, waehrend der Trainer selbst gesund war
+ * (`bereit: true`, Modell auf der GPU). Drei bezahlte Laeufe starben daran,
+ * obwohl die Karte normal weiterrechnete.
+ *
+ * 16 x (30 s Abstand + 20 s Zeitgrenze) ≈ 8 Minuten. Das deckt die kurzen
+ * Aussetzer ab, an denen die Zyklen 4 und 6 starben. Ein Ausfall wie die 78
+ * Minuten fuehrt weiterhin zum Abbruch — richtig so, das ist kein Schluckauf.
+ *
+ * Die Karte bleibt dabei NICHT unbeaufsichtigt: Laufzeit- und Kostendeckel
+ * werden oben in derselben Schleife bei JEDEM Durchgang geprueft
+ * (mussNotausAusloesen) und sind unveraendert.
  */
-const UNBEKANNT_TOLERANZ = 3;
+const UNBEKANNT_TOLERANZ = 16;
 
 function jetztMinuten(start, jetzt) {
   return (jetzt().getTime() - start) / 60_000;

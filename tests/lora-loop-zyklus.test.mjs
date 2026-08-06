@@ -204,3 +204,42 @@ test("erschoepftes Gitter startet keinen weiteren Zyklus", async () => {
   assert.equal(ergebnis.kostenUsd, 0);
   assert.ok(ergebnis.gruende.includes("gitter_erschoepft"));
 });
+
+// --- Toleranzfenster: 8 Minuten Gateway-Ausfall, nicht 90 Sekunden -----------
+//
+// Betreiber-Freigabe 2026-08-06 („Toleranz der Trainingsschleife"): von 3 auf 16
+// Abfragen. Anlass sind drei bezahlte Laeufe, die in der Nacht auf den 2026-08-06
+// starben, waehrend die Karte normal weiterrechnete. Gemessen: die Statusabfrage
+// 24-mal ueber 12 Minuten nachgestellt ergab 14-mal HTTP 503 AM STUECK, obwohl
+// der Trainer sich als `bereit` meldete.
+//
+// Diese zwei Tests halten BEIDE Seiten der Grenze fest. Ohne den zweiten waere
+// die Toleranz beliebig erhoehbar, ohne dass ein Test widerspricht — und eine
+// Karte koennte unbemerkt stundenlang unbeaufsichtigt laufen.
+test("ein achtminuetiger Gateway-Ausfall verwirft den bezahlten Lauf NICHT", () => {
+  const aussetzer = Array.from({ length: 12 }, () => "kaputtgeredet");
+  return fuehreZyklusAus(basis({
+    fetchImpl: trainerFetch({ zustandsfolge: ["laeuft", ...aussetzer, "laeuft", "fertig"] })
+  })).then((ergebnis) => {
+    assert.equal(ergebnis.gestartet, true);
+    assert.equal(ergebnis.ok, true, ergebnis.gruende ? ergebnis.gruende.join(",") : "");
+    assert.ok(
+      !ergebnis.gruende.some((g) => g.startsWith("trainer_zustand_unbekannt")),
+      "12 unklare Abfragen liegen unter der Toleranz und duerfen nicht abbrechen"
+    );
+  });
+});
+
+test("ein DAUERausfall bricht weiterhin ab — die Toleranz ist begrenzt", () => {
+  // 78 Minuten Ausfall wie am 2026-08-06 gemessen: das ist kein Schluckauf.
+  const dauerhaft = Array.from({ length: 40 }, () => "kaputtgeredet");
+  return fuehreZyklusAus(basis({
+    fetchImpl: trainerFetch({ zustandsfolge: dauerhaft })
+  })).then((ergebnis) => {
+    assert.equal(ergebnis.ok, false);
+    assert.ok(
+      ergebnis.gruende.some((g) => g.startsWith("trainer_zustand_unbekannt")),
+      ergebnis.gruende.join(",")
+    );
+  });
+});
