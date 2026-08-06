@@ -50,14 +50,37 @@ export async function leseZustand({ env = process.env, key, idriveConfig, reques
  * naechste Start wuerde mit einem zu niedrigen Kostenzaehler weiterrechnen.
  * Deshalb Rueckgabewert statt stillem Schlucken.
  */
-export async function schreibeZustand(zustand, { env = process.env, key, idriveConfig, request = signedS3Request } = {}) {
-  try {
-    const config = idriveConfig || idriveConfigFromEnv(env);
-    await request(config, "PUT", key, `${JSON.stringify(zustand, null, 2)}\n`, "application/json; charset=utf-8");
-    return true;
-  } catch {
-    return false;
+/**
+ * Abstaende der Schreibversuche. Der Kostenzaehler ist die Grundlage des
+ * Deckels — ein verlorener Schreibvorgang macht ihn nach einem Neustart zu
+ * niedrig, und dann greift die Geldbremse zu spaet.
+ *
+ * GEMESSEN AM 2026-08-05/06: zweimal in Folge `abgelegt=false`, jeweils
+ * zeitgleich mit einem fehlgeschlagenen Trainer-Aufruf. Beide Gegenstellen
+ * waren Minuten spaeter tadellos erreichbar (IDrive 0,19-0,32 s) — es sind
+ * kurze Aussetzer der lokalen Leitung, keine Stoerung der Gegenstelle.
+ * Danach klafften Schleife (0,9145 USD) und IDrive (0,7234 USD) auseinander.
+ *
+ * Ein einzelner Versuch ist fuer einen Wert, an dem eine Geldbremse haengt,
+ * zu wenig.
+ */
+const SCHREIB_VERSUCHE_MS = [0, 1500, 4000];
+
+export async function schreibeZustand(zustand, { env = process.env, key, idriveConfig, request = signedS3Request, warte = (ms) => new Promise((f) => setTimeout(f, ms)) } = {}) {
+  let letzter = null;
+  for (const pause of SCHREIB_VERSUCHE_MS) {
+    if (pause) await warte(pause);
+    try {
+      const config = idriveConfig || idriveConfigFromEnv(env);
+      await request(config, "PUT", key, `${JSON.stringify(zustand, null, 2)}\n`, "application/json; charset=utf-8");
+      return true;
+    } catch (fehler) {
+      letzter = fehler;
+    }
   }
+  // Der Aufrufer meldet das laut. Hier bleibt es bei `false`: eine Ausnahme
+  // wuerde den Zyklus reissen, und der Zaehler im Speicher stimmt ja noch.
+  return false;
 }
 
 export async function leseBestenStand({ env = process.env, key, idriveConfig, request = signedS3Request } = {}) {
