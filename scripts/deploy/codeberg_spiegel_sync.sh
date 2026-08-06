@@ -84,7 +84,17 @@ pruefe_zugang() {
       echo "FEHLER: SSH-Schluessel fehlt: ${SSH_KEY}" >&2
       exit 1
     fi
-    export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    # ZEITLIMITS (Freigabe Betreiber 2026-08-05, nach einem gemessenen Hänger):
+    # Das Vortor prueft nur VOR dem Start, ob Port 22 erreichbar ist. Bricht die
+    # Verbindung MITTEN im Lauf weg, hat `git push` von sich aus kein Zeitlimit
+    # — am 2026-08-05 hing die Spiegelung dadurch 10 Minuten in
+    # `ssh … git-receive-pack` beim letzten Repo, Port 22 war unmittelbar davor
+    # und danach offen. Nachts um 04:20 bliebe so ein toter Prozess stehen.
+    #   ConnectTimeout     20 s  — Verbindungsaufbau
+    #   ServerAliveInterval 15 s x CountMax 4 = nach ~60 s Stille ist Schluss
+    # Damit wird aus einem unbegrenzten Haenger ein Fehler, und der Lauf meldet
+    # ihn ueber die Fehlerzaehlung sauber als UNVOLLSTAENDIG.
+    export GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
   fi
 
   # Fail-closed: ohne lesbaren Zugang gar nicht erst anfangen. Alle fuenf
