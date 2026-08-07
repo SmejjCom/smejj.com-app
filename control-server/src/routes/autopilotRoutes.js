@@ -11,7 +11,7 @@
 // Maus-Engine-Umbau: Engine-Logik immer ohne Browser testbar bauen).
 import { json, readJson } from "../http/respond.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
-import { heartbeatAnnehmen } from "../admin/opsAutopiloten.js";
+import { heartbeatAnnehmen, persistiereHerzschlag } from "../admin/opsAutopiloten.js";
 
 const PFAD = "/api/autopilot/heartbeat";
 // 7 Autopiloten, keiner schlaegt oefter als stuendlich — 30 pro Minute je
@@ -55,5 +55,8 @@ export async function handleAutopilotHeartbeat(req, url, res, { env = process.en
     return true;
   }
   json(res, 200, { ok: true, id: antwort.id, gespeichertAm: antwort.gespeichert.am });
+  // Stufe 3: dauerhaft ablegen — NACH der Antwort und ohne sie aufzuhalten.
+  // Ein Ablage-Fehler kostet Neustart-Festigkeit, nie die Quittung.
+  persistiereHerzschlag(antwort.id, { env }).catch(() => {});
   return true;
 }

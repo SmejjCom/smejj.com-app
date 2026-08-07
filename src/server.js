@@ -62,7 +62,7 @@ import { handleProviderRoute } from "../control-server/src/routes/providerRoutes
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
-import { starteSelbstmessung } from "../control-server/src/admin/opsAutopiloten.js";
+import { ladeHerzschlaege, starteAlarmWache, starteSelbstmessung } from "../control-server/src/admin/opsAutopiloten.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -250,6 +250,10 @@ starteMailLogAufraeumen({ env: process.env });
 // Autopiloten-Ampel (Modul AP): Eigenmeldung fuer die Salad-Sonden — der
 // laufende Container bezeugt sich alle 5 Minuten selbst; unref, haelt nichts wach.
 starteSelbstmessung();
+// Stufe 3: abgelegte Herzschlaege zurueckholen (Neustart-Festigkeit), danach
+// die Alarm-Wache takten — Rot wird einmal je Episode per Mail gemeldet.
+ladeHerzschlaege().catch(() => {});
+starteAlarmWache();
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {

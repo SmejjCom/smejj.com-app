@@ -14,6 +14,8 @@
 // Einschraenkung wie beim Job-Store (Modul H): nach einem Neustart des
 // Control-Servers ist er leer, und die Ansicht sagt das ausdruecklich.
 import crypto from "node:crypto";
+import { createRecordStore } from "./recordStore.js";
+import { sendAuthMail } from "../auth/mailer.js";
 
 const TAG_MS = 24 * 60 * 60 * 1000;
 const STUNDE_MS = 60 * 60 * 1000;
@@ -152,6 +154,12 @@ const VERLAUF_MAX = 20;
 // id -> { laeufe: [{ am, status, meldung, dauerMs }] } — juengster Lauf zuerst.
 const herzschlaege = new Map();
 
+// Stufe 3: externe Herzschlaege ueberleben den Neustart auf IDrive e2 (ein
+// JSON-Datensatz je Autopilot). Die Eigenmeldung der Salad-Sonden wird bewusst
+// NICHT abgelegt — sie bezeugt genau diesen Prozess und waere nach einem
+// Neustart eine konservierte Luege; sie entsteht dort binnen Sekunden neu.
+const ablage = createRecordStore("admin/autopiloten", { maximal: 50 });
+
 /**
  * Nimmt einen Herzschlag entgegen. Fail-closed in jeder Richtung: ohne
  * hinterlegte Schluessel wird NICHTS angenommen (sonst koennte jeder die Ampel
@@ -278,6 +286,104 @@ function sicherGleich(links, rechts) {
 }
 
 /**
+ * Stufe 3a: einen Autopiloten-Verlauf dauerhaft ablegen. Persistenz ist Zusatz,
+ * nie Blocker — ein fehlgeschlagener Put kostet nur die Neustart-Festigkeit
+ * dieses einen Herzschlags, niemals die 200-Antwort an den Absender.
+ */
+export async function persistiereHerzschlag(id, { env = process.env } = {}) {
+  const gespeichert = herzschlaege.get(String(id || ""));
+  if (!gespeichert || !gespeichert.laeufe.length) return false;
+  try {
+    await ablage.schreib({
+      id: String(id),
+      createdAt: gespeichert.laeufe[0].am,
+      laeufe: gespeichert.laeufe
+    }, { env });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Stufe 3a: beim Serverstart die abgelegten Verlaeufe zurueckholen. Ein lebender
+ * Eintrag im Arbeitsspeicher gewinnt immer gegen die Ablage — geladen wird nur,
+ * was fehlt. Unbekannte Kennungen (z. B. ein inzwischen ausgebauter Autopilot)
+ * bleiben liegen, statt Phantome auf die Ampel zu heben.
+ */
+export async function ladeHerzschlaege({ env = process.env } = {}) {
+  try {
+    const ergebnis = await ablage.liste({ env });
+    if (!ergebnis.ok) return 0;
+    let geladen = 0;
+    for (const datensatz of ergebnis.datensaetze) {
+      if (!AUTOPILOTEN.some((a) => a.id === datensatz.id)) continue;
+      if (herzschlaege.has(datensatz.id)) continue;
+      if (!Array.isArray(datensatz.laeufe) || !datensatz.laeufe.length) continue;
+      herzschlaege.set(datensatz.id, { laeufe: datensatz.laeufe.slice(0, VERLAUF_MAX) });
+      geladen += 1;
+    }
+    return geladen;
+  } catch {
+    return 0;
+  }
+}
+
+// Stufe 3b: Wer bereits eine Rot-Mail bekommen hat, bekommt keine zweite fuer
+// dieselbe Rot-Phase. Wird der Autopilot wieder gruen/gelb/grau, ist die
+// Episode beendet und ein neues Rot meldet sich wieder.
+const alarmiert = new Set();
+
+/**
+ * Ein Pruefdurchlauf der Alarm-Wache: neue Rot-Faelle melden, beendete
+ * Episoden vergessen. `sende` ist fuer Tests injizierbar; im Betrieb geht die
+ * Mail an die erste Adresse aus SMEJJ_ADMIN_OWNER_EMAILS — dieselbe Quelle,
+ * die auch den Adminbereich oeffnet.
+ */
+export async function pruefeAlarm({ env = process.env, jetztMs = Date.now(), sende = null } = {}) {
+  const uebersicht = autopilotUebersicht({ jetztMs });
+  const rote = uebersicht.autopiloten.filter((a) => a.ampel === "rot");
+  const roteIds = new Set(rote.map((a) => a.id));
+  for (const id of [...alarmiert]) if (!roteIds.has(id)) alarmiert.delete(id);
+
+  const neue = rote.filter((a) => !alarmiert.has(a.id));
+  if (!neue.length) return { gemeldet: 0 };
+  const empfaenger = String(env.SMEJJ_ADMIN_OWNER_EMAILS || "").split(",")[0].trim();
+  if (!empfaenger) return { gemeldet: 0, hinweis: "kein Empfaenger hinterlegt" };
+
+  const senden = sende || ((nachricht) => sendAuthMail(nachricht, env));
+  let gemeldet = 0;
+  for (const a of neue) {
+    try {
+      await senden({
+        to: empfaenger,
+        subject: `smejj.com Autopilot ROT: ${a.name}`,
+        text: `Der Autopilot "${a.name}" steht auf ROT.\n\n`
+          + `Grund: ${a.ampelGrund}\n`
+          + `Ort: ${a.ort} · Zeitplan: ${a.zeitplan}\n\n`
+          + "Ampel und Bedienungs-Anleitung: https://smejj.com/admin/autopiloten/\n\n"
+          + "Diese Mail kommt einmal je Rot-Phase. Wird der Autopilot wieder gruen "
+          + "und faellt erneut aus, meldet er sich wieder.",
+        art: "autopilot-alarm"
+      });
+      alarmiert.add(a.id);
+      gemeldet += 1;
+    } catch {
+      // Naechster Takt versucht es erneut — ein Mail-Ausfall darf den Alarm
+      // nur verzoegern, nie verschlucken.
+    }
+  }
+  return { gemeldet };
+}
+
+/** Stufe 3b: die Alarm-Wache im Takt starten. unref — haelt den Prozess nicht wach. */
+export function starteAlarmWache({ env = process.env, intervallMs = 10 * 60 * 1000 } = {}) {
+  const zeitgeber = setInterval(() => { pruefeAlarm({ env }).catch(() => {}); }, intervallMs);
+  if (typeof zeitgeber.unref === "function") zeitgeber.unref();
+  return zeitgeber;
+}
+
+/**
  * Eigenmeldung des Control-Servers fuer die Salad-Sonden — in-process, ohne
  * Schluessel: der Server bezeugt sich selbst, eine Faelschung von aussen ist
  * ueber diesen Weg nicht moeglich (er haengt an keiner Route).
@@ -301,7 +407,13 @@ export function starteSelbstmessung({ intervallMs = 5 * 60 * 1000 } = {}) {
   return zeitgeber;
 }
 
-/** Nur fuer Tests: den Arbeitsspeicher-Zustand zuruecksetzen. */
+/** Nur fuer Tests: den Arbeitsspeicher-Zustand zuruecksetzen (NICHT die Ablage). */
 export function _herzschlaegeZuruecksetzen() {
   herzschlaege.clear();
+  alarmiert.clear();
+}
+
+/** Nur fuer Tests: auch die Ablage leeren. */
+export function _ablageLeeren() {
+  ablage.__leeren();
 }

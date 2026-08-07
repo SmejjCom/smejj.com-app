@@ -11,7 +11,11 @@ import {
   AUTOPILOTEN,
   autopilotUebersicht,
   heartbeatAnnehmen,
+  ladeHerzschlaege,
+  persistiereHerzschlag,
+  pruefeAlarm,
   starteSelbstmessung,
+  _ablageLeeren,
   _herzschlaegeZuruecksetzen
 } from "./opsAutopiloten.js";
 
@@ -106,6 +110,60 @@ test("Eigenmeldung: die Salad-Sonden werden gruen, sonst niemand", () => {
   assert.equal(sonden.ampel, "gruen", "die Eigenmeldung traegt die Sonden-Ampel");
   assert.ok(sonden.letzterLauf.meldung.includes("Eigenmeldung"));
   assert.equal(u.gruen, 1, "kein anderer Autopilot erbt die Eigenmeldung");
+});
+
+test("Stufe 3: ein abgelegter Herzschlag uebersteht den Neustart", async () => {
+  frisch(); _ablageLeeren();
+  // Ohne IDrive-Umgebung faellt die Ablage auf den Memory-Speicher zurueck —
+  // genau das simuliert hier den Neustart: Karte leer, Ablage voll.
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", meldung: "Note 96 %", env: ENV, jetztMs: JETZT - 1000 });
+  assert.equal(await persistiereHerzschlag("qualitaetsmessung", { env: {} }), true);
+  _herzschlaegeZuruecksetzen();
+  assert.equal(autopilotUebersicht({ jetztMs: JETZT }).gruen, 0, "Neustart: erst einmal alles grau");
+  const geladen = await ladeHerzschlaege({ env: {} });
+  assert.equal(geladen, 1);
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "qualitaetsmessung");
+  assert.equal(a.ampel, "gruen", "der geladene Verlauf traegt die Ampel wieder");
+  assert.ok(a.letzterLauf.meldung.includes("Note 96"));
+});
+
+test("Stufe 3: ein lebender Herzschlag gewinnt gegen die Ablage", async () => {
+  frisch(); _ablageLeeren();
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", meldung: "alt", env: ENV, jetztMs: JETZT - 5000 });
+  await persistiereHerzschlag("qualitaetsmessung", { env: {} });
+  _herzschlaegeZuruecksetzen();
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", meldung: "frisch", env: ENV, jetztMs: JETZT - 1000 });
+  await ladeHerzschlaege({ env: {} });
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "qualitaetsmessung");
+  assert.ok(a.letzterLauf.meldung.includes("frisch"), "die Ablage darf den lebenden Stand nicht ueberschreiben");
+});
+
+test("Stufe 3: Rot-Alarm genau einmal je Episode, danach wieder scharf", async () => {
+  frisch(); _ablageLeeren();
+  const gesendet = [];
+  const sende = async (mail) => { gesendet.push(mail); };
+  const alarmEnv = { ...ENV, SMEJJ_ADMIN_OWNER_EMAILS: "smejjcom@gmail.com" };
+
+  heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "fehler", meldung: "push kaputt", env: ENV, jetztMs: JETZT - 1000 });
+  await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT, sende });
+  await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT, sende });
+  assert.equal(gesendet.length, 1, "dieselbe Rot-Phase wird nur einmal gemeldet");
+  assert.ok(gesendet[0].subject.includes("Codeberg-Spiegel"));
+  assert.ok(gesendet[0].text.includes("push kaputt"));
+
+  // Episode endet (gruen), neues Rot -> neue Mail.
+  heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "ok", env: ENV, jetztMs: JETZT });
+  await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT, sende });
+  heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "fehler", meldung: "wieder kaputt", env: ENV, jetztMs: JETZT + 1000 });
+  await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT + 2000, sende });
+  assert.equal(gesendet.length, 2, "eine neue Rot-Phase meldet sich wieder");
+});
+
+test("Stufe 3: ohne Empfaenger wird nichts gesendet und nichts geworfen", async () => {
+  frisch();
+  heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "fehler", env: ENV, jetztMs: JETZT });
+  const ergebnis = await pruefeAlarm({ env: ENV, jetztMs: JETZT, sende: async () => { throw new Error("darf nicht"); } });
+  assert.equal(ergebnis.gemeldet, 0);
 });
 
 test("jeder Autopilot hat, was die idiotensichere Ansicht braucht", () => {
