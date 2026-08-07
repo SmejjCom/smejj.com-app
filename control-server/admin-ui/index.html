@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<!-- Die Konsole wird an zwei Orten ausgeliefert: statisch von smejj.com/admin
+     (GitHub Pages setzt KEINE Kopfzeilen — deshalb steht die Regel hier im
+     Markup) und vom Control-Server (der zusaetzlich seine eigene Kopfzeile
+     setzt; es gilt dann die Schnittmenge, und die ist dieselbe).
+     connect-src listet den Control-Server, weil die Konsole von smejj.com aus
+     fremde Herkunft anspricht. WER DIE API-ADRESSE AENDERT, MUSS SIE HIER
+     EINTRAGEN — sonst blockiert der Browser jede Abfrage. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>smejj.com — Operations Console</title>
 <link rel="stylesheet" href="/admin/console.css">
 </head>

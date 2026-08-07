@@ -1,13 +1,66 @@
 // smejj.com Operations Console — Zugriff auf die eigene API.
 //
-// Gleiche Herkunft wie der Control-Server: das Sitzungs-Cookie geht von selbst
-// mit, es wird kein Token durch localStorage gereicht. Klassisches Skript
-// (kein ES-Modul), damit die CSP-Regel script-src 'self' ohne Sonderfall greift.
+// DIESELBE Datei laeuft an ZWEI Orten, und das ist Absicht:
+//
+//   1. smejj.com/admin  (GitHub Pages, der normale Weg seit 2026-08-07).
+//      Statisch ausgeliefert, wie es die Architekturregel verlangt: "Alles, was
+//      statisch ausgeliefert werden kann, wird statisch ausgeliefert. Der
+//      Control Server steht nie im Pfad des normalen Seitenaufrufs."
+//      Hier ist die API fremde Herkunft — Anmeldung per Bearer-Token aus
+//      localStorage, genau wie in assets/account-sessions.js. Das Cookie taugt
+//      cross-site nicht (SameSite=Lax).
+//
+//   2. <control-server>/admin  (der bisherige Weg, bleibt als Rueckfall).
+//      Gleiche Herkunft, das Sitzungs-Cookie geht von selbst mit.
+//
+// Deshalb wird die Basis-Adresse NICHT fest verdrahtet, sondern aus der
+// eigenen Herkunft abgeleitet. Wer das aendert, muss beide Wege pruefen.
+//
+// Klassisches Skript (kein ES-Modul), damit die CSP-Regel script-src 'self'
+// ohne Sonderfall greift.
 //
 // Jede Antwort wird auf ein einheitliches Ergebnis gebracht: { ok, status, data,
 // fehler }. Die Ansichten sollen Fehler anzeigen, nicht auffangen muessen.
 (function () {
   "use strict";
+
+  // Gleicher Schluessel wie assets/auth-page.js und assets/account-sessions.js —
+  // wer sich auf smejj.com anmeldet, ist damit auch in der Konsole angemeldet.
+  const TOKEN_KEY = "smejj.auth.accessToken.v1";
+  const CONTROL_ORIGIN = "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud";
+
+  /** Leer = gleiche Herkunft (Control-Server). Sonst die Adresse der API. */
+  const API_BASIS = (function () {
+    try {
+      // Auf dem Control-Server selbst bleibt alles relativ.
+      if (location.origin === CONTROL_ORIGIN) return "";
+      // Zum Messen und fuer die lokale Entwicklung uebersteuerbar — derselbe
+      // Schluessel, den auch assets/config.js kennt.
+      const eigen = localStorage.getItem("smejj.apiOrigin.v1");
+      if (eigen && /^https?:\/\//.test(eigen)) return eigen.replace(/\/+$/, "");
+    } catch { /* Storage gesperrt: Standard unten */ }
+    return CONTROL_ORIGIN;
+  })();
+
+  function token() {
+    try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; }
+  }
+
+  /** Vollstaendige Adresse fuer einen API-Pfad. */
+  function url(pfad) {
+    return API_BASIS + pfad;
+  }
+
+  /**
+   * Kopfzeilen inklusive Anmeldung. Ohne Token wird KEIN leerer
+   * Authorization-Kopf gesendet — der Server wuerde ihn als Fehlversuch werten.
+   */
+  function kopf(extra) {
+    const t = token();
+    const basis = Object.assign({ accept: "application/json" }, extra || {});
+    if (t) basis.Authorization = "Bearer " + t;
+    return basis;
+  }
 
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -17,7 +70,7 @@
 
   async function holeDirekt(pfad) {
     try {
-      const antwort = await fetch(pfad, { headers: { accept: "application/json" }, cache: "no-store" });
+      const antwort = await fetch(url(pfad), { headers: kopf(), cache: "no-store" });
       const text = await antwort.text();
       let data = {};
       try { data = text ? JSON.parse(text) : {}; } catch { data = {}; }
@@ -212,9 +265,9 @@
 
   async function sendeDirekt(pfad, koerper) {
     try {
-      const antwort = await fetch(pfad, {
+      const antwort = await fetch(url(pfad), {
         method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
+        headers: kopf({ "content-type": "application/json" }),
         body: JSON.stringify(koerper || {})
       });
       const text = await antwort.text();
