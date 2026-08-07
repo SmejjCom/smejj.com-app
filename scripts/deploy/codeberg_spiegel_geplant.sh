@@ -10,8 +10,8 @@
 #   weggefallen. Eine Automatik, die einmal lief, bleibt kein Beweis.
 #
 # WAS DER LAUF TUT
-#   1. Arbeitskopie des Projekts auffrischen (HTTPS, flach) — dieselbe Kopie,
-#      die auch der Qualitaets-Messlauf benutzt.
+#   1. Arbeitskopie des Projekts auffrischen (SSH, volle Historie) — dieselbe
+#      Kopie, die auch der Qualitaets-Messlauf benutzt.
 #   2. Vorpruefung passend zum Protokoll (HTTPS ist Standard).
 #   3. Die versionierte Spiegelung aus der Arbeitskopie ausfuehren.
 #
@@ -32,10 +32,45 @@
 # deshalb ueberspringt der Lauf sauber, statt etwas umzustellen.
 set -u
 
+# --- Herzschlag Autopilot (Modul AP — smejj.com/admin, Ampel) ----------------
+# Meldet bei JEDEM Skriptende (auch UEBERSPRUNGEN) Erfolg oder Fehler an den
+# Totmannschalter des Adminbereichs. Der Schluessel liegt in
+# ~/.config/smejj.com/autopilot-keys.env und steht bewusst NICHT hier drin.
+# Ein fehlgeschlagener Herzschlag aendert den Exit-Code nicht.
+smejj_ap_herzschlag() {
+  AP_EXIT=$?
+  AP_ID="codeberg-spiegel"
+  AP_KEY=$(sed -n 's/^SMEJJ_AUTOPILOT_KEYS=//p' "$HOME/.config/smejj.com/autopilot-keys.env" 2>/dev/null \
+    | tr ',' '\n' | sed -n "s/^${AP_ID}://p")
+  [ -z "${AP_KEY:-}" ] && return 0
+  AP_STATUS=ok; [ "$AP_EXIT" -ne 0 ] && AP_STATUS=fehler
+  # Wiederholungen, weil das Salad-Gateway zeitweise fuer ALLE Pfade 503
+  # liefert (am 2026-08-07 gemessen, /health eingeschlossen): 5 Versuche im
+  # 30-s-Abstand ueberbruecken ein kurzes Flattern. -m deckelt die GESAMTE
+  # Operation inklusive Wiederholungen — er muss also groesser sein als
+  # Versuche x Abstand, sonst finden die Wiederholungen nie statt.
+  curl -fsS --connect-timeout 10 -m 240 --retry 5 --retry-delay 30 \
+    -X POST "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/autopilot/heartbeat" \
+    -H "Content-Type: application/json" \
+    -d "{\"id\":\"${AP_ID}\",\"key\":\"${AP_KEY}\",\"status\":\"${AP_STATUS}\",\"meldung\":\"Exit ${AP_EXIT}\"}" \
+    >/dev/null 2>&1 || echo "Herzschlag nicht zugestellt (Netz oder Server nicht erreichbar)."
+  return 0
+}
+trap smejj_ap_herzschlag EXIT
+
 BASIS="$HOME/.local/share/smejj-qualitaet"
 KOPIE="$BASIS/app"
 ZWEIG="feature/auth-redesign-github-magiclink"
-HERKUNFT="https://github.com/SmejjCom/smejj.com-app.git"
+# SEIT 2026-08-07 SSH STATT HTTPS (Befund aus dem Cron-Lauf 2026-08-06, 04:20
+# Ortszeit): smejj.com-app ist PRIVAT, und der HTTPS-Weg holt die Zugangsdaten
+# aus dem macOS-Schluesselbund. Der ist im cron-Kontext nicht lesbar — git
+# wollte deshalb interaktiv fragen und scheiterte ohne Terminal mit
+#   fatal: could not read Username for 'https://github.com': Device not configured
+# Interaktiv lief exakt derselbe Befehl fehlerfrei; der Fehler ist NUR in der
+# Automatik messbar. Der Deploy-Schluessel liest das Repo ohne Schluesselbund
+# und ohne Passphrase (mit BatchMode=yes gemessen, 2026-08-07).
+HERKUNFT="git@github.com:SmejjCom/smejj.com-app.git"
+GITHUB_KEY="$HOME/.ssh/smejjcom_github_ed25519"
 SSH_KEY="$HOME/.ssh/codeberg_smejj_ed25519"
 # Muss zum Standard von codeberg_spiegel_sync.sh passen (dort ebenfalls ssh).
 CODEBERG_PROTOKOLL="${CODEBERG_PROTOKOLL:-ssh}"
@@ -57,17 +92,39 @@ export PATH
 # up-to-date" war kein Beweis fuer einen funktionierenden Push, sondern nur
 # ein Spiegel, der zufaellig schon passte. Volle Historie kostet hier wenige
 # MB (das Repo ist gepackt ~5 MB) und ist die Voraussetzung fuers Spiegeln.
+if [ ! -f "$GITHUB_KEY" ]; then
+  echo "ABBRUCH: GitHub-Schluessel fehlt ($GITHUB_KEY). Nichts gespiegelt."
+  exit 1
+fi
+
+# Port-22-Weiche NUR fuer GitHub: dort gibt es ssh.github.com:443 als Ausweg
+# (bei Codeberg nicht — siehe Vorpruefung unten). BatchMode, damit im
+# cron-Kontext nie eine Passphrase- oder Hostkey-Frage haengen bleibt.
+GITHUB_SSH="ssh -i $GITHUB_KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20"
+if ! nc -z -G 8 github.com 22 2>/dev/null; then
+  if nc -z -G 8 ssh.github.com 443 2>/dev/null; then
+    echo "github.com Port 22 ist zu — Ausweichweg ssh.github.com:443."
+    GITHUB_SSH="$GITHUB_SSH -o HostName=ssh.github.com -o Port=443"
+  else
+    echo "ABBRUCH: github.com ist weder ueber Port 22 noch ssh.github.com:443 erreichbar."
+    exit 1
+  fi
+fi
+
 if [ ! -d "$KOPIE/.git" ]; then
-  git clone -q --branch "$ZWEIG" "$HERKUNFT" "$KOPIE" \
+  GIT_SSH_COMMAND="$GITHUB_SSH" git clone -q --branch "$ZWEIG" "$HERKUNFT" "$KOPIE" \
     || { echo "ABBRUCH: Arbeitskopie konnte nicht angelegt werden."; exit 1; }
 else
+  # Bestandskopien aus HTTPS-Zeiten einmalig auf die SSH-Herkunft umstellen.
+  git -C "$KOPIE" remote set-url origin "$HERKUNFT" \
+    || { echo "ABBRUCH: Herkunft liess sich nicht umstellen."; exit 1; }
   # Eine aus frueheren Laeufen noch flache Kopie einmalig vervollstaendigen.
   if [ "$(git -C "$KOPIE" rev-parse --is-shallow-repository)" = "true" ]; then
     echo "Arbeitskopie ist flach — wird einmalig vervollstaendigt."
-    git -C "$KOPIE" fetch -q --unshallow origin "$ZWEIG" \
+    GIT_SSH_COMMAND="$GITHUB_SSH" git -C "$KOPIE" fetch -q --unshallow origin "$ZWEIG" \
       || { echo "ABBRUCH: Vervollstaendigen fehlgeschlagen."; exit 1; }
   fi
-  git -C "$KOPIE" fetch -q origin "$ZWEIG" \
+  GIT_SSH_COMMAND="$GITHUB_SSH" git -C "$KOPIE" fetch -q origin "$ZWEIG" \
     || { echo "ABBRUCH: Auffrischen fehlgeschlagen (GitHub nicht erreichbar?)."; exit 1; }
   git -C "$KOPIE" reset -q --hard FETCH_HEAD \
     || { echo "ABBRUCH: Arbeitskopie liess sich nicht zuruecksetzen."; exit 1; }
