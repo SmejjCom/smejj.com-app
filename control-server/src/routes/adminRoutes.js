@@ -106,6 +106,22 @@ async function respondUsers(res, actor, url, env) {
   });
 }
 
+/**
+ * Ein Grund, der nur nach einem verunglueckten Aufruf aussieht, ist keiner.
+ *
+ * Befund 2026-08-07: `akte(id, grund)` in admin-ui/api.js baut die Adresse mit
+ * `encodeURIComponent(grund)`. Fehlt der Grund, wird daraus die ZEICHENKETTE
+ * "undefined" — neun Zeichen, also lang genug fuer die Laengenpruefung. Die
+ * Einsicht ging damit durch, und im Nachweisregister stand als Grund
+ * "undefined". Ein Kontrollpunkt, der sich so aushebeln laesst, schuetzt nichts.
+ *
+ * Solche Woerter koennen nur aus einem Fehler stammen, nie aus einem Menschen,
+ * der einen Grund eintippt. Sie werden deshalb behandelt wie gar kein Grund.
+ */
+function istScheingrund(reason) {
+  return /^(undefined|null|nan|none|-+|n\/a|k\.a\.)$/i.test(reason.trim());
+}
+
 async function respondUserDetail(req, res, actor, identifier, url, env) {
   const gate = checkActorPermission(actor, "users.read");
   if (!gate.ok) return privateJson(res, gate.status, { ok: false, error: gate.error });
@@ -114,7 +130,7 @@ async function respondUserDetail(req, res, actor, identifier, url, env) {
   // Sie verlangt deshalb einen Grund und wird protokolliert — anders als das
   // Blaettern in der Liste, die nur Metadaten zeigt. Ohne Grund keine Einsicht.
   const reason = String(url.searchParams.get("reason") || "").trim();
-  if (reason.length < 3) {
+  if (reason.length < 3 || istScheingrund(reason)) {
     return privateJson(res, 400, {
       ok: false,
       error: "admin_reason_required",
