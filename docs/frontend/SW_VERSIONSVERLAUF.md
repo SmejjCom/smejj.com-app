@@ -793,3 +793,14 @@ WICHTIG: Alle chat-store-Importeure (chat-actions.js, search.js,
 chat-history-view.js, index.html) springen GEMEINSAM auf ?v=pin-20260806 —
 ein abweichender Spezifizierer erzeugt eine zweite Store-Instanz (F-07).
 Freigabe Betreiber 2026-08-06 (Radar-Bericht 01, V4; kein Start-Lock betroffen).
+
+## v229 -> v230 (2026-08-06, Konkurrenz-Radar V2): Live-Mitschrift im Sprachmodus
+
+Die Antwort streamt als Text sichtbar unter der Welle mit: #voiceModeReply in
+index.html, setVoiceModeReply() in composer-tools.js (gespeist aus dem
+vorhandenen MutationObserver in waitForAssistantReply), Optik in
+start-styles.css (:empty blendet aus). Neue Frage und Schliessen raeumen die
+Mitschrift. Rein additiv — Erkennungs-Loop, Vorlese-Queue und Barge-in
+unveraendert. app.js zieht die composer-tools-Import-Query auf
+?v=voice-mitschrift-20260806 mit (einziger Importeur, kein Doppel-Instanz-Risiko).
+Freigabe Betreiber 2026-08-06 (Radar-Bericht 01, V2 — gilt als Start-Lock-Freigabe).
