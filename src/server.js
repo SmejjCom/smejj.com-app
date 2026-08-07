@@ -62,6 +62,7 @@ import { handleProviderRoute } from "../control-server/src/routes/providerRoutes
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
+import { starteSelbstmessung } from "../control-server/src/admin/opsAutopiloten.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -245,6 +246,10 @@ server.listen(config.port, listenHost, () => {
 // 2026-07-29 freigegeben. Der Taktgeber laeuft verzoegert an, haelt den Prozess
 // nicht wach und bleibt ohne Objektspeicher ganz aus.
 starteMailLogAufraeumen({ env: process.env });
+
+// Autopiloten-Ampel (Modul AP): Eigenmeldung fuer die Salad-Sonden — der
+// laufende Container bezeugt sich alle 5 Minuten selbst; unref, haelt nichts wach.
+starteSelbstmessung();
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {

@@ -11,6 +11,7 @@ import {
   AUTOPILOTEN,
   autopilotUebersicht,
   heartbeatAnnehmen,
+  starteSelbstmessung,
   _herzschlaegeZuruecksetzen
 } from "./opsAutopiloten.js";
 
@@ -94,6 +95,17 @@ test("lange Meldungen werden gekuerzt — der Speicher ist begrenzt", () => {
   heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", meldung: "x".repeat(5000), env: ENV, jetztMs: JETZT });
   const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "qualitaetsmessung");
   assert.equal(a.letzterLauf.meldung.length, 200);
+});
+
+test("Eigenmeldung: die Salad-Sonden werden gruen, sonst niemand", () => {
+  frisch();
+  const zeitgeber = starteSelbstmessung({ intervallMs: 60 * 60 * 1000 });
+  clearInterval(zeitgeber);
+  const u = autopilotUebersicht({ jetztMs: Date.now() });
+  const sonden = u.autopiloten.find((x) => x.id === "salad-sonden");
+  assert.equal(sonden.ampel, "gruen", "die Eigenmeldung traegt die Sonden-Ampel");
+  assert.ok(sonden.letzterLauf.meldung.includes("Eigenmeldung"));
+  assert.equal(u.gruen, 1, "kein anderer Autopilot erbt die Eigenmeldung");
 });
 
 test("jeder Autopilot hat, was die idiotensichere Ansicht braucht", () => {

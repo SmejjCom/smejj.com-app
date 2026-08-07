@@ -84,10 +84,11 @@ export const AUTOPILOTEN = Object.freeze([
     ],
     ort: "Anthropic-Cloud",
     zeitplan: "montags 6:00 UTC",
-    messung: "keine",
-    messungHinweis: "Herzschlag-Anschluss folgt in Stufe 2. Bis dahin: Berichte erscheinen unter claude.ai/code, Bericht 01 liegt in docs/konkurrenz-radar/.",
-    erwartetAlleMs: null,
-    schonfristMs: null,
+    // Seit Stufe 2 (2026-08-07) meldet sich die Cloud-Routine am Ende jedes
+    // Laufs selbst — auch ein "keine neuen Funde"-Lauf ist ein Erfolg.
+    messung: "heartbeat",
+    erwartetAlleMs: 7 * TAG_MS,
+    schonfristMs: 12 * STUNDE_MS,
     startAnleitung: "Auf claude.ai/code/routines die Routine »Konkurrenz-Radar (woechentlich)« öffnen und einmalig starten.",
     stopAnleitung: "Auf claude.ai/code/routines die Routine »Konkurrenz-Radar (woechentlich)« ausschalten."
   },
@@ -131,14 +132,17 @@ export const AUTOPILOTEN = Object.freeze([
     kurz: "Gesundheitssonden am Salad-Container, die einen abgestürzten Dienst automatisch neu starten sollen.",
     funktionen: [
       "Salad prüft den Container in festen Abständen und startet ihn bei Ausfall neu.",
-      "MERKREGEL aus der Messung: nur eine HTTP-Sonde auf /health fängt den 503-Ausfall — eine reine TCP-Sonde ist blind."
+      "MERKREGEL aus der Messung: nur eine HTTP-Sonde auf /health fängt den 503-Ausfall — eine reine TCP-Sonde ist blind.",
+      "Gemessen über die Eigenmeldung des Control-Servers alle 5 Minuten: lebt der Container, kommt die Meldung — bleibt sie aus, haben die Sonden ihren Dienst versagt."
     ],
     ort: "Salad",
     zeitplan: "Dauerbetrieb",
-    messung: "keine",
-    messungHinweis: "Die Sonden prüfen den Server, auf dem diese Konsole läuft — antwortet die Konsole, lebt der Container. Ein eigener Herzschlag folgt in Stufe 2.",
-    erwartetAlleMs: null,
-    schonfristMs: null,
+    // Eigenmeldung statt Fremdschluessel: der Server bezeugt sein eigenes
+    // Leben. Faellt der Container, reisst die Meldekette ab — und genau dieses
+    // Ausbleiben zeigt die Ampel nach der Schonfrist als Ausfall.
+    messung: "heartbeat",
+    erwartetAlleMs: 10 * 60 * 1000,
+    schonfristMs: 20 * 60 * 1000,
     startAnleitung: "Im Salad-Portal am Container die Health Probes prüfen (HTTP auf /health, failure_threshold maximal 20).",
     stopAnleitung: "Im Salad-Portal die Health Probes entfernen — davon wird abgeraten, dann startet nichts mehr automatisch neu."
   }
@@ -271,6 +275,30 @@ function sicherGleich(links, rechts) {
   const a = crypto.createHash("sha256").update(links, "utf8").digest();
   const b = crypto.createHash("sha256").update(rechts, "utf8").digest();
   return crypto.timingSafeEqual(a, b);
+}
+
+/**
+ * Eigenmeldung des Control-Servers fuer die Salad-Sonden — in-process, ohne
+ * Schluessel: der Server bezeugt sich selbst, eine Faelschung von aussen ist
+ * ueber diesen Weg nicht moeglich (er haengt an keiner Route).
+ * `unref()` haelt den Prozess nicht am Leben, Tests und Shutdown bleiben sauber.
+ */
+export function starteSelbstmessung({ intervallMs = 5 * 60 * 1000 } = {}) {
+  const melden = () => {
+    const gespeichert = herzschlaege.get("salad-sonden") || { laeufe: [] };
+    gespeichert.laeufe.unshift({
+      am: new Date().toISOString(),
+      status: "ok",
+      meldung: "Eigenmeldung: Container läuft.",
+      dauerMs: null
+    });
+    gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
+    herzschlaege.set("salad-sonden", gespeichert);
+  };
+  melden();
+  const zeitgeber = setInterval(melden, intervallMs);
+  if (typeof zeitgeber.unref === "function") zeitgeber.unref();
+  return zeitgeber;
 }
 
 /** Nur fuer Tests: den Arbeitsspeicher-Zustand zuruecksetzen. */
