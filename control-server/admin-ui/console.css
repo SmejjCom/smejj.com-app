@@ -296,3 +296,30 @@ tbody tr:hover td{background:rgba(255,255,255,.03);}
   border:1px solid var(--sm-border);color:var(--sm-ink);font-size:12.5px;font-family:inherit;}
 tbody tr.klickbar{cursor:pointer;}
 .zurueck{cursor:pointer;color:var(--sm-accent-text);font-size:12px;}
+
+/* ---------- Sicherheitsbestaetigung (Step-up) ----------
+   Ersetzt window.prompt: das Browserfenster zeigt immer den rohen Hostnamen
+   (…salad.cloud) und sieht aus wie eine fremde Aufforderung — genau das, was
+   man Nutzern beim Thema Sicherheitscode NICHT zeigen sollte. Der Dialog hier
+   gehoert sichtbar zur Konsole. Styles muessen in dieser Datei stehen:
+   die CSP erlaubt kein style-Attribut (style-src 'self'). */
+.stepup-hg{position:fixed;inset:0;z-index:200;display:grid;place-items:center;
+  background:rgba(4,5,7,.72);backdrop-filter:blur(3px);padding:20px;}
+.stepup{width:100%;max-width:420px;background:#141517;border:1px solid var(--sm-border-strong);
+  padding:26px 28px 22px;box-shadow:0 18px 60px rgba(0,0,0,.55);}
+.stepup-marke{margin:0 0 12px;font-size:10px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--sm-accent);}
+.stepup h2{margin:0 0 10px;font-size:19px;font-weight:600;color:var(--sm-ink);}
+.stepup p{margin:0 0 6px;font-size:12.5px;color:var(--sm-ink-dim);line-height:1.65;}
+.stepup .stepup-ziel{color:var(--sm-ink);font-family:ui-monospace,Menlo,monospace;font-size:12px;}
+.stepup-eingabe{width:100%;margin:16px 0 4px;padding:13px 14px;background:var(--sm-field);
+  border:1px solid var(--sm-accent-border);color:var(--sm-ink);font-size:24px;
+  font-family:ui-monospace,Menlo,monospace;letter-spacing:.42em;text-align:center;}
+.stepup-eingabe:focus{outline:2px solid var(--sm-accent);outline-offset:1px;}
+.stepup-fehler{min-height:17px;margin:6px 0 0;font-size:12px;color:var(--sm-danger);}
+.stepup-fuss{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}
+.stepup-fuss .btn{padding:9px 18px;font-size:12.5px;cursor:pointer;font-family:inherit;
+  background:transparent;border:1px solid var(--sm-border-strong);color:var(--sm-ink-dim);}
+.stepup-fuss .btn.haupt{background:var(--sm-accent-soft);border-color:var(--sm-accent-border);
+  color:var(--sm-accent-text);font-weight:600;}
+.stepup-fuss .btn[disabled]{opacity:.45;cursor:default;}

@@ -376,6 +376,11 @@
       return;
     }
     zustand.akteur = antwort.data.actor || {};
+    // Damit der Sicherheitsdialog sagen kann, WOHIN der Code ging, statt nur
+    // "deine Admin-E-Mail-Adresse". Beim allerersten Aufruf einer noch nicht
+    // bestaetigten Adresse steht das hier noch nicht — dort greift der
+    // allgemeine Text in api.js.
+    if (zustand.akteur.email) document.body.setAttribute("data-admin-email", zustand.akteur.email);
     const name = zustand.akteur.name || zustand.akteur.email || "—";
     document.getElementById("akteurName").textContent = name;
     document.getElementById("akteurRolle").textContent = zustand.akteur.role || "—";

@@ -44,23 +44,170 @@
       && (code === "admin_step_up_required" || code === "admin_email_not_verified");
   }
 
-  /** Holt den Mail-Code, fragt ihn ab und bestaetigt ihn. true = Weg ist frei. */
+  /**
+   * Holt den Mail-Code und fragt ihn in EINEM Dialog der Konsole ab.
+   *
+   * Bewusst kein window.prompt: das Browserfenster stellt jeder Eingabe den
+   * rohen Hostnamen voran ("Auf redbean-…salad.cloud wird Folgendes angezeigt")
+   * und sieht damit aus wie die Aufforderung einer fremden Seite. Bei einer
+   * Abfrage, die einen Sicherheitscode will, ist genau das die falsche Optik.
+   *
+   * Ein falscher Code schliesst den Dialog NICHT: der Server erlaubt fuenf
+   * Versuche, also darf man sich auch fuenfmal vertippen, ohne die Aktion
+   * von vorn zu beginnen.
+   *
+   * @returns {Promise<boolean>} true = bestaetigt, der Weg ist frei.
+   */
   async function bestaetigungEinholen() {
     const anforderung = await sendeDirekt("/api/admin/step-up/request", {});
-    if (!anforderung.ok) {
-      window.alert("Der Bestätigungscode konnte nicht verschickt werden: " + anforderung.fehler);
-      return false;
+    const dialog = baueStepUpDialog();
+    // Jeder Rueckgabeweg raeumt den Dialog ab — bliebe das Overlay stehen,
+    // waere die Konsole unbedienbar.
+    try {
+      if (!anforderung.ok) {
+        dialog.fehler("Der Code konnte nicht verschickt werden: " + anforderung.fehler);
+        dialog.nurSchliessen();
+        await dialog.warten();
+        return false;
+      }
+      while (true) {
+        const code = await dialog.warten();
+        if (code === null) return false;
+        dialog.arbeitet(true);
+        const bestaetigung = await sendeDirekt("/api/admin/step-up/confirm", { code: code });
+        if (bestaetigung.ok) return true;
+        dialog.arbeitet(false);
+        dialog.fehler(bestaetigung.fehler);
+        const fehlercode = bestaetigung.data && bestaetigung.data.error;
+        if (fehlercode === "step_up_too_many_attempts" || fehlercode === "step_up_code_expired") {
+          dialog.nurSchliessen();
+          await dialog.warten();
+          return false;
+        }
+      }
+    } finally {
+      dialog.schliessen();
     }
-    const code = window.prompt(
-      "Sicherheitsbestätigung\n\nEs wurde ein 6-stelliger Code an deine Admin-E-Mail geschickt.\n"
-      + "Er gilt 10 Minuten und öffnet ein Schreibfenster von 15 Minuten.\n\nCode eingeben:", "");
-    if (code === null || !String(code).trim()) return false;
-    const bestaetigung = await sendeDirekt("/api/admin/step-up/confirm", { code: String(code).trim() });
-    if (!bestaetigung.ok) {
-      window.alert(bestaetigung.fehler);
-      return false;
+  }
+
+  /** Baut den Dialog einmal auf und liefert Steuerfunktionen dafuer. */
+  function baueStepUpDialog() {
+    const hg = document.createElement("div");
+    hg.className = "stepup-hg";
+    const box = document.createElement("div");
+    box.className = "stepup";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-labelledby", "stepupTitel");
+
+    const marke = document.createElement("p");
+    marke.className = "stepup-marke";
+    marke.textContent = "smejj.com · Sicherheit";
+    const titel = document.createElement("h2");
+    titel.id = "stepupTitel";
+    titel.textContent = "Bestätigungscode eingeben";
+    const text = document.createElement("p");
+    text.textContent = "Wir haben dir gerade einen 6-stelligen Code geschickt an:";
+    const ziel = document.createElement("p");
+    ziel.className = "stepup-ziel";
+    ziel.textContent = adminAdresse();
+    const dauer = document.createElement("p");
+    dauer.textContent = "Der Code gilt 10 Minuten. Danach kannst du 15 Minuten lang Änderungen vornehmen.";
+
+    const eingabe = document.createElement("input");
+    eingabe.className = "stepup-eingabe";
+    eingabe.type = "text";
+    eingabe.inputMode = "numeric";
+    eingabe.autocomplete = "one-time-code";
+    eingabe.maxLength = 6;
+    eingabe.placeholder = "······";
+    eingabe.setAttribute("aria-label", "Sechsstelliger Bestätigungscode");
+
+    const fehlerzeile = document.createElement("p");
+    fehlerzeile.className = "stepup-fehler";
+    fehlerzeile.setAttribute("role", "alert");
+
+    const fuss = document.createElement("div");
+    fuss.className = "stepup-fuss";
+    const abbrechen = document.createElement("button");
+    abbrechen.type = "button";
+    abbrechen.className = "btn";
+    abbrechen.textContent = "Abbrechen";
+    const bestaetigen = document.createElement("button");
+    bestaetigen.type = "button";
+    bestaetigen.className = "btn haupt";
+    bestaetigen.textContent = "Bestätigen";
+    fuss.appendChild(abbrechen);
+    fuss.appendChild(bestaetigen);
+
+    box.appendChild(marke); box.appendChild(titel); box.appendChild(text);
+    box.appendChild(ziel); box.appendChild(dauer); box.appendChild(eingabe);
+    box.appendChild(fehlerzeile); box.appendChild(fuss);
+    hg.appendChild(box);
+    document.body.appendChild(hg);
+    eingabe.focus();
+
+    let aufloesen = null;
+    function gib(wert) {
+      const f = aufloesen;
+      aufloesen = null;
+      if (f) f(wert);
     }
-    return true;
+    eingabe.addEventListener("input", function () {
+      // Nur Ziffern — verhindert Leerzeichen aus der Zwischenablage.
+      const nur = eingabe.value.replace(/\D/g, "").slice(0, 6);
+      if (nur !== eingabe.value) eingabe.value = nur;
+      fehlerzeile.textContent = "";
+    });
+    eingabe.addEventListener("keydown", function (ereignis) {
+      if (ereignis.key === "Enter") { ereignis.preventDefault(); absenden(); }
+    });
+    // Escape haengt am ganzen Dialog, nicht nur am Eingabefeld: sonst schliesst
+    // die Taste nur, solange der Fokus im Feld sitzt — und genau das ist nach
+    // einem Klick auf den Hintergrund nicht mehr der Fall.
+    hg.addEventListener("keydown", function (ereignis) {
+      if (ereignis.key === "Escape") { ereignis.preventDefault(); gib(null); }
+    });
+    hg.tabIndex = -1;
+    function absenden() {
+      const wert = eingabe.value.trim();
+      if (wert.length !== 6) {
+        fehlerzeile.textContent = "Bitte alle 6 Ziffern eingeben.";
+        return;
+      }
+      gib(wert);
+    }
+    bestaetigen.addEventListener("click", absenden);
+    abbrechen.addEventListener("click", function () { gib(null); });
+
+    return {
+      warten: function () { return new Promise(function (f) { aufloesen = f; }); },
+      fehler: function (nachricht) { fehlerzeile.textContent = String(nachricht || ""); },
+      arbeitet: function (an) {
+        bestaetigen.disabled = Boolean(an);
+        eingabe.disabled = Boolean(an);
+        bestaetigen.textContent = an ? "prüft …" : "Bestätigen";
+        if (!an) { eingabe.value = ""; eingabe.focus(); }
+      },
+      /** Aus dem Dialog wird eine reine Meldung: nur noch Schliessen moeglich. */
+      nurSchliessen: function () {
+        eingabe.disabled = true;
+        bestaetigen.disabled = true;
+        abbrechen.textContent = "Schließen";
+        abbrechen.focus();
+      },
+      schliessen: function () { if (hg.parentNode) hg.parentNode.removeChild(hg); }
+    };
+  }
+
+  /** Adresse des angemeldeten Admins, falls die Konsole sie schon kennt. */
+  function adminAdresse() {
+    try {
+      const el = document.querySelector("[data-admin-email]");
+      const wert = el && el.getAttribute("data-admin-email");
+      if (wert) return wert;
+    } catch { /* egal */ }
+    return "deine Admin-E-Mail-Adresse";
   }
 
   async function sendeDirekt(pfad, koerper) {
