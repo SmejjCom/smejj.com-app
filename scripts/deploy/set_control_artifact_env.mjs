@@ -70,6 +70,10 @@ async function main() {
   // src/ai/reasoningEffortPolicy.js. Dient dem Messen im A/B-Vergleich und als
   // Notbremse. Der Sonderwert "RULE" loescht die Vorgabe wieder.
   const k3EffortEingabe = String(process.env.SMEJJ_LLM_KIMI_K3_REASONING_EFFORT || "").trim().toLowerCase();
+  // Optional: Herzschlag-Schluessel der Autopiloten (Modul AP, 2026-08-07).
+  // Gleiche Regel wie oben — nur was der Aufrufer ausdruecklich mitgibt, wird
+  // geschrieben. Der Wert wird nie ausgegeben, nur seine Eintragszahl.
+  const autopilotKeysEingabe = String(process.env.SMEJJ_AUTOPILOT_KEYS || "").trim();
   loadSecureLocalEnv();
   const org = process.env.SALAD_ORGANIZATION_NAME;
   const project = process.env.SALAD_PROJECT_NAME;
@@ -125,6 +129,13 @@ async function main() {
     // "rule" = keine feste Vorgabe; die Regel im Code entscheidet wieder.
     mergedEnv.SMEJJ_LLM_KIMI_K3_REASONING_EFFORT = k3EffortEingabe === "rule" ? "" : k3EffortEingabe;
   }
+  if (autopilotKeysEingabe) {
+    // Format: id1:schluessel1,id2:schluessel2 — Kennungen wie in opsAutopiloten.js.
+    if (!/^[a-z0-9-]+:[A-Za-z0-9_-]{16,}(,[a-z0-9-]+:[A-Za-z0-9_-]{16,})*$/.test(autopilotKeysEingabe)) {
+      fail("SMEJJ_AUTOPILOT_KEYS: Format id:schluessel, kommagetrennt, Schluessel min. 16 Zeichen.");
+    }
+    mergedEnv.SMEJJ_AUTOPILOT_KEYS = autopilotKeysEingabe;
+  }
   await saladApi("PATCH", `/organizations/${org}/projects/${project}/containers/${SALAD_GROUP}`, {
     container: { environment_variables: mergedEnv }
   });
@@ -142,6 +153,9 @@ async function main() {
     adminOwner: applied.SMEJJ_ADMIN_OWNER_EMAILS ?? "(nicht gesetzt)",
     kimiK3: applied.SMEJJ_KIMI_K3_ENABLED ?? "(nicht gesetzt)",
     kimiK3Denktiefe: applied.SMEJJ_LLM_KIMI_K3_REASONING_EFFORT || "(Regel im Code)",
+    autopilotKeys: applied.SMEJJ_AUTOPILOT_KEYS
+      ? applied.SMEJJ_AUTOPILOT_KEYS.split(",").length + " Eintraege gesetzt"
+      : "(nicht gesetzt)",
     hint: "Salad rollt jetzt neu aus (~10 Minuten). Danach /api/health pruefen."
   }, null, 2));
 }
