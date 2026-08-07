@@ -1,13 +1,13 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-07T05:11:18.162Z",
-  "confirmation": "mach das (Betreiber, 2026-08-07) — Freigabe fuer: Operations Console statisch unter smejj.com/admin ausliefern (Static-First), Anmeldung per Bearer-Token; danach 100% Schutz wieder aktivieren.",
+  "frozenAt": "2026-08-07T20:38:21.216Z",
+  "confirmation": "Ja, beides ausrollen",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "7a5d58280d14e28c2f83fade6c41bc523dd992c49c92670de721abc01b79a3d4",
     "control-server/src/admin/sicherheitsAlarm.js": "2b1bdd1c1718d9120e1c25a667bae9004bbe15bd17840ba3592f1700fdbcf67e",
     "control-server/src/routes/adminSurfaceRoutes.js": "71e3ab90a34293c684d521aa329f7e79bcb0cfb9fe6b076ad8d5fc910ac94aa4",
-    "control-server/src/routes/adminWriteRoutes.js": "3c94317711b80a01cb111ea057d93b71a0921be744618df41d55acf283cd2013",
+    "control-server/src/routes/adminWriteRoutes.js": "ff6d84987050016bf910fd202df066fd16d574c880b88dc4ad90f0313e2cd149",
     "control-server/src/routes/adminStage4Routes.js": "2d9ae83dc42f7dfd18e5f253e5ef18caa67a4d27461e236ba11d075e4dd073cc",
     "control-server/src/admin/adminAuth.js": "805519c67e3a964995aa55d672c000176808abd278a7b88a086c9d983cd6b2dd",
     "control-server/src/admin/adminRoles.js": "8e8b056a89914c5817459b99bebbcc5e68def115ab875da7e2cc3a2d1eaf829e",

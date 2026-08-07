@@ -315,3 +315,29 @@ test("wer beantragt, darf auch nicht ablehnen — und zwar mit 403, nicht 409", 
   assert.equal(ab.status, 200);
   assert.equal(ab.body.approval.status, "rejected");
 });
+
+// Regression: die Liste hing frueher am Schritt-Zweig, der den Pfad in DREI
+// Teile zerlegt (impersonation/{id}/{schritt}). "impersonation/list" hat nur
+// zwei — der Schritt blieb leer, die Route antwortete 404, und die Konsole
+// zeigte das als "0 Vorgaenge" an. Genau das faengt dieser Test ab.
+test("die Vorgangsliste antwortet — und braucht kein offenes Schreibfenster", async () => {
+  await aufbauen();
+  const antrag = await post("/api/admin/impersonation/request", SUPPORT,
+    { subject: "kundin@example.de", reason: "Ticket 4471 — Magic-Link" });
+  assert.equal(antrag.status, 202);
+
+  const liste = await post("/api/admin/impersonation/list", SUPPORT, {});
+  assert.equal(liste.status, 200, "die Liste darf nicht 404 sein");
+  assert.equal(liste.body.total, 1);
+  assert.equal(liste.body.impersonations[0].subjectEmail, "kundin@example.de");
+
+  // Lesen ist keine Aenderung: ohne frischen Step-up muss sie trotzdem gehen.
+  __clearStepUpForTests();
+  const ohneFenster = await post("/api/admin/impersonation/list", SUPPORT, {});
+  assert.equal(ohneFenster.status, 200);
+  assert.equal(ohneFenster.body.total, 1);
+
+  // Ein Konto ohne Verwaltungsrolle sieht die Liste nicht.
+  const fremd = await post("/api/admin/impersonation/list", { email: "readonly@example.de" }, {});
+  assert.equal(fremd.status >= 400, true, "fail-closed");
+});

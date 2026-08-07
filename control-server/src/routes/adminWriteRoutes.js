@@ -133,6 +133,10 @@ export async function handleAdminWriteRoute(req, url, res, { env = process.env }
       return await entscheideFreigabe(req, res, actor, id, schritt, body, env), true;
     }
     if (rest === "impersonation/request") return await impersonationBeantragen(req, res, actor, body, env), true;
+    // Die Liste steht HIER und nicht im Schritt-Zweig darunter: dort wird der
+    // Pfad in drei Teile zerlegt (impersonation/{id}/{schritt}), "impersonation/list"
+    // hat aber nur zwei — der Schritt bliebe leer und die Liste antwortete 404.
+    if (rest === "impersonation/list") return await listeImpersonationen(res, actor, env), true;
     if (rest.startsWith("impersonation/")) {
       const [, id, schritt] = rest.split("/");
       return await impersonationSchritt(req, res, actor, id, schritt, body, env), true;
@@ -340,12 +344,16 @@ async function impersonationSchritt(req, res, actor, id, schritt, body, env) {
     return privateJson(res, 200, { ok: true, impersonation: ergebnis.impersonation });
   }
 
-  if (schritt === "list") {
-    const liste = await listImpersonations({ env });
-    if (!liste.ok) return privateJson(res, 503, { ok: false, error: liste.error });
-    return privateJson(res, 200, { ok: true, total: liste.total, impersonations: liste.impersonations });
-  }
   return privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
+}
+
+async function listeImpersonationen(res, actor, env) {
+  if (can(actor.role, "impersonation.start") === GRANT.deny && can(actor.role, "audit.read") === GRANT.deny) {
+    return privateJson(res, 403, { ok: false, error: "admin_permission_denied" });
+  }
+  const liste = await listImpersonations({ env });
+  if (!liste.ok) return privateJson(res, 503, { ok: false, error: liste.error });
+  return privateJson(res, 200, { ok: true, total: liste.total, impersonations: liste.impersonations });
 }
 
 // ---- Helfer ------------------------------------------------------------------
