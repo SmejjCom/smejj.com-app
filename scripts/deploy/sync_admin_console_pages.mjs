@@ -56,7 +56,14 @@ function sha256(inhalt) {
 }
 
 export function konsolenDateien(quelle = QUELLE) {
-  return readdirSync(quelle).filter((name) => !name.startsWith(".")).sort();
+  return readdirSync(quelle)
+    .filter((name) => !name.startsWith("."))
+    // Tests liegen neben dem Code, gehoeren aber NICHT ins Netz: gespiegelt
+    // waeren sie unter smejj.com/admin/<name>.test.js oeffentlich abrufbar.
+    // (Der Control-Server liefert sie ohnehin nie aus — seine Dateiliste ist
+    // fest. Der Pages-Spiegel hat diesen Schutz nicht, deshalb hier.)
+    .filter((name) => !/\.test\.[cm]?js$/.test(name))
+    .sort();
 }
 
 /**
