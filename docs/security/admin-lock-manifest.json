@@ -1,21 +1,22 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-07T20:38:21.216Z",
-  "confirmation": "Ja, beides ausrollen",
+  "frozenAt": "2026-08-07T21:35:48.349Z",
+  "confirmation": "mach Passkey (Betreiber, 2026-08-07) — Freigabe fuer: Step-up per Passkey als starken Bestaetigungsweg, Mail-Code bleibt Rueckfall; danach 100% Schutz wieder aktivieren.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
-    "control-server/src/admin/stepUp.js": "7a5d58280d14e28c2f83fade6c41bc523dd992c49c92670de721abc01b79a3d4",
+    "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
+    "control-server/src/admin/stepUpPasskey.js": "b0ce4b01ca294e542111f463c8e2491be4a0f331f9cd4187e97f1230eb1aea5b",
     "control-server/src/admin/sicherheitsAlarm.js": "2b1bdd1c1718d9120e1c25a667bae9004bbe15bd17840ba3592f1700fdbcf67e",
     "control-server/src/routes/adminSurfaceRoutes.js": "71e3ab90a34293c684d521aa329f7e79bcb0cfb9fe6b076ad8d5fc910ac94aa4",
-    "control-server/src/routes/adminWriteRoutes.js": "ff6d84987050016bf910fd202df066fd16d574c880b88dc4ad90f0313e2cd149",
+    "control-server/src/routes/adminWriteRoutes.js": "2b9490ecae2f76acc65b06e36f8fa2b045a16ac339f09e9d668c3c463b6d89c7",
     "control-server/src/routes/adminStage4Routes.js": "2d9ae83dc42f7dfd18e5f253e5ef18caa67a4d27461e236ba11d075e4dd073cc",
     "control-server/src/admin/adminAuth.js": "805519c67e3a964995aa55d672c000176808abd278a7b88a086c9d983cd6b2dd",
     "control-server/src/admin/adminRoles.js": "8e8b056a89914c5817459b99bebbcc5e68def115ab875da7e2cc3a2d1eaf829e",
-    "control-server/src/admin/auditLog.js": "8a205fabbc22ecdffb032679097bb68837de12d35e35bc0e982586554904d675",
+    "control-server/src/admin/auditLog.js": "aeffcf778e4eeb609b011d8ea685a18cc83417532ab052f6a57a745180e42f21",
     "control-server/src/admin/approvalStore.js": "0bd996af40f28a8abcc016a8eb072b726e4907ed6a8e5ec7e855556501a68bab",
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
     "control-server/src/routes/adminUiRoutes.js": "7ee397c2010cdb65cb7d9104d9af1b5ab89712309200a515147033470d0c9715",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
-    "control-server/admin-ui/api.js": "a05be9467aa746dbfde8464a837d27ab07e41c970cb207dda8a690ffe7f36af8"
+    "control-server/admin-ui/api.js": "29633ae846dde0cc9eeba272f98f3205e835816898994be76b51872c3103ccd5"
   }
 }

@@ -41,6 +41,10 @@ import { istDirektAufgerufen, runLockCli } from "./lib/datei-sperre.mjs";
 export const PROTECTED_FILES = [
   // Der frische Besitznachweis.
   "control-server/src/admin/stepUp.js",
+  // Der starke Weg dorthin: die WebAuthn-Zeremonie. Wer hier den Challenge-Typ
+  // oder die Kontobindung aufweicht, laesst fremde Passkeys das Schreibfenster
+  // oeffnen — von aussen nicht zu sehen.
+  "control-server/src/admin/stepUpPasskey.js",
   // Die Sicherheitswache: sie entscheidet, ab wann ein Muster gemeldet wird.
   // Wer die Schwelle hochdreht, macht einen Angriff wieder unsichtbar.
   "control-server/src/admin/sicherheitsAlarm.js",
