@@ -64,7 +64,7 @@ Wichtig: Mehrere Vorschläge berühren Dateien unter dem Start-Lock (31 eingefro
 | Vorschlag | Entscheidung (Ja / Nein / Später) | Anmerkung |
 |---|---|---|
 | V1 Riesen-Einfügung als Anhang | **JA — umgesetzt und live** | Freigabe 2026-08-06 (inkl. Start-Lock); live als sw v228, Commit b4678d7 (Frontend-Repo) / 9ce211b (lokal) |
-| V2 Live-Mitschrift Sprachmodus | | |
+| V2 Live-Mitschrift Sprachmodus | **JA — umgesetzt und live** | Freigabe 2026-08-06 (inkl. Start-Lock); live als sw v230, Commit 51d4ecb (Frontend-Repo) / 3cbd8d5 (lokal); in Chrome live verifiziert |
 | V3 Modellwahl Schnell/Auto/Gründlich | | |
 | V4 Verlauf: Anpinnen + Suche | **JA (Stufe 1) — umgesetzt und live** | Freigabe 2026-08-06; Anpinnen live als sw v229, Commit 11c5fd3 (Frontend-Repo) / d7a61ca (lokal); Stufe 2 (breitere Suche) noch offen |
 | V5 Quellen-Panel koppeln | | |
