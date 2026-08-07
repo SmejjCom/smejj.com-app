@@ -188,7 +188,10 @@ async function respondAudit(res, actor, url, env) {
     to: url.searchParams.get("to") || "",
     env
   });
-  if (!page.ok) return privateJson(res, 503, { ok: false, error: page.error });
+  // "grund" trägt den Speicher-Statuscode mit (z.B. s3_status_503). Ohne ihn
+  // steht in der Konsole nur "liess sich nicht lesen" — und der naechste, der
+  // dem Fehler nachgeht, faengt wieder bei null an. Die Route ist admin-only.
+  if (!page.ok) return privateJson(res, 503, { ok: false, error: page.error, ...(page.grund ? { grund: page.grund } : {}) });
   const chain = verifyAuditChain(page.entries);
   // "window" muss mit: die Seite zeigt standardmaessig nur den laufenden und den
   // vorigen Monat. Ohne diese Angabe liest sich eine kurze Liste faelschlich als

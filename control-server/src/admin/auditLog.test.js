@@ -253,3 +253,62 @@ test("der Zeitraum filtert auch tagesgenau, nicht nur monatsweise", async () => 
   assert.equal(page.entries.length, 1);
   assert.equal(page.entries[0].at, "2026-07-20T09:00:00.000Z");
 });
+
+// ---- Wiederholung beim Listen ------------------------------------------------
+// Befund 2026-08-07: ein einziger Fehlversuch beim Speicher kippte die ganze
+// Seite (503 in der Konsole, "Das Audit-Log liess sich nicht lesen"). Lesen ist
+// gefahrlos wiederholbar — also muss es wiederholt werden.
+
+/** Wie s3MitZaehler, laesst aber die ersten `fehlschlaege` LIST-Aufrufe scheitern. */
+function s3MitAussetzern(objekte, fehlschlaege, art = "status") {
+  let gescheitert = 0;
+  return async (rawUrl, init = {}) => {
+    const url = new URL(rawUrl);
+    const schluessel = decodeURIComponent(url.pathname.replace(`/${S3_ENV.IDRIVE_E2_BUCKET}/`, ""));
+    if (url.searchParams.get("list-type") === "2") {
+      if (gescheitert < fehlschlaege) {
+        gescheitert += 1;
+        if (art === "wurf") throw new Error("socket hang up");
+        return antwort(503, "<Error><Code>SlowDown</Code></Error>");
+      }
+      const prefix = url.searchParams.get("prefix") || "";
+      const keys = [...objekte.keys()].filter((key) => key.startsWith(prefix));
+      return antwort(200, `<?xml version="1.0"?><ListBucketResult>${
+        keys.map((key) => `<Key>${key}</Key>`).join("")
+      }<IsTruncated>false</IsTruncated></ListBucketResult>`);
+    }
+    if (!objekte.has(schluessel)) return antwort(404, "");
+    return antwort(200, objekte.get(schluessel));
+  };
+}
+
+test("ein einzelner Aussetzer beim Speicher kippt die Seite nicht mehr", async () => {
+  const objekte = new Map([auditObjekt("2026-07-28T09:00:00.000Z")]);
+  const page = await readAuditPage({
+    env: S3_ENV, limit: 50, nowMs: Date.parse("2026-07-28T10:00:00.000Z"),
+    fetchImpl: s3MitAussetzern(objekte, 1)
+  });
+  assert.equal(page.ok, true, "der zweite Versuch muss die Seite retten");
+  assert.equal(page.entries.length, 1);
+});
+
+test("ein abgerissener Socket wird wiederholt, nicht durchgereicht", async () => {
+  const objekte = new Map([auditObjekt("2026-07-28T09:00:00.000Z")]);
+  const page = await readAuditPage({
+    env: S3_ENV, limit: 50, nowMs: Date.parse("2026-07-28T10:00:00.000Z"),
+    fetchImpl: s3MitAussetzern(objekte, 1, "wurf")
+  });
+  assert.equal(page.ok, true, "ein Netzfehler darf nicht als Ausnahme nach oben schlagen");
+  assert.equal(page.entries.length, 1);
+});
+
+test("bleibt der Speicher weg, sagt die Antwort WARUM", async () => {
+  const objekte = new Map([auditObjekt("2026-07-28T09:00:00.000Z")]);
+  const page = await readAuditPage({
+    env: S3_ENV, limit: 50, nowMs: Date.parse("2026-07-28T10:00:00.000Z"),
+    fetchImpl: s3MitAussetzern(objekte, 99)
+  });
+  assert.equal(page.ok, false);
+  assert.equal(page.error, "audit_list_failed");
+  assert.equal(page.grund, "s3_status_503", "der Statuscode des Speichers muss mitkommen");
+});

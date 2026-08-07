@@ -169,7 +169,10 @@ export async function readAuditPage({
 
   const spanne = monthSpan({ from, to, nowMs });
   const scanned = await Promise.all(spanne.prefixes.map((prefix) => listKeys(cfg, prefix, fetchImpl)));
-  if (scanned.some((result) => !result.ok)) return { ok: false, error: "audit_list_failed", entries: [] };
+  const gescheitert = scanned.find((result) => !result.ok);
+  // Der Grund wandert mit: "es liess sich nicht lesen" allein sagt niemandem,
+  // ob der Speicher gedrosselt hat, die Verbindung abriss oder der Zugang fehlt.
+  if (gescheitert) return { ok: false, error: "audit_list_failed", grund: gescheitert.grund, entries: [] };
   let keys = scanned.flatMap((result) => result.keys);
   let window = spanne.label;
 
@@ -178,7 +181,7 @@ export async function readAuditPage({
   // Antwort plötzlich eine Antwort ueber das gesamte Log.
   if (keys.length === 0 && !from && !to) {
     const all = await listKeys(cfg, `${PREFIX}/`, fetchImpl);
-    if (!all.ok) return { ok: false, error: "audit_list_failed", entries: [] };
+    if (!all.ok) return { ok: false, error: "audit_list_failed", grund: all.grund, entries: [] };
     keys = all.keys;
     window = "all";
   }
@@ -240,17 +243,51 @@ function keyTimestamp(key) {
   return match ? `${match[1]}-${match[2]}-${match[3]}` : "";
 }
 
-async function listKeys(cfg, prefix, fetchImpl = fetch) {
+// Ein einzelner Schluckauf beim Speicher hat frueher die GANZE Seite gekippt:
+// eine nicht-ok-Antwort, und readAuditPage meldete audit_list_failed, woraus
+// die Route 503 machte. Gemessen am 2026-08-07: 1 Fehlschlag in 8 Abrufen auf
+// einem lange laufenden Container, 0 in 60 auf einem frischen. Lesen ist
+// gefahrlos wiederholbar — also wird es wiederholt, statt dem Betreiber einen
+// Fehler zu zeigen, den der naechste Versuch nicht mehr haette.
+const LIST_VERSUCHE = 3;
+const LIST_PAUSE_MS = 150;
+
+async function listKeys(cfg, prefix, fetchImpl = fetch, warteFn = warte) {
+  let letzterFehler = "";
+  for (let versuch = 1; versuch <= LIST_VERSUCHE; versuch += 1) {
+    const ergebnis = await listKeysEinmal(cfg, prefix, fetchImpl);
+    if (ergebnis.ok) return ergebnis;
+    letzterFehler = ergebnis.grund;
+    // Nach dem letzten Versuch nicht mehr warten — das verzoegert nur die Antwort.
+    if (versuch < LIST_VERSUCHE) await warteFn(LIST_PAUSE_MS * versuch);
+  }
+  return { ok: false, keys: [], grund: letzterFehler };
+}
+
+/** Ein Durchlauf ueber alle Fortsetzungsseiten. Wirft nicht, sondern meldet. */
+async function listKeysEinmal(cfg, prefix, fetchImpl) {
   const keys = [];
   let continuationToken = null;
   do {
-    const { response, body } = await signedS3List({ ...cfg, prefix, continuationToken, fetchImpl });
-    if (!response.ok) return { ok: false, keys: [] };
+    let response, body;
+    try {
+      ({ response, body } = await signedS3List({ ...cfg, prefix, continuationToken, fetchImpl }));
+    } catch (fehler) {
+      // Ein Netzfehler (abgerissene Verbindung, Zeitablauf) ist genau der Fall,
+      // fuer den die Wiederholung da ist — er darf nicht als Ausnahme nach oben
+      // durchschlagen, sonst greift sie gar nicht.
+      return { ok: false, keys: [], grund: String(fehler?.message || fehler).slice(0, 120) };
+    }
+    if (!response.ok) return { ok: false, keys: [], grund: `s3_status_${response.status}` };
     const page = parseS3ListPage(body);
     for (const key of page.keys) if (key !== HEAD_KEY) keys.push(key);
     continuationToken = page.isTruncated ? page.nextContinuationToken : null;
   } while (continuationToken);
-  return { ok: true, keys };
+  return { ok: true, keys, grund: "" };
+}
+
+function warte(ms) {
+  return new Promise((fertig) => setTimeout(fertig, ms));
 }
 
 /**
