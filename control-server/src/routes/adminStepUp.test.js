@@ -36,7 +36,7 @@ async function aufbauen() {
   __clearMemoryStoreForTests();
   __clearAuditMemoryForTests();
   __clearStepUpForTests();
-  await putUser({ ...createUserRecord({ email: OWNER.email, name: "Owner", passwordHash: "h" }), role: "owner" }, ENV);
+  await putUser({ ...createUserRecord({ email: OWNER.email, name: "Owner", passwordHash: "h" }), role: "owner", emailVerifiedAt: "2026-01-01T00:00:00.000Z" }, ENV);
   await putUser(createUserRecord({ email: "kundin@example.de", name: "Kundin", passwordHash: "h" }), ENV);
 }
 

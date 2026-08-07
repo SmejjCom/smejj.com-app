@@ -64,7 +64,11 @@ export async function handleAdminUiRoute(req, url, res, { env = process.env } = 
   // der Fehlerseite gebraucht. Waere es gesperrt, bekaeme ein Abgewiesener eine
   // unformatierte Seite — die Erklaerung soll aber lesbar sein.
   if (datei !== "console.css") {
-    const resolved = await resolveAdminActor(req.authUser, { env });
+    // Hier werden DATEIEN ausgeliefert, keine Kontodaten. Eine noch nicht
+    // bestaetigte Adresse darf die Konsole deshalb laden — jede Datenroute
+    // dahinter weist sie weiterhin ab, und erst in der geladenen Konsole kann
+    // sie sich ueberhaupt bestaetigen.
+    const resolved = await resolveAdminActor(req.authUser, { env, erlaubeUnbestaetigt: true });
     if (!resolved.ok) {
       antwortSeite(res, resolved.status, ueberschriftFuer(resolved.error), erklaerungFuer(resolved.error));
       return true;

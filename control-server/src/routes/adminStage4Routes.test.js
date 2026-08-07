@@ -49,8 +49,8 @@ async function aufbauen() {
   __clearMemoryStoreForTests(); __clearAuditMemoryForTests();
   __clearModerationForTests(); __clearGdprForTests();
   __clearAnnouncementsForTests(); __clearFlagsForTests();
-  await putUser({ ...createUserRecord({ email: "owner@example.de", name: "O", passwordHash: "h" }), role: "owner" }, ENV);
-  await putUser({ ...createUserRecord({ email: "finance@example.de", name: "F", passwordHash: "h" }), role: "finance" }, ENV);
+  await putUser({ ...createUserRecord({ email: "owner@example.de", name: "O", passwordHash: "h" }), role: "owner", emailVerifiedAt: "2026-01-01T00:00:00.000Z" }, ENV);
+  await putUser({ ...createUserRecord({ email: "finance@example.de", name: "F", passwordHash: "h" }), role: "finance", emailVerifiedAt: "2026-01-01T00:00:00.000Z" }, ENV);
   // Aendernde Stufe-4-Routen verlangen ein offenes Step-up-Fenster; der
   // Step-up selbst ist in adminStepUp.test.js geprueft.
   __clearStepUpForTests();

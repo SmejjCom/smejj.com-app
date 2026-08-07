@@ -17,6 +17,7 @@
 // Schreibend vor lesend ist Absicht: was die Schreibrouten nicht beanspruchen,
 // faellt durch. Andersherum wuerde eine Leseroute eine Schreibanfrage schlucken.
 import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
+import { ARTEN, meldeEreignis } from "../admin/sicherheitsAlarm.js";
 import { SECURITY_HEADERS } from "../../../src/shared/platform.js";
 import { privateJson } from "../http/respond.js";
 import { handleComplianceRoute } from "./complianceRoutes.js";
@@ -64,9 +65,13 @@ export async function handleAdminSurface(req, url, res, { readSession, sessionSt
   const pfad = url.pathname;
 
   if (pfad === "/admin" || pfad.startsWith("/admin/") || pfad === "/api/admin" || pfad.startsWith("/api/admin/")) {
-    const limit = vortuerGate.take(clientKeyFromRequest(req), 1);
+    const kennung = clientKeyFromRequest(req);
+    const limit = vortuerGate.take(kennung, 1);
     if (!limit.allowed) {
+      // Antwort zuerst, Alarm danach: der Abweisende wartet nicht auf die
+      // Sicherheitswache. Fehler im Alarm duerfen die Abwehr nie aufhalten.
       vortuerAbweisen(res, pfad, limit.retryAfterSec);
+      meldeEreignis(ARTEN.vortuer, { kennung, pfad }, { env }).catch(() => {});
       return true;
     }
   }

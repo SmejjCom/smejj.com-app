@@ -41,6 +41,9 @@ import { istDirektAufgerufen, runLockCli } from "./lib/datei-sperre.mjs";
 export const PROTECTED_FILES = [
   // Der frische Besitznachweis.
   "control-server/src/admin/stepUp.js",
+  // Die Sicherheitswache: sie entscheidet, ab wann ein Muster gemeldet wird.
+  // Wer die Schwelle hochdreht, macht einen Angriff wieder unsichtbar.
+  "control-server/src/admin/sicherheitsAlarm.js",
   // Vortuer und Routen-Reihenfolge.
   "control-server/src/routes/adminSurfaceRoutes.js",
   // Schreibende Aktionen.

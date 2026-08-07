@@ -68,9 +68,9 @@ async function aufbauen() {
   __clearAuditMemoryForTests();
   __clearApprovalMemoryForTests();
   __clearImpersonationMemoryForTests();
-  await putUser({ ...createUserRecord({ email: "owner@example.de", name: "Owner", passwordHash: "h" }), role: "owner" }, ENV);
-  await putUser({ ...createUserRecord({ email: "zweite@example.de", name: "Zweite", passwordHash: "h" }), role: "admin" }, ENV);
-  await putUser({ ...createUserRecord({ email: "helfer@example.de", name: "Helfer", passwordHash: "h" }), role: "support" }, ENV);
+  await putUser({ ...createUserRecord({ email: "owner@example.de", name: "Owner", passwordHash: "h" }), role: "owner", emailVerifiedAt: "2026-01-01T00:00:00.000Z" }, ENV);
+  await putUser({ ...createUserRecord({ email: "zweite@example.de", name: "Zweite", passwordHash: "h" }), role: "admin", emailVerifiedAt: "2026-01-01T00:00:00.000Z" }, ENV);
+  await putUser({ ...createUserRecord({ email: "helfer@example.de", name: "Helfer", passwordHash: "h" }), role: "support", emailVerifiedAt: "2026-01-01T00:00:00.000Z" }, ENV);
   await putUser(createUserRecord({ email: "readonly@example.de", name: "Nur Lesen", passwordHash: "h" }), ENV);
   const kundin = createUserRecord({ email: "kundin@example.de", name: "Kundin", passwordHash: "h" });
   addSessionToRecord(kundin, { sid: "s1", expiresAt: Date.now() + 3_600_000, userAgent: "Mac" });
@@ -209,7 +209,7 @@ test("ablehnen verlangt einen Grund und verhindert die Ausfuehrung", async () =>
 test("Rollenvergabe braucht ebenfalls vier Augen", async () => {
   await aufbauen();
   const antrag = await post("/api/admin/users/kundin@example.de/actions/role.grant", OWNER,
-    { reason: "Neues Teammitglied", role: "support" });
+    { reason: "Neues Teammitglied", role: "support", emailVerifiedAt: "2026-01-01T00:00:00.000Z" });
   assert.equal(antrag.status, 202);
 
   const vorher = await getUserByEmail("kundin@example.de", ENV);

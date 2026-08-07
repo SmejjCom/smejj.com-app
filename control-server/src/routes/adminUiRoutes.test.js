@@ -24,7 +24,7 @@ async function anfrage(pfad, authUser, method = "GET") {
 await (async () => {
   __clearMemoryStoreForTests();
   await putUser(createUserRecord({ email: "normal@example.de", name: "Normal", passwordHash: "scrypt$x" }), ENV);
-  await putUser({ ...createUserRecord({ email: "chefin@example.de", name: "Chefin", passwordHash: "scrypt$x" }), role: "admin" }, ENV);
+  await putUser({ ...createUserRecord({ email: "chefin@example.de", name: "Chefin", passwordHash: "scrypt$x" }), role: "admin", emailVerifiedAt: "2026-01-01T00:00:00.000Z" }, ENV);
 })();
 
 test("fremde Pfade werden durchgereicht, nicht beantwortet", async () => {

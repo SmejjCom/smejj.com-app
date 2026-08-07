@@ -15,7 +15,7 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  async function hole(pfad) {
+  async function holeDirekt(pfad) {
     try {
       const antwort = await fetch(pfad, { headers: { accept: "application/json" }, cache: "no-store" });
       const text = await antwort.text();
@@ -26,6 +26,41 @@
     } catch (error) {
       return { ok: false, status: 0, data: {}, fehler: "Keine Verbindung zum Control-Server: " + String(error && error.message || error) };
     }
+  }
+
+  // Auch LESEN kann an der Bestaetigungspflicht scheitern (seit 2026-08-06).
+  // Ohne diesen Umweg saehe der Betreiber beim ersten Aufruf nur eine
+  // Fehlermeldung und haette in der Konsole keinen Knopf, um sie loszuwerden.
+  async function hole(pfad) {
+    const antwort = await holeDirekt(pfad);
+    if (!istBestaetigungNoetig(antwort)) return antwort;
+    if (!(await bestaetigungEinholen())) return antwort;
+    return holeDirekt(pfad);
+  }
+
+  function istBestaetigungNoetig(antwort) {
+    const code = antwort && antwort.data && antwort.data.error;
+    return antwort && antwort.status === 403
+      && (code === "admin_step_up_required" || code === "admin_email_not_verified");
+  }
+
+  /** Holt den Mail-Code, fragt ihn ab und bestaetigt ihn. true = Weg ist frei. */
+  async function bestaetigungEinholen() {
+    const anforderung = await sendeDirekt("/api/admin/step-up/request", {});
+    if (!anforderung.ok) {
+      window.alert("Der Bestätigungscode konnte nicht verschickt werden: " + anforderung.fehler);
+      return false;
+    }
+    const code = window.prompt(
+      "Sicherheitsbestätigung\n\nEs wurde ein 6-stelliger Code an deine Admin-E-Mail geschickt.\n"
+      + "Er gilt 10 Minuten und öffnet ein Schreibfenster von 15 Minuten.\n\nCode eingeben:", "");
+    if (code === null || !String(code).trim()) return false;
+    const bestaetigung = await sendeDirekt("/api/admin/step-up/confirm", { code: String(code).trim() });
+    if (!bestaetigung.ok) {
+      window.alert(bestaetigung.fehler);
+      return false;
+    }
+    return true;
   }
 
   async function sendeDirekt(pfad, koerper) {
@@ -50,16 +85,12 @@
   // wiederholt die urspruengliche Anfrage genau einmal. Fuer alle Ansichten
   // unsichtbar — sie rufen weiter einfach sende() auf.
   async function sende(pfad, koerper) {
+    // Die Step-up-Routen selbst duerfen nie durch diesen Umweg laufen —
+    // sonst riefe sich der Umweg im Fehlerfall endlos selbst auf.
+    if (pfad.indexOf("/api/admin/step-up/") === 0) return sendeDirekt(pfad, koerper);
     const antwort = await sendeDirekt(pfad, koerper);
-    if (!(antwort.status === 403 && antwort.data && antwort.data.error === "admin_step_up_required")) return antwort;
-    const anforderung = await sendeDirekt("/api/admin/step-up/request", {});
-    if (!anforderung.ok) return anforderung;
-    const code = window.prompt(
-      "Sicherheitsbestätigung\n\nFür diese Aktion wurde ein 6-stelliger Code an deine Admin-E-Mail geschickt.\n"
-      + "Er gilt 10 Minuten und öffnet ein Schreibfenster von 15 Minuten.\n\nCode eingeben:", "");
-    if (code === null || !String(code).trim()) return antwort;
-    const bestaetigung = await sendeDirekt("/api/admin/step-up/confirm", { code: String(code).trim() });
-    if (!bestaetigung.ok) return bestaetigung;
+    if (!istBestaetigungNoetig(antwort)) return antwort;
+    if (!(await bestaetigungEinholen())) return antwort;
     return sendeDirekt(pfad, koerper);
   }
 
@@ -78,6 +109,7 @@
       admin_audit_unavailable: "Der Nachweis liess sich nicht schreiben, deshalb keine Ausgabe.",
       admin_rate_limit: "Zu viele Anfragen. Bitte kurz warten.",
       admin_step_up_required: "Sicherheitsbestätigung nötig — Code wurde angefordert.",
+      admin_email_not_verified: "Diese E-Mail-Adresse ist noch nicht bestätigt. Der Code aus der Bestätigungsmail erledigt beides auf einmal.",
       step_up_code_wrong: "Der Code stimmt nicht.",
       step_up_code_expired: "Der Code ist abgelaufen (10 Minuten). Bitte neu anfordern.",
       step_up_code_missing: "Es ist kein Code angefordert. Aktion einfach erneut ausführen.",

@@ -10,9 +10,16 @@ import { bootstrapOwnerEmails, checkActorPermission, requireAdminPermission, res
 
 const ENV = {}; // keine IDrive-Konfiguration -> Memory-Store
 
+// Konten sind hier standardmaessig bestaetigt: diese Datei prueft ROLLEN, und
+// die Bestaetigungspflicht hat eigene Tests (routes/adminVerifiziert.test.js).
+// Wer den unbestaetigten Fall braucht, uebergibt emailVerifiedAt: null.
 async function seed(email, patch = {}) {
   __clearMemoryStoreForTests();
-  const record = { ...createUserRecord({ email, name: "Test", passwordHash: "scrypt$x" }), ...patch };
+  const record = {
+    ...createUserRecord({ email, name: "Test", passwordHash: "scrypt$x" }),
+    emailVerifiedAt: "2026-01-01T00:00:00.000Z",
+    ...patch
+  };
   await putUser(record, ENV);
   return record;
 }

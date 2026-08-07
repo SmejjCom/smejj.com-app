@@ -28,9 +28,18 @@ export function bootstrapOwnerEmails(env = process.env) {
 
 /**
  * Ermittelt den handelnden Admin zur aktuellen Sitzung.
+ *
+ * `erlaubeUnbestaetigt` ist die Ausnahme fuer genau zwei Stellen und darf
+ * nirgends sonst gesetzt werden:
+ *   - die Auslieferung der Konsolen-DATEIEN (dort stehen keine Kontodaten),
+ *   - die Step-up-Routen selbst.
+ * Ohne diese Ausnahme waere die Bestaetigungspflicht eine Falle: Wer seine
+ * Adresse noch nicht bestaetigt hat, kaeme an den einzigen Weg, sie zu
+ * bestaetigen, gar nicht erst heran — auch der Betreiber nicht.
+ *
  * @returns {Promise<{ok: true, actor: object} | {ok: false, status: number, error: string}>}
  */
-export async function resolveAdminActor(authUser, { env = process.env } = {}) {
+export async function resolveAdminActor(authUser, { env = process.env, erlaubeUnbestaetigt = false } = {}) {
   const email = normalizeEmail(authUser?.email);
   if (!email) return deny(401, "admin_authentication_required");
 
@@ -51,6 +60,14 @@ export async function resolveAdminActor(authUser, { env = process.env } = {}) {
   if (!isAdminRole(role)) return deny(403, "admin_role_required");
   if (record && userStatus(record) !== "active") return deny(403, "admin_account_not_active");
 
+  // Bestaetigte Adresse ist Pflicht (2026-08-06). Der Step-up schickt seinen
+  // Code an genau diese Adresse — wenn niemand je nachgewiesen hat, dass sie
+  // dem Konto gehoert, waere der zweite Faktor ein Faktor ins Blaue.
+  const emailVerified = Boolean(record?.emailVerifiedAt);
+  if (!emailVerified && !erlaubeUnbestaetigt) {
+    return deny(403, "admin_email_not_verified");
+  }
+
   return {
     ok: true,
     actor: {
@@ -60,7 +77,8 @@ export async function resolveAdminActor(authUser, { env = process.env } = {}) {
       role,
       // "bootstrap" heisst: die Rolle stammt aus der Umgebung, nicht aus dem Konto.
       roleSource: isBootstrapOwner ? "bootstrap" : "store",
-      storedRole: storedRole || null
+      storedRole: storedRole || null,
+      emailVerified
     }
   };
 }

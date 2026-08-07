@@ -27,6 +27,7 @@ import {
 } from "../admin/userActions.js";
 import { endImpersonation, listImpersonations, requestImpersonation } from "../admin/impersonation.js";
 import { bestaetigeCode, fordereCode, istErhoeht } from "../admin/stepUp.js";
+import { ARTEN, meldeEreignis } from "../admin/sicherheitsAlarm.js";
 
 const PREFIX = "/api/admin";
 // Enger als beim Lesen: schreibende Aktionen sind selten und teuer.
@@ -53,9 +54,20 @@ export async function handleAdminWriteRoute(req, url, res, { env = process.env }
   // Der Index-Neubau bleibt in den Leseruten — er beruehrt keine Konten.
   if (rest === "users/index/rebuild") return false;
 
-  const resolved = await resolveAdminActor(req.authUser, { env });
+  // Unbestaetigte Adressen kommen bis hierher, damit sie die Step-up-Routen
+  // erreichen — und NUR die. Alles andere faellt unten durch die Pruefung.
+  const resolved = await resolveAdminActor(req.authUser, { env, erlaubeUnbestaetigt: true });
   if (!resolved.ok) { privateJson(res, resolved.status, { ok: false, error: resolved.error }); return true; }
   const { actor } = resolved;
+  const istStepUpRoute = rest === "step-up/request" || rest === "step-up/confirm";
+  if (!istStepUpRoute && !actor.emailVerified) {
+    privateJson(res, 403, {
+      ok: false,
+      error: "admin_email_not_verified",
+      hinweis: "Adresse zuerst bestaetigen: Code unter /api/admin/step-up/request anfordern und unter /api/admin/step-up/confirm bestaetigen."
+    });
+    return true;
+  }
 
   const limit = schreibGate.take(actor.email, 1);
   if (!limit.allowed) {
@@ -78,9 +90,29 @@ export async function handleAdminWriteRoute(req, url, res, { env = process.env }
     }
     if (rest === "step-up/confirm") {
       const bestaetigung = bestaetigeCode(actor.email, body?.code);
-      if (!bestaetigung.ok) return privateJson(res, 403, { ok: false, error: bestaetigung.error, ...(bestaetigung.verbleibend != null ? { verbleibend: bestaetigung.verbleibend } : {}) }), true;
+      if (!bestaetigung.ok) {
+        // Falsche Codes sind das Muster, an dem man einen Angriff erkennt.
+        if (bestaetigung.error === "step_up_code_wrong") {
+          meldeEreignis(ARTEN.stepUpFalsch, { kennung: actor.email }, { env }).catch(() => {});
+        } else if (bestaetigung.error === "step_up_too_many_attempts") {
+          meldeEreignis(ARTEN.stepUpVerbrannt, { kennung: actor.email }, { env }).catch(() => {});
+        }
+        return privateJson(res, 403, { ok: false, error: bestaetigung.error, ...(bestaetigung.verbleibend != null ? { verbleibend: bestaetigung.verbleibend } : {}) }), true;
+      }
       await schreibeNachweis(actor, "step_up.confirmed", actor.email, null, { fensterSek: bestaetigung.fensterSek }, "step-up", req, env);
-      return privateJson(res, 200, { ok: true, fensterSek: bestaetigung.fensterSek }), true;
+      // Der Code ging an genau diese Adresse und kam zurueck — damit IST der
+      // Besitz nachgewiesen. Wer den Step-up besteht, hat seine Adresse
+      // bestaetigt; ein zweiter Bestaetigungsweg waere derselbe Beweis nochmal.
+      let bestaetigt = actor.emailVerified;
+      if (!bestaetigt) {
+        const markiert = await markEmailVerified(actor.email, { env });
+        bestaetigt = markiert.ok || markiert.error === "admin_no_change";
+        if (markiert.ok) {
+          invalidateUserIndexCache();
+          await schreibeNachweis(actor, "user.verify", actor.email, markiert.before, markiert.after, "durch bestandenen Step-up", req, env);
+        }
+      }
+      return privateJson(res, 200, { ok: true, fensterSek: bestaetigung.fensterSek, emailBestaetigt: bestaetigt }), true;
     }
     const nurListe = rest === "approvals" || rest === "impersonation/list";
     if (!nurListe && !istErhoeht(actor.email)) {
