@@ -25,7 +25,13 @@ function passkeyConfig(env) {
   };
 }
 
-function userIdFor(email, name) {
+/**
+ * Nutzer-Kennung aus der E-Mail ableiten — EINE Quelle fuer alle Passkey-Wege.
+ * Exportiert, damit der Admin-Step-up (src/admin/stepUpPasskey.js) dieselben
+ * Passkeys findet. Zwei eigene Ableitungen waeren zwei Wahrheiten: der Admin
+ * saehe seine Schluessel nicht mehr, sobald eine der beiden sich aendert.
+ */
+export function userIdFor(email, name) {
   const seed = String(email || name || "").trim().toLowerCase();
   if (seed) return `u_${crypto.createHash("sha256").update(seed).digest("base64url").slice(0, 24)}`;
   return `u_${crypto.randomBytes(16).toString("base64url")}`;

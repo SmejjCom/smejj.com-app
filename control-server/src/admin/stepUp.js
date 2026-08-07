@@ -68,6 +68,27 @@ export async function fordereCode(email, { env = process.env, mail = sendAuthMai
   return { ok: true, gueltigSek: CODE_GUELTIG_MS / 1000 };
 }
 
+/**
+ * Oeffnet das Schreibfenster, ohne einen Mail-Code zu verlangen.
+ *
+ * Ausschliesslich fuer einen Nachweis, der MINDESTENS so stark ist wie der
+ * Code — heute der Passkey (Besitz des Geraets plus Biometrie, gebunden an die
+ * Domain). Der Aufrufer hat den Nachweis bereits geprueft; diese Funktion
+ * prueft nichts, sie haelt nur die Zeit. Wer sie ohne vorherige Pruefung
+ * aufruft, hebt den Step-up auf.
+ */
+export function oeffneFenster(email, { now = Date.now } = {}) {
+  const schluessel = schluesselFuer(email);
+  if (!schluessel) return { ok: false, error: "step_up_email_missing" };
+  const bisher = eintraege.get(schluessel);
+  eintraege.set(schluessel, {
+    // Ein offener Mail-Code wird dabei entwertet: es gibt nur einen Weg zur
+    // Zeit, sonst laege nach dem Passkey noch ein gueltiger Code herum.
+    elevatedUntil: Math.max(now() + FENSTER_MS, bisher?.elevatedUntil || 0)
+  });
+  return { ok: true, fensterSek: FENSTER_MS / 1000 };
+}
+
 /** Prueft den Code und oeffnet bei Erfolg das Schreibfenster. */
 export function bestaetigeCode(email, code, { now = Date.now } = {}) {
   const schluessel = schluesselFuer(email);

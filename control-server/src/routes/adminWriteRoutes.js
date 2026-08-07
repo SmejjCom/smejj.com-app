@@ -26,7 +26,8 @@ import {
   ACTIONS, clearLoginLock, deleteUserData, markEmailVerified, revokeUserSessions, setUserRole, setUserStatus
 } from "../admin/userActions.js";
 import { endImpersonation, listImpersonations, requestImpersonation } from "../admin/impersonation.js";
-import { bestaetigeCode, fordereCode, istErhoeht } from "../admin/stepUp.js";
+import { bestaetigeCode, fordereCode, istErhoeht, oeffneFenster } from "../admin/stepUp.js";
+import { passkeyOptionen, pruefePasskeyAntwort } from "../admin/stepUpPasskey.js";
 import { ARTEN, meldeEreignis } from "../admin/sicherheitsAlarm.js";
 
 const PREFIX = "/api/admin";
@@ -59,7 +60,7 @@ export async function handleAdminWriteRoute(req, url, res, { env = process.env }
   const resolved = await resolveAdminActor(req.authUser, { env, erlaubeUnbestaetigt: true });
   if (!resolved.ok) { privateJson(res, resolved.status, { ok: false, error: resolved.error }); return true; }
   const { actor } = resolved;
-  const istStepUpRoute = rest === "step-up/request" || rest === "step-up/confirm";
+  const istStepUpRoute = rest.startsWith("step-up/");
   if (!istStepUpRoute && !actor.emailVerified) {
     privateJson(res, 403, {
       ok: false,
@@ -87,6 +88,27 @@ export async function handleAdminWriteRoute(req, url, res, { env = process.env }
       if (!anforderung.ok) return privateJson(res, 503, { ok: false, error: anforderung.error }), true;
       await schreibeNachweis(actor, "step_up.requested", actor.email, null, { gueltigSek: anforderung.gueltigSek }, "step-up", req, env);
       return privateJson(res, 200, { ok: true, gueltigSek: anforderung.gueltigSek, hinweis: "Code an die Admin-Adresse geschickt." }), true;
+    }
+    // ---- Step-up per Passkey: der starke Weg, wenn die Konsole auf smejj.com
+    // laeuft. Die Zeremonie steckt in admin/stepUpPasskey.js; hier bleibt nur
+    // der Weg vom und zum Netz.
+    if (rest === "step-up/passkey/options") {
+      const optionen = await passkeyOptionen(actor, { env });
+      if (!optionen.ok) return privateJson(res, optionen.status, { ok: false, error: optionen.error }), true;
+      return privateJson(res, 200, { ok: true, ...optionen.optionen }), true;
+    }
+    if (rest === "step-up/passkey/verify") {
+      const geprueft = await pruefePasskeyAntwort(actor, body, { env });
+      if (!geprueft.ok) {
+        // Fehlversuche mit Passkey sind dasselbe Angriffsmuster wie falsche
+        // Codes — die Wache soll beides sehen.
+        meldeEreignis(ARTEN.stepUpFalsch, { kennung: actor.email, weg: "passkey" }, { env }).catch(() => {});
+        return privateJson(res, geprueft.status, { ok: false, error: geprueft.error }), true;
+      }
+      const fenster = oeffneFenster(actor.email);
+      await schreibeNachweis(actor, "step_up.confirmed", actor.email, null,
+        { fensterSek: fenster.fensterSek, weg: "passkey" }, "step-up per Passkey", req, env);
+      return privateJson(res, 200, { ok: true, fensterSek: fenster.fensterSek, weg: "passkey" }), true;
     }
     if (rest === "step-up/confirm") {
       const bestaetigung = bestaetigeCode(actor.email, body?.code);
