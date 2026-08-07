@@ -1,30 +1,31 @@
 <!doctype html>
-<html lang="de" class="p-404">
+<html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <!-- Bruecke zur Operations Console: Die Konsole liegt bewusst NICHT auf
-       smejj.com, sondern im Control-Server (kein Frontend-Deploy, kein
-       Service-Worker, kein Start-Lock-Risiko — siehe adminUiRoutes.js im
-       Repo smejj.com-app). Diese Seite macht die Adresse nur merkbar:
-       smejj.com/admin leitet weiter. Zugang entscheidet die Konsole selbst
-       (Sitzung + Adminrolle, fail-closed) — die Adresse ist kein Geheimnis. -->
-  <meta http-equiv="refresh" content="0; url=https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/admin">
-  <link rel="icon" href="/favicon.ico?v=112" sizes="any">
-  <link rel="icon" href="/icons/smejj_favicon.svg?v=112" type="image/svg+xml">
-  <title>Adminbereich — smejj.com</title>
-  <link rel="stylesheet" href="/assets/static-pages.css">
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Hinweis — nicht die ausgelieferte Datei</title>
+<!--
+  ACHTUNG: Diese Datei wird NICHT ausgeliefert und ist nur ein Wegweiser.
+
+  Bis 2026-08-07 stand hier eine Weiterleitung von smejj.com/admin zur
+  Operations Console auf dem Control-Server. Das ist ueberholt.
+
+  Seit 2026-08-07 liefert smejj.com/admin die Konsole SELBST aus — statisch
+  von GitHub Pages, wie es die Architekturregel verlangt ("Alles, was statisch
+  ausgeliefert werden kann, wird statisch ausgeliefert").
+
+  Quelle der Konsole:   control-server/admin-ui/
+  Ausgeliefert aus:     Repo SmejjCom/smejj-app-frontend, Ordner admin/
+  Dorthin gespiegelt:   node scripts/deploy/sync_admin_console_pages.mjs <klon>
+  Abweichung pruefen:   ... <klon> --pruefen
+
+  Wer die Konsole aendert, aendert control-server/admin-ui/ — nie die Kopie.
+  Details: docs/approvals/2026-08-07-konsole-statisch.md
+-->
 </head>
 <body>
-  <main>
-    <a class="error-brand" href="/" aria-label="smejj.com Startseite">
-      <img src="/icons/smejj_icon.svg" alt="smejj.com" width="2000" height="1532">
-    </a>
-    <h1>Adminbereich</h1>
-    <p>Du wirst zur Operations Console weitergeleitet &hellip;</p>
-    <a href="https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/admin">Weiter zur Operations Console</a>
-    <p>Zugang nur f&uuml;r Betreiber-Konten &mdash; bitte vorher auf smejj.com anmelden, die Konsole nutzt dieselbe Sitzung.</p>
-  </main>
+<p>Diese Datei ist ein Wegweiser und wird nicht ausgeliefert.
+Die Operations Console liegt unter <code>control-server/admin-ui/</code>
+und wird nach <code>smejj-app-frontend/admin/</code> gespiegelt.</p>
 </body>
 </html>
