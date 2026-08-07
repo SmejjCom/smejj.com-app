@@ -22,6 +22,22 @@ import { fileURLToPath } from "node:url";
 
 const QUELLE = path.resolve(fileURLToPath(new URL("../../control-server/admin-ui/", import.meta.url)));
 
+// Jede Konsolen-Seite bekommt auf GitHub Pages einen eigenen Ordner mit einer
+// Kopie von index.html — so sind die Adressen ECHTE Pfade (smejj.com/admin/jobs/)
+// statt #-Routen. Die Liste entspricht den Registrierungen in console.js und
+// den console-stage*.js; wer dort eine Seite ergaenzt, ergaenzt sie HIER —
+// sonst antwortet Pages auf die neue Adresse mit 404 und der Fehler faellt
+// erst beim Klicken auf. „uebersicht" fehlt bewusst: sie ist /admin/ selbst.
+const SEITEN_ORDNER = Object.freeze([
+  "nutzer", "rollen", "support", "freigaben", "audit", "compliance",
+  "moderation", "dsgvo", "ankuendigungen", "flags",
+  "modelle", "jobs", "worker", "deploy", "speicher",
+  "schluessel", "ereignisse", "adminverwaltung",
+  "abrechnung", "kosten",
+  "wissen", "sprachen", "experimente", "email", "analytik", "aufgaben",
+  "autopiloten"
+]);
+
 function sha256(inhalt) {
   return createHash("sha256").update(inhalt).digest("hex");
 }
@@ -48,7 +64,21 @@ export function spiegeln(zielWurzel, { pruefen = false, quelle = QUELLE } = {}) 
       geschrieben.push(name);
     }
   }
-  return { dateien: konsolenDateien(quelle).length, abweichungen, geschrieben };
+  // Seiten-Ordner: jeweils eine Kopie von index.html (alle Verweise darin sind
+  // absolut /admin/..., deshalb funktioniert dieselbe Datei in jeder Tiefe).
+  const indexInhalt = readFileSync(path.join(quelle, "index.html"));
+  for (const seite of SEITEN_ORDNER) {
+    const ordnerPfad = path.join(ziel, seite, "index.html");
+    const vorhanden = existsSync(ordnerPfad) ? readFileSync(ordnerPfad) : null;
+    if (vorhanden && sha256(vorhanden) === sha256(indexInhalt)) continue;
+    abweichungen.push(seite + "/index.html" + (vorhanden ? " (veraendert)" : " (fehlt)"));
+    if (!pruefen) {
+      mkdirSync(path.join(ziel, seite), { recursive: true });
+      writeFileSync(ordnerPfad, indexInhalt);
+      geschrieben.push(seite + "/index.html");
+    }
+  }
+  return { dateien: konsolenDateien(quelle).length + SEITEN_ORDNER.length, abweichungen, geschrieben };
 }
 
 function main() {
