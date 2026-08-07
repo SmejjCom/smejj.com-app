@@ -24,6 +24,7 @@ import { sprachUebersicht } from "../admin/opsSprachen.js";
 import { experimentUebersicht } from "../admin/opsExperimente.js";
 import { emailUebersicht } from "../admin/opsEmail.js";
 import { analytikUebersicht } from "../admin/opsAnalytik.js";
+import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -37,7 +38,7 @@ const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
   "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
-  "experimente", "email", "analytik"
+  "experimente", "email", "analytik", "autopiloten"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -78,6 +79,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "experimente") return privateJson(res, 200, await experimentUebersicht({ env })), true;
     if (bereich === "email") return privateJson(res, 200, await emailUebersicht({ env })), true;
     if (bereich === "analytik") return privateJson(res, 200, await analytikUebersicht({ env, tage: tageAus(url) })), true;
+    if (bereich === "autopiloten") return privateJson(res, 200, autopilotUebersicht({ startzeitMs: GESTARTET_MS })), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {

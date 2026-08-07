@@ -61,6 +61,7 @@ import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSessio
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
+import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -171,6 +172,8 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/keys" || url.pathname.startsWith("/api/keys/")) return await handleApiKeysRoute(req, url, res);
     // Sprachserver (Wecken/Idle-Stopp/Audio-Proxy, Token-gepflichtig) — voiceWorkerRoutes.js.
     if (await handleVoiceRoute(req, url, res)) return;
+    // Herzschlag der Autopiloten (Maschinen-Absender, eigener Schluessel je Automatik) — autopilotRoutes.js.
+    if (await handleAutopilotHeartbeat(req, url, res)) return;
     // Adminbereich, Transparenzbericht, Einwilligung — Zustaendigkeit: adminSurfaceRoutes.js.
     if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid: emailSessionStillValid })) return;
     // Adminbereich Stufe 1 (nur lesend): ohne frische Adminrolle aus dem Store => 403.
