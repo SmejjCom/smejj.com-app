@@ -6,11 +6,23 @@
 (function () {
   "use strict";
   const A = window.adminApi;
+  const D = window.adminDialog;
   const S = window.adminViewsStage4;
 
+  /**
+   * Frage im Konsolen-Dialog statt im Browserfenster. Bleibt bewusst bei der
+   * bisherigen Aufrufform (ein Text, eine Vorgabe), damit die Aufrufstellen
+   * unveraendert bleiben — nur `await` kommt dazu.
+   */
   function frage(text, vorgabe) {
-    const wert = window.prompt(text, vorgabe || "");
-    return wert === null ? null : String(wert).trim();
+    const zeilen = String(text || "").split("\n").map(function (z) { return z.trim(); }).filter(Boolean);
+    return D.text({
+      titel: zeilen.shift() || "Eingabe",
+      absaetze: zeilen,
+      vorgabe: vorgabe || "",
+      minLaenge: 1,
+      okText: "Übernehmen"
+    });
   }
 
   const seiten = {
@@ -32,11 +44,11 @@
         ctx.zeichne(S.dsgvo(a.data));
         const neu = document.getElementById("dsgvoNeu");
         if (neu) neu.addEventListener("click", async () => {
-          const art = frage("Art der Anfrage:\n\nauskunft, loeschung, uebertrag, berichtigung, widerspruch", "auskunft");
+          const art = await frage("Art der Anfrage:\n\nauskunft, loeschung, uebertrag, berichtigung, widerspruch", "auskunft");
           if (!art) return;
-          const email = frage("E-Mail der betroffenen Person:");
+          const email = await frage("E-Mail der betroffenen Person:");
           if (!email) return;
-          const eingang = frage("Eingegangen am (JJJJ-MM-TT).\n\nWICHTIG: das echte Eingangsdatum — die Frist läuft ab da, nicht ab heute.",
+          const eingang = await frage("Eingegangen am (JJJJ-MM-TT).\n\nWICHTIG: das echte Eingangsdatum — die Frist läuft ab da, nicht ab heute.",
             new Date().toISOString().slice(0, 10));
           if (eingang === null) return;
           const ergebnis = await A.dsgvoErfassen({ art, betroffeneEmail: email, eingegangenAm: eingang });
@@ -44,14 +56,14 @@
           ctx.neuLaden();
         });
         binde(ctx, "data-dsgvoFertig", async (id) => {
-          const nachweis = frage("Erledigungsnachweis (was wurde wann getan?):");
+          const nachweis = await frage("Erledigungsnachweis (was wurde wann getan?):");
           if (!nachweis || nachweis.length < 5) return;
           const a2 = await A.dsgvoStatus(id, { status: "abgeschlossen", nachweis });
           if (!a2.ok) return ctx.meldung(a2.fehler, true);
           ctx.neuLaden();
         });
         binde(ctx, "data-dsgvoFrist", async (id) => {
-          const grund = frage("Begründung für die Verlängerung um zwei Monate (Art. 12 Abs. 3):");
+          const grund = await frage("Begründung für die Verlängerung um zwei Monate (Art. 12 Abs. 3):");
           if (!grund || grund.length < 10) return;
           const a2 = await A.dsgvoVerlaengern(id, grund);
           if (!a2.ok) return ctx.meldung(a2.fehler, true);
@@ -67,20 +79,20 @@
         ctx.zeichne(S.ankuendigungen(a.data));
         const neu = document.getElementById("ankNeu");
         if (neu) neu.addEventListener("click", async () => {
-          const art = frage("Art:\n\nhinweis, wartung, stoerung", "hinweis");
+          const art = await frage("Art:\n\nhinweis, wartung, stoerung", "hinweis");
           if (!art) return;
-          const titel = frage("Titel:");
+          const titel = await frage("Titel:");
           if (!titel) return;
-          const text = frage("Text für die Nutzer:");
+          const text = await frage("Text für die Nutzer:");
           if (!text) return;
-          const ziel = frage("Zielgruppe:\n\nalle, angemeldete, pro", "alle");
+          const ziel = await frage("Zielgruppe:\n\nalle, angemeldete, pro", "alle");
           if (!ziel) return;
           const ergebnis = await A.ankuendigungErstellen({ art, titel, text, ziel });
           if (!ergebnis.ok) return ctx.meldung(ergebnis.fehler, true);
           ctx.neuLaden();
         });
         binde(ctx, "data-ankWeg", async (id) => {
-          const grund = frage("Warum wird die Ankündigung zurückgezogen?");
+          const grund = await frage("Warum wird die Ankündigung zurückgezogen?");
           if (!grund || grund.length < 3) return;
           const a2 = await A.ankuendigungZurueck(id, grund);
           if (!a2.ok) return ctx.meldung(a2.fehler, true);
@@ -102,17 +114,17 @@
   };
 
   async function setzen(ctx, vorgabeName) {
-    const name = frage("Name des Flags (Kleinbuchstaben, Ziffern, Bindestrich):", vorgabeName);
+    const name = await frage("Name des Flags (Kleinbuchstaben, Ziffern, Bindestrich):", vorgabeName);
     if (!name) return;
-    const status = frage("Zustand:\n\noff, partial, on", "partial");
+    const status = await frage("Zustand:\n\noff, partial, on", "partial");
     if (!status) return;
     let percent = 0;
     if (status === "partial") {
-      const eingabe = frage("Anteil in Prozent (1 bis 99):", "5");
+      const eingabe = await frage("Anteil in Prozent (1 bis 99):", "5");
       if (!eingabe) return;
       percent = Number(eingabe);
     }
-    const grund = frage("Grund (wird protokolliert):");
+    const grund = await frage("Grund (wird protokolliert):");
     if (!grund || grund.length < 3) return;
     const ergebnis = await A.flagSetzen({ name, status, percent, reason: grund });
     if (!ergebnis.ok) return ctx.meldung(ergebnis.fehler, true);
@@ -120,11 +132,11 @@
   }
 
   async function entscheiden(ctx, id, bewertung) {
-    const begruendung = frage(bewertung === "bestaetigt"
+    const begruendung = await frage(bewertung === "bestaetigt"
       ? "Missbrauch bestätigen.\n\nDas sperrt NICHTS — es hält die Entscheidung fest. Begründung (mind. 10 Zeichen):"
       : "Entwarnung geben.\n\nBegründung (mind. 10 Zeichen):");
     if (!begruendung || begruendung.length < 10) return;
-    const massnahme = bewertung === "bestaetigt" ? frage("Maßnahme (optional):", "Sperre beantragt") : "";
+    const massnahme = bewertung === "bestaetigt" ? await frage("Maßnahme (optional):", "Sperre beantragt") : "";
     const ergebnis = await A.moderationEntscheiden(id, { bewertung, begruendung, massnahme });
     if (!ergebnis.ok) return ctx.meldung(ergebnis.fehler, true);
     ctx.meldung(ergebnis.data.hinweis || "Entscheidung festgehalten.", false);

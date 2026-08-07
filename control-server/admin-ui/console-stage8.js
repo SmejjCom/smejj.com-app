@@ -6,6 +6,7 @@
 (function () {
   "use strict";
   const A = window.adminApi;
+  const D = window.adminDialog;
   const S = window.adminViewsStage8;
 
   function lade(pfad, zeichne, nachher) {
@@ -17,9 +18,16 @@
     };
   }
 
+  /** Frage im Konsolen-Dialog statt im Browserfenster — wie in Stufe 4. */
   function frage(text, vorgabe) {
-    const wert = window.prompt(text, vorgabe || "");
-    return wert === null ? null : String(wert).trim();
+    const zeilen = String(text || "").split("\n").map(function (z) { return z.trim(); }).filter(Boolean);
+    return D.text({
+      titel: zeilen.shift() || "Eingabe",
+      absaetze: zeilen,
+      vorgabe: vorgabe || "",
+      minLaenge: 1,
+      okText: "Übernehmen"
+    });
   }
 
   function binde(merkmal, aufgabe) {
@@ -31,13 +39,13 @@
   function aufgabenKnoepfe(ctx, daten) {
     const neu = document.getElementById("aufgabeNeu");
     if (neu) neu.addEventListener("click", async function () {
-      const titel = frage("Was ist zu tun?\n\nMindestens 5 Zeichen.");
+      const titel = await frage("Was ist zu tun?\n\nMindestens 5 Zeichen.");
       if (!titel) return;
-      const bereich = frage("Bereich:\n\n" + (daten.bereiche || []).join(", "), "allgemein");
+      const bereich = await frage("Bereich:\n\n" + (daten.bereiche || []).join(", "), "allgemein");
       if (bereich === null) return;
-      const zustaendig = frage("Zuständig (E-Mail, optional):");
+      const zustaendig = await frage("Zuständig (E-Mail, optional):");
       if (zustaendig === null) return;
-      const faelligAm = frage("Frist (JJJJ-MM-TT, optional):");
+      const faelligAm = await frage("Frist (JJJJ-MM-TT, optional):");
       if (faelligAm === null) return;
       const antwort = await A.sende("/api/admin/aufgaben/erfassen", {
         titel, bereich: bereich || "allgemein", zustaendig, faelligAm
@@ -57,7 +65,7 @@
       ["data-aufgabeWeg", "verworfen", "Warum wird die Aufgabe verworfen? (mindestens 5 Zeichen)"]
     ]) {
       binde(merkmal, async function (id) {
-        const nachweis = frage(text);
+        const nachweis = await frage(text);
         if (nachweis === null) return;
         if (nachweis.length < 5) return ctx.meldung("Der Nachweis braucht mindestens 5 Zeichen.", true);
         const antwort = await A.sende("/api/admin/aufgaben/" + id + "/status", { status: ziel, nachweis });

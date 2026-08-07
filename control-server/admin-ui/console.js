@@ -6,6 +6,7 @@
 (function () {
   "use strict";
   const A = window.adminApi;
+  const D = window.adminDialog;
   const V = window.adminViews;
 
   const SEITEN = [
@@ -123,8 +124,13 @@
   }
 
   async function zeigeAkte(id) {
-    const grund = window.prompt(
-      "Die Einsicht in eine Nutzerakte wird unveränderlich protokolliert.\n\nGrund für den Zugriff:", "");
+    const grund = await D.text({
+      titel: "Grund für die Akteneinsicht",
+      absaetze: ["Die Einsicht in eine Nutzerakte wird unveränderlich protokolliert — mit deinem Namen, der Zeit und diesem Grund."],
+      platzhalter: "z. B. Ticket 4471, Rückfrage der Nutzerin",
+      minLaenge: 3,
+      okText: "Akte öffnen"
+    });
     if (grund === null) { location.hash = "#nutzer"; return; }
     if (String(grund).trim().length < 3) {
       seite.innerHTML = V.fehlerblock("Ohne Grund keine Einsicht. Bitte mindestens drei Zeichen angeben.")
@@ -222,7 +228,13 @@
     const knopf = document.getElementById("neubauKnopf");
     if (!knopf) return;
     knopf.addEventListener("click", async function () {
-      const grund = window.prompt("Der Neubau des Index wird protokolliert.\n\nGrund:", "Turnusmässige Auffrischung");
+      const grund = await D.text({
+        titel: "Nutzer-Index neu bauen",
+        absaetze: ["Der Neubau liest alle Konten neu ein und wird protokolliert. Bestehende Daten ändert er nicht."],
+        vorgabe: "Turnusmässige Auffrischung",
+        minLaenge: 3,
+        okText: "Neu bauen"
+      });
       if (grund === null || String(grund).trim().length < 3) return;
       knopf.textContent = "wird gebaut …";
       knopf.setAttribute("disabled", "disabled");
@@ -231,6 +243,18 @@
       zeigeNutzer();
     });
   }
+
+  // Auswahl statt Abtippen: ein vertippter Rollenname wurde frueher erst vom
+  // Server abgewiesen ("admin_role_invalid") — jetzt gibt es nur gueltige.
+  const ROLLEN = [
+    { wert: "user", text: "user — normales Konto, kein Zugang zur Konsole" },
+    { wert: "readonly", text: "readonly — darf zuschauen, nichts ändern" },
+    { wert: "auditor", text: "auditor — Audit-Log und Nachweise" },
+    { wert: "finance", text: "finance — Abrechnung und Budgets" },
+    { wert: "support", text: "support — Sitzungen widerrufen, Support-Zugriff" },
+    { wert: "admin", text: "admin — Konten verwalten, sperren" },
+    { wert: "owner", text: "owner — alle Rechte, inklusive Rollenvergabe" }
+  ];
 
   const AKTIONSTEXT = {
     block: ["Sperren", "Das Konto wird gesperrt und alle Sitzungen werden beendet.", "Grund für die Sperre:"],
@@ -252,10 +276,23 @@
         const text = AKTIONSTEXT[name] || [name, "", "Grund:"];
         let rolle = null;
         if (name === "role.grant") {
-          rolle = window.prompt("Welche Rolle?\n\nuser, readonly, auditor, finance, support, admin, owner", "support");
+          rolle = await D.auswahl({
+            titel: "Welche Rolle?",
+            absaetze: ["Eine Rechteausweitung braucht anschließend die Freigabe einer zweiten Person."],
+            optionen: ROLLEN,
+            vorgabe: "support",
+            okText: "Weiter"
+          });
           if (!rolle) return;
         }
-        const grund = window.prompt(text[0] + "\n\n" + text[1] + "\n\n" + text[2], "");
+        const grund = await D.text({
+          titel: text[0],
+          absaetze: [text[1]],
+          platzhalter: text[2].replace(/:$/, ""),
+          minLaenge: 3,
+          mehrzeilig: name === "delete",
+          okText: text[0]
+        });
         if (grund === null || String(grund).trim().length < 3) return;
         knopf.textContent = "läuft …";
         knopf.setAttribute("disabled", "disabled");
@@ -272,8 +309,13 @@
   }
 
   async function supportAnfragen(kennung) {
-    const grund = window.prompt(
-      "Support-Zugriff anfragen\n\nDie betroffene Person muss in ihrer eigenen Sitzung einwilligen.\n\nGrund:", "");
+    const grund = await D.text({
+      titel: "Support-Zugriff anfragen",
+      absaetze: ["Die betroffene Person muss in ihrer eigenen Sitzung einwilligen. Ohne Einwilligung passiert nichts."],
+      platzhalter: "Grund, z. B. Ticket 4471 — Nutzerin bittet um Hilfe",
+      minLaenge: 3,
+      okText: "Anfragen"
+    });
     if (grund === null || String(grund).trim().length < 3) return;
     const antwort = await A.impersonationBeantragen({ subject: kennung, reason: String(grund).trim() });
     if (!antwort.ok) { meldung(antwort.fehler, true); return; }
@@ -283,7 +325,12 @@
   function bindeFreigaben() {
     document.querySelectorAll("[data-frei]").forEach(function (el) {
       el.addEventListener("click", async function () {
-        if (!window.confirm("Diesen Antrag freigeben? Die Aktion wird danach sofort ausgeführt.")) return;
+        const sicher = await D.bestaetige({
+          titel: "Antrag freigeben?",
+          absaetze: ["Die beantragte Aktion wird danach sofort ausgeführt. Bei einer Löschung ist das unumkehrbar."],
+          okText: "Freigeben und ausführen"
+        });
+        if (!sicher) return;
         const antwort = await A.freigeben(el.getAttribute("data-frei"));
         if (!antwort.ok) { meldung(antwort.fehler, true); return; }
         zeigeFreigaben();
@@ -291,7 +338,13 @@
     });
     document.querySelectorAll("[data-ab]").forEach(function (el) {
       el.addEventListener("click", async function () {
-        const grund = window.prompt("Warum wird der Antrag abgelehnt?", "");
+        const grund = await D.text({
+          titel: "Antrag ablehnen",
+          absaetze: ["Der Grund steht dauerhaft im Audit-Log und ist für die antragstellende Person sichtbar."],
+          platzhalter: "Warum wird der Antrag abgelehnt?",
+          minLaenge: 3,
+          okText: "Ablehnen"
+        });
         if (grund === null || String(grund).trim().length < 3) return;
         const antwort = await A.ablehnen(el.getAttribute("data-ab"), String(grund).trim());
         if (!antwort.ok) { meldung(antwort.fehler, true); return; }

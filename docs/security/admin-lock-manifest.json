@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-07T03:22:54.595Z",
-  "confirmation": "Dann mach professionell. (Betreiber, 2026-08-07) — Auftrag: anstaendige Adminbereich-Verknuepfung admin.smejj.com und professionelle Code-Eingabe statt Browser-Popup; danach 100% Schutz wieder aktivieren.",
+  "frozenAt": "2026-08-07T03:46:51.903Z",
+  "confirmation": "ja (Betreiber, 2026-08-07) — Freigabe fuer: die restlichen neun Browser-Popups der Konsole durch echte Dialoge ersetzen; danach 100% Schutz wieder aktivieren.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "7a5d58280d14e28c2f83fade6c41bc523dd992c49c92670de721abc01b79a3d4",
@@ -14,7 +14,7 @@
     "control-server/src/admin/auditLog.js": "8a205fabbc22ecdffb032679097bb68837de12d35e35bc0e982586554904d675",
     "control-server/src/admin/approvalStore.js": "0bd996af40f28a8abcc016a8eb072b726e4907ed6a8e5ec7e855556501a68bab",
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
-    "control-server/src/routes/adminUiRoutes.js": "ab5885800a3cdc1a3ba1b49a8a2667b0388344408a47e4315e31ad278afab094",
+    "control-server/src/routes/adminUiRoutes.js": "7ee397c2010cdb65cb7d9104d9af1b5ab89712309200a515147033470d0c9715",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
     "control-server/admin-ui/api.js": "3bab31bcda96c3ca58678a026c5f157cf2de2693b9c21a63352811cc64c0fcfe"
   }

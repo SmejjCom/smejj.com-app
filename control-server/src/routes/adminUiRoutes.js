@@ -32,6 +32,7 @@ const DATEIEN = Object.freeze({
   "index.html": "index.html",
   "console.css": "console.css",
   "api.js": "api.js",
+  "dialog.js": "dialog.js",
   "views.js": "views.js",
   "views-stage4.js": "views-stage4.js",
   "console-stage4.js": "console-stage4.js",

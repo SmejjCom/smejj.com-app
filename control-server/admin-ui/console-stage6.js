@@ -6,6 +6,7 @@
 (function () {
   "use strict";
   const A = window.adminApi;
+  const D = window.adminDialog;
   const S = window.adminViewsStage6;
 
   function lade(pfad, zeichne, nachher) {
@@ -22,11 +23,17 @@
     for (const knopf of liste) {
       knopf.addEventListener("click", async function () {
         const [kontoId, anbieter] = String(knopf.getAttribute("data-schluesselWeg") || "").split("|");
-        const grund = window.prompt(
-          "Warum wird dieser Schlüssel widerrufen?\n\n"
-          + "Mindestens 10 Zeichen. Der Grund steht dauerhaft im Audit-Log.\n"
-          + "Der Schlüssel wird unbrauchbar; die Nutzerin kann jederzeit einen neuen hinterlegen."
-        );
+        const grund = await D.text({
+          titel: "Schlüssel widerrufen",
+          absaetze: [
+            "Der Schlüssel wird unbrauchbar. Die betroffene Person kann jederzeit einen neuen hinterlegen.",
+            "Der Grund steht dauerhaft im Audit-Log."
+          ],
+          platzhalter: "Warum wird dieser Schlüssel widerrufen?",
+          minLaenge: 10,
+          mehrzeilig: true,
+          okText: "Widerrufen"
+        });
         if (grund === null) return;
         if (String(grund).trim().length < 10) {
           return ctx.meldung("Der Grund braucht mindestens 10 Zeichen.", true);
