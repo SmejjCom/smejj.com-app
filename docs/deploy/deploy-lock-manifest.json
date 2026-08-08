@@ -1,10 +1,10 @@
 {
   "lock": "smejj deploy lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-07T08:16:15.387Z",
-  "confirmation": "Auftrag Betreiber 2026-08-07: Codeberg-Spiegelung schlaegt fehl (Ampel codeberg-spiegel ROT) — Ursache finden und beheben, bis die Ampel wieder gruen wird.",
+  "frozenAt": "2026-08-08T21:19:16.517Z",
+  "confirmation": "Freigabe 2026-08-07: Die nachgeschaerften Herzschlag-Wiederholungen (12 Versuche im Minutenabstand, -m 800) in scripts/deploy/codeberg_spiegel_geplant.sh versionieren und den Deploy-Lock darauf neu einfrieren.",
   "rule": "Keine Aenderung am Spiegelweg (was gespiegelt wird, ob gespiegelt wird) ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "scripts/deploy/codeberg_spiegel_sync.sh": "a4d872da20cf6f0a3b57ed8b6089ba14b94b55e3517ef7ef74d8d6edfa52e349",
-    "scripts/deploy/codeberg_spiegel_geplant.sh": "b7ee508be345a8044bba57921f5762de5f41d9e182deeccb91520199a6f9b4d9"
+    "scripts/deploy/codeberg_spiegel_geplant.sh": "ab10388993daebc79f0da34ac8c966a565ffc363cb64137eadaf5c166c1778d4"
   }
 }

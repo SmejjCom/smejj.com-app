@@ -49,7 +49,12 @@ smejj_ap_herzschlag() {
   # 30-s-Abstand ueberbruecken ein kurzes Flattern. -m deckelt die GESAMTE
   # Operation inklusive Wiederholungen — er muss also groesser sein als
   # Versuche x Abstand, sonst finden die Wiederholungen nie statt.
-  curl -fsS --connect-timeout 10 -m 240 --retry 5 --retry-delay 30 \
+  # 2026-08-07 nachgeschaerft: die gemessenen Salad-Reallokationen dauerten 7
+  # bis 25 Minuten, nicht Sekunden. 2,5 Minuten Wiederholung waren zu knapp —
+  # ein verschluckter Herzschlag faerbt die Ampel spaeter FAELSCHLICH rot
+  # (Ausbleiben ist ja der Alarm). 12 Versuche im Minutenabstand decken den
+  # Regelfall; -m muss groesser sein als Versuche x Abstand.
+  curl -fsS --connect-timeout 10 -m 800 --retry 12 --retry-delay 60 \
     -X POST "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/autopilot/heartbeat" \
     -H "Content-Type: application/json" \
     -d "{\"id\":\"${AP_ID}\",\"key\":\"${AP_KEY}\",\"status\":\"${AP_STATUS}\",\"meldung\":\"Exit ${AP_EXIT}\"}" \
