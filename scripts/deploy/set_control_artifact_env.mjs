@@ -90,6 +90,27 @@ async function main() {
     fail(`Unerwartet kleine Env-Map (${existingCount} Eintraege) — Abbruch, nichts geaendert.`);
   }
   const previousKey = existing.SMEJJ_CONTROL_ARTIFACT_KEY || "(leer)";
+  // WAECHTER GEGEN DAS UEBERFAHREN FREMDER RELEASES (2026-08-07 fast passiert):
+  // In einer geteilten Arbeitskopie rollt jederzeit eine Parallelsitzung etwas
+  // aus. Wer sein Artefakt vor 20 Minuten gebaut hat, ersetzt damit womoeglich
+  // einen Stand, den er nie gesehen hat. `previousArtifactKey` in der Ausgabe
+  // meldet das — aber erst NACH dem Schreiben, also zu spaet.
+  //
+  // Wer SMEJJ_CONTROL_EXPECTED_PREVIOUS setzt, bekommt die Pruefung DAVOR:
+  // stimmt der laufende Stand nicht mit der eigenen Bau-Basis ueberein, bricht
+  // das Skript ab, ohne etwas zu aendern. Ohne die Variable bleibt es beim
+  // alten Verhalten plus deutlichem Hinweis — kein stiller Zwang, aber auch
+  // keine Ausrede mehr.
+  const erwartetVorher = String(process.env.SMEJJ_CONTROL_EXPECTED_PREVIOUS || "").trim();
+  if (erwartetVorher) {
+    if (previousKey !== erwartetVorher) {
+      fail(`Abbruch, NICHTS geaendert: live laeuft "${previousKey}", erwartet war "${erwartetVorher}". `
+        + "Eine andere Sitzung hat zwischenzeitlich ausgerollt — Artefakt auf dem NEUEN Live-Stand neu bauen.");
+    }
+  } else {
+    console.error(`Hinweis: live laeuft gerade "${previousKey}". Stammt dein Artefakt von dieser Basis? `
+      + "Mit SMEJJ_CONTROL_EXPECTED_PREVIOUS=<key> wird das kuenftig vorher geprueft statt nachher gemeldet.");
+  }
   const mergedEnv = {
     ...existing,
     SMEJJ_CONTROL_ARTIFACT_KEY: key,
