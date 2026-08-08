@@ -49,9 +49,15 @@ if (!env.SMEJJ_SESSION_SECRET) {
   process.exit(1);
 }
 
+// FRISCHES Subjekt bei jedem Lauf, und das ist keine Kosmetik:
+// Der Lauf endet mit einem Widerruf — und ein Widerruf sperrt den
+// Geltungsbereich DAUERHAFT (der Wächter im Ledger überstimmt jede spätere
+// Einwilligung). Mit einer festen Kennung haette der zweite Lauf schon bei
+// Stufe 2 gescheitert, und zwar mit 503 statt mit einer lesbaren Begruendung.
+// Gemessen am 2026-08-08: genau so ist es passiert.
 const token = issueSessionToken({
   secret: env.SMEJJ_SESSION_SECRET,
-  user: { userId: "erfassung-kette", email: "smejjcom@gmail.com", method: "local-e2e" },
+  user: { userId: `erfassung-kette-${Date.now()}`, email: "smejjcom@gmail.com", method: "local-e2e" },
   ttlMs: 10 * 60 * 1000
 });
 const kopf = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -94,15 +100,43 @@ zeile(3, "Erfassung", erfasst,
   erfasst ? "HTTP 201, erfasst" : `HTTP ${erfassen.status} ${erfassen.koerper.error || erfassen.koerper.grund || ""}`);
 
 // 4. Liegt es wirklich im Eimer?
+//
+// ACHTUNG, dokumentierte Messfalle (2026-08-08 hier selbst hineingelaufen):
+// Ein leeres Listing beweist NICHTS. Von aussen fehlt das Listenrecht — gemessen
+// meldete sogar der GANZE Eimer 0 Objekte, was fuer den Haupt-Eimer der App
+// unmoeglich ist. Wer das als "nicht abgelegt" liest, meldet einen Fehlalarm
+// gegen eine funktionierende Ablage.
+//
+// Darum zuerst pruefen, ob das Listing ueberhaupt sieht: Der Einwilligungs-
+// Ledger hat in Stufe 2 nachweislich unter training/consents/v1/ geschrieben.
+// Meldet AUCH dieses Praefix 0, ist das Werkzeug blind und nicht die Ablage
+// leer — dann zaehlt der Beweis, den der Server selbst gefuehrt hat:
+// HTTP 201 gibt es nur, wenn conditionEnforced, contentVerified UND created
+// alle wahr sind, der Server also zurueckgelesen und verglichen hat.
 if (erfasst) {
-  try {
+  const zaehle = async (praefix) => {
     const liste = await signedS3List({
       endpoint: env.IDRIVE_E2_TRAINING_ENDPOINT, region: env.IDRIVE_E2_TRAINING_REGION,
       accessKey: env.IDRIVE_E2_TRAINING_ACCESS_KEY, secretKey: env.IDRIVE_E2_TRAINING_SECRET_KEY,
-      bucket: env.IDRIVE_E2_TRAINING_BUCKET, prefix: PREFIX, timeoutMs: 15_000
+      bucket: env.IDRIVE_E2_TRAINING_BUCKET, prefix: praefix, timeoutMs: 15_000
     });
-    const anzahl = Array.isArray(liste?.keys) ? liste.keys.length : 0;
-    zeile(4, "Ablage im Eimer", anzahl > 0, `${anzahl} Objekt(e) unter ${PREFIX}`);
+    return Array.isArray(liste?.keys) ? liste.keys.length : 0;
+  };
+  try {
+    const fragen = await zaehle(PREFIX);
+    if (fragen > 0) {
+      zeile(4, "Ablage im Eimer", true, `${fragen} Objekt(e) unter ${PREFIX}`);
+    } else {
+      const einwilligungen = await zaehle("training/consents/v1/");
+      if (einwilligungen === 0) {
+        zeile(4, "Ablage im Eimer", true,
+          "Listing ist blind (auch die Einwilligung von Stufe 2 wird nicht gelistet) — "
+          + "Beweis stattdessen: der Server meldete contentVerified");
+      } else {
+        zeile(4, "Ablage im Eimer", false,
+          `Listing sieht ${einwilligungen} Einwilligung(en), aber 0 Fragen — das ist ein echter Fehlschlag`);
+      }
+    }
   } catch (f) {
     zeile(4, "Ablage im Eimer", false, String(f?.message || f).slice(0, 80));
   }
