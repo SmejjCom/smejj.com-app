@@ -170,6 +170,22 @@ const herzschlaege = new Map();
 // Neustart eine konservierte Luege; sie entsteht dort binnen Sekunden neu.
 const ablage = createRecordStore("admin/autopiloten", { maximal: 50 });
 
+// Was die Ablage tatsaechlich getan hat — sichtbar in der Ansicht.
+//
+// WARUM DAS HIER STEHT (Befund 2026-08-08): Nach einem Neustart standen zwei
+// Autopiloten auf grau, obwohl ihre Herzschlaege haetten geladen werden
+// muessen. Ob das Schreiben oder das Laden fehlschlug, war von aussen NICHT
+// zu unterscheiden — beide Wege verschlucken ihre Fehler bewusst, damit sie
+// nie die Quittung an den Absender gefaehrden. Ein Modul, das "gemessen statt
+// behauptet" verspricht, darf ausgerechnet ueber sich selbst nicht raten.
+const ablageStand = {
+  geladenBeimStart: null,   // null = Laden lief noch nicht
+  ladeFehler: null,
+  schreibVersuche: 0,
+  schreibErfolge: 0,
+  letzterSchreibFehler: null
+};
+
 /**
  * Nimmt einen Herzschlag entgegen. Fail-closed in jeder Richtung: ohne
  * hinterlegte Schluessel wird NICHTS angenommen (sonst koennte jeder die Ampel
@@ -223,6 +239,9 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
     grau: zaehle("grau"),
     autopiloten: liste.sort(sortiereNachDringlichkeit),
     serverStartAm: Number.isFinite(startzeitMs) ? new Date(startzeitMs).toISOString() : null,
+    // Selbstauskunft der Ablage: ob die Neustart-Festigkeit wirklich traegt,
+    // steht hier als Zahl statt als Versprechen.
+    ablage: { ...ablageStand },
     hinweis: "Herzschläge liegen im Arbeitsspeicher: nach einem Neustart des Control-Servers "
       + "beginnt die Messung von vorn, bis dahin steht »keine Messung«. "
       + "Grün gibt es nur für einen gemessenen, rechtzeitigen, erfolgreichen Lauf — nie aus der Konfiguration."
@@ -357,14 +376,18 @@ export function starteWaechterAbfrage({ intervallMs = 5 * 60 * 1000 } = {}) {
 export async function persistiereHerzschlag(id, { env = process.env } = {}) {
   const gespeichert = herzschlaege.get(String(id || ""));
   if (!gespeichert || !gespeichert.laeufe.length) return false;
+  ablageStand.schreibVersuche += 1;
   try {
     await ablage.schreib({
       id: String(id),
       createdAt: gespeichert.laeufe[0].am,
       laeufe: gespeichert.laeufe
     }, { env });
+    ablageStand.schreibErfolge += 1;
+    ablageStand.letzterSchreibFehler = null;
     return true;
-  } catch {
+  } catch (fehler) {
+    ablageStand.letzterSchreibFehler = String(fehler?.message || fehler).slice(0, 120);
     return false;
   }
 }
@@ -378,7 +401,11 @@ export async function persistiereHerzschlag(id, { env = process.env } = {}) {
 export async function ladeHerzschlaege({ env = process.env } = {}) {
   try {
     const ergebnis = await ablage.liste({ env });
-    if (!ergebnis.ok) return 0;
+    if (!ergebnis.ok) {
+      ablageStand.geladenBeimStart = 0;
+      ablageStand.ladeFehler = ergebnis.error || "record_store_list_failed";
+      return 0;
+    }
     let geladen = 0;
     for (const datensatz of ergebnis.datensaetze) {
       if (!AUTOPILOTEN.some((a) => a.id === datensatz.id)) continue;
@@ -387,8 +414,15 @@ export async function ladeHerzschlaege({ env = process.env } = {}) {
       herzschlaege.set(datensatz.id, { laeufe: datensatz.laeufe.slice(0, VERLAUF_MAX) });
       geladen += 1;
     }
+    ablageStand.geladenBeimStart = geladen;
+    // Ein leeres Ergebnis ist kein Fehler, aber es ist auch kein Erfolg —
+    // die Zahl daneben sagt, ob ueberhaupt etwas in der Ablage lag.
+    ablageStand.abgelegteDatensaetze = ergebnis.datensaetze.length;
+    ablageStand.ladeFehler = null;
     return geladen;
-  } catch {
+  } catch (fehler) {
+    ablageStand.geladenBeimStart = 0;
+    ablageStand.ladeFehler = String(fehler?.message || fehler).slice(0, 120);
     return 0;
   }
 }
