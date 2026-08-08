@@ -392,3 +392,20 @@ worden — nur der Schnitt ist neu.
 
 Alles bis einschliesslich **v181 -> v182** steht in
 [SW_VERSIONSVERLAUF-ARCHIV.md](SW_VERSIONSVERLAUF-ARCHIV.md).
+
+## v230 -> v234 (2026-08-06, Konkurrenz-Radar Freigabe-Paket)
+
+Vier freigegebene Punkte in Folge (v231 kam aus einer Parallelsitzung):
+- v232 V4 Stufe 2: search.js findet PROJEKT-DATEIEN aus den Projekt-Manifesten
+  (vorher nur state.uploads = fluechtige Sitzungs-Uploads). 20-s-Cache, weil
+  findResults() bei jedem Tastendruck laeuft.
+- v233 Ausbaustufe Messung: icon-nutzung.js NEU (anonyme Icon-Zaehlung, feste
+  Positivliste, nur localStorage, KEIN fetch). Auswertung als Knopf in der
+  Status-Ansicht. Zaehlstand geht in den Datenschutz-Export.
+- v234 V5: quellen-panel.js NEU (Links aus den Antworten, Zaehler am
+  Quellen-Knopf). Nichts gespeichert, immer frisch aus dem offenen Chat.
+Beide neuen Module haengen an profile-dock.js statt an index.html — die
+Startseite bleibt damit unter dem Start-Lock unangetastet (Muster auth-gate.js).
+Dazu ohne sw-Bezug: Operations Console Stufe 10 (Konkurrenz-Radar) und
+/radar/berichte.json.
+Freigabe Betreiber 2026-08-06.
