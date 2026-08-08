@@ -1,5 +1,10 @@
 # Service-Worker: Versionsverlauf
 
+**Fortsetzung ab v213:** [SW_VERSIONSVERLAUF_2026-08.md](SW_VERSIONSVERLAUF_2026-08.md)
+— am 2026-08-07 ausgelagert, weil der Block in `public/sw.js` erneut auf 646
+von 863 Zeilen gewachsen war. Eine eigene Datei, weil die 800-Zeilen-Regel
+auch fuer `.md` gilt.
+
 Der Aenderungsverlauf von `public/sw.js` (CACHE_NAME `smejj-shell-vNNN`).
 Bis 2026-08-05 stand dieser Text als Kommentarblock in der Datei selbst und
 machte dort 586 der 800 Zeilen aus — 73 % einer Datei, deren echte Logik rund
