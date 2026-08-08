@@ -97,36 +97,43 @@ export const AUTOPILOTEN = Object.freeze([
   {
     id: "training-loop",
     name: "Training-Loop",
-    kurz: "Dauerdienst auf Zeabur, der früher das Modelltraining getaktet hat — das Training selbst ist seit 2026-08-06 eingestellt.",
+    kurz: "STILLGELEGT seit 2. August 2026. Der Dienst ist im Zeabur-Portal angehalten und läuft nicht — das Modelltraining wurde am 6. August endgültig eingestellt.",
     funktionen: [
-      "Läuft 24/7 auf Zeabur und tickt in festen Abständen (Lebenszeichen: wanderndes lastTickAt).",
-      "Das eigentliche LoRA-Training wurde nach Messung eingestellt (RAG hat gewonnen) — der Dienst tickt nur noch als Infrastruktur."
+      "Taktete früher rund um die Uhr die Eval- und Trainings-Zyklen.",
+      "Am 2026-08-02 im Zeabur-Portal angehalten (Service is suspended); am 2026-08-07 dort nachgemessen.",
+      "Bis dahin stand in den Projektnotizen weiter »läuft 24/7« — fünf Tage lang glaubte niemand etwas anderes.",
+      "Ein Neustart würde wieder Modellaufrufe kosten und ist ohne Training zwecklos."
     ],
     ort: "Zeabur",
-    zeitplan: "Dauerbetrieb",
+    zeitplan: "stillgelegt",
+    // Ein angehaltener Dienst KANN keinen Herzschlag senden. Ihn auf Herzschlag
+    // zu stellen hiesse, ihn dauerhaft rot zu faerben — Alarm fuer einen
+    // gewollten Zustand. Grau mit klarer Begruendung ist die ehrliche Anzeige.
     messung: "keine",
-    messungHinweis: "Herzschlag-Anschluss folgt in Stufe 2. Lebenszeichen bis dahin: lastTickAt im Zeabur-Portal.",
+    messungHinweis: "Stillgelegt — kein Alarm, sondern ein gewollter Zustand. Diese Zeile bleibt stehen, damit niemand den Dienst für laufend hält.",
     erwartetAlleMs: null,
     schonfristMs: null,
-    startAnleitung: "Im Zeabur-Portal den Dienst neu starten (Konto beachten — nicht das iMild-Com-Konto).",
-    stopAnleitung: "Im Zeabur-Portal den Dienst anhalten."
+    startAnleitung: "Nur mit Absicht: Zeabur-Portal → Projekt »untitled« → smejj-training-loop → Restart. Kostet wieder Modellaufrufe.",
+    stopAnleitung: "Bereits angehalten — nichts zu tun."
   },
   {
     id: "brueckenwaechter",
     name: "Brücken-Wächter",
-    kurz: "Soll die Chat-Brücke überwachen (3-Fehler-Schwelle) — ist aber ohne eigene Domain derzeit unsichtbar und faktisch wirkungslos.",
+    kurz: "LÄUFT NICHT. Er ist kein eigener Dienst, sondern lebt im Training-Loop — und der ist seit 2. August angehalten.",
     funktionen: [
-      "Erkennungslogik fertig und geprüft: schlägt nach 3 Fehlern in Folge an.",
-      "BEKANNTE LÜCKE: der Zeabur-Dienst hat keine Domain — niemand kann ihn erreichen oder seine Alarme sehen."
+      "Sollte die Chat-Brücke von außen abfragen und nach 3 Fehlern in Folge Alarm schlagen.",
+      "Wohnt in workers/smejj-training-loop/brueckenWaechter.js, also im Prozess des Training-Loops.",
+      "Am 2026-08-07 im Zeabur-Portal nachgemessen: es gibt nur 6 Dienste, keiner davon ist der Wächter.",
+      "Solange der Training-Loop stillgelegt ist, überwacht niemand die Brücke von außen."
     ],
-    ort: "Zeabur",
-    zeitplan: "Dauerbetrieb (geplant)",
+    ort: "Zeabur (im Training-Loop)",
+    zeitplan: "läuft nicht",
     messung: "keine",
-    messungHinweis: "Erst braucht der Dienst eine Domain, dann einen Herzschlag. Bis dahin ehrlich: Zustand unbekannt.",
+    messungHinweis: "Läuft nicht, weil sein Wirtsprozess angehalten ist. Wer ihn zurück will, braucht entweder den Training-Loop wieder oder einen eigenen kleinen Dienst nur für die Überwachung.",
     erwartetAlleMs: null,
     schonfristMs: null,
-    startAnleitung: "Im Zeabur-Portal den Dienst starten — wirksam wird er erst mit einer Domain.",
-    stopAnleitung: "Im Zeabur-Portal den Dienst anhalten."
+    startAnleitung: "Zwei Wege: (a) Training-Loop wieder starten — er bringt den Wächter mit, kostet aber Modellaufrufe; (b) den Wächter als eigenen, schlanken Dienst ausrollen (braucht eine Freigabe).",
+    stopAnleitung: "Bereits gestoppt — er lief seit dem 2. August nicht mehr."
   },
   {
     id: "salad-sonden",
