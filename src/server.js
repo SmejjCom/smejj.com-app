@@ -1,10 +1,9 @@
 import http from "node:http";
-import { mkdir, readFile, writeFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { APP_INFO, CAPABILITIES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE } from "./shared/platform.js";
 import { SECURITY_LIMITS } from "./shared/securityPolicy.js";
+import { createWerkstatt } from "./routes/werkstattRoutes.js";
 import { json, readJson } from "../control-server/src/http/respond.js";
 import { parseS3Keys, signedS3List } from "../control-server/src/storage/s3Signer.js";
 import {
@@ -45,7 +44,6 @@ import { allowedOriginsFromEnv, corsHeadersFor, handlePreflight } from "../contr
 import { installCrashGuard } from "../control-server/src/http/crashGuard.js";
 import { createStaticHandlers } from "./http/staticServing.js";
 import { loadSecureLocalEnv, normalizeSecret } from "./shared/env.js";
-import { resolveTerminalCommand } from "./shared/terminalPolicy.js";
 import { isSafeMutatingControlRequest, requiresAuthenticatedControlAccess } from "./shared/controlAccessPolicy.js";
 import { createPublicModelRateGate } from "./shared/modelRatePolicy.js";
 import { bearerSessionToken, issueSessionToken, verifySessionToken } from "../control-server/src/auth/sessionToken.js";
@@ -100,6 +98,13 @@ const config = {
 };
 
 const forbiddenSegments = new Set([".env", ".git", "node_modules", "dist", "build"]);
+// Lesen, Schreiben, Terminal, Git — die einzige Gruppe, die ans Dateisystem
+// geht. Steht seit 2026-08-08 in src/routes/werkstattRoutes.js (800-Zeilen-Regel).
+// safeResolve/readLimited kommen mit heraus: der Agent-Weg unten liest damit
+// ebenfalls Dateien und muss durch DIESELBE Sandbox.
+const {
+  handleRead, handleWrite, handleTerminal, handleGitStatus, handleGitCommit, safeResolve, readLimited
+} = createWerkstatt({ projectRoot: config.projectRoot, forbiddenSegments });
 const publicModelRateGate = createPublicModelRateGate(process.env);
 const sessionHandoffStore = createSessionHandoffStore();
 const server = http.createServer(async (req, res) => {
@@ -591,53 +596,6 @@ async function handleAgent(req, res) {
   });
 }
 
-async function handleRead(req, res) {
-  const body = await readJson(req);
-  const safePath = safeResolve(body.path);
-  const content = await readLimited(safePath, 250_000);
-  json(res, 200, { path: path.relative(config.projectRoot, safePath), content });
-}
-
-async function handleWrite(req, res) {
-  const body = await readJson(req);
-  const safePath = safeResolve(body.path);
-  const content = String(body.content || "");
-  if (content.length > 500_000) return json(res, 413, { error: "File too large" });
-  if (body.apply !== true) {
-    return json(res, 200, {
-      approved: false,
-      message: "Preview only. Send apply:true after user review to write.",
-      path: path.relative(config.projectRoot, safePath),
-      proposedContent: content
-    });
-  }
-  await mkdir(path.dirname(safePath), { recursive: true });
-  await writeFile(safePath, content, "utf8");
-  json(res, 200, { approved: true, path: path.relative(config.projectRoot, safePath) });
-}
-
-async function handleTerminal(req, res) {
-  const body = await readJson(req);
-  const command = String(body.command || "").trim();
-  const resolved = resolveTerminalCommand(command);
-  if (!resolved.ok) return json(res, 403, { error: "Command not allowed", reason: resolved.reason });
-  const result = await run(resolved.bin, resolved.args, config.projectRoot, 30_000);
-  json(res, 200, result);
-}
-
-async function handleGitStatus(res) {
-  const result = await run("git", ["status", "--short"], config.projectRoot, 10_000);
-  json(res, 200, result);
-}
-
-async function handleGitCommit(req, res) {
-  const body = await readJson(req);
-  const message = String(body.message || "").trim();
-  if (!message) return json(res, 400, { error: "Missing commit message" });
-  const result = await run("git", ["commit", "-am", message], config.projectRoot, 30_000);
-  json(res, 200, result);
-}
-
 async function handleStorageStatus(res) {
   const endpoint = process.env.IDRIVE_E2_ENDPOINT;
   const accessKey = process.env.IDRIVE_E2_ACCESS_KEY;
@@ -729,43 +687,6 @@ function boundedInteger(value, min, max, fallback) {
   return Number.isFinite(number) ? Math.min(max, Math.max(min, Math.floor(number))) : fallback;
 }
 
-
-function safeResolve(inputPath) {
-  const rel = String(inputPath || "").replace(/^\/+/, "");
-  const parts = rel.split(/[\\/]+/).filter(Boolean);
-  if (parts.some((part) => forbiddenSegments.has(part))) throw new Error("Path is not allowed");
-  const resolved = path.resolve(config.projectRoot, rel);
-  if (!resolved.startsWith(config.projectRoot + path.sep) && resolved !== config.projectRoot) {
-    throw new Error("Path escapes project sandbox");
-  }
-  return resolved;
-}
-
-async function readLimited(file, limit) {
-  const info = await stat(file);
-  if (!info.isFile()) throw new Error("Path is not a file");
-  if (info.size > limit) throw new Error(`File too large. Limit: ${limit} bytes`);
-  return readFile(file, "utf8");
-}
-
-function run(bin, args, cwd, timeoutMs) {
-  return new Promise((resolve) => {
-    const child = spawn(bin, args, { cwd, shell: false });
-    let stdout = "";
-    let stderr = "";
-    const timer = setTimeout(() => child.kill("SIGTERM"), timeoutMs);
-    child.stdout.on("data", (data) => { stdout += data.toString(); });
-    child.stderr.on("data", (data) => { stderr += data.toString(); });
-    child.on("error", (error) => {
-      clearTimeout(timer);
-      resolve({ code: 127, stdout: "", stderr: error.message || "Command failed to start" });
-    });
-    child.on("close", (code) => {
-      clearTimeout(timer);
-      resolve({ code, stdout: stdout.slice(-20_000), stderr: stderr.slice(-20_000) });
-    });
-  });
-}
 
 function readAuthBody(req) {
   const contentType = String(req.headers["content-type"] || "");
