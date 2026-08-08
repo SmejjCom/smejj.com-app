@@ -65,8 +65,39 @@ Wichtig: Mehrere Vorschläge berühren Dateien unter dem Start-Lock (31 eingefro
 |---|---|---|
 | V1 Riesen-Einfügung als Anhang | **JA — umgesetzt und live** | Freigabe 2026-08-06 (inkl. Start-Lock); live als sw v228, Commit b4678d7 (Frontend-Repo) / 9ce211b (lokal) |
 | V2 Live-Mitschrift Sprachmodus | **JA — umgesetzt und live** | Freigabe 2026-08-06 (inkl. Start-Lock); live als sw v230, Commit 51d4ecb (Frontend-Repo) / 3cbd8d5 (lokal); in Chrome live verifiziert |
-| V3 Modellwahl Schnell/Auto/Gründlich | | |
-| V4 Verlauf: Anpinnen + Suche | **JA (Stufe 1) — umgesetzt und live** | Freigabe 2026-08-06; Anpinnen live als sw v229, Commit 11c5fd3 (Frontend-Repo) / d7a61ca (lokal); Stufe 2 (breitere Suche) noch offen |
-| V5 Quellen-Panel koppeln | | |
+| V3 Modellwahl Schnell/Auto/Gründlich | **JA — freigegeben, NICHT umgesetzt** | Freigabe 2026-08-06 inkl. Start-Lock. Beim Bauen zeigte sich: erfordert eine Bridge-Änderung + Container-Neustart, den diese Sitzung nicht auslösen kann. Befund unten. |
+| V4 Verlauf: Anpinnen + Suche | **JA — beide Stufen umgesetzt und live** | Stufe 1 (Anpinnen) sw v229 / 11c5fd3; Stufe 2 (Projekt-Dateien in der Suche) sw v232 / 17d3c21 |
+| V5 Quellen-Panel koppeln | **JA — umgesetzt und live** | Freigabe 2026-08-06; live als sw v234, Commit ab6da57 |
 
 *Nächster Radar-Durchgang: Vorschlag — Anfang September 2026 (monatliche Bündelung), sofern die Automatik bis dahin eingerichtet ist.*
+
+
+---
+
+## Befund zu V3 (Modellwahl) — 2026-08-06, beim Bauen gemessen
+
+V3 ist freigegeben, aber **bewusst nicht umgesetzt**. Grund ist kein Zweifel am
+Nutzen, sondern ein technischer Befund, der im Bericht nicht absehbar war:
+
+1. **Unbekannte Modellnamen sind kein harmloser Anzeigetext.** `normalizeModelId()`
+   in `src/shared/modelRegistry.js` liefert für alles, was nicht in der Registry
+   steht, `null`. Ein Chip, der "Schnell" oder "Gründlich" als `model` mitschickt,
+   würde das Routing nicht vereinfachen, sondern brechen.
+2. **Die drei Stufen existieren serverseitig bereits — automatisch.** Die Bridge
+   meldet `fastLaneEnabled: true` mit `groq:llama-3.3-70b-versatile` (703 ms),
+   und `chatThinkingPolicy.js` / `reasoningEffortPolicy.js` schalten die Denktiefe
+   je Aufgabe schon heute um (Coding tief, Rest flach). Was fehlt, ist nicht die
+   Fähigkeit, sondern die *Steuerbarkeit von außen*.
+3. **Damit braucht V3 eine Bridge-Änderung**, die eine Stufe (`schnell`/`auto`/
+   `gruendlich`) entgegennimmt und auf Fast-Lane bzw. Denktiefe abbildet — plus
+   Bridge-Deploy (Bündel + Salad-Container-Neustart) und die in der Freigabe
+   verlangte Eval-Messung. Der Container-Neustart war aus dieser Sitzung nicht
+   auslösbar.
+
+**Warum nicht trotzdem der Chip allein?** Ein "Schnell"-Knopf ohne Wirkung wäre
+ein toter Knopf — genau das, was die Konsole an anderer Stelle ausdrücklich
+vermeidet. Lieber offen als scheinbar erledigt.
+
+**Nächster Schritt, wenn gewünscht:** Bridge um die Stufen-Präferenz erweitern,
+`npm run eval:models` als Vorher/Nachher-Messung fahren, dann Frontend-Chip
+umstellen. Aufwand realistisch 1–2 Tage statt der geschätzten 2.
