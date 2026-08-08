@@ -124,7 +124,8 @@ export const AUTOPILOTEN = Object.freeze([
       "Fragt jede Minute die öffentliche Adresse der Chat-Brücke ab und liest ihre Version.",
       "Erst 3 Fehlversuche in Folge gelten als Ausfall — eine Schwalbe ist kein Befund.",
       "Meldet sich alle 5 Minuten selbst; bleibt seine Meldung aus, wird diese Ampel rot.",
-      "Seit 2026-08-07 ein EIGENER Dienst: vorher wohnte er im Training-Loop und wurde mit dessen Stilllegung fünf Tage lang unbemerkt still."
+      "Seit 2026-08-07 ein EIGENER Dienst: vorher wohnte er im Training-Loop und wurde mit dessen Stilllegung fünf Tage lang unbemerkt still.",
+      "Selbst nachschauen: smejj-brueckenwaechter.zeabur.app/bruecke zeigt Prüfungen, Fehler und vergangene Ausfälle; /health zeigt den Wächter selbst."
     ],
     ort: "Zeabur (eigener Dienst)",
     zeitplan: "Dauerbetrieb",
