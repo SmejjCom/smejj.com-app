@@ -103,7 +103,16 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
     }
   }
 
-  async function schreib(datensatz, { env = process.env, fetchImpl = fetch, nowMs = Date.now() } = {}) {
+  /**
+   * @param {number} [optionen.timeoutMs] Zeitlimit fuer den Schreibvorgang.
+   *   Der Standard im Signierer sind 2,5 s — vom Salad-Container zu IDrive e2
+   *   reicht das nicht zuverlaessig (am 2026-08-08 gemessen: der Herzschlag
+   *   der Autopiloten scheiterte reproduzierbar mit "operation was aborted due
+   *   to timeout", und weil der Schreibweg seine Fehler bewusst verschluckt,
+   *   fiel es erst auf, als die Ablage selbst Auskunft geben musste).
+   *   Wer schreibt und dabei nicht auf einen Menschen wartet, gibt hier mehr mit.
+   */
+  async function schreib(datensatz, { env = process.env, fetchImpl = fetch, nowMs = Date.now(), timeoutMs } = {}) {
     if (!datensatz?.id) throw new Error("record_store_id_required");
     const cfg = idriveConfig(env);
     if (!cfg) { memory.set(datensatz.id, datensatz); return datensatz; }
@@ -112,7 +121,8 @@ export function createRecordStore(praefix, { maximal = MAX_DATENSAETZE } = {}) {
       key: schluessel(datensatz.id),
       body: JSON.stringify(datensatz, null, 2),
       contentType: "application/json; charset=utf-8",
-      fetchImpl
+      fetchImpl,
+      timeoutMs
     });
     merkeFrisch(datensatz, nowMs);
     // Wer schreibt, will danach den neuen Stand sehen — nicht den alten.

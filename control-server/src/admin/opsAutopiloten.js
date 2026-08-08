@@ -377,19 +377,25 @@ export async function persistiereHerzschlag(id, { env = process.env } = {}) {
   const gespeichert = herzschlaege.get(String(id || ""));
   if (!gespeichert || !gespeichert.laeufe.length) return false;
   ablageStand.schreibVersuche += 1;
-  try {
-    await ablage.schreib({
-      id: String(id),
-      createdAt: gespeichert.laeufe[0].am,
-      laeufe: gespeichert.laeufe
-    }, { env });
-    ablageStand.schreibErfolge += 1;
-    ablageStand.letzterSchreibFehler = null;
-    return true;
-  } catch (fehler) {
-    ablageStand.letzterSchreibFehler = String(fehler?.message || fehler).slice(0, 120);
-    return false;
+  const datensatz = {
+    id: String(id),
+    createdAt: gespeichert.laeufe[0].am,
+    laeufe: gespeichert.laeufe
+  };
+  // Zwei Anlaeufe mit grosszuegigem Zeitlimit. Hier wartet kein Mensch auf
+  // eine Antwort — der Absender hat seine Quittung laengst. Was zaehlt, ist
+  // dass der Datensatz ankommt, nicht dass es schnell geht.
+  for (const timeoutMs of [20_000, 20_000]) {
+    try {
+      await ablage.schreib(datensatz, { env, timeoutMs });
+      ablageStand.schreibErfolge += 1;
+      ablageStand.letzterSchreibFehler = null;
+      return true;
+    } catch (fehler) {
+      ablageStand.letzterSchreibFehler = String(fehler?.message || fehler).slice(0, 120);
+    }
   }
+  return false;
 }
 
 /**
