@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { loadLoopConfig } from "./config.js";
 import { createLoop } from "./loop.js";
 import { baueLoraAnbau, beantworteLoraRoute, starteLoraTakt } from "./loraAnbau.js";
-import { createBrueckenWaechter } from "./brueckenWaechter.js";
+import { createBrueckenWaechter } from "../smejj-brueckenwaechter/brueckenWaechter.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const TICK_POLL_MS = 30_000;

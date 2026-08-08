@@ -1,0 +1,44 @@
+# smejj.com Bruecken-Waechter — eigenstaendiger Dauerdienst (Zeabur).
+#
+# Warum eine Datei im Wurzelverzeichnis und nicht im Worker-Ordner: Zeabur
+# waehlt `Dockerfile.<dienstname>` gezielt fuer genau diesen Dienst aus
+# (Docker-Wal-Symbol in der Oberflaeche); alle anderen Dienste des Projekts
+# bleiben unberuehrt. Siehe die vier gemessenen Fallen in
+# docs/deploy/ZEABUR_NEUER_DIENST.md — vor allem: OHNE Startbefehl fuehrt
+# Zeaburs Auto-Erkennung `pnpm start` aus, und das ist der CONTROL SERVER,
+# nicht dieser Worker. Der CMD unten nagelt das fest.
+#
+# Keine npm-Abhaengigkeiten: der Waechter benutzt ausschliesslich Node-Bordmittel
+# (fetch, http). Kein `npm install`, kein Lockfile-Risiko, kein Bauschritt.
+#
+# Build:  docker build -f Dockerfile.brueckenwaechter -t smejj-brueckenwaechter:latest .
+# Lokal:  docker run --rm -p 8080:8080 -e SMEJJ_AUTOPILOT_KEY=... smejj-brueckenwaechter:latest
+FROM node:22-slim
+
+ENV NODE_ENV=production \
+    SMEJJ_HOST=0.0.0.0 \
+    PORT=8080
+
+WORKDIR /app
+
+# Nur der Waechter selbst — zwei Dateien, keine weiteren Abhaengigkeiten.
+# Der Pfad bleibt repo-relativ, damit der relative Import im Worker unveraendert
+# funktioniert (gleiches Muster wie workers/maus-engine/Dockerfile).
+COPY --chown=node:node workers/smejj-brueckenwaechter ./workers/smejj-brueckenwaechter
+
+USER node
+
+# Laufzeit-Werte (alle optional ausser dem Schluessel):
+#   SMEJJ_AUTOPILOT_KEY          Herzschlag an die Ampel; ohne ihn bleibt sie grau
+#   SMEJJ_WAECHTER_TAKT_MS       Abstand der Bruecken-Abfragen (Standard 60000, min 30000)
+#   SMEJJ_WAECHTER_HERZSCHLAG_MS Abstand der Herzschlaege (Standard 300000)
+#   SMEJJ_WAECHTER_SCHWELLE      Fehlversuche in Folge bis "Ausfall" (Standard 3)
+#   SMEJJ_BRUECKE_HEALTH_URL     zu pruefende Adresse (Standard: Chat-Bruecke)
+#   SMEJJ_WAECHTER_MELDE_URL     optionaler zweiter Meldeweg fuer Ausfaelle
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+CMD ["node", "workers/smejj-brueckenwaechter/worker.mjs"]

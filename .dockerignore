@@ -25,6 +25,11 @@ workers/*
 !workers/glm-salad/s3.js
 !workers/smejj-training-loop
 !workers/smejj-training-loop/**
+# Bruecken-Waechter (eigener Dienst seit 2026-08-07). OHNE diese zwei
+# Zeilen scheitert der Docker-Bau mit "failed to calculate checksum of ref"
+# — die Falle, die schon den Training-Loop einen Ship-Loop gekostet hat.
+!workers/smejj-brueckenwaechter
+!workers/smejj-brueckenwaechter/**
 # Anbau der Dauertrainings-Schleife. OHNE diese beiden Zeilen bricht der Bau ab:
 # "failed to compute cache key" bei COPY workers/smejj-lora-loop — der Ordner
 # liegt dann gar nicht im Bau-Kontext. Live gemessen am 2026-08-01

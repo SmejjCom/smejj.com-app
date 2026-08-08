@@ -119,21 +119,22 @@ export const AUTOPILOTEN = Object.freeze([
   {
     id: "brueckenwaechter",
     name: "Brücken-Wächter",
-    kurz: "LÄUFT NICHT. Er ist kein eigener Dienst, sondern lebt im Training-Loop — und der ist seit 2. August angehalten.",
+    kurz: "Prüft rund um die Uhr, ob die Chat-Brücke wirklich antwortet — von außen, über dieselbe Adresse wie ein Nutzer.",
     funktionen: [
-      "Sollte die Chat-Brücke von außen abfragen und nach 3 Fehlern in Folge Alarm schlagen.",
-      "Wohnt in workers/smejj-training-loop/brueckenWaechter.js, also im Prozess des Training-Loops.",
-      "Am 2026-08-07 im Zeabur-Portal nachgemessen: es gibt nur 6 Dienste, keiner davon ist der Wächter.",
-      "Solange der Training-Loop stillgelegt ist, überwacht niemand die Brücke von außen."
+      "Fragt jede Minute die öffentliche Adresse der Chat-Brücke ab und liest ihre Version.",
+      "Erst 3 Fehlversuche in Folge gelten als Ausfall — eine Schwalbe ist kein Befund.",
+      "Meldet sich alle 5 Minuten selbst; bleibt seine Meldung aus, wird diese Ampel rot.",
+      "Seit 2026-08-07 ein EIGENER Dienst: vorher wohnte er im Training-Loop und wurde mit dessen Stilllegung fünf Tage lang unbemerkt still."
     ],
-    ort: "Zeabur (im Training-Loop)",
-    zeitplan: "läuft nicht",
-    messung: "keine",
-    messungHinweis: "Läuft nicht, weil sein Wirtsprozess angehalten ist. Wer ihn zurück will, braucht entweder den Training-Loop wieder oder einen eigenen kleinen Dienst nur für die Überwachung.",
-    erwartetAlleMs: null,
-    schonfristMs: null,
-    startAnleitung: "Zwei Wege: (a) Training-Loop wieder starten — er bringt den Wächter mit, kostet aber Modellaufrufe; (b) den Wächter als eigenen, schlanken Dienst ausrollen (braucht eine Freigabe).",
-    stopAnleitung: "Bereits gestoppt — er lief seit dem 2. August nicht mehr."
+    ort: "Zeabur (eigener Dienst)",
+    zeitplan: "Dauerbetrieb",
+    // 5-Minuten-Takt, 10 Minuten erwartet, 20 Minuten Schonfrist: ein
+    // verpasster Herzschlag ist noch kein Alarm, zwei schon.
+    messung: "heartbeat",
+    erwartetAlleMs: 10 * 60 * 1000,
+    schonfristMs: 20 * 60 * 1000,
+    startAnleitung: "Zeabur-Portal → Projekt »untitled« → smejj-brueckenwaechter → Restart. Läuft ohne Modellkosten auf dem bereits bezahlten Server.",
+    stopAnleitung: "Zeabur-Portal → smejj-brueckenwaechter → Suspend. Danach beobachtet niemand mehr, ob die Brücke lebt."
   },
   {
     id: "salad-sonden",

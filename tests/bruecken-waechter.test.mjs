@@ -6,7 +6,7 @@
 // haben (ein einzelner Aussetzer; eine Antwort, die "da" war, aber nichts sagte).
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createBrueckenWaechter } from "../workers/smejj-training-loop/brueckenWaechter.js";
+import { createBrueckenWaechter } from "../workers/smejj-brueckenwaechter/brueckenWaechter.js";
 
 /** Eine gestellte Bruecke, deren Antworten der Test vorgibt. */
 function stelleBruecke(folge) {
