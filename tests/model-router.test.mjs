@@ -230,3 +230,54 @@ test("classifyProfile erkennt die Coding-Absicht des fehlgeschlagenen Eval-Falls
   assert.equal(classifyProfile("Schreibe eine ESM-Funktion parseBudget(text)"), "coding");
   assert.equal(classifyProfile("Implement a patch for this bug"), "coding");
 });
+
+test("das selbst gehostete Modell bekommt eine Gesundheitssonde", async () => {
+  // Der Waechter fuer einen echten Befund (2026-08-06): fuer smejj-fast-1 gab
+  // es GAR KEINE Sonde. Gesundheit entstand nur aus echter Inferenz — und
+  // `runtimeAvailable` ist `health?.available === true`, bei fehlendem Eintrag
+  // also false. Vier Tage lang meldete das Register `erreichbar: false` fuer
+  // eine laufende, gesunde und bezahlte GPU, deren /health `{"status":"ok"}`
+  // lieferte. Wer das liest, benutzt das Modell nicht — und ohne Benutzung
+  // entsteht kein Eintrag. Diese Sonde bricht den Kreis.
+  resetModelRuntimeHealth();
+  const env = {
+    SMEJJ_FAST_1_ENABLED: "true",
+    SMEJJ_LLM_FAST_BASE_URL: "https://beispiel.salad.cloud/v1",
+    SMEJJ_LLM_FAST_API_KEY: "never-expose-this-key"
+  };
+
+  let geseheneUrl = "";
+  let gesehenerKopf = "";
+  await refreshModelRuntimeHealth(env, {
+    force: true,
+    fetchImpl: async (url, options) => {
+      geseheneUrl = url;
+      gesehenerKopf = options.headers["Salad-Api-Key"] || "";
+      return { ok: true, status: 200, json: async () => ({ status: "ok" }) };
+    }
+  });
+
+  // Die Adresse endet auf /v1; die Gesundheitsanzeige liegt eine Ebene darueber.
+  assert.equal(geseheneUrl, "https://beispiel.salad.cloud/health");
+  // Salad verlangt den eigenen Kopf — mit `Authorization: Bearer` antwortet die
+  // Vortuer 403 (live gemessen), und die Sonde haette den Ausfall erfunden.
+  assert.equal(gesehenerKopf, "never-expose-this-key");
+
+  const gesund = getModelRuntimeHealthSnapshot()["smejj-fast-1"];
+  assert.equal(gesund.status, "ready");
+  assert.equal(gesund.available, true);
+  assert.equal(gesund.source, "health-probe");
+  assert.equal(JSON.stringify(gesund).includes("never-expose-this-key"), false,
+    "der Schluessel darf in keinem Gesundheitseintrag auftauchen");
+
+  // Und der Ausfall wird als Ausfall gemeldet, nicht verschwiegen.
+  await refreshModelRuntimeHealth(env, {
+    force: true,
+    nowMs: Date.now() + 1,
+    fetchImpl: async () => ({ ok: false, status: 503, json: async () => ({}) })
+  });
+  const krank = getModelRuntimeHealthSnapshot()["smejj-fast-1"];
+  assert.equal(krank.available, false);
+  assert.equal(krank.reason, "health_http_503");
+  resetModelRuntimeHealth();
+});

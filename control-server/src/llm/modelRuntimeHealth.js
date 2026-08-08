@@ -64,7 +64,70 @@ export async function refreshModelRuntimeHealth(env = process.env, {
   timeoutMs = Number(env.SMEJJ_MODEL_HEALTH_TIMEOUT_MS || DEFAULT_PROBE_TIMEOUT_MS)
 } = {}) {
   await probeMoonshotBalance(env, { fetchImpl, force, nowMs, probeTtlMs, timeoutMs });
+  await probeSelbstGehostet(env, { fetchImpl, force, nowMs, probeTtlMs, timeoutMs });
   return getModelRuntimeHealthSnapshot();
+}
+
+/**
+ * Sonde fuer das selbst gehostete Modell (`smejj-fast-1`).
+ *
+ * WARUM ES SIE GIBT (gemessen 2026-08-06): Ohne sie hatte das Modell GAR
+ * KEINEN Gesundheitseintrag. `runtimeAvailable` ist `health?.available === true`
+ * — und das ist bei einem fehlenden Eintrag falsch. Das Modellregister meldete
+ * darum `erreichbar: false`, obwohl die Container-Gruppe lief, gesund war
+ * (`/health` -> `{"status":"ok"}`) und ihr Modell auslieferte. Vier Tage lang
+ * sah eine bezahlte, funktionierende GPU wie ein Ausfall aus.
+ *
+ * Der Eintrag entstand vorher nur aus echter Inferenz — also erst, wenn jemand
+ * das Modell benutzt. Wer aber im Register `erreichbar: false` liest, benutzt
+ * es nicht. Diese Sonde bricht den Kreis.
+ *
+ * ROUTING WAR NIE BLOCKIERT: `nachGesundheitSortiert()` schiebt nur BEKANNT
+ * ausgefallene Modelle ans Ende; ein fehlender Eintrag zaehlt nicht als
+ * Ausfall. Die Sonde repariert also die Anzeige und die Reihenfolge, nicht die
+ * Erreichbarkeit — die war die ganze Zeit gegeben.
+ */
+async function probeSelbstGehostet(env, options) {
+  const modelId = "smejj-fast-1";
+  if (!isModelEnabled(modelId, env)) return;
+  const runtime = getModelRuntimeConfig(modelId, env);
+  if (!runtime?.configured) return;
+
+  const cachedAt = Number(PROBE_CACHE.get(modelId) || 0);
+  const ttlMs = bounded(options.probeTtlMs, 1_000, 15 * 60_000, DEFAULT_PROBE_TTL_MS);
+  if (!options.force && options.nowMs - cachedAt < ttlMs) return;
+  PROBE_CACHE.set(modelId, options.nowMs);
+
+  const backend = { logicalModelId: modelId, name: runtime.provider, model: runtime.runtimeModel };
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(),
+    bounded(options.timeoutMs, 500, 15_000, DEFAULT_PROBE_TIMEOUT_MS)
+  );
+  try {
+    // `/health` und nicht `/v1/models`: die Modellliste ist bei llama.cpp
+    // teurer und sagt nichts, was `/health` nicht schon sagt. Die Adresse
+    // endet auf `/v1` — die Gesundheitsanzeige haengt eine Ebene darueber.
+    const wurzel = String(runtime.baseUrl || "").replace(/\/v1\/?$/, "");
+    const response = await options.fetchImpl(`${wurzel}/health`, {
+      method: "GET",
+      signal: controller.signal,
+      headers: authHeaders(runtime)
+    });
+    if (!response.ok) {
+      markModelRuntimeFailure(backend, `health_http_${response.status}`, { source: "health-probe" });
+      return;
+    }
+    markModelRuntimeSuccess(backend, { source: "health-probe" });
+  } catch (error) {
+    markModelRuntimeFailure(
+      backend,
+      error?.name === "AbortError" ? "health_probe_timeout" : "health_probe_unreachable",
+      { source: "health-probe" }
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function probeMoonshotBalance(env, options) {
