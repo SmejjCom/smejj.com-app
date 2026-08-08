@@ -125,7 +125,8 @@ export const AUTOPILOTEN = Object.freeze([
       "Erst 3 Fehlversuche in Folge gelten als Ausfall — eine Schwalbe ist kein Befund.",
       "Meldet sich alle 5 Minuten selbst; bleibt seine Meldung aus, wird diese Ampel rot.",
       "Seit 2026-08-07 ein EIGENER Dienst: vorher wohnte er im Training-Loop und wurde mit dessen Stilllegung fünf Tage lang unbemerkt still.",
-      "Selbst nachschauen: smejj-brueckenwaechter.zeabur.app/bruecke zeigt Prüfungen, Fehler und vergangene Ausfälle; /health zeigt den Wächter selbst."
+      "Selbst nachschauen: smejj-brueckenwaechter.zeabur.app/bruecke zeigt Prüfungen, Fehler und vergangene Ausfälle; /health zeigt den Wächter selbst.",
+      "Diese Ampel fragt ihn alle 5 Minuten ab (statt auf eine Meldung zu warten) — antwortet er nicht mehr, wird sie rot."
     ],
     ort: "Zeabur (eigener Dienst)",
     zeitplan: "Dauerbetrieb",
@@ -292,6 +293,60 @@ function sicherGleich(links, rechts) {
   const a = crypto.createHash("sha256").update(links, "utf8").digest();
   const b = crypto.createHash("sha256").update(rechts, "utf8").digest();
   return crypto.timingSafeEqual(a, b);
+}
+
+/**
+ * Der Bruecken-Waechter wird ABGEFRAGT statt zu melden (2026-08-08).
+ *
+ * Warum umgekehrt zu allen anderen: Ein Push-Herzschlag braucht einen
+ * Schluessel am fremden Dienst — und den dort einzutragen ist ein Handgriff,
+ * der leicht vergessen wird und die Ampel dann faelschlich rot faerbt. Der
+ * Waechter hat aber etwas, das die cron-Skripte nicht haben: eine oeffentliche
+ * Adresse. Also holt der Control-Server sich die Auskunft selbst.
+ *
+ * Das ist KEIN schwaecherer Nachweis: Antwortet /health, laeuft der Prozess;
+ * antwortet er nicht, ist der Waechter tot — genau die Frage, um die es geht.
+ * Zusaetzlich wandert der Bruecken-Zustand aus /bruecke in die Meldung, damit
+ * in der Ampel steht, was der Waechter gerade sieht.
+ */
+export async function frageWaechterAb({ jetztMs = Date.now(), fetchImpl = fetch } = {}) {
+  const basis = process.env.SMEJJ_WAECHTER_URL || "https://smejj-brueckenwaechter.zeabur.app";
+  try {
+    const [gesundheit, bruecke] = await Promise.all([
+      fetchImpl(`${basis}/health`, { signal: AbortSignal.timeout(15_000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetchImpl(`${basis}/bruecke`, { signal: AbortSignal.timeout(15_000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+    ]);
+    // Keine Antwort = kein Herzschlag. Nichts eintragen ist hier richtig:
+    // Ausbleiben IST der Alarm, eine erfundene Meldung waere das Gegenteil.
+    if (!gesundheit?.ok) return false;
+
+    const meldung = bruecke?.erreichbar === false
+      ? `Brücke AUSGEFALLEN seit ${bruecke.laufenderAusfall?.seit || "?"}`
+      : bruecke?.erreichbar === true
+        ? `Brücke gesund (${bruecke.letzteVersion || "?"}), ${bruecke.gesamtPruefungen || 0} Prüfungen`
+        : "Wächter läuft, erste Brücken-Prüfung steht aus";
+
+    const gespeichert = herzschlaege.get("brueckenwaechter") || { laeufe: [] };
+    gespeichert.laeufe.unshift({
+      am: new Date(jetztMs).toISOString(),
+      status: "ok",
+      meldung: meldung.slice(0, 200),
+      dauerMs: null
+    });
+    gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
+    herzschlaege.set("brueckenwaechter", gespeichert);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Die Waechter-Abfrage im Takt starten. unref — haelt den Prozess nicht wach. */
+export function starteWaechterAbfrage({ intervallMs = 5 * 60 * 1000 } = {}) {
+  frageWaechterAb().catch(() => {});
+  const zeitgeber = setInterval(() => { frageWaechterAb().catch(() => {}); }, intervallMs);
+  if (typeof zeitgeber.unref === "function") zeitgeber.unref();
+  return zeitgeber;
 }
 
 /**

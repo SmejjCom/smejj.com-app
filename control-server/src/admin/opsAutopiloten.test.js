@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import {
   AUTOPILOTEN,
   autopilotUebersicht,
+  frageWaechterAb,
   heartbeatAnnehmen,
   ladeHerzschlaege,
   persistiereHerzschlag,
@@ -164,6 +165,43 @@ test("Stufe 3: ohne Empfaenger wird nichts gesendet und nichts geworfen", async 
   heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "fehler", env: ENV, jetztMs: JETZT });
   const ergebnis = await pruefeAlarm({ env: ENV, jetztMs: JETZT, sende: async () => { throw new Error("darf nicht"); } });
   assert.equal(ergebnis.gemeldet, 0);
+});
+
+test("Waechter-Abfrage: antwortet er, wird er gruen — mit Bruecken-Zustand", async () => {
+  frisch();
+  const antwortet = async (url) => ({
+    ok: true,
+    json: async () => (String(url).includes("/bruecke")
+      ? { erreichbar: true, letzteVersion: "v124", gesamtPruefungen: 42 }
+      : { ok: true, dienst: "smejj-brueckenwaechter" })
+  });
+  assert.equal(await frageWaechterAb({ jetztMs: JETZT, fetchImpl: antwortet }), true);
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "brueckenwaechter");
+  assert.equal(a.ampel, "gruen");
+  assert.ok(a.letzterLauf.meldung.includes("v124"), "der Bruecken-Zustand gehoert in die Meldung");
+});
+
+test("Waechter-Abfrage: schweigt er, wird NICHTS eingetragen", async () => {
+  frisch();
+  const schweigt = async () => { throw new Error("nicht erreichbar"); };
+  assert.equal(await frageWaechterAb({ jetztMs: JETZT, fetchImpl: schweigt }), false);
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "brueckenwaechter");
+  assert.equal(a.ampel, "grau", "eine erfundene Meldung waere das Gegenteil des Zwecks");
+  assert.equal(a.letzterLauf, null);
+});
+
+test("Waechter-Abfrage: meldet er die Bruecke als tot, bleibt ER trotzdem gruen", async () => {
+  frisch();
+  const brueckeTot = async (url) => ({
+    ok: true,
+    json: async () => (String(url).includes("/bruecke")
+      ? { erreichbar: false, laufenderAusfall: { seit: "2026-08-08T05:00:00.000Z" } }
+      : { ok: true })
+  });
+  await frageWaechterAb({ jetztMs: JETZT, fetchImpl: brueckeTot });
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "brueckenwaechter");
+  assert.equal(a.ampel, "gruen", "der Waechter tut seine Arbeit — die Bruecke ist das Problem, nicht er");
+  assert.ok(a.letzterLauf.meldung.includes("AUSGEFALLEN"));
 });
 
 test("jeder Autopilot hat, was die idiotensichere Ansicht braucht", () => {

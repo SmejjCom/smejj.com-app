@@ -62,7 +62,7 @@ import { handleProviderRoute } from "../control-server/src/routes/providerRoutes
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
-import { ladeHerzschlaege, starteAlarmWache, starteSelbstmessung } from "../control-server/src/admin/opsAutopiloten.js";
+import { ladeHerzschlaege, starteAlarmWache, starteSelbstmessung, starteWaechterAbfrage } from "../control-server/src/admin/opsAutopiloten.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -254,6 +254,9 @@ starteSelbstmessung();
 // die Alarm-Wache takten — Rot wird einmal je Episode per Mail gemeldet.
 ladeHerzschlaege().catch(() => {});
 starteAlarmWache();
+// Bruecken-Waechter: er wird ABGEFRAGT statt zu melden — er hat als einziger
+// Autopilot eine oeffentliche Adresse, also braucht er keinen Schluessel.
+starteWaechterAbfrage();
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {
