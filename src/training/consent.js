@@ -165,9 +165,33 @@ export function consentDecision({ entries = [], scope }, {
     String(left.occurredAt).localeCompare(String(right.occurredAt)) ||
     String(left.eventId).localeCompare(String(right.eventId))
   ));
-  const revocation = [...verified].reverse().find((entry) => (
-    entry.eventType === "revoke" || entry.eventType === "revocation-sentinel"
-  ));
+  // Es entscheidet der JUENGSTE Vorgang, nicht die blosse Existenz eines
+  // Widerrufs.
+  //
+  // WARUM DAS EINMAL ANDERS WAR UND WAS ES KOSTETE (gemessen 2026-08-08):
+  // Vorher gewann jeder Widerruf, unabhaengig davon, ob danach eine neue
+  // Einwilligung kam. Die Eintraege wurden zwar chronologisch sortiert — die
+  // Sortierung wurde dann aber nicht benutzt. Folge: wer einmal widerrief,
+  // konnte NIE WIEDER einwilligen. Die neue Einwilligung wurde geschrieben,
+  // sofort ueberstimmt, und handleGrant warf `consent_grant_resolution_failed`
+  // — beim Nutzer kam ein nichtssagendes "Dienst nicht verfuegbar" an.
+  //
+  // Ein Widerruf soll die bestehende Einwilligung beenden, nicht das Recht,
+  // sich spaeter neu zu entscheiden. Genau das war auch die Zusage der
+  // Oberflaeche ("jederzeit widerrufbar").
+  //
+  // FAIL-CLOSED BLEIBT: Bei GLEICHEM Zeitstempel gewinnt der Widerruf. Sonst
+  // entschiede die Sortierung nach `eventId` — also faktisch der Zufall —
+  // darueber, ob Daten erfasst werden duerfen. Diese Muenze darf nicht
+  // geworfen werden.
+  const ENTSCHEIDENDE_TYPEN = new Set(["grant", "revoke", "revocation-sentinel"]);
+  const entscheidende = verified.filter((entry) => ENTSCHEIDENDE_TYPEN.has(entry.eventType));
+  const juengste = entscheidende[entscheidende.length - 1];
+  const gleichzeitig = juengste
+    ? entscheidende.filter((entry) => String(entry.occurredAt) === String(juengste.occurredAt))
+    : [];
+  const massgeblich = gleichzeitig.find((entry) => entry.eventType !== "grant") || juengste;
+  const revocation = massgeblich && massgeblich.eventType !== "grant" ? massgeblich : null;
   if (revocation) {
     return resolvedDecision({
       ...decisionBase(expected, ledgerDigest, now),

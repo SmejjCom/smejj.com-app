@@ -523,3 +523,78 @@ function fakeResponse() {
     end(payload) { this.body = JSON.parse(payload); }
   };
 }
+
+test("nach einem Widerruf ist eine NEUE Einwilligung wieder moeglich", () => {
+  // Der Waechter fuer einen echten Fehler (live gemessen 2026-08-08 auf einem
+  // frischen Konto): einwilligen -> widerrufen -> erneut einwilligen ergab
+  // HTTP 503. Jeder Widerruf gewann fuer immer, obwohl die Eintraege
+  // chronologisch sortiert wurden — die Sortierung wurde nur nicht benutzt.
+  // Ein Widerruf beendet die bestehende Einwilligung; er darf nicht das Recht
+  // nehmen, sich spaeter neu zu entscheiden.
+  const scope = bindConsentScope({ subjectId: SUBJECT, repository: REPOSITORY, privacyNoticeSha256: NOTICE_HASH }, CONFIG);
+  let n = 0;
+  const uuid = () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`;
+  const mache = (now) => createConsentGrant({
+    subjectId: SUBJECT, repository: REPOSITORY, privacyNoticeSha256: NOTICE_HASH,
+    captureReviewConsent: true, modelTrainingConsent: true, sourceRightsConfirmed: true
+  }, { config: CONFIG, now, randomUUID: uuid });
+
+  const ersteEinwilligung = mache("2026-07-10T10:00:00.000Z");
+  const widerruf = createConsentRevocation(
+    { grant: ersteEinwilligung, subjectId: SUBJECT, repository: REPOSITORY },
+    { config: CONFIG, now: "2026-07-10T11:00:00.000Z", randomUUID: uuid }
+  );
+  const zweiteEinwilligung = mache("2026-07-10T12:00:00.000Z");
+
+  const nachWiderruf = consentDecision({ entries: [ersteEinwilligung, widerruf.event, widerruf.sentinel], scope },
+    { config: CONFIG, now: "2026-07-10T11:30:00.000Z" });
+  assert.equal(nachWiderruf.status, "revoked", "ein Widerruf muss sofort wirken");
+  assert.equal(nachWiderruf.captureAllowed, false);
+
+  const nachNeuerEinwilligung = consentDecision(
+    { entries: [ersteEinwilligung, widerruf.event, widerruf.sentinel, zweiteEinwilligung], scope },
+    { config: CONFIG, now: "2026-07-10T12:30:00.000Z" }
+  );
+  assert.equal(nachNeuerEinwilligung.status, "granted", "die spaetere Einwilligung muss gelten");
+  assert.equal(nachNeuerEinwilligung.captureAllowed, true);
+  assert.equal(nachNeuerEinwilligung.evidenceId, zweiteEinwilligung.eventId,
+    "der Beleg muss auf die NEUE Einwilligung zeigen, nicht auf die widerrufene");
+
+  // Die Reihenfolge der Eintraege im Ledger darf egal sein — es zaehlt die Zeit.
+  const gemischt = consentDecision(
+    { entries: [zweiteEinwilligung, widerruf.sentinel, ersteEinwilligung, widerruf.event], scope },
+    { config: CONFIG, now: "2026-07-10T12:30:00.000Z" }
+  );
+  assert.equal(gemischt.status, "granted");
+});
+
+test("bei gleichem Zeitstempel gewinnt der Widerruf", () => {
+  // Sonst entschiede die Sortierung nach eventId — also der Zufall — darueber,
+  // ob personenbezogene Daten erfasst werden duerfen. Diese Muenze darf nicht
+  // geworfen werden.
+  const scope = bindConsentScope({ subjectId: SUBJECT, repository: REPOSITORY, privacyNoticeSha256: NOTICE_HASH }, CONFIG);
+  const GLEICH = "2026-07-10T10:00:00.000Z";
+  let n = 100;
+  const uuid = () => `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`;
+  const ersteEinwilligung = createConsentGrant({
+    subjectId: SUBJECT, repository: REPOSITORY, privacyNoticeSha256: NOTICE_HASH,
+    captureReviewConsent: true, modelTrainingConsent: true, sourceRightsConfirmed: true
+  }, { config: CONFIG, now: "2026-07-10T09:00:00.000Z", randomUUID: uuid });
+  const widerruf = createConsentRevocation(
+    { grant: ersteEinwilligung, subjectId: SUBJECT, repository: REPOSITORY },
+    { config: CONFIG, now: GLEICH, randomUUID: uuid }
+  );
+  const gleichzeitigeEinwilligung = createConsentGrant({
+    subjectId: SUBJECT, repository: REPOSITORY, privacyNoticeSha256: NOTICE_HASH,
+    captureReviewConsent: true, modelTrainingConsent: true, sourceRightsConfirmed: true
+  }, { config: CONFIG, now: GLEICH, randomUUID: uuid });
+
+  for (const reihenfolge of [
+    [ersteEinwilligung, widerruf.event, widerruf.sentinel, gleichzeitigeEinwilligung],
+    [ersteEinwilligung, gleichzeitigeEinwilligung, widerruf.event, widerruf.sentinel]
+  ]) {
+    const d = consentDecision({ entries: reihenfolge, scope }, { config: CONFIG, now: "2026-07-10T10:30:00.000Z" });
+    assert.equal(d.status, "revoked", "bei Gleichstand muss fail-closed gelten");
+    assert.equal(d.captureAllowed, false);
+  }
+});

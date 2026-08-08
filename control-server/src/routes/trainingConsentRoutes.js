@@ -152,6 +152,14 @@ function consentError(res, error) {
     return json(res, 503, { ok: false, error: "consent_service_unavailable" });
   }
   if (code.includes("immutable_object_exists")) return json(res, 409, { ok: false, error: "consent_event_already_exists" });
+  // Die Einwilligung wurde geschrieben, aber der Ledger loest sie nicht als
+  // "granted" auf. Das ist ein Zustandskonflikt, kein Ausfall — und es gehoert
+  // gesagt. Vorher fiel dieser Fall in den Sammelcode und der Nutzer las
+  // "Dienst nicht verfuegbar", waehrend der Dienst tadellos lief (gemessen
+  // 2026-08-08, damals ausgeloest durch einen frueheren Widerruf).
+  if (code === "consent_grant_resolution_failed") {
+    return json(res, 409, { ok: false, error: "consent_grant_not_effective" });
+  }
   const clientErrors = new Set([
     "consent_authenticated_subject_invalid",
     "consent_explicit_scope_required",
