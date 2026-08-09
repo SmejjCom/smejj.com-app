@@ -53,6 +53,11 @@ export const PROTECTED_FILES = [
   // Schreibende Aktionen.
   "control-server/src/routes/adminWriteRoutes.js",
   "control-server/src/routes/adminStage4Routes.js",
+  // Autopiloten-Wartung (Stufe 2b, Freigabe 2026-08-08): Stummschalten ist
+  // das perfekte Werkzeug, um einen Einbruch unsichtbar zu machen — wer die
+  // Ampel stummschalten kann, kann jeden Alarm abstellen. Deshalb steht diese
+  // Route unter demselben Schutz wie die Kontoaktionen.
+  "control-server/src/routes/adminAutopilotAktionen.js",
   // Wer hereinkommt und was er darf.
   "control-server/src/admin/adminAuth.js",
   "control-server/src/admin/adminRoles.js",

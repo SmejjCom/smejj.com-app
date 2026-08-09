@@ -57,7 +57,13 @@ const MATRIX = Object.freeze({
   // Auftragstext, keine Fehlermeldung im Wortlaut, keine Repository-Adresse,
   // kein Schluesselwert. Wer den Adminbereich betreten darf, darf sehen, ob
   // etwas haengt. Alles darueber hinaus faellt unter users.content.read.
-  "ops.read":          { owner: "allow", admin: "allow", support: "allow",   finance: "allow", auditor: "allow", readonly: "allow" }
+  "ops.read":          { owner: "allow", admin: "allow", support: "allow",   finance: "allow", auditor: "allow", readonly: "allow" },
+  // Betriebszustand AENDERN (Autopiloten-Wartung, Sofortpruefung) — seit der
+  // Betreiber-Freigabe vom 2026-08-08. Bewusst enger als ops.read: zuschauen
+  // darf jede Rolle, stummschalten nur, wer auch Konten verwalten darf. Ein
+  // Auditor, der einen Alarm stummschalten koennte, waere ein Widerspruch in
+  // sich — er ist da, um Luecken zu finden, nicht um sie zuzudecken.
+  "ops.write":         { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" }
 });
 
 // Das Audit-Log ist fuer JEDE Rolle unveraenderlich — auch fuer den Owner.

@@ -26,6 +26,7 @@ import { handleAdminUiRoute } from "./adminUiRoutes.js";
 import { handleAdminWriteRoute } from "./adminWriteRoutes.js";
 import { handleAdminStage4Route } from "./adminStage4Routes.js";
 import { handleAdminOpsRoute } from "./adminOpsRoutes.js";
+import { handleAutopilotAktion } from "./adminAutopilotAktionen.js";
 import { handleAdminSicherheitRoute } from "./adminSicherheitRoutes.js";
 import { handleAdminGeldRoute } from "./adminGeldRoutes.js";
 import { handleAdminRoute } from "./adminRoutes.js";
@@ -96,6 +97,9 @@ export async function handleAdminSurface(req, url, res, { readSession, sessionSt
   if (pfad === "/api/admin" || pfad.startsWith("/api/admin/")) {
     if (await handleAdminWriteRoute(req, url, res, { env })) return true;
     if (await handleAdminStage4Route(req, url, res, { env })) return true;
+    // VOR der lesenden Ops-Route: die ist auf GET verriegelt und wuerde den
+    // POST mit 405 abweisen, bevor er hier ankommt.
+    if (await handleAutopilotAktion(req, url, res, { env })) return true;
     if (await handleAdminOpsRoute(req, url, res, { env })) return true;
     if (await handleAdminSicherheitRoute(req, url, res, { env })) return true;
     if (await handleAdminGeldRoute(req, url, res, { env })) return true;

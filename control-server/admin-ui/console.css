@@ -363,3 +363,12 @@ select.dlg-feld{cursor:pointer;}
 .ap-anleitung{margin-top:6px;padding:10px 12px;background:var(--sm-field);
   border:1px solid var(--sm-border);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:12px;line-height:1.6;word-break:break-word;color:var(--sm-ink);}
+
+/* Wartung: eigener Ampelzustand (Stufe 2b). Akzentfarbe statt Rot/Grün —
+   stummgeschaltet ist weder gesund noch kaputt, sondern eine Entscheidung. */
+.ap-dot.wartung{background:var(--sm-accent);box-shadow:0 0 10px var(--sm-accent);opacity:.75;}
+.ap-knoepfe{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:4px;}
+.ap-knoepfe .btn{padding:9px 16px;font-size:12.5px;cursor:pointer;font-family:inherit;
+  background:var(--sm-accent-soft);border:1px solid var(--sm-accent-border);color:var(--sm-accent-text);}
+.ap-knoepfe .btn:hover{background:var(--sm-card-strong);}
+.ap-knopf-hinweis{flex-basis:100%;color:var(--sm-ink-faint);}

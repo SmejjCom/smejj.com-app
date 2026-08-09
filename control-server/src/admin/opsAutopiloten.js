@@ -237,6 +237,7 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
     gelb: zaehle("gelb"),
     rot: zaehle("rot"),
     grau: zaehle("grau"),
+    wartung: zaehle("wartung"),
     autopiloten: liste.sort(sortiereNachDringlichkeit),
     serverStartAm: Number.isFinite(startzeitMs) ? new Date(startzeitMs).toISOString() : null,
     // Selbstauskunft der Ablage: ob die Neustart-Festigkeit wirklich traegt,
@@ -251,7 +252,9 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
 function bewerten(a, jetztMs) {
   const gespeichert = herzschlaege.get(a.id) || { laeufe: [] };
   const letzter = gespeichert.laeufe[0] || null;
+  const inWartung = wartung.get(a.id) || null;
   const basis = {
+    wartung: inWartung,
     id: a.id,
     name: a.name,
     kurz: a.kurz,
@@ -264,6 +267,17 @@ function bewerten(a, jetztMs) {
     verlauf: gespeichert.laeufe
   };
 
+  // Wartung schlaegt alles: wer stumm geschaltet ist, loest keinen Alarm aus.
+  // Die Anzeige sagt trotzdem, seit wann und warum — Stummschalten heisst
+  // nicht Verstecken.
+  if (inWartung) {
+    return {
+      ...basis,
+      ampel: "wartung",
+      ampelGrund: `In Wartung seit ${inWartung.seit}${inWartung.grund ? " — " + inWartung.grund : ""}. `
+        + "Kein Alarm, bis die Wartung beendet wird."
+    };
+  }
   if (a.messung !== "heartbeat") {
     return { ...basis, ampel: "grau", ampelGrund: a.messungHinweis || "Kein Herzschlag angeschlossen." };
   }
@@ -290,7 +304,9 @@ function bewerten(a, jetztMs) {
 
 /** Rot zuerst, dann gelb, dann grau, dann gruen — Auffaelliges nach oben. */
 function sortiereNachDringlichkeit(a, b) {
-  const rang = { rot: 0, gelb: 1, grau: 2, gruen: 3 };
+  // Wartung ganz nach unten: sie ist bewusst herbeigefuehrt und braucht keine
+  // Aufmerksamkeit — anders als grau, das eine offene Frage ist.
+  const rang = { rot: 0, gelb: 1, grau: 2, gruen: 3, wartung: 4 };
   const unterschied = (rang[a.ampel] ?? 9) - (rang[b.ampel] ?? 9);
   if (unterschied !== 0) return unterschied;
   return a.name.localeCompare(b.name, "de");
@@ -414,6 +430,7 @@ export async function ladeHerzschlaege({ env = process.env } = {}) {
     }
     let geladen = 0;
     for (const datensatz of ergebnis.datensaetze) {
+      if (ladeWartung(datensatz)) continue;
       if (!AUTOPILOTEN.some((a) => a.id === datensatz.id)) continue;
       if (herzschlaege.has(datensatz.id)) continue;
       if (!Array.isArray(datensatz.laeufe) || !datensatz.laeufe.length) continue;
@@ -431,6 +448,66 @@ export async function ladeHerzschlaege({ env = process.env } = {}) {
     ablageStand.ladeFehler = String(fehler?.message || fehler).slice(0, 120);
     return 0;
   }
+}
+
+// ---- Wartung (Stufe 2b, Betreiber-Freigabe 2026-08-08) ----------------------
+//
+// WAS HIER BEWUSST NICHT STEHT: Knoepfe, die einen Dienst wirklich starten
+// oder stoppen. Der Control-Server hat weder einen Zeabur- noch einen
+// claude.ai-Zugang (am 2026-08-08 in der Umgebung nachgesehen: nur der
+// Salad-Schluessel, und das ist er selbst). Ein "Start"-Knopf fuer den
+// Konkurrenz-Radar waere eine Attrappe — und eine Attrappe in einer Ansicht,
+// die "gemessen statt behauptet" verspricht, waere schlimmer als ihr Fehlen.
+//
+// WAS ER STATTDESSEN KANN, und was echten Wert hat: eine Automatik in WARTUNG
+// setzen. Wer weiss, dass ein Autopilot gerade absichtlich stillsteht, schaltet
+// ihn stumm — die Ampel zeigt "Wartung" statt Rot, und die Alarm-Mail bleibt
+// aus. Ohne das ist die einzige Alternative, den Alarm zu ignorieren; und eine
+// Ampel, die man ignorieren lernt, ist keine Ampel mehr.
+const wartung = new Map();   // id -> { seit, grund, wer }
+
+export function istInWartung(id) {
+  return wartung.has(String(id || ""));
+}
+
+/**
+ * Wartung ein- oder ausschalten. Die Entscheidung wird abgelegt, damit sie
+ * einen Neustart uebersteht — sonst faellt der stummgeschaltete Autopilot
+ * nach der naechsten Reallokation ploetzlich wieder in den Alarm.
+ */
+export async function setzeWartung(id, an, { grund = "", wer = "", env = process.env, jetztMs = Date.now() } = {}) {
+  const kennung = String(id || "");
+  if (!AUTOPILOTEN.some((a) => a.id === kennung)) return { ok: false, error: "autopilot_unknown" };
+  if (an) {
+    wartung.set(kennung, { seit: new Date(jetztMs).toISOString(), grund: String(grund).slice(0, 200), wer });
+    // Eine Wartung beendet die laufende Alarm-Episode: sonst bliebe die
+    // Erinnerung stehen und nach dem Ende der Wartung kaeme keine Mail mehr.
+    alarmiert.delete(kennung);
+  } else {
+    wartung.delete(kennung);
+  }
+  try {
+    await ablage.schreib({
+      id: "_wartung",
+      createdAt: new Date(jetztMs).toISOString(),
+      eintraege: [...wartung.entries()].map(([k, v]) => ({ id: k, ...v }))
+    }, { env, timeoutMs: 20_000 });
+  } catch {
+    // Die Wartung gilt trotzdem — sie steht im Arbeitsspeicher. Nur ihre
+    // Neustart-Festigkeit ist dahin, und das faellt in der Ablage-Auskunft auf.
+  }
+  return { ok: true, id: kennung, wartung: an ? wartung.get(kennung) : null };
+}
+
+/** Beim Start die abgelegten Wartungen zurueckholen. */
+function ladeWartung(datensatz) {
+  if (datensatz?.id !== "_wartung" || !Array.isArray(datensatz.eintraege)) return false;
+  for (const e of datensatz.eintraege) {
+    if (e?.id && AUTOPILOTEN.some((a) => a.id === e.id)) {
+      wartung.set(e.id, { seit: e.seit, grund: e.grund, wer: e.wer });
+    }
+  }
+  return true;
 }
 
 // Stufe 3b: Wer bereits eine Rot-Mail bekommen hat, bekommt keine zweite fuer

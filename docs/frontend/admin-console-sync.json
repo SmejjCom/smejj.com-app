@@ -37,8 +37,8 @@
     "console-stage6.js": "85d04b0a3093274b8a53bd65d9051844463d0331e67b0eb72b5d24435df66f06",
     "console-stage7.js": "0ffbdfa9c984fe0edc98f5fd9aefc19324f90de4d0a1dbae1ab1c366ba11dd14",
     "console-stage8.js": "778d89b1ec1a071a581f4030acf0dbef72de52aa2b370a4cc3092c38d6d78bfb",
-    "console-stage9.js": "cede0732fdfbd8090dcc6292a599d458088fbd22409a454d1505e6c7b2b2c2a8",
-    "console.css": "3004a30ab5657753fb8428fe619e81d7fca85dda6b6fcd90f35d053d9bd84825",
+    "console-stage9.js": "7861fa393614b6a3fd47b23d439430360c5b5d667c008a0116c2b02647fc6c21",
+    "console.css": "423ce3e956afe76c7202d952968e4dc6c04ce6791f3729bfe4cd930c9ec96cac",
     "console.js": "1e748c603827eefdc0e20d1d8da097ac92a56ee1d2a3502d20424fd357c975fd",
     "dialog.js": "e6784e914c7573b6fe9d28bfcebc1c3b3c2e17d4cc2a1b56c4f2f8917f781a5d",
     "index.html": "520aa1eddad1f9194a071b4bbde97cdbcc9ddfa3a7165f95d8ed3cc3c2b044f3",
@@ -47,7 +47,7 @@
     "views-stage6.js": "7de341e1cb168e4e6ab9efa138586ca23298de10c8d8f76495ede3622956ef4c",
     "views-stage7.js": "97e63d79f8b7f1d257964647e990c96f38a621ecee53e1e2f96351f20e3668d9",
     "views-stage8.js": "b023606eeac6580b6edae72f12cb4794bc305711dc44bded3fee77b1fc5b92cb",
-    "views-stage9.js": "8d7f190e16eea85056e46c9cccb9b1e5b4f8e4d69f443e36f4974b8a07cf2972",
+    "views-stage9.js": "a4759406f32ee57d9f4e189ce848f66eb676a930604b0b073b59217689094096",
     "views.js": "73af84dad9f961298c4a4942c1888a32e15101107707fe1b9173344dbaf7061f"
   }
 }
