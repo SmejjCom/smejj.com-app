@@ -797,3 +797,17 @@ erreichbar. Ausserdem waren alle drei Elemente nur 35 px hoch. Jetzt bekommt
 das Feld eine eigene Zeile, die beiden Knoepfe teilen sich die naechste, und
 alle drei sind mindestens 44 px hoch. Desktop bleibt unveraendert (eine
 Zeile, 35 px) — dort passen 426 px muehelos.
+v247 -> v248 (2026-08-09): Die Knopf-Regeln des Verlaufs kamen live gar nicht
+an. Erst der Test auf der ECHTEN Seite (integrierter Browser, 375 px,
+Geraete-Emulation, UI-Schalter statt Anmeldung) zeigte es: app-surfaces.css
+bringt ".premium-view button" mit — Spezifitaet (0,2,0). Eine blosse Klasse
+wie ".ch-neu" (0,1,0) verliert dagegen, unabhaengig von der Reihenfolge der
+Stylesheets. Gemessen war der Knopf "Neuer Chat" dadurch 249 px breit statt
+74 (die Handy-Kurzform "＋ Neu" kam nie an), das Suchfeld daneben schrumpfte
+auf 58 px und war unbenutzbar, und die Chips waren eckig (border-radius 8 px
+statt 999). Alle Knopf-Regeln haengen jetzt an #chatHistory. WICHTIG fuer
+kuenftige Tests: eine Teststrecke ohne die Stylesheets der App kann diesen
+Fehler nicht zeigen — dort greift jede Regel. Zwei neue Tests halten den
+Anker fest und verbieten Backticks im CSS-Block (ein Backtick im Kommentar
+beendete das Template-Literal und machte die Datei ungueltig; node --check
+hat es vor dem Deploy gefangen).

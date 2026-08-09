@@ -126,3 +126,38 @@ test("setAutoTitle laesst von Hand vergebene Titel in Ruhe", () => {
   assert.match(block, /if \(!chat \|\| chat\.titleEdited === true\) return false/);
   assert.ok(!/updatedAt/.test(block), "Umbenennen ist keine inhaltliche Aenderung — updatedAt bleibt");
 });
+
+// ---------------------------------------------------------------------------
+// Die Verlauf-Ansicht spritzt ihr CSS zur Laufzeit ein. app-surfaces.css bringt
+// ".premium-view button" mit (Spezifitaet 0,2,0) — eine blosse Klasse verliert
+// dagegen, egal in welcher Reihenfolge die Stylesheets stehen. Live gemessen
+// am 2026-08-09: der Knopf "Neuer Chat" war 249 px statt 74 px breit, weil die
+// Handy-Regel nie ankam. Auf einer Teststrecke ohne die App-Stylesheets faellt
+// das NICHT auf.
+const ANSICHT = readFileSync(new URL("../public/chat-history-view.js", import.meta.url), "utf8");
+
+function cssBlock() {
+  const start = ANSICHT.indexOf("style.textContent = `") + "style.textContent = `".length;
+  const ende = ANSICHT.indexOf("`;\n  document.head.append(style);");
+  assert.ok(start > 20 && ende > start, "CSS-Block nicht gefunden");
+  return ANSICHT.slice(start, ende);
+}
+
+test("Knopf-Regeln haengen an #chatHistory, sonst gewinnt .premium-view button", () => {
+  const css = cssBlock();
+  const knopfRegeln = css
+    .split("\n")
+    .map((zeile) => zeile.trim())
+    .filter((zeile) => /^[.#][\w .:\[\]="-]*\{/.test(zeile) || /^[.#][\w .:\[\]="-]*$/.test(zeile))
+    .filter((zeile) => /\.ch-(neu|chip|mehr)\b/.test(zeile) || /\.ch-(menu|umbenennen) button/.test(zeile));
+  assert.ok(knopfRegeln.length >= 6, `zu wenige Knopf-Regeln gefunden: ${knopfRegeln.length}`);
+  const ohneAnker = knopfRegeln.filter((zeile) => !zeile.includes("#chatHistory"));
+  assert.deepEqual(ohneAnker, [], "diese Knopf-Regeln verlieren live gegen .premium-view button");
+});
+
+test("kein Backtick im CSS-Block — er steht selbst in einem Template-Literal", () => {
+  // Beim Schreiben des Kommentars zur Spezifitaet passiert: ein Backtick um
+  // ".premium-view button" beendete das Template-Literal und machte die ganze
+  // Datei ungueltig. Ohne node --check waere sie so live gegangen.
+  assert.equal(cssBlock().includes("`"), false);
+});
