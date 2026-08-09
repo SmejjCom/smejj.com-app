@@ -727,3 +727,19 @@ optisch hart am Rand; ein weicher Rand zeigt jetzt, dass es weitergeht.
 Die beiden Texte haengen am JavaScript, nicht an CSS — beim Drehen des
 Geraets zeichnet ein resize-Listener sie darum neu, aber nur beim echten
 Wechsel der Schwelle.
+v241 -> v242 (2026-08-09): Auto-Titel aus der Bruecke. chat-title-auto.js NEU
+im SHELL, importiert von chat-history-view.js (nicht aus index.html — die
+bleibt so unter dem Start-Lock; gleiches Muster wie icon-nutzung.js in
+profile-dock.js). Das Modul holt fuer Chats ohne eigenen Titel einen kurzen
+aus /api/chat. Live gemessen: "[Anhang: IMG_4911.jpeg] @/Users/…/IMG_4911.HEIC
+Geh chrome Browser Bank of America" -> "Bank of America Ueberweisung" (750 ms);
+"geh browser iMild.com teste ob alles fehlerfrei ist?" -> "Test von iMild
+Funktionen" (460 ms). Was die Bruecke NICHT loest: zwei verschiedene
+Wetter-Chats bekamen beide "Wetter in Silicon Valley" — die Entdopplung in
+chat-history-view.js bleibt deshalb aktiv. Ruecksicht auf das geteilte
+Kontingent: seriell mit 1,2 s Pause, hoechstens acht je Runde, nur bei
+offener Verlauf-Ansicht und sichtbarem Tab, 8 s Zeitbudget je Anfrage. Ein
+neuer Test (tests/chat-title-auto.test.mjs, in check:frontend) haelt die
+Bereinigung fest; er fand beim Schreiben sofort einen Fehler — ein
+Wortfilter verwarf "Titel: Wetterabfrage Berlin" komplett, jetzt entscheidet
+allein der Doppelpunkt am Zeilenende.
