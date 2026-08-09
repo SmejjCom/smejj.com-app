@@ -821,3 +821,18 @@ ausdruecklich width: auto. Merkregel: bei fremden Regeln reicht es nicht, die
 Spezifitaet zu erhoehen — man muss auch wissen, WELCHE Eigenschaften sie
 setzen. Erst das Auflisten aller passenden Regeln (element.matches gegen
 document.styleSheets) hat width: 100% sichtbar gemacht.
+v249 -> v250 (2026-08-09): Das "⋯"-Menue im Verlauf verschwand von selbst
+wieder. Beim Live-Test "Chat oeffnen" auf dem Handy gefunden: nach dem
+Oeffnen eines Chats und der Rueckkehr in den Verlauf war das gerade
+angetippte Menue nach gut 100 ms weg. Ursache: das Menue haengt IN der Karte
+und ueberlebt kein replaceChildren; eines der mehreren verzoegerten
+Neuzeichnen (popstate-Handler, Auto-Titel-Anstoss, chats-changed nach dem
+Speichern des geoeffneten Chats) lief hinein. Welcher genau trifft, ist ein
+Rennen und wechselte zwischen den Messungen — behandelt wird darum die
+Wirkung: zeichne() zeichnet nicht, solange ein Menue offen ist, merkt sich
+den Auftrag und holt ihn beim Schliessen nach. Beim selben Test bestaetigt:
+Oeffnen per Tap auf die Karte oder das Themen-Tag laedt alle Nachrichten in
+der richtigen Reihenfolge und springt zur Startseite, ein Tap auf "⋯" oeffnet
+den Chat NICHT, und die geoeffnete Karte bleibt im Verlauf markiert.
+Randbefund in fremdem Code: die 16 Aktionsknoepfe unter den Chat-Nachrichten
+sind 42x42 px und liegen damit knapp unter der 44-px-Empfehlung.

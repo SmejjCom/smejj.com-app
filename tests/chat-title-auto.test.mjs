@@ -161,3 +161,15 @@ test("kein Backtick im CSS-Block — er steht selbst in einem Template-Literal",
   // Datei ungueltig. Ohne node --check waere sie so live gegangen.
   assert.equal(cssBlock().includes("`"), false);
 });
+
+test("ein offenes Menue ueberlebt ein verzoegertes Neuzeichnen", () => {
+  // Live auf dem Handy gemessen: nach dem Oeffnen eines Chats und der Rueckkehr
+  // in den Verlauf verschwand das gerade angetippte "⋯"-Menue nach gut 100 ms.
+  // Das Menue haengt IN der Karte und ueberlebt kein replaceChildren. Welcher
+  // der verzoegerten Ausloeser genau trifft, ist ein Rennen — behandelt wird
+  // darum die Wirkung, nicht die Quelle.
+  assert.match(ANSICHT, /if \(offenesMenu\) \{\s*\n\s*zeichnenAusstehend = true;\s*\n\s*return;/,
+    "zeichne() muss ein offenes Menue respektieren");
+  assert.match(ANSICHT, /if \(zeichnenAusstehend\) \{\s*\n\s*zeichnenAusstehend = false;\s*\n\s*zeichne\(\);/,
+    "das zurueckgestellte Zeichnen muss beim Schliessen nachgeholt werden");
+});
