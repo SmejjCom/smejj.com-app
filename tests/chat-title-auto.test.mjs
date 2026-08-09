@@ -81,7 +81,11 @@ test("spitze Klammern bleiben nicht im Titel stehen", () => {
 test("das Modul bleibt fail-safe und ruecksichtsvoll", () => {
   // Diese Zusagen tragen den Betrieb: ohne sie wuerde ein Ansturm von Anfragen
   // das geteilte Kontingent der Bruecke aufbrauchen.
-  assert.match(QUELLE, /const MIN_NACHRICHTEN = 4/, "Titel erst ab vier Nachrichten");
+  assert.match(QUELLE, /const MIN_NACHRICHTEN = 4/, "Titel erst ab vier Nachrichten im Chat");
+  // Nur erste Frage + erste Antwort. Mit mehr Kontext mischte das Modell
+  // gemessen ein Nebenthema in den Titel ("Fahrradfahren und Code" fuer einen
+  // Chat ueber parseBudget) — die Chats wechseln das Thema oft ab Nachricht 2.
+  assert.match(QUELLE, /const NACHRICHTEN_JE_ANFRAGE = 2/, "mehr Kontext schleppt Nebenthemen ein");
   assert.match(QUELLE, /const MAX_JE_RUNDE = \d+/, "Obergrenze je Runde fehlt");
   assert.match(QUELLE, /signal: abbruch\.signal/, "Anfrage ohne Zeitbudget");
   assert.match(QUELLE, /document\.hidden/, "im Hintergrund muss die Arbeit ruhen");

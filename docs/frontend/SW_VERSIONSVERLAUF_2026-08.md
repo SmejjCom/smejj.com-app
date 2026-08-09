@@ -764,3 +764,15 @@ ein von der Bruecke geholter Titel waere beim Weiterschreiben wieder durch die
 erste Frage ersetzt worden. Beide werden jetzt weitergetragen, und der Titel
 bleibt stehen, sobald er von Hand ODER von der Bruecke kommt. Zwei Tests in
 tests/chat-title-auto.test.mjs halten das fest.
+v244 -> v245 (2026-08-09): Auto-Titel auf erste Frage + erste Antwort
+verkuerzt. Beim Live-Test ueber alle 28 Chats war die Schaerfung aus v243
+nicht genug: "Schreibe eine ESM-Funktion parseBudget(value)…" wurde zu
+"Fahrradfahren und Code", weil Nachricht 2 danach fragte. Die Chats des
+Betreibers wechseln das Thema oft schon ab Nachricht 2 — eine Bitte an das
+Modell ("nimm im Zweifel die ERSTE Frage") reicht dagegen nicht. Mit nur zwei
+Nachrichten KANN kein zweites Thema im Kontext stehen; der Fehler ist damit
+strukturell ausgeschlossen. Gemessen: "Parse Budget Funktion" statt
+"Fahrradfahren und Code", "Wetter in Sacramento" statt "Wetter in
+Kalifornien", "Smejj Com Informationen" statt "Smejj Kommt Ins Gespraech".
+Preis: ein Titel wurde unschaerfer ("Bank of America Ueberweisung" ->
+"Online Bankueberweisung vorbereiten"). Drei Gewinne gegen einen Verlust.
