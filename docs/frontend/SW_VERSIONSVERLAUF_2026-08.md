@@ -776,3 +776,14 @@ strukturell ausgeschlossen. Gemessen: "Parse Budget Funktion" statt
 Kalifornien", "Smejj Com Informationen" statt "Smejj Kommt Ins Gespraech".
 Preis: ein Titel wurde unschaerfer ("Bank of America Ueberweisung" ->
 "Online Bankueberweisung vorbereiten"). Drei Gewinne gegen einen Verlust.
+v245 -> v246 (2026-08-09): Auch die kurzen Chats bekommen einen Titel — mit
+einem Sparfilter davor. MIN_NACHRICHTEN faellt von vier auf zwei (Frage und
+Antwort genuegen; genau so viele gehen ohnehin an die Bruecke). An den
+sieben verbliebenen Chats gemessen wurden sechs dadurch besser ("ich suche
+eine buroe: 1 oder 2 Zimmer in Eine Neue…" -> "Buero in Silicon Valley",
+"kannst du Internet nicht greifen und ueber…" -> "Berlin Akten
+Informationen"). EINER wurde schlechter: "Was ist 7 mal 8?" -> "Mathematische
+Multiplikationsergebnisse". Daraus die neue Regel: ist die erste Frage kurz
+(<= 30 Zeichen) und ohne Ballast (kein Anhang-Praefix, kein Dateipfad), IST
+sie bereits der beste Titel und bleibt stehen. Das verhindert die
+Verschlimmbesserung und spart zugleich jeden zweiten Anfragezyklus.

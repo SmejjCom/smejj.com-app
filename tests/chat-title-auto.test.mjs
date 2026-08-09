@@ -81,7 +81,11 @@ test("spitze Klammern bleiben nicht im Titel stehen", () => {
 test("das Modul bleibt fail-safe und ruecksichtsvoll", () => {
   // Diese Zusagen tragen den Betrieb: ohne sie wuerde ein Ansturm von Anfragen
   // das geteilte Kontingent der Bruecke aufbrauchen.
-  assert.match(QUELLE, /const MIN_NACHRICHTEN = 4/, "Titel erst ab vier Nachrichten im Chat");
+  assert.match(QUELLE, /const MIN_NACHRICHTEN = 2/, "Frage und Antwort genuegen fuer einen Titel");
+  // Eine kurze, vollstaendige Frage IST der beste Titel — gemessen wurde
+  // "Was ist 7 mal 8?" sonst zu "Mathematische Multiplikationsergebnisse".
+  assert.match(QUELLE, /const KURZ_GENUG_ZEICHEN = \d+/, "kurze Fragen duerfen ihren Titel behalten");
+  assert.match(QUELLE, /frage\.length <= KURZ_GENUG_ZEICHEN && !BALLAST\.test\(frage\)/, "Sparfilter fehlt");
   // Nur erste Frage + erste Antwort. Mit mehr Kontext mischte das Modell
   // gemessen ein Nebenthema in den Titel ("Fahrradfahren und Code" fuer einen
   // Chat ueber parseBudget) — die Chats wechseln das Thema oft ab Nachricht 2.
