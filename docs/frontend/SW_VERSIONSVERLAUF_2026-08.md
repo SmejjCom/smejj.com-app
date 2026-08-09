@@ -836,3 +836,18 @@ der richtigen Reihenfolge und springt zur Startseite, ein Tap auf "⋯" oeffnet
 den Chat NICHT, und die geoeffnete Karte bleibt im Verlauf markiert.
 Randbefund in fremdem Code: die 16 Aktionsknoepfe unter den Chat-Nachrichten
 sind 42x42 px und liegen damit knapp unter der 44-px-Empfehlung.
+v250 -> v251 (2026-08-09): Der leere Verlauf war eine Sackgasse. Beim
+Live-Test "Loeschen" auf dem Handy gefunden: Wer seinen letzten Chat
+loescht, sah nur noch den Hinweistext — mit den Karten verschwand auch der
+Kopf und damit der "Neuer Chat"-Knopf, der einzige Weg, der von dieser
+Ansicht nach vorn fuehrt. Der Knopf steht jetzt auch im leeren Verlauf, mit
+eigenem Baustein (bausteinNeuKnopf) an beiden Stellen; das Suchfeld bleibt
+dort weg, weil es ohne Chats nichts zu suchen gibt. Auf dem Handy traegt er
+im leeren Zustand die volle Beschriftung statt der Kurzform, weil dort Platz
+ist. Beim selben Test bestaetigt und unveraendert richtig: der erste Tap auf
+"Loeschen" fragt nur nach ("Wirklich loeschen?", 44 px hoch, rot), loescht
+nichts; ohne Bestaetigung verfaellt die Frage nach vier Sekunden und der
+Knopf steht wieder auf "Loeschen…"; der zweite Tap trifft genau die
+angetippte Karte (mittlere von drei geloescht, die anderen blieben); Liste,
+Themen-Chips und Zaehler stimmen sofort; ein Loeschen waehrend aktiver Suche
+laesst den Suchbegriff stehen und zeigt korrekt "Nichts gefunden".

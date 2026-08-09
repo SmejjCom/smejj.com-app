@@ -173,3 +173,13 @@ test("ein offenes Menue ueberlebt ein verzoegertes Neuzeichnen", () => {
   assert.match(ANSICHT, /if \(zeichnenAusstehend\) \{\s*\n\s*zeichnenAusstehend = false;\s*\n\s*zeichne\(\);/,
     "das zurueckgestellte Zeichnen muss beim Schliessen nachgeholt werden");
 });
+
+test("der leere Verlauf bleibt keine Sackgasse", () => {
+  // Beim Loeschen-Test auf dem Handy gefunden: mit dem letzten Chat verschwand
+  // auch der Kopf — und damit der einzige Knopf, der von dieser Ansicht aus
+  // weiterfuehrt.
+  assert.match(ANSICHT, /function bausteinNeuKnopf/, "der Knopf braucht einen eigenen Baustein");
+  const leerZweig = ANSICHT.slice(ANSICHT.indexOf("if (!alleChats.length)"), ANSICHT.indexOf("const aufbereitet"));
+  assert.match(leerZweig, /bausteinNeuKnopf\(\)/, "im leeren Verlauf fehlt der Weg zum neuen Chat");
+  assert.ok(!/ch-suche/.test(leerZweig), "ein Suchfeld ohne Chats waere sinnlos");
+});
