@@ -183,3 +183,13 @@ test("der leere Verlauf bleibt keine Sackgasse", () => {
   assert.match(leerZweig, /bausteinNeuKnopf\(\)/, "im leeren Verlauf fehlt der Weg zum neuen Chat");
   assert.ok(!/ch-suche/.test(leerZweig), "ein Suchfeld ohne Chats waere sinnlos");
 });
+
+test("der Ansichts-Container darf schrumpfen (Grid-Item mit min-width auto)", () => {
+  // Live gemessen: der Container liegt in einem Grid. Ohne min-width: 0 waechst
+  // er mit seinem breitesten Kind — die Chip-Leiste steht auf nowrap und war
+  // 372 px breit, der Container damit 406 px bei 375 px Fenster. Karten und
+  // Ueberschrift ragten hinaus, und die Leiste wischte NIE, weil sie nie zu
+  // eng wurde. Auf einer Teststrecke ohne die App faellt das nicht auf.
+  assert.match(cssBlock(), /#chatHistory \.output \{ min-width: 0; \}/,
+    "ohne min-width: 0 sprengt die Chip-Leiste die Ansicht");
+});

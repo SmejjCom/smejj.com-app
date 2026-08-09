@@ -851,3 +851,20 @@ Knopf steht wieder auf "Loeschen…"; der zweite Tap trifft genau die
 angetippte Karte (mittlere von drei geloescht, die anderen blieben); Liste,
 Themen-Chips und Zaehler stimmen sofort; ein Loeschen waehrend aktiver Suche
 laesst den Suchbegriff stehen und zeigt korrekt "Nichts gefunden".
+v251 -> v252 (2026-08-09): Die wischbare Chip-Leiste wischte live NIE. Beim
+Live-Test "Anheften" auf dem Handy sichtbar geworden: sobald vier Chips nicht
+mehr in die Zeile passten, zog die Leiste die GANZE Ansicht ueber den
+Bildschirmrand statt zu scrollen — Karten, Kopf und Ueberschrift ragten
+hinaus (Container 406 px bei 375 px Fenster, Karten bis x=401). Ursache: der
+Container der Ansicht (.output) ist ein GRID-Item, und Grid-Items haben
+min-width: auto; sie wachsen mit ihrem breitesten Kind. Die Leiste steht auf
+nowrap und war 372 px breit. Mit min-width: 0 darf der Container schrumpfen,
+dann greift overflow-x: gemessen faellt .output von 406 auf 351 px, die
+Karten auf 317, und die Leiste ist mit 372 px Inhalt in 317 px Fenster
+endlich wischbar. Der frueher gemessene "Erfolg" der Chip-Leiste stammte von
+der Teststrecke, wo .output ein normaler Block ist und sich selbst begrenzt.
+Beim selben Test bestaetigt: Anheften holt die Karte in die Gruppe
+"Angeheftet" ganz nach oben, das Menue heisst danach "Nicht mehr anheften",
+das Pin-Symbol steht im Titel — und `updatedAt` bleibt unveraendert, ein 40
+Tage alter Chat behaelt in der Fusszeile korrekt sein Datum ("30. Juni 2026")
+statt nach oben zu rutschen.

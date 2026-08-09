@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-09T23:11:48.791Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09: 'Loeschen live auf dem Handy testen' — Neuer-Chat-Knopf auch im leeren Verlauf, sw v251.",
+  "frozenAt": "2026-08-09T23:58:04.466Z",
+  "confirmation": "Freigabe Betreiber 2026-08-09: 'Anheften live auf dem Handy testen' — Chip-Leiste sprengte die Ansicht, min-width 0, sw v252.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "f11fa9b8268481cb516002d21b5de82e05f970cf9f381f5be09432653292f985",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "43f6128a865fd75341adaa062a5f4f4217c317b8915198be4095b54f66e26a51",
+    "public/sw.js": "c391ca7226989741d075ec2f40b87220ad542c9575d3cbd6d6a5fc624c696a8a",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
