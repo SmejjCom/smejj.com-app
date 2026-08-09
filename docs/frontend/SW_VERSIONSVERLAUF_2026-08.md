@@ -811,3 +811,13 @@ Fehler nicht zeigen — dort greift jede Regel. Zwei neue Tests halten den
 Anker fest und verbieten Backticks im CSS-Block (ein Backtick im Kommentar
 beendete das Template-Literal und machte die Datei ungueltig; node --check
 hat es vor dem Deploy gefangen).
+v248 -> v249 (2026-08-09): Der #chatHistory-Anker aus v248 reichte nicht. Die
+Gegenprobe auf der echten Seite zeigte: app-surfaces.css setzt unterhalb von
+760 px ".premium-view button { width: 100% }". Damit fuellt JEDER Knopf die
+volle Zeilenbreite — "Neuer Chat" war weiterhin 249 px breit und drueckte das
+Suchfeld auf 58 px, und jeder Themen-Chip stand als eigener Balken
+untereinander statt in einer Reihe. Die Knopf-Regeln setzen jetzt
+ausdruecklich width: auto. Merkregel: bei fremden Regeln reicht es nicht, die
+Spezifitaet zu erhoehen — man muss auch wissen, WELCHE Eigenschaften sie
+setzen. Erst das Auflisten aller passenden Regeln (element.matches gegen
+document.styleSheets) hat width: 100% sichtbar gemacht.
