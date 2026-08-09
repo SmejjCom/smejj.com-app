@@ -685,3 +685,16 @@ Automatisierung und Nutzer. Das Eyebrow ist als KATEGORIE ueber einem
 abweichenden Titel gedacht ("Browser" ueber "Lokaler Browser"); wo beide
 gleich lauteten, war es nur Dopplung. Genau diese sechs `<p>`-Zeilen sind
 aus index.html entfernt, die zwoelf sinnvollen Paare bleiben unveraendert.
+v238 -> v239 (2026-08-09): Themen im Verlauf berichtigt. Meldung des
+Betreibers: "Themen stimmen nicht ganz, Bank-Chat gehoert zu Finanzen". Die
+Regel "Bilder" stand an erster Stelle und traf auf das Anhang-Praefix — ein
+Anhang ist aber ein TRANSPORTWEG, kein Thema. "Bilder" greift jetzt nur noch
+als Rueckfall, wenn inhaltlich gar nichts erkennbar ist, und geprueft wird
+auf dem um Anhang und Dateipfade bereinigten Text (sonst schlaegt
+"@/Users/…/IMG_4911.HEIC" als Bild-Treffer an). Beim Nachmessen aller 35
+Chats fiel ein zweiter Fall auf: die vier iMild.com-Pruefungen standen unter
+"Tests", obwohl sie Website-Pruefungen sind. Neue Kategorie "Websites";
+"Tests" bleibt den Modell-Prueflaeufen (Regressionstest, "antworte nur mit",
+Hauptstadt-Fragen). `\.com` taugt dabei NICHT als Website-Merkmal — "Sag mir,
+was smejj.com ist" ist eine Frage ueber das Projekt. Gemessen: genau 5 von 35
+Chats wechseln, kein weiterer verrutscht.
