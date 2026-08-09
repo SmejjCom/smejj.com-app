@@ -39,10 +39,29 @@ test("jeder genannte Arbeitsbereich existiert wirklich", () => {
   }
 });
 
-test("jedes genannte Modell existiert wirklich", () => {
-  for (const modell of ["smejj 1.0", "GLM-5.2", "Kimi K2.7", "Cline"]) {
-    assert.ok(hilfe.includes(modell), `Hilfe nennt "${modell}" nicht`);
-    assert.ok(index.includes(`data-model="${modell}"`), `Modell "${modell}" gibt es in der App nicht`);
+// Die Liste stand hier frueher fest verdrahtet. Am 2026-08-08 fiel damit auf,
+// dass die Hilfe "smejj 1.0" nannte, das die App laengst nicht mehr anbietet —
+// aber die umgekehrte Luecke blieb blind: ein NEUES Modell (Kimi K3) fehlte in
+// der Hilfe, ohne dass irgendetwas rot wurde. Deshalb wird die Liste jetzt aus
+// index.html GELESEN statt behauptet, und beide Richtungen werden geprueft.
+const ANGEBOTENE_MODELLE = [...index.matchAll(/data-model="([^"]+)"/g)].map((t) => t[1]);
+
+test("die Hilfe nennt genau die Modelle, die die App anbietet", () => {
+  assert.ok(ANGEBOTENE_MODELLE.length >= 2, "index.html bietet gar keine Modellwahl — Testgrundlage fehlt");
+  // Richtung 1: was die App anbietet, muss erklaert sein.
+  for (const modell of ANGEBOTENE_MODELLE) {
+    assert.ok(hilfe.includes(modell), `Die App bietet "${modell}" an, die Hilfe erklaert es nicht`);
+  }
+  // Richtung 2: was die Hilfe als waehlbar auszeichnet, muss es auch geben.
+  // Nur die <strong>-Auszeichnungen im Modell-Absatz zaehlen — Fliesstext ueber
+  // Anbieter oder Preise soll hier nicht mitgeprueft werden.
+  const absatz = /welches Modell antwortet:([\s\S]*?)<\/p>/.exec(hilfe);
+  assert.ok(absatz, "Der Modell-Absatz der Hilfe wurde nicht gefunden");
+  for (const treffer of absatz[1].matchAll(/<strong>([^<]+)<\/strong>/g)) {
+    assert.ok(
+      ANGEBOTENE_MODELLE.includes(treffer[1]),
+      `Die Hilfe nennt "${treffer[1]}", die App bietet es nicht an`
+    );
   }
 });
 
