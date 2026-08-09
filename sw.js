@@ -12,7 +12,13 @@
 //
 // BITTE NEUE EINTRAEGE IN SW_VERSIONSVERLAUF_2026-08.md SCHREIBEN, nicht hier.
 // Hier gehoert nur, was zum Verstehen des Codes DANEBEN noetig ist.
-const CACHE_NAME = "smejj-shell-v235";
+// v235 -> v236 (2026-08-09, Konkurrenz-Radar V3 Stufe 2): Modellwahl-Chip
+// zeigt "Schnell/Auto/Gruendlich" statt Modellnamen. Modellnamen bleiben unter
+// "Modelle (erweitert)" im selben Menue erreichbar (BYOK/Vault unveraendert).
+// Die Stufe geht als preferences.stufe an die Bruecke (v125, live seit
+// 2026-08-08). Freigabe Betreiber 2026-08-06/08: drei Eval-Laeufe (99-100%%,
+// identisches Modell-Routing je Fall) bestaetigen Bedingung (c) der Freigabe.
+const CACHE_NAME = "smejj-shell-v236";
 const SHELL = [
   "/",
   "/assets/start-styles.css",

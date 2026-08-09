@@ -43,7 +43,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260805-v124-codeblock-zerleger";
+const BRIDGE_VERSION = "20260806-v125-antwortstufen";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -109,6 +109,7 @@ function healthPayload() {
     controlConfigured: Boolean(CONTROL_ORIGIN),
     multiModelRouterEnabled: CONTROL_ROUTER_ENABLED,
     fastLaneEnabled: fastLaneEnabled(),
+    antwortstufenEnabled: true,
     fastLaneModel: fastLaneEnabled() ? `groq:${GROQ_MODEL}` : "",
     projektwissen: ragIndexStatus(),
     role: "stateless-chat-stream-bridge",
@@ -174,7 +175,8 @@ async function handleChat(req, res) {
   const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
   const angereichert = withRagBlock(hardenMessages(messages), wissen, 1);
   // handleAgent schloss Coding immer aus; handleChat uebergab fest "chat".
-  if (await streamFastLane(res, angereichert, isCodingTask(String(messages[messages.length - 1]?.content || "")) ? "coding" : "chat", body.model)) return;
+  const stufe = leseStufe(body);
+  if (await streamFastLane(res, angereichert, isCodingTask(String(messages[messages.length - 1]?.content || "")) ? "coding" : "chat", body.model, stufe)) return;
   // Der Control Server ergaenzt Projektwissen bisher nur in /api/agent, nicht im
   // Chat — darum bekommt er den Block hier mit. Alles andere am Rumpf bleibt
   // unveraendert, insbesondere der ungekuerzte Gespraechsverlauf.
@@ -187,7 +189,10 @@ async function handleAgent(req, res) {
   const task = String(body.task || body.message || "").trim();
   if (!task) return json(res, 400, { ok: false, error: "Missing task" });
   const coding = isCodingTask(task);
-  const fastTask = !coding && !shouldSearchWeb(task);
+  const stufe = leseStufe(body);
+  // "schnell" heisst schnell: dann bekommt auch eine Coding- oder Suchfrage die
+  // Schnellspur angeboten (streamFastLane entscheidet dann endgueltig).
+  const fastTask = stufe === "schnell" || (!coding && !shouldSearchWeb(task));
   // /api/agent ist der Weg, den die Startseite wirklich nutzt (public/app.js).
   // Der Control Server ergaenzt hier bereits Projektwissen — die Schnellspur
   // erreicht ihn aber gar nicht und blieb darum ohne. Suche einmal, gleicher
@@ -202,13 +207,13 @@ async function handleAgent(req, res) {
   // danach nur noch "und bei 15 Jahren?". Neueste Frage zuerst — neue Werte
   // gewinnen, der Verlauf fuellt nur Luecken.
   const rechnung = coding ? "" : baueRechenKontext(task, nutzerfragenRueckwaerts(body.history));
-  if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen, rechnung, history: body.history }), "fast", body.model)) return;
+  if (fastTask && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: "", wissen, rechnung, history: body.history }), "fast", body.model, stufe)) return;
   // Wetter-Fast-Path (Welle 2b): Live-Daten direkt von Open-Meteo (~0,3s, frei,
   // ohne Key) statt Control-Router mit Suchmaschinen-Scraping (8-12s). Fail-safe:
   // ohne Kontext oder bei Fast-Lane-Fehler laeuft unveraendert der alte Pfad.
   if (!coding && isWeatherTask(task)) {
     const weatherContext = await buildWeatherContext(task);
-    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, rechnung, history: body.history }), "web", body.model)) return;
+    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, rechnung, history: body.history }), "web", body.model, stufe)) return;
   }
   if (await streamViaControl(res, "/api/agent", body)) return;
   const webContext = !coding && shouldSearchWeb(task) ? await buildWebContext(task, CONTROL_ORIGIN) : "";
@@ -314,12 +319,35 @@ export function fastLaneEnabled() {
   return Boolean(GROQ_API_KEY && GROQ_BASE_URL && GROQ_MODEL);
 }
 
+// --- Antwortstufe (Konkurrenz-Radar V3, Freigabe Betreiber 2026-08-06) -------
+//
+// Bisher konnte der Nutzer die Spur nur INDIREKT waehlen: ein Modellname mit
+// glm/kimi/cline schaltete die Schnellspur ab, alles andere ueberliess die
+// Wahl der Automatik. Modellnamen sagen Nutzern aber nichts — deshalb nimmt
+// die Bruecke jetzt zusaetzlich eine verstaendliche Stufe entgegen:
+//
+//   schnell     — immer die Groq-Schnellspur, auch bei Coding
+//   auto        — heutiges Verhalten, die Automatik entscheidet
+//   gruendlich  — nie die Schnellspur, immer die tiefe Spur
+//
+// FAIL-SAFE (Bedingung a der Freigabe): Jeder unbekannte Wert — und das
+// Fehlen des Feldes — ergibt "" und damit exakt das bisherige Verhalten.
+// Aeltere Frontends, die nichts davon wissen, aendern sich also nicht.
+export function leseStufe(body) {
+  const roh = String(body?.stufe || body?.preferences?.stufe || "").trim().toLowerCase();
+  return roh === "schnell" || roh === "auto" || roh === "gruendlich" ? roh : "";
+}
+
 // Schnelle Konversations-Spur: true nur wenn Groq streamt; bei false wurde noch KEIN Byte
 // gesendet und der Aufrufer nimmt den bisherigen Pfad. Coding gibt die Spur ab, aber NUR
 // bei vorhandener tiefer Spur — sonst antwortet streamModel 503 statt einer Antwort.
-export async function streamFastLane(res, messages, profile, requestedModel = "") {
+export async function streamFastLane(res, messages, profile, requestedModel = "", stufe = "") {
   if (!fastLaneEnabled()) return false;
-  if (/glm|kimi|cline/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL)))) return false;
+  // "gruendlich" gibt die Schnellspur immer ab; "schnell" nimmt sie immer.
+  // Ohne Stufe gelten unveraendert die bisherigen Regeln.
+  if (stufe === "gruendlich") return false;
+  if (stufe !== "schnell"
+    && (/glm|kimi|cline/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))))) return false;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(REQUEST_TIMEOUT_MS, FAST_LANE_TIMEOUT_MS));
   let upstream;
