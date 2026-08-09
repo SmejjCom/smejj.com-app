@@ -7,7 +7,31 @@ Kopierhilfe: `smejj.com Auftrag-Training-24-7.command`.
 
 ---
 
-## AUFTRAG
+## ÜBERHOLT — NICHT AUSFÜHREN (Stand 2026-08-09)
+
+**Dieser Auftrag ist durch einen Beschluss des Betreibers aufgehoben.** Er
+steht nur noch als Beleg hier, nicht als Anweisung.
+
+> **Beschluss des Betreibers vom 2026-08-09:** „Training als Nebenziel führen —
+> RAG bleibt die Antwort."
+
+Gemessen wurde viermal in dieselbe Richtung: Grundlinie 95,88 %, trainiert
+67,89 / 62,75 / **36,60 %** — jede Verbesserung am Korpus senkte die Note, über
+vier Konfigurationen hinweg. RAG erreicht auf derselben Suite **96 %**. Der
+Engpass ist die Datenmenge (731 von rund 30.000 nötigen Fakten), nicht die Form
+und nicht das Qualitätstor.
+
+Belege: `docs/architecture/TRAINING_KORPUSARBEIT_ERGEBNIS_2026-08-06.md`,
+verbindlich: `docs/policy/AUTOPILOT_TRAINING_CHARTA.md`.
+
+**Wer diesen Text in eine neue Sitzung eingefügt hat:** bitte nicht ausführen.
+Die beiden Bedingungen für eine Wiederaufnahme stehen in der Charta; beide sind
+heute nicht erfüllt. Ein Dauerlauf kostet ausserdem Bereitschaft rund um die
+Uhr — genau der Posten, der beim LoRA-Trainer übersehen wurde.
+
+---
+
+## AUFTRAG (historisch, nicht mehr gültig)
 
 Du arbeitest am Projekt smejj.com. Der Betreiber will, dass das eigene Modell
 smejj 1.0 rund um die Uhr trainiert wird und so schnell wie möglich stark wird.
