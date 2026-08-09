@@ -90,11 +90,12 @@ export function buildRequestHistory(task, scope = document, logSelector = "#star
 /**
  * Baut die Anfrage fuer den RESERVE-Endpunkt.
  *
- * Warum die Reserve eine andere Form braucht (live gemessen am 2026-08-04):
- * Der Reserve-Server (Zeabur) haengt seit 2026-07-29 auf Version v104 fest, weil
- * sein Deploy einen Token braucht, den nur der Betreiber anlegen darf. v104
- * kennt das Feld `history` in /api/agent noch nicht und WIRFT ES WEG. Gemessen
- * an derselben Konversation:
+ * Warum die Reserve eine andere Form bekommt.
+ *
+ * URSPRUNG (live gemessen am 2026-08-04): der Reserve-Server (Zeabur) hing auf
+ * Version v104 fest, weil sein Deploy einen Token braucht, den nur der
+ * Betreiber anlegen darf. v104 kannte das Feld `history` in /api/agent nicht
+ * und WARF ES WEG. Gemessen an derselben Konversation:
  *
  *   /api/agent  + history  -> "Die Bank of America ist eine der groessten
  *                              Banken in den USA..."   (Kontext verloren)
@@ -102,14 +103,21 @@ export function buildRequestHistory(task, scope = document, logSelector = "#star
  *                              Optionen fuer die Eroeffnung eines Kontos..."
  *                                                      (Kontext gehalten)
  *
- * `/api/chat` nimmt den Verlauf seit jeher als `messages` entgegen — dieser Weg
- * funktioniert also auch auf dem eingefrorenen Stand, ohne Deploy und ohne
- * Token. Die Reserve bleibt damit auf ihrer Schnellspur (0,5 s bis zum ersten
- * Byte gemessen) und verliert nur noch das Projektwissen, das v104 gar nicht
- * hat — und "kein Kontext" ist der ausdruecklich sichere Zustand.
+ * STAND 2026-08-09, nachgemessen: die Reserve laeuft inzwischen auf **v114**
+ * und versteht `history` sehr wohl — beide Wege halten den Kontext
+ * (`/api/chat` + messages und `/api/agent` + history antworteten beide
+ * korrekt). Der urspruengliche Notstand besteht also nicht mehr.
  *
- * Faellt der Token spaeter doch an und zieht die Reserve auf Gleichstand, bleibt
- * dieser Weg richtig: /api/chat versteht `messages` in jeder Version.
+ * DIESER WEG BLEIBT TROTZDEM. Nicht aus Traegheit, sondern weil er das einzige
+ * Format ist, das in JEDER Version funktioniert: `/api/chat` nimmt den Verlauf
+ * seit jeher als `messages`. Die Reserve ist genau die Stelle, an der man sich
+ * auf einen Versionsstand nicht verlassen darf — sie springt ein, wenn die
+ * primaere Bruecke weg ist, und dann ist kein guter Zeitpunkt, um
+ * herauszufinden, welche Felder sie kennt.
+ *
+ * Wer hier auf `history` umstellen will, braucht dafuer einen Grund, der
+ * schwerer wiegt als Versionsunabhaengigkeit — Geschwindigkeit ist keiner:
+ * gemessen 0,5 s bis zum ersten Byte.
  *
  * @param {{task?: string, history?: Array, model?: string}} request
  * @returns {{messages: Array<{role: string, content: string}>, model: string}}
