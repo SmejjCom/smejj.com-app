@@ -678,3 +678,10 @@ und legt die Aktionen ins "⋯"-Menue — neu darin: als Markdown sichern.
 Der GESPEICHERTE Titel bleibt unangetastet, aufbereitet wird nur die
 Anzeige; von Hand vergebene Titel (titleEdited) bleiben wie sie sind.
 KEIN eigenes ⌘K: das Kuerzel gehoert bereits der globalen Suche (search.js).
+v237 -> v238 (2026-08-09): doppelte Ueberschriften. In sechs Ansichten stand
+der Name zweimal untereinander — `<p class="eyebrow">Verlauf</p>` direkt
+ueber `<h2>Verlauf</h2>`, ebenso bei Suche, Websites, Coding,
+Automatisierung und Nutzer. Das Eyebrow ist als KATEGORIE ueber einem
+abweichenden Titel gedacht ("Browser" ueber "Lokaler Browser"); wo beide
+gleich lauteten, war es nur Dopplung. Genau diese sechs `<p>`-Zeilen sind
+aus index.html entfernt, die zwoelf sinnvollen Paare bleiben unveraendert.
