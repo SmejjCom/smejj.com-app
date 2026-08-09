@@ -698,3 +698,15 @@ Chats fiel ein zweiter Fall auf: die vier iMild.com-Pruefungen standen unter
 Hauptstadt-Fragen). `\.com` taugt dabei NICHT als Website-Merkmal — "Sag mir,
 was smejj.com ist" ist eine Frage ueber das Projekt. Gemessen: genau 5 von 35
 Chats wechseln, kein weiterer verrutscht.
+v239 -> v240 (2026-08-09): drei Themen-Grenzfaelle entschieden (Betreiber:
+"Entscheide du selber als Expert"). (1) "Nenne die Hauptstadt von Italien"
+stand unter Tests. Ob eine harmlose Frage ein Prueflauf war, laesst sich
+nicht zuverlaessig erkennen — und sie faelschlich als Test zu etikettieren
+ist die anmassendere Annahme. Neue Kategorie "Wissen"; "Tests" verlangt jetzt
+ein eindeutiges Signal (Regressionstest, "antworte nur mit", "Stufe X …
+Test") und behaelt genau einen Chat. (2) "Such mir eine Spiegel" war
+Recherche, ist aber eine PRODUKTSUCHE — neue Kategorie "Einkauf", die vor
+Recherche greift. Recherche behaelt "such", sonst verliert "Kannst du
+Internet nicht greifen …" seinen Bezug. (3) "Was ist 7 mal 8?" ist "Rechnen"
+— die Regel verlangt eine echte Rechenform, damit die Bueroe-Finanzierung
+bei Immobilien bleibt. Gemessen: alle 35 Chats zugeordnet, 12 Kategorien.
