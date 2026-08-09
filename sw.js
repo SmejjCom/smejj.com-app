@@ -12,7 +12,7 @@
 //
 // BITTE NEUE EINTRAEGE IN SW_VERSIONSVERLAUF_2026-08.md SCHREIBEN, nicht hier.
 // Hier gehoert nur, was zum Verstehen des Codes DANEBEN noetig ist.
-const CACHE_NAME = "smejj-shell-v234";
+const CACHE_NAME = "smejj-shell-v235";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
