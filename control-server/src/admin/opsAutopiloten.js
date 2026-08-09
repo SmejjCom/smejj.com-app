@@ -166,6 +166,26 @@ const VERLAUF_MAX = 20;
 // id -> { laeufe: [{ am, status, meldung, dauerMs }] } — juengster Lauf zuerst.
 const herzschlaege = new Map();
 
+// Profi-Ausbau (2026-08-09): Tages-Statistik fuer die 90-Tage-Anzeige.
+// id -> [{ tag: "2026-08-09", ok: 3, fehler: 0 }] — aufsteigend nach Tag.
+// Bewusst je TAG verdichtet statt je Lauf: der Bruecken-Waechter meldet
+// 288-mal am Tag, ein Verlauf je Lauf waere in 90 Tagen ein 26.000-Zeilen-
+// Datensatz. Die Frage der Anzeige ist aber nur: War dieser Tag sauber?
+const TAGE_MAX = 90;
+const tagesstatistik = new Map();
+
+function zaehleTag(id, status, jetztMs) {
+  const tag = new Date(jetztMs).toISOString().slice(0, 10);
+  const tage = tagesstatistik.get(id) || [];
+  const letzter = tage[tage.length - 1];
+  if (letzter && letzter.tag === tag) {
+    letzter[status === "fehler" ? "fehler" : "ok"] += 1;
+  } else {
+    tage.push({ tag, ok: status === "fehler" ? 0 : 1, fehler: status === "fehler" ? 1 : 0 });
+  }
+  tagesstatistik.set(id, tage.slice(-TAGE_MAX));
+}
+
 // Stufe 3: externe Herzschlaege ueberleben den Neustart auf IDrive e2 (ein
 // JSON-Datensatz je Autopilot). Die Eigenmeldung der Salad-Sonden wird bewusst
 // NICHT abgelegt — sie bezeugt genau diesen Prozess und waere nach einem
@@ -217,6 +237,7 @@ export function heartbeatAnnehmen({ id, key, status, meldung, dauerMs, env = pro
   });
   gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
   herzschlaege.set(eintrag.id, gespeichert);
+  zaehleTag(eintrag.id, ergebnis, jetztMs);
   return { ok: true, status: 200, id: eintrag.id, gespeichert: gespeichert.laeufe[0] };
 }
 
@@ -241,6 +262,11 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
     grau: zaehle("grau"),
     wartung: zaehle("wartung"),
     autopiloten: liste.sort(sortiereNachDringlichkeit),
+    // Vorfall-Protokoll: offene zuerst (bis === null), dann die juengsten.
+    vorfaelle: [...vorfaelle].sort((a, b) => {
+      if ((a.bis === null) !== (b.bis === null)) return a.bis === null ? -1 : 1;
+      return String(b.von).localeCompare(String(a.von));
+    }),
     serverStartAm: Number.isFinite(startzeitMs) ? new Date(startzeitMs).toISOString() : null,
     // Selbstauskunft der Ablage: ob die Neustart-Festigkeit wirklich traegt,
     // steht hier als Zahl statt als Versprechen.
@@ -271,7 +297,12 @@ function bewerten(a, jetztMs) {
     startAnleitung: a.startAnleitung,
     stopAnleitung: a.stopAnleitung,
     letzterLauf: letzter,
-    verlauf: gespeichert.laeufe
+    verlauf: gespeichert.laeufe,
+    // 90-Tage-Anzeige: je Tag verdichtet. Die Erfolgsquote zaehlt LAEUFE, nicht
+    // Zeit — und sagt das in der Ansicht auch so. Eine "Uptime", die aus zwei
+    // Cron-Laeufen am Tag 99,99 % errechnet, waere gelogen.
+    tage: tagesstatistik.get(a.id) || [],
+    erfolgsquote90: erfolgsquote(tagesstatistik.get(a.id))
   };
 
   // Wartung schlaegt alles: wer stumm geschaltet ist, loest keinen Alarm aus.
@@ -309,6 +340,15 @@ function bewerten(a, jetztMs) {
     return { ...basis, ampel: "gelb", ampelGrund: "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch." };
   }
   return { ...basis, ampel: "gruen", ampelGrund: "Letzter Lauf pünktlich und erfolgreich." };
+}
+
+/** Anteil erfolgreicher Laeufe ueber die Tages-Statistik; null ohne Messung. */
+function erfolgsquote(tage) {
+  if (!Array.isArray(tage) || !tage.length) return null;
+  let ok = 0, gesamt = 0;
+  for (const t of tage) { ok += t.ok || 0; gesamt += (t.ok || 0) + (t.fehler || 0); }
+  if (!gesamt) return null;
+  return { prozent: Math.round((ok / gesamt) * 1000) / 10, laeufe: gesamt, tage: tage.length };
 }
 
 /** Rot zuerst, dann gelb, dann grau, dann gruen — Auffaelliges nach oben. */
@@ -355,6 +395,7 @@ function sicherGleich(links, rechts) {
  */
 export async function frageWaechterAb({ jetztMs = Date.now(), fetchImpl = fetch } = {}) {
   const basis = process.env.SMEJJ_WAECHTER_URL || "https://smejj-brueckenwaechter.zeabur.app";
+  const startMs = Date.now();
   try {
     const [gesundheit, bruecke] = await Promise.all([
       fetchImpl(`${basis}/health`, { signal: AbortSignal.timeout(15_000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
@@ -375,10 +416,13 @@ export async function frageWaechterAb({ jetztMs = Date.now(), fetchImpl = fetch 
       am: new Date(jetztMs).toISOString(),
       status: "ok",
       meldung: meldung.slice(0, 200),
-      dauerMs: null
+      // Die Dauer der Abfrage selbst — misst den Weg Control-Server -> Waechter.
+      dauerMs: Math.max(0, Date.now() - startMs)
     });
     gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
     herzschlaege.set("brueckenwaechter", gespeichert);
+    zaehleTag("brueckenwaechter", "ok", jetztMs);
+    persistiereTageGedrosselt("brueckenwaechter");
     return true;
   } catch {
     return false;
@@ -405,7 +449,9 @@ export async function persistiereHerzschlag(id, { env = process.env } = {}) {
   const datensatz = {
     id: String(id),
     createdAt: gespeichert.laeufe[0].am,
-    laeufe: gespeichert.laeufe
+    laeufe: gespeichert.laeufe,
+    // Die Tages-Statistik faehrt im selben Datensatz mit — ein Put statt zwei.
+    tage: tagesstatistik.get(String(id)) || []
   };
   // Zwei Anlaeufe mit grosszuegigem Zeitlimit. Hier wartet kein Mensch auf
   // eine Antwort — der Absender hat seine Quittung laengst. Was zaehlt, ist
@@ -421,6 +467,35 @@ export async function persistiereHerzschlag(id, { env = process.env } = {}) {
     }
   }
   return false;
+}
+
+/**
+ * Die Dauerbetriebs-Piloten (Waechter-Abfrage, Salad-Eigenmeldung) melden alle
+ * 5 Minuten — jedes Mal zu schreiben waeren ~576 Puts am Tag fuer eine Anzeige,
+ * die sich je Tag genau einmal aendert. Gedrosselt auf hoechstens einen Put pro
+ * Stunde je Kennung. Abgelegt wird NUR die Tages-Statistik, nie die laeufe:
+ * eine konservierte "lebt noch"-Meldung waere nach dem Neustart eine Luege
+ * (siehe Kommentar an der Ablage) — dass ein VERGANGENER Tag sauber war,
+ * bleibt dagegen auch nach einem Neustart wahr.
+ */
+const PERSISTENZ_TAKT_MS = 60 * 60 * 1000;
+const letztePersistenz = new Map();
+
+function persistiereTageGedrosselt(id, { env = process.env, jetztMs = Date.now() } = {}) {
+  const zuletzt = letztePersistenz.get(id) || 0;
+  if (jetztMs - zuletzt < PERSISTENZ_TAKT_MS) return;
+  letztePersistenz.set(id, jetztMs);
+  const tage = tagesstatistik.get(id) || [];
+  if (!tage.length) return;
+  ablageStand.schreibVersuche += 1;
+  ablage.schreib({
+    id, createdAt: new Date(jetztMs).toISOString(), laeufe: [], tage
+  }, { env, timeoutMs: 20_000 }).then(() => {
+    ablageStand.schreibErfolge += 1;
+    ablageStand.letzterSchreibFehler = null;
+  }).catch((fehler) => {
+    ablageStand.letzterSchreibFehler = String(fehler?.message || fehler).slice(0, 120);
+  });
 }
 
 /**
@@ -440,7 +515,14 @@ export async function ladeHerzschlaege({ env = process.env } = {}) {
     let geladen = 0;
     for (const datensatz of ergebnis.datensaetze) {
       if (ladeWartung(datensatz)) continue;
+      if (ladeVorfaelle(datensatz)) continue;
       if (!AUTOPILOTEN.some((a) => a.id === datensatz.id)) continue;
+      // Tages-Statistik VOR der laeufe-Pruefung zurueckholen: die Datensaetze
+      // der Dauerbetriebs-Piloten tragen absichtlich leere laeufe, aber volle
+      // Tage — sonst waere die 90-Tage-Anzeige nach jedem Neustart leer.
+      if (Array.isArray(datensatz.tage) && datensatz.tage.length && !tagesstatistik.has(datensatz.id)) {
+        tagesstatistik.set(datensatz.id, datensatz.tage.slice(-TAGE_MAX));
+      }
       if (herzschlaege.has(datensatz.id)) continue;
       if (!Array.isArray(datensatz.laeufe) || !datensatz.laeufe.length) continue;
       herzschlaege.set(datensatz.id, { laeufe: datensatz.laeufe.slice(0, VERLAUF_MAX) });
@@ -519,6 +601,64 @@ function ladeWartung(datensatz) {
   return true;
 }
 
+// ---- Vorfall-Protokoll (Profi-Ausbau 2026-08-09) ----------------------------
+//
+// Was die Status-Seiten der grossen Anbieter koennen und diese Ampel bisher
+// nicht: sagen, was FRUEHER kaputt war. Eine Ampel zeigt nur das Jetzt — wer
+// morgens auf gruen schaut, erfaehrt nie, dass nachts drei Stunden rot waren.
+// Jede Rot-Phase wird deshalb als Vorfall festgehalten: von wann bis wann,
+// welcher Autopilot, welcher Grund. Erkannt wird sie von der Alarm-Wache, die
+// ohnehin alle 10 Minuten hinschaut — feiner aufgeloest ist auch die Mail nicht.
+const VORFAELLE_MAX = 50;
+let vorfaelle = [];                 // abgeschlossene + offene, juengste zuerst
+const offeneVorfaelle = new Map();  // id -> Vorfall (bis === null)
+
+function vorfaelleFortschreiben(uebersicht, jetztMs, env) {
+  const rote = new Map(uebersicht.autopiloten.filter((a) => a.ampel === "rot").map((a) => [a.id, a]));
+  let geaendert = false;
+
+  for (const [id, a] of rote) {
+    if (offeneVorfaelle.has(id)) continue;
+    const vorfall = {
+      id, name: a.name,
+      von: new Date(jetztMs).toISOString(),
+      bis: null,
+      grund: String(a.ampelGrund || "").slice(0, 200)
+    };
+    offeneVorfaelle.set(id, vorfall);
+    vorfaelle.unshift(vorfall);
+    geaendert = true;
+  }
+  for (const [id, vorfall] of [...offeneVorfaelle]) {
+    if (rote.has(id)) continue;
+    vorfall.bis = new Date(jetztMs).toISOString();
+    vorfall.dauerMs = Math.max(0, jetztMs - Date.parse(vorfall.von));
+    offeneVorfaelle.delete(id);
+    geaendert = true;
+  }
+  if (!geaendert) return;
+  vorfaelle = vorfaelle.slice(0, VORFAELLE_MAX);
+  // Ablegen wie die Wartung: gilt sofort im Arbeitsspeicher, die Ablage ist
+  // nur die Neustart-Festigkeit — ein Fehlschlag faellt in der Auskunft auf.
+  ablage.schreib({
+    id: "_vorfaelle",
+    createdAt: new Date(jetztMs).toISOString(),
+    eintraege: vorfaelle
+  }, { env, timeoutMs: 20_000 }).catch((fehler) => {
+    ablageStand.letzterSchreibFehler = String(fehler?.message || fehler).slice(0, 120);
+  });
+}
+
+/** Beim Start die abgelegten Vorfaelle zurueckholen (Gegenstueck zu ladeWartung). */
+function ladeVorfaelle(datensatz) {
+  if (datensatz?.id !== "_vorfaelle" || !Array.isArray(datensatz.eintraege)) return false;
+  if (!vorfaelle.length) {
+    vorfaelle = datensatz.eintraege.slice(0, VORFAELLE_MAX);
+    for (const v of vorfaelle) if (v && v.bis === null && v.id) offeneVorfaelle.set(v.id, v);
+  }
+  return true;
+}
+
 // Stufe 3b: Wer bereits eine Rot-Mail bekommen hat, bekommt keine zweite fuer
 // dieselbe Rot-Phase. Wird der Autopilot wieder gruen/gelb/grau, ist die
 // Episode beendet und ein neues Rot meldet sich wieder.
@@ -532,6 +672,9 @@ const alarmiert = new Set();
  */
 export async function pruefeAlarm({ env = process.env, jetztMs = Date.now(), sende = null } = {}) {
   const uebersicht = autopilotUebersicht({ jetztMs });
+  // Vorfaelle IMMER fortschreiben — auch wenn keine Mail rausgeht (kein
+  // Empfaenger, schon alarmiert): das Protokoll haengt nicht am Postausgang.
+  vorfaelleFortschreiben(uebersicht, jetztMs, env);
   const rote = uebersicht.autopiloten.filter((a) => a.ampel === "rot");
   const roteIds = new Set(rote.map((a) => a.id));
   for (const id of [...alarmiert]) if (!roteIds.has(id)) alarmiert.delete(id);
@@ -590,6 +733,8 @@ export function starteSelbstmessung({ intervallMs = 5 * 60 * 1000 } = {}) {
     });
     gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
     herzschlaege.set("salad-sonden", gespeichert);
+    zaehleTag("salad-sonden", "ok", Date.now());
+    persistiereTageGedrosselt("salad-sonden");
   };
   melden();
   const zeitgeber = setInterval(melden, intervallMs);
@@ -601,6 +746,10 @@ export function starteSelbstmessung({ intervallMs = 5 * 60 * 1000 } = {}) {
 export function _herzschlaegeZuruecksetzen() {
   herzschlaege.clear();
   alarmiert.clear();
+  tagesstatistik.clear();
+  letztePersistenz.clear();
+  vorfaelle = [];
+  offeneVorfaelle.clear();
 }
 
 /** Nur fuer Tests: auch die Ablage leeren. */

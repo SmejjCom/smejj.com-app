@@ -204,6 +204,83 @@ test("Waechter-Abfrage: meldet er die Bruecke als tot, bleibt ER trotzdem gruen"
   assert.ok(a.letzterLauf.meldung.includes("AUSGEFALLEN"));
 });
 
+test("Profi-Ausbau: Herzschlaege verdichten sich zur Tages-Statistik mit Quote", () => {
+  frisch();
+  // Drei Laeufe an Tag 1 (einer davon Fehler), einer an Tag 2.
+  const tag1 = Date.parse("2026-08-01T06:00:00.000Z");
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: tag1 });
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "fehler", env: ENV, jetztMs: tag1 + 1000 });
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: tag1 + 2000 });
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: tag1 + TAG_TEST_MS });
+  const a = autopilotUebersicht({ jetztMs: tag1 + TAG_TEST_MS }).autopiloten.find((x) => x.id === "qualitaetsmessung");
+  assert.equal(a.tage.length, 2, "zwei Kalendertage ergeben zwei Eintraege");
+  assert.deepEqual(a.tage[0], { tag: "2026-08-01", ok: 2, fehler: 1 });
+  assert.deepEqual(a.tage[1], { tag: "2026-08-02", ok: 1, fehler: 0 });
+  assert.equal(a.erfolgsquote90.prozent, 75, "3 von 4 Laeufen erfolgreich");
+  assert.equal(a.erfolgsquote90.laeufe, 4);
+});
+
+test("Profi-Ausbau: die Tages-Statistik uebersteht den Neustart", async () => {
+  frisch(); _ablageLeeren();
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: JETZT - 1000 });
+  await persistiereHerzschlag("qualitaetsmessung", { env: {} });
+  _herzschlaegeZuruecksetzen();
+  await ladeHerzschlaege({ env: {} });
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "qualitaetsmessung");
+  assert.equal(a.tage.length, 1, "die Tages-Statistik kommt aus der Ablage zurueck");
+  assert.equal(a.erfolgsquote90.prozent, 100);
+});
+
+test("Profi-Ausbau: die Waechter-Abfrage misst ihre eigene Dauer", async () => {
+  frisch();
+  const antwortet = async () => ({ ok: true, json: async () => ({ ok: true, erreichbar: true }) });
+  await frageWaechterAb({ jetztMs: JETZT, fetchImpl: antwortet });
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "brueckenwaechter");
+  assert.ok(Number.isFinite(a.letzterLauf.dauerMs), "die Dauer der Abfrage gehoert in den Lauf");
+  assert.ok(a.tage.length === 1 && a.tage[0].ok === 1, "auch die Abfrage zaehlt in die Tages-Statistik");
+});
+
+test("Profi-Ausbau: eine Rot-Phase wird als Vorfall protokolliert und geschlossen", async () => {
+  frisch(); _ablageLeeren();
+  const sende = async () => {};
+  const alarmEnv = { ...ENV, SMEJJ_ADMIN_OWNER_EMAILS: "smejjcom@gmail.com" };
+
+  heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "fehler", meldung: "push kaputt", env: ENV, jetztMs: JETZT - 1000 });
+  await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT, sende });
+  let u = autopilotUebersicht({ jetztMs: JETZT });
+  assert.equal(u.vorfaelle.length, 1, "das Rot eroeffnet einen Vorfall");
+  assert.equal(u.vorfaelle[0].bis, null, "der Vorfall ist noch offen");
+  assert.ok(u.vorfaelle[0].grund.includes("push kaputt"));
+
+  // Zweiter Pruefdurchlauf im selben Rot: KEIN zweiter Vorfall.
+  await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT + 1000, sende });
+  assert.equal(autopilotUebersicht({ jetztMs: JETZT + 1000 }).vorfaelle.length, 1);
+
+  // Wieder gruen: der Vorfall wird geschlossen und bekommt eine Dauer.
+  heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "ok", env: ENV, jetztMs: JETZT + 2000 });
+  await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT + 3000, sende });
+  u = autopilotUebersicht({ jetztMs: JETZT + 3000 });
+  assert.equal(u.vorfaelle.length, 1);
+  assert.ok(u.vorfaelle[0].bis, "der Vorfall ist geschlossen");
+  // Der Vorfall beginnt, wenn die Wache das Rot SIEHT (10-Minuten-Takt),
+  // nicht beim Fehler-Herzschlag selbst — feiner loest auch die Mail nicht auf.
+  assert.equal(u.vorfaelle[0].dauerMs, 3000, "vom ersten Sehen bis zum Pruefdurchlauf");
+});
+
+test("Profi-Ausbau: Vorfaelle ueberstehen den Neustart, offene bleiben offen", async () => {
+  frisch(); _ablageLeeren();
+  heartbeatAnnehmen({ id: "codeberg-spiegel", key: "geheim2", status: "fehler", env: ENV, jetztMs: JETZT - 1000 });
+  await pruefeAlarm({ env: {}, jetztMs: JETZT, sende: async () => {} });
+  _herzschlaegeZuruecksetzen();
+  assert.equal(autopilotUebersicht({ jetztMs: JETZT }).vorfaelle.length, 0, "Neustart: Arbeitsspeicher leer");
+  await ladeHerzschlaege({ env: {} });
+  const u = autopilotUebersicht({ jetztMs: JETZT });
+  assert.equal(u.vorfaelle.length, 1, "der Vorfall kommt aus der Ablage zurueck");
+  assert.equal(u.vorfaelle[0].bis, null, "ein offener Vorfall bleibt offen");
+});
+
+const TAG_TEST_MS = 24 * 60 * 60 * 1000;
+
 test("jeder Autopilot hat, was die idiotensichere Ansicht braucht", () => {
   for (const a of AUTOPILOTEN) {
     assert.ok(a.id && a.name && a.kurz, a.id + ": Kennung, Name und Kurzbeschreibung sind Pflicht");
