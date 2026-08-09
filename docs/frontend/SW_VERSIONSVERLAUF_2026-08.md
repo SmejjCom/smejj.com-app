@@ -754,3 +754,13 @@ Nachrichten je Anfrage, und der Auftrag lautet "Worum geht es hauptsaechlich?
 Nimm im Zweifel das Thema der ERSTEN Frage." Gegengemessen: die beiden
 Fehlfaelle werden zu "Bank fuer iMild LLC" und "Smeeting und Kommunikation",
 die bereits guten Titel bleiben unveraendert.
+v243 -> v244 (2026-08-09): persistActive() verliert keine Zustaende mehr.
+Beim Aufraeumen nach dem Auto-Titel-Deploy aufgefallen: die Funktion baut ein
+neues Chat-Objekt und ERSETZT damit das gespeicherte — was im Objektliteral
+fehlt, ist danach weg. Es fehlten zwei Felder. `pinned` war ein BESTEHENDER
+Fehler: wer einen angehefteten Chat oeffnete und weiterschrieb, verlor beim
+naechsten Speichern die Anheftung. `titleAuto` haette denselben Weg genommen —
+ein von der Bruecke geholter Titel waere beim Weiterschreiben wieder durch die
+erste Frage ersetzt worden. Beide werden jetzt weitergetragen, und der Titel
+bleibt stehen, sobald er von Hand ODER von der Bruecke kommt. Zwei Tests in
+tests/chat-title-auto.test.mjs halten das fest.

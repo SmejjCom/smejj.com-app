@@ -94,3 +94,27 @@ test("Kennungen der Importe passen zu den uebrigen Modulen (Befund F-07)", () =>
   assert.match(QUELLE, /from "\/assets\/ai\/chat-stream\.js"/);
   assert.ok(!/chat-stream\.js\?/.test(QUELLE), "chat-stream.js wird ohne Kennung importiert");
 });
+
+// ---------------------------------------------------------------------------
+// persistActive() ersetzt den gespeicherten Chat VOLLSTAENDIG. Was im
+// Objektliteral fehlt, ist nach dem naechsten Speichern weg. Genau daran ging
+// bis 2026-08-09 die Anheftung verloren (bestehender Fehler) und haette auch
+// jeder von der Bruecke geholte Titel verloren gehen muessen.
+const STORE = readFileSync(new URL("../public/chat-store.js", import.meta.url), "utf8");
+
+test("persistActive traegt Anheftung und Auto-Titel weiter", () => {
+  const block = STORE.slice(STORE.indexOf("async function persistActive"), STORE.indexOf("function safeModelName"));
+  assert.match(block, /pinned:\s*existing\?\.pinned === true/, "pinned faellt beim Speichern weg");
+  assert.match(block, /titleAuto:\s*Boolean\(existing && existing\.titleAuto\)/, "titleAuto faellt beim Speichern weg");
+  assert.match(
+    block,
+    /title:\s*existing && \(existing\.titleEdited \|\| existing\.titleAuto\)/,
+    "ein geholter Titel wird sonst wieder durch die erste Frage ersetzt"
+  );
+});
+
+test("setAutoTitle laesst von Hand vergebene Titel in Ruhe", () => {
+  const block = STORE.slice(STORE.indexOf("export async function setAutoTitle"), STORE.indexOf("export async function renameChat"));
+  assert.match(block, /if \(!chat \|\| chat\.titleEdited === true\) return false/);
+  assert.ok(!/updatedAt/.test(block), "Umbenennen ist keine inhaltliche Aenderung — updatedAt bleibt");
+});
