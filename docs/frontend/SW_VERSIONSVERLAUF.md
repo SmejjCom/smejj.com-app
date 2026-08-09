@@ -414,3 +414,28 @@ Startseite bleibt damit unter dem Start-Lock unangetastet (Muster auth-gate.js).
 Dazu ohne sw-Bezug: Operations Console Stufe 10 (Konkurrenz-Radar) und
 /radar/berichte.json.
 Freigabe Betreiber 2026-08-06.
+
+## v235 -> v236 (2026-08-09, Konkurrenz-Radar V3 Stufe 2): Modellwahl vereinfacht
+
+Der Modellwahl-Chip zeigt normalen Nutzern "Schnell/Auto/Gruendlich" statt
+Modellnamen. Modellnamen (GLM-5.2, Kimi K2.7, Cline, Kimi K3) bleiben unter
+"Modelle (erweitert)" im selben Menue erreichbar — der bestehende BYOK-/
+Vault-Pfad ist unveraendert (getestet: Wechsel zu einem BYOK-Modell und
+zurueck, Cline-Untermenue unberuehrt). Eine gewaehlte Stufe wechselt zurueck
+auf den Live-Pfad ("smejj 1.0") und geht als preferences.stufe an die Bruecke.
+
+Bruecke v125 (public/chat-bridge.js) ist Voraussetzung: leseStufe() liest
+body.stufe/body.preferences.stufe, streamFastLane() erzwingt bei "schnell"
+immer die Groq-Schnellspur (auch bei Coding) und gibt sie bei "gruendlich"
+immer ab. Unbekannte Werte und fehlende Angabe verhalten sich exakt wie vorher
+(Fail-Safe). Live seit 2026-08-08 per Salad-Container-Neustart, mit curl gegen
+/api/agent und /api/chat verifiziert (schnell/gruendlich/unbekannt je einmal
+mit und ohne Coding-Aufgabe).
+
+Freigabe des Betreibers 2026-08-06, Bedingung (c) explizit erfuellt: drei
+`npm run eval:models --live`-Laeufe (08-08 Basis 100%, 08-09 100%, 08-09
+Bestaetigung 99%), identisches Modell-Routing je Fall in allen drei Laeufen.
+Die einzelne "Regression"-Meldung im zweiten Lauf war reine Kimi-
+Latenzstreuung (im dritten Lauf lag p95 unter dem Ausgangswert) — Berichte in
+docs/benchmarks/modeleval-smejj-chat-core-live-default-2026-08-08.json und
+...-2026-08-09.json.
