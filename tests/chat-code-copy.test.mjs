@@ -96,7 +96,7 @@ test("Auslieferung: eingebunden, gebuendelt und im Precache", () => {
   assert.match(indexHtml, /<script src="\/assets\/chat-code-copy\.js\?v=[^"]+" type="module"><\/script>/);
   assert.match(sw, /"\/assets\/chat-code-copy\.js"/);
   // Ohne Versionssprung erreicht die Aenderung Bestandsnutzer nicht.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v231"/);
+  assert.match(sw, /CACHE_NAME = "smejj-shell-v235"/);
   // Die Regeln muessen im gebuendelten Stylesheet der Startseite ankommen.
   assert.match(bundle, /\.chat-code-copy::after/);
 });
