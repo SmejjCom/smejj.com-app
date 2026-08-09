@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// smejj.com — Basis-Abbild der Chat-Bruecke schlanker machen (Startzeit senken).
+// smejj.com — Basis-Abbild eines Salad-Dienstes schlanker machen (Startzeit senken).
 //
 // WARUM (gemessen am 2026-08-09, nicht vermutet): Der Bruecken-Waechter hat
 // einen Ausfall von 23:16:44 bis 23:20:44 aufgezeichnet — vier Minuten HTTP 503.
@@ -23,13 +23,19 @@
 // Modell-Zugaenge der Bruecke loeschen. Deshalb: lesen, ergaenzen, GANZ
 // zurueckschreiben — und vorher zaehlen.
 //
+// GILT AUCH FUER ANDERE SALAD-DIENSTE. Der Startbefehl wird NUR angefasst,
+// wenn er das Buendel per curl holt (Bruecken-Muster) — der Control-Server
+// startet ueber einen signierten Bootstrap, und an dessen Befehl darf nichts
+// geaendert werden. Deshalb: Befehl anfassen nur, wenn er "curl" enthaelt.
+//
 // Aufruf:
-//   CONFIRM_BRIDGE_IMAGE_SWITCH=YES node scripts/deploy/set_bridge_base_image.mjs
-//   (optional SMEJJ_BRIDGE_IMAGE=node:22-bookworm-slim fuer den Rueckweg)
+//   CONFIRM_SALAD_IMAGE_SWITCH=YES node scripts/deploy/set_salad_base_image.mjs
+//   SMEJJ_SALAD_GROUP=smejj-control CONFIRM_SALAD_IMAGE_SWITCH=YES node …
+//   (optional SMEJJ_SALAD_IMAGE=node:22-bookworm fuer den Rueckweg)
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
 
-const GRUPPE = process.env.SMEJJ_BRIDGE_GROUP || "smejj-chat-bridge-v88b-live";
-const ZIEL_ABBILD = process.env.SMEJJ_BRIDGE_IMAGE || "node:22-alpine";
+const GRUPPE = process.env.SMEJJ_SALAD_GROUP || "smejj-chat-bridge-v88b-live";
+const ZIEL_ABBILD = process.env.SMEJJ_SALAD_IMAGE || "node:22-alpine";
 const BUENDEL = "https://raw.githubusercontent.com/SmejjCom/smejj-app-frontend/main/assets/chat-bridge.js";
 
 function fail(nachricht) {
@@ -59,8 +65,8 @@ function startbefehl(abbild) {
 }
 
 async function main() {
-  if (process.env.CONFIRM_BRIDGE_IMAGE_SWITCH !== "YES") {
-    fail("Sicherung: CONFIRM_BRIDGE_IMAGE_SWITCH=YES erforderlich — das Umstellen startet die Bruecke neu.");
+  if (process.env.CONFIRM_SALAD_IMAGE_SWITCH !== "YES") {
+    fail("Sicherung: CONFIRM_SALAD_IMAGE_SWITCH=YES erforderlich — das Umstellen startet die Bruecke neu.");
   }
   loadSecureLocalEnv();
   const org = process.env.SALAD_ORGANIZATION_NAME;
@@ -81,14 +87,14 @@ async function main() {
     return;
   }
 
-  await saladApi("PATCH", pfad, {
-    container: {
-      image: ZIEL_ABBILD,
-      command: startbefehl(ZIEL_ABBILD),
-      // Die volle Abbildung zurueckschreiben — sonst loescht Salad sie.
-      environment_variables: { ...umgebung }
-    }
-  });
+  // Den Befehl NUR beim Bruecken-Muster ersetzen (curl -> wget). Beim
+  // Control-Server steht dort ein signierter Bootstrap-Einzeiler; ihn zu
+  // ueberschreiben hiesse, den Server unstartbar zu machen.
+  const holtPerCurl = (behaelter.command || []).some((t) => String(t).includes("curl "));
+  const aenderung = { image: ZIEL_ABBILD, environment_variables: { ...umgebung } };
+  if (holtPerCurl) aenderung.command = startbefehl(ZIEL_ABBILD);
+
+  await saladApi("PATCH", pfad, { container: aenderung });
 
   // Salads Rueckgabe ist VERZOEGERT KONSISTENT: unmittelbar nach dem Schreiben
   // meldet die Gruppe noch den alten Stand. Am 2026-08-09 selbst hineingelaufen
