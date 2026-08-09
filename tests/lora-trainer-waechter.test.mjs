@@ -164,7 +164,9 @@ test("fehlende Salad-Koordinaten machen den Waechter erkennbar zahnlos", () => {
   assert.equal(leer.vollstaendig, false);
   assert.deepEqual([...leer.fehlend].sort(), ["SALAD_ORGANIZATION_NAME", "SALAD_PROJECT_NAME", "SMEJJ_LORA_TRAINER_KEY"]);
   // Die Gruppe hat einen brauchbaren Standard, sie fehlt nie.
-  assert.equal(leer.gruppe, "smejj-lora-trainer");
+  // Seit 2026-08-06 "-batch": die alte Gruppe wurde fuer den Stufenwechsel
+  // geloescht, und Salad haelt geloeschte Namen dauerhaft belegt.
+  assert.equal(leer.gruppe, "smejj-lora-trainer-batch");
 });
 
 test("der Loop-Schluessel gilt als Salad-Schluessel", () => {
@@ -206,7 +208,7 @@ test("der Stopp trifft die richtige Adresse und akzeptiert 202", async () => {
   assert.equal(gesehen.length, 1);
   assert.equal(
     gesehen[0].url,
-    "https://api.salad.com/api/public/organizations/smejjcom/projects/default/containers/smejj-lora-trainer/stop"
+    "https://api.salad.com/api/public/organizations/smejjcom/projects/default/containers/smejj-lora-trainer-batch/stop"
   );
   assert.equal(gesehen[0].optionen.method, "POST");
   assert.equal(gesehen[0].optionen.headers["Salad-Api-Key"], "schluessel-123");

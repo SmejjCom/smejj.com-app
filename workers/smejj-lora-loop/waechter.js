@@ -127,7 +127,7 @@ export function bewerteWacht({ erreichbar, bereit, nichtBereitSeitMs, zyklusLaeu
 export function leseSaladKoordinaten(env = process.env) {
   const organisation = env.SALAD_ORGANIZATION_NAME || "";
   const projekt = env.SALAD_PROJECT_NAME || "";
-  const gruppe = env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer";
+  const gruppe = env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer-batch";
   // Der Loop bekommt den Salad-Schluessel ohnehin als SMEJJ_LORA_TRAINER_KEY —
   // es ist derselbe Schluessel, der auch das Gateway oeffnet.
   const apiKey = env.SMEJJ_LORA_TRAINER_KEY || env.SALAD_API_KEY || "";

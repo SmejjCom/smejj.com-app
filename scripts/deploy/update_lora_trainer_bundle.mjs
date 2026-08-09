@@ -25,7 +25,7 @@ import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { ABBILD, startBefehl } from "./lora_trainer_rezept.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const GRUPPE = process.env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer";
+const GRUPPE = process.env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer-batch";
 
 loadSecureLocalEnv();
 

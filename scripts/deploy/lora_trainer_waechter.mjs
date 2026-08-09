@@ -29,11 +29,11 @@ function pflicht(name) {
 }
 
 const API_KEY = pflicht("SALAD_API_KEY");
-const GRUPPE = process.env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer";
+const GRUPPE = process.env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer-batch";
 const BASIS = `https://api.salad.com/api/public/organizations/${pflicht("SALAD_ORGANIZATION_NAME")}`
   + `/projects/${pflicht("SALAD_PROJECT_NAME")}/containers`;
 const TRAINER_URL = (process.env.SMEJJ_TRAINER_PUBLIC_URL
-  || "https://lime-parsley-qr1myuiyur3yeow5.salad.cloud").replace(/\/$/, "");
+  || "https://fig-ranch-asdha4o0meo6huq6.salad.cloud").replace(/\/$/, "");
 const TAKT_MS = Number(process.env.SMEJJ_WAECHTER_TAKT_MS || 30_000);
 const NUR_BEOBACHTEN = String(process.env.SMEJJ_WAECHTER_NUR_BEOBACHTEN || "NO").toUpperCase() === "YES";
 // Dauerbetrieb: nach Erreichen von 'bereit' NICHT beenden, sondern weiter wachen.

@@ -36,7 +36,7 @@ import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { ABBILD, startBefehl } from "./lora_trainer_rezept.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const GRUPPE = process.env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer";
+const GRUPPE = process.env.SMEJJ_TRAINER_GRUPPE || "smejj-lora-trainer-batch";
 const MODUS = process.env.SMEJJ_TRAINER_MODUS || "attrappe";
 
 loadSecureLocalEnv();
@@ -95,7 +95,7 @@ function umgebung() {
     // Dienst haengt selbst /api/chat an. Ohne diesen Wert liefert
     // /training/status messEndpunkt=null und jede Messung schlaegt fehl.
     SMEJJ_TRAINER_PUBLIC_URL: process.env.SMEJJ_TRAINER_PUBLIC_URL
-      || "https://lime-parsley-qr1myuiyur3yeow5.salad.cloud",
+      || "https://fig-ranch-asdha4o0meo6huq6.salad.cloud",
     SMEJJ_TRAINER_BUNDLE_B64: baueBuendel(),
     SMEJJ_TRAINER_BASIS_REPO: process.env.SMEJJ_LORA_BASIS_HF_REPO || "",
     IDRIVE_E2_ENDPOINT: process.env.IDRIVE_E2_ENDPOINT || "",
