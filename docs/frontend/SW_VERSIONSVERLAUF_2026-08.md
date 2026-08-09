@@ -787,3 +787,13 @@ Multiplikationsergebnisse". Daraus die neue Regel: ist die erste Frage kurz
 (<= 30 Zeichen) und ohne Ballast (kein Anhang-Praefix, kein Dateipfad), IST
 sie bereits der beste Titel und bleibt stehen. Das verhindert die
 Verschlimmbesserung und spart zugleich jeden zweiten Anfragezyklus.
+v246 -> v247 (2026-08-09): Umbenennen war auf dem Handy nicht bedienbar. Beim
+Nachmessen der Handy-Ansicht mit den neuen Titeln gefunden: Eingabefeld,
+"Speichern" und "Abbrechen" standen in EINER Zeile (flex, nowrap) und
+brauchen zusammen 426 px. Die Karte bietet bei 375 px Fensterbreite nur
+265 px. Gemessen lag die rechte Kante des "Abbrechen"-Knopfes bei 463 px —
+also weit ausserhalb von Karte UND Fenster; der Knopf war schlicht nicht
+erreichbar. Ausserdem waren alle drei Elemente nur 35 px hoch. Jetzt bekommt
+das Feld eine eigene Zeile, die beiden Knoepfe teilen sich die naechste, und
+alle drei sind mindestens 44 px hoch. Desktop bleibt unveraendert (eine
+Zeile, 35 px) — dort passen 426 px muehelos.
