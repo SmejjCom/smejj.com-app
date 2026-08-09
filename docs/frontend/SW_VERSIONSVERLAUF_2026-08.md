@@ -666,7 +666,7 @@ Links aus den angezeigten Antworten, zeigt sie oben in der Datei-Ansicht
 (dorthin fuehrt der Quellen-Knopf) und setzt einen Zaehler an den Knopf in
 der rechten Panel-Leiste. Nichts wird gespeichert — die Liste wird bei jeder
 Aenderung frisch aus dem angezeigten Chat gelesen.
-v234 -> v235 (2026-08-08): Verlauf-Ansicht neu gestaltet. An den 34 echten
+v236 -> v237 (2026-08-08/09): Verlauf-Ansicht neu gestaltet. An den 34 echten
 Chats des Betreibers gemessen: 19 von 34 Titeln endeten mitten im Wort,
 einer war ein Dateipfad ("[Anhang: IMG_4911.jpeg] @/Users/..."), 8 Titel
 waren doppelt und dadurch nicht unterscheidbar, ein Suchfeld gab es nicht,

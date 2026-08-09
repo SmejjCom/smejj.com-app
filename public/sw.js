@@ -18,7 +18,18 @@
 // Die Stufe geht als preferences.stufe an die Bruecke (v125, live seit
 // 2026-08-08). Freigabe Betreiber 2026-08-06/08: drei Eval-Laeufe (99-100%%,
 // identisches Modell-Routing je Fall) bestaetigen Bedingung (c) der Freigabe.
-const CACHE_NAME = "smejj-shell-v236";
+//
+// ACHTUNG (2026-08-09): Der Modellwahl-Chip oben ist NOCH NICHT LIVE. Live
+// gepusht wurde v235 — mit der Cache-Version aus dem gemeinsamen Arbeitsbaum,
+// aber ohne die Dateien, die dazugehoerten. Wer app.js, index.html oder
+// chat-bridge.js deployt, muss deshalb erneut hochzaehlen (v238); v236 und
+// v237 sind verbraucht.
+//
+// v236 -> v237 (2026-08-09): neu gestaltete Verlauf-Ansicht
+// (chat-history-view.js) — Suche, Zeitgruppen, Themen, Aktions-Menue.
+// Eigene Nummer statt v236, damit ein spaeterer Deploy des Modellwahl-Chips
+// nicht faelschlich als schon ausgeliefert gilt.
+const CACHE_NAME = "smejj-shell-v237";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
