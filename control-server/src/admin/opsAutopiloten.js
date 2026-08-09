@@ -10,9 +10,11 @@
 // angeschlossenen Herzschlag ist "keine Messung" (grau) — niemals gruen.
 // Vorbild ist der Totmannschalter: Ausbleiben ist der Alarm, nicht die Meldung.
 //
-// Der Herzschlag-Speicher liegt im Arbeitsspeicher — dieselbe ehrliche
-// Einschraenkung wie beim Job-Store (Modul H): nach einem Neustart des
-// Control-Servers ist er leer, und die Ansicht sagt das ausdruecklich.
+// Der Herzschlag-Speicher liegt im Arbeitsspeicher UND (seit Stufe 3) auf
+// IDrive e2: geschrieben wird nach der Quittung, geladen beim Start. Ein
+// Neustart setzt die Ampel also nicht mehr auf null zurueck. Nur die
+// Eigenmeldung der Salad-Sonden bleibt bewusst fluechtig — sie bezeugt genau
+// diesen Prozess und waere nach einem Neustart eine konservierte Luege.
 import crypto from "node:crypto";
 import { createRecordStore } from "./recordStore.js";
 import { sendAuthMail } from "../auth/mailer.js";
@@ -243,8 +245,13 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
     // Selbstauskunft der Ablage: ob die Neustart-Festigkeit wirklich traegt,
     // steht hier als Zahl statt als Versprechen.
     ablage: { ...ablageStand },
-    hinweis: "Herzschläge liegen im Arbeitsspeicher: nach einem Neustart des Control-Servers "
-      + "beginnt die Messung von vorn, bis dahin steht »keine Messung«. "
+    // Der Text muss dem Stand der Technik folgen: bis Stufe 3 stand hier
+    // "nach einem Neustart beginnt die Messung von vorn" — seit die Verläufe
+    // auf IDrive e2 liegen, stimmt das nicht mehr. Ein veralteter Hinweis in
+    // einer Ansicht, die Ehrlichkeit verspricht, ist derselbe Fehler wie eine
+    // Ampel, die Konfiguration für Messung hält.
+    hinweis: "Herzschläge werden dauerhaft abgelegt und überstehen einen Neustart des Control-Servers — "
+      + "die Ampel beginnt nicht mehr bei null. "
       + "Grün gibt es nur für einen gemessenen, rechtzeitigen, erfolgreichen Lauf — nie aus der Konfiguration."
   };
 }
@@ -285,7 +292,9 @@ function bewerten(a, jetztMs) {
     return {
       ...basis,
       ampel: "grau",
-      ampelGrund: "Seit dem Start des Control-Servers ist noch kein Herzschlag angekommen. "
+      // Nicht mehr "seit dem Start" — die Ablage überdauert den Neustart.
+      // Fehlt hier etwas, hat dieser Autopilot wirklich noch nie gemeldet.
+      ampelGrund: "Von diesem Autopiloten ist noch kein Herzschlag angekommen — auch nicht aus der Ablage. "
         + "Nächster erwarteter Lauf: " + a.zeitplan + "."
     };
   }
