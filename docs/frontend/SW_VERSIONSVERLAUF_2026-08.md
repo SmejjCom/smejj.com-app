@@ -710,3 +710,20 @@ Recherche greift. Recherche behaelt "such", sonst verliert "Kannst du
 Internet nicht greifen …" seinen Bezug. (3) "Was ist 7 mal 8?" ist "Rechnen"
 — die Regel verlangt eine echte Rechenform, damit die Bueroe-Finanzierung
 bei Immobilien bleibt. Gemessen: alle 35 Chats zugeordnet, 12 Kategorien.
+v240 -> v241 (2026-08-09): Handy-Ansicht des Verlaufs nachgemessen. Der
+Weg dorthin ist selbst eine Merkregel: Chrome laesst sein Fenster nicht
+unter 958 CSS-px, die 600-px-Media-Query greift dort also NIE; ein iframe
+mit 375 px auf derselben Seite wird von frame-guard.js sofort entfernt.
+Gemessen wurde darum mit echter Geraete-Emulation (375 px, Touch,
+Mobile-UA) gegen die byte-identische Live-Datei (SHA-256 abgeglichen).
+Vier Befunde: (1) "Donnerstag, 09:13 · 30 Nachrichten" passt nicht in eine
+Zeile und brach mitten im Wort ab ("30 Nachrich") — auf schmalen Schirmen
+steht jetzt "30 Nachr.". (2) Der Platzhalter "18 Unterhaltungen
+durchsuchen…" wurde abgeschnitten, dort jetzt "Durchsuchen…". (3) Der
+"⋯"-Knopf war 32x32 px und die Menue-Eintraege 35 px hoch — beides unter
+der 44-px-Untergrenze von Apple und Google fuer Touch-Ziele; beide jetzt
+44 px. (4) Die wischbare Chip-Leiste (13 Chips, 1254 px in 335 px) endete
+optisch hart am Rand; ein weicher Rand zeigt jetzt, dass es weitergeht.
+Die beiden Texte haengen am JavaScript, nicht an CSS — beim Drehen des
+Geraets zeichnet ein resize-Listener sie darum neu, aber nur beim echten
+Wechsel der Schwelle.
