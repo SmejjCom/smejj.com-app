@@ -666,3 +666,15 @@ Links aus den angezeigten Antworten, zeigt sie oben in der Datei-Ansicht
 (dorthin fuehrt der Quellen-Knopf) und setzt einen Zaehler an den Knopf in
 der rechten Panel-Leiste. Nichts wird gespeichert — die Liste wird bei jeder
 Aenderung frisch aus dem angezeigten Chat gelesen.
+v234 -> v235 (2026-08-08): Verlauf-Ansicht neu gestaltet. An den 34 echten
+Chats des Betreibers gemessen: 19 von 34 Titeln endeten mitten im Wort,
+einer war ein Dateipfad ("[Anhang: IMG_4911.jpeg] @/Users/..."), 8 Titel
+waren doppelt und dadurch nicht unterscheidbar, ein Suchfeld gab es nicht,
+und "Loeschen" stand direkt neben "Oeffnen". chat-history-view.js baut die
+Liste jetzt aus Zeitgruppen (Angeheftet/Heute/Gestern/Diese Woche/30 Tage/
+Aelter), zeigt je Karte einen aufbereiteten Titel plus Vorschau, filtert
+ueber ein Suchfeld nach Titel UND Nachrichteninhalt (mit Trefferausschnitt)
+und legt die Aktionen ins "⋯"-Menue — neu darin: als Markdown sichern.
+Der GESPEICHERTE Titel bleibt unangetastet, aufbereitet wird nur die
+Anzeige; von Hand vergebene Titel (titleEdited) bleiben wie sie sind.
+KEIN eigenes ⌘K: das Kuerzel gehoert bereits der globalen Suche (search.js).
