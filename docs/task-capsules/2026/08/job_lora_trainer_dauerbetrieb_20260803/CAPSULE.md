@@ -448,3 +448,25 @@ Rote Liste — nur mit schriftlicher Freigabe.
 laesst sich die Zeabur-Umgebung weder lesen noch setzen — und der Browser ist im
 falschen Konto angemeldet (siehe Blocker oben). Der Chat-Fix bleibt ebenfalls
 unausgeliefert.
+
+---
+
+## Nachtrag 2026-08-06 — dieser Bericht nennt eine Gruppe, die es nicht mehr gibt
+
+Alles oben ist historisch richtig und bleibt unveraendert. Zwei Dinge haben sich
+seither geaendert, und wer den Bericht als Anleitung liest, laeuft sonst ins
+Leere:
+
+1. **Die Gruppe heisst jetzt `smejj-lora-trainer-batch`**, Adresse
+   `fig-ranch-asdha4o0meo6huq6.salad.cloud`. Die alte wurde mit schriftlicher
+   Freigabe geloescht und auf Stufe `batch` (0,09 statt 0,25 USD/h) neu
+   angelegt. Salad haelt geloeschte Namen belegt — daher der Zusatz.
+2. **Das Training ruht** (Betreiber-Entscheidung, Charta v1.2 Abschnitt 0).
+   Vier Messpunkte zeigten dieselbe Richtung: jede Korpusverbesserung senkte
+   die Note (95,88 → 36,60 %). RAG erreicht auf derselben Suite 96 %.
+   Nachgemessen am 2026-08-06: alle Dokumente des Repos ergeben zusammen rund
+   1.720 Fakten — 6 % der noetigen 30.000. Der Korpus ist aus Dokumentation
+   nicht erreichbar; es braucht echte Nutzerfragen.
+
+Ein Bericht wird nicht dadurch falsch, dass die Welt weiterlaeuft — aber er
+wird gefaehrlich, wenn niemand dazuschreibt, was inzwischen gilt.

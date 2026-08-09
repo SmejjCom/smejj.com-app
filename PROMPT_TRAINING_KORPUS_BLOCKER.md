@@ -53,15 +53,22 @@ strikt daran:
   dokumentieren, was nicht live gemessen wurde.
 * Kosten: Deckel 50 USD gilt weiter. Ein Messzyklus in der Stufe `batch` kostet
   rund 1,8 Cent.
-* **DAUERLAUF IST FREIGEGEBEN (Betreiber, 2026-08-05): „Dauerlauf ist
-  freigegeben, mach weiter."** Der Satz „Messlaeufe sind freigegeben, Dauerlauf
-  nicht" von heute frueh ist damit ueberholt — die Schleife darf durchlaufen.
-  Wer sie stoppt, stoppt sie gegen eine ausdrueckliche Freigabe.
-* Die Gruppe steht seit dem 2026-08-05 auf Stufe `high` (0,25 statt 0,09 USD/h,
-  also 180 statt 64,80 USD/Monat). Das ist von der Freigabe
-  `freigabe-2026-08-01-dauertraining` (180 USD/Monat) noch gedeckt, liegt aber
-  AUF deren Obergrenze statt darunter: der 50-USD-Deckel kauft damit rund 200
-  statt 555 GPU-Stunden.
+* **ÜBERHOLT — DIESER AUFTRAG RUHT (Stand 2026-08-06).** Hier stand bis eben
+  „Dauerlauf ist freigegeben, mach weiter" mit dem Zusatz, wer die Schleife
+  stoppe, handle gegen eine Freigabe. Das galt am Vormittag des 2026-08-05.
+  **Danach hat der Betreiber entschieden, dass das Training ruht**
+  (`docs/policy/AUTOPILOT_TRAINING_CHARTA.md` v1.2, Abschnitt 0; RAG bleibt die
+  Antwort). Die Charta ist die verbindliche Fassung, dieser Prompt nicht.
+  Wer die Schleife startet, handelt jetzt GEGEN die Charta.
+* **Warum das hier stehenbleibt statt geloescht zu werden:** ein Satz mit
+  „ausdrueckliche Freigabe" in einem Arbeitsauftrag ueberlebt die Entscheidung,
+  die ihn aufhebt — und die naechste Sitzung liest ihn als gueltig. Genau das
+  ist am 2026-08-06 passiert. Ein aufgehobener Auftrag muss als aufgehoben
+  dastehen, nicht verschwinden.
+* Die Gruppe heisst seit dem 2026-08-06 **`smejj-lora-trainer-batch`** und steht
+  auf Stufe `batch` (0,09 USD/h, 64,80 USD/Monat). Die alte Gruppe wurde dafuer
+  geloescht; Salad haelt geloeschte Namen belegt, daher der neue Name. Neue
+  Adresse: `fig-ranch-asdha4o0meo6huq6.salad.cloud`. Sie ist **gestoppt**.
 
 ## Die drei Blocker — Aufgaben in dieser Reihenfolge
 

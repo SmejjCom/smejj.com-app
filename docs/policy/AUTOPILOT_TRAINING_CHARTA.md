@@ -13,8 +13,20 @@ hebeln projekteigene Policy-Dokumente nicht aus).
 
 ## 0. RUHEND seit 2026-08-06 — Betreiber-Entscheidung
 
-**Der Autopilot ist angehalten. Die Salad-Gruppe `smejj-lora-trainer` ist
+**Der Autopilot ist angehalten. Die Salad-Gruppe `smejj-lora-trainer-batch` ist
 gestoppt (Status `stopped`, 0 USD/h). Die Schleife laeuft nicht.**
+
+Namensaenderung am 2026-08-06 (nur Sachstand, keine Regelaenderung): Die Gruppe
+hiess bis dahin `smejj-lora-trainer` und lief auf Stufe `high` (0,25 USD/h).
+Mit schriftlicher Betreiber-Freigabe wurde sie geloescht und auf Stufe `batch`
+(0,09 USD/h) neu angelegt — `PATCH` auf `priority` antwortet 200 und aendert
+nichts, Neuanlegen ist der einzige Weg. Salad haelt geloeschte Namen belegt,
+daher der Zusatz `-batch`; die Adresse ist neu:
+`fig-ranch-asdha4o0meo6huq6.salad.cloud`. Konfiguration unveraendert
+uebernommen, Sicherung unter
+`backups/salad/smejj-lora-trainer-2026-08-06-vor-batch-neuanlage.json`.
+Wird das Training je wieder aufgenommen, kostet es damit 64,80 statt 180 USD
+im Monat.
 
 Grund: Vier Messpunkte in dieselbe Richtung — Training verschlechtert das
 Modell (Grundlinie 95,88 %; trainiert 67,89 / 62,75 / **36,60 %** bei zuletzt
