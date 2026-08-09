@@ -65,7 +65,7 @@ Wichtig: Mehrere Vorschläge berühren Dateien unter dem Start-Lock (31 eingefro
 |---|---|---|
 | V1 Riesen-Einfügung als Anhang | **JA — umgesetzt und live** | Freigabe 2026-08-06 (inkl. Start-Lock); live als sw v228, Commit b4678d7 (Frontend-Repo) / 9ce211b (lokal) |
 | V2 Live-Mitschrift Sprachmodus | **JA — umgesetzt und live** | Freigabe 2026-08-06 (inkl. Start-Lock); live als sw v230, Commit 51d4ecb (Frontend-Repo) / 3cbd8d5 (lokal); in Chrome live verifiziert |
-| V3 Modellwahl Schnell/Auto/Gründlich | **JA — freigegeben, NICHT umgesetzt** | Freigabe 2026-08-06 inkl. Start-Lock. Beim Bauen zeigte sich: erfordert eine Bridge-Änderung + Container-Neustart, den diese Sitzung nicht auslösen kann. Befund unten. |
+| V3 Modellwahl Schnell/Auto/Gründlich | **JA — umgesetzt und live** | Zweite Freigabe 2026-08-08 (inkl. Salad-Container-Neustart) hat den ursprünglichen Blocker aufgehoben; Bridge v125 + Chip live als sw v235 (Frontend-Repo, Commits 2b09ee5/bd9c1c0) / sw v236 (lokal, 0008ecb). Details unten. |
 | V4 Verlauf: Anpinnen + Suche | **JA — beide Stufen umgesetzt und live** | Stufe 1 (Anpinnen) sw v229 / 11c5fd3; Stufe 2 (Projekt-Dateien in der Suche) sw v232 / 17d3c21 |
 | V5 Quellen-Panel koppeln | **JA — umgesetzt und live** | Freigabe 2026-08-06; live als sw v234, Commit ab6da57 |
 
@@ -101,3 +101,50 @@ vermeidet. Lieber offen als scheinbar erledigt.
 **Nächster Schritt, wenn gewünscht:** Bridge um die Stufen-Präferenz erweitern,
 `npm run eval:models` als Vorher/Nachher-Messung fahren, dann Frontend-Chip
 umstellen. Aufwand realistisch 1–2 Tage statt der geschätzten 2.
+
+---
+
+## Nachtrag 2026-08-08/09: V3 doch umgesetzt
+
+Der Blocker aus dem Befund oben ließ sich lösen — der Salad-API-Schlüssel war
+in der Umgebung dieser Sitzung erreichbar, ein Neustart also technisch möglich.
+Der Betreiber hat den Eingriff mit einer separaten, expliziten Freigabe
+autorisiert (Klartext-Vier-Punkte-Auftrag a–d, 2026-08-08).
+
+**Umsetzung:**
+- **Bridge v125** (`public/chat-bridge.js`): `leseStufe(body)` liest
+  `body.stufe`/`body.preferences.stufe`, nur `schnell|auto|gruendlich` werden
+  angenommen, jeder andere Wert (und ein fehlendes Feld) ergibt `""` — exaktes
+  Fail-Safe-Verhalten wie zuvor. `streamFastLane()` erzwingt bei `schnell`
+  immer die Groq-Schnellspur (auch bei Coding-Aufgaben), gibt sie bei
+  `gruendlich` immer ab.
+- **Deploy:** Bündel gebaut (`scripts/deploy/bundle_chat_bridge.mjs`), auf
+  `SmejjCom/smejj-app-frontend` ausgeliefert, Salad-Container per
+  `scripts/deploy/restart_chat_bridge_salad.mjs` neu gestartet (Ausfallzeit
+  ca. 220 s, wie in der Freigabe akzeptiert). `/health` bestätigt
+  `antwortstufenEnabled: true`.
+- **Live-Funktionstest per curl** gegen `/api/agent` und `/api/chat`: `schnell`
+  erzwingt Groq auch bei einer Coding-Aufgabe, `gruendlich`/Standard bleiben
+  auf Kimi (tiefe Spur) — Fail-Safe für unbekannte Werte bestätigt.
+- **Messung (Bedingung c):** Drei `npm run eval:models --live`-Läufe.
+  08-08 (Basis, vor der Bridge-Änderung): 100 %. 08-09 (nach Deploy+Neustart):
+  100 %, aber Werkzeug-Urteil „regression" wegen einer einzelnen
+  Latenz-Ausreißerin (p95 8937→10767 ms). Fallweiser Vergleich zeigte: **jeder
+  Fall bekam in beiden Läufen exakt dasselbe Modell** — das Routing ohne
+  `stufe`-Angabe war unverändert, die Verzögerung betraf nur den
+  Kimi-Denkpfad, dessen hohe Streuung im Code bereits dokumentiert ist
+  (`reasoningEffortPolicy.js`: p95 bis 17 661 ms gemessen). Ein dritter
+  Bestätigungslauf (08-09) landete bei 99 % mit p95 7286 ms — **besser als
+  der Ausgangswert**. Werkzeug-Urteil „passed". Berichte liegen unter
+  `docs/benchmarks/modeleval-smejj-chat-core-live-default-2026-08-08.json`
+  und `...-2026-08-09.json`.
+- **Frontend-Chip:** zeigt „Schnell/Auto/Gründlich" statt Modellnamen.
+  Modellnamen (GLM-5.2, Kimi K2.7, Cline, Kimi K3) bleiben unter „Modelle
+  (erweitert)" im selben Menü erreichbar — der bestehende BYOK-/Vault-Pfad ist
+  unverändert (getestet: Wechsel zu einem BYOK-Modell und zurück,
+  Cline-Untermenü unberührt).
+
+**Lehre:** Der ursprüngliche Befund war technisch korrekt (Bridge musste
+geändert werden), aber die Einschätzung „Container-Neustart nicht auslösbar"
+war falsch — der Zugang war vorhanden, nur ungeprüft. Vor einer Ablehnung aus
+Reichweiten-Gründen künftig zuerst die Umgebung selbst prüfen.
