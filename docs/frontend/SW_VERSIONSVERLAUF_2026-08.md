@@ -743,3 +743,14 @@ neuer Test (tests/chat-title-auto.test.mjs, in check:frontend) haelt die
 Bereinigung fest; er fand beim Schreiben sofort einen Fehler — ein
 Wortfilter verwarf "Titel: Wetterabfrage Berlin" komplett, jetzt entscheidet
 allein der Doppelpunkt am Zeilenende.
+v242 -> v243 (2026-08-09): Auto-Titel an der Eroeffnungsfrage verankert. Am
+Live-Lauf ueber die echten Chats aufgefallen: zwei von acht Titeln trafen ein
+NEBENTHEMA. "Welche Bank fuer meine iMild LLC?" wurde zu "Banken in Silizium
+Valley" (Nachricht 2 fragte nach Banken im Silicon Valley), und der Chat
+"smeeting nach\"" zu "Fahrradfahren in der Stadt" (ab Nachricht 2 ging es
+darum). Kein Halluzinieren, sondern falsche Gewichtung: das Modell nahm den
+auffaelligsten Punkt aus dem mitgeschickten Verlauf. Jetzt vier statt sechs
+Nachrichten je Anfrage, und der Auftrag lautet "Worum geht es hauptsaechlich?
+Nimm im Zweifel das Thema der ERSTEN Frage." Gegengemessen: die beiden
+Fehlfaelle werden zu "Bank fuer iMild LLC" und "Smeeting und Kommunikation",
+die bereits guten Titel bleiben unveraendert.
