@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-09T07:59:39.083Z",
-  "confirmation": "Ich gebe frei: public/composer-tools.js darf trotz Start-Lock aufgeteilt werden. Baue danach den Control-Release aus dem aktuellen Stand — die Arbeit meiner Parallelsitzungen geht bewusst mit live. Danach alle Locks neu einfrieren.",
+  "frozenAt": "2026-08-09T08:23:18.831Z",
+  "confirmation": "Freigabe Betreiber 2026-08-09 (Auswahlkarte 'Doppelte Ueberschrift weg'): Ich entferne das ueberfluessige VERLAUF ueber der Hauptzeile - betrifft den Ansichts-Rahmen, gilt dann fuer alle Premium-Ansichten. Kleiner Eingriff, neuer sw-Bump. Zuvor Auswahlkarte 'Ja, jetzt live' fuer chat-history-view.js und sw.js v237.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "e3330ee1a8682ae9dd6bcc8b6e6540a393415523f78367a292bf26674a15aabe",
+    "public/index.html": "f11fa9b8268481cb516002d21b5de82e05f970cf9f381f5be09432653292f985",
     "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "89495c1238dd03ef7907f0e02577f667db733b02471a688bb2f63d62d74ada54",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e3104bb2ce4e4ae25527fe24082f343d964e63bd6ce8fc10ff10645273e55fb0",
+    "public/sw.js": "03a199d277c9da010f71ba2724da675e94cdf6e024459a9a586013ae28ffd4c8",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
