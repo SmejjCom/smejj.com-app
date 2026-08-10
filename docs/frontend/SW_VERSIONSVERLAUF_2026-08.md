@@ -868,3 +868,21 @@ Beim selben Test bestaetigt: Anheften holt die Karte in die Gruppe
 das Pin-Symbol steht im Titel — und `updatedAt` bleibt unveraendert, ein 40
 Tage alter Chat behaelt in der Fusszeile korrekt sein Datum ("30. Juni 2026")
 statt nach oben zu rutschen.
+v252 -> v253 (2026-08-09): Waehrend einer Suche war die Trefferzahl
+unsichtbar. Sie stand nur im Platzhalter des Suchfelds ("2 von 5") — und ein
+Platzhalter ist genau dann verdeckt, wenn etwas eingetippt ist, also genau
+dann, wenn man die Zahl braucht. Beim Live-Test "Suche" auf dem Handy im
+Screenshot gesehen: "berlin" im Feld, zwei Karten in der Liste, und nirgends
+stand, dass es zwei von fuenf sind. Jetzt eine eigene, dezente Zeile ueber
+der Liste, die nur bei aktiver Suche ODER aktivem Themen-Filter erscheint.
+Beim selben Test bestaetigt und unveraendert richtig: der Fokus bleibt bei
+JEDEM Zeichen im Feld und der Cursor am Ende (die Liste wird bei jedem
+Tastendruck neu gezeichnet — ohne diese Nachsorge waere die Suche auf dem
+Handy unbenutzbar); Gross- und Kleinschreibung sowie Umlaute stimmen
+("MUeSLUeM" findet "Mueslueim"); Treffer tief im Nachrichtentext liefern
+einen Ausschnitt mit fuehrendem Auslassungszeichen ("…enkapital liegt die
+Monatsrate bei rund 4.350 Euro"); waehrend einer Suche entfaellt die Gruppe
+"Angeheftet", damit ein Treffer nicht versteckt wird; Themen-Filter und
+Suche wirken zusammen (Immobilien + "wohnung" = 1 Treffer, Immobilien +
+"wetter" = keiner); Feldbreite und Kopfhoehe bleiben beim Tippen konstant,
+kein Layout-Sprung.

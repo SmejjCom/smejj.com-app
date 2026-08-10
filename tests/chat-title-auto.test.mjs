@@ -193,3 +193,13 @@ test("der Ansichts-Container darf schrumpfen (Grid-Item mit min-width auto)", ()
   assert.match(cssBlock(), /#chatHistory \.output \{ min-width: 0; \}/,
     "ohne min-width: 0 sprengt die Chip-Leiste die Ansicht");
 });
+
+test("die Trefferzahl steht nicht nur im Platzhalter", () => {
+  // Der Platzhalter ist verdeckt, sobald etwas eingetippt ist — also genau
+  // dann, wenn die Zahl gebraucht wird. Live gesehen: "berlin" im Feld, zwei
+  // Karten, und nirgends stand "2 von 5".
+  assert.match(ANSICHT, /if \(\(nadel \|\| themenFilter\) && treffer\.length\)/,
+    "die Zaehlerzeile fehlt oder erscheint zur falschen Zeit");
+  assert.match(ANSICHT, /\$\{treffer\.length\} von \$\{aufbereitet\.length\} Unterhaltungen/);
+  assert.match(cssBlock(), /\.ch-zaehler \{/, "die Zaehlerzeile braucht eine Regel");
+});
