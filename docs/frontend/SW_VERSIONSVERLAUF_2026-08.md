@@ -976,3 +976,33 @@ Elemente, null Verstoesse.
 Chats wurde die ganze Liste auf einmal gezeichnet", Frontend-Commit f549210.
 Der Eintrag kommt aus deren Branch. Zum zweiten Mal an diesem Tag: vor jedem
 Deploy die LIVE ausgelieferte Cache-Version pruefen, nicht die lokale.)
+
+v259 -> v260 (2026-08-09): Nach der Startseite alle 15 App-Ansichten bei
+375 px durchgemessen — 107 Touch-Ziele unter 44 px, aber nur vier Ursachen:
+
+1. Zurueck und Schliessen der Ansichts-Leiste waren 32x32 und kamen in JEDER
+   Ansicht vor — die kleinsten Ziele der App. Ihre Regel setzt width/height
+   mit !important (um die Knopf-Grundregeln der Ansichten zu schlagen);
+   dagegen kommt eine normale Deklaration nicht an, die Handy-Regel braucht
+   deshalb ebenfalls !important. Das Symbol bleibt 20 px, nur die Flaeche
+   waechst. Weil die Leiste absolut ueber dem Inhalt liegt, geht der obere
+   Innenabstand der Ansicht von 46 auf 58 px mit — sonst deckt der Knopf die
+   Ueberschrift.
+2. Die Aktionsknoepfe der Ansichten waren 40 px hoch (325x40, 351x40, 311x40),
+   die Formularfelder 42. Beide haengen an `.premium-view` in
+   app-surfaces.css. Die Reiter von Einstellungen und Konto brauchten keine
+   eigene Regel — sie sind `.premium-view button` und holen ihre Hoehe von
+   dort.
+3. Die Ansicht Automatisierung faellt aus diesem Muster: sie ist eine
+   klassische `.view` mit eigenen Knopf- und Feldregeln (40 bzw. 42 px) und
+   blieb nach dem ersten Durchlauf als einzige mit 12 Verstoessen stehen.
+   Eigene Media-Query in autonomous-coding.css.
+4. Kein Fehler war `#profilePictureInput` (30x44): ein per CSS verborgener
+   File-Input, bedient wird der sichtbare Knopf daneben. Der ist gross genug.
+   Nebenbefund fuer spaeter: die Versteck-Regel (`width: 1px; clip`) scheint
+   nicht anzukommen, sonst waere er 1x1 — unangetastet gelassen.
+
+Vorab an der echten Seite geprueft, indem alle DREI betroffenen Stylesheets im
+DOM durch die lokalen Fassungen ersetzt wurden (jeweils an ihrer eigenen
+Kaskadenposition): 15 von 15 Ansichten ohne Verstoss, keine Ueberschrift
+verdeckt, keine Ansicht laeuft ueber den Rand.
