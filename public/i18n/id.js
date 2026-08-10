@@ -328,4 +328,5 @@ export default {
   "Natürlicher Klang über den smejj-Server — wird in den Einstellungen aktiviert.": "Suara alami melalui server smejj — diaktifkan di pengaturan.",
   "Konto-E-Mail": "Email akun",
   "Datum": "Tanggal",
+  "Benachrichtigungen im Browser nicht erlaubt — bitte in den Website-Einstellungen freigeben.": "Notifikasi tidak diizinkan di browser — mohon izinkan di pengaturan situs.",
 };

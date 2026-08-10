@@ -56,6 +56,7 @@ import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
 import { mailerConfig } from "../control-server/src/auth/mailer.js";
 import { starteMailLogAufraeumen } from "../control-server/src/auth/mailLogJanitor.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
+import { sessionRegistryEnabled, newSessionId, registerSession, isSessionActive, revokeSession } from "../control-server/src/auth/sessionRegistry.js";
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
@@ -127,7 +128,7 @@ const server = http.createServer(async (req, res) => {
       res.setHeader("Cache-Control", "private, no-store");
       const authenticatedUser = readSession(req);
       if (!authenticatedUser) return json(res, 401, { ok: false, error: "authentication_required" });
-      if (!(await emailSessionStillValid(authenticatedUser, process.env))) {
+      if (!(await sessionStillValid(authenticatedUser, process.env))) {
         return json(res, 401, { ok: false, error: "session_revoked_or_expired" });
       }
       req.authUser = authenticatedUser;
@@ -188,7 +189,7 @@ const server = http.createServer(async (req, res) => {
     // Herzschlag der Autopiloten (Maschinen-Absender, eigener Schluessel je Automatik) — autopilotRoutes.js.
     if (await handleAutopilotHeartbeat(req, url, res)) return;
     // Adminbereich, Transparenzbericht, Einwilligung — Zustaendigkeit: adminSurfaceRoutes.js.
-    if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid: emailSessionStillValid })) return;
+    if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid })) return;
     // Adminbereich Stufe 1 (nur lesend): ohne frische Adminrolle aus dem Store => 403.
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
@@ -355,7 +356,7 @@ function handleAuthConfig(res) {
 
 async function handleAuthMe(req, res) { // noStoreJson: Identitaet nie cachen (F-08)
   const user = readSession(req);
-  const valid = user ? await emailSessionStillValid(user, process.env) : false;
+  const valid = user ? await sessionStillValid(user, process.env) : false;
   // Gleitende Verlaengerung (Freigabe C, 2026-08-05): jede Nutzung gibt ein
   // frisches Token mit voller Laufzeit zurueck. Der Client ersetzt sein
   // gespeichertes Token nur, wenn er selbst eines dauerhaft haelt —
@@ -460,8 +461,13 @@ const routeExtraAuth = createExtraAuthRouter({
 });
 
 async function handleAuthLogout(req, res) {
-  // Serverseitig: E-Mail-Sessions in der Registry widerrufen (nicht nur Cookie loeschen).
-  await revokeCurrentEmailSession(readSession(req), process.env).catch(() => {});
+  // Serverseitig widerrufen (nicht nur Cookie loeschen): E-Mail ueber ihre eigene
+  // Registry, alle anderen Methoden (H2) ueber die generalisierte sid-Registry.
+  const sessionUser = readSession(req);
+  await revokeCurrentEmailSession(sessionUser, process.env).catch(() => {});
+  if (sessionUser?.sid && sessionUser.method !== "email") {
+    await revokeSession(sessionUser.sid, process.env).catch(() => {});
+  }
   res.writeHead(200, {
     ...SECURITY_HEADERS,
     "Content-Type": "application/json; charset=utf-8",
@@ -731,7 +737,39 @@ function readAuthBody(req) {
 }
 
 function serializeSessionCookie(user) {
+  // H2: genau HIER (Cookie wird nur beim Login gesetzt, nicht bei /me-Renewal)
+  // bekommt eine Nicht-E-Mail-Sitzung ihre sid und einen Registry-Eintrag —
+  // damit auch Google/Passkey/GitHub/Magic fern-widerrufbar werden.
+  ensureRegistrySid(user);
   return `smejj_session=${serializeSessionToken(user)}; Path=/; HttpOnly; Secure; SameSite=${SESSION_COOKIE_SAMESITE}; Max-Age=604800`;
+}
+
+// H2 (Flag SMEJJ_SESSION_REGISTRY): vergibt einer frisch angemeldeten
+// Nicht-E-Mail-Sitzung eine sid und hinterlegt sie als aktiv. Synchron die sid
+// (sie muss sofort in Cookie UND Access-Token), die Registrierung best-effort im
+// Hintergrund (isSessionActive wertet "noch kein Eintrag" als aktiv -> kein
+// Aussperren). E-Mail-Sitzungen haben ihre eigene Registry und werden hier
+// ausgelassen. Ohne Flag passiert nichts (Rollback per Flag).
+function ensureRegistrySid(user) {
+  if (!sessionRegistryEnabled(process.env)) return;
+  if (!user || user.method === "email" || user.sid) return;
+  user.sid = newSessionId();
+  registerSession({
+    sid: user.sid,
+    subject: user.userId || user.sub || user.email,
+    method: user.method,
+    expiresAtMs: Date.now() + 180 * 24 * 60 * 60 * 1000
+  }, process.env).catch(() => {});
+}
+
+// Generalisierte Sitzungspruefung: E-Mail wie bisher; Nicht-E-Mail nur dann, wenn
+// die Registry aktiv ist UND das Token eine sid traegt. Legacy-Tokens ohne sid
+// (vor Flag-Aktivierung ausgestellt) bleiben gueltig.
+async function sessionStillValid(user, env = process.env) {
+  if (!user) return false;
+  if (user.method === "email") return emailSessionStillValid(user, env);
+  if (sessionRegistryEnabled(env) && user.sid) return isSessionActive(user.sid, env);
+  return true;
 }
 
 function serializeSessionToken(user) {

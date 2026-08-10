@@ -132,7 +132,11 @@ export async function handleEmailAuthRoutes(req, url, res, ctx) {
     const result = await deleteAccount({ email: user.email, password: body.password, confirmText: body.confirmText }, ctx.env);
     if (result.ok) {
       invalidateSessionCache(user.email);
-      res.setHeader("Set-Cookie", "smejj_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0");
+      // H1: der Clear muss zum SET passen — bei aktivem SMEJJ_SHORT_ACCESS_TOKEN
+      // wird das Cookie als SameSite=None; Partitioned gesetzt, sonst Lax.
+      const shortToken = ["1", "true", "yes"].includes(String(ctx.env?.SMEJJ_SHORT_ACCESS_TOKEN || "").toLowerCase());
+      const sameSite = shortToken ? "None; Partitioned" : "Lax";
+      res.setHeader("Set-Cookie", `smejj_session=; Path=/; HttpOnly; Secure; SameSite=${sameSite}; Max-Age=0`);
     }
     return respond(ctx, res, result);
   }

@@ -328,4 +328,5 @@ export default {
   "Natürlicher Klang über den smejj-Server — wird in den Einstellungen aktiviert.": "smejj 서버를 통한 자연스러운 음성 — 설정에서 활성화합니다.",
   "Konto-E-Mail": "계정 이메일",
   "Datum": "날짜",
+  "Benachrichtigungen im Browser nicht erlaubt — bitte in den Website-Einstellungen freigeben.": "브라우저에서 알림이 허용되지 않았습니다 — 사이트 설정에서 허용해 주세요.",
 };

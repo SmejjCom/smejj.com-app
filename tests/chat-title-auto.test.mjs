@@ -135,8 +135,10 @@ test("setAutoTitle laesst von Hand vergebene Titel in Ruhe", () => {
 // Handy-Regel nie ankam. Auf einer Teststrecke ohne die App-Stylesheets faellt
 // das NICHT auf.
 const ANSICHT = readFileSync(new URL("../public/chat-history-view.js", import.meta.url), "utf8");
-// Textaufbereitung und Export sind seit 2026-08-10 ausgelagert.
+// Beide Aufteilungen vom 2026-08-10: Textaufbereitung/Export in
+// chat-history-text.js, Karten-Bausteine in chat-history-cards.js.
 const TEXTMODUL = readFileSync(new URL("../public/chat-history-text.js", import.meta.url), "utf8");
+const KARTEN = readFileSync(new URL("../public/chat-history-cards.js", import.meta.url), "utf8");
 
 function cssBlock() {
   const start = ANSICHT.indexOf("style.textContent = `") + "style.textContent = `".length;
@@ -180,7 +182,7 @@ test("der leere Verlauf bleibt keine Sackgasse", () => {
   // Beim Loeschen-Test auf dem Handy gefunden: mit dem letzten Chat verschwand
   // auch der Kopf — und damit der einzige Knopf, der von dieser Ansicht aus
   // weiterfuehrt.
-  assert.match(ANSICHT, /function bausteinNeuKnopf/, "der Knopf braucht einen eigenen Baustein");
+  assert.match(KARTEN, /function bausteinNeuKnopf/, "der Knopf braucht einen eigenen Baustein");
   const leerZweig = ANSICHT.slice(ANSICHT.indexOf("if (!alleChats.length)"), ANSICHT.indexOf("const aufbereitet"));
   assert.match(leerZweig, /bausteinNeuKnopf\(\)/, "im leeren Verlauf fehlt der Weg zum neuen Chat");
   assert.ok(!/ch-suche/.test(leerZweig), "ein Suchfeld ohne Chats waere sinnlos");

@@ -124,12 +124,13 @@ if (!accessKey || !secretKey) {
       `     Schreiben unter  ${bucket || "<eimer>"}/training/`,
       "  2. In ~/.config/smejj.com/env.local eintragen:",
       // Platzhalter bewusst als DREI PUNKTE, nicht als typografisches "…":
-      // `check:security` erlaubt nach SECRET_KEY= genau `replace_me`, `<set>`
-      // oder `...` — jedes andere Zeichen gilt als echter Schluessel. Mit dem
-      // Auslassungszeichen faerbte diese Hilfezeile das Testtor rot, obwohl
-      // hier nie ein Geheimnis stand.
-      "       IDRIVE_E2_TRAINING_ACCESS_KEY=...",
-      "       IDRIVE_E2_TRAINING_SECRET_KEY=...",
+      // Die Release-Waechter (release:guard UND check:security) erlauben nach
+      // ACCESS_KEY=/SECRET_KEY= nur `replace_me`, `<set>` oder Leere — jedes
+      // andere Zeichen gilt als echter Schluessel. Das fruehere `...` liess
+      // check:security passieren, faerbte aber release:guard rot (zwei Waechter,
+      // zwei Erlaubt-Listen; Befund 2026-08-10). `<set>` besteht beide.
+      "       IDRIVE_E2_TRAINING_ACCESS_KEY=<set>",
+      "       IDRIVE_E2_TRAINING_SECRET_KEY=<set>",
       "  3. Dieses Skript erneut aufrufen.",
       "",
       "Der schnelle Weg: --gleiche-zugangsdaten verwendet die allgemeinen",

@@ -328,4 +328,5 @@ export default {
   "Natürlicher Klang über den smejj-Server — wird in den Einstellungen aktiviert.": "Sonido natural a través del servidor de smejj: se activa en los ajustes.",
   "Konto-E-Mail": "Correo electrónico de la cuenta",
   "Datum": "Fecha",
+  "Benachrichtigungen im Browser nicht erlaubt — bitte in den Website-Einstellungen freigeben.": "Las notificaciones están bloqueadas en el navegador: permítelas en la configuración del sitio.",
 };

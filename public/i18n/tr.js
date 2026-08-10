@@ -328,4 +328,5 @@ export default {
   "Natürlicher Klang über den smejj-Server — wird in den Einstellungen aktiviert.": "smejj sunucusu üzerinden doğal ses — ayarlardan etkinleştirilir.",
   "Konto-E-Mail": "Hesap e-postası",
   "Datum": "Tarih",
+  "Benachrichtigungen im Browser nicht erlaubt — bitte in den Website-Einstellungen freigeben.": "Tarayıcıda bildirimlere izin verilmiyor — lütfen site ayarlarından izin ver.",
 };

@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-10T10:03:29.654Z",
-  "confirmation": "Freigabe Betreiber 2026-08-10: Verlauf-Refactoring (chat-history-text.js) und Rueckbau des Fehl-Deploys; sw.js CACHE_NAME v267 -> v268.",
+  "frozenAt": "2026-08-10T10:57:25.646Z",
+  "confirmation": "Freigabe Betreiber 2026-08-10: Zusammenfuehrung der beiden Verlauf-Aufteilungen (text.js bleibt, cards.js dazu, format.js entfaellt), offline-banner in den Precache, neuer Push-Hinweis in 14 Sprachen; sw.js CACHE_NAME v268 -> v269.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "24802eee6f48dc822918f0b9cbb8b28735198f06bee0c1ba87602a597542efe9",
+    "public/sw.js": "4e5370590c55909aa1b4f2c9f4504e2645d703c60b3edd313cf1569476569ad1",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

@@ -328,4 +328,5 @@ export default {
   "Natürlicher Klang über den smejj-Server — wird in den Einstellungen aktiviert.": "smejj सर्वर के ज़रिए स्वाभाविक ध्वनि — सेटिंग्स में सक्रिय करें।",
   "Konto-E-Mail": "खाता ईमेल",
   "Datum": "दिनांक",
+  "Benachrichtigungen im Browser nicht erlaubt — bitte in den Website-Einstellungen freigeben.": "ब्राउज़र में सूचनाओं की अनुमति नहीं है — कृपया साइट सेटिंग्स में अनुमति दें।",
 };

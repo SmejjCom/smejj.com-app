@@ -511,3 +511,24 @@ Hervorhebung und Markdown-Export.
 Merkregel, die schon im Projektgedaechtnis stand und trotzdem verletzt wurde:
 im geteilten Frontend-Repo NIEMALS `git add -A` — immer gezielte Pfade. Der
 Arbeitsbaum dort gehoert allen Sitzungen gleichzeitig.
+
+v268 -> v269 (2026-08-10): Zusammenfuehrung ZWEIER paralleler Aufteilungen von
+chat-history-view.js (Betreiber-Entscheidung "Zusammenfuehren"). Zwei
+Sitzungen hatten die 1.091-Zeilen-Datei unabhaengig geschnitten: die
+Audit-Sitzung auf dem Basisbranch in chat-history-format.js (reine Helfer) +
+chat-history-cards.js (Karten-Bausteine als Factory, Zustand bleibt in der
+Ansicht), diese Sitzung in chat-history-text.js (Helfer + Themen + Export) —
+und LIVE war seit v267 der text-Schnitt.
+
+Aufloesung: text.js bleibt die eine Heimat der zustandsfreien Textarbeit
+(format.js war eine Teilmenge davon und ENTFAELLT), cards.js kommt als
+zweite Ebene dazu, die Ansicht schrumpft auf 615 Zeilen und haelt weiter den
+EINEN Zustand (Suchbegriff, Filter, offenes Menue), den die Factory ueber
+Getter/Setter liest. text.js exportiert neu ersteFrage und ohneBallast, die
+deren View-Fassung direkt nutzt.
+
+Mit dem Merge des Basisbranchs kommt auch offline-banner.js herein
+(auth-gate.js importiert es) — beide neuen Module stehen im SHELL-Precache,
+format.js bewusst NICHT. Die Doku-Eintraege der Audit-Sitzung zu ihrem
+format-Schnitt (dort als "v263 -> v264" geplant) sind durch diese
+Zusammenfuehrung ueberholt; ihre Nummern waren nie live.
