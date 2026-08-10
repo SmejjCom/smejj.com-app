@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-10T00:15:43.123Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09: Aktionsknoepfe unter Chat-Nachrichten von 42 auf 44 px anheben, nur unterhalb 600 px; sw.js CACHE_NAME auf v254 (v253 war parallel belegt).",
+  "frozenAt": "2026-08-10T00:27:49.529Z",
+  "confirmation": "Freigabe Betreiber 2026-08-09: Versionspfeile der Chat-Aktionsleiste auf schmalen Schirmen ebenfalls auf 44 px; sw.js CACHE_NAME v254 -> v255.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "f11fa9b8268481cb516002d21b5de82e05f970cf9f381f5be09432653292f985",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "7d4017242b952ecc921d2dd7abf21d0eb0003e68d59eec1e7625fef6e5d67120",
+    "public/sw.js": "e4e0c8d0a602bcdfa1b2df1367f97455f0d602be607e924f2280306170ef94db",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

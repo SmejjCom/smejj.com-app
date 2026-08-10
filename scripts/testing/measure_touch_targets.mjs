@@ -38,7 +38,7 @@ const SELBSTTEST = args.includes("--selbsttest");
 // Untergrenze fuer Touch-Ziele; die Leiste lag mit 42 knapp darunter. Gilt nur
 // auf schmalen Schirmen — und genau die misst dieses Skript (375 px, coarse).
 const MIN_ZIEL = 44;
-const MIN_SCHRITT = 34;
+const MIN_SCHRITT = 44;
 
 // Entfernt genau die zwei Eigenschaften, die die Knoepfe vor dem Quetschen
 // schuetzen (flex-wrap auf der Leiste, flex: 0 0 auto auf dem Knopf).
@@ -175,7 +175,7 @@ try {
   for (const leiste of messung.leisten) {
     if (leiste.laeuftUeber) verstoesse.push(`${leiste.rolle}: Leiste laeuft aus dem Log`);
     for (const knopf of leiste.knoepfe) {
-      const soll = knopf.versionsschritt ? MIN_SCHRITT : MIN_ZIEL;
+      const soll = knopf.versionsschritt ? MIN_SCHRITT : MIN_ZIEL; // seit 2026-08-09 beides 44
       if (knopf.breite < soll || knopf.hoehe < soll) {
         verstoesse.push(`${leiste.rolle}/${knopf.aktion}: ${knopf.breite}x${knopf.hoehe} px, gefordert ${soll}`);
       }

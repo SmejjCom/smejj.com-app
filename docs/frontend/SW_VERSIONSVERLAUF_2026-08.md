@@ -893,3 +893,16 @@ Kaskadenposition nach dem Deploy): 8 von 8 Aktionsknoepfen 44x44, kein
 Ueberlauf, die Leiste der Antwort bricht wie vorgesehen auf zwei Zeilen um (80
 px hoch). Die Versionspfeile bleiben bewusst bei 34 px — sie waren nicht Teil
 des Auftrags. Der Waechter `npm run measure:touch` fordert jetzt 44 statt 42.
+
+v254 -> v255 (2026-08-09): Die beiden Versionspfeile ("vorherige/naechste
+Fassung") waren als einzige Knoepfe der Aktionsleiste noch 34x34 px — sie
+standen bei v254 bewusst aussen vor, weil nur die fuenf Aktionen beauftragt
+waren. Auf Nachfrage des Betreibers gehen sie jetzt mit: sie stehen in
+derselben Leiste und werden mit demselben Daumen getroffen. Auf schmalen
+Schirmen also 44x44 wie alles andere; mit Maus bleiben sie bei ihren 22 px.
+Dafuer braucht die Maus-Regel einen DOPPELTEN Klassenanker
+(`#startLog .msg-version-step.msg-version-step`, 1,2,0): der ID-Anker der
+Aktionsregel (`#startLog .msg-act`, 1,1,0) haette eine blosse Klassenregel
+sonst geschlagen, obwohl sie spaeter steht — spaeter hilft nur bei gleicher
+Spezifitaet. `npm run measure:touch` fordert jetzt auch fuer die Pfeile 44
+statt 34.
