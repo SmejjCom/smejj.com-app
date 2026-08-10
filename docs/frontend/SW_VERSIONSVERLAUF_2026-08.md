@@ -939,3 +939,16 @@ zeigt, dass die groesseren Flaechen KEIN anderes Bedienelement verdecken.
 
 Offen bleiben die 11 Eintraege des linken Menues (178x36) und der
 Profil-Chip (93x42) — breit genug zum Treffen, es fehlt nur Hoehe.
+
+v256 -> v257 (2026-08-09): Nachtrag zu v256, im Live-Audit gefunden. Bei
+OFFENEM linken Menue zeigt das Logo die Wortmarke statt des Symbols und wird
+dabei von `body[data-left-menu-state="expanded"] .app-brand-logo` auf
+`--app-brand-expanded-height` (28 px) gesetzt — eine Regel mit hoeherer
+Spezifitaet als die neue Handy-Regel. Gemessen: 76x28, als einziges
+Kopf-Element wieder unter dem Touch-Ziel. Die Breite bleibt der Wortmarke
+ueberlassen, die Hoehe nicht: jetzt 76x44 bei offenem und 44x44 bei
+geschlossenem Menue, in beiden Faellen ohne Ueberlappung mit dem Menue-Knopf
+(0-44 / 48-92 bzw. 48-124).
+
+Merkregel daraus: eine Groessenaenderung muss in JEDEM Zustand des Elements
+nachgemessen werden. Der erste Audit-Durchlauf sah das Logo nur geschlossen.

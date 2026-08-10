@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-10T01:09:06.295Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09: Touch-Ziele der Kopfleiste und der Eingabezeile auf 44 px (nur unterhalb 600 px); Maus-Knopf-Position vom Inline-Style nach styles.css; sw.js CACHE_NAME v255 -> v256.",
+  "frozenAt": "2026-08-10T01:13:18.526Z",
+  "confirmation": "Freigabe Betreiber 2026-08-09: Logo-Hoehe bei offenem linken Menue ebenfalls 44 px; sw.js CACHE_NAME v256 -> v257.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
     "public/styles.css": "15d4bd6cd45862516e3ea79c436f7173e26e2568ac46205cb4cf2c04232c13c2",
-    "public/branding.css": "f910ed462a7962d1a3b81f71a8b7779029c06008de64cec7910752b63e13b3fe",
+    "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
     "public/composer-tools.css": "5481f66724b6ab6156c4997d3097820afd14151a222e7d7e1ccf2f31acc331e0",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "7397dc8e32436606c84fb313a35273f18906a9931b34a3757f83a925a2ea3672",
+    "public/sw.js": "f3df35c07d821f5f700e863138827d4a35f4676191e6a5901973e8b32477daa0",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
