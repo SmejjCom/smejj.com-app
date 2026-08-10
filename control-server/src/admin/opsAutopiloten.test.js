@@ -15,6 +15,8 @@ import {
   ladeHerzschlaege,
   persistiereHerzschlag,
   pruefeAlarm,
+  pruefeWochenbericht,
+  wochenberichtText,
   starteSelbstmessung,
   _ablageLeeren,
   _herzschlaegeZuruecksetzen
@@ -280,6 +282,66 @@ test("Profi-Ausbau: Vorfaelle ueberstehen den Neustart, offene bleiben offen", a
 });
 
 const TAG_TEST_MS = 24 * 60 * 60 * 1000;
+
+test("Nr. 5: eine Gelb-Phase wird Vorfall und eskaliert zu EINEM Rot-Vorfall", async () => {
+  frisch(); _ablageLeeren();
+  const sende = async () => {};
+  // Qualitaetsmessung: 12 h erwartet, 6 h Schonfrist. 14 h alt = gelb.
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: JETZT - 14 * 60 * 60 * 1000 });
+  await pruefeAlarm({ env: ENV, jetztMs: JETZT, sende });
+  let u = autopilotUebersicht({ jetztMs: JETZT });
+  assert.equal(u.vorfaelle.length, 1, "die Verspaetung eroeffnet einen Vorfall");
+  assert.equal(u.vorfaelle[0].art, "gelb");
+
+  // 20 h alt = rot: derselbe Vorfall wird angehoben, kein zweiter.
+  const SPAETER = JETZT + 6 * 60 * 60 * 1000;
+  await pruefeAlarm({ env: ENV, jetztMs: SPAETER, sende });
+  u = autopilotUebersicht({ jetztMs: SPAETER });
+  assert.equal(u.vorfaelle.length, 1, "Eskalation ist EIN Vorfall, kein neuer");
+  assert.equal(u.vorfaelle[0].art, "rot");
+  assert.equal(u.vorfaelle[0].bis, null, "der Beginn bleibt der Gelb-Beginn, der Vorfall laeuft");
+
+  // Frischer Erfolg: der Vorfall schliesst.
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: SPAETER });
+  await pruefeAlarm({ env: ENV, jetztMs: SPAETER + 1000, sende });
+  u = autopilotUebersicht({ jetztMs: SPAETER + 1000 });
+  assert.ok(u.vorfaelle[0].bis, "wieder gruen schliesst den Vorfall");
+});
+
+test("Nr. 4: der Wochenbericht kommt montags ab 7 Uhr UTC — genau einmal", async () => {
+  frisch(); _ablageLeeren();
+  const gesendet = [];
+  const sende = async (mail) => { gesendet.push(mail); };
+  const env = { ...ENV, SMEJJ_ADMIN_OWNER_EMAILS: "smejjcom@gmail.com" };
+  const MONTAG_8 = Date.parse("2026-08-10T08:00:00.000Z");
+
+  // Sonntag: nicht faellig. Montag 6 Uhr: noch nicht faellig.
+  assert.equal((await pruefeWochenbericht({ env, jetztMs: MONTAG_8 - TAG_TEST_MS, sende })).gesendet, false);
+  assert.equal((await pruefeWochenbericht({ env, jetztMs: MONTAG_8 - 2 * 60 * 60 * 1000, sende })).gesendet, false);
+
+  // Montag 8 Uhr: faellig — einmal, nicht zweimal.
+  assert.equal((await pruefeWochenbericht({ env, jetztMs: MONTAG_8, sende })).gesendet, true);
+  assert.equal((await pruefeWochenbericht({ env, jetztMs: MONTAG_8 + 60 * 60 * 1000, sende })).gesendet, false);
+  assert.equal(gesendet.length, 1);
+  assert.ok(gesendet[0].subject.includes("Wochenbericht 2026-08-10"));
+
+  // Der Marker uebersteht den Neustart: auch danach keine zweite Mail.
+  await new Promise((r) => setTimeout(r, 10));
+  _herzschlaegeZuruecksetzen();
+  await ladeHerzschlaege({ env: {} });
+  assert.equal((await pruefeWochenbericht({ env, jetztMs: MONTAG_8 + 2 * 60 * 60 * 1000, sende })).gesendet, false, "der abgelegte Marker verhindert die Doppel-Mail");
+});
+
+test("Nr. 4: der Berichtstext ist ehrlich — Quote aus Laeufen, Stillgelegtes als gewollt", () => {
+  frisch();
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: JETZT - 1000 });
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "fehler", meldung: "kaputt", env: ENV, jetztMs: JETZT - 500 });
+  const text = wochenberichtText({ jetztMs: JETZT });
+  assert.ok(text.includes("Qualitätsmessung [ROT]: 2 Laeufe, 1 Fehler (50 % erfolgreich)"), "Quote aus gemessenen Laeufen: " + text);
+  assert.ok(text.includes("Training-Loop: stillgelegt (gewollt"), "Stillgelegtes ist kein Alarm");
+  assert.ok(text.includes("Konkurrenz-Radar [keine Messung]: keine Laeufe gemessen"));
+  assert.ok(text.includes("smejj.com/admin/autopiloten/"));
+});
 
 test("jeder Autopilot hat, was die idiotensichere Ansicht braucht", () => {
   for (const a of AUTOPILOTEN) {
