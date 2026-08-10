@@ -22,17 +22,23 @@ Alle Code-Änderungen liegen lokal committet auf `feature/auth-redesign-github-m
 
 ## 2. Betreiber-Daten, die VOR dem Deploy in die Dateien müssen
 
-- [ ] **EU-Vertreter (Art. 27 DSGVO)** — Name + Anschrift eines EU-Vertreters.
-      Einzutragen in `impressum.html` und `datenschutz.html` (§1). Pflicht, weil
-      iMild LLC eine US-Gesellschaft mit Zielmarkt DE ist.
-- [ ] **Vertretungsberechtigter** der LLC (z. B. "Wof Kadavanich, Managing Member")
-      + US-Registerangaben → `impressum.html`.
-- [ ] **USt bestätigen** — die Texte sagen "inkl. gesetzl. USt.". Stripe Tax / OSS
-      muss so konfiguriert sein, dass die USt im Checkout tatsächlich enthalten ist.
-      Falls nein: entweder Stripe-Tax aktivieren oder die Preisangaben anpassen.
-- [ ] **Stripe-Kundenportal-Link** → Konstante `STRIPE_BILLING_PORTAL_URL` in
-      `account-privacy.js` setzen (Stripe Dashboard → Kundenportal → Link teilen).
-      Solange leer, greift der Mailto-Notweg für §312k.
+Stand 2026-08-09 nach Betreiber-Entscheidung:
+
+- [x] **USt — ERLEDIGT/bestätigt:** Stripe Tax ist aktiv, die USt wird im Checkout
+      ausgewiesen. Die Angabe "inkl. gesetzl. USt." in `account-privacy.js` und
+      `onboarding-welcome.js` ist damit korrekt. Keine Textänderung nötig.
+- [x] **Vertretungsberechtigter — ERLEDIGT:** "Wof Kadavanich (Managing Member)"
+      steht im Impressum (§5 DDG, Commit `27433ee`).
+- [ ] **EU-Vertreter (Art. 27 DSGVO) — OFFEN (Betreiber lässt bewusst offen):**
+      Name + Anschrift eines EU-Vertreters, einzutragen in `impressum.html` und
+      `datenschutz.html` (§1). Pflicht für die US-Gesellschaft mit Zielmarkt DE —
+      MUSS vor dem Livegang der Zahlungen benannt werden.
+- [ ] **Stripe-Kundenportal-Link — OFFEN (Betreiber lässt bewusst offen):**
+      Konstante `STRIPE_BILLING_PORTAL_URL` in `account-privacy.js` bleibt leer;
+      solange greift der Mailto-Notweg für §312k. Für die volle §312k-Konformität
+      (Selbst-Kündigung per Button-Flow) den Portal-Link nachtragen.
+- [ ] **US-Registerangaben** (Registerstaat/-nummer der LLC) → `impressum.html`,
+      optional aber empfohlen.
 
 ## 3. Lock-Freigaben (Betreiber-Autorität)
 
