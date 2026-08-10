@@ -79,5 +79,10 @@ Nach 2. + 3. — **auslösender Push ist eine Betreiber-Entscheidung.**
 
 - [ ] **Anwaltliche Kurzprüfung** der Rechtstexte (AGB/Widerruf/Datenschutz).
       Die Texte sind solide Standardfassungen, ersetzen aber keine Rechtsberatung.
+- [ ] **Sprachfrage klären** — die Oberfläche gibt es in 15 Sprachen, die
+      Zahlungs- und Vertragstexte nur auf Deutsch (AGB und Widerrufsbelehrung
+      auch als Dokument nur auf Deutsch). Fertige Vorlage mit Wortlaut,
+      Fundstellen und den zu klärenden Fragen:
+      [RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md](RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md).
 - [ ] Stripe von Test- auf Live-Modus (Zahlungslinks in `account-privacy.js`
       und `onboarding-welcome.js` austauschen).
