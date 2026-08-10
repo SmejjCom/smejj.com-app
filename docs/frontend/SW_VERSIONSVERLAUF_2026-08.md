@@ -906,3 +906,36 @@ Aktionsregel (`#startLog .msg-act`, 1,1,0) haette eine blosse Klassenregel
 sonst geschlagen, obwohl sie spaeter steht — spaeter hilft nur bei gleicher
 Spezifitaet. `npm run measure:touch` fordert jetzt auch fuer die Pfeile 44
 statt 34.
+
+v255 -> v256 (2026-08-09): Nach den Chat-Aktionsknoepfen die ganze Startseite
+bei 375 px durchgemessen (echte Geraete-Emulation, drei Zustaende): 23 von 30
+bedienbaren Elementen lagen unter 44 px. Nichts unter 24 px — WCAG 2.5.8 AA
+war eingehalten, es ging um die strengere Empfehlung von Apple und Google.
+Behoben sind die neun kleinsten: die vier Icons der Kopfleiste (28x28 —
+Menue, Logo, Browser, Maus-Wiedergabe) und die fuenf Knoepfe der Eingabezeile
+(30x38 bzw. 34x38 — Aktionen, Mikrofon, Audio, Stimme, Senden). Der
+Modell-Chip in derselben Reihe waere sonst als einziger 38 px hoch geblieben
+und geht in der Hoehe mit (88x44).
+
+Drei Dinge mussten dafuer mitwandern:
+1. Der Maus-Knopf stand mit `style="right: 36px"` IM HTML. Inline schlaegt
+   jede Media-Query — die Handy-Regel haette ihn nie verschieben koennen, und
+   bei 44 px haetten sich Maus- und Browser-Knopf ueberlappt. Die Position
+   steht jetzt in styles.css, wo sie ueberschreibbar ist.
+2. Das Logo sass 36 px vom linken Rand, direkt hinter dem 28 px breiten
+   Menue-Knopf. Bei 44 px endet der erst bei 44; das Logo rueckt auf 48.
+3. Mit 44er Knoepfen brauchte die Eingabezeile 382 px bei 375 px Fenster —
+   und wurde dabei NICHT gequetscht, sondern zog die ganze Spalte hinaus:
+   `.home-feed` ist ein Grid-Item und hat damit min-width: auto, waechst also
+   mit seinem breitesten Kind. Dieselbe Ursache wie bei der Chip-Leiste des
+   Verlaufs (v252). Statt am Container zu drehen wurde der Platz beschafft:
+   gap 4 px, Polster 6 px statt 8-10 px. Danach 375 px, kein Ueberlauf.
+
+Vorab an der ECHTEN Seite geprueft, indem das Live-Buendel start-styles.css
+im DOM durch die lokale Fassung ersetzt wurde (gleiche Kaskadenposition):
+alle neun Ziele 44x44, Kopf-Icons ohne Ueberlappung (Menue 0-44, Logo 48-92,
+Maus 287-331, Browser 331-375), und eine Rasterprobe ueber die volle Breite
+zeigt, dass die groesseren Flaechen KEIN anderes Bedienelement verdecken.
+
+Offen bleiben die 11 Eintraege des linken Menues (178x36) und der
+Profil-Chip (93x42) — breit genug zum Treffen, es fehlt nur Hoehe.
