@@ -532,3 +532,20 @@ Mit dem Merge des Basisbranchs kommt auch offline-banner.js herein
 format.js bewusst NICHT. Die Doku-Eintraege der Audit-Sitzung zu ihrem
 format-Schnitt (dort als "v263 -> v264" geplant) sind durch diese
 Zusammenfuehrung ueberholt; ihre Nummern waren nie live.
+
+v269 -> v270 (2026-08-10): Kanzlei-Gegenpruefung der Anwaltsvorlage — drei
+Befunde, alle behoben. (1) Das Willkommens-Overlay (onboarding-welcome.js)
+traegt eine ZWEITE komplette Zahlungs-Oberflaeche: § 312j-Schaltflaeche
+(dreimal), eigener Fineprint mit ABWEICHENDER Kuendigungsformulierung
+("zum Monatsende" statt "zum Ende des bezahlten Monats"), AGB/Widerruf-Links.
+15 von 16 t()-Texten waren unuebersetzt, die Datei fehlte im i18n-Waechter
+UND in der Anwaltsvorlage. Waechter erweitert (onboarding jetzt in der
+Quellliste), neun Bedientexte in 14 Sprachen nachgezogen (Begruessung,
+Free-Hinweise, Tarif-Kurzformen ohne Preis), die fuenf Rechtstexte als
+begruendete Ausnahmen in Vorlage Abschnitt 3.5 (jetzt 20 Textstellen statt
+15, inkl. Zusatzfrage zur Wortlaut-Divergenz). (2) Die Vorlage behauptete,
+AGB/Widerruf "existieren nur auf Deutsch" — live existieren sie GAR NICHT
+(404), waehrend die verweisenden Links seit v265/v266 ausgeliefert sind;
+praezisiert als bekannter Zwischenzustand des Rechts-Pakets. (3) Die
+Fundstellen-Zeilennummern nach dem Merge nachgemessen: alle fuenf stimmen.
+Ladequery der Sprachdateien ?v=8.

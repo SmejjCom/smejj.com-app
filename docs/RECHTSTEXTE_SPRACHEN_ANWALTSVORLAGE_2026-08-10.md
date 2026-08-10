@@ -57,10 +57,12 @@ sein.
    „Zahlungspflichtig abonnieren", oder ist je Sprache eine etablierte
    Formulierung vorgeschrieben bzw. empfohlen?
 
-## 3. Die betroffenen Textstellen (15)
+## 3. Die betroffenen Textstellen (20)
 
-Alle Fundstellen in `public/account-privacy.js`, Ansicht **Konto →
-Abo & Zahlungen**. Der Wortlaut ist unverändert aus dem Quellcode übernommen.
+Die Zahlungs-Oberfläche existiert **zweimal**: in der Ansicht **Konto →
+Abo & Zahlungen** (`public/account-privacy.js`, Abschnitte 3.1 bis 3.4) und im
+**Willkommens-Overlay für Neunutzer** (`public/onboarding-welcome.js`,
+Abschnitt 3.5). Der Wortlaut ist unverändert aus dem Quellcode übernommen.
 
 ### 3.1 Schaltfläche nach § 312j Abs. 3 BGB — höchste Priorität
 
@@ -120,13 +122,46 @@ angepasst, dass die Reihenfolge je Sprache frei wählbar ist.
 Nr. 11 erscheint, sobald der Stripe-Portal-Link hinterlegt ist; Nr. 12 bis 14
 gehören zum derzeit aktiven Notweg (siehe Abschnitt 4.2).
 
+### 3.5 Willkommens-Overlay (Onboarding) — zweite Zahlungs-Oberfläche
+
+Das Overlay erscheint Neunutzern beim ersten Besuch — also **vor** der
+Konto-Ansicht. Es trägt dieselbe Schaltfläche und einen **eigenen, abweichend
+formulierten** Fineprint (`public/onboarding-welcome.js`):
+
+| Nr. | Wortlaut | Fundstelle |
+|---|---|---|
+| 15 | Zahlungspflichtig abonnieren *(dreimal: Plus, Pro, Max — identisch mit 3.1)* | `:66-68` |
+| 16 | Alle Preise sind Gesamtpreise pro Monat inkl. gesetzlicher Umsatzsteuer. Monatliche Laufzeit, verlängert sich automatisch, jederzeit zum Monatsende kündbar. Zahlung über Stripe; es gelten | `:70` |
+| 17 | AGB *(Linktext auf `/agb.html`)* | `:70` |
+| 18 | und *(Bindeglied — hier „und", im Konto „und die")* | `:70` |
+| 19 | Widerrufsbelehrung *(Linktext auf `/widerruf.html`)* | `:70` |
+
+**Wortlaut-Divergenz, die die Kanzlei kennen sollte:** Der Onboarding-Fineprint
+(Nr. 16) und die Konto-Fassung (Nr. 1) beschreiben dasselbe Abo mit
+unterschiedlichen Kündigungsformulierungen — „jederzeit zum Monatsende
+kündbar" gegenüber „jederzeit zum Ende des **bezahlten** Monats kündbar".
+**Zusatzfrage:** Sollen beide Oberflächen auf einen einheitlichen Wortlaut
+gebracht werden, und welcher ist der richtige?
+
+Dieser Abschnitt fehlte in der ersten Fassung dieser Vorlage: das Overlay war
+weder vom Übersetzungs-Wächter erfasst noch in der Aufstellung — gefunden bei
+der Gegenprüfung am 2026-08-10. Der Wächter deckt die Datei seither ab; die
+reinen Bedientexte des Overlays (Begrüßung, Free-Hinweise, Tarif-Kurzformen
+ohne Preisangabe) sind übersetzt, die fünf obigen Stellen warten auf die
+Kanzlei.
+
 ## 4. Drei Punkte, die über die Textstellen hinausgehen
 
 ### 4.1 Die verlinkten Dokumente selbst gibt es nur auf Deutsch
 
-Die Links unter Nr. 6 und 8 zeigen fest auf `/agb.html` und `/widerruf.html` —
-**unabhängig von der eingestellten Sprache**. Beide Dokumente existieren
-ausschließlich auf Deutsch. Vorhanden sind:
+Die Links unter Nr. 6/8 und 17/19 zeigen fest auf `/agb.html` und
+`/widerruf.html` — **unabhängig von der eingestellten Sprache**. Beide
+Dokumente existieren ausschließlich auf Deutsch, und beide sind **derzeit
+nicht öffentlich erreichbar**: die Seiten liegen im Repository, ihr Deploy
+steht noch aus — live antworten beide Adressen mit 404, während die
+verweisenden Links bereits ausgeliefert sind. Wer die Links heute prüft,
+findet also tote Ziele; das ist ein bekannter Zwischenzustand des laufenden
+Rechts-Pakets, kein Versehen dieser Vorlage. Vorhanden (im Repository) sind:
 
 | Dokument | Sprachen |
 |---|---|

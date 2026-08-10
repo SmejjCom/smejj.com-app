@@ -15,6 +15,10 @@ const profileDock = fs.readFileSync(path.join(publicDir, "profile-dock.js"), "ut
 const profilePictureControl = fs.readFileSync(path.join(publicDir, "profile-picture-control.js"), "utf8");
 // Der Store liefert deutsche Quelltexte, die profile-picture-control.js per t() uebersetzt.
 const profilePictureStore = fs.readFileSync(path.join(publicDir, "profile-picture-store.js"), "utf8");
+// Das Willkommens-Overlay traegt eine EIGENE Zahlungs-Oberflaeche (§ 312j-
+// Schaltflaeche, Fineprint, AGB/Widerruf-Links). Es fehlte hier bis zum
+// 2026-08-10 komplett — 15 von 16 t()-Texten waren unbemerkt unuebersetzt.
+const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welcome.js"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
 
@@ -51,7 +55,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore;
+    + profileDock + profilePictureControl + profilePictureStore + onboardingWelcome;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }
@@ -80,12 +84,15 @@ const UNUEBERSETZT_ERLAUBT = [
   { text: "Kündigung: Im Stripe-Kundenportal", grund: "Kuendigungsweg" },
   { text: "Kündigung: Eine vorbereitete E-Mail", grund: "Kuendigungsbestaetigung in Textform" },
   { text: "Kündigung meines smejj.com Abonnements", grund: "Betreff der Kuendigungserklaerung — Rechtstext" },
-  { text: "Hiermit kündige ich mein kostenpflichtiges", grund: "Wortlaut der Kuendigungserklaerung — Rechtstext" }
+  { text: "Hiermit kündige ich mein kostenpflichtiges", grund: "Wortlaut der Kuendigungserklaerung — Rechtstext" },
+  { text: "Alle Preise sind Gesamtpreise pro Monat inkl. gesetzlicher Umsatzsteuer. Monatliche Laufzeit", grund: "Onboarding-Fineprint — Preis/Laufzeit, wartet auf Anwaltspruefung" },
+  { text: "und", grund: "Bindeglied zwischen den Rechtstext-Links im Onboarding" },
+  { text: "Zahlungspflichtig abonnieren", grund: "Schaltflaeche § 312j Abs. 3 BGB (im Onboarding als direkter t()-Text)" }
 ];
 
 test("jeder t()-Text der Oberflaeche ist uebersetzt (oder begruendet ausgenommen)", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore;
+    + profileDock + profilePictureControl + profilePictureStore + onboardingWelcome;
   // Wortgrenze davor: sonst zaehlt `createElement("img")` als `t("img")`.
   const quelltexte = [...combined.matchAll(/(?<![\w$.])t\(\s*"((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]);
   assert.ok(quelltexte.length >= 100, `nur ${quelltexte.length} t()-Aufrufe gefunden — Regex vermutlich kaputt`);
@@ -216,7 +223,7 @@ test("keine Ausnahme der Uebersetzungspflicht ist veraltet", () => {
   // Eine Ausnahme, deren Text es nicht mehr gibt, deckt nichts mehr ab und
   // verschleiert beim naechsten Mal den Blick auf die echte Liste.
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore;
+    + profileDock + profilePictureControl + profilePictureStore + onboardingWelcome;
   for (const { text, grund } of [...UNUEBERSETZT_ERLAUBT, ...HELFER_AUSNAHMEN]) {
     assert.ok(grund && grund.length > 8, `Ausnahme "${text}" ohne brauchbare Begruendung`);
     assert.ok(combined.includes(text), `Ausnahme "${text}" kommt im Quellcode nicht mehr vor`);
