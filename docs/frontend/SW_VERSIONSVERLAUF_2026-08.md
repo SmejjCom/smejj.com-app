@@ -656,3 +656,36 @@ wurde von nirgendwo mehr nachgeschlagen; check:frontend ist damit wieder gruen
 Der Versionssprung ist noetig, weil i18n/ui.js im Precache liegt: die
 Sprachdateien werden mit `?v=` geladen, und dieser Wert geht von 3 auf 4 —
 ohne ihn wuerde der Browser-Cache die alten Fassungen weiterliefern.
+
+v264 -> v265 (2026-08-10): Zweite Uebersetzungsluecke geschlossen — und sie
+war die groessere. Beim Erstellen der Anwaltsvorlage fuer die Rechtstexte fiel
+auf, dass die Schaltflaeche "Zahlungspflichtig abonnieren" in allen 14
+Fremdsprachen deutsch beschriftet war. Das ist die Beschriftung nach § 312j
+Abs. 3 BGB, an der die Zahlungspflicht erkennbar sein muss.
+
+Der Grund, warum weder Menschen noch der neue Test es gesehen haben: die
+Oberflaeche baut ihre Zeilen ueber Hilfsfunktionen —
+`dataAction("Plus", "…", "id", "Zahlungspflichtig abonnieren")` —, und die
+uebersetzen ihre Argumente erst im Rumpf. Im Code steht an dieser Stelle kein
+`t("…")`, sondern `t(text)`. Der Waechter vom selben Tag suchte nach direkten
+Texten und ging daran vorbei.
+
+Der Test bekommt dafuer einen kleinen Parser statt einer Regex: Klammern und
+Zeichenketten muessen mitgezaehlt werden, sonst trennt ein Komma IM Text die
+Argumente an der falschen Stelle und die Zuordnung Parameter->Text kippt
+lautlos. Er findet 11 uebersetzende Hilfsfunktionen und 142 Texte; faellt eine
+davon unter 8 Funktionen oder 100 Texte, schlaegt der Test an, statt still
+gruen zu melden. Gegenprobe gemacht: ein entfernter Schluessel wird erkannt.
+
+Nachtraeglich uebersetzt sind drei nicht-rechtliche Texte, die dabei mit
+auffielen: "Sprachminuten (Premium-Stimme)", der zugehoerige Zaehlhinweis und
+die Beschreibung der Premium-Stimme. Die vier Zahlungstexte (§ 312j-Knopf und
+die drei Tarifbeschreibungen mit Preis und USt) bleiben unuebersetzt und
+stehen als begruendete Ausnahmen im Test — sie sind Teil der Anwaltsvorlage
+[RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md](../RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md).
+Ebenfalls ausgenommen, aus offensichtlichem Grund: GitHub, Google Drive und
+Slack sind Eigennamen.
+
+Wie bei v264 geht die Ladequery der Sprachdateien mit (?v=4 -> ?v=5), sonst
+liefert der Browser-Cache die alten Fassungen; i18n/ui.js liegt im Precache,
+daher der sw-Sprung.

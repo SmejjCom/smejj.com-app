@@ -95,12 +95,108 @@ test("jeder t()-Text der Oberflaeche ist uebersetzt (oder begruendet ausgenommen
     `Diese Texte erscheinen in jeder Fremdsprache auf Deutsch:\n  ${fehlend.join("\n  ")}`);
 });
 
+// Zweite Luecke, gefunden am 2026-08-10 beim Erstellen der Anwaltsvorlage:
+// der Test oben sieht nur `t("Text")`. Die Oberflaeche baut ihre Zeilen aber
+// ueber Hilfsfunktionen — `dataAction("Plus", "…", "id", "Zahlungspflichtig
+// abonnieren")` —, und DIE uebersetzen ihre Argumente erst im Rumpf. So blieb
+// ausgerechnet die Schaltflaechenbeschriftung nach § 312j Abs. 3 BGB in 14
+// Sprachen deutsch, ohne dass etwas anschlug.
+//
+// Deshalb hier ein kleiner Parser statt einer Regex: Klammern und
+// Zeichenketten muessen mitgezaehlt werden, sonst trennt ein Komma IM Text die
+// Argumente an der falschen Stelle und die Zuordnung Parameter->Text kippt.
+
+/** Liest ab `start` (hinter der oeffnenden Klammer) bis zur passenden zu. */
+function leseBlock(text, start, zuZeichen) {
+  let tiefe = 1;
+  let i = start;
+  const grenzen = [start];
+  while (i < text.length && tiefe > 0) {
+    const c = text[i];
+    if (c === '"' || c === "'" || c === "`") {
+      const quote = c;
+      i += 1;
+      while (i < text.length) {
+        if (text[i] === "\\") { i += 2; continue; }
+        if (text[i] === quote) break;
+        i += 1;
+      }
+    } else if ("([{".includes(c)) {
+      tiefe += 1;
+    } else if (")]}".includes(c)) {
+      tiefe -= 1;
+      if (tiefe === 0 && c === zuZeichen) break;
+    } else if (c === "," && tiefe === 1) {
+      grenzen.push(i + 1);
+    }
+    i += 1;
+  }
+  return { ende: i, grenzen, inhalt: text.slice(start, i) };
+}
+
+function argumente(text, start) {
+  const { ende, grenzen } = leseBlock(text, start, ")");
+  return grenzen.map((von, k) => text.slice(von, k + 1 < grenzen.length ? grenzen[k + 1] - 1 : ende).trim());
+}
+
+/** Hilfsfunktionen samt der Parameter, die im Rumpf durch t() laufen. */
+function uebersetzendeHelfer(quelle) {
+  const gefunden = new Map();
+  for (const m of quelle.matchAll(/function\s+(\w+)\s*\(([^)]*)\)\s*\{/g)) {
+    const params = m[2].split(",").map((p) => p.trim().split("=")[0].trim()).filter(Boolean);
+    const rumpf = leseBlock(quelle, m.index + m[0].length, "}").inhalt;
+    const durchT = params.filter((p) => new RegExp(`t\\(\\s*${p}\\s*\\)`).test(rumpf));
+    if (durchT.length) gefunden.set(m[1], { params, durchT });
+  }
+  return gefunden;
+}
+
+// Texte, die durch eine Hilfsfunktion laufen und trotzdem deutsch bleiben.
+const HELFER_AUSNAHMEN = [
+  { text: "Zahlungspflichtig abonnieren", grund: "Schaltflaeche § 312j Abs. 3 BGB — Wortlaut je Sprache ist Anwaltssache" },
+  { text: "Gesamtpreis 9 € pro Monat", grund: "Preis- und USt-Angabe, wartet auf Anwaltspruefung" },
+  { text: "Gesamtpreis 19 € pro Monat", grund: "Preis- und USt-Angabe, wartet auf Anwaltspruefung" },
+  { text: "Gesamtpreis 39 € pro Monat", grund: "Preis- und USt-Angabe, wartet auf Anwaltspruefung" },
+  { text: "GitHub", grund: "Eigenname eines Dienstes" },
+  { text: "Google Drive", grund: "Eigenname eines Dienstes" },
+  { text: "Slack", grund: "Eigenname eines Dienstes" }
+];
+
+test("auch Texte hinter Hilfsfunktionen sind uebersetzt (§ 312j-Falle)", async () => {
+  const combined = settingsSurface + accountPrivacy + profileDock;
+  const helfer = uebersetzendeHelfer(combined);
+  assert.ok(helfer.size >= 8,
+    `nur ${helfer.size} uebersetzende Hilfsfunktionen erkannt — Parser vermutlich kaputt`);
+  assert.ok(helfer.has("dataAction"), "dataAction fehlt — genau dort sass die § 312j-Schaltflaeche");
+
+  const literal = /^"((?:[^"\\]|\\.)*)"$/;
+  const texte = [];
+  for (const [name, { params, durchT }] of helfer) {
+    for (const m of combined.matchAll(new RegExp(`(?<![\\w$.])${name}\\s*\\(`, "g"))) {
+      const args = argumente(combined, m.index + m[0].length);
+      params.forEach((p, i) => {
+        if (!durchT.includes(p) || i >= args.length) return;
+        const treffer = literal.exec(args[i]);
+        if (treffer) texte.push({ name, param: p, text: treffer[1] });
+      });
+    }
+  }
+  assert.ok(texte.length >= 100, `nur ${texte.length} Texte gefunden — Aufruf-Erkennung vermutlich kaputt`);
+
+  const uebersetzt = new Set(Object.keys(await loadMessages("en")));
+  const erlaubt = (t) => HELFER_AUSNAHMEN.some((a) => t.includes(a.text));
+  const fehlend = [...new Set(texte.filter((e) => !uebersetzt.has(e.text) && !erlaubt(e.text))
+    .map((e) => `[${e.name}/${e.param}] ${e.text}`))];
+  assert.deepEqual(fehlend, [],
+    `Diese Texte erscheinen in jeder Fremdsprache auf Deutsch:\n  ${fehlend.join("\n  ")}`);
+});
+
 test("keine Ausnahme der Uebersetzungspflicht ist veraltet", () => {
   // Eine Ausnahme, deren Text es nicht mehr gibt, deckt nichts mehr ab und
   // verschleiert beim naechsten Mal den Blick auf die echte Liste.
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore;
-  for (const { text, grund } of UNUEBERSETZT_ERLAUBT) {
+  for (const { text, grund } of [...UNUEBERSETZT_ERLAUBT, ...HELFER_AUSNAHMEN]) {
     assert.ok(grund && grund.length > 8, `Ausnahme "${text}" ohne brauchbare Begruendung`);
     assert.ok(combined.includes(text), `Ausnahme "${text}" kommt im Quellcode nicht mehr vor`);
   }

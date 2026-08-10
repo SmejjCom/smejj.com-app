@@ -31,14 +31,12 @@ sein.
   übersetzt werden (`tests/i18n-ui.test.mjs`); die Stellen aus Abschnitt 3.3
   und 3.4 stehen dort als begründete Ausnahmen und fallen heraus, sobald sie
   übersetzt sind.
-- **Einschränkung, die zur Aufstellung gehört:** Die Stellen aus 3.1 und 3.2 —
-  darunter die Schaltfläche nach § 312j — erreicht dieser Test **nicht**. Sie
-  werden nicht als Text im Code übergeben, sondern als Argument einer
-  Hilfsfunktion, und der Test sieht nur direkte Texte. Genau deshalb waren sie
-  bis heute unbemerkt unübersetzt; gefunden wurden sie beim Erstellen dieser
-  Vorlage durch eine gesonderte Auswertung. Der Test wird entsprechend
-  erweitert — für die rechtliche Prüfung ändert das nichts, die Liste unten
-  ist vollständig.
+- Die Stellen aus 3.1 und 3.2 — darunter die Schaltfläche nach § 312j — waren
+  bis zum 2026-08-10 unbemerkt unübersetzt, weil sie nicht als Text im Code
+  stehen, sondern als Argument einer Hilfsfunktion übergeben werden; der
+  damalige Test sah nur direkte Texte. Gefunden wurden sie beim Erstellen
+  dieser Vorlage. Der Test wurde noch am selben Tag um genau diesen Fall
+  erweitert und erfasst jetzt **alle** hier gelisteten Stellen.
 
 ## 2. Die Fragen, um die es geht
 
