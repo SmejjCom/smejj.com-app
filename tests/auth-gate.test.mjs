@@ -30,10 +30,17 @@ function fakeWindow(pathname, entries = {}) {
 }
 
 test("Abgemeldete auf App-Seiten werden zur Anmeldung geleitet", () => {
-  for (const path of ["/", "/index.html", "/profile", "/chat", "/settings"]) {
+  // Standardziele ohne ?next= — der Chat ("/") ist ohnehin das Login-Ziel.
+  for (const path of ["/", "/index.html"]) {
     const win = fakeWindow(path);
     assert.equal(enforceAuthGate(win), true, path);
     assert.deepEqual(win.calls, ["/auth/login/"]);
+  }
+  // Tiefere Ziele wandern als ?next= mit, damit der Login dorthin zurueckfuehrt.
+  for (const path of ["/profile", "/chat", "/settings"]) {
+    const win = fakeWindow(path);
+    assert.equal(enforceAuthGate(win), true, path);
+    assert.deepEqual(win.calls, [`/auth/login/?next=${encodeURIComponent(path)}`]);
   }
 });
 
@@ -62,7 +69,7 @@ test("unter den Sprachpfaden bleibt alles andere anmeldepflichtig", () => {
     assert.equal(isPublicPath(path), false, path);
     const win = fakeWindow(path);
     assert.equal(enforceAuthGate(win), true, path);
-    assert.deepEqual(win.calls, ["/auth/login/"], path);
+    assert.deepEqual(win.calls, [`/auth/login/?next=${encodeURIComponent(path)}`], path);
   }
 });
 
@@ -218,6 +225,51 @@ test("die Anmeldeseite nennt den Grund", async () => {
   const seite = readFileSync(new URL("../public/auth/auth-page.js", import.meta.url), "utf8");
   assert.match(seite, /params\.get\("abgelaufen"\)/);
   assert.match(seite, /Deine Anmeldung ist abgelaufen/);
+});
+
+// ---------------------------------------------------------------------------
+// 2026-08-09 — Nach dem Login in den Chat, nicht auf die Kontoseite.
+//
+// Befund Betreiber: "wenn ich eingeloggt bin, geht es nicht direkt auf Chat".
+// Drei Regeln: (1) Login-Ziel ist der Chat "/" bzw. das ?next=-Ziel, das das
+// Gate mitgibt. (2) ?next= akzeptiert NUR app-eigene Pfade — sonst offene
+// Weiterleitung. (3) Wer schon angemeldet die Anmeldeseite oeffnet, wird
+// sofort weitergeleitet statt "Bereits angemeldet" zu lesen.
+// ---------------------------------------------------------------------------
+
+test("ein abgelaufenes Token auf einer tiefen Seite merkt sich das Ziel", async () => {
+  const { win } = fensterMit({ token: "altes.token", pfad: "/verlauf" });
+  const ergebnis = await verifyStoredSession(win, {
+    fetchFn: antwortMit({ authenticated: false, user: null }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "abgelaufen");
+  assert.equal(win.location.ersetztDurch, "/auth/login/?abgelaufen=1&next=%2Fverlauf",
+    "Grund UND Rueckkehr-Ziel muessen mitwandern");
+});
+
+test("die Anmeldeseite leitet in den Chat, nicht mehr auf /profile", () => {
+  const seite = readFileSync(new URL("../public/auth/auth-page.js", import.meta.url), "utf8");
+  assert.ok(!seite.includes('window.location.assign("/profile?login=ok")'),
+    "das feste /profile-Ziel muss weg sein");
+  assert.match(seite, /function nextTarget\(\)/);
+  assert.match(seite, /gotoAfterLogin\(\)/);
+  // Nur app-eigene Pfade: genau EIN fuehrender Schraegstrich, nichts unter /auth.
+  assert.match(seite, /\^\\\/\(\?!\[\/\\\\\]\)/, "die ?next=-Pruefung gegen offene Weiterleitungen muss stehen");
+  assert.match(seite, /startsWith\("\/auth"\)/, "Ziele unter /auth waeren eine Schleife");
+  // Der Login-Marker ?login=ok bleibt erhalten (onboarding-welcome.js liest ihn).
+  assert.match(seite, /login=ok/);
+});
+
+test("schon Angemeldete werden von der Anmeldeseite sofort weitergeleitet", () => {
+  const seite = readFileSync(new URL("../public/auth/auth-page.js", import.meta.url), "utf8");
+  const zweig = seite.match(/async function refreshSession\(\) \{[\s\S]*?\n\}/)[0];
+  assert.match(zweig, /window\.location\.replace\(nextTarget\(\)\)/,
+    "bestehende Sitzung -> direkt in die App (replace, kein Verlaufs-Eintrag)");
+  // Aufgaben-Links (E-Mail-Bestaetigung, Passwort-Reset) bleiben stehen.
+  assert.match(zweig, /verify/);
+  assert.match(zweig, /reset/);
+  assert.match(zweig, /mode === "login"/, "die Registrierungsseite bleibt stehen");
 });
 
 test("der Hinweis erscheint in der Sprache des Nutzers, nicht auf Deutsch", () => {
