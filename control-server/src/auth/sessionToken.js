@@ -7,6 +7,20 @@ import crypto from "node:crypto";
 // Abmelden widerruft serverseitig (E-Mail-Sitzungen) bzw. loescht das Token.
 const MAX_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
+// Kurzlebiges, eng gescoptes Access-Token fuer Cross-Origin-Bridge-Aufrufe
+// (H1-Haertung 2026-08-09, hinter Env-Flag SMEJJ_SHORT_ACCESS_TOKEN). Es traegt
+// kind:"access" und lebt nur wenige Minuten. Zweck: das 180-Tage-Session-Token
+// bleibt ausschliesslich im HttpOnly-Cookie; der JS-lesbare Bearer, den das
+// Frontend an die Salad-/Zeabur-Bridge schickt, ist nur noch dieses
+// Kurzzeit-Token. Ein per XSS exfiltrierter Bearer oeffnet damit nur ein
+// Minuten-Fenster statt 180 Tage. verifySessionToken akzeptiert beide
+// Token-Arten unveraendert (rueckwaertskompatibel).
+const ACCESS_TTL_MS = 10 * 60 * 1000;
+
+export function issueAccessToken({ secret, user, nowMs = Date.now() } = {}) {
+  return issueSessionToken({ secret, user: { ...user, kind: "access" }, nowMs, ttlMs: ACCESS_TTL_MS });
+}
+
 export function issueSessionToken({ secret, user, nowMs = Date.now(), ttlMs = MAX_TTL_MS } = {}) {
   if (!String(secret || "")) throw new Error("session_token_secret_missing");
   const safeUser = normalizeUser(user);
@@ -41,7 +55,7 @@ export function bearerSessionToken(headers = {}) {
 function normalizeUser(value) {
   if (!value || typeof value !== "object") return null;
   const user = {};
-  for (const key of ["userId", "email", "name", "method", "sub", "picture", "sid"]) {
+  for (const key of ["userId", "email", "name", "method", "sub", "picture", "sid", "kind"]) {
     const text = String(value[key] || "").trim();
     if (text) user[key] = text.slice(0, key === "picture" ? 500 : 200);
   }

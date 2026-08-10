@@ -68,6 +68,25 @@ test("control mutation origin keeps local HTTP and Google callback exceptions sc
   }, new URL("https://control.example/api/jobs")), false);
 });
 
+test("fehlender Origin: cookie-authentifizierte Mutation fail-closed, Worker-Callback offen", () => {
+  const url = new URL("https://control.example/api/jobs/job-1/status");
+  // Cookie-authentifizierte Mutation OHNE Origin-Header -> abgewiesen (CSRF-Schutz).
+  assert.equal(isSafeMutatingControlRequest({
+    method: "POST",
+    headers: { host: "control.example", cookie: "smejj_session=abc.def" }
+  }, url), false);
+  // Unauthentifizierter Worker-Callback OHNE Cookie und OHNE Origin -> passiert.
+  assert.equal(isSafeMutatingControlRequest({
+    method: "POST",
+    headers: { host: "control.example" }
+  }, url), true);
+  // Anderes Cookie, aber keine Session -> kein CSRF-Risiko -> passiert.
+  assert.equal(isSafeMutatingControlRequest({
+    method: "POST",
+    headers: { host: "control.example", cookie: "theme=dark" }
+  }, url), true);
+});
+
 test("die Wissenssuche verlangt eine Anmeldung", () => {
   // Die Route gibt Auszuege aus den internen Regeldokumenten samt Quellpfad
   // heraus. Offen erreichbar war sie ein Leck: derselbe Dienst filtert interne
