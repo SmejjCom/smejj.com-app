@@ -886,3 +886,18 @@ Monatsrate bei rund 4.350 Euro"); waehrend einer Suche entfaellt die Gruppe
 Suche wirken zusammen (Immobilien + "wohnung" = 1 Treffer, Immobilien +
 "wetter" = keiner); Feldbreite und Kopfhoehe bleiben beim Tippen konstant,
 kein Layout-Sprung.
+v253 -> v254 (2026-08-09): Zwei Handy-Befunde am Themen-Filter, beide beim
+Live-Test gefunden. (1) Die Filter-Chips waren 34 px hoch statt 44 — das
+min-height: 0, mit dem sie ".premium-view button" ueberstimmen muessen, hatte
+ihnen auch die Touch-Groesse genommen; auf dem Handy jetzt wieder 44 px, am
+Schreibtisch bleiben sie kompakt. (2) Die Chip-Leiste sprang beim Neuzeichnen
+zurueck an den Anfang. Auf 375 px passen nur drei der acht Chips ins Bild —
+wer nach rechts wischte und dort "Wissen" antippte, sah die Leiste
+zurueckspringen und den gerade gewaehlten Chip nicht mehr; zum Abwaehlen
+musste man erneut wischen. Die Wischposition wird jetzt uebernommen, analog
+zum Fokus im Suchfeld. Beim selben Test bestaetigt und richtig: ein Chip
+filtert, derselbe Chip erneut hebt den Filter auf, ein direkter Wechsel zu
+einem anderen Chip funktioniert, "Alle" setzt zurueck; die Zeitgruppen zeigen
+im Filter nur die tatsaechlich belegten; die Gruppe "Angeheftet" bleibt im
+Filter erhalten; die Zaehlerzeile erscheint mit Filter und verschwindet ohne;
+die Chips stehen nach Haeufigkeit sortiert.

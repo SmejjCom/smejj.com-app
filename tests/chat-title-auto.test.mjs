@@ -203,3 +203,19 @@ test("die Trefferzahl steht nicht nur im Platzhalter", () => {
   assert.match(ANSICHT, /\$\{treffer\.length\} von \$\{aufbereitet\.length\} Unterhaltungen/);
   assert.match(cssBlock(), /\.ch-zaehler \{/, "die Zaehlerzeile braucht eine Regel");
 });
+
+test("die Chip-Leiste behaelt ihre Wischposition", () => {
+  // Auf dem Handy passen nur drei von acht Chips ins Bild. Ohne diese Nachsorge
+  // sprang die Leiste beim Neuzeichnen zurueck an den Anfang — der gerade
+  // angetippte Chip war aus dem Blick, zum Abwaehlen musste man erneut wischen.
+  assert.match(ANSICHT, /const wischPosition = alteLeiste \? alteLeiste\.scrollLeft : 0/);
+  assert.match(ANSICHT, /neueLeiste\.scrollLeft = wischPosition/);
+});
+
+test("Filter-Chips sind auf dem Handy 44 px hoch", () => {
+  // min-height: 0 ist noetig gegen ".premium-view button", nimmt den Chips aber
+  // auch die Touch-Groesse. Gemessen waren sie 34 px.
+  const handy = cssBlock().slice(cssBlock().indexOf("@media (max-width: 600px)"));
+  assert.match(handy, /#chatHistory \.ch-chip \{[^}]*min-height: 44px/,
+    "die Chips fallen sonst unter die Touch-Grenze");
+});
