@@ -47,13 +47,13 @@ test("die Datei liegt im Precache — sonst ist die App offline tot", () => {
   // "/" (HTML) statt JavaScript und bricht app.js komplett ab.
   const sw = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(sw, /"\/assets\/system-status-text\.js"/);
-  // Nicht auf eine feste Nummer festnageln: jede spaetere Aenderung an einer
-  // Precache-Datei zaehlt hoch, und der Test soll den naechsten Deploy nicht
-  // blockieren. Was er schuetzt, ist die Untergrenze — zurueckdrehen wuerde
-  // Bestandsnutzer wieder auf den alten Stand setzen.
+  // Untergrenze statt fester Nummer: jede Aenderung an einer Precache-Datei
+  // zaehlt hoch, und eine feste Zahl muesste in fuenf Testdateien nachgezogen
+  // werden. Geschuetzt wird das Nicht-Zurueckdrehen; v263 ist der live
+  // ausgelieferte Stand.
   const version = sw.match(/const CACHE_NAME = "smejj-shell-v(\d+)"/);
   assert.ok(version, "CACHE_NAME fehlt oder hat ein anderes Format");
-  assert.ok(Number(version[1]) >= 252,
+  assert.ok(Number(version[1]) >= 263,
     `ohne Versionssprung erreicht der Fix Bestandsnutzer nicht (v${version[1]})`);
 });
 

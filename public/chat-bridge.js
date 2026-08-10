@@ -18,6 +18,23 @@ import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndex
 // und Zeichen gegen Kontextfenster und BYOK-Kosten.
 import { sanitizeHistory } from "../src/agent/conversationHistory.js";
 
+// Crash-Guard auf Prozess-Ebene (Infra-Audit 2026-08-09): Auf der Salad-GPU
+// laesst ein unbehandelter Fehler den Prozess sonst "still" haengen — die
+// TCP-Sonde sieht nur den offenen Port und haelt die Instanz fuer gesund, waehrend
+// der Chat-Pfad tot ist. Wie im Control Server (crashGuard.js) landet jeder
+// unbehandelte Fehler mit Stack im Container-Log, danach kontrollierter Exit 1;
+// die Salad-Probe erkennt den Exit und realloziert. Selbst-enthalten, weil die
+// Bridge als eigenes Bundle laeuft (kein Zugriff auf control-server/).
+for (const kind of ["uncaughtException", "unhandledRejection"]) {
+  process.on(kind, (error) => {
+    try {
+      const detail = error instanceof Error ? `${error.message}\n${error.stack || "(kein Stack)"}` : String(error);
+      console.error(`smejj.com chat-bridge FATAL ${kind}: ${detail}`);
+    } catch { /* Logging darf den Abgang nicht verhindern */ }
+    process.exit(1);
+  });
+}
+
 const APP = "smejj.com chat-bridge";
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.SMEJJ_HOST || "::";

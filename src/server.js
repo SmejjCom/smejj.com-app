@@ -46,7 +46,7 @@ import { createStaticHandlers } from "./http/staticServing.js";
 import { loadSecureLocalEnv, normalizeSecret } from "./shared/env.js";
 import { isSafeMutatingControlRequest, requiresAuthenticatedControlAccess } from "./shared/controlAccessPolicy.js";
 import { createPublicModelRateGate } from "./shared/modelRatePolicy.js";
-import { bearerSessionToken, issueSessionToken, verifySessionToken } from "../control-server/src/auth/sessionToken.js";
+import { bearerSessionToken, issueSessionToken, issueAccessToken, verifySessionToken } from "../control-server/src/auth/sessionToken.js";
 import { createSessionHandoffStore, isSessionHandoffId } from "../control-server/src/auth/sessionHandoff.js";
 import { handleTrainingCaptureRoute } from "../control-server/src/routes/trainingCaptureRoutes.js";
 import { handleTrainingConsentRoute } from "../control-server/src/routes/trainingConsentRoutes.js";
@@ -60,7 +60,7 @@ import { handleProviderRoute } from "../control-server/src/routes/providerRoutes
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
-import { ladeHerzschlaege, starteAlarmWache, starteSelbstmessung, starteWaechterAbfrage } from "../control-server/src/admin/opsAutopiloten.js";
+import { ladeHerzschlaege, starteAlarmWache, starteSelbstmessung, starteWaechterAbfrage, starteWochenbericht } from "../control-server/src/admin/opsAutopiloten.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -96,6 +96,13 @@ const config = {
   githubLoginAllowedEmail: (process.env.SMEJJ_GITHUB_LOGIN_ALLOWED_EMAIL || "").toLowerCase(),
   sessionSecret: normalizeSecret(process.env.SMEJJ_SESSION_SECRET || process.env.GOOGLE_SESSION_SECRET || "")
 };
+
+// H1-Haertung: schaltet kurzlebiges Cross-Origin-Access-Token + cross-site-
+// faehiges Cookie ein. Standardmaessig AUS -> keine Verhaltensaenderung, bis
+// der Betreiber das Flag setzt. SameSite=None verlangt Secure (ist gesetzt) und
+// Partitioned (CHIPS), sonst blocken Drittanbieter-Cookie-Filter die Recovery.
+const SHORT_ACCESS_TOKEN = ["1", "true", "yes"].includes(String(process.env.SMEJJ_SHORT_ACCESS_TOKEN || "").toLowerCase());
+const SESSION_COOKIE_SAMESITE = SHORT_ACCESS_TOKEN ? "None; Partitioned" : "Lax";
 
 const forbiddenSegments = new Set([".env", ".git", "node_modules", "dist", "build"]);
 // Lesen, Schreiben, Terminal, Git — die einzige Gruppe, die ans Dateisystem
@@ -167,9 +174,9 @@ const server = http.createServer(async (req, res) => {
       if (handled) return;
     }
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyRegisterOptions) return await handlePasskeyRegisterOptions(req, res, { env: process.env });
-    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyRegisterVerify) return await handlePasskeyRegisterVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeSessionToken });
+    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyRegisterVerify) return await handlePasskeyRegisterVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeAccessToken });
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginOptions) return await handlePasskeyLoginOptions(req, res, { env: process.env });
-    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginVerify) return await handlePasskeyLoginVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeSessionToken });
+    if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginVerify) return await handlePasskeyLoginVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeAccessToken });
     // Agent API — fail-closed hinter SMEJJ_AGENT_API_ENABLED (aus => Provider-Pfad bleibt zustaendig).
     if (url.pathname.startsWith("/api/agent/")) {
       if (await handleAgentRoute(req, url, res)) return;
@@ -262,6 +269,9 @@ starteAlarmWache();
 // Bruecken-Waechter: er wird ABGEFRAGT statt zu melden — er hat als einziger
 // Autopilot eine oeffentliche Adresse, also braucht er keinen Schluessel.
 starteWaechterAbfrage();
+// Wochenbericht (Profi-Ausbau Nr. 4): montags ab 7:00 UTC eine Mail mit der
+// Lage der Woche — einmal je Montag, der Marker liegt neustart-fest in der Ablage.
+starteWochenbericht();
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {
@@ -353,7 +363,7 @@ async function handleAuthMe(req, res) { // noStoreJson: Identitaet nie cachen (F
   noStoreJson(res, 200, {
     authenticated: Boolean(user) && valid,
     user: valid ? user : null,
-    ...(valid ? { accessToken: serializeSessionToken(user) } : {})
+    ...(valid ? { accessToken: serializeAccessToken(user) } : {})
   });
 }
 
@@ -363,7 +373,7 @@ function handleAuthSessionToken(req, res) {
   return noStoreJson(res, 200, {
     authenticated: true,
     user,
-    accessToken: serializeSessionToken(user),
+    accessToken: serializeAccessToken(user),
     tokenStorage: "session-only"
   });
 }
@@ -384,7 +394,7 @@ async function handleSessionHandoffComplete(req, url, res) {
     ? url.searchParams.get("handoffId")
     : (await readJson(req)).handoffId;
   const result = sessionHandoffStore.complete(handoffId, {
-    token: serializeSessionToken(req.authUser),
+    token: serializeAccessToken(req.authUser),
     user: req.authUser
   });
   if (req.method === "GET" && result.ok) {
@@ -426,7 +436,11 @@ const { handleGoogleAuth, handleGoogleAuthStart } = createGoogleAuthHandlers({
   readAuthBody,
   SECURITY_HEADERS,
   serializeSessionCookie,
-  serializeSessionToken,
+  // H1: Google-/GitHub-/Magic-Router nutzen diese Funktion NUR fuer den
+  // Client-Bearer (das Cookie laeuft ueber serializeSessionCookie). Wir binden
+  // sie deshalb an serializeAccessToken -> bei aktivem Flag minten auch diese
+  // Login-Wege kurzlebige Bearer, ohne die Downstream-Module zu aendern.
+  serializeSessionToken: serializeAccessToken,
   sessionHandoffStore,
   allowedOriginsFromEnv,
   signGoogleAuthState,
@@ -440,7 +454,8 @@ const { handleGoogleAuth, handleGoogleAuthStart } = createGoogleAuthHandlers({
 // src/auth/extraAuthRoutes.js (schlanker Server, Flow ohne Boot testbar).
 const routeExtraAuth = createExtraAuthRouter({
   config, json, readJson, SECURITY_HEADERS,
-  serializeSessionCookie, serializeSessionToken,
+  // H1: nur Client-Bearer (siehe Google-Router oben) -> serializeAccessToken.
+  serializeSessionCookie, serializeSessionToken: serializeAccessToken,
   sessionHandoffStore, allowedOriginsFromEnv, ROUTES, env: process.env
 });
 
@@ -450,7 +465,7 @@ async function handleAuthLogout(req, res) {
   res.writeHead(200, {
     ...SECURITY_HEADERS,
     "Content-Type": "application/json; charset=utf-8",
-    "Set-Cookie": "smejj_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"
+    "Set-Cookie": `smejj_session=; Path=/; HttpOnly; Secure; SameSite=${SESSION_COOKIE_SAMESITE}; Max-Age=0`
   });
   res.end(JSON.stringify({ authenticated: false }, null, 2));
 }
@@ -462,7 +477,7 @@ function emailAuthContext(url) {
     json,
     readSession,
     makeSessionCookie: serializeSessionCookie,
-    makeAccessToken: serializeSessionToken,
+    makeAccessToken: serializeAccessToken,
     requestOrigin(req) {
       const proto = req.headers["x-forwarded-proto"] || (url.hostname === "localhost" ? "http" : "https");
       return `${String(proto).split(",")[0].trim()}://${req.headers.host}`;
@@ -716,11 +731,23 @@ function readAuthBody(req) {
 }
 
 function serializeSessionCookie(user) {
-  return `smejj_session=${serializeSessionToken(user)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`;
+  return `smejj_session=${serializeSessionToken(user)}; Path=/; HttpOnly; Secure; SameSite=${SESSION_COOKIE_SAMESITE}; Max-Age=604800`;
 }
 
 function serializeSessionToken(user) {
   return issueSessionToken({ secret: config.sessionSecret, user });
+}
+
+// H1-Haertung (2026-08-09, Flag SMEJJ_SHORT_ACCESS_TOKEN): der JS-lesbare Bearer,
+// den das Frontend an die Cross-Origin-Bridge schickt, ist bei aktivem Flag nur
+// noch ein kurzlebiges Access-Token (10 min, kind:"access"). Das 180-Tage-Token
+// bleibt ausschliesslich im HttpOnly-Cookie. verifySessionToken akzeptiert beide
+// Arten -> keine bestehende Sitzung bricht. Flag aus = altes Verhalten (Bearer =
+// Langzeit-Token), damit ist der Rollback ein einziges Env-Flag.
+function serializeAccessToken(user) {
+  return SHORT_ACCESS_TOKEN
+    ? issueAccessToken({ secret: config.sessionSecret, user })
+    : serializeSessionToken(user);
 }
 
 function readSession(req) {

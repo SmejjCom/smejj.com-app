@@ -193,3 +193,84 @@ test("der Ansichts-Container darf schrumpfen (Grid-Item mit min-width auto)", ()
   assert.match(cssBlock(), /#chatHistory \.output \{ min-width: 0; \}/,
     "ohne min-width: 0 sprengt die Chip-Leiste die Ansicht");
 });
+
+test("die Trefferzahl steht nicht nur im Platzhalter", () => {
+  // Der Platzhalter ist verdeckt, sobald etwas eingetippt ist — also genau
+  // dann, wenn die Zahl gebraucht wird. Live gesehen: "berlin" im Feld, zwei
+  // Karten, und nirgends stand "2 von 5".
+  assert.match(ANSICHT, /if \(\(nadel \|\| themenFilter\) && treffer\.length\)/,
+    "die Zaehlerzeile fehlt oder erscheint zur falschen Zeit");
+  assert.match(ANSICHT, /\$\{treffer\.length\} von \$\{aufbereitet\.length\} Unterhaltungen/);
+  assert.match(cssBlock(), /\.ch-zaehler \{/, "die Zaehlerzeile braucht eine Regel");
+});
+
+test("die Chip-Leiste behaelt ihre Wischposition", () => {
+  // Auf dem Handy passen nur drei von acht Chips ins Bild. Ohne diese Nachsorge
+  // sprang die Leiste beim Neuzeichnen zurueck an den Anfang — der gerade
+  // angetippte Chip war aus dem Blick, zum Abwaehlen musste man erneut wischen.
+  assert.match(ANSICHT, /const wischPosition = alteLeiste \? alteLeiste\.scrollLeft : 0/);
+  assert.match(ANSICHT, /neueLeiste\.scrollLeft = wischPosition/);
+});
+
+test("Filter-Chips sind auf dem Handy 44 px hoch", () => {
+  // min-height: 0 ist noetig gegen ".premium-view button", nimmt den Chips aber
+  // auch die Touch-Groesse. Gemessen waren sie 34 px.
+  const handy = cssBlock().slice(cssBlock().indexOf("@media (max-width: 600px)"));
+  assert.match(handy, /#chatHistory \.ch-chip \{[^}]*min-height: 44px/,
+    "die Chips fallen sonst unter die Touch-Grenze");
+});
+
+// ---------------------------------------------------------------------------
+// Der Dateiname des Markdown-Exports entsteht aus dem Chat-Titel — und der kann
+// alles enthalten: Schraegstriche, Doppelpunkte, Emoji, oder nur Sonderzeichen.
+function ladeDateiname() {
+  const start = ANSICHT.indexOf("function dateiname(titel)");
+  const ende = ANSICHT.indexOf("// Sichern als Markdown");
+  assert.ok(start > -1 && ende > start, "dateiname() nicht gefunden");
+  return new Function(`${ANSICHT.slice(start, ende)} return dateiname;`)();
+}
+
+test("der Export-Dateiname bleibt brauchbar und sicher", () => {
+  const dateiname = ladeDateiname();
+  // Live gemessen: "Rate 25 % / Zins: 3,8 % Uebersicht" wurde zu
+  // "Rate 25   Zins 38   Uebersicht" — Sonderzeichen fielen ersatzlos weg.
+  assert.equal(dateiname("Rate 25 % / Zins: 3,8 % 🏦 Übersicht"), "Rate 25 Zins 3,8 Übersicht");
+  assert.equal(dateiname("Bürokauf Finanzierung berechnen"), "Bürokauf Finanzierung berechnen");
+  // Kein Ausbruch aus dem Zielordner, kein leerer Name.
+  assert.ok(!dateiname("../../etc/passwd").includes(".."));
+  for (const leer of ["", "   ", "🏦🏦🏦", "%%% ///"]) {
+    assert.equal(dateiname(leer), "unterhaltung");
+  }
+  for (const eingabe of ["a".repeat(200), "Datei.md.md", "x/y\\z:q*?<>|"]) {
+    const name = dateiname(eingabe);
+    assert.ok(name.length <= 50, `zu lang: ${name.length}`);
+    assert.ok(!/[/\\:*?"<>|]/.test(name), `unsicheres Zeichen in: ${name}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Nachladen beim Scrollen statt aller Karten auf einmal.
+test("die Liste laedt blockweise nach und bleibt dabei vollstaendig", () => {
+  assert.match(ANSICHT, /const ERSTER_BLOCK = \d+/, "erster Block fehlt");
+  assert.match(ANSICHT, /const NACHLADE_BLOCK = \d+/, "Nachladeblock fehlt");
+  // Angehaengt wird VOR die Marke — niemals neu gezeichnet, sonst springt die
+  // Scrollposition weg.
+  assert.match(ANSICHT, /marke\.before\(naechsteKarten\(NACHLADE_BLOCK\)\)/);
+  // Die Gruppen-Ueberschrift darf beim Anhaengen nicht doppelt erscheinen:
+  // der Zustand merkt sich die zuletzt geschriebene.
+  assert.match(ANSICHT, /nachladeZustand\.letzteGruppe = gruppe/);
+  // Ist die Liste kuerzer als der Bildschirm, wird nie gescrollt — dann muss
+  // der naechste Block von selbst kommen.
+  assert.match(ANSICHT, /requestAnimationFrame\(pruefeNachladen\)/);
+});
+
+test("das Nachladen haengt nicht am IntersectionObserver", () => {
+  // Beim Test am 2026-08-09 feuerte der Observer im eingebetteten Browser
+  // ueberhaupt nicht — auch nicht in einem Kontrollversuch ausserhalb des
+  // Moduls. Wo er stillbleibt, waere die Liste bei 30 Karten abgeschnitten.
+  // Auf die VERWENDUNG pruefen, nicht auf das Wort: es darf in Kommentaren
+  // stehen (dort steht, warum der Observer hier nicht taugt).
+  assert.ok(!/new IntersectionObserver/.test(ANSICHT), "Nachladen darf nicht am Observer haengen");
+  assert.match(ANSICHT, /addEventListener\("scroll", pruefeNachladen, \{ passive: true \}\)/);
+  assert.match(ANSICHT, /removeEventListener\("scroll", pruefeNachladen\)/, "der Listener muss auch wieder weg");
+});

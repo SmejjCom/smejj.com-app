@@ -95,13 +95,13 @@ export async function signedS3Put({
   };
   if (compareCondition) headers["If-Match"] = compareCondition;
   if (immutableCondition) headers["If-None-Match"] = immutableCondition;
-  const signal = requestTimeoutSignal(timeoutMs);
-  const response = await fetchImpl(`${endpoint.replace(/\/$/, "")}${canonicalUri}`, {
+  const putUrl = `${endpoint.replace(/\/$/, "")}${canonicalUri}`;
+  const response = await s3FetchWithRetry(() => fetchImpl(putUrl, {
     method,
     headers,
     body: payload,
-    signal
-  });
+    signal: requestTimeoutSignal(timeoutMs)
+  }));
   if ((immutableCondition || compareCondition) && response.status === 412) {
     return { ok: false, key, status: 412, created: false, conditionEnforced: true };
   }
@@ -150,7 +150,8 @@ export async function signedS3Delete({
   const stringToSign = [algorithm, amzDate, credentialScope, crypto.createHash("sha256").update(canonicalRequest).digest("hex")].join("\n");
   const signature = hmac(signingKey(secretKey, dateStamp, region), stringToSign, "hex");
   const authorization = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  const response = await fetchImpl(`${endpoint.replace(/\/$/, "")}${canonicalUri}`, {
+  const deleteUrl = `${endpoint.replace(/\/$/, "")}${canonicalUri}`;
+  const response = await s3FetchWithRetry(() => fetchImpl(deleteUrl, {
     method,
     signal: requestTimeoutSignal(timeoutMs),
     headers: {
@@ -158,7 +159,7 @@ export async function signedS3Delete({
       "x-amz-content-sha256": payloadHash,
       "x-amz-date": amzDate
     }
-  });
+  }));
   // S3 antwortet auf DELETE mit 204, auch wenn das Objekt nicht existierte.
   if (!response.ok && response.status !== 404) {
     throw new Error(`IDrive e2 delete failed for ${key}: ${response.status}`);
@@ -190,16 +191,16 @@ export async function signedS3Get({
   const stringToSign = [algorithm, amzDate, credentialScope, sha256(canonicalRequest)].join("\n");
   const signature = hmac(signingKey(secretKey, dateStamp, region), stringToSign, "hex");
   const authorization = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  const signal = requestTimeoutSignal(timeoutMs);
-  const response = await fetchImpl(`${endpoint.replace(/\/$/, "")}${canonicalUri}`, {
+  const getUrl = `${endpoint.replace(/\/$/, "")}${canonicalUri}`;
+  const response = await s3FetchWithRetry(() => fetchImpl(getUrl, {
     method,
-    signal,
+    signal: requestTimeoutSignal(timeoutMs),
     headers: {
       Authorization: authorization,
       "x-amz-content-sha256": payloadHash,
       "x-amz-date": amzDate
     }
-  });
+  }));
   const bytes = Buffer.from(await response.arrayBuffer());
   const body = responseType === "buffer" ? bytes : bytes.toString("utf8");
   if (allowNotFound === true && response.status === 404) {
@@ -259,15 +260,14 @@ export async function signedS3List({
   const authorization = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
   const url = `${endpoint.replace(/\/$/, "")}${canonicalUri}?${canonicalQuery}`;
   try {
-    const signal = requestTimeoutSignal(timeoutMs ?? process.env.IDRIVE_E2_STATUS_TIMEOUT_MS);
-    const response = await fetchImpl(url, {
-      signal,
+    const response = await s3FetchWithRetry(() => fetchImpl(url, {
+      signal: requestTimeoutSignal(timeoutMs ?? process.env.IDRIVE_E2_STATUS_TIMEOUT_MS),
       headers: {
         Authorization: authorization,
         "x-amz-content-sha256": payloadHash,
         "x-amz-date": amzDate
       }
-    });
+    }));
     return { response, body: await response.text() };
   } catch (error) {
     return {
@@ -317,6 +317,35 @@ function requestTimeoutSignal(value) {
   return typeof AbortSignal !== "undefined" && AbortSignal.timeout
     ? AbortSignal.timeout(milliseconds)
     : undefined;
+}
+
+// H4 (Infra-Audit 2026-08-09): Retry mit Backoff um TRANSIENTE S3-Stoerungen.
+// Wiederholt werden ausschliesslich geworfene Netzwerk-/Timeout-Fehler
+// (AbortError) und 5xx-Serverantworten. 2xx/3xx/4xx werden UNVERAENDERT
+// durchgereicht — insbesondere 404, 409 und 412 (bedingte Schreibvorgaenge) sind
+// endgueltig und duerfen NIE wiederholt werden. Die Thunk-Funktion liefert pro
+// Versuch ein FRISCHES Timeout-Signal (ein abgelaufenes Signal wuerde den
+// naechsten Versuch sofort abbrechen). Anmerkung zu bedingten PUTs: sollte ein
+// erster Versuch serverseitig erfolgreich sein, aber 5xx melden, liefert der
+// Retry ein 412 zurueck — fail-safe (keine Datenbeschaedigung), der Aufrufer
+// behandelt es wie eine verlorene Bedingung. Selbes Muster wie im vorhandenen
+// idrive-conditional-writer.js.
+function s3RetryCount() {
+  return boundedNumber(process.env.IDRIVE_E2_MAX_RETRIES, 2, 0, 5);
+}
+
+async function s3FetchWithRetry(makeRequest, { retries = s3RetryCount(), baseDelayMs = 150 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const response = await makeRequest();
+      if (response.status < 500 || attempt >= retries) return response;
+    } catch (error) {
+      if (attempt >= retries) throw error;
+    }
+    // Linearer Backoff (150ms, 300ms, ...); klein, da jede Operation ohnehin auf
+    // timeoutMs gedeckelt ist.
+    await new Promise((resolve) => setTimeout(resolve, baseDelayMs * (attempt + 1)));
+  }
 }
 
 function normalizeEtag(value) {

@@ -7,6 +7,7 @@ import http from "node:http";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { runCodingJob } from "../smejj-worker/agentloop.mjs";
+import { installWorkerCrashGuard } from "../process-crash-guard.mjs";
 
 const PORT = Number(envValue("PORT", 8080));
 const HOST = envValue("SMEJJ_HOST", "0.0.0.0");
@@ -433,5 +434,7 @@ export function startServer({ port = PORT, host = HOST } = {}) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  // Nur im Direktstart (nicht beim Import in Tests): kein stiller Tod auf Salad.
+  installWorkerCrashGuard("smejj.com remote-browser-worker");
   startServer();
 }

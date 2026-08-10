@@ -289,6 +289,27 @@ das Pin-Symbol steht im Titel — und `updatedAt` bleibt unveraendert, ein 40
 Tage alter Chat behaelt in der Fusszeile korrekt sein Datum ("30. Juni 2026")
 statt nach oben zu rutschen.
 
+---
+
+## Zwei Sitzungen, ein Nummernraum (2026-08-09)
+
+An diesem Tag liefen zwei Sitzungen parallel und haben unabhaengig voneinander
+Cache-Versionen vergeben. Live ausgeliefert wurde jeweils die Nummer, die beim
+Deploy frei war — deshalb tauchen unten Nummern doppelt auf, und keine der
+beiden Reihen ist fuer sich vollstaendig. Beide Bloecke bleiben unveraendert
+stehen; sie nachtraeglich umzunummerieren wuerde die Verweise in Commits,
+Freigaben und Messprotokollen entwerten.
+
+**Block A — Touch-Ziele** (unten zuerst): Startseite und alle 16 Ansichten auf
+44 px, ausgeliefert als v254, v255, v256, v257, v259, v260, v262, v263.
+
+**Block B — Verlauf, Auth, Recht** (danach): ausgeliefert als v253, v258, v261.
+
+Der zuletzt live ausgelieferte Stand ist v263.
+
+---
+
+
 v252 -> v253 (2026-08-09): von einer parallelen Sitzung belegt (Trefferzahl
 waehrend der Suche sichtbar, Frontend-Commit 67f84da) — der Eintrag kommt aus
 deren Branch. Hier nur vermerkt, damit die Nummer keine Luecke ist.
@@ -493,3 +514,115 @@ ohne Verstoss, alle neun Ziele der Kopfleiste und Eingabezeile weiterhin
 Offen bleibt ein Naming-Verstoss in Zeile 196: ein woertliches Zitat gemessener
 Modell-Ausgaben ("Smejj Com Informationen") im Eintrag einer parallelen
 Sitzung. Umschreiben wuerde die Messung verfaelschen, deshalb unangetastet.
+
+---
+
+### Block B
+
+v252 -> v253 (2026-08-09): Waehrend einer Suche war die Trefferzahl
+unsichtbar. Sie stand nur im Platzhalter des Suchfelds ("2 von 5") — und ein
+Platzhalter ist genau dann verdeckt, wenn etwas eingetippt ist, also genau
+dann, wenn man die Zahl braucht. Beim Live-Test "Suche" auf dem Handy im
+Screenshot gesehen: "berlin" im Feld, zwei Karten in der Liste, und nirgends
+stand, dass es zwei von fuenf sind. Jetzt eine eigene, dezente Zeile ueber
+der Liste, die nur bei aktiver Suche ODER aktivem Themen-Filter erscheint.
+Beim selben Test bestaetigt und unveraendert richtig: der Fokus bleibt bei
+JEDEM Zeichen im Feld und der Cursor am Ende (die Liste wird bei jedem
+Tastendruck neu gezeichnet — ohne diese Nachsorge waere die Suche auf dem
+Handy unbenutzbar); Gross- und Kleinschreibung sowie Umlaute stimmen
+("MUeSLUeM" findet "Mueslueim"); Treffer tief im Nachrichtentext liefern
+einen Ausschnitt mit fuehrendem Auslassungszeichen ("…enkapital liegt die
+Monatsrate bei rund 4.350 Euro"); waehrend einer Suche entfaellt die Gruppe
+"Angeheftet", damit ein Treffer nicht versteckt wird; Themen-Filter und
+Suche wirken zusammen (Immobilien + "wohnung" = 1 Treffer, Immobilien +
+"wetter" = keiner); Feldbreite und Kopfhoehe bleiben beim Tippen konstant,
+kein Layout-Sprung.
+v253 -> v254 (2026-08-09): Zwei Handy-Befunde am Themen-Filter, beide beim
+Live-Test gefunden. (1) Die Filter-Chips waren 34 px hoch statt 44 — das
+min-height: 0, mit dem sie ".premium-view button" ueberstimmen muessen, hatte
+ihnen auch die Touch-Groesse genommen; auf dem Handy jetzt wieder 44 px, am
+Schreibtisch bleiben sie kompakt. (2) Die Chip-Leiste sprang beim Neuzeichnen
+zurueck an den Anfang. Auf 375 px passen nur drei der acht Chips ins Bild —
+wer nach rechts wischte und dort "Wissen" antippte, sah die Leiste
+zurueckspringen und den gerade gewaehlten Chip nicht mehr; zum Abwaehlen
+musste man erneut wischen. Die Wischposition wird jetzt uebernommen, analog
+zum Fokus im Suchfeld. Beim selben Test bestaetigt und richtig: ein Chip
+filtert, derselbe Chip erneut hebt den Filter auf, ein direkter Wechsel zu
+einem anderen Chip funktioniert, "Alle" setzt zurueck; die Zeitgruppen zeigen
+im Filter nur die tatsaechlich belegten; die Gruppe "Angeheftet" bleibt im
+Filter erhalten; die Zaehlerzeile erscheint mit Filter und verschwindet ohne;
+die Chips stehen nach Haeufigkeit sortiert.
+v254 -> v255 (2026-08-09): Der Dateiname des Markdown-Exports war unschoen.
+Beim Live-Test auf dem Handy mit einem Titel voller Sonderzeichen gemessen:
+"Rate 25 % / Zins: 3,8 % Uebersicht" wurde zu "Rate 25   Zins 38
+Uebersicht" — die verbotenen Zeichen fielen ERSATZLOS weg und hinterliessen
+Mehrfach-Leerzeichen, und aus "3,8" wurde "38". Jetzt werden sie durch ein
+Leerzeichen ersetzt und anschliessend zusammengefasst; das Komma bleibt
+erlaubt, weil es Bedeutung traegt, der Punkt nicht (er gehoert der
+Dateiendung). Ergebnis: "Rate 25 Zins 3,8 Uebersicht.md". Gegen Kantenfaelle
+geprueft: "../../etc/passwd" wird zu "etc passwd" (kein Ausbruch aus dem
+Zielordner), leere Titel und reine Emoji-Titel fallen auf "unterhaltung"
+zurueck, nie laenger als 50 Zeichen, nie ein Zeichen aus /\:*?"<>|. Beim
+selben Test bestaetigt: der Menuepunkt ist 44 px hoch und im Bild, der
+Download laeuft ueber eine Blob-URL, der Inhalt traegt Titel, Datum und
+Nachrichtenzahl als Kopf und danach Frage/Antwort im Wechsel — und zwar den
+ROHTEXT samt Markdown-Auszeichnung, nicht die gerenderte Fassung. Nach dem
+Klick bleibt kein Link im DOM zurueck.
+v257 -> v258 (2026-08-09): Die Verlauf-Liste zeichnet nicht mehr alle Chats
+auf einmal. Der erste Block umfasst 30 Karten, der Rest wird beim Scrollen
+nachgeladen — ANGEHAENGT, nie neu gezeichnet, sonst verliert man die
+Scrollposition. Gemessen bei 100 Chats: erster Aufbau 26 ms -> 10 ms,
+Seitenhoehe 11.113 px -> 3.627 px, 750 DOM-Elemente -> rund 240. Angeheftete
+stehen weiterhin vollstaendig da (es sind wenige und ausdruecklich als wichtig
+markiert). Kein Fenster-Recycling mit fester Zeilenhoehe: die Karten sind je
+nach Titel- und Vorschauzeilen 94 bis 116 px hoch, geschaetzte Hoehen liessen
+die Liste beim Scrollen springen. Ausgeloest wird ueber das scroll-Ereignis
+und NICHT ueber einen IntersectionObserver — der feuerte im eingebetteten
+Browser ueberhaupt nicht, auch nicht in einem Kontrollversuch ausserhalb des
+Moduls; wo er stillbleibt, waere die Liste bei 30 Karten abgeschnitten und
+der Rest unerreichbar. Zusaetzlich prueft ein requestAnimationFrame direkt
+nach dem Zeichnen nach: ist die Liste kuerzer als der Bildschirm, wird nie
+gescrollt und der naechste Block muss von selbst kommen. Gegengemessen: alle
+100 Karten kommen an (31 -> 61 -> 91 -> 100), keine doppelt (100 eindeutige
+Kennungen), keine doppelten Gruppen-Ueberschriften, die Marke verschwindet am
+Ende samt Scroll-Listener, und Suche wie Filter setzen den Block zurueck.
+
+Nachtrag zur Nummer: geplant war v256. Beim Deploy zeigte sich, dass v256 UND
+v257 live bereits vergeben sind — eine Parallelsitzung hat beide direkt ins
+Frontend-Repo gestellt (Commits c376606 und ae9ec2f, 44-px-Touch-Ziele in
+Kopfleiste und Startseite), ohne sie hier einzutragen. Der Code der Live-sw.js
+war ausser Kommentaren und der Nummer identisch mit dem lokalen Stand; das
+Deploy-Artefakt ist deshalb auf der LIVE-Datei aufgebaut, damit deren
+Begruendungen nicht verlorengehen.
+
+v260 -> v261 (2026-08-09): Themen-Zuordnung im Verlauf nachgeschaerft. Gemessen
+an 49 realistischen Anfragen: vorher 43 % richtig, jetzt 49 von 49. Die
+Zuordnung besteht aus vierzehn Mustern, die in FESTER Reihenfolge geprueft
+werden — der erste Treffer gewinnt. Drei Ursachen:
+
+1. Ein breites Wort in einem fruehen Muster legt ein spaeteres Thema still.
+   "Finanzen" enthielt \beuro\b und stand vor "Einkauf" — damit landete
+   "Standventilator unter 80 Euro zum Kaufen" unter Finanzen, und Einkauf kam
+   bei keiner einzigen Anfrage je zum Zug. Behoben, indem Finanzen ZWEIMAL in
+   der Tabelle steht: die eindeutigen Geldwoerter (Bank, Kredit, Steuer) vor
+   Einkauf, das Breite (Euro, Rate, Rechnung) danach. So bleibt "Suche mir die
+   guenstigste Bank" eine Geldfrage und "Wo bestelle ich Patronen" ein Einkauf.
+2. Vier Muster hatten ein fuehrendes \b, das genau die haeufigste Schreibweise
+   aussperrte: \brate\b traf "Monatsrate" nicht, \bvertrag "Handyvertrag" nicht,
+   \barzt\b "Arzttermin" nicht, \bserver\b "Serverraum" nicht. Im Deutschen ist
+   das zusammengesetzte Wort der Normalfall.
+3. Umschriften ohne Umlaut trafen nichts. Getippt wird oft "uebersetze",
+   "pruefe", "guenstig" — die Muster kannten nur "übersetze". [üu] deckt die
+   Folge "ue" NICHT; ueberall steht jetzt (ü|ue).
+
+Neu sind die Themen Recht, Reise und Gesundheit — vorher landeten solche Chats
+samt DSGVO-, Visum- und Arztfragen unter "Allgemein". Zwei Reihenfolgen sind
+bewusst gesetzt: Recht vor Websites ("Impressum fuer meine Webseite" ist eine
+Rechtsfrage) und Technik vor Wissen ("was bedeutet non-fast-forward" ist keine
+Frage der Allgemeinbildung). "temperatur" ist aus Wetter entfernt und an einen
+Wetterbezug gebunden, weil es sonst "Die Temperatur im Serverraum" einfing.
+
+Abgesichert durch tests/verlauf-themen.test.mjs (6 Tests, in check:frontend):
+35 Beispielanfragen, 12 absichtlich gebaute Fallen mit einem Wort aus einem
+frueheren Thema, die Wortgrenzen-Faelle, die Umlaut-Umschriften und die
+Reihenfolge Finanzen-Einkauf-Finanzen.

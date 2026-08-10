@@ -124,6 +124,57 @@
 // Leiste steht auf nowrap, war 372 px breit und dehnte den Container auf
 // 406 px bei 375 px Fenster. Karten, Kopf und Ueberschrift ragten hinaus.
 // Mit min-width: 0 darf der Container schrumpfen, dann greift overflow-x.
+//
+// v252 -> v253 (2026-08-09): Waehrend einer Suche war die Trefferzahl
+// unsichtbar. Sie stand nur im Platzhalter des Suchfelds — und der ist genau
+// dann verdeckt, wenn etwas eingetippt ist. Live gesehen: "berlin" im Feld,
+// zwei Karten, und nirgends stand "2 von 5". Jetzt eine eigene Zeile, die nur
+// bei aktiver Suche oder aktivem Themen-Filter erscheint.
+//
+// v253 -> v254 (2026-08-09): Zwei Handy-Befunde am Themen-Filter. (1) Die
+// Chips waren 34 px hoch statt 44 — das min-height: 0, mit dem sie
+// ".premium-view button" ueberstimmen, hatte ihnen auch die Touch-Groesse
+// genommen. (2) Die Chip-Leiste sprang beim Neuzeichnen zurueck an den
+// Anfang: wer nach rechts wischte und dort einen Chip antippte, verlor ihn
+// aus dem Blick. Die Wischposition wird jetzt uebernommen.
+//
+// v254 -> v255 (2026-08-09): Der Dateiname des Markdown-Exports war unschoen.
+// Verbotene Zeichen fielen ersatzlos weg: "Rate 25 % / Zins: 3,8 % Uebersicht"
+// wurde zu "Rate 25   Zins 38   Uebersicht" — Mehrfach-Leerzeichen, und aus
+// 3,8 wurde 38. Jetzt werden sie durch ein Leerzeichen ersetzt und
+// zusammengefasst; das Komma bleibt erlaubt.
+//
+// ACHTUNG (2026-08-09, zweite Kollision): v256 und v257 sind live vergeben —
+// eine Parallelsitzung ("Chat-Aktionsknoepfe auf 44 px") hat sie direkt ins
+// Frontend-Repo deployt, ohne sie hier einzutragen. Deshalb springt der
+// Verlauf-Deploy auf v258. Wer als naechstes deployt: erst
+// `curl .../smejj-app-frontend/main/sw.js | grep CACHE_NAME` gegen diese
+// Datei halten, dann hochzaehlen (v259).
+//
+// v257 -> v258 (2026-08-09): Die Liste zeichnet nicht mehr alle Chats auf
+// einmal. Erster Block 30 Karten, der Rest kommt beim Scrollen nachgeladen
+// (angehaengt, nie neu gezeichnet — sonst springt die Scrollposition).
+// Gemessen bei 100 Chats: erster Aufbau 26 ms -> 10 ms, Seitenhoehe
+// 11.113 px -> 3.627 px. Ausgeloest wird ueber das scroll-Ereignis, NICHT
+// ueber einen IntersectionObserver: der feuerte im Test gar nicht, und wo er
+// stillbleibt, waere die Liste bei 30 Karten abgeschnitten.
+//
+// v260 -> v261 (2026-08-09): Themen-Zuordnung im Verlauf nachgeschaerft.
+// An 49 Beispielanfragen gemessen: vorher 43 % richtig, jetzt 49 von 49.
+// Drei Ursachen, alle in tests/verlauf-themen.test.mjs festgehalten:
+// ein breites Wort in einem fruehen Muster (\beuro\b in Finanzen) legte ein
+// spaeteres Thema (Einkauf) still; vier Muster hatten ein fuehrendes \b, das
+// genau die haeufigste Schreibweise aussperrte (Monatsrate, Handyvertrag,
+// Arzttermin, Serverraum); und Umschriften ohne Umlaut ("uebersetze",
+// "pruefe") trafen nichts, weil [üu] die Folge "ue" nicht deckt.
+// Neu sind die Themen Recht, Reise und Gesundheit.
+//
+// KLARSTELLUNG (2026-08-09, beim Zusammenfuehren): der Hinweis oben zu v256
+// und v257 nennt eine Parallelsitzung, die "ohne Eintrag hier" deployt habe.
+// Eingetragen war es — nur an der vorgesehenen Stelle: v254 bis v263 stehen
+// in docs/frontend/SW_VERSIONSVERLAUF_2026-08.md, so wie es der Kopf dieser
+// Datei verlangt (Touch-Ziele auf 44 px, Startseite und alle 16 Ansichten).
+// Wer den naechsten Stand sucht, schaut also besser dorthin als hierher.
 const CACHE_NAME = "smejj-shell-v263";
 const SHELL = [
   "/",

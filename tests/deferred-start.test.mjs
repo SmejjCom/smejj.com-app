@@ -167,9 +167,11 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   // v195 -> v196 am 2026-08-02: Sprachwelle Stufe 3a auf der Startseite —
   // voice-thinking-cue.js neu im Precache, weil composer-tools.js es importiert
   // (siehe public/sw.js). Diese Zusicherung erzwingt genau diesen Versionssprung.
-  // Untergrenze statt fester Nummer: jede spaetere Aenderung an einer
-  // Precache-Datei zaehlt hoch (2026-08-09: v253). Was der Test schuetzt, ist
-  // das Nicht-Zurueckdrehen — sonst sehen Bestandsnutzer den alten Stand.
-  assert.ok(Number(/smejj-shell-v(\d+)/.exec(sw)?.[1] || 0) >= 252,
+  // Untergrenze statt fester Nummer: jede Aenderung an einer Precache-Datei
+  // zaehlt hoch, und eine feste Zahl muesste dann in fuenf Testdateien
+  // nachgezogen werden (am 2026-08-09 dreimal passiert, weil parallele
+  // Sitzungen Versionen belegten). Geschuetzt wird das Nicht-Zurueckdrehen:
+  // v263 ist der live ausgelieferte Stand.
+  assert.ok(Number(/smejj-shell-v(\d+)/.exec(sw)?.[1] || 0) >= 263,
     "CACHE_NAME wurde zurueckgedreht — Bestandsnutzer bekaemen den alten Stand");
 });

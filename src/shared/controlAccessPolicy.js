@@ -68,6 +68,18 @@ export function requiresAuthenticatedControlAccess(req, url) {
 export function isSafeMutatingControlRequest(req, url) {
   if (!["POST", "PUT", "PATCH", "DELETE"].includes(String(req?.method || "").toUpperCase())) return true;
   const origin = String(req?.headers?.origin || "");
+  if (!origin) {
+    // Fehlender Origin-Header: frueher pauschal erlaubt (fail-open, CSRF-Luecke
+    // aus dem Audit 2026-08-09). CSRF ist aber nur dann moeglich, wenn der
+    // Request ambiente Zugangsdaten traegt — das Session-Cookie. Traegt die
+    // mutierende Anfrage das smejj_session-Cookie, aber keinen Origin, wird sie
+    // jetzt abgewiesen (fail-closed): ein echter Browser sendet bei Mutationen
+    // stets einen Origin. Unauthentifizierte Worker-Callbacks
+    // (/api/jobs/:id/status) und Bearer-/Server-zu-Server-Clients tragen kein
+    // Cookie und passieren weiterhin — sie sind per CSRF nicht faelschbar.
+    const hasSessionCookie = /(?:^|;\s*)smejj_session=/.test(String(req?.headers?.cookie || ""));
+    return !hasSessionCookie;
+  }
   const host = safeHost(req?.headers?.host);
   const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase();
   const selfOrigins = host
