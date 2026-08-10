@@ -721,3 +721,21 @@ test("das Touch-Ziel bleibt 42 px, kompakt wird nur mit Maus", () => {
   assert.match(basis, /\.msg-act \{[\s\S]*?min-height: 42px;/, "Voreinstellung ist das 42-px-Touch-Ziel");
   assert.match(actionsCss, /@media \(pointer: fine\)[\s\S]*?min-height: 28px;/, "kompakt nur mit praezisem Zeigegeraet");
 });
+
+test("auf schmalen Schirmen sind die Aktionsknoepfe 44 px", () => {
+  // Live gemessen 2026-08-09 (375 px, Geraete-Emulation, pointer coarse): alle
+  // Aktionsknoepfe waren 42x42 — knapp unter den 44 px, die Apple und Google
+  // als Untergrenze nennen. Angehoben wird NUR unterhalb 600 px.
+  const schmal = actionsCss.split("@media (max-width: 600px)")[1] || "";
+  assert.match(schmal, /min-height: 44px;/, "unterhalb 600 px gilt 44 px");
+
+  // Der Selektor braucht mehr Gewicht als `.premium-view button` (0,1,1) aus
+  // app-surfaces.css, das mobil `width: 100%` setzt — sonst verliert er.
+  assert.match(schmal, /#startLog \.msg-act/, "ID-Anker gegen .premium-view button");
+  assert.match(schmal, /\.msg-act\.msg-act/, "doppelte Klasse fuer Leisten ausserhalb von #startLog");
+
+  // Der Desktop bleibt kompakt, auch wenn das Fenster schmal ist: sonst wuerde
+  // die neue, hoeher gewichtete Regel die 28 px mit der Maus ueberschreiben.
+  const mausAusnahme = actionsCss.split("@media (max-width: 600px) and (pointer: fine)")[1] || "";
+  assert.match(mausAusnahme, /min-height: 28px;/, "mit Maus bleibt es bei 28 px");
+});

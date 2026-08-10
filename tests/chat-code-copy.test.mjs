@@ -96,7 +96,11 @@ test("Auslieferung: eingebunden, gebuendelt und im Precache", () => {
   assert.match(indexHtml, /<script src="\/assets\/chat-code-copy\.js\?v=[^"]+" type="module"><\/script>/);
   assert.match(sw, /"\/assets\/chat-code-copy\.js"/);
   // Ohne Versionssprung erreicht die Aenderung Bestandsnutzer nicht.
-  assert.match(sw, /CACHE_NAME = "smejj-shell-v252"/);
+  // Untergrenze statt fester Nummer: jede spaetere Aenderung an einer
+  // Precache-Datei zaehlt hoch (2026-08-09: v253). Was der Test schuetzt, ist
+  // das Nicht-Zurueckdrehen — sonst sehen Bestandsnutzer den alten Stand.
+  assert.ok(Number(/smejj-shell-v(\d+)/.exec(sw)?.[1] || 0) >= 252,
+    "CACHE_NAME wurde zurueckgedreht — Bestandsnutzer bekaemen den alten Stand");
   // Die Regeln muessen im gebuendelten Stylesheet der Startseite ankommen.
   assert.match(bundle, /\.chat-code-copy::after/);
 });

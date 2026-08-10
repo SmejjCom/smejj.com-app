@@ -34,7 +34,10 @@ const ALS_JSON = args.includes("--json");
 // Check waere wertlos — deshalb ist die Gegenprobe eingebaut statt nur einmal
 // von Hand gemacht.
 const SELBSTTEST = args.includes("--selbsttest");
-const MIN_ZIEL = 42;
+// 44 statt 42 seit 2026-08-09: Apple HIG und Material nennen 44 px als
+// Untergrenze fuer Touch-Ziele; die Leiste lag mit 42 knapp darunter. Gilt nur
+// auf schmalen Schirmen — und genau die misst dieses Skript (375 px, coarse).
+const MIN_ZIEL = 44;
 const MIN_SCHRITT = 34;
 
 // Entfernt genau die zwei Eigenschaften, die die Knoepfe vor dem Quetschen
@@ -97,7 +100,7 @@ const MESSUNG = `(() => {
       rolle: bar.classList.contains("is-user") ? "user" : "assistant",
       knoepfe,
       leisteHoehe: Math.round(box.height),
-      zeilen: Math.max(1, Math.round(box.height / 42)),
+      zeilen: Math.max(1, Math.round(box.height / 44)),
       laeuftUeber: box.right > logBox.right + 1 || box.left < logBox.left - 1
     };
   };

@@ -868,3 +868,28 @@ Beim selben Test bestaetigt: Anheften holt die Karte in die Gruppe
 das Pin-Symbol steht im Titel — und `updatedAt` bleibt unveraendert, ein 40
 Tage alter Chat behaelt in der Fusszeile korrekt sein Datum ("30. Juni 2026")
 statt nach oben zu rutschen.
+
+v252 -> v253 (2026-08-09): von einer parallelen Sitzung belegt (Trefferzahl
+waehrend der Suche sichtbar, Frontend-Commit 67f84da) — der Eintrag kommt aus
+deren Branch. Hier nur vermerkt, damit die Nummer keine Luecke ist.
+
+v253 -> v254 (2026-08-09): Die Aktionsknoepfe unter jeder Chat-Nachricht waren
+auf dem Handy 42x42 px — knapp unter den 44 px, die Apple (HIG) und Google
+(Material, 48 dp) als Untergrenze fuer Touch-Ziele nennen. Live nachgemessen
+bei 375 px mit echter Geraete-Emulation (pointer coarse, nicht nur ein
+schmales Fenster): Kopieren, Bearbeiten und Menue an der Frage sowie
+Kopieren, Daumen hoch, Daumen runter, Neu generieren und Menue an der Antwort
+lagen alle bei 42x42. Angehoben auf 44x44, aber nur unterhalb 600 px; der
+Desktop bleibt bei seinen kompakten 28 px. Zwei Fallen bestimmten den
+Selektor: app-surfaces.css setzt mobil `.premium-view button { width: 100% }`
+(Spezifitaet 0,1,1), gegen das eine blosse Klassenregel (0,1,0) verliert —
+daher ID-Anker `#startLog .msg-act` plus doppelt gewichtete Variante
+`.msg-actions .msg-act.msg-act` fuer Leisten ausserhalb des Start-Logs; und
+ein schmales Fenster AM RECHNER hat pointer: fine, weshalb der Maus-Fall
+darunter ausdruecklich wiederhergestellt wird, sonst haette die neue Regel den
+Desktop mitgezogen. Vor dem Deploy gegen die ECHTE Seite geprueft, indem die
+neuen Regeln ans Ende des Buendels start-styles.css eingesetzt wurden (die
+Kaskadenposition nach dem Deploy): 8 von 8 Aktionsknoepfen 44x44, kein
+Ueberlauf, die Leiste der Antwort bricht wie vorgesehen auf zwei Zeilen um (80
+px hoch). Die Versionspfeile bleiben bewusst bei 34 px — sie waren nicht Teil
+des Auftrags. Der Waechter `npm run measure:touch` fordert jetzt 44 statt 42.
