@@ -1006,3 +1006,21 @@ Vorab an der echten Seite geprueft, indem alle DREI betroffenen Stylesheets im
 DOM durch die lokalen Fassungen ersetzt wurden (jeweils an ihrer eigenen
 Kaskadenposition): 15 von 15 Ansichten ohne Verstoss, keine Ueberschrift
 verdeckt, keine Ansicht laeuft ueber den Rand.
+
+(ohne Versionssprung, 2026-08-09): Waechter fuer Touch-Ziele erweitert. Der
+bisherige `npm run measure:touch` misst genau die Chat-Aktionsleiste — und war
+gruen, waehrend daneben 130 Ziele unter 44 px lagen (23 auf der Startseite,
+107 in den Ansichten). Neu ist `npm run measure:touch:app`: es misst jedes
+sichtbare bedienbare Element, die Startseite in DREI Zustaenden (ruhend,
+Nachrichten-Menue offen, linkes Menue offen) und alle 16 Ansichten einzeln,
+prueft zusaetzlich auf seitlichen Ueberlauf und bricht ab, wenn die
+Zeiger-Emulation nicht greift (sonst waere die Messung still falsch-gruen).
+Gegenprobe eingebaut: `measure:touch:app:selbsttest` nimmt die 600-px-Regeln
+zur Laufzeit heraus und ERWARTET Verstoesse — gemessen 29 entfernte
+Eigenschaften, 201 erkannte Verstoesse.
+
+tests/touch-ziele-waechter.test.mjs haelt das ohne Browser fest, was
+schiefgehen kann: beide Waechter fordern 44 (nicht mehr 42), jede Route aus
+view-routes.js ist abgedeckt, jede Ausnahme traegt eine Begruendung. Der Test
+hat sich sofort bezahlt gemacht — er fand, dass die Ansicht /smejj-claw in der
+ersten Fassung des Waechters fehlte.
