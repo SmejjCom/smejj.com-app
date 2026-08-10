@@ -1,11 +1,11 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-10T02:37:48.551Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09: Verstecken des Profilbild-Datei-Feldes haerten (min-height 1px, clip-path); sw.js CACHE_NAME auf v262 (v261 war parallel belegt).",
+  "frozenAt": "2026-08-10T02:47:28.622Z",
+  "confirmation": "Freigabe Betreiber 2026-08-09: Versionsverlauf-Doku aufgeteilt, Touch-Regeln von styles.css nach view-chrome.css verschoben; sw.js CACHE_NAME v262 -> v263.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
-    "public/styles.css": "921503c87dddf5af3adfd54af1a28106b8d0b182e016a38ed38698b406102e11",
+    "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "5481f66724b6ab6156c4997d3097820afd14151a222e7d7e1ccf2f31acc331e0",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "9f1d6f664e0cb523ccf2e1fed75ae5b4c48db1fb6e42ab84a4ba924a44055fff",
+    "public/sw.js": "f66ecc1f701ab721bd4b0a26c47e83a8832b5138426a17d0297a58843332743d",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
