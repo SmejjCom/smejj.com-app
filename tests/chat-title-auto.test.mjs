@@ -135,9 +135,9 @@ test("setAutoTitle laesst von Hand vergebene Titel in Ruhe", () => {
 // Handy-Regel nie ankam. Auf einer Teststrecke ohne die App-Stylesheets faellt
 // das NICHT auf.
 const ANSICHT = readFileSync(new URL("../public/chat-history-view.js", import.meta.url), "utf8");
-// Die Karten-Bausteine liegen seit 2026-08-10 in chat-history-cards.js (800-Zeilen-
-// Regel). Der leer-Zweig ruft bausteinNeuKnopf() weiter in der Ansicht auf; die
-// Definition wird hier geprueft.
+// Beide Aufteilungen vom 2026-08-10: Textaufbereitung/Export in
+// chat-history-text.js, Karten-Bausteine in chat-history-cards.js.
+const TEXTMODUL = readFileSync(new URL("../public/chat-history-text.js", import.meta.url), "utf8");
 const KARTEN = readFileSync(new URL("../public/chat-history-cards.js", import.meta.url), "utf8");
 
 function cssBlock() {
@@ -228,10 +228,10 @@ test("Filter-Chips sind auf dem Handy 44 px hoch", () => {
 // Der Dateiname des Markdown-Exports entsteht aus dem Chat-Titel — und der kann
 // alles enthalten: Schraegstriche, Doppelpunkte, Emoji, oder nur Sonderzeichen.
 function ladeDateiname() {
-  const start = ANSICHT.indexOf("function dateiname(titel)");
-  const ende = ANSICHT.indexOf("// Sichern als Markdown");
+  const start = TEXTMODUL.indexOf("function dateiname(titel)");
+  const ende = TEXTMODUL.indexOf("// Sichern als Markdown");
   assert.ok(start > -1 && ende > start, "dateiname() nicht gefunden");
-  return new Function(`${ANSICHT.slice(start, ende)} return dateiname;`)();
+  return new Function(`${TEXTMODUL.slice(start, ende)} return dateiname;`)();
 }
 
 test("der Export-Dateiname bleibt brauchbar und sicher", () => {
