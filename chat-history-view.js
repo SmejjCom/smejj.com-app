@@ -107,6 +107,8 @@ function injectStyles() {
       border-color: rgba(120,220,232,.45); color: #78dce8; opacity: 1; }
     #chatHistory .ch-chip .ch-n { opacity: .55; margin-left: 5px; font-variant-numeric: tabular-nums; }
 
+    .ch-zaehler { font-size: 12.5px; opacity: .5; margin: 10px 2px 0; font-variant-numeric: tabular-nums; }
+
     .ch-gruppe { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
       opacity: .42; margin: 24px 0 9px; display: flex; align-items: center; gap: 10px; }
     .ch-gruppe::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.10); }
@@ -149,6 +151,11 @@ function injectStyles() {
       border: 1px solid rgba(255,255,255,.16); border-radius: 9px; padding: 7px 13px; cursor: pointer;
       min-height: 0; }
 
+    /* Die Marke am Listenende ist der Messpunkt fuers Nachladen: kommt sie in
+       die Naehe des Bildrands, kommt der naechste Block. Eine echte Hoehe
+       macht die Abstandsrechnung verlaesslich. */
+    .ch-marke { height: 1px; }
+
     .chat-history-empty { opacity: .75; padding: 26px 2px 14px; }
     .ch-leer-aktion { padding: 0 2px 8px; }
 
@@ -168,7 +175,11 @@ function injectStyles() {
         mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
         -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
       .ch-chips::-webkit-scrollbar { display: none; }
-      #chatHistory .ch-chip { flex: 0 0 auto; }
+      /* min-height: 0 oben ist noetig, um ".premium-view button" zu ueber-
+         stimmen — es nimmt den Chips aber auch die 44 px, die dort richtig
+         waren. Auf dem Handy gemessen: 34 px, also 10 unter der Touch-Grenze.
+         Hier also wieder hinein; am Schreibtisch bleiben sie kompakt. */
+      #chatHistory .ch-chip { flex: 0 0 auto; min-height: 44px; }
       .ch-titel { -webkit-line-clamp: 2; }
       .ch-meta { white-space: nowrap; overflow: hidden; }
       /* 32 px sind fuer einen Finger zu wenig — Apple und Google nennen 44 px
@@ -325,17 +336,58 @@ function anzeigeVorschau(chat) {
 //   - "Ein Buero … 1.200.000 Euro … Monatsrate" ist auch eine Rechnung, aber
 //     zuerst eine Immobilienfrage — Rechnen steht deshalb hinter Immobilien
 //     und Finanzen und verlangt eine echte Rechenform ("7 mal 8").
+// Die Reihenfolge IST die Regel: geprueft wird von oben nach unten, der erste
+// Treffer gewinnt. Spezifische Absichten stehen deshalb vor allgemeinen.
+//
+// Zwei Fallen, beide an echten Formulierungen gemessen (2026-08-09):
+//
+// 1. Ein breites Wort in einem fruehen Thema verschluckt alles Spaetere.
+//    "Finanzen" enthielt \beuro\b — damit landete "Standventilator unter
+//    80 Euro zum Kaufen" unter Finanzen, und "Einkauf" weiter unten kam nie
+//    zum Zug. Preisangaben sind KEIN Finanzthema; ein Preis steht in fast
+//    jeder Kaufabsicht. Finanzen braucht ein echtes Geldsignal (Bank, Kredit,
+//    Steuer, Rate), Einkauf ein echtes Kaufsignal (kaufen, bestellen, kostet).
+//
+// 2. Umschriften ohne Umlaut trafen nichts. Getippt wird oft "uebersetze",
+//    "pruefe", "guenstig" — die Muster kannten nur "übersetze". Darum steht
+//    ueberall (ü|ue) statt [üu]: [üu] trifft "ubersetze", aber nicht "ue".
 const THEMEN = Object.freeze([
-  ["Wetter", /\bwetter\b|\btemperatur\b|vorhersage|\bregnet\b/i],
-  ["Immobilien", /\bwohnung|\bb[üu]ro|\bmiete\b|immobilie|makler|quadratmeter|neubau|\bzimmer\b/i],
-  ["Finanzen", /\bbank\b|\bkonto\b|kredit|\bzins|finanzierung|eigenkapital|steuer|\bllc\b|\bgmbh\b|\brate\b|\beuro\b|ueberweisung|überweisung/i],
-  ["Rechnen", /\d\s*(mal|plus|minus|geteilt)\s*\d|\bwie viel ist\b|prozent von|\bausrechnen\b/i],
+  // "temperatur" stand hier allein und zog "Die Temperatur im Serverraum
+  // steigt auf 40 Grad" zu Wetter. Das Wort gehoert genauso zu Fieber und
+  // Rechenzentrum — es braucht einen Wetterbezug.
+  ["Wetter", /\bwetter\b|vorhersage|\bregnet\b|\bschneit\b|wie (warm|kalt) (wird|ist) es|temperatur (morgen|heute|am wochenende|drau(ß|ss)en)/i],
+  ["Rechnen", /\d\s*(mal|plus|minus|geteilt)\s*\d|\bwie viel ist\b|prozent von|\bausrechnen\b|\bwurzel aus\b/i],
   ["Tests", /\bregressionstest\b|\bantworte nur mit\b|\btestlauf\b|\bstufe [a-z]\b.*\btest/i],
-  ["Wissen", /hauptstadt von|\bhauptstadt\b|\bwer war\b|\bwann wurde\b|\bwas bedeutet\b/i],
-  ["Technik", /\bcode\b|funktion|javascript|\bnode\b|\bapi\b|datenbank|\bindex\b|constraint|deploy|\bbug\b/i],
-  ["Websites", /\bbrowser\b|webseite|website|fehlerfrei|\bseite\b.*\bpr[üu]f/i],
-  ["Texte", /\bschreibe?\b|schlagzeile|formuliere|übersetze|zusammenfass/i],
-  ["Einkauf", /\bsuch mir\b|\bkaufen\b|\bbestellen\b|\bpreis\b|\bangebot\b/i],
+  // Recht vor Websites: "Impressum fuer meine Webseite" ist eine Rechtsfrage,
+  // auch wenn das Wort Webseite darin steht.
+  // Kein fuehrendes \b vor "vertrag" und "k(ü|ue)ndig": zusammengesetzte
+  // Woerter sind hier der Normalfall (Handyvertrag, Mietvertrag), und
+  // "kuendige" ist die haeufigere Form als "Kuendigung". Das abschliessende
+  // \b haelt "vertragen" draussen.
+  ["Recht", /\bdsgvo\b|datenschutz|impressum|widerruf|\bagb\b|einwilligung|urheberrecht|abmahnung|vertrag(s|es)?\b|k(ü|ue)ndig|haftung|gew(ä|ae)hrleistung|\bbgb\b|\b§\s*\d|rechtlich|\bklausel\b/i],
+  ["Reise", /\breise|\burlaub|\bflug\b|\bfl(ü|ue)ge\b|\bhotel\b|\bvisum\b|unterkunft|sehensw(ü|ue)rdig|st(ä|ae)dtetrip|\bmietwagen\b|\bairbnb\b|(ein|zwei|drei|vier|f(ü|ue)nf|sieben)\s+tage\b/i],
+  // "\barzt\b" traf "Arzttermin" nicht — dieselbe Wortgrenzen-Falle wie bei
+  // "Monatsrate" und "Handyvertrag".
+  ["Gesundheit", /\barzt|(ä|ae)rztin|schmerz|verspannung|\bschlaf\b|ern(ä|ae)hrung|\bmedikament|\bsymptom|\bimpfung|\bblutdruck\b|\bdi(ä|ae)t\b|\bgesund\b/i],
+  ["Immobilien", /\bwohnung|\bb(ü|ue)ro|\bmiete\b|immobilie|makler|quadratmeter|neubau|\bzimmer\b/i],
+  // Finanzen steht ZWEIMAL in der Tabelle, absichtlich — der Name entscheidet,
+  // nicht die Zeile. Davor die eindeutigen Geldwoerter: "Suche mir die
+  // guenstigste Bank" und "Was kostet ein Kredit" sind Geldfragen, auch wenn
+  // "suche mir", "guenstig" und "was kostet" nach Einkauf klingen. Danach das
+  // Breite (Euro, Rate, Rechnung), das eine echte Kaufabsicht nicht
+  // ueberstimmen darf.
+  ["Finanzen", /\bbank\b|\bkonto\b|kredit|\bzins|steuer|\bllc\b|\bgmbh\b|\btilgung|\bbuchhaltung\b|\bdarlehen\b/i],
+  ["Einkauf", /\bkaufen\b|\bbestell|\bsuch(e)? mir\b|\bwo (bekomme|gibt es|kriege)\b|\bwas kostet ein|preisvergleich|\bg(ü|ue)nstig|\bangebot\b|\brabatt\b/i],
+  // \brate\b traf "Monatsrate" nicht — vor "rate" steht dort keine Wortgrenze.
+  // Die erlaubten Vorsilben stehen deshalb ausdruecklich da: ein blosses
+  // \w*rate\b haette auch "separate" eingefangen.
+  ["Finanzen", /\b(monats|jahres|quartals|tilgungs|raten)?rate\b|\beuro\b|finanzierung|eigenkapital|(ü|ue)berweisung|\bumsatzsteuer\b|\brechnung\b/i],
+  // Technik vor Wissen: "was bedeutet non-fast-forward" ist keine Wissensfrage
+  // im Sinne von Allgemeinbildung, sondern eine Werkzeugfrage.
+  ["Technik", /\bcode\b|funktion|javascript|typescript|\bpython\b|\bnode\b|\bapi\b|datenbank|\bindex\b|constraint|deploy|\bbug\b|\bskript\b|\bscript\b|docker|container|\bgit\b|\bcss\b|\bhtml\b|\bsql\b|\bserver|terminal|\bcron(job)?\b|service worker|kompilier|\brepo\b|\bbranch\b|\bcommit\b|\bnpm\b|\bshell\b|\bbash\b|\bdateien?\b|\bfehlermeldung\b|\bmigration\b/i],
+  ["Websites", /\bbrowser\b|webseite|website|fehlerfrei|\bseite\b.*\bpr(ü|ue)f|\bpr(ü|ue)f\w*\b.*\bseite\b|tote links|\bfavicon\b/i],
+  ["Texte", /\bschreibe?\b|schlagzeile|formuliere|(ü|ue)bersetz|zusammenfass|korrigiere|umformulier|\bentwurf\b/i],
+  ["Wissen", /hauptstadt von|\bhauptstadt\b|\bwer war\b|\bwann wurde\b|\bwas bedeutet\b|\bwarum heisst\b/i],
   ["Recherche", /kennst du|\bwer ist\b|recherch|\bquellen\b|\bsuch|\binternet\b/i]
 ]);
 
@@ -475,6 +527,7 @@ function zeichne(target) {
     // loescht, sass hier in einer Sackgasse — mit den Karten verschwand auch
     // der Kopf, also der einzige Knopf, der von dieser Ansicht aus weiterfuehrt.
     // Ein Suchfeld waere bei null Chats sinnlos, der Knopf ist es nicht.
+    beobachterAus();
     const leer = document.createDocumentFragment();
     leer.append(bausteinLeer("Noch keine gespeicherten Unterhaltungen. Neue Chats werden hier automatisch abgelegt."));
     const platz = document.createElement("div");
@@ -501,8 +554,20 @@ function zeichne(target) {
   const stueck = document.createDocumentFragment();
   stueck.append(bausteinKopf(treffer.length, aufbereitet.length));
   stueck.append(bausteinChips(aufbereitet));
+  // Die Trefferzahl stand bisher NUR im Platzhalter des Suchfelds — und der ist
+  // genau dann verdeckt, wenn man sie braucht: sobald etwas eingetippt ist.
+  // Live auf dem Handy gesehen: "berlin" im Feld, zwei Karten in der Liste, und
+  // nirgends stand, dass es zwei von fuenf sind. Darum eine eigene Zeile, die
+  // nur erscheint, wenn wirklich gefiltert wird.
+  if ((nadel || themenFilter) && treffer.length) {
+    const zaehler = document.createElement("div");
+    zaehler.className = "ch-zaehler";
+    zaehler.textContent = `${treffer.length} von ${aufbereitet.length} Unterhaltungen`;
+    stueck.append(zaehler);
+  }
 
   if (!treffer.length) {
+    beobachterAus();
     stueck.append(bausteinLeer(nadel ? `Nichts gefunden für „${suchbegriff.trim()}".` : "In diesem Thema liegt nichts."));
     ziel.replaceChildren(stueck);
     return;
@@ -520,17 +585,138 @@ function zeichne(target) {
     for (const eintrag of angeheftet) stueck.append(bausteinKarte(eintrag, aktiv, nadel));
   }
 
-  let letzteGruppe = "";
-  for (const eintrag of rest) {
-    const gruppe = gruppeVon(eintrag.chat.updatedAt);
-    if (gruppe !== letzteGruppe) {
-      stueck.append(bausteinGruppe(gruppe));
-      letzteGruppe = gruppe;
-    }
-    stueck.append(bausteinKarte(eintrag, aktiv, nadel));
-  }
+  // Angeheftete stehen immer vollstaendig da: es sind wenige, und sie sind
+  // ausdruecklich als wichtig markiert. Nachgeladen wird nur die Zeitliste.
+  nachladeZustand = { rest, index: 0, letzteGruppe: "", aktiv, nadel };
+  stueck.append(naechsteKarten());
+  const marke = document.createElement("div");
+  marke.className = "ch-marke";
+  marke.setAttribute("aria-hidden", "true");
+  stueck.append(marke);
 
+  // Die Chip-Leiste wird bei jedem Zeichnen neu gebaut und beginnt dann wieder
+  // ganz links. Auf dem Handy passen nur drei der acht Chips ins Bild: Wer nach
+  // rechts wischt und dort "Wissen" antippt, sah die Leiste zurueckspringen —
+  // der gerade gewaehlte Chip war aus dem Blick, zum Abwaehlen musste man
+  // erneut wischen. Darum die Wischposition uebernehmen.
+  const alteLeiste = ziel.querySelector(".ch-chips");
+  const wischPosition = alteLeiste ? alteLeiste.scrollLeft : 0;
   ziel.replaceChildren(stueck);
+  if (wischPosition) {
+    const neueLeiste = ziel.querySelector(".ch-chips");
+    if (neueLeiste) neueLeiste.scrollLeft = wischPosition;
+  }
+  beobachteMarke(ziel);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Nachladen beim Scrollen
+ *
+ *  Statt aller Karten auf einmal wird ein erster Block gezeichnet; der Rest
+ *  kommt, sobald der Nutzer sich dem Ende naehert. Kein Fenster-Recycling mit
+ *  fester Zeilenhoehe: die Karten sind je nach Titel- und Vorschauzeilen
+ *  zwischen 94 und 116 px hoch, und Recycling mit geschaetzten Hoehen laesst
+ *  die Liste beim Scrollen springen. Angehaengt wird nur, nie neu gezeichnet —
+ *  sonst verliert man die Scrollposition.
+ * ------------------------------------------------------------------ */
+
+const ERSTER_BLOCK = 30;
+const NACHLADE_BLOCK = 30;
+
+let nachladeZustand = null;
+let scrollWacheLaeuft = false;
+
+// Ein Beobachter, dessen Marke nicht mehr im Dokument haengt, wuerde nie wieder
+// feuern — aber auch nie aufraeumen. Darum bei jedem Zeichnen ohne Liste weg.
+function beobachterAus() {
+  scrollWacheAus();
+  nachladeZustand = null;
+}
+
+// Baut die naechsten Karten samt der Gruppen-Ueberschriften, die dazwischen
+// faellig werden. Der Zustand merkt sich, wo der letzte Block aufgehoert hat.
+function naechsteKarten(anzahl = ERSTER_BLOCK) {
+  const teil = document.createDocumentFragment();
+  if (!nachladeZustand) return teil;
+  const { rest, aktiv, nadel } = nachladeZustand;
+  const bis = Math.min(nachladeZustand.index + anzahl, rest.length);
+  for (let i = nachladeZustand.index; i < bis; i += 1) {
+    const eintrag = rest[i];
+    const gruppe = gruppeVon(eintrag.chat.updatedAt);
+    if (gruppe !== nachladeZustand.letzteGruppe) {
+      teil.append(bausteinGruppe(gruppe));
+      nachladeZustand.letzteGruppe = gruppe;
+    }
+    teil.append(bausteinKarte(eintrag, aktiv, nadel));
+  }
+  nachladeZustand.index = bis;
+  return teil;
+}
+
+function alleGezeichnet() {
+  return !nachladeZustand || nachladeZustand.index >= nachladeZustand.rest.length;
+}
+
+// Nachgeladen wird ueber das SCROLL-Ereignis, nicht ueber einen
+// IntersectionObserver.
+//
+// Der Observer waere der elegantere Weg, aber er ist hier zu riskant: Beim Test
+// am 2026-08-09 feuerte er im eingebetteten Browser ueberhaupt nicht — auch
+// nicht in einem Kontrollversuch ausserhalb des Moduls. Wo er stillbleibt,
+// waere die Liste bei 30 Karten abgeschnitten und der Rest unerreichbar. Ein
+// Scroll-Listener ist unspektakulaer, kostet mit `passive` und einer billigen
+// Abstandsrechnung praktisch nichts — und laeuft ueberall.
+const NACHLADE_ABSTAND = 600;
+
+function pruefeNachladen() {
+  const ziel = host();
+  if (!ziel) return;
+  const marke = ziel.querySelector(".ch-marke");
+  if (!marke) return;
+  if (alleGezeichnet()) {
+    marke.remove();
+    scrollWacheAus();
+    return;
+  }
+  if (marke.getBoundingClientRect().top > window.innerHeight + NACHLADE_ABSTAND) return;
+  marke.before(naechsteKarten(NACHLADE_BLOCK));
+  if (alleGezeichnet()) {
+    marke.remove();
+    scrollWacheAus();
+    return;
+  }
+  // Reicht der neue Block noch nicht ueber den Bildrand, sofort weitermachen —
+  // sonst haengt die Liste, bis der Nutzer erneut scrollt.
+  if (marke.getBoundingClientRect().top <= window.innerHeight + NACHLADE_ABSTAND) {
+    requestAnimationFrame(pruefeNachladen);
+  }
+}
+
+function scrollWacheAn() {
+  if (scrollWacheLaeuft) return;
+  window.addEventListener("scroll", pruefeNachladen, { passive: true });
+  window.addEventListener("resize", pruefeNachladen, { passive: true });
+  scrollWacheLaeuft = true;
+}
+
+function scrollWacheAus() {
+  if (!scrollWacheLaeuft) return;
+  window.removeEventListener("scroll", pruefeNachladen);
+  window.removeEventListener("resize", pruefeNachladen);
+  scrollWacheLaeuft = false;
+}
+
+function beobachteMarke(ziel) {
+  const marke = ziel.querySelector(".ch-marke");
+  if (!marke || alleGezeichnet()) {
+    if (marke) marke.remove();
+    scrollWacheAus();
+    return;
+  }
+  scrollWacheAn();
+  // Ist die Liste kuerzer als der Bildschirm, wird nie gescrollt — dann muss
+  // der naechste Block sofort kommen.
+  requestAnimationFrame(pruefeNachladen);
 }
 
 // Vier der 34 echten Chats hiessen "Geh browser iMild.com teste ob alles
@@ -814,6 +1000,24 @@ function zeigeUmbenennen(karte, chat) {
   eingabe.select();
 }
 
+// Aus dem Titel einen brauchbaren Dateinamen machen.
+//
+// Live gemessen: "Rate 25 % / Zins: 3,8 % 🏦 Uebersicht" wurde zu
+// "Rate 25   Zins 38   Uebersicht" — die Sonderzeichen fielen ersatzlos weg
+// und hinterliessen Mehrfach-Leerzeichen, und aus "3,8" wurde "38". Darum:
+// verbotene Zeichen durch ein Leerzeichen ERSETZEN statt zu loeschen, danach
+// zusammenfassen. Das Komma bleibt erlaubt, es traegt hier Bedeutung; der
+// Punkt nicht, der gehoert der Dateiendung.
+function dateiname(titel) {
+  const sauber = String(titel || "")
+    .replace(/[^\p{L}\p{N} ,_-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 50)
+    .trim();
+  return sauber || "unterhaltung";
+}
+
 // Sichern als Markdown: rein lokal, keine Uebertragung. Der Verlauf war bisher
 // nur im Browser gefangen — ohne Ausweg bei einem Geraetewechsel.
 function sichereAlsMarkdown(chat) {
@@ -827,7 +1031,7 @@ function sichereAlsMarkdown(chat) {
     const url = URL.createObjectURL(datei);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${anzeigeTitel(chat).replace(/[^\p{L}\p{N} _-]/gu, "").slice(0, 50).trim() || "unterhaltung"}.md`;
+    link.download = `${dateiname(anzeigeTitel(chat))}.md`;
     document.body.append(link);
     link.click();
     link.remove();

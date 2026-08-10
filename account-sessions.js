@@ -7,8 +7,28 @@ import { API_ORIGIN } from "./config.js";
 // per Bearer-Token (localStorage), nicht per Cookie (SameSite=Lax geht cross-site
 // nicht mit; CORS ohne Credentials). Gleicher Token-Key wie auth-page.js.
 const TOKEN_KEY = "smejj.auth.accessToken.v1";
-function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; } }
-function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch { /* Storage gesperrt */ } }
+// H1-Haertung: sessionStorage ist die bevorzugte, weniger XSS-persistente
+// Ablage (wie passkey-ui.js); localStorage bleibt als Uebergangs-Fallback, bis
+// die Cookie-basierte Wiederherstellung ueberall greift. Gelesen wird beides.
+function getToken() { try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; } }
+function clearToken() { try { sessionStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY); } catch { /* Storage gesperrt */ } }
+
+// H1: Kein Bearer im Speicher (neuer Tab, Passkey-session-only, oder das
+// kurzlebige Access-Token ist abgelaufen)? Dann versucht die App, aus dem
+// HttpOnly-Cookie ein frisches Token zu minten. Cross-site funktioniert das nur,
+// wenn das Cookie SameSite=None traegt (Flag SMEJJ_SHORT_ACCESS_TOKEN an) — sonst
+// liefert der Endpunkt 401 und es bleibt beim bisherigen localStorage-Verhalten.
+// Das frische Token landet in sessionStorage; kein Ausloggen bei Ablauf.
+async function recoverSessionToken() {
+  try {
+    const response = await fetch(`${API_ORIGIN}/api/auth/session-token`, { credentials: "include" });
+    if (!response.ok) return "";
+    const data = await response.json();
+    const token = String(data.accessToken || "");
+    if (token) { try { sessionStorage.setItem(TOKEN_KEY, token); } catch { /* Storage gesperrt */ } }
+    return token;
+  } catch { return ""; }
+}
 function authHeaders(extra = {}) {
   const token = getToken();
   return token ? { ...extra, Authorization: `Bearer ${token}` } : { ...extra };
@@ -17,16 +37,19 @@ function authHeaders(extra = {}) {
 // Angemeldeten Nutzer laden (oder null). Token- und Authorization-Handling
 // bleiben in diesem Modul; Oberflaechen wie account-privacy.js sehen nur das Ergebnis.
 export async function fetchAuthenticatedUser() {
-  if (!getToken()) return null;
+  // H1: Ohne gespeicherten Bearer NICHT sofort aufgeben — erst den Cookie-Weg
+  // versuchen (recoverSessionToken). getToken liest das dort abgelegte Token dann.
+  if (!getToken()) { if (!(await recoverSessionToken())) return null; }
   try {
     const response = await fetch(API.me, { headers: authHeaders() });
     const data = await response.json();
     // Gleitende Verlaengerung (Freigabe C, 2026-08-05): der Server legt jeder
-    // gueltigen Antwort ein frisches Token mit voller Laufzeit bei. Nur ein
-    // BESTEHENDES localStorage-Token wird ersetzt — Passkey-Sitzungen speichern
-    // bewusst session-only und bleiben unangetastet (getToken() war leer).
+    // gueltigen Antwort ein frisches Token bei. H1: dieses (bei aktivem Flag
+    // kurzlebige) Token wird in sessionStorage gecacht statt neu in localStorage
+    // geschrieben — das senkt die persistente XSS-Angriffsflaeche. Der durable
+    // localStorage-Eintrag aus dem Login bleibt als Uebergangs-Fallback bestehen.
     if (data.authenticated && data.accessToken) {
-      try { localStorage.setItem(TOKEN_KEY, data.accessToken); } catch { /* Storage gesperrt */ }
+      try { sessionStorage.setItem(TOKEN_KEY, data.accessToken); } catch { /* Storage gesperrt */ }
     }
     return data.authenticated && data.user ? data.user : null;
   } catch { return null; }
