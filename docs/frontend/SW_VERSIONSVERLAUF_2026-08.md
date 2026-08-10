@@ -193,7 +193,7 @@ Modell ("nimm im Zweifel die ERSTE Frage") reicht dagegen nicht. Mit nur zwei
 Nachrichten KANN kein zweites Thema im Kontext stehen; der Fehler ist damit
 strukturell ausgeschlossen. Gemessen: "Parse Budget Funktion" statt
 "Fahrradfahren und Code", "Wetter in Sacramento" statt "Wetter in
-Kalifornien", "Smejj Com Informationen" statt "Smejj Kommt Ins Gespraech".
+Kalifornien", "Smejj Com Informationen" statt "Smejj Kommt Ins Gespraech" (woertliche Modell-Zitate; so heisst die Plattform niemals).
 Preis: ein Titel wurde unschaerfer ("Bank of America Ueberweisung" ->
 "Online Bankueberweisung vorbereiten"). Drei Gewinne gegen einen Verlust.
 v245 -> v246 (2026-08-09): Auch die kurzen Chats bekommen einen Titel — mit
@@ -511,9 +511,10 @@ tragen ihr Gewicht selbst. Nachgemessen: Startseite in beiden Menue-Zustaenden
 ohne Verstoss, alle neun Ziele der Kopfleiste und Eingabezeile weiterhin
 44x44.
 
-Offen bleibt ein Naming-Verstoss in Zeile 196: ein woertliches Zitat gemessener
-Modell-Ausgaben ("Smejj Com Informationen") im Eintrag einer parallelen
-Sitzung. Umschreiben wuerde die Messung verfaelschen, deshalb unangetastet.
+Der fruehere Naming-Befund in Zeile 196 ist aufgeloest (2026-08-10): das
+woertliche Modell-Zitat "Smejj Com Informationen" (so heisst die Plattform niemals)
+bleibt unveraendert erhalten und ist jetzt als Negativbeispiel gekennzeichnet;
+die Messung ist damit unverfaelscht UND das Guideline-Tor gruen.
 
 ---
 
