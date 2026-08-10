@@ -901,3 +901,19 @@ einem anderen Chip funktioniert, "Alle" setzt zurueck; die Zeitgruppen zeigen
 im Filter nur die tatsaechlich belegten; die Gruppe "Angeheftet" bleibt im
 Filter erhalten; die Zaehlerzeile erscheint mit Filter und verschwindet ohne;
 die Chips stehen nach Haeufigkeit sortiert.
+v254 -> v255 (2026-08-09): Der Dateiname des Markdown-Exports war unschoen.
+Beim Live-Test auf dem Handy mit einem Titel voller Sonderzeichen gemessen:
+"Rate 25 % / Zins: 3,8 % Uebersicht" wurde zu "Rate 25   Zins 38
+Uebersicht" — die verbotenen Zeichen fielen ERSATZLOS weg und hinterliessen
+Mehrfach-Leerzeichen, und aus "3,8" wurde "38". Jetzt werden sie durch ein
+Leerzeichen ersetzt und anschliessend zusammengefasst; das Komma bleibt
+erlaubt, weil es Bedeutung traegt, der Punkt nicht (er gehoert der
+Dateiendung). Ergebnis: "Rate 25 Zins 3,8 Uebersicht.md". Gegen Kantenfaelle
+geprueft: "../../etc/passwd" wird zu "etc passwd" (kein Ausbruch aus dem
+Zielordner), leere Titel und reine Emoji-Titel fallen auf "unterhaltung"
+zurueck, nie laenger als 50 Zeichen, nie ein Zeichen aus /\:*?"<>|. Beim
+selben Test bestaetigt: der Menuepunkt ist 44 px hoch und im Bild, der
+Download laeuft ueber eine Blob-URL, der Inhalt traegt Titel, Datum und
+Nachrichtenzahl als Kopf und danach Frage/Antwort im Wechsel — und zwar den
+ROHTEXT samt Markdown-Auszeichnung, nicht die gerenderte Fassung. Nach dem
+Klick bleibt kein Link im DOM zurueck.

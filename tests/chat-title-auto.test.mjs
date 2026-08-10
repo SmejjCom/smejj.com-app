@@ -219,3 +219,31 @@ test("Filter-Chips sind auf dem Handy 44 px hoch", () => {
   assert.match(handy, /#chatHistory \.ch-chip \{[^}]*min-height: 44px/,
     "die Chips fallen sonst unter die Touch-Grenze");
 });
+
+// ---------------------------------------------------------------------------
+// Der Dateiname des Markdown-Exports entsteht aus dem Chat-Titel — und der kann
+// alles enthalten: Schraegstriche, Doppelpunkte, Emoji, oder nur Sonderzeichen.
+function ladeDateiname() {
+  const start = ANSICHT.indexOf("function dateiname(titel)");
+  const ende = ANSICHT.indexOf("// Sichern als Markdown");
+  assert.ok(start > -1 && ende > start, "dateiname() nicht gefunden");
+  return new Function(`${ANSICHT.slice(start, ende)} return dateiname;`)();
+}
+
+test("der Export-Dateiname bleibt brauchbar und sicher", () => {
+  const dateiname = ladeDateiname();
+  // Live gemessen: "Rate 25 % / Zins: 3,8 % Uebersicht" wurde zu
+  // "Rate 25   Zins 38   Uebersicht" — Sonderzeichen fielen ersatzlos weg.
+  assert.equal(dateiname("Rate 25 % / Zins: 3,8 % 🏦 Übersicht"), "Rate 25 Zins 3,8 Übersicht");
+  assert.equal(dateiname("Bürokauf Finanzierung berechnen"), "Bürokauf Finanzierung berechnen");
+  // Kein Ausbruch aus dem Zielordner, kein leerer Name.
+  assert.ok(!dateiname("../../etc/passwd").includes(".."));
+  for (const leer of ["", "   ", "🏦🏦🏦", "%%% ///"]) {
+    assert.equal(dateiname(leer), "unterhaltung");
+  }
+  for (const eingabe of ["a".repeat(200), "Datei.md.md", "x/y\\z:q*?<>|"]) {
+    const name = dateiname(eingabe);
+    assert.ok(name.length <= 50, `zu lang: ${name.length}`);
+    assert.ok(!/[/\\:*?"<>|]/.test(name), `unsicheres Zeichen in: ${name}`);
+  }
+});
