@@ -487,3 +487,27 @@ Zwei Tests lasen die ausgelagerten Teile direkt aus der alten Datei
 (verlauf-themen: THEMEN-Tabelle und NUR_BILD; chat-title-auto: dateiname) und
 zeigen jetzt auf das Textmodul. Die Zusicherungen selbst sind unveraendert —
 sie waren es, die den Umzug sofort gemeldet haben.
+
+v267 -> v268 (2026-08-10): Rueckbau eines eigenen Fehlers, minutenschnell.
+Der v267-Deploy des Verlauf-Refactorings hat per `git add -A` im Frontend-Repo
+uncommittete Arbeitsstaende ANDERER Sitzungen mitgepusht: das Rechts-Paket
+(agb.html, widerruf.html, datenschutz, impressum — laut Marktreife-Audit
+ausdruecklich NICHT deployed, offener Blocker EU-Vertreter), eine halbfertige
+parallele Aufteilung des Verlaufs (chat-history-format.js, -cards.js,
+offline-banner.js) und Aenderungen an auth-gate, settings-runtime,
+settings-surface und onboarding-welcome.
+
+Der Revert (Frontend-Commit 6e5eb25) stellt alle fremden Pfade auf den Stand
+davor zurueck; das geprueft deployte Refactoring bleibt. v268 statt still bei
+v267 zu bleiben, weil Nutzer, die den Fehl-Stand in den Minuten dazwischen
+installiert haben, die fremden Dateien sonst FUER IMMER im Cache behielten —
+der SHELL-Inhalt aendert sich, also muss die Nummer springen. Die fremden
+Arbeitsstaende sind unversehrt: als uncommittete Arbeitskopie im Frontend-Repo
+wiederhergestellt, zusaetzlich in ~/smejj-frontend-sicherung-20260810 und in
+der Historie (32fb5e6). Live nachgeprueft: agb.html antwortet wieder 404, die
+Verlauf-Ansicht rendert mit Karten, Gruppen, Themen-Chips, Suche samt
+Hervorhebung und Markdown-Export.
+
+Merkregel, die schon im Projektgedaechtnis stand und trotzdem verletzt wurde:
+im geteilten Frontend-Repo NIEMALS `git add -A` — immer gezielte Pfade. Der
+Arbeitsbaum dort gehoert allen Sitzungen gleichzeitig.
