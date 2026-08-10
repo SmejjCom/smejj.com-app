@@ -15,7 +15,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const QUELLE = readFileSync(new URL("../public/chat-history-view.js", import.meta.url), "utf8");
+// Seit 2026-08-10 wohnen THEMEN, NUR_BILD und die Textaufbereitung in
+// chat-history-text.js (aus der Ansicht ausgelagert, 800-Zeilen-Regel).
+const QUELLE = readFileSync(new URL("../public/chat-history-text.js", import.meta.url), "utf8");
 
 function ladeThemen() {
   const block = QUELLE.match(/const THEMEN = Object\.freeze\(\[([\s\S]*?)\n\]\);/);

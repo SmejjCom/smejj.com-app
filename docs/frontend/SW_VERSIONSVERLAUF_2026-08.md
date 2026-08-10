@@ -465,3 +465,25 @@ bis heute.
 
 account-privacy.js liegt cache-first im Precache, die Ladequery der
 Sprachdateien geht auf ?v=6.
+
+v266 -> v267 (2026-08-10): chat-history-view.js aufgeteilt — reine
+Umstrukturierung, kein Verhaltenswechsel. Die Datei war auf 1.091 Zeilen
+gewachsen (Limit 800) und der letzte offene Frontend-Verstoss von
+check:guidelines. Der Schnitt liegt an der Naht, die im Code schon markiert
+war ("Titel, Vorschau, Thema — alles nur fuer die ANZEIGE"): alles, was aus
+einem Chat-Objekt TEXT macht und keinen Ansichts-Zustand kennt, wohnt jetzt
+in chat-history-text.js (Titel-, Vorschau- und Themen-Aufbereitung, die
+THEMEN-Tabelle, Zeitgruppen, Suche mit Hervorhebung, Markdown-Export samt
+Dateinamen) — 354 Zeilen mit genau 9 Exporten. Die Ansicht selbst (Zustand,
+Zeichnen, Nachladen, Menue, Umbenennen) bleibt in chat-history-view.js, jetzt
+771 Zeilen.
+
+Das neue Modul steht NEU im SHELL-Precache: check:precache-imports haette die
+Luecke NICHT gefunden, denn es verfolgt nur relative Importe — der Import
+laeuft aber wie alle App-Importe absolut ueber /assets/. Ohne den Eintrag
+waere die Verlauf-Ansicht offline kommentarlos tot gewesen.
+
+Zwei Tests lasen die ausgelagerten Teile direkt aus der alten Datei
+(verlauf-themen: THEMEN-Tabelle und NUR_BILD; chat-title-auto: dateiname) und
+zeigen jetzt auf das Textmodul. Die Zusicherungen selbst sind unveraendert —
+sie waren es, die den Umzug sofort gemeldet haben.
