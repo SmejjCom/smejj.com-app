@@ -1024,3 +1024,27 @@ schiefgehen kann: beide Waechter fordern 44 (nicht mehr 42), jede Route aus
 view-routes.js ist abgedeckt, jede Ausnahme traegt eine Begruendung. Der Test
 hat sich sofort bezahlt gemacht — er fand, dass die Ansicht /smejj-claw in der
 ersten Fassung des Waechters fehlte.
+
+v261 -> v262 (2026-08-09): Nachgang zum Touch-Audit. Der Waechter meldete
+`#profilePictureInput` mit 30x44 px — kein Bedienfehler (der Input ist
+verborgen, bedient wird der Knopf daneben, 167x44, und ein elementFromPoint an
+seiner Stelle findet nichts), aber die Ursache ist lehrreich und die Loesung
+war fragil:
+
+- `min-height` schlaegt `height`, egal wie spezifisch die height-Regel ist.
+  `#profile #profilePictureInput` setzt height: 1px, doch
+  `.premium-view input { min-height: 50px }` gewann — deshalb 44 px hoch.
+  Jetzt steht dort ausdruecklich min-height: 1px.
+- Verborgen war das Feld allein durch `clip` — eine veraltete Eigenschaft, die
+  nur bei position: absolute wirkt. Faellt eine der beiden weg, stuende ein
+  natives Datei-Widget mitten in der Konto-Ansicht. `clip-path: inset(50%)`
+  sichert es jetzt doppelt ab.
+
+Gemessen nach der Aenderung: min-height 1px greift, clip-path aktiv, das Feld
+faellt von 44 auf 28 px Hoehe. Kleiner geht es nicht — Chrome gibt dem nativen
+Datei-Widget eine Mindestgroesse von rund 30x28, die `width/height: 1px` nicht
+unterschreitet. Sichtbar ist es in keinem Fall, und der Knopf bleibt ein Label
+und damit funktionsfaehig.
+
+(Hinweis: v260 -> v261 ist von einer parallelen Sitzung belegt — Themen-
+Zuordnung im Verlauf, Frontend-Commit a0cfaef. Das dritte Mal an diesem Tag.)
