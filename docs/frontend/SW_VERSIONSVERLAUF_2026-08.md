@@ -626,3 +626,33 @@ Abgesichert durch tests/verlauf-themen.test.mjs (6 Tests, in check:frontend):
 35 Beispielanfragen, 12 absichtlich gebaute Fallen mit einem Wort aus einem
 frueheren Thema, die Wortgrenzen-Faelle, die Umlaut-Umschriften und die
 Reihenfolge Finanzen-Einkauf-Finanzen.
+
+v263 -> v264 (2026-08-10): Uebersetzungen nachgezogen. Commit 65781ea
+(Zahlungs-Rechtstexte) hatte 20 neue deutsche Texte in die Oberflaeche
+gebracht, ohne sie zu uebersetzen — in allen 13 Fremdsprachen erschienen sie
+auf Deutsch. Aufgefallen ist es nicht, weil tests/i18n-ui.test.mjs nur die
+Gegenrichtung prueft (kein verwaister Schluessel), nicht die fehlende
+Uebersetzung.
+
+Nachgezogen sind die 11 nicht-rechtlichen Meldungen in 14 Sprachen:
+Anmeldelink (senden, gesendet, nicht erreichbar), GitHub-Login (startet,
+fehlgeschlagen), Apple-Login-Hinweis und die fuenf Meldungen rund um die
+Datenschutz-Einwilligung. Die deutschen Schluessel wurden dabei EXAKT aus dem
+Quellcode gelesen statt abgetippt — ein falsches Sonderzeichen (…, —, „ ")
+haette den Schluessel still verwaisen lassen.
+
+Die 9 Rechtstexte bleiben bewusst unuebersetzt: AGB, Widerrufsbelehrung, der
+Stripe-Weiterleitungshinweis, der Preis- und Laufzeithinweis, zwei
+Kuendigungstexte und die zugehoerigen Link-Beschriftungen. Eine Uebersetzung
+ist dort eine rechtliche Aussage und gehoert zur Anwaltspruefung, die fuer die
+Zahlungstexte ohnehin aussteht (Betreiber-Entscheidung 2026-08-10).
+
+Ausserdem entfernt: ein verwaister Schluessel aus derselben Aenderung — der
+alte, zusammengesetzte Stripe-Satz, den 65781ea im Quellcode in mehrere
+t()-Aufrufe aufgeteilt hatte. Er stand noch in allen 14 Sprachdateien und
+wurde von nirgendwo mehr nachgeschlagen; check:frontend ist damit wieder gruen
+(427/427).
+
+Der Versionssprung ist noetig, weil i18n/ui.js im Precache liegt: die
+Sprachdateien werden mit `?v=` geladen, und dieser Wert geht von 3 auf 4 —
+ohne ihn wuerde der Browser-Cache die alten Fassungen weiterliefern.
