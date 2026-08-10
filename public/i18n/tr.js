@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "İptal edildi — dönem sonunda sona erer.",
   "Rechnungen & Zahlungen": "Faturalar ve ödemeler",
   "Kommt mit den Bezahl-Plänen.": "Ücretli planlarla birlikte gelir.",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "Ödeme Stripe üzerinden yapılır — kart bilgileri yalnızca Stripe'ta kalır, asla smejj sunucularında tutulmaz. Aylık iptal edilebilir. Şu anda Stripe TEST MODU: işlemler gerçek tahsilat olmadan denemedir (test kartı 4242 4242 4242 4242). Stripe hesabı etkinleştirildikten sonra gerçek moda geçilir.",
   "Nachrichten": "Mesajlar",
   "Aufbauphase: ohne Limit.": "Kuruluş aşaması: sınır yok.",
   "Coding-Aufgaben": "Kodlama görevleri",

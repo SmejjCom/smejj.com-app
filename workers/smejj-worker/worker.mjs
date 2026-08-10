@@ -2,7 +2,6 @@
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import { runCodingJob } from "./agentloop.mjs";
-import { installWorkerCrashGuard } from "../process-crash-guard.mjs";
 
 export const WORKER_VERSION = "20260710-phase2-v1";
 const PORT = Number(process.env.SMEJJ_WORKER_PORT || process.env.PORT || 8080);
@@ -150,8 +149,4 @@ function requestCancellation(req, res) {
 }
 
 const directPath = process.argv[1] ? fileURLToPath(import.meta.url) === process.argv[1] : false;
-if (directPath) {
-  // Nur im Direktstart (nicht beim Import in Tests): kein stiller Tod auf Salad.
-  installWorkerCrashGuard("smejj.com coding worker");
-  startServer();
-}
+if (directPath) startServer();
