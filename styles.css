@@ -1643,3 +1643,14 @@ button:hover {
     padding: 0 6px;
   }
 }
+
+/* Linkes Menue und Browser-Panel: 44 px hohe Eintraege auf schmalen Schirmen
+   (2026-08-09). Gemessen waren 178x36 bzw. 179x36 — breit genug zum Treffen,
+   es fehlte nur Hoehe. Der Anker `.sidebar` gibt Gewicht 0,2,0 und schlaegt
+   damit sowohl `.nav-button` (0,1,0) als auch `.premium-view button` (0,1,1). */
+@media (max-width: 600px) {
+  .sidebar .nav-button,
+  .browser-panel-nav button {
+    min-height: 44px;
+  }
+}

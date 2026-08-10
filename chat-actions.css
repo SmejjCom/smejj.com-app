@@ -512,3 +512,11 @@
   font-size: 18px;
   line-height: 1;
 }
+
+/* Die Eintraege des Ueberlaufmenues waren 209x42 — zwei Pixel unter dem Ziel
+   (Polster 7 px plus 13-px-Zeile). Gemessen 2026-08-09 bei 375 px. */
+@media (max-width: 600px) {
+  .msg-menu .msg-menu-item {
+    min-height: 44px;
+  }
+}
