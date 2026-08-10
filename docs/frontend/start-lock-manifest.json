@@ -1,11 +1,11 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-10T01:13:18.526Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09: Logo-Hoehe bei offenem linken Menue ebenfalls 44 px; sw.js CACHE_NAME v256 -> v257.",
+  "frozenAt": "2026-08-10T01:31:25.584Z",
+  "confirmation": "Freigabe Betreiber 2026-08-09: restliche Touch-Ziele der Startseite (linkes Menue, Browser-Panel, Profil-Dock, Nachrichten-Menue) auf 44 px; sw.js CACHE_NAME auf v259 (v258 war parallel belegt).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
-    "public/styles.css": "15d4bd6cd45862516e3ea79c436f7173e26e2568ac46205cb4cf2c04232c13c2",
+    "public/styles.css": "921503c87dddf5af3adfd54af1a28106b8d0b182e016a38ed38698b406102e11",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "4d7fbea00f7243c5047d6d51423cccae84df64b6037915a6142b02a100eccf1f",
     "public/composer-tools.css": "5481f66724b6ab6156c4997d3097820afd14151a222e7d7e1ccf2f31acc331e0",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "f3df35c07d821f5f700e863138827d4a35f4676191e6a5901973e8b32477daa0",
+    "public/sw.js": "d724cbab780087a449ada8dcc95880c6993433f062fe82c642f47f8405bf5c47",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

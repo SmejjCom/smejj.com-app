@@ -952,3 +952,27 @@ geschlossenem Menue, in beiden Faellen ohne Ueberlappung mit dem Menue-Knopf
 
 Merkregel daraus: eine Groessenaenderung muss in JEDEM Zustand des Elements
 nachgemessen werden. Der erste Audit-Durchlauf sah das Logo nur geschlossen.
+
+v258 -> v259 (2026-08-09): Die letzten 13 Touch-Ziele der Startseite. Alle
+waren breit genug und zu flach: die sechs Eintraege des linken Menues und die
+fuenf des Browser-Panels 178x36 bzw. 179x36, der Profil-Chip 93x42, das
+Zahnrad 34x36 (dem fehlte auch Breite — es traegt nur ein Symbol und wuchs
+deshalb nicht mit), und die Eintraege des Nachrichten-Menues 209x42, zwei
+Pixel unter dem Ziel. Alle auf min-height 44; beim Zahnrad zusaetzlich
+min-width.
+
+Die eigentliche Gefahr lag nicht bei den Knoepfen, sondern in der Spalte: die
+Seitenleiste ist genau fensterhoch und hat overflow-y: hidden. Sechs Eintraege
+um 8 px zu erhoehen kann unten etwas abschneiden — und unten sitzt der
+Profil-Knopf, der dann unerreichbar waere. Deshalb vorab mitgemessen: die
+Leiste bleibt bei scrollHeight 812 zu 812 px Hoehe (nichts abgeschnitten) und
+der Profil-Dock endet bei 792 von 812 px, also vollstaendig sichtbar. Bei
+offenem UND geschlossenem Menue kein Element mehr unter 44 px.
+
+Damit ist die Startseite bei 375 px vollstaendig auf 44 px: 30 bedienbare
+Elemente, null Verstoesse.
+
+(Hinweis: v257 -> v258 ist von einer parallelen Sitzung belegt — "bei vielen
+Chats wurde die ganze Liste auf einmal gezeichnet", Frontend-Commit f549210.
+Der Eintrag kommt aus deren Branch. Zum zweiten Mal an diesem Tag: vor jedem
+Deploy die LIVE ausgelieferte Cache-Version pruefen, nicht die lokale.)
