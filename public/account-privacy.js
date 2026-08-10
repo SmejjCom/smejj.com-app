@@ -282,10 +282,19 @@ function handleCancelSubscription(view) {
     output(view, t("Kündigung: Im Stripe-Kundenportal kannst du dein Abo sofort kündigen."));
     return;
   }
-  const betreff = encodeURIComponent("Kündigung meines smejj.com Abonnements");
+  // Die Erklaerung laeuft durch t(), obwohl es dafuer bis auf Weiteres nur die
+  // deutsche Fassung gibt: eine Kuendigungserklaerung ist ein Rechtstext, ihre
+  // Uebersetzung gehoert zur Anwaltspruefung (Vorlage in
+  // docs/RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md). Ohne t() muesste
+  // man dafuer spaeter Code anfassen; so wird nur der Wortlaut eingetragen.
+  // Fehlt eine Uebersetzung, faellt t() auf den deutschen Text zurueck — der
+  // Zustand bleibt also exakt der heutige.
+  const betreff = encodeURIComponent(t("Kündigung meines smejj.com Abonnements"));
+  // Die Feldnamen sind keine rechtliche Aussage und deshalb schon uebersetzt.
+  const felder = [t("Konto-E-Mail"), t("Name"), t("Datum")].map((f) => `${f}: `).join("\n");
   const koerper = encodeURIComponent(
-    "Hiermit kündige ich mein kostenpflichtiges smejj.com Abonnement zum nächstmöglichen Zeitpunkt.\n\n" +
-    "Konto-E-Mail: \nName: \nDatum: "
+    t("Hiermit kündige ich mein kostenpflichtiges smejj.com Abonnement zum nächstmöglichen Zeitpunkt.") +
+    "\n\n" + felder
   );
   window.location.href = `mailto:s@smejj.com?subject=${betreff}&body=${koerper}`;
   output(view, t("Kündigung: Eine vorbereitete E-Mail wurde geöffnet. Wir bestätigen den Eingang und das Vertragsende in Textform."));

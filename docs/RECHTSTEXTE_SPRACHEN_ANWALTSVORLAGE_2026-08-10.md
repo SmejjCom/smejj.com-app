@@ -57,7 +57,7 @@ sein.
    „Zahlungspflichtig abonnieren", oder ist je Sprache eine etablierte
    Formulierung vorgeschrieben bzw. empfohlen?
 
-## 3. Die betroffenen Textstellen (13)
+## 3. Die betroffenen Textstellen (15)
 
 Alle Fundstellen in `public/account-privacy.js`, Ansicht **Konto →
 Abo & Zahlungen**. Der Wortlaut ist unverändert aus dem Quellcode übernommen.
@@ -113,10 +113,12 @@ angepasst, dass die Reihenfolge je Sprache frei wählbar ist.
 |---|---|---|
 | 10 | Verträge hier kündigen | `:132` (Beschriftung des Kündigungs-Elements) |
 | 11 | Kündigung: Im Stripe-Kundenportal kannst du dein Abo sofort kündigen. | `:282` |
-| 12 | Kündigung: Eine vorbereitete E-Mail wurde geöffnet. Wir bestätigen den Eingang und das Vertragsende in Textform. | `:291` |
+| 12 | Kündigung: Eine vorbereitete E-Mail wurde geöffnet. Wir bestätigen den Eingang und das Vertragsende in Textform. | `:300` |
+| 13 | Kündigung meines smejj.com Abonnements *(Betreff der E-Mail)* | `:292` |
+| 14 | Hiermit kündige ich mein kostenpflichtiges smejj.com Abonnement zum nächstmöglichen Zeitpunkt. *(Text der E-Mail)* | `:296` |
 
-Nr. 11 erscheint, sobald der Stripe-Portal-Link hinterlegt ist; Nr. 12 ist der
-derzeit aktive Notweg (siehe Abschnitt 4.2).
+Nr. 11 erscheint, sobald der Stripe-Portal-Link hinterlegt ist; Nr. 12 bis 14
+gehören zum derzeit aktiven Notweg (siehe Abschnitt 4.2).
 
 ## 4. Drei Punkte, die über die Textstellen hinausgehen
 
@@ -138,21 +140,27 @@ beschrifteten Link (nach der Übersetzung) und landet auf einem deutschen
 Dokument. Die Frage nach der Sprachpflicht betrifft damit nicht nur die
 Beschriftungen, sondern vor allem diese vier Dokumente.
 
-### 4.2 Die Kündigungs-E-Mail ist fest deutsch
+### 4.2 Die Kündigungs-E-Mail — Technik vorbereitet, Wortlaut offen
 
 Solange kein Stripe-Kundenportal-Link hinterlegt ist, öffnet der
-Kündigungs-Knopf eine vorformulierte E-Mail (`account-privacy.js:285-290`).
-Betreff und Text laufen **nicht** durch die Übersetzung, sie sind fest
-verdrahtet:
+Kündigungs-Knopf eine vorformulierte E-Mail (`account-privacy.js:292-298`):
 
 > Betreff: `Kündigung meines smejj.com Abonnements`
 > Text: `Hiermit kündige ich mein kostenpflichtiges smejj.com Abonnement zum
 > nächstmöglichen Zeitpunkt.` + Felder für Konto-E-Mail, Name, Datum
 
-Ein Verbraucher mit nicht-deutscher Oberfläche bekommt also eine deutsche
-Kündigungserklärung vorgelegt, die er unterschreiben bzw. absenden soll.
-**Frage:** Ist das mit der Anforderung vereinbar, dass die Kündigung leicht
-zugänglich sein muss?
+Ein Verbraucher mit nicht-deutscher Oberfläche bekommt damit eine deutsche
+Kündigungserklärung vorgelegt, die er absenden soll. **Frage:** Ist das mit der
+Anforderung vereinbar, dass die Kündigung leicht zugänglich sein muss?
+
+Betreff und Text sind seit dem 2026-08-10 **technisch übersetzbar** (Nr. 13 und
+14 in Abschnitt 3.4): sie laufen durch dieselbe Übersetzungsschicht wie der
+Rest der Oberfläche, es gibt bis auf Weiteres nur die deutsche Fassung, und
+ohne Übersetzung fällt die Anzeige auf Deutsch zurück. Der heutige Zustand ist
+also unverändert — sobald die Kanzlei Wortlaute liefert, ist nur noch ein
+Eintrag je Sprache nötig, keine Codeänderung. Die **Feldnamen** (Konto-E-Mail,
+Name, Datum) sind bereits in alle 14 Sprachen übersetzt; sie sind
+Formularbezeichnungen, keine rechtliche Aussage.
 
 ### 4.3 Der Testmodus-Hinweis ist zeitlich begrenzt
 

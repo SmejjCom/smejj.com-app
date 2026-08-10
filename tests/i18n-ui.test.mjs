@@ -78,7 +78,9 @@ const UNUEBERSETZT_ERLAUBT = [
   { text: "Alle Preise sind Gesamtpreise", grund: "Preis- und Laufzeitangabe" },
   { text: "Aktuell Stripe-TESTMODUS", grund: "Hinweis zum Zahlungs-Testbetrieb" },
   { text: "Kündigung: Im Stripe-Kundenportal", grund: "Kuendigungsweg" },
-  { text: "Kündigung: Eine vorbereitete E-Mail", grund: "Kuendigungsbestaetigung in Textform" }
+  { text: "Kündigung: Eine vorbereitete E-Mail", grund: "Kuendigungsbestaetigung in Textform" },
+  { text: "Kündigung meines smejj.com Abonnements", grund: "Betreff der Kuendigungserklaerung — Rechtstext" },
+  { text: "Hiermit kündige ich mein kostenpflichtiges", grund: "Wortlaut der Kuendigungserklaerung — Rechtstext" }
 ];
 
 test("jeder t()-Text der Oberflaeche ist uebersetzt (oder begruendet ausgenommen)", async () => {
@@ -189,6 +191,25 @@ test("auch Texte hinter Hilfsfunktionen sind uebersetzt (§ 312j-Falle)", async 
     .map((e) => `[${e.name}/${e.param}] ${e.text}`))];
   assert.deepEqual(fehlend, [],
     `Diese Texte erscheinen in jeder Fremdsprache auf Deutsch:\n  ${fehlend.join("\n  ")}`);
+});
+
+test("die Kuendigungs-E-Mail ist uebersetzbar aufgebaut", async () => {
+  // § 312k-Notweg ohne Stripe-Portal: der Knopf oeffnet eine vorformulierte
+  // E-Mail. Bis zum 2026-08-10 waren Betreff und Text fest verdrahtet — ein
+  // Verbraucher mit tuerkischer Oberflaeche bekam eine deutsche
+  // Kuendigungserklaerung zum Absenden. Der Wortlaut bleibt deutsch, bis die
+  // Kanzlei liefert; die Technik steht, damit dafuer kein Code mehr faellt.
+  assert.match(accountPrivacy, /encodeURIComponent\(t\("Kündigung meines smejj\.com Abonnements"\)\)/,
+    "Betreff laeuft nicht durch t()");
+  assert.match(accountPrivacy, /t\("Hiermit kündige ich mein kostenpflichtiges/,
+    "Wortlaut der Erklaerung laeuft nicht durch t()");
+
+  // Die Feldnamen sind keine rechtliche Aussage — die muessen uebersetzt sein.
+  const uebersetzt = new Set(Object.keys(await loadMessages("en")));
+  for (const feld of ["Konto-E-Mail", "Name", "Datum"]) {
+    assert.match(accountPrivacy, new RegExp(`t\\("${feld}"\\)`), `${feld} laeuft nicht durch t()`);
+    assert.ok(uebersetzt.has(feld), `${feld} ist nicht uebersetzt`);
+  }
 });
 
 test("keine Ausnahme der Uebersetzungspflicht ist veraltet", () => {

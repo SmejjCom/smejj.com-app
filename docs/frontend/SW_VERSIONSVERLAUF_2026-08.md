@@ -689,3 +689,31 @@ Slack sind Eigennamen.
 Wie bei v264 geht die Ladequery der Sprachdateien mit (?v=4 -> ?v=5), sonst
 liefert der Browser-Cache die alten Fassungen; i18n/ui.js liegt im Precache,
 daher der sw-Sprung.
+
+v265 -> v266 (2026-08-10): Die Kuendigungs-E-Mail ist jetzt uebersetzbar
+aufgebaut. Sie ist der § 312k-Notweg, solange kein Stripe-Kundenportal-Link
+hinterlegt ist: der Knopf oeffnet eine vorformulierte Mail. Betreff und Text
+waren fest im Code verdrahtet und liefen nicht durch die Uebersetzung — ein
+Verbraucher mit tuerkischer oder japanischer Oberflaeche bekam eine DEUTSCHE
+Kuendigungserklaerung zum Absenden vorgelegt.
+
+Am sichtbaren Verhalten aendert sich heute nichts: die Erklaerung laeuft jetzt
+durch t(), es gibt aber bis auf Weiteres nur die deutsche Fassung, und ohne
+Uebersetzung faellt t() auf den deutschen Text zurueck. Der Zweck ist die
+Vorbereitung — sobald die Kanzlei Wortlaute liefert, ist nur noch ein Eintrag
+je Sprache noetig statt einer Codeaenderung. Beide Texte stehen als begruendete
+Ausnahmen im i18n-Waechter und in der Anwaltsvorlage
+[RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md](../RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md)
+(dort Nr. 13 und 14).
+
+Wirklich uebersetzt sind die drei FELDNAMEN der Mail (Konto-E-Mail, Name,
+Datum) — Formularbezeichnungen, keine rechtliche Aussage. "Name" gab es
+bereits, die anderen beiden sind neu in 14 Sprachen.
+
+Ein Test haelt den Aufbau fest (`tests/i18n-ui.test.mjs`): Betreff und Erklaerung
+muessen durch t() laufen, die Feldnamen zusaetzlich uebersetzt sein. Ohne ihn
+faellt ein Rueckbau auf feste Strings niemandem auf — genau so war der Zustand
+bis heute.
+
+account-privacy.js liegt cache-first im Precache, die Ladequery der
+Sprachdateien geht auf ?v=6.
