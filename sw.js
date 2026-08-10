@@ -22,8 +22,8 @@
 // ACHTUNG (2026-08-09): Der Modellwahl-Chip oben ist NOCH NICHT LIVE. Live
 // gepusht wurde v235 — mit der Cache-Version aus dem gemeinsamen Arbeitsbaum,
 // aber ohne die Dateien, die dazugehoerten. Wer app.js, index.html oder
-// chat-bridge.js deployt, muss deshalb erneut hochzaehlen (v261); v236 bis
-// v260 sind verbraucht.
+// chat-bridge.js deployt, muss deshalb erneut hochzaehlen (v263); v236 bis
+// v262 sind verbraucht.
 //
 // v236 -> v237 (2026-08-09): neu gestaltete Verlauf-Ansicht
 // (chat-history-view.js) — Suche, Zeitgruppen, Themen, Aktions-Menue.
@@ -124,7 +124,7 @@
 // Leiste steht auf nowrap, war 372 px breit und dehnte den Container auf
 // 406 px bei 375 px Fenster. Karten, Kopf und Ueberschrift ragten hinaus.
 // Mit min-width: 0 darf der Container schrumpfen, dann greift overflow-x.
-const CACHE_NAME = "smejj-shell-v260";
+const CACHE_NAME = "smejj-shell-v262";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
