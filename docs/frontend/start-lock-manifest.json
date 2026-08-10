@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-10T00:30:25.600Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09: 'Markdown-Export live auf dem Handy testen' — Dateiname bereinigt, sw v255.",
+  "frozenAt": "2026-08-10T01:21:22.919Z",
+  "confirmation": "Freigabe Betreiber 2026-08-09: 'Virtualisierung einbauen' — blockweises Nachladen der Verlauf-Liste, sw v258.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "f11fa9b8268481cb516002d21b5de82e05f970cf9f381f5be09432653292f985",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "78e107f63943ed79946681cdd8f4366c1bb39ad22db972557bea36e99749f48c",
+    "public/sw.js": "5d96ce3530fad9d6d2baa0ebf091a23b4909059f5a10687d8b9d4dfb7bd41950",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

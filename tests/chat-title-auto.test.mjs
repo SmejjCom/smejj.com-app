@@ -247,3 +247,30 @@ test("der Export-Dateiname bleibt brauchbar und sicher", () => {
     assert.ok(!/[/\\:*?"<>|]/.test(name), `unsicheres Zeichen in: ${name}`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Nachladen beim Scrollen statt aller Karten auf einmal.
+test("die Liste laedt blockweise nach und bleibt dabei vollstaendig", () => {
+  assert.match(ANSICHT, /const ERSTER_BLOCK = \d+/, "erster Block fehlt");
+  assert.match(ANSICHT, /const NACHLADE_BLOCK = \d+/, "Nachladeblock fehlt");
+  // Angehaengt wird VOR die Marke — niemals neu gezeichnet, sonst springt die
+  // Scrollposition weg.
+  assert.match(ANSICHT, /marke\.before\(naechsteKarten\(NACHLADE_BLOCK\)\)/);
+  // Die Gruppen-Ueberschrift darf beim Anhaengen nicht doppelt erscheinen:
+  // der Zustand merkt sich die zuletzt geschriebene.
+  assert.match(ANSICHT, /nachladeZustand\.letzteGruppe = gruppe/);
+  // Ist die Liste kuerzer als der Bildschirm, wird nie gescrollt — dann muss
+  // der naechste Block von selbst kommen.
+  assert.match(ANSICHT, /requestAnimationFrame\(pruefeNachladen\)/);
+});
+
+test("das Nachladen haengt nicht am IntersectionObserver", () => {
+  // Beim Test am 2026-08-09 feuerte der Observer im eingebetteten Browser
+  // ueberhaupt nicht — auch nicht in einem Kontrollversuch ausserhalb des
+  // Moduls. Wo er stillbleibt, waere die Liste bei 30 Karten abgeschnitten.
+  // Auf die VERWENDUNG pruefen, nicht auf das Wort: es darf in Kommentaren
+  // stehen (dort steht, warum der Observer hier nicht taugt).
+  assert.ok(!/new IntersectionObserver/.test(ANSICHT), "Nachladen darf nicht am Observer haengen");
+  assert.match(ANSICHT, /addEventListener\("scroll", pruefeNachladen, \{ passive: true \}\)/);
+  assert.match(ANSICHT, /removeEventListener\("scroll", pruefeNachladen\)/, "der Listener muss auch wieder weg");
+});

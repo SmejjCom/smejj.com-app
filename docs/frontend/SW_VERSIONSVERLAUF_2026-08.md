@@ -917,3 +917,29 @@ Download laeuft ueber eine Blob-URL, der Inhalt traegt Titel, Datum und
 Nachrichtenzahl als Kopf und danach Frage/Antwort im Wechsel — und zwar den
 ROHTEXT samt Markdown-Auszeichnung, nicht die gerenderte Fassung. Nach dem
 Klick bleibt kein Link im DOM zurueck.
+v257 -> v258 (2026-08-09): Die Verlauf-Liste zeichnet nicht mehr alle Chats
+auf einmal. Der erste Block umfasst 30 Karten, der Rest wird beim Scrollen
+nachgeladen — ANGEHAENGT, nie neu gezeichnet, sonst verliert man die
+Scrollposition. Gemessen bei 100 Chats: erster Aufbau 26 ms -> 10 ms,
+Seitenhoehe 11.113 px -> 3.627 px, 750 DOM-Elemente -> rund 240. Angeheftete
+stehen weiterhin vollstaendig da (es sind wenige und ausdruecklich als wichtig
+markiert). Kein Fenster-Recycling mit fester Zeilenhoehe: die Karten sind je
+nach Titel- und Vorschauzeilen 94 bis 116 px hoch, geschaetzte Hoehen liessen
+die Liste beim Scrollen springen. Ausgeloest wird ueber das scroll-Ereignis
+und NICHT ueber einen IntersectionObserver — der feuerte im eingebetteten
+Browser ueberhaupt nicht, auch nicht in einem Kontrollversuch ausserhalb des
+Moduls; wo er stillbleibt, waere die Liste bei 30 Karten abgeschnitten und
+der Rest unerreichbar. Zusaetzlich prueft ein requestAnimationFrame direkt
+nach dem Zeichnen nach: ist die Liste kuerzer als der Bildschirm, wird nie
+gescrollt und der naechste Block muss von selbst kommen. Gegengemessen: alle
+100 Karten kommen an (31 -> 61 -> 91 -> 100), keine doppelt (100 eindeutige
+Kennungen), keine doppelten Gruppen-Ueberschriften, die Marke verschwindet am
+Ende samt Scroll-Listener, und Suche wie Filter setzen den Block zurueck.
+
+Nachtrag zur Nummer: geplant war v256. Beim Deploy zeigte sich, dass v256 UND
+v257 live bereits vergeben sind — eine Parallelsitzung hat beide direkt ins
+Frontend-Repo gestellt (Commits c376606 und ae9ec2f, 44-px-Touch-Ziele in
+Kopfleiste und Startseite), ohne sie hier einzutragen. Der Code der Live-sw.js
+war ausser Kommentaren und der Nummer identisch mit dem lokalen Stand; das
+Deploy-Artefakt ist deshalb auf der LIVE-Datei aufgebaut, damit deren
+Begruendungen nicht verlorengehen.

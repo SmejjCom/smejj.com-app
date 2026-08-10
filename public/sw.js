@@ -22,8 +22,8 @@
 // ACHTUNG (2026-08-09): Der Modellwahl-Chip oben ist NOCH NICHT LIVE. Live
 // gepusht wurde v235 — mit der Cache-Version aus dem gemeinsamen Arbeitsbaum,
 // aber ohne die Dateien, die dazugehoerten. Wer app.js, index.html oder
-// chat-bridge.js deployt, muss deshalb erneut hochzaehlen (v256); v236 bis
-// v255 sind verbraucht.
+// chat-bridge.js deployt, muss deshalb erneut hochzaehlen (v259); v236 bis
+// v258 sind verbraucht.
 //
 // v236 -> v237 (2026-08-09): neu gestaltete Verlauf-Ansicht
 // (chat-history-view.js) — Suche, Zeitgruppen, Themen, Aktions-Menue.
@@ -143,7 +143,22 @@
 // wurde zu "Rate 25   Zins 38   Uebersicht" — Mehrfach-Leerzeichen, und aus
 // 3,8 wurde 38. Jetzt werden sie durch ein Leerzeichen ersetzt und
 // zusammengefasst; das Komma bleibt erlaubt.
-const CACHE_NAME = "smejj-shell-v255";
+//
+// ACHTUNG (2026-08-09, zweite Kollision): v256 und v257 sind live vergeben —
+// eine Parallelsitzung ("Chat-Aktionsknoepfe auf 44 px") hat sie direkt ins
+// Frontend-Repo deployt, ohne sie hier einzutragen. Deshalb springt der
+// Verlauf-Deploy auf v258. Wer als naechstes deployt: erst
+// `curl .../smejj-app-frontend/main/sw.js | grep CACHE_NAME` gegen diese
+// Datei halten, dann hochzaehlen (v259).
+//
+// v257 -> v258 (2026-08-09): Die Liste zeichnet nicht mehr alle Chats auf
+// einmal. Erster Block 30 Karten, der Rest kommt beim Scrollen nachgeladen
+// (angehaengt, nie neu gezeichnet — sonst springt die Scrollposition).
+// Gemessen bei 100 Chats: erster Aufbau 26 ms -> 10 ms, Seitenhoehe
+// 11.113 px -> 3.627 px. Ausgeloest wird ueber das scroll-Ereignis, NICHT
+// ueber einen IntersectionObserver: der feuerte im Test gar nicht, und wo er
+// stillbleibt, waere die Liste bei 30 Karten abgeschnitten.
+const CACHE_NAME = "smejj-shell-v258";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
