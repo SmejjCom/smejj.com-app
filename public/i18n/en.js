@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "Cancelled — runs out at the end of the period.",
   "Rechnungen & Zahlungen": "Invoices & payments",
   "Kommt mit den Bezahl-Plänen.": "Arrives with the paid plans.",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "Payment runs through Stripe — card details stay solely with Stripe, never on smejj servers. Cancel monthly. Currently Stripe TEST MODE: bookings are trials without any real charge (test card 4242 4242 4242 4242). It goes live once the Stripe account is activated.",
   "Nachrichten": "Messages",
   "Aufbauphase: ohne Limit.": "Build-up phase: no limit.",
   "Coding-Aufgaben": "Coding tasks",

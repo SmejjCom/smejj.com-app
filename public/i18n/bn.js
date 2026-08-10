@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "বাতিল — মেয়াদ শেষে বন্ধ হবে।",
   "Rechnungen & Zahlungen": "চালান ও পেমেন্ট",
   "Kommt mit den Bezahl-Plänen.": "পেইড প্ল্যানের সঙ্গে আসবে।",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "পেমেন্ট Stripe-এর মাধ্যমে হয় — কার্ডের তথ্য শুধু Stripe-এ থাকে, কখনও smejj সার্ভারে নয়। মাসিক বাতিলযোগ্য। এখন Stripe টেস্ট মোড: বুকিং প্রকৃত চার্জ ছাড়া পরীক্ষামূলক (টেস্ট কার্ড 4242 4242 4242 4242)। Stripe অ্যাকাউন্ট সক্রিয় হলে এটি সত্যিকারভাবে চালু হবে।",
   "Nachrichten": "বার্তা",
   "Aufbauphase: ohne Limit.": "নির্মাণ পর্যায়: কোনো সীমা নেই।",
   "Coding-Aufgaben": "কোডিং কাজ",

@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "해지됨 — 기간이 끝나면 종료됩니다.",
   "Rechnungen & Zahlungen": "청구서 및 결제",
   "Kommt mit den Bezahl-Plänen.": "유료 요금제와 함께 제공됩니다.",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "결제는 Stripe를 통해 이루어집니다 — 카드 정보는 Stripe에만 보관되며 smejj 서버에는 절대 저장되지 않습니다. 매월 해지할 수 있습니다. 현재 Stripe 테스트 모드입니다: 신청은 실제 청구가 없는 테스트입니다(테스트 카드 4242 4242 4242 4242). Stripe 계정이 활성화되면 실제로 전환됩니다.",
   "Nachrichten": "메시지",
   "Aufbauphase: ohne Limit.": "구축 단계: 한도 없음.",
   "Coding-Aufgaben": "코딩 작업",

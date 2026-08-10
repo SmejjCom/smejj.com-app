@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "Dibatalkan — berakhir pada akhir periode.",
   "Rechnungen & Zahlungen": "Tagihan & pembayaran",
   "Kommt mit den Bezahl-Plänen.": "Hadir bersama paket berbayar.",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "Pembayaran berjalan lewat Stripe — data kartu hanya tersimpan di Stripe, tidak pernah di server smejj. Bisa dibatalkan tiap bulan. Saat ini MODE UJI Stripe: pemesanan hanya percobaan tanpa penagihan nyata (kartu uji 4242 4242 4242 4242). Akan aktif sungguhan setelah akun Stripe diaktifkan.",
   "Nachrichten": "Pesan",
   "Aufbauphase: ohne Limit.": "Tahap pengembangan: tanpa batas.",
   "Coding-Aufgaben": "Tugas coding",
