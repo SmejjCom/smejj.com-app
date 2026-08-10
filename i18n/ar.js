@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "تم الإلغاء — ينتهي مع نهاية الفترة.",
   "Rechnungen & Zahlungen": "الفواتير والمدفوعات",
   "Kommt mit den Bezahl-Plänen.": "يأتي مع الخطط المدفوعة.",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "تتم المدفوعات عبر Stripe — تبقى بيانات البطاقة لدى Stripe وحدها، ولا توضع أبدًا على خوادم smejj. يمكن الإلغاء شهريًا. حاليًا وضع اختبار Stripe: الحجوزات تجريبية دون أي خصم فعلي (بطاقة الاختبار 4242 4242 4242 4242). سيُفعَّل فعليًا بعد تنشيط حساب Stripe.",
   "Nachrichten": "الرسائل",
   "Aufbauphase: ohne Limit.": "مرحلة البناء: بلا حدود.",
   "Coding-Aufgaben": "مهام البرمجة",

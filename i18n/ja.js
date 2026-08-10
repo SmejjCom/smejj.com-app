@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "解約済み — 期間の終わりに終了します。",
   "Rechnungen & Zahlungen": "請求と支払い",
   "Kommt mit den Bezahl-Plänen.": "有料プランと同時に提供します。",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "支払いは Stripe を通じて行われます。カード情報は Stripe にのみ保存され、smejj のサーバーには一切保存されません。毎月解約できます。現在は Stripe のテストモードです：申し込みは実際の請求が発生しないテストです（テストカード 4242 4242 4242 4242）。Stripe アカウントの有効化後に本番へ切り替わります。",
   "Nachrichten": "メッセージ",
   "Aufbauphase: ohne Limit.": "立ち上げ期：上限なし。",
   "Coding-Aufgaben": "コーディング作業",

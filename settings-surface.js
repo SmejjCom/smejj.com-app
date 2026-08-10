@@ -96,10 +96,11 @@ function render(view) {
 function handleChange(view, event) {
   // Erst die Wahl merken, dann speichern: save() nimmt die Sprache bewusst
   // nicht aus dem Feld (siehe dort), sonst ginge genau diese Wahl verloren.
-  if (event.target?.id === "settingsLanguage") sprachwahlVomNutzer = event.target.value;
   // Push/Notification: die Berechtigung JETZT anfragen (wir sind in einer echten
   // Nutzergeste), sobald eine Benachrichtigung eingeschaltet wird. Ohne diesen
-  // Aufruf blieb der Benachrichtigungspfad toter Code (Audit 2026-08-09).
+  // Aufruf blieb der Benachrichtigungspfad toter Code (Audit 2026-08-09). Steht
+  // bewusst VOR der Sprach-Zeile: die naechsten zwei Zeilen (Sprache merken +
+  // save) muessen benachbart bleiben (i18n-ui-Waechter).
   const notifyIds = ["settingsNotifyComplete", "settingsNotifyApproval", "settingsNotifyError"];
   if (notifyIds.includes(event.target?.id) && event.target.checked === true) {
     ensureNotificationPermission().then((granted) => {
@@ -109,6 +110,7 @@ function handleChange(view, event) {
       }
     });
   }
+  if (event.target?.id === "settingsLanguage") sprachwahlVomNutzer = event.target.value;
   save(view);
   if (event.target?.id === "settingsLanguage") {
     loadUiLanguage(event.target.value).then(() => render(view));

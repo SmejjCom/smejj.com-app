@@ -301,7 +301,6 @@ export default {
   "Gekündigt — läuft zum Periodenende aus.": "已取消——将在当前周期结束时到期。",
   "Rechnungen & Zahlungen": "账单与付款",
   "Kommt mit den Bezahl-Plänen.": "将随付费套餐推出。",
-  "Bezahlung läuft über Stripe — Kartendaten liegen ausschließlich bei Stripe, nie auf smejj-Servern. Monatlich kündbar. Aktuell Stripe-TESTMODUS: Buchungen sind Proben ohne echte Abbuchung (Testkarte 4242 4242 4242 4242). Echt geschaltet wird nach der Stripe-Konto-Aktivierung.": "付款通过 Stripe 处理——银行卡信息仅保存在 Stripe，绝不会存放在 smejj 服务器上。可按月取消。当前为 Stripe 测试模式：交易仅为演示，不会真实扣款（测试卡 4242 4242 4242 4242）。Stripe 账户激活后将正式启用。",
   "Nachrichten": "消息",
   "Aufbauphase: ohne Limit.": "建设阶段：无限额。",
   "Coding-Aufgaben": "编程任务",
