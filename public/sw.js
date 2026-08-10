@@ -22,8 +22,8 @@
 // ACHTUNG (2026-08-09): Der Modellwahl-Chip oben ist NOCH NICHT LIVE. Live
 // gepusht wurde v235 — mit der Cache-Version aus dem gemeinsamen Arbeitsbaum,
 // aber ohne die Dateien, die dazugehoerten. Wer app.js, index.html oder
-// chat-bridge.js deployt, muss deshalb erneut hochzaehlen (v259); v236 bis
-// v258 sind verbraucht.
+// chat-bridge.js deployt, muss deshalb erneut hochzaehlen (v262); v236 bis
+// v261 sind verbraucht.
 //
 // v236 -> v237 (2026-08-09): neu gestaltete Verlauf-Ansicht
 // (chat-history-view.js) — Suche, Zeitgruppen, Themen, Aktions-Menue.
@@ -158,7 +158,17 @@
 // 11.113 px -> 3.627 px. Ausgeloest wird ueber das scroll-Ereignis, NICHT
 // ueber einen IntersectionObserver: der feuerte im Test gar nicht, und wo er
 // stillbleibt, waere die Liste bei 30 Karten abgeschnitten.
-const CACHE_NAME = "smejj-shell-v258";
+//
+// v260 -> v261 (2026-08-09): Themen-Zuordnung im Verlauf nachgeschaerft.
+// An 49 Beispielanfragen gemessen: vorher 43 % richtig, jetzt 49 von 49.
+// Drei Ursachen, alle in tests/verlauf-themen.test.mjs festgehalten:
+// ein breites Wort in einem fruehen Muster (\beuro\b in Finanzen) legte ein
+// spaeteres Thema (Einkauf) still; vier Muster hatten ein fuehrendes \b, das
+// genau die haeufigste Schreibweise aussperrte (Monatsrate, Handyvertrag,
+// Arzttermin, Serverraum); und Umschriften ohne Umlaut ("uebersetze",
+// "pruefe") trafen nichts, weil [üu] die Folge "ue" nicht deckt.
+// Neu sind die Themen Recht, Reise und Gesundheit.
+const CACHE_NAME = "smejj-shell-v261";
 const SHELL = [
   "/",
   "/assets/start-styles.css",

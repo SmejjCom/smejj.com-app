@@ -943,3 +943,35 @@ Kopfleiste und Startseite), ohne sie hier einzutragen. Der Code der Live-sw.js
 war ausser Kommentaren und der Nummer identisch mit dem lokalen Stand; das
 Deploy-Artefakt ist deshalb auf der LIVE-Datei aufgebaut, damit deren
 Begruendungen nicht verlorengehen.
+
+v260 -> v261 (2026-08-09): Themen-Zuordnung im Verlauf nachgeschaerft. Gemessen
+an 49 realistischen Anfragen: vorher 43 % richtig, jetzt 49 von 49. Die
+Zuordnung besteht aus vierzehn Mustern, die in FESTER Reihenfolge geprueft
+werden — der erste Treffer gewinnt. Drei Ursachen:
+
+1. Ein breites Wort in einem fruehen Muster legt ein spaeteres Thema still.
+   "Finanzen" enthielt \beuro\b und stand vor "Einkauf" — damit landete
+   "Standventilator unter 80 Euro zum Kaufen" unter Finanzen, und Einkauf kam
+   bei keiner einzigen Anfrage je zum Zug. Behoben, indem Finanzen ZWEIMAL in
+   der Tabelle steht: die eindeutigen Geldwoerter (Bank, Kredit, Steuer) vor
+   Einkauf, das Breite (Euro, Rate, Rechnung) danach. So bleibt "Suche mir die
+   guenstigste Bank" eine Geldfrage und "Wo bestelle ich Patronen" ein Einkauf.
+2. Vier Muster hatten ein fuehrendes \b, das genau die haeufigste Schreibweise
+   aussperrte: \brate\b traf "Monatsrate" nicht, \bvertrag "Handyvertrag" nicht,
+   \barzt\b "Arzttermin" nicht, \bserver\b "Serverraum" nicht. Im Deutschen ist
+   das zusammengesetzte Wort der Normalfall.
+3. Umschriften ohne Umlaut trafen nichts. Getippt wird oft "uebersetze",
+   "pruefe", "guenstig" — die Muster kannten nur "übersetze". [üu] deckt die
+   Folge "ue" NICHT; ueberall steht jetzt (ü|ue).
+
+Neu sind die Themen Recht, Reise und Gesundheit — vorher landeten solche Chats
+samt DSGVO-, Visum- und Arztfragen unter "Allgemein". Zwei Reihenfolgen sind
+bewusst gesetzt: Recht vor Websites ("Impressum fuer meine Webseite" ist eine
+Rechtsfrage) und Technik vor Wissen ("was bedeutet non-fast-forward" ist keine
+Frage der Allgemeinbildung). "temperatur" ist aus Wetter entfernt und an einen
+Wetterbezug gebunden, weil es sonst "Die Temperatur im Serverraum" einfing.
+
+Abgesichert durch tests/verlauf-themen.test.mjs (6 Tests, in check:frontend):
+35 Beispielanfragen, 12 absichtlich gebaute Fallen mit einem Wort aus einem
+frueheren Thema, die Wortgrenzen-Faelle, die Umlaut-Umschriften und die
+Reihenfolge Finanzen-Einkauf-Finanzen.
