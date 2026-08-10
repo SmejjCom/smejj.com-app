@@ -57,6 +57,55 @@ test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer ueb
   }
 });
 
+// Die Gegenrichtung. Der Test darueber findet Schluessel OHNE Quelltext; am
+// 2026-08-10 fiel auf, dass der umgekehrte Fall gar nicht geprueft wurde:
+// Commit 65781ea hatte 20 neue deutsche Texte in die Oberflaeche gebracht,
+// ohne sie zu uebersetzen — in allen 13 Fremdsprachen standen sie auf Deutsch,
+// darunter Anmelde- und Einwilligungs-Meldungen. Niemandem ist es aufgefallen,
+// weil kein Check danach gesucht hat.
+//
+// Bewusst unuebersetzt: die Zahlungs-Rechtstexte. Eine Uebersetzung ist dort
+// eine rechtliche Aussage und gehoert zur Anwaltspruefung, nicht in einen
+// Fleiss-Commit (Betreiber-Entscheidung 2026-08-10). Wird einer davon
+// uebersetzt, faellt er einfach aus dieser Liste — der Test verlangt nicht,
+// dass eine Ausnahme unuebersetzt BLEIBT.
+const UNUEBERSETZT_ERLAUBT = [
+  { text: "AGB", grund: "Rechtstext-Link, wartet auf Anwaltspruefung" },
+  { text: "Widerrufsbelehrung", grund: "Rechtstext-Link, wartet auf Anwaltspruefung" },
+  { text: "und die", grund: "Bindeglied zwischen den beiden Rechtstext-Links" },
+  { text: "Verträge hier kündigen", grund: "Kuendigungs-Link nach § 312k BGB" },
+  { text: "Mit „Zahlungspflichtig abonnieren“", grund: "Stripe-Weiterleitungshinweis" },
+  { text: "Alle Preise sind Gesamtpreise", grund: "Preis- und Laufzeitangabe" },
+  { text: "Aktuell Stripe-TESTMODUS", grund: "Hinweis zum Zahlungs-Testbetrieb" },
+  { text: "Kündigung: Im Stripe-Kundenportal", grund: "Kuendigungsweg" },
+  { text: "Kündigung: Eine vorbereitete E-Mail", grund: "Kuendigungsbestaetigung in Textform" }
+];
+
+test("jeder t()-Text der Oberflaeche ist uebersetzt (oder begruendet ausgenommen)", async () => {
+  const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
+    + profileDock + profilePictureControl + profilePictureStore;
+  // Wortgrenze davor: sonst zaehlt `createElement("img")` als `t("img")`.
+  const quelltexte = [...combined.matchAll(/(?<![\w$.])t\(\s*"((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]);
+  assert.ok(quelltexte.length >= 100, `nur ${quelltexte.length} t()-Aufrufe gefunden — Regex vermutlich kaputt`);
+
+  const uebersetzt = new Set(Object.keys(await loadMessages("en")));
+  const erlaubt = (text) => UNUEBERSETZT_ERLAUBT.some((a) => text.includes(a.text));
+  const fehlend = [...new Set(quelltexte)].filter((t) => !uebersetzt.has(t) && !erlaubt(t));
+  assert.deepEqual(fehlend, [],
+    `Diese Texte erscheinen in jeder Fremdsprache auf Deutsch:\n  ${fehlend.join("\n  ")}`);
+});
+
+test("keine Ausnahme der Uebersetzungspflicht ist veraltet", () => {
+  // Eine Ausnahme, deren Text es nicht mehr gibt, deckt nichts mehr ab und
+  // verschleiert beim naechsten Mal den Blick auf die echte Liste.
+  const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
+    + profileDock + profilePictureControl + profilePictureStore;
+  for (const { text, grund } of UNUEBERSETZT_ERLAUBT) {
+    assert.ok(grund && grund.length > 8, `Ausnahme "${text}" ohne brauchbare Begruendung`);
+    assert.ok(combined.includes(text), `Ausnahme "${text}" kommt im Quellcode nicht mehr vor`);
+  }
+});
+
 test("Auth-Seiten sind uebersetzbar: Seiten-Uebersetzer, Laufzeit-t() und Fail-safe", () => {
   assert.match(authPage, /from "\.\.\/i18n\/ui\.js/);
   assert.match(authPage, /translateStaticPage/);
