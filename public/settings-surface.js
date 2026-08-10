@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from "./config.js";
-import { initSettingsRuntime, SETTINGS_VERSION } from "./settings-runtime.js?v=4";
+import { initSettingsRuntime, SETTINGS_VERSION, ensureNotificationPermission } from "./settings-runtime.js?v=4";
 // api-keys-surface.js und provider-settings.js werden BEWUSST nicht statisch
 // importiert (Seitengewicht, Freigabe Wof Kadavanich 2026-08-04). Beide rendern
 // ausschliesslich in das Panel "models", und der Startreiter ist "general" —
@@ -97,6 +97,18 @@ function handleChange(view, event) {
   // Erst die Wahl merken, dann speichern: save() nimmt die Sprache bewusst
   // nicht aus dem Feld (siehe dort), sonst ginge genau diese Wahl verloren.
   if (event.target?.id === "settingsLanguage") sprachwahlVomNutzer = event.target.value;
+  // Push/Notification: die Berechtigung JETZT anfragen (wir sind in einer echten
+  // Nutzergeste), sobald eine Benachrichtigung eingeschaltet wird. Ohne diesen
+  // Aufruf blieb der Benachrichtigungspfad toter Code (Audit 2026-08-09).
+  const notifyIds = ["settingsNotifyComplete", "settingsNotifyApproval", "settingsNotifyError"];
+  if (notifyIds.includes(event.target?.id) && event.target.checked === true) {
+    ensureNotificationPermission().then((granted) => {
+      if (!granted) {
+        const status = view.querySelector("#settingsSaveStatus");
+        if (status) status.textContent = t("Benachrichtigungen im Browser nicht erlaubt — bitte in den Website-Einstellungen freigeben.");
+      }
+    });
+  }
   save(view);
   if (event.target?.id === "settingsLanguage") {
     loadUiLanguage(event.target.value).then(() => render(view));
