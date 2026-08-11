@@ -1,5 +1,6 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
+import { streamVisionLane } from "./chat-bridge-vision.js";
 // Rechnen statt schaetzen: Sprachmodelle koennen Potenzen nicht (Befund
 // 2026-08-05, Monatsrate 40 % daneben). Der Rechner legt exakte Werte vor.
 import { baueRechenKontext } from "./chat-bridge-rechner.js";
@@ -53,7 +54,9 @@ const GROQ_API_KEY = process.env.SMEJJ_LLM_GROQ_API_KEY || "";
 const GROQ_BASE_URL = trimUrl(process.env.SMEJJ_LLM_GROQ_BASE_URL || "https://api.groq.com/openai/v1");
 const GROQ_MODEL = process.env.SMEJJ_LLM_GROQ_MODEL || "llama-3.3-70b-versatile"; // 70B statt 8B: gemessen 2026-08-03, gleicher Free-Tier
 const FAST_LANE_TIMEOUT_MS = Number(process.env.SMEJJ_FAST_LANE_TIMEOUT_MS || 15000);
-const MAX_BODY_BYTES = 256 * 1024;
+// 1 MB statt 256 KB: ein Bild-Anhang (data:-URL, Deckel 600 KB in
+// composer-bild-anhang.js) muss samt Verlauf hineinpassen (Stufe 1, 2026-08-11).
+const MAX_BODY_BYTES = 1024 * 1024;
 const RATE_WINDOW_MS = 60_000;
 const RATE_PER_CLIENT = boundedInteger(process.env.SMEJJ_PUBLIC_AI_RATE_PER_MINUTE, 1, 600, 12);
 const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_MINUTE, RATE_PER_CLIENT, 5_000, 120);
@@ -207,6 +210,9 @@ async function handleAgent(req, res) {
   if (!task) return json(res, 400, { ok: false, error: "Missing task" });
   const coding = isCodingTask(task);
   const stufe = leseStufe(body);
+  // Bild-Verstehen (Stufe 1): Bild-Anhang -> Vision-Spur; bei false laeuft
+  // unveraendert der Text-Weg (fail-safe, Details in chat-bridge-vision.js).
+  if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
   // "schnell" heisst schnell: dann bekommt auch eine Coding- oder Suchfrage die
   // Schnellspur angeboten (streamFastLane entscheidet dann endgueltig).
   const fastTask = stufe === "schnell" || (!coding && !shouldSearchWeb(task));
