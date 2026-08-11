@@ -48,6 +48,9 @@ export async function handleAutopilotHeartbeat(req, url, res, { env = process.en
     status: body?.status,
     meldung: body?.meldung,
     dauerMs: body?.dauerMs,
+    // Nachlieferung aus der Warteschlange: Original-Zeitpunkt des Laufs.
+    // Validierung (Fenster, Format) liegt in heartbeatAnnehmen, nicht hier.
+    am: body?.am,
     env
   });
   if (!antwort.ok) {

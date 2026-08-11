@@ -162,3 +162,28 @@ test("die Vorfallsliste waechst im Dauerbetrieb nicht unbegrenzt", async () => {
   }
   assert.ok(w.stand().vorfaelle.length <= 2);
 });
+
+test("versionAus: der Control-Server ohne version-Feld gilt als gesund, ok:false nicht", async () => {
+  // /api/health des Control-Servers traegt kein `version`-Feld — die
+  // Lebenskennung kommt per versionAus aus `aiBackend`, aber NUR bei ok:true.
+  const controlAntworten = (koerper) => async () => ({ ok: true, status: 200, json: async () => koerper });
+  const liest = (daten) => (daten?.ok === true ? String(daten.aiBackend || "ok") : "");
+
+  const gesund = createBrueckenWaechter({
+    fetchFn: controlAntworten({ ok: true, aiBackend: "kimi:kimi-k2.7-code" }),
+    versionAus: liest, log: still, jetzt: uhr(0)
+  });
+  await gesund.pruefe();
+  assert.equal(gesund.stand().erreichbar, true);
+  assert.equal(gesund.stand().letzteVersion, "kimi:kimi-k2.7-code");
+
+  // HTTP 200 mit ok:false ist genau die "Antwort, die da war, aber nichts
+  // sagte" — sie darf nicht als gesund durchgehen.
+  const luegt = createBrueckenWaechter({
+    fetchFn: controlAntworten({ ok: false }),
+    versionAus: liest, schwelle: 1, log: still, jetzt: uhr(0)
+  });
+  await luegt.pruefe();
+  assert.equal(luegt.stand().erreichbar, false);
+  assert.equal(luegt.stand().laufenderAusfall.grund, "antwort_ohne_version");
+});

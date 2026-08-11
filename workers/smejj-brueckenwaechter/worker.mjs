@@ -42,6 +42,22 @@ const waechter = createBrueckenWaechter({
   meldeUrl: process.env.SMEJJ_WAECHTER_MELDE_URL || ""
 });
 
+// ZWEITES PRUEFZIEL (Befund 2026-08-11): Der Control-Server nimmt alle
+// Herzschlaege an und traegt die Autopiloten-Ampel — und genau er starb am
+// 09.–11.08. mehrfach still, waehrend dieser Waechter nur die Bruecke ansah.
+// Der Wachhund bewachte das falsche Haus. Ab jetzt beide.
+// /api/health statt /health: /health liefert dort die App-Seite (HTML),
+// nur /api/health antwortet als JSON. Es traegt kein `version`-Feld —
+// als Lebenskennung dient `aiBackend`, und nur bei ausdruecklichem `ok:true`.
+const controlWaechter = createBrueckenWaechter({
+  url: process.env.SMEJJ_CONTROL_HEALTH_URL
+    || "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/health",
+  schwelle: Number(process.env.SMEJJ_WAECHTER_SCHWELLE || 3),
+  meldeUrl: process.env.SMEJJ_WAECHTER_MELDE_URL || "",
+  name: "control-waechter",
+  versionAus: (daten) => (daten?.ok === true ? String(daten.aiBackend || "ok") : "")
+});
+
 let letzterHerzschlag = null;
 let herzschlagFehler = 0;
 
@@ -53,15 +69,26 @@ let herzschlagFehler = 0;
 async function herzschlag() {
   if (!HERZSCHLAG_SCHLUESSEL) return;
   const stand = waechter.stand();
+  const controlStand = controlWaechter.stand();
   // Der Waechter meldet SICH als gesund, solange er prueft. Ob die Bruecke
   // gesund ist, steht in der Meldung — nicht im Status. Sonst wuerde ein
   // Brueckenausfall den Waechter selbst als kaputt anzeigen, und man suchte
   // am falschen Ende.
-  const meldung = stand.erreichbar === false
+  const brueckeText = stand.erreichbar === false
     ? `Bruecke AUSGEFALLEN seit ${stand.laufenderAusfall?.seit || "?"}`
     : stand.erreichbar === true
       ? `Bruecke gesund (${stand.letzteVersion || "?"}), ${stand.gesamtPruefungen} Pruefungen`
       : "Waechter gestartet, erste Pruefung steht aus";
+  // Der Control-Zustand faehrt in derselben Meldung mit. Wichtig fuer die
+  // Deutung: Ist Control tot, kommt dieser Herzschlag gar nicht erst an —
+  // die Zeile "Control AUSGEFALLEN" erscheint also erst NACH der Erholung
+  // und beziffert dann rueckblickend den Ausfall.
+  const controlText = controlStand.erreichbar === false
+    ? `Control AUSGEFALLEN seit ${controlStand.laufenderAusfall?.seit || "?"}`
+    : controlStand.erreichbar === true
+      ? "Control gesund"
+      : "Control-Pruefung steht aus";
+  const meldung = `${brueckeText} · ${controlText}`;
   try {
     const antwort = await fetch(HERZSCHLAG_URL, {
       method: "POST",
@@ -83,7 +110,9 @@ async function herzschlag() {
 
 async function takt() {
   try {
-    await waechter.pruefe();
+    // Beide Ziele je Takt, unabhaengig voneinander: ein haengendes Ziel darf
+    // die Pruefung des anderen nicht aufhalten.
+    await Promise.all([waechter.pruefe(), controlWaechter.pruefe()]);
   } catch {
     // createBrueckenWaechter wirft nie; dieser Fang ist die zweite Sicherung.
   }
@@ -99,7 +128,7 @@ const server = http.createServer((req, res) => {
     return antwort(200, {
       ok: true,
       dienst: "smejj-brueckenwaechter",
-      version: "1.0.0",
+      version: "1.1.0",
       taktMs: TAKT_MS,
       herzschlagAktiv: Boolean(HERZSCHLAG_SCHLUESSEL),
       letzterHerzschlag,
@@ -107,7 +136,8 @@ const server = http.createServer((req, res) => {
     });
   }
   if (pfad === "/bruecke") return antwort(200, waechter.stand());
-  antwort(404, { ok: false, error: "not_found", pfade: ["/health", "/bruecke"] });
+  if (pfad === "/control") return antwort(200, controlWaechter.stand());
+  antwort(404, { ok: false, error: "not_found", pfade: ["/health", "/bruecke", "/control"] });
 });
 
 server.listen(PORT, HOST, () => {

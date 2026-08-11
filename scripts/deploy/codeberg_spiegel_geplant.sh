@@ -37,6 +37,32 @@ set -u
 # Totmannschalter des Adminbereichs. Der Schluessel liegt in
 # ~/.config/smejj.com/autopilot-keys.env und steht bewusst NICHT hier drin.
 # Ein fehlgeschlagener Herzschlag aendert den Exit-Code nicht.
+#
+# WARTESCHLANGE (Befund 2026-08-11): Der Control-Server war am 09.–11.08.
+# stundenlang tot — laenger als jede vertretbare Wiederholungsschleife hier
+# (die alte lief 12 Minuten und verlor den Herzschlag trotzdem; die Ampel
+# wurde FAELSCHLICH rot, obwohl der Lauf sauber war). Ein unzustellbarer
+# Herzschlag wird deshalb jetzt MIT Original-Zeitpunkt (`am`) aufgehoben und
+# beim naechsten Lauf nachgeliefert; der Server traegt ihn dann in seinen
+# echten Kalendertag ein. Der Schluessel steht NIE in der Warteschlangendatei.
+AP_URL="https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/autopilot/heartbeat"
+AP_QUEUE="$HOME/.local/share/smejj-qualitaet/herzschlag-warteschlange.jsonl"
+
+# Ein Sendeversuch: 3 Wiederholungen im 30-s-Abstand fangen kurzes Flattern;
+# lange Ausfaelle faengt die Warteschlange. -m deckelt die GESAMTE Operation
+# und muss groesser sein als Versuche x Abstand.
+# BEWUSST OHNE -f, mit HTTP-Code in AP_HTTP: -f macht aus 503 (voruebergehend,
+# wiederholen) und 400 (endgueltig, verwerfen) denselben Exit 22 — die
+# Warteschlange muss die beiden aber unterscheiden. --retry wiederholt von
+# sich aus bei 429/5xx und Verbindungsfehlern.
+smejj_ap_senden() {
+  AP_HTTP=$(curl -sS --connect-timeout 10 -m 150 --retry 3 --retry-delay 30 \
+    -o /dev/null -w "%{http_code}" \
+    -X POST "$AP_URL" -H "Content-Type: application/json" \
+    -d "$1" 2>/dev/null) || AP_HTTP=000
+  [ "$AP_HTTP" = "200" ]
+}
+
 smejj_ap_herzschlag() {
   AP_EXIT=$?
   AP_ID="codeberg-spiegel"
@@ -44,21 +70,57 @@ smejj_ap_herzschlag() {
     | tr ',' '\n' | sed -n "s/^${AP_ID}://p")
   [ -z "${AP_KEY:-}" ] && return 0
   AP_STATUS=ok; [ "$AP_EXIT" -ne 0 ] && AP_STATUS=fehler
-  # Wiederholungen, weil das Salad-Gateway zeitweise fuer ALLE Pfade 503
-  # liefert (am 2026-08-07 gemessen, /health eingeschlossen): 5 Versuche im
-  # 30-s-Abstand ueberbruecken ein kurzes Flattern. -m deckelt die GESAMTE
-  # Operation inklusive Wiederholungen — er muss also groesser sein als
-  # Versuche x Abstand, sonst finden die Wiederholungen nie statt.
-  # 2026-08-07 nachgeschaerft: die gemessenen Salad-Reallokationen dauerten 7
-  # bis 25 Minuten, nicht Sekunden. 2,5 Minuten Wiederholung waren zu knapp —
-  # ein verschluckter Herzschlag faerbt die Ampel spaeter FAELSCHLICH rot
-  # (Ausbleiben ist ja der Alarm). 12 Versuche im Minutenabstand decken den
-  # Regelfall; -m muss groesser sein als Versuche x Abstand.
-  curl -fsS --connect-timeout 10 -m 800 --retry 12 --retry-delay 60 \
-    -X POST "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/autopilot/heartbeat" \
-    -H "Content-Type: application/json" \
-    -d "{\"id\":\"${AP_ID}\",\"key\":\"${AP_KEY}\",\"status\":\"${AP_STATUS}\",\"meldung\":\"Exit ${AP_EXIT}\"}" \
-    >/dev/null 2>&1 || echo "Herzschlag nicht zugestellt (Netz oder Server nicht erreichbar)."
+  AP_DAUER_MS=$(( SECONDS * 1000 ))
+  AP_AM=$(date -u +%FT%TZ)
+
+  # 1) Nachlieferung: Aufgestautes zuerst, aelteste vorn. Bei Netz- oder
+  #    Serverproblemen (000/5xx/429) stoppt die Runde und alles bleibt liegen
+  #    (Reihenfolge bleibt erhalten); eine endgueltige Ablehnung (4xx, z. B.
+  #    aelter als das 14-Tage-Fenster des Servers) wird dagegen verworfen —
+  #    sie wuerde nie mehr angenommen und duerfte als Giftpille sonst die
+  #    ganze Schlange blockieren.
+  if [ -s "$AP_QUEUE" ]; then
+    AP_REST="${AP_QUEUE}.rest.$$"
+    : > "$AP_REST"
+    AP_NETZ_ZU=0
+    while IFS= read -r AP_ZEILE; do
+      [ -z "$AP_ZEILE" ] && continue
+      if [ "$AP_NETZ_ZU" -eq 1 ]; then
+        printf '%s\n' "$AP_ZEILE" >> "$AP_REST"
+        continue
+      fi
+      if smejj_ap_senden "${AP_ZEILE%\}},\"key\":\"${AP_KEY}\"}"; then
+        continue
+      fi
+      case "$AP_HTTP" in
+        429)
+          # Rate-Limit ist voruebergehend — liegen lassen wie einen Netzfehler.
+          AP_NETZ_ZU=1
+          printf '%s\n' "$AP_ZEILE" >> "$AP_REST"
+          ;;
+        4??)
+          echo "Nachlieferung vom Server abgelehnt (HTTP ${AP_HTTP}) und verworfen: ${AP_ZEILE}"
+          ;;
+        *)
+          AP_NETZ_ZU=1
+          printf '%s\n' "$AP_ZEILE" >> "$AP_REST"
+          ;;
+      esac
+    done < "$AP_QUEUE"
+    mv "$AP_REST" "$AP_QUEUE"
+    [ -s "$AP_QUEUE" ] || rm -f "$AP_QUEUE"
+  fi
+
+  # 2) Der aktuelle Herzschlag. Ohne key abgelegt — der kommt erst beim Senden
+  #    dazu, damit die Warteschlangendatei kein Geheimnis traegt.
+  AP_KERN="{\"id\":\"${AP_ID}\",\"status\":\"${AP_STATUS}\",\"meldung\":\"Exit ${AP_EXIT}\",\"dauerMs\":${AP_DAUER_MS},\"am\":\"${AP_AM}\"}"
+  if ! smejj_ap_senden "${AP_KERN%\}},\"key\":\"${AP_KEY}\"}"; then
+    printf '%s\n' "$AP_KERN" >> "$AP_QUEUE"
+    # Deckel gegen unbegrenztes Wachstum; die juengsten 100 reichen weit
+    # ueber das 14-Tage-Annahmefenster des Servers hinaus.
+    tail -n 100 "$AP_QUEUE" > "${AP_QUEUE}.kopf.$$" && mv "${AP_QUEUE}.kopf.$$" "$AP_QUEUE"
+    echo "Herzschlag nicht zugestellt — aufgehoben fuer die Nachlieferung beim naechsten Lauf."
+  fi
   return 0
 }
 trap smejj_ap_herzschlag EXIT

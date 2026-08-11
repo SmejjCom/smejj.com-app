@@ -43,6 +43,8 @@ const STANDARD_MAX_VORFAELLE = 50;
  * @param {number} [optionen.schwelle] Fehlversuche in Folge, bis ein Ausfall gilt
  * @param {number} [optionen.zeitlimitMs] hartes Limit je Abfrage
  * @param {string} [optionen.meldeUrl] optionaler Meldeweg (leer = aus)
+ * @param {string} [optionen.name] Anzeigename in Protokollzeilen (Standard: "bruecken-waechter")
+ * @param {Function} [optionen.versionAus] liest die Lebenskennung aus der Antwort — leer/falsy heisst "keine gueltige Antwort". Standard: das `version`-Feld (die Bruecke traegt eins; der Control-Server nicht, dort dient `aiBackend` bei `ok:true` als Kennung).
  * @param {Function} [optionen.fetchFn] nur fuer Tests
  * @param {Function} [optionen.log] nur fuer Tests
  * @param {Function} [optionen.jetzt] nur fuer Tests
@@ -53,6 +55,8 @@ export function createBrueckenWaechter({
   zeitlimitMs = STANDARD_ZEITLIMIT_MS,
   maxVorfaelle = STANDARD_MAX_VORFAELLE,
   meldeUrl = "",
+  name = "bruecken-waechter",
+  versionAus = (daten) => daten?.version,
   fetchFn = fetch,
   log = console.log,
   jetzt = () => new Date()
@@ -74,7 +78,7 @@ export function createBrueckenWaechter({
 
   /** Meldet einen Zustandswechsel. Wird NIE abgewartet und wirft nie. */
   function melden(art, text, einzelheiten) {
-    log(`[bruecken-waechter] ${art.toUpperCase()}: ${text}`);
+    log(`[${name}] ${art.toUpperCase()}: ${text}`);
     if (!meldeUrl) return;
     Promise.resolve()
       .then(() => fetchFn(meldeUrl, {
@@ -99,8 +103,9 @@ export function createBrueckenWaechter({
       });
       if (!antwort.ok) return { gesund: false, grund: `http_${antwort.status}` };
       const daten = await antwort.json();
-      if (!daten?.version) return { gesund: false, grund: "antwort_ohne_version" };
-      return { gesund: true, version: String(daten.version) };
+      const kennung = versionAus(daten);
+      if (!kennung) return { gesund: false, grund: "antwort_ohne_version" };
+      return { gesund: true, version: String(kennung) };
     } catch (fehler) {
       const name = fehler?.name === "TimeoutError" ? "zeitueberschreitung" : "nicht_erreichbar";
       return { gesund: false, grund: name };

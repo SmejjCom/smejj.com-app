@@ -178,11 +178,15 @@ const tagesstatistik = new Map();
 function zaehleTag(id, status, jetztMs) {
   const tag = new Date(jetztMs).toISOString().slice(0, 10);
   const tage = tagesstatistik.get(id) || [];
-  const letzter = tage[tage.length - 1];
-  if (letzter && letzter.tag === tag) {
-    letzter[status === "fehler" ? "fehler" : "ok"] += 1;
+  // Suche ueber ALLE Tage statt nur den letzten: nachgelieferte Herzschlaege
+  // aus der Warteschlange kommen mit Original-Zeitstempel und damit auch
+  // ausserhalb der Reihenfolge an — sie gehoeren trotzdem in ihren Kalendertag.
+  const vorhanden = tage.find((t) => t.tag === tag);
+  if (vorhanden) {
+    vorhanden[status === "fehler" ? "fehler" : "ok"] += 1;
   } else {
     tage.push({ tag, ok: status === "fehler" ? 0 : 1, fehler: status === "fehler" ? 1 : 0 });
+    tage.sort((a, b) => a.tag.localeCompare(b.tag));
   }
   tagesstatistik.set(id, tage.slice(-TAGE_MAX));
 }
@@ -216,7 +220,7 @@ const ablageStand = {
  *
  * Schluesselformat in der Umgebung: SMEJJ_AUTOPILOT_KEYS="id1:schluessel1,id2:schluessel2"
  */
-export function heartbeatAnnehmen({ id, key, status, meldung, dauerMs, env = process.env, jetztMs = Date.now() } = {}) {
+export function heartbeatAnnehmen({ id, key, status, meldung, dauerMs, am, env = process.env, jetztMs = Date.now() } = {}) {
   const schluessel = schluesselAus(env);
   if (schluessel === null) return { ok: false, status: 503, error: "autopilot_keys_missing" };
 
@@ -228,18 +232,37 @@ export function heartbeatAnnehmen({ id, key, status, meldung, dauerMs, env = pro
     return { ok: false, status: 403, error: "autopilot_key_invalid" };
   }
 
+  // Nachlieferung: ein Herzschlag, der beim Lauf nicht zustellbar war, darf
+  // spaeter mit seinem Original-Zeitpunkt (`am`) kommen — sonst saehe ein
+  // nachgelieferter Lauf frischer aus, als er war, und die Ampel wuerde gruen
+  // aus einer alten Nachricht. Das Fenster ist eng begrenzt: nichts aus der
+  // Zukunft (kleine Uhren-Abweichung erlaubt), nichts aelter als 14 Tage.
+  let zeitMs = jetztMs;
+  if (am !== undefined && am !== null && String(am).trim() !== "") {
+    const geparst = Date.parse(String(am));
+    if (!Number.isFinite(geparst)) return { ok: false, status: 400, error: "autopilot_am_invalid" };
+    if (geparst > jetztMs + 5 * 60 * 1000 || geparst < jetztMs - 14 * TAG_MS) {
+      return { ok: false, status: 400, error: "autopilot_am_out_of_range" };
+    }
+    zeitMs = geparst;
+  }
+
   const ergebnis = status === "fehler" ? "fehler" : "ok";
   const gespeichert = herzschlaege.get(eintrag.id) || { laeufe: [] };
-  gespeichert.laeufe.unshift({
-    am: new Date(jetztMs).toISOString(),
+  const lauf = {
+    am: new Date(zeitMs).toISOString(),
     status: ergebnis,
     meldung: String(meldung || "").slice(0, 200),
     dauerMs: Number.isFinite(Number(dauerMs)) ? Math.max(0, Math.trunc(Number(dauerMs))) : null
-  });
+  };
+  gespeichert.laeufe.unshift(lauf);
+  // Nachgelieferte Laeufe an ihren Platz sortieren: die Ampel liest laeufe[0]
+  // als juengsten Lauf — ein alter Nachzuegler darf dort nicht stehen bleiben.
+  gespeichert.laeufe.sort((a, b) => String(b.am).localeCompare(String(a.am)));
   gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
   herzschlaege.set(eintrag.id, gespeichert);
-  zaehleTag(eintrag.id, ergebnis, jetztMs);
-  return { ok: true, status: 200, id: eintrag.id, gespeichert: gespeichert.laeufe[0] };
+  zaehleTag(eintrag.id, ergebnis, zeitMs);
+  return { ok: true, status: 200, id: eintrag.id, gespeichert: lauf };
 }
 
 /**
@@ -522,8 +545,31 @@ export async function ladeHerzschlaege({ env = process.env } = {}) {
       // Tages-Statistik VOR der laeufe-Pruefung zurueckholen: die Datensaetze
       // der Dauerbetriebs-Piloten tragen absichtlich leere laeufe, aber volle
       // Tage — sonst waere die 90-Tage-Anzeige nach jedem Neustart leer.
-      if (Array.isArray(datensatz.tage) && datensatz.tage.length && !tagesstatistik.has(datensatz.id)) {
-        tagesstatistik.set(datensatz.id, datensatz.tage.slice(-TAGE_MAX));
+      //
+      // VERSCHMELZEN statt ueberspringen (Befund 2026-08-11): Der Waechter-Takt
+      // und die Eigenmeldung starten mit dem Server und zaehlen ihren ersten
+      // Lauf oft, BEVOR dieses Laden fertig ist. Ein "nur laden, wenn leer"
+      // uebersprang dann die ganze Historie — und der naechste gedrosselte Put
+      // ueberschrieb sie mit einem einzigen Tag. So wurde die 90-Tage-Anzeige
+      // bei jedem Neustart geloescht, obwohl die Ablage sie tragen sollte.
+      // Summieren ist sicher: im Arbeitsspeicher stehen nur Laeufe SEIT dem
+      // Start, in der Ablage nur Laeufe DAVOR — nichts wird doppelt gezaehlt.
+      if (Array.isArray(datensatz.tage) && datensatz.tage.length) {
+        const nachTag = new Map((tagesstatistik.get(datensatz.id) || []).map((t) => [t.tag, t]));
+        for (const alt of datensatz.tage) {
+          if (!alt?.tag) continue;
+          const lebend = nachTag.get(alt.tag);
+          if (lebend) {
+            lebend.ok += alt.ok || 0;
+            lebend.fehler += alt.fehler || 0;
+          } else {
+            nachTag.set(alt.tag, { tag: alt.tag, ok: alt.ok || 0, fehler: alt.fehler || 0 });
+          }
+        }
+        tagesstatistik.set(
+          datensatz.id,
+          [...nachTag.values()].sort((a, b) => a.tag.localeCompare(b.tag)).slice(-TAGE_MAX)
+        );
       }
       if (herzschlaege.has(datensatz.id)) continue;
       if (!Array.isArray(datensatz.laeufe) || !datensatz.laeufe.length) continue;

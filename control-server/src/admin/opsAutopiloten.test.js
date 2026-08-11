@@ -343,6 +343,59 @@ test("Nr. 4: der Berichtstext ist ehrlich — Quote aus Laeufen, Stillgelegtes a
   assert.ok(text.includes("smejj.com/admin/autopiloten/"));
 });
 
+test("Nachlieferung: ein Herzschlag mit Original-Zeitpunkt landet an seinem Platz", () => {
+  frisch();
+  // Frischer Lauf zuerst, dann kommt ein aelterer aus der Warteschlange nach.
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", meldung: "frisch", env: ENV, jetztMs: JETZT - 1000 });
+  const antwort = heartbeatAnnehmen({
+    id: "qualitaetsmessung", key: "geheim1", status: "ok", meldung: "nachgeliefert",
+    am: new Date(JETZT - 26 * 60 * 60 * 1000).toISOString(), env: ENV, jetztMs: JETZT
+  });
+  assert.equal(antwort.ok, true);
+  assert.equal(antwort.gespeichert.meldung, "nachgeliefert", "die Quittung gehoert zum nachgelieferten Lauf");
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "qualitaetsmessung");
+  assert.ok(a.letzterLauf.meldung.includes("frisch"), "der Nachzuegler darf den juengsten Lauf nicht verdraengen");
+  assert.equal(a.ampel, "gruen", "die Ampel liest weiter den juengsten Lauf");
+  assert.equal(a.tage.length, 2, "der Nachzuegler zaehlt in SEINEM Kalendertag");
+  assert.ok(a.tage[0].tag < a.tage[1].tag, "die Tage bleiben aufsteigend sortiert");
+});
+
+test("Nachlieferung: Zukunft und Uralt werden abgewiesen, kaputte Zeit auch", () => {
+  frisch();
+  const zukunft = heartbeatAnnehmen({
+    id: "qualitaetsmessung", key: "geheim1", status: "ok",
+    am: new Date(JETZT + 60 * 60 * 1000).toISOString(), env: ENV, jetztMs: JETZT
+  });
+  assert.equal(zukunft.status, 400, "eine Stunde Zukunft ist keine Uhren-Abweichung mehr");
+  const uralt = heartbeatAnnehmen({
+    id: "qualitaetsmessung", key: "geheim1", status: "ok",
+    am: new Date(JETZT - 15 * TAG_TEST_MS).toISOString(), env: ENV, jetztMs: JETZT
+  });
+  assert.equal(uralt.status, 400, "aelter als 14 Tage faellt aus dem Fenster");
+  const kaputt = heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", am: "gestern", env: ENV, jetztMs: JETZT });
+  assert.equal(kaputt.status, 400);
+  const u = autopilotUebersicht({ jetztMs: JETZT });
+  assert.equal(u.gruen, 0, "abgewiesene Nachlieferungen fassen die Ampel nicht an");
+});
+
+test("Neustart-Wettlauf: die geladene Tages-Historie verschmilzt mit frischen Laeufen", async () => {
+  frisch(); _ablageLeeren();
+  // Gestern und vorgestern liefen Herzschlaege, die Ablage kennt sie.
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: JETZT - 2 * TAG_TEST_MS });
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "fehler", env: ENV, jetztMs: JETZT - TAG_TEST_MS });
+  await persistiereHerzschlag("qualitaetsmessung", { env: {} });
+  _herzschlaegeZuruecksetzen();
+  // Neustart: ein frischer Herzschlag kommt an, BEVOR die Ablage geladen ist —
+  // genau der Wettlauf, der die 90-Tage-Anzeige bisher bei jedem Neustart
+  // geloescht hat.
+  heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: JETZT });
+  await ladeHerzschlaege({ env: {} });
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "qualitaetsmessung");
+  assert.equal(a.tage.length, 3, "alte Tage aus der Ablage UND der frische Tag: " + JSON.stringify(a.tage));
+  assert.equal(a.tage[1].fehler, 1, "der Fehler von gestern bleibt erhalten");
+  assert.ok(a.letzterLauf.meldung !== undefined && a.tage[2].ok >= 1, "der frische Lauf zaehlt in seinem Tag");
+});
+
 test("jeder Autopilot hat, was die idiotensichere Ansicht braucht", () => {
   for (const a of AUTOPILOTEN) {
     assert.ok(a.id && a.name && a.kurz, a.id + ": Kennung, Name und Kurzbeschreibung sind Pflicht");
