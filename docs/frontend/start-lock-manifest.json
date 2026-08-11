@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-11T20:43:26.870Z",
-  "confirmation": "Ich sehe in Startseite unserem Modell smejj 1.0 nicht",
+  "frozenAt": "2026-08-11T20:50:28.917Z",
+  "confirmation": "soll smejj 1.0 immer standart model sein, wenn mann model weckselen wollen soll mann mauel welen",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "a74ae5bebe42623e911873167ea976e3d7c0b7160ae725b1f5357b9d19e57914",
@@ -10,7 +10,7 @@
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "78e7852fdbe0ec5915de603839e247af4be329042205f60ade58ee7c3f42e989",
+    "public/app.js": "22bc30a0b56439c4121b14c23d483c9b7af36cd9e12c523e2cf9f21b432e6fbb",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "2e503fb05eb88d90460501edd51ad0129d83855f02801d5b7b3970474dbbf107",
     "public/components.js": "3857d1e62ed36de05a27fc307c1a4fc13b4721f5cafb850dafa672ef8dd2d0ff",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "c0a2a542c402086dbfeaec1d46db95630f710631c09df3e55f793fd07f194e83",
+    "public/sw.js": "6973b6b3430c7cc2a0569dc3d641e0c13330e75aaa29734a5fde99c2bd92f262",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

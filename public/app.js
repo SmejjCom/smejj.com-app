@@ -215,7 +215,7 @@ function applySelectedModel(model, { persist = true, quiet = false } = {}) {
   const selectedModel = Object.hasOwn(MODEL_MODES, model) ? model : "smejj 1.0";
   const mode = MODEL_MODES[selectedModel] || AI_MODES.disabled;
   const button = $("#modelPickerButton");
-  if (button) button.textContent = selectedModel === "smejj 1.0" ? STUFE_LABEL[normalizeStufe(state.settings.stufe)] : selectedModel;
+  if (button) button.textContent = selectedModel;
   state.settings = { ...state.settings, model: selectedModel };
   if (persist) localStorage.setItem(STORAGE_KEYS.model, selectedModel);
   const aiModeSelect = $("#aiModeSelect");
