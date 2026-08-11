@@ -28,7 +28,9 @@ import {
   routePrompt,
   evaluateArenaCompetition,
   scanForBugsAndVulnerabilities,
-  runProjectBugScan
+  runProjectBugScan,
+  generateAndVerifySyntheticTask,
+  runSyntheticGenerationBatch
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -200,3 +202,16 @@ test("Bug Predictor & Security Scan Test", () => {
   assert.equal(projectScan.scannedFiles, 2);
   assert.equal(projectScan.cleanFiles, 1);
 });
+
+test("Synthetic Task Generator & 24/7 Self-Play Test", async () => {
+  const task = generateAndVerifySyntheticTask();
+  assert.ok(task.topic);
+  assert.ok(task.prompt);
+  assert.equal(task.verified, true);
+  assert.match(task.chosen, /```javascript/);
+
+  const batch = await runSyntheticGenerationBatch(2);
+  assert.equal(batch.ok, true);
+  assert.equal(batch.generated, 2);
+});
+

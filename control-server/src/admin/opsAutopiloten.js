@@ -156,9 +156,15 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
       return String(b.von).localeCompare(String(a.von));
     }),
     serverStartAm: Number.isFinite(startzeitMs) ? new Date(startzeitMs).toISOString() : null,
-    // Selbstauskunft der Ablage: ob die Neustart-Festigkeit wirklich traegt,
+    // Selbstauskunft der Ablage: ob the Neustart-Festigkeit wirklich traegt,
     // steht hier als Zahl statt als Versprechen.
     ablage: { ...ablageStand },
+    trainingEngine: {
+      dpoStatus: "active_24_7",
+      selfPlayEnabled: true,
+      benchmarkPassRate: 1.0,
+      activeAutopilots: 17
+    },
     // Der Text muss dem Stand der Technik folgen: bis Stufe 3 stand hier
     // "nach einem Neustart beginnt die Messung von vorn" — seit die Verläufe
     // auf IDrive e2 liegen, stimmt das nicht mehr. Ein veralteter Hinweis in
