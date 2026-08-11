@@ -13,7 +13,7 @@ async function ueberpruefeAutopiloten() {
     { id: "training-loop", name: "Training-Loop" },
     { id: "codeberg-spiegel", name: "Codeberg-Spiegel" },
     { id: "brueckenwaechter", name: "Brücken-Wächter" },
-    { id: "salad-sonden", name: "Salad-Sonden" },
+    { id: "salad-sonden", name: "Zeabur-Sonden (Zeabur.com 100% Hauptbetrieb)" },
     { id: "deep-research", name: "Deep Research KI-Autopilot" },
     { id: "code-interpreter", name: "Code Interpreter Sandbox Autopilot" },
     { id: "memory-sync", name: "Memory & Langzeitgedächtnis Autopilot" },

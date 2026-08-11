@@ -114,19 +114,20 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "salad-sonden",
-    name: "Salad-Sonden",
-    kurz: "Gesundheitssonden am Container (Salad-Exit schrittweise, Zukunft 100% Zeabur).",
+    name: "Zeabur-Sonden",
+    kurz: "Gesundheitssonden am Zeabur-Cluster (100% Zeabur.com Hauptbetrieb & Container-Health).",
     funktionen: [
-      "Salad-Container schrittweise auslaufend, Dienste auf Zeabur migriert.",
+      "Überwacht 24/7 die Zeabur-Instanz, RAM-Auslastung und Server-Gesundheit.",
+      "Vollständiger Salad-Exit vollzogen: Hauptbetrieb läuft zu 100% auf Zeabur.com.",
       "Gemessen über die Eigenmeldung des Control-Servers alle 5 Minuten."
     ],
-    ort: "Salad (Salad-Exit)",
+    ort: "Zeabur (smejj-control.zeabur.app)",
     zeitplan: "Dauerbetrieb",
     messung: "heartbeat",
     erwartetAlleMs: 10 * 60 * 1000,
     schonfristMs: 20 * 60 * 1000,
-    startAnleitung: "Salad-Exit erfolgt — Dienste laufen auf Zeabur.",
-    stopAnleitung: "Im Salad-Portal Container löschen/anhalten."
+    startAnleitung: "Läuft kontinuierlich als interner Zeabur-Cluster-Wächter.",
+    stopAnleitung: "Im Zeabur-Portal den Dienst verwalten."
   },
   {
     id: "deep-research",
