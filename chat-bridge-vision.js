@@ -13,7 +13,7 @@ import { sanitizeHistory } from "../src/agent/conversationHistory.js";
 // Gueltigkeitsbereich, GROQ_API_KEY & Co. gehoeren dort chat-bridge.js.
 const VISION_API_KEY = process.env.SMEJJ_LLM_GROQ_API_KEY || "";
 const VISION_BASE_URL = String(process.env.SMEJJ_LLM_GROQ_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, "");
-const VISION_MODEL = process.env.SMEJJ_LLM_GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
+const VISION_MODEL = process.env.SMEJJ_LLM_GROQ_VISION_MODEL || "qwen/qwen3.6-27b";
 
 // Nur JPEG/PNG/WebP als base64-data:-URL, Deckel = Body-Deckel der Bruecke.
 // Alles andere (fremde URLs, andere MIME-Typen, Muell) ergibt "" — kein Fehler
