@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-09T07:33:19.179Z",
-  "confirmation": "Freigabe: Autopiloten-Steuerung (Start/Pause) als schreibende Adminaktion mit Step-up-Code und Audit-Eintrag; admin lock v1 danach neu einfrieren. (Betreiber, 2026-08-08)",
+  "frozenAt": "2026-08-11T16:50:49.463Z",
+  "confirmation": "Freigabe: automatisches Failover Salad<->Zeabur in api.js (Betreiber, 2026-08-11)",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -18,6 +18,6 @@
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
     "control-server/src/routes/adminUiRoutes.js": "a2824e4b1f2d8b230a43e8cc894a3e9e3eddf892738fbc8c7cb10822ee57acfc",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
-    "control-server/admin-ui/api.js": "29633ae846dde0cc9eeba272f98f3205e835816898994be76b51872c3103ccd5"
+    "control-server/admin-ui/api.js": "aea71bb73868f7112e5f11e27beb72958c873362e221cc83645d9c36520a2e4e"
   }
 }

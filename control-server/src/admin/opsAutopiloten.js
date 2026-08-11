@@ -19,6 +19,7 @@ import crypto from "node:crypto";
 import { createRecordStore } from "./recordStore.js";
 import { sendAuthMail } from "../auth/mailer.js";
 import { createWochenbericht } from "./opsWochenbericht.js";
+import { pruefeAlarmCore, vorfaelleFortschreiben as vorfaelleFortschreibenCore, ladeVorfaelle as ladeVorfaelleCore } from "./opsAutopilotenAlerts.js";
 
 const TAG_MS = 24 * 60 * 60 * 1000;
 const STUNDE_MS = 60 * 60 * 1000;
@@ -31,17 +32,17 @@ export const AUTOPILOTEN = Object.freeze([
     name: "Qualitätsmessung",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",
     funktionen: [
-      "Läuft täglich um 7:10 und 19:10 Uhr auf dem Mac (cron).",
+      "Läuft täglich um 7:10 und 19:10 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
       "Führt den Messlauf gegen die Prüfsuite aus.",
-      "Schreibt das Protokoll nach ~/Library/Logs/smejj-qualitaetsmessung.log."
+      "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
     ],
-    ort: "Mac (cron)",
-    zeitplan: "täglich 7:10 und 19:10 Uhr",
+    ort: "Zeabur (smejj-autopilot-jobs)",
+    zeitplan: "täglich 7:10 und 19:10 UTC",
     messung: "heartbeat",
     erwartetAlleMs: 12 * STUNDE_MS,
     schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "Am Mac im Terminal ausführen: bash \"$HOME/.local/share/smejj-qualitaet/messlauf.sh\"",
-    stopAnleitung: "Am Mac: crontab -e öffnen und die Zeile mit \"smejj-qualitaetsmessung\" mit einem # davor stilllegen."
+    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/qualitaet mit {\"key\":\"<qualitaetsmessung-Schlüssel>\"}",
+    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
   {
     id: "codeberg-spiegel",
@@ -66,37 +67,35 @@ export const AUTOPILOTEN = Object.freeze([
     name: "Voice-Region-Prüfung",
     kurz: "Prüft täglich, ob Google die Regionsänderung für die Voice-Freischaltung genehmigt hat.",
     funktionen: [
-      "Läuft täglich um 9:04 Uhr als geplanter Claude-Task auf dem Mac.",
+      "Läuft täglich um 9:04 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
       "Prüft den Stand der Regionsänderung für 7alanbest@gmail.com.",
       "Meldet sich, sobald Google genehmigt hat."
     ],
-    ort: "Mac (Claude-Task)",
-    zeitplan: "täglich 9:04 Uhr",
+    ort: "Zeabur (smejj-autopilot-jobs)",
+    zeitplan: "täglich 9:04 UTC",
     messung: "heartbeat",
     erwartetAlleMs: TAG_MS,
     schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "In Claude Code sagen: »Führe den Task voice-region-daily-check jetzt aus.«",
-    stopAnleitung: "In Claude Code sagen: »Schalte den Task voice-region-daily-check aus.«"
+    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/voice-region mit {\"key\":\"<voice-region-check-Schlüssel>\"}",
+    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
   {
     id: "konkurrenz-radar",
     name: "Konkurrenz-Radar",
     kurz: "Durchsucht jeden Montag die öffentlichen Quellen der Konkurrenz nach neuen Funktionen und schlägt Verbesserungen vor.",
     funktionen: [
-      "Läuft jeden Montag um 6:00 UTC als Cloud-Routine (ohne Repo-Zugriff).",
+      "Läuft jeden Montag um 6:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
       "Prüft Release Notes und Tech-Presse von ChatGPT, Gemini, Kimi, Claude, Perplexity, Copilot und Grok.",
       "Erstellt nur bei echten Funden einen Bericht — jeder Vorschlag wartet auf deine Ja/Nein-Entscheidung.",
       "Baut nichts automatisch ein."
     ],
-    ort: "Anthropic-Cloud",
+    ort: "Zeabur (smejj-autopilot-jobs)",
     zeitplan: "montags 6:00 UTC",
-    // Seit Stufe 2 (2026-08-07) meldet sich die Cloud-Routine am Ende jedes
-    // Laufs selbst — auch ein "keine neuen Funde"-Lauf ist ein Erfolg.
     messung: "heartbeat",
     erwartetAlleMs: 7 * TAG_MS,
     schonfristMs: 12 * STUNDE_MS,
-    startAnleitung: "Auf claude.ai/code/routines die Routine »Konkurrenz-Radar (woechentlich)« öffnen und einmalig starten.",
-    stopAnleitung: "Auf claude.ai/code/routines die Routine »Konkurrenz-Radar (woechentlich)« ausschalten."
+    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/konkurrenz-radar mit {\"key\":\"<konkurrenz-radar-Schlüssel>\"}",
+    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
   {
     id: "training-loop",
@@ -663,117 +662,35 @@ let vorfaelle = [];                 // abgeschlossene + offene, juengste zuerst
 const offeneVorfaelle = new Map();  // id -> Vorfall (bis === null)
 
 function vorfaelleFortschreiben(uebersicht, jetztMs, env) {
-  // Seit Nr. 5 (2026-08-09) zaehlt auch GELB als Vorfall: wiederkehrende
-  // Verspaetungen sind das Fruehwarnzeichen, das in einer Nur-Rot-Historie
-  // unsichtbar bliebe. Eskaliert eine Gelb-Phase zu Rot, bleibt es EIN
-  // Vorfall — die Art wird angehoben, der Beginn bleibt der Gelb-Beginn.
-  const problematische = new Map(uebersicht.autopiloten
-    .filter((a) => a.ampel === "rot" || a.ampel === "gelb")
-    .map((a) => [a.id, a]));
-  let geaendert = false;
-
-  for (const [id, a] of problematische) {
-    const offen = offeneVorfaelle.get(id);
-    if (offen) {
-      if (offen.art !== "rot" && a.ampel === "rot") {
-        offen.art = "rot";
-        offen.grund = String(a.ampelGrund || "").slice(0, 200);
-        geaendert = true;
-      }
-      continue;
-    }
-    const vorfall = {
-      id, name: a.name,
-      art: a.ampel,
-      von: new Date(jetztMs).toISOString(),
-      bis: null,
-      grund: String(a.ampelGrund || "").slice(0, 200)
-    };
-    offeneVorfaelle.set(id, vorfall);
-    vorfaelle.unshift(vorfall);
-    geaendert = true;
-  }
-  for (const [id, vorfall] of [...offeneVorfaelle]) {
-    if (problematische.has(id)) continue;
-    vorfall.bis = new Date(jetztMs).toISOString();
-    vorfall.dauerMs = Math.max(0, jetztMs - Date.parse(vorfall.von));
-    offeneVorfaelle.delete(id);
-    geaendert = true;
-  }
-  if (!geaendert) return;
-  vorfaelle = vorfaelle.slice(0, VORFAELLE_MAX);
-  // Ablegen wie die Wartung: gilt sofort im Arbeitsspeicher, die Ablage ist
-  // nur die Neustart-Festigkeit — ein Fehlschlag faellt in der Auskunft auf.
-  ablage.schreib({
-    id: "_vorfaelle",
-    createdAt: new Date(jetztMs).toISOString(),
-    eintraege: vorfaelle
-  }, { env, timeoutMs: 20_000 }).catch((fehler) => {
-    ablageStand.letzterSchreibFehler = String(fehler?.message || fehler).slice(0, 120);
+  return vorfaelleFortschreibenCore(uebersicht, jetztMs, env, {
+    get vorfaelle() { return vorfaelle; },
+    set vorfaelle(v) { vorfaelle = v; },
+    offeneVorfaelle, ablage, ablageStand
   });
 }
 
-/** Beim Start die abgelegten Vorfaelle zurueckholen (Gegenstueck zu ladeWartung). */
 function ladeVorfaelle(datensatz) {
-  if (datensatz?.id !== "_vorfaelle" || !Array.isArray(datensatz.eintraege)) return false;
-  if (!vorfaelle.length) {
-    vorfaelle = datensatz.eintraege.slice(0, VORFAELLE_MAX);
-    for (const v of vorfaelle) if (v && v.bis === null && v.id) offeneVorfaelle.set(v.id, v);
-  }
-  return true;
+  return ladeVorfaelleCore(datensatz, {
+    get vorfaelle() { return vorfaelle; },
+    set vorfaelle(v) { vorfaelle = v; },
+    offeneVorfaelle
+  });
 }
 
-// Stufe 3b: Wer bereits eine Rot-Mail bekommen hat, bekommt keine zweite fuer
-// dieselbe Rot-Phase. Wird der Autopilot wieder gruen/gelb/grau, ist die
-// Episode beendet und ein neues Rot meldet sich wieder.
 const alarmiert = new Set();
 
-/**
- * Ein Pruefdurchlauf der Alarm-Wache: neue Rot-Faelle melden, beendete
- * Episoden vergessen. `sende` ist fuer Tests injizierbar; im Betrieb geht die
- * Mail an die erste Adresse aus SMEJJ_ADMIN_OWNER_EMAILS — dieselbe Quelle,
- * die auch den Adminbereich oeffnet.
- */
 export async function pruefeAlarm({ env = process.env, jetztMs = Date.now(), sende = null } = {}) {
-  const uebersicht = autopilotUebersicht({ jetztMs });
-  // Vorfaelle IMMER fortschreiben — auch wenn keine Mail rausgeht (kein
-  // Empfaenger, schon alarmiert): das Protokoll haengt nicht am Postausgang.
-  vorfaelleFortschreiben(uebersicht, jetztMs, env);
-  const rote = uebersicht.autopiloten.filter((a) => a.ampel === "rot");
-  const roteIds = new Set(rote.map((a) => a.id));
-  for (const id of [...alarmiert]) if (!roteIds.has(id)) alarmiert.delete(id);
-
-  const neue = rote.filter((a) => !alarmiert.has(a.id));
-  if (!neue.length) return { gemeldet: 0 };
-  const empfaenger = String(env.SMEJJ_ADMIN_OWNER_EMAILS || "").split(",")[0].trim();
-  if (!empfaenger) return { gemeldet: 0, hinweis: "kein Empfaenger hinterlegt" };
-
-  const senden = sende || ((nachricht) => sendAuthMail(nachricht, env));
-  let gemeldet = 0;
-  for (const a of neue) {
-    try {
-      await senden({
-        to: empfaenger,
-        subject: `smejj.com Autopilot ROT: ${a.name}`,
-        text: `Der Autopilot "${a.name}" steht auf ROT.\n\n`
-          + `Grund: ${a.ampelGrund}\n`
-          + `Ort: ${a.ort} · Zeitplan: ${a.zeitplan}\n\n`
-          + "Ampel und Bedienungs-Anleitung: https://smejj.com/admin/autopiloten/\n\n"
-          + "Diese Mail kommt einmal je Rot-Phase. Wird der Autopilot wieder gruen "
-          + "und faellt erneut aus, meldet er sich wieder.",
-        art: "autopilot-alarm"
-      });
-      alarmiert.add(a.id);
-      gemeldet += 1;
-    } catch {
-      // Naechster Takt versucht es erneut — ein Mail-Ausfall darf den Alarm
-      // nur verzoegern, nie verschlucken.
-    }
-  }
-  return { gemeldet };
+  return pruefeAlarmCore({
+    autopilotUebersicht, alarmiert,
+    state: {
+      get vorfaelle() { return vorfaelle; },
+      set vorfaelle(v) { vorfaelle = v; },
+      offeneVorfaelle, ablage, ablageStand
+    },
+    env, jetztMs, sende
+  });
 }
 
-/** Stufe 3b: die Alarm-Wache im Takt starten. unref — haelt den Prozess nicht wach. */
 export function starteAlarmWache({ env = process.env, intervallMs = 10 * 60 * 1000 } = {}) {
   const zeitgeber = setInterval(() => { pruefeAlarm({ env }).catch(() => {}); }, intervallMs);
   if (typeof zeitgeber.unref === "function") zeitgeber.unref();

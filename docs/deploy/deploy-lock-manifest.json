@@ -1,10 +1,10 @@
 {
   "lock": "smejj deploy lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-08T21:19:16.517Z",
-  "confirmation": "Freigabe 2026-08-07: Die nachgeschaerften Herzschlag-Wiederholungen (12 Versuche im Minutenabstand, -m 800) in scripts/deploy/codeberg_spiegel_geplant.sh versionieren und den Deploy-Lock darauf neu einfrieren.",
+  "frozenAt": "2026-08-11T16:50:44.742Z",
+  "confirmation": "Freigabe: Neuer Zeabur-Dienst smejj-autopilot-jobs (Betreiber, 2026-08-11)",
   "rule": "Keine Aenderung am Spiegelweg (was gespiegelt wird, ob gespiegelt wird) ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "scripts/deploy/codeberg_spiegel_sync.sh": "a4d872da20cf6f0a3b57ed8b6089ba14b94b55e3517ef7ef74d8d6edfa52e349",
-    "scripts/deploy/codeberg_spiegel_geplant.sh": "ab10388993daebc79f0da34ac8c966a565ffc363cb64137eadaf5c166c1778d4"
+    "scripts/deploy/codeberg_spiegel_geplant.sh": "ed7c96bb9183d04ef122a8c05b8ff574957f1b140fbb507ff1fc0d491abc76d0"
   }
 }

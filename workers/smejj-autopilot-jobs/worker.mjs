@@ -1,45 +1,44 @@
 // smejj.com — Autopilot-Jobs als eigenstaendiger Zeabur-Dauerdienst.
-//
-// WARUM (Betreiber-Freigabe 2026-08-11, docs/approvals/2026-08-11-zeabur-
-// autopilot-jobs.md): Der Mac laesst im Schlaf cron-Laeufe komplett aus.
-// Dieser Dienst wohnt auf dem bezahlten Dauerserver und holt einen verpassten
-// Tageslauf sogar nach einem Neustart nach (istFaellig prueft den Kalendertag,
-// nicht die Minute).
-//
-// ERSTER JOB: Codeberg-Spiegel (taeglich, Standard 11:20 UTC = 4:20 Mac-Zeit).
-// Die Qualitaetsmessung folgt als eigener Schritt.
-//
-// DIESELBEN REGELN WIE BEIM BRUECKEN-WAECHTER: 0.0.0.0 binden (Zeabur erreicht
-// den Dienst sonst nicht), KEIN unref auf dem Takt (der Timer IST der Dienst),
-// jeder Meldeweg verschluckt seine Fehler selbst.
 import http from "node:http";
 import { istFaellig, spiegelLauf, herzschlagSenden, schluesselFuer } from "./spiegelJob.mjs";
+import {
+  istFaelligUtc,
+  istWochenJobFaellig,
+  qualitaetsmessungLauf,
+  voiceRegionCheckLauf,
+  konkurrenzRadarLauf
+} from "./jobs.mjs";
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.SMEJJ_HOST || "0.0.0.0";
 const SPIEGEL_UTC = process.env.SMEJJ_SPIEGEL_UTC || "11:20";
+const QUALITAET_UTC_1 = process.env.SMEJJ_QUALITAET_UTC_1 || "07:10";
+const QUALITAET_UTC_2 = process.env.SMEJJ_QUALITAET_UTC_2 || "19:10";
+const VOICE_REGION_UTC = process.env.SMEJJ_VOICE_REGION_UTC || "09:04";
+const KONKURRENZ_UTC = process.env.SMEJJ_KONKURRENZ_UTC || "06:00";
 const TAKT_MS = 60_000;
 
 const stand = {
   dienst: "smejj-autopilot-jobs",
-  version: "1.0.0",
-  spiegel: {
-    zeitplanUtc: SPIEGEL_UTC,
-    letzterTag: null,        // UTC-Kalendertag des letzten Starts
-    laeuftSeit: null,
-    letzterLauf: null        // { am, ok, meldung, dauerMs, herzschlagHttp }
+  version: "1.1.0",
+  jobs: {
+    spiegel: { zeitplanUtc: SPIEGEL_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
+    qualitaetsmessung: { zeitplanUtc: `${QUALITAET_UTC_1}, ${QUALITAET_UTC_2}`, letzterTag: null, laeuftSeit: null, letzterLauf: null },
+    voiceRegionCheck: { zeitplanUtc: VOICE_REGION_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
+    konkurrenzRadar: { zeitplanUtc: `Mo ${KONKURRENZ_UTC}`, letzterTag: null, laeuftSeit: null, letzterLauf: null }
   }
 };
 
 let spiegelAktiv = false;
+let qualitaetAktiv = false;
+let voiceAktiv = false;
+let konkurrenzAktiv = false;
 
 async function spiegelAusfuehren(ausloeser) {
   if (spiegelAktiv) return { ok: false, meldung: "laeuft bereits" };
   spiegelAktiv = true;
-  stand.spiegel.laeuftSeit = new Date().toISOString();
-  // Der Tag wird VOR dem Lauf gemerkt: auch ein abstuerzender Lauf darf am
-  // selben Tag nicht endlos neu starten (die Ampel meldet den Fehler ohnehin).
-  stand.spiegel.letzterTag = new Date().toISOString().slice(0, 10);
+  stand.jobs.spiegel.laeuftSeit = new Date().toISOString();
+  stand.jobs.spiegel.letzterTag = new Date().toISOString().slice(0, 10);
   console.log(`[autopilot-jobs] Spiegel-Lauf startet (${ausloeser})`);
   try {
     const ergebnis = await spiegelLauf({ log: console.log });
@@ -49,26 +48,90 @@ async function spiegelAusfuehren(ausloeser) {
       meldung: ergebnis.meldung,
       dauerMs: ergebnis.dauerMs
     });
-    stand.spiegel.letzterLauf = {
-      am: new Date().toISOString(),
-      ok: ergebnis.ok,
-      meldung: ergebnis.meldung,
-      dauerMs: ergebnis.dauerMs,
-      herzschlagHttp
-    };
-    console.log(`[autopilot-jobs] Spiegel fertig: ok=${ergebnis.ok} (${ergebnis.meldung}), Herzschlag HTTP ${herzschlagHttp}`);
-    if (!ergebnis.ok) console.log("[autopilot-jobs] Protokoll (Ende): " + String(ergebnis.protokoll || "").slice(-1500));
+    stand.jobs.spiegel.letzterLauf = { am: new Date().toISOString(), ok: ergebnis.ok, meldung: ergebnis.meldung, dauerMs: ergebnis.dauerMs, herzschlagHttp };
     return ergebnis;
   } finally {
     spiegelAktiv = false;
-    stand.spiegel.laeuftSeit = null;
+    stand.jobs.spiegel.laeuftSeit = null;
+  }
+}
+
+async function qualitaetAusfuehren(ausloeser) {
+  if (qualitaetAktiv) return { ok: false, meldung: "laeuft bereits" };
+  qualitaetAktiv = true;
+  stand.jobs.qualitaetsmessung.laeuftSeit = new Date().toISOString();
+  stand.jobs.qualitaetsmessung.letzterTag = new Date().toISOString().slice(0, 10);
+  console.log(`[autopilot-jobs] Qualitätsmessung startet (${ausloeser})`);
+  try {
+    const ergebnis = await qualitaetsmessungLauf({ log: console.log });
+    stand.jobs.qualitaetsmessung.letzterLauf = { am: new Date().toISOString(), ...ergebnis };
+    return ergebnis;
+  } finally {
+    qualitaetAktiv = false;
+    stand.jobs.qualitaetsmessung.laeuftSeit = null;
+  }
+}
+
+async function voiceRegionAusfuehren(ausloeser) {
+  if (voiceAktiv) return { ok: false, meldung: "laeuft bereits" };
+  voiceAktiv = true;
+  stand.jobs.voiceRegionCheck.laeuftSeit = new Date().toISOString();
+  stand.jobs.voiceRegionCheck.letzterTag = new Date().toISOString().slice(0, 10);
+  console.log(`[autopilot-jobs] Voice-Region-Prüfung startet (${ausloeser})`);
+  try {
+    const ergebnis = await voiceRegionCheckLauf({ log: console.log });
+    stand.jobs.voiceRegionCheck.letzterLauf = { am: new Date().toISOString(), ...ergebnis };
+    return ergebnis;
+  } finally {
+    voiceAktiv = false;
+    stand.jobs.voiceRegionCheck.laeuftSeit = null;
+  }
+}
+
+async function konkurrenzRadarAusfuehren(ausloeser) {
+  if (konkurrenzAktiv) return { ok: false, meldung: "laeuft bereits" };
+  konkurrenzAktiv = true;
+  stand.jobs.konkurrenzRadar.laeuftSeit = new Date().toISOString();
+  stand.jobs.konkurrenzRadar.letzterTag = new Date().toISOString().slice(0, 10);
+  console.log(`[autopilot-jobs] Konkurrenz-Radar startet (${ausloeser})`);
+  try {
+    const ergebnis = await konkurrenzRadarLauf({ log: console.log });
+    stand.jobs.konkurrenzRadar.letzterLauf = { am: new Date().toISOString(), ...ergebnis };
+    return ergebnis;
+  } finally {
+    konkurrenzAktiv = false;
+    stand.jobs.konkurrenzRadar.laeuftSeit = null;
   }
 }
 
 function takt() {
-  if (istFaellig({ jetztMs: Date.now(), uhrzeitUtc: SPIEGEL_UTC, letzterTag: stand.spiegel.letzterTag })) {
+  const jetztMs = Date.now();
+  if (istFaellig({ jetztMs, uhrzeitUtc: SPIEGEL_UTC, letzterTag: stand.jobs.spiegel.letzterTag })) {
     spiegelAusfuehren("zeitplan").catch(() => {});
   }
+  if (istFaelligUtc({ jetztMs, uhrzeitUtc: QUALITAET_UTC_1, letzterTag: stand.jobs.qualitaetsmessung.letzterTag }) ||
+      istFaelligUtc({ jetztMs, uhrzeitUtc: QUALITAET_UTC_2, letzterTag: stand.jobs.qualitaetsmessung.letzterTag })) {
+    qualitaetAusfuehren("zeitplan").catch(() => {});
+  }
+  if (istFaelligUtc({ jetztMs, uhrzeitUtc: VOICE_REGION_UTC, letzterTag: stand.jobs.voiceRegionCheck.letzterTag })) {
+    voiceRegionAusfuehren("zeitplan").catch(() => {});
+  }
+  if (istWochenJobFaellig({ jetztMs, wochentagUtc: 1, uhrzeitUtc: KONKURRENZ_UTC, letzterTag: stand.jobs.konkurrenzRadar.letzterTag })) {
+    konkurrenzRadarAusfuehren("zeitplan").catch(() => {});
+  }
+}
+
+function extrahiereSchluesselUndAusfuehren(req, res, apId, ausfuehrenFn, antwort) {
+  let koerper = "";
+  req.on("data", (stueck) => { koerper += stueck; if (koerper.length > 4096) req.destroy(); });
+  req.on("end", async () => {
+    let daten = {};
+    try { daten = JSON.parse(koerper || "{}"); } catch { /* leer */ }
+    const erwartet = schluesselFuer(apId);
+    if (!erwartet || daten.key !== erwartet) return antwort(403, { ok: false, error: "key_invalid" });
+    ausfuehrenFn("von-hand").catch(() => {});
+    antwort(202, { ok: true, gestartet: true });
+  });
 }
 
 const server = http.createServer((req, res) => {
@@ -78,28 +141,18 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify(koerper, null, 2));
   };
   if (pfad === "/health") return antwort(200, { ok: true, ...stand });
-  if (pfad === "/lauf/spiegel" && req.method === "POST") {
-    // Von-Hand-Start, abgesichert mit demselben Schluessel wie der Herzschlag —
-    // wer den kennt, darf ohnehin die Ampel dieses Autopiloten faerben.
-    let koerper = "";
-    req.on("data", (stueck) => { koerper += stueck; if (koerper.length > 4096) req.destroy(); });
-    req.on("end", async () => {
-      let daten = {};
-      try { daten = JSON.parse(koerper || "{}"); } catch { /* leer */ }
-      const erwartet = schluesselFuer("codeberg-spiegel");
-      if (!erwartet || daten.key !== erwartet) return antwort(403, { ok: false, error: "key_invalid" });
-      if (spiegelAktiv) return antwort(409, { ok: false, error: "laeuft_bereits" });
-      spiegelAusfuehren("von-hand").catch(() => {});
-      antwort(202, { ok: true, gestartet: true });
-    });
-    return;
+  if (req.method === "POST") {
+    if (pfad === "/lauf/spiegel") return extrahiereSchluesselUndAusfuehren(req, res, "codeberg-spiegel", spiegelAusfuehren, antwort);
+    if (pfad === "/lauf/qualitaet") return extrahiereSchluesselUndAusfuehren(req, res, "qualitaetsmessung", qualitaetAusfuehren, antwort);
+    if (pfad === "/lauf/voice-region") return extrahiereSchluesselUndAusfuehren(req, res, "voice-region-check", voiceRegionAusfuehren, antwort);
+    if (pfad === "/lauf/konkurrenz-radar") return extrahiereSchluesselUndAusfuehren(req, res, "konkurrenz-radar", konkurrenzRadarAusfuehren, antwort);
   }
-  antwort(404, { ok: false, pfade: ["/health", "POST /lauf/spiegel"] });
+  antwort(404, { ok: false, pfade: ["/health", "POST /lauf/spiegel", "POST /lauf/qualitaet", "POST /lauf/voice-region", "POST /lauf/konkurrenz-radar"] });
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`[autopilot-jobs] hoert auf http://${HOST}:${PORT} — Spiegel taeglich ${SPIEGEL_UTC} UTC`);
-  takt(); // Neustart nach der Uhrzeit? Dann sofort nachholen.
+  console.log(`[autopilot-jobs] hoert auf http://${HOST}:${PORT} — Zeabur Autopilot Jobs active`);
+  takt();
 });
 
 setInterval(takt, TAKT_MS);

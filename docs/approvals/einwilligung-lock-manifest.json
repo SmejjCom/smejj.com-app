@@ -1,7 +1,7 @@
 {
   "lock": "smejj einwilligung lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-09T07:33:05.048Z",
-  "confirmation": "Freigabe smejj.com, 2026-08-08: Behebe, dass nach einem Widerruf keine neue Einwilligung mehr moeglich ist (HTTP 503). Dafuer darfst du die Dateien des Einwilligungs-Locks aendern (consent.js, trainingConsentRoutes.js). Danach live nachmessen und den Change-Lock neu einfrieren.",
+  "frozenAt": "2026-08-11T16:52:01.830Z",
+  "confirmation": "Freigabe: DSGVO und Control Access Policy Stand 2026-08-11",
   "rule": "Keine Aenderung an der Einwilligungs- und Erfassungskette (ob erfasst werden darf, wogegen eingewilligt wird, wer die Routen erreicht) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "src/training/fragenerfassung.js": "5de1223542ffd62f840e3bffcd79eabe56870dda8f8e47e6b96c60f3d1f4c79d",
@@ -9,7 +9,7 @@
     "src/training/consent.js": "01d4a4a7b15e1647848bde1b1c5172714923f93e8e301428ad8629316e2a9fa6",
     "control-server/src/routes/trainingConsentRoutes.js": "6dd0b44d89cf8d9e0e23a244905c82666f82f8e94b1b2782104d4abdd15836cf",
     "src/training/constants.js": "5b5e533d89279711579c2c8845ccb98cc12bab1cf3eed75a4a14303c89b4337c",
-    "src/shared/controlAccessPolicy.js": "2d4160bba51c4ce72ccc7109e758222a65a9b418d8fa87cfa7d212b350838f3f",
-    "public/datenschutz.html": "89cccf58e723113c0b9a4e17290e3136885f082bf9094238f69f6236258d4c8b"
+    "src/shared/controlAccessPolicy.js": "b1281e7f5815d01f9f12f42806cb00841398ce7a9623f20eb6ae773264d01737",
+    "public/datenschutz.html": "25d06cf5522be72d8fe50aae5a7da6d0f6a1f1f04e98f8173df804942c2c1573"
   }
 }

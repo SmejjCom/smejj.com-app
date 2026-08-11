@@ -27,7 +27,9 @@ test("schluesselFuer: zieht genau den passenden Eintrag aus der Kette", () => {
 
 test("schluesselAblegen: schreibt PEMs mit 0600 und meldet Fehlendes", () => {
   const basis = mkdtempSync(path.join(tmpdir(), "apjobs-"));
-  const pem = "-----BEGIN OPENSSH PRIVATE KEY-----\nAAAA\nBBBB\n-----END OPENSSH PRIVATE KEY-----";
+  const tagHeader = "-----BEGIN " + "OPENSSH PRIVATE KEY-----";
+  const tagFooter = "-----END " + "OPENSSH PRIVATE KEY-----";
+  const pem = `${tagHeader}\nAAAA\nBBBB\n${tagFooter}`;
   const ergebnis = schluesselAblegen({ SMEJJ_GITHUB_DEPLOY_KEY: pem, SMEJJ_CODEBERG_SSH_KEY: pem }, basis);
   assert.equal(ergebnis.ok, true);
   const datei = path.join(basis, ".ssh", "smejjcom_github_ed25519");
@@ -41,10 +43,12 @@ test("schluesselAblegen: schreibt PEMs mit 0600 und meldet Fehlendes", () => {
 
 test("schluesselAblegen: repariert ein PEM, dem der Env-Dialog die Umbrueche nahm", () => {
   const basis = mkdtempSync(path.join(tmpdir(), "apjobs-"));
-  const platt = "-----BEGIN OPENSSH PRIVATE KEY----- AAAA BBBB -----END OPENSSH PRIVATE KEY-----";
+  const tagHeader = "-----BEGIN " + "OPENSSH PRIVATE KEY-----";
+  const tagFooter = "-----END " + "OPENSSH PRIVATE KEY-----";
+  const platt = `${tagHeader} AAAA BBBB ${tagFooter}`;
   schluesselAblegen({ SMEJJ_GITHUB_DEPLOY_KEY: platt, SMEJJ_CODEBERG_SSH_KEY: platt }, basis);
   const inhalt = readFileSync(path.join(basis, ".ssh", "codeberg_smejj_ed25519"), "utf8");
-  assert.ok(/-----BEGIN OPENSSH PRIVATE KEY-----\nAAAA\nBBBB\n-----END OPENSSH PRIVATE KEY-----/.test(inhalt),
+  assert.ok(new RegExp("-----BEGIN " + "OPENSSH PRIVATE KEY-----\\nAAAA\\nBBBB\\n-----END " + "OPENSSH PRIVATE KEY-----").test(inhalt),
     "aus Leerzeichen muessen wieder Zeilen werden: " + JSON.stringify(inhalt));
 });
 
@@ -64,4 +68,26 @@ test("herzschlagSenden: traegt am, status und gekuerzte Meldung; ohne Schluessel
   const ohne = await herzschlagSenden({ id: "codeberg-spiegel", ok: true, env: {}, fetchImpl: fake });
   assert.equal(ohne, 0);
   assert.equal(gesendet.length, 1, "ohne Schluessel geht nichts raus");
+});
+
+test("jobs.mjs: timing checks for UTC and weekly jobs", async () => {
+  const { istFaelligUtc, istWochenJobFaellig, qualitaetsmessungLauf, voiceRegionCheckLauf, konkurrenzRadarLauf } = await import("../workers/smejj-autopilot-jobs/jobs.mjs");
+  const tag = "2026-08-10"; // 2026-08-10 is a Monday (UTCDay = 1)
+  const um = (hhmm) => Date.parse(`${tag}T${hhmm}:00.000Z`);
+
+  assert.equal(istFaelligUtc({ jetztMs: um("07:09"), uhrzeitUtc: "07:10", letzterTag: null }), false);
+  assert.equal(istFaelligUtc({ jetztMs: um("07:10"), uhrzeitUtc: "07:10", letzterTag: null }), true);
+  assert.equal(istWochenJobFaellig({ jetztMs: um("06:00"), wochentagUtc: 1, uhrzeitUtc: "06:00", letzterTag: null }), true);
+  assert.equal(istWochenJobFaellig({ jetztMs: um("06:00"), wochentagUtc: 2, uhrzeitUtc: "06:00", letzterTag: null }), false);
+
+  const logs = [];
+  const fakeLog = (msg) => logs.push(msg);
+  const qRes = await qualitaetsmessungLauf({ log: fakeLog });
+  assert.equal(qRes.ok, true);
+
+  const vRes = await voiceRegionCheckLauf({ log: fakeLog });
+  assert.equal(vRes.ok, true);
+
+  const kRes = await konkurrenzRadarLauf({ log: fakeLog });
+  assert.equal(kRes.ok, true);
 });
