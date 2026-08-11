@@ -25,6 +25,7 @@ import { experimentUebersicht } from "../admin/opsExperimente.js";
 import { emailUebersicht } from "../admin/opsEmail.js";
 import { analytikUebersicht } from "../admin/opsAnalytik.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
+import { cockpitUebersicht } from "../admin/opsCockpit.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -37,7 +38,7 @@ const gate = createRateLimiter({ capacity: 60, refillPerSec: 1, maxKeys: 5_000 }
 const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
-  "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
+  "cockpit", "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
   "experimente", "email", "analytik", "autopiloten"
 ]);
 
@@ -67,7 +68,8 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
 
   const bereich = url.pathname.slice(PREFIX.length).replace(/^\//, "");
   try {
-    if (bereich === "" ) return privateJson(res, 200, { ok: true, bereiche: BEREICHE }), true;
+    if (bereich === "") return privateJson(res, 200, { ok: true, bereiche: BEREICHE }), true;
+    if (bereich === "cockpit") return privateJson(res, 200, await cockpitUebersicht({ env })), true;
     if (bereich === "modelle") return privateJson(res, 200, modellUebersicht({ env })), true;
     if (bereich === "jobs") return privateJson(res, 200, jobUebersicht({ limit: grenze(url) })), true;
     if (bereich === "worker") return privateJson(res, 200, await workerUebersicht({ env })), true;
