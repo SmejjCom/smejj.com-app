@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-11T14:34:20.069Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-11 per Auswahlkarte: Jetzt deployen — Vision-Modell qwen3.6-27b (Llama-4 bei Groq abgeschaltet), v127",
+  "frozenAt": "2026-08-11T20:48:50.256Z",
+  "confirmation": "Ich logge mich mit Google Login, und ständig lockt er mich aus. Kannst du so einstellen, wenn man hat einmal eingeloggt soll für immer eingeloggt bleiben mit Google Login egal andere Lookin spielt keine Rolle. Soll bei keine ausgeloggt sein. - Bestaetigung: Ja",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "65435eddbd0a154777805fe836ffc8ce9858bddd19e31f322c47b55de373b436",
     "public/auth/register/index.html": "2a73cdf79edd7ec8ffda01736c729f3d29f7ebe7506b399922d7642d1bab7ba6",
-    "public/auth/auth-page.js": "e04b641a2ca787d6776912e39e723126a6ca058ea44f2e5c8c8af56ed9dec5e0",
+    "public/auth/auth-page.js": "9d2ae93d78c901c10fdee2bdd40882cbc98c023bc32f3d1585de5a66809ce93a",
     "public/auth/auth.css": "582576014a5a9177bc7bff9e9df9622fa94a411e3b428047bd14a238179341c0",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "c4af05031dadfcd5a7e02d768955ebc2039de9ee8fbea847e9701e31a0c580ef",

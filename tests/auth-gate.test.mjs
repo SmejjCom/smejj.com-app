@@ -162,15 +162,27 @@ test("ein abgelehntes Token wird entfernt und fuehrt zur Anmeldung", async () =>
     "die Anmeldeseite muss den Grund erfahren — eine wortlose Umleitung wirkt wie ein Fehler");
 });
 
-test("ein gueltiges Token bleibt unangetastet", async () => {
+test("ein gueltiges Token bleibt unangetastet und wird bei frischem Token aktualisiert", async () => {
   const { win, speicher } = fensterMit({ token: "gutes.token" });
   const ergebnis = await verifyStoredSession(win, {
-    fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" } }),
+    fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" }, accessToken: "frisches.token" }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "gueltig");
+  assert.equal(speicher.get("smejj.auth.accessToken.v1"), "frisches.token");
+  assert.equal(win.location.ersetztDurch, undefined, "niemand darf grundlos umgeleitet werden");
+});
+
+test("Google- und permanente Sitzungen werden nicht eigenmaechtig abgemeldet", async () => {
+  const { win, speicher } = fensterMit({ token: "google.token" });
+  speicher.set("smejj.session.v1", JSON.stringify({ authenticated: true, method: "google", permanent: true }));
+  const ergebnis = await verifyStoredSession(win, {
+    fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });
   assert.equal(ergebnis, "gueltig");
   assert.equal(speicher.has("smejj.auth.accessToken.v1"), true);
-  assert.equal(win.location.ersetztDurch, undefined, "niemand darf grundlos umgeleitet werden");
+  assert.equal(win.location.ersetztDurch, undefined, "Google-Nutzer duerfen nie ungewollt ausgeloggt werden");
 });
 
 test("OFFLINE MELDET NIEMANDEN AB — die wichtigste Regel", async () => {

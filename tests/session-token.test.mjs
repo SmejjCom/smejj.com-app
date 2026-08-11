@@ -11,6 +11,15 @@ test("session token is signed, expiring and carries only normalized user data", 
   assert.equal(bearerSessionToken({ authorization: `Bearer ${token}` }), token);
 });
 
+test("Google and permanent session tokens have 10-year permanent lifespan", () => {
+  const token = issueSessionToken({ secret: "secret", user: { email: "user@gmail.com", method: "google", permanent: "true" }, nowMs: 1_000 });
+  const fiveYearsMs = 5 * 365 * 24 * 60 * 60 * 1000;
+  const verified = verifySessionToken(token, { secret: "secret", nowMs: 1_000 + fiveYearsMs });
+  assert.equal(verified?.email, "user@gmail.com");
+  assert.equal(verified?.method, "google");
+  assert.equal(verified?.permanent, "true");
+});
+
 test("Google auth state remains signed, expiring and tamper-evident after modularization", () => {
   const secret = "test-google-state-secret";
   const state = signGoogleAuthState({ nonce: "nonce_1", exp: 20_000 }, secret);

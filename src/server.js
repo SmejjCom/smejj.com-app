@@ -741,7 +741,8 @@ function serializeSessionCookie(user) {
   // bekommt eine Nicht-E-Mail-Sitzung ihre sid und einen Registry-Eintrag —
   // damit auch Google/Passkey/GitHub/Magic fern-widerrufbar werden.
   ensureRegistrySid(user);
-  return `smejj_session=${serializeSessionToken(user)}; Path=/; HttpOnly; Secure; SameSite=${SESSION_COOKIE_SAMESITE}; Max-Age=604800`;
+  const maxAge = user?.permanent || user?.method === "google" ? 315360000 : 604800;
+  return `smejj_session=${serializeSessionToken(user)}; Path=/; HttpOnly; Secure; SameSite=${SESSION_COOKIE_SAMESITE}; Max-Age=${maxAge}`;
 }
 
 // H2 (Flag SMEJJ_SESSION_REGISTRY): vergibt einer frisch angemeldeten
@@ -783,6 +784,7 @@ function serializeSessionToken(user) {
 // Arten -> keine bestehende Sitzung bricht. Flag aus = altes Verhalten (Bearer =
 // Langzeit-Token), damit ist der Rollback ein einziges Env-Flag.
 function serializeAccessToken(user) {
+  if (user?.permanent || user?.method === "google") return serializeSessionToken(user);
   return SHORT_ACCESS_TOKEN
     ? issueAccessToken({ secret: config.sessionSecret, user })
     : serializeSessionToken(user);

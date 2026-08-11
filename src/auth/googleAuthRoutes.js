@@ -43,7 +43,9 @@ export function createGoogleAuthHandlers({
       email,
       name: String(payload.name || email),
       picture: String(payload.picture || ""),
-      sub: String(payload.sub || "")
+      sub: String(payload.sub || ""),
+      method: "google",
+      permanent: "true"
     };
     const headers = {
       ...SECURITY_HEADERS,

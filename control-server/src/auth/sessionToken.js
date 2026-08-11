@@ -1,10 +1,8 @@
 import crypto from "node:crypto";
 
-// 180 Tage statt 7 (Freigabe C des Betreibers, 2026-08-05: "eingeloggt bleiben
-// bis zur manuellen Abmeldung"). Die Dauer allein reicht nicht — /api/auth/me
-// gibt zusaetzlich bei jeder Nutzung ein frisches Token zurueck (gleitende
-// Verlaengerung); nur wer 180 Tage GAR NICHT kommt, muss sich neu anmelden.
-// Abmelden widerruft serverseitig (E-Mail-Sitzungen) bzw. loescht das Token.
+// 180 Tage Standard-TTL, 10 Jahre fuer dauerhafte Sitzungen (Google/Permanent,
+// Freigabe Betreiber 2026-08-11: "dauerhaft fuer immer eingeloggt bleiben").
+const PERMANENT_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 const MAX_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
 // Kurzlebiges, eng gescoptes Access-Token fuer Cross-Origin-Bridge-Aufrufe
@@ -25,11 +23,15 @@ export function issueSessionToken({ secret, user, nowMs = Date.now(), ttlMs = MA
   if (!String(secret || "")) throw new Error("session_token_secret_missing");
   const safeUser = normalizeUser(user);
   if (!safeUser) throw new Error("session_token_user_invalid");
+  const isPermanent = safeUser.permanent === "true" || safeUser.permanent === true || safeUser.method === "google";
+  const defaultTtl = isPermanent ? PERMANENT_TTL_MS : MAX_TTL_MS;
+  const effectiveTtl = Number(ttlMs) && Number(ttlMs) !== MAX_TTL_MS ? Number(ttlMs) : defaultTtl;
+  const maxLimit = isPermanent ? PERMANENT_TTL_MS : MAX_TTL_MS;
   const payload = Buffer.from(JSON.stringify({
     version: 1,
     user: safeUser,
     issuedAt: nowMs,
-    expiresAt: nowMs + Math.min(MAX_TTL_MS, Math.max(60_000, Number(ttlMs) || MAX_TTL_MS))
+    expiresAt: nowMs + Math.min(maxLimit, Math.max(60_000, effectiveTtl))
   })).toString("base64url");
   return `${payload}.${sign(secret, payload)}`;
 }
@@ -55,7 +57,7 @@ export function bearerSessionToken(headers = {}) {
 function normalizeUser(value) {
   if (!value || typeof value !== "object") return null;
   const user = {};
-  for (const key of ["userId", "email", "name", "method", "sub", "picture", "sid", "kind"]) {
+  for (const key of ["userId", "email", "name", "method", "sub", "picture", "sid", "kind", "permanent"]) {
     const text = String(value[key] || "").trim();
     if (text) user[key] = text.slice(0, key === "picture" ? 500 : 200);
   }
