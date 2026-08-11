@@ -144,18 +144,6 @@ async function refreshSession() {
     const data = await response.json();
     if (data.authenticated && data.user) {
       if (data.accessToken) setToken(data.accessToken);
-      // Wer schon angemeldet ist, hat auf der Anmeldeseite nichts zu suchen:
-      // sofort in die App (bzw. zum ?next=-Ziel), so machen es claude.ai und
-      // Co. Stehen bleibt die Seite nur fuer echte Aufgaben-Links (E-Mail-
-      // Bestaetigung, Passwort-Reset) und auf der Registrierungsseite.
-      // replace(): die Anmeldeseite gehoert nicht in den Zurueck-Verlauf,
-      // sonst klemmt der Zurueck-Knopf in einer Umleitungsschleife.
-      const params = new URLSearchParams(window.location.search);
-      const aufgabe = params.get("verify") || params.get("reset") || params.get("abgelaufen");
-      if (mode === "login" && !aufgabe) {
-        window.location.replace(nextTarget());
-        return;
-      }
       // Bei bestehender Sitzung fuehrt ein deutlicher Knopf zurueck in die App;
       // die Statuszeile bleibt nur als Rueckfallebene, falls der Block fehlt.
       if (!showSignedIn(data.user)) {
