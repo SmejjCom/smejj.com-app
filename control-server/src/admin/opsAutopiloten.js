@@ -163,8 +163,11 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
       dpoStatus: "active_24_7",
       selfPlayEnabled: true,
       userFlywheelActive: true,
+      prmStepRewardActive: true,
+      crossModelDistillationActive: true,
+      evolutionaryMutationActive: true,
       benchmarkPassRate: 1.0,
-      activeAutopilots: 19,
+      activeAutopilots: 22,
       activeLiveModel: "smejj 1.0",
       shadowBetaModel: "smejj 1.1-beta"
     },

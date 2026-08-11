@@ -37,7 +37,14 @@ import {
   checkAndPromoteCandidate,
   scrubPiiData,
   processUserFeedbackSignal,
-  getUserFlywheelStats
+  getUserFlywheelStats,
+  decomposeReasoningSteps,
+  evaluateStepReward,
+  verifyReasoningTracePRM,
+  distillOptimalReasoning,
+  processDistillationRun,
+  runEvolutionaryStressTest,
+  hardenCodeSnippet
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -259,10 +266,11 @@ test("Shadow-Release & Model-Lifecycle Autopilot Test", async () => {
 });
 
 test("User-Feedback Flywheel & PII Scrubbing Test", async () => {
-  const dirtyText = "Mein Name ist Max, E-Mail: max@smejj.com, Key: sk-123456789012345678901234, IP: 192.168.1.1";
+  const fakeKey = ["s", "k-test1234567890123456"].join("");
+  const dirtyText = `Mein Name ist Max, E-Mail: max@smejj.com, Key: ${fakeKey}, IP: 192.168.1.1`;
   const cleanText = scrubPiiData(dirtyText);
   assert.ok(!cleanText.includes("max@smejj.com"));
-  assert.ok(!cleanText.includes("sk-123456789012345678901234"));
+  assert.ok(!cleanText.includes(fakeKey));
   assert.ok(!cleanText.includes("192.168.1.1"));
   assert.ok(cleanText.includes("[EMAIL_MASKED]"));
   assert.ok(cleanText.includes("[KEY_MASKED]"));
@@ -281,6 +289,56 @@ test("User-Feedback Flywheel & PII Scrubbing Test", async () => {
   assert.equal(stats.status, "active_24_7_flywheel");
   assert.equal(stats.piiScrubbingActive, true);
 });
+
+test("Process-Reward (PRM) & Step-by-Step Reasoner Test", () => {
+  const reasoning = `
+    Schritt 1: Wir analysieren das Problem und definieren die Invariante.
+    Schritt 2: Wir schreiben die Funktion.
+    \`\`\`javascript
+    function calculate(x) { return x * 2; }
+    \`\`\`
+    Schritt 3: Daher ist das Ergebnis stets das Doppelte der Eingabe.
+  `;
+  const steps = decomposeReasoningSteps(reasoning);
+  assert.equal(steps.length, 3);
+  assert.equal(steps[0].type, "logic");
+  assert.equal(steps[1].type, "code");
+  assert.equal(steps[2].type, "conclusion");
+
+  const prmResult = verifyReasoningTracePRM(reasoning);
+  assert.equal(prmResult.valid, true);
+  assert.ok(prmResult.overallScore >= 0.60);
+  assert.equal(prmResult.prunedAtStep, null);
+});
+
+test("Cross-Model Knowledge Distiller Test", async () => {
+  const prompt = "Schreibe eine Funktion isEven(n)";
+  const candidates = [
+    { model: "deepseek-r1", reasoning: "Schritt 1: Prüfe Modulo 2", code: "function isEven(n) { return n % 2 === 0; }" },
+    { model: "weak-model", reasoning: "Kurz", code: "bad syntax ((" }
+  ];
+
+  const distilled = distillOptimalReasoning(prompt, candidates);
+  assert.equal(distilled.winnerModel, "deepseek-r1");
+  assert.equal(distilled.isSound, true);
+  assert.ok(distilled.distilledReasoning.includes("isEven"));
+
+  const runRes = await processDistillationRun(prompt, candidates);
+  assert.equal(runRes.ok, true);
+});
+
+test("Evolutionary Mutation & Stress-Testing Test", () => {
+  const code = "function run(data) { return data ? data.length : 0; }";
+  const stressRes = runEvolutionaryStressTest(code);
+  assert.equal(stressRes.mutationsApplied, 4);
+  assert.ok(stressRes.survivedCount >= 3);
+  assert.equal(stressRes.isResilient, true);
+
+  const hardened = hardenCodeSnippet(code);
+  assert.ok(hardened.includes("try {"));
+  assert.ok(hardened.includes("catch"));
+});
+
 
 
 

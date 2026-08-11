@@ -331,5 +331,56 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 30 * 60 * 1000,
     startAnleitung: "Läuft kontinuierlich im Hintergrund bei jedem Chat-Event.",
     stopAnleitung: "Über Telemetrie- und DSGVO-Einstellungen steuerbar."
+  },
+  {
+    id: "process-reward",
+    name: "Process-Reward & Step-by-Step Reasoner Autopilot",
+    kurz: "Bewertet jeden einzelnen Gedankenschritt (PRM) und bricht fehlerhafte Denkpfade sofort ab.",
+    funktionen: [
+      "Zerlegt Denkketten in atomare Logik- und Code-Schritte.",
+      "Berechnet pro Schritt einen Verifikations- und Zuverlässigkeits-Score.",
+      "Implementiert MCTS-Branch-Pruning für mathematisch fehlerfreie Ausgaben."
+    ],
+    ort: "Control Server (Reasoning Engine)",
+    zeitplan: "24/7 Dauerbetrieb (Inferenz & Training)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Aktiviert bei tiefgründigen Reasoning- und Mathematik-Aufgaben.",
+    stopAnleitung: "Über PRM-Policy konfigurierbar."
+  },
+  {
+    id: "knowledge-distiller",
+    name: "Cross-Model Knowledge Distiller Autopilot",
+    kurz: "Destilliert komplexe Denk- und Lösungsstrukturen weltweit führender Modelle in smejj 2.0 Gewichte.",
+    funktionen: [
+      "Vergleicht Multi-Modell-Lösungsansätze gegen Sandbox-Compiler-Beweise.",
+      "Extrahiert hochdichte Lösungs-Archetypen für das 24/7 LoRA-Training.",
+      "Persistiert bereinigte Destillations-Datensätze auf IDrive e2 S3 Storage."
+    ],
+    ort: "Control Server (Distillation Engine)",
+    zeitplan: "24/7 Dauerbetrieb (Hintergrund-Takt)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Führt kontinuierliche Destillations-Läufe im Hintergrund aus.",
+    stopAnleitung: "Über Distillation-Flag steuerbar."
+  },
+  {
+    id: "evolutionary-mutation",
+    name: "Evolutionary Mutation & Stress-Testing Autopilot",
+    kurz: "Unterzieht generierten Code aggressiven evolutionären Mutationen und Randfall-Stresstests.",
+    funktionen: [
+      "Injeziert Boundary-Werte, leere Collections und Race-Condition-Stresstests.",
+      "Testet Code-Resilienz automatisch in der isolierten Node-Sandbox.",
+      "Generiert proaktiv gehärtete Defensive-Code-Wrapper."
+    ],
+    ort: "Control Server (Genetic QA)",
+    zeitplan: "24/7 Dauerbetrieb (QA & Training)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Läuft als automatischer Stresstest vor jeder Code-Persistierung.",
+    stopAnleitung: "Über Mutation-QA Flag steuerbar."
   }
 ]);

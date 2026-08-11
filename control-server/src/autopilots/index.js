@@ -14,3 +14,6 @@ export * from "./bugPredictorAutopilot.js";
 export * from "./syntheticTaskGenerator.js";
 export * from "./modelLifecycleAutopilot.js";
 export * from "./userFeedbackFlywheelAutopilot.js";
+export * from "./processRewardAutopilot.js";
+export * from "./knowledgeDistillerAutopilot.js";
+export * from "./evolutionaryMutationAutopilot.js";
