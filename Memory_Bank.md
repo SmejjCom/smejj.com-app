@@ -5,6 +5,16 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-11] DAUERHAFTER GOOGLE-LOGIN & SLIDING TOKEN RENEWAL (job_google_login_permanent_20260811)
+
+Capsule: `task-capsules/2026/08/job_google_login_permanent_20260811/capsule.md`.
+Freigabe Betreiber 2026-08-11: "einmal eingeloggt soll fuer immer eingeloggt bleiben mit Google Login".
+Live: `smejj-shell-v276` auf `https://smejj.com`.
+- **Dauerhafter Google-Login:** 10 Jahre TTL (`PERMANENT_TTL_MS`) fuer Google- und Dauer-Sitzungen in `sessionToken.js`, `googleAuthRoutes.js` und `server.js`.
+- **Gleitende Verlaengerung (Sliding Token Renewal):** `auth-gate.js` und `auth-page.js` uebernehmen frische Tokens von `/api/auth/me` automatisch in `localStorage`.
+- **Schutz vor Auto-Logout:** `auth-gate.js` wirft Google-/Dauer-Sitzungen niemals eigenmaechtig heraus. `google-login.js` speichert `accessToken` direkt beim Login.
+- **Verifikation:** 1904 Tests bestanden (`npm test`, `check:all`), `check:guidelines` gruen, Live-Deployment auf GitHub Pages erfolgreich verifiziert (TTFB 127-155ms).
+
 ### [2026-08-01] PROJEKTWISSEN IM PROMPT: +7,9 PUNKTE — ABER NUR ALS AUSNAHME (job_rag_projektwissen_20260801)
 
 Volltext: [docs/memory/Memory_Bank_2026-08-01_rag_projektwissen.md](docs/memory/Memory_Bank_2026-08-01_rag_projektwissen.md).
@@ -730,39 +740,9 @@ Volltext ausgelagert nach
 [docs/memory/Memory_Bank_2026-08-05_punkt2_banner.md](docs/memory/Memory_Bank_2026-08-05_punkt2_banner.md).
 
 ## 2026-08-05 — Die Suchmaschine luegt, nicht der Filter (job_websuche_komposita_20260805)
-Volltext: [task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md](task-capsules/2026/08/job_websuche_komposita_20260805/capsule.md).
-- **Bing liefert dem Rechenzentrum Attrappen: vom Server 9 von 9 frischen
-  Suchen** (3 von 12 Fragen hatten Treffer, alle drei aus dem Zwischenspeicher).
-  Die SERP ist echt (Titel, Suchfeld, 10x `b_algo`), nur der Inhalt ist
-  Fremdmuell — auf "Einwohnerzahl Wien 2024" kamen Justin-Bieber-Songtexte auf
-  Chinesisch. Englische Fragen scheitern genauso. `&format=rss` hilft nicht.
-- **MESSUNGEN AUS DIESEM NETZ SIND ANGREIFBAR:** Fortinet-Firewall faengt TLS ab
-  (blockt sogar smejj.com mit 403). Nur `/api/search/web` auf dem Server zaehlt.
-- **MEINE DIAGNOSE WAR FALSCH und ich habe sie ausgeliefert, bevor ich sie an
-  echten Daten geprueft habe.** Ich schloss von `kept 0` auf einen zu strengen
-  Filter, statt die 10 verworfenen Treffer auszudrucken. A/B an identischen
-  Rohtreffern: 0 Unterschiede von 8. **MERKREGEL: erst Rohdaten ausdrucken,
-  dann erklaeren.** Die Antwort stand zudem schon im Kopf von
-  `searchKeyProvider.js` (seit 2026-08-04). Vor dem Raten die Nachbardatei lesen.
-- **RUECKBAU (a6f7d62)** im Code raus; **LIVE laeuft weiter die wirkungslose
-  Fassung** — Betreiber: "lass die Parallelsitzung das machen". Zwei gepruefte
-  Artefakte bereit, Uebergabe in der Kapsel. **MERKREGEL: ein Artefakt aus HEAD
-  liefert den GANZEN Tagesstand aus** (hier 38 fremde Commits inkl. neuer
-  Endpunkte auf dem Anmelde-Server). Schmal: `git worktree` auf den Live-Commit,
-  dort `git revert`.
-- **ZWEI EIGENE GIT-FEHLER, bereinigt.** (1) `git add <pfade> && git commit`
-  reicht NICHT — war Fremdes schon vorgemerkt, schreibt `commit` den GANZEN
-  Index mit. **Richtig: `git commit -- <pfade>`.** (2) `git stash -u` raeumte
-  sieben fremde Dateien weg. **Kein stash in geteilter Arbeitskopie.**
-- **EIGENE RAG-REGRESSION behoben (fdafbeb):** 2345e68 verschob den
-  sw.js-Changelog nach .md — damit wurde er Projektwissen, und "Loesche alle
-  alten Dateien im Objektspeicher" kam mit 21,1 ueber die Schwelle 20.
-  Changelogs jetzt am DATEINAMEN ausgeschlossen. **MERKREGEL: .js nach .md zu
-  verschieben aendert, wer die Datei liest.**
-- **BLOCKER beim Betreiber:** von 85 Container-Variablen ist **keine**
-  suchbezogen; `SMEJJ_SEARCH_TAVILY_API_KEY` fehlt. Anbieter seit 2026-08-04
-  freigegeben (0,00 USD, keine Karte), alles gebaut inkl.
-  `smejj.com Suchschluessel-eingeben.command`. Schluessel gibt nur er ein.
+
+Volltext ausgelagert nach
+[docs/memory/Memory_Bank_2026-08-05_websuche_komposita.md](docs/memory/Memory_Bank_2026-08-05_websuche_komposita.md).
 
 ## 2026-08-05 — Abschlussmessung 15-Formen-Korpus: verworfen, aber verunreinigt gemessen
 
