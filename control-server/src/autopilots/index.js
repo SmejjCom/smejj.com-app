@@ -17,3 +17,6 @@ export * from "./userFeedbackFlywheelAutopilot.js";
 export * from "./processRewardAutopilot.js";
 export * from "./knowledgeDistillerAutopilot.js";
 export * from "./evolutionaryMutationAutopilot.js";
+export * from "./realtimeInternetHarvesterAutopilot.js";
+export * from "./multiFileRepoArchitectAutopilot.js";
+export * from "./liveArenaLeaderboardAutopilot.js";

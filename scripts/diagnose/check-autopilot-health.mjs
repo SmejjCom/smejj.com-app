@@ -28,7 +28,10 @@ async function ueberpruefeAutopiloten() {
     { id: "user-feedback-flywheel", name: "User-Feedback & RLHF Flywheel Autopilot" },
     { id: "process-reward", name: "Process-Reward & Step-by-Step Reasoner Autopilot" },
     { id: "knowledge-distiller", name: "Cross-Model Knowledge Distiller Autopilot" },
-    { id: "evolutionary-mutation", name: "Evolutionary Mutation & Stress-Testing Autopilot" }
+    { id: "evolutionary-mutation", name: "Evolutionary Mutation & Stress-Testing Autopilot" },
+    { id: "realtime-internet-harvester", name: "24/7 Real-Time Internet Ingestion & Knowledge Harvester" },
+    { id: "multi-file-repo-architect", name: "Autonomous Multi-File Repo-Architect Autopilot" },
+    { id: "live-arena-leaderboard", name: "Automated Live-Arena & ELO Leaderboard Autopilot" }
   ];
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);

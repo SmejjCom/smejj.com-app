@@ -44,7 +44,15 @@ import {
   distillOptimalReasoning,
   processDistillationRun,
   runEvolutionaryStressTest,
-  hardenCodeSnippet
+  hardenCodeSnippet,
+  extractHarvestedFacts,
+  executeRealtimeHarvestCycle,
+  validateMultiFileArchitecture,
+  generateProjectBlueprint,
+  calculateExpectedScore,
+  updateEloRatings,
+  executeArenaMatch,
+  recordArenaMatch
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -338,6 +346,74 @@ test("Evolutionary Mutation & Stress-Testing Test", () => {
   assert.ok(hardened.includes("try {"));
   assert.ok(hardened.includes("catch"));
 });
+
+test("24/7 Real-Time Internet Ingestion & Knowledge Harvester Test", async () => {
+  const rawWebReport = `
+    Node.js v24 bringt massive Security Updates und Performance Optimierungen.
+    Eine neue CVE Sicherheitslücke wurde im HTTP-Parser geschlossen.
+    LoRA Fine-Tuning ermöglicht 10x schnellere Modell-Adaption auf GPU-Clustern.
+  `;
+  const facts = extractHarvestedFacts(rawWebReport, "Frameworks");
+  assert.ok(facts.length >= 2);
+  assert.ok(facts[0].headline.includes("Node.js"));
+  assert.ok(facts[1].tags.includes("security"));
+
+  const harvestCycle = await executeRealtimeHarvestCycle("Trending AI Architectures");
+  assert.equal(harvestCycle.ok, true);
+  assert.ok(harvestCycle.factsHarvested >= 0);
+});
+
+test("Autonomous Multi-File Repo-Architect Test", () => {
+  const projectFiles = [
+    {
+      path: "src/index.js",
+      content: 'import { calculate } from "./utils/math.js"; export const main = () => calculate(5);'
+    },
+    {
+      path: "src/utils/math.js",
+      content: "export function calculate(x) { return x * 2; }"
+    }
+  ];
+
+  const validRes = validateMultiFileArchitecture(projectFiles);
+  assert.equal(validRes.valid, true);
+  assert.equal(validRes.fileCount, 2);
+  assert.equal(validRes.resolvedImports, 1);
+  assert.equal(validRes.missingImports.length, 0);
+
+  const brokenFiles = [
+    {
+      path: "src/index.js",
+      content: 'import { missing } from "./nonExistent.js";'
+    }
+  ];
+  const brokenRes = validateMultiFileArchitecture(brokenFiles);
+  assert.equal(brokenRes.valid, false);
+  assert.equal(brokenRes.missingImports.length, 1);
+
+  const blueprint = generateProjectBlueprint("E-Commerce Microservice");
+  assert.ok(blueprint.fileTree.length >= 4);
+});
+
+test("Automated Live-Arena & ELO Leaderboard Test", async () => {
+  const expScore = calculateExpectedScore(1600, 1400);
+  assert.ok(expScore > 0.70);
+
+  const eloUpdate = updateEloRatings(1500, 1500, 1);
+  assert.ok(eloUpdate.newRatingA > 1500);
+  assert.ok(eloUpdate.newRatingB < 1500);
+
+  const match = executeArenaMatch(
+    { id: "smejj 1.0", rating: 1520, score: 95 },
+    { id: "competitor-x", rating: 1500, score: 70 }
+  );
+  assert.equal(match.winner, "smejj 1.0");
+  assert.ok(match.deltaA > 0);
+
+  const recRes = await recordArenaMatch(match);
+  assert.equal(recRes.ok, true);
+});
+
 
 
 

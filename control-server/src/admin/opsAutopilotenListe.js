@@ -383,5 +383,56 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 30 * 60 * 1000,
     startAnleitung: "Läuft als automatischer Stresstest vor jeder Code-Persistierung.",
     stopAnleitung: "Über Mutation-QA Flag steuerbar."
+  },
+  {
+    id: "realtime-internet-harvester",
+    name: "24/7 Real-Time Internet Ingestion & Knowledge Harvester",
+    kurz: "Durchforstet 24/7 das Web nach neuen Open-Source Releases, Papers und Sicherheitslücken.",
+    funktionen: [
+      "Scannt kontinuierlich weltweite Tech-Feeds, arXiv-Paper und CVE-Sicherheitswarnungen.",
+      "Extrahiert strukturierte Fakten und speichert sie im Knowledge-Graph auf IDrive e2 S3.",
+      "Hält den Wissensstand des Modells auf die Minute aktuell."
+    ],
+    ort: "Control Server (Real-Time Ingestion)",
+    zeitplan: "24/7 Dauerbetrieb (Zyklisch)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Läuft zyklisch zur stetigen Aktualisierung des Wissens-Stores.",
+    stopAnleitung: "Über Ingestion-Flag steuerbar."
+  },
+  {
+    id: "multi-file-repo-architect",
+    name: "Autonomous Multi-File Repo-Architect Autopilot",
+    kurz: "Virtualisiert und orchestriert vollständige Datei-Bäume und modulare Software-Architekturen.",
+    funktionen: [
+      "Prüft und validiert Import- und Modul-Abhängigkeiten über 50+ Dateien hinweg.",
+      "Erzeugt konsistente Full-Stack Project-Blueprints ohne Cross-File Drift.",
+      "Sichert saubere Schnittstellen zwischen Frontend, Backend und Tests."
+    ],
+    ort: "Control Server (Repo Virtualizer)",
+    zeitplan: "24/7 Dauerbetrieb (Event-basiert)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Aktiv bei komplexen Multi-File Projektaufgaben.",
+    stopAnleitung: "Über Architect-Policy steuerbar."
+  },
+  {
+    id: "live-arena-leaderboard",
+    name: "Automated Live-Arena & ELO Leaderboard Autopilot",
+    kurz: "Führt kontinuierliche Benchmark-Duelle durch und berechnet mathematische ELO-Ratings.",
+    funktionen: [
+      "Lässt smejj-Modelle kontinuierlich gegen standardisierte Coding-Benchmarks antreten.",
+      "Berechnet mathematisch saubere ELO-Rankings mit K-Faktor Dynamik.",
+      "Persistiert historische Duelle und Leaderboards auf IDrive e2 S3 Storage."
+    ],
+    ort: "Control Server (Arena & ELO Engine)",
+    zeitplan: "24/7 Dauerbetrieb (Benchmarking)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Läuft kontinuierlich zur Qualitäts- und ELO-Messung.",
+    stopAnleitung: "Über Arena-Policy steuerbar."
   }
 ]);
