@@ -18,9 +18,9 @@ const NOTIFY_KEY = "smejj.notifications.v1";
 // Schluessel im Frontend — Stripe hostet den Checkout. Nach der Konto-
 // Aktivierung bei Stripe werden hier nur die Live-Links eingetragen.
 const STRIPE_PLAN_LINKS = {
-  plus: "https://buy.stripe.com/test_5kQaEZ2Cic9C5egbiIfIs00",
-  pro: "https://buy.stripe.com/test_28E6oJ2Ci4HabCE72sfIs01",
-  max: "https://buy.stripe.com/test_14AdRb7WC5Le6ik2McfIs02"
+  plus: "https://buy.stripe.com/5kQaEZ2Cic9C5egbiIfIs00",
+  pro: "https://buy.stripe.com/28E6oJ2Ci4HabCE72sfIs01",
+  max: "https://buy.stripe.com/14AdRb7WC5Le6ik2McfIs02"
 };
 // Kuendigungsbutton nach § 312k BGB ("Verträge hier kündigen"): fuehrt zum
 // Stripe-Kundenportal, in dem der Kunde das laufende Abo selbst kuendigt. Der
@@ -28,7 +28,7 @@ const STRIPE_PLAN_LINKS = {
 // Betreiber eingetragen (Stripe Dashboard → Einstellungen → Kundenportal →
 // "Link teilen"). BETREIBER-TODO: leer lassen, bis der echte Portal-Link
 // vorliegt; solange greift der Mailto-Notweg in handleCancelSubscription().
-const STRIPE_BILLING_PORTAL_URL = "";
+const STRIPE_BILLING_PORTAL_URL = "https://billing.stripe.com/p/login/5kQaEZ2Cic9C5egbiIfIs00";
 const SAFE_EXPORT_KEYS = [STORAGE_KEYS.profile, STORAGE_KEYS.settings, STORAGE_KEYS.session, STORAGE_KEYS.model];
 // Abo-Anzeige (Schritt 3b): checkoutRef kommt vom Control-Server
 // (/api/billing/status) und geht als client_reference_id an die Zahlungslinks.
@@ -282,10 +282,19 @@ function handleCancelSubscription(view) {
     output(view, t("Kündigung: Im Stripe-Kundenportal kannst du dein Abo sofort kündigen."));
     return;
   }
-  const betreff = encodeURIComponent("Kündigung meines smejj.com Abonnements");
+  // Die Erklaerung laeuft durch t(), obwohl es dafuer bis auf Weiteres nur die
+  // deutsche Fassung gibt: eine Kuendigungserklaerung ist ein Rechtstext, ihre
+  // Uebersetzung gehoert zur Anwaltspruefung (Vorlage in
+  // docs/RECHTSTEXTE_SPRACHEN_ANWALTSVORLAGE_2026-08-10.md). Ohne t() muesste
+  // man dafuer spaeter Code anfassen; so wird nur der Wortlaut eingetragen.
+  // Fehlt eine Uebersetzung, faellt t() auf den deutschen Text zurueck — der
+  // Zustand bleibt also exakt der heutige.
+  const betreff = encodeURIComponent(t("Kündigung meines smejj.com Abonnements"));
+  // Die Feldnamen sind keine rechtliche Aussage und deshalb schon uebersetzt.
+  const felder = [t("Konto-E-Mail"), t("Name"), t("Datum")].map((f) => `${f}: `).join("\n");
   const koerper = encodeURIComponent(
-    "Hiermit kündige ich mein kostenpflichtiges smejj.com Abonnement zum nächstmöglichen Zeitpunkt.\n\n" +
-    "Konto-E-Mail: \nName: \nDatum: "
+    t("Hiermit kündige ich mein kostenpflichtiges smejj.com Abonnement zum nächstmöglichen Zeitpunkt.") +
+    "\n\n" + felder
   );
   window.location.href = `mailto:s@smejj.com?subject=${betreff}&body=${koerper}`;
   output(view, t("Kündigung: Eine vorbereitete E-Mail wurde geöffnet. Wir bestätigen den Eingang und das Vertragsende in Textform."));
