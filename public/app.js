@@ -51,7 +51,7 @@ let taskIndicatorTimer;
 // leseStufe). Ein unbekannter Wert und fehlende Angabe verhalten sich dort
 // identisch zum bisherigen Zustand (Fail-Safe der Bruecke).
 const STUFE_KEY = "smejj.stufe.v1";
-const STUFE_LABEL = Object.freeze({ schnell: "Schnell", auto: "Auto", gruendlich: "Gründlich" });
+const STUFE_LABEL = Object.freeze({ schnell: "smejj 1.0 (Schnell)", auto: "smejj 1.0", gruendlich: "smejj 1.0 (Gründlich)" });
 function normalizeStufe(value) {
   return Object.hasOwn(STUFE_LABEL, value) ? value : "auto";
 }
