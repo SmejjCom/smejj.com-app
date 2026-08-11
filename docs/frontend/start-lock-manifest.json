@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-10T04:24:24.589Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09: Zusammenfuehrung des Touch-Ziel-Branches mit dem Arbeitsbranch; CACHE_NAME bleibt v263 (Live-Stand).",
+  "frozenAt": "2026-08-11T14:20:56.293Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-11 per Auswahlkarte: Jetzt deployen — Bild-Verstehen Stufe 1",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
@@ -10,7 +10,7 @@
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "5481f66724b6ab6156c4997d3097820afd14151a222e7d7e1ccf2f31acc331e0",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "81506767ce810d6f65a4fe6fcfc2fa95ae669a147f8147328d8660601cbd7ec8",
+    "public/app.js": "cfacc18c2ea1d796e333ff04a9140fc17d8a3228fc1c932d44c583d065e79641",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "2e503fb05eb88d90460501edd51ad0129d83855f02801d5b7b3970474dbbf107",
     "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
@@ -19,7 +19,7 @@
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "10df93373bcaded8a00d7641922697b94547848d826dfda6a4f7434d96509bc8",
     "public/composer-tools.js": "1ef01e7dadf381b9950511f07904f4b70fca785571a4221d90d6f0bb549d3b57",
-    "public/composer-plus-menu.js": "f41fe15db290dc044322648c5b2ab4d7e175754350e9c5e59d816d801236dd37",
+    "public/composer-plus-menu.js": "d479a9e2874ca04c067bb4288828310fd3b13fd3a1c3ca803540ccf2a7f3bb4e",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "e68f3c7964373d7938571bb3590571755f34be67e0b46a4f9642607b89c2bd65",
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "86a7e96638a698aa1d973731038079425909b2d35951b25edbed32272db16e32",
+    "public/sw.js": "cadce82ac86a2fd2db711611111e8874cd9661f1d49a7d54ff9ca4f58b53e110",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
