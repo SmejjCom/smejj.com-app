@@ -7,21 +7,29 @@
 // Settle SOFORT entfernt, damit spaetere, nutzerausgeloeste Aufrufe garantiert
 // frisch laden (kein Stale-Cache). Fail-open bleibt unveraendert: Netzfehler
 // liefern ein Fehlerobjekt, es wird nicht geworfen.
-import { UI_COPY } from "../config.js";
+import { API_ORIGIN, UI_COPY } from "../config.js";
 
 const inflightGetJson = new Map();
 
+function resolveUrl(url) {
+  if (typeof url === "string" && url.startsWith("/api/")) {
+    return `${API_ORIGIN}${url}`;
+  }
+  return url;
+}
+
 export async function getJson(url) {
-  const pending = inflightGetJson.get(url);
+  const fullUrl = resolveUrl(url);
+  const pending = inflightGetJson.get(fullUrl);
   if (pending) return pending;
-  const promise = rawGetJson(url).finally(() => inflightGetJson.delete(url));
-  inflightGetJson.set(url, promise);
+  const promise = rawGetJson(fullUrl).finally(() => inflightGetJson.delete(fullUrl));
+  inflightGetJson.set(fullUrl, promise);
   return promise;
 }
 
 async function rawGetJson(url) {
   try {
-    const response = await fetch(url);
+    const response = await fetch(resolveUrl(url));
     const text = await response.text();
     try {
       return JSON.parse(text);
@@ -35,7 +43,7 @@ async function rawGetJson(url) {
 
 export async function postJson(url, body) {
   try {
-    const response = await fetch(url, {
+    const response = await fetch(resolveUrl(url), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
