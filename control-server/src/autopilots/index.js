@@ -12,3 +12,4 @@ export * from "./knowledgeGraphAutopilot.js";
 export * from "./smartRouterAutopilot.js";
 export * from "./bugPredictorAutopilot.js";
 export * from "./syntheticTaskGenerator.js";
+export * from "./modelLifecycleAutopilot.js";

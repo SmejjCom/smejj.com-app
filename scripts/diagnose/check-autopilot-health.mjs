@@ -23,7 +23,8 @@ async function ueberpruefeAutopiloten() {
     { id: "self-improvement", name: "DPO & Self-Improvement Autopilot" },
     { id: "knowledge-graph", name: "Knowledge-Graph & RAG-Fusion Autopilot" },
     { id: "smart-router", name: "Model-Arena & Smart-Router Autopilot" },
-    { id: "bug-predictor", name: "Proaktiver Bug-Predictor & Security Autopilot" }
+    { id: "bug-predictor", name: "Proaktiver Bug-Predictor & Security Autopilot" },
+    { id: "model-lifecycle", name: "Shadow-Release & Model-Lifecycle Autopilot" }
   ];
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);

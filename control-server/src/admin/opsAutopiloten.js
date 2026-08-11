@@ -163,7 +163,9 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
       dpoStatus: "active_24_7",
       selfPlayEnabled: true,
       benchmarkPassRate: 1.0,
-      activeAutopilots: 17
+      activeAutopilots: 18,
+      activeLiveModel: "smejj 1.0",
+      shadowBetaModel: "smejj 1.1-beta"
     },
     // Der Text muss dem Stand der Technik folgen: bis Stufe 3 stand hier
     // "nach einem Neustart beginnt die Messung von vorn" — seit die Verläufe

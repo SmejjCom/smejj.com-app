@@ -30,7 +30,11 @@ import {
   scanForBugsAndVulnerabilities,
   runProjectBugScan,
   generateAndVerifySyntheticTask,
-  runSyntheticGenerationBatch
+  runSyntheticGenerationBatch,
+  createInitialLifecycleState,
+  evaluateShadowTrial,
+  recordShadowTrial,
+  checkAndPromoteCandidate
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -214,4 +218,41 @@ test("Synthetic Task Generator & 24/7 Self-Play Test", async () => {
   assert.equal(batch.ok, true);
   assert.equal(batch.generated, 2);
 });
+
+test("Shadow-Release & Model-Lifecycle Autopilot Test", async () => {
+  const state = createInitialLifecycleState();
+  assert.equal(state.activeLiveModel.version, "smejj 1.0");
+  assert.equal(state.shadowBetaModel.version, "smejj 1.1-beta");
+  assert.equal(state.nextTrainingTarget.version, "smejj 2.0-training");
+
+  // Shadow Trial
+  const trial = evaluateShadowTrial(
+    "Schreibe Code",
+    "Kurz",
+    "```javascript\nfunction test() { return true; }\n```",
+    1200,
+    600
+  );
+  assert.equal(trial.winner, "shadow");
+
+  for (let i = 0; i < 6; i++) {
+    recordShadowTrial(state, trial);
+  }
+  assert.equal(state.shadowBetaModel.shadowTrials, 6);
+  assert.equal(state.shadowBetaModel.winRate, 1.0);
+
+  // Promotion
+  const mockInfer = async (prompt) => {
+    if (prompt.includes("Fibonacci")) return "```javascript\nfunction fib(n) { return n <= 1 ? n : fib(n-1) + fib(n-2); }\n```";
+    if (prompt.includes("JSON")) return '{"status": "ok", "code": 200, "message": "success"}';
+    if (prompt.includes("Plattform")) return "Die Plattform heisst smejj.com.";
+    if (prompt.includes("HTML")) return "```html\n<button type=\"button\">Klick mich</button>\n```";
+    return "Standard";
+  };
+  const promo = await checkAndPromoteCandidate(state, mockInfer);
+  assert.equal(promo.promoted, true);
+  assert.equal(promo.newState.activeLiveModel.version, "smejj 1.1");
+  assert.equal(promo.newState.shadowBetaModel.version, "smejj 1.2-beta");
+});
+
 

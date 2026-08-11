@@ -297,5 +297,22 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 6 * STUNDE_MS,
     startAnleitung: "Wird vor dem Speichern und Pushen von Code aufgerufen.",
     stopAnleitung: "Über Linter- und Pre-Commit-Flags steuerbar."
+  },
+  {
+    id: "model-lifecycle",
+    name: "Shadow-Release & Model-Lifecycle Autopilot",
+    kurz: "Verwaltet smejj 1.0 Live-Betrieb, Shadow-Beta-Tests und automatische Zero-Downtime Releases.",
+    funktionen: [
+      "Steuert aktives Live-Modell (smejj 1.0), Shadow-Beta und Trainings-Ziele.",
+      "Führt geräuschlose Schatten-Tests gegen Live-Prompts im Hintergrund aus.",
+      "Vollzieht automatische Zero-Downtime Promotion bei bestandener Reife."
+    ],
+    ort: "Control Server (Model Evolution)",
+    zeitplan: "24/7 Dauerbetrieb (Hintergrund)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Läuft kontinuierlich zur Reifeprüfung neuer Modellversionen.",
+    stopAnleitung: "Über Model-Lifecycle Flag steuerbar."
   }
 ]);
