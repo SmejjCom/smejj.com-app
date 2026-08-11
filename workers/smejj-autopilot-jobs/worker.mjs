@@ -126,8 +126,8 @@ async function konkurrenzRadarAusfuehren(ausloeser) {
 
 function takt() {
   const jetztMs = Date.now();
-  if (jetztMs - letzterWaechterLaufMs >= STUNDE_MS) {
-    waechterAusfuehren("stündlicher-takt").catch(() => {});
+  if (jetztMs - letzterWaechterLaufMs >= 15 * 60 * 1000) {
+    waechterAusfuehren("15min-takt").catch(() => {});
   }
   if (istFaellig({ jetztMs, uhrzeitUtc: SPIEGEL_UTC, letzterTag: stand.jobs.spiegel.letzterTag })) {
     spiegelAusfuehren("zeitplan").catch(() => {});

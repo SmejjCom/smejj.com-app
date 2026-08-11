@@ -86,7 +86,7 @@ const RECHERCHE_STAEMME = [
   "webseite", "website", "internet", "google", "wikipedia", "linkliste"
 ];
 
-const EXAKTE_RECHERCHE = ["link", "links", "url", "web", "online", "source", "sources"];
+const EXAKTE_RECHERCHE = ["link", "links", "url", "web", "online", "source", "sources", "internet", "google", "suche", "suchen", "checke", "pruefe", "prüfe"];
 
 // Reine Smalltalk-/Begruessungs-Eingaben brauchen keine Websuche.
 const SMALLTALK_PATTERN = /^(hi|hallo|hey|servus|moin|hey smejj|danke|dankeschoen|merci|ok|okay|alles klar|tschuess|bye|ciao|gute nacht|guten morgen|guten tag)\b[\s!.?]*$/i;

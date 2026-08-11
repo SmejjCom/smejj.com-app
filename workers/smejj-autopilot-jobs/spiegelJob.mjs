@@ -27,11 +27,8 @@ export function schluesselFuer(id, env = process.env) {
     const trenner = paar.indexOf(":");
     if (trenner > 0 && paar.slice(0, trenner).trim() === id) return paar.slice(trenner + 1).trim();
   }
-  // Fallback auf den ersten gültigen Systemschlüssel falls für diese ID noch kein eigener Schlüssel existiert
-  for (const paar of roh.split(",")) {
-    const trenner = paar.indexOf(":");
-    if (trenner > 0) return paar.slice(trenner + 1).trim();
-  }
+  const einzel = String(env.SMEJJ_AUTOPILOT_KEY || "").trim();
+  if (einzel) return einzel;
   return "";
 }
 

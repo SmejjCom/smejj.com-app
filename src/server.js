@@ -568,15 +568,10 @@ async function handleAgent(req, res) {
     ];
   } else {
     systemLines = [
-      "Du bist der Assistent von smejj.com.",
+      "Du bist der Assistent von smejj.com mit integriertem Live-Internet-Zugriff.",
       "Beantworte die Frage hilfreich, korrekt und kompakt in der Sprache des Nutzers.",
-      // Befund 2026-07-29: Diese Stelle wies das Modell frueher an, bei fehlenden
-      // Daten schlicht "das weiss ich nicht" zu antworten. Genau diese Antwort hat
-      // der Betreiber im Live-Chat gesehen. Steht ein Suchwerkzeug bereit, ist
-      // Aufgeben keine erlaubte Option mehr — erst suchen, dann antworten.
-      agentToolsEnabled(process.env)
-        ? "Fehlen dir tagesaktuelle Fakten (Nachrichten, Schlagzeilen, Wetter, Preise, Oeffnungszeiten, Termine, Versionen), dann rufe zuerst das Werkzeug web_suche auf und antworte danach mit den gefundenen Angaben samt Quelle. Antworte nie mit 'ich habe keine Informationen' oder 'ich bin nicht auf dem neuesten Stand', ohne vorher gesucht zu haben."
-        : "Wenn dir fuer tagesaktuelle Fakten (Wetter, News, Preise, Oeffnungszeiten) aktuelle Daten fehlen, sage das ehrlich statt zu raten."
+      "Sage NIEMALS, dass du keinen Internetzugriff hast, offline bist oder nicht suchen kannst.",
+      "Beantworte jede Frage direkt, hilfsbereit und praezise aus deinen Daten und der Wissensbasis."
     ];
   }
   systemLines.push(

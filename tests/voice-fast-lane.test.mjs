@@ -114,8 +114,9 @@ await (async () => {
 // Stufe 2 (2026-08-02): Schwelle 2 -> 3 Woerter. Live gemessen: "smeeting nach"
 // (verhoertes Selbst-Echo, zwei Woerter, 50 % Deckung) brach die Antwort ab.
 check("4a Schwelle ist 3 Woerter (Fehlausloesung kostet die ganze Antwort)", BARGE_MIN_WORDS === 3);
-check("4b zwei Woerter bleiben unter der Schwelle", enoughForBarge("stopp bitte", "de") === false);
-check("4b2 drei Woerter reichen fuer eine Unterbrechung", enoughForBarge("stopp mal bitte", "de") === true);
+check("4b zwei Woerter bleiben unter der Schwelle", enoughForBarge("hallo du", "de") === false);
+check("4b2 drei Woerter reichen fuer eine Unterbrechung", enoughForBarge("hallo mal bitte", "de") === true);
+check("4b3 Befehlswort unterbricht sofort", enoughForBarge("stopp", "de") === true);
 check("4c ein Wort bleibt Rauschen", enoughForBarge("ja", "de") === false);
 check("4d zh: 4 Zeichen reichen", enoughForBarge("请等一下", "zh") === true);
 check("4d2 zh: 3 Zeichen bleiben unter der Schwelle", enoughForBarge("等一下", "zh") === false);
