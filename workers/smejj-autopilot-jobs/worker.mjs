@@ -6,7 +6,8 @@ import {
   istWochenJobFaellig,
   qualitaetsmessungLauf,
   voiceRegionCheckLauf,
-  konkurrenzRadarLauf
+  konkurrenzRadarLauf,
+  autopilotWaechterLauf
 } from "./jobs.mjs";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -17,15 +18,20 @@ const QUALITAET_UTC_2 = process.env.SMEJJ_QUALITAET_UTC_2 || "19:10";
 const VOICE_REGION_UTC = process.env.SMEJJ_VOICE_REGION_UTC || "09:04";
 const KONKURRENZ_UTC = process.env.SMEJJ_KONKURRENZ_UTC || "06:00";
 const TAKT_MS = 60_000;
+const STUNDE_MS = 3600_000;
+
+let letzterWaechterLaufMs = 0;
+let waechterAktiv = false;
 
 const stand = {
   dienst: "smejj-autopilot-jobs",
-  version: "1.1.0",
+  version: "1.2.0",
   jobs: {
     spiegel: { zeitplanUtc: SPIEGEL_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
     qualitaetsmessung: { zeitplanUtc: `${QUALITAET_UTC_1}, ${QUALITAET_UTC_2}`, letzterTag: null, laeuftSeit: null, letzterLauf: null },
     voiceRegionCheck: { zeitplanUtc: VOICE_REGION_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
-    konkurrenzRadar: { zeitplanUtc: `Mo ${KONKURRENZ_UTC}`, letzterTag: null, laeuftSeit: null, letzterLauf: null }
+    konkurrenzRadar: { zeitplanUtc: `Mo ${KONKURRENZ_UTC}`, letzterTag: null, laeuftSeit: null, letzterLauf: null },
+    waechter: { zeitplan: "stündlich", letzterLauf: null }
   }
 };
 
@@ -33,6 +39,20 @@ let spiegelAktiv = false;
 let qualitaetAktiv = false;
 let voiceAktiv = false;
 let konkurrenzAktiv = false;
+
+async function waechterAusfuehren(ausloeser) {
+  if (waechterAktiv) return { ok: false, meldung: "laeuft bereits" };
+  waechterAktiv = true;
+  letzterWaechterLaufMs = Date.now();
+  console.log(`[autopilot-jobs] Wächter-Lauf startet (${ausloeser})`);
+  try {
+    const ergebnis = await autopilotWaechterLauf({ log: console.log });
+    stand.jobs.waechter.letzterLauf = { am: new Date().toISOString(), ...ergebnis };
+    return ergebnis;
+  } finally {
+    waechterAktiv = false;
+  }
+}
 
 async function spiegelAusfuehren(ausloeser) {
   if (spiegelAktiv) return { ok: false, meldung: "laeuft bereits" };
@@ -68,7 +88,7 @@ async function qualitaetAusfuehren(ausloeser) {
     return ergebnis;
   } finally {
     qualitaetAktiv = false;
-    stand.jobs.qualitaetsmessung.laeuftSeit = null;
+    stand.jobs.qualitaetsmessung.letzterLaufSeit = null;
   }
 }
 
@@ -106,6 +126,9 @@ async function konkurrenzRadarAusfuehren(ausloeser) {
 
 function takt() {
   const jetztMs = Date.now();
+  if (jetztMs - letzterWaechterLaufMs >= STUNDE_MS) {
+    waechterAusfuehren("stündlicher-takt").catch(() => {});
+  }
   if (istFaellig({ jetztMs, uhrzeitUtc: SPIEGEL_UTC, letzterTag: stand.jobs.spiegel.letzterTag })) {
     spiegelAusfuehren("zeitplan").catch(() => {});
   }
@@ -146,8 +169,9 @@ const server = http.createServer((req, res) => {
     if (pfad === "/lauf/qualitaet") return extrahiereSchluesselUndAusfuehren(req, res, "qualitaetsmessung", qualitaetAusfuehren, antwort);
     if (pfad === "/lauf/voice-region") return extrahiereSchluesselUndAusfuehren(req, res, "voice-region-check", voiceRegionAusfuehren, antwort);
     if (pfad === "/lauf/konkurrenz-radar") return extrahiereSchluesselUndAusfuehren(req, res, "konkurrenz-radar", konkurrenzRadarAusfuehren, antwort);
+    if (pfad === "/lauf/waechter") return extrahiereSchluesselUndAusfuehren(req, res, "qualitaetsmessung", waechterAusfuehren, antwort);
   }
-  antwort(404, { ok: false, pfade: ["/health", "POST /lauf/spiegel", "POST /lauf/qualitaet", "POST /lauf/voice-region", "POST /lauf/konkurrenz-radar"] });
+  antwort(404, { ok: false, pfade: ["/health", "POST /lauf/spiegel", "POST /lauf/qualitaet", "POST /lauf/voice-region", "POST /lauf/konkurrenz-radar", "POST /lauf/waechter"] });
 });
 
 server.listen(PORT, HOST, () => {

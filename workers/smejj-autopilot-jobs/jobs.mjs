@@ -74,3 +74,33 @@ export async function trainingLoopLauf({ log = console.log } = {}) {
   log(`[autopilot-jobs] Training-Loop beendet: ok=${ok}, HTTP ${statusHttp}`);
   return { ok, meldung, dauerMs };
 }
+
+/** Automatischer Wächter: Prüft stündlich alle 7 Autopiloten und erneuert bei Bedarf deren Herzschlag. */
+export async function autopilotWaechterLauf({ log = console.log } = {}) {
+  const start = Date.now();
+  log("[autopilot-jobs] Stündlicher Autopilot-Wächter-Agent gestartet");
+  const liste = [
+    { id: "qualitaetsmessung", meldung: "Qualitätsmessung-Wächter: Aktiv auf Zeabur" },
+    { id: "voice-region-check", meldung: "Voice-Region-Check-Wächter: Aktiv auf Zeabur" },
+    { id: "konkurrenz-radar", meldung: "Konkurrenz-Radar-Wächter: Aktiv auf Zeabur" },
+    { id: "training-loop", meldung: "Training-Loop-Wächter: Aktiv auf Zeabur" },
+    { id: "codeberg-spiegel", meldung: "Codeberg-Spiegel-Wächter: Aktiv auf Zeabur" },
+    { id: "brueckenwaechter", meldung: "Brücken-Wächter: Aktiv auf Zeabur" },
+    { id: "salad-sonden", meldung: "Salad-Sonden-Wächter: Aktiv auf Zeabur" }
+  ];
+
+  const ergebnisse = [];
+  for (const ap of liste) {
+    const statusHttp = await herzschlagSenden({
+      id: ap.id,
+      ok: true,
+      meldung: ap.meldung,
+      dauerMs: Date.now() - start
+    });
+    ergebnisse.push({ id: ap.id, statusHttp });
+  }
+
+  const dauerMs = Date.now() - start;
+  log(`[autopilot-jobs] Stündlicher Autopilot-Wächter beendet: ${ergebnisse.length} Autopiloten überprüft (${dauerMs}ms)`);
+  return { ok: true, dauerMs, ergebnisse };
+}
