@@ -19,7 +19,16 @@ import {
   formatMultimodalPromptPayload,
   processAudioChunkStream,
   buildTaskGraph,
-  executeTaskOrchestrator
+  executeTaskOrchestrator,
+  evaluateResponseQuality,
+  createDpoPair,
+  runSelfImprovementCycle,
+  extractCodeEntities,
+  buildKnowledgeGraph,
+  routePrompt,
+  evaluateArenaCompetition,
+  scanForBugsAndVulnerabilities,
+  runProjectBugScan
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -113,4 +122,81 @@ test("Task Orchestrator Graph & Execution Test", async () => {
   const exec = await executeTaskOrchestrator("Erstelle eine Datenanalyse der Absätze");
   assert.equal(exec.status, "success");
   assert.equal(exec.tasks.every(t => t.status === "completed"), true);
+});
+
+test("Self-Improvement & DPO Pair Test", async () => {
+  const evalGood = evaluateResponseQuality("Schreibe eine Funktion", "```javascript\nfunction hallo() { return 'welt'; }\n```");
+  assert.ok(evalGood.score >= 80);
+
+  const evalBad = evaluateResponseQuality("Schreibe Code", "Kurz");
+  assert.ok(evalBad.score < evalGood.score);
+
+  const pair = createDpoPair("Prompt", "Gute Antwort", "Schlechte Antwort");
+  assert.equal(pair.prompt, "Prompt");
+  assert.equal(pair.chosen, "Gute Antwort");
+  assert.equal(pair.rejected, "Schlechte Antwort");
+
+  const cycle = await runSelfImprovementCycle([
+    { prompt: "Schreibe Code", response: "```js\nconsole.log(1);\n```", alternatives: ["bad"] }
+  ]);
+  assert.equal(cycle.ok, true);
+  assert.ok(cycle.analyzed >= 1);
+});
+
+test("Knowledge Graph Code Parsing Test", () => {
+  const sampleCode = `
+    import { foo } from "./foo.js";
+    export function myFunc() { return 1; }
+    export class MyClass {}
+  `;
+  const entities = extractCodeEntities("src/test.js", sampleCode);
+  assert.equal(entities.functions.length, 1);
+  assert.equal(entities.functions[0].name, "myFunc");
+  assert.equal(entities.classes.length, 1);
+  assert.equal(entities.classes[0].name, "MyClass");
+  assert.equal(entities.imports.length, 1);
+
+  const kg = buildKnowledgeGraph([{ path: "src/test.js", content: sampleCode }]);
+  assert.equal(kg.totalFiles, 1);
+  assert.ok(kg.findSymbol("myFunc") !== null);
+  assert.ok(kg.search("my").length >= 2);
+});
+
+test("Smart Router & Arena Test", () => {
+  const mathRoute = routePrompt("Berechne den mathematischen Beweis für den Algorithmus");
+  assert.equal(mathRoute.domain, "math_and_logic");
+  assert.equal(mathRoute.suggestedModel, "deepseek-r1");
+
+  const archRoute = routePrompt("Refactore die Multi-File Architektur der Komponenten");
+  assert.equal(archRoute.domain, "system_architecture");
+  assert.equal(archRoute.suggestedModel, "claude-3-5-sonnet");
+
+  const arena = evaluateArenaCompetition([
+    { model: "model-a", output: "```js\nconst a = 1;\n``` Sehr lange und detaillierte Erklärung hier.", durationMs: 1200 },
+    { model: "model-b", output: "Kurz", durationMs: 5000 }
+  ]);
+  assert.equal(arena.winner, "model-a");
+});
+
+test("Bug Predictor & Security Scan Test", () => {
+  const cleanCode = "function sum(a, b) { return a + b; }";
+  const cleanScan = scanForBugsAndVulnerabilities("clean.js", cleanCode);
+  assert.equal(cleanScan.status, "clean");
+  assert.equal(cleanScan.findingsCount, 0);
+
+  const riskyCode = `
+    eval("2 + 2");
+    setInterval(() => {}, 1000);
+    const url = "http://insecure-api.com";
+  `;
+  const riskyScan = scanForBugsAndVulnerabilities("risky.js", riskyCode);
+  assert.ok(riskyScan.findingsCount >= 2);
+  assert.ok(riskyScan.riskScore > 0);
+
+  const projectScan = runProjectBugScan([
+    { path: "clean.js", content: cleanCode },
+    { path: "risky.js", content: riskyCode }
+  ]);
+  assert.equal(projectScan.scannedFiles, 2);
+  assert.equal(projectScan.cleanFiles, 1);
 });

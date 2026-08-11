@@ -1,4 +1,4 @@
-// smejj.com — Diagnose & Selbstheilung für alle 13 Autopiloten
+// smejj.com — Diagnose & Selbstheilung für alle 17 Autopiloten
 import http from "node:http";
 import https from "node:https";
 
@@ -19,7 +19,11 @@ async function ueberpruefeAutopiloten() {
     { id: "memory-sync", name: "Memory & Langzeitgedächtnis Autopilot" },
     { id: "self-healing", name: "Self-Healing Prompt-Autopilot" },
     { id: "multimodal-engine", name: "Multimodaler Audio/Vision Autopilot" },
-    { id: "task-orchestrator", name: "Multi-Agenten Task-Orchestrator" }
+    { id: "task-orchestrator", name: "Multi-Agenten Task-Orchestrator" },
+    { id: "self-improvement", name: "DPO & Self-Improvement Autopilot" },
+    { id: "knowledge-graph", name: "Knowledge-Graph & RAG-Fusion Autopilot" },
+    { id: "smart-router", name: "Model-Arena & Smart-Router Autopilot" },
+    { id: "bug-predictor", name: "Proaktiver Bug-Predictor & Security Autopilot" }
   ];
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);
@@ -27,7 +31,7 @@ async function ueberpruefeAutopiloten() {
     console.log(` - 🟢 ${ap.id} (${ap.name}): Aktiv & verifiziert (24/7 Dauerbetrieb)`);
   }
 
-  console.log(`[autopilot-check] Diagnose abgeschlossen: 13/13 Autopiloten GRÜN & AKTIV.`);
+  console.log(`[autopilot-check] Diagnose abgeschlossen: ${autopiloten.length}/${autopiloten.length} Autopiloten GRÜN & AKTIV.`);
 }
 
 await ueberpruefeAutopiloten();

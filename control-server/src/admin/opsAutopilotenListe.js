@@ -229,5 +229,73 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 6 * STUNDE_MS,
     startAnleitung: "Aktiviert bei komplexen Multi-Step Nutzeranweisungen.",
     stopAnleitung: "Über Orchestrator-Schalter steuerbar."
+  },
+  {
+    id: "self-improvement",
+    name: "DPO & Self-Improvement Autopilot",
+    kurz: "Generiert kontinuierlich Trainings-Paare aus Interaktionen zur eigenständigen Modell- & Prompt-Optimierung.",
+    funktionen: [
+      "Bewertet Antwortqualität nach Vollständigkeit und Präzision.",
+      "Erstellt DPO-Präferenzdatensätze (Chosen vs. Rejected).",
+      "Persistiert Trainingsdaten auf IDrive e2 S3 Storage."
+    ],
+    ort: "Control Server (Self-Learning Engine)",
+    zeitplan: "Dauerbetrieb / Takt-basiert",
+    messung: "heartbeat",
+    erwartetAlleMs: TAG_MS,
+    schonfristMs: 6 * STUNDE_MS,
+    startAnleitung: "Läuft kontinuierlich im Hintergrund der Chat-Pipeline.",
+    stopAnleitung: "Über Self-Improvement Flag steuerbar."
+  },
+  {
+    id: "knowledge-graph",
+    name: "Knowledge-Graph & RAG-Fusion Autopilot",
+    kurz: "Erstellt einen semantischen Wissens- und Abhängigkeitsgraphen über den gesamten Codebase.",
+    funktionen: [
+      "Extrahiert Symbole, Funktionen, Klassen und Modul-Abhängigkeiten.",
+      "Bietet hochpräzise AST- und Hybrid-Codesuche.",
+      "Hält Projektwissen permanent aktuell."
+    ],
+    ort: "Control Server (Knowledge Engine)",
+    zeitplan: "Bei Datei-Änderungen / Event-basiert",
+    messung: "heartbeat",
+    erwartetAlleMs: TAG_MS,
+    schonfristMs: 6 * STUNDE_MS,
+    startAnleitung: "Aktualisiert sich automatisch bei Datei-Uploads und Commits.",
+    stopAnleitung: "Über Indexer-Konfiguration steuerbar."
+  },
+  {
+    id: "smart-router",
+    name: "Model-Arena & Smart-Router Autopilot",
+    kurz: "Klassifiziert Anfragen nach Komplexität und routet sie automatisch an das beste Spezialmodell.",
+    funktionen: [
+      "Klassifiziert Anfragen (Mathe, Deep Reasoning, Architektur, Quick Lookup).",
+      "Routet an DeepSeek R1, Claude Sonnet, GPT-4o oder Gemini Flash.",
+      "Führt automatisierte Mini-Arena-Benchmark-Bewertungen durch."
+    ],
+    ort: "Control Server (Router Engine)",
+    zeitplan: "Dauerbetrieb (Jeder Prompt)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Standard-Eingang für alle eintreffenden Benutzer-Prompts.",
+    stopAnleitung: "Über Model-Routing Policy konfigurierbar."
+  },
+  {
+    id: "bug-predictor",
+    name: "Proaktiver Bug-Predictor & Security Autopilot",
+    kurz: "Scannt Code im Voraus auf Sicherheitsrisiken, Memory Leaks und Fehlerquellen.",
+    funktionen: [
+      "Erkennt unsichere Konstrukte (eval, unhandled promises, memory leaks).",
+      "Generiert proaktiv präzise Reparatur-Vorschläge.",
+      "Prüft ganze Repositories vor dem Commit auf Risiken."
+    ],
+    ort: "Control Server (Code Analyzer)",
+    zeitplan: "Vor jedem Commit / Scan-basiert",
+    messung: "heartbeat",
+    erwartetAlleMs: TAG_MS,
+    schonfristMs: 6 * STUNDE_MS,
+    startAnleitung: "Wird vor dem Speichern und Pushen von Code aufgerufen.",
+    stopAnleitung: "Über Linter- und Pre-Commit-Flags steuerbar."
   }
 ]);
