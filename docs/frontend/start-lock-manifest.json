@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-11T17:13:46.918Z",
-  "confirmation": "Ich bestätige den Stand des Start-Locks",
+  "frozenAt": "2026-08-11T17:15:26.313Z",
+  "confirmation": "Unterdrückung aller Info-Meldungen bei Icon-Klicks auf der Startseite freigegeben",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
@@ -13,7 +13,7 @@
     "public/app.js": "cfacc18c2ea1d796e333ff04a9140fc17d8a3228fc1c932d44c583d065e79641",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "2e503fb05eb88d90460501edd51ad0129d83855f02801d5b7b3970474dbbf107",
-    "public/components.js": "1e51caaca17b1d92ec91479e1e64515243c0a93afa0b6ce22d339d2e61b31869",
+    "public/components.js": "3857d1e62ed36de05a27fc307c1a4fc13b4721f5cafb850dafa672ef8dd2d0ff",
     "public/premium-surfaces.js": "6017499c5fcd1c2f189f4ca550e1604c0479de8070137815ddcaa32572f31832",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "c07d5e2b0ad49d68a7accfcc9ff12133e536b398de0298146aaff6a247dd58aa",
+    "public/sw.js": "c0a2a542c402086dbfeaec1d46db95630f710631c09df3e55f793fd07f194e83",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

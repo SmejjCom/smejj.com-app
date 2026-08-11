@@ -1,6 +1,6 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-11T17:13:51.946Z",
+  "frozenAt": "2026-08-11T17:20:35.858Z",
   "confirmation": "Ich bestätige die Absicherung aller Admin-Sicherheitsfunktionen",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
@@ -18,6 +18,6 @@
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
     "control-server/src/routes/adminUiRoutes.js": "a2824e4b1f2d8b230a43e8cc894a3e9e3eddf892738fbc8c7cb10822ee57acfc",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
-    "control-server/admin-ui/api.js": "aea71bb73868f7112e5f11e27beb72958c873362e221cc83645d9c36520a2e4e"
+    "control-server/admin-ui/api.js": "14a495ff6dd4e4c59d09ac60aae179c26d0beaca0574d6045dc34c53b53dbc6a"
   }
 }
