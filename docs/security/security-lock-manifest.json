@@ -1,17 +1,17 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-09T08:27:55.683Z",
-  "confirmation": "Freigabe Betreiber 2026-08-09 (Auswahlkarte 'Neu einfrieren'): Ich pruefe den Diff noch einmal Zeile fuer Zeile und friere den security-lock mit deiner Freigabe neu ein. Geprueft: public/chat-history-context.js aus 41f76c3 einer Parallelsitzung, Aenderung liegt vollstaendig in einem JSDoc-Block, Code nach Entfernen aller Kommentare byte-identisch zum eingefrorenen Stand.",
+  "frozenAt": "2026-08-10T09:34:28.791Z",
+  "confirmation": "Mach du komplett fertig. Du hast alle Rechte. (Wof Kadavanich, 2026-08-10 — Marktreife-Umbau: auth-page.js, account-sessions.js, chat-bridge.js)",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "65435eddbd0a154777805fe836ffc8ce9858bddd19e31f322c47b55de373b436",
     "public/auth/register/index.html": "2a73cdf79edd7ec8ffda01736c729f3d29f7ebe7506b399922d7642d1bab7ba6",
-    "public/auth/auth-page.js": "ea029edad98c7a92bd0e80dbd466b5c170070b89c944a0cfbdba74b0973e976d",
+    "public/auth/auth-page.js": "e04b641a2ca787d6776912e39e723126a6ca058ea44f2e5c8c8af56ed9dec5e0",
     "public/auth/auth.css": "582576014a5a9177bc7bff9e9df9622fa94a411e3b428047bd14a238179341c0",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
-    "public/account-sessions.js": "087864904c3f37cf85082a2691d2e642ba69ccd7b82d2b35ebbdce443f3ed98e",
+    "public/account-sessions.js": "c4af05031dadfcd5a7e02d768955ebc2039de9ee8fbea847e9701e31a0c580ef",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "9ce75587e160399fbf4cea0c93b298af96d0d67d1bb37a784bd5dff7be0d3e8f",
+    "public/chat-bridge.js": "d1ccdd65a35be1df06047ebadb93cbe80426d4eec23cd939488f045688d44e74",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
