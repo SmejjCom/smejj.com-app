@@ -337,9 +337,9 @@ test("Nr. 4: der Berichtstext ist ehrlich — Quote aus Laeufen, Stillgelegtes a
   heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: JETZT - 1000 });
   heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "fehler", meldung: "kaputt", env: ENV, jetztMs: JETZT - 500 });
   const text = wochenberichtText({ jetztMs: JETZT });
-  assert.ok(text.includes("Qualitätsmessung [ROT]: 2 Laeufe, 1 Fehler (50 % erfolgreich)"), "Quote aus gemessenen Laeufen: " + text);
-  assert.ok(text.includes("Training-Loop [keine Messung]: keine Laeufe gemessen"));
-  assert.ok(text.includes("Konkurrenz-Radar [keine Messung]: keine Laeufe gemessen"));
+  assert.ok(text.includes("01. Qualitätsmessung [ROT]: 2 Laeufe, 1 Fehler (50 % erfolgreich)"), "Quote aus gemessenen Laeufen: " + text);
+  assert.ok(text.includes("05. Training-Loop [keine Messung]: keine Laeufe gemessen"));
+  assert.ok(text.includes("04. Konkurrenz-Radar [keine Messung]: keine Laeufe gemessen"));
   assert.ok(text.includes("smejj.com/admin/autopiloten/"));
 });
 

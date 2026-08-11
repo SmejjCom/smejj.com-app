@@ -7,7 +7,7 @@ const STUNDE_MS = 60 * 60 * 1000;
 export const AUTOPILOTEN = Object.freeze([
   {
     id: "qualitaetsmessung",
-    name: "Qualitätsmessung",
+    name: "01. Qualitätsmessung",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",
     funktionen: [
       "Läuft täglich um 7:10 und 19:10 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
@@ -24,7 +24,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "codeberg-spiegel",
-    name: "Codeberg-Spiegel",
+    name: "02. Codeberg-Spiegel",
     kurz: "Sichert jede Nacht eine Kopie des Codes nach Codeberg — seit 11. August 2026 vom Zeabur-Dauerdienst, nicht mehr vom Mac.",
     funktionen: [
       "Läuft täglich um 11:20 UTC (= 4:20 Uhr Mac-Zeit) im Dienst smejj-autopilot-jobs auf Zeabur.",
@@ -42,7 +42,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "voice-region-check",
-    name: "Voice-Region-Prüfung",
+    name: "03. Voice-Region-Prüfung",
     kurz: "Prüft täglich, ob Google die Regionsänderung für die Voice-Freischaltung genehmigt hat.",
     funktionen: [
       "Läuft täglich um 9:04 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
@@ -59,7 +59,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "konkurrenz-radar",
-    name: "Konkurrenz-Radar",
+    name: "04. Konkurrenz-Radar",
     kurz: "Durchsucht jeden Montag die öffentlichen Quellen der Konkurrenz nach neuen Funktionen und schlägt Verbesserungen vor.",
     funktionen: [
       "Läuft jeden Montag um 6:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
@@ -77,7 +77,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "training-loop",
-    name: "Training-Loop",
+    name: "05. Training-Loop",
     kurz: "Überwacht und taktet die Evaluierungs- und Trainingszyklen im Dienst smejj-autopilot-jobs auf Zeabur.",
     funktionen: [
       "Läuft täglich um 12:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
@@ -94,7 +94,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "brueckenwaechter",
-    name: "Brücken-Wächter",
+    name: "06. Brücken-Wächter",
     kurz: "Prüft rund um die Uhr, ob die Chat-Brücke wirklich antwortet — von außen, über dieselbe Adresse wie ein Nutzer.",
     funktionen: [
       "Fragt jede Minute die öffentliche Adresse der Chat-Brücke ab und liest ihre Version.",
@@ -114,7 +114,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "salad-sonden",
-    name: "Zeabur-Sonden",
+    name: "07. Zeabur-Sonden",
     kurz: "Gesundheitssonden am Zeabur-Cluster (100% Zeabur.com Hauptbetrieb & Container-Health).",
     funktionen: [
       "Überwacht 24/7 die Zeabur-Instanz, RAM-Auslastung und Server-Gesundheit.",
@@ -131,7 +131,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "deep-research",
-    name: "Deep Research KI-Autopilot",
+    name: "08. Deep Research KI-Autopilot",
     kurz: "Führt mehrstufige Internet-Recherchen mit automatischer Synthese und Quellenzitierung durch.",
     funktionen: [
       "Generiert iterativ mehrstufige Suchpläne.",
@@ -148,7 +148,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "code-interpreter",
-    name: "Code Interpreter Sandbox Autopilot",
+    name: "09. Code Interpreter Sandbox Autopilot",
     kurz: "Führt JavaScript/Berechnungen in einer isolierten Umgebung mit Timeouts und Ergebnis-Erfassung aus.",
     funktionen: [
       "Isolierter vm-Sandbox-Kontext mit Zeitbeschränkungen.",
@@ -165,7 +165,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "memory-sync",
-    name: "Memory & Langzeitgedächtnis Autopilot",
+    name: "10. Memory & Langzeitgedächtnis Autopilot",
     kurz: "Extrahiert fortlaufend wichtige Nutzerfakten und Vorlieben aus Chats und hält das Nutzerprofil aktuell.",
     funktionen: [
       "Extrahiert Nutzerkontext (Name, Ort, Präferenzen).",
@@ -182,7 +182,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "self-healing",
-    name: "Self-Healing Prompt-Autopilot",
+    name: "11. Self-Healing Prompt-Autopilot",
     kurz: "Prüft KI-Antworten laufend auf Fehler und führt automatische Reparaturen aus.",
     funktionen: [
       "Laufzeit-Inspektion von Modell-Ausgaben auf Abbrüche und JSON-Syntax.",
@@ -199,7 +199,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "multimodal-engine",
-    name: "Multimodaler Audio/Vision Autopilot",
+    name: "12. Multimodaler Audio/Vision Autopilot",
     kurz: "Steuert multimodale Audio- & Bild-Streams für Live-Interaktionen.",
     funktionen: [
       "Validiert Audio-Chunks und Bild-Frames.",
@@ -216,7 +216,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "task-orchestrator",
-    name: "Multi-Agenten Task-Orchestrator",
+    name: "13. Multi-Agenten Task-Orchestrator",
     kurz: "Zerlegt komplexe Aufgaben in Sub-Agenten-Tasks und koordiniert deren Ausführung.",
     funktionen: [
       "Generiert gerichtete Aufgaben-Graphen (DAG).",
@@ -233,7 +233,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "self-improvement",
-    name: "DPO & Self-Improvement Autopilot",
+    name: "14. DPO & Self-Improvement Autopilot",
     kurz: "Generiert kontinuierlich Trainings-Paare aus Interaktionen zur eigenständigen Modell- & Prompt-Optimierung.",
     funktionen: [
       "Bewertet Antwortqualität nach Vollständigkeit und Präzision.",
@@ -250,7 +250,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "knowledge-graph",
-    name: "Knowledge-Graph & RAG-Fusion Autopilot",
+    name: "15. Knowledge-Graph & RAG-Fusion Autopilot",
     kurz: "Erstellt einen semantischen Wissens- und Abhängigkeitsgraphen über den gesamten Codebase.",
     funktionen: [
       "Extrahiert Symbole, Funktionen, Klassen und Modul-Abhängigkeiten.",
@@ -267,7 +267,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "smart-router",
-    name: "Model-Arena & Smart-Router Autopilot",
+    name: "16. Model-Arena & Smart-Router Autopilot",
     kurz: "Klassifiziert Anfragen nach Komplexität und routet sie automatisch an das beste Spezialmodell.",
     funktionen: [
       "Klassifiziert Anfragen (Mathe, Deep Reasoning, Architektur, Quick Lookup).",
@@ -284,7 +284,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "bug-predictor",
-    name: "Proaktiver Bug-Predictor & Security Autopilot",
+    name: "17. Proaktiver Bug-Predictor & Security Autopilot",
     kurz: "Scannt Code im Voraus auf Sicherheitsrisiken, Memory Leaks und Fehlerquellen.",
     funktionen: [
       "Erkennt unsichere Konstrukte (eval, unhandled promises, memory leaks).",
@@ -301,7 +301,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "model-lifecycle",
-    name: "Shadow-Release & Model-Lifecycle Autopilot",
+    name: "18. Shadow-Release & Model-Lifecycle Autopilot",
     kurz: "Verwaltet smejj 1.0 Live-Betrieb, Shadow-Beta-Tests und automatische Zero-Downtime Releases.",
     funktionen: [
       "Steuert aktives Live-Modell (smejj 1.0), Shadow-Beta und Trainings-Ziele.",
@@ -318,7 +318,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "user-feedback-flywheel",
-    name: "User-Feedback & RLHF Flywheel Autopilot",
+    name: "19. User-Feedback & RLHF Flywheel Autopilot",
     kurz: "Erfasst Nutzer-Interaktionen (Kopieren, Regeneration, Edits), maskiert PII und generiert DPO-Trainingsdaten.",
     funktionen: [
       "Erfasst implizite und explizite Nutzersignale (Kopieren, Daumen hoch, Neu generieren).",
@@ -335,7 +335,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "process-reward",
-    name: "Process-Reward & Step-by-Step Reasoner Autopilot",
+    name: "20. Process-Reward & Step-by-Step Reasoner Autopilot",
     kurz: "Bewertet jeden einzelnen Gedankenschritt (PRM) und bricht fehlerhafte Denkpfade sofort ab.",
     funktionen: [
       "Zerlegt Denkketten in atomare Logik- und Code-Schritte.",
@@ -352,7 +352,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "knowledge-distiller",
-    name: "Cross-Model Knowledge Distiller Autopilot",
+    name: "21. Cross-Model Knowledge Distiller Autopilot",
     kurz: "Destilliert komplexe Denk- und Lösungsstrukturen weltweit führender Modelle in smejj 2.0 Gewichte.",
     funktionen: [
       "Vergleicht Multi-Modell-Lösungsansätze gegen Sandbox-Compiler-Beweise.",
@@ -369,7 +369,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "evolutionary-mutation",
-    name: "Evolutionary Mutation & Stress-Testing Autopilot",
+    name: "22. Evolutionary Mutation & Stress-Testing Autopilot",
     kurz: "Unterzieht generierten Code aggressiven evolutionären Mutationen und Randfall-Stresstests.",
     funktionen: [
       "Injeziert Boundary-Werte, leere Collections und Race-Condition-Stresstests.",
@@ -386,7 +386,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "realtime-internet-harvester",
-    name: "24/7 Real-Time Internet Ingestion & Knowledge Harvester",
+    name: "23. 24/7 Real-Time Internet Ingestion & Knowledge Harvester",
     kurz: "Durchforstet 24/7 das Web nach neuen Open-Source Releases, Papers und Sicherheitslücken.",
     funktionen: [
       "Scannt kontinuierlich weltweite Tech-Feeds, arXiv-Paper und CVE-Sicherheitswarnungen.",
@@ -403,7 +403,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "multi-file-repo-architect",
-    name: "Autonomous Multi-File Repo-Architect Autopilot",
+    name: "24. Autonomous Multi-File Repo-Architect Autopilot",
     kurz: "Virtualisiert und orchestriert vollständige Datei-Bäume und modulare Software-Architekturen.",
     funktionen: [
       "Prüft und validiert Import- und Modul-Abhängigkeiten über 50+ Dateien hinweg.",
@@ -420,7 +420,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "live-arena-leaderboard",
-    name: "Automated Live-Arena & ELO Leaderboard Autopilot",
+    name: "25. Automated Live-Arena & ELO Leaderboard Autopilot",
     kurz: "Führt kontinuierliche Benchmark-Duelle durch und berechnet mathematische ELO-Ratings.",
     funktionen: [
       "Lässt smejj-Modelle kontinuierlich gegen standardisierte Coding-Benchmarks antreten.",
@@ -437,7 +437,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "instant-web-container",
-    name: "In-Browser Instant WebContainers & Live-Vorschau",
+    name: "26. In-Browser Instant WebContainers & Live-Vorschau",
     kurz: "Ermöglicht sofortiges, clientseitiges Rendern und Ausführen generierter Web-Apps mit 0 Server-Last.",
     funktionen: [
       "Erzeugt isolierte, sandboxed HTML5/JS/CSS Live-Vorschauen im Browser des Nutzers.",
@@ -454,7 +454,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "realtime-voice-pair",
-    name: "Real-Time Voice & Screen Pair-Programmer Autopilot",
+    name: "27. Real-Time Voice & Screen Pair-Programmer Autopilot",
     kurz: "Verarbeitet bidirektionale Audio-Streams und Screen-Frames in Echtzeit (<300 ms).",
     funktionen: [
       "Verwaltet ephemere Voice-Session-Tokens und Audio-Stream-Pakete.",
@@ -471,7 +471,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "autonomous-git-bot",
-    name: "Autonomous Git-Bot & Pull-Request Auto-Fixer",
+    name: "28. Autonomous Git-Bot & Pull-Request Auto-Fixer",
     kurz: "Scannt Repositories, analysiert Pull Requests und generiert automatisch verifizierte Patches.",
     funktionen: [
       "Analysiert Git-Diffs auf Sicherheitslücken, XSS und Hardcoded Secrets.",
@@ -488,7 +488,7 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "synthetic-user-watchdog",
-    name: "24/7 Synthetic User & Full-Stack E2E Watchdog",
+    name: "29. 24/7 Synthetic User & Full-Stack E2E Watchdog",
     kurz: "Simuliert rund um die Uhr echte Nutzer-Abläufe (Login, Chat, Inferenz, S3-Speicher) und schlägt bei Fehlern sofort Alarm.",
     funktionen: [
       "Führt alle 5 Minuten einen vollständigen End-to-End-Durchlauf als virtueller Nutzer aus.",
