@@ -13,7 +13,7 @@ nach Aufwand/Kosten sortiert.
 
 ---
 
-## Stufe 1 — Bild-VERSTEHEN (schnellster Gewinn, keine neuen Fixkosten)
+## Stufe 1 — Bild-VERSTEHEN — ERLEDIGT + LIVE 2026-08-11 (sw v272, Bridge v127, Modell qwen/qwen3.6-27b — Llama-4-Vision war bei Groq abgeschaltet)
 
 Anbieter: **Groq** — Schluessel ist bereits in der Bruecke vorhanden, kein
 neuer Dienst noetig. Vision-Modelle: Llama 4 Scout / Maverick (Preview),
