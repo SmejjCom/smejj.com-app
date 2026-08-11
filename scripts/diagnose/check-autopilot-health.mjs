@@ -31,7 +31,10 @@ async function ueberpruefeAutopiloten() {
     { id: "evolutionary-mutation", name: "Evolutionary Mutation & Stress-Testing Autopilot" },
     { id: "realtime-internet-harvester", name: "24/7 Real-Time Internet Ingestion & Knowledge Harvester" },
     { id: "multi-file-repo-architect", name: "Autonomous Multi-File Repo-Architect Autopilot" },
-    { id: "live-arena-leaderboard", name: "Automated Live-Arena & ELO Leaderboard Autopilot" }
+    { id: "live-arena-leaderboard", name: "Automated Live-Arena & ELO Leaderboard Autopilot" },
+    { id: "instant-web-container", name: "In-Browser Instant WebContainers & Live-Vorschau" },
+    { id: "realtime-voice-pair", name: "Real-Time Voice & Screen Pair-Programmer Autopilot" },
+    { id: "autonomous-git-bot", name: "Autonomous Git-Bot & Pull-Request Auto-Fixer" }
   ];
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);

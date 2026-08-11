@@ -20,3 +20,6 @@ export * from "./evolutionaryMutationAutopilot.js";
 export * from "./realtimeInternetHarvesterAutopilot.js";
 export * from "./multiFileRepoArchitectAutopilot.js";
 export * from "./liveArenaLeaderboardAutopilot.js";
+export * from "./instantWebContainerAutopilot.js";
+export * from "./realtimeVoicePairAutopilot.js";
+export * from "./autonomousGitBotAutopilot.js";

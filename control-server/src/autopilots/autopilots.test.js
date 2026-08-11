@@ -52,7 +52,13 @@ import {
   calculateExpectedScore,
   updateEloRatings,
   executeArenaMatch,
-  recordArenaMatch
+  recordArenaMatch,
+  buildInstantWebContainerPreview,
+  analyzeWebContainerSnippet,
+  createVoicePairSession,
+  processRealtimePairFrame,
+  analyzePullRequestDiff,
+  synthesizeAutoFixPatch
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -413,6 +419,65 @@ test("Automated Live-Arena & ELO Leaderboard Test", async () => {
   const recRes = await recordArenaMatch(match);
   assert.equal(recRes.ok, true);
 });
+
+test("In-Browser Instant WebContainers & Live-Vorschau Test", () => {
+  const snippet = "```html\n<div class=\"box\">Hello smejj.com</div>\n```\n```css\n.box { color: red; }\n```\n```js\nconsole.log('App ready');\n```";
+  const analysis = analyzeWebContainerSnippet(snippet);
+  assert.equal(analysis.canPreview, true);
+  assert.equal(analysis.detectedType, "full_stack");
+
+  const preview = buildInstantWebContainerPreview({
+    html: analysis.extracted.html,
+    css: analysis.extracted.css,
+    js: analysis.extracted.js,
+    title: "Demo Preview"
+  });
+
+  assert.equal(preview.isSafe, true);
+  assert.ok(preview.previewHtml.includes("<!DOCTYPE html>"));
+  assert.ok(preview.previewHtml.includes("Hello smejj.com"));
+});
+
+test("Ultra-Low-Latency Real-Time Voice & Screen Pair-Programmer Test", () => {
+  const session = createVoicePairSession("dev_user_1", "voice_and_screen");
+  assert.ok(session.sessionId.startsWith("vpair_"));
+  assert.ok(session.token.startsWith("vtok_"));
+  assert.equal(session.maxLatencyBudgetMs, 300);
+
+  const frameResult = processRealtimePairFrame({
+    audioChunkBase64: "dGVzdGF1ZGlv",
+    screenFrameBase64: "dGVzdHNjcmVlbg==",
+    activeFile: "app.js",
+    cursorLine: 42
+  });
+
+  assert.equal(frameResult.status, "processed");
+  assert.ok(frameResult.contextSummary.includes("Audio-Eingabe aktiv"));
+  assert.ok(frameResult.contextSummary.includes("app.js (Zeile 42)"));
+});
+
+test("Autonomous Git-Bot & Pull-Request Auto-Fixer Test", () => {
+  const dangerousDiff = `
+    + const res = eval(userInput);
+    + const key = "password = '12345'";
+  `;
+  const review = analyzePullRequestDiff(dangerousDiff);
+  assert.equal(review.riskLevel, "high");
+  assert.equal(review.canAutoMerge, false);
+  assert.ok(review.issuesDetected.length >= 2);
+
+  const cleanDiff = `
+    + export function add(a, b) { return a + b; }
+  `;
+  const cleanReview = analyzePullRequestDiff(cleanDiff);
+  assert.equal(cleanReview.riskLevel, "low");
+  assert.equal(cleanReview.canAutoMerge, true);
+
+  const patch = synthesizeAutoFixPatch("src/utils.js", "Unescaped innerHTML", "element.textContent = safeValue;");
+  assert.ok(patch.commitMessage.includes("fix(autofix):"));
+  assert.equal(patch.targetFile, "src/utils.js");
+});
+
 
 
 

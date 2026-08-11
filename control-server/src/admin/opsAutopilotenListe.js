@@ -434,5 +434,56 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 30 * 60 * 1000,
     startAnleitung: "Läuft kontinuierlich zur Qualitäts- und ELO-Messung.",
     stopAnleitung: "Über Arena-Policy steuerbar."
+  },
+  {
+    id: "instant-web-container",
+    name: "In-Browser Instant WebContainers & Live-Vorschau",
+    kurz: "Ermöglicht sofortiges, clientseitiges Rendern und Ausführen generierter Web-Apps mit 0 Server-Last.",
+    funktionen: [
+      "Erzeugt isolierte, sandboxed HTML5/JS/CSS Live-Vorschauen im Browser des Nutzers.",
+      "Vollständige Client-Side Execution (0,00 EUR Server-Kosten, ausgelegt auf 1 Mrd. Besucher).",
+      "Erkennt automatisch Code-Snippets und bereitet interaktive Apps vor."
+    ],
+    ort: "Client & Control Server (WebContainer Engine)",
+    zeitplan: "24/7 Dauerbetrieb (Ereignis-gesteuert)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Wird bei jeder Web-App-Generierung im Chat getriggert.",
+    stopAnleitung: "Über WebContainer-Policy konfigurierbar."
+  },
+  {
+    id: "realtime-voice-pair",
+    name: "Real-Time Voice & Screen Pair-Programmer Autopilot",
+    kurz: "Verarbeitet bidirektionale Audio-Streams und Screen-Frames in Echtzeit (<300 ms).",
+    funktionen: [
+      "Verwaltet ephemere Voice-Session-Tokens und Audio-Stream-Pakete.",
+      "Verbindet Bildschirm- und Cursor-Kontext direkt mit der Sprachausgabe.",
+      "Ermöglicht interaktives Senior-Architect Pair-Programming ohne Verzögerung."
+    ],
+    ort: "Control Server (Voice Engine)",
+    zeitplan: "Auf Anfrage / Live-Session",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Wird bei Start einer Sprach-Coding-Sitzung aktiviert.",
+    stopAnleitung: "Über Voice-Gateway steuerbar."
+  },
+  {
+    id: "autonomous-git-bot",
+    name: "Autonomous Git-Bot & Pull-Request Auto-Fixer",
+    kurz: "Scannt Repositories, analysiert Pull Requests und generiert automatisch verifizierte Patches.",
+    funktionen: [
+      "Analysiert Git-Diffs auf Sicherheitslücken, XSS und Hardcoded Secrets.",
+      "Generiert automatisierte Tests und verifizierte Bugfix-Patches.",
+      "Überwacht Codeberg- und GitHub-Branches auf saubere Merge-Fähigkeit."
+    ],
+    ort: "Control Server (Git-Bot Agent)",
+    zeitplan: "24/7 Dauerbetrieb (Event-basiert)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Aktiviert bei Git-Webhooks und Repository-Events.",
+    stopAnleitung: "Über Git-Bot Policy steuerbar."
   }
 ]);
