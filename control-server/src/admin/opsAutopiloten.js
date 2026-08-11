@@ -46,19 +46,20 @@ export const AUTOPILOTEN = Object.freeze([
   {
     id: "codeberg-spiegel",
     name: "Codeberg-Spiegel",
-    kurz: "Sichert jede Nacht um 4:20 Uhr eine Kopie des Codes nach Codeberg.",
+    kurz: "Sichert jede Nacht eine Kopie des Codes nach Codeberg — seit 11. August 2026 vom Zeabur-Dauerdienst, nicht mehr vom Mac.",
     funktionen: [
-      "Läuft täglich um 4:20 Uhr auf dem Mac (cron).",
+      "Läuft täglich um 11:20 UTC (= 4:20 Uhr Mac-Zeit) im Dienst smejj-autopilot-jobs auf Zeabur.",
       "Spiegelt das Repository nach Codeberg (zweiter, unabhängiger Aufbewahrungsort).",
-      "Schreibt das Protokoll nach ~/Library/Logs/smejj-codeberg-spiegel.log."
+      "Holt einen verpassten Tageslauf nach einem Neustart selbst nach — der Mac konnte das im Schlaf nicht.",
+      "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs; Zustand unter smejj-autopilot-jobs.zeabur.app/health."
     ],
-    ort: "Mac (cron)",
-    zeitplan: "täglich 4:20 Uhr",
+    ort: "Zeabur (smejj-autopilot-jobs)",
+    zeitplan: "täglich 11:20 UTC",
     messung: "heartbeat",
     erwartetAlleMs: TAG_MS,
     schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "Am Mac im Terminal ausführen: bash \"$HOME/.local/share/smejj-qualitaet/spiegel.sh\"",
-    stopAnleitung: "Am Mac: crontab -e öffnen und die Zeile mit \"smejj-codeberg-spiegel\" mit einem # davor stilllegen."
+    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/spiegel mit {\"key\":\"<codeberg-spiegel-Schlüssel>\"} — oder im Zeabur-Portal den Dienst neu starten (holt den Tageslauf nach).",
+    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten — davon wird abgeraten, dann spiegelt nichts mehr."
   },
   {
     id: "voice-region-check",

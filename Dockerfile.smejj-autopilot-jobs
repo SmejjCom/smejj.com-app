@@ -1,0 +1,41 @@
+# smejj.com Autopilot-Jobs — eigenstaendiger Dauerdienst (Zeabur).
+#
+# Gleiches Muster wie Dockerfile.brueckenwaechter: Zeabur waehlt
+# `Dockerfile.<dienstname>` gezielt fuer den Dienst "smejj-autopilot-jobs";
+# der CMD nagelt den Start fest (Zeaburs Auto-Erkennung wuerde sonst
+# `pnpm start` = Control Server ausfuehren — die bekannte Falle).
+#
+# ANDERS als der Waechter braucht dieser Dienst git + ssh: der Spiegel-Job
+# holt die Arbeitskopie und pusht nach Codeberg. bash fuer das bewaehrte
+# codeberg_spiegel_sync.sh aus der Arbeitskopie.
+#
+# Betreiber-Freigabe: docs/approvals/2026-08-11-zeabur-autopilot-jobs.md
+FROM node:22-slim
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends git openssh-client ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_ENV=production \
+    SMEJJ_HOST=0.0.0.0 \
+    PORT=8080
+
+WORKDIR /app
+
+COPY --chown=node:node workers/smejj-autopilot-jobs ./workers/smejj-autopilot-jobs
+
+USER node
+
+# Laufzeit-Werte:
+#   SMEJJ_AUTOPILOT_KEYS         "codeberg-spiegel:<key>,..." — Herzschlag + Von-Hand-Start
+#   SMEJJ_GITHUB_DEPLOY_KEY      PEM-Inhalt des GitHub-Deploy-Schluessels (lesen smejj.com-app)
+#   SMEJJ_CODEBERG_SSH_KEY       PEM-Inhalt des Codeberg-Schluessels (Konto smejj)
+#   SMEJJ_AUTOPILOT_HEARTBEAT_URL  Standard: Zeabur-Control
+#   SMEJJ_SPIEGEL_UTC            Standard 11:20 (= 4:20 Mac-Zeit)
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+CMD ["node", "workers/smejj-autopilot-jobs/worker.mjs"]
