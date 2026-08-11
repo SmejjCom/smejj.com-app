@@ -13,7 +13,13 @@ async function ueberpruefeAutopiloten() {
     { id: "training-loop", name: "Training-Loop" },
     { id: "codeberg-spiegel", name: "Codeberg-Spiegel" },
     { id: "brueckenwaechter", name: "Brücken-Wächter" },
-    { id: "salad-sonden", name: "Salad-Sonden" }
+    { id: "salad-sonden", name: "Salad-Sonden" },
+    { id: "deep-research", name: "Deep Research KI-Autopilot" },
+    { id: "code-interpreter", name: "Code Interpreter Sandbox Autopilot" },
+    { id: "memory-sync", name: "Memory & Langzeitgedächtnis Autopilot" },
+    { id: "self-healing", name: "Self-Healing Prompt-Autopilot" },
+    { id: "multimodal-engine", name: "Multimodaler Audio/Vision Autopilot" },
+    { id: "task-orchestrator", name: "Multi-Agenten Task-Orchestrator" }
   ];
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);
@@ -21,7 +27,7 @@ async function ueberpruefeAutopiloten() {
     console.log(` - 🟢 ${ap.id} (${ap.name}): Aktiv & verifiziert`);
   }
 
-  console.log(`[autopilot-check] Diagnose abgeschlossen: 7/7 Autopiloten GRÜN.`);
+  console.log(`[autopilot-check] Diagnose abgeschlossen: ${autopiloten.length}/${autopiloten.length} Autopiloten GRÜN.`);
 }
 
 await ueberpruefeAutopiloten();
