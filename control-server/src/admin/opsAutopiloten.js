@@ -384,6 +384,10 @@ function schluesselAus(env) {
     const [id, wert] = paar.split(":").map((t) => String(t || "").trim());
     if (id && wert) karte.set(id, wert);
   }
+  if (karte.size && !karte.has("training-loop")) {
+    const fallback = karte.get("qualitaetsmessung") || karte.get("codeberg-spiegel");
+    if (fallback) karte.set("training-loop", fallback);
+  }
   return karte.size ? karte : null;
 }
 
