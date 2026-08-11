@@ -13,3 +13,4 @@ export * from "./smartRouterAutopilot.js";
 export * from "./bugPredictorAutopilot.js";
 export * from "./syntheticTaskGenerator.js";
 export * from "./modelLifecycleAutopilot.js";
+export * from "./userFeedbackFlywheelAutopilot.js";

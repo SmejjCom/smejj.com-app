@@ -314,5 +314,22 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 30 * 60 * 1000,
     startAnleitung: "Läuft kontinuierlich zur Reifeprüfung neuer Modellversionen.",
     stopAnleitung: "Über Model-Lifecycle Flag steuerbar."
+  },
+  {
+    id: "user-feedback-flywheel",
+    name: "User-Feedback & RLHF Flywheel Autopilot",
+    kurz: "Erfasst Nutzer-Interaktionen (Kopieren, Regeneration, Edits), maskiert PII und generiert DPO-Trainingsdaten.",
+    funktionen: [
+      "Erfasst implizite und explizite Nutzersignale (Kopieren, Daumen hoch, Neu generieren).",
+      "Automatisches PII-Scrubbing (Maskierung von E-Mails, Schlüsseln, IPs).",
+      "Erzeugt hochqualitative DPO-Trainingspaare auf IDrive e2 S3 Storage."
+    ],
+    ort: "Control Server (Data Flywheel)",
+    zeitplan: "24/7 Dauerbetrieb (Ereignis-gesteuert)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Läuft kontinuierlich im Hintergrund bei jedem Chat-Event.",
+    stopAnleitung: "Über Telemetrie- und DSGVO-Einstellungen steuerbar."
   }
 ]);

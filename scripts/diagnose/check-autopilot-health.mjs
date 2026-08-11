@@ -24,7 +24,8 @@ async function ueberpruefeAutopiloten() {
     { id: "knowledge-graph", name: "Knowledge-Graph & RAG-Fusion Autopilot" },
     { id: "smart-router", name: "Model-Arena & Smart-Router Autopilot" },
     { id: "bug-predictor", name: "Proaktiver Bug-Predictor & Security Autopilot" },
-    { id: "model-lifecycle", name: "Shadow-Release & Model-Lifecycle Autopilot" }
+    { id: "model-lifecycle", name: "Shadow-Release & Model-Lifecycle Autopilot" },
+    { id: "user-feedback-flywheel", name: "User-Feedback & RLHF Flywheel Autopilot" }
   ];
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);

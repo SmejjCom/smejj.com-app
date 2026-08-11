@@ -34,7 +34,10 @@ import {
   createInitialLifecycleState,
   evaluateShadowTrial,
   recordShadowTrial,
-  checkAndPromoteCandidate
+  checkAndPromoteCandidate,
+  scrubPiiData,
+  processUserFeedbackSignal,
+  getUserFlywheelStats
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -254,5 +257,30 @@ test("Shadow-Release & Model-Lifecycle Autopilot Test", async () => {
   assert.equal(promo.newState.activeLiveModel.version, "smejj 1.1");
   assert.equal(promo.newState.shadowBetaModel.version, "smejj 1.2-beta");
 });
+
+test("User-Feedback Flywheel & PII Scrubbing Test", async () => {
+  const dirtyText = "Mein Name ist Max, E-Mail: max@smejj.com, Key: sk-123456789012345678901234, IP: 192.168.1.1";
+  const cleanText = scrubPiiData(dirtyText);
+  assert.ok(!cleanText.includes("max@smejj.com"));
+  assert.ok(!cleanText.includes("sk-123456789012345678901234"));
+  assert.ok(!cleanText.includes("192.168.1.1"));
+  assert.ok(cleanText.includes("[EMAIL_MASKED]"));
+  assert.ok(cleanText.includes("[KEY_MASKED]"));
+  assert.ok(cleanText.includes("[IP_MASKED]"));
+
+  const feedbackRes = await processUserFeedbackSignal({
+    prompt: "Schreibe eine Funktion",
+    chosenResponse: "function test() { return true; }",
+    rejectedResponse: "bad code",
+    signalType: "copy"
+  });
+  assert.equal(feedbackRes.ok, true);
+  assert.equal(feedbackRes.processed, true);
+
+  const stats = await getUserFlywheelStats();
+  assert.equal(stats.status, "active_24_7_flywheel");
+  assert.equal(stats.piiScrubbingActive, true);
+});
+
 
 
