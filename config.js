@@ -2,7 +2,7 @@
 // Salad-Container-Gateway (Backend auf *.salad.cloud) wird die Origin hier als
 // Konstante gesetzt oder per localStorage "smejj.apiOrigin.v1" uebersteuert
 // (nur https; lokales HTTP nur fuer localhost/Loopback-Testserver).
-const DEFAULT_API_ORIGIN = "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud";
+const DEFAULT_API_ORIGIN = "https://smejj-control.zeabur.app";
 
 function resolveApiOrigin() {
   const pageOrigin = String(globalThis.location?.origin || "").trim().replace(/\/+$/, "");
