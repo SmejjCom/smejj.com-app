@@ -40,7 +40,9 @@ set -u
 # deshalb MIT Original-Zeitpunkt (`am`) aufgehoben und beim naechsten Lauf
 # nachgeliefert. Die Datei teilen sich beide Skripte; der Schluessel steht
 # NIE darin (er kommt erst beim Senden dazu).
-AP_URL="https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/autopilot/heartbeat"
+# SEIT 2026-08-11 ZEABUR STATT SALAD (Begruendung in spiegel.sh): dauerhafter
+# Empfaenger, gemeinsame Ablage auf IDrive e2.
+AP_URL="https://smejj-control.zeabur.app/api/autopilot/heartbeat"
 AP_QUEUE="$HOME/.local/share/smejj-qualitaet/herzschlag-warteschlange.jsonl"
 
 # Ein Sendeversuch: 3 Wiederholungen im 30-s-Abstand fangen kurzes Flattern;

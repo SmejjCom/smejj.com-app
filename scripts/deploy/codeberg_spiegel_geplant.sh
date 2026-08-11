@@ -45,7 +45,12 @@ set -u
 # Herzschlag wird deshalb jetzt MIT Original-Zeitpunkt (`am`) aufgehoben und
 # beim naechsten Lauf nachgeliefert; der Server traegt ihn dann in seinen
 # echten Kalendertag ein. Der Schluessel steht NIE in der Warteschlangendatei.
-AP_URL="https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/autopilot/heartbeat"
+# SEIT 2026-08-11 ZEABUR STATT SALAD: Der Salad-Empfaenger fiel an diesem Tag
+# den ganzen Tag knotenweise aus (Zombie-Hosts, stundenlang 503) — genau er
+# hat die Warteschlange noetig gemacht. Der Zeabur-Control laeuft dauerhaft
+# und teilt sich die Herzschlag-Ablage (IDrive e2) mit dem Salad-Control:
+# egal wer die Ampel serviert, er laedt dieselben Daten.
+AP_URL="https://smejj-control.zeabur.app/api/autopilot/heartbeat"
 AP_QUEUE="$HOME/.local/share/smejj-qualitaet/herzschlag-warteschlange.jsonl"
 
 # Ein Sendeversuch: 3 Wiederholungen im 30-s-Abstand fangen kurzes Flattern;
