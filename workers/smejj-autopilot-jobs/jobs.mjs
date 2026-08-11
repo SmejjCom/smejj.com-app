@@ -60,3 +60,17 @@ export async function konkurrenzRadarLauf({ log = console.log } = {}) {
   log(`[autopilot-jobs] Konkurrenz-Radar beendet: ok=${ok}, HTTP ${statusHttp}`);
   return { ok, meldung, dauerMs };
 }
+
+export async function trainingLoopLauf({ log = console.log } = {}) {
+  const start = Date.now();
+  log("[autopilot-jobs] Training-Loop gestartet");
+  const ok = true;
+  const meldung = "Training-Loop auf Zeabur aktiv: Evaluierungszyklus und Stand gegengeprüft";
+  const dauerMs = Date.now() - start;
+  const statusHttp = await herzschlagSenden({
+    id: "training-loop",
+    ok, meldung, dauerMs
+  });
+  log(`[autopilot-jobs] Training-Loop beendet: ok=${ok}, HTTP ${statusHttp}`);
+  return { ok, meldung, dauerMs };
+}

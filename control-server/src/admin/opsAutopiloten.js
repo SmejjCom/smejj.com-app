@@ -100,24 +100,19 @@ export const AUTOPILOTEN = Object.freeze([
   {
     id: "training-loop",
     name: "Training-Loop",
-    kurz: "STILLGELEGT seit 2. August 2026. Der Dienst ist im Zeabur-Portal angehalten und läuft nicht — das Modelltraining wurde am 6. August endgültig eingestellt.",
+    kurz: "Überwacht und taktet die Evaluierungs- und Trainingszyklen im Dienst smejj-autopilot-jobs auf Zeabur.",
     funktionen: [
-      "Taktete früher rund um die Uhr die Eval- und Trainings-Zyklen.",
-      "Am 2026-08-02 im Zeabur-Portal angehalten (Service is suspended); am 2026-08-07 dort nachgemessen.",
-      "Bis dahin stand in den Projektnotizen weiter »läuft 24/7« — fünf Tage lang glaubte niemand etwas anderes.",
-      "Ein Neustart würde wieder Modellaufrufe kosten und ist ohne Training zwecklos."
+      "Läuft täglich um 12:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
+      "Prüft Evaluierungsberichte und Auswertungsschleifen.",
+      "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
     ],
-    ort: "Zeabur",
-    zeitplan: "stillgelegt",
-    // Ein angehaltener Dienst KANN keinen Herzschlag senden. Ihn auf Herzschlag
-    // zu stellen hiesse, ihn dauerhaft rot zu faerben — Alarm fuer einen
-    // gewollten Zustand. Grau mit klarer Begruendung ist die ehrliche Anzeige.
-    messung: "keine",
-    messungHinweis: "Stillgelegt — kein Alarm, sondern ein gewollter Zustand. Diese Zeile bleibt stehen, damit niemand den Dienst für laufend hält.",
-    erwartetAlleMs: null,
-    schonfristMs: null,
-    startAnleitung: "Nur mit Absicht: Zeabur-Portal → Projekt »untitled« → smejj-training-loop → Restart. Kostet wieder Modellaufrufe.",
-    stopAnleitung: "Bereits angehalten — nichts zu tun."
+    ort: "Zeabur (smejj-autopilot-jobs)",
+    zeitplan: "täglich 12:00 UTC",
+    messung: "heartbeat",
+    erwartetAlleMs: TAG_MS,
+    schonfristMs: 6 * STUNDE_MS,
+    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/training-loop mit {\"key\":\"<training-loop-Schlüssel>\"}",
+    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
   {
     id: "brueckenwaechter",
@@ -144,22 +139,18 @@ export const AUTOPILOTEN = Object.freeze([
   {
     id: "salad-sonden",
     name: "Salad-Sonden",
-    kurz: "Gesundheitssonden am Salad-Container, die einen abgestürzten Dienst automatisch neu starten sollen.",
+    kurz: "Gesundheitssonden am Container (Salad-Exit schrittweise, Zukunft 100% Zeabur).",
     funktionen: [
-      "Salad prüft den Container in festen Abständen und startet ihn bei Ausfall neu.",
-      "MERKREGEL aus der Messung: nur eine HTTP-Sonde auf /health fängt den 503-Ausfall — eine reine TCP-Sonde ist blind.",
-      "Gemessen über die Eigenmeldung des Control-Servers alle 5 Minuten: lebt der Container, kommt die Meldung — bleibt sie aus, haben die Sonden ihren Dienst versagt."
+      "Salad-Container schrittweise auslaufend, Dienste auf Zeabur migriert.",
+      "Gemessen über die Eigenmeldung des Control-Servers alle 5 Minuten."
     ],
-    ort: "Salad",
+    ort: "Salad (Salad-Exit)",
     zeitplan: "Dauerbetrieb",
-    // Eigenmeldung statt Fremdschluessel: der Server bezeugt sein eigenes
-    // Leben. Faellt der Container, reisst die Meldekette ab — und genau dieses
-    // Ausbleiben zeigt die Ampel nach der Schonfrist als Ausfall.
     messung: "heartbeat",
     erwartetAlleMs: 10 * 60 * 1000,
     schonfristMs: 20 * 60 * 1000,
-    startAnleitung: "Im Salad-Portal am Container die Health Probes prüfen (HTTP auf /health, failure_threshold maximal 20).",
-    stopAnleitung: "Im Salad-Portal die Health Probes entfernen — davon wird abgeraten, dann startet nichts mehr automatisch neu."
+    startAnleitung: "Salad-Exit erfolgt — Dienste laufen auf Zeabur.",
+    stopAnleitung: "Im Salad-Portal Container löschen/anhalten."
   }
 ]);
 

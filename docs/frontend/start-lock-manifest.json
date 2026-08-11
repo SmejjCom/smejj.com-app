@@ -1,11 +1,11 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-11T15:25:46.957Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-11: Stripe verbinden (Live-Links, sw v273)",
+  "frozenAt": "2026-08-11T16:58:50.061Z",
+  "confirmation": "Meldungs-Positionierung oberhalb der Icons (bottom: 84px), Klick-Durchlässigkeit und Entfernung unnötiger Mikrofon-Info-Toasts freigegeben",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
-    "public/styles.css": "26051a2e8d34d6434ee4eaee0892889e63899d1834c99593f7192acef9304d70",
+    "public/styles.css": "b749acf7abef387c672f66743864e880c4cdcd51001f33d0433b9c7fe17c6c26",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "5481f66724b6ab6156c4997d3097820afd14151a222e7d7e1ccf2f31acc331e0",

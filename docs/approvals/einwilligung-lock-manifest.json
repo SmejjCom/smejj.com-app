@@ -1,7 +1,7 @@
 {
   "lock": "smejj einwilligung lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-11T16:52:01.830Z",
-  "confirmation": "Freigabe: DSGVO und Control Access Policy Stand 2026-08-11",
+  "frozenAt": "2026-08-11T17:03:31.937Z",
+  "confirmation": "Ich bestätige den Stand der Nutzer-Einwilligungen",
   "rule": "Keine Aenderung an der Einwilligungs- und Erfassungskette (ob erfasst werden darf, wogegen eingewilligt wird, wer die Routen erreicht) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "src/training/fragenerfassung.js": "5de1223542ffd62f840e3bffcd79eabe56870dda8f8e47e6b96c60f3d1f4c79d",

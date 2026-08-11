@@ -22,7 +22,7 @@ import { loadKnowledgeChunks } from "../control-server/src/rag/knowledgeLoader.j
 import { MIN_TOP_SCORE, rankHits } from "../control-server/src/rag/ragRanking.js";
 
 /** Dokumente, die eine Infrastrukturantwort tragen duerfen. */
-const LEITDOKUMENTE = ["MASTER_PROMPT.md", "AI_Guidelines.md", "docs/FREE_ARCHITECTURE.md", "docs/architecture/FREE_ONLY_MASTER_POLICY.md"];
+const LEITDOKUMENTE = ["MASTER_PROMPT.md", "AI_Guidelines.md", "AGENTS.md", "docs/FREE_ARCHITECTURE.md", "docs/architecture/FREE_ONLY_MASTER_POLICY.md"];
 
 test("kurze Fragen nach dem eigenen Betrieb werden erkannt", () => {
   for (const frage of [

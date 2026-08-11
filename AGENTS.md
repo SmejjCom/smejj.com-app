@@ -4,9 +4,9 @@
 
 - `docs/architecture/FREE_ONLY_MASTER_POLICY.md` ist verbindlich.
 - GitHub.com darf nur im dauerhaft kostenlosen Free-Tarif genutzt werden.
-- Cloudflare.com wird nicht genutzt (Cloudflare-Exit 2026-07-02). Hosting: GitHub Pages Free (Deploy-from-Branch, keine Actions). DNS/Domain: Spaceship.
+- Cloudflare.com wird nicht genutzt (Cloudflare-Exit 2026-07-02). Salad.com wird schrittweise stillgelegt (Salad-Exit 2026-08-11, Zukunft 100% Zeabur.com). Hosting: GitHub Pages Free (Deploy-from-Branch, keine Actions). DNS/Domain: Spaceship.
 - Keine GitHub Pro-, Team-, Enterprise-, Actions-Minuten-, Storage-, Packages-, LFS-, Codespaces- oder sonstigen kostenpflichtigen GitHub-Dienste.
-- Keine Cloudflare-Dienste jeglicher Art; keine kostenpflichtigen Spaceship-Zusatzdienste; Salad nur pay-per-use hinter Budget-Gate.
+- Keine Cloudflare-Dienste jeglicher Art; keine kostenpflichtigen Spaceship-Zusatzdienste; Hauptbetrieb & Workers auf Zeabur.com.
 - Keine Trials, keine Auto-Billing-Fallbacks, keine spaeter automatisch kostenpflichtigen Dienste.
 - IDrive e2 / S3-kompatibler Storage ist Hauptspeicher fuer Dateien, Medien, Modelle, Backups, Deployments und zentrale Daten.
 

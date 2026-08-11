@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-11T16:50:49.463Z",
-  "confirmation": "Freigabe: automatisches Failover Salad<->Zeabur in api.js (Betreiber, 2026-08-11)",
+  "frozenAt": "2026-08-11T17:03:31.878Z",
+  "confirmation": "Ich bestätige die Absicherung aller Admin-Sicherheitsfunktionen",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
