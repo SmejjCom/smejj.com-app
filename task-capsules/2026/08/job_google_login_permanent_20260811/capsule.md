@@ -28,14 +28,17 @@
    - Gleitende Token-Verlängerung: Frische Tokens von `/api/auth/me` werden automatisch im `localStorage` aktualisiert.
    - Schutz vor Auto-Logout: Google- und permanente Sitzungen werden bei Token-Ungültigkeit niemals eigenmächtig abgemeldet.
 7. **`public/sw.js`:**
-   - Cache-Version auf `smejj-shell-v276` angehoben.
+   - Cache-Version auf `smejj-shell-v281` angehoben.
+8. **Asset-Wiederherstellung (`assets/auth/auth.css` u. a.):**
+   - Die CSS- und Script-Dateien (`assets/auth/auth.css`, `assets/auth/passkey-ui.js`, `assets/frame-guard.js`, `assets/account-sessions.js`, `assets/account-privacy.js`) wurden vollständig in das Frontend-Deployment aufgenommen.
+   - Die ungestylte HTML-Darstellung ist behoben; alle Login-Assets antworten live mit HTTP 200.
 
 ## Tests & Verifikation
 - **Unit & Integration Tests:** `npm test` & `npm run check:all` erfolgreich (1904 bestandene Tests).
 - **Guidelines & Locks:** `npm run check:guidelines` (alle Dateien < 800 Zeilen, smejj.com-Naming), `check:security-lock` grün.
-- **Live Deployment:** GitHub Pages (`smejj-app-frontend`) auf `main` aktualisiert, Version `smejj-shell-v276` live geschaltet.
+- **Live Deployment:** GitHub Pages (`smejj-app-frontend`) auf `main` aktualisiert, Version `smejj-shell-v281` live geschaltet.
 - **Live-Verifikation auf `https://smejj.com`:**
-  - `sw.js` liefert `smejj-shell-v276` (HTTP 200).
-  - `assets/auth-gate.js` enthält Schutz für Google-/Permanente-Sitzungen.
-  - `assets/google-login.js` und `assets/auth/auth-page.js` live verifiziert.
+  - `sw.js` liefert `smejj-shell-v281` (HTTP 200).
+  - `/assets/auth/auth.css` liefert wieder HTTP 200 (vollständiges Dark-Mode-Design aktiv).
+  - `/assets/auth/auth-page.js`, `/assets/auth/passkey-ui.js` und `/assets/frame-guard.js` antworten live mit HTTP 200.
   - TTFB auf `https://smejj.com`: 127ms – 155ms (< 300ms Performance Budget).
