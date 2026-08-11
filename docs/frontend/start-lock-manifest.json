@@ -1,16 +1,16 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-11T20:50:28.917Z",
-  "confirmation": "soll smejj 1.0 immer standart model sein, wenn mann model weckselen wollen soll mann mauel welen",
+  "frozenAt": "2026-08-11T21:31:57.714Z",
+  "confirmation": "smejj 1.0 als Standardmodell und ganz oben im Menue platzieren",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "a74ae5bebe42623e911873167ea976e3d7c0b7160ae725b1f5357b9d19e57914",
+    "public/index.html": "1edebc808d59fb4cfc1b0f3e0e1065c5cc09c778328e800aee125e7be4c8a931",
     "public/styles.css": "b749acf7abef387c672f66743864e880c4cdcd51001f33d0433b9c7fe17c6c26",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "22bc30a0b56439c4121b14c23d483c9b7af36cd9e12c523e2cf9f21b432e6fbb",
+    "public/app.js": "0dc35be2d14b7fe32b72d967cd88c7f943fc869600e3d293a001c3d7f58aa436",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "2e503fb05eb88d90460501edd51ad0129d83855f02801d5b7b3970474dbbf107",
     "public/components.js": "3857d1e62ed36de05a27fc307c1a4fc13b4721f5cafb850dafa672ef8dd2d0ff",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6973b6b3430c7cc2a0569dc3d641e0c13330e75aaa29734a5fde99c2bd92f262",
+    "public/sw.js": "6acaa751b1849179d526c58d2908657306fce8492e3f33036f17497cb911ec81",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
