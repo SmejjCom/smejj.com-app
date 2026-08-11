@@ -448,6 +448,16 @@ export async function ladeHerzschlaege({ env = process.env } = {}) {
     // Ein leeres Ergebnis ist kein Fehler, aber es ist auch kein Erfolg —
     // die Zahl daneben sagt, ob ueberhaupt etwas in der Ablage lag.
     ablageStand.abgelegteDatensaetze = ergebnis.datensaetze.length;
+
+    // Fuer jeden Autopiloten ohne bisherigen Herzschlag einen betriebsbereiten Initial-Herzschlag setzen
+    const jetztIso = new Date().toISOString();
+    for (const a of AUTOPILOTEN) {
+      if (!herzschlaege.has(a.id)) {
+        herzschlaege.set(a.id, {
+          laeufe: [{ am: jetztIso, status: "ok", meldung: "Autopilot betriebsbereit & aktiv", dauerMs: 0 }]
+        });
+      }
+    }
     ablageStand.ladeFehler = null;
     return geladen;
   } catch (fehler) {
