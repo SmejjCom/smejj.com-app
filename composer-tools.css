@@ -214,9 +214,22 @@
    sprechen im Wechsel, je ein Punkt gehoert zu einer Seite. */
 
 .voice-mode-logo {
+     position: relative;
      display: flex;
      align-items: center;
      justify-content: center;
+}
+
+.voice-mode-logo::before {
+     content: "";
+     position: absolute;
+     inset: -24px;
+     border-radius: 50%;
+     background: radial-gradient(circle, rgba(20, 224, 220, 0.25) 0%, rgba(20, 224, 220, 0) 70%);
+     filter: blur(24px);
+     pointer-events: none;
+     animation: voice-aura-pulse 3s ease-in-out infinite;
+     z-index: -1;
 }
 
 .voice-mode-logo svg {
@@ -230,10 +243,12 @@
      stroke-width: 22;
      stroke-linecap: round;
      stroke-linejoin: round;
+     filter: drop-shadow(0 0 12px rgba(20, 224, 220, 0.4));
 }
 
 .voice-mode-logo circle {
      fill: #14e0dc;
+     filter: drop-shadow(0 0 8px rgba(20, 224, 220, 0.6));
 }
 
 .voice-logo-left { animation: voice-talk-left 2.4s ease-in-out infinite; }
@@ -263,6 +278,11 @@
      65% { opacity: 1; }
 }
 
+@keyframes voice-aura-pulse {
+     0%, 100% { transform: scale(0.92); opacity: 0.45; }
+     50% { transform: scale(1.12); opacity: 0.9; }
+}
+
 /* Zustaende des Zeichens: Denken (langsam), Sprechen (gruen).
    Stumm: Das Zeichen bleibt bewusst farbig und animiert — der Sprachmodus
    laeuft weiter, nur das Mikrofon ist aus (Signal traegt der rote Mic-Button). */
@@ -274,12 +294,24 @@
      animation-duration: 3.6s;
 }
 
+.voice-mode-overlay[data-mode="thinking"] .voice-mode-logo::before {
+     background: radial-gradient(circle, rgba(246, 243, 238, 0.2) 0%, rgba(246, 243, 238, 0) 70%);
+     animation-duration: 4.5s;
+}
+
 .voice-mode-overlay[data-mode="speaking"] .voice-mode-logo path {
      stroke: #7fd4a8;
+     filter: drop-shadow(0 0 14px rgba(127, 212, 168, 0.5));
 }
 
 .voice-mode-overlay[data-mode="speaking"] .voice-mode-logo circle {
      fill: #7fd4a8;
+     filter: drop-shadow(0 0 10px rgba(127, 212, 168, 0.7));
+}
+
+.voice-mode-overlay[data-mode="speaking"] .voice-mode-logo::before {
+     background: radial-gradient(circle, rgba(127, 212, 168, 0.32) 0%, rgba(127, 212, 168, 0) 70%);
+     animation-duration: 2s;
 }
 
 /* Untere Leiste im Sprachmodus: Eingabefeld mit Plus, Mikrofon (stumm), Beenden. */
