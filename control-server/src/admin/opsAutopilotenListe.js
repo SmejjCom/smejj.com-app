@@ -485,5 +485,22 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 30 * 60 * 1000,
     startAnleitung: "Aktiviert bei Git-Webhooks und Repository-Events.",
     stopAnleitung: "Über Git-Bot Policy steuerbar."
+  },
+  {
+    id: "synthetic-user-watchdog",
+    name: "24/7 Synthetic User & Full-Stack E2E Watchdog",
+    kurz: "Simuliert rund um die Uhr echte Nutzer-Abläufe (Login, Chat, Inferenz, S3-Speicher) und schlägt bei Fehlern sofort Alarm.",
+    funktionen: [
+      "Führt alle 5 Minuten einen vollständigen End-to-End-Durchlauf als virtueller Nutzer aus.",
+      "Misst Time-to-First-Token (<1,0s) und Antwort-Integrität von smejj 1.0.",
+      "Prüft IDrive e2 S3 Speicher-Konsistenz und leitet bei Fehlern sofortige Selbstheilung ein."
+    ],
+    ort: "Control Server (E2E Watchdog)",
+    zeitplan: "24/7 Dauerbetrieb (alle 5 Min)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: 30 * 60 * 1000,
+    startAnleitung: "Läuft kontinuierlich als permanenter E2E-Endnutzer-Wächter.",
+    stopAnleitung: "Über Watchdog-Policy konfigurierbar."
   }
 ]);

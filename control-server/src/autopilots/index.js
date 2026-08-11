@@ -23,3 +23,4 @@ export * from "./liveArenaLeaderboardAutopilot.js";
 export * from "./instantWebContainerAutopilot.js";
 export * from "./realtimeVoicePairAutopilot.js";
 export * from "./autonomousGitBotAutopilot.js";
+export * from "./syntheticUserWatchdogAutopilot.js";

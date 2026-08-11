@@ -34,7 +34,8 @@ async function ueberpruefeAutopiloten() {
     { id: "live-arena-leaderboard", name: "Automated Live-Arena & ELO Leaderboard Autopilot" },
     { id: "instant-web-container", name: "In-Browser Instant WebContainers & Live-Vorschau" },
     { id: "realtime-voice-pair", name: "Real-Time Voice & Screen Pair-Programmer Autopilot" },
-    { id: "autonomous-git-bot", name: "Autonomous Git-Bot & Pull-Request Auto-Fixer" }
+    { id: "autonomous-git-bot", name: "Autonomous Git-Bot & Pull-Request Auto-Fixer" },
+    { id: "synthetic-user-watchdog", name: "24/7 Synthetic User & Full-Stack E2E Watchdog" }
   ];
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);

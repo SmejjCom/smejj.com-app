@@ -58,7 +58,11 @@ import {
   createVoicePairSession,
   processRealtimePairFrame,
   analyzePullRequestDiff,
-  synthesizeAutoFixPatch
+  synthesizeAutoFixPatch,
+  runSyntheticAuthCheck,
+  runSyntheticChatCheck,
+  runSyntheticStorageCheck,
+  runFullSyntheticE2ECycle
 } from "./index.js";
 
 test("Deep Research Autopilot Plan & Formatter Test", async () => {
@@ -477,6 +481,25 @@ test("Autonomous Git-Bot & Pull-Request Auto-Fixer Test", () => {
   assert.ok(patch.commitMessage.includes("fix(autofix):"));
   assert.equal(patch.targetFile, "src/utils.js");
 });
+
+test("24/7 Synthetic User & Full-Stack E2E Watchdog Test", async () => {
+  const authRes = runSyntheticAuthCheck();
+  assert.equal(authRes.passed, true);
+  assert.equal(authRes.step, "auth_token_validation");
+
+  const chatRes = runSyntheticChatCheck("E2E Test Prompt");
+  assert.equal(chatRes.passed, true);
+  assert.ok(chatRes.ttftMs < 1000);
+
+  const storageRes = await runSyntheticStorageCheck();
+  assert.equal(storageRes.passed, true);
+
+  const fullCycle = await runFullSyntheticE2ECycle();
+  assert.equal(fullCycle.ok, true);
+  assert.equal(fullCycle.stepsPassed, 3);
+  assert.equal(fullCycle.failedStep, null);
+});
+
 
 
 

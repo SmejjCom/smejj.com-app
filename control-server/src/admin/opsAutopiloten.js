@@ -172,8 +172,9 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
       instantWebContainerActive: true,
       realtimeVoicePairActive: true,
       autonomousGitBotActive: true,
+      syntheticUserWatchdogActive: true,
       benchmarkPassRate: 1.0,
-      activeAutopilots: 28,
+      activeAutopilots: 29,
       activeLiveModel: "smejj 1.0",
       shadowBetaModel: "smejj 1.1-beta"
     },
