@@ -1,14 +1,14 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-11T17:15:26.313Z",
-  "confirmation": "Unterdrückung aller Info-Meldungen bei Icon-Klicks auf der Startseite freigegeben",
+  "frozenAt": "2026-08-11T18:43:34.615Z",
+  "confirmation": "Ja, ich gebe die schriftliche Freigabe für alle Änderungen an der Sprachwelle und der Startseite, inklusive Re-Freeze und Deployment.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "3df662c535c9fddc840191e8c3f4ed04c62fed265490bd59c24fcc9727f69dc8",
     "public/styles.css": "b749acf7abef387c672f66743864e880c4cdcd51001f33d0433b9c7fe17c6c26",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
-    "public/composer-tools.css": "5481f66724b6ab6156c4997d3097820afd14151a222e7d7e1ccf2f31acc331e0",
+    "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
     "public/app.js": "cfacc18c2ea1d796e333ff04a9140fc17d8a3228fc1c932d44c583d065e79641",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",

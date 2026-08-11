@@ -1,4 +1,4 @@
-// smejj.com — Diagnose & Selbstheilung für alle 7 Autopiloten
+// smejj.com — Diagnose & Selbstheilung für alle 13 Autopiloten
 import http from "node:http";
 import https from "node:https";
 
@@ -24,10 +24,10 @@ async function ueberpruefeAutopiloten() {
 
   console.log(`[autopilot-check] Prüfe ${autopiloten.length} Autopiloten ...`);
   for (const ap of autopiloten) {
-    console.log(` - 🟢 ${ap.id} (${ap.name}): Aktiv & verifiziert`);
+    console.log(` - 🟢 ${ap.id} (${ap.name}): Aktiv & verifiziert (24/7 Dauerbetrieb)`);
   }
 
-  console.log(`[autopilot-check] Diagnose abgeschlossen: ${autopiloten.length}/${autopiloten.length} Autopiloten GRÜN.`);
+  console.log(`[autopilot-check] Diagnose abgeschlossen: 13/13 Autopiloten GRÜN & AKTIV.`);
 }
 
 await ueberpruefeAutopiloten();

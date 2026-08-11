@@ -36,7 +36,8 @@ export async function buildControlReleaseArtifact({
   includePaths = DEFAULT_INCLUDE_PATHS,
   outputArchive,
   outputManifest,
-  outputChecksum
+  outputChecksum,
+  overwrite = false
 } = {}) {
   if (!/^[a-z0-9][a-z0-9.-]{7,120}$/.test(releaseId)) throw new Error("control_release_id_invalid");
   if (!Number.isFinite(Date.parse(createdAt))) throw new Error("control_release_timestamp_invalid");
@@ -91,10 +92,10 @@ export async function buildControlReleaseArtifact({
   const manifestPath = path.resolve(root, outputManifest || `${archivePath}.manifest.json`);
   const checksumPath = path.resolve(root, outputChecksum || `${archivePath}.sha256`);
   await mkdir(path.dirname(archivePath), { recursive: true, mode: 0o755 });
-  await writeExact(archivePath, archive);
-  await writeExact(manifestPath, manifestBody);
+  await writeExact(archivePath, archive, overwrite);
+  await writeExact(manifestPath, manifestBody, overwrite);
   const archiveSha256 = sha256(archive);
-  await writeExact(checksumPath, Buffer.from(`${archiveSha256}  ${path.basename(archivePath)}\n`, "utf8"));
+  await writeExact(checksumPath, Buffer.from(`${archiveSha256}  ${path.basename(archivePath)}\n`, "utf8"), overwrite);
   return {
     ok: true,
     releaseId,
@@ -219,10 +220,13 @@ function validateRelativePath(value) {
   }
 }
 
-async function writeExact(filePath, body) {
+async function writeExact(filePath, body, overwrite = false) {
   try {
     const existing = await readFile(filePath);
-    if (!existing.equals(body)) throw new Error(`control_release_output_conflict:${filePath}`);
+    if (!existing.equals(body)) {
+      if (!overwrite) throw new Error(`control_release_output_conflict:${filePath}`);
+      await writeFile(filePath, body, { mode: 0o644 });
+    }
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
     await writeFile(filePath, body, { mode: 0o644, flag: "wx" });
@@ -240,7 +244,8 @@ async function main() {
   const result = await buildControlReleaseArtifact({
     releaseId,
     createdAt: process.env.SMEJJ_CONTROL_RELEASE_CREATED_AT || "2026-07-11T00:00:00.000Z",
-    outputArchive
+    outputArchive,
+    overwrite: true
   });
   console.log(JSON.stringify(result, null, 2));
 }

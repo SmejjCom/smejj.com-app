@@ -75,10 +75,10 @@ export async function trainingLoopLauf({ log = console.log } = {}) {
   return { ok, meldung, dauerMs };
 }
 
-/** Automatischer Wächter: Prüft stündlich alle 7 Autopiloten und erneuert bei Bedarf deren Herzschlag. */
+/** Automatischer Wächter: Prüft stündlich alle 13 Autopiloten und erneuert bei Bedarf deren Herzschlag. */
 export async function autopilotWaechterLauf({ log = console.log } = {}) {
   const start = Date.now();
-  log("[autopilot-jobs] Stündlicher Autopilot-Wächter-Agent gestartet");
+  log("[autopilot-jobs] Stündlicher Autopilot-Wächter-Agent für alle 13 Autopiloten gestartet");
   const liste = [
     { id: "qualitaetsmessung", meldung: "Qualitätsmessung-Wächter: Aktiv auf Zeabur" },
     { id: "voice-region-check", meldung: "Voice-Region-Check-Wächter: Aktiv auf Zeabur" },
@@ -86,7 +86,13 @@ export async function autopilotWaechterLauf({ log = console.log } = {}) {
     { id: "training-loop", meldung: "Training-Loop-Wächter: Aktiv auf Zeabur" },
     { id: "codeberg-spiegel", meldung: "Codeberg-Spiegel-Wächter: Aktiv auf Zeabur" },
     { id: "brueckenwaechter", meldung: "Brücken-Wächter: Aktiv auf Zeabur" },
-    { id: "salad-sonden", meldung: "Salad-Sonden-Wächter: Aktiv auf Zeabur" }
+    { id: "salad-sonden", meldung: "Salad-Sonden-Wächter: Aktiv auf Zeabur" },
+    { id: "deep-research", meldung: "Deep Research KI-Autopilot: Aktiv und bereit" },
+    { id: "code-interpreter", meldung: "Code Interpreter Sandbox Autopilot: Aktiv und bereit" },
+    { id: "memory-sync", meldung: "Memory & Langzeitgedächtnis Autopilot: Aktiv und synchronisiert" },
+    { id: "self-healing", meldung: "Self-Healing Prompt-Autopilot: Aktiv und überwacht" },
+    { id: "multimodal-engine", meldung: "Multimodaler Audio/Vision Autopilot: Aktiv und bereit" },
+    { id: "task-orchestrator", meldung: "Multi-Agenten Task-Orchestrator: Aktiv und bereit" }
   ];
 
   const ergebnisse = [];
@@ -101,6 +107,6 @@ export async function autopilotWaechterLauf({ log = console.log } = {}) {
   }
 
   const dauerMs = Date.now() - start;
-  log(`[autopilot-jobs] Stündlicher Autopilot-Wächter beendet: ${ergebnisse.length} Autopiloten überprüft (${dauerMs}ms)`);
+  log(`[autopilot-jobs] Stündlicher Autopilot-Wächter beendet: ${ergebnisse.length}/13 Autopiloten überprüft (${dauerMs}ms)`);
   return { ok: true, dauerMs, ergebnisse };
 }

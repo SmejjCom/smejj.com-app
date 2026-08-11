@@ -1,6 +1,6 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-11T17:28:30.436Z",
+  "frozenAt": "2026-08-11T20:20:52.334Z",
   "confirmation": "Ich bestätige die Absicherung aller Admin-Sicherheitsfunktionen",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
