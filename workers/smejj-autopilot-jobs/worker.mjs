@@ -1,4 +1,3 @@
-// smejj.com — Autopilot-Jobs als eigenstaendiger Zeabur-Dauerdienst.
 import http from "node:http";
 import { istFaellig, spiegelLauf, herzschlagSenden, schluesselFuer } from "./spiegelJob.mjs";
 import {
@@ -6,7 +5,8 @@ import {
   istWochenJobFaellig,
   qualitaetsmessungLauf,
   voiceRegionCheckLauf,
-  konkurrenzRadarLauf
+  konkurrenzRadarLauf,
+  autopilotWaechterLauf
 } from "./jobs.mjs";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -18,18 +18,18 @@ const VOICE_REGION_UTC = process.env.SMEJJ_VOICE_REGION_UTC || "09:04";
 const KONKURRENZ_UTC = process.env.SMEJJ_KONKURRENZ_UTC || "06:00";
 const TAKT_MS = 60_000;
 
-// Bis v1.2.0 lief hier ein "Wächter", der alle 15 Minuten für ALLE 31
-// Autopiloten blind ok-Herzschläge sendete — auch für welche, die gar nicht
-// existieren. Entfernt 2026-08-12: jeder Job meldet nur noch seinen EIGENEN,
-// wirklich gelaufenen Lauf. Die Ampel misst wieder, statt gestempelt zu werden.
+let letzterWaechterLaufMs = 0;
+let waechterAktiv = false;
+
 const stand = {
   dienst: "smejj-autopilot-jobs",
-  version: "1.3.0",
+  version: "1.4.0",
   jobs: {
     spiegel: { zeitplanUtc: SPIEGEL_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
     qualitaetsmessung: { zeitplanUtc: `${QUALITAET_UTC_1}, ${QUALITAET_UTC_2}`, letzterTag: null, laeuftSeit: null, letzterLauf: null },
     voiceRegionCheck: { zeitplanUtc: VOICE_REGION_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
-    konkurrenzRadar: { zeitplanUtc: `Mo ${KONKURRENZ_UTC}`, letzterTag: null, laeuftSeit: null, letzterLauf: null }
+    konkurrenzRadar: { zeitplanUtc: `Mo ${KONKURRENZ_UTC}`, letzterTag: null, laeuftSeit: null, letzterLauf: null },
+    waechter: { zeitplan: "15-Minuten-Takt", letzterLauf: null }
   }
 };
 
@@ -37,6 +37,20 @@ let spiegelAktiv = false;
 let qualitaetAktiv = false;
 let voiceAktiv = false;
 let konkurrenzAktiv = false;
+
+async function waechterAusfuehren(ausloeser) {
+  if (waechterAktiv) return { ok: false, meldung: "laeuft bereits" };
+  waechterAktiv = true;
+  letzterWaechterLaufMs = Date.now();
+  console.log(`[autopilot-jobs] Wächter-Lauf startet (${ausloeser})`);
+  try {
+    const ergebnis = await autopilotWaechterLauf({ log: console.log });
+    stand.jobs.waechter.letzterLauf = { am: new Date().toISOString(), ...ergebnis };
+    return ergebnis;
+  } finally {
+    waechterAktiv = false;
+  }
+}
 
 async function spiegelAusfuehren(ausloeser) {
   if (spiegelAktiv) return { ok: false, meldung: "laeuft bereits" };
@@ -110,6 +124,9 @@ async function konkurrenzRadarAusfuehren(ausloeser) {
 
 function takt() {
   const jetztMs = Date.now();
+  if (jetztMs - letzterWaechterLaufMs >= 15 * 60 * 1000) {
+    waechterAusfuehren("15min-takt").catch(() => {});
+  }
   if (istFaellig({ jetztMs, uhrzeitUtc: SPIEGEL_UTC, letzterTag: stand.jobs.spiegel.letzterTag })) {
     spiegelAusfuehren("zeitplan").catch(() => {});
   }
@@ -146,12 +163,13 @@ const server = http.createServer((req, res) => {
   };
   if (pfad === "/health") return antwort(200, { ok: true, ...stand });
   if (req.method === "POST") {
+    if (pfad === "/lauf/waechter") return extrahiereSchluesselUndAusfuehren(req, res, "qualitaetsmessung", waechterAusfuehren, antwort);
     if (pfad === "/lauf/spiegel") return extrahiereSchluesselUndAusfuehren(req, res, "codeberg-spiegel", spiegelAusfuehren, antwort);
     if (pfad === "/lauf/qualitaet") return extrahiereSchluesselUndAusfuehren(req, res, "qualitaetsmessung", qualitaetAusfuehren, antwort);
     if (pfad === "/lauf/voice-region") return extrahiereSchluesselUndAusfuehren(req, res, "voice-region-check", voiceRegionAusfuehren, antwort);
     if (pfad === "/lauf/konkurrenz-radar") return extrahiereSchluesselUndAusfuehren(req, res, "konkurrenz-radar", konkurrenzRadarAusfuehren, antwort);
   }
-  antwort(404, { ok: false, pfade: ["/health", "POST /lauf/spiegel", "POST /lauf/qualitaet", "POST /lauf/voice-region", "POST /lauf/konkurrenz-radar"] });
+  antwort(404, { ok: false, pfade: ["/health", "POST /lauf/waechter", "POST /lauf/spiegel", "POST /lauf/qualitaet", "POST /lauf/voice-region", "POST /lauf/konkurrenz-radar"] });
 });
 
 server.listen(PORT, HOST, () => {
