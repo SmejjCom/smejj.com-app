@@ -67,7 +67,7 @@
     "check:release-imports": "node scripts/deploy/check_release_import_closure.mjs",
     "release:preflight": "npm run check:all && npm run check:release-imports && npm run release:guard",
     "test:e2e:smoke": "node scripts/testing/prompt5_e2e_smoke.mjs",
-    "test": "npm run check",
+    "test": "npm run check && npm run test:autopiloten",
     "test:unit": "node --test control-server/src/**/*.test.js",
     "task-capsule:create": "node scripts/agent/create_task_capsule.mjs",
     "check:task-capsules": "node --test tests/task-capsule-generator.test.mjs",
@@ -106,7 +106,8 @@
     "eval:rag-deckung": "node scripts/evaluation/rag_deckung.mjs",
     "eval:rag-decke": "node scripts/evaluation/rag_decke.mjs",
     "training:fragen-pruefen": "node scripts/training/pruefe_fragevarianten.mjs",
-    "check:einwilligung-lock": "node scripts/check-einwilligung-lock.mjs"
+    "check:einwilligung-lock": "node scripts/check-einwilligung-lock.mjs",
+    "test:autopiloten": "node --test tests/autopiloten-ehrlichkeit.test.mjs tests/autopilot-jobs.test.mjs tests/bruecken-waechter.test.mjs control-server/src/admin/opsAutopiloten.test.js control-server/src/admin/opsCockpit.test.js"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2"
