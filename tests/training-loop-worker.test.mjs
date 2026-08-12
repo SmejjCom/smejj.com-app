@@ -660,7 +660,7 @@ test("loop: der Verlauf und das Protokoll fuehren die Quoten mit", async () => {
 test("config: Messweg ist per Umgebungswert umstellbar, Standard ist der Nutzerweg", async () => {
   const { DEFAULT_CHAT_ENDPOINT } = await import("../src/evaluation/evalTransport.js");
   assert.equal(loadLoopConfig({}).chatEndpoint, DEFAULT_CHAT_ENDPOINT);
-  assert.ok(!/zeabur/.test(DEFAULT_CHAT_ENDPOINT), "die Reserve ist nicht der Nutzerweg");
+  assert.ok(!/salad/.test(DEFAULT_CHAT_ENDPOINT), "Salad ist stillgelegt — Zeabur ist der 100% Nutzerweg");
   assert.equal(
     loadLoopConfig({ SMEJJ_EVAL_CHAT_ENDPOINT: "https://smejj-control.zeabur.app/api/chat" }).chatEndpoint,
     "https://smejj-control.zeabur.app/api/chat"

@@ -23,7 +23,7 @@
 // MERKREGEL: Ein Messweg, der nicht der Nutzerweg ist, misst etwas anderes als
 // das Produkt. Wechselt der primaere Endpunkt, muss diese Zeile mitwandern —
 // `tests/model-eval.test.mjs` haelt sie deshalb gegen public/config.js.
-export const DEFAULT_CHAT_ENDPOINT = "https://starfruit-thyme-cblgn6u06ca2z9d5.salad.cloud/api/chat";
+export const DEFAULT_CHAT_ENDPOINT = "https://smejj-chat-bridge.zeabur.app/api/chat";
 /**
  * Zeitgrenze je Messfall.
  *
