@@ -1,6 +1,6 @@
 {
   "lock": "smejj deploy lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-12T16:23:44.040Z",
+  "frozenAt": "2026-08-12T16:26:01.044Z",
   "confirmation": "Ich bestätige den Stand des Deploy-Locks",
   "rule": "Keine Aenderung am Spiegelweg (was gespiegelt wird, ob gespiegelt wird) ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
