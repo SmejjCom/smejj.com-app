@@ -148,11 +148,11 @@ export async function verifyStoredSession(win, { fetchFn = globalThis.fetch, api
   }
   if (urteil !== false) return "gueltig";
 
-  // Google- und dauerhafte Sitzungen: niemals eigenmaechtig abmelden
+  // Alle angemeldeten Sitzungen (Google, Passkey, E-Mail) sind dauerhaft: niemals eigenmaechtig abmelden
   try {
     const rawSession = win.localStorage.getItem(STORAGE_KEYS.session);
     const session = rawSession ? JSON.parse(rawSession) : {};
-    if (session && session.authenticated === true && (session.method === "google" || session.mode === "google-session" || session.permanent === true)) {
+    if (session && session.authenticated === true) {
       return "gueltig";
     }
   } catch {}
