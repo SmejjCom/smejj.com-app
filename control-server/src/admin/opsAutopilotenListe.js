@@ -101,9 +101,8 @@ export const AUTOPILOTEN = Object.freeze([
     neuigkeiten: ["Dauertrainings-Takt 100% synchronisiert auf Zeabur", "Eval-Pipeline grün"],
     ort: "Zeabur (smejj-autopilot-jobs)",
     zeitplan: "täglich 12:00 UTC",
-    messung: "geplant",
-    messungHinweis: "Stillgelegt seit 2026-08-02 (Beschluss: RAG statt Training). Kein Live-Betrieb — Ampel bewusst grau.",
-    erwartetAlleMs: TAG_MS,
+    messung: "heartbeat",
+    erwartetAlleMs: 6 * STUNDE_MS,
     schonfristMs: 6 * STUNDE_MS,
     startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/training-loop mit {\"key\":\"<training-loop-Schlüssel>\"}",
     stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
