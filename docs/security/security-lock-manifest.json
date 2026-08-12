@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-12T06:48:21.243Z",
-  "confirmation": "Nutzer-Bestätigung: Cache-Busting Header in Login, Register & Profile",
+  "frozenAt": "2026-08-12T06:50:59.834Z",
+  "confirmation": "Nutzer-Bestätigung: GitHub Login als primäre Standard-Option aktivieren",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "4e56ce36741aafdb3b497694a9b33c24b3093516a45eccb57a236a8723926060",
+    "public/auth/login/index.html": "c5264cc7d0509acfc914f5db04fd6f336edc82663894296c21cc7859e46ae1c5",
     "public/auth/register/index.html": "2694b807662ab3ab15d991c0ae368631043168cadee0dd1a5935de8e4f41c6ba",
-    "public/auth/auth-page.js": "779a133f375cd470a0601d914497f8a56267e3b3ee9d168217531890dd72c064",
+    "public/auth/auth-page.js": "f7f1baf302d07d8b9badbc3186c35054deee86a6700c2e33356ad9b6133f0c0d",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "c4af05031dadfcd5a7e02d768955ebc2039de9ee8fbea847e9701e31a0c580ef",
