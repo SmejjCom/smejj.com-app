@@ -18,5 +18,7 @@ ENV HF_HOME=/tmp/hf
 ENV PORT=8080
 EXPOSE 8080
 
-# "::" = IPv6+IPv4 (Premium-Stimmen-Lehre: IPv4-Bind macht Gateways blind).
-CMD ["uvicorn", "server:app", "--host", "::", "--port", "8080"]
+# 0.0.0.0, NICHT "::": Zeaburs internes Netz ist IPv4 (zeabur.internal ->
+# 10.x, gemessen 2026-08-12); uvicorn bindet "::" hier IPv6-ONLY und die
+# Bruecke bekaeme Connection refused. (Die Salad-IPv6-Lehre gilt nur dort.)
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
