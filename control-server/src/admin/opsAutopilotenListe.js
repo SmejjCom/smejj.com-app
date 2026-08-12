@@ -11,7 +11,8 @@ export const AUTOPILOTEN = Object.freeze([
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",
     funktionen: [
       "Läuft täglich um 7:10 und 19:10 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
-      "EHRLICH: Der Lauf ist bisher nur ein Lebenszeichen des Dienstes — der echte Messlauf gegen die Prüfsuite ist noch nicht angebunden.",
+      "Fährt seit 2026-08-12 den ECHTEN Messlauf: Suite smejj-chat-core-v1 (3 Wiederholungen) über den Nutzerweg; die Note steht in der Herzschlag-Meldung.",
+      "Braucht SMEJJ_SESSION_SECRET im Dienst-Env; ohne ihn sendet der Job ein ehrlich beschriftetes Lebenszeichen.",
       "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
     ],
     trainiert: "Qualitäts-Eval-Suites, Prompt-Varianten & Antwort-Präzision",

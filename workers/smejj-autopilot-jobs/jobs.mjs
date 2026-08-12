@@ -1,5 +1,6 @@
 // smejj.com — Autopilot Jobs (Zeabur): Qualitätsmessung, Voice-Region, Konkurrenz-Radar.
 import { herzschlagSenden } from "./spiegelJob.mjs";
+import { echterQualitaetslauf } from "./qualitaetJob.mjs";
 
 /** Prüft ob eine Uhrzeit (HH:MM UTC) erreicht wurde und am aktuellen Tag noch nicht gelaufen ist. */
 export function istFaelligUtc({ jetztMs, uhrzeitUtc, letzterTag }) {
@@ -18,20 +19,21 @@ export function istWochenJobFaellig({ jetztMs, wochentagUtc, uhrzeitUtc, letzter
   return istFaelligUtc({ jetztMs, uhrzeitUtc, letzterTag });
 }
 
-export async function qualitaetsmessungLauf({ log = console.log } = {}) {
+export async function qualitaetsmessungLauf({ log = console.log, messlauf = echterQualitaetslauf } = {}) {
   const start = Date.now();
   log("[autopilot-jobs] Qualitätsmessung-Lauf gestartet");
-  // EHRLICHKEIT (2026-08-12): Hier stand "Suite pass" — ohne dass je eine
-  // Suite lief. Bis der echte Messlauf angebunden ist, sagt die Meldung genau
-  // das. Der Herzschlag beweist dann nur: der Dienst lebt und der Takt stimmt.
-  const ok = true;
-  const meldung = "Lebenszeichen: Dienst läuft planmäßig — echter Messlauf (Prüfsuite) noch nicht angebunden";
+  // Seit 2026-08-12 misst dieser Job WIRKLICH (qualitaetJob.mjs): Suite über
+  // den echten Nutzerweg, Note in der Meldung. Ohne SMEJJ_SESSION_SECRET
+  // bleibt er ein ehrlich beschriftetes Lebenszeichen; ein gescheiterter
+  // Messlauf meldet "fehler" mit Grund — nie eine erfundene Zahl.
+  const ergebnis = await messlauf({ log });
+  const { ok, meldung } = ergebnis;
   const dauerMs = Date.now() - start;
   const statusHttp = await herzschlagSenden({
     id: "qualitaetsmessung",
     ok, meldung, dauerMs
   });
-  log(`[autopilot-jobs] Qualitätsmessung beendet: ok=${ok}, HTTP ${statusHttp}`);
+  log(`[autopilot-jobs] Qualitätsmessung beendet: ok=${ok}, gemessen=${ergebnis.gemessen}, HTTP ${statusHttp}`);
   return { ok, meldung, dauerMs };
 }
 

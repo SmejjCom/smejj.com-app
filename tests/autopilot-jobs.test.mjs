@@ -91,3 +91,52 @@ test("jobs.mjs: timing checks for UTC and weekly jobs", async () => {
   const kRes = await konkurrenzRadarLauf({ log: fakeLog });
   assert.equal(kRes.ok, true);
 });
+
+// ---- Echte Qualitaetsmessung (2026-08-12) -----------------------------------
+// Die Netz- und Git-Teile laufen live; hier stehen die reinen Kerne:
+// Berichts-Bewertung (Transportfehler ist keine Note!) und die Verdrahtung
+// des Jobs mit einem gestubbten Messlauf.
+
+test("bewerteBericht: eine gemessene Note wird als ok mit Note gemeldet", async () => {
+  const { bewerteBericht } = await import("../workers/smejj-autopilot-jobs/qualitaetJob.mjs");
+  const b = bewerteBericht({
+    verdict: "passed",
+    summary: { cases: 14, passed: 14, failed: 0, errors: 0, weightedScore: 0.958 }
+  });
+  assert.equal(b.ok, true);
+  assert.equal(b.gemessen, true);
+  assert.ok(b.meldung.includes("95,8 %"), "die Note steht in der Meldung: " + b.meldung);
+  assert.ok(b.meldung.includes("14 Fälle"));
+});
+
+test("bewerteBericht: Transportfehler ergeben KEIN Qualitaetsurteil, sondern fehler", async () => {
+  const { bewerteBericht } = await import("../workers/smejj-autopilot-jobs/qualitaetJob.mjs");
+  const b = bewerteBericht({ summary: { cases: 14, passed: 10, errors: 4, weightedScore: 0.7 } });
+  assert.equal(b.ok, false);
+  assert.equal(b.gemessen, false);
+  assert.ok(b.meldung.includes("Transportfehler"));
+  const leer = bewerteBericht(null);
+  assert.equal(leer.ok, false);
+  const ohneFaelle = bewerteBericht({ summary: { cases: 0, errors: 0, weightedScore: 1 } });
+  assert.equal(ohneFaelle.ok, false);
+});
+
+test("echterQualitaetslauf: ohne SMEJJ_SESSION_SECRET ehrliches Lebenszeichen statt Alarm", async () => {
+  const { echterQualitaetslauf } = await import("../workers/smejj-autopilot-jobs/qualitaetJob.mjs");
+  const e = await echterQualitaetslauf({ env: {}, log: () => {} });
+  assert.equal(e.ok, true, "fehlende Einrichtung ist kein Ausfall");
+  assert.equal(e.gemessen, false);
+  assert.ok(e.meldung.includes("SMEJJ_SESSION_SECRET"));
+});
+
+test("qualitaetsmessungLauf: traegt das Messlauf-Ergebnis in den Herzschlag", async () => {
+  const { qualitaetsmessungLauf } = await import("../workers/smejj-autopilot-jobs/jobs.mjs");
+  const ergebnis = await qualitaetsmessungLauf({
+    log: () => {},
+    messlauf: async () => ({ ok: false, gemessen: false, meldung: "Messlauf gescheitert: Probe" })
+  });
+  // Ohne SMEJJ_AUTOPILOT_KEYS sendet herzschlagSenden nie (HTTP 0) — der
+  // Rueckgabewert traegt trotzdem das ehrliche Ergebnis.
+  assert.equal(ergebnis.ok, false);
+  assert.ok(ergebnis.meldung.includes("gescheitert"));
+});
