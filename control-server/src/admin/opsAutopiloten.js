@@ -159,25 +159,11 @@ export function autopilotUebersicht({ jetztMs = Date.now(), startzeitMs = null }
     // Selbstauskunft der Ablage: ob the Neustart-Festigkeit wirklich traegt,
     // steht hier als Zahl statt als Versprechen.
     ablage: { ...ablageStand },
-    trainingEngine: {
-      dpoStatus: "active_24_7",
-      selfPlayEnabled: true,
-      userFlywheelActive: true,
-      prmStepRewardActive: true,
-      crossModelDistillationActive: true,
-      evolutionaryMutationActive: true,
-      realtimeInternetHarvesterActive: true,
-      multiFileRepoArchitectActive: true,
-      liveArenaLeaderboardActive: true,
-      instantWebContainerActive: true,
-      realtimeVoicePairActive: true,
-      autonomousGitBotActive: true,
-      syntheticUserWatchdogActive: true,
-      benchmarkPassRate: 1.0,
-      activeAutopilots: 29,
-      activeLiveModel: "smejj 1.0",
-      shadowBetaModel: "smejj 1.1-beta"
-    },
+    // Hier stand bis 2026-08-12 ein hart codierter "trainingEngine"-Block
+    // (dpoStatus active_24_7, benchmarkPassRate 1.0, 29 aktive Autopiloten) —
+    // reine Behauptung ohne Messung, von keiner Ansicht gerendert. Entfernt:
+    // eine Uebersicht, die Ehrlichkeit verspricht, darf keine erfundenen
+    // Kennzahlen ausliefern.
     // Der Text muss dem Stand der Technik folgen: bis Stufe 3 stand hier
     // "nach einem Neustart beginnt die Messung von vorn" — seit die Verläufe
     // auf IDrive e2 liegen, stimmt das nicht mehr. Ein veralteter Hinweis in
@@ -325,14 +311,17 @@ export async function frageWaechterAb({ jetztMs = Date.now(), fetchImpl = fetch 
     const gespeichert = herzschlaege.get("brueckenwaechter") || { laeufe: [] };
     gespeichert.laeufe.unshift({
       am: new Date(jetztMs).toISOString(),
-      status: "ok",
+      // Ein gemessener Brueckenausfall MUSS die Ampel rot faerben. Bis
+      // 2026-08-12 stand hier immer "ok" — die Meldung "Bruecke AUSGEFALLEN"
+      // fuhr dann unter gruener Ampel mit und niemand sah sie.
+      status: bruecke?.erreichbar === false ? "fehler" : "ok",
       meldung: meldung.slice(0, 200),
       // Die Dauer der Abfrage selbst — misst den Weg Control-Server -> Waechter.
       dauerMs: Math.max(0, Date.now() - startMs)
     });
     gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
     herzschlaege.set("brueckenwaechter", gespeichert);
-    zaehleTag("brueckenwaechter", "ok", jetztMs);
+    zaehleTag("brueckenwaechter", bruecke?.erreichbar === false ? "fehler" : "ok", jetztMs);
     persistiereTageGedrosselt("brueckenwaechter");
     return true;
   } catch {
@@ -628,21 +617,10 @@ export function starteSelbstmessung({ intervallMs = 5 * 60 * 1000 } = {}) {
     herzschlaege.set("salad-sonden", gespeichert);
     zaehleTag("salad-sonden", "ok", jetztMs);
     persistiereTageGedrosselt("salad-sonden");
-
-    // Autopilot 01 (Qualitätsmessung): In-Process Selbstmessung für 100% Verfügbarkeit
-    const qm = herzschlaege.get("qualitaetsmessung") || { laeufe: [] };
-    if (!qm.laeufe.length || jetztMs - Date.parse(qm.laeufe[0].am) > 6 * 60 * 60 * 1000) {
-      qm.laeufe.unshift({
-        am: jetzt,
-        status: "ok",
-        meldung: "Qualitätsmessung-Autopilot (smejj 1.0): Suite pass (100% Pass Rate)",
-        dauerMs: 15
-      });
-      qm.laeufe = qm.laeufe.slice(0, VERLAUF_MAX);
-      herzschlaege.set("qualitaetsmessung", qm);
-      zaehleTag("qualitaetsmessung", "ok", jetztMs);
-      persistiereTageGedrosselt("qualitaetsmessung");
-    }
+    // Frueher stand hier eine "Selbstmessung" fuer die Qualitaetsmessung, die
+    // ohne jeden Messlauf "Suite pass (100%)" eintrug. Entfernt 2026-08-12:
+    // der Server darf nur bezeugen, was er selbst ist (dieser Container) —
+    // nie das Ergebnis eines Laufs, den es nicht gab.
   };
   melden();
   const zeitgeber = setInterval(melden, intervallMs);

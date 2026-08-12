@@ -192,7 +192,10 @@ test("Waechter-Abfrage: schweigt er, wird NICHTS eingetragen", async () => {
   assert.equal(a.letzterLauf, null);
 });
 
-test("Waechter-Abfrage: meldet er die Bruecke als tot, bleibt ER trotzdem gruen", async () => {
+test("Waechter-Abfrage: meldet er die Bruecke als tot, wird die Ampel ROT", async () => {
+  // Bis 2026-08-12 blieb die Ampel hier gruen und der Ausfall stand nur im
+  // Meldungstext — am 2026-08-12 fuhr so ein realer Brueckenausfall (ab 06:00
+  // UTC) unter gruener Ampel mit. Ein gemessener Ausfall muss rot sein.
   frisch();
   const brueckeTot = async (url) => ({
     ok: true,
@@ -202,8 +205,22 @@ test("Waechter-Abfrage: meldet er die Bruecke als tot, bleibt ER trotzdem gruen"
   });
   await frageWaechterAb({ jetztMs: JETZT, fetchImpl: brueckeTot });
   const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "brueckenwaechter");
-  assert.equal(a.ampel, "gruen", "der Waechter tut seine Arbeit — die Bruecke ist das Problem, nicht er");
+  assert.equal(a.ampel, "rot", "ein gemessener Brueckenausfall faerbt die Ampel rot");
   assert.ok(a.letzterLauf.meldung.includes("AUSGEFALLEN"));
+});
+
+test("Waechter-Abfrage: gesunde Bruecke bleibt gruen", async () => {
+  frisch();
+  const gesund = async (url) => ({
+    ok: true,
+    json: async () => (String(url).includes("/bruecke")
+      ? { erreichbar: true, letzteVersion: "v127", gesamtPruefungen: 42 }
+      : { ok: true })
+  });
+  await frageWaechterAb({ jetztMs: JETZT, fetchImpl: gesund });
+  const a = autopilotUebersicht({ jetztMs: JETZT }).autopiloten.find((x) => x.id === "brueckenwaechter");
+  assert.equal(a.ampel, "gruen");
+  assert.ok(a.letzterLauf.meldung.includes("gesund"));
 });
 
 test("Profi-Ausbau: Herzschlaege verdichten sich zur Tages-Statistik mit Quote", () => {
