@@ -1,0 +1,8 @@
+# smejj.com Bild-Maler — torch kommt separat (CPU-Wheel, siehe Dockerfile).
+diffusers==0.31.0
+transformers==4.46.3
+accelerate==1.1.1
+safetensors==0.4.5
+fastapi==0.115.5
+uvicorn==0.32.1
+pillow==11.0.0

@@ -1,0 +1,22 @@
+# smejj.com — Bild-Maler (SD-Turbo auf Zeabur-CPU, intern erreichbar).
+# Weg + Fallen: Memory smejj-zeabur-neuer-dienst-weg (Dockerfile.<dienstname>,
+# .dockerignore-Erlaubnisliste, fester Startbefehl gegen die pnpm-Falle).
+# torch gehoert ins ABBILD (Trainer-Lehre) — CPU-Wheel, kein CUDA-Ballast.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+
+COPY workers/smejj-bild-maler/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY workers/smejj-bild-maler/server.py ./server.py
+
+# Modell-Downloads (~2,5 GB von Hugging Face) landen beim Start hier.
+ENV HF_HOME=/tmp/hf
+ENV PORT=8080
+EXPOSE 8080
+
+# "::" = IPv6+IPv4 (Premium-Stimmen-Lehre: IPv4-Bind macht Gateways blind).
+CMD ["uvicorn", "server:app", "--host", "::", "--port", "8080"]

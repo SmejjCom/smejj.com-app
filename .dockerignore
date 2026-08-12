@@ -23,6 +23,8 @@ workers/*
 !workers/maus-engine/**
 !workers/glm-salad
 !workers/glm-salad/s3.js
+!workers/smejj-bild-maler
+!workers/smejj-bild-maler/**
 !workers/smejj-training-loop
 !workers/smejj-training-loop/**
 # Bruecken-Waechter (eigener Dienst seit 2026-08-07). OHNE diese zwei
