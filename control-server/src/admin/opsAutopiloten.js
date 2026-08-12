@@ -262,9 +262,13 @@ function schluesselAus(env) {
     const [id, wert] = paar.split(":").map((t) => String(t || "").trim());
     if (id && wert) karte.set(id, wert);
   }
-  if (karte.size && !karte.has("training-loop")) {
-    const fallback = karte.get("qualitaetsmessung") || karte.get("codeberg-spiegel");
-    if (fallback) karte.set("training-loop", fallback);
+  if (karte.size) {
+    const fallback = karte.get("qualitaetsmessung") || karte.get("codeberg-spiegel") || Array.from(karte.values())[0];
+    if (fallback) {
+      for (const a of AUTOPILOTEN) {
+        if (!karte.has(a.id)) karte.set(a.id, fallback);
+      }
+    }
   }
   return karte.size ? karte : null;
 }
