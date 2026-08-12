@@ -108,7 +108,8 @@
     "training:fragen-pruefen": "node scripts/training/pruefe_fragevarianten.mjs",
     "check:einwilligung-lock": "node scripts/check-einwilligung-lock.mjs",
     "test:autopiloten": "node --test tests/autopiloten-ehrlichkeit.test.mjs tests/autopilot-jobs.test.mjs tests/bruecken-waechter.test.mjs control-server/src/admin/opsAutopiloten.test.js control-server/src/admin/opsCockpit.test.js",
-    "test:tests": "node --test tests/*.test.mjs"
+    "test:tests": "node --test tests/*.test.mjs",
+    "werkstatt:sammeln": "node scripts/werkstatt/sammle-backlog.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2"
