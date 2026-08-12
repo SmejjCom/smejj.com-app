@@ -23,8 +23,8 @@ test("auth pages expose honest professional sign-in paths", async () => {
     assert.match(page, /magicLinkLogin/);
     assert.match(page, /passkey/);
     assert.match(page, /noindex, nofollow/);
-    assert.match(page, /href="\/assets\/auth\/auth\.css(\?v=[^"]*)?"/);
-    assert.match(page, /src="\/assets\/auth\/auth-page\.js(\?v=[^"]*)?"/);
+    assert.match(page, /href="\/(assets\/)?auth\/auth\.css(\?v=[^"]*)?"/);
+    assert.match(page, /src="\/(assets\/)?auth\/auth-page\.js(\?v=[^"]*)?"/);
   }
   // Codex-Stil (Freigabe 2026-07-21): E-Mail zuerst, grosse Knoepfe, beide Themes.
   assert.match(login, /Willkommen zurück/);
