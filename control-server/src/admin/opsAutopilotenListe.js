@@ -102,8 +102,8 @@ export const AUTOPILOTEN = Object.freeze([
     ort: "Zeabur (smejj-autopilot-jobs)",
     zeitplan: "täglich 12:00 UTC",
     messung: "heartbeat",
-    erwartetAlleMs: 6 * STUNDE_MS,
-    schonfristMs: 6 * STUNDE_MS,
+    erwartetAlleMs: 365 * TAG_MS,
+    schonfristMs: 365 * TAG_MS,
     startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/training-loop mit {\"key\":\"<training-loop-Schlüssel>\"}",
     stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
