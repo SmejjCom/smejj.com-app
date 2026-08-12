@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-12T03:43:50.091Z",
-  "confirmation": "Service Worker Precache Version Bump v290 - 1-Klick Live-Schalten checkbox panel in freigaben view",
+  "frozenAt": "2026-08-12T03:51:37.546Z",
+  "confirmation": "Service Worker Precache Version Bump v291 - Feature Rollout Journal list in freigaben view",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "1edebc808d59fb4cfc1b0f3e0e1065c5cc09c778328e800aee125e7be4c8a931",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "8fb5ec4e02d51905160738bfe2e12f66bbc3450ade4f5e28b8387c28d52ccf04",
+    "public/sw.js": "1163b89cc5f9fd2d01e4154365329b8cdc09e75f7d98d4720091bc63db1af177",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
