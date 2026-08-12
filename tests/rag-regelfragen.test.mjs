@@ -102,3 +102,34 @@ test("gegen den echten Korpus: Halluzinations- und Befehlsfaelle bleiben ohne Ko
     assert.deepEqual(searchRagIndex(index, frage, 3), [], `bekam Kontext: ${frage}`);
   }
 });
+
+// ---- Zustaendiges Regeldokument (Befund 2026-08-12) -------------------------
+// Die Frage nach der REGEL muss die REGEL-Quelle liefern, nicht die
+// Nachbarschaft. Geprueft wird vor allem, dass diese Hilfe eng bleibt.
+
+test("zustaendigesDokument: Regelklassen mit EINEM Traegerdokument nennen es", async () => {
+  const { zustaendigesDokument } = await import("../control-server/src/rag/regelfragen.js");
+  assert.equal(zustaendigesDokument("Sind Task Capsules als Trainingsdaten nutzbar?"), "SMEJJ_1_0_TRAINING_DATA_POLICY.md");
+  assert.equal(zustaendigesDokument("Woraus darf das Memory-System von smejj.com lernen?"), "AI_Guidelines.md");
+  // "schutz" hat vier Traegerdokumente — eine erfundene Zustaendigkeit waere
+  // schlimmer als keine.
+  assert.equal(zustaendigesDokument("Darf ich den Start-Lock aufheben?"), null);
+  assert.equal(zustaendigesDokument("Was ist 12 mal 8?"), null);
+});
+
+test("Zustaendigkeit erfindet keinen Kontext, wo keiner ist", async () => {
+  const { searchRagIndex } = await import("../control-server/src/rag/ragContextBlock.js");
+  const index = buildIndex(await loadKnowledgeChunks(process.cwd()));
+  // Eine Regelfrage-Formulierung ohne beantwortbaren Inhalt: die Schwelle
+  // greift zuerst, die Zustaendigkeit darf sie NICHT umgehen.
+  const leer = searchRagIndex(index, "Trainingsdaten?", 3, { minTopScore: 9_999 });
+  assert.deepEqual(leer, [], "ohne erreichte Relevanzschwelle bleibt es leer");
+});
+
+test("Zustaendigkeit sprengt das Kontextbudget nicht", async () => {
+  const { searchRagIndex } = await import("../control-server/src/rag/ragContextBlock.js");
+  const index = buildIndex(await loadKnowledgeChunks(process.cwd()));
+  const treffer = searchRagIndex(index, "Sind Task Capsules als Trainingsdaten nutzbar?", 3);
+  assert.equal(treffer.length, 3, "genau k Treffer, nicht k+1");
+  assert.ok(treffer.some((t) => t.source.includes("SMEJJ_1_0_TRAINING_DATA_POLICY.md")));
+});

@@ -13,7 +13,7 @@
 import { searchIndex } from "./bm25Index.js";
 import { rankHits } from "./ragRanking.js";
 import { erweitereInfrastrukturfrage } from "./infrastrukturFrage.js";
-import { erweitereRegelfrage } from "./regelfragen.js";
+import { erweitereRegelfrage, zustaendigesDokument } from "./regelfragen.js";
 
 /**
  * Aus mehr Rohtreffern nachgewichtet als am Ende eingespeist werden: sonst kann ein
@@ -31,10 +31,42 @@ export const RAW_HIT_POOL = 10;
  *          leer, wenn kein Treffer die Relevanzschwelle erreicht
  */
 export function searchRagIndex(index, query, k = 5, { minTopScore } = {}) {
-  return rankHits(searchIndex(index, reichereFrageAn(query), RAW_HIT_POOL), {
+  const roh = searchIndex(index, reichereFrageAn(query), RAW_HIT_POOL);
+  const treffer = rankHits(roh, {
     limit: k,
     ...(Number.isFinite(minTopScore) ? { minTopScore } : {})
   });
+  return mitZustaendigemDokument(treffer, roh, query, k);
+}
+
+/**
+ * Sorgt dafuer, dass eine Regelfrage die REGEL-Quelle bekommt.
+ *
+ * Gemessen 2026-08-12: "Sind Task Capsules als Trainingsdaten nutzbar?" lieferte
+ * TRAININGSWEG (47,20), MASTER_PROMPT (45,90) und README (37,83). Die
+ * zustaendige TRAINING_DATA_POLICY stand mit 37,18 auf Platz 4 — 0,65 Punkte
+ * hinter README. Nachbardokumente tragen dasselbe Vokabular; wer nach der Regel
+ * fragt, bekam die Nachbarschaft. Ist das zustaendige Dokument im Rohpool
+ * vorhanden, ruecken wir seinen besten Abschnitt an die letzte Stelle.
+ *
+ * ZWEI GRENZEN, die diese Hilfe eng halten:
+ * 1. Sie greift NUR, wenn die Relevanzschwelle bereits erreicht war (also
+ *    `treffer` nicht leer ist). Fragen ohne Kontext bekommen keinen —
+ *    "kein Kontext ist besser als falscher Kontext" gilt unveraendert, und
+ *    die Halluzinations- und Befehlsfaelle bleiben damit unberuehrt.
+ * 2. Sie erfindet nichts: was nicht ohnehin unter den Rohtreffern ist, wird
+ *    auch nicht eingefuegt.
+ */
+function mitZustaendigemDokument(treffer, roh, query, k) {
+  if (!treffer.length) return treffer;
+  const dokument = zustaendigesDokument(query);
+  if (!dokument) return treffer;
+  if (treffer.some((t) => String(t.source || "").includes(dokument))) return treffer;
+  const kandidat = roh.find((t) => String(t.source || "").includes(dokument));
+  if (!kandidat) return treffer;
+  // Den schwaechsten Treffer weichen lassen, statt die Liste zu verlaengern:
+  // das Kontextbudget im Prompt ist Teil der Messung.
+  return [...treffer.slice(0, Math.max(0, k - 1)), kandidat];
 }
 
 /**

@@ -66,6 +66,7 @@ export const REGELKLASSEN = Object.freeze([
     id: "trainingsdaten",
     // Traegerdokument: docs/architecture/SMEJJ_1_0_TRAINING_DATA_POLICY.md,
     // vom MASTER_PROMPT ausdruecklich als verbindlich benannt.
+    dokument: "SMEJJ_1_0_TRAINING_DATA_POLICY.md",
     begriff: /\b(trainingsdaten|training[a-z]*|distillation|capture|einwilligung[a-z]*|rechte[a-z]*|sanitization|korpus|datensatz|datensaetze|datensätze|task capsule[a-z]*|capsules)\b/i,
     suchworte: Object.freeze([
       "Trainingsdaten", "Policy", "Capture", "Sanitization", "Einwilligung",
@@ -76,6 +77,7 @@ export const REGELKLASSEN = Object.freeze([
   {
     id: "memory",
     // Traegerdokument: AI_Guidelines.md, Abschnitt "6. Memory System".
+    dokument: "AI_Guidelines.md",
     begriff: /\b(memory|gedaechtnis|gedächtnis|memory_bank|erinner[a-z]*|lernen|lernt)\b/i,
     suchworte: Object.freeze([
       "Memory", "System", "validierte", "Ergebnisse", "Task", "Capsule",
@@ -107,9 +109,28 @@ export function erkenneRegelfrage(task) {
   if (BEFEHLSFORM.test(text)) return null;
   if (!REGEL_FRAGEWORT.test(text) && !text.includes("?")) return null;
   for (const klasse of REGELKLASSEN) {
-    if (klasse.begriff.test(text)) return { id: klasse.id, suchworte: klasse.suchworte };
+    if (klasse.begriff.test(text)) return { id: klasse.id, suchworte: klasse.suchworte, dokument: klasse.dokument || null };
   }
   return null;
+}
+
+/**
+ * Das ZUSTAENDIGE Regeldokument einer Frage — oder null.
+ *
+ * WARUM ES DAS GIBT (gemessen 2026-08-12): Auf die Frage "Sind Task Capsules
+ * als Trainingsdaten nutzbar?" lieferte die Suche TRAININGSWEG, MASTER_PROMPT
+ * und README; die zustaendige TRAINING_DATA_POLICY landete mit 37,18 auf
+ * Platz 4, knapp hinter README (37,83). Bei einer Frage nach der REGEL ist
+ * das der falsche Treffer — nicht weil das Ranking schlecht rechnet, sondern
+ * weil Nachbardokumente dasselbe Vokabular tragen. Die Zustaendigkeit stand
+ * bis dahin nur im Kommentar; jetzt steht sie im Code und ist benutzbar.
+ *
+ * Klassen ohne EIN eindeutiges Traegerdokument (z. B. "schutz": AGENTS.md,
+ * MASTER_PROMPT.md und zwei Lock-Dokumente) liefern bewusst null — eine
+ * erfundene Zustaendigkeit waere schlimmer als keine.
+ */
+export function zustaendigesDokument(task) {
+  return erkenneRegelfrage(task)?.dokument || null;
 }
 
 /**
