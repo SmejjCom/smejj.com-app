@@ -1,11 +1,11 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-11T22:58:41.477Z",
-  "confirmation": "Ja, ich gebe die schriftliche Freigabe für alle Änderungen an der Sprachwelle und der Startseite, inklusive Re-Freeze und Deployment.",
+  "frozenAt": "2026-08-12T01:59:31.653Z",
+  "confirmation": "Security lock re-freeze after login register updates",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "81ee59181636bea0893b3cccfb1f9989094a578163d69d8282e6c94328505b0b",
-    "public/auth/register/index.html": "cb72715659950722361ca877816b7b4f0fec9923cf96b13a2fc0f570f1a96336",
+    "public/auth/login/index.html": "b3f40b82eaa3f48d330bd1b8f37a4672b342516b3915f646ec093afc12b51fb3",
+    "public/auth/register/index.html": "abfdb53605df11e48f1758086ad780257527c4a37c14268ac9aaf4d195433a48",
     "public/auth/auth-page.js": "779a133f375cd470a0601d914497f8a56267e3b3ee9d168217531890dd72c064",
     "public/auth/auth.css": "582576014a5a9177bc7bff9e9df9622fa94a411e3b428047bd14a238179341c0",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
