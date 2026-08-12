@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-12T03:03:54.492Z",
-  "confirmation": "Service Worker Precache Version Bump v285 - Left-aligned topbar search input positioning",
+  "frozenAt": "2026-08-12T03:05:18.893Z",
+  "confirmation": "Service Worker Precache Version Bump v286 - Left-aligned search input position fix before spacer",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "1edebc808d59fb4cfc1b0f3e0e1065c5cc09c778328e800aee125e7be4c8a931",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "7cf9d201eba5eb8b6632ebde86f6cf0ad72a31ece878ef533c50c34335fe6fa7",
+    "public/sw.js": "bcb9339b7cb8301b98fe8b4c8d80c5cf8963f1587b0cbce82a3649633a3c6e4e",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
