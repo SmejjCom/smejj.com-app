@@ -1,13 +1,12 @@
 import http from "node:http";
 import { buildWeatherContext, isWeatherTask } from "./chat-bridge-weather.js";
 import { streamVisionLane } from "./chat-bridge-vision.js";
-// Rechnen statt schaetzen: Sprachmodelle koennen Potenzen nicht (Befund
-// 2026-08-05, Monatsrate 40 % daneben). Der Rechner legt exakte Werte vor.
+import { streamBilderLane } from "./chat-bridge-bilder.js";
+// Rechnen statt schaetzen: Modelle koennen Potenzen nicht (Befund 2026-08-05).
 import { baueRechenKontext } from "./chat-bridge-rechner.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
-// Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit
-// 2026-08-05 wieder scharf, Freigabe des Betreibers — siehe Fundstelle unten).
-// Der Zaehler laeuft daneben weiter: er zeigt in /health, was wirklich ankommt.
+// Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit 2026-08-05
+// wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
 import { pipeVisibleStream } from "./chat-bridge-strom.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
@@ -63,7 +62,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260811-v127-vision-qwen";
+const BRIDGE_VERSION = "20260812-v128-bilder-svg";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -210,9 +209,10 @@ async function handleAgent(req, res) {
   if (!task) return json(res, 400, { ok: false, error: "Missing task" });
   const coding = isCodingTask(task);
   const stufe = leseStufe(body);
-  // Bild-Verstehen (Stufe 1): Bild-Anhang -> Vision-Spur; bei false laeuft
-  // unveraendert der Text-Weg (fail-safe, Details in chat-bridge-vision.js).
+  // Bild-Verstehen (Vision) und Bilder-Zeichnen: bei false laeuft unveraendert
+  // der Text-Weg (fail-safe, Details in chat-bridge-vision.js/-bilder.js).
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
+  if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS })) return;
   // "schnell" heisst schnell: dann bekommt auch eine Coding- oder Suchfrage die
   // Schnellspur angeboten (streamFastLane entscheidet dann endgueltig).
   const fastTask = stufe === "schnell" || (!coding && !shouldSearchWeb(task));

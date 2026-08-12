@@ -136,3 +136,30 @@ test("Verdrahtung: gerendert wird erst am ENDE des Streams", () => {
   // aus dem HTTP-Cache, der Re-Export fehlt und app.js bricht komplett ab.
   assert.match(appJs, /from "\.\/components\.js\?v=[^"]+"/, "components.js-Import braucht eine Cache-Version");
 });
+
+test("Bilder: data:image-base64 wird zum <img>, Fremd-URLs bleiben Text", async () => {
+  // Bilder-Zeichnen 2026-08-12: die Bruecke (chat-bridge-bilder.js) liefert
+  // ![Alt](data:image/...;base64,...) — NUR diese Form darf ein Bild werden.
+  const render = await load();
+  const node = fakeNode("Hier ist dein Bild:\n\n![Erstelltes Bild](data:image/jpeg;base64,AAAA)");
+  render(node);
+  assert.match(node.innerHTML, /<img class="chat-image" src="data:image\/jpeg;base64,AAAA" alt="Erstelltes Bild" loading="lazy">/);
+
+  // SVG aus der eigenen Bruecke (smejj 1.0 zeichnet): erlaubt, weil nur im
+  // <img>-Kontext gerendert — dort fuehren SVGs nie Skripte aus.
+  const svg = fakeNode("![Erstelltes Bild](data:image/svg+xml;base64,AAAA)");
+  render(svg);
+  assert.match(svg.innerHTML, /<img class="chat-image" src="data:image\/svg\+xml;base64,AAAA"/);
+
+  // Fremde http(s)-Bild-URL: bewusst KEIN <img> (Tracking-Kanal) — der Link-
+  // Renderer macht hoechstens einen klickbaren Link aus der URL.
+  const fremd = fakeNode("![x](https://boese.example/pixel.png)");
+  render(fremd);
+  assert.doesNotMatch(fremd.innerHTML, /<img/);
+
+  // Kein base64 = kein Bild: rohe SVG-Quelltexte oder javascript: scheitern
+  // schon an der data:image/...;base64-Pflichtform.
+  const roh = fakeNode('![x](data:image/svg+xml,<svg onload="alert(1)"></svg>)');
+  render(roh);
+  assert.doesNotMatch(roh.innerHTML, /<img/);
+});
