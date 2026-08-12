@@ -38,12 +38,18 @@ test("erkenneBildAuftrag: normale Fragen nehmen NIE die Bild-Spur", () => {
   assert.equal(erkenneBildAuftrag(`Zeichne ein Bild ${"x".repeat(700)}`), "");
 });
 
+test("sichereSvgAntwort: ohne xmlns wird es ergaenzt (Browser lehnen data:-SVGs sonst ab)", () => {
+  // Live gemessen 2026-08-12: naturalWidth 0, kaputtes Bild-Icon.
+  const ohne = '<svg viewBox="0 0 512 512"><rect width="512" height="512" fill="#234"/></svg>';
+  assert.match(sichereSvgAntwort(ohne), /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox/);
+});
+
 test("sichereSvgAntwort: zieht das SVG auch aus Geschwaetz drumherum", () => {
-  const svg = '<svg viewBox="0 0 512 512"><rect width="512" height="512" fill="#234"/><circle cx="256" cy="256" r="80" fill="#e63"/></svg>';
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#234"/><circle cx="256" cy="256" r="80" fill="#e63"/></svg>';
   assert.equal(sichereSvgAntwort(svg), svg);
   assert.equal(sichereSvgAntwort(`Hier ist dein Bild:\n\`\`\`svg\n${svg}\n\`\`\`\nViel Freude!`), svg);
   // Farbverlaeufe verweisen per url(#id) auf ihre Definition — das ist erlaubt.
-  const verlauf = '<svg viewBox="0 0 512 512"><defs><linearGradient id="g"><stop offset="0" stop-color="#123"/><stop offset="1" stop-color="#89a"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/></svg>';
+  const verlauf = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g"><stop offset="0" stop-color="#123"/><stop offset="1" stop-color="#89a"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/></svg>';
   assert.equal(sichereSvgAntwort(verlauf), verlauf);
 });
 

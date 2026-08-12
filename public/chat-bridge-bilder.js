@@ -56,7 +56,10 @@ export function sichereSvgAntwort(text) {
   if (!svg || svg.length > BILDER_SVG_MAX) return "";
   if (BILDER_SVG_VERBOTEN.test(svg)) return "";
   if (!/viewBox/i.test(svg)) return "";
-  return svg;
+  // Ohne xmlns lehnen Browser ein SVG aus einer data:-URL ab (leeres Bild-Icon,
+  // live gemessen 2026-08-12: naturalWidth 0) — das Modell vergisst es oft.
+  if (/xmlns\s*=/.test(svg)) return svg;
+  return svg.replace(/^<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
 }
 
 /**
