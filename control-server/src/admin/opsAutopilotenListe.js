@@ -585,5 +585,26 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 6 * STUNDE_MS,
     startAnleitung: "Läuft kontinuierlich als permanenter E2E-Endnutzer-Wächter.",
     stopAnleitung: "Über Watchdog-Policy konfigurierbar."
+  },
+  {
+    id: "werkstatt-autopilot",
+    name: "30. Werkstatt-Autopilot (Self-Evolution Engine)",
+    kurz: "Entwicklungs-Kreislauf in 4 Stationen: Sammeln (Radar/Bugs/Feedback), Bauen (Claude Cloud auf feature/-Branch), Prüfen (Lock-Hashes & Fail-Closed), 1-Klick PR-Freigabe.",
+    funktionen: [
+      "Station 1: Sammelt echte Quellen (Radar, Watchdog-Fehler, Nutzermeldungen) in priorisierte Backlog-Datei.",
+      "Station 2: Headless Claude-Code Routine programmiert 1 Aufgabe pro Nacht auf neuem feature/-Branch.",
+      "Station 3: Führt volle Prüfsuite & Lock-Manifest-Verifikation aus (Start-Lock & Security-Lock cryptographisch geschützt).",
+      "Station 4: Sendet 1-Klick PR-Freigabekarte per GitHub PR / Claude App (keine scharfen Deploy-Keys auf dem Webserver)."
+    ],
+    trainiert: "Self-Evolution Backlog, Lock-Safe Patch Generator & Automated Preflight Pipelines",
+    verbessert: "Sichere Selbst-Programmierung von smejj.com ohne Risiko für Live-Betrieb oder Locks",
+    neuigkeiten: ["Werkstatt-Autopilot v2 spezifiziert", "4-Stationen Loop bereit"],
+    ort: "Claude Cloud & GitHub PR",
+    zeitplan: "Auf Anfrage / Geplante Nacht-Routine",
+    messung: "heartbeat",
+    erwartetAlleMs: 24 * 60 * 60 * 1000,
+    schonfristMs: 12 * 60 * 60 * 1000,
+    startAnleitung: "Läuft als geplante Claude-Code-Cloud-Routine auf dediziertem feature/-Branch.",
+    stopAnleitung: "Über GitHub Actions / Claude Cloud-Workflow steuerbar."
   }
 ]);
