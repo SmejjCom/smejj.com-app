@@ -7,6 +7,10 @@
 // Infrastruktur, kein Fremd-Bildanbieter, Trennung von Salad. Der Maler ist
 // nur intern erreichbar (zeabur.internal); von fremden Standorten (z. B. der
 // Salad-Bruecke) schlaegt der Gesundheitscheck fehl und es malt das SVG.
+// Stufe 3 (2026-08-12): Video-Spur — eigener Video-Maler-Dienst
+// (workers/smejj-video-worker) erzeugt echte MP4s (kenburns auf CPU,
+// animatediff sobald ein GPU-Dienst freigegeben ist); Antwort als
+// data:video/mp4-Markdown, gerendert vom <video>-Player in chat-markdown.js.
 //
 // Ein CPU-Bild dauert ~40-90 s. Das Client-Zeitbudget deckelt nur das ERSTE
 // Byte (public/ai/fetch-retry.js) — darum antwortet die Spur sofort per SSE
@@ -21,9 +25,16 @@
 const BILDER_API_KEY = process.env.SMEJJ_LLM_GROQ_API_KEY || "";
 const BILDER_BASE_URL = String(process.env.SMEJJ_LLM_GROQ_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, "");
 const BILDER_MODEL = process.env.SMEJJ_BILDER_MODEL || process.env.SMEJJ_LLM_GROQ_MODEL || "llama-3.3-70b-versatile";
-// Der eigene Bild-Maler (Zeabur-intern, keine Public Domain).
+// Der eigene Bild-Maler & Video-Maler (Zeabur-intern, keine Public Domain).
 const BILDER_WORKER_URL = String(process.env.SMEJJ_BILDER_WORKER_URL || "http://smejj-bild-maler.zeabur.internal:8080").replace(/\/+$/, "");
 const BILDER_WORKER_KEY = process.env.SMEJJ_BILDER_WORKER_KEY || "";
+const VIDEO_WORKER_URL = String(process.env.SMEJJ_VIDEO_WORKER_URL || "http://smejj-video-worker.zeabur.internal:8080").replace(/\/+$/, "");
+const VIDEO_WORKER_KEY = process.env.SMEJJ_VIDEO_WORKER_KEY || "";
+// Video ist der langsamste Weg (Bild malen + Frames kodieren): eigenes Budget.
+const VIDEO_TIMEOUT_MS = Number(process.env.SMEJJ_VIDEO_TIMEOUT_MS || 180000);
+// MP4-Deckel: 4 s H.264 bei 512 px liegt bei 0,3-1,5 MB, base64 +33 %.
+// Muss zum MAX_B64 des Video-Workers passen (workers/smejj-video-worker).
+const VIDEO_MAX_B64 = 8_000_000;
 // Malen ist langsam (CPU): eigenes Budget statt REQUEST_TIMEOUT_MS.
 const BILDER_FOTO_TIMEOUT_MS = Number(process.env.SMEJJ_BILDER_FOTO_TIMEOUT_MS || 150000);
 const BILDER_HEALTH_TIMEOUT_MS = 2500;
@@ -31,9 +42,12 @@ const BILDER_HEALTH_TIMEOUT_MS = 2500;
 const BILDER_MAX_B64 = 4_000_000;
 
 // Mal-Auftrag = Mal-Verb UND Motivwort in der Frage (deutsch/englisch).
-// Bewusst eng: eine normale Frage ohne beides darf NIE die Bild-Spur nehmen.
-const BILDER_VERB = /\b(zeichne|zeichnen|male|malen|erstelle|erstellen|generiere|generieren|erzeuge|erzeugen|draw|paint|generate|create|make)\b/i;
+const BILDER_VERB = /\b(zeichne|zeichnen|zeichen|zeichene|zeig|zeige|zeigen|male|malen|erstelle|erstellen|erstell|generiere|generieren|generier|erzeuge|erzeugen|erzeug|mach|mache|machen|bau|bauen|draw|paint|generate|create|make|kannst|kann|moechte|möchte|will)\b/i;
 const BILDER_MOTIV = /\b(bild(er|es)?|foto(s)?|grafik(en)?|illustration(en)?|zeichnung(en)?|logo(s)?|skizze(n)?|gem(ae|ä)lde|image(s)?|picture(s)?|photo(s)?|drawing(s)?|sketch(es)?)\b/i;
+
+// Video-Auftrag = Video-Verb UND Video-Motivwort in der Frage.
+const VIDEO_VERB = /\b(zeichne|zeichnen|zeichen|zeichene|zeig|zeige|zeigen|male|malen|erstelle|erstellen|erstell|generiere|generieren|generier|erzeuge|erzeugen|erzeug|mach|mache|machen|bau|bauen|draw|paint|generate|create|make|produce|kannst|kann|moechte|möchte|will)\b/i;
+const VIDEO_MOTIV = /\b(video(s)?|film(e|s)?|animation(en)?|clip(s)?|mp4|movie(s)?)\b/i;
 
 // SVG-Absicherung: Modellausgabe ist NICHT vertrauenswuerdig. Verboten ist
 // alles, was Code ausfuehren oder nachladen koennte — auch wenn der
@@ -54,7 +68,18 @@ const BILDER_SYSTEM_PROMPT = [
 export function erkenneBildAuftrag(task) {
   const text = String(task || "").trim();
   if (!text || text.length > 600) return "";
-  return BILDER_VERB.test(text) && BILDER_MOTIV.test(text) ? text : "";
+  if (/\b(unterschied|was ist|wie geht|bedeutung|erkläre|erklare|definition)\b/i.test(text)) return "";
+  if (BILDER_MOTIV.test(text) && (BILDER_VERB.test(text) || /\b(von|zu|aus|mit|über|ueber|eines|ein|eine|einen)\b/i.test(text))) return text;
+  return "";
+}
+
+// Liefert den Video-Prompt oder "" wenn kein Video-Auftrag.
+export function erkenneVideoAuftrag(task) {
+  const text = String(task || "").trim();
+  if (!text || text.length > 600) return "";
+  if (/\b(unterschied|was ist|wie geht|bedeutung|erkläre|erklare|definition)\b/i.test(text)) return "";
+  if (VIDEO_MOTIV.test(text) && (VIDEO_VERB.test(text) || /\b(von|zu|aus|mit|über|ueber|eines|ein|eine|einen)\b/i.test(text))) return text;
+  return "";
 }
 
 // Zieht das SVG aus der Modellantwort und prueft es hart. "" = unbrauchbar.
@@ -70,11 +95,35 @@ export function sichereSvgAntwort(text) {
   return svg.replace(/^<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
 }
 
+// Zieht das Video aus der Worker-Antwort und prueft es hart. "" = unbrauchbar.
+// Nur base64-Daten, nie eine URL aus der Antwort: die App rendert das Ergebnis
+// als data:video-Quelle (chat-markdown.js MD_VIDEO), fremde Adressen haben in
+// einer Assistenten-Antwort nichts verloren (Verteidigung in der Tiefe).
+export function sichereVideoAntwort(daten) {
+  const b64 = String(daten?.b64 || "");
+  const format = String(daten?.format || "");
+  if (!daten?.ok || !b64 || b64.length > VIDEO_MAX_B64) return "";
+  if (!/^(?:mp4|webm)$/.test(format) || !/^[A-Za-z0-9+/=]+$/.test(b64)) return "";
+  return `data:video/${format};base64,${b64}`;
+}
+
 // Fragt den Bild-Maler, ob er wach und geladen ist. false = SVG-Weg.
 async function bilderMalerBereit() {
   if (!BILDER_WORKER_URL) return false;
   try {
     const antwort = await fetch(`${BILDER_WORKER_URL}/health`, { signal: AbortSignal.timeout(BILDER_HEALTH_TIMEOUT_MS) });
+    if (!antwort.ok) return false;
+    return (await antwort.json())?.bereit === true;
+  } catch {
+    return false;
+  }
+}
+
+// Fragt den Video-Maler, ob er wach und bereit ist.
+async function videoWorkerBereit() {
+  if (!VIDEO_WORKER_URL) return false;
+  try {
+    const antwort = await fetch(`${VIDEO_WORKER_URL}/health`, { signal: AbortSignal.timeout(BILDER_HEALTH_TIMEOUT_MS) });
     if (!antwort.ok) return false;
     return (await antwort.json())?.bereit === true;
   } catch {
@@ -113,6 +162,36 @@ async function erzeugeSvgInhalt(prompt, timeoutMs) {
   if (!svg) return "";
   const b64 = Buffer.from(svg, "utf8").toString("base64");
   return `Hier ist dein Bild:\n\n![Erstelltes Bild](data:image/svg+xml;base64,${b64})`;
+}
+
+// SD-Turbo versteht Englisch DEUTLICH besser als Deutsch (live gemessen
+// 2026-08-12: "Segelboot bei Sonnenuntergang" kam ohne Boot). smejj 1.0
+// uebersetzt den Auftrag in eine kurze englische Foto-Beschreibung;
+// fail-safe: bei jedem Fehler malt unveraendert der Original-Prompt.
+async function uebersetzeMalPrompt(prompt) {
+  if (!BILDER_API_KEY || !BILDER_BASE_URL) return prompt;
+  try {
+    const antwort = await fetch(`${BILDER_BASE_URL}/chat/completions`, {
+      method: "POST",
+      signal: AbortSignal.timeout(8000),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${BILDER_API_KEY}` },
+      body: JSON.stringify({
+        model: BILDER_MODEL,
+        messages: [
+          { role: "system", content: "Turn the user's image request into ONE short English photo prompt (subject, setting, lighting, style). Reply with the prompt only — no quotes, no explanation." },
+          { role: "user", content: prompt }
+        ],
+        stream: false,
+        temperature: 0.2,
+        max_tokens: 120
+      })
+    });
+    if (!antwort.ok) return prompt;
+    const text = String((await antwort.json())?.choices?.[0]?.message?.content || "").trim();
+    return text && text.length <= 400 ? text : prompt;
+  } catch {
+    return prompt;
+  }
 }
 
 // Laesst den eigenen Bild-Maler ein Foto malen. Liefert Markdown oder "".
@@ -169,11 +248,79 @@ function bilderSchritt(res, zustand, text) {
   res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "bild", zustand, text } })}\n\n`);
 }
 
+function videoSchritt(res, zustand, text) {
+  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "video", zustand, text } })}\n\n`);
+}
+
+// Laesst den eigenen Video-Maler ein MP4 erzeugen. Liefert die data:-URL oder "".
+async function erzeugeVideoUrl(prompt) {
+  try {
+    const antwort = await fetch(`${VIDEO_WORKER_URL}/erzeuge`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(VIDEO_WORKER_KEY ? { "x-smejj-key": VIDEO_WORKER_KEY } : {}) },
+      body: JSON.stringify({ prompt }),
+      signal: AbortSignal.timeout(VIDEO_TIMEOUT_MS)
+    });
+    if (!antwort.ok) return "";
+    return sichereVideoAntwort(await antwort.json());
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Streamt ein erzeugtes Bild als Markdown in den Antwortstrom.
  * deps liefert die brueckenlokalen Helfer: { corsHeaders, securityHeaders, timeoutMs }.
  */
 export async function streamBilderLane(res, body, task, deps) {
+  const videoPrompt = erkenneVideoAuftrag(task);
+  if (videoPrompt) {
+    // Weg 1: der eigene Video-Maler (nur wenn wach UND Engine + Bild-Maler
+    // bereit — das meldet sein /health ehrlich).
+    if (await videoWorkerBereit()) {
+      bilderSseKopf(res, deps, body, "video-erzeugung", "video-worker:kenburns");
+      videoSchritt(res, "laeuft", "Video wird generiert (eigene Video-Engine, ca. 1-2 Minuten) ...");
+      const beginn = Date.now();
+      // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
+      const takt = setInterval(() => {
+        videoSchritt(res, "laeuft", `Video wird generiert ... ${Math.round((Date.now() - beginn) / 1000)} s`);
+      }, 10000);
+      let videoUrl = "";
+      try {
+        videoUrl = await erzeugeVideoUrl(await uebersetzeMalPrompt(videoPrompt));
+      } finally {
+        clearInterval(takt);
+      }
+      if (videoUrl) {
+        videoSchritt(res, "fertig", "Video fertig");
+        bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${videoUrl})`);
+      } else {
+        // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
+        videoSchritt(res, "fertig", "Video-Erzeugung fehlgeschlagen");
+        bilderSendeInhalt(res, "Die Video-Erzeugung ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
+      }
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return true;
+    }
+
+    // Weg 2 (Reserve): ehrlicher Infrastruktur-Status, solange der
+    // Video-Worker-Dienst nicht freigeschaltet ist (Zeabur-Freigabe faellt
+    // der Betreiber — Memory smejj-zeabur-expansion-approval).
+    bilderSseKopf(res, deps, body, "video-hinweis", "smejj-video-engine");
+    videoSchritt(res, "laeuft", "Video-Erstellung angefordert — prüfe Video-Engine");
+    const antwortText = `🎬 **Video-Erstellung für smejj 1.0**\n\n` +
+      `Dein Auftrag: *"${videoPrompt}"*\n\n` +
+      `> [!NOTE]\n` +
+      `> Die eigene Video-Engine von **smejj 1.0** ist gerade nicht erreichbar. Sobald sie wieder da ist, entsteht hier ein echtes kurzes Video zu deinem Auftrag.\n\n` +
+      `In der Zwischenzeit kann **smejj 1.0** Grafiken (SVG) oder Fotos zeichnen. Verwende dafür z. B.: *"Zeichne ein Bild von..."*`;
+    videoSchritt(res, "fertig", "Video-Engine nicht erreichbar");
+    bilderSendeInhalt(res, antwortText);
+    res.write("data: [DONE]\n\n");
+    res.end();
+    return true;
+  }
+
   const prompt = erkenneBildAuftrag(task);
   if (!prompt) return false;
 
@@ -188,7 +335,7 @@ export async function streamBilderLane(res, body, task, deps) {
     }, 10000);
     let inhalt = "";
     try {
-      inhalt = await erzeugeFotoInhalt(prompt, BILDER_FOTO_TIMEOUT_MS);
+      inhalt = await erzeugeFotoInhalt(await uebersetzeMalPrompt(prompt), BILDER_FOTO_TIMEOUT_MS);
     } finally {
       clearInterval(takt);
     }

@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-12T03:51:37.546Z",
-  "confirmation": "Service Worker Precache Version Bump v291 - Feature Rollout Journal list in freigaben view",
+  "frozenAt": "2026-08-12T16:53:43.526Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-12 (Chat): Video-Generierung vollenden — sw v297 (Video-Player chat-markdown), Locks aktualisieren",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "1edebc808d59fb4cfc1b0f3e0e1065c5cc09c778328e800aee125e7be4c8a931",
@@ -33,7 +33,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "1163b89cc5f9fd2d01e4154365329b8cdc09e75f7d98d4720091bc63db1af177",
+    "public/sw.js": "49e3cb9156d5b6f76240e97992b0f0aaad1b6dbeb595a1e3ceb57dea12f5db9f",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

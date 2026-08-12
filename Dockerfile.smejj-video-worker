@@ -1,0 +1,21 @@
+# smejj.com — Video-Maler (kenburns-Engine auf Zeabur-CPU, intern erreichbar).
+# Weg + Fallen: Memory smejj-zeabur-neuer-dienst-weg (Dockerfile.<dienstname>,
+# .dockerignore-Erlaubnisliste, fester Startbefehl gegen die pnpm-Falle).
+# Für die animatediff-Engine (GPU) käme torch als eigene Schicht dazu — wie im
+# Trainer gehört es ins ABBILD, nie zur Laufzeit nachinstalliert.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY workers/smejj-video-worker/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY workers/smejj-video-worker/server.py ./server.py
+
+ENV PORT=8080
+EXPOSE 8080
+
+# 0.0.0.0, NICHT "::": Zeaburs internes Netz ist IPv4 (zeabur.internal ->
+# 10.x, gemessen 2026-08-12); uvicorn bindet "::" hier IPv6-ONLY und die
+# Bruecke bekaeme Connection refused. (Die Salad-IPv6-Lehre gilt nur dort.)
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -18,13 +18,7 @@ import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndex
 // und Zeichen gegen Kontextfenster und BYOK-Kosten.
 import { sanitizeHistory } from "../src/agent/conversationHistory.js";
 
-// Crash-Guard auf Prozess-Ebene (Infra-Audit 2026-08-09): Auf der Salad-GPU
-// laesst ein unbehandelter Fehler den Prozess sonst "still" haengen — die
-// TCP-Sonde sieht nur den offenen Port und haelt die Instanz fuer gesund, waehrend
-// der Chat-Pfad tot ist. Wie im Control Server (crashGuard.js) landet jeder
-// unbehandelte Fehler mit Stack im Container-Log, danach kontrollierter Exit 1;
-// die Salad-Probe erkennt den Exit und realloziert. Selbst-enthalten, weil die
-// Bridge als eigenes Bundle laeuft (kein Zugriff auf control-server/).
+// Crash-Guard auf Prozess-Ebene: Unbehandelte Fehler loggen & kontrollierter Exit 1.
 for (const kind of ["uncaughtException", "unhandledRejection"]) {
   process.on(kind, (error) => {
     try {
@@ -62,7 +56,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260812-v130-bild-maler";
+const BRIDGE_VERSION = "20260812-v132-video-mp4";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -190,12 +184,17 @@ function boundedInteger(value, min, max, fallback) {
 async function handleChat(req, res) {
   const body = await readJson(req);
   const messages = Array.isArray(body.messages) ? body.messages : [{ role: "user", content: String(body.message || "") }];
+  const task = String(messages[messages.length - 1]?.content || "").trim();
+  if (task) {
+    if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
+    if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS })) return;
+  }
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
   const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
   const angereichert = withRagBlock(hardenMessages(messages), wissen, 1);
   // handleAgent schloss Coding immer aus; handleChat uebergab fest "chat".
   const stufe = leseStufe(body);
-  if (await streamFastLane(res, angereichert, isCodingTask(String(messages[messages.length - 1]?.content || "")) ? "coding" : "chat", body.model, stufe)) return;
+  if (await streamFastLane(res, angereichert, isCodingTask(task) ? "coding" : "chat", body.model, stufe)) return;
   // Der Control Server ergaenzt Projektwissen bisher nur in /api/agent, nicht im
   // Chat — darum bekommt er den Block hier mit. Alles andere am Rumpf bleibt
   // unveraendert, insbesondere der ungekuerzte Gespraechsverlauf.

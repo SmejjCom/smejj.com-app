@@ -627,3 +627,12 @@ Abgesichert durch tests/verlauf-themen.test.mjs (6 Tests, in check:frontend):
 35 Beispielanfragen, 12 absichtlich gebaute Fallen mit einem Wort aus einem
 frueheren Thema, die Wortgrenzen-Faelle, die Umlaut-Umschriften und die
 Reihenfolge Finanzen-Einkauf-Finanzen.
+
+## v297 — Video-Erzeugung Stufe 3 (2026-08-12)
+
+Chat rendert erzeugte Videos als HTML5-Player: chat-markdown.js (MD_VIDEO nur
+data:video-base64 aus der eigenen Bruecke, playsinline fuer iOS) und die
+.chat-video-Regeln aus chat-markdown.css (seit v296 im Buendel). Quelle ist die
+neue Video-Spur der Bruecke (v132): eigener Video-Worker
+(workers/smejj-video-worker) erzeugt echte MP4s — kenburns auf CPU ueber den
+Bild-Maler, animatediff sobald ein GPU-Dienst freigegeben ist.

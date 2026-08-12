@@ -25,6 +25,8 @@ workers/*
 !workers/glm-salad/s3.js
 !workers/smejj-bild-maler
 !workers/smejj-bild-maler/**
+!workers/smejj-video-worker
+!workers/smejj-video-worker/**
 !workers/smejj-training-loop
 !workers/smejj-training-loop/**
 # Bruecken-Waechter (eigener Dienst seit 2026-08-07). OHNE diese zwei
