@@ -75,10 +75,10 @@ export async function trainingLoopLauf({ log = console.log } = {}) {
   return { ok, meldung, dauerMs };
 }
 
-/** Automatischer Wächter: Prüft stündlich alle 29 Autopiloten und erneuert bei Bedarf deren Herzschlag. */
+/** Automatischer Wächter: Prüft stündlich alle 31 Autopiloten und erneuert bei Bedarf deren Herzschlag. */
 export async function autopilotWaechterLauf({ log = console.log } = {}) {
   const start = Date.now();
-  log("[autopilot-jobs] Stündlicher Autopilot-Wächter-Agent für alle 29 Autopiloten gestartet");
+  log("[autopilot-jobs] Wächter-Agent für alle 31 Autopiloten gestartet");
   const liste = [
     { id: "qualitaetsmessung", meldung: "Qualitätsmessung-Wächter: Aktiv auf Zeabur" },
     { id: "voice-region-check", meldung: "Voice-Region-Check-Wächter: Aktiv auf Zeabur" },
@@ -108,7 +108,9 @@ export async function autopilotWaechterLauf({ log = console.log } = {}) {
     { id: "instant-web-container", meldung: "In-Browser Instant WebContainers Autopilot: Aktiv und bereit" },
     { id: "realtime-voice-pair", meldung: "Real-Time Voice & Screen Pair-Programmer Autopilot: Aktiv (<300ms)" },
     { id: "autonomous-git-bot", meldung: "Autonomous Git-Bot & PR Auto-Fixer Autopilot: Aktiv und überwacht" },
-    { id: "synthetic-user-watchdog", meldung: "24/7 Synthetic User & Full-Stack E2E Watchdog: Aktiv (alle 5 Min)" }
+    { id: "synthetic-user-watchdog", meldung: "24/7 Synthetic User & Full-Stack E2E Watchdog: Aktiv (alle 5 Min)" },
+    { id: "werkstatt-autopilot", meldung: "Werkstatt-Autopilot (Self-Evolution Engine): Aktiv und bereit" },
+    { id: "angelina-autopilot", meldung: "Angelina-Autopilot (Satz & Prompt-Synthesizer Engine): Aktiv und bereit" }
   ];
 
   const ergebnisse = [];
@@ -123,6 +125,6 @@ export async function autopilotWaechterLauf({ log = console.log } = {}) {
   }
 
   const dauerMs = Date.now() - start;
-  log(`[autopilot-jobs] Stündlicher Autopilot-Wächter beendet: ${ergebnisse.length}/29 Autopiloten überprüft (${dauerMs}ms)`);
+  log(`[autopilot-jobs] Autopilot-Wächter beendet: ${ergebnisse.length}/31 Autopiloten überprüft (${dauerMs}ms)`);
   return { ok: true, dauerMs, ergebnisse };
 }

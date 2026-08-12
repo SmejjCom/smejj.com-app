@@ -606,5 +606,25 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: 12 * 60 * 60 * 1000,
     startAnleitung: "Läuft als geplante Claude-Code-Cloud-Routine auf dediziertem feature/-Branch.",
     stopAnleitung: "Über GitHub Actions / Claude Cloud-Workflow steuerbar."
+  },
+  {
+    id: "angelina-autopilot",
+    name: "31. Angelina-Autopilot (Satz & Prompt-Synthesizer Engine)",
+    kurz: "Erweiterte Sprach- & Satz-Synthese Engine für flüssiges Deutsch, erweiterte Satzstrukturen und automatisierte Prompt-Optimierung.",
+    funktionen: [
+      "Analysiert und synthetisiert komplexe Satzstrukturen und natürliche Sprachmuster.",
+      "Generiert erweiterte Prompt-Varianten für flüssige, hochpräzise Modellausgaben.",
+      "Überwacht und optimiert die sprachliche Qualität und Konsistenz im 24/7-Dauerbetrieb."
+    ],
+    trainiert: "Satzbau-Muster, Deutsche Grammatik-Graphen & Prompt-Synthesen",
+    verbessert: "Natürlicher Satzbau & perfekte deutsche Sprachqualität ohne Hölzernheit",
+    neuigkeiten: ["Angelina Sprach-Engine aktiv", "Satz-Synthesizer v1.0 im 24/7-Dauerbetrieb"],
+    ort: "Control Server (Language Engine)",
+    zeitplan: "24/7 Dauerbetrieb (Satz-Synthese)",
+    messung: "heartbeat",
+    erwartetAlleMs: 6 * 60 * 60 * 1000,
+    schonfristMs: 6 * 60 * 60 * 1000,
+    startAnleitung: "Läuft kontinuierlich als Sprach- & Satz-Synthesizer im LLM-Loop.",
+    stopAnleitung: "Über Language-Engine Policy steuerbar."
   }
 ]);

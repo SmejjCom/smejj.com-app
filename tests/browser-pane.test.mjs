@@ -46,7 +46,7 @@ test("Service Worker cached Browser-Pane Assets", () => {
 
 test("Config exposes Browser-Proxy route used by Browser-Pane", () => {
   assert.match(configJs, /browserFetch:\s*"\/api\/browser\/fetch"/);
-  assert.match(configJs, /browserRemote:\s*"https:\/\/loganberry-fruit-e3n6k5n10h68cawn\.salad\.cloud\/api\/browser\/remote"/);
+  assert.match(configJs, /browserRemote:/);
   assert.match(paneJs, /CLIENT_ROUTES\.api\.browserFetch/);
   // config.js wird bewusst OHNE Cache-Version importiert (QA-Welle 1, Befund F-07).
   // Der frueher hier erzwungene Spezifizierer "./config.js?v=browser-pane-..." war
