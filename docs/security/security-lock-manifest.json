@@ -7,7 +7,7 @@
     "public/auth/login/index.html": "b3f40b82eaa3f48d330bd1b8f37a4672b342516b3915f646ec093afc12b51fb3",
     "public/auth/register/index.html": "abfdb53605df11e48f1758086ad780257527c4a37c14268ac9aaf4d195433a48",
     "public/auth/auth-page.js": "779a133f375cd470a0601d914497f8a56267e3b3ee9d168217531890dd72c064",
-    "public/auth/auth.css": "582576014a5a9177bc7bff9e9df9622fa94a411e3b428047bd14a238179341c0",
+    "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "c4af05031dadfcd5a7e02d768955ebc2039de9ee8fbea847e9701e31a0c580ef",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
