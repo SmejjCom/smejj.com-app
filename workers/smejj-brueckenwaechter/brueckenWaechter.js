@@ -30,8 +30,13 @@
 // abfragbar) und — falls `meldeUrl` gesetzt ist — dorthin melden. Ohne diesen
 // Wert passiert nichts und es wird auch nichts versucht.
 
-/** Standardadresse: dieselbe, die auch die App benutzt. */
-export const BRUECKE_HEALTH = "https://starfruit-thyme-cblgn6u06ca2z9d5.salad.cloud/health";
+/** Standardadresse: dieselbe, die auch die App benutzt (public/config.js).
+ * Seit dem App-Umschwenk vom 2026-08-12 ist das die Zeabur-Bruecke — die alte
+ * Salad-Bruecke (starfruit) ist ausgemustert; ihr Buendel-Pfad
+ * assets/chat-bridge.js existiert im Frontend-Repo nicht mehr, die Instanz
+ * kann nicht mehr booten. Ein Waechter, der ein ausgemustertes Ziel prueft,
+ * meldet Daueralarm ohne Nutzerbezug. */
+export const BRUECKE_HEALTH = "https://smejj-chat-bridge.zeabur.app/health";
 
 const STANDARD_SCHWELLE = 3;
 const STANDARD_ZEITLIMIT_MS = 10_000;
