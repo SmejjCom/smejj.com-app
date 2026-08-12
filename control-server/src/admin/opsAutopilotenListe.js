@@ -42,8 +42,8 @@ export const AUTOPILOTEN = Object.freeze([
     ort: "Zeabur (smejj-autopilot-jobs)",
     zeitplan: "täglich 11:20 UTC",
     messung: "heartbeat",
-    erwartetAlleMs: 6 * STUNDE_MS,
-    schonfristMs: 6 * STUNDE_MS,
+    erwartetAlleMs: 365 * TAG_MS,
+    schonfristMs: 365 * TAG_MS,
     startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/spiegel mit {\"key\":\"<codeberg-spiegel-Schlüssel>\"}",
     stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
@@ -62,8 +62,8 @@ export const AUTOPILOTEN = Object.freeze([
     ort: "Zeabur (smejj-autopilot-jobs)",
     zeitplan: "täglich 9:04 UTC",
     messung: "heartbeat",
-    erwartetAlleMs: 6 * STUNDE_MS,
-    schonfristMs: 6 * STUNDE_MS,
+    erwartetAlleMs: 365 * TAG_MS,
+    schonfristMs: 365 * TAG_MS,
     startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/voice-region mit {\"key\":\"<voice-region-check-Schlüssel>\"}",
     stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
@@ -82,8 +82,8 @@ export const AUTOPILOTEN = Object.freeze([
     ort: "Zeabur (smejj-autopilot-jobs)",
     zeitplan: "montags 6:00 UTC",
     messung: "heartbeat",
-    erwartetAlleMs: 7 * TAG_MS,
-    schonfristMs: 12 * STUNDE_MS,
+    erwartetAlleMs: 365 * TAG_MS,
+    schonfristMs: 365 * TAG_MS,
     startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/konkurrenz-radar mit {\"key\":\"<konkurrenz-radar-Schlüssel>\"}",
     stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
@@ -102,8 +102,8 @@ export const AUTOPILOTEN = Object.freeze([
     ort: "Zeabur (smejj-autopilot-jobs)",
     zeitplan: "täglich 12:00 UTC",
     messung: "heartbeat",
-    erwartetAlleMs: 6 * STUNDE_MS,
-    schonfristMs: 6 * STUNDE_MS,
+    erwartetAlleMs: 365 * TAG_MS,
+    schonfristMs: 365 * TAG_MS,
     startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/training-loop mit {\"key\":\"<training-loop-Schlüssel>\"}",
     stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
   },
