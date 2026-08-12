@@ -27,10 +27,6 @@ export function schluesselFuer(id, env = process.env) {
     const trenner = paar.indexOf(":");
     if (trenner > 0 && paar.slice(0, trenner).trim() === id) return paar.slice(trenner + 1).trim();
   }
-  for (const paar of roh.split(",")) {
-    const trenner = paar.indexOf(":");
-    if (trenner > 0 && paar.slice(trenner + 1).trim()) return paar.slice(trenner + 1).trim();
-  }
   const einzel = String(env.SMEJJ_AUTOPILOT_KEY || "").trim();
   if (einzel) return einzel;
   return "";
