@@ -52,7 +52,7 @@ export function upgradeVoiceOverlay({ sendIcon = "" } = {}) {
     try {
       const [{ bildDateienAusClipboard }, { uebernehmeBildDatei }] = await Promise.all([
         import("./composer-paste-attach.js?v=1"),
-        import("./composer-bild-anhang.js?v=1")
+        import("./composer-bild-anhang.js")
       ]);
       const bilder = bildDateienAusClipboard(event.clipboardData);
       if (!bilder.length) return;

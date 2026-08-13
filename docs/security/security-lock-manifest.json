@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-13T09:15:35.697Z",
-  "confirmation": "Betreiber waehlte am 2026-08-13 in der Claude-Sitzung die Option 'Zweitkonto-Fehler beheben (Empfehlung)': Beim Login zuerst alte Identitaet raeumen (beide Token + Control-Cookie), dann neue setzen — sonst sitzt Person B in der Sitzung von Person A.",
+  "frozenAt": "2026-08-13T22:54:49.232Z",
+  "confirmation": "Freigeben + reparieren (Betreiber-Karte 2026-08-13, mehrfach in der Sitzung bestaetigt): deckt 8c45b11 v134, ba4025a v135 und die Auslagerung von chat-bridge.js auf 604 Zeilen (8cb0ffe)",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "c645281b51b7b2ea699909d4f6c4ee6eb5ad8ea506b6fb01f4521439144c2b0e",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "c4af05031dadfcd5a7e02d768955ebc2039de9ee8fbea847e9701e31a0c580ef",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "2efa5b82b761ca9a18b13a6b1e40b7eed21ed4bba5d84c15ab43a7561bfedc5c",
+    "public/chat-bridge.js": "e600d653966d0005e10fdb0483883c6eb5af9755a210689d33161e1ddc9b1c3a",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

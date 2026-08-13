@@ -45,7 +45,7 @@ import {
   ohneBallast, trefferAusschnitt, volltext, zeitText, themaVon, sichereAlsMarkdown,
   projektGruppen
 } from "/assets/chat-history-text.js";
-import { createCardBuilders } from "/assets/chat-history-cards.js?v=split-20260810";
+import { createCardBuilders, createProjektAktionen } from "/assets/chat-history-cards.js?v=split-20260810";
 
 const STYLE_ID = "chatHistoryStyles";
 
@@ -54,6 +54,17 @@ let confirmTimer = null;
 let suchbegriff = "";
 let themenFilter = "";
 let offenesMenu = null;
+
+// Projekt-Menues (chat-history-cards.js) an den Zustand DIESER Ansicht binden
+// (2026-08-13 dorthin verschoben, 800-Zeilen-Regel). MUSS vor createCardBuilders
+// stehen: dessen ctx reicht oeffneProjektMenu weiter — als const erst ab hier
+// belegt (TDZ), waehrend die uebrigen Rueckrufe gehoistete Funktionen sind.
+const { oeffneProjektMenu, zeigeProjektPicker } = createProjektAktionen({
+  menuSchliessen, render,
+  getAlleProjekte: () => alleProjekte,
+  setOffenesMenu: (menu) => { offenesMenu = menu; },
+  armConfirmTimer: (rueckruf, ms) => { clearTimeout(confirmTimer); confirmTimer = setTimeout(rueckruf, ms); }
+});
 
 // Karten-Bausteine (chat-history-cards.js) an den Zustand DIESER Ansicht
 // binden: sie lesen Suchbegriff/Themenfilter/offenes Menue ueber Getter und
@@ -619,155 +630,6 @@ function zeigeUmbenennen(karte, chat) {
   eingabe.select();
 }
 
-/* ------------------------------------------------------------------ *
- *  Projekte (2026-08-13): Menue am Gruppenkopf + Picker an der Karte.
- *  Beide nutzen dasselbe offenesMenu-Handle wie das Chat-Menue — damit
- *  greifen Render-Sperre (zeichne) und Outside-Click-Schliessen mit.
- * ------------------------------------------------------------------ */
-
-let confirmingProjektId = "";
-
-function oeffneProjektMenu(kopf, projekt) {
-  const menu = document.createElement("div");
-  menu.className = "ch-menu ch-projekt-menu";
-  menu.dataset.projektId = projekt.id;
-  menu.addEventListener("click", (event) => event.stopPropagation());
-
-  const eintrag = (text, aktion, gefaehrlich) => {
-    const knopf = document.createElement("button");
-    knopf.type = "button";
-    knopf.textContent = text;
-    if (gefaehrlich) knopf.classList.add("is-danger");
-    knopf.addEventListener("click", aktion);
-    return knopf;
-  };
-
-  menu.append(eintrag("✎ Umbenennen", () => { menuSchliessen(); zeigeProjektUmbenennen(kopf, projekt); }));
-  menu.append(document.createElement("hr"));
-
-  // Zweistufig wie beim Chat — mit dem Hinweis, dass die Chats NICHT
-  // mitgeloescht werden (sie rutschen in die Datumsgruppen zurueck).
-  const loeschen = eintrag("🗑 Löschen…", async () => {
-    if (confirmingProjektId !== projekt.id) {
-      confirmingProjektId = projekt.id;
-      loeschen.textContent = "🗑 Wirklich? Chats bleiben erhalten";
-      clearTimeout(confirmTimer);
-      confirmTimer = setTimeout(() => { menuSchliessen(); }, 4000);
-      return;
-    }
-    menuSchliessen();
-    await loescheProjekt(projekt.id).catch(() => {});
-    render();
-  }, true);
-  menu.append(loeschen);
-
-  kopf.append(menu);
-  offenesMenu = menu;
-}
-
-function zeigeProjektUmbenennen(kopf, projekt) {
-  if (kopf.querySelector(".ch-umbenennen")) return;
-  const zeile = document.createElement("div");
-  zeile.className = "ch-umbenennen ch-projekt-umbenennen";
-  zeile.addEventListener("click", (event) => event.stopPropagation());
-
-  const eingabe = document.createElement("input");
-  eingabe.type = "text";
-  eingabe.maxLength = 60;
-  eingabe.value = projekt.name || "";
-  eingabe.setAttribute("aria-label", "Neuer Projektname");
-
-  const speichern = document.createElement("button");
-  speichern.type = "button";
-  speichern.textContent = "Speichern";
-  const abbrechen = document.createElement("button");
-  abbrechen.type = "button";
-  abbrechen.textContent = "Abbrechen";
-
-  const senden = async () => {
-    await benenneProjektUm(projekt.id, eingabe.value).catch(() => {});
-    render();
-  };
-  speichern.addEventListener("click", senden);
-  abbrechen.addEventListener("click", () => zeile.remove());
-  eingabe.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") senden();
-    if (event.key === "Escape") zeile.remove();
-  });
-
-  zeile.append(eingabe, speichern, abbrechen);
-  kopf.after(zeile);
-  eingabe.focus();
-  eingabe.select();
-}
-
-// Picker: Chat einem Projekt zuordnen. Bei null Projekten direkt die
-// Eingabe fuer das erste — ein leerer Picker waere eine Sackgasse.
-function zeigeProjektPicker(karte, chat) {
-  const menu = document.createElement("div");
-  menu.className = "ch-menu ch-projekt-picker";
-  menu.dataset.chatId = chat.id;
-  menu.addEventListener("click", (event) => event.stopPropagation());
-
-  const eintrag = (text, aktion, aktivGewaehlt) => {
-    const knopf = document.createElement("button");
-    knopf.type = "button";
-    knopf.textContent = text;
-    if (aktivGewaehlt) knopf.classList.add("is-gewaehlt");
-    knopf.addEventListener("click", aktion);
-    return knopf;
-  };
-
-  const zuordnen = async (projektId) => {
-    menuSchliessen();
-    await setzeChatProjekt(chat.id, projektId).catch(() => {});
-    render();
-  };
-
-  for (const projekt of alleProjekte) {
-    const gewaehlt = chat.projectId === projekt.id;
-    menu.append(eintrag(`${gewaehlt ? "✓ " : ""}📁 ${projekt.name}`, () => zuordnen(gewaehlt ? "" : projekt.id), gewaehlt));
-  }
-  if (chat.projectId && alleProjekte.some((projekt) => projekt.id === chat.projectId)) {
-    menu.append(eintrag("Kein Projekt", () => zuordnen("")));
-  }
-  if (alleProjekte.length) menu.append(document.createElement("hr"));
-
-  const neu = eintrag("＋ Neues Projekt…", () => {
-    // Menue-Inhalt gegen die Eingabezeile tauschen — kein zweites Overlay.
-    menu.replaceChildren();
-    const zeile = document.createElement("div");
-    zeile.className = "ch-projekt-neu";
-    const eingabe = document.createElement("input");
-    eingabe.type = "text";
-    eingabe.maxLength = 60;
-    eingabe.placeholder = "Projektname";
-    eingabe.setAttribute("aria-label", "Name des neuen Projekts");
-    const anlegen = document.createElement("button");
-    anlegen.type = "button";
-    anlegen.textContent = "Anlegen";
-    const senden = async () => {
-      const name = eingabe.value;
-      menuSchliessen();
-      const projektId = await erstelleProjekt(name).catch(() => "");
-      if (projektId) await setzeChatProjekt(chat.id, projektId).catch(() => {});
-      render();
-    };
-    anlegen.addEventListener("click", senden);
-    eingabe.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") senden();
-      if (event.key === "Escape") menuSchliessen();
-    });
-    zeile.append(eingabe, anlegen);
-    menu.append(zeile);
-    eingabe.focus();
-  });
-  menu.append(neu);
-
-  karte.append(menu);
-  offenesMenu = menu;
-  if (!alleProjekte.length) neu.click();
-}
 
 
 /* ------------------------------------------------------------------ *
