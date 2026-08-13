@@ -22,6 +22,78 @@ async function load(voiceMode = false) {
   return module.renderChatMarkdown;
 }
 
+// --- Tabellen --------------------------------------------------------------
+//
+// GEMESSEN 2026-08-13 live: Nachdem der Agent endlich sieben echte Angebote
+// lieferte, standen sie als Zeichensalat im Chat — "| # | Lage / Adresse |
+// Zimmer / Flaeche | …" samt "|---|---|". Das Modell lieferte korrektes
+// Markdown; der Renderer kannte nur keine Tabellen.
+
+const TABELLE = [
+  "| # | Lage / Adresse | Zimmer / Fläche | Mietpreis monatl. | Exposé |",
+  "|---|----------------|-----------------|-------------------|--------|",
+  "| 1 | Hayward / Castro Valley | 2 Räume, ca. 225 sq ft | **700 $** | https://www.craigslist.org/view/d/hayward |",
+  "| 2 | 2811 Castro Valley Blvd | ca. 880 sq ft | im Inserat nicht angegeben | https://www.officespace.com/ca/x |"
+].join("\n");
+
+test("eine Markdown-Tabelle wird eine echte Tabelle", async () => {
+  const render = await load();
+  const node = fakeNode(TABELLE);
+  render(node);
+  assert.match(node.innerHTML, /<table class="chat-table">/);
+  assert.equal((node.innerHTML.match(/<th>/g) || []).length, 5, "fuenf Kopfspalten");
+  assert.equal((node.innerHTML.match(/<tr>/g) || []).length, 3, "Kopfzeile plus zwei Datenzeilen");
+  assert.match(node.innerHTML, /<th>Mietpreis monatl\.<\/th>/);
+  assert.match(node.innerHTML, /<td>2 Räume, ca\. 225 sq ft<\/td>/);
+  // Die Trennzeile darf nie als Inhalt auftauchen.
+  assert.doesNotMatch(node.innerHTML, /---/);
+  assert.doesNotMatch(node.innerHTML, /\|/, "kein einziger Rohstrich bleibt stehen");
+});
+
+test("in der Tabelle bleiben Links klickbar und fett bleibt fett", async () => {
+  const render = await load();
+  const node = fakeNode(TABELLE);
+  render(node);
+  assert.match(node.innerHTML, /<td><a class="chat-link" href="https:\/\/www\.craigslist\.org\/view\/d\/hayward"/);
+  assert.match(node.innerHTML, /<td><strong>700 \$<\/strong><\/td>/);
+});
+
+test("eine verrutschte Zeile verschiebt die Spalten nicht", async () => {
+  // Modellausgabe ist nie garantiert sauber. Fehlende Zellen werden aufgefuellt,
+  // ueberzaehlige abgeschnitten — sonst rutscht der Preis in die Link-Spalte.
+  const render = await load();
+  const node = fakeNode(["| A | B | C |", "|---|---|---|", "| 1 | 2 |", "| 1 | 2 | 3 | 4 |"].join("\n"));
+  render(node);
+  const zeilen = node.innerHTML.split("<tr>").slice(2);
+  for (const zeile of zeilen) {
+    assert.equal((zeile.match(/<td>/g) || []).length, 3, "jede Datenzeile hat genau drei Zellen");
+  }
+});
+
+test("Modellausgabe in Zellen wird escaped, nie als Markup ausgefuehrt", async () => {
+  const render = await load();
+  const node = fakeNode(["| Name | Notiz |", "|---|---|", "| <img src=x onerror=alert(1)> | ok |"].join("\n"));
+  render(node);
+  assert.match(node.innerHTML, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.doesNotMatch(node.innerHTML, /<img src=x/);
+});
+
+test("ein Satz mit Strichen ist keine Tabelle", async () => {
+  // Ohne die Trennzeile als Bedingung wuerde jeder Text mit "|" verunstaltet.
+  const render = await load();
+  const node = fakeNode("Der Pfad ist a|b|c und die Regel gilt.");
+  render(node);
+  assert.doesNotMatch(node.innerHTML, /<table/);
+  // Eine Aufzaehlung beginnt mit "-", eine Trennzeile auch. Die Liste darf
+  // dadurch nicht zur Tabelle werden. (Dass sie hier ueberhaupt gerendert wird,
+  // liegt am Stern in der Zeile — reine Bindestrich-Listen ohne Auszeichnung
+  // bleiben seit jeher Rohtext, das ist nicht Teil dieser Aenderung.)
+  const liste = fakeNode("- eins *wichtig*\n- zwei");
+  render(liste);
+  assert.match(liste.innerHTML, /<ul class="chat-list">/, "Listen bleiben Listen");
+  assert.doesNotMatch(liste.innerHTML, /<table/);
+});
+
 test("fett, kursiv und Code werden ausgezeichnet", async () => {
   const render = await load();
   const node = fakeNode("Die Hauptstadt ist **Lissabon**.");
