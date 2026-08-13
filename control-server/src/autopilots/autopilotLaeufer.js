@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 
 import { interneMeldung, autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { baueBacklog } from "./werkstattBacklog.js";
+import { pruefeSpracheAlle } from "./spracheQualitaetAutopilot.js";
 import { runProjectBugScan } from "./bugPredictorAutopilot.js";
 import { buildKnowledgeGraph } from "./knowledgeGraphAutopilot.js";
 import { runCodeInterpreter } from "./codeInterpreterAutopilot.js";
@@ -43,6 +44,8 @@ import { runFullSyntheticE2ECycle } from "./syntheticUserWatchdogAutopilot.js";
 // und der Scan meldete "kein Quelltext" mitten im vollen Repository.
 const WURZEL = path.resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const SCAN_ORDNER = ["control-server/src", "src"];
+// Angelina (Nr. 31) prueft die ausgelieferten Seiten, nicht den Servercode.
+const SEITEN_ORDNER = ["public"];
 const MAX_DATEIEN = 400;
 const MAX_BYTES = 200_000;
 
@@ -190,6 +193,57 @@ export async function laufSyntheticWatchdog({ env = process.env } = {}) {
   };
 }
 
+/** Sammelt die ausgelieferten HTML-Seiten (fuer den Sprach-Waechter). */
+export function sammleSeiten({ wurzel = WURZEL, ordner = SEITEN_ORDNER, maxDateien = MAX_DATEIEN } = {}) {
+  const dateien = [];
+  const besuche = (verzeichnis) => {
+    if (dateien.length >= maxDateien) return;
+    let eintraege;
+    try { eintraege = readdirSync(verzeichnis, { withFileTypes: true }); } catch { return; }
+    for (const e of eintraege) {
+      if (dateien.length >= maxDateien) return;
+      const voll = path.join(verzeichnis, e.name);
+      if (e.isDirectory()) {
+        // assets/ enthaelt gebuendelte Kopien — dieselben Texte doppelt zaehlen
+        // waere kein Fund, sondern Laerm.
+        if (e.name === "node_modules" || e.name === "assets" || e.name.startsWith(".")) continue;
+        besuche(voll);
+      } else if (e.name.endsWith(".html")) {
+        try {
+          if (statSync(voll).size > MAX_BYTES) continue;
+          dateien.push({ path: path.relative(wurzel, voll), content: readFileSync(voll, "utf8") });
+        } catch { /* eine unlesbare Seite stoppt den Lauf nicht */ }
+      }
+    }
+  };
+  for (const o of ordner) besuche(path.join(wurzel, o));
+  return dateien;
+}
+
+/**
+ * Angelina (Nr. 31): findet deutsche Texte, die der Nutzer zu sehen bekommt
+ * und die falsch geschrieben sind (Ersatzschreibung statt Umlaut).
+ *
+ * Der Autopilot ist GRUEN, wenn er gemessen hat — Funde sind ein Befund an der
+ * Oberflaeche, kein Ausfall des Waechters. Genau wie beim Bug-Predictor steht
+ * die Zahl in der Meldung, damit sie niemand uebersieht. Findet er GAR NICHTS
+ * zu pruefen, ist das dagegen ein Ausfall: dann fehlen die Seiten.
+ */
+export function laufSprachQualitaet(seiten) {
+  const bericht = pruefeSpracheAlle(seiten);
+  if (!bericht.geprueft) return { ok: false, meldung: "Keine Seiten gefunden — Sprachpruefung ohne Aussage" };
+  if (!bericht.funde) {
+    return { ok: true, meldung: `${bericht.geprueft} Seiten geprüft, keine falsch geschriebenen Texte gefunden` };
+  }
+  const erster = bericht.berichte[0];
+  const beispiel = erster?.funde?.[0];
+  return {
+    ok: true,
+    meldung: `${bericht.geprueft} Seiten geprüft, ${bericht.funde} Sprachfehler in ${bericht.dateienMitFunden} Datei(en)`
+      + (beispiel ? ` — z.B. "${beispiel.falsch}" statt "${beispiel.richtig}" in ${erster.pfad}` : "")
+  };
+}
+
 /**
  * Werkstatt-Autopilot (Nr. 30), Station 1: sammelt das Backlog aus den echten
  * Quellen — im Takt statt nur auf Abruf.
@@ -262,12 +316,14 @@ export async function laufVoiceRegion({ env = process.env, fetchImpl = fetch } =
  *   mitNetz=false laesst den E2E-Waechter aus — fuer Tests, die ohne Aussenwelt
  *   laufen muessen.
  */
-export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien, mitNetz = true } = {}) {
+export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien, seitenLader = sammleSeiten, mitNetz = true } = {}) {
   // Einmal lesen, zweimal nutzen: beide Repo-Autopiloten sehen denselben Stand.
   let dateien = [];
   try {
     dateien = dateienLader();
   } catch { /* laufBugPredictor meldet dann "kein Quelltext" — ehrlich statt still */ }
+  let seiten = [];
+  try { seiten = seitenLader(); } catch { /* laufSprachQualitaet meldet dann "keine Seiten" */ }
 
   const ergebnisse = [
     await fuehreAus("bug-predictor", () => laufBugPredictor(dateien)),
@@ -292,6 +348,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     await fuehreAus("realtime-voice-pair", () => S.laufVoicePair()),
     await fuehreAus("autonomous-git-bot", () => S.laufGitBot()),
     await fuehreAus("werkstatt-autopilot", () => laufWerkstattSammeln()),
+    await fuehreAus("angelina-autopilot", () => laufSprachQualitaet(seiten)),
     // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
     // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen

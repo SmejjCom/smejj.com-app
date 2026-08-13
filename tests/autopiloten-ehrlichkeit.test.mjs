@@ -72,6 +72,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "realtime-voice-pair",      // Sitzung anlegen und Rahmen verarbeiten
   "autonomous-git-bot",       // muss Secret und eval im Diff finden
   "werkstatt-autopilot",      // Station 1 sammelt im Takt aus der Ampel (in-process)
+  "angelina-autopilot",       // Sprach-Waechter ueber die ausgelieferten Seiten
   "synthetic-user-watchdog"   // ECHTER Durchlauf: Anmeldung, Chat ueber die Bruecke, Speicher mit Ruecklese-Probe
 ]);
 

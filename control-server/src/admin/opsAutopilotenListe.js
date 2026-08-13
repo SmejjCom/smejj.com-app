@@ -613,23 +613,23 @@ export const AUTOPILOTEN = Object.freeze([
   },
   {
     id: "angelina-autopilot",
-    name: "31. Angelina-Autopilot (Satz & Prompt-Synthesizer Engine)",
-    kurz: "Erweiterte Sprach- & Satz-Synthese Engine für flüssiges Deutsch, erweiterte Satzstrukturen und automatisierte Prompt-Optimierung.",
+    name: "31. Angelina-Autopilot (Sprach-Wächter)",
+    kurz: "Findet deutsche Texte auf den ausgelieferten Seiten, die der Nutzer zu sehen bekommt und die falsch geschrieben sind.",
     funktionen: [
-      "Analysiert und synthetisiert komplexe Satzstrukturen und natürliche Sprachmuster.",
-      "Generiert erweiterte Prompt-Varianten für flüssige, hochpräzise Modellausgaben.",
-      "Überwacht und optimiert die sprachliche Qualität und Konsistenz im 24/7-Dauerbetrieb."
+      "Läuft alle 30 Minuten im Autopilot-Läufer und liest die ausgelieferten HTML-Seiten.",
+      "Sucht Ersatzschreibung statt Umlaut in SICHTBAREM Text (zwischen den Tags) — Attribute, Skripte und Pfade bleiben außen vor.",
+      "Nennt Fundzahl und ein Beispiel in der Meldung; findet er keine Seiten, wird er rot.",
+      "EHRLICH: Bis 2026-08-13 gab es zu diesem Autopiloten überhaupt keinen Code — die Registry beschrieb eine Engine, die nie existierte."
     ],
-    trainiert: "Satzbau-Muster, Deutsche Grammatik-Graphen & Prompt-Synthesen",
-    verbessert: "Natürlicher Satzbau & perfekte deutsche Sprachqualität ohne Hölzernheit",
-    neuigkeiten: ["Angelina Sprach-Engine aktiv", "Satz-Synthesizer v1.0 im 24/7-Dauerbetrieb"],
-    ort: "Control Server (Language Engine)",
-    zeitplan: "24/7 Dauerbetrieb (Satz-Synthese)",
-    messung: "geplant",
-    messungHinweis: "Zu diesem Autopiloten existiert kein Modul im Code — bisher nur ein Registry-Eintrag.",
-    erwartetAlleMs: 6 * 60 * 60 * 1000,
-    schonfristMs: 6 * 60 * 60 * 1000,
-    startAnleitung: "Läuft kontinuierlich als Sprach- & Satz-Synthesizer im LLM-Loop.",
-    stopAnleitung: "Über Language-Engine Policy steuerbar."
+    trainiert: "Sichtbare deutsche Oberflächentexte der ausgelieferten Seiten",
+    verbessert: "Schreibfehler in der Oberfläche fallen auf, bevor Nutzer sie sehen (erster Lauf: 19 Funde, u.a. 'Willkommen zurueck' auf der Startseite)",
+    neuigkeiten: ["Seit 2026-08-13 echter Sprach-Wächter statt Registry-Eintrag ohne Modul"],
+    ort: "Control Server (Autopilot-Läufer)",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
   }
 ]);
