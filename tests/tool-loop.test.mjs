@@ -9,7 +9,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AGENT_TOOLS, agentToolsEnabled, runAgentTool, SCHLUSSRUNDE_ANSAGE, streamWithTools, withAgentTools, zuText } from "../control-server/src/llm/toolLoop.js";
+import { AGENT_TOOLS, agentToolsEnabled, runAgentTool, SCHLUSSRUNDE_ANSAGE, streamWithTools, WERKZEUG_VERTRAG, withAgentTools, zuText } from "../control-server/src/llm/toolLoop.js";
 
 // Baut einen Modell-Stream aus fertigen SSE-Ereignissen.
 function stream(events) {
@@ -118,10 +118,13 @@ test("Werkzeugaufruf wird ausgefuehrt und das Ergebnis beantwortet", async () =>
   assert.equal(gesehen.aufrufe[0].function.name, "seite_lesen");
   assert.equal(gesehen.aufrufe[0].function.arguments, '{"url":"https://imild.com/"}', "Bruchstuecke muessen zusammengesetzt werden");
 
+  // Die letzte system-Nachricht ist der Antwort-Vertrag (seit 2026-08-13) — die
+  // Reihenfolge davor ist die eigentliche Zusage: Frage, Werkzeugwunsch, Ergebnis.
   const rollen = gesehen.zweiteNachrichten.map((m) => m.role);
-  assert.deepEqual(rollen, ["user", "assistant", "tool"]);
-  assert.equal(gesehen.zweiteNachrichten[2].content, "HTTP-Status: 200");
-  assert.equal(gesehen.zweiteNachrichten[2].tool_call_id, "call_1");
+  assert.deepEqual(rollen, ["user", "assistant", "tool", "system"]);
+  const werkzeugAntwort = gesehen.zweiteNachrichten.find((m) => m.role === "tool");
+  assert.equal(werkzeugAntwort.content, "HTTP-Status: 200");
+  assert.equal(werkzeugAntwort.tool_call_id, "call_1");
 
   assert.match(res.gesendet(), /Seite ist erreichbar/);
   assert.ok(!res.gesendet().includes("seite_lesen"), "Werkzeugaufrufe duerfen nie im Antworttext landen");
@@ -138,7 +141,9 @@ test("ein fehlgeschlagenes Werkzeug bricht nichts ab", async () => {
     ]) } },
     chain: [], messages: [], res, options: {},
     executeWithFallback: async (_c, nachrichten) => {
-      gemeldet = nachrichten.at(-1).content;
+      // Bewusst ueber die Rolle gesucht statt at(-1): am Ende steht seit
+      // 2026-08-13 der Antwort-Vertrag. Gemeint ist hier das Werkzeugergebnis.
+      gemeldet = nachrichten.find((m) => m.role === "tool").content;
       return { ok: true, response: { body: stream([textEvent("Die Seite war nicht erreichbar."), "data: [DONE]"]) } };
     },
     runTool: async () => { throw new Error("Netz weg"); }
@@ -324,29 +329,63 @@ test("403 mit Bild-Inhaltstyp meldet ebenfalls die Sperre, nicht den Typ", async
 // Inserat, obwohl die Treffer vorlagen. Wer nicht weiss, dass er das letzte
 // Wort hat, kuendigt weiter an.
 
-test("die Schlussrunde bekommt eine Ansage, die Zwischenrunden nicht", async () => {
+function ansagenJeRunde({ hoertAufNach = Infinity } = {}) {
   const gesehen = [];
-  await streamWithTools({
-    result: { response: { body: stream([
-      toolEvent(0, { id: "c1", function: { name: "web_suche", arguments: '{"anfrage":"office castro valley"}' } }),
-      "data: [DONE]"
-    ]) } },
-    chain: [], messages: [{ role: "user", content: "Suche Buero-Angebote" }], res: sammelAntwort(), options: {},
-    executeWithFallback: async (_chain, verlauf) => {
-      gesehen.push(verlauf.filter((n) => n.role === "system").map((n) => n.content));
-      return { ok: true, response: { body: stream([
-        toolEvent(0, { id: `c${gesehen.length + 1}`, function: { name: "web_suche", arguments: '{"anfrage":"noch was"}' } }),
+  return {
+    gesehen,
+    lauf: streamWithTools({
+      result: { response: { body: stream([
+        toolEvent(0, { id: "c1", function: { name: "web_suche", arguments: '{"anfrage":"office castro valley"}' } }),
         "data: [DONE]"
-      ]) } };
-    },
-    runTool: async () => "Suchergebnisse:\n1. Treffer\n   https://a.example/"
-  });
+      ]) } },
+      chain: [], messages: [{ role: "user", content: "Suche Buero-Angebote" }], res: sammelAntwort(), options: {},
+      executeWithFallback: async (_chain, verlauf) => {
+        gesehen.push(verlauf.filter((n) => n.role === "system").map((n) => n.content));
+        // Das Modell hoert irgendwann von selbst auf, Werkzeuge zu rufen — genau
+        // dieser Fall war der gemessene Fehler.
+        const schluss = gesehen.length >= hoertAufNach;
+        return { ok: true, response: { body: stream([
+          schluss
+            ? textEvent("Ich suche jetzt gezielt nach aktuellen Buromiet-Angeboten.")
+            : toolEvent(0, { id: `c${gesehen.length + 1}`, function: { name: "web_suche", arguments: '{"anfrage":"noch was"}' } }),
+          "data: [DONE]"
+        ]) } };
+      },
+      runTool: async () => "Suchergebnisse:\n1. Treffer\n   https://a.example/"
+    })
+  };
+}
 
+test("der Antwort-Vertrag gilt schon ab der ERSTEN Werkzeugrunde", async () => {
+  // Der gemessene Fehler: ein Lauf endet meist NICHT am Rundenlimit, sondern
+  // weil das Modell aufhoert, Werkzeuge zu rufen. Eine Ansage nur vor der
+  // letzten Runde kam dann nie an.
+  const { gesehen, lauf } = ansagenJeRunde({ hoertAufNach: 1 });
+  await lauf;
+  assert.equal(gesehen.length, 1, "das Modell hoerte nach einer Runde von selbst auf");
+  assert.deepEqual(gesehen[0], [WERKZEUG_VERTRAG], "der Vertrag muss trotzdem angekommen sein");
+});
+
+test("die Schlussrunde bekommt zusaetzlich die Schlussansage", async () => {
+  const { gesehen, lauf } = ansagenJeRunde();
+  await lauf;
   assert.equal(gesehen.length, 3, "drei Modellaufrufe, einer je Runde");
-  assert.deepEqual(gesehen[0], [], "die erste Zwischenrunde bekommt keine Ansage");
-  assert.deepEqual(gesehen[1], [], "die zweite auch nicht");
-  assert.equal(gesehen[2].length, 1, "nur die Schlussrunde bekommt sie");
-  assert.equal(gesehen[2][0], SCHLUSSRUNDE_ANSAGE);
+  assert.deepEqual(gesehen[0], [WERKZEUG_VERTRAG], "ab der ersten Runde gilt der Vertrag");
+  assert.deepEqual(gesehen[1], [WERKZEUG_VERTRAG], "die Zwischenrunde bekommt NUR den Vertrag");
+  assert.deepEqual(gesehen[2], [WERKZEUG_VERTRAG, SCHLUSSRUNDE_ANSAGE], "erst zum Schluss beides");
+  // Der Vertrag darf sich nicht wiederholen — sonst waechst der Verlauf je Runde.
+  assert.equal(gesehen[2].filter((t) => t === WERKZEUG_VERTRAG).length, 1);
+});
+
+test("der Vertrag laesst weiterrecherchieren, die Schlussansage nicht", () => {
+  assert.match(WERKZEUG_VERTRAG, /darfst weitere Werkzeuge aufrufen/);
+  assert.ok(!/LETZTE RUNDE/.test(WERKZEUG_VERTRAG), "sonst hoert das Modell schon in Runde eins auf");
+  assert.match(SCHLUSSRUNDE_ANSAGE, /LETZTE RUNDE/);
+  // Beide tragen denselben Vertragstext — eine Quelle, keine zwei Wahrheiten.
+  for (const pflicht of [/Tabelle/, /im Inserat nicht angegeben/, /ich lese jetzt/]) {
+    assert.match(WERKZEUG_VERTRAG, pflicht);
+    assert.match(SCHLUSSRUNDE_ANSAGE, pflicht);
+  }
 });
 
 test("die Ansage verbietet das Ankuendigen und verlangt Belege", () => {
