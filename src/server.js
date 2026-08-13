@@ -116,6 +116,7 @@ const {
 } = createWerkstatt({ projectRoot: config.projectRoot, forbiddenSegments });
 const publicModelRateGate = createPublicModelRateGate(process.env);
 const sessionHandoffStore = createSessionHandoffStore();
+const chatSyncRoutes = createChatSyncRoutes({ env: process.env, readSession, json, readJson });
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
