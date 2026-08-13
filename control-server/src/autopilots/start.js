@@ -18,24 +18,32 @@ import { starteModellEinkaeufer } from "./modellEinkaeufer.js";
 import { interneMeldung } from "../admin/opsAutopiloten.js";
 import { sendAuthMail } from "../auth/mailer.js";
 
-/** Startet alle Autopilot-Hintergrunddienste. Wirft nie; unref ueberall. */
+/** Startet alle Autopilot-Hintergrunddienste. Wirft nie; unref ueberall.
+ *
+ * JEDER Aufruf einzeln abgesichert (2026-08-13, nach dem 502-Vorfall):
+ * Die Ueberwachung existiert fuer die App — nicht umgekehrt. Ein Fehler in
+ * einem Waechter darf den HTTP-Server niemals am Booten hindern; er wird
+ * protokolliert und der Rest startet trotzdem.
+ */
 export function starteAutopiloten({ env = process.env } = {}) {
+  const sicher = (name, fn) => {
+    try { fn(); } catch (fehler) {
+      console.error(`[autopiloten] ${name} startete NICHT: ${String(fehler?.message || fehler).slice(0, 160)}`);
+    }
+  };
   // Zustellprotokoll: 90 Tage aufbewahren (Betreiber-Freigabe 2026-07-29).
-  starteMailLogAufraeumen({ env });
+  sicher("mailLogAufraeumen", () => starteMailLogAufraeumen({ env }));
   // Eigenmeldung der Sonden: der laufende Container bezeugt sich selbst.
-  starteSelbstmessung();
+  sicher("selbstmessung", () => starteSelbstmessung());
   // Neustart-Festigkeit: abgelegte Herzschlaege zurueckholen, dann Alarm-Wache.
-  ladeHerzschlaege().catch(() => {});
-  starteAlarmWache();
+  sicher("herzschlaege", () => { ladeHerzschlaege().catch(() => {}); });
+  sicher("alarmWache", () => starteAlarmWache());
   // Bruecken-Waechter wird ABGEFRAGT — er hat eine oeffentliche Adresse.
-  starteWaechterAbfrage();
+  sicher("waechterAbfrage", () => starteWaechterAbfrage());
   // Wochenbericht: montags eine Mail mit der Lage der Woche.
-  starteWochenbericht();
+  sicher("wochenbericht", () => starteWochenbericht());
   // Der Taktgeber (Nr. 32) betreibt die Module alle 30 Minuten mit echten
   // Aufgaben; die Selbstheilung (Nr. 33) belebt Rotes hoechstens dreimal
   // wieder und eskaliert dann genau einmal per Mail.
-  starteAutopilotLaeufer({ sendeAlarm: baueEskalationsVersand(sendAuthMail, env) });
-  // Der Modell-Einkäufer (Nr. 34) misst woechentlich alle aktiven Modelle
-  // und legt die Empfehlung in die Ampel — umschalten bleibt Betreiber-Sache.
-  starteModellEinkaeufer({ env, melde: interneMeldung });
+  sicher("autopilotLaeufer", () => starteAutopilotLaeufer({ sendeAlarm: baueEskalationsVersand(sendAuthMail, env) }));
 }
