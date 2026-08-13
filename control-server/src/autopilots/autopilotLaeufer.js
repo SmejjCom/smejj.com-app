@@ -34,6 +34,7 @@ import { inspectResponseHealth, detectRepetitiveLoop } from "./selfHealingAutopi
 // Die uebrigen Selbsttests liegen in einer eigenen Datei (800-Zeilen-Regel).
 import * as S from "./autopilotSelbsttests.js";
 import { runFullSyntheticE2ECycle } from "./syntheticUserWatchdogAutopilot.js";
+import { planeHeilung, fuehreHeilungAus } from "./selbstheilung.js";
 
 // Der Container hat seinen eigenen Quelltext an Bord (Dockerfile.smejj-control
 // kopiert src/ und control-server/). Genau den scannen die beiden
@@ -48,6 +49,21 @@ const SCAN_ORDNER = ["control-server/src", "src"];
 const SEITEN_ORDNER = ["public"];
 const MAX_DATEIEN = 400;
 const MAX_BYTES = 200_000;
+
+// Wen betreibt dieser Laeufer? Genau diese lassen sich hier auch wiederbeleben.
+export const IM_LAEUFER_BETRIEBEN = Object.freeze([
+  "bug-predictor", "knowledge-graph", "code-interpreter", "smart-router", "self-healing",
+  "deep-research", "memory-sync", "multimodal-engine", "task-orchestrator", "self-improvement",
+  "model-lifecycle", "user-feedback-flywheel", "process-reward", "knowledge-distiller",
+  "evolutionary-mutation", "realtime-internet-harvester", "multi-file-repo-architect",
+  "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot",
+  "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check"
+]);
+
+// Zaehler der Selbstheilung: id -> {versuche, letzterMs, eskaliert}. Lebt im
+// Prozess; ein Neustart setzt ihn zurueck — richtig so, denn ein Neustart ist
+// selbst schon der groesste denkbare Heilungsversuch.
+const heilungsZustand = new Map();
 
 /** Sammelt die echten .js-Dateien dieses Containers. */
 export function sammleQuelldateien({ wurzel = WURZEL, ordner = SCAN_ORDNER, maxDateien = MAX_DATEIEN } = {}) {
@@ -362,7 +378,63 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
   for (const e of ergebnisse) {
     melde(e.id, { status: e.ok ? "ok" : "fehler", meldung: e.meldung, dauerMs: e.dauerMs });
   }
+
+  // TOTMANNSCHALTER FUER DEN TAKTGEBER (2026-08-13).
+  //
+  // Wer bewacht den Waechter? Bleibt dieser Laeufer stehen, ohne dass der
+  // Server abstuerzt, wuerden alle von ihm betriebenen Ampeln nacheinander
+  // rot — ohne erkennbaren gemeinsamen Grund, und niemand kaeme auf die
+  // Idee, den Motor zu verdaechtigen. Diese eine Meldung macht den
+  // Stillstand sofort sichtbar: bleibt SIE aus, steht der Taktgeber.
+  const gelungen = ergebnisse.filter((e) => e.ok).length;
+  const gesamtMs = ergebnisse.reduce((summe, e) => summe + (e.dauerMs || 0), 0);
+  melde("autopilot-laeufer", {
+    // Ein Durchgang, in dem KEIN einziger Lauf gelingt, ist selbst ein
+    // Ausfall — dann stimmt etwas Grundsaetzliches, nicht 24 Einzelheiten.
+    status: gelungen > 0 ? "ok" : "fehler",
+    meldung: gelungen > 0
+      ? `Durchgang beendet: ${gelungen}/${ergebnisse.length} Läufe gelungen (${gesamtMs} ms)`
+      : `Durchgang OHNE einen einzigen gelungenen Lauf (${ergebnisse.length} versucht) — der Motor läuft, aber nichts funktioniert`,
+    dauerMs: gesamtMs
+  });
+
   return ergebnisse;
+}
+
+/**
+ * Die Wiederbelebungswege — bewusst knapp und ehrlich.
+ *
+ * Wer hier fehlt, ist von hier aus NICHT wiederbelebbar; die Selbstheilung
+ * sagt das dann klar, statt einen Versuch vorzutäuschen. Konkret betrifft
+ * das die Autopiloten im Dienst smejj-autopilot-jobs: er ist von außen nicht
+ * erreichbar (404 auf allen Pfaden), sein Start-Weg also nicht aufrufbar.
+ * Das ist ein echter Mangel — aber einer, den der Betreiber im Portal lösen
+ * muss, nicht einer, den ein Heiler wegzaubern kann.
+ */
+export function baueHeiler({ melde = interneMeldung } = {}) {
+  // Die im Control-Server betriebenen Autopiloten heilt derselbe Griff:
+  // ihren Lauf sofort wiederholen, statt bis zum nächsten Takt zu warten.
+  const sofortNochmal = async () => {
+    await laufeAlle({ melde, mitNetz: true });
+    return true;
+  };
+  const heiler = {};
+  for (const id of IM_LAEUFER_BETRIEBEN) heiler[id] = sofortNochmal;
+  return heiler;
+}
+
+/** Prüft die Ampel und heilt, was rot ist — mit Bremse und Eskalation. */
+export async function heileWasRotIst({
+  uebersicht = autopilotUebersicht,
+  zustand = heilungsZustand,
+  melde = interneMeldung,
+  sendeAlarm = null,
+  jetztMs = Date.now(),
+  log = () => {}
+} = {}) {
+  const daten = uebersicht({ jetztMs });
+  const plan = planeHeilung({ autopiloten: daten.autopiloten || [], zustand, jetztMs });
+  return fuehreHeilungAus({ plan, heiler: baueHeiler({ melde }), melde, sendeAlarm, log });
 }
 
 /**
@@ -371,8 +443,15 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
  * (einige hundert Dateien) den Server nicht beschaeftigt.
  * `unref()` haelt den Prozess nicht wach.
  */
-export function starteAutopilotLaeufer({ intervallMs = 30 * 60 * 1000 } = {}) {
-  const tick = () => { laufeAlle().catch(() => {}); };
+export function starteAutopilotLaeufer({ intervallMs = 30 * 60 * 1000, sendeAlarm = null } = {}) {
+  const tick = () => {
+    // Erst arbeiten, dann nachsehen, ob etwas liegen geblieben ist. Die
+    // Reihenfolge ist Absicht: Der Heiler soll die FRISCHEN Ergebnisse
+    // bewerten, nicht die von vor 30 Minuten.
+    laufeAlle()
+      .then(() => heileWasRotIst({ sendeAlarm, log: console.log }))
+      .catch(() => {});
+  };
   tick();
   const zeitgeber = setInterval(tick, intervallMs);
   if (typeof zeitgeber.unref === "function") zeitgeber.unref();

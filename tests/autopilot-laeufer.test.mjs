@@ -25,8 +25,9 @@ test("Der Laeufer betreibt alle 23 Selbsttest-Autopiloten und meldet jeden einze
   const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; }, mitNetz: false });
 
   assert.equal(ergebnisse.length, 23, "23 Autopiloten laufen ohne Netz im Control-Server");
-  assert.equal(gemeldet.length, 23, "jeder bekommt genau einen Herzschlag");
-  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 23, "keine Kennung doppelt");
+  assert.equal(gemeldet.length, 24, "23 Laeufe + der Taktgeber, der sich selbst bezeugt");
+  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 24, "keine Kennung doppelt");
+  assert.ok(gemeldet.some((g) => g.id === "autopilot-laeufer"), "der Taktgeber bezeugt sich selbst");
 
   // Jede Meldung muss ein Ergebnis tragen, keinen Pauschaltext.
   for (const g of gemeldet) {

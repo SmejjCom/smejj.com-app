@@ -6,6 +6,27 @@ const STUNDE_MS = 60 * 60 * 1000;
 
 export const AUTOPILOTEN = Object.freeze([
   {
+    id: "autopilot-laeufer",
+    name: "32. Autopilot-Läufer (Taktgeber)",
+    kurz: "Der Motor, der die 24 Autopiloten im Control-Server alle 30 Minuten antreibt — und sich dabei selbst bezeugt.",
+    funktionen: [
+      "Ruft jeden Durchgang alle im Control-Server betriebenen Autopiloten mit echten Eingaben auf.",
+      "Meldet nach JEDEM Durchgang, wie viele Läufe gelungen sind und wie lange es gedauert hat.",
+      "WER BEWACHT DEN WÄCHTER: Bleibt der Taktgeber stehen, ohne dass der Server abstürzt, würden sonst alle 24 Ampeln langsam und ohne erkennbaren Grund rot. Diese eine Ampel zeigt stattdessen sofort die wahre Ursache.",
+      "Erwartet alle 30 Minuten einen Durchgang; bleibt er länger als eine Stunde aus, ist der Motor stehengeblieben."
+    ],
+    trainiert: "Laufzeiten und Erfolgsquoten der eigenen Durchgänge",
+    verbessert: "Ein stiller Stillstand des Taktgebers wird sichtbar, statt sich als 24 unerklärliche Ausfälle zu tarnen",
+    neuigkeiten: ["Totmannschalter für den Taktgeber seit 2026-08-13"],
+    ort: "Control Server (src/server.js → starteAutopilotLaeufer)",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server. Neustart des Dienstes startet auch den Taktgeber.",
+    stopAnleitung: "Nur durch Anhalten des Control-Servers."
+  },
+  {
     id: "qualitaetsmessung",
     name: "01. Qualitätsmessung",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",

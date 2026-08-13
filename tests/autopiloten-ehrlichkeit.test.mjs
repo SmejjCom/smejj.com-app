@@ -73,6 +73,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "autonomous-git-bot",       // muss Secret und eval im Diff finden
   "werkstatt-autopilot",      // Station 1 sammelt im Takt aus der Ampel (in-process)
   "angelina-autopilot",       // Sprach-Waechter ueber die ausgelieferten Seiten
+  "autopilot-laeufer",        // Totmannschalter: der Taktgeber bezeugt jeden Durchgang selbst
   "synthetic-user-watchdog"   // ECHTER Durchlauf: Anmeldung, Chat ueber die Bruecke, Speicher mit Ruecklese-Probe
 ]);
 

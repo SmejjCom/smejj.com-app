@@ -53,7 +53,7 @@ import { handleTrainingConsentRoute } from "../control-server/src/routes/trainin
 import { signGoogleAuthState, verifyGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
 import { createGoogleAuthHandlers } from "./auth/googleAuthRoutes.js";
 import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
-import { mailerConfig } from "../control-server/src/auth/mailer.js";
+import { mailerConfig, sendAuthMail } from "../control-server/src/auth/mailer.js";
 import { starteMailLogAufraeumen } from "../control-server/src/auth/mailLogJanitor.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
 import { sessionRegistryEnabled, newSessionId, registerSession, isSessionActive, revokeSession } from "../control-server/src/auth/sessionRegistry.js";
@@ -280,7 +280,28 @@ starteWochenbericht();
 // Aufgabe mit feststehender Antwort (bug-predictor scannt den echten Quelltext
 // dieses Containers, live-arena rechnet ELO, git-bot muss ein Secret finden)
 // und meldet das ECHTE Ergebnis. Wer seine Aufgabe falsch loest, wird rot.
-starteAutopilotLaeufer();
+// SELBSTHEILUNG MIT BREMSE (Betreiber-Wunsch 2026-08-13: "wenn einer ausgeht,
+// soll er sich automatisch wieder starten"): Nach jedem Durchgang sieht der
+// Laeufer nach, was rot ist, und versucht es hoechstens dreimal mit wachsendem
+// Abstand wiederzubeleben. Danach ruft er einen Menschen — endloses Haemmern
+// gegen einen Dienst am Boden waere schlimmer als gar kein Heiler.
+starteAutopilotLaeufer({
+  sendeAlarm: async ({ id, name, grund }) => {
+    const empfaenger = String(process.env.SMEJJ_ADMIN_OWNER_EMAILS || "").split(",")[0].trim();
+    if (!empfaenger) return;
+    await sendAuthMail({
+      to: empfaenger,
+      subject: `smejj.com Autopilot gibt auf: ${name || id}`,
+      text: `Der Autopilot "${name || id}" liess sich nicht wiederbeleben.\n\n`
+        + `${grund}\n\n`
+        + "Die automatischen Versuche sind eingestellt, damit nicht endlos gegen einen "
+        + "ausgefallenen Dienst gehaemmert wird. Sobald er von selbst wieder gruen wird, "
+        + "beginnt die Selbstheilung wieder bei null.\n\n"
+        + "Ampel: https://smejj.com/admin/autopiloten/",
+      art: "autopilot-eskalation"
+    }, process.env);
+  }
+});
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {
