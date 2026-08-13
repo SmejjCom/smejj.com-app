@@ -171,16 +171,14 @@ export function withAgentTools(options, env = process.env) {
  * schwerer als eine Zeile im urspruenglichen Systemprompt, die zwanzig
  * Werkzeugergebnisse weit zurueckliegt.
  */
-export const SCHLUSSRUNDE_ANSAGE = [
-  "LETZTE RUNDE. Du hast keine Werkzeuge mehr und bekommst keine weitere Gelegenheit.",
-  "",
-  "Antworte JETZT abschliessend mit allem, was in den bisherigen Werkzeugergebnissen steht.",
-  "",
+/** Der gemeinsame Kern beider Ansagen — einmal formuliert, nie auseinandergelaufen. */
+const ANTWORT_VERTRAG = [
   "Verboten: ankuendigen, was du noch tun wirst (\"ich lese jetzt\", \"ich suche noch\",",
-  "\"lassen Sie mich\"). Solche Saetze sind fuer den Nutzer wertlos — er sieht nur sie",
-  "und bekommt nie das Ergebnis.",
+  "\"lassen Sie mich\"). Der Nutzer sieht deine Arbeitsschritte ohnehin in einer eigenen",
+  "Liste. Ein Ankuendigungssatz ist fuer ihn wertlos — er bekommt dann nur den Satz",
+  "und nie das Ergebnis.",
   "",
-  "Pflicht:",
+  "Pflicht, sobald du Text fuer den Nutzer schreibst:",
   "- Nenne jeden brauchbaren Treffer einzeln, mit vollstaendiger anklickbarer Adresse.",
   "- Sind es mehrere gleichartige Treffer, stelle sie als Tabelle dar, mit genau den",
   "  Angaben, nach denen der Nutzer gefragt hat — eine Spalte je Angabe.",
@@ -189,6 +187,37 @@ export const SCHLUSSRUNDE_ANSAGE = [
   "- Konntest du eine Quelle nicht auslesen, sage das in einem Satz und nenne die",
   "  Adresse trotzdem — der Nutzer kann sie selbst oeffnen.",
   "- Schliesse mit einer kurzen Empfehlung, welcher Treffer am besten passt und warum."
+].join("\n");
+
+/**
+ * Gilt ab der ersten Werkzeugrunde, fuer JEDE weitere Runde.
+ *
+ * GEMESSEN 2026-08-13, zweiter Live-Lauf: Eine Ansage nur vor der letzten Runde
+ * kam zu spaet. Ein Lauf endet meist nicht am Rundenlimit, sondern weil das
+ * Modell aufhoert, Werkzeuge zu rufen — dann ist der Text DIESER Runde schon
+ * die Antwort. Sie lautete "Ich suche jetzt gezielt nach aktuellen
+ * Buromiet-Angeboten in Castro Valley und San Lorenzo.", 91 Zeichen, nach zwei
+ * Suchen und drei gelesenen Seiten.
+ *
+ * Der Vertrag sagt deshalb nicht "antworte jetzt" — das Modell darf
+ * weiterrecherchieren. Er sagt, WIE eine Antwort auszusehen hat, sobald es eine
+ * schreibt.
+ */
+export const WERKZEUG_VERTRAG = [
+  "Du darfst weitere Werkzeuge aufrufen, solange dir etwas fehlt.",
+  "",
+  "Aber schreibe keinen Text fuer den Nutzer, der nur ankuendigt. Jeder Text, den du",
+  "schreibst, gilt als deine Antwort — es kann sein, dass danach keine Runde mehr kommt.",
+  "",
+  ANTWORT_VERTRAG
+].join("\n");
+
+export const SCHLUSSRUNDE_ANSAGE = [
+  "LETZTE RUNDE. Du hast keine Werkzeuge mehr und bekommst keine weitere Gelegenheit.",
+  "",
+  "Antworte JETZT abschliessend mit allem, was in den bisherigen Werkzeugergebnissen steht.",
+  "",
+  ANTWORT_VERTRAG
 ].join("\n");
 
 /**
@@ -227,14 +256,22 @@ export async function streamWithTools({ result, chain, messages, res, options, e
       verlauf.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: String(ergebnis).slice(0, MAX_PAGE_CHARS + 500) });
     }
 
+    // Der Vertrag gilt ab der ersten Werkzeugrunde — NICHT erst am Ende.
+    //
+    // GEMESSEN 2026-08-13, zweiter Live-Lauf: Eine Ansage nur vor der letzten
+    // Runde griff im haeufigsten Fall gar nicht. Ein Lauf endet naemlich meist
+    // NICHT am Rundenlimit, sondern weil das Modell von sich aus aufhoert,
+    // Werkzeuge zu rufen — dann greift oben `if (!toolCalls.length) return`,
+    // und der Text dieser Runde IST bereits die Antwort. Die Ansage kam zu
+    // spaet: die Antwort lautete erneut "Ich suche jetzt gezielt nach aktuellen
+    // Buromiet-Angeboten", 91 Zeichen, nach zwei Suchen und drei Seiten.
+    //
+    // Deshalb zwei Nachrichten mit verschiedener Aufgabe: der Vertrag sagt, WIE
+    // eine Antwort aussieht, sobald das Modell eine schreibt (jede Runde). Die
+    // Schlussansage sagt zusaetzlich, dass es JETZT keine Gelegenheit mehr gibt.
+    if (runde === 0) verlauf.push({ role: "system", content: WERKZEUG_VERTRAG });
     // Letzte Runde ohne Werkzeuge: erzwingt eine Antwort statt einer Schleife.
     const letzte = runde === MAX_ROUNDS - 1;
-    // ... aber "keine Werkzeuge mehr" allein genuegt nicht. GEMESSEN am
-    // 2026-08-13 live: Die werkzeugfreie Schlussrunde schrieb "Ich habe
-    // konkrete Craigslist-Inserate gefunden, die ich jetzt einzeln auslese" —
-    // 148 Zeichen Ankuendigung, kein einziges Inserat, obwohl das Modell die
-    // Treffer bereits hatte. Es KONNTE nicht mehr suchen und wusste es nicht.
-    // Wer nicht weiss, dass er das letzte Wort hat, kuendigt weiter an.
     if (letzte) verlauf.push({ role: "system", content: SCHLUSSRUNDE_ANSAGE });
     const naechste = await executeWithFallback(chain, verlauf, letzte ? { ...options, tools: undefined } : options);
     if (!naechste?.ok || !naechste.response?.body) {
