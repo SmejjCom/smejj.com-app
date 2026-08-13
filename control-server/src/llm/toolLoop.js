@@ -153,6 +153,45 @@ export function withAgentTools(options, env = process.env) {
 }
 
 /**
+ * Die Ansage an die Schlussrunde.
+ *
+ * GEMESSEN 2026-08-13 an einer Buero-Suche, live: Die werkzeugfreie
+ * Schlussrunde antwortete "Ich habe konkrete Craigslist-Inserate gefunden, die
+ * ich jetzt einzeln auslese, um Ihnen die Details zu geben." — eine
+ * Ankuendigung von 148 Zeichen, kein einziges Inserat. Das Modell hatte die
+ * Treffer bereits vorliegen; es hielt die Runde nur fuer eine weitere
+ * Zwischenrunde.
+ *
+ * ChatGPT lieferte fuer dieselbe Frage sechs Inserate als Tabelle, mit
+ * Exposé-Link je Zeile und offen benannten Luecken ("SqFt im Inserat nicht
+ * angegeben"). Genau das steht hier als Vertrag — nicht als Bitte, sondern als
+ * Verbot der Ankuendigung.
+ *
+ * Bewusst als eigene system-Nachricht am ENDE des Verlaufs: dort wiegt sie
+ * schwerer als eine Zeile im urspruenglichen Systemprompt, die zwanzig
+ * Werkzeugergebnisse weit zurueckliegt.
+ */
+export const SCHLUSSRUNDE_ANSAGE = [
+  "LETZTE RUNDE. Du hast keine Werkzeuge mehr und bekommst keine weitere Gelegenheit.",
+  "",
+  "Antworte JETZT abschliessend mit allem, was in den bisherigen Werkzeugergebnissen steht.",
+  "",
+  "Verboten: ankuendigen, was du noch tun wirst (\"ich lese jetzt\", \"ich suche noch\",",
+  "\"lassen Sie mich\"). Solche Saetze sind fuer den Nutzer wertlos — er sieht nur sie",
+  "und bekommt nie das Ergebnis.",
+  "",
+  "Pflicht:",
+  "- Nenne jeden brauchbaren Treffer einzeln, mit vollstaendiger anklickbarer Adresse.",
+  "- Sind es mehrere gleichartige Treffer, stelle sie als Tabelle dar, mit genau den",
+  "  Angaben, nach denen der Nutzer gefragt hat — eine Spalte je Angabe.",
+  "- Fehlt eine Angabe in den Ergebnissen, schreibe \"im Inserat nicht angegeben\".",
+  "  Eine offene Luecke ist richtig; eine erfundene Zahl ist ein Fehler.",
+  "- Konntest du eine Quelle nicht auslesen, sage das in einem Satz und nenne die",
+  "  Adresse trotzdem — der Nutzer kann sie selbst oeffnen.",
+  "- Schliesse mit einer kurzen Empfehlung, welcher Treffer am besten passt und warum."
+].join("\n");
+
+/**
  * Streamt die Antwort und fuehrt dabei Werkzeugaufrufe des Modells aus.
  * @param {object} args
  * @param {object} args.result Erste Antwort aus executeWithFallback.
@@ -190,6 +229,13 @@ export async function streamWithTools({ result, chain, messages, res, options, e
 
     // Letzte Runde ohne Werkzeuge: erzwingt eine Antwort statt einer Schleife.
     const letzte = runde === MAX_ROUNDS - 1;
+    // ... aber "keine Werkzeuge mehr" allein genuegt nicht. GEMESSEN am
+    // 2026-08-13 live: Die werkzeugfreie Schlussrunde schrieb "Ich habe
+    // konkrete Craigslist-Inserate gefunden, die ich jetzt einzeln auslese" —
+    // 148 Zeichen Ankuendigung, kein einziges Inserat, obwohl das Modell die
+    // Treffer bereits hatte. Es KONNTE nicht mehr suchen und wusste es nicht.
+    // Wer nicht weiss, dass er das letzte Wort hat, kuendigt weiter an.
+    if (letzte) verlauf.push({ role: "system", content: SCHLUSSRUNDE_ANSAGE });
     const naechste = await executeWithFallback(chain, verlauf, letzte ? { ...options, tools: undefined } : options);
     if (!naechste?.ok || !naechste.response?.body) {
       res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "\n\nDas Werkzeugergebnis konnte nicht ausgewertet werden." } }] })}\n\n`);
