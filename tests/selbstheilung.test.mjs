@@ -132,3 +132,21 @@ test("Eskalation faerbt die Heiler-Ampel rot", async () => {
   assert.equal(gemeldet.get("selbstheilung").status, "fehler",
     "wenn der Heiler aufgibt, darf seine eigene Ampel nicht gruen bleiben");
 });
+
+test("Der Heiler hat einen Registry-Eintrag — sonst meldet er ins Leere", async () => {
+  // Genau das war am 2026-08-13 kurz kaputt: Der Heiler bezeugte sich selbst
+  // unter der Kennung "selbstheilung", die es in der Registry nicht gab.
+  // interneMeldung() nimmt unbekannte Kennungen nicht an (fail-closed) — die
+  // Selbstmeldung verschwand also spurlos. Ein Waechter, dessen eigene
+  // Meldung ins Leere geht, ist unsichtbar, wenn er ausfaellt.
+  const { AUTOPILOTEN } = await import("../control-server/src/admin/opsAutopilotenListe.js");
+  const { interneMeldung, _herzschlaegeZuruecksetzen } = await import("../control-server/src/admin/opsAutopiloten.js");
+
+  for (const id of ["selbstheilung", "autopilot-laeufer"]) {
+    assert.ok(AUTOPILOTEN.some((a) => a.id === id), `${id} fehlt in der Registry`);
+    _herzschlaegeZuruecksetzen();
+    assert.equal(interneMeldung(id, { status: "ok", meldung: "Probe" }), true,
+      `${id}: interneMeldung nimmt die Kennung nicht an — die Selbstmeldung ginge verloren`);
+  }
+  _herzschlaegeZuruecksetzen();
+});

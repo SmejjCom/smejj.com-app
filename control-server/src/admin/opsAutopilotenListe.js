@@ -27,6 +27,28 @@ export const AUTOPILOTEN = Object.freeze([
     stopAnleitung: "Nur durch Anhalten des Control-Servers."
   },
   {
+    id: "selbstheilung",
+    name: "33. Selbstheilung (Wiederbelebung mit Bremse)",
+    kurz: "Belebt wieder, was rot wird — höchstens dreimal, dann ruft sie einen Menschen.",
+    funktionen: [
+      "Prüft nach jedem Durchgang des Taktgebers die frische Ampel.",
+      "Versucht rote Autopiloten wiederzubeleben: sofort, nach 5 Minuten, nach 15 Minuten.",
+      "DIE BREMSE IST DER ZWECK: Nach drei erfolglosen Versuchen genau EINE Mail an den Betreiber, dann Ruhe. Endloses Hämmern gegen einen ausgefallenen Dienst verbrennt Kontingent und verdeckt die Ursache.",
+      "Der Zähler fällt erst zurück, wenn ein Autopilot WIRKLICH wieder grün ist — nicht schon, wenn ein Versuch startete.",
+      "Wer keinen erreichbaren Start-Weg hat, wird sofort ehrlich eskaliert statt einen Versuch vorzutäuschen."
+    ],
+    trainiert: "Ausfallmuster und Erfolgsquoten der eigenen Wiederbelebungsversuche",
+    verbessert: "Ein Ausfall heilt sich meist von selbst — und wenn nicht, erfährt es der Betreiber genau einmal",
+    neuigkeiten: ["Selbstheilung mit Backoff seit 2026-08-13"],
+    ort: "Control Server (Autopilot-Läufer, nach jedem Durchgang)",
+    zeitplan: "alle 30 Minuten (nach dem Durchgang des Taktgebers)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Nur durch Anhalten des Control-Servers."
+  },
+  {
     id: "qualitaetsmessung",
     name: "01. Qualitätsmessung",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",
