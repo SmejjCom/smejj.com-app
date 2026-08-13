@@ -1,0 +1,20 @@
+FROM mcr.microsoft.com/playwright:v1.45.3-jammy
+
+WORKDIR /app
+COPY package.json /app/package.json
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --omit=dev --no-audit --no-fund playwright@1.45.3
+COPY workers/remote-browser/worker.js /app/remote-browser/worker.js
+COPY workers/remote-browser/session-engine.js /app/remote-browser/session-engine.js
+COPY workers/smejj-worker /app/smejj-worker
+
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV SMEJJ_HOST=0.0.0.0
+
+EXPOSE 8080
+CMD ["node", "/app/remote-browser/worker.js"]
+
+# Hinweis (2026-08-13, B1-Reparatur): Diese Datei ist die Wurzel-Kopie von
+# workers/remote-browser/Dockerfile im Zeabur-Namensschema Dockerfile.<dienst>.
+# Der fruehere Dienst zog ein nicht existierendes Registry-Abbild ("Image Pull
+# Failed"); seit dieser Datei baut Zeabur direkt aus GitHub.
