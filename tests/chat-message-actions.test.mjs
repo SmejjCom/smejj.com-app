@@ -621,7 +621,13 @@ test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
   assert.match(store, /createdAt: String\(meta\.createdAt \|\| ""\)/);
   assert.match(store, /seedMeta\(node, \{/, "beim Wiederherstellen zurueckgeben");
   assert.match(store, /export async function createChatFrom/, "Abzweigen legt einen eigenen Chat an");
-  assert.ok(!/store\.delete/.test(store.split("export async function createChatFrom")[1] || ""), "Abzweigen loescht nichts");
+  // Nur die FUNKTION selbst pruefen (bis zum naechsten export), nicht den Rest
+  // der Datei: seit dem Grabstein-Loeschen (a848bab) steht weiter unten ein
+  // legitimes store.delete in importChat — die alte Bis-zum-Dateiende-Pruefung
+  // schlug dadurch falsch an, obwohl Abzweigen weiterhin nichts loescht.
+  const createChatFromRumpf = (store.split("export async function createChatFrom")[1] || "").split(/\nexport /)[0];
+  assert.ok(createChatFromRumpf.length > 0, "createChatFrom hat einen Rumpf");
+  assert.ok(!/store\.delete/.test(createChatFromRumpf), "Abzweigen loescht nichts");
 });
 
 test("Quellen kommen aus echtem Grounding, nicht aus Raten", () => {
