@@ -56,7 +56,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260813-v134-faehigkeiten-ehrlich";
+const BRIDGE_VERSION = "20260813-v135-strom-ohne-schere";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -310,17 +310,32 @@ function hardenMessages(messages) {
 
 async function streamViaControl(res, route, body) {
   if (!CONTROL_ROUTER_ENABLED || !CONTROL_ORIGIN) return false;
+  // Das Zeitbudget gilt NUR bis zu den Antwort-Kopfzeilen — danach darf der
+  // Strom so lange laufen, wie der Control Server sendet.
+  //
+  // GEMESSEN 2026-08-13 an der Buero-Suche: AbortSignal.timeout deckelte die
+  // GESAMTE Verbindung. Ein Agenten-Lauf braucht aber Werkzeugrunden (Suchen,
+  // Seiten lesen) PLUS die Schlussantwort — zusammen leicht ueber 60 s. Der
+  // Abbruch traf dann mitten in den Satz ("… für ein echtes 2-Zimmer-Büro b"),
+  // und zwar umso sicherer, je BESSER die Antwort war (drei Tabellen brauchen
+  // laenger als eine Ausrede). Der Klient (fetch-retry.js) und der modelRouter
+  // des Control Servers arbeiten laengst nach derselben Regel: Budget bis zum
+  // ersten Byte, dann freies Streaming.
+  const controller = new AbortController();
+  const wecker = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let upstream;
   try {
     upstream = await fetch(`${CONTROL_ORIGIN}${route}`, {
       method: "POST",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: controller.signal,
       headers: { "Content-Type": "application/json", Accept: "text/event-stream", Origin: "https://smejj.com" },
       body: JSON.stringify(body || {})
     });
   } catch {
+    clearTimeout(wecker);
     return false;
   }
+  clearTimeout(wecker);
   if (!upstream.ok || !upstream.body) {
     if (upstream.status >= 500) return false;
     const detail = await upstream.text().catch(() => "");
