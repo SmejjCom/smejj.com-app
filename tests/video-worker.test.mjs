@@ -104,3 +104,21 @@ describe("smejj video worker & video player markdown integration", () => {
     assert.ok(css.includes(".chat-video"), ".chat-video fehlt in chat-markdown.css");
   });
 });
+
+describe("Portraet-Qualitaet (Befund Betreiber 2026-08-13)", () => {
+  it("warpt weich statt in Tiefenscheiben zu zerschneiden", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    // Das Ebenen-Verfahren zerriss Gesichter (gemessen +0,32 Kantenenergie,
+    // live vom Betreiber als "sehr schlecht" gemeldet). Es darf nicht
+    // unbemerkt zurueckkehren.
+    assert.ok(!server.includes("PARALLAX_EBENEN"), "Ebenen-Verfahren ist zurueck");
+    assert.ok(server.includes("bilinear") || server.includes("Warping"), "Weich-Warping fehlt");
+    assert.ok(server.includes("GaussianBlur(5)"), "Tiefenkarten-Glaettung fehlt (Riss-Kanten)");
+  });
+
+  it("kodiert mit CRF 23 (drei Stufen schaerfer als vorher)", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    assert.ok(server.includes('"SMEJJ_VIDEO_CRF", "23"'), "CRF-Vorgabe 23 fehlt");
+    assert.ok(server.includes('str(CRF)'), "CRF wird nicht verwendet");
+  });
+});

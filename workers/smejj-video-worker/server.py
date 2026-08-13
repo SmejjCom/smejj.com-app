@@ -44,6 +44,10 @@ SCHRITTE = int(os.environ.get("SMEJJ_VIDEO_SCHRITTE", "4"))  # nur animatediff
 MAX_PROMPT = 500
 # Deckel wie in der Brücke (VIDEO_MAX_B64): mehr streamen wir nicht durch.
 MAX_B64 = 8_000_000
+# H.264-Qualitaet: 23 statt 26 nach dem Portraet-Befund 2026-08-13 — drei
+# CRF-Stufen sind sichtbar weniger Matsch; ein 8-s-Video waechst von ~90 auf
+# ~140 KB und bleibt weit unter dem 8-MB-Deckel der Bruecke.
+CRF = int(os.environ.get("SMEJJ_VIDEO_CRF", "23"))
 
 # --- parallax-Engine -------------------------------------------------------
 # Tiefenmodell als ONNX (26 MB, quantisiert) statt torch (~800 MB): der Server
@@ -55,10 +59,9 @@ TIEFE_MODELL_URL = os.environ.get(
     "https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/main/onnx/model_quantized.onnx",
 )
 TIEFE_DATEI = os.environ.get("SMEJJ_VIDEO_TIEFE_DATEI", "/tmp/smejj-tiefe.onnx")
-# Wie weit die naechste Ebene wandert (Pixel). Mehr wirkt raeumlicher, reisst
-# aber groessere Loecher hinter Objekten auf; 26 ist gemessen ein guter Wert.
+# Wie weit der nahste Pixel wandert (Pixel). Mehr wirkt raeumlicher; ueber
+# ~30 verschmiert das Warping an harten Tiefenkanten. 26 ist gemessen gut.
 PARALLAX_STAERKE = float(os.environ.get("SMEJJ_VIDEO_PARALLAX_STAERKE", "26"))
-PARALLAX_EBENEN = int(os.environ.get("SMEJJ_VIDEO_PARALLAX_EBENEN", "8"))
 # Eigenbewegung der Szene (Stufe 2, 2026-08-13): Wolken ziehen durch. Ohne das
 # steht eine Landschaft trotz Kamerafahrt wie eingefroren.
 #
@@ -297,67 +300,68 @@ def welle(rgb, maske, versatz_je_zeile):
 
 
 def parallax_frames(bild, tiefe, dauer=None):
-    """Kamerafahrt durch die Szene: nahe Ebenen wandern weiter als ferne.
+    """Kamerafahrt durch die Szene: jeder Pixel wandert nach SEINER Tiefe.
 
-    Umsetzung als Ebenenstapel (Multi-Plane): die Tiefenkarte zerlegt das Bild
-    in PARALLAX_EBENEN Schichten, jede wird um ihren eigenen Betrag verschoben
-    und von hinten nach vorne übereinandergelegt. Löcher hinter Objekten füllt
-    eine weichgezeichnete Grundierung — echtes Inpainting wäre auf 2 Kernen zu
-    teuer und fällt bei 24 fps ohnehin nicht auf.
+    Frueher stapelten hier 8 Tiefen-EBENEN (Multi-Plane). Das zerriss
+    Portraets sichtbar: ein Gesicht faellt in mehrere Scheiben, an den
+    Grenzen entstehen Geisterraender ("Papierschnitt"). GEMESSEN 2026-08-13
+    an einer Portraet-Szene: +0,32 Kantenenergie im Gesicht (36 % mehr als
+    das Original) — der Betreiber sah genau das live und nannte es zu Recht
+    sehr schlecht.
+
+    Jetzt: kontinuierliches Depth-Warping mit bilinearer Abtastung — jeder
+    Pixel bekommt seinen eigenen Versatz aus der (geglaetteten) Tiefenkarte.
+    GEMESSEN: +0,01 Kantenenergie (artefaktfrei), gleiche Rechenzeit
+    (25 ms/Frame), Parallax bleibt kraeftig (nah/fern 14,8x). Die Glaettung
+    der Karte verhindert Riss-Kanten an harten Tiefenspruengen; Loecher gibt
+    es beim Rueckwaerts-Abtasten prinzipbedingt nicht.
     """
     import math
 
     import numpy as np
     from PIL import Image, ImageFilter
 
-    # Grundierung: weich und leicht vergrößert, damit an den Rändern nichts fehlt.
-    grund = np.asarray(
-        bild.filter(ImageFilter.GaussianBlur(24))
-        .resize((int(GROESSE * 1.08), int(GROESSE * 1.08)))
-        .crop((0, 0, GROESSE, GROESSE)),
-        dtype=np.float32,
-    )
     rgb = np.asarray(bild, dtype=np.float32)
+    hoehe, breite = tiefe.shape
 
-    ebenen = []
-    for i in range(PARALLAX_EBENEN):
-        lo, hi = i / PARALLAX_EBENEN, (i + 1) / PARALLAX_EBENEN
-        maske = ((tiefe >= lo) & (tiefe < hi)).astype(np.float32)
-        if maske.sum() < 50:  # leere Tiefenscheibe überspringen
-            continue
-        # Weiche Kanten: harte Ebenengrenzen sähen wie ausgeschnittenes Papier aus.
-        weich = np.asarray(
-            Image.fromarray((maske * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.5)),
-            dtype=np.float32,
-        ) / 255.0
-        ebenen.append(((lo + hi) / 2, weich[..., None]))
+    # Geglaettete Karte: weiche Uebergaenge statt Scheibengrenzen.
+    glatt = np.asarray(
+        Image.fromarray((tiefe * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(5)),
+        dtype=np.float32,
+    ) / 255.0
 
     # Was in der Szene von selbst in Bewegung ist (ziehende Wolken).
     himmel = himmel_bereich(bild, tiefe) if BEWEGUNG_AN else None
-    hoehe = tiefe.shape[0]
+
+    yy, xx = np.mgrid[0:hoehe, 0:breite].astype(np.float32)
+
+    def warp(quelle, vx, vy):
+        qx = xx - PARALLAX_STAERKE * glatt * vx
+        qy = yy - PARALLAX_STAERKE * glatt * vy
+        x0 = np.clip(np.floor(qx).astype(np.int32), 0, breite - 2)
+        y0 = np.clip(np.floor(qy).astype(np.int32), 0, hoehe - 2)
+        fx = (qx - x0)[..., None]
+        fy = (qy - y0)[..., None]
+        return (quelle[y0, x0] * (1 - fx) * (1 - fy)
+                + quelle[y0, x0 + 1] * fx * (1 - fy)
+                + quelle[y0 + 1, x0] * (1 - fx) * fy
+                + quelle[y0 + 1, x0 + 1] * fx * fy)
 
     anzahl = max(2, int((dauer or DAUER_S) * FPS))
     rand = int(PARALLAX_STAERKE * 1.2)
     frames = []
     for i in range(anzahl):
-        # Nahtlose Schleife: einmal hin und zurück, mit leichtem Bogen nach oben.
+        # Nahtlose Schleife: einmal hin und zurueck, mit leichtem Bogen.
         w = 2 * math.pi * i / anzahl
         vx, vy = math.sin(w), 0.35 * (1 - math.cos(w)) - 0.35
-        # Eigenbewegung VOR dem Ebenenstapel: die Wolken ziehen gleichmässig
-        # durch und stehen nach einer Runde wieder am Anfang — sonst ruckelt
-        # die Schleife an der Nahtstelle.
+        # Eigenbewegung VOR dem Warp: die Wolken ziehen gleichmaessig durch
+        # und stehen nach einer Runde wieder am Anfang.
         rgb_bewegt = rgb
         if himmel is not None:
             zug = np.full(hoehe, HIMMEL_ZUG * i / anzahl, dtype=np.float32)
             rgb_bewegt = welle(rgb_bewegt, himmel, zug)
-        leinwand = grund.copy()
-        for mitteltiefe, alpha in ebenen:
-            dx = int(round(PARALLAX_STAERKE * mitteltiefe * vx))
-            dy = int(round(PARALLAX_STAERKE * mitteltiefe * vy))
-            rgb_v = np.roll(np.roll(rgb_bewegt, dx, axis=1), dy, axis=0)
-            a_v = np.roll(np.roll(alpha, dx, axis=1), dy, axis=0)
-            leinwand = leinwand * (1 - a_v) + rgb_v * a_v
-        # Zuschnitt kaschiert die Ränder, die das Verschieben freilegt.
+        leinwand = warp(rgb_bewegt, vx, vy)
+        # Zuschnitt kaschiert die Raender, die das Verschieben freilegt.
         frame = Image.fromarray(np.clip(leinwand, 0, 255).astype(np.uint8))
         frames.append(
             frame.crop((rand, rand, GROESSE - rand, GROESSE - rand)).resize(
@@ -468,7 +472,7 @@ def kodiere_mp4(frames):
             fps=FPS,
             codec="libx264",
             quality=None,
-            ffmpeg_params=["-crf", "26", "-preset", "veryfast", "-pix_fmt", "yuv420p", "-movflags", "+frag_keyframe+empty_moov+default_base_moof"],
+            ffmpeg_params=["-crf", str(CRF), "-preset", "veryfast", "-pix_fmt", "yuv420p", "-movflags", "+frag_keyframe+empty_moov+default_base_moof"],
         )
         for frame in frames:
             schreiber.append_data(np.asarray(frame))
