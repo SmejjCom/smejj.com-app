@@ -167,8 +167,8 @@ export function starteModellEinkaeufer({ env = process.env, melde = null, pruefI
   const WOCHE_MS = 6.5 * 24 * 60 * 60 * 1000;
   const tick = async () => {
     try {
-      const letzte = await ablage.liste({ env }).catch(() => []);
-      const juengste = (letzte || [])
+      const letzte = await ablage.liste({ env }).catch(() => null);
+      const juengste = (letzte?.datensaetze || [])
         .map((d) => Date.parse(d?.createdAt || 0))
         .filter(Number.isFinite)
         .sort((a, b) => b - a)[0] || 0;

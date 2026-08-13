@@ -71,6 +71,27 @@ export const AUTOPILOTEN = Object.freeze([
     stopAnleitung: "Nur durch Anhalten des Control-Servers."
   },
   {
+    id: "support-sla",
+    name: "35. Kundensupport-Wache (SLA)",
+    kurz: "Wacht darüber, dass kein Kunde ohne Antwort wartet — die KI antwortet in Sekunden, die Ampel misst es.",
+    funktionen: [
+      "Jedes Support-Ticket bekommt sofort eine automatische, ehrlich gekennzeichnete KI-Antwort über denselben Weg wie der Chat (RAG inklusive).",
+      "Wartet ein Kunde länger als 15 Minuten ohne Antwort, wird diese Ampel ROT — und die Alarm-Wache schickt dem Betreiber eine Mail.",
+      "Scheitert die Sofortantwort (Brücke, Geheimnis, Speicher), bleibt das Ticket offen und fällt hier auf — nichts verschwindet still.",
+      "Betreiber-Aufsicht: GET /api/support/alle (nur Owner); die Konsolen-Ansicht folgt in Stufe 2."
+    ],
+    trainiert: "Antwortzeiten und Lösungsquote des automatischen Supports",
+    verbessert: "Kunden bekommen in Sekunden Hilfe statt in Stunden — und kein Fall geht verloren",
+    neuigkeiten: ["Support-Kanal + Sofortantwort seit 2026-08-13 (Stufe 1)"],
+    ort: "Control Server (Autopilot-Läufer)",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server.",
+    stopAnleitung: "Nur durch Anhalten des Control-Servers."
+  },
+  {
     id: "qualitaetsmessung",
     name: "01. Qualitätsmessung",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",

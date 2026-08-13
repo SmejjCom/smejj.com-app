@@ -73,6 +73,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "autonomous-git-bot",       // muss Secret und eval im Diff finden
   "werkstatt-autopilot",      // Station 1 sammelt im Takt aus der Ampel (in-process)
   "angelina-autopilot",       // Sprach-Waechter ueber die ausgelieferten Seiten
+  "support-sla",              // misst echte Tickets und echte Wartezeiten
   "modell-einkaeufer",        // Wochen-Arena: echte Proben je Modell ueber die Bruecke
   "selbstheilung",            // bezeugt jeden Heilungs-Durchgang selbst
   "autopilot-laeufer",        // Totmannschalter: der Taktgeber bezeugt jeden Durchgang selbst

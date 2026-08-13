@@ -60,8 +60,10 @@ import { handleProviderRoute } from "../control-server/src/routes/providerRoutes
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
+import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
 import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
+import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
@@ -168,6 +170,9 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname.startsWith("/api/auth/github") || url.pathname.startsWith("/api/auth/magic-link") || url.pathname.startsWith("/api/billing/")) {
       if (await routeExtraAuth(req, res, url)) return;
     }
+    // Verlauf-Sync (Stufe 3): eigene Routen-Datei, damit dieser Verteiler
+    // schlank bleibt. Abgeschaltet, solange SMEJJ_CHAT_SYNC_ENABLED fehlt.
+    if (url.pathname === "/api/chats" && await chatSyncRoutes.handle(req, res, url)) return;
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return await handleAuthLogout(req, res);
     if (url.pathname.startsWith("/api/auth/")) {
       const handled = await handleEmailAuthRoutes(req, url, res, emailAuthContext(url));
@@ -187,6 +192,8 @@ const server = http.createServer(async (req, res) => {
     if (await handleVoiceRoute(req, url, res)) return;
     // Herzschlag der Autopiloten (Maschinen-Absender, eigener Schluessel je Automatik) — autopilotRoutes.js.
     if (await handleAutopilotHeartbeat(req, url, res)) return;
+    // Kundensupport Stufe 1: Ticket + KI-Sofortantwort (angemeldete Nutzer) — supportRoutes.js.
+    if (await handleSupportRoute(req, url, res)) return;
     // Adminbereich, Transparenzbericht, Einwilligung — Zustaendigkeit: adminSurfaceRoutes.js.
     if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid })) return;
     // Adminbereich Stufe 1 (nur lesend): ohne frische Adminrolle aus dem Store => 403.

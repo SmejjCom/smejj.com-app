@@ -24,9 +24,9 @@ test("Der Laeufer betreibt alle 23 Selbsttest-Autopiloten und meldet jeden einze
   const gemeldet = [];
   const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; }, mitNetz: false });
 
-  assert.equal(ergebnisse.length, 23, "23 Autopiloten laufen ohne Netz im Control-Server");
-  assert.equal(gemeldet.length, 24, "23 Laeufe + der Taktgeber, der sich selbst bezeugt");
-  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 24, "keine Kennung doppelt");
+  assert.equal(ergebnisse.length, 24, "24 Autopiloten laufen ohne Netz im Control-Server");
+  assert.equal(gemeldet.length, 25, "24 Laeufe + der Taktgeber, der sich selbst bezeugt");
+  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 25, "keine Kennung doppelt");
   assert.ok(gemeldet.some((g) => g.id === "autopilot-laeufer"), "der Taktgeber bezeugt sich selbst");
 
   // Jede Meldung muss ein Ergebnis tragen, keinen Pauschaltext.
@@ -62,7 +62,7 @@ test("Ein abstuerzendes Modul reisst den Lauf nicht mit", async () => {
     dateienLader: () => { throw new Error("Dateisystem weg"); },
     mitNetz: false
   });
-  assert.equal(ergebnisse.length, 23, "alle anderen laufen trotzdem");
+  assert.equal(ergebnisse.length, 24, "alle anderen laufen trotzdem");
   assert.equal(gemeldet.get("smart-router").status, "ok");
 });
 
@@ -74,7 +74,7 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
     melde: (id, e) => { gemeldet.set(id, e); return true; },
     mitNetz: true
   });
-  assert.equal(ergebnisse.length, 25, "E2E-Waechter und Voice-Region sind die beiden Netz-Laeufe");
+  assert.equal(ergebnisse.length, 26, "E2E-Waechter und Voice-Region sind die beiden Netz-Laeufe");
   const w = gemeldet.get("synthetic-user-watchdog");
   assert.ok(w, "der Waechter muss melden");
   assert.equal(w.status, "fehler", "ohne pruefbare Kette ist er rot, nie gruen");

@@ -35,6 +35,7 @@ import { inspectResponseHealth, detectRepetitiveLoop } from "./selfHealingAutopi
 import * as S from "./autopilotSelbsttests.js";
 import { runFullSyntheticE2ECycle } from "./syntheticUserWatchdogAutopilot.js";
 import { planeHeilung, fuehreHeilungAus } from "./selbstheilung.js";
+import { offeneUeberfaellig, listeTickets } from "../admin/supportTickets.js";
 
 // Der Container hat seinen eigenen Quelltext an Bord (Dockerfile.smejj-control
 // kopiert src/ und control-server/). Genau den scannen die beiden
@@ -364,6 +365,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     await fuehreAus("realtime-voice-pair", () => S.laufVoicePair()),
     await fuehreAus("autonomous-git-bot", () => S.laufGitBot()),
     await fuehreAus("werkstatt-autopilot", () => laufWerkstattSammeln()),
+    await fuehreAus("support-sla", () => laufSupportSla()),
     await fuehreAus("angelina-autopilot", () => laufSprachQualitaet(seiten)),
     // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
@@ -444,6 +446,34 @@ export function baueEskalationsVersand(sendAuthMail, env = process.env) {
         + "Ampel: https://smejj.com/admin/autopiloten/",
       art: "autopilot-eskalation"
     }, env);
+  };
+}
+
+
+/**
+ * Support-SLA (Nr. 35): Ein Kunde, der laenger als 15 Minuten ohne Antwort
+ * wartet, ist ein AUSFALL — kein Schoenheitsfehler. Die Sofortantwort der
+ * KI beantwortet normal in Sekunden; steht hier trotzdem etwas offen, ist
+ * die Kette dahinter kaputt (Bruecke, Geheimnis, Speicher) oder ein Fall
+ * wartet wirklich auf einen Menschen. Beides gehoert auf Rot — die
+ * Alarm-Wache verschickt dann die Mail an den Betreiber.
+ */
+export async function laufSupportSla({ env = process.env, jetztMs = Date.now() } = {}) {
+  const ueberfaellig = await offeneUeberfaellig({ env, minuten: 15, jetztMs });
+  if (ueberfaellig.length) {
+    const aeltestes = ueberfaellig[ueberfaellig.length - 1];
+    return {
+      ok: false,
+      meldung: `${ueberfaellig.length} Kunde(n) warten laenger als 15 min ohne Antwort — aeltestes Ticket ${aeltestes.id} (${aeltestes.betreff.slice(0, 40)})`
+    };
+  }
+  const alle = await listeTickets({ env });
+  const beantwortet = alle.filter((t) => t.status === "beantwortet").length;
+  return {
+    ok: true,
+    meldung: alle.length
+      ? `Kein Kunde wartet: ${alle.length} Ticket(s), ${beantwortet} automatisch beantwortet`
+      : "Kein Kunde wartet — noch keine Tickets eingegangen"
   };
 }
 
