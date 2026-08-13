@@ -29,6 +29,9 @@ const PROTECTED_FILES = [
   // liess es zurueckrollen; ab jetzt faellt jede Aenderung am Aussehen der
   // Startseite hier auf, egal ueber welche Quelle sie eingebaut wurde.
   "public/start-styles.css",
+  // Glas-Startseite (2026-08-13): eigene Datei statt styles.css-Ratchet —
+  // gehoert damit genauso unter den Lock wie das Buendel.
+  "public/start-glass.css",
   "public/branding.css",
   "public/app-surfaces.css",
   "public/composer-tools.css",
