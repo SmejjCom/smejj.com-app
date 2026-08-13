@@ -54,24 +54,48 @@ export function sseZuText(roh) {
   return teile.join("");
 }
 
-/** Misst EIN Modell über den echten Nutzerweg. */
-export async function messeModell(modellId, { token, basis = BRUECKE_STANDARD, fetchImpl = fetch, proben = PROBEN } = {}) {
+/**
+ * Misst EIN Modell über den echten Nutzerweg.
+ *
+ * 429-fest seit 2026-08-13 abends: Die Arena feuert 24 Anfragen mit EINEM
+ * Token — die Brücke bremst irgendwann, und die zuletzt gemessenen Modelle
+ * sahen aus wie 0/6-Versager (kimi-k3 und smejj-fast-1 galten einen ganzen
+ * Tag als kaputt; die Nachmessung ergab 6/6 und 5/6). Darum: Pause zwischen
+ * den Proben, bei 429 warten und genau EINMAL wiederholen — und bleibt es
+ * 429, heisst das Ergebnis "nicht messbar", nie "kann nichts".
+ */
+export async function messeModell(modellId, { token, basis = BRUECKE_STANDARD, fetchImpl = fetch, proben = PROBEN, pauseMs = 2_000, warte = (ms) => new Promise((w) => setTimeout(w, ms)) } = {}) {
   const einzel = [];
-  for (const p of proben) {
+  const frage = async (p) => {
     const start = Date.now();
+    const antwort = await fetchImpl(`${basis.replace(/\/+$/, "")}/api/agent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://smejj.com", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ task: p.task, model: modellId }),
+      signal: AbortSignal.timeout(45_000)
+    });
+    return { antwort, ms: Date.now() - start };
+  };
+  for (const p of proben) {
+    if (einzel.length && pauseMs > 0) await warte(pauseMs);
     try {
-      const antwort = await fetchImpl(`${basis.replace(/\/+$/, "")}/api/agent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: "https://smejj.com", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ task: p.task, model: modellId }),
-        signal: AbortSignal.timeout(45_000)
-      });
-      const ms = Date.now() - start;
+      let { antwort, ms } = await frage(p);
+      if (antwort.status === 429) {
+        // Retry-After der Bruecke respektieren; ohne Angabe 20 s. Deckel 60 s,
+        // damit ein boeswilliger Header den Wochenlauf nicht festhaelt.
+        const retryAfterSek = Number(antwort.headers?.get?.("retry-after")) || 20;
+        await warte(Math.min(Math.max(retryAfterSek, 5), 60) * 1000);
+        ({ antwort, ms } = await frage(p));
+      }
+      if (antwort.status === 429) {
+        einzel.push({ probe: p.id, ok: false, nichtMessbar: true, ms, grund: "Rate-Limit (429) trotz Wartezeit — nicht messbar" });
+        continue;
+      }
       if (!antwort.ok) { einzel.push({ probe: p.id, ok: false, ms, grund: `HTTP ${antwort.status}` }); continue; }
       const text = sseZuText(await antwort.text());
       einzel.push({ probe: p.id, ok: text.length > 0 && p.pruefe(text), ms, grund: text.length ? undefined : "leere Antwort" });
     } catch (fehler) {
-      einzel.push({ probe: p.id, ok: false, ms: Date.now() - start, grund: fehler?.name === "TimeoutError" ? "Zeitlimit 45 s" : String(fehler?.message || fehler).slice(0, 60) });
+      einzel.push({ probe: p.id, ok: false, ms: null, grund: fehler?.name === "TimeoutError" ? "Zeitlimit 45 s" : String(fehler?.message || fehler).slice(0, 60) });
     }
   }
   const treffer = einzel.filter((e) => e.ok).length;
@@ -80,6 +104,7 @@ export async function messeModell(modellId, { token, basis = BRUECKE_STANDARD, f
     modell: modellId,
     treffer,
     gesamt: einzel.length,
+    nichtMessbar: einzel.filter((e) => e.nichtMessbar).length,
     medianMs: zeiten.length ? zeiten[Math.floor(zeiten.length / 2)] : null,
     einzel
   };
@@ -93,8 +118,16 @@ export async function messeModell(modellId, { token, basis = BRUECKE_STANDARD, f
  * die die Probe nicht sieht.
  */
 export function bewerteEinkauf(messungen = [], championId = "") {
-  const sortiert = [...messungen].sort((a, b) => b.treffer - a.treffer || (a.medianMs ?? 1e9) - (b.medianMs ?? 1e9));
-  const champion = messungen.find((m) => m.modell === championId) || null;
+  // Wer ueberwiegend am Rate-Limit scheiterte, wurde nicht GEMESSEN — er
+  // gehoert weder in die Rangliste noch in ein 0/6-Urteil. Er wird benannt
+  // und in der naechsten Arena erneut versucht. (Befund 2026-08-13: zwei
+  // gesunde Modelle galten einen Tag als kaputt, weil die Arena ihr eigenes
+  // Rate-Limit mass.)
+  const gemessen = messungen.filter((m) => (m.nichtMessbar || 0) <= (m.gesamt || 0) / 2);
+  const ungemessen = messungen.filter((m) => (m.nichtMessbar || 0) > (m.gesamt || 0) / 2);
+
+  const sortiert = [...gemessen].sort((a, b) => b.treffer - a.treffer || (a.medianMs ?? 1e9) - (b.medianMs ?? 1e9));
+  const champion = gemessen.find((m) => m.modell === championId) || null;
   const bester = sortiert[0] || null;
   let empfehlung = null;
   if (bester && champion && bester.modell !== champion.modell) {
@@ -104,9 +137,12 @@ export function bewerteEinkauf(messungen = [], championId = "") {
       && bester.medianMs <= champion.medianMs * 0.6;
     if (deutlichBesser || gleichAberSchneller) empfehlung = bester.modell;
   }
-  const kurz = sortiert.map((m) => `${m.modell} ${m.treffer}/${m.gesamt}${m.medianMs != null ? ` ${m.medianMs}ms` : ""}`).join(" · ");
+  const kurzTeile = sortiert.map((m) => `${m.modell} ${m.treffer}/${m.gesamt}${m.medianMs != null ? ` ${m.medianMs}ms` : ""}`);
+  for (const m of ungemessen) kurzTeile.push(`${m.modell} nicht messbar (Rate-Limit)`);
+  const kurz = kurzTeile.join(" · ");
   return {
     rangliste: sortiert.map((m) => m.modell),
+    nichtMessbar: ungemessen.map((m) => m.modell),
     empfehlung,
     meldung: empfehlung
       ? `EMPFEHLUNG: Wechsel zu ${empfehlung} — ${kurz}`
@@ -156,9 +192,18 @@ export async function laufModellEinkauf({ env = process.env, fetchImpl = fetch, 
   }, { env, timeoutMs: 20_000 }).catch(() => {});
 
   // Ein Lauf, in dem KEIN Modell auch nur eine Probe schafft, misst nicht
-  // die Modelle, sondern einen Ausfall der Kette — dann ehrlich rot.
+  // die Modelle, sondern einen Ausfall der Kette — dann ehrlich rot. Waren
+  // dabei alle nur ungemessen (Rate-Limit), sagt die Meldung genau das.
   const irgendwas = messungen.some((m) => m.treffer > 0);
-  return { ok: irgendwas, meldung: irgendwas ? urteil.meldung : `Kein Modell bestand eine Probe — Kette prüfen (${urteil.meldung})` };
+  const alleUngemessen = messungen.length > 0 && urteil.nichtMessbar?.length === messungen.length;
+  return {
+    ok: irgendwas,
+    meldung: irgendwas
+      ? urteil.meldung
+      : alleUngemessen
+        ? `Arena nicht messbar — alle Modelle am Rate-Limit; naechster Versuch im naechsten Takt`
+        : `Kein Modell bestand eine Probe — Kette prüfen (${urteil.meldung})`
+  };
 }
 
 /**

@@ -136,3 +136,45 @@ test("start.js ruft jeden importierten starte*-Dienst auch auf — Importe ohne 
     assert.ok(aufrufe >= 2, `${name} wird importiert, aber nie aufgerufen — genau so blieb der Einkaeufer unsichtbar stehen`);
   }
 });
+
+test("429-fest: bei Rate-Limit wird gewartet und EINMAL wiederholt; Rest-429 heisst 'nicht messbar', nie 'kann nichts'", async () => {
+  const { messeModell, bewerteEinkauf, PROBEN } = await import("../control-server/src/autopilots/modellEinkaeufer.js");
+  const wartezeiten = [];
+  let aufrufe = 0;
+
+  // Erster Aufruf je Probe: 429 mit Retry-After — der Wiederholungsversuch liefert.
+  const einmal429 = await messeModell("test-modell", {
+    token: "t",
+    proben: PROBEN.slice(0, 2),
+    pauseMs: 0,
+    warte: async (ms) => { wartezeiten.push(ms); },
+    fetchImpl: async () => {
+      aufrufe += 1;
+      if (aufrufe % 2 === 1) return { ok: false, status: 429, headers: { get: () => "7" } };
+      return { ok: true, status: 200, text: async () => 'data: {"choices":[{"delta":{"content":"Canberra 391"}}]}\n\ndata: [DONE]\n' };
+    }
+  });
+  assert.equal(einmal429.treffer, 2, "nach der Wartezeit zaehlt der zweite Versuch");
+  assert.equal(einmal429.nichtMessbar, 0);
+  assert.ok(wartezeiten.includes(7000), "Retry-After der Bruecke (7 s) muss respektiert werden");
+
+  // Dauerhaft 429: nicht messbar — und bewerteEinkauf verurteilt NICHT.
+  const dauer429 = await messeModell("gedrosselt", {
+    token: "t",
+    proben: PROBEN.slice(0, 2),
+    pauseMs: 0,
+    warte: async () => {},
+    fetchImpl: async () => ({ ok: false, status: 429, headers: { get: () => null } })
+  });
+  assert.equal(dauer429.treffer, 0);
+  assert.equal(dauer429.nichtMessbar, 2, "beide Proben sind ungemessen, nicht durchgefallen");
+
+  const urteil = bewerteEinkauf([
+    { modell: "champion", treffer: 6, gesamt: 6, medianMs: 2000 },
+    { ...dauer429, modell: "gedrosselt" }
+  ], "champion");
+  assert.deepEqual(urteil.nichtMessbar, ["gedrosselt"]);
+  assert.equal(urteil.rangliste.includes("gedrosselt"), false, "Ungemessene stehen in keiner Rangliste");
+  assert.match(urteil.meldung, /gedrosselt nicht messbar \(Rate-Limit\)/);
+  assert.equal(/gedrosselt 0\//.test(urteil.meldung), false, "das falsche 0/6-Urteil darf nie wieder auftauchen");
+});
