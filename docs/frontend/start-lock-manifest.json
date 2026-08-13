@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T10:45:54.894Z",
-  "confirmation": "2026-08-13 Betreiber: Spur soll genau die Breite des Menue-Icons oben links haben — 28 px.",
+  "frozenAt": "2026-08-13T11:07:08.255Z",
+  "confirmation": "2026-08-13 Betreiber: Mitte soll sich beim Oeffnen links/rechts automatisch anpassen und die Maus in die rechte Spur wandern. Bild gesehen, Auswahl: Ja, live.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
-    "public/styles.css": "c1fbd62720a237f0cf807b9a588da97b554ac202969123ecf221e378984dfac5",
-    "public/start-styles.css": "3daada725b1773e2cfa5a1d65c3c42f39c01d351efda4fe2f5ad8e0a10d3ee2d",
+    "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
+    "public/start-styles.css": "c4595558c83875c59c6d80bb61cf5b02600d3938eeb0cf9904667f9081a87962",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
