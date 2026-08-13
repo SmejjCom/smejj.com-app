@@ -70,8 +70,17 @@ function schrittText(schritt) {
 
 /** Die Liste entsteht erst, wenn wirklich ein Schritt gemeldet wird. */
 function schrittListe(output) {
-  const davor = output?.previousElementSibling;
-  if (davor && davor.dataset?.smejjSchritte === "true") return davor;
+  // RUECKWAERTS suchen statt nur das direkte Geschwister: chat-actions.js
+  // fuegt Aktions-Knoepfe als EIGENE Geschwister ein — mit ihnen dazwischen
+  // fand diese Funktion ihre Liste nie wieder und legte pro Meldung eine neue
+  // an (der Stapel-Fehler, live gesehen 2026-08-12). Ein user-Eintrag beendet
+  // die Suche: fremde Fragen bekommen nie unsere Liste.
+  let davor = output?.previousElementSibling;
+  while (davor) {
+    if (davor.dataset?.smejjSchritte === "true") return davor;
+    if (davor.classList?.contains("user")) break;
+    davor = davor.previousElementSibling;
+  }
   if (!output?.parentElement) return null;
   const liste = document.createElement("article");
   liste.className = "entry assistant chat-schritte";
@@ -120,10 +129,33 @@ export function zeigeSchritt(output, schritt) {
     anhang.dataset.stand = "true";
   }
   anhang.className = "chat-schritt-stand";
+  // `stand` (z. B. "läuft … 40 s") erlaubt dem Server, dieselbe Zeile mit
+  // wachsendem Fortschritt zu aktualisieren — vorher bekam jede 10-s-Meldung
+  // einen neuen Text und damit eine NEUE Zeile (Stapel-Fehler, 2026-08-12).
   anhang.textContent = fertig
-    ? (schritt.treffer > 0 ? ` ✓ ${schritt.treffer} Treffer` : " ✓ nichts gefunden")
-    : " läuft …";
+    ? (schritt.stand ? ` ✓ ${schritt.stand}` : schritt.treffer > 0 ? ` ✓ ${schritt.treffer} Treffer` : " ✓ nichts gefunden")
+    : ` ${schritt.stand || "läuft …"}`;
   zeile.append(anhang);
+  // Bild-Platzhalter: waehrend der Bild-Maler arbeitet, schimmert eine leere
+  // Bildkarte (wie bei Midjourney/ChatGPT); bei "fertig" verschwindet sie —
+  // das echte Bild folgt direkt darunter als normale Antwort.
+  if (schritt.platzhalter === "bild") {
+    let karte = null;
+    for (const kind of liste.children || []) {
+      if (kind.dataset?.platzhalter === "bild") { karte = kind; break; }
+    }
+    if (fertig) {
+      // Auch Waisen-Karten aus frueheren Listen mit abraeumen — falls die
+      // Liste zwischendurch doch neu entstand, bleibt sonst eine stehen.
+      for (const alt of output?.parentElement?.querySelectorAll?.(".chat-bild-platzhalter") || []) alt.remove();
+      karte?.remove();
+    } else if (!karte) {
+      karte = document.createElement("div");
+      karte.className = "chat-bild-platzhalter";
+      karte.dataset.platzhalter = "bild";
+      liste.append(karte);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
