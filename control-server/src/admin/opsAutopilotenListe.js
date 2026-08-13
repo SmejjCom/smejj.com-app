@@ -717,5 +717,26 @@ export const AUTOPILOTEN = Object.freeze([
     schonfristMs: STUNDE_MS,
     startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
     stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
+  },
+  {
+    id: "antwort-tuev",
+    name: "36. Antwort-TÜV (Qualitäts-Wächter)",
+    kurz: "Prüft per Daumen-runter gemeldete Chat-Antworten gegen die live gemessenen Fehlerklassen — deterministische Regeln mit Beleg, kein Modell-Urteil.",
+    funktionen: [
+      "Selbsttest zuerst: die wörtlich am 2026-08-13 gemessenen Fehlantworten (Abbruch mitten im Wort, Nur-Ankündigung, Fähigkeits-Verneinung) müssen erkannt, eine gesunde Antwort freigesprochen werden — sonst rot.",
+      "Prüft danach bis zu 20 gemeldete Antworten der letzten 7 Tage aus dem Feedback-Schwungrad (bereits PII-bereinigt; es werden nie stillschweigend fremde Verläufe gelesen).",
+      "Sieben Fehlerklassen: abbruch, nur-ankuendigung, faehigkeits-verneinung, denk-tags, latex-roh, kaputte-tabelle, link-versprochen-keiner-da — jeder Fund trägt seinen Beleg.",
+      "Fundzahl und ein Beispiel stehen in der Meldung; die Befunde sind Rohstoff für das Werkstatt-Backlog (Stufe 2 des Antwort-TÜV-Plans vom 2026-08-14)."
+    ],
+    trainiert: "Nichts — er misst. Gemeldete Antworten (Daumen runter) gegen nachprüfbare Regeln.",
+    verbessert: "Antwortfehler, die bisher nur der Betreiber per Screenshot fand, fallen maschinell auf — im Takt, nicht per Zufall",
+    neuigkeiten: ["Neu am 2026-08-14 als Stufe 2 des Antwort-TÜV-Plans (Betreiber-Auftrag: Verläufe füttern die Werkstatt)"],
+    ort: "Control Server (Autopilot-Läufer)",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
   }
 ]);
