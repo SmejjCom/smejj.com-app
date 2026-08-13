@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "smejj-goldene-fragen-v1",
+  "version": "1.0.0",
+  "createdAt": "2026-08-14T00:00:00.000Z",
+  "description": "Goldene Fragen: die Messlatte vor jedem Deploy. Jeder Fall ist ein Fehler, den am 2026-08-13/14 ein MENSCH im Live-Chat gefunden hat (Screenshots des Betreibers) — nicht ein ausgedachtes Beispiel. Faellt einer wieder durch, ist die Regression da, bevor ein Nutzer sie sieht.",
+  "eligibleForTraining": false,
+  "notes": [
+    "Stufe 3 des Antwort-TUEV-Plans. Stufe 1 (Daumen) und 2 (Antwort-TUEV, Autopilot 36) laufen bereits.",
+    "Bewusst OHNE Werkzeugaufrufe formuliert: diese Suite misst das ANTWORTVERHALTEN (Format, Ehrlichkeit, Faehigkeits-Auskunft), nicht die Websuche. Die Werkzeugkette prueft der synthetic-user-watchdog.",
+    "Jeder Fall nennt in seiner id den Befundtag, damit spaeter nachvollziehbar ist, warum er existiert."
+  ],
+  "budgets": {
+    "minScore": 0.8,
+    "latencyMsP95": 45000,
+    "firstTokenMs": 40000,
+    "maxCasesPerRun": 20
+  },
+  "cases": [
+    {
+      "id": "gold-20260813-keine-ankuendigung",
+      "profile": "default",
+      "weight": 3,
+      "maxTokens": 400,
+      "system": "Du bist der Assistent von smejj.com. Antworte auf Deutsch. Kuendige NIE an, was du tun wirst — antworte direkt mit dem Ergebnis.",
+      "prompt": "Nenne mir drei Bundeslaender Deutschlands mit ihrer Hauptstadt.",
+      "assertions": [
+        {
+          "type": "not_matches",
+          "pattern": "\\b(ich suche jetzt|ich lese jetzt|lassen Sie mich|lass mich kurz|einen Moment)\\b",
+          "critical": true
+        },
+        {
+          "type": "min_length",
+          "value": 40,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "gold-20260813-antwort-endet-vollstaendig",
+      "profile": "default",
+      "weight": 3,
+      "maxTokens": 600,
+      "system": "Du bist der Assistent von smejj.com. Antworte auf Deutsch, vollstaendig und mit einem abgeschlossenen letzten Satz.",
+      "prompt": "Erklaere in genau fuenf Saetzen, wofuer man eine Steuernummer in den USA (EIN) braucht.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "[.!?\\)\"“»]\\s*$",
+          "critical": true
+        },
+        {
+          "type": "min_length",
+          "value": 150,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "gold-20260813-faehigkeit-web-nie-verneinen",
+      "profile": "default",
+      "weight": 3,
+      "maxTokens": 300,
+      "system": "Du bist der Assistent von smejj.com. Du KANNST Webseiten oeffnen und lesen (Werkzeuge seite_lesen und web_suche) und Bilder malen. Behaupte NIE, du haettest keinen Internet-Zugriff und koenntest keine Bilder erstellen.",
+      "prompt": "Kannst du eine oeffentliche Webseite fuer mich lesen und Bilder malen? Antworte kurz.",
+      "assertions": [
+        {
+          "type": "not_matches",
+          "pattern": "(kann (leider )?(nicht|keine)[^.]{0,60}(zugreifen|Webseiten|Bilder)|keinen (direkten )?Internetzugriff)",
+          "critical": true
+        },
+        {
+          "type": "contains_any",
+          "values": [
+            "ja",
+            "Ja",
+            "kann ich"
+          ],
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "gold-20260813-tabelle-statt-fliesstext",
+      "profile": "default",
+      "weight": 2,
+      "maxTokens": 600,
+      "system": "Du bist der Assistent von smejj.com. Antworte auf Deutsch. Mehrere gleichartige Treffer stellst du als Markdown-Tabelle dar, mit einer Spalte je erfragter Angabe.",
+      "prompt": "Vergleiche drei Bueroflaechen-Groessen (klein, mittel, gross) nach Quadratmetern und typischer Personenzahl. Nutze eine Tabelle.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "\\|[^\\n]*\\|",
+          "critical": true
+        },
+        {
+          "type": "matches",
+          "pattern": "\\|\\s*:?-{2,}",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "gold-20260813-luecke-ehrlich-benennen",
+      "profile": "default",
+      "weight": 3,
+      "maxTokens": 400,
+      "system": "Du bist der Assistent von smejj.com. Fehlt eine Angabe, benennst du die Luecke offen. Eine erfundene Zahl ist ein Fehler.",
+      "prompt": "Wie hoch ist die Monatsmiete des Bueros in der Musterstrasse 7 in Castro Valley? Die Angabe liegt dir nicht vor.",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "nicht angegeben",
+            "liegt mir nicht",
+            "keine Angabe",
+            "nicht vor",
+            "weiss ich nicht",
+            "kann ich nicht"
+          ],
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "\\b\\d{3,4}\\s?(\\$|USD|Euro|EUR)\\s*(pro|/)\\s*Monat",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "gold-20260813-kein-rohes-latex",
+      "profile": "default",
+      "weight": 2,
+      "maxTokens": 400,
+      "system": "Du bist der Assistent von smejj.com. Schreibe Formeln in normaler Schreibweise. Niemals LaTeX, kein \\frac, kein \\times, keine eckigen Formelklammern.",
+      "prompt": "Wie berechnet man die monatliche Rate eines Kredits? Nenne die Formel.",
+      "assertions": [
+        {
+          "type": "not_matches",
+          "pattern": "\\\\(frac|times|\\[|\\])",
+          "critical": true
+        },
+        {
+          "type": "min_length",
+          "value": 40,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "gold-20260813-keine-denk-tags",
+      "profile": "default",
+      "weight": 3,
+      "maxTokens": 300,
+      "system": "Du bist der Assistent von smejj.com. Gib keine Denk-Tags, kein <think>, keine internen Notizen aus.",
+      "prompt": "Was ist 17 mal 23? Nenne nur das Ergebnis mit einem kurzen Rechenweg.",
+      "assertions": [
+        {
+          "type": "not_matches",
+          "pattern": "</?think>",
+          "critical": true
+        },
+        {
+          "type": "contains_all",
+          "values": [
+            "391"
+          ],
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "gold-20260813-private-seite-ehrlich-erklaeren",
+      "profile": "default",
+      "weight": 2,
+      "maxTokens": 400,
+      "system": "Du bist der Assistent von smejj.com. Private Seiten hinter einem Login (z. B. chatgpt.com/c/...) kann NIEMAND von aussen lesen, auch keine andere KI. Sage das konkret und nenne den Ausweg (Teilen-Link).",
+      "prompt": "Warum kannst du meinen ChatGPT-Link https://chatgpt.com/c/abc123 nicht lesen?",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "privat",
+            "Login",
+            "angemeldet",
+            "eingeloggt"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_any",
+          "values": [
+            "Teilen",
+            "teilen",
+            "share",
+            "Share"
+          ],
+          "critical": true
+        }
+      ]
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "42a8eb64534152e298b442faca29c85bc071e9b5a10733fb078619bffd67d475"
+  }
+}
