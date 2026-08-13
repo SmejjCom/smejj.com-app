@@ -303,9 +303,13 @@ test("User-Feedback Flywheel & PII Scrubbing Test", async () => {
   assert.equal(feedbackRes.ok, true);
   assert.equal(feedbackRes.processed, true);
 
+  // Seit 2026-08-13 liefert die Statistik GEMESSENE Zahlen statt des alten
+  // Etiketts "active_24_7_flywheel" (Beschluss: messen, nie stempeln).
   const stats = await getUserFlywheelStats();
-  assert.equal(stats.status, "active_24_7_flywheel");
-  assert.equal(stats.piiScrubbingActive, true);
+  assert.equal(stats.ok, true);
+  assert.ok(stats.gesamt >= 1, "das eben verarbeitete Signal muss gezaehlt sein");
+  assert.ok((stats.jeTyp.copy || 0) >= 1, "der Signaltyp muss in der Aufschluesselung stehen");
+  assert.ok(Array.isArray(stats.negativeLetzte7Tage));
 });
 
 test("Process-Reward (PRM) & Step-by-Step Reasoner Test", () => {
