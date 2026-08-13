@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T22:06:30.325Z",
-  "confirmation": "Ja, Freigabe erteilt — Such-Overlay (docs/approvals/2026-08-13-suche-overlay-startlock-freigabe.md)",
+  "frozenAt": "2026-08-13T22:40:41.870Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 per Auswahlkarte 'Live umsetzen': Glas-Startseite (docs/approvals/2026-08-13-startseite-glas-design-freigabe.md). index.html: Glas-CSS-Link, Markenwort-Span, Beispiel-Chips, Chips-Script. start-styles.css-Stand 0aac880 stammt aus b0fb345 (Ecken-Knoepfe-Fix, Betreiber-Befund 2026-08-13) und wird mitgestempelt.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "01f51f2da3165a9bb39877cff91049fe6806eb282d24bc0c7f034fc31b0a9dda",
+    "public/index.html": "6f29a0e43d1c23c393293c0df843f292ffa4a024e9fcdeef0fe62b54a1f7f1e1",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
-    "public/start-styles.css": "43e02c10dcc97b302b17250b08293a28f1ed9e5451677e3b1f82020c69a185db",
+    "public/start-styles.css": "0aac880651b981461c1da7025b88d57b12a667f397216539dfa7d3f6c205bd46",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "d9c21ae999004b8d5121a881010e1b7c5887b1639da3b6be60f5d17584d6b9d2",
