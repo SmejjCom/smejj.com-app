@@ -40,6 +40,13 @@ const LLM_API_KEY = process.env.SMEJJ_LLM_SALAD_API_KEY || process.env.SMEJJ_LLM
 const LLM_MODEL = process.env.SMEJJ_LLM_SALAD_MODEL || process.env.SMEJJ_LLM_MODEL || "tgi";
 const LLM_HEADER = process.env.SMEJJ_LLM_HEADER || (process.env.SMEJJ_LLM_SALAD_API_KEY ? "Salad-Api-Key" : "Authorization");
 const REQUEST_TIMEOUT_MS = Number(process.env.SMEJJ_CHAT_BRIDGE_TIMEOUT_MS || 60000);
+// Eigenes Zeitbudget fuer die Mal-Spur (Befund 2026-08-14): Der Bild-Maler
+// braucht seit dem Qualitaets-Tuning (3 Schritte + Foto-Anreicherung) rund
+// zwei Minuten je Bild — die Logs zeigen POST /erzeuge 200 nach ~110 s, aber
+// die Lane wartete nur REQUEST_TIMEOUT_MS (60 s). Der Maler malte fertig und
+// antwortete einem toten Socket; der Nutzer sah einen ewig schimmernden
+// Platzhalter. 240 s = doppelte gemessene Malzeit als Reserve.
+const BILDER_TIMEOUT_MS = Number(process.env.SMEJJ_BILDER_TIMEOUT_MS || 240000);
 // Fast Lane (Welle 2, 0-Euro-Freigabe 2026-07-21): Groq Free-Tier NUR fuer schnelle
 // Konversationsantworten; Coding/Web bleiben auf der Deep Lane (GLM-5.2).
 // Fail-safe: ohne Key oder bei jedem Fehler greift unveraendert der bisherige Pfad.
@@ -56,7 +63,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260814-v137-strom-und-schutz-vereint";
+const BRIDGE_VERSION = "20260814-v138-maler-zeitbudget";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -187,7 +194,7 @@ async function handleChat(req, res) {
   const task = String(messages[messages.length - 1]?.content || "").trim();
   if (task) {
     if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
-    if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS })) return;
+    if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS })) return;
   }
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
   const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
@@ -211,7 +218,7 @@ async function handleAgent(req, res) {
   // Bild-Verstehen (Vision) und Bilder-Zeichnen: bei false laeuft unveraendert
   // der Text-Weg (fail-safe, Details in chat-bridge-vision.js/-bilder.js).
   if (await streamVisionLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS, maxBodyBytes: MAX_BODY_BYTES })) return;
-  if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: REQUEST_TIMEOUT_MS })) return;
+  if (await streamBilderLane(res, body, task, { corsHeaders, securityHeaders, timeoutMs: BILDER_TIMEOUT_MS })) return;
   // "schnell" heisst schnell: dann bekommt auch eine Coding- oder Suchfrage die
   // Schnellspur angeboten (streamFastLane entscheidet dann endgueltig).
   const fastTask = stufe === "schnell" || (!coding && !shouldSearchWeb(task));
