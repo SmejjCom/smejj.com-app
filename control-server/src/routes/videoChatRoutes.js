@@ -83,11 +83,18 @@ export function createVideoChatRoutes({ env, securityHeaders = {}, resolveModelR
       const result = await executeWithFallback(chain, [
         { role: "system", content: systemPrompt },
         { role: "user", content: nutzerPrompt }
-      ], { temperature: 0.2, maxTokens: 160 });
+      ], {
+        temperature: 0.2,
+        maxTokens: 300,
+        // Ohne diese beiden frisst die Denkphase (kimi/GLM) die ganze Frist:
+        // erst kommt minutenlang reasoning_content, sichtbarer Text nie.
+        thinking: { type: "disabled" },
+        reasoningEffort: "low"
+      });
       if (!result.ok || !result.response?.body) return "";
       const reader = result.response.body.getReader();
       const decoder = new TextDecoder();
-      const frist = Date.now() + 20_000;
+      const frist = Date.now() + 30_000;
       let puffer = "";
       let text = "";
       while (Date.now() < frist && text.length < 2_000) {
