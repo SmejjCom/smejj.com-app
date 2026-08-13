@@ -8,6 +8,7 @@ import { verifyStripeSignature } from "../control-server/src/billing/stripeWebho
 import {
   PLAN_BY_STRIPE_PRODUCT,
   __clearBillingMemoryStoreForTests,
+  planFromStripeItem,
   resolveSubscriptionStatus
 } from "../control-server/src/billing/subscriptionStore.js";
 import { applyStripeEvent } from "../control-server/src/billing/stripeEventApply.js";
@@ -115,6 +116,83 @@ test("Checkout ohne client_reference_id oder ohne Kunde wird ignoriert (kein Cra
   const badCustomer = checkoutEvent({ customer: "not-a-customer" });
   assert.equal((await applyStripeEvent(badCustomer, EMPTY_ENV)).handled, false);
   assert.equal((await applyStripeEvent({ type: "invoice.paid" }, EMPTY_ENV)).handled, false);
+});
+
+test("Live-Produkt unbekannt: Plan faellt auf den Monatsbetrag zurueck", async () => {
+  assert.equal(planFromStripeItem({ price: { product: "prod_LiveUnbekannt1", unit_amount: 1900 } }), "pro");
+  assert.equal(planFromStripeItem({ price: { product: "prod_UxSGVIRDGNdHaI", unit_amount: 1900 } }), "plus");
+  assert.equal(planFromStripeItem({ price: { product: "prod_LiveUnbekannt1", unit_amount: 4711 } }), null);
+
+  __clearBillingMemoryStoreForTests();
+  await applyStripeEvent(checkoutEvent(), EMPTY_ENV);
+  await applyStripeEvent(subscriptionEvent({ product: "prod_LiveIrgendwas" }), EMPTY_ENV);
+  // subscriptionEvent traegt keinen unit_amount -> Plan bleibt null -> "free";
+  // mit Betrag im Preis wird der Plan erkannt.
+  await applyStripeEvent({
+    type: "customer.subscription.updated",
+    created: 1_753_500_200,
+    livemode: true,
+    data: {
+      object: {
+        id: "sub_Test1", customer: "cus_TestKunde1", status: "active",
+        cancel_at_period_end: false, current_period_end: 1_756_178_400,
+        items: { data: [{ price: { product: "prod_LiveIrgendwas", unit_amount: 3900 } }] }
+      }
+    }
+  }, EMPTY_ENV);
+  const status = await resolveSubscriptionStatus(REF, EMPTY_ENV);
+  assert.equal(status.plan, "max");
+  assert.equal(status.livemode, true);
+});
+
+test("Checkout ohne ref, aber mit Stripe-bestaetigter E-Mail wird zugeordnet", async () => {
+  __clearBillingMemoryStoreForTests();
+  const event = checkoutEvent({ ref: "" });
+  event.data.object.customer_details = { email: "Abo-Tester@example.com" };
+  const mails = [];
+  const ergebnis = await applyStripeEvent(event, EMPTY_ENV, (mail) => { mails.push(mail); return { sent: true }; });
+  assert.deepEqual(ergebnis, { handled: true, action: "checkout_linked" });
+  await applyStripeEvent(subscriptionEvent(), EMPTY_ENV);
+  assert.equal((await resolveSubscriptionStatus(REF, EMPTY_ENV)).plan, "plus");
+  // Bestaetigungs-Mail ging an die Checkout-Adresse
+  assert.equal(mails.length, 1);
+  assert.equal(mails[0].to, "Abo-Tester@example.com");
+  assert.match(mails[0].subject, /Bestätigung/);
+});
+
+test("Portal-Route: 401 ohne Session, 503 ohne Schluessel, 404 ohne Abo, 200 mit Portal-URL", async () => {
+  __clearBillingMemoryStoreForTests();
+  const url = { pathname: "/api/billing/portal" };
+  const user = { email: "abo-tester@example.com" };
+
+  const anon = fakeResponse();
+  await makeHandlers()(fakeRequest(), anon, url);
+  assert.equal(anon.out.status, 401);
+
+  const ohneKey = fakeResponse();
+  await makeHandlers({ user })(fakeRequest(), ohneKey, url);
+  assert.equal(ohneKey.out.status, 503);
+  assert.equal(ohneKey.out.payload.error, "billing_portal_not_configured");
+
+  const env = { STRIPE_SECRET_KEY: "sk_test_x" };
+  const ohneAbo = fakeResponse();
+  await makeHandlers({ env, user })(fakeRequest(), ohneAbo, url);
+  assert.equal(ohneAbo.out.status, 404);
+
+  await applyStripeEvent(checkoutEvent(), EMPTY_ENV);
+  const aufrufe = [];
+  const fetchImpl = async (ziel, options) => {
+    aufrufe.push({ ziel, body: options.body });
+    return { ok: true, json: async () => ({ url: "https://billing.stripe.com/session/xyz" }) };
+  };
+  const mitAbo = fakeResponse();
+  await createBillingHandlers({
+    env, readSession: () => user, fetchImpl,
+    json: (res, status, payload) => { res.out.status = status; res.out.payload = payload; }
+  })(fakeRequest(), mitAbo, url);
+  assert.equal(mitAbo.out.status, 200);
+  assert.equal(mitAbo.out.payload.url, "https://billing.stripe.com/session/xyz");
+  assert.match(aufrufe[0].body, /customer=cus_TestKunde1/);
 });
 
 function fakeRequest({ method = "POST", body = "", headers = {} } = {}) {
