@@ -1,82 +1,66 @@
-# BEFUND: Video kommt an, der Player zeigt es nicht
+# ZURÜCKGEZOGEN: „Video kommt an, der Player zeigt es nicht"
 
-Gemessen am **2026-08-13 gegen 11:15** live auf smejj.com, im angemeldeten
-Browser des Betreibers. Diese Notiz ist für die Sitzung, die gerade am
-Wiedergabepfad arbeitet (`feat(video): browserfeste Wiedergabe — fMP4 +
-MediaSource-Weiche mit blob-Reserve`). **Ich habe den Player NICHT angefasst**,
-um nicht in halbfertige fremde Arbeit zu greifen.
+**Diese Notiz behauptete am 2026-08-13, der Wiedergabepfad sei defekt. Das war
+ein MESSFEHLER meiner Prüfumgebung. Der Player-Code ist NICHT als defekt
+belegt — wer hier nach einem Fehler sucht, sucht vermutlich am falschen Ort.**
 
-## Kurz
+Ich lasse den Text stehen statt ihn zu löschen, damit die Messungen und vor
+allem der Fehlschluss nachvollziehbar bleiben.
 
-Die Erzeugung ist vollständig in Ordnung. Der `<video>`-Player bleibt bei
-`readyState 0` und lädt nie — ohne Fehlercode.
+## Was ich gemessen hatte
 
-## Was nachweislich funktioniert
+Im angemeldeten Browser blieb der `<video>`-Player bei `readyState 0`,
+`0x0`, `duration NaN`, **ohne Fehlercode** — bei beiden Videos im Verlauf und
+auch bei einem frisch erzeugten. Daraus schloss ich auf einen Fehler im
+MediaSource-Pfad des Nacht-Umbaus.
 
-| Stufe | Beleg |
+## Warum der Schluss falsch war
+
+Die Gegenprobe, die ich zuerst versäumt hatte:
+
+| Test in derselben Browser-Instanz | Ergebnis |
 |---|---|
-| Auftrag erkannt | Videospur übernimmt, Profil `video-erzeugung` |
-| Fortschritt | „Erzeuge dein Video · läuft … 40 s", eine Zeile, Schimmerkarte da |
-| Bild-Maler | Schritt „Male dein Bild ✓ fertig" |
-| Video-Worker | Schritt „Erzeuge dein Video ✓ fertig"; im Zeabur-Log `POST /erzeuge → 200 OK` |
-| Hinweistext | „Räumliche Kamerafahrt … Erzählt von der Stimme von smejj 1.0." |
-| Player-Attribute | `muted=false`, `loop=false` — für erzählte Videos korrekt |
+| Worker-MP4 über blob-URL | hängt, `readyState 0` |
+| Worker-MP4 über MediaSource | hängt, `readyState 0` |
+| **Unkomprimiertes WAV im `<audio>`** | **hängt, `readyState 0`** |
+| **Dasselbe WAV im `<video>`** | **hängt, `readyState 0`** |
 
-## Was scheitert
+Ein WAV braucht **keinen Codec** — es ist der trivialste denkbare Fall. Dass
+selbst das hängt, heißt: **der Media-Stack dieser automatisierten
+Chrome-Instanz dekodiert überhaupt nichts.** Jede Messung an `readyState`
+in dieser Umgebung ist wertlos, egal welcher Code dahintersteht.
 
-```
-readyState: 0        (nie geladen)
-networkState: 2      (LOADING, bleibt stehen)
-duration: NaN
-videoWidth/Height: 0x0
-error: null          (KEIN Fehlercode — es scheitert still)
-src: blob:https://smejj.com/…
-```
+`canPlayType` half nicht beim Erkennen: Es antwortete brav `"probably"` für
+`avc1.64001e` — aber es prüft nur den MIME-String, nicht den echten Decoder.
 
-Reproduzierbar bei **beiden** Videos im Verlauf, auch bei einem frisch
-erzeugten. Der Blob ist danach nicht mehr abrufbar (XHR auf die blob-URL
-scheitert), während `fetch(data:…)` einwandfrei funktioniert.
+## Was trotzdem gesichert ist (davon unberührt)
 
-## Ursachen, die ich AUSGESCHLOSSEN habe
+Diese Belege stammen nicht aus dem Browser und gelten weiter:
 
-1. **Das MP4 ist gut.** Aus der Container-Probe mit demselben Worker-Code:
-   91 KB, Boxenfolge `ftyp moov moof mdat mfra` — also **bereits
-   fragmentiert** (MediaSource-tauglich), H.264-Bild + AAC-Ton, von ffmpeg
-   gegengeprüft. Ein fehlendes `moof` ist NICHT das Problem.
-2. **Die CSP ist korrekt verstanden.** `media-src 'self' blob:` — `data:` ist
-   wirklich verboten, der Blob-Umweg ist also nötig und richtig.
-3. **Der `fetch`-Patch der App ist unschuldig.** `window.fetch` ist zwar
-   überschrieben (`passkey-ui.js`), liefert für `data:video/mp4;base64,…` aber
-   sauber einen Blob mit korrektem Typ.
-4. **Der Worker ist nicht überlastet.** CPU im Tagesmittel < 10 %.
+- Die **Erzeugung** ist vollständig in Ordnung: im Zeabur-Log des Workers steht
+  `POST /erzeuge → 200 OK`; die Schritte melden „Male dein Bild ✓ fertig" und
+  „Erzeuge dein Video ✓ fertig"; der Hinweistext und `muted=false/loop=false`
+  stehen korrekt in der Antwort.
+- Das erzeugte **MP4 ist gültig**: 91 KB, `ftyp moov moof mdat mfra`,
+  H.264 (High, Level 3.0 = `avc1.64001e`) + AAC — außerhalb des Browsers mit
+  ffmpeg gegengeprüft.
+- Die **CSP** verlangt den blob-Umweg wirklich (`media-src 'self' blob:`).
 
-## Wo der Verdacht liegt
+## Was offen bleibt
 
-Der ausgelieferte Player trägt den Kommentar *„Browserfester Wiedergabepfad
-(Nacht-Umbau 2026-08-13): zuerst MediaSource —"*. Der MediaSource-Pfad wird
-also betreten, füllt aber offenbar nie den `sourceBuffer` (daher `readyState 0`
-ohne Fehler), und **die im Commit-Titel angekündigte blob-Reserve fängt diesen
-Fall nicht auf**.
+**Ob der Player im normalen Browser des Betreibers funktioniert, ist NICHT
+geprüft** — weder positiv noch negativ. Das lässt sich nur dort messen:
 
-Zu prüfen wäre dort:
-- Stimmt der Codec-String in `MediaSource.isTypeSupported` / `addSourceBuffer`
-  mit dem echten Inhalt überein (`video/mp4; codecs="avc1.…, mp4a.40.2"`)?
-- Wird `sourceBuffer.appendBuffer` überhaupt erreicht, und kommt `updateend`?
-- Greift die Reserve auch dann, wenn MediaSource **still** hängt statt zu
-  werfen? Ein Zeitlimit („nach N Sekunden ohne `loadedmetadata` → blob") würde
-  genau diesen Fall abfangen.
-- Wird die blob-URL evtl. zu früh freigegeben? (`revokeObjectURL` steht nicht
-  im ausgelieferten Bündel, aber der Blob ist hinterher tot.)
-
-## So misst man es nach
-
-Im angemeldeten Browser auf smejj.com, nach einem Video-Auftrag:
+1. Auf smejj.com ein Video erzeugen lassen.
+2. Spielt es ab → alles gut, hier ist nichts zu tun.
+3. Dreht der Ladekreis ewig → dann erst lohnt der Blick in den
+   MediaSource-Pfad, und dann mit dieser Konsolen-Zeile:
 
 ```js
 const v = [...document.querySelectorAll('video.chat-video')].pop();
-({ readyState: v.readyState, netzwerk: v.networkState, dauer: v.duration,
-   groesse: v.videoWidth + 'x' + v.videoHeight,
-   fehler: v.error && v.error.code, quelle: (v.currentSrc||v.src).slice(0,30) });
+({ readyState: v.readyState, dauer: v.duration, fehler: v.error && v.error.code });
 ```
 
-Erwartet bei Erfolg: `readyState 4`, echte Dauer, `512x512`.
+**Merkregel für die nächste Player-Messung:** Erst mit einem WAV prüfen, ob die
+Umgebung überhaupt Medien abspielen kann. Sonst misst man den eigenen Browser
+und hält es für einen Produktfehler.
