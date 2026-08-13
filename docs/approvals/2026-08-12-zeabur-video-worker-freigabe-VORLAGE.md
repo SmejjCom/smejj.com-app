@@ -25,6 +25,22 @@ echte Video-Diffusion braeuchte auf 2 Kernen ~45 min pro 2-Sekunden-Video bei
 10-14 GB RAM. Der gebaute Weg erzeugt Bewegung aus Geometrie statt aus einem
 Videomodell — er laeuft auf der Maschine, die ihr schon bezahlt.
 
+## Im Container bewiesen (2026-08-12, lokal mit Docker)
+
+Nicht nur Code — der Dienst wurde als Abbild gebaut und im Verbund gefahren:
+
+| Pruefung | Ergebnis |
+|---|---|
+| `docker build -f Dockerfile.smejj-video-worker` | gruen, **601 MB** |
+| Start + Tiefenmodell laden (26 MB von HF) | gruen, `bereit: true` nach ~20 s |
+| `/erzeuge` ohne Schluessel | **401** (Schutz greift) |
+| `/erzeuge` mit Bild-Maler- und Piper-Ersatz | `engine: parallax:depth-anything-v2-small`, `ton: true` |
+| Ergebnisdatei | 81 KB MP4, **h264 512x512 + AAC-Tonspur**, 7,6 s |
+
+Nicht bewiesen: das 429-Verhalten bei echter Gleichzeitigkeit (die Ersatz-
+dienste antworten zu schnell, die Auftraege ueberlappten nicht). Der Pfad ist
+auf Bruecken-Seite durch Tests gedeckt.
+
 ## Kosten (vom Betreiber im Portal zu bestaetigen)
 
 Erwartung: **0,00 EUR zusaetzlich**, wenn der Dienst auf den bestehenden
