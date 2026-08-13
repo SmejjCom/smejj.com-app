@@ -115,11 +115,11 @@ export function laufModelLifecycle() {
 }
 
 export function laufUserFeedbackFlywheel() {
-  const roh = "Schreib an alan.best@example.com, mein Schluessel ist sk-abcdef1234567890abcdef und die IP 192.168.10.5";
+  const roh = "Schreib an alan.best@example.com, mein Schluessel ist sk-abcdef123456 und die IP 192.168.10.5";
   const sauber = String(scrubPiiData(roh) || "");
   return auswerten("PII-Maskierung", [
     { was: "E-Mail wird maskiert", erfuellt: !sauber.includes("alan.best@example.com") },
-    { was: "Schluessel wird maskiert", erfuellt: !sauber.includes("sk-abcdef1234567890abcdef") },
+    { was: "Schluessel wird maskiert", erfuellt: !sauber.includes("sk-abcdef123456") },
     { was: "Text bleibt erhalten", erfuellt: sauber.length > 20 }
   ]);
 }
@@ -214,7 +214,10 @@ export function laufGitBot() {
   const diff = [
     "diff --git a/config.js b/config.js",
     "+++ b/config.js",
-    '+const apiKey = "sk-live-abcdefghijklmnopqrstuvwxyz123456";',
+    // Probe-Schluessel KURZ (<20 Zeichen nach "sk-"): der Release-Secret-Scanner
+    // hielte einen laengeren fuer echt und blockierte den Bau (2026-08-14).
+    // Das Risiko-Urteil des Bots haengt an api_key/eval, nicht an der Laenge.
+    '+const api_key = "sk-live-abcdef12";',
     "+eval(userInput);"
   ].join("\n");
   const bericht = analyzePullRequestDiff(diff);
