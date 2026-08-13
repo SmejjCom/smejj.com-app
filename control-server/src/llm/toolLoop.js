@@ -356,6 +356,75 @@ async function sucheImWeb(anfrage, sucheImpl, region = "") {
   return [kopfzeile, ...zeilen, "", hinweis].join("\n");
 }
 
+// ---------------------------------------------------------------------------
+// Eine gesperrte Seite ist keine Sackgasse
+//
+// GEMESSEN am 2026-08-13 an einer Buero-Suche (Castro Valley / San Lorenzo).
+// LoopNet und Crexi antworteten mit 403 hinter Cloudflare. Das Modell schrieb
+// daraufhin "Weil LoopNet und Crexi 403 blockieren, kann ich die dortigen
+// Exposés nicht direkt auslesen", suchte weiter, verbrauchte alle Runden und
+// brach mitten im Satz ab. Der Nutzer bekam kein einziges Angebot.
+//
+// ChatGPT wurde am selben Tag von denselben Portalen genauso ausgesperrt — und
+// lieferte trotzdem sechs konkrete Inserate mit Adresse, Flaeche und Preis. Es
+// hat die Seiten nie gelesen, sondern die SUCHTREFFER ausgewertet: Titel und
+// Kurztext eines Portal-Treffers tragen Flaeche, Preis je SqFt und Zimmerzahl
+// schon in sich. Die Daten lagen auch bei uns vor — im selben Lauf stand
+// "Crexi 3209 Castro Valley Blvd office lease 1083 sqft" in der Schrittliste,
+// und ChatGPT nennt fuer dasselbe Objekt "1.083 SqFt, ca. 2.220 $/Monat".
+//
+// Die Sperre war also nie das Problem. Das Problem war, dass das Werkzeug sie
+// wie einen Fehler meldete und das Modell daraus "geht nicht" schloss. Ab jetzt
+// sagt das Werkzeugergebnis, was stattdessen zu tun ist.
+// ---------------------------------------------------------------------------
+
+/** 401/403/429 und 5xx eines Schutzdienstes: der Inhalt ist da, nur nicht fuer uns. */
+export function istSperrstatus(status) {
+  const code = Number(status);
+  return code === 401 || code === 403 || code === 429 || code === 503;
+}
+
+/** Eine echte Pruefseite hat fast keinen Text. Ein Artikel hat welchen. */
+const PRUEFSEITE_MAX_ZEICHEN = 600;
+// ANKER am Anfang, nicht irgendwo im Text: Ein erster Entwurf suchte diese
+// Woerter ueberall und stufte prompt einen Blogartikel UEBER Bot-Sperren als
+// Sperre ein (vom Non-Regression-Test gefangen, 2026-08-13). Wer ueber
+// "access denied" SCHREIBT, ist nicht gesperrt.
+const PRUEFSEITE_TITEL = /^(just a moment|attention required|access denied|verify you are human|security check|checking your browser|are you a robot)/;
+const PRUEFSEITE_TEXT = /^(enable javascript and cookies to continue|checking your browser before accessing|verify you are human|please enable (js|javascript))/i;
+
+/**
+ * Eine Javascript-Pruefseite ("Just a moment …") kommt mit HTTP 200 und sieht
+ * fuer das Modell wie echter Inhalt aus — ohne diese Erkennung berichtet es dem
+ * Nutzer ueber "Just a moment". Drei Bedingungen muessen zusammenkommen, damit
+ * eine echte Seite nie faelschlich als Sperre gilt.
+ */
+export function istPruefseite(titel, text) {
+  const kopf = String(titel || "").trim().toLowerCase();
+  const inhalt = String(text || "").trim();
+  if (inhalt.length >= PRUEFSEITE_MAX_ZEICHEN) return false;
+  return PRUEFSEITE_TITEL.test(kopf) || PRUEFSEITE_TEXT.test(inhalt);
+}
+
+/** Was das Modell statt der Seite tun soll. Anweisung, nicht Fehlermeldung. */
+export function sperrHinweis(url, status) {
+  return [
+    `Die Seite ${url} ist fuer maschinelle Zugriffe gesperrt (HTTP ${status}).`,
+    "",
+    "Das ist KEIN Grund aufzugeben und KEIN Grund, es weiter zu versuchen:",
+    `- Rufe seite_lesen fuer ${url} NICHT erneut auf. Ein zweiter Versuch scheitert genauso.`,
+    "- Die Angaben stehen bereits in deinen SUCHERGEBNISSEN. Titel und Kurztext eines",
+    "  Portal-Treffers enthalten in der Regel Flaeche, Preis je Einheit und Zimmerzahl.",
+    "  Werte sie aus, statt neu zu suchen.",
+    `- Nenne ${url} trotzdem als anklickbare Adresse: der Nutzer kann die Seite in seinem`,
+    "  Browser oeffnen, auch wenn wir es nicht koennen.",
+    "- Erfinde nichts. Was der Kurztext nicht hergibt, benennst du offen als \"im Inserat",
+    "  nicht angegeben\" — eine ehrliche Luecke ist besser als eine erfundene Zahl.",
+    "",
+    "Antworte jetzt mit dem, was du hast."
+  ].join("\n");
+}
+
 // Nutzt bewusst parseBrowserTarget aus dem Browser-Proxy: dieselbe gepruefte
 // Regel gegen interne Adressen (SSRF), kein zweiter Sicherheitsstand.
 async function leseSeite(rawUrl, fetchImpl) {
@@ -367,11 +436,19 @@ async function leseSeite(rawUrl, fetchImpl) {
     const antwort = await fetchImpl(ziel.url, { redirect: "follow", signal: controller.signal });
     const typ = String(antwort.headers.get("content-type") || "");
     if (!/text\/html|text\/plain|application\/xhtml/i.test(typ)) {
+      if (istSperrstatus(antwort.status)) return sperrHinweis(ziel.url, antwort.status);
       return `HTTP ${antwort.status}, Inhaltstyp ${typ || "unbekannt"} — kein lesbarer Text.`;
     }
     const html = (await antwort.text()).slice(0, MAX_PAGE_BYTES);
     const titel = extractTitle(html) || "";
     const text = zuText(html).slice(0, MAX_PAGE_CHARS);
+    // Die Sperre kommt in zwei Gestalten: als HTTP-Status (403/429) ODER als
+    // freundliche 200er-Seite mit einer Javascript-Pruefung darauf. Beide
+    // muessen dieselbe Anweisung ausloesen — sonst haelt das Modell die
+    // Pruefseite fuer den Inhalt und berichtet ueber "Just a moment".
+    if (istSperrstatus(antwort.status) || istPruefseite(titel, text)) {
+      return sperrHinweis(ziel.url, antwort.status);
+    }
     return [
       `URL: ${ziel.url}`,
       `HTTP-Status: ${antwort.status}`,
