@@ -21,6 +21,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const STORE = "chats";
+// Projekte (2026-08-13): zweiter Objektspeicher in derselben Datenbank. Die
+// Selbstheilung ist zugleich die MIGRATION — eine Bestands-Datenbank ohne
+// "projekte" wird einmal eine Version hochgezogen.
+const PROJEKT_STORE = "projekte";
 
 // chat-store.js importiert seine Nachbarn ueber Browser-Pfade ("/assets/…"),
 // die Node nicht aufloest. Fuer den Test werden sie auf file://-URLs
@@ -133,6 +137,9 @@ async function lade(anfang) {
   };
   globalThis.window = globalThis.window || {};
   globalThis.window.addEventListener = () => {};
+  // Projekt-Funktionen melden Aenderungen per CustomEvent — im Test still.
+  globalThis.window.dispatchEvent = () => true;
+  globalThis.CustomEvent = globalThis.CustomEvent || class { constructor(typ, opts) { this.type = typ; this.detail = opts?.detail; } };
   const modul = await import(`${pathToFileURL(MODUL).href}?fall=${Math.random()}`);
   return { modul, fake };
 }
@@ -152,16 +159,27 @@ test("kaputte Datenbank ohne Objektspeicher heilt sich und speichert wieder", as
 });
 
 test("gesunde Datenbank wird nicht unnoetig hochgezogen", async () => {
-  const { modul, fake } = await lade({ version: 1, stores: [STORE] });
+  const { modul, fake } = await lade({ version: 1, stores: [STORE, PROJEKT_STORE] });
   assert.deepEqual(await modul.listChats(), []);
   assert.deepEqual(fake.protokoll.geoeffnet, [null], "genau ein Oeffnen, keine Versionserhoehung");
   assert.deepEqual(fake.protokoll.aufgebaut, [], "ein vorhandener Speicher wird nicht neu gebaut");
   assert.equal(fake.protokoll.geschlossen, 0);
 });
 
+test("Bestands-Datenbank ohne Projekt-Store wird EINMAL hochgezogen (Migration)", async () => {
+  // Vor den Projekten war {version 1, stores: [chats]} der gesunde Normalfall —
+  // jede echte Bestandsinstallation sieht so aus. Der fehlende Projekt-Store
+  // laeuft ueber denselben Heilungsweg wie ein kaputter Chats-Store.
+  const { modul, fake } = await lade({ version: 1, stores: [STORE] });
+  assert.deepEqual(await modul.listChats(), [], "Chats bleiben unangetastet");
+  assert.ok(fake.protokoll.aufgebaut.includes(`${PROJEKT_STORE}@2`), "der Projekt-Store wird auf Version 2 nachgelegt");
+  assert.deepEqual(fake.protokoll.geoeffnet, [null, 2], "erst der vorhandene Stand, dann eine Version hoeher");
+  assert.equal(fake.protokoll.geschlossen, 1);
+});
+
 test("eine bereits geheilte Datenbank oeffnet ohne VersionError", async () => {
   // Der Rueckfall, den ein Fix mit fester Version 1 eingebaut haette.
-  const { modul, fake } = await lade({ version: 2, stores: [STORE] });
+  const { modul, fake } = await lade({ version: 2, stores: [STORE, PROJEKT_STORE] });
   assert.deepEqual(await modul.listChats(), []);
   assert.deepEqual(fake.protokoll.geoeffnet, [null], "ohne Versionsangabe oeffnen — sonst VersionError");
 });
@@ -170,6 +188,33 @@ test("fehlende Datenbank wird beim ersten Start vollstaendig angelegt", async ()
   const { modul, fake } = await lade(null);
   assert.deepEqual(await modul.listChats(), []);
   assert.ok(fake.protokoll.aufgebaut.includes(`${STORE}@1`), "Erstaufbau bleibt auf Version 1");
+  assert.ok(fake.protokoll.aufgebaut.includes(`${PROJEKT_STORE}@1`), "beide Speicher entstehen zusammen — kein zweiter Aufbau noetig");
+});
+
+test("Projekte: anlegen, Chat zuordnen, loeschen — projectId ueberlebt, Chats bleiben", async () => {
+  const { modul } = await lade({ version: 1, stores: [STORE, PROJEKT_STORE] });
+  // Angemeldete Sitzung, sonst ist alles unsichtbar (fail-closed wie bei Chats).
+  globalThis.localStorage.setItem("smejj.session.v1", JSON.stringify({ authenticated: true, userId: "user_test" }));
+
+  const projektId = await modul.erstelleProjekt("  Marktstart   2026  ");
+  assert.ok(projektId.startsWith("proj_"), "Projekt wird angelegt");
+  const projekte = await modul.listProjekte();
+  assert.equal(projekte.length, 1);
+  assert.equal(projekte[0].name, "Marktstart 2026", "Name wird getrimmt und zusammengefasst");
+
+  // Chat anlegen (createChatFrom startet bewusst OHNE Projekt) und zuordnen.
+  const chatId = await modul.createChatFrom([{ role: "user", text: "Hallo" }]);
+  assert.equal((await modul.getChat(chatId)).projectId, "", "neuer Chat gehoert keinem Projekt");
+  assert.equal(await modul.setzeChatProjekt(chatId, projektId), true);
+  const chat = await modul.getChat(chatId);
+  assert.equal(chat.projectId, projektId, "Zuordnung sitzt");
+  assert.ok(chat.updatedAt >= chat.createdAt, "Zuordnung bumpt updatedAt (sonst reist sie nie zu anderen Geraeten)");
+
+  // Projekt loeschen: der Chat bleibt mitsamt seiner (nun toten) projectId —
+  // die Ansicht behandelt das als "kein Projekt", nichts wird mitgeloescht.
+  assert.equal(await modul.loescheProjekt(projektId), true);
+  assert.deepEqual(await modul.listProjekte(), []);
+  assert.equal((await modul.getChat(chatId)).projectId, projektId, "der Chat wird beim Projekt-Loeschen nicht angefasst");
 });
 
 test("eine voruebergehende Stoerung vergiftet den Verlauf nicht dauerhaft", async () => {
