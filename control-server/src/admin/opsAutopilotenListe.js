@@ -573,19 +573,19 @@ export const AUTOPILOTEN = Object.freeze([
     name: "29. 24/7 Synthetic User & Full-Stack E2E Watchdog",
     kurz: "Simuliert rund um die Uhr echte Nutzer-Abläufe (Login, Chat, Inferenz, S3-Speicher) und schlägt bei Fehlern sofort Alarm.",
     funktionen: [
-      "Führt alle 5 Minuten einen vollständigen End-to-End-Durchlauf als virtueller Nutzer aus.",
-      "Misst Time-to-First-Token (<1,0s) und Antwort-Integrität von smejj 1.0.",
-      "Prüft IDrive e2 S3 Speicher-Konsistenz und leitet bei Fehlern sofortige Selbstheilung ein."
+      "Führt alle 30 Minuten einen ECHTEN End-to-End-Durchlauf aus: Anmeldung, Chat über die Brücke, Speicher.",
+      "Anmeldung: stellt ein Token aus und prüft beide Richtungen — gültig wird angenommen, verfälscht wird abgelehnt.",
+      "Chat: echter Aufruf über dieselbe Adresse wie die App, misst die Antwortzeit; ein leerer 200er gilt als Ausfall.",
+      "Speicher: schreibt einen Datensatz und liest ihn zurück — erst der Vergleich ist der Nachweis."
     ],
     trainiert: "Synthetic User Journeys (Auth -> Chat -> TTFT -> IDrive e2 S3 Storage)",
     verbessert: "24/7 End-to-End Qualitätsgarantie & automatische Ausfallerkennung in unter 60 Sekunden",
     neuigkeiten: ["Synthetic User Watchdog aktiv (alle 5 Min)", "100% E2E Flow grün verifiziert"],
     ort: "Control Server (E2E Watchdog)",
-    zeitplan: "24/7 Dauerbetrieb (alle 5 Min)",
-    messung: "geplant",
-    messungHinweis: "Das Modul erzeugt bisher Zufallswerte statt echter E2E-Laeufe (Math.random als Antwortzeit). Grau, bis der Durchlauf wirklich gegen die Live-Kette faehrt.",
-    erwartetAlleMs: 24 * STUNDE_MS,
-    schonfristMs: 12 * STUNDE_MS,
+    zeitplan: "alle 30 Minuten (Autopilot-Läufer im Control-Server)",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
     startAnleitung: "Läuft kontinuierlich als permanenter E2E-Endnutzer-Wächter.",
     stopAnleitung: "Über Watchdog-Policy konfigurierbar."
   },

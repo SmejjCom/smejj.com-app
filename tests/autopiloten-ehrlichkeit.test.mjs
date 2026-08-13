@@ -70,7 +70,8 @@ const MIT_ECHTER_MESSUNG = new Set([
   "live-arena-leaderboard",   // ELO-Mathematik, exakt pruefbar
   "instant-web-container",    // Vorschau mit eingebettetem Inhalt
   "realtime-voice-pair",      // Sitzung anlegen und Rahmen verarbeiten
-  "autonomous-git-bot"        // muss Secret und eval im Diff finden
+  "autonomous-git-bot",       // muss Secret und eval im Diff finden
+  "synthetic-user-watchdog"   // ECHTER Durchlauf: Anmeldung, Chat ueber die Bruecke, Speicher mit Ruecklese-Probe
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

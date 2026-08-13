@@ -17,11 +17,14 @@ import {
   laufSelfHealing
 } from "../control-server/src/autopilots/autopilotLaeufer.js";
 
-test("Der Laeufer betreibt alle 21 Autopiloten und meldet jeden einzeln", async () => {
+// mitNetz:false ueberall in den Tests — der E2E-Waechter ist der einzige Lauf,
+// der die Aussenwelt anfasst. Eine Testsuite, die echte Chat-Aufrufe macht,
+// misst das Netz statt den Code (und kostet Tokens).
+test("Der Laeufer betreibt alle 21 Selbsttest-Autopiloten und meldet jeden einzeln", async () => {
   const gemeldet = [];
-  const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; } });
+  const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; }, mitNetz: false });
 
-  assert.equal(ergebnisse.length, 21, "21 Autopiloten laufen im Control-Server");
+  assert.equal(ergebnisse.length, 21, "21 Autopiloten laufen ohne Netz im Control-Server");
   assert.equal(gemeldet.length, 21, "jeder bekommt genau einen Herzschlag");
   assert.equal(new Set(gemeldet.map((g) => g.id)).size, 21, "keine Kennung doppelt");
 
@@ -39,7 +42,8 @@ test("ENTSCHEIDEND: ein durchgefallener Autopilot wird ROT gemeldet", async () =
   const gemeldet = new Map();
   await laufeAlle({
     melde: (id, e) => { gemeldet.set(id, e); return true; },
-    dateienLader: () => []
+    dateienLader: () => [],
+    mitNetz: false
   });
 
   assert.equal(gemeldet.get("bug-predictor").status, "fehler",
@@ -54,10 +58,26 @@ test("Ein abstuerzendes Modul reisst den Lauf nicht mit", async () => {
   const gemeldet = new Map();
   const ergebnisse = await laufeAlle({
     melde: (id, e) => { gemeldet.set(id, e); return true; },
-    dateienLader: () => { throw new Error("Dateisystem weg"); }
+    dateienLader: () => { throw new Error("Dateisystem weg"); },
+    mitNetz: false
   });
   assert.equal(ergebnisse.length, 21, "alle anderen laufen trotzdem");
   assert.equal(gemeldet.get("smart-router").status, "ok");
+});
+
+test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht pruefen kann", async () => {
+  // Ohne SMEJJ_SESSION_SECRET kann der Waechter die Kette nicht pruefen. Er
+  // faehrt dann KEINEN Netzaufruf und meldet "fehler" mit Grund — nicht "ok".
+  const gemeldet = new Map();
+  const ergebnisse = await laufeAlle({
+    melde: (id, e) => { gemeldet.set(id, e); return true; },
+    mitNetz: true
+  });
+  assert.equal(ergebnisse.length, 22, "der Waechter ist der 22. Lauf");
+  const w = gemeldet.get("synthetic-user-watchdog");
+  assert.ok(w, "der Waechter muss melden");
+  assert.equal(w.status, "fehler", "ohne pruefbare Kette ist er rot, nie gruen");
+  assert.match(w.meldung, /gescheitert/i);
 });
 
 test("Quelltext-Sammler findet den echten Code dieses Projekts", () => {

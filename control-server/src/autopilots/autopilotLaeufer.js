@@ -31,6 +31,7 @@ import { routePrompt } from "./smartRouterAutopilot.js";
 import { inspectResponseHealth, detectRepetitiveLoop } from "./selfHealingAutopilot.js";
 // Die uebrigen Selbsttests liegen in einer eigenen Datei (800-Zeilen-Regel).
 import * as S from "./autopilotSelbsttests.js";
+import { runFullSyntheticE2ECycle } from "./syntheticUserWatchdogAutopilot.js";
 
 // Der Container hat seinen eigenen Quelltext an Bord (Dockerfile.smejj-control
 // kopiert src/ und control-server/). Genau den scannen die beiden
@@ -167,7 +168,33 @@ export function laufSelfHealing() {
  *
  * @param {{melde?: Function, dateienLader?: Function}} [optionen]
  */
-export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien } = {}) {
+/**
+ * Der einzige Lauf mit echtem Netzverkehr: ein vollstaendiger Nutzer-Durchlauf
+ * (Anmeldung -> Chat ueber die Bruecke -> Speicher mit Ruecklese-Probe).
+ * Bis 2026-08-12 war dieses Modul innen eine Attrappe: es wuerfelte eine
+ * Antwortzeit mit Math.random() und prueft, ob ein selbst gebauter String
+ * laenger als 10 Zeichen ist. Jetzt misst es die echte Kette.
+ */
+export async function laufSyntheticWatchdog({ env = process.env } = {}) {
+  const zyklus = await runFullSyntheticE2ECycle({ env });
+  const chat = (zyklus.details || []).find((d) => d.step === "chat_inference_flow");
+  if (!zyklus.ok) {
+    const kaputt = (zyklus.details || []).find((d) => !d.passed);
+    return { ok: false, meldung: `E2E-Durchlauf gescheitert bei "${zyklus.failedStep}": ${kaputt?.error || "ohne Grund"}` };
+  }
+  return {
+    ok: true,
+    meldung: `Echter Nutzer-Durchlauf bestanden: ${zyklus.stepsPassed}/3 Schritte `
+      + `(Anmeldung, Chat ${chat?.ttftMs ?? "?"} ms, Speicher mit Rücklese-Probe)`
+  };
+}
+
+/**
+ * @param {{melde?: Function, dateienLader?: Function, mitNetz?: boolean}} [optionen]
+ *   mitNetz=false laesst den E2E-Waechter aus — fuer Tests, die ohne Aussenwelt
+ *   laufen muessen.
+ */
+export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien, mitNetz = true } = {}) {
   // Einmal lesen, zweimal nutzen: beide Repo-Autopiloten sehen denselben Stand.
   let dateien = [];
   try {
@@ -195,7 +222,12 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     await fuehreAus("live-arena-leaderboard", () => S.laufLiveArena()),
     await fuehreAus("instant-web-container", () => S.laufWebContainer()),
     await fuehreAus("realtime-voice-pair", () => S.laufVoicePair()),
-    await fuehreAus("autonomous-git-bot", () => S.laufGitBot())
+    await fuehreAus("autonomous-git-bot", () => S.laufGitBot()),
+    // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
+    // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
+    // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen
+    // Selbsttest.
+    ...(mitNetz ? [await fuehreAus("synthetic-user-watchdog", () => laufSyntheticWatchdog())] : [])
   ];
 
   for (const e of ergebnisse) {
