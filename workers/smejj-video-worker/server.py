@@ -109,7 +109,11 @@ MAX_DAUER_S = float(os.environ.get("SMEJJ_VIDEO_MAX_DAUER_S", "14"))
 EXTERN_KEY = os.environ.get("SMEJJ_VIDEO_EXTERN_KEY", "")
 EXTERN_MODELL = os.environ.get("SMEJJ_VIDEO_EXTERN_MODELL", "fal-ai/ltx-video/image-to-video")
 EXTERN_QUEUE = "https://queue.fal.run"
-EXTERN_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_EXTERN_TIMEOUT_S", "110"))
+# Budgetkette (Befund 2026-08-13): die Bruecke wartet insgesamt nur 180 s.
+# Bild (~110 s) + extern-Warten muessen zusammen darunter bleiben, sonst
+# stirbt der Auftrag am Bruecken-Timeout, selbst wenn hier alles klappt.
+# Darum 60 s statt 110 s Voreinstellung fuers Abfrage-Warten bei fal.
+EXTERN_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_EXTERN_TIMEOUT_S", "60"))
 # 50 Videos/Tag x 0,02 USD = max ~1 USD/Tag. Der Zaehler liegt in /tmp und
 # faellt bei Neustart auf 0 — darum ist das Anbieter-Limit der massgebliche
 # Deckel, nicht diese Datei.
@@ -537,19 +541,23 @@ def extern_budget_frei():
     return True
 
 
-def erzeuge_extern(prompt):
+def erzeuge_extern(prompt, bild):
     """Echte Motivbewegung: eigenes Bild + fal.ai-Animation.
 
     Wirft bei jedem Problem — der Aufrufer faellt dann auf parallax zurueck,
     der Nutzer bekommt IMMER ein Video. Der Aufrufer stellt sicher, dass
     EXTERN_KEY gesetzt ist; hier schuetzt zusaetzlich der Tagesdeckel.
+
+    Das Basisbild kommt vom AUFRUFER (einmal gemalt, ~110 s): schlaegt fal
+    fehl, rendert der parallax-Rueckfall DASSELBE Bild, statt den Maler ein
+    zweites Mal zu bezahlen — die zweite Malrunde sprengte am 2026-08-13 das
+    180-s-Budget der Bruecke.
     """
     import base64 as b64mod
 
     if not extern_budget_frei():
         raise RuntimeError("extern_tagesdeckel_erreicht")
 
-    bild = hole_basisbild(prompt)  # eigener Maler — inkl. Personen-Schutzfilter
     puffer = io.BytesIO()
     bild.save(puffer, format="PNG")
     daten_uri = "data:image/png;base64," + b64mod.b64encode(puffer.getvalue()).decode("ascii")
@@ -589,19 +597,22 @@ def erzeuge_extern(prompt):
     return mp4, f"extern:{EXTERN_MODELL.split('/')[-2]}"
 
 
-def erzeuge_kenburns(prompt, dauer=None):
-    bild = hole_basisbild(prompt)
+def erzeuge_kenburns(prompt, dauer=None, bild=None):
+    if bild is None:
+        bild = hole_basisbild(prompt)
     return kodiere_mp4(kenburns_frames(bild, dauer)), "kenburns:sd-turbo"
 
 
-def erzeuge_parallax(prompt, dauer=None):
+def erzeuge_parallax(prompt, dauer=None, bild=None):
     """Bild malen, Tiefe schätzen, räumlich durchfahren.
 
     Fällt auf kenburns zurück, wenn keine brauchbare Tiefe herauskommt — die
     Antwort nennt dann auch ehrlich "kenburns", damit die Brücke den richtigen
-    Hinweis setzt.
+    Hinweis setzt. Ein schon gemaltes Bild (extern-Rueckfall) wird
+    wiederverwendet statt neu bezahlt.
     """
-    bild = hole_basisbild(prompt)
+    if bild is None:
+        bild = hole_basisbild(prompt)
     tiefe = schaetze_tiefe(bild)
     if tiefe is None:
         return kodiere_mp4(kenburns_frames(bild, dauer)), "kenburns:sd-turbo"
@@ -666,6 +677,22 @@ async def erzeuge(request: Request):
     if not video_sperre.acquire(blocking=False):
         return JSONResponse({"ok": False, "fehler": "beschaeftigt"}, status_code=429)
     try:
+        # Die Minutenarbeit gehoert in den Threadpool, NICHT in die Event-Loop:
+        # der Bild-Maler blockiert seine Loop waehrend des Malens, und gemessen
+        # am 2026-08-13 stauen sich dann alle Anfragen (auch /health) am Socket,
+        # bis der Job fertig ist — das sofortige 429 wird zur Luege. Hier bleibt
+        # die Loop frei, damit /health und das 429 auch waehrend eines Renderns
+        # ehrlich antworten.
+        from fastapi.concurrency import run_in_threadpool
+
+        return await run_in_threadpool(erzeuge_blockierend, prompt, erzaehltext)
+    finally:
+        video_sperre.release()
+
+
+def erzeuge_blockierend(prompt, erzaehltext):
+    """Die eigentliche Videoarbeit — laeuft im Threadpool, Sperre haelt der Aufrufer."""
+    try:
         beginn = time.time()
         # Stimme ZUERST: erst ihre Länge sagt, wie lang das Video werden muss.
         # Sie kostet nur wenige Sekunden, das Bild danach die Minute.
@@ -682,15 +709,20 @@ async def erzeuge(request: Request):
             # Fehler ehrlich zurueck auf die eigene Engine — der Nutzer
             # bekommt immer ein Video. LTX liefert fix 5 s; die Stimme wird
             # bei Bedarf vom Mischer gekuerzt statt das Video zu strecken.
+            #
+            # Das Bild EINMAL malen und fuer extern UND Rueckfall verwenden:
+            # zweimal malen (je ~110 s) sprengte das 180-s-Budget der Bruecke.
+            bild = hole_basisbild(prompt)
+            print(f"basisbild nach {time.time() - beginn:.0f}s", flush=True)
             try:
-                mp4, engine = erzeuge_extern(prompt)
+                mp4, engine = erzeuge_extern(prompt, bild)
             except Besetzt:
                 raise
             except Exception as fehler:  # noqa: BLE001
                 # flush: Container-stdout ist blockgepuffert — ohne flush erschien
                 # diese Zeile NIE im Zeabur-Log (Befund 2026-08-13).
                 print(f"extern fehlgeschlagen, parallax uebernimmt: {type(fehler).__name__}: {fehler}", flush=True)
-                mp4, engine = erzeuge_parallax(prompt, dauer)
+                mp4, engine = erzeuge_parallax(prompt, dauer, bild=bild)
         elif ENGINE == "animatediff" and diffusion_pipeline is not None:
             mp4, engine = erzeuge_animatediff(prompt)
         elif ENGINE == "parallax":
@@ -724,6 +756,8 @@ async def erzeuge(request: Request):
     except Besetzt as fehler:
         return JSONResponse({"ok": False, "fehler": str(fehler)}, status_code=429)
     except Exception as fehler:  # noqa: BLE001
+        # Auch der Fehlweg gehoert ins Log: die Bruecke zeigt dem Nutzer nur
+        # ihren generischen Satz, der Ausnahme-Typ stand bisher NIRGENDS
+        # (Befund 2026-08-13: der 500er um 23:18Z war im Log typlos).
+        print(f"erzeuge fehlgeschlagen: {type(fehler).__name__}: {fehler}", flush=True)
         return JSONResponse({"ok": False, "fehler": f"{type(fehler).__name__}: {fehler}"}, status_code=500)
-    finally:
-        video_sperre.release()
