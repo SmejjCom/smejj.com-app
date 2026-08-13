@@ -61,6 +61,7 @@ import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.j
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
 import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
+import { handleFeedbackRoute } from "../control-server/src/routes/feedbackRoutes.js";
 import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoutes.js";
@@ -195,6 +196,8 @@ const server = http.createServer(async (req, res) => {
     if (await handleAutopilotHeartbeat(req, url, res)) return;
     // Kundensupport Stufe 1: Ticket + KI-Sofortantwort (angemeldete Nutzer) — supportRoutes.js.
     if (await handleSupportRoute(req, url, res)) return;
+    // Daten-Schwungrad Stufe 1: Daumen-Signale der Nutzer — feedbackRoutes.js.
+    if (await handleFeedbackRoute(req, url, res)) return;
     // Adminbereich, Transparenzbericht, Einwilligung — Zustaendigkeit: adminSurfaceRoutes.js.
     if (await handleAdminSurface(req, url, res, { readSession, sessionStillValid })) return;
     // Adminbereich Stufe 1 (nur lesend): ohne frische Adminrolle aus dem Store => 403.

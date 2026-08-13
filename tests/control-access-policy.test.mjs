@@ -129,3 +129,10 @@ test("Kundensupport-Routen verlangen eine Anmeldung", () => {
       pfad + " muss durch die Anmelde-Pflicht laufen");
   }
 });
+
+test("Daten-Schwungrad-Route verlangt eine Anmeldung", () => {
+  // Ohne diesen Eintrag setzt server.js req.authUser nie und die Route weist
+  // JEDEN ab — derselbe Fehler, der am 2026-08-13 den Support lahmlegte.
+  assert.equal(requiresAuthenticatedControlAccess({ method: "POST" }, new URL("http://x/api/feedback")), true);
+  assert.equal(requiresAuthenticatedControlAccess({ method: "GET" }, new URL("http://x/api/feedback/irgendwas")), true);
+});

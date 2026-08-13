@@ -54,6 +54,7 @@ export function requiresAuthenticatedControlAccess(req, url) {
   if (pathname === "/api/account" || pathname.startsWith("/api/account/")) return true;
   // Kundensupport (Stufe 1, 2026-08-13): Tickets gehoeren zum Konto.
   if (pathname === "/api/support" || pathname.startsWith("/api/support/")) return true;
+  if (pathname === "/api/feedback" || pathname.startsWith("/api/feedback/")) return true;
   // Die Admin-Oberflaeche prueft ihre Sitzung SELBST (adminUiRoutes.js) und
   // antwortet mit einer lesbaren Seite statt mit JSON. Waere sie hier gelistet,
   // bekaeme ein Mensch am Browser `{"error":"authentication_required"}` zu
