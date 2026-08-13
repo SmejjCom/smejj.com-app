@@ -173,7 +173,9 @@ function knoten(tag = "div") {
       if (!eltern) return null;
       const i = eltern.children.indexOf(self);
       return i > 0 ? eltern.children[i - 1] : null;
-    }
+    },
+    querySelector: () => null,
+    scrollIntoView() {}
   };
   return self;
 }
@@ -539,6 +541,88 @@ test("ein einziger Fund genuegt — dann schweigt der Hinweis", () => {
   assert.equal(quellenHinweis({ gesamt: 6, ohneFund: 5, antwort: "Kurz." }), "");
   assert.equal(quellenHinweis({ gesamt: 0, ohneFund: 0, antwort: "" }), "", "ohne Werkzeuglauf gar nichts");
   assert.equal(quellenHinweis(), "");
+});
+
+// --- Zwischengerede gehoert nicht in die Antwort ---------------------------
+//
+// GEMESSEN 2026-08-13 live: Als Antwort stand das Selbstgespraech des Modells
+// zwischen den Werkzeugaufrufen, ohne Absatz aneinandergeklebt — "Lassen Sie
+// mich verschiedene Suchen durchführen.Ich habe jetzt gute Ansätze gefunden.
+// … Es ist wichtig, ehrlich zu sein über den Stand." Ursache: toolLoop.js
+// streamt den Text JEDER Runde durch, nur die letzte ist die Antwort.
+
+const { streamChatAnswer } = await import("../public/ai/chat-stream.js");
+
+const textEreignis = (inhalt) => JSON.stringify({ choices: [{ delta: { content: inhalt } }] });
+const schrittEreignis = (schritt) => JSON.stringify({ smejj_schritt: schritt });
+
+function stromAus(ereignisse) {
+  const encoder = new TextEncoder();
+  let i = 0;
+  return {
+    ok: true,
+    body: {
+      getReader: () => ({
+        read: async () => (i < ereignisse.length
+          ? { value: encoder.encode(`data: ${ereignisse[i++]}\n\n`), done: false }
+          : { value: undefined, done: true })
+      })
+    }
+  };
+}
+
+async function laufeStrom(ereignisse) {
+  const { antwort } = buehne();
+  const alterFetch = globalThis.fetch;
+  globalThis.fetch = async () => stromAus(ereignisse);
+  try {
+    await streamChatAnswer("https://beispiel.test/api/chat", {}, antwort, {});
+  } finally {
+    globalThis.fetch = alterFetch;
+  }
+  return antwort;
+}
+
+const SUCHE_LAEUFT = { art: "suche", text: "office castro valley", zustand: "laeuft" };
+const SUCHE_FERTIG = { art: "suche", text: "office castro valley", zustand: "fertig", treffer: 6 };
+
+test("was vor einem Werkzeug geschrieben wurde, landet NICHT in der Antwort", async () => {
+  const antwort = await laufeStrom([
+    textEreignis("Ich suche jetzt gezielt nach konkreten Exposés. Lassen Sie mich das tun."),
+    schrittEreignis(SUCHE_LAEUFT),
+    schrittEreignis(SUCHE_FERTIG),
+    textEreignis("2811 Castro Valley Blvd, 1.083 SqFt, 2.600 $/Monat.")
+  ]);
+  assert.equal(antwort.textContent, "2811 Castro Valley Blvd, 1.083 SqFt, 2.600 $/Monat.");
+  assert.ok(!antwort.textContent.includes("Lassen Sie mich"), "kein Selbstgespraech in der Antwort");
+});
+
+test("mehrere Runden kleben nicht mehr aneinander — nur die letzte zaehlt", async () => {
+  const antwort = await laufeStrom([
+    textEreignis("Runde eins."),
+    schrittEreignis(SUCHE_LAEUFT), schrittEreignis(SUCHE_FERTIG),
+    textEreignis("Runde zwei."),
+    schrittEreignis({ art: "seite", text: "https://a.example/", zustand: "laeuft" }),
+    schrittEreignis({ art: "seite", text: "https://a.example/", zustand: "fertig", treffer: 1 }),
+    textEreignis("Das ist die Antwort.")
+  ]);
+  assert.equal(antwort.textContent, "Das ist die Antwort.");
+});
+
+test("bricht der Lauf ohne Antwort ab, kommt die letzte Notiz zurueck", async () => {
+  // Live gesehen: die Schlussrunde lieferte nichts mehr. Eine leere Blase waere
+  // schlechter als die Arbeitsnotiz — nichts geht verloren.
+  const antwort = await laufeStrom([
+    textEreignis("Weil LoopNet und Crexi 403 blockieren, kann ich die Exposés nicht auslesen."),
+    schrittEreignis(SUCHE_LAEUFT),
+    schrittEreignis(SUCHE_FERTIG)
+  ]);
+  assert.match(antwort.textContent, /LoopNet und Crexi 403 blockieren/);
+});
+
+test("ohne Werkzeugschritt bleibt jeder Text stehen (Non-Regression)", async () => {
+  const antwort = await laufeStrom([textEreignis("Berlin"), textEreignis(" ist die Hauptstadt.")]);
+  assert.equal(antwort.textContent, "Berlin ist die Hauptstadt.");
 });
 
 test("eine ausfuehrliche Antwort wird nicht belehrt", () => {
