@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T23:18:26.178Z",
-  "confirmation": "Betreiber 2026-08-13: 'Eckig-Kontrolle App-weit machen' + Wahl 'Alles ausser Avatar' — neue eckig.css (border-radius 0 !important app-weit, Avatare ausgenommen), in index.html verlinkt und in den Lock aufgenommen. Mitgestempelt: Hero-Text 'Womit kann ich helfen?' + neuer Platzhalter aus einer Parallelsitzung (uncommittet in der gemeinsamen Arbeitskopie vorgefunden).",
+  "frozenAt": "2026-08-13T23:43:49.486Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 Punkt 4 (Startseiten-Dateien fuer heutige Design- und Textarbeiten aendern und neu einfrieren). Inhalt gezeigt: index.html + search.js aus 4becb50 (Hero 'Womit kann ich helfen?' + Platzhalter) und 4555595 (Umbenennung Datei-Flaeche 'Projekte' -> 'Arbeitsbereich', Parallelsitzung). Keine Logik-, nur Text- und Beschriftungsaenderungen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "856834942b7db5e21e5099acf6df302550901c3098162f06415e129f2099caf0",
+    "public/index.html": "d1a2660b7ec2f52ccabf4dd016c1fa8436230498553badc5d4d76c053583d79b",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "0aac880651b981461c1da7025b88d57b12a667f397216539dfa7d3f6c205bd46",
     "public/start-glass.css": "8b5fcce2c6d972fd475fbb959a751cad9b241b62b77f1ffb25c1464dce5c8cc6",
@@ -20,7 +20,7 @@
     "public/premium-surfaces.js": "db717e4c28d90aeb49667070be285e3c72cfd6f0323d088d4441f4585730f91b",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
-    "public/search.js": "9cebf815344779cabaa9057e993129f71362aa95d53c0aaae208c6c160af19a6",
+    "public/search.js": "5388a057541422264bb86fd8f23659a1e10bb7f66ac9cfdd9f1f6a010a9bf1b2",
     "public/composer-tools.js": "7c3676feb6f1c305ec5f675d41fc26f745f3bbee19043bee6fc6e217d8106d92",
     "public/composer-plus-menu.js": "d479a9e2874ca04c067bb4288828310fd3b13fd3a1c3ca803540ccf2a7f3bb4e",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
