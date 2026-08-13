@@ -74,3 +74,27 @@ test("ENTSCHEIDEND: ohne Seiten ist der Waechter ROT, nicht 'nichts gefunden'", 
   assert.equal(sauber.ok, true);
   assert.match(sauber.meldung, /keine falsch geschriebenen/);
 });
+
+test("prueft auch Texte, die vorgelesen werden (aria-label, title, placeholder)", () => {
+  // Nachgetragen 2026-08-13: Die erste Korrekturrunde liess ein
+  // aria-label="Schritt zurueck" stehen — fuer blinde Nutzer derselbe Fehler,
+  // nur unsichtbar fuer einen Pruefer, der nur zwischen die Tags schaut.
+  const { funde } = pruefeSprache("x.html", '<button aria-label="Schritt zurueck">◀</button>');
+  assert.equal(funde.length, 1);
+  assert.equal(funde[0].herkunft, "vorgelesen");
+  assert.equal(funde[0].richtig, "zurück");
+
+  const titel = pruefeSprache("y.html", '<input placeholder="Datei auswaehlen">');
+  assert.equal(titel.funde.length, 1);
+});
+
+test("Kennungen und Pfade bleiben auch als Attribut unangetastet", () => {
+  // alt, name, id, href & Co werden NICHT geprueft — dort ist die
+  // Ersatzschreibung richtig.
+  const quellen = [
+    '<img alt="zurueck" src="/pfad/fuer-alle.png">',
+    '<div id="zurueck-knopf" data-ziel="ueber-uns"></div>',
+    '<a href="/spaeter">Später</a>'
+  ];
+  for (const q of quellen) assert.equal(pruefeSprache("z.html", q).funde.length, 0, `Fehlalarm bei: ${q}`);
+});

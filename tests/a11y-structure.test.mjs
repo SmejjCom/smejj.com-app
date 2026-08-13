@@ -25,8 +25,8 @@ test("visually-hidden CSS versteckt nur visuell (Screenreader lesen weiter)", ()
 
 test("Formularfelder haben programmatische Labels (WCAG 1.3.1/4.1.2)", () => {
   const required = [
-    ['id="projectImportFile"', 'aria-label="Import-Datei auswaehlen"'],
-    ['id="upload"', 'aria-label="Dateien fuer Upload auswaehlen"'],
+    ['id="projectImportFile"', 'aria-label="Import-Datei auswählen"'],
+    ['id="upload"', 'aria-label="Dateien für Upload auswählen"'],
     ['id="uploadList"', 'aria-label="Gestagte Uploads"'],
     ['id="aiModeSelect"', 'aria-label="KI-Modus"'],
     ['id="settingsLanguage"', 'aria-label="Sprache"'],

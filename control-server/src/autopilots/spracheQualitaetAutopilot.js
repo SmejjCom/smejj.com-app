@@ -35,6 +35,15 @@ export const ERSATZSCHREIBUNGEN = Object.freeze([
 // ({{…}}) interessieren nicht.
 const SICHTBAR = />([^<>{}]{2,200})</g;
 
+// Attribute, die dem Nutzer ebenfalls PRÄSENTIERT werden: aria-label und
+// title liest der Screenreader vor, placeholder steht im Eingabefeld.
+// Ergänzt am 2026-08-13, nachdem die erste Korrekturrunde ein
+// aria-label="Schritt zurueck" übrig liess — für blinde Nutzer ist das
+// derselbe Fehler wie im sichtbaren Text, nur unsichtbar für den Prüfer.
+// NICHT geprüft werden alt, name, id, href & Co: dort sind Kennungen und
+// Pfade richtig ohne Umlaut.
+const VORGELESEN = /\b(?:aria-label|title|placeholder)="([^"]{2,200})"/g;
+
 /**
  * Prüft EINE Datei auf falsch geschriebene sichtbare Texte.
  *
@@ -52,20 +61,25 @@ export function pruefeSprache(pfad, inhalt = "") {
   const sichtbarerTeil = String(inhalt)
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "");
-  SICHTBAR.lastIndex = 0;
-  while ((treffer = SICHTBAR.exec(sichtbarerTeil)) !== null) {
-    const text = treffer[1].trim();
-    if (!text || !/[a-zäöüß]/i.test(text)) continue;
+  const pruefeStelle = (roh, herkunft) => {
+    const text = String(roh || "").trim();
+    if (!text || !/[a-zäöüß]/i.test(text)) return;
     const klein = text.toLowerCase();
     for (const [falsch, richtig] of ERSATZSCHREIBUNGEN) {
       if (!klein.includes(falsch)) continue;
       // Gegenprobe: steht die RICHTIGE Form auch drin, ist es kein Fehler
       // (z.B. eine Zeile, die beide Schreibweisen erklärt).
       if (klein.includes(richtig)) continue;
-      funde.push({ text: text.slice(0, 60), falsch, richtig });
-      break; // ein Fund je Textstelle genügt
+      funde.push({ text: text.slice(0, 60), falsch, richtig, herkunft });
+      return; // ein Fund je Textstelle genügt
     }
-  }
+  };
+
+  SICHTBAR.lastIndex = 0;
+  while ((treffer = SICHTBAR.exec(sichtbarerTeil)) !== null) pruefeStelle(treffer[1], "text");
+  VORGELESEN.lastIndex = 0;
+  while ((treffer = VORGELESEN.exec(sichtbarerTeil)) !== null) pruefeStelle(treffer[1], "vorgelesen");
+
   return { pfad, funde };
 }
 

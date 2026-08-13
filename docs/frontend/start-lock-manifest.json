@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T05:35:00.730Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-13 per Klick-Antwort auf die Option 'Die 19 Schreibfehler beheben' mit ausdruecklichem Hinweis auf den Start-Lock: reine Rechtschreibkorrekturen in sichtbaren Texten von public/index.html (Ersatzschreibung ae/oe/ue/ss zu Umlaut/ss, z.B. 'Willkommen zurueck' zu 'Willkommen zurueck' mit Umlaut). Keine inhaltlichen, strukturellen oder funktionalen Aenderungen; IDs, Attribute, Skripte und Pfade unberuehrt. Gefunden vom Angelina-Autopiloten.",
+  "frozenAt": "2026-08-13T05:56:28.400Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 (Fortsetzung der Rechtschreib-Korrektur): zusaetzlich vier vorgelesene Texte (aria-label, placeholder) in public/index.html und maus-replay.html auf Umlaut korrigiert. Reine Rechtschreibung, keine inhaltlichen oder funktionalen Aenderungen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "88805000d538a4e0e98bb168ed57e1ec374e3218c2514b3983d838e6581ec32d",
+    "public/index.html": "e484bdf8cfa0a07b21f520b3756f1cddc84e1481644884574cdf523ed65ae64a",
     "public/styles.css": "b749acf7abef387c672f66743864e880c4cdcd51001f33d0433b9c7fe17c6c26",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
