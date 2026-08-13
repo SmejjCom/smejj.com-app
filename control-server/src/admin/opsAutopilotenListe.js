@@ -50,22 +50,23 @@ export const AUTOPILOTEN = Object.freeze([
   {
     id: "voice-region-check",
     name: "03. Voice-Region-Prüfung",
-    kurz: "Prüft täglich, ob Google die Regionsänderung für die Voice-Freischaltung genehmigt hat.",
+    kurz: "Misst, ob die Sprachausgabe für Nutzer bereitsteht — das sichtbare Ergebnis der Google-Freigabe.",
     funktionen: [
-      "Läuft täglich um 9:04 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
-      "EHRLICH: Der Lauf ist bisher nur ein Lebenszeichen des Dienstes — die echte Google-Statusprüfung ist noch nicht angebunden.",
-      "Meldet sich, sobald Google genehmigt hat."
+      "Läuft alle 30 Minuten im Autopilot-Läufer des Control-Servers.",
+      "Fragt den Sprach-Status der Brücke ab (POST, weil jedes GET dort 404 liefert) und meldet, was er wirklich sieht.",
+      "Springt die Google-Freigabe um, wechselt die Meldung von 'noch nicht freigeschaltet' auf 'verfügbar'.",
+      "Die Genehmigung selbst ist nicht automatisch abfragbar (dafür bräuchte es eine Anmeldung in der Google-Konsole) — ihr Ergebnis schon."
     ],
-    trainiert: "Google Account API Status & Provider Endpunkte",
-    verbessert: "Automatisches Monitoring ohne manuelles Login in Google Console",
-    neuigkeiten: ["Täglicher Statuscheck um 9:04 UTC ausgeführt", "Wartet auf Provider-Bestätigung"],
-    ort: "Zeabur (smejj-autopilot-jobs)",
-    zeitplan: "täglich 9:04 UTC",
+    trainiert: "Verfügbarkeit der Sprachausgabe (premiumVoice) an der echten Brücke",
+    verbessert: "Die Freischaltung fällt auf, sobald sie wirkt — ohne manuelles Nachsehen in der Google-Konsole",
+    neuigkeiten: ["Läuft seit 2026-08-13 im Control-Server statt im nicht erreichbaren Jobs-Dienst"],
+    ort: "Control Server (Autopilot-Läufer)",
+    zeitplan: "alle 30 Minuten",
     messung: "heartbeat",
-    erwartetAlleMs: TAG_MS,
-    schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/voice-region mit {\"key\":\"<voice-region-check-Schlüssel>\"}",
-    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
   },
   {
     id: "konkurrenz-radar",

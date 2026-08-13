@@ -190,6 +190,46 @@ export async function laufSyntheticWatchdog({ env = process.env } = {}) {
 }
 
 /**
+ * Voice-Region: misst, was messbar IST — ob die Sprachausgabe für Nutzer
+ * bereitsteht.
+ *
+ * Der Autopilot hiess urspruenglich "prueft, ob Google die Regionsaenderung
+ * genehmigt hat". Das laesst sich nicht automatisch abfragen (dafuer braeuchte
+ * es eine Anmeldung in der Google-Konsole) — aber sein ERGEBNIS laesst sich
+ * messen: springt die Freigabe um, meldet die Bruecke premiumVoice. Genau das
+ * prueft dieser Lauf, und er sagt in der Meldung, was er wirklich gesehen hat.
+ *
+ * Der Lauf lief bis 2026-08-13 im Zeabur-Dienst smejj-autopilot-jobs und blieb
+ * dort zwei Tage aus (Ampel rot, Dienst von aussen nicht erreichbar). Im
+ * Control-Server laeuft er im selben Takt wie alle anderen.
+ *
+ * POST statt GET ist Absicht: die Bruecke beantwortet jedes GET ausser /health
+ * mit 404 — ein GET haette hier "Endpunkt tot" gemeldet, obwohl er lebt.
+ */
+export async function laufVoiceRegion({ env = process.env, fetchImpl = fetch } = {}) {
+  const basis = String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "");
+  try {
+    const antwort = await fetchImpl(`${basis}/api/voice/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://smejj.com" },
+      body: "{}",
+      signal: AbortSignal.timeout(15_000)
+    });
+    if (!antwort.ok) return { ok: false, meldung: `Sprach-Status nicht abfragbar: HTTP ${antwort.status}` };
+    const daten = await antwort.json();
+    if (daten?.ok !== true) return { ok: false, meldung: `Sprach-Status meldet einen Fehler: ${String(daten?.error || "ohne Grund").slice(0, 80)}` };
+    return {
+      ok: true,
+      meldung: daten.premiumVoice
+        ? "Sprachausgabe verfügbar (premiumVoice aktiv) — Freigabe wirksam"
+        : "Sprachausgabe noch nicht freigeschaltet (premiumVoice aus) — Stand unverändert"
+    };
+  } catch (fehler) {
+    return { ok: false, meldung: `Sprach-Status nicht erreichbar: ${String(fehler?.name === "TimeoutError" ? "Zeitlimit 15 s" : fehler?.message || fehler).slice(0, 90)}` };
+  }
+}
+
+/**
  * @param {{melde?: Function, dateienLader?: Function, mitNetz?: boolean}} [optionen]
  *   mitNetz=false laesst den E2E-Waechter aus — fuer Tests, die ohne Aussenwelt
  *   laufen muessen.
@@ -227,7 +267,10 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
     // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen
     // Selbsttest.
-    ...(mitNetz ? [await fuehreAus("synthetic-user-watchdog", () => laufSyntheticWatchdog())] : [])
+    ...(mitNetz ? [
+      await fuehreAus("synthetic-user-watchdog", () => laufSyntheticWatchdog()),
+      await fuehreAus("voice-region-check", () => laufVoiceRegion())
+    ] : [])
   ];
 
   for (const e of ergebnisse) {

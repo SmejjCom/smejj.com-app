@@ -73,11 +73,27 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
     melde: (id, e) => { gemeldet.set(id, e); return true; },
     mitNetz: true
   });
-  assert.equal(ergebnisse.length, 22, "der Waechter ist der 22. Lauf");
+  assert.equal(ergebnisse.length, 23, "E2E-Waechter und Voice-Region sind die beiden Netz-Laeufe");
   const w = gemeldet.get("synthetic-user-watchdog");
   assert.ok(w, "der Waechter muss melden");
   assert.equal(w.status, "fehler", "ohne pruefbare Kette ist er rot, nie gruen");
   assert.match(w.meldung, /gescheitert/i);
+  assert.ok(gemeldet.get("voice-region-check"), "Voice-Region laeuft im Control-Server, nicht mehr im Jobs-Dienst");
+});
+
+test("Voice-Region: ein toter Endpunkt wird ROT, kein 'Stand unveraendert'", async () => {
+  const { laufVoiceRegion } = await import("../control-server/src/autopilots/autopilotLaeufer.js");
+  const tot = await laufVoiceRegion({ fetchImpl: async () => ({ ok: false, status: 404 }) });
+  assert.equal(tot.ok, false);
+  assert.match(tot.meldung, /404/);
+
+  const aus = await laufVoiceRegion({ fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, premiumVoice: false }) }) });
+  assert.equal(aus.ok, true, "nicht freigeschaltet ist kein Ausfall — der Autopilot hat sauber gemessen");
+  assert.match(aus.meldung, /noch nicht freigeschaltet/);
+
+  const an = await laufVoiceRegion({ fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, premiumVoice: true }) }) });
+  assert.equal(an.ok, true);
+  assert.match(an.meldung, /verfügbar/);
 });
 
 test("Quelltext-Sammler findet den echten Code dieses Projekts", () => {
