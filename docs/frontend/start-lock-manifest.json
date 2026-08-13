@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T17:58:22.091Z",
-  "confirmation": "2026-08-13 Betreiber: Klick ins Schreibfeld darf die Seiten nicht zuklappen — Abdunkeln nur noch bei der breiten Schublade, nicht bei der schmalen Spur.",
+  "frozenAt": "2026-08-13T19:45:54.037Z",
+  "confirmation": "Betreiber waehlte am 2026-08-13 die Option 'Screens 4-14 verdrahten (Empfehlung)' — design-cyan-views.css (ohne Screen 1, Start-Revert d722064 bleibt gewahrt) wird von premium-surfaces.js (Start-Lock) zusaetzlich geladen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
@@ -15,7 +15,7 @@
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "4233f774e0c0c36f17f4c8dbe9cc948215dec01eaaf035180350527a77ebe879",
     "public/components.js": "3857d1e62ed36de05a27fc307c1a4fc13b4721f5cafb850dafa672ef8dd2d0ff",
-    "public/premium-surfaces.js": "a0266601c2fa745ff828846f1ce14d2db064565d80aa10ecd835c80a79de06c8",
+    "public/premium-surfaces.js": "db717e4c28d90aeb49667070be285e3c72cfd6f0323d088d4441f4585730f91b",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "10df93373bcaded8a00d7641922697b94547848d826dfda6a4f7434d96509bc8",
