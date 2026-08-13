@@ -95,11 +95,34 @@ export function sammleQuelldateien({ wurzel = WURZEL, ordner = SCAN_ORDNER, maxD
   return dateien;
 }
 
-/** Ein Lauf, einheitlich verpackt: Dauer messen, Absturz zu "fehler" machen. */
-async function fuehreAus(id, arbeit) {
+/**
+ * Ein Lauf, einheitlich verpackt: Dauer messen, Absturz zu "fehler" machen.
+ *
+ * Das Zeitlimit ist kein Komfort, sondern eine Lehre (Befund 2026-08-13):
+ * ein einziger Lauf ohne eigenes Zeitlimit, der auf eine tote Verbindung
+ * wartet, hielt den gesamten Durchgang fest — und weil damals erst am Ende
+ * gemeldet wurde, blieben ALLE Ampeln stumm-grau, ohne Hinweis auf den einen
+ * Haenger. Der haengende Lauf selbst laeuft im Hintergrund weiter (abbrechen
+ * kann man ein fremdes Promise nicht), aber der Durchgang geht weiter und
+ * die Ampel nennt den Schuldigen beim Namen.
+ */
+const ZEITLIMIT_JE_LAUF_MS = 120_000;
+
+export async function fuehreAus(id, arbeit, zeitlimitMs = ZEITLIMIT_JE_LAUF_MS) {
   const start = Date.now();
+  let wecker = null;
   try {
-    const { meldung, ok = true } = await arbeit();
+    const ergebnis = await Promise.race([
+      Promise.resolve().then(arbeit),
+      new Promise((_, ablehnen) => {
+        wecker = setTimeout(
+          () => ablehnen(new Error(`Zeitlimit ${Math.round(zeitlimitMs / 1000)} s ueberschritten — der Lauf haengt`)),
+          zeitlimitMs
+        );
+        if (typeof wecker.unref === "function") wecker.unref();
+      })
+    ]);
+    const { meldung, ok = true } = ergebnis;
     return { id, ok, meldung, dauerMs: Date.now() - start };
   } catch (fehler) {
     return {
@@ -108,6 +131,8 @@ async function fuehreAus(id, arbeit) {
       meldung: `Lauf abgebrochen: ${String(fehler?.message || fehler).slice(0, 140)}`,
       dauerMs: Date.now() - start
     };
+  } finally {
+    if (wecker) clearTimeout(wecker);
   }
 }
 
@@ -333,7 +358,24 @@ export async function laufVoiceRegion({ env = process.env, fetchImpl = fetch } =
  *   mitNetz=false laesst den E2E-Waechter aus — fuer Tests, die ohne Aussenwelt
  *   laufen muessen.
  */
-export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien, seitenLader = sammleSeiten, mitNetz = true } = {}) {
+/**
+ * Die Laeufe der Reihe nach ausfuehren und JEDEN SOFORT melden (Befund
+ * 2026-08-13): als die Meldungen gesammelt nach allen Laeufen kamen, hielt
+ * EIN haengender Lauf saemtliche 26 Ampeln auf stumm-grau — und der Haenger
+ * selbst war unsichtbar. So fuellt sich die Ampel Stueck fuer Stueck, und
+ * was haengt, faellt als Luecke sofort auf.
+ */
+export async function fuehreLaeufeAus(laeufe, { melde = interneMeldung, zeitlimitMs = ZEITLIMIT_JE_LAUF_MS } = {}) {
+  const ergebnisse = [];
+  for (const [id, arbeit] of laeufe) {
+    const e = await fuehreAus(id, arbeit, zeitlimitMs);
+    melde(e.id, { status: e.ok ? "ok" : "fehler", meldung: e.meldung, dauerMs: e.dauerMs });
+    ergebnisse.push(e);
+  }
+  return ergebnisse;
+}
+
+export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien, seitenLader = sammleSeiten, mitNetz = true, zeitlimitMs = ZEITLIMIT_JE_LAUF_MS } = {}) {
   // Einmal lesen, zweimal nutzen: beide Repo-Autopiloten sehen denselben Stand.
   let dateien = [];
   try {
@@ -342,44 +384,42 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
   let seiten = [];
   try { seiten = seitenLader(); } catch { /* laufSprachQualitaet meldet dann "keine Seiten" */ }
 
-  const ergebnisse = [
-    await fuehreAus("bug-predictor", () => laufBugPredictor(dateien)),
-    await fuehreAus("knowledge-graph", () => laufKnowledgeGraph(dateien)),
-    await fuehreAus("code-interpreter", () => laufCodeInterpreter()),
-    await fuehreAus("smart-router", () => laufSmartRouter()),
-    await fuehreAus("self-healing", () => laufSelfHealing()),
-    await fuehreAus("deep-research", () => S.laufDeepResearch()),
-    await fuehreAus("memory-sync", () => S.laufMemory()),
-    await fuehreAus("multimodal-engine", () => S.laufMultimodal()),
-    await fuehreAus("task-orchestrator", () => S.laufTaskOrchestrator()),
-    await fuehreAus("self-improvement", () => S.laufSelfImprovement()),
-    await fuehreAus("model-lifecycle", () => S.laufModelLifecycle()),
-    await fuehreAus("user-feedback-flywheel", () => S.laufUserFeedbackFlywheel()),
-    await fuehreAus("process-reward", () => S.laufProcessReward()),
-    await fuehreAus("knowledge-distiller", () => S.laufKnowledgeDistiller()),
-    await fuehreAus("evolutionary-mutation", () => S.laufEvolutionaryMutation()),
-    await fuehreAus("realtime-internet-harvester", () => S.laufInternetHarvester()),
-    await fuehreAus("multi-file-repo-architect", () => S.laufRepoArchitect(dateien)),
-    await fuehreAus("live-arena-leaderboard", () => S.laufLiveArena()),
-    await fuehreAus("instant-web-container", () => S.laufWebContainer()),
-    await fuehreAus("realtime-voice-pair", () => S.laufVoicePair()),
-    await fuehreAus("autonomous-git-bot", () => S.laufGitBot()),
-    await fuehreAus("werkstatt-autopilot", () => laufWerkstattSammeln()),
-    await fuehreAus("support-sla", () => laufSupportSla()),
-    await fuehreAus("angelina-autopilot", () => laufSprachQualitaet(seiten)),
+  const laeufe = [
+    ["bug-predictor", () => laufBugPredictor(dateien)],
+    ["knowledge-graph", () => laufKnowledgeGraph(dateien)],
+    ["code-interpreter", () => laufCodeInterpreter()],
+    ["smart-router", () => laufSmartRouter()],
+    ["self-healing", () => laufSelfHealing()],
+    ["deep-research", () => S.laufDeepResearch()],
+    ["memory-sync", () => S.laufMemory()],
+    ["multimodal-engine", () => S.laufMultimodal()],
+    ["task-orchestrator", () => S.laufTaskOrchestrator()],
+    ["self-improvement", () => S.laufSelfImprovement()],
+    ["model-lifecycle", () => S.laufModelLifecycle()],
+    ["user-feedback-flywheel", () => S.laufUserFeedbackFlywheel()],
+    ["process-reward", () => S.laufProcessReward()],
+    ["knowledge-distiller", () => S.laufKnowledgeDistiller()],
+    ["evolutionary-mutation", () => S.laufEvolutionaryMutation()],
+    ["realtime-internet-harvester", () => S.laufInternetHarvester()],
+    ["multi-file-repo-architect", () => S.laufRepoArchitect(dateien)],
+    ["live-arena-leaderboard", () => S.laufLiveArena()],
+    ["instant-web-container", () => S.laufWebContainer()],
+    ["realtime-voice-pair", () => S.laufVoicePair()],
+    ["autonomous-git-bot", () => S.laufGitBot()],
+    ["werkstatt-autopilot", () => laufWerkstattSammeln()],
+    ["support-sla", () => laufSupportSla()],
+    ["angelina-autopilot", () => laufSprachQualitaet(seiten)],
     // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
     // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen
     // Selbsttest.
     ...(mitNetz ? [
-      await fuehreAus("synthetic-user-watchdog", () => laufSyntheticWatchdog()),
-      await fuehreAus("voice-region-check", () => laufVoiceRegion())
+      ["synthetic-user-watchdog", () => laufSyntheticWatchdog()],
+      ["voice-region-check", () => laufVoiceRegion()]
     ] : [])
   ];
 
-  for (const e of ergebnisse) {
-    melde(e.id, { status: e.ok ? "ok" : "fehler", meldung: e.meldung, dauerMs: e.dauerMs });
-  }
+  const ergebnisse = await fuehreLaeufeAus(laeufe, { melde, zeitlimitMs });
 
   // TOTMANNSCHALTER FUER DEN TAKTGEBER (2026-08-13).
   //
