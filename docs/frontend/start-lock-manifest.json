@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T10:11:49.705Z",
-  "confirmation": "2026-08-13 Betreiber: schmale Spur links und rechts wie ChatGPT, Zustand wird gemerkt — Bilder gesehen, Auswahl: Ja, live stellen.",
+  "frozenAt": "2026-08-13T10:28:34.550Z",
+  "confirmation": "2026-08-13 Betreiber: Spur zu breit — auf Menue-Knopf-Breite verschmaelern, Zeichen in dessen Groesse. Bild gesehen, Auswahl: Ja, live.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
-    "public/styles.css": "fe3ae6b19c666501e7715aa8226e16134449a4f662781db5dda4a9615666601e",
-    "public/start-styles.css": "9cf4648c6682a1d8498d34e0131d97650798a5966504fe00910c638354ae8750",
+    "public/styles.css": "dea52bbc47a762c02ce9e46b6df4c7c2cc8ce5d55788f53b6f5e25d474f1c25e",
+    "public/start-styles.css": "73ea30fc6e0b37d160c8e768fe2039bc81a8481db98db1270f76d1016ffd2f94",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
