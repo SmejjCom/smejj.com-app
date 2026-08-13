@@ -56,3 +56,36 @@ Referenz-Implementierung: `public/chat-bridge-bilder.js` (`versucheVideo`,
 Ein Auftrag ueber eure Spur ("Windmuehle im Kornfeld") hing **>2,5 Minuten
 ohne jede Antwort** — die Kopie hat zusaetzlich ein Haenger-Problem, das der
 Worker-Anschluss gleich mit erledigen wuerde.
+
+---
+
+## NACHTRAG: Anschluss GEBAUT + LIVE BEWIESEN (2026-08-13 spät, andere Sitzung)
+
+Der Dienst smejj-control baut inzwischen DIREKT aus GitHub (feature-Branch,
+jeder Push deployt) — das Arbeitskopie-Release ist Geschichte. Im Git-Stand
+hatte handleChat GAR KEINE Videospur mehr; Video-Aufträge wurden als Text
+beantwortet. Neu (Commits 25d76b4, 03701d4):
+
+- `control-server/src/routes/videoChatRoutes.js` + Einbau in `src/server.js`
+  (+ 7 Verhaltenstests `tests/control-video-chat-spur.test.mjs`): gleicher
+  Worker-Vertrag wie die Brücke (POST /erzeuge, 429-Geduld, 180 s), `engine`
+  steuert den Hinweistext (extern:* → KEIN Kamerafahrt-Satz), Übersetzung +
+  PERSON_GESPERRT über den eigenen Modell-Router, fail-safe/fail-closed.
+- Falle: `thinking {type:"disabled"}` + `reasoningEffort "low"` sind Pflicht,
+  sonst frisst die kimi-Denkphase die Frist und die Übersetzung bleibt leer.
+- Livemessung: POST /api/chat "Leuchtturm…" → Header
+  `x-smejj-model-backend: video-worker:weg-c`, Ticks alle 10 s, nach ~135 s
+  `data:video/mp4` MIT Erzählstimme. Der 2,5-min-Hänger ist damit erledigt.
+
+**OFFEN (liegt im WORKER, nicht am Anschluss):** engine war `parallax:*` —
+der extern-Pfad (LTX) war zur Messzeit im Worker nicht aktiv; sobald er
+scharf ist, verschwindet der Kamerafahrt-Satz von selbst.
+
+**NETZ-BEFUND, der die ursprüngliche Messkette miterklärt:** Der interne
+Service-Endpoint des video-workers war heute Abend TOT —
+`smejj-video-worker.zeabur.internal` (ClusterIP 10.43.250.25) timeoutete vom
+Control aus, während die Pod-IP (10.42.0.216) direkt antwortete und der
+Worker lokal gesund war (uvicorn korrekt auf 0.0.0.0). Erst der nächste
+Redeploy registrierte den Endpoint neu. Merkregel: bei "Worker nicht
+erreichbar" erst Pod-direkt gegen DNS-Weg messen, bevor man den Code
+verdächtigt.
