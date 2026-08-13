@@ -168,3 +168,22 @@ test("Der Beschluss-Zettel liegt im Repo und ist auffindbar", () => {
   const zettel = lies("docs/approvals/2026-08-12-ampel-ehrlich-messen.md");
   assert.ok(zettel.includes("Ehrlich messen"), "der Beschluss muss im Wortlaut im Zettel stehen");
 });
+
+test("Beschluss 2, fuenfter Trick: KEIN erfundener Initial-Herzschlag beim Laden", async () => {
+  // Am 2026-08-13 setzte ladeHerzschlaege jedem Autopiloten ohne Herzschlag
+  // ein erfundenes "ok / betriebsbereit & aktiv" — Trick Nr. 5 nach
+  // Sammel-Schleife, Registry-Umschaltung, 365-Tage-Fenster und
+  // Sammel-Schluessel. Wer noch nie gemeldet hat, ist GRAU. Punkt.
+  const { ladeHerzschlaege, autopilotUebersicht, _herzschlaegeZuruecksetzen, _ablageLeeren } =
+    await import("../control-server/src/admin/opsAutopiloten.js");
+  _herzschlaegeZuruecksetzen();
+  if (typeof _ablageLeeren === "function") _ablageLeeren();
+  await ladeHerzschlaege();
+  const u = autopilotUebersicht({});
+  assert.equal(u.gruen, 0,
+    `nach leerem Laden darf NICHTS gruen sein — ${u.gruen} Autopiloten tragen erfundene Herzschlaege`);
+  const gestempelt = (u.autopiloten || []).filter((a) =>
+    /betriebsbereit & aktiv/i.test((a.letzterLauf || {}).meldung || ""));
+  assert.deepEqual(gestempelt.map((a) => a.id), [], "der Initial-Stempel-Text darf nirgends auftauchen");
+  _herzschlaegeZuruecksetzen();
+});

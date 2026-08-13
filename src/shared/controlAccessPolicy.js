@@ -52,6 +52,8 @@ export function requiresAuthenticatedControlAccess(req, url) {
   // eigenen Konto. Angemeldet reicht — eine Adminrolle waere hier falsch, weil
   // sie genau denjenigen aussperren wuerde, dessen Zustimmung gebraucht wird.
   if (pathname === "/api/account" || pathname.startsWith("/api/account/")) return true;
+  // Kundensupport (Stufe 1, 2026-08-13): Tickets gehoeren zum Konto.
+  if (pathname === "/api/support" || pathname.startsWith("/api/support/")) return true;
   // Die Admin-Oberflaeche prueft ihre Sitzung SELBST (adminUiRoutes.js) und
   // antwortet mit einer lesbaren Seite statt mit JSON. Waere sie hier gelistet,
   // bekaeme ein Mensch am Browser `{"error":"authentication_required"}` zu

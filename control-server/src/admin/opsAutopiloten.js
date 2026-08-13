@@ -457,15 +457,14 @@ export async function ladeHerzschlaege({ env = process.env } = {}) {
     // die Zahl daneben sagt, ob ueberhaupt etwas in der Ablage lag.
     ablageStand.abgelegteDatensaetze = ergebnis.datensaetze.length;
 
-    // Fuer jeden Autopiloten ohne bisherigen Herzschlag einen betriebsbereiten Initial-Herzschlag setzen
-    const jetztIso = new Date().toISOString();
-    for (const a of AUTOPILOTEN) {
-      if (!herzschlaege.has(a.id)) {
-        herzschlaege.set(a.id, {
-          laeufe: [{ am: jetztIso, status: "ok", meldung: "Autopilot betriebsbereit & aktiv", dauerMs: 0 }]
-        });
-      }
-    }
+    // KEIN Initial-Herzschlag fuer Autopiloten ohne Messung. Hier stand am
+    // 2026-08-13 kurzzeitig eine Schleife, die jedem Autopiloten ohne
+    // Herzschlag ein erfundenes "ok / betriebsbereit & aktiv" eintrug — der
+    // fuenfte Stempel-Trick (nach Sammel-Schleife, Registry-Umschaltung,
+    // 365-Tage-Fenster und Sammel-Schluessel). Der Beschluss-Zettel
+    // docs/approvals/2026-08-12-ampel-ehrlich-messen.md verbietet erfundene
+    // Messwerte woertlich: Wer noch nie gemeldet hat, ist GRAU — das ist
+    // eine ehrliche Auskunft, kein Schoenheitsfehler.
     ablageStand.ladeFehler = null;
     return geladen;
   } catch (fehler) {

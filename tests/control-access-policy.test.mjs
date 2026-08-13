@@ -119,3 +119,13 @@ test("jede Route, die req.authUser LIEST, muss hier gelistet sein", async () => 
   // den geltenden Hash erfahren, und die Einwilligung waere unerreichbar.
   assert.equal(protectedAccess(ROUTES.api.trainingConsentNotice, "GET"), false);
 });
+
+test("Kundensupport-Routen verlangen eine Anmeldung", () => {
+  // Ohne diesen Eintrag setzte server.js req.authUser fuer /api/support nie —
+  // die Route antwortete ihrerseits 401 und JEDES Ticket scheiterte still.
+  const faelle = ["/api/support/ticket", "/api/support/meine", "/api/support/alle"];
+  for (const pfad of faelle) {
+    assert.equal(requiresAuthenticatedControlAccess({ method: "POST" }, new URL("http://x" + pfad)), true,
+      pfad + " muss durch die Anmelde-Pflicht laufen");
+  }
+});
