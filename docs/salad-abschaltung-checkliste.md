@@ -35,7 +35,28 @@ Vorher prüfen, dass nichts mehr dort ankommt:
 Nach dem Stopp: 24 h beobachten; bei Problemen ist Wiederanschalten im
 Salad-Portal der Rollback.
 
-**Schritt 3 — Blocker B1 lösen, dann `loganberry` stoppen.**
+**Schritt 3 — Blocker B1: WEITGEHEND GELÖST (2026-08-13 nachmittags), dann `loganberry` stoppen.**
+Stand der Reparatur:
+- Neuer Zeabur-Dienst `smejj-remote-browser` baut aus GitHub
+  (`Dockerfile.smejj-remote-browser`, Branch feature/…-magiclink); der alte
+  kaputte Image-Dienst heißt jetzt `kaputt-image-remote-browser-alt` und kann
+  gelöscht werden, sobald der neue läuft.
+- Erster Startfehler (fehlendes `process-crash-guard.mjs` im Abbild) gefixt.
+- BEWUSST OHNE öffentliche Domain: Control erreicht den Worker intern über
+  `http://smejj-remote-browser.zeabur.internal:8080` — kleinere Angriffsfläche
+  als die öffentliche Salad-Adresse.
+- Am Control gesetzt: `SMEJJ_REMOTE_BROWSER_WORKER_URL` (interne Adresse) und
+  `SMEJJ_REMOTE_BROWSER_ENABLED=YES`. Noch KEIN Redeploy.
+
+**Betreiber-Handgriff (2 Minuten, Token darf ich nicht eintippen):**
+1. Einen zufälligen Wert erzeugen (z. B. `openssl rand -hex 24`).
+2. Zeabur → `smejj-remote-browser` → Variable → `SMEJJ_REMOTE_BROWSER_TOKEN`
+   = dieser Wert → Redeploy des Workers.
+3. Zeabur → `smejj-control` → Variable → `SMEJJ_REMOTE_BROWSER_TOKEN`
+   = DERSELBE Wert → Redeploy des Control.
+Danach sage ich dir per Livetest, ob die Browser-Ansicht über Zeabur läuft.
+
+**Schritt 3-alt (nur zur Referenz):**
 B1: `smejj-remote-browser` auf Zeabur reparieren — das Abbild zeigt auf eine
 nicht existierende Registry-Adresse. Der saubere Weg (bekanntes Muster
 „Neuer Zeabur-Dienst"): Dienst auf GitHub-Bau umstellen mit
