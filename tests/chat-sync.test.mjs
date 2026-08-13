@@ -55,6 +55,25 @@ test("konfliktSieger: juengerer Stand gewinnt, Gleichstand tut nichts", () => {
   assert.equal(konfliktSieger("kaputt", "2026-08-13T10:00:00Z"), "server");
 });
 
+test("loescheChat schreibt einen Grabstein (kein S3-Delete: Schluessel darf nicht, und Loeschung muss sich verbreiten)", async () => {
+  const { loescheChat } = await import("../control-server/src/chats/chatSyncStore.js");
+  const env = { IDRIVE_E2_ENDPOINT: "https://e2.example.com", IDRIVE_E2_ACCESS_KEY: "a", IDRIVE_E2_SECRET_KEY: "s", IDRIVE_E2_BUCKET: "smejj-app" };
+  const anfragen = [];
+  const fetchImpl = async (url, init) => { anfragen.push({ url: String(url), method: init?.method, body: init?.body }); return { ok: true, status: 200, text: async () => "" }; };
+  const ergebnis = await loescheChat({ kontoId: "user_a", chatId: "chat_1", env, fetchImpl, jetztMs: Date.parse("2026-08-13T12:00:00Z") });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.grabstein, true);
+  assert.equal(anfragen.length, 1);
+  assert.equal(anfragen[0].method, "PUT");
+  assert.match(anfragen[0].url, /chats\/user_a\/chat_1\.json/);
+  const rumpf = JSON.parse(String(anfragen[0].body));
+  assert.equal(rumpf.geloescht, true);
+  assert.equal(rumpf.messages.length, 0); // Inhalt ist wirklich weg
+  assert.equal(rumpf.updatedAt, "2026-08-13T12:00:00.000Z");
+  // Und der Grabstein gewinnt gegen jeden aelteren Push:
+  assert.equal(konfliktSieger("2026-08-13T11:59:00Z", rumpf.updatedAt), "server");
+});
+
 // ---- Routen: Sitzung ist Pflicht, Kontokennung kommt NIE aus der Anfrage ----
 
 function fakeRes() {

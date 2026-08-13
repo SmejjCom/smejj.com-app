@@ -14,7 +14,7 @@
 // 3. GRENZEN VOR SPEICHERPLATZ. Zu grosse oder zu viele Chats werden abgewiesen
 //    bzw. gekappt, damit ein Endlos-Verlauf keine Kosten treibt.
 
-import { signedS3Delete, signedS3Get, signedS3List, signedS3Put } from "../storage/s3Signer.js";
+import { signedS3Get, signedS3List, signedS3Put } from "../storage/s3Signer.js";
 
 export const PRAEFIX = "chats";
 export const MAX_CHATS_PRO_KONTO = 100;
@@ -132,10 +132,35 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
   return { ok: true, chats };
 }
 
-/** Loescht einen Chat serverseitig (Konto-Loeschung und "Chat loeschen"). */
-export async function loescheChat({ kontoId, chatId, env = process.env, fetchImpl = fetch }) {
+/**
+ * "Loescht" einen Chat serverseitig — als GRABSTEIN, nicht als S3-Delete.
+ *
+ * Zwei Gruende, live gemessen 2026-08-13:
+ * 1. Der e2-Schluessel des Control-Servers darf nicht loeschen (DELETE → 403).
+ * 2. Wichtiger: Ein hartes Loeschen wuerde die Loeschung NICHT verbreiten.
+ *    Geraet B haelt den Chat noch lokal und wuerde ihn beim naechsten Push
+ *    wieder hochladen — der geloeschte Chat kaeme als Untoter zurueck.
+ *    Der Grabstein gewinnt stattdessen ueber updatedAt gegen jeden aelteren
+ *    Push (konfliktSieger) und traegt die Loeschung per Pull auf alle Geraete.
+ * Inhalt wird dabei WIRKLICH entfernt: der Grabstein hat keine Nachrichten.
+ */
+export async function loescheChat({ kontoId, chatId, env = process.env, fetchImpl = fetch, jetztMs = Date.now() }) {
   const cfg = idriveConfig(env);
   if (!cfg) return { ok: false, error: "speicher_nicht_eingerichtet" };
-  await signedS3Delete({ ...cfg, key: schluessel(kontoId, chatId), fetchImpl, timeoutMs: S3_TIMEOUT_MS });
-  return { ok: true };
+  const grabstein = {
+    id: chatId,
+    ownerId: kontoId,
+    geloescht: true,
+    updatedAt: new Date(jetztMs).toISOString(),
+    messages: []
+  };
+  await signedS3Put({
+    ...cfg,
+    key: schluessel(kontoId, chatId),
+    body: `${JSON.stringify(grabstein, null, 2)}\n`,
+    contentType: "application/json; charset=utf-8",
+    fetchImpl,
+    timeoutMs: S3_TIMEOUT_MS
+  });
+  return { ok: true, grabstein: true };
 }
