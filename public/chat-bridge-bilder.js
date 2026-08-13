@@ -35,6 +35,15 @@ const VIDEO_TIMEOUT_MS = Number(process.env.SMEJJ_VIDEO_TIMEOUT_MS || 180000);
 // MP4-Deckel: 4 s H.264 bei 512 px liegt bei 0,3-1,5 MB, base64 +33 %.
 // Muss zum MAX_B64 des Video-Workers passen (workers/smejj-video-worker).
 const VIDEO_MAX_B64 = 8_000_000;
+// Geduld, wenn der Maler besetzt ist: so lange wird gewartet, in diesem Takt
+// nachgefragt. Zusammen mit VIDEO_TIMEOUT_MS deckelt das die Gesamtdauer.
+const VIDEO_WARTE_MAX_MS = Number(process.env.SMEJJ_VIDEO_WARTE_MAX_MS || 120000);
+const VIDEO_WARTE_TAKT_MS = Number(process.env.SMEJJ_VIDEO_WARTE_TAKT_MS || 5000);
+// Wie viele Auftraege gleichzeitig warten duerfen. Der Server (2C/8GB, geteilt
+// mit sechs Diensten) traegt kein Video-Gedraenge — ab hier sagt die Bruecke
+// SOFORT ehrlich ab, statt eine Schlange zu bilden, die keiner abarbeitet.
+const VIDEO_ANDRANG_MAX = Number(process.env.SMEJJ_VIDEO_ANDRANG_MAX || 3);
+let videoAndrang = 0;
 // Malen ist langsam (CPU): eigenes Budget statt REQUEST_TIMEOUT_MS.
 const BILDER_FOTO_TIMEOUT_MS = Number(process.env.SMEJJ_BILDER_FOTO_TIMEOUT_MS || 150000);
 const BILDER_HEALTH_TIMEOUT_MS = 2500;
@@ -258,10 +267,11 @@ function videoSchritt(res, zustand, stand) {
   res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "video", zustand, text: "Erzeuge dein Video", stand, platzhalter: "bild" } })}\n\n`);
 }
 
-// Laesst den eigenen Video-Maler ein MP4 erzeugen.
-// Liefert { url, engine } oder null — die Engine entscheidet ueber den Hinweis
-// im Antworttext (kenburns bewegt die Kamera, animatediff das Motiv selbst).
-async function erzeugeVideo(prompt) {
+// Ein Versuch beim Video-Maler.
+// Liefert { url, engine } bei Erfolg, "besetzt" wenn gerade ein anderes Video
+// laeuft (HTTP 429), sonst null. Die Engine entscheidet ueber den Hinweis im
+// Antworttext (kenburns bewegt die Kamera, animatediff das Motiv selbst).
+async function versucheVideo(prompt) {
   try {
     const antwort = await fetch(`${VIDEO_WORKER_URL}/erzeuge`, {
       method: "POST",
@@ -269,6 +279,7 @@ async function erzeugeVideo(prompt) {
       body: JSON.stringify({ prompt }),
       signal: AbortSignal.timeout(VIDEO_TIMEOUT_MS)
     });
+    if (antwort.status === 429) return "besetzt";
     if (!antwort.ok) return null;
     const daten = await antwort.json();
     const url = sichereVideoAntwort(daten);
@@ -279,51 +290,43 @@ async function erzeugeVideo(prompt) {
 }
 
 /**
+ * Wartet hoeflich, bis der Video-Maler frei ist, statt sofort abzusagen.
+ *
+ * Der Worker kann nur EIN Video zugleich (2 Kerne, geteilter Server) und
+ * antwortet sonst mit 429. Vorher hiess das fuer den zweiten Nutzer
+ * "fehlgeschlagen" — falsch und unfreundlich, denn nichts war kaputt, es war
+ * nur besetzt. Jetzt wartet die Bruecke und laesst den Nutzer zusehen.
+ *
+ * `melde(phase)` faerbt den laufenden Fortschritt ("wartet" statt "läuft").
+ */
+async function erzeugeVideoMitGeduld(prompt, melde) {
+  const bis = Date.now() + VIDEO_WARTE_MAX_MS;
+  for (;;) {
+    const ergebnis = await versucheVideo(prompt);
+    if (ergebnis !== "besetzt") return ergebnis;
+    // Besetzt: warten, aber nie laenger als das Geduldsbudget. Danach lieber
+    // ehrlich absagen als den Nutzer endlos vertroesten.
+    if (Date.now() >= bis) return null;
+    melde("wartet auf freien Platz");
+    await new Promise((weiter) => setTimeout(weiter, VIDEO_WARTE_TAKT_MS));
+    melde("läuft");
+  }
+}
+
+/**
  * Streamt ein erzeugtes Bild als Markdown in den Antwortstrom.
  * deps liefert die brueckenlokalen Helfer: { corsHeaders, securityHeaders, timeoutMs }.
  */
-export async function streamBilderLane(res, body, task, deps) {
-  const videoPrompt = erkenneVideoAuftrag(task);
-  if (videoPrompt) {
-    // Weg 1: der eigene Video-Maler (nur wenn wach UND Engine + Bild-Maler
-    // bereit — das meldet sein /health ehrlich).
-    if (await videoWorkerBereit()) {
-      bilderSseKopf(res, deps, body, "video-erzeugung", "video-worker:kenburns");
-      videoSchritt(res, "laeuft", "läuft … (ca. 1-2 Minuten)");
-      const beginn = Date.now();
-      // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
-      const takt = setInterval(() => {
-        videoSchritt(res, "laeuft", `läuft … ${Math.round((Date.now() - beginn) / 1000)} s`);
-      }, 10000);
-      let video = null;
-      try {
-        video = await erzeugeVideo(await uebersetzeMalPrompt(videoPrompt));
-      } finally {
-        clearInterval(takt);
-      }
-      if (video) {
-        videoSchritt(res, "fertig", "fertig");
-        // Ehrlich sagen, WAS sich bewegt: die kenburns-Engine animiert ein
-        // gemaltes Standbild (Kamerafahrt), das Motiv selbst bleibt ruhig —
-        // wer "fliegender Adler" tippt, saehe sonst enttaeuscht einen Zoom.
-        // animatediff bewegt das Motiv wirklich und braucht keinen Hinweis.
-        const hinweis = video.engine.startsWith("kenburns")
-          ? "\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.*"
-          : "";
-        bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${video.url})${hinweis}`);
-      } else {
-        // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
-        videoSchritt(res, "fertig", "fehlgeschlagen");
-        bilderSendeInhalt(res, "Die Video-Erzeugung ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
-      }
-      res.write("data: [DONE]\n\n");
-      res.end();
-      return true;
-    }
-
-    // Weg 2 (Reserve): ehrlicher Infrastruktur-Status, solange der
-    // Video-Worker-Dienst nicht freigeschaltet ist (Zeabur-Freigabe faellt
-    // der Betreiber — Memory smejj-zeabur-expansion-approval).
+/**
+ * Video-Zweig: erzeugt ein MP4 beim eigenen Video-Maler und streamt es.
+ * Ausgelagert, weil streamBilderLane sonst zwei Spuren in einer Funktion
+ * traegt — und weil der Andrang-Zaehler eine klare Klammer braucht.
+ */
+async function streamVideoSpur(res, body, videoPrompt, deps) {
+  if (!(await videoWorkerBereit())) {
+    // Reserve: ehrlicher Infrastruktur-Status, solange der Video-Worker-Dienst
+    // nicht freigeschaltet ist (Zeabur-Freigabe faellt der Betreiber —
+    // Memory smejj-zeabur-expansion-approval).
     bilderSseKopf(res, deps, body, "video-hinweis", "smejj-video-engine");
     videoSchritt(res, "laeuft", "prüfe Video-Engine …");
     const antwortText = `🎬 **Video-Erstellung für smejj 1.0**\n\n` +
@@ -336,6 +339,71 @@ export async function streamBilderLane(res, body, task, deps) {
     res.write("data: [DONE]\n\n");
     res.end();
     return true;
+  }
+
+  bilderSseKopf(res, deps, body, "video-erzeugung", "video-worker:kenburns");
+  videoSchritt(res, "laeuft", "läuft … (ca. 1-2 Minuten)");
+  const beginn = Date.now();
+  let phase = "läuft";
+  // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
+  const takt = setInterval(() => {
+    videoSchritt(res, "laeuft", `${phase} … ${Math.round((Date.now() - beginn) / 1000)} s`);
+  }, 10000);
+  let video = null;
+  try {
+    video = await erzeugeVideoMitGeduld(await uebersetzeMalPrompt(videoPrompt), (neu) => {
+      phase = neu;
+    });
+  } finally {
+    clearInterval(takt);
+  }
+
+  if (video) {
+    videoSchritt(res, "fertig", "fertig");
+    // Ehrlich sagen, WAS sich bewegt: die kenburns-Engine animiert ein
+    // gemaltes Standbild (Kamerafahrt), das Motiv selbst bleibt ruhig —
+    // wer "fliegender Adler" tippt, saehe sonst enttaeuscht einen Zoom.
+    // animatediff bewegt das Motiv wirklich und braucht keinen Hinweis.
+    const hinweis = video.engine.startsWith("kenburns")
+      ? "\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.*"
+      : "";
+    bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${video.url})${hinweis}`);
+  } else {
+    // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
+    videoSchritt(res, "fertig", "fehlgeschlagen");
+    bilderSendeInhalt(res, "Die Video-Erzeugung ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
+  }
+  res.write("data: [DONE]\n\n");
+  res.end();
+  return true;
+}
+
+/**
+ * Streamt ein erzeugtes Bild als Markdown in den Antwortstrom.
+ * deps liefert die brueckenlokalen Helfer: { corsHeaders, securityHeaders, timeoutMs }.
+ */
+export async function streamBilderLane(res, body, task, deps) {
+  const videoPrompt = erkenneVideoAuftrag(task);
+  if (videoPrompt) {
+    // Pruefen UND zaehlen ohne await dazwischen: sonst kommen gleichzeitige
+    // Auftraege alle an der Pruefung vorbei, bevor der erste den Zaehler
+    // erhoeht (gemessen 2026-08-12: vier von vier kamen durch).
+    if (videoAndrang >= VIDEO_ANDRANG_MAX) {
+      // Zu viele zugleich: SOFORT und ehrlich absagen. Eine Schlange, die der
+      // Server nie abarbeitet, waere nur eine langsamere Enttaeuschung.
+      bilderSseKopf(res, deps, body, "video-andrang", "smejj-video-engine");
+      videoSchritt(res, "fertig", "gerade zu viele Videos");
+      bilderSendeInhalt(res, "Gerade werden schon mehrere Videos erzeugt — bitte versuch es in ein paar Minuten noch einmal.");
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return true;
+    }
+    videoAndrang += 1;
+    try {
+      return await streamVideoSpur(res, body, videoPrompt, deps);
+    } finally {
+      videoAndrang -= 1;
+    }
   }
 
   const prompt = erkenneBildAuftrag(task);

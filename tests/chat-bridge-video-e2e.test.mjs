@@ -28,6 +28,9 @@ let antwortModus = "ok";
 let engine = "kenburns:sd-turbo";
 let letzterPrompt = "";
 let streamBilderLane;
+// Wie oft der Worker "besetzt" (429) meldet, bevor er liefert.
+let besetztZaehler = 0;
+let versuche = 0;
 
 before(async () => {
   worker = http.createServer((req, res) => {
@@ -40,6 +43,12 @@ before(async () => {
       req.on("data", (stueck) => (body += stueck));
       return req.on("end", () => {
         letzterPrompt = JSON.parse(body || "{}").prompt || "";
+        versuche += 1;
+        if (besetztZaehler > 0) {
+          besetztZaehler -= 1;
+          res.writeHead(429, { "Content-Type": "application/json" });
+          return res.end(JSON.stringify({ ok: false, fehler: "beschaeftigt" }));
+        }
         res.writeHead(antwortModus === "fehler" ? 500 : 200, { "Content-Type": "application/json" });
         if (antwortModus === "urlschmuggel") {
           // Ein kompromittierter Worker koennte eine fremde Adresse schicken.
@@ -53,6 +62,9 @@ before(async () => {
   await new Promise((fertig) => worker.listen(0, "127.0.0.1", fertig));
   workerPort = worker.address().port;
   process.env.SMEJJ_VIDEO_WORKER_URL = `http://127.0.0.1:${workerPort}`;
+  // Kurzer Wartetakt, damit die Geduld-Probe nicht 5 Sekunden pro Runde kostet.
+  process.env.SMEJJ_VIDEO_WARTE_TAKT_MS = "20";
+  process.env.SMEJJ_VIDEO_WARTE_MAX_MS = "600";
   ({ streamBilderLane } = await import("../public/chat-bridge-bilder.js"));
 });
 
@@ -171,6 +183,46 @@ describe("Video-Spur Ende-zu-Ende (echter Worker-Ersatz, echte streamBilderLane)
     assert.equal(new Set(schritte.map((s) => s.text)).size, 1, "text muss konstant bleiben");
     assert.ok(schritte.every((s) => s.stand), "stand fehlt — Fortschritt unsichtbar");
     assert.ok(schritte.every((s) => s.platzhalter === "bild"), "Schimmer-Karte fehlt");
+  });
+
+  it("wartet, wenn der Maler besetzt ist, statt abzusagen", async () => {
+    antwortModus = "ok";
+    besetztZaehler = 2; // zweimal 429, dann liefert der Worker
+    versuche = 0;
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem Wasserfall", DEPS);
+
+    assert.equal(versuche, 3, "die Bruecke haette es dreimal versuchen muessen");
+    assert.ok(res.inhalt.includes("data:video/mp4;base64,"), "nach dem Warten muss das Video kommen");
+    assert.ok(!res.inhalt.includes("fehlgeschlagen"), "besetzt ist kein Fehlschlag");
+  });
+
+  it("gibt nach dem Geduldsbudget ehrlich auf", async () => {
+    antwortModus = "ok";
+    besetztZaehler = 10_000; // bleibt dauerhaft besetzt
+    versuche = 0;
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem Vulkan", DEPS);
+
+    assert.ok(!res.inhalt.includes("data:video"), "kein Video, wenn nie ein Platz frei wird");
+    assert.ok(res.inhalt.length > 0, "der Nutzer darf nie eine leere Antwort bekommen");
+    // 600 ms Budget bei 20 ms Takt: viele Versuche, aber nicht endlos.
+    assert.ok(versuche > 1 && versuche < 200, `unplausible Versuchszahl: ${versuche}`);
+    besetztZaehler = 0;
+  });
+
+  it("sagt bei Andrang sofort ab, statt eine Schlange zu bilden", async () => {
+    antwortModus = "ok";
+    besetztZaehler = 0;
+    // Vier Auftraege gleichzeitig; ab dem vierten greift VIDEO_ANDRANG_MAX=3.
+    const laeufe = Array.from({ length: 4 }, () => sammelAntwort());
+    await Promise.all(laeufe.map((res) => streamBilderLane(res, {}, "Erstelle ein Video von einem Wald", DEPS)));
+
+    const abgewiesen = laeufe.filter((r) => r.inhalt.includes("mehrere Videos"));
+    assert.equal(abgewiesen.length, 1, "genau der vierte Auftrag muss abgewiesen werden");
+    assert.equal(abgewiesen[0].kopf["x-smejj-profile"], "video-andrang");
+    // Die Absage ist freundlich und nennt keinen Fehler.
+    assert.ok(!abgewiesen[0].inhalt.includes("fehlgeschlagen"));
   });
 
   it("laesst Bild-Auftraege unberuehrt (Videospur greift nicht daneben)", async () => {

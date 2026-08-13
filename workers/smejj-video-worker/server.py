@@ -84,6 +84,13 @@ if ENGINE == "animatediff":
     threading.Thread(target=lade_diffusion_engine, daemon=True).start()
 
 
+class Besetzt(Exception):
+    """Eine Stufe der Kette ist gerade beschaeftigt — kein Defekt, nur voll.
+
+    Wird als HTTP 429 beantwortet, damit die Bruecke wartet statt abzusagen.
+    """
+
+
 def bild_maler_bereit():
     """Fragt (höchstens alle 30 s) nach, ob der Bild-Maler wach und geladen ist."""
     if time.time() - maler_cache["geprueft"] < 30:
@@ -107,6 +114,11 @@ def hole_basisbild(prompt):
         headers={"x-smejj-key": BILD_MALER_KEY} if BILD_MALER_KEY else {},
         timeout=BILD_TIMEOUT_S,
     )
+    # Der Bild-Maler kann auch nur EINS zugleich. Sein 429 muss als "besetzt"
+    # durchgereicht werden, sonst haelt die Bruecke es fuer einen Defekt und
+    # sagt ab, statt zu warten (Warteschlange in chat-bridge-bilder.js).
+    if antwort.status_code == 429:
+        raise Besetzt("bild_maler_beschaeftigt")
     antwort.raise_for_status()
     daten = antwort.json()
     if not daten.get("ok") or not daten.get("b64"):
@@ -237,6 +249,8 @@ async def erzeuge(request: Request):
             "aufloesung": f"{GROESSE}x{GROESSE}",
             "dauerSek": round(time.time() - beginn, 1),
         }
+    except Besetzt as fehler:
+        return JSONResponse({"ok": False, "fehler": str(fehler)}, status_code=429)
     except Exception as fehler:  # noqa: BLE001
         return JSONResponse({"ok": False, "fehler": f"{type(fehler).__name__}: {fehler}"}, status_code=500)
     finally:
