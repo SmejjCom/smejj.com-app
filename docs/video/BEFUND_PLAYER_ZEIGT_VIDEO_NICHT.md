@@ -35,18 +35,35 @@ Die Gegenprobe, die ich zuerst versäumt hatte:
 | **Unkomprimiertes WAV im `<audio>`** | **hängt** |
 | **Dasselbe WAV im `<video>`** | **hängt** |
 
-Ein WAV braucht keinen Codec. Dass selbst das hängt, heißt: diese Instanz
-dekodiert überhaupt nichts. Jede `readyState`-Messung darin ist wertlos.
+## Die genaue Ursache (nachgemessen)
+
+Zuerst hielt ich die Instanz für codec-los. Die eigentliche Ursache ist banaler
+und wichtiger zu kennen:
+
+```js
+document.visibilityState   // -> "hidden"
+```
+
+**Chrome lädt in unsichtbaren Tabs keine Medien.** Die Tabs der
+Browser-Erweiterung laufen in einem Fenster, das nie in den Vordergrund kommt —
+auch ein frisch erstellter Tab meldet `hidden`. Deshalb bleibt dort JEDES
+Medium bei `readyState 0`: Video, MP3, sogar unkomprimiertes WAV. Ein Klick auf
+den Play-Knopf ändert daran nichts (`paused` wird false, geladen wird trotzdem
+nicht).
 
 `canPlayType` warnt dabei NICHT — es antwortete `"probably"` für
-`avc1.64001e`, prüft aber nur den MIME-String, nie den echten Decoder.
+`avc1.64001e`, prüft aber nur den MIME-String, nie den echten Ladevorgang.
 
 ## Merkregel
 
-**Vor jeder Player-Messung im Agenten-Browser erst ein WAV testen.** Kommt dort
-kein `loadedmetadata`, misst man den eigenen Browser und hält es für einen
-Produktfehler. Für echte Medien-Proben gehört der Weg über
-`scripts/testing/cdp-client.mjs` (richtiger Chrome), nicht der Agenten-Browser.
+**Medien lassen sich im Agenten-Browser grundsätzlich nicht messen.** Vor jeder
+Player-Messung `document.visibilityState` prüfen — steht dort `hidden`, ist
+jede `readyState`-Messung wertlos, egal welcher Code dahintersteht. Zur
+Gegenprobe ein WAV laden (braucht keinen Codec): hängt selbst das, ist es die
+Umgebung.
+
+Für echte Medien-Proben gehört der Weg über `scripts/testing/cdp-client.mjs`
+(richtiger Chrome) — siehe `scripts/testing/pruefe_video_player.mjs`.
 
 ## Nachmessen
 
