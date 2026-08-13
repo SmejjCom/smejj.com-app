@@ -58,7 +58,7 @@ const MAX_BYTES = 200_000;
 export const IM_LAEUFER_BETRIEBEN = Object.freeze([
   "bug-predictor", "knowledge-graph", "code-interpreter", "smart-router", "self-healing",
   "deep-research", "memory-sync", "multimodal-engine", "task-orchestrator", "self-improvement",
-  "model-lifecycle", "user-feedback-flywheel", "process-reward", "knowledge-distiller",
+  "model-lifecycle", "user-feedback-flywheel", "antwort-tuev", "process-reward", "knowledge-distiller",
   "evolutionary-mutation", "realtime-internet-harvester", "multi-file-repo-architect",
   "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot",
   "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check"
@@ -368,9 +368,13 @@ export async function laufAntwortTuev({ statsLader = getUserFlywheelStats } = {}
 }
 
 export async function laufFeedbackSchwungrad({ statsLader = getUserFlywheelStats } = {}) {
-  const probe = scrubPiiData("Mail an alan.best@example.com, Schluessel sk-abcdef1234567890abcdef, IP 192.168.10.5");
+  // Der Probe-Schluessel ist mit Absicht KURZ (12 Zeichen nach "sk-"): der
+  // PII-Filter maskiert ab 10, der Release-Secret-Scanner schlaegt ab 20 an —
+  // die alte 22er-Probe sah fuer den Scanner wie ein ECHTER Schluessel aus und
+  // blockierte jeden Control-Release-Bau (gemessen 2026-08-14).
+  const probe = scrubPiiData("Mail an alan.best@example.com, Schluessel sk-abcdef123456, IP 192.168.10.5");
   const filterHeil = !probe.includes("alan.best@example.com")
-    && !probe.includes("sk-abcdef1234567890abcdef")
+    && !probe.includes("sk-abcdef123456")
     && !probe.includes("192.168.10.5");
   if (!filterHeil) {
     return { ok: false, meldung: "PII-Filter durchlaessig — es darf NICHTS gespeichert werden, bis er wieder maskiert" };
