@@ -259,6 +259,18 @@ function bilderSchritt(res, zustand, stand) {
   res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "bild", zustand, text: "Male dein Bild", stand, platzhalter: "bild" } })}\n\n`);
 }
 
+// Zieht das Motiv aus einem Video-Auftrag, damit der Ersatzvorschlag
+// ("Zeichne ein Bild von X") sauber klingt. Die Praeposition muss MIT weg,
+// sonst entsteht "Bild von von einem Adler" oder "Bild von über Berlin".
+export function videoMotiv(prompt) {
+  const rest = String(prompt || "")
+    .replace(/^.*?\b(?:video|videos|film|filme|films|clip|clips|animation|animationen|movie|movies|mp4)\b\s*/i, "")
+    .replace(/^(?:von|vom|über|ueber|aus|zu|mit|of|about|from|with)\s+/i, "")
+    .replace(/[.!?]+\s*$/, "")
+    .trim();
+  return rest || "…";
+}
+
 // Sagt dem Nutzer, WAS sich im Video bewegt. Exportiert, damit die
 // Erwartungs-Ehrlichkeit pruefbar bleibt (tests/chat-bridge-video-e2e).
 // `ton` kommt aus der Worker-Antwort — nur wenn dort wirklich Stimme drin ist.
@@ -382,11 +394,11 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
     // Memory smejj-zeabur-expansion-approval).
     bilderSseKopf(res, deps, body, "video-hinweis", "smejj-video-engine");
     videoSchritt(res, "laeuft", "prüfe Video-Engine …");
-    const antwortText = `🎬 **Video-Erstellung für smejj 1.0**\n\n` +
-      `Dein Auftrag: *"${videoPrompt}"*\n\n` +
-      `> [!NOTE]\n` +
-      `> Die eigene Video-Engine von **smejj 1.0** ist gerade nicht erreichbar. Sobald sie wieder da ist, entsteht hier ein echtes kurzes Video zu deinem Auftrag.\n\n` +
-      `In der Zwischenzeit kann **smejj 1.0** Grafiken (SVG) oder Fotos zeichnen. Verwende dafür z. B.: *"Zeichne ein Bild von..."*`;
+    // Der Hinweiskasten wird von chat-markdown.js gerendert (seit 2026-08-13);
+    // vorher stand "> [!NOTE]" woertlich im Chat.
+    const antwortText = `> [!NOTE]\n` +
+      `> Die eigene Video-Engine ist gerade nicht erreichbar. Sobald sie läuft, entsteht hier ein kurzes Video zu deinem Auftrag.\n\n` +
+      `Bilder gehen weiter — versuch es mit *"Zeichne ein Bild von ${videoMotiv(videoPrompt)}"*.`;
     videoSchritt(res, "fertig", "Video-Engine nicht erreichbar");
     bilderSendeInhalt(res, antwortText);
     res.write("data: [DONE]\n\n");

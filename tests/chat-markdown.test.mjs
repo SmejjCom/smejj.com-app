@@ -94,6 +94,58 @@ test("ein Satz mit Strichen ist keine Tabelle", async () => {
   assert.doesNotMatch(liste.innerHTML, /<table/);
 });
 
+// --- Ueberschriften --------------------------------------------------------
+//
+// GEMESSEN 2026-08-13 im Schlussbeweis der Buero-Suche: "## Meine Empfehlung"
+// stand roh samt Doppelkreuzen im Chat. Das Modell gliedert laengere Antworten
+// von sich aus; der Renderer kannte nur keine Ueberschriften.
+
+test("## wird eine echte Ueberschrift, ### eine kleinere", async () => {
+  const render = await load();
+  const node = fakeNode("## Meine Empfehlung\nCastro Valley ist besser aufgestellt.\n\n### Details\nMehr Text.");
+  render(node);
+  assert.match(node.innerHTML, /<h3 class="chat-titel">Meine Empfehlung<\/h3>/);
+  assert.match(node.innerHTML, /<h4 class="chat-titel">Details<\/h4>/);
+  assert.match(node.innerHTML, /<p>Castro Valley ist besser aufgestellt\.<\/p>/);
+  assert.doesNotMatch(node.innerHTML, /##/, "kein Doppelkreuz bleibt stehen");
+});
+
+test("eine Ueberschrift mitten im Block trennt die Absaetze sauber", async () => {
+  const render = await load();
+  const node = fakeNode("Erster Satz.\n## Zwischentitel\nZweiter Satz.");
+  render(node);
+  assert.match(node.innerHTML, /<p>Erster Satz\.<\/p><h3 class="chat-titel">Zwischentitel<\/h3><p>Zweiter Satz\.<\/p>/);
+});
+
+test("die Chat-Skala ist gedeckelt: # bleibt h3, #### bleibt h4", async () => {
+  // Eine Chat-Antwort ist kein Dokument — sie darf die App-Ueberschriften
+  // nie ueberragen, egal was das Modell schickt.
+  const render = await load();
+  const node = fakeNode("# Riesig\nText.\n\n#### Winzig\nText.");
+  render(node);
+  assert.match(node.innerHTML, /<h3 class="chat-titel">Riesig<\/h3>/);
+  assert.match(node.innerHTML, /<h4 class="chat-titel">Winzig<\/h4>/);
+  assert.doesNotMatch(node.innerHTML, /<h1|<h2/);
+});
+
+test("Ueberschriften-Inhalt bleibt escaped und Links darin klickbar", async () => {
+  const render = await load();
+  const node = fakeNode("## Quelle <script> und https://a.example/\nText.");
+  render(node);
+  assert.match(node.innerHTML, /&lt;script&gt;/);
+  assert.match(node.innerHTML, /<h3 class="chat-titel">Quelle &lt;script&gt; und <a class="chat-link"/);
+});
+
+test("Doppelkreuz ohne Leerzeichen oder mitten im Satz ist KEINE Ueberschrift", async () => {
+  const render = await load();
+  const kanal = fakeNode("Der Kanal #allgemein ist *aktiv*.");
+  render(kanal);
+  assert.doesNotMatch(kanal.innerHTML, /<h3|<h4/);
+  const raute = fakeNode("#1 der Charts ist *dieser* Song.");
+  render(raute);
+  assert.doesNotMatch(raute.innerHTML, /<h3|<h4/, "#1 ist eine Platzierung, kein Titel");
+});
+
 test("fett, kursiv und Code werden ausgezeichnet", async () => {
   const render = await load();
   const node = fakeNode("Die Hauptstadt ist **Lissabon**.");
@@ -240,4 +292,86 @@ test("Bilder: data:image-base64 wird zum <img>, Fremd-URLs bleiben Text", async 
   const roh = fakeNode('![x](data:image/svg+xml,<svg onload="alert(1)"></svg>)');
   render(roh);
   assert.doesNotMatch(roh.innerHTML, /<img/);
+});
+
+// --- Zitate und Hinweiskaesten ---------------------------------------------
+//
+// GEMESSEN 2026-08-13: Der Renderer kannte "> Text" nicht. Im Chat stand
+// woertlich "&gt; Text" — in JEDER Modellantwort mit Zitat und in der
+// Video-Statusmeldung, die "> [!NOTE]" verwendet.
+
+async function html(text) {
+  const render = await load();
+  const node = fakeNode(text);
+  render(node);
+  return node.innerHTML;
+}
+
+test("aus '> Text' wird ein Zitat statt sichtbarer Zitatzeichen", async () => {
+  const ergebnis = await html("> Eine stumme Quelle ist kein leeres Backlog.");
+  assert.match(ergebnis, /<blockquote class="chat-zitat">/);
+  assert.ok(!ergebnis.includes("&gt;"), "Zitatzeichen darf nicht sichtbar bleiben");
+});
+
+test("ein Zitat ohne Sternchen wird ueberhaupt gerendert", async () => {
+  // MARKERS trifft hier nicht — ohne die zweite Frage (hatZitat) bliebe der
+  // Text roh stehen, genau wie es Tabellen frueher passierte.
+  const ergebnis = await html("> Schlichtes Zitat ohne jede Auszeichnung");
+  assert.ok(ergebnis.length > 0, "Renderer hat gar nicht angefasst");
+  assert.match(ergebnis, /blockquote/);
+});
+
+test("aus '> [!NOTE]' wird ein Hinweiskasten mit deutschem Titel", async () => {
+  const ergebnis = await html("> [!NOTE]\n> Die Engine ist nicht erreichbar.");
+  assert.match(ergebnis, /class="chat-hinweis" data-art="note"/);
+  assert.match(ergebnis, /Hinweis<\/div>/);
+  assert.ok(!ergebnis.includes("[!NOTE]"), "Markierungszeile gehoert nicht in den Text");
+  assert.ok(ergebnis.includes("Die Engine ist nicht erreichbar."));
+});
+
+test("alle fuenf Kastenarten bekommen ihren deutschen Titel", async () => {
+  for (const [art, titel] of [["TIP", "Tipp"], ["IMPORTANT", "Wichtig"], ["WARNING", "Achtung"], ["CAUTION", "Vorsicht"]]) {
+    const ergebnis = await html(`> [!${art}]\n> Text dazu.`);
+    assert.match(ergebnis, new RegExp(`data-art="${art.toLowerCase()}"`), art);
+    assert.ok(ergebnis.includes(titel), `${art} muss ${titel} heissen`);
+  }
+});
+
+test("'>' mitten im Satz bleibt Text, wird nie ein Zitat", async () => {
+  const ergebnis = await html("Wenn a > b, dann gilt **das**.");
+  assert.ok(!ergebnis.includes("blockquote"), "kein Zitat mitten im Satz");
+  assert.match(ergebnis, /a &gt; b/);
+});
+
+test("Zitat und Aufzaehlung werden nicht verwechselt", async () => {
+  assert.match(await html("> - Punkt eins\n> - Punkt zwei"), /<blockquote/);
+  assert.match(await html("- Punkt eins\n- Punkt zwei"), /<ul class="chat-list">/);
+});
+
+test("im Zitat wird weiter ausgezeichnet (fett)", async () => {
+  assert.match(await html("> Zweite Zeile mit **fett**."), /<strong>fett<\/strong>/);
+});
+
+test("eine schlichte Strichliste wird ueberhaupt gerendert", async () => {
+  // GEFUNDEN 2026-08-13: "- Punkt" traegt kein Zeichen aus MARKERS ("*" haette
+  // eines, "-" nicht) — jede Strichliste des Modells blieb Rohtext, obwohl
+  // BULLET sie seit jeher kennt. Aeltester Fall dieser Luecken-Familie.
+  const ergebnis = await html("- Milch holen\n- Brot kaufen\n- Zeitung mitnehmen");
+  assert.match(ergebnis, /<ul class="chat-list">/);
+  assert.match(ergebnis, /<li>Milch holen<\/li>/);
+});
+
+test("mp4CodecsAuslesen: liest avc1-Profil/Level und erkennt AAC (Nacht-Umbau MediaSource)", async () => {
+  globalThis.window = {};
+  const { mp4CodecsAuslesen } = await import(`../public/chat-markdown.js?case=${Math.random()}`);
+  // Synthetischer moov-Ausschnitt: 'avcC' + [version=1, 0x64, 0x00, 0x1E] = High 3.0
+  const nurVideo = new Uint8Array([0,0,0,0, 0x61,0x76,0x63,0x43, 1, 0x64, 0x00, 0x1E, 0,0,0,0]);
+  assert.equal(mp4CodecsAuslesen(nurVideo.buffer), "avc1.64001e");
+  // Mit 'mp4a'-Eintrag kommt AAC-LC dazu.
+  const mitTon = new Uint8Array([...nurVideo, 0x6d,0x70,0x34,0x61, 0,0,0,0]);
+  assert.equal(mp4CodecsAuslesen(mitTon.buffer), "avc1.64001e,mp4a.40.2");
+  // Ohne avcC oder mit falscher Version: unbekannt -> blob-Reserve.
+  assert.equal(mp4CodecsAuslesen(new Uint8Array(32).buffer), "");
+  const falscheVersion = new Uint8Array([0x61,0x76,0x63,0x43, 9, 0x64, 0x00, 0x1E]);
+  assert.equal(mp4CodecsAuslesen(falscheVersion.buffer), "");
 });
