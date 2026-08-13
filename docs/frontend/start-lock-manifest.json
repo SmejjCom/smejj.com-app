@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T23:43:49.486Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-13 Punkt 4 (Startseiten-Dateien fuer heutige Design- und Textarbeiten aendern und neu einfrieren). Inhalt gezeigt: index.html + search.js aus 4becb50 (Hero 'Womit kann ich helfen?' + Platzhalter) und 4555595 (Umbenennung Datei-Flaeche 'Projekte' -> 'Arbeitsbereich', Parallelsitzung). Keine Logik-, nur Text- und Beschriftungsaenderungen.",
+  "frozenAt": "2026-08-13T23:51:17.039Z",
+  "confirmation": "Betreiber 2026-08-13 per Auswahlkarte: 'Chips professionell' — vier Beispiel-Knoepfe werden kurze Taetigkeiten (Code schreiben, Text verbessern, Recherchieren, Bild erstellen); data-chip traegt den uebersetzten Satzanfang ins Feld. Mitgestempelt, weil in der gemeinsamen Arbeitskopie bereits committet: public/search.js und Teile von public/index.html aus Commit 4555595 (Arbeitsbereich-Umbenennung, Parallelsitzung).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "d1a2660b7ec2f52ccabf4dd016c1fa8436230498553badc5d4d76c053583d79b",
+    "public/index.html": "dfb2748e9daae11e6dd44df8245f9f45a1b1282979aa017a2fe31dae83d014df",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "0aac880651b981461c1da7025b88d57b12a667f397216539dfa7d3f6c205bd46",
     "public/start-glass.css": "8b5fcce2c6d972fd475fbb959a751cad9b241b62b77f1ffb25c1464dce5c8cc6",
