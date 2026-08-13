@@ -56,7 +56,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260812-v132-video-mp4";
+const BRIDGE_VERSION = "20260813-v134-faehigkeiten-ehrlich";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -280,6 +280,12 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
     // Der Chat zeigt reinen Text — rohes LaTeX stand am 2026-08-05 sichtbar in
     // der Antwort ("\\[ A = P \\times \\frac{...} \\]") und ist fuer Nutzer unlesbar.
     "Schreibe Formeln in normaler Schreibweise (z. B. Rate = Betrag * Faktor). Niemals LaTeX, kein \\frac, kein \\times, keine eckigen Formelklammern.",
+    "smejj.com KANN Bilder malen und zeichnen (eigenes Bildmodell). Behaupte NIE, du koenntest keine Bilder erstellen; verweise stattdessen auf einen Auftrag wie: Male ein Foto von ...",
+    // Befund 2026-08-13: Auf einen eingefuegten ChatGPT-Link antwortete das
+    // Modell "ich kann nicht direkt auf externe Webseiten zugreifen" — obwohl
+    // seite_lesen/web_suche existieren und am selben Tag bewiesen liefen. Die
+    // Faehigkeits-Verneinung ist derselbe Fehlertyp wie einst bei den Bildern.
+    "smejj.com KANN Webseiten oeffnen und lesen (Werkzeuge seite_lesen und web_suche). Behaupte NIE, du haettest keinen Internet-Zugriff — versuche es. Nur PRIVATE Seiten hinter einem Login (z. B. chatgpt.com/c/..., Postfaecher, Konten) kann NIEMAND von aussen lesen, auch keine andere KI; sage dann konkret, dass die Seite privat ist, und nenne den Ausweg (bei ChatGPT: ueber 'Teilen' einen oeffentlichen .../share/...-Link erstellen).",
     rechnung
       ? "Die exakt berechneten Werte liegen dir vor. Uebernimm sie ZIFFERNGENAU und rechne sie NICHT nach; erklaere nur den Weg und nenne die Ergebnisse."
       : ""
