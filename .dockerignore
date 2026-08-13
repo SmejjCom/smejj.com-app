@@ -15,6 +15,7 @@ scripts/*
 idrive-layout
 examples
 workers/*
+!workers/process-crash-guard.mjs
 !workers/remote-browser
 !workers/remote-browser/**
 !workers/smejj-worker
