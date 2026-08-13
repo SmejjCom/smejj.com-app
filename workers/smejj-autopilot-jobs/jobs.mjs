@@ -102,18 +102,17 @@ export async function autopilotWaechterLauf({ log = console.log } = {}) {
     { id: "angelina-autopilot", meldung: "Angelina-Autopilot (Satz & Prompt-Synthesizer Engine): Aktiv und bereit" }
   ];
 
-  const ergebnisse = [];
-  for (const ap of liste) {
+  const ergebnisse = await Promise.allSettled(liste.map(async (ap) => {
     const statusHttp = await herzschlagSenden({
       id: ap.id,
       ok: true,
       meldung: ap.meldung,
       dauerMs: Date.now() - start
     });
-    ergebnisse.push({ id: ap.id, statusHttp });
-  }
+    return { id: ap.id, statusHttp };
+  }));
 
   const dauerMs = Date.now() - start;
   log(`[autopilot-jobs] Autopilot-Wächter beendet: ${ergebnisse.length}/31 Autopiloten überprüft (${dauerMs}ms)`);
-  return { ok: true, dauerMs, ergebnisse };
+  return { ok: true, dauerMs, ergebnisse: ergebnisse.map((r) => r.value || { ok: false }) };
 }
