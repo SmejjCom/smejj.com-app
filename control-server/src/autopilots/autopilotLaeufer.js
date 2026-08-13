@@ -423,6 +423,30 @@ export function baueHeiler({ melde = interneMeldung } = {}) {
   return heiler;
 }
 
+
+/**
+ * Baut den Eskalations-Mailversand fuer die Selbstheilung. Wohnt HIER statt
+ * in src/server.js: die 800-Zeilen-Regel gilt auch fuer den Serverkern, und
+ * der Text gehoert fachlich zum Heiler, nicht zum HTTP-Einstieg.
+ */
+export function baueEskalationsVersand(sendAuthMail, env = process.env) {
+  return async ({ id, name, grund }) => {
+    const empfaenger = String(env.SMEJJ_ADMIN_OWNER_EMAILS || "").split(",")[0].trim();
+    if (!empfaenger) return;
+    await sendAuthMail({
+      to: empfaenger,
+      subject: `smejj.com Autopilot gibt auf: ${name || id}`,
+      text: `Der Autopilot "${name || id}" liess sich nicht wiederbeleben.\n\n`
+        + `${grund}\n\n`
+        + "Die automatischen Versuche sind eingestellt, damit nicht endlos gegen einen "
+        + "ausgefallenen Dienst gehaemmert wird. Sobald er von selbst wieder gruen wird, "
+        + "beginnt die Selbstheilung wieder bei null.\n\n"
+        + "Ampel: https://smejj.com/admin/autopiloten/",
+      art: "autopilot-eskalation"
+    }, env);
+  };
+}
+
 /** Prüft die Ampel und heilt, was rot ist — mit Bremse und Eskalation. */
 export async function heileWasRotIst({
   uebersicht = autopilotUebersicht,

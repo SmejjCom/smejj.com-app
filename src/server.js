@@ -53,16 +53,14 @@ import { handleTrainingConsentRoute } from "../control-server/src/routes/trainin
 import { signGoogleAuthState, verifyGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
 import { createGoogleAuthHandlers } from "./auth/googleAuthRoutes.js";
 import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
-import { mailerConfig, sendAuthMail } from "../control-server/src/auth/mailer.js";
-import { starteMailLogAufraeumen } from "../control-server/src/auth/mailLogJanitor.js";
+import { mailerConfig } from "../control-server/src/auth/mailer.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
 import { sessionRegistryEnabled, newSessionId, registerSession, isSessionActive, revokeSession } from "../control-server/src/auth/sessionRegistry.js";
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
-import { ladeHerzschlaege, starteAlarmWache, starteSelbstmessung, starteWaechterAbfrage, starteWochenbericht } from "../control-server/src/admin/opsAutopiloten.js";
-import { starteAutopilotLaeufer } from "../control-server/src/autopilots/autopilotLaeufer.js";
+import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -256,52 +254,9 @@ server.listen(config.port, listenHost, () => {
   console.log(`Sandbox: ${config.projectRoot}`);
 });
 
-// Zustellprotokoll: 90 Tage aufbewahren, danach loeschen — so vom Betreiber am
-// 2026-07-29 freigegeben. Der Taktgeber laeuft verzoegert an, haelt den Prozess
-// nicht wach und bleibt ohne Objektspeicher ganz aus.
-starteMailLogAufraeumen({ env: process.env });
-
-// Autopiloten-Ampel (Modul AP): Eigenmeldung fuer die Salad-Sonden — der
-// laufende Container bezeugt sich alle 5 Minuten selbst; unref, haelt nichts wach.
-starteSelbstmessung();
-// Stufe 3: abgelegte Herzschlaege zurueckholen (Neustart-Festigkeit), danach
-// die Alarm-Wache takten — Rot wird einmal je Episode per Mail gemeldet.
-ladeHerzschlaege().catch(() => {});
-starteAlarmWache();
-// Bruecken-Waechter: er wird ABGEFRAGT statt zu melden — er hat als einziger
-// Autopilot eine oeffentliche Adresse, also braucht er keinen Schluessel.
-starteWaechterAbfrage();
-// Wochenbericht (Profi-Ausbau Nr. 4): montags ab 7:00 UTC eine Mail mit der
-// Lage der Woche — einmal je Montag, der Marker liegt neustart-fest in der Ablage.
-starteWochenbericht();
-// Autopilot-Laeufer (2026-08-12): die 21 Module in control-server/src/autopilots
-// waren vollstaendig implementiert und wurden von NIRGENDS importiert — toter
-// Code hinter gruenen Ampeln. Der Laeufer gibt ihnen alle 30 Minuten eine
-// Aufgabe mit feststehender Antwort (bug-predictor scannt den echten Quelltext
-// dieses Containers, live-arena rechnet ELO, git-bot muss ein Secret finden)
-// und meldet das ECHTE Ergebnis. Wer seine Aufgabe falsch loest, wird rot.
-// SELBSTHEILUNG MIT BREMSE (Betreiber-Wunsch 2026-08-13: "wenn einer ausgeht,
-// soll er sich automatisch wieder starten"): Nach jedem Durchgang sieht der
-// Laeufer nach, was rot ist, und versucht es hoechstens dreimal mit wachsendem
-// Abstand wiederzubeleben. Danach ruft er einen Menschen — endloses Haemmern
-// gegen einen Dienst am Boden waere schlimmer als gar kein Heiler.
-starteAutopilotLaeufer({
-  sendeAlarm: async ({ id, name, grund }) => {
-    const empfaenger = String(process.env.SMEJJ_ADMIN_OWNER_EMAILS || "").split(",")[0].trim();
-    if (!empfaenger) return;
-    await sendAuthMail({
-      to: empfaenger,
-      subject: `smejj.com Autopilot gibt auf: ${name || id}`,
-      text: `Der Autopilot "${name || id}" liess sich nicht wiederbeleben.\n\n`
-        + `${grund}\n\n`
-        + "Die automatischen Versuche sind eingestellt, damit nicht endlos gegen einen "
-        + "ausgefallenen Dienst gehaemmert wird. Sobald er von selbst wieder gruen wird, "
-        + "beginnt die Selbstheilung wieder bei null.\n\n"
-        + "Ampel: https://smejj.com/admin/autopiloten/",
-      art: "autopilot-eskalation"
-    }, process.env);
-  }
-});
+// Alle Autopilot-Hintergrunddienste (Sonden, Alarm, Laeufer, Heiler) starten
+// aus EINEM Modul — Begruendungen und Reihenfolge dort (800-Zeilen-Regel).
+starteAutopiloten();
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {

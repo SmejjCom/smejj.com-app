@@ -110,7 +110,9 @@
     "test:autopiloten": "node --test tests/autopiloten-ehrlichkeit.test.mjs tests/autopilot-jobs.test.mjs tests/bruecken-waechter.test.mjs control-server/src/admin/opsAutopiloten.test.js control-server/src/admin/opsCockpit.test.js",
     "test:tests": "node --test tests/*.test.mjs",
     "werkstatt:sammeln": "node scripts/werkstatt/sammle-backlog.mjs",
-    "werkstatt:tor": "node scripts/werkstatt/pruefe-tor.mjs"
+    "werkstatt:tor": "node scripts/werkstatt/pruefe-tor.mjs",
+    "werkstatt:auftrag": "node scripts/werkstatt/baue-auftrag.mjs",
+    "werkstatt:karte": "node scripts/werkstatt/freigabe-karte.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2"
