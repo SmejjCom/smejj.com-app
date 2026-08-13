@@ -1,24 +1,24 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T19:45:54.037Z",
-  "confirmation": "Betreiber waehlte am 2026-08-13 die Option 'Screens 4-14 verdrahten (Empfehlung)' — design-cyan-views.css (ohne Screen 1, Start-Revert d722064 bleibt gewahrt) wird von premium-surfaces.js (Start-Lock) zusaetzlich geladen.",
+  "frozenAt": "2026-08-13T22:06:30.325Z",
+  "confirmation": "Ja, Freigabe erteilt — Such-Overlay (docs/approvals/2026-08-13-suche-overlay-startlock-freigabe.md)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
+    "public/index.html": "01f51f2da3165a9bb39877cff91049fe6806eb282d24bc0c7f034fc31b0a9dda",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "43e02c10dcc97b302b17250b08293a28f1ed9e5451677e3b1f82020c69a185db",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "d9c21ae999004b8d5121a881010e1b7c5887b1639da3b6be60f5d17584d6b9d2",
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
-    "public/app.js": "17edb876a7add25a5b254d53936e3fbb80cac4b4f422907f3f3e90f2b5626a77",
+    "public/app.js": "10dab47a836b888d25dc0dbce26455d46cf8e71a5e0fb5d0280eef3f762c82bc",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "4233f774e0c0c36f17f4c8dbe9cc948215dec01eaaf035180350527a77ebe879",
     "public/components.js": "3857d1e62ed36de05a27fc307c1a4fc13b4721f5cafb850dafa672ef8dd2d0ff",
     "public/premium-surfaces.js": "db717e4c28d90aeb49667070be285e3c72cfd6f0323d088d4441f4585730f91b",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
-    "public/search.js": "10df93373bcaded8a00d7641922697b94547848d826dfda6a4f7434d96509bc8",
+    "public/search.js": "9cebf815344779cabaa9057e993129f71362aa95d53c0aaae208c6c160af19a6",
     "public/composer-tools.js": "7c3676feb6f1c305ec5f675d41fc26f745f3bbee19043bee6fc6e217d8106d92",
     "public/composer-plus-menu.js": "d479a9e2874ca04c067bb4288828310fd3b13fd3a1c3ca803540ccf2a7f3bb4e",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "49e3cb9156d5b6f76240e97992b0f0aaad1b6dbeb595a1e3ceb57dea12f5db9f",
+    "public/sw.js": "77d54c5a457f2ae3366ce14553744a432df62883c6e40422ea64c4de5b5c8c14",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

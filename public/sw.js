@@ -241,6 +241,8 @@ const SHELL = [
   "/assets/autonomous-thread-run.js",
   "/assets/browser-context.js",
   "/assets/search.js",
+  "/assets/search-overlay.js",
+  "/assets/search-overlay.css",
   "/assets/view-chrome.js",
   "/assets/composer-tools.js",
   "/assets/composer-plus-menu.js",
