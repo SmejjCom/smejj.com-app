@@ -9,7 +9,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AGENT_TOOLS, agentToolsEnabled, runAgentTool, streamWithTools, withAgentTools, zuText } from "../control-server/src/llm/toolLoop.js";
+import { AGENT_TOOLS, agentToolsEnabled, runAgentTool, SCHLUSSRUNDE_ANSAGE, streamWithTools, withAgentTools, zuText } from "../control-server/src/llm/toolLoop.js";
 
 // Baut einen Modell-Stream aus fertigen SSE-Ereignissen.
 function stream(events) {
@@ -314,4 +314,61 @@ test("403 mit Bild-Inhaltstyp meldet ebenfalls die Sperre, nicht den Typ", async
     status: 403, headers: { get: () => "image/png" }, text: async () => "binaer"
   }));
   assert.match(ergebnis, /gesperrt \(HTTP 403\)/);
+});
+
+// --- Die Schlussrunde muss wissen, dass sie die Schlussrunde ist -----------
+//
+// GEMESSEN 2026-08-13 live: Die werkzeugfreie Schlussrunde antwortete "Ich habe
+// konkrete Craigslist-Inserate gefunden, die ich jetzt einzeln auslese, um
+// Ihnen die Details zu geben." — 148 Zeichen Ankuendigung, kein einziges
+// Inserat, obwohl die Treffer vorlagen. Wer nicht weiss, dass er das letzte
+// Wort hat, kuendigt weiter an.
+
+test("die Schlussrunde bekommt eine Ansage, die Zwischenrunden nicht", async () => {
+  const gesehen = [];
+  await streamWithTools({
+    result: { response: { body: stream([
+      toolEvent(0, { id: "c1", function: { name: "web_suche", arguments: '{"anfrage":"office castro valley"}' } }),
+      "data: [DONE]"
+    ]) } },
+    chain: [], messages: [{ role: "user", content: "Suche Buero-Angebote" }], res: sammelAntwort(), options: {},
+    executeWithFallback: async (_chain, verlauf) => {
+      gesehen.push(verlauf.filter((n) => n.role === "system").map((n) => n.content));
+      return { ok: true, response: { body: stream([
+        toolEvent(0, { id: `c${gesehen.length + 1}`, function: { name: "web_suche", arguments: '{"anfrage":"noch was"}' } }),
+        "data: [DONE]"
+      ]) } };
+    },
+    runTool: async () => "Suchergebnisse:\n1. Treffer\n   https://a.example/"
+  });
+
+  assert.equal(gesehen.length, 3, "drei Modellaufrufe, einer je Runde");
+  assert.deepEqual(gesehen[0], [], "die erste Zwischenrunde bekommt keine Ansage");
+  assert.deepEqual(gesehen[1], [], "die zweite auch nicht");
+  assert.equal(gesehen[2].length, 1, "nur die Schlussrunde bekommt sie");
+  assert.equal(gesehen[2][0], SCHLUSSRUNDE_ANSAGE);
+});
+
+test("die Ansage verbietet das Ankuendigen und verlangt Belege", () => {
+  // Der gemessene Fehlersatz und seine Geschwister muessen ausdruecklich
+  // benannt sein — eine allgemeine Bitte um "eine gute Antwort" reicht nicht.
+  assert.match(SCHLUSSRUNDE_ANSAGE, /LETZTE RUNDE/);
+  assert.match(SCHLUSSRUNDE_ANSAGE, /keine Werkzeuge mehr/);
+  assert.match(SCHLUSSRUNDE_ANSAGE, /ich lese jetzt/, "genau der gemessene Fehlersatz");
+  assert.match(SCHLUSSRUNDE_ANSAGE, /lassen Sie mich/i);
+  assert.match(SCHLUSSRUNDE_ANSAGE, /Tabelle/, "der Antwort-Vertrag bei mehreren Treffern");
+  assert.match(SCHLUSSRUNDE_ANSAGE, /anklickbar/, "die Adresse muss anklickbar verlangt werden");
+  assert.match(SCHLUSSRUNDE_ANSAGE, /im Inserat nicht angegeben/, "Luecken offen benennen");
+  assert.match(SCHLUSSRUNDE_ANSAGE, /erfundene Zahl ist ein Fehler/);
+  assert.match(SCHLUSSRUNDE_ANSAGE, /Empfehlung/);
+});
+
+test("ohne Werkzeuglauf gibt es auch keine Ansage (Non-Regression)", async () => {
+  const gesehen = [];
+  await streamWithTools({
+    result: { response: { body: stream([textEvent("Direkt geantwortet."), "data: [DONE]"]) } },
+    chain: [], messages: [], res: sammelAntwort(), options: {},
+    executeWithFallback: async (_chain, verlauf) => { gesehen.push(verlauf); throw new Error("darf nicht aufgerufen werden"); }
+  });
+  assert.equal(gesehen.length, 0, "wer kein Werkzeug ruft, braucht keine Schlussansage");
 });
