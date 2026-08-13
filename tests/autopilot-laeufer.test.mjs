@@ -9,6 +9,8 @@ import assert from "node:assert/strict";
 
 import {
   laufeAlle,
+  fuehreAus,
+  fuehreLaeufeAus,
   sammleQuelldateien,
   laufBugPredictor,
   laufKnowledgeGraph,
@@ -124,4 +126,36 @@ test("Die Repo-Autopiloten melden echte Zahlen aus ihrer Arbeit", () => {
   assert.match(bug.meldung, /\d+ Dateien gescannt/, "die Zahl der Dateien gehoert in die Meldung");
   assert.equal(graph.ok, true);
   assert.match(graph.meldung, /\d+ Symbole/, "die Zahl der Symbole gehoert in die Meldung");
+});
+
+test("Ein haengender Lauf blockiert den Durchgang nicht (Befund 2026-08-13)", async () => {
+  // Live hielt EIN Lauf ohne Zeitlimit den gesamten Durchgang fest, und weil
+  // damals erst nach ALLEN Laeufen gemeldet wurde, blieben saemtliche Ampeln
+  // stumm-grau. Zwei Zusicherungen halten das fest:
+  // 1. Ein Lauf, der nie fertig wird, endet nach dem Zeitlimit als "fehler"
+  //    mit ehrlicher Begruendung — der Durchgang geht weiter.
+  const haenger = await fuehreAus("test-haenger", () => new Promise(() => {}), 50);
+  assert.equal(haenger.ok, false);
+  assert.match(haenger.meldung, /Zeitlimit/, "das Zeitlimit muss als Grund genannt werden");
+
+  // 2. Die Meldung kommt SOFORT nach jedem Modul, nicht gesammelt am Ende:
+  //    Wenn der Haenger in der Mitte sitzt, muss der Lauf DAVOR schon
+  //    gemeldet sein, bevor der Haenger ueberhaupt fertig ist — und der
+  //    Lauf DANACH kommt trotzdem noch dran.
+  const protokoll = [];
+  const ergebnisse = await fuehreLaeufeAus(
+    [
+      ["erster", () => ({ ok: true, meldung: "sofort fertig und sofort gemeldet" })],
+      ["haenger", () => { protokoll.push(`beim Start des Haengers lagen ${protokoll.length} Meldungen vor`); return new Promise(() => {}); }],
+      ["letzter", () => ({ ok: true, meldung: "kommt trotz Haenger noch dran" })]
+    ],
+    { melde: (id) => protokoll.push(`gemeldet: ${id}`), zeitlimitMs: 50 }
+  );
+  assert.deepEqual(protokoll, [
+    "gemeldet: erster",
+    "beim Start des Haengers lagen 1 Meldungen vor",
+    "gemeldet: haenger",
+    "gemeldet: letzter"
+  ], "der erste Lauf muss gemeldet sein, BEVOR der Haenger laeuft — sonst ist es doch eine Sammel-Meldung");
+  assert.deepEqual(ergebnisse.map((e) => e.ok), [true, false, true]);
 });
