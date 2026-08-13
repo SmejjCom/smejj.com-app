@@ -396,3 +396,110 @@ test("ohne Antwort-Knoten passiert nichts", () => {
   assert.equal(typeof stopp, "function");
   stopp();
 });
+
+// --- Nach der Arbeit: falten und ehrlich abschliessen ------------------------
+//
+// Betreiber-Befund 2026-08-13 an einer echten Buero-Suche (Castro Valley):
+// achtzehn Schrittzeilen standen nach dem Ende offen im Verlauf, und die
+// Antwort selbst war ein einziger Ankuendigungssatz — alle sechs Portale
+// hatten "nichts gefunden" gemeldet. Zwei getrennte Zusagen:
+//   5. Nach dem Ende ist das Protokoll EINE aufklappbare Zeile.
+//   6. Liefert keine Quelle etwas, sagt die Antwort das — statt zu schweigen.
+
+const { falteSchritte, quellenHinweis, QUELLEN_LEER_HINWEIS } = await import("../public/ai/chat-stream.js");
+
+function fertigerLauf(antwort, schritte) {
+  for (const s of schritte) {
+    zeigeSchritt(antwort, { ...s, zustand: "laeuft" });
+    zeigeSchritt(antwort, { ...s, zustand: "fertig" });
+  }
+}
+
+test("nach dem Ende ist das Protokoll EINE aufklappbare Zeile", () => {
+  const { log, antwort } = buehne();
+  fertigerLauf(antwort, [
+    { art: "suche", text: "office castro valley", treffer: 6 },
+    { art: "suche", text: "office san lorenzo", treffer: 6 },
+    { art: "seite", text: "https://www.loopnet.com/x", treffer: 0 }
+  ]);
+  const liste = log.children[0];
+  assert.equal(liste.children.length, 3, "waehrend der Arbeit stehen alle Zeilen offen");
+
+  falteSchritte(antwort, 1);
+  assert.equal(liste.children.length, 1, "danach haengt nur noch der Falter drin");
+  const falter = liste.children[0];
+  assert.equal(falter.tagName, "details");
+  assert.equal(falter.children[0].tagName, "summary", "die Zusammenfassung ist die erste Zeile");
+  assert.equal(falter.children.length, 4, "summary + die drei Schrittzeilen");
+  // Aufklappbar heisst: die Zeilen sind nicht weg, nur eingeklappt.
+  assert.match(falter.children[1].textContent, /office castro valley/);
+});
+
+test("die zugeklappte Zeile sagt, was getan wurde", () => {
+  const { log, antwort } = buehne();
+  fertigerLauf(antwort, [
+    { art: "suche", text: "eins", treffer: 6 },
+    { art: "suche", text: "zwei", treffer: 6 },
+    { art: "seite", text: "https://a.example/", treffer: 3 }
+  ]);
+  falteSchritte(antwort, 0);
+  const titel = log.children[0].children[0].children[0].textContent;
+  assert.match(titel, /2 Suchen/);
+  assert.match(titel, /1 Seite gelesen/);
+  assert.ok(!titel.includes("ohne Fund"), "es gab Funde — das darf nicht dranstehen");
+});
+
+test("ging alles leer aus, steht das SCHON in der zugeklappten Zeile", () => {
+  // Sonst versteckt das Falten genau die Information, dass nichts gefunden wurde.
+  const { log, antwort } = buehne();
+  fertigerLauf(antwort, [{ art: "suche", text: "xyz", treffer: 0 }, { art: "seite", text: "https://b.example/", treffer: 0 }]);
+  falteSchritte(antwort, 2);
+  assert.match(log.children[0].children[0].children[0].textContent, /ohne Fund/);
+});
+
+test("falten ist mehrfach aufrufbar und ohne Schritte wirkungslos", () => {
+  const { log, antwort } = buehne();
+  fertigerLauf(antwort, [{ art: "suche", text: "eins", treffer: 1 }]);
+  assert.ok(falteSchritte(antwort, 0));
+  assert.equal(falteSchritte(antwort, 0), null, "zweimal falten legt keinen zweiten Falter an");
+  assert.equal(log.children[0].children.length, 1);
+
+  const leer = buehne();
+  assert.equal(falteSchritte(leer.antwort, 0), null, "ohne Schrittliste passiert nichts");
+  assert.equal(leer.log.children.length, 1, "und es entsteht auch keine");
+});
+
+test("das Wartesignal zaehlt nicht als Arbeitsschritt", () => {
+  const { log, antwort } = buehne();
+  const z = zeitgeber();
+  starteWartesignal(antwort, z.deps);
+  z.ausloesen();
+  assert.equal(falteSchritte(antwort, 0), null, "eine reine Wartezeile ist nichts zum Falten");
+  assert.equal(log.children[0].children.length, 1, "die Wartezeile bleibt unangetastet");
+});
+
+test("liefert keine Quelle etwas, bekommt die Antwort einen ehrlichen Schluss", () => {
+  // Genau die Lage aus dem Screenshot: sechs Schritte, alle leer, und als
+  // Antwort nur die Ankuendigung.
+  const hinweis = quellenHinweis({
+    gesamt: 6, ohneFund: 6,
+    antwort: "Ich suche direkt nach konkreten Angeboten auf den gaengigen US-Plattformen."
+  });
+  assert.equal(hinweis, QUELLEN_LEER_HINWEIS);
+  assert.match(hinweis, /Keine der abgefragten Quellen/);
+  assert.match(hinweis, /sperren maschinelle Zugriffe/, "der Grund gehoert dazu, nicht nur die Absage");
+});
+
+test("ein einziger Fund genuegt — dann schweigt der Hinweis", () => {
+  assert.equal(quellenHinweis({ gesamt: 6, ohneFund: 5, antwort: "Kurz." }), "");
+  assert.equal(quellenHinweis({ gesamt: 0, ohneFund: 0, antwort: "" }), "", "ohne Werkzeuglauf gar nichts");
+  assert.equal(quellenHinweis(), "");
+});
+
+test("eine ausfuehrliche Antwort wird nicht belehrt", () => {
+  // Das Modell kann aus eigenem Wissen geantwortet haben, obwohl die Suche
+  // leer ausging. Dann waere der Hinweis schlicht falsch.
+  const lang = "A".repeat(401);
+  assert.equal(quellenHinweis({ gesamt: 3, ohneFund: 3, antwort: lang }), "");
+  assert.equal(quellenHinweis({ gesamt: 3, ohneFund: 3, antwort: "A".repeat(399) }), QUELLEN_LEER_HINWEIS);
+});
