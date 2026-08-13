@@ -242,3 +242,76 @@ test("Nicht-Text-Inhalte werden nicht als Seite ausgegeben", async () => {
 test("zuText entfernt Markup und normalisiert", () => {
   assert.equal(zuText("<p>Hallo&nbsp;Welt</p><p>Zwei</p>"), "Hallo Welt\nZwei");
 });
+
+// --- Eine gesperrte Seite ist keine Sackgasse ------------------------------
+//
+// GEMESSEN 2026-08-13: LoopNet und Crexi antworteten mit 403 hinter Cloudflare.
+// Das Modell schrieb "kann ich die dortigen Exposés nicht direkt auslesen",
+// suchte weiter, verbrauchte alle Runden und brach mitten im Satz ab — kein
+// einziges Angebot fuer den Nutzer. ChatGPT wurde am selben Tag genauso
+// ausgesperrt und lieferte trotzdem sechs Inserate, weil es die SUCHTREFFER
+// auswertete. Die Sperre war nie das Problem, die Fehlermeldung war es.
+
+const sperrfetch = (status, extra = {}) => async () => ({
+  status,
+  headers: { get: () => "text/html; charset=utf-8" },
+  text: async () => "<html><head><title>Access denied</title></head><body>Sorry, you have been blocked.</body></html>",
+  ...extra
+});
+
+async function leseMit(url, fetchImpl) {
+  return runAgentTool({ function: { name: "seite_lesen", arguments: JSON.stringify({ url }) } }, { fetchImpl });
+}
+
+test("403 sagt dem Modell, was es STATTDESSEN tun soll", async () => {
+  const ergebnis = await leseMit("https://www.loopnet.com/Listing/20980-Redwood-Rd/", sperrfetch(403));
+  assert.match(ergebnis, /gesperrt \(HTTP 403\)/);
+  assert.match(ergebnis, /NICHT erneut auf/, "erneutes Lesen muss ausdruecklich verboten sein");
+  assert.match(ergebnis, /SUCHERGEBNISSEN/, "der Ausweg muss benannt sein, nicht nur die Sperre");
+  assert.match(ergebnis, /Flaeche, Preis je Einheit und Zimmerzahl/);
+  assert.match(ergebnis, /anklickbare Adresse/, "die Adresse gehoert trotzdem in die Antwort");
+  assert.match(ergebnis, /Erfinde nichts/, "die Luecke ehrlich benennen, nicht fuellen");
+  assert.match(ergebnis, /www\.loopnet\.com\/Listing\/20980-Redwood-Rd/, "die konkrete Adresse steht drin");
+});
+
+test("401, 429 und 503 zaehlen genauso als Sperre", async () => {
+  for (const status of [401, 429, 503]) {
+    const ergebnis = await leseMit("https://www.crexi.com/lease/x", sperrfetch(status));
+    assert.match(ergebnis, new RegExp(`gesperrt \\(HTTP ${status}\\)`), `Status ${status}`);
+    assert.match(ergebnis, /SUCHERGEBNISSEN/, `Status ${status} braucht denselben Ausweg`);
+  }
+});
+
+test("eine Javascript-Pruefseite mit HTTP 200 gilt auch als Sperre", async () => {
+  // Cloudflare liefert die Pruefseite oft mit 200. Ohne diese Erkennung
+  // berichtet das Modell dem Nutzer ueber "Just a moment ...".
+  const ergebnis = await leseMit("https://www.crexi.com/lease/properties/CA/Castro_Valley/Office", async () => ({
+    status: 200,
+    headers: { get: () => "text/html; charset=utf-8" },
+    text: async () => "<html><head><title>Just a moment...</title></head><body>Enable JavaScript and cookies to continue</body></html>"
+  }));
+  assert.match(ergebnis, /gesperrt \(HTTP 200\)/);
+  assert.ok(!ergebnis.includes("Just a moment"), "die Pruefseite darf nie als Inhalt durchgehen");
+});
+
+test("eine gesunde Seite bleibt unveraendert lesbar (Non-Regression)", async () => {
+  // Der Sperrtest darf nicht jede Seite verschlucken, die ueber Cloudflare
+  // SCHREIBT — deshalb ist die Erkennung an den Textanfang gebunden.
+  const ergebnis = await leseMit("https://blog.example/cloudflare", async () => ({
+    status: 200,
+    headers: { get: () => "text/html; charset=utf-8" },
+    text: async () => "<html><head><title>Wie Cloudflare Bots blockiert</title></head><body>"
+      + "<p>Ein Artikel darueber, warum Seiten access denied liefern und Nutzer verify you are human sehen.</p>"
+      + "</body></html>"
+  }));
+  assert.match(ergebnis, /HTTP-Status: 200/);
+  assert.match(ergebnis, /Wie Cloudflare Bots blockiert/);
+  assert.ok(!ergebnis.includes("gesperrt (HTTP"), "ein Artikel UEBER Sperren ist keine Sperre");
+});
+
+test("403 mit Bild-Inhaltstyp meldet ebenfalls die Sperre, nicht den Typ", async () => {
+  const ergebnis = await leseMit("https://www.loopnet.com/x", async () => ({
+    status: 403, headers: { get: () => "image/png" }, text: async () => "binaer"
+  }));
+  assert.match(ergebnis, /gesperrt \(HTTP 403\)/);
+});
