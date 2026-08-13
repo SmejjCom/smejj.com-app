@@ -22,6 +22,13 @@ const BACKUP_ROOT = "backups/start-design-lock";
 const PROTECTED_FILES = [
   "public/index.html",
   "public/styles.css",
+  // Das ausgelieferte Buendel selbst (aufgenommen 2026-08-13). Es stand bis
+  // dahin NICHT unter Schutz — deshalb konnte am 12.08. ein komplettes
+  // Cyan-Design (leuchtender Rahmen um den Feed, Glas-Eingabe) im Anhang des
+  // Buendels live gehen, ohne den Lock auch nur zu streifen. Der Betreiber
+  // liess es zurueckrollen; ab jetzt faellt jede Aenderung am Aussehen der
+  // Startseite hier auf, egal ueber welche Quelle sie eingebaut wurde.
+  "public/start-styles.css",
   "public/branding.css",
   "public/app-surfaces.css",
   "public/composer-tools.css",
@@ -110,6 +117,16 @@ function check() {
   const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
   const current = collectHashes();
   const violations = [];
+  // Zuerst die Messlatte selbst pruefen: bis 2026-08-13 lief der Vergleich NUR
+  // ueber die Eintraege des Manifests. Eine Datei, die hier geschuetzt ist, im
+  // Manifest aber fehlt, wurde damit stillschweigend gar nicht geprueft — der
+  // Lock meldete trotzdem "OK". Fail-closed: fehlender Eintrag ist eine
+  // Verletzung, kein gruenes Licht.
+  for (const file of PROTECTED_FILES) {
+    if (!Object.prototype.hasOwnProperty.call(manifest.files, file)) {
+      violations.push(`${file}: NICHT IM MANIFEST (ungeprueft — neu einfrieren)`);
+    }
+  }
   for (const [file, frozenHash] of Object.entries(manifest.files)) {
     const actual = current[file] || "FEHLT";
     if (actual !== frozenHash) violations.push(`${file}: ${actual === "FEHLT" ? "GELOESCHT" : "VERAENDERT"}`);

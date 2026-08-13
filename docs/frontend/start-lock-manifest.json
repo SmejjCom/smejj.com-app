@@ -1,11 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T05:56:28.400Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-13 (Fortsetzung der Rechtschreib-Korrektur): zusaetzlich vier vorgelesene Texte (aria-label, placeholder) in public/index.html und maus-replay.html auf Umlaut korrigiert. Reine Rechtschreibung, keine inhaltlichen oder funktionalen Aenderungen.",
+  "frozenAt": "2026-08-13T07:31:27.556Z",
+  "confirmation": "2026-08-13 Betreiber: ist wieder wie vorher, danke — plus Auswahl Start-Lock einfrieren. Eingefroren wird der zurueckgerollte Startseiten-Stand OHNE Cyan-Design, erstmals inklusive public/start-styles.css.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "e484bdf8cfa0a07b21f520b3756f1cddc84e1481644884574cdf523ed65ae64a",
     "public/styles.css": "b749acf7abef387c672f66743864e880c4cdcd51001f33d0433b9c7fe17c6c26",
+    "public/start-styles.css": "71d7e9562e14a688993a65c9c5af9405c3945a4cb27e1b6a2e83e15fbb41cfb7",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
