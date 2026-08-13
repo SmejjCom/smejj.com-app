@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T10:28:34.550Z",
-  "confirmation": "2026-08-13 Betreiber: Spur zu breit — auf Menue-Knopf-Breite verschmaelern, Zeichen in dessen Groesse. Bild gesehen, Auswahl: Ja, live.",
+  "frozenAt": "2026-08-13T10:36:26.276Z",
+  "confirmation": "2026-08-13 Betreiber: Spur immer noch zu breit, schmaler und Icons fetter — 40 px, Strich 2.4.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
-    "public/styles.css": "dea52bbc47a762c02ce9e46b6df4c7c2cc8ce5d55788f53b6f5e25d474f1c25e",
-    "public/start-styles.css": "73ea30fc6e0b37d160c8e768fe2039bc81a8481db98db1270f76d1016ffd2f94",
+    "public/styles.css": "809ca14bd60599b18bca1678b03404ed789a5ba590a6c007a9da633b35780895",
+    "public/start-styles.css": "46d7872aaeb4c37d77133291e9ae5744bc07e3ecb7cea12638d62323b203cfb7",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
