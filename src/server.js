@@ -66,6 +66,7 @@ import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoutes.js";
 import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyncRoutes.js";
+import { createVideoChatRoutes } from "../control-server/src/routes/videoChatRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
@@ -120,6 +121,10 @@ const publicModelRateGate = createPublicModelRateGate(process.env);
 const sessionHandoffStore = createSessionHandoffStore();
 const chatSyncRoutes = createChatSyncRoutes({ env: process.env, readSession, json, readJson });
 const projektSyncRoutes = createProjektSyncRoutes({ env: process.env, readSession, json, readJson });
+// Video-Reserve (Befund docs/video/BEFUND_CONTROL_SPUR_RUFT_WORKER_NICHT.md):
+// /api/chat gibt Video-Auftraege an den Video-Worker (Weg C) statt sie als
+// Text zu beantworten. Fail-safe: ohne Worker laeuft alles unveraendert.
+const videoChatRoutes = createVideoChatRoutes({ env: process.env, securityHeaders: SECURITY_HEADERS, resolveModelRequest, executeWithFallback });
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
@@ -305,6 +310,9 @@ async function handleChat(req, res) {
   // bisher sein Default (PROVIDER_CATALOG) — es wird nichts geraten und kein
   // Anbieter neu aktiviert.
   const prompt = latestUserPrompt(messages);
+  // Video-Auftraege gehen an den Video-Worker (Weg C) — komplett oder gar
+  // nicht: false heisst, es wurde kein Byte gesendet und Text laeuft normal.
+  if (prompt && await videoChatRoutes.handle(res, prompt)) return;
   return streamLLM(res, messages, {
     // Ohne erkennbare Nutzerfrage bleibt es beim bisherigen "default".
     ...(prompt ? { profile: classifyProfile(prompt) } : {}),
