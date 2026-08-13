@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-13T06:07:27.675Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-13 per Klick-Antwort: Express-Login (Commit 7f8b898) an public/auth/login/index.html geprueft und freigegeben. Reine Umsortierung — 1-Klick-Wege (Google, GitHub) nach oben, E-Mail-Formular darunter mit Trenner 'oder mit E-Mail'. Element-IDs vorher/nachher IDENTISCH, nichts entfernt; live geprueft: profileEmail, emailPassword, emailLogin, passwordResetLink, githubLogin, googleLogin alle vorhanden. Keine Aenderung an Pruefungen, Rechten oder Token-Handhabung.",
+  "frozenAt": "2026-08-13T09:15:35.697Z",
+  "confirmation": "Betreiber waehlte am 2026-08-13 in der Claude-Sitzung die Option 'Zweitkonto-Fehler beheben (Empfehlung)': Beim Login zuerst alte Identitaet raeumen (beide Token + Control-Cookie), dann neue setzen — sonst sitzt Person B in der Sitzung von Person A.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "8fce7eff16467aed1376a57f2af48f23bff03d296fc5d0fd076df0f2752f94a9",
-    "public/auth/register/index.html": "71765dc40d8b1998d8fcd4230dace5f9f80584a435bfa8a7f74e2039c5a41ff0",
-    "public/auth/auth-page.js": "10a671659c0f4c0339681f0a6e02215470dd2729c816d17ee0c3a1c4d3efbc64",
+    "public/auth/login/index.html": "c645281b51b7b2ea699909d4f6c4ee6eb5ad8ea506b6fb01f4521439144c2b0e",
+    "public/auth/register/index.html": "a891f41fa9265cff4b3d711f83d89205ef8c7dbfd056fb24a5ca1d6e95ec6502",
+    "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "c4af05031dadfcd5a7e02d768955ebc2039de9ee8fbea847e9701e31a0c580ef",
