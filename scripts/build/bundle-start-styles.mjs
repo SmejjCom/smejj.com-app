@@ -53,8 +53,18 @@ export async function buildBundle() {
   const parts = [HEADER];
   for (const name of SOURCES) {
     const css = await readFile(join(ROOT, "public", name), "utf8");
-    if (/@import|url\(/.test(css)) {
-      throw new Error(`${name} enthaelt @import oder url() — Buendeln waere nicht mehr sicher.`);
+    if (/@import/.test(css)) {
+      throw new Error(`${name} enthaelt @import — Buendeln waere nicht mehr sicher.`);
+    }
+    // Gefaehrlich am Buendeln ist nur ein RELATIVER Pfad: er wird gegen die
+    // Adresse des Stylesheets aufgeloest und zeigt nach dem Zusammenlegen
+    // woandershin. Wurzel-absolute Pfade ("/icons/…") und eingebettete
+    // data:-Inhalte sind davon unberuehrt und deshalb erlaubt (2026-08-13,
+    // gebraucht fuer das Maus-Zeichen in branding.css).
+    for (const [, pfad] of css.matchAll(/url\(\s*['"]?([^'")]+)/g)) {
+      if (!pfad.startsWith("/") && !pfad.startsWith("data:")) {
+        throw new Error(`${name} enthaelt den relativen Pfad url(${pfad}) — Buendeln waere nicht mehr sicher.`);
+      }
     }
     parts.push(`\n/* ---- ${name} ---- */\n${css.trimEnd()}\n`);
   }
