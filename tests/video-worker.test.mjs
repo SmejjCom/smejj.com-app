@@ -55,6 +55,13 @@ describe("smejj video worker & video player markdown integration", () => {
     assert.match(ausgabe, /Alle \d+ Pruefungen gruen/, ausgabe);
   });
 
+  it("die externe Engine (Weg C) ist fail-closed und SSRF-fest", () => {
+    // Kein Schluessel = kein Aufruf = kein Cent; Tagesdeckel; fremde
+    // video_url wird nie geladen. Verhalten, nicht Textmuster.
+    const ausgabe = execFileSync("python3", ["scripts/testing/pruefe_video_extern.py"], { encoding: "utf8" });
+    assert.ok(!/FEHLER/.test(ausgabe), ausgabe);
+  });
+
   it("der Player laesst erzaehlte Videos hoerbar und einmalig laufen", () => {
     const markdown = fs.readFileSync("public/chat-markdown.js", "utf8");
     // muted/loop nur fuer stumme Szenen — sonst hoert der Nutzer nichts bzw.

@@ -90,6 +90,32 @@ MAX_ERZAEHLTEXT = 200
 # jede Sekunde kostet 24 Frames Rechenzeit und Dateigröße.
 MAX_DAUER_S = float(os.environ.get("SMEJJ_VIDEO_MAX_DAUER_S", "14"))
 
+# --- Externe Video-Engine (Weg C, Betreiber-Entscheidung 2026-08-13) -------
+# Der Betreiber hat seine fruehere Vorgabe "kein Fremd-Bildanbieter" fuer
+# VIDEO ausdruecklich geaendert: echte Motivbewegung gibt es auf 2 CPU-Kernen
+# nicht (AnimateDiff ~45 min/2 s; GPU bei Zeabur nicht vorhanden).
+#
+# Arbeitsteilung, die die eigene Infrastruktur maximal behaelt:
+#   1. Das BILD malt weiterhin der eigene Bild-Maler (0 EUR, inkl. dessen
+#      Personen-Schutzfilter — blockt der, laeuft auch extern nichts).
+#   2. NUR die Bewegung kommt von fal.ai (LTX image-to-video, 0,02 USD pro
+#      5-s-Video, Stand 2026-08-13).
+#   3. Die Erzaehlstimme bleibt Piper (eigener Dienst).
+#
+# FAIL-CLOSED: ohne SMEJJ_VIDEO_EXTERN_KEY existiert dieser Weg nicht —
+# kein Aufruf, kein Cent, parallax laeuft wie bisher. Der WEICHE Deckel hier
+# (Tageslimit) schuetzt gegen Amok; der HARTE Deckel ist das Billing-Limit,
+# das der Betreiber im fal.ai-Konto selbst setzt.
+EXTERN_KEY = os.environ.get("SMEJJ_VIDEO_EXTERN_KEY", "")
+EXTERN_MODELL = os.environ.get("SMEJJ_VIDEO_EXTERN_MODELL", "fal-ai/ltx-video/image-to-video")
+EXTERN_QUEUE = "https://queue.fal.run"
+EXTERN_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_EXTERN_TIMEOUT_S", "110"))
+# 50 Videos/Tag x 0,02 USD = max ~1 USD/Tag. Der Zaehler liegt in /tmp und
+# faellt bei Neustart auf 0 — darum ist das Anbieter-Limit der massgebliche
+# Deckel, nicht diese Datei.
+EXTERN_MAX_PRO_TAG = int(os.environ.get("SMEJJ_VIDEO_EXTERN_MAX_PRO_TAG", "50"))
+EXTERN_ZAEHLER_DATEI = os.environ.get("SMEJJ_VIDEO_EXTERN_ZAEHLER", "/tmp/smejj-extern-zaehler.txt")
+
 app = FastAPI()
 zustand = {"bereit": ENGINE == "kenburns", "fehler": "", "laedt_seit": time.time()}
 diffusion_pipeline = None
@@ -481,6 +507,77 @@ def kodiere_mp4(frames):
         return datei.read()
 
 
+def extern_budget_frei():
+    """Weicher Tagesdeckel. True = ein weiterer externer Aufruf ist erlaubt."""
+    import datetime
+
+    heute = datetime.date.today().isoformat()
+    stand = 0
+    try:
+        tag, zahl = open(EXTERN_ZAEHLER_DATEI).read().split(":")
+        if tag == heute:
+            stand = int(zahl)
+    except Exception:  # noqa: BLE001 — fehlende/kaputte Datei = Zaehler 0
+        pass
+    if stand >= EXTERN_MAX_PRO_TAG:
+        return False
+    with open(EXTERN_ZAEHLER_DATEI, "w") as datei:
+        datei.write(f"{heute}:{stand + 1}")
+    return True
+
+
+def erzeuge_extern(prompt):
+    """Echte Motivbewegung: eigenes Bild + fal.ai-Animation.
+
+    Wirft bei jedem Problem — der Aufrufer faellt dann auf parallax zurueck,
+    der Nutzer bekommt IMMER ein Video. Der Aufrufer stellt sicher, dass
+    EXTERN_KEY gesetzt ist; hier schuetzt zusaetzlich der Tagesdeckel.
+    """
+    import base64 as b64mod
+
+    if not extern_budget_frei():
+        raise RuntimeError("extern_tagesdeckel_erreicht")
+
+    bild = hole_basisbild(prompt)  # eigener Maler — inkl. Personen-Schutzfilter
+    puffer = io.BytesIO()
+    bild.save(puffer, format="PNG")
+    daten_uri = "data:image/png;base64," + b64mod.b64encode(puffer.getvalue()).decode("ascii")
+
+    kopf = {"Authorization": f"Key {EXTERN_KEY}", "Content-Type": "application/json"}
+    start = requests.post(
+        f"{EXTERN_QUEUE}/{EXTERN_MODELL}",
+        json={"image_url": daten_uri, "prompt": prompt[:MAX_PROMPT]},
+        headers=kopf, timeout=30,
+    )
+    start.raise_for_status()
+    anfrage = start.json().get("request_id")
+    if not anfrage:
+        raise RuntimeError("extern_keine_request_id")
+
+    basis = f"{EXTERN_QUEUE}/{EXTERN_MODELL}/requests/{anfrage}"
+    frist = time.time() + EXTERN_TIMEOUT_S
+    while time.time() < frist:
+        lage = requests.get(f"{basis}/status", headers=kopf, timeout=15).json()
+        if lage.get("status") == "COMPLETED":
+            break
+        if lage.get("status") in ("FAILED", "CANCELLED"):
+            raise RuntimeError(f"extern_{lage.get('status', 'fehler').lower()}")
+        time.sleep(3)
+    else:
+        raise RuntimeError("extern_zeitueberschreitung")
+
+    ergebnis = requests.get(basis, headers=kopf, timeout=30).json()
+    video_url = ((ergebnis.get("video") or {}).get("url")) or ""
+    # Nur von fal selbst laden (SSRF-Schutz): die Antwort kam zwar per TLS
+    # von fal, aber eine fremde Adresse darin laden wir trotzdem nicht.
+    if not video_url.startswith("https://") or ".fal." not in video_url.split("/")[2]:
+        raise RuntimeError("extern_unerwartete_video_adresse")
+    mp4 = requests.get(video_url, timeout=60).content
+    if mp4[4:8] != b"ftyp":
+        raise RuntimeError("extern_kein_mp4")
+    return mp4, f"extern:{EXTERN_MODELL.split('/')[-2]}"
+
+
 def erzeuge_kenburns(prompt, dauer=None):
     bild = hole_basisbild(prompt)
     return kodiere_mp4(kenburns_frames(bild, dauer)), "kenburns:sd-turbo"
@@ -561,16 +658,37 @@ async def erzeuge(request: Request):
         beginn = time.time()
         # Stimme ZUERST: erst ihre Länge sagt, wie lang das Video werden muss.
         # Sie kostet nur wenige Sekunden, das Bild danach die Minute.
+        # Extern liefert FIX 5 s — dort den Text vorab auf ~70 Zeichen kuerzen
+        # (am Satzende), sonst schnitte -shortest die Erzaehlung mitten im
+        # Satz ab (die Falle von 98e7ec8, nur durch die Hintertuer).
+        if erzaehltext and EXTERN_KEY:
+            erzaehltext = kuerze_auf_satz(erzaehltext, 70)
         stimme = hole_erzaehlstimme(erzaehltext) if erzaehltext else None
         dauer = min(MAX_DAUER_S, stimme[1] + 0.6) if stimme else DAUER_S
 
-        if ENGINE == "animatediff" and diffusion_pipeline is not None:
+        if EXTERN_KEY:
+            # Weg C (Betreiber 2026-08-13): echte Motivbewegung. Bei JEDEM
+            # Fehler ehrlich zurueck auf die eigene Engine — der Nutzer
+            # bekommt immer ein Video. LTX liefert fix 5 s; die Stimme wird
+            # bei Bedarf vom Mischer gekuerzt statt das Video zu strecken.
+            try:
+                mp4, engine = erzeuge_extern(prompt)
+            except Besetzt:
+                raise
+            except Exception as fehler:  # noqa: BLE001
+                print(f"extern fehlgeschlagen, parallax uebernimmt: {fehler}")
+                mp4, engine = erzeuge_parallax(prompt, dauer)
+        elif ENGINE == "animatediff" and diffusion_pipeline is not None:
             mp4, engine = erzeuge_animatediff(prompt)
         elif ENGINE == "parallax":
             mp4, engine = erzeuge_parallax(prompt, dauer)
         else:
             mp4, engine = erzeuge_kenburns(prompt, dauer)
 
+        # Passt die Stimme nicht ins (externe 5-s-)Video, lieber ehrlich
+        # stumm als ein abgehackter Satz.
+        if stimme and engine.startswith("extern:") and stimme[1] > 5.5:
+            stimme = None
         if stimme:
             mp4 = mische_ton(mp4, stimme[0])
 
