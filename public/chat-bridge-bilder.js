@@ -187,7 +187,7 @@ async function uebersetzeMalPrompt(prompt) {
       body: JSON.stringify({
         model: BILDER_MODEL,
         messages: [
-          { role: "system", content: "Turn the user's image request into ONE short English photo prompt (subject, setting, lighting, style). Reply with the prompt only — no quotes, no explanation." },
+          { role: "system", content: "Turn the user's image request into ONE short English photo prompt (subject, setting, lighting, style). Reply with the prompt only — no quotes, no explanation. EXCEPTION: if the request depicts a real, identifiable person (any celebrity or any named individual), reply with exactly: PERSON_GESPERRT" },
           { role: "user", content: prompt }
         ],
         stream: false,
@@ -202,6 +202,16 @@ async function uebersetzeMalPrompt(prompt) {
     return prompt;
   }
 }
+
+// Personen-Schutz (2026-08-13, Persoenlichkeitsrechte): der Uebersetzer meldet
+// reale, benennbare Personen mit dem Sentinel — Foto- UND Video-Weg lehnen
+// dann hoeflich ab, statt zu malen. Die SVG-Reserve bleibt stilisiert und
+// ungefiltert. Fail-open ist akzeptiert: ohne Groq-Schluessel malt ohnehin nichts.
+function istPersonGesperrt(text) {
+  return String(text || "").includes("PERSON_GESPERRT");
+}
+
+const PERSONEN_ABSAGE = "Aus Rücksicht auf Persönlichkeitsrechte male ich keine realen, erkennbaren Personen. Gern male ich dir eine frei erfundene Person oder eine andere Szene — beschreib sie mir einfach.";
 
 // Laesst den eigenen Bild-Maler ein Foto malen. Liefert Markdown oder "".
 async function erzeugeFotoInhalt(prompt, timeoutMs) {
@@ -423,13 +433,24 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
       uebersetzeMalPrompt(videoPrompt),
       schreibeErzaehltext(videoPrompt)
     ]);
-    video = await erzeugeVideoMitGeduld(malPrompt, erzaehltext, (neu) => {
-      phase = neu;
-    });
+    if (istPersonGesperrt(malPrompt)) {
+      video = "PERSON_GESPERRT";
+    } else {
+      video = await erzeugeVideoMitGeduld(malPrompt, erzaehltext, (neu) => {
+        phase = neu;
+      });
+    }
   } finally {
     clearInterval(takt);
   }
 
+  if (video === "PERSON_GESPERRT") {
+    videoSchritt(res, "fertig", "abgelehnt (reale Person)");
+    bilderSendeInhalt(res, PERSONEN_ABSAGE);
+    res.write("data: [DONE]\n\n");
+    res.end();
+    return true;
+  }
   if (video) {
     videoSchritt(res, "fertig", "fertig");
     // Ehrlich sagen, WAS sich bewegt — sonst erwartet der Nutzer bei
@@ -491,10 +512,20 @@ export async function streamBilderLane(res, body, task, deps) {
       bilderSchritt(res, "laeuft", `läuft … ${Math.round((Date.now() - beginn) / 1000)} s`);
     }, 10000);
     let inhalt = "";
+    let gesperrt = false;
     try {
-      inhalt = await erzeugeFotoInhalt(await uebersetzeMalPrompt(prompt), BILDER_FOTO_TIMEOUT_MS);
+      const malPrompt = await uebersetzeMalPrompt(prompt);
+      gesperrt = istPersonGesperrt(malPrompt);
+      if (!gesperrt) inhalt = await erzeugeFotoInhalt(malPrompt, BILDER_FOTO_TIMEOUT_MS);
     } finally {
       clearInterval(takt);
+    }
+    if (gesperrt) {
+      bilderSchritt(res, "fertig", "abgelehnt (reale Person)");
+      bilderSendeInhalt(res, PERSONEN_ABSAGE);
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return true;
     }
     if (!inhalt) {
       // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — SVG als Reserve.
