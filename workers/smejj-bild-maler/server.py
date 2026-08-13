@@ -31,6 +31,73 @@ app = FastAPI()
 zustand = {"bereit": False, "fehler": "", "laedt_seit": time.time()}
 pipeline = None
 mal_sperre = threading.Lock()
+# Gesichts-Reparatur (2026-08-13, Betreiber: "Augen Fehler"): GFPGAN als
+# Nachschliff NUR fuer fotorealistische Bilder. Dreifach abgesichert: laedt
+# erst beim ersten Bedarf, ueberspringt sich bei RAM-Knappheit, und jeder
+# Fehler liefert einfach das unreparierte Bild.
+GESICHTSFIX = os.environ.get("SMEJJ_BILD_GESICHTSFIX", "1") == "1"
+GESICHTSFIX_MIN_FREI_MB = int(os.environ.get("SMEJJ_BILD_GESICHTSFIX_MIN_FREI_MB", "2000"))
+GFPGAN_GEWICHTE = os.environ.get("SMEJJ_GFPGAN_GEWICHTE", "/tmp/hf/gfpgan/GFPGANv1.4.pth")
+GFPGAN_URL = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
+gesichtsfixer = None
+gesichtsfix_zustand = {"status": "aus" if not GESICHTSFIX else "bereitschaft", "fehler": ""}
+
+
+def mem_verfuegbar_mb():
+    try:
+        for zeile in open("/proc/meminfo"):
+            if zeile.startswith("MemAvailable"):
+                return int(zeile.split()[1]) // 1024
+    except Exception:  # noqa: BLE001
+        pass
+    return 99999
+
+
+def lade_gesichtsfixer():
+    """Lazy: GFPGAN erst beim ersten Portraet. Gewichte landen im hf-Volume."""
+    global gesichtsfixer
+    if gesichtsfixer is not None:
+        return gesichtsfixer
+    # basicsr nutzt das aus torchvision entfernte functional_tensor-Modul —
+    # bekannter Shim, bevor gfpgan importiert wird.
+    import sys
+    import types
+    import torchvision.transforms.functional as F  # noqa: N812
+    shim = types.ModuleType("torchvision.transforms.functional_tensor")
+    shim.rgb_to_grayscale = F.rgb_to_grayscale
+    sys.modules.setdefault("torchvision.transforms.functional_tensor", shim)
+    import urllib.request
+    from gfpgan import GFPGANer
+    os.makedirs(os.path.dirname(GFPGAN_GEWICHTE), exist_ok=True)
+    if not os.path.exists(GFPGAN_GEWICHTE):
+        urllib.request.urlretrieve(GFPGAN_URL, GFPGAN_GEWICHTE)
+    gesichtsfixer = GFPGANer(model_path=GFPGAN_GEWICHTE, upscale=1, arch="clean",
+                             channel_multiplier=2, bg_upsampler=None)
+    return gesichtsfixer
+
+
+def repariere_gesichter(bild):
+    """PIL -> PIL; bei jedem Problem kommt das Original zurueck."""
+    import numpy as np
+    if not GESICHTSFIX:
+        return bild
+    frei = mem_verfuegbar_mb()
+    if frei < GESICHTSFIX_MIN_FREI_MB:
+        gesichtsfix_zustand["status"] = f"uebersprungen (nur {frei} MB frei)"
+        return bild
+    try:
+        fixer = lade_gesichtsfixer()
+        bgr = np.asarray(bild)[:, :, ::-1]
+        _, _, repariert = fixer.enhance(bgr, has_aligned=False, only_center_face=False, paste_back=True)
+        gesichtsfix_zustand["status"] = "aktiv"
+        if repariert is None:
+            return bild
+        from PIL import Image
+        return Image.fromarray(repariert[:, :, ::-1])
+    except Exception as fehler:  # noqa: BLE001
+        gesichtsfix_zustand["status"] = "fehler"
+        gesichtsfix_zustand["fehler"] = f"{type(fehler).__name__}: {fehler}"
+        return bild
 
 
 def lade_modell():
@@ -66,6 +133,7 @@ def health():
         "ladezeitSek": 0 if zustand["bereit"] else round(time.time() - zustand["laedt_seit"]),
         "schritte": SCHRITTE,
         "groesse": GROESSE,
+        "gesichtsfix": gesichtsfix_zustand,
     }
 
 
@@ -95,6 +163,8 @@ async def erzeuge(request: Request):
             width=GROESSE,
             height=GROESSE,
         ).images[0]
+        if "photorealistic" in prompt:
+            bild = repariere_gesichter(bild)
         puffer = io.BytesIO()
         bild.save(puffer, format="PNG")
         return {
