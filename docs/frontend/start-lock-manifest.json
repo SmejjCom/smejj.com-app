@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T07:51:03.537Z",
-  "confirmation": "2026-08-13 Betreiber: Aussenkante sehr leicht beleuchtet in der Logo-Farbe wie auf der Login-Seite — Vorschau gesehen, Auswahl: So live stellen.",
+  "frozenAt": "2026-08-13T08:11:32.431Z",
+  "confirmation": "Betreiber waehlte am 2026-08-13 in der Claude-Sitzung die Option 'Nutzen + Technik in Klammern (Empfehlung)' zur Frage 'Welchen Namensstil soll das Modell-Menue bekommen? (Aenderung an index.html = Start-Lock, deine Auswahl gilt mir als Freigabe)'",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "e484bdf8cfa0a07b21f520b3756f1cddc84e1481644884574cdf523ed65ae64a",
+    "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
     "public/styles.css": "355af0473e941ecceb1e4a9c241a05f1f9d4db7f03ba0a5f6963c9991f91cc2a",
     "public/start-styles.css": "a25f7ab1d206eec5651625c3d734ebe33ccf933e3a44dc4d5b7dccbf6ed99a07",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
