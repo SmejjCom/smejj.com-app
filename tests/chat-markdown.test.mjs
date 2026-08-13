@@ -125,8 +125,14 @@ test("Verdrahtung: gerendert wird erst am ENDE des Streams", () => {
   // Rendern mittendrin wuerde die Rohquelle zerstoeren.
   // Seit 2026-08-04 liegt der Empfang in public/ai/chat-stream.js (app.js stand
   // an der 800-Zeilen-Grenze); app.js reicht den Renderer nur noch hinein.
-  assert.match(chatStream, /\n  renderMarkdown\?\.\(output\);\n\}/);
-  assert.doesNotMatch(chatStream, /renderMarkdown\?\.\(output\);\s*\n\s*output\.textContent \+=/);
+  // Seit 2026-08-13 steht renderMarkdown nicht mehr als allerletzte Zeile:
+  // danach folgt falteSchritte(), das die Schrittliste NEBEN der Antwort
+  // zusammenklappt und den Antwort-Knoten gar nicht anfasst. Die eigentliche
+  // Zusage wird deshalb direkt geprueft statt ueber die Position.
+  assert.equal((chatStream.match(/renderMarkdown\?\.\(output\)/g) || []).length, 1,
+    "genau EIN Renderaufruf — mehrere hiessen: mittendrin gerendert");
+  assert.doesNotMatch(chatStream, /renderMarkdown\?\.\(output\);[\s\S]*output\.textContent \+=/,
+    "nach dem Rendern darf nichts mehr an den Antworttext angehaengt werden");
   assert.match(appJs, /renderMarkdown: renderChatMarkdown/,
     "app.js muss den Markdown-Renderer an den Empfaenger uebergeben");
   // Der Import kam ohne neue Zeile aus (Ratchet): components.js re-exportiert.

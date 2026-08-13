@@ -143,9 +143,15 @@ test("die Werkzeugliste bleibt unveraendert (Non-Regression)", () => {
 // Minimales Dokument statt jsdom: das Projekt haelt sich abhaengigkeitsfrei.
 
 function knoten(tag = "div") {
+  // textContent wie im echten DOM: Setzen ersetzt die Kinder, Lesen liest sie
+  // mit. Ohne das koennte der Test nicht sehen, ob eine URL als <a> im Kind
+  // steckt oder nur als roher Text in der Zeile.
+  let eigenerText = "";
   const self = {
-    tagName: tag, className: "", textContent: "", dataset: {}, children: [], parentElement: null,
+    tagName: tag, className: "", dataset: {}, children: [], parentElement: null,
     attribute: {},
+    get textContent() { return eigenerText + self.children.map((k) => k.textContent).join(""); },
+    set textContent(wert) { eigenerText = String(wert ?? ""); self.children.splice(0); },
     setAttribute(name, wert) { self.attribute[name] = wert; },
     getAttribute(name) { return Object.hasOwn(self.attribute, name) ? self.attribute[name] : null; },
     remove() {
@@ -200,8 +206,9 @@ test("laeuft und fertig sind DIESELBE Zeile, nicht zwei", () => {
   assert.equal(liste.children.length, 1, "ein Schritt ist eine Zeile");
   const zeile = liste.children[0];
   assert.equal(zeile.dataset.zustand, "fertig");
-  assert.equal(zeile.children.filter((k) => k.dataset.stand === "true").length, 1, "nur EIN Stand-Anhang");
-  assert.match(zeile.children[0].textContent, /8 Treffer/);
+  const staende = zeile.children.filter((k) => k.dataset.stand === "true");
+  assert.equal(staende.length, 1, "nur EIN Stand-Anhang");
+  assert.match(staende[0].textContent, /8 Treffer/);
 });
 
 test("zwei verschiedene Schritte ergeben zwei Zeilen", () => {
@@ -215,7 +222,45 @@ test("zwei verschiedene Schritte ergeben zwei Zeilen", () => {
 test("null Treffer wird ehrlich benannt", () => {
   const { log, antwort } = buehne();
   zeigeSchritt(antwort, { art: "suche", text: "xyz", zustand: "fertig", treffer: 0 });
-  assert.match(log.children[0].children[0].children[0].textContent, /nichts gefunden/);
+  assert.match(log.children[0].children[0].textContent, /nichts gefunden/);
+});
+
+// Betreiber 2026-08-13: "wenn Link geben soll, immer klickbar sein". Die
+// gelesenen Adressen standen als toter Text da — man konnte sie nur abtippen.
+test("eine gelesene Adresse ist ein echter, anklickbarer Link", () => {
+  const { log, antwort } = buehne();
+  zeigeSchritt(antwort, { art: "seite", text: "https://www.loopnet.com/search/office-space/castro-valley-ca/for-lease/", zustand: "fertig", treffer: 0 });
+  const zeile = log.children[0].children[0];
+  const link = zeile.children.find((k) => k.tagName === "a");
+  assert.ok(link, "die Adresse muss ein <a> sein");
+  assert.equal(link.getAttribute("href"), "https://www.loopnet.com/search/office-space/castro-valley-ca/for-lease/");
+  assert.equal(link.getAttribute("target"), "_blank");
+  assert.equal(link.getAttribute("rel"), "noopener noreferrer", "die Zielseite darf nie an unser window");
+  assert.equal(link.className, "chat-link", "dieselbe Klasse wie Links in der Antwort");
+  assert.match(zeile.textContent, /^📄 Lese: https:\/\/www\.loopnet\.com/);
+});
+
+test("ein Suchbegriff wird NICHT zum Link", () => {
+  const { log, antwort } = buehne();
+  zeigeSchritt(antwort, { art: "suche", text: "LoopNet office space lease Castro Valley CA", markt: "us", zustand: "laeuft" });
+  const zeile = log.children[0].children[0];
+  assert.equal(zeile.children.filter((k) => k.tagName === "a").length, 0);
+  assert.match(zeile.textContent, /🔍 Suche: LoopNet office space lease Castro Valley CA · Markt us/);
+});
+
+test("nur http und https werden klickbar — sonst gar nicht", () => {
+  const { log, antwort } = buehne();
+  // Der Text kommt aus der Modellausgabe. Ein javascript:- oder data:-Ziel darf
+  // niemals in ein href geraten, auch nicht als Bruchstueck.
+  for (const boese of ["javascript:alert(1)", "data:text/html,<script>", "  javascript:alert(1)", "https://nutzer:geheim@example.com/"]) {
+    zeigeSchritt(antwort, { art: "seite", text: boese, zustand: "laeuft" });
+  }
+  const zeilen = log.children[0].children;
+  assert.equal(zeilen.length, 4);
+  for (const zeile of zeilen) {
+    assert.equal(zeile.children.filter((k) => k.tagName === "a").length, 0, `darf kein Link sein: ${zeile.textContent}`);
+  }
+  assert.match(zeilen[0].textContent, /javascript:alert\(1\)/, "der Text bleibt sichtbar, nur eben als Text");
 });
 
 test("Modelltext landet als Text, nie als Markup", () => {
