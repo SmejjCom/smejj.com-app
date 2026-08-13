@@ -323,6 +323,12 @@ async function handleChat(req, res) {
   });
 }
 
+// Seit wann laeuft DIESER Container? Ohne diese Marke ist nach einem Deploy
+// nicht pruefbar, ob der neue Code wirklich live ist (Befund 2026-08-13: ein
+// Mailer-Fix war gepusht, und es gab keinen einzigen Messpunkt am Server, um
+// den Neubau zu bestaetigen — /api/health hatte keine Zeit- oder Versionsmarke).
+const GESTARTET_AM = new Date().toISOString();
+
 async function handleHealth(res) {
   // ai spiegelt den echten Router-Zustand: Gate + Budget + Provider-Kette (fail-closed).
   await refreshModelRuntimeHealth(process.env);
@@ -330,6 +336,7 @@ async function handleHealth(res) {
   json(res, 200, {
     ok: true,
     app: APP_INFO.name,
+    gestartetAm: GESTARTET_AM,
     costPolicy: COST_POLICY,
     ai: aiStatus.ai,
     aiBackend: aiStatus.aiBackend,
