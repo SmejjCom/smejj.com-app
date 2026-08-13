@@ -22,6 +22,10 @@ import { createRecordStore } from "../admin/recordStore.js";
 const BRUECKE_STANDARD = "https://smejj-chat-bridge.zeabur.app";
 const ablage = createRecordStore("autopiloten/modell-einkaeufer", { maximal: 30 });
 
+/** Testhilfen: Ablage befuellen/leeren, ohne den e2-Weg zu beruehren. */
+export function __einkaufAblageLeeren() { ablage.__leeren(); }
+export async function __einkaufAblageSchreiben(datensatz, { env = {} } = {}) { return ablage.schreib(datensatz, { env }); }
+
 // Die Einkaufsprobe: klein genug, um wöchentlich für JEDES Modell zu laufen
 // (6 Proben x 4 Modelle = 24 Aufrufe pro Woche), aussagekräftig genug, um
 // Ausfälle je Disziplin zu sehen. Jede Probe hat eine prüfbare Antwort —
@@ -163,20 +167,56 @@ export async function laufModellEinkauf({ env = process.env, fetchImpl = fetch, 
  * der letzte Lauf in der Ablage; geprüft wird alle 12 Stunden, gelaufen wird
  * nur, wenn der letzte Einkauf älter als 6,5 Tage ist.
  */
+const WOCHE_MS = 6.5 * 24 * 60 * 60 * 1000;
+
+/**
+ * Ein Pruef-Takt des Einkaeufers — eigenstaendig testbar.
+ *
+ * Bis 2026-08-13 kehrte der Takt WORTLOS um, wenn der letzte Einkauf juenger
+ * als die Woche war: der Einkaeufer blieb tagelang grau, obwohl er gesund
+ * war — und genau dieses Grau verdeckte den echten Fehler (der Start-Aufruf
+ * fehlte komplett). Jetzt ist auch das Ueberspringen eine MESSUNG mit
+ * Meldung: gelesen wurde die Ablage wirklich, das Alter ist gerechnet, das
+ * naechste Arena-Datum steht dabei. Kein Stempel — jede Zahl kommt aus dem
+ * Store.
+ */
+export async function pruefeEinkaufsTakt({ env = process.env, melde = null, jetztMs = Date.now(), einkauf = laufModellEinkauf } = {}) {
+  try {
+    const letzte = await ablage.liste({ env }).catch(() => null);
+    const juengste = (letzte?.datensaetze || [])
+      .map((d) => Date.parse(d?.createdAt || 0))
+      .filter(Number.isFinite)
+      .sort((a, b) => b - a)[0] || 0;
+    if (juengste && jetztMs - juengste < WOCHE_MS) {
+      const tage = Math.floor((jetztMs - juengste) / 86_400_000);
+      const naechste = new Date(juengste + WOCHE_MS).toISOString().slice(0, 10);
+      if (melde) {
+        melde("modell-einkaeufer", {
+          status: "ok",
+          meldung: `Takt geprueft: letzter Einkauf vor ${tage} Tag(en), Ablage lesbar — naechste Wochen-Arena am ${naechste}`,
+          dauerMs: null
+        });
+      }
+      return { gelaufen: false };
+    }
+    const ergebnis = await einkauf({ env });
+    if (melde) melde("modell-einkaeufer", { status: ergebnis.ok ? "ok" : "fehler", meldung: ergebnis.meldung, dauerMs: null });
+    return { gelaufen: true, ergebnis };
+  } catch (fehler) {
+    // Auch das Scheitern der Pruefung ist ein Befund, kein Schweigen.
+    if (melde) {
+      melde("modell-einkaeufer", {
+        status: "fehler",
+        meldung: `Pruef-Takt gescheitert: ${String(fehler?.message || fehler).slice(0, 100)}`,
+        dauerMs: null
+      });
+    }
+    return { gelaufen: false, fehler: true };
+  }
+}
+
 export function starteModellEinkaeufer({ env = process.env, melde = null, pruefIntervallMs = 12 * 60 * 60 * 1000 } = {}) {
-  const WOCHE_MS = 6.5 * 24 * 60 * 60 * 1000;
-  const tick = async () => {
-    try {
-      const letzte = await ablage.liste({ env }).catch(() => null);
-      const juengste = (letzte?.datensaetze || [])
-        .map((d) => Date.parse(d?.createdAt || 0))
-        .filter(Number.isFinite)
-        .sort((a, b) => b - a)[0] || 0;
-      if (Date.now() - juengste < WOCHE_MS) return;
-      const ergebnis = await laufModellEinkauf({ env });
-      if (melde) melde("modell-einkaeufer", { status: ergebnis.ok ? "ok" : "fehler", meldung: ergebnis.meldung, dauerMs: null });
-    } catch { /* nächster Prüf-Takt versucht es erneut */ }
-  };
+  const tick = () => { pruefeEinkaufsTakt({ env, melde }).catch(() => {}); };
   // Erster Check kurz nach dem Start (der Boot soll nicht auf 24 Messungen warten).
   const anlauf = setTimeout(tick, 3 * 60 * 1000);
   if (typeof anlauf.unref === "function") anlauf.unref();

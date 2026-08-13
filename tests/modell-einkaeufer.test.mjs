@@ -90,3 +90,49 @@ test("laufModellEinkauf: ohne Secret ehrlich rot; Voll-Ausfall der Kette ebenfal
   assert.equal(tot.ok, false, "wenn KEIN Modell eine Probe schafft, ist die Kette kaputt — nicht die Modelle");
   assert.match(tot.meldung, /Kette prüfen/);
 });
+
+test("Zwischenmeldung: ein uebersprungener Takt MELDET sich (Befund 2026-08-13: grau verdeckte den fehlenden Start)", async () => {
+  const { pruefeEinkaufsTakt, __einkaufAblageLeeren, __einkaufAblageSchreiben } = await import("../control-server/src/autopilots/modellEinkaeufer.js");
+  __einkaufAblageLeeren();
+  const jetzt = Date.parse("2026-08-13T18:00:00Z");
+  await __einkaufAblageSchreiben({ id: "einkauf-2026-08-13", createdAt: "2026-08-13T09:00:00Z" });
+
+  const meldungen = [];
+  const uebersprungen = await pruefeEinkaufsTakt({
+    env: {},
+    jetztMs: jetzt,
+    melde: (id, e) => meldungen.push({ id, ...e }),
+    einkauf: async () => { throw new Error("Arena darf bei frischem Einkauf NICHT laufen"); }
+  });
+  assert.equal(uebersprungen.gelaufen, false);
+  assert.equal(meldungen.length, 1, "auch das Ueberspringen ist eine Meldung");
+  assert.equal(meldungen[0].status, "ok");
+  assert.match(meldungen[0].meldung, /vor 0 Tag/);
+  assert.match(meldungen[0].meldung, /naechste Wochen-Arena am 2026-08-19/);
+
+  // Ist der letzte Einkauf aelter als die Woche, laeuft die Arena wirklich.
+  __einkaufAblageLeeren();
+  await __einkaufAblageSchreiben({ id: "einkauf-alt", createdAt: "2026-08-01T09:00:00Z" });
+  const gelaufen = await pruefeEinkaufsTakt({
+    env: {},
+    jetztMs: jetzt,
+    melde: (id, e) => meldungen.push({ id, ...e }),
+    einkauf: async () => ({ ok: true, meldung: "Arena gelaufen: Champion bleibt" })
+  });
+  assert.equal(gelaufen.gelaufen, true);
+  assert.match(meldungen[meldungen.length - 1].meldung, /Arena gelaufen/);
+});
+
+test("start.js ruft jeden importierten starte*-Dienst auch auf — Importe ohne Aufruf sind der Fehler von heute", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const quelle = await readFile(new URL("../control-server/src/autopilots/start.js", import.meta.url), "utf8");
+  const importiert = [...quelle.matchAll(/import\s*\{([^}]+)\}/g)]
+    .flatMap((m) => m[1].split(","))
+    .map((name) => name.trim().split(/\s+as\s+/).pop())
+    .filter((name) => /^starte[A-Z]/.test(name));
+  assert.ok(importiert.length >= 5, "start.js muss die starte*-Dienste importieren");
+  for (const name of importiert) {
+    const aufrufe = quelle.split(name).length - 1;
+    assert.ok(aufrufe >= 2, `${name} wird importiert, aber nie aufgerufen — genau so blieb der Einkaeufer unsichtbar stehen`);
+  }
+});
