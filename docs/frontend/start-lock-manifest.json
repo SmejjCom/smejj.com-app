@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T08:11:32.431Z",
-  "confirmation": "Betreiber waehlte am 2026-08-13 in der Claude-Sitzung die Option 'Nutzen + Technik in Klammern (Empfehlung)' zur Frage 'Welchen Namensstil soll das Modell-Menue bekommen? (Aenderung an index.html = Start-Lock, deine Auswahl gilt mir als Freigabe)'",
+  "frozenAt": "2026-08-13T08:45:13.212Z",
+  "confirmation": "2026-08-13 Betreiber: ist zu schwach, mach etwas staerker — Lichtsaum von 0.14/0.10/0.06 auf 0.30/0.22/0.13 angehoben.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
-    "public/styles.css": "355af0473e941ecceb1e4a9c241a05f1f9d4db7f03ba0a5f6963c9991f91cc2a",
-    "public/start-styles.css": "a25f7ab1d206eec5651625c3d734ebe33ccf933e3a44dc4d5b7dccbf6ed99a07",
+    "public/styles.css": "6d9a30300fe135eafe848e2ec7a1c5ae586451c2efb67efc8997030050f8f6b3",
+    "public/start-styles.css": "3ef265625b09830c6c1583f561ce33ec680b967aa902003d39896269a38fa060",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
