@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T11:34:12.859Z",
-  "confirmation": "2026-08-13 Betreiber (Nacht-Modus): Spur ist Rahmen, Schublade bleibt Overlay — Mitte weicht der schmalen Spur auf jedem Schirm aus.",
+  "frozenAt": "2026-08-13T11:41:46.343Z",
+  "confirmation": "2026-08-13 Betreiber (Nacht-Modus): auf dem Handy schiebt nur die linke Spur, die rechte bleibt Overlay — gemessen gegen die 344 px breite Eingabereihe.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
-    "public/start-styles.css": "bd9b5af205f6459b2cc6b59ce683a1c219be94e2bf41ce740127a14df911a92d",
+    "public/start-styles.css": "43e02c10dcc97b302b17250b08293a28f1ed9e5451677e3b1f82020c69a185db",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "d9c21ae999004b8d5121a881010e1b7c5887b1639da3b6be60f5d17584d6b9d2",
