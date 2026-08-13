@@ -65,6 +65,7 @@ import { handleFeedbackRoute } from "../control-server/src/routes/feedbackRoutes
 import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoutes.js";
+import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyncRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
@@ -118,6 +119,7 @@ const {
 const publicModelRateGate = createPublicModelRateGate(process.env);
 const sessionHandoffStore = createSessionHandoffStore();
 const chatSyncRoutes = createChatSyncRoutes({ env: process.env, readSession, json, readJson });
+const projektSyncRoutes = createProjektSyncRoutes({ env: process.env, readSession, json, readJson });
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
@@ -175,6 +177,8 @@ const server = http.createServer(async (req, res) => {
     // Verlauf-Sync (Stufe 3): eigene Routen-Datei, damit dieser Verteiler
     // schlank bleibt. Abgeschaltet, solange SMEJJ_CHAT_SYNC_ENABLED fehlt.
     if (url.pathname === "/api/chats" && await chatSyncRoutes.handle(req, res, url)) return;
+    // Projekte-Sync (2026-08-13): benannte Sammlungen fuer Chats, gleiches Flag.
+    if (url.pathname === "/api/projekte" && await projektSyncRoutes.handle(req, res, url)) return;
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return await handleAuthLogout(req, res);
     if (url.pathname.startsWith("/api/auth/")) {
       const handled = await handleEmailAuthRoutes(req, url, res, emailAuthContext(url));
