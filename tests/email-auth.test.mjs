@@ -170,6 +170,27 @@ test("mailer: fail-closed ohne Konfiguration, Versand mit Transport-Stub", async
   assert.ok(!calls[0].message.includes("\np")); // Passwort nie im Mailtext
 });
 
+// Zustellbarkeit (Befund 2026-08-12: Gmail 550 "likely unsolicited mail").
+test("mailer: Kopfzeilen fuer Zustellbarkeit — Message-ID passt zur From-Domain", async () => {
+  const env = { SMEJJ_SMTP_HOST: "smtp.gmail.com", SMEJJ_SMTP_PORT: "465", SMEJJ_SMTP_USER: "konto@gmail.com", SMEJJ_SMTP_PASS: "p", SMEJJ_SMTP_FROM: "s@smejj.com" };
+  const nachrichten = [];
+  const senden = () => sendAuthMail({ to: EMAIL, subject: "Dein Anmeldelink", text: "Link" }, env, async (_cfg, message) => { nachrichten.push(message); });
+  await senden();
+  await senden();
+  assert.match(nachrichten[0], /^From: smejj\.com <s@smejj\.com>\r\n/);
+  assert.match(nachrichten[0], /\r\nMessage-ID: <[^@\s>]+@smejj\.com>\r\n/);
+  assert.match(nachrichten[0], /\r\nAuto-Submitted: auto-generated\r\n/);
+  const id = (text) => text.match(/Message-ID: <([^>]+)>/)[1];
+  assert.notEqual(id(nachrichten[0]), id(nachrichten[1])); // jede Mail eine eigene Kennung
+});
+
+test("mailer: Message-ID bleibt gueltig auch bei unbrauchbarer Absenderadresse", async () => {
+  const env = { SMEJJ_SMTP_HOST: "smtp.example.com", SMEJJ_SMTP_PORT: "465", SMEJJ_SMTP_USER: "kaputt", SMEJJ_SMTP_PASS: "p", SMEJJ_SMTP_FROM: "kaputt" };
+  let nachricht = "";
+  await sendAuthMail({ to: EMAIL, subject: "x", text: "y" }, env, async (_cfg, message) => { nachricht = message; });
+  assert.match(nachricht, /\r\nMessage-ID: <[^@\s>]+@smejj\.com>\r\n/);
+});
+
 test("Routen: Login setzt HttpOnly-Cookie, Sessions-API, Widerruf greift", async () => {
   await registerUser({ email: EMAIL, password: PASSWORD, origin: "https://smejj.com" }, ENV);
   let currentUser = null;
