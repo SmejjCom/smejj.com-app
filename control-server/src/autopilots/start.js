@@ -14,6 +14,8 @@ import {
 } from "../admin/opsAutopiloten.js";
 import { starteMailLogAufraeumen } from "../auth/mailLogJanitor.js";
 import { starteAutopilotLaeufer, baueEskalationsVersand } from "./autopilotLaeufer.js";
+import { starteModellEinkaeufer } from "./modellEinkaeufer.js";
+import { interneMeldung } from "../admin/opsAutopiloten.js";
 import { sendAuthMail } from "../auth/mailer.js";
 
 /** Startet alle Autopilot-Hintergrunddienste. Wirft nie; unref ueberall. */
@@ -33,4 +35,7 @@ export function starteAutopiloten({ env = process.env } = {}) {
   // Aufgaben; die Selbstheilung (Nr. 33) belebt Rotes hoechstens dreimal
   // wieder und eskaliert dann genau einmal per Mail.
   starteAutopilotLaeufer({ sendeAlarm: baueEskalationsVersand(sendAuthMail, env) });
+  // Der Modell-Einkäufer (Nr. 34) misst woechentlich alle aktiven Modelle
+  // und legt die Empfehlung in die Ampel — umschalten bleibt Betreiber-Sache.
+  starteModellEinkaeufer({ env, melde: interneMeldung });
 }

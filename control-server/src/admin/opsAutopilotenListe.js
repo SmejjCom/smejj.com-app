@@ -49,6 +49,28 @@ export const AUTOPILOTEN = Object.freeze([
     stopAnleitung: "Nur durch Anhalten des Control-Servers."
   },
   {
+    id: "modell-einkaeufer",
+    name: "34. Modell-Einkäufer (Wochen-Arena)",
+    kurz: "Misst jede Woche alle aktiven Modelle mit denselben prüfbaren Aufgaben und empfiehlt den Wechsel — einkaufen statt trainieren.",
+    funktionen: [
+      "Gibt jedem aktiven Modell dieselben 6 Proben mit feststehender richtiger Antwort (Wissen, Rechnen, Code, Logik, Deutsch, JSON-Disziplin).",
+      "Misst über den ECHTEN Nutzerweg (Brücke, /api/agent) — Treffer und Antwortzeit, kein Labor-Seiteneingang.",
+      "Empfiehlt einen Wechsel nur bei MEHR Treffern oder gleich vielen bei höchstens 60 % der Antwortzeit — Gleichstand gehört dem Amtsinhaber.",
+      "SCHALTET NIE SELBST UM: Modellwahl ist Betreiber-Sache (Kosten, Marke). Die Empfehlung steht in der Ampel-Meldung, die Zahlen je Probe in der Ablage.",
+      "Neustart-fest über die Ablage: gelaufen wird, wenn der letzte Einkauf älter als 6,5 Tage ist — egal wie oft der Container neu baut."
+    ],
+    trainiert: "Wochen-Vergleich aller verfügbaren Modelle über echte Proben",
+    verbessert: "smejj reitet die Fortschritte der Modellanbieter automatisch, statt gegen Milliardenbudgets anzutrainieren",
+    neuigkeiten: ["Wochen-Arena seit 2026-08-13"],
+    ort: "Control Server (eigener Wochen-Takt)",
+    zeitplan: "wöchentlich (Prüfung alle 12 h, Lauf ab 6,5 Tagen Abstand)",
+    messung: "heartbeat",
+    erwartetAlleMs: 7 * TAG_MS,
+    schonfristMs: 24 * STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteModellEinkaeufer).",
+    stopAnleitung: "Nur durch Anhalten des Control-Servers."
+  },
+  {
     id: "qualitaetsmessung",
     name: "01. Qualitätsmessung",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",
