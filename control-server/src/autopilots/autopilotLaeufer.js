@@ -36,6 +36,8 @@ import * as S from "./autopilotSelbsttests.js";
 import { runFullSyntheticE2ECycle } from "./syntheticUserWatchdogAutopilot.js";
 import { planeHeilung, fuehreHeilungAus } from "./selbstheilung.js";
 import { offeneUeberfaellig, listeTickets } from "../admin/supportTickets.js";
+import { scrubPiiData, getUserFlywheelStats } from "./userFeedbackFlywheelAutopilot.js";
+import { executeRealtimeHarvestCycle, getHarvestBestand, HARVEST_TOPICS } from "./realtimeInternetHarvesterAutopilot.js";
 
 // Der Container hat seinen eigenen Quelltext an Bord (Dockerfile.smejj-control
 // kopiert src/ und control-server/). Genau den scannen die beiden
@@ -299,11 +301,18 @@ export function laufSprachQualitaet(seiten) {
  * Server einen Kindprozess ueber hunderte Dateien laufen zu lassen. Der
  * Bericht sagt das auch — eine stumme Quelle wird benannt, nie verschwiegen.
  */
-export function laufWerkstattSammeln({ uebersicht = autopilotUebersicht } = {}) {
+export async function laufWerkstattSammeln({ uebersicht = autopilotUebersicht, statsLader = getUserFlywheelStats } = {}) {
   const ampelDaten = uebersicht({});
+  // Seit dem Daten-Schwungrad (2026-08-13) liest die Werkstatt auch die
+  // Nicht-hilfreich-Signale der Nutzer: schlechte Antworten sind Arbeit,
+  // keine Statistik. Nicht lesbar => als stumme Quelle benannt, nie erfunden.
+  const stats = await statsLader().catch(() => null);
   const backlog = baueBacklog({
     ampel: { ok: true, autopiloten: ampelDaten.autopiloten || [], vorfaelle: ampelDaten.vorfaelle || [] },
-    tests: { ok: false, grund: "im Takt nicht ausgefuehrt — npm run werkstatt:sammeln -- --mit-tests" }
+    tests: { ok: false, grund: "im Takt nicht ausgefuehrt — npm run werkstatt:sammeln -- --mit-tests" },
+    antworten: stats?.ok
+      ? { ok: true, negative: stats.negativeLetzte7Tage }
+      : { ok: false, grund: stats?.grund || "Feedback-Ablage nicht lesbar" }
   });
   const dringend = backlog.aufgaben.filter((a) => a.stufe <= 2).length;
   return {
@@ -311,6 +320,130 @@ export function laufWerkstattSammeln({ uebersicht = autopilotUebersicht } = {}) 
     meldung: `Backlog gesammelt: ${backlog.aufgaben.length} Aufgaben, davon ${dringend} dringend `
       + `(Quellen: ${backlog.gesammeltAus.join(", ")}; stumm: ${backlog.stummeQuellen.length})`
   };
+}
+
+/**
+ * Daten-Schwungrad (Nr. 19), seit 2026-08-13 echt: zaehlt die WIRKLICH
+ * eingegangenen Daumen-Signale (POST /api/feedback) statt nur den
+ * PII-Filter zu testen. Der Filter wird trotzdem weiter geprueft — er ist
+ * die Bedingung, unter der ueberhaupt gespeichert werden darf: faellt er,
+ * ist der Lauf rot, egal wie schoen die Zahlen sind.
+ */
+export async function laufFeedbackSchwungrad({ statsLader = getUserFlywheelStats } = {}) {
+  const probe = scrubPiiData("Mail an alan.best@example.com, Schluessel sk-abcdef1234567890abcdef, IP 192.168.10.5");
+  const filterHeil = !probe.includes("alan.best@example.com")
+    && !probe.includes("sk-abcdef1234567890abcdef")
+    && !probe.includes("192.168.10.5");
+  if (!filterHeil) {
+    return { ok: false, meldung: "PII-Filter durchlaessig — es darf NICHTS gespeichert werden, bis er wieder maskiert" };
+  }
+  const stats = await statsLader();
+  if (!stats.ok) {
+    return { ok: false, meldung: `PII-Filter dicht, aber Feedback-Ablage nicht lesbar: ${stats.grund || "ohne Grund"}` };
+  }
+  const negativ = stats.negativeLetzte7Tage.length;
+  const typen = Object.entries(stats.jeTyp).map(([typ, n]) => `${n}x ${typ}`).join(", ");
+  return {
+    ok: true,
+    meldung: stats.gesamt === 0
+      ? "PII-Filter dicht; noch keine Nutzersignale eingegangen — der Daumen-Weg ist frisch verdrahtet"
+      : `PII-Filter dicht; ${stats.gesamt} Signale (${typen}), davon ${negativ} negativ in 7 Tagen`
+  };
+}
+
+// Zwischen zwei Ernten liegt mindestens ein Tag: die Themen rotieren
+// kalendertaeglich, und haeufigeres Ernten wuerde nur dieselben Treffer
+// erneut einsammeln (und Suchkontingent verbrennen).
+const ERNTE_ABSTAND_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Wissens-Ernte (Nr. 23), seit 2026-08-13 echt: einmal taeglich holt sie
+ * ueber die echte Websuche neue Fakten zum Tagesthema und legt sie in den
+ * Feed, den der RAG-Index des Agenten seit heute WIRKLICH einliest
+ * (agentContext.js). In den uebrigen Takten meldet sie den gemessenen
+ * Bestand — nie einen Pauschaltext.
+ */
+export async function laufWissensErnte({ mitNetz = true, bestandLader = getHarvestBestand, ernte = executeRealtimeHarvestCycle, jetztMs = Date.now() } = {}) {
+  const bestand = await bestandLader();
+  if (!bestand.ok) {
+    return { ok: false, meldung: `Ernte-Ablage nicht lesbar: ${bestand.grund || "ohne Grund"}` };
+  }
+  const letzteMs = bestand.letzterBatch ? Date.parse(bestand.letzterBatch.createdAt || "") : NaN;
+  const frisch = Number.isFinite(letzteMs) && jetztMs - letzteMs < ERNTE_ABSTAND_MS;
+  if (frisch) {
+    const stunden = Math.round((jetztMs - letzteMs) / 3_600_000);
+    return {
+      ok: true,
+      meldung: `Ernte aktuell: ${bestand.faktenGesamt} Fakten in ${bestand.batches} Laeufen, `
+        + `letzte vor ${stunden} h ("${String(bestand.letzterBatch.topic).slice(0, 40)}")`
+    };
+  }
+  if (!mitNetz) {
+    return { ok: true, meldung: `Ernte faellig (Bestand: ${bestand.faktenGesamt} Fakten) — laeuft im naechsten Netz-Takt` };
+  }
+  const tagDesJahres = Math.floor(jetztMs / 86_400_000);
+  const thema = HARVEST_TOPICS[tagDesJahres % HARVEST_TOPICS.length];
+  const ergebnis = await ernte(thema);
+  if (!ergebnis.ok || ergebnis.factsHarvested === 0) {
+    return {
+      ok: false,
+      meldung: `Ernte zu "${String(thema).slice(0, 40)}" brachte ${ergebnis.factsHarvested || 0} Fakten`
+        + `${ergebnis.error ? ` (${String(ergebnis.error).slice(0, 60)})` : " — Suchweg pruefen"}`
+    };
+  }
+  return {
+    ok: true,
+    meldung: `${ergebnis.factsHarvested} frische Fakten zu "${String(thema).slice(0, 40)}" geerntet `
+      + `(Bestand vorher: ${bestand.faktenGesamt})`
+  };
+}
+
+/**
+ * Bild/Video-Qualitaet (Nr. 8 multimodal-engine), seit 2026-08-13 echt:
+ * fragt die BEIDEN Erzeuger-Dienste nach ihrem Zustand, statt nur die
+ * Eingabepruefung zu testen. Faellt ein Worker um oder meldet er sich
+ * nicht bereit, wird die Ampel rot — und der Vorfall laeuft von selbst
+ * ins Werkstatt-Backlog (Ampel-Quelle).
+ *
+ * Der Video-Worker wird IMMER geprueft (er ist seit 2026-08-11 live);
+ * der Bild-Maler nur, wenn seine Adresse gesetzt ist — einen nie
+ * ausgerollten Dienst rot zu malen waere keine Messung, sondern Laerm.
+ */
+export async function laufMedienQualitaet({ mitNetz = true, env = process.env, fetchImpl = fetch } = {}) {
+  if (!mitNetz) {
+    return { ok: true, meldung: "Netz-Takt abgewartet — Worker-Zustand wird im naechsten Lauf gemessen" };
+  }
+  const ziele = [
+    { name: "Video-Worker", url: String(env.SMEJJ_VIDEO_WORKER_URL || "http://smejj-video-worker.zeabur.internal:8080") }
+  ];
+  if (env.SMEJJ_BILDER_WORKER_URL) {
+    ziele.push({ name: "Bild-Maler", url: String(env.SMEJJ_BILDER_WORKER_URL) });
+  }
+  const befunde = [];
+  let allesOk = true;
+  for (const ziel of ziele) {
+    try {
+      const antwort = await fetchImpl(`${ziel.url.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(10_000) });
+      if (!antwort.ok) {
+        allesOk = false;
+        befunde.push(`${ziel.name}: HTTP ${antwort.status}`);
+        continue;
+      }
+      const daten = await antwort.json().catch(() => ({}));
+      if (daten.bereit === false) {
+        // "laeuft, aber nicht bereit" ist der Salad-Fehlbild-Klassiker —
+        // genau der Zustand, der frueher unsichtbar blieb.
+        allesOk = false;
+        befunde.push(`${ziel.name}: laeuft, aber NICHT bereit${daten.fehler ? ` (${String(daten.fehler).slice(0, 40)})` : ""}`);
+      } else {
+        befunde.push(`${ziel.name}: bereit${daten.engine ? ` (${daten.engine})` : ""}`);
+      }
+    } catch (fehler) {
+      allesOk = false;
+      befunde.push(`${ziel.name}: nicht erreichbar (${String(fehler?.name === "TimeoutError" ? "Zeitlimit 10 s" : fehler?.message || fehler).slice(0, 50)})`);
+    }
+  }
+  return { ok: allesOk, meldung: befunde.join("; ") };
 }
 
 /**
@@ -392,15 +525,15 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["self-healing", () => laufSelfHealing()],
     ["deep-research", () => S.laufDeepResearch()],
     ["memory-sync", () => S.laufMemory()],
-    ["multimodal-engine", () => S.laufMultimodal()],
+    ["multimodal-engine", () => laufMedienQualitaet({ mitNetz })],
     ["task-orchestrator", () => S.laufTaskOrchestrator()],
     ["self-improvement", () => S.laufSelfImprovement()],
     ["model-lifecycle", () => S.laufModelLifecycle()],
-    ["user-feedback-flywheel", () => S.laufUserFeedbackFlywheel()],
+    ["user-feedback-flywheel", () => laufFeedbackSchwungrad()],
     ["process-reward", () => S.laufProcessReward()],
     ["knowledge-distiller", () => S.laufKnowledgeDistiller()],
     ["evolutionary-mutation", () => S.laufEvolutionaryMutation()],
-    ["realtime-internet-harvester", () => S.laufInternetHarvester()],
+    ["realtime-internet-harvester", () => laufWissensErnte({ mitNetz })],
     ["multi-file-repo-architect", () => S.laufRepoArchitect(dateien)],
     ["live-arena-leaderboard", () => S.laufLiveArena()],
     ["instant-web-container", () => S.laufWebContainer()],

@@ -58,15 +58,15 @@ const MIT_ECHTER_MESSUNG = new Set([
   "self-healing",             // muss kaputte UND gesunde Antworten erkennen
   "deep-research",            // Rechercheplan zu einem Thema
   "memory-sync",              // Faktenextraktion aus einem Gespraech
-  "multimodal-engine",        // gueltige/ungueltige Eingaben unterscheiden
+  "multimodal-engine",        // seit 2026-08-13: fragt Video-Worker (+Bild-Maler) nach /health
   "task-orchestrator",        // Aufgabengraph aus einem Ziel
   "self-improvement",         // gute Antwort muss schlechte schlagen
   "model-lifecycle",          // langsamer Schatten darf nicht befoerdert werden
-  "user-feedback-flywheel",   // PII-Maskierung (E-Mail, Schluessel)
+  "user-feedback-flywheel",   // seit 2026-08-13: echte Daumen-Signale (POST /api/feedback) + PII-Filter
   "process-reward",           // Denkkette zerlegen und bewerten
   "knowledge-distiller",      // beste Loesung aus Kandidaten waehlen
   "evolutionary-mutation",    // Stresstest auf Code
-  "realtime-internet-harvester", // Fakten aus Rohtext ziehen
+  "realtime-internet-harvester", // seit 2026-08-13: taegliche Websuche-Ernte in den RAG-Feed
   "live-arena-leaderboard",   // ELO-Mathematik, exakt pruefbar
   "instant-web-container",    // Vorschau mit eingebettetem Inhalt
   "realtime-voice-pair",      // Sitzung anlegen und Rahmen verarbeiten

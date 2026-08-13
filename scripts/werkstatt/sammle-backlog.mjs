@@ -100,7 +100,13 @@ async function main() {
   const [ampel, mails] = await Promise.all([holeAmpel(), holeMails()]);
   const tests = mitTests ? await holeTests() : { ok: false, grund: "nicht angefordert (--mit-tests setzen)" };
   const jetzt = new Date().toISOString();
-  const backlog = baueBacklog({ ampel, tests, mails });
+  const backlog = baueBacklog({
+    ampel, tests, mails,
+    // Die Feedback-Ablage (Daumen-Signale) haengt am e2-Zugang des
+    // Control-Servers; von hier aus ehrlich als stumm benannt. Der Laeufer
+    // im Control-Server liest sie bei jedem Takt wirklich.
+    antworten: { ok: false, grund: "nur im Control-Server messbar (liest die e2-Feedback-Ablage im Takt)" }
+  });
 
   mkdirSync(path.join(REPO, "docs/werkstatt"), { recursive: true });
   writeFileSync(path.join(REPO, ZIEL_MD), alsMarkdown(backlog, jetzt) + "\n", "utf8");

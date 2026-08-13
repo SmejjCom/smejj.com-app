@@ -33,9 +33,10 @@ export const STUFEN = Object.freeze({
  * @param {{ok: boolean, autopiloten?: Array, vorfaelle?: Array, grund?: string}} quellen.ampel
  * @param {{ok: boolean, rote?: Array<string>, grund?: string}} [quellen.tests]
  * @param {{ok: boolean, gescheitert?: number, zeitraumTage?: number, grund?: string}} [quellen.mails]
+ * @param {{ok: boolean, negative?: Array<{promptSample: string, antwortSample?: string, createdAt: string}>, grund?: string}} [quellen.antworten]
  * @returns {{aufgaben: Array, stummeQuellen: Array, gesammeltAus: Array}}
  */
-export function baueBacklog({ ampel, tests, mails } = {}) {
+export function baueBacklog({ ampel, tests, mails, antworten } = {}) {
   const aufgaben = [];
   const stummeQuellen = [];
   const gesammeltAus = [];
@@ -98,6 +99,30 @@ export function baueBacklog({ ampel, tests, mails } = {}) {
     }
   } else if (mails) {
     stummeQuellen.push({ quelle: "Mail-Zustellprotokoll", grund: mails.grund || "nicht abgefragt" });
+  }
+
+  // Daten-Schwungrad (2026-08-13): Nicht-hilfreich-Klicks der Nutzer. EINE
+  // gebuendelte Aufgabe je Sammelrunde statt einer je Klick — zehn Daumen
+  // runter sind EIN Arbeitsauftrag ("Antwortqualitaet pruefen"), kein
+  // zehnfach aufgeblaehtes Backlog. Die Kostproben stehen im Befund.
+  if (antworten?.ok) {
+    gesammeltAus.push("Nutzer-Feedback");
+    const negative = antworten.negative || [];
+    if (negative.length > 0) {
+      const kostproben = negative.slice(0, 3)
+        .map((n) => `"${String(n.promptSample || "").slice(0, 60)}"`)
+        .join(", ");
+      aufgaben.push({
+        stufe: STUFEN.REGRESSION,
+        quelle: "Nutzer-Feedback",
+        betrifft: "chat-antworten",
+        titel: `${negative.length} Antwort(en) in 7 Tagen als "nicht hilfreich" markiert`,
+        befund: `Betroffene Fragen (PII-bereinigt): ${kostproben}${negative.length > 3 ? ` und ${negative.length - 3} weitere` : ""}.`,
+        seit: negative[negative.length - 1]?.createdAt || null
+      });
+    }
+  } else if (antworten) {
+    stummeQuellen.push({ quelle: "Nutzer-Feedback", grund: antworten.grund || "nicht abgefragt" });
   }
 
   aufgaben.sort((a, b) => a.stufe - b.stufe || String(a.betrifft).localeCompare(String(b.betrifft)));
