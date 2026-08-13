@@ -182,6 +182,17 @@ def lade_tiefen_modell():
         zustand["bereit"] = True
 
 
+# Start-Diagnose (2026-08-13): Ein Auftrag lief am extern-Zweig vorbei, ohne
+# Fehler und ohne LTX-Ergebnis — der Schluessel war im Prozess LEER, obwohl
+# die Variable im Portal existierte. /health ist nur intern erreichbar, darum
+# steht die Wahrheit ab jetzt beim START im Log: konfiguriert ja/nein und die
+# LAENGE (nie der Wert) — eine leere oder verkuemmerte Variable faellt sofort auf.
+print(
+    f"extern: {'konfiguriert (Schluessel-Laenge ' + str(len(EXTERN_KEY)) + ')' if EXTERN_KEY else 'OHNE SCHLUESSEL — Weg C inaktiv'}"
+    f" | engine={ENGINE} | modell={EXTERN_MODELL}",
+    flush=True,
+)
+
 if ENGINE == "animatediff":
     threading.Thread(target=lade_diffusion_engine, daemon=True).start()
 elif ENGINE == "parallax":
