@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T11:41:46.343Z",
-  "confirmation": "2026-08-13 Betreiber (Nacht-Modus): auf dem Handy schiebt nur die linke Spur, die rechte bleibt Overlay — gemessen gegen die 344 px breite Eingabereihe.",
+  "frozenAt": "2026-08-13T17:58:22.091Z",
+  "confirmation": "2026-08-13 Betreiber: Klick ins Schreibfeld darf die Seiten nicht zuklappen — Abdunkeln nur noch bei der breiten Schublade, nicht bei der schmalen Spur.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
@@ -24,7 +24,7 @@
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "e68f3c7964373d7938571bb3590571755f34be67e0b46a4f9642607b89c2bd65",
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
-    "public/panel-backdrop.js": "6d0246e8b6ffe00337d64c7f9ad93a9e1b36d3ef7c7e614ca3600ab66b191ae3",
+    "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
     "public/cline-model-menu.js": "1bc22d8e0c9fd5200031d893dd774a2c3879db8092a7a4f63b354d74bcc8fdb3",
     "public/cline-model-menu.css": "e440d1b7fed003a9147d0f339173966f02ddad128d139f080f191f0edf313d07",
