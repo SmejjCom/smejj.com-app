@@ -37,6 +37,7 @@ import { runFullSyntheticE2ECycle } from "./syntheticUserWatchdogAutopilot.js";
 import { planeHeilung, fuehreHeilungAus } from "./selbstheilung.js";
 import { offeneUeberfaellig, listeTickets } from "../admin/supportTickets.js";
 import { scrubPiiData, getUserFlywheelStats } from "./userFeedbackFlywheelAutopilot.js";
+import { pruefeAntwortenAlle, fuehreSelbsttestAus } from "./antwortTuevAutopilot.js";
 import { executeRealtimeHarvestCycle, getHarvestBestand, HARVEST_TOPICS } from "./realtimeInternetHarvesterAutopilot.js";
 
 // Der Container hat seinen eigenen Quelltext an Bord (Dockerfile.smejj-control
@@ -329,6 +330,43 @@ export async function laufWerkstattSammeln({ uebersicht = autopilotUebersicht, s
  * die Bedingung, unter der ueberhaupt gespeichert werden darf: faellt er,
  * ist der Lauf rot, egal wie schoen die Zahlen sind.
  */
+/**
+ * Antwort-TÜV (Nr. 36): prüft Antworten, die Nutzer per Daumen-runter gemeldet
+ * haben, gegen die am 2026-08-13 live gemessenen Fehlerklassen (Abbruch,
+ * Nur-Ankündigung, Fähigkeits-Verneinung, Denk-Tags, rohes LaTeX, kaputte
+ * Tabelle, versprochene-aber-fehlende Links).
+ *
+ * ERST der Selbsttest, DANN die Echtdaten: Der Prüfer bekommt die wörtlich
+ * gemessenen Fehlantworten von damals vorgelegt und muss sie erkennen — und
+ * eine gesunde Antwort freisprechen. Fällt er durch, ist die Ampel rot: ein
+ * Prüfer, der nichts findet, ist sonst von einem kaputten Prüfer nicht zu
+ * unterscheiden (dieselbe Regel wie beim Self-Healing-Lauf).
+ */
+export async function laufAntwortTuev({ statsLader = getUserFlywheelStats } = {}) {
+  const selbsttest = fuehreSelbsttestAus();
+  if (!selbsttest.bestanden) {
+    return { ok: false, meldung: `Prüfer erkennt bekannte Fehler nicht mehr: ${selbsttest.fehler.join("; ")}` };
+  }
+  const stats = await statsLader();
+  if (!stats.ok) {
+    return { ok: false, meldung: `Selbsttest bestanden, aber Feedback-Ablage nicht lesbar: ${stats.grund || "ohne Grund"}` };
+  }
+  const faelle = stats.negativeLetzte7Tage
+    .filter((e) => e.antwortSample)
+    .slice(0, 20)
+    .map((e) => ({ antwort: e.antwortSample, frage: e.promptSample, quelle: `daumen-runter ${e.createdAt || ""}` }));
+  if (!faelle.length) {
+    return { ok: true, meldung: "Selbsttest 4/4 bestanden; keine gemeldeten Antworten der letzten 7 Tage zu prüfen" };
+  }
+  const bericht = pruefeAntwortenAlle(faelle);
+  const beispiel = bericht.berichte[0]?.funde?.[0];
+  return {
+    ok: true,
+    meldung: `Selbsttest 4/4; ${bericht.geprueft} gemeldete Antworten geprüft, ${bericht.funde} Befund(e) in ${bericht.antwortenMitFunden}`
+      + (beispiel ? ` — z.B. ${beispiel.klasse}: ${beispiel.beleg}` : "")
+  };
+}
+
 export async function laufFeedbackSchwungrad({ statsLader = getUserFlywheelStats } = {}) {
   const probe = scrubPiiData("Mail an alan.best@example.com, Schluessel sk-abcdef1234567890abcdef, IP 192.168.10.5");
   const filterHeil = !probe.includes("alan.best@example.com")
@@ -530,6 +568,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["self-improvement", () => S.laufSelfImprovement()],
     ["model-lifecycle", () => S.laufModelLifecycle()],
     ["user-feedback-flywheel", () => laufFeedbackSchwungrad()],
+    ["antwort-tuev", () => laufAntwortTuev()],
     ["process-reward", () => S.laufProcessReward()],
     ["knowledge-distiller", () => S.laufKnowledgeDistiller()],
     ["evolutionary-mutation", () => S.laufEvolutionaryMutation()],

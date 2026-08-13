@@ -63,6 +63,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "self-improvement",         // gute Antwort muss schlechte schlagen
   "model-lifecycle",          // langsamer Schatten darf nicht befoerdert werden
   "user-feedback-flywheel",   // seit 2026-08-13: echte Daumen-Signale (POST /api/feedback) + PII-Filter
+  "antwort-tuev",             // seit 2026-08-14: Selbsttest mit den woertlich gemessenen Fehlantworten + echte Daumen-runter-Antworten
   "process-reward",           // Denkkette zerlegen und bewerten
   "knowledge-distiller",      // beste Loesung aus Kandidaten waehlen
   "evolutionary-mutation",    // Stresstest auf Code
