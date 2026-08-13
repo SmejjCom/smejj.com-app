@@ -46,4 +46,11 @@ export function starteAutopiloten({ env = process.env } = {}) {
   // Aufgaben; die Selbstheilung (Nr. 33) belebt Rotes hoechstens dreimal
   // wieder und eskaliert dann genau einmal per Mail.
   sicher("autopilotLaeufer", () => starteAutopilotLaeufer({ sendeAlarm: baueEskalationsVersand(sendAuthMail, env) }));
+  // Modell-Einkaeufer (Nr. 34): Wochen-Arena + 12-h-Zwischenmeldung. Dieser
+  // Aufruf FEHLTE nach dem Auszug aus server.js (2026-08-13 abends entdeckt):
+  // der Import stand da, gerufen wurde nie — der Einkaeufer war grau und
+  // haette auch seine Wochen-Arena nie gefahren. Der Test
+  // "start.js ruft jeden importierten starte*-Dienst auch auf" haelt die
+  // ganze Fehlerklasse seitdem fest.
+  sicher("modellEinkaeufer", () => starteModellEinkaeufer({ env, melde: interneMeldung }));
 }
