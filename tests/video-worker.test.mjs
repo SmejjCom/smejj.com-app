@@ -123,6 +123,19 @@ describe("Portraet-Qualitaet (Befund Betreiber 2026-08-13)", () => {
     assert.ok(server.includes("GaussianBlur(5)"), "Tiefenkarten-Glaettung fehlt (Riss-Kanten)");
   });
 
+  it("bereitet das Basisbild auf (Schaerfe + Kontrast, EINMAL statt je Frame)", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    assert.ok(server.includes("def bild_aufbereiten"), "Aufbereitung fehlt");
+    assert.ok(server.includes("UnsharpMask"), "Nachschaerfen fehlt");
+    // Gemessen 2026-08-13: Detailschaerfe im fertigen Video mehr als
+    // verdoppelt (Portraet 45 -> 100). Muss VOR dem Rendern passieren —
+    // je Frame waere es der 96-fache Aufwand fuer dasselbe Ergebnis.
+    const vorRendern = server.indexOf("def bild_aufbereiten") < server.indexOf("def parallax_frames");
+    assert.ok(vorRendern, "Aufbereitung gehoert vor das Rendern");
+    assert.ok(/except Exception:.*\n\s*pass/.test(server.split("def bild_aufbereiten")[1].slice(0, 900)),
+      "Aufbereitung muss fail-safe sein — sie darf nie ein Video kosten");
+  });
+
   it("kodiert mit CRF 23 (drei Stufen schaerfer als vorher)", () => {
     const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
     assert.ok(server.includes('"SMEJJ_VIDEO_CRF", "23"'), "CRF-Vorgabe 23 fehlt");

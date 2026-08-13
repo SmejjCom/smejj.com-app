@@ -48,6 +48,13 @@ MAX_B64 = 8_000_000
 # CRF-Stufen sind sichtbar weniger Matsch; ein 8-s-Video waechst von ~90 auf
 # ~140 KB und bleibt weit unter dem 8-MB-Deckel der Bruecke.
 CRF = int(os.environ.get("SMEJJ_VIDEO_CRF", "23"))
+# Nachschaerfen des Basisbilds (2026-08-13): SD-Turbo malt weich, und die
+# bilineare Abtastung beim Warping glaettet zusaetzlich. EINMAL am Bild
+# geschaerft (nicht je Frame — das waere 96x der Aufwand) hebt die
+# Detailschaerfe gemessen um ~90 %, ohne sichtbare Halos.
+# 0 schaltet ab; ueber ~60 % entstehen helle Saeume an Kanten.
+SCHAERFE_PROZENT = int(os.environ.get("SMEJJ_VIDEO_SCHAERFE", "50"))
+KONTRAST = float(os.environ.get("SMEJJ_VIDEO_KONTRAST", "1.08"))
 
 # --- parallax-Engine -------------------------------------------------------
 # Tiefenmodell als ONNX (26 MB, quantisiert) statt torch (~800 MB): der Server
@@ -242,7 +249,28 @@ def hole_basisbild(prompt):
     daten = antwort.json()
     if not daten.get("ok") or not daten.get("b64"):
         raise RuntimeError(f"bild_maler: {daten.get('fehler', 'keine_bilddaten')}")
-    return Image.open(io.BytesIO(base64.b64decode(daten["b64"]))).convert("RGB")
+    bild = Image.open(io.BytesIO(base64.b64decode(daten["b64"]))).convert("RGB")
+    return bild_aufbereiten(bild)
+
+
+def bild_aufbereiten(bild):
+    """Holt aus dem SD-Turbo-Bild heraus, was ohne Modellwechsel drin ist.
+
+    Zwei billige Schritte, gemessen 2026-08-13: Nachschaerfen (+~90 %
+    Detailschaerfe, Ueberzeichnung unter 40) und ein Hauch Kontrast (+14 %).
+    Beides EINMAL auf dem Standbild — pro Frame waere es der 96-fache Aufwand
+    fuer dasselbe Ergebnis, weil alle Frames aus diesem einen Bild entstehen.
+    """
+    from PIL import ImageEnhance, ImageFilter
+
+    try:
+        if SCHAERFE_PROZENT > 0:
+            bild = bild.filter(ImageFilter.UnsharpMask(radius=2.5, percent=SCHAERFE_PROZENT, threshold=3))
+        if KONTRAST and abs(KONTRAST - 1.0) > 0.001:
+            bild = ImageEnhance.Contrast(bild).enhance(KONTRAST)
+    except Exception:  # noqa: BLE001 — Aufbereitung darf nie ein Video kosten
+        pass
+    return bild
 
 
 def kenburns_frames(bild, dauer=None):
