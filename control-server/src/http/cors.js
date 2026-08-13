@@ -21,7 +21,12 @@ export function corsHeadersFor(originHeader, env = process.env) {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Credentials": "true",
     Vary: "Origin",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    // PUT/DELETE seit dem Verlauf-Sync (Stufe 3, /api/chats): Der Browser
+    // fragt sie im Preflight an; ohne Eintrag scheitert der PUT als stummes
+    // "Failed to fetch" (live gemessen 2026-08-13). Die Freigabe hier oeffnet
+    // nichts — welche Methoden eine Route WIRKLICH beantwortet, entscheidet
+    // weiterhin ihr Handler.
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Expose-Headers": "x-smejj-model-backend, x-smejj-provider-request-id",
     "Access-Control-Max-Age": "600"
