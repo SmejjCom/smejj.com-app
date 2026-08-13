@@ -1,12 +1,12 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-13T03:57:56.706Z",
-  "confirmation": "Ich bestätige den Stand des Security-Locks",
+  "frozenAt": "2026-08-13T04:49:41.456Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 per Klick-Antwort: Login-Fix 0c3891d (doppelte API-Origin-URLs entfernt, Google-/GitHub-/Magic-Link-Anmeldung funktioniert wieder) an public/auth/login/index.html, register/index.html und auth-page.js ist geprueft und freigegeben.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "c5264cc7d0509acfc914f5db04fd6f336edc82663894296c21cc7859e46ae1c5",
-    "public/auth/register/index.html": "2694b807662ab3ab15d991c0ae368631043168cadee0dd1a5935de8e4f41c6ba",
-    "public/auth/auth-page.js": "f7f1baf302d07d8b9badbc3186c35054deee86a6700c2e33356ad9b6133f0c0d",
+    "public/auth/login/index.html": "d4363cfde3da85adbe9043da732e475578f5790ae18256afae445518358cba0a",
+    "public/auth/register/index.html": "71765dc40d8b1998d8fcd4230dace5f9f80584a435bfa8a7f74e2039c5a41ff0",
+    "public/auth/auth-page.js": "10a671659c0f4c0339681f0a6e02215470dd2729c816d17ee0c3a1c4d3efbc64",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "c4af05031dadfcd5a7e02d768955ebc2039de9ee8fbea847e9701e31a0c580ef",
