@@ -22,7 +22,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 MODELL = os.environ.get("SMEJJ_BILD_MODELL", "stabilityai/sd-turbo")
-SCHRITTE = int(os.environ.get("SMEJJ_BILD_SCHRITTE", "2"))
+# 3 statt 2 Schritte (2026-08-13): sichtbar mehr Detail, ~120 s — unterm 150-s-Budget.
+SCHRITTE = int(os.environ.get("SMEJJ_BILD_SCHRITTE", "3"))
 GROESSE = int(os.environ.get("SMEJJ_BILD_GROESSE", "512"))
 WORKER_KEY = os.environ.get("SMEJJ_BILDER_WORKER_KEY", "")
 MAX_PROMPT = 500
@@ -148,6 +149,11 @@ async def erzeuge(request: Request):
     except Exception:  # noqa: BLE001
         return JSONResponse({"ok": False, "fehler": "kein_json"}, status_code=400)
     prompt = str(daten.get("prompt", "")).strip()[:MAX_PROMPT]
+    # Foto-Anreicherung (2026-08-13): SD-Turbo reagiert stark auf Stil-Anker;
+    # nur ergaenzen, wenn der Prompt keinen eigenen Stil nennt. Der Zusatz
+    # triggert zugleich die Gesichts-Reparatur ("photorealistic" im Prompt).
+    if prompt and not any(w in prompt.lower() for w in ("painting", "drawing", "sketch", "cartoon", "anime", "illustration", "pixel", "watercolor")):
+        prompt = f"{prompt}, photorealistic, highly detailed, sharp focus, professional photography, natural skin texture"[:MAX_PROMPT + 120]
     if not prompt:
         return JSONResponse({"ok": False, "fehler": "prompt_fehlt"}, status_code=400)
     # 2 Kerne: immer nur EIN Bild; ein zweiter Auftrag bekommt sofort 429,
