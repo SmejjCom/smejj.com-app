@@ -23,7 +23,8 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { interneMeldung } from "../admin/opsAutopiloten.js";
+import { interneMeldung, autopilotUebersicht } from "../admin/opsAutopiloten.js";
+import { baueBacklog } from "./werkstattBacklog.js";
 import { runProjectBugScan } from "./bugPredictorAutopilot.js";
 import { buildKnowledgeGraph } from "./knowledgeGraphAutopilot.js";
 import { runCodeInterpreter } from "./codeInterpreterAutopilot.js";
@@ -190,6 +191,33 @@ export async function laufSyntheticWatchdog({ env = process.env } = {}) {
 }
 
 /**
+ * Werkstatt-Autopilot (Nr. 30), Station 1: sammelt das Backlog aus den echten
+ * Quellen — im Takt statt nur auf Abruf.
+ *
+ * Er liest die Ampel DIREKT im Prozess (autopilotUebersicht), nicht ueber
+ * HTTP: kein Token, kein Netz, keine Frage der Erreichbarkeit. Die Datei
+ * docs/werkstatt/BACKLOG.md schreibt weiterhin nur der Aufruf von Hand
+ * (npm run werkstatt:sammeln) — der Container hat dafuer keinen Ort.
+ *
+ * Die Pruefsuite bleibt hier bewusst stumm: sie zu starten hiesse, im
+ * Server einen Kindprozess ueber hunderte Dateien laufen zu lassen. Der
+ * Bericht sagt das auch — eine stumme Quelle wird benannt, nie verschwiegen.
+ */
+export function laufWerkstattSammeln({ uebersicht = autopilotUebersicht } = {}) {
+  const ampelDaten = uebersicht({});
+  const backlog = baueBacklog({
+    ampel: { ok: true, autopiloten: ampelDaten.autopiloten || [], vorfaelle: ampelDaten.vorfaelle || [] },
+    tests: { ok: false, grund: "im Takt nicht ausgefuehrt — npm run werkstatt:sammeln -- --mit-tests" }
+  });
+  const dringend = backlog.aufgaben.filter((a) => a.stufe <= 2).length;
+  return {
+    ok: true,
+    meldung: `Backlog gesammelt: ${backlog.aufgaben.length} Aufgaben, davon ${dringend} dringend `
+      + `(Quellen: ${backlog.gesammeltAus.join(", ")}; stumm: ${backlog.stummeQuellen.length})`
+  };
+}
+
+/**
  * Voice-Region: misst, was messbar IST — ob die Sprachausgabe für Nutzer
  * bereitsteht.
  *
@@ -263,6 +291,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     await fuehreAus("instant-web-container", () => S.laufWebContainer()),
     await fuehreAus("realtime-voice-pair", () => S.laufVoicePair()),
     await fuehreAus("autonomous-git-bot", () => S.laufGitBot()),
+    await fuehreAus("werkstatt-autopilot", () => laufWerkstattSammeln()),
     // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
     // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen
