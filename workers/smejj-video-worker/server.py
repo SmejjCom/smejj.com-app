@@ -59,6 +59,19 @@ TIEFE_DATEI = os.environ.get("SMEJJ_VIDEO_TIEFE_DATEI", "/tmp/smejj-tiefe.onnx")
 # aber groessere Loecher hinter Objekten auf; 26 ist gemessen ein guter Wert.
 PARALLAX_STAERKE = float(os.environ.get("SMEJJ_VIDEO_PARALLAX_STAERKE", "26"))
 PARALLAX_EBENEN = int(os.environ.get("SMEJJ_VIDEO_PARALLAX_EBENEN", "8"))
+# Eigenbewegung der Szene (Stufe 2, 2026-08-13): Wolken ziehen durch. Ohne das
+# steht eine Landschaft trotz Kamerafahrt wie eingefroren.
+#
+# GEMESSEN, nicht vermutet: Himmel-Zug hebt die Aenderung in der Himmelzone von
+# 1,21 auf 2,01 (bei 40 px auf 2,68) — er wirkt und skaliert sauber.
+#
+# BEWUSST NICHT GEBAUT: eine Wasser-Kraeuselung (zeilenweise Sinus-Verschiebung)
+# war fertig und wurde wieder entfernt. Sie zeigte bei 3,5 / 8 / 14 px Ausschlag
+# jedes Mal exakt die Werte des ausgeschalteten Zustands — die Wirkung liess sich
+# nicht belegen, kostete aber die Haelfte der Renderzeit. Was sich nicht messen
+# laesst, gehoert nicht in den Betrieb (Lehre aus der Autopiloten-Ampel).
+BEWEGUNG_AN = os.environ.get("SMEJJ_VIDEO_BEWEGUNG", "1") not in ("0", "nein", "no")
+HIMMEL_ZUG = float(os.environ.get("SMEJJ_VIDEO_HIMMEL_ZUG", "22"))    # Pixel je Runde
 
 # --- Erzählstimme ----------------------------------------------------------
 # Derselbe Piper-Dienst, der schon die Premium-Stimme des Chats spricht
@@ -232,6 +245,57 @@ def schaetze_tiefe(bild):
     return (tiefe - tiefe.min()) / spanne
 
 
+def himmel_bereich(bild, tiefe):
+    """Findet den Himmel — die Fläche, die in echt nie stillsteht.
+
+    Die Kamerafahrt allein lässt eine Szene starr wirken: Wolken stehen wie
+    eingefroren. Der Himmel lässt sich ohne Modell erkennen, aus Tiefe, Lage
+    und Farbe (oben, sehr fern, bläulich oder sehr hell) — das kostet
+    Millisekunden statt Diffusion.
+
+    Liefert die Maske als 0..1-Feld oder None, wenn die Erkennung unsicher ist.
+    """
+    import numpy as np
+    from PIL import Image, ImageFilter
+
+    rgb = np.asarray(bild, dtype=np.float32) / 255.0
+    hoehe, breite = tiefe.shape
+    rot, gruen, blau = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    blaustich = blau - (rot + gruen) / 2
+
+    zeilen = np.arange(hoehe)[:, None] / hoehe
+
+    # Fern (kleine Tiefe), oben, und entweder blau oder sehr hell.
+    himmel = ((tiefe < 0.28) & (zeilen < 0.55) & ((blaustich > 0.04) | (rgb.mean(axis=2) > 0.72)))
+
+    anteil = himmel.mean()
+    # Zu klein = Rauschen, zu gross = die Erkennung hat danebengegriffen
+    # (z. B. ein blaues Motiv fuellt das Bild). Beides lieber lassen.
+    if anteil < 0.04 or anteil > 0.85:
+        return None
+    return np.asarray(
+        Image.fromarray((himmel.astype(np.float32) * 255).astype(np.uint8))
+        .filter(ImageFilter.GaussianBlur(6)),
+        dtype=np.float32,
+    ) / 255.0
+
+
+def welle(rgb, maske, versatz_je_zeile):
+    """Verschiebt jede Bildzeile innerhalb der Maske um ihren eigenen Betrag.
+
+    Damit zieht der Himmel gleichmässig durch das Bild — reine Indexarithmetik,
+    kein Modell, wenige Millisekunden.
+    """
+    import numpy as np
+
+    hoehe, breite = maske.shape
+    spalten = np.arange(breite)[None, :]
+    quelle = (spalten - versatz_je_zeile[:, None]).astype(np.int32) % breite
+    verschoben = np.take_along_axis(rgb, quelle[..., None].repeat(3, axis=2), axis=1)
+    alpha = maske[..., None]
+    return rgb * (1 - alpha) + verschoben * alpha
+
+
 def parallax_frames(bild, tiefe, dauer=None):
     """Kamerafahrt durch die Szene: nahe Ebenen wandern weiter als ferne.
 
@@ -268,6 +332,10 @@ def parallax_frames(bild, tiefe, dauer=None):
         ) / 255.0
         ebenen.append(((lo + hi) / 2, weich[..., None]))
 
+    # Was in der Szene von selbst in Bewegung ist (ziehende Wolken).
+    himmel = himmel_bereich(bild, tiefe) if BEWEGUNG_AN else None
+    hoehe = tiefe.shape[0]
+
     anzahl = max(2, int((dauer or DAUER_S) * FPS))
     rand = int(PARALLAX_STAERKE * 1.2)
     frames = []
@@ -275,11 +343,18 @@ def parallax_frames(bild, tiefe, dauer=None):
         # Nahtlose Schleife: einmal hin und zurück, mit leichtem Bogen nach oben.
         w = 2 * math.pi * i / anzahl
         vx, vy = math.sin(w), 0.35 * (1 - math.cos(w)) - 0.35
+        # Eigenbewegung VOR dem Ebenenstapel: die Wolken ziehen gleichmässig
+        # durch und stehen nach einer Runde wieder am Anfang — sonst ruckelt
+        # die Schleife an der Nahtstelle.
+        rgb_bewegt = rgb
+        if himmel is not None:
+            zug = np.full(hoehe, HIMMEL_ZUG * i / anzahl, dtype=np.float32)
+            rgb_bewegt = welle(rgb_bewegt, himmel, zug)
         leinwand = grund.copy()
         for mitteltiefe, alpha in ebenen:
             dx = int(round(PARALLAX_STAERKE * mitteltiefe * vx))
             dy = int(round(PARALLAX_STAERKE * mitteltiefe * vy))
-            rgb_v = np.roll(np.roll(rgb, dx, axis=1), dy, axis=0)
+            rgb_v = np.roll(np.roll(rgb_bewegt, dx, axis=1), dy, axis=0)
             a_v = np.roll(np.roll(alpha, dx, axis=1), dy, axis=0)
             leinwand = leinwand * (1 - a_v) + rgb_v * a_v
         # Zuschnitt kaschiert die Ränder, die das Verschieben freilegt.

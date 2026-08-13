@@ -63,6 +63,18 @@ describe("smejj video worker & video player markdown integration", () => {
     assert.ok(!/controls loop muted/.test(markdown), "loop/muted duerfen nicht mehr fest verdrahtet sein");
   });
 
+  it("die Szene bewegt sich selbst — und nur, was belegt ist", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    // Himmel-Zug ist gemessen (Himmelzone 1,21 -> 2,01) und bleibt.
+    assert.ok(server.includes("himmel_bereich"), "Himmel-Erkennung fehlt");
+    assert.ok(server.includes("HIMMEL_ZUG"), "Himmel-Zug fehlt");
+    // Die Wasser-Kraeuselung war gebaut und wurde entfernt: bei 3,5/8/14 px
+    // Ausschlag exakt die Werte des ausgeschalteten Zustands. Sie darf nicht
+    // unbemerkt zurueckkehren — unbelegte Wirkung ist eine Attrappe.
+    assert.ok(!/WASSER_HUB|wasser_maske/.test(server), "unbelegte Wasser-Bewegung ist zurueck");
+    assert.ok(server.includes("BEWUSST NICHT GEBAUT"), "die Entscheidung muss im Code stehen");
+  });
+
   it("das Tiefenmodell kommt als ONNX, nicht als torch (Abbildgroesse)", () => {
     const anforderungen = fs.readFileSync("workers/smejj-video-worker/requirements.txt", "utf8");
     assert.ok(anforderungen.includes("onnxruntime"), "onnxruntime fehlt");
