@@ -369,7 +369,7 @@ def mische_ton(mp4_bytes, wav_bytes):
             lauf = subprocess.run(
                 [get_ffmpeg_exe(), "-y", "-i", stumm, "-i", ton,
                  "-c:v", "copy", "-c:a", "aac", "-b:a", "96k",
-                 "-shortest", "-movflags", "+faststart", ziel],
+                 "-shortest", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", ziel],
                 capture_output=True, timeout=60,
             )
             if lauf.returncode != 0 or not os.path.exists(ziel):
@@ -381,7 +381,8 @@ def mische_ton(mp4_bytes, wav_bytes):
 
 
 def kodiere_mp4(frames):
-    """Kodiert die Frames als H.264-MP4 (yuv420p + faststart für den Browser)."""
+    """Kodiert die Frames als fragmentiertes H.264-MP4 (yuv420p; fMP4 spielt
+    progressiv UND via MediaSource — der browserfeste Wiedergabepfad)."""
     import imageio.v2 as imageio
     import numpy as np
 
@@ -392,7 +393,7 @@ def kodiere_mp4(frames):
             fps=FPS,
             codec="libx264",
             quality=None,
-            ffmpeg_params=["-crf", "26", "-preset", "veryfast", "-pix_fmt", "yuv420p", "-movflags", "+faststart"],
+            ffmpeg_params=["-crf", "26", "-preset", "veryfast", "-pix_fmt", "yuv420p", "-movflags", "+frag_keyframe+empty_moov+default_base_moof"],
         )
         for frame in frames:
             schreiber.append_data(np.asarray(frame))
