@@ -244,16 +244,24 @@ function bilderSendeInhalt(res, inhalt) {
   }
 }
 
-function bilderSchritt(res, zustand, text) {
-  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "bild", zustand, text } })}\n\n`);
+// Konstanter text = konstante Kennung: die App aktualisiert dann EINE Zeile
+// (Stand + Schimmer-Platzhalter), statt pro 10-s-Meldung eine neue zu stapeln.
+function bilderSchritt(res, zustand, stand) {
+  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "bild", zustand, text: "Male dein Bild", stand, platzhalter: "bild" } })}\n\n`);
 }
 
-function videoSchritt(res, zustand, text) {
-  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "video", zustand, text } })}\n\n`);
+// Dieselbe Schimmer-Form wie bilderSchritt: konstanter text, wechselnder stand.
+// Video dauert 1-2 Minuten — ohne das waeren es ein Dutzend gestapelter Zeilen.
+// platzhalter "bild" ist Absicht: die App (ai/chat-stream.js) kennt genau diese
+// eine schimmernde Karte, und sie passt fuer das 512er-Video unveraendert.
+function videoSchritt(res, zustand, stand) {
+  res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "video", zustand, text: "Erzeuge dein Video", stand, platzhalter: "bild" } })}\n\n`);
 }
 
-// Laesst den eigenen Video-Maler ein MP4 erzeugen. Liefert die data:-URL oder "".
-async function erzeugeVideoUrl(prompt) {
+// Laesst den eigenen Video-Maler ein MP4 erzeugen.
+// Liefert { url, engine } oder null — die Engine entscheidet ueber den Hinweis
+// im Antworttext (kenburns bewegt die Kamera, animatediff das Motiv selbst).
+async function erzeugeVideo(prompt) {
   try {
     const antwort = await fetch(`${VIDEO_WORKER_URL}/erzeuge`, {
       method: "POST",
@@ -261,10 +269,12 @@ async function erzeugeVideoUrl(prompt) {
       body: JSON.stringify({ prompt }),
       signal: AbortSignal.timeout(VIDEO_TIMEOUT_MS)
     });
-    if (!antwort.ok) return "";
-    return sichereVideoAntwort(await antwort.json());
+    if (!antwort.ok) return null;
+    const daten = await antwort.json();
+    const url = sichereVideoAntwort(daten);
+    return url ? { url, engine: String(daten?.engine || "") } : null;
   } catch {
-    return "";
+    return null;
   }
 }
 
@@ -279,24 +289,31 @@ export async function streamBilderLane(res, body, task, deps) {
     // bereit — das meldet sein /health ehrlich).
     if (await videoWorkerBereit()) {
       bilderSseKopf(res, deps, body, "video-erzeugung", "video-worker:kenburns");
-      videoSchritt(res, "laeuft", "Video wird generiert (eigene Video-Engine, ca. 1-2 Minuten) ...");
+      videoSchritt(res, "laeuft", "läuft … (ca. 1-2 Minuten)");
       const beginn = Date.now();
       // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
       const takt = setInterval(() => {
-        videoSchritt(res, "laeuft", `Video wird generiert ... ${Math.round((Date.now() - beginn) / 1000)} s`);
+        videoSchritt(res, "laeuft", `läuft … ${Math.round((Date.now() - beginn) / 1000)} s`);
       }, 10000);
-      let videoUrl = "";
+      let video = null;
       try {
-        videoUrl = await erzeugeVideoUrl(await uebersetzeMalPrompt(videoPrompt));
+        video = await erzeugeVideo(await uebersetzeMalPrompt(videoPrompt));
       } finally {
         clearInterval(takt);
       }
-      if (videoUrl) {
-        videoSchritt(res, "fertig", "Video fertig");
-        bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${videoUrl})`);
+      if (video) {
+        videoSchritt(res, "fertig", "fertig");
+        // Ehrlich sagen, WAS sich bewegt: die kenburns-Engine animiert ein
+        // gemaltes Standbild (Kamerafahrt), das Motiv selbst bleibt ruhig —
+        // wer "fliegender Adler" tippt, saehe sonst enttaeuscht einen Zoom.
+        // animatediff bewegt das Motiv wirklich und braucht keinen Hinweis.
+        const hinweis = video.engine.startsWith("kenburns")
+          ? "\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.*"
+          : "";
+        bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${video.url})${hinweis}`);
       } else {
         // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
-        videoSchritt(res, "fertig", "Video-Erzeugung fehlgeschlagen");
+        videoSchritt(res, "fertig", "fehlgeschlagen");
         bilderSendeInhalt(res, "Die Video-Erzeugung ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
       }
       res.write("data: [DONE]\n\n");
@@ -308,7 +325,7 @@ export async function streamBilderLane(res, body, task, deps) {
     // Video-Worker-Dienst nicht freigeschaltet ist (Zeabur-Freigabe faellt
     // der Betreiber — Memory smejj-zeabur-expansion-approval).
     bilderSseKopf(res, deps, body, "video-hinweis", "smejj-video-engine");
-    videoSchritt(res, "laeuft", "Video-Erstellung angefordert — prüfe Video-Engine");
+    videoSchritt(res, "laeuft", "prüfe Video-Engine …");
     const antwortText = `🎬 **Video-Erstellung für smejj 1.0**\n\n` +
       `Dein Auftrag: *"${videoPrompt}"*\n\n` +
       `> [!NOTE]\n` +
@@ -327,11 +344,11 @@ export async function streamBilderLane(res, body, task, deps) {
   // Weg 1: der eigene Bild-Maler (nur wenn wach UND Modell geladen).
   if (await bilderMalerBereit()) {
     bilderSseKopf(res, deps, body, "bilder-foto", "bild-maler:sd-turbo");
-    bilderSchritt(res, "laeuft", "Male dein Bild (eigenes Bildmodell, ca. 1 Minute)");
+    bilderSchritt(res, "laeuft", "läuft … (ca. 1 Minute)");
     const beginn = Date.now();
     // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
     const takt = setInterval(() => {
-      bilderSchritt(res, "laeuft", `Male dein Bild … ${Math.round((Date.now() - beginn) / 1000)} s`);
+      bilderSchritt(res, "laeuft", `läuft … ${Math.round((Date.now() - beginn) / 1000)} s`);
     }, 10000);
     let inhalt = "";
     try {
@@ -341,10 +358,10 @@ export async function streamBilderLane(res, body, task, deps) {
     }
     if (!inhalt) {
       // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — SVG als Reserve.
-      bilderSchritt(res, "laeuft", "Bildmodell ausgelastet — zeichne als Vektorgrafik");
+      bilderSchritt(res, "laeuft", "ausgelastet — zeichne als Vektorgrafik …");
       inhalt = await erzeugeSvgInhalt(prompt, deps.timeoutMs);
     }
-    bilderSchritt(res, "fertig", inhalt ? "Bild fertig" : "Malen fehlgeschlagen");
+    bilderSchritt(res, "fertig", inhalt ? "fertig" : "fehlgeschlagen");
     bilderSendeInhalt(res, inhalt || "Das Malen ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
     res.write("data: [DONE]\n\n");
     res.end();

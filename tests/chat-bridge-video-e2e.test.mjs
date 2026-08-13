@@ -25,6 +25,7 @@ const MP4_B64 = "AAAAIGZ0eXBpc29tAAACAGlzb21pc28y";
 let worker;
 let workerPort = 0;
 let antwortModus = "ok";
+let engine = "kenburns:sd-turbo";
 let letzterPrompt = "";
 let streamBilderLane;
 
@@ -44,7 +45,7 @@ before(async () => {
           // Ein kompromittierter Worker koennte eine fremde Adresse schicken.
           return res.end(JSON.stringify({ ok: true, video_url: "https://boese.example/spur.mp4" }));
         }
-        res.end(JSON.stringify({ ok: antwortModus === "ok", format: "mp4", b64: MP4_B64 }));
+        res.end(JSON.stringify({ ok: antwortModus === "ok", format: "mp4", b64: MP4_B64, engine }));
       });
     }
     res.writeHead(404).end();
@@ -138,6 +139,38 @@ describe("Video-Spur Ende-zu-Ende (echter Worker-Ersatz, echte streamBilderLane)
 
     assert.ok(!res.inhalt.includes("boese.example"), "fremde Adresse ist in die Antwort gelangt");
     assert.ok(!res.inhalt.includes("http"), "Antwort darf keine externe Quelle tragen");
+  });
+
+  it("sagt bei kenburns ehrlich dazu, dass nur die Kamera faehrt", async () => {
+    antwortModus = "ok";
+    engine = "kenburns:sd-turbo";
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem fliegenden Adler", DEPS);
+    // Ohne diesen Satz erwartet der Nutzer einen flatternden Adler und
+    // bekommt eine Kamerafahrt ueber ein Standbild.
+    assert.ok(res.inhalt.includes("die Kamera fährt"), "Erwartungs-Hinweis fehlt");
+  });
+
+  it("laesst den Hinweis weg, wenn das Motiv sich wirklich bewegt", async () => {
+    antwortModus = "ok";
+    engine = "animatediff:smejj/video-engine-v1";
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem fliegenden Adler", DEPS);
+    assert.ok(!res.inhalt.includes("die Kamera fährt"), "Hinweis waere hier falsch");
+    assert.ok(res.inhalt.includes("data:video/mp4;base64,"));
+    engine = "kenburns:sd-turbo";
+  });
+
+  it("haelt den Fortschritt auf EINER Zeile (Schimmer-Form)", async () => {
+    antwortModus = "ok";
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "generiere ein Video vom Ozean", DEPS);
+    const schritte = res.ereignisse.filter((e) => e.typ === "schritt");
+    // Konstanter text = die App aktualisiert eine Zeile; wechselnder text
+    // stapelte bei 2 Minuten ein Dutzend Zeilen (Befund 2026-08-12).
+    assert.equal(new Set(schritte.map((s) => s.text)).size, 1, "text muss konstant bleiben");
+    assert.ok(schritte.every((s) => s.stand), "stand fehlt — Fortschritt unsichtbar");
+    assert.ok(schritte.every((s) => s.platzhalter === "bild"), "Schimmer-Karte fehlt");
   });
 
   it("laesst Bild-Auftraege unberuehrt (Videospur greift nicht daneben)", async () => {
