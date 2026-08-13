@@ -506,7 +506,13 @@ export function starteAutopilotLaeufer({ intervallMs = 30 * 60 * 1000, sendeAlar
       .then(() => heileWasRotIst({ sendeAlarm, log: console.log }))
       .catch(() => {});
   };
-  tick();
+  // Der ERSTE Takt kommt 90 Sekunden nach dem Boot, nicht sofort: Beim Start
+  // gehoeren CPU und Speicher dem HTTP-Server und dem Gesundheits-Check.
+  // Ein Container, der in den ersten Sekunden 265 Dateien scannt und 25
+  // Autopiloten betreibt, kann seine eigene Startsonde verpassen — dann
+  // startet ihn die Plattform im Kreis neu (502-Vorfall 2026-08-13).
+  const anlauf = setTimeout(tick, 90_000);
+  if (typeof anlauf.unref === "function") anlauf.unref();
   const zeitgeber = setInterval(tick, intervallMs);
   if (typeof zeitgeber.unref === "function") zeitgeber.unref();
   return zeitgeber;
