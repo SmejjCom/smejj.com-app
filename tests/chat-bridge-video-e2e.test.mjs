@@ -163,6 +163,16 @@ describe("Video-Spur Ende-zu-Ende (echter Worker-Ersatz, echte streamBilderLane)
     assert.ok(res.inhalt.includes("die Kamera fährt"), "Erwartungs-Hinweis fehlt");
   });
 
+  it("nennt bei parallax die raeumliche Kamerafahrt", async () => {
+    antwortModus = "ok";
+    engine = "parallax:depth-anything-v2-small";
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem Berg", DEPS);
+    assert.ok(res.inhalt.includes("Räumliche Kamerafahrt"), "Parallax-Hinweis fehlt");
+    assert.ok(!res.inhalt.includes("die Kamera fährt, das Motiv"), "falscher (kenburns-)Hinweis");
+    engine = "kenburns:sd-turbo";
+  });
+
   it("laesst den Hinweis weg, wenn das Motiv sich wirklich bewegt", async () => {
     antwortModus = "ok";
     engine = "animatediff:smejj/video-engine-v1";

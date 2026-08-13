@@ -259,6 +259,19 @@ function bilderSchritt(res, zustand, stand) {
   res.write(`data: ${JSON.stringify({ smejj_schritt: { art: "bild", zustand, text: "Male dein Bild", stand, platzhalter: "bild" } })}\n\n`);
 }
 
+// Sagt dem Nutzer, WAS sich im Video bewegt. Exportiert, damit die
+// Erwartungs-Ehrlichkeit pruefbar bleibt (tests/chat-bridge-video-e2e).
+export function videoHinweis(engine) {
+  const name = String(engine || "");
+  if (name.startsWith("parallax")) {
+    return "\n\n*Räumliche Kamerafahrt durch ein gemaltes Bild: Vorder- und Hintergrund bewegen sich gegeneinander, das Motiv selbst bleibt ruhig.*";
+  }
+  if (name.startsWith("kenburns")) {
+    return "\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.*";
+  }
+  return "";
+}
+
 // Dieselbe Schimmer-Form wie bilderSchritt: konstanter text, wechselnder stand.
 // Video dauert 1-2 Minuten — ohne das waeren es ein Dutzend gestapelter Zeilen.
 // platzhalter "bild" ist Absicht: die App (ai/chat-stream.js) kennt genau diese
@@ -360,14 +373,11 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
 
   if (video) {
     videoSchritt(res, "fertig", "fertig");
-    // Ehrlich sagen, WAS sich bewegt: die kenburns-Engine animiert ein
-    // gemaltes Standbild (Kamerafahrt), das Motiv selbst bleibt ruhig —
-    // wer "fliegender Adler" tippt, saehe sonst enttaeuscht einen Zoom.
-    // animatediff bewegt das Motiv wirklich und braucht keinen Hinweis.
-    const hinweis = video.engine.startsWith("kenburns")
-      ? "\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.*"
-      : "";
-    bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${video.url})${hinweis}`);
+    // Ehrlich sagen, WAS sich bewegt — sonst erwartet der Nutzer bei
+    // "fliegender Adler" einen flatternden Adler. Nur animatediff bewegt das
+    // Motiv selbst; die CPU-Engines bewegen die Kamera (parallax raeumlich
+    // ueber eine Tiefenkarte, kenburns flach als Zoom).
+    bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${video.url})${videoHinweis(video.engine)}`);
   } else {
     // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
     videoSchritt(res, "fertig", "fehlgeschlagen");

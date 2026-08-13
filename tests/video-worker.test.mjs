@@ -21,6 +21,24 @@ describe("smejj video worker & video player markdown integration", () => {
     assert.ok(server.includes('"b64"') && server.includes('"format"'), "b64/format-Antwort fehlt");
   });
 
+  it("die parallax-Engine ist die Voreinstellung und faellt sicher zurueck", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    assert.ok(server.includes('"SMEJJ_VIDEO_ENGINE", "parallax"'), "parallax muss Voreinstellung sein");
+    assert.ok(server.includes("schaetze_tiefe") && server.includes("parallax_frames"), "Parallax-Bausteine fehlen");
+    // Ohne Tiefenmodell muss trotzdem ein Video herauskommen (kenburns).
+    assert.ok(server.includes("if tiefe is None:"), "Rueckfall auf kenburns fehlt");
+    // Der Dienst darf nicht haengen bleiben, wenn der Modell-Download scheitert.
+    assert.ok(/finally:\s*\n\s*zustand\["bereit"\] = True/.test(server), "bereit muss auch nach Ladefehler kommen");
+    // Teil-Download darf nie als fertiges Modell gelten.
+    assert.ok(server.includes("os.replace"), "atomares Umbenennen des Modells fehlt");
+  });
+
+  it("das Tiefenmodell kommt als ONNX, nicht als torch (Abbildgroesse)", () => {
+    const anforderungen = fs.readFileSync("workers/smejj-video-worker/requirements.txt", "utf8");
+    assert.ok(anforderungen.includes("onnxruntime"), "onnxruntime fehlt");
+    assert.ok(!/^torch/m.test(anforderungen), "torch gehoert NUR ins GPU-Abbild (800 MB)");
+  });
+
   it("das Dockerfile bindet IPv4 (Zeaburs internes Netz, Lehre Bild-Maler)", () => {
     const dockerfile = fs.readFileSync("Dockerfile.smejj-video-worker", "utf8");
     const cmd = dockerfile.split("\n").find((zeile) => zeile.startsWith("CMD")) || "";
