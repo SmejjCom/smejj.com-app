@@ -5,6 +5,7 @@
 // Konfiguration (nur Secret-Umgebung, niemals Repo):
 //   SMEJJ_SMTP_HOST, SMEJJ_SMTP_PORT (465=implizites TLS, 587=STARTTLS),
 //   SMEJJ_SMTP_USER, SMEJJ_SMTP_PASS, SMEJJ_SMTP_FROM
+import crypto from "node:crypto";
 import net from "node:net";
 import { protokolliereVersand } from "./mailDeliveryLog.js";
 import tls from "node:tls";
@@ -43,6 +44,16 @@ export async function sendAuthMail({ to, subject, text, art = "" }, env = proces
   return ergebnis;
 }
 
+// Zustellbarkeit (Befund 2026-08-12): Gmail blockte eine Anmelde-Mail mit
+// "550 5.7.1 … likely unsolicited mail". Zwei Kopfzeilen fehlten, die jeder
+// serioese Versender setzt und deren Fehlen Spamfilter negativ werten:
+//   Message-ID       — eindeutige Kennung; ohne sie wirkt Post wie Massenware
+//                      (Domain aus der Absenderadresse, damit sie zur From-
+//                      Domain passt).
+//   Auto-Submitted   — RFC 3834: "auto-generated" kennzeichnet transaktionale
+//                      Post und unterbindet Abwesenheits-Antworten.
+// Die eigentliche Wurzel bleibt die Absenderadresse (SMEJJ_SMTP_FROM): eine
+// @gmail.com-Adresse kann die SPF/DMARC-Freigaben von smejj.com nicht nutzen.
 function buildMessage({ from, to, subject, text }) {
   const date = new Date().toUTCString();
   const safeSubject = String(subject || "").replace(/[\r\n]/g, " ").slice(0, 200);
@@ -52,6 +63,8 @@ function buildMessage({ from, to, subject, text }) {
     `To: <${to}>`,
     `Subject: ${encodeSubject(safeSubject)}`,
     `Date: ${date}`,
+    `Message-ID: <${messageId(from)}>`,
+    "Auto-Submitted: auto-generated",
     "MIME-Version: 1.0",
     "Content-Type: text/plain; charset=utf-8",
     "Content-Transfer-Encoding: 8bit",
@@ -59,6 +72,13 @@ function buildMessage({ from, to, subject, text }) {
     body,
     "."
   ].join("\r\n");
+}
+
+// Eindeutige Message-ID; die Domain stammt aus der Absenderadresse, damit sie
+// zur From-Domain passt. Ohne brauchbare Domain faellt sie auf smejj.com zurueck.
+function messageId(from) {
+  const domain = String(from || "").split("@")[1]?.trim().replace(/[^A-Za-z0-9.-]/g, "") || "smejj.com";
+  return `${Date.now().toString(36)}.${crypto.randomBytes(12).toString("hex")}@${domain}`;
 }
 
 function encodeSubject(subject) {
