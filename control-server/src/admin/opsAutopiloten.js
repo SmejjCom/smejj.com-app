@@ -601,6 +601,44 @@ export const starteWochenbericht = wochenbericht.starteWochenbericht;
  * ueber diesen Weg nicht moeglich (er haengt an keiner Route).
  * `unref()` haelt den Prozess nicht am Leben, Tests und Shutdown bleiben sauber.
  */
+/**
+ * Herzschlag aus dem EIGENEN Prozess eintragen — fuer Autopiloten, die im
+ * Control-Server selbst arbeiten (siehe autopilots/autopilotLaeufer.js).
+ *
+ * Warum ohne Schluessel: der Weg haengt an KEINER Route. Wer ihn aufruft,
+ * laeuft bereits in diesem Prozess und koennte die Ampel ohnehin direkt
+ * setzen. Ein Schluessel waere Theater, kein Schutz.
+ *
+ * Warum das trotzdem keine Ruecktuer fuer Stempel ist: Der Aufrufer muss ein
+ * ECHTES Ergebnis mitbringen. Der Laeufer ruft die Autopilot-Module mit
+ * echten Eingaben auf und meldet, was dabei herauskam — faellt der Lauf aus,
+ * meldet er "fehler". Ein Aufruf ohne vorherige Arbeit waere genau der
+ * Blind-Stempel, den docs/approvals/2026-08-12-ampel-ehrlich-messen.md
+ * verbietet.
+ *
+ * @param {string} id Kennung aus der Registry.
+ * @param {{status?: "ok"|"fehler", meldung?: string, dauerMs?: number|null, jetztMs?: number}} ergebnis
+ * @returns {boolean} false, wenn die Kennung unbekannt ist (nichts eingetragen).
+ */
+export function interneMeldung(id, { status = "ok", meldung = "", dauerMs = null, jetztMs = Date.now() } = {}) {
+  const eintrag = AUTOPILOTEN.find((a) => a.id === String(id || "")) || null;
+  if (!eintrag) return false;
+  const ergebnis = status === "fehler" ? "fehler" : "ok";
+  const gespeichert = herzschlaege.get(eintrag.id) || { laeufe: [] };
+  gespeichert.laeufe.unshift({
+    am: new Date(jetztMs).toISOString(),
+    status: ergebnis,
+    meldung: String(meldung || "").slice(0, 200),
+    dauerMs: Number.isFinite(Number(dauerMs)) ? Math.max(0, Math.trunc(Number(dauerMs))) : null
+  });
+  gespeichert.laeufe.sort((a, b) => String(b.am).localeCompare(String(a.am)));
+  gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
+  herzschlaege.set(eintrag.id, gespeichert);
+  zaehleTag(eintrag.id, ergebnis, jetztMs);
+  persistiereTageGedrosselt(eintrag.id);
+  return true;
+}
+
 export function starteSelbstmessung({ intervallMs = 5 * 60 * 1000 } = {}) {
   const melden = () => {
     const jetzt = new Date().toISOString();

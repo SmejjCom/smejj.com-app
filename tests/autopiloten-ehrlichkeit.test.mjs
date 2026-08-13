@@ -39,12 +39,38 @@ const ohneKommentare = (quelle) => quelle
 // Wer diese Liste erweitert, muss auch die Messung mitliefern — genau das ist
 // der Zweck: die Erweiterung faellt im Review auf, statt still zu passieren.
 const MIT_ECHTER_MESSUNG = new Set([
+  // --- Externe Dienste ---
   "qualitaetsmessung",   // echter Suite-Lauf, workers/smejj-autopilot-jobs/qualitaetJob.mjs
   "codeberg-spiegel",    // echter Git-Spiegel, spiegelJob.mjs
   "voice-region-check",  // Lebenszeichen des Dienstes, ehrlich beschriftet
   "konkurrenz-radar",    // Lebenszeichen des Dienstes, ehrlich beschriftet
   "brueckenwaechter",    // wird vom Control-Server abgefragt (frageWaechterAb)
-  "salad-sonden"         // Eigenmeldung des Control-Servers
+  "salad-sonden",        // Eigenmeldung des Control-Servers
+  // --- Im Control-Server, betrieben vom Autopilot-Laeufer (alle 30 min) ---
+  // Jeder bekommt eine Aufgabe mit feststehender Antwort und wird ROT, wenn
+  // er sie falsch loest. Siehe autopilots/autopilotLaeufer.js +
+  // autopilots/autopilotSelbsttests.js.
+  "bug-predictor",            // scannt die echten Quelldateien des Containers
+  "knowledge-graph",          // baut den Symbolgraphen ueber dieselben Dateien
+  "multi-file-repo-architect",// prueft die echte Architektur des Containers
+  "code-interpreter",         // Rechnung mit pruefbarem Ergebnis (Summe 1..100)
+  "smart-router",             // Prompts mit bekannter Soll-Zuordnung
+  "self-healing",             // muss kaputte UND gesunde Antworten erkennen
+  "deep-research",            // Rechercheplan zu einem Thema
+  "memory-sync",              // Faktenextraktion aus einem Gespraech
+  "multimodal-engine",        // gueltige/ungueltige Eingaben unterscheiden
+  "task-orchestrator",        // Aufgabengraph aus einem Ziel
+  "self-improvement",         // gute Antwort muss schlechte schlagen
+  "model-lifecycle",          // langsamer Schatten darf nicht befoerdert werden
+  "user-feedback-flywheel",   // PII-Maskierung (E-Mail, Schluessel)
+  "process-reward",           // Denkkette zerlegen und bewerten
+  "knowledge-distiller",      // beste Loesung aus Kandidaten waehlen
+  "evolutionary-mutation",    // Stresstest auf Code
+  "realtime-internet-harvester", // Fakten aus Rohtext ziehen
+  "live-arena-leaderboard",   // ELO-Mathematik, exakt pruefbar
+  "instant-web-container",    // Vorschau mit eingebettetem Inhalt
+  "realtime-voice-pair",      // Sitzung anlegen und Rahmen verarbeiten
+  "autonomous-git-bot"        // muss Secret und eval im Diff finden
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

@@ -62,6 +62,7 @@ import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.j
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
 import { ladeHerzschlaege, starteAlarmWache, starteSelbstmessung, starteWaechterAbfrage, starteWochenbericht } from "../control-server/src/admin/opsAutopiloten.js";
+import { starteAutopilotLaeufer } from "../control-server/src/autopilots/autopilotLaeufer.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
@@ -273,6 +274,13 @@ starteWaechterAbfrage();
 // Wochenbericht (Profi-Ausbau Nr. 4): montags ab 7:00 UTC eine Mail mit der
 // Lage der Woche — einmal je Montag, der Marker liegt neustart-fest in der Ablage.
 starteWochenbericht();
+// Autopilot-Laeufer (2026-08-12): die 21 Module in control-server/src/autopilots
+// waren vollstaendig implementiert und wurden von NIRGENDS importiert — toter
+// Code hinter gruenen Ampeln. Der Laeufer gibt ihnen alle 30 Minuten eine
+// Aufgabe mit feststehender Antwort (bug-predictor scannt den echten Quelltext
+// dieses Containers, live-arena rechnet ELO, git-bot muss ein Secret finden)
+// und meldet das ECHTE Ergebnis. Wer seine Aufgabe falsch loest, wird rot.
+starteAutopilotLaeufer();
 
 // RAG: semantische Suche (BM25) ueber das Projektwissen. Nur lesend, Cache im agentContext-Modul.
 async function handleRagSearch(url, res) {

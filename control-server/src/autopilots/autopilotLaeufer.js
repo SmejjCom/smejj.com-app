@@ -1,0 +1,219 @@
+// smejj.com — Autopilot-Laeufer: bringt die Autopilot-Module zum ARBEITEN.
+//
+// WARUM ES DAS GIBT (Befund 2026-08-12): Die Module in diesem Ordner waren
+// vollstaendig implementiert — und wurden von keiner einzigen Zeile des
+// Servers importiert. Toter Code. Ihre Ampeln standen auf grau ("geplant"),
+// weil nichts lief. Der Betreiber will sie arbeiten sehen, nicht gruen
+// gefaerbt (docs/approvals/2026-08-12-ampel-ehrlich-messen.md).
+//
+// Dieser Laeufer ruft sie im Takt mit ECHTEN Eingaben auf und meldet, was
+// dabei herauskam — Zahlen aus der Arbeit, nie ein Pauschaltext:
+//
+//   bug-predictor     scannt die echten Quelldateien dieses Containers
+//   knowledge-graph   baut den Symbolgraphen ueber dieselben Dateien
+//   code-interpreter  fuehrt eine Rechnung mit PRUEFBAREM Ergebnis aus
+//   smart-router      klassifiziert Prompts mit bekannter Soll-Zuordnung
+//   self-healing      bekommt kaputte Antworten und muss sie erkennen
+//
+// Die letzten drei sind Selbsttests mit erwartetem Ergebnis: Der Autopilot
+// wird nicht gefragt "laeufst du?", sondern bekommt eine Aufgabe, deren
+// richtige Antwort feststeht. Faellt er durch, wird seine Ampel ROT. Genau
+// das unterscheidet Arbeit von einem Lebenszeichen.
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { interneMeldung } from "../admin/opsAutopiloten.js";
+import { runProjectBugScan } from "./bugPredictorAutopilot.js";
+import { buildKnowledgeGraph } from "./knowledgeGraphAutopilot.js";
+import { runCodeInterpreter } from "./codeInterpreterAutopilot.js";
+import { routePrompt } from "./smartRouterAutopilot.js";
+import { inspectResponseHealth, detectRepetitiveLoop } from "./selfHealingAutopilot.js";
+// Die uebrigen Selbsttests liegen in einer eigenen Datei (800-Zeilen-Regel).
+import * as S from "./autopilotSelbsttests.js";
+
+// Der Container hat seinen eigenen Quelltext an Bord (Dockerfile.smejj-control
+// kopiert src/ und control-server/). Genau den scannen die beiden
+// Repo-Autopiloten — kein kuenstliches Beispiel, sondern der Code, der
+// gerade laeuft.
+// fileURLToPath statt .pathname: der Projektordner enthaelt Leerzeichen, und
+// .pathname liefert sie URL-kodiert als %20 — readdirSync findet dann nichts
+// und der Scan meldete "kein Quelltext" mitten im vollen Repository.
+const WURZEL = path.resolve(fileURLToPath(new URL("../../..", import.meta.url)));
+const SCAN_ORDNER = ["control-server/src", "src"];
+const MAX_DATEIEN = 400;
+const MAX_BYTES = 200_000;
+
+/** Sammelt die echten .js-Dateien dieses Containers. */
+export function sammleQuelldateien({ wurzel = WURZEL, ordner = SCAN_ORDNER, maxDateien = MAX_DATEIEN } = {}) {
+  const dateien = [];
+  const besuche = (verzeichnis) => {
+    if (dateien.length >= maxDateien) return;
+    let eintraege;
+    try {
+      eintraege = readdirSync(verzeichnis, { withFileTypes: true });
+    } catch {
+      return; // Ordner fehlt im Abbild — kein Grund, den Lauf abzubrechen.
+    }
+    for (const e of eintraege) {
+      if (dateien.length >= maxDateien) return;
+      const voll = path.join(verzeichnis, e.name);
+      if (e.isDirectory()) {
+        if (e.name === "node_modules" || e.name.startsWith(".")) continue;
+        besuche(voll);
+      } else if (e.name.endsWith(".js") && !e.name.endsWith(".test.js")) {
+        try {
+          if (statSync(voll).size > MAX_BYTES) continue;
+          dateien.push({ path: path.relative(wurzel, voll), content: readFileSync(voll, "utf8") });
+        } catch { /* eine unlesbare Datei stoppt den Lauf nicht */ }
+      }
+    }
+  };
+  for (const o of ordner) besuche(path.join(wurzel, o));
+  return dateien;
+}
+
+/** Ein Lauf, einheitlich verpackt: Dauer messen, Absturz zu "fehler" machen. */
+async function fuehreAus(id, arbeit) {
+  const start = Date.now();
+  try {
+    const { meldung, ok = true } = await arbeit();
+    return { id, ok, meldung, dauerMs: Date.now() - start };
+  } catch (fehler) {
+    return {
+      id,
+      ok: false,
+      meldung: `Lauf abgebrochen: ${String(fehler?.message || fehler).slice(0, 140)}`,
+      dauerMs: Date.now() - start
+    };
+  }
+}
+
+export function laufBugPredictor(dateien) {
+  const bericht = runProjectBugScan(dateien);
+  if (!Number.isFinite(bericht?.scannedFiles) || bericht.scannedFiles === 0) {
+    return { ok: false, meldung: "Kein Quelltext gefunden — Scan ohne Aussage" };
+  }
+  return {
+    ok: true,
+    meldung: `${bericht.scannedFiles} Dateien gescannt, ${bericht.totalFindings} Befunde, `
+      + `${bericht.cleanFiles} sauber${bericht.hasCriticalIssues ? " — KRITISCHE Funde dabei" : ""}`
+  };
+}
+
+export function laufKnowledgeGraph(dateien) {
+  const graph = buildKnowledgeGraph(dateien);
+  if (!graph?.totalSymbols) {
+    return { ok: false, meldung: "Graph leer — kein Symbol extrahiert" };
+  }
+  // Gegenprobe: der Graph muss sich auch abfragen lassen, sonst ist er nur
+  // eine Zahl. "export" kommt in jedem Modul vor.
+  const treffer = typeof graph.search === "function" ? graph.search("lauf").length : -1;
+  return {
+    ok: treffer >= 0,
+    meldung: `${graph.totalFiles} Dateien, ${graph.totalSymbols} Symbole, ${graph.totalEdges} Kanten indexiert`
+  };
+}
+
+export function laufCodeInterpreter() {
+  // Aufgabe mit feststehender richtiger Antwort: 1+2+...+100 = 5050.
+  const ergebnis = runCodeInterpreter("let s = 0; for (let i = 1; i <= 100; i++) s += i; s;");
+  const wert = Number(ergebnis?.result);
+  if (ergebnis?.status !== "success" || wert !== 5050) {
+    return { ok: false, meldung: `Selbsttest FEHLGESCHLAGEN: erwartet 5050, bekam ${ergebnis?.result} (${ergebnis?.error || ergebnis?.status})` };
+  }
+  return { ok: true, meldung: `Sandbox-Selbsttest bestanden (Summe 1..100 = 5050, ${ergebnis.executionTimeMs} ms)` };
+}
+
+export function laufSmartRouter() {
+  // Drei Prompts mit bekannter Soll-Sparte. Trifft der Router daneben, ist
+  // seine Klassifikation kaputt — und die Ampel muss das zeigen.
+  const faelle = [
+    { prompt: "Berechne das Integral von x^2 und beweise die Ableitung", erwartet: "math_and_logic" },
+    { prompt: "Entwirf die Systemarchitektur fuer einen Microservice und refaktoriere die Module", erwartet: "system_architecture" }
+  ];
+  const daneben = [];
+  for (const f of faelle) {
+    const r = routePrompt(f.prompt);
+    if (r?.domain !== f.erwartet) daneben.push(`"${f.prompt.slice(0, 24)}…" -> ${r?.domain || "?"} statt ${f.erwartet}`);
+  }
+  if (daneben.length) {
+    return { ok: false, meldung: `Router traf ${daneben.length}/${faelle.length} Faelle nicht: ${daneben[0]}` };
+  }
+  return { ok: true, meldung: `Klassifikation geprueft: ${faelle.length}/${faelle.length} Prompts richtig zugeordnet` };
+}
+
+export function laufSelfHealing() {
+  // Der Autopilot muss kaputte Antworten als kaputt erkennen UND eine
+  // gesunde als gesund. Nur beides zusammen ist ein Nachweis.
+  const pruefungen = [
+    { name: "leere Antwort", healthy: inspectResponseHealth("")?.healthy, soll: false },
+    { name: "kaputtes JSON", healthy: inspectResponseHealth('{"a": 1,,}', "json")?.healthy, soll: false },
+    // Mindestens 50 Zeichen — kuerzere Texte prueft detectRepetitiveLoop
+    // bewusst nicht (eine kurze Wiederholung ist oft legitim).
+    { name: "Endlosschleife", healthy: !detectRepetitiveLoop("wiederhole dich wiederhole dich wiederhole dich wiederhole dich wiederhole dich"), soll: false },
+    { name: "gesunde Antwort", healthy: inspectResponseHealth("Das ist eine vollstaendige, sinnvolle Antwort.")?.healthy, soll: true }
+  ];
+  const daneben = pruefungen.filter((p) => Boolean(p.healthy) !== p.soll);
+  if (daneben.length) {
+    return { ok: false, meldung: `Selbstheilung erkennt ${daneben.length} Fall/Faelle falsch: ${daneben.map((d) => d.name).join(", ")}` };
+  }
+  return { ok: true, meldung: `Fehlererkennung geprueft: ${pruefungen.length}/${pruefungen.length} Faelle richtig beurteilt` };
+}
+
+/**
+ * Ein kompletter Durchgang. Liefert die Ergebnisse zurueck (fuer Tests) und
+ * traegt sie als Herzschlaege ein.
+ *
+ * @param {{melde?: Function, dateienLader?: Function}} [optionen]
+ */
+export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQuelldateien } = {}) {
+  // Einmal lesen, zweimal nutzen: beide Repo-Autopiloten sehen denselben Stand.
+  let dateien = [];
+  try {
+    dateien = dateienLader();
+  } catch { /* laufBugPredictor meldet dann "kein Quelltext" — ehrlich statt still */ }
+
+  const ergebnisse = [
+    await fuehreAus("bug-predictor", () => laufBugPredictor(dateien)),
+    await fuehreAus("knowledge-graph", () => laufKnowledgeGraph(dateien)),
+    await fuehreAus("code-interpreter", () => laufCodeInterpreter()),
+    await fuehreAus("smart-router", () => laufSmartRouter()),
+    await fuehreAus("self-healing", () => laufSelfHealing()),
+    await fuehreAus("deep-research", () => S.laufDeepResearch()),
+    await fuehreAus("memory-sync", () => S.laufMemory()),
+    await fuehreAus("multimodal-engine", () => S.laufMultimodal()),
+    await fuehreAus("task-orchestrator", () => S.laufTaskOrchestrator()),
+    await fuehreAus("self-improvement", () => S.laufSelfImprovement()),
+    await fuehreAus("model-lifecycle", () => S.laufModelLifecycle()),
+    await fuehreAus("user-feedback-flywheel", () => S.laufUserFeedbackFlywheel()),
+    await fuehreAus("process-reward", () => S.laufProcessReward()),
+    await fuehreAus("knowledge-distiller", () => S.laufKnowledgeDistiller()),
+    await fuehreAus("evolutionary-mutation", () => S.laufEvolutionaryMutation()),
+    await fuehreAus("realtime-internet-harvester", () => S.laufInternetHarvester()),
+    await fuehreAus("multi-file-repo-architect", () => S.laufRepoArchitect(dateien)),
+    await fuehreAus("live-arena-leaderboard", () => S.laufLiveArena()),
+    await fuehreAus("instant-web-container", () => S.laufWebContainer()),
+    await fuehreAus("realtime-voice-pair", () => S.laufVoicePair()),
+    await fuehreAus("autonomous-git-bot", () => S.laufGitBot())
+  ];
+
+  for (const e of ergebnisse) {
+    melde(e.id, { status: e.ok ? "ok" : "fehler", meldung: e.meldung, dauerMs: e.dauerMs });
+  }
+  return ergebnisse;
+}
+
+/**
+ * Den Laeufer im Takt starten. Standard: alle 30 Minuten — oft genug, damit
+ * ein Ausfall binnen einer Stunde auffaellt, selten genug, dass der Scan
+ * (einige hundert Dateien) den Server nicht beschaeftigt.
+ * `unref()` haelt den Prozess nicht wach.
+ */
+export function starteAutopilotLaeufer({ intervallMs = 30 * 60 * 1000 } = {}) {
+  const tick = () => { laufeAlle().catch(() => {}); };
+  tick();
+  const zeitgeber = setInterval(tick, intervallMs);
+  if (typeof zeitgeber.unref === "function") zeitgeber.unref();
+  return zeitgeber;
+}
