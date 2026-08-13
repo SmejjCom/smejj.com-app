@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T22:58:23.776Z",
-  "confirmation": "Betreiber 2026-08-13: 'Rand-Icons auf 44 px machen' + 'Unsere gesamte Design ist viereckig. Merk dir das.' — start-glass.css: 44-px-Ecken-Knoepfe auch Desktop, Kapsel+Chips wieder eckig; Datei neu in den Lock aufgenommen.",
+  "frozenAt": "2026-08-13T23:08:29.053Z",
+  "confirmation": "Betreiber 2026-08-13: 'Chips uebersetzen' — start-chips.js wird Modul mit t()-Anbindung, index.html-Script-Tag auf type=module; 4 Chip-Schluessel in allen 14 Sprachdateien.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "6f29a0e43d1c23c393293c0df843f292ffa4a024e9fcdeef0fe62b54a1f7f1e1",
+    "public/index.html": "91a240e1b0036712cf7ecc6270e60de620f6ec826a2cc2e68b8be9b6aaa54905",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "0aac880651b981461c1da7025b88d57b12a667f397216539dfa7d3f6c205bd46",
     "public/start-glass.css": "8b5fcce2c6d972fd475fbb959a751cad9b241b62b77f1ffb25c1464dce5c8cc6",
