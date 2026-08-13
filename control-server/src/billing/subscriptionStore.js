@@ -16,6 +16,21 @@ export const PLAN_BY_STRIPE_PRODUCT = Object.freeze({
   prod_UxSJBDqMn7QUTM: "max"
 });
 
+// Live- und Testmodus tragen VERSCHIEDENE Produkt-IDs (Befund 2026-08-13: die
+// Zahlungslinks sind Live-Links, das Mapping oben kennt nur Testprodukte —
+// eine echte Zahlung waere als plan null gespeichert und als "free" angezeigt
+// worden). Der Monatsbetrag ist in beiden Modi gleich, darum entscheidet er
+// als Rueckfallebene. Betraege in Cent, wie Stripe sie liefert.
+export const PLAN_BY_MONTHLY_AMOUNT = Object.freeze({ 900: "plus", 1900: "pro", 3900: "max" });
+
+// Ein Abo-Posten (subscription.items.data[0]) -> Planname oder null.
+export function planFromStripeItem(item) {
+  const productId = String(item?.price?.product || "");
+  if (PLAN_BY_STRIPE_PRODUCT[productId]) return PLAN_BY_STRIPE_PRODUCT[productId];
+  const amount = Number(item?.price?.unit_amount);
+  return PLAN_BY_MONTHLY_AMOUNT[amount] || null;
+}
+
 const PLAN_ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 function idriveConfig(env = process.env) {
