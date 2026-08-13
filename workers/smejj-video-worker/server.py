@@ -676,7 +676,9 @@ async def erzeuge(request: Request):
             except Besetzt:
                 raise
             except Exception as fehler:  # noqa: BLE001
-                print(f"extern fehlgeschlagen, parallax uebernimmt: {fehler}")
+                # flush: Container-stdout ist blockgepuffert — ohne flush erschien
+                # diese Zeile NIE im Zeabur-Log (Befund 2026-08-13).
+                print(f"extern fehlgeschlagen, parallax uebernimmt: {type(fehler).__name__}: {fehler}", flush=True)
                 mp4, engine = erzeuge_parallax(prompt, dauer)
         elif ENGINE == "animatediff" and diffusion_pipeline is not None:
             mp4, engine = erzeuge_animatediff(prompt)
