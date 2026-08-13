@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T07:31:27.556Z",
-  "confirmation": "2026-08-13 Betreiber: ist wieder wie vorher, danke — plus Auswahl Start-Lock einfrieren. Eingefroren wird der zurueckgerollte Startseiten-Stand OHNE Cyan-Design, erstmals inklusive public/start-styles.css.",
+  "frozenAt": "2026-08-13T07:51:03.537Z",
+  "confirmation": "2026-08-13 Betreiber: Aussenkante sehr leicht beleuchtet in der Logo-Farbe wie auf der Login-Seite — Vorschau gesehen, Auswahl: So live stellen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "e484bdf8cfa0a07b21f520b3756f1cddc84e1481644884574cdf523ed65ae64a",
-    "public/styles.css": "b749acf7abef387c672f66743864e880c4cdcd51001f33d0433b9c7fe17c6c26",
-    "public/start-styles.css": "71d7e9562e14a688993a65c9c5af9405c3945a4cb27e1b6a2e83e15fbb41cfb7",
+    "public/styles.css": "355af0473e941ecceb1e4a9c241a05f1f9d4db7f03ba0a5f6963c9991f91cc2a",
+    "public/start-styles.css": "a25f7ab1d206eec5651625c3d734ebe33ccf933e3a44dc4d5b7dccbf6ed99a07",
     "public/branding.css": "abd890aa38dceacc593c7058f95919fc6af806870e10a698886e6076c3a05921",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "a6ae43c7eafbb673bc20243b89d283c2f1be1aebde082ddd18abfb4a9f65c9d1",
