@@ -66,7 +66,10 @@ PARALLAX_EBENEN = int(os.environ.get("SMEJJ_VIDEO_PARALLAX_EBENEN", "8"))
 # die smejj 1.0 fragt — der Worker hat bewusst keinen Modell-Zugang.
 STIMME_URL = os.environ.get("SMEJJ_VOICE_TTS_ORIGIN", "http://smejj-voice-piper.zeabur.internal:8080").rstrip("/")
 STIMME_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_STIMME_TIMEOUT_S", "25"))
-MAX_ERZAEHLTEXT = 300
+# Deutsch wird mit rund 15 Zeichen pro Sekunde gesprochen: 200 Zeichen sind
+# ~13 s und bleiben damit unter MAX_DAUER_S. Längere Texte würden als Stimme
+# verworfen (siehe hole_erzaehlstimme) — lieber vorher kürzen.
+MAX_ERZAEHLTEXT = 200
 # Das Video richtet sich nach der Sprechdauer, aber nie länger als das:
 # jede Sekunde kostet 24 Frames Rechenzeit und Dateigröße.
 MAX_DAUER_S = float(os.environ.get("SMEJJ_VIDEO_MAX_DAUER_S", "14"))
@@ -289,26 +292,60 @@ def parallax_frames(bild, tiefe, dauer=None):
     return frames
 
 
+def kuerze_auf_satz(text, deckel):
+    """Kürzt am letzten Satzende vor dem Deckel — nie mitten im Wort.
+
+    Ein abgeschnittenes Wort spricht Piper als Bruchstück aus ("Das Licht wan"),
+    was schlimmer klingt als ein Satz weniger.
+    """
+    sauber = " ".join(str(text or "").split())
+    if len(sauber) <= deckel:
+        return sauber
+    schnitt = sauber[:deckel]
+    ende = max(schnitt.rfind(". "), schnitt.rfind("! "), schnitt.rfind("? "))
+    if ende > deckel // 3:
+        return schnitt[: ende + 1]
+    luecke = schnitt.rfind(" ")
+    return (schnitt[:luecke] if luecke > 0 else schnitt).rstrip(",;: ") + "."
+
+
 def hole_erzaehlstimme(text):
     """Lässt Piper den Erzähltext sprechen. Liefert (wav_bytes, dauer_s) oder None.
 
     Fail-safe: bei jedem Fehler gibt es das Video eben stumm — eine fehlende
     Stimme darf nie das ganze Video kosten.
     """
+    import array
     import wave
 
     try:
         antwort = requests.post(
             f"{STIMME_URL}/synthesize",
-            json={"text": text[:MAX_ERZAEHLTEXT]},
+            json={"text": kuerze_auf_satz(text, MAX_ERZAEHLTEXT)},
             timeout=STIMME_TIMEOUT_S,
         )
+        # RIFF-Kopf statt Content-Type raten: der Piper-http_server beantwortet
+        # Winz-Eingaben mit seiner HTML-Demo-Seite — und zwar mit Status 200.
         if not antwort.ok or antwort.content[:4] != b"RIFF":
             return None
         with wave.open(io.BytesIO(antwort.content)) as datei:
             dauer = datei.getnframes() / float(datei.getframerate() or 1)
+            breite, rate = datei.getsampwidth(), datei.getframerate()
+            probe = datei.readframes(min(datei.getnframes(), rate * 3))
         if dauer < 0.3:
-            return None  # Piper antwortet bei Winz-Eingaben mit der Demo-Seite
+            return None
+        # Länger als das Videobudget: ffmpeg -shortest würde die Erzählung
+        # mitten im Satz abschneiden. Lieber ehrlich stumm als halbiert.
+        if dauer > MAX_DAUER_S:
+            return None
+        # Gültiges WAV, das nur Stille enthält, wäre eine Lüge: das Video
+        # hätte eine Tonspur, der Chat verspräche eine Erzählung, und der
+        # Nutzer hörte nichts.
+        if breite == 2 and probe:
+            werte = array.array("h")
+            werte.frombytes(probe[: len(probe) - (len(probe) % 2)])
+            if werte and max(abs(wert) for wert in werte) < 200:
+                return None
         return antwort.content, dauer
     except Exception:  # noqa: BLE001 — stummes Video ist der akzeptable Rückfall
         return None

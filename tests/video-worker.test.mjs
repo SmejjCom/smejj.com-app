@@ -46,6 +46,15 @@ describe("smejj video worker & video player markdown integration", () => {
     assert.ok(server.includes('"ton": bool(stimme)'), "ehrliches ton-Feld fehlt");
   });
 
+  it("faengt die Piper-Fallen ECHT ab (Verhalten, nicht Textmuster)", () => {
+    // Prueft den laufenden Worker-Code gegen HTML-Demo-Seite trotz Status 200,
+    // stille WAVs, zu lange Stimmen und kaputte RIFF-Ruempfe. Laeuft mit dem
+    // System-python3 (requests/fastapi werden gestubbt) — schlaegt der Aufruf
+    // fehl, ist das ein Befund und kein Grund zum Ueberspringen.
+    const ausgabe = execFileSync("python3", ["scripts/testing/pruefe_video_stimme.py"], { encoding: "utf8" });
+    assert.match(ausgabe, /Alle \d+ Pruefungen gruen/, ausgabe);
+  });
+
   it("der Player laesst erzaehlte Videos hoerbar und einmalig laufen", () => {
     const markdown = fs.readFileSync("public/chat-markdown.js", "utf8");
     // muted/loop nur fuer stumme Szenen — sonst hoert der Nutzer nichts bzw.
