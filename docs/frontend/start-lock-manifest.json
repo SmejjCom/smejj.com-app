@@ -1,13 +1,14 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T23:08:29.053Z",
-  "confirmation": "Betreiber 2026-08-13: 'Chips uebersetzen' — start-chips.js wird Modul mit t()-Anbindung, index.html-Script-Tag auf type=module; 4 Chip-Schluessel in allen 14 Sprachdateien.",
+  "frozenAt": "2026-08-13T23:18:26.178Z",
+  "confirmation": "Betreiber 2026-08-13: 'Eckig-Kontrolle App-weit machen' + Wahl 'Alles ausser Avatar' — neue eckig.css (border-radius 0 !important app-weit, Avatare ausgenommen), in index.html verlinkt und in den Lock aufgenommen. Mitgestempelt: Hero-Text 'Womit kann ich helfen?' + neuer Platzhalter aus einer Parallelsitzung (uncommittet in der gemeinsamen Arbeitskopie vorgefunden).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "91a240e1b0036712cf7ecc6270e60de620f6ec826a2cc2e68b8be9b6aaa54905",
+    "public/index.html": "856834942b7db5e21e5099acf6df302550901c3098162f06415e129f2099caf0",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "0aac880651b981461c1da7025b88d57b12a667f397216539dfa7d3f6c205bd46",
     "public/start-glass.css": "8b5fcce2c6d972fd475fbb959a751cad9b241b62b77f1ffb25c1464dce5c8cc6",
+    "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "d9c21ae999004b8d5121a881010e1b7c5887b1639da3b6be60f5d17584d6b9d2",

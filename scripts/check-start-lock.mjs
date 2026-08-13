@@ -32,6 +32,8 @@ const PROTECTED_FILES = [
   // Glas-Startseite (2026-08-13): eigene Datei statt styles.css-Ratchet —
   // gehoert damit genauso unter den Lock wie das Buendel.
   "public/start-glass.css",
+  // Eckig-Regel (2026-08-13): app-weite border-radius-0-Ueberschreibung.
+  "public/eckig.css",
   "public/branding.css",
   "public/app-surfaces.css",
   "public/composer-tools.css",
