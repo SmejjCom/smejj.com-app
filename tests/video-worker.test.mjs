@@ -33,6 +33,27 @@ describe("smejj video worker & video player markdown integration", () => {
     assert.ok(server.includes("os.replace"), "atomares Umbenennen des Modells fehlt");
   });
 
+  it("vertont Videos mit der vorhandenen Piper-Stimme, fail-safe", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    assert.ok(server.includes("/synthesize"), "Piper-Endpunkt fehlt");
+    assert.ok(server.includes("hole_erzaehlstimme") && server.includes("mische_ton"), "Vertonung fehlt");
+    // Die Videolaenge muss sich nach der Sprechdauer richten, sonst bricht
+    // die Erzaehlung mittendrin ab (-shortest schneidet auf das Kuerzere).
+    assert.ok(server.includes("MAX_DAUER_S, stimme[1]"), "Laengenanpassung an die Stimme fehlt");
+    // Fehlender Ton darf nie das ganze Video kosten.
+    assert.ok(server.includes("return mp4_bytes"), "Rueckfall auf stummes Video fehlt");
+    // Nur echten Ton behaupten.
+    assert.ok(server.includes('"ton": bool(stimme)'), "ehrliches ton-Feld fehlt");
+  });
+
+  it("der Player laesst erzaehlte Videos hoerbar und einmalig laufen", () => {
+    const markdown = fs.readFileSync("public/chat-markdown.js", "utf8");
+    // muted/loop nur fuer stumme Szenen — sonst hoert der Nutzer nichts bzw.
+    // die Erzaehlung wiederholt sich endlos.
+    assert.ok(markdown.includes('startsWith("Erzähltes")'), "Ton-Erkennung im Player fehlt");
+    assert.ok(!/controls loop muted/.test(markdown), "loop/muted duerfen nicht mehr fest verdrahtet sein");
+  });
+
   it("das Tiefenmodell kommt als ONNX, nicht als torch (Abbildgroesse)", () => {
     const anforderungen = fs.readFileSync("workers/smejj-video-worker/requirements.txt", "utf8");
     assert.ok(anforderungen.includes("onnxruntime"), "onnxruntime fehlt");

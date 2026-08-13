@@ -261,15 +261,55 @@ function bilderSchritt(res, zustand, stand) {
 
 // Sagt dem Nutzer, WAS sich im Video bewegt. Exportiert, damit die
 // Erwartungs-Ehrlichkeit pruefbar bleibt (tests/chat-bridge-video-e2e).
-export function videoHinweis(engine) {
+// `ton` kommt aus der Worker-Antwort — nur wenn dort wirklich Stimme drin ist.
+export function videoHinweis(engine, ton = false) {
   const name = String(engine || "");
+  const stimme = ton ? " Erzählt von der Stimme von smejj 1.0." : "";
   if (name.startsWith("parallax")) {
-    return "\n\n*Räumliche Kamerafahrt durch ein gemaltes Bild: Vorder- und Hintergrund bewegen sich gegeneinander, das Motiv selbst bleibt ruhig.*";
+    return `\n\n*Räumliche Kamerafahrt durch ein gemaltes Bild: Vorder- und Hintergrund bewegen sich gegeneinander, das Motiv selbst bleibt ruhig.${stimme}*`;
   }
   if (name.startsWith("kenburns")) {
-    return "\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.*";
+    return `\n\n*Bewegte Szene aus einem gemalten Bild: die Kamera fährt, das Motiv selbst bleibt ruhig.${stimme}*`;
   }
-  return "";
+  return ton ? `\n\n*${stimme.trim()}*` : "";
+}
+
+// Laesst smejj 1.0 zwei Saetze zur Szene schreiben, die Piper spricht.
+// Fail-safe: bei jedem Fehler entsteht das Video eben stumm.
+async function schreibeErzaehltext(prompt) {
+  if (!BILDER_API_KEY || !BILDER_BASE_URL) return "";
+  try {
+    const antwort = await fetch(`${BILDER_BASE_URL}/chat/completions`, {
+      method: "POST",
+      signal: AbortSignal.timeout(8000),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${BILDER_API_KEY}` },
+      body: JSON.stringify({
+        model: BILDER_MODEL,
+        messages: [
+          {
+            role: "system",
+            content: [
+              "Du schreibst die Erzählstimme für ein kurzes Video (etwa 8 Sekunden).",
+              "Antworte mit ZWEI kurzen deutschen Sätzen, die die Szene beschreiben — bildhaft, ruhig, ohne Anrede.",
+              "Keine Aufzählung, keine Überschrift, keine Anführungszeichen, kein Markdown. Nur die zwei Sätze."
+            ].join(" ")
+          },
+          { role: "user", content: prompt }
+        ],
+        stream: false,
+        temperature: 0.7,
+        max_tokens: 120
+      })
+    });
+    if (!antwort.ok) return "";
+    const text = String((await antwort.json())?.choices?.[0]?.message?.content || "")
+      .replace(/[*_`#>]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text.length >= 10 && text.length <= 300 ? text : "";
+  } catch {
+    return "";
+  }
 }
 
 // Dieselbe Schimmer-Form wie bilderSchritt: konstanter text, wechselnder stand.
@@ -284,19 +324,19 @@ function videoSchritt(res, zustand, stand) {
 // Liefert { url, engine } bei Erfolg, "besetzt" wenn gerade ein anderes Video
 // laeuft (HTTP 429), sonst null. Die Engine entscheidet ueber den Hinweis im
 // Antworttext (kenburns bewegt die Kamera, animatediff das Motiv selbst).
-async function versucheVideo(prompt) {
+async function versucheVideo(prompt, erzaehltext) {
   try {
     const antwort = await fetch(`${VIDEO_WORKER_URL}/erzeuge`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(VIDEO_WORKER_KEY ? { "x-smejj-key": VIDEO_WORKER_KEY } : {}) },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, erzaehltext: erzaehltext || "" }),
       signal: AbortSignal.timeout(VIDEO_TIMEOUT_MS)
     });
     if (antwort.status === 429) return "besetzt";
     if (!antwort.ok) return null;
     const daten = await antwort.json();
     const url = sichereVideoAntwort(daten);
-    return url ? { url, engine: String(daten?.engine || "") } : null;
+    return url ? { url, engine: String(daten?.engine || ""), ton: daten?.ton === true } : null;
   } catch {
     return null;
   }
@@ -312,10 +352,10 @@ async function versucheVideo(prompt) {
  *
  * `melde(phase)` faerbt den laufenden Fortschritt ("wartet" statt "läuft").
  */
-async function erzeugeVideoMitGeduld(prompt, melde) {
+async function erzeugeVideoMitGeduld(prompt, erzaehltext, melde) {
   const bis = Date.now() + VIDEO_WARTE_MAX_MS;
   for (;;) {
-    const ergebnis = await versucheVideo(prompt);
+    const ergebnis = await versucheVideo(prompt, erzaehltext);
     if (ergebnis !== "besetzt") return ergebnis;
     // Besetzt: warten, aber nie laenger als das Geduldsbudget. Danach lieber
     // ehrlich absagen als den Nutzer endlos vertroesten.
@@ -364,7 +404,14 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
   }, 10000);
   let video = null;
   try {
-    video = await erzeugeVideoMitGeduld(await uebersetzeMalPrompt(videoPrompt), (neu) => {
+    // Bild-Prompt (englisch fuer SD-Turbo) und Erzaehltext (deutsch fuer
+    // Piper) entstehen nebeneinander — zwei kurze Modellaufrufe statt zweier
+    // nacheinander gewarteter Sekunden.
+    const [malPrompt, erzaehltext] = await Promise.all([
+      uebersetzeMalPrompt(videoPrompt),
+      schreibeErzaehltext(videoPrompt)
+    ]);
+    video = await erzeugeVideoMitGeduld(malPrompt, erzaehltext, (neu) => {
       phase = neu;
     });
   } finally {
@@ -377,7 +424,10 @@ async function streamVideoSpur(res, body, videoPrompt, deps) {
     // "fliegender Adler" einen flatternden Adler. Nur animatediff bewegt das
     // Motiv selbst; die CPU-Engines bewegen die Kamera (parallax raeumlich
     // ueber eine Tiefenkarte, kenburns flach als Zoom).
-    bilderSendeInhalt(res, `Hier ist dein Video:\n\n![Erstelltes Video](${video.url})${videoHinweis(video.engine)}`);
+    // Alt-Text traegt die Tonspur-Information zur App: ein erzaehltes Video
+    // darf nicht stummgeschaltet und nicht endlos wiederholt werden.
+    const alt = video.ton ? "Erzähltes Video" : "Erstelltes Video";
+    bilderSendeInhalt(res, `Hier ist dein Video:\n\n![${alt}](${video.url})${videoHinweis(video.engine, video.ton)}`);
   } else {
     // Mitten im Strom: kein Rueckweg zum Text-Pfad mehr — ehrliche Absage.
     videoSchritt(res, "fertig", "fehlgeschlagen");

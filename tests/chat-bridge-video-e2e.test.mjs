@@ -31,6 +31,8 @@ let streamBilderLane;
 // Wie oft der Worker "besetzt" (429) meldet, bevor er liefert.
 let besetztZaehler = 0;
 let versuche = 0;
+let letzterErzaehltext = null;
+let tonGeliefert = false;
 
 before(async () => {
   worker = http.createServer((req, res) => {
@@ -42,7 +44,9 @@ before(async () => {
       let body = "";
       req.on("data", (stueck) => (body += stueck));
       return req.on("end", () => {
-        letzterPrompt = JSON.parse(body || "{}").prompt || "";
+        const rumpf = JSON.parse(body || "{}");
+        letzterPrompt = rumpf.prompt || "";
+        letzterErzaehltext = rumpf.erzaehltext ?? null;
         versuche += 1;
         if (besetztZaehler > 0) {
           besetztZaehler -= 1;
@@ -54,7 +58,7 @@ before(async () => {
           // Ein kompromittierter Worker koennte eine fremde Adresse schicken.
           return res.end(JSON.stringify({ ok: true, video_url: "https://boese.example/spur.mp4" }));
         }
-        res.end(JSON.stringify({ ok: antwortModus === "ok", format: "mp4", b64: MP4_B64, engine }));
+        res.end(JSON.stringify({ ok: antwortModus === "ok", format: "mp4", b64: MP4_B64, engine, ton: tonGeliefert }));
       });
     }
     res.writeHead(404).end();
@@ -233,6 +237,37 @@ describe("Video-Spur Ende-zu-Ende (echter Worker-Ersatz, echte streamBilderLane)
     assert.equal(abgewiesen[0].kopf["x-smejj-profile"], "video-andrang");
     // Die Absage ist freundlich und nennt keinen Fehler.
     assert.ok(!abgewiesen[0].inhalt.includes("fehlgeschlagen"));
+  });
+
+  it("reicht ein Feld fuer den Erzaehltext an den Worker durch", async () => {
+    antwortModus = "ok";
+    besetztZaehler = 0;
+    letzterErzaehltext = null;
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem Sonnenaufgang", DEPS);
+    // Ohne Groq-Schluessel bleibt der Text leer — das Feld muss trotzdem
+    // mitreisen, sonst kaeme der Worker nie an eine Erzaehlung.
+    assert.notEqual(letzterErzaehltext, null, "erzaehltext fehlt in der Anfrage");
+    assert.equal(typeof letzterErzaehltext, "string");
+  });
+
+  it("markiert ein vertontes Video, damit der Player es nicht stummschaltet", async () => {
+    antwortModus = "ok";
+    tonGeliefert = true;
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem Sonnenaufgang", DEPS);
+    assert.ok(res.inhalt.includes("![Erzähltes Video]"), "Ton-Markierung im Alt-Text fehlt");
+    assert.ok(res.inhalt.includes("Erzählt von der Stimme"), "Hinweis auf die Stimme fehlt");
+    tonGeliefert = false;
+  });
+
+  it("behauptet keinen Ton, wenn der Worker keinen geliefert hat", async () => {
+    antwortModus = "ok";
+    tonGeliefert = false;
+    const res = sammelAntwort();
+    await streamBilderLane(res, {}, "Erstelle ein Video von einem Sonnenaufgang", DEPS);
+    assert.ok(res.inhalt.includes("![Erstelltes Video]"), "stummes Video falsch markiert");
+    assert.ok(!res.inhalt.includes("Erzählt von der Stimme"), "Ton behauptet, den es nicht gibt");
   });
 
   it("laesst Bild-Auftraege unberuehrt (Videospur greift nicht daneben)", async () => {

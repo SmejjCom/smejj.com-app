@@ -60,6 +60,17 @@ TIEFE_DATEI = os.environ.get("SMEJJ_VIDEO_TIEFE_DATEI", "/tmp/smejj-tiefe.onnx")
 PARALLAX_STAERKE = float(os.environ.get("SMEJJ_VIDEO_PARALLAX_STAERKE", "26"))
 PARALLAX_EBENEN = int(os.environ.get("SMEJJ_VIDEO_PARALLAX_EBENEN", "8"))
 
+# --- Erzählstimme ----------------------------------------------------------
+# Derselbe Piper-Dienst, der schon die Premium-Stimme des Chats spricht
+# (POST /synthesize {text} -> audio/wav). Der Erzähltext kommt von der Brücke,
+# die smejj 1.0 fragt — der Worker hat bewusst keinen Modell-Zugang.
+STIMME_URL = os.environ.get("SMEJJ_VOICE_TTS_ORIGIN", "http://smejj-voice-piper.zeabur.internal:8080").rstrip("/")
+STIMME_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_STIMME_TIMEOUT_S", "25"))
+MAX_ERZAEHLTEXT = 300
+# Das Video richtet sich nach der Sprechdauer, aber nie länger als das:
+# jede Sekunde kostet 24 Frames Rechenzeit und Dateigröße.
+MAX_DAUER_S = float(os.environ.get("SMEJJ_VIDEO_MAX_DAUER_S", "14"))
+
 app = FastAPI()
 zustand = {"bereit": ENGINE == "kenburns", "fehler": "", "laedt_seit": time.time()}
 diffusion_pipeline = None
@@ -174,7 +185,7 @@ def hole_basisbild(prompt):
     return Image.open(io.BytesIO(base64.b64decode(daten["b64"]))).convert("RGB")
 
 
-def kenburns_frames(bild):
+def kenburns_frames(bild, dauer=None):
     """Animiert das Basisbild: langsamer Zoom mit Schwenk, als nahtlose Schleife.
 
     Gerendert wird auf dem 2x-Bild, damit der Ausschnitt beim Herauszoomen nie
@@ -185,7 +196,7 @@ def kenburns_frames(bild):
 
     quelle = bild.resize((GROESSE * 2, GROESSE * 2))
     frames = []
-    anzahl = max(2, int(DAUER_S * FPS))
+    anzahl = max(2, int((dauer or DAUER_S) * FPS))
     for i in range(anzahl):
         t = 0.5 - 0.5 * math.cos(2 * math.pi * i / anzahl)  # 0 → 1 → 0, nahtlos
         zoom = 1.0 + 0.25 * t
@@ -218,7 +229,7 @@ def schaetze_tiefe(bild):
     return (tiefe - tiefe.min()) / spanne
 
 
-def parallax_frames(bild, tiefe):
+def parallax_frames(bild, tiefe, dauer=None):
     """Kamerafahrt durch die Szene: nahe Ebenen wandern weiter als ferne.
 
     Umsetzung als Ebenenstapel (Multi-Plane): die Tiefenkarte zerlegt das Bild
@@ -254,7 +265,7 @@ def parallax_frames(bild, tiefe):
         ) / 255.0
         ebenen.append(((lo + hi) / 2, weich[..., None]))
 
-    anzahl = max(2, int(DAUER_S * FPS))
+    anzahl = max(2, int((dauer or DAUER_S) * FPS))
     rand = int(PARALLAX_STAERKE * 1.2)
     frames = []
     for i in range(anzahl):
@@ -278,6 +289,60 @@ def parallax_frames(bild, tiefe):
     return frames
 
 
+def hole_erzaehlstimme(text):
+    """Lässt Piper den Erzähltext sprechen. Liefert (wav_bytes, dauer_s) oder None.
+
+    Fail-safe: bei jedem Fehler gibt es das Video eben stumm — eine fehlende
+    Stimme darf nie das ganze Video kosten.
+    """
+    import wave
+
+    try:
+        antwort = requests.post(
+            f"{STIMME_URL}/synthesize",
+            json={"text": text[:MAX_ERZAEHLTEXT]},
+            timeout=STIMME_TIMEOUT_S,
+        )
+        if not antwort.ok or antwort.content[:4] != b"RIFF":
+            return None
+        with wave.open(io.BytesIO(antwort.content)) as datei:
+            dauer = datei.getnframes() / float(datei.getframerate() or 1)
+        if dauer < 0.3:
+            return None  # Piper antwortet bei Winz-Eingaben mit der Demo-Seite
+        return antwort.content, dauer
+    except Exception:  # noqa: BLE001 — stummes Video ist der akzeptable Rückfall
+        return None
+
+
+def mische_ton(mp4_bytes, wav_bytes):
+    """Legt die Erzählstimme unter das Video (AAC). Bei Fehler: stummes Video."""
+    import subprocess
+
+    from imageio_ffmpeg import get_ffmpeg_exe
+
+    try:
+        with tempfile.TemporaryDirectory() as ordner:
+            stumm = os.path.join(ordner, "stumm.mp4")
+            ton = os.path.join(ordner, "ton.wav")
+            ziel = os.path.join(ordner, "fertig.mp4")
+            with open(stumm, "wb") as datei:
+                datei.write(mp4_bytes)
+            with open(ton, "wb") as datei:
+                datei.write(wav_bytes)
+            lauf = subprocess.run(
+                [get_ffmpeg_exe(), "-y", "-i", stumm, "-i", ton,
+                 "-c:v", "copy", "-c:a", "aac", "-b:a", "96k",
+                 "-shortest", "-movflags", "+faststart", ziel],
+                capture_output=True, timeout=60,
+            )
+            if lauf.returncode != 0 or not os.path.exists(ziel):
+                return mp4_bytes
+            with open(ziel, "rb") as datei:
+                return datei.read()
+    except Exception:  # noqa: BLE001
+        return mp4_bytes
+
+
 def kodiere_mp4(frames):
     """Kodiert die Frames als H.264-MP4 (yuv420p + faststart für den Browser)."""
     import imageio.v2 as imageio
@@ -299,12 +364,12 @@ def kodiere_mp4(frames):
         return datei.read()
 
 
-def erzeuge_kenburns(prompt):
+def erzeuge_kenburns(prompt, dauer=None):
     bild = hole_basisbild(prompt)
-    return kodiere_mp4(kenburns_frames(bild)), "kenburns:sd-turbo"
+    return kodiere_mp4(kenburns_frames(bild, dauer)), "kenburns:sd-turbo"
 
 
-def erzeuge_parallax(prompt):
+def erzeuge_parallax(prompt, dauer=None):
     """Bild malen, Tiefe schätzen, räumlich durchfahren.
 
     Fällt auf kenburns zurück, wenn keine brauchbare Tiefe herauskommt — die
@@ -314,8 +379,8 @@ def erzeuge_parallax(prompt):
     bild = hole_basisbild(prompt)
     tiefe = schaetze_tiefe(bild)
     if tiefe is None:
-        return kodiere_mp4(kenburns_frames(bild)), "kenburns:sd-turbo"
-    return kodiere_mp4(parallax_frames(bild, tiefe)), "parallax:depth-anything-v2-small"
+        return kodiere_mp4(kenburns_frames(bild, dauer)), "kenburns:sd-turbo"
+    return kodiere_mp4(parallax_frames(bild, tiefe, dauer)), "parallax:depth-anything-v2-small"
 
 
 def erzeuge_animatediff(prompt):
@@ -369,6 +434,7 @@ async def erzeuge(request: Request):
     prompt = str(daten.get("prompt", "")).strip()[:MAX_PROMPT]
     if not prompt:
         return JSONResponse({"ok": False, "fehler": "prompt_fehlt"}, status_code=400)
+    erzaehltext = str(daten.get("erzaehltext", "")).strip()[:MAX_ERZAEHLTEXT]
 
     # 2 Kerne: immer nur EIN Video; ein zweiter Auftrag bekommt sofort 429,
     # die Brücke antwortet dann mit der ehrlichen Status-Nachricht.
@@ -376,12 +442,21 @@ async def erzeuge(request: Request):
         return JSONResponse({"ok": False, "fehler": "beschaeftigt"}, status_code=429)
     try:
         beginn = time.time()
+        # Stimme ZUERST: erst ihre Länge sagt, wie lang das Video werden muss.
+        # Sie kostet nur wenige Sekunden, das Bild danach die Minute.
+        stimme = hole_erzaehlstimme(erzaehltext) if erzaehltext else None
+        dauer = min(MAX_DAUER_S, stimme[1] + 0.6) if stimme else DAUER_S
+
         if ENGINE == "animatediff" and diffusion_pipeline is not None:
             mp4, engine = erzeuge_animatediff(prompt)
         elif ENGINE == "parallax":
-            mp4, engine = erzeuge_parallax(prompt)
+            mp4, engine = erzeuge_parallax(prompt, dauer)
         else:
-            mp4, engine = erzeuge_kenburns(prompt)
+            mp4, engine = erzeuge_kenburns(prompt, dauer)
+
+        if stimme:
+            mp4 = mische_ton(mp4, stimme[0])
+
         b64 = base64.b64encode(mp4).decode("ascii")
         if len(b64) > MAX_B64:
             return JSONResponse({"ok": False, "fehler": "video_zu_gross"}, status_code=500)
@@ -390,7 +465,10 @@ async def erzeuge(request: Request):
             "format": "mp4",
             "b64": b64,
             "engine": engine,
-            "dauer_sekunden": DAUER_S,
+            # Die Brücke sagt dem Nutzer nur dann "mit Erzählstimme", wenn hier
+            # wirklich Ton drin ist — eine stumme Piper-Panne darf nicht lügen.
+            "ton": bool(stimme),
+            "dauer_sekunden": round(dauer, 1),
             "fps": FPS,
             "aufloesung": f"{GROESSE}x{GROESSE}",
             "dauerSek": round(time.time() - beginn, 1),
