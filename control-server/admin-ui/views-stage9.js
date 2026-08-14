@@ -208,8 +208,15 @@
     },
     {
       id: "still", name: "Still",
-      passt: function (a) { return a.ampel === "grau" || a.ampel === "wartung"; },
-      leer: "Von allen Automatiken liegt eine Messung vor. Keine ist stumm, keine stummgeschaltet."
+      passt: function (a) { return a.ampel === "grau"; },
+      leer: "Von jeder Automatik liegt eine Messung vor. Keine ist stumm."
+    },
+    {
+      // Erscheint nur, wenn wirklich jemand stummgeschaltet ist — ein Register
+      // mit dauerhafter Null waere ein Knopf, der nie etwas tut.
+      id: "wartung", name: "In Wartung", nurWennVorhanden: true,
+      passt: function (a) { return a.ampel === "wartung"; },
+      leer: "Keine Automatik ist stummgeschaltet."
     },
     {
       id: "alle", name: "Alle",
@@ -222,6 +229,13 @@
     return REGISTER.filter(function (r) { return r.id === id; })[0] || null;
   }
 
+  /** Die Register, die gerade gezeigt werden — ohne die dauerhaft leeren. */
+  function registerListe(alle) {
+    return REGISTER.filter(function (r) {
+      return !r.nurWennVorhanden || alle.some(r.passt);
+    });
+  }
+
   /**
    * Welches Register ist offen, wenn noch keins gewaehlt wurde?
    * Antwort: das mit dem Problem. Wer die Seite aufschlaegt und einen Ausfall
@@ -232,7 +246,7 @@
   }
 
   function registerLeiste(alle, aktivId) {
-    return '<div class="ap-register">' + REGISTER.map(function (r) {
+    return '<div class="ap-register">' + registerListe(alle).map(function (r) {
       const anzahl = alle.filter(r.passt).length;
       const dringend = r.id === "achtung" && anzahl > 0;
       return '<span class="ap-reg' + (r.id === aktivId ? " on" : "") + (dringend ? " warn" : "")
@@ -320,7 +334,12 @@
     // danach INNERHALB des Registers aufgeloest. Sonst zeigte die Liste das
     // eine und die Akte daneben ein anderes — der haeufigste Weg, wie eine
     // Master-Detail-Ansicht luegt.
-    const reg = registerFuer(registerId) || registerFuer(standardRegister(alle));
+    // Nur ein Register waehlen, das gerade auch als Reiter dasteht: wird der
+    // letzte Wartungsfall beendet, waehrend das Register offen ist, stuende
+    // sonst eine leere Liste ohne hervorgehobenen Reiter da.
+    const gezeigt = registerListe(alle);
+    const gewaehlt = gezeigt.filter(function (r) { return r.id === registerId; })[0];
+    const reg = gewaehlt || registerFuer(standardRegister(alle));
     const sichtbar = alle.filter(reg.passt);
     const auswahl = sichtbar.filter(function (a) { return a.id === auswahlId; })[0] || sichtbar[0] || null;
 
@@ -340,17 +359,18 @@
         + '<div class="ns">Alles Gemessene ist pünktlich und erfolgreich gelaufen. ' + e(d.hinweis || "") + "</div></div></div>";
     }
 
+    // Die Zahlenkacheln standen frueher hier (Grün/Gelb/Rot/Wartung). Sie sind
+    // ab 2026-08-14 weg: die Register darunter zeigen dieselben Zahlen, nur
+    // anklickbar — dieselbe Zahl an zwei Stellen ist das Gegenteil von
+    // uebersichtlich. Die Aufteilung gelb/rot, die den Registern fehlt, steht
+    // im Lage-Satz direkt darueber ("N auf Rot", "N verspätet").
+    //
+    // Mit weg ist die Kachel "DPO Self-Training / 24/7 Aktiv": sie war ein
+    // fest verdrahteter Text, der nie etwas anderes sagen konnte, also auch
+    // keinen Ausfall. Genau so eine Behauptung ohne Messung ist auf dieser
+    // Seite verboten (docs/approvals/2026-08-12-ampel-ehrlich-messen.md).
     return V.kopfBlock("AP", "Autopiloten", "Autopiloten",
       "Alle Automatiken auf einen Blick. Grün ist gemessen, nie behauptet: ohne Herzschlag gibt es kein Grün.")
-      + '<div class="kpis">'
-      + V.kachelBlock("Grün", String(d.gruen || 0), "läuft nachweislich", (d.gruen || 0) > 0 ? "up" : "")
-      + V.kachelBlock("Gelb", String(d.gelb || 0), "verspätet, Schonfrist läuft")
-      + V.kachelBlock("Rot", String(d.rot || 0), (d.rot || 0) > 0 ? "sofort ansehen" : "keiner", (d.rot || 0) > 0 ? "dn" : "up")
-      + V.kachelBlock("DPO Self-Training", "24/7 Aktiv", "Ground-Truth Self-Play & Benchmarks", "up")
-      + ((d.wartung || 0) > 0
-        ? V.kachelBlock("Wartung", String(d.wartung), "stummgeschaltet, kein Alarm")
-        : "")
-      + "</div>"
       + '<div class="stack">' + lage
       + registerLeiste(alle, reg.id)
       + '<div class="ap-wrap">'
