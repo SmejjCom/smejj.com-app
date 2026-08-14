@@ -19,7 +19,12 @@
 diffusers==0.38.0
 transformers==5.5.0
 accelerate==1.1.1
-safetensors==0.4.5
+# 0.8.0 statt 0.4.5 (2026-08-14): NICHT wegen Luecken — beide Fassungen sind
+# sauber (osv.dev: je 0). Reiner Vertraeglichkeitszwang: diffusers 0.38.0
+# verlangt safetensors>=0.8.0, mit dem alten Pin brach der Bau mit
+# "ResolutionImpossible" ab. transformers 5.5.0 fordert nur >=0.4.3 und
+# traegt die neuere Fassung mit.
+safetensors==0.8.0
 fastapi==0.115.5
 uvicorn==0.32.1
 # 11.0.0 trug 34 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 12.3.0.
