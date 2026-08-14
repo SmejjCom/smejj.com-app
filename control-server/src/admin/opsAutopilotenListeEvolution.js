@@ -11,8 +11,8 @@ const STUNDE_MS = 60 * 60 * 1000;
 export const EVOLUTION_AUTOPILOTEN = Object.freeze([
   {
     id: "ai-evolution-engine",
-    name: "37. AI Evolution Engine (Sofort Verbessern)",
-    kurz: "Die Schicht ÜBER allen KI-Aktionen: jedes Ergebnis — Text, Code, Bild, Video, Audio, Dokument, Recherche, Werkzeug, Agent — bekommt eine Note und, wenn nötig, eine fertige Verbesserungs-Aufgabe.",
+    name: "37. Chat Sofort Verbessern (AI Evolution Engine)",
+    kurz: "»Chat« heisst hier JEDE KI-Aktion, nicht nur Text. Die Schicht ÜBER allen KI-Funktionen: jedes Ergebnis — Text, Code, Bild, Video, Audio, Dokument, Recherche, Werkzeug, Agent — bekommt eine Note und, wenn nötig, eine fertige Verbesserungs-Aufgabe.",
     funktionen: [
       "EIN Einstieg für jede KI-Funktion: erfasseAktion({art, prompt, ergebnis}). Eine neue Funktion braucht zwei Zeilen — Prüfer anmelden, Aktion melden — und hängt im Kreislauf.",
       "Bewertet je Medientyp über die Quality-Engine: 12 angemeldete Prüfer, jeder mit einer KAPUTTEN und einer GESUNDEN Selbsttest-Probe. Fällt ein Prüfer durch, wird diese Ampel rot.",

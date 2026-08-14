@@ -167,14 +167,29 @@ export function erfasseAktion({ art, prompt = "", ergebnis, dauerMs = 0, quelle 
   } catch (fehler) {
     bewertung = { art: String(art), gemessen: false, punkte: null, funde: [], grund: String(fehler?.message || fehler).slice(0, 120) };
   }
+  return erfasseBewertung(bewertung, { dauerMs, quelle, betrifft, jetztMs });
+}
+
+/**
+ * Derselbe Weg ab der fertigen Bewertung — für Melder, die SCHON geurteilt
+ * haben und nur das Urteil schicken.
+ *
+ * WARUM ES DIESEN ZWEITEN EINSTIEG GIBT: Die Brücke ist ein eigener Dienst.
+ * Damit ihre Chat-Antworten und Bilder gemessen werden, müsste sie entweder
+ * den ganzen Inhalt an den Control-Server schicken — oder selbst urteilen und
+ * nur das Urteil melden. Das Zweite ist richtig: der Antworttext eines Nutzers
+ * verlässt die Brücke dann NICHT. Es reisen Note, Fehlerklassen und die kurzen
+ * Belege, mehr nicht.
+ */
+export function erfasseBewertung(bewertung, { dauerMs = 0, quelle = "", betrifft = "", jetztMs = Date.now() } = {}) {
   const eintrag = {
-    art: String(art),
+    art: String(bewertung?.art || "unbekannt"),
     zeitMs: jetztMs,
     dauerMs: Number(dauerMs) || 0,
     quelle: String(quelle || "").slice(0, 60),
-    gemessen: bewertung.gemessen,
-    punkte: bewertung.punkte,
-    klassen: bewertung.funde.map((f) => f.klasse)
+    gemessen: Boolean(bewertung?.gemessen),
+    punkte: bewertung?.punkte ?? null,
+    klassen: (bewertung?.funde || []).map((f) => f.klasse)
   };
   AKTIONEN.push(eintrag);
   if (AKTIONEN.length > MAX_AKTIONEN) AKTIONEN.splice(0, AKTIONEN.length - MAX_AKTIONEN);

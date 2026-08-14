@@ -9,6 +9,7 @@ import { buildWebContext } from "./chat-bridge-websuche.js";
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
 import { pipeVisibleStream } from "./chat-bridge-strom.js";
+import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
 // Gespraechsgedaechtnis. Bewusst DIESELBE gepruefte Bereinigung wie der Control
@@ -146,6 +147,9 @@ function healthPayload() {
     earConfigured: Boolean(GROQ_API_KEY),
     publicRateLimit: { perClientPerMinute: RATE_PER_CLIENT, globalPerMinute: RATE_GLOBAL },
     anmeldung: anmeldeStatistik(),
+    // Sichtbar machen, ob die Qualitaetsmessung ueberhaupt meldet: eine stille
+    // Messung sieht sonst wie "alles gemessen" aus.
+    evolutionMelder: evolutionMelderStatus(),
     startedAt: STARTED_AT.toISOString()
   };
 }
@@ -368,7 +372,16 @@ async function streamViaControl(res, route, body) {
     "x-smejj-model-id": upstream.headers.get("x-smejj-model-id") || "",
     "x-smejj-model-fallback": upstream.headers.get("x-smejj-model-fallback") || "false"
   });
-  await pipeVisibleStream(upstream.body, res);
+  const antwortText = await pipeVisibleStream(upstream.body, res);
+  // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
+  // der Text bleibt hier). Nie erwartet, nie werfend.
+  meldeAktion({
+    art: "text",
+    prompt: String(body?.task || lastUserContent(body?.messages || [])),
+    ergebnis: antwortText,
+    quelle: "bruecke-control-router",
+    betrifft: "chat-antwort"
+  });
   res.end();
   return true;
 }
@@ -450,7 +463,10 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
     "x-smejj-requested-model": String(requestedModel || ""),
     "x-smejj-model-fallback": "false"
   });
-  await pipeVisibleStream(upstream.body, res);
+  const antwortText = await pipeVisibleStream(upstream.body, res);
+  // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
+  // der Text bleibt hier). Nie erwartet, nie werfend.
+  meldeAktion({ art: "text", prompt: lastUserContent(messages), ergebnis: antwortText, quelle: "bruecke-chat", betrifft: "chat-antwort" });
   res.end();
   return true;
 }
@@ -499,7 +515,10 @@ async function streamModel(res, messages, profile, requestedModel = "") {
     "x-smejj-requested-model": String(requestedModel || ""),
     "x-smejj-model-fallback": String(/kimi/i.test(String(requestedModel || "")))
   });
-  await pipeVisibleStream(upstream.body, res);
+  const antwortText = await pipeVisibleStream(upstream.body, res);
+  // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
+  // der Text bleibt hier). Nie erwartet, nie werfend.
+  meldeAktion({ art: "text", prompt: lastUserContent(messages), ergebnis: antwortText, quelle: "bruecke-chat", betrifft: "chat-antwort" });
   res.end();
 }
 
