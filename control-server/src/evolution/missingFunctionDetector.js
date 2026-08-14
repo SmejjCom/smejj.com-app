@@ -51,7 +51,7 @@ export const SMEJJ_FAEHIGKEITEN = Object.freeze([
  */
 export const KONKURRENZ_STAND = Object.freeze({
   stand: "2026-08-14",
-  herkunft: "handgepflegt (Konkurrenz-Radar Nr. 04 liefert die Berichte, noch keine strukturierte Liste)",
+  herkunft: "handgepflegt — diese Liste enthaelt BESTAETIGTE Funktionen. Der Konkurrenz-Radar (Nr. 04) liefert seit 2026-08-14 strukturierte KANDIDATEN mit Quelle; sie stehen oben getrennt und werden erst durch eine Betreiber-Entscheidung hier eingetragen",
   funktionen: Object.freeze([
     { id: "chat", anbieter: ["ChatGPT", "Gemini", "Claude", "Kimi", "Grok"], name: "Text-Chat", art: "text" },
     { id: "websuche", anbieter: ["ChatGPT", "Gemini", "Perplexity", "Grok"], name: "Websuche mit Quellen", art: "recherche" },
