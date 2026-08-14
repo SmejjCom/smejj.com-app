@@ -16,6 +16,10 @@
 // sieht "nichts zu tun" genauso aus wie "ich konnte nicht nachsehen".
 
 // Dringlichkeit: 1 = Nutzer merkt es jetzt, 5 = geplanter Ausbau.
+// Karenz nach einem Neustart: der langsamste Autopilot-Takt sind 30 Minuten,
+// darum erst danach graue Ampeln als echte Aufgaben werten.
+export const AMPEL_TAKT_KARENZ_MS = 35 * 60 * 1000;
+
 export const STUFEN = Object.freeze({
   AUSFALL: 1,      // gemessener roter Vorfall — etwas ist kaputt
   REGRESSION: 2,   // roter Test — Code weicht von seiner Zusage ab
@@ -34,9 +38,12 @@ export const STUFEN = Object.freeze({
  * @param {{ok: boolean, rote?: Array<string>, grund?: string}} [quellen.tests]
  * @param {{ok: boolean, gescheitert?: number, zeitraumTage?: number, grund?: string}} [quellen.mails]
  * @param {{ok: boolean, negative?: Array<{promptSample: string, antwortSample?: string, createdAt: string}>, grund?: string}} [quellen.antworten]
+ * @param {number} [quellen.laufzeitMs] Wie lange der Control-Server schon laeuft
+ *   (aus /api/health `gestartetAm`). Fehlt der Wert, wird von einem lange
+ *   laufenden Server ausgegangen — graue Ampeln zaehlen dann wie bisher.
  * @returns {{aufgaben: Array, stummeQuellen: Array, gesammeltAus: Array}}
  */
-export function baueBacklog({ ampel, tests, mails, antworten } = {}) {
+export function baueBacklog({ ampel, tests, mails, antworten, laufzeitMs } = {}) {
   const aufgaben = [];
   const stummeQuellen = [];
   const gesammeltAus = [];
@@ -54,16 +61,38 @@ export function baueBacklog({ ampel, tests, mails, antworten } = {}) {
         seit: v.von || null
       });
     }
-    for (const a of ampel.autopiloten || []) {
-      if (a.ampel !== "grau") continue;
-      aufgaben.push({
-        stufe: STUFEN.AUSBAU,
-        quelle: "Ampel-grau",
-        betrifft: a.id,
-        titel: `Messung anschliessen: ${a.name || a.id}`,
-        befund: String(a.ampelGrund || "").slice(0, 200),
-        seit: null
-      });
+    // Nach einem Neustart hat noch KEIN Autopilot getaktet — dann steht alles
+    // auf grau, ohne dass irgendetwas kaputt waere. Gemessen 2026-08-14: zwei
+    // Minuten nach einem Deploy meldete dieselbe Ampel 30 graue; 120 Sekunden
+    // spaeter wieder 34 gruen. Ungefiltert haette der Nachtbau an einer von 30
+    // Phantom-Aufgaben gebaut. Der langsamste Takt ist 30 Minuten, deshalb die
+    // Schwelle darueber.
+    // Fail-closed wie ueberall in der Werkstatt: die grauen werden NICHT still
+    // verworfen, sondern als stumme Quelle gemeldet — ungeprueft ist nicht
+    // erledigt ([[Werkstatt Station 1]]).
+    const jungeLaufzeitMs = Number.isFinite(laufzeitMs) ? laufzeitMs : Infinity;
+    const nochNichtGetaktet = jungeLaufzeitMs < AMPEL_TAKT_KARENZ_MS;
+    if (nochNichtGetaktet) {
+      const graue = (ampel.autopiloten || []).filter((a) => a.ampel === "grau").length;
+      if (graue > 0) {
+        stummeQuellen.push({
+          quelle: "Ampel-grau",
+          grund: `Server erst seit ${Math.round(jungeLaufzeitMs / 60000)} min neu gestartet — `
+            + `${graue} Autopilot(en) hatten noch keinen Takt. Grau heisst hier "noch nicht gemessen", nicht "kaputt".`
+        });
+      }
+    } else {
+      for (const a of ampel.autopiloten || []) {
+        if (a.ampel !== "grau") continue;
+        aufgaben.push({
+          stufe: STUFEN.AUSBAU,
+          quelle: "Ampel-grau",
+          betrifft: a.id,
+          titel: `Messung anschliessen: ${a.name || a.id}`,
+          befund: String(a.ampelGrund || "").slice(0, 200),
+          seit: null
+        });
+      }
     }
   } else {
     stummeQuellen.push({ quelle: "Autopiloten-Ampel", grund: ampel?.grund || "nicht abgefragt" });
