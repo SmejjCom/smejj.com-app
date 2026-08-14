@@ -9,8 +9,26 @@
 #   silero  -> Silero VAD (barge-in)
 #   whisper -> faster-whisper STT (large-v3, auto-detect)
 #   openai  -> OpenAI-compatible LLM client (smejj.com router, BYOK)
-# BEWUSST NICHT angehoben: 0.0.94 traegt SELBST 4 Luecken — ein Wechsel
-# taeuscht Fortschritt vor, ohne einen zu bringen.
+# ENTSCHEIDUNG 2026-08-14: BEWUSST NICHT angehoben. Gemessen an api.osv.dev,
+# Fassung fuer Fassung (eindeutige Befunde, Aliase zusammengefasst):
+#   0.0.67 -> 1 Befund   CVE-2025-62373
+#   0.0.80 -> 2 Befunde  CVE-2025-62373, CVE-2026-54695
+#   0.0.90 -> 3 Befunde  + CVE-2026-44716
+#   0.0.93 -> 3 Befunde
+#   0.0.94 -> 2 Befunde  CVE-2026-44716, CVE-2026-54695
+#   0.0.95 -> 2 Befunde  dieselben
+#   0.0.96 -> 2 Befunde  dieselben
+# Es gibt KEINE Fassung ohne Befund. Anheben tauscht einen Befund gegen zwei —
+# die Standardempfehlung des CVE-Waechters ("Version anheben") ist fuer dieses
+# Paket also messbar falsch.
+# WARUM DER WAECHTER "2 Schwachstellen" MELDET: osv fuehrt denselben Befund
+# zweimal — GHSA-c2jg-5cp7-6wc7 und PYSEC-2026-458 sind Aliase derselben
+# CVE-2025-62373. Es ist EINE Luecke, nicht zwei.
+# WARUM 0.0.67 TRAGBAR IST: CVE-2025-62373 ist ausschliesslich ueber den
+# LivekitFrameSerializer erreichbar (optional, nicht Standard, abgekuendigt);
+# dieser Dienst benutzt den ProtobufFrameSerializer. Das ist keine Zusage auf
+# Zuruf: tests/sprachdienst-pipecat-pin.test.mjs haelt sie fest — wer livekit,
+# den pipecat.runner oder die Telefonie-Serialisierer verdrahtet, faellt auf.
 pipecat-ai[silero,whisper,openai]==0.0.67
 
 # Speech-to-text engine (also pulled by the whisper extra; pinned for clarity).
