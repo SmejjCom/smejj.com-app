@@ -95,9 +95,27 @@ function holeTests() {
   });
 }
 
+/**
+ * Wie lange laeuft der Control-Server schon? Aus /api/health `gestartetAm`.
+ * Gibt null zurueck, wenn die Auskunft fehlt — dann rechnet baueBacklog mit
+ * einem lange laufenden Server (bisheriges Verhalten, nichts wird stiller).
+ */
+async function holeLaufzeitMs() {
+  try {
+    const antwort = await fetch(`${CONTROL_URL}/api/health`, { signal: AbortSignal.timeout(10_000) });
+    if (!antwort.ok) return null;
+    const daten = await antwort.json();
+    const gestartet = Date.parse(daten?.gestartetAm || "");
+    if (!Number.isFinite(gestartet)) return null;
+    return Math.max(0, Date.now() - gestartet);
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const mitTests = process.argv.includes("--mit-tests");
-  const [ampel, mails] = await Promise.all([holeAmpel(), holeMails()]);
+  const [ampel, mails, laufzeitMs] = await Promise.all([holeAmpel(), holeMails(), holeLaufzeitMs()]);
   const tests = mitTests ? await holeTests() : { ok: false, grund: "nicht angefordert (--mit-tests setzen)" };
   const jetzt = new Date().toISOString();
   const backlog = baueBacklog({
@@ -105,7 +123,10 @@ async function main() {
     // Die Feedback-Ablage (Daumen-Signale) haengt am e2-Zugang des
     // Control-Servers; von hier aus ehrlich als stumm benannt. Der Laeufer
     // im Control-Server liest sie bei jedem Takt wirklich.
-    antworten: { ok: false, grund: "nur im Control-Server messbar (liest die e2-Feedback-Ablage im Takt)" }
+    antworten: { ok: false, grund: "nur im Control-Server messbar (liest die e2-Feedback-Ablage im Takt)" },
+    // Frisch neu gestarteter Server = alle Ampeln grau, ohne dass etwas kaputt
+    // ist. Ohne diesen Wert baute der Nachtbau an Phantom-Aufgaben.
+    laufzeitMs
   });
 
   mkdirSync(path.join(REPO, "docs/werkstatt"), { recursive: true });

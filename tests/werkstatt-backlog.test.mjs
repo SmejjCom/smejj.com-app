@@ -77,3 +77,33 @@ test("Bericht: nennt die Quellen, aus denen wirklich gesammelt wurde", () => {
   assert.ok(text.includes("Quellen, die geantwortet haben:** Autopiloten-Ampel"));
   assert.ok(text.includes("Ausfall: 06. Bruecken-Waechter"));
 });
+
+// Gemessen am 2026-08-14: zwei Minuten nach einem Deploy meldete die Ampel 30
+// graue Autopiloten, 120 Sekunden spaeter wieder 34 gruene. Ungefiltert haette
+// der Nachtbau an einer von 30 Phantom-Aufgaben gebaut. Grau direkt nach einem
+// Neustart heisst "noch nicht getaktet", nicht "kaputt" — und muss trotzdem
+// sichtbar bleiben (stumme Quelle statt stiller Verwerfung).
+test("Frischer Neustart: graue Ampeln werden stumme Quelle, keine Aufgaben", () => {
+  const b = baueBacklog({ ampel: AMPEL_OK, laufzeitMs: 2 * 60 * 1000 });
+
+  assert.equal(b.aufgaben.some((a) => a.quelle === "Ampel-grau"), false,
+    "aus grauen Ampeln darf direkt nach dem Start keine Aufgabe werden");
+  const stumm = b.stummeQuellen.find((q) => q.quelle === "Ampel-grau");
+  assert.ok(stumm, "die grauen muessen als stumme Quelle auftauchen, nicht verschwinden");
+  assert.match(stumm.grund, /neu gestartet/, "der Grund muss den Neustart benennen");
+  // Echte Vorfaelle bleiben unberuehrt — die haengen nicht am Takt.
+  assert.ok(b.aufgaben.some((a) => a.quelle === "Ampel-Vorfall"),
+    "offene Vorfaelle zaehlen weiterhin sofort");
+});
+
+test("Lange laufender Server: graue Ampeln zaehlen wie bisher", () => {
+  const b = baueBacklog({ ampel: AMPEL_OK, laufzeitMs: 6 * 60 * 60 * 1000 });
+  assert.ok(b.aufgaben.some((a) => a.quelle === "Ampel-grau"),
+    "nach der Karenz ist grau ein echter Befund");
+});
+
+test("Ohne Laufzeit-Auskunft bleibt das Verhalten unveraendert", () => {
+  const b = baueBacklog({ ampel: AMPEL_OK });
+  assert.ok(b.aufgaben.some((a) => a.quelle === "Ampel-grau"),
+    "fehlende Auskunft darf nichts stiller machen (fail-open waere hier der Fehler)");
+});
