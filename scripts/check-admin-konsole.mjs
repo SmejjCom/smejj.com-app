@@ -91,7 +91,11 @@ function sandboxMitApi() {
     localStorage: { getItem: () => "pruefstand-token", setItem: () => {}, removeItem: () => {} },
     location: { origin: "https://smejj.com", hostname: "smejj.com", pathname: "/admin/", hash: "" },
     fetch: async (adresse, init = {}) => {
-      const url = new URL(String(adresse));
+      // Basis mitgeben: eine Seite darf relativ abrufen (die Radar-Ansicht holt
+      // /radar/berichte.json). Ohne Basis warf new URL(), der Aufruf verschwand
+      // im catch der Seite, und der Pruefer meldete "ruft gar keinen Endpunkt" —
+      // ein Fehlalarm, der wie ein echter Befund aussah.
+      const url = new URL(String(adresse), "https://smejj.com/admin/");
       // Die Methode steht im zweiten Argument; api.js setzt sie nur beim Senden.
       gerufen.push({ methode: init.method || "GET", pfad: url.pathname + url.search });
       return {
@@ -127,9 +131,19 @@ function sandboxMitApi() {
  */
 async function adressenDerKonsole() {
   const { kontext, fenster, gerufen } = sandboxMitApi();
-  for (const datei of readdirSync(KONSOLE).filter((n) => /^console-stage\d+\.js$/.test(n)).sort()) {
-    vm.runInContext(readFileSync(path.join(KONSOLE, datei), "utf8"), kontext, { filename: datei });
-  }
+  // Erst die Ansichten, dann die Bedienung. Grund (2026-08-14 aufgefallen):
+  // console-stage11.js greift in laden() auf window.adminViewsStage11 zu.
+  // Wurden nur die console-*-Dateien geladen, war das undefined und der
+  // ganze Lauf stuerzte mit einem TypeError ab — die Pruefung meldete also
+  // nicht "Seite kaputt", sondern gar nichts mehr. Eine Pruefung, die am
+  // ersten Fund stirbt, prueft die restlichen Seiten nie.
+  const laden = (muster) => {
+    for (const datei of readdirSync(KONSOLE).filter((n) => muster.test(n)).sort()) {
+      vm.runInContext(readFileSync(path.join(KONSOLE, datei), "utf8"), kontext, { filename: datei });
+    }
+  };
+  laden(/^views(-stage\d+|-cockpit)?\.js$/);
+  laden(/^console-(stage\d+|cockpit)\.js$/);
 
   const seiten = [];
   for (const schluessel of Object.keys(fenster)) {
@@ -235,16 +249,27 @@ async function main() {
       befunde.push({ seite, pfad: "(keine)", grund: "die Seite ruft gar keinen Endpunkt — Attrappe oder Seite pruefen" });
       continue;
     }
+    // Je SEITE bewerten, nicht je Adresse. Eine Seite darf mehrere Quellen der
+    // Reihe nach versuchen — die Radar-Ansicht holt ihre Berichte auf dem
+    // Pages-Weg unter /radar/berichte.json und auf dem Control-Weg unter
+    // /admin/radar-berichte.json. Bewertete man jede Adresse einzeln, meldete
+    // der Pruefer bei JEDEM Lauf einen Fehlalarm — und ein Pruefer, dem man
+    // seine Fehlalarme abgewoehnt, indem man ihn ignoriert, ist keiner mehr.
+    // Ein Befund entsteht erst, wenn KEINE der Quellen ankommt.
+    const schlecht = [];
     for (const { methode, pfad } of adressen) {
       geprueft += 1;
       const antwort = await frage(methode, pfad);
       if (!antwort.behandelt) {
-        befunde.push({ seite, pfad: `${methode} ${pfad}`, grund: "kein Handler zustaendig" });
+        schlecht.push({ pfad: `${methode} ${pfad}`, grund: "kein Handler zustaendig" });
       } else if (antwort.status === 404 && antwort.fehler === "admin_route_not_found") {
         // Genau der Befund vom 2026-08-07: die Kette nimmt den Pfad an und
         // weist ihn dann als unbekannt ab.
-        befunde.push({ seite, pfad: `${methode} ${pfad}`, grund: "404 admin_route_not_found" });
+        schlecht.push({ pfad: `${methode} ${pfad}`, grund: "404 admin_route_not_found" });
       }
+    }
+    if (schlecht.length === adressen.length) {
+      for (const b of schlecht) befunde.push({ seite, ...b });
     }
   }
 
