@@ -18,6 +18,10 @@ const profilePictureStore = fs.readFileSync(path.join(publicDir, "profile-pictur
 // Die Beispiel-Chips der Startseite sind seit 2026-08-13 uebersetzt; ihre
 // deutschen Quelltexte stehen im Markup und im Chip-Modul.
 const startChips = fs.readFileSync(path.join(publicDir, "start-chips.js"), "utf8");
+// Zwei weitere t()-Oberflaechen: das Such-Overlay traegt die Bereichsnamen,
+// die Begruessung nach dem Login die Plan-Karte.
+const searchOverlay = fs.readFileSync(path.join(publicDir, "search.js"), "utf8");
+const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welcome.js"), "utf8");
 const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
@@ -55,7 +59,8 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml;
+    + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
+    + searchOverlay + onboardingWelcome;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }
