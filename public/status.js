@@ -26,7 +26,10 @@ export const DIENSTE = Object.freeze([
     id: "control",
     name: "Anmeldung und Konto",
     beschreibung: "Anmelden, Konto, Schlüssel, Aufträge.",
-    url: "https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud/api/health",
+    // Seit dem Zeabur-Umzug melden sich Nutzer HIER an — die alte Salad-Adresse
+    // zu messen war eine Falschmessung: sie haette "laeuft" gezeigt, selbst wenn
+    // der echte Anmelde-Server tot ist (korrigiert 2026-08-13, Salad-Abschaltung).
+    url: "https://smejj-control.zeabur.app/api/health",
     kritisch: true
   },
   {
@@ -40,7 +43,11 @@ export const DIENSTE = Object.freeze([
     id: "browser",
     name: "Browser-Ansicht",
     beschreibung: "Fremde Seiten im rechten Bereich anzeigen.",
-    url: "https://loganberry-fruit-e3n6k5n10h68cawn.salad.cloud/health",
+    // Seit B1 (2026-08-13) traegt der Zeabur-Worker die Ansicht. Er hat BEWUSST
+    // keine oeffentliche Domain, darum misst dieser Eintrag das Gesundheits-Relay
+    // am Control: der pingt den Worker intern (/health, kein Render, kein Token)
+    // und uebersetzt in 200/503. Salad-loganberry ist damit messfrei und stoppbar.
+    url: "https://smejj-control.zeabur.app/api/browser/remote/health",
     kritisch: false
   }
 ]);

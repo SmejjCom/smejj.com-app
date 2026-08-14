@@ -63,6 +63,29 @@ export function remoteBrowserViewportFromUrl(url) {
   };
 }
 
+// Gesundheits-Relay fuer die Statusseite: Der Worker hat BEWUSST keine
+// oeffentliche Domain (Zeabur-intern), also kann der Browser ihn nicht selbst
+// messen. Dieser Endpunkt pingt /health des Workers serverseitig — kein
+// Playwright-Render, kein Token noetig (die /health des Workers ist offen),
+// kein Rate-Limit-Verbrauch. 200 = Kette steht, 503 = Worker fehlt/tot.
+const HEALTH_TIMEOUT_MS = 5_000;
+
+export async function handleBrowserRemoteHealth(res, { env = process.env, fetchImpl = fetch } = {}) {
+  const config = readRemoteBrowserConfig(env);
+  if (!config.configured) {
+    return json(res, 503, { ok: false, konfiguriert: false, fehlt: config.missing });
+  }
+  try {
+    const antwort = await fetchImpl(`${config.workerUrl}/health`, {
+      signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS)
+    });
+    if (!antwort.ok) return json(res, 503, { ok: false, konfiguriert: true, worker: `Antwort ${antwort.status}` });
+    return json(res, 200, { ok: true, konfiguriert: true, worker: "erreichbar" });
+  } catch {
+    return json(res, 503, { ok: false, konfiguriert: true, worker: "nicht erreichbar" });
+  }
+}
+
 export async function handleBrowserRemote(url, res, {
   req = null,
   env = process.env,

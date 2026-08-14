@@ -294,3 +294,37 @@ test("sanitizeLinks/sanitizeCapture: fail-closed gegen kaputte Worker-Antworten"
   assert.deepEqual(sanitizeCapture(null, { width: 1365, height: 900 }), { width: 1365, height: 900 });
   assert.deepEqual(sanitizeCapture({ width: 1000, height: 4000 }, { width: 1365, height: 900 }), { width: 1000, height: 4000 });
 });
+
+// Gesundheits-Relay: Die Statusseite kann den internen Worker nicht direkt
+// messen — der Control pingt dessen /health und uebersetzt in 200/503.
+test("handleBrowserRemoteHealth meldet 503 ohne Konfiguration und ruft den Worker nicht", async () => {
+  const { handleBrowserRemoteHealth } = await import("../control-server/src/routes/browserRemoteRoutes.js");
+  const res = fakeRes();
+  await handleBrowserRemoteHealth(res, { env: {}, fetchImpl: async () => { throw new Error("must not call worker"); } });
+  assert.equal(res.statusCode, 503);
+  assert.equal(payload(res).konfiguriert, false);
+});
+
+test("handleBrowserRemoteHealth meldet 200 bei erreichbarem Worker und 503 bei totem", async () => {
+  const { handleBrowserRemoteHealth } = await import("../control-server/src/routes/browserRemoteRoutes.js");
+  const env = {
+    SMEJJ_REMOTE_BROWSER_ENABLED: "YES",
+    SMEJJ_REMOTE_BROWSER_WORKER_URL: "http://smejj-remote-browser.zeabur.internal:8080",
+    SMEJJ_REMOTE_BROWSER_TOKEN: "secret"
+  };
+  const ok = fakeRes();
+  await handleBrowserRemoteHealth(ok, {
+    env,
+    fetchImpl: async (url) => {
+      assert.equal(url, "http://smejj-remote-browser.zeabur.internal:8080/health");
+      return { ok: true };
+    }
+  });
+  assert.equal(ok.statusCode, 200);
+  assert.equal(payload(ok).ok, true);
+
+  const tot = fakeRes();
+  await handleBrowserRemoteHealth(tot, { env, fetchImpl: async () => { throw new Error("ECONNREFUSED"); } });
+  assert.equal(tot.statusCode, 503);
+  assert.equal(payload(tot).konfiguriert, true);
+});
