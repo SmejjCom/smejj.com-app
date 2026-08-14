@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 import { interneMeldung, autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { baueBacklog } from "./werkstattBacklog.js";
 import { fuehreSelbsttestAus as tuerwaechterSelbsttest, pruefeTueren } from "./tuerwaechterAutopilot.js";
+import { issueSessionToken } from "../auth/sessionToken.js";
 import { pruefeSpracheAlle } from "./spracheQualitaetAutopilot.js";
 import { runProjectBugScan } from "./bugPredictorAutopilot.js";
 import { buildKnowledgeGraph } from "./knowledgeGraphAutopilot.js";
@@ -368,6 +369,35 @@ export async function laufWerkstattSammeln({ uebersicht = autopilotUebersicht, s
  * unterscheiden (dieselbe Regel wie beim Self-Healing-Lauf).
  */
 /**
+ * Besorgt den kurzlebigen Nachweis, mit dem der Türwächter durch die Türen geht.
+ *
+ * Er stellt ihn SELBST aus, statt ihn als Umgebungsvariable zu erwarten. Grund:
+ * Ein Messtoken lebt Minuten. Als Variable hinterlegt wäre es beim nächsten Lauf
+ * abgelaufen — der Wächter meldete dann ewig "nicht messbar" und wäre eine
+ * Attrappe mit Extraschritt. Das Sitzungsgeheimnis liegt am Dienst ohnehin; mehr
+ * braucht es nicht.
+ *
+ * `method: "local-e2e"` ist Absicht: emailSessionStillValid() prüft nur bei
+ * method "email" gegen den Sitzungsspeicher, wo ein frisch ausgestelltes Token
+ * keine Sitzung hätte und fail-closed durchfiele.
+ */
+export function messTokenBesorgen({ env = process.env, ausstellen = issueSessionToken } = {}) {
+  const gesetzt = String(env.SMEJJ_EVAL_SESSION_TOKEN || env.SMEJJ_MESS_TOKEN || "");
+  if (gesetzt) return gesetzt;
+  const secret = String(env.SMEJJ_SESSION_SECRET || "");
+  if (!secret) return "";
+  try {
+    return ausstellen({
+      secret,
+      user: { userId: "tuerwaechter", email: String(env.SMEJJ_ADMIN_OWNER_EMAILS || "").split(",")[0].trim(), method: "local-e2e" },
+      ttlMs: 5 * 60 * 1000
+    });
+  } catch {
+    return ""; // lieber "nicht messbar" als ein Urteil auf falscher Grundlage
+  }
+}
+
+/**
  * Türwächter (Nr. 40): geht den Weg, den ein Mensch geht, und meldet, wenn eine
  * Tür zu ist. Er ist die Antwort auf zwei stille Aussperrungen am 2026-08-14,
  * bei denen alle übrigen Autopiloten grün waren — sie messen Dienste, nicht
@@ -380,7 +410,7 @@ export async function laufTuerwaechter({
   pruefer = pruefeTueren,
   selbsttest = tuerwaechterSelbsttest,
   controlOrigin = process.env.SMEJJ_CONTROL_ORIGIN || "https://smejj-control.zeabur.app",
-  token = process.env.SMEJJ_EVAL_SESSION_TOKEN || process.env.SMEJJ_MESS_TOKEN || ""
+  token = messTokenBesorgen()
 } = {}) {
   const probe = selbsttest();
   if (!probe.bestanden) {
