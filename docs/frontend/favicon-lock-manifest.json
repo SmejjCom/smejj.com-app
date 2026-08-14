@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frozenAt": "2026-08-12T06:48:21.274Z",
+  "frozenAt": "2026-08-14T05:56:55.496Z",
   "approval": "Das Browser-Favicon ist jetzt final und funktioniert einwandfrei. Bitte behandle es ab sofort als geschützt und unveränderlich.",
   "assets": {
     "public/favicon.ico": "a514be650bd471347a9811bd3dc8ae5be8ae8372c4b1265de7d3112e9731eb15",
@@ -52,6 +52,13 @@
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
     "public/bn/index.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/danke-abo.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
       "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
@@ -238,5 +245,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "nachtrag": "2026-08-14: Seitenliste um public/danke-abo.html erweitert (Abo-Dankeseite). Favicon-Dateien, Generatorquellen und Web-Manifest unveraendert; die neue Seite traegt denselben Block wie die anderen 28. Freigabe des Betreibers: 'alles gruen machen ... Mach du alle ich mache nicht.'"
 }
