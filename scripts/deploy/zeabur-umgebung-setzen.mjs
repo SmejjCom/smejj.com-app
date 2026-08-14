@@ -76,9 +76,17 @@ export async function findeSetzMutation(abfrage = zeaburAbfrage) {
     let p = 0;
     if (namen.some((n) => n.includes("service"))) p += 2;
     if (namen.some((n) => n.includes("environment"))) p += 2;
-    // Sammel-Mutationen (data/variables als Map) sind uns lieber als key/value.
-    if (namen.some((n) => ["data", "variables", "envs"].includes(n))) p += 3;
-    if (namen.some((n) => n === "key") && namen.some((n) => n === "value")) p += 1;
+    // EINZEL-MUTATIONEN HABEN VORRANG. Bis zum 2026-08-14 stand hier das
+    // Gegenteil ("Sammel-Mutationen sind uns lieber"), und es hat genau das
+    // angerichtet, wovor die Salad-Lehre warnt: Zeaburs
+    // updateEnvironmentVariable(data: Map) ERSETZT die Umgebung. Ein Aufruf,
+    // der EINEN Wert setzen wollte, loeschte am Dienst smejj-control alle
+    // anderen — Sitzungsgeheimnis, Modellschluessel, Speicherzugang. Der
+    // Betreiber war abgemeldet und die KI aus, ohne dass jemand etwas
+    // "Gefaehrliches" getan haette.
+    //
+    // Ein Wert je Aufruf ist langsamer und in jeder Hinsicht harmloser.
+    if (namen.some((n) => n === "key") && namen.some((n) => n === "value")) p += 4;
     if (/update/i.test(f.name)) p += 1;
     return p;
   };
@@ -90,12 +98,25 @@ export async function findeSetzMutation(abfrage = zeaburAbfrage) {
 // Setzt werte = { NAME: "wert", ... } am Dienst. Gibt { ok, mutation, anzahl }
 // zurueck; wirft bei Fehlern (Aufrufer entscheidet ueber den Rueckfallweg).
 export async function setzeUmgebungswerte(dienstName, werte, abfrage = zeaburAbfrage) {
-  const dienst = await findeDienst(dienstName, abfrage);
+  // ERST die Mutation pruefen, DANN den Dienst suchen: Wenn die Form ohnehin
+  // verweigert wird, soll das passieren, BEVOR irgendetwas anderes angefasst
+  // wird. Ein Abbruch, der erst nach dem halben Weg kommt, ist schwerer zu
+  // lesen — und in diesem Fall ginge es um Loeschen.
   const mutation = await findeSetzMutation(abfrage);
   if (!mutation) throw new Error("zeabur_setz_mutation_nicht_gefunden");
 
   const namen = mutation.args.map((a) => a.name);
   const sammel = namen.find((n) => ["data", "variables", "envs"].includes(n.toLowerCase()));
+  if (sammel) {
+    throw new Error(
+      `zeabur_ersetzende_mutation_verweigert:${mutation.name} — `
+      + "die Sammel-Form (data/variables als Map) ERSETZT die Umgebung. "
+      + "Am 2026-08-14 hat genau das smejj-control alle Werte gekostet: Sitzungsgeheimnis, "
+      + "Modellschluessel, Speicherzugang. Es braucht eine Einzel-Mutation (key/value)."
+    );
+  }
+
+  const dienst = await findeDienst(dienstName, abfrage);
 
   const belege = (arg) => {
     const n = arg.name.toLowerCase();
@@ -116,9 +137,18 @@ export async function setzeUmgebungswerte(dienstName, werte, abfrage = zeaburAbf
     return abfrage(`mutation Setze(${deklaration}) { ${mutation.name}(${uebergabe}) }`, variablen);
   }
 
+  // HARTE SPERRE gegen die ersetzende Form. Selbst wenn die Auswahl oben
+  // einmal danebengreift (Zeabur baut sein Schema regelmaessig um), darf ein
+  // Aufruf mit einer Teil-Map niemals durchgehen: er wuerde alles loeschen,
+  // was nicht in der Map steht. Lieber ein ehrlicher Abbruch als ein Dienst
+  // ohne Geheimnisse.
   if (sammel) {
-    await ruf({ [sammel]: werte });
-    return { ok: true, mutation: mutation.name, anzahl: Object.keys(werte).length };
+    throw new Error(
+      `zeabur_ersetzende_mutation_verweigert:${mutation.name} — `
+      + "die Sammel-Form (data/variables als Map) ERSETZT die Umgebung. "
+      + "Am 2026-08-14 hat genau das smejj-control alle Werte gekostet. "
+      + "Es braucht eine Einzel-Mutation (key/value) oder ein Lesen-Mischen-Schreiben, das hier bewusst nicht existiert."
+    );
   }
   // key/value-Form: nacheinander, damit ein Fehlschlag beim zweiten Wert den
   // ersten nicht als "nie gesetzt" erscheinen laesst.
