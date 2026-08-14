@@ -382,6 +382,28 @@ def welle(rgb, maske, versatz_je_zeile):
     return rgb * (1 - alpha) + verschoben * alpha
 
 
+def bildart(tiefe):
+    """Zentrales Motiv oder weite Szene? Entscheidet ueber die Kamerabahn.
+
+    GEMESSEN 2026-08-13 an Portraet und Landschaft: der Unterschied zwischen
+    mittlerer Tiefe in der BILDMITTE und am RAND trennt beide sauber.
+    Portraet +0,09 (Kopf naeher als der Hintergrund ringsum), Landschaft
+    -0,17 (der Vordergrund liegt unten und aussen).
+
+    Ein seitlicher Schwenk laesst ein Portraet unruhig wirken; eine
+    Vorwaertsfahrt (Zoom) passt dort besser — und umgekehrt.
+    """
+    import numpy as np
+
+    hoehe, breite = tiefe.shape
+    mitte = tiefe[hoehe // 3:2 * hoehe // 3, breite // 3:2 * breite // 3].mean()
+    rand = np.concatenate([
+        tiefe[:hoehe // 6].ravel(), tiefe[-hoehe // 6:].ravel(),
+        tiefe[:, :breite // 6].ravel(), tiefe[:, -breite // 6:].ravel(),
+    ]).mean()
+    return "zentral" if float(mitte - rand) > 0.03 else "weit"
+
+
 def parallax_frames(bild, tiefe, dauer=None):
     """Kamerafahrt durch die Szene: jeder Pixel wandert nach SEINER Tiefe.
 
@@ -413,14 +435,20 @@ def parallax_frames(bild, tiefe, dauer=None):
         dtype=np.float32,
     ) / 255.0
 
-    # Was in der Szene von selbst in Bewegung ist (ziehende Wolken).
-    himmel = himmel_bereich(bild, tiefe) if BEWEGUNG_AN else None
+    art = bildart(tiefe)
+    # Wolkenzug nur bei weiten Szenen: hinter einem Kopf zieht sonst der
+    # unscharfe Hintergrund vorbei, was unruhig statt lebendig wirkt.
+    himmel = himmel_bereich(bild, tiefe) if (BEWEGUNG_AN and art == "weit") else None
 
     yy, xx = np.mgrid[0:hoehe, 0:breite].astype(np.float32)
 
-    def warp(quelle, vx, vy):
-        qx = xx - PARALLAX_STAERKE * glatt * vx
-        qy = yy - PARALLAX_STAERKE * glatt * vy
+    # Radiale Richtung fuer die Vorwaertsfahrt (vom Bildmittelpunkt weg).
+    rx = (xx - breite / 2) / (breite / 2)
+    ry = (yy - hoehe / 2) / (hoehe / 2)
+
+    def warp(quelle, vx, vy, vz=0.0):
+        qx = xx - PARALLAX_STAERKE * glatt * (vx + rx * vz)
+        qy = yy - PARALLAX_STAERKE * glatt * (vy + ry * vz)
         x0 = np.clip(np.floor(qx).astype(np.int32), 0, breite - 2)
         y0 = np.clip(np.floor(qy).astype(np.int32), 0, hoehe - 2)
         fx = (qx - x0)[..., None]
@@ -434,16 +462,24 @@ def parallax_frames(bild, tiefe, dauer=None):
     rand = int(PARALLAX_STAERKE * 1.2)
     frames = []
     for i in range(anzahl):
-        # Nahtlose Schleife: einmal hin und zurueck, mit leichtem Bogen.
+        # Nahtlose Schleife: jeder Verlauf beginnt und endet bei 0.
         w = 2 * math.pi * i / anzahl
-        vx, vy = math.sin(w), 0.35 * (1 - math.cos(w)) - 0.35
+        if art == "zentral":
+            # Vorwaertsfahrt: der Versatz zeigt radial nach aussen, nahe
+            # Bildteile wandern staerker — das wirkt wie ein Hineingehen.
+            # Dazu ein Hauch Seitwaerts, damit es nicht mechanisch aussieht.
+            vz = 0.5 - 0.5 * math.cos(w)
+            vx, vy = 0.18 * math.sin(w), 0.0
+        else:
+            vz = 0.0
+            vx, vy = math.sin(w), 0.35 * (1 - math.cos(w)) - 0.35
         # Eigenbewegung VOR dem Warp: die Wolken ziehen gleichmaessig durch
         # und stehen nach einer Runde wieder am Anfang.
         rgb_bewegt = rgb
         if himmel is not None:
             zug = np.full(hoehe, HIMMEL_ZUG * i / anzahl, dtype=np.float32)
             rgb_bewegt = welle(rgb_bewegt, himmel, zug)
-        leinwand = warp(rgb_bewegt, vx, vy)
+        leinwand = warp(rgb_bewegt, vx, vy, vz)
         # Zuschnitt kaschiert die Raender, die das Verschieben freilegt.
         frame = Image.fromarray(np.clip(leinwand, 0, 255).astype(np.uint8))
         frames.append(

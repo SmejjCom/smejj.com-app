@@ -147,6 +147,17 @@ describe("Portraet-Qualitaet (Befund Betreiber 2026-08-13)", () => {
     assert.ok(auf.indexOf("LANCZOS") < auf.indexOf("UnsharpMask"), "erst skalieren, dann schaerfen");
   });
 
+  it("waehlt die Kamerabahn nach dem Bildinhalt", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    assert.ok(server.includes("def bildart"), "Bildart-Erkennung fehlt");
+    // Trennmerkmal (gemessen): Mitte naeher als Rand = zentrales Motiv.
+    assert.ok(server.includes('"zentral"') && server.includes('"weit"'), "beide Bahnen fehlen");
+    // Vorwaertsfahrt braucht den radialen Anteil im Warp.
+    assert.ok(/rx \* vz/.test(server) && /ry \* vz/.test(server), "radialer Versatz fehlt");
+    // Bei zentralem Motiv KEIN Wolkenzug — der zieht sonst hinter dem Kopf vorbei.
+    assert.ok(/art == "weit"/.test(server), "Wolkenzug ist nicht auf weite Szenen begrenzt");
+  });
+
   it("kodiert mit CRF 23 (drei Stufen schaerfer als vorher)", () => {
     const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
     assert.ok(server.includes('"SMEJJ_VIDEO_CRF", "23"'), "CRF-Vorgabe 23 fehlt");
