@@ -22,10 +22,11 @@ export const AMPEL_TAKT_KARENZ_MS = 35 * 60 * 1000;
 
 export const STUFEN = Object.freeze({
   AUSFALL: 1,      // gemessener roter Vorfall — etwas ist kaputt
-  REGRESSION: 2,   // roter Test — Code weicht von seiner Zusage ab
-  VERSPAETUNG: 3,  // gelber Vorfall — laeuft, aber nicht puenktlich
-  ZUSTELLUNG: 4,   // Mails erreichen den Empfaenger nicht
-  AUSBAU: 5        // grauer Autopilot — dokumentierte offene Aufgabe
+  SICHERHEIT: 2,   // bekannte Schwachstelle in einer benutzten Bibliothek
+  REGRESSION: 3,   // roter Test — Code weicht von seiner Zusage ab
+  VERSPAETUNG: 4,  // gelber Vorfall — laeuft, aber nicht puenktlich
+  ZUSTELLUNG: 5,   // Mails erreichen den Empfaenger nicht
+  AUSBAU: 6        // grauer Autopilot — dokumentierte offene Aufgabe
 });
 
 /**
@@ -38,12 +39,13 @@ export const STUFEN = Object.freeze({
  * @param {{ok: boolean, rote?: Array<string>, grund?: string}} [quellen.tests]
  * @param {{ok: boolean, gescheitert?: number, zeitraumTage?: number, grund?: string}} [quellen.mails]
  * @param {{ok: boolean, negative?: Array<{promptSample: string, antwortSample?: string, createdAt: string}>, grund?: string}} [quellen.antworten]
+ * @param {{ok: boolean, funde?: Array<{name: string, version: string, id: string, herkunft: string}>, grund?: string}} [quellen.cve]
  * @param {number} [quellen.laufzeitMs] Wie lange der Control-Server schon laeuft
  *   (aus /api/health `gestartetAm`). Fehlt der Wert, wird von einem lange
  *   laufenden Server ausgegangen — graue Ampeln zaehlen dann wie bisher.
  * @returns {{aufgaben: Array, stummeQuellen: Array, gesammeltAus: Array}}
  */
-export function baueBacklog({ ampel, tests, mails, antworten, laufzeitMs } = {}) {
+export function baueBacklog({ ampel, tests, mails, antworten, cve, laufzeitMs } = {}) {
   const aufgaben = [];
   const stummeQuellen = [];
   const gesammeltAus = [];
@@ -114,6 +116,35 @@ export function baueBacklog({ ampel, tests, mails, antworten, laufzeitMs } = {})
     stummeQuellen.push({ quelle: "Pruefsuite", grund: tests.grund || "nicht ausgefuehrt" });
   }
 
+  // Bekannte Schwachstellen in benutzten Bibliotheken (osv.dev). Eine Aufgabe
+  // je PAKET, nicht je Fund: `aiohttp 3.11.11` traegt allein 66 Eintraege —
+  // 191 einzelne Backlog-Zeilen waeren unbedienbar, die Arbeit ist ohnehin
+  // eine einzige (Version anheben und neu bauen).
+  if (cve?.ok) {
+    gesammeltAus.push("CVE-Waechter");
+    const jePaket = new Map();
+    for (const f of cve.funde || []) {
+      const schluessel = `${f.name}@${f.version}`;
+      if (!jePaket.has(schluessel)) jePaket.set(schluessel, { ...f, anzahl: 0, ids: [] });
+      const eintrag = jePaket.get(schluessel);
+      eintrag.anzahl += 1;
+      if (eintrag.ids.length < 3) eintrag.ids.push(f.id);
+    }
+    for (const p of jePaket.values()) {
+      aufgaben.push({
+        stufe: STUFEN.SICHERHEIT,
+        quelle: "CVE-Waechter",
+        betrifft: `bibliothek:${p.name}`,
+        titel: `${p.name} ${p.version}: ${p.anzahl} bekannte Schwachstelle(n)`,
+        befund: `Gemeldet von osv.dev. Beispiele: ${p.ids.join(", ")}. `
+          + `Quelle: ${p.herkunft}. Behebung = Version anheben und den Dienst neu bauen.`,
+        seit: null
+      });
+    }
+  } else if (cve) {
+    stummeQuellen.push({ quelle: "CVE-Waechter", grund: cve.grund || "nicht abgefragt" });
+  }
+
   if (mails?.ok) {
     gesammeltAus.push("Mail-Zustellprotokoll");
     if (Number(mails.gescheitert) > 0) {
@@ -180,7 +211,16 @@ export function alsMarkdown({ aufgaben, stummeQuellen, gesammeltAus }, jetzt) {
   if (!aufgaben.length) {
     zeilen.push("Keine Aufgaben gefunden. Das gilt nur fuer die oben genannten Quellen.");
   }
-  const namen = { 1: "1 — Ausfall", 2: "2 — Regression", 3: "3 — Verspaetung", 4: "4 — Zustellung", 5: "5 — Ausbau" };
+  // Muss zu STUFEN passen — sonst traegt eine Aufgabe im Bericht den Namen
+  // einer fremden Kategorie (beim Einfuegen von SICHERHEIT genau passiert).
+  const namen = {
+    [STUFEN.AUSFALL]: "1 — Ausfall",
+    [STUFEN.SICHERHEIT]: "2 — Sicherheit",
+    [STUFEN.REGRESSION]: "3 — Regression",
+    [STUFEN.VERSPAETUNG]: "4 — Verspaetung",
+    [STUFEN.ZUSTELLUNG]: "5 — Zustellung",
+    [STUFEN.AUSBAU]: "6 — Ausbau"
+  };
   let letzteStufe = null;
   for (const a of aufgaben) {
     if (a.stufe !== letzteStufe) {

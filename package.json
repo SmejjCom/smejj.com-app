@@ -13,6 +13,7 @@
     "check:cost": "node scripts/check-cost-guardrails.mjs",
     "check:paths": "node scripts/check-no-private-paths.mjs",
     "check:security": "node scripts/check-no-paid-services.mjs && node scripts/check-backup-archives.mjs && node --test tests/backup-archive-safety.test.mjs",
+    "check:cve": "node scripts/diagnose/cve-waechter.mjs",
     "check:guidelines": "node scripts/check-guidelines.mjs",
     "brand:generate": "node scripts/branding/generate-brand-assets.mjs",
     "check:branding": "node scripts/branding/generate-brand-assets.mjs --check",

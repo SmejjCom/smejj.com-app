@@ -113,9 +113,25 @@ async function holeLaufzeitMs() {
   }
 }
 
+/**
+ * Bekannte Schwachstellen der benutzten Bibliotheken (osv.dev). Laeuft lokal
+ * ueber die requirements.txt der Worker und package.json — kein Token noetig.
+ * Scheitert die Abfrage, wird das als STUMME QUELLE gemeldet, nie als "sauber".
+ */
+async function holeCve() {
+  try {
+    const { sammlePakete, frageOsv } = await import("../diagnose/cve-waechter.mjs");
+    const pakete = sammlePakete(REPO);
+    const funde = await frageOsv(pakete);
+    return { ok: true, funde, geprueft: pakete.length };
+  } catch (fehler) {
+    return { ok: false, grund: `osv.dev nicht erreichbar (${fehler.message})` };
+  }
+}
+
 async function main() {
   const mitTests = process.argv.includes("--mit-tests");
-  const [ampel, mails, laufzeitMs] = await Promise.all([holeAmpel(), holeMails(), holeLaufzeitMs()]);
+  const [ampel, mails, laufzeitMs, cve] = await Promise.all([holeAmpel(), holeMails(), holeLaufzeitMs(), holeCve()]);
   const tests = mitTests ? await holeTests() : { ok: false, grund: "nicht angefordert (--mit-tests setzen)" };
   const jetzt = new Date().toISOString();
   const backlog = baueBacklog({
@@ -126,7 +142,8 @@ async function main() {
     antworten: { ok: false, grund: "nur im Control-Server messbar (liest die e2-Feedback-Ablage im Takt)" },
     // Frisch neu gestarteter Server = alle Ampeln grau, ohne dass etwas kaputt
     // ist. Ohne diesen Wert baute der Nachtbau an Phantom-Aufgaben.
-    laufzeitMs
+    laufzeitMs,
+    cve
   });
 
   mkdirSync(path.join(REPO, "docs/werkstatt"), { recursive: true });
