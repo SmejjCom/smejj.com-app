@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-14T16:34:15.053Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-14: 'Abstaende nachziehen'. Nach der Schriftvergroesserung klebten die Zeilen. Geaendert wurden ausschliesslich Abstaende: Zeilenabstaende im Fliesstext-Band (1.4-1.65 um rund 0.1 angehoben, Ueberschriften und Etiketten unter 1.4 unveraendert), sowie Innen- und Aussenabstand der Chat-Eintraege (padding 16 -> 18/20 px, Abstand zwischen Nachrichten 12 -> 20 px). Keine Farbe, keine Schriftgroesse, kein Layout. start-styles.css ist das neu gebaute Buendel.",
+  "frozenAt": "2026-08-14T18:39:02.706Z",
+  "confirmation": "Betreiber-Meldung 2026-08-14 'Was ist mit Startseite Design passiert' — Wiederherstellung: start-glass.css, eckig.css und search-overlay.css fehlten in SOURCES und fielen beim Buendel-Bau heraus. Buendel wieder mit 12 Quellen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "53d1ed109a17e0e943c028ea28bc89eb4a5749c8cdb9b4639f13237732fc8488",
     "public/styles.css": "2bb97c86e8c71f9847436f2616b349218e09773aad1370be3292808b945ac2fc",
-    "public/start-styles.css": "9dcc8bfd14e64d2d9c16333e8b13cda1dee8f9e6513876f3804bceab458c370e",
+    "public/start-styles.css": "12043c79f73c31ce8afa6ca7a64f1ca6f901c378fca513ad985a442dc97c1cbd",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "0a6a46f43adc3518c09e1f8b404191b7f58fe577cacef952439abed11948cd54",
     "public/composer-tools.css": "0ed46fe1f8be280d72604b272faf3f232559e2b8791cc10ce3c1a483b7b6f48a",

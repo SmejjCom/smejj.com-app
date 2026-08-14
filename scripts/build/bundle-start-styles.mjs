@@ -37,7 +37,18 @@ export const SOURCES = Object.freeze([
   "chat-markdown.css",
   // Aktionen pro Nachricht (2026-07-28). Bewusst im Buendel statt als eigenes
   // <link>: die Startseite soll genau EIN render-blockierendes Stylesheet laden.
-  "chat-actions.css"
+  "chat-actions.css",
+  // Such-Overlay (Cmd+K), Glas-Startseite und die App-weite Eckig-Regel.
+  // WARUM SIE HIER STEHEN MUESSEN (Befund 2026-08-14): Die drei Dateien lagen
+  // nur im ausgelieferten Buendel, nicht in dieser Liste. Beim naechsten
+  // regulaeren Buendel-Bau fielen sie heraus — und die Startseite verlor
+  // Glas-Kapsel, Zentrierung und Eckig-Regel auf einen Schlag, ohne dass
+  // jemand etwas an ihnen geaendert haette. Ein Artefakt zu deployen ersetzt
+  // NIE den Eintrag in der Quelle.
+  // eckig.css steht ABSICHTLICH am Ende: sie ueberschreibt jede Rundung.
+  "search-overlay.css",
+  "start-glass.css",
+  "eckig.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

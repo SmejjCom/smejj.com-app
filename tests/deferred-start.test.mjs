@@ -175,3 +175,20 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   assert.ok(Number(/smejj-shell-v(\d+)/.exec(sw)?.[1] || 0) >= 263,
     "CACHE_NAME wurde zurueckgedreht — Bestandsnutzer bekaemen den alten Stand");
 });
+
+// --- Die Startseiten-Optik muss IN DER QUELLE stehen, nicht nur im Artefakt --
+//
+// Befund 2026-08-14, vom Betreiber im Browser gesehen: Die Startseite verlor
+// Glas-Kapsel, Zentrierung und die Eckig-Regel auf einen Schlag. Ursache war
+// nicht eine Aenderung an diesen Dateien, sondern ihr FEHLEN in SOURCES:
+// start-glass.css, eckig.css und search-overlay.css lagen nur im
+// ausgelieferten Buendel. Der naechste regulaere Buendel-Bau warf sie hinaus.
+// Ein deploytes Artefakt ersetzt NIE den Eintrag in der Quelle.
+test("die Startseiten-Optik steht in SOURCES, nicht nur im ausgelieferten Buendel", () => {
+  for (const pflicht of ["start-glass.css", "eckig.css", "search-overlay.css"]) {
+    assert.ok(SOURCES.includes(pflicht), `${pflicht} fehlt in SOURCES — beim naechsten Bau faellt es heraus`);
+    assert.ok(fs.existsSync(`public/${pflicht}`), `public/${pflicht} fehlt — SOURCES zeigt ins Leere`);
+  }
+  // eckig.css muss die LETZTE sein: sie ueberschreibt jede Rundung.
+  assert.equal(SOURCES[SOURCES.length - 1], "eckig.css", "eckig.css gehoert ans Ende der Kaskade");
+});
