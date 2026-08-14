@@ -12,7 +12,6 @@ export default {
   "Startseite": "होम",
   "Projekte": "प्रोजेक्ट",
   "Arbeitsbereich": "वर्कस्पेस",
-  "Lokale Dateien und Snapshots": "स्थानीय फ़ाइलें और स्नैपशॉट",
   "Sicherheitsmodus": "सुरक्षा मोड",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK तैयार",

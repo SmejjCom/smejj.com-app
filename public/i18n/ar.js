@@ -12,7 +12,6 @@ export default {
   "Startseite": "الصفحة الرئيسية",
   "Projekte": "المشاريع",
   "Arbeitsbereich": "مساحة العمل",
-  "Lokale Dateien und Snapshots": "الملفات واللقطات المحلية",
   "Sicherheitsmodus": "وضع الأمان",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK جاهز",

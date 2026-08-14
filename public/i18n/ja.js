@@ -12,7 +12,6 @@ export default {
   "Startseite": "ホーム",
   "Projekte": "プロジェクト",
   "Arbeitsbereich": "ワークスペース",
-  "Lokale Dateien und Snapshots": "ローカルのファイルとスナップショット",
   "Sicherheitsmodus": "セキュリティモード",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK 準備済み",

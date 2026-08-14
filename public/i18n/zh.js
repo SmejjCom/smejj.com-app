@@ -12,7 +12,6 @@ export default {
   "Startseite": "首页",
   "Projekte": "项目",
   "Arbeitsbereich": "工作区",
-  "Lokale Dateien und Snapshots": "本地文件与快照",
   "Sicherheitsmodus": "安全模式",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK 就绪",

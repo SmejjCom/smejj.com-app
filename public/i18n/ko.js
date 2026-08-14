@@ -12,7 +12,6 @@ export default {
   "Startseite": "홈",
   "Projekte": "프로젝트",
   "Arbeitsbereich": "작업 공간",
-  "Lokale Dateien und Snapshots": "로컬 파일 및 스냅숏",
   "Sicherheitsmodus": "보안 모드",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK 준비됨",

@@ -12,7 +12,6 @@ export default {
   "Startseite": "Beranda",
   "Projekte": "Proyek",
   "Arbeitsbereich": "Ruang kerja",
-  "Lokale Dateien und Snapshots": "Berkas dan snapshot lokal",
   "Sicherheitsmodus": "Mode keamanan",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK siap",

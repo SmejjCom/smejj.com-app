@@ -12,7 +12,6 @@ export default {
   "Startseite": "Ana sayfa",
   "Projekte": "Projeler",
   "Arbeitsbereich": "Çalışma alanı",
-  "Lokale Dateien und Snapshots": "Yerel dosyalar ve anlık görüntüler",
   "Sicherheitsmodus": "Güvenlik modu",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK hazır",

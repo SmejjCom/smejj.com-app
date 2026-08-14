@@ -12,7 +12,6 @@ export default {
   "Startseite": "Главная",
   "Projekte": "Проекты",
   "Arbeitsbereich": "Рабочая область",
-  "Lokale Dateien und Snapshots": "Локальные файлы и снимки",
   "Sicherheitsmodus": "Режим безопасности",
   "Free-safe": "Free-safe",
   "BYOK vorbereitet": "BYOK готов",
