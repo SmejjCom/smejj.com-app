@@ -46,6 +46,11 @@ const VIDEO_ANDRANG_MAX = Number(process.env.SMEJJ_VIDEO_ANDRANG_MAX || 3);
 let videoAndrang = 0;
 // Malen ist langsam (CPU): eigenes Budget statt REQUEST_TIMEOUT_MS.
 const BILDER_FOTO_TIMEOUT_MS = Number(process.env.SMEJJ_BILDER_FOTO_TIMEOUT_MS || 150000);
+// Geduld beim besetzten Maler (2026-08-13): seit der Maler im Threadpool malt,
+// feuert sein Sofort-429 wirklich — 429 heisst nur noch "gerade malt ein
+// anderer", nicht "kaputt". Darum warten statt sofort zur SVG-Reserve.
+const BILDER_WARTE_MAX_MS = Number(process.env.SMEJJ_BILDER_WARTE_MAX_MS || 120000);
+const BILDER_WARTE_TAKT_MS = Number(process.env.SMEJJ_BILDER_WARTE_TAKT_MS || 5000);
 const BILDER_HEALTH_TIMEOUT_MS = 2500;
 // PNG-Deckel: 512px-PNG liegt bei 300-800 KB, base64 +33 %.
 const BILDER_MAX_B64 = 4_000_000;
@@ -213,7 +218,8 @@ function istPersonGesperrt(text) {
 
 const PERSONEN_ABSAGE = "Aus Rücksicht auf Persönlichkeitsrechte male ich keine realen, erkennbaren Personen. Gern male ich dir eine frei erfundene Person oder eine andere Szene — beschreib sie mir einfach.";
 
-// Laesst den eigenen Bild-Maler ein Foto malen. Liefert Markdown oder "".
+// Laesst den eigenen Bild-Maler ein Foto malen. Liefert Markdown, "besetzt"
+// wenn gerade ein anderes Bild entsteht (HTTP 429), sonst "".
 async function erzeugeFotoInhalt(prompt, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -227,6 +233,7 @@ async function erzeugeFotoInhalt(prompt, timeoutMs) {
       },
       body: JSON.stringify({ prompt })
     });
+    if (antwort.status === 429) return "besetzt";
     if (!antwort.ok) return "";
     const daten = await antwort.json();
     const b64 = String(daten?.b64 || "");
@@ -236,6 +243,25 @@ async function erzeugeFotoInhalt(prompt, timeoutMs) {
     return "";
   } finally {
     clearTimeout(timer);
+  }
+}
+
+// Wartet hoeflich, bis der Bild-Maler frei ist — dasselbe Muster wie
+// erzeugeVideoMitGeduld: der Maler kann nur EIN Bild zugleich (2 Kerne) und
+// antwortet sonst ehrlich mit 429. Ohne diese Schleife hiesse jedes 429 sofort
+// SVG-Reserve, obwohl nichts kaputt, sondern nur besetzt ist.
+// `melde(phase)` faerbt den laufenden Fortschritt ("wartet" statt "läuft").
+async function erzeugeFotoMitGeduld(prompt, melde) {
+  const bis = Date.now() + BILDER_WARTE_MAX_MS;
+  for (;;) {
+    const inhalt = await erzeugeFotoInhalt(prompt, BILDER_FOTO_TIMEOUT_MS);
+    if (inhalt !== "besetzt") return inhalt;
+    // Besetzt: warten, aber nie laenger als das Geduldsbudget. Danach
+    // uebernimmt die SVG-Reserve — besser stilisiert als gar kein Bild.
+    if (Date.now() >= bis) return "";
+    melde("wartet auf freien Platz");
+    await new Promise((weiter) => setTimeout(weiter, BILDER_WARTE_TAKT_MS));
+    melde("läuft");
   }
 }
 
@@ -507,16 +533,21 @@ export async function streamBilderLane(res, body, task, deps) {
     bilderSseKopf(res, deps, body, "bilder-foto", "bild-maler:sd-turbo");
     bilderSchritt(res, "laeuft", "läuft … (ca. 1 Minute)");
     const beginn = Date.now();
+    let phase = "läuft";
     // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
     const takt = setInterval(() => {
-      bilderSchritt(res, "laeuft", `läuft … ${Math.round((Date.now() - beginn) / 1000)} s`);
+      bilderSchritt(res, "laeuft", `${phase} … ${Math.round((Date.now() - beginn) / 1000)} s`);
     }, 10000);
     let inhalt = "";
     let gesperrt = false;
     try {
       const malPrompt = await uebersetzeMalPrompt(prompt);
       gesperrt = istPersonGesperrt(malPrompt);
-      if (!gesperrt) inhalt = await erzeugeFotoInhalt(malPrompt, BILDER_FOTO_TIMEOUT_MS);
+      if (!gesperrt) {
+        inhalt = await erzeugeFotoMitGeduld(malPrompt, (neu) => {
+          phase = neu;
+        });
+      }
     } finally {
       clearInterval(takt);
     }

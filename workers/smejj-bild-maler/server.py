@@ -157,9 +157,28 @@ async def erzeuge(request: Request):
     if not prompt:
         return JSONResponse({"ok": False, "fehler": "prompt_fehlt"}, status_code=400)
     # 2 Kerne: immer nur EIN Bild; ein zweiter Auftrag bekommt sofort 429,
-    # die Bruecke faellt dann auf den SVG-Weg zurueck statt zu warten.
+    # die Bruecke wartet dann geduldig auf einen freien Platz (SVG-Reserve
+    # erst, wenn ihr Geduldsbudget aufgebraucht ist).
     if not mal_sperre.acquire(blocking=False):
         return JSONResponse({"ok": False, "fehler": "beschaeftigt"}, status_code=429)
+    try:
+        # Die Minutenarbeit gehoert in den Threadpool, NICHT in die Event-Loop:
+        # blockierend gemalt beantwortete der Prozess waehrend eines Jobs NICHTS
+        # mehr — neue Anfragen (auch GET /health) stauten sich am Socket bis zum
+        # Jobende, das Sofort-429 feuerte praktisch nie, und der Video-Worker
+        # lief in sein 150-s-Timeout (gemessen 2026-08-13,
+        # docs/video/BEFUND_500_UM_2318Z_KEIN_EXTERN_KEY.md). Hier bleibt die
+        # Loop frei, damit /health und das 429 auch waehrend des Malens ehrlich
+        # antworten.
+        from fastapi.concurrency import run_in_threadpool
+
+        return await run_in_threadpool(erzeuge_blockierend, prompt)
+    finally:
+        mal_sperre.release()
+
+
+def erzeuge_blockierend(prompt):
+    """Die eigentliche Malarbeit — laeuft im Threadpool, die Sperre haelt der Aufrufer."""
     try:
         beginn = time.time()
         bild = pipeline(
@@ -181,5 +200,3 @@ async def erzeuge(request: Request):
         }
     except Exception as fehler:  # noqa: BLE001
         return JSONResponse({"ok": False, "fehler": f"{type(fehler).__name__}: {fehler}"}, status_code=500)
-    finally:
-        mal_sperre.release()
