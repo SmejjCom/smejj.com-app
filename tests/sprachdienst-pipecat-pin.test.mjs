@@ -97,6 +97,51 @@ test("die verwundbare pipecat-Oberflaeche ist nirgends verdrahtet", () => {
   }
 });
 
+// --- protobuf: die Fassung muss tragen, was pipecat verlangt ---------------
+//
+// WARUM (2026-08-14): Der Pin stand auf 5.29.2 — UNTER der Untergrenze, die
+// pipecat-ai 0.0.67 selbst fordert. Ein echter Bau waere an der Aufloesung
+// gescheitert; gemerkt hat es niemand, weil dieser Dienst nirgends gebaut
+// wird. Eine Anforderung, die nur in fremden Metadaten steht, ist hier
+// festgehalten, damit der naechste Pin nicht wieder darunter rutscht.
+
+/** Quelle: PyPI-Metadaten von pipecat-ai 0.0.67 — `protobuf~=5.29.3`. */
+const PIPECAT_FORDERT = { mindestens: [5, 29, 3], reihe: [5, 29] };
+
+/** "5.29.6" -> [5, 29, 6] */
+function alsZahlen(fassung) {
+  return fassung.split(".").map((t) => Number.parseInt(t, 10));
+}
+
+/** Vergleicht zwei Fassungen stellenweise. */
+function vergleiche(a, b) {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const d = (a[i] ?? 0) - (b[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
+test("der protobuf-Pin erfuellt, was pipecat selbst verlangt", () => {
+  const treffer = ANFORDERUNGEN.match(/^protobuf==([^\s#]+)/m);
+  assert.ok(treffer, "requirements.txt pinnt kein protobuf");
+  const fassung = alsZahlen(treffer[1]);
+
+  assert.ok(vergleiche(fassung, PIPECAT_FORDERT.mindestens) >= 0,
+    `protobuf ${treffer[1]} liegt unter der Untergrenze ${PIPECAT_FORDERT.mindestens.join(".")}, `
+    + "die pipecat-ai 0.0.67 mit ~=5.29.3 fordert — pip kaeme hier nicht durch");
+  assert.deepEqual(fassung.slice(0, 2), PIPECAT_FORDERT.reihe,
+    "~=5.29.3 erlaubt nur die 5.29er-Reihe; 6.x waere kein Fortschritt, sondern ein Konflikt");
+});
+
+test("die gepinnte protobuf-Fassung ist die gemessen saubere", () => {
+  const treffer = ANFORDERUNGEN.match(/^protobuf==([^\s#]+)/m);
+  const zeileZurFassung = new RegExp(`^#\\s*${treffer[1].replace(/\./g, "\\.")}\\s*->\\s*0 Befunde`, "m");
+  assert.match(ANFORDERUNGEN, zeileZurFassung,
+    `fuer protobuf ${treffer[1]} ist keine Null-Befunde-Messung dokumentiert — `
+    + "wer anhebt, misst; wer nicht misst, hebt nicht an");
+});
+
 test("der genutzte Serialisierer ist der unverwundbare Protobuf-Weg", () => {
   const quellen = pythonQuellen();
   const nutztProtobuf = quellen.some((q) => /pipecat\.serializers\.protobuf/.test(q.inhalt));

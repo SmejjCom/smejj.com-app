@@ -39,10 +39,29 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 # 3.11.11 trug 66 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 3.14.3.
 aiohttp==3.14.3
-# BEWUSST NICHT angehoben (2026-08-14): 4 Luecken, sauber erst ab 6.33.5 —
-# das waere ein Hauptversionssprung (5 -> 6) bei einer Kernbibliothek, an
-# der onnxruntime und pipecat haengen. Risiko groesser als der Nutzen.
-protobuf==5.29.2
+# ENTSCHEIDUNG 2026-08-14: angehoben auf die erste saubere Fassung.
+# Die aeltere Notiz hier ("sauber erst ab 6.33.5, das waere ein
+# Hauptversionssprung") stimmte nicht — sie zaehlte osv-EINTRAEGE statt
+# Befunde und hatte die 5.29er-Reihe nicht zu Ende gemessen.
+# Gemessen an api.osv.dev, Fassung fuer Fassung (eindeutige Befunde):
+#   5.29.2 -> 2 Befunde  CVE-2025-4565, CVE-2026-0994
+#   5.29.3 -> 2 Befunde  dieselben
+#   5.29.4 -> 2 Befunde  dieselben
+#   5.29.5 -> 1 Befund   CVE-2026-0994
+#   5.29.6 -> 0 Befunde  SAUBER
+#   6.33.0 -> 1 Befund   CVE-2026-0994
+#   6.33.5 -> 0 Befunde
+# Es braucht also weder einen Zwischenschritt noch einen Hauptversionssprung:
+# die saubere Fassung liegt INNERHALB der gepinnten Reihe.
+# VERTRAEGLICHKEIT (PyPI-Metadaten, 2026-08-14): pipecat-ai 0.0.67 verlangt
+# `protobuf~=5.29.3`, also >=5.29.3 UND <5.30. Damit ist 6.x gar nicht
+# erlaubt — der befuerchtete Sprung war nie moeglich. onnxruntime 1.20.1
+# verlangt `protobuf` ohne Obergrenze, faster-whisper 1.1.0 gar nicht.
+# NEBENBEFUND, hier mit behoben: 5.29.2 lag UNTER der Untergrenze, die
+# pipecat verlangt (>=5.29.3). Ein echter Bau waere an der Aufloesung
+# gescheitert; aufgefallen ist es nie, weil dieser Dienst kein Dockerfile
+# hat und in kein Abbild gebaut wird.
+protobuf==5.29.6
 
 # Silero VAD runtime (CPU is enough for VAD).
 onnxruntime==1.20.1
