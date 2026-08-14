@@ -39,7 +39,14 @@ BILD_MALER_KEY = os.environ.get("SMEJJ_BILDER_WORKER_KEY", "")
 BILD_TIMEOUT_S = int(os.environ.get("SMEJJ_VIDEO_BILD_TIMEOUT_S", "150"))
 DAUER_S = float(os.environ.get("SMEJJ_VIDEO_DAUER_S", "4"))
 FPS = int(os.environ.get("SMEJJ_VIDEO_FPS", "24"))
-GROESSE = int(os.environ.get("SMEJJ_VIDEO_GROESSE", "512"))
+# Zielgroesse des VIDEOS. Der Bild-Maler liefert 512 px; hier wird vor dem
+# Warping hochgezogen. Klingt nach Scheinaufloesung, ist aber gemessen ein
+# echter Gewinn: die bilineare Abtastung beim Warping verwischt in 512
+# spuerbar mehr. FAIR VERGLICHEN (alle Ergebnisse auf 512 zurueckgerechnet,
+# 2026-08-13): 512 -> 103, 768 -> 135 (+31 %), 1024 -> 150 (+46 %).
+# 768 ist der Punkt, an dem der Gewinn die Rechenzeit noch wert ist
+# (+2,6 s lokal); 1024 kostete das Dreifache fuer wenig mehr.
+GROESSE = int(os.environ.get("SMEJJ_VIDEO_GROESSE", "768"))
 SCHRITTE = int(os.environ.get("SMEJJ_VIDEO_SCHRITTE", "4"))  # nur animatediff
 MAX_PROMPT = 500
 # Deckel wie in der Brücke (VIDEO_MAX_B64): mehr streamen wir nicht durch.
@@ -68,7 +75,9 @@ TIEFE_MODELL_URL = os.environ.get(
 TIEFE_DATEI = os.environ.get("SMEJJ_VIDEO_TIEFE_DATEI", "/tmp/smejj-tiefe.onnx")
 # Wie weit der nahste Pixel wandert (Pixel). Mehr wirkt raeumlicher; ueber
 # ~30 verschmiert das Warping an harten Tiefenkanten. 26 ist gemessen gut.
-PARALLAX_STAERKE = float(os.environ.get("SMEJJ_VIDEO_PARALLAX_STAERKE", "26"))
+# Auf 512 px bezogen; wird unten proportional zur Zielgroesse skaliert,
+# damit die Fahrt bei 768 gleich stark WIRKT und nicht kleiner.
+PARALLAX_STAERKE = float(os.environ.get("SMEJJ_VIDEO_PARALLAX_STAERKE", "26")) * GROESSE / 512
 # Eigenbewegung der Szene (Stufe 2, 2026-08-13): Wolken ziehen durch. Ohne das
 # steht eine Landschaft trotz Kamerafahrt wie eingefroren.
 #
@@ -261,9 +270,14 @@ def bild_aufbereiten(bild):
     Beides EINMAL auf dem Standbild — pro Frame waere es der 96-fache Aufwand
     fuer dasselbe Ergebnis, weil alle Frames aus diesem einen Bild entstehen.
     """
-    from PIL import ImageEnhance, ImageFilter
+    from PIL import Image, ImageEnhance, ImageFilter
 
     try:
+        # Erst auf Zielgroesse (LANCZOS haelt Kanten am besten), dann schaerfen.
+        # Andersherum wuerde das Hochziehen die Schaerfung gleich wieder
+        # wegglaetten.
+        if bild.size != (GROESSE, GROESSE):
+            bild = bild.resize((GROESSE, GROESSE), Image.LANCZOS)
         if SCHAERFE_PROZENT > 0:
             bild = bild.filter(ImageFilter.UnsharpMask(radius=2.5, percent=SCHAERFE_PROZENT, threshold=3))
         if KONTRAST and abs(KONTRAST - 1.0) > 0.001:
