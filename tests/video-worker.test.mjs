@@ -132,8 +132,19 @@ describe("Portraet-Qualitaet (Befund Betreiber 2026-08-13)", () => {
     // je Frame waere es der 96-fache Aufwand fuer dasselbe Ergebnis.
     const vorRendern = server.indexOf("def bild_aufbereiten") < server.indexOf("def parallax_frames");
     assert.ok(vorRendern, "Aufbereitung gehoert vor das Rendern");
-    assert.ok(/except Exception:.*\n\s*pass/.test(server.split("def bild_aufbereiten")[1].slice(0, 900)),
+    assert.ok(/except Exception:.*\n\s*pass/.test(server.split("def bild_aufbereiten")[1].slice(0, 1600)),
       "Aufbereitung muss fail-safe sein — sie darf nie ein Video kosten");
+  });
+
+  it("rendert groesser als das Basisbild (768) — gemessener Schaerfegewinn", () => {
+    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
+    assert.ok(server.includes('"SMEJJ_VIDEO_GROESSE", "768"'), "Zielgroesse 768 fehlt");
+    // Die Fahrt muss mitwachsen, sonst wirkt sie bei 768 schwaecher.
+    assert.ok(/PARALLAX_STAERKE = .*\* GROESSE \/ 512/.test(server), "Staerke skaliert nicht mit");
+    // Reihenfolge zaehlt: erst hochziehen, dann schaerfen — andersherum
+    // glaettet das Hochziehen die Schaerfung wieder weg.
+    const auf = server.split("def bild_aufbereiten")[1].slice(0, 1200);
+    assert.ok(auf.indexOf("LANCZOS") < auf.indexOf("UnsharpMask"), "erst skalieren, dann schaerfen");
   });
 
   it("kodiert mit CRF 23 (drei Stufen schaerfer als vorher)", () => {
