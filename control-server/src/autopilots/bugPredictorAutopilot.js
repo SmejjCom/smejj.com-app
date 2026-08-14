@@ -63,8 +63,16 @@ export function scanForBugsAndVulnerabilities(filePath, codeContent = "") {
       }
     }
 
-    // 3. Potentieller Memory Leak (Event-Listener in Loops oder setInterval ohne Clear)
-    if (/setInterval\s*\(/.test(line) && !lines.some((l) => l.includes("clearInterval"))) {
+    // 3. Potentieller Memory Leak (setInterval ohne Aufraeumen).
+    // ENTWARNUNG bei `unref()` in den naechsten Zeilen: ein unref'ter Timer
+    // haelt den Node-Prozess nicht am Leben und ist damit genau der KORREKTE
+    // Umgang fuer Hintergrund-Takte. Gemessen 2026-08-14: sechs der 13
+    // verbliebenen Befunde waren solche vorbildlich entschaerften Timer
+    // (opsAutopiloten, opsWochenbericht, autopilotLaeufer, modellEinkaeufer) —
+    // sie als Leck zu melden hiesse, sauberen Code zur Arbeit zu erklaeren.
+    const entschaerft = lines.slice(i, i + 3).some((l) => /\.unref\s*\(/.test(l));
+    if (/setInterval\s*\(/.test(line) && !lines.some((l) => l.includes("clearInterval"))
+        && !entschaerft && !istSelbstfund(line) && !istTest) {
       findings.push({ line: lineNum, severity: "MEDIUM", type: "uncleared_interval", message: "setInterval() ohne sichtbares clearInterval() kann zu Memory-Leaks fuehren." });
       suggestions.push({ line: lineNum, fix: "Speichere die Intervall-ID und raeume sie bei Beendigung auf." });
       riskScore += 15;
@@ -86,8 +94,12 @@ export function scanForBugsAndVulnerabilities(filePath, codeContent = "") {
     //      baut nur einen Bezugspunkt zum Zerlegen; es wird nichts gesendet.
     const namensraum = /https?:\/\/(www\.)?w3\.org\//.test(line) || /xmlns/.test(line);
     const parserBasis = /new URL\(/.test(line) || /http:\/\/\$\{/.test(line);
-    if (/http:\/\/(?!localhost|127\.0\.0\.1)/.test(line)
-        && !internerHost && !namensraum && !parserBasis && !istSelbstfund(line)) {
+    // Ein Endpunkt braucht einen Host. `"Aendere http:// zu https://."` ist ein
+    // Reparaturvorschlag im Fliesstext — der Scanner meldete damit seinen
+    // eigenen Ratschlag als Sicherheitsrisiko.
+    const echterEndpunkt = /http:\/\/[a-z0-9$[{]/i.test(line);
+    if (/http:\/\/(?!localhost|127\.0\.0\.1)/.test(line) && echterEndpunkt
+        && !internerHost && !namensraum && !parserBasis && !istSelbstfund(line) && !istTest) {
       findings.push({ line: lineNum, severity: "MEDIUM", type: "insecure_http", message: "Ungesicherter HTTP-Endpunkt verwendet." });
       suggestions.push({ line: lineNum, fix: "Aendere http:// zu https://." });
       riskScore += 20;

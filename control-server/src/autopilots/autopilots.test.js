@@ -544,3 +544,24 @@ test("bug-predictor: Laerm bleibt drausen, echte Funde bleiben drin", () => {
   assert.equal(http("src/x.js", "const u = new URL(req.url, `http://${req.headers.host}`);"), 0, "Parser-Basis sendet nichts");
   assert.equal(http("src/x.js", 'const w = "http://smejj-video-worker.zeabur.internal:8080";'), 0, "internes Netz kennt kein TLS");
 });
+
+// Zweite Runde 2026-08-14: nach den Selbstfund-Filtern blieben 13 MEDIUM. Auch
+// die waren zu 11/13 Laerm — sechs vorbildlich mit unref() entschaerfte Timer,
+// ein Kommentar, der Reparaturvorschlag des Scanners selbst, eine Testdatei.
+// Echt war nur der Takt der Statusseite (behoben: clearInterval bei pagehide).
+test("bug-predictor: entschaerfte Timer und Fliesstext sind keine Befunde", () => {
+  const iv = (pfad, code) => scanForBugsAndVulnerabilities(pfad, code)
+    .findings.filter((f) => f.type === "uncleared_interval").length;
+  const http = (pfad, code) => scanForBugsAndVulnerabilities(pfad, code)
+    .findings.filter((f) => f.type === "insecure_http").length;
+
+  // ECHT
+  assert.equal(iv("src/x.js", "setInterval(tick, 1000);"), 1, "Timer ohne jedes Aufraeumen");
+
+  // LAERM
+  assert.equal(
+    iv("src/x.js", 'const z = setInterval(tick, 1000);\nif (typeof z.unref === "function") z.unref();'),
+    0, "unref() ist der korrekte Umgang, kein Leck");
+  assert.equal(iv("src/x.js", "// ein simpler setInterval(7 Tage) wuerde nie feuern"), 0, "Kommentar");
+  assert.equal(http("src/x.js", 'fix: "Aendere http:// zu https://."'), 0, "Fliesstext ohne Host ist kein Endpunkt");
+});
