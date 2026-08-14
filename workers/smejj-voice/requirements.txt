@@ -11,6 +11,11 @@
 #   openai  -> OpenAI-compatible LLM client (smejj.com router, BYOK)
 # BEWUSST NICHT angehoben: 0.0.94 traegt SELBST 4 Luecken — ein Wechsel
 # taeuscht Fortschritt vor, ohne einen zu bringen.
+# NACHMESSUNG 2026-08-14, 02:05 Pazifik (api.osv.dev): die Lage ist sogar
+# umgekehrt — 0.0.67 -> 2 Luecken, 0.0.80 -> 4, 0.0.90 -> 6. Anheben
+# VERSCHLECHTERT hier messbar. Die Standardempfehlung des Backlog-Eintrags
+# ("Version anheben und Dienst neu bauen") ist fuer dieses Paket also falsch;
+# wer sie befolgt, handelt sich vier zusaetzliche Luecken ein.
 pipecat-ai[silero,whisper,openai]==0.0.67
 
 # Speech-to-text engine (also pulled by the whisper extra; pinned for clarity).
@@ -24,6 +29,11 @@ aiohttp==3.14.3
 # BEWUSST NICHT angehoben (2026-08-14): 4 Luecken, sauber erst ab 6.33.5 —
 # das waere ein Hauptversionssprung (5 -> 6) bei einer Kernbibliothek, an
 # der onnxruntime und pipecat haengen. Risiko groesser als der Nutzen.
+# NACHMESSUNG 2026-08-14, 02:05 Pazifik (api.osv.dev, Version fuer Version):
+#   5.29.2 -> 4 Luecken, 5.29.5 -> 2, 6.33.0 -> 2.
+# Damit gibt es einen Zwischenschritt OHNE Hauptversionssprung: 5.29.5 halbiert
+# die Zahl und bleibt in der 5er-Reihe. Kein Selbstlaeufer — nachmessen, ob
+# onnxruntime 1.20.1 die Fassung mittraegt.
 protobuf==5.29.2
 
 # Silero VAD runtime (CPU is enough for VAD).

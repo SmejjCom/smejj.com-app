@@ -1,351 +1,53 @@
 {
-  "gesammeltAm": "2026-08-12T16:49:21.370Z",
+  "gesammeltAm": "2026-08-14T08:54:48.199Z",
   "aufgaben": [
     {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "training-loop",
-      "titel": "Ausfall: 05. Training-Loop",
-      "befund": "Überfällig: der letzte Lauf ist deutlich länger her als der Zeitplan erlaubt.",
-      "seit": "2026-08-12T09:59:36.371Z"
+      "stufe": 2,
+      "quelle": "CVE-Waechter",
+      "betrifft": "bibliothek:diffusers",
+      "titel": "diffusers 0.36.0: 5 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-7wx4-6vff-v64p, GHSA-98h9-4798-4q5v, PYSEC-2026-2446. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
+      "seit": null
     },
     {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "angelina-autopilot",
-      "titel": "Verspaetung: 31. Angelina-Autopilot (Satz & Prompt-Synthesizer Engine)",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
+      "stufe": 2,
+      "quelle": "CVE-Waechter",
+      "betrifft": "bibliothek:pipecat-ai",
+      "titel": "pipecat-ai 0.0.67: 2 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-c2jg-5cp7-6wc7, PYSEC-2026-458. Quelle: workers/smejj-voice/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
+      "seit": null
     },
     {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "autonomous-git-bot",
-      "titel": "Verspaetung: 28. Autonomous Git-Bot & Pull-Request Auto-Fixer",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
+      "stufe": 2,
+      "quelle": "CVE-Waechter",
+      "betrifft": "bibliothek:protobuf",
+      "titel": "protobuf 5.29.2: 4 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-7gcm-g887-7qv7, GHSA-8qvm-5x2c-j2w7, PYSEC-2026-1805. Quelle: workers/smejj-voice/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
+      "seit": null
     },
     {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "evolutionary-mutation",
-      "titel": "Verspaetung: 22. Evolutionary Mutation & Stress-Testing Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "instant-web-container",
-      "titel": "Verspaetung: 26. In-Browser Instant WebContainers & Live-Vorschau",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "knowledge-distiller",
-      "titel": "Verspaetung: 21. Cross-Model Knowledge Distiller Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "live-arena-leaderboard",
-      "titel": "Verspaetung: 25. Automated Live-Arena & ELO Leaderboard Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "model-lifecycle",
-      "titel": "Verspaetung: 18. Shadow-Release & Model-Lifecycle Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "multi-file-repo-architect",
-      "titel": "Verspaetung: 24. Autonomous Multi-File Repo-Architect Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "process-reward",
-      "titel": "Verspaetung: 20. Process-Reward & Step-by-Step Reasoner Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "realtime-internet-harvester",
-      "titel": "Verspaetung: 23. 24/7 Real-Time Internet Ingestion & Knowledge Harvester",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "realtime-voice-pair",
-      "titel": "Verspaetung: 27. Real-Time Voice & Screen Pair-Programmer Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "self-healing",
-      "titel": "Verspaetung: 11. Self-Healing Prompt-Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "smart-router",
-      "titel": "Verspaetung: 16. Model-Arena & Smart-Router Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "synthetic-user-watchdog",
-      "titel": "Verspaetung: 29. 24/7 Synthetic User & Full-Stack E2E Watchdog",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 3,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "user-feedback-flywheel",
-      "titel": "Verspaetung: 19. User-Feedback & RLHF Flywheel Autopilot",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-12T15:59:36.843Z"
-    },
-    {
-      "stufe": 4,
+      "stufe": 5,
       "quelle": "Mail-Protokoll",
       "betrifft": "email-zustellung",
       "titel": "3 Mails haben den Server nicht verlassen",
       "befund": "Gemessen ueber 14 Tage. Gruende stehen im Versandprotokoll (Adminbereich, Ansicht V).",
       "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "angelina-autopilot",
-      "titel": "Messung anschliessen: 31. Angelina-Autopilot (Satz & Prompt-Synthesizer Engine)",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "autonomous-git-bot",
-      "titel": "Messung anschliessen: 28. Autonomous Git-Bot & Pull-Request Auto-Fixer",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "bug-predictor",
-      "titel": "Messung anschliessen: 17. Proaktiver Bug-Predictor & Security Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "code-interpreter",
-      "titel": "Messung anschliessen: 09. Code Interpreter Sandbox Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "deep-research",
-      "titel": "Messung anschliessen: 08. Deep Research KI-Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "evolutionary-mutation",
-      "titel": "Messung anschliessen: 22. Evolutionary Mutation & Stress-Testing Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "instant-web-container",
-      "titel": "Messung anschliessen: 26. In-Browser Instant WebContainers & Live-Vorschau",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "knowledge-distiller",
-      "titel": "Messung anschliessen: 21. Cross-Model Knowledge Distiller Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "knowledge-graph",
-      "titel": "Messung anschliessen: 15. Knowledge-Graph & RAG-Fusion Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "live-arena-leaderboard",
-      "titel": "Messung anschliessen: 25. Automated Live-Arena & ELO Leaderboard Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "memory-sync",
-      "titel": "Messung anschliessen: 10. Memory & Langzeitgedächtnis Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "model-lifecycle",
-      "titel": "Messung anschliessen: 18. Shadow-Release & Model-Lifecycle Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "multi-file-repo-architect",
-      "titel": "Messung anschliessen: 24. Autonomous Multi-File Repo-Architect Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "multimodal-engine",
-      "titel": "Messung anschliessen: 12. Multimodaler Audio/Vision Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "process-reward",
-      "titel": "Messung anschliessen: 20. Process-Reward & Step-by-Step Reasoner Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "realtime-internet-harvester",
-      "titel": "Messung anschliessen: 23. 24/7 Real-Time Internet Ingestion & Knowledge Harvester",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "realtime-voice-pair",
-      "titel": "Messung anschliessen: 27. Real-Time Voice & Screen Pair-Programmer Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "self-healing",
-      "titel": "Messung anschliessen: 11. Self-Healing Prompt-Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "self-improvement",
-      "titel": "Messung anschliessen: 14. DPO & Self-Improvement Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "smart-router",
-      "titel": "Messung anschliessen: 16. Model-Arena & Smart-Router Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "synthetic-user-watchdog",
-      "titel": "Messung anschliessen: 29. 24/7 Synthetic User & Full-Stack E2E Watchdog",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "task-orchestrator",
-      "titel": "Messung anschliessen: 13. Multi-Agenten Task-Orchestrator",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "training-loop",
-      "titel": "Messung anschliessen: 05. Training-Loop",
-      "befund": "Stillgelegt seit 2026-08-02 (Beschluss: RAG statt Training). Kein Live-Betrieb — Ampel bewusst grau.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "user-feedback-flywheel",
-      "titel": "Messung anschliessen: 19. User-Feedback & RLHF Flywheel Autopilot",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Ampel-grau",
-      "betrifft": "werkstatt-autopilot",
-      "titel": "Messung anschliessen: 30. Werkstatt-Autopilot (Self-Evolution Engine)",
-      "befund": "Geplant — dieses Modul ist noch nicht in den Live-Betrieb eingebunden. Die Ampel bleibt grau, bis eine echte Messung existiert.",
-      "seit": null
     }
   ],
   "stummeQuellen": [
     {
-      "quelle": "Pruefsuite",
-      "grund": "nicht angefordert (--mit-tests setzen)"
+      "quelle": "Ampel-grau",
+      "grund": "Server erst seit 3 min neu gestartet — 2 Autopilot(en) hatten noch keinen Takt. Grau heisst hier \"noch nicht gemessen\", nicht \"kaputt\"."
+    },
+    {
+      "quelle": "Nutzer-Feedback",
+      "grund": "nur im Control-Server messbar (liest die e2-Feedback-Ablage im Takt)"
     }
   ],
   "gesammeltAus": [
     "Autopiloten-Ampel",
+    "Pruefsuite",
+    "CVE-Waechter",
     "Mail-Zustellprotokoll"
   ]
 }
