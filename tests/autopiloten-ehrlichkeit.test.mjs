@@ -78,7 +78,14 @@ const MIT_ECHTER_MESSUNG = new Set([
   "modell-einkaeufer",        // Wochen-Arena: echte Proben je Modell ueber die Bruecke
   "selbstheilung",            // bezeugt jeden Heilungs-Durchgang selbst
   "autopilot-laeufer",        // Totmannschalter: der Taktgeber bezeugt jeden Durchgang selbst
-  "synthetic-user-watchdog"   // ECHTER Durchlauf: Anmeldung, Chat ueber die Bruecke, Speicher mit Ruecklese-Probe
+  "synthetic-user-watchdog",  // ECHTER Durchlauf: Anmeldung, Chat ueber die Bruecke, Speicher mit Ruecklese-Probe
+  // --- AI Evolution Engine (Nr. 37-39), seit 2026-08-14 ---
+  // Alle drei laufen im Autopilot-Laeufer und werden ROT, wenn ihr Selbsttest
+  // faellt: jeder Pruefer bekommt eine KAPUTTE und eine GESUNDE Probe und muss
+  // beide richtig beurteilen (control-server/src/evolution/evolutionLaeufe.js).
+  "ai-evolution-engine",      // 12 Medientyp-Pruefer + Sperrfrist-Nachweis
+  "missing-function-detector",// Luecken-Erkennung + Beleg-Pruefung gegen den echten Quelltext
+  "autopilot-supervisor"      // Abnahme, blind UND blockierend geprueft
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

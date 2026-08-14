@@ -1,10 +1,12 @@
 // smejj.com — Modul AP: Autopiloten-Liste (Single Responsibility: Handgepflegte Registry aller Autopiloten).
 // Ausgelagert aus opsAutopiloten.js zur Einhaltung der 800-Zeilen-Regel.
 
+import { EVOLUTION_AUTOPILOTEN } from "./opsAutopilotenListeEvolution.js";
+
 const TAG_MS = 24 * 60 * 60 * 1000;
 const STUNDE_MS = 60 * 60 * 1000;
 
-export const AUTOPILOTEN = Object.freeze([
+const BASIS_AUTOPILOTEN = Object.freeze([
   {
     id: "autopilot-laeufer",
     name: "Taktgeber",
@@ -776,3 +778,11 @@ export const AUTOPILOTEN = Object.freeze([
     stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
   }
 ]);
+
+/**
+ * Die vollstaendige Registry. Teil 2 (Nr. 37-39, AI Evolution Engine) wohnt in
+ * einer eigenen Datei — zusammen ueberschritten sie die 800-Zeilen-Regel.
+ * Wer einen Autopiloten sucht, findet ihn ueber AUTOPILOTEN, nicht ueber die
+ * Teillisten.
+ */
+export const AUTOPILOTEN = Object.freeze([...BASIS_AUTOPILOTEN, ...EVOLUTION_AUTOPILOTEN]);

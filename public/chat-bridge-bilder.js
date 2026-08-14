@@ -19,6 +19,8 @@
 //
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
+import { meldeAktion } from "./chat-bridge-evolution.js";
+
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
 // Derselbe Groq-Zugang, der smejj 1.0 heute traegt — fuer den SVG-Weg.
@@ -389,6 +391,36 @@ function bilderSendeInhalt(res, inhalt) {
   for (let i = 0; i < inhalt.length; i += 65536) {
     res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: inhalt.slice(i, i + 65536) } }] })}\n\n`);
   }
+  // AI Evolution Engine (2026-08-14): DIESE eine Stelle ist der Trichter, durch
+  // den jedes Bild und jedes Video die Bruecke verlaesst — Erfolg wie
+  // Fehlschlag. Hier zu messen heisst, keinen Weg zu uebersehen.
+  messeMedienAusgabe(inhalt);
+}
+
+/**
+ * Liest der Ausgabe an, WAS geliefert wurde, und meldet das Urteil.
+ *
+ * Bewusst aus dem fertigen Markdown gelesen statt aus Zwischenwerten: was hier
+ * steht, ist genau das, was beim Nutzer ankommt. Ein Wert, den nur der Erzeuger
+ * kennt, sagt nichts darueber, was am Ende ausgeliefert wurde.
+ */
+export function messeMedienAusgabe(inhalt, { melder = meldeAktion } = {}) {
+  const text = String(inhalt || "");
+  const treffer = text.match(/\]\((data:(image|video)\/([a-z0-9+.-]+);base64,)([A-Za-z0-9+/=]+)\)/i);
+  if (!treffer) {
+    // Kein Medium drin: dann war es eine Textantwort (meist eine Absage).
+    return melder({ art: "text", ergebnis: text, quelle: "bruecke-bilder", betrifft: "bilder-spur" });
+  }
+  const gattung = String(treffer[2]).toLowerCase() === "video" ? "video" : "bild";
+  const format = String(treffer[3]).toLowerCase();
+  // base64 traegt 6 Bit je Zeichen — drei Viertel der Zeichenzahl sind Bytes.
+  const bytes = Math.floor((treffer[4].length * 3) / 4);
+  return melder({
+    art: gattung,
+    ergebnis: { url: treffer[1], format, bytes, ...(gattung === "video" ? { hatTon: /Ton/i.test(text) } : {}) },
+    quelle: "bruecke-bilder",
+    betrifft: gattung === "video" ? "video-erzeugung" : "bilder-malen"
+  });
 }
 
 // Konstanter text = konstante Kennung: die App aktualisiert dann EINE Zeile
