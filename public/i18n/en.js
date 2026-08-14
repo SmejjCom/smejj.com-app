@@ -10,7 +10,6 @@ export default {
   "Beim Öffnen anzeigen": "Show on launch",
   "Letzte Ansicht": "Last view",
   "Startseite": "Home",
-  "Projekte": "Projects",
   "Arbeitsbereich": "Workspace",
   "Sicherheitsmodus": "Security mode",
   "Free-safe": "Free-safe",
@@ -324,4 +323,18 @@ export default {
   "Coding": "Coding",
   "z. B. Antworte kurz und auf Deutsch. Erkläre Fachwörter einfach.": "e.g. Answer briefly and in English. Explain technical terms simply.",
   "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.": "Your session has expired. Please sign in again.",
+  // Beispiel-Chips der Glas-Startseite (2026-08-13).
+  "Code schreiben": "Write code",
+  "Schreibe Code für:": "Write code for:",
+  "Text verbessern": "Improve text",
+  "Verbessere diesen Text:": "Improve this text:",
+  "Recherchieren": "Research",
+  "Recherchiere für mich:": "Research this for me:",
+  // Startseiten-Hero + Eingabe-Platzhalter (2026-08-13).
+  "Womit kann ich helfen?": "How can I help?",
+  "Beschreibe eine Aufgabe oder stelle eine Frage.": "Describe a task or ask a question.",
+  "Bilder generieren": "Generate images",
+  "Generiere ein Bild von:": "Generate an image of:",
+  "Video generieren": "Generate video",
+  "Generiere ein Video von:": "Generate a video of:",
 };

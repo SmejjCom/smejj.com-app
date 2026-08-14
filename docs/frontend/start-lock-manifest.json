@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-14T18:39:02.706Z",
-  "confirmation": "Betreiber-Meldung 2026-08-14 'Was ist mit Startseite Design passiert' — Wiederherstellung: start-glass.css, eckig.css und search-overlay.css fehlten in SOURCES und fielen beim Buendel-Bau heraus. Buendel wieder mit 12 Quellen.",
+  "frozenAt": "2026-08-14T19:01:50.030Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-14: Chip 'Bild erstellen' -> 'Bilder generieren', neuer Chip 'Video generieren'. Dabei die Startseiten-Quellen des Bau-Branches auf den ausgelieferten Stand nachgezogen (index.html, i18n, start-chips.js), die nur im Frontend-Artefakt lagen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "53d1ed109a17e0e943c028ea28bc89eb4a5749c8cdb9b4639f13237732fc8488",
+    "public/index.html": "8f3fae986d807c6f3a31dc759c93a2f9d6da40a637a5d48423cc95f602fc8b06",
     "public/styles.css": "2bb97c86e8c71f9847436f2616b349218e09773aad1370be3292808b945ac2fc",
     "public/start-styles.css": "12043c79f73c31ce8afa6ca7a64f1ca6f901c378fca513ad985a442dc97c1cbd",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",

@@ -10,7 +10,6 @@ export default {
   "Beim Öffnen anzeigen": "Tampilkan saat dibuka",
   "Letzte Ansicht": "Tampilan terakhir",
   "Startseite": "Beranda",
-  "Projekte": "Proyek",
   "Arbeitsbereich": "Ruang kerja",
   "Sicherheitsmodus": "Mode keamanan",
   "Free-safe": "Free-safe",
@@ -324,4 +323,18 @@ export default {
   "Coding": "Coding",
   "z. B. Antworte kurz und auf Deutsch. Erkläre Fachwörter einfach.": "Misalnya: Jawab singkat dan dalam bahasa Indonesia. Jelaskan istilah teknis secara sederhana.",
   "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.": "Sesi Anda telah berakhir. Silakan masuk lagi.",
+  // Beispiel-Chips der Glas-Startseite (2026-08-13).
+  "Code schreiben": "Menulis kode",
+  "Schreibe Code für:": "Tulis kode untuk:",
+  "Text verbessern": "Memperbaiki teks",
+  "Verbessere diesen Text:": "Perbaiki teks ini:",
+  "Recherchieren": "Meneliti",
+  "Recherchiere für mich:": "Telusuri ini untuk saya:",
+  // Startseiten-Hero + Eingabe-Platzhalter (2026-08-13).
+  "Womit kann ich helfen?": "Ada yang bisa saya bantu?",
+  "Beschreibe eine Aufgabe oder stelle eine Frage.": "Jelaskan tugas atau ajukan pertanyaan.",
+  "Bilder generieren": "Hasilkan gambar",
+  "Generiere ein Bild von:": "Hasilkan gambar tentang:",
+  "Video generieren": "Hasilkan video",
+  "Generiere ein Video von:": "Hasilkan video tentang:",
 };

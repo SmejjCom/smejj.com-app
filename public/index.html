@@ -66,7 +66,7 @@
          1452-1531 ms fertig — acht Runden Latenz vor dem ersten Bildaufbau.
          Erzeugt aus den unveraenderten Quelldateien:
          node scripts/build/bundle-start-styles.mjs -->
-    <link rel="stylesheet" href="/assets/start-styles.css?v=paste-attach-20260806">
+    <link rel="stylesheet" href="/assets/start-styles.css?v=glas-eckig-20260813">
     <!-- Strukturierte Daten (QA-Welle 1, Befund F-13). Die 15 Sprachseiten hatten
          sie bereits, ausgerechnet die Hauptseite nicht. Bewusst ohne FAQPage: Die
          Fragen stehen auf den Landingpages, nicht hier. -->
@@ -121,7 +121,7 @@
           <button class="nav-button is-active" type="button" data-view="start" data-icon="plus" title="Neu">Neu</button>
           <button class="nav-button icon-only-nav" type="button" data-view="search" data-icon="search" title="Suche" aria-label="Suche">Suche</button>
           <button class="nav-button" type="button" data-view="code" data-icon="code" title="Coding">Coding</button>
-          <button class="nav-button" type="button" data-view="projects" data-icon="projects" title="Projekte">Projekte</button>
+          <button class="nav-button" type="button" data-view="projects" data-icon="projects" title="Arbeitsbereich">Arbeitsbereich</button>
           <button class="nav-button" type="button" data-view="files" data-icon="files" title="Dateien">Dateien</button>
           <button class="nav-button" type="button" data-view="chatHistory" data-icon="history" title="Verlauf">Verlauf</button>
         </nav>
@@ -163,11 +163,11 @@
           <h1 class="visually-hidden">smejj.com — KI- und Code-Assistent</h1>
           <div class="home-feed">
             <header class="home-hero">
-              <h2>Was sollen wir in smejj entwickeln?</h2>
+              <h2>Womit kann ich helfen?</h2>
             </header>
             <div id="startLog" class="start-log" aria-label="Start Chat" hidden></div>
             <section class="prompt-glass" aria-label="Start Eingabe">
-              <textarea id="startMessage" rows="1" aria-label="Startprompt" placeholder="Nachricht schreiben"></textarea>
+              <textarea id="startMessage" rows="1" aria-label="Startprompt" placeholder="Beschreibe eine Aufgabe oder stelle eine Frage."></textarea>
               <div class="prompt-actions">
                 <div class="plus-picker">
                   <button id="composerPlusButton" class="ghost-button icon-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Aktionen" title="Aktionen">
@@ -226,6 +226,13 @@
                 </button>
               </div>
             </section>
+            <div class="start-chips" aria-label="Beispiele zum Losklicken">
+              <button type="button" data-chip="Schreibe Code für:">Code schreiben</button>
+              <button type="button" data-chip="Verbessere diesen Text:">Text verbessern</button>
+              <button type="button" data-chip="Recherchiere für mich:">Recherchieren</button>
+              <button type="button" data-chip="Generiere ein Bild von:">Bilder generieren</button>
+              <button type="button" data-chip="Generiere ein Video von:">Video generieren</button>
+            </div>
             <section class="feed-list" aria-label="Feed" hidden>
               <article class="feed-item">
                 <strong>Willkommen zurück</strong>
@@ -277,7 +284,7 @@
           </header>
           <div class="toolbar">
             <button type="button" data-jump="automation">Automatisierung</button>
-            <button type="button" data-jump="projects">Projekte</button>
+            <button type="button" data-jump="projects">Arbeitsbereich</button>
           </div>
           <div class="output">Coding bereit.</div>
         </section>
@@ -347,10 +354,10 @@
           <div id="codeOutput" class="output"></div>
         </section>
 
-        <section id="projects" class="view" aria-label="Projekte">
+        <section id="projects" class="view" aria-label="Arbeitsbereich">
           <header class="view-header">
-            <p class="eyebrow">Projekte</p>
-            <h2>Lokale Projekte</h2>
+            <p class="eyebrow">Arbeitsbereich</p>
+            <h2>Lokale Dateien und Snapshots</h2>
             <p class="subhead">Projektmanifeste und Snapshots entstehen lokal. IDrive-e2-Sync kommt später über signierte URLs.</p>
           </header>
           <div class="toolbar">
@@ -642,6 +649,17 @@
         <div id="modalBody" class="modal-body"></div>
       </section>
     </div>
+    <div id="searchOverlay" class="search-overlay" hidden>
+      <div class="search-overlay-backdrop" data-search-close></div>
+      <section class="search-overlay-panel" role="dialog" aria-modal="true" aria-label="Suche">
+        <form id="searchOverlayForm" class="search-overlay-form" role="search">
+          <input id="searchOverlayQuery" type="search" placeholder="Chats, Projekte, Dateien durchsuchen …" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button type="button" class="search-overlay-close" data-search-close aria-label="Suche schließen" title="Schließen (Esc)">Esc</button>
+        </form>
+        <div id="searchOverlayLog" class="search-overlay-log" aria-live="polite"></div>
+        <p class="search-overlay-hints" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> wählen</span><span><kbd>Enter</kbd> öffnen</span><span><kbd>Esc</kbd> schließen</span></p>
+      </section>
+    </div>
     <div id="voiceModeOverlay" class="voice-mode-overlay" data-mode="listening" role="dialog" aria-modal="true" aria-label="Sprachmodus" hidden>
       <button id="voiceModeClose" class="voice-mode-close" type="button" aria-label="Sprachmodus beenden" title="Beenden">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
@@ -653,6 +671,7 @@
       <p class="voice-mode-hint">Sprich einfach — zum Beenden X druecken oder Escape.</p>
     </div>
     <script src="/assets/frame-guard.js?v=1" type="module"></script>
+    <script src="/assets/start-chips.js?v=chips-i18n-20260813" type="module"></script>
     <script src="/assets/app.js?v=stufen-chip-20260809" type="module"></script>
     <script src="/assets/cline-model-menu.js?v=cline-submenu-20260714-3" type="module"></script>
     <script src="/assets/browser-pane.js?v=browser-pane-20260728-3" type="module"></script>
