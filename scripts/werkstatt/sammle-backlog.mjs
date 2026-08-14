@@ -117,12 +117,17 @@ async function holeLaufzeitMs() {
  * Bekannte Schwachstellen der benutzten Bibliotheken (osv.dev). Laeuft lokal
  * ueber die requirements.txt der Worker und package.json — kein Token noetig.
  * Scheitert die Abfrage, wird das als STUMME QUELLE gemeldet, nie als "sauber".
+ *
+ * `frageOsvEindeutig` statt `frageOsv`: sonst steht im Backlog die Zahl der
+ * osv-EINTRAEGE, und die ist groesser als die Zahl der Befunde (GHSA und PYSEC
+ * fuehren denselben Fall doppelt). Eine Aufgabe "2 Schwachstellen", von denen
+ * es nur eine gibt, schickt die Nachtwerkstatt an eine erfundene Haelfte.
  */
 async function holeCve() {
   try {
-    const { sammlePakete, frageOsv } = await import("../diagnose/cve-waechter.mjs");
+    const { sammlePakete, frageOsvEindeutig } = await import("../diagnose/cve-waechter.mjs");
     const pakete = sammlePakete(REPO);
-    const funde = await frageOsv(pakete);
+    const funde = await frageOsvEindeutig(pakete);
     return { ok: true, funde, geprueft: pakete.length };
   } catch (fehler) {
     return { ok: false, grund: `osv.dev nicht erreichbar (${fehler.message})` };
