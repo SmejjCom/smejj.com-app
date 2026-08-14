@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-14T15:25:33.331Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-14: groessere Schrift in der ganzen App bestaetigt. Grund woertlich: 'ich bin fast 50, ich sehe nicht gut, und ich trage keine Brille, sollen Schriften gut lesbar sein.' 182 font-size-Werte in 16 Dateien um rund ein Viertel angehoben, Untergrenze 14 px fuer echten Text; start-styles.css neu aus den Quellen gebaut. Nachgewiesen: 249 geaenderte Zeilen, 249 davon reine font-size-Aenderungen — keine Farbe, keine Rundung, kein Layout.",
+  "frozenAt": "2026-08-14T16:19:26.209Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-14: 'Vorschlag gut' — alle fuenf Punkte des Ruhiger-Entwurfs. Betroffen an der geschuetzten Startseite ist NUR Punkt 1: die zwei farbigen Radialverlaeufe rgba(95,176,154,.16) und rgba(79,143,236,.14) im body-Hintergrund entfallen, es bleibt ein neutraler Verlauf 141517/101113/0d0e10. start-styles.css ist das daraus neu gebaute Buendel. Nachgewiesen: 8 geaenderte Zeilen, ausschliesslich dieser Hintergrund.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "53d1ed109a17e0e943c028ea28bc89eb4a5749c8cdb9b4639f13237732fc8488",
-    "public/styles.css": "e31fd35a2d50e0a4a9fc496f610a0aad2abe392ab93999884acfaeed297b7241",
-    "public/start-styles.css": "71a7bf6e4687afbf83215092d25faa9cbcfd58c0e3025813c321b43c016ae2e5",
+    "public/styles.css": "6ec5b72973b007e5fac16524627293ea899ea53730f577c3921d169b253204ba",
+    "public/start-styles.css": "db573db89ad180f3ae1c343ec2f6b01a496c08dd4b3a3fe11f511b78cc8365cd",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "38398b3e36995a2d84061ddf6441c4bbab0bf479672e9a4d58f464cc8878434b",
     "public/composer-tools.css": "831f1a1ea49d6a20c90e24896da5c4936c7c12602ffd8d836d1f182a3d121982",
