@@ -75,7 +75,12 @@ const CHECK_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".md", ".json", ".html",
 // kein handgepflegter Quellcode. Die acht Quelldateien bleiben einzeln unter der
 // 800-Zeilen-Regel und werden weiterhin geprueft; das Buendel ist nur ihr Ergebnis
 // und wird von check:start-styles gegen die Quellen verifiziert (2026-07-27).
-const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/start-styles\.css$/];
+// Auch die AUSGELIEFERTE Fassung des Buendels ist erzeugt, nicht handgepflegt:
+// index.html laedt `/assets/start-styles.css`, und `/assets/` spiegelt die
+// public/-Wurzel. Beide Fassungen schreibt und prueft bundle-start-styles.mjs
+// gegen dieselben Quellen — die Ausnahme deckt also kein ungeprueftes Holz
+// (2026-08-14; die Wurzel-Fassung war seit 2026-07-27 ausgenommen).
+const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/(assets\/)?start-styles\.css$/];
 
 const failures = [];
 const files = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8" })

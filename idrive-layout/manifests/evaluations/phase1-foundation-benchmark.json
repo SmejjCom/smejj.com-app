@@ -9,7 +9,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "e33fac70ea17ec0509b6a1eaf7d22410d452794f9677887c892b11a4fa25dd0b"
+    "contentSha256": "bb58698da7bdb2d4156c51376f2d7d1d1791cbf6f4a0f3779293bf7790d31d42"
   },
   "protection": {
     "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-28.5/manifest.json",
@@ -123,7 +123,7 @@
       },
       {
         "path": "scripts/check-guidelines.mjs",
-        "sha256": "bc4e6e85948b3e1c72bbdab670d844635b2c3353f465cd7ea8977da8956f30f9"
+        "sha256": "034e775fc59f0ee29c543b10147e12ee9f4b118a474e88c9ca67d83a48927ed8"
       },
       {
         "path": "scripts/check-start-lock.mjs",
