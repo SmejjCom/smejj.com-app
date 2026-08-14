@@ -251,10 +251,11 @@ async function erzeugeFotoInhalt(prompt, timeoutMs) {
 // antwortet sonst ehrlich mit 429. Ohne diese Schleife hiesse jedes 429 sofort
 // SVG-Reserve, obwohl nichts kaputt, sondern nur besetzt ist.
 // `melde(phase)` faerbt den laufenden Fortschritt ("wartet" statt "läuft").
-async function erzeugeFotoMitGeduld(prompt, melde) {
+// Exportiert fuer den Verhaltenstest (tests/chat-bridge-foto-geduld.test.mjs).
+export async function erzeugeFotoMitGeduld(prompt, timeoutMs, melde) {
   const bis = Date.now() + BILDER_WARTE_MAX_MS;
   for (;;) {
-    const inhalt = await erzeugeFotoInhalt(prompt, BILDER_FOTO_TIMEOUT_MS);
+    const inhalt = await erzeugeFotoInhalt(prompt, timeoutMs);
     if (inhalt !== "besetzt") return inhalt;
     // Besetzt: warten, aber nie laenger als das Geduldsbudget. Danach
     // uebernimmt die SVG-Reserve — besser stilisiert als gar kein Bild.
@@ -544,7 +545,7 @@ export async function streamBilderLane(res, body, task, deps) {
       const malPrompt = await uebersetzeMalPrompt(prompt);
       gesperrt = istPersonGesperrt(malPrompt);
       if (!gesperrt) {
-        inhalt = await erzeugeFotoMitGeduld(malPrompt, (neu) => {
+        inhalt = await erzeugeFotoMitGeduld(malPrompt, BILDER_FOTO_TIMEOUT_MS, (neu) => {
           phase = neu;
         });
       }
