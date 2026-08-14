@@ -52,7 +52,12 @@ const SEITEN_ORDNER = Object.freeze([
   // 2026-08-14: beide Seiten lagen fertig im Repo, waren aber nirgends
   // eingetragen — und damit unerreichbar. "cockpit" liegt zusaetzlich
   // unter der nackten Adresse /admin/ (STARTSEITE in console.js).
-  "cockpit", "radar"
+  "cockpit", "radar",
+  // 2026-08-14: Modul AE (AI Evolution Dashboard). Ohne diesen Eintrag laege
+  // die Seite zwar im Control-Server, aber smejj.com/admin/evolution/ waere
+  // 404 — genau der Fehler, an dem Cockpit und Radar tagelang unsichtbar
+  // blieben. Erst der Ordner macht die Adresse erreichbar.
+  "evolution"
 ]);
 
 function sha256(inhalt) {
