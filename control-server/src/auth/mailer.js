@@ -22,17 +22,43 @@ export function mailerConfig(env = process.env) {
   return { host, port, user, pass, from, implicitTls: port === 465 };
 }
 
+// Wiederholung bei Verbindungsfehlern (Befund 2026-08-13, Ansicht V des
+// Adminbereichs): 3 von 63 Mails in 14 Tagen verliessen den Server nicht,
+// gemessener Grund "smtp_connect_failed:ETIMEDOUT". Um 19:36 ging eine Mail
+// raus, um 19:37 lief die naechste in den Timeout, danach klappte es wieder —
+// eine sporadische Netzstoerung, kein dauerhafter Ausfall. Bisher gab es
+// keinen zweiten Versuch: EIN Timeout kostete die Anmeldung.
+//
+// Wiederholt wird AUSSCHLIESSLICH, wenn die Verbindung gar nicht zustande kam.
+// Hat der Mailserver die Nachricht angenommen ODER ausdruecklich abgelehnt
+// (z. B. 550 unbekannter Empfaenger), waere ein zweiter Versuch entweder eine
+// Dublette beim Empfaenger oder sinnlose Last beim Anbieter.
+const VERSUCHE = 3;
+const PAUSE_MS = 900;
+
+function lohntWiederholung(grund) {
+  return grund === "smtp_connect_failed" || String(grund || "").startsWith("smtp_connect_failed:");
+}
+
+const warte = (ms) => new Promise((fertig) => { setTimeout(fertig, ms); });
+
 export async function sendAuthMail({ to, subject, text, art = "" }, env = process.env, transport = smtpSend) {
   const cfg = mailerConfig(env);
   if (!cfg) return { sent: false, reason: "email_delivery_unconfigured" };
   const recipient = String(to || "").trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(recipient)) return { sent: false, reason: "recipient_invalid" };
+  const nachricht = buildMessage({ from: cfg.from, to: recipient, subject, text });
   let ergebnis;
-  try {
-    await transport(cfg, buildMessage({ from: cfg.from, to: recipient, subject, text }), recipient);
-    ergebnis = { sent: true };
-  } catch (error) {
-    ergebnis = { sent: false, reason: sanitizeError(error) };
+  for (let versuch = 1; versuch <= VERSUCHE; versuch += 1) {
+    try {
+      await transport(cfg, nachricht, recipient);
+      ergebnis = versuch === 1 ? { sent: true } : { sent: true, versuche: versuch };
+      break;
+    } catch (error) {
+      ergebnis = { sent: false, reason: sanitizeError(error) };
+      if (versuch === VERSUCHE || !lohntWiederholung(ergebnis.reason)) break;
+      await warte(PAUSE_MS * versuch);
+    }
   }
   // Nachweis, keine Voraussetzung: das Protokoll wirft nie und wird bewusst
   // NICHT abgewartet-mit-Konsequenz. Ob eine Registrierung klappt, darf nicht
