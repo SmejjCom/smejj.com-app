@@ -1,7 +1,7 @@
 {
   "lock": "smejj einwilligung lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T01:49:49.922Z",
-  "confirmation": "Betreiber-Karte 2026-08-13 abends: 'Ja, alle vier' — gezeigt und freigegeben: Bridge v138, Abo in account-sessions.js, start-styles.css, Datenschutz 6a, Login-Pflicht /api/feedback, drei neue Seiten",
+  "frozenAt": "2026-08-14T07:20:12.212Z",
+  "confirmation": "Betreiber-Karte 2026-08-14: Ja, einfrieren - drei abgeschaltete salad.cloud-Adressen aus der CSP entfernt, kein Datenschutztext geaendert",
   "rule": "Keine Aenderung an der Einwilligungs- und Erfassungskette (ob erfasst werden darf, wogegen eingewilligt wird, wer die Routen erreicht) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "src/training/fragenerfassung.js": "5de1223542ffd62f840e3bffcd79eabe56870dda8f8e47e6b96c60f3d1f4c79d",
@@ -10,6 +10,6 @@
     "control-server/src/routes/trainingConsentRoutes.js": "6dd0b44d89cf8d9e0e23a244905c82666f82f8e94b1b2782104d4abdd15836cf",
     "src/training/constants.js": "5b5e533d89279711579c2c8845ccb98cc12bab1cf3eed75a4a14303c89b4337c",
     "src/shared/controlAccessPolicy.js": "a240d9af19ec426cda1ae1eae73de68676ac89f28e5018ed1530f06b299c92f2",
-    "public/datenschutz.html": "944cf6cc47befdfe446378a732e79b2dd2ffafbdb7c2eb9f565d9edfe25ac90c"
+    "public/datenschutz.html": "4ea789d21d8f791dbe52e066f4a1f084bb7cbb894accd2ecd4f8ad09e47aa969"
   }
 }
