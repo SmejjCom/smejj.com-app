@@ -18,7 +18,8 @@
 // Aufruf:
 //   node scripts/werkstatt/baue-auftrag.mjs             # schreibt docs/werkstatt/AUFTRAG.md
 //   node scripts/werkstatt/baue-auftrag.mjs --zeigen    # nur auf stdout
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 // EINE Wahrheit fuer die Bau-Basis (2026-08-14): Der Auftrag nannte
@@ -107,6 +108,34 @@ in sich geschlossen: alles Noetige steht hier, es gibt keine Sitzung dahinter.
 `;
 }
 
+/**
+ * Prueft das volle Tor gegen den AUSGELIEFERTEN Stand statt gegen die
+ * Arbeitskopie: frischer Worktree ab BAU_BASIS, node_modules per Symlink
+ * (sonst melden Tests fehlende Pakete als Fehler — gemessen 2026-08-14:
+ * vier falsche Rote allein wegen @resvg/resvg-js), Tor laufen lassen,
+ * Worktree wieder abraeumen.
+ *
+ * Faellt schon das Aufsetzen aus, wird NICHT stillschweigend auf die
+ * Arbeitskopie zurueckgefallen — das waere genau die Selbsttaeuschung, die
+ * dieser Umbau beseitigt. Dann gilt das Tor als zu (fail-closed).
+ */
+export function torImWorktree(spawnSync, { basis = BAU_BASIS, tmpDir = os.tmpdir() } = {}) {
+  const wt = path.join(tmpDir, `werkstatt-tor-${process.pid}`);
+  const lauf = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", timeout: 300_000, ...opts });
+  try {
+    lauf("git", ["worktree", "prune"], { cwd: REPO });
+    const angelegt = lauf("git", ["worktree", "add", "--detach", wt, basis], { cwd: REPO });
+    if (angelegt.status !== 0) {
+      return { status: 1, stdout: `[tor] Worktree ab ${basis} nicht anlegbar — fail-closed.\n${angelegt.stderr || ""}` };
+    }
+    // Ohne Pakete meldet die Pruefsuite Fehler, die es auf dem Server nicht gibt.
+    try { symlinkSync(path.join(REPO, "node_modules"), path.join(wt, "node_modules")); } catch { /* schon da */ }
+    return lauf("node", ["scripts/werkstatt/pruefe-tor.mjs"], { cwd: wt });
+  } finally {
+    lauf("git", ["worktree", "remove", "--force", wt], { cwd: REPO });
+  }
+}
+
 async function main() {
   if (!existsSync(BACKLOG_JSON)) {
     console.error("[werkstatt] Kein backlog.json — zuerst npm run werkstatt:sammeln.");
@@ -117,8 +146,18 @@ async function main() {
   // Ohne offenes Tor kein Auftrag: Wer auf rotem Fundament baut, kann seine
   // eigene Wirkung nicht messen. Das VOLLE Tor (inkl. Pruefsuite, ~60 s) —
   // --schnell wuerde die Suite auslassen und bleibt per Bauart ZU.
+  //
+  // GEMESSEN IM FRISCHEN WORKTREE, nicht in der Arbeitskopie (2026-08-14).
+  // Der Nachtbau laeuft im Hauptverzeichnis, und dort liegen die Staende
+  // mehrerer paralleler Sitzungen uebereinander: an diesem Tag 60 eigene
+  // Commits gegenueber dem Bau-Branch. Das Tor meldete deshalb "ZU"
+  // (vier Sperren rot), waehrend derselbe Lauf auf dem Bau-Branch 9/9 gruen
+  // war. Der Nachtbau haette also erneut nicht gebaut — mit einer Begruendung,
+  // die nichts mit dem ausgelieferten Stand zu tun hat.
+  // Nach dem Bau prueft die Routine (Schritt 4) weiterhin die EIGENE
+  // Arbeitskopie — dort gehoert sie hin.
   const { spawnSync } = await import("node:child_process");
-  const tor = spawnSync("npm", ["run", "werkstatt:tor", "--silent"], { cwd: REPO, encoding: "utf8", timeout: 300_000 });
+  const tor = torImWorktree(spawnSync);
   if (tor.status !== 0) {
     console.error("[werkstatt] Tor ist ZU — kein Bau-Auftrag. Erst den Grund beheben:");
     console.error(String(tor.stdout || "").split("\n").filter((z) => z.includes("ZU") || z.includes("VERLETZT")).slice(0, 5).join("\n"));
