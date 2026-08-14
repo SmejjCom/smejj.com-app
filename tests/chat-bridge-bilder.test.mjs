@@ -22,6 +22,46 @@ test("erkenneBildAuftrag: Mal-Verb UND Motivwort noetig (deutsch/englisch)", () 
   }
 });
 
+test("erkenneBildAuftrag: 'Zeichne mir X' reicht auch OHNE das Wort 'Bild'", () => {
+  // Befund 2026-08-14, live gemessen: "Zeichne mir einen roten Leuchtturm am
+  // Meer bei Sonnenuntergang" landete in der Textspur, und das Modell
+  // antwortete, es koenne gar keine Bilder erzeugen — eine falsche Aussage
+  // ueber die eigenen Faehigkeiten. Genau dieser Satz steht hier als Wache.
+  const treffer = [
+    "Zeichne mir einen roten Leuchtturm am Meer bei Sonnenuntergang",
+    "Male eine Katze auf einem Fensterbrett",
+    "zeichne einen Drachen ueber den Bergen",
+    "draw a lighthouse at sunset",
+    "paint a small village in winter",
+    "Skizziere einen Bauplan fuer ein Baumhaus",
+    // "nach" und "ab" als Praeposition mitten im Satz duerfen den Auftrag
+    // NICHT verschlucken. Die erste Fassung der Redewendungs-Sperre tat genau
+    // das: sie suchte die Vorsilbe irgendwo, statt am Satzende.
+    "Zeichne mir eine Katze nach dem Vorbild von Picasso",
+    "Male ein Haus nach meinen Angaben"
+  ];
+  for (const task of treffer) {
+    assert.equal(erkenneBildAuftrag(task), task, `sollte erkannt werden: ${task}`);
+  }
+});
+
+test("erkenneBildAuftrag: Redewendungen mit denselben Verben malen NICHT", () => {
+  // Die Lockerung darf sich nicht raechen: dieselben Verben heissen in
+  // festen Wendungen etwas voellig anderes. Ein faelschlich gemaltes Bild
+  // waere hier teurer als eine verpasste Absicht — Malen dauert Minuten.
+  const kein = [
+    "Male dir das mal aus, wie das enden wuerde",
+    "Kannst du dir das ausmalen?",
+    "Bitte zeichne den Vertrag ab",
+    "Zeichne die Route nach, die ich gefahren bin",
+    "Es zeichnet sich ab, dass wir mehr Speicher brauchen",
+    "male"
+  ];
+  for (const task of kein) {
+    assert.equal(erkenneBildAuftrag(task), "", `darf NICHT malen: ${task}`);
+  }
+});
+
 test("erkenneBildAuftrag: normale Fragen nehmen NIE die Bild-Spur", () => {
   const kein = [
     "Was ist die Hauptstadt von Portugal?",

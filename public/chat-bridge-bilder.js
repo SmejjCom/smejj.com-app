@@ -54,6 +54,45 @@ const BILDER_MAX_B64 = 4_000_000;
 const BILDER_VERB = /\b(zeichne|zeichnen|zeichen|zeichene|zeig|zeige|zeigen|male|malen|erstelle|erstellen|erstell|generiere|generieren|generier|erzeuge|erzeugen|erzeug|mach|mache|machen|bau|bauen|draw|paint|generate|create|make|kannst|kann|moechte|möchte|will)\b/i;
 const BILDER_MOTIV = /\b(bild(er|es)?|foto(s)?|grafik(en)?|illustration(en)?|zeichnung(en)?|logo(s)?|skizze(n)?|gem(ae|ä)lde|image(s)?|picture(s)?|photo(s)?|drawing(s)?|sketch(es)?)\b/i;
 
+// Verben, die fuer sich allein schon einen Mal-Auftrag bedeuten — auch OHNE
+// Motivwort. Befund 2026-08-14 am Live-Chat: "Zeichne mir einen roten
+// Leuchtturm am Meer" fiel in die Textspur, und das Modell antwortete "Ich
+// kann leider keine Bilder zeichnen — mir stehen nur Recherche-Tools zur
+// Verfuegung." Das ist schlimmer als eine nicht erkannte Absicht: die App
+// sagt etwas Falsches ueber sich selbst, und wer das liest, versucht es nie
+// wieder. "Zeichne mir X" ist die natuerlichste Formulierung ueberhaupt.
+//
+// Bewusst ENG gehalten: "erstelle", "mach", "generiere", "zeig" bleiben
+// draussen, weil sie viel oefter etwas anderes meinen ("erstelle mir einen
+// Trainingsplan", "zeig mir die Datei"). Nur Verben, die ohne Bild keinen
+// Sinn ergeben.
+const BILDER_MALVERB_ALLEIN = /(^|\s)(zeichne|zeichnest|zeichnen|male|malst|malen|skizziere|skizzier|draw|paint|sketch)\b/i;
+
+// ...ausser in Wendungen, in denen dieselben Verben etwas ganz anderes heissen:
+// sich etwas ausmalen (vorstellen), etwas abzeichnen (kopieren/unterschreiben),
+// etwas nachzeichnen, "es zeichnet sich ab" (Entwicklung).
+// ACHTUNG deutsche Partikelverben: die Vorsilbe steht oft erst am Satzende
+// ("zeichne den Vertrag AB", "zeichne die Route NACH"). Ein Muster, das nur
+// "zeichne ab" direkt nebeneinander sucht, greift daneben — der Test
+// "Bitte zeichne den Vertrag ab" faellt sonst durch. Darum die Luecke
+// dazwischen ausdruecklich zulassen, aber nicht ueber Satzgrenzen hinweg.
+const BILDER_MALVERB_WENDUNG = new RegExp(
+  [
+    "\\bmal(e|st)?\\s+(dir|es\\s+dir|sich)\\b", // sich etwas ausmalen
+    "\\baus(zu)?malen\\b",
+    "\\bzeichnet\\s+sich\\b",                    // "es zeichnet sich ab"
+    "\\b(ab|nach|auf)(zu)?zeichnen\\b",
+    // Getrennte Vorsilbe — aber NUR am Satzende. Erster Versuch liess die
+    // Vorsilbe irgendwo im Satz stehen und verschluckte damit echte
+    // Auftraege: "Zeichne mir eine Katze NACH dem Vorbild von Picasso" waere
+    // stumm in die Textspur gefallen. Bei Partikelverben steht die Vorsilbe
+    // hinten ("zeichne den Vertrag ab"), bei der Praeposition nicht.
+    "\\bzeichne(st|n)?\\b[^.!?]{0,50}\\b(ab|nach)\\s*(?:[,.!?]|$)",
+    "\\bmal(e|st|en)?\\b[^.!?]{0,50}\\b(ab|nach)\\s*(?:[,.!?]|$)"
+  ].join("|"),
+  "i"
+);
+
 // Video-Auftrag = Video-Verb UND Video-Motivwort in der Frage.
 const VIDEO_VERB = /\b(zeichne|zeichnen|zeichen|zeichene|zeig|zeige|zeigen|male|malen|erstelle|erstellen|erstell|generiere|generieren|generier|erzeuge|erzeugen|erzeug|mach|mache|machen|bau|bauen|draw|paint|generate|create|make|produce|kannst|kann|moechte|möchte|will)\b/i;
 const VIDEO_MOTIV = /\b(video(s)?|film(e|s)?|animation(en)?|clip(s)?|mp4|movie(s)?)\b/i;
@@ -79,6 +118,13 @@ export function erkenneBildAuftrag(task) {
   if (!text || text.length > 600) return "";
   if (/\b(unterschied|was ist|wie geht|bedeutung|erkläre|erklare|definition)\b/i.test(text)) return "";
   if (BILDER_MOTIV.test(text) && (BILDER_VERB.test(text) || /\b(von|zu|aus|mit|über|ueber|eines|ein|eine|einen)\b/i.test(text))) return text;
+  // Ohne Motivwort: nur ein eindeutig malendes Verb zaehlt, und die Wendungen
+  // oben schliessen es wieder aus. Ausserdem muss dem Verb noch etwas folgen —
+  // ein blosses "male!" ist kein Auftrag, sondern eine Interjektion.
+  if (BILDER_MALVERB_ALLEIN.test(text) && !BILDER_MALVERB_WENDUNG.test(text)) {
+    const rest = text.replace(BILDER_MALVERB_ALLEIN, " ").trim();
+    if (rest.length >= 3) return text;
+  }
   return "";
 }
 
