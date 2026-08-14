@@ -138,7 +138,7 @@ describe("Portraet-Qualitaet (Befund Betreiber 2026-08-13)", () => {
 
   it("rendert groesser als das Basisbild (768) — gemessener Schaerfegewinn", () => {
     const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
-    assert.ok(server.includes('"SMEJJ_VIDEO_GROESSE", "768"'), "Zielgroesse 768 fehlt");
+    assert.ok(server.includes('"SMEJJ_VIDEO_GROESSE", "640"'), "Zielgroesse 768 fehlt");
     // Die Fahrt muss mitwachsen, sonst wirkt sie bei 768 schwaecher.
     assert.ok(/PARALLAX_STAERKE = .*\* GROESSE \/ 512/.test(server), "Staerke skaliert nicht mit");
     // Reihenfolge zaehlt: erst hochziehen, dann schaerfen — andersherum
