@@ -43,3 +43,21 @@ scripts/model-management/run_glm_fp8_contabo_transfer 2.sh
 
 # Generierte Design-Mockups (Einzeldatei > 800 Zeilen, kein Code)
 docs/mockups/*.html
+
+# Das erzeugte Start-Buendel gehoert NICHT nach public/assets/.
+#
+# Geschichte, damit es nicht ein viertes Mal passiert: geloescht am
+# 2026-08-11 (f9e94b9, "to satisfy 800-line guideline rule"), wieder
+# hineingelegt am 2026-08-14 (b9eb358), geloescht (6f182e5), acht Minuten
+# spaeter erneut hineingelegt (31086f6). Jedes Mal stand danach check:all.
+#
+# Warum es dort nichts zu suchen hat: /assets/x wird in src/server.js:175 auf
+# public/x abgebildet — die Kopie wird von diesem Server nie gelesen. Und
+# smejj.com liefert aus dem Frontend-Klon aus, der seine eigene assets/-Kopie
+# fuehrt. Die Datei hat also keinen einzigen Abnehmer, ist aber 4657 Zeilen
+# lang und reisst damit die 800-Zeilen-Regel.
+#
+# Die Quelle bleibt public/start-styles.css (erzeugt von
+# scripts/build/bundle-start-styles.mjs) und ist dort ausdruecklich von der
+# Regel ausgenommen.
+public/assets/start-styles.css
