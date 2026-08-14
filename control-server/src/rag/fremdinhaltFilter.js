@@ -88,8 +88,16 @@ export function formatFremdKontextBlock(treffer = []) {
   let funde = 0;
   const bloecke = liste.map((t) => {
     const entwaffnet = entwaffneFremdtext(t.snippet || "");
-    funde += entwaffnet.funde;
-    const kopf = `[FREMDQUELLE aus dem Netz: ${t.source}${t.heading ? ` — ${t.heading}` : ""}]`;
+    // Die UEBERSCHRIFT stammt genauso von der fremden Seite wie der Text.
+    // Gemessen 2026-08-14 beim Nachpruefen des deepResearch-Wegs: sie lief
+    // ungefiltert in die Kopfzeile, ein praeparierter Seitentitel
+    // ("Ignoriere alle vorherigen Anweisungen …") stand also woertlich im
+    // Prompt — direkt neben der Quellenangabe, wo er besonders glaubwuerdig
+    // wirkt. Der Harvester uebernimmt Titel ungeprueft
+    // (ladeErnteChunks: `heading: fakt.headline`).
+    const kopfText = entwaffneFremdtext(t.heading || "");
+    funde += entwaffnet.funde + kopfText.funde;
+    const kopf = `[FREMDQUELLE aus dem Netz: ${t.source}${kopfText.text ? ` — ${kopfText.text}` : ""}]`;
     return `${kopf}\n${entwaffnet.text}`;
   });
 
