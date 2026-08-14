@@ -19,10 +19,13 @@
 #
 # [ueberholt] diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es
 # [ueberholt] existiert derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36).
-diffusers==0.36.0
+diffusers==0.38.0
 transformers==5.5.0
 accelerate==1.1.1
-safetensors==0.4.5
+# 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
+# ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die
+# Sicherheitsaktualisierung selbst falsch gewesen.
+safetensors==0.8.0
 fastapi==0.115.5
 uvicorn==0.32.1
 # 11.0.0 trug 34 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 12.3.0.
