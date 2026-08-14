@@ -162,7 +162,7 @@ export async function laufKonkurrenzRadar({
   }
   return {
     ok: true,
-    meldung: `${lauf.kandidaten.length} Kandidat(en) bei ${BEOBACHTET.length - (lauf.stummeQuellen.length)} von ${BEOBACHTET.length} Anbietern gefunden`
+    meldung: `${lauf.kandidaten.length} Kandidat(en) aus ${BEOBACHTET.length - lauf.stummeQuellen.length} von ${BEOBACHTET.length} Suchen (Bereiche: ${[...new Set(BEOBACHTET.map((b) => b.bereich))].join(", ")})`
       + (lauf.stummeQuellen.length ? `; stumm: ${lauf.stummeQuellen.map((s) => s.anbieter).join(", ")}` : "")
       + (lauf.abgelegt ? "" : `; NICHT abgelegt (${lauf.ablageGrund})`)
       + " — Kandidaten sind Suchtreffer mit Quelle, keine bestätigten Funktionen"

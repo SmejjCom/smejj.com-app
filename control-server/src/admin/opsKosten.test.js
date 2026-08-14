@@ -95,3 +95,40 @@ test("ein Fehler beim Worker-Zaehlen kippt die Ansicht nicht", async () => {
   assert.equal(e.ok, true);
   assert.equal(e.gemessen.aktiveWorker, 0);
 });
+
+// ---- Zwei Waechter, zwei Wahrheiten (2026-08-14) ----------------------------
+//
+// Befund aus der Adminbereich-Pruefung: die Kostenseite meldete
+// "keine fehlenden Grenzen", waehrend die Worker-Seite gleichzeitig
+// "Kapazitaet nicht erreichbar" zeigte. Grund: das Budget-Tor prueft nur
+// SEINE zwei Grenzen; die Platzreservierung der Worker braucht eine dritte,
+// von der das Tor nichts weiss. Wer nur auf die Kostenseite schaut, haelt
+// alles fuer eingerichtet.
+test("die Kostenseite nennt auch die Grenze, die der ANDERE Waechter braucht", async () => {
+  const u = await kostenUebersicht({
+    env: {
+      SMEJJ_BUDGET_MAX_USD_PER_JOB: "0.1",
+      SMEJJ_BUDGET_MAX_RUNTIME_MINUTES: "30",
+      SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS: "1"
+      // SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD fehlt mit Absicht
+    },
+    jetztMs: JETZT, leseKapazitaet: OHNE_KAPAZITAET, zaehleWorker: () => 0
+  });
+  assert.deepEqual(u.gemessen.budgetGate.fehlendeGrenzen, [], "das Tor selbst ist vollstaendig");
+  assert.equal(u.gemessen.budgetGate.scharf, true);
+  assert.equal(u.gemessen.budgetGate.fehlendeGrenzenAndererWaechter.length, 1,
+    "die fehlende Grenze der Platzreservierung muss trotzdem dastehen");
+  assert.match(u.gemessen.budgetGate.fehlendeGrenzenAndererWaechter[0], /MAX_GLOBAL_RESERVED_USD/);
+});
+
+test("ist die dritte Grenze gesetzt, meldet die Seite nichts mehr", async () => {
+  const u = await kostenUebersicht({
+    env: {
+      SMEJJ_BUDGET_MAX_USD_PER_JOB: "0.1",
+      SMEJJ_BUDGET_MAX_RUNTIME_MINUTES: "30",
+      SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD: "5"
+    },
+    jetztMs: JETZT, leseKapazitaet: OHNE_KAPAZITAET, zaehleWorker: () => 0
+  });
+  assert.deepEqual(u.gemessen.budgetGate.fehlendeGrenzenAndererWaechter, []);
+});

@@ -17,7 +17,7 @@ import {
 import { merkeKennzahlen, holeKennzahlen, tagesId, _leereKennzahlenFuerTest } from "./kennzahlenAblage.js";
 import { erfasseAktion, entnimmZuwachs, _leereFuerTest } from "./aiEvolutionEngine.js";
 import { schreibeEvolutionAblage, laufSupervisor, laufKonkurrenzRadar } from "./evolutionLaeufe.js";
-import { fuehreRadarAus, fuehreRadarSelbsttestAus } from "./konkurrenzRadar.js";
+import { fuehreRadarAus, fuehreRadarSelbsttestAus, BEOBACHTET } from "./konkurrenzRadar.js";
 
 const OHNE_IDRIVE = {};
 
@@ -242,4 +242,45 @@ test("Radar: ein frischer Scan wird nicht wiederholt", async () => {
   });
   assert.equal(gesucht, false, "wöchentlich heisst wöchentlich — sonst verbrennt er Suchkontingent");
   assert.match(r.meldung, /letzter Scan vor 1 Tag/);
+});
+
+// ── Radar: gezielte Bereiche + Selbstmessung (Betreiber-Auftrag 2026-08-14) ──
+
+test("Radar: beobachtet Recherche und Audio als eigene Bereiche", () => {
+  const bereiche = new Set(BEOBACHTET.map((b) => b.bereich));
+  assert.ok(bereiche.has("recherche"), "die allgemeine Suche findet nur, was gross angekuendigt wird");
+  assert.ok(bereiche.has("audio"));
+  assert.ok(bereiche.has("allgemein"));
+});
+
+test("Radar: der Bereich wandert bis in den Kandidaten", async () => {
+  const suche = async () => ({ results: [{ title: "Introducing a new voice mode", url: "https://example.com/v" }] });
+  const r = await fuehreRadarAus({
+    suche, env: OHNE_IDRIVE, jetztMs: 1,
+    beobachtet: [{ anbieter: "mehrere", bereich: "audio", anfrage: "x" }]
+  });
+  assert.equal(r.kandidaten[0].bereich, "audio", "sonst weiss niemand, wonach gesucht wurde");
+});
+
+test("Radar: seine EIGENEN Suchen zaehlen als Recherche", async () => {
+  _leereFuerTest();
+  const suche = async () => ({ results: [{ title: "Introducing a new research feature", url: "https://example.com/r" }] });
+  await fuehreRadarAus({
+    suche, env: OHNE_IDRIVE, jetztMs: 1,
+    beobachtet: [{ anbieter: "mehrere", bereich: "recherche", anfrage: "x" }]
+  });
+  const zuwachs = entnimmZuwachs();
+  assert.equal(zuwachs.jeArt.recherche?.aktionen, 1, "ein Rechercheur, der sich selbst nicht misst, ist ein blinder Fleck");
+  assert.equal(zuwachs.jeArt.recherche.gemessen, 1);
+});
+
+test("Radar: eine Suche OHNE Treffer faellt als quellenlose Recherche auf", async () => {
+  _leereFuerTest();
+  await fuehreRadarAus({
+    suche: async () => ({ results: [] }), env: OHNE_IDRIVE, jetztMs: 1,
+    beobachtet: [{ anbieter: "mehrere", bereich: "recherche", anfrage: "x" }]
+  });
+  const zuwachs = entnimmZuwachs();
+  assert.ok(zuwachs.klassen.has("recherche|leer") || zuwachs.klassen.has("recherche|quellen-fehlen"),
+    "eine Recherche ohne Quelle ist eine Behauptung — das muss als Fund erscheinen");
 });

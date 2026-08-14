@@ -44,9 +44,13 @@ FPS = int(os.environ.get("SMEJJ_VIDEO_FPS", "24"))
 # echter Gewinn: die bilineare Abtastung beim Warping verwischt in 512
 # spuerbar mehr. FAIR VERGLICHEN (alle Ergebnisse auf 512 zurueckgerechnet,
 # 2026-08-13): 512 -> 103, 768 -> 135 (+31 %), 1024 -> 150 (+46 %).
-# 768 ist der Punkt, an dem der Gewinn die Rechenzeit noch wert ist
-# (+2,6 s lokal); 1024 kostete das Dreifache fuer wenig mehr.
-GROESSE = int(os.environ.get("SMEJJ_VIDEO_GROESSE", "768"))
+# GEMESSEN IM ECHTEN CHAT (2026-08-14): mit 768 brauchte ein Auftrag rund
+# 170 s von 180 s Bruecken-Budget — zehn Sekunden Rest. Bei langsamerem Maler
+# oder einem zweiten Auftrag faellt das Video ganz aus, und ein fehlendes
+# Video ist schlimmer als ein etwas weicheres. Darum 640: kostet rund ein
+# Drittel des Schaerfegewinns (112 statt 135 gegen 103 bei 512), holt aber
+# ~25 s Sicherheitsabstand zurueck. Schaerfer geht erst mit mehr Kernen.
+GROESSE = int(os.environ.get("SMEJJ_VIDEO_GROESSE", "640"))
 SCHRITTE = int(os.environ.get("SMEJJ_VIDEO_SCHRITTE", "4"))  # nur animatediff
 MAX_PROMPT = 500
 # Deckel wie in der Brücke (VIDEO_MAX_B64): mehr streamen wir nicht durch.

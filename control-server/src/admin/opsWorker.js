@@ -64,11 +64,26 @@ async function holeKapazitaet(env, leseKapazitaet) {
   }
 }
 
+// Salad ist seit dem 2026-08-13 abgeschaltet; die App laeuft auf Zeabur.
+// Eine nicht eingerichtete Quelle ist NICHT dasselbe wie eine kaputte: die
+// Seite meldete "keine Quelle erreichbar" und las sich wie ein Ausfall,
+// obwohl hier nur nichts mehr zu holen ist.
+const STILLGELEGT = new Set(["salad_api_not_configured", "salad_nicht_eingerichtet"]);
+
 async function holeContainer(env, leseContainer) {
   try {
     const antwort = await leseContainer(env);
     if (!antwort || antwort.ok === false) {
-      return { erreichbar: false, grund: String(antwort?.reason || "salad_nicht_erreichbar").slice(0, 120) };
+      const grund = String(antwort?.reason || "salad_nicht_eingerichtet").slice(0, 120);
+      if (STILLGELEGT.has(grund)) {
+        return {
+          erreichbar: false,
+          stillgelegt: true,
+          grund,
+          hinweis: "Salad wurde am 13.08.2026 abgeschaltet. Die App laeuft auf Zeabur — hier ist nichts mehr zu holen, das ist kein Ausfall."
+        };
+      }
+      return { erreichbar: false, grund };
     }
     const daten = antwort.data || antwort.body || antwort;
     return {
@@ -85,6 +100,11 @@ async function holeContainer(env, leseContainer) {
 }
 
 function bewerte(kapazitaet, container) {
+  // Eine stillgelegte Quelle zaehlt nicht als Ausfall — sonst stuende hier
+  // dauerhaft ein Alarm fuer etwas, das absichtlich weg ist.
+  if (container.stillgelegt) {
+    return kapazitaet.erreichbar ? "unauffaellig" : "Kapazitaet nicht erreichbar";
+  }
   if (!kapazitaet.erreichbar && !container.erreichbar) return "keine Quelle erreichbar";
   if (kapazitaet.erreichbar && kapazitaet.freiePlaetze === 0 && kapazitaet.maximalePlaetze > 0) {
     return "alle Plaetze belegt — neue Laeufe warten";
