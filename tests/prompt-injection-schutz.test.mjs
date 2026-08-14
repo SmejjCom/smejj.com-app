@@ -197,3 +197,85 @@ test("deepResearch hat KEINEN eigenen Weg ins Modell — die Kette bleibt geschl
     "Ernte-Chunks muessen als internet-ernte gekennzeichnet bleiben — daran haengt der ganze Schutz");
   assert.equal(istFremdquelle("internet-ernte/2026-08-14"), true, "und diese Kennung muss als fremd gelten");
 });
+
+// --- Die Wache fuer ALLE kuenftigen Wege ------------------------------------
+//
+// Inventur 2026-08-14 abends: Alle drei bekannten Wege sind zu — der RAG-Block
+// (6cdf177), die Werkzeugergebnisse (974ce48) und die Ueberschriften (de5c99b).
+// Der Eintrag "offen: deepResearchAutopilot" in meiner Notiz war VERALTET; die
+// Kette deepResearch -> Ernte -> RAG war laengst geschuetzt.
+//
+// Was fehlte, war nicht ein weiterer Fix, sondern eine Wache: Bisher wurde
+// jeder Weg EINZELN geprueft, und zwar von Hand. Der vierte faellt so erst auf,
+// wenn jemand danach sucht. Dieser Test dreht das um — er sucht selbst.
+//
+// Regel: Wer fremde Web-Inhalte holt UND daraus Prompt-Nachrichten baut, MUSS
+// den Fremdinhalt-Filter benutzen. Wer nur eines von beidem tut, ist frei.
+
+test("keine Datei bringt Web-Inhalte in einen Prompt, ohne sie zu entwaffnen", async () => {
+  const { readFileSync, readdirSync, statSync } = await import("node:fs");
+  const path = await import("node:path");
+
+  const dateien = [];
+  const sammeln = (ordner) => {
+    for (const name of readdirSync(ordner)) {
+      const p = path.join(ordner, name);
+      if (statSync(p).isDirectory()) {
+        if (!/node_modules|\.git/.test(name)) sammeln(p);
+      } else if (name.endsWith(".js") && !name.endsWith(".test.js")) {
+        dateien.push(p);
+      }
+    }
+  };
+  sammeln("control-server/src");
+  sammeln("src");
+
+  // Holt diese Datei fremde Web-Inhalte? Nur AUFRUFE zaehlen, nicht
+  // Namensnennungen. Erster Entwurf zaehlte auch `browserFetch` als blossen
+  // Routennamen — dadurch schlug src/server.js an, wo die beiden Fundstellen
+  // 77 Zeilen auseinander liegen und nichts miteinander zu tun haben: eine
+  // Routen-Konstante (Zeile 215) und die Nachrichten, die der Client selbst
+  // schickt (Zeile 292). Ein Fehlalarm, der die Wache wertlos gemacht haette:
+  // Wer sie einmal als "schlaegt eh immer an" abtut, sieht auch den echten
+  // Fund nicht mehr.
+  // Der IMPORT ist das verlaessliche Zeichen, nicht die Aufrufform. Zweiter
+  // Entwurf suchte `searchWebDetailed(` — und war damit ausgerechnet fuer
+  // toolLoop.js blind, die einzige Datei, die wirklich Web-Inhalte in Prompts
+  // bringt: dort laeuft der Aufruf ueber eine Test-Naht
+  // (`sucheImpl = searchWebDetailed`), also ohne Klammer hinter dem Namen.
+  // Aufgefallen ist das nur, weil die Blindheitsprobe unten den Schutz
+  // absichtlich entfernt hat und die Wache gruen blieb.
+  const HOLT_WEB = /\b(searchWebDetailed|searchWeb|ladeErnteChunks|harvestedKnowledge)\b/;
+  // Baut sie daraus einen Prompt? "user" bewusst NICHT dabei — das ist die
+  // Rolle, in der Nutzereingaben stehen, und die sind kein Fremdinhalt.
+  const BAUT_PROMPT = /\brole\s*:\s*["'](system|assistant|tool)["']/;
+  // Benutzt sie den Schutz?
+  const SCHUETZT = /\b(entwaffneFremdtext|formatFremdKontextBlock|teileNachHerkunft)\b/;
+
+  const ungeschuetzt = [];
+  for (const datei of dateien) {
+    const q = readFileSync(datei, "utf8");
+    if (HOLT_WEB.test(q) && BAUT_PROMPT.test(q) && !SCHUETZT.test(q)) ungeschuetzt.push(datei);
+  }
+
+  assert.deepEqual(ungeschuetzt, [],
+    "diese Dateien holen Web-Inhalte UND bauen Prompts, benutzen aber den Fremdinhalt-Filter nicht");
+});
+
+test("die Wache ist nicht blind — ein neuer ungeschuetzter Weg faellt auf", () => {
+  // Selbstpruefung im Sinne des Waechter-TUEV: Eine Wache, die immer gruen
+  // ist, beweist nichts. Hier dieselbe Logik gegen eine erfundene Datei.
+  const HOLT_WEB = /\b(searchWebDetailed|searchWeb|ladeErnteChunks|harvestedKnowledge)\b/;
+  const BAUT_PROMPT = /\brole\s*:\s*["'](system|assistant|tool)["']/;
+  const SCHUETZT = /\b(entwaffneFremdtext|formatFremdKontextBlock|teileNachHerkunft)\b/;
+  const gefaehrlich = `
+    import { searchWebDetailed } from "../search/webSearch.js";
+    const treffer = await searchWebDetailed(frage);
+    const messages = [{ role: "system", content: treffer[0].snippet }];
+  `;
+  assert.ok(HOLT_WEB.test(gefaehrlich) && BAUT_PROMPT.test(gefaehrlich) && !SCHUETZT.test(gefaehrlich),
+    "genau so sieht der naechste Weg aus — die Wache muss ihn fangen");
+
+  const entschaerft = gefaehrlich.replace("treffer[0].snippet", "entwaffneFremdtext(treffer[0].snippet).text");
+  assert.ok(SCHUETZT.test(entschaerft), "und mit Filter darf sie NICHT mehr anschlagen");
+});
