@@ -304,3 +304,26 @@ test("der Store holt die Medien beim Wiederherstellen", async () => {
   assert.match(rumpf, /medienHolen\(log\)/,
     "ohne diesen Aufruf bliebe im Verlauf eine Adresse stehen, die die Sicherheitsrichtlinie blockt");
 });
+
+test("die Reihenfolge beim Speichern ist die einzige, die sicher ist", async () => {
+  // Live gemessen 2026-08-14: Direkt nach dem Auslagern stand die
+  // Serveradresse im src — und die Sicherheitsrichtlinie wies sie ab
+  // ("MEDIA_ELEMENT_ERROR: Media load rejected"). Das Medium war erst nach
+  // einem Neuladen zu sehen. Also muss auch beim Speichern umgeschaltet
+  // werden — aber NUR NACH dem Schnappschuss.
+  //
+  // Waere medienHolen() vor readEntries(), stuende ein blob: im gespeicherten
+  // html. Genau daran sind die vier Videos im Konto gestorben. Diese drei
+  // Zeilen in dieser Reihenfolge sind der ganze Schutz.
+  const quelle = await import("node:fs").then((fs) => fs.readFileSync("public/chat-store.js", "utf8"));
+  const i = quelle.indexOf("async function persistActive()");
+  const rumpf = quelle.slice(i, i + 1400);
+  const auslagern = rumpf.indexOf("await medienAuslagern();");
+  const schnappschuss = rumpf.indexOf("const messages = readEntries();");
+  const holen = rumpf.indexOf("medienHolen(startLog());");
+  assert.ok(auslagern >= 0 && schnappschuss >= 0 && holen >= 0, "alle drei Schritte muessen vorkommen");
+  assert.ok(auslagern < schnappschuss,
+    "auslagern MUSS vor dem Schnappschuss stehen, sonst wandert der Datenberg ins html");
+  assert.ok(schnappschuss < holen,
+    "holen MUSS nach dem Schnappschuss stehen, sonst wandert ein blob: ins html");
+});
