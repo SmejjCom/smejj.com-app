@@ -252,7 +252,7 @@ export const SECURITY_HEADERS = {
     // und die Statusseite meldet falschen Alarm — live faellt das nicht auf,
     // weil GitHub Pages keine CSP-Kopfzeile setzt. Dieselben Hosts stehen in
     // der Meta-CSP von status.html; tests/statusseite.test.mjs erzwingt das.
-    "connect-src 'self' https://accounts.google.com https://redbean-caesar-yccqb9olg70i1ehu.salad.cloud https://smejj-chat-bridge.zeabur.app https://loganberry-fruit-e3n6k5n10h68cawn.salad.cloud",
+    "connect-src 'self' https://accounts.google.com https://smejj-chat-bridge.zeabur.app",
     "frame-src https://accounts.google.com",
     "img-src 'self' data:",
     "style-src 'self'",
