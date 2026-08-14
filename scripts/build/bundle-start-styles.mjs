@@ -22,7 +22,17 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const OUTPUT = join(ROOT, "public", "start-styles.css");
+
+// ZWEI Ziele, und das ist kein Versehen: index.html laedt
+// `/assets/start-styles.css` — die AUSGELIEFERTE Fassung ist die Kopie im
+// Unterordner, nicht die in der Wurzel. Bis 2026-08-14 schrieb dieses Skript
+// nur die Wurzel-Fassung; wer die Quellen aenderte und buendelte, sah live
+// weiter das alte Buendel, ohne Fehlermeldung. Beide Fassungen werden darum
+// geschrieben und beide geprueft.
+export const OUTPUTS = Object.freeze([
+  join(ROOT, "public", "start-styles.css"),
+  join(ROOT, "public", "assets", "start-styles.css")
+]);
 
 // Reihenfolge = Kaskade. Muss exakt der frueheren Reihenfolge in index.html
 // entsprechen, sonst gewinnen andere Regeln als vorher.
@@ -87,14 +97,16 @@ export async function buildBundle() {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const bundle = await buildBundle();
   if (process.argv.includes("--check")) {
-    const current = await readFile(OUTPUT, "utf8").catch(() => "");
-    if (current !== bundle) {
-      console.error("start-styles.css ist NICHT aktuell — bitte 'node scripts/build/bundle-start-styles.mjs' ausfuehren.");
-      process.exit(1);
+    for (const ziel of OUTPUTS) {
+      const current = await readFile(ziel, "utf8").catch(() => "");
+      if (current !== bundle) {
+        console.error(`${ziel} ist NICHT aktuell — bitte 'node scripts/build/bundle-start-styles.mjs' ausfuehren.`);
+        process.exit(1);
+      }
     }
-    console.log(`start-styles.css aktuell — ${SOURCES.length} Quelldateien, ${Math.round(bundle.length / 1024)} KB.`);
+    console.log(`start-styles.css aktuell (${OUTPUTS.length} Fassungen) — ${SOURCES.length} Quelldateien, ${Math.round(bundle.length / 1024)} KB.`);
   } else {
-    await writeFile(OUTPUT, bundle);
-    console.log(`start-styles.css erzeugt — ${SOURCES.length} Quelldateien, ${Math.round(bundle.length / 1024)} KB.`);
+    for (const ziel of OUTPUTS) await writeFile(ziel, bundle);
+    console.log(`start-styles.css erzeugt (${OUTPUTS.length} Fassungen) — ${SOURCES.length} Quelldateien, ${Math.round(bundle.length / 1024)} KB.`);
   }
 }
