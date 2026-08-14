@@ -75,7 +75,9 @@ const CHECK_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".md", ".json", ".html",
 // kein handgepflegter Quellcode. Die acht Quelldateien bleiben einzeln unter der
 // 800-Zeilen-Regel und werden weiterhin geprueft; das Buendel ist nur ihr Ergebnis
 // und wird von check:start-styles gegen die Quellen verifiziert (2026-07-27).
-const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/start-styles\.css$/];
+// Auch die Auslieferungs-Kopie des Buendels ist erzeugt, nicht handgepflegt
+// (public/assets/ spiegelt die Wurzel fuer den lokalen Server, 2026-08-13).
+const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/(assets\/)?start-styles\.css$/];
 
 const failures = [];
 const files = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8" })

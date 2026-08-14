@@ -15,6 +15,10 @@ const profileDock = fs.readFileSync(path.join(publicDir, "profile-dock.js"), "ut
 const profilePictureControl = fs.readFileSync(path.join(publicDir, "profile-picture-control.js"), "utf8");
 // Der Store liefert deutsche Quelltexte, die profile-picture-control.js per t() uebersetzt.
 const profilePictureStore = fs.readFileSync(path.join(publicDir, "profile-picture-store.js"), "utf8");
+// Die Beispiel-Chips der Startseite sind seit 2026-08-13 uebersetzt; ihre
+// deutschen Quelltexte stehen im Markup und im Chip-Modul.
+const startChips = fs.readFileSync(path.join(publicDir, "start-chips.js"), "utf8");
+const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
 
@@ -51,7 +55,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore;
+    + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }

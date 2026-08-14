@@ -29,7 +29,9 @@ test("die Hilfeseite liegt im Precache", () => {
 });
 
 test("jeder genannte Arbeitsbereich existiert wirklich", () => {
-  const bereiche = ["Neu", "Suche", "Coding", "Projekte", "Dateien", "Verlauf", "Einstellungen"];
+  // "Projekte" heisst in der Oberflaeche seit 2026-08-13 "Arbeitsbereich"
+  // (index.html: title="Arbeitsbereich"). Die Hilfe folgt der Oberflaeche.
+  const bereiche = ["Neu", "Suche", "Coding", "Arbeitsbereich", "Dateien", "Verlauf", "Einstellungen"];
   for (const name of bereiche) {
     assert.ok(hilfe.includes(`<dt>${name}</dt>`), `Hilfe nennt "${name}" nicht`);
     assert.ok(
@@ -44,13 +46,22 @@ test("jeder genannte Arbeitsbereich existiert wirklich", () => {
 // aber die umgekehrte Luecke blieb blind: ein NEUES Modell (Kimi K3) fehlte in
 // der Hilfe, ohne dass irgendetwas rot wurde. Deshalb wird die Liste jetzt aus
 // index.html GELESEN statt behauptet, und beide Richtungen werden geprueft.
-const ANGEBOTENE_MODELLE = [...index.matchAll(/data-model="([^"]+)"/g)].map((t) => t[1]);
+// Zwei Namen pro Modell: die technische Kennung (data-model) und die
+// Beschriftung, die der Nutzer im Menue liest ("Kraftvoll (GLM-5.2)").
+// Die Hilfe spricht mit dem Nutzer, also darf sie die Beschriftung nennen —
+// vorher zaehlte nur die Kennung, und jede lesbare Bezeichnung war rot.
+const ANGEBOTENE_MODELLE = [...index.matchAll(/data-model="([^"]+)"[^>]*>([^<]+)</g)]
+  .flatMap((treffer) => [treffer[1], treffer[2].trim()])
+  .filter(Boolean);
 
 test("die Hilfe nennt genau die Modelle, die die App anbietet", () => {
   assert.ok(ANGEBOTENE_MODELLE.length >= 2, "index.html bietet gar keine Modellwahl — Testgrundlage fehlt");
   // Richtung 1: was die App anbietet, muss erklaert sein.
-  for (const modell of ANGEBOTENE_MODELLE) {
-    assert.ok(hilfe.includes(modell), `Die App bietet "${modell}" an, die Hilfe erklaert es nicht`);
+  for (const [, kennung, beschriftung] of index.matchAll(/data-model="([^"]+)"[^>]*>([^<]+)</g)) {
+    assert.ok(
+      hilfe.includes(kennung) || hilfe.includes(beschriftung.trim()),
+      `Die App bietet "${beschriftung.trim()}" an, die Hilfe erklaert es nicht`
+    );
   }
   // Richtung 2: was die Hilfe als waehlbar auszeichnet, muss es auch geben.
   // Nur die <strong>-Auszeichnungen im Modell-Absatz zaehlen — Fliesstext ueber

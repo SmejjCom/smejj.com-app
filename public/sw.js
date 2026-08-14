@@ -242,7 +242,6 @@ const SHELL = [
   "/assets/browser-context.js",
   "/assets/search.js",
   "/assets/search-overlay.js",
-  "/assets/search-overlay.css",
   "/assets/view-chrome.js",
   "/assets/composer-tools.js",
   "/assets/composer-plus-menu.js",
@@ -270,6 +269,10 @@ const SHELL = [
   "/assets/chat-title-auto.js",
   "/assets/chat-messages.js",
   "/assets/chat-actions.js",
+  // Beispiel-Chips der Startseite (2026-08-13). index.html laedt sie per
+  // <script>; ohne Eintrag hier fehlen sie offline — check:precache-imports
+  // hat genau das gemeldet.
+  "/assets/start-chips.js",
   "/assets/chat-actions-menu.js",
   "/assets/chat-code-copy.js",
   "/assets/workspace-bridge.js",
