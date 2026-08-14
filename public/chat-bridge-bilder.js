@@ -20,6 +20,9 @@
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
 import { meldeAktion } from "./chat-bridge-evolution.js";
+// Weg 0 (Betreiber-Entscheidung 2026-08-14): externer Maler fuer die Qualitaet,
+// die der CPU-Server nicht liefern kann. Ohne Schluessel existiert er nicht.
+import { erzeugeExternesBild, externMalerName, externerMalerBereit } from "./chat-bridge-bilder-extern.js";
 
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
@@ -56,6 +59,7 @@ const BILDER_WARTE_TAKT_MS = Number(process.env.SMEJJ_BILDER_WARTE_TAKT_MS || 50
 const BILDER_HEALTH_TIMEOUT_MS = 2500;
 // PNG-Deckel: 512px-PNG liegt bei 300-800 KB, base64 +33 %.
 const BILDER_MAX_B64 = 4_000_000;
+
 
 // Mal-Auftrag = Mal-Verb UND Motivwort in der Frage (deutsch/englisch).
 const BILDER_VERB = /\b(zeichne|zeichnen|zeichen|zeichene|zeig|zeige|zeigen|male|malen|erstelle|erstellen|erstell|generiere|generieren|generier|erzeuge|erzeugen|erzeug|mach|mache|machen|bau|bauen|draw|paint|generate|create|make|kannst|kann|moechte|möchte|will)\b/i;
@@ -688,11 +692,17 @@ export async function streamBilderLane(res, body, task, deps) {
 
   // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
   const malerZustand = await bilderMalerZustand(deps.fetchImpl || fetch);
+  const externAn = externerMalerBereit();
 
-  // Weg 1: der eigene Bild-Maler (nur wenn wach UND Modell geladen).
-  if (malerZustand.bereit) {
-    bilderSseKopf(res, deps, body, "bilder-foto", "bild-maler:sd-turbo");
-    bilderSchritt(res, "laeuft", "läuft … (ca. 1 Minute)");
+  // Weg 0 (extern, beste Qualitaet) und Weg 1 (eigener Maler) teilen sich
+  // Kopf, Personen-Schutz und Fortschrittsanzeige. Extern kommt ZUERST: es ist
+  // nicht nur besser, sondern auch ~3 s statt ~2 min — und es nimmt dem
+  // geteilten 8-GB-Server die Last (der Maler zieht 203 % CPU je Bild).
+  if (externAn || malerZustand.bereit) {
+    bilderSseKopf(res, deps, body,
+      externAn ? "bilder-foto-extern" : "bilder-foto",
+      externAn ? `extern:${externMalerName()}` : "bild-maler:sd-turbo");
+    bilderSchritt(res, "laeuft", externAn ? "läuft …" : "läuft … (ca. 1 Minute)");
     const beginn = Date.now();
     let phase = "läuft";
     // Lebenszeichen alle 10 s, damit Zwischenknoten die Leitung nicht kappen.
@@ -705,7 +715,13 @@ export async function streamBilderLane(res, body, task, deps) {
     try {
       const malPrompt = await uebersetzeMalPrompt(prompt);
       gesperrt = istPersonGesperrt(malPrompt);
-      if (!gesperrt) {
+      if (!gesperrt && externAn) {
+        inhalt = await erzeugeExternesBild(malPrompt, notiz, deps.fetchImpl || fetch);
+      }
+      // Extern aus oder gescheitert: der eigene Maler bleibt der Rueckfall —
+      // ein langsames echtes Foto ist besser als gar keins.
+      if (!gesperrt && !inhalt && malerZustand.bereit) {
+        if (externAn) bilderSchritt(res, "laeuft", "eigener Maler übernimmt … (ca. 1 Minute)");
         inhalt = await erzeugeFotoMitGeduld(malPrompt, BILDER_FOTO_TIMEOUT_MS, (neu) => {
           phase = neu;
         }, notiz);
@@ -730,7 +746,7 @@ export async function streamBilderLane(res, body, task, deps) {
     // Nutzer UND Betreiber raten — genau das ist heute passiert.
     bilderSchritt(res, "fertig", inhalt
       ? "fertig"
-      : `fehlgeschlagen (${notiz.grund || "unbekannt"})`);
+      : `fehlgeschlagen (${[notiz.externGrund, notiz.grund].filter(Boolean).join(" / ") || "unbekannt"})`);
     bilderSendeInhalt(res, inhalt || "Das Malen ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
     res.write("data: [DONE]\n\n");
     res.end();
