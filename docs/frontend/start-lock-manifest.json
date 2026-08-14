@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-14T00:39:47.859Z",
-  "confirmation": "Betreiber-Entscheidung 2026-08-13 per Karte 'Modell nach links': Werkzeugleiste der Eingabe gruppiert (plus+Modell links, Diktat/Sprache/Senden rechts) — reine CSS-order in start-glass.css, Markup unveraendert, danach Buendel neu gebaut.",
+  "frozenAt": "2026-08-14T07:50:06.970Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-14: Salad-Endreinigung aus Commit 0a3cb37 bestaetigt — die ausgemusterten Hosts redbean-caesar, loganberry-fruit und starfruit-thyme (*.salad.cloud) aus den CSP-Erlaubnislisten und aus der Empfaengerliste der Datenschutzerklaerung gestrichen, config.js Rueckfall-Origin auf smejj-control.zeabur.app. Nur Streichungen, kein neuer Host, keine Regel gelockert.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "ca9a7abd3e16d03789d2cd530a3feb10fa8c081eb2f9e63b3ed11a430cc66f88",
+    "public/index.html": "4d83241e31a6c40b2d6199c3467746d533a829bc3c7db94984f93b447128ea17",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "e96bed9dd2e342a242af64a9aa38fd0ebf9971f6f48e6af398aa23a6355b0a00",
     "public/start-glass.css": "f986d76a91f61d3af7397df2caef2965c3ba1d96d3f6d2625d5e7e7ba2e0a1bc",
@@ -15,7 +15,7 @@
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
     "public/app.js": "10dab47a836b888d25dc0dbce26455d46cf8e71a5e0fb5d0280eef3f762c82bc",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
-    "public/config.js": "4233f774e0c0c36f17f4c8dbe9cc948215dec01eaaf035180350527a77ebe879",
+    "public/config.js": "e339c27e00688ef7963d201be68ca3f35479cc4f3a110689c05e78f013f49970",
     "public/components.js": "3857d1e62ed36de05a27fc307c1a4fc13b4721f5cafb850dafa672ef8dd2d0ff",
     "public/premium-surfaces.js": "db717e4c28d90aeb49667070be285e3c72cfd6f0323d088d4441f4585730f91b",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
