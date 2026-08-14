@@ -41,9 +41,10 @@ import { pruefeAntwortenAlle, fuehreSelbsttestAus } from "./antwortTuevAutopilot
 import { executeRealtimeHarvestCycle, getHarvestBestand, HARVEST_TOPICS } from "./realtimeInternetHarvesterAutopilot.js";
 // Die drei Läufe der AI Evolution Engine (Nr. 37-39) — eigene Datei wegen der
 // 800-Zeilen-Regel, siehe control-server/src/evolution/evolutionLaeufe.js.
-import { laufEvolutionEngine, laufMissingFunctionDetector, laufSupervisor, schreibeEvolutionAblage } from "../evolution/evolutionLaeufe.js";
+import { laufEvolutionEngine, laufMissingFunctionDetector, laufSupervisor, schreibeEvolutionAblage, laufKonkurrenzRadar } from "../evolution/evolutionLaeufe.js";
 import { erkenneLuecken, baueLueckenAufgaben } from "../evolution/missingFunctionDetector.js";
 import { erfasseAktion } from "../evolution/aiEvolutionEngine.js";
+import { searchWebDetailed } from "../../../src/search/webSearch.js";
 
 /**
  * Die Konkurrenzlücken als fertige Backlog-Aufgaben. Eigene Funktion, damit
@@ -622,6 +623,10 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["ai-evolution-engine", () => laufEvolutionEngine()],
     ["missing-function-detector", () => laufMissingFunctionDetector({ dateien })],
     ["autopilot-supervisor", () => laufSupervisor({ autopiloten: autopilotUebersicht({}).autopiloten || [] })],
+    // Nr. 04 zieht vom Dienst smejj-autopilot-jobs hierher um: dort war er ein
+    // Lebenszeichen ohne Suche, und der Dienst ist von aussen nicht erreichbar
+    // (derselbe Umzug wie bei der Voice-Region-Pruefung am 2026-08-13).
+    ["konkurrenz-radar", () => laufKonkurrenzRadar({ mitNetz, suche: searchWebDetailed })],
     // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
     // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen

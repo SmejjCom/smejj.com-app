@@ -15,6 +15,7 @@ import { medientypen } from "../evolution/qualitaetsEngine.js";
 import { erkenneLuecken, baueLueckenAufgaben, KONKURRENZ_STAND } from "../evolution/missingFunctionDetector.js";
 import { holeKennzahlen } from "../evolution/kennzahlenAblage.js";
 import { zaehleAufgaben } from "../evolution/aufgabenAblage.js";
+import { holeKandidaten } from "../evolution/konkurrenzRadar.js";
 import { AKTIONSARTEN } from "../evolution/aiEvolutionEngine.js";
 import { KRITERIEN } from "../evolution/autopilotSupervisor.js";
 
@@ -40,7 +41,7 @@ export function berechneEvolutionScore({ abdeckung, ampelAnteil, paritaet }) {
 /**
  * @param {{jetztMs?: number, uebersicht?: Function, engineUebersicht?: Function}} [optionen]
  */
-export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = autopilotUebersicht, engineUebersicht = evolutionUebersicht, kennzahlen = holeKennzahlen, aufgabenZaehler = zaehleAufgaben, env = process.env } = {}) {
+export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = autopilotUebersicht, engineUebersicht = evolutionUebersicht, kennzahlen = holeKennzahlen, aufgabenZaehler = zaehleAufgaben, radarBestand = holeKandidaten, env = process.env } = {}) {
   const ampel = uebersicht({ jetztMs });
   const alle = ampel.autopiloten || [];
   const gruen = alle.filter((a) => a.ampel === "gruen").length;
@@ -66,6 +67,8 @@ export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = au
   const aufgabenStand = await aufgabenZaehler({ env }).catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 120) }));
   const abdeckung = dauerhaft.ok ? dauerhaft.abdeckung : null;
   const qualitaetsNote = dauerhaft.ok ? dauerhaft.qualitaetsNote : null;
+
+  const radar = await radarBestand({ env }).catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 120) }));
 
   const { luecken, vorteile, gleichstand } = erkenneLuecken({});
   const lueckenAufgaben = baueLueckenAufgaben(luecken);
@@ -110,7 +113,14 @@ export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = au
       ohnePruefer,
       // Die Reihe aus der Ablage; der Prozessstand steht darunter als Zusatz.
       jeArt: dauerhaft.ok ? dauerhaft.arten : [],
-      jeArtSeitNeustart: engine.arten
+      jeArtSeitNeustart: engine.arten,
+      // DIE EHRLICHERE LUECKE als "ohne Prüfer": Für DIESE Arten gibt es einen
+      // Prüfer, aber es hat sich noch nie eine Funktion gemeldet. 100 %
+      // Abdeckung heisst nur "alles Gemeldete wird geprüft" — nicht "alles
+      // meldet". Ohne diese Zeile liest sich das eine wie das andere.
+      ohneMeldung: dauerhaft.ok
+        ? typen.filter((t) => !(dauerhaft.arten || []).some((a) => a.art === t))
+        : null
     },
 
     verbesserungen: (() => {
@@ -147,6 +157,13 @@ export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = au
       luecken: luecken.map((l) => ({ id: l.id, name: l.name, anbieter: l.anbieter })),
       vorteile,
       gleichstand: gleichstand.length,
+      // Frische Suchtreffer des Radars — KANDIDATEN, keine bestaetigten
+      // Funktionen. Sie stehen getrennt von den Luecken, damit niemand einen
+      // Zeitungstitel fuer eine gemessene Funktionsluecke haelt.
+      kandidaten: radar.ok ? (radar.kandidaten || []).slice(0, 8) : [],
+      radarLetzterLauf: radar.ok ? radar.letzterLauf : null,
+      radarStumm: radar.ok ? null : (radar.grund || "Radar-Ablage nicht lesbar"),
+      radarStummeQuellen: radar.ok ? (radar.stummeQuellen || []) : [],
       paritaet
     },
 

@@ -13,6 +13,7 @@ import { fuehreQualitaetSelbsttestAus, medientypen } from "./qualitaetsEngine.js
 import { fuehreEngineSelbsttestAus, evolutionUebersicht, entnimmZuwachs, AKTIONSARTEN } from "./aiEvolutionEngine.js";
 import { merkeAufgaben, listeAufgaben, setzeZustand, schliesseErloschene, zaehleAufgaben, ZUSTAENDE } from "./aufgabenAblage.js";
 import { merkeKennzahlen, holeKennzahlen } from "./kennzahlenAblage.js";
+import { fuehreRadarAus, holeKandidaten, fuehreRadarSelbsttestAus, BEOBACHTET } from "./konkurrenzRadar.js";
 import {
   fuehreDetectorSelbsttestAus, erkenneLuecken, baueLueckenAufgaben,
   pruefeBelege, SMEJJ_FAEHIGKEITEN, KONKURRENZ_STAND
@@ -111,6 +112,60 @@ export async function laufEvolutionEngine({ uebersicht = evolutionUebersicht, da
       + `Note ${k.qualitaetsNote}/100`
       + (a.ok ? `; Aufgaben: ${a.offen} offen von ${a.gesamt}` : `; Aufgaben-Ablage nicht lesbar (${a.grund || "ohne Grund"})`)
       + anhang
+  };
+}
+
+// Zwischen zwei Radar-Läufen liegt eine Woche: Anbieter kündigen nicht
+// stündlich an, und jede Anfrage kostet Suchkontingent. 6,5 Tage statt 7,
+// damit ein Lauf nicht Woche für Woche später wandert.
+const RADAR_ABSTAND_MS = 6.5 * 24 * 60 * 60 * 1000;
+
+/**
+ * Nr. 04 — Konkurrenz-Radar, seit 2026-08-14 mit ECHTEM Quellenscan.
+ *
+ * Vorher war dieser Autopilot ein Lebenszeichen aus dem Dienst
+ * smejj-autopilot-jobs ("echter Quellenscan noch nicht angebunden") — grün,
+ * ohne je gesucht zu haben. Jetzt sucht er wirklich und legt KANDIDATEN mit
+ * Quelle ab: Suchtreffer, keine bestätigten Funktionen. Die Deutung
+ * ("das ist eine Funktion, die uns fehlt") trifft der Betreiber.
+ */
+export async function laufKonkurrenzRadar({
+  mitNetz = true, suche = null, radar = fuehreRadarAus, bestand = holeKandidaten,
+  env = process.env, jetztMs = Date.now()
+} = {}) {
+  const selbsttest = fuehreRadarSelbsttestAus({ jetztMs });
+  if (!selbsttest.bestanden) {
+    return { ok: false, meldung: `Radar-Filter erkennt bekannte Fälle nicht mehr: ${selbsttest.fehler.slice(0, 2).join("; ")}` };
+  }
+
+  const gelesen = await bestand({ env });
+  if (!gelesen.ok) return { ok: false, meldung: `Selbsttest ${selbsttest.geprueft}/${selbsttest.geprueft}, aber die Radar-Ablage ist nicht lesbar: ${gelesen.grund}` };
+
+  const letzteMs = gelesen.letzterLauf ? Date.parse(gelesen.letzterLauf) : NaN;
+  const frisch = Number.isFinite(letzteMs) && jetztMs - letzteMs < RADAR_ABSTAND_MS;
+  if (frisch) {
+    const tage = Math.round((jetztMs - letzteMs) / 86_400_000);
+    return {
+      ok: true,
+      meldung: `Selbsttest ${selbsttest.geprueft}/${selbsttest.geprueft}; letzter Scan vor ${tage} Tag(en): `
+        + `${gelesen.kandidaten.length} Kandidat(en) aus ${gelesen.laeufe} Lauf/Läufen`
+        + (gelesen.stummeQuellen.length ? `, ${gelesen.stummeQuellen.length} Quelle(n) waren stumm` : "")
+    };
+  }
+  if (!mitNetz || typeof suche !== "function") {
+    return { ok: true, meldung: `Selbsttest bestanden; Scan fällig, läuft im nächsten Netz-Takt (${gelesen.kandidaten.length} Kandidaten im Bestand)` };
+  }
+
+  const lauf = await radar({ suche, jetztMs, env });
+  if (!lauf.ok) {
+    return { ok: false, meldung: `Scan gescheitert: ALLE ${lauf.stummeQuellen?.length || 0} Quellen stumm — ${lauf.stummeQuellen?.[0]?.grund || "ohne Grund"}` };
+  }
+  return {
+    ok: true,
+    meldung: `${lauf.kandidaten.length} Kandidat(en) bei ${BEOBACHTET.length - (lauf.stummeQuellen.length)} von ${BEOBACHTET.length} Anbietern gefunden`
+      + (lauf.stummeQuellen.length ? `; stumm: ${lauf.stummeQuellen.map((s) => s.anbieter).join(", ")}` : "")
+      + (lauf.abgelegt ? "" : `; NICHT abgelegt (${lauf.ablageGrund})`)
+      + " — Kandidaten sind Suchtreffer mit Quelle, keine bestätigten Funktionen"
   };
 }
 

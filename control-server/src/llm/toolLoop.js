@@ -23,6 +23,7 @@
 // normalen Seitenaufruf. Der Control Server bleibt aus dem Ladepfad heraus.
 
 import { filterSseEvent } from "./streamFilter.js";
+import { erfasseAktion } from "../evolution/aiEvolutionEngine.js";
 import { parseBrowserTarget, extractTitle } from "../routes/browserProxyRoutes.js";
 import { searchWebDetailed, cleanSnippet, normalizeRegion } from "../../../src/search/webSearch.js";
 import { entwaffneFremdtext } from "../rag/fremdinhaltFilter.js";
@@ -271,6 +272,22 @@ export async function streamWithTools({ result, chain, messages, res, options, e
       sendeSchritt(res, { ...schritt, zustand: "laeuft" });
       const ergebnis = await runTool(call, { env }).catch((error) => `Werkzeugfehler: ${String(error?.message || error).slice(0, 200)}`);
       sendeSchritt(res, { ...schritt, zustand: "fertig", treffer: zaehleTreffer(ergebnis) });
+      // AI Evolution Engine (2026-08-14): jeder Werkzeuglauf wird bewertet.
+      // Ein Werkzeug meldet seinen Fehler als TEXT zurueck (der Agent soll
+      // darauf reagieren koennen) — deshalb wird hier an genau den Saetzen
+      // erkannt, die die Werkzeuge selbst schreiben, statt an einem Statuscode,
+      // den es nicht gibt. Der Aufruf darf den Lauf nie zu Fall bringen.
+      try {
+        const text = String(ergebnis || "");
+        const gescheitert = /^Werkzeugfehler:|^Die Suche ist fehlgeschlagen|^Unbekanntes Werkzeug|kein gueltiges JSON/.test(text);
+        erfasseAktion({
+          art: "werkzeug",
+          prompt: schritt.text,
+          ergebnis: { ok: !gescheitert, text, ...(gescheitert ? { fehler: text.slice(0, 120) } : {}) },
+          quelle: `werkzeug:${schritt.art}`,
+          betrifft: "werkzeuge"
+        });
+      } catch { /* eine Messung, die den gemessenen Weg kaputtmacht, ist keine */ }
       // Werkzeugergebnisse aus dem NETZ sind Fremdtext (2026-08-14).
       // `web_suche` und `seite_lesen` liefern Inhalte von Seiten, die uns
       // niemand geprueft hat — und sie landeten hier ungefiltert im Verlauf.

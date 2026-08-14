@@ -167,22 +167,24 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     id: "konkurrenz-radar",
     name: "Konkurrenz-Radar",
     nummer: "04",
-    kurz: "Durchsucht jeden Montag die öffentlichen Quellen der Konkurrenz nach neuen Funktionen und schlägt Verbesserungen vor.",
+    kurz: "Sucht woechentlich in oeffentlichen Quellen nach neuen Funktionen der Konkurrenz — und liefert KANDIDATEN mit Quelle, keine bestaetigten Funktionen.",
     funktionen: [
-      "Läuft jeden Montag um 6:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
-      "EHRLICH: Der Zeabur-Lauf ist bisher nur ein Lebenszeichen des Dienstes — der echte Quellenscan ist noch nicht angebunden.",
-      "Erstellt nur bei echten Funden einen Bericht."
+      "Sucht je beobachtetem Anbieter (ChatGPT, Gemini, Claude, Perplexity, Grok, Kimi) einmal woechentlich ueber die echte Websuche und legt die Treffer mit Titel, Adresse und Datum ab.",
+      "DIE TRENNUNG IST DER ZWECK: Eine MESSUNG ist »am 14.08. lieferte diese Suche diesen Treffer«. Eine DEUTUNG waere »Anbieter X hat jetzt Funktion Y, die uns fehlt«. Das Erste kann eine Maschine belegen, das Zweite nicht — ein Modell, das aus Schlagzeilen Funktionslisten destilliert, erfindet frueher oder spaeter eine.",
+      "Kandidaten tragen deshalb ausdruecklich »bestaetigt: false«. Erst eine Betreiber-Entscheidung traegt eine Funktion in den Konkurrenz-Stand ein, aus dem der Missing-Function-Detector (Nr. 38) Aufgaben baut.",
+      "UMGEZOGEN am 2026-08-14: Vorher lief er im Dienst smejj-autopilot-jobs und war dort ein blosses Lebenszeichen (»echter Quellenscan noch nicht angebunden«) — gruen, ohne je gesucht zu haben. Der Job dort sendet jetzt bewusst KEINEN Herzschlag mehr, sonst wuerde seine Attrappe diese Ampel gruen halten, waehrend der echte Scan scheitert.",
+      "Faellt die Suche fuer einen Anbieter aus, steht er als STUMME QUELLE im Bericht — nie als »keine Neuigkeiten«. Sind ALLE Quellen stumm, wird die Ampel rot."
     ],
-    trainiert: "AI Benchmark Leaderboards & Öffentliche Tech Release Notes",
-    verbessert: "Strategische Überholspur durch wöchentliches Benchmarking der Top-Anbieter",
-    neuigkeiten: ["Wochen-Radar erfolgreich ausgeführt", "Keine ungeprüften Konkurrenz-Abweichungen"],
-    ort: "Zeabur (smejj-autopilot-jobs)",
-    zeitplan: "montags 6:00 UTC",
+    trainiert: "Nichts — er sucht. Oeffentliche Ankuendigungen der Anbieter.",
+    verbessert: "Der Radar war zwei Wochen gruen, ohne je eine Suche ausgefuehrt zu haben",
+    neuigkeiten: ["Echter Quellenscan seit 2026-08-14 (vorher Lebenszeichen)"],
+    ort: "Control Server (control-server/src/evolution/konkurrenzRadar.js)",
+    zeitplan: "woechentlich (Pruefung alle 30 Minuten, Scan ab 6,5 Tagen Abstand)",
     messung: "heartbeat",
     erwartetAlleMs: 7 * TAG_MS,
-    schonfristMs: 12 * STUNDE_MS,
-    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/konkurrenz-radar mit {\"key\":\"<konkurrenz-radar-Schlüssel>\"}",
-    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
+    schonfristMs: 24 * STUNDE_MS,
+    startAnleitung: "Laeuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Ueber den Autopilot-Laeufer im Control-Server steuerbar."
   },
   {
     id: "training-loop",

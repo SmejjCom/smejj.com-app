@@ -9,7 +9,7 @@ import { buildWebContext } from "./chat-bridge-websuche.js";
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
 import { pipeVisibleStream } from "./chat-bridge-strom.js";
-import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
+import { meldeAntwort, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
 // Gespraechsgedaechtnis. Bewusst DIESELBE gepruefte Bereinigung wie der Control
@@ -375,7 +375,7 @@ async function streamViaControl(res, route, body) {
   const antwortText = await pipeVisibleStream(upstream.body, res);
   // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
   // der Text bleibt hier). Nie erwartet, nie werfend.
-  meldeAktion({ art: "text", prompt: String(body?.task || lastUserContent(body?.messages || [])), ergebnis: antwortText, quelle: "bruecke-control-router", betrifft: "chat-antwort" });
+  meldeAntwort({ prompt: String(body?.task || lastUserContent(body?.messages || [])), antwort: antwortText, quelle: "bruecke-control-router" });
   res.end();
   return true;
 }
@@ -460,7 +460,7 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
   const antwortText = await pipeVisibleStream(upstream.body, res);
   // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
   // der Text bleibt hier). Nie erwartet, nie werfend.
-  meldeAktion({ art: "text", prompt: lastUserContent(messages), ergebnis: antwortText, quelle: "bruecke-chat", betrifft: "chat-antwort" });
+  meldeAntwort({ prompt: lastUserContent(messages), antwort: antwortText, quelle: "bruecke-chat" });
   res.end();
   return true;
 }
@@ -512,7 +512,7 @@ async function streamModel(res, messages, profile, requestedModel = "") {
   const antwortText = await pipeVisibleStream(upstream.body, res);
   // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
   // der Text bleibt hier). Nie erwartet, nie werfend.
-  meldeAktion({ art: "text", prompt: lastUserContent(messages), ergebnis: antwortText, quelle: "bruecke-chat", betrifft: "chat-antwort" });
+  meldeAntwort({ prompt: lastUserContent(messages), antwort: antwortText, quelle: "bruecke-chat" });
   res.end();
 }
 

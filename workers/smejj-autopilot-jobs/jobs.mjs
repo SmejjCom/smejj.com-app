@@ -51,18 +51,24 @@ export async function voiceRegionCheckLauf({ log = console.log } = {}) {
   return { ok, meldung, dauerMs };
 }
 
+/**
+ * Der Konkurrenz-Radar ist am 2026-08-14 in den Control-Server umgezogen
+ * (control-server/src/evolution/konkurrenzRadar.js) und sucht dort WIRKLICH.
+ *
+ * DIESER JOB SENDET DESHALB KEINEN HERZSCHLAG MEHR. Täte er es weiter, hielte
+ * sein Lebenszeichen ("Dienst läuft planmäßig — echter Quellenscan noch nicht
+ * angebunden") die Ampel grün, auch wenn der echte Scan im Control-Server
+ * scheitert. Genau so tarnen sich Attrappen: nicht durch eine Lüge, sondern
+ * durch ein Signal, das eine andere Frage beantwortet als die gestellte.
+ *
+ * Die Funktion bleibt als Stummel, damit ein alter Aufruf im Dienst nicht
+ * abstürzt — sie sagt nur noch, wo der Radar jetzt wohnt.
+ */
 export async function konkurrenzRadarLauf({ log = console.log } = {}) {
-  const start = Date.now();
-  log("[autopilot-jobs] Konkurrenz-Radar gestartet");
-  const ok = true;
-  const meldung = "Lebenszeichen: Dienst läuft planmäßig — echter Quellenscan noch nicht angebunden";
-  const dauerMs = Date.now() - start;
-  const statusHttp = await herzschlagSenden({
-    id: "konkurrenz-radar",
-    ok, meldung, dauerMs
-  });
-  log(`[autopilot-jobs] Konkurrenz-Radar beendet: ok=${ok}, HTTP ${statusHttp}`);
-  return { ok, meldung, dauerMs };
+  const meldung = "Umgezogen: der Konkurrenz-Radar läuft seit 2026-08-14 im Control-Server "
+    + "(echter Quellenscan). Dieser Job sendet bewusst KEINEN Herzschlag mehr.";
+  log(`[autopilot-jobs] ${meldung}`);
+  return { ok: true, meldung, dauerMs: 0, herzschlagGesendet: false };
 }
 
 // trainingLoopLauf wurde am 2026-08-12 entfernt: das Training ist seit dem

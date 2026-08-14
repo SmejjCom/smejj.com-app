@@ -16,7 +16,8 @@ import {
 } from "./aufgabenAblage.js";
 import { merkeKennzahlen, holeKennzahlen, tagesId, _leereKennzahlenFuerTest } from "./kennzahlenAblage.js";
 import { erfasseAktion, entnimmZuwachs, _leereFuerTest } from "./aiEvolutionEngine.js";
-import { schreibeEvolutionAblage, laufSupervisor } from "./evolutionLaeufe.js";
+import { schreibeEvolutionAblage, laufSupervisor, laufKonkurrenzRadar } from "./evolutionLaeufe.js";
+import { fuehreRadarAus, fuehreRadarSelbsttestAus } from "./konkurrenzRadar.js";
 
 const OHNE_IDRIVE = {};
 
@@ -188,4 +189,57 @@ test("Supervisor: eine abgegebene Aufgabe wird geprueft UND ihr Urteil festgehal
   assert.match(r.meldung, /0\/1 Abgaben abgenommen/);
   const { aufgaben } = await listeAufgaben({ env: OHNE_IDRIVE });
   assert.equal(aufgaben[0].status, ZUSTAENDE.LAUFEND, "das Urteil muss festgehalten werden");
+});
+
+// ── Konkurrenz-Radar (Nr. 04) ───────────────────────────────────────────────
+//
+// Er war zwei Wochen gruen, ohne je gesucht zu haben. Geprueft wird deshalb
+// vor allem eines: dass er die Grenze zwischen MESSUNG und DEUTUNG haelt.
+
+test("Radar: der Selbsttest trennt Funktions-Ankuendigung von Laerm", () => {
+  const r = fuehreRadarSelbsttestAus({ jetztMs: 1 });
+  assert.equal(r.bestanden, true, r.fehler.join("; "));
+});
+
+test("Radar: Treffer werden zu Kandidaten — ausdruecklich UNBESTAETIGT", async () => {
+  const suche = async () => ({ results: [
+    { title: "OpenAI launches new Canvas feature", url: "https://example.com/canvas", snippet: "rolling out today" },
+    { title: "OpenAI hires a new CFO", url: "https://example.com/cfo", snippet: "personnel" }
+  ] });
+  const r = await fuehreRadarAus({ suche, env: OHNE_IDRIVE, jetztMs: Date.parse("2026-08-14T09:00:00Z"), beobachtet: [{ anbieter: "ChatGPT", anfrage: "x" }] });
+  assert.equal(r.ok, true);
+  assert.equal(r.kandidaten.length, 1, "die Personalie ist keine Funktion");
+  assert.equal(r.kandidaten[0].bestaetigt, false, "ein Suchtreffer ist nie eine bestätigte Funktion");
+  assert.match(r.kandidaten[0].url, /^https:/);
+});
+
+test("Radar: eine stumme Quelle ist KEINE Nachricht 'nichts Neues'", async () => {
+  const suche = async () => { throw new Error("Suchdienst weg"); };
+  const r = await fuehreRadarAus({ suche, env: OHNE_IDRIVE, jetztMs: 1, beobachtet: [{ anbieter: "ChatGPT", anfrage: "x" }] });
+  assert.equal(r.ok, false, "alle Quellen stumm heisst rot, nicht 'keine Funde'");
+  assert.equal(r.stummeQuellen.length, 1);
+  assert.match(r.stummeQuellen[0].grund, /Suchdienst weg/);
+});
+
+test("Radar: ohne Netz wird nicht gesucht, aber ehrlich berichtet", async () => {
+  const r = await laufKonkurrenzRadar({
+    mitNetz: false,
+    bestand: async () => ({ ok: true, laeufe: 0, letzterLauf: null, kandidaten: [], stummeQuellen: [] }),
+    env: OHNE_IDRIVE
+  });
+  assert.equal(r.ok, true);
+  assert.match(r.meldung, /Scan fällig/);
+});
+
+test("Radar: ein frischer Scan wird nicht wiederholt", async () => {
+  const jetztMs = Date.parse("2026-08-14T09:00:00Z");
+  let gesucht = false;
+  const r = await laufKonkurrenzRadar({
+    mitNetz: true,
+    suche: async () => { gesucht = true; return { results: [] }; },
+    bestand: async () => ({ ok: true, laeufe: 1, letzterLauf: new Date(jetztMs - 86_400_000).toISOString(), kandidaten: [{}], stummeQuellen: [] }),
+    env: OHNE_IDRIVE, jetztMs
+  });
+  assert.equal(gesucht, false, "wöchentlich heisst wöchentlich — sonst verbrennt er Suchkontingent");
+  assert.match(r.meldung, /letzter Scan vor 1 Tag/);
 });

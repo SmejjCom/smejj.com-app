@@ -10,7 +10,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { meldeAktion, evolutionMelderStatus } from "../public/chat-bridge-evolution.js";
+import { meldeAktion, meldeAntwort, codeAusAntwort, evolutionMelderStatus } from "../public/chat-bridge-evolution.js";
 import { messeMedienAusgabe } from "../public/chat-bridge-bilder.js";
 import { pruefeEvolutionToken, handleEvolutionAktion } from "../control-server/src/routes/autopilotRoutes.js";
 import { evolutionUebersicht, _leereFuerTest } from "../control-server/src/evolution/aiEvolutionEngine.js";
@@ -148,3 +148,35 @@ async function schicke(nutzlast) {
   await handleEvolutionAktion(req, res, { env: { SMEJJ_EVOLUTION_TOKEN: TOKEN } });
   return { status, body };
 }
+
+// ── Zweite Linse: Code in Chat-Antworten (2026-08-14) ───────────────────────
+//
+// Der Textprüfer sieht eine Antwort, die sauber endet und Substanz hat. Dass
+// der Codeblock darin mitten in einer Funktion abbricht, kann er nicht sehen.
+
+test("Antwort-Melder: Code mit Sprachmarke wird als zweite Aktion gemessen", () => {
+  const netz = faengt();
+  const antwort = "Hier ist die Lösung:\n\n```js\nexport function summe(a, b) {\n  return a + b;\n}\n```\n\nDas war's.";
+  const r = meldeAntwort({ prompt: "addiere zwei Zahlen", antwort }, { env: ENV_AN, fetchImpl: netz.fetchImpl });
+  assert.equal(r.codestuecke, 1);
+  assert.equal(netz.gesendet.length, 2, "einmal als Text, einmal als Code");
+  const arten = netz.gesendet.map((g) => JSON.parse(g.optionen.body).art).sort();
+  assert.deepEqual(arten, ["code", "text"]);
+});
+
+test("Antwort-Melder: ein abgeschnittener Codeblock faellt auf, die Antwort selbst nicht", () => {
+  const netz = faengt();
+  // Der Text endet sauber mit Punkt — nur der Code ist unvollständig.
+  const antwort = "Bitte sehr.\n\n```js\nfunction f(a) {\n  if (a) {\n    return 1;\n```\n\nFertig.";
+  meldeAntwort({ antwort }, { env: ENV_AN, fetchImpl: netz.fetchImpl });
+  const gemeldet = netz.gesendet.map((g) => JSON.parse(g.optionen.body));
+  const text = gemeldet.find((g) => g.art === "text");
+  const code = gemeldet.find((g) => g.art === "code");
+  assert.equal(text.funde.length, 0, "die Antwort selbst ist in Ordnung");
+  assert.ok(code.funde.some((f) => f.klasse === "unbalanciert"), "der Code ist es nicht");
+});
+
+test("Antwort-Melder: Fliesstext in Backticks ist kein Code", () => {
+  assert.equal(codeAusAntwort("```\nnur eine Ausgabe ohne Sprachmarke, aber lang genug für die Schwelle\n```").length, 0);
+  assert.equal(codeAusAntwort("```js\nlet a = 1;\n```").length, 0, "Einzeiler sind Beispiele, keine Programme");
+});
