@@ -39,6 +39,99 @@
     return wann + " — " + wie;
   }
 
+  // ---------- "Was hat er HEUTE gemacht?" (2026-08-14) ----------
+  //
+  // Die Seite konnte bisher alles beantworten AUSSER der Frage, die man als
+  // erstes stellt. Ampel, 90-Tage-Balken und Verlauf sind Fachantworten;
+  // "was hat das Ding heute getan" ist die Laienfrage.
+  //
+  // ZWEI KALENDER, und das ist der Grund fuer die Sorgfalt hier:
+  //   - a.verlauf hat echte Zeitstempel, aber nur die letzten 20 Laeufe.
+  //   - a.tage zaehlt vollstaendig, aber je UTC-Kalendertag (so legt der
+  //     Server sie ab, so zeichnet auch der 90-Tage-Balken).
+  // Der Betreiber sitzt in der Pazifikzeit; ab 17 Uhr seiner Uhr ist der
+  // UTC-Tag schon der naechste. "Heute" heisst deshalb hier SEIN heute, aus
+  // verlauf gerechnet — und wenn der Verlauf randvoll ist, sagen wir
+  // "mindestens N" statt eine Zahl zu erfinden. Die exakte UTC-Tageszahl
+  // steht als Zusatzzeile darunter, statt sie als "heute" auszugeben.
+  const VERLAUF_MAX = 20;
+
+  function istHeute(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return false;
+    const jetzt = new Date();
+    return d.getFullYear() === jetzt.getFullYear()
+      && d.getMonth() === jetzt.getMonth()
+      && d.getDate() === jetzt.getDate();
+  }
+
+  function heuteBilanz(a) {
+    const verlauf = a.verlauf || [];
+    const laeufe = verlauf.filter(function (l) { return istHeute(l.am); });
+    const fehler = laeufe.filter(function (l) { return l.status !== "ok"; }).length;
+    // Randvoll heisst: es koennen mehr gewesen sein, wir wissen es nur nicht.
+    const gedeckelt = laeufe.length >= VERLAUF_MAX && verlauf.length >= VERLAUF_MAX;
+    const utcTag = new Date().toISOString().slice(0, 10);
+    const tag = (a.tage || []).filter(function (t) { return t.tag === utcTag; })[0] || null;
+    return { laeufe: laeufe, fehler: fehler, gedeckelt: gedeckelt, tag: tag };
+  }
+
+  /** Ein Satz, ohne Fachwort, fuer Liste und Detail. */
+  function heuteSatz(a) {
+    if (a.wartung) return "Stummgeschaltet — er meldet heute nichts.";
+    const b = heuteBilanz(a);
+    if (!b.laeufe.length) {
+      return b.tag && (b.tag.ok + b.tag.fehler) > 0
+        ? "Heute noch nichts — der letzte Lauf war gestern Abend."
+        : "Heute noch nichts gemacht.";
+    }
+    const wieviele = (b.gedeckelt ? "mindestens " : "") + b.laeufe.length
+      + (b.laeufe.length === 1 ? " Lauf" : " Läufe");
+    if (b.fehler === 0) return "Heute " + wieviele + ", alle erfolgreich.";
+    return "Heute " + wieviele + ", davon " + b.fehler
+      + (b.fehler === 1 ? " mit Fehler." : " mit Fehlern.");
+  }
+
+  function heuteBlock(a) {
+    const b = heuteBilanz(a);
+    const zahl = b.laeufe.length
+      ? (b.gedeckelt ? VERLAUF_MAX + "+" : String(b.laeufe.length))
+      : "0";
+    const ton = a.wartung ? "" : (b.fehler > 0 ? " fehler" : "");
+
+    const zeilen = b.laeufe.slice(0, 6).map(function (l) {
+      const uhr = A.zeit(l.am).slice(-5);
+      return '<li><b>' + e(uhr) + "</b> — "
+        + (l.status === "ok" ? "erfolgreich" : "FEHLER")
+        + (l.dauerMs === null || l.dauerMs === undefined ? "" : " · " + e(A.dauer(l.dauerMs / 1000)))
+        + (l.meldung ? " · " + e(l.meldung) : "") + "</li>";
+    });
+    const rest = b.laeufe.length > 6
+      ? '<li class="s">… und ' + (b.laeufe.length - 6) + " weitere, alle im Verlauf unten.</li>"
+      : "";
+
+    // Die Vollzaehlung des Servers steht NUR da, wenn sie von der Zahl oben
+    // abweicht — sonst waere sie zwei Zahlen fuer dieselbe Sache, also genau
+    // das Gegenteil von uebersichtlich. Weicht sie ab, erklaert der Satz auch
+    // warum: der Server rechnet in UTC-Tagen, die Zahl oben in deinen.
+    const utcGesamt = b.tag ? (b.tag.ok + b.tag.fehler) : null;
+    const utc = (utcGesamt !== null && utcGesamt !== b.laeufe.length)
+      ? '<div class="ap-heute-utc">Oben steht dein Tag nach deiner Uhr. '
+        + "Der Server zählt in UTC-Tagen — dort stehen für den laufenden UTC-Tag "
+        + "<b>" + utcGesamt + " Läufe</b>, " + b.tag.fehler + " davon mit Fehler.</div>"
+      : "";
+
+    return V.panelBlock("Was hat er heute gemacht?", "die Antwort in einem Satz",
+      '<div class="pb"><div class="ap-heute' + ton + '">'
+      + '<div class="ap-heute-zahl">' + e(zahl) + "</div>"
+      + '<div class="ap-heute-text">' + e(heuteSatz(a))
+      + '<div class="s">Nächster Lauf: ' + e(a.zeitplan || "—") + "</div></div></div>"
+      + (zeilen.length
+        ? '<ul class="ap-heute-liste">' + zeilen.join("") + rest + "</ul>"
+        : '<div class="s ap-heute-leer">Kein Lauf mit heutigem Zeitstempel. Das ist bei Wochen- und Nacht-Automatiken der Normalfall.</div>')
+      + utc + "</div>");
+  }
+
   // 90-Tage-Balken wie auf den Status-Seiten der grossen Anbieter — nur ehrlich:
   // eine Zelle je KALENDERTAG, grau heisst "an diesem Tag nichts gemessen"
   // (bei einem Montags-Autopiloten sind sechs graue Zellen pro Woche normal).
@@ -96,6 +189,7 @@
       return '<a class="ap-item' + (a.id === auswahlId ? " on" : "") + '" data-ap="' + e(a.id) + '">'
         + punkt(a.ampel)
         + '<span class="t"><b>' + e(a.name) + "</b>"
+        + '<span class="h">' + e(heuteSatz(a)) + "</span>"
         + "<span>" + e(a.ort) + " · " + e(a.zeitplan) + "</span></span></a>";
     }).join("") + "</div>";
   }
@@ -150,6 +244,7 @@
       + '<div class="ap-detail-kopf">' + punkt(a.ampel) + "<h2>" + e(a.name) + "</h2>" + ampelPille(a.ampel) + "</div>"
       + '<p class="ap-kurz">' + e(a.kurz) + "</p>"
       + grund
+      + heuteBlock(a)
       + V.panelBlock("Zuverlässigkeit", "die letzten 90 Tage, ein Kästchen je Tag", tageBalken(a))
       + V.panelBlock("Steckbrief", null, steckbrief)
       + V.panelBlock("Was macht er genau?", null, '<div class="pb">' + funktionen + "</div>")
