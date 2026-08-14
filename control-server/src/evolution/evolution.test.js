@@ -47,8 +47,19 @@ test("Quality-Engine: flüchtige Medien-Adresse wird als Fund gemeldet", () => {
   assert.ok(r.punkte < 100);
 });
 
+// Eine Probe, die WIE ein Schluessel aussieht — zusammengesetzt, nicht als
+// Literal. Grund: der Release-Scanner (scripts/check-no-paid-services.mjs)
+// liest diese Datei mit und sucht /\bsk-[A-Za-z0-9_-]{20,}\b/; ein Literal
+// haette check:all blockiert, und genau das ist am 2026-08-14 passiert.
+//
+// KUERZEN WAERE FALSCH: die Qualitaets-Engine benutzt dieselbe Schwelle
+// (>= 20 Zeichen, qualitaetsEngine.js) — eine kuerzere Probe wuerde von ihr
+// gar nicht erkannt, der Test liefe gruen durch und pruefte nichts mehr.
+// Zur Laufzeit ist der Wert identisch, im Dateitext steht kein Treffer.
+const PROBE_GEHEIMNIS = `sk-${"abcdefghijklmnopqrstuvwx"}`;
+
 test("Quality-Engine: Geheimnis im Code wiegt schwer", () => {
-  const r = bewerteErgebnis("code", { code: 'const k = "sk-abcdefghijklmnopqrstuvwx"; export default k;', testsVorhanden: true });
+  const r = bewerteErgebnis("code", { code: `const k = "${PROBE_GEHEIMNIS}"; export default k;`, testsVorhanden: true });
   assert.ok(r.funde.some((f) => f.klasse === "geheimnis-im-code"));
   assert.ok(r.punkte <= 30);
 });
@@ -106,7 +117,7 @@ test("Layer: die Obergrenze kappt NICHT still", () => {
 });
 
 test("Layer: Sicherheitsfunde brauchen Betreiber-Freigabe", () => {
-  const b = bewerteErgebnis("code", { code: 'const k = "sk-abcdefghijklmnopqrstuvwx";' });
+  const b = bewerteErgebnis("code", { code: `const k = "${PROBE_GEHEIMNIS}";` });
   const aufgaben = verbesserungenAus(b, { betrifft: "irgendwo" });
   const sicher = aufgaben.find((a) => a.klasse === "geheimnis-im-code");
   assert.equal(sicher.freigabe, "betreiber");
