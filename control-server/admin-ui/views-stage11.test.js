@@ -71,6 +71,27 @@ test("AE: kein style-Attribut (die eigene CSP verbietet sie)", () => {
   assert.ok(!/\sstyle="/.test(html));
 });
 
+// Die beiden folgenden Tests gibt es, weil BEIDE Fehler live auf smejj.com
+// standen (2026-08-14) und der erste Testsatz sie nicht gefangen hat: er
+// prüfte, ob Texte VORKOMMEN — nicht, ob sie richtig gerendert sind.
+test("AE: jede Tabelle hat echte Zeilen, keinen Fließtext", () => {
+  const html = ansicht().evolution(evolutionDashboard({}));
+  const tabellen = (html.match(/<table>/g) || []).length;
+  const zeilen = (html.match(/<tr><td>/g) || []).length;
+  assert.ok(tabellen > 0, "die Seite soll Tabellen haben");
+  assert.ok(zeilen >= tabellen, "V.tabelleBlock erwartet fertige <tr>-Zeilen; Zellen-Listen werden still zu Fließtext");
+  // Eine Zellen-Liste, die durch join("") gelaufen ist, hinterlaesst Kommas
+  // zwischen Zellinhalten direkt vor der Kopfzeile.
+  assert.ok(!/<\/thead>[^<]*,[^<]*,/.test(html), "Zellen dürfen nicht kommagetrennt neben der Tabelle landen");
+});
+
+test("AE: keine Kachel zeigt rohes HTML als Text", () => {
+  const html = ansicht().evolution(evolutionDashboard({}));
+  // V.kachelBlock escaped seinen Wert: ein <span> darin erscheint woertlich.
+  assert.ok(!/&lt;span/.test(html), "escapetes Markup heisst: da wurde HTML an eine escapende Stelle gegeben");
+  assert.ok(!/&lt;div/.test(html));
+});
+
 test("AE: eine Verbesserung mit Betreiber-Freigabe wird als solche gezeigt", () => {
   const daten = evolutionDashboard({});
   const html = ansicht().evolution(daten);
