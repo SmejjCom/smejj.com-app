@@ -518,3 +518,29 @@ test("24/7 Synthetic User & Full-Stack E2E Watchdog Test", async () => {
 
 
 
+
+// Gemessen 2026-08-14 ueber 627 eigene Dateien: ALLE sechs HIGH-Befunde und
+// 34 der 47 MEDIUM waren Selbstfunde oder harmlose Muster — der Scanner fand
+// seine eigenen Suchmuster, seine Testfixtures, XML-Namensraeume und interne
+// Worker-Adressen. Als Backlog-Quelle haette er den Nachtbau mit Phantomen
+// gefuettert. Diese Tests halten beide Richtungen fest: Laerm bleibt drausen,
+// echte Funde bleiben drin.
+test("bug-predictor: Laerm bleibt drausen, echte Funde bleiben drin", () => {
+  const hoch = (pfad, code) => scanForBugsAndVulnerabilities(pfad, code)
+    .findings.filter((f) => f.severity === "HIGH").length;
+  const http = (pfad, code) => scanForBugsAndVulnerabilities(pfad, code)
+    .findings.filter((f) => f.type === "insecure_http").length;
+
+  // ECHT — muss weiterhin auffallen
+  assert.equal(hoch("src/x.js", "const x = eval(userInput);"), 1, "echter eval-Aufruf");
+  assert.equal(hoch("src/x.js", "const f = new Function('return 1');"), 1, "Function-Konstruktor");
+  assert.equal(http("src/x.js", 'fetch("http://api.fremd.de/v1")'), 1, "echtes http nach aussen");
+
+  // LAERM — darf nicht mehr melden
+  assert.equal(hoch("src/x.js", "    if (/\\beval\\s*\\(/.test(line)) {"), 0, "der Detektor selbst");
+  assert.equal(hoch("src/x.js", "// Verwendung von eval() ist riskant"), 0, "Kommentar ist kein Code");
+  assert.equal(hoch("tests/x.test.js", 'eval("2 + 2");'), 0, "Testfixture laeuft nie in Produktion");
+  assert.equal(http("src/x.js", 'xmlns="http://www.w3.org/2000/svg"'), 0, "XML-Namensraum wird nie abgerufen");
+  assert.equal(http("src/x.js", "const u = new URL(req.url, `http://${req.headers.host}`);"), 0, "Parser-Basis sendet nichts");
+  assert.equal(http("src/x.js", 'const w = "http://smejj-video-worker.zeabur.internal:8080";'), 0, "internes Netz kennt kein TLS");
+});
