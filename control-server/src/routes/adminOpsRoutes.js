@@ -83,7 +83,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "email") return privateJson(res, 200, await emailUebersicht({ env })), true;
     if (bereich === "analytik") return privateJson(res, 200, await analytikUebersicht({ env, tage: tageAus(url) })), true;
     if (bereich === "autopiloten") return privateJson(res, 200, autopilotUebersicht({ startzeitMs: GESTARTET_MS })), true;
-    if (bereich === "evolution") return privateJson(res, 200, evolutionDashboard({})), true;
+    if (bereich === "evolution") return privateJson(res, 200, await evolutionDashboard({ env })), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {

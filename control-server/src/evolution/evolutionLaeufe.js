@@ -10,7 +10,9 @@
 // dieselbe Reihenfolge wie beim Antwort-TÜV (Nr. 36).
 
 import { fuehreQualitaetSelbsttestAus, medientypen } from "./qualitaetsEngine.js";
-import { fuehreEngineSelbsttestAus, evolutionUebersicht, AKTIONSARTEN } from "./aiEvolutionEngine.js";
+import { fuehreEngineSelbsttestAus, evolutionUebersicht, entnimmZuwachs, AKTIONSARTEN } from "./aiEvolutionEngine.js";
+import { merkeAufgaben, listeAufgaben, setzeZustand, schliesseErloschene, zaehleAufgaben, ZUSTAENDE } from "./aufgabenAblage.js";
+import { merkeKennzahlen, holeKennzahlen } from "./kennzahlenAblage.js";
 import {
   fuehreDetectorSelbsttestAus, erkenneLuecken, baueLueckenAufgaben,
   pruefeBelege, SMEJJ_FAEHIGKEITEN, KONKURRENZ_STAND
@@ -18,12 +20,56 @@ import {
 import { fuehreSupervisorSelbsttestAus, pruefeAbnahme, MAX_ABGABEN } from "./autopilotSupervisor.js";
 
 /**
+ * Schreibt den gesammelten Zuwachs weg — Kennzahlen UND Aufgaben.
+ *
+ * DIESE FUNKTION IST DER GRUND, WARUM DER KREISLAUF GESCHLOSSEN IST. Bis zum
+ * 2026-08-14 erkannte die Engine Aufgaben und vergass sie beim naechsten
+ * Deploy; der Aktionszaehler begann bei jedem Push wieder bei null. Genau
+ * einmal je Durchgang wandert beides in die Ablage.
+ *
+ * Sie wird vom Autopilot-Laeufer aufgerufen, NICHT aus erfasseAktion: der
+ * heisse Pfad jeder KI-Antwort bleibt frei von Netzaufrufen.
+ */
+export async function schreibeEvolutionAblage({
+  zuwachsLader = entnimmZuwachs, kennzahlen = merkeKennzahlen,
+  aufgaben = merkeAufgaben, erloschene = schliesseErloschene,
+  env = process.env, jetztMs = Date.now()
+} = {}) {
+  const zuwachs = zuwachsLader();
+  const teile = [];
+
+  const k = await kennzahlen({ jeArt: zuwachs.jeArt }, { env, jetztMs });
+  if (k.ok && k.geschrieben) teile.push(`${zuwachs.messungen} Messungen auf ${k.tag} gebucht`);
+  else if (!k.ok) teile.push(`Kennzahlen NICHT geschrieben (${k.grund})`);
+
+  if (zuwachs.aufgaben.length) {
+    const a = await aufgaben(zuwachs.aufgaben, { env, jetztMs });
+    teile.push(`${a.neu} neue Aufgabe(n), ${a.wiedergesehen} wiedergesehen${a.fehler ? `, ${a.fehler} nicht geschrieben` : ""}`);
+  }
+
+  // Erloschene schliessen: nur mit genug frischen Messungen, sonst waere
+  // "nicht wieder aufgetreten" bloss "es wurde kaum gemessen".
+  const e = await erloschene({ klassenSeither: zuwachs.klassen, messungenSeither: zuwachs.messungen, env, jetztMs });
+  if (e.geschlossen) teile.push(`${e.geschlossen} Aufgabe(n) durch Messung erloschen`);
+
+  // IMMER mit Zahlen melden, auch wenn nichts zu buchen war. Der erste Entwurf
+  // sagte "nichts Neues zu buchen" — und der Supervisor hat diese Ampel prompt
+  // als Erfolgsmeldung ohne einen einzigen Beleg angezeigt (gemessen
+  // 2026-08-14, beim allerersten Durchgang). Er hatte recht.
+  return {
+    ok: k.ok !== false,
+    meldung: teile.join("; ")
+      || `nichts zu buchen: 0 Messungen und 0 Aufgaben seit dem letzten Takt (${zuwachs.klassen.size} Fehlerklassen gesehen)`
+  };
+}
+
+/**
  * Nr. 37 — AI Evolution Engine.
  *
  * Meldet die ehrlichste Zahl, die das System über sich selbst hat: den
  * Abdeckungsgrad. Wie viel vom laufenden KI-Betrieb sieht überhaupt jemand an?
  */
-export function laufEvolutionEngine({ uebersicht = evolutionUebersicht } = {}) {
+export async function laufEvolutionEngine({ uebersicht = evolutionUebersicht, dauerhaft = holeKennzahlen, ablage = zaehleAufgaben, env = process.env } = {}) {
   const qualitaet = fuehreQualitaetSelbsttestAus();
   if (!qualitaet.bestanden) {
     return { ok: false, meldung: `Quality-Engine erkennt bekannte Fehler nicht mehr: ${qualitaet.fehler.slice(0, 2).join("; ")}` };
@@ -32,24 +78,39 @@ export function laufEvolutionEngine({ uebersicht = evolutionUebersicht } = {}) {
   if (!engine.bestanden) {
     return { ok: false, meldung: `Evolution-Layer defekt: ${engine.fehler.slice(0, 2).join("; ")}` };
   }
-  const u = uebersicht({});
   const typen = medientypen();
   // Welche Aktionsarten haben noch KEINEN Prüfer? Das ist die Ausbau-Liste —
   // und sie gehört in die Meldung, nicht in eine Schublade.
   const ohnePruefer = AKTIONSARTEN.filter((a) => !typen.includes(a));
   const basis = `Selbsttest ${qualitaet.geprueft}/${qualitaet.geprueft} Medientypen bestanden; ${typen.length} Prüfer angemeldet`;
-  if (!u.aktionen) {
+
+  // Seit 2026-08-14 zählt der DAUERHAFTE Stand, nicht der des laufenden
+  // Prozesses: sonst meldete diese Ampel nach jedem Deploy "noch nichts
+  // gemessen", obwohl den ganzen Tag gemessen wurde.
+  const k = await dauerhaft({ tage: 30, env }).catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 80) }));
+  const a = await ablage({ env }).catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 80) }));
+  const anhang = ohnePruefer.length ? ` — ohne Prüfer: ${ohnePruefer.join(", ")}` : "";
+
+  if (!k.ok) {
+    // Ablage stumm = ehrlich rot. Ein Prüfer, dessen Gedächtnis fehlt, misst
+    // zwar noch, aber niemand kann es nachlesen.
+    return { ok: false, meldung: `${basis}; Kennzahlen-Ablage NICHT lesbar: ${k.grund || "ohne Grund"}${anhang}` };
+  }
+  if (!k.aktionen) {
+    const roh = uebersicht({});
     return {
       ok: true,
-      meldung: `${basis}; seit dem letzten Neustart wurde noch keine KI-Aktion gemeldet`
-        + (ohnePruefer.length ? ` (ohne Prüfer: ${ohnePruefer.join(", ")})` : "")
+      meldung: `${basis}; noch keine KI-Aktion in der Ablage`
+        + (roh.aktionen ? ` (${roh.aktionen} im laufenden Prozess, wird im nächsten Takt gebucht)` : "")
+        + anhang
     };
   }
   return {
     ok: true,
-    meldung: `${basis}; ${u.aktionen} Aktionen erfasst, ${u.abdeckung} % davon gemessen, `
-      + `Qualitätsnote ${u.qualitaetsNote}/100`
-      + (ohnePruefer.length ? ` — ohne Prüfer: ${ohnePruefer.join(", ")}` : "")
+    meldung: `${basis}; ${k.aktionen} Aktionen an ${k.tage} Tag(en), ${k.abdeckung} % gemessen, `
+      + `Note ${k.qualitaetsNote}/100`
+      + (a.ok ? `; Aufgaben: ${a.offen} offen von ${a.gesamt}` : `; Aufgaben-Ablage nicht lesbar (${a.grund || "ohne Grund"})`)
+      + anhang
   };
 }
 
@@ -107,7 +168,7 @@ export function laufMissingFunctionDetector({ dateien = [] } = {}) {
  * ist wieder das Muster der 29 Attrappen von 2026-08-12. Der Fund macht die
  * Ampel nicht rot — er steht in der Meldung, damit ihn niemand übersieht.
  */
-export function laufSupervisor({ abgaben = [], autopiloten = [], dateiExistiert = null } = {}) {
+export async function laufSupervisor({ abgaben = null, autopiloten = [], dateiExistiert = null, warteschlange = listeAufgaben, zustandSetzer = setzeZustand, env = process.env } = {}) {
   const selbsttest = fuehreSupervisorSelbsttestAus();
   if (!selbsttest.bestanden) {
     return { ok: false, meldung: `Supervisor ist keine Kontrolle mehr: ${selbsttest.fehler.slice(0, 2).join("; ")}` };
@@ -118,7 +179,26 @@ export function laufSupervisor({ abgaben = [], autopiloten = [], dateiExistiert 
     ? ` — ACHTUNG: ${pauschale.length} grüne Ampel(n) melden Erfolg ohne eine einzige Zahl (${pauschale.slice(0, 2).join(", ")})`
     : "";
 
-  if (!abgaben.length) {
+  // Die Warteschlange kommt seit 2026-08-14 aus der ABLAGE: jede Aufgabe im
+  // Zustand "abgegeben" traegt ihre Behauptung und ihre Belege bei sich. Ohne
+  // Ablage gab es hier nie etwas zu pruefen — der Supervisor war eine
+  // Kontrolle ohne Gegenstand.
+  let zuPruefen = abgaben;
+  let ablageStumm = null;
+  if (zuPruefen === null) {
+    const gelesen = await warteschlange({ env });
+    if (!gelesen.ok) ablageStumm = gelesen.grund || "ohne Grund";
+    zuPruefen = (gelesen.aufgaben || [])
+      .filter((a) => a.status === ZUSTAENDE.ABGEGEBEN)
+      .map((a) => ({ aufgabe: a, behauptung: a.behauptung, belege: a.belege, abgabeNr: Number(a.abgabeNr || 1) }));
+  }
+
+  if (ablageStumm) {
+    // Fail-closed: eine stumme Warteschlange ist NICHT dasselbe wie eine leere.
+    return { ok: false, meldung: `Selbsttest bestanden, aber die Aufgaben-Ablage ist nicht lesbar: ${ablageStumm}${anhang}` };
+  }
+
+  if (!zuPruefen.length) {
     return {
       ok: true,
       meldung: `Selbsttest ${selbsttest.geprueft}/${selbsttest.geprueft} bestanden (blind UND blockierend geprüft); `
@@ -126,7 +206,21 @@ export function laufSupervisor({ abgaben = [], autopiloten = [], dateiExistiert 
     };
   }
 
-  const ergebnisse = abgaben.map((a) => pruefeAbnahme({ ...a, dateiExistiert }));
+  const ergebnisse = [];
+  for (const a of zuPruefen) {
+    const urteil = pruefeAbnahme({ ...a, dateiExistiert });
+    ergebnisse.push(urteil);
+    // Das Urteil wird ZURUECKGESCHRIEBEN — ein Supervisor, dessen Entscheidung
+    // niemand festhaelt, hat nichts entschieden.
+    if (a.aufgabe?.id) {
+      const zustand = urteil.abgenommen ? ZUSTAENDE.ERLEDIGT : (urteil.eskaliert ? ZUSTAENDE.GESCHEITERT : ZUSTAENDE.LAUFEND);
+      await zustandSetzer(a.aufgabe.id, zustand, {
+        grund: urteil.meldung,
+        beleg: { kriterien: urteil.kriterien, abgabeNr: urteil.abgabeNr },
+        env
+      }).catch(() => {});
+    }
+  }
   const abgenommen = ergebnisse.filter((r) => r.abgenommen).length;
   const eskaliert = ergebnisse.filter((r) => r.eskaliert);
   return {

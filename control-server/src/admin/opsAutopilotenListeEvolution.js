@@ -77,5 +77,28 @@ export const EVOLUTION_AUTOPILOTEN = Object.freeze([
     schonfristMs: STUNDE_MS,
     startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
     stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
+  },
+  {
+    id: "evolution-ablage",
+    name: "Aufgaben-Gedächtnis",
+    nummer: "40",
+    kurz: "Schreibt Kennzahlen und erkannte Aufgaben dauerhaft weg — ohne ihn beginnt die Evolution-Engine nach jedem Deploy wieder bei null.",
+    funktionen: [
+      "Bucht einmal je Durchgang, was die Engine seit dem letzten Takt gemessen hat: Aktionen, Noten und Funde je Medientyp, als Tagessumme.",
+      "NICHT im heissen Pfad: erfasseAktion sitzt in jeder KI-Antwort und darf nie auf einen Netzaufruf warten. Die Engine sammelt, dieser Lauf schreibt gebündelt.",
+      "Legt erkannte Verbesserungen als Aufgaben ab — EINE Aufgabe je Befund. Kommt derselbe Befund wieder, wird ein Zähler erhöht statt eine zweite Aufgabe geschrieben; so misst »gesehen«, wie hartnäckig ein Problem ist.",
+      "Schliesst Aufgaben, deren Fund seit mindestens 20 Messungen nicht mehr auftrat — ausdrücklich als »durch Messung erloschen« beschriftet, nicht als repariert. Wer das liest, sieht sofort, dass niemand etwas behoben hat.",
+      "Ein Neustart kostet höchstens den Zuwachs eines Taktes — und der entsteht beim nächsten Befund ohnehin erneut."
+    ],
+    trainiert: "Nichts — er merkt sich. Tagessummen der Messungen und den Lebenslauf jeder Aufgabe.",
+    verbessert: "Der Kreislauf war an genau einer Stelle offen: Befunde entstanden und verschwanden beim nächsten Deploy, ohne dass je einer bearbeitet wurde",
+    neuigkeiten: ["Neu am 2026-08-14 — schliesst den Kreislauf"],
+    ort: "Control Server (control-server/src/evolution, Ablage auf IDrive e2)",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
   }
 ]);

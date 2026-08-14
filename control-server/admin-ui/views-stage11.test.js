@@ -35,17 +35,17 @@ function ansicht() {
   return buehne.adminViewsStage11;
 }
 
-test("AE: die Seite entsteht aus den ECHTEN Backend-Daten", () => {
-  const html = ansicht().evolution(evolutionDashboard({}));
+test("AE: die Seite entsteht aus den ECHTEN Backend-Daten", async () => {
+  const html = ansicht().evolution(await evolutionDashboard({}));
   assert.ok(html.includes("AI Evolution Engine"));
   assert.ok(html.includes("Evolution-Score"));
   assert.ok(html.includes("Abdeckung"));
 });
 
-test("AE: eine fehlende Zahl erscheint als Lücke, nie als 0", () => {
+test("AE: eine fehlende Zahl erscheint als Lücke, nie als 0", async () => {
   // Frischer Prozess: es wurde noch keine KI-Aktion gemeldet, die Abdeckung
   // ist null. Genau dann darf die Seite keine Prozentzahl behaupten.
-  const daten = evolutionDashboard({});
+  const daten = await evolutionDashboard({});
   const html = ansicht().evolution(daten);
   if (daten.system.abdeckung === null) {
     assert.ok(html.includes("Noch keine KI-Aktion gemessen"), "die Lücke muss benannt werden");
@@ -54,28 +54,28 @@ test("AE: eine fehlende Zahl erscheint als Lücke, nie als 0", () => {
   assert.ok(html.includes("nicht gemessen —"), "die Aufgaben-Ablage fehlt noch und muss als Lücke dastehen");
 });
 
-test("AE: der Konkurrenz-Stand wird als handgepflegt ausgewiesen", () => {
-  const html = ansicht().evolution(evolutionDashboard({}));
+test("AE: der Konkurrenz-Stand wird als handgepflegt ausgewiesen", async () => {
+  const html = ansicht().evolution(await evolutionDashboard({}));
   assert.ok(html.includes("handgepflegt"), "eine gepflegte Liste darf nie wie eine Messung aussehen");
 });
 
-test("AE: alle neun Abnahme-Kriterien stehen auf der Seite", () => {
-  const daten = evolutionDashboard({});
+test("AE: alle neun Abnahme-Kriterien stehen auf der Seite", async () => {
+  const daten = await evolutionDashboard({});
   const html = ansicht().evolution(daten);
   assert.equal(daten.abnahme.kriterien.length, 9);
   for (const k of daten.abnahme.kriterien) assert.ok(html.includes(k.id), `Kriterium ${k.id} fehlt in der Ansicht`);
 });
 
-test("AE: kein style-Attribut (die eigene CSP verbietet sie)", () => {
-  const html = ansicht().evolution(evolutionDashboard({}));
+test("AE: kein style-Attribut (die eigene CSP verbietet sie)", async () => {
+  const html = ansicht().evolution(await evolutionDashboard({}));
   assert.ok(!/\sstyle="/.test(html));
 });
 
 // Die beiden folgenden Tests gibt es, weil BEIDE Fehler live auf smejj.com
 // standen (2026-08-14) und der erste Testsatz sie nicht gefangen hat: er
 // prüfte, ob Texte VORKOMMEN — nicht, ob sie richtig gerendert sind.
-test("AE: jede Tabelle hat echte Zeilen, keinen Fließtext", () => {
-  const html = ansicht().evolution(evolutionDashboard({}));
+test("AE: jede Tabelle hat echte Zeilen, keinen Fließtext", async () => {
+  const html = ansicht().evolution(await evolutionDashboard({}));
   const tabellen = (html.match(/<table>/g) || []).length;
   const zeilen = (html.match(/<tr><td>/g) || []).length;
   assert.ok(tabellen > 0, "die Seite soll Tabellen haben");
@@ -85,15 +85,15 @@ test("AE: jede Tabelle hat echte Zeilen, keinen Fließtext", () => {
   assert.ok(!/<\/thead>[^<]*,[^<]*,/.test(html), "Zellen dürfen nicht kommagetrennt neben der Tabelle landen");
 });
 
-test("AE: keine Kachel zeigt rohes HTML als Text", () => {
-  const html = ansicht().evolution(evolutionDashboard({}));
+test("AE: keine Kachel zeigt rohes HTML als Text", async () => {
+  const html = ansicht().evolution(await evolutionDashboard({}));
   // V.kachelBlock escaped seinen Wert: ein <span> darin erscheint woertlich.
   assert.ok(!/&lt;span/.test(html), "escapetes Markup heisst: da wurde HTML an eine escapende Stelle gegeben");
   assert.ok(!/&lt;div/.test(html));
 });
 
-test("AE: eine Verbesserung mit Betreiber-Freigabe wird als solche gezeigt", () => {
-  const daten = evolutionDashboard({});
+test("AE: eine Verbesserung mit Betreiber-Freigabe wird als solche gezeigt", async () => {
+  const daten = await evolutionDashboard({});
   const html = ansicht().evolution(daten);
   if (daten.verbesserungen.wichtigste.some((v) => v.freigabe === "betreiber")) {
     assert.ok(html.includes("Betreiber entscheidet"));

@@ -85,7 +85,8 @@ const MIT_ECHTER_MESSUNG = new Set([
   // beide richtig beurteilen (control-server/src/evolution/evolutionLaeufe.js).
   "ai-evolution-engine",      // 12 Medientyp-Pruefer + Sperrfrist-Nachweis
   "missing-function-detector",// Luecken-Erkennung + Beleg-Pruefung gegen den echten Quelltext
-  "autopilot-supervisor"      // Abnahme, blind UND blockierend geprueft
+  "autopilot-supervisor",     // Abnahme, blind UND blockierend geprueft
+  "evolution-ablage"          // bucht Kennzahlen und Aufgaben dauerhaft weg
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

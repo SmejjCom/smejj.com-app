@@ -76,6 +76,54 @@ const AKTIONEN = [];
 /** id -> letzter Meldezeitpunkt (ms). Trägt die Sperrfrist. */
 const GEMELDET = new Map();
 
+// ── DER ZUWACHS SEIT DEM LETZTEN WEGSCHREIBEN ───────────────────────────────
+//
+// erfasseAktion sitzt in JEDER KI-Antwort. Ein Schreibvorgang zur Ablage wäre
+// dort ein Netzaufruf im heißen Pfad — der Nutzer würde auf unsere Statistik
+// warten. Deshalb sammelt die Engine hier, und der Autopilot-Läufer holt den
+// Zuwachs einmal je Durchgang ab (entnimmZuwachs) und schreibt ihn gebündelt.
+// Ein Neustart dazwischen kostet höchstens einen Takt.
+const ZUWACHS = { jeArt: new Map(), aufgaben: [], klassen: new Set(), messungen: 0 };
+
+/**
+ * Nimmt den gesammelten Zuwachs UND LEERT IHN. Genau einmal je Durchgang
+ * aufrufen: wer zweimal ruft, bekommt beim zweiten Mal nichts — richtig so,
+ * denn sonst würde derselbe Zuwachs doppelt gezählt.
+ */
+export function entnimmZuwachs() {
+  const jeArt = {};
+  for (const [art, z] of ZUWACHS.jeArt.entries()) jeArt[art] = { ...z };
+  const entnommen = {
+    jeArt,
+    aufgaben: [...ZUWACHS.aufgaben],
+    klassen: new Set(ZUWACHS.klassen),
+    messungen: ZUWACHS.messungen
+  };
+  ZUWACHS.jeArt.clear();
+  ZUWACHS.aufgaben.length = 0;
+  ZUWACHS.klassen.clear();
+  ZUWACHS.messungen = 0;
+  return entnommen;
+}
+
+function sammleZuwachs(eintrag, aufgaben) {
+  const z = ZUWACHS.jeArt.get(eintrag.art) || { aktionen: 0, gemessen: 0, punkteSumme: 0, funde: 0 };
+  z.aktionen += 1;
+  if (eintrag.gemessen) {
+    z.gemessen += 1;
+    z.punkteSumme += eintrag.punkte;
+    z.funde += eintrag.klassen.length;
+    ZUWACHS.messungen += 1;
+    // Welche Fehlerklassen sind SEITHER aufgetreten? Daraus entscheidet die
+    // Ablage, welche alten Aufgaben erloschen sind.
+    for (const klasse of eintrag.klassen) ZUWACHS.klassen.add(`${eintrag.art}|${klasse}`);
+  }
+  ZUWACHS.jeArt.set(eintrag.art, z);
+  // Höchstens so viele Aufgaben zwischenlagern, wie ein Durchgang ohnehin
+  // schreiben darf — sonst wächst der Speicher zwischen zwei Takten unbegrenzt.
+  for (const a of aufgaben) if (ZUWACHS.aufgaben.length < MAX_AUFGABEN_JE_LAUF * 5) ZUWACHS.aufgaben.push(a);
+}
+
 /** Deterministische, kurze Aufgaben-ID. Gleicher Befund => gleiche ID. */
 export function aufgabenId({ art, klasse, betrifft }) {
   return `ev-${sha256(`${art}|${klasse}|${betrifft}`).slice(0, 10)}`;
@@ -196,6 +244,7 @@ export function erfasseBewertung(bewertung, { dauerMs = 0, quelle = "", betrifft
 
   const alle = verbesserungenAus(bewertung, { betrifft, quelle });
   const { aufgaben, unterdrueckt, gekappt } = filtereNeue(alle, jetztMs);
+  sammleZuwachs(eintrag, aufgaben);
   return { bewertung, aufgaben, unterdrueckt, gekappt };
 }
 
@@ -261,6 +310,7 @@ const STARTZEIT_MS = Date.now();
 export function _leereFuerTest() {
   AKTIONEN.length = 0;
   GEMELDET.clear();
+  entnimmZuwachs();
 }
 
 /**

@@ -13,6 +13,8 @@ import { autopilotUebersicht } from "./opsAutopiloten.js";
 import { evolutionUebersicht } from "../evolution/aiEvolutionEngine.js";
 import { medientypen } from "../evolution/qualitaetsEngine.js";
 import { erkenneLuecken, baueLueckenAufgaben, KONKURRENZ_STAND } from "../evolution/missingFunctionDetector.js";
+import { holeKennzahlen } from "../evolution/kennzahlenAblage.js";
+import { zaehleAufgaben } from "../evolution/aufgabenAblage.js";
 import { AKTIONSARTEN } from "../evolution/aiEvolutionEngine.js";
 import { KRITERIEN } from "../evolution/autopilotSupervisor.js";
 
@@ -38,7 +40,7 @@ export function berechneEvolutionScore({ abdeckung, ampelAnteil, paritaet }) {
 /**
  * @param {{jetztMs?: number, uebersicht?: Function, engineUebersicht?: Function}} [optionen]
  */
-export function evolutionDashboard({ jetztMs = Date.now(), uebersicht = autopilotUebersicht, engineUebersicht = evolutionUebersicht } = {}) {
+export async function evolutionDashboard({ jetztMs = Date.now(), uebersicht = autopilotUebersicht, engineUebersicht = evolutionUebersicht, kennzahlen = holeKennzahlen, aufgabenZaehler = zaehleAufgaben, env = process.env } = {}) {
   const ampel = uebersicht({ jetztMs });
   const alle = ampel.autopiloten || [];
   const gruen = alle.filter((a) => a.ampel === "gruen").length;
@@ -54,6 +56,17 @@ export function evolutionDashboard({ jetztMs = Date.now(), uebersicht = autopilo
   const ampelAnteil = gemesseneAmpeln > 0 ? Math.round((gruen / gemesseneAmpeln) * 100) : null;
 
   const engine = engineUebersicht({ jetztMs });
+
+  // DIE DAUERHAFTEN ZAHLEN (seit 2026-08-14): Bis dahin zeigte diese Seite den
+  // Ringpuffer des laufenden Prozesses — und der beginnt nach JEDEM Deploy bei
+  // null. Am Live-Dashboard stand deshalb "3 Aktionen", obwohl den ganzen Tag
+  // gemessen worden war. Jetzt kommt die Reihe aus der Ablage; der Prozesswert
+  // steht nur noch als "seit dem Neustart" daneben.
+  const dauerhaft = await kennzahlen({ tage: 30, env, jetztMs }).catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 120) }));
+  const aufgabenStand = await aufgabenZaehler({ env }).catch((f) => ({ ok: false, grund: String(f?.message || f).slice(0, 120) }));
+  const abdeckung = dauerhaft.ok ? dauerhaft.abdeckung : null;
+  const qualitaetsNote = dauerhaft.ok ? dauerhaft.qualitaetsNote : null;
+
   const { luecken, vorteile, gleichstand } = erkenneLuecken({});
   const lueckenAufgaben = baueLueckenAufgaben(luecken);
   const konkurrenzGesamt = luecken.length + gleichstand.length;
@@ -73,38 +86,58 @@ export function evolutionDashboard({ jetztMs = Date.now(), uebersicht = autopilo
     stand: new Date(jetztMs).toISOString(),
 
     system: {
-      evolutionScore: berechneEvolutionScore({ abdeckung: engine.abdeckung, ampelAnteil, paritaet }),
+      evolutionScore: berechneEvolutionScore({ abdeckung, ampelAnteil, paritaet }),
       // Die Zerlegung steht daneben, damit die Einzelzahl nachrechenbar bleibt.
-      bestandteile: { abdeckung: engine.abdeckung, ampelAnteil, paritaet },
-      qualitaetsNote: engine.qualitaetsNote,
-      abdeckung: engine.abdeckung,
-      aktionenErfasst: engine.aktionen,
+      bestandteile: { abdeckung, ampelAnteil, paritaet },
+      qualitaetsNote,
+      abdeckung,
+      aktionenErfasst: dauerhaft.ok ? dauerhaft.aktionen : null,
+      tageMitDaten: dauerhaft.ok ? dauerhaft.tage : null,
+      seit: dauerhaft.ok ? dauerhaft.seit : null,
+      // Was der laufende Prozess seit dem letzten Takt gesammelt hat und noch
+      // nicht gebucht ist — sonst sähe eine frische Instanz aus wie Stillstand.
+      nochNichtGebucht: engine.aktionen,
       laufzeitMs: engine.laufzeitMs,
-      // Der Ringpuffer lebt im Prozess: nach einem Deploy fängt er bei null an.
-      // Das steht hier, damit "0 Aktionen" nicht wie "niemand nutzt es" wirkt.
-      hinweis: "Aktionszähler und Qualitätsnote gelten seit dem letzten Neustart des Control-Servers."
+      ablageStumm: dauerhaft.ok ? null : (dauerhaft.grund || "ohne Grund"),
+      hinweis: dauerhaft.ok
+        ? `Aktionen und Note über ${dauerhaft.tage} Tag(e) aus der Ablage — sie überleben jeden Deploy.`
+        : "Die Kennzahlen-Ablage ist gerade nicht lesbar. Was hier fehlt, ist ungeprüft, nicht null."
     },
 
     qualitaet: {
       pruefer: typen.length,
       medientypen: typen,
       ohnePruefer,
-      jeArt: engine.arten
+      // Die Reihe aus der Ablage; der Prozessstand steht darunter als Zusatz.
+      jeArt: dauerhaft.ok ? dauerhaft.arten : [],
+      jeArtSeitNeustart: engine.arten
     },
 
-    verbesserungen: {
-      neuAusKonkurrenz: lueckenAufgaben.length,
-      kritisch: lueckenAufgaben.filter((a) => a.prioritaet === "critical").length,
-      hoch: lueckenAufgaben.filter((a) => a.prioritaet === "high").length,
-      wichtigste: lueckenAufgaben.slice(0, 5).map((a) => ({
-        id: a.id, titel: a.titel, score: a.score, prioritaet: a.prioritaet, zustaendig: a.zustaendig, freigabe: a.freigabe
-      })),
-      // Ein Aufgaben-Lebenslauf (laufend/erledigt/gescheitert) braucht eine
-      // Ablage, die es noch nicht gibt. Lieber ehrlich leer als geraten.
-      laufend: ungemessen("Aufgaben-Ablage noch nicht angeschlossen — die Werkstatt führt das Backlog heute in docs/werkstatt/BACKLOG.md"),
-      erledigt: ungemessen("Aufgaben-Ablage noch nicht angeschlossen"),
-      gescheitert: ungemessen("Aufgaben-Ablage noch nicht angeschlossen")
-    },
+    verbesserungen: (() => {
+      const z = aufgabenStand.ok ? aufgabenStand.jeZustand : null;
+      const lueckeGrund = aufgabenStand.grund || "Aufgaben-Ablage nicht lesbar";
+      return {
+        neuAusKonkurrenz: lueckenAufgaben.length,
+        kritisch: lueckenAufgaben.filter((a) => a.prioritaet === "critical").length,
+        hoch: lueckenAufgaben.filter((a) => a.prioritaet === "high").length,
+        // Seit 2026-08-14 ECHT: die Aufgaben liegen in der Ablage und
+        // ueberleben jeden Deploy. Die Liste zeigt bevorzugt das, woran
+        // wirklich etwas haengt — die Konkurrenzluecken nur, solange die
+        // Ablage noch leer ist.
+        wichtigste: (aufgabenStand.ok && aufgabenStand.wichtigste?.length
+          ? aufgabenStand.wichtigste
+          : lueckenAufgaben.slice(0, 5).map((a) => ({
+            id: a.id, titel: a.titel, score: a.score, prioritaet: a.prioritaet, zustaendig: a.zustaendig, freigabe: a.freigabe
+          }))),
+        gesamt: aufgabenStand.ok ? aufgabenStand.gesamt : null,
+        offen: aufgabenStand.ok ? aufgabenStand.offen : null,
+        hartnaeckigste: aufgabenStand.ok ? aufgabenStand.hartnaeckigste : null,
+        neu: z ? { wert: z.neu } : ungemessen(lueckeGrund),
+        laufend: z ? { wert: z.laufend } : ungemessen(lueckeGrund),
+        erledigt: z ? { wert: z.erledigt } : ungemessen(lueckeGrund),
+        gescheitert: z ? { wert: z.gescheitert } : ungemessen(lueckeGrund)
+      };
+    })(),
 
     autopiloten: { gesamt: alle.length, gruen, gelb, rot, grau, anteilGruen: ampelAnteil },
 

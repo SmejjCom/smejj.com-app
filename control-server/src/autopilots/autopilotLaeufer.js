@@ -41,7 +41,7 @@ import { pruefeAntwortenAlle, fuehreSelbsttestAus } from "./antwortTuevAutopilot
 import { executeRealtimeHarvestCycle, getHarvestBestand, HARVEST_TOPICS } from "./realtimeInternetHarvesterAutopilot.js";
 // Die drei Läufe der AI Evolution Engine (Nr. 37-39) — eigene Datei wegen der
 // 800-Zeilen-Regel, siehe control-server/src/evolution/evolutionLaeufe.js.
-import { laufEvolutionEngine, laufMissingFunctionDetector, laufSupervisor } from "../evolution/evolutionLaeufe.js";
+import { laufEvolutionEngine, laufMissingFunctionDetector, laufSupervisor, schreibeEvolutionAblage } from "../evolution/evolutionLaeufe.js";
 import { erkenneLuecken, baueLueckenAufgaben } from "../evolution/missingFunctionDetector.js";
 import { erfasseAktion } from "../evolution/aiEvolutionEngine.js";
 
@@ -82,7 +82,7 @@ export const IM_LAEUFER_BETRIEBEN = Object.freeze([
   "evolutionary-mutation", "realtime-internet-harvester", "multi-file-repo-architect",
   "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot",
   "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check",
-  "ai-evolution-engine", "missing-function-detector", "autopilot-supervisor"
+  "ai-evolution-engine", "missing-function-detector", "autopilot-supervisor", "evolution-ablage"
 ]);
 
 // Zaehler der Selbstheilung: id -> {versuche, letzterMs, eskaliert}. Lebt im
@@ -614,6 +614,11 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     // gegen den Quelltext, der gerade wirklich läuft, statt gegen eine Liste.
     // Der Supervisor liest die frische Ampel und sucht darin Erfolgsmeldungen
     // ohne Beleg — das Muster der 29 Attrappen von 2026-08-12.
+    // ZUERST wegschreiben, DANN berichten: sonst meldet die Engine-Ampel den
+    // Stand von vor 30 Minuten, während der frische Zuwachs noch im Speicher
+    // liegt. Die Reihenfolge ist dieselbe Überlegung wie beim Heiler, der die
+    // FRISCHE Ampel bewerten soll.
+    ["evolution-ablage", () => schreibeEvolutionAblage()],
     ["ai-evolution-engine", () => laufEvolutionEngine()],
     ["missing-function-detector", () => laufMissingFunctionDetector({ dateien })],
     ["autopilot-supervisor", () => laufSupervisor({ autopiloten: autopilotUebersicht({}).autopiloten || [] })],
