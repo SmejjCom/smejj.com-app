@@ -9,6 +9,8 @@
 #   silero  -> Silero VAD (barge-in)
 #   whisper -> faster-whisper STT (large-v3, auto-detect)
 #   openai  -> OpenAI-compatible LLM client (smejj.com router, BYOK)
+# BEWUSST NICHT angehoben: 0.0.94 traegt SELBST 4 Luecken — ein Wechsel
+# taeuscht Fortschritt vor, ohne einen zu bringen.
 pipecat-ai[silero,whisper,openai]==0.0.67
 
 # Speech-to-text engine (also pulled by the whisper extra; pinned for clarity).
@@ -19,6 +21,9 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 # 3.11.11 trug 66 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 3.14.3.
 aiohttp==3.14.3
+# BEWUSST NICHT angehoben (2026-08-14): 4 Luecken, sauber erst ab 6.33.5 —
+# das waere ein Hauptversionssprung (5 -> 6) bei einer Kernbibliothek, an
+# der onnxruntime und pipecat haengen. Risiko groesser als der Nutzen.
 protobuf==5.29.2
 
 # Silero VAD runtime (CPU is enough for VAD).
