@@ -63,7 +63,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260814-v138-maler-zeitbudget";
+const BRIDGE_VERSION = "20260814-v140-maler-threadpool-geduld";
 
 export function createChatBridgeServer() {
   return http.createServer(async (req, res) => {
@@ -415,7 +415,12 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
         messages,
         stream: true,
         temperature: 0.35,
-        max_tokens: profile === "fast" ? 700 : 1400
+        // Antwort-Abbruch am Ende (Befund 2026-08-13, "...2-Zimmer-Buero b"):
+        // 700 Token sind rund 500 Woerter — eine Tabelle mit sechs Zeilen plus
+        // Erklaerung reisst mitten im Wort ab. Der Nutzer sieht keinen Fehler,
+        // nur einen abgeschnittenen Satz. 2000/4000 lassen die Antwort zu Ende
+        // schreiben; das Zeitbudget bleibt die eigentliche Bremse.
+        max_tokens: profile === "fast" ? 2000 : 4000
       })
     });
   } catch {
@@ -459,7 +464,9 @@ async function streamModel(res, messages, profile, requestedModel = "") {
         messages,
         stream: true,
         temperature: profile === "coding" ? 0.2 : 0.35,
-        max_tokens: profile === "fast" ? 700 : 1400
+        // Gleicher Grund wie in der Groq-Spur oben: 700/1400 schnitten lange
+        // Antworten mitten im Wort ab.
+        max_tokens: profile === "fast" ? 2000 : 4000
       })
     });
   } catch (error) {
