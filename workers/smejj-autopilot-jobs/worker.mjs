@@ -6,7 +6,8 @@ import {
   istWochenJobFaellig,
   qualitaetsmessungLauf,
   voiceRegionCheckLauf,
-  konkurrenzRadarLauf
+  konkurrenzRadarLauf,
+  slotKennung
 } from "./jobs.mjs";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -27,7 +28,7 @@ const stand = {
   version: "1.3.0",
   jobs: {
     spiegel: { zeitplanUtc: SPIEGEL_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
-    qualitaetsmessung: { zeitplanUtc: `${QUALITAET_UTC_1}, ${QUALITAET_UTC_2}`, letzterTag: null, laeuftSeit: null, letzterLauf: null },
+    qualitaetsmessung: { zeitplanUtc: `${QUALITAET_UTC_1}, ${QUALITAET_UTC_2}`, gelaufeneSlots: [], laeuftSeit: null, letzterLauf: null },
     voiceRegionCheck: { zeitplanUtc: VOICE_REGION_UTC, letzterTag: null, laeuftSeit: null, letzterLauf: null },
     konkurrenzRadar: { zeitplanUtc: `Mo ${KONKURRENZ_UTC}`, letzterTag: null, laeuftSeit: null, letzterLauf: null }
   }
@@ -60,11 +61,16 @@ async function spiegelAusfuehren(ausloeser) {
   }
 }
 
-async function qualitaetAusfuehren(ausloeser) {
+async function qualitaetAusfuehren(ausloeser, slot = null) {
   if (qualitaetAktiv) return { ok: false, meldung: "laeuft bereits" };
   qualitaetAktiv = true;
   stand.jobs.qualitaetsmessung.laeuftSeit = new Date().toISOString();
-  stand.jobs.qualitaetsmessung.letzterTag = new Date().toISOString().slice(0, 10);
+  // Nur den wirklich faelligen Termin abhaken. Frueher wurde der ganze TAG
+  // abgehakt — damit fiel der zweite Termin des Tages dauerhaft aus.
+  const heute = new Date().toISOString().slice(0, 10);
+  stand.jobs.qualitaetsmessung.gelaufeneSlots =
+    stand.jobs.qualitaetsmessung.gelaufeneSlots.filter((eintrag) => eintrag.startsWith(heute));
+  if (slot) stand.jobs.qualitaetsmessung.gelaufeneSlots.push(slot);
   console.log(`[autopilot-jobs] Qualitätsmessung startet (${ausloeser})`);
   try {
     const ergebnis = await qualitaetsmessungLauf({ log: console.log });
@@ -113,9 +119,11 @@ function takt() {
   if (istFaellig({ jetztMs, uhrzeitUtc: SPIEGEL_UTC, letzterTag: stand.jobs.spiegel.letzterTag })) {
     spiegelAusfuehren("zeitplan").catch(() => {});
   }
-  if (istFaelligUtc({ jetztMs, uhrzeitUtc: QUALITAET_UTC_1, letzterTag: stand.jobs.qualitaetsmessung.letzterTag }) ||
-      istFaelligUtc({ jetztMs, uhrzeitUtc: QUALITAET_UTC_2, letzterTag: stand.jobs.qualitaetsmessung.letzterTag })) {
-    qualitaetAusfuehren("zeitplan").catch(() => {});
+  for (const uhrzeit of [QUALITAET_UTC_1, QUALITAET_UTC_2]) {
+    if (istFaelligUtc({ jetztMs, uhrzeitUtc: uhrzeit, gelaufeneSlots: stand.jobs.qualitaetsmessung.gelaufeneSlots })) {
+      qualitaetAusfuehren("zeitplan", slotKennung(jetztMs, uhrzeit)).catch(() => {});
+      break;
+    }
   }
   if (istFaelligUtc({ jetztMs, uhrzeitUtc: VOICE_REGION_UTC, letzterTag: stand.jobs.voiceRegionCheck.letzterTag })) {
     voiceRegionAusfuehren("zeitplan").catch(() => {});

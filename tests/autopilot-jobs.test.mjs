@@ -140,3 +140,30 @@ test("qualitaetsmessungLauf: traegt das Messlauf-Ergebnis in den Herzschlag", as
   assert.equal(ergebnis.ok, false);
   assert.ok(ergebnis.meldung.includes("gescheitert"));
 });
+
+test("beide Termine der Qualitaetsmessung kommen am selben Tag dran", async () => {
+  const { istFaelligUtc, slotKennung } = await import("../workers/smejj-autopilot-jobs/jobs.mjs");
+  const tag = "2026-08-14";
+  const um = (zeit) => Date.parse(`${tag}T${zeit}:00Z`);
+  const gelaufen = [];
+
+  // Bis 2026-08-14 teilten sich beide Uhrzeiten EINEN Tages-Merker: nach dem
+  // ersten Lauf war der zweite Termin fuer den Rest des Tages blockiert, und
+  // die Ampel versprach trotzdem "taeglich 7:10 und 19:10 UTC".
+  assert.equal(istFaelligUtc({ jetztMs: um("07:10"), uhrzeitUtc: "07:10", gelaufeneSlots: gelaufen }), true);
+  gelaufen.push(slotKennung(um("07:10"), "07:10"));
+
+  assert.equal(istFaelligUtc({ jetztMs: um("12:00"), uhrzeitUtc: "07:10", gelaufeneSlots: gelaufen }), false, "derselbe Termin nie doppelt");
+  assert.equal(istFaelligUtc({ jetztMs: um("19:10"), uhrzeitUtc: "19:10", gelaufeneSlots: gelaufen }), true, "der zweite Termin kommt dran");
+
+  gelaufen.push(slotKennung(um("19:10"), "19:10"));
+  assert.equal(istFaelligUtc({ jetztMs: um("23:00"), uhrzeitUtc: "19:10", gelaufeneSlots: gelaufen }), false);
+
+  // Am naechsten Tag zaehlen die alten Slots nicht mehr.
+  const morgen = um("07:10") + 24 * 60 * 60 * 1000;
+  assert.equal(istFaelligUtc({ jetztMs: morgen, uhrzeitUtc: "07:10", gelaufeneSlots: gelaufen }), true, "neuer Tag, neue Termine");
+
+  // Ein-Termin-Jobs (ohne Slot-Liste) verhalten sich unveraendert.
+  assert.equal(istFaelligUtc({ jetztMs: um("12:00"), uhrzeitUtc: "09:04", letzterTag: tag }), false);
+  assert.equal(istFaelligUtc({ jetztMs: um("12:00"), uhrzeitUtc: "09:04", letzterTag: null }), true);
+});
