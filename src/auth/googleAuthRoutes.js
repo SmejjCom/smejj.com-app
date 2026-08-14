@@ -2,6 +2,7 @@
 // Verhalten byteweise unveraendert; alle Abhaengigkeiten werden injiziert,
 // damit der Flow erstmals unit-testbar ist (vorher nur live verifiziert).
 import crypto from "node:crypto";
+import { sichereAnbieterKonto } from "./anbieterKonto.js";
 
 export function createGoogleAuthHandlers({
   config,
@@ -47,6 +48,10 @@ export function createGoogleAuthHandlers({
       method: "google",
       permanent: "true"
     };
+    // Google hat die Adresse bestaetigt (oben geprueft) — das im Kontospeicher
+    // vermerken. Ohne diesen Schritt bleibt der Adminbereich fuer reine
+    // Google-Konten unerreichbar, siehe src/auth/anbieterKonto.js. Wirft nie.
+    await sichereAnbieterKonto({ email, name: user.name, method: "google" }, env);
     const headers = {
       ...SECURITY_HEADERS,
       "Set-Cookie": serializeSessionCookie(user)

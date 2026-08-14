@@ -3,6 +3,7 @@
 // One-Time-Handoff fuer die Cross-Origin-Rueckkehr in die App, kein Open-Redirect.
 // Eigene OAuth-App (SMEJJ_GITHUB_LOGIN_*), getrennt vom Repo-Publisher.
 import crypto from "node:crypto";
+import { sichereAnbieterKonto } from "./anbieterKonto.js";
 
 export function createGithubAuthHandlers({
   config,
@@ -87,6 +88,10 @@ export function createGithubAuthHandlers({
       sub: String(profile.sub || ""),
       method: "github"
     };
+    // fetchGithubUser liefert ausschliesslich `verified`-Adressen (githubAuth.js) —
+    // diesen Nachweis im Kontospeicher vermerken, sonst bleibt der Adminbereich
+    // fuer reine GitHub-Konten unerreichbar. Siehe src/auth/anbieterKonto.js.
+    await sichereAnbieterKonto({ email, name: user.name, method: "github" }, env);
     const headers = { ...SECURITY_HEADERS, "Set-Cookie": serializeSessionCookie(user) };
     const handoffReturn = safeReturnOrigin(state?.handoffReturn);
     if (state?.handoff && handoffReturn) {
