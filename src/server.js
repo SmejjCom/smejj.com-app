@@ -22,7 +22,7 @@ import { handleSaladCreate, handleSaladGpuClasses, handleSaladPlan, handleSaladS
 import { recoverWorkerRuntimeOnStartup } from "../control-server/src/orchestrator/startupRecovery.js";
 import { handleStoragePresign } from "../control-server/src/routes/storagePresignRoutes.js";
 import { handleBrowserFetch } from "../control-server/src/routes/browserProxyRoutes.js";
-import { handleBrowserRemote } from "../control-server/src/routes/browserRemoteRoutes.js";
+import { handleBrowserRemote, handleBrowserRemoteHealth } from "../control-server/src/routes/browserRemoteRoutes.js";
 import { handleBrowserSession } from "../control-server/src/routes/browserSessionRoutes.js";
 import { handleMausRun, handleMausStatus } from "../control-server/src/routes/mausEngineRoutes.js";
 import { handlePasskeyLoginOptions, handlePasskeyLoginVerify, handlePasskeyRegisterOptions, handlePasskeyRegisterVerify } from "../control-server/src/routes/passkeyRoutes.js";
@@ -208,6 +208,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.ragSearch) return await handleRagSearch(url, res);
     if (readMethod && url.pathname === ROUTES.api.webSearch) return await handleWebSearch(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.browserFetch) return await handleBrowserFetch(url, res, { req });
+    if (readMethod && url.pathname === `${ROUTES.api.browserRemote}/health`) return await handleBrowserRemoteHealth(res);
     if (readMethod && url.pathname === ROUTES.api.browserRemote) return await handleBrowserRemote(url, res, { req });
     if (req.method === "POST" && url.pathname === ROUTES.api.browserSession) return await handleBrowserSession("open", req, res);
     if (req.method === "POST" && url.pathname === ROUTES.api.browserSessionAct) return await handleBrowserSession("act", req, res);

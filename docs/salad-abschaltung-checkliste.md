@@ -9,7 +9,7 @@ Inventur-Grundlage: `docs/salad-reste-inventar.md`.
 |---|---|---|---|
 | `starfruit-thyme-…` | ALTE Chat-Brücke (ausgemustert; Wächter zeigt seit 7d3ab07 auf Zeabur) | `smejj-chat-bridge` ✅ läuft | **JA, sofort** |
 | `redbean-caesar-…` | alter Control-Server | `smejj-control` ✅ läuft, trägt seit heute Login+Bridge+Sync | **JA, nach Schritt 2** |
-| `loganberry-fruit-…` | Live-Browser-Ansicht (remote-browser-bridge) | `smejj-remote-browser` ❌ **kaputt** („Service Image Pull Failed", keine Domain) | **NEIN — Blocker B1** |
+| `loganberry-fruit-…` | Live-Browser-Ansicht (remote-browser-bridge) | `smejj-remote-browser` ✅ läuft, E2E bewiesen | **JA — B1 gelöst; vorher status.js-Eintrag umstellen (s. Schritt 3)** |
 
 Bereits umgestellt (alles live bewiesen):
 - Bridge → Zeabur-Control (`SMEJJ_CONTROL_ORIGIN`, Suchzähler-Beweis)
@@ -35,26 +35,25 @@ Vorher prüfen, dass nichts mehr dort ankommt:
 Nach dem Stopp: 24 h beobachten; bei Problemen ist Wiederanschalten im
 Salad-Portal der Rollback.
 
-**Schritt 3 — Blocker B1: WEITGEHEND GELÖST (2026-08-13 nachmittags), dann `loganberry` stoppen.**
-Stand der Reparatur:
+**Schritt 3 — Blocker B1: GELÖST UND BEWIESEN (2026-08-13 abends), `loganberry` stoppbar.**
+E2E-Beweis: `GET /api/browser/remote?url=https://example.com` am Zeabur-Control
+liefert `ok:true, remote:true`, Titel „Example Domain", Screenshot (21 KB),
+Link-Extraktion. Kette: Control → intern
+`http://smejj-remote-browser.zeabur.internal:8080` → Playwright-Render.
 - Neuer Zeabur-Dienst `smejj-remote-browser` baut aus GitHub
-  (`Dockerfile.smejj-remote-browser`, Branch feature/…-magiclink); der alte
-  kaputte Image-Dienst heißt jetzt `kaputt-image-remote-browser-alt` und kann
-  gelöscht werden, sobald der neue läuft.
-- Erster Startfehler (fehlendes `process-crash-guard.mjs` im Abbild) gefixt.
-- BEWUSST OHNE öffentliche Domain: Control erreicht den Worker intern über
-  `http://smejj-remote-browser.zeabur.internal:8080` — kleinere Angriffsfläche
-  als die öffentliche Salad-Adresse.
-- Am Control gesetzt: `SMEJJ_REMOTE_BROWSER_WORKER_URL` (interne Adresse) und
-  `SMEJJ_REMOTE_BROWSER_ENABLED=YES`. Noch KEIN Redeploy.
-
-**Betreiber-Handgriff (2 Minuten, Token darf ich nicht eintippen):**
-1. Einen zufälligen Wert erzeugen (z. B. `openssl rand -hex 24`).
-2. Zeabur → `smejj-remote-browser` → Variable → `SMEJJ_REMOTE_BROWSER_TOKEN`
-   = dieser Wert → Redeploy des Workers.
-3. Zeabur → `smejj-control` → Variable → `SMEJJ_REMOTE_BROWSER_TOKEN`
-   = DERSELBE Wert → Redeploy des Control.
-Danach sage ich dir per Livetest, ob die Browser-Ansicht über Zeabur läuft.
+  (`Dockerfile.smejj-remote-browser`); der alte kaputte Image-Dienst heißt
+  `kaputt-image-remote-browser-alt` und kann jetzt gelöscht werden.
+- BEWUSST OHNE öffentliche Domain (kleinere Angriffsfläche als Salad).
+- **Token-Lösung (eine Quelle statt zwei Kopien):** Das Token liegt NUR am
+  Worker und ist dort „Exposed" (projektweit lesbar); Control erbt es als
+  Auto-generated-Variable gleichen Namens. Die frühere Control-Kopie wurde
+  gelöscht — zwei abweichende Werte (Ursache des 401) können nicht wieder
+  entstehen. Wer das Token rotieren will: NUR am Worker ändern, beide Dienste
+  redeployen.
+- **VOR dem loganberry-Stopp:** `public/status.js` („Browser-Ansicht") misst
+  noch loganberry — Eintrag erst umstellen/entfernen, sonst zeigt die
+  Statusseite falsches Rot. (Teil von Schritt 4, aber zeitlich an den Stopp
+  gekoppelt.)
 
 **Schritt 3-alt (nur zur Referenz):**
 B1: `smejj-remote-browser` auf Zeabur reparieren — das Abbild zeigt auf eine

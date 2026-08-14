@@ -43,12 +43,11 @@ export const DIENSTE = Object.freeze([
     id: "browser",
     name: "Browser-Ansicht",
     beschreibung: "Fremde Seiten im rechten Bereich anzeigen.",
-    // BEWUSST noch Salad: Der Zeabur-Ersatz (smejj-remote-browser) hat ein
-    // kaputtes Abbild und keine Domain — dieser Eintrag misst den Dienst, der
-    // die Ansicht WIRKLICH traegt. Bei der Salad-Abschaltung MUSS er umgestellt
-    // oder entfernt werden, sonst zeigt die Statusseite dauerhaft rot
-    // (Checkliste: docs/salad-abschaltung-checkliste.md).
-    url: "https://loganberry-fruit-e3n6k5n10h68cawn.salad.cloud/health",
+    // Seit B1 (2026-08-13) traegt der Zeabur-Worker die Ansicht. Er hat BEWUSST
+    // keine oeffentliche Domain, darum misst dieser Eintrag das Gesundheits-Relay
+    // am Control: der pingt den Worker intern (/health, kein Render, kein Token)
+    // und uebersetzt in 200/503. Salad-loganberry ist damit messfrei und stoppbar.
+    url: "https://smejj-control.zeabur.app/api/browser/remote/health",
     kritisch: false
   }
 ]);
