@@ -32,15 +32,21 @@ export function createWochenbericht({ autopilotUebersicht, sendAuthMail, ablage,
     const grenzeMs = jetztMs - 7 * tagMs;
     const AMPELWORT = { gruen: "gruen", gelb: "GELB", rot: "ROT", grau: "keine Messung", wartung: "Wartung" };
 
+    // In der Mail steht die Nummer VOR dem Namen. Auf der Seite ist sie in den
+    // Steckbrief gewandert (dort hat man die Akte vor sich); in einem Bericht,
+    // den man ausdruckt oder weiterleitet, ist sie die Kennung, ueber die man
+    // sich verstaendigt — "schau dir mal Autopilot 06 an".
+    const beschriftung = (a) => (a.nummer ? `${a.nummer}. ${a.name}` : a.name);
+
     const zeilen = u.autopiloten.map((a) => {
-      if (a.zeitplan === "stillgelegt") return `- ${a.name}: stillgelegt (gewollt, kein Alarm)`;
+      if (a.zeitplan === "stillgelegt") return `- ${beschriftung(a)}: stillgelegt (gewollt, kein Alarm)`;
       const woche = (a.tage || []).filter((t) => Date.parse(t.tag) >= grenzeMs);
       const laeufe = woche.reduce((s, t) => s + (t.ok || 0) + (t.fehler || 0), 0);
       const fehler = woche.reduce((s, t) => s + (t.fehler || 0), 0);
       const messung = laeufe
         ? `${laeufe} Laeufe, ${fehler} Fehler (${Math.round(((laeufe - fehler) / laeufe) * 1000) / 10} % erfolgreich)`
         : "keine Laeufe gemessen";
-      return `- ${a.name} [${AMPELWORT[a.ampel] || a.ampel}]: ${messung}`;
+      return `- ${beschriftung(a)} [${AMPELWORT[a.ampel] || a.ampel}]: ${messung}`;
     });
 
     const wochenVorfaelle = u.vorfaelle.filter((v) => Date.parse(v.von) >= grenzeMs);

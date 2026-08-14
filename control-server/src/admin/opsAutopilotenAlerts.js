@@ -98,8 +98,10 @@ export async function pruefeAlarmCore({
     try {
       await senden({
         to: empfaenger,
-        subject: `smejj.com Autopilot ROT: ${a.name}`,
-        text: `Der Autopilot "${a.name}" steht auf ROT.\n\n`
+        // Nummer in den Betreff: im Posteingang steht die Mail ohne die Seite
+        // daneben, und "Autopilot 06" ist die Kennung, ueber die man redet.
+        subject: `smejj.com Autopilot ROT: ${a.nummer ? a.nummer + ". " : ""}${a.name}`,
+        text: `Der Autopilot "${a.name}"${a.nummer ? ` (Nr. ${a.nummer}, ${a.id})` : ""} steht auf ROT.\n\n`
           + `Grund: ${a.ampelGrund}\n`
           + `Ort: ${a.ort} · Zeitplan: ${a.zeitplan}\n\n`
           + "Ampel und Bedienungs-Anleitung: https://smejj.com/admin/autopiloten/\n\n"

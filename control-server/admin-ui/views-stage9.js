@@ -274,10 +274,16 @@
       + '<div class="nt">Warum diese Ampel?</div>'
       + '<div class="ns">' + e(a.ampelGrund || "") + "</div></div></div>";
 
+    // Nummer und technischer Name stehen hier unten, nicht in der Ueberschrift:
+    // oben soll stehen, was das Ding TUT. Wer sie braucht — fuer eine Notiz,
+    // ein Zettel-Verweis, eine Fehlersuche im Log — findet sie hier.
     const steckbrief = V.tabelleBlock(["", ""], [
       "<tr><td><b>Wo läuft er?</b></td><td>" + e(a.ort) + "</td></tr>",
       "<tr><td><b>Wann läuft er?</b></td><td>" + e(a.zeitplan) + "</td></tr>",
-      "<tr><td><b>Letzter Lauf</b></td><td>" + e(letzterLaufText(a)) + "</td></tr>"
+      "<tr><td><b>Letzter Lauf</b></td><td>" + e(letzterLaufText(a)) + "</td></tr>",
+      "<tr><td><b>Nummer und Kennung</b></td><td><span class=\"s\">"
+        + (a.nummer ? "Autopilot " + e(a.nummer) + " · " : "")
+        + "<code>" + e(a.id) + "</code></span></td></tr>"
     ]);
 
     const funktionen = "<ul class=\"ap-funktionen\">"

@@ -378,6 +378,11 @@ select.dlg-feld{cursor:pointer;}
 .ap-dot.rot{background:var(--sm-danger);box-shadow:0 0 10px var(--sm-danger);}
 .ap-dot.grau{background:var(--sm-ink-faint);}
 .ap-detail{display:flex;flex-direction:column;gap:12px;min-width:0;}
+/* Technische Kennung im Steckbrief: sichtbar, aber leise. Sie ist eine
+   Nachschlage-Angabe, keine Ueberschrift. */
+.ap-detail td code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11.5px;color:var(--sm-ink-dim);}
+
 .ap-detail-kopf{display:flex;align-items:center;gap:12px;}
 .ap-detail-kopf h2{margin:0;font-size:20px;}
 .ap-kurz{margin:0;color:var(--sm-ink-dim);font-size:13.5px;line-height:1.55;}

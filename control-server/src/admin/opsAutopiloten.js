@@ -183,6 +183,11 @@ function bewerten(a, jetztMs) {
     wartung: inWartung,
     id: a.id,
     name: a.name,
+    // Die laufende Nummer stand bis 2026-08-14 im Anzeigenamen ("06. Brücken-
+    // Wächter"). Sie ist jetzt ein eigenes Feld: der Name bleibt kurz und
+    // lesbar, die Nummer bleibt trotzdem da — in Notizen und Zetteln heisst
+    // es weiterhin "Autopilot 36".
+    nummer: a.nummer || null,
     kurz: a.kurz,
     funktionen: a.funktionen,
     ort: a.ort,
@@ -251,6 +256,13 @@ function sortiereNachDringlichkeit(a, b) {
   const rang = { rot: 0, gelb: 1, grau: 2, gruen: 3, wartung: 4 };
   const unterschied = (rang[a.ampel] ?? 9) - (rang[b.ampel] ?? 9);
   if (unterschied !== 0) return unterschied;
+  // Innerhalb einer Ampelfarbe nach laufender Nummer. Bis 2026-08-14 stand die
+  // Nummer im Namen ("01. Qualitätsmessung"), ein Namensvergleich sortierte
+  // also numerisch. Seit die Namen Klartext sind, muesste er alphabetisch
+  // sortieren — die gewachsene Reihenfolge bliebe ohne diese Zeile still auf
+  // der Strecke.
+  const nummern = String(a.nummer || "zz").localeCompare(String(b.nummer || "zz"));
+  if (nummern !== 0) return nummern;
   return a.name.localeCompare(b.name, "de");
 }
 

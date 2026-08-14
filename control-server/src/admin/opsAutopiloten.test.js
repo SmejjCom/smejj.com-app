@@ -151,7 +151,11 @@ test("Stufe 3: Rot-Alarm genau einmal je Episode, danach wieder scharf", async (
   await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT, sende });
   await pruefeAlarm({ env: alarmEnv, jetztMs: JETZT, sende });
   assert.equal(gesendet.length, 1, "dieselbe Rot-Phase wird nur einmal gemeldet");
-  assert.ok(gesendet[0].subject.includes("Codeberg-Spiegel"));
+  // Der Betreff muss den Betroffenen NENNEN — mit Nummer, weil die Mail im
+  // Posteingang ohne die Seite daneben steht. (Der Name hiess bis 2026-08-14
+  // "02. Codeberg-Spiegel"; Klartext-Umbenennung, Kennung unveraendert.)
+  assert.ok(gesendet[0].subject.includes("02. Code-Sicherung"), "Betreff nennt den Betroffenen: " + gesendet[0].subject);
+  assert.ok(gesendet[0].text.includes("codeberg-spiegel"), "der Text nennt die technische Kennung fuer die Fehlersuche");
   assert.ok(gesendet[0].text.includes("push kaputt"));
 
   // Episode endet (gruen), neues Rot -> neue Mail.
@@ -354,8 +358,10 @@ test("Nr. 4: der Berichtstext ist ehrlich — Quote aus Laeufen, Stillgelegtes a
   heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "ok", env: ENV, jetztMs: JETZT - 1000 });
   heartbeatAnnehmen({ id: "qualitaetsmessung", key: "geheim1", status: "fehler", meldung: "kaputt", env: ENV, jetztMs: JETZT - 500 });
   const text = wochenberichtText({ jetztMs: JETZT });
-  assert.ok(text.includes("01. Qualitätsmessung [ROT]: 2 Laeufe, 1 Fehler (50 % erfolgreich)"), "Quote aus gemessenen Laeufen: " + text);
-  assert.ok(text.includes("05. Training-Loop [keine Messung]: keine Laeufe gemessen"));
+  // Namen seit 2026-08-14 im Klartext; die Nummer steht im Bericht weiterhin
+  // vorn, weil man sich in Notizen ueber sie verstaendigt.
+  assert.ok(text.includes("01. Qualitäts-Prüfer [ROT]: 2 Laeufe, 1 Fehler (50 % erfolgreich)"), "Quote aus gemessenen Laeufen: " + text);
+  assert.ok(text.includes("05. Trainings-Takt [keine Messung]: keine Laeufe gemessen"));
   assert.ok(text.includes("04. Konkurrenz-Radar [keine Messung]: keine Laeufe gemessen"));
   assert.ok(text.includes("smejj.com/admin/autopiloten/"));
 });
