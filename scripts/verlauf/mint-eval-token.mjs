@@ -7,8 +7,18 @@
 // braucht er einen Nachweis wie ein angemeldeter Nutzer.
 //
 // EIGENSCHAFTEN, alle drei notwendig:
-//   1. Der Sitzungsschluessel wird aus der LAUFENDEN Salad-Gruppe gelesen. Der
-//      Wert in ~/.config/smejj.com/env.local ist ein anderer und ergibt 401.
+//   1. Der Sitzungsschluessel kommt aus ~/.config/smejj.com/env.local — er muss
+//      derselbe sein, mit dem der LAUFENDE Control-Server seine Sitzungen
+//      unterschreibt.
+//
+//      GEAENDERT 2026-08-14: Bis heute las dieses Skript den Schluessel aus der
+//      Salad-Gruppe, und der Kommentar hier behauptete ausdruecklich, env.local
+//      sei "ein anderer und ergibt 401". Das stimmte zu Salad-Zeiten. Salad ist
+//      abgeschaltet, Control laeuft auf Zeabur mit genau dem Wert aus env.local
+//      — die Lage hat sich also umgekehrt. Die Salad-API antwortete weiterhin
+//      mit der eingefrorenen alten Definition, das Skript meldete froehlich
+//      "Anmelde-Nachweis erzeugt", und JEDE Livemessung lief still in 401.
+//      Ein Werkzeug, das im Fehlerfall Erfolg meldet, ist schlimmer als keines.
 //   2. `method: "local-e2e"` — NICHT "email". `emailSessionStillValid()` prueft
 //      nur bei method === "email" gegen den Sitzungsspeicher; ein gemintetes
 //      Token haette dort keine Sitzung und fiele fail-closed durch.
@@ -23,7 +33,6 @@
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { issueSessionToken } from "../../control-server/src/auth/sessionToken.js";
 
-const GRUPPE = process.env.SMEJJ_CONTROL_GROUP || "smejj-control";
 const LAUFZEIT_MS = Number(process.env.SMEJJ_EVAL_TOKEN_TTL_MS || 15 * 60 * 1000);
 
 function abbruch(nachricht) {
@@ -33,27 +42,11 @@ function abbruch(nachricht) {
 
 loadSecureLocalEnv();
 
-for (const name of ["SALAD_API_KEY", "SALAD_ORGANIZATION_NAME", "SALAD_PROJECT_NAME"]) {
-  if (!process.env[name]) abbruch(`${name} fehlt — kein Token erzeugt.`);
+const secret = String(process.env.SMEJJ_SESSION_SECRET || "");
+if (!secret) {
+  abbruch("SMEJJ_SESSION_SECRET fehlt in ~/.config/smejj.com/env.local — kein Token erzeugt."
+    + " Es muss derselbe Wert sein, den der Dienst smejj-control bei Zeabur traegt.");
 }
-
-const pfad = `https://api.salad.com/api/public/organizations/${process.env.SALAD_ORGANIZATION_NAME}`
-  + `/projects/${process.env.SALAD_PROJECT_NAME}/containers/${GRUPPE}`;
-
-let definition;
-try {
-  const antwort = await fetch(pfad, {
-    headers: { "Salad-Api-Key": process.env.SALAD_API_KEY, Accept: "application/json" },
-    signal: AbortSignal.timeout(30_000)
-  });
-  if (!antwort.ok) abbruch(`Salad-API HTTP ${antwort.status} — kein Token erzeugt.`);
-  definition = await antwort.json();
-} catch (fehler) {
-  abbruch(`Salad-API nicht erreichbar (${fehler.name}) — kein Token erzeugt.`);
-}
-
-const secret = definition?.container?.environment_variables?.SMEJJ_SESSION_SECRET;
-if (!secret) abbruch(`SMEJJ_SESSION_SECRET nicht in ${GRUPPE} gefunden — kein Token erzeugt.`);
 
 const token = issueSessionToken({
   secret,

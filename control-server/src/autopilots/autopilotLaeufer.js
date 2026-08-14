@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 
 import { interneMeldung, autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { baueBacklog } from "./werkstattBacklog.js";
+import { fuehreSelbsttestAus as tuerwaechterSelbsttest, pruefeTueren } from "./tuerwaechterAutopilot.js";
 import { pruefeSpracheAlle } from "./spracheQualitaetAutopilot.js";
 import { runProjectBugScan } from "./bugPredictorAutopilot.js";
 import { buildKnowledgeGraph } from "./knowledgeGraphAutopilot.js";
@@ -366,6 +367,39 @@ export async function laufWerkstattSammeln({ uebersicht = autopilotUebersicht, s
  * Prüfer, der nichts findet, ist sonst von einem kaputten Prüfer nicht zu
  * unterscheiden (dieselbe Regel wie beim Self-Healing-Lauf).
  */
+/**
+ * Türwächter (Nr. 40): geht den Weg, den ein Mensch geht, und meldet, wenn eine
+ * Tür zu ist. Er ist die Antwort auf zwei stille Aussperrungen am 2026-08-14,
+ * bei denen alle übrigen Autopiloten grün waren — sie messen Dienste, nicht
+ * Türen. Siehe tuerwaechterAutopilot.js.
+ *
+ * Ohne Messtoken meldet er "nicht messbar" (ok:false) statt Entwarnung: Eine
+ * Ampel, die grün zeigt, weil sie nichts messen konnte, ist eine Attrappe.
+ */
+export async function laufTuerwaechter({
+  pruefer = pruefeTueren,
+  selbsttest = tuerwaechterSelbsttest,
+  controlOrigin = process.env.SMEJJ_CONTROL_ORIGIN || "https://smejj-control.zeabur.app",
+  token = process.env.SMEJJ_EVAL_SESSION_TOKEN || process.env.SMEJJ_MESS_TOKEN || ""
+} = {}) {
+  const probe = selbsttest();
+  if (!probe.bestanden) {
+    return { ok: false, meldung: `Türwächter erkennt bekannte Aussperrungen nicht mehr: ${probe.fehler.join("; ")}` };
+  }
+  const ergebnis = await pruefer({ controlOrigin, token });
+  if (!ergebnis.messbar) {
+    return { ok: false, meldung: `Selbsttest bestanden, aber nicht messbar (${ergebnis.grund}) — kein Urteil über die Türen` };
+  }
+  if (ergebnis.alarm) {
+    const wo = ergebnis.ausgesperrt.map((a) => `${a.stufe}: ${a.hinweis || a.grund}`).join(" | ");
+    return { ok: false, meldung: `Ein Mensch kommt nicht mehr herein — ${wo}` };
+  }
+  if (ergebnis.gestoert.length) {
+    return { ok: true, meldung: `Keine Tür zu; ${ergebnis.gestoert.length} Stufe(n) gestört: ${ergebnis.gestoert.map((g) => g.stufe).join(", ")}` };
+  }
+  return { ok: true, meldung: `Alle ${ergebnis.offen.length} Türen offen (${ergebnis.offen.join(", ")})` };
+}
+
 export async function laufAntwortTuev({ statsLader = getUserFlywheelStats } = {}) {
   const selbsttest = fuehreSelbsttestAus();
   if (!selbsttest.bestanden) {
@@ -597,6 +631,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["model-lifecycle", () => S.laufModelLifecycle()],
     ["user-feedback-flywheel", () => laufFeedbackSchwungrad()],
     ["antwort-tuev", () => laufAntwortTuev()],
+    ["tuerwaechter", () => laufTuerwaechter()],
     ["process-reward", () => S.laufProcessReward()],
     ["knowledge-distiller", () => S.laufKnowledgeDistiller()],
     ["evolutionary-mutation", () => S.laufEvolutionaryMutation()],
