@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { erkenneBildAuftrag, sichereSvgAntwort, streamBilderLane } from "../public/chat-bridge-bilder.js";
+import { erkenneBildAuftrag, erzeugeFotoInhalt, sichereSvgAntwort, streamBilderLane } from "../public/chat-bridge-bilder.js";
 
 test("erkenneBildAuftrag: Mal-Verb UND Motivwort noetig (deutsch/englisch)", () => {
   const treffer = [
@@ -119,4 +119,99 @@ test("streamBilderLane: ohne Schluessel false, ohne ein einziges gesendetes Byte
   const deps = { corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 1000 };
   assert.equal(await streamBilderLane(res, {}, "Zeichne ein Bild von einem Fuchs", deps), false);
   assert.equal(geschrieben, false, "bei false darf kein Byte gesendet sein — der Text-Weg uebernimmt");
+});
+
+// --- Der Grund eines misslungenen Bildes darf nicht verschwinden ------------
+//
+// Befund 2026-08-14, live: Der Maler schrieb "3/3 [01:47]" in sein Log — also
+// Erfolg — und der Chat sagte trotzdem "Das Malen ist gerade fehlgeschlagen".
+// Nirgends stand warum: jeder Fehlerweg endete in `return ""`. Genau dieselbe
+// Stille wie beim verschluckten 400 der Verlauf-Sicherung.
+
+const echtesBild = "iVBORw0KGgoAAAANSUhEUg==";
+const alsAntwort = (koerper, ok = true, status = 200) => ({
+  ok, status, json: async () => koerper
+});
+
+test("gelingt es, steht das Bild drin — und die Dauer in der Notiz", async () => {
+  const notiz = {};
+  const inhalt = await erzeugeFotoInhalt("fuchs", 5000, notiz,
+    async () => alsAntwort({ ok: true, b64: echtesBild }));
+  assert.match(inhalt, /!\[Erstelltes Bild\]\(data:image\/png;base64,/);
+  assert.equal(notiz.grund, undefined, "ohne Fehler darf kein Grund gesetzt sein");
+  assert.equal(typeof notiz.sekunden, "number");
+});
+
+test("JEDER Fehlweg nennt seinen Grund — keiner endet mehr stumm", async () => {
+  const faelle = [
+    ["HTTP-Fehler des Malers", async () => alsAntwort({}, false, 503), /^maler_http_503$/],
+    ["Antwort ist kein JSON", async () => ({ ok: true, status: 200, json: async () => { throw new Error("kaputt"); } }), /^maler_antwort_kein_json$/],
+    ["Maler sagt selbst nein", async () => alsAntwort({ ok: false, error: "modell_nicht_geladen" }), /^maler_sagt_nein:modell_nicht_geladen$/],
+    ["Erfolg ohne Bilddaten", async () => alsAntwort({ ok: true, b64: "" }), /^maler_ohne_bilddaten$/],
+    ["Bilddaten sind kein base64", async () => alsAntwort({ ok: true, b64: "!!!kein base64!!!" }), /^bilddaten_kaputt$/],
+    ["Netz weg", async () => { throw new Error("ECONNREFUSED"); }, /^netzfehler:ECONNREFUSED$/]
+  ];
+  for (const [name, netz, erwartet] of faelle) {
+    const notiz = {};
+    const inhalt = await erzeugeFotoInhalt("fuchs", 5000, notiz, netz);
+    assert.equal(inhalt, "", `${name}: darf keinen Inhalt liefern`);
+    assert.match(notiz.grund || "", erwartet, name);
+    assert.equal(typeof notiz.sekunden, "number", `${name}: Dauer fehlt`);
+  }
+});
+
+test("die eigene Zeitgrenze heisst Zeitgrenze, nicht 'Netzfehler'", async () => {
+  // Der haeufigste Fall — und der einzige, der wie ein Netzfehler AUSSIEHT:
+  // abgebrochen wird durch den eigenen AbortController.
+  const notiz = {};
+  const inhalt = await erzeugeFotoInhalt("fuchs", 60, notiz, async (_url, opt) =>
+    new Promise((_f, ab) => opt.signal.addEventListener("abort", () => ab(new Error("The operation was aborted")))));
+  assert.equal(inhalt, "");
+  assert.equal(notiz.grund, "zeitgrenze_0s_erreicht");
+});
+
+test("ein zu grosses Bild nennt seine Groesse — sonst raet man ewig", async () => {
+  const notiz = {};
+  const riesig = "A".repeat(4_000_001);
+  await erzeugeFotoInhalt("fuchs", 5000, notiz, async () => alsAntwort({ ok: true, b64: riesig }));
+  assert.equal(notiz.grund, "bild_zu_gross_4000001");
+});
+
+// --- Aufwaermen darf nicht als "kann ich nicht" beim Nutzer ankommen --------
+//
+// Befund 2026-08-14, zweimal live gemessen: Nach einem Neustart laedt der
+// Maler sein Modell (Minuten). Solange meldet /health bereit:false, die
+// SVG-Reserve scheiterte ebenfalls, und die Spur gab `false` zurueck — der
+// Text-Weg uebernahm und smejj antwortete "Ich kann leider keine Bilder
+// malen". Sachlich falsch: die Faehigkeit ist da, sie waermt nur auf.
+
+test("waermt der Maler auf, sagt die Spur das ehrlich statt zu verneinen", async () => {
+  const gesendet = [];
+  const res = {
+    writeHead: () => {}, setHeader: () => {},
+    write: (s) => gesendet.push(String(s)), end: () => {}
+  };
+  const deps = {
+    corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 500,
+    // /health antwortet: laedt noch seit 42 s
+    fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, bereit: false, ladezeitSek: 42 }) })
+  };
+  const ergebnis = await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps);
+  const text = gesendet.join("");
+  assert.equal(ergebnis, true, "die Spur muss selbst antworten, nicht an den Text-Weg abgeben");
+  assert.match(text, /startet gerade/, "der Grund muss dastehen");
+  assert.match(text, /42 s/, "die gemessene Ladezeit gehoert dazu");
+  assert.doesNotMatch(text, /kann .{0,20}keine Bilder/i, "die Faehigkeit darf NIE verneint werden");
+});
+
+test("ohne eingerichteten Maler bleibt es beim stillen Rueckfall", async () => {
+  // Fremder Standort oder Testumgebung: kein Byte senden, Text-Weg uebernimmt.
+  let geschrieben = false;
+  const res = { writeHead: () => { geschrieben = true; }, write: () => { geschrieben = true; }, end: () => { geschrieben = true; } };
+  const deps = {
+    corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 500,
+    fetchImpl: async () => { throw new Error("nicht erreichbar"); }
+  };
+  assert.equal(await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps), false);
+  assert.equal(geschrieben, false, "hier darf weiterhin kein Byte raus");
 });

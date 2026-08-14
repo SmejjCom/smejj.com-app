@@ -19,6 +19,8 @@
 //
 // Fail-safe: false = kein Byte gesendet, der Text-Weg uebernimmt unveraendert.
 
+import { meldeAktion } from "./chat-bridge-evolution.js";
+
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
 // Derselbe Groq-Zugang, der smejj 1.0 heute traegt — fuer den SVG-Weg.
@@ -164,13 +166,29 @@ export function sichereVideoAntwort(daten) {
 
 // Fragt den Bild-Maler, ob er wach und geladen ist. false = SVG-Weg.
 async function bilderMalerBereit() {
-  if (!BILDER_WORKER_URL) return false;
+  return (await bilderMalerZustand()).bereit;
+}
+
+// Wie bilderMalerBereit, aber mit dem GRUND. Befund 2026-08-14: waehrend der
+// Maler nach einem Neustart sein Modell laedt (Minuten — die Gewichte kommen
+// aus dem Netz), ist "bereit" false. Faellt dann auch die SVG-Reserve aus,
+// uebernahm bisher der Text-Weg, und smejj antwortete "Ich kann leider keine
+// Bilder malen". Der Nutzer erfaehrt also das Gegenteil der Wahrheit: die
+// Faehigkeit ist da, sie waermt nur auf. Dafuer brauchen wir den Zustand,
+// nicht bloss ein Ja/Nein.
+export async function bilderMalerZustand(fetchImpl = fetch) {
+  if (!BILDER_WORKER_URL) return { bereit: false, grund: "nicht eingerichtet" };
   try {
-    const antwort = await fetch(`${BILDER_WORKER_URL}/health`, { signal: AbortSignal.timeout(BILDER_HEALTH_TIMEOUT_MS) });
-    if (!antwort.ok) return false;
-    return (await antwort.json())?.bereit === true;
+    const antwort = await fetchImpl(`${BILDER_WORKER_URL}/health`, { signal: AbortSignal.timeout(BILDER_HEALTH_TIMEOUT_MS) });
+    if (!antwort.ok) return { bereit: false, grund: "nicht erreichbar" };
+    const daten = await antwort.json();
+    if (daten?.bereit === true) return { bereit: true, grund: "" };
+    if (daten?.fehler) return { bereit: false, grund: "gestoert" };
+    // ladezeitSek zaehlt seit dem Start des Ladens — das ist die einzige
+    // ehrliche Zahl, die wir dem Wartenden nennen koennen.
+    return { bereit: false, grund: "waermt auf", ladezeitSek: Number(daten?.ladezeitSek) || 0 };
   } catch {
-    return false;
+    return { bereit: false, grund: "nicht erreichbar" };
   }
 }
 
@@ -250,11 +268,26 @@ async function uebersetzeMalPrompt(prompt) {
 }
 
 // Laesst den eigenen Bild-Maler ein Foto malen. Liefert Markdown oder "".
-async function erzeugeFotoInhalt(prompt, timeoutMs) {
+// Der Grund fuer ein misslungenes Bild wurde frueher WEGGEWORFEN: jeder Fehler
+// — Zeitgrenze, abgewiesener Schluessel, kaputte Antwort, zu grosses Bild —
+// endete in `return ""`. Gemessen 2026-08-14: der Maler MELDETE Erfolg
+// ("3/3 [01:47]" in seinem Log), der Chat sagte trotzdem "fehlgeschlagen", und
+// nirgends stand warum. Die `notiz` traegt den Grund jetzt nach oben, ohne den
+// Rueckgabewert zu aendern (der bleibt Inhalt oder leer).
+// Exportiert NUR fuer die Tests: ohne sie waere jeder Grund wieder nur eine
+// Behauptung. `fetchImpl` ist die Naht, an der das Netz ersetzt wird.
+export async function erzeugeFotoInhalt(prompt, timeoutMs, notiz = {}, fetchImpl = fetch) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const beginn = Date.now();
+  const scheitern = (grund) => {
+    notiz.grund = grund;
+    notiz.sekunden = Math.round((Date.now() - beginn) / 1000);
+    console.warn(`smejj Bild-Maler: ${grund} nach ${notiz.sekunden} s`);
+    return "";
+  };
   try {
-    const antwort = await fetch(`${BILDER_WORKER_URL}/erzeuge`, {
+    const antwort = await fetchImpl(`${BILDER_WORKER_URL}/erzeuge`, {
       method: "POST",
       signal: controller.signal,
       headers: {
@@ -263,13 +296,27 @@ async function erzeugeFotoInhalt(prompt, timeoutMs) {
       },
       body: JSON.stringify({ prompt })
     });
-    if (!antwort.ok) return "";
-    const daten = await antwort.json();
+    if (!antwort.ok) return scheitern(`maler_http_${antwort.status}`);
+    let daten;
+    try {
+      daten = await antwort.json();
+    } catch {
+      return scheitern("maler_antwort_kein_json");
+    }
     const b64 = String(daten?.b64 || "");
-    if (!daten?.ok || !b64 || b64.length > BILDER_MAX_B64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return "";
+    if (!daten?.ok) return scheitern(`maler_sagt_nein:${String(daten?.error || "ohne_grund").slice(0, 60)}`);
+    if (!b64) return scheitern("maler_ohne_bilddaten");
+    if (b64.length > BILDER_MAX_B64) return scheitern(`bild_zu_gross_${b64.length}`);
+    if (!/^[A-Za-z0-9+/=]+$/.test(b64)) return scheitern("bilddaten_kaputt");
+    notiz.sekunden = Math.round((Date.now() - beginn) / 1000);
     return `Hier ist dein Bild:\n\n![Erstelltes Bild](data:image/png;base64,${b64})`;
-  } catch {
-    return "";
+  } catch (fehler) {
+    // Der Abbruch durch die eigene Zeitgrenze sieht wie ein Netzfehler aus —
+    // er ist aber der haeufigste Fall und verdient einen eigenen Namen.
+    const abgebrochen = controller.signal.aborted;
+    return scheitern(abgebrochen
+      ? `zeitgrenze_${Math.round(timeoutMs / 1000)}s_erreicht`
+      : `netzfehler:${String(fehler?.message || fehler).slice(0, 60)}`);
   } finally {
     clearTimeout(timer);
   }
@@ -297,6 +344,36 @@ function bilderSendeInhalt(res, inhalt) {
   for (let i = 0; i < inhalt.length; i += 65536) {
     res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: inhalt.slice(i, i + 65536) } }] })}\n\n`);
   }
+  // AI Evolution Engine (2026-08-14): DIESE eine Stelle ist der Trichter, durch
+  // den jedes Bild und jedes Video die Bruecke verlaesst — Erfolg wie
+  // Fehlschlag. Hier zu messen heisst, keinen Weg zu uebersehen.
+  messeMedienAusgabe(inhalt);
+}
+
+/**
+ * Liest der Ausgabe an, WAS geliefert wurde, und meldet das Urteil.
+ *
+ * Bewusst aus dem fertigen Markdown gelesen statt aus Zwischenwerten: was hier
+ * steht, ist genau das, was beim Nutzer ankommt. Ein Wert, den nur der Erzeuger
+ * kennt, sagt nichts darueber, was am Ende ausgeliefert wurde.
+ */
+export function messeMedienAusgabe(inhalt, { melder = meldeAktion } = {}) {
+  const text = String(inhalt || "");
+  const treffer = text.match(/\]\((data:(image|video)\/([a-z0-9+.-]+);base64,)([A-Za-z0-9+/=]+)\)/i);
+  if (!treffer) {
+    // Kein Medium drin: dann war es eine Textantwort (meist eine Absage).
+    return melder({ art: "text", ergebnis: text, quelle: "bruecke-bilder", betrifft: "bilder-spur" });
+  }
+  const gattung = String(treffer[2]).toLowerCase() === "video" ? "video" : "bild";
+  const format = String(treffer[3]).toLowerCase();
+  // base64 traegt 6 Bit je Zeichen — drei Viertel der Zeichenzahl sind Bytes.
+  const bytes = Math.floor((treffer[4].length * 3) / 4);
+  return melder({
+    art: gattung,
+    ergebnis: { url: treffer[1], format, bytes, ...(gattung === "video" ? { hatTon: /Ton/i.test(text) } : {}) },
+    quelle: "bruecke-bilder",
+    betrifft: gattung === "video" ? "video-erzeugung" : "bilder-malen"
+  });
 }
 
 // Konstanter text = konstante Kennung: die App aktualisiert dann EINE Zeile
@@ -527,8 +604,11 @@ export async function streamBilderLane(res, body, task, deps) {
   const prompt = erkenneBildAuftrag(task);
   if (!prompt) return false;
 
+  // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
+  const malerZustand = await bilderMalerZustand(deps.fetchImpl || fetch);
+
   // Weg 1: der eigene Bild-Maler (nur wenn wach UND Modell geladen).
-  if (await bilderMalerBereit()) {
+  if (malerZustand.bereit) {
     bilderSseKopf(res, deps, body, "bilder-foto", "bild-maler:sd-turbo");
     bilderSchritt(res, "laeuft", "läuft … (ca. 1 Minute)");
     const beginn = Date.now();
@@ -537,8 +617,9 @@ export async function streamBilderLane(res, body, task, deps) {
       bilderSchritt(res, "laeuft", `läuft … ${Math.round((Date.now() - beginn) / 1000)} s`);
     }, 10000);
     let inhalt = "";
+    const notiz = {};
     try {
-      inhalt = await erzeugeFotoInhalt(await uebersetzeMalPrompt(prompt), BILDER_FOTO_TIMEOUT_MS);
+      inhalt = await erzeugeFotoInhalt(await uebersetzeMalPrompt(prompt), BILDER_FOTO_TIMEOUT_MS, notiz);
     } finally {
       clearInterval(takt);
     }
@@ -547,7 +628,12 @@ export async function streamBilderLane(res, body, task, deps) {
       bilderSchritt(res, "laeuft", "ausgelastet — zeichne als Vektorgrafik …");
       inhalt = await erzeugeSvgInhalt(prompt, deps.timeoutMs);
     }
-    bilderSchritt(res, "fertig", inhalt ? "fertig" : "fehlgeschlagen");
+    // Scheitert AUCH die Reserve, ist der Grund des ersten Versuchs das
+    // einzige, was noch etwas erklaert — sonst steht dort ein nacktes
+    // "fehlgeschlagen", aus dem niemand etwas ableiten kann.
+    bilderSchritt(res, "fertig", inhalt
+      ? "fertig"
+      : `fehlgeschlagen (${notiz.grund || "unbekannt"})`);
     bilderSendeInhalt(res, inhalt || "Das Malen ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
     res.write("data: [DONE]\n\n");
     res.end();
@@ -557,7 +643,28 @@ export async function streamBilderLane(res, body, task, deps) {
   // Weg 2 (Reserve): smejj 1.0 zeichnet SVG. Erst erzeugen, DANN senden —
   // bei "" ist noch kein Byte raus und der Text-Weg uebernimmt.
   const inhalt = await erzeugeSvgInhalt(prompt, deps.timeoutMs);
-  if (!inhalt) return false;
+  if (!inhalt) {
+    // Weg 3: Beide Wege aus — aber ein Mal-Auftrag WURDE erkannt. Frueher fiel
+    // das stumm auf den Text-Weg, und smejj antwortete "Ich kann leider keine
+    // Bilder malen" (live gemessen 2026-08-14, zweimal). Das ist die
+    // schlechteste aller Antworten: sachlich falsch, und der Nutzer versucht
+    // es nie wieder. Waermt der Maler nur auf, sagen wir genau das.
+    if (malerZustand.grund === "waermt auf" || malerZustand.grund === "gestoert") {
+      const sek = Number(malerZustand.ladezeitSek) || 0;
+      const seit = sek > 0 ? ` (seit ${sek} s)` : "";
+      bilderSseKopf(res, deps, body, "bilder-warten", "bild-maler:aufwaermen");
+      bilderSchritt(res, "fertig", "Bild-Dienst startet gerade");
+      bilderSendeInhalt(res, malerZustand.grund === "gestoert"
+        ? "Der Bild-Dienst meldet gerade eine Stoerung. Ich kann sonst Bilder malen — bitte versuch es in ein paar Minuten noch einmal."
+        : `Der Bild-Dienst startet gerade${seit} und laedt sein Modell. Ich kann Bilder malen — bitte versuch es in ein bis zwei Minuten noch einmal.`);
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return true;
+    }
+    // Gar nicht eingerichtet (z. B. in Tests oder von einem fremden Standort
+    // aus): unveraendert fail-safe zurueck auf den Text-Weg.
+    return false;
+  }
   bilderSseKopf(res, deps, body, "bilder-svg", `groq:${BILDER_MODEL}`);
   bilderSendeInhalt(res, inhalt);
   res.write("data: [DONE]\n\n");
