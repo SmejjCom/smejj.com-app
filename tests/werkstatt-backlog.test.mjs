@@ -107,3 +107,47 @@ test("Ohne Laufzeit-Auskunft bleibt das Verhalten unveraendert", () => {
   assert.ok(b.aufgaben.some((a) => a.quelle === "Ampel-grau"),
     "fehlende Auskunft darf nichts stiller machen (fail-open waere hier der Fehler)");
 });
+
+// CVE-Waechter als Quelle (2026-08-14). Gemessen: 191 Funde in 24 Bibliotheken —
+// aiohttp allein traegt 66. Eine Zeile je Fund waere unbedienbar; die Arbeit ist
+// je Paket EINE (Version anheben, Dienst neu bauen).
+test("CVE-Funde werden je Paket gebuendelt, nicht je Eintrag", () => {
+  const b = baueBacklog({
+    ampel: AMPEL_OK,
+    cve: { ok: true, funde: [
+      { name: "pillow", version: "11.0.0", id: "GHSA-a", herkunft: "workers/x/requirements.txt" },
+      { name: "pillow", version: "11.0.0", id: "GHSA-b", herkunft: "workers/x/requirements.txt" },
+      { name: "pillow", version: "11.0.0", id: "GHSA-c", herkunft: "workers/x/requirements.txt" },
+      { name: "pillow", version: "11.0.0", id: "GHSA-d", herkunft: "workers/x/requirements.txt" },
+      { name: "aiohttp", version: "3.11.11", id: "GHSA-e", herkunft: "workers/y/requirements.txt" }
+    ] }
+  });
+  const cveAufgaben = b.aufgaben.filter((a) => a.quelle === "CVE-Waechter");
+  assert.equal(cveAufgaben.length, 2, "zwei Pakete, nicht fuenf Eintraege");
+
+  const pillow = cveAufgaben.find((a) => a.betrifft === "bibliothek:pillow");
+  assert.match(pillow.titel, /4 bekannte Schwachstelle/, "die Anzahl steht im Titel");
+  assert.match(pillow.befund, /GHSA-a, GHSA-b, GHSA-c/, "hoechstens drei Beispiele");
+  assert.ok(!pillow.befund.includes("GHSA-d"), "nicht alle IDs aufzaehlen");
+
+  // Sicherheit rangiert direkt hinter einem echten Ausfall.
+  assert.equal(pillow.stufe, STUFEN.SICHERHEIT);
+  assert.ok(STUFEN.SICHERHEIT > STUFEN.AUSFALL && STUFEN.SICHERHEIT < STUFEN.REGRESSION);
+});
+
+test("gescheiterte CVE-Abfrage ist eine stumme Quelle, kein sauberes Ergebnis", () => {
+  const b = baueBacklog({ ampel: AMPEL_OK, cve: { ok: false, grund: "osv.dev nicht erreichbar" } });
+  assert.equal(b.aufgaben.some((a) => a.quelle === "CVE-Waechter"), false);
+  const stumm = b.stummeQuellen.find((q) => q.quelle === "CVE-Waechter");
+  assert.ok(stumm, "der Ausfall muss im Bericht stehen");
+  assert.match(stumm.grund, /osv\.dev/);
+});
+
+test("Bericht: jede Stufe traegt ihren eigenen Namen", () => {
+  const b = baueBacklog({
+    ampel: { ok: true, vorfaelle: [], autopiloten: [] },
+    cve: { ok: true, funde: [{ name: "pillow", version: "1.0", id: "X", herkunft: "w/r.txt" }] }
+  });
+  const text = alsMarkdown(b, "2026-08-14T00:00:00.000Z");
+  assert.match(text, /Stufe 2 — Sicherheit/, "Sicherheit darf nicht als Regression erscheinen");
+});

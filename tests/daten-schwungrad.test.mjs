@@ -17,7 +17,7 @@ import {
   __feedbackAblageLeeren
 } from "../control-server/src/autopilots/userFeedbackFlywheelAutopilot.js";
 import { laufFeedbackSchwungrad, laufWissensErnte, laufMedienQualitaet } from "../control-server/src/autopilots/autopilotLaeufer.js";
-import { baueBacklog } from "../control-server/src/autopilots/werkstattBacklog.js";
+import { baueBacklog, STUFEN } from "../control-server/src/autopilots/werkstattBacklog.js";
 
 // Leere Umgebung => recordStore faellt auf Prozess-Memory zurueck; die Tests
 // duerfen NIE gegen die echte e2-Ablage laufen.
@@ -82,7 +82,7 @@ test("PII-Filter-Ausfall macht das Schwungrad ROT, egal wie gut die Zahlen sind"
   assert.equal(sauber.includes("10.0.0.1"), false);
 });
 
-test("Backlog: negative Signale werden EINE gebuendelte Aufgabe der Stufe 2", () => {
+test("Backlog: negative Signale werden EINE gebuendelte Aufgabe der Regressions-Stufe", () => {
   const backlog = baueBacklog({
     ampel: { ok: true, autopiloten: [], vorfaelle: [] },
     antworten: {
@@ -95,7 +95,10 @@ test("Backlog: negative Signale werden EINE gebuendelte Aufgabe der Stufe 2", ()
   });
   const aufgaben = backlog.aufgaben.filter((a) => a.quelle === "Nutzer-Feedback");
   assert.equal(aufgaben.length, 1, "gebuendelt, nicht eine Aufgabe je Klick");
-  assert.equal(aufgaben[0].stufe, 2);
+  // Die BEDEUTUNG festhalten, nicht die Zahl: als 2026-08-14 die Stufe
+  // SICHERHEIT dazwischenkam, rutschte REGRESSION von 2 auf 3 und dieser
+  // Test fiel — obwohl sich am Verhalten nichts geaendert hatte.
+  assert.equal(aufgaben[0].stufe, STUFEN.REGRESSION);
   assert.match(aufgaben[0].titel, /2 Antwort/);
   assert.match(aufgaben[0].befund, /Wie melde ich mich ab\?/);
   assert.ok(backlog.gesammeltAus.includes("Nutzer-Feedback"));
