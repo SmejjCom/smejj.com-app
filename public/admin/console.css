@@ -349,7 +349,10 @@ select.dlg-feld{cursor:pointer;}
 .ap-item.on{border-color:var(--sm-accent-border);background:var(--sm-accent-soft);}
 .ap-item .t{min-width:0;}
 .ap-item .t b{display:block;font-size:13px;}
-.ap-item .t span{font-size:11px;color:var(--sm-ink-dim);}
+.ap-item .t span{display:block;font-size:11px;color:var(--sm-ink-faint);}
+/* Die Heute-Zeile ist die erste Frage, die man stellt — also heller als der
+   Steckbrief darunter (Ort/Zeitplan), aber leiser als der Name. */
+.ap-item .t span.h{color:var(--sm-ink-dim);margin:3px 0 1px;}
 .ap-dot{width:12px;height:12px;flex:none;}
 .ap-dot.gruen{background:var(--sm-ok);box-shadow:0 0 10px var(--sm-ok);}
 .ap-dot.gelb{background:var(--sm-warn);box-shadow:0 0 10px var(--sm-warn);}
@@ -385,3 +388,22 @@ select.dlg-feld{cursor:pointer;}
 .ap-tage-achse{display:flex;justify-content:space-between;margin-top:5px;
   font-size:10.5px;color:var(--sm-ink-faint);}
 .ap-quote{margin-top:10px;font-size:13px;}
+
+/* ---------- "Was hat er heute gemacht?" (2026-08-14) ----------
+   Grosse Zahl links, ganzer Satz rechts, darunter die Uhrzeiten von heute.
+   Die Zahl ist bewusst gross: sie ist die einzige Angabe, die man auch
+   erfasst, wenn man am Handy nur kurz drueberschaut. */
+.ap-heute{display:flex;align-items:center;gap:16px;padding:14px;
+  background:var(--sm-ok-bg);border:1px solid var(--sm-ok-border);}
+.ap-heute.fehler{background:var(--sm-danger-bg);border-color:var(--sm-danger-border);}
+.ap-heute-zahl{font-size:34px;line-height:1;font-weight:600;flex:none;min-width:52px;
+  text-align:center;color:var(--sm-ok);}
+.ap-heute.fehler .ap-heute-zahl{color:var(--sm-danger);}
+.ap-heute-text{font-size:15px;line-height:1.45;min-width:0;}
+.ap-heute-text .s{display:block;margin-top:4px;font-size:12px;color:var(--sm-ink-dim);}
+.ap-heute-liste{margin:12px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px;
+  font-size:12.5px;line-height:1.5;color:var(--sm-ink-dim);}
+.ap-heute-liste b{color:var(--sm-ink);font-weight:500;}
+.ap-heute-leer{display:block;margin-top:12px;font-size:12.5px;line-height:1.5;}
+.ap-heute-utc{margin-top:12px;padding-top:10px;border-top:1px solid var(--sm-border);
+  font-size:11.5px;line-height:1.5;color:var(--sm-ink-faint);}
