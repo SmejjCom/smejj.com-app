@@ -1,4 +1,4 @@
-// smejj.com Operations Console — Ansichten der Stufe 10 (AI Evolution, Modul AE).
+// smejj.com Operations Console — Ansichten der Stufe 11 (AI Evolution, Modul AE).
 //
 // Gleiches Muster wie Stufe 9: reine Funktionen, Daten rein, HTML raus, kein
 // Zustand, keine style="..."-Attribute (die eigene CSP verbietet sie).
@@ -162,5 +162,5 @@
       + "</div>";
   }
 
-  window.adminViewsStage10 = { evolution: evolution };
+  window.adminViewsStage11 = { evolution: evolution };
 })();

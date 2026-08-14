@@ -5,7 +5,7 @@
 // prüft deshalb genau das Gegenteil: dass eine FEHLENDE Zahl auch als fehlend
 // erscheint — und nie als 0 oder 100 %.
 //
-// views-stage10.js ist ein Browser-Skript (IIFE auf window) und wird in eine
+// views-stage11.js ist ein Browser-Skript (IIFE auf window) und wird in eine
 // kleine Bühne geladen statt importiert — dasselbe Muster wie views.test.js.
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -29,10 +29,10 @@ function ansicht() {
     dauer: (s) => `${s} s`
   };
   vm.createContext(buehne);
-  for (const datei of ["views.js", "views-stage10.js"]) {
+  for (const datei of ["views.js", "views-stage11.js"]) {
     vm.runInContext(fs.readFileSync(path.join(HIER, datei), "utf8"), buehne);
   }
-  return buehne.adminViewsStage10;
+  return buehne.adminViewsStage11;
 }
 
 test("AE: die Seite entsteht aus den ECHTEN Backend-Daten", () => {

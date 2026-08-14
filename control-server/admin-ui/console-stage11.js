@@ -1,4 +1,4 @@
-// smejj.com Operations Console — Bedienung der Stufe 10 (AI Evolution, Modul AE).
+// smejj.com Operations Console — Bedienung der Stufe 11 (AI Evolution, Modul AE).
 //
 // Rein lesend: eine Ansicht, ein Endpunkt, keine Interaktion. Alles, was hier
 // zu entscheiden wäre — welche Verbesserung gebaut wird — entscheidet der
@@ -6,7 +6,7 @@
 (function () {
   "use strict";
   const A = window.adminApi;
-  const S = window.adminViewsStage10;
+  const S = window.adminViewsStage11;
 
   async function laden(ctx) {
     const antwort = await A.hole("/api/admin/ops/evolution");
@@ -14,7 +14,7 @@
     ctx.zeichne(S.evolution(antwort.data));
   }
 
-  window.adminStage10 = {
+  window.adminStage11 = {
     seiten: {
       evolution: { id: "AE", gruppe: "Betrieb", name: "AI Evolution", laden: laden }
     }
