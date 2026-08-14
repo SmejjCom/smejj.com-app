@@ -48,7 +48,11 @@ const SEITEN_ORDNER = Object.freeze([
   "schluessel", "ereignisse", "adminverwaltung",
   "abrechnung", "kosten",
   "wissen", "sprachen", "experimente", "email", "analytik", "aufgaben",
-  "autopiloten"
+  "autopiloten",
+  // 2026-08-14: beide Seiten lagen fertig im Repo, waren aber nirgends
+  // eingetragen — und damit unerreichbar. "cockpit" liegt zusaetzlich
+  // unter der nackten Adresse /admin/ (STARTSEITE in console.js).
+  "cockpit", "radar"
 ]);
 
 function sha256(inhalt) {

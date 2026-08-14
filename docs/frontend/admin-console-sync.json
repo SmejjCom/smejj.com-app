@@ -28,26 +28,32 @@
     "email",
     "analytik",
     "aufgaben",
-    "autopiloten"
+    "autopiloten",
+    "cockpit",
+    "radar"
   ],
   "dateien": {
     "api.js": "b2ac0d7c03ad325e0fec113c44fcd1026af4169b709a269f8f7159b4fdc5b17a",
+    "console-cockpit.js": "6d7837db97337d58d6ac0fe200e1d83373b2475506a47b5fe2d827bb4e75d26e",
+    "console-stage10.js": "8e6871b08f6bea50377e9c09cdd59c35ebabbfce7aaf35bf5de3aae4b6e36113",
     "console-stage4.js": "5b24c661b5823a6eb30944b995cba15733f09511e116bdc8ec5e396ca9335220",
     "console-stage5.js": "fdc2f87a9a2a5178f74903acdced6c4dbb7b0eb6f4b4248d4a28698c4faacab7",
     "console-stage6.js": "85d04b0a3093274b8a53bd65d9051844463d0331e67b0eb72b5d24435df66f06",
     "console-stage7.js": "0ffbdfa9c984fe0edc98f5fd9aefc19324f90de4d0a1dbae1ab1c366ba11dd14",
     "console-stage8.js": "778d89b1ec1a071a581f4030acf0dbef72de52aa2b370a4cc3092c38d6d78bfb",
-    "console-stage9.js": "7861fa393614b6a3fd47b23d439430360c5b5d667c008a0116c2b02647fc6c21",
-    "console.css": "c22911c4ce4d2913e12c9d3174a344eddc0fc2a6f9f6d1805071077f4dd8e05c",
-    "console.js": "1e748c603827eefdc0e20d1d8da097ac92a56ee1d2a3502d20424fd357c975fd",
+    "console-stage9.js": "1aeb1105d4d13e8a1bd239c0ed757a1578ee1a1cf9b378edd666a0df59d10925",
+    "console.css": "ea8e21cecdbd1ad0f3b9e4b7d866755eb360dd53cfc0871e6e0b2e07f5692705",
+    "console.js": "89511c7a0d615bc98087623adac525037a1e60d1f3f2d7bfd1e007778e0dd129",
     "dialog.js": "e6784e914c7573b6fe9d28bfcebc1c3b3c2e17d4cc2a1b56c4f2f8917f781a5d",
-    "index.html": "52bdbcded82820b885f01d51c79806d14b7610bb1fd9b90e8f82d1bfb037bfe1",
+    "index.html": "4db34ac2d37da4a3ef16a3cbb5a89f36e35ad6c546bd19257abcb8082c043841",
+    "views-cockpit.js": "946b197caab4ec378dc4b4a56b31b8091527db3c90e4430c312401c6ef7043e6",
+    "views-stage10.js": "a7f4b57f8b5c60611997b31e2ff3d9a5e889856beac0474b24ba5eb67a5728b5",
     "views-stage4.js": "eaa42919f0866a3e1ab7a2a252eb97f6f24ab9fac9c5b207b1b2d9509fa346d5",
     "views-stage5.js": "fcffea722ad7b24a1ed85ffc90a63b4f472c833b3a8fc41aa547b22a3847ca27",
     "views-stage6.js": "7de341e1cb168e4e6ab9efa138586ca23298de10c8d8f76495ede3622956ef4c",
     "views-stage7.js": "97e63d79f8b7f1d257964647e990c96f38a621ecee53e1e2f96351f20e3668d9",
     "views-stage8.js": "b023606eeac6580b6edae72f12cb4794bc305711dc44bded3fee77b1fc5b92cb",
-    "views-stage9.js": "b3e447e60fcd1525aaa0403ab911f15ab52814c50eb3b26073d6ec7b45cfc3a8",
+    "views-stage9.js": "94e72d194767e43654f972e0c8e02b82464d775b26d0627ca56e55af47c22178",
     "views.js": "73af84dad9f961298c4a4942c1888a32e15101107707fe1b9173344dbaf7061f"
   }
 }
