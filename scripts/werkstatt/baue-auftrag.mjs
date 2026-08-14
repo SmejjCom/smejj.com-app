@@ -21,6 +21,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// EINE Wahrheit fuer die Bau-Basis (2026-08-14): Der Auftrag nannte
+// `origin/main`, das Tor misst aber gegen den Branch, aus dem wirklich
+// ausgeliefert wird. Gemessen an diesem Tag lag origin/main so weit zurueck,
+// dass src/server.js dort 807 Zeilen hatte — der Nachtbau waere selbst bei
+// offenem Tor sofort wieder an check:guidelines gescheitert, ohne eigenes
+// Verschulden. Zwei Stellen mit je eigener Basis driften auseinander; darum
+// kommt sie ab jetzt aus pruefe-tor.mjs.
+import { BAU_BASIS } from "./pruefe-tor.mjs";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const BACKLOG_JSON = path.join(REPO, "docs/werkstatt/backlog.json");
@@ -65,7 +73,10 @@ in sich geschlossen: alles Noetige steht hier, es gibt keine Sitzung dahinter.
 
 ## Harte Schutzregeln (bei Verstoss: abbrechen, nichts pushen)
 
-1. Arbeite AUSSCHLIESSLICH auf einem frischen Branch \`${branch}\` ab origin/main.
+1. Arbeite AUSSCHLIESSLICH auf einem frischen Branch \`${branch}\` ab ${BAU_BASIS}.
+   Das ist der Stand, der wirklich ausgeliefert wird — und genau der, gegen den
+   das Tor misst. NICHT origin/main: der liegt weit zurueck, dort waere das Tor
+   aus Gruenden zu, die mit deiner Aufgabe nichts zu tun haben.
    Niemals auf main oder einem fremden Branch committen.
 2. GENAU diese eine Aufgabe. Keine Nebenreparaturen, keine "wo ich schon mal
    dabei bin"-Aenderungen — was dir auffaellt, gehoert als Notiz in den
