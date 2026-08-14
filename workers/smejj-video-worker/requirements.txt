@@ -3,8 +3,10 @@
 # onnxruntime traegt die Tiefenschaetzung: 60 MB statt ~800 MB fuer torch.
 fastapi==0.115.5
 uvicorn==0.32.1
-requests==2.32.3
-pillow==11.0.0
+# 2.32.3 trug 4 bekannte Luecken (osv.dev, 2026-08-14); 2.33.0 ist sauber.
+requests==2.33.0
+# 11.0.0 trug 34 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 12.3.0.
+pillow==12.3.0
 numpy==2.1.3
 imageio==2.36.1
 imageio-ffmpeg==0.5.1
