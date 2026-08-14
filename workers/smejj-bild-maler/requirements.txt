@@ -5,4 +5,5 @@ accelerate==1.1.1
 safetensors==0.4.5
 fastapi==0.115.5
 uvicorn==0.32.1
-pillow==11.0.0
+# 11.0.0 trug 34 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 12.3.0.
+pillow==12.3.0

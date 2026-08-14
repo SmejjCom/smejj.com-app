@@ -17,7 +17,8 @@ faster-whisper==1.1.0
 # WebSocket transport + server + frame serialization + TTS HTTP client.
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-aiohttp==3.11.11
+# 3.11.11 trug 66 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 3.14.3.
+aiohttp==3.14.3
 protobuf==5.29.2
 
 # Silero VAD runtime (CPU is enough for VAD).
