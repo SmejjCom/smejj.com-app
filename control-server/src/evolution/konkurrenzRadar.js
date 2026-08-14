@@ -24,6 +24,7 @@
 // erreichbar, sein Ausfall fiel zwei Tage lang niemandem auf.
 
 import { createRecordStore } from "../admin/recordStore.js";
+import { erfasseAktion } from "./aiEvolutionEngine.js";
 
 const store = createRecordStore("evolution/radar", { maximal: 200 });
 const SCHREIB_ZEITLIMIT_MS = 4_000;
@@ -34,12 +35,23 @@ const SCHREIB_ZEITLIMIT_MS = 4_000;
  * Suchkontingent. Wer mehr will, fügt eine Zeile hinzu — nicht zehn.
  */
 export const BEOBACHTET = Object.freeze([
-  { anbieter: "ChatGPT", anfrage: "OpenAI ChatGPT new feature announcement" },
-  { anbieter: "Gemini", anfrage: "Google Gemini new feature announcement" },
-  { anbieter: "Claude", anfrage: "Anthropic Claude new feature announcement" },
-  { anbieter: "Perplexity", anfrage: "Perplexity AI new feature announcement" },
-  { anbieter: "Grok", anfrage: "xAI Grok new feature announcement" },
-  { anbieter: "Kimi", anfrage: "Kimi Moonshot AI new feature announcement" }
+  { anbieter: "ChatGPT", bereich: "allgemein", anfrage: "OpenAI ChatGPT new feature announcement" },
+  { anbieter: "Gemini", bereich: "allgemein", anfrage: "Google Gemini new feature announcement" },
+  { anbieter: "Claude", bereich: "allgemein", anfrage: "Anthropic Claude new feature announcement" },
+  { anbieter: "Perplexity", bereich: "allgemein", anfrage: "Perplexity AI new feature announcement" },
+  { anbieter: "Grok", bereich: "allgemein", anfrage: "xAI Grok new feature announcement" },
+  { anbieter: "Kimi", bereich: "allgemein", anfrage: "Kimi Moonshot AI new feature announcement" },
+
+  // GEZIELTE BEREICHE (Betreiber-Auftrag 2026-08-14). Die allgemeine Suche
+  // findet, was gross angekuendigt wird — sie uebersieht zuverlaessig das,
+  // was in einem Nebensatz der Release Notes steht. Wer wissen will, was sich
+  // bei Recherche und Stimme tut, muss danach FRAGEN.
+  //
+  // Anbieteruebergreifend statt je Anbieter: das kostet zwei Anfragen statt
+  // zwoelf und liefert genau das Vergleichende, um das es hier geht. Der
+  // Anbieter steht dann im Titel des Treffers, nicht in der Anfrage.
+  { anbieter: "mehrere", bereich: "recherche", anfrage: "deep research feature update ChatGPT Gemini Perplexity Claude" },
+  { anbieter: "mehrere", bereich: "audio", anfrage: "advanced voice mode update ChatGPT Gemini Grok realtime speech" }
 ]);
 
 /**
@@ -67,13 +79,14 @@ const FUNKTIONS_WORT = new RegExp(
 );
 
 /** Ein Treffer, auf das Nötige reduziert — und ohne Deutung. */
-function alsKandidat(anbieter, treffer, jetztMs) {
+function alsKandidat(anbieter, treffer, jetztMs, bereich = "allgemein") {
   const url = String(treffer?.url || treffer?.href || "").slice(0, 300);
   if (!/^https?:\/\//.test(url)) return null;
   const titel = String(treffer?.title || "").replace(/\s+/g, " ").trim().slice(0, 200);
   if (!titel) return null;
   return {
     anbieter,
+    bereich,
     titel,
     url,
     auszug: String(treffer?.snippet || treffer?.text || "").replace(/\s+/g, " ").trim().slice(0, 300),
@@ -103,18 +116,41 @@ export async function fuehreRadarAus({ suche, jetztMs = Date.now(), env = proces
     try {
       befund = await suche(ziel.anfrage, { limit: 5, region: "us" });
     } catch (fehler) {
-      stummeQuellen.push({ anbieter: ziel.anbieter, grund: String(fehler?.message || fehler).slice(0, 100) });
+      stummeQuellen.push({ anbieter: ziel.anbieter, bereich: ziel.bereich || "allgemein", grund: String(fehler?.message || fehler).slice(0, 100) });
       continue;
     }
     const treffer = Array.isArray(befund) ? befund : (befund?.results || []);
+
+    // DER RADAR IST SELBST EINE RECHERCHE (Betreiber-Auftrag 2026-08-14).
+    // Er sucht acht Mal die Woche — und wurde dabei nie gemessen, obwohl im
+    // Dashboard "recherche" als Medientyp ohne einzige Meldung stand. Ein
+    // Rechercheur, der andere prueft und sich selbst nicht, ist genau die
+    // Sorte blinder Fleck, gegen die diese Schicht gebaut ist.
+    //
+    // Der Pruefer misst hier das, was eine Recherche ausmacht: Kamen Quellen,
+    // und haben sie eine Adresse? Eine Suche ohne Treffer faellt damit als
+    // "quellen-fehlen" auf, statt nur als leere Zeile im Bericht.
+    try {
+      erfasseAktion({
+        art: "recherche",
+        prompt: ziel.anfrage,
+        ergebnis: {
+          text: treffer.map((t) => String(t?.title || "")).join("\n"),
+          quellen: treffer.map((t) => ({ url: String(t?.url || t?.href || "") }))
+        },
+        quelle: `radar:${ziel.bereich || "allgemein"}`,
+        betrifft: "konkurrenz-radar"
+      });
+    } catch { /* eine Messung, die den gemessenen Weg kaputtmacht, ist keine */ }
+
     if (!treffer.length) {
-      stummeQuellen.push({ anbieter: ziel.anbieter, grund: "Suche lieferte keinen Treffer" });
+      stummeQuellen.push({ anbieter: ziel.anbieter, bereich: ziel.bereich || "allgemein", grund: "Suche lieferte keinen Treffer" });
       continue;
     }
     for (const t of treffer) {
       const titelUndText = `${t?.title || ""} ${t?.snippet || t?.text || ""}`;
       if (!FUNKTIONS_WORT.test(titelUndText)) continue;
-      const kandidat = alsKandidat(ziel.anbieter, t, jetztMs);
+      const kandidat = alsKandidat(ziel.anbieter, t, jetztMs, ziel.bereich || "allgemein");
       if (kandidat) kandidaten.push(kandidat);
     }
   }
