@@ -96,7 +96,7 @@ export const AUTOPILOTEN = Object.freeze([
     name: "01. Qualitätsmessung",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",
     funktionen: [
-      "Läuft täglich um 7:10 und 19:10 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
+      "Vorgesehen sind zwei Läufe am Tag (7:10 und 19:10 UTC) im Dienst smejj-autopilot-jobs auf Zeabur. Die echten Uhrzeiten stehen im Dienst-Env (SMEJJ_QUALITAET_UTC_1/2) und können davon abweichen; maßgeblich ist der Zeitpunkt des letzten Laufs unten.",
       "Fährt seit 2026-08-12 den ECHTEN Messlauf: Suite smejj-chat-core-v1 (3 Wiederholungen) über den Nutzerweg; die Note steht in der Herzschlag-Meldung.",
       "Braucht SMEJJ_SESSION_SECRET im Dienst-Env; ohne ihn sendet der Job ein ehrlich beschriftetes Lebenszeichen.",
       "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
@@ -105,7 +105,10 @@ export const AUTOPILOTEN = Object.freeze([
     verbessert: "Modell-Genauigkeit +12%, 100% Pass-Rate auf Standard-Testsets",
     neuigkeiten: ["Tages-Messung 7:10 UTC erfolgreich absolviert", "Antwortqualität 100% stabil im Soll"],
     ort: "Zeabur (smejj-autopilot-jobs)",
-    zeitplan: "täglich 7:10 und 19:10 UTC",
+    // Diese Zeile ist eine VORGABE, keine Messung: sie steht fest im Code und
+    // weiß nichts vom Dienst-Env. Am 2026-08-14 liefen die Messungen um 02:16
+    // und 14:15 UTC, während hier 7:10/19:10 stand — deshalb der Zusatz.
+    zeitplan: "vorgesehen täglich 7:10 und 19:10 UTC (Dienst-Env kann abweichen)",
     messung: "heartbeat",
     erwartetAlleMs: 12 * STUNDE_MS,
     schonfristMs: 6 * STUNDE_MS,
