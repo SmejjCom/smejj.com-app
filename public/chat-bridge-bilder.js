@@ -266,11 +266,29 @@ const PERSONEN_ABSAGE = "Aus Rücksicht auf Persönlichkeitsrechte male ich kein
 
 // Laesst den eigenen Bild-Maler ein Foto malen. Liefert Markdown, "besetzt"
 // wenn gerade ein anderes Bild entsteht (HTTP 429), sonst "".
-async function erzeugeFotoInhalt(prompt, timeoutMs) {
+//
+// DER GRUND EINES MISSLUNGENEN BILDES WURDE WEGGEWORFEN: jeder Fehlweg —
+// Zeitgrenze, abgewiesener Schluessel, kaputte Antwort, zu grosses Bild —
+// endete gleich in `return ""`. Gemessen 2026-08-14 im echten Chat: der Maler
+// schrieb "3/3 [01:47]" in sein Log, also Erfolg, und der Chat sagte trotzdem
+// "Das Malen ist gerade fehlgeschlagen". Nirgends stand warum — dieselbe
+// Stille wie beim verschluckten 400 der Verlauf-Sicherung.
+//
+// Die `notiz` traegt den Grund nach oben, OHNE den Rueckgabewert anzutasten:
+// "" heisst weiterhin misslungen, "besetzt" weiterhin besetzt. `fetchImpl` ist
+// nur die Naht fuer die Tests — ohne sie waere jeder Grund eine Behauptung.
+export async function erzeugeFotoInhalt(prompt, timeoutMs, notiz = {}, fetchImpl = fetch) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const beginn = Date.now();
+  const scheitern = (grund) => {
+    notiz.grund = grund;
+    notiz.sekunden = Math.round((Date.now() - beginn) / 1000);
+    console.warn(`smejj Bild-Maler: ${grund} nach ${notiz.sekunden} s`);
+    return "";
+  };
   try {
-    const antwort = await fetch(`${BILDER_WORKER_URL}/erzeuge`, {
+    const antwort = await fetchImpl(`${BILDER_WORKER_URL}/erzeuge`, {
       method: "POST",
       signal: controller.signal,
       headers: {
@@ -279,14 +297,29 @@ async function erzeugeFotoInhalt(prompt, timeoutMs) {
       },
       body: JSON.stringify({ prompt })
     });
+    // "besetzt" ist KEIN Fehler, sondern die Aufforderung zu warten — der
+    // Aufrufer behandelt es eigens. Darum vor allen Fehlwegen.
     if (antwort.status === 429) return "besetzt";
-    if (!antwort.ok) return "";
-    const daten = await antwort.json();
+    if (!antwort.ok) return scheitern(`maler_http_${antwort.status}`);
+    let daten;
+    try {
+      daten = await antwort.json();
+    } catch {
+      return scheitern("maler_antwort_kein_json");
+    }
     const b64 = String(daten?.b64 || "");
-    if (!daten?.ok || !b64 || b64.length > BILDER_MAX_B64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return "";
+    if (!daten?.ok) return scheitern(`maler_sagt_nein:${String(daten?.error || "ohne_grund").slice(0, 60)}`);
+    if (!b64) return scheitern("maler_ohne_bilddaten");
+    if (b64.length > BILDER_MAX_B64) return scheitern(`bild_zu_gross_${b64.length}`);
+    if (!/^[A-Za-z0-9+/=]+$/.test(b64)) return scheitern("bilddaten_kaputt");
+    notiz.sekunden = Math.round((Date.now() - beginn) / 1000);
     return `Hier ist dein Bild:\n\n![Erstelltes Bild](data:image/png;base64,${b64})`;
-  } catch {
-    return "";
+  } catch (fehler) {
+    // Der Abbruch durch die EIGENE Zeitgrenze sieht wie ein Netzfehler aus —
+    // er ist aber der haeufigste Fall und verdient einen eigenen Namen.
+    return scheitern(controller.signal.aborted
+      ? `zeitgrenze_${Math.round(timeoutMs / 1000)}s_erreicht`
+      : `netzfehler:${String(fehler?.message || fehler).slice(0, 60)}`);
   } finally {
     clearTimeout(timer);
   }
@@ -298,14 +331,19 @@ async function erzeugeFotoInhalt(prompt, timeoutMs) {
 // SVG-Reserve, obwohl nichts kaputt, sondern nur besetzt ist.
 // `melde(phase)` faerbt den laufenden Fortschritt ("wartet" statt "läuft").
 // Exportiert fuer den Verhaltenstest (tests/chat-bridge-foto-geduld.test.mjs).
-export async function erzeugeFotoMitGeduld(prompt, timeoutMs, melde) {
+export async function erzeugeFotoMitGeduld(prompt, timeoutMs, melde, notiz = {}) {
   const bis = Date.now() + BILDER_WARTE_MAX_MS;
   for (;;) {
-    const inhalt = await erzeugeFotoInhalt(prompt, timeoutMs);
+    const inhalt = await erzeugeFotoInhalt(prompt, timeoutMs, notiz);
     if (inhalt !== "besetzt") return inhalt;
     // Besetzt: warten, aber nie laenger als das Geduldsbudget. Danach
     // uebernimmt die SVG-Reserve — besser stilisiert als gar kein Bild.
-    if (Date.now() >= bis) return "";
+    // Auch DAS ist ein Grund, der bisher verschwand: "hat gewartet und den
+    // Platz nie bekommen" sieht am Ende genauso aus wie "kaputt".
+    if (Date.now() >= bis) {
+      notiz.grund = `geduld_${Math.round(BILDER_WARTE_MAX_MS / 1000)}s_erschoepft_maler_besetzt`;
+      return "";
+    }
     melde("wartet auf freien Platz");
     await new Promise((weiter) => setTimeout(weiter, BILDER_WARTE_TAKT_MS));
     melde("läuft");
@@ -587,13 +625,14 @@ export async function streamBilderLane(res, body, task, deps) {
     }, 10000);
     let inhalt = "";
     let gesperrt = false;
+    const notiz = {};
     try {
       const malPrompt = await uebersetzeMalPrompt(prompt);
       gesperrt = istPersonGesperrt(malPrompt);
       if (!gesperrt) {
         inhalt = await erzeugeFotoMitGeduld(malPrompt, BILDER_FOTO_TIMEOUT_MS, (neu) => {
           phase = neu;
-        });
+        }, notiz);
       }
     } finally {
       clearInterval(takt);
@@ -610,7 +649,12 @@ export async function streamBilderLane(res, body, task, deps) {
       bilderSchritt(res, "laeuft", "ausgelastet — zeichne als Vektorgrafik …");
       inhalt = await erzeugeSvgInhalt(prompt, deps.timeoutMs);
     }
-    bilderSchritt(res, "fertig", inhalt ? "fertig" : "fehlgeschlagen");
+    // Scheitert AUCH die SVG-Reserve, ist der Grund des ersten Versuchs das
+    // Einzige, was noch etwas erklaert. Ein nacktes "fehlgeschlagen" laesst
+    // Nutzer UND Betreiber raten — genau das ist heute passiert.
+    bilderSchritt(res, "fertig", inhalt
+      ? "fertig"
+      : `fehlgeschlagen (${notiz.grund || "unbekannt"})`);
     bilderSendeInhalt(res, inhalt || "Das Malen ist gerade fehlgeschlagen — bitte versuch es gleich noch einmal.");
     res.write("data: [DONE]\n\n");
     res.end();

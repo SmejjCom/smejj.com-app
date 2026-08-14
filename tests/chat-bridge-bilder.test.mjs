@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { erkenneBildAuftrag, sichereSvgAntwort, streamBilderLane } from "../public/chat-bridge-bilder.js";
+import { erkenneBildAuftrag, erzeugeFotoInhalt, sichereSvgAntwort, streamBilderLane } from "../public/chat-bridge-bilder.js";
 
 test("erkenneBildAuftrag: Mal-Verb UND Motivwort noetig (deutsch/englisch)", () => {
   const treffer = [
@@ -120,3 +120,60 @@ test("streamBilderLane: ohne Schluessel false, ohne ein einziges gesendetes Byte
   assert.equal(await streamBilderLane(res, {}, "Zeichne ein Bild von einem Fuchs", deps), false);
   assert.equal(geschrieben, false, "bei false darf kein Byte gesendet sein — der Text-Weg uebernimmt");
 });
+
+// --- Der Grund eines misslungenen Bildes darf nicht verschwinden ------------
+//
+// Befund 2026-08-14, live: Der Maler schrieb "3/3 [01:47]" in sein Log — also
+// Erfolg — und der Chat sagte trotzdem "Das Malen ist gerade fehlgeschlagen".
+// Nirgends stand warum: jeder Fehlerweg endete in `return ""`. Genau dieselbe
+// Stille wie beim verschluckten 400 der Verlauf-Sicherung.
+
+const echtesBild = "iVBORw0KGgoAAAANSUhEUg==";
+const alsAntwort = (koerper, ok = true, status = 200) => ({
+  ok, status, json: async () => koerper
+});
+
+test("gelingt es, steht das Bild drin — und die Dauer in der Notiz", async () => {
+  const notiz = {};
+  const inhalt = await erzeugeFotoInhalt("fuchs", 5000, notiz,
+    async () => alsAntwort({ ok: true, b64: echtesBild }));
+  assert.match(inhalt, /!\[Erstelltes Bild\]\(data:image\/png;base64,/);
+  assert.equal(notiz.grund, undefined, "ohne Fehler darf kein Grund gesetzt sein");
+  assert.equal(typeof notiz.sekunden, "number");
+});
+
+test("JEDER Fehlweg nennt seinen Grund — keiner endet mehr stumm", async () => {
+  const faelle = [
+    ["HTTP-Fehler des Malers", async () => alsAntwort({}, false, 503), /^maler_http_503$/],
+    ["Antwort ist kein JSON", async () => ({ ok: true, status: 200, json: async () => { throw new Error("kaputt"); } }), /^maler_antwort_kein_json$/],
+    ["Maler sagt selbst nein", async () => alsAntwort({ ok: false, error: "modell_nicht_geladen" }), /^maler_sagt_nein:modell_nicht_geladen$/],
+    ["Erfolg ohne Bilddaten", async () => alsAntwort({ ok: true, b64: "" }), /^maler_ohne_bilddaten$/],
+    ["Bilddaten sind kein base64", async () => alsAntwort({ ok: true, b64: "!!!kein base64!!!" }), /^bilddaten_kaputt$/],
+    ["Netz weg", async () => { throw new Error("ECONNREFUSED"); }, /^netzfehler:ECONNREFUSED$/]
+  ];
+  for (const [name, netz, erwartet] of faelle) {
+    const notiz = {};
+    const inhalt = await erzeugeFotoInhalt("fuchs", 5000, notiz, netz);
+    assert.equal(inhalt, "", `${name}: darf keinen Inhalt liefern`);
+    assert.match(notiz.grund || "", erwartet, name);
+    assert.equal(typeof notiz.sekunden, "number", `${name}: Dauer fehlt`);
+  }
+});
+
+test("die eigene Zeitgrenze heisst Zeitgrenze, nicht 'Netzfehler'", async () => {
+  // Der haeufigste Fall — und der einzige, der wie ein Netzfehler AUSSIEHT:
+  // abgebrochen wird durch den eigenen AbortController.
+  const notiz = {};
+  const inhalt = await erzeugeFotoInhalt("fuchs", 60, notiz, async (_url, opt) =>
+    new Promise((_f, ab) => opt.signal.addEventListener("abort", () => ab(new Error("The operation was aborted")))));
+  assert.equal(inhalt, "");
+  assert.equal(notiz.grund, "zeitgrenze_0s_erreicht");
+});
+
+test("ein zu grosses Bild nennt seine Groesse — sonst raet man ewig", async () => {
+  const notiz = {};
+  const riesig = "A".repeat(4_000_001);
+  await erzeugeFotoInhalt("fuchs", 5000, notiz, async () => alsAntwort({ ok: true, b64: riesig }));
+  assert.equal(notiz.grund, "bild_zu_gross_4000001");
+});
+
