@@ -60,8 +60,23 @@ export function argTyp(arg) {
   return bau(arg.type);
 }
 
-// Sucht die Mutation, die Umgebungswerte setzt. Bevorzugt eine, die MEHRERE
-// Werte auf einmal nimmt (ein Aufruf = ein Neustart statt zwei).
+// Nimmt die Mutation eine Sammlung von Werten entgegen (data/variables/envs als
+// Map)? Solche Formen ERSETZEN bei Zeabur die Umgebung — sie sind hier tabu.
+export function istSammelform(feld) {
+  return (feld?.args || []).some((a) => ["data", "variables", "envs"].includes(String(a.name).toLowerCase()));
+}
+
+// Sucht die Mutation, die Umgebungswerte setzt.
+//
+// SIE MEIDET SAMMEL-MUTATIONEN — und zwar aus Erfahrung. Am 2026-08-14 wurde
+// hier die Sammelform BEVORZUGT ("ein Aufruf = ein Neustart statt zwei"). Das
+// war der Denkfehler: Zeaburs updateEnvironmentVariable(data: Map) fuegt nicht
+// hinzu, es ERSETZT die Umgebung. Ein Aufruf mit zwei Stripe-Werten nahm
+// smejj-control noch am selben Tag ein zweites Mal alle uebrigen 19 Werte —
+// Sitzungsgeheimnis, Modellschluessel, Speicher- und Mailzugang. Der Aufruf
+// meldete dabei brav "2 Werte gesetzt".
+//
+// Ein Neustart mehr ist billig. Eine geloeschte Produktionsumgebung nicht.
 export async function findeSetzMutation(abfrage = zeaburAbfrage) {
   const schema = await abfrage(`{
     __schema { mutationType { fields {
@@ -76,13 +91,13 @@ export async function findeSetzMutation(abfrage = zeaburAbfrage) {
     let p = 0;
     if (namen.some((n) => n.includes("service"))) p += 2;
     if (namen.some((n) => n.includes("environment"))) p += 2;
-    // Sammel-Mutationen (data/variables als Map) sind uns lieber als key/value.
-    if (namen.some((n) => ["data", "variables", "envs"].includes(n))) p += 3;
-    if (namen.some((n) => n === "key") && namen.some((n) => n === "value")) p += 1;
-    if (/update/i.test(f.name)) p += 1;
+    // Ein Wert je Aufruf ist die EINZIGE Form, die nur hinzufuegt.
+    if (namen.some((n) => n === "key") && namen.some((n) => n === "value")) p += 3;
     return p;
   };
-  const beste = felder.sort((a, b) => punkte(b) - punkte(a))[0];
+  // Sammel-Mutationen kommen gar nicht erst in die Auswahl.
+  const einzeln = felder.filter((f) => !istSammelform(f));
+  const beste = einzeln.sort((a, b) => punkte(b) - punkte(a))[0];
   if (!beste || punkte(beste) < 4) return null;
   return beste;
 }
@@ -95,7 +110,9 @@ export async function setzeUmgebungswerte(dienstName, werte, abfrage = zeaburAbf
   if (!mutation) throw new Error("zeabur_setz_mutation_nicht_gefunden");
 
   const namen = mutation.args.map((a) => a.name);
-  const sammel = namen.find((n) => ["data", "variables", "envs"].includes(n.toLowerCase()));
+  // Zweite Wache, unabhaengig von der Auswahl oben: selbst wenn hier je eine
+  // Sammel-Mutation ankaeme, wird sie nicht ausgefuehrt.
+  if (istSammelform(mutation)) throw new Error("zeabur_sammelform_verboten");
 
   const belege = (arg) => {
     const n = arg.name.toLowerCase();
@@ -113,13 +130,17 @@ export async function setzeUmgebungswerte(dienstName, werte, abfrage = zeaburAbf
       const wert = zusatz[arg.name] !== undefined ? zusatz[arg.name] : belege(arg);
       if (wert !== undefined) variablen[arg.name] = wert;
     }
-    return abfrage(`mutation Setze(${deklaration}) { ${mutation.name}(${uebergabe}) }`, variablen);
+    // Liefert die Mutation ein Objekt zurueck, verlangt GraphQL eine
+    // Feldauswahl und antwortet sonst mit 422. Ausgewaehlt wird nur `key` —
+    // NIE `value`, damit kein Geheimwert in einer Antwort landet.
+    try {
+      return await abfrage(`mutation Setze(${deklaration}) { ${mutation.name}(${uebergabe}) }`, variablen);
+    } catch (fehler) {
+      if (!/422/.test(String(fehler?.message || ""))) throw fehler;
+      return abfrage(`mutation Setze(${deklaration}) { ${mutation.name}(${uebergabe}) { key } }`, variablen);
+    }
   }
 
-  if (sammel) {
-    await ruf({ [sammel]: werte });
-    return { ok: true, mutation: mutation.name, anzahl: Object.keys(werte).length };
-  }
   // key/value-Form: nacheinander, damit ein Fehlschlag beim zweiten Wert den
   // ersten nicht als "nie gesetzt" erscheinen laesst.
   const schluesselArg = namen.find((n) => /^key$|name/i.test(n));
