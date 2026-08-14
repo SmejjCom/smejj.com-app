@@ -34,7 +34,7 @@ test("fail-safe: kaputter Speicher blockiert nichts", () => {
 
 test("verdrahtet ueber account-privacy.js VOR der Marker-Bereinigung, Start-Lock unberuehrt", () => {
   const konto = fs.readFileSync("public/account-privacy.js", "utf8");
-  const initPos = konto.indexOf("initOnboardingWelcome(STRIPE_PLAN_LINKS)");
+  const initPos = konto.indexOf("initOnboardingWelcome(STRIPE_PLAN_LINKS");
   const cleanPos = konto.indexOf("cleanLoginMarkers();");
   assert.ok(initPos > -1 && cleanPos > -1 && initPos < cleanPos, "Onboarding muss vor der Marker-Bereinigung starten");
   // Eingefrorene Startseiten-Dateien bleiben ohne Onboarding-Bezug.

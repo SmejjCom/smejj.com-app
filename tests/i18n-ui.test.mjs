@@ -15,6 +15,10 @@ const profileDock = fs.readFileSync(path.join(publicDir, "profile-dock.js"), "ut
 const profilePictureControl = fs.readFileSync(path.join(publicDir, "profile-picture-control.js"), "utf8");
 // Der Store liefert deutsche Quelltexte, die profile-picture-control.js per t() uebersetzt.
 const profilePictureStore = fs.readFileSync(path.join(publicDir, "profile-picture-store.js"), "utf8");
+// Zwei weitere t()-Oberflaechen: das Such-Overlay traegt die Bereichsnamen,
+// die Begruessung nach dem Login die Plan-Karte.
+const searchOverlay = fs.readFileSync(path.join(publicDir, "search.js"), "utf8");
+const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welcome.js"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
 
@@ -51,7 +55,8 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore;
+    + profileDock + profilePictureControl + profilePictureStore
+    + searchOverlay + onboardingWelcome;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }
