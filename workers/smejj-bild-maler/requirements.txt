@@ -1,6 +1,17 @@
 # smejj.com Bild-Maler — torch kommt separat (CPU-Wheel, siehe Dockerfile).
-diffusers==0.31.0
-transformers==4.46.3
+# diffusers und transformers werden GEMEINSAM angehoben (2026-08-14).
+# transformers 4.46.3 trug 42 bekannte Luecken; sauber erst ab 5.5.0 — das ist
+# ein Hauptversionssprung. Unser eigener Code importiert transformers NIRGENDS
+# direkt (server.py nutzt nur diffusers.AutoPipelineForText2Image); das Risiko
+# liegt also allein darin, ob diffusers intern noch transformers-4-APIs ruft.
+# Deshalb wandert diffusers von 0.31.0 (Nov 2024) auf 0.36.0 mit: ein zwei
+# Jahre aelteres diffusers gegen transformers 5 zu stellen waere die eigentlich
+# riskante Kombination gewesen. Beide verlangen huggingface-hub <2.0 — kein
+# Versionskonflikt.
+# diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es existiert
+# derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36 alle gleich).
+diffusers==0.36.0
+transformers==5.5.0
 accelerate==1.1.1
 safetensors==0.4.5
 fastapi==0.115.5
