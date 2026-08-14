@@ -17,11 +17,47 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { BAU_BASIS } from "./pruefe-tor.mjs";
+
 const REPO_PFAD = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REPO_GITHUB = "SmejjCom/smejj.com-app";
 
+/**
+ * Wogegen der Pull Request laeuft.
+ *
+ * KORRIGIERT 2026-08-14: Die Karte zeigte auf `main`. Gebaut und gemessen wird
+ * aber gegen die Bau-Basis aus pruefe-tor.mjs — `main` liegt rund 95 Commits
+ * zurueck (siehe Kopfkommentar dort). Ein PR gegen `main` zeigte darum den
+ * Nachtbau plus hundert fremde Commits; der Betreiber haette einen Umfang
+ * freigegeben, den niemand gebaut hat. Die Quelle der Wahrheit ist EINE:
+ * dieselbe Konstante, gegen die auch das Tor prueft.
+ */
+export function basisBranch(basisRef = BAU_BASIS) {
+  return String(basisRef).replace(/^origin\//, "");
+}
+
+/** Die 1-Klick-Adresse fuer den PR-Entwurf (ohne gh-CLI). */
+export function vergleichsAdresse(branch, basisRef = BAU_BASIS, repo = REPO_GITHUB) {
+  return `https://github.com/${repo}/compare/${encodeURIComponent(basisBranch(basisRef))}`
+    + `...${encodeURIComponent(branch)}?expand=1`;
+}
+
+/**
+ * Womit die Karte den Tor-Stand misst.
+ *
+ * KORRIGIERT 2026-08-14: Hier stand `--schnell`. Der schnelle Lauf laesst die
+ * Pruefsuite aus und meldet DESHALB per Bauart "TOR ZU" — die Karte konnte
+ * also nie etwas anderes sagen als "NICHT MERGEN", auch wenn der volle Lauf
+ * kurz zuvor OFFEN gemeldet hatte. Eine Ampel, die immer rot ist, ist keine
+ * Ampel. Die Karte misst darum voll; die Minute ist einmal pro Nacht zu
+ * verkraften, eine falsche Ampel nicht.
+ */
+export function torArgumente() {
+  return ["run", "werkstatt:tor", "--silent"];
+}
+
 /** Baut Titel und Beschreibung des PR. REINE Funktion, testbar ohne git. */
-export function baueKarte({ branch, aufgabeTitel = "", torOffen = false, testStand = "", gescheitert = "" } = {}) {
+export function baueKarte({ branch, aufgabeTitel = "", torOffen = false, testStand = "", gescheitert = "", ziel = basisBranch() } = {}) {
   const status = gescheitert ? "GESCHEITERT" : torOffen ? "BEREIT ZUM MERGE" : "TOR ZU — NICHT MERGEN";
   const titel = gescheitert
     ? `werkstatt: GESCHEITERT — ${aufgabeTitel || branch}`
@@ -33,6 +69,7 @@ export function baueKarte({ branch, aufgabeTitel = "", torOffen = false, testSta
     "Ein Klick auf **Merge** liefert aus; ohne Klick bleibt alles auf diesem Branch.",
     "",
     `- Aufgabe: ${aufgabeTitel || "(siehe docs/werkstatt/AUFTRAG.md auf dem Branch)"}`,
+    `- Ziel-Branch: ${ziel} (die Bau-Basis, gegen die auch das Tor misst — nicht main)`,
     `- Pruef-Tor (Station 3): ${torOffen ? "OFFEN — alle Sperren und die volle Suite gruen" : "ZU — siehe Protokoll unten"}`,
     testStand ? `- Testlauf: ${testStand}` : null,
     gescheitert ? `- Warum gescheitert: ${gescheitert}` : null,
@@ -55,9 +92,8 @@ async function main() {
   const gescheitertIdx = process.argv.indexOf("--gescheitert");
   const gescheitert = gescheitertIdx > -1 ? String(process.argv[gescheitertIdx + 1] || "ohne Grund") : "";
 
-  // Tor-Stand fuer die Karte messen (schnell, ohne Vollsuite — der volle
-  // Lauf ist Teil der Abnahme im Auftrag und lief bereits auf dem Branch).
-  const tor = spawnSync("npm", ["run", "werkstatt:tor", "--silent", "--", "--schnell"], { cwd: REPO_PFAD, encoding: "utf8" });
+  // Tor-Stand fuer die Karte messen — VOLL. Siehe torArgumente().
+  const tor = spawnSync("npm", torArgumente(), { cwd: REPO_PFAD, encoding: "utf8" });
   const torOffen = tor.status === 0;
 
   const aufgabeTitel = spawnSync("git", ["log", "-1", "--format=%s", branch], { cwd: REPO_PFAD, encoding: "utf8" }).stdout.trim();
@@ -66,7 +102,7 @@ async function main() {
   // Weg 1: gh-CLI (falls angemeldet) erzeugt den PR direkt.
   const gh = spawnSync("gh", ["pr", "create",
     "--repo", REPO_GITHUB,
-    "--base", "main",
+    "--base", basisBranch(),
     "--head", branch,
     "--title", karte.titel,
     "--body", karte.koerper
@@ -81,9 +117,8 @@ async function main() {
 
   // Weg 2 (ohne gh): der compare-Link — ein Klick oeffnet den fertig
   // ausgefuellten PR-Entwurf.
-  const compare = `https://github.com/${REPO_GITHUB}/compare/main...${encodeURIComponent(branch)}?expand=1`;
   console.log("[werkstatt] gh-CLI nicht verfuegbar — 1-Klick-Adresse:");
-  console.log(`  ${compare}`);
+  console.log(`  ${vergleichsAdresse(branch)}`);
   console.log(`[werkstatt] Titel: ${karte.titel}`);
   console.log(`[werkstatt] Status: ${karte.status}`);
 }

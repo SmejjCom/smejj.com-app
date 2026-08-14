@@ -7,7 +7,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { waehleAufgabe, alsAuftrag } from "../scripts/werkstatt/baue-auftrag.mjs";
-import { baueKarte } from "../scripts/werkstatt/freigabe-karte.mjs";
+import { baueKarte, basisBranch, vergleichsAdresse, torArgumente } from "../scripts/werkstatt/freigabe-karte.mjs";
+import { BAU_BASIS } from "../scripts/werkstatt/pruefe-tor.mjs";
 
 const aufgabe = (betrifft, stufe, titel = betrifft) => ({ betrifft, stufe, titel, quelle: "Test", befund: "B" });
 
@@ -77,4 +78,38 @@ test("Karte: der Mensch entscheidet — steht woertlich drin", () => {
   const k = baueKarte({ branch: "feature/werkstatt-x", torOffen: true });
   assert.match(k.koerper, /Der Mensch entscheidet/);
   assert.match(k.koerper, /ohne Klick bleibt alles auf diesem Branch/);
+});
+
+// --- Die Karte misst und zielt richtig (2026-08-14) ------------------------
+// Zwei Fehler, die sich gegenseitig deckten: Die Karte mass den Tor-Stand mit
+// `--schnell` — und der schnelle Lauf laesst die Pruefsuite aus und meldet
+// DESHALB immer ZU. Die Karte konnte also nie "BEREIT ZUM MERGE" sagen. Und
+// sie zeigte auf `main`, wo rund 95 fremde Commits liegen. Wer trotzdem
+// geklickt haette, haette einen ganz anderen Umfang freigegeben als gebaut.
+
+test("Karte: der Tor-Stand wird VOLL gemessen, nie mit --schnell", () => {
+  const args = torArgumente();
+  assert.ok(!args.includes("--schnell"),
+    "mit --schnell meldet das Tor per Bauart ZU — die Ampel waere dauerhaft rot");
+  assert.deepEqual(args.slice(0, 2), ["run", "werkstatt:tor"]);
+});
+
+test("Karte: Ziel ist die Bau-Basis, nicht main", () => {
+  assert.equal(basisBranch("origin/feature/auth-redesign-github-magiclink"),
+    "feature/auth-redesign-github-magiclink");
+  assert.notEqual(basisBranch(), "main",
+    "gegen main gemessen wird nicht, also wird gegen main auch nicht freigegeben");
+  assert.equal(basisBranch(), BAU_BASIS.replace(/^origin\//, ""),
+    "Karte und Tor muessen dieselbe Basis benutzen — eine Quelle, nicht zwei");
+});
+
+test("Karte: die 1-Klick-Adresse vergleicht Basis mit Bau-Branch", () => {
+  const adresse = vergleichsAdresse("feature/werkstatt-2026-08-14", "origin/basis-x");
+  assert.match(adresse, /\/compare\/basis-x\.\.\.feature%2Fwerkstatt-2026-08-14\?expand=1$/);
+  assert.ok(!adresse.includes("/compare/main..."), "der alte Fehlgriff auf main");
+});
+
+test("Karte: der Ziel-Branch steht im Text — der Betreiber sieht, wohin es geht", () => {
+  const k = baueKarte({ branch: "feature/werkstatt-x", torOffen: true, ziel: "basis-y" });
+  assert.match(k.koerper, /Ziel-Branch: basis-y/);
 });
