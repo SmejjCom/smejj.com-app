@@ -168,14 +168,31 @@ export function sichereVideoAntwort(daten) {
 }
 
 // Fragt den Bild-Maler, ob er wach und geladen ist. false = SVG-Weg.
-async function bilderMalerBereit() {
-  if (!BILDER_WORKER_URL) return false;
+async function bilderMalerBereit(fetchImpl = fetch) {
+  return (await bilderMalerZustand(fetchImpl)).bereit;
+}
+
+// Wie bilderMalerBereit, aber mit dem GRUND. Befund 2026-08-14, zweimal live
+// gemessen: waehrend der Maler nach einem Neustart sein Modell laedt (Minuten,
+// die Gewichte kommen aus dem Netz), meldet /health bereit:false. Fiel dann
+// auch die SVG-Reserve aus, uebernahm der Text-Weg — und smejj antwortete
+// "Ich kann leider keine Bilder malen". Sachlich falsch: die Faehigkeit ist
+// da, sie waermt nur auf. Und endgueltig, weil danach niemand mehr fragt.
+// Fuer eine ehrliche Auskunft braucht die Spur den Zustand, nicht bloss ja/nein.
+// `fetchImpl` ist die Naht, an der die Tests das Netz ersetzen.
+export async function bilderMalerZustand(fetchImpl = fetch) {
+  if (!BILDER_WORKER_URL) return { bereit: false, grund: "nicht eingerichtet" };
   try {
-    const antwort = await fetch(`${BILDER_WORKER_URL}/health`, { signal: AbortSignal.timeout(BILDER_HEALTH_TIMEOUT_MS) });
-    if (!antwort.ok) return false;
-    return (await antwort.json())?.bereit === true;
+    const antwort = await fetchImpl(`${BILDER_WORKER_URL}/health`, { signal: AbortSignal.timeout(BILDER_HEALTH_TIMEOUT_MS) });
+    if (!antwort.ok) return { bereit: false, grund: "nicht erreichbar" };
+    const daten = await antwort.json();
+    if (daten?.bereit === true) return { bereit: true, grund: "" };
+    if (daten?.fehler) return { bereit: false, grund: "gestoert" };
+    // ladezeitSek zaehlt seit dem Beginn des Ladens — die einzige ehrliche
+    // Zahl, die wir dem Wartenden nennen koennen.
+    return { bereit: false, grund: "waermt auf", ladezeitSek: Number(daten?.ladezeitSek) || 0 };
   } catch {
-    return false;
+    return { bereit: false, grund: "nicht erreichbar" };
   }
 }
 
@@ -613,8 +630,11 @@ export async function streamBilderLane(res, body, task, deps) {
   const prompt = erkenneBildAuftrag(task);
   if (!prompt) return false;
 
+  // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
+  const malerZustand = await bilderMalerZustand(deps.fetchImpl || fetch);
+
   // Weg 1: der eigene Bild-Maler (nur wenn wach UND Modell geladen).
-  if (await bilderMalerBereit()) {
+  if (malerZustand.bereit) {
     bilderSseKopf(res, deps, body, "bilder-foto", "bild-maler:sd-turbo");
     bilderSchritt(res, "laeuft", "läuft … (ca. 1 Minute)");
     const beginn = Date.now();
@@ -664,7 +684,28 @@ export async function streamBilderLane(res, body, task, deps) {
   // Weg 2 (Reserve): smejj 1.0 zeichnet SVG. Erst erzeugen, DANN senden —
   // bei "" ist noch kein Byte raus und der Text-Weg uebernimmt.
   const inhalt = await erzeugeSvgInhalt(prompt, deps.timeoutMs);
-  if (!inhalt) return false;
+  if (!inhalt) {
+    // Weg 3: Beide Wege aus — aber ein Mal-Auftrag WURDE erkannt. Frueher fiel
+    // das stumm auf den Text-Weg, und smejj antwortete "Ich kann leider keine
+    // Bilder malen" (2026-08-14 zweimal live gemessen). Sachlich falsch und
+    // endgueltig: danach fragt niemand mehr. Waermt der Maler nur auf, sagen
+    // wir genau das — mit der gemessenen Ladezeit, nicht mit einer Schaetzung.
+    if (malerZustand.grund === "waermt auf" || malerZustand.grund === "gestoert") {
+      const sek = Number(malerZustand.ladezeitSek) || 0;
+      const seit = sek > 0 ? ` (seit ${sek} s)` : "";
+      bilderSseKopf(res, deps, body, "bilder-warten", "bild-maler:aufwaermen");
+      bilderSchritt(res, "fertig", "Bild-Dienst startet gerade");
+      bilderSendeInhalt(res, malerZustand.grund === "gestoert"
+        ? "Der Bild-Dienst meldet gerade eine Störung. Ich kann sonst Bilder malen — bitte versuch es in ein paar Minuten noch einmal."
+        : `Der Bild-Dienst startet gerade${seit} und lädt sein Modell. Ich kann Bilder malen — bitte versuch es in ein bis zwei Minuten noch einmal.`);
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return true;
+    }
+    // Gar nicht eingerichtet (Testumgebung, fremder Standort): unveraendert
+    // fail-safe zurueck auf den Text-Weg, ohne ein einziges gesendetes Byte.
+    return false;
+  }
   bilderSseKopf(res, deps, body, "bilder-svg", `groq:${BILDER_MODEL}`);
   bilderSendeInhalt(res, inhalt);
   res.write("data: [DONE]\n\n");

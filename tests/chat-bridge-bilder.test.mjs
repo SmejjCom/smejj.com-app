@@ -177,3 +177,38 @@ test("ein zu grosses Bild nennt seine Groesse — sonst raet man ewig", async ()
   assert.equal(notiz.grund, "bild_zu_gross_4000001");
 });
 
+// --- Aufwaermen darf nicht als "kann ich nicht" beim Nutzer ankommen --------
+//
+// Zweimal live gemessen 2026-08-14: Nach einem Neustart laedt der Maler sein
+// Modell (Minuten). Solange meldet /health bereit:false; fiel dann auch die
+// SVG-Reserve aus, uebernahm der Text-Weg und smejj antwortete "Ich kann
+// leider keine Bilder malen" — sachlich falsch und endgueltig.
+
+test("waermt der Maler auf, sagt die Spur das ehrlich statt zu verneinen", async () => {
+  const gesendet = [];
+  const res = {
+    writeHead: () => {}, setHeader: () => {},
+    write: (s) => gesendet.push(String(s)), end: () => {}
+  };
+  const deps = {
+    corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 500,
+    fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, bereit: false, ladezeitSek: 42 }) })
+  };
+  const ergebnis = await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps);
+  const text = gesendet.join("");
+  assert.equal(ergebnis, true, "die Spur muss selbst antworten, nicht an den Text-Weg abgeben");
+  assert.match(text, /startet gerade/, "der Grund muss dastehen");
+  assert.match(text, /42 s/, "die gemessene Ladezeit gehoert dazu");
+  assert.doesNotMatch(text, /kann .{0,20}keine Bilder/i, "die Faehigkeit darf NIE verneint werden");
+});
+
+test("ohne erreichbaren Maler bleibt es beim stillen Rueckfall", async () => {
+  let geschrieben = false;
+  const res = { writeHead: () => { geschrieben = true; }, write: () => { geschrieben = true; }, end: () => { geschrieben = true; } };
+  const deps = {
+    corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 500,
+    fetchImpl: async () => { throw new Error("nicht erreichbar"); }
+  };
+  assert.equal(await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps), false);
+  assert.equal(geschrieben, false, "hier darf weiterhin kein Byte raus");
+});
