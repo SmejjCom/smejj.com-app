@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-13T23:51:17.039Z",
-  "confirmation": "Betreiber 2026-08-13 per Auswahlkarte: 'Chips professionell' — vier Beispiel-Knoepfe werden kurze Taetigkeiten (Code schreiben, Text verbessern, Recherchieren, Bild erstellen); data-chip traegt den uebersetzten Satzanfang ins Feld. Mitgestempelt, weil in der gemeinsamen Arbeitskopie bereits committet: public/search.js und Teile von public/index.html aus Commit 4555595 (Arbeitsbereich-Umbenennung, Parallelsitzung).",
+  "frozenAt": "2026-08-14T00:03:15.730Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 Punkt 4+6: Ein-Buendel-Vertrag wiederhergestellt — search-overlay.css, start-glass.css und eckig.css wandern aus eigenen <link>-Tags in scripts/build/bundle-start-styles.mjs (12 Quellen), index.html laedt wieder genau EIN Stylesheet, sw.js ohne Doppeleintrag. Kein Aussehens-Wechsel, nur Auslieferung.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "dfb2748e9daae11e6dd44df8245f9f45a1b1282979aa017a2fe31dae83d014df",
+    "public/index.html": "ca9a7abd3e16d03789d2cd530a3feb10fa8c081eb2f9e63b3ed11a430cc66f88",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
-    "public/start-styles.css": "0aac880651b981461c1da7025b88d57b12a667f397216539dfa7d3f6c205bd46",
+    "public/start-styles.css": "ac045f9a1e34f77f1d8079bdf18d22ac778e6f38a3100b59b5f975f59dff5766",
     "public/start-glass.css": "8b5fcce2c6d972fd475fbb959a751cad9b241b62b77f1ffb25c1464dce5c8cc6",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "77d54c5a457f2ae3366ce14553744a432df62883c6e40422ea64c4de5b5c8c14",
+    "public/sw.js": "922b84ac8e03fd981cb6726c37aa507adef94332d79ff7201db410be59da2932",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

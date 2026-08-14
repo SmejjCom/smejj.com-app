@@ -19,7 +19,17 @@ test("index.html traegt Overlay-Markup und Stylesheet", () => {
   assert.match(html, /<div id="searchOverlay" class="search-overlay" hidden>/);
   assert.match(html, /<input id="searchOverlayQuery" type="search"/);
   assert.match(html, /<div id="searchOverlayLog" class="search-overlay-log" aria-live="polite">/);
-  assert.match(html, /<link rel="stylesheet" href="\/assets\/search-overlay\.css\?v=[^"]+">/);
+  // Seit 2026-08-13 kein eigenes <link> mehr: das Overlay-CSS steckt im
+  // Start-Buendel (scripts/build/bundle-start-styles.mjs). Die Startseite darf
+  // genau EIN render-blockierendes Stylesheet laden — drei Extra-Links hatten
+  // diesen Vertrag gebrochen (tests/deferred-start.test.mjs). Geprueft wird
+  // deshalb, dass das CSS wirklich ausgeliefert wird, nicht WIE es verlinkt ist.
+  assert.match(html, /<link rel="stylesheet" href="\/assets\/start-styles\.css\?v=[^"]+">/);
+  assert.match(
+    fs.readFileSync("public/start-styles.css", "utf8"),
+    /\/\* ---- search-overlay\.css ---- \*\//,
+    "Overlay-CSS fehlt im Start-Buendel — die Suche waere unformatiert"
+  );
   // Die alte Such-Seite bleibt als Rueckfallebene bestehen.
   assert.match(html, /<section id="search" class="view" aria-label="Suche">/);
 });
@@ -53,7 +63,11 @@ test("Overlay-Zeilen halten die 44-px-Touch-Regel", () => {
   assert.match(overlayCss, /\.search-overlay-close \{[^}]*min-height: 44px/s);
 });
 
-test("sw.js precacht beide Overlay-Dateien", () => {
+test("sw.js precacht das Overlay-Modul; das CSS kommt ueber das Buendel", () => {
   assert.match(swJs, /"\/assets\/search-overlay\.js",/);
-  assert.match(swJs, /"\/assets\/search-overlay\.css",/);
+  // search-overlay.css steht bewusst NICHT mehr einzeln im Precache: es ist
+  // Teil von start-styles.css. Ein Doppeleintrag waere toter Ballast und
+  // wuerde tests/deferred-start.test.mjs brechen.
+  assert.ok(!swJs.includes('"/assets/search-overlay.css"'), "Overlay-CSS liegt doppelt im Precache");
+  assert.match(swJs, /"\/assets\/start-styles\.css"/);
 });
