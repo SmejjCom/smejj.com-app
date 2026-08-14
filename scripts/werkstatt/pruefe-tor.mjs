@@ -15,8 +15,22 @@
 // unveraendert sind. Wer ein Manifest neu einfriert, muss das mit einer
 // Betreiber-Freigabe tun — nicht nebenbei im selben Commit.
 //
+// WELCHE BAU-BASIS? (korrigiert 2026-08-13, live gemessen)
+// Die Basis war `origin/main` — und das machte das Tor STRUKTURELL
+// unpassierbar. Gebaut und ausgeliefert wird aus
+// `feature/auth-redesign-github-magiclink` (docs/deployment/
+// CONTROL_SERVER_ZEABUR_UMZUG.md Zeile 37: "Branch ... waehlen, **nicht**
+// `main`"). Gemessen am 2026-08-13: origin/main fehlten 95 Commits des
+// Bau-Branches. Gegen so eine Basis gilt JEDES Lock-Manifest als "seit der
+// Bau-Basis veraendert" — der Nachtbau fiel jede Nacht an derselben Zeile,
+// ohne dass je etwas faul gewesen waere.
+// Die Regel selbst bleibt unveraendert scharf: Manifeste, die im SELBEN Zug
+// wie Code neu eingefroren werden, fallen weiterhin auf. Nur wird jetzt
+// gegen den Stand verglichen, der wirklich ausgeliefert wird.
+// Mit --basis laesst sich weiterhin jede andere Basis erzwingen.
+//
 // Aufruf:
-//   node scripts/werkstatt/pruefe-tor.mjs [--basis origin/main] [--schnell]
+//   node scripts/werkstatt/pruefe-tor.mjs [--basis <ref>] [--schnell]
 //
 // --schnell laesst die 40-Sekunden-Vollsuite aus (nur fuer Zwischenlaeufe des
 // Bau-Agenten; das Tor vor einer Freigabe laeuft IMMER vollstaendig).
@@ -26,6 +40,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+
+// Der Branch, aus dem wirklich gebaut und ausgeliefert wird. Siehe die
+// ausfuehrliche Begruendung im Kopfkommentar ("WELCHE BAU-BASIS?").
+export const BAU_BASIS = "origin/feature/auth-redesign-github-magiclink";
 
 // Die Manifeste, die den Schutz TRAGEN. Aendert sich eines davon im selben
 // Zug wie der Code, ist die Sperre umgangen.
@@ -115,7 +133,7 @@ export async function pruefeManifeste(basis, laufFn = lauf) {
 async function main() {
   const argv = process.argv.slice(2);
   const basisIndex = argv.indexOf("--basis");
-  const basis = basisIndex >= 0 ? argv[basisIndex + 1] : "origin/main";
+  const basis = basisIndex >= 0 ? argv[basisIndex + 1] : BAU_BASIS;
   const schnell = argv.includes("--schnell");
 
   console.log(`[tor] Station 3 — Pruefung gegen Bau-Basis ${basis}`);
