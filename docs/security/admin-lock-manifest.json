@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-13T03:57:56.612Z",
-  "confirmation": "Ich bestätige die Absicherung aller Admin-Sicherheitsfunktionen",
+  "frozenAt": "2026-08-14T14:13:15.324Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-14: neuer Auslieferungsweg in adminUiRoutes.js bestaetigt. Vier Module (Cockpit, Konkurrenz-Radar) in die Auslieferungsliste; dazu die eingefrorene Liste FREMDE mit genau einem Eintrag (radar-berichte.json -> public/radar/berichte.json), damit die Datei ausgeliefert statt kopiert wird. Der Anfragepfad wird nur als Schluessel nachgeschlagen, nie in einen Dateipfad eingesetzt (kein Pfad-Ausbruch); die Datei liegt hinter der Admin-Anmeldung, die console.css-Ausnahme greift fuer sie nicht.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -16,7 +16,7 @@
     "control-server/src/admin/auditLog.js": "aeffcf778e4eeb609b011d8ea685a18cc83417532ab052f6a57a745180e42f21",
     "control-server/src/admin/approvalStore.js": "0bd996af40f28a8abcc016a8eb072b726e4907ed6a8e5ec7e855556501a68bab",
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
-    "control-server/src/routes/adminUiRoutes.js": "a2824e4b1f2d8b230a43e8cc894a3e9e3eddf892738fbc8c7cb10822ee57acfc",
+    "control-server/src/routes/adminUiRoutes.js": "301b11fcba34674e08a5520b305ac89b421eb394119bee2aace1dbcf2ea6537b",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
     "control-server/admin-ui/api.js": "b2ac0d7c03ad325e0fec113c44fcd1026af4169b709a269f8f7159b4fdc5b17a"
   }

@@ -46,7 +46,27 @@ const DATEIEN = Object.freeze({
   "console-stage8.js": "console-stage8.js",
   "views-stage9.js": "views-stage9.js",
   "console-stage9.js": "console-stage9.js",
+  "views-cockpit.js": "views-cockpit.js",
+  "console-cockpit.js": "console-cockpit.js",
+  "views-stage10.js": "views-stage10.js",
+  "console-stage10.js": "console-stage10.js",
   "console.js": "console.js"
+});
+
+// Wenige Dateien haben ihre Quelle der Wahrheit ANDERSWO im Repo und werden
+// hier nur mitausgeliefert. Sie werden bewusst NICHT nach admin-ui kopiert:
+// zwei Fassungen derselben Datei laufen frueher oder spaeter auseinander, und
+// genau das ist bei console.css bereits passiert.
+//
+// Dass es geht, haengt an einer Zeile in Dockerfile.smejj-control:
+// `COPY public ./public`. Faellt die weg, gibt es hier eine ehrliche 503
+// ("fehlt im Release-Artefakt") statt einer stillen leeren Seite.
+const REPO_DIR = path.resolve(fileURLToPath(new URL("../../../", import.meta.url)));
+const FREMDE = Object.freeze({
+  // Konkurrenz-Radar (Modul RA). Liegt hinter der Admin-Anmeldung, obwohl die
+  // Datei auch oeffentlich unter /radar/ liegen koennte — Wettbewerbsnotizen
+  // gehen niemanden sonst etwas an.
+  "radar-berichte.json": "public/radar/berichte.json"
 });
 
 export async function handleAdminUiRoute(req, url, res, { env = process.env } = {}) {
@@ -58,7 +78,8 @@ export async function handleAdminUiRoute(req, url, res, { env = process.env } = 
 
   const rest = url.pathname.slice(PREFIX.length).replace(/^\//, "");
   const datei = DATEIEN[rest];
-  if (!datei) {
+  const fremd = datei ? null : FREMDE[rest];
+  if (!datei && !fremd) {
     antwortSeite(res, 404, "Nicht gefunden", "Diese Seite gehoert nicht zur Konsole.");
     return true;
   }
@@ -78,18 +99,18 @@ export async function handleAdminUiRoute(req, url, res, { env = process.env } = 
     }
   }
 
-  const pfad = path.join(UI_DIR, datei);
+  const pfad = fremd ? path.join(REPO_DIR, fremd) : path.join(UI_DIR, datei);
   let inhalt;
   try {
     inhalt = fs.readFileSync(pfad);
   } catch {
-    antwortSeite(res, 503, "Konsole unvollstaendig", `Die Datei ${datei} fehlt im Release-Artefakt.`);
+    antwortSeite(res, 503, "Konsole unvollstaendig", `Die Datei ${datei || fremd} fehlt im Release-Artefakt.`);
     return true;
   }
 
   res.writeHead(200, {
     ...SECURITY_HEADERS,
-    "Content-Type": CONTENT_TYPES[path.extname(datei)] || "application/octet-stream",
+    "Content-Type": CONTENT_TYPES[path.extname(datei || fremd)] || "application/octet-stream",
     // Betreiberdaten gehoeren in keinen Zwischenspeicher.
     "Cache-Control": "private, no-store",
     "X-Robots-Tag": "noindex, nofollow"

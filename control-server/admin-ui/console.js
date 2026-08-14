@@ -31,7 +31,9 @@
     (window.adminStage6 || {}).seiten || {},
     (window.adminStage7 || {}).seiten || {},
     (window.adminStage8 || {}).seiten || {},
-    (window.adminStage9 || {}).seiten || {}
+    (window.adminStage9 || {}).seiten || {},
+    (window.adminStageCockpit || {}).seiten || {},
+    (window.adminStage10 || {}).seiten || {}
   );
   Object.keys(ANGEMELDET).forEach(function (pfad) {
     SEITEN.push({ id: ANGEMELDET[pfad].id, pfad: pfad, gruppe: ANGEMELDET[pfad].gruppe, name: ANGEMELDET[pfad].name });
