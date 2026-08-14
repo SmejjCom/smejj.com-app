@@ -35,7 +35,7 @@ import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
-import { planFromStripeItem, putCustomerRecord, putRefRecord } from "../../control-server/src/billing/subscriptionStore.js";
+import { periodEndeAus, planFromStripeItem, putCustomerRecord, putRefRecord } from "../../control-server/src/billing/subscriptionStore.js";
 import { emailKey, normalizeEmail } from "../../control-server/src/auth/emailUserStore.js";
 
 const CONTROL_ORIGIN = "https://smejj-control.zeabur.app";
@@ -179,7 +179,7 @@ async function main() {
       subscriptionId: abo.id,
       plan: planFromStripeItem(posten),
       status: String(abo.status || "unknown"),
-      periodEnd: abo.current_period_end ? new Date(abo.current_period_end * 1000).toISOString() : null,
+      periodEnd: periodEndeAus(abo),
       cancelAtPeriodEnd: Boolean(abo.cancel_at_period_end),
       livemode: true,
       lastSubscriptionEventCreated: jetztSekunden
