@@ -65,6 +65,17 @@ export async function kostenUebersicht({
         // Die eine Frage, die zaehlt.
         scharf: grenzen.configured === true,
         fehlendeGrenzen: grenzen.missing,
+        // Das Tor prueft nur SEINE beiden Grenzen. Die Platzreservierung der
+        // Worker braucht eine dritte (SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD,
+        // gelesen in budget/workerCapacityStore.js) — fehlt die, meldete
+        // diese Seite trotzdem "keine fehlenden Grenzen", waehrend die
+        // Worker-Seite "Kapazitaet nicht erreichbar" zeigte. Zwei Waechter,
+        // zwei Wahrheiten. Jetzt sagt die Kostenseite auch, was den ANDEREN
+        // fehlt — ohne die Fail-closed-Entscheidung des Tores anzufassen.
+        fehlendeGrenzenAndererWaechter: Number.isFinite(Number(env.SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD))
+          && Number(env.SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD) > 0
+          ? []
+          : ["SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD (Platzreservierung der Worker)"],
         maxUsdProJob: grenzen.maxUsdPerJob || null,
         maxLaufzeitMinuten: grenzen.maxRuntimeMinutes || null,
         maxGleichzeitigeWorker: grenzen.maxConcurrentWorkers,

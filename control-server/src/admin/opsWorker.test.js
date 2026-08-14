@@ -75,3 +75,32 @@ test("aus den Laeufen kommen nur Kennungen und Fristen, keine Inhalte", async ()
   const e = await workerUebersicht({ env: {}, jetztMs: JETZT, leseKapazitaet: KAPAZITAET_OK, leseContainer: CONTAINER_OK });
   assert.deepEqual(Object.keys(e.kapazitaet.laeufe[0]).sort(), ["fristAm", "gruppe", "jobId"]);
 });
+
+// ---- Stillgelegte Quelle ist kein Ausfall (2026-08-14) ----------------------
+//
+// Befund aus der Adminbereich-Pruefung: die Seite meldete "keine Quelle
+// erreichbar" und las sich wie ein Totalausfall. Tatsaechlich war Salad am
+// 13.08.2026 abgeschaltet worden — da ist nichts kaputt, da ist nichts mehr.
+// Ein Alarm, der dauerhaft steht, wird ueberlesen; dann faellt der ECHTE
+// Ausfall auch nicht mehr auf.
+test("abgeschaltete Salad-Quelle wird als stillgelegt gemeldet, nicht als Ausfall", async () => {
+  const u = await workerUebersicht({
+    env: { SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS: "2", SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD: "5" },
+    leseKapazitaet: async () => ({ ok: true, maxConcurrentWorkers: 2, activeCount: 0, reservedUsd: 0, jobs: [] }),
+    leseContainer: async () => ({ ok: false, reason: "salad_api_not_configured" })
+  });
+  assert.equal(u.container.stillgelegt, true, "die Quelle ist stillgelegt, nicht kaputt");
+  assert.match(u.container.hinweis || "", /abgeschaltet/);
+  assert.equal(u.bewertung, "unauffaellig", "eine stillgelegte Quelle darf die Bewertung nicht rot faerben");
+});
+
+test("eine WIRKLICH kaputte Quelle bleibt ein Ausfall", async () => {
+  // Gegenprobe: ohne sie wuerde die Regel oben jeden Fehler verschlucken.
+  const u = await workerUebersicht({
+    env: {},
+    leseKapazitaet: async () => ({ ok: false, reason: "kaputt" }),
+    leseContainer: async () => ({ ok: false, reason: "salad_http_500" })
+  });
+  assert.equal(u.container.stillgelegt, undefined);
+  assert.equal(u.bewertung, "keine Quelle erreichbar");
+});
