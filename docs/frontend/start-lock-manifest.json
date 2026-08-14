@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-14T01:49:49.887Z",
-  "confirmation": "Betreiber-Karte 2026-08-13 abends: 'Ja, alle vier' — gezeigt und freigegeben: Bridge v138, Abo in account-sessions.js, start-styles.css, Datenschutz 6a, Login-Pflicht /api/feedback, drei neue Seiten",
+  "frozenAt": "2026-08-14T07:00:44.856Z",
+  "confirmation": "Code-Endreinigung jetzt — Betreiber-Auswahl 2026-08-13: Salad-Hosts aus CSP entfernen und Locks neu einfrieren",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c40c099d9cdc1b3f4034addc49423ae584efb0abec7cbd0fd7c46fd9780429ed",
+    "public/index.html": "53d1ed109a17e0e943c028ea28bc89eb4a5749c8cdb9b4639f13237732fc8488",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "0aac880651b981461c1da7025b88d57b12a667f397216539dfa7d3f6c205bd46",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -13,7 +13,7 @@
     "public/browser-pane.css": "57dff94f8e9a1ff93862d020e5d12a9517a7c0d3f8910eea86f15326cb18aec6",
     "public/app.js": "17edb876a7add25a5b254d53936e3fbb80cac4b4f422907f3f3e90f2b5626a77",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
-    "public/config.js": "4233f774e0c0c36f17f4c8dbe9cc948215dec01eaaf035180350527a77ebe879",
+    "public/config.js": "e339c27e00688ef7963d201be68ca3f35479cc4f3a110689c05e78f013f49970",
     "public/components.js": "3857d1e62ed36de05a27fc307c1a4fc13b4721f5cafb850dafa672ef8dd2d0ff",
     "public/premium-surfaces.js": "a0266601c2fa745ff828846f1ce14d2db064565d80aa10ecd835c80a79de06c8",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
