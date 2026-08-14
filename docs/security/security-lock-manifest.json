@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T15:20:17.892Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-14: chat-bridge.js darf die AI Evolution Engine melden (Import, /health-Feld evolutionMelder, drei meldeAktion-Aufrufe). Kein Antwortpfad, kein Auth, kein Streaming veraendert.",
+  "frozenAt": "2026-08-14T15:26:37.657Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 Punkt 1: nach Rebase auf den neuen Bau-Stand neu gestempelt; einzige eigene Aenderung ist BRIDGE_VERSION v143-motiv-zuerst.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "842af267e98833f359a4b6044b6e234ea871c5e79834332ebcc4fe6929215546",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "0ecdc5d8071e70b24402ac7f17a95ea8af160e47a96c668b80add11faf1c70e3",
+    "public/chat-bridge.js": "4a41c3586e0df019d84b8e2a78bd287300ba60cc2b2ea0da03d40a5e64a3e68c",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

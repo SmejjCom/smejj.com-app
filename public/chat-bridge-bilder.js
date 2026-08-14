@@ -247,6 +247,30 @@ async function erzeugeSvgInhalt(prompt, timeoutMs) {
 // 2026-08-12: "Segelboot bei Sonnenuntergang" kam ohne Boot). smejj 1.0
 // uebersetzt den Auftrag in eine kurze englische Foto-Beschreibung;
 // fail-safe: bei jedem Fehler malt unveraendert der Original-Prompt.
+// Wie aus "Zeichne mir einen roten Leuchtturm am Meer" ein Bildauftrag wird.
+//
+// Befund 2026-08-14, zweimal live: das Bild zeigte Meer und Sonnenuntergang —
+// aber KEINEN Leuchtturm. Der Uebersetzer lieferte einen stimmungsvollen,
+// langen Satz ("A dramatic golden sunset over the sea with orange clouds,
+// waves crashing, a red lighthouse on rocks, 8k, highly detailed"). Das
+// Hauptmotiv stand in der Mitte.
+//
+// Warum das durchfaellt: Der Textleser von SD-Turbo verarbeitet nur die
+// ersten 77 Tokens, und was frueh steht, wiegt schwerer. Ein langer
+// Stimmungs-Satz verduennt das Motiv oder schneidet es ganz ab. Deshalb:
+// SUBJEKT ZUERST, kurz halten, Stimmung nur als knapper Nachsatz.
+//
+// Der Personen-Schutz (2026-08-13, Persoenlichkeitsrechte) bleibt WORTGLEICH
+// erhalten — er ist der Grund, warum dieser Umweg ueberhaupt existiert.
+const BILDER_UEBERSETZER_PROMPT = [
+  "Turn the user's image request into ONE English image prompt for Stable Diffusion.",
+  "RULE 1: begin with the MAIN SUBJECT — the concrete thing to depict — in the first three words.",
+  "RULE 2: at most 20 words total. The text encoder only reads the beginning; a long mood sentence dilutes or cuts off the subject.",
+  "RULE 3: after the subject add only setting and lighting, then stop. No lists of quality words.",
+  "Reply with the prompt only — no quotes, no explanation.",
+  "EXCEPTION: if the request depicts a real, identifiable person (any celebrity or any named individual), reply with exactly: PERSON_GESPERRT"
+].join(" ");
+
 async function uebersetzeMalPrompt(prompt) {
   if (!BILDER_API_KEY || !BILDER_BASE_URL) return prompt;
   try {
@@ -257,12 +281,12 @@ async function uebersetzeMalPrompt(prompt) {
       body: JSON.stringify({
         model: BILDER_MODEL,
         messages: [
-          { role: "system", content: "Turn the user's image request into ONE short English photo prompt (subject, setting, lighting, style). Reply with the prompt only — no quotes, no explanation. EXCEPTION: if the request depicts a real, identifiable person (any celebrity or any named individual), reply with exactly: PERSON_GESPERRT" },
+          { role: "system", content: BILDER_UEBERSETZER_PROMPT },
           { role: "user", content: prompt }
         ],
         stream: false,
         temperature: 0.2,
-        max_tokens: 120
+        max_tokens: 60
       })
     });
     if (!antwort.ok) return prompt;

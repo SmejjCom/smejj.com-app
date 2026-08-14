@@ -5,6 +5,7 @@
 // die Spur fail-safe komplett aus sein muss.
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 
 import { erkenneBildAuftrag, erzeugeFotoInhalt, sichereSvgAntwort, streamBilderLane } from "../public/chat-bridge-bilder.js";
 
@@ -211,4 +212,24 @@ test("ohne erreichbaren Maler bleibt es beim stillen Rueckfall", async () => {
   };
   assert.equal(await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps), false);
   assert.equal(geschrieben, false, "hier darf weiterhin kein Byte raus");
+});
+
+// --- Der Uebersetzer muss das Motiv nach vorn stellen -----------------------
+//
+// Befund 2026-08-14: Das Bild zu "Zeichne mir einen roten Leuchtturm am Meer"
+// zeigte Meer und Sonnenuntergang, aber KEINEN Leuchtturm. Der Uebersetzer
+// lieferte einen langen Stimmungssatz mit dem Motiv in der Mitte. Der
+// Textleser von SD-Turbo liest nur die ersten 77 Tokens und gewichtet frueh
+// Stehendes staerker — ein langer Vorlauf verduennt oder verschluckt das
+// Motiv. Diese Wache haelt die drei Regeln fest, die das verhindern.
+
+test("die Uebersetzer-Anweisung verlangt Motiv zuerst, kurz, und schuetzt Personen", async () => {
+  const quelle = await readFile(new URL("../public/chat-bridge-bilder.js", import.meta.url), "utf8");
+  const block = quelle.split("const BILDER_UEBERSETZER_PROMPT")[1]?.split("].join(")[0] || "";
+  assert.ok(block, "die Anweisung muss als eigene Konstante stehen — sonst findet sie niemand wieder");
+  assert.match(block, /MAIN SUBJECT/, "das Hauptmotiv muss ausdruecklich zuerst verlangt werden");
+  assert.match(block, /first three words/, "die Position des Motivs muss konkret sein, nicht 'wichtig'");
+  assert.match(block, /at most 20 words/, "die Laengengrenze ist der halbe Fix — ohne sie kehrt der Stimmungssatz zurueck");
+  // Der Personen-Schutz ist aelter als dieser Fix und darf ihm nie zum Opfer fallen.
+  assert.match(block, /PERSON_GESPERRT/, "Persoenlichkeitsrechte: die Ausnahme muss erhalten bleiben");
 });
