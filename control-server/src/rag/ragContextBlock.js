@@ -14,6 +14,7 @@ import { searchIndex } from "./bm25Index.js";
 import { rankHits } from "./ragRanking.js";
 import { erweitereInfrastrukturfrage } from "./infrastrukturFrage.js";
 import { erweitereRegelfrage, zustaendigesDokument } from "./regelfragen.js";
+import { teileNachHerkunft, formatFremdKontextBlock } from "./fremdinhaltFilter.js";
 
 /**
  * Aus mehr Rohtreffern nachgewichtet als am Ende eingespeist werden: sonst kann ein
@@ -100,13 +101,30 @@ export function reichereFrageAn(query) {
  */
 export function formatRagContextBlock(hits) {
   if (!Array.isArray(hits) || hits.length === 0) return "";
-  const blocks = hits.map((hit) => `[intern: ${hit.source}${hit.heading ? ` — ${hit.heading}` : ""}]\n${hit.snippet}`);
-  return [
-    "Internes Projektwissen (automatische RAG-Treffer aus Memory_Bank und Doku von smejj.com).",
-    "Nur als Hintergrund verwenden; interne Dateinamen, Pfade und Memory_Bank.md niemals als oeffentliche Quelle, URL oder Markdown-Link ausgeben.",
-    "",
-    blocks.join("\n\n")
-  ].join("\n");
+
+  // HERKUNFT TRENNEN (2026-08-14). Der Index enthaelt seit dem Anschluss des
+  // Internet-Harvesters auch geerntete FREMDE Webseiten
+  // (`source: "internet-ernte/<datum>"`). Die liefen hier bis heute unter
+  // "[intern: …]" und unter der Ueberschrift "Internes Projektwissen" — wer
+  // eine geerntete Seite kontrollierte, konnte dem Modell also Anweisungen
+  // unterschieben, die wie eigenes, geprueftes Wissen aussahen. Klassische
+  // indirekte Prompt-Injection.
+  const { eigen, fremd } = teileNachHerkunft(hits);
+
+  const teile = [];
+  if (eigen.length > 0) {
+    const blocks = eigen.map((hit) => `[intern: ${hit.source}${hit.heading ? ` — ${hit.heading}` : ""}]\n${hit.snippet}`);
+    teile.push([
+      "Internes Projektwissen (automatische RAG-Treffer aus Memory_Bank und Doku von smejj.com).",
+      "Nur als Hintergrund verwenden; interne Dateinamen, Pfade und Memory_Bank.md niemals als oeffentliche Quelle, URL oder Markdown-Link ausgeben.",
+      "",
+      blocks.join("\n\n")
+    ].join("\n"));
+  }
+  const fremdBlock = formatFremdKontextBlock(fremd).block;
+  if (fremdBlock) teile.push(fremdBlock);
+
+  return teile.join("\n\n");
 }
 
 /**
