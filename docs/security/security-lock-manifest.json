@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T07:00:44.887Z",
-  "confirmation": "Code-Endreinigung jetzt — Betreiber-Auswahl 2026-08-13: Salad-Hosts aus CSP entfernen und Locks neu einfrieren",
+  "frozenAt": "2026-08-14T14:22:05.626Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 Punkt 1: nur BRIDGE_VERSION v140 -> v141-zeichne-mir-x. Keine Logikaenderung in chat-bridge.js; der Fix liegt in chat-bridge-bilder.js (nicht gesperrt).",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "842af267e98833f359a4b6044b6e234ea871c5e79834332ebcc4fe6929215546",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "e3a5295beed9ae169879a2ca4fd09a1738bdff93f018136afbf30a75f119026e",
+    "public/chat-bridge.js": "a07346fa0619fc5080e1a4c48b5e3bb27405c8734560a621283bece793d98bc7",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
