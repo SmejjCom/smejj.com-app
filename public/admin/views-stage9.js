@@ -184,7 +184,65 @@
       V.tabelleBlock(["Autopilot", "Art", "Von", "Bis", "Dauer", "Grund"], zeilen));
   }
 
+  // ---------- Register: welche Automatiken sehe ich gerade? (2026-08-14) ----------
+  //
+  // Dreissig Zeilen untereinander sind eine Liste, keine Uebersicht. Wer die
+  // Seite oeffnet, will EINE Sache wissen: muss ich jetzt etwas tun? Die
+  // Register beantworten genau das, bevor man ueberhaupt liest.
+  //
+  // Wortwahl mit Absicht: das dritte Register heisst "Still", NICHT "Schläft".
+  // Grau bedeutet in diesem Haus "keine Messung" — bei einer Montags-Automatik
+  // ist das normal, bei einer stuendlichen waere es ein Befund. "Schläft" wuerde
+  // beides zu "alles gut" verklaeren, und das ist genau die Sorte Beschoenigung,
+  // die die Ampel hier nirgends macht.
+  const REGISTER = [
+    {
+      id: "achtung", name: "Braucht dich",
+      passt: function (a) { return a.ampel === "rot" || a.ampel === "gelb"; },
+      leer: "Niemand braucht dich gerade. Kein Ausfall, keine Verspätung."
+    },
+    {
+      id: "arbeit", name: "Arbeitet",
+      passt: function (a) { return a.ampel === "gruen"; },
+      leer: "Gerade arbeitet keine Automatik nachweislich — es liegt für keine ein frischer Herzschlag vor."
+    },
+    {
+      id: "still", name: "Still",
+      passt: function (a) { return a.ampel === "grau" || a.ampel === "wartung"; },
+      leer: "Von allen Automatiken liegt eine Messung vor. Keine ist stumm, keine stummgeschaltet."
+    },
+    {
+      id: "alle", name: "Alle",
+      passt: function () { return true; },
+      leer: "Es ist keine einzige Automatik eingetragen."
+    }
+  ];
+
+  function registerFuer(id) {
+    return REGISTER.filter(function (r) { return r.id === id; })[0] || null;
+  }
+
+  /**
+   * Welches Register ist offen, wenn noch keins gewaehlt wurde?
+   * Antwort: das mit dem Problem. Wer die Seite aufschlaegt und einen Ausfall
+   * hat, soll ihn sehen und nicht erst danach suchen muessen.
+   */
+  function standardRegister(alle) {
+    return alle.some(registerFuer("achtung").passt) ? "achtung" : "alle";
+  }
+
+  function registerLeiste(alle, aktivId) {
+    return '<div class="ap-register">' + REGISTER.map(function (r) {
+      const anzahl = alle.filter(r.passt).length;
+      const dringend = r.id === "achtung" && anzahl > 0;
+      return '<span class="ap-reg' + (r.id === aktivId ? " on" : "") + (dringend ? " warn" : "")
+        + '" data-apReg="' + e(r.id) + '">' + e(r.name)
+        + '<b class="n">' + anzahl + "</b></span>";
+    }).join("") + "</div>";
+  }
+
   function liste(autopiloten, auswahlId) {
+    if (!autopiloten.length) return "";
     return '<div class="ap-liste">' + autopiloten.map(function (a) {
       return '<a class="ap-item' + (a.id === auswahlId ? " on" : "") + '" data-ap="' + e(a.id) + '">'
         + punkt(a.ampel)
@@ -256,9 +314,15 @@
       + "</div>";
   }
 
-  function autopiloten(d, auswahlId) {
+  function autopiloten(d, auswahlId, registerId) {
     const alle = d.autopiloten || [];
-    const auswahl = alle.filter(function (a) { return a.id === auswahlId; })[0] || alle[0] || null;
+    // Das Register entscheidet, WAS in der Liste steht; die Auswahl wird
+    // danach INNERHALB des Registers aufgeloest. Sonst zeigte die Liste das
+    // eine und die Akte daneben ein anderes — der haeufigste Weg, wie eine
+    // Master-Detail-Ansicht luegt.
+    const reg = registerFuer(registerId) || registerFuer(standardRegister(alle));
+    const sichtbar = alle.filter(reg.passt);
+    const auswahl = sichtbar.filter(function (a) { return a.id === auswahlId; })[0] || sichtbar[0] || null;
 
     let lage;
     if ((d.rot || 0) > 0) {
@@ -288,7 +352,12 @@
         : "")
       + "</div>"
       + '<div class="stack">' + lage
-      + '<div class="ap-wrap">' + liste(alle, auswahl ? auswahl.id : null) + detail(auswahl) + "</div>"
+      + registerLeiste(alle, reg.id)
+      + '<div class="ap-wrap">'
+      + (sichtbar.length
+        ? liste(sichtbar, auswahl ? auswahl.id : null) + detail(auswahl)
+        : '<div class="ap-register-leer">' + e(reg.leer) + "</div>")
+      + "</div>"
       + vorfallBlock(d.vorfaelle)
       + "</div>";
   }

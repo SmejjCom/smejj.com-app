@@ -338,6 +338,27 @@ select.dlg-feld{cursor:pointer;}
    Master-Detail: links die Automatiken mit Ampelpunkt, rechts die Akte des
    gewaehlten. Die Punkte sind bewusst viereckig — das ganze Haus ist es
    (--radius:0 mit !important), und ein Status-Wuerfel liest sich wie eine LED. */
+/* Register ueber der Liste (2026-08-14): "Braucht dich" zuerst, weil das die
+   einzige Frage ist, mit der man die Seite aufschlaegt. Steht dort eine Zahl
+   groesser null, faerbt sich das Register rot und zieht den Blick — steht dort
+   eine Null, ist die Seite in einer Sekunde abgearbeitet. */
+.ap-register{display:flex;flex-wrap:wrap;gap:6px;}
+.ap-reg{display:flex;align-items:center;gap:9px;padding:9px 15px;cursor:pointer;
+  font-size:12.5px;border:1px solid var(--sm-border);background:var(--sm-card);
+  color:var(--sm-ink-dim);user-select:none;}
+.ap-reg:hover{border-color:var(--sm-border-strong);color:var(--sm-ink);}
+.ap-reg .n{font-size:13px;font-weight:600;color:var(--sm-ink);}
+.ap-reg.warn{border-color:var(--sm-danger-border);background:var(--sm-danger-bg);
+  color:var(--sm-danger);}
+.ap-reg.warn .n{color:var(--sm-danger);}
+.ap-reg.on{border-color:var(--sm-accent-border);background:var(--sm-accent-soft);
+  color:var(--sm-accent-text);}
+.ap-reg.on .n{color:var(--sm-accent-text);}
+.ap-reg.warn.on{border-color:var(--sm-danger);background:var(--sm-danger-bg);
+  color:var(--sm-danger);}
+.ap-register-leer{grid-column:1/-1;padding:26px 18px;font-size:13.5px;line-height:1.55;
+  color:var(--sm-ink-dim);border:1px solid var(--sm-border);background:var(--sm-card);}
+
 .ap-wrap{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;align-items:start;}
 @media (max-width:960px){.ap-wrap{grid-template-columns:1fr;}}
 .ap-liste{display:flex;flex-direction:column;gap:6px;}
