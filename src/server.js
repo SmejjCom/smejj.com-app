@@ -69,6 +69,9 @@ import { handleFeedbackRoute } from "../control-server/src/routes/feedbackRoutes
 import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
 import { handleAgentRoute } from "../control-server/src/routes/agentRoutes.js";
 import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoutes.js";
+// Medien des Verlaufs liegen NEBEN dem Chat, nicht in ihm (Befund 2026-08-14:
+// Bilder sprengten MAX_CHAT_BYTES, Videos wurden als toter blob: gespeichert).
+import { createChatMedienRoutes } from "../control-server/src/routes/chatMedienRoutes.js";
 import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyncRoutes.js";
 import { createVideoChatRoutes } from "../control-server/src/routes/videoChatRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
@@ -138,6 +141,7 @@ const {
 const publicModelRateGate = createPublicModelRateGate(process.env);
 const sessionHandoffStore = createSessionHandoffStore();
 const chatSyncRoutes = createChatSyncRoutes({ env: process.env, readSession, json, readJson });
+const chatMedienRoutes = createChatMedienRoutes({ env: process.env, readSession, json, readJson });
 const projektSyncRoutes = createProjektSyncRoutes({ env: process.env, readSession, json, readJson });
 // Video-Reserve (Befund docs/video/BEFUND_CONTROL_SPUR_RUFT_WORKER_NICHT.md):
 // /api/chat gibt Video-Auftraege an den Video-Worker (Weg C) statt sie als
@@ -200,6 +204,7 @@ const server = http.createServer(async (req, res) => {
     // Verlauf-Sync (Stufe 3): eigene Routen-Datei, damit dieser Verteiler
     // schlank bleibt. Abgeschaltet, solange SMEJJ_CHAT_SYNC_ENABLED fehlt.
     if (url.pathname === "/api/chats" && await chatSyncRoutes.handle(req, res, url)) return;
+    if (url.pathname === "/api/chat-medien" && await chatMedienRoutes.handle(req, res, url)) return;
     // Projekte-Sync (2026-08-13): benannte Sammlungen fuer Chats, gleiches Flag.
     if (url.pathname === "/api/projekte" && await projektSyncRoutes.handle(req, res, url)) return;
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return await handleAuthLogout(req, res);
