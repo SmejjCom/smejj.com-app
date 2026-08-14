@@ -621,7 +621,14 @@ test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
   assert.match(store, /createdAt: String\(meta\.createdAt \|\| ""\)/);
   assert.match(store, /seedMeta\(node, \{/, "beim Wiederherstellen zurueckgeben");
   assert.match(store, /export async function createChatFrom/, "Abzweigen legt einen eigenen Chat an");
-  assert.ok(!/store\.delete/.test(store.split("export async function createChatFrom")[1] || ""), "Abzweigen loescht nichts");
+  // NUR den Rumpf von createChatFrom pruefen, nicht den ganzen Rest der Datei.
+  // Der Schnitt "alles nach dem Funktionsnamen" schlug am 2026-08-13 falsch an:
+  // hinter createChatFrom stehen inzwischen deleteChat und loescheProjekt
+  // ("Projekte"), die selbstverstaendlich loeschen duerfen. Ein Test, der ueber
+  // die eigene Funktion hinausgreift, meldet fremde Arbeit als eigenen Fehler.
+  const rumpfCreateChatFrom = (store.split("export async function createChatFrom")[1] || "")
+    .split(/\nexport /)[0];
+  assert.ok(!/store\.delete/.test(rumpfCreateChatFrom), "Abzweigen loescht nichts");
 });
 
 test("Quellen kommen aus echtem Grounding, nicht aus Raten", () => {
