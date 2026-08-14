@@ -31,6 +31,17 @@ export function planFromStripeItem(item) {
   return PLAN_BY_MONTHLY_AMOUNT[amount] || null;
 }
 
+// Ende der bezahlten Periode als ISO-Zeit (oder null). Stripe hat
+// current_period_end mit der API-Fassung 2025-03-31 vom Abo auf den Abo-Posten
+// verschoben; welche Fassung ein Konto sieht, haengt am Konto. Beide Orte
+// lesen kostet nichts und ist der Unterschied zwischen "verlaengert sich am
+// 13. September" und gar keinem Datum in der Anzeige.
+export function periodEndeAus(subscription) {
+  const posten = Array.isArray(subscription?.items?.data) ? subscription.items.data[0] : null;
+  const sekunden = Number(subscription?.current_period_end || posten?.current_period_end || 0);
+  return sekunden > 0 ? new Date(sekunden * 1000).toISOString() : null;
+}
+
 const PLAN_ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 function idriveConfig(env = process.env) {

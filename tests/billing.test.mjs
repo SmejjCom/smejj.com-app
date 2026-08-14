@@ -8,6 +8,7 @@ import { verifyStripeSignature } from "../control-server/src/billing/stripeWebho
 import {
   PLAN_BY_STRIPE_PRODUCT,
   __clearBillingMemoryStoreForTests,
+  periodEndeAus,
   planFromStripeItem,
   resolveSubscriptionStatus
 } from "../control-server/src/billing/subscriptionStore.js";
@@ -143,6 +144,33 @@ test("Live-Produkt unbekannt: Plan faellt auf den Monatsbetrag zurueck", async (
   const status = await resolveSubscriptionStatus(REF, EMPTY_ENV);
   assert.equal(status.plan, "max");
   assert.equal(status.livemode, true);
+});
+
+test("Periodenende: Stripe liefert es am Abo ODER am Abo-Posten", async () => {
+  assert.equal(periodEndeAus({ current_period_end: 1_756_178_400 }), "2025-08-26T03:20:00.000Z");
+  // API-Fassung ab 2025-03-31: der Wert steht nur noch am Posten
+  assert.equal(
+    periodEndeAus({ items: { data: [{ current_period_end: 1_756_178_400 }] } }),
+    "2025-08-26T03:20:00.000Z"
+  );
+  assert.equal(periodEndeAus({}), null);
+  assert.equal(periodEndeAus(null), null);
+
+  __clearBillingMemoryStoreForTests();
+  await applyStripeEvent(checkoutEvent(), EMPTY_ENV);
+  await applyStripeEvent({
+    type: "customer.subscription.updated",
+    created: 1_753_500_300,
+    livemode: true,
+    data: {
+      object: {
+        id: "sub_Test1", customer: "cus_TestKunde1", status: "active", cancel_at_period_end: false,
+        items: { data: [{ price: { product: "prod_X", unit_amount: 900 }, current_period_end: 1_756_178_400 }] }
+      }
+    }
+  }, EMPTY_ENV);
+  const status = await resolveSubscriptionStatus(REF, EMPTY_ENV);
+  assert.equal(status.periodEnd, "2025-08-26T03:20:00.000Z");
 });
 
 test("Checkout ohne ref, aber mit Stripe-bestaetigter E-Mail wird zugeordnet", async () => {

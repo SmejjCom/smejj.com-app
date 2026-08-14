@@ -9,6 +9,7 @@ import {
   getCustomerRecord,
   isCheckoutRef,
   isStripeCustomerId,
+  periodEndeAus,
   planFromStripeItem,
   putCustomerRecord,
   putRefRecord
@@ -121,9 +122,7 @@ async function applySubscriptionEvent(event, env) {
     subscriptionId: subscription.id || existing.subscriptionId || null,
     plan: planFromStripeItem(item) || existing.plan || null,
     status,
-    periodEnd: subscription.current_period_end
-      ? new Date(subscription.current_period_end * 1000).toISOString()
-      : existing.periodEnd || null,
+    periodEnd: periodEndeAus(subscription) || existing.periodEnd || null,
     cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
     livemode: Boolean(event.livemode),
     lastSubscriptionEventCreated: eventCreated
