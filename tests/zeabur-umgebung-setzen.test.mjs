@@ -15,7 +15,11 @@
 // kaputte UND eine gesunde Probe.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { findeSetzMutation, setzeUmgebungswerte } from "../scripts/deploy/zeabur-umgebung-setzen.mjs";
+import {
+  findeSetzMutation,
+  sammelArgumente,
+  setzeUmgebungswerte
+} from "../scripts/deploy/zeabur-umgebung-setzen.mjs";
 
 const objektId = (name) => ({
   name,
@@ -27,12 +31,12 @@ const text = (name) => ({
 });
 
 // Die ersetzende Form: ein einziges Map-Argument traegt ALLE Werte.
-const sammelform = (sammelArg = "data") => ({
+const sammelform = (sammelArg = "data", typ = "Map") => ({
   name: "updateEnvironmentVariable",
   args: [
     objektId("serviceID"),
     objektId("environmentID"),
-    { name: sammelArg, type: { kind: "NON_NULL", ofType: { kind: "SCALAR", name: "Map" } } }
+    { name: sammelArg, type: { kind: "NON_NULL", ofType: { kind: "SCALAR", name: typ } } }
   ]
 });
 const SAMMEL = sammelform();
@@ -113,6 +117,56 @@ test("kaputte Probe: auch variables und envs gelten als Sammelform", async () =>
       `${sammelArg} ist derselbe Loeschweg wie data`
     );
   }
+});
+
+// Sperre 1 liest das Schema. Der Name eines Arguments ist dabei das schwaechere
+// Merkmal: Zeabur baut sein Schema regelmaessig um, und eine Sammelform, die
+// morgen "payload" heisst, waere durch eine reine Namensliste geschluepft. Der
+// Map-Typ verraet sie unabhaengig vom Namen.
+test("kaputte Probe: eine Sammelform mit fremdem Namen wird am Map-Typ erkannt", async () => {
+  const getarnt = sammelform("payload");
+  assert.deepEqual(sammelArgumente(getarnt), ["payload"]);
+  const { abfrage, aufrufe } = fakeApi([getarnt]);
+  await assert.rejects(
+    () => setzeUmgebungswerte("smejj-control", { A: "1" }, abfrage),
+    /zeabur_ersetzende_mutation_verweigert/,
+    "nicht der Name macht sie gefaehrlich, sondern dass sie alle Werte auf einmal traegt"
+  );
+  assert.equal(aufrufe.length, 0);
+});
+
+test("gesunde Probe: die harmlose Einzelform gilt nicht als Sammelform", () => {
+  assert.deepEqual(sammelArgumente(EINZELN), [], "key/value darf nie faelschlich blockiert werden");
+});
+
+// Umgekehrt bleibt der Name ein Merkmal fuer sich: ein Argument, das "data"
+// heisst, gilt auch dann als Sammelform, wenn sein Typ harmlos aussieht. Lieber
+// ein Abbruch zu viel als eine geloeschte Umgebung.
+test("beide Merkmale zaehlen einzeln — Name auch ohne Map-Typ", () => {
+  assert.deepEqual(sammelArgumente(sammelform("data", "String")), ["data"]);
+});
+
+// Sperre 2 sitzt eine Ebene tiefer: sie sieht nicht die Form im Schema, sondern
+// was tatsaechlich hinausgeht. Eine Mutation kann lauter harmlose
+// key/value-Argumente deklarieren und trotzdem ein Sammelgebilde uebertragen,
+// weil ein Aufrufer statt eines Wertes ein Objekt uebergibt.
+test("kaputte Probe: ein Objekt als Wert wird vor dem Absenden abgefangen", async () => {
+  const { abfrage, aufrufe } = fakeApi([EINZELN]);
+  await assert.rejects(
+    () => setzeUmgebungswerte("smejj-control", { A: { B: "1", C: "2" } }, abfrage),
+    /zeabur_sammelwert_verweigert/,
+    "eine Map als Wert ist derselbe Loeschweg, nur einen Stock tiefer"
+  );
+  assert.equal(aufrufe.length, 0, "der Abbruch muss VOR dem Absenden kommen");
+});
+
+test("kaputte Probe: Sperre 2 verraet den Wert nicht, nur das Argument", async () => {
+  const { abfrage } = fakeApi([EINZELN]);
+  const fehler = await setzeUmgebungswerte("smejj-control", { A: { geheim: "s3kr3t" } }, abfrage)
+    .then(() => null, (e) => e);
+  assert.ok(fehler, "muss werfen");
+  assert.match(fehler.message, /\.value\b/, "das betroffene Argument gehoert in die Meldung");
+  assert.doesNotMatch(fehler.message, /s3kr3t/, "Werte werden NIEMALS ausgegeben, auch nicht in Fehlertexten");
 });
 
 test("gesunde Probe: setzt zwei Werte in zwei Aufrufen — nie eine Map", async () => {
