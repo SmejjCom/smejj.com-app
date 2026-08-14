@@ -8,12 +8,23 @@
 # Jahre aelteres diffusers gegen transformers 5 zu stellen waere die eigentlich
 # riskante Kombination gewesen. Beide verlangen huggingface-hub <2.0 — kein
 # Versionskonflikt.
-# diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es existiert
-# derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36 alle gleich).
-diffusers==0.36.0
+# 0.38.0 statt 0.36.0 (2026-08-14, Betreiber-Karte "Ganzes Paket, jetzt"):
+# Version fuer Version gegen api.osv.dev gemessen —
+#   0.31.0 (bisher hier) und 0.36.0 -> 5 Luecken, 0.37.0 -> 5,
+#   **0.38.0 -> 0**, 0.39.0 -> 0.
+# Eine aeltere Notiz sagte, es gebe KEINE saubere Fassung; diese Pruefung
+# endete bei 0.36. server.py nutzt nur diffusers.AutoPipelineForText2Image —
+# eine API, die ueber diese Versionen stabil ist. Der Beweis liegt trotzdem
+# erst am laufenden Dienst (erstes echtes Bild nach dem Bau).
+diffusers==0.38.0
 transformers==5.5.0
 accelerate==1.1.1
-safetensors==0.4.5
+# 0.8.0 statt 0.4.5 (2026-08-14): NICHT wegen Luecken — beide Fassungen sind
+# sauber (osv.dev: je 0). Reiner Vertraeglichkeitszwang: diffusers 0.38.0
+# verlangt safetensors>=0.8.0, mit dem alten Pin brach der Bau mit
+# "ResolutionImpossible" ab. transformers 5.5.0 fordert nur >=0.4.3 und
+# traegt die neuere Fassung mit.
+safetensors==0.8.0
 fastapi==0.115.5
 uvicorn==0.32.1
 # 11.0.0 trug 34 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 12.3.0.
