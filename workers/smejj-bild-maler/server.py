@@ -22,23 +22,23 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 MODELL = os.environ.get("SMEJJ_BILD_MODELL", "stabilityai/sd-turbo")
-# 3 statt 2 Schritte (2026-08-13): sichtbar mehr Detail/Koherenz, ~120 s gesamt —
-# bleibt unter dem 150-s-Budget der Bruecke. 4 Schritte rissen das Budget.
+# 3 statt 2 Schritte (2026-08-13): sichtbar mehr Detail, ~120 s — unterm 150-s-Budget.
 SCHRITTE = int(os.environ.get("SMEJJ_BILD_SCHRITTE", "3"))
 GROESSE = int(os.environ.get("SMEJJ_BILD_GROESSE", "512"))
 WORKER_KEY = os.environ.get("SMEJJ_BILDER_WORKER_KEY", "")
 MAX_PROMPT = 500
 # Genauigkeit der Gewichte. Messung 2026-08-13 (Zeabur-Metrics): der Dienst
 # spitzt auf 6646 MB von 8 GB, davon sind ~5 GB die fp32-Gewichte von SD-Turbo
-# (~1,3 Mrd. Parameter x 4 Byte). "bfloat16" halbiert das auf ~2,6 GB.
+# (~1,3 Mrd. Parameter x 4 Byte). "bfloat16" halbiert das auf ~2,6 GB — und
+# schafft damit genau den Platz, den der Gesichtsfixer unten sucht.
 #
 # Warum NICHT einfach umgestellt: bf16 rechnet auf CPU nur dort schnell, wo die
 # Hardware AVX512-BF16 oder AMX kann; sonst emuliert PyTorch und wird LANGSAMER
 # als fp32. Ob dieser Tencent-Knoten das kann, weiss man erst durch Messen —
-# darum ein Schalter statt einer Entscheidung. Standard bleibt fp32, also
-# unveraendertes Verhalten beim naechsten Deploy.
+# darum ein Schalter statt einer Entscheidung. Standard bleibt fp32, dieser
+# Deploy aendert das Verhalten also NICHT von selbst.
 #
-# Messweg (kein Deploy noetig zum Umschalten, Env-Variablen sind auf der
+# Messweg (zum Umschalten kein Deploy noetig, Env-Variablen sind auf der
 # Zeabur-Gratis-Stufe schreibbar):
 #   1. /health lesen -> "genauigkeit" und "letzteDauerSek" notieren (fp32-Basis)
 #   2. Zeabur -> smejj-bild-maler -> Variable: SMEJJ_BILD_GENAUIGKEIT=bfloat16
@@ -66,6 +66,73 @@ zustand = {
 }
 pipeline = None
 mal_sperre = threading.Lock()
+# Gesichts-Reparatur (2026-08-13, Betreiber: "Augen Fehler"): GFPGAN als
+# Nachschliff NUR fuer fotorealistische Bilder. Dreifach abgesichert: laedt
+# erst beim ersten Bedarf, ueberspringt sich bei RAM-Knappheit, und jeder
+# Fehler liefert einfach das unreparierte Bild.
+GESICHTSFIX = os.environ.get("SMEJJ_BILD_GESICHTSFIX", "1") == "1"
+GESICHTSFIX_MIN_FREI_MB = int(os.environ.get("SMEJJ_BILD_GESICHTSFIX_MIN_FREI_MB", "2000"))
+GFPGAN_GEWICHTE = os.environ.get("SMEJJ_GFPGAN_GEWICHTE", "/tmp/hf/gfpgan/GFPGANv1.4.pth")
+GFPGAN_URL = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
+gesichtsfixer = None
+gesichtsfix_zustand = {"status": "aus" if not GESICHTSFIX else "bereitschaft", "fehler": ""}
+
+
+def mem_verfuegbar_mb():
+    try:
+        for zeile in open("/proc/meminfo"):
+            if zeile.startswith("MemAvailable"):
+                return int(zeile.split()[1]) // 1024
+    except Exception:  # noqa: BLE001
+        pass
+    return 99999
+
+
+def lade_gesichtsfixer():
+    """Lazy: GFPGAN erst beim ersten Portraet. Gewichte landen im hf-Volume."""
+    global gesichtsfixer
+    if gesichtsfixer is not None:
+        return gesichtsfixer
+    # basicsr nutzt das aus torchvision entfernte functional_tensor-Modul —
+    # bekannter Shim, bevor gfpgan importiert wird.
+    import sys
+    import types
+    import torchvision.transforms.functional as F  # noqa: N812
+    shim = types.ModuleType("torchvision.transforms.functional_tensor")
+    shim.rgb_to_grayscale = F.rgb_to_grayscale
+    sys.modules.setdefault("torchvision.transforms.functional_tensor", shim)
+    import urllib.request
+    from gfpgan import GFPGANer
+    os.makedirs(os.path.dirname(GFPGAN_GEWICHTE), exist_ok=True)
+    if not os.path.exists(GFPGAN_GEWICHTE):
+        urllib.request.urlretrieve(GFPGAN_URL, GFPGAN_GEWICHTE)
+    gesichtsfixer = GFPGANer(model_path=GFPGAN_GEWICHTE, upscale=1, arch="clean",
+                             channel_multiplier=2, bg_upsampler=None)
+    return gesichtsfixer
+
+
+def repariere_gesichter(bild):
+    """PIL -> PIL; bei jedem Problem kommt das Original zurueck."""
+    import numpy as np
+    if not GESICHTSFIX:
+        return bild
+    frei = mem_verfuegbar_mb()
+    if frei < GESICHTSFIX_MIN_FREI_MB:
+        gesichtsfix_zustand["status"] = f"uebersprungen (nur {frei} MB frei)"
+        return bild
+    try:
+        fixer = lade_gesichtsfixer()
+        bgr = np.asarray(bild)[:, :, ::-1]
+        _, _, repariert = fixer.enhance(bgr, has_aligned=False, only_center_face=False, paste_back=True)
+        gesichtsfix_zustand["status"] = "aktiv"
+        if repariert is None:
+            return bild
+        from PIL import Image
+        return Image.fromarray(repariert[:, :, ::-1])
+    except Exception as fehler:  # noqa: BLE001
+        gesichtsfix_zustand["status"] = "fehler"
+        gesichtsfix_zustand["fehler"] = f"{type(fehler).__name__}: {fehler}"
+        return bild
 
 
 def lade_modell():
@@ -90,9 +157,11 @@ def lade_modell():
         # 8-GB-Server, geteilt mit 6 anderen Diensten: Speicher vor Tempo.
         pipe.enable_attention_slicing()
         # Gemessen 2026-08-13 (Zeabur-Metrics): dieser Dienst spitzt auf 6646 MB
-        # von 8 GB — der Rest liegt bei ~1,4 GB fuer alle anderen zusammen.
-        # Das VAE-Dekodieren am Ende jedes Bildes ist die letzte grosse Spitze
-        # obendrauf; scheibenweise dekodieren senkt sie ohne Qualitaetsverlust.
+        # von 8 GB — fuer alle anderen Dienste zusammen bleiben ~1,4 GB. Das
+        # VAE-Dekodieren am Ende jedes Bildes ist die letzte grosse Spitze
+        # obendrauf; scheibenweise dekodieren senkt sie ohne Qualitaetsverlust
+        # und laesst mehr Luft fuer den Gesichtsfixer (der bei <2000 MB frei
+        # aussetzt).
         pipe.enable_vae_slicing()
         pipeline = pipe
         zustand["bereit"] = True
@@ -114,6 +183,7 @@ def health():
         "ladezeitSek": 0 if zustand["bereit"] else round(time.time() - zustand["laedt_seit"]),
         "schritte": SCHRITTE,
         "groesse": GROESSE,
+        "gesichtsfix": gesichtsfix_zustand,
         # Die drei Felder sind der Tempotest fuer bfloat16 (siehe GENAUIGKEIT
         # oben): Was laeuft gerade, was kann die CPU, wie lange dauerte zuletzt
         # ein echtes Bild. 0.0 heisst: seit dem Start noch keins erzeugt.
@@ -134,9 +204,9 @@ async def erzeuge(request: Request):
     except Exception:  # noqa: BLE001
         return JSONResponse({"ok": False, "fehler": "kein_json"}, status_code=400)
     prompt = str(daten.get("prompt", "")).strip()[:MAX_PROMPT]
-    # Foto-Anreicherung (2026-08-13, "Qualitaet wie Midjourney"-Auftrag): SD-Turbo
-    # reagiert stark auf Stil-Anker. Nur ergaenzen, wenn der Prompt selbst keinen
-    # Stil nennt — ein gewuenschtes "oil painting" wird nicht uebermalt.
+    # Foto-Anreicherung (2026-08-13): SD-Turbo reagiert stark auf Stil-Anker;
+    # nur ergaenzen, wenn der Prompt keinen eigenen Stil nennt. Der Zusatz
+    # triggert zugleich die Gesichts-Reparatur ("photorealistic" im Prompt).
     if prompt and not any(w in prompt.lower() for w in ("painting", "drawing", "sketch", "cartoon", "anime", "illustration", "pixel", "watercolor")):
         prompt = f"{prompt}, photorealistic, highly detailed, sharp focus, professional photography, natural skin texture"[:MAX_PROMPT + 120]
     if not prompt:
@@ -154,9 +224,12 @@ async def erzeuge(request: Request):
             width=GROESSE,
             height=GROESSE,
         ).images[0]
+        if "photorealistic" in prompt:
+            bild = repariere_gesichter(bild)
+        # Gleiche Bedeutung wie bisher (Erzeugung inklusive Gesichtsfix), nur
+        # zusaetzlich mitgeschrieben, damit der bf16-Tempotest ueber /health
+        # ablesbar ist, ohne die Antwort eines echten Auftrags abzufangen.
         dauer = round(time.time() - beginn, 1)
-        # Mitschreiben, damit der bf16-Tempotest ueber /health ablesbar ist,
-        # ohne den Rueckgabewert eines echten Auftrags abfangen zu muessen.
         zustand["letzte_dauer_sek"] = dauer
         puffer = io.BytesIO()
         bild.save(puffer, format="PNG")
