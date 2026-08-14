@@ -18,6 +18,7 @@ import crypto from "node:crypto";
 import { createRecordStore } from "./recordStore.js";
 import { issueSessionToken } from "../auth/sessionToken.js";
 import { sseZuText } from "../autopilots/modellEinkaeufer.js";
+import { erfasseAktion } from "../evolution/aiEvolutionEngine.js";
 
 const ablage = createRecordStore("support/tickets", { maximal: 500 });
 const BRUECKE_STANDARD = "https://smejj-chat-bridge.zeabur.app";
@@ -53,6 +54,13 @@ export async function holeSofortantwort(betreff, text, { env = process.env, fetc
     if (!antwort.ok) return { ok: false, grund: `Bruecke HTTP ${antwort.status}` };
     const inhalt = sseZuText(await antwort.text()).trim();
     if (inhalt.length < 20) return { ok: false, grund: "leere Antwort der Bruecke" };
+    // AI Evolution Engine (2026-08-14): Jede erzeugte Antwort geht durch die
+    // zentrale Qualitaetsschicht. Der Aufruf ist absichtlich ungefaehrlich —
+    // erfasseAktion faengt seine eigenen Fehler und darf die Sofortantwort
+    // niemals verzoegern oder zum Scheitern bringen.
+    try {
+      erfasseAktion({ art: "text", prompt: betreff, ergebnis: inhalt, quelle: "support-sofortantwort", betrifft: "support-sla" });
+    } catch { /* eine Messung, die den gemessenen Weg kaputtmacht, ist keine */ }
     return { ok: true, text: inhalt };
   } catch (fehler) {
     return { ok: false, grund: fehler?.name === "TimeoutError" ? "Zeitlimit 45 s" : String(fehler?.message || fehler).slice(0, 80) };

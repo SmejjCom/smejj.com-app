@@ -39,6 +39,26 @@ import { offeneUeberfaellig, listeTickets } from "../admin/supportTickets.js";
 import { scrubPiiData, getUserFlywheelStats } from "./userFeedbackFlywheelAutopilot.js";
 import { pruefeAntwortenAlle, fuehreSelbsttestAus } from "./antwortTuevAutopilot.js";
 import { executeRealtimeHarvestCycle, getHarvestBestand, HARVEST_TOPICS } from "./realtimeInternetHarvesterAutopilot.js";
+// Die drei Läufe der AI Evolution Engine (Nr. 37-39) — eigene Datei wegen der
+// 800-Zeilen-Regel, siehe control-server/src/evolution/evolutionLaeufe.js.
+import { laufEvolutionEngine, laufMissingFunctionDetector, laufSupervisor } from "../evolution/evolutionLaeufe.js";
+import { erkenneLuecken, baueLueckenAufgaben } from "../evolution/missingFunctionDetector.js";
+import { erfasseAktion } from "../evolution/aiEvolutionEngine.js";
+
+/**
+ * Die Konkurrenzlücken als fertige Backlog-Aufgaben. Eigene Funktion, damit
+ * der Werkstatt-Lauf sie in Tests austauschen kann — und damit ein Fehler im
+ * Detector nicht das ganze Backlog stumm macht: er wird zur STUMMEN QUELLE
+ * mit Grund, nie zu einem stillen "nichts zu tun".
+ */
+export function holeLueckenAufgaben() {
+  try {
+    const { luecken } = erkenneLuecken({});
+    return { ok: true, aufgaben: baueLueckenAufgaben(luecken) };
+  } catch (fehler) {
+    return { ok: false, grund: `Missing-Function-Detector gefallen: ${String(fehler?.message || fehler).slice(0, 100)}` };
+  }
+}
 
 // Der Container hat seinen eigenen Quelltext an Bord (Dockerfile.smejj-control
 // kopiert src/ und control-server/). Genau den scannen die beiden
@@ -61,7 +81,8 @@ export const IM_LAEUFER_BETRIEBEN = Object.freeze([
   "model-lifecycle", "user-feedback-flywheel", "antwort-tuev", "process-reward", "knowledge-distiller",
   "evolutionary-mutation", "realtime-internet-harvester", "multi-file-repo-architect",
   "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot",
-  "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check"
+  "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check",
+  "ai-evolution-engine", "missing-function-detector", "autopilot-supervisor"
 ]);
 
 // Zaehler der Selbstheilung: id -> {versuche, letzterMs, eskaliert}. Lebt im
@@ -302,7 +323,7 @@ export function laufSprachQualitaet(seiten) {
  * Server einen Kindprozess ueber hunderte Dateien laufen zu lassen. Der
  * Bericht sagt das auch — eine stumme Quelle wird benannt, nie verschwiegen.
  */
-export async function laufWerkstattSammeln({ uebersicht = autopilotUebersicht, statsLader = getUserFlywheelStats } = {}) {
+export async function laufWerkstattSammeln({ uebersicht = autopilotUebersicht, statsLader = getUserFlywheelStats, lueckenLader = holeLueckenAufgaben } = {}) {
   const ampelDaten = uebersicht({});
   // Seit dem Daten-Schwungrad (2026-08-13) liest die Werkstatt auch die
   // Nicht-hilfreich-Signale der Nutzer: schlechte Antworten sind Arbeit,
@@ -313,7 +334,10 @@ export async function laufWerkstattSammeln({ uebersicht = autopilotUebersicht, s
     tests: { ok: false, grund: "im Takt nicht ausgefuehrt — npm run werkstatt:sammeln -- --mit-tests" },
     antworten: stats?.ok
       ? { ok: true, negative: stats.negativeLetzte7Tage }
-      : { ok: false, grund: stats?.grund || "Feedback-Ablage nicht lesbar" }
+      : { ok: false, grund: stats?.grund || "Feedback-Ablage nicht lesbar" },
+    // Seit 2026-08-14: Die Lücken des Missing-Function-Detectors (Nr. 38)
+    // landen als Aufgaben im Backlog, statt in einem Bericht zu warten.
+    verbesserungen: lueckenLader()
   });
   const dringend = backlog.aufgaben.filter((a) => a.stufe <= 2).length;
   return {
@@ -585,6 +609,14 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["werkstatt-autopilot", () => laufWerkstattSammeln()],
     ["support-sla", () => laufSupportSla()],
     ["angelina-autopilot", () => laufSprachQualitaet(seiten)],
+    // Die Evolution-Schicht (Nr. 37-39). Der Detector bekommt DIESELBE
+    // Dateiliste wie die Repo-Autopiloten — so prüft er die Fähigkeits-Belege
+    // gegen den Quelltext, der gerade wirklich läuft, statt gegen eine Liste.
+    // Der Supervisor liest die frische Ampel und sucht darin Erfolgsmeldungen
+    // ohne Beleg — das Muster der 29 Attrappen von 2026-08-12.
+    ["ai-evolution-engine", () => laufEvolutionEngine()],
+    ["missing-function-detector", () => laufMissingFunctionDetector({ dateien })],
+    ["autopilot-supervisor", () => laufSupervisor({ autopiloten: autopilotUebersicht({}).autopiloten || [] })],
     // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
     // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen
@@ -606,6 +638,24 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
   // Stillstand sofort sichtbar: bleibt SIE aus, steht der Taktgeber.
   const gelungen = ergebnisse.filter((e) => e.ok).length;
   const gesamtMs = ergebnisse.reduce((summe, e) => summe + (e.dauerMs || 0), 0);
+
+  // AI Evolution Engine (2026-08-14): Der Durchgang selbst ist eine
+  // KI-Automation und wird wie jede andere Aktion bewertet — jeder Lauf ein
+  // Schritt, jede Meldung sein Beleg. Damit misst die Schicht nicht nur
+  // fremde Ergebnisse, sondern auch den Motor, der sie erzeugt.
+  // Der Aufruf darf den Durchgang nie zu Fall bringen.
+  try {
+    erfasseAktion({
+      art: "autopilot",
+      ergebnis: {
+        schritte: ergebnisse.map((e) => ({ name: e.id, ok: e.ok, beleg: e.meldung })),
+        dauerMs: gesamtMs
+      },
+      dauerMs: gesamtMs,
+      quelle: "autopilot-laeufer",
+      betrifft: "autopilot-laeufer"
+    });
+  } catch { /* eine Messung, die den gemessenen Weg kaputtmacht, ist keine */ }
   melde("autopilot-laeufer", {
     // Ein Durchgang, in dem KEIN einziger Lauf gelingt, ist selbst ein
     // Ausfall — dann stimmt etwas Grundsaetzliches, nicht 24 Einzelheiten.

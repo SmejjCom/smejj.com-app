@@ -46,6 +46,8 @@ const DATEIEN = Object.freeze({
   "console-stage8.js": "console-stage8.js",
   "views-stage9.js": "views-stage9.js",
   "console-stage9.js": "console-stage9.js",
+  "views-stage10.js": "views-stage10.js",
+  "console-stage10.js": "console-stage10.js",
   "console.js": "console.js"
 });
 

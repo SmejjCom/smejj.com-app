@@ -26,6 +26,7 @@ import { emailUebersicht } from "../admin/opsEmail.js";
 import { analytikUebersicht } from "../admin/opsAnalytik.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { cockpitUebersicht } from "../admin/opsCockpit.js";
+import { evolutionDashboard } from "../admin/opsEvolution.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -39,7 +40,7 @@ const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
   "cockpit", "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
-  "experimente", "email", "analytik", "autopiloten"
+  "experimente", "email", "analytik", "autopiloten", "evolution"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -82,6 +83,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "email") return privateJson(res, 200, await emailUebersicht({ env })), true;
     if (bereich === "analytik") return privateJson(res, 200, await analytikUebersicht({ env, tage: tageAus(url) })), true;
     if (bereich === "autopiloten") return privateJson(res, 200, autopilotUebersicht({ startzeitMs: GESTARTET_MS })), true;
+    if (bereich === "evolution") return privateJson(res, 200, evolutionDashboard({})), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {

@@ -40,12 +40,16 @@ export const STUFEN = Object.freeze({
  * @param {{ok: boolean, gescheitert?: number, zeitraumTage?: number, grund?: string}} [quellen.mails]
  * @param {{ok: boolean, negative?: Array<{promptSample: string, antwortSample?: string, createdAt: string}>, grund?: string}} [quellen.antworten]
  * @param {{ok: boolean, funde?: Array<{name: string, version: string, id: string, herkunft: string}>, grund?: string}} [quellen.cve]
+ * @param {{ok: boolean, aufgaben?: Array, grund?: string}} [quellen.verbesserungen] Fertige
+ *   Aufgaben aus der AI Evolution Engine (Quality-Engine und Missing-Function-Detector).
+ *   Sie bringen ihre eigene Priorität mit — hier wird sie nur in die Stufen-Skala
+ *   der Werkstatt übersetzt, damit EINE Rangfolge gilt und nicht zwei.
  * @param {number} [quellen.laufzeitMs] Wie lange der Control-Server schon laeuft
  *   (aus /api/health `gestartetAm`). Fehlt der Wert, wird von einem lange
  *   laufenden Server ausgegangen — graue Ampeln zaehlen dann wie bisher.
  * @returns {{aufgaben: Array, stummeQuellen: Array, gesammeltAus: Array}}
  */
-export function baueBacklog({ ampel, tests, mails, antworten, cve, laufzeitMs } = {}) {
+export function baueBacklog({ ampel, tests, mails, antworten, cve, verbesserungen, laufzeitMs } = {}) {
   const aufgaben = [];
   const stummeQuellen = [];
   const gesammeltAus = [];
@@ -185,8 +189,43 @@ export function baueBacklog({ ampel, tests, mails, antworten, cve, laufzeitMs } 
     stummeQuellen.push({ quelle: "Nutzer-Feedback", grund: antworten.grund || "nicht abgefragt" });
   }
 
+  // AI Evolution Engine (2026-08-14): Befunde der Quality-Engine und Lücken
+  // aus dem Missing-Function-Detector. Sie kommen als FERTIGE Aufgaben an —
+  // mit Score, Zuständigem und Testanforderung — und werden hier nur in die
+  // Stufen-Skala übersetzt. Zwei Rangfolgen nebeneinander wären eine zu viel.
+  if (verbesserungen?.ok) {
+    gesammeltAus.push("Evolution-Engine");
+    for (const v of verbesserungen.aufgaben || []) {
+      aufgaben.push({
+        stufe: stufeAusPrioritaet(v),
+        quelle: v.quelle || "Evolution-Engine",
+        betrifft: v.betrifft,
+        titel: v.titel,
+        befund: `${v.befund} Beleg: ${v.beleg}. `
+          + `Score ${v.score} (${v.prioritaet}), zustaendig: ${v.zustaendig}, Freigabe: ${v.freigabe}. `
+          + `Test: ${v.testanforderung}`,
+        seit: null
+      });
+    }
+  } else if (verbesserungen) {
+    stummeQuellen.push({ quelle: "Evolution-Engine", grund: verbesserungen.grund || "nicht abgefragt" });
+  }
+
   aufgaben.sort((a, b) => a.stufe - b.stufe || String(a.betrifft).localeCompare(String(b.betrifft)));
   return { aufgaben, stummeQuellen, gesammeltAus };
+}
+
+/**
+ * Uebersetzt die Prioritaet einer Evolution-Aufgabe in eine Werkstatt-Stufe.
+ * Eine fehlende Funktion ist NIE dringender als ein Ausfall: was kaputt ist,
+ * geht vor dem, was fehlt — sonst baut die Werkstatt Neues, waehrend Altes
+ * brennt.
+ */
+function stufeAusPrioritaet(v) {
+  if (v?.klasse === "fehlende-funktion") return STUFEN.AUSBAU;
+  if (v?.risiko === "hoch") return STUFEN.SICHERHEIT;
+  if (v?.prioritaet === "critical" || v?.prioritaet === "high") return STUFEN.REGRESSION;
+  return STUFEN.AUSBAU;
 }
 
 /** Der Bericht als Markdown — fuer Menschen lesbar, in Git nachvollziehbar. */
