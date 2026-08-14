@@ -37,6 +37,9 @@ sys.path.insert(0, os.environ["WORKER_DIR"])
 import server
 from PIL import Image
 server.hole_basisbild = lambda prompt: Image.new("RGB", (512,512), (99,99,99))
+# Seit dem Budget-Befund 2026-08-13 malt der HANDLER das Bild einmal und
+# reicht es an erzeuge_extern UND den parallax-Rueckfall weiter.
+testbild = server.hole_basisbild("egal")
 
 fehler = []
 def pruefe(name, bedingung):
@@ -52,15 +55,15 @@ pruefe("Dispatch prueft EXTERN_KEY vor jedem Aufruf", "if EXTERN_KEY:" in quelle
 
 # 2) Mit Key: voller Erfolgsweg
 server.EXTERN_KEY = "test-key"
-mp4, engine = server.erzeuge_extern("a lighthouse in a storm")
+mp4, engine = server.erzeuge_extern("a lighthouse in a storm", testbild)
 pruefe("liefert MP4 + engine extern:*", mp4[4:8]==b"ftyp" and engine.startswith("extern:"))
 pruefe("genau 1 POST an queue.fal.run", sum(1 for a in aufrufe if a[0]=="POST" and "queue.fal.run" in a[1])==1)
 
 # 3) Tagesdeckel
 server.EXTERN_MAX_PRO_TAG = 2   # 1 schon verbraucht
-server.erzeuge_extern("x")      # 2. Aufruf ok
+server.erzeuge_extern("x", testbild)      # 2. Aufruf ok
 try:
-    server.erzeuge_extern("x"); pruefe("Tagesdeckel wirft", False)
+    server.erzeuge_extern("x", testbild); pruefe("Tagesdeckel wirft", False)
 except RuntimeError as e:
     pruefe("Tagesdeckel wirft nach Limit", "tagesdeckel" in str(e))
 
@@ -68,7 +71,7 @@ except RuntimeError as e:
 server.EXTERN_MAX_PRO_TAG = 99
 ANTWORTEN["ergebnis"] = Antwort({"video": {"url": "https://boese.example/x.mp4"}})
 try:
-    server.erzeuge_extern("x"); pruefe("fremde Adresse abgelehnt", False)
+    server.erzeuge_extern("x", testbild); pruefe("fremde Adresse abgelehnt", False)
 except RuntimeError as e:
     pruefe("fremde Adresse abgelehnt", "unerwartete_video_adresse" in str(e))
 pruefe("boese.example wurde NIE angefragt", not any("boese" in a[1] for a in aufrufe))
@@ -77,7 +80,7 @@ del ANTWORTEN["ergebnis"]
 # 5) FAILED-Status wirft (Aufrufer faellt auf parallax zurueck)
 ANTWORTEN["status"] = Antwort({"status": "FAILED"})
 try:
-    server.erzeuge_extern("x"); pruefe("FAILED wirft", False)
+    server.erzeuge_extern("x", testbild); pruefe("FAILED wirft", False)
 except RuntimeError as e:
     pruefe("FAILED wirft (Rueckfall parallax im Handler)", "extern_failed" in str(e))
 
