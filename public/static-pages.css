@@ -97,21 +97,21 @@ html.p-sprachstart header.top { display: flex; align-items: center; margin-botto
 html.p-sprachstart header.top a { display: inline-flex; max-width: 100%; }
 html.p-sprachstart header.top img { width: clamp(26px, 4.5vw, 30px); height: auto; aspect-ratio: 2000 / 1532.335; object-fit: contain; background: transparent; }
 html.p-sprachstart h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.2; margin: 0 0 12px; }
-html.p-sprachstart p.tagline { font-size: 18px; color: #44443f; margin: 0 0 24px; }
+html.p-sprachstart p.tagline { font-size:21px; color: #44443f; margin: 0 0 24px; }
 html.p-sprachstart a.cta { display: inline-block; background: #1c1c1a; color: #f7f7f4; text-decoration: none; padding: 12px 26px; border-radius: 999px; font-weight: 600; }
 html.p-sprachstart a.cta:hover { background: #333330; }
-html.p-sprachstart h2 { font-size: 22px; margin: 48px 0 16px; }
+html.p-sprachstart h2 { font-size:25px; margin: 48px 0 16px; }
 html.p-sprachstart .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
 html.p-sprachstart .card { background: #ffffff; border: 1px solid #e6e6e0; border-radius: 14px; padding: 18px; }
-html.p-sprachstart .card h3 { margin: 0 0 8px; font-size: 16px; }
-html.p-sprachstart .card p { margin: 0; font-size: 14.5px; color: #44443f; }
+html.p-sprachstart .card h3 { margin: 0 0 8px; font-size:18.5px; }
+html.p-sprachstart .card p { margin: 0; font-size:17px; color: #44443f; }
 html.p-sprachstart details { background: #ffffff; border: 1px solid #e6e6e0; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
 html.p-sprachstart summary { cursor: pointer; font-weight: 600; }
 html.p-sprachstart details p { margin: 10px 0 4px; color: #44443f; }
 html.p-sprachstart nav.langs { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; }
-html.p-sprachstart nav.langs a { color: #1c1c1a; text-decoration: none; border-bottom: 1px solid #c9c9c2; padding-bottom: 1px; font-size: 14.5px; }
+html.p-sprachstart nav.langs a { color: #1c1c1a; text-decoration: none; border-bottom: 1px solid #c9c9c2; padding-bottom: 1px; font-size:17px; }
 html.p-sprachstart nav.langs a:hover { border-color: #1c1c1a; }
-html.p-sprachstart footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid #e6e6e0; font-size: 13.5px; color: #6b6b64; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+html.p-sprachstart footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid #e6e6e0; font-size:16px; color: #6b6b64; display: flex; flex-wrap: wrap; gap: 8px 18px; }
 html.p-sprachstart footer a { color: #6b6b64; }
 
 /* ===== Betriebsstatus (html.p-status, zusaetzlich zu p-recht) =====
