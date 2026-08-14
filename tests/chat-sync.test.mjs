@@ -134,3 +134,68 @@ test("Route: andere Pfade bleiben unberuehrt", async () => {
   assert.equal(behandelt, false);
   assert.equal(res.status, 0);
 });
+
+// --- Der stille Datenverlust ist abgestellt (Befund 2026-08-14) -------------
+//
+// Bis heute prueften beide Sende-Wege in public/chat-sync.js NUR auf 503. Ein
+// 400 — "diesen Chat nehme ich nicht" — fiel durch das catch und war fuer
+// niemanden sichtbar. Gemessen: jeder Chat mit einem erzeugten Bild lag mit
+// ~585 KB ueber dem 512-KB-Deckel und wurde KOMPLETT abgewiesen, waehrend der
+// Nutzer ihn fuer gesichert hielt.
+//
+// Geprueft wird die QUELLE: chat-sync.js laeuft nur im Browser (fetch,
+// localStorage, dynamischer Import), ein Modulimport waere hier kein Test der
+// echten Datei, sondern eines Nachbaus.
+
+import { readFileSync } from "node:fs";
+
+const SYNC_QUELLE = readFileSync("public/chat-sync.js", "utf8");
+
+test("eine 4xx-Ablehnung wird gemeldet statt verschluckt — auf BEIDEN Sende-Wegen", () => {
+  const meldungen = SYNC_QUELLE.match(/await meldeAbweisung\(/g) || [];
+  assert.equal(meldungen.length, 2, "Chat-Push und Projekte-Push muessen beide melden");
+  assert.match(SYNC_QUELLE, /antwort\.status >= 400 && antwort\.status < 500/,
+    "der ganze 4xx-Bereich zaehlt, nicht nur die 400 selbst");
+});
+
+test("die Meldung nennt beim Groessen-Fall den KLARTEXT, nicht den Fehlercode", () => {
+  // "chat_zu_gross" sagt einem Nutzer nichts. Er muss erfahren, was das fuer
+  // ihn bedeutet: der Chat liegt nur noch auf diesem Geraet.
+  assert.match(SYNC_QUELLE, /grund === "chat_zu_gross"/);
+  assert.match(SYNC_QUELLE, /zu gross und wurde NICHT gesichert/);
+  assert.match(SYNC_QUELLE, /nur auf diesem Geraet/);
+});
+
+test("gemeldet wird EINMAL je Chat — push() laeuft nach jeder Aenderung", () => {
+  // Ohne Bremse gaebe es alle vier Sekunden (PUSH_ENTPRELLUNG_MS) denselben
+  // Hinweis; nach dem dritten wuerde ihn niemand mehr lesen.
+  assert.match(SYNC_QUELLE, /const abgewiesen = new Set\(\)/);
+  assert.match(SYNC_QUELLE, /if \(abgewiesen\.has\(kennung\)\) return;\s*\n\s*abgewiesen\.add\(kennung\);/,
+    "erst pruefen, dann merken — sonst meldet der zweite Aufruf erneut");
+});
+
+test("503 bleibt der Abschalter, 4xx bricht die Schleife NICHT ab", () => {
+  // Ein zu grosser Chat darf die uebrigen nicht mitreissen: nach der Meldung
+  // laeuft die Schleife weiter, nur 503 setzt den Sitzungs-Schalter.
+  assert.match(SYNC_QUELLE, /if \(antwort\.status === 503\) \{ serverSagtNein = true; break; \}/);
+  // HINTER dem gefundenen break beginnen — sonst zaehlt der Test genau das
+  // break mit, das er sucht (erster Entwurf lief prompt hinein).
+  const marke = "serverSagtNein = true; break; }";
+  const nachDem503 = SYNC_QUELLE.slice(SYNC_QUELLE.indexOf(marke) + marke.length);
+  const bis4xx = nachDem503.slice(0, nachDem503.indexOf("meldeAbweisung"));
+  assert.ok(!bis4xx.includes("break"), "zwischen 503 und der 4xx-Meldung darf kein weiteres break stehen");
+});
+
+test("scheitert sogar der Hinweis, bleibt der Grund auffindbar", () => {
+  // Der Import des Toasts kann fehlschlagen (Modul nicht geladen, CSP). Dann
+  // muss der Grund wenigstens in der Konsole stehen — genau die Stille war
+  // ja der Fehler.
+  assert.match(SYNC_QUELLE, /catch \{[\s\S]{0,400}console\.warn\(/);
+  assert.match(SYNC_QUELLE, /smejj Verlauf-Sync: Chat \$\{kennung\} abgewiesen/);
+});
+
+test("der Grund wird aus einer KOPIE der Antwort gelesen", () => {
+  // antwort.json() wuerde den Rumpf verbrauchen; ein spaeterer Leser bekaeme
+  // nichts mehr. clone() haelt beide Wege offen.
+  assert.match(SYNC_QUELLE, /await antwort\.clone\(\)\.json\(\)/);
+});
