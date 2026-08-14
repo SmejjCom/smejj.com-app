@@ -1,17 +1,17 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T00:12:22.119Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-13 Punkt 1+6: chat-bridge.js v139 — max_tokens 700/1400 auf 2000/4000 angehoben, weil lange Antworten (Tabellen) mitten im Wort abbrachen (Befund '...2-Zimmer-Buero b'). Nur diese zwei Zahlen plus Kommentar und Versionsname.",
+  "frozenAt": "2026-08-14T07:40:48.428Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-14: Salad-Endreinigung aus Commit 0a3cb37 bestaetigt — toter Host redbean-caesar-....salad.cloud aus der CSP von login/register entfernt, chat-bridge.js Rueckfall-Origin auf smejj-control.zeabur.app umgestellt. Keine Regel gelockert, kein neuer Host aufgenommen.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "c645281b51b7b2ea699909d4f6c4ee6eb5ad8ea506b6fb01f4521439144c2b0e",
-    "public/auth/register/index.html": "a891f41fa9265cff4b3d711f83d89205ef8c7dbfd056fb24a5ca1d6e95ec6502",
+    "public/auth/login/index.html": "842af267e98833f359a4b6044b6e234ea871c5e79834332ebcc4fe6929215546",
+    "public/auth/register/index.html": "e4d40a128d6c683b520e81cddeea8e48793b99569cd3911fe2875578a45177c5",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "e1c037a51a1ec9779d5b7e67b563399a82676e92d1592a2260db97b119e9d171",
+    "public/chat-bridge.js": "af0b93aaf646765a8c9faef303914cfb7d387976aa70c8d23c3312868b0f82ac",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
