@@ -18,16 +18,22 @@ import { zeaburAbfrage } from "../diagnose/zeabur-api.mjs";
 // Ein Dienst in einer Umgebung:
 // { serviceId, environmentId, projektId, projektName, umgebungName }.
 export async function findeDienst(dienstName, abfrage = zeaburAbfrage) {
-  const daten = await abfrage(`{
-    projects { edges { node {
-      _id name
-      environments { _id name }
-      services { edges { node { _id name } } }
-    } } }
+  // ZWEI Abfragen statt einer verschachtelten (korrigiert 2026-08-14):
+  // `Project.services` ist eine schlichte Liste, KEINE Verbindung — die
+  // verschachtelte Fassung endete mit HTTP 422 ("Cannot query field \"edges\"
+  // on type \"Service\""). Der Fehler war unsichtbar, solange niemand das
+  // Skript gegen einen echten Dienst laufen liess.
+  // Der Einstieg `services(projectID:…)` liefert dagegen eine Verbindung.
+  const projekte = await abfrage(`{
+    projects { edges { node { _id name environments { _id name } } } }
   }`);
-  for (const kante of daten?.projects?.edges || []) {
+  for (const kante of projekte?.projects?.edges || []) {
     const projekt = kante.node;
-    for (const dienstKante of projekt.services?.edges || []) {
+    const dienste = await abfrage(
+      `query($p:ObjectID!){ services(projectID:$p, limit:100){ edges { node { _id name } } } }`,
+      { p: projekt._id }
+    );
+    for (const dienstKante of dienste?.services?.edges || []) {
       if (dienstKante.node.name !== dienstName) continue;
       const umgebung = (projekt.environments || [])[0];
       if (!umgebung?._id) throw new Error(`zeabur_umgebung_fehlt_fuer_${dienstName}`);
