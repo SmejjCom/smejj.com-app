@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T02:09:01.597Z",
-  "confirmation": "Betreiber-Karte 2026-08-13 abends: Ja, alle vier - heutiger Stand inklusive Bridge v140",
+  "frozenAt": "2026-08-14T06:24:19.854Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-13 Punkt 1: chat-bridge.js aufgeteilt (834 auf 618 Zeilen), Stimmen-Block nach chat-bridge-voice-tts.js. Uebernahme des erprobten Refactors 8cb0ffe, kein Verhaltenswechsel.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "c645281b51b7b2ea699909d4f6c4ee6eb5ad8ea506b6fb01f4521439144c2b0e",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "ea25b806f415e2ae0909f57c20f0768acc38fc22d1318d980b2d4fba028ab3d8",
+    "public/chat-bridge.js": "729b736517d60994f5d4932d2b5770d766418542317dbd894e47df9d0eb3fc26",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

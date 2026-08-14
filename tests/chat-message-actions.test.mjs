@@ -628,6 +628,9 @@ test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
   // die eigene Funktion hinausgreift, meldet fremde Arbeit als eigenen Fehler.
   const rumpfCreateChatFrom = (store.split("export async function createChatFrom")[1] || "")
     .split(/\nexport /)[0];
+  // Faengt den stillen Ausfall ab: wird die Funktion umbenannt, waere der Rumpf
+  // leer und die Pruefung darunter immer gruen, ohne je etwas zu pruefen.
+  assert.ok(rumpfCreateChatFrom.length > 0, "createChatFrom hat einen Rumpf");
   assert.ok(!/store\.delete/.test(rumpfCreateChatFrom), "Abzweigen loescht nichts");
 });
 

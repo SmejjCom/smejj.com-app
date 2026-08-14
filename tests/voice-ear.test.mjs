@@ -132,8 +132,11 @@ function machEarSend(host, serverText, { totesOhr = false } = {}) {
   // modellkostenden Routen (Sammelbedingung `kostetModell` in chat-bridge.js).
   // Geprueft wird die Absicht: die Route gehoert dazu und liegt hinter beiden.
   const einzeilig = bridge.replace(/\n/g, " ");
+  // (?:voiceTts\.)? — seit 2026-08-13 liegt der Handler in der ausgelagerten
+  // Stimmen-Fabrik (chat-bridge-voice-tts.js); die Route und ihre Gates stehen
+  // unveraendert in der Bridge.
   check("3e Bridge fuehrt die Route und haelt sie hinter Rate-Gate und Anmeldung",
-    /"\/api\/voice\/transcribe"\) return await handleVoiceTranscribe/.test(bridge)
+    /"\/api\/voice\/transcribe"\) return await (?:voiceTts\.)?handleVoiceTranscribe/.test(bridge)
     && /const kostetModell =[^;]*"\/api\/voice\/transcribe"/.test(einzeilig)
     && /kostetModell && !allowModelRequest\(req, res\)/.test(einzeilig)
     && /kostetModell && !\(await allowAuthenticated\(req, res/.test(einzeilig));

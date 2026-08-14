@@ -48,6 +48,7 @@ import { isSafeMutatingControlRequest, requiresAuthenticatedControlAccess } from
 import { createPublicModelRateGate } from "./shared/modelRatePolicy.js";
 import { bearerSessionToken, issueSessionToken, issueAccessToken, verifySessionToken } from "../control-server/src/auth/sessionToken.js";
 import { createSessionHandoffStore, isSessionHandoffId } from "../control-server/src/auth/sessionHandoff.js";
+import { createSessionHandoffRoutes } from "./auth/sessionHandoffRoutes.js";
 import { handleTrainingCaptureRoute } from "../control-server/src/routes/trainingCaptureRoutes.js";
 import { handleTrainingConsentRoute } from "../control-server/src/routes/trainingConsentRoutes.js";
 import { signGoogleAuthState, verifyGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
@@ -159,9 +160,9 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.authConfig) return handleAuthConfig(res);
     if (readMethod && url.pathname === ROUTES.api.authMe) return handleAuthMe(req, res);
     if (readMethod && url.pathname === ROUTES.api.authSessionToken) return handleAuthSessionToken(req, res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.authSessionHandoffStart) return await handleSessionHandoffStart(req, res);
-    if (["GET", "POST"].includes(req.method) && url.pathname === ROUTES.api.authSessionHandoffComplete) return await handleSessionHandoffComplete(req, url, res);
-    if (readMethod && url.pathname.startsWith(`${ROUTES.api.authSessionHandoff}/`)) return handleSessionHandoffPoll(req, url, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.authSessionHandoffStart) return await sessionHandoffRoutes.start(req, res);
+    if (["GET", "POST"].includes(req.method) && url.pathname === ROUTES.api.authSessionHandoffComplete) return await sessionHandoffRoutes.complete(req, url, res);
+    if (readMethod && url.pathname.startsWith(`${ROUTES.api.authSessionHandoff}/`)) return sessionHandoffRoutes.poll(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.authGoogle) {
       try {
         return await handleGoogleAuthStart(req, res, url);
@@ -394,45 +395,21 @@ function handleAuthSessionToken(req, res) {
   });
 }
 
-async function handleSessionHandoffStart(req, res) {
-  const origin = requestOrigin(req);
-  const body = await readJson(req);
-  const returnOrigin = String(body.returnOrigin || "").replace(/\/$/, "");
-  if (!allowedOriginsFromEnv(process.env).includes(origin) || returnOrigin !== origin) {
-    return noStoreJson(res, 403, { ok: false, error: "session_handoff_origin_not_allowed" });
-  }
-  const result = sessionHandoffStore.start(returnOrigin);
-  return noStoreJson(res, result.status, result);
-}
-
-async function handleSessionHandoffComplete(req, url, res) {
-  const handoffId = req.method === "GET"
-    ? url.searchParams.get("handoffId")
-    : (await readJson(req)).handoffId;
-  const result = sessionHandoffStore.complete(handoffId, {
-    token: serializeAccessToken(req.authUser),
-    user: req.authUser
-  });
-  if (req.method === "GET" && result.ok) {
-    res.writeHead(303, {
-      ...SECURITY_HEADERS,
-      "Cache-Control": "no-store",
-      Pragma: "no-cache",
-      Location: "/profile?session-handoff-complete=1"
-    });
-    return res.end();
-  }
-  return noStoreJson(res, result.status, result.ok
-    ? { ok: true, state: "completed", expiresAt: result.expiresAt }
-    : result);
-}
-
-function handleSessionHandoffPoll(req, url, res) {
-  const handoffId = decodeURIComponent(url.pathname.slice(`${ROUTES.api.authSessionHandoff}/`.length));
-  if (!isSessionHandoffId(handoffId)) return noStoreJson(res, 404, { ok: false, error: "session_handoff_not_found" });
-  const result = sessionHandoffStore.consume(handoffId, requestOrigin(req));
-  return noStoreJson(res, result.status, result);
-}
+// Sitzungs-Uebergabe: die drei Handler stehen seit 2026-08-14 in
+// src/auth/sessionHandoffRoutes.js (800-Zeilen-Regel). Verhalten unveraendert,
+// Abhaengigkeiten werden injiziert.
+const sessionHandoffRoutes = createSessionHandoffRoutes({
+  sessionHandoffStore,
+  isSessionHandoffId,
+  allowedOriginsFromEnv,
+  serializeAccessToken,
+  requestOrigin,
+  readJson,
+  noStoreJson,
+  securityHeaders: SECURITY_HEADERS,
+  routes: ROUTES,
+  env: process.env
+});
 
 function noStoreJson(res, status, payload) {
   res.setHeader("Cache-Control", "no-store");
