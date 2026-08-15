@@ -25,6 +25,7 @@ const requiredViews = [
   "projects",
   "files",
   "papierkorb",
+  "arbeitsbereiche",
   "storageView",
   "memory",
   "ai",

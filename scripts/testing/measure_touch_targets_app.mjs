@@ -39,6 +39,7 @@ const MIN_ZIEL = 44;
 // Anmelde-Pflicht steht einem echten Seitenwechsel im Weg.
 const ANSICHTEN = [
   ["papierkorb", "/papierkorb"],
+  ["arbeitsbereiche", "/bereiche"],
   ["Suche", "/search"], ["Websites", "/websites"], ["smejj Claw", "/smejj-claw"],
   ["Automatisierung", "/automation"],
   ["Verlauf", "/chat-history"], ["Browser", "/browser"], ["Coding", "/code"],
