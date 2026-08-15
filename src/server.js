@@ -74,6 +74,7 @@ import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoute
 import { createChatMedienRoutes } from "../control-server/src/routes/chatMedienRoutes.js";
 import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyncRoutes.js";
 import { createVideoChatRoutes } from "../control-server/src/routes/videoChatRoutes.js";
+import { createBildExternRoutes } from "../control-server/src/routes/bildExternRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
@@ -147,6 +148,10 @@ const projektSyncRoutes = createProjektSyncRoutes({ env: process.env, readSessio
 // /api/chat gibt Video-Auftraege an den Video-Worker (Weg C) statt sie als
 // Text zu beantworten. Fail-safe: ohne Worker laeuft alles unveraendert.
 const videoChatRoutes = createVideoChatRoutes({ env: process.env, securityHeaders: SECURITY_HEADERS, resolveModelRequest, executeWithFallback });
+// Bild-Erzeugung ueber den eigenen Zhipu-Zugang (CogView). Der Schluessel steht
+// NUR hier, nicht an der Bruecke — darum kommt der Auftrag zum Schluessel und
+// nicht umgekehrt (bildExternRoutes.js erklaert es ausfuehrlich).
+const bildExternRoutes = createBildExternRoutes({ env: process.env, readSession, sessionStillValid, json, readJson });
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
@@ -205,6 +210,7 @@ const server = http.createServer(async (req, res) => {
     // schlank bleibt. Abgeschaltet, solange SMEJJ_CHAT_SYNC_ENABLED fehlt.
     if (url.pathname === "/api/chats" && await chatSyncRoutes.handle(req, res, url)) return;
     if (url.pathname === "/api/chat-medien" && await chatMedienRoutes.handle(req, res, url)) return;
+    if (url.pathname === "/api/bild/erzeuge" && await bildExternRoutes.handle(req, res, url)) return;
     // Projekte-Sync (2026-08-13): benannte Sammlungen fuer Chats, gleiches Flag.
     if (url.pathname === "/api/projekte" && await projektSyncRoutes.handle(req, res, url)) return;
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return await handleAuthLogout(req, res);

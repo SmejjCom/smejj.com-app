@@ -22,7 +22,7 @@
 import { meldeAktion } from "./chat-bridge-evolution.js";
 // Weg 0 (Betreiber-Entscheidung 2026-08-14): externer Maler fuer die Qualitaet,
 // die der CPU-Server nicht liefern kann. Ohne Schluessel existiert er nicht.
-import { erzeugeExternesBild, externMalerName, externerMalerBereit } from "./chat-bridge-bilder-extern.js";
+import { controlMalerBereit, erzeugeBildUeberControl, erzeugeExternesBild, externMalerName, externerMalerBereit } from "./chat-bridge-bilder-extern.js";
 
 // Eigene Namen (BILDER_*): das Deploy-Buendel legt alle Bridge-Module in EINEN
 // Gueltigkeitsbereich (bundle_chat_bridge.mjs prueft Kollisionen hart).
@@ -692,7 +692,16 @@ export async function streamBilderLane(res, body, task, deps) {
 
   // deps.fetchImpl gibt es nur im Test — im Betrieb bleibt es das echte fetch.
   const malerZustand = await bilderMalerZustand(deps.fetchImpl || fetch);
-  const externAn = externerMalerBereit();
+  // Nutzer-Token fuer den Control-Weg aus res.req (Node haengt die Anfrage dort
+  // an) statt durch `deps`: chat-bridge.js steht unter dem Security-Lock.
+  const autorisierung = res?.req?.headers?.authorization || "";
+  // Zwei externe Wege: fal (falls je ein Schluessel gesetzt wird) und der eigene
+  // Control-Dienst mit CogView (Regelfall — der Zhipu-Zugang steht dort schon).
+  // Das Token gehoert in die BEDINGUNG, nicht nur in den Aufruf: ohne Anmeldung
+  // kann Control nicht malen, und wer den Zweig trotzdem betritt, hat schon
+  // Bytes gesendet und zerstoert den stillen Rueckfall auf die Textspur.
+  const controlAn = controlMalerBereit() && Boolean(autorisierung);
+  const externAn = externerMalerBereit() || controlAn;
 
   // Weg 0 (extern, beste Qualitaet) und Weg 1 (eigener Maler) teilen sich
   // Kopf, Personen-Schutz und Fortschrittsanzeige. Extern kommt ZUERST: es ist
@@ -715,8 +724,11 @@ export async function streamBilderLane(res, body, task, deps) {
     try {
       const malPrompt = await uebersetzeMalPrompt(prompt);
       gesperrt = istPersonGesperrt(malPrompt);
-      if (!gesperrt && externAn) {
+      if (!gesperrt && externerMalerBereit()) {
         inhalt = await erzeugeExternesBild(malPrompt, notiz, deps.fetchImpl || fetch);
+      }
+      if (!gesperrt && !inhalt && controlAn) {
+        inhalt = await erzeugeBildUeberControl(malPrompt, autorisierung, notiz, deps.fetchImpl || fetch);
       }
       // Extern aus oder gescheitert: der eigene Maler bleibt der Rueckfall —
       // ein langsames echtes Foto ist besser als gar keins.

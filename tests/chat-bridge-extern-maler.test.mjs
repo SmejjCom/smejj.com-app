@@ -108,6 +108,48 @@ test("kaputte Bilddaten unter einer echten fal-Adresse fallen durch", async () =
   assert.equal(notiz.externGrund, "extern_keine_bilddaten");
 });
 
+test("Control-Weg: ohne Anmeldung wird nicht gemalt, mit Anmeldung schon", async () => {
+  const modul = await ladeModul({ SMEJJ_BILDER_EXTERN_KEY: null }, 8);
+  assert.equal(modul.controlMalerBereit(), true, "der Control-Weg braucht keinen eigenen Schluessel");
+
+  // Ohne Token: kein Netzkontakt, ehrlicher Grund.
+  let angefasst = false;
+  const notizOhne = {};
+  const ohne = await modul.erzeugeBildUeberControl("a red fox", "", notizOhne, () => {
+    angefasst = true;
+    throw new Error("darf nie passieren");
+  });
+  assert.equal(ohne, "");
+  assert.equal(notizOhne.externGrund, "control_ohne_anmeldung");
+  assert.equal(angefasst, false, "ohne Anmeldung darf kein Guthaben verbraucht werden");
+
+  // Mit Token: es wird durchgereicht, das Bild kommt zurueck.
+  let gesehenerKopf = "";
+  const mit = await modul.erzeugeBildUeberControl("a red fox", "Bearer tok123", {}, async (url, init) => {
+    gesehenerKopf = init.headers.Authorization;
+    assert.match(String(url), /\/api\/bild\/erzeuge$/);
+    return { ok: true, status: 200, json: async () => ({ ok: true, format: "jpeg", b64: JPEG.toString("base64") }) };
+  });
+  assert.equal(gesehenerKopf, "Bearer tok123", "das Token des Nutzers muss unveraendert ankommen");
+  assert.ok(mit.includes(`data:image/jpeg;base64,${JPEG.toString("base64")}`));
+});
+
+test("Control-Weg prueft die Antwort ein zweites Mal (Verteidigung in der Tiefe)", async () => {
+  const modul = await ladeModul({ SMEJJ_BILDER_EXTERN_KEY: null }, 9);
+  const faelle = [
+    [{ ok: true, format: "svg", b64: "AAAA" }, "control_unbekanntes_format"],
+    [{ ok: true, format: "jpeg", b64: "nicht base64!" }, "control_bilddaten_kaputt"],
+    [{ ok: false, fehler: "tagesdeckel" }, "control_sagt_nein:tagesdeckel"]
+  ];
+  for (const [antwort, grund] of faelle) {
+    const notiz = {};
+    const inhalt = await modul.erzeugeBildUeberControl("x", "Bearer t", notiz,
+      async () => ({ ok: true, status: 200, json: async () => antwort }));
+    assert.equal(inhalt, "", `muss leer bleiben: ${grund}`);
+    assert.equal(notiz.externGrund, grund);
+  }
+});
+
 test("der Tagesdeckel bremst, statt unbegrenzt Geld auszugeben", async () => {
   const modul = await ladeModul({ SMEJJ_BILDER_EXTERN_KEY: "test-schluessel", SMEJJ_BILDER_EXTERN_MAX_PRO_TAG: "2" }, 7);
   const fake = async (url) => (String(url).startsWith("https://fal.run/")

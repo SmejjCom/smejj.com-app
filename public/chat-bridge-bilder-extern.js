@@ -39,9 +39,78 @@ const BILDER_EXTERN_MAX_PRO_TAG = Number(process.env.SMEJJ_BILDER_EXTERN_MAX_PRO
 const EXTERN_MAX_B64 = 4_000_000;
 const externZaehler = { tag: "", anzahl: 0 };
 
+// --- Weg 0a: der eigene Control-Dienst malt mit CogView ------------------------
+//
+// DER GRUND, warum es diesen zweiten Weg gibt (2026-08-14): Der Zhipu-Zugang,
+// der ohnehin "smejj 1.0" traegt, kann auch Bilder (CogView-4) — in ~8 s ein
+// 1024er Foto auf dem Niveau, das der Betreiber verlangt hat. Der Schluessel
+// steht aber NUR am Control-Dienst, nicht an der Bruecke (per Zeabur-API
+// geprueft). Ihn hierher zu kopieren waere das Eintragen eines API-Schluessels
+// — das darf eine Agenten-Sitzung nicht. Also geht der Auftrag zum Schluessel:
+// die Bruecke fragt Control, Control malt (control-server/src/routes/
+// bildExternRoutes.js). Vorteil fuer den Betreiber: NICHTS zu tun, kein neues
+// Konto, kein neues Geheimnis.
+const CONTROL_BILD_ORIGIN = String(process.env.SMEJJ_CONTROL_ORIGIN || "https://smejj-control.zeabur.app").replace(/\/+$/, "");
+const CONTROL_BILD_AN = process.env.SMEJJ_BILDER_CONTROL_AUS !== "1";
+const CONTROL_BILD_TIMEOUT_MS = Number(process.env.SMEJJ_BILDER_CONTROL_TIMEOUT_MS || 90000);
+
+// Ist der Control-Weg grundsaetzlich moeglich?
+export function controlMalerBereit() {
+  return Boolean(CONTROL_BILD_AN && CONTROL_BILD_ORIGIN);
+}
+
+/**
+ * Laesst Control ein Bild malen. Liefert Markdown oder "".
+ *
+ * `autorisierung` ist das Anmelde-Token DES NUTZERS, unveraendert
+ * weitergereicht: Control prueft dieselbe Sitzung wie bei /api/chat. Dadurch
+ * entsteht kein zusaetzliches Geheimnis zwischen den beiden Diensten — und
+ * nur angemeldete Nutzer koennen Guthaben verbrauchen.
+ */
+export async function erzeugeBildUeberControl(prompt, autorisierung, notiz = {}, fetchImpl = fetch) {
+  if (!controlMalerBereit()) return "";
+  if (!autorisierung) {
+    notiz.externGrund = "control_ohne_anmeldung";
+    return "";
+  }
+  const beginn = Date.now();
+  const scheitern = (grund) => {
+    notiz.externGrund = grund;
+    console.warn(`smejj Bild ueber Control: ${grund} nach ${Math.round((Date.now() - beginn) / 1000)} s`);
+    return "";
+  };
+  try {
+    const antwort = await fetchImpl(`${CONTROL_BILD_ORIGIN}/api/bild/erzeuge`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: autorisierung },
+      body: JSON.stringify({ prompt: String(prompt).slice(0, 1200) }),
+      signal: AbortSignal.timeout(CONTROL_BILD_TIMEOUT_MS)
+    });
+    if (!antwort.ok) return scheitern(`control_http_${antwort.status}`);
+    let daten;
+    try {
+      daten = await antwort.json();
+    } catch {
+      return scheitern("control_antwort_kein_json");
+    }
+    if (!daten?.ok) return scheitern(`control_sagt_nein:${String(daten?.fehler || "ohne_grund").slice(0, 60)}`);
+    const b64 = String(daten.b64 || "");
+    const format = String(daten.format || "");
+    // Control hat schon geprueft — hier NOCH EINMAL, weil ein Bild aus einer
+    // fremden Antwort direkt in den Chat geht (Verteidigung in der Tiefe).
+    if (!/^(?:jpeg|png|webp)$/.test(format)) return scheitern("control_unbekanntes_format");
+    if (!b64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return scheitern("control_bilddaten_kaputt");
+    if (b64.length > EXTERN_MAX_B64) return scheitern(`control_bild_zu_gross_${b64.length}`);
+    notiz.externSekunden = Math.round((Date.now() - beginn) / 1000);
+    return `Hier ist dein Bild:\n\n![Erstelltes Bild](data:image/${format};base64,${b64})`;
+  } catch (fehler) {
+    return scheitern(`control_netzfehler:${String(fehler?.message || fehler).slice(0, 60)}`);
+  }
+}
+
 // Fuer die Kopfzeile der Spur: WELCHER Maler antwortet gerade.
 export function externMalerName() {
-  return BILDER_EXTERN_MODELL;
+  return BILDER_EXTERN_KEY ? BILDER_EXTERN_MODELL : "control:cogview";
 }
 
 // True = ein weiterer externer Aufruf ist heute noch erlaubt.
