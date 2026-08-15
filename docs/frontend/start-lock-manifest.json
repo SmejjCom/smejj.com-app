@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-15T23:50:37.753Z",
-  "confirmation": "Betreiber-Entscheid 2026-08-15 im Chat: 'ChatGPT als Beispiel — unnoetige Sachen muessen nicht auf der Startseite sein.' Vorschlagzeilen + Chip-Reihe ausgeblendet (hidden, nicht geloescht — alles bleibt im Plus-Menue), Avatar oben rechts oeffnet das vorhandene Profilmenue (topbar-krume b33a).",
+  "frozenAt": "2026-08-15T23:58:23.231Z",
+  "confirmation": "Am echten ChatGPT nachgemessen (Betreiber-Screenshot 15.08.): die DREI Vorschlagzeilen gehoeren auf die Startseite (ChatGPT hat sie), nur die Chip-Reihe bleibt ausgeblendet — hidden von start-vorschlaege wieder entfernt",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "5bcbb205483489372f5ac9212e2f6969d7a537cb1ad64b18c6ba19024cf50d90",
+    "public/index.html": "4e1d93f7ef6bdedbb7d158dbb021db539253bad70e86c6ced25f91bec26323af",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "7be9f19d5f3359f21b92806b2931dd8da283a3f6437596ed89ed778475e6b425",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
