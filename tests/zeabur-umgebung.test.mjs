@@ -131,12 +131,9 @@ test("key/value-Form: ein Aufruf je Wert, Werte korrekt verteilt", async () => {
 
 test("NUR Sammelform vorhanden: verweigern, bevor irgendetwas angefasst wird", async () => {
   const { abfrage, aufrufe } = abfrageMit(SCHEMA_NUR_SAMMEL);
-  // Zwei Riegel liegen hier hintereinander (Auswahl und Ausfuehrung); welcher
-  // zuerst greift, ist Umbau-abhaengig. Wichtig ist NUR: es wird abgebrochen
-  // und nichts angefasst.
   await assert.rejects(
     () => setzeUmgebungswerte("smejj-control", { A: "1" }, abfrage),
-    /zeabur_(setz_mutation_nicht_gefunden|ersetzende_mutation_verweigert)/
+    /zeabur_ersetzende_mutation_verweigert/
   );
   // Weder gesetzt noch ueberhaupt nach dem Dienst gefragt: der Abbruch kommt
   // vor jedem anderen Schritt, damit nichts halb passiert.

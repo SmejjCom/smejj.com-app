@@ -114,14 +114,7 @@ export async function findeSetzMutation(abfrage = zeaburAbfrage) {
     if (/update/i.test(f.name)) p += 1;
     return p;
   };
-  // Die Sammelform kommt gar nicht erst in die Auswahl — nicht nur schlechter
-  // bewertet, sondern raus. Eine Bewertung ist eine Rangfolge: steht nichts
-  // anderes daneben, gewinnt die gefaehrliche Form trotzdem. Genau so ist es
-  // am 2026-08-14 ein zweites Mal passiert, obwohl die Gefahr bekannt war.
-  // Zwei Riegel, absichtlich doppelt: hier die Auswahl, in
-  // setzeUmgebungswerte noch einmal die Ausfuehrung.
-  const einzeln = felder.filter((f) => sammelArgumente(f).length === 0);
-  const beste = einzeln.sort((a, b) => punkte(b) - punkte(a))[0];
+  const beste = felder.sort((a, b) => punkte(b) - punkte(a))[0];
   if (!beste || punkte(beste) < 4) return null;
   return beste;
 }
