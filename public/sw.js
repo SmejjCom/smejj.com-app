@@ -175,7 +175,7 @@
 // in docs/frontend/SW_VERSIONSVERLAUF_2026-08.md, so wie es der Kopf dieser
 // Datei verlangt (Touch-Ziele auf 44 px, Startseite und alle 16 Ansichten).
 // Wer den naechsten Stand sucht, schaut also besser dorthin als hierher.
-const CACHE_NAME = "smejj-shell-v304";
+const CACHE_NAME = "smejj-shell-v305";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -278,6 +278,7 @@ const SHELL = [
   // leer = Sprachwelle, getippt = senden. Muss in den Vorrat, sonst faellt
   // die Startseite offline auf den alten Senden-Knopf zurueck.
   "/assets/composer-sendetaste.js",
+  "/assets/nav-absichten.js",
   "/assets/chat-actions-menu.js",
   "/assets/chat-code-copy.js",
   "/assets/workspace-bridge.js",

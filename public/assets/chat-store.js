@@ -245,8 +245,54 @@ function titleFrom(messages) {
   return raw.slice(0, MAX_TITLE) + (raw.length > MAX_TITLE ? "…" : "");
 }
 
+// Medien auslagern, BEVOR der Schnappschuss gezogen wird (Befund 2026-08-14).
+//
+// readEntries() speichert `node.innerHTML`. Ein erzeugtes Bild steht dort als
+// ~585-KB-data:-URL — damit sprengt JEDER Chat mit Bild den Server-Deckel von
+// 512 KB, und der ganze Chat wird abgewiesen (chat-sync.js prueft nur auf 503,
+// der 400 fiel still durch). Ein Video steht dort sogar nur noch als
+// blob:-Zeiger, der mit dem Tab stirbt — vier solcher Leichen lagen im Konto.
+//
+// chat-medien.js legt das Medium einmal serverseitig ab und ersetzt die Quelle
+// durch eine kurze Adresse. Danach ist der Schnappschuss klein und das Medium
+// ueberlebt Neuladen und Geraetewechsel.
+//
+// Dynamischer Import und stiller Fehlschlag mit Absicht: ist das Modul nicht
+// ladbar oder die Ablage aus, wird gespeichert wie bisher — nie schlechter.
+async function medienAuslagern() {
+  try {
+    const log = startLog();
+    if (!log) return;
+    const { lagereMedienAus } = await import("./chat-medien.js?v=1");
+    for (const eintrag of log.querySelectorAll(":scope > .entry.assistant")) {
+      await lagereMedienAus(eintrag);
+    }
+  } catch { /* fail-safe: lieber ein grosser Chat als gar keiner */ }
+}
+
+// Gegenstueck zu medienAuslagern: holt beim Wiederherstellen, was ausgelagert
+// wurde. Still und ohne Netz-Zwang — kommt nichts, bleibt die Adresse stehen.
+async function medienHolen(log) {
+  try {
+    const { rehydriereMedien } = await import("./chat-medien.js?v=1");
+    await rehydriereMedien(log);
+  } catch { /* fail-safe: lieber ein leeres Bild als ein kaputter Verlauf */ }
+}
+
 async function persistActive() {
+  await medienAuslagern();
   const messages = readEntries();
+  // ERST der Schnappschuss, DANN die Anzeige. Genau in dieser Reihenfolge:
+  // readEntries() speichert innerHTML, also muss dort die kurze Adresse stehen.
+  // Wuerde hier schon auf blob: umgeschaltet, landete der blob im Gespeicherten —
+  // und daran sind die vier Videos im Konto gestorben.
+  //
+  // Ohne diesen Aufruf sieht der Nutzer ein frisch erzeugtes Bild oder Video
+  // erst nach einem Neuladen: die Sicherheitsrichtlinie der Seite laesst kein
+  // Medium vom Control-Server zu (live gemessen — "MEDIA_ELEMENT_ERROR: Media
+  // load rejected" direkt nach dem Auslagern). Ohne await, das Speichern soll
+  // nicht auf das Netz warten.
+  medienHolen(startLog());
   if (!messages.length) return null;
   let id = activeChatId();
   if (!id) {
@@ -479,6 +525,13 @@ function renderEntriesInto(log, messages) {
     document.querySelector("#start")?.classList.toggle("has-start-chat", messages.length > 0);
     const last = log.lastElementChild;
     if (last) last.scrollIntoView({ block: "end" });
+    // Ausgelagerte Medien holen. Im gespeicherten html steht nur die kurze
+    // Serveradresse; die kann ein <img> nicht selbst laden — die
+    // Sicherheitsrichtlinie der Seite laesst nur 'self', data: und blob: zu,
+    // und den Anmelde-Schluessel koennte ein <img> ohnehin nicht mitschicken.
+    // Darum holt chat-medien.js das Medium per fetch und zeigt es als blob:.
+    // Ohne await: das Wiederherstellen soll nicht auf das Netz warten.
+    medienHolen(log);
   } finally {
     setTimeout(() => { restoring = false; }, 50);
   }
@@ -539,7 +592,10 @@ async function restoreOnBoot() {
 
 function bindNewChatButton() {
   document.addEventListener("click", (event) => {
-    const button = event.target.closest('.nav-button[data-view="start"][data-icon="plus"]');
+    // Seit der Vier-Gruppen-Spur (Mockup V11, Bildschirm 19) heisst der Knopf
+    // "Chat" und traegt das Chat-Symbol; das Plus-Icon bleibt als Altform
+    // erkannt, falls eine zwischengespeicherte Huelle noch die alte Leiste hat.
+    const button = event.target.closest('.nav-button[data-view="start"][data-icon="chat"], .nav-button[data-view="start"][data-icon="plus"]');
     if (button) newChat();
   }, true);
 }

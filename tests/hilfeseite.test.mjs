@@ -33,7 +33,10 @@ test("jeder genannte Arbeitsbereich existiert wirklich", () => {
   // Tausch (Design V11, Freigabe 2026-08-15) heisst "Coding" -> "Programmieren"
   // und "Arbeitsbereich" -> "Meine Sachen": beides Fachjargon, den ein
   // Anfaenger nicht deuten kann. Genau dieser Test hat die Luecke gefunden.
-  const bereiche = ["Neu", "Suche", "Programmieren", "Meine Sachen", "Dateien", "Verlauf", "Einstellungen"];
+  // Seit der Vier-Gruppen-Spur (Mockup V11, Bildschirm 19, 2026-08-15):
+  // Reden / Arbeiten / Meine Sachen / Betrieb, 13 Eintraege plus das
+  // Einstellungen-Zahnrad unten.
+  const bereiche = ["Chat", "Sprechen", "Im Netz suchen", "Bilder erstellen", "Programmieren", "Browser bedienen", "Aufträge", "Verlauf", "Meine Dateien", "Dateien", "Systemzustand", "KI-Modelle", "Speicher", "Einstellungen"];
   for (const name of bereiche) {
     assert.ok(hilfe.includes(`<dt>${name}</dt>`), `Hilfe nennt "${name}" nicht`);
     assert.ok(
