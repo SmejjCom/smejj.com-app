@@ -28,7 +28,8 @@ const ALLE_SPERREN = [
   "scripts/check-start-lock.mjs",
   "scripts/check-security-lock.mjs",
   "scripts/check-deploy-lock.mjs",
-  "scripts/check-admin-lock.mjs"
+  "scripts/check-admin-lock.mjs",
+  "scripts/check-abo-lock.mjs"
 ];
 
 // Die Startseiten-Liste wird NICHT aus dem Skript importiert: check-start-lock.mjs
