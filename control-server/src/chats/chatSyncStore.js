@@ -35,14 +35,46 @@ export function idriveConfig(env = process.env) {
   return { endpoint, accessKey, secretKey, bucket, region: env.IDRIVE_E2_REGION || "us-west-2" };
 }
 
-// Aus der Sitzung eine stabile, dateisystem-sichere Kontokennung machen —
-// dieselbe Regel wie im Frontend (auth-page.js), damit beide Seiten denselben
-// Nutzer meinen.
+// Aus der Sitzung eine stabile, dateisystem-sichere Kontokennung machen.
+//
+// BEFUND 2026-08-15 (A-bis-Z-Pruefung, Runde 3): Hier stand
+//   `user_${email.replace(/[^a-z0-9]+/g, "_")}`
+// Diese Regel ist NICHT EINDEUTIG. Jedes Sonderzeichen wurde zu "_", und damit
+// landeten verschiedene, unabhaengig registrierbare Konten im GLEICHEN Ordner:
+//
+//   max.mustermann@example.com  ─┐
+//   max-mustermann@example.com   ├─> alle: chats/user_max_mustermann_example_com/
+//   max_mustermann@example.com   │
+//   max+mustermann@example.com  ─┘
+//
+// Wer sich mit der Bindestrich-Schreibweise anmeldete, las und ueberschrieb die
+// Gespraeche desjenigen mit der Punkt-Schreibweise. Das ist keine theoretische
+// Kollision: bei jedem Anbieter mit freier Adresswahl sind das verschiedene
+// Postfaecher, und der Angreifer sucht sich die passende Variante selbst aus.
+//
+// Gefunden, bevor es Schaden anrichten konnte: der Sync steht fail-closed
+// hinter SMEJJ_CHAT_SYNC_ENABLED und war nie eingeschaltet. Deshalb gibt es
+// keinen Datenbestand und BEWUSST KEINEN Rueckfall auf die alte Regel — ein
+// Rueckfall wuerde genau das Leck offenhalten, das hier geschlossen wird.
+//
+// Die neue Regel bildet ueber SHA-256 ab. Das bringt zweierlei:
+//   1. Eindeutig. Zwei verschiedene Adressen ergeben nie denselben Ordner.
+//   2. Die E-Mail-Adresse steht nicht mehr im Ablagepfad. Wer die Dateiliste
+//      des Eimers sieht, sieht keine Postfaecher mehr — Datenminimierung, ohne
+//      dass es etwas kostet.
+//
+// Zuordnung bleibt moeglich: Aus der Adresse laesst sich der Ordner jederzeit
+// nachrechnen (fuer Support und DSGVO-Auskunft reicht genau das).
+//
+// 128 Bit (32 Hex-Zeichen) — bei dieser Menge ist eine Kollision
+// ausgeschlossen, und der Pfad bleibt kurz.
+import { createHash } from "node:crypto";
+
 export function kontoKennung(user) {
   const email = String(user?.email || "").trim().toLowerCase();
-  if (email) return `user_${email.replace(/[^a-z0-9]+/g, "_")}`;
-  const id = String(user?.sub || user?.userId || "").trim().toLowerCase();
-  return id ? `user_${id.replace(/[^a-z0-9]+/g, "_")}` : "";
+  if (email) return `user_${createHash("sha256").update(`email:${email}`).digest("hex").slice(0, 32)}`;
+  const id = String(user?.sub || user?.userId || "").trim();
+  return id ? `user_${createHash("sha256").update(`id:${id}`).digest("hex").slice(0, 32)}` : "";
 }
 
 // Chat-Kennungen kommen vom Client. Alles, was nicht wie eine Kennung aussieht,

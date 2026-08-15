@@ -18,11 +18,49 @@ test("syncAktiv: aus ohne Flag, an mit Flag", () => {
   assert.equal(syncAktiv({ SMEJJ_CHAT_SYNC_ENABLED: "true" }), true);
 });
 
-test("kontoKennung: gleiche Regel wie das Frontend, leere Sitzung ergibt leer", () => {
-  assert.equal(kontoKennung({ email: "SmejjCom@Gmail.com" }), "user_smejjcom_gmail_com");
-  assert.equal(kontoKennung({ email: "smejjcom+test@gmail.com" }), "user_smejjcom_test_gmail_com");
+test("kontoKennung: stabil, dateisicher, leere Sitzung ergibt leer", () => {
+  // Stabil: dieselbe Adresse ergibt immer denselben Ordner, unabhaengig von
+  // Gross-/Kleinschreibung und Leerzeichen — sonst verlaere ein Nutzer beim
+  // naechsten Anmelden seinen Verlauf.
+  const a = kontoKennung({ email: "SmejjCom@Gmail.com" });
+  assert.equal(a, kontoKennung({ email: "  smejjcom@gmail.com  " }));
+  assert.match(a, /^user_[0-9a-f]{32}$/, "Kennung ist nicht dateisicher");
   assert.equal(kontoKennung({}), "");
   assert.equal(kontoKennung(null), "");
+});
+
+test("kontoKennung: VERSCHIEDENE Konten bekommen NIE denselben Ordner", () => {
+  // BEFUND 2026-08-15: die alte Regel ersetzte jedes Sonderzeichen durch "_".
+  // Diese fuenf Adressen ergaben damit alle `user_max_mustermann_example_com`
+  // — wer sich mit der Bindestrich-Schreibweise anmeldete, las und ueberschrieb
+  // die Gespraeche desjenigen mit der Punkt-Schreibweise.
+  //
+  // Das ist die kaputte Probe zum Waechter: mit der alten Regel faellt dieser
+  // Test um, mit der neuen nicht.
+  const konten = [
+    "max.mustermann@example.com",
+    "max-mustermann@example.com",
+    "max_mustermann@example.com",
+    "max+mustermann@example.com",
+    "maxmustermann@example.com",
+    "max.mustermann@example.co",
+    "max.mustermann@examples.com"
+  ];
+  const kennungen = konten.map((email) => kontoKennung({ email }));
+  assert.equal(new Set(kennungen).size, konten.length,
+    `Kollision: ${konten.length} Konten ergaben nur ${new Set(kennungen).size} Ordner`);
+
+  // Auch quer ueber die beiden Quellen (E-Mail und Konto-ID) darf nichts
+  // zusammenfallen: sonst uebernaehme eine ID den Ordner einer Adresse.
+  assert.notEqual(kontoKennung({ email: "abc" }), kontoKennung({ userId: "abc" }));
+});
+
+test("kontoKennung: die Adresse steht NICHT mehr im Ablagepfad", () => {
+  // Nebengewinn der Umstellung: wer die Dateiliste des Eimers sieht, sieht
+  // keine Postfaecher mehr. Datenminimierung, ohne dass es etwas kostet.
+  const kennung = kontoKennung({ email: "geheim.person@example.com" });
+  assert.ok(!kennung.includes("geheim"), "die Adresse steckt noch im Pfad");
+  assert.ok(!kennung.includes("example"), "die Domain steckt noch im Pfad");
 });
 
 test("chatKennungGueltig: Pfad-Tricks werden abgewiesen", () => {
