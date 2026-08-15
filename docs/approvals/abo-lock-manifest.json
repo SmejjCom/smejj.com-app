@@ -1,14 +1,14 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-15T22:27:41.355Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-15 (Chat, zweite ausdrueckliche Bestaetigung 'Ja, auch stempeln'): account-privacy.js V11-Anzeige (Zeile 'Bezahlt wurde mit' via renderZugang/paidEmail, Panel-Titel 'Mein Plan'/'Meine Daten', Daten-Karten, Stilmarke b47) und account-sessions.js Panik-Block 'Ueberall abmelden' (Bildschirm 46). Preise, Stripe-Weg und Kuendigung unveraendert.",
+  "frozenAt": "2026-08-15T22:50:07.042Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-15 (Chat 'Ja, auch stempeln', gleicher Umfang): Konto-Tab-Leiste an die schon freigegebenen Panel-Titel angeglichen — Abo & Zahlungen -> Mein Plan, Daten & Datenschutz -> Meine Daten. Nur Beschriftung, Preise/Stripe unveraendert.",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "959087778a74f4d49530a58c85b3f40402813e617a1b4ba5c0e2eb15df639925",
     "control-server/src/billing/stripeWebhookVerify.js": "e7a42ade4bc0e78e718bac8cc24cf30e21f46aec70aac8c2d6bcc7ce2a99e6b6",
     "control-server/src/billing/stripeEventApply.js": "d15cac9a4444d6b7a15236aea789f25afd547678a059305cf162372ac89487ef",
     "control-server/src/billing/subscriptionStore.js": "5ccf64346bd10986da2c94c71738b8c766b59654d23af00196cbe3e179ea5a2a",
-    "public/account-privacy.js": "9e2512142c89a917c34ffbf1f1851c7dd5059a31f224409f804864a789279688",
+    "public/account-privacy.js": "2d257747f68f274dbcc1ee53fa92e0f5b463ebb4d0bb1d499b2c408648dd1ed0",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/danke-abo.html": "14e2ff0dd497692bddd2add5593f7a3e82d42dfe60c62119fcfb97a912ac5ff9",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",

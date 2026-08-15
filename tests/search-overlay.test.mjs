@@ -34,13 +34,27 @@ test("index.html traegt Overlay-Markup und Stylesheet", () => {
   assert.match(html, /<section id="search" class="view" aria-label="Suche">/);
 });
 
+// Kennungen NICHT mehr hart pinnen: der feste Pin (erst ohne ?v=, dann
+// pin-20260806) riss bei jedem legitimen Marken-Bump und stand wochenlang rot,
+// ohne einen echten Fehler zu melden. Die eigentliche Regel ist: ALLE
+// Importstellen desselben Moduls tragen DIESELBE Kennung — sonst entsteht
+// eine zweite Modulinstanz. Genau das wird jetzt geprueft.
+function kennung(quelle, modul) {
+  const treffer = quelle.match(new RegExp(`from "[^"]*${modul}\\.js(\\?v=[^"]*)?"`));
+  return treffer ? treffer[1] || "(ohne)" : null;
+}
+
 test("Nav-Knopf Suche oeffnet das Overlay, nicht die Seite", () => {
-  assert.match(appJs, /import \{ openSearchOverlay \} from "\.\/search-overlay\.js";/);
+  assert.ok(kennung(appJs, "search-overlay"), "app.js importiert search-overlay.js nicht mehr");
   assert.match(appJs, /button\.dataset\.view === "search" && openSearchOverlay\(\)/);
 });
 
 test("Cmd+K schaltet das Overlay und search.js reicht die Datenwege durch", () => {
-  assert.match(searchJs, /import \{ initSearchOverlay, toggleSearchOverlay \} from "\.\/search-overlay\.js";/);
+  assert.equal(
+    kennung(searchJs, "search-overlay"),
+    kennung(appJs, "search-overlay"),
+    "search.js und app.js importieren search-overlay.js unter verschiedenen Kennungen — zweite Modulinstanz"
+  );
   assert.match(searchJs, /if \(toggleSearchOverlay\(\)\) return;/);
   assert.match(searchJs, /initSearchOverlay\(\{/);
   // Chat-Treffer tragen das Chat-Objekt (Ausschnitt, Zeit, Titel im Overlay).
@@ -55,7 +69,11 @@ test("Overlay hebt sicher hervor und bedient die Tastatur", () => {
   assert.match(overlayJs, /"ArrowDown"/);
   assert.match(overlayJs, /"Escape"/);
   // Gleicher chat-store-Spezifizierer wie search.js — sonst ZWEITE Modulinstanz.
-  assert.match(overlayJs, /from "\/assets\/chat-store\.js\?v=pin-20260806"/);
+  assert.equal(
+    kennung(overlayJs, "chat-store"),
+    kennung(searchJs, "chat-store"),
+    "search-overlay.js und search.js importieren chat-store.js unter verschiedenen Kennungen — zweite Modulinstanz"
+  );
 });
 
 test("Overlay-Zeilen halten die 44-px-Touch-Regel", () => {
