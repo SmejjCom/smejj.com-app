@@ -143,3 +143,35 @@ test("an einer geloeschten Huelle gibt es keinen einzigen Knopf mehr", () => {
   assert.ok(!html.includes("data-aktion="), "geloeschte Konten duerfen keine Aktionen anbieten");
   assert.match(html, /gelöscht/);
 });
+
+// ---- C · Herkunft der eigenen Rolle -----------------------------------------
+//
+// Am 2026-08-14 loeschte ein einziger fehlerhafter Aufruf die Zeabur-Umgebung.
+// Mit SMEJJ_ADMIN_OWNER_EMAILS war der gesamte Adminzugang weg, weil im Konto
+// des Betreibers nur die Rolle "user" steht. Die Konsole erwaehnte die Variable
+// zwar, nannte aber die Folge nicht.
+
+function rollen(actor) {
+  return ansichten().rollen({ actor, permissions: { "users.read": "allow" } });
+}
+
+test("Bootstrap-Rechte werden als Einzelrisiko benannt, nicht nur erwaehnt", () => {
+  const html = rollen({ role: "owner", roleSource: "bootstrap", storedRole: "user" });
+  assert.match(html, /SMEJJ_ADMIN_OWNER_EMAILS/);
+  assert.match(html, /ist die Konsole für alle zu/, "die FOLGE muss dastehen, nicht nur die Herkunft");
+  assert.match(html, /control_umgebung_wiederherstellen/, "der Weg zurueck gehoert dazu");
+  assert.match(html, /user/, "die tatsaechlich gespeicherte Rolle muss sichtbar sein");
+});
+
+test("wer seine Rolle aus dem Konto hat, bekommt keine Warnung", () => {
+  const html = rollen({ role: "owner", roleSource: "store", storedRole: "owner" });
+  assert.ok(!html.includes("SMEJJ_ADMIN_OWNER_EMAILS"),
+    "ohne Bootstrap-Herkunft waere die Warnung nur Laerm");
+});
+
+test("die Rollen-Ansicht bietet KEINEN Knopf zur Selbstbefoerderung", () => {
+  const html = rollen({ role: "owner", roleSource: "bootstrap", storedRole: "user" });
+  assert.ok(!html.includes("data-aktion"),
+    "Rollenvergabe ist Vier-Augen — ein Knopf hier haette das mit einem Klick ausgehebelt");
+  assert.match(html, /Vier-Augen/);
+});
