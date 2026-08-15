@@ -30,15 +30,41 @@ fi
 cd "$ROOT" 2>/dev/null || { echo "github_kostenfrei: $ROOT nicht lesbar." >&2; exit 1; }
 
 # --- Nur das PRIVATE Repo ist betroffen ------------------------------------
-# Im oeffentlichen Frontend-Repo sind Actions unbegrenzt frei; dort waere ein
-# Block sachlich falsch. Erkennung ueber die Push-Adresse von origin.
+# In OEFFENTLICHEN Repos sind Actions unbegrenzt frei (Regel Abschnitt 2);
+# dort waere ein Block sachlich falsch.
+#
+# WARUM GEMESSEN STATT AUFGEZAEHLT (Befund 2026-08-15): Hier stand eine feste
+# Namensliste mit genau einem Eintrag (smejj-app-frontend). Inzwischen sind
+# smejj.com-app, smejj-control, smejj-site und imild-site ebenfalls oeffentlich
+# — die Liste wurde nie nachgezogen. Dadurch blockierte der Waechter einen
+# Workflow, der nachweislich nichts kostet, und begruendete es mit "privates
+# Repo". Eine Liste, die von aussen veraltet, ist keine Messung.
+#
+# FAIL-CLOSED: Nur ein eindeutiges "public" von der GitHub-API oeffnet das Tor.
+# Netzfehler, fehlendes curl, Zeitueberschreitung, unklare Antwort — alles
+# fuehrt zur vollen Pruefung. Offline blockiert also weiterhin, und das ist
+# richtig: lieber ein Push zu viel geprueft als eine Rechnung zu wenig.
 REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
-case "$REMOTE" in
-  *smejj-app-frontend*)
-    echo "github_kostenfrei: oeffentliches Repo ($REMOTE) — Actions dort kostenlos, keine Pruefung."
-    exit 0
-    ;;
-esac
+
+repo_ist_oeffentlich() {
+  # "…/OWNER/NAME.git" oder "…:OWNER/NAME.git" -> "OWNER/NAME"
+  pfad=$(printf '%s' "$REMOTE" | sed -e 's|^.*github\.com[:/]||' -e 's|\.git$||')
+  case "$pfad" in
+    */*) ;;
+    *) return 1 ;;   # keine erkennbare GitHub-Adresse -> pruefen
+  esac
+  command -v curl >/dev/null 2>&1 || return 1
+  # Ohne Anmeldung: ein privates Repo antwortet 404, ein oeffentliches 200.
+  antwort=$(curl -s -m 8 -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${pfad}" 2>/dev/null) || return 1
+  printf '%s' "$antwort" | grep -q '"private"[[:space:]]*:[[:space:]]*false' || return 1
+  return 0
+}
+
+if [ -z "${SMEJJ_KOSTEN_SICHTBARKEIT_PRUEFEN:-}" ] && repo_ist_oeffentlich; then
+  echo "github_kostenfrei: oeffentliches Repo ($REMOTE) — Actions dort kostenlos, keine Pruefung."
+  exit 0
+fi
 
 FUNDE=0
 melde() {
