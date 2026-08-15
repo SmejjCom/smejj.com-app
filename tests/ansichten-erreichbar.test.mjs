@@ -97,3 +97,16 @@ test("kein Knopf zeigt auf eine Ansicht, die es nicht gibt", () => {
   const leer = [...new Set(ziele)].filter((z) => !vorhanden.has(z));
   assert.deepEqual(leer, [], `Diese Knoepfe zeigen ins Leere: ${leer.join(", ")}`);
 });
+
+
+test("jede App-Route steht auch in der 404-Weiche", () => {
+  // GitHub Pages liefert fuer /pfad die 404.html; nur Routen aus deren
+  // ROUTES-Liste werden zur App umgeleitet. Fehlt eine, zeigt ihr
+  // Direktaufruf die echte 404-Seite — genau so blieben /papierkorb und
+  // /bereiche am 2026-08-15 unerreichbar, obwohl die Ansichten fertig waren.
+  const routen = fs.readFileSync("public/view-routes.js", "utf8");
+  const weiche = fs.readFileSync("public/404.html", "utf8");
+  const pfade = [...routen.matchAll(/^\s+\w+: "(\/[\w-]+)",?$/gm)].map((m) => m[1]);
+  const fehlend = pfade.filter((p) => p !== "/" && !weiche.includes(`"${p}"`));
+  assert.deepEqual(fehlend, [], `Diese Routen fehlen in public/404.html ROUTES: ${fehlend.join(", ")}`);
+});
