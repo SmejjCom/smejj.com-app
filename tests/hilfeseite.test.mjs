@@ -29,9 +29,11 @@ test("die Hilfeseite liegt im Precache", () => {
 });
 
 test("jeder genannte Arbeitsbereich existiert wirklich", () => {
-  // "Projekte" heisst in der Oberflaeche seit 2026-08-13 "Arbeitsbereich"
-  // (index.html: title="Arbeitsbereich"). Die Hilfe folgt der Oberflaeche.
-  const bereiche = ["Neu", "Suche", "Coding", "Arbeitsbereich", "Dateien", "Verlauf", "Einstellungen"];
+  // Die Hilfe folgt der Oberflaeche, nicht umgekehrt. Seit dem Klartext-
+  // Tausch (Design V11, Freigabe 2026-08-15) heisst "Coding" -> "Programmieren"
+  // und "Arbeitsbereich" -> "Meine Sachen": beides Fachjargon, den ein
+  // Anfaenger nicht deuten kann. Genau dieser Test hat die Luecke gefunden.
+  const bereiche = ["Neu", "Suche", "Programmieren", "Meine Sachen", "Dateien", "Verlauf", "Einstellungen"];
   for (const name of bereiche) {
     assert.ok(hilfe.includes(`<dt>${name}</dt>`), `Hilfe nennt "${name}" nicht`);
     assert.ok(

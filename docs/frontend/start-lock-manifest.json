@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-15T08:46:21.019Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-15 (schriftlich, Chat): 'Du kannst V11 umsetzen ... Ich gebe dir alle Rechte frag mich nicht' und 'Du Kannst Deployen, dann live gehen, testen, muss 100 % fertig sein'. Umgesetzt: Design V11 Stufe 1 — (a) public/composer-sendetaste.js: ein Hauptknopf fuer zwei Zwecke, leer = Sprachmodus, getippt = senden; (b) public/design-v11.css: eine Farbquelle (ein Cyanton statt drei), Glas mit Lichtkante oben, Haarstrich statt Rahmen, 8px-Rundung als dokumentierte Ausnahme zu eckig.css auf ausdrueckliche Ansage 'leichter Knick'; (c) sw.js: neuer Eintrag im Vorrat, CACHE_NAME v297->v298. Der Sendeweg selbst wurde nicht angefasst.",
+  "frozenAt": "2026-08-15T08:59:45.656Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-15 (schriftlich): V11 vollstaendig umsetzen, alle Rechte. Design V11 Stufe 2 — Klartext statt Fachjargon in der Oberflaeche. Ersetzt: 'Modus und Kosten'->'Wie smejj antwortet', 'IDrive e2 Status'->'Wo deine Sachen liegen', 'Lokale Dateien und Snapshots'->'Meine Dateien', 'Free-Schutz'->'Kostenschutz', 'App-Modus'->'Wo deine Einstellungen liegen', 'Merken und Suchen'->'Was smejj sich merkt', 'Aktion blockiert'->'Das geht gerade nicht', 'Coding'->'Programmieren', 'Arbeitsbereich'->'Meine Sachen', 'Memory'->'Gedaechtnis' sowie neun Untertitel und zwei aria-label. Nur Anzeigetexte, keine Bezeichner, keine ids, keine data-Attribute. Hilfeseite und tests/hilfeseite.test.mjs nachgezogen (der Waechter hat die Kopplung gefunden).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "bdc3e74357f888ba642a5e97f955196f358873333fbe483bc3990de1dd8decd0",
+    "public/index.html": "5235ff7785321ffe630fc0dd49a1d6184b215b4de7cba0970d68189b2c8c6336",
     "public/styles.css": "5012159968d7de2882e501ed047c69f78fa3a3001f68ed9fd715145a50af32b4",
     "public/start-styles.css": "42a4ed0ef134340ecacb095d8ab4f439e41bdcd07b64246b466ef52f133bfdd1",
     "public/start-glass.css": "f986d76a91f61d3af7397df2caef2965c3ba1d96d3f6d2625d5e7e7ba2e0a1bc",
