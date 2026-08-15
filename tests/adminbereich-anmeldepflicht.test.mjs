@@ -288,3 +288,47 @@ test("ein Netz- oder Serverfehler macht die Konsole NICHT sichtbar", () => {
       `${datei}: der Netzfehler-Fall bietet kein Wiederholen an`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Waechter 5: Klickjacking-Schutz (Befund 2026-08-14, zweite Pruefrunde).
+//
+// public/frame-guard.js gab es laengst — er hing aber nur an 3 von 12 Seiten,
+// und der Adminbereich war NICHT dabei. Dasselbe Muster wie beim Tuersteher:
+// der Schutz war gebaut, nur nicht ueberall angeschlossen.
+//
+// Warum er ueberhaupt als Skript existiert: `frame-ancestors` wirkt nur als
+// HTTP-Kopfzeile, GitHub Pages Free kann keine setzen, und eine meta-CSP
+// ignoriert die Direktive laut Spezifikation. Auf dem Control-Server faengt
+// dessen eigene Kopfzeile `x-frame-options: DENY` — dort ist das Modul
+// absichtlich nicht in der Ausliefer-Liste.
+// ---------------------------------------------------------------------------
+
+/** Laedt die Seite den Klickjacking-Schutz? Als Funktion, fuer die kaputte Probe. */
+function ladeFrameSchutz(html) {
+  return /<script[^>]+src="\/frame-guard\.js/.test(html);
+}
+
+test("jede Adminseite wehrt Klickjacking ab", () => {
+  const ohne = adminSeiten("public/admin")
+    .filter((datei) => !ladeFrameSchutz(fs.readFileSync(datei, "utf8")));
+  assert.deepEqual(ohne, [], `Adminseiten ohne Klickjacking-Schutz:\n${ohne.join("\n")}`);
+});
+
+test("auch die Seiten mit echten Klickzielen wehren ihn ab", () => {
+  // Genau die, auf denen ein abgefangener Klick etwas anrichtet: Gespraeche
+  // loeschen, Abo bestaetigen, Konto oeffnen.
+  for (const datei of ["public/verlauf.html", "public/danke-abo.html", "public/profile/index.html"]) {
+    assert.ok(ladeFrameSchutz(fs.readFileSync(datei, "utf8")), `${datei}: kein Klickjacking-Schutz`);
+  }
+});
+
+test("der Waechter merkt es, wenn der Schutz fehlt (kaputte Probe)", () => {
+  assert.equal(ladeFrameSchutz("<!doctype html><html><head></head><body></body></html>"), false);
+  // Ein aehnlich heissendes Skript zaehlt nicht.
+  assert.equal(ladeFrameSchutz('<script src="/frame-guard-attrappe.js"></script>'), false);
+});
+
+test("Quelle und Spiegel der Konsole tragen auch diesen Schutz", () => {
+  assert.ok(ladeFrameSchutz(fs.readFileSync("control-server/admin-ui/index.html", "utf8")),
+    "die QUELLE index.html wehrt kein Klickjacking ab — beim naechsten Spiegeln waere er weg");
+});
