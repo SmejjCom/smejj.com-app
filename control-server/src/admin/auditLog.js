@@ -58,6 +58,35 @@ export function redact(value, depth = 0) {
   return null;
 }
 
+/**
+ * Das Ziel einer Aktion, so dass man es SPAETER noch lesen kann.
+ *
+ * BEFUND 2026-08-15 (A-bis-Z-Pruefung, im Live-Audit-Log gesehen): hier stand
+ * `String(target || "")`. Zwei Aufrufer in adminAutopilotAktionen.js uebergeben
+ * ein Objekt (`{ type: "autopilot", id }`) — daraus machte String() die
+ * Zeichenkette "[object Object]". In der Spalte "Ziel" stand also bei jeder
+ * Autopiloten-Aktion, WAS getan wurde, aber nicht WORAN.
+ *
+ * Das wiegt hier schwerer als anderswo: das Audit-Log ist anfuegend und
+ * unveraenderlich. Ein verlorenes Ziel ist dauerhaft verloren — die bereits
+ * geschriebenen Eintraege bleiben deshalb, wie sie sind (ein geschoenter
+ * Nachweis waere schlimmer als ein sichtbar defekter).
+ *
+ * Die Pruefung sitzt bewusst HIER und nicht bei den zwei Aufrufern: so kann
+ * kein kuenftiger Aufrufer denselben Fehler noch einmal machen.
+ */
+export function zielAlsText(ziel) {
+  if (ziel === null || ziel === undefined) return "";
+  if (typeof ziel === "string") return ziel.slice(0, 200);
+  if (typeof ziel !== "object") return String(ziel).slice(0, 200);
+  // Aus { type: "autopilot", id: "brueckenwaechter" } wird
+  // "autopilot:brueckenwaechter" — lesbar, kurz, eindeutig.
+  const paare = Object.entries(ziel)
+    .filter(([, wert]) => wert !== null && wert !== undefined && typeof wert !== "object")
+    .map(([, wert]) => String(wert));
+  return (paare.length ? paare.join(":") : JSON.stringify(ziel)).slice(0, 200);
+}
+
 function buildEntry({ actor, action, target, before, after, reason, ip }, prevHash, nowIso) {
   const entry = {
     version: 1,
@@ -66,7 +95,7 @@ function buildEntry({ actor, action, target, before, after, reason, ip }, prevHa
     actorRole: String(actor?.role || "").slice(0, 40),
     actorRoleSource: String(actor?.roleSource || "store").slice(0, 20),
     action: String(action || "").slice(0, 80),
-    target: String(target || "").slice(0, 200),
+    target: zielAlsText(target),
     before: redact(before),
     after: redact(after),
     reason: String(reason || "").slice(0, MAX_TEXT),

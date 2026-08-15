@@ -16,6 +16,19 @@
 // Warum es diesen Autopiloten braucht: Ein Speicher, den man nur lesen kann,
 // sieht von aussen vollstaendig gesund aus. Nur ein echter Schreibversuch
 // findet das — und genau den macht dieser Lauf.
+//
+// NACHTRAG, ehrlich: Der Ausfall vom 15.08. war voruebergehend. Eine
+// Parallelsitzung hat waehrenddessen die Zeabur-Umgebung repariert
+// ("der Eimer darf NICHT aus env.local kommen"); in diesem Fenster stand der
+// falsche Eimer, danach schrieb der Server wieder (Audit-Eintrag 00:34).
+// Der Waechter bleibt trotzdem: Dass ein solcher Zustand ueberhaupt eine
+// halbe Stunde lang unbemerkt bleiben konnte, ist der eigentliche Befund.
+//
+// GRENZE, ebenfalls ehrlich: Geschrieben wird nach admin/diagnose, nicht nach
+// admin/audit. Eine Probe im Audit-Pfad wuerde vom Leser als Eintrag
+// aufgesammelt und damit den Nachweis verfaelschen. Ein Rechteproblem, das
+// AUSSCHLIESSLICH admin/audit betraefe, faende dieser Lauf deshalb nicht —
+// ein Schluessel- oder Eimerproblem, und das war der reale Fall, sehr wohl.
 import { createRecordStore } from "../admin/recordStore.js";
 
 /** Immer dieselbe Kennung: die Probe wird ueberschrieben, nicht angehaeuft. */

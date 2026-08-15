@@ -3,7 +3,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  __clearAuditMemoryForTests, appendAuditEntry, entryHash, monthSpan, readAuditPage, redact, verifyAuditChain
+  __clearAuditMemoryForTests, appendAuditEntry, entryHash, monthSpan, readAuditPage, redact, verifyAuditChain,
+  zielAlsText
 } from "./auditLog.js";
 
 const ENV = {}; // keine IDrive-Konfiguration -> Memory-Zweig
@@ -311,4 +312,45 @@ test("bleibt der Speicher weg, sagt die Antwort WARUM", async () => {
   assert.equal(page.ok, false);
   assert.equal(page.error, "audit_list_failed");
   assert.equal(page.grund, "s3_status_503", "der Statuscode des Speichers muss mitkommen");
+});
+
+// ---- Ziel-Feld: nie wieder "[object Object]" --------------------------------
+//
+// Befund 2026-08-15, im LIVE-Audit-Log gesehen: zwei Aufrufer in
+// adminAutopilotAktionen.js uebergeben `target: { type: "autopilot", id }`.
+// String() machte daraus "[object Object]" — in der Spalte "Ziel" stand also
+// bei jeder Autopiloten-Aktion, WAS getan wurde, aber nicht WORAN. Im
+// anfuegenden, unveraenderlichen Log ist das dauerhaft verloren.
+
+test("ein Objekt als Ziel wird lesbar, nicht zu [object Object]", () => {
+  assert.equal(zielAlsText({ type: "autopilot", id: "brueckenwaechter" }), "autopilot:brueckenwaechter");
+});
+
+test("Zeichenketten bleiben unveraendert — der haeufigste Fall", () => {
+  assert.equal(zielAlsText("konto@example.invalid"), "konto@example.invalid");
+  assert.equal(zielAlsText("admin/index/users.json"), "admin/index/users.json");
+});
+
+test("leere Ziele bleiben leer, statt 'null' oder 'undefined' zu heissen", () => {
+  assert.equal(zielAlsText(null), "");
+  assert.equal(zielAlsText(undefined), "");
+  assert.equal(zielAlsText(""), "");
+});
+
+test("kein Ziel wird laenger als 200 Zeichen", () => {
+  assert.equal(zielAlsText("x".repeat(500)).length, 200);
+  assert.equal(zielAlsText({ a: "y".repeat(500) }).length, 200);
+});
+
+test("ein Eintrag mit Objekt-Ziel ist hinterher noch zuzuordnen", async () => {
+  __clearAuditMemoryForTests();
+  await appendAuditEntry({
+    actor: { email: "a@b.c", role: "owner" },
+    action: "autopilot.wartung.ein",
+    target: { type: "autopilot", id: "container-puls" },
+    reason: "Pruefung des Ziel-Feldes"
+  }, { env: {} });
+  const seite = await readAuditPage({ limit: 1 }, { env: {} });
+  assert.equal(seite.entries[0].target, "autopilot:container-puls");
+  assert.ok(!seite.entries[0].target.includes("object Object"));
 });
