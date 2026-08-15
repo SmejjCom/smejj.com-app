@@ -18,6 +18,12 @@ const profilePictureStore = fs.readFileSync(path.join(publicDir, "profile-pictur
 // Zwei weitere t()-Oberflaechen: das Such-Overlay traegt die Bereichsnamen,
 // die Begruessung nach dem Login die Plan-Karte.
 const searchOverlay = fs.readFileSync(path.join(publicDir, "search.js"), "utf8");
+// Die Startseite selbst ist ebenfalls eine t()-Oberflaeche: start-chips.js
+// uebersetzt Hero, Platzhalter und die Chip-Beschriftungen, deren deutsche
+// Quelltexte im Markup stehen (Aufschrift UND data-chip). Ohne diese Datei
+// galten die Chip-Schluessel als "verwaist", obwohl sie taeglich benutzt
+// werden — der Test schaute schlicht nicht dorthin.
+const startseiteHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welcome.js"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
@@ -56,7 +62,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore
-    + searchOverlay + onboardingWelcome;
+    + searchOverlay + onboardingWelcome + startseiteHtml;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }

@@ -29,7 +29,11 @@ test("die Hilfeseite liegt im Precache", () => {
 });
 
 test("jeder genannte Arbeitsbereich existiert wirklich", () => {
-  const bereiche = ["Neu", "Suche", "Coding", "Projekte", "Dateien", "Verlauf", "Einstellungen"];
+  // "Arbeitsbereich" statt "Projekte" (Umbenennung 2026-08-13): die alte
+  // Datei-Flaeche heisst jetzt Arbeitsbereich, "Projekte" gehoert seither den
+  // Chat-Gruppen im Verlauf. Der Test trug den alten Namen fest verdrahtet
+  // weiter und meldete die vollzogene Umbenennung als Fehler.
+  const bereiche = ["Neu", "Suche", "Coding", "Arbeitsbereich", "Dateien", "Verlauf", "Einstellungen"];
   for (const name of bereiche) {
     assert.ok(hilfe.includes(`<dt>${name}</dt>`), `Hilfe nennt "${name}" nicht`);
     assert.ok(

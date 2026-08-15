@@ -3,6 +3,8 @@
 // damit der Flow erstmals unit-testbar ist (vorher nur live verifiziert).
 import crypto from "node:crypto";
 
+import { merkeOauthBestaetigung } from "../../control-server/src/auth/oauthKonto.js";
+
 export function createGoogleAuthHandlers({
   config,
   json,
@@ -15,6 +17,10 @@ export function createGoogleAuthHandlers({
   signGoogleAuthState,
   verifyGoogleAuthState,
   verifyGoogleIdToken,
+  // Der Nutzerdatensatz wird hier festgehalten (siehe oauthKonto.js). Als
+  // Abhaengigkeit hereingereicht, damit der Flow ohne Objektspeicher testbar
+  // bleibt — dieselbe Bauart wie bei allem anderen in dieser Datei.
+  merkeKonto = merkeOauthBestaetigung,
   ROUTES,
   env = process.env
 }) {
@@ -47,6 +53,12 @@ export function createGoogleAuthHandlers({
       method: "google",
       permanent: "true"
     };
+    // Googles `email_verified` ist derselbe Nachweis, den der Magic-Link
+    // erbringt — er wurde hier bisher geprueft und dann weggeworfen. Ohne
+    // Eintrag im Verzeichnis bleibt der Adminbereich fuer Google-Anmeldungen
+    // dauerhaft zu (403 admin_email_not_verified). Eine Stoerung darf die
+    // Anmeldung nicht aufhalten, deshalb ohne await-Abbruch bewertet.
+    await merkeKonto(user, { env });
     const headers = {
       ...SECURITY_HEADERS,
       "Set-Cookie": serializeSessionCookie(user)
