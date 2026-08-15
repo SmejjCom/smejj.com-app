@@ -14,7 +14,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  argTyp, findeDienst, findeSetzMutation, istSammelform, setzeUmgebungswerte
+  argTyp, findeDienst, findeSetzMutation, sammelArgumente, setzeUmgebungswerte
 } from "../scripts/deploy/zeabur-umgebung-setzen.mjs";
 
 const PROJEKTE = {
@@ -97,12 +97,17 @@ test("findeDienst liefert Dienst- und Umgebungs-ID, nicht den falschen Dienst", 
   await assert.rejects(() => findeDienst("gibt-es-nicht", abfrage), /zeabur_dienst_nicht_gefunden/);
 });
 
-test("istSammelform erkennt genau die Formen, die die Umgebung ersetzen", () => {
-  assert.equal(istSammelform({ args: [{ name: "data" }] }), true);
-  assert.equal(istSammelform({ args: [{ name: "variables" }] }), true);
-  assert.equal(istSammelform({ args: [{ name: "envs" }] }), true);
-  assert.equal(istSammelform({ args: [{ name: "key" }, { name: "value" }] }), false);
-  assert.equal(istSammelform(null), false);
+test("sammelArgumente erkennt genau die Formen, die die Umgebung ersetzen", () => {
+  assert.deepEqual(sammelArgumente({ args: [{ name: "data", type: NONNULL("Map") }] }), ["data"]);
+  assert.deepEqual(sammelArgumente({ args: [{ name: "variables", type: NONNULL("String") }] }), ["variables"]);
+  assert.deepEqual(sammelArgumente({ args: [{ name: "envs", type: NONNULL("String") }] }), ["envs"]);
+  // Ein harmlos benanntes Argument mit Map-Typ ist ebenfalls eine Sammelform —
+  // auf den Namen allein waere kein Verlass.
+  assert.deepEqual(sammelArgumente({ args: [{ name: "payload", type: NONNULL("Map") }] }), ["payload"]);
+  assert.deepEqual(sammelArgumente({
+    args: [{ name: "key", type: NONNULL("String") }, { name: "value", type: NONNULL("String") }]
+  }), []);
+  assert.deepEqual(sammelArgumente(null), []);
 });
 
 test("findeSetzMutation MEIDET die Sammelform und nimmt key/value", async () => {
@@ -124,14 +129,16 @@ test("key/value-Form: ein Aufruf je Wert, Werte korrekt verteilt", async () => {
   assert.ok(setzAufrufe.every((a) => !/\{\s*value\s*\}/.test(a.query)));
 });
 
-test("NUR Sammelform vorhanden: nichts tun ist besser als die Umgebung loeschen", async () => {
+test("NUR Sammelform vorhanden: verweigern, bevor irgendetwas angefasst wird", async () => {
   const { abfrage, aufrufe } = abfrageMit(SCHEMA_NUR_SAMMEL);
-  assert.equal(await findeSetzMutation(abfrage), null);
   await assert.rejects(
     () => setzeUmgebungswerte("smejj-control", { A: "1" }, abfrage),
-    /zeabur_setz_mutation_nicht_gefunden/
+    /zeabur_ersetzende_mutation_verweigert/
   );
+  // Weder gesetzt noch ueberhaupt nach dem Dienst gefragt: der Abbruch kommt
+  // vor jedem anderen Schritt, damit nichts halb passiert.
   assert.equal(aufrufe.filter((a) => a.query.startsWith("mutation Setze")).length, 0);
+  assert.equal(aufrufe.filter((a) => a.query.includes("services(")).length, 0);
 });
 
 test("Umbau bei Zeabur: lieber ehrlich scheitern als still nichts tun", async () => {
