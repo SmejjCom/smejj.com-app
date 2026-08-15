@@ -1,0 +1,87 @@
+# smejj.com — Code-Sicherung nach Codeberg, als GitHub Action.
+#
+# WARUM ES DAS GIBT (2026-08-15): Autopilot 02 "Code-Sicherung" lief auf dem
+# Zeabur-Dienst smejj-autopilot-jobs. Dieser Dienst EXISTIERT NICHT MEHR — er
+# steht in keinem der beiden Zeabur-Projekte, und smejj-autopilot-jobs.zeabur.app
+# antwortet auf jeder Route mit 404. Seit dem 13.08. gab es damit keinen
+# Codeberg-Spiegel mehr; der gesamte Code lag nur noch bei GitHub.
+#
+# Diese Action ersetzt den Dienst, ohne einen neuen zu mieten: GitHub Actions
+# ist fuer dieses Konto kostenfrei (siehe Kostenregel des Projekts), und der
+# Lauf braucht keine eigene Maschine.
+#
+# EINMALIG NOETIG (macht der Betreiber selbst, nie ein Skript):
+#   1. Bei Codeberg einen Zugriffstoken erzeugen: Einstellungen → Anwendungen →
+#      "Token generieren", Recht: write:repository
+#   2. Hier im Repo hinterlegen: Settings → Secrets and variables → Actions →
+#      "New repository secret", Name: CODEBERG_TOKEN
+# Ohne dieses Secret bricht der Lauf sofort und sichtbar ab (fail-closed) —
+# er taeuscht keinen Erfolg vor.
+name: Code-Sicherung nach Codeberg
+
+on:
+  schedule:
+    # Taeglich 11:20 UTC — derselbe Zeitpunkt, den Autopilot 02 hatte.
+    - cron: "20 11 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  # Zwei gleichzeitige Spiegelungen wuerden sich beim Push ins Gehege kommen.
+  group: codeberg-spiegel
+  cancel-in-progress: false
+
+jobs:
+  spiegeln:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+        with:
+          # Volle Historie: ein Spiegel mit abgeschnittener Historie waere keine
+          # Sicherung. persist-credentials: false, damit der GitHub-Token nicht
+          # in der Git-Konfiguration liegt, waehrend wir nach Codeberg pushen.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Alle Zweige von origin holen
+        # actions/checkout holt standardmaessig nur den einen Branch. Das
+        # Spiegel-Skript liest aber refs/remotes/origin/* als Quelle der
+        # Wahrheit — ohne diesen Schritt wuerde genau ein Zweig gesichert.
+        run: |
+          git fetch --prune --tags origin "+refs/heads/*:refs/remotes/origin/*"
+          echo "Zweige bei origin: $(git for-each-ref --format='%(refname)' refs/remotes/origin | wc -l)"
+
+      - name: Codeberg-Zugang einrichten
+        env:
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CODEBERG_TOKEN}" ]; then
+            echo "::error::Secret CODEBERG_TOKEN fehlt — es wurde NICHTS gesichert. Anleitung steht im Kopf dieser Datei."
+            exit 1
+          fi
+          # Der Token landet in ~/.git-credentials des Laufers (wird nach dem
+          # Lauf verworfen) — NICHT in einer URL, die in Logs auftauchen koennte.
+          git config --global credential.helper store
+          printf 'https://%s:%s@codeberg.org\n' "smejj" "${CODEBERG_TOKEN}" > "${HOME}/.git-credentials"
+          chmod 600 "${HOME}/.git-credentials"
+
+      - name: Spiegelung ausfuehren
+        env:
+          CODEBERG_PROTOKOLL: https
+          GIT_TERMINAL_PROMPT: "0"
+        run: |
+          # Modus "lokal": spiegelt DIESES Repo. Die vier weiteren Repos
+          # (smejj-app-frontend, smejj-control, smejj-site, imild-site) braeuchten
+          # einen GitHub-Token mit Leserecht auf fremde Repos; das ist bewusst
+          # nicht Teil dieses Laufs. Sie bleiben ungesichert — sichtbar hier
+          # notiert statt stillschweigend uebergangen.
+          bash scripts/deploy/codeberg_spiegel_sync.sh lokal
+
+      - name: Zugang wieder entfernen
+        if: always()
+        run: rm -f "${HOME}/.git-credentials"
