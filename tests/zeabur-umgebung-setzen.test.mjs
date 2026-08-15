@@ -7,7 +7,7 @@
 // kaputte UND eine gesunde Probe.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { findeSetzMutation, istSammelform, setzeUmgebungswerte } from "../scripts/deploy/zeabur-umgebung-setzen.mjs";
+import { findeSetzMutation, sammelArgumente, setzeUmgebungswerte } from "../scripts/deploy/zeabur-umgebung-setzen.mjs";
 
 const SAMMEL = {
   name: "updateEnvironmentVariable",
@@ -32,8 +32,8 @@ function schemaMit(felder) {
 }
 
 test("erkennt die Sammelform an ihrem Map-Argument", () => {
-  assert.equal(istSammelform(SAMMEL), true);
-  assert.equal(istSammelform(EINZELN), false);
+  assert.deepEqual(sammelArgumente(SAMMEL), ["data"]);
+  assert.deepEqual(sammelArgumente(EINZELN), []);
 });
 
 test("waehlt die Einzelform, auch wenn die Sammelform danebensteht", async () => {
