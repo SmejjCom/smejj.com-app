@@ -1,10 +1,10 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-15T23:16:45.301Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-15 im Chat: 'Anmeldeseite auch 1 zu 1 machen, freigegeben' — Login-Seite auf Vier-Zeilen-Fassung (Mockup 4): Titel 'Anmelden oder registrieren', Google/Fingerabdruck/GitHub/E-Mail gleichwertig, E-Mail-Weg klappt auf (neues vier-zeilen.js, nur Sichtbarkeit), Konto-erstellen-Link durch ehrliche Zwei-Zeilen ersetzt, AGB-Link ergaenzt. auth-page.js/auth.css/passkey.js UNVERAENDERT.",
+  "frozenAt": "2026-08-15T23:37:45.731Z",
+  "confirmation": "Gleiche Betreiber-Freigabe 2026-08-15 ('Anmeldeseite auch 1 zu 1, freigegeben' + Nachbesserung 'passt nicht zum V11'): Optik exakt wie Mockup 4 — Leuchtkarte weg (flach, 8px, viereckig), Logo mittig, farbige Marken-Icons, vierte Zeile IST die cyan umrandete E-Mail-Eingabe mit Pfeil, Deck-Saetze unten. auth-page.js/auth.css/passkey.js weiter UNVERAENDERT.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "3fd816ca6a1f2a67a41cfa16bd4aff96b6295b51dea621f688b21a74074e59cc",
+    "public/auth/login/index.html": "6e3e0842fbc5d030e30e8cdedc46daefc8c040f7874f424639ae372cadac7905",
     "public/auth/register/index.html": "e4d40a128d6c683b520e81cddeea8e48793b99569cd3911fe2875578a45177c5",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
