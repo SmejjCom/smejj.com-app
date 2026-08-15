@@ -38,6 +38,7 @@ const MIN_ZIEL = 44;
 // popstate: ein Klick durchs Menue erreicht nicht jede Ansicht, und die
 // Anmelde-Pflicht steht einem echten Seitenwechsel im Weg.
 const ANSICHTEN = [
+  ["papierkorb", "/papierkorb"],
   ["Suche", "/search"], ["Websites", "/websites"], ["smejj Claw", "/smejj-claw"],
   ["Automatisierung", "/automation"],
   ["Verlauf", "/chat-history"], ["Browser", "/browser"], ["Coding", "/code"],

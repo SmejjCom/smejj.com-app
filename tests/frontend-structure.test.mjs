@@ -24,6 +24,7 @@ const requiredViews = [
   "code",
   "projects",
   "files",
+  "papierkorb",
   "storageView",
   "memory",
   "ai",
