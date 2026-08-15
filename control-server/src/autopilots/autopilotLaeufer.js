@@ -174,10 +174,18 @@ export function laufBugPredictor(dateien) {
   if (!Number.isFinite(bericht?.scannedFiles) || bericht.scannedFiles === 0) {
     return { ok: false, meldung: "Kein Quelltext gefunden — Scan ohne Aussage" };
   }
+  // Die Meldung nennt die Schwere, nicht nur die Menge: 755 Befunde klingen
+  // dramatisch, 755 LOW-Hinweise sind eine Aufraeumliste. Bis zum 2026-08-15
+  // stand hier "KRITISCHE Funde dabei", obwohl kein einziger Befund kritisch
+  // war (siehe bugPredictorAutopilot.js).
+  const schwere = bericht.nachSchwere || {};
+  const aufzaehlung = Object.keys(schwere).sort()
+    .map((stufe) => `${schwere[stufe]} ${stufe}`).join(", ");
   return {
     ok: true,
-    meldung: `${bericht.scannedFiles} Dateien gescannt, ${bericht.totalFindings} Befunde, `
-      + `${bericht.cleanFiles} sauber${bericht.hasCriticalIssues ? " — KRITISCHE Funde dabei" : ""}`
+    meldung: `${bericht.scannedFiles} Dateien gescannt, ${bericht.totalFindings} Befunde`
+      + (aufzaehlung ? ` (${aufzaehlung})` : "")
+      + `, ${bericht.cleanFiles} sauber${bericht.hasCriticalIssues ? " — KRITISCHE Funde dabei" : ""}`
   };
 }
 

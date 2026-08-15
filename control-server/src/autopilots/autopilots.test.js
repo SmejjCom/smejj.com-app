@@ -565,3 +565,48 @@ test("bug-predictor: entschaerfte Timer und Fliesstext sind keine Befunde", () =
   assert.equal(iv("src/x.js", "// ein simpler setInterval(7 Tage) wuerde nie feuern"), 0, "Kommentar");
   assert.equal(http("src/x.js", 'fix: "Aendere http:// zu https://."'), 0, "Fliesstext ohne Host ist kein Endpunkt");
 });
+
+// ---- Bug-Predictor: "kritisch" muss kritisch heissen -----------------------
+//
+// Befund 2026-08-15 (A-bis-Z-Pruefung, live an der Ampel gesehen): Die Meldung
+// lautete "755 Befunde ... — KRITISCHE Funde dabei". Nachgezaehlt waren es
+// 755 LOW und KEIN einziger CRITICAL oder HIGH. Ursache: `hasCriticalIssues`
+// hing am DATEI-Status, und der kommt aus einer Punktesumme — sechs
+// LOW-Hinweise in einer Datei reichten fuer "critical".
+//
+// Das ist die Umkehrung des Attrappen-Problems: nicht gruen ohne Grund,
+// sondern Alarm ohne Grund. Beides macht die Ampel unlesbar.
+
+test("viele LOW-Hinweise sind kein kritischer Befund", () => {
+  // Acht Zeilen, die je einen LOW-Hinweis ausloesen: weit ueber der alten
+  // Punkteschwelle von 30, aber kein einziger kritischer Befund.
+  const inhalt = Array.from({ length: 8 }, (_, i) => `async function f${i}() { await tuWas(); }`).join("\n");
+  const bericht = runProjectBugScan([{ path: "beispiel.js", content: inhalt }]);
+  const schwere = bericht.nachSchwere || {};
+  assert.ok((schwere.LOW || 0) >= 4, "der Scan muss die Hinweise ueberhaupt finden");
+  assert.equal((schwere.CRITICAL || 0) + (schwere.HIGH || 0), 0);
+  assert.equal(bericht.hasCriticalIssues, false,
+    "Menge ist keine Schwere — sonst lernt man sich die Warnung abzugewoehnen");
+});
+
+test("ein echter kritischer Befund schlaegt sehr wohl an", () => {
+  const bericht = runProjectBugScan([
+    { path: "geheim.js", content: 'const key = "sk-liveGEHEIM1234567890abcdefghij";' }
+  ]);
+  const schwere = bericht.nachSchwere || {};
+  const hoch = (schwere.CRITICAL || 0) + (schwere.HIGH || 0);
+  if (hoch > 0) {
+    assert.equal(bericht.hasCriticalIssues, true, "was kritisch eingestuft ist, muss die Ampel auch melden");
+  } else {
+    // Der Scanner stuft diesen Fall nicht hoch ein — dann darf die Zusammen-
+    // fassung erst recht nicht "kritisch" sagen.
+    assert.equal(bericht.hasCriticalIssues, false);
+  }
+});
+
+test("sauberer Quelltext bleibt sauber", () => {
+  const bericht = runProjectBugScan([{ path: "rein.js", content: "export const zwei = 1 + 1;\n" }]);
+  assert.equal(bericht.totalFindings, 0);
+  assert.equal(bericht.cleanFiles, 1);
+  assert.equal(bericht.hasCriticalIssues, false);
+});

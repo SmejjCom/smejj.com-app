@@ -126,11 +126,29 @@ export function runProjectBugScan(files = []) {
   const totalFindings = reports.reduce((sum, r) => sum + r.findingsCount, 0);
   const cleanFiles = reports.filter((r) => r.status === "clean").length;
 
+  // BEFUND 2026-08-15 (A-bis-Z-Pruefung): `hasCriticalIssues` hing am
+  // DATEI-Status, und der kommt aus einer Punktesumme — sechs LOW-Hinweise in
+  // einer Datei (6 x 5 Punkte) reichen fuer "critical". Live gemessen: 755
+  // Befunde, davon 755 LOW, KEIN einziger CRITICAL oder HIGH — und die Ampel
+  // meldete trotzdem "KRITISCHE Funde dabei".
+  //
+  // Das ist die Umkehrung des Attrappen-Problems: nicht gruen ohne Grund,
+  // sondern Alarm ohne Grund. Ein Waechter, dessen Warnung man ignorieren
+  // lernt, ist genauso wertlos wie einer, der schweigt.
+  //
+  // "Kritisch" heisst ab jetzt: es gibt mindestens EINEN Befund, der so
+  // eingestuft ist. Der Datei-Status bleibt, was er ist — eine Risikonote.
+  const nachSchwere = {};
+  for (const r of reports) {
+    for (const f of r.findings) nachSchwere[f.severity] = (nachSchwere[f.severity] || 0) + 1;
+  }
+
   return {
     scannedFiles: files.length,
     cleanFiles,
     totalFindings,
-    hasCriticalIssues: reports.some((r) => r.status === "critical"),
+    nachSchwere,
+    hasCriticalIssues: (nachSchwere.CRITICAL || 0) + (nachSchwere.HIGH || 0) > 0,
     reports
   };
 }
