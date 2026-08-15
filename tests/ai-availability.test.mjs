@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability.js";
+import { evaluateAiAvailability, resolveServerAiGate } from "../control-server/src/llm/aiAvailability.js";
 
 const TEST_KEY = "test-key-nicht-echt-1234";
 
@@ -156,5 +156,87 @@ test("GET /api/health: Zhipu BYOK bleibt ai:true bei deaktiviertem klassischem G
     assert.equal(health.ok, true);
     assert.equal(health.ai, true);
     assert.equal(health.aiBackend, "zhipu:glm-5.2");
+  });
+});
+
+// --- Waechter: Ampel und Chat duerfen nie auseinanderlaufen ---
+//
+// 2026-08-15: /api/health meldete "ai": true / "zhipu:glm-5.2", waehrend
+// /api/chat still den Rueckfall-Assistenten ausgab ("Verstanden. Ich kann
+// daraus eine konkrete Aufgabe machen..."). Der Betreiber sah eine hoefliche
+// Antwort statt eines Fehlers, und keine Messung schlug an. Ursache: zwei
+// getrennte Entscheidungen — Health kannte den BYOK-Pfad, streamLLM nicht.
+// Diese Tests halten beide Seiten aneinander fest.
+
+const RUECKFALL_MARKER = "Ich kann daraus eine konkrete Aufgabe machen";
+
+async function chatAntwort(base) {
+  const res = await fetch(`${base}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "Hauptstadt von Frankreich?" }] })
+  });
+  return { status: res.status, backendKopf: res.headers.get("x-smejj-model-backend"), text: await res.text() };
+}
+
+test("Waechter (Unit): Ampel und Chat-Tor beantworten 'ai' identisch", () => {
+  const proben = [
+    {},
+    zhipuEnv(),
+    zhipuEnv({ SMEJJ_SERVER_AI_ENABLED: "false" }),
+    zhipuEnv({ SMEJJ_SERVER_AI_REMAINING: "0" }),
+    { SMEJJ_SERVER_AI_ENABLED: "true", SMEJJ_SERVER_AI_REMAINING: "5", SMEJJ_LLM_PROVIDER_ORDER: "zhipu,salad" }
+  ];
+  for (const env of proben) {
+    assert.equal(
+      resolveServerAiGate(env).ai,
+      evaluateAiAvailability(env).ai,
+      `Ampel und Chat-Tor weichen ab fuer: ${JSON.stringify(Object.keys(env))}`
+    );
+  }
+});
+
+test("Waechter (gesund): meldet die Ampel ai:true, faellt der Chat NICHT in den Rueckfall", async () => {
+  // Gate aus, aber Zhipu-BYOK aktiv — exakt der Live-Stand vom 2026-08-15.
+  // SMEJJ_LOCAL_ENV_FILE zeigt ins Leere, damit ausschliesslich die hier
+  // gesetzte Umgebung zaehlt und nicht die Schluessel des Entwicklerrechners.
+  await withServer(zhipuEnv({
+    SMEJJ_SERVER_AI_ENABLED: "false",
+    SMEJJ_LOCAL_ENV_FILE: "/nonexistent/smejj-test-nur-zhipu.env"
+  }), 34773, async (base) => {
+    const health = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(health.ai, true, "Vorbedingung: die Ampel muss hier gruen sein");
+
+    const antwort = await chatAntwort(base);
+    // Der Testschluessel ist ungueltig, der echte Anbieter wird also scheitern.
+    // Erlaubt ist jeder EHRLICHE Ausgang (502/429/Stream) — verboten ist einzig
+    // der stille Rueckfall-Text, der wie eine gelungene Antwort aussieht.
+    assert.equal(
+      antwort.text.includes(RUECKFALL_MARKER),
+      false,
+      `Ampel gruen, aber der Chat gab den Rueckfall-Text aus (HTTP ${antwort.status})`
+    );
+  });
+});
+
+test("Waechter (kaputt): ohne jeden Anbieter bleibt der Rueckfall erhalten", async () => {
+  // Gegenprobe — die freundliche Notantwort ist ohne Anbieter gewollt
+  // (Graceful Degradation). Ohne diese Probe wuerde der Waechter oben auch
+  // dann gruen bleiben, wenn jemand den Rueckfall komplett ausbaut.
+  //
+  // SMEJJ_LOCAL_ENV_FILE muss auf einen leeren Pfad zeigen: der Server laedt
+  // sonst ~/.config/smejj.com/env.local nach und haette auf einem Entwickler-
+  // rechner echte Schluessel — der Test misst dann die Maschine, nicht den Code.
+  await withServer({ SMEJJ_LOCAL_ENV_FILE: "/nonexistent/smejj-test-ohne-anbieter.env" }, 34774, async (base) => {
+    const health = await (await fetch(`${base}/api/health`)).json();
+    assert.equal(health.ai, false, "Vorbedingung: die Ampel muss hier rot sein");
+
+    const antwort = await chatAntwort(base);
+    assert.equal(antwort.status, 200);
+    assert.equal(
+      antwort.text.includes(RUECKFALL_MARKER),
+      true,
+      "Ohne Anbieter soll die Seite bedienbar bleiben statt zu fehlern"
+    );
   });
 });
