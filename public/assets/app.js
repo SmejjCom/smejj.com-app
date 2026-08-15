@@ -369,9 +369,13 @@ async function submitTask(task, { target = "#startLog" } = {}) {
     showTaskIndicator("done");
   } catch (error) {
     clearThinkingState(output);
+    // "network error" ist Chromes nackter Text fuer einen Strom-Abriss
+    // (live gesehen beim Bruecken-Neustart mitten in einer Bild-Antwort).
     const message = error?.message === "Failed to fetch"
       ? UI_COPY.chatOffline
-      : error.message || "Das hat gerade nicht geklappt. Deine Frage steht noch im Feld \u2014 probier es noch einmal.";
+      : /network error/i.test(error?.message || "")
+        ? "Die Verbindung ist während der Antwort abgerissen — bitte sende die Frage noch einmal."
+        : error.message || "Das hat gerade nicht geklappt. Deine Frage steht noch im Feld — probier es noch einmal.";
     output.textContent = output.textContent ? `${output.textContent.trim()}\n\n${message}` : message;
     hideTaskIndicator();
   }
