@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { readFileSync } from "node:fs";
 // verifyStoredSession kam am 2026-08-04 dazu (halber Anmeldezustand).
-const { verifyStoredSession } = await import("../public/auth-gate.js");
+const { verifyStoredSession, zeigeAbgelaufenHinweis } = await import("../public/auth-gate.js");
 
 const { isPublicPath, hasSession, enforceAuthGate } = await import("../public/auth-gate.js");
 
@@ -293,3 +293,69 @@ test("der Hinweis erscheint in der Sprache des Nutzers, nicht auf Deutsch", () =
   assert.ok(zweig.indexOf("await loadUiLanguage") < zweig.indexOf("status("),
     "die Sprache muss VOR der Meldung geladen sein");
 });
+
+// ---------------------------------------------------------------------------
+// 2026-08-15 — Dauerhaft angemeldet bleiben, aber nicht schweigen.
+//
+// Befund am Konto des Betreibers: Der Server sagte eindeutig
+// `authenticated: false`, die App zeigte trotzdem die volle Oberflaeche. Er
+// war ueberzeugt, angemeldet zu sein; erst eine scheiternde Anfrage brachte es
+// heraus, die Suche danach kostete eine Stunde.
+//
+// Die Freigabe "dauerhafter Google Login" (9a46b01) bleibt: es wird NICHT
+// abgemeldet und NICHT umgeleitet. Neu ist nur der sichtbare Hinweis.
+// ---------------------------------------------------------------------------
+
+test("dauerhafte Sitzung bleibt — aber der Hinweis erscheint", async () => {
+  const { win, speicher } = fensterMit({ token: "google.token" });
+  speicher.set("smejj.session.v1", JSON.stringify({ authenticated: true, method: "google", permanent: true }));
+  const elemente = [];
+  win.document = bastelDokument(elemente);
+
+  const ergebnis = await verifyStoredSession(win, {
+    fetchFn: antwortMit({ authenticated: false, user: null }),
+    apiOrigin: "https://control.test"
+  });
+
+  assert.equal(ergebnis, "gueltig", "die Freigabe des Betreibers bleibt unangetastet");
+  assert.equal(speicher.has("smejj.auth.accessToken.v1"), true, "es wird nicht abgemeldet");
+  assert.equal(win.location.ersetztDurch, undefined, "es wird nicht umgeleitet");
+  assert.equal(elemente.filter((e) => e.id === "smejj-sitzung-abgelaufen").length, 1,
+    "genau EIN Hinweis — schweigen war der Fehler");
+});
+
+test("bei gueltiger Sitzung erscheint kein Hinweis", async () => {
+  const { win } = fensterMit({ token: "gutes.token" });
+  const elemente = [];
+  win.document = bastelDokument(elemente);
+  await verifyStoredSession(win, {
+    fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" } }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(elemente.length, 0, "ein Hinweis ohne Anlass waere nur Laerm");
+});
+
+test("der Hinweis kommt nicht doppelt", () => {
+  const elemente = [];
+  const win = { document: bastelDokument(elemente), location: { pathname: "/", search: "" } };
+  assert.equal(zeigeAbgelaufenHinweis(win), true);
+  assert.equal(zeigeAbgelaufenHinweis(win), false, "zweimal derselbe Streifen waere ein Fehler");
+  assert.equal(elemente.length, 1);
+});
+
+/** Ein document, das gerade so viel kann, wie der Hinweis braucht. */
+function bastelDokument(gesammelt) {
+  const machElement = () => {
+    const el = {
+      style: { cssText: "" }, id: "", href: "", type: "", textContent: "",
+      setAttribute() {}, addEventListener() {}, remove() {},
+      append(...kinder) { el.kinder = (el.kinder || []).concat(kinder); }
+    };
+    return el;
+  };
+  return {
+    createElement: machElement,
+    getElementById: (id) => gesammelt.find((e) => e.id === id) || null,
+    body: { appendChild: (el) => gesammelt.push(el) }
+  };
+}
