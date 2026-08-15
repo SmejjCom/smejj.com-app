@@ -100,5 +100,29 @@ export const EVOLUTION_AUTOPILOTEN = Object.freeze([
     schonfristMs: STUNDE_MS,
     startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
     stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
+  },
+  {
+    id: "nachweis-kette",
+    name: "Nachweis-Wächter",
+    nummer: "41",
+    kurz: "Versucht alle 30 Minuten wirklich zu schreiben — ein Speicher, den man nur lesen kann, sieht sonst gesund aus.",
+    funktionen: [
+      "Schreibt ein einziges Probeobjekt in den Adminspeicher und überschreibt es beim nächsten Lauf.",
+      "Rührt das Audit-Log NICHT an: ein Wächter, der zum Messen Nachweise erzeugt, verfälscht genau das, was er schützen soll.",
+      "Wird ROT, sobald der Schlüssel nur noch lesen darf (403) — dann gibt es keinen Nachweis, keinen Step-up-Code und keine schreibende Adminaktion mehr."
+    ],
+    trainiert: "Nichts — er probiert. Ein echter Schreibversuch je Durchgang.",
+    verbessert: "Ein nur-lesbarer Adminspeicher fällt in Minuten auf statt beim nächsten Klick des Betreibers",
+    neuigkeiten: [
+      "Neu am 2026-08-15 nach einem echten Ausfall: Lesen ging, Schreiben gab 403 — alle Ampeln blieben grün",
+      "Gefunden wurde es nur, weil ein Step-up-Dialog den Fehler ausgab"
+    ],
+    ort: "Control Server (Autopilot-Läufer) → IDrive e2, Präfix admin/diagnose",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
   }
 ]);

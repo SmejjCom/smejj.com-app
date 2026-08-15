@@ -47,6 +47,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "brueckenwaechter",    // wird vom Control-Server abgefragt (frageWaechterAb)
   "container-puls",      // Eigenmeldung des Control-Servers, seit 2026-08-14 MIT Zahlen
                          // (hiess bis dahin "salad-sonden" und meldete gruen ohne jede Messung)
+  "nachweis-kette",      // echter Schreibversuch in den Adminspeicher (403 => rot)
   // --- Im Control-Server, betrieben vom Autopilot-Laeufer (alle 30 min) ---
   // Jeder bekommt eine Aufgabe mit feststehender Antwort und wird ROT, wenn
   // er sie falsch loest. Siehe autopilots/autopilotLaeufer.js +
