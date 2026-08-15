@@ -42,11 +42,19 @@
 # oeffentliche Seite bleibt vorerst auf ihrem Stand.
 name: Qualitaets-Messlauf
 
+# ZEITPLAN STILLGELEGT (2026-08-15, Betreiber-Entscheidung noch am selben Tag):
+# Auf die Rueckfrage, wie der Messlauf an sein Geheimnis kommen soll, fiel die
+# Wahl auf "im Control-Server takten" — dort liegt SMEJJ_SESSION_SECRET
+# ohnehin, es braucht also keine zweite Kopie in den GitHub-Secrets.
+#
+# Dieser Workflow bleibt als von Hand ausloesbarer Ersatzweg bestehen (er ist
+# geprueft und einsatzbereit, sobald das Secret hinterlegt wird), faehrt aber
+# KEINEN Zeitplan mehr: sonst schluege er zweimal taeglich rot fehl, waehrend
+# der eigentliche Messlauf woanders laeuft — und eine dauerhaft rote Wache
+# liest irgendwann niemand mehr.
+#
+# Sobald der Control-Autopilot laeuft, kann diese Datei geloescht werden.
 on:
-  schedule:
-    # 7:10 und 19:10 UTC — dieselben Zeitpunkte, die Autopilot 01 hatte.
-    - cron: "10 7 * * *"
-    - cron: "10 19 * * *"
   workflow_dispatch: {}
 
 permissions:
