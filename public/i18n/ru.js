@@ -10,7 +10,6 @@ export default {
   "Beim Öffnen anzeigen": "Показывать при запуске",
   "Letzte Ansicht": "Последний экран",
   "Startseite": "Главная",
-  "Projekte": "Проекты",
   "Arbeitsbereich": "Рабочая область",
   "Sicherheitsmodus": "Режим безопасности",
   "Free-safe": "Free-safe",
@@ -324,4 +323,18 @@ export default {
   "Coding": "Программирование",
   "z. B. Antworte kurz und auf Deutsch. Erkläre Fachwörter einfach.": "Например: Отвечай кратко и по-русски. Объясняй технические термины просто.",
   "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.": "Срок сессии истёк. Пожалуйста, войдите снова.",
+  // Beispiel-Chips der Glas-Startseite (2026-08-13).
+  "Code schreiben": "Написать код",
+  "Schreibe Code für:": "Напиши код для:",
+  "Text verbessern": "Улучшить текст",
+  "Verbessere diesen Text:": "Улучши этот текст:",
+  "Recherchieren": "Найти информацию",
+  "Recherchiere für mich:": "Найди информацию о:",
+  // Startseiten-Hero + Eingabe-Platzhalter (2026-08-13).
+  "Womit kann ich helfen?": "Чем я могу помочь?",
+  "Beschreibe eine Aufgabe oder stelle eine Frage.": "Опишите задачу или задайте вопрос.",
+  "Bilder generieren": "Создать изображения",
+  "Generiere ein Bild von:": "Создай изображение:",
+  "Video generieren": "Создать видео",
+  "Generiere ein Video von:": "Создай видео:",
 };

@@ -10,7 +10,6 @@ export default {
   "Beim Öffnen anzeigen": "起動時に表示",
   "Letzte Ansicht": "前回のビュー",
   "Startseite": "ホーム",
-  "Projekte": "プロジェクト",
   "Arbeitsbereich": "ワークスペース",
   "Sicherheitsmodus": "セキュリティモード",
   "Free-safe": "Free-safe",
@@ -324,4 +323,18 @@ export default {
   "Coding": "コーディング",
   "z. B. Antworte kurz und auf Deutsch. Erkläre Fachwörter einfach.": "例：日本語で簡潔に答えてください。専門用語はやさしく説明してください。",
   "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.": "セッションの有効期限が切れました。もう一度サインインしてください。",
+  // Beispiel-Chips der Glas-Startseite (2026-08-13).
+  "Code schreiben": "コードを書く",
+  "Schreibe Code für:": "次のためのコードを書いて：",
+  "Text verbessern": "文章を改善する",
+  "Verbessere diesen Text:": "この文章を改善して：",
+  "Recherchieren": "調べる",
+  "Recherchiere für mich:": "これについて調べて：",
+  // Startseiten-Hero + Eingabe-Platzhalter (2026-08-13).
+  "Womit kann ich helfen?": "何をお手伝いしましょうか？",
+  "Beschreibe eine Aufgabe oder stelle eine Frage.": "タスクを説明するか、質問してください。",
+  "Bilder generieren": "画像を生成",
+  "Generiere ein Bild von:": "次の画像を生成：",
+  "Video generieren": "動画を生成",
+  "Generiere ein Video von:": "次の動画を生成：",
 };

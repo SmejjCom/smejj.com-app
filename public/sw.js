@@ -219,6 +219,11 @@ const SHELL = [
   "/assets/components.js",
   "/assets/chat-markdown.js",
   "/assets/frame-guard.js",
+  // 2026-08-14 nachgetragen: index.html laedt start-chips.js seit 49fd609 als
+  // eigenes <script type="module">, der Eintrag hier fehlte. Offline waere die
+  // Startseite ohne ihre Beispiel-Chips gestartet — check:precache-imports hat
+  // es gefunden, bevor es jemand gemerkt haette.
+  "/assets/start-chips.js",
   "/assets/app.js",
   "/assets/view-title.js",
   "/assets/left-menu-state.js",

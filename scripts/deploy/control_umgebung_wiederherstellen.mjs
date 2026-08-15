@@ -43,7 +43,14 @@ const GEBRAUCHT = Object.freeze([
   // Ohne das hier ist jede Ablage stumm: Verlauf, Aufgaben, Kennzahlen.
   { name: "IDRIVE_E2_ACCESS_KEY", wofuer: "Speicher (Verlauf, Aufgaben, Kennzahlen)" },
   { name: "IDRIVE_E2_SECRET_KEY", wofuer: "Speicher" },
-  { name: "IDRIVE_E2_BUCKET", wofuer: "Speicher" },
+  // NICHT aus env.local! Dort steht `smejj-model-files` — der Eimer fuer
+  // Modelldateien, den die LOKALEN Skripte benutzen. Die App-Daten (Konten,
+  // Verlauf, Aufgaben) liegen in `smejj-app`. Am 2026-08-14 hat genau diese
+  // Verwechslung den Control-Server auf einen leeren Eimer zeigen lassen:
+  // die Anmeldung wurde angenommen, aber KEIN Konto war auffindbar
+  // (admin_email_not_verified). env.local ist die Konfiguration der
+  // Werkzeuge auf diesem Mac — nicht eine Kopie der Produktionsumgebung.
+  { name: "IDRIVE_E2_BUCKET", wofuer: "Speicher (App-Daten)", festwert: "smejj-app" },
   { name: "IDRIVE_E2_ENDPOINT", wofuer: "Speicher" },
   { name: "IDRIVE_E2_REGION", wofuer: "Speicher" },
   { name: "SMEJJ_SEARCH_TAVILY_API_KEY", wofuer: "Websuche (Recherche, Konkurrenz-Radar)" },
@@ -91,7 +98,8 @@ async function main() {
 
   for (const eintrag of GEBRAUCHT) {
     if (schonDa.has(eintrag.name)) { uebersprungen.push(eintrag.name); continue; }
-    const wert = String(process.env[eintrag.name] || "").trim();
+    // Ein Festwert schlaegt env.local: siehe die Eimer-Verwechslung oben.
+    const wert = eintrag.festwert || String(process.env[eintrag.name] || "").trim();
     if (!wert) { fehlend.push(eintrag); continue; }
     try {
       await setzeEinzeln(eintrag.name, wert);

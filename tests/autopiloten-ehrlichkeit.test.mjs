@@ -45,7 +45,8 @@ const MIT_ECHTER_MESSUNG = new Set([
   "voice-region-check",  // Lebenszeichen des Dienstes, ehrlich beschriftet
   "konkurrenz-radar",    // Lebenszeichen des Dienstes, ehrlich beschriftet
   "brueckenwaechter",    // wird vom Control-Server abgefragt (frageWaechterAb)
-  "salad-sonden",        // Eigenmeldung des Control-Servers
+  "container-puls",      // Eigenmeldung des Control-Servers, seit 2026-08-14 MIT Zahlen
+                         // (hiess bis dahin "salad-sonden" und meldete gruen ohne jede Messung)
   // --- Im Control-Server, betrieben vom Autopilot-Laeufer (alle 30 min) ---
   // Jeder bekommt eine Aufgabe mit feststehender Antwort und wird ROT, wenn
   // er sie falsch loest. Siehe autopilots/autopilotLaeufer.js +

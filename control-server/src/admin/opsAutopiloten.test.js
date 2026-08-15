@@ -104,15 +104,36 @@ test("lange Meldungen werden gekuerzt — der Speicher ist begrenzt", () => {
   assert.equal(a.letzterLauf.meldung.length, 200);
 });
 
-test("Eigenmeldung: die Salad-Sonden werden gruen, sonst niemand", () => {
+test("Eigenmeldung: der Container-Puls wird gruen, sonst niemand", () => {
   frisch();
   const zeitgeber = starteSelbstmessung({ intervallMs: 60 * 60 * 1000 });
   clearInterval(zeitgeber);
   const u = autopilotUebersicht({ jetztMs: Date.now() });
-  const sonden = u.autopiloten.find((x) => x.id === "salad-sonden");
-  assert.equal(sonden.ampel, "gruen", "die Eigenmeldung traegt die Sonden-Ampel");
-  assert.ok(sonden.letzterLauf.meldung.includes("Eigenmeldung"));
+  const puls = u.autopiloten.find((x) => x.id === "container-puls");
+  assert.ok(puls, "der Autopilot heisst seit dem 14.08. container-puls, nicht mehr salad-sonden");
+  assert.equal(puls.ampel, "gruen", "die Eigenmeldung traegt die Ampel");
   assert.equal(u.gruen, 1, "kein anderer Autopilot erbt die Eigenmeldung");
+});
+
+test("die Eigenmeldung traegt ZAHLEN, keine blosse Behauptung", () => {
+  // Befund 2026-08-14: hier stand nur "Eigenmeldung: Container läuft." — gruen
+  // ohne eine einzige Zahl. Der autopilot-supervisor hat es selbst angezeigt.
+  frisch();
+  clearInterval(starteSelbstmessung({ intervallMs: 60 * 60 * 1000 }));
+  const puls = autopilotUebersicht({ jetztMs: Date.now() }).autopiloten
+    .find((x) => x.id === "container-puls");
+  assert.match(puls.letzterLauf.meldung, /\d+ MB/, "der belegte Speicher muss in der Meldung stehen");
+  assert.match(puls.letzterLauf.meldung, /seit \d+ min/, "die Laufzeit muss in der Meldung stehen");
+});
+
+test("der Autopilot verspricht nichts, was er nicht misst", () => {
+  frisch();
+  const puls = autopilotUebersicht({ jetztMs: Date.now() }).autopiloten
+    .find((x) => x.id === "container-puls");
+  const text = [puls.kurz, ...(puls.funktionen || [])].join(" ").toLowerCase();
+  assert.ok(!text.includes("salad"), "Salad ist abgeschaltet und darf nirgends mehr auftauchen");
+  assert.ok(!/\bssd\b|egress|cluster-gesundheit/.test(text),
+    "was dieser Prozess nicht messen kann, darf er auch nicht behaupten");
 });
 
 test("Stufe 3: ein abgelegter Herzschlag uebersteht den Neustart", async () => {

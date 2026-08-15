@@ -10,7 +10,6 @@ export default {
   "Beim Öffnen anzeigen": "Afficher à l'ouverture",
   "Letzte Ansicht": "Dernière vue",
   "Startseite": "Accueil",
-  "Projekte": "Projets",
   "Arbeitsbereich": "Espace de travail",
   "Sicherheitsmodus": "Mode de sécurité",
   "Free-safe": "Free-safe",
@@ -324,4 +323,18 @@ export default {
   "Coding": "Développement",
   "z. B. Antworte kurz und auf Deutsch. Erkläre Fachwörter einfach.": "Par exemple : Réponds brièvement et en français. Explique simplement les termes techniques.",
   "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.": "Votre session a expiré. Veuillez vous reconnecter.",
+  // Beispiel-Chips der Glas-Startseite (2026-08-13).
+  "Code schreiben": "Écrire du code",
+  "Schreibe Code für:": "Écris du code pour :",
+  "Text verbessern": "Améliorer un texte",
+  "Verbessere diesen Text:": "Améliore ce texte :",
+  "Recherchieren": "Rechercher",
+  "Recherchiere für mich:": "Fais une recherche sur :",
+  // Startseiten-Hero + Eingabe-Platzhalter (2026-08-13).
+  "Womit kann ich helfen?": "Comment puis-je aider ?",
+  "Beschreibe eine Aufgabe oder stelle eine Frage.": "Décrivez une tâche ou posez une question.",
+  "Bilder generieren": "Générer des images",
+  "Generiere ein Bild von:": "Génère une image de :",
+  "Video generieren": "Générer une vidéo",
+  "Generiere ein Video von:": "Génère une vidéo de :",
 };

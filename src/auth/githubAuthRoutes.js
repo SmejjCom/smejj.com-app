@@ -4,6 +4,8 @@
 // Eigene OAuth-App (SMEJJ_GITHUB_LOGIN_*), getrennt vom Repo-Publisher.
 import crypto from "node:crypto";
 
+import { merkeOauthBestaetigung } from "../../control-server/src/auth/oauthKonto.js";
+
 export function createGithubAuthHandlers({
   config,
   json,
@@ -17,6 +19,9 @@ export function createGithubAuthHandlers({
   githubAuthorizeUrl,
   exchangeGithubCode,
   fetchGithubUser,
+  // Siehe googleAuthRoutes.js: `fetchGithubUser` wirft, wenn die Adresse nicht
+  // verifiziert ist — der Nachweis liegt also vor und gehoert ins Verzeichnis.
+  merkeKonto = merkeOauthBestaetigung,
   ROUTES,
   fetchImpl = fetch,
   env = process.env
@@ -87,6 +92,7 @@ export function createGithubAuthHandlers({
       sub: String(profile.sub || ""),
       method: "github"
     };
+    await merkeKonto(user, { env });
     const headers = { ...SECURITY_HEADERS, "Set-Cookie": serializeSessionCookie(user) };
     const handoffReturn = safeReturnOrigin(state?.handoffReturn);
     if (state?.handoff && handoffReturn) {

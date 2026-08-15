@@ -13,7 +13,7 @@ test("Startseite hat genau ein verstecktes H1 (Option A, pixel-identisch)", () =
   assert.equal(h1Matches.length, 1, "genau ein H1 erwartet");
   assert.match(html, /<h1 class="visually-hidden">smejj\.com — KI- und Code-Assistent<\/h1>/);
   // Sichtbare Hauptueberschrift bleibt unveraendert ein h2 (Design-Lock):
-  assert.match(html, /<h2>Was sollen wir in smejj entwickeln\?<\/h2>/);
+  assert.match(html, /<h2>Womit kann ich helfen\?<\/h2>/);
 });
 
 test("visually-hidden CSS versteckt nur visuell (Screenreader lesen weiter)", () => {

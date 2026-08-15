@@ -10,7 +10,6 @@ export default {
   "Beim Öffnen anzeigen": "العرض عند الفتح",
   "Letzte Ansicht": "آخر عرض",
   "Startseite": "الصفحة الرئيسية",
-  "Projekte": "المشاريع",
   "Arbeitsbereich": "مساحة العمل",
   "Sicherheitsmodus": "وضع الأمان",
   "Free-safe": "Free-safe",
@@ -324,4 +323,18 @@ export default {
   "Coding": "البرمجة",
   "z. B. Antworte kurz und auf Deutsch. Erkläre Fachwörter einfach.": "مثال: أجب باختصار وبالعربية. واشرح المصطلحات التقنية ببساطة.",
   "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
+  // Beispiel-Chips der Glas-Startseite (2026-08-13).
+  "Code schreiben": "كتابة كود",
+  "Schreibe Code für:": "اكتب كودًا لـ:",
+  "Text verbessern": "تحسين نص",
+  "Verbessere diesen Text:": "حسّن هذا النص:",
+  "Recherchieren": "بحث",
+  "Recherchiere für mich:": "ابحث لي عن:",
+  // Startseiten-Hero + Eingabe-Platzhalter (2026-08-13).
+  "Womit kann ich helfen?": "كيف يمكنني المساعدة؟",
+  "Beschreibe eine Aufgabe oder stelle eine Frage.": "صف مهمة أو اطرح سؤالاً.",
+  "Bilder generieren": "توليد صور",
+  "Generiere ein Bild von:": "ولّد صورة لـ:",
+  "Video generieren": "توليد فيديو",
+  "Generiere ein Video von:": "ولّد فيديو لـ:",
 };
