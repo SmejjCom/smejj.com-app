@@ -284,6 +284,8 @@ const SHELL = [
   "/assets/code-flaeche.js",
   "/assets/kamera.js",
   "/assets/fuehrung.js",
+  "/assets/willkommen-fokus.js",
+  "/assets/arbeitsflaeche.js",
   "/assets/arbeitsbereiche.js",
   "/assets/papierkorb.js",
   "/assets/chat-actions-menu.js",
