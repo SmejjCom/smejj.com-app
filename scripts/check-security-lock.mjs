@@ -45,6 +45,14 @@ export const PROTECTED_FILES = [
   "public/auth/auth-page.js",
   "public/auth/auth.css",
   "public/auth/passkey.js",
+  // Wer OHNE Anmeldung an welchen Endpunkt darf. Aufgenommen am 2026-08-14,
+  // nachdem diese Datei als VERBOTSLISTE gebaut war: sie endete mit
+  // "return false", also offen, und jede vergessene Route war oeffentlich —
+  // ohne dass irgendetwas fehlschlug. Zwei Lecks gingen darauf zurueck
+  // (/api/rag/search am 01.08., /api/training/capture am 05.08.). Jetzt ist
+  // "geschuetzt" die Voreinstellung. Genau diese Umkehrung darf niemand
+  // beilaeufig zurueckdrehen — sie ist "Endpunktwahl" im Sinne der Regel.
+  "src/shared/controlAccessPolicy.js",
   // Konto: Passwortwechsel, Sitzungen, Loeschung.
   "public/account-sessions.js",
   // Was vom Gespraech den Server erreicht.

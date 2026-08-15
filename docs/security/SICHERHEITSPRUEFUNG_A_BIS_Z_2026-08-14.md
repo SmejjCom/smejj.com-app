@@ -175,6 +175,45 @@ Spiegeln nicht herausfallen (die Falle „Artefakt ersetzt nie die Quelle").
 
 ---
 
+## D — Beim Ausliefern noch gefunden: `admin/uebersicht/` wäre offen geblieben
+
+`sync_admin_console_pages.mjs` führt `uebersicht` bewusst **nicht** in
+`SEITEN_ORDNER` („uebersicht ist /admin/ selbst"). Im Frontend-Repo **existiert
+der Ordner aber** — das Spiegel-Skript lässt ihn also aus. Ohne die Gegenprobe
+nach dem Spiegeln wäre `smejj.com/admin/uebersicht/` als einzige Seite ohne
+Türsteher live geblieben. Von Hand mitgezogen, alle **32** Seiten geprüft.
+
+**Der Betreiber muss entscheiden:** das Skript steht unter dem `deploy-lock` und
+darf nicht ohne schriftliche Freigabe geändert werden. Solange es so bleibt, muss
+nach **jedem** Spiegeln von Hand geprüft werden:
+
+```bash
+cd ~/smejj-app-frontend && find admin -name "*.html" | while read f; do grep -q "/admin/gate.js" "$f" || echo "OHNE: $f"; done
+```
+
+---
+
+## Eingefroren (Anweisung des Betreibers vom 14.08.)
+
+> „wenn es alles fertig sicherer alles soll nicht mehr kaputt gehen, nicht mehr
+> geändert werden ohne schriftliche Bestätigung"
+
+| Sperre | Datei | warum dort |
+|---|---|---|
+| `security-lock` (11) | `src/shared/controlAccessPolicy.js` | **Endpunktwahl** — genau die Kategorie der Sperrregel |
+| `admin-lock` (16) | `control-server/admin-ui/gate.js` | Adminbereich-Sicherheitskette, neben `admin-ui/api.js` |
+
+`public/admin/gate.js` steht bewusst **unter keiner** Sperre: der Wächter-Test
+erzwingt bereits Byte-Gleichheit mit der Quelle. Zwei Sperren wären zwei
+Wahrheiten — dieselbe Begründung, die im Projekt schon dreimal steht.
+
+Gegenprobe gefahren: entschärft man in `gate.js` die Umleitung, meldet
+`admin-lock VERLETZT (1)` und nennt die Datei beim Namen.
+
+Alle vier Sperren grün: start (32), security (11), admin (16), deploy (2).
+
+---
+
 ## Wächter, damit es nicht zurückfällt
 
 `tests/adminbereich-anmeldepflicht.test.mjs` (16) und

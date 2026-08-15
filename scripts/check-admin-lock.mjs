@@ -71,7 +71,16 @@ export const PROTECTED_FILES = [
   // Mechanik hinter allen Drosseln.
   "control-server/src/http/rateLimiter.js",
   // Der zentrale Step-up-Umweg der Oberflaeche.
-  "control-server/admin-ui/api.js"
+  "control-server/admin-ui/api.js",
+  // Der Tuersteher der Konsole. Aufgenommen am 2026-08-14: bis dahin war
+  // smejj.com/admin fuer JEDEN sichtbar, weil die statische Auslieferung ueber
+  // GitHub Pages laeuft und dort niemand pruefen kann. Diese Datei IST die
+  // Pruefung auf diesem Weg — faellt sie weg oder wird sie entschaerft, steht
+  // der Adminbereich wieder offen, und zwar wieder ohne Fehlermeldung.
+  // Der Spiegel public/admin/gate.js steht bewusst NICHT unter einer Sperre:
+  // tests/adminbereich-anmeldepflicht.test.mjs erzwingt bereits, dass er
+  // byte-gleich zu dieser Quelle ist. Zwei Sperren waeren zwei Wahrheiten.
+  "control-server/admin-ui/gate.js"
 ];
 
 export const ADMIN_LOCK = {

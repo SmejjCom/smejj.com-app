@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T15:20:17.924Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-14: adminUiRoutes.js liefert zusaetzlich views-stage11.js und console-stage11.js aus (Modul AE, AI Evolution Dashboard). Zwei Zeilen in der festen DATEIEN-Liste, keine Aenderung an Zugriffspruefung oder Auslieferungslogik.",
+  "frozenAt": "2026-08-15T01:01:08.298Z",
+  "confirmation": "wenn es alles fertig sicherer alles soll nicht mehr kaputt gehen, nicht mehr geaendert werden ohne schriftliche Bestaetigung (Betreiber, 2026-08-14)",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -18,6 +18,7 @@
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
     "control-server/src/routes/adminUiRoutes.js": "fb1a4164ec1c09abd40d1a336c20282222158737cc30f57804c71a8bfa4e1631",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
-    "control-server/admin-ui/api.js": "b2ac0d7c03ad325e0fec113c44fcd1026af4169b709a269f8f7159b4fdc5b17a"
+    "control-server/admin-ui/api.js": "b2ac0d7c03ad325e0fec113c44fcd1026af4169b709a269f8f7159b4fdc5b17a",
+    "control-server/admin-ui/gate.js": "d9e9bb407b063600208b1ba1881e8fc18120fb5d37e2e7c65a06afbc9736de2f"
   }
 }

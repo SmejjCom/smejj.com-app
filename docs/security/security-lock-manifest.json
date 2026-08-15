@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T16:46:10.098Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-14 (Fortsetzung der Evolution-Melder-Freigabe): chat-bridge.js ruft an denselben drei Antwortstellen meldeAntwort statt meldeAktion. Damit wird dieselbe Antwort zusaetzlich als Code geprueft, wenn ein Codeblock darin steht. Vier Zeilen, kein Antwortpfad, kein Auth, kein Streaming veraendert.",
+  "frozenAt": "2026-08-15T01:01:08.271Z",
+  "confirmation": "wenn es alles fertig sicherer alles soll nicht mehr kaputt gehen, nicht mehr geaendert werden ohne schriftliche Bestaetigung (Betreiber, 2026-08-14)",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "842af267e98833f359a4b6044b6e234ea871c5e79834332ebcc4fe6929215546",
@@ -9,6 +9,7 @@
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
+    "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
     "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
     "public/chat-bridge.js": "82c62f446b1c28c89facb6eda5d20a8ae659cb6ce9fe4a4dd5595cbd6ffeb93c",
