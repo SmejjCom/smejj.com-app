@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-15T01:01:08.298Z",
-  "confirmation": "wenn es alles fertig sicherer alles soll nicht mehr kaputt gehen, nicht mehr geaendert werden ohne schriftliche Bestaetigung (Betreiber, 2026-08-14)",
+  "frozenAt": "2026-08-15T01:34:59.297Z",
+  "confirmation": "Entscheide du selber als Expert, mach professionell, admin-lock neu einfrieren (Betreiber, 2026-08-15)",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -13,7 +13,7 @@
     "control-server/src/routes/adminAutopilotAktionen.js": "e79e9f79104837ff98b3fc2783756d9908b9663c97edf3f404831975283566d7",
     "control-server/src/admin/adminAuth.js": "805519c67e3a964995aa55d672c000176808abd278a7b88a086c9d983cd6b2dd",
     "control-server/src/admin/adminRoles.js": "8cd3fc1ef85bd1206aaff17e51cc90d7083ed5d3e00b1e07b5beab8cef6d07f2",
-    "control-server/src/admin/auditLog.js": "aeffcf778e4eeb609b011d8ea685a18cc83417532ab052f6a57a745180e42f21",
+    "control-server/src/admin/auditLog.js": "abc94f207de28ed56aeba04eecf1cec4f4c0a53f5fa3d5395d55ea3676936d5b",
     "control-server/src/admin/approvalStore.js": "0bd996af40f28a8abcc016a8eb072b726e4907ed6a8e5ec7e855556501a68bab",
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
     "control-server/src/routes/adminUiRoutes.js": "fb1a4164ec1c09abd40d1a336c20282222158737cc30f57804c71a8bfa4e1631",
