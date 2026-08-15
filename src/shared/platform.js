@@ -5,7 +5,15 @@ export const APP_INFO = {
   description: "Free-safe KI- und Code-Assistent-Plattform mit IDrive e2 als Hauptspeicher."
 };
 
-export const COST_POLICY = "GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Salad is pay-per-use compute.";
+// Salad-Ausstieg abgeschlossen (Betreiber-Ansage 2026-08-15: "Salad.com
+// vollstaendig ignorieren und entfernen. Wir arbeiten ausschliesslich mit
+// Zeabur.com"). Die Rechenarbeit laeuft seit dem 11.08. ueber Zeabur; diese
+// Zeile war der letzte Ort, an dem Salad noch nach AUSSEN genannt wurde —
+// sie steht in der Antwort von /api/health und /api/capabilities.
+// Im Code selbst gibt es Salad-Bezuege weiter (Worker-Steuerung, Budget,
+// Autopiloten); die sind nicht nach aussen sichtbar und ihr Rueckbau ist
+// ein eigenes Vorhaben, kein Nebeneffekt dieser Zeile.
+export const COST_POLICY = "GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Zeabur runs the control server and compute.";
 
 export const STORAGE = {
   provider: "idrive-e2",
