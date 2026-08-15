@@ -49,6 +49,30 @@ export async function findeDienst(dienstName, abfrage = zeaburAbfrage) {
   throw new Error(`zeabur_dienst_nicht_gefunden:${dienstName}`);
 }
 
+// Ein Argument traegt VIELE Werte auf einmal — das ist die Form, die bei Zeabur
+// die Umgebung ersetzt statt ergaenzt.
+//
+// Erkannt wird sie an zwei Merkmalen, und das zweite ist das wichtigere: der
+// Name kann sich aendern (Zeabur baut sein Schema regelmaessig um, morgen heisst
+// es envVars oder kv), der Map-Typ bleibt. Die urspruengliche Fassung sah nur
+// auf die Namen "data/variables/envs" — eine Sammelform mit anderem Namen waere
+// glatt durchgegangen.
+const SAMMEL_NAMEN = ["data", "variables", "variablen", "envs", "envvars", "kv"];
+const SAMMEL_TYPEN = ["map", "json", "jsonobject", "object", "keyvalue", "keyvaluepair"];
+
+function typName(arg) {
+  let t = arg?.type;
+  while (t && !t.name) t = t.ofType;
+  return (t?.name || "").toLowerCase();
+}
+
+// Gibt die Namen aller Sammel-Argumente zurueck (leer = harmlose Einzelform).
+export function sammelArgumente(mutation) {
+  return (mutation?.args || [])
+    .filter((arg) => SAMMEL_NAMEN.includes(arg.name.toLowerCase()) || SAMMEL_TYPEN.includes(typName(arg)))
+    .map((arg) => arg.name);
+}
+
 export function argTyp(arg) {
   // GraphQL-Typ als Text fuer die Variablendeklaration, inkl. NonNull/Liste.
   const bau = (t) => {
@@ -76,9 +100,17 @@ export async function findeSetzMutation(abfrage = zeaburAbfrage) {
     let p = 0;
     if (namen.some((n) => n.includes("service"))) p += 2;
     if (namen.some((n) => n.includes("environment"))) p += 2;
-    // Sammel-Mutationen (data/variables als Map) sind uns lieber als key/value.
-    if (namen.some((n) => ["data", "variables", "envs"].includes(n))) p += 3;
-    if (namen.some((n) => n === "key") && namen.some((n) => n === "value")) p += 1;
+    // EINZEL-MUTATIONEN HABEN VORRANG. Bis zum 2026-08-14 stand hier das
+    // Gegenteil ("Sammel-Mutationen sind uns lieber"), und es hat genau das
+    // angerichtet, wovor die Salad-Lehre warnt: Zeaburs
+    // updateEnvironmentVariable(data: Map) ERSETZT die Umgebung. Ein Aufruf,
+    // der EINEN Wert setzen wollte, loeschte am Dienst smejj-control alle
+    // anderen — Sitzungsgeheimnis, Modellschluessel, Speicherzugang. Der
+    // Betreiber war abgemeldet und die KI aus, ohne dass jemand etwas
+    // "Gefaehrliches" getan haette.
+    //
+    // Ein Wert je Aufruf ist langsamer und in jeder Hinsicht harmloser.
+    if (namen.some((n) => n === "key") && namen.some((n) => n === "value")) p += 4;
     if (/update/i.test(f.name)) p += 1;
     return p;
   };
@@ -90,12 +122,26 @@ export async function findeSetzMutation(abfrage = zeaburAbfrage) {
 // Setzt werte = { NAME: "wert", ... } am Dienst. Gibt { ok, mutation, anzahl }
 // zurueck; wirft bei Fehlern (Aufrufer entscheidet ueber den Rueckfallweg).
 export async function setzeUmgebungswerte(dienstName, werte, abfrage = zeaburAbfrage) {
-  const dienst = await findeDienst(dienstName, abfrage);
+  // ERST die Mutation pruefen, DANN den Dienst suchen: Wenn die Form ohnehin
+  // verweigert wird, soll das passieren, BEVOR irgendetwas anderes angefasst
+  // wird. Ein Abbruch, der erst nach dem halben Weg kommt, ist schwerer zu
+  // lesen — und in diesem Fall ginge es um Loeschen.
   const mutation = await findeSetzMutation(abfrage);
   if (!mutation) throw new Error("zeabur_setz_mutation_nicht_gefunden");
 
+  // SPERRE 1 — die FORM, wie sie im Schema steht.
   const namen = mutation.args.map((a) => a.name);
-  const sammel = namen.find((n) => ["data", "variables", "envs"].includes(n.toLowerCase()));
+  const sammel = sammelArgumente(mutation);
+  if (sammel.length) {
+    throw new Error(
+      `zeabur_ersetzende_mutation_verweigert:${mutation.name}(${sammel.join(",")}) — `
+      + "die Sammel-Form (eine Map statt key/value) ERSETZT die Umgebung. "
+      + "Am 2026-08-14 hat genau das smejj-control alle Werte gekostet: Sitzungsgeheimnis, "
+      + "Modellschluessel, Speicherzugang. Es braucht eine Einzel-Mutation (key/value)."
+    );
+  }
+
+  const dienst = await findeDienst(dienstName, abfrage);
 
   const belege = (arg) => {
     const n = arg.name.toLowerCase();
@@ -113,13 +159,30 @@ export async function setzeUmgebungswerte(dienstName, werte, abfrage = zeaburAbf
       const wert = zusatz[arg.name] !== undefined ? zusatz[arg.name] : belege(arg);
       if (wert !== undefined) variablen[arg.name] = wert;
     }
+
+    // SPERRE 2 — die WERTE, unmittelbar vor dem Absenden.
+    //
+    // Sperre 1 oben liest das Schema; diese hier sieht, was tatsaechlich
+    // hinausgeht. Das sind zwei verschiedene Ebenen: eine Mutation kann
+    // lauter harmlose key/value-Argumente deklarieren und trotzdem ein
+    // Sammelgebilde uebertragen, weil ein Aufrufer statt eines Wertes ein
+    // Objekt uebergibt. Ueber die Leitung gehoeren nur Skalare.
+    //
+    // (Bis 2026-08-14 stand hier eine Wiederholung von Sperre 1 — dieselbe
+    // Bedingung, die eine Zeile vorher schon geworfen hatte. Sie sah nach
+    // zwei Schutzwaellen aus und war toter Code.)
+    for (const [name, wert] of Object.entries(variablen)) {
+      if (wert !== null && typeof wert === "object") {
+        throw new Error(
+          `zeabur_sammelwert_verweigert:${mutation.name}.${name} — `
+          + "dieses Argument traegt ein Objekt statt eines Wertes. Eine Map ist genau der Weg, "
+          + "auf dem am 2026-08-14 die Umgebung von smejj-control geloescht wurde. Ein Wert je Aufruf."
+        );
+      }
+    }
     return abfrage(`mutation Setze(${deklaration}) { ${mutation.name}(${uebergabe}) }`, variablen);
   }
 
-  if (sammel) {
-    await ruf({ [sammel]: werte });
-    return { ok: true, mutation: mutation.name, anzahl: Object.keys(werte).length };
-  }
   // key/value-Form: nacheinander, damit ein Fehlschlag beim zweiten Wert den
   // ersten nicht als "nie gesetzt" erscheinen laesst.
   const schluesselArg = namen.find((n) => /^key$|name/i.test(n));

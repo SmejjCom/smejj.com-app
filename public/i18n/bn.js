@@ -10,7 +10,6 @@ export default {
   "Beim Öffnen anzeigen": "খোলার সময় দেখান",
   "Letzte Ansicht": "সর্বশেষ ভিউ",
   "Startseite": "হোম",
-  "Projekte": "প্রকল্প",
   "Arbeitsbereich": "ওয়ার্কস্পেস",
   "Sicherheitsmodus": "নিরাপত্তা মোড",
   "Free-safe": "Free-safe",
@@ -324,4 +323,18 @@ export default {
   "Coding": "কোডিং",
   "z. B. Antworte kurz und auf Deutsch. Erkläre Fachwörter einfach.": "যেমন: সংক্ষেপে এবং বাংলায় উত্তর দিন। কারিগরি শব্দ সহজভাবে ব্যাখ্যা করুন।",
   "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an.": "আপনার সেশনের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে আবার সাইন ইন করুন।",
+  // Beispiel-Chips der Glas-Startseite (2026-08-13).
+  "Code schreiben": "কোড লেখা",
+  "Schreibe Code für:": "এর জন্য কোড লিখুন:",
+  "Text verbessern": "লেখা উন্নত করা",
+  "Verbessere diesen Text:": "এই লেখাটি উন্নত করুন:",
+  "Recherchieren": "গবেষণা",
+  "Recherchiere für mich:": "আমার জন্য এটি নিয়ে গবেষণা করুন:",
+  // Startseiten-Hero + Eingabe-Platzhalter (2026-08-13).
+  "Womit kann ich helfen?": "আমি কীভাবে সাহায্য করতে পারি?",
+  "Beschreibe eine Aufgabe oder stelle eine Frage.": "একটি কাজ বর্ণনা করুন বা একটি প্রশ্ন করুন।",
+  "Bilder generieren": "ছবি তৈরি করো",
+  "Generiere ein Bild von:": "এর ছবি তৈরি করো:",
+  "Video generieren": "ভিডিও তৈরি করো",
+  "Generiere ein Video von:": "এর ভিডিও তৈরি করো:",
 };

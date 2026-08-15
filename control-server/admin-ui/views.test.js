@@ -86,3 +86,60 @@ test("fehlende Audit-Daten bringen das Cockpit nicht zum Absturz", () => {
   assert.match(html, /Sicherheitsalarme/);
   assert.match(html, /keiner in den letzten 0 Eintraegen/);
 });
+
+// ---- B2 · Aktionsleiste der Nutzerakte --------------------------------------
+//
+// Befund der A-bis-Z-Pruefung vom 14.08.2026: console.js bindet seit dem
+// 28.07.2026 Handler an `#akteAktionen` und `[data-aktion]` — gezeichnet hat
+// diese Leiste nie jemand. Der komplette schreibende Adminbereich war damit
+// unerreichbar, obwohl Server, Vier-Augen-Freigabe und Audit-Log fertig waren.
+// Diese Tests halten die Leiste dort, wo console.js sie sucht.
+
+function akte(user) {
+  return ansichten().akte({ user, grund: "Pruefung" });
+}
+
+const KONTO = {
+  name: "Testkonto", email: "t@example.invalid", userId: "u-1", method: "email",
+  role: "user", status: "active", emailVerifiedAt: "2026-01-01T00:00:00.000Z",
+  createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z",
+  sessions: []
+};
+
+test("die Akte zeichnet die Leiste, an die console.js seine Handler bindet", () => {
+  const html = akte(KONTO);
+  assert.match(html, /id="akteAktionen"/, "ohne diese Kennung findet console.js gar nichts");
+  assert.match(html, /data-aktion="block"/);
+  assert.match(html, /data-aktion="role\.grant"/);
+  assert.match(html, /data-aktion="delete"/);
+  assert.match(html, /data-aktion="impersonation"/);
+});
+
+test("ein gesperrtes Konto bietet Entsperren an, kein zweites Sperren", () => {
+  const html = akte({ ...KONTO, status: "blocked" });
+  assert.match(html, /data-aktion="unblock"/);
+  assert.ok(!html.includes('data-aktion="block"'), "Sperren waere hier ein Knopf ohne Wirkung");
+});
+
+test("bestaetigte Adressen bekommen kein 'E-Mail bestaetigen'", () => {
+  assert.ok(!akte(KONTO).includes('data-aktion="verify"'));
+  assert.match(akte({ ...KONTO, emailVerifiedAt: null }), /data-aktion="verify"/);
+});
+
+test("Entriegeln und Abmelden erscheinen nur, wenn es etwas zu tun gibt", () => {
+  assert.ok(!akte(KONTO).includes('data-aktion="unlock"'));
+  assert.ok(!akte(KONTO).includes('data-aktion="sessions.revoke"'));
+  const html = akte({
+    ...KONTO,
+    loginGuard: { failedCount: 5, lockedUntil: "2026-08-14T20:00:00.000Z" },
+    sessions: [{ device: "Mac", sidHint: "ab12", lastSeenAt: null, expiresAt: null, active: true }]
+  });
+  assert.match(html, /data-aktion="unlock"/);
+  assert.match(html, /data-aktion="sessions\.revoke"/);
+});
+
+test("an einer geloeschten Huelle gibt es keinen einzigen Knopf mehr", () => {
+  const html = akte({ ...KONTO, status: "deleted" });
+  assert.ok(!html.includes("data-aktion="), "geloeschte Konten duerfen keine Aktionen anbieten");
+  assert.match(html, /gelöscht/);
+});
