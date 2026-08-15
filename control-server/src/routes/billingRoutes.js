@@ -13,7 +13,14 @@
 //   ehrlich 503, das Frontend faellt dann auf den Portal-Login-Link zurueck.
 import { verifyStripeSignature } from "../billing/stripeWebhookVerify.js";
 import { applyStripeEvent } from "../billing/stripeEventApply.js";
-import { getRefRecord, resolveSubscriptionStatus } from "../billing/subscriptionStore.js";
+import {
+  getRefRecord,
+  periodEndeAus,
+  planFromStripeItem,
+  putCustomerRecord,
+  putRefRecord,
+  resolveSubscriptionStatus
+} from "../billing/subscriptionStore.js";
 import { emailKey, normalizeEmail } from "../auth/emailUserStore.js";
 import { emailSessionStillValid } from "./emailAuthRoutes.js";
 import { privateJson, readRawBody } from "../http/respond.js";
@@ -49,12 +56,67 @@ export function createBillingHandlers({ env = process.env, readSession, json, fe
     if (!email) return privateJson(res, 400, { ok: false, error: "session_without_email" });
     const checkoutRef = emailKey(email);
     try {
-      const status = await resolveSubscriptionStatus(checkoutRef, env);
+      let status = await resolveSubscriptionStatus(checkoutRef, env);
+      if (status.plan === "free") status = await heileFehlendeZuordnung(email, checkoutRef, status, env);
       return privateJson(res, 200, { ok: true, checkoutRef, ...status });
     } catch {
       // fail-closed: Storage-Stoerung nie als "kein Abo" ausgeben
       return privateJson(res, 503, { ok: false, error: "billing_status_unavailable" });
     }
+  }
+
+  // Selbstheilung (Befund 2026-08-14): Das erste echte Abo lag im Speicher und
+  // der Kunde sah trotzdem "Free" — weil die Zuordnung ueber sha256(E-Mail)
+  // laeuft und die Kennung beim Kauf verloren gegangen war. Das ist kein
+  // Einzelfall, sondern der Normalfall bei Zahlungslinks: wer den Link oeffnet,
+  // bevor der Abo-Status geladen ist, kauft ohne client_reference_id.
+  //
+  // Statt darauf zu warten, dass jemand es meldet, fragt der Server hier bei
+  // Stripe nach: Gibt es einen Kunden mit GENAU dieser Adresse und einem
+  // laufenden Abo? Verglichen wird die vom Login bestaetigte Adresse mit der
+  // bei Stripe hinterlegten — beide muessen uebereinstimmen. Damit kann sich
+  // niemand ein fremdes Abo aneignen, indem er eine Adresse behauptet.
+  //
+  // Ohne STRIPE_SECRET_KEY passiert hier nichts; der Status bleibt "free".
+  async function heileFehlendeZuordnung(email, checkoutRef, status, umgebung) {
+    const schluessel = String(umgebung.STRIPE_SECRET_KEY || "");
+    if (!schluessel) return status;
+    try {
+      const suche = await fetchImpl(
+        `https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=10`,
+        { headers: { Authorization: `Bearer ${schluessel}` }, signal: AbortSignal.timeout(10_000) }
+      );
+      if (!suche.ok) return status;
+      const kunden = (await suche.json())?.data || [];
+      for (const kunde of kunden) {
+        if (normalizeEmail(kunde?.email) !== email) continue; // exakte Adresse, nichts Aehnliches
+        const abos = await fetchImpl(
+          `https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(kunde.id)}&status=all&limit=10`,
+          { headers: { Authorization: `Bearer ${schluessel}` }, signal: AbortSignal.timeout(10_000) }
+        );
+        if (!abos.ok) continue;
+        const laufend = ((await abos.json())?.data || [])
+          .find((abo) => ["active", "trialing", "past_due"].includes(String(abo.status)));
+        if (!laufend) continue;
+        const posten = Array.isArray(laufend.items?.data) ? laufend.items.data[0] : null;
+        await putRefRecord(checkoutRef, {
+          customerId: kunde.id,
+          subscriptionId: laufend.id,
+          livemode: Boolean(laufend.livemode)
+        }, umgebung);
+        await putCustomerRecord(kunde.id, {
+          ref: checkoutRef,
+          subscriptionId: laufend.id,
+          plan: planFromStripeItem(posten),
+          status: String(laufend.status),
+          periodEnd: periodEndeAus(laufend),
+          cancelAtPeriodEnd: Boolean(laufend.cancel_at_period_end),
+          livemode: Boolean(laufend.livemode)
+        }, umgebung);
+        return resolveSubscriptionStatus(checkoutRef, umgebung);
+      }
+    } catch { /* Stripe still: der Status bleibt, wie er war */ }
+    return status;
   }
 
   async function handleBillingPortal(req, res) {
