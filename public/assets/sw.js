@@ -283,6 +283,7 @@ const SHELL = [
   "/assets/spur-start.js",
   "/assets/code-flaeche.js",
   "/assets/kamera.js",
+  "/assets/fuehrung.js",
   "/assets/arbeitsbereiche.js",
   "/assets/papierkorb.js",
   "/assets/chat-actions-menu.js",

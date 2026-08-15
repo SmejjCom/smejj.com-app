@@ -30,11 +30,14 @@ function fakeWindow(pathname, entries = {}) {
 }
 
 test("Abgemeldete auf App-Seiten werden zur Anmeldung geleitet", () => {
-  // Standardziele ohne ?next= — der Chat ("/") ist ohnehin das Login-Ziel.
+  // Landeseite zuerst (Mockup V11 Bildschirm 1, Betreiber-Auftrag
+  // 2026-08-15): ein anonymer Besucher der WURZEL sieht die Landeseite mit
+  // Anmelden/Kostenlos-starten — nicht sofort das Login-Formular. Wer nicht
+  // weiss, was smejj ist, meldet sich auch nicht an.
   for (const path of ["/", "/index.html"]) {
     const win = fakeWindow(path);
     assert.equal(enforceAuthGate(win), true, path);
-    assert.deepEqual(win.calls, ["/auth/login/"]);
+    assert.deepEqual(win.calls, ["/willkommen.html"]);
   }
   // Tiefere Ziele wandern als ?next= mit, damit der Login dorthin zurueckfuehrt.
   for (const path of ["/profile", "/chat", "/settings"]) {
