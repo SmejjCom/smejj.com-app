@@ -78,9 +78,17 @@ export async function handleAdminUiRoute(req, url, res, { env = process.env } = 
     return true;
   }
 
+  // Object.hasOwn statt einfachem Zugriff: `rest` kommt aus der Adresse, und
+  // ein Objektliteral kennt geerbte Namen. `/admin/__proto__` lieferte
+  // Object.prototype, `/admin/constructor` eine Funktion — beide sind wahr,
+  // rutschten durch die Pruefung unten und liefen dann in path.join(…, {}) —
+  // also in einen TypeError statt in eine saubere 404. Erreichbar war das nur
+  // angemeldet (davor greift die Anmeldesperre), aber ein Absturzpfad in der
+  // Konsole ist einer zu viel: der Control-Server ist schon einmal still
+  // gestorben, und solche Fehler sucht man dann an der falschen Stelle.
   const rest = url.pathname.slice(PREFIX.length).replace(/^\//, "");
-  const datei = DATEIEN[rest];
-  const fremd = datei ? null : FREMDE[rest];
+  const datei = Object.hasOwn(DATEIEN, rest) ? DATEIEN[rest] : undefined;
+  const fremd = datei ? null : (Object.hasOwn(FREMDE, rest) ? FREMDE[rest] : undefined);
   if (!datei && !fremd) {
     antwortSeite(res, 404, "Nicht gefunden", "Diese Seite gehoert nicht zur Konsole.");
     return true;
