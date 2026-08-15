@@ -125,7 +125,10 @@ await check("health api", async () => {
 });
 
 await check("idrive storage api", async () => {
-  const { response, body } = await json("/api/storage/status");
+  // Seit 2026-08-14 anmeldepflichtig: die Antwort nennt Anbieter und
+  // Bucket-Namen, also Aufklaerung fuer einen Angreifer. Der Rauchtest hat den
+  // Token ohnehin schon — er braucht ihn hier nur mitzuschicken.
+  const { response, body } = await json("/api/storage/status", { headers: protectedJsonHeaders() });
   assert([200, 502].includes(response.status), `status ${response.status}`);
   assert(body.configured === true || body.ok === true, "storage status did not report configured/ok state");
   assert(body.provider === "idrive-e2" || body.storageRole === "primary", "wrong provider");
