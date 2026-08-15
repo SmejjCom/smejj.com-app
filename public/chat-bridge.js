@@ -37,10 +37,24 @@ const ALLOWED_ORIGINS = new Set(["https://smejj.com", "https://www.smejj.com"]);
 // Rueckfall = Zeabur-Control; der alte Salad-Control ist seit 2026-08-13 gestoppt.
 const CONTROL_ORIGIN = trimUrl(process.env.SMEJJ_CONTROL_ORIGIN || "https://smejj-control.zeabur.app");
 const CONTROL_ROUTER_ENABLED = /^(1|true|yes)$/i.test(process.env.SMEJJ_MULTI_MODEL_ROUTER_ENABLED || "NO");
-const LLM_BASE_URL = trimUrl(process.env.SMEJJ_LLM_SALAD_BASE_URL || process.env.SMEJJ_LLM_BASE_URL || "");
-const LLM_API_KEY = process.env.SMEJJ_LLM_SALAD_API_KEY || process.env.SMEJJ_LLM_API_KEY || "";
-const LLM_MODEL = process.env.SMEJJ_LLM_SALAD_MODEL || process.env.SMEJJ_LLM_MODEL || "tgi";
-const LLM_HEADER = process.env.SMEJJ_LLM_HEADER || (process.env.SMEJJ_LLM_SALAD_API_KEY ? "Salad-Api-Key" : "Authorization");
+// Salad-Ausstieg (Betreiber-Ansage 2026-08-15: "Salad.com vollstaendig
+// ignorieren und entfernen. Wir arbeiten ausschliesslich mit Zeabur.com").
+//
+// Die neutralen Namen stehen ab hier ZUERST. Die alten SMEJJ_LLM_SALAD_*
+// bleiben als Rueckfall stehen und sind als veraltet markiert — sie werden
+// NICHT entfernt, solange nicht gemessen ist, dass sie in keiner Umgebung
+// mehr gesetzt sind. Live gemessen am 2026-08-15: /health meldet
+// modelConfigured=false, also ist hier ohnehin nichts gesetzt; der Rueckfall
+// kostet nichts und verhindert, dass ein vergessener Altwert stumm ausfaellt.
+// Wer die Altnamen entfernt, muss vorher die Zeabur-Umgebung pruefen.
+const LLM_BASE_URL = trimUrl(process.env.SMEJJ_LLM_BASE_URL || process.env.SMEJJ_LLM_SALAD_BASE_URL || "");
+const LLM_API_KEY = process.env.SMEJJ_LLM_API_KEY || process.env.SMEJJ_LLM_SALAD_API_KEY || "";
+const LLM_MODEL = process.env.SMEJJ_LLM_MODEL || process.env.SMEJJ_LLM_SALAD_MODEL || "tgi";
+// Der Kopfzeilen-Name haengt am Anbieter, nicht am Variablennamen: nur wenn
+// ausschliesslich der Altschluessel gesetzt ist, braucht das Gegenueber noch
+// die alte Kopfzeile. Sonst gilt der Standard.
+const LLM_HEADER = process.env.SMEJJ_LLM_HEADER
+  || (!process.env.SMEJJ_LLM_API_KEY && process.env.SMEJJ_LLM_SALAD_API_KEY ? "Salad-Api-Key" : "Authorization");
 const REQUEST_TIMEOUT_MS = Number(process.env.SMEJJ_CHAT_BRIDGE_TIMEOUT_MS || 60000);
 // Eigenes Zeitbudget fuer die Mal-Spur (Befund 2026-08-14): Der Bild-Maler
 // braucht seit dem Qualitaets-Tuning (3 Schritte + Foto-Anreicherung) rund

@@ -150,7 +150,7 @@ const artifact = {
   app: "smejj.com",
   type: "source-and-deployment-artifact",
   createdAt: now.toISOString(),
-  costPolicy: "GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Salad is pay-per-use compute.",
+  costPolicy: "GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Zeabur runs the control server and compute.",
   git: {
     branch,
     commit: git(["rev-parse", "HEAD"]),

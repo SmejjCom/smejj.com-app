@@ -31,6 +31,10 @@ export function createVoiceTts({
   // Entscheidung); die Bridge selbst bleibt CPU-only.
   const VOICE_TTS_ORIGIN = trimUrl(process.env.SMEJJ_VOICE_TTS_ORIGIN || "");
   // Gateway-Auth des TTS-Workers (kein offener GPU-Endpunkt) — Org-Key-Fallback.
+  // Salad-Ausstieg 2026-08-15: neutraler Name zuerst. Der Altname bleibt als
+  // Rueckfall, weil /health premiumVoiceConfigured=true meldet und von aussen
+  // nicht erkennbar ist, an welcher Variable das haengt. Erst entfernen, wenn
+  // die Zeabur-Umgebung geprueft ist — sonst verstummt die Stimme lautlos.
   const VOICE_TTS_API_KEY = process.env.SMEJJ_VOICE_TTS_API_KEY || process.env.SMEJJ_LLM_SALAD_API_KEY || "";
   // v107: Mit internem Token laufen Sprecher-Daten und tts_stream ueber den
   // Control-Proxy (/api/voice/worker/*) — nur der Control traegt den Org-Schluessel
