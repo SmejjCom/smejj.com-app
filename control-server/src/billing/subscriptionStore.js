@@ -124,6 +124,9 @@ export async function resolveSubscriptionStatus(ref, env = process.env) {
   const plan = customer && PLAN_ACTIVE_STATUSES.has(customer.status) ? customer.plan || "free" : "free";
   return {
     plan,
+    // Nur an den Kontoinhaber (Session-Pflicht der Route): die bestaetigte
+    // Kaufadresse fuer die Zeile "Bezahlt wurde mit" auf der Kontoseite.
+    paidEmail: customer?.paidEmail || null,
     status: customer?.status || "none",
     subscriptionId: customer?.subscriptionId || null,
     periodEnd: customer?.periodEnd || null,

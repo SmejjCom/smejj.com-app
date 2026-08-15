@@ -59,9 +59,18 @@ async function applyCheckoutCompleted(event, env, sendMail) {
     livemode: Boolean(event.livemode)
   }, env);
   const existing = (await getCustomerRecord(customerId, env)) || {};
+  // Die von Stripe BESTAETIGTE Kaufadresse wird mitgespeichert (Mockup V11,
+  // Bildschirm 51: "Bezahlt wurde mit" — die wichtigste Zeile der Kontoseite).
+  // Genau an dieser Adresse ist das erste echte Abo unsichtbar geworden:
+  // bezahlt unter einer anderen Adresse als angemeldet. Nur fuer den
+  // Kontoinhaber selbst sichtbar (/api/billing/status verlangt die Session).
+  // Bestandskunden von vor diesem Feld haben es nicht — dann bleibt es null,
+  // und die Kontoseite zeigt die Zeile schlicht nicht.
+  const paidEmail = normalizeEmail(session.customer_details?.email || session.customer_email || "") || existing.paidEmail || null;
   await putCustomerRecord(customerId, {
     ...existing,
     ref,
+    paidEmail,
     subscriptionId: session.subscription || existing.subscriptionId || null,
     livemode: Boolean(event.livemode)
   }, env);
