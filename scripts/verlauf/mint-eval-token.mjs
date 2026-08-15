@@ -34,6 +34,11 @@ import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { issueSessionToken } from "../../control-server/src/auth/sessionToken.js";
 
 const LAUFZEIT_MS = Number(process.env.SMEJJ_EVAL_TOKEN_TTL_MS || 15 * 60 * 1000);
+// Manche Pruefungen haengen an der ADRESSE, nicht am Messlauf: der Abo-Status
+// wird ueber sha256(E-Mail) aufgeloest — nur ein Nachweis mit der zahlenden
+// Adresse beweist, dass ein Kunde sein Abo wirklich sieht (Befund 2026-08-14:
+// bezahlt wurde mit einer anderen Adresse als der vermuteten).
+const ADRESSE = process.env.SMEJJ_EVAL_EMAIL || "smejjcom@gmail.com";
 
 function abbruch(nachricht) {
   process.stderr.write(`${nachricht}\n`);
@@ -50,7 +55,7 @@ if (!secret) {
 
 const token = issueSessionToken({
   secret,
-  user: { userId: "eval-harness", email: "smejjcom@gmail.com", method: "local-e2e" },
+  user: { userId: "eval-harness", email: ADRESSE, method: "local-e2e" },
   ttlMs: LAUFZEIT_MS
 });
 
