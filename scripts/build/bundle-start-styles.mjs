@@ -44,7 +44,12 @@ export const SOURCES = Object.freeze([
   // eckig.css steht ABSICHTLICH am Ende: es ueberschreibt jede Rundung.
   "search-overlay.css",
   "start-glass.css",
-  "eckig.css"
+  "eckig.css",
+  // Design V11 (Betreiber-Freigabe 2026-08-15). Steht ABSICHTLICH nach
+  // eckig.css: es traegt die dokumentierte Rundungs-Ausnahme ("leichter
+  // Knick", 8 px) und die eine Farbquelle. Wer hier etwas davorschiebt,
+  // bekommt wieder drei Cyantoene.
+  "design-v11.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.
