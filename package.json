@@ -39,6 +39,7 @@
     "check:admin-console-sync": "node scripts/deploy/sync_admin_console_pages.mjs --pruefen",
     "check:admin-konsole": "node scripts/check-admin-konsole.mjs",
     "check:deploy-lock": "node scripts/check-deploy-lock.mjs",
+    "check:zweig-sperren": "node scripts/check-zweig-sperren.mjs --fetch",
     "rag:export": "node scripts/rag/export_rag_index_to_idrive.mjs",
     "lock:freeze": "node scripts/check-start-lock.mjs --freeze",
     "check:release-safety": "node --test tests/dockerignore-bau-kontext.test.mjs tests/release-safety.test.mjs tests/idrive-quota-guard.test.mjs tests/overlay-bootstrap.test.mjs tests/control-overlay-baseline.test.mjs tests/control-overlay-release-builder.test.mjs tests/control-release-artifact-builder.test.mjs tests/control-release-upload.test.mjs tests/secure-env-path.test.mjs && node tests/control-release-import-gate.test.mjs",
