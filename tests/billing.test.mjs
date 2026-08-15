@@ -188,6 +188,83 @@ test("Checkout ohne ref, aber mit Stripe-bestaetigter E-Mail wird zugeordnet", a
   assert.match(mails[0].subject, /Bestätigung/);
 });
 
+// Stripe-Antworten fuer die Selbstheilung nachstellen.
+function stripeFetch({ kunden = [], abos = [] } = {}) {
+  const aufrufe = [];
+  const fetchImpl = async (ziel) => {
+    aufrufe.push(String(ziel));
+    if (String(ziel).includes("/v1/customers?")) return { ok: true, json: async () => ({ data: kunden }) };
+    if (String(ziel).includes("/v1/subscriptions?")) return { ok: true, json: async () => ({ data: abos }) };
+    return { ok: false, json: async () => ({}) };
+  };
+  return { fetchImpl, aufrufe };
+}
+
+const LAUFENDES_ABO = {
+  id: "sub_Selbstheilung", status: "active", livemode: true, cancel_at_period_end: false,
+  items: { data: [{ price: { product: "prod_Unbekannt", unit_amount: 1900 }, current_period_end: 1_756_178_400 }] }
+};
+
+test("Selbstheilung: bezahlt ohne Kennung — Abo wird bei der Anmeldung zugeordnet", async () => {
+  __clearBillingMemoryStoreForTests();
+  const env = { STRIPE_SECRET_KEY: "sk_live_x" };
+  const { fetchImpl } = stripeFetch({
+    kunden: [{ id: "cus_Zahler1", email: "Abo-Tester@example.com" }],
+    abos: [LAUFENDES_ABO]
+  });
+  const res = fakeResponse();
+  await createBillingHandlers({
+    env, fetchImpl, readSession: () => ({ email: "abo-tester@example.com" }),
+    json: (r, status, payload) => { r.out.status = status; r.out.payload = payload; }
+  })(fakeRequest({ method: "GET" }), res, { pathname: "/api/billing/status" });
+  assert.equal(res.out.status, 200);
+  assert.equal(res.out.payload.plan, "pro");
+  assert.equal(res.out.payload.status, "active");
+  // dauerhaft abgelegt: der naechste Aufruf braucht Stripe nicht mehr
+  assert.equal((await resolveSubscriptionStatus(REF, EMPTY_ENV)).plan, "pro");
+});
+
+test("Selbstheilung eignet sich KEIN fremdes Abo an", async () => {
+  __clearBillingMemoryStoreForTests();
+  const env = { STRIPE_SECRET_KEY: "sk_live_x" };
+  // Stripe liefert (etwa bei unscharfer Suche) einen Kunden mit ANDERER Adresse.
+  const { fetchImpl } = stripeFetch({
+    kunden: [{ id: "cus_Fremd", email: "jemand-anders@example.com" }],
+    abos: [LAUFENDES_ABO]
+  });
+  const res = fakeResponse();
+  await createBillingHandlers({
+    env, fetchImpl, readSession: () => ({ email: "abo-tester@example.com" }),
+    json: (r, status, payload) => { r.out.status = status; r.out.payload = payload; }
+  })(fakeRequest({ method: "GET" }), res, { pathname: "/api/billing/status" });
+  assert.equal(res.out.payload.plan, "free");
+  assert.equal((await resolveSubscriptionStatus(REF, EMPTY_ENV)).plan, "free");
+});
+
+test("Selbstheilung: gekuendigtes Abo wird nicht wiederbelebt, Stripe-Stille schadet nicht", async () => {
+  __clearBillingMemoryStoreForTests();
+  const env = { STRIPE_SECRET_KEY: "sk_live_x" };
+  const beendet = { ...LAUFENDES_ABO, status: "canceled" };
+  const { fetchImpl } = stripeFetch({ kunden: [{ id: "cus_Zahler1", email: "abo-tester@example.com" }], abos: [beendet] });
+  const res = fakeResponse();
+  const rufe = createBillingHandlers({
+    env, fetchImpl, readSession: () => ({ email: "abo-tester@example.com" }),
+    json: (r, status, payload) => { r.out.status = status; r.out.payload = payload; }
+  });
+  await rufe(fakeRequest({ method: "GET" }), res, { pathname: "/api/billing/status" });
+  assert.equal(res.out.payload.plan, "free");
+
+  // Stripe antwortet gar nicht: der Status kommt trotzdem, nur eben "free".
+  const stumm = fakeResponse();
+  await createBillingHandlers({
+    env, fetchImpl: async () => { throw new Error("netz"); },
+    readSession: () => ({ email: "abo-tester@example.com" }),
+    json: (r, status, payload) => { r.out.status = status; r.out.payload = payload; }
+  })(fakeRequest({ method: "GET" }), stumm, { pathname: "/api/billing/status" });
+  assert.equal(stumm.out.status, 200);
+  assert.equal(stumm.out.payload.plan, "free");
+});
+
 test("Portal-Route: 401 ohne Session, 503 ohne Schluessel, 404 ohne Abo, 200 mit Portal-URL", async () => {
   __clearBillingMemoryStoreForTests();
   const url = { pathname: "/api/billing/portal" };

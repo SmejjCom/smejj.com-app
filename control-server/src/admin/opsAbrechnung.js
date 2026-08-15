@@ -63,6 +63,7 @@ export async function abrechnungUebersicht({
   ]);
 
   const abos = datensaetze.filter(Boolean).map((k) => aufbereiten(k, adressen, jetztMs)).sort(sortiere);
+  await ergaenzeZahlendeAdressen(abos, env, fetchImpl);
   const handlungsbedarf = abos.filter((a) => a.dringlichkeit === "hoch");
 
   return {
@@ -114,6 +115,36 @@ function aufbereiten(k, adressen, jetztMs) {
     livemodus: typeof k.livemode === "boolean" ? k.livemode : null,
     abonnementId: k.subscriptionId || null
   };
+}
+
+// EIN "konto: null" ist die teuerste Zeile dieser Uebersicht: der Kunde hat
+// bezahlt und sieht in der App trotzdem "Free" (erlebt am 2026-08-14 mit dem
+// ersten echten Abo). Der Grund ist immer derselbe — die Adresse, mit der bei
+// Stripe bezahlt wurde, gehoert zu keinem Konto hier.
+//
+// Ohne diese Zeile weiss eine Betreiberin nur DASS etwas klemmt, nicht WEN sie
+// anschreiben soll. Darum wird die zahlende Adresse live bei Stripe geholt —
+// nur fuer die offenen Faelle, nur zur Anzeige, und NICHT gespeichert (der
+// Kunden-Datensatz bleibt bewusst ohne Klartext-Adresse).
+async function ergaenzeZahlendeAdressen(abos, env, fetchImpl) {
+  const offen = abos.filter((a) => !a.konto && a.kundenId);
+  const schluessel = String(env.STRIPE_SECRET_KEY || "");
+  if (!offen.length || !schluessel) return;
+  await mapMitGrenze(offen, async (abo) => {
+    try {
+      const antwort = await fetchImpl(`https://api.stripe.com/v1/customers/${abo.kundenId}`, {
+        headers: { Authorization: `Bearer ${schluessel}` },
+        signal: AbortSignal.timeout(10_000)
+      });
+      if (!antwort.ok) return;
+      const kunde = await antwort.json();
+      abo.zahlendeAdresse = kunde?.email || null;
+      abo.naechsterSchritt = abo.zahlendeAdresse
+        ? `Bezahlt als ${abo.zahlendeAdresse} — mit dieser Adresse anmelden, oder das Abo auf die Konto-Adresse umhaengen.`
+        : abo.naechsterSchritt;
+      abo.dringlichkeit = "hoch";
+    } catch { /* Stripe still — die Uebersicht bleibt trotzdem brauchbar */ }
+  }, 4);
 }
 
 /** sha256(E-Mail) -> E-Mail. Ein Index-Aufruf, nicht einer je Kunde. */
