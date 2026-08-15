@@ -38,7 +38,7 @@ import { keyProviderUsage, shouldSearchWeb } from "./search/webSearch.js";
 import { buildAgentWebContext, handleWebSearch } from "./search/webSearchRoute.js";
 import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/src/live/liveInternet.js";
 import { classifyProfile, executeWithFallback, resolveModelRequest } from "../control-server/src/llm/modelRouter.js";
-import { evaluateAiAvailability } from "../control-server/src/llm/aiAvailability.js";
+import { evaluateAiAvailability, resolveServerAiGate } from "../control-server/src/llm/aiAvailability.js";
 import { streamWithTools, withAgentTools, agentToolsEnabled } from "../control-server/src/llm/streamFilter.js";
 import { localAssistantStream } from "../control-server/src/llm/localAssistant.js";
 import { chatThinkingMode, latestUserPrompt } from "./ai/chatThinkingPolicy.js";
@@ -682,14 +682,20 @@ async function handleStorageStatus(res) {
 }
 
 async function streamLLM(res, messages, { profile = "default", requestedModel = "", thinking, reasoningEffort, maxTokens } = {}) {
-  if (process.env.SMEJJ_SERVER_AI_ENABLED !== "true") {
-    return localAssistantStream(res, messages);
-  }
-  const remaining = Number(process.env.SMEJJ_SERVER_AI_REMAINING || 0);
-  if (!Number.isFinite(remaining) || remaining <= 0) {
+  // Eine Quelle der Wahrheit mit /api/health (resolveServerAiGate): sonst zeigt
+  // die Ampel "ai: true / zhipu:glm-5.2", waehrend der Chat still in den
+  // Rueckfall-Text faellt — genau der Fehler vom 2026-08-15.
+  const tor = resolveServerAiGate(process.env, profile, requestedModel);
+  // Aufgebrauchtes Budget bleibt ein sichtbarer 429 — aber nur dort, wo das
+  // Budget ueberhaupt zaehlt. Im BYOK-Modus fuehrt der Anbieter (Zhipu/Kimi)
+  // das Guthaben; ein lokaler Zaehler von 0 wuerde den Chat grundlos sperren.
+  if (tor.gateEnabled && !tor.budgetOk && !tor.registryByokOk) {
     return json(res, 429, { error: "AI rate limit reached or unclear." });
   }
-  const { chain, selection } = resolveModelRequest(profile, requestedModel, process.env);
+  if (!tor.ai) {
+    return localAssistantStream(res, messages);
+  }
+  const { chain, selection } = tor;
   if (chain.length === 0) {
     return json(res, 400, {
       error: "AI mode disabled. No active model runtime or approved fallback is configured.",
