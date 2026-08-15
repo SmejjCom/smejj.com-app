@@ -230,25 +230,31 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     stopAnleitung: "Zeabur-Portal → smejj-brueckenwaechter → Suspend."
   },
   {
-    id: "salad-sonden",
-    name: "Server-Puls",
+    // Hiess bis zum 2026-08-14 "salad-sonden" und versprach CPU-, SSD- und
+    // Netzwerk-Ueberwachung eines Clusters. Gemessen hat er nichts davon —
+    // seine Meldung lautete woertlich "Eigenmeldung: Container läuft.", und
+    // der autopilot-supervisor hat ihn dafuer selbst angezeigt. Salad ist
+    // ausserdem abgeschaltet. Jetzt steht hier nur noch, was dieser Prozess
+    // ueber sich selbst wirklich weiss — und genau das misst er auch.
+    id: "container-puls",
+    name: "Container-Puls",
     nummer: "07",
-    kurz: "Gesundheitssonden am Zeabur-Cluster (100% Zeabur.com Hauptbetrieb & Container-Health).",
+    kurz: "Der Control-Server bezeugt alle 5 Minuten seinen eigenen Zustand — mit Zahlen.",
     funktionen: [
-      "Überwacht 24/7 die Zeabur-Instanz, RAM-Auslastung und Server-Gesundheit.",
-      "Vollständiger Salad-Exit vollzogen: Hauptbetrieb läuft zu 100% auf Zeabur.com.",
-      "Gemessen über die Eigenmeldung des Control-Servers alle 5 Minuten."
+      "Meldet belegten Speicher, Heap und ununterbrochene Laufzeit des eigenen Prozesses.",
+      "Bleibt die Meldung aus, wird die Ampel grau: dann lebt der Container nicht mehr.",
+      "Alles, was ausserhalb dieses Prozesses liegt, misst er ausdrücklich nicht — dafür hätte er keine Quelle."
     ],
-    trainiert: "Server-Metriken (CPU, RAM, SSD, Network Egress)",
-    verbessert: "Cluster-Stabilität & Auslastungs-Transparenz ohne ungeplante Ausfälle",
-    neuigkeiten: ["Zeabur Cluster 100% gesund (2 vCPU / 8 GB RAM optimal)", "0,00 EUR Mehrkosten"],
+    trainiert: "Speicher- und Laufzeitwerte des eigenen Prozesses",
+    verbessert: "Ein Absturz oder Neustart des Control-Servers fällt sofort auf",
+    neuigkeiten: ["2026-08-14: misst statt zu behaupten", "Salad-Bezug entfernt — der Betrieb läuft auf Zeabur"],
     ort: "Zeabur (smejj-control.zeabur.app)",
     zeitplan: "Dauerbetrieb",
     messung: "heartbeat",
     erwartetAlleMs: 10 * 60 * 1000,
     schonfristMs: 20 * 60 * 1000,
-    startAnleitung: "Läuft kontinuierlich als interner Zeabur-Cluster-Wächter.",
-    stopAnleitung: "Im Zeabur-Portal den Dienst verwalten."
+    startAnleitung: "Läuft mit dem Control-Server; er startet die Selbstmessung beim Hochfahren.",
+    stopAnleitung: "Nur durch Anhalten des Control-Servers im Zeabur-Portal."
   },
   {
     id: "deep-research",

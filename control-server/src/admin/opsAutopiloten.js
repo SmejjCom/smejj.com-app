@@ -650,22 +650,40 @@ export function interneMeldung(id, { status = "ok", meldung = "", dauerMs = null
   return true;
 }
 
+// Frueher "salad-sonden". Salad ist abgeschaltet (Betreiber-Entscheidung, an
+// diesem Bericht bestaetigt: "Wir arbeiten mit Salad nicht mehr") — ein Name,
+// der auf einen toten Anbieter zeigt, macht die Ampel unlesbar.
+export const SELBSTMESSUNG_ID = "container-puls";
+
 export function starteSelbstmessung({ intervallMs = 5 * 60 * 1000 } = {}) {
   const melden = () => {
     const jetzt = new Date().toISOString();
     const jetztMs = Date.now();
 
-    const gespeichert = herzschlaege.get("salad-sonden") || { laeufe: [] };
+    // BEFUND 2026-08-14 (A-bis-Z-Pruefung, gemeldet vom autopilot-supervisor
+    // selbst): hier stand nur "Eigenmeldung: Container läuft." — eine gruene
+    // Ampel ohne eine einzige Zahl, waehrend die Beschreibung des Autopiloten
+    // RAM-, CPU- und Auslastungsueberwachung versprach. Genau die Sorte
+    // Attrappe, die am 2026-08-12 aus allen anderen Ampeln entfernt wurde.
+    //
+    // Jetzt misst die Eigenmeldung, was der Container ueber sich selbst
+    // WIRKLICH weiss. Mehr behauptet sie nicht: kein Cluster, keine SSD, kein
+    // Netzwerk-Egress — dafuer haette dieser Prozess keine Quelle.
+    const speicher = process.memoryUsage();
+    const rssMb = Math.round(speicher.rss / 1048576);
+    const heapMb = Math.round(speicher.heapUsed / 1048576);
+    const laufzeitMin = Math.round(process.uptime() / 60);
+    const gespeichert = herzschlaege.get(SELBSTMESSUNG_ID) || { laeufe: [] };
     gespeichert.laeufe.unshift({
       am: jetzt,
       status: "ok",
-      meldung: "Eigenmeldung: Container läuft.",
+      meldung: `Container gesund: ${rssMb} MB belegt (davon ${heapMb} MB Heap), seit ${laufzeitMin} min ununterbrochen`,
       dauerMs: null
     });
     gespeichert.laeufe = gespeichert.laeufe.slice(0, VERLAUF_MAX);
-    herzschlaege.set("salad-sonden", gespeichert);
-    zaehleTag("salad-sonden", "ok", jetztMs);
-    persistiereTageGedrosselt("salad-sonden");
+    herzschlaege.set(SELBSTMESSUNG_ID, gespeichert);
+    zaehleTag(SELBSTMESSUNG_ID, "ok", jetztMs);
+    persistiereTageGedrosselt(SELBSTMESSUNG_ID);
     // Frueher stand hier eine "Selbstmessung" fuer die Qualitaetsmessung, die
     // ohne jeden Messlauf "Suite pass (100%)" eintrug. Entfernt 2026-08-12:
     // der Server darf nur bezeugen, was er selbst ist (dieser Container) —

@@ -218,6 +218,70 @@ async function frage(methode, pfad) {
   return { behandelt, status: res.status, fehler: res.body?.error || "" };
 }
 
+// ---- 3. Findet die Bedienung, woran sie sich haengen will? ------------------
+//
+// BEFUND 2026-08-14 (A-bis-Z-Pruefung): console.js bindet seit dem 28.07.2026
+// Handler an `#akteAktionen` und `[data-aktion]` — nur hat diese Leiste NIE
+// eine Ansicht gezeichnet. `getElementById` gab null, die Bindefunktion kehrte
+// still zurueck. Damit war der gesamte schreibende Adminbereich (sperren,
+// entsperren, Rolle vergeben, loeschen, Support-Vorgang) unerreichbar,
+// waehrend Server, Vier-Augen-Freigabe, Step-up und Audit-Log fertig waren und
+// gruen getestet wurden. Kein Test konnte das sehen: die Ansichten fuer sich
+// waren richtig, die Bedienung fuer sich war richtig — falsch war die LUECKE
+// dazwischen. Genau dieselbe Sorte Fehler wie die tote Route vom 07.08.
+//
+// Geprueft wird per Textsuche, nicht durch Zeichnen: die Ansichten setzen ihre
+// Kennungen als Zeichenketten zusammen, ein DOM-Nachbau brauchte fuer jede
+// Seite erfundene Daten — und wo Daten erfunden werden, prueft man am Ende die
+// Erfindung. Die Frage hier ist schlichter: taucht die Kennung ueberhaupt
+// irgendwo als erzeugtes Attribut auf?
+//
+// GRENZE, ehrlich benannt: eine Zeichenfunktion, die die Kennung baut, aber von
+// niemandem gerufen wird, faellt hier NICHT auf — der Text steht ja da. Gegen
+// den echten Stand vom 14.08. schlaegt die Ebene nachweislich an (zwei
+// Befunde); gegen eine tote Funktion braeuchte es einen Aufruf-Graphen. Wer
+// das spaeter nachruestet, faengt auch diesen Fall.
+
+/** Woran sich die Bedienung haengt: {art, ziel, datei}. */
+function haengerZiele() {
+  const ziele = [];
+  for (const name of readdirSync(KONSOLE).filter((n) => /^console.*\.js$/.test(n))) {
+    const text = readFileSync(path.join(KONSOLE, name), "utf8");
+    for (const t of text.matchAll(/getElementById\(\s*"([a-zA-Z0-9_-]+)"\s*\)/g)) {
+      ziele.push({ art: "id", ziel: t[1], datei: name });
+    }
+    for (const t of text.matchAll(/querySelector(?:All)?\(\s*"\[([a-zA-Z0-9_-]+)\]"\s*\)/g)) {
+      ziele.push({ art: "attribut", ziel: t[1], datei: name });
+    }
+  }
+  return ziele;
+}
+
+/** Alles, was die Konsole ausliefert — dort muss die Kennung entstehen. */
+function konsolenText() {
+  return readdirSync(KONSOLE)
+    .filter((n) => /\.(js|html)$/.test(n) && !/\.test\.[cm]?js$/.test(n))
+    .map((n) => readFileSync(path.join(KONSOLE, n), "utf8"))
+    .join("\n");
+}
+
+function haengerBefunde(ziele = haengerZiele(), quellen = konsolenText()) {
+  const befunde = [];
+  for (const { art, ziel, datei } of ziele) {
+    // Erzeugt gilt: als Attribut im HTML-Text ODER per setAttribute gesetzt.
+    const erzeugt = art === "id"
+      ? new RegExp(`id="${ziel}"|setAttribute\\(\\s*"id"\\s*,\\s*"${ziel}"`).test(quellen)
+      : new RegExp(`${ziel}="|setAttribute\\(\\s*"${ziel}"`).test(quellen);
+    if (!erzeugt) {
+      befunde.push({
+        datei, ziel: art === "id" ? `#${ziel}` : `[${ziel}]`,
+        grund: "die Bedienung bindet daran, aber keine Ansicht zeichnet es — stiller Ausfall"
+      });
+    }
+  }
+  return befunde;
+}
+
 // ---- Lauf -------------------------------------------------------------------
 
 async function main() {
@@ -236,6 +300,16 @@ async function main() {
   if (!erkannt) {
     console.error("admin-konsole KAPUTT — die Selbstprobe schlug NICHT an "
       + `(Status ${probe.status}, Fehler "${probe.fehler}"). Die Pruefung wuerde alles durchwinken.`);
+    process.exit(1);
+  }
+
+  // Selbstprobe der dritten Ebene: erkennt sie einen erfundenen Haenger, und
+  // laesst sie einen echten in Ruhe? Ohne beides waere sie Zierde.
+  const probeBlind = haengerBefunde([{ art: "id", ziel: "gibt-es-garantiert-nicht", datei: "probe" }], "");
+  const probeGesund = haengerBefunde([{ art: "id", ziel: "gibtsWirklich", datei: "probe" }], 'id="gibtsWirklich"');
+  if (probeBlind.length !== 1 || probeGesund.length !== 0) {
+    console.error("admin-konsole KAPUTT — die Haenger-Selbstprobe schlug nicht an "
+      + `(blind=${probeBlind.length}, gesund=${probeGesund.length}).`);
     process.exit(1);
   }
 
@@ -273,13 +347,17 @@ async function main() {
     }
   }
 
+  const haenger = haengerBefunde();
+  for (const h of haenger) befunde.push({ seite: h.datei, pfad: h.ziel, grund: h.grund });
+
   if (befunde.length > 0) {
-    console.error(`admin-konsole VERLETZT (${befunde.length} von ${geprueft} Adressen laufen ins Leere):`);
+    console.error(`admin-konsole VERLETZT (${befunde.length} Befunde bei ${geprueft} Adressen):`);
     for (const b of befunde) console.error(`  - ${b.seite}: ${b.pfad} — ${b.grund}`);
-    console.error("Eine Adresse, die die Konsole ruft, muss beim Server ankommen. Sonst zeigt die Seite Leere statt eines Fehlers.");
+    console.error("Eine Adresse, die die Konsole ruft, muss beim Server ankommen — und ein Knopf, an den sie bindet, muss gezeichnet werden.");
     process.exit(1);
   }
-  console.log(`admin-konsole OK — ${geprueft} Adressen aus ${alle.length} Ansichten kommen beim Server an.`);
+  console.log(`admin-konsole OK — ${geprueft} Adressen aus ${alle.length} Ansichten kommen beim Server an;`
+    + ` ${haengerZiele().length} Bedienelemente werden auch gezeichnet.`);
 }
 
 await main();
