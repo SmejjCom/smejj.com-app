@@ -173,7 +173,12 @@ test("Medien-Qualitaet: bereiter Worker ist gruen, 'laeuft aber nicht bereit' is
     fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, bereit: true, engine: "kenburns" }) })
   });
   assert.equal(gruen.ok, true);
-  assert.match(gruen.meldung, /Video-Worker: bereit \(kenburns\)/);
+  assert.match(gruen.meldung, /Video-Worker: bereit in \d+ ms \(kenburns\)/);
+  // Die Antwortzeit steht seit 2026-08-14 in der Meldung. Zwei Gruende:
+  // Frueh-Signal fuer einen wegkippenden Worker — und der Supervisor (Nr. 39)
+  // meldet jede gruene Ampel, deren Meldung KEINE Zahl traegt. Er hatte hier
+  // formal recht, obwohl eine echte Netzabfrage dahinterstand.
+  assert.match(gruen.meldung, /\d/, "eine gruene Ampel ohne Zahl zeigt der Supervisor an");
 
   const zombie = await laufMedienQualitaet({
     mitNetz: true,

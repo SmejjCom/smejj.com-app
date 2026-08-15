@@ -553,21 +553,30 @@ export async function laufMedienQualitaet({ mitNetz = true, env = process.env, f
   const befunde = [];
   let allesOk = true;
   for (const ziel of ziele) {
+    // Die Antwortzeit wird MITGEMESSEN. Zwei Gruende: sie ist das einzige
+    // Frueh-Signal fuer einen Worker, der noch antwortet, aber schon
+    // wegkippt — und der autopilot-supervisor (Nr. 39) meldet jede gruene
+    // Ampel, deren Meldung keine einzige Zahl traegt. Er tat das hier zu
+    // Recht der Form nach ("Video-Worker: bereit (parallax)"), obwohl eine
+    // echte Netzabfrage dahinterstand. Ein Waechter, dessen Fehlalarme man
+    // sich abgewoehnt, ist keiner mehr — also bekommt er seine Zahl.
+    const begonnen = Date.now();
     try {
       const antwort = await fetchImpl(`${ziel.url.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(10_000) });
+      const dauerMs = Date.now() - begonnen;
       if (!antwort.ok) {
         allesOk = false;
-        befunde.push(`${ziel.name}: HTTP ${antwort.status}`);
+        befunde.push(`${ziel.name}: HTTP ${antwort.status} nach ${dauerMs} ms`);
         continue;
       }
       const daten = await antwort.json().catch(() => ({}));
       if (daten.bereit === false) {
-        // "laeuft, aber nicht bereit" ist der Salad-Fehlbild-Klassiker —
-        // genau der Zustand, der frueher unsichtbar blieb.
+        // "laeuft, aber nicht bereit" ist der Fehlbild-Klassiker aus der
+        // Salad-Zeit — genau der Zustand, der frueher unsichtbar blieb.
         allesOk = false;
-        befunde.push(`${ziel.name}: laeuft, aber NICHT bereit${daten.fehler ? ` (${String(daten.fehler).slice(0, 40)})` : ""}`);
+        befunde.push(`${ziel.name}: laeuft, aber NICHT bereit nach ${dauerMs} ms${daten.fehler ? ` (${String(daten.fehler).slice(0, 40)})` : ""}`);
       } else {
-        befunde.push(`${ziel.name}: bereit${daten.engine ? ` (${daten.engine})` : ""}`);
+        befunde.push(`${ziel.name}: bereit in ${dauerMs} ms${daten.engine ? ` (${daten.engine})` : ""}`);
       }
     } catch (fehler) {
       allesOk = false;
