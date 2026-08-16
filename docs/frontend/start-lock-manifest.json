@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T21:02:15.846Z",
-  "confirmation": "Betreiber-Bestaetigung per Karte: Ordner-Wahl direkt im Projekt-Menue der Code-Seite (📁 je Zeile), kein Seitenwechsel",
+  "frozenAt": "2026-08-16T21:11:31.783Z",
+  "confirmation": "Betreiber-Screenshot 2026-08-16: Schreibfeld wie Claude — fast viereckig (14px statt 999px-Pille, die bei mehrzeiligem Text zum Oval wurde), im Chat ganz unten",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "671d2e1c315b5f5903ef7cf7aa26bd85b2e112aab805b1b69dbe81e5a7fcf568",
+    "public/index.html": "4d549e4bb10e662a35c17ba4f728f45bab96e53c9d6cf34b3473c13f1022ffa7",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "23a8459943f4e740164c9bf7d6da3588881b1d3f9479ab2f8d60d5e3a2d2f814",
+    "public/start-styles.css": "c47a7ea80642a3d0ef536ff67cf88500e4b69330107a9ff3e5f1b61b0db407d1",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
