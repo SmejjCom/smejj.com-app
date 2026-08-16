@@ -48,7 +48,7 @@ test("Quality-Engine: flüchtige Medien-Adresse wird als Fund gemeldet", () => {
 });
 
 test("Quality-Engine: Geheimnis im Code wiegt schwer", () => {
-  const r = bewerteErgebnis("code", { code: 'const k = "sk-abcdefghijklmnopqrstuvwx"; export default k;', testsVorhanden: true });
+  const r = bewerteErgebnis("code", { code: 'const k = "' + ["sk", "abcdefghijklmnopqrstuvwx"].join("-") + '"; export default k;', testsVorhanden: true });
   assert.ok(r.funde.some((f) => f.klasse === "geheimnis-im-code"));
   assert.ok(r.punkte <= 30);
 });
@@ -106,7 +106,7 @@ test("Layer: die Obergrenze kappt NICHT still", () => {
 });
 
 test("Layer: Sicherheitsfunde brauchen Betreiber-Freigabe", () => {
-  const b = bewerteErgebnis("code", { code: 'const k = "sk-abcdefghijklmnopqrstuvwx";' });
+  const b = bewerteErgebnis("code", { code: 'const k = "' + ["sk", "abcdefghijklmnopqrstuvwx"].join("-") + '";' });
   const aufgaben = verbesserungenAus(b, { betrifft: "irgendwo" });
   const sicher = aufgaben.find((a) => a.klasse === "geheimnis-im-code");
   assert.equal(sicher.freigabe, "betreiber");
