@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T01:53:22.658Z",
-  "confirmation": "Griff-Position als Inline-Style aus spur-schalter v5 (Kaskade unberechenbar durch Runtime-CSS), Zuklapp-Schwelle misst echte Spurbreite",
+  "frozenAt": "2026-08-16T02:01:18.212Z",
+  "confirmation": "spur-schalter v6: volleBreite() raeumt die klebende is-compact-Schmalspur nach Kleinziehen/Wieder-Oeffnen auf",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4e55e131374c781327b7e77eb21ab203a6f74cc7ad689cb0f62e7147e4adc7b7",
+    "public/index.html": "c8d1ca795499e6dcd704ce5bcc2070f4b7f97690dcb9747ccb3b893b6a3d9ff1",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "ad028d19de280690d837d47f9e5f60af6e2b116c65f6e298dd1d9295a046989b",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
