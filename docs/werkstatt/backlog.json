@@ -1,14 +1,6 @@
 {
-  "gesammeltAm": "2026-08-14T08:54:48.199Z",
+  "gesammeltAm": "2026-08-14T15:19:57.653Z",
   "aufgaben": [
-    {
-      "stufe": 2,
-      "quelle": "CVE-Waechter",
-      "betrifft": "bibliothek:diffusers",
-      "titel": "diffusers 0.36.0: 5 bekannte Schwachstelle(n)",
-      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-7wx4-6vff-v64p, GHSA-98h9-4798-4q5v, PYSEC-2026-2446. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
-      "seit": null
-    },
     {
       "stufe": 2,
       "quelle": "CVE-Waechter",
@@ -37,7 +29,11 @@
   "stummeQuellen": [
     {
       "quelle": "Ampel-grau",
-      "grund": "Server erst seit 3 min neu gestartet — 2 Autopilot(en) hatten noch keinen Takt. Grau heisst hier \"noch nicht gemessen\", nicht \"kaputt\"."
+      "grund": "Server erst seit 2 min neu gestartet — 2 Autopilot(en) hatten noch keinen Takt. Grau heisst hier \"noch nicht gemessen\", nicht \"kaputt\"."
+    },
+    {
+      "quelle": "Pruefsuite",
+      "grund": "nicht angefordert (--mit-tests setzen)"
     },
     {
       "quelle": "Nutzer-Feedback",
@@ -46,7 +42,6 @@
   ],
   "gesammeltAus": [
     "Autopiloten-Ampel",
-    "Pruefsuite",
     "CVE-Waechter",
     "Mail-Zustellprotokoll"
   ]

@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-15T23:37:45.731Z",
-  "confirmation": "Gleiche Betreiber-Freigabe 2026-08-15 ('Anmeldeseite auch 1 zu 1, freigegeben' + Nachbesserung 'passt nicht zum V11'): Optik exakt wie Mockup 4 — Leuchtkarte weg (flach, 8px, viereckig), Logo mittig, farbige Marken-Icons, vierte Zeile IST die cyan umrandete E-Mail-Eingabe mit Pfeil, Deck-Saetze unten. auth-page.js/auth.css/passkey.js weiter UNVERAENDERT.",
+  "frozenAt": "2026-08-16T15:49:06.012Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-16 im Chat (Auswahl der Option 'Bruecken-Halt bauen (Empfehlung)' — 'Ich bringe den Berechtigungs-Halt in die Chat-Bruecke: im Plan/Manuell-Modus liefert der Server wirklich erst nach deinem Ja.'): chat-bridge.js buildAgentMessages setzt preferences.modus (plan/manuell/akzeptieren) im Coding-Systemprompt hart durch",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "6e3e0842fbc5d030e30e8cdedc46daefc8c040f7874f424639ae372cadac7905",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "6b0c6206e43345633b6025cf3f109b74c8a9fce7d7389dbc81423f5f6aeac72e",
+    "public/chat-bridge.js": "f47c92f6f77932015ce19b2822080557bc78f8ae5795c50927ca681a34f95bfc",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
