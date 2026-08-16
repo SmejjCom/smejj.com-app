@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T09:47:05.191Z",
-  "confirmation": "Nachtlauf 2026-08-16: Vier-Gruppen-Spur passt bei niedrigen Fenstern (kompakte Eintraege @max-height 840, duenne Scroll-Leiste) — KI-Modelle/Speicher waren unter der Scroll-Kante unerreichbar",
+  "frozenAt": "2026-08-16T09:51:16.601Z",
+  "confirmation": "Nachtlauf: rechtes Panel schaltet unter 188px auf Nur-Icons (Ueberlappungs-Fix) + panel-layout bekommt eine Versionsmarke (alter setPointerCapture-Fix erreichte den Browser nie)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "6a1bd8c3e2b33ed39b1cd7b8296d6857d9ac34eaccbc7a8dc94959d92b07abfe",
+    "public/index.html": "d17e88b14f0e0de0f8d7d666c56d9b5820eb3dbf580ded8c5707ef672ed0fcae",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "604a7fac42cd61249d3082640270156620af72bda8070e9604112c12d3ff8c11",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "a9a988fe934321a49040446296ec2eb7a38188bedaab8c8d50636f4b7340643b",
-    "public/app.js": "16ae17d47566163f3a2467ca59ff25b0e3a1345f08cbe5f503f99f05dc285e72",
+    "public/app.js": "cbb24b2b7201b8035ad74e18fd2cf90c3d4d43b807a987ec5c4681a9260d5bcf",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "7275a23acfaac72f6caa332f198153ea2167d2183a412a1abfa1e635f275a057",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",

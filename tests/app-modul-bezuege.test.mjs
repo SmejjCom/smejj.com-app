@@ -77,5 +77,5 @@ test("app.js kennt jede benutzte Konstante — eigene Deklaration oder Import", 
 test("PANEL_WIDTHS wird exportiert und importiert", () => {
   const panelLayout = fs.readFileSync("public/panel-layout.js", "utf8");
   assert.match(panelLayout, /export const PANEL_WIDTHS/);
-  assert.match(quelle, /import \{[^}]*PANEL_WIDTHS[^}]*\} from "\.\/panel-layout\.js"/);
+  assert.match(quelle, /import \{[^}]*PANEL_WIDTHS[^}]*\} from "\.\/panel-layout\.js(\?v=\d+)?"/);
 });
