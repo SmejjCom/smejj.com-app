@@ -1,19 +1,19 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-15T23:58:23.231Z",
-  "confirmation": "Am echten ChatGPT nachgemessen (Betreiber-Screenshot 15.08.): die DREI Vorschlagzeilen gehoeren auf die Startseite (ChatGPT hat sie), nur die Chip-Reihe bleibt ausgeblendet — hidden von start-vorschlaege wieder entfernt",
+  "frozenAt": "2026-08-16T00:16:55.891Z",
+  "confirmation": "Zeilenwache: Kommentar in die Zeile gezogen, app.js wieder unter 800 (split-Zaehlung); Inhalt unveraendert zur Freigabe davor",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4e1d93f7ef6bdedbb7d158dbb021db539253bad70e86c6ced25f91bec26323af",
+    "public/index.html": "1e86cf1a0110dccf3997552f96dcdb5b81295aaaae34d4d52515f3f102556b32",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "7be9f19d5f3359f21b92806b2931dd8da283a3f6437596ed89ed778475e6b425",
+    "public/start-styles.css": "f5ecff4a7da4ccb7f302a8cb75cb27d13ad7925d16de1ea22a06c09b4f3807aa",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "a9a988fe934321a49040446296ec2eb7a38188bedaab8c8d50636f4b7340643b",
-    "public/app.js": "23cec0c1307e458ebfb08a031690819f94c72a85ac9f3935863c38033e9a7131",
+    "public/app.js": "e6f4712bf736398c1bede19b2d2f1f356c65e15f940eb4a96bd95163c6adcd87",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "7275a23acfaac72f6caa332f198153ea2167d2183a412a1abfa1e635f275a057",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "092d1369657f99f462d82654fa9d3defb1c4d5c35f9e1eaa5612f16032f4ee41",
+    "public/sw.js": "61ac0fcc1a78d1527055a8e3cac7e9cd4e43445ff6ab87469fbae2e12646fcb6",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
