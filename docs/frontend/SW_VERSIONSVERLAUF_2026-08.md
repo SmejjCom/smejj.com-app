@@ -693,3 +693,7 @@ neben Kopieren (right 46px; der Ordner-Speichern-Knopf rueckt auf 86px).
 Dateiname code-N.<endung> aus data-language (25 Sprachen gemappt, sonst
 txt). Haengt sich an fertige .chat-code-wrap-Huellen von chat-code-copy.js.
 Fixture-Beweis: Klick erzeugte Blob 31B und Download "code-1.py".
+
+v482 -> v483 (2026-08-16): Code-Spur-Punkt heisst wie bei Claude kurz "Neu"
+— "Neuer Auftrag" wurde in der schmalen Spur abgeschnitten ("Neuer Auf…",
+im Betreiber-Chrome gesehen). spur-start.js b34h.
