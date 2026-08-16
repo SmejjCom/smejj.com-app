@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T17:59:08.648Z",
-  "confirmation": "Betreiber schriftlich 2026-08-16: Code-Seite ohne Zurueck/X oben, Code-Spur zeigt echten Verlauf (8 + Alle) und oeffnet Gespraeche im Code",
+  "frozenAt": "2026-08-16T18:11:34.150Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-16: Ordner je Project wie Claude Code — Handle-Speicher, Verbinden-Knopf, Datei-Kontext beim Senden, In-Ordner-Speichern an Codebloecken",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "6c5dcf4624e0036157d6e254c85209bd5759236f38a0d991dccd6ee4dd0d9c70",
+    "public/index.html": "5eec36bd1e5d7eb019285817b0edcdcc8cde19fe300c446e6270e37e92abbb0a",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "37293e2bb801db45aac876a32fee84100afa64fa97acb20664eb30e7754ab3bc",
+    "public/start-styles.css": "5b45d5083ec47867fc869aa1079d3d635010190a51041a45464e8715ff4fd233",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
