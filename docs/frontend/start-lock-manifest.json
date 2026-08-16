@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T04:19:05.898Z",
-  "confirmation": "Profil-Initialen-Kreis rund erzwungen (!important gegen eckig.css-Nullrundung; Avatare sind die dokumentierte Ausnahme)",
+  "frozenAt": "2026-08-16T04:38:52.218Z",
+  "confirmation": "Betreiber 2026-08-16: Profilmenue (profileDockMenu) im Menue-Glas wie Plus/Modell — Buendel profilmenue-glas",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "19ba59064a6c492d5d0d80fe5fdb2d71572e169a857f4e6b7a369248d408227b",
+    "public/index.html": "35c7048f09477c0da0b61abee4675bf70607697ff4fd5acf1c7c6836aec9ba9e",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "d26bf844b8020d5a279f13cb719a1f93fa322eec30b91b89f66b4efd7fc6b2ea",
+    "public/start-styles.css": "5eedb0e4ea4a3aaa131c060a8f3becf8b3d202dfdfbecbad374ca92af37c504b",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
