@@ -557,9 +557,22 @@ async function handleAgent(req, res) {
 
   let systemLines;
   if (codingTask) {
+    // Berechtigungs-Modus der Code-Seite (Betreiber-Freigabe 2026-08-16,
+    // "Bruecken-Halt bauen"): die Bruecke reicht Coding-Auftraege per
+    // streamViaControl HIERHER — der Halt muss darum in DIESEM Prompt
+    // stehen, sonst liefert der Control trotz Plan/Manuell fertigen Code
+    // (live gemessen, dreimal).
+    const modus = ["plan", "manuell", "akzeptieren"].includes(String(body?.preferences?.modus || ""))
+      ? body.preferences.modus
+      : "auto";
+    const modusZeile = {
+      plan: "PERMISSION MODE PLAN: Reply ONLY with a short numbered plan and the closing question \"Soll ich so umsetzen?\". Do NOT include any code, diffs, or file contents in this reply — implementation starts only after the user approves in their next message.",
+      manuell: "PERMISSION MODE MANUAL: Reply ONLY with 1-3 sentences describing WHAT you would do, ending with \"Soll ich das so machen?\". Do NOT include any code or diffs — only after the user says yes.",
+      akzeptieren: "PERMISSION MODE AUTO-ACCEPT: Deliver the plan and the complete code/diff suggestions in one pass, then summarize briefly what you did."
+    }[modus];
     systemLines = [
       "You are smejj.com Code Agent.",
-      "Return a concise plan and unified diff suggestions only.",
+      modusZeile || "Return a concise plan and unified diff suggestions only.",
       "Do not claim that files were changed.",
       "Dangerous terminal, git, network, secrets, and deletion actions require user approval."
     ];
