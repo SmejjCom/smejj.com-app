@@ -636,3 +636,14 @@ data:video-base64 aus der eigenen Bruecke, playsinline fuer iOS) und die
 neue Video-Spur der Bruecke (v132): eigener Video-Worker
 (workers/smejj-video-worker) erzeugt echte MP4s — kenburns auf CPU ueber den
 Bild-Maler, animatediff sobald ein GPU-Dienst freigegeben ist.
+
+v474 -> v475 (2026-08-16): Drei Betreiber-Befunde vom Startseiten-Testlauf.
+(1) "Neuer Auftrag" in der Code-Spur leerte nur das Eingabefeld und liess den
+offenen Chat WEITERLAUFEN — die naechste Aufgabe landete im alten Gespraech
+(Betreiber-Chat: "Warum schreibst du unter alte Chat?"); jetzt ruft der Punkt
+newChat() (spur-start.js b34g). (2) Der fixe "Hilfe"-Knopf oben ist raus —
+Platz von oben nach unten (topbar-krume.js b33f, entfernt auch Bestands-DOM).
+(3) Die Drei-Punkte lagen auf Raendern: bei eigenen Nachrichten halb auf dem
+Blasenrand, nach einer af-Karte auf dem Kartenrahmen. Jetzt sitzen sie in der
+letzten Blasen-Zeile (padding-right schafft Platz) bzw. 2 px unter der Karte
+(design-v11.css im Buendel).
