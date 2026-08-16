@@ -647,3 +647,8 @@ Platz von oben nach unten (topbar-krume.js b33f, entfernt auch Bestands-DOM).
 Blasenrand, nach einer af-Karte auf dem Kartenrahmen. Jetzt sitzen sie in der
 letzten Blasen-Zeile (padding-right schafft Platz) bzw. 2 px unter der Karte
 (design-v11.css im Buendel).
+
+v475 -> v476 (2026-08-16): Anhang- und Diktat-Knopf der Code-Leiste waren
+unsichtbare Striche — ghost-button bringt padding 0 14px mit, im 30px-Knopf
+blieben dem SVG 2px Innenbreite. #code .code-mini setzt jetzt padding:0 und
+das SVG flex:none (design-v11.css im Buendel, Marke codemini-20260816).
