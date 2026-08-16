@@ -41,7 +41,7 @@ const ANSICHTEN = [
   ["papierkorb", "/papierkorb"],
   ["arbeitsbereiche", "/bereiche"],
   ["Suche", "/search"], ["Websites", "/websites"], ["smejj Claw", "/smejj-claw"],
-  ["Automatisierung", "/automation"],
+  ["smejjBot", "/smejjBot"],
   ["Verlauf", "/chat-history"], ["Browser", "/browser"], ["Coding", "/code"],
   ["Projekte", "/projects"], ["Dateien", "/files"], ["Speicher", "/storage"],
   ["Gedaechtnis", "/memory"], ["Modelle", "/ai"], ["Kosten", "/cost"],

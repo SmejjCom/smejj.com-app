@@ -36,7 +36,7 @@ test("jeder genannte Arbeitsbereich existiert wirklich", () => {
   // Seit der Vier-Gruppen-Spur (Mockup V11, Bildschirm 19, 2026-08-15):
   // Reden / Arbeiten / Meine Sachen / Betrieb, 13 Eintraege plus das
   // Einstellungen-Zahnrad unten.
-  const bereiche = ["Chat", "Sprechen", "Im Netz suchen", "Bilder erstellen", "Programmieren", "Browser bedienen", "Aufträge", "Verlauf", "Meine Dateien", "Dateien", "Papierkorb", "Systemzustand", "KI-Modelle", "Speicher", "Einstellungen"];
+  const bereiche = ["Chat", "Sprechen", "Im Netz suchen", "Bilder erstellen", "Programmieren", "Browser bedienen", "smejjBot", "Verlauf", "Meine Dateien", "Dateien", "Papierkorb", "Systemzustand", "KI-Modelle", "Speicher", "Einstellungen"];
   for (const name of bereiche) {
     assert.ok(hilfe.includes(`<dt>${name}</dt>`), `Hilfe nennt "${name}" nicht`);
     assert.ok(
