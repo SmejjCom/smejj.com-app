@@ -671,3 +671,8 @@ in dessen Handler; Code-Seite unberuehrt). Beide neuen Module im Precache.
 v478 -> v479 (2026-08-16): Runter-Pfeil ohne requestAnimationFrame — rAF
 feuert im versteckten Tab nie (Messregel 2026-08-09), und die Arbeit ist nur
 ein hidden-Toggle. chat-runter-pfeil.js ?v=2.
+
+v479 -> v480 (2026-08-16): Runter-Pfeil-Klick springt im versteckten Tab
+direkt (behavior auto statt smooth — smooth haengt an rAF) und blendet den
+Pfeil sofort aus. Fixture-Beweis: 26542/26542 px, Stopp-Overlay deckt den
+Senden-Knopf exakt und geht mit dem Strom-Ereignis auf/zu. ?v=3.
