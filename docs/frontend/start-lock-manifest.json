@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T02:47:28.826Z",
-  "confirmation": "Betreiber 2026-08-16: Plus-Eintrag Foto/Video aufnehmen — capture-Input oeffnet direkt die Kamera, Fotos durch Bild-Verstehen, Videos mit ehrlicher Ausweg-Meldung; Kette werkzeuge-2/b44",
+  "frozenAt": "2026-08-16T03:04:58.794Z",
+  "confirmation": "Betreiber 2026-08-16: Plus-Menue-Eintraege hart auf EINE Zeile linksbuendig (Icon vorne, Text daneben) — !important gegen spaeter ladende Runtime-CSS, Menuebreite begrenzt",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "5b074a0d15d3561fa16d88b2f3762457c31aa779f60c78daa4834102042877d1",
+    "public/index.html": "611d46318ccd6139abbf16e7298eeda370161fce9c4eb37d70b575eef0166bc5",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "0e0bbe822c494e77bd2d03d8bde1035ab3738cd4150d99d301933a92e8ff7b59",
+    "public/start-styles.css": "884ca85875e1aed36184603f96494fcc65b5acd47cf6429a97ff36a3a76d362e",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
