@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T01:44:10.002Z",
-  "confirmation": "Griff endgueltig: overflow:hidden + Stacking-Kontext der Spur schluckten jeden Klick — spur-schalter v4 haengt den Griff an document.body, Selektoren entsprechend",
+  "frozenAt": "2026-08-16T01:53:22.658Z",
+  "confirmation": "Griff-Position als Inline-Style aus spur-schalter v5 (Kaskade unberechenbar durch Runtime-CSS), Zuklapp-Schwelle misst echte Spurbreite",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "94cc421365658519502d9ea8304624e3bd0dbd50128cce1f92c4dbca051155e4",
+    "public/index.html": "4e55e131374c781327b7e77eb21ab203a6f74cc7ad689cb0f62e7147e4adc7b7",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "ad028d19de280690d837d47f9e5f60af6e2b116c65f6e298dd1d9295a046989b",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
