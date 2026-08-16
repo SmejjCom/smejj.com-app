@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T02:36:11.891Z",
-  "confirmation": "Betreiber 2026-08-16: Logo als Spur-Schalter (appMenuButton traegt smejj_favicon, app-brand-logo aus), Plus-Menue oeffnet auf leerer Startseite nach unten (has startLog hidden), Buendel logo-schalter",
+  "frozenAt": "2026-08-16T02:47:28.826Z",
+  "confirmation": "Betreiber 2026-08-16: Plus-Eintrag Foto/Video aufnehmen — capture-Input oeffnet direkt die Kamera, Fotos durch Bild-Verstehen, Videos mit ehrlicher Ausweg-Meldung; Kette werkzeuge-2/b44",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "59322a705d5eda78d80830b8a969fd5eabf4032386ba93c62e16789507bc632c",
+    "public/index.html": "5b074a0d15d3561fa16d88b2f3762457c31aa779f60c78daa4834102042877d1",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "0e0bbe822c494e77bd2d03d8bde1035ab3738cd4150d99d301933a92e8ff7b59",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
@@ -22,7 +22,7 @@
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "04f2cb303ed55e49e74d0845c20bd730307da592e9c2561e27db12e453df9ba6",
     "public/composer-tools.js": "02ecfbb9eee515be920776520e3b071705d614db46a1632314e461f8770573af",
-    "public/composer-plus-menu.js": "2c3f3578e462fb25e52d2fb8589503a9d42c0d3549460ed9f9f20ff643a73d34",
+    "public/composer-plus-menu.js": "833c9046dee49bc9b154a31887f1adff25e6e3de8489aac2f77a7c0a9f40eac3",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "e68f3c7964373d7938571bb3590571755f34be67e0b46a4f9642607b89c2bd65",
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
