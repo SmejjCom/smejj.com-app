@@ -667,3 +667,7 @@ laufender Stroeme; try/finally deregistriert auch bei Netzabbruch. Neues
 additives Modul chat-stopp.js (?v=1) legt waehrend des Stroms ein
 Stopp-Quadrat UEBER den Senden-Pfeil der Startseite (Overlay, kein Eingriff
 in dessen Handler; Code-Seite unberuehrt). Beide neuen Module im Precache.
+
+v478 -> v479 (2026-08-16): Runter-Pfeil ohne requestAnimationFrame — rAF
+feuert im versteckten Tab nie (Messregel 2026-08-09), und die Arbeit ist nur
+ein hidden-Toggle. chat-runter-pfeil.js ?v=2.
