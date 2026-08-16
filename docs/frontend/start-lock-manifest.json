@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T01:04:31.249Z",
-  "confirmation": "Betreiber 2026-08-16: Werkzeuge als reine Icon-Zeile (44px, title/aria-label tragen den Namen) direkt unter dem Schreibfeld, Vorschlaege darunter; Buendel icons-zeile",
+  "frozenAt": "2026-08-16T01:34:02.273Z",
+  "confirmation": "Betreiber 2026-08-16, sechs Punkte: 8. Icon Schreiben/bearbeiten in der Zeile, drei Text-Vorschlaege ausgeblendet, Plus-Menue kompakt mit Icons wie ChatGPT (werk-ic, Erklaertexte nur optisch weg), Spur-Icons vereinheitlicht, Spur+Browser-Panel als Glas",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "ceb7eb9c3b711ce3352a132059a88e92ea1628dda1f40f17f19509b88464ab60",
+    "public/index.html": "1df7e56a2af04a3fa09d4688fcc926b85b1d3e7a6de508fa016632aa994fb011",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "13fb95e2d730ade8f29c6fdb1c99bd4ee50b5a227c57c309cb06a4dbc9015f04",
+    "public/start-styles.css": "58038228efc2fb59239596208bef63e4abac574e77d35763426c3b1a57c48d77",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
