@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T08:38:44.479Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-16: Code-Seite war komplett tot (code-flaeche.js nie eingebunden — Script-Tag fehlte); jetzt eingebunden, Senden bleibt auf der Seite und streamt dort, Projekt-Chip mit echtem Inline-Menue; Meine Dateien heisst smejjCloud",
+  "frozenAt": "2026-08-16T09:05:20.085Z",
+  "confirmation": "Nachzug: chat-history-cards auf chat-store b51 (vergessene Kopie der Markenkette)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "40035ba6a2bb7e7e97f34943c187ee6581f52d0fd7a7749c1ab540a59956c338",
+    "public/index.html": "5bcc02f57a6cd6e79be740fa6626ba2f99375d4d773dcd9ee99edf43eff34fc9",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "01cb79960d3323ee14a3bc6160ad31af6404570a74b082ca008b6066c06f6dd8",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
@@ -20,7 +20,7 @@
     "public/premium-surfaces.js": "d77212e209e095afa64798fd943fc3c3d3585b676150f975dd975b42e1f6dc7f",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
-    "public/search.js": "185e5cf228d83242c81fd4fd23ea95d3b2afe1021fb4dc4d810cb32a705ff3a4",
+    "public/search.js": "45429565ae1223006ec2b0fcb06de1a2974ca41008e721c8ce3fd6d0a33ac8ac",
     "public/composer-tools.js": "02ecfbb9eee515be920776520e3b071705d614db46a1632314e461f8770573af",
     "public/composer-plus-menu.js": "833c9046dee49bc9b154a31887f1adff25e6e3de8489aac2f77a7c0a9f40eac3",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
