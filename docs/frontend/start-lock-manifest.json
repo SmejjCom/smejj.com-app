@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T09:36:08.610Z",
-  "confirmation": "Modus-Regeln nachgeschaerft: Plan/Manuell verbieten Code in der ersten Antwort ausdruecklich (weiche Formulierung verlor gegen den Coding-Systemprompt, live gemessen)",
+  "frozenAt": "2026-08-16T09:47:05.191Z",
+  "confirmation": "Nachtlauf 2026-08-16: Vier-Gruppen-Spur passt bei niedrigen Fenstern (kompakte Eintraege @max-height 840, duenne Scroll-Leiste) — KI-Modelle/Speicher waren unter der Scroll-Kante unerreichbar",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4a43887aa8cca02b0ef5f037ca4a3fd57855f661fdaf40330451ecc1591014c1",
+    "public/index.html": "6a1bd8c3e2b33ed39b1cd7b8296d6857d9ac34eaccbc7a8dc94959d92b07abfe",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "947f9eda23e532e54dd9232d2afa052cf97c8089adac7ff14ca52543df68d03e",
+    "public/start-styles.css": "604a7fac42cd61249d3082640270156620af72bda8070e9604112c12d3ff8c11",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
