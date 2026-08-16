@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T09:51:16.601Z",
-  "confirmation": "Nachtlauf: rechtes Panel schaltet unter 188px auf Nur-Icons (Ueberlappungs-Fix) + panel-layout bekommt eine Versionsmarke (alter setPointerCapture-Fix erreichte den Browser nie)",
+  "frozenAt": "2026-08-16T10:11:32.582Z",
+  "confirmation": "Nachtlauf: rechtes Panel ohne transform-Animation am Desktop — Hit-Flaeche hing um Panelbreite neben dem gemalten Panel, echte Klicks gingen ins Leere",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "d17e88b14f0e0de0f8d7d666c56d9b5820eb3dbf580ded8c5707ef672ed0fcae",
+    "public/index.html": "2926660f1a3c999b0aeb5a436175e5e4b81f9332b37cb233f88a2d3a7e56a7ac",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "604a7fac42cd61249d3082640270156620af72bda8070e9604112c12d3ff8c11",
+    "public/start-styles.css": "05d60e91a53558e4a09587e9c87252da6c52e29180110d858b692e4e95a2da5a",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
