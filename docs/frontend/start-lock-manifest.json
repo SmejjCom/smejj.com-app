@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T15:50:21.024Z",
-  "confirmation": "Markenkette fuer den Bruecken-Halt (settings-runtime b39, Kette bis app b49)",
+  "frozenAt": "2026-08-16T16:40:56.270Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-16 (Claude-Vorbild): Modell-Waehler sichtbar rechts in der Schreibleiste (war versteckt, Menue lebt), Mitte rahmenlos wenn beide Fenster zu",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "937996d42b90f4a81353700a33524e648ff2ddd8080fe0309912dee701808e7a",
+    "public/index.html": "267ea44b99fa1ac174b36a280b27dc8e594a9ac13e7ad0eab9d71a5cef5aa84f",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "05d60e91a53558e4a09587e9c87252da6c52e29180110d858b692e4e95a2da5a",
+    "public/start-styles.css": "23fe192162d87ecc41e60de1a895c98fed88f453ae47ad19eeeef772648f5ccd",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
