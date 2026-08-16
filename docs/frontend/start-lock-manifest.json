@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T17:45:40.053Z",
-  "confirmation": "Nachzug zur Betreiber-Anweisung: auch Editor-und-Dateien-Zeile unter dem Code-Feld ausgeblendet — darunter ist jetzt wirklich nichts",
+  "frozenAt": "2026-08-16T17:54:15.484Z",
+  "confirmation": "Betreiber-Screenshots 2026-08-16: Code-Chat dockt oben an (Gruss weicht), scrollt intern ans Ende, Feld klebt am Boden, Mikrofon/Anhang-Icons sichtbar",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "111b72cec5d73096b52557f7149c6c0bf0880a979710c8edad65ad1ef7ac5a23",
+    "public/index.html": "b5713ee4f532efd018f94f71aecfed647ecd3c5b8e07d183aa900055ed7e62cb",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "27a9d76b21e4998f22c17cdcbc8afe132d7eedd989034ebe31391c1cef967354",
+    "public/start-styles.css": "984ea313af22ed6415533eea5c69072519b9f7659c517fb9100b2748f2051e26",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
