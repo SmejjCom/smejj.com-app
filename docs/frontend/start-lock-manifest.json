@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T17:10:55.609Z",
-  "confirmation": "Drei-Punkte-Nachschliff: Daumen aus dem Menue wirkt (ensureBar statt totem Leisten-Bezug) und die Punkte stehen in der letzten Antwortzeile (Betreiber-Ansage)",
+  "frozenAt": "2026-08-16T17:13:16.694Z",
+  "confirmation": "Betreiber-Ansage 2026-08-16: Chat dicht (Haarstrich statt Luft zwischen Nachrichten), App-Koepfe und Raster kompakter",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "36ce26156837c973761b6b358ca7f1d84210022228f0d1a7f028faa0f1196534",
+    "public/index.html": "8a277774ffc4707fc8a72d09778e9d4017d515a74b88d2e027df56ba61dbed5f",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "3ecf305eca760838b34841e57424229acc95eaaf6d5e934372c6304c51fa6b92",
+    "public/start-styles.css": "76294bc97745b6b5857129d01c07de71d380b4da62957e34ff56f08f658ec2d3",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
