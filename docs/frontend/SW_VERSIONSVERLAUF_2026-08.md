@@ -676,3 +676,13 @@ v479 -> v480 (2026-08-16): Runter-Pfeil-Klick springt im versteckten Tab
 direkt (behavior auto statt smooth — smooth haengt an rAF) und blendet den
 Pfeil sofort aus. Fixture-Beweis: 26542/26542 px, Stopp-Overlay deckt den
 Senden-Knopf exakt und geht mit dem Strom-Ereignis auf/zu. ?v=3.
+
+v480 -> v481 (2026-08-16, "Codierung wie Claude"): Codebloecke im Chat wie
+Claude. (1) Kopfleiste: pre.chat-code[data-language]::before zeigt den
+Sprachnamen als Kopfstreifen (sticky gegen den horizontalen Ueberlauf), der
+Kopieren-Knopf sitzt rechts darin; Bloecke ohne Sprache unveraendert.
+(2) Syntax-Farben: neues additives Modul chat-code-farben.js (?v=1) faerbt
+NACH dem Rendern (Kommentar/String/Zahl/Schluesselwort/Funktion, ein
+Regex-Pass, Ausgabe erneut escaped); textContent bleibt ZEICHENGLEICH —
+Verlauf, Modellkontext und Vorlesen unveraendert (Fixture-Beweis). Renderer
+chat-markdown.js unangetastet.
