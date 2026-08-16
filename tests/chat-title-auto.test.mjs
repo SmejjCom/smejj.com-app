@@ -98,7 +98,7 @@ test("das Modul bleibt fail-safe und ruecksichtsvoll", () => {
 
 test("Kennungen der Importe passen zu den uebrigen Modulen (Befund F-07)", () => {
   // Ein abweichender Spezifizierer erzeugt eine ZWEITE Modulinstanz.
-  assert.match(QUELLE, /from "\/assets\/chat-store\.js\?v=b49"/);
+  assert.match(QUELLE, /from "\/assets\/chat-store\.js\?v=b50"/);
   assert.match(QUELLE, /from "\/assets\/ai\/chat-stream\.js"/);
   assert.ok(!/chat-stream\.js\?/.test(QUELLE), "chat-stream.js wird ohne Kennung importiert");
 });
