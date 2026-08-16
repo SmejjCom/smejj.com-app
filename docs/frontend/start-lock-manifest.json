@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T09:05:20.085Z",
-  "confirmation": "Nachzug: chat-history-cards auf chat-store b51 (vergessene Kopie der Markenkette)",
+  "frozenAt": "2026-08-16T09:15:51.461Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-16: Such-Overlay X-Icon statt Esc-Kasten, Zieh-Griff unter das Overlay (z75<80), Chat rahmenlos wie Claude, Code-Schreibfeld unten fest",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "5bcc02f57a6cd6e79be740fa6626ba2f99375d4d773dcd9ee99edf43eff34fc9",
+    "public/index.html": "6da2e214076acad6a750cc04fa4bb1a000011eb368dcf2c419dbcb545670af82",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "01cb79960d3323ee14a3bc6160ad31af6404570a74b082ca008b6066c06f6dd8",
+    "public/start-styles.css": "05e67a33961e3946faf89b58f61017478f06e1c19e31edb7747b375a30caa5d7",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
