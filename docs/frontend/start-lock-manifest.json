@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T17:18:38.598Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-16: Verlauf und Such-Overlay kompakt wie der Chat (flache Zeilen, Haarstrich)",
+  "frozenAt": "2026-08-16T17:21:45.828Z",
+  "confirmation": "Regression aus v458 repariert: zerissene Sammelregel — Audio-Knopf hat sein display:none zurueck, nur noch EINE Sprachwelle im Feld",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4814c466a941682cba40eb9e50a6ff51a0b419b331c726e60bb68762a959f2aa",
+    "public/index.html": "999da1396022631f6950ed7d62c5bb8e5af31ff3f5233f4af55992b593d60a6f",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "86ea5435972ffd873610662a5404e18e088dc48f470cfa73a673871d00930811",
+    "public/start-styles.css": "9ba5af132d81d5e3a7a5a1ecca24fa50a030dee737989380a69e035be5c62bf1",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
