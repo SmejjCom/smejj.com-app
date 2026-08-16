@@ -490,6 +490,26 @@ export async function readableError(response, offlineNotice = "") {
  * @param {HTMLElement} output Antwort-Knoten
  * @param {{renderMarkdown?: Function, offlineNotice?: string}} deps
  */
+// Betreiber 2026-08-16 ("Chat-Funktion wie ChatGPT"): laufende Stroeme sind
+// abbrechbar. Die Registry haelt jeden aktiven Leser; stoppeChatStrom()
+// cancelt sie alle — die Leseschleife endet dann SAUBER ueber done, der
+// normale Abschluss (Wartesignal weg, Markdown, Notiz-Fallback) laeuft wie
+// bei einem regulaeren Stromende. Das Fensterereignis "smejj:chat-strom"
+// meldet die Zahl laufender Stroeme an die Oberflaeche (Stopp-Knopf).
+const aktiveLeser = new Set();
+
+function meldeStromstand() {
+  try {
+    window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: aktiveLeser.size } }));
+  } catch { /* ohne Fenster (Tests) einfach still */ }
+}
+
+export function stoppeChatStrom() {
+  for (const leser of aktiveLeser) {
+    try { leser.cancel(); } catch { /* Strom war schon zu */ }
+  }
+}
+
 export async function streamChatAnswer(url, body, output, { renderMarkdown, offlineNotice = "" } = {}) {
   // Ab dem Absenden sichtbar arbeiten — der Server meldet sich erst nach
   // gemessenen 5,75 s (siehe starteWartesignal).
@@ -515,6 +535,8 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   }
 
   const reader = response.body.getReader();
+  aktiveLeser.add(reader);
+  meldeStromstand();
   const decoder = new TextDecoder();
   let buffer = "";
   // Ausgang der Werkzeugarbeit — gebraucht wird er erst ganz am Ende, fuer die
@@ -525,6 +547,7 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   // nichts stehen (abgebrochener Lauf), kommt sie zurueck.
   let letzteNotiz = "";
 
+  try {
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -563,6 +586,12 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
       }
     }
     output.scrollIntoView({ block: "end" });
+  }
+  } finally {
+    // Immer deregistrieren — auch wenn read() wirft (Netzabbruch): sonst
+    // bliebe der Stopp-Knopf fuer immer stehen.
+    aktiveLeser.delete(reader);
+    meldeStromstand();
   }
   // Auch wenn der Strom ohne ein einziges Ereignis endet: das Signal muss weg.
   stoppeWartesignal();

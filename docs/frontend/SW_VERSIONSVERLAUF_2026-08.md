@@ -658,3 +658,12 @@ Gespraech — neues additives Modul chat-runter-pfeil.js (?v=1): wer
 hochgescrollt hat, sieht mittig ueber dem Schreibfeld einen runden Pfeil,
 Klick springt ans Ende; waehrend des Stroms zieht ein MutationObserver mit.
 Kein Eingriff in Senden/Strom/Verlauf.
+
+v477 -> v478 (2026-08-16, "Chat wie ChatGPT" Schritt 2): Stopp-Knopf.
+ai/chat-stream.js fuehrt eine Registry aktiver Leser, exportiert
+stoppeChatStrom() (cancel -> Schleife endet sauber ueber done, Markdown und
+Notiz-Fallback laufen normal) und meldet "smejj:chat-strom" mit der Zahl
+laufender Stroeme; try/finally deregistriert auch bei Netzabbruch. Neues
+additives Modul chat-stopp.js (?v=1) legt waehrend des Stroms ein
+Stopp-Quadrat UEBER den Senden-Pfeil der Startseite (Overlay, kein Eingriff
+in dessen Handler; Code-Seite unberuehrt). Beide neuen Module im Precache.
