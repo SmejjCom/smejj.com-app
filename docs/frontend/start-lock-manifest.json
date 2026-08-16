@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T03:45:20.539Z",
-  "confirmation": "Betreiber 2026-08-16: Arbeitsbereich heisst Projects (Labels), Spur startet IMMER offen (zu-Merker war die Kaputt-Falle), rechter Griff wie links an den Body, beide Griffe sichtbar mit Hover-Cyan; spur-schalter v7, Buendel griffe-sichtbar, arbeitsbereiche v2",
+  "frozenAt": "2026-08-16T04:09:53.728Z",
+  "confirmation": "Betreiber 2026-08-16: rechter Ecken-Knopf traegt das Profil-Zeichen (Initialen-Kreis) statt des Menue-Icons — Funktion bleibt rechtes Fenster auf/zu; topbar-krume b33c fuellt Initialen, topAvatar-Doppel entfernt",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8bf3c24d1e6078ffc341810981acb1972fd99025af336177d014caa53aac4d18",
+    "public/index.html": "f649b7f228b3fdb7188b7de44818d4d12658aff092888f69b20693c9cde76765",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "fa5a7d6c15ef0cc09dce9d7a59ffc80a33c4b8dfe1af23bf6fe943627907c39b",
+    "public/start-styles.css": "0a5bf0a0e18d2b8aa22883039d3b528c9804d6f5c42b69b0dbdda0bd4b2ea30c",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
