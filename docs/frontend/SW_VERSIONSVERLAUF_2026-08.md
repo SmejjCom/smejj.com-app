@@ -686,3 +686,10 @@ NACH dem Rendern (Kommentar/String/Zahl/Schluesselwort/Funktion, ein
 Regex-Pass, Ausgabe erneut escaped); textContent bleibt ZEICHENGLEICH —
 Verlauf, Modellkontext und Vorlesen unveraendert (Fixture-Beweis). Renderer
 chat-markdown.js unangetastet.
+
+v481 -> v482 (2026-08-16, "Codierung wie Claude"): Codeblock als Datei
+herunterladen — neues additives Modul chat-code-download.js (?v=1), Knopf
+neben Kopieren (right 46px; der Ordner-Speichern-Knopf rueckt auf 86px).
+Dateiname code-N.<endung> aus data-language (25 Sprachen gemappt, sonst
+txt). Haengt sich an fertige .chat-code-wrap-Huellen von chat-code-copy.js.
+Fixture-Beweis: Klick erzeugte Blob 31B und Download "code-1.py".
