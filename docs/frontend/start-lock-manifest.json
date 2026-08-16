@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T17:42:24.618Z",
-  "confirmation": "Betreiber schriftlich im Chat 2026-08-16: Code-Schreibfeld ganz unten wie bei Claude, Vorlagen-Chips weg, darunter leer",
+  "frozenAt": "2026-08-16T17:45:40.053Z",
+  "confirmation": "Nachzug zur Betreiber-Anweisung: auch Editor-und-Dateien-Zeile unter dem Code-Feld ausgeblendet — darunter ist jetzt wirklich nichts",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "0e990bbd9591408e824dc8e699c32a14f14537974e86d8e068ff0dc40da21be2",
+    "public/index.html": "111b72cec5d73096b52557f7149c6c0bf0880a979710c8edad65ad1ef7ac5a23",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "7b6ad3e749b677f4a822251470ad99ed52b8006aa3450ebd956c35ab71505cf5",
+    "public/start-styles.css": "27a9d76b21e4998f22c17cdcbc8afe132d7eedd989034ebe31391c1cef967354",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
