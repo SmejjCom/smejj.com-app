@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T07:21:45.846Z",
-  "confirmation": "Projects-Anweisung wirkt jetzt wirklich: openChat-Aufruf stand nach return (toter Code), newChat legt die Anweisung des vorgemerkten Bereichs sofort ab — chat-store b50, Kette b47c/b34c/b38c/b45",
+  "frozenAt": "2026-08-16T07:41:54.153Z",
+  "confirmation": "Betreiber 2026-08-16: Brotkrume oben UEBERALL raus — sie doppelte nur die grosse Ueberschrift jeder Ansicht; topbar-krume b33e",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "df19dfa9bcf99df9c21a2ab14ff16373c970862750825c43c9b738e8359db81d",
+    "public/index.html": "fbf77df68307852327d810bf0cc3c2e9c51f94ea609c8e91d594e351758e6cbe",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "2140968075bb52714fa22028ab15ee64c64f5df77078556e7f592aaac1862112",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
