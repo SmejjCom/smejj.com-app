@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T00:37:29.497Z",
-  "confirmation": "Betreiber-Befunde 2026-08-15: Zieh-Griff der Spur hing bei x=-24 (Alt-Regel) — am Desktop hart an die Kante; setPointerCapture abgesichert; klein ziehen klappt die Spur zu (wie ChatGPT, spur-schalter v2); Profilzeile ohne Zahnrad, Avatar rund",
+  "frozenAt": "2026-08-16T00:48:57.452Z",
+  "confirmation": "Betreiber-Fenster hat durch Zoom nur ~778 CSS-px — Spur-Schalter und Offen-Regeln von 1024 auf 768 gesenkt (spur-schalter v3, Buendel spur-768)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4c613d39802ce055279fbbf8e8f655b5d624e1312a9518e85138b725052b4548",
+    "public/index.html": "b0c48329d215c83dd4d5f72f6fb30c04b5ac72ede5546ad7d64d2c4fb65d777d",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "49955bbce8b1ccdf47670e60a58c50578ba0c349aacdda721875b2a5bb16acfb",
+    "public/start-styles.css": "40461a126dfd39b19c77d45c351b5172836b2a9e0317f6a3b080abafa6e89fe5",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
