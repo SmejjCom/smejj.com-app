@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T04:48:04.542Z",
-  "confirmation": "Betreiber 2026-08-16 zweite Ansage: rechts oben wieder Browser-Icon (Globus) statt Profil-Initialen; topbar-krume b33d ohne Initialen-Fueller",
+  "frozenAt": "2026-08-16T05:27:38.703Z",
+  "confirmation": "DER Klick-Killer: panel-layout setzte inert auf die am Desktop sichtbare Spur (Handy-Automat dachte zu) — sichtbar, aber jeder echte Mausklick tot. spur-schalter v8 wacht und entfernt inert/aria-hidden solange die Spur sichtbar ist",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "933454c3b5434f876e32047caadbcd8cd48bee500e5021daca7ee7e00333cad2",
+    "public/index.html": "21202cf40a88c20ef8007a5343f27a659c12c5b98561c774811fee9223619237",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "5eedb0e4ea4a3aaa131c060a8f3becf8b3d202dfdfbecbad374ca92af37c504b",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
