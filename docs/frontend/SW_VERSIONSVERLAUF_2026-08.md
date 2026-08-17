@@ -1098,3 +1098,7 @@ v521 -> v522 (2026-08-17): Kurzname trennt nur noch nach
 Buchstabengruppen >=2 ("deepseek-v4" -> "Deepseek V4" statt "V 4") —
 damit greift auch der Namens-Dedupe (Kimi K3 stand doppelt). Zeilen
 noch dichter (padding 2px, line-height 1.35). code-flaeche.js v23.
+
+v522 -> v523 (2026-08-17, Betreiber: "Schriftgroesse wie Auto/Schnell,
+edel, enger"): Modell-Menue-Schrift 13px/Gewicht 450 (wie die
+Leisten-Chips), Zeilen-padding 1px, Kopf 11.5px, Menue 250px schmal.
