@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-16T21:11:31.783Z",
-  "confirmation": "Betreiber-Screenshot 2026-08-16: Schreibfeld wie Claude — fast viereckig (14px statt 999px-Pille, die bei mehrzeiligem Text zum Oval wurde), im Chat ganz unten",
+  "frozenAt": "2026-08-17T00:40:26.953Z",
+  "confirmation": "Betreiber 2026-08-16 (Chat): 'passt, mach Tag und Stempel fertig' — v475-v487 abgenommen (Chat wie ChatGPT, Code wie Claude, Code-Seite randlos, aktives Gespraech markiert)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4d549e4bb10e662a35c17ba4f728f45bab96e53c9d6cf34b3473c13f1022ffa7",
+    "public/index.html": "20c4bbca569d2e6fe3b1a5ba0fee1580c1a4aa0f733b6595a7ed9ed40b68a687",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "c47a7ea80642a3d0ef536ff67cf88500e4b69330107a9ff3e5f1b61b0db407d1",
+    "public/start-styles.css": "ba4e1865a232da624fe839815d3b038d68ab413f15d8723764e0adda83891377",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
