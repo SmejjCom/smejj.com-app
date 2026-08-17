@@ -1121,3 +1121,8 @@ Messung am Knopf selbst (rechtsbuendig, 6px darueber) statt am Feld.
 min-height 40px + padding 0 14px und schlug die engen Zeilen — mit
 ID-Gewicht erzwungen (min-height 0, padding 2px): Zeilenhoehe ~24px
 statt 40. code-flaeche.js v24.
+
+v525 -> v526 (2026-08-17, Betreiber: "Freiflaeche rausnehmen, Fenster
+klein"): Modell-Menue auf Inhaltsbreite (width max-content statt
+min-width 320) — der Haken sitzt direkt hinter dem laengsten Namen,
+keine Leerflaeche rechts.
