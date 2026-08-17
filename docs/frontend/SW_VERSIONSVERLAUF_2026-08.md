@@ -1093,3 +1093,8 @@ die Wunschliste (GLM 5.3, Opus 5, GPT 5.6, Grok 4.5, Kimi K3), dann
 alle uebrigen mit lesbar gemachten Kurznamen (kurzName(): qwen3.8-max
 -> "Qwen 3.8 Max"); gleiche Namen nur einmal (kimi-k3 stand doppelt).
 Zeilen enger (padding 3px statt 7px). code-flaeche.js v22.
+
+v521 -> v522 (2026-08-17): Kurzname trennt nur noch nach
+Buchstabengruppen >=2 ("deepseek-v4" -> "Deepseek V4" statt "V 4") —
+damit greift auch der Namens-Dedupe (Kimi K3 stand doppelt). Zeilen
+noch dichter (padding 2px, line-height 1.35). code-flaeche.js v23.
