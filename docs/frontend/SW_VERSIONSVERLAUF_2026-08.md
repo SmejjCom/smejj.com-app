@@ -893,3 +893,9 @@ Beschreibung gedaempft darunter (eine Zeile, Punkte), rechts Haken
 offen ist. Claudes "Berechtigungen umgehen"-Zeile fehlt BEWUSST (kein
 solches System — Blindgaenger-Verbot). code-flaeche.js v15,
 CACHE_NAME v340.
+
+v500 -> v501 (2026-08-16, Betreiber: "keine Trennstriche"): die feinen
+Linien zwischen den Modus-Zeilen kamen aus der generischen Knopf-Regel
+(Lichtkante inset 0 1px + Grundton 0.055, live gemessen) — in beiden
+Code-Menues mit ID-Gewicht abgeschaltet; Hover bleibt cyan.
+CACHE_NAME v341.
