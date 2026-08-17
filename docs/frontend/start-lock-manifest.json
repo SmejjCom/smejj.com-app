@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T16:57:24.457Z",
-  "confirmation": "Betreiber 2026-08-17: 'Passt — Stempel setzen' (Startseiten-Runde v529-v531: gleiches Modell-Menue am Start, im Fenster, kurzer Modellname im Knopf)",
+  "frozenAt": "2026-08-17T17:09:10.575Z",
+  "confirmation": "Betreiber 2026-08-17: 'Passt — Stempel setzen' (v532: Modellwechsel wirkt beim Senden — /select-Pflicht; Opus-5-Beweis im frischen Gespraech)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "93eaa85f719224ed238e6a0f9b66b5a35d76ac55ccfc8136ffe711d95a3bd129",
+    "public/index.html": "20dba5d5336849391b17c9832394292cbc72cf1e1e98581f784960d303dad20c",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "6f876cf388f94a424b6c4d6548423cc908b5fded3c54ac979cd862bb18349e6e",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "2f1b92c9681dcb85646d6c4d20ee6daa2b1e37f2a57deac55b1fbb8d6e841229",
+    "public/sw.js": "b002f52adbee344c09927da513691dd3f6ea4fbb91d33a576fc74e3f98467d28",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
