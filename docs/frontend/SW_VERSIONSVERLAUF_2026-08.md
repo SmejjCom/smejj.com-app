@@ -1175,3 +1175,11 @@ Menue-Wahl wirkte beim Senden NIE (GPT-Test klappte nur, weil server-
 seitig zufaellig gpt-5.6 stand; "Opus"-Antwort kam von GPT). Jetzt
 ruft jede Cline-Wahl im Menue zusaetzlich POST /select — der Server
 wechselt mit. code-flaeche.js v30.
+
+v532 -> v535 (2026-08-17, Nutzertest Bilder): Mit gewaehltem
+Cline-Katalogmodell lief "Generiere ein Bild von: …" ueber
+/api/providers/cline/chat — ein reiner Text-Weg OHNE Medien-Spur; die
+Antwort war ein ausformulierter "Bildprompt" statt eines Bildes. Neues
+Modul medien-absicht.js (?v=1, TUEV-Test kaputt+gesund): erkennt Bild-
+und Video-Auftraege im Client, app.js (b54) laesst dann den Cline-Weg aus
+— Medien nehmen IMMER den Bruecken-Weg mit Maler/Video-Worker.
