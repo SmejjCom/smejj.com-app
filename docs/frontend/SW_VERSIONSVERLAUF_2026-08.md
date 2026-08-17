@@ -1057,3 +1057,17 @@ Knoten, Live-Werte bleiben live) in den Panel-Halter; zweiter Klick,
 anderer Reiter oder das Oeffnen der Systemzustand-Ansicht geben sie
 zurueck. Fixture-Beweis: kein Sprung, Live-Wert-Update im Panel, saubere
 Rueckgabe, andere Reiter springen normal.
+
+v516 -> v517 (2026-08-17): Modell-Menue im Code-Bereich meldete "Key
+verbinden" trotz verbundenem Key — die Status-Abfrage nutzte nur den
+localStorage-apiToken (401). Jetzt dieselbe Anmeldung wie
+provider-settings.js: Sitzungs-Token, dann Zugangs-Token, plus Cookies.
+code-flaeche.js v19. AUSSERDEM heute serverseitig (Bau-Branch
+feature/auth-redesign-github-magiclink, NICHT main — Zeabur baut von
+dort): Cline-Verbindungstest nutzt gewaehltes/empfohlenes Modell statt
+gesperrter Gratis-Modelle (403 product surfaces) und 64 statt 4
+Test-Tokens (GPT-5.6-Minimum). Tresor-Geheimnis per
+provider_tresor_scharfschalten.mjs gesetzt. BEWIESEN mit dem Key des
+Betreibers: gpt-5.6-sol 201/getestet, claude-opus-5 getestet, kimi-k3
+getestet; cline-pass/glm-5.3 = 403 "not subscribed" (braucht
+Cline-Pass-Abo). Guthaben ~0.35 — fuer echtes Arbeiten aufladen.
