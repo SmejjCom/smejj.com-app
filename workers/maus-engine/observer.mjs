@@ -6,8 +6,8 @@
 // KEIN Modell. Der Zustand geht als untrusted DATEN an den Planer
 // (Rahmung uebernimmt prompt-template.buildStepPrompt).
 
-export const OBSERVATION_LIMIT_CHARS = 4000;
-export const OBSERVATION_MAX_ELEMENTS = 40;
+export const OBSERVATION_LIMIT_CHARS = 6000;
+export const OBSERVATION_MAX_ELEMENTS = 60;
 const ELEMENT_TEXT_LIMIT = 80;
 const MASKED_VALUE = "***";
 
@@ -19,11 +19,20 @@ export function pageSnapshotScript() {
   const selector = "a[href], button, input, select, textarea, [role=\"" + roles.join("\"], [role=\"") + "\"]";
   const elements = [];
   const nodes = document.querySelectorAll(selector);
-  for (let i = 0; i < nodes.length && elements.length < 80; i += 1) {
+  for (let i = 0; i < nodes.length && elements.length < 160; i += 1) {
     const node = nodes[i];
     const rect = node.getBoundingClientRect();
+    // Nur wirklich Unsichtbares faellt raus (display:none, Groesse 0).
     if (rect.width <= 0 || rect.height <= 0) continue;
-    if (rect.bottom < 0 || rect.top > window.innerHeight) continue;
+    // Bis 2026-08-17 flog hier alles ausserhalb des Bildausschnitts raus:
+    //   if (rect.bottom < 0 || rect.top > window.innerHeight) continue;
+    // Damit sah die Maus nur, was gerade im Fenster stand. Ein Link im
+    // Fussbereich existierte fuer sie nicht — sie musste ihn blind ersuchen
+    // und verbrauchte dabei ihre Schritte. Aus einer echten Aufnahme:
+    // "Impressum-Link ist in den sichtbaren Elementen nicht vorhanden,
+    //  vermutlich weiter unten auf der Seite; scrollen nach unten".
+    // Jetzt sieht sie die ganze Seite und weiss, WOHIN sie scrollen muss.
+    const imBild = rect.bottom > 0 && rect.top < window.innerHeight;
     const type = (node.getAttribute("type") || "").toLowerCase();
     const isPassword = node.tagName === "INPUT" && type === "password";
     let label = node.getAttribute("aria-label") || "";
@@ -39,6 +48,9 @@ export function pageSnapshotScript() {
       id: (node.getAttribute("id") || "").slice(0, 80) || undefined,
       href: node.tagName === "A" ? (node.getAttribute("href") || "").slice(0, 300) : undefined,
       password: isPassword || undefined,
+      // Nur die AUSNAHME wird vermerkt. Steht nichts da, ist das Element im
+      // Bild — so bleibt die Liste kurz, und "ausserhalb" faellt beim Lesen auf.
+      ausserhalbBild: imBild ? undefined : true,
       x: Math.round(rect.left + rect.width / 2),
       y: Math.round(rect.top + rect.height / 2)
     });
@@ -65,6 +77,7 @@ function normalizeElement(raw, index) {
     x: Number.isFinite(raw.x) ? raw.x : 0,
     y: Number.isFinite(raw.y) ? raw.y : 0
   };
+  if (raw.ausserhalbBild === true) element.ausserhalbBild = true;
   if (raw.role) element.role = truncate(raw.role, 30);
   if (raw.type) element.type = truncate(raw.type, 30);
   if (raw.name) element.name = truncate(raw.name, 60);
@@ -84,13 +97,32 @@ function normalizeElement(raw, index) {
 // Beobachtung deterministisch auf maxChars kappen: erst Elementliste
 // verkleinern, dann Textauszug kuerzen. Rueckgabe ist IMMER <= maxChars
 // (gemessen an der JSON-Serialisierung, die auch in den Prompt geht).
+/**
+ * Kuerzt eine Elementliste auf `max` — und nimmt dafuer aus der MITTE.
+ *
+ * Frueher wurde hinten abgeschnitten. Solange die Beobachtung nur den
+ * Bildausschnitt umfasste, war das gleichgueltig. Seit sie die ganze Seite
+ * umfasst, ist es der Unterschied zwischen brauchbar und nutzlos: Seiten
+ * tragen ihre Verweise oben (Navigation) und unten (Fussbereich). Wer hinten
+ * kuerzt, wirft zuerst den Fussbereich weg — also genau das Impressum, das die
+ * Maus suchen sollte. Die Mitte ist meist Fliesstext.
+ *
+ * Deterministisch: bei ungerader Restzahl bekommt der Kopf das Mehr.
+ */
+export function waehleElemente(alle, max) {
+  if (!Array.isArray(alle) || alle.length <= max || max <= 0) return Array.isArray(alle) ? alle.slice(0, Math.max(0, max)) : [];
+  const kopf = Math.ceil(max / 2);
+  const fuss = max - kopf;
+  return fuss > 0 ? [...alle.slice(0, kopf), ...alle.slice(alle.length - fuss)] : alle.slice(0, kopf);
+}
+
 function capObservation(observation, maxChars) {
   const fits = (candidate) => JSON.stringify(candidate).length <= maxChars;
   let result = observation;
   if (fits(result)) return result;
   result = { ...result, truncated: true };
   while (result.elements.length > 0 && !fits(result)) {
-    result = { ...result, elements: result.elements.slice(0, result.elements.length - 1) };
+    result = { ...result, elements: waehleElemente(result.elements, result.elements.length - 1) };
   }
   while (result.textExcerpt.length > 0 && !fits(result)) {
     const next = Math.max(0, Math.floor(result.textExcerpt.length / 2) - 1);
@@ -141,7 +173,7 @@ export async function buildObservation(page, {
   const observation = {
     url: truncate(url, 500),
     title,
-    elements: snapshot.elements.slice(0, maxElements).map(normalizeElement),
+    elements: waehleElemente(snapshot.elements, maxElements).map(normalizeElement),
     textExcerpt: truncate(snapshot.text.replace(/\s+/g, " ").trim(), 2000),
     truncated: snapshot.elements.length > maxElements
   };
