@@ -66,7 +66,20 @@ test("Cline submenu activates a model instantly without touching the chat path",
 test("Cline submenu stays fail-closed without a connected key", () => {
   assert.match(submenu, /Cline-Key in Einstellungen verbinden/);
   assert.match(submenu, /status\?\.configured/);
-  assert.match(submenu, /\.catch\(\(\) => renderKeyHint\(submenu\)\)/);
+  assert.match(submenu, /renderKeyHint\(submenu\)/);
+});
+
+// Betreiber-Befund 2026-08-17: "manchmal kommen komplette Modelle und
+// manchmal nur 2, 3". Ursache war ein 429 der geteilten Bremse, das der
+// alte Code als "kein Key" auslegte. Gebremst ist NICHT fehlend.
+test("Gebremst (429) wird nicht als fehlender Key ausgegeben", () => {
+  assert.match(submenu, /fehler\?\.status === 429/);
+  assert.match(submenu, /retryAfterSec/);
+  // Der 429-Zweig muss VOR renderKeyHint zurueckkehren, sonst luegt das Menue.
+  const zweig = submenu.slice(submenu.indexOf("fehler?.status === 429"), submenu.indexOf("renderKeyHint(submenu);\n    });"));
+  assert.match(zweig, /return;/);
+  // Und er laedt selbst nach, statt den Nutzer klicken zu lassen.
+  assert.match(zweig, /setTimeout\([\s\S]*openSubmenu\(trigger, submenu, true\)/);
 });
 
 test("autonomous worker resolves Cline credential only on the control server", () => {
