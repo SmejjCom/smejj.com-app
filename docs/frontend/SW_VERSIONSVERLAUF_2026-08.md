@@ -1086,3 +1086,10 @@ CLINE_KURZ -> echte Katalog-IDs; ein Eintrag erscheint nur, wenn seine
 ID im Live-Katalog steht). Keine Gruppen, keine Beschreibungen. Fable 5
 und Gemini stehen NICHT drin — gibt es im Cline-Katalog nicht.
 code-flaeche.js v21.
+
+v520 -> v521 (2026-08-17, Betreiber: "mach alle Modelle rein, aber nur
+Namen, kompakt"): Modell-Menue zeigt jetzt den GANZEN Katalog — erst
+die Wunschliste (GLM 5.3, Opus 5, GPT 5.6, Grok 4.5, Kimi K3), dann
+alle uebrigen mit lesbar gemachten Kurznamen (kurzName(): qwen3.8-max
+-> "Qwen 3.8 Max"); gleiche Namen nur einmal (kimi-k3 stand doppelt).
+Zeilen enger (padding 3px statt 7px). code-flaeche.js v22.
