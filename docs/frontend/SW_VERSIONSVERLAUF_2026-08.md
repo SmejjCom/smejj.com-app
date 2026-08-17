@@ -935,3 +935,10 @@ haengen unmittelbar an der Textunterkante. CACHE_NAME v345.
 v505 -> v506 (2026-08-16, Betreiber: "zwischen Texten keine Trennlinie,
 kompakt"): der Haarstrich zwischen Chat-Eintraegen ist weg, Polster
 7->6px — die Nutzer-Blase trennt optisch genug. CACHE_NAME v346.
+
+v506 -> v507 (2026-08-16, Betreiber: "einfügen ist das LETZTE WORT der
+Zeile — Icons sollen danach in derselben Zeile stehen"): die Leiste
+wird per Range ans gemessene Textende geschoben (marginLeft/-Top als
+Inline-Style, Neuberechnung bei jedem ensureBar-Tick und bei resize);
+reicht der Platz in der Zeile nicht, bleibt sie wie bisher darunter.
+chat-actions.js b26i, CACHE_NAME v347.
