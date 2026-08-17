@@ -722,3 +722,9 @@ Fixture-Messung 1280x720: Gruss-Oberkante 42px, Luecke unten 8px, seitlich
 v485 -> v486 (2026-08-16): Code-Seite — Text beginnt GANZ oben (padding-top
 4px statt 42px): Betreiber-Nachtrag "Text soll ueber Browser-Icon kommen";
 das fixe Icon schwebt rechts ueber dem Inhalt.
+
+v486 -> v487 (2026-08-16, Betreiber: "warum sehe ich aktuellen Chat links
+nicht?"): das OFFENE Gespraech ist in beiden Spur-Listen markiert
+(is-active am spur-chat-Eintrag, bestehende Optik) — wie bei Claude. Es
+steht durch updatedAt ohnehin oben; die Spur zeichnet bei jedem
+Speicher-Tick neu (smejj:chats-changed). spur-start.js b34j.
