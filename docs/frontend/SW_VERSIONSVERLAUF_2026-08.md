@@ -718,3 +718,7 @@ waechst elastisch nach oben (input-Listener in code-flaeche.js v9, Deckel
 40vh dann innen scrollen; senden() setzt die Hoehe zurueck).
 Fixture-Messung 1280x720: Gruss-Oberkante 42px, Luecke unten 8px, seitlich
 12px, Feld 26->176->26px.
+
+v485 -> v486 (2026-08-16): Code-Seite — Text beginnt GANZ oben (padding-top
+4px statt 42px): Betreiber-Nachtrag "Text soll ueber Browser-Icon kommen";
+das fixe Icon schwebt rechts ueber dem Inhalt.
