@@ -341,7 +341,7 @@ test('"Quellen anzeigen" erscheint nur mit echter Quelle', () => {
   assert.ok(!menuItemsFor("assistant", false).some((i) => i.act === "sources"), "ohne Beleg kein Menuepunkt");
   const mitQuelle = menuItemsFor("assistant", true);
   assert.equal(mitQuelle[0].act, "sources", "mit Beleg steht er ganz oben");
-  assert.equal(mitQuelle.length, 9);
+  assert.equal(mitQuelle.length, 6);
   assert.ok(!menuItemsFor("user", true).some((i) => i.act === "sources"), "eigene Nachrichten haben keine Quellen");
 });
 
@@ -519,10 +519,13 @@ test("Pfeiltasten laufen im Menue um", () => {
 
 test("Belegung der Leiste je Rolle", () => {
   const user = barSpecFor("user").map((spec) => spec.act);
-  assert.deepEqual(user, ["menu"], "Betreiber 2026-08-16: NUR die drei Punkte — alles liegt im Menue");
+  assert.deepEqual(user, ["menu"], "eigene Nachrichten: ruhige Zeile, alles im Menue");
 
+  // Betreiber 2026-08-16, Runde 2 (ZCode-Abgleich, ersetzt den
+  // Drei-Punkte-Entscheid vom selben Tag): Antworten zeigen wie ZCode
+  // Kopieren + Daumen direkt, das Menue bleibt am Ende.
   const assistant = barSpecFor("assistant").map((spec) => spec.act);
-  assert.deepEqual(assistant, ["menu"]);
+  assert.deepEqual(assistant, ["copy", "rate-up", "rate-down", "menu"]);
   assert.equal(assistant.at(-1), "menu", "das Ueberlaufmenue steht immer am Ende");
 
   for (const spec of [...barSpecFor("user"), ...barSpecFor("assistant")]) {
@@ -535,7 +538,9 @@ test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   assert.deepEqual(user, ["copy", "edit", "fork", "remove"]);
 
   const assistant = menuItemsFor("assistant");
-  assert.deepEqual(assistant.map((item) => item.act), ["copy", "rate-up", "rate-down", "regen", "copy-plain", "speak", "fork", "remove"]);
+  // Kopieren/Daumen stehen seit dem ZCode-Abgleich sichtbar in der Leiste —
+  // im Menue nur noch, was dort NICHT steht (doppelte Wege verwirren).
+  assert.deepEqual(assistant.map((item) => item.act), ["regen", "copy-plain", "speak", "fork", "remove"]);
   assert.equal(assistant.at(-1).danger, true);
   assert.ok(!assistant.some((item) => item.act === "sources"), "keine Quellenliste, solange keine Quellen erfasst werden");
 });
@@ -585,7 +590,7 @@ test("buildMenu erzeugt bedienbare Menuepunkte mit Trennlinie vor dem Loeschen",
   assert.equal(head.textContent, "Heute, 16:30 · smejj 1.0");
 
   const items = menu.children.filter((node) => String(node.className).includes("msg-menu-item"));
-  assert.equal(items.length, 8);
+  assert.equal(items.length, 5);
   for (const item of items) {
     assert.equal(item.type, "button", "Menuepunkte sind echte Knoepfe und damit fokussierbar");
     assert.equal(item.attributes.role, "menuitem");

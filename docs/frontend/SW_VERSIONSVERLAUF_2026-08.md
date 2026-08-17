@@ -755,3 +755,18 @@ Fixture-Beweis (Scratchpad, :8613): Kopieren-Feedback hin und zurueck,
 Einklappen 198 -> 36 px -> 198 px, aria-expanded wechselt, "text"-Fallback
 sichtbar. Clipboard-Verweigerung im unfokussierten MCP-Tab ist eine
 Messfalle, kein Codefehler. CACHE_NAME v329.
+
+v489 -> v490 (2026-08-16, Betreiber-Wahl "Aktionsleiste angleichen",
+ZCode-Abgleich Runde 2): Antworten zeigen wie ZCode Kopieren + Daumen
+hoch/runter direkt in einer EIGENEN Zeile darunter (linksbuendig), dann
+das Drei-Punkte-Menue und die Uhrzeit der Antwort (msg-zeit, aus
+meta.createdAt — Leiste ist Geschwister des Eintrags, textContent des
+Verlaufs bleibt sauber; syncZeit heilt bei jedem ensureBar). Ersetzt
+BEIDE Drei-Punkte-Entscheide vom selben Tag (nur-Menue-Leiste und
+"dieselbe Zeile"): die waren fuer EINEN Punkte-Knopf gebaut, mit vier
+Icons kollidierte die Ueberlagerung mit dem Text (Fixture-Beweis).
+Eigene Nachrichten behalten die ruhige Drei-Punkte-Blasenzeile.
+Daumen-Icons exakt ZCodes Lucide-Zeichnungen; Menuekopf der Antwort ohne
+Doppelwege (nur noch Neu generieren + Rest). chat-actions.js b26g,
+chat-actions-menu.js v3, CACHE_NAME v330. Fixture leiste.html: Daumen
+an/aus/wechsel gemessen, Uhrzeit erscheint, keine Textkollision.
