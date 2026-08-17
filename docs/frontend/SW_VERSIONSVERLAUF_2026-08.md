@@ -1071,3 +1071,7 @@ provider_tresor_scharfschalten.mjs gesetzt. BEWIESEN mit dem Key des
 Betreibers: gpt-5.6-sol 201/getestet, claude-opus-5 getestet, kimi-k3
 getestet; cline-pass/glm-5.3 = 403 "not subscribed" (braucht
 Cline-Pass-Abo). Guthaben ~0.35 — fuer echtes Arbeiten aufladen.
+
+v517 -> v518 (2026-08-17): Status-Feld heisst "configured", nicht
+"hasKey" — das Menue zeigte trotz verbundenem Key die Hinweis-Zeile.
+code-flaeche.js v20.
