@@ -948,3 +948,9 @@ v507 -> v508 (2026-08-16): Inline-Leiste griff nie — zwei Messfallen
 Textknotens (TreeWalker). (2) offsetWidth der Block-Leiste ist die
 volle Breite (613px); Platzpruefung jetzt gegen die Inhaltsbreite
 (erstes bis letztes Kind). chat-actions.js b26j, CACHE_NAME v348.
+
+v508 -> v509 (2026-08-16): Inline-Position lief nur VOR fertigem Layout
+(Messwerte live spaeter korrekt, Styles blieben leer). ensureBar
+positioniert jetzt 60ms verzoegert (kein rAF — feuert im versteckten
+Tab nie), plus Nachlauf nach document.fonts.ready. chat-actions.js
+b26k, CACHE_NAME v349.
