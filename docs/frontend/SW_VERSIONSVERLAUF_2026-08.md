@@ -811,3 +811,19 @@ gemessen) — Block-Reset mit gleicher Staerke nachgezogen.
 Fixture-Beweise: Palette auf/filter/Wahl/Escape, Aussenklick-Falle
 behoben, Karte erscheint mit leerem textContent. code-flaeche.js v11,
 chat-code-copy.js zcode2, CACHE_NAME v332.
+
+v492 -> v493 (2026-08-16, Betreiber: "checke claude noch mal — was fehlt
+noch"): die drei Luecken zum Claude-CODE-Menue geschlossen. (1) "Plugins
+hinzufuegen …" als fuenfter Punkt — oeffnet die Werkzeuge-Uebersicht
+(smejjs Plugin-Katalog; echtes Ziel statt Attrappe). (2) Konnektoren hat
+ein ECHTES Untermenue wie Claudes Flyout (Betreiber-Screenshot): Zeile
+"Projekt-Ordner" mit Schalter, der den realen Zustand zeigt und wirklich
+verbindet/trennt (projekt-ordner.js); darunter "Konnektoren verwalten"
+(Einstellungen) und "Konnektoren durchsuchen" (Werkzeuge). Schalter
+zeichnet VIERECKIG (Designgesetz schlaegt Claudes Pille), AN in Cyan.
+(3) Cmd/Strg+U oeffnet die Dateiauswahl — nur in der aktiven
+CODE-Ansicht. Fixture-Beweise: 5 Menuepunkte, Flyout auf/zu, Schalter
+34x20 eckig, trennen+verbinden beides gemessen; Menue-CSS galt nur fuer
+role=menuitem und liess die Schalter-Zeile nackt (Riesen-Icon, gemessen)
+— Selektoren sauber um menuitemcheckbox erweitert, span-flex-Falle mit
+34px-Override geloest. code-flaeche.js v12, CACHE_NAME v333.
