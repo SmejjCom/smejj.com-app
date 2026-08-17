@@ -995,3 +995,9 @@ v512 -> v513 (2026-08-17, Betreiber: "wenn nicht arbeitet, soll man
 nicht sehen"): das Arbeits-Viereck ist im Ruhezustand UNSICHTBAR
 (opacity 0 + visibility hidden, kein Umriss mehr) — es erscheint nur
 cyan-pulsierend, solange ein Strom laeuft. CACHE_NAME v513.
+
+v513 -> v514 (2026-08-17, Betreiber-Klarstellung: "wenn arbeitet muss
+leuchten, wenn nicht arbeitet soll nicht leuchten"): das Viereck ist
+im Ruhezustand wieder SICHTBAR als gedaempfter Umriss (wie Claudes
+Kaestchen) — es leuchtet nur nicht; beim Arbeiten cyan + Puls. Der
+v513-Zwischenstand (ganz unsichtbar) war ein Missverstaendnis.
