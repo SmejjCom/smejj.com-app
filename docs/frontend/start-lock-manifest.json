@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T21:41:16.277Z",
-  "confirmation": "Betreiber 2026-08-17: 'Stempel setzen' — Abnahme nach dem ZWEITEN Control-Neubau der Parallelsitzung (Cline-Key intakt und echt bewiesen, Kopfzeilen ohne Nebenwirkung, Frontend v534 unveraendert)",
+  "frozenAt": "2026-08-17T22:44:43.398Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-17 per Karte 'Freigeben und live' — Nachschlag: Auto-Zeile ohne Untertitel (Betreiber-Regel nur nackte Kurznamen; die zweite Zeile wurde live abgeschnitten), Erklaerung jetzt im Tooltip. code-flaeche v33 -> v34.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "0828b94fd882851506bd559e02ee0d85c72c4e7b2d7dc7f830a154889cc26299",
+    "public/index.html": "23ba4329defda88b979e0380d617691b69086b34ff62414f795ed63adf5a990f",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "53464bb6953d72e7b491bb02cb89e2da64b4850030953671746f8e2a48669704",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "a9a988fe934321a49040446296ec2eb7a38188bedaab8c8d50636f4b7340643b",
-    "public/app.js": "b98908428116d90d11b3a56e8acb6b9ac3d452b68fb21de24611712cdee312bd",
+    "public/app.js": "63f79c475e2d84c7a1fe4b9696a048dcafce8c9838f1e6b1af41ccb66eae7a8d",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "7275a23acfaac72f6caa332f198153ea2167d2183a412a1abfa1e635f275a057",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -28,15 +28,15 @@
     "public/browser-pane-render.js": "9e8f34278102945e4b37c8c45c2c00654e6ab0a7d15457ca08b3f0703ada46e4",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
-    "public/cline-model-menu.js": "75cbecaf1455006fae0dbd890f6add2f9118807cf4d75769a9ed657c8050cd4b",
+    "public/cline-model-menu.js": "05d04b6bf94c3d22e89ea2cffe90638391ed2468a15a544e10c98162d960f301",
     "public/cline-model-menu.css": "44599e36922c6f340e3b19df0728f85b9dc89ba09590ca0f0e644dfd29acfa84",
     "public/auth/passkey-ui.js": "ff1335c193e6458b0e5bdf43627ffe3bc2fa94aa94f67c8bf3d53a4ba4f24019",
-    "public/ai/chatClient.js": "1e6283a7bb172c0f572b21269c723c4fed105de15a26cef08f8ed0d645878796",
+    "public/ai/chatClient.js": "0e05e8c2cd00f77834e4060286211bec72cf8c5aada6ac331f1f8fb6bc77ecaa",
     "public/ai/index.js": "f21fcef60cecb99c454783909fc6f63aedf3f8d2211e1df04380327debe87997",
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "fd3c9bda4ae4cd8c59c765476540aa9c13398c90b9fe80cd078f35ebef7c2019",
+    "public/sw.js": "a3cf517fb63a25a260002ff4e74eac01f8adaf70ae461643cb478f18452de12b",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
