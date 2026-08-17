@@ -102,18 +102,27 @@ function capObservation(observation, maxChars) {
 // Oeffentliche Schnittstelle: Playwright-Seite -> kompakter Zustand.
 // Duck-typed: page braucht url(); title() und evaluate() sind optional
 // (Mocks/Sonderfaelle liefern dann eine Minimal-Beobachtung).
-export async function buildObservation(page, { maxChars = OBSERVATION_LIMIT_CHARS, maxElements = OBSERVATION_MAX_ELEMENTS } = {}) {
-  const url = typeof page?.url === "function" ? String(page.url()) : "";
-  let title = "";
-  try {
-    if (typeof page?.title === "function") title = truncate(await page.title(), 200);
-  } catch { /* Titel ist optional, Beobachtung bleibt gueltig */ }
-
+//
+// `nurMitElementen` (2026-08-17): dann wird die Seite ZUERST auf den
+// Bedienbaum abgefragt und bei Fehlschlag `null` zurueckgegeben — ohne
+// Titelabfrage. Der Grund ist der Chrome-Adapter des Betreibers: er
+// beherrscht bewusst kein `evaluate` (fremdes JavaScript im eigenen Browser
+// waere genau die Hintertuer, die dieser Weg vermeidet), aber sein `title()`
+// schickt sehr wohl einen Befehl an die Erweiterung. Eine Minimal-Beobachtung
+// aus URL und Titel nuetzt dem Planer nichts und kostete dort einen Zugriff
+// auf eine Seite, die vielleicht gerade gesperrt wurde.
+export async function buildObservation(page, {
+  maxChars = OBSERVATION_LIMIT_CHARS,
+  maxElements = OBSERVATION_MAX_ELEMENTS,
+  nurMitElementen = false
+} = {}) {
   let snapshot = { text: "", elements: [] };
+  let konnteLesen = false;
   try {
     if (typeof page?.evaluate === "function") {
       const raw = await page.evaluate(pageSnapshotScript);
       if (raw && typeof raw === "object") {
+        konnteLesen = true;
         snapshot = {
           text: typeof raw.text === "string" ? raw.text : "",
           elements: Array.isArray(raw.elements) ? raw.elements : []
@@ -121,6 +130,13 @@ export async function buildObservation(page, { maxChars = OBSERVATION_LIMIT_CHAR
       }
     }
   } catch { /* fail-open: Minimal-Beobachtung (URL/Titel) statt Abbruch */ }
+  if (nurMitElementen && !konnteLesen) return null;
+
+  const url = typeof page?.url === "function" ? String(page.url()) : "";
+  let title = "";
+  try {
+    if (typeof page?.title === "function") title = truncate(await page.title(), 200);
+  } catch { /* Titel ist optional, Beobachtung bleibt gueltig */ }
 
   const observation = {
     url: truncate(url, 500),

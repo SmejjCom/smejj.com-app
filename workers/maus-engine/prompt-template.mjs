@@ -134,20 +134,50 @@ export function buildPlannerPrompt({ task, capsuleRef, domainAllowlist, budget, 
 // Folge-Prompt nach fehlgeschlagenem Lauf (budgetierter Planner-Roundtrip).
 // Fehlerkontext (Log-Auszug, DOM-Auszug) ist maskiert und wird ausdruecklich
 // als untrusted Daten gerahmt (Prompt-Injection-Schutz).
-export function buildRetryPrompt({ previousPlan, failure, roundtrip, planIdHint }) {
-  if (!previousPlan || !failure) throw new Error("retry_parameter_unvollstaendig");
-  const feedback = {
+// SEITENZUSTAND STATT ROH-HTML (2026-08-17): Bis hierher bekam der Planer
+// nach einem Fehlschlag `domExcerpt` — die ersten 4000 Zeichen des HTML.
+// Bei jeder echten Seite endeten die noch im <head>, zwischen Meta-Angaben
+// und Skripten. Der Planer korrigierte also praktisch blind und riet CSS-Pfade
+// ein zweites Mal.
+//
+// Jetzt steht dort der Bedienbaum aus observer.mjs: jedes sichtbare
+// Bedienelement mit Nummer, Rolle, Beschriftung und Position. Genau das
+// Material, das die fuehrenden Browser-Agenten ihren Modellen geben — und in
+// dieser Engine seit dem 2026-07-15 vorhanden, nur nie im Regelweg benutzt.
+//
+// `domExcerpt` bleibt als Rueckfall stehen: liefert ein Aufrufer noch die alte
+// Form (oder scheitert die Beobachtung), ist ein schlechter Kontext immer noch
+// besser als gar keiner.
+function fehlerkontext(failure) {
+  const kontext = {
     failedStep: failure.failedStep ?? null,
     aborted: failure.aborted === true,
     abortReason: failure.abortReason ?? null,
     errors: failure.errors ?? undefined,
-    actionLogTail: Array.isArray(failure.actionLog) ? failure.actionLog.slice(-5) : undefined,
-    domExcerpt: failure.domExcerpt ? String(failure.domExcerpt).slice(0, 4000) : undefined
+    actionLogTail: Array.isArray(failure.actionLog) ? failure.actionLog.slice(-5) : undefined
   };
+  if (failure.observation) kontext.seitenzustand = failure.observation;
+  else if (failure.domExcerpt) kontext.domExcerpt = String(failure.domExcerpt).slice(0, 4000);
+  return kontext;
+}
+
+export function buildRetryPrompt({ previousPlan, failure, roundtrip, planIdHint }) {
+  if (!previousPlan || !failure) throw new Error("retry_parameter_unvollstaendig");
+  const feedback = fehlerkontext(failure);
+  const hatBedienbaum = Boolean(failure.observation);
   return [
     `Dein Aktionsplan (Versuch ${roundtrip}) ist fehlgeschlagen. Erzeuge einen`,
     "korrigierten, vollstaendigen Plan nach demselben Vertrag und denselben",
     "VORGABEN wie zuvor (Allowlist, Budget, Schema unveraendert).",
+    ...(hatBedienbaum ? [
+      "",
+      "seitenzustand.elements listet die Bedienelemente, die zum Zeitpunkt des",
+      "Fehlers sichtbar waren — mit Rolle, Beschriftung, name/id und Position.",
+      "Waehle deine Selektoren aus DIESER Liste, statt sie erneut zu raten.",
+      "Steht das gesuchte Element nicht darin, war es nicht sichtbar: dann",
+      "fehlt ein Schritt davor (scrollen, oeffnen, warten) — nicht ein anderer",
+      "Selektor."
+    ] : []),
     "",
     SECURITY_BLOCK,
     "",
