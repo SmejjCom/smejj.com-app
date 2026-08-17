@@ -885,3 +885,11 @@ Chips 12px, Leiste margin 2px, Chips 2/6px; Icon-Knoepfe und Senden bei
 praezisem Zeigegeraet 28px (Touch behaelt 34/42). Schriftgroesse des
 Schreibfelds UNVERAENDERT 16.5px — grosse Schrift ist Betreiber-Gesetz.
 CACHE_NAME v339.
+
+v499 -> v500 (2026-08-16, Betreiber-Screenshots): Modus-Menue 1:1 wie
+Claude — Kopfzeile "Modus", Zeilen linksbuendig OHNE Trennstriche,
+Beschreibung gedaempft darunter (eine Zeile, Punkte), rechts Haken
+(cyan) + Ziffer; die Ziffern 1-4 SIND Kurztasten, solange das Menue
+offen ist. Claudes "Berechtigungen umgehen"-Zeile fehlt BEWUSST (kein
+solches System — Blindgaenger-Verbot). code-flaeche.js v15,
+CACHE_NAME v340.
