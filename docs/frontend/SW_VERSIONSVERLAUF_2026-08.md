@@ -1022,3 +1022,19 @@ sichert danach die bereinigte Fassung.
 v512 -> v516 (2026-08-17): Der Warte-Reste-Waechter fuhr als v516 aus —
 die Parallelsitzung hatte inzwischen v513-v515 verteilt (Arbeits-Viereck);
 v512 war nie live. Ausgeliefert wurde deren v515-Stand plus Waechter.
+
+v515 -> v516 (2026-08-17, Betreiber: "warum kann ich bei Code nicht
+Modelle waehlen? Ich will die aktuellsten — ueber unser Cline-Guthaben"):
+Der Modellname unten rechts im Code-Bereich ist jetzt ein KNOPF (wie
+Claudes "Fable 5") und oeffnet ein Modell-Menue im Modus-Menue-Stil:
+oben smejj 1.0 (Hausmodell, folgt der Stufe), darunter der ECHTE
+Cline-Katalog live vom Control (Empfohlen: claude-opus-5, grok-4.5,
+gpt-5.6-sol, kimi-k3 · Cline Pass: glm-5.3 u.a. · Kostenlos).
+Wunschliste-Abgleich: Opus 5, GPT-5.6, Kimi K3, GLM 5.3 verfuegbar;
+Fable 5 und Gemini gibt es im Cline-Katalog NICHT (ehrlich keine
+Eintraege erfunden). Auswahl nutzt die BESTEHENDEN Speicher/Wege des
+Start-Pickers (smejj.model.selected.v2="Cline" + smejj.cline.model.v1,
+Ereignisse smejj:cline-selected/model-selected) — der Chat-Weg mit
+runClineChat-Weiche bleibt unangetastet. Ohne verbundenen Key zeigt
+das Menue eine ehrliche Hinweis-Zeile mit Sprung in die Einstellungen.
+code-flaeche.js v18.
