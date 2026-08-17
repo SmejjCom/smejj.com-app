@@ -858,3 +858,7 @@ oben gehoert dem Text. (3) Feld schmaler: padding 13/14 -> 8/12, Leiste
 margin 14 -> 6. (4) Leiste als Geister: Auto/Gruendlich/Projekt ohne
 Pillen-Grund (aktiv = Cyan-FARBE statt Fuellung), +/Mikro ohne runden
 Grund, Hover hellt auf. code-flaeche.js v13, CACHE_NAME v335.
+
+v495 -> v496 (2026-08-16): Projekt-Chip kappte VORN ("ojekt: …") —
+text-overflow greift nicht in inline-flex; der Chip ist jetzt
+inline-block und kappt hinten mit Punkten. CACHE_NAME v336.
