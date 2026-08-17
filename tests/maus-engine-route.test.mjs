@@ -308,6 +308,41 @@ test("Planer-Proxy: Worker-Token + plannerPrompt liefert Modellantwort", async (
   assert.equal(gesehenerPrompt, "entscheide den naechsten Schritt");
 });
 
+// Der freie Modus war im Async-Betrieb unbenutzbar: der laufende Auftrag zaehlte
+// als aktiver Arbeiter, die Obergrenze steht auf 1, also verweigerte das Gate
+// ausgerechnet die Modellfragen DESSELBEN Auftrags. Er blockierte sich selbst.
+test("Planer-Proxy: ein laufender Auftrag blockiert nicht seine eigenen Fragen", async () => {
+  const res = mockRes();
+  let gesehen = null;
+  await handleMausRun(workerReq({ plannerPrompt: "Was nun?" }), res, {
+    env: ENV_OK,
+    limiter: null,
+    // Der Aufrufer behauptet, es liefen bereits Arbeiter — fuer die Frage
+    // EINES LAUFENDEN Auftrags darf das nicht gegen ihn verwendet werden.
+    activeWorkers: 5,
+    budgetEvaluator: (eingabe) => { gesehen = eingabe.activeWorkers; return { ok: true }; },
+    plannerClient: async () => "{\"decision\":\"done\"}"
+  });
+  assert.equal(gesehen, 0, "der Proxy darf keine Nebenlaeufigkeit anrechnen");
+  assert.equal(res.statusCode, 200);
+});
+
+// Die Gegenprobe: fuer einen NUTZER, der einen neuen Lauf startet, gilt die
+// Nebenlaeufigkeits-Grenze unveraendert. Sonst waere die Ausnahme oben ein Loch
+// im Kostendeckel statt einer Praezisierung.
+test("Budget-Gate: fuer einen echten Lauf zaehlt die Nebenlaeufigkeit weiter", async () => {
+  const res = mockRes();
+  let gesehen = null;
+  await handleMausRun(mockReq({ body: requestBody() }), res, {
+    env: ENV_OK,
+    limiter: null,
+    activeWorkers: 5,
+    budgetEvaluator: (eingabe) => { gesehen = eingabe.activeWorkers; return { ok: false, reasons: ["max_concurrent_workers_reached"] }; }
+  });
+  assert.equal(gesehen, 5);
+  assert.equal(res.statusCode, 503);
+});
+
 test("Planer-Proxy: Worker-Token darf KEINEN Lauf starten (fail-closed 403)", async () => {
   const res = mockRes();
   await handleMausRun(workerReq(requestBody()), res, {
