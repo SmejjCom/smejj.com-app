@@ -293,6 +293,14 @@ async function senden() {
   feld.value = "";
   // Elastische Hoehe zuruecksetzen — sonst bleibt das geleerte Feld hoch.
   feld.dispatchEvent(new Event("input", { bubbles: true }));
+  // Betreiber-Urfehler in zweiter Form (Nutzertest 2026-08-16): Die Flaeche
+  // zeigt den GRUSS (nichts adoptiert), aber am Zeiger haengt noch das
+  // zuletzt offene Gespraech — die Aufgabe waere unsichtbar im ALTEN Chat
+  // gelandet und alle alten Eintraege waeren mit aufgetaucht. Zeigt die
+  // Code-Seite leer, beginnt Senden ein NEUES Gespraech; ein sichtbar
+  // geoeffnetes (adoptierter Log) laeuft normal weiter.
+  const schonAdoptiert = document.querySelector("#codeLogHalter #startLog");
+  if (!schonAdoptiert && document.querySelector("#startLog")?.children.length) newChat();
   holeLog();
   // Fester Ordner je Project (wie Claude Code): ist am gewaehlten Project
   // ein Ordner verbunden, reisen dessen Textdateien als Kontext mit —

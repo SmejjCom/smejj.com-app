@@ -959,3 +959,10 @@ v509 -> v510 (2026-08-16): der automatische Anstoss fehlte weiter —
 onLogChanged zieht die Inline-Position jetzt 250ms nach jeder
 Log-Aenderung nach (der resize-Weg hatte die Logik live bewiesen:
 ml 76px / mt -38px). chat-actions.js b26l, CACHE_NAME v350.
+
+v488 -> v489 (2026-08-16, Nutzertest): Der Urfehler in zweiter Form — wer
+/code frisch oeffnete (Gruss sichtbar) und sofort schrieb, haengte die
+Aufgabe an das ZULETZT OFFENE Gespraech; beim Adoptieren tauchten dessen
+alte Eintraege mit auf. senden() trennt jetzt zuerst (newChat), wenn die
+Flaeche leer aussieht; ein sichtbar geoeffnetes Gespraech laeuft weiter
+(code-flaeche.js v9).
