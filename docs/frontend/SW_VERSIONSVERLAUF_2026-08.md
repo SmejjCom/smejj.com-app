@@ -845,3 +845,16 @@ Markenkette: composer-plus-menu werkzeuge-2 -> composer-tools
 werkzeuge-2 -> app.js b51 -> index.html; composer-bild-anhang bleibt
 BEWUSST unversioniert (drei Importer ohne ?v — EINE Modulinstanz,
 pending-Bild), Frische kommt vom CACHE_NAME v334.
+
+v494 -> v495 (2026-08-16, Betreiber-Screenshot mit vier Punkten):
+Schreibfeld der CODE-Seite aufgeraeumt. (1) Anhang-Verweise stehen NIE
+mehr als Text im Feld — code-flaeche.js zieht "[Anhang/Bild …]"-Zeilen
+bei jedem input in Chips (#codeAnhaenge) ueber dem Text; Entfernen-x
+verwirft bei Bildern auch den Vision-Zwischenspeicher; beim Senden
+reisen die Verweise unsichtbar mit (Anhang allein ist sendbar). (2) Die
+Projekt-Zeile ueber dem Feld ist WEG — der Chip sitzt schlank unten in
+der Leiste (Menue ankert jetzt am .codefeld wie das Modus-Menue), Platz
+oben gehoert dem Text. (3) Feld schmaler: padding 13/14 -> 8/12, Leiste
+margin 14 -> 6. (4) Leiste als Geister: Auto/Gruendlich/Projekt ohne
+Pillen-Grund (aktiv = Cyan-FARBE statt Fuellung), +/Mikro ohne runden
+Grund, Hover hellt auf. code-flaeche.js v13, CACHE_NAME v335.
