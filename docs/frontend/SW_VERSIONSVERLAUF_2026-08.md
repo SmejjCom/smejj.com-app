@@ -708,3 +708,13 @@ location.pathname === "/code"; (2) ein MutationObserver auf der
 keinen Namen — das Profil-Dock laedt sein Konto erst danach; ein
 Beobachter auf #profileDockName zieht den Gruss nach (code-flaeche.js v8,
 wie Claudes "Was steht als Naechstes an, AlanBest?").
+
+v484 -> v485 (2026-08-16, Betreiber: "gesamte Flaeche nutzen, kompakt,
+Text nicht sichtbar beim Tippen"): CODE-Seite randlos. #code.view wird eine
+bildschirmhohe Flex-Spalte (padding 42/12/8 statt .view-30px-Rundum),
+codeflaeche flex:1, Gruss-padding 2px, codeunten schliesst buendig; die
+980px-Textmitte gilt im Code-Log nicht (max-width none). Schreibfeld
+waechst elastisch nach oben (input-Listener in code-flaeche.js v9, Deckel
+40vh dann innen scrollen; senden() setzt die Hoehe zurueck).
+Fixture-Messung 1280x720: Gruss-Oberkante 42px, Luecke unten 8px, seitlich
+12px, Feld 26->176->26px.
