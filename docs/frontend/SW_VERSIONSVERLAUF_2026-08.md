@@ -1038,3 +1038,13 @@ Ereignisse smejj:cline-selected/model-selected) — der Chat-Weg mit
 runClineChat-Weiche bleibt unangetastet. Ohne verbundenen Key zeigt
 das Menue eine ehrliche Hinweis-Zeile mit Sprung in die Einstellungen.
 code-flaeche.js v18.
+
+v516 -> v517 (2026-08-17, Nutzertest Suchen+Verlauf): ZWEI Halb-Commits
+der v502-v515-Welle repariert. (1) chat-history-view.js benutzte
+confirmingProjektId ohne Deklaration — JEDER ⋯-Klick im Verlauf warf einen
+ReferenceError, bevor das Menue erschien: Umbenennen/Anheften/Loeschen
+waren unerreichbar (b47d). (2) account-privacy.js rief renderZugang auf,
+die Funktion fehlte — die Abo-Anzeige der Kontoseite crashte beim Fuellen;
+jetzt definiert, fail-safe ohne paidEmail (b46m; Markenkette
+premium-surfaces b41b, app.js b52). Suchen und Verlauf sonst gruen
+(Volltext-Treffer, Filter "1 von 62", Zeitgruppen, Treffer-Klick oeffnet).
