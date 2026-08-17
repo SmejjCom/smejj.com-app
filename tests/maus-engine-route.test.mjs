@@ -91,14 +91,20 @@ test("503 wenn Engine nicht konfiguriert (fail-closed)", async () => {
   assert.equal(res.body.missing.length, 3);
 });
 
-test("503 wenn Budget-Gate blockiert", async () => {
+// Die Begruendung MUSS durchkommen. Bis 2026-08-17 las die Route
+// `budgetVerdict.reason` (Einzahl) — ein Feld, das evaluateWorkerBudget nie
+// liefert; die Antwort lautete immer `"reason": null`. Der alte Test benutzte
+// eine Attrappe mit ebenjenem erfundenen Feld und war deshalb blind. Hier steht
+// jetzt die ECHTE Form des Gates (reasons als Liste).
+test("503 wenn Budget-Gate blockiert — mit Begruendung", async () => {
   const res = mockRes();
   await handleMausRun(mockReq({ body: requestBody() }), res, {
     env: ENV_OK, limiter: null,
-    budgetEvaluator: () => ({ ok: false, reason: "budget_limit" })
+    budgetEvaluator: () => ({ ok: false, reasons: ["positive_worker_budget_required:SMEJJ_WORKER_BUDGET_USD"] })
   });
   assert.equal(res.statusCode, 503);
   assert.equal(res.body.error, "budget_gate_blockiert");
+  assert.deepEqual(res.body.reasons, ["positive_worker_budget_required:SMEJJ_WORKER_BUDGET_USD"]);
 });
 
 test("400 bei fehlender Allowlist, fehlender Capsule oder fehlender Aufgabe", async () => {

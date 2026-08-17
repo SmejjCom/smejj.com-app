@@ -4,6 +4,31 @@ import path from "node:path";
 import { CONTENT_TYPES, ROUTES, SECURITY_HEADERS } from "../shared/platform.js";
 import { json } from "../../control-server/src/http/respond.js";
 
+// Die Maus-Wiedergabe ist die EINZIGE Seite, die eingebettet werden soll: das
+// rechte Panel der Startseite rahmt sie als iframe (public/maus-panel.js).
+//
+// Die allgemeinen Kopfzeilen verbieten das Einbetten vollstaendig
+// ("frame-ancestors 'none'" plus "X-Frame-Options: DENY"), und das soll fuer
+// jede andere Seite auch so bleiben — tests/security-abuse.test.mjs erzwingt
+// es. Fuer diese eine Seite lautete die Folge aber: Chrome brach den iframe mit
+// net::ERR_BLOCKED_BY_RESPONSE ab, das Panel blieb weiss (Befund 2026-08-17).
+// Live faellt das nicht auf, weil GitHub Pages ueberhaupt keine Kopfzeilen
+// setzt — wieder eine Abweichung, die eine lokale Messung luegen laesst.
+//
+// 'self' statt 'none' heisst NICHT "jeder darf": fremde Seiten bleiben
+// ausgesperrt, nur die eigene Herkunft darf rahmen. Genau das tut die App.
+export const EIGENE_EINBETTUNG_ERLAUBT = new Set([ROUTES.mausReplay]);
+
+function kopfzeilenFuer(pathname) {
+  if (!EIGENE_EINBETTUNG_ERLAUBT.has(pathname)) return SECURITY_HEADERS;
+  return {
+    ...SECURITY_HEADERS,
+    "Content-Security-Policy": SECURITY_HEADERS["Content-Security-Policy"]
+      .replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+    "X-Frame-Options": "SAMEORIGIN"
+  };
+}
+
 export function createStaticHandlers({ publicDir, storageSourceDir, aiSourceDir, sharedSourceDir }) {
   async function streamFromDir(res, baseDir, file, fallbackDir = null, defaultType = "application/octet-stream") {
     const safePath = path.resolve(baseDir, file);
@@ -14,14 +39,14 @@ export function createStaticHandlers({ publicDir, storageSourceDir, aiSourceDir,
       return json(res, 404, { error: "Not found" });
     }
     const contentType = CONTENT_TYPES[path.extname(safePath)] || defaultType;
-    res.writeHead(200, { ...SECURITY_HEADERS, "Content-Type": contentType });
+    res.writeHead(200, { ...kopfzeilenFuer(`/${file}`), "Content-Type": contentType });
     createReadStream(safePath).pipe(res);
   }
 
   return {
     isPublicAsset(pathname) {
       if (pathname.startsWith("/icons/")) return true;
-      return [ROUTES.favicon, ROUTES.appleTouchIcon, ROUTES.socialImage, ROUTES.manifest, ROUTES.serviceWorker, ROUTES.robots, ROUTES.llms, ROUTES.sitemap, ROUTES.status, ROUTES.verlauf, ROUTES.verlaufMesswerte, ROUTES.hilfe, ROUTES.impressum, ROUTES.datenschutz, ROUTES.legalNoticeEn, ROUTES.privacyEn].includes(pathname);
+      return [ROUTES.favicon, ROUTES.appleTouchIcon, ROUTES.socialImage, ROUTES.manifest, ROUTES.serviceWorker, ROUTES.robots, ROUTES.llms, ROUTES.sitemap, ROUTES.status, ROUTES.verlauf, ROUTES.verlaufMesswerte, ROUTES.hilfe, ROUTES.mausReplay, ROUTES.indexHtml, ROUTES.willkommen, ROUTES.programmieren, ROUTES.agb, ROUTES.widerruf, ROUTES.impressum, ROUTES.datenschutz, ROUTES.legalNoticeEn, ROUTES.privacyEn].includes(pathname);
     },
 
     isAppRoute(pathname) {

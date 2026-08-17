@@ -73,6 +73,22 @@ export function sammelArgumente(mutation) {
     .map((arg) => arg.name);
 }
 
+// Liefert die Feldauswahl fuer den Rueckgabewert einer Mutation — leer bei
+// Skalaren, ` { _id }` bei Objekttypen.
+//
+// WARUM (Befund 2026-08-17): `createEnvironmentVariable` gibt kein Boolean
+// zurueck, sondern den Typ `EnvironmentVariable`. GraphQL verlangt fuer
+// Objekttypen zwingend eine Feldauswahl; ohne sie antwortet Zeabur mit
+// HTTP 422 — und zwar ohne dass irgendetwas an der Anfrage inhaltlich falsch
+// waere. Sichtbar wurde das erst, als die Bewertung erstmals eine
+// Create-Mutation waehlte (bei fehlenden Schluesseln), waehrend vorher immer
+// eine Boolean-Mutation gewonnen hatte.
+export function rueckgabeAuswahl(mutation) {
+  let t = mutation?.type;
+  while (t && !t.name) t = t.ofType;
+  return t?.kind === "OBJECT" ? " { _id }" : "";
+}
+
 export function argTyp(arg) {
   // GraphQL-Typ als Text fuer die Variablendeklaration, inkl. NonNull/Liste.
   const bau = (t) => {
@@ -90,6 +106,7 @@ export async function findeSetzMutation(abfrage = zeaburAbfrage) {
   const schema = await abfrage(`{
     __schema { mutationType { fields {
       name
+      type { kind name ofType { kind name } }
       args { name type { kind name ofType { kind name ofType { kind name } } } }
     } } }
   }`);
@@ -180,7 +197,10 @@ export async function setzeUmgebungswerte(dienstName, werte, abfrage = zeaburAbf
         );
       }
     }
-    return abfrage(`mutation Setze(${deklaration}) { ${mutation.name}(${uebergabe}) }`, variablen);
+    return abfrage(
+      `mutation Setze(${deklaration}) { ${mutation.name}(${uebergabe})${rueckgabeAuswahl(mutation)} }`,
+      variablen
+    );
   }
 
   // key/value-Form: nacheinander, damit ein Fehlschlag beim zweiten Wert den
