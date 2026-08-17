@@ -1001,3 +1001,10 @@ leuchten, wenn nicht arbeitet soll nicht leuchten"): das Viereck ist
 im Ruhezustand wieder SICHTBAR als gedaempfter Umriss (wie Claudes
 Kaestchen) — es leuchtet nur nicht; beim Arbeiten cyan + Puls. Der
 v513-Zwischenstand (ganz unsichtbar) war ein Missverstaendnis.
+
+v514 -> v515 (2026-08-17): Doppeltes Arbeitszeichen bereinigt — der
+ALTE Arbeits-Punkt aus v491 (links in der Leiste, Klasse .code-arbeit
+mit Dauer-Cyan) faerbte das neue Claude-Viereck dauerhaft mit (live
+gemessen: bg cyan trotz an=false). Alte CSS-Regel + JS-Erzeugung
+entfernt; es gibt nur noch DAS Viereck rechts oben: ruhig = Umriss,
+arbeitet = cyan + Puls. code-flaeche.js v17.
