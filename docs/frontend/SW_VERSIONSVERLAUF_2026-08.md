@@ -1238,3 +1238,26 @@ ZWEI LEHREN, teuer bezahlt:
    nicht am Server: eine Statusabfrage mit fremdem Token liefert
    zwangslaeufig configured:false und ist als Beweis wertlos. Solche
    Tests nur aus der Betreiber-Sitzung.
+
+## Verifikation nach Fremd-Deploy #2 (2026-08-17, 21:33Z)
+Zweiter Control-Neubau der Parallelsitzung (Bau-Branch 23cfab1:
+Erlaubnisliste fuer sechs public/-Seiten, budgetVerdict.reasons-Fix,
+Sicherheits-Kopfzeilen). gestartetAm 18:33:13 -> 21:33:27.
+Aus der Betreiber-Sitzung geprueft — alles gruen:
+- Cline unveraendert: configured true, keyHint ••••8fc2, Opus 5,
+  storage "encrypted"; ECHT gesendet: "Claude von Anthropic."
+- Kopfzeilen ohne Nebenwirkung: Startseite frisch geladen, KEINE
+  Konsolenfehler, kein ERR_BLOCKED_BY_RESPONSE, keine CSP-Verstoesse.
+
+DREI BEFUNDE ZUM MERKEN:
+1. Die Kopfzeilen-Aenderung ist live gar nicht messbar: GitHub Pages
+   setzt keine Header, die Seite traegt nur die Meta-CSP. SECURITY_HEADERS
+   wirken ausschliesslich am lokalen Node-Server. Wer "live" prueft,
+   misst zwangslaeufig die Meta-Angabe.
+2. Die Einbettungs-Ausnahme ist sauber begrenzt (Set mit genau
+   ROUTES.mausReplay); frame-guard.js laeuft NUR in index.html — waere er
+   in maus-replay.html eingebunden, haette er das Panel selbst gesprengt.
+3. Chrome-Auswahl: bei zwei verbundenen Instanzen passen die Anzeigenamen
+   NICHT zu den deviceIds (Browser 2 wurde nach dem Wechsel als
+   "Browser 1" gelistet). Nie nach Namen waehlen — am offenen
+   smejj-Tab pruefen, ob es die Betreiber-Sitzung ist.
