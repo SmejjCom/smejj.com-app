@@ -173,6 +173,67 @@ test("Bedienbaum: kein Zugriff, wenn die Umgebung keinen liefern kann", async ()
   assert.deepEqual(gelesen, ["screenshot"]);
 });
 
+// ── Schritt-Pruefer im Rundlauf ─────────────────────────────────────────────
+// Die Zusage lautet: der ERSTE Plan wird nie wegen fehlender Nachweise
+// abgelehnt (das kostete einen Modellaufruf aus dem Budget, mit dem der Lauf
+// spaeter echte Fehler korrigieren muss), der KORREKTURPLAN sehr wohl.
+
+function planMitKlickOhneNachweis(planId) {
+  const p = validPlan(planId);
+  p.steps = [
+    { id: "s1", action: "openBrowser" },
+    { id: "s2", action: "navigate", url: "https://example.com/" },
+    { id: "s3", action: "click", target: { selector: { strategy: "css", value: "button" } } },
+    { id: "s4", action: "closeBrowser" }
+  ];
+  return p;
+}
+
+test("Schritt-Pruefer: der Erstplan laeuft auch ohne Nachweise", async () => {
+  const aufrufe = [];
+  const ergebnis = await planAndExecute({
+    task: "irgendwas klicken",
+    policyInput,
+    plannerClient: async (prompt) => { aufrufe.push(prompt); return JSON.stringify(planMitKlickOhneNachweis()); },
+    runPlan: async () => ({ ok: true })
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(aufrufe.length, 1, "kein zusaetzlicher Modellaufruf");
+});
+
+test("Schritt-Pruefer: der Korrekturplan muss nachweisen", async () => {
+  const prompts = [];
+  let n = 0;
+  const ergebnis = await planAndExecute({
+    task: "irgendwas klicken",
+    policyInput,
+    plannerClient: async (prompt) => {
+      prompts.push(prompt);
+      n += 1;
+      // 1. Antwort ungueltig -> Korrekturrunde. 2. Antwort gueltig, aber ohne
+      // Nachweis -> muss abgelehnt werden. 3. Antwort mit Nachweis -> laeuft.
+      if (n === 1) return "kein plan";
+      if (n === 2) return JSON.stringify(planMitKlickOhneNachweis("korrektur-1"));
+      const gut = planMitKlickOhneNachweis("korrektur-2");
+      // Nachweis fuer BEIDE veraendernden Schritte — navigate und click.
+      // Genau daran ist der erste Entwurf dieses Tests gescheitert: der Klick
+      // war gedeckt, die Navigation davor nicht.
+      gut.steps.splice(2, 0, { id: "s2b", action: "waitFor", condition: "selectorVisible", target: { strategy: "css", value: "body" } });
+      gut.steps.splice(4, 0, { id: "s3b", action: "assert", condition: "selectorExists", target: { strategy: "css", value: "#ergebnis" } });
+      return JSON.stringify(gut);
+    },
+    runPlan: async () => ({ ok: true })
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.plan.planId, "korrektur-2");
+  // Der dritte Prompt muss sagen, WELCHER Schritt keinen Nachweis hatte.
+  assert.match(prompts[2], /s3 \(click\)/);
+  assert.match(prompts[2], /waitFor oder assert/);
+  const abgelehnt = ergebnis.history.find((h) => h.ungeprueft);
+  assert.ok(abgelehnt, "die Ablehnung steht nicht im Protokoll");
+  assert.equal(abgelehnt.ungeprueft, 2, "navigate UND click waren ungeprueft");
+});
+
 test("Normalisierung: Markdown-Zaeune und umgebender Text werden entfernt", () => {
   const plan = validPlan();
   const antworten = [
