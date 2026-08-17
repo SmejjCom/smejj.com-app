@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T16:54:28.646Z",
-  "confirmation": "Betreiber 2026-08-17 (Karte): 'Abgenommen — Tag + Stempel' — v532: IDrive-Pruefknopf-Fix Dateien-Seite + Parallelsitzung v528-v531",
+  "frozenAt": "2026-08-17T16:57:24.457Z",
+  "confirmation": "Betreiber 2026-08-17: 'Passt — Stempel setzen' (Startseiten-Runde v529-v531: gleiches Modell-Menue am Start, im Fenster, kurzer Modellname im Knopf)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "93eaa85f719224ed238e6a0f9b66b5a35d76ac55ccfc8136ffe711d95a3bd129",
