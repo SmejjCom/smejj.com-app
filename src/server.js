@@ -24,7 +24,7 @@ import { handleStoragePresign } from "../control-server/src/routes/storagePresig
 import { handleBrowserFetch } from "../control-server/src/routes/browserProxyRoutes.js";
 import { handleBrowserRemote, handleBrowserRemoteHealth } from "../control-server/src/routes/browserRemoteRoutes.js";
 import { handleBrowserSession } from "../control-server/src/routes/browserSessionRoutes.js";
-import { handleMausRun, handleMausStatus } from "../control-server/src/routes/mausEngineRoutes.js";
+import { handleMausRun, handleMausStatus, istMausEngineToken } from "../control-server/src/routes/mausEngineRoutes.js";
 import { handlePasskeyLoginOptions, handlePasskeyLoginVerify, handlePasskeyRegisterOptions, handlePasskeyRegisterVerify } from "../control-server/src/routes/passkeyRoutes.js";
 import { handleVoiceRoute } from "../control-server/src/routes/voiceWorkerRoutes.js";
 import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "../control-server/src/routes/modelRoutes.js";
@@ -133,7 +133,14 @@ const server = http.createServer(async (req, res) => {
       if (cors) for (const [name, value] of Object.entries(cors)) res.setHeader(name, value);
     }
     if (!isSafeMutatingControlRequest(req, url)) return json(res, 403, { error: "Origin not allowed" });
-    if (requiresAuthenticatedControlAccess(req, url)) {
+    // Einzige Ausnahme vom Sitzungszwang: die Maus-Engine fragt den
+    // Planer-Proxy mit ihrem Token statt mit einer Sitzung. Begruendung und
+    // Grenzen stehen bei istMausEngineToken; der Waechter dahinter laesst einer
+    // Token-Anfrage NUR den Proxy (alles andere fail-closed 403).
+    const mausPlanerProxy = req.method === "POST"
+      && url.pathname === ROUTES.api.mausRun
+      && istMausEngineToken(req, process.env);
+    if (!mausPlanerProxy && requiresAuthenticatedControlAccess(req, url)) {
       res.setHeader("Cache-Control", "private, no-store");
       const authenticatedUser = readSession(req);
       if (!authenticatedUser) return json(res, 401, { ok: false, error: "authentication_required" });

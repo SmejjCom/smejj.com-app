@@ -346,6 +346,32 @@ function readRunIdFromRequest(req) {
 // Worker-Authentifizierung fuer den Planer-Proxy: der stateless Worker hat
 // keine Nutzer-Sitzung, aber das gemeinsame Engine-Token (Salad-Secret).
 // Konstanter Vergleich ueber timingSafeEqual (fail-closed ohne Token).
+/**
+ * Traegt diese Anfrage das Engine-Token der Maus?
+ *
+ * WARUM ES DIESE EXPORTIERTE FASSUNG GIBT (Befund 2026-08-17):
+ * Der Planer-Proxy fuer den freien Modus war vollstaendig gebaut, getestet und
+ * ausgerollt — und trotzdem von aussen NIE erreichbar. `/api/maus/run` steht in
+ * USER_PROTECTED_EXACT_PATHS, also weist der globale Torwaechter in
+ * src/server.js jede Anfrage ohne gueltige SITZUNG mit 401 ab, lange bevor
+ * `handleMausRun` und damit `isWorkerRequest` ueberhaupt laufen. Die Engine
+ * traegt aber keine Sitzung, sondern ein Token.
+ *
+ * Die Unit-Tests haben es nicht gefunden, weil sie `handleMausRun` direkt
+ * aufrufen und den Waechter damit ueberspringen. Genau die Luecke zwischen
+ * "getestet" und "erreichbar" — der freie Modus meldete `loop_planner_http_401`
+ * und sah wie ein Token-Problem aus, obwohl beide Token nachweislich gleich
+ * waren.
+ *
+ * Der Torwaechter darf diese eine Anfrage deshalb durchlassen. Gefaehrlich ist
+ * das nicht: `handleMausRun` erlaubt einer Token-Anfrage AUSSCHLIESSLICH den
+ * Planer-Proxy (`plannerPrompt`) und antwortet auf alles andere fail-closed mit
+ * 403 — insbesondere darf sie keinen Lauf starten.
+ */
+export function istMausEngineToken(req, env = process.env) {
+  return isWorkerRequest(req, readMausEngineConfig(env));
+}
+
 function isWorkerRequest(req, config) {
   const header = String(req?.headers?.authorization || "");
   if (!config.tokenPresent || !header.startsWith("Bearer ")) return false;
