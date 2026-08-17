@@ -187,6 +187,10 @@ export async function planAndExecute({ task, policyInput, plannerClient, runPlan
           infra: result.infra === true,
           error: result.error ?? null,
           actionLog: result.actionLog,
+          // Bedienbaum statt Roh-HTML (2026-08-17). domExcerpt bleibt in der
+          // Form erhalten, damit aeltere Aufrufer und Attrappen nichts brechen
+          // — der Interpreter fuellt es nicht mehr.
+          observation: result.failureContext?.observation,
           domExcerpt: result.failureContext?.domExcerpt
         };
         history.push({ call, phase: "run", ok: false, failedStep: result.failedStep ?? null, aborted: result.aborted === true });

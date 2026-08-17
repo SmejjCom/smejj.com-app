@@ -51,6 +51,128 @@ test("Retry-Prompt: Fehlerkontext ist als untrusted gerahmt", () => {
   assert.ok(prompt.indexOf("<untrusted_fehlerkontext>") < prompt.indexOf("Malware"));
 });
 
+// Der Kern der Aenderung vom 2026-08-17: der Planer korrigiert nicht mehr
+// gegen 4000 Zeichen Roh-HTML (die bei jeder echten Seite im <head> endeten),
+// sondern gegen die Liste der sichtbaren Bedienelemente.
+test("Retry-Prompt: der Bedienbaum verdraengt das Roh-HTML", () => {
+  const prompt = buildRetryPrompt({
+    previousPlan: validPlan(),
+    failure: {
+      failedStep: "s2",
+      observation: {
+        url: "https://example.com/",
+        title: "Beispiel",
+        elements: [{ n: 1, tag: "button", role: "button", text: "Weiter", x: 40, y: 90 }],
+        textExcerpt: "Beispielseite",
+        truncated: false
+      },
+      domExcerpt: "<head><meta charset=\"utf-8\"><script src=\"analytics.js\">"
+    },
+    roundtrip: 1
+  });
+  assert.match(prompt, /seitenzustand/);
+  assert.match(prompt, /Weiter/);
+  assert.match(prompt, /Waehle deine Selektoren aus DIESER Liste/);
+  // Beides zugleich waere das Schlechteste: doppelte Kosten, widerspruechliches
+  // Material. Liegt ein Bedienbaum vor, faellt der HTML-Auszug weg.
+  assert.doesNotMatch(prompt, /analytics\.js/);
+  assert.doesNotMatch(prompt, /domExcerpt/);
+});
+
+test("Retry-Prompt: ohne Bedienbaum bleibt der HTML-Auszug der Rueckfall", () => {
+  const prompt = buildRetryPrompt({
+    previousPlan: validPlan(),
+    failure: { failedStep: "s2", domExcerpt: "<p>Fehlerseite</p>" },
+    roundtrip: 1
+  });
+  assert.match(prompt, /Fehlerseite/);
+  // Der Hinweis auf die Elementliste darf NUR erscheinen, wenn es sie gibt —
+  // sonst schickt er den Planer zu einer Liste, die im Prompt fehlt.
+  assert.doesNotMatch(prompt, /Waehle deine Selektoren aus DIESER Liste/);
+});
+
+test("Fehlerkontext: der Interpreter legt den Bedienbaum bei, nicht das HTML", async () => {
+  const log = [];
+  const factory = mockBrowserFactory(log);
+  const plan = macroPlan([
+    { id: "s1", action: "openBrowser" },
+    { id: "s2", action: "navigate", url: "https://example.com/" },
+    { id: "s3", action: "assert", condition: "selectorTextEquals", target: { strategy: "css", value: "h1" }, text: "nie-da" }
+  ]);
+  plan.policy.budget = { ...plan.policy.budget, maxLocalRetries: 0 };
+
+  // Eine Seite, die wie eine echte antwortet: evaluate() liefert Rohdaten,
+  // content() das HTML. Nur so laesst sich pruefen, WELCHES von beidem der
+  // Planer zu sehen bekommt.
+  const seite = await (await factory()).context.newPage();
+  seite.evaluate = async () => ({
+    text: "Anmelden bei Beispiel",
+    elements: [
+      { tag: "input", type: "password", name: "pw", x: 10, y: 20 },
+      { tag: "button", text: "Anmelden", x: 10, y: 60 }
+    ]
+  });
+  seite.content = async () => "<html><head><script src=\"tracker.js\"></script></head></html>";
+
+  const result = await createInterpreter(plan, {
+    browserFactory: async () => ({
+      browser: { async close() {} },
+      context: { async newPage() { return seite; }, on() {}, async cookies() { return []; }, async storageState() { return { cookies: [] }; } }
+    }),
+    retryDelayFn: async () => {}
+  }).run();
+
+  assert.equal(result.ok, false);
+  const beobachtung = result.failureContext?.observation;
+  assert.ok(beobachtung, "Bedienbaum fehlt im Fehlerkontext");
+  assert.equal(beobachtung.elements.length, 2);
+  assert.equal(beobachtung.elements[1].text, "Anmelden");
+  // Passwortfelder tragen nie einen Wert — auch nicht, wenn die Seite ihn zeigt.
+  assert.equal(beobachtung.elements[0].masked, true);
+  assert.equal(beobachtung.elements[0].text, "***");
+  // Das vollstaendige HTML bleibt als Beweis erhalten, geht aber nicht mehr
+  // als domExcerpt in den Modellkontext.
+  assert.equal(result.failureContext.domExcerpt, undefined);
+  assert.ok(result.artifacts.some((a) => a.name === "fehler/dom-snapshot.html"));
+});
+
+// Der Bedienbaum darf nie ein neues Zugriffsrecht durch die Hintertuer
+// mitbringen. Zwei Faelle, in denen die Seite gar nicht angefasst werden darf.
+test("Bedienbaum: kein Zugriff, wenn die Umgebung keinen liefern kann", async () => {
+  const gelesen = [];
+  const seite = {
+    url() { return "https://smejj.com/"; },
+    async title() { gelesen.push("title"); return "t"; },
+    async evaluate() { throw new Error("chrome_adapter_kann_nicht: evaluate"); },
+    async screenshot() { gelesen.push("screenshot"); return Buffer.from("PNG"); },
+    async close() {},
+    locator: () => ({ async waitFor() { throw new Error("nicht da"); }, async textContent() { return ""; }, first() { return this; }, nth() { return this; }, async count() { return 0; } }),
+    keyboard: { async press() {} }, mouse: { async click() {} }, frameLocator() { return seite; }
+  };
+  seite.getByRole = seite.locator; seite.getByTestId = seite.locator;
+  seite.getByLabel = seite.locator; seite.getByText = seite.locator;
+
+  const plan = macroPlan([
+    { id: "s1", action: "openBrowser" },
+    { id: "s2", action: "assert", condition: "selectorTextEquals", target: { strategy: "css", value: "h1" }, text: "nie-da" }
+  ]);
+  plan.policy.budget = { ...plan.policy.budget, maxLocalRetries: 0 };
+
+  const result = await createInterpreter(plan, {
+    browserFactory: async () => ({
+      browser: { async close() {} },
+      context: { async newPage() { return seite; }, on() {}, async cookies() { return []; }, async storageState() { return { cookies: [] }; } }
+    }),
+    retryDelayFn: async () => {}
+  }).run();
+
+  assert.equal(result.ok, false);
+  assert.equal(result.failureContext.observation, undefined);
+  // Der Beweis-Screenshot bleibt der EINZIGE Zugriff. Waere der Titel gelesen
+  // worden, ginge im Chrome des Betreibers ein sichtbarer Befehl hinaus.
+  assert.deepEqual(gelesen, ["screenshot"]);
+});
+
 test("Normalisierung: Markdown-Zaeune und umgebender Text werden entfernt", () => {
   const plan = validPlan();
   const antworten = [

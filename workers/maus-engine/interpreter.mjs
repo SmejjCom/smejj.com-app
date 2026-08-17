@@ -10,6 +10,7 @@ import { checkUrlAllowed } from "./allowlist.mjs";
 import { resolveLocator, candidateForAttempt } from "./selector.mjs";
 import { withRetries, withTimeout } from "./retry.mjs";
 import { createSecretVault } from "./secret-vault.mjs";
+import { buildObservation } from "./observer.mjs";
 import { navActions } from "./actions/nav-actions.mjs";
 import { mouseActions } from "./actions/mouse-actions.mjs";
 import { inputActions } from "./actions/input-actions.mjs";
@@ -208,6 +209,10 @@ export function createInterpreter(plan, options = {}) {
     let failedStep = null;
     let aborted = false;
     let abortReason = null;
+    // Wurde der Lauf von einer REGEL gestoppt (Allowlist, Herkunft, Budget)?
+    // Das ist etwas anderes als ein Schritt, der schlicht nicht griff — und es
+    // entscheidet unten darueber, ob die Seite noch einmal gelesen werden darf.
+    let regelAbbruch = false;
 
     for (let index = 0; index < plan.steps.length; index += 1) {
       const step = plan.steps[index];
@@ -222,6 +227,7 @@ export function createInterpreter(plan, options = {}) {
       } catch (error) {
         if (error instanceof AllowlistError || error instanceof BudgetError) {
           aborted = true;
+          regelAbbruch = true;
           abortReason = error.message;
           const abortEntry = { index, id: step.id, action: step.action, ok: false, error: abortReason, abort: true };
           actionLog.push(abortEntry);
@@ -237,9 +243,27 @@ export function createInterpreter(plan, options = {}) {
       }
     }
 
-    // Fehlerkontext fuer budgetierte Planner-Roundtrips: Screenshot + DOM-
-    // Auszug (maskiert) als Beweis und Beobachtungsmaterial — Seiteninhalt
-    // bleibt untrusted und wird nur als Daten weitergegeben.
+    // Fehlerkontext fuer budgetierte Planner-Roundtrips.
+    //
+    // ZWEI VERSCHIEDENE DINGE, die frueher eins waren (geaendert 2026-08-17):
+    //
+    //   Beweis fuer Menschen  -> vollstaendiger DOM-Schnappschuss + Screenshot
+    //                            als Artefakte in der Capsule. Unveraendert.
+    //   Material fuer den Planer -> ab jetzt der BEDIENBAUM aus observer.mjs
+    //                            statt 4000 Zeichen rohes HTML.
+    //
+    // Warum der Tausch: Rohes HTML ist fuer ein Sprachmodell das denkbar
+    // schlechteste Material. Es besteht zum groessten Teil aus Attributen,
+    // Klassennamen und Skripten, die keine Frage beantworten, und die 4000
+    // Zeichen reichten bei jeder echten Seite nicht einmal ueber den <head>
+    // hinaus — der Planer korrigierte also blind. Der Bedienbaum enthaelt
+    // stattdessen genau das, worueber entschieden wird: jedes sichtbare
+    // Bedienelement mit Nummer, Rolle, Beschriftung und Position, dazu ein
+    // Textauszug. Er ist deterministisch gekappt und maskiert Passwortfelder
+    // von sich aus — der DOM-Auszug verliess sich dafuer allein auf den Vault.
+    //
+    // Genau dieses Material bekommt der interaktive Loop-Modus seit dem
+    // 2026-07-15. Neu ist nur, dass auch der Regelweg es sieht.
     let failureContext = null;
     if (aborted || failedStep !== null) {
       failureContext = {};
@@ -256,9 +280,33 @@ export function createInterpreter(plan, options = {}) {
           if (typeof page.content === "function") {
             const html = vault.mask(await page.content());
             artifacts.push({ name: "fehler/dom-snapshot.html", data: Buffer.from(html), contentType: "text/html" });
-            failureContext.domExcerpt = html.slice(0, 4000);
           }
         } catch { /* Beweis optional */ }
+        // Zwei Sperren davor, beide bewusst:
+        //
+        // `!regelAbbruch` — hat die Allowlist oder das Budget den Lauf
+        //   gestoppt, ist die Seite genau die, die nicht angefasst werden
+        //   darf. Ein neuer Selektor haette dort ohnehin nicht geholfen:
+        //   nicht der Selektor war falsch, sondern das Ziel.
+        //
+        // `nurMitElementen` — liefert die Umgebung keinen Bedienbaum (der
+        //   Chrome-Adapter des Betreibers beherrscht bewusst kein evaluate),
+        //   wird die Seite gar nicht erst angefasst. Eine Beobachtung aus
+        //   URL und Titel nuetzt dem Planer nichts und kostete dort einen
+        //   sichtbaren Befehl an die Erweiterung.
+        //   (tests/maus-chrome-adapter.test.mjs haelt beides fest.)
+        if (!regelAbbruch) {
+          try {
+            const beobachtung = await buildObservation(page, { nurMitElementen: true });
+            // Maskiert wird die Serialisierung, nicht das Objekt: der Vault
+            // ersetzt Geheimnisse durch "***" und kann JSON deshalb nicht
+            // beschaedigen. Zweite Verteidigungslinie — Passwortfelder
+            // maskiert der Beobachter bereits selbst.
+            if (beobachtung) {
+              failureContext.observation = JSON.parse(vault.mask(JSON.stringify(beobachtung)));
+            }
+          } catch { /* Beobachtung optional — ein Roundtrip ohne sie ist besser als keiner */ }
+        }
       }
     }
 
