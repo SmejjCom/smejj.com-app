@@ -982,3 +982,11 @@ Fassung traegt beide Staende). (2) REPARATUR: das live ausgelieferte sw.js
 trug CACHE_NAME v350 — ein veralteter Stand war beim v509/v510-Deploy
 mitgekommen; Clients bekamen dadurch KEIN Precache-Update mehr. v511 liegt
 ueber jeder je verteilten Nummer und setzt die Update-Kette wieder in Gang.
+
+v511 -> v512 (2026-08-17, Release-Kollision aufgeloest): Die
+Parallelsitzung deployte nach v511 weiter (Live-sw stand auf v511,
+Arbeitskopie auf v350) — dabei gingen design-v11/start-styles MIT dem
+Arbeits-Viereck-CSS nicht mit: das Viereck war live als Element da,
+aber unsichtbar. Jetzt konsistent: CACHE_NAME v512 (nie rueckwaerts),
+Styles-Marker arbeit2, alle vier Dateien in EINEM Push, Hash-verifiziert.
+Merkregel bleibt: vor jedem Push Live-CACHE_NAME lesen.
