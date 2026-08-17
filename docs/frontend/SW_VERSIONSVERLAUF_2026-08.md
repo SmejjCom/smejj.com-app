@@ -1078,3 +1078,11 @@ code-flaeche.js v20.
 
 v518 -> v519 (2026-08-17): Modell-Menue gedeckelt (60vh, innen
 scrollen) — der 20-Modelle-Katalog sprengte die Bildhoehe.
+
+v519 -> v520 (2026-08-17, Betreiber: "nur Modellnamen, zweite Zeile
+brauchen wir nicht"): Modell-Menue radikal flach — smejj 1.0, GLM 5.3,
+Opus 5, GPT 5.6, Grok 4.5, Kimi K3 als nackte Kurznamen (Zuordnung
+CLINE_KURZ -> echte Katalog-IDs; ein Eintrag erscheint nur, wenn seine
+ID im Live-Katalog steht). Keine Gruppen, keine Beschreibungen. Fable 5
+und Gemini stehen NICHT drin — gibt es im Cline-Katalog nicht.
+code-flaeche.js v21.
