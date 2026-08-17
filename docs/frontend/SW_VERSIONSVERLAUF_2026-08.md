@@ -1113,3 +1113,11 @@ crashte bei JEDEM Klick — refreshProjectList stand DIREKT als
 Klick-Handler, das Ereignis kam als deps an (workspace undefined), die
 Projektliste blieb leer. Jetzt mit den echten Abhaengigkeiten gerufen
 (projects-surface.js; Datei liegt im Precache, der sw-Bump liefert sie).
+
+v524 -> v525 (2026-08-17, Betreiber: "Fenster direkt AUF dem
+Modellnamen, und WIRKLICH kompakt"): (1) Das Menue ankert jetzt per
+Messung am Knopf selbst (rechtsbuendig, 6px darueber) statt am Feld.
+(2) Live gemessen: app-surfaces gab jedem premium-view-Knopf
+min-height 40px + padding 0 14px und schlug die engen Zeilen — mit
+ID-Gewicht erzwungen (min-height 0, padding 2px): Zeilenhoehe ~24px
+statt 40. code-flaeche.js v24.
