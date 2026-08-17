@@ -16,6 +16,7 @@
 import { buildPlannerPrompt, buildRetryPrompt, PROMPT_TEMPLATE_VERSION } from "./prompt-template.mjs";
 import { normalizePlannerOutput } from "./plan-normalizer.mjs";
 import { validatePlan } from "./plan-validator.mjs";
+import { ungepruefteSchritte } from "./schritt-pruefer.mjs";
 import { deriveMacroName } from "./macro-store.mjs";
 
 function taskTextOf(task) {
@@ -166,9 +167,33 @@ export async function planAndExecute({ task, policyInput, plannerClient, runPlan
     } else {
       const plan = normalized.plan;
       const validation = validatePlan(plan);
-      if (!validation.ok) {
-        lastFailure = { errors: validation.errors.slice(0, 10) };
-        history.push({ call, phase: "validate", ok: false, errors: lastFailure.errors });
+      // SCHRITT-PRUEFER (2026-08-17): veraendernde Schritte ohne Nachweis.
+      //
+      // Warum erst ab dem ZWEITEN Versuch scharf: Beim Erstplan waere eine
+      // Ablehnung riskant. Sie kostete einen Modellaufruf aus demselben
+      // knappen Budget, mit dem der Lauf spaeter echte Fehler korrigieren
+      // muss — ein Plan, der einwandfrei durchgelaufen waere, koennte daran
+      // scheitern. Beim Korrekturplan ist die Lage umgekehrt: dort ist bereits
+      // etwas schiefgegangen, und ein Plan, der wieder nicht nachweist, ob
+      // seine Schritte wirken, wiederholt genau den Fehler, der hierher
+      // gefuehrt hat. Der Hinweis geht in JEDEM Fall in den Prompt — scharf
+      // ist nur die Ablehnung.
+      const offeneNachweise = validation.ok ? ungepruefteSchritte(plan) : [];
+      const nachweisFehlt = call > 0 && offeneNachweise.length > 0;
+      if (!validation.ok || nachweisFehlt) {
+        lastFailure = {
+          errors: validation.ok
+            ? [`Nachweis fehlt fuer: ${offeneNachweise.map((s) => `${s.id} (${s.action})`).join(", ")}`]
+            : validation.errors.slice(0, 10),
+          ungepruefteSchritte: offeneNachweise
+        };
+        history.push({
+          call,
+          phase: "validate",
+          ok: false,
+          errors: lastFailure.errors,
+          ...(nachweisFehlt ? { ungeprueft: offeneNachweise.length } : {})
+        });
         previousPlan = plan;
       } else {
         history.push({ call, phase: "validate", ok: true, planId: plan.planId });
@@ -191,7 +216,10 @@ export async function planAndExecute({ task, policyInput, plannerClient, runPlan
           // Form erhalten, damit aeltere Aufrufer und Attrappen nichts brechen
           // — der Interpreter fuellt es nicht mehr.
           observation: result.failureContext?.observation,
-          domExcerpt: result.failureContext?.domExcerpt
+          domExcerpt: result.failureContext?.domExcerpt,
+          // Auch nach einem LAUF-Fehler: fehlende Nachweise sind oft der Grund,
+          // warum der Fehler ueberhaupt erst so spaet auffiel.
+          ungepruefteSchritte: offeneNachweise
         };
         history.push({ call, phase: "run", ok: false, failedStep: result.failedStep ?? null, aborted: result.aborted === true });
         previousPlan = plan;

@@ -7,6 +7,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { VERAENDERNDE_AKTIONEN, nachweisHinweis } from "./schritt-pruefer.mjs";
 
 export const PROMPT_TEMPLATE_VERSION = "v1";
 
@@ -83,6 +84,14 @@ function contractBlock() {
     "- Erster Browser-Schritt ist openBrowser, letzter ist closeBrowser.",
     "- Nutze waitFor vor Interaktionen mit dynamischen Elementen und assert,",
     "  um das Aufgabenziel nachweisbar zu machen (Screenshot als Beweis).",
+    `- NACHWEISPFLICHT: Hinter jeden Schritt, der die Seite veraendert`,
+    `  (${VERAENDERNDE_AKTIONEN.join(", ")}),`,
+    "  gehoert ein waitFor oder assert, der belegt, dass er gewirkt hat —",
+    "  bevor der naechste veraendernde Schritt kommt. Ein Klick, der ins Leere",
+    "  ging, faellt sonst erst viel spaeter auf, und bis dahin baut der Plan",
+    "  auf einer Seite auf, die er gar nicht vor sich hat.",
+    "  Ein screenshot zaehlt NICHT als Nachweis: ein Bild gelingt auch von der",
+    "  falschen Seite.",
     "- Wenn die Aufgabe komplett ohne Browser per HTTP loesbar ist, plane",
     "  ausschliesslich httpRequest-Schritte (Stufe 1, bevorzugt).",
     "",
@@ -165,6 +174,7 @@ export function buildRetryPrompt({ previousPlan, failure, roundtrip, planIdHint 
   if (!previousPlan || !failure) throw new Error("retry_parameter_unvollstaendig");
   const feedback = fehlerkontext(failure);
   const hatBedienbaum = Boolean(failure.observation);
+  const hinweis = nachweisHinweis(failure.ungepruefteSchritte || []);
   return [
     `Dein Aktionsplan (Versuch ${roundtrip}) ist fehlgeschlagen. Erzeuge einen`,
     "korrigierten, vollstaendigen Plan nach demselben Vertrag und denselben",
@@ -178,6 +188,7 @@ export function buildRetryPrompt({ previousPlan, failure, roundtrip, planIdHint 
       "fehlt ein Schritt davor (scrollen, oeffnen, warten) — nicht ein anderer",
       "Selektor."
     ] : []),
+    ...(hinweis ? ["", hinweis] : []),
     "",
     SECURITY_BLOCK,
     "",
