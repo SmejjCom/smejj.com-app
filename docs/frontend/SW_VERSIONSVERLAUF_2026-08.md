@@ -966,3 +966,11 @@ Aufgabe an das ZULETZT OFFENE Gespraech; beim Adoptieren tauchten dessen
 alte Eintraege mit auf. senden() trennt jetzt zuerst (newChat), wenn die
 Flaeche leer aussieht; ein sichtbar geoeffnetes Gespraech laeuft weiter
 (code-flaeche.js v9).
+
+v510 -> v511 (2026-08-16, Betreiber-Screenshot des Claude-Vierecks im
+Schreibfeld): Arbeits-Viereck rechts oben im CODE-Schreibfeld — frei =
+gedaempfter Umriss, arbeitet = in Logo-Cyan gefuellt mit leisem
+Opacity-Puls (kein Leuchten, Augen-Regel; prefers-reduced-motion
+schaltet den Puls ab). Signal ist dasselbe Strom-Ereignis
+smejj:chat-strom, das den Stopp-Knopf steuert (detail.laufen > 0).
+code-flaeche.js v16, CACHE_NAME v348.

@@ -535,6 +535,12 @@ export function initCodeFlaeche() {
       document.querySelector('.nav-button[data-view="tools"]')?.click();
     }
   });
+  // Arbeits-Viereck wie bei Claude (Betreiber 2026-08-16): dasselbe
+  // Strom-Signal wie der Stopp-Knopf — laeuft mindestens ein Strom,
+  // pulsiert das Viereck in Logo-Cyan.
+  window.addEventListener("smejj:chat-strom", (event) => {
+    document.getElementById("codeArbeit")?.classList.toggle("an", (Number(event.detail?.laufen) || 0) > 0);
+  });
   // ⌘U / Strg+U wie bei Claude: oeffnet die Dateiauswahl — nur solange die
   // CODE-Ansicht aktiv ist, damit die Kombination sonst niemandem gehoert.
   document.addEventListener("keydown", (e) => {
