@@ -899,3 +899,14 @@ Linien zwischen den Modus-Zeilen kamen aus der generischen Knopf-Regel
 (Lichtkante inset 0 1px + Grundton 0.055, live gemessen) — in beiden
 Code-Menues mit ID-Gewicht abgeschaltet; Hover bleibt cyan.
 CACHE_NAME v341.
+
+v501 -> v502 (2026-08-16, Betreiber: "Randbeleuchtung stoert die Augen
+beim Programmieren; Spur links leuchtet zu stark und soll kompakt wie
+Claude"): (1) Leuchten ueberall gedaempft — --v11-cy-glow 0.22->0.10,
+Lichtkante 0.13->0.07, Focus-Ringe der Schreibfelder von hartem
+1px-Cyan+30px-Schein auf weiche Linie+12px. (2) Aktive Nav-Zeile der
+Premium-Ansichten (design-cyan-views.css, gemessen: Rahmen 0.58 +
+Glow 14px + Seitenbalken) jetzt wie Claude: ruhige helle Toenung
+0.07, kein Rahmen, kein Schein. (3) Spur kompakt: Zeilen 28px statt
+36, padding 3px, Schrift 13.5, gap 1px; Markierungspunkt 5px und
+gedaempft (cyan 0.55 statt Vollton). CACHE_NAME v342.
