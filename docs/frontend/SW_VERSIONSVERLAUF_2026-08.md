@@ -1166,3 +1166,12 @@ Katalog-Fuellen — die Zeilen kommen asynchron und das bottom-verankerte
 Menue wuchs nach oben aus dem Schirm (top -112 gemessen). (2) Knopftext
 per MutationObserver: app.js schreibt "Cline · id" auch spaeter — bei
 Cline-Wahl haelt der Waechter den kurzen Namen. code-flaeche.js v29.
+
+v531 -> v532 (2026-08-17, Betreiber: "teste Opus 5 beim Senden" — der
+Test DECKTE EINEN ECHTEN FEHLER AUF): der Chat-Request an
+/providers/cline/chat traegt KEIN model-Feld (Fetch-Spion: Body nur
+"messages") — der Server nimmt sein gespeichertes selectedModel, die
+Menue-Wahl wirkte beim Senden NIE (GPT-Test klappte nur, weil server-
+seitig zufaellig gpt-5.6 stand; "Opus"-Antwort kam von GPT). Jetzt
+ruft jede Cline-Wahl im Menue zusaetzlich POST /select — der Server
+wechselt mit. code-flaeche.js v30.
