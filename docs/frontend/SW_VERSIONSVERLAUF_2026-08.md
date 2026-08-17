@@ -974,3 +974,11 @@ Opacity-Puls (kein Leuchten, Augen-Regel; prefers-reduced-motion
 schaltet den Puls ab). Signal ist dasselbe Strom-Ereignis
 smejj:chat-strom, das den Stopp-Knopf steuert (detail.laufen > 0).
 code-flaeche.js v16, CACHE_NAME v348.
+
+v489/v510 -> v511 (2026-08-16 nachts): ZWEI Dinge in einem Zug. (1) Der
+Urfehler-Fix v489 (leere Code-Seite trennt beim Senden) faehrt jetzt auf
+dem v510-Stand der Parallelsitzung aus (code-flaeche.js ?v=16 — die
+Fassung traegt beide Staende). (2) REPARATUR: das live ausgelieferte sw.js
+trug CACHE_NAME v350 — ein veralteter Stand war beim v509/v510-Deploy
+mitgekommen; Clients bekamen dadurch KEIN Precache-Update mehr. v511 liegt
+ueber jeder je verteilten Nummer und setzt die Update-Kette wieder in Gang.
