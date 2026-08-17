@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T22:44:43.398Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-17 per Karte 'Freigeben und live' — Nachschlag: Auto-Zeile ohne Untertitel (Betreiber-Regel nur nackte Kurznamen; die zweite Zeile wurde live abgeschnitten), Erklaerung jetzt im Tooltip. code-flaeche v33 -> v34.",
+  "frozenAt": "2026-08-17T23:00:34.148Z",
+  "confirmation": "Betreiber 2026-08-17: 'Stempel setzen' (v535: Modellwechsel wartet auf die Serverbestaetigung — kein Hinterherhinken mehr; im echten Menue mit Kimi K3 bewiesen)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "23ba4329defda88b979e0380d617691b69086b34ff62414f795ed63adf5a990f",
