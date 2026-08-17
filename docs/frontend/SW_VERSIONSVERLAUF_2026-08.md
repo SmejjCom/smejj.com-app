@@ -1160,3 +1160,9 @@ CLIENT_ROUTES leben in app.js, uploads-surface.js kannte beide nicht
 (Auslagerungs-Rest von 2026-07-28). Jetzt lokal mit dynamischem
 config-Import und lesbarer Fehlermeldung (uploads-surface b39u, app b53).
 Upload-Pfad selbst war gesund (Testdatei erschien mit Klartext-Typ).
+
+v530 -> v531 (2026-08-17): (1) Fenster-Kappe laeuft nach JEDEM
+Katalog-Fuellen — die Zeilen kommen asynchron und das bottom-verankerte
+Menue wuchs nach oben aus dem Schirm (top -112 gemessen). (2) Knopftext
+per MutationObserver: app.js schreibt "Cline · id" auch spaeter — bei
+Cline-Wahl haelt der Waechter den kurzen Namen. code-flaeche.js v29.
