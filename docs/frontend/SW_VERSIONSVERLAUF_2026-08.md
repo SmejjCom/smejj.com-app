@@ -919,3 +919,10 @@ Vorlesen aus dem Menue in die Leiste (Lucide volume-2); Menue nur noch
 regen/copy-plain/fork/remove. Leiste rueckt auf -7px an die
 Textunterkante, gap 0, Knoepfe am Desktop 26px, Icons 15px, Uhrzeit
 11.5px. chat-actions.js b26h, chat-actions-menu v4, CACHE_NAME v343.
+
+v503 -> v504 (2026-08-16, Betreiber: "Hintergrund mit Rahmen — soll
+transparent ohne Hintergrund sein"): die Aktions-Icons unter
+Nachrichten trugen im Code-Bereich den generischen Knopf-Kasten
+(Grundton 0.055 + Lichtkante, live gemessen) — mit
+Doppelklassen-Gewicht abgeschaltet, nur Hover toent noch leicht.
+CACHE_NAME v344.
