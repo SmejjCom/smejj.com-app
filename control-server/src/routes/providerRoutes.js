@@ -18,7 +18,20 @@ import {
 } from "../providers/providerCredentialVault.js";
 
 const PREFIX = "/api/providers/cline";
+// ZWEI Bremsen statt einer (Betreiber-Befund 2026-08-17: "manchmal kommen
+// komplette Modelle und manchmal nur 2, 3").
+//
+// Vorher teilten sich ALLE Wege einen Eimer mit Kapazitaet 12 und 0,2/s
+// Nachfuellung. /chat kostet 2 — nach sechs Nachrichten in einer Minute war
+// der Eimer leer, und dann bekam auch das Modell-MENUE ein 429. Fuer den
+// Betreiber sah das aus wie "die Liste ist kaputt".
+//
+// Das Lesen (status, models) belastet Cline gar nicht — der Katalog kommt
+// aus dem Server-Cache, der Status aus dem eigenen Tresor. Es braucht also
+// keine scharfe Bremse, nur einen Schutz gegen Dauerfeuer.
 const requestGate = createRateLimiter({ capacity: 12, refillPerSec: 0.2, maxKeys: 20_000 });
+const leseGate = createRateLimiter({ capacity: 60, refillPerSec: 1, maxKeys: 20_000 });
+const LESEWEGE = new Set([`${PREFIX}/status`, `${PREFIX}/models`]);
 
 export async function handleProviderRoute(req, url, res, { env = process.env, fetchImpl = fetch } = {}) {
   if (!url.pathname.startsWith(PREFIX)) return false;
@@ -27,7 +40,10 @@ export async function handleProviderRoute(req, url, res, { env = process.env, fe
     privateJson(res, 401, { ok: false, error: "authentication_required" });
     return true;
   }
-  const limit = requestGate.take(subjectId, url.pathname.endsWith("/chat") ? 2 : 1);
+  const lesend = req.method === "GET" && LESEWEGE.has(url.pathname);
+  const limit = lesend
+    ? leseGate.take(subjectId, 1)
+    : requestGate.take(subjectId, url.pathname.endsWith("/chat") ? 2 : 1);
   if (!limit.allowed) {
     res.setHeader("Retry-After", String(limit.retryAfterSec));
     privateJson(res, 429, { ok: false, error: "provider_rate_limit", retryAfterSec: limit.retryAfterSec });
