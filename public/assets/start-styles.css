@@ -5700,8 +5700,20 @@ body.spur-zu:not(.right-panel-open) #code .code-wchips button {
 #code .view-chrome { display: none; }
 
 /* Ordner je Project: Speichern-Knopf sitzt neben dem Kopieren-Knopf am
-   Codeblock; der Verbinden-Knopf auf der Projects-Karte wie die anderen. */
-.chat-code-save { right: 46px; }
+   Codeblock; der Verbinden-Knopf auf der Projects-Karte wie die anderen.
+   Anordnung (ZCode-Abgleich 2026-08-16, rechts nach links): Chevron,
+   Download, Kopieren, Speichern — alle Knoepfe sind wie bei ZCode reine
+   Icon-Knoepfe mit fester Breite, die Abstaende bleiben darum stabil. */
+.chat-code-klapp { right: 4px; }
+.chat-code-download { right: 48px; }
+.chat-code-copy[data-code-copy] { right: 92px; }
+.chat-code-save { right: 136px; }
+@media (pointer: fine) {
+  .chat-code-klapp { right: 6px; }
+  .chat-code-download { right: 34px; }
+  .chat-code-copy[data-code-copy] { right: 62px; }
+  .chat-code-save { right: 90px; }
+}
 
 /* Projekt-Zeile im Code-Menue: links Name (waehlt Project), rechts der
    📁-Knopf (waehlt den Ordner — direkt hier, kein Seitenwechsel). */
@@ -5918,10 +5930,14 @@ body.spur-zu:not(.right-panel-open) #code .code-wchips button {
 }
 #code .code-mini {
   width: 30px; height: 30px; min-height: 30px;
+  /* ghost-button bringt padding 0 14px mit — im 30px-Knopf blieben dem SVG
+     nur 2px Innenbreite, Anhang- und Diktat-Icon waren unsichtbare Striche
+     (Betreiber-Testlauf 2026-08-16). */
+  padding: 0;
   border-radius: 999px !important;
 }
 #code .code-mini svg {
-  width: 16px; height: 16px;
+  width: 16px; height: 16px; flex: none;
   fill: none; stroke: currentColor; stroke-width: 2.2;
   stroke-linecap: round; stroke-linejoin: round;
 }
@@ -6207,3 +6223,181 @@ body.spur-zu:not(.right-panel-open) #code .code-wchips button {
 #files .datei-tabelle { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 #files .datei-tabelle th { text-align: left; color: rgba(242,245,244,.58); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; padding: 8px 10px; border-bottom: 1px solid var(--v11-hair); }
 #files .datei-tabelle td { padding: 9px 10px; border-bottom: 1px solid var(--v11-hair); }
+
+/* Betreiber 2026-08-16 ("Warum hast du ... mit Rahmen gemacht — soll mit
+   Text gleiche Zeile sein"): die drei Punkte liegen NIE auf einem Rahmen.
+   Nach einer Werkzeug-Karte sitzen sie knapp UNTER der Karte statt auf
+   ihrem Rand; bei eigenen Nachrichten sitzen sie IN der letzten Zeile der
+   Blase — der Text bekommt dafuer rechts Platz. */
+#startLog .af-karte + .msg-actions { margin-top: -10px; }
+#startLog .entry.user { padding-right: 40px; }
+#startLog .msg-actions.is-user { margin-top: -34px; padding-right: 6px; }
+
+/* Betreiber 2026-08-16 ("Chat-Funktion wie ChatGPT"): der Runter-Pfeil.
+   Sitzt mittig ueber dem Schreibfeld, nur sichtbar wenn hochgescrollt. */
+.chat-runter {
+  position: fixed;
+  left: 50%;
+  bottom: 128px;
+  transform: translateX(-50%);
+  z-index: 60;
+  width: 34px; height: 34px; min-height: 34px;
+  padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--v11-hair);
+  border-radius: 999px;
+  background: rgba(20, 26, 33, 0.92);
+  color: #f2f5f4;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+.chat-runter:hover { background: rgba(40, 48, 58, 0.95); }
+.chat-runter svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Stopp-Knopf waehrend der Antwort (Overlay ueber dem Senden-Pfeil) */
+.chat-stopp {
+  position: fixed;
+  z-index: 70;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: 0;
+  border-radius: 999px;
+  background: #f2f5f4;
+  color: #0a0f16;
+  cursor: pointer;
+}
+.chat-stopp:hover { background: #dfe5e3; }
+.chat-stopp svg { width: 18px; height: 18px; fill: currentColor; stroke: none; }
+
+/* Betreiber 2026-08-16 ("Code-Bereich wie die ZCode-App"): Codebloecke
+   mit Kopfzeile — Sprachname links, die Icon-Knoepfe (chat-code-copy.js,
+   chat-code-download.js) sitzen rechts darin. JEDER Block traegt eine
+   Sprache (chat-markdown.js liefert sie, chat-code-copy.js setzt sonst
+   "text" nach). ::before steht nicht in textContent — Verlauf und
+   Modellkontext bleiben sauber. */
+#startLog .entry.assistant .chat-code[data-language] {
+  padding-top: 0;
+}
+#startLog .entry.assistant .chat-code[data-language]::before {
+  content: attr(data-language);
+  display: block;
+  position: sticky;
+  left: 0;
+  /* ZCode-Abgleich 2026-08-16: die Sprachzeile ist bei ZCode KEIN eigener
+     Streifen — kleine Mono-Schrift, gedaempft, ohne Grund und ohne
+     Trennlinie, im selben Kasten wie der Code. Hoch genug fuer die
+     42px-Touch-Knoepfe; bei praezisem Zeigegeraet kompakt (h-8 wie ZCode). */
+  margin: 0 -12px 6px;
+  padding: 15px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: rgba(242, 245, 244, 0.55);
+}
+@media (pointer: fine) {
+  #startLog .entry.assistant .chat-code[data-language]::before {
+    padding: 8px 12px;
+  }
+}
+
+/* ZCode-Abgleich Runde 2 (Betreiber 2026-08-16, "Code-Bereich wie die
+   ZCode-App"): die Knoepfe in der Kopfzeile sind wie bei ZCode reine
+   Icon-Knoepfe — randlos, gedaempft, Hover/Fokus hellt NUR die Farbe auf
+   (ZCode: text-muted-foreground -> text-foreground, kein Grundwechsel).
+   Die Grundregeln (Groesse, Fokusring, immer sichtbar) bleiben in
+   chat-markdown.css und gelten weiter. */
+#startLog .chat-code-wrap .chat-code-copy {
+  top: 3px;
+  border-color: transparent;
+  background: transparent;
+  color: rgba(242, 245, 244, 0.55);
+  transition: color 120ms ease;
+}
+#startLog .chat-code-wrap .chat-code-copy:hover,
+#startLog .chat-code-wrap .chat-code-copy:focus-visible {
+  border-color: transparent;
+  background: transparent;
+  color: #f2f5f4;
+}
+@media (pointer: fine) {
+  #startLog .chat-code-wrap .chat-code-copy { top: 4px; }
+}
+/* Wie ZCode: kein geschriebenes "Kopieren" am Codeblock — nur das Icon,
+   der Name bleibt im aria-label/title. Die ::after-Beschriftung aus
+   chat-markdown.css gilt weiter fuer alle Kopierknoepfe ausserhalb. */
+#startLog .chat-code-wrap .chat-code-copy::after { content: none; }
+#startLog .chat-code-wrap .chat-code-copy svg { width: 14px; height: 14px; }
+
+/* Ein-/Ausklappen wie ZCodes einklappbare Zeilen ("1 file changed"-Muster;
+   chat-code-copy.js setzt data-zu am
+   Wrapper): zu sehen bleibt nur der Kopfstreifen, der Chevron dreht zur
+   Seite. Die Hoehen entsprechen dem Kopfstreifen samt Rahmen. */
+#startLog .chat-code-wrap[data-zu] .chat-code[data-language] {
+  max-height: 50px;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+@media (pointer: fine) {
+  #startLog .chat-code-wrap[data-zu] .chat-code[data-language] { max-height: 36px; }
+}
+.chat-code-klapp svg { transition: transform 150ms ease; }
+.chat-code-wrap[data-zu] .chat-code-klapp svg { transform: rotate(-90deg); }
+
+/* Syntax-Farben der Codebloecke (chat-code-farben.js) — ZCode-Abgleich
+   2026-08-16: die GitHub-Dark-Farbwelt, in der auch ZCode zeichnet
+   (Kommentar grau, String hellblau, Zahl blau, Schluesselwort koralle,
+   Funktion violett). */
+.chat-code .cf-kom { color: #8b949e; font-style: italic; }
+.chat-code .cf-str { color: #a5d6ff; }
+.chat-code .cf-zahl { color: #79c0ff; }
+.chat-code .cf-schl { color: #ff7b72; }
+.chat-code .cf-fn { color: #d2a8ff; }
+
+/* Betreiber 2026-08-16 ("gesamte Flaeche nutzen, kompakt, keine
+   Freiflaeche"): die CODE-Seite randlos wie Claude. Die Ansicht selbst ist
+   eine Bildschirm-hohe Flex-Spalte — oben nur Platz fuer die fixe
+   Logo-Zeile, links/rechts 12px, unten schliesst das Schreibfeld buendig
+   ab. Der Text im Gespraech deckt die volle Breite (die 980px-Mitte der
+   Startseite gilt hier nicht). */
+#code.view.is-active {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  /* Betreiber-Nachtrag ("Text ganz oben, ueber Browser-Icon"): kein
+     reservierter Kopfstreifen — der Text beginnt an der Oberkante, das
+     fixe Browser-Icon schwebt rechts darueber. */
+  padding: 4px 12px 8px;
+}
+#code .codeflaeche {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
+#code .codegruss { padding: 2px 2px 0; }
+#code .codeunten { margin-top: auto; padding: 8px 0 0; }
+#code .code-log-halter .start-log .entry { max-width: none; }
+#code .code-log-halter .msg-actions { max-width: none; }
+/* Das Schreibfeld waechst beim Tippen nach OBEN mit (code-flaeche.js) —
+   ab 40% Bildhoehe scrollt es innen statt weiterzuwachsen. */
+#code .codefeld textarea { max-height: 40vh; overflow-y: auto; }
+
+/* Claude-Abgleich 2026-08-16: "Zuletzt verwendet"-Eintraege tragen wie bei
+   Claude einen kleinen Kreis; das offene Gespraech fuellt ihn (cyan). */
+.nav-start .spur-chat::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin-right: 9px;
+  border: 1.5px solid rgba(242, 245, 244, 0.4);
+  border-radius: 50%;
+}
+.nav-start .spur-chat.is-active::before {
+  border-color: var(--v11-cy);
+  background: var(--v11-cy);
+}
+.nav-start .spur-chat { display: flex; align-items: center; }

@@ -736,3 +736,22 @@ die geteilte Icons-Bibliothek bleibt unangetastet). "Zuletzt
 verwendet"-Eintraege tragen wie bei Claude eine kleine Markierung vor dem
 Titel; das offene Gespraech fuellt sie cyan. Die Markierungen rendern
 VIERECKIG — Betreiber-Designgesetz schlaegt Claudes Kreise.
+
+v488 -> v489 (2026-08-16, Betreiber: "Code-Bereich abgleichen — statt
+Claude die ZCode-App als Vorbild"): Codebloecke im Chat wie ZCode
+(Anatomie 1:1 aus dem App-Bundle gelesen, streamdown-Baustein). Kopfzeile
+an JEDEM Block: Sprachname klein/mono/gedaempft ohne eigenen Streifen;
+Bloecke ohne Sprache bekommen "text" (chat-code-copy.js, nur data-Attribut
+— nie textContent). Rechts drei reine Icon-Knoepfe wie ZCode: Kopieren
+(zwei abgerundete Blaetter, Haekchen-Feedback 2 s), Download
+(Ablageschale), NEU Ein-/Ausklappen (Chevron dreht, zu = nur Kopfzeile;
+ZCodes "1 file changed"-Muster). Hover hellt nur die Farbe auf (ZCode:
+muted -> foreground, kein Grundwechsel); Beschriftung "Kopieren" am
+Codeblock entfaellt (aria-label bleibt). Syntax-Farben auf GitHub-Dark
+(ZCodes Farbwelt): Kommentar #8b949e, String #a5d6ff, Zahl #79c0ff,
+Schluesselwort #ff7b72, Funktion #d2a8ff. Aktionsleisten-Kopiersymbol
+(chat-actions.js b26f) traegt dieselbe abgerundete Zeichnung.
+Fixture-Beweis (Scratchpad, :8613): Kopieren-Feedback hin und zurueck,
+Einklappen 198 -> 36 px -> 198 px, aria-expanded wechselt, "text"-Fallback
+sichtbar. Clipboard-Verweigerung im unfokussierten MCP-Tab ist eine
+Messfalle, kein Codefehler. CACHE_NAME v329.
