@@ -1153,3 +1153,10 @@ Fenster (bottom wird gekappt, innen scrollen); der Start-Knopf zeigt
 den kurzen Modellnamen ("Opus 5") statt "Cline · claude-opus-5" —
 gesetzt NACH app.js (setTimeout 0 auf model-selected/cline-selected).
 code-flaeche.js v28.
+
+v527 -> v532 (2026-08-17, Nutzertest Dateien): "IDrive e2 pruefen" auf
+der Dateien-Seite crashte bei JEDEM Klick still — showJson und
+CLIENT_ROUTES leben in app.js, uploads-surface.js kannte beide nicht
+(Auslagerungs-Rest von 2026-07-28). Jetzt lokal mit dynamischem
+config-Import und lesbarer Fehlermeldung (uploads-surface b39u, app b53).
+Upload-Pfad selbst war gesund (Testdatei erschien mit Klartext-Typ).
