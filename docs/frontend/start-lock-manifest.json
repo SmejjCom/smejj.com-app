@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T07:40:31.586Z",
-  "confirmation": "Betreiber 2026-08-17 (Karte): 'Abgenommen — Tag + Stempel' — v518: Verlaufs-Menue-Crash und Abo-Anzeige-Crash repariert (Nutzertest Suchen+Verlauf)",
+  "frozenAt": "2026-08-17T08:27:43.815Z",
+  "confirmation": "Betreiber 2026-08-17 (Karte): 'Abgenommen — Tag + Stempel' — v519: Status im rechten Panel statt Ansichtswechsel",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "f70dc15a03666a4b276b26c2290cd4229d26ee3306e00c2df0178ff5c2fc4e15",
+    "public/index.html": "3f184a9467139bda9db4e5c26ff6ea22329cfa045ce7455f044f95a3c15a88c6",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "d686d2f38e5e4138a0aa9177e729e40acf1bf4e631a91dcb3e28ade98fea326d",
+    "public/start-styles.css": "52e14ed1d621ce64f4348f74593ce7afba6c90aaaa792a173289987df815ef45",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
