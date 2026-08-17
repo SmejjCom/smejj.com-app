@@ -1132,3 +1132,10 @@ fett, 13px wie Auto/Schnell; die Anzeige nutzt jetzt kurzName()
 ("Qwen 3.8 Max" statt roher ID). (2) Arbeits-Viereck-Umriss scharf
 (0.55 statt 0.3) — blinkt weiterhin cyan solange gearbeitet wird,
 danach stiller Umriss. code-flaeche.js v25.
+
+v527 -> v528 (2026-08-17, Betreiber-Freigabe "Ja, genau so"):
+Modell-Reihenfolge nach Staerke/Beliebtheit (smejj 1.0, Opus 5,
+GPT 5.6, GLM 5.3, Grok 4.5, Kimi K3, dann Cline-Pass-Reihe);
+Gratis-Gruppe fliegt raus (per API 403-gesperrt — tote Knoepfe:
+Nemotron, Laguna), Deepseek Flash zeigt die nutzbare
+Cline-Pass-Variante. code-flaeche.js v26.
