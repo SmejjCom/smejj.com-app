@@ -1204,3 +1204,10 @@ der Uebersetzer machte daraus einen Prompt, in dem das Motiv unterging
 die Einleitung ab, uebrig bleibt das Motiv; TUEV-Test mit Wortgrenzen-Falle
 ("ein" frass die Silbe von "einen"). Fail-safe: bleibt zu wenig uebrig,
 gilt der ganze Satz.
+
+v535 -> v536 (2026-08-17, Betreiber-Screenshot Sprachmodus): Die Antwort
+stand ROH im Overlay — "```js", "###", "**" als Zeichen, riesig und
+zentriert, dadurch unlesbar. lesbarerSprechtext() nimmt die
+Auszeichnungs-Zeichen heraus (Inhalt unversehrt, TUEV-Test), das Overlay
+zeigt Text jetzt linksbuendig in 16px. Renderer und Vorlese-Offset
+unangetastet.
