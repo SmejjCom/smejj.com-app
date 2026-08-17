@@ -1048,3 +1048,12 @@ die Funktion fehlte — die Abo-Anzeige der Kontoseite crashte beim Fuellen;
 jetzt definiert, fail-safe ohne paidEmail (b46m; Markenkette
 premium-surfaces b41b, app.js b52). Suchen und Verlauf sonst gruen
 (Volltext-Treffer, Filter "1 von 62", Zeitgruppen, Treffer-Klick oeffnet).
+
+v518 -> v519 (2026-08-17): Status IM rechten Panel — der Status-Reiter
+zeigte bisher per data-jump die grosse Systemzustand-Ansicht und verliess
+den Chat. Neues additives Modul panel-status.js (?v=1) faengt den Klick in
+der Capture-Phase ab und ADOPTIERT die echte .status-grid (derselbe
+Knoten, Live-Werte bleiben live) in den Panel-Halter; zweiter Klick,
+anderer Reiter oder das Oeffnen der Systemzustand-Ansicht geben sie
+zurueck. Fixture-Beweis: kein Sprung, Live-Wert-Update im Panel, saubere
+Rueckgabe, andere Reiter springen normal.
