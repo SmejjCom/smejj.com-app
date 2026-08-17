@@ -1218,3 +1218,23 @@ gerissen, zwei Waechter rot. Die Weiche wohnt jetzt KOMPLETT in
 medien-absicht.js (chatOhneMedienauftrag ?v=2, laedt runClientChat selbst
 per dynamischem Import); app.js ruft nur noch eine Funktion und ist zurueck
 auf 800 Zeilen. Verhalten unveraendert, TUEV-Tests gruen.
+
+## Verifikation nach Fremd-Deploy (2026-08-17, 18:33Z)
+Die Parallelsitzung ("Browser und Maus") hat den Control-Server neu
+gebaut (deploy(gitRef) auf feature/auth-redesign-github-magiclink,
+Commits cc4c46d + 7ffc5cd; gestartetAm 18:28:50 -> 18:33:13). Danach
+aus der ANGEMELDETEN Betreiber-Sitzung geprueft — beides gruen:
+- /api/providers/cline/status: 200, configured true, keyHint ••••8fc2,
+  selectedModel anthropic/claude-opus-5, storage "encrypted"
+- ECHT gesendet (frischer Chat): "Claude (Modellfamilie von Anthropic)"
+  ueber /providers/cline/chat — die Kette laeuft, nicht nur gespeichert.
+Frontend-Stand unveraendert v534 (Start-Lock byte-identisch).
+
+ZWEI LEHREN, teuer bezahlt:
+1. Ein Neustart-Zeitstempel allein beweist NICHT den eigenen Deploy —
+   ich hielt 18:28:50 faelschlich fuer den fremden Rollout und meldete
+   voreilig Entwarnung. Immer den Vorher-Wert der ANDEREN Seite erfragen.
+2. Der Cline-Zugang haengt am NUTZER (subjectId aus authenticatedUserId),
+   nicht am Server: eine Statusabfrage mit fremdem Token liefert
+   zwangslaeufig configured:false und ist als Beweis wertlos. Solche
+   Tests nur aus der Betreiber-Sitzung.
