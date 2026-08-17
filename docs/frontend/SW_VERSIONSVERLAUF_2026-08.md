@@ -1211,3 +1211,10 @@ zentriert, dadurch unlesbar. lesbarerSprechtext() nimmt die
 Auszeichnungs-Zeichen heraus (Inhalt unversehrt, TUEV-Test), das Overlay
 zeigt Text jetzt linksbuendig in 16px. Renderer und Vorlese-Offset
 unangetastet.
+
+v536 -> v537 (2026-08-17, Hinweis der Parallelsitzung): Der Einbau der
+Bild-Weiche hatte app.js auf 804 Zeilen gebracht — 800-Zeilen-Regel
+gerissen, zwei Waechter rot. Die Weiche wohnt jetzt KOMPLETT in
+medien-absicht.js (chatOhneMedienauftrag ?v=2, laedt runClientChat selbst
+per dynamischem Import); app.js ruft nur noch eine Funktion und ist zurueck
+auf 800 Zeilen. Verhalten unveraendert, TUEV-Tests gruen.
