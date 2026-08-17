@@ -85,7 +85,19 @@ const BUDGET_LIMITS = Object.freeze({
   defaultActionTimeoutMs: [100, 120_000],
   maxLoopSteps: [0, 25]
 });
-const LOOP_DEFAULT_STEPS = 8;
+// Schrittzahl des freien Modus, wenn der Aufrufer keine nennt.
+//
+// Von 8 auf 16 erhoeht (2026-08-17, live gemessen): Der Auftrag "gehe auf die
+// Hilfeseite und klicke auf Impressum" verbrauchte alle 8 Schritte und endete
+// mit `loop_budget_erschoepft`. Er scheiterte also nicht am Koennen — die Maus
+// hat gesehen, entschieden und geklickt —, sondern an einer Zahl. Bei acht
+// Schritten reicht es fuer "Seite oeffnen und ablesen"; alles, was einmal
+// klicken und danach noch etwas pruefen soll, laeuft an.
+//
+// 16 bleibt deutlich unter der Schema-Obergrenze von 25 und unter dem
+// Zeitbudget. Jeder Schritt kostet EINEN Modellaufruf — das ist der Preis des
+// freien Modus und der Grund, warum der Plan-Modus die Voreinstellung bleibt.
+const LOOP_DEFAULT_STEPS = 16;
 
 export function readMausEngineConfig(env = process.env) {
   const workerUrl = String(env.SMEJJ_MAUS_ENGINE_WORKER_URL || "").trim().replace(/\/$/, "");
