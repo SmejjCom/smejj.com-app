@@ -26,10 +26,31 @@ test("Cline selection streams through authenticated backend and supports restart
 test("Cline submenu shows the live catalog grouped like the settings surface", () => {
   assert.match(submenu, /\/api\/providers\/cline/);
   assert.match(submenu, /"cline-pass": "Cline Pass"/);
-  assert.match(submenu, /free: "Kostenlos"/);
   assert.match(submenu, /recommended: "Empfohlen"/);
   assert.match(submenu, /Alle Modelle & Key → Einstellungen/);
   assert.match(submenu, /aria-checked/);
+});
+
+// Messlatte BEWUSST verschoben (2026-08-17): der Test verlangte bis hierher
+// eine Gruppe "Kostenlos". Live gemessen liefern genau diese Modelle 403
+// ("only available via Cline product surfaces") — der alte Vertrag forderte
+// also tote Knoepfe. Jetzt wird das Gegenteil festgehalten.
+test("Cline submenu bietet keine toten Knoepfe an", () => {
+  assert.doesNotMatch(submenu, /free: "Kostenlos"/);
+  assert.match(submenu, /GROUP_ORDER = \["cline-pass", "recommended"\]/);
+  // Die zwei Blindgaenger (HTTP 200, aber leere Antwort) fliegen ebenfalls raus.
+  assert.match(submenu, /BLINDGAENGER = new Set\(\["cline-pass\/qwen3\.7-max", "x-ai\/grok-4\.5"\]\)/);
+  assert.match(submenu, /!BLINDGAENGER\.has\(model\.id\)/);
+});
+
+test("Cline submenu bietet Auto an und ruft dafuer kein /select", () => {
+  assert.match(submenu, /const AUTO_MARKE = "auto"/);
+  assert.match(submenu, /submenu\.append\(autoButton\(submenu, active\)\)/);
+  // Auto darf NICHT ueber die /select-Route gehen: das Modell steht erst fest,
+  // wenn der Auftrag da ist (ai/modellRouter.js waehlt dann und wartet ab).
+  const autoBlock = submenu.slice(submenu.indexOf("function autoButton"), submenu.indexOf("function modelButton"));
+  assert.doesNotMatch(autoBlock, /\/select/);
+  assert.match(autoBlock, /activateCline\(AUTO_MARKE\)/);
 });
 
 test("Cline submenu activates a model instantly without touching the chat path", () => {
