@@ -1190,3 +1190,9 @@ Code-Bereich — Schreibfeld Zeile 1 (voll breit, waechst bis 40vh, alles
 sichtbar), Werkzeuge feste Zeile 2 (+ | Spacer | Nachdenken Modell
 Mikro Senden). Ein Wrap-Block am design-v11-DATEIENDE schlaegt die
 Ein-Pillen-Regeln auf allen Breiten.
+
+v533 -> v534 (2026-08-17): Startfeld waechst wirklich mit — die
+Ein-Pillen-Regel setzte height:40px und schlug sogar den Inline-Stil
+(gemessen: scrollHeight 120, sichtbar 44). Jetzt height:auto !important
++ field-sizing:content, dazu ein JS-Autogrow als Fallback (Deckel 40vh).
+code-flaeche.js v31.
