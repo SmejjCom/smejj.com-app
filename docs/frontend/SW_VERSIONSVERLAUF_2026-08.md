@@ -876,3 +876,12 @@ Code-Project ein Ordner verbunden ist, steht ueber dem Feld ein kleiner
 Chip "📁 Name ×"; das × trennt (trenneOrdner) und der Chip verschwindet.
 Ohne Ordner bleibt der Platz voellig frei. Kein CSS-Neubau (nutzt die
 Anhang-Chip-Optik). code-flaeche.js v14, CACHE_NAME v338.
+
+v498 -> v499 (2026-08-16, Betreiber: "sehr schmal, wie EINE Zeile,
+Leiste trifft die Unterkante" — Variante A abgestimmt): Composer der
+CODE-Seite ultra-flach. Ansicht unten 0 statt 8px (Leiste buendig an
+der Kante), codeunten 4px, Feld-Polster 5/10/4, Chip-Zeile margin 3px,
+Chips 12px, Leiste margin 2px, Chips 2/6px; Icon-Knoepfe und Senden bei
+praezisem Zeigegeraet 28px (Touch behaelt 34/42). Schriftgroesse des
+Schreibfelds UNVERAENDERT 16.5px — grosse Schrift ist Betreiber-Gesetz.
+CACHE_NAME v339.
