@@ -926,3 +926,8 @@ Nachrichten trugen im Code-Bereich den generischen Knopf-Kasten
 (Grundton 0.055 + Lichtkante, live gemessen) — mit
 Doppelklassen-Gewicht abgeschaltet, nur Hover toent noch leicht.
 CACHE_NAME v344.
+
+v504 -> v505 (2026-08-16, Betreiber: "Icons sollen die letzte Textzeile
+treffen"): die Leiste hebt die gemessene Luecke exakt auf
+(margin-top -13px = 7px Eintrag-Polster + Icon-Kopfraum) — die Icons
+haengen unmittelbar an der Textunterkante. CACHE_NAME v345.
