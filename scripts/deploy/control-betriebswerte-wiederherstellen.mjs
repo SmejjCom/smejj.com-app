@@ -20,6 +20,23 @@ import { zeaburAbfrage } from "../diagnose/zeabur-api.mjs";
 import { findeDienst, setzeUmgebungswerte, starteDienstNeu } from "./zeabur-umgebung-setzen.mjs";
 
 const CONTROL = "smejj-control";
+const ENGINE = "ghcriosmejjcomsmejj-maus-enginev1";
+
+// DER FREIE MODUS (2026-08-17): Die Maus kann Schritt fuer Schritt arbeiten —
+// hinsehen, entscheiden, handeln — statt einen starren Plan abzuspulen. Genau
+// so arbeiten die Browser-Agenten von Claude und OpenAI. Der Code dafuer liegt
+// seit dem 2026-07-15 fertig in workers/maus-engine/loop-runner.mjs.
+//
+// Gefehlt hat EIN Wert: die Adresse, unter der die Engine den Planer erreicht.
+// Ohne ihn lehnt sie fail-closed ab ("loop_planner_nicht_konfiguriert"), und
+// der freie Modus war damit unerreichbar, obwohl vollstaendig gebaut.
+//
+// Die Engine ruft NIE selbst ein Modell. Sie fragt den Planer-Proxy des
+// Control Servers und weist sich mit dem Token aus, das sie ohnehin hat —
+// deshalb ist diese Adresse kein Geheimnis, sondern eine Wegbeschreibung.
+export const ENGINE_BETRIEBSWERTE = Object.freeze({
+  SMEJJ_MAUS_PLANNER_URL: "https://smejj-control.zeabur.app/api/maus/run"
+});
 
 export const BETRIEBSWERTE = Object.freeze({
   // Budget-Gate (control-server/src/budget/budgetGate.js). Werte wie am
@@ -112,4 +129,26 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split("/").pop()
 
   await starteDienstNeu(CONTROL);
   console.log(`${CONTROL} neu gestartet (${nachher.size} Werte).`);
+
+  // Zweiter Dienst: die Maus-Engine. Getrennt behandelt, weil ein Fehlschlag
+  // hier den Control-Teil oben nicht rueckgaengig machen soll.
+  const engineVorher = await leseUmgebung(ENGINE);
+  const engineFehlend = Object.fromEntries(
+    Object.entries(ENGINE_BETRIEBSWERTE).filter(([k]) => !engineVorher.get(k))
+  );
+  if (!Object.keys(engineFehlend).length) {
+    console.log(`${ENGINE}: alle Werte gesetzt — nichts zu tun.`);
+    process.exit(0);
+  }
+  await setzeUmgebungswerte(ENGINE, engineFehlend);
+  const engineNachher = await leseUmgebung(ENGINE);
+  for (const [k, w] of Object.entries(engineFehlend)) {
+    if (engineNachher.get(k) !== w) {
+      console.error(`Abbruch: ${k} zurueckgelesen "${engineNachher.get(k)}" statt "${w}".`);
+      process.exit(1);
+    }
+    console.log(`${ENGINE}: ${k} = ${w} (zurueckgelesen)`);
+  }
+  await starteDienstNeu(ENGINE);
+  console.log(`${ENGINE} neu gestartet — der freie Modus (mode:"interaktiv") sollte jetzt anlaufen.`);
 }
