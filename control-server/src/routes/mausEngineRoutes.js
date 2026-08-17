@@ -462,7 +462,18 @@ export async function handleMausRun(req, res, {
   for (const [name, value] of Object.entries(aiTransparencyHeaders("maus-engine-v2"))) res.setHeader?.(name, value);
   const fromWorker = isWorkerRequest(req, config);
   if (!req?.authUser && !fromWorker) return json(res, 401, { ok: false, error: "authentication_required" });
-  if (limiter) {
+  // Die Bremse gilt fuer NUTZER, die Auftraege starten: 6 Anfragen, dann eine
+  // alle 20 Sekunden. Fuer die Schrittfragen EINES LAUFENDEN Auftrags ist sie
+  // die falsche Bremse — ein freier Lauf stellt bis zu 16 davon in schneller
+  // Folge und war nach der sechsten tot ("Zu viele Maus-Engine-Anfragen",
+  // gemessen 2026-08-17). Die Bremse fuer den Loop ist seine Schrittzahl, und
+  // die setzt derselbe Server eine Ebene hoeher.
+  //
+  // Ungebremst ist das nicht: die Anfrage braucht das Engine-Token, darf
+  // ausschliesslich den Planer-Proxy ausloesen, und der Lauf, fuer den sie
+  // fragt, ist durch maxLoopSteps und das Budget-Gate hart begrenzt.
+  const istSchrittfrage = fromWorker && !req?.authUser;
+  if (limiter && !istSchrittfrage) {
     const verdict = limiter.take(clientKeyFromRequest(req));
     if (!verdict.allowed) {
       res.setHeader?.("Retry-After", String(verdict.retryAfterSec));
@@ -478,7 +489,7 @@ export async function handleMausRun(req, res, {
   // nicht stellt. Siehe die ausfuehrliche Begruendung in handleMausPlannerProxy.
   const budgetVerdict = budgetEvaluator({
     env,
-    activeWorkers: fromWorker && !req?.authUser ? 0 : Math.max(activeWorkers, countRunningAsyncRuns())
+    activeWorkers: istSchrittfrage ? 0 : Math.max(activeWorkers, countRunningAsyncRuns())
   });
   if (!budgetVerdict.ok) {
     // reasons (Liste) statt reason (Einzahl): evaluateWorkerBudget liefert nie ein
