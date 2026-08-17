@@ -1139,3 +1139,11 @@ GPT 5.6, GLM 5.3, Grok 4.5, Kimi K3, dann Cline-Pass-Reihe);
 Gratis-Gruppe fliegt raus (per API 403-gesperrt — tote Knoepfe:
 Nemotron, Laguna), Deepseek Flash zeigt die nutzbare
 Cline-Pass-Variante. code-flaeche.js v26.
+
+v528 -> v529 (2026-08-17, Betreiber: "bei Startseite auch gleiches
+Modell-Menue"): oeffneModellMenue ist kontextfaehig (menueId/chip/
+halter) und haengt jetzt AUCH am #modelPickerButton der Startseite
+(capture + stopImmediatePropagation — das alte Menue bleibt im DOM,
+oeffnet nur nicht mehr). Gleiche Liste, gleiche Reihenfolge, gleicher
+Anker ueber dem Knopf. Die engen Zeilen gelten per Doppelklassen-
+Gewicht jetzt ueberall (nicht nur #code). code-flaeche.js v27.
