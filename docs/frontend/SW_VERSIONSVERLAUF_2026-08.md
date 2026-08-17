@@ -1008,3 +1008,13 @@ mit Dauer-Cyan) faerbte das neue Claude-Viereck dauerhaft mit (live
 gemessen: bg cyan trotz an=false). Alte CSS-Regel + JS-Erzeugung
 entfernt; es gibt nur noch DAS Viereck rechts oben: ruhig = Umriss,
 arbeitet = cyan + Puls. code-flaeche.js v17.
+
+v511 -> v512 (2026-08-17, Startseiten-Nutzertest): Warte-Reste-Waechter —
+eingefrorene Zeilen abgebrochener Laeufe ("⏳ Anfrage laeuft … 3 s",
+"smejj denkt nach …") standen als DAUERHAFTE Eintraege im gespeicherten
+Verlauf, samt Aktionsleiste und Uhrzeit. Neues additives Modul
+chat-warte-reste.js (?v=1) entfernt sie beim Anzeigen — doppelt gesichert:
+istWarteRest erkennt NUR vollstaendige Wartesignal-Texte (TUEV-Test mit
+kaputten und gesunden Proben), und der LETZTE Eintrag wird nie angefasst
+(ein lebendes Wartesignal ist immer der letzte). Der Speicher-Beobachter
+sichert danach die bereinigte Fassung.
