@@ -60,7 +60,10 @@ export async function testClineConnection(apiKey, { selectedModel = "", fetchImp
     model: testModel,
     messages: [{ role: "user", content: "Reply with OK." }],
     stream: false,
-    maxTokens: 4,
+    // GPT-5.6 lehnte 4 ab ("max_output_tokens below minimum", live 2026-08-17):
+    // Reasoning-Modelle verlangen ein hoeheres Minimum. 64 ist ueberall gueltig
+    // und kostet beim Test trotzdem nur Bruchteile eines Cents.
+    maxTokens: 64,
     fetchImpl
   });
   const payload = await safeJson(response);
