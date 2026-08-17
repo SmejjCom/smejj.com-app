@@ -770,3 +770,21 @@ Daumen-Icons exakt ZCodes Lucide-Zeichnungen; Menuekopf der Antwort ohne
 Doppelwege (nur noch Neu generieren + Rest). chat-actions.js b26g,
 chat-actions-menu.js v3, CACHE_NAME v330. Fixture leiste.html: Daumen
 an/aus/wechsel gemessen, Uhrzeit erscheint, keine Textkollision.
+
+v490 -> v491 (2026-08-16, Betreiber: "Inline-Chips", dann "+ Icon im Code
+wie Claude, 1:1" und "viereckiger Punkt im Schreibfeld wenn es
+arbeitet"): DREI Stuecke. (1) Inline-Code als Chip exakt wie ZCodes
+streamdown-inline-code: gefuellter Grund, kein Rahmen, 0.875em, padding
+2x6 (Rundung nimmt eckig.css zurueck). (2) Das Plus im CODE-Feld oeffnet
+ein Menue in Claudes 1:1-Optik (an claude.ai gemessen: Kasten
+rgb(32,32,31), 302px, Zeilen 32px/14px, Kuerzel ⌘U rechts, Untermenue-
+Pfeil, Trennlinie, oeffnet nach oben) — dahinter NUR echte Wege:
+Dateien/Fotos (composerFileInput, auch per Cmd/Strg+U), Foto aufnehmen
+(composerCaptureInput), Zum Projekt (codeProjektChip), Recherche
+(Vorlage). Claudes Skills/Konnektoren/Plugins existieren hier nicht und
+stehen NICHT drin (Blindgaenger-Verbot). (3) Arbeits-Punkt: 9px-Quadrat
+in Cyan links in der codeleiste, pulsiert, haengt am echten Signal
+smejj:chat-strom (chat-stream.js) — sichtbar nur solange ein Strom
+laeuft; prefers-reduced-motion stellt die Animation ab.
+code-flaeche.js v10, CACHE_NAME v331. Fixture code.html: Menue
+auf/zu/Escape/Aussenklick, alle vier Wege, Punkt an/aus gemessen.
