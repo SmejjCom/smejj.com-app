@@ -827,3 +827,21 @@ CODE-Ansicht. Fixture-Beweise: 5 Menuepunkte, Flyout auf/zu, Schalter
 role=menuitem und liess die Schalter-Zeile nackt (Riesen-Icon, gemessen)
 — Selektoren sauber um menuitemcheckbox erweitert, span-flex-Falle mit
 34px-Override geloest. code-flaeche.js v12, CACHE_NAME v333.
+
+v493 -> v494 (2026-08-16, Betreiber: "Foto hinzufuegen hat nicht
+geklappt — checke alle Funktionen"): Live-Sweep im echten Chrome —
+Menue, Slash (9 Befehle), Cmd+U, Konnektoren-Flyout (zeigte den echten
+Ordner AOHotel.com) alle in Ordnung; der Anhang-Weg war doppelt kaputt:
+(1) bindAttachInput und bindBildAnhang griffen das Ziel-Feld EINMAL beim
+Laden (immer #startMessage) — in der CODE-Ansicht landete der Verweis
+unsichtbar im Start-Feld (live gemessen: startFeld "[Anhang: probe.txt]",
+Code-Feld leer). Beide holen das Feld jetzt ZUR AENDERUNGSZEIT ueber
+getInput(); composerInput() ist ansichts-bewusst (CODE aktiv ->
+#codeAufgabe). Damit folgt auch das Diktat dem richtigen Feld.
+(2) Ein FOTO ueber "Dateien oder Fotos hinzufuegen" war nur toter
+Text-Verweis — Bilddateien laufen jetzt durch uebernehmeBildDatei
+(Bild-Verstehen, erstes Bild traegt Inhalt, weitere als Referenz).
+Markenkette: composer-plus-menu werkzeuge-2 -> composer-tools
+werkzeuge-2 -> app.js b51 -> index.html; composer-bild-anhang bleibt
+BEWUSST unversioniert (drei Importer ohne ?v — EINE Modulinstanz,
+pending-Bild), Frische kommt vom CACHE_NAME v334.
