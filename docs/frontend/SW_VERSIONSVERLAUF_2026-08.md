@@ -728,3 +728,11 @@ nicht?"): das OFFENE Gespraech ist in beiden Spur-Listen markiert
 (is-active am spur-chat-Eintrag, bestehende Optik) — wie bei Claude. Es
 steht durch updatedAt ohnehin oben; die Spur zeichnet bei jedem
 Speicher-Tick neu (smejj:chats-changed). spur-start.js b34j.
+
+v487 -> v488 (2026-08-16, Claude-Icon-Abgleich): Code-Spur-Zeichen wie
+Claude — "Mehr" traegt ein Chevron statt des falschen Haekchens, "Regeln"
+Schieberegler statt der Sonne (eigene SPUR_ICONS in spur-start.js b34k,
+die geteilte Icons-Bibliothek bleibt unangetastet). "Zuletzt
+verwendet"-Eintraege tragen wie bei Claude eine kleine Markierung vor dem
+Titel; das offene Gespraech fuellt sie cyan. Die Markierungen rendern
+VIERECKIG — Betreiber-Designgesetz schlaegt Claudes Kreise.
