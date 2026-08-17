@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T18:44:04.078Z",
-  "confirmation": "Betreiber 2026-08-17: 'Stempel setzen' — Abnahme des Stands NACH dem Control-Neubau der Parallelsitzung (Cline-Key intakt, Kette echt bewiesen, Frontend v534 unveraendert)",
+  "frozenAt": "2026-08-17T21:41:16.277Z",
+  "confirmation": "Betreiber 2026-08-17: 'Stempel setzen' — Abnahme nach dem ZWEITEN Control-Neubau der Parallelsitzung (Cline-Key intakt und echt bewiesen, Kopfzeilen ohne Nebenwirkung, Frontend v534 unveraendert)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "0828b94fd882851506bd559e02ee0d85c72c4e7b2d7dc7f830a154889cc26299",
