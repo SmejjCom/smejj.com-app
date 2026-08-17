@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T05:10:44.384Z",
-  "confirmation": "Betreiber 2026-08-16: 'Passt — Stempel setzen' (Runde v493-v501: Claude-CODE-Menue, Anhang-Chips, Ordner-Chip, flacher Composer, Modus-Menue)",
+  "frozenAt": "2026-08-17T05:52:35.105Z",
+  "confirmation": "Betreiber 2026-08-16: 'Passt — Stempel v502-v510' (ruhige Raender, kompakte Spur, Vorlesen in der Leiste, Icons in der letzten Textzeile)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "a8f7f380d9f77171f01095c0c38a993a3b97de52a6fa98cf43506df48fd39606",
+    "public/index.html": "7fe097d300139d6413e017fb497fc8a1854fd90c7dd16803bbabc851497d848d",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "41d57554247f260f5d80dd3d16d411660ed1ae7647b69c4fb046c14e349ce530",
+    "public/start-styles.css": "00dc23c3d86ecf32bc2709d345b290fd10746a31f6e53c9b7f743a08f656c085",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "109e100e8b743ca2012c5cc9316d53ea4c36d222ade8e2351aa0b1701456bee2",
+    "public/sw.js": "298330674e06b3c2293788931497b93113dd9c6ed91185e4a752f02351c1a427",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
