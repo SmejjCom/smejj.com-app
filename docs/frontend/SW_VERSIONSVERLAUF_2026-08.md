@@ -869,3 +869,10 @@ Auto/Gruendlich/+/Mikro. Der Knopf bleibt im DOM fuer die
 programmatischen Wege (Plus-Menue "Ordner hinzufuegen" ohne Project,
 Projektwahl); Projekte weiter ueber die Spur ("Meine Projekte").
 CACHE_NAME v337.
+
+v497 -> v498 (2026-08-16, Betreiber: "woher weiss ich, welcher Ordner
+verbunden ist?"): Ordner-Chip wie Claude — NUR wenn am aktiven
+Code-Project ein Ordner verbunden ist, steht ueber dem Feld ein kleiner
+Chip "📁 Name ×"; das × trennt (trenneOrdner) und der Chip verschwindet.
+Ohne Ordner bleibt der Platz voellig frei. Kein CSS-Neubau (nutzt die
+Anhang-Chip-Optik). code-flaeche.js v14, CACHE_NAME v338.
