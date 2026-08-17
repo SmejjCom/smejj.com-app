@@ -1275,3 +1275,14 @@ das falsche Modell zu benutzen. Zweiter Fund beim Bauen: die aktion
 hatte keinen Zugriff auf ihren Knopf (k war ausserhalb des Scopes) —
 zeile() reicht ihn jetzt durch, sonst haette es einen ReferenceError
 gegeben. code-flaeche.js v32.
+
+## Abnahme v535 (2026-08-17, 22:5xZ)
+Der await-Fix wurde nach dem Livegang im ECHTEN Menue geprueft (nicht
+nur simuliert): Klick auf "Kimi K3" -> Knopf, localStorage UND
+Server-selectedModel stehen synchron auf moonshotai/kimi-k3
+(code-flaeche v34 im Browser gemessen). Damit ist der Wechsel
+nachweislich vollstaendig, bevor der naechste Auftrag laeuft.
+Modell-Beweise gesamt: GPT 5.6, Opus 5, Kimi K3 (Selbstauskunft passt);
+Grok 4.5 wechselt nachweislich mit, meldet sich aber selbst falsch
+("Auto (agent router), Cursor") — Modell-Eigenart, kein Ketten-Fehler.
+GLM 5.3 bleibt gesperrt (Cline-Pass-Abo noetig).
