@@ -954,3 +954,8 @@ v508 -> v509 (2026-08-16): Inline-Position lief nur VOR fertigem Layout
 positioniert jetzt 60ms verzoegert (kein rAF — feuert im versteckten
 Tab nie), plus Nachlauf nach document.fonts.ready. chat-actions.js
 b26k, CACHE_NAME v349.
+
+v509 -> v510 (2026-08-16): der automatische Anstoss fehlte weiter —
+onLogChanged zieht die Inline-Position jetzt 250ms nach jeder
+Log-Aenderung nach (der resize-Weg hatte die Logik live bewiesen:
+ml 76px / mt -38px). chat-actions.js b26l, CACHE_NAME v350.
