@@ -1075,3 +1075,6 @@ Cline-Pass-Abo). Guthaben ~0.35 — fuer echtes Arbeiten aufladen.
 v517 -> v518 (2026-08-17): Status-Feld heisst "configured", nicht
 "hasKey" — das Menue zeigte trotz verbundenem Key die Hinweis-Zeile.
 code-flaeche.js v20.
+
+v518 -> v519 (2026-08-17): Modell-Menue gedeckelt (60vh, innen
+scrollen) — der 20-Modelle-Katalog sprengte die Bildhoehe.
