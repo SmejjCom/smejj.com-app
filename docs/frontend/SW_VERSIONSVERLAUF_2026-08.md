@@ -910,3 +910,12 @@ Glow 14px + Seitenbalken) jetzt wie Claude: ruhige helle Toenung
 0.07, kein Rahmen, kein Schein. (3) Spur kompakt: Zeilen 28px statt
 36, padding 3px, Schrift 13.5, gap 1px; Markierungspunkt 5px und
 gedaempft (cyan 0.55 statt Vollton). CACHE_NAME v342.
+
+v502 -> v503 (2026-08-16, Betreiber: "nach Kopieren soll Vorlesen
+kommen; Rest unter drei Punkten; ohne Rahmen, sehr schmal, fast an der
+Textkante; klein kompakt modern edel"): Leiste der Antwort =
+Kopieren · Vorlesen · Daumen hoch/runter · drei Punkte · Uhrzeit.
+Vorlesen aus dem Menue in die Leiste (Lucide volume-2); Menue nur noch
+regen/copy-plain/fork/remove. Leiste rueckt auf -7px an die
+Textunterkante, gap 0, Knoepfe am Desktop 26px, Icons 15px, Uhrzeit
+11.5px. chat-actions.js b26h, chat-actions-menu v4, CACHE_NAME v343.

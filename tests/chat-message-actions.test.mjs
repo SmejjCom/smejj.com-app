@@ -341,7 +341,7 @@ test('"Quellen anzeigen" erscheint nur mit echter Quelle', () => {
   assert.ok(!menuItemsFor("assistant", false).some((i) => i.act === "sources"), "ohne Beleg kein Menuepunkt");
   const mitQuelle = menuItemsFor("assistant", true);
   assert.equal(mitQuelle[0].act, "sources", "mit Beleg steht er ganz oben");
-  assert.equal(mitQuelle.length, 6);
+  assert.equal(mitQuelle.length, 5);
   assert.ok(!menuItemsFor("user", true).some((i) => i.act === "sources"), "eigene Nachrichten haben keine Quellen");
 });
 
@@ -525,7 +525,7 @@ test("Belegung der Leiste je Rolle", () => {
   // Drei-Punkte-Entscheid vom selben Tag): Antworten zeigen wie ZCode
   // Kopieren + Daumen direkt, das Menue bleibt am Ende.
   const assistant = barSpecFor("assistant").map((spec) => spec.act);
-  assert.deepEqual(assistant, ["copy", "rate-up", "rate-down", "menu"]);
+  assert.deepEqual(assistant, ["copy", "speak", "rate-up", "rate-down", "menu"], "Betreiber 2026-08-16: Vorlesen direkt nach Kopieren");
   assert.equal(assistant.at(-1), "menu", "das Ueberlaufmenue steht immer am Ende");
 
   for (const spec of [...barSpecFor("user"), ...barSpecFor("assistant")]) {
@@ -540,7 +540,7 @@ test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   const assistant = menuItemsFor("assistant");
   // Kopieren/Daumen stehen seit dem ZCode-Abgleich sichtbar in der Leiste —
   // im Menue nur noch, was dort NICHT steht (doppelte Wege verwirren).
-  assert.deepEqual(assistant.map((item) => item.act), ["regen", "copy-plain", "speak", "fork", "remove"]);
+  assert.deepEqual(assistant.map((item) => item.act), ["regen", "copy-plain", "fork", "remove"], "Vorlesen sitzt sichtbar in der Leiste");
   assert.equal(assistant.at(-1).danger, true);
   assert.ok(!assistant.some((item) => item.act === "sources"), "keine Quellenliste, solange keine Quellen erfasst werden");
 });
@@ -590,7 +590,7 @@ test("buildMenu erzeugt bedienbare Menuepunkte mit Trennlinie vor dem Loeschen",
   assert.equal(head.textContent, "Heute, 16:30 · smejj 1.0");
 
   const items = menu.children.filter((node) => String(node.className).includes("msg-menu-item"));
-  assert.equal(items.length, 5);
+  assert.equal(items.length, 4);
   for (const item of items) {
     assert.equal(item.type, "button", "Menuepunkte sind echte Knoepfe und damit fokussierbar");
     assert.equal(item.attributes.role, "menuitem");
