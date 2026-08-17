@@ -406,7 +406,23 @@ export async function handleMausPlannerProxy(req, res, prompt, { env, fetchImpl,
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > MAX_PLANNER_PROMPT_CHARS) {
     return json(res, 400, { ok: false, error: "planner_prompt_ungueltig_oder_zu_lang" });
   }
-  const budgetVerdict = budgetEvaluator({ env, activeWorkers: countRunningAsyncRuns() });
+  // activeWorkers BEWUSST 0 — und das ist kein Loch im Kostendeckel.
+  //
+  // Der Nebenläufigkeits-Teil des Gates beantwortet die Frage "darf NOCH ein
+  // Arbeiter starten?". Hier startet keiner: der Proxy stellt genau eine
+  // Modellfrage FUER einen Arbeiter, der laengst laeuft und beim Start bereits
+  // durch dasselbe Gate ging (startsCompute ist hier immer false).
+  //
+  // Mit der Zaehlung war der freie Modus im Async-Betrieb unbenutzbar: der
+  // laufende Auftrag zaehlte als aktiver Arbeiter, SMEJJ_BUDGET_MAX_CONCURRENT_
+  // WORKERS steht auf 1, also verweigerte das Gate ausgerechnet die Anfragen
+  // DESSELBEN Auftrags — er blockierte sich selbst. Sichtbar als
+  // `loop_planner_http_503`, gemessen am 2026-08-17.
+  //
+  // Alle Kostengrenzen gelten unveraendert weiter: Budget je Auftrag, Laufzeit,
+  // die Obergrenzen aus der Umgebung. Nur die Frage nach einem ZUSAETZLICHEN
+  // Arbeiter wird nicht gestellt, weil sie hier keinen Sinn ergibt.
+  const budgetVerdict = budgetEvaluator({ env, activeWorkers: 0 });
   if (!budgetVerdict.ok) {
     // reasons (Liste) statt reason (Einzahl): evaluateWorkerBudget liefert nie ein
     // Feld "reason". Die Antwort lautete deshalb immer `"reason": null` — der Aufrufer
@@ -456,7 +472,14 @@ export async function handleMausRun(req, res, {
   if (!config.configured) {
     return json(res, 503, { ok: false, error: "maus_engine_nicht_konfiguriert", missing: config.missing });
   }
-  const budgetVerdict = budgetEvaluator({ env, activeWorkers: Math.max(activeWorkers, countRunningAsyncRuns()) });
+  // Eine Anfrage mit Engine-Token kann keinen Arbeiter starten — sie darf laut
+  // der Weiche unten AUSSCHLIESSLICH den Planer-Proxy ausloesen. Ihr die
+  // Nebenlaeufigkeit anzurechnen, beantwortet also eine Frage, die sich hier
+  // nicht stellt. Siehe die ausfuehrliche Begruendung in handleMausPlannerProxy.
+  const budgetVerdict = budgetEvaluator({
+    env,
+    activeWorkers: fromWorker && !req?.authUser ? 0 : Math.max(activeWorkers, countRunningAsyncRuns())
+  });
   if (!budgetVerdict.ok) {
     // reasons (Liste) statt reason (Einzahl): evaluateWorkerBudget liefert nie ein
     // Feld "reason". Die Antwort lautete deshalb immer `"reason": null` — der Aufrufer
