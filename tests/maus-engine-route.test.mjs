@@ -327,6 +327,27 @@ test("Planer-Proxy: ein laufender Auftrag blockiert nicht seine eigenen Fragen",
   assert.equal(res.statusCode, 200);
 });
 
+// Dieselbe Verwechslung an der zweiten Bremse: 6 Anfragen, dann eine alle
+// 20 Sekunden — ein freier Lauf mit 16 Schritten war nach der sechsten tot.
+test("Ratenbremse: die Schrittfragen eines Laufs werden nicht gebremst", async () => {
+  const nie = { take: () => ({ allowed: false, retryAfterSec: 20 }) };
+  const res = mockRes();
+  await handleMausRun(workerReq({ plannerPrompt: "Schritt 7 von 16" }), res, {
+    env: ENV_OK,
+    limiter: nie,
+    budgetEvaluator: () => ({ ok: true }),
+    plannerClient: async () => "{\"decision\":\"done\"}"
+  });
+  assert.equal(res.statusCode, 200, "eine Schrittfrage darf nicht an der Nutzerbremse scheitern");
+});
+
+test("Ratenbremse: fuer Nutzer bremst sie unveraendert", async () => {
+  const nie = { take: () => ({ allowed: false, retryAfterSec: 20 }) };
+  const res = mockRes();
+  await handleMausRun(mockReq({ body: requestBody() }), res, { env: ENV_OK, limiter: nie });
+  assert.equal(res.statusCode, 429);
+});
+
 // Die Gegenprobe: fuer einen NUTZER, der einen neuen Lauf startet, gilt die
 // Nebenlaeufigkeits-Grenze unveraendert. Sonst waere die Ausnahme oben ein Loch
 // im Kostendeckel statt einer Praezisierung.
