@@ -1147,3 +1147,9 @@ halter) und haengt jetzt AUCH am #modelPickerButton der Startseite
 oeffnet nur nicht mehr). Gleiche Liste, gleiche Reihenfolge, gleicher
 Anker ueber dem Knopf. Die engen Zeilen gelten per Doppelklassen-
 Gewicht jetzt ueberall (nicht nur #code). code-flaeche.js v27.
+
+v529 -> v530 (2026-08-17): Start-Modellmenue ragt nie mehr oben aus dem
+Fenster (bottom wird gekappt, innen scrollen); der Start-Knopf zeigt
+den kurzen Modellnamen ("Opus 5") statt "Cline · claude-opus-5" —
+gesetzt NACH app.js (setTimeout 0 auf model-selected/cline-selected).
+code-flaeche.js v28.
