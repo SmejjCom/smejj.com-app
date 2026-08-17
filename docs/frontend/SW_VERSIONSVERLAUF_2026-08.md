@@ -1018,3 +1018,7 @@ istWarteRest erkennt NUR vollstaendige Wartesignal-Texte (TUEV-Test mit
 kaputten und gesunden Proben), und der LETZTE Eintrag wird nie angefasst
 (ein lebendes Wartesignal ist immer der letzte). Der Speicher-Beobachter
 sichert danach die bereinigte Fassung.
+
+v512 -> v516 (2026-08-17): Der Warte-Reste-Waechter fuhr als v516 aus —
+die Parallelsitzung hatte inzwischen v513-v515 verteilt (Arbeits-Viereck);
+v512 war nie live. Ausgeliefert wurde deren v515-Stand plus Waechter.
