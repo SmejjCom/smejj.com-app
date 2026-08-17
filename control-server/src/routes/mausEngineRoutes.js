@@ -17,7 +17,23 @@ import { signedS3Request } from "../../../workers/glm-salad/s3.js";
 
 const MAX_BODY_BYTES = 128_000;
 const MAX_PLANNER_PROMPT_CHARS = 24_000;
-const WORKER_TIMEOUT_MS = 330_000;
+// DREI FRISTEN, DIE GESTAFFELT SEIN MUESSEN — und es bis 2026-08-17 nicht waren.
+//
+//   1. maxDurationMs      der Lauf stoppt sich SELBST (in der Engine)
+//   2. WORKER_TIMEOUT_MS  so lange wartet der Control Server auf die Antwort
+//   3. ASYNC_RUN_TIMEOUT_MS  so lange lebt der Hintergrund-Auftrag
+//
+// Die Ordnung 1 < 2 < 3 ist der ganze Sinn: der Lauf soll sich selbst beenden
+// und ein ERGEBNIS liefern. Reisst stattdessen die Verbindung (2 zu klein),
+// gibt es kein Ergebnis, nur `worker_fehler: fetch failed` — man weiss dann
+// nicht einmal, wie weit er kam.
+//
+// Genau das passierte, als LOOP_DEFAULT_STEPS von 8 auf 16 stieg: die
+// Schrittzahl wurde angehoben, die Fristen nicht. Ein freier Lauf, der seine
+// 16 Schritte wirklich nutzt, braucht laenger als die alten 300 s — er lief in
+// die Verbindungsgrenze statt in sein eigenes Budget.
+// `tests/maus-engine-route.test.mjs` haelt die Staffelung jetzt fest.
+const WORKER_TIMEOUT_MS = 660_000;
 const RATE_CAPACITY = 6;
 const RATE_REFILL_PER_SEC = 0.05;
 const ASYNC_RUN_TIMEOUT_MS = 900_000;
@@ -98,6 +114,19 @@ const BUDGET_LIMITS = Object.freeze({
 // Zeitbudget. Jeder Schritt kostet EINEN Modellaufruf — das ist der Preis des
 // freien Modus und der Grund, warum der Plan-Modus die Voreinstellung bleibt.
 const LOOP_DEFAULT_STEPS = 16;
+// Lauf-Frist des freien Modus. Muss zu LOOP_DEFAULT_STEPS passen und unter
+// WORKER_TIMEOUT_MS bleiben — siehe die Staffelung ganz oben.
+const LOOP_DEFAULT_DURATION_MS = 600_000;
+
+// Nach aussen gegeben, damit ein Test die Staffelung pruefen kann. Sie steht
+// sonst nur als Kommentar da, und ein Kommentar haelt keine Zahl fest.
+export const ZEITGRENZEN = Object.freeze({
+  planLaufFrist: BUDGET_DEFAULTS.maxDurationMs,
+  loopLaufFrist: LOOP_DEFAULT_DURATION_MS,
+  workerAntwort: WORKER_TIMEOUT_MS,
+  hintergrundLauf: ASYNC_RUN_TIMEOUT_MS,
+  loopSchritte: LOOP_DEFAULT_STEPS
+});
 
 export function readMausEngineConfig(env = process.env) {
   const workerUrl = String(env.SMEJJ_MAUS_ENGINE_WORKER_URL || "").trim().replace(/\/$/, "");
@@ -546,6 +575,13 @@ export async function handleMausRun(req, res, {
     policyInput.budget.maxLoopSteps = LOOP_DEFAULT_STEPS;
   }
   const loopEnabled = interactive || policyInput.budget.maxLoopSteps > 0;
+  // Der freie Modus braucht mehr Zeit als ein Plan: jeder Schritt ist eine
+  // Modellfrage PLUS eine Browseraktion. Mit den 300 s des Plan-Modus reichte
+  // es fuer etwa acht Schritte — die sechzehn, die er nehmen darf, passten nie
+  // hinein. Nur der Standard steigt; wer selbst eine Dauer angibt, behaelt sie.
+  if (loopEnabled && !Number.isFinite(Number.parseInt(body?.budget?.maxDurationMs, 10))) {
+    policyInput.budget.maxDurationMs = LOOP_DEFAULT_DURATION_MS;
+  }
   const execute = (onPlan = null) => planAndExecute({
     task: interactive ? { text: task, mode: "interaktiv" } : task,
     policyInput,
