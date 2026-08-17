@@ -241,7 +241,26 @@ async function erzeugeSvgInhalt(prompt, timeoutMs) {
 // 2026-08-12: "Segelboot bei Sonnenuntergang" kam ohne Boot). smejj 1.0
 // uebersetzt den Auftrag in eine kurze englische Foto-Beschreibung;
 // fail-safe: bei jedem Fehler malt unveraendert der Original-Prompt.
-async function uebersetzeMalPrompt(prompt) {
+// Der Auftragssatz ist NICHT das Motiv. "Generiere ein Bild von: einem roten
+// Leuchtturm" ging bisher komplett an den Uebersetzer — der machte daraus
+// einen Prompt, in dem das Motiv unterging (Nutzertest 2026-08-17: bestellt
+// war ein Leuchtturm, gemalt wurde eine Sand-Nahaufnahme). Hier faellt die
+// Einleitung weg, uebrig bleibt das Motiv. Bleibt danach zu wenig stehen,
+// gilt weiter der ganze Satz (fail-safe).
+export function motivAusAuftrag(prompt) {
+  const text = String(prompt || "").trim();
+  const ohne = text
+    .replace(/^[^:]{0,80}:\s*/, "")
+    // Artikel und Motivwort nur MIT Wortgrenze wegnehmen — ohne \b frass
+    // "ein" die erste Silbe von "einen" (TUEV-Fund 2026-08-17:
+    // "Zeichne mir einen Leuchtturm" -> "en Leuchtturm").
+    .replace(/^(bitte\s+)?(generiere|erzeuge|erstelle|male|zeichne|mach(e)?|draw|paint|generate|create|make)\b(\s+mir)?(\s+bitte)?(\s+(ein|eine|einen|das|die|der|a|an)\b)?(\s+(bild|foto|grafik|illustration|zeichnung|skizze|image|picture|photo|drawing|sketch)\b)?(\s+(von|vom|mit|of|with)\b)?\s*[:,]?\s*/i, "")
+    .trim();
+  return ohne.length >= 3 ? ohne : text;
+}
+
+async function uebersetzeMalPrompt(rohPrompt) {
+  const prompt = motivAusAuftrag(rohPrompt);
   if (!BILDER_API_KEY || !BILDER_BASE_URL) return prompt;
   try {
     const antwort = await fetch(`${BILDER_BASE_URL}/chat/completions`, {

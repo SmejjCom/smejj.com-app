@@ -1196,3 +1196,11 @@ Ein-Pillen-Regel setzte height:40px und schlug sogar den Inline-Stil
 (gemessen: scrollHeight 120, sichtbar 44). Jetzt height:auto !important
 + field-sizing:content, dazu ein JS-Autogrow als Fallback (Deckel 40vh).
 code-flaeche.js v31.
+
+Bridge (2026-08-17, Nutzertest Bilder, zweiter Fund): Der Maler bekam den
+GANZEN Auftragssatz ("Generiere ein Bild von: einem roten Leuchtturm") —
+der Uebersetzer machte daraus einen Prompt, in dem das Motiv unterging
+(geliefert wurde eine Sand-Nahaufnahme). Neu: motivAusAuftrag() schneidet
+die Einleitung ab, uebrig bleibt das Motiv; TUEV-Test mit Wortgrenzen-Falle
+("ein" frass die Silbe von "einen"). Fail-safe: bleibt zu wenig uebrig,
+gilt der ganze Satz.
