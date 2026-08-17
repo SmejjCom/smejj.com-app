@@ -990,3 +990,8 @@ Arbeits-Viereck-CSS nicht mit: das Viereck war live als Element da,
 aber unsichtbar. Jetzt konsistent: CACHE_NAME v512 (nie rueckwaerts),
 Styles-Marker arbeit2, alle vier Dateien in EINEM Push, Hash-verifiziert.
 Merkregel bleibt: vor jedem Push Live-CACHE_NAME lesen.
+
+v512 -> v513 (2026-08-17, Betreiber: "wenn nicht arbeitet, soll man
+nicht sehen"): das Arbeits-Viereck ist im Ruhezustand UNSICHTBAR
+(opacity 0 + visibility hidden, kein Umriss mehr) — es erscheint nur
+cyan-pulsierend, solange ein Strom laeuft. CACHE_NAME v513.
