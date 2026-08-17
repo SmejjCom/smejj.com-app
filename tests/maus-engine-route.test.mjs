@@ -8,7 +8,8 @@ import {
   handleMausRun,
   handleMausStatus,
   readMausEngineConfig,
-  buildPlannerClient
+  buildPlannerClient,
+  ZEITGRENZEN
 } from "../control-server/src/routes/mausEngineRoutes.js";
 import { PROMPT_TEMPLATE_VERSION } from "../workers/maus-engine/prompt-template.mjs";
 
@@ -325,6 +326,26 @@ test("Planer-Proxy: ein laufender Auftrag blockiert nicht seine eigenen Fragen",
   });
   assert.equal(gesehen, 0, "der Proxy darf keine Nebenlaeufigkeit anrechnen");
   assert.equal(res.statusCode, 200);
+});
+
+// Die drei Fristen muessen gestaffelt bleiben. Bis 2026-08-17 waren sie es
+// nicht: LOOP_DEFAULT_STEPS stieg von 8 auf 16, die Fristen blieben stehen.
+// Ein Lauf, der seine Schritte wirklich nutzt, riss dann die Verbindung, statt
+// sich selbst zu beenden — Ergebnis war `worker_fehler: fetch failed` und man
+// wusste nicht einmal, wie weit er kam. Ein Kommentar haelt keine Zahl fest,
+// ein Test schon.
+test("Zeitgrenzen: Lauf-Frist < Verbindungs-Frist < Hintergrund-Frist", () => {
+  const z = ZEITGRENZEN;
+  assert.ok(z.planLaufFrist < z.workerAntwort, "der Plan-Lauf muss sich vor der Verbindung beenden");
+  assert.ok(z.loopLaufFrist < z.workerAntwort, "der freie Lauf muss sich vor der Verbindung beenden");
+  assert.ok(z.workerAntwort < z.hintergrundLauf, "der Hintergrund-Auftrag muss die Verbindung ueberleben");
+  // Und die Frist muss zur Schrittzahl passen: ein Schritt ist eine
+  // Modellfrage plus eine Browseraktion, realistisch 20 s. Weniger Zeit als
+  // Schritte x 20 s heisst, dass die erhoehte Schrittzahl nie ankommt.
+  assert.ok(
+    z.loopLaufFrist >= z.loopSchritte * 20_000,
+    `${z.loopSchritte} Schritte brauchen mindestens ${z.loopSchritte * 20} s, erlaubt sind ${z.loopLaufFrist / 1000} s`
+  );
 });
 
 // Dieselbe Verwechslung an der zweiten Bremse: 6 Anfragen, dann eine alle
