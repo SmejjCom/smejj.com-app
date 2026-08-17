@@ -1183,3 +1183,10 @@ Antwort war ein ausformulierter "Bildprompt" statt eines Bildes. Neues
 Modul medien-absicht.js (?v=1, TUEV-Test kaputt+gesund): erkennt Bild-
 und Video-Auftraege im Client, app.js (b54) laesst dann den Cline-Weg aus
 — Medien nehmen IMMER den Bruecken-Weg mit Maler/Video-Worker.
+
+v532 -> v533 (2026-08-17, Betreiber-Screenshot: Knoepfe schwammen bei
+mehrzeiligem Text MITTEN im Startfeld): Start-Composer jetzt wie der
+Code-Bereich — Schreibfeld Zeile 1 (voll breit, waechst bis 40vh, alles
+sichtbar), Werkzeuge feste Zeile 2 (+ | Spacer | Nachdenken Modell
+Mikro Senden). Ein Wrap-Block am design-v11-DATEIENDE schlaegt die
+Ein-Pillen-Regeln auf allen Breiten.
