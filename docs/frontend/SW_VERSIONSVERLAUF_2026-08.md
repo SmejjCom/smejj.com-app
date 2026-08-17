@@ -1126,3 +1126,9 @@ v525 -> v526 (2026-08-17, Betreiber: "Freiflaeche rausnehmen, Fenster
 klein"): Modell-Menue auf Inhaltsbreite (width max-content statt
 min-width 320) — der Haken sitzt direkt hinter dem laengsten Namen,
 keine Leerflaeche rechts.
+
+v526 -> v527 (2026-08-17): (1) Modellname in der Code-Leiste NICHT
+fett, 13px wie Auto/Schnell; die Anzeige nutzt jetzt kurzName()
+("Qwen 3.8 Max" statt roher ID). (2) Arbeits-Viereck-Umriss scharf
+(0.55 statt 0.3) — blinkt weiterhin cyan solange gearbeitet wird,
+danach stiller Umriss. code-flaeche.js v25.
