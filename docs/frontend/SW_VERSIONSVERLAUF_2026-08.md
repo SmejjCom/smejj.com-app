@@ -697,3 +697,14 @@ Fixture-Beweis: Klick erzeugte Blob 31B und Download "code-1.py".
 v482 -> v483 (2026-08-16): Code-Spur-Punkt heisst wie bei Claude kurz "Neu"
 — "Neuer Auftrag" wurde in der schmalen Spur abgeschnitten ("Neuer Auf…",
 im Betreiber-Chrome gesehen). spur-start.js b34h.
+
+v483 -> v484 (2026-08-16, Betreiber-Screenshots Claude vs. smejj): Beim
+DIREKTEN Aufruf von /code zeigte die Spur die START-Punkte und markierte
+"Start" — sie zeichnete vor dem Router, und #start traegt is-active
+statisch im Markup. Zwei Griffe: (1) codeAktiv zaehlt auch
+location.pathname === "/code"; (2) ein MutationObserver auf der
+#code-Klasse zeichnet nach, sobald der Router wirklich umschaltet
+(spur-start.js b34i). Dazu (3): der Code-Gruss zeigte beim Direktaufruf
+keinen Namen — das Profil-Dock laedt sein Konto erst danach; ein
+Beobachter auf #profileDockName zieht den Gruss nach (code-flaeche.js v8,
+wie Claudes "Was steht als Naechstes an, AlanBest?").
