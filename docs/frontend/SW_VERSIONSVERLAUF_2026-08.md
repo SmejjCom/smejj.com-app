@@ -788,3 +788,26 @@ smejj:chat-strom (chat-stream.js) — sichtbar nur solange ein Strom
 laeuft; prefers-reduced-motion stellt die Animation ab.
 code-flaeche.js v10, CACHE_NAME v331. Fixture code.html: Menue
 auf/zu/Escape/Aussenklick, alle vier Wege, Punkt an/aus gemessen.
+
+v491 -> v492 (2026-08-16, Betreiber: "Werkzeug-Karten" + Screenshot des
+Claude-CODE-Plus-Menues "genau so zeigen und funktionieren"): VIER
+Stuecke. (1) Datei-Karte wie ZCode: nach "In den Project-Ordner
+speichern" bleibt am Codeblock eine Karte (Zeichenkasten, Dateiname,
+"Im Project-Ordner gespeichert · N Zeilen") — ALLER Text aus
+data-Attributen per CSS attr(), textContent bleibt sauber; chat-store
+sichert innerHTML, die Karte uebersteht Neuladen. (2) Arbeitsschritte-
+Falte im ZCode-Look: gedaempfte Zeile mit drehendem ›-Chevron statt
+details-Dreieck, Schritte ruecken mit Haarstrich ein. (3) Plus-Menue
+exakt nach Betreiber-Screenshot: Dateien/Fotos ⌘U, Ordner hinzufuegen
+(verbindeOrdner am aktiven Code-Project; ohne Project erst Projektwahl),
+Slash-Befehle, Konnektoren › (Einstellungen/Anbieter). Claudes "Plugins
+hinzufuegen…" fehlt BEWUSST — kein Plugin-System, kein Blindgaenger.
+(4) Slash-Befehle FUNKTIONIEREN: "/" am Feldanfang oeffnet die Palette
+mit den neun ECHTEN Vorlagen (/recherche /code /tests /fehler /erklaere
+/funktion /bild /video /text), Tippen filtert, Klick fuellt das Feld.
+DAZU Regressions-Fix aus v491: die Inline-Chip-Regel faerbte auch
+Codeblock-Zeilen (ID-Selektor schlug den Block-Reset; im Fixture
+gemessen) — Block-Reset mit gleicher Staerke nachgezogen.
+Fixture-Beweise: Palette auf/filter/Wahl/Escape, Aussenklick-Falle
+behoben, Karte erscheint mit leerem textContent. code-flaeche.js v11,
+chat-code-copy.js zcode2, CACHE_NAME v332.
