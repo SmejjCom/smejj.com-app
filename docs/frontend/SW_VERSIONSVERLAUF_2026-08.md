@@ -1102,3 +1102,8 @@ noch dichter (padding 2px, line-height 1.35). code-flaeche.js v23.
 v522 -> v523 (2026-08-17, Betreiber: "Schriftgroesse wie Auto/Schnell,
 edel, enger"): Modell-Menue-Schrift 13px/Gewicht 450 (wie die
 Leisten-Chips), Zeilen-padding 1px, Kopf 11.5px, Menue 250px schmal.
+
+v523 -> v524 (2026-08-17, Betreiber-Screenshot von Claudes Menue):
+Modellnamen in Claude-Groesse 14.5px und NICHT fett (Gewicht 400);
+das Menue oeffnet direkt UEBER dem Modellnamen rechts (left:auto,
+right:10px) statt links am Feld.
