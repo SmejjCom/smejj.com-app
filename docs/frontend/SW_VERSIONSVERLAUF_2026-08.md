@@ -931,3 +931,7 @@ v504 -> v505 (2026-08-16, Betreiber: "Icons sollen die letzte Textzeile
 treffen"): die Leiste hebt die gemessene Luecke exakt auf
 (margin-top -13px = 7px Eintrag-Polster + Icon-Kopfraum) — die Icons
 haengen unmittelbar an der Textunterkante. CACHE_NAME v345.
+
+v505 -> v506 (2026-08-16, Betreiber: "zwischen Texten keine Trennlinie,
+kompakt"): der Haarstrich zwischen Chat-Eintraegen ist weg, Polster
+7->6px — die Nutzer-Blase trennt optisch genug. CACHE_NAME v346.
