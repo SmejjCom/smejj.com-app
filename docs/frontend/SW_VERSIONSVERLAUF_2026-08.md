@@ -1261,3 +1261,17 @@ DREI BEFUNDE ZUM MERKEN:
    NICHT zu den deviceIds (Browser 2 wurde nach dem Wechsel als
    "Browser 1" gelistet). Nie nach Namen waehlen — am offenen
    smejj-Tab pruefen, ob es die Betreiber-Sitzung ist.
+
+v534 -> v535 (2026-08-17, Betreiber: "Grok 4.5 auch testen" — der Test
+DECKTE DEN NAECHSTEN ECHTEN FEHLER AUF): Das Modell hinkte jede Wahl
+genau EINEN Schritt hinterher. Gemessen: Grok gewaehlt -> Antwort kam
+von Kimi; Server danach manuell auf Grok gesetzt -> Antwort kam von
+Qwen. Ursache: mein /select aus v532 war fire-and-forget (void fetch).
+Der Datensatz liegt auf IDrive e2, das Schreiben dauert — der naechste
+Chat-Request las den ALTEN Record. Jetzt wird /select ABGEWARTET
+(await + Statuspruefung), der Menuepunkt zeigt solange "Name …", und
+bei Fehlschlag bleibt der alte Name stehen PLUS Hinweis statt still
+das falsche Modell zu benutzen. Zweiter Fund beim Bauen: die aktion
+hatte keinen Zugriff auf ihren Knopf (k war ausserhalb des Scopes) —
+zeile() reicht ihn jetzt durch, sonst haette es einen ReferenceError
+gegeben. code-flaeche.js v32.
