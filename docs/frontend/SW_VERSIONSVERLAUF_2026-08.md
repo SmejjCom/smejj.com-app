@@ -1107,3 +1107,9 @@ v523 -> v524 (2026-08-17, Betreiber-Screenshot von Claudes Menue):
 Modellnamen in Claude-Groesse 14.5px und NICHT fett (Gewicht 400);
 das Menue oeffnet direkt UEBER dem Modellnamen rechts (left:auto,
 right:10px) statt links am Feld.
+
+v519 -> v527 (2026-08-17, Nutzertest smejjCloud): "Liste aktualisieren"
+crashte bei JEDEM Klick — refreshProjectList stand DIREKT als
+Klick-Handler, das Ereignis kam als deps an (workspace undefined), die
+Projektliste blieb leer. Jetzt mit den echten Abhaengigkeiten gerufen
+(projects-surface.js; Datei liegt im Precache, der sw-Bump liefert sie).
