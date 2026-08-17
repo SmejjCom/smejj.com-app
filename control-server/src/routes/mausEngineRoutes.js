@@ -328,7 +328,7 @@ export async function handleMausStatus(req, res, { env = process.env, activeWork
     engine: "smejj.com maus-engine",
     configured: config.configured,
     missing: config.missing,
-    budget: { ok: budget.ok, reason: budget.reason ?? null },
+    budget: { ok: budget.ok, reasons: budget.reasons ?? [] },
     startsCompute: false
   });
 }
@@ -370,7 +370,11 @@ export async function handleMausPlannerProxy(req, res, prompt, { env, fetchImpl,
   }
   const budgetVerdict = budgetEvaluator({ env, activeWorkers: countRunningAsyncRuns() });
   if (!budgetVerdict.ok) {
-    return json(res, 503, { ok: false, error: "budget_gate_blockiert", reason: budgetVerdict.reason ?? null });
+    // reasons (Liste) statt reason (Einzahl): evaluateWorkerBudget liefert nie ein
+    // Feld "reason". Die Antwort lautete deshalb immer `"reason": null` — der Aufrufer
+    // sah, DASS das Gate blockt, nie WARUM (Befund 2026-08-17: zwei fehlende
+    // Umgebungswerte kosteten eine halbe Stunde Suche).
+    return json(res, 503, { ok: false, error: "budget_gate_blockiert", reasons: budgetVerdict.reasons ?? [] });
   }
   try {
     const client = plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel });
@@ -416,7 +420,11 @@ export async function handleMausRun(req, res, {
   }
   const budgetVerdict = budgetEvaluator({ env, activeWorkers: Math.max(activeWorkers, countRunningAsyncRuns()) });
   if (!budgetVerdict.ok) {
-    return json(res, 503, { ok: false, error: "budget_gate_blockiert", reason: budgetVerdict.reason ?? null });
+    // reasons (Liste) statt reason (Einzahl): evaluateWorkerBudget liefert nie ein
+    // Feld "reason". Die Antwort lautete deshalb immer `"reason": null` — der Aufrufer
+    // sah, DASS das Gate blockt, nie WARUM (Befund 2026-08-17: zwei fehlende
+    // Umgebungswerte kosteten eine halbe Stunde Suche).
+    return json(res, 503, { ok: false, error: "budget_gate_blockiert", reasons: budgetVerdict.reasons ?? [] });
   }
 
   let body;

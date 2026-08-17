@@ -149,6 +149,24 @@ export const ROUTES = {
   verlauf: "/verlauf.html",
   verlaufMesswerte: "/verlauf-messwerte.json",
   hilfe: "/hilfe.html",
+  // ---------------------------------------------------------------------
+  // Sechs Seiten, die live (GitHub Pages liefert public/ vollstaendig aus)
+  // mit HTTP 200 antworten und lokal mit 404 — weil die Erlaubnisliste in
+  // src/http/staticServing.js sie nicht kannte (Befund 2026-08-17).
+  //
+  // Aufgefallen ist es an der Maus-Wiedergabe: das Maus-Panel der Startseite
+  // bettete lokal eine leere weisse Flaeche ein. Die Suche nach dem Grund
+  // foerderte fuenf weitere zutage — darunter /index.html, das Ziel der
+  // Weiterleitung nach der Anmeldung. Der Unterschied zwischen lokal und live
+  // ist genau die Art Abweichung, an der eine Messung luegt: lokal geprueft,
+  // live anders. Der Waechter dagegen ist tests/static-erlaubnisliste.test.mjs.
+  // ---------------------------------------------------------------------
+  mausReplay: "/maus-replay.html",
+  indexHtml: "/index.html",
+  willkommen: "/willkommen.html",
+  programmieren: "/programmieren.html",
+  agb: "/agb.html",
+  widerruf: "/widerruf.html",
   impressum: "/impressum.html",
   datenschutz: "/datenschutz.html",
   // Englische Hoeflichkeitsfassungen (verbindlich bleibt der deutsche Text).
@@ -261,7 +279,17 @@ export const SECURITY_HEADERS = {
     // weil GitHub Pages keine CSP-Kopfzeile setzt. Dieselben Hosts stehen in
     // der Meta-CSP von status.html; tests/statusseite.test.mjs erzwingt das.
     "connect-src 'self' https://accounts.google.com https://smejj-chat-bridge.zeabur.app",
-    "frame-src https://accounts.google.com",
+    // 'self' gehoert hier dazu: die App rahmt ihre EIGENE Maus-Wiedergabe
+    // (public/maus-replay.html) im rechten Panel. Ohne 'self' loeschte diese
+    // Direktive den Standard aus default-src, und Chrome blockte den iframe mit
+    // "Framing 'http://localhost:3000/maus-replay.html' violates ... frame-src
+    // https://accounts.google.com" — das Panel blieb weiss (Befund 2026-08-17).
+    // Live faellt das nicht auf: GitHub Pages setzt keine CSP-Kopfzeile, und die
+    // Meta-CSP in index.html kennt gar kein frame-src, dort greift also
+    // default-src 'self'. Genau diese Abweichung macht eine lokale Messung
+    // wertlos. Gerahmt WERDEN darf die App weiterhin von niemandem — dafuer
+    // sorgen frame-ancestors 'none' und X-Frame-Options weiter unten.
+    "frame-src 'self' https://accounts.google.com",
     "img-src 'self' data:",
     "style-src 'self'",
     "script-src 'self' https://accounts.google.com/gsi/client",
