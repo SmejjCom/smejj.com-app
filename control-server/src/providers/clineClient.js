@@ -46,8 +46,14 @@ export function __clearClineCatalogCacheForTests() {
 export async function testClineConnection(apiKey, { selectedModel = "", fetchImpl = fetch } = {}) {
   const key = normalizeApiKey(apiKey);
   const catalog = await fetchClineModels({ fetchImpl });
-  const testModel = catalog.models.find((model) => model.category === "free")?.id
-    || (catalog.models.some((model) => model.id === selectedModel) ? selectedModel : catalog.models[0]?.id);
+  // Betreiber-Befund 2026-08-17: die Gratis-Modelle liefert Cline nur noch
+  // an eigene Apps aus ("Error 403: … only available via Cline product
+  // surfaces") — ein Test damit scheitert IMMER. Getestet wird darum das
+  // GEWAEHLTE Modell, sonst ein empfohlenes; Gratis nur als letzte Reserve.
+  const testModel = (selectedModel && catalog.models.some((model) => model.id === selectedModel) ? selectedModel : "")
+    || catalog.models.find((model) => model.category === "recommended")?.id
+    || catalog.models.find((model) => model.category === "cline-pass")?.id
+    || catalog.models[0]?.id;
   if (!testModel) throw new Error("cline_model_catalog_empty");
   const response = await clineChatCompletion({
     apiKey: key,
