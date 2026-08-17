@@ -862,3 +862,10 @@ Grund, Hover hellt auf. code-flaeche.js v13, CACHE_NAME v335.
 v495 -> v496 (2026-08-16): Projekt-Chip kappte VORN ("ojekt: …") —
 text-overflow greift nicht in inline-flex; der Chip ist jetzt
 inline-block und kappt hinten mit Punkten. CACHE_NAME v336.
+
+v496 -> v497 (2026-08-16, Betreiber: "bei Claude sieht man das nicht"):
+der Projekt-Chip ist ganz unsichtbar — die Leiste zeigt wie Claude nur
+Auto/Gruendlich/+/Mikro. Der Knopf bleibt im DOM fuer die
+programmatischen Wege (Plus-Menue "Ordner hinzufuegen" ohne Project,
+Projektwahl); Projekte weiter ueber die Spur ("Meine Projekte").
+CACHE_NAME v337.
