@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T07:08:27.379Z",
-  "confirmation": "Betreiber 2026-08-17: 'Jetzt stimmt es — Stempel' (v512-v515: Arbeits-Viereck wie Claude — Ruhe still, Arbeit cyan; Kollisionsbereinigung)",
+  "frozenAt": "2026-08-17T07:24:54.452Z",
+  "confirmation": "Betreiber 2026-08-17 (Karte): 'Abgenommen — Tag + Stempel' — v516: Warte-Reste-Waechter nach Startseiten-Nutzertest",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "14157095358d6196be67fc75fea46627ac6f61493d9bca5fdcd48c2012f70ecd",
+    "public/index.html": "efe3878899689f8d926e4b3465f8608a9483e898e071344651511257a23fb442",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "d686d2f38e5e4138a0aa9177e729e40acf1bf4e631a91dcb3e28ade98fea326d",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
