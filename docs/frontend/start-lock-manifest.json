@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-17T16:33:03.972Z",
-  "confirmation": "Betreiber 2026-08-17: 'Jetzt passt es' (Modell-Runde v516-v526: Cline-Modelle im Code-Bereich, Menue klein/eng/ueber dem Modellnamen wie Claude)",
+  "frozenAt": "2026-08-17T16:40:03.173Z",
+  "confirmation": "Betreiber 2026-08-17 (Karte): 'Abgenommen — Tag + Stempel' — Stand v527: smejjCloud-Crash-Fix + Parallelsitzungs-Arbeit v520-v526 (Modell-Menue)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9cf54ebc240a9ac29382da58dc4dcad6edaea0bc2aa929663799c0bf551015c0",
+    "public/index.html": "c4afaad3dfd64d18c6071bc2d66b51d67cb6f37ca385c3090733729ceb369b41",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "d7e353d4df9c67456f66a3d2ffcc812294e10ff780afe02a89360f853febddf4",
+    "public/start-styles.css": "0a61dadc02e22164bb6c524392b138afebb28bc3c6617b1f655544c485fa80d2",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "f5179cafe43e86926f55c06ac6e346d0e7c43feac3817cb787dd2e76058193a2",
+    "public/sw.js": "6410a1a1d271324cdd09abcd8301f5a8ebd531905c8b23f568366724d81c3534",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
