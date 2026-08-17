@@ -942,3 +942,9 @@ wird per Range ans gemessene Textende geschoben (marginLeft/-Top als
 Inline-Style, Neuberechnung bei jedem ensureBar-Tick und bei resize);
 reicht der Platz in der Zeile nicht, bleibt sie wie bisher darunter.
 chat-actions.js b26i, CACHE_NAME v347.
+
+v507 -> v508 (2026-08-16): Inline-Leiste griff nie — zwei Messfallen
+(live): (1) Range auf Elementende liefert 0x0; jetzt Ende des LETZTEN
+Textknotens (TreeWalker). (2) offsetWidth der Block-Leiste ist die
+volle Breite (613px); Platzpruefung jetzt gegen die Inhaltsbreite
+(erstes bis letztes Kind). chat-actions.js b26j, CACHE_NAME v348.
