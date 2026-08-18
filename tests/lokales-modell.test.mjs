@@ -11,7 +11,9 @@ import assert from "node:assert/strict";
 import {
   frageLokal,
   lokalErlaubt,
+  lokalStatistik,
   lokalVerfuegbar,
+  merkeEntscheidung,
   setzeLokalErlaubt,
   taugtFuerLokal
 } from "../public/ai/lokalesModell.js";
@@ -205,4 +207,48 @@ test("die Vorgeschichte erreicht das Modell wirklich", async () => {
   // Gegenstueck: eine vom Client gesendete system-Rolle wird verworfen, nicht
   // durchgereicht — dieselbe Regel wie serverseitig.
   assert.ok(!gesehen.slice(1).some((n) => n.role === "system"), "keine fremde system-Rolle im Verlauf");
+});
+
+// ---------------------------------------------------------------------------
+// ZAEHLER — ohne ihn ist die Gratis-Spur unsichtbar. Was auf dem Geraet
+// beantwortet wird, erzeugt keine Server-Logzeile; der Tagesbericht saehe nur
+// weniger Anfragen und koennte nicht sagen, warum. "Es greift" waere dann eine
+// Behauptung.
+// ---------------------------------------------------------------------------
+test("Entscheidungen werden je Tag und Grund gezaehlt", () => {
+  const s = speicher();
+  const tag = new Date("2026-08-18T10:00:00Z");
+  merkeEntscheidung("geeignet", s, tag);
+  merkeEntscheidung("geeignet", s, tag);
+  merkeEntscheidung("tagesaktuell", s, tag);
+
+  const stand = lokalStatistik(s);
+  assert.equal(stand.tage.length, 1);
+  assert.equal(stand.tage[0].tag, "2026-08-18");
+  assert.equal(stand.tage[0].gesamt, 3);
+  assert.equal(stand.tage[0].lokal, 2);
+  assert.equal(stand.tage[0].quote, 0.667, "genau diese Zahl beantwortet die Frage der Messwoche");
+  assert.deepEqual(stand.tage[0].gruende, { geeignet: 2, tagesaktuell: 1 });
+});
+
+test("der Zaehler speichert KEINEN Fragetext", () => {
+  const s = speicher();
+  merkeEntscheidung("geeignet", s, new Date("2026-08-18T10:00:00Z"));
+  const roh = s.getItem("smejj.lokalquote.v1");
+  assert.ok(roh.includes("geeignet"));
+  assert.ok(!/frage|task|content/i.test(roh), "fuer die Quote genuegt die Zahl");
+});
+
+test("alte Tage fallen weg statt den Speicher zu fuellen", () => {
+  const s = speicher();
+  for (let i = 0; i < 20; i += 1) {
+    const tag = new Date(Date.UTC(2026, 7, 1 + i, 10));
+    merkeEntscheidung("geeignet", s, tag);
+  }
+  assert.ok(lokalStatistik(s).tage.length <= 14, "zwei Wochen genuegen fuer eine Messwoche");
+});
+
+test("ohne Speicher zaehlt es nicht mit — aber faellt auch nicht um", () => {
+  assert.equal(merkeEntscheidung("geeignet", null), false);
+  assert.deepEqual(lokalStatistik(null).tage, []);
 });
