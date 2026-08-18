@@ -465,3 +465,20 @@ test("ein gewuenschtes Modell schlaegt die Tempo-Reihenfolge", async () => {
   assert.match(stelle, /if \(requestedModel\)/, "der Wunsch muss abgefragt werden");
   assert.match(stelle, /resolveChain\("fast", env\)/, "ohne Wunsch die schnelle Anbieterkette");
 });
+
+// scroll fehlte als EINZIGE Aktion in der Feldliste des Planer-Auftrags.
+// Das Modell riet die Form und riet falsch: jeder Auftrag mit "scrolle" wurde
+// abgelehnt und KOMPLETT neu geplant — 15-25 s Aufschlag, jedes Mal.
+// Gemessen am Verlauf: call 0 abgelehnt ("scroll verlangt entweder to oder
+// direction+amountPx"), call 1 angenommen.
+test("die Anleitung nennt JEDE Aktion, die die Pruefung verlangt", async () => {
+  const { buildPlannerPrompt } = await import("../workers/maus-engine/prompt-template.mjs");
+  const prompt = buildPlannerPrompt({
+    task: "test", capsuleRef: "c", domainAllowlist: ["a.de"],
+    budget: { maxActions: 10 }, files: [], visionAllowed: false
+  });
+  // Die Bedingung stammt woertlich aus plan-validator.mjs.
+  assert.match(prompt, /scroll: to = <Selektor> ODER direction/,
+    "ohne diese Zeile raet das Modell die Scroll-Form — und wird abgelehnt");
+  assert.match(prompt, /amountPx/);
+});
