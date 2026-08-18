@@ -100,3 +100,28 @@ test("Fehlerseite escaped den technischen Grund", () => {
   assert.ok(!html.includes("<img src=x"), "roher Tag darf nicht durchkommen");
   assert.match(html, /&lt;img/);
 });
+
+// --- Adressanzeige -----------------------------------------------------------
+
+// Der auffaelligste Unterschied im direkten Nebeneinander (Bildschirmfoto
+// 2026-08-17): Chrome zeigt "smejj.com", wir zeigten "https://www.amazon.com/".
+test("Adresse wird wie in Chrome gekuerzt angezeigt", async () => {
+  const { anzeigeAdresse } = await import("../public/browser-pane-vorschlaege.js");
+  assert.equal(anzeigeAdresse("https://www.amazon.com/"), "amazon.com");
+  assert.equal(anzeigeAdresse("https://smejj.com/"), "smejj.com");
+  assert.equal(anzeigeAdresse(""), "");
+});
+
+// Ein Pfad ist kein Schmuck — er muss stehen bleiben, sonst fuehrt die
+// angezeigte Adresse woanders hin als die echte.
+test("Adressanzeige kuerzt Pfad und Abfrage NICHT weg", async () => {
+  const { anzeigeAdresse } = await import("../public/browser-pane-vorschlaege.js");
+  assert.equal(anzeigeAdresse("https://amazon.com/dp/B01?ref=x"), "amazon.com/dp/B01?ref=x");
+  assert.equal(anzeigeAdresse("https://amazon.com/gp/cart/"), "amazon.com/gp/cart");
+});
+
+// Eine unverschluesselte Verbindung darf NICHT aussehen wie eine sichere.
+test("http:// bleibt sichtbar", async () => {
+  const { anzeigeAdresse } = await import("../public/browser-pane-vorschlaege.js");
+  assert.equal(anzeigeAdresse("http://alt.example.com/"), "http://alt.example.com/");
+});
