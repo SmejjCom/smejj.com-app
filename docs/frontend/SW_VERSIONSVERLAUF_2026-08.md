@@ -1310,3 +1310,12 @@ bestaetigt), war aber mit 11 px in der Ecke praktisch unsichtbar. Im
 ARBEITSZUSTAND jetzt 15 px, mit Cyan-Schein und Groessenpuls
 (1,15 s, scale 1 -> 0,72). Der Ruhezustand bleibt unveraendert der
 stille Umriss — die Augen-Regel gilt weiter fuer Dauerzustaende.
+
+v567 -> v568 (2026-08-18, Betreiber: "warum hast du das Viereck
+rausgenommen? Es war gut, es soll NUR beleuchtet werden — mach
+rueckgaengig"): meine Vergroesserung (15 px), die Verschiebung
+(top 8/right 10) und der Cyan-Schein sind ZURUECKGEBAUT. Das Viereck
+steht wieder exakt wie vorher (11 px, top 10 / right 12) und aendert
+im Arbeitszustand ausschliesslich seine Beleuchtung (cyan + ruhiger
+Opazitaets-Puls 1,6 s). LEHRE: "sichtbarer machen" heisst nicht
+"umbauen" — Form und Platz eines abgenommenen Bauteils bleiben.
