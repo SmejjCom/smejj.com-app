@@ -388,3 +388,38 @@ test("Cmd+W schliesst keinen angepinnten Tab", async () => {
   const tasten = fs.readFileSync("public/browser-pane-tasten.js", "utf8");
   assert.match(tasten, /tabSchliessen:[\s\S]*!t\.angepinnt/);
 });
+
+// --- Links im neuen Tab, Verlaufsliste ---------------------------------------
+
+// Vorher navigierte JEDER Klick an Ort und Stelle. Wer eine Trefferliste
+// durchgehen wollte, musste nach jedem Link zurueck.
+test("Cmd/Strg-Klick, Mausrad und _blank oeffnen im neuen Tab", async () => {
+  const { rewriteBrowserHtml } = await import("../control-server/src/routes/browserProxyRoutes.js");
+  const html = rewriteBrowserHtml("<html><body><a href='/x'>L</a></body></html>", "https://x.de/");
+  assert.match(html, /neuerTabGewuenscht/);
+  assert.match(html, /event\.metaKey \|\| event\.ctrlKey \|\| event\.button === 1/);
+  assert.match(html, /_blank/);
+  // Die mittlere Maustaste loest KEIN click aus — ohne auxclick bliebe die
+  // gewohnteste Art, einen Link nebenbei zu oeffnen, wirkungslos.
+  assert.match(html, /addEventListener\("auxclick"/);
+});
+
+test("die Verlaufsliste zeigt die Stationen in Sprungweite", async () => {
+  const { verlaufEintraege, MAX_VERLAUF_EINTRAEGE } = await import("../public/browser-pane-menue.js");
+  const history = ["https://a.de/", "https://b.de/", "https://c.de/", "https://d.de/"];
+  const zurueck = verlaufEintraege(history, 2, -1);
+  assert.deepEqual(zurueck.map((e) => e.text), ["b.de", "a.de"], "neueste zuerst");
+  assert.deepEqual(zurueck.map((e) => e.id), ["-1", "-2"], "der n-te Eintrag ist n Schritte entfernt");
+  const vor = verlaufEintraege(history, 2, 1);
+  assert.deepEqual(vor.map((e) => e.text), ["d.de"]);
+  assert.deepEqual(vor.map((e) => e.id), ["1"]);
+});
+
+test("die Verlaufsliste bleibt kurz und faellt leer nicht um", async () => {
+  const { verlaufEintraege, MAX_VERLAUF_EINTRAEGE } = await import("../public/browser-pane-menue.js");
+  const lang = Array.from({ length: 40 }, (_, i) => `https://s${i}.de/`);
+  assert.equal(verlaufEintraege(lang, 39, -1).length, MAX_VERLAUF_EINTRAEGE);
+  assert.deepEqual(verlaufEintraege([], 0, -1), []);
+  assert.deepEqual(verlaufEintraege(null, 0, -1), []);
+  assert.deepEqual(verlaufEintraege(["https://a.de/"], -1, -1), [], "ohne Station kein Eintrag");
+});
