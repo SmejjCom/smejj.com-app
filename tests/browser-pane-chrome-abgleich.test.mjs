@@ -150,3 +150,47 @@ test("die Warnung nennt die Folge, nicht nur den Zustand", async () => {
   // ist, sieht niemand mehr.
   assert.equal(sicherheitsText(ZUSTAende.SICHER).kurz, "");
 });
+
+// --- Lesezeichen -------------------------------------------------------------
+
+test("Stern merkt und vergisst dieselbe Seite", async () => {
+  const { umschalten, istGemerkt } = await import("../public/browser-pane-lesezeichen.js");
+  const a = umschalten("https://amazon.com/", "Amazon", []);
+  assert.equal(a.gemerkt, true);
+  assert.equal(istGemerkt("https://amazon.com/", a.liste), true);
+  const b = umschalten("https://amazon.com/", "Amazon", a.liste);
+  assert.equal(b.gemerkt, false);
+  assert.deepEqual(b.liste, []);
+});
+
+// Der abschliessende Schraegstrich darf keine zweite Merkung erzeugen —
+// sonst sammelt man dieselbe Seite doppelt und der Stern zeigt Unsinn.
+test("Schraegstrich am Ende macht kein zweites Lesezeichen", async () => {
+  const { umschalten, istGemerkt } = await import("../public/browser-pane-lesezeichen.js");
+  const { liste } = umschalten("https://amazon.com/", "Amazon", []);
+  assert.equal(istGemerkt("https://amazon.com", liste), true, "mit und ohne Schraegstrich ist dieselbe Seite");
+  const zurueck = umschalten("https://amazon.com", "Amazon", liste);
+  assert.equal(zurueck.gemerkt, false);
+  assert.deepEqual(zurueck.liste, []);
+});
+
+test("neueste Lesezeichen stehen vorn", async () => {
+  const { umschalten } = await import("../public/browser-pane-lesezeichen.js");
+  const eins = umschalten("https://a.de/", "A", []);
+  const zwei = umschalten("https://b.de/", "B", eins.liste);
+  assert.equal(zwei.liste[0].url, "https://b.de/");
+});
+
+// Ein gesperrter Speicher (Privatmodus) darf das Panel nicht aufhalten.
+test("gesperrter Speicher liefert eine leere Liste statt zu werfen", async () => {
+  const { ladeLesezeichen, speichereLesezeichen } = await import("../public/browser-pane-lesezeichen.js");
+  const gesperrt = { getItem() { throw new Error("SecurityError"); }, setItem() { throw new Error("SecurityError"); } };
+  assert.deepEqual(ladeLesezeichen(gesperrt), []);
+  assert.equal(speichereLesezeichen([{ url: "https://a.de/" }], gesperrt), false);
+});
+
+test("beschaedigter Speicherinhalt wirft nicht", async () => {
+  const { ladeLesezeichen } = await import("../public/browser-pane-lesezeichen.js");
+  assert.deepEqual(ladeLesezeichen({ getItem: () => "{kein json" }), []);
+  assert.deepEqual(ladeLesezeichen({ getItem: () => '{"nicht":"liste"}' }), []);
+});

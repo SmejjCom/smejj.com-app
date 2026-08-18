@@ -16,7 +16,14 @@ import { clientKeyFromRequest, createRateLimiter } from "../control-server/src/h
 const html = fs.readFileSync("public/index.html", "utf8");
 const sw = fs.readFileSync("public/sw.js", "utf8");
 const configJs = fs.readFileSync("public/config.js", "utf8");
-const paneJs = fs.readFileSync("public/browser-pane.js", "utf8");
+// GEAENDERT 2026-08-17: Die Markup-Vorlage des Panels liegt seit der
+// Aufteilung in browser-pane-render.js (browser-pane.js stand exakt an der
+// 800-Zeilen-Grenze). Die Tests pruefen weiterhin DASSELBE — sie muessen nur
+// in beiden Dateien nachsehen. Zusammengehaengt statt umgeschrieben, damit
+// jede einzelne Zusicherung unveraendert bleibt und nachweisbar dasselbe
+// schuetzt wie vorher.
+const paneJs = fs.readFileSync("public/browser-pane.js", "utf8")
+  + fs.readFileSync("public/browser-pane-render.js", "utf8");
 
 test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
   assert.match(html, /id="browserPaneRoot" class="browser-pane"/);
