@@ -1379,3 +1379,12 @@ Sprachknopf — gemeldet wird nur, wenn wirklich Text da ist; (2) andere
 Handler an denselben Knoepfen rufen stopImmediatePropagation, darum
 haengt die Meldung in der CAPTURE-Phase. Gilt fuer Chat UND Code.
 code-flaeche.js v39.
+
+v574 -> v575 (2026-08-18, Betreiber nimmt den Inline-Auftrag vom
+16.08. zurueck): die Aktionsleiste (Kopieren, Vorlesen, Daumen, Menue,
+Uhrzeit) steht wieder in einer EIGENEN ZEILE unter der Antwort —
+linksbuendig, wie vor v507 (16.08. 22:42). Die Range-Messung, die sie
+hinter das letzte Wort schob, ist entfernt; die Funktion bleibt nur noch
+als Aufraeumer, damit aus dem Verlauf wiederhergestellte Leisten ihre
+alten Inline-Abstaende verlieren. CSS blieb unveraendert (margin -7px).
+chat-actions.js b26k.
