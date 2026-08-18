@@ -323,7 +323,10 @@ async function handleChat(req, res) {
     ...(prompt ? { profile: classifyProfile(prompt) } : {}),
     requestedModel: body.model,
     thinking: chatThinkingMode(messages, classifyProfile),
-    reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env, body?.preferences?.reasoningEffort)
+    reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env, body?.preferences?.reasoningEffort),
+    // Nur fuer die Token-Messung: streamWithTools macht daraus die pseudonyme
+    // user_-Kennung. Ohne sie zaehlt der Bericht Anfragen, aber keine Nutzer.
+    authUser: req.authUser
   });
 }
 
@@ -640,6 +643,8 @@ async function handleAgent(req, res) {
     requestedModel: body.model,
     thinking,
     reasoningEffort: chatReasoningEffort(messages, classifyProfile, process.env, body?.preferences?.reasoningEffort),
+    authUser: req.authUser,
+    spur: "agent",
     ...(voiceMode && !codingTask ? { maxTokens: 400 } : {})
   });
 }
@@ -693,7 +698,7 @@ async function handleStorageStatus(res) {
   });
 }
 
-async function streamLLM(res, messages, { profile = "default", requestedModel = "", thinking, reasoningEffort, maxTokens } = {}) {
+async function streamLLM(res, messages, { profile = "default", requestedModel = "", thinking, reasoningEffort, maxTokens, authUser = null, spur = "chat" } = {}) {
   // Eine Quelle der Wahrheit mit /api/health (resolveServerAiGate): sonst zeigt
   // die Ampel "ai: true / zhipu:glm-5.2", waehrend der Chat still in den
   // Rueckfall-Text faellt — genau der Fehler vom 2026-08-15.
@@ -732,7 +737,7 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
     "x-smejj-requested-model-id": selection.requestedModelId,
     "x-smejj-model-fallback": String(result.logicalModelId !== selection.requestedModelId)
   });
-  await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback });
+  await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback, authUser, spur });
   res.end();
 }
 

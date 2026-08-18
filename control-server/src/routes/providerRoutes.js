@@ -16,6 +16,7 @@ import {
   providerCredentialEncryptionConfig,
   putProviderCredential
 } from "../providers/providerCredentialVault.js";
+import { neueMessung, notiere } from "../llm/tokenMesser.js";
 
 const PREFIX = "/api/providers/cline";
 // ZWEI Bremsen statt einer (Betreiber-Befund 2026-08-17: "manchmal kommen
@@ -168,7 +169,10 @@ async function streamChat(subjectId, req, res, env, fetchImpl) {
   const body = await readJson(req);
   const messages = sanitizeMessages(body.messages);
   if (messages.length === 0) return privateJson(res, 400, { ok: false, error: "messages_required" });
-  const response = await clineChatCompletion({
+  const messgeraet = neueMessung({ spur: "cline", backend: "cline", modell: record.selectedModel, nutzer: subjectId });
+  messgeraet.zaehleEingabe(messages);
+  const messenAn = String(env.SMEJJ_USAGE_MESSUNG || "an").trim().toLowerCase() !== "aus";
+  const anfrage = (includeUsage) => clineChatCompletion({
     apiKey: record.apiKey,
     model: record.selectedModel,
     messages,
@@ -176,8 +180,13 @@ async function streamChat(subjectId, req, res, env, fetchImpl) {
     temperature: 0.7,
     maxTokens: 8_192,
     fetchImpl,
-    taskId: body.taskId
+    taskId: body.taskId,
+    includeUsage
   });
+  let response = await anfrage(messenAn);
+  // Lehnt der Anbieter stream_options ab, wird EINMAL ohne wiederholt. Der Chat
+  // geht vor der Messung — dieselbe Regel wie im Modell-Router.
+  if (messenAn && response.status === 400) response = await anfrage(false);
   if (!response.ok || !response.body) throw await clineResponseError(response);
   res.writeHead(200, {
     ...SECURITY_HEADERS,
@@ -188,16 +197,53 @@ async function streamChat(subjectId, req, res, env, fetchImpl) {
     "x-smejj-provider-request-id": response.headers.get("x-request-id") || ""
   });
   const reader = response.body.getReader();
+  // Mitlesen, nicht eingreifen: die Bytes gehen unveraendert an den Client, ein
+  // Abgriff sucht nur den usage-Block. Ein Fehler beim Messen darf den Chat
+  // niemals stoeren — deshalb steckt das Parsen in seinem eigenen try.
+  const abgriff = neuerUsageAbgriff(messgeraet);
   try {
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       res.write(value);
+      abgriff.lies(value);
     }
   } finally {
     reader.releaseLock();
     res.end();
+    notiere(messgeraet.fertig(), { env });
   }
+}
+
+/**
+ * Liest einen SSE-Bytestrom mit und meldet gefundene usage-Bloecke ans
+ * Messgeraet. Reiner Beobachter: er schreibt nichts und wirft nichts.
+ */
+function neuerUsageAbgriff(messgeraet) {
+  const decoder = new TextDecoder();
+  let puffer = "";
+  return {
+    lies(bytes) {
+      try {
+        puffer += decoder.decode(bytes, { stream: true });
+        let trenner = puffer.indexOf("\n\n");
+        while (trenner !== -1) {
+          const ereignis = puffer.slice(0, trenner);
+          puffer = puffer.slice(trenner + 2);
+          const zeile = ereignis.split("\n").find((eintrag) => eintrag.startsWith("data: "));
+          const nutzlast = zeile ? zeile.slice(6) : "";
+          if (nutzlast && nutzlast !== "[DONE]" && nutzlast.includes("\"usage\"")) {
+            messgeraet.lies(JSON.parse(nutzlast));
+          }
+          trenner = puffer.indexOf("\n\n");
+        }
+        // Der Puffer waechst sonst unbegrenzt, wenn ein Anbieter andere Trenner nutzt.
+        if (puffer.length > 64_000) puffer = puffer.slice(-8_000);
+      } catch {
+        // Messen ist Beiwerk. Ein kaputtes Ereignis bleibt ungezaehlt.
+      }
+    }
+  };
 }
 
 async function requireCredential(subjectId, env) {

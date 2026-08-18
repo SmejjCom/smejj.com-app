@@ -27,6 +27,8 @@ import { analytikUebersicht } from "../admin/opsAnalytik.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { cockpitUebersicht } from "../admin/opsCockpit.js";
 import { evolutionDashboard } from "../admin/opsEvolution.js";
+// Token-Verbrauch: die Zahl, ohne die jede Kostenentscheidung geraten ist.
+import { bericht as verbrauchsBericht } from "../llm/tokenMesser.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -40,7 +42,7 @@ const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
   "cockpit", "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
-  "experimente", "email", "analytik", "autopiloten", "evolution"
+  "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -84,6 +86,10 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "analytik") return privateJson(res, 200, await analytikUebersicht({ env, tage: tageAus(url) })), true;
     if (bereich === "autopiloten") return privateJson(res, 200, autopilotUebersicht({ startzeitMs: GESTARTET_MS })), true;
     if (bereich === "evolution") return privateJson(res, 200, evolutionDashboard({})), true;
+    // Der Speicher ist nach jedem Control-Neustart leer — die vollstaendige
+    // Historie steht in den Logzeilen "[verbrauch] {...}". Diese Ansicht ist
+    // die schnelle Sicht auf den laufenden Prozess, nicht das Archiv.
+    if (bereich === "verbrauch") return privateJson(res, 200, { ok: true, ...verbrauchsBericht({ tag: tagAus(url) }) }), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {
@@ -103,6 +109,11 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
 function tageAus(url) {
   const roh = url.searchParams.get("tage");
   return roh === null ? undefined : roh;
+}
+
+function tagAus(url) {
+  const roh = String(url.searchParams.get("tag") || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(roh) ? roh : "";
 }
 
 function grenze(url) {

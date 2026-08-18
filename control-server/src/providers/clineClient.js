@@ -87,11 +87,17 @@ export async function clineChatCompletion({
   temperature,
   maxTokens,
   fetchImpl = fetch,
-  taskId = ""
+  taskId = "",
+  // Ohne dieses Feld liefert ein OpenAI-kompatibler Stream KEINEN usage-Block —
+  // dann bleibt jede Kostenzahl geraten (tokenMesser.js). Cline reicht die
+  // Option an den Anbieter durch; die Antwortbytes aendern sich nur um das eine
+  // zusaetzliche Ereignis am Ende, das der Client ohnehin ignoriert.
+  includeUsage = false
 } = {}) {
   const key = normalizeApiKey(apiKey);
   if (!isModelId(model)) throw new Error("cline_model_id_invalid");
   const body = { model, messages, stream: stream === true };
+  if (body.stream && includeUsage) body.stream_options = { include_usage: true };
   if (Array.isArray(tools) && tools.length > 0) body.tools = tools;
   if (toolChoice) body.tool_choice = toolChoice;
   if (Number.isFinite(Number(temperature))) body.temperature = Number(temperature);
