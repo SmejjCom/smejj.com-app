@@ -337,6 +337,14 @@ test("Planer-Proxy: ein laufender Auftrag blockiert nicht seine eigenen Fragen",
 test("Zeitgrenzen: der Lauf beendet sich, bevor irgendeine Verbindung reisst", () => {
   const z = ZEITGRENZEN;
   assert.ok(z.workerAntwort < z.hintergrundLauf, "der Hintergrund-Auftrag muss die Verbindung ueberleben");
+
+  // Das Planen selbst braucht Zeit — ein Plan ist ein ganzes JSON-Dokument,
+  // keine Chat-Antwort. Gemessen 2026-08-18: mit den voreingestellten 45 s je
+  // Versuch scheiterte schon eine zweiteilige Aufgabe reproduzierbar.
+  // Zwei Kettenglieder x Planer-Zeitgrenze muessen unter die Plattformgrenze
+  // passen, sonst reisst die Verbindung, bevor der Planer aufgibt.
+  assert.ok(z.planerVersuch * 2 <= z.gatewayHartgrenze,
+    `zwei Planer-Versuche (${z.planerVersuch * 2 / 1000} s) muessen unter ${z.gatewayHartgrenze / 1000} s bleiben`);
   assert.ok(z.planLaufFrist < z.workerAntwort, "der Plan-Lauf muss sich vor unserer Frist beenden");
   assert.ok(z.loopLaufFrist < z.workerAntwort, "der freie Lauf muss sich vor unserer Frist beenden");
 
