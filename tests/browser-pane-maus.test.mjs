@@ -140,3 +140,55 @@ test("der Knopf sprengt die Kopfgeometrie nicht", async () => {
   const elemente = (rechts.match(/<button|<span/g) || []).length;
   assert.equal(elemente, 3, "rechts bleiben genau drei Plaetze — die Seitenbreite rechnet damit");
 });
+
+// --- Die zwei Fehler vom 2026-08-18 ------------------------------------------
+
+// ECHTE PLAENE NUTZEN ZWEI FORMEN. Mein erster Uebersetzer kannte nur die
+// flache — der Klick-Schritt fand kein Ziel und wurde still verworfen. Der
+// Auftrag "Klicke auf den Link zum Impressum" oeffnete daraufhin nur die
+// Seite und meldete "1 Schritt erledigt": ein Erfolg, der keiner war.
+test("der Selektor wird in BEIDEN Formen gefunden", async () => {
+  const { selektorAus } = await import("../public/browser-pane-maus.js");
+  // So schreibt der Planer einen Klick:
+  assert.deepEqual(selektorAus({ target: { selector: { strategy: "text", value: "Impressum" } } }),
+    { strategy: "text", value: "Impressum" });
+  // Und so ein Lesen:
+  assert.deepEqual(selektorAus({ target: { strategy: "css", value: "h1" } }),
+    { strategy: "css", value: "h1" });
+  assert.equal(selektorAus({ target: {} }), null);
+  assert.equal(selektorAus({}), null);
+});
+
+test("ein echter Klick-Plan ergibt auch einen Klick", async () => {
+  const { planAlsAuftraege } = await import("../public/browser-pane-maus.js");
+  // Wortwoertlich die Form, die der Planer am 2026-08-18 geliefert hat.
+  const plan = { steps: [
+    { id: "s1", action: "openBrowser" },
+    { id: "s2", action: "navigate", url: "https://smejj.com/" },
+    { id: "s4", action: "click", target: { selector: { strategy: "text", value: "Impressum" } } }
+  ] };
+  const a = planAlsAuftraege(plan);
+  assert.deepEqual(a.map((x) => x.aktion.type), ["navigate", "selectorClick"]);
+  assert.equal(a.fehler.length, 0);
+});
+
+// Ein Schritt, den wir nicht uebersetzen konnten, darf nicht still
+// verschwinden — sonst meldet die Maus "erledigt" fuer einen Auftrag, den sie
+// nur zur Haelfte verstanden hat.
+test("unverstandene Schritte werden gemeldet, nicht verschluckt", async () => {
+  const { planAlsAuftraege, fuehreMausAuftragAus } = await import("../public/browser-pane-maus.js");
+  const a = planAlsAuftraege({ steps: [{ id: "sX", action: "click" }] });
+  assert.equal(a.length, 0);
+  assert.deepEqual(a.fehler, ["sX: klick_ohne_ziel"]);
+
+  // Und der Lauf verweigert dann GANZ, statt halb zu arbeiten.
+  let gesendet = 0;
+  const ergebnis = await fuehreMausAuftragAus({
+    auftrag: "x", tab: { url: "https://a.de/", sessionId: "s1" }, planeUrl: "https://api.test/plan",
+    sende: async () => { gesendet += 1; return { ok: true }; },
+    holeToken: () => "",
+    // Planen ueberspringen: hier zaehlt nur, dass ein unverstandener Plan
+    // NICHTS ausfuehrt.
+  }).catch(() => null);
+  assert.equal(gesendet, 0, "bei einem unverstandenen Plan darf nichts gesendet werden");
+});

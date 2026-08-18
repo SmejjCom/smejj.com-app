@@ -30,7 +30,7 @@ const p = await (await fetch(`${BASIS}/api/maus/run`, {
   method: "POST", headers: kopf,
   body: JSON.stringify({
     nurPlan: true, plannerModel: "glm-5.2",
-    task: "Lies die Ueberschrift der Seite und scrolle nach unten.",
+    task: process.env.AUFTRAG || "Lies die Ueberschrift.",
     capsuleRef: `knopftest-${Date.now().toString(36)}`, domainAllowlist: hosts
   })
 })).json();
@@ -45,12 +45,28 @@ console.log("4. Uebersetzt in", auftraege.length, "Panel-Auftraege");
 const ergebnis = await fahreAuftraege({
   auftraege, pauseMs: 300,
   zeige: (t, nr, ges) => console.log(`   Maus ${nr}/${ges}: ${t}`),
-  sende: async (aktion) => (await fetch(`${BASIS}/api/browser/session/act`, {
-    method: "POST", headers: kopf,
-    body: JSON.stringify({ sessionId: s.sessionId, action: aktion })
-  })).json()
+  // Den GRUND mitgeben, nicht nur "gestoppt". Ein Diagnosewerkzeug, das
+  // verschweigt, warum etwas scheiterte, kostet genau den Lauf, den es
+  // erklaeren sollte.
+  sende: async (aktion) => {
+    const antwort = await (await fetch(`${BASIS}/api/browser/session/act`, {
+      method: "POST", headers: kopf,
+      body: JSON.stringify({ sessionId: s.sessionId, action: aktion })
+    })).json();
+    if (!antwort?.ok) console.log("      Grund:", antwort?.error || "(ohne Angabe)", "| Aktion:", JSON.stringify(aktion).slice(0, 120));
+    return antwort;
+  }
 });
 console.log("5. Ergebnis:", ergebnis.fehler ? `GESTOPPT bei "${ergebnis.fehler}"` : `${ergebnis.getan} Schritte erledigt`);
+// Wo steht der Browser am Ende? Bei einem Klick-Auftrag ist die Endadresse
+// der eigentliche Beweis — "3 Schritte erledigt" sagt nichts darueber, ob
+// der Klick auch WOHIN gefuehrt hat.
+const stand = await (await fetch(`${BASIS}/api/browser/session/act`, {
+  method: "POST", headers: kopf,
+  body: JSON.stringify({ sessionId: s.sessionId, action: { type: "scroll", deltaY: 1 } })
+})).json();
+console.log("   Endadresse:", stand?.finalUrl || "(unbekannt)");
+console.log("   Endtitel  :", stand?.title || "(unbekannt)");
 if (Object.keys(ergebnis.gelesen).length) console.log("   Gelesen:", JSON.stringify(ergebnis.gelesen));
 
 await fetch(`${BASIS}/api/browser/session/close`, { method: "POST", headers: kopf, body: JSON.stringify({ sessionId: s.sessionId }) });
