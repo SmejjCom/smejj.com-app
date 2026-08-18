@@ -423,3 +423,49 @@ test("die Verlaufsliste bleibt kurz und faellt leer nicht um", async () => {
   assert.deepEqual(verlaufEintraege(null, 0, -1), []);
   assert.deepEqual(verlaufEintraege(["https://a.de/"], -1, -1), [], "ohne Station kein Eintrag");
 });
+
+// --- Handhabung: Konflikte zwischen den Funktionen ---------------------------
+//
+// Diese beiden Fehler sind erst durch das ZUSAMMENSPIEL entstanden. Jede
+// Regel fuer sich war richtig; zusammen ergaben sie ein Verhalten, das nach
+// einem Fehler aussieht. Gefunden beim Durchgehen der Handhabung, nicht durch
+// die Tests der Einzelteile.
+
+// Cmd+1 traf einen anderen Tab als den, den man ganz links SIEHT: die Tasten
+// waehlten nach der internen Liste, gezeichnet wird nach der Pinnung.
+test("Cmd+1 meint den linkesten Tab, so wie er angezeigt wird", async () => {
+  const { sortiertNachPinnung } = await import("../public/browser-pane-tableiste.js");
+  const tabs = [{ id: "a" }, { id: "b", angepinnt: true }, { id: "c" }];
+  const sichtbar = sortiertNachPinnung(tabs);
+  assert.equal(sichtbar[0].id, "b", "links steht der angepinnte");
+  assert.notEqual(tabs[0].id, sichtbar[0].id, "die interne Liste sagt etwas anderes — genau das war der Fehler");
+  const fs = await import("node:fs");
+  const tasten = fs.readFileSync("public/browser-pane-tasten.js", "utf8");
+  assert.match(tasten, /sortiertNachPinnung\(state\.tabs\)/, "die Tasten muessen die ANGEZEIGTE Reihenfolge nehmen");
+});
+
+// Ein gewoehnlicher Tab, den man nach vorn zog, schnappte beim naechsten
+// Zeichnen zurueck — die Angepinnten stehen ja immer vorn.
+test("ueber die Gruppengrenze wird nicht gezogen", async () => {
+  const { umsortiert } = await import("../public/browser-pane-tableiste.js");
+  const tabs = [{ id: "p", angepinnt: true }, { id: "a" }, { id: "b" }];
+  assert.deepEqual(umsortiert(tabs, 1, 0).map((t) => t.id), ["p", "a", "b"],
+    "ungepinnt nach vorn: bleibt, wie es war — statt sichtbar zurueckzuschnappen");
+  assert.deepEqual(umsortiert(tabs, 0, 2).map((t) => t.id), ["p", "a", "b"],
+    "und angepinnt nach hinten ebenso wenig");
+  // INNERHALB einer Gruppe bleibt das Ziehen selbstverstaendlich moeglich.
+  assert.deepEqual(umsortiert(tabs, 2, 1).map((t) => t.id), ["p", "b", "a"]);
+});
+
+// Escape stieg vorher am Ausstieg fuer die Pfeiltasten aus ("wenn keine
+// Vorschlaege stehen, tu nichts") und verschluckte sich damit selbst. Wer
+// eine falsche Adresse getippt hatte, blieb auf seinem halben Text sitzen.
+test("Escape wird behandelt, bevor auf Vorschlaege geprueft wird", async () => {
+  const fs = await import("node:fs");
+  const q = fs.readFileSync("public/browser-pane-vorschlaege.js", "utf8");
+  const rumpf = q.slice(q.indexOf("function beiTaste"));
+  const bisEscape = rumpf.slice(0, rumpf.indexOf("Escape"));
+  assert.ok(!bisEscape.includes("if (liste.hidden) return;"),
+    "der Ausstieg fuer die Pfeiltasten darf NICHT vor Escape stehen");
+  assert.match(rumpf, /zuruecksetzen\(\)/);
+});
