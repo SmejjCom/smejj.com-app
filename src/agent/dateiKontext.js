@@ -33,6 +33,61 @@ export const DATEIEN_GESAMT_ZEICHEN = 60_000;
 const MINDEST_ANTEIL = 400;
 
 /**
+ * Platz, den der Symbol-Index im Budget einer Datei bekommen darf.
+ *
+ * GEMESSEN an src/server.js (49.585 Zeichen, 27 Symbole): der Index wiegt
+ * 498 Zeichen, also 1 % der Datei. Fuer diesen einen Prozent weiss das Modell,
+ * WAS in der ausgelassenen Mitte steht, statt nur DASS dort etwas fehlt — es
+ * kann gezielt nachfragen ("zeig mir handleAgent") statt zu raten oder die
+ * Existenz einer Funktion zu bestreiten, die es schlicht nicht gesehen hat.
+ */
+const INDEX_MAX_ZEICHEN = 600;
+/** Unter diesem Budget ist der Index den Platz nicht wert. */
+const INDEX_AB_BUDGET = 2_000;
+const INDEX_MAX_SYMBOLE = 40;
+
+// Bewusst konservativ: lieber ein Symbol uebersehen als eine Zeile falsch als
+// Definition ausgeben. Erfasst werden die Formen, die in diesem Projekt
+// vorkommen — Funktionen, Klassen und als Pfeilfunktion zugewiesene Konstanten,
+// jeweils nur am Zeilenanfang (verschachtelte Helfer bleiben aussen vor).
+const SYMBOL_MUSTER = /^\s{0,4}(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)|^\s{0,4}(?:export\s+)?(?:default\s+)?class\s+([A-Za-z_$][\w$]*)|^\s{0,4}(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|\([^)]{0,200}\)\s*=>)/gm;
+
+/**
+ * Namen der Definitionen in einem Textstueck — fuer den Symbol-Index.
+ * @param {string} text
+ * @returns {string[]} Namen in Reihenfolge des Auftretens, ohne Doppelte.
+ */
+export function extrahiereSignaturen(text) {
+  const inhalt = String(text ?? "");
+  if (!inhalt) return [];
+  const namen = [];
+  const gesehen = new Set();
+  for (const treffer of inhalt.matchAll(SYMBOL_MUSTER)) {
+    const name = treffer[1] || treffer[2] || treffer[3];
+    if (!name || gesehen.has(name)) continue;
+    gesehen.add(name);
+    namen.push(name);
+  }
+  return namen;
+}
+
+/** Baut den Index-Text und haelt ihn unter INDEX_MAX_ZEICHEN. */
+function indexText(namen) {
+  if (namen.length === 0) return "";
+  const genommen = [];
+  let laenge = 0;
+  for (const name of namen.slice(0, INDEX_MAX_SYMBOLE)) {
+    const zuwachs = name.length + 2;
+    if (laenge + zuwachs > INDEX_MAX_ZEICHEN - 40) break;
+    genommen.push(name);
+    laenge += zuwachs;
+  }
+  if (genommen.length === 0) return "";
+  const rest = namen.length - genommen.length;
+  return ` Darin definiert: ${genommen.join(", ")}${rest > 0 ? ` und ${rest} weitere` : ""}.`;
+}
+
+/**
  * Verteilt ein Gesamtbudget auf Dateien — kleine zuerst, Rest wandert weiter.
  *
  * Warum nicht einfach gleichmaessig teilen: bei einer 200-Zeichen-Datei neben
@@ -85,13 +140,22 @@ export function kuerzeInhalt(inhalt, budget) {
       weggelassen: text.length
     };
   }
-  const marke = (fehlt) => `\n\n[... ${fehlt} Zeichen ausgelassen — frage nach, wenn du diesen Teil brauchst ...]\n\n`;
-  const platz = grenze - marke(text.length).length;
+  const marke = (fehlt, index) =>
+    `\n\n[... ${fehlt} Zeichen ausgelassen.${index} Frage nach, wenn du diesen Teil brauchst ...]\n\n`;
+  // Der Index bekommt festen Platz im Budget, nicht obendrauf — sonst wuerde
+  // die Diaet ihn selbst wieder auffressen. Bleibt Platz uebrig, weil die Datei
+  // wenige Symbole hat, faellt das Ergebnis eben kleiner aus als erlaubt.
+  const indexPlatz = grenze >= INDEX_AB_BUDGET ? INDEX_MAX_ZEICHEN : 0;
+  const platz = grenze - marke(text.length, "").length - indexPlatz;
   const kopf = Math.max(0, Math.ceil(platz * 0.65));
   const fuss = Math.max(0, platz - kopf);
   const weggelassen = text.length - kopf - fuss;
+  // Nur die WEGGELASSENE Mitte indizieren: was in Kopf und Fuss steht, sieht
+  // das Modell ohnehin — es zweimal zu nennen waere bezahlter Platz fuer nichts.
+  const mitte = text.slice(kopf, fuss > 0 ? text.length - fuss : text.length);
+  const index = indexPlatz > 0 ? indexText(extrahiereSignaturen(mitte)) : "";
   return {
-    text: `${text.slice(0, kopf)}${marke(weggelassen)}${fuss > 0 ? text.slice(-fuss) : ""}`,
+    text: `${text.slice(0, kopf)}${marke(weggelassen, index)}${fuss > 0 ? text.slice(-fuss) : ""}`,
     gekuerzt: true,
     weggelassen
   };
