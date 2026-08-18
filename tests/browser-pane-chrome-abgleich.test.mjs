@@ -125,3 +125,28 @@ test("http:// bleibt sichtbar", async () => {
   const { anzeigeAdresse } = await import("../public/browser-pane-vorschlaege.js");
   assert.equal(anzeigeAdresse("http://alt.example.com/"), "http://alt.example.com/");
 });
+
+// --- Sicherheitsanzeige ------------------------------------------------------
+
+// Seit die Adresse ohne "https://" angezeigt wird, ist dieses Zeichen die
+// EINZIGE Auskunft ueber die Verschluesselung. Ohne es waere das Kuerzen ein
+// Rueckschritt: weniger Text UND weniger Wissen.
+test("Sicherheitszustand wird aus der Adresse erkannt", async () => {
+  const { sicherheitsZustand, ZUSTAende } = await import("../public/browser-pane-sicherheit.js");
+  assert.equal(sicherheitsZustand("https://amazon.com/"), ZUSTAende.SICHER);
+  assert.equal(sicherheitsZustand("http://alt.example.com/"), ZUSTAende.UNSICHER);
+  assert.equal(sicherheitsZustand("about:blank"), ZUSTAende.INTERN);
+  assert.equal(sicherheitsZustand(""), ZUSTAende.LEER);
+});
+
+// Die Warnung muss konkret sagen, was zu lassen ist — "nicht sicher" allein
+// hilft niemandem beim Entscheiden.
+test("die Warnung nennt die Folge, nicht nur den Zustand", async () => {
+  const { sicherheitsText, ZUSTAende } = await import("../public/browser-pane-sicherheit.js");
+  const unsicher = sicherheitsText(ZUSTAende.UNSICHER);
+  assert.match(unsicher.kurz, /Nicht sicher/);
+  assert.match(unsicher.hinweis, /Passwoerter|Zahlungsdaten/);
+  // Der sichere Fall traegt bewusst KEINEN Text: ein Schloss, das immer da
+  // ist, sieht niemand mehr.
+  assert.equal(sicherheitsText(ZUSTAende.SICHER).kurz, "");
+});
