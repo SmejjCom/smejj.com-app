@@ -194,3 +194,50 @@ test("beschaedigter Speicherinhalt wirft nicht", async () => {
   assert.deepEqual(ladeLesezeichen({ getItem: () => "{kein json" }), []);
   assert.deepEqual(ladeLesezeichen({ getItem: () => '{"nicht":"liste"}' }), []);
 });
+
+// --- Tastenkuerzel -----------------------------------------------------------
+
+test("die Chrome-Kuerzel werden erkannt", async () => {
+  const { tastenBefehl } = await import("../public/browser-pane-tasten.js");
+  const cmd = (key, shift = false) => tastenBefehl({ metaKey: true, shiftKey: shift, key });
+  assert.deepEqual(cmd("t"), { befehl: "neuerTab" });
+  assert.deepEqual(cmd("w"), { befehl: "tabSchliessen" });
+  assert.deepEqual(cmd("l"), { befehl: "adresseFokus" });
+  assert.deepEqual(cmd("r"), { befehl: "neuLaden" });
+  assert.equal(cmd("q"), null, "fremde Kombinationen gehoeren uns nicht");
+  assert.equal(tastenBefehl({ key: "t" }), null, "ohne Cmd/Ctrl passiert nichts");
+});
+
+// Cmd+Shift+T MUSS vor der Pruefung auf "t" stehen — sonst gewinnt
+// "neuer Tab" und der geschlossene Tab bleibt fuer immer weg.
+test("Cmd+Shift+T holt zurueck und wird nicht von Cmd+T geschluckt", async () => {
+  const { tastenBefehl } = await import("../public/browser-pane-tasten.js");
+  assert.deepEqual(tastenBefehl({ metaKey: true, shiftKey: true, key: "T" }), { befehl: "tabZurueckholen" });
+});
+
+// Chrome-Eigenheit: Cmd+9 springt zum LETZTEN Tab, nicht zum neunten.
+test("Cmd+1..8 waehlt den n-ten, Cmd+9 den letzten Tab", async () => {
+  const { tastenBefehl } = await import("../public/browser-pane-tasten.js");
+  assert.deepEqual(tastenBefehl({ metaKey: true, key: "1" }), { befehl: "tabWaehlen", wert: 0 });
+  assert.deepEqual(tastenBefehl({ metaKey: true, key: "8" }), { befehl: "tabWaehlen", wert: 7 });
+  assert.deepEqual(tastenBefehl({ metaKey: true, key: "9" }), { befehl: "tabWaehlen", wert: -1 });
+});
+
+test("geschlossene Tabs kommen in umgekehrter Reihenfolge zurueck", async () => {
+  const { merkeGeschlossen, holeZurueck, MAX_GESCHLOSSEN } = await import("../public/browser-pane-tasten.js");
+  let stapel = merkeGeschlossen([], { url: "https://a.de/", title: "A" });
+  stapel = merkeGeschlossen(stapel, { url: "https://b.de/", title: "B" });
+  const erst = holeZurueck(stapel);
+  assert.equal(erst.eintrag.url, "https://b.de/", "der zuletzt geschlossene kommt zuerst zurueck");
+  assert.equal(holeZurueck(erst.stapel).eintrag.url, "https://a.de/");
+  assert.deepEqual(holeZurueck([]), { eintrag: null, stapel: [] }, "leerer Stapel wirft nicht");
+
+  let voll = [];
+  for (let i = 0; i < MAX_GESCHLOSSEN + 5; i += 1) voll = merkeGeschlossen(voll, { url: `https://x${i}.de/` });
+  assert.equal(voll.length, MAX_GESCHLOSSEN, "der Stapel waechst nicht unbegrenzt");
+});
+
+test("ein Tab ohne Adresse wird nicht gemerkt", async () => {
+  const { merkeGeschlossen } = await import("../public/browser-pane-tasten.js");
+  assert.deepEqual(merkeGeschlossen([], { url: "", title: "Neuer Tab" }), []);
+});
