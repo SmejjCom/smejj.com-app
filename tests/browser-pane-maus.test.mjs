@@ -48,6 +48,10 @@ test("ein echter Plan aus dem Repo laesst sich uebersetzen", () => {
 test("die Beschreibung ist ein Satz fuer Menschen, keine Kennung", () => {
   assert.match(beschreibe({ action: "navigate", url: "https://smejj.com/" }), /Seite oeffnen/);
   assert.match(beschreibe({ action: "click", target: { name: "Impressum" } }), /Klicken: Impressum/);
+  // Auch in der verschachtelten Form — sonst las der Nutzer waehrend des
+  // Laufs "Klicken:" ohne Ziel.
+  assert.match(beschreibe({ action: "click", target: { selector: { strategy: "text", value: "Impressum" } } }),
+    /Klicken: Impressum/);
 });
 
 // Fail-closed: ein halb ausgefuehrter Plan auf einer fremden Seite ist
