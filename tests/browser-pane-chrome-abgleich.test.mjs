@@ -267,3 +267,40 @@ test("bei mehreren Tabs sind die Sammelbefehle aktiv", async () => {
   assert.equal(beiC.find((e) => e.id === "rechteSchliessen").aktiv, false);
   assert.equal(beiC.find((e) => e.id === "andereSchliessen").aktiv, true);
 });
+
+// --- Suche in der Seite (Cmd+F) ----------------------------------------------
+
+test("Cmd+F oeffnet die Suche", async () => {
+  const { tastenBefehl } = await import("../public/browser-pane-tasten.js");
+  assert.deepEqual(tastenBefehl({ metaKey: true, key: "f" }), { befehl: "suchen" });
+});
+
+// Chrome laeuft vom letzten Treffer zum ersten um — wer am Ende ist, will
+// weitersuchen, nicht anhalten.
+test("Treffer laufen um, in beide Richtungen", async () => {
+  const { naechsterTreffer } = await import("../public/browser-pane-suche.js");
+  assert.equal(naechsterTreffer(2, 3, 1), 0, "vom letzten zum ersten");
+  assert.equal(naechsterTreffer(0, 3, -1), 2, "vom ersten zum letzten");
+  assert.equal(naechsterTreffer(0, 3, 1), 1);
+  assert.equal(naechsterTreffer(-1, 3, 1), 0, "ohne vorherigen Treffer beginnt es vorn");
+  assert.equal(naechsterTreffer(-1, 3, -1), 2, "rueckwaerts beginnt es hinten");
+  assert.equal(naechsterTreffer(0, 0, 1), -1, "ohne Treffer gibt es nichts anzuspringen");
+});
+
+test("Trefferanzeige zaehlt ab 1, wie in Chrome", async () => {
+  const { trefferText } = await import("../public/browser-pane-suche.js");
+  assert.equal(trefferText(0, 12), "1/12", "der erste Treffer heisst 1, nicht 0");
+  assert.equal(trefferText(11, 12), "12/12");
+  assert.equal(trefferText(-1, 0), "0/0", "nichts gefunden ist eine Aussage, keine Leere");
+});
+
+// Eine Suchleiste, die nie etwas findet, ist schlimmer als keine — man sucht
+// den Fehler dann bei sich.
+test("in nicht durchsuchbaren Ansichten wird ehrlich abgelehnt", async () => {
+  const { sucheMoeglich } = await import("../public/browser-pane-suche.js");
+  assert.equal(sucheMoeglich("proxy"), true);
+  assert.equal(sucheMoeglich("live-browser"), true);
+  assert.equal(sucheMoeglich("direct"), false, "fremder Rahmen: kein Zugriff auf das Dokument");
+  assert.equal(sucheMoeglich("error"), false);
+  assert.equal(sucheMoeglich(""), false);
+});
