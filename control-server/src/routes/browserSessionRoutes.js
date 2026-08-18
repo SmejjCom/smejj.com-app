@@ -56,7 +56,17 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
       width: clampInt(viewport.width, 1365, 360, 1920),
       height: clampInt(viewport.height, 900, 360, 1200)
     },
-    expiresInMs: clampInt(payload.expiresInMs, 0, 0, 3_600_000)
+    expiresInMs: clampInt(payload.expiresInMs, 0, 0, 3_600_000),
+    // Trefferzahl der Suche. MUSS hier eingetragen sein: diese Liste ist eine
+    // Erlaubnisliste, sie laesst NUR bekannte Felder durch. Am 2026-08-18 hat
+    // sie prompt mein eigenes neues Feld verschluckt — die Aktion lief, die
+    // Zahl kam nie an. Das ist kein Fehler der Liste, sondern ihr Zweck:
+    // was der Worker schickt, ist nicht automatisch vertrauenswuerdig.
+    // Merkregel: ein neues Feld im Worker ist erst dann da, wenn das Tor es
+    // kennt.
+    treffer: Number.isFinite(Number(payload.treffer))
+      ? clampInt(payload.treffer, 0, 0, 500)
+      : undefined
   };
 }
 
