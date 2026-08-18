@@ -222,13 +222,30 @@ export function rewriteBrowserHtml(html, baseUrl) {
 function buildNavigationScript() {
   return [
     "<script>(function () {",
-    '  function go(url) { parent.postMessage({ type: "smejj.browser.navigate", url: String(url) }, "*"); }',
+    '  function go(url, neuerTab) { parent.postMessage({ type: "smejj.browser.navigate", url: String(url), neuerTab: !!neuerTab }, "*"); }',
+    // Cmd/Strg-Klick, Mausradklick und target="_blank" gehoeren in einen NEUEN
+    // Tab — das ist eine der haeufigsten Handbewegungen ueberhaupt. Vorher
+    // navigierte JEDER Klick an Ort und Stelle: wer eine Trefferliste
+    // durchgehen wollte, musste nach jedem Link zurueck.
+    "  function neuerTabGewuenscht(event, anchor) {",
+    "    return event.metaKey || event.ctrlKey || event.button === 1 ||",
+    '      String(anchor.getAttribute("target") || "").toLowerCase() === "_blank";',
+    "  }",
     '  document.addEventListener("click", function (event) {',
     '    var anchor = event.target && event.target.closest ? event.target.closest("a[href]") : null;',
     "    if (!anchor) return;",
     "    event.preventDefault();",
     "    event.stopPropagation();",
-    "    try { go(new URL(anchor.getAttribute(\"href\"), document.baseURI).toString()); } catch (error) {}",
+    "    try { go(new URL(anchor.getAttribute(\"href\"), document.baseURI).toString(), neuerTabGewuenscht(event, anchor)); } catch (error) {}",
+    "  }, true);",
+    // Die mittlere Maustaste loest KEIN click aus — ohne diesen Zweig bliebe
+    // die gewohnteste Art, einen Link nebenbei zu oeffnen, wirkungslos.
+    '  document.addEventListener("auxclick", function (event) {',
+    "    if (event.button !== 1) return;",
+    '    var anchor = event.target && event.target.closest ? event.target.closest("a[href]") : null;',
+    "    if (!anchor) return;",
+    "    event.preventDefault();",
+    "    try { go(new URL(anchor.getAttribute(\"href\"), document.baseURI).toString(), true); } catch (error) {}",
     "  }, true);",
     '  document.addEventListener("submit", function (event) {',
     "    var form = event.target;",
