@@ -1293,3 +1293,13 @@ gemessen: "Mimo V2.5", waehrend Speicher und Server schon gpt-5.6-sol
 standen) — er zeigt jetzt denselben Wartezustand wie die Menuezeile
 ("Name …") und faellt bei Fehlschlag auf den alten Namen zurueck.
 code-flaeche.js v36.
+
+v559 -> v560 (2026-08-18, Betreiber: "laeuft gerade, aber das
+Viereck leuchtet nicht"): runClineChat und runProviderChat in
+public/ai/chatClient.js feuerten NIE das Ereignis smejj:chat-strom —
+nur chat-stream.js tat das. Damit blieben Arbeits-Viereck UND
+Stopp-Knopf bei jedem Cline-/BYOK-Modell (also auch Opus 5) stumm,
+obwohl die Antwort lief. Beide Wege melden jetzt { laufen: n } beim
+Start und im finally beim Ende (Zaehler, damit parallele Laeufe sich
+nicht gegenseitig ausschalten). chatClient.js ist im Precache — der
+CACHE_NAME-Sprung reicht als Marke.
