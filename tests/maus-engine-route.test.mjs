@@ -334,17 +334,28 @@ test("Planer-Proxy: ein laufender Auftrag blockiert nicht seine eigenen Fragen",
 // sich selbst zu beenden — Ergebnis war `worker_fehler: fetch failed` und man
 // wusste nicht einmal, wie weit er kam. Ein Kommentar haelt keine Zahl fest,
 // ein Test schon.
-test("Zeitgrenzen: Lauf-Frist < Verbindungs-Frist < Hintergrund-Frist", () => {
+test("Zeitgrenzen: der Lauf beendet sich, bevor irgendeine Verbindung reisst", () => {
   const z = ZEITGRENZEN;
-  assert.ok(z.planLaufFrist < z.workerAntwort, "der Plan-Lauf muss sich vor der Verbindung beenden");
-  assert.ok(z.loopLaufFrist < z.workerAntwort, "der freie Lauf muss sich vor der Verbindung beenden");
   assert.ok(z.workerAntwort < z.hintergrundLauf, "der Hintergrund-Auftrag muss die Verbindung ueberleben");
-  // Und die Frist muss zur Schrittzahl passen: ein Schritt ist eine
-  // Modellfrage plus eine Browseraktion, realistisch 20 s. Weniger Zeit als
-  // Schritte x 20 s heisst, dass die erhoehte Schrittzahl nie ankommt.
+  assert.ok(z.planLaufFrist < z.workerAntwort, "der Plan-Lauf muss sich vor unserer Frist beenden");
+  assert.ok(z.loopLaufFrist < z.workerAntwort, "der freie Lauf muss sich vor unserer Frist beenden");
+
+  // DIE WICHTIGSTE ZEILE. Die Plattform kappt frueher als unsere eigene Frist,
+  // und gegen sie hilft keine Zahl in diesem Repo. Wer die Lauf-Frist darueber
+  // hebt, bekommt keinen laengeren Lauf, sondern einen Lauf OHNE Ergebnis
+  // ("worker_fehler: fetch failed"). Genau daran sind am 2026-08-17 zwei
+  // Bauten gescheitert, bevor jemand nachgemessen hat.
   assert.ok(
-    z.loopLaufFrist >= z.loopSchritte * 20_000,
-    `${z.loopSchritte} Schritte brauchen mindestens ${z.loopSchritte * 20} s, erlaubt sind ${z.loopLaufFrist / 1000} s`
+    z.loopLaufFrist < z.gatewayHartgrenze,
+    `Lauf-Frist ${z.loopLaufFrist / 1000} s liegt ueber der Plattformgrenze ${z.gatewayHartgrenze / 1000} s — der Lauf stirbt dann ohne Ergebnis`
+  );
+
+  // Und die Schrittzahl muss in die Frist passen, sonst ist sie eine Luege:
+  // ein Schritt ist eine Modellfrage plus eine Browseraktion.
+  const braucht = z.loopSchritte * z.sekundenJeSchritt * 1000;
+  assert.ok(
+    braucht <= z.loopLaufFrist,
+    `${z.loopSchritte} Schritte brauchen ${braucht / 1000} s, erlaubt sind ${z.loopLaufFrist / 1000} s`
   );
 });
 
