@@ -161,20 +161,46 @@ async function main() {
 
   // Der konkrete Aufruf haengt am gefundenen Befehlsnamen; die Argumente werden
   // aus dem Schema uebernommen, damit das Skript Schema-Aenderungen ueberlebt.
-  // ZWEI FALLEN IN EINER ZEILE, beide am 2026-08-18 gemessen:
-  //   1. Der Befehl liefert ein Boolean. Eine Feldauswahl `{ __typename }`
-  //      quittiert Zeabur mit 422 ("must not have a selection") — dieselbe
-  //      Falle wie bei `deploy`. Boolean-Mutationen bekommen KEINE Klammern.
-  //   2. `fillCurrentContent` ist PFLICHT (Boolean!). Fehlt es, schlaegt die
-  //      Anfrage fehl, bevor irgendetwas geschrieben wird. Wir liefern den
-  //      vollstaendigen Inhalt selbst, also false.
-  const dateiBefehl = befehle.datei[0];
-  await graphql(
-    `mutation($serviceID: ObjectID!, $environmentID: ObjectID!, $path: String!, $content: String!, $fill: Boolean!) {
-       ${dateiBefehl}(serviceID: $serviceID, environmentID: $environmentID, path: $path, content: $content, fillCurrentContent: $fill)
-     }`,
-    { serviceID: SERVICE_ID, environmentID: UMGEBUNG_ID, path: ZIEL, content: inhalt, fill: false }
-  );
+  // HIER ENDET DER ALTE WEG — UND ZWAR MIT ABSICHT.
+  //
+  // TEUER GELERNT AM 2026-08-18: `updateServiceConfig` legt die Datei nicht ab,
+  // es haengt sie als SCHREIBGESCHUETZTEN Config-Mount in den Container. Der
+  // Startbefehl des Dienstes lautet aber (aus dem Spec gelesen):
+  //
+  //   curl -fsSL https://raw.githubusercontent.com/SmejjCom/smejj-app-frontend/
+  //        main/assets/chat-bridge.js -o /tmp/smejj-chat-bridge.mjs
+  //   && node /tmp/smejj-chat-bridge.mjs
+  //
+  // Der Container holt sich seinen Quelltext also SELBST — an genau den Pfad,
+  // den der Mount belegt. Ergebnis: `curl: (23) Failure writing output to
+  // destination`, Container-Start scheitert, BackOff-Schleife, 502 auf
+  // smejj.com. Die Bridge war dadurch rund 15 Minuten tot; geheilt hat es erst
+  // `deleteServiceConfig` (scripts/deploy/bruecke-config-mount-entfernen.mjs).
+  //
+  // Der richtige Weg ist deshalb NICHT die Zeabur-API, sondern das
+  // Frontend-Repo: das gebuendelte Artefakt gehoert als assets/chat-bridge.js
+  // nach SmejjCom/smejj-app-frontend@main, danach genuegt ein restartService.
+  // Solange das nicht in diesem Skript automatisiert ist, bricht es hier ab —
+  // lieber gar kein Deploy als der, der die Bridge umbringt.
+  abbruch([
+    "Dieser Deploy-Weg ist STILLGELEGT (Befund 2026-08-18).",
+    "",
+    `Das Buendel ist fertig gebaut: ${Buffer.byteLength(inhalt)} Bytes, Version ${version}.`,
+    "Geschrieben wurde NICHTS.",
+    "",
+    "Warum: `updateServiceConfig` haengt die Datei als schreibgeschuetzten",
+    "Config-Mount ein. Der Startbefehl des Dienstes laedt seinen Quelltext aber",
+    "selbst per curl an genau diesen Pfad — der Mount blockiert das Schreiben,",
+    "der Container startet nicht mehr (502 auf smejj.com).",
+    "",
+    "Der echte Auslieferungsweg:",
+    "  1. Buendel bauen (buildChatBridgeArtifact aus bundle_chat_bridge.mjs)",
+    "  2. Als assets/chat-bridge.js nach SmejjCom/smejj-app-frontend@main pushen",
+    "     (Freigabe verlangt Fast-Forward — vorher merge-base --is-ancestor)",
+    "  3. Bridge neu starten: restartService (NICHT redeployService)",
+    "",
+    "Ein Commit allein ist nicht live — erst der Neustart holt die neue Datei."
+  ].join("\n"));
 
   // Reihenfolge zaehlt (Befund 2026-08-18): `redeployService` antwortet bei
   // diesem Dienst mit "Cannot redeploy in-place" — smejj-chat-bridge laeuft als
