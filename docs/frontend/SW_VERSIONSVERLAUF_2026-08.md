@@ -1286,3 +1286,10 @@ Modell-Beweise gesamt: GPT 5.6, Opus 5, Kimi K3 (Selbstauskunft passt);
 Grok 4.5 wechselt nachweislich mit, meldet sich aber selbst falsch
 ("Auto (agent router), Cursor") — Modell-Eigenart, kein Ketten-Fehler.
 GLM 5.3 bleibt gesperrt (Cline-Pass-Abo noetig).
+
+v544 -> v545 (2026-08-17, Betreiber: "Knopf-Flackern beheben"): waehrend
+des Modellwechsels zeigte der Modell-Knopf noch den ALTEN Namen (live
+gemessen: "Mimo V2.5", waehrend Speicher und Server schon gpt-5.6-sol
+standen) — er zeigt jetzt denselben Wartezustand wie die Menuezeile
+("Name …") und faellt bei Fehlschlag auf den alten Namen zurueck.
+code-flaeche.js v36.
