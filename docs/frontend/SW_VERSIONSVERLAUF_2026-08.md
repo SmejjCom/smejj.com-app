@@ -1335,3 +1335,12 @@ Chips, Tippen, Fensterbreite). Zweite Falle dabei: line-height steht auf
 "normal", parseFloat gibt NaN — Ersatzmass ist Schriftgroesse x 1,2 plus
 Polster. Ergebnis auf BEIDEN Breiten identisch (375 und 1280 px: 3 px
 Restabweichung, optisch mittig). code-flaeche.js v37.
+
+v570 -> v571 (2026-08-18, Betreiber-Freigabe "nur am Handy
+vergroessern"): unter 600 px erfuellen die Bedienknoepfe der CODE-Leiste
+jetzt das 44-px-Touch-Ziel des Projekts (gemessen vorher: Anhang/Diktat
+30x30, Senden 32x32, Chips 19 px hoch). Am Desktop bleibt alles schmal
+und edel — die Regel steht ausschliesslich in @media (max-width: 600px),
+derselben Kante, die styles.css und start-glass.css schon benutzen.
+375-px-Messung nach dem Umbau: alle sechs Knoepfe 44 px hoch,
+Arbeits-Viereck 1 px genau auf der Textzeile.
