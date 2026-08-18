@@ -253,7 +253,11 @@ test("Menue graut aus, was gerade nicht geht — statt es zu verstecken", async 
   assert.equal(nach(einer, "schliessen").aktiv, true);
   // Chrome versteckt sie nicht: ein Menue, dessen Eintraege springen, kann
   // man sich nicht merken.
-  assert.equal(einer.length, 4, "die Anzahl der Eintraege bleibt immer gleich");
+  // Die ZAHL darf nicht springen — darum geht es. Sie wuchs von 4 auf 5, als
+  // "Tab anpinnen" dazukam; das ist eine bewusste Erweiterung, kein Rutschen.
+  const drei = menueEintraege([{ id: "a" }, { id: "b" }, { id: "c" }], "b");
+  assert.equal(einer.length, drei.length, "gleich viele Eintraege, egal wie die Lage ist");
+  assert.deepEqual(einer.map((e) => e.id), drei.map((e) => e.id), "und in derselben Reihenfolge");
 });
 
 test("bei mehreren Tabs sind die Sammelbefehle aktiv", async () => {
@@ -342,4 +346,45 @@ test("das Seitenmenue graut aus, was die Lage nicht hergibt", async () => {
   assert.equal(voll.every((e) => e.aktiv === true), true);
   assert.deepEqual(voll.map((e) => e.id),
     ["zurueck", "vor", "neuLaden", "adresseKopieren", "externOeffnen"]);
+});
+
+// --- Angepinnte Tabs ---------------------------------------------------------
+
+test("angepinnte Tabs stehen vorn, Reihenfolge bleibt sonst erhalten", async () => {
+  const { sortiertNachPinnung } = await import("../public/browser-pane-tableiste.js");
+  const tabs = [
+    { id: "a" }, { id: "b", angepinnt: true }, { id: "c" }, { id: "d", angepinnt: true }
+  ];
+  assert.deepEqual(sortiertNachPinnung(tabs).map((t) => t.id), ["b", "d", "a", "c"],
+    "beide Gruppen behalten ihre innere Reihenfolge — sonst findet man Tabs nicht wieder");
+  assert.deepEqual(tabs.map((t) => t.id), ["a", "b", "c", "d"], "das Original bleibt unberuehrt");
+  assert.deepEqual(sortiertNachPinnung(null), []);
+});
+
+// Das ist der ganze Sinn des Anpinnens: der Tab soll nicht versehentlich
+// verschwinden. Ein Versprechen, das das Menue bricht, waere keins.
+test("ein angepinnter Tab laesst sich nicht schliessen, ohne ihn zu loesen", async () => {
+  const { menueEintraege } = await import("../public/browser-pane-tableiste.js");
+  const tabs = [{ id: "a", angepinnt: true }, { id: "b" }];
+  const beiA = menueEintraege(tabs, "a");
+  assert.equal(beiA.find((e) => e.id === "schliessen").aktiv, false);
+  assert.equal(beiA.find((e) => e.id === "pinnen").text, "Tab loesen", "der Eintrag zeigt, was ein Klick TUT");
+  const beiB = menueEintraege(tabs, "b");
+  assert.equal(beiB.find((e) => e.id === "schliessen").aktiv, true);
+  assert.equal(beiB.find((e) => e.id === "pinnen").text, "Tab anpinnen");
+});
+
+// Angepinnt muss den Neustart ueberleben — sonst ist das Anpinnen wertlos.
+// Die Feldliste in persistTabs ist die bekannte Falle.
+test("angepinnt steht in der Speicherliste", async () => {
+  const fs = await import("node:fs");
+  const pane = fs.readFileSync("public/browser-pane.js", "utf8");
+  const liste = pane.slice(pane.indexOf("export function persistTabs"));
+  assert.match(liste, /angepinnt: Boolean\(tab\.angepinnt\)/);
+});
+
+test("Cmd+W schliesst keinen angepinnten Tab", async () => {
+  const fs = await import("node:fs");
+  const tasten = fs.readFileSync("public/browser-pane-tasten.js", "utf8");
+  assert.match(tasten, /tabSchliessen:[\s\S]*!t\.angepinnt/);
 });
