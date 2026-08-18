@@ -43,7 +43,6 @@ test("was das kleine Modell NICHT kann, bleibt beim Server", () => {
     [{ frage: "Such mir bitte die beste Bohrmaschine" }, "braucht-werkzeug"],
     [{ frage: "Was macht diese Datei?", dateien: 1 }, "dateien"],
     [{ frage: "Was ist auf dem Bild zu sehen?", bilder: 1 }, "bilder"],
-    [{ frage: "Und dann?", verlauf: [{ role: "user", content: "vorher" }] }, "anschlussfrage"],
     [{ frage: "hi" }, "zu-kurz"],
     [{ frage: "x".repeat(2_000) }, "zu-gross"]
   ];
@@ -156,4 +155,54 @@ test("der Nutzer kann eine bessere Antwort erzwingen — ohne Einstellungen", ()
   }
   // Gegenstueck: ohne dieses Wort bleibt dieselbe Frage lokal.
   assert.equal(taugtFuerLokal({ frage: "Wie funktioniert eine Waermepumpe?" }).ok, true);
+});
+
+// ---------------------------------------------------------------------------
+// VERLAUF — die Korrektur nach dem Live-Test.
+//
+// Der erste Entwurf lehnte JEDE Anfrage mit Verlauf ab. An der echten Seite
+// standen 19 Gespraechsblasen, die Regel griff, und die Frage ging an den
+// Server. Fast jeder echte Chat hat Verlauf — die Gratis-Spur haette so gut
+// wie nie gegriffen. Ein Hebel, der nie zieht, ist kein Hebel.
+// ---------------------------------------------------------------------------
+test("kurzer Verlauf schliesst die lokale Spur NICHT mehr aus", () => {
+  const verlauf = [
+    { role: "user", content: "Was ist eine Waermepumpe?" },
+    { role: "assistant", content: "Ein Geraet, das Umweltwaerme nutzbar macht." }
+  ];
+  const urteil = taugtFuerLokal({ frage: "Und wie hoch sind die Betriebskosten?", verlauf });
+  assert.equal(urteil.ok, true, "sonst greift die Gratis-Spur in der Praxis nie");
+});
+
+test("zu langer Verlauf gehoert auf die starke Spur", () => {
+  const viele = Array.from({ length: 12 }, (_, i) => ({ role: "user", content: `Frage ${i}` }));
+  assert.equal(taugtFuerLokal({ frage: "Und wie geht es weiter?", verlauf: viele }).grund, "verlauf-zu-lang");
+
+  const dick = [{ role: "user", content: "x".repeat(5_000) }];
+  assert.equal(taugtFuerLokal({ frage: "Und wie geht es weiter?", verlauf: dick }).grund, "verlauf-zu-gross");
+});
+
+test("die Vorgeschichte erreicht das Modell wirklich", async () => {
+  let gesehen = null;
+  const umgebung = {
+    LanguageModel: {
+      availability: async () => "available",
+      create: async (optionen) => {
+        gesehen = optionen?.initialPrompts || [];
+        return { prompt: async () => "Eine ausreichend lange Antwort auf die Anschlussfrage.", destroy() {} };
+      }
+    }
+  };
+  const verlauf = [
+    { role: "user", content: "Was ist eine Waermepumpe?" },
+    { role: "assistant", content: "Ein Geraet, das Umweltwaerme nutzbar macht." },
+    { role: "system", content: "das gehoert nicht hierher" }
+  ];
+  const ergebnis = await frageLokal("Und die Betriebskosten?", { umgebung, system: "Systemregeln", verlauf });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(gesehen[0].role, "system", "die Systemregeln bleiben vorn");
+  assert.equal(gesehen.length, 3, "Systemregeln plus zwei gueltige Verlaufszeilen");
+  // Gegenstueck: eine vom Client gesendete system-Rolle wird verworfen, nicht
+  // durchgereicht — dieselbe Regel wie serverseitig.
+  assert.ok(!gesehen.slice(1).some((n) => n.role === "system"), "keine fremde system-Rolle im Verlauf");
 });
