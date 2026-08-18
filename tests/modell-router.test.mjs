@@ -18,22 +18,34 @@ test("Code-Frage nimmt das Abo-Codemodell, nicht das teure", () => {
   assert.equal(wahl.grund, "code");
 });
 
-test("angehaengte Dateien machen den Auftrag schwer", () => {
+test("angehaengte Dateien ziehen die teure Spur", () => {
   const wahl = waehleModell("Was macht das hier?", { dateien: 1 });
   assert.equal(wahl.spur, "Guthaben");
-  assert.equal(wahl.grund, "schwer");
+  assert.equal(wahl.grund, "viel-kontext");
 });
 
-test("langer Auftrag macht den Auftrag schwer", () => {
-  const wahl = waehleModell("x".repeat(1201));
+test("sehr langer Auftrag zieht die teure Spur", () => {
+  const wahl = waehleModell("x".repeat(4001));
   assert.equal(wahl.spur, "Guthaben");
 });
 
-test("Schwer-Wort schlaegt das blosse Code-Wort", () => {
-  // Gegenprobe zum Code-Fall oben: dasselbe Thema, aber mit Denk-Merkmal.
+// NACHGEMESSEN 2026-08-17: 19 ausgefuehrte Testfaelle, minimax-m3 19/19 in
+// 8 s gegen Opus 5 19/19 in 12 s. Ein Denk-Wort allein rechtfertigt also
+// keine Guthaben-Anfrage mehr — die alte Regel kostete Geld ohne Gegenwert.
+test("Denk-Woerter allein kosten kein Guthaben mehr", () => {
+  for (const probe of [
+    "Analysiere die Architektur dieses Moduls.",
+    "Erklaere die Migration und die Security-Folgen.",
+    "Wie optimiere ich die Performance hier?"
+  ]) {
+    assert.equal(waehleModell(probe).spur, "Abo", probe);
+  }
+});
+
+test("Code-Wort plus Denk-Wort bleibt im Abo, auf der Code-Spur", () => {
   const wahl = waehleModell("Refactor die Funktion und erklaere die Architektur.");
-  assert.equal(wahl.spur, "Guthaben");
-  assert.equal(wahl.grund, "schwer");
+  assert.equal(wahl.spur, "Abo");
+  assert.equal(wahl.grund, "code");
 });
 
 test("Router waehlt nie einen Blindgaenger", () => {
