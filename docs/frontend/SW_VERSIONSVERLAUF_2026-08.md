@@ -1319,3 +1319,9 @@ steht wieder exakt wie vorher (11 px, top 10 / right 12) und aendert
 im Arbeitszustand ausschliesslich seine Beleuchtung (cyan + ruhiger
 Opazitaets-Puls 1,6 s). LEHRE: "sichtbarer machen" heisst nicht
 "umbauen" — Form und Platz eines abgenommenen Bauteils bleiben.
+
+v568 -> v569 (2026-08-18, Betreiber-Abgleich mit Claude): das
+Arbeits-Viereck sitzt jetzt auf HOEHE DER TEXTZEILE (top 31 statt 10) —
+bei Claude steht es neben dem Eingabetext, bei uns klebte es am oberen
+Feldrand und driftete 21 px weg, sobald der Ordner-Chip darueber lag.
+Groesse (11 px), Form und Beleuchtung bleiben unveraendert.
