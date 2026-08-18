@@ -1344,3 +1344,13 @@ und edel — die Regel steht ausschliesslich in @media (max-width: 600px),
 derselben Kante, die styles.css und start-glass.css schon benutzen.
 375-px-Messung nach dem Umbau: alle sechs Knoepfe 44 px hoch,
 Arbeits-Viereck 1 px genau auf der Textzeile.
+
+v571 -> v572 (2026-08-18, Betreiber: "kannst du das fuer den
+Chat-Bereich auch machen — sieht gut aus"): das Arbeits-Viereck gibt es
+jetzt auch im Glas-Schreibfeld der Startseite (#startArbeit). Gleiches
+Signal (smejj:chat-strom, ein Strom treibt beide Anzeigen), gleiche
+Optik (11 px, stiller Umriss in Ruhe, cyan + Puls beim Arbeiten) und
+dieselbe Laufzeit-Ausrichtung an der ersten Textzeile
+(--start-arbeit-top) — ein fester Wert versagte im Code-Bereich am
+Telefon, derselbe Fehler wird hier gar nicht erst gemacht.
+code-flaeche.js v38.
