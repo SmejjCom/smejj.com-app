@@ -68,6 +68,15 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
       if (!/^https?:\/\//i.test(url) || url.length > 2_000) return { ok: false, error: "navigate_url_invalid" };
       return { ok: true, action: { type: "navigate", url } };
     }
+    case "find": {
+      // Suche in der Seite. Der Text ist Nutzereingabe und wird NICHT als
+      // Code ausgefuehrt — er geht als Argument in page.evaluate, nie in
+      // eine zusammengebaute Zeichenkette.
+      const text = String(action.text ?? "");
+      if (text.length > 200) return { ok: false, error: "find_text_too_long" };
+      const index = Number.isFinite(Number(action.index)) ? Math.max(0, Math.floor(Number(action.index))) : 0;
+      return { ok: true, action: { type: "find", text, index } };
+    }
     case "back":
     case "forward":
     case "reload":
@@ -211,7 +220,55 @@ export function createSessionEngine({
       case "scroll":
         await page.mouse.wheel(0, action.deltaY);
         await page.waitForTimeout?.(150)?.catch?.(() => {});
-        return;
+        return undefined;
+      case "find": {
+        // Gesucht wird IM echten Browser — hier liegt das Dokument wirklich
+        // vor. Dieselbe Regel wie im Proxy-Skript: erst sammeln, dann
+        // veraendern, sonst zieht man dem TreeWalker den Boden weg.
+        const treffer = await page.evaluate(({ text, index }) => {
+          const alte = document.querySelectorAll("mark[data-smejj-treffer]");
+          for (const m of alte) m.replaceWith(document.createTextNode(m.textContent));
+          document.body?.normalize();
+          if (!text) return 0;
+          const suchText = text.toLowerCase();
+          const lauf = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode(n) {
+              if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+              const e = n.parentNode && n.parentNode.nodeName;
+              if (e === "SCRIPT" || e === "STYLE" || e === "NOSCRIPT") return NodeFilter.FILTER_REJECT;
+              return n.nodeValue.toLowerCase().includes(suchText) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+            }
+          });
+          const knoten = [];
+          let k;
+          while ((k = lauf.nextNode()) && knoten.length < 500) knoten.push(k);
+          const marken = [];
+          for (let n of knoten) {
+            let wert = n.nodeValue;
+            let pos = wert.toLowerCase().indexOf(suchText);
+            while (pos !== -1 && marken.length < 500) {
+              const rest = n.splitText(pos);
+              n = rest.splitText(suchText.length);
+              const mark = document.createElement("mark");
+              mark.setAttribute("data-smejj-treffer", "1");
+              mark.style.cssText = "background:#ffe066;color:#111";
+              rest.parentNode.replaceChild(mark, rest);
+              mark.appendChild(rest);
+              marken.push(mark);
+              wert = n.nodeValue;
+              pos = wert.toLowerCase().indexOf(suchText);
+            }
+          }
+          const ziel = marken[Math.min(index, Math.max(0, marken.length - 1))];
+          if (ziel) {
+            ziel.style.background = "#ff9f1a";
+            ziel.scrollIntoView({ block: "center" });
+          }
+          return marken.length;
+        }, { text: action.text, index: action.index });
+        await page.waitForTimeout?.(120)?.catch?.(() => {});
+        return { treffer };
+      }
       case "navigate": {
         const parsed = isAllowedTarget(action.url);
         if (!parsed.ok) throw new Error(parsed.error);
@@ -246,9 +303,12 @@ export function createSessionEngine({
     if (session.busy) return fail(409, "session_busy");
     session.busy = true;
     try {
-      await performAction(session, verdict.action);
+      const zusatz = await performAction(session, verdict.action);
       touch(session);
-      return await snapshot(session);
+      const bild = await snapshot(session);
+      // Zusaetzliche Auskuenfte einer Aktion (z. B. die Trefferzahl der Suche)
+      // reisen mit dem Schnappschuss zurueck.
+      return zusatz && typeof zusatz === "object" ? { ...bild, ...zusatz } : bild;
     } catch (error) {
       return fail(502, error?.message || error);
     } finally {

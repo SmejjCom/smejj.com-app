@@ -304,3 +304,17 @@ test("in nicht durchsuchbaren Ansichten wird ehrlich abgelehnt", async () => {
   assert.equal(sucheMoeglich("error"), false);
   assert.equal(sucheMoeglich(""), false);
 });
+
+// Der Live-Browser zeigt nur ein Bild — dort muss der ECHTE Browser suchen.
+// Die Leiste selbst weiss davon nichts: sie fragt nach dem Weg. Sonst muesste
+// jede kuenftige Ansicht die Leiste wieder anfassen.
+test("die Suche waehlt den Weg nach Ansicht", async () => {
+  const { sucheWeg, sucheMoeglich } = await import("../public/browser-pane-suche.js");
+  assert.equal(sucheWeg("proxy"), "rahmen", "im Proxy liegt das Dokument im Rahmen");
+  assert.equal(sucheWeg("live-browser"), "sitzung", "im Live-Browser sehen wir nur ein Bild");
+  assert.equal(sucheWeg("direct"), null, "fremder Rahmen: kein Zugriff");
+  assert.equal(sucheWeg("error"), null);
+  // sucheMoeglich leitet sich daraus ab — eine Wahrheit, nicht zwei.
+  assert.equal(sucheMoeglich("live-browser"), true);
+  assert.equal(sucheMoeglich("direct"), false);
+});
