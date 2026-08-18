@@ -7,6 +7,7 @@
 // (Idle-Timeout + Hard-Limit) — keine laufenden Fixkosten.
 // Sicherheits-Helfer (SSRF-Schutz) kommen per Dependency Injection aus
 // worker.js, damit exakt dieselben Pruefungen gelten wie beim Einmal-Rendern.
+import { resolveLocator } from "../maus-engine/selector.mjs";
 import { randomBytes } from "node:crypto";
 import { lookup } from "node:dns/promises";
 
@@ -31,6 +32,10 @@ export const SESSION_ALLOWED_KEYS = new Set([
 // Pure Validierung des Aktions-Objekts (ohne Playwright testbar).
 // Liefert fail-closed { ok:false, error } oder { ok:true, action } mit
 // normalisierten Werten.
+// Dieselben Strategien, die die Maus kennt — css/xpath bleiben moeglich, aber
+// role/testId/label sind die stabilen: sie ueberleben ein Umgestalten der Seite.
+const ERLAUBTE_STRATEGIEN = new Set(["role", "testId", "label", "text", "placeholder", "altText", "title", "css", "xpath"]);
+
 export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
   if (!action || typeof action !== "object" || typeof action.type !== "string") {
     return { ok: false, error: "action_missing" };
@@ -67,6 +72,27 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
       const url = String(action.url || "");
       if (!/^https?:\/\//i.test(url) || url.length > 2_000) return { ok: false, error: "navigate_url_invalid" };
       return { ok: true, action: { type: "navigate", url } };
+    }
+    // Aktionen, die auf ELEMENTE zielen statt auf Pixel. Sie sind der Weg,
+    // auf dem die Maus spaeter DIESEN Browser bedient: ein Plan nennt
+    // Rolle/Beschriftung, keine Koordinaten. Ein Klick auf Prozentwerte
+    // waere bei jeder Fensterbreite ein anderer.
+    case "selectorClick":
+    case "selectorType":
+    case "selectorText": {
+      const strategy = String(action.strategy || "");
+      const value = String(action.value || "");
+      if (!ERLAUBTE_STRATEGIEN.has(strategy)) return { ok: false, error: "selector_strategy_not_allowed" };
+      if (!value || value.length > 300) return { ok: false, error: "selector_value_invalid" };
+      const gebaut = { type: action.type, strategy, value };
+      if (action.name !== undefined) gebaut.name = String(action.name).slice(0, 200);
+      if (action.type === "selectorType") {
+        const text = String(action.text ?? "");
+        if (!text || text.length > limits.typeMaxChars) return { ok: false, error: "type_text_invalid" };
+        if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)) return { ok: false, error: "type_text_invalid" };
+        gebaut.text = text;
+      }
+      return { ok: true, action: gebaut };
     }
     case "find": {
       // Suche in der Seite. Der Text ist Nutzereingabe und wird NICHT als
@@ -221,6 +247,29 @@ export function createSessionEngine({
         await page.mouse.wheel(0, action.deltaY);
         await page.waitForTimeout?.(150)?.catch?.(() => {});
         return undefined;
+      case "selectorClick":
+      case "selectorType":
+      case "selectorText": {
+        // DER AUFLOESER DER MAUS, nicht ein zweiter. Beide muessen Elemente
+        // gleich finden — sonst tut die Maus im Panel etwas anderes als in
+        // ihrem eigenen Browser, und das faellt erst live auf.
+        const def = { strategy: action.strategy, value: action.value };
+        if (action.name !== undefined) def.name = action.name;
+        const locator = resolveLocator(page, def).first();
+        await locator.waitFor({ state: "visible", timeout: cfg.settleTimeoutMs }).catch(() => {});
+        if (action.type === "selectorText") {
+          const text = await locator.innerText({ timeout: cfg.settleTimeoutMs }).catch(() => "");
+          return { gelesen: String(text || "").slice(0, 2000) };
+        }
+        if (action.type === "selectorType") {
+          await locator.fill(action.text, { timeout: cfg.settleTimeoutMs });
+          return undefined;
+        }
+        await locator.click({ timeout: cfg.settleTimeoutMs });
+        await page.waitForLoadState("domcontentloaded", { timeout: cfg.settleTimeoutMs }).catch(() => {});
+        await page.waitForTimeout?.(300)?.catch?.(() => {});
+        return undefined;
+      }
       case "find": {
         // Gesucht wird IM echten Browser — hier liegt das Dokument wirklich
         // vor. Dieselbe Regel wie im Proxy-Skript: erst sammeln, dann

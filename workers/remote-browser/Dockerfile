@@ -5,6 +5,10 @@ COPY package.json /app/package.json
 RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --omit=dev --no-audit --no-fund playwright@1.45.3
 COPY workers/remote-browser/worker.js /app/remote-browser/worker.js
 COPY workers/remote-browser/session-engine.js /app/remote-browser/session-engine.js
+# Der Selektor-Aufloeser der Maus wird MITBENUTZT, nicht nachgebaut: der
+# Panel-Browser soll Elemente genauso finden wie die Maus. Zwei Aufloeser
+# waeren zwei Verhalten, und das schwaechere faellt erst live auf.
+COPY workers/maus-engine/selector.mjs /app/maus-engine/selector.mjs
 COPY workers/smejj-worker /app/smejj-worker
 # worker.js importiert ../process-crash-guard.mjs — ohne diese Kopie stirbt
 # der Container mit ERR_MODULE_NOT_FOUND (live gemessen 2026-08-13).

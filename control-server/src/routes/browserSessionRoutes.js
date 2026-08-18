@@ -66,6 +66,13 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
     // kennt.
     treffer: Number.isFinite(Number(payload.treffer))
       ? clampInt(payload.treffer, 0, 0, 500)
+      : undefined,
+    // Von einer Selektor-Leseaktion zurueckgegebener Text. Gleiche Lehre wie
+    // bei `treffer`: ein neues Feld im Worker ist erst dann da, wenn das Tor
+    // es kennt. Hart gekuerzt — was der Worker schickt, ist nicht automatisch
+    // vertrauenswuerdig.
+    gelesen: typeof payload.gelesen === "string"
+      ? payload.gelesen.slice(0, 2000)
       : undefined
   };
 }
