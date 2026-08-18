@@ -1,7 +1,7 @@
 // smejj.com — Tests der Denk-Modus-Entscheidung im Chat und der Wartezeit-Messung.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chatThinkingMode, latestUserPrompt, THINKING_DISABLED } from "../src/ai/chatThinkingPolicy.js";
+import { DENK_KONTEXT_ZEICHEN, chatThinkingMode, denkBremse, denkBremseAus, latestUserPrompt, THINKING_DISABLED } from "../src/ai/chatThinkingPolicy.js";
 import { classifyProfile } from "../control-server/src/llm/modelRouter.js";
 import {
   buildProbeBody,
@@ -25,14 +25,44 @@ test("massgeblich ist die letzte Nutzerfrage, nicht der Systemtext oder der Verl
   assert.equal(latestUserPrompt(null), "");
 });
 
-test("Coding behaelt das Reasoning, alles andere antwortet sofort", () => {
-  // Coding: Antwortguete geht vor Wartezeit.
-  assert.equal(chatThinkingMode([{ role: "user", content: "Bitte refactor diese Funktion" }], classifyProfile), undefined);
-  assert.equal(chatThinkingMode([{ role: "user", content: "Schreib einen test in javascript" }], classifyProfile), undefined);
-
-  // Gespraech: rund 6 s unsichtbares Reasoning entfallen.
+test("Gespraech antwortet sofort — unveraendert", () => {
+  // Rund 6 s unsichtbares Reasoning entfallen. Diese Zusage ist alt und bleibt.
   assert.deepEqual(chatThinkingMode([{ role: "user", content: "Wie ist das Wetter in Berlin?" }], classifyProfile), THINKING_DISABLED);
   assert.deepEqual(chatThinkingMode([{ role: "user", content: "Erklaer mir kurz, was smejj.com macht." }], classifyProfile), THINKING_DISABLED);
+});
+
+test("Denk-Bremse: kurze Coding-Frage denkt nicht mehr, grosse Aufgabe schon", () => {
+  // GEMESSEN 2026-08-18: acht Coding-Anfragen erzeugten 6.726 Denk-Tokens =
+  // 56 % der Tagesrechnung. Ein Fall: 50 Eingabe-Tokens, 721 Denk-Tokens,
+  // rund 60 Tokens sichtbare Antwort.
+  assert.deepEqual(
+    chatThinkingMode([{ role: "user", content: "Bitte refactor diese Funktion" }], classifyProfile, {}),
+    THINKING_DISABLED
+  );
+  // Mit echtem Kontext-Umfang (angehaengte Dateien landen IN der Nachricht)
+  // bleibt die volle Denktiefe.
+  const mitDateien = `Bitte refactor diese Funktion\n\nDateien:\n${"x".repeat(DENK_KONTEXT_ZEICHEN)}`;
+  assert.equal(chatThinkingMode([{ role: "user", content: mitDateien }], classifyProfile, {}), undefined);
+});
+
+test("die Schwelle liegt genau bei DENK_KONTEXT_ZEICHEN, nicht irgendwo", () => {
+  const bauen = (laenge) => [{ role: "user", content: `javascript funktion ${"x".repeat(laenge)}` }];
+  assert.deepEqual(chatThinkingMode(bauen(DENK_KONTEXT_ZEICHEN - 100), classifyProfile, {}), THINKING_DISABLED);
+  assert.equal(chatThinkingMode(bauen(DENK_KONTEXT_ZEICHEN), classifyProfile, {}), undefined);
+});
+
+test("Gegenstueck: SMEJJ_DENKBREMSE=aus stellt exakt das alte Verhalten her", () => {
+  // Ohne diesen Test waere nicht belegt, dass der Ausschalter wirklich traegt —
+  // und die Bremse waere eine Einbahnstrasse.
+  const aus = { SMEJJ_DENKBREMSE: "aus" };
+  assert.equal(denkBremseAus(aus), true);
+  assert.equal(chatThinkingMode([{ role: "user", content: "Bitte refactor diese Funktion" }], classifyProfile, aus), undefined);
+  assert.equal(chatThinkingMode([{ role: "user", content: "Schreib einen test in javascript" }], classifyProfile, aus), undefined);
+  // Am Gespraech aendert der Ausschalter nichts — das Denken bleibt dort aus.
+  assert.deepEqual(chatThinkingMode([{ role: "user", content: "Wie ist das Wetter in Berlin?" }], classifyProfile, aus), THINKING_DISABLED);
+  // Und er reagiert nur auf das eine Wort, nicht auf irgendeinen Wert.
+  assert.equal(denkBremseAus({ SMEJJ_DENKBREMSE: "an" }), false);
+  assert.equal(denkBremseAus({}), false);
 });
 
 test("ohne erkennbare Nutzerfrage bleibt das bisherige Verhalten unveraendert", () => {
@@ -163,3 +193,34 @@ async function* asyncChunks(parts) {
   const encoder = new TextEncoder();
   for (const part of parts) yield encoder.encode(part);
 }
+
+// ---------------------------------------------------------------------------
+// Der Agenten-Weg (/api/agent) entscheidet den Aufgabentyp selbst und zaehlt
+// angehaengte Dateien getrennt. Er muss zur selben Antwort kommen wie /api/chat
+// — die Ungleichheit zwischen beiden Wegen war hier schon einmal ein Fehler.
+// ---------------------------------------------------------------------------
+test("Agenten-Weg: dieselbe Bremse, Dateien zaehlen fuer sich", () => {
+  // Kurzer Coding-Auftrag ohne Dateien -> kein Denken mehr.
+  assert.deepEqual(denkBremse({ text: "Bitte refactor diese Funktion", dateien: 0 }, {}), THINKING_DISABLED);
+  // EINE angehaengte Datei genuegt fuer volle Denktiefe, egal wie kurz der Text.
+  assert.equal(denkBremse({ text: "fix", dateien: 1 }, {}), undefined);
+  // Langer Auftrag ohne Dateien ebenfalls.
+  assert.equal(denkBremse({ text: "x".repeat(DENK_KONTEXT_ZEICHEN), dateien: 0 }, {}), undefined);
+  // Ausschalter stellt auch hier das alte Verhalten her.
+  assert.equal(denkBremse({ text: "kurz", dateien: 0 }, { SMEJJ_DENKBREMSE: "aus" }), undefined);
+  // Unsinnige Eingaben fallen auf "nicht denken" statt zu raten.
+  assert.deepEqual(denkBremse({}, {}), THINKING_DISABLED);
+  assert.deepEqual(denkBremse(undefined, {}), THINKING_DISABLED);
+});
+
+test("beide Wege stimmen bei derselben Aufgabe ueberein", () => {
+  const kurz = "Bitte refactor diese javascript Funktion";
+  const lang = `${kurz}\n\n${"x".repeat(DENK_KONTEXT_ZEICHEN)}`;
+  for (const text of [kurz, lang]) {
+    assert.deepEqual(
+      chatThinkingMode([{ role: "user", content: text }], classifyProfile, {}),
+      denkBremse({ text, dateien: 0 }, {}),
+      `Chat und Agent weichen ab bei Laenge ${text.length}`
+    );
+  }
+});

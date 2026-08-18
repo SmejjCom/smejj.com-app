@@ -17,6 +17,10 @@
 /** Denk-Modus, den die Z.ai-Schnittstelle als Abschaltung versteht. */
 export const THINKING_DISABLED = Object.freeze({ type: "disabled" });
 
+// Ab dieser Laenge der aktuellen Nutzernachricht darf eine Coding-Aufgabe voll
+// denken. Dieselbe Schwelle wie im Auto-Router (public/ai/modellRouter.js).
+export const DENK_KONTEXT_ZEICHEN = 4_000;
+
 /**
  * Letzte Nutzerfrage aus einer Nachrichtenliste.
  * Systemtexte und fruehere Antworten bleiben aussen vor: massgeblich ist, was der
@@ -45,11 +49,64 @@ export function latestUserPrompt(messages) {
  * @param {(task: string) => string} classifyProfile Profilklassifikation des Routers.
  * @returns {undefined|{type: string}} undefined bedeutet: Voreinstellung des Modells behalten.
  */
-export function chatThinkingMode(messages, classifyProfile) {
+export function chatThinkingMode(messages, classifyProfile, env = process.env) {
   if (typeof classifyProfile !== "function") return undefined;
   const prompt = latestUserPrompt(messages);
   // Ohne erkennbare Nutzerfrage wird nichts umgestellt — fail-closed zugunsten
   // des bisherigen Verhaltens.
   if (!prompt) return undefined;
-  return classifyProfile(prompt) === "coding" ? undefined : THINKING_DISABLED;
+  if (classifyProfile(prompt) !== "coding") return THINKING_DISABLED;
+  // Ab hier: Coding. Frueher hiess das immer "Voreinstellung des Modells", also
+  // volles Denken — siehe die Denk-Bremse unten.
+  if (denkBremseAus(env)) return undefined;
+  return prompt.length >= DENK_KONTEXT_ZEICHEN ? undefined : THINKING_DISABLED;
+}
+
+/**
+ * DIE DENK-BREMSE (gemessen 2026-08-18, Betreiber-Karte "Denk-Bremse bauen").
+ *
+ * Der Messschrieb eines Tages: 74 % der Kosten sind AUSGABE-Tokens, und 76 %
+ * davon sind Denk-Tokens — zusammen **56 % der gesamten Rechnung** allein
+ * fuers Nachdenken. Erzeugt wurde das von genau ACHT Coding-Anfragen (die
+ * uebrigen 25 Chat-Anfragen denken dank dieser Datei schon lange nicht mehr).
+ * Einzelne Faelle: 50 Eingabe-Tokens, 721 Denk-Tokens, rund 60 Tokens
+ * sichtbare Antwort.
+ *
+ * Die Schwelle ist NICHT geraten, sondern die bereits abgenommene Regel des
+ * Auto-Routers, dort mit 19 echten Testfaellen belegt: ein Denk-Wort wie
+ * "Architektur" macht eine Aufgabe nicht schwer — nur echter Kontext-Umfang
+ * tut das (minimax-m3 loeste 19/19, genauso fehlerfrei wie Opus 5 und
+ * schneller). Uebertragen aufs Denken: eine kurze Coding-Frage rechtfertigt
+ * keine 800 Token Nachdenken, eine Aufgabe mit angehaengten Dateien schon.
+ * Dateien landen im Serverpfad IN der Nutzernachricht ("Dateien:\n--- …"),
+ * darum genuegt deren Laenge als Mass.
+ *
+ * EHRLICH DAZU: Bewiesen ist die Schwelle fuer die MODELLWAHL, nicht fuer den
+ * Denk-Schalter — das ist ein anderer Versuch. Wer sie pruefen will, misst
+ * `npm run eval:models:live` mit und ohne Bremse gegen die Coding-Faelle.
+ * Deshalb der Ausschalter: SMEJJ_DENKBREMSE=aus stellt exakt das alte
+ * Verhalten wieder her (Coding denkt immer voll).
+ */
+export function denkBremseAus(env = process.env) {
+  return String(env?.SMEJJ_DENKBREMSE || "").trim().toLowerCase() === "aus";
+}
+
+/**
+ * Dieselbe Bremse fuer den Agenten-Weg, wo der Aufgabentyp schon feststeht und
+ * angehaengte Dateien getrennt gezaehlt werden.
+ *
+ * Warum eigene Funktion und nicht chatThinkingMode: dort wird der Aufgabentyp
+ * erst aus der Nutzerfrage erschlossen, hier ist er bereits bekannt. Wer beides
+ * in eine Funktion presst, muss den Aufgabentyp zweimal raten.
+ *
+ * @param {{text?: string, dateien?: number}} lage Aufgabentext und Anzahl der Dateien.
+ * @param {object} env Umgebung; SMEJJ_DENKBREMSE=aus stellt das alte Verhalten her.
+ * @returns {undefined|{type: string}} undefined = volle Denktiefe des Modells.
+ */
+export function denkBremse(lage = {}, env = process.env) {
+  if (denkBremseAus(env)) return undefined;
+  // Angehaengte Dateien sind fuer sich schon echter Kontext-Umfang — genau die
+  // Unterscheidung, die der Auto-Router mit 19 Testfaellen belegt hat.
+  if (Number(lage.dateien || 0) > 0) return undefined;
+  return String(lage.text || "").length >= DENK_KONTEXT_ZEICHEN ? undefined : THINKING_DISABLED;
 }
