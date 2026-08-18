@@ -89,7 +89,7 @@ function taskText(task) {
 // ohne Browser): plannerClient(prompt) -> Antworttext; runAction(step, i)
 // fuehrt einen validierten Schritt deterministisch aus (Produktion:
 // Interpreter ctx.runMacroSteps + enforcePageAllowed, siehe loop-runner.mjs).
-export async function observeDecideAct({ task, policyInput, page, plannerClient, runAction, observer = buildObservation, onDecision = null }) {
+export async function observeDecideAct({ task, policyInput, page, plannerClient, runAction, observer = buildObservation, onDecision = null, clock = Date }) {
   if (typeof plannerClient !== "function" || typeof runAction !== "function") {
     throw new Error("loop_parameter_fehlen");
   }
@@ -99,12 +99,36 @@ export async function observeDecideAct({ task, policyInput, page, plannerClient,
     return { ok: false, mode: "interaktiv", error: "loop_budget_ungueltig", loopSteps: 0, modelCalls: 0, decisions: [], recordedSteps: [] };
   }
 
+  // ZEITGRENZE — bis 2026-08-17 hatte der Loop KEINE.
+  //
+  // Er zaehlte ausschliesslich Schritte. `maxDurationMs` wurde im Plan
+  // mitgefuehrt, geklemmt und dokumentiert — und hier schlicht ignoriert. Der
+  // Plan-Modus hat seine Frist (interpreter.run), der freie Modus hatte keine.
+  //
+  // Aufgefallen ist es beim Gegenteil eines Fehlers: Die Schrittzahl wurde von
+  // 16 auf 10 gesenkt, damit ein Lauf in die ~300 s passt, die die Plattform
+  // eine Verbindung offen haelt. Es aenderte NICHTS — der Lauf lief weiter bis
+  // zur gekappten Verbindung und endete mit `worker_fehler: fetch failed`,
+  // ohne Ergebnis und ohne Protokoll. Eine Frist, die niemand liest, ist keine.
+  //
+  // Jetzt endet der Lauf von selbst und liefert, wie weit er kam. Das ist der
+  // Unterschied zwischen "abgebrochen, wir wissen nichts" und "hier ist der
+  // Stand nach acht Schritten".
+  const maxDurationMs = Number(policyInput?.budget?.maxDurationMs);
+  const deadline = Number.isFinite(maxDurationMs) && maxDurationMs > 0
+    ? clock.now() + maxDurationMs
+    : Infinity;
+
   const decisions = [];
   const history = [];
   const recordedSteps = [];
   let modelCalls = 0;
+  let zeitAbgelaufen = false;
 
   for (let iteration = 1; iteration <= maxLoopSteps; iteration += 1) {
+    // VOR der Modellfrage pruefen: sie ist der teure Teil, und ein Schritt,
+    // der ohnehin nicht mehr ausgefuehrt wird, muss nicht bezahlt werden.
+    if (clock.now() >= deadline) { zeitAbgelaufen = true; break; }
     const observation = await observer(page);
     const prompt = buildStepPrompt({
       task: taskText(task),
@@ -164,5 +188,12 @@ export async function observeDecideAct({ task, policyInput, page, plannerClient,
   }
 
   // Budget erschoepft: fail-closed, keine weiteren Modell-Aufrufe.
+  // Zwei verschiedene Enden, zwei verschiedene Worte: `loop_zeit_erschoepft`
+  // heisst "die Frist war um, weitere Schritte waeren gegangen" —
+  // `loop_budget_erschoepft` heisst "alle Schritte verbraucht". Wer beides
+  // gleich nennt, dreht beim Diagnostizieren wieder an der falschen Zahl.
+  if (zeitAbgelaufen) {
+    return { ok: false, mode: "interaktiv", error: "loop_zeit_erschoepft", loopSteps: decisions.length, modelCalls, decisions, recordedSteps };
+  }
   return { ok: false, mode: "interaktiv", error: "loop_budget_erschoepft", loopSteps: maxLoopSteps, modelCalls, decisions, recordedSteps };
 }
