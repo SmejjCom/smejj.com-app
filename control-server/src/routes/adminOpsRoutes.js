@@ -29,6 +29,7 @@ import { cockpitUebersicht } from "../admin/opsCockpit.js";
 import { evolutionDashboard } from "../admin/opsEvolution.js";
 // Token-Verbrauch: die Zahl, ohne die jede Kostenentscheidung geraten ist.
 import { bericht as verbrauchsBericht } from "../llm/tokenMesser.js";
+import { cacheBericht } from "../llm/semantischerCache.js";
 
 const PREFIX = "/api/admin/ops";
 const RECHT = "ops.read";
@@ -89,7 +90,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     // Der Speicher ist nach jedem Control-Neustart leer — die vollstaendige
     // Historie steht in den Logzeilen "[verbrauch] {...}". Diese Ansicht ist
     // die schnelle Sicht auf den laufenden Prozess, nicht das Archiv.
-    if (bereich === "verbrauch") return privateJson(res, 200, { ok: true, ...verbrauchsBericht({ tag: tagAus(url) }) }), true;
+    if (bereich === "verbrauch") return privateJson(res, 200, { ok: true, ...verbrauchsBericht({ tag: tagAus(url) }), semantischerCache: cacheBericht() }), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {

@@ -277,9 +277,11 @@ export async function streamWithTools({ result, chain, messages, res, options, e
   }
 
   async function schleife() {
+  let sichtbarGesamt = "";
   for (let runde = 0; runde < MAX_ROUNDS; runde += 1) {
     const { toolCalls, sawContent } = await pumpRound(current.response.body, res, env, messgeraet);
-    if (!toolCalls.length) return finishStream(res);
+    sichtbarGesamt += sawContent || "";
+    if (!toolCalls.length) return finishStream(res, sichtbarGesamt);
 
     // Das Modell will ein Werkzeug. Sein bisheriger Text bleibt sichtbar.
     verlauf.push({ role: "assistant", content: sawContent || null, tool_calls: toolCalls });
@@ -347,6 +349,7 @@ export async function streamWithTools({ result, chain, messages, res, options, e
     if (naechste?.ok) messgeraet.wechsleModell(naechste.model);
     if (!naechste?.ok || !naechste.response?.body) {
       res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "\n\nDas Werkzeugergebnis konnte nicht ausgewertet werden." } }] })}\n\n`);
+      // Bewusst OHNE Text: eine abgebrochene Antwort gehoert nie in den Cache.
       return finishStream(res);
     }
     current = naechste;
@@ -360,8 +363,8 @@ export async function streamWithTools({ result, chain, messages, res, options, e
   // Fehler erst durch das neue Werkzeug web_suche: liefert die Suche nichts,
   // versucht das Modell es erneut und schoepft damit alle MAX_ROUNDS aus. Vorher
   // erreichte fast keine Anfrage die letzte Runde.
-  await pumpRound(current.response.body, res, env, messgeraet);
-  return finishStream(res);
+  const letzteRunde = await pumpRound(current.response.body, res, env, messgeraet);
+  return finishStream(res, sichtbarGesamt + (letzteRunde.sawContent || ""));
   }
 }
 
@@ -445,8 +448,12 @@ function sicherParsen(payload) {
   }
 }
 
-function finishStream(res) {
+// Gibt den sichtbaren Antworttext zurueck. Gebraucht wird er vom semantischen
+// Cache, der eine Antwort nur ablegen kann, wenn er sie kennt — bis 2026-08-18
+// verschwand sie ungelesen im Strom. Am Verhalten des Stroms aendert sich nichts.
+function finishStream(res, sichtbar = "") {
   res.write("data: [DONE]\n\n");
+  return String(sichtbar || "");
 }
 
 /** Fuehrt ein Werkzeug aus. Unbekannte Werkzeuge werden abgelehnt (fail-closed). */

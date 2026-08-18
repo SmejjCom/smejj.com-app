@@ -77,6 +77,7 @@ import { createVideoChatRoutes } from "../control-server/src/routes/videoChatRou
 import { createBildExternRoutes } from "../control-server/src/routes/bildExternRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 import { baueDateibloecke } from "./agent/dateiKontext.js";
+import { cacheModus, frageCache, merkeAntwort } from "../control-server/src/llm/semantischerCache.js";
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -667,9 +668,40 @@ async function handleAgent(req, res) {
   const thinking = codingTask
     ? denkBremse({ text: task, dateien: fileBlocks.length })
     : { type: "disabled" };
+  // SEMANTISCHER CACHE (2026-08-18). Standard ist der SCHATTEN-Modus: er misst,
+  // was er getroffen HAETTE, und veraendert keine Antwort. Scharf wird er erst
+  // per SMEJJ_SEM_CACHE=an, wenn die Trefferpaare an echtem Verkehr geprueft
+  // sind — ein Fehltreffer liefert eine falsche Antwort, und das ist teurer als
+  // jeder gesparte Token.
+  const cacheLage = {
+    frage: task,
+    nutzer: req.authUser?.userId || req.authUser?.email || "unbekannt",
+    verlauf: body.history,
+    dateien: fileBlocks.length,
+    liveInhalt: Boolean(webContext),
+    coding: codingTask
+  };
+  const ausCache = frageCache(cacheLage);
+  console.log(`[sem-cache] ${JSON.stringify({ treffer: ausCache.treffer, grund: ausCache.grund, aehnlich: ausCache.aehnlich ?? null })}`);
+  if (ausCache.treffer && cacheModus() === "an") {
+    // Als regulaerer Strom ausliefern, damit der Client nichts anders behandeln
+    // muss als sonst. Der Kopf sagt ehrlich, dass kein Modell gelaufen ist.
+    res.writeHead(200, {
+      ...SECURITY_HEADERS,
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "x-smejj-model-backend": "semantischer-cache",
+      "x-smejj-cache-aehnlichkeit": String(ausCache.aehnlich)
+    });
+    res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: ausCache.antwort } }] })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    return res.end();
+  }
+
   // Denktiefe von K3: Wunsch aus den Einstellungen (Reasoning-Aufwand) schlaegt
   // die Regel nach Aufgabentyp; die Env des Betreibers schlaegt beides.
-  return streamLLM(res, messages, {
+  const antwortText = await streamLLM(res, messages, {
     profile,
     requestedModel: body.model,
     thinking,
@@ -678,6 +710,10 @@ async function handleAgent(req, res) {
     spur: "agent",
     ...(voiceMode && !codingTask ? { maxTokens: 400 } : {})
   });
+  // Erst NACH einer vollstaendigen Antwort ablegen. Ein abgebrochener Strom
+  // gibt leeren Text zurueck und faellt damit von selbst durch die Laengenpruefung
+  // in merkeAntwort — eine halbe Antwort waere schlimmer als gar keine.
+  merkeAntwort(cacheLage, antwortText);
 }
 
 async function handleStorageStatus(res) {
@@ -768,6 +804,7 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
     "x-smejj-requested-model-id": selection.requestedModelId,
     "x-smejj-model-fallback": String(result.logicalModelId !== selection.requestedModelId)
   });
-  await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback, authUser, spur });
+  const sichtbar = await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback, authUser, spur });
   res.end();
+  return sichtbar;
 }
