@@ -19,6 +19,20 @@ export const HISTORY_MAX_MESSAGES = 10;
 export const HISTORY_MAX_TOTAL_CHARS = 12_000;
 export const HISTORY_MAX_MESSAGE_CHARS = 4_000;
 
+// Gekuerzt wird in BLOECKEN, nicht Nachricht fuer Nachricht.
+//
+// WARUM (gemessen 2026-08-18): Ein gleitendes Fenster wirft in JEDER Runde die
+// aelteste Nachricht weg. Damit beginnt die Anfrage jedes Mal anders — und
+// Anbieter cachen nur den laengsten uebereinstimmenden ANFANG. Genau in langen
+// Gespraechen, wo der Verlauf gross und der Rabatt (90-98 % auf den Eingabeteil)
+// am meisten wert waere, war die Trefferquote deshalb NULL.
+//
+// Mit Bloecken bleibt der Anfang ueber vier Runden Byte fuer Byte gleich: eine
+// Runde zahlt voll, die drei danach lesen aus dem Cache. Der Preis dafuer sind
+// bis zu drei zusaetzlich verworfene alte Nachrichten — die Obergrenzen oben
+// werden dabei nie ueberschritten, nur frueher erreicht.
+export const HISTORY_TRIM_BLOCK = 4;
+
 const ALLOWED_ROLES = new Set(["user", "assistant"]);
 
 /**
@@ -37,21 +51,27 @@ export function sanitizeHistory(rawHistory) {
     if (!content) continue;
     cleaned.push({ role, content: content.slice(0, HISTORY_MAX_MESSAGE_CHARS) });
   }
-  // Von hinten (juengste zuerst) auffuellen, dann Reihenfolge wiederherstellen.
-  const kept = [];
-  let totalChars = 0;
-  for (let index = cleaned.length - 1; index >= 0; index -= 1) {
-    if (kept.length >= HISTORY_MAX_MESSAGES) break;
-    const candidate = cleaned[index];
-    if (totalChars + candidate.content.length > HISTORY_MAX_TOTAL_CHARS) break;
-    totalChars += candidate.content.length;
-    kept.push(candidate);
-  }
-  kept.reverse();
+  // So wenig wie noetig vorne wegwerfen, bis die Grenzen passen ...
+  let start = 0;
+  while (start < cleaned.length && !passtInsBudget(cleaned, start)) start += 1;
+  // ... und dann auf das Blockraster AUFRUNDEN. Das ist der ganze Trick: die
+  // Schnittstelle springt nur alle vier Runden, statt jede Runde zu wandern.
+  // Rein rechnerisch aus der Laenge abgeleitet, also ohne Gedaechtnis — zwei
+  // Anfragen mit demselben Verlauf ergeben immer denselben Anfang.
+  start = Math.min(cleaned.length, Math.ceil(start / HISTORY_TRIM_BLOCK) * HISTORY_TRIM_BLOCK);
+  const kept = cleaned.slice(start);
   // Ein Verlauf, der mit einer Assistenten-Antwort ohne zugehoerige Frage
   // beginnt, verwirrt das Modell — fuehrende Assistenten-Zeilen entfernen.
   while (kept.length > 0 && kept[0].role === "assistant") kept.shift();
   return kept;
+}
+
+/** Passt der Verlauf ab `start` in beide Obergrenzen (Anzahl UND Zeichen)? */
+function passtInsBudget(cleaned, start) {
+  if (cleaned.length - start > HISTORY_MAX_MESSAGES) return false;
+  let zeichen = 0;
+  for (let index = start; index < cleaned.length; index += 1) zeichen += cleaned[index].content.length;
+  return zeichen <= HISTORY_MAX_TOTAL_CHARS;
 }
 
 /**
