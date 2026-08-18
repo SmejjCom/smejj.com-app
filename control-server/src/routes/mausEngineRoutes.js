@@ -40,6 +40,8 @@ const MAX_PLANNER_PROMPT_CHARS = 24_000;
 // Merkregel: bevor man die eigene Frist anhebt, messen, WESSEN Frist zuschlaegt.
 // Eine Zahl, die man selbst kontrolliert, ist die verlockendste falsche Antwort.
 const GATEWAY_HARTGRENZE_MS = 300_000;
+// Je Modellversuch beim PLANEN. Siehe die Begruendung bei buildPlannerClient.
+const PLANER_TIMEOUT_MS = 100_000;
 const WORKER_TIMEOUT_MS = 330_000;
 const RATE_CAPACITY = 6;
 const RATE_REFILL_PER_SEC = 0.05;
@@ -136,6 +138,7 @@ const LOOP_DEFAULT_DURATION_MS = 240_000;
 // sonst nur als Kommentar da, und ein Kommentar haelt keine Zahl fest.
 export const ZEITGRENZEN = Object.freeze({
   gatewayHartgrenze: GATEWAY_HARTGRENZE_MS,
+  planerVersuch: PLANER_TIMEOUT_MS,
   planLaufFrist: BUDGET_DEFAULTS.maxDurationMs,
   loopLaufFrist: LOOP_DEFAULT_DURATION_MS,
   workerAntwort: WORKER_TIMEOUT_MS,
@@ -185,9 +188,26 @@ export function buildPlannerClient({ env = process.env, fetchImpl = fetch, reque
     // Modellneutral: KEINE feste temperature. Provider wie Moonshot/Kimi-Coding
     // erzwingen modellabhaengige Werte und lehnen andere mit HTTP 400 ab
     // (Live-Befund 2026-07-14); der Provider-Default gilt fuer jedes Modell.
+    // ZEITGRENZE FUERS PLANEN, nicht fuers Plaudern.
+    //
+    // GEMESSEN 2026-08-18: "Lies die Ueberschrift." -> 60 s, geht.
+    // "Lies die Ueberschrift der Seite und scrolle nach unten." -> 90 s,
+    // scheitert. Reproduzierbar, kein Zufall und keine Drosselung.
+    //
+    // Ursache: der Modellaufruf bricht nach SMEJJ_LLM_TIMEOUT_MS ab, und der
+    // Standard ist 45 s. Das reicht fuer eine Chat-Antwort — ein Plan ist ein
+    // vollstaendiges JSON-Dokument mit Schritten, Selektoren und Policy, und
+    // schon eine zweiteilige Aufgabe braucht laenger. Jeder Kettenglied-
+    // Versuch kostete dann seine 45 s, bis am Ende "nicht erreichbar" stand.
+    //
+    // 100 s je Versuch: bei zwei Kettengliedern sind das 200 s und damit
+    // sicher unter der Plattformgrenze von 300 s, ab der die Verbindung
+    // gekappt wird (siehe GATEWAY_HARTGRENZE_MS oben). Eine Zahl, die den
+    // Aufruf ueberleben laesst, aber nicht die Antwort verhindert.
     const result = await executeWithFallback(chain, [{ role: "user", content: prompt }], {
       fetchImpl,
-      stream: false
+      stream: false,
+      timeoutMs: PLANER_TIMEOUT_MS
     });
     if (!result.ok) throw new Error("planer_nicht_erreichbar");
     const payload = await result.response.json();
