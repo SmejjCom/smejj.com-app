@@ -1303,3 +1303,10 @@ obwohl die Antwort lief. Beide Wege melden jetzt { laufen: n } beim
 Start und im finally beim Ende (Zaehler, damit parallele Laeufe sich
 nicht gegenseitig ausschalten). chatClient.js ist im Precache — der
 CACHE_NAME-Sprung reicht als Marke.
+
+v566 -> v567 (2026-08-18, Betreiber: "ich sehe es im Browser
+nicht"): das Arbeits-Viereck leuchtete zwar korrekt (per Screenshot
+bestaetigt), war aber mit 11 px in der Ecke praktisch unsichtbar. Im
+ARBEITSZUSTAND jetzt 15 px, mit Cyan-Schein und Groessenpuls
+(1,15 s, scale 1 -> 0,72). Der Ruhezustand bleibt unveraendert der
+stille Umriss — die Augen-Regel gilt weiter fuer Dauerzustaende.
