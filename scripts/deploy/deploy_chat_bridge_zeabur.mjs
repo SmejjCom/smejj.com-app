@@ -19,6 +19,7 @@
 
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { BRIDGE_ENTRY, buildChatBridgeArtifact } from "./bundle_chat_bridge.mjs";
+import { schluesselKandidaten } from "../diagnose/zeabur-schluessel-suchen.mjs";
 
 const API = "https://api.zeabur.com/graphql";
 const QUELLE = BRIDGE_ENTRY;
@@ -73,9 +74,21 @@ async function main() {
     abbruch("Sicherung: CONFIRM_BRIDGE_DEPLOY=YES erforderlich (bewusster Live-Deploy der Bridge).");
   }
   loadSecureLocalEnv();
+  // Zweiter Fundort statt Handgriff des Betreibers: die Zeabur-CLI legt nach
+  // einem `zeabur auth login` einen Schluessel in ~/.config/zeabur/cli.yaml ab.
+  // Genau darum gibt es zeabur-schluessel-suchen.mjs — dort steht der Befund
+  // im Wortlaut: "Solange niemand dort nachsieht, bleibt jede Aenderung ein
+  // Handgriff des Betreibers, obwohl der Zugang laengst auf der Platte liegt."
+  // Derselbe Zugang, dieselbe Person; nur ein Ort mehr, an dem gesucht wird.
+  // Der Wert wird nie ausgegeben und nie ueber die Kommandozeile gereicht.
+  if (!process.env.ZEABUR_API_TOKEN) {
+    const kandidat = schluesselKandidaten()[0];
+    if (kandidat?.wert) process.env.ZEABUR_API_TOKEN = kandidat.wert;
+  }
   if (!process.env.ZEABUR_API_TOKEN) {
     abbruch([
-      "ZEABUR_API_TOKEN fehlt in ~/.config/smejj.com/env.local.",
+      "ZEABUR_API_TOKEN fehlt in ~/.config/smejj.com/env.local — und in",
+      "~/.config/zeabur/cli.yaml liegt auch keiner (dann hilft `zeabur auth login`).",
       "",
       "So legst du ihn an (einmalig, 1 Minute):",
       "  1. https://zeabur.com/account/developer  ->  API-Token erstellen",
