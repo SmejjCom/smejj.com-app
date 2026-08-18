@@ -469,3 +469,16 @@ test("Escape wird behandelt, bevor auf Vorschlaege geprueft wird", async () => {
     "der Ausstieg fuer die Pfeiltasten darf NICHT vor Escape stehen");
   assert.match(rumpf, /zuruecksetzen\(\)/);
 });
+
+// Am 2026-08-18 sah der Betreiber statt eines Tabs einen orangen Block: sein
+// Browser hatte neues Skript mit ALTER CSS gemischt (der Dienstarbeiter
+// liefert Dateien einzeln aus dem Zwischenspeicher — dass beide aus derselben
+// Fassung stammen, ist nicht garantiert). Ein Favicon ist oft 64x64; ohne
+// Stylesheet sprengt es die Kopfleiste.
+test("Favicon und Marke halten ihre Groesse auch ohne Stylesheet", async () => {
+  const fs = await import("node:fs");
+  const q = fs.readFileSync("public/browser-pane-tableiste.js", "utf8");
+  assert.match(q, /bild\.width = 16/);
+  assert.match(q, /bild\.style\.width = "16px"/);
+  assert.match(q, /marke\.style\.width = "16px"/);
+});

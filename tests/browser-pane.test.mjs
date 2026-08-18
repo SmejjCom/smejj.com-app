@@ -71,13 +71,11 @@ test("Browser-Pane erlaubt maximal 7 Tabs", () => {
 
 test("Browser-Pane keeps iframe content visible and Enter navigates", () => {
   const css = fs.readFileSync("public/browser-pane.css", "utf8");
-  // GEAENDERT 2026-08-17: an Chrome gemessen (Leiste ~32 px, Knoepfe ~28 px).
-  // 26/22 galt seit der ersten Fassung und war spuerbar enger als Chrome —
-  // und lag unter den Touch-Zielen. Der enge Satz bleibt fuer schmale
-  // Fenster erhalten, deshalb wird BEIDES geprueft.
-  assert.match(css, /--bp-row-height:\s*32px;/);
-  assert.match(css, /--bp-control-size:\s*28px;/);
-  assert.match(css, /@media \(max-width: 680px\)[\s\S]*--bp-control-size:\s*22px;/);
+  // ZURUECKGENOMMEN 2026-08-18: Kurzzeitig standen hier Chromes Masse
+  // (32/28). Der Betreiber wollte Chromes FUNKTION, nicht sein Aussehen —
+  // die Kopfleiste bleibt, wie sie war. Der Test haelt genau das fest.
+  assert.match(css, /--bp-row-height:\s*26px;/);
+  assert.match(css, /--bp-control-size:\s*22px;/);
   // minmax(0, 1fr): Inhalt darf das Panel nie ueberragen (keine abgeschnittenen Seiten).
   assert.match(css, /grid-template-rows:\s*var\(--bp-row-height\) var\(--bp-row-height\) auto auto minmax\(0,\s*1fr\)/);
   assert.match(css, /\.bp-content\s*\{[\s\S]*grid-row:\s*5/);
