@@ -163,8 +163,9 @@ export function readMausEngineConfig(env = process.env) {
 
 // Der EINE modellneutrale Planer-Zugang: AI Router entscheidet das Modell
 // (Default-Kette beginnt bei GLM-5.2); die Engine sieht nur Plan-JSON.
-export function buildPlannerClient({ env = process.env, fetchImpl = fetch, requestedModel = "" } = {}) {
+export function buildPlannerClient({ env = process.env, fetchImpl = fetch, requestedModel = "", melde = null } = {}) {
   return async (prompt) => {
+    const begonnen = performance.now();
     // ZWEI PROFILE HINTEREINANDER, nicht nur eines.
     //
     // BEFUND 2026-08-18: Jeder Maus-Auftrag endete mit
@@ -249,6 +250,18 @@ export function buildPlannerClient({ env = process.env, fetchImpl = fetch, reque
       fetchImpl,
       stream: false,
       timeoutMs: PLANER_TIMEOUT_MS
+    });
+    // WER hat geantwortet und wie lange hat es gedauert? Ohne diese Auskunft
+    // ist jede Tempo-Frage Kaffeesatz: executeWithFallback WEISS es, sagte es
+    // aber niemandem. Am 2026-08-18 stand deshalb die Frage im Raum, ob
+    // ueberhaupt Groq antwortet — beantworten liess sie sich nicht.
+    melde?.({
+      backend: result.backend || null,
+      model: result.model || null,
+      ms: Math.round(performance.now() - begonnen),
+      // Fehlversuche kosten die volle Zeitgrenze. Zwei davon erklaeren eine
+      // Minute Wartezeit vollstaendig.
+      fehlversuche: (result.attempts || []).map((a) => `${a.backend || a.name || "?"}/${a.model || "?"}: ${a.error || a.failure || "?"}`)
     });
     if (!result.ok) throw new Error("planer_nicht_erreichbar");
     const payload = await result.response.json();
@@ -691,6 +704,7 @@ export async function handleMausRun(req, res, {
   // wie sonst. Herausgegeben wird nur, was sie bestanden hat.
   if (body?.nurPlan === true) {
     let geprueft = null;
+    let planerMessung = null;
     // Faellt der Planer aus (Anbieter gedrosselt, Modell weg), soll hier eine
     // LESBARE Meldung stehen. Ohne diesen Fang flog der Fehler als HTTP 500
     // durch — und 500 sagt dem Panel nichts ausser "irgendwas".
@@ -699,7 +713,10 @@ export async function handleMausRun(req, res, {
       ergebnis = await planAndExecute({
         task,
         policyInput,
-        plannerClient: plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }),
+        plannerClient: plannerClient || buildPlannerClient({
+          env, fetchImpl, requestedModel,
+          melde: (m) => { planerMessung = m; }
+        }),
         // Ausfuehrung faellt aus: der Plan soll nur entstehen und geprueft
       // werden. Der VOLLE Plan kommt hier an — `onPlan` liefert bewusst nur
       // eine Kurzmeldung fuer die Fortschrittsanzeige und waere der falsche
@@ -723,6 +740,8 @@ export async function handleMausRun(req, res, {
       plan: geprueft,
       planId: geprueft.planId || null,
       plannerCalls: ergebnis?.plannerCalls ?? null,
+      // Damit man beim naechsten "das dauert zu lange" MESSEN kann statt zu raten.
+      planer: planerMessung,
       transparenzhinweis: transparencyNotice("maus-engine-v2")
     });
   }
