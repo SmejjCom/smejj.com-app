@@ -76,6 +76,7 @@ import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyn
 import { createVideoChatRoutes } from "../control-server/src/routes/videoChatRoutes.js";
 import { createBildExternRoutes } from "../control-server/src/routes/bildExternRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
+import { baueDateibloecke } from "./agent/dateiKontext.js";
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -549,12 +550,20 @@ async function handleAgent(req, res) {
   const voiceMode = body?.preferences?.voiceMode === true;
   if (!task) return json(res, 400, { error: "Missing task" });
 
-  const fileBlocks = [];
+  // Kontext-Diaet (2026-08-18): frueher galt eine Grenze JE DATEI von 120.000
+  // Zeichen und KEINE Gesamtgrenze — acht Dateien ergaben bis zu 960.000
+  // Zeichen, rund 240.000 Eingabe-Tokens, also 0,34 USD auf glm-5.2 und
+  // 1,20 USD auf Opus 5. Genau dorthin schickt der Auto-Router diesen Fall
+  // ("viel-kontext"). Jetzt teilen sich alle Dateien EIN Budget; gekuerzt wird
+  // nie still, sondern mit einer Zeile, die sagt, wieviel fehlt.
+  const gelesen = [];
   for (const file of files) {
     const safePath = safeResolve(file);
     const content = await readLimited(safePath, 120_000);
-    fileBlocks.push(`--- ${file} ---\n${content}`);
+    gelesen.push({ name: file, inhalt: content });
   }
+  const dateiKontext = baueDateibloecke(gelesen);
+  const fileBlocks = dateiKontext.bloecke;
 
   // Coding-Aufgabe -> Code-Agent. Sonst Wissens-/Aktualitaetsfrage -> Live-Websuche.
   const codingTask = fileBlocks.length > 0 || isCodingTask(task);
