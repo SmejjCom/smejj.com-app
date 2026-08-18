@@ -241,3 +241,29 @@ test("ein Tab ohne Adresse wird nicht gemerkt", async () => {
   const { merkeGeschlossen } = await import("../public/browser-pane-tasten.js");
   assert.deepEqual(merkeGeschlossen([], { url: "", title: "Neuer Tab" }), []);
 });
+
+// --- Tab-Kontextmenue und Zoom-Anzeige ---------------------------------------
+
+test("Menue graut aus, was gerade nicht geht — statt es zu verstecken", async () => {
+  const { menueEintraege } = await import("../public/browser-pane-tableiste.js");
+  const einer = menueEintraege([{ id: "a" }], "a");
+  const nach = (liste, id) => liste.find((e) => e.id === id);
+  assert.equal(nach(einer, "andereSchliessen").aktiv, false, "es gibt keine anderen");
+  assert.equal(nach(einer, "rechteSchliessen").aktiv, false, "rechts steht nichts");
+  assert.equal(nach(einer, "schliessen").aktiv, true);
+  // Chrome versteckt sie nicht: ein Menue, dessen Eintraege springen, kann
+  // man sich nicht merken.
+  assert.equal(einer.length, 4, "die Anzahl der Eintraege bleibt immer gleich");
+});
+
+test("bei mehreren Tabs sind die Sammelbefehle aktiv", async () => {
+  const { menueEintraege } = await import("../public/browser-pane-tableiste.js");
+  const drei = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  const beiA = menueEintraege(drei, "a");
+  assert.equal(beiA.find((e) => e.id === "andereSchliessen").aktiv, true);
+  assert.equal(beiA.find((e) => e.id === "rechteSchliessen").aktiv, true);
+  // Beim letzten Tab steht rechts nichts mehr.
+  const beiC = menueEintraege(drei, "c");
+  assert.equal(beiC.find((e) => e.id === "rechteSchliessen").aktiv, false);
+  assert.equal(beiC.find((e) => e.id === "andereSchliessen").aktiv, true);
+});
