@@ -435,3 +435,33 @@ test("Planer-Proxy: ueberlanger Prompt wird fail-closed abgelehnt", async () => 
   assert.equal(res.statusCode, 400);
   assert.match(String(res.body.error), /planner_prompt_ungueltig_oder_zu_lang/);
 });
+
+// Die Planer-Kette war ZWEIMAL falsch, ohne dass man es im Code sah.
+//
+// 1. Anlauf: nur die "coding"-Kette -> deren Anbieter fehlen hier, jeder
+//    Auftrag endete mit "planer_nicht_erreichbar".
+// 2. Anlauf: "fast"-Kette nach vorn — wirkungslos, weil resolveModelRequest
+//    die REGISTRY-Modelle voranstellt und die schnelle Kette selbst mit
+//    GLM begann. Eine Umstellung, die nichts umstellt.
+//
+// Deshalb steht die Reihenfolge jetzt in einem Test und nicht nur im Kopf.
+test("Planer fragt das SCHNELLE Modell zuerst", async () => {
+  const { resolveChain, resolveModelRequest } = await import("../control-server/src/llm/modelRouter.js");
+  const env = { SMEJJ_LLM_ZHIPU_API_KEY: "z", SMEJJ_LLM_GROQ_API_KEY: "g" };
+
+  // Der Unterschied, um den es geht — beide Formen nebeneinander:
+  assert.equal(resolveChain("fast", env)[0].name, "groq",
+    "die reine Anbieterkette beginnt schnell");
+  assert.equal(resolveModelRequest("fast", "", env).chain[0].name, "zhipu",
+    "die Registry-Form stellt GLM voran — genau das war die Falle");
+});
+
+// Ein ausdruecklich gewuenschtes Modell muss weiter gewinnen: dann zaehlt der
+// Wunsch, nicht das Tempo.
+test("ein gewuenschtes Modell schlaegt die Tempo-Reihenfolge", async () => {
+  const fs = await import("node:fs");
+  const quelle = fs.readFileSync("control-server/src/routes/mausEngineRoutes.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("const chain = [];"), quelle.indexOf("if (!chain.length)"));
+  assert.match(stelle, /if \(requestedModel\)/, "der Wunsch muss abgefragt werden");
+  assert.match(stelle, /resolveChain\("fast", env\)/, "ohne Wunsch die schnelle Anbieterkette");
+});

@@ -9,7 +9,7 @@ import { json } from "../http/respond.js";
 import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
 import { evaluateWorkerBudget } from "../budget/budgetGate.js";
 import { aiTransparencyHeaders, transparencyNotice } from "../compliance/aiTransparency.js";
-import { resolveModelRequest, executeWithFallback } from "../llm/modelRouter.js";
+import { resolveChain, resolveModelRequest, executeWithFallback } from "../llm/modelRouter.js";
 import { planAndExecute } from "../../../workers/maus-engine/planner-roundtrip.mjs";
 import { createMacroStore } from "../../../workers/maus-engine/macro-store.mjs";
 import { idriveConfigFromEnv } from "../../../workers/maus-engine/artifact-uploader.mjs";
@@ -193,17 +193,38 @@ export function buildPlannerClient({ env = process.env, fetchImpl = fetch, reque
     //
     // Reihenfolge: schnell (Groq) -> coding -> default. Faellt die schnelle
     // Kette aus, aendert sich nur die Wartezeit, nicht das Ergebnis.
-    const { chain: schnellKette } = resolveModelRequest("fast", requestedModel, env);
-    const { chain: codingKette } = resolveModelRequest("coding", requestedModel, env);
-    const { chain: reserveKette } = resolveModelRequest("default", requestedModel, env);
-    const gesehen = new Set();
+    // resolveChain STATT resolveModelRequest — und das ist der ganze Punkt.
+    //
+    // GEMESSEN 2026-08-18, nachdem ein erster Versuch wirkungslos blieb:
+    //   resolveModelRequest("fast") -> zhipu/glm-5.2, groq/llama-3.1-8b, zhipu
+    //   resolveChain("fast")        -> groq/llama-3.1-8b, zhipu/glm-5.2
+    // resolveModelRequest stellt die REGISTRY-Modelle voran (hier glm-5-2).
+    // Deshalb kam Groq nie dran, obwohl es in der Anbieterliste steht und ich
+    // die "schnelle Kette" bereits nach vorn gesetzt hatte: sie begann selbst
+    // mit GLM. Eine Umstellung, die nichts umstellt, sieht im Code richtig aus.
+    //
+    // Merkregel: wer eine Reihenfolge aendert, muss sie sich AUSGEBEN lassen.
+    // Zwei Zeilen Messung haetten den ersten Anlauf gespart.
+    //
+    // Ein ausdruecklich gewuenschtes Modell hat weiter Vorrang: dann zaehlt
+    // der Wunsch, nicht das Tempo.
     const chain = [];
-    for (const backend of [...schnellKette, ...codingKette, ...reserveKette]) {
-      const schluessel = `${backend.name}:${backend.model || ""}`;
-      if (gesehen.has(schluessel)) continue;
-      gesehen.add(schluessel);
-      chain.push(backend);
+    const gesehen = new Set();
+    const anhaengen = (backends) => {
+      for (const backend of backends || []) {
+        const schluessel = `${backend.name}:${backend.model || ""}`;
+        if (gesehen.has(schluessel)) continue;
+        gesehen.add(schluessel);
+        chain.push(backend);
+      }
+    };
+    if (requestedModel) {
+      anhaengen(resolveModelRequest("coding", requestedModel, env).chain);
+    } else {
+      anhaengen(resolveChain("fast", env));
     }
+    anhaengen(resolveModelRequest("coding", requestedModel, env).chain);
+    anhaengen(resolveModelRequest("default", requestedModel, env).chain);
     if (!chain.length) throw new Error("kein_planer_backend_konfiguriert");
     // Modellneutral: KEINE feste temperature. Provider wie Moonshot/Kimi-Coding
     // erzwingen modellabhaengige Werte und lehnen andere mit HTTP 400 ab
