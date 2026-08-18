@@ -11,7 +11,7 @@ import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat
 import { pipeVisibleStream } from "./chat-bridge-strom.js";
 import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
-import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, withRagBlock } from "./chat-bridge-rag.js";
+import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, vorLetzterNutzerNachricht, withRagBlock } from "./chat-bridge-rag.js";
 // Gespraechsgedaechtnis. Bewusst DIESELBE gepruefte Bereinigung wie der Control
 // Server (src/server.js) statt einer zweiten Umsetzung: sie verwirft insbesondere
 // eine vom Client gesendete "system"-Rolle (Prompt-Injection) und begrenzt Anzahl
@@ -224,14 +224,18 @@ async function handleChat(req, res) {
   }
   // Anschlussfragen tragen ihr Thema nicht selbst — dann zaehlt die Frage davor.
   const wissen = buildRagBlockMitVerlauf(lastUserContent(messages), previousUserContent(messages));
-  const angereichert = withRagBlock(hardenMessages(messages), wissen, 1);
+  // Wechselndes ans Ende: der Wissensblock aendert sich mit jeder Frage und
+  // stand bisher an Stelle 1 — damit war alles dahinter (Systemregeln folgen
+  // dort nicht, aber der ganze Verlauf) fuer den Anbieter-Cache wertlos.
+  const gehaertet = hardenMessages(messages);
+  const angereichert = withRagBlock(gehaertet, wissen, vorLetzterNutzerNachricht(gehaertet));
   // handleAgent schloss Coding immer aus; handleChat uebergab fest "chat".
   const stufe = leseStufe(body);
   if (await streamFastLane(res, angereichert, isCodingTask(task) ? "coding" : "chat", body.model, stufe)) return;
   // Der Control Server ergaenzt Projektwissen bisher nur in /api/agent, nicht im
   // Chat — darum bekommt er den Block hier mit. Alles andere am Rumpf bleibt
   // unveraendert, insbesondere der ungekuerzte Gespraechsverlauf.
-  if (await streamViaControl(res, "/api/chat", wissen ? { ...body, messages: withRagBlock(messages, wissen, 0) } : body)) return;
+  if (await streamViaControl(res, "/api/chat", wissen ? { ...body, messages: withRagBlock(messages, wissen, vorLetzterNutzerNachricht(messages)) } : body)) return;
   return streamModel(res, angereichert, "chat", body.model);
 }
 
@@ -335,19 +339,31 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
   const user = ["Frage/Aufgabe:", task, rechnung, webContext].filter(Boolean).join("\n\n");
   // Projektwissen steht VOR der Aufgaben-Anweisung: die Anweisung muss zuletzt
   // gelten, sonst richtet sich das Modell nach dem Hintergrund statt nach ihr.
-  return withRagBlock(
-    [{ role: "system", content: system }, ...sanitizeHistory(history), { role: "user", content: user }],
-    wissen,
-    0
-  );
+  // Seit 2026-08-18 direkt davor statt ganz vorn — dieselbe Zusicherung, aber
+  // Systemregeln und Verlauf bleiben ein unveraenderter Anfang, den der Anbieter
+  // cachen kann (90-98 % Rabatt auf diesen Teil).
+  const nachrichten = [{ role: "system", content: system }, ...sanitizeHistory(history), { role: "user", content: user }];
+  return withRagBlock(nachrichten, wissen, vorLetzterNutzerNachricht(nachrichten));
 }
 
-function hardenMessages(messages) {
+// Fenster fuer den mitgesendeten Verlauf. Gekuerzt wird in BLOECKEN, nicht
+// Nachricht fuer Nachricht: ein gleitendes slice(-12) warf in jeder Runde die
+// aelteste Nachricht weg, damit begann die Anfrage jedes Mal anders — und
+// Anbieter cachen nur den laengsten uebereinstimmenden ANFANG. Mit Bloecken
+// bleibt der Anfang vier Runden lang gleich (Rabatt 90-98 % auf diesen Teil).
+// Dieselbe Regel wie serverseitig in src/agent/conversationHistory.js.
+const BRUECKE_VERLAUF_MAX = 12;
+const BRUECKE_VERLAUF_BLOCK = 4;
+
+export function hardenMessages(messages) {
   const guard = {
     role: "system",
     content: "Du bist der Assistent von smejj.com. Antworte direkt sichtbar, ohne <think>, ohne interne Notizen und ohne leere Vorrede."
   };
-  return [guard, ...messages.filter((message) => message && message.role && typeof message.content === "string").slice(-12)];
+  const gueltig = messages.filter((message) => message && message.role && typeof message.content === "string");
+  const ueberhang = Math.max(0, gueltig.length - BRUECKE_VERLAUF_MAX);
+  const start = Math.min(gueltig.length, Math.ceil(ueberhang / BRUECKE_VERLAUF_BLOCK) * BRUECKE_VERLAUF_BLOCK);
+  return [guard, ...gueltig.slice(start)];
 }
 
 async function streamViaControl(res, route, body) {
