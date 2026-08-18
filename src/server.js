@@ -674,7 +674,18 @@ async function handleAgent(req, res) {
     coding: codingTask
   };
   const ausCache = frageCache(cacheLage);
-  console.log(`[sem-cache] ${JSON.stringify({ treffer: ausCache.treffer, grund: ausCache.grund, aehnlich: ausCache.aehnlich ?? null })}`);
+  // Bei einem Treffer wird das PAAR protokolliert, nicht nur die Zahl. Ohne die
+  // getroffene Frage laesst sich ein Fehltreffer hinterher nicht nachvollziehen —
+  // man saehe nur "Treffer 0,93" und muesste raten, ob das richtig war. Genau
+  // dieselbe Regel wie beim Verbrauch: eine Zahl ohne Beleg ist eine Behauptung.
+  // Gekuerzt auf 120 Zeichen, damit das Log lesbar bleibt.
+  const kurz = (text) => String(text || "").replace(/\s+/g, " ").slice(0, 120);
+  console.log(`[sem-cache] ${JSON.stringify({
+    treffer: ausCache.treffer,
+    grund: ausCache.grund,
+    aehnlich: ausCache.aehnlich ?? null,
+    ...(ausCache.treffer ? { neueFrage: kurz(task), getroffeneFrage: kurz(ausCache.frage) } : {})
+  })}`);
   if (ausCache.treffer && cacheModus() === "an") {
     // Als regulaerer Strom ausliefern, damit der Client nichts anders behandeln
     // muss als sonst. Der Kopf sagt ehrlich, dass kein Modell gelaufen ist.
