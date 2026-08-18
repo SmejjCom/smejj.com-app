@@ -742,6 +742,11 @@ export async function handleMausRun(req, res, {
       plannerCalls: ergebnis?.plannerCalls ?? null,
       // Damit man beim naechsten "das dauert zu lange" MESSEN kann statt zu raten.
       planer: planerMessung,
+      // WARUM wurde mehrfach geplant? Der Verlauf nennt die abgelehnten
+      // Plaene mit Grund. Ohne ihn sieht man nur "plannerCalls: 2" und weiss
+      // nicht, ob das Modell Unsinn liefert oder unsere Pruefung zu streng
+      // ist — zwei sehr verschiedene Baustellen.
+      verlauf: ergebnis?.history || null,
       transparenzhinweis: transparencyNotice("maus-engine-v2")
     });
   }
