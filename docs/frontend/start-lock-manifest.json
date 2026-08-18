@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-18T02:44:51.321Z",
-  "confirmation": "Betreiber-Karte 2026-08-17 'Stand schuetzen'. Der Tag im Wortlaut: 'checke selber kommt bei viele Modelle Fehler ... Modelle waehlen haengt auch manchmal kommen komplette Modellen und manchmal kommt nur 2, 3 beheben dieser Fehler' und 'Sollen alle Modelle mit chatten, Codierung, Bilder und Video generieren und so weiter, einwandfrei funktionieren'. Behoben und live bewiesen: geteilte Rate-Bremse (Menue zeigte mal alle, mal 2 Zeilen), 600-Zeichen-Falle bei Bildauftraegen, Router nachgemessen, SMEJJ_CHAT_SYNC_ENABLED wieder gesetzt (Bilder), Video-Worker entblockt, Stille-Wache gegen endloses Haengen, Funktions-Waechter.",
+  "frozenAt": "2026-08-18T02:58:38.529Z",
+  "confirmation": "Betreiber 2026-08-17/18: 'Knopf-Flackern beheben' + 'Stempel setzen' (v545: der Modell-Knopf zeigt den Wartezustand statt des alten Namens; live verifiziert)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "ea9643c725162e06ee2cfbe53d0ca223e8f0f4a85b39c1d1aaf4d363c428d58a",
+    "public/index.html": "8fbfe946943ad19773030fb8ee71497a9160e1aaa1fc777981e434b0d720bb4e",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "53464bb6953d72e7b491bb02cb89e2da64b4850030953671746f8e2a48669704",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "a3cf517fb63a25a260002ff4e74eac01f8adaf70ae461643cb478f18452de12b",
+    "public/sw.js": "ee42c524b868a1c87bee5408542102633dd97360e8dc0626cc76b54bc2f9a7ee",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
