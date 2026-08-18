@@ -482,3 +482,19 @@ test("Favicon und Marke halten ihre Groesse auch ohne Stylesheet", async () => {
   assert.match(q, /bild\.style\.width = "16px"/);
   assert.match(q, /marke\.style\.width = "16px"/);
 });
+
+// Der Betreiber sah am 2026-08-18 nackte Buchstaben, senkrecht gestapelt und
+// ueber den Rand hinaus: sein Browser hatte neues Skript mit ALTER CSS
+// gemischt. Die Live-CSS war korrekt — sein Browser benutzte sie nur nicht.
+// Eine Kopfleiste darf nicht davon abhaengen, welche Fassung des Stylesheets
+// gerade im Zwischenspeicher liegt.
+test("die Tableiste traegt ihr Layout selbst, ohne Stylesheet", async () => {
+  const fs = await import("node:fs");
+  const q = fs.readFileSync("public/browser-pane-tableiste.js", "utf8");
+  // Die Leiste muss nebeneinander legen — sonst stapeln die Tabs senkrecht.
+  assert.match(q, /behaelter\.style\.display = "flex"/);
+  // Und ein Tab braucht Hoehe, Rahmen und Ausrichtung aus sich heraus.
+  assert.match(q, /knopf\.style\.display = "grid"/);
+  assert.match(q, /knopf\.style\.height = "var\(--bp-control-size, 22px\)"/);
+  assert.match(q, /knopf\.style\.flex = "none"/);
+});
