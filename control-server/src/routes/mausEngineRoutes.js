@@ -177,13 +177,33 @@ export function buildPlannerClient({ env = process.env, fetchImpl = fetch, reque
     // anderes Modell bereitsteht, ist zu streng: er soll planen, nicht ein
     // bestimmtes Modell durchsetzen. Deshalb haengt die Standardkette hinten
     // an — dieselbe, mit der der Chat arbeitet.
+    // SCHNELLE KETTE ZUERST — und das ist keine Bequemlichkeit.
+    //
+    // GEMESSEN 2026-08-18: Ein zweiteiliger Auftrag ("lies X und scrolle")
+    // brauchte mit GLM-5.2 ueber 100 s und lief in die Zeitgrenze; jedes
+    // Kettenglied verbrannte seine Frist, am Ende stand "nicht erreichbar".
+    // Der Auftrag selbst ist mit rund 5300 Zeichen klein — es liegt nicht an
+    // der Groesse, sondern am Tempo des Modells.
+    //
+    // Warum ein schnelles Modell hier VERTRETBAR ist: Der Plan wird danach
+    // fail-closed VALIDIERT. Ein schlechter Plan wird abgelehnt und neu
+    // angefordert; er kommt nie zur Ausfuehrung. Die Sicherheit haengt an der
+    // Pruefung, nicht an der Groesse des Modells — anders als bei einer
+    // Chat-Antwort, die der Nutzer ungeprueft liest.
+    //
+    // Reihenfolge: schnell (Groq) -> coding -> default. Faellt die schnelle
+    // Kette aus, aendert sich nur die Wartezeit, nicht das Ergebnis.
+    const { chain: schnellKette } = resolveModelRequest("fast", requestedModel, env);
     const { chain: codingKette } = resolveModelRequest("coding", requestedModel, env);
     const { chain: reserveKette } = resolveModelRequest("default", requestedModel, env);
-    const gesehen = new Set(codingKette.map((b) => `${b.name}:${b.model || ""}`));
-    const chain = [
-      ...codingKette,
-      ...reserveKette.filter((b) => !gesehen.has(`${b.name}:${b.model || ""}`))
-    ];
+    const gesehen = new Set();
+    const chain = [];
+    for (const backend of [...schnellKette, ...codingKette, ...reserveKette]) {
+      const schluessel = `${backend.name}:${backend.model || ""}`;
+      if (gesehen.has(schluessel)) continue;
+      gesehen.add(schluessel);
+      chain.push(backend);
+    }
     if (!chain.length) throw new Error("kein_planer_backend_konfiguriert");
     // Modellneutral: KEINE feste temperature. Provider wie Moonshot/Kimi-Coding
     // erzwingen modellabhaengige Werte und lehnen andere mit HTTP 400 ab
