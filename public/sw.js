@@ -220,6 +220,8 @@ const SHELL = [
   "/assets/browser-pane-lesezeichen.js",
   "/assets/browser-pane-tasten.js",
   "/assets/browser-pane-suche.js",
+  "/assets/browser-pane-nachrichten.js",
+  "/assets/browser-pane-menue.js",
   "/assets/auth/passkey.js",
   "/assets/auth/passkey-ui.js",
   "/assets/config.js",

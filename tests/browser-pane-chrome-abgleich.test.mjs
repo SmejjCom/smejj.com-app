@@ -318,3 +318,28 @@ test("die Suche waehlt den Weg nach Ansicht", async () => {
   assert.equal(sucheMoeglich("live-browser"), true);
   assert.equal(sucheMoeglich("direct"), false);
 });
+
+// --- Seitenmenue (Rechtsklick auf den Inhalt) --------------------------------
+
+// Ein Menue, das unten rechts halb aus dem Fenster ragt, ist genau dort am
+// wahrscheinlichsten, wo man zuletzt geklickt hat.
+test("das Menue bleibt im sichtbaren Bereich", async () => {
+  const { menuePosition } = await import("../public/browser-pane-menue.js");
+  const eng = menuePosition(1260, 700, 220, 180, 1280, 720);
+  assert.ok(eng.links + 220 <= 1280, "rechter Rand bleibt drin");
+  assert.ok(eng.oben + 180 <= 720, "unterer Rand bleibt drin");
+  const normal = menuePosition(100, 120, 220, 180, 1280, 720);
+  assert.deepEqual(normal, { links: 100, oben: 120 }, "in der Mitte wird nichts verschoben");
+});
+
+// Was hier nicht geht, steht gar nicht erst drin. Ein Menue voller toter
+// Eintraege ("Drucken", "Uebersetzen") sieht nach Browser aus und ist keiner.
+test("das Seitenmenue graut aus, was die Lage nicht hergibt", async () => {
+  const { seitenEintraege } = await import("../public/browser-pane-menue.js");
+  const leer = seitenEintraege({});
+  assert.equal(leer.every((e) => e.aktiv === false), true, "ohne Adresse und Verlauf geht nichts");
+  const voll = seitenEintraege({ kannZurueck: true, kannVor: true, hatAdresse: true });
+  assert.equal(voll.every((e) => e.aktiv === true), true);
+  assert.deepEqual(voll.map((e) => e.id),
+    ["zurueck", "vor", "neuLaden", "adresseKopieren", "externOeffnen"]);
+});

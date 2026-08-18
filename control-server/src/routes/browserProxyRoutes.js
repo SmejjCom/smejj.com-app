@@ -257,6 +257,13 @@ function buildNavigationScript() {
     // abgeschottet (sandbox ohne allow-same-origin), von aussen kommt niemand
     // an dieses Dokument. Die Leiste schickt den Suchtext herein, dieses
     // Skript sucht, hebt hervor und meldet die Trefferzahl zurueck.
+    // Rechtsklick nach oben melden: der Klick landet im Dokument DIESES
+    // Rahmens, unser Panel bekommt ihn sonst nie zu sehen. Die Koordinaten
+    // sind fensterbezogen — der Empfaenger rechnet sie um.
+    '  document.addEventListener("contextmenu", function (event) {',
+    "    event.preventDefault();",
+    '    parent.postMessage({ type: "smejj.browser.rechtsklick", x: event.clientX, y: event.clientY }, "*");',
+    "  });",
     "  var trefferListe = [];",
     "  function suchAufraeumen() {",
     "    for (var i = 0; i < trefferListe.length; i++) {",
