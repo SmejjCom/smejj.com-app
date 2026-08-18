@@ -4,6 +4,7 @@
 // liefert sonst eine sichere, umgeschriebene HTML-Version fuer srcdoc-Iframes.
 // Fail-closed: nur http(s), keine privaten Netze, harte Groessen-/Zeitlimits.
 import { json } from "../http/respond.js";
+import { holeFavicon } from "./faviconHolen.js";
 import { allowedOriginsFromEnv } from "../http/cors.js";
 import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
 
@@ -137,12 +138,20 @@ export async function handleBrowserFetch(url, res, { fetchImpl = fetch, req = nu
     return json(res, 502, { ok: false, error: `Seite konnte nicht gelesen werden: ${String(error?.message || error).slice(0, 200)}` });
   }
 
+  // Favicon mitliefern (als data:, weil img-src fremde Adressen sperrt).
+  // Ein fehlendes Icon ist KEIN Grund, die Seite nicht zu liefern — deshalb
+  // faellt holeFavicon immer auf "" zurueck statt zu werfen, und die eigene
+  // Zielpruefung der Route wird hineingereicht (kein zweiter, womoeglich
+  // schwaecherer Schutz gegen private Netze).
+  const favicon = await holeFavicon(html, finalUrl, { fetchImpl, pruefeZiel: parseBrowserTarget });
+
   return json(res, 200, {
     ok: true,
     finalUrl,
     status: response.status,
     contentType,
     embeddable,
+    favicon,
     title: extractTitle(html) || finalUrl,
     html: rewriteBrowserHtml(html, finalUrl)
   });
