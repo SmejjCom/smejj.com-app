@@ -218,6 +218,11 @@
             <div id="startLog" class="start-log" aria-label="Start Chat" hidden></div>
             <section class="prompt-glass" aria-label="Start Eingabe">
               <textarea id="startMessage" rows="1" aria-label="Startprompt" placeholder="Frag mich alles"></textarea>
+              <!-- Arbeits-Viereck wie im CODE-Bereich (Betreiber 2026-08-18:
+                   "kannst du das fuer den Chat-Bereich auch machen"):
+                   stiller Umriss in Ruhe, cyan waehrend gearbeitet wird.
+                   Gleiches Signal (smejj:chat-strom), gleiche Optik. -->
+              <span id="startArbeit" class="code-arbeit start-arbeit" aria-hidden="true"></span>
               <div class="prompt-actions">
                 <div class="plus-picker">
                   <button id="composerPlusButton" class="ghost-button icon-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Aktionen" title="Aktionen">

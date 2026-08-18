@@ -103,3 +103,40 @@ test("ein Abbruch haelt den Lauf sofort an", async () => {
   assert.equal(ergebnis.abgebrochen, true);
   assert.equal(ergebnis.getan, 1);
 });
+
+// --- Der Knopf ---------------------------------------------------------------
+
+// DIE WICHTIGSTE ZEILE DES MODULS: die Maus bekommt nur den Host, den der
+// Nutzer gerade offen hat. Sonst haette sie eine offene Tuer ins ganze Netz —
+// und sie klickt selbstaendig.
+test("die Erlaubnis gilt nur fuer die offene Seite", async () => {
+  const { erlaubteHosts } = await import("../public/browser-pane-maus.js");
+  assert.deepEqual(erlaubteHosts("https://www.amazon.com/dp/B01"), ["www.amazon.com"]);
+  assert.deepEqual(erlaubteHosts(""), [], "ohne Seite keine Erlaubnis");
+  assert.deepEqual(erlaubteHosts("kein-url"), []);
+});
+
+test("ohne Live-Browser wird ehrlich abgelehnt statt blind losgelaufen", async () => {
+  const { fuehreMausAuftragAus } = await import("../public/browser-pane-maus.js");
+  const ohneSitzung = await fuehreMausAuftragAus({ auftrag: "x", tab: { url: "https://a.de/" }, sende: async () => ({ ok: true }) });
+  assert.equal(ohneSitzung.ok, false);
+  assert.match(ohneSitzung.grund, /Live-Browser/);
+
+  const ohneSeite = await fuehreMausAuftragAus({ auftrag: "x", tab: { sessionId: "s1" }, sende: async () => ({ ok: true }) });
+  assert.equal(ohneSeite.ok, false);
+  assert.match(ohneSeite.grund, /Seite oeffnen/);
+});
+
+// Der Knopf sitzt auf einem der beiden Platzhalter, die rechts ohnehin
+// reserviert waren — die Kopfgeometrie darf sich NICHT aendern.
+test("der Knopf sprengt die Kopfgeometrie nicht", async () => {
+  const fs = await import("node:fs");
+  const shell = fs.readFileSync("public/browser-pane-render.js", "utf8");
+  assert.match(shell, /class="bp-maus"/);
+  // Genau bis zum Ende des Blocks schneiden — ein festes Zeichenfenster
+  // greift ueber das schliessende </div> hinaus und zaehlt Fremdes mit.
+  const start = shell.indexOf('class="bp-tab-right"');
+  const rechts = shell.slice(start, shell.indexOf("</div>", start));
+  const elemente = (rechts.match(/<button|<span/g) || []).length;
+  assert.equal(elemente, 3, "rechts bleiben genau drei Plaetze — die Seitenbreite rechnet damit");
+});
