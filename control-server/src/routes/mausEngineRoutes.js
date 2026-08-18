@@ -162,7 +162,25 @@ export function readMausEngineConfig(env = process.env) {
 // (Default-Kette beginnt bei GLM-5.2); die Engine sieht nur Plan-JSON.
 export function buildPlannerClient({ env = process.env, fetchImpl = fetch, requestedModel = "" } = {}) {
   return async (prompt) => {
-    const { chain } = resolveModelRequest("coding", requestedModel, env);
+    // ZWEI PROFILE HINTEREINANDER, nicht nur eines.
+    //
+    // BEFUND 2026-08-18: Jeder Maus-Auftrag endete mit
+    // "planer_nicht_erreichbar" — obwohl /api/chat einwandfrei antwortete.
+    // Grund: der Planer fragte NUR die "coding"-Kette, und deren Anbieter
+    // sind auf diesem Server nicht hinterlegt. Mit einem ausdruecklich
+    // genannten Modell lief derselbe Auftrag sofort durch.
+    //
+    // Ein Planer, der ausfaellt, weil EIN Profil unbesetzt ist, obwohl ein
+    // anderes Modell bereitsteht, ist zu streng: er soll planen, nicht ein
+    // bestimmtes Modell durchsetzen. Deshalb haengt die Standardkette hinten
+    // an — dieselbe, mit der der Chat arbeitet.
+    const { chain: codingKette } = resolveModelRequest("coding", requestedModel, env);
+    const { chain: reserveKette } = resolveModelRequest("default", requestedModel, env);
+    const gesehen = new Set(codingKette.map((b) => `${b.name}:${b.model || ""}`));
+    const chain = [
+      ...codingKette,
+      ...reserveKette.filter((b) => !gesehen.has(`${b.name}:${b.model || ""}`))
+    ];
     if (!chain.length) throw new Error("kein_planer_backend_konfiguriert");
     // Modellneutral: KEINE feste temperature. Provider wie Moonshot/Kimi-Coding
     // erzwingen modellabhaengige Werte und lehnen andere mit HTTP 400 ab
