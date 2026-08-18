@@ -224,3 +224,17 @@ test("beide Wege stimmen bei derselben Aufgabe ueberein", () => {
     );
   }
 });
+
+test("nur der Auftrag des Nutzers zaehlt, nicht der dazugesuchte Kontext", () => {
+  // GEMESSEN 2026-08-18 im Live-Lauf: der Server uebergab den ZUSAMMENGEBAUTEN
+  // Text (Auftrag + Websuche + Projektwissen). Ein grosser RAG-Block hob damit
+  // eine Einzeiler-Frage ueber die Schwelle — 1.378 Denk-Tokens fuer "Erklaer
+  // mir kurz, was smejj.com macht". Der Kontext, den der Server selbst
+  // dazusucht, darf die Denktiefe NICHT heben.
+  const auftrag = "Bitte refactor diese Funktion";
+  const dazugesucht = `${auftrag}\n\n${"Projektwissen ".repeat(500)}`;
+  assert.ok(dazugesucht.length > DENK_KONTEXT_ZEICHEN, "die Probe muss die Schwelle ueberschreiten");
+  assert.deepEqual(denkBremse({ text: auftrag, dateien: 0 }, {}), THINKING_DISABLED);
+  // Gegenstueck: haengt der NUTZER etwas an, zaehlt es sehr wohl.
+  assert.equal(denkBremse({ text: auftrag, dateien: 1 }, {}), undefined);
+});

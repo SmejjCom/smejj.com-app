@@ -639,8 +639,16 @@ async function handleAgent(req, res) {
   // (siehe chatThinkingPolicy.js) traegt hier dieselbe Regel wie in /api/chat.
   // Vorher entschieden die zwei Wege verschieden, und genau solche Ungleichheit
   // zwischen Chat und Agent war hier schon einmal ein Fehler, kein Entwurf.
+  //
+  // GEMESSEN 2026-08-18 im Live-Lauf: hier stand zuerst `userParts.join(...)` —
+  // also der ZUSAMMENGEBAUTE Text samt Websuche und Projektwissen. Damit reichte
+  // ein grosser RAG-Block, um eine Einzeiler-Frage ueber die Schwelle zu heben:
+  // 2.328 Eingabe-Tokens, davon 1.378 Denk-Tokens fuer "Erklaer mir kurz, was
+  // smejj.com macht". Genau das Gegenteil der Absicht. Massgeblich ist, was der
+  // NUTZER mitbringt: sein Auftrag und die Dateien, die er anhaengt — nicht das,
+  // was der Server selbst dazugesucht hat.
   const thinking = codingTask
-    ? denkBremse({ text: userParts.join("\n\n"), dateien: fileBlocks.length })
+    ? denkBremse({ text: task, dateien: fileBlocks.length })
     : { type: "disabled" };
   // Denktiefe von K3: Wunsch aus den Einstellungen (Reasoning-Aufwand) schlaegt
   // die Regel nach Aufgabentyp; die Env des Betreibers schlaegt beides.
