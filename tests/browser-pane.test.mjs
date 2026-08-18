@@ -90,7 +90,19 @@ test("Browser-Pane header aligns active tab row with URL row", () => {
   assert.match(paneJs, /class="bp-tab-spacer"/);
   assert.match(paneJs, /refs\.prevTab\.addEventListener\("click", \(\) => switchTab\(-1\)\)/);
   assert.match(paneJs, /refs\.nextTab\.addEventListener\("click", \(\) => switchTab\(1\)\)/);
-  assert.match(paneJs, /const visibleTabs = active \? \[active\] : \[\];/);
+  // GEAENDERT 2026-08-17 (Chrome-Abgleich): Hier stand
+  // `const visibleTabs = active ? [active] : []` — die Leiste zeigte immer nur
+  // EINEN Tab. Das war der Grund fuer die Blaetter-Pfeile, die Chrome nicht
+  // hat. Jetzt zeichnet browser-pane-tableiste.js alle Tabs.
+  //
+  // Der Zweck DIESES Tests bleibt unveraendert: die Kopfgeometrie darf nicht
+  // verrutschen. Deshalb wird jetzt geprueft, dass die Leiste ihre Spalte
+  // nicht sprengen kann — sie schrumpft die Tabs und scrollt notfalls,
+  // statt die Adresszeile aus der Flucht zu schieben.
+  assert.match(paneJs, /zeichneTableiste\(refs\.tabs, \{/);
+  assert.match(paneJs, /tabs: state\.tabs/);
+  assert.match(css, /\.bp-tabs\s*\{[\s\S]*overflow-x:\s*auto;/);
+  assert.match(css, /\.bp-tabs\s*\{[\s\S]*min-width:\s*0;/);
 });
 
 test("Browser-Pane opens as right 50/50 split instead of navigating fullscreen", () => {
