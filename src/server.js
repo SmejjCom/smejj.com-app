@@ -41,7 +41,7 @@ import { classifyProfile, executeWithFallback, resolveModelRequest } from "../co
 import { evaluateAiAvailability, resolveServerAiGate } from "../control-server/src/llm/aiAvailability.js";
 import { streamWithTools, withAgentTools, agentToolsEnabled } from "../control-server/src/llm/streamFilter.js";
 import { localAssistantStream } from "../control-server/src/llm/localAssistant.js";
-import { chatThinkingMode, latestUserPrompt } from "./ai/chatThinkingPolicy.js";
+import { chatThinkingMode, denkBremse, latestUserPrompt } from "./ai/chatThinkingPolicy.js";
 import { chatReasoningEffort } from "./ai/reasoningEffortPolicy.js";
 import { allowedOriginsFromEnv, corsHeadersFor, handlePreflight } from "../control-server/src/http/cors.js";
 import { installCrashGuard } from "../control-server/src/http/crashGuard.js";
@@ -642,8 +642,14 @@ async function handleAgent(req, res) {
   // Profilwahl: Web-Fragen nutzen das Web-Zusammenfassungsprofil des Routers.
   const profile = webContext ? "web" : classifyProfile(task);
   // Interaktiver Chat: GLM-Thinking abschalten (sofort sichtbare Antwort statt
-  // 5-20 s unsichtbarem Reasoning). Coding behaelt das Qualitaets-Reasoning.
-  const thinking = codingTask ? undefined : { type: "disabled" };
+  // 5-20 s unsichtbarem Reasoning). Coding behaelt das Qualitaets-Reasoning —
+  // aber seit dem 2026-08-18 nur noch bei echtem Kontext-Umfang: die Denk-Bremse
+  // (siehe chatThinkingPolicy.js) traegt hier dieselbe Regel wie in /api/chat.
+  // Vorher entschieden die zwei Wege verschieden, und genau solche Ungleichheit
+  // zwischen Chat und Agent war hier schon einmal ein Fehler, kein Entwurf.
+  const thinking = codingTask
+    ? denkBremse({ text: userParts.join("\n\n"), dateien: fileBlocks.length })
+    : { type: "disabled" };
   // Denktiefe von K3: Wunsch aus den Einstellungen (Reasoning-Aufwand) schlaegt
   // die Regel nach Aufgabentyp; die Env des Betreibers schlaegt beides.
   return streamLLM(res, messages, {
