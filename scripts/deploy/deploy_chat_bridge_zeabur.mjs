@@ -47,14 +47,25 @@ async function graphql(query, variables = {}) {
 
 // Die genauen Namen der Datei- und Neustart-Befehle koennen sich aendern.
 // Deshalb wird das Schema zur Laufzeit gefragt, statt Namen fest zu verdrahten.
+//
+// GESUCHT WIRD NACH FAEHIGKEIT, NICHT NACH NAMEN (Befund 2026-08-18): Vorher
+// galt jeder Mutationsname, der /file/i enthielt — und das traf
+// `createRegistrantProfile`, weil in "Profile" das Wort "file" steckt. Die
+// eigene Schutzpruefung "kein Datei-Befehl vorhanden" lief dadurch ins Leere:
+// statt der klaren Ansage "die API kann das nicht mehr, es braucht einen
+// Git-Deploy" kam ein verwirrendes "Unknown argument serviceID on field
+// createRegistrantProfile". Ein Befehl taugt nur, wenn er die Argumente
+// `path` UND `content` annimmt — danach wird jetzt gefragt.
 async function findeBefehle() {
   const schema = await graphql(`{ __schema { mutationType { fields { name args { name } } } } }`);
   const felder = schema?.__schema?.mutationType?.fields || [];
-  const suche = (muster) => felder.filter((f) => muster.test(f.name)).map((f) => f.name);
+  const nimmt = (feld, ...namen) => namen.every((name) => (feld.args || []).some((arg) => arg.name === name));
   return {
     alle: felder.map((f) => f.name),
-    datei: suche(/file/i),
-    neustart: suche(/restart|redeploy/i)
+    datei: felder.filter((f) => nimmt(f, "path", "content")).map((f) => f.name),
+    // Nur der Vollstaendigkeit halber gemeldet, nicht zur Auswahl benutzt.
+    dateiVerdaechtig: felder.filter((f) => /file/i.test(f.name)).map((f) => f.name),
+    neustart: felder.filter((f) => /restart|redeploy/i.test(f.name)).map((f) => f.name)
   };
 }
 
@@ -115,9 +126,23 @@ async function main() {
   const befehle = await findeBefehle();
   if (!befehle.datei.length) {
     abbruch([
-      "Die Zeabur-API kennt keinen Datei-Befehl (kein Mutationsname mit 'file').",
-      `Verfuegbar sind ${befehle.alle.length} Befehle; passende fuer Neustart: ${befehle.neustart.join(", ") || "keine"}.`,
-      "Dann bleibt nur der Umstieg des Dienstes auf einen Git-Deploy — siehe Task Capsule."
+      "Die Zeabur-API kennt keinen Befehl, der eine Datei in den Container schreibt",
+      "(kein Mutationsfeld nimmt zugleich 'path' und 'content').",
+      `Verfuegbar sind ${befehle.alle.length} Befehle. Namentlich nach 'file' klingen:`,
+      `  ${befehle.dateiVerdaechtig.join(", ") || "keine"}`,
+      "— das sind aber Profil-, Dockerfile- und Vorlagen-Befehle, keiner davon schreibt",
+      "eine Datei in den laufenden Dienst.",
+      `Neustart-Befehle gaebe es: ${befehle.neustart.join(", ") || "keine"}.`,
+      "",
+      "Der Dienst smejj-chat-bridge laeuft als PREBUILT_V2 OHNE Git-Anbindung; sein",
+      "Quelltext liegt im Container unter /tmp. Solange die API keinen Schreibbefehl",
+      "mehr anbietet, gibt es genau zwei Wege — beide braucht eine Entscheidung:",
+      "  1. Den Dienst auf einen Git-Deploy umstellen (wie smejj-control, dann",
+      "     traegt deploy(gitRef) die Aenderung).",
+      "  2. Die Datei einmalig im Zeabur-Portal einsetzen (Agenten-Sitzungen ist",
+      "     das Bearbeiten von Code im Browser gesperrt).",
+      "",
+      "Es wurde NICHTS veraendert; die laufende Bridge ist unberuehrt."
     ].join("\n"));
   }
 
@@ -136,15 +161,28 @@ async function main() {
 
   // Der konkrete Aufruf haengt am gefundenen Befehlsnamen; die Argumente werden
   // aus dem Schema uebernommen, damit das Skript Schema-Aenderungen ueberlebt.
+  // ZWEI FALLEN IN EINER ZEILE, beide am 2026-08-18 gemessen:
+  //   1. Der Befehl liefert ein Boolean. Eine Feldauswahl `{ __typename }`
+  //      quittiert Zeabur mit 422 ("must not have a selection") — dieselbe
+  //      Falle wie bei `deploy`. Boolean-Mutationen bekommen KEINE Klammern.
+  //   2. `fillCurrentContent` ist PFLICHT (Boolean!). Fehlt es, schlaegt die
+  //      Anfrage fehl, bevor irgendetwas geschrieben wird. Wir liefern den
+  //      vollstaendigen Inhalt selbst, also false.
   const dateiBefehl = befehle.datei[0];
   await graphql(
-    `mutation($serviceID: ObjectID!, $environmentID: ObjectID!, $path: String!, $content: String!) {
-       ${dateiBefehl}(serviceID: $serviceID, environmentID: $environmentID, path: $path, content: $content) { __typename }
+    `mutation($serviceID: ObjectID!, $environmentID: ObjectID!, $path: String!, $content: String!, $fill: Boolean!) {
+       ${dateiBefehl}(serviceID: $serviceID, environmentID: $environmentID, path: $path, content: $content, fillCurrentContent: $fill)
      }`,
-    { serviceID: SERVICE_ID, environmentID: UMGEBUNG_ID, path: ZIEL, content: inhalt }
+    { serviceID: SERVICE_ID, environmentID: UMGEBUNG_ID, path: ZIEL, content: inhalt, fill: false }
   );
 
-  const neustartBefehl = befehle.neustart[0];
+  // Reihenfolge zaehlt (Befund 2026-08-18): `redeployService` antwortet bei
+  // diesem Dienst mit "Cannot redeploy in-place" — smejj-chat-bridge laeuft als
+  // PREBUILT_V2 ohne Git-Anbindung, es gibt also nichts neu zu bauen. Der
+  // Dienst laedt seinen Quelltext beim Start aus der Datei, die oben gerade
+  // geschrieben wurde; ein schlichter Neustart genuegt und ist der einzige Weg,
+  // der hier ueberhaupt traegt.
+  const neustartBefehl = befehle.neustart.find((name) => /^restartService$/.test(name)) || befehle.neustart[0];
   if (neustartBefehl) {
     await graphql(
       `mutation($serviceID: ObjectID!, $environmentID: ObjectID!) {
