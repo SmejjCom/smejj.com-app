@@ -371,3 +371,42 @@ test("Planer-Client fail-closed ohne URL oder ohne Engine-Token", () => {
   assert.throws(() => buildEnvPlannerClient({ SMEJJ_MAUS_ENGINE_TOKEN: "t" }), /loop_planner_nicht_konfiguriert/);
   assert.throws(() => buildEnvPlannerClient({ SMEJJ_MAUS_PLANNER_URL: "https://x.example" }), /loop_planner_nicht_konfiguriert/);
 });
+
+// Der Loop hatte bis 2026-08-17 KEINE Zeitgrenze — maxDurationMs stand im
+// Budget und wurde hier ignoriert. Der Lauf starb an der gekappten Verbindung
+// der Plattform (~300 s) statt sich selbst zu beenden: kein Ergebnis, kein
+// Protokoll. Eine Frist, die niemand liest, ist keine.
+test("Zeitgrenze: der Loop beendet sich selbst und liefert den Stand", async () => {
+  let jetzt = 0;
+  const clock = { now: () => jetzt };
+  const result = await observeDecideAct({
+    task: "irgendwas",
+    policyInput: { ...policyInput, budget: { ...policyInput.budget, maxLoopSteps: 10, maxDurationMs: 100 } },
+    page: mockPage(),
+    clock,
+    plannerClient: async () => {
+      jetzt += 60; // jede Modellfrage kostet 60 "ms" — nach zwei ist die Frist um
+      return decision("act", { step: clickStep });
+    },
+    runAction: async () => ({ ok: true })
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, "loop_zeit_erschoepft");
+  // Der Stand ist DA: zwei Entscheidungen liefen, dann war Schluss — vor der
+  // dritten Modellfrage, nicht mitten in ihr (sie waere bezahlt und verworfen).
+  assert.equal(result.loopSteps, 2);
+  assert.equal(result.modelCalls, 2);
+  assert.equal(result.decisions.length, 2);
+});
+
+test("Zeitgrenze: ohne maxDurationMs laeuft der Loop wie bisher", async () => {
+  const result = await observeDecideAct({
+    task: "irgendwas",
+    policyInput: { ...policyInput, budget: { ...policyInput.budget, maxLoopSteps: 2, maxDurationMs: undefined } },
+    page: mockPage(),
+    plannerClient: async () => decision("act", { step: clickStep }),
+    runAction: async () => ({ ok: true })
+  });
+  assert.equal(result.error, "loop_budget_erschoepft");
+  assert.equal(result.loopSteps, 2);
+});
