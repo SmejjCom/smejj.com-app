@@ -326,6 +326,33 @@ export function backendSupportsReasoningEffort(backend) {
 
 export const REASONING_EFFORTS = Object.freeze(["low", "high", "max"]);
 
+// Ohne `stream_options.include_usage` schickt ein OpenAI-kompatibler Anbieter im
+// Streaming-Modus KEINEN usage-Block — dann bleibt jede Kostenzahl geraten
+// (tokenMesser.js). Das Feld ist Standard, aber nicht jeder Anbieter kennt es.
+//
+// Gelernt aus backendNutztVorlagenDenken() darueber: ein unbekanntes Feld kann
+// HTTP 400 ausloesen, die Kette faellt weiter, und ein gutes Backend gilt als
+// tot. Darum NICHT einfach mitschicken, sondern: einmal mit Feld versuchen; bei
+// 400 dasselbe Backend sofort ohne Feld wiederholen und es sich merken. Der
+// Nutzer merkt nichts, wir verlieren nur die Messung dieses einen Backends.
+const ohneUsageOption = new Set();
+
+export function backendKenntUsageOption(backend) {
+  return !ohneUsageOption.has(backendSchluessel(backend));
+}
+
+export function __setzeUsageOptionZurueck() {
+  ohneUsageOption.clear();
+}
+
+function backendSchluessel(backend) {
+  return `${backend?.name || ""}|${backend?.baseUrl || ""}`;
+}
+
+function usageMessungAn(env) {
+  return String(env?.SMEJJ_USAGE_MESSUNG || "an").trim().toLowerCase() !== "aus";
+}
+
 function buildHeaders(backend) {
   const headers = { "Content-Type": "application/json", ...(backend.extraHeaders || {}) };
   headers[backend.apiKeyHeader] = backend.apiKeyHeader === "Authorization" ? `Bearer ${backend.apiKey}` : backend.apiKey;
@@ -361,29 +388,40 @@ export async function executeWithFallback(chain, messages, {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), limitMs);
     try {
-      const response = await fetchImpl(`${backend.baseUrl}/chat/completions`, {
+      const baueKoerper = (mitUsage) => JSON.stringify({
+        model: backend.model,
+        messages,
+        stream,
+        ...(mitUsage ? { stream_options: { include_usage: true } } : {}),
+        ...(temperature === undefined ? {} : { temperature }),
+        ...(Array.isArray(tools) && tools.length ? { tools } : {}),
+        ...(toolChoice === undefined ? {} : { tool_choice: toolChoice }),
+        ...(maxTokens === undefined ? {} : { max_tokens: maxTokens }),
+        ...(responseFormat === undefined ? {} : { response_format: responseFormat }),
+        ...(thinking !== undefined && backendSupportsThinking(backend) ? { thinking } : {}),
+        // Dasselbe Ziel, andere Sprache: llama.cpp kennt `thinking` nicht.
+        ...(denkenAusgeschaltet(thinking) && backendNutztVorlagenDenken(backend, env)
+          ? { chat_template_kwargs: { enable_thinking: false } }
+          : {}),
+        ...(REASONING_EFFORTS.includes(reasoningEffort) && backendSupportsReasoningEffort(backend)
+          ? { reasoning_effort: reasoningEffort }
+          : {})
+      });
+
+      const mitUsage = stream === true && usageMessungAn(env) && backendKenntUsageOption(backend);
+      const anfragen = (koerper) => fetchImpl(`${backend.baseUrl}/chat/completions`, {
         method: "POST",
         headers: buildHeaders(backend),
         signal: controller.signal,
-        body: JSON.stringify({
-          model: backend.model,
-          messages,
-          stream,
-          ...(temperature === undefined ? {} : { temperature }),
-          ...(Array.isArray(tools) && tools.length ? { tools } : {}),
-          ...(toolChoice === undefined ? {} : { tool_choice: toolChoice }),
-          ...(maxTokens === undefined ? {} : { max_tokens: maxTokens }),
-          ...(responseFormat === undefined ? {} : { response_format: responseFormat }),
-          ...(thinking !== undefined && backendSupportsThinking(backend) ? { thinking } : {}),
-          // Dasselbe Ziel, andere Sprache: llama.cpp kennt `thinking` nicht.
-          ...(denkenAusgeschaltet(thinking) && backendNutztVorlagenDenken(backend, env)
-            ? { chat_template_kwargs: { enable_thinking: false } }
-            : {}),
-          ...(REASONING_EFFORTS.includes(reasoningEffort) && backendSupportsReasoningEffort(backend)
-            ? { reasoning_effort: reasoningEffort }
-            : {})
-        })
+        body: koerper
       });
+      let response = await anfragen(baueKoerper(mitUsage));
+      if (mitUsage && response.status === 400) {
+        // Dieses Backend kennt stream_options nicht. Einmal ohne wiederholen und
+        // es merken — der Chat laeuft weiter, nur ohne Messung dieses Backends.
+        ohneUsageOption.add(backendSchluessel(backend));
+        response = await anfragen(baueKoerper(false));
+      }
       if (response.ok) {
         clearTimeout(timer);
         markModelRuntimeSuccess(backend);

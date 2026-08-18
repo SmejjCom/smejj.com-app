@@ -27,6 +27,8 @@ import { erfasseAktion } from "../evolution/aiEvolutionEngine.js";
 import { parseBrowserTarget, extractTitle } from "../routes/browserProxyRoutes.js";
 import { searchWebDetailed, cleanSnippet, normalizeRegion } from "../../../src/search/webSearch.js";
 import { entwaffneFremdtext } from "../rag/fremdinhaltFilter.js";
+import { neueMessung, notiere } from "./tokenMesser.js";
+import { authenticatedUserId } from "../jobs/jobAccess.js";
 
 const MAX_ROUNDS = 3;
 const MAX_PAGE_CHARS = 6000;
@@ -251,12 +253,32 @@ export const SCHLUSSRUNDE_ANSAGE = [
  * @param {Function} [args.runTool] Werkzeug-Ausfuehrung (testbar injizierbar).
  * @param {object} [args.env]
  */
-export async function streamWithTools({ result, chain, messages, res, options, executeWithFallback, runTool = runAgentTool, env = process.env }) {
+export async function streamWithTools({ result, chain, messages, res, options, executeWithFallback, runTool = runAgentTool, env = process.env, authUser = null, nutzer = "", spur = "chat" }) {
   let current = result;
   const verlauf = [...messages];
+  // Ab hier laeuft die Token-Messung mit (tokenMesser.js). Sie haengt bewusst
+  // HIER und nicht in server.js: der Stream ist die einzige Stelle, an der
+  // Anbieter-Modell, Werkzeugrunden und der usage-Block zusammenkommen.
+  // Eine Werkzeugrunde ist eine EIGENE Modellanfrage mit eigenem usage —
+  // gezaehlt wird die ganze Nutzeranfrage, nicht die erste Runde.
+  const messgeraet = neueMessung({
+    spur,
+    backend: result?.backend,
+    modell: result?.model,
+    // authUser ist der rohe Anmeldedatensatz; authenticatedUserId macht daraus
+    // eine Einweg-Kennung. Eine Mailadresse darf nie in den Messschrieb.
+    nutzer: nutzer || authenticatedUserId(authUser || {})
+  });
+  messgeraet.zaehleEingabe(messages);
+  try {
+    return await schleife();
+  } finally {
+    notiere(messgeraet.fertig(), { env });
+  }
 
+  async function schleife() {
   for (let runde = 0; runde < MAX_ROUNDS; runde += 1) {
-    const { toolCalls, sawContent } = await pumpRound(current.response.body, res, env);
+    const { toolCalls, sawContent } = await pumpRound(current.response.body, res, env, messgeraet);
     if (!toolCalls.length) return finishStream(res);
 
     // Das Modell will ein Werkzeug. Sein bisheriger Text bleibt sichtbar.
@@ -320,6 +342,9 @@ export async function streamWithTools({ result, chain, messages, res, options, e
     const letzte = runde === MAX_ROUNDS - 1;
     if (letzte) verlauf.push({ role: "system", content: SCHLUSSRUNDE_ANSAGE });
     const naechste = await executeWithFallback(chain, verlauf, letzte ? { ...options, tools: undefined } : options);
+    // Der Fallback kann das Modell wechseln — die Kosten gehoeren dem, das
+    // wirklich geantwortet hat, sonst rechnet der Bericht sie dem falschen zu.
+    if (naechste?.ok) messgeraet.wechsleModell(naechste.model);
     if (!naechste?.ok || !naechste.response?.body) {
       res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "\n\nDas Werkzeugergebnis konnte nicht ausgewertet werden." } }] })}\n\n`);
       return finishStream(res);
@@ -335,13 +360,14 @@ export async function streamWithTools({ result, chain, messages, res, options, e
   // Fehler erst durch das neue Werkzeug web_suche: liefert die Suche nichts,
   // versucht das Modell es erneut und schoepft damit alle MAX_ROUNDS aus. Vorher
   // erreichte fast keine Anfrage die letzte Runde.
-  await pumpRound(current.response.body, res, env);
+  await pumpRound(current.response.body, res, env, messgeraet);
   return finishStream(res);
+  }
 }
 
 // Liest einen Modell-Stream: sichtbarer Text geht sofort raus, Werkzeugaufrufe
 // werden gesammelt und NICHT durchgereicht (sie sind kein Antworttext).
-async function pumpRound(body, res, env) {
+async function pumpRound(body, res, env, messgeraet = null) {
   const decoder = new TextDecoder();
   const state = { buffer: "", content: "", insideThink: false };
   const calls = new Map();
@@ -354,7 +380,7 @@ async function pumpRound(body, res, env) {
     while (splitAt !== -1) {
       const event = state.buffer.slice(0, splitAt);
       state.buffer = state.buffer.slice(splitAt + 2);
-      const text = handleEvent(event, state, res, calls, env);
+      const text = handleEvent(event, state, res, calls, env, messgeraet);
       if (text === null) fertig = true;
       else sawContent += text;
       splitAt = state.buffer.indexOf("\n\n");
@@ -362,18 +388,25 @@ async function pumpRound(body, res, env) {
   }
   state.buffer += decoder.decode();
   if (state.buffer.trim()) {
-    const text = handleEvent(state.buffer, state, res, calls, env);
+    const text = handleEvent(state.buffer, state, res, calls, env, messgeraet);
     if (text !== null) sawContent += text;
   }
   void fertig;
+  // Nur der Notnagel: schickt der Anbieter keinen usage-Block, bleibt die
+  // Zeichenzahl. Sie wird im Bericht als "geschaetzt" ausgewiesen.
+  messgeraet?.zaehleAusgabe(sawContent);
   return { toolCalls: [...calls.values()].filter((call) => call.function.name), sawContent };
 }
 
 // Liefert den sichtbaren Text des Ereignisses, oder null bei [DONE].
-function handleEvent(event, state, res, calls, env) {
+function handleEvent(event, state, res, calls, env, messgeraet = null) {
   const payload = leseNutzlast(event);
   if (payload === "[DONE]") return null; // Erst am Ende der Schleife senden.
   const parsed = payload ? sicherParsen(payload) : null;
+  // Der usage-Block kommt als eigenes Ereignis ganz am Ende, meist mit leerem
+  // choices-Array. Er wird gelesen und danach wie bisher weiterbehandelt —
+  // der Filter unten reicht ihn an den Client durch, das ist unveraendert.
+  if (parsed?.usage) messgeraet?.lies(parsed);
   const delta = parsed?.choices?.[0]?.delta;
 
   if (Array.isArray(delta?.tool_calls)) {
