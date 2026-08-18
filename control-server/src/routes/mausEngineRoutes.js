@@ -630,16 +630,29 @@ export async function handleMausRun(req, res, {
   // wie sonst. Herausgegeben wird nur, was sie bestanden hat.
   if (body?.nurPlan === true) {
     let geprueft = null;
-    const ergebnis = await planAndExecute({
-      task,
-      policyInput,
-      plannerClient: plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }),
-      // Ausfuehrung faellt aus: der Plan soll nur entstehen und geprueft
+    // Faellt der Planer aus (Anbieter gedrosselt, Modell weg), soll hier eine
+    // LESBARE Meldung stehen. Ohne diesen Fang flog der Fehler als HTTP 500
+    // durch — und 500 sagt dem Panel nichts ausser "irgendwas".
+    let ergebnis;
+    try {
+      ergebnis = await planAndExecute({
+        task,
+        policyInput,
+        plannerClient: plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }),
+        // Ausfuehrung faellt aus: der Plan soll nur entstehen und geprueft
       // werden. Der VOLLE Plan kommt hier an — `onPlan` liefert bewusst nur
       // eine Kurzmeldung fuer die Fortschrittsanzeige und waere der falsche
       // Griff (erst gemacht, dann gemerkt: der Plan kam ohne Schritte an).
-      runPlan: async (plan) => { geprueft = plan; return { ok: true, nurGeplant: true }; }
-    });
+        runPlan: async (plan) => { geprueft = plan; return { ok: true, nurGeplant: true }; }
+      });
+    } catch (error) {
+      return json(res, 502, {
+        ok: false,
+        error: String(error?.message || error).slice(0, 200),
+        hinweis: "Der Planer war nicht erreichbar. Mit plannerModel laesst sich ein Modell ausdruecklich waehlen.",
+        transparenzhinweis: transparencyNotice("maus-engine-v2")
+      });
+    }
     if (!geprueft) {
       return json(res, 502, { ok: false, error: ergebnis?.error || "kein_plan_erzeugt", transparenzhinweis: transparencyNotice("maus-engine-v2") });
     }
