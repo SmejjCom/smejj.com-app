@@ -28,7 +28,12 @@ export function corsHeadersFor(originHeader, env = process.env) {
     // weiterhin ihr Handler.
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Expose-Headers": "x-smejj-model-backend, x-smejj-provider-request-id",
+    // x-smejj-cache-aehnlichkeit gehoert dazu, seit der semantische Cache
+    // antwortet: ohne sie liest der Client zwar "semantischer-cache" als
+    // Backend, kann aber nicht sehen, WIE aehnlich die Frage war. Genau die
+    // Zahl braucht man, um einen Fehltreffer zu erkennen (gemessen 2026-08-18:
+    // der Wert kam im Browser als null an, weil er nicht freigegeben war).
+    "Access-Control-Expose-Headers": "x-smejj-model-backend, x-smejj-provider-request-id, x-smejj-cache-aehnlichkeit",
     "Access-Control-Max-Age": "600"
   };
 }
