@@ -634,9 +634,11 @@ export async function handleMausRun(req, res, {
       task,
       policyInput,
       plannerClient: plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }),
-      // Ausfuehrung faellt aus: der Plan soll nur entstehen und geprueft werden.
-      runPlan: async () => ({ ok: true, nurGeplant: true, steps: 0 }),
-      onPlan: (plan) => { geprueft = plan; }
+      // Ausfuehrung faellt aus: der Plan soll nur entstehen und geprueft
+      // werden. Der VOLLE Plan kommt hier an — `onPlan` liefert bewusst nur
+      // eine Kurzmeldung fuer die Fortschrittsanzeige und waere der falsche
+      // Griff (erst gemacht, dann gemerkt: der Plan kam ohne Schritte an).
+      runPlan: async (plan) => { geprueft = plan; return { ok: true, nurGeplant: true }; }
     });
     if (!geprueft) {
       return json(res, 502, { ok: false, error: ergebnis?.error || "kein_plan_erzeugt", transparenzhinweis: transparencyNotice("maus-engine-v2") });
