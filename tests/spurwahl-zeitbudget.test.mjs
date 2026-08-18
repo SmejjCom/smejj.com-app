@@ -283,3 +283,34 @@ test("/api/chat mit zwei Endpunkten bleibt beim schnellen Wechsel", async () => 
   }
   assert.equal(grenzen[0], 6500, "der schnelle Wechsel auf die Reserve muss erhalten bleiben");
 });
+
+// ---------------------------------------------------------------------------
+// Grosse Auftraege: der Client darf nicht frueher aufgeben als der Server
+// ueberhaupt zugesteht.
+//
+// GEMESSEN 2026-08-18: ein Coding-Auftrag mit 21.000 Zeichen zeigte
+// "Verbindung zum Server unterbrochen", waehrend der Server laut Messschrieb
+// nach 19,4 s bzw. 69,3 s sauber fertig antwortete. Dieselbe Schwelle von
+// 4.000 Zeichen, die volle DENKTIEFE gewaehrt, muss auch die ZEIT gewaehren,
+// die dieses Denken braucht.
+// ---------------------------------------------------------------------------
+test("ein grosser Auftrag bekommt deutlich mehr Zeit bis zum ersten Byte", () => {
+  const klein = { body: JSON.stringify({ messages: [{ role: "user", content: "kurz" }] }) };
+  const gross = { body: JSON.stringify({ messages: [{ role: "user", content: "x".repeat(21_000) }] }) };
+
+  const budgetKlein = firstByteBudgetFor(klein, 15_000, "https://x/api/chat");
+  const budgetGross = firstByteBudgetFor(gross, 15_000, "https://x/api/chat");
+
+  assert.equal(budgetKlein, 6_500, "kleine Anfragen bleiben unveraendert schnell budgetiert");
+  assert.ok(budgetGross >= 60_000, `grosse Anfragen brauchen das Budget der Bruecke, war ${budgetGross}`);
+  assert.ok(budgetGross > budgetKlein * 5, "der Unterschied muss deutlich sein, nicht kosmetisch");
+});
+
+test("die Groesse schlaegt Route und Modellname, weil sie beide ueberholt", () => {
+  const grossSchnellspur = { body: JSON.stringify({ model: "smejj-fast-1", text: "y".repeat(9_000) }) };
+  // Auf der Schnellspur-Route und mit Schnellspur-Modell — trotzdem geduldig.
+  assert.ok(firstByteBudgetFor(grossSchnellspur, 15_000, "https://x/api/chat") >= 60_000);
+  // Gegenstueck: knapp unter der Schwelle bleibt alles beim Alten.
+  const knappDrunter = { body: "z".repeat(3_500) };
+  assert.equal(firstByteBudgetFor(knappDrunter, 15_000, "https://x/api/chat"), 6_500);
+});
