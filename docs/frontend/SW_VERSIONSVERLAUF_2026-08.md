@@ -1354,3 +1354,13 @@ dieselbe Laufzeit-Ausrichtung an der ersten Textzeile
 (--start-arbeit-top) — ein fester Wert versagte im Code-Bereich am
 Telefon, derselbe Fehler wird hier gar nicht erst gemacht.
 code-flaeche.js v38.
+
+v572 -> v573 (2026-08-18, Betreiber-Freigabe "ja, unten
+festkleben"): das CHAT-Schreibfeld klebt jetzt am unteren Rand wie im
+CODE-Bereich und bei Claude. Befund, der dahinter steckte: der Betreiber
+sah das neue Arbeits-Viereck nicht — nicht weil es fehlte, sondern weil
+das GANZE Schreibfeld bei langem Verlauf aus dem Bild scrollte (live
+gemessen: Glas-Feld bei top 10938 px). Jetzt ist .home-feed im
+Chat-Zustand eine bildschirmhohe Flex-Spalte, #startLog scrollt INNEN,
+das Feld bleibt stehen. Der leere Willkommens-Bildschirm bleibt
+unveraendert (Regel nur unter .has-start-chat).
