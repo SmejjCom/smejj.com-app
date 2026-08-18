@@ -75,6 +75,12 @@ function contractBlock() {
     "    dazu target (Selektor) bzw. urlPattern bzw. ms",
     '  assert: condition = "selectorExists|selectorTextContains|selectorTextEquals|urlMatches|titleContains|downloadExists",',
     "    dazu target/text/urlPattern/fileName passend zur condition",
+    // GEMESSEN 2026-08-18: scroll fehlte als EINZIGE Aktion in dieser Liste.
+    // Folge: das Modell riet die Form und riet falsch — jeder Auftrag mit
+    // "scrolle" wurde abgelehnt und komplett neu geplant. Ein zweiter
+    // Planungslauf kostet 15-25 s, jedes Mal. Der Plan war nicht schlecht,
+    // ihm fehlte nur ein Feld, das niemand genannt hatte.
+    '  scroll: to = <Selektor> ODER direction = "down|up|left|right" + amountPx (Zahl)',
     "  screenshot: name (Pflicht, kurzer Dateiname ohne Endung)",
     "  extract/extractTable: name (Pflicht) + target (Selektor)",
     '  download: saveAs (Pflicht) + trigger (Selektor) ODER url',
