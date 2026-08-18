@@ -1325,3 +1325,13 @@ Arbeits-Viereck sitzt jetzt auf HOEHE DER TEXTZEILE (top 31 statt 10) —
 bei Claude steht es neben dem Eingabetext, bei uns klebte es am oberen
 Feldrand und driftete 21 px weg, sobald der Ordner-Chip darueber lag.
 Groesse (11 px), Form und Beleuchtung bleiben unveraendert.
+
+v569 -> v570 (2026-08-18, Handy-Durchgang bei 375 px): der feste
+CSS-Wert top:31px fuer das Arbeits-Viereck war FALSCH — am Telefon steht
+die Textzeile weiter oben, das Viereck rutschte 23 px darunter (gemessen
+im integrierten Browser mit Geraete-Emulation). Die Hoehe wird jetzt zur
+LAUFZEIT an der Textzeile gemessen (--code-arbeit-top, neu berechnet bei
+Chips, Tippen, Fensterbreite). Zweite Falle dabei: line-height steht auf
+"normal", parseFloat gibt NaN — Ersatzmass ist Schriftgroesse x 1,2 plus
+Polster. Ergebnis auf BEIDEN Breiten identisch (375 und 1280 px: 3 px
+Restabweichung, optisch mittig). code-flaeche.js v37.
