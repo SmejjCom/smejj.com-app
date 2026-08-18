@@ -618,6 +618,39 @@ export async function handleMausRun(req, res, {
   if (loopEnabled && !Number.isFinite(Number.parseInt(body?.budget?.maxDurationMs, 10))) {
     policyInput.budget.maxDurationMs = LOOP_DEFAULT_DURATION_MS;
   }
+  // NUR PLANEN, nicht ausfuehren.
+  //
+  // Damit der Betreiber der Maus ZUSEHEN kann, faehrt der Plan nicht hier,
+  // sondern in seinem Panel: dieses zeichnet nach jeder Aktion ein neues Bild.
+  // Der Server bleibt zustaendig fuer das, was nur er kann — Modelle und die
+  // fail-closed-Pruefung des Plans. Er gibt den GEPRUEFTEN Plan heraus, und
+  // das Panel fuehrt ihn Schritt fuer Schritt gegen seine eigene Sitzung aus.
+  //
+  // Sicherheit bleibt, wo sie war: der Plan durchlaeuft dieselbe Validierung
+  // wie sonst. Herausgegeben wird nur, was sie bestanden hat.
+  if (body?.nurPlan === true) {
+    let geprueft = null;
+    const ergebnis = await planAndExecute({
+      task,
+      policyInput,
+      plannerClient: plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }),
+      // Ausfuehrung faellt aus: der Plan soll nur entstehen und geprueft werden.
+      runPlan: async () => ({ ok: true, nurGeplant: true, steps: 0 }),
+      onPlan: (plan) => { geprueft = plan; }
+    });
+    if (!geprueft) {
+      return json(res, 502, { ok: false, error: ergebnis?.error || "kein_plan_erzeugt", transparenzhinweis: transparencyNotice("maus-engine-v2") });
+    }
+    return json(res, 200, {
+      ok: true,
+      nurPlan: true,
+      plan: geprueft,
+      planId: geprueft.planId || null,
+      plannerCalls: ergebnis?.plannerCalls ?? null,
+      transparenzhinweis: transparencyNotice("maus-engine-v2")
+    });
+  }
+
   const execute = (onPlan = null) => planAndExecute({
     task: interactive ? { text: task, mode: "interaktiv" } : task,
     policyInput,
