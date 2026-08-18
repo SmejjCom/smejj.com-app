@@ -22,7 +22,14 @@ import { zeaburAbfrage } from "./zeabur-api.mjs";
 import { findeDienst } from "../deploy/zeabur-umgebung-setzen.mjs";
 
 const DIENST = "smejj-control";
-const MARKE = "[verbrauch]";
+// ZWEI Marken, nicht eine (Befund 2026-08-18): der Server schreibt auch
+// "[sem-cache] {...}" fuer den semantischen Cache. Solange hier nur
+// "[verbrauch]" durchkam, lief `cache-paare.mjs` an einem gefilterten Abzug
+// ins Leere und meldete ewig "keine Zeilen gefunden" — obwohl der Cache
+// nachweislich antwortete. Gebaut, aber nicht angeschlossen; aufgefallen
+// erst, als beide Werkzeuge zusammen gegen ECHTE Logdaten liefen.
+// Ein Abzug, zwei Berichte: jeder Auswerter sucht seine eigene Marke.
+const MARKEN = ["[verbrauch]", "[sem-cache]"];
 const seiten = Math.max(1, Math.min(100, Number(process.argv[2] || 10)));
 
 const dienst = await findeDienst(DIENST);
@@ -42,7 +49,7 @@ for (let seite = 0; seite < seiten; seite += 1) {
 
   for (const zeile of zeilen) {
     const text = String(zeile.message || "");
-    if (!text.includes(MARKE)) continue;
+    if (!MARKEN.some((marke) => text.includes(marke))) continue;
     const schluessel = `${zeile.timestamp}|${text}`;
     if (gesehen.has(schluessel)) continue;
     gesehen.add(schluessel);
@@ -55,7 +62,7 @@ for (let seite = 0; seite < seiten; seite += 1) {
 }
 
 if (treffer.length === 0) {
-  console.error("Keine [verbrauch]-Zeilen gefunden.");
+  console.error(`Keine Zeilen mit ${MARKEN.join(" oder ")} gefunden.`);
   console.error("Moegliche Gruende: seit dem Neubau lief noch keine Chat-Anfrage,");
   console.error("oder SMEJJ_VERBRAUCH_LOG steht auf \"aus\".");
   process.exit(1);
