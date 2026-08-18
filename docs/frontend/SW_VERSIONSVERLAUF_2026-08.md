@@ -1364,3 +1364,18 @@ gemessen: Glas-Feld bei top 10938 px). Jetzt ist .home-feed im
 Chat-Zustand eine bildschirmhohe Flex-Spalte, #startLog scrollt INNEN,
 das Feld bleibt stehen. Der leere Willkommens-Bildschirm bleibt
 unveraendert (Regel nur unter .has-start-chat).
+
+v573 -> v574 (2026-08-18, Betreiber: "sobald was angefragt,
+Denkzeit und Arbeitszeit immer so blenden"): die Arbeits-Anzeige leuchtet
+jetzt AB DEM ABSENDEN, nicht erst ab dem ersten Zeichen der Antwort. Die
+Sekunden davor (Verbindung, Denkzeit, Werkzeugrunden) blieben bisher
+dunkel, obwohl laengst gearbeitet wurde.
+Bauart: zwei Quellen, ODER-verknuepft — "vorlauf" (gesendet, Strom noch
+nicht da) und "strom" (bisheriges Signal). Endet der Strom, faellt auch
+der Vorlauf. Notbremse 90 s (dieselbe Grenze wie die Stille-Wache),
+damit es nie ewig blinkt.
+Zwei Fallen dabei: (1) der Hauptknopf ist bei LEEREM Feld der
+Sprachknopf — gemeldet wird nur, wenn wirklich Text da ist; (2) andere
+Handler an denselben Knoepfen rufen stopImmediatePropagation, darum
+haengt die Meldung in der CAPTURE-Phase. Gilt fuer Chat UND Code.
+code-flaeche.js v39.
