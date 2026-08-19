@@ -123,13 +123,13 @@ export function menueEintraege(tabs, tabId) {
   const tab = (tabs || []).find((t) => t.id === tabId);
   const angepinnt = Boolean(tab?.angepinnt);
   return [
-    { id: "pinnen", text: angepinnt ? "Tab loesen" : "Tab anpinnen", aktiv: true },
+    { id: "pinnen", text: angepinnt ? "Tab lösen" : "Tab anpinnen", aktiv: true },
     { id: "duplizieren", text: "Tab duplizieren", aktiv: true },
     // Ein angepinnter Tab laesst sich nicht schliessen, ohne ihn vorher zu
     // loesen — das ist der ganze Sinn des Anpinnens. Chrome macht es genauso.
-    { id: "schliessen", text: "Tab schliessen", aktiv: !angepinnt },
-    { id: "andereSchliessen", text: "Andere Tabs schliessen", aktiv: andere > 0 },
-    { id: "rechteSchliessen", text: "Tabs rechts schliessen", aktiv: rechts > 0 }
+    { id: "schliessen", text: "Tab schließen", aktiv: !angepinnt },
+    { id: "andereSchliessen", text: "Andere Tabs schließen", aktiv: andere > 0 },
+    { id: "rechteSchliessen", text: "Tabs rechts schließen", aktiv: rechts > 0 }
   ];
 }
 
@@ -302,8 +302,10 @@ function kreuzElement(tab, schliessen) {
   const kreuz = document.createElement("span");
   kreuz.className = "bp-tab-close";
   kreuz.setAttribute("role", "button");
-  kreuz.setAttribute("aria-label", `Tab schliessen: ${tab.title || hostVon(tab.url) || "Neuer Tab"}`);
-  kreuz.title = "Schliessen";
+  kreuz.setAttribute("aria-label", `Tab schließen: ${tab.title || hostVon(tab.url) || "Neuer Tab"}`);
+  // Angepinnte Tabs zeigen kein Kreuz (CSS), deshalb stimmt das Kuerzel hier
+  // immer — Cmd+W schliesst bewusst keinen angepinnten Tab.
+  kreuz.title = "Schließen (⌘W)";
   kreuz.textContent = "×";
   kreuz.style.flex = "none";
   kreuz.style.display = "grid";

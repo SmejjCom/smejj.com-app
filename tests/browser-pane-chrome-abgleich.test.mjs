@@ -368,7 +368,10 @@ test("ein angepinnter Tab laesst sich nicht schliessen, ohne ihn zu loesen", asy
   const tabs = [{ id: "a", angepinnt: true }, { id: "b" }];
   const beiA = menueEintraege(tabs, "a");
   assert.equal(beiA.find((e) => e.id === "schliessen").aktiv, false);
-  assert.equal(beiA.find((e) => e.id === "pinnen").text, "Tab loesen", "der Eintrag zeigt, was ein Klick TUT");
+  // Schreibweise 2026-08-18 auf echte Umlaute gezogen (Chrome-Abgleich der
+  // sichtbaren Texte). Der ZWECK bleibt: der Eintrag nennt die Tat, nicht den
+  // Zustand — bei einem angepinnten Tab also "loesen", nicht "angepinnt".
+  assert.equal(beiA.find((e) => e.id === "pinnen").text, "Tab lösen", "der Eintrag zeigt, was ein Klick TUT");
   const beiB = menueEintraege(tabs, "b");
   assert.equal(beiB.find((e) => e.id === "schliessen").aktiv, true);
   assert.equal(beiB.find((e) => e.id === "pinnen").text, "Tab anpinnen");
