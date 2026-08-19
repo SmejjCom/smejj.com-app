@@ -2424,6 +2424,16 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
   --bp-control-size: 22px;
   --bp-control-gap: 3px;
   --bp-side-width: calc((var(--bp-control-size) * 3) + (var(--bp-control-gap) * 2));
+  /* Die TABLEISTE hat schmalere Raender als die Werkzeugleiste: links sitzt
+     nur noch "+" (1 Knopf), rechts Maus und Platzhalter (2). Frueher galt
+     hier ebenfalls --bp-side-width (3 Knoepfe je Seite) — der Rest stand
+     leer, und die Tabs bekamen ihn NICHT. Bei 7 Tabs blieben so 79 px pro
+     Tab, unter der 88-px-Schwelle: selbst der aktive Tab zeigte keinen
+     Titel mehr, nur seinen Anfangsbuchstaben. Diese 75 px gehen jetzt an
+     die Tabs. Chrome macht es genauso — dort beginnen die Tabs am linken
+     Rand, waehrend die Adresszeile darunter ihre drei Knoepfe hat. */
+  --bp-tab-left-width: var(--bp-control-size);
+  --bp-tab-right-width: calc((var(--bp-control-size) * 2) + var(--bp-control-gap));
   /* Inhalt darf nie hoeher als das Panel werden: minmax(0, 1fr) statt fester
      Mindesthoehe — sonst werden Seiten auf kleinen Fenstern abgeschnitten. */
   grid-template-rows: var(--bp-row-height) var(--bp-row-height) auto auto minmax(0, 1fr);
@@ -2445,7 +2455,7 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
 .bp-tabstrip {
   grid-row: 1;
   display: grid;
-  grid-template-columns: var(--bp-side-width) minmax(0, 1fr) var(--bp-side-width);
+  grid-template-columns: var(--bp-tab-left-width) minmax(0, 1fr) var(--bp-tab-right-width);
   align-items: center;
   gap: 6px;
   min-width: 0;
@@ -2666,10 +2676,7 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
   color: #f6f3ee;
 }
 
-.bp-tab-add,
-.bp-tab-prev,
-.bp-tab-next,
-.bp-tab-count {
+.bp-tab-add {
   flex: none;
   width: var(--bp-control-size);
   height: var(--bp-control-size);
@@ -2684,27 +2691,12 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
   cursor: pointer;
 }
 
-.bp-tab-count {
-  min-width: var(--bp-control-size);
-  padding: 0 5px;
-  border: 1px solid rgba(159, 231, 212, 0.36);
-  background: rgba(159, 231, 212, 0.11);
-  color: rgba(159, 231, 212, 0.95);
-  font-size: 13.5px;
-  font-weight: 700;
-}
-
-.bp-tab-add:hover:not(:disabled),
-.bp-tab-prev:hover:not(:disabled),
-.bp-tab-next:hover:not(:disabled),
-.bp-tab-count:hover:not(:disabled) {
+.bp-tab-add:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   color: #f6f3ee;
 }
 
-.bp-tab-add:disabled,
-.bp-tab-prev:disabled,
-.bp-tab-next:disabled {
+.bp-tab-add:disabled {
   opacity: 0.35;
   cursor: default;
 }
@@ -2927,10 +2919,6 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
     padding: 0 5px;
   }
 
-  .bp-tab-count {
-    padding: 0 5px;
-  }
-
   .bp-toolbar {
     padding: 2px 5px;
   }
@@ -2939,6 +2927,26 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
     width: calc(100vw - 12px);
   }
 }
+
+/* ---- browser-pane-chrome.css ---- */
+/* smejj.com — Browser-Panel: die Chrome-Angleichung.
+ *
+ * WARUM ES DIESE DATEI GIBT (2026-08-19): browser-pane.css war auf 842 Zeilen
+ * gewachsen und riss damit die 800-Zeilen-Regel aus AI_Guidelines.md. Gewachsen
+ * ist sie in Lagen — Sicherheitsanzeige, Lesezeichen-Stern, Zoom, Tabmenue,
+ * Seitensuche, angepinnte Tabs, Maus-Knopf kamen nacheinander hinten dran.
+ * Genau diese Lagen stehen jetzt hier: alles, was das Panel an Chrome angleicht.
+ * browser-pane.css behaelt das Grundgeruest (Rahmen, Werkzeugleiste, Adresse,
+ * Inhalt, Fehlerseiten).
+ *
+ * DIE REIHENFOLGE IST TEIL DER BEDEUTUNG. Mehrere Regeln hier ueberschreiben
+ * absichtlich frueheres aus browser-pane.css (z. B. .bp-address gleich dreimal).
+ * Darum steht diese Datei in bundle-start-styles.mjs DIREKT hinter
+ * browser-pane.css. Wer sie davorschiebt, dreht die Kaskade um und bekommt die
+ * Fehler zurueck, die hier schon einmal behoben wurden (Schloss unter fremder
+ * Regel, Zoom-Marke ueber dem Adresstext).
+ */
+
 .bp-tab-spacer {
   flex: none;
   width: var(--bp-control-size);
@@ -3217,6 +3225,12 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
   place-items: center;
   width: var(--bp-control-size);
   height: var(--bp-control-size);
+  /* Ohne dieses min-height gewinnt die globale Touch-Regel `button
+     { min-height: 42px }` — `min-height` schlaegt `height`. Der Knopf wurde
+     dann 42 px hoch und riss die 26-px-Kopfleiste 16 px in die Werkzeugleiste
+     hinein. Gemessen live am 2026-08-18. Jeder Panel-Knopf braucht diese
+     Zeile; beim Maus-Knopf fehlte sie, weil er spaeter dazukam. */
+  min-height: 0;
   border: 0;
   border-radius: 5px;
   background: transparent;

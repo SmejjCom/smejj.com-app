@@ -95,7 +95,17 @@ test("Browser-Pane header aligns active tab row with URL row", () => {
   const css = fs.readFileSync("public/browser-pane.css", "utf8");
   assert.match(css, /\.browser-panel\.is-browser-mode\s*\{[\s\S]*padding:\s*0;/);
   assert.match(css, /--bp-side-width:\s*calc\(\(var\(--bp-control-size\) \* 3\) \+ \(var\(--bp-control-gap\) \* 2\)\);/);
-  assert.match(css, /\.bp-tabstrip\s*\{[\s\S]*grid-row:\s*1;[\s\S]*grid-template-columns:\s*var\(--bp-side-width\) minmax\(0, 1fr\) var\(--bp-side-width\);[\s\S]*height:\s*var\(--bp-row-height\);/);
+  // GEAENDERT 2026-08-18: Die Tableiste hat eigene Randbreiten bekommen.
+  // Zweck des Tests bleibt: die Leiste ist ein Raster aus Rand | Tabs | Rand
+  // und behaelt ihre Zeilenhoehe. Nur die beiden Raender sind nicht mehr so
+  // breit wie die der Werkzeugleiste — links steht seit dem Chrome-Abgleich
+  // nur noch "+", rechts Maus und Platzhalter. Die frei gewordenen 75 px
+  // gehoeren den Tabs, sonst blieben sie leer.
+  assert.match(css, /\.bp-tabstrip\s*\{[\s\S]*grid-row:\s*1;[\s\S]*grid-template-columns:\s*var\(--bp-tab-left-width\) minmax\(0, 1fr\) var\(--bp-tab-right-width\);[\s\S]*height:\s*var\(--bp-row-height\);/);
+  // Die Raender muessen sich aus den Knopfmassen ERRECHNEN, nicht geraten
+  // sein — sonst passt die Leiste beim naechsten Groessenwechsel nicht mehr.
+  assert.match(css, /--bp-tab-left-width:\s*var\(--bp-control-size\);/);
+  assert.match(css, /--bp-tab-right-width:\s*calc\(\(var\(--bp-control-size\) \* 2\) \+ var\(--bp-control-gap\)\);/);
   assert.match(css, /\.bp-tabstrip\s*\{[\s\S]*border-bottom:\s*1px solid rgba\(255, 255, 255, 0\.1\);/);
   assert.match(css, /\.bp-toolbar\s*\{[\s\S]*grid-row:\s*2;[\s\S]*grid-template-columns:\s*var\(--bp-side-width\) minmax\(0, 1fr\) var\(--bp-side-width\);[\s\S]*height:\s*var\(--bp-row-height\);/);
   assert.match(css, /\.bp-tab\s*\{[\s\S]*height:\s*var\(--bp-control-size\);/);
@@ -106,8 +116,16 @@ test("Browser-Pane header aligns active tab row with URL row", () => {
   assert.match(paneJs, /class="bp-toolbar-left"/);
   assert.match(paneJs, /class="bp-toolbar-right"/);
   assert.match(paneJs, /class="bp-tab-spacer"/);
-  assert.match(paneJs, /refs\.prevTab\.addEventListener\("click", \(\) => switchTab\(-1\)\)/);
-  assert.match(paneJs, /refs\.nextTab\.addEventListener\("click", \(\) => switchTab\(1\)\)/);
+  // GEAENDERT 2026-08-18 (Chrome-Abgleich): Hier stand die Zusicherung, dass
+  // die beiden Blaetterpfeile "‹ ›" am switchTab haengen. Chrome hat diese
+  // Pfeile nicht — sie waren ein Notbehelf aus der Zeit, als die Leiste nur
+  // EINEN Tab zeigte, und kosteten 44 px, die den Tabs fehlten.
+  //
+  // Der Zweck bleibt: der Tab-Wechsel darf nicht verlorengehen. Er haengt
+  // jetzt an Chromes eigenem Kuerzel Strg+Tab, verdrahtet ueber die
+  // Tastenzuordnung. Geprueft wird deshalb die Durchreichung — ohne sie
+  // waere der Wechsel still tot, genau wie bei einem fehlenden Import.
+  assert.match(paneJs, /verdrahtePanelTasten\(\{[^}]*switchTab/);
   // GEAENDERT 2026-08-17 (Chrome-Abgleich): Hier stand
   // `const visibleTabs = active ? [active] : []` — die Leiste zeigte immer nur
   // EINEN Tab. Das war der Grund fuer die Blaetter-Pfeile, die Chrome nicht
