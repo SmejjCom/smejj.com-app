@@ -28,6 +28,12 @@ import { zeigeLesezeichen } from "./browser-pane-lesezeichen.js?v=browser-pane-2
 import { verdrahtePanelTasten, merkeGeschlossen } from "./browser-pane-tasten.js?v=browser-pane-20260709-2";
 import { verdrahtePanelSuche } from "./browser-pane-suche.js?v=browser-pane-20260709-2";
 import { verdrahteMausKnopf } from "./browser-pane-maus.js?v=browser-pane-20260709-2";
+// Gefunden 2026-08-18 beim Livetest: dieser Import FEHLTE, obwohl init() die
+// Funktion benutzt. Folge war kein kleiner Schoenheitsfehler — browser-pane.js
+// warf beim Laden "baueNachrichtenEmpfang is not defined", das ganze Modul kam
+// nie hoch, und damit war der eingebaute Browser stumm tot. Kein Test hat das
+// gemeldet: alle pruefen den QUELLTEXT, keiner laesst das Modul laufen.
+import { baueNachrichtenEmpfang } from "./browser-pane-nachrichten.js?v=browser-pane-20260709-2";
 let suche = null;
 import { buildErrorPageHtml, buildPaneShellHtml } from "./browser-pane-render.js?v=browser-pane-20260709-2";
 

@@ -19,15 +19,28 @@
 //
 // Fail-safe: erkennt sie nichts, gibt sie false zurueck und der Auftrag laeuft
 // unveraendert den gewohnten Chat-Weg.
+
+// WARUM DIE PANEL-MODULE ERST BEIM AUFRUF GELADEN WERDEN (und nicht oben):
+// app.js importiert diese Datei fest. Ein FESTER Import des Browser-Panels
+// haette dessen Ladefehler an app.js weitergereicht — und app.js ist der
+// ganze Chat. Genau das ist am 2026-08-18 im Livetest passiert: browser-pane.js
+// warf beim Laden (ein Import fehlte dort, inzwischen behoben), und mit dem
+// festen Import blieb der komplette Chat stumm. Ein kaputter Browser darf
+// hoechstens den Browser kosten, nie das Tippen.
 //
 // ACHTUNG, ?v=-MARKE: Beide Pfade muessen ZEICHENGLEICH mit denen sein, die
-// index.html bzw. browser-pane.js schon benutzen. Eine andere Marke ist fuer
-// den Browser eine andere Datei — er laedt eine ZWEITE Kopie mit eigenem
-// Zustand. Dann zeigte activeTab() auf ein leeres Panel und starteMausLauf()
-// meldete ewig "Der Browser ist noch nicht bereit". Nichts waere kaputt zu
-// sehen, alles waere kaputt.
-import { activeTab, openBrowserRequest } from "./browser-pane.js?v=browser-pane-20260728-3";
-import { starteMausLauf } from "./browser-pane-maus.js?v=browser-pane-20260709-2";
+// index.html bzw. browser-pane.js benutzen. Eine andere Marke ist fuer den
+// Browser eine andere Datei — er laedt eine ZWEITE Kopie mit eigenem Zustand.
+// Dann zeigte activeTab() auf ein leeres Panel und starteMausLauf() meldete
+// ewig "Der Browser ist noch nicht bereit". Nichts waere kaputt zu sehen,
+// alles waere kaputt.
+const PANEL = "./browser-pane.js?v=browser-pane-20260728-3";
+const PANEL_MAUS = "./browser-pane-maus.js?v=browser-pane-20260709-2";
+
+async function holePanel() {
+  const [pane, maus] = await Promise.all([import(PANEL), import(PANEL_MAUS)]);
+  return { activeTab: pane.activeTab, openBrowserRequest: pane.openBrowserRequest, starteMausLauf: maus.starteMausLauf };
+}
 
 /** Die Vorlage, die der Startseiten-Chip ins Feld setzt (Quellsprache Deutsch). */
 export const MAUS_VORLAGE = "Erledige mit der Maus im Browser:";
@@ -130,10 +143,20 @@ export async function mausAuftragErledigt({ task, output, deps = {} } = {}) {
   if (!istMausAuftrag(task, vorlagen)) return false;
 
   const schreibe = deps.schreibe || baueZeilenschreiber(output);
-  const oeffne = deps.oeffne || openBrowserRequest;
-  const tab = deps.activeTab || activeTab;
-  const starte = deps.starte || starteMausLauf;
   const warte = deps.warte || ((ms) => new Promise((auf) => setTimeout(auf, ms)));
+
+  let panel = { activeTab: () => null, openBrowserRequest: () => false, starteMausLauf: null };
+  if (!deps.oeffne || !deps.activeTab || !deps.starte) {
+    try {
+      panel = await holePanel();
+    } catch (fehler) {
+      schreibe(`Der eingebaute Browser laesst sich gerade nicht laden (${fehler?.message || fehler}). Bitte die Seite neu laden.`);
+      return true;
+    }
+  }
+  const oeffne = deps.oeffne || panel.openBrowserRequest;
+  const tab = deps.activeTab || panel.activeTab;
+  const starte = deps.starte || panel.starteMausLauf;
 
   const aufgabe = mausAufgabeAus(task, vorlagen);
   if (!aufgabe) {
