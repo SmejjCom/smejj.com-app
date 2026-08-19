@@ -142,7 +142,40 @@ export async function speichereChat({ kontoId, chat, env = process.env, fetchImp
 }
 
 /** Holt alle Chats eines Kontos, juengste zuerst. */
-export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch, limit = MAX_CHATS_PRO_KONTO }) {
+/**
+ * Nimmt einem Chat die Nachrichten ab und haengt ihre Anzahl an.
+ *
+ * GEMESSEN 2026-08-19: `/api/chats` lieferte 2,50 MB fuer 88 Chats, weil jeder
+ * Eintrag sein komplettes `messages`-Feld mitschleppte — bei JEDEM Seitenaufruf,
+ * ungecacht. Das waren 65 % des Seitengewichts und brach Static-First: der
+ * Control Server stand damit im Pfad jedes normalen Aufrufs.
+ *
+ * Der Verlaufs-Abgleich braucht die Nachrichten dafuer gar nicht. Er vergleicht
+ * `updatedAt` und holt nur, was wirklich neuer ist. Alles andere war bezahlte
+ * Bandbreite fuer eine Verwerfung.
+ */
+export function ohneNachrichten(chat) {
+  const { messages, ...rest } = chat || {};
+  return { ...rest, nachrichtenAnzahl: Array.isArray(messages) ? messages.length : 0 };
+}
+
+/** Einen einzelnen Chat vollstaendig laden — inklusive Nachrichten. */
+export async function ladeChat({ kontoId, chatId, env = process.env, fetchImpl = fetch }) {
+  const cfg = idriveConfig(env);
+  if (!cfg) return { ok: false, error: "speicher_nicht_eingerichtet", chat: null };
+  if (!chatKennungGueltig(chatId)) return { ok: false, error: "chat_id_ungueltig", chat: null };
+  try {
+    const antwort = await signedS3Get({
+      ...cfg, key: schluessel(kontoId, chatId), allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS
+    });
+    if (!antwort?.body) return { ok: true, chat: null };
+    return { ok: true, chat: JSON.parse(antwort.body) };
+  } catch (error) {
+    return { ok: false, error: String(error?.message || "lesen_fehlgeschlagen").slice(0, 160), chat: null };
+  }
+}
+
+export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch, limit = MAX_CHATS_PRO_KONTO, nurListe = false }) {
   const cfg = idriveConfig(env);
   if (!cfg) return { ok: false, error: "speicher_nicht_eingerichtet", chats: [] };
   const prefix = `${PRAEFIX}/${kontoId}/`;
@@ -161,7 +194,11 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
     } catch { /* ein defekter Eintrag darf den Rest nicht verhindern */ }
   }
   chats.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
-  return { ok: true, chats };
+  // `nurListe` ist bewusst opt-in: ein alter Client, der noch im Browser-Cache
+  // liegt, bekommt weiterhin die vollen Chats. Wuerde die Liste einfach duenner,
+  // importierte er Chats OHNE Nachrichten und ueberschriebe damit seinen eigenen
+  // Verlauf — ein Datenverlust, ausgeloest von einem Performance-Fix.
+  return { ok: true, chats: nurListe ? chats.map(ohneNachrichten) : chats };
 }
 
 /**
