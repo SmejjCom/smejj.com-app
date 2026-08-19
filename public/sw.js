@@ -265,6 +265,12 @@ const SHELL = [
   "/assets/voice-warmup.js",
   "/assets/ai/chat-stream.js",
   "/assets/ai/fetch-retry.js",
+  // Gratis-Stufe 0 und der Modellwaehler haengen als Import an den beiden
+  // Zeilen darueber. Bis 2026-08-19 fehlten sie hier: online lief alles,
+  // offline haette der Fetch-Handler index.html statt JavaScript geliefert
+  // und der ganze Chatstrom waere abgebrochen.
+  "/assets/ai/lokalesModell.js",
+  "/assets/ai/modellRouter.js",
   "/assets/composer-dictation.js",
   "/assets/chat-store.js",
   "/assets/chat-history-view.js",

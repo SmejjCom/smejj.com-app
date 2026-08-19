@@ -9,6 +9,7 @@
 // werden (fetch-retry.js) und welchen Rumpf jeder von ihnen bekommt
 // (chat-history-context.js). Dieses Modul empfaengt nur.
 import { fetchStreamWithRetry } from "./fetch-retry.js";
+import { frageLokal, lokalErlaubt, merkeEntscheidung, taugtFuerLokal } from "./lokalesModell.js";
 
 // Gleicher Schluessel wie in auth/auth-page.js, account-sessions.js und
 // auth-gate.js — dort bewusst dupliziert, damit kein Modul den anderen nur
@@ -490,7 +491,143 @@ export async function readableError(response, offlineNotice = "") {
  * @param {HTMLElement} output Antwort-Knoten
  * @param {{renderMarkdown?: Function, offlineNotice?: string}} deps
  */
+// Betreiber 2026-08-16 ("Chat-Funktion wie ChatGPT"): laufende Stroeme sind
+// abbrechbar. Die Registry haelt jeden aktiven Leser; stoppeChatStrom()
+// cancelt sie alle — die Leseschleife endet dann SAUBER ueber done, der
+// normale Abschluss (Wartesignal weg, Markdown, Notiz-Fallback) laeuft wie
+// bei einem regulaeren Stromende. Das Fensterereignis "smejj:chat-strom"
+// meldet die Zahl laufender Stroeme an die Oberflaeche (Stopp-Knopf).
+const aktiveLeser = new Set();
+
+/**
+ * Ein abgerissener Bild-/Video-Strom hinterlaesst ein `![...](data:...`-Markdown
+ * ohne schliessende Klammer — dann steht 100+ KB base64 als Rohtext im Chat
+ * (live gesehen 2026-08-13 bei einem Bruecken-Neustart mitten im Malen).
+ * Das Fragment wird abgeschnitten und durch einen verstaendlichen Satz ersetzt.
+ */
+export function entferneAbgerisseneMedien(text) {
+  const roh = String(text || "");
+  const start = roh.lastIndexOf("![");
+  if (start === -1) return roh;
+  const rest = roh.slice(start);
+  const klammer = rest.indexOf("](data:");
+  if (klammer === -1 || rest.indexOf(")", klammer) !== -1) return roh;
+  const art = rest.slice(klammer).startsWith("](data:video") ? "Video" : "Bild";
+  return `${roh.slice(0, start).trimEnd()}\n\nDie ${art}-Übertragung ist abgerissen — bitte fordere es einfach noch einmal an.`;
+}
+
+function meldeStromstand() {
+  try {
+    window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: aktiveLeser.size } }));
+  } catch { /* ohne Fenster (Tests) einfach still */ }
+}
+
+export function stoppeChatStrom() {
+  for (const leser of aktiveLeser) {
+    try { leser.cancel(); } catch { /* Strom war schon zu */ }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stille-Wache
+//
+// GEMESSEN 2026-08-17: Ein Video-Auftrag stand 15 Minuten auf "Erzeuge dein
+// Video läuft … (ca. 1-2 Minuten)" — und blieb dort stehen. Der Platz beim
+// Video-Maler war blockiert; die Leitung starb nach der ERSTEN Meldung. Der
+// Chat hat das nie gemerkt und haette bis zum Schliessen des Tabs gewartet.
+//
+// Serverseitig gilt eine 3-Minuten-Grenze, aber sie hilft nichts, wenn der
+// Strom danach still verendet. Diese Wache misst darum die STILLE: kommt
+// laenger als STILLE_GRENZE_MS kein einziges Byte, gilt der Weg als tot.
+//
+// 90 Sekunden mit Absicht: die Bruecke taktet lange Arbeiten alle 10 s
+// ("läuft … 40 s"), ein Modell streamt ohnehin laufend. Wer 90 Sekunden lang
+// gar nichts sagt, sagt nichts mehr. Kurzer gewaehlt wuerde ein langsames
+// Modell abgewuergt.
+const STILLE_GRENZE_MS = 90_000;
+
+function starteStilleWache(reader, beiStille) {
+  let uhr = null;
+  let ausgeloest = false;
+  const neuStellen = () => {
+    clearTimeout(uhr);
+    uhr = setTimeout(() => {
+      ausgeloest = true;
+      beiStille();
+      try { reader.cancel(); } catch { /* Strom war schon zu */ }
+    }, STILLE_GRENZE_MS);
+  };
+  neuStellen();
+  return {
+    lebenszeichen: neuStellen,
+    beenden: () => clearTimeout(uhr),
+    get hatZugeschlagen() { return ausgeloest; }
+  };
+}
+
+/**
+ * STUFE 0 — das Modell im Browser des Nutzers, vor jedem Netzaufruf.
+ *
+ * Betreiber-Anweisung 2026-08-18: unbegrenzt und kostenlos fuer jeden Nutzer.
+ * Das geht nur, wenn die Anfrage unseren Server gar nicht erst erreicht.
+ * Chrome bringt das Modell mit; Google berechnet dafuer nichts.
+ *
+ * Drei Regeln, die hier nicht verhandelbar sind:
+ *  1. Nur wo das kleine Modell wirklich taugt (siehe taugtFuerLokal). Im Zweifel
+ *     Server — eine still verschlechterte Antwort waere mit Vertrauen bezahlt.
+ *  2. SICHTBAR machen. Der Nutzer muss erkennen koennen, dass sein Geraet
+ *     geantwortet hat, und wie er eine gruendlichere Antwort bekommt.
+ *  3. Bei jedem Zweifel WEITERREICHEN: schlaegt es fehl oder wird die Antwort
+ *     zu duenn, laeuft der gewohnte Weg — der Nutzer merkt nur die Wartezeit.
+ *
+ * @returns {Promise<boolean>} true = fertig beantwortet, kein Netzaufruf noetig.
+ */
+async function versucheLokaleAntwort(body, output, renderMarkdown) {
+  if (!lokalErlaubt()) return false;
+  const lage = {
+    frage: String(body?.task || ""),
+    dateien: Array.isArray(body?.files) ? body.files.length : 0,
+    verlauf: Array.isArray(body?.history) ? body.history : [],
+    bilder: body?.preferences?.bild || body?.preferences?.image ? 1 : 0
+  };
+  const urteil = taugtFuerLokal(lage);
+  // Der Grund gehoert IMMER ins Protokoll. Ohne ihn laesst sich "greift nie"
+  // nicht von "ist abgeschaltet" unterscheiden — und genau diese Frage stand
+  // beim ersten Live-Test im Raum, als 19 Gespraechsblasen die Spur still
+  // blockierten.
+  console.info(`[lokal] ${JSON.stringify({ lokal: urteil.ok, grund: urteil.grund })}`);
+  // Mitzaehlen, sonst ist die Gratis-Spur fuer den Tagesbericht unsichtbar:
+  // eine lokal beantwortete Frage erzeugt KEINE Server-Logzeile.
+  merkeEntscheidung(urteil.grund);
+  if (!urteil.ok) return false;
+
+  let text = "";
+  const ergebnis = await frageLokal(lage.frage, {
+    system: "Du bist der Assistent von smejj.com. Antworte kurz, korrekt und in der Sprache des Nutzers.",
+    verlauf: lage.verlauf,
+    onDelta: (zuwachs) => {
+      text += zuwachs;
+      output.textContent = text;
+    }
+  });
+  if (!ergebnis.ok) {
+    // Nichts stehen lassen, was der Server gleich ueberschreibt.
+    output.textContent = "";
+    return false;
+  }
+  const hinweis = "\n\nAuf deinem Geraet beantwortet — ohne Server, ohne Kosten."
+    + " Fuer eine gruendlichere Antwort schreibe \u00bbgenauer\u00ab dazu.";
+  const ganz = `${ergebnis.text}${hinweis}`;
+  if (typeof renderMarkdown === "function") renderMarkdown(output, ganz);
+  else output.textContent = ganz;
+  return true;
+}
+
 export async function streamChatAnswer(url, body, output, { renderMarkdown, offlineNotice = "" } = {}) {
+  // Stufe 0 zuerst: was das Geraet des Nutzers selbst beantworten kann, kostet
+  // niemanden etwas und ist meist schneller (gemessen 1,7-3,5 s gegen 2,9-6,6 s).
+  if (await versucheLokaleAntwort(body, output, renderMarkdown)) return;
+
   // Ab dem Absenden sichtbar arbeiten — der Server meldet sich erst nach
   // gemessenen 5,75 s (siehe starteWartesignal).
   const stoppeWartesignal = starteWartesignal(output);
@@ -515,6 +652,8 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   }
 
   const reader = response.body.getReader();
+  aktiveLeser.add(reader);
+  meldeStromstand();
   const decoder = new TextDecoder();
   let buffer = "";
   // Ausgang der Werkzeugarbeit — gebraucht wird er erst ganz am Ende, fuer die
@@ -525,9 +664,15 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   // nichts stehen (abgebrochener Lauf), kommt sie zurueck.
   let letzteNotiz = "";
 
+  // Stille-Wache: schlaegt der Strom laenger als 90 s nicht mehr an, gilt er
+  // als tot und wird abgebrochen. Ohne sie wartet der Chat endlos.
+  let stilleGemeldet = false;
+  const wache = starteStilleWache(reader, () => { stilleGemeldet = true; });
+  try {
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
+    wache.lebenszeichen();
     buffer += decoder.decode(value, { stream: true });
     const events = buffer.split("\n\n");
     buffer = events.pop() || "";
@@ -564,12 +709,37 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
     }
     output.scrollIntoView({ block: "end" });
   }
+  } catch (abriss) {
+    // Netzabbruch mitten im Bild-/Video-Strom: ohne Saeuberung stuenden hier
+    // 100+ KB base64-Rohtext in der Blase.
+    output.textContent = entferneAbgerisseneMedien(output.textContent);
+    throw abriss;
+  } finally {
+    // Immer deregistrieren — auch wenn read() wirft (Netzabbruch): sonst
+    // bliebe der Stopp-Knopf fuer immer stehen.
+    wache.beenden();
+    aktiveLeser.delete(reader);
+    meldeStromstand();
+  }
   // Auch wenn der Strom ohne ein einziges Ereignis endet: das Signal muss weg.
   stoppeWartesignal();
   clearThinkingState(output);
+  // Der Weg ist mitten in der Arbeit verstummt (gemessen 2026-08-17 an einem
+  // haengenden Video-Auftrag). Ehrlich sagen statt endlos "läuft" zeigen —
+  // und die bisherige Teilantwort behalten, sie ist nicht falsch.
+  if (stilleGemeldet) {
+    const bisher = entferneAbgerisseneMedien(output.textContent).trim();
+    output.textContent = bisher
+      ? `${bisher}\n\n_Abgebrochen: der Server hat sich 90 Sekunden lang nicht mehr gemeldet. Bitte erneut versuchen._`
+      : "Abgebrochen: der Server hat sich 90 Sekunden lang nicht mehr gemeldet. Bitte erneut versuchen.";
+    renderMarkdown?.(output);
+    falteSchritte(output, schritteOhneFundZahl);
+    return;
+  }
   // Der Lauf endete ohne Schlussantwort (alle Runden gingen in Werkzeuge).
   // Dann ist die letzte Arbeitsnotiz besser als eine leere Blase.
   if (!output.textContent.trim() && letzteNotiz.trim()) output.textContent = letzteNotiz;
+  output.textContent = entferneAbgerisseneMedien(output.textContent);
   // VOR renderMarkdown: der Renderer liest textContent und ersetzt innerHTML —
   // danach angehaengter Text bliebe roher Stern-Text.
   output.textContent += quellenHinweis({

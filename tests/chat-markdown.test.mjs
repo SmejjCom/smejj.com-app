@@ -253,10 +253,25 @@ test("Verdrahtung: gerendert wird erst am ENDE des Streams", () => {
   // danach folgt falteSchritte(), das die Schrittliste NEBEN der Antwort
   // zusammenklappt und den Antwort-Knoten gar nicht anfasst. Die eigentliche
   // Zusage wird deshalb direkt geprueft statt ueber die Position.
-  assert.equal((chatStream.match(/renderMarkdown\?\.\(output\)/g) || []).length, 1,
-    "genau EIN Renderaufruf — mehrere hiessen: mittendrin gerendert");
-  assert.doesNotMatch(chatStream, /renderMarkdown\?\.\(output\);[\s\S]*output\.textContent \+=/,
-    "nach dem Rendern darf nichts mehr an den Antworttext angehaengt werden");
+  // Seit 2026-08-19 gibt es ZWEI Renderaufrufe, und beide sind richtig: einer im
+  // Abbruchzweig der Stille-Wache (der sofort per return zurueckkehrt), einer am
+  // regulaeren Ende. Ein blosses Zaehlen wuerde hier die falsche Frage pruefen —
+  // gefaehrlich ist nicht die ANZAHL, sondern ein Aufruf INNERHALB der
+  // Leseschleife: der wuerde die Rohquelle zerstoeren, an der `textContent +=`
+  // noch weiterbaut. Genau das wird darum direkt gemessen.
+  const leseSchleife = chatStream.indexOf("while (true) {");
+  const nachSchleife = chatStream.indexOf("aktiveLeser.delete(reader)");
+  assert.ok(leseSchleife > 0 && nachSchleife > leseSchleife, "Leseschleife nicht gefunden");
+  const renderStellen = [...chatStream.matchAll(/renderMarkdown\?\.\(output\)/g)].map((t) => t.index);
+  assert.ok(renderStellen.length >= 1, "es muss gerendert werden");
+  for (const stelle of renderStellen) {
+    assert.ok(stelle > nachSchleife,
+      "kein Renderaufruf innerhalb der Leseschleife — das zerstoert die Rohquelle");
+  }
+  // Nach dem LETZTEN Rendern darf nichts mehr an den Antworttext angehaengt
+  // werden, sonst stuende roher Stern-Text unter der fertigen Antwort.
+  assert.doesNotMatch(chatStream.slice(renderStellen[renderStellen.length - 1]), /output\.textContent \+=/,
+    "nach dem letzten Rendern darf nichts mehr angehaengt werden");
   assert.match(appJs, /renderMarkdown: renderChatMarkdown/,
     "app.js muss den Markdown-Renderer an den Empfaenger uebergeben");
   // Der Import kam ohne neue Zeile aus (Ratchet): components.js re-exportiert.
