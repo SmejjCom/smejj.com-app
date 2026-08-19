@@ -18,6 +18,7 @@ import {
   kurzeAdresse,
   mausAufgabeAus,
   startAdresseAus,
+  oeffneZiel,
   warteAufSitzung
 } from "../public/maus-absicht.js";
 
@@ -136,4 +137,40 @@ test("alle 14 Sprachen kennen die Vorlage", () => {
     const datei = fs.readFileSync(`public/i18n/${code}.js`, "utf8");
     assert.ok(datei.includes('"Erledige mit der Maus im Browser:"'), `${code} fehlt`);
   }
+});
+
+test("volles Panel blockiert die Maus nicht mehr — und die Meldung luegt nicht", () => {
+  // Live gemessen im Browser des Betreibers: sieben Tabs offen, addTab() gab
+  // nichts zurueck, openBrowserRequest() meldete false — und die alte Fassung
+  // schrieb "es geht nur https" fuer https://smejj.com. Der falsche Grund hat
+  // die Fehlersuche in die Irre geschickt.
+  const gesagt = [];
+  const ereignisse = [];
+  const adresszeile = { value: "", dispatchEvent: (e) => ereignisse.push(e.key) };
+  const vollesPanel = {
+    openBrowserRequest: () => false,
+    normalizeAgentBrowserUrl: (u) => u,
+    openPane: () => {},
+    refs: { address: adresszeile },
+    state: { tabs: new Array(7) }
+  };
+  const ergebnis = oeffneZiel("https://smejj.com", vollesPanel, (t) => gesagt.push(t));
+  assert.equal(ergebnis.ok, true, "bei vollem Panel muss der aktive Tab einspringen");
+  assert.equal(adresszeile.value, "https://smejj.com");
+  assert.deepEqual(ereignisse, ["Enter"]);
+  assert.match(gesagt.join(" "), /7 Tabs/, "der Nutzer muss erfahren, dass sein aktiver Tab benutzt wird");
+  assert.ok(!gesagt.join(" ").includes("https"), "kein falscher https-Grund");
+});
+
+test("eine wirklich unbrauchbare Adresse nennt den richtigen Grund", () => {
+  const panel = { openBrowserRequest: () => false, normalizeAgentBrowserUrl: () => "" };
+  const ergebnis = oeffneZiel("http://unsicher.example", panel, () => {});
+  assert.equal(ergebnis.ok, false);
+  assert.match(ergebnis.grund, /nur https/);
+});
+
+test("der Rat beim fehlenden Live-Browser schickt niemanden im Kreis", async () => {
+  const nie = await warteAufSitzung({ tab: () => ({}), warte: async () => {}, versuche: 1 });
+  assert.ok(!/neu laden/i.test(nie.grund), "Neuladen hilft nicht, also darf es nicht empfohlen werden");
+  assert.match(nie.grund, /Server/);
 });
