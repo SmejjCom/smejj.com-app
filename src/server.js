@@ -70,8 +70,10 @@ import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoute
 import { createChatMedienRoutes } from "../control-server/src/routes/chatMedienRoutes.js";
 import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyncRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
-import { baueDateibloecke } from "./agent/dateiKontext.js";
-import { cacheModus, frageCache, merkeAntwort } from "../control-server/src/llm/semantischerCache.js";
+import { leseUndKuerze } from "./agent/dateiKontext.js";
+import { baueCacheLage, befrageCache, darfAusliefern, liefereAusCache, merkeFuerSpaeter } from "./agent/cacheSpur.js";
+import { baueSystemregeln } from "./agent/systemregeln.js";
+import { holeLiveKontext } from "./agent/liveKontext.js";
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -543,90 +545,29 @@ async function handleAgent(req, res) {
   const voiceMode = body?.preferences?.voiceMode === true;
   if (!task) return json(res, 400, { error: "Missing task" });
 
-  // Kontext-Diaet (2026-08-18): frueher galt eine Grenze JE DATEI von 120.000
-  // Zeichen und KEINE Gesamtgrenze — acht Dateien ergaben bis zu 960.000
-  // Zeichen, rund 240.000 Eingabe-Tokens, also 0,34 USD auf glm-5.2 und
-  // 1,20 USD auf Opus 5. Genau dorthin schickt der Auto-Router diesen Fall
-  // ("viel-kontext"). Jetzt teilen sich alle Dateien EIN Budget; gekuerzt wird
-  // nie still, sondern mit einer Zeile, die sagt, wieviel fehlt.
-  const gelesen = [];
-  for (const file of files) {
-    const safePath = safeResolve(file);
-    const content = await readLimited(safePath, 120_000);
-    gelesen.push({ name: file, inhalt: content });
-  }
-  const dateiKontext = baueDateibloecke(gelesen);
+  // Kontext-Diaet: alle Dateien teilen sich EIN Budget statt je 120.000
+  // Zeichen ohne Gesamtgrenze (das ergab bis zu 1,20 USD je Anfrage).
+  // Lesen, Verteilen und Kuerzen stehen in src/agent/dateiKontext.js.
+  const dateiKontext = await leseUndKuerze(files, safeResolve, readLimited);
   const fileBlocks = dateiKontext.bloecke;
 
   // Coding-Aufgabe -> Code-Agent. Sonst Wissens-/Aktualitaetsfrage -> Live-Websuche.
   const codingTask = fileBlocks.length > 0 || isCodingTask(task);
-  let webContext = "";
-  if (!codingTask) {
-    // Wetter direkt ueber Open-Meteo (echte API, ~0,2s) statt Suchmaschinen-Scraping (~9,5s).
-    const liveIntent = detectLiveInternetIntent(task);
-    if (liveIntent.kind === "weather") {
-      const live = await answerLiveIntent(liveIntent, task).catch(() => null);
-      if (live && live.ok) webContext = "Live-Wetterdaten (Open-Meteo):\n" + live.answer;
-    }
-    // Intent-Gate: nur bei Aktualitaet/URL/Quellenbitte suchen. Suchbegriff und
-    // Markt baut buildAgentWebContext (src/search/webSearchRoute.js).
-    if (!webContext && shouldSearchWeb(task)) webContext = await buildAgentWebContext(task);
-  }
+  // Tagesaktueller Kontext (Wetter, Websuche) — siehe src/agent/liveKontext.js.
+  const webContext = await holeLiveKontext(task, {
+    codingTask,
+    erkenneAbsicht: detectLiveInternetIntent,
+    beantworteLive: answerLiveIntent,
+    sollSuchen: shouldSearchWeb,
+    baueSuchkontext: buildAgentWebContext
+  });
   // Projektwissen (RAG) ergaenzt, ersetzt aber nie die Live-Suche.
   const ragContext = await buildRagContextBlock(config.projectRoot, task, 3);
 
-  let systemLines;
-  if (codingTask) {
-    // Berechtigungs-Modus der Code-Seite (Betreiber-Freigabe 2026-08-16,
-    // "Bruecken-Halt bauen"): die Bruecke reicht Coding-Auftraege per
-    // streamViaControl HIERHER — der Halt muss darum in DIESEM Prompt
-    // stehen, sonst liefert der Control trotz Plan/Manuell fertigen Code
-    // (live gemessen, dreimal).
-    const modus = ["plan", "manuell", "akzeptieren"].includes(String(body?.preferences?.modus || ""))
-      ? body.preferences.modus
-      : "auto";
-    const modusZeile = {
-      plan: "PERMISSION MODE PLAN: Reply ONLY with a short numbered plan and the closing question \"Soll ich so umsetzen?\". Do NOT include any code, diffs, or file contents in this reply — implementation starts only after the user approves in their next message.",
-      manuell: "PERMISSION MODE MANUAL: Reply ONLY with 1-3 sentences describing WHAT you would do, ending with \"Soll ich das so machen?\". Do NOT include any code or diffs — only after the user says yes.",
-      akzeptieren: "PERMISSION MODE AUTO-ACCEPT: Deliver the plan and the complete code/diff suggestions in one pass, then summarize briefly what you did."
-    }[modus];
-    systemLines = [
-      "You are smejj.com Code Agent.",
-      modusZeile || "Return a concise plan and unified diff suggestions only.",
-      "Do not claim that files were changed.",
-      "Dangerous terminal, git, network, secrets, and deletion actions require user approval."
-    ];
-  } else if (webContext) {
-    systemLines = [
-      "Du bist der Assistent von smejj.com mit Live-Internet-Suchergebnissen.",
-      "Beantworte die Frage direkt, korrekt und kompakt in der Sprache des Nutzers.",
-      "Nutze VORRANGIG die Live-Internet-Ergebnisse unten und fasse die relevanten Infos zusammen.",
-      "Fasse in EIGENEN WORTEN und klaren, vollstaendigen Saetzen zusammen; gib NIEMALS rohen Seitentext, Code-, JSON- oder Markup-Fragmente wieder.",
-      "Beispiel: aus der Kontext-Zeile 'Bitcoin 54.792 -0,7% Euro' antwortest du 'Ein Bitcoin kostet aktuell rund 54.792 Euro.' - kopiere niemals ganze Ticker-, Snippet- oder Menue-Zeilen.",
-      // Betreiber-Befund 2026-08-04: Der Nutzer bekam nur die Startseiten der
-      // Portale ("loopnet.com", "crexi.com") statt der gefundenen Treffer und
-      // konnte nichts anklicken. Die Adressen der Treffer SIND das Ergebnis.
-      "Nenne die passenden Treffer einzeln mit ihrer vollstaendigen Adresse aus den Ergebnissen, damit der Nutzer sie anklicken kann.",
-      "Gib niemals nur die Startseite eines Portals an, wenn in den Ergebnissen eine konkrete Trefferadresse steht. Erfinde niemals Adressen.",
-      "Nenne am Ende die genutzte(n) Quelle(n) als URL samt Abrufzeit (Stand).",
-      "Wenn die Ergebnisse die Antwort nicht enthalten, sage das ehrlich und nenne, was du gefunden hast; erfinde nichts."
-    ];
-  } else {
-    systemLines = [
-      "Du bist der Assistent von smejj.com mit integriertem Live-Internet-Zugriff.",
-      "Beantworte die Frage hilfreich, korrekt und kompakt in der Sprache des Nutzers.",
-      "Sage NIEMALS, dass du keinen Internetzugriff hast, offline bist oder nicht suchen kannst.",
-      "Beantworte jede Frage direkt, hilfsbereit und praezise aus deinen Daten und der Wissensbasis."
-    ];
-  }
-  systemLines.push(
-    "Internes Projektwissen ist nur Hintergrund. Nenne interne Dateinamen, Pfade, Memory_Bank.md, Project_Goals.md oder docs/* niemals als oeffentliche Quelle, URL oder Markdown-Link."
-  );
-  if (voiceMode && !codingTask) {
-    systemLines.push(
-      "Sprachmodus: Der Nutzer hoert deine Antwort als Sprachausgabe. Antworte wie in einem natuerlichen Gespraech: kurz (1-3 Saetze), direkt und freundlich. Keine Listen, keine Tabellen, kein Markdown, keine Code-Bloecke, keine URLs."
-    );
-  }
+  const modus = ["plan", "manuell", "akzeptieren"].includes(String(body?.preferences?.modus || ""))
+    ? body.preferences.modus
+    : "auto";
+  const systemLines = baueSystemregeln({ codingTask, webContext, voiceMode, modus });
 
   const userParts = [`Frage/Aufgabe:\n${task}`];
   if (webContext) userParts.push(webContext);
@@ -643,64 +584,17 @@ async function handleAgent(req, res) {
   });
   // Profilwahl: Web-Fragen nutzen das Web-Zusammenfassungsprofil des Routers.
   const profile = webContext ? "web" : classifyProfile(task);
-  // Interaktiver Chat: GLM-Thinking abschalten (sofort sichtbare Antwort statt
-  // 5-20 s unsichtbarem Reasoning). Coding behaelt das Qualitaets-Reasoning —
-  // aber seit dem 2026-08-18 nur noch bei echtem Kontext-Umfang: die Denk-Bremse
-  // (siehe chatThinkingPolicy.js) traegt hier dieselbe Regel wie in /api/chat.
-  // Vorher entschieden die zwei Wege verschieden, und genau solche Ungleichheit
-  // zwischen Chat und Agent war hier schon einmal ein Fehler, kein Entwurf.
-  //
-  // GEMESSEN 2026-08-18 im Live-Lauf: hier stand zuerst `userParts.join(...)` —
-  // also der ZUSAMMENGEBAUTE Text samt Websuche und Projektwissen. Damit reichte
-  // ein grosser RAG-Block, um eine Einzeiler-Frage ueber die Schwelle zu heben:
-  // 2.328 Eingabe-Tokens, davon 1.378 Denk-Tokens fuer "Erklaer mir kurz, was
-  // smejj.com macht". Genau das Gegenteil der Absicht. Massgeblich ist, was der
-  // NUTZER mitbringt: sein Auftrag und die Dateien, die er anhaengt — nicht das,
-  // was der Server selbst dazugesucht hat.
+  // Coding behaelt Qualitaets-Reasoning, aber nur bei echtem Kontext-Umfang.
+  // Begruendung und Messwerte stehen in src/ai/chatThinkingPolicy.js.
   const thinking = codingTask
     ? denkBremse({ text: task, dateien: fileBlocks.length })
     : { type: "disabled" };
-  // SEMANTISCHER CACHE (2026-08-18). Standard ist der SCHATTEN-Modus: er misst,
-  // was er getroffen HAETTE, und veraendert keine Antwort. Scharf wird er erst
-  // per SMEJJ_SEM_CACHE=an, wenn die Trefferpaare an echtem Verkehr geprueft
-  // sind — ein Fehltreffer liefert eine falsche Antwort, und das ist teurer als
-  // jeder gesparte Token.
-  const cacheLage = {
-    frage: task,
-    nutzer: req.authUser?.userId || req.authUser?.email || "unbekannt",
-    verlauf: body.history,
-    dateien: fileBlocks.length,
-    liveInhalt: Boolean(webContext),
-    coding: codingTask
-  };
-  const ausCache = frageCache(cacheLage);
-  // Bei einem Treffer wird das PAAR protokolliert, nicht nur die Zahl. Ohne die
-  // getroffene Frage laesst sich ein Fehltreffer hinterher nicht nachvollziehen —
-  // man saehe nur "Treffer 0,93" und muesste raten, ob das richtig war. Genau
-  // dieselbe Regel wie beim Verbrauch: eine Zahl ohne Beleg ist eine Behauptung.
-  // Gekuerzt auf 120 Zeichen, damit das Log lesbar bleibt.
-  const kurz = (text) => String(text || "").replace(/\s+/g, " ").slice(0, 120);
-  console.log(`[sem-cache] ${JSON.stringify({
-    treffer: ausCache.treffer,
-    grund: ausCache.grund,
-    aehnlich: ausCache.aehnlich ?? null,
-    ...(ausCache.treffer ? { neueFrage: kurz(task), getroffeneFrage: kurz(ausCache.frage) } : {})
-  })}`);
-  if (ausCache.treffer && cacheModus() === "an") {
-    // Als regulaerer Strom ausliefern, damit der Client nichts anders behandeln
-    // muss als sonst. Der Kopf sagt ehrlich, dass kein Modell gelaufen ist.
-    res.writeHead(200, {
-      ...SECURITY_HEADERS,
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "x-smejj-model-backend": "semantischer-cache",
-      "x-smejj-cache-aehnlichkeit": String(ausCache.aehnlich)
-    });
-    res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: ausCache.antwort } }] })}\n\n`);
-    res.write("data: [DONE]\n\n");
-    return res.end();
-  }
+  // Semantischer Cache: Standard ist der Schatten-Modus — er misst, was er
+  // getroffen HAETTE, und veraendert keine Antwort. Regeln, Protokoll und
+  // Auslieferung stehen in src/agent/cacheSpur.js.
+  const cacheLage = baueCacheLage({ task, req, body, fileBlocks, webContext, codingTask });
+  const ausCache = befrageCache(cacheLage);
+  if (darfAusliefern(ausCache)) return liefereAusCache(res, ausCache, SECURITY_HEADERS);
 
   // Denktiefe von K3: Wunsch aus den Einstellungen (Reasoning-Aufwand) schlaegt
   // die Regel nach Aufgabentyp; die Env des Betreibers schlaegt beides.
@@ -713,10 +607,7 @@ async function handleAgent(req, res) {
     spur: "agent",
     ...(voiceMode && !codingTask ? { maxTokens: 400 } : {})
   });
-  // Erst NACH einer vollstaendigen Antwort ablegen. Ein abgebrochener Strom
-  // gibt leeren Text zurueck und faellt damit von selbst durch die Laengenpruefung
-  // in merkeAntwort — eine halbe Antwort waere schlimmer als gar keine.
-  merkeAntwort(cacheLage, antwortText);
+  merkeFuerSpaeter(cacheLage, antwortText);
 }
 
 async function handleStorageStatus(res) {
