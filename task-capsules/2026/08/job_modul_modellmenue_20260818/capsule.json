@@ -1,0 +1,153 @@
+{
+ "jobId": "job_modul_modellmenue_20260818",
+ "createdAt": "2026-08-18T20:55:00-07:00",
+ "owner": "smejj.com App — Sitzung feature/design-v11",
+ "title": "800-Zeilen-Regel: Modell-Menue aus code-flaeche.js herausgeloest",
+ "ziel": "Betreiber-Auftrag im Wortlaut: 'Lese Gesamte Chats dann vergleiche mit Beruecksichtigung und welche Regeln in Beruecksichtigung steht und du hast im Chat nicht gemacht. Macht nachtraeglich was in dieser Beruecksichtigung steht, muss genau gemacht werden.' Aus dem Abgleich blieb als EIGENER Verstoss dieser Sitzung uebrig: code-flaeche.js war ueber mehrere Ausbaustufen auf 1183 Zeilen gewachsen, die Hausregel erlaubt 800.",
+ "anforderungen": [
+  "Hoechstens 800 Zeilen je Datei (Master-Prompt).",
+  "Kein Rueckbau und keine Verhaltensaenderung an einer verifizierten Funktion (Rote Liste).",
+  "Blindgaenger-Verbot: die neue Datei muss im Lauf AUSGELOEST werden, nicht nur geladen.",
+  "Gleiche Modul-Kennung ueberall, sonst zweite Modulinstanz (check:module-queries).",
+  "Precache: jeder Import muss im SHELL stehen, sonst ist die App offline tot."
+ ],
+ "kontext": {
+  "warum_gewachsen": "Modellwahl (2026-08-17), Cline-Katalog, Modell-Menue und Arbeits-Anzeige kamen nacheinander in dieselbe Datei.",
+  "schnitt": "Genommen wurde der Block, der fuer sich steht: Speicher-Schluessel, kurzName, CLINE_KURZ, Katalog-Gedaechtnis, modellAnzeige, oeffneModellMenue. Die Chat-Strom-Verwaltung blieb, weil sie mit dem Senden verzahnt ist.",
+  "kein_ringschluss": "Das Modul importiert code-flaeche.js NICHT zurueck. Die Stufenanzeige kommt als Parameter (modellAnzeige(hausText)), das Neu-Zeichnen als Rueckruf (kontext.beiWahl)."
+ },
+ "befunde": [
+  {
+   "nr": 1,
+   "befund": "CACHE_NAME v579 war beim Deploy live schon vergeben",
+   "quelle": "curl https://smejj.com/sw.js",
+   "konsequenz": "Zwei verschiedene Shells haetten gleich geheissen; Bestandsnutzer haetten je nach Zufall die alte Dateiliste behalten.",
+   "fix": "Vor dem Bump live gemessen statt aus dem Repo geschlossen; auf v580, beim Deploy erneut auf v581 (origin/main war inzwischen selbst auf v580)."
+  },
+  {
+   "nr": 2,
+   "befund": "git checkout -B auf einen dirty Baum verschleppte eine frueher gesetzte sed-Zeile — der Precache-Eintrag stand doppelt",
+   "quelle": "grep -c code-modell-menue sw.js == 2",
+   "konsequenz": "Doppelter Eintrag im ausgelieferten Service Worker.",
+   "fix": "index.html und sw.js hart auf origin/main zurueckgesetzt, dann die seds neu angewandt."
+  },
+  {
+   "nr": 3,
+   "befund": "public/assets/ hinkte einer fremden Sitzung hinterher (app.js b58, maus-absicht.js fehlte)",
+   "quelle": "diff public/index.html public/assets/index.html",
+   "konsequenz": "Ein Vollkopieren public -> assets haette deren Arbeit ueberschrieben.",
+   "fix": "Nur die eigenen Zeilen punktuell nachgezogen."
+  },
+  {
+   "nr": 4,
+   "befund": "Der Waechter war zuerst gruen aus falschem Grund — die Attrappe registrierte den Chip auch im Fall 'ohne Chip'",
+   "quelle": "eigener TUEV-Lauf",
+   "konsequenz": "Ein Test, der nichts misst, ist schlimmer als keiner.",
+   "fix": "Registry leer im kaputten Fall; zusaetzlich mit gekapptem beiWahl-Draht gegengeprueft (rot), dann geheilt (gruen)."
+  },
+  {
+   "nr": 5,
+   "befund": "Browser-Beweis war nicht moeglich: Chrome-Erweiterung nicht verbunden, das eingebaute Panel wird vom Netz abgewiesen",
+   "quelle": "tabs_context_mcp / preview_start",
+   "konsequenz": "Der uebliche Live-Klick-Beweis fiel aus.",
+   "fix": "Ersatz: ausgeloester Lauf im Waechter plus Byte-Vergleich der live ausgelieferten Dateien gegen die lokalen (sha256 gleich). EHRLICH: ein Klick im echten Browser steht noch aus."
+  }
+ ],
+ "betroffeneDateien": [
+  {
+   "pfad": "public/code-flaeche.js",
+   "sha256": "ba7798ef3637b106a36d777151b4982cac1cbe98ada6323816a8c90a887091e3",
+   "zeilen": 800,
+   "aenderung": "1183 -> 800 Zeilen; Modellwahl und Menue heraus, Import + zwei Bruecken-Funktionen herein"
+  },
+  {
+   "pfad": "public/code-modell-menue.js",
+   "sha256": "938a06c3b6922a24c9df027a65fc6ccb65264344ea649a3a57cb41b377476b77",
+   "zeilen": 421,
+   "aenderung": "NEU, 421 Zeilen: Modellwahl-Speicher, Kurznamen, Katalog-Gedaechtnis, Modell-Menue"
+  },
+  {
+   "pfad": "public/sw.js",
+   "sha256": "cd02c67782854405b94523bbd1a224ed823aaefb94da3edcff8cb48fabdbc498",
+   "zeilen": 433,
+   "aenderung": "Precache-Eintrag fuer das neue Modul; CACHE_NAME v578 -> v580"
+  },
+  {
+   "pfad": "public/index.html",
+   "sha256": "c965349f1ae19f2c3a20b3f6ca8d220428123d040fa06351a66202aa732ee4d2",
+   "zeilen": 995,
+   "aenderung": "code-flaeche.js?v=40 -> 41"
+  },
+  {
+   "pfad": "public/assets/code-flaeche.js",
+   "sha256": "ba7798ef3637b106a36d777151b4982cac1cbe98ada6323816a8c90a887091e3",
+   "zeilen": 800,
+   "aenderung": "Ableitung nachgezogen"
+  },
+  {
+   "pfad": "public/assets/code-modell-menue.js",
+   "sha256": "938a06c3b6922a24c9df027a65fc6ccb65264344ea649a3a57cb41b377476b77",
+   "zeilen": 421,
+   "aenderung": "Ableitung nachgezogen"
+  },
+  {
+   "pfad": "public/assets/sw.js",
+   "sha256": "890564f4beb0a060b59c20784f717a7034afacca24dd032341d0fa9736817d2c",
+   "zeilen": 430,
+   "aenderung": "Ableitung punktuell nachgezogen"
+  },
+  {
+   "pfad": "public/assets/index.html",
+   "sha256": "b6c9c2aacd028851c561654ac5efe15d234c577b5ac2d0a850d5dbeb8426fe33",
+   "zeilen": 995,
+   "aenderung": "Ableitung punktuell nachgezogen"
+  },
+  {
+   "pfad": "tests/code-modell-menue.test.mjs",
+   "sha256": "dbad5d82f79c46b428488600cfd93400c0f0f567cdf0c61589a9dd989c37737d",
+   "zeilen": 180,
+   "aenderung": "NEU: Waechter, der das Menue ausloest statt nur importiert"
+  },
+  {
+   "pfad": "package.json",
+   "sha256": "0ad7ff4ddd85e786b607012b9f2a0da960db9259829e6b201fb7c98566e33afa",
+   "zeilen": 131,
+   "aenderung": "Waechter in check:frontend eingetragen"
+  }
+ ],
+ "verification": {
+  "check:guidelines": "code-flaeche.js taucht nicht mehr auf (vorher 1183/800). Die uebrigen 15 Verstoesse sind vorbestehend und fremd — Rote Liste, nicht ohne Freigabe angefasst.",
+  "check:architecture": "7 pass, 0 fail",
+  "check:frontend": "497 gruen / 5 rot. Die 5 bestehen VOR und NACH dieser Arbeit identisch (per git stash gegengeprueft) und stammen aus public/app.js einer fremden Sitzung (801 Zeilen).",
+  "waechter_tuev": "tests/code-modell-menue.test.mjs wird mit gekapptem Rueckruf rot, geheilt gruen.",
+  "live": "https://smejj.com/assets/code-modell-menue.js HTTP 200; sha256 von code-flaeche.js und code-modell-menue.js live == lokal; index.html traegt ?v=41; sw.js CACHE_NAME v581.",
+  "offen": "Klick im echten Browser (Menue oeffnen, Modell waehlen, senden) — Netz blockiert beide Browser-Wege auf diesem Rechner."
+ },
+ "benchmarks": {
+  "hinweis": "Keine eigene Web-Vitals-Messung: eine Parallelsitzung hat am selben Tag gemessen und das Ergebnis als unbrauchbar verworfen (Messnetz gefiltert, TLS 1,7-3,1 s auf ALLEN Domains).",
+  "quelle": "docs/benchmarks/webvitals_2026-08-19_messnetz-verfaelscht.json",
+  "eigener_beitrag": "Diese Arbeit aendert das Auslieferungsgewicht praktisch nicht: dieselbe Menge Code, auf zwei Dateien verteilt, beide im Precache."
+ },
+ "kosten": {
+  "neueLaufendeKosten": "keine",
+  "neuerAnbieter": "keiner"
+ },
+ "rollback": {
+  "marke": "rollback-vor-modularisierung-20260818 (lokal, vor dem ersten Schnitt gesetzt)",
+  "app_repo": "git revert 17fca3c 6e2a8cd bb675cd",
+  "frontend_repo": "git revert 29d897f in SmejjCom/smejj-app-frontend, danach CACHE_NAME erneut anheben",
+  "hinweis": "Ein blosser Revert im Frontend OHNE CACHE_NAME-Anhebung liefert Bestandsnutzern die alte Shell mit dem neuen Precache-Eintrag."
+ },
+ "qualitaetsbewertung": {
+  "erledigt": "800-Zeilen-Regel fuer die eigene Datei; Waechter mit TUEV; live ausgeliefert und byte-verifiziert.",
+  "eigene_fehler_dieses_laufs": [
+   "v579 zweimal vergeben, weil zuerst aus dem Repo statt live geschlossen",
+   "dirty checkout -B erzeugte einen doppelten Precache-Eintrag",
+   "erster Waechter war gruen aus falschem Grund"
+  ],
+  "nicht_erledigt": [
+   "Klick-Beweis im echten Browser (Netz blockiert)",
+   "Die 15 fremden 800-Zeilen-Verstoesse — Rote Liste, brauchen schriftliche Freigabe"
+  ]
+ }
+}

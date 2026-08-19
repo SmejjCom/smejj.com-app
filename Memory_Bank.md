@@ -5,6 +5,53 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-18] 800-ZEILEN-REGEL: MODELL-MENUE HERAUSGELOEST (job_modul_modellmenue_20260818)
+
+Capsule: `task-capsules/2026/08/job_modul_modellmenue_20260818/capsule.json`
+(Object Brain: `s3://smejj-model-files/capsules/app/job_modul_modellmenue_20260818/`).
+Frontend live: `29d897f`, App-Repo `bb675cd` / `6e2a8cd` / `17fca3c`.
+
+**Entscheidung:** `public/code-flaeche.js` war ueber mehrere Ausbaustufen auf
+1183 Zeilen gewachsen (Limit 800) — ein Verstoss der eigenen Sitzung, nicht
+geerbt. Herausgeloest wurde `public/code-modell-menue.js` (421 Zeilen):
+Modellwahl-Speicher, Kurznamen, Katalog-Gedaechtnis, Modell-Menue.
+`code-flaeche.js` steht jetzt bei 800.
+
+**Begruendung:** Geschnitten wurde am Block, der fuer sich steht. Der
+Rueckschnitt darf keinen Ringschluss erzeugen — das Modul importiert
+`code-flaeche.js` NICHT zurueck: die Stufenanzeige kommt als Parameter herein
+(`modellAnzeige(hausText)`), das Neu-Zeichnen als Rueckruf (`kontext.beiWahl`).
+Kennung ohne `?v` wie `config.js`, sonst entstuende eine zweite Modulinstanz mit
+eigenem Zustand (`check:module-queries`).
+
+**Verifikation:** `check:guidelines` fuehrt `code-flaeche.js` nicht mehr;
+`check:architecture` 7/0; `check:frontend` 497 gruen (vorher 492) — die 5 roten
+bestehen VOR und NACH der Arbeit identisch (per `git stash` gegengeprueft) und
+stammen aus `public/app.js` einer fremden Sitzung. Live byte-verifiziert:
+sha256 von `code-flaeche.js` und `code-modell-menue.js` live == lokal,
+`index.html` traegt `?v=41`, `sw.js` `CACHE_NAME v581`.
+
+**MERKREGELN aus diesem Lauf**
+
+1. **CACHE_NAME live messen, nicht aus dem Repo schliessen.** `v579` war beim
+   Deploy schon vergeben, `v580` beim zweiten Anlauf ebenfalls — beide von einer
+   Parallelsitzung. Zwei gleichnamige Shells heissen: Bestandsnutzer behalten je
+   nach Zufall die alte Dateiliste. `curl https://smejj.com/sw.js` vor jedem Bump.
+2. **`git checkout -B` auf einen dirty Baum verschleppt frueheres sed.** Der
+   Precache-Eintrag stand danach DOPPELT im ausgelieferten Service Worker. Wer
+   punktuell deployt, setzt die Zieldateien erst hart auf `origin/main`
+   (`git checkout origin/main -- <datei>`) und wendet die Aenderung dann neu an.
+3. **`public/assets/` ist keine Kopie, sondern eine eigene Zeitachse.** Sie hinkte
+   einer fremden Sitzung hinterher (`app.js b58`, `maus-absicht.js` fehlte). Ein
+   Vollkopieren `public/ -> public/assets/` haette deren Arbeit ueberschrieben —
+   punktuell nachziehen, nie `cp` ueber die ganze Datei.
+4. **Ein Waechter kann gruen sein aus falschem Grund.** Die erste Fassung des
+   Tests registrierte den Chip auch im Fall "ohne Chip" — sie mass nichts.
+   Erst der TUEV (Rueckruf-Draht kappen -> ROT, heilen -> GRUEN) beweist, dass
+   ein Test etwas prueft. Und: das Modul wird AUSGELOEST (Klick auf die
+   Auto-Zeile), nicht nur importiert — ein Import-Test findet den stillen
+   Bruch beim Auslagern nicht.
+
 ### [2026-08-19] KOSTENARCHITEKTUR: SIEBEN HEBEL, KEINE DECKEL (job_kostenarchitektur_20260819)
 
 Capsule: `task-capsules/2026/08/job_kostenarchitektur_20260819/capsule.json`
