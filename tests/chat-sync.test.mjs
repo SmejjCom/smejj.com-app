@@ -5,6 +5,9 @@ import {
   chatKennungGueltig,
   konfliktSieger,
   kontoKennung,
+  ladeChat,
+  ladeChats,
+  ohneNachrichten,
   pruefeChat,
   schluessel,
   syncAktiv
@@ -236,4 +239,141 @@ test("der Grund wird aus einer KOPIE der Antwort gelesen", () => {
   // antwort.json() wuerde den Rumpf verbrauchen; ein spaeterer Leser bekaeme
   // nichts mehr. clone() haelt beide Wege offen.
   assert.match(SYNC_QUELLE, /await antwort\.clone\(\)\.json\(\)/);
+});
+
+// ---------------------------------------------------------------------------
+// KLEINE LISTE — gefunden durch die Performance-Messung am 2026-08-19.
+//
+// `/api/chats` lieferte 2,50 MB bei 88 Chats, weil jeder Eintrag sein
+// komplettes `messages`-Feld mitschleppte, bei JEDEM Seitenaufruf und ungecacht.
+// Das waren 65 % des Seitengewichts und brach Static-First.
+//
+// Die Tests sichern beide Seiten ab: die Liste muss klein werden, UND der alte
+// Vertrag muss unveraendert bleiben — sonst importiert ein Client aus dem
+// Browser-Cache leere Chats ueber seinen eigenen Verlauf.
+// ---------------------------------------------------------------------------
+const S3_ENV = {
+  SMEJJ_CHAT_SYNC_ENABLED: "1",
+  IDRIVE_E2_ENDPOINT: "https://e2.example",
+  IDRIVE_E2_ACCESS_KEY: "k",
+  IDRIVE_E2_SECRET_KEY: "s",
+  IDRIVE_E2_BUCKET: "b",
+  IDRIVE_E2_REGION: "us-west-2"
+};
+
+// Die Attrappe muss liefern, was der echte Signierer liest: signedS3Get nimmt
+// `arrayBuffer()` und fragt `headers.get("etag")`. Ein Doppel, das nur `text()`
+// kann, laesst die Tests scheitern, obwohl der Code stimmt — genau das ist hier
+// beim ersten Anlauf passiert.
+function antwort(status, koerper) {
+  const bytes = Buffer.from(koerper, "utf8");
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => koerper,
+    arrayBuffer: async () => bytes,
+    headers: { get: () => null }
+  };
+}
+
+function s3Doppel(chats) {
+  const liste = chats.map((c) => `<Key>chats/user_a/${c.id}.json</Key>`).join("");
+  return async (url) => {
+    const text = String(url);
+    if (text.includes("list-type")) return antwort(200, `<ListBucketResult>${liste}</ListBucketResult>`);
+    const treffer = chats.find((c) => text.includes(`${c.id}.json`));
+    if (!treffer) return antwort(404, "");
+    return antwort(200, JSON.stringify(treffer));
+  };
+}
+
+const CHAT_A = { id: "chat_a", ownerId: "user_a", title: "A", updatedAt: "2026-08-19T10:00:00Z", messages: [{ role: "user", content: "x".repeat(500) }, { role: "assistant", content: "y" }] };
+const CHAT_B = { id: "chat_b", ownerId: "user_a", title: "B", updatedAt: "2026-08-19T09:00:00Z", messages: [{ role: "user", content: "z" }] };
+
+test("ohneNachrichten nimmt die Nachrichten weg und nennt ihre Anzahl", () => {
+  const schlank = ohneNachrichten(CHAT_A);
+  assert.equal(schlank.messages, undefined, "genau das war die halbe Megabyte-Last");
+  assert.equal(schlank.nachrichtenAnzahl, 2, "die Anzahl bleibt, damit die Liste etwas anzeigen kann");
+  assert.equal(schlank.id, "chat_a");
+  assert.equal(schlank.updatedAt, "2026-08-19T10:00:00Z", "der Abgleich braucht genau dieses Feld");
+  assert.equal(schlank.title, "A");
+  // Gegenstueck: Unsinn faellt nicht um.
+  assert.equal(ohneNachrichten(null).nachrichtenAnzahl, 0);
+});
+
+test("nurListe=true liefert die Liste OHNE Nachrichten", async () => {
+  const ergebnis = await ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]), nurListe: true });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.chats.length, 2);
+  for (const c of ergebnis.chats) assert.equal(c.messages, undefined, "kein Chat darf Nachrichten tragen");
+  assert.equal(ergebnis.chats[0].nachrichtenAnzahl, 2);
+});
+
+test("OHNE nurListe bleibt der alte Vertrag unveraendert", async () => {
+  // Der wichtigere Test: ein alter Client aus dem Browser-Cache ruft weiterhin
+  // /api/chats ohne Parameter. Bekaeme er ploetzlich Chats ohne Nachrichten,
+  // importierte er sie leer ueber seinen eigenen Verlauf — Datenverlust,
+  // ausgeloest von einem Performance-Fix.
+  const ergebnis = await ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]) });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.chats[0].messages.length, 2, "die Nachrichten muessen da sein");
+  assert.equal(ergebnis.chats[0].nachrichtenAnzahl, undefined, "und kein neues Feld dazukommen");
+});
+
+test("ladeChat holt genau einen Chat, vollstaendig", async () => {
+  const ergebnis = await ladeChat({ kontoId: "user_a", chatId: "chat_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]) });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.chat.id, "chat_a");
+  assert.equal(ergebnis.chat.messages.length, 2, "hier MUESSEN die Nachrichten kommen");
+});
+
+test("ladeChat weist eine ungueltige Kennung ab, statt danach zu suchen", async () => {
+  const ergebnis = await ladeChat({ kontoId: "user_a", chatId: "../fremd", env: S3_ENV, fetchImpl: s3Doppel([]) });
+  assert.equal(ergebnis.ok, false);
+  assert.equal(ergebnis.error, "chat_id_ungueltig");
+});
+
+test("ladeChat liefert null statt zu werfen, wenn es den Chat nicht gibt", async () => {
+  const ergebnis = await ladeChat({ kontoId: "user_a", chatId: "chat_weg", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A]) });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.chat, null);
+});
+
+test("Route: ?id= liefert einen Chat, ?nurListe=1 die kleine Liste", async () => {
+  const bauen = () => createChatSyncRoutes({
+    env: S3_ENV,
+    readSession: () => ({ userId: "user_a" }),
+    json: fakeJson,
+    readJson: async () => ({}),
+    fetchImpl: s3Doppel([CHAT_A, CHAT_B])
+  });
+
+  const einzeln = fakeRes();
+  await bauen().handle({ method: "GET" }, einzeln, new URL("https://x/api/chats?id=chat_a"));
+  assert.equal(einzeln.status, 200);
+  assert.equal(einzeln.payload.chat.messages.length, 2);
+
+  const klein = fakeRes();
+  await bauen().handle({ method: "GET" }, klein, new URL("https://x/api/chats?nurListe=1"));
+  assert.equal(klein.status, 200);
+  assert.equal(klein.payload.chats[0].messages, undefined);
+
+  const alt = fakeRes();
+  await bauen().handle({ method: "GET" }, alt, new URL("https://x/api/chats"));
+  assert.equal(alt.status, 200);
+  assert.ok(Array.isArray(alt.payload.chats[0].messages), "der alte Weg bleibt vollstaendig");
+});
+
+test("Route: ?id= mit ungueltiger Kennung gibt 400, nicht 200 mit null", async () => {
+  const routen = createChatSyncRoutes({
+    env: S3_ENV,
+    readSession: () => ({ userId: "user_a" }),
+    json: fakeJson,
+    readJson: async () => ({}),
+    fetchImpl: s3Doppel([])
+  });
+  const res = fakeRes();
+  await routen.handle({ method: "GET" }, res, new URL("https://x/api/chats?id=..%2Ffremd"));
+  assert.equal(res.status, 400);
+  assert.equal(res.payload.error, "chat_id_ungueltig");
 });
