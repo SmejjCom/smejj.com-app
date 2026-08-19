@@ -1,19 +1,19 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-19T02:56:44.137Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-18 im Wortlaut: 'Auto soll ganz oben 1. sein, smejj 1.0 2. sein, Das heisst Auto wecksel platz mit smejj 1.0.' — Reihenfolge im Modell-Menue getauscht (code-flaeche.js), live bewiesen an der ausgelieferten Datei v40. Dazu die Schutzregel des Master-Prompts: nichts darf kaputtgehen oder ohne schriftliche Freigabe geaendert werden.",
+  "frozenAt": "2026-08-19T03:59:50.484Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-19 im Wortlaut: 'Start-Lock stempeln wenn Parallelsitzung fertig ist'. Bedingung erfuellt: Arbeitsbaum sauber (0 offene Dateien), Parallelsitzung hat 6 Commits abgeschlossen. VOR dem Stempel gemessen: meine 40 Tests gruen; Frontend-Suite 492 gruen / 5 rot, und diese 5 waren gegen meinen Vorgaenger-Commit ea9022f BEREITS rot (Altlasten: @resvg/resvg-js lokal nicht installiert, app.js-Zeilengrenze, composer-Test) — die fremde Arbeit hat KEINEN Test rot gemacht und einen repariert. Live gegengeprueft: Auto steht vor smejj 1.0 im neuen Modul code-modell-menue.js (Position 11966 vs 12590), sw v581, app b59.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c0ab1ed043294d3d9dc4edc6e2d30fc0bdd210f393b0df2b6cbd48b3932b320c",
+    "public/index.html": "c965349f1ae19f2c3a20b3f6ca8d220428123d040fa06351a66202aa732ee4d2",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
-    "public/start-styles.css": "df586b1b37034cc85774c25d7d02057d376c8ae59f5768632a08a30f87b389fe",
+    "public/start-styles.css": "0d7619f69f3007061f24450a3b00c672acbcb833238bc640490b9f33a34a7215",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "7ed9ff71b78227f5e3182d47c242f3df2dda9cea1df5c8c149a505072fb64161",
-    "public/app.js": "b9bba60db83beb8a753bba28faf117c0570f4a05c537ac4dbfcb68cd7a848f7f",
+    "public/app.js": "23b590dbef5c10d818e2fa0d9abc5c46e197dba9060b0b897f8d9fa1857078fa",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "6f2cc54cb595530dceb18b039a17af0b47fe00c1565944429048031a713966ca",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "261deb2f4feee34411e4c54dffafa7265b715fc63126360d00dfb799798abf55",
     "public/composer-plus-menu.js": "7b0fe7ebb9dae557789899fbb6e98cc3c5a6f8b8687c9abe29a80140e2d0206b",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "c91d936f6058c8b29bcd4e80341379811f23b9d22568b1a94a93b316f3c93b4f",
+    "public/browser-pane.js": "447fc4d371efad324dbec49904cec2ad12967478eead0f6080b4e6762059c2d4",
     "public/browser-pane-render.js": "af8048bb06cb08c98997227df8d924effd940c6bc7d1bd667526d2fbb6ac2f2d",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "8780c54f97b93a9a667d78d4ea4438c61a2fc75dc71734f29d1765670f627de8",
+    "public/sw.js": "cd02c67782854405b94523bbd1a224ed823aaefb94da3edcff8cb48fabdbc498",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
