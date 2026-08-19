@@ -53,6 +53,20 @@ export const MAX_EINTRAEGE = 500;
 /** Weniger tragende Woerter sind zu wenig Signal fuer einen Treffer. */
 export const MIN_WOERTER = 3;
 
+// KREATIVE AUFTRAEGE duerfen NIE aus dem Cache kommen.
+//
+// GEFUNDEN 2026-08-19 durch die Paar-Durchsicht, an echtem Verkehr: "Kannst du
+// mir eine witzige Geschichte schreiben?" traf sich selbst mit Aehnlichkeit 1,0
+// und bekam die GESPEICHERTE Geschichte zurueck. Technisch ein perfekter
+// Treffer — inhaltlich falsch. Wer zum zweiten Mal um eine Geschichte bittet,
+// will eine ANDERE.
+//
+// Das ist eine andere Sorte Fehler als ein zu grosszuegiger Schwellwert: hier
+// ist die Frage wirklich dieselbe, aber die Erwartung an die Antwort ist
+// "etwas Neues". Kein Aehnlichkeitsmass der Welt erkennt das — es steht in der
+// ABSICHT, nicht im Wortlaut. Deshalb eine eigene Regel.
+export const KREATIV = /\b(geschichte|gedicht|witz|witzig|erfinde|erfind|ausdenken|denk dir|schreib mir (ein|eine|einen)|idee|ideen|vorschlaege|brainstorm|slogan|name[nrs]?\b|beispiel)/i;
+
 const eintraege = [];
 let statistik = { treffer: 0, fehlschlaege: 0, ausgeliefert: 0, gespart: 0 };
 
@@ -94,6 +108,7 @@ export function darfCachen(lage = {}) {
   if (lage.liveInhalt) return { ok: false, grund: "live-inhalt" };
   if (lage.coding) return { ok: false, grund: "coding" };
   if (tokenize(lage.frage).length < MIN_WOERTER) return { ok: false, grund: "zu-kurz" };
+  if (KREATIV.test(String(lage.frage || ""))) return { ok: false, grund: "kreativ" };
   return { ok: true, grund: "geeignet" };
 }
 
