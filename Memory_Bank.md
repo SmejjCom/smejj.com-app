@@ -993,3 +993,33 @@ Stand auf 5. August 2026 gesetzt.
   sind VERAENDERT. Beide gehoeren zu laufender fremder Arbeit. **Bewusst NICHT
   gestempelt** — ein Stempel haette unfertige fremde Aenderungen als
   abgenommen eingefroren (Regel: Sperre pruefen, nicht stempeln).
+
+## 2026-08-19 — LIVE-BEFUND: `zeichne is not defined` in code-flaeche.js
+
+**Gemessen im Chrome des Betreibers gegen den ausgelieferten Stand
+(`code-flaeche.js?v=41`, sw v582):** Beim Oeffnen der Code-Seite wirft
+`initCodeFlaeche` dreimal `ReferenceError: zeichne is not defined`
+(Zeilen 788/792/793 und 761).
+
+**Ursache — dasselbe Muster wie die vier stillen Abstuerze vom 17.08.:**
+Beim Auslagern des Modell-Menues nach `public/code-modell-menue.js`
+(Commit bb675cd) wanderte `zeichne()` mit; die AUFRUFE blieben in
+`code-flaeche.js` zurueck. Dort ist die Funktion weder definiert noch
+importiert, und das Modul exportiert sie nicht.
+
+**Konkrete Folge (live nachgemessen, nicht vermutet):**
+- Die Kernfunktion LAEUFT: Senden, Log-Adoption und Antwort sind bewiesen
+  ("Bereit" kam zurueck). Die Bindungen davor stehen.
+- Kaputt ist der SCHWANZ von `initCodeFlaeche` nach dem ersten Wurf:
+  der Gruss zieht den Profilnamen nicht mehr nach, und die Chips
+  (Modell, Stufe, Projekt) aktualisieren sich nicht mehr bei Klicks.
+
+**Warum hier NICHT behoben:** `code-flaeche.js` ist die aktive Baustelle
+einer Parallelsitzung (Commit von eben). Ein Eingriff waere eine Kollision
+mit laufender fremder Arbeit. Der Fix selbst ist klein: `zeichne` wieder
+definieren oder aus dem Modul exportieren und importieren.
+
+**Merkregel (jetzt viermal bestaetigt):** Nach JEDER Auslagerung eines
+Moduls einmal `grep -n "<symbol>" alte-datei.js` gegen Definition UND
+Import halten — und die Seite im Browser oeffnen. Kein Test faellt darauf,
+weil die Tests den Quelltext lesen statt den Pfad auszufuehren.
