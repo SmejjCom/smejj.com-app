@@ -187,3 +187,22 @@ export function baueDateibloecke(dateien, gesamt = DATEIEN_GESAMT_ZEICHEN) {
   });
   return { bloecke, zeichen, gekuerzt, weggelassen };
 }
+
+/**
+ * Liest die angehaengten Dateien und baut daraus die Bloecke fuer den Prompt.
+ *
+ * Steht hier statt im Router (2026-08-19, 800-Zeilen-Regel): Lesen und Kuerzen
+ * gehoeren zusammen — wer das Budget aendert, soll nicht in zwei Dateien suchen.
+ * Die Grenze von 120.000 Zeichen JE DATEI bleibt als erster Riegel bestehen;
+ * das Gesamtbudget oben ist der zweite. Wirft `leseDatei` (zu gross, kein
+ * regulaeres File), reicht der Fehler nach oben durch — eine still ausgelassene
+ * Datei waere schlimmer als eine klare Absage.
+ */
+export async function leseUndKuerze(pfade, sicherAufloesen, leseDatei, gesamt = DATEIEN_GESAMT_ZEICHEN) {
+  const gelesen = [];
+  for (const name of Array.isArray(pfade) ? pfade : []) {
+    const inhalt = await leseDatei(sicherAufloesen(name), 120_000);
+    gelesen.push({ name, inhalt });
+  }
+  return baueDateibloecke(gelesen, gesamt);
+}

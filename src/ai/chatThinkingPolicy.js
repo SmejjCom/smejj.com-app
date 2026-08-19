@@ -110,3 +110,15 @@ export function denkBremse(lage = {}, env = process.env) {
   if (Number(lage.dateien || 0) > 0) return undefined;
   return String(lage.text || "").length >= DENK_KONTEXT_ZEICHEN ? undefined : THINKING_DISABLED;
 }
+
+// WAS DER BREMSE UEBERGEBEN WIRD — gemessen am 2026-08-18 im Live-Lauf:
+// In src/server.js stand zuerst `userParts.join(...)`, also der ZUSAMMENGEBAUTE
+// Text samt Websuche und Projektwissen. Damit reichte ein grosser RAG-Block, um
+// eine Einzeiler-Frage ueber die Schwelle zu heben: 2.328 Eingabe-Tokens, davon
+// 1.378 Denk-Tokens fuer "Erklaer mir kurz, was smejj.com macht" — das Gegenteil
+// der Absicht. Massgeblich ist, was der NUTZER mitbringt: sein Auftrag und die
+// Dateien, die er anhaengt. Nicht das, was der Server sich selbst dazugesucht hat.
+//
+// Dieselbe Regel gilt in BEIDEN Wegen (chatThinkingMode fuer /api/chat,
+// denkBremse fuer /api/agent). Vorher entschieden sie verschieden, und genau
+// solche Ungleichheit war hier schon einmal ein Fehler, kein Entwurf.
