@@ -257,8 +257,10 @@ export function verdrahteMausKnopf({ knopf, activeTab, planeUrl, holeToken, send
 
     const tab = activeTab();
     const auftrag = globalThis.prompt?.(
-      "Was soll die Maus auf dieser Seite tun?\n\nSie arbeitet NUR auf " +
-      (erlaubteHosts(tab?.url)[0] || "dieser Seite") + " und klickt selbstaendig."
+      "Was soll die Maus auf dieser Seite tun?\n\n" +
+      "Sie arbeitet NUR auf " + (erlaubteHosts(tab?.url)[0] || "dieser Seite") +
+      " und klickt selbstaendig. Sie sieht nach jedem Schritt neu hin.\n\n" +
+      "Tipp: mit \"plan:\" beginnen macht es schneller, aber starr."
     );
     if (!auftrag || !auftrag.trim()) return;
 
@@ -267,10 +269,23 @@ export function verdrahteMausKnopf({ knopf, activeTab, planeUrl, holeToken, send
     knopf.classList.add("laeuft");
     knopf.title = "Maus anhalten";
     try {
-      const ergebnis = await fuehreMausAuftragAus({
-        auftrag, tab, planeUrl, holeToken, sende, zeige,
-        abbruch: () => anhalten
-      });
+      // FREIER MODUS IST DER STANDARD. Er kommt mit Ueberraschungen zurecht
+      // — Cookie-Fenster, anderer Seitenaufbau, verschobene Links —, und
+      // genau daran ist der Plan-Modus regelmaessig gescheitert. Er kostet
+      // eine Modellfrage je Schritt; das ist der Preis dafuer, dass die Maus
+      // hinsieht statt zu raten.
+      //
+      // Der Plan-Modus bleibt erreichbar (Auftrag mit "plan:" beginnen): bei
+      // einfachen, bekannten Ablaeufen ist er schneller und billiger.
+      const planModus = /^plan:/i.test(auftrag.trim());
+      const ergebnis = planModus
+        ? await fuehreMausAuftragAus({
+          auftrag: auftrag.trim().replace(/^plan:/i, "").trim(),
+          tab, planeUrl, holeToken, sende, zeige, abbruch: () => anhalten
+        })
+        : await fuehreFreienLaufAus({
+          auftrag, tab, schrittUrl: planeUrl, holeToken, sende, zeige, abbruch: () => anhalten
+        });
       zeige(ergebnis.grund);
     } finally {
       laeuft = false;
@@ -281,4 +296,99 @@ export function verdrahteMausKnopf({ knopf, activeTab, planeUrl, holeToken, send
   });
 
   return { laeuft: () => laeuft };
+}
+
+// --- FREIER MODUS: hinsehen, entscheiden, handeln -----------------------------
+//
+// Der Unterschied zum Plan-Modus ist kein technischer, sondern ein
+// praktischer: Ein Plan wird EINMAL gemacht und scheitert an allem, was
+// dazwischenkommt — ein Cookie-Fenster, ein anderer Seitenaufbau, ein Link,
+// der woanders steht. Hier schaut die Maus nach JEDEM Schritt neu hin.
+//
+// Der Preis ist ehrlich zu nennen: jeder Schritt kostet eine Modellfrage.
+// Deshalb bleibt der Plan-Modus fuer einfache Auftraege die bessere Wahl,
+// und dieser hier ist fuer das, was vorher gar nicht ging.
+
+export const FREI_MAX_SCHRITTE = 10;
+
+/** Eine Entscheidung der Maus in eine Panel-Aktion uebersetzen. */
+export function entscheidungAlsAktion(entscheidung) {
+  if (!entscheidung || typeof entscheidung !== "object") return { fehler: "keine_entscheidung" };
+  if (entscheidung.decision === "done") return { fertig: true, grund: entscheidung.reason || "fertig" };
+  if (entscheidung.decision === "fail") return { fehler: entscheidung.reason || "maus_gibt_auf" };
+  if (entscheidung.decision !== "act") return { fehler: `unbekannte_entscheidung:${entscheidung.decision}` };
+  const u = alsSitzungsAktion(entscheidung.step);
+  if (u.aktion) return { aktion: u.aktion, beschreibung: beschreibe(entscheidung.step), liestAls: u.liestAls || null };
+  // Auch hier: nichts still verschlucken.
+  return { fehler: u.fehler || `nicht_uebersetzbar:${entscheidung.step?.action || "?"}` };
+}
+
+/**
+ * Der freie Lauf. Fragt den Server nach JEDEM Schritt erneut.
+ *
+ * @param {object} o
+ *   auftrag, tab, schrittUrl, holeToken, sende(aktion), zeige(text), abbruch()
+ *   maxSchritte  Obergrenze — ohne sie koennte die Maus ewig weitermachen
+ */
+export async function fuehreFreienLaufAus({
+  auftrag, tab, schrittUrl, holeToken = () => "", sende, zeige = () => {},
+  abbruch = () => false, maxSchritte = FREI_MAX_SCHRITTE
+} = {}) {
+  const hosts = erlaubteHosts(tab?.url);
+  if (!hosts.length) return { ok: false, grund: "Erst eine Seite oeffnen — die Maus arbeitet nur dort." };
+  if (!tab?.sessionId) return { ok: false, grund: "Die Maus braucht den Live-Browser. Diese Ansicht hat keinen." };
+
+  const verlauf = [];
+  const gelesen = {};
+  for (let n = 1; n <= maxSchritte; n += 1) {
+    if (abbruch()) return { ok: false, grund: `Maus angehalten nach ${n - 1} Schritten.`, gelesen };
+
+    // 1. HINSEHEN
+    zeige(`Maus ${n}/${maxSchritte}: sieht sich die Seite an ...`);
+    const blick = await sende({ type: "observe" });
+    if (!blick?.beobachtung) return { ok: false, grund: "Die Maus konnte die Seite nicht ansehen.", gelesen };
+
+    // 2. ENTSCHEIDEN (auf dem Server: Modell + Pruefung)
+    zeige(`Maus ${n}/${maxSchritte}: ueberlegt ...`);
+    let antwort;
+    try {
+      const token = await holeToken();
+      const r = await fetch(schrittUrl, {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          naechsterSchritt: true,
+          task: String(auftrag || "").slice(0, 4000),
+          capsuleRef: `panel-frei-${Date.now().toString(36)}`,
+          domainAllowlist: hosts,
+          beobachtung: blick.beobachtung,
+          verlauf,
+          restSchritte: maxSchritte - n + 1
+        })
+      });
+      antwort = await r.json().catch(() => null);
+      if (!r.ok || !antwort?.ok) {
+        return { ok: false, grund: `Maus konnte nicht entscheiden: ${antwort?.error || r.status}`, gelesen };
+      }
+    } catch {
+      return { ok: false, grund: "Maus nicht erreichbar.", gelesen };
+    }
+
+    // 3. HANDELN
+    const naechste = entscheidungAlsAktion(antwort.entscheidung);
+    if (naechste.fertig) return { ok: true, grund: `Maus fertig nach ${n - 1} Schritten: ${naechste.grund}`, gelesen };
+    if (naechste.fehler) return { ok: false, grund: `Maus gestoppt: ${naechste.fehler}`, gelesen };
+
+    zeige(`Maus ${n}/${maxSchritte}: ${naechste.beschreibung}`);
+    const ergebnis = await sende(naechste.aktion);
+    if (!ergebnis || ergebnis.ok === false) {
+      return { ok: false, grund: `Maus gestoppt bei: ${naechste.beschreibung}`, gelesen };
+    }
+    if (naechste.liestAls && typeof ergebnis.gelesen === "string") gelesen[naechste.liestAls] = ergebnis.gelesen;
+    // Der Verlauf haelt sie davon ab, im Kreis zu laufen: ohne ihn entscheidet
+    // sie bei gleichem Seitenzustand jedes Mal dasselbe.
+    verlauf.push(naechste.beschreibung);
+  }
+  return { ok: false, grund: `Maus hat nach ${maxSchritte} Schritten aufgehoert (Obergrenze).`, gelesen };
 }

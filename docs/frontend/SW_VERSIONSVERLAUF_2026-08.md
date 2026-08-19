@@ -1388,3 +1388,11 @@ hinter das letzte Wort schob, ist entfernt; die Funktion bleibt nur noch
 als Aufraeumer, damit aus dem Verlauf wiederhergestellte Leisten ihre
 alten Inline-Abstaende verlieren. CSS blieb unveraendert (margin -7px).
 chat-actions.js b26k.
+
+v577 -> v578 (2026-08-18, Betreiber: "diese Icon deckt Logo,
+kannst du rausnehmen"): das Code-Zeichen (<>) vor dem Gruss der
+CODE-Seite ist entfernt. Seit die Seite randlos ist (padding-top 4px,
+v486) sass es direkt neben dem fixen Logo oben links und verdeckte es.
+Der Gruss selbst bleibt unveraendert. Die CSS-Regel
+#code .codegruss-zeichen bleibt stehen (schadet nicht, greift ins
+Leere) — entfernt wird nur das Markup.
