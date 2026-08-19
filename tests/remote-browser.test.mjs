@@ -234,14 +234,20 @@ test("remote worker HTTP handler returns mocked render result", async () => {
 
 test("frontend knows remote browser route and screenshot shell", () => {
   const config = fs.readFileSync("public/config.js", "utf8");
+  // Seit 2026-08-19 lebt der Remote-Weg in browser-pane-fernwege.js
+  // (Bausteine-Muster, 800-Zeilen-Regel); die Routen kommen als `routes`
+  // herein. browser-pane.js muss die Fabrik mit CLIENT_ROUTES speisen —
+  // beide Haelften werden geprueft, sonst zeigt die Route ins Leere.
   const pane = fs.readFileSync("public/browser-pane.js", "utf8");
+  const fernwege = fs.readFileSync("public/browser-pane-fernwege.js", "utf8");
   assert.match(config, /browserRemote:\s*"/);
   assert.match(config, /agent:\s*"https:\/\/smejj-chat-bridge\.zeabur\.app\/api\/agent"/);
   assert.match(config, /agentFallback:\s*"https:\/\/smejj-control\.zeabur\.app\/api\/agent"/);
-  assert.match(pane, /CLIENT_ROUTES\.api\.browserRemote/);
-  assert.match(pane, /viewportWidth/);
-  assert.match(pane, /viewportHeight/);
-  assert.match(pane, /mode:\s*"remote-browser"/);
+  assert.match(pane, /routes:\s*CLIENT_ROUTES/);
+  assert.match(fernwege, /routes\.api\.browserRemote/);
+  assert.match(fernwege, /viewportWidth/);
+  assert.match(fernwege, /viewportHeight/);
+  assert.match(fernwege, /mode:\s*"remote-browser"/);
   const html = buildRemoteBrowserHtml({
     url: "https://example.com",
     title: "Example",
