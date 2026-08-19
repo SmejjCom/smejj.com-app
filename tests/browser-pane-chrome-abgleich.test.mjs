@@ -501,3 +501,29 @@ test("die Tableiste traegt ihr Layout selbst, ohne Stylesheet", async () => {
   assert.match(q, /knopf\.style\.height = "var\(--bp-control-size, 22px\)"/);
   assert.match(q, /knopf\.style\.flex = "none"/);
 });
+
+
+// --- Der aktive Tab schrumpft ZULETZT (2026-08-19) ---------------------------
+//
+// Live gemessen: 7 Tabs im schmalen Panel = 55 px pro Tab — ALLE zeigten nur
+// ihren Anfangsbuchstaben, auch der aktive. Chrome haelt den aktiven lesbar.
+test("der aktive Tab behaelt seinen Titel, solange es irgend geht", async () => {
+  const { tabBreiten, TAB_MIN_BREITE, TAB_NUR_ICON_BREITE } = await import("../public/browser-pane-tableiste.js");
+  // Der Live-Fall: 7 Tabs auf 387 px — vorher 55 px fuer alle.
+  const eng = tabBreiten(7, 387, true);
+  assert.equal(eng.aktiv, TAB_NUR_ICON_BREITE, "der aktive bekommt die Titel-Mindestbreite");
+  assert.ok(eng.rest >= TAB_MIN_BREITE, "die uebrigen fallen nie unter das Minimum");
+  // Reicht der Platz fuer alle, bleiben alle gleich — kein Sonderfall noetig.
+  const breit = tabBreiten(3, 900, true);
+  assert.equal(breit.aktiv, breit.rest);
+  // Extrem eng: der aktive faellt hoechstens auf das Minimum, nie darunter.
+  const winzig = tabBreiten(7, 300, true);
+  assert.ok(winzig.aktiv >= TAB_MIN_BREITE);
+  // Randfall vom lokalen Sichttest: Leiste beim ersten Zeichnen 0 px breit —
+  // frueher bekam der Rest dann die MAXIMAL-Breite (240) statt des Minimums.
+  const nullbreit = tabBreiten(7, 4, true);
+  assert.equal(nullbreit.rest, TAB_MIN_BREITE);
+  // Ohne aktiven Tab (nur Angepinnte aktiv) gilt die Gleichverteilung.
+  const ohne = tabBreiten(7, 387, false);
+  assert.equal(ohne.aktiv, ohne.rest);
+});
