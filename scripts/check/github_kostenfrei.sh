@@ -55,10 +55,28 @@ repo_ist_oeffentlich() {
   esac
   command -v curl >/dev/null 2>&1 || return 1
   # Ohne Anmeldung: ein privates Repo antwortet 404, ein oeffentliches 200.
-  antwort=$(curl -s -m 8 -H "Accept: application/vnd.github+json" \
-    "https://api.github.com/repos/${pfad}" 2>/dev/null) || return 1
-  printf '%s' "$antwort" | grep -q '"private"[[:space:]]*:[[:space:]]*false' || return 1
-  return 0
+  #
+  # ZWEI VERSUCHE UND MEHR ZEIT (2026-08-18): Mit einer einzigen Abfrage und
+  # 8 Sekunden hat ein Netz-Zucken genuegt, um einen voellig regelkonformen
+  # Push zu blockieren — samt der Meldung "im privaten Repo", obwohl das Repo
+  # oeffentlich ist. Unabhaengig nachgemessen: private=false. Fail-closed ist
+  # richtig, aber eine Sperre darf nicht BEHAUPTEN, was sie nicht gemessen hat:
+  # wer die Meldung glaubt, sucht den Fehler an der falschen Stelle.
+  for versuch in 1 2; do
+    antwort=$(curl -s -m 15 -H "Accept: application/vnd.github+json" \
+      "https://api.github.com/repos/${pfad}" 2>/dev/null) || antwort=""
+    if printf '%s' "$antwort" | grep -q '"private"[[:space:]]*:[[:space:]]*false'; then
+      return 0
+    fi
+    if printf '%s' "$antwort" | grep -q '"private"[[:space:]]*:[[:space:]]*true'; then
+      return 1   # eindeutig privat — kein zweiter Versuch noetig
+    fi
+    [ "$versuch" = 1 ] && sleep 2
+  done
+  # Hierher kommt man NUR, wenn keine Antwort auswertbar war. Das ist etwas
+  # anderes als "privat", und der Aufrufer sagt es auch so.
+  SICHTBARKEIT_UNBEKANNT=1
+  return 1
 }
 
 if [ -z "${SMEJJ_KOSTEN_SICHTBARKEIT_PRUEFEN:-}" ] && repo_ist_oeffentlich; then
@@ -85,6 +103,12 @@ if [ -n "$TREFFER" ]; then
   printf '%s\n' "$TREFFER" | while IFS= read -r f; do
     [ -n "$f" ] && echo "  TREFFER-A $f"
   done
+  if [ -n "${SICHTBARKEIT_UNBEKANNT:-}" ]; then
+    melde "Sichtbarkeit des Repos NICHT feststellbar (GitHub nicht erreichbar).
+      Deshalb wird wie bei einem privaten Repo geprueft — das ist Vorsicht,
+      keine Feststellung. Ist das Repo oeffentlich, kosten Actions dort
+      nichts: kurz warten und erneut pushen, dann greift die Abfrage wieder."
+  fi
   melde "GitHub-Actions-Workflow im privaten Repo: siehe TREFFER-A oben.
       Kosten: 0,002 \$/min Plattformgebuehr ab der ERSTEN Minute, danach
       0,006 \$/min ueber dem 2.000-min-Freikontingent.
