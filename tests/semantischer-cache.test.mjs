@@ -147,3 +147,45 @@ test("der Bericht trennt Treffer, Fehlschlaege und Ausgeliefertes", () => {
   assert.equal(bericht.gesparteEingabeTokens, 500);
   setzeCacheZurueck();
 });
+
+// ---------------------------------------------------------------------------
+// KREATIVE AUFTRAEGE — gefunden durch die Paar-Durchsicht an ECHTEM Verkehr
+// (2026-08-19), nicht durch einen Test. "Kannst du mir eine witzige Geschichte
+// schreiben?" traf sich selbst mit Aehnlichkeit 1,0 und bekam die gespeicherte
+// Geschichte zurueck. Technisch perfekt, inhaltlich falsch: wer zum zweiten Mal
+// fragt, will eine ANDERE. Das steht in der Absicht, nicht im Wortlaut — kein
+// Aehnlichkeitsmass erkennt es.
+// ---------------------------------------------------------------------------
+test("kreative Auftraege kommen NIE aus dem Cache", () => {
+  const proben = [
+    "Kannst du mir eine witzige Geschichte schreiben?",
+    "Schreib mir ein Gedicht ueber den Herbst",
+    "Erfinde einen Namen fuer meine Katze",
+    "Gib mir drei Ideen fuer ein Geburtstagsgeschenk",
+    "Denk dir einen Slogan fuer meine Firma aus"
+  ];
+  for (const frage of proben) {
+    const urteil = darfCachen({ frage });
+    assert.equal(urteil.ok, false, `haette abgelehnt werden muessen: ${frage}`);
+    assert.equal(urteil.grund, "kreativ");
+  }
+});
+
+test("Gegenstueck: Wissensfragen bleiben cachebar", () => {
+  // Sonst haette die Regel den Cache gleich mit abgeschaltet.
+  for (const frage of [
+    "Wie hoch ist der Eiffelturm in Metern",
+    "Was kostet ein Abo im Monat",
+    "Wie funktioniert eine Waermepumpe technisch"
+  ]) {
+    assert.equal(darfCachen({ frage }).ok, true, `haette cachebar bleiben muessen: ${frage}`);
+  }
+});
+
+test("eine kreative Antwort wird auch nicht ABGELEGT", () => {
+  setzeCacheZurueck();
+  const kreativ = { frage: "Schreib mir eine kurze Geschichte ueber einen Hund", nutzer: "user_a" };
+  assert.equal(merkeAntwort(kreativ, ANTWORT, { env: AN }), false, "sonst liegt sie fuer spaeter bereit");
+  assert.equal(frageCache(kreativ, { env: AN }).treffer, false);
+  setzeCacheZurueck();
+});
