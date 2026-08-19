@@ -202,3 +202,55 @@ test("ein Freigabeziel wird streng gelesen", async () => {
   assert.equal(alsHerkunft(""), null);
   assert.equal(alsHerkunft("   "), null);
 });
+
+// --- Aussetzer des Planers ---------------------------------------------------
+// Gemessen 2026-08-19 am Live-Server: dieselbe Anfrage dreimal hintereinander
+// ergab 200 (fertige Entscheidung), 502, 502. Das Modell schweigt manchmal bei
+// gleicher Eingabe. Ohne Wiederholung endet ein Auftrag an so einem Zufall.
+test("ein Aussetzer beendet den Auftrag nicht — und kostet keinen Schritt", async () => {
+  const { fuehreFreienLaufAus, AUSSETZER_GRENZE } = await import("../public/browser-pane-maus.js");
+  const zeilen = [];
+  let anfragen = 0;
+  globalThis.fetch = async (_u, o) => {
+    anfragen += 1;
+    if (anfragen === 1) return { ok: false, status: 502, json: async () => ({ ok: false, error: "planer_leere_antwort" }) };
+    // Der zweite Anlauf darf dem Modell den Aussetzer NICHT vorhalten — das
+    // wuerde seine naechste Antwort nur verwirren.
+    const koerper = JSON.parse(o.body);
+    assert.ok(!koerper.verlauf.some((z) => /VERWORFEN|leere/i.test(z)), "der Aussetzer gehoert nicht in den Verlauf");
+    return { ok: true, status: 200, json: async () => ({ ok: true, entscheidung: { decision: "done", reason: "fertig" } }) };
+  };
+  const ergebnis = await fuehreFreienLaufAus({
+    auftrag: "x",
+    tab: { url: "https://smejj.com/", sessionId: "s1" },
+    schrittUrl: "https://beispiel.test/api/maus/run",
+    sende: async () => ({ ok: true, beobachtung: { url: "https://smejj.com/", elements: [] } }),
+    zeige: (t) => zeilen.push(t)
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(anfragen, 2);
+  assert.match(zeilen.join(" "), /fragt noch einmal/);
+  // Der Aussetzer darf keinen Schritt verbrauchen: sonst schrumpft das Budget
+  // fuer echte Arbeit, obwohl nichts getan wurde.
+  assert.ok(zeilen.filter((z) => /^Maus 1\//.test(z)).length >= 2, "der Schritt muss derselbe bleiben");
+  assert.ok(AUSSETZER_GRENZE >= 1);
+});
+
+test("auch das Wiederholen hat eine Grenze", async () => {
+  const { fuehreFreienLaufAus, AUSSETZER_GRENZE } = await import("../public/browser-pane-maus.js");
+  let anfragen = 0;
+  globalThis.fetch = async () => {
+    anfragen += 1;
+    return { ok: false, status: 502, json: async () => ({ ok: false, error: "planer_leere_antwort" }) };
+  };
+  const ergebnis = await fuehreFreienLaufAus({
+    auftrag: "x",
+    tab: { url: "https://smejj.com/", sessionId: "s1" },
+    schrittUrl: "https://beispiel.test/api/maus/run",
+    sende: async () => ({ ok: true, beobachtung: { url: "https://smejj.com/", elements: [] } }),
+    zeige: () => {}
+  });
+  assert.equal(ergebnis.ok, false);
+  assert.equal(anfragen, AUSSETZER_GRENZE + 1);
+  assert.match(ergebnis.grund, /planer_leere_antwort/);
+});

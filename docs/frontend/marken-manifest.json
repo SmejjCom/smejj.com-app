@@ -1,0 +1,373 @@
+{
+  "hinweis": "Fingerabdruck je Modul und Marke. Aendert sich der Inhalt, MUSS die Marke steigen.",
+  "module": {
+    "account-sessions.js": {
+      "marke": "b46",
+      "finger": "b6623e48ec0482b4"
+    },
+    "language-options.js": {
+      "marke": "1",
+      "finger": "24d3f879297b9f24"
+    },
+    "profile-picture-control.js": {
+      "marke": "1",
+      "finger": "87e2db5731fc1454"
+    },
+    "profile-picture-store.js": {
+      "marke": "1",
+      "finger": "7d81e4c9d47ad205"
+    },
+    "account-auth-state.js": {
+      "marke": "1",
+      "finger": "9ebb3d1d5a3f7a84"
+    },
+    "usage-meter.js": {
+      "marke": "1",
+      "finger": "a486fe5729849605"
+    },
+    "onboarding-welcome.js": {
+      "marke": "1",
+      "finger": "4eb33b829e6c99a0"
+    },
+    "components.js": {
+      "marke": "b48",
+      "finger": "54b1f9b624a2e4c8"
+    },
+    "composer-paste-attach.js": {
+      "marke": "1",
+      "finger": "a192efcbefdb12d9"
+    },
+    "search.js": {
+      "marke": "b39",
+      "finger": "30a6f33c05761834"
+    },
+    "search-overlay.js": {
+      "marke": "b47c",
+      "finger": "e64215caf38201a2"
+    },
+    "nachladen.js": {
+      "marke": "1",
+      "finger": "f5f01394ee4dab0a"
+    },
+    "panel-backdrop.js": {
+      "marke": "panel-backdrop-20260803",
+      "finger": "b7978c772410b623"
+    },
+    "uploads-surface.js": {
+      "marke": "b39u",
+      "finger": "9c5bf7dca3e34d07"
+    },
+    "medien-absicht.js": {
+      "marke": "4",
+      "finger": "da780274309efac1"
+    },
+    "maus-absicht.js": {
+      "marke": "9",
+      "finger": "4f578bcf44828f92"
+    },
+    "panel-layout.js": {
+      "marke": "2",
+      "finger": "67014daed2b3a747"
+    },
+    "view-routes.js": {
+      "marke": "b50",
+      "finger": "86a9acdf00a6bf97"
+    },
+    "premium-surfaces.js": {
+      "marke": "b41b",
+      "finger": "d4395ae849cb8298"
+    },
+    "composer-tools.js": {
+      "marke": "werkzeuge-3",
+      "finger": "261deb2f4feee344"
+    },
+    "voice-landing.js": {
+      "marke": "blitz-20260726",
+      "finger": "2e556eb36aeae6b1"
+    },
+    "chat-store.js": {
+      "marke": "b52",
+      "finger": "33ebce5bf40daeb6"
+    },
+    "autonomous-thread-run.js": {
+      "marke": "1",
+      "finger": "948c8c087e38fa1d"
+    },
+    "browser-pane-menue.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "dc45f6e6412720fb"
+    },
+    "browser-pane-tableiste.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "7a9637ef56db98b8"
+    },
+    "browser-pane-render.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "fedf7baf8aaf3ccc"
+    },
+    "browser-pane-session.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "5a71066703f5b6aa"
+    },
+    "browser-pane-vorschlaege.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "c1408663f685f026"
+    },
+    "browser-pane-sicherheit.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "544f7f72da48b978"
+    },
+    "browser-pane-lesezeichen.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "6e3da6a41c7cfa04"
+    },
+    "browser-pane-tasten.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "ff70366aaf85b058"
+    },
+    "browser-pane-suche.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "03919cd71d3fe05d"
+    },
+    "browser-pane-maus.js": {
+      "marke": "browser-pane-20260819-1",
+      "finger": "457b95031f228833"
+    },
+    "browser-pane-nachrichten.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "92bcd41688bb541b"
+    },
+    "browser-pane-adressen.js": {
+      "marke": "browser-pane-20260819-1",
+      "finger": "482cdff7b8a1f361"
+    },
+    "chat-messages.js": {
+      "marke": "1",
+      "finger": "c6b7419f70d5d515"
+    },
+    "chat-actions-menu.js": {
+      "marke": "4",
+      "finger": "fd6bc741ca6cf246"
+    },
+    "voice-speech-queue.js": {
+      "marke": "blitz-20260726",
+      "finger": "d0341c29ed7dd8e9"
+    },
+    "chat-history-text.js": {
+      "marke": "b47b",
+      "finger": "1377b0733ae8ceaf"
+    },
+    "chat-history-cards.js": {
+      "marke": "b47c",
+      "finger": "fd572b086d00dbdb"
+    },
+    "chat-markdown.js": {
+      "marke": "1",
+      "finger": "25f42cbcf497f9c2"
+    },
+    "chat-owner.js": {
+      "marke": "2",
+      "finger": "dc747d414d5eeb91"
+    },
+    "chat-medien.js": {
+      "marke": "1",
+      "finger": "5fde077a071065d8"
+    },
+    "chat-sync.js": {
+      "marke": "2",
+      "finger": "f75d80a345511479"
+    },
+    "voice-typed-send.js": {
+      "marke": "voice-send-20260721",
+      "finger": "50700281e3b17bf1"
+    },
+    "voice-vad.js": {
+      "marke": "blitz2-20260726",
+      "finger": "fa32b5eb22ad439a"
+    },
+    "composer-plus-menu.js": {
+      "marke": "werkzeuge-2",
+      "finger": "7b0fe7ebb9dae557"
+    },
+    "frame-guard.js": {
+      "marke": "1",
+      "finger": "98bd70646d64741e"
+    },
+    "start-chips.js": {
+      "marke": "b32b",
+      "finger": "8e081f94e0cf0165"
+    },
+    "composer-sendetaste.js": {
+      "marke": "v11-20260815",
+      "finger": "0fbde9f27a10b5e9"
+    },
+    "nav-absichten.js": {
+      "marke": "b32",
+      "finger": "a7c609c4ccc068b1"
+    },
+    "topbar-krume.js": {
+      "marke": "b33f",
+      "finger": "50c91127f442aca0"
+    },
+    "papierkorb.js": {
+      "marke": "1c",
+      "finger": "844b67502969e648"
+    },
+    "arbeitsbereiche.js": {
+      "marke": "6",
+      "finger": "e8a184ef68f2afb6"
+    },
+    "kamera.js": {
+      "marke": "b35live2",
+      "finger": "c240598999c1135a"
+    },
+    "fuehrung.js": {
+      "marke": "1",
+      "finger": "41971c8ce94f4e09"
+    },
+    "arbeitsflaeche.js": {
+      "marke": "1",
+      "finger": "a8a76c53bbc0fbbd"
+    },
+    "spur-schalter.js": {
+      "marke": "9",
+      "finger": "9c20b31fb9a63a08"
+    },
+    "spur-start.js": {
+      "marke": "b34m",
+      "finger": "85fca872c1fa681b"
+    },
+    "projekt-ordner.js": {
+      "marke": "1",
+      "finger": "77f85949b611b623"
+    },
+    "code-flaeche.js": {
+      "marke": "43",
+      "finger": "d715ec7e61b4ce5f"
+    },
+    "app.js": {
+      "marke": "b65",
+      "finger": "93cb86ce9a65289d"
+    },
+    "cline-model-menu.js": {
+      "marke": "cline-submenu-20260817-5",
+      "finger": "368a4de8eb1ac038"
+    },
+    "browser-pane.js": {
+      "marke": "browser-pane-20260819-1",
+      "finger": "65117c4d7901f3f3"
+    },
+    "browser-pane-backdrop.js": {
+      "marke": "2",
+      "finger": "3144f0486fe13e2f"
+    },
+    "maus-panel.js": {
+      "marke": "3",
+      "finger": "21102c07fa4103db"
+    },
+    "view-chrome.js": {
+      "marke": "view-chrome-20260716-2",
+      "finger": "349521e305ea8b81"
+    },
+    "profile-dock.js": {
+      "marke": "b46",
+      "finger": "87b5ea3a03503dd1"
+    },
+    "chat-history-view.js": {
+      "marke": "b47d",
+      "finger": "03040dc7ca8d837f"
+    },
+    "chat-actions.js": {
+      "marke": "b26k",
+      "finger": "4c9452986f611595"
+    },
+    "chat-code-copy.js": {
+      "marke": "zcode2-20260816",
+      "finger": "5fd2e2fab2c038ae"
+    },
+    "chat-runter-pfeil.js": {
+      "marke": "3",
+      "finger": "3bfbedefdc697c0a"
+    },
+    "chat-warte-reste.js": {
+      "marke": "1",
+      "finger": "a818e41c3f30e9bc"
+    },
+    "panel-status.js": {
+      "marke": "1",
+      "finger": "e276daaff0ec5f79"
+    },
+    "chat-stopp.js": {
+      "marke": "6",
+      "finger": "949024ecc04b09d4"
+    },
+    "chat-code-farben.js": {
+      "marke": "1",
+      "finger": "4030fe30a668517a"
+    },
+    "chat-code-download.js": {
+      "marke": "2",
+      "finger": "83b7dce67c0ba9c6"
+    },
+    "maus-chrome.js": {
+      "marke": "1",
+      "finger": "7f3271befd437955"
+    },
+    "maus-auftrag.js": {
+      "marke": "maus-auftrag-20260731-1",
+      "finger": "80e0ae4f88643d95"
+    },
+    "maus-replay.js": {
+      "marke": "maus-replay-20260715-3",
+      "finger": "a7f008cff4186447"
+    },
+    "autonomous-coding.js": {
+      "marke": "5",
+      "finger": "819f1c6de635062e"
+    },
+    "settings-surface.js": {
+      "marke": "b41",
+      "finger": "6b8912906dad5ccd"
+    },
+    "account-privacy.js": {
+      "marke": "b46m",
+      "finger": "406718d12fe0648b"
+    },
+    "auth-gate.js": {
+      "marke": "1",
+      "finger": "6e17139c86e4650d"
+    },
+    "icon-nutzung.js": {
+      "marke": "1",
+      "finger": "ddf238e94e55304d"
+    },
+    "quellen-panel.js": {
+      "marke": "1",
+      "finger": "a3be46d6cec23224"
+    },
+    "profile-dock-menu.js": {
+      "marke": "b46",
+      "finger": "0424ff5f13fdc502"
+    },
+    "settings-runtime.js": {
+      "marke": "b39",
+      "finger": "1b4fa9f21564013d"
+    },
+    "api-keys-surface.js": {
+      "marke": "1",
+      "finger": "8e1aa5589e66b874"
+    },
+    "provider-settings.js": {
+      "marke": "1",
+      "finger": "6c56887975e30f99"
+    },
+    "voice-landing-signin.js": {
+      "marke": "1",
+      "finger": "fd31074d5cb1aaa2"
+    },
+    "willkommen-fokus.js": {
+      "marke": "w2",
+      "finger": "04b22fdb85bb41d7"
+    }
+  }
+}
