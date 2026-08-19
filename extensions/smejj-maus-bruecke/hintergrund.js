@@ -240,11 +240,28 @@ function imSeitenkontext(befehl) {
   return { ok: false, error: "befehl_nicht_erlaubt" };
 }
 
-// Nur smejj.com darf ueberhaupt Nachrichten schicken (externally_connectable
-// im Manifest). Das ist die erste Schranke; die Freigabe je Herkunft die zweite.
-if (typeof chrome !== "undefined" && chrome.runtime?.onMessageExternal) {
-  chrome.runtime.onMessageExternal.addListener((nachricht, absender, antworte) => {
-    if (!String(absender?.origin || "").startsWith("https://smejj.com")) {
+// ZWEI EINGAENGE, und das ist kein Versehen:
+//
+//   onMessageExternal  — die Seite ruft direkt (externally_connectable).
+//                        Setzt voraus, dass sie die Kennung der Erweiterung
+//                        kennt; bei unverpackter Installation ist die auf
+//                        jedem Rechner anders.
+//   onMessage          — das Inhaltsskript reicht durch (seiten-bruecke.js).
+//                        Dafuer braucht die Seite keine Kennung.
+//
+// GEFUNDEN 2026-08-19, vor dem ersten echten Einsatz: die Bruecke hatte NUR
+// onMessageExternal. Nachrichten aus dem EIGENEN Inhaltsskript kommen dort
+// aber nie an — chrome.runtime.sendMessage aus einem Inhaltsskript landet
+// immer bei onMessage. Der Weg, den die Seite tatsaechlich nimmt, war also
+// tot, und zwar lautlos: die Seite haette bis zur Zeitgrenze gewartet und
+// dann "bruecke_antwortet_nicht" gemeldet — als waere die Erweiterung nicht
+// installiert.
+function baueEmpfang() {
+  return (nachricht, absender, antworte) => {
+    // Beide Wege pruefen dieselbe Herkunft. Beim Inhaltsskript steht sie in
+    // absender.url (origin ist dort nicht immer gesetzt).
+    const herkunft = String(absender?.origin || absender?.url || "");
+    if (!herkunft.startsWith("https://smejj.com")) {
       antworte({ ok: false, error: "absender_nicht_erlaubt" });
       return false;
     }
@@ -260,5 +277,11 @@ if (typeof chrome !== "undefined" && chrome.runtime?.onMessageExternal) {
       .then(antworte)
       .catch((error) => antworte({ ok: false, error: String(error?.message || error).slice(0, 200) }));
     return true; // asynchrone Antwort
-  });
+  };
+}
+
+if (typeof chrome !== "undefined" && chrome.runtime) {
+  const empfang = baueEmpfang();
+  chrome.runtime.onMessageExternal?.addListener(empfang);
+  chrome.runtime.onMessage?.addListener(empfang);
 }

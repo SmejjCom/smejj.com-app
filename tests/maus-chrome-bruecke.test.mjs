@@ -174,3 +174,31 @@ test("aus dem Lernen wird keine Endlosschleife", async () => {
   // Und der Grund muss beim Nutzer ankommen, nicht nur die Kennung.
   assert.match(ergebnis.grund, /immer derselbe Fehler/);
 });
+
+// --- Der Weg, den die Seite WIRKLICH nimmt ----------------------------------
+test("die Bruecke horcht auf BEIDE Eingaenge", () => {
+  // Gefunden 2026-08-19, vor dem ersten echten Einsatz: die Bruecke hatte nur
+  // onMessageExternal. Eine Nachricht aus dem EIGENEN Inhaltsskript kommt dort
+  // nie an — chrome.runtime.sendMessage aus einem Inhaltsskript landet immer
+  // bei onMessage. Der Weg, den die Seite tatsaechlich nimmt, war also tot,
+  // und zwar lautlos: die Seite haette bis zur Zeitgrenze gewartet und dann
+  // gemeldet, die Bruecke antworte nicht — als waere sie nicht installiert.
+  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  assert.match(hintergrund, /onMessageExternal\?\.addListener/);
+  assert.match(hintergrund, /onMessage\?\.addListener/);
+  // Beide muessen DIESELBE Pruefung durchlaufen, sonst ist einer die Hintertuer.
+  assert.equal((hintergrund.match(/baueEmpfang\(\)/g) || []).length, 2, "ein Eingang benutzt eine eigene Pruefung");
+  assert.match(hintergrund, /absender\?\.origin \|\| absender\?\.url/);
+});
+
+test("ein Freigabeziel wird streng gelesen", async () => {
+  const { alsHerkunft } = await import("../extensions/smejj-maus-bruecke/adresse.js");
+  assert.equal(alsHerkunft("mail.google.com"), "https://mail.google.com");
+  assert.equal(alsHerkunft("https://mail.google.com/mail/u/0"), "https://mail.google.com");
+  // http bleibt gesperrt: im ANGEMELDETEN Chrome waere das ein Klartext-Leck.
+  assert.equal(alsHerkunft("http://mail.google.com"), null);
+  // Ein Wort ohne Punkt ist ein Vertipper, kein Ziel.
+  assert.equal(alsHerkunft("mail"), null);
+  assert.equal(alsHerkunft(""), null);
+  assert.equal(alsHerkunft("   "), null);
+});

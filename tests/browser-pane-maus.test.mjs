@@ -131,8 +131,12 @@ test("ohne Live-Browser wird ehrlich abgelehnt statt blind losgelaufen", async (
   assert.match(ohneSeite.grund, /Seite oeffnen/);
 });
 
-// Der Knopf sitzt auf einem der beiden Platzhalter, die rechts ohnehin
-// reserviert waren — die Kopfgeometrie darf sich NICHT aendern.
+// Der Knopf sitzt auf einem reservierten Platzhalter — die Kopfgeometrie
+// darf sich nicht aendern. Seit dem Chrome-Abgleich 2026-08-19 hat die
+// rechte Seite ZWEI Plaetze (Maus + Spacer): der Tab-Zaehler ist entfernt,
+// und --bp-tab-right-width in start-styles.css rechnet mit genau zwei
+// Steuerbreiten. Wer hier einen Platz ergaenzt oder entfernt, muss BEIDE
+// Stellen aendern — sonst stehen Knoepfe ausserhalb der Leiste.
 test("der Knopf sprengt die Kopfgeometrie nicht", async () => {
   const fs = await import("node:fs");
   const shell = fs.readFileSync("public/browser-pane-render.js", "utf8");
@@ -142,7 +146,12 @@ test("der Knopf sprengt die Kopfgeometrie nicht", async () => {
   const start = shell.indexOf('class="bp-tab-right"');
   const rechts = shell.slice(start, shell.indexOf("</div>", start));
   const elemente = (rechts.match(/<button|<span/g) || []).length;
-  assert.equal(elemente, 3, "rechts bleiben genau drei Plaetze — die Seitenbreite rechnet damit");
+  assert.equal(elemente, 2, "rechts bleiben genau zwei Plaetze — --bp-tab-right-width rechnet damit");
+  // Die Gegenseite derselben Zusicherung: die CSS-Variable bleibt auf zwei
+  // Steuerbreiten. Ein dritter Knopf ohne CSS-Anpassung stuende im Leeren.
+  const css = fs.readFileSync("public/start-styles.css", "utf8");
+  assert.match(css, /--bp-tab-right-width: calc\(\(var\(--bp-control-size\) \* 2\) \+ var\(--bp-control-gap\)\)/,
+    "start-styles.css rechnet rechts mit zwei Steuerbreiten");
 });
 
 // --- Die zwei Fehler vom 2026-08-18 ------------------------------------------

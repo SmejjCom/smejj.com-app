@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "smejj.com Maus-Bruecke",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Laesst die Maus von smejj.com den echten Chrome bedienen - sie sieht die Seite als Bedienbaum und klickt darin, nur auf Seiten, die der Betreiber sichtbar freigegeben hat.",
   "minimum_chrome_version": "116",
   "permissions": [
