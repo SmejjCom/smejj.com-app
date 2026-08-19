@@ -5,6 +5,53 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-15] EINE WAHRHEIT FUER "IST DIE KI NUTZBAR?" (job_chat_rueckfall_ampel_20260815)
+
+Capsule: `task-capsules/2026/08/job_chat_rueckfall_ampel_20260815/capsule.md`.
+Commits: `0ff9886` (Chat-Fix), `f591cf2` (Kosten-Waechter), `f8fd83f`
+(Code-Sicherung), `9dcf2ca` (Qualitaets-Messlauf stillgelegt).
+
+**Entscheidung:** Die Frage "ist serverseitige AI nutzbar?" wird an GENAU EINER
+Stelle beantwortet — `resolveServerAiGate()` in `aiAvailability.js`. Ampel
+(`/api/health`) und Chat (`streamLLM`) lesen dieselbe Funktion.
+
+**Begruendung:** Beide entschieden es vorher getrennt. Die Ampel kannte den
+BYOK-Pfad (Zhipu und Kimi fuehren ihr Guthaben beim Anbieter, das Server-Gate
+zaehlt dort nicht), `streamLLM` prueffte nur `SMEJJ_SERVER_AI_ENABLED === "true"`.
+Fiel diese eine Variable weg, antwortete der Chat auf JEDE Frage mit dem
+Rueckfall-Text, waehrend `/api/health` `"ai": true, "zhipu:glm-5.2"` meldete.
+**Der Rueckfall-Text sieht aus wie eine hoefliche Antwort — deshalb blieb der
+Totalausfall einen Tag unsichtbar.** Kein Test schlug an, weil keiner die
+Kopplung von Ampel und Chat prueffte.
+
+**Verifikation:** 15/15 in `tests/ai-availability.test.mjs`, darunter der
+Waechter mit beiden Proben (gesund: Ampel gruen => Chat darf NICHT in den
+Rueckfall; kaputt: ohne Anbieter bleibt der Rueckfall). Waechter-TUEV bestanden:
+gegen den nachgebauten alten Stand faellt er rot. Zusaetzlich 34/34 in
+`model-router` und `local-assistant`, `check:architecture` 0 Fehler. Live nach
+Deploy: `/api/chat` streamt echtes glm-5.2; die Betreiberfrage nach Wohnungen in
+der Bay Area kam mit echten Objekten und Quellen zurueck (Backend
+`zhipu:glm-5.2`, 8 s).
+
+**Folgebefunde, beide behoben:**
+- Der Zeabur-Dienst `smejj-autopilot-jobs` **existiert nicht mehr**. Daran hingen
+  Qualitaets-Pruefer (01) und Code-Sicherung (02) — seit 13.08. gab es keinen
+  Codeberg-Spiegel. Die Code-Sicherung laeuft jetzt als GitHub Action (kostenfrei,
+  das Repo ist oeffentlich). Offen: Secret `CODEBERG_TOKEN` (nur der Betreiber).
+- Der Kosten-Waechter entschied "privates Repo" aus einer **festen Namensliste
+  mit einem Eintrag** und blockierte damit einen Workflow, der nichts kostet. Er
+  misst die Sichtbarkeit jetzt bei GitHub, fail-closed in jeder anderen Richtung.
+  Waechter-TUEV: `tests/github-kostenfrei.test.mjs`, 5/5 ohne Netz lauffaehig.
+
+**Benchmark 2026-08-15:** Startseite 81 KB gzip ohne Bilder (Budget 300 KB) —
+erfuellt. Latenzwerte von diesem Anschluss **nicht belastbar** und daher NICHT
+als Budgetverletzung gewertet: smejj.com 1,9 s TTFB, aber `github.com` 4,6 s und
+`example.com` 3,8 s von derselben Leitung. Offen: Web-Vitals-Messpunkt ausserhalb.
+
+**Merksatz fuer den Betrieb:** Antwortet der Chat mit "Verstanden. Ich kann
+daraus eine konkrete Aufgabe machen…", ist das keine Antwort, sondern die
+Meldung "kein Modell erreichbar".
+
 ### [2026-08-11] DAUERHAFTER GOOGLE-LOGIN & SLIDING TOKEN RENEWAL (job_google_login_permanent_20260811)
 
 Capsule: `task-capsules/2026/08/job_google_login_permanent_20260811/capsule.md`.
