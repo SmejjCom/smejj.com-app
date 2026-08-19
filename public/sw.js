@@ -354,6 +354,7 @@ const SHELL = [
   "/en/legal-notice.html",
   "/en/privacy.html",
   "/assets/browser-pane-adressen.js",
+  "/assets/browser-pane-fernwege.js",
   "/assets/ai/lokalesModell.js",
   "/assets/chat-owner.js",
   "/assets/medien-absicht.js",

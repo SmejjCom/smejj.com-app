@@ -12,6 +12,7 @@
 // abweichende Spezifizierer liess config.js ein zweites Mal laden — zwei Modul-
 // instanzen mit getrennten CLIENT_ROUTES.
 import { CLIENT_ROUTES } from "./config.js";
+import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260819-2";
 import {
   buildExternalFallbackHtml,
   buildLiveBrowserHtml,
@@ -27,7 +28,7 @@ import { zeigeSicherheit, zeigeZoom, zeigeNeuladen } from "./browser-pane-sicher
 import { zeigeLesezeichen } from "./browser-pane-lesezeichen.js?v=browser-pane-20260709-2";
 import { verdrahtePanelTasten, merkeGeschlossen } from "./browser-pane-tasten.js?v=browser-pane-20260709-2";
 import { verdrahtePanelSuche } from "./browser-pane-suche.js?v=browser-pane-20260709-2";
-import { verdrahteMausKnopf } from "./browser-pane-maus.js?v=browser-pane-20260818-1";
+import { verdrahteMausKnopf } from "./browser-pane-maus.js?v=browser-pane-20260819-1";
 // Gefunden 2026-08-18 beim Livetest: dieser Import FEHLTE, obwohl init() die
 // Funktion benutzt. Folge war kein kleiner Schoenheitsfehler — browser-pane.js
 // warf beim Laden "baueNachrichtenEmpfang is not defined", das ganze Modul kam
@@ -85,15 +86,42 @@ const sessionHooks = {
   }
 };
 
+// Fern-Browser-Wege (Live-Session, Remote-Worker, "echter Browser"-Karte)
+// liegen seit 2026-08-19 in browser-pane-fernwege.js — mit ihnen stand diese
+// Datei ueber der 800-Zeilen-Grenze. Zustandsnahes kommt als Baustein hinein.
+const { tryLiveBrowser, tryRemoteBrowser, echterBrowserWeg, remoteBrowserViewport } = baueFernwege({
+  sessionClient,
+  refs,
+  routes: CLIENT_ROUTES,
+  setFrame: (tab, teil) => setFrame(tab, teil),
+  setFallbackFrame: (tab, teil) => setFallbackFrame(tab, teil),
+  commitHistory: (tab, url, push) => commitHistory(tab, url, push),
+  showHint: (text) => showHint(text),
+  persistTabs: () => persistTabs(),
+  render: () => render()
+});
+
 // In Node-Tests gibt es kein document — dort werden nur die puren Helfer importiert.
 if (typeof document !== "undefined") init();
 
 function init() {
   if (!document.getElementById("browserPaneRoot")) return;
-  // Der "Browser"-Eintrag im rechten Panel oeffnet den integrierten Browser.
-  // Capture-Phase, damit der generische data-jump-Handler nicht mehr feuert.
+  // JEDER Browser-Knopf oeffnet den eingebauten Browser — Panel, Seitenspur
+  // und Menue.
+  //
+  // Betreiber-Entscheid 2026-08-18: "Nehm Websites raus, wir haben browser."
+  // Bis dahin trugen diese Knoepfe data-jump/data-view="websites" und fielen,
+  // wenn dieses Modul nicht rechtzeitig geladen war, auf eine LEERE Ansicht
+  // unter /websites zurueck ("Website-Bereich bereit."). Genau das ist am
+  // 2026-08-18 passiert, als browser-pane.js wegen einer fehlenden Datei gar
+  // nicht hochkam: der Klick auf "Browser" landete auf /websites, und es sah
+  // aus wie eine geaenderte Navigation. Es war ein toter Rueckfall.
+  //
+  // Die Attrappe ist jetzt weg, samt Route. Diese Knoepfe tragen ein eigenes
+  // Merkmal und koennen deshalb NIRGENDWO mehr hinfuehren ausser hierher —
+  // faellt dieses Modul aus, passiert gar nichts, statt etwas Falsches.
   document.addEventListener("click", (event) => {
-    const trigger = event.target?.closest?.('#browserPanel [data-jump="websites"]');
+    const trigger = event.target?.closest?.("[data-browser-oeffnen]");
     if (!trigger) return;
     event.preventDefault();
     event.stopPropagation();
@@ -458,26 +486,46 @@ async function navigate(tab, url, { push = true } = {}) {
   // und was der Browser nicht zeigen kann, gehoert nicht in den Zustand.
   if (typeof data?.favicon === "string" && data.favicon.startsWith("data:image/")) tab.favicon = data.favicon;
 
+  // Bekannte Einbettungs-Blocker (amazon.*) IMMER zuerst in den Live-Browser —
+  // unabhaengig davon, ob der Server-Proxy geantwortet hat. Vorher hing diese
+  // Weiche an `!data`, und genau das machte Amazon zur Lotterie (live gemessen
+  // 2026-08-19, dreimal dieselbe Adresse): antwortete Amazon dem Server mit
+  // einer Bot-Fassung OHNE Sperr-Header, meldete isEmbeddable() faelschlich
+  // "einbettbar" (fail-open), und die Seite landete WORTLOS als leerer
+  // Direkt-iframe im Panel — kein Hinweis, kein Live-Browser, zweimal von
+  // dreimal. Der Server kann die Frage "sperrt Amazon Iframes?" grundsaetzlich
+  // nicht beantworten: Amazon zeigt ihm eine andere Antwort als dem Browser.
+  if (shouldPreferRealBrowserUrl(finalUrl)) {
+    if (await echterBrowserWeg(tab, finalUrl, "known-embed-blocker", push)) return;
+    commitHistory(tab, finalUrl, push);
+    tab.status = "ready";
+    persistTabs();
+    render();
+    return;
+  }
+
   if (data?.ok && data.html && shouldOpenInRealBrowser(data.html, finalUrl)) {
-    if (await tryRemoteBrowser(tab, finalUrl, { reason: "external-required", push })) return;
-    setFallbackFrame(tab, {
-      url: finalUrl,
-      title: "Echter Browser erforderlich",
-      message: "Diese Webseite blockiert eingebettete oder automatisierte Browser-Ansichten. Oeffne sie extern, damit Login, Cookies und Schutzpruefungen wie in Chrome funktionieren."
-    });
-    showHint("Diese Webseite braucht einen echten Browser-Kontext. Bitte extern oeffnen.");
+    if (await echterBrowserWeg(tab, finalUrl, "external-required", push)) return;
   } else if (data?.ok && data.html && !data.embeddable) {
     setFrame(tab, { srcdoc: data.html, mode: "proxy" });
-  } else if (!data && shouldPreferRealBrowserUrl(finalUrl)) {
-    if (await tryRemoteBrowser(tab, finalUrl, { reason: "known-embed-blocker", push })) return;
-    setFallbackFrame(tab, {
-      url: finalUrl,
-      title: "Echter Browser erforderlich",
-      message: "Diese Webseite blockiert eingebettete Browser haeufig. Oeffne sie extern, damit Login, Cookies und Schutzpruefungen wie in Chrome funktionieren."
-    });
-    showHint("Diese Webseite braucht einen echten Browser-Kontext. Bitte extern oeffnen.");
   } else {
-    // Direkt einbetten: erlaubt volles JS; ohne Server-Antwort als Fallback.
+    // OHNE Server-Antwort zuerst den Live-Browser fragen, statt sofort direkt
+    // einzubetten.
+    //
+    // Live gemessen 2026-08-18: /api/browser/fetch liefert auf dem laufenden
+    // Control-Server 404. `data` ist damit IMMER null, und weil dieser Zweig
+    // der letzte ist, landete danach JEDE Seite hier — direkt eingebettet,
+    // ohne Sitzung. Der Live-Browser wurde nie gefragt, obwohl er einwandfrei
+    // laeuft (/api/browser/session antwortet 200 mit interactive:true,
+    // sessionId und Bild). Folge: tab.sessionId blieb leer, und die Maus
+    // konnte grundsaetzlich nichts sehen und nichts klicken — auf KEINER
+    // Seite. Der eingebaute Browser war damit eine Attrappe: Bild ja,
+    // Bedienung nein.
+    //
+    // tryLiveBrowser() gibt sauber false zurueck, wenn der Dienst nicht
+    // bereit ist oder der Aufruf scheitert. Das direkte Einbetten bleibt
+    // also der Rueckfall, es ist nur nicht mehr der erste Griff.
+    if (!data && await tryLiveBrowser(tab, finalUrl, { push })) return;
     setFrame(tab, { src: finalUrl, mode: data ? "direct" : "direct-fallback" });
     if (!data) showHint('Server-Proxy nicht erreichbar. Falls die Seite leer bleibt: "In neuem Tab oeffnen".');
   }
@@ -489,72 +537,55 @@ async function navigate(tab, url, { push = true } = {}) {
 }
 
 // Live-Browser zuerst: interaktive Remote-Session (klicken/tippen wie Chrome).
-async function tryLiveBrowser(tab, url, { push = true } = {}) {
-  if (!sessionClient.ready()) return false;
-  const viewport = remoteBrowserViewport();
-  const data = await sessionClient.open(url, viewport);
-  if (!data?.ok) return false;
-  tab.sessionId = data.sessionId;
-  tab.url = data.finalUrl || url;
-  tab.title = data.title || shortHost(tab.url);
-  tab.remoteViewport = data.viewport || viewport;
-  setFrame(tab, {
-    mode: "live-browser",
-    srcdoc: buildLiveBrowserHtml({ url: tab.url, title: tab.title, screenshot: data.screenshot, viewport: tab.remoteViewport })
-  });
-  tab.status = "ready";
-  commitHistory(tab, tab.url, push);
-  showHint("Live-Browser verbunden — klicken, tippen und scrollen wie in Chrome.");
-  persistTabs();
+
+/**
+ * Oeffnet eine Adresse AUSDRUECKLICH im Live-Browser — der einzige Modus, in
+ * dem die Maus etwas sehen und klicken kann.
+ *
+ * WARUM ES DAS BRAUCHT (live gemessen 2026-08-18, mehrfach im Kreis gelaufen):
+ * navigate() waehlt den Modus nach der SEITE, nicht nach dem Zweck. Ist eine
+ * Seite einbettbar — und das sind die meisten —, landet sie als gewoehnlicher
+ * iframe im Panel. Das ist fuer einen Menschen genau richtig: volles
+ * JavaScript, schnell, kein Serverumweg. Fuer die Maus ist es wertlos: ein
+ * fremder iframe laesst sich nicht auslesen, es entsteht keine sessionId, und
+ * der freie Lauf wartet auf eine Sitzung, die nie kommt.
+ *
+ * Solange /api/browser/fetch ausgefallen war (404), fiel alles auf den
+ * Live-Browser zurueck und es sah aus, als funktioniere die Kette. Als der
+ * Endpunkt zurueckkam, verschwand die Sitzung wieder — derselbe Fehler, neues
+ * Gesicht. Deshalb fragt die Maus jetzt selbst danach, statt zu hoffen.
+ *
+ * @returns {Promise<{ok: true}|{ok: false, grund: string}>}
+ */
+export async function oeffneImLiveBrowser(url) {
+  const ziel = normalizeAgentBrowserUrl(url);
+  if (!ziel) return { ok: false, grund: `Diese Adresse kann der Browser nicht oeffnen: ${url} — es geht nur https.` };
+  openPane();
+
+  // Ist das Panel voll (MAX_TABS), wird der AKTIVE Tab weiterbenutzt statt
+  // aufzugeben. Sieben offene Taebe sind kein Grund, einen Auftrag zu
+  // verweigern — der Nutzer erfaehrt es im Chat.
+  const aktiv = activeTab();
+  const tab = (!aktiv?.url || aktiv.url === ziel) ? aktiv : (addTab() || aktiv);
+  if (!tab) return { ok: false, grund: "Der Browser konnte keinen Tab bereitstellen." };
+
+  if (tab.sessionId) { sessionClient.close(tab.sessionId); tab.sessionId = ""; }
+  tab.status = "loading";
+  tab.url = ziel;
+  refs.address.value = ziel;
+  refs.address.blur();
   render();
-  return true;
+
+  const gelungen = await tryLiveBrowser(tab, ziel, { push: true });
+  if (gelungen) return { ok: true };
+
+  // Fail-closed mit Grund: lieber ehrlich abbrechen als die Seite als
+  // gewoehnlichen iframe zeigen und die Maus danach ins Leere greifen lassen.
+  tab.status = "ready";
+  return { ok: false, grund: "Der Live-Browser hat die Seite nicht uebernommen. Ohne ihn kann die Maus nichts sehen oder klicken." };
 }
 
-async function tryRemoteBrowser(tab, url, { reason = "", push = true } = {}) {
-  if (await tryLiveBrowser(tab, url, { push })) return true;
-  const endpoint = CLIENT_ROUTES.api.browserRemote;
-  if (!endpoint || !endpoint.startsWith("https://")) return false;
-  const viewport = remoteBrowserViewport();
-  const requestUrl = new URL(endpoint);
-  requestUrl.searchParams.set("url", url);
-  requestUrl.searchParams.set("viewportWidth", String(viewport.width));
-  requestUrl.searchParams.set("viewportHeight", String(viewport.height));
-  let data = null;
-  try {
-    const response = await fetch(requestUrl.toString());
-    data = response.ok ? await response.json() : null;
-  } catch {
-    data = null;
-  }
-  if (!data?.ok || !data.screenshot) return false;
-  tab.url = data.finalUrl || url;
-  tab.title = data.title || shortHost(tab.url);
-  tab.remoteViewport = viewport;
-  setFrame(tab, {
-    mode: "remote-browser",
-    srcdoc: buildRemoteBrowserHtml({
-      url: tab.url,
-      title: tab.title,
-      screenshot: data.screenshot,
-      capture: data.capture,
-      links: data.links,
-      reason
-    })
-  });
-  tab.status = "ready";
-  commitHistory(tab, tab.url, push);
-  showHint("Remote-Browser-Worker hat die Seite gerendert.");
-  persistTabs();
-  render();
-  return true;
-}
 
-function remoteBrowserViewport() {
-  const rect = refs.content?.getBoundingClientRect?.();
-  const width = clampViewport(rect?.width, 360, 1920, 1365);
-  const height = clampViewport((rect?.height || 0) - 38, 360, 1200, 900);
-  return { width, height };
-}
 
 
 function stepHistory(delta) {
@@ -599,6 +630,7 @@ export function setFrame(tab, { src = "", srcdoc = "", mode }) {
   applyZoom(tab);
   refs.content.appendChild(frame);
 }
+
 
 function setFallbackFrame(tab, { url, title, message }) {
   tab.title = title;
