@@ -8,6 +8,7 @@
 // Sicherheits-Helfer (SSRF-Schutz) kommen per Dependency Injection aus
 // worker.js, damit exakt dieselben Pruefungen gelten wie beim Einmal-Rendern.
 import { resolveLocator } from "../maus-engine/selector.mjs";
+import { buildObservation } from "../maus-engine/observer.mjs";
 import { randomBytes } from "node:crypto";
 import { lookup } from "node:dns/promises";
 
@@ -94,6 +95,11 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
       }
       return { ok: true, action: gebaut };
     }
+    // HINSEHEN. Der Baustein, mit dem die Maus im Panel wie Claudes Maus
+    // arbeiten kann: erst schauen, was da ist, dann entscheiden. Ohne ihn
+    // muss sie alles vorab planen und scheitert an jeder Ueberraschung.
+    case "observe":
+      return { ok: true, action: { type: "observe" } };
     case "find": {
       // Suche in der Seite. Der Text ist Nutzereingabe und wird NICHT als
       // Code ausgefuehrt — er geht als Argument in page.evaluate, nie in
@@ -269,6 +275,13 @@ export function createSessionEngine({
         await page.waitForLoadState("domcontentloaded", { timeout: cfg.settleTimeoutMs }).catch(() => {});
         await page.waitForTimeout?.(300)?.catch?.(() => {});
         return undefined;
+      }
+      case "observe": {
+        // DERSELBE Beobachter wie in der Maus-Engine, nicht ein zweiter:
+        // sonst sieht die Maus im Panel eine andere Seite als in ihrem
+        // eigenen Browser und entscheidet dort anders.
+        const beobachtung = await buildObservation(page);
+        return { beobachtung };
       }
       case "find": {
         // Gesucht wird IM echten Browser — hier liegt das Dokument wirklich

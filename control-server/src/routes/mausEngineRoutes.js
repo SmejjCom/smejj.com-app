@@ -11,6 +11,8 @@ import { evaluateWorkerBudget } from "../budget/budgetGate.js";
 import { aiTransparencyHeaders, transparencyNotice } from "../compliance/aiTransparency.js";
 import { resolveChain, resolveModelRequest, executeWithFallback } from "../llm/modelRouter.js";
 import { planAndExecute } from "../../../workers/maus-engine/planner-roundtrip.mjs";
+import { buildStepPrompt } from "../../../workers/maus-engine/prompt-template.mjs";
+import { validateLoopDecision } from "../../../workers/maus-engine/interactive-loop.mjs";
 import { createMacroStore } from "../../../workers/maus-engine/macro-store.mjs";
 import { idriveConfigFromEnv } from "../../../workers/maus-engine/artifact-uploader.mjs";
 import { signedS3Request } from "../../../workers/glm-salad/s3.js";
@@ -692,6 +694,59 @@ export async function handleMausRun(req, res, {
   if (loopEnabled && !Number.isFinite(Number.parseInt(body?.budget?.maxDurationMs, 10))) {
     policyInput.budget.maxDurationMs = LOOP_DEFAULT_DURATION_MS;
   }
+  // EINEN SCHRITT ENTSCHEIDEN — der freie Modus im Panel.
+  //
+  // Der Unterschied zum Plan-Modus ist der ganze Punkt: Statt alles vorab zu
+  // planen und an der ersten Ueberraschung zu scheitern, schaut die Maus nach
+  // JEDEM Schritt auf die Seite und entscheidet neu. So arbeitet auch Claudes
+  // Maus, und der Betreiber hat genau das verlangt.
+  //
+  // Die Arbeitsteilung bleibt: der Server denkt (Modell + Pruefung), das
+  // Panel handelt und zeigt. Der Seitenzustand kommt vom Panel herein und
+  // wird als UNTRUSTED behandelt — buildStepPrompt rahmt ihn entsprechend.
+  if (body?.naechsterSchritt === true) {
+    const beobachtung = body?.beobachtung;
+    if (!beobachtung || typeof beobachtung !== "object") {
+      return json(res, 400, { ok: false, error: "beobachtung_fehlt", transparenzhinweis: transparencyNotice("maus-engine-v2") });
+    }
+    // Der Verlauf haelt die Maus davon ab, im Kreis zu laufen: ohne ihn
+    // entscheidet sie bei gleichem Seitenzustand jedes Mal dasselbe.
+    const verlauf = Array.isArray(body?.verlauf) ? body.verlauf.slice(-12).map(String) : [];
+    const restSchritte = Math.max(1, Math.min(25, Number(body?.restSchritte) || LOOP_DEFAULT_STEPS));
+
+    let entscheidung;
+    try {
+      const prompt = buildStepPrompt({
+        task, capsuleRef, domainAllowlist,
+        budget: policyInput.budget, files: policyInput.files,
+        visionAllowed: false,
+        observation: beobachtung,
+        history: verlauf,
+        remainingSteps: restSchritte
+      });
+      const roh = await (plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }))(prompt);
+      entscheidung = validateLoopDecision(roh, policyInput);
+    } catch (error) {
+      return json(res, 502, {
+        ok: false, error: String(error?.message || error).slice(0, 200),
+        transparenzhinweis: transparencyNotice("maus-engine-v2")
+      });
+    }
+    // Fail-closed wie ueberall: eine Entscheidung, die die Pruefung nicht
+    // besteht, wird NICHT ausgefuehrt — auch nicht "so ungefaehr".
+    if (!entscheidung.ok) {
+      return json(res, 422, {
+        ok: false, error: "entscheidung_abgelehnt", gruende: entscheidung.errors?.slice(0, 5) || [],
+        transparenzhinweis: transparencyNotice("maus-engine-v2")
+      });
+    }
+    return json(res, 200, {
+      ok: true,
+      entscheidung: entscheidung.decision,
+      transparenzhinweis: transparencyNotice("maus-engine-v2")
+    });
+  }
+
   // NUR PLANEN, nicht ausfuehren.
   //
   // Damit der Betreiber der Maus ZUSEHEN kann, faehrt der Plan nicht hier,

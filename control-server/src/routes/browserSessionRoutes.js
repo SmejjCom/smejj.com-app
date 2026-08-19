@@ -73,6 +73,26 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
     // vertrauenswuerdig.
     gelesen: typeof payload.gelesen === "string"
       ? payload.gelesen.slice(0, 2000)
+      : undefined,
+    // Seitenzustand fuers Hinsehen. Dritte Runde derselben Lehre: ein neues
+    // Feld ist erst da, wenn das Tor es kennt. Hart begrenzt — der Zustand
+    // geht als UNTRUSTED Text in einen Modell-Prompt, also darf er weder
+    // beliebig gross noch beliebig tief sein.
+    beobachtung: payload.beobachtung && typeof payload.beobachtung === "object"
+      ? {
+        url: String(payload.beobachtung.url || "").slice(0, 2000),
+        title: String(payload.beobachtung.title || "").slice(0, 300),
+        text: String(payload.beobachtung.text || "").slice(0, 6000),
+        elements: Array.isArray(payload.beobachtung.elements)
+          ? payload.beobachtung.elements.slice(0, 60).map((e) => ({
+            role: String(e?.role || "").slice(0, 40),
+            name: String(e?.name || "").slice(0, 200),
+            selector: e?.selector && typeof e.selector === "object"
+              ? { strategy: String(e.selector.strategy || "").slice(0, 20), value: String(e.selector.value || "").slice(0, 300) }
+              : null
+          }))
+          : []
+      }
       : undefined
   };
 }

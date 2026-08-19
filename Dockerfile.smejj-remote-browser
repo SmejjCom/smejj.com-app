@@ -9,6 +9,9 @@ COPY workers/remote-browser/session-engine.js /app/remote-browser/session-engine
 # Panel-Browser soll Elemente genauso finden wie die Maus. Zwei Aufloeser
 # waeren zwei Verhalten, und das schwaechere faellt erst live auf.
 COPY workers/maus-engine/selector.mjs /app/maus-engine/selector.mjs
+# Der Beobachter ebenso: die Maus muss im Panel DENSELBEN Seitenzustand
+# sehen wie in ihrem eigenen Browser, sonst entscheidet sie dort anders.
+COPY workers/maus-engine/observer.mjs /app/maus-engine/observer.mjs
 COPY workers/smejj-worker /app/smejj-worker
 # worker.js importiert ../process-crash-guard.mjs — ohne diese Kopie stirbt
 # der Container mit ERR_MODULE_NOT_FOUND (live gemessen 2026-08-13).

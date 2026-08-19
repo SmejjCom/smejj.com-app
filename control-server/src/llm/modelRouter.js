@@ -48,7 +48,16 @@ const OPENROUTER_DEFAULT_MODELS = Object.freeze({
 export const PROVIDER_CATALOG = Object.freeze({
   groq: {
     baseUrl: "https://api.groq.com/openai/v1",
-    models: { default: "llama-3.3-70b-versatile", fast: "llama-3.1-8b-instant", web: "llama-3.3-70b-versatile" }
+    // GEMESSEN 2026-08-18 gegen die echte Modellliste des Kontos
+    // (scripts/diagnose/groq-zugang-pruefen.mjs): die beiden Llama-Eintraege
+    // gibt es bei Groq NICHT MEHR. Jeder Aufruf endete mit HTTP 404, und
+    // weil zwei verschiedene Namen denselben Fehler gaben, sah es nach einem
+    // kaputten Schluessel aus. Der Schluessel war die ganze Zeit gueltig.
+    //
+    // Merkregel: ein 404 vom Chat-Endpunkt vermischt "Modell gibt es nicht"
+    // und "Schluessel darf das nicht". Der /models-Endpunkt trennt beides —
+    // er kostet nichts und beantwortet die Frage in einem Aufruf.
+    models: { default: "openai/gpt-oss-120b", fast: "openai/gpt-oss-20b", web: "openai/gpt-oss-120b" }
   },
   cerebras: {
     baseUrl: "https://api.cerebras.ai/v1",
