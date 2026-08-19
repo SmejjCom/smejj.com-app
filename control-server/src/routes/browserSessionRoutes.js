@@ -78,23 +78,83 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
     // Feld ist erst da, wenn das Tor es kennt. Hart begrenzt — der Zustand
     // geht als UNTRUSTED Text in einen Modell-Prompt, also darf er weder
     // beliebig gross noch beliebig tief sein.
+    // VIERTE RUNDE DERSELBEN LEHRE, und diesmal hat sie die ganze Maus
+    // gekostet (gemessen 2026-08-19 an der laufenden Seite):
+    //
+    // Der Worker liefert laengst den Bedienbaum aus workers/maus-engine/
+    // observer.mjs — { textExcerpt, truncated, elements:[{n, tag, x, y,
+    // role, text, href, ...}] }. Dieses Tor kannte davon KEIN einziges Feld.
+    // Es liess nur `text` und `elements:[{role,name,selector}]` durch, und
+    // beides schickt der Worker gar nicht mehr. Ergebnis: die Beobachtung kam
+    // vollstaendig LEER beim Modell an — text:"" und Elemente, in denen jedes
+    // Feld ein leerer String war.
+    //
+    // Die Folgen sahen wie drei verschiedene Fehler aus und waren einer:
+    //   * entscheidung_abgelehnt in Dauerschleife (aus nichts laesst sich kein
+    //     gueltiger Schritt bilden)
+    //   * planer_leere_antwort (der Prompt war praktisch leer)
+    //   * "keine relevanten Elemente oder Textinhalte gefunden" — die Maus hat
+    //     die Wahrheit gesagt, niemand hat ihr geglaubt
+    //
+    // Gegenprobe, die es bewiesen hat: selectorText auf css=body lieferte auf
+    // DERSELBEN Seite den vollen Text. Der Weg war offen, nur dieses Tor zu.
+    //
+    // Erlaubnisliste BLEIBT Erlaubnisliste: jedes Feld ist einzeln genannt und
+    // hart begrenzt. Der Zustand geht als UNTRUSTED Text in einen Modell-
+    // Prompt — er darf weder beliebig gross noch beliebig tief sein. `text`
+    // bleibt erhalten, damit ein aelterer Worker weiter funktioniert.
     beobachtung: payload.beobachtung && typeof payload.beobachtung === "object"
       ? {
         url: String(payload.beobachtung.url || "").slice(0, 2000),
         title: String(payload.beobachtung.title || "").slice(0, 300),
         text: String(payload.beobachtung.text || "").slice(0, 6000),
+        textExcerpt: String(payload.beobachtung.textExcerpt || "").slice(0, 6000),
+        truncated: payload.beobachtung.truncated === true ? true : undefined,
         elements: Array.isArray(payload.beobachtung.elements)
-          ? payload.beobachtung.elements.slice(0, 60).map((e) => ({
-            role: String(e?.role || "").slice(0, 40),
-            name: String(e?.name || "").slice(0, 200),
-            selector: e?.selector && typeof e.selector === "object"
-              ? { strategy: String(e.selector.strategy || "").slice(0, 20), value: String(e.selector.value || "").slice(0, 300) }
-              : null
-          }))
+          ? payload.beobachtung.elements.slice(0, 60).map((e) => saubereBeobachtungsElement(e))
           : []
       }
       : undefined
   };
+}
+
+// Ein Element des Bedienbaums, Feld fuer Feld erlaubt und gekappt.
+//
+// `n` ist die KENNUNG, mit der das Modell spaeter auf genau dieses Element
+// zeigt ("klicke n=12"). Faellt sie weg, kann die Maus zwar sehen, aber nicht
+// zielen — deshalb steht sie hier an erster Stelle und nicht als Beiwerk.
+export function saubereBeobachtungsElement(e) {
+  const zahl = (wert, hoechstens) => (Number.isFinite(Number(wert)) ? Math.max(-hoechstens, Math.min(hoechstens, Math.round(Number(wert)))) : undefined);
+  const text = (wert, laenge) => {
+    const t = String(wert ?? "").slice(0, laenge);
+    return t || undefined;
+  };
+  const sauber = {
+    n: zahl(e?.n, 1000),
+    tag: text(e?.tag, 20),
+    x: zahl(e?.x, 20000),
+    y: zahl(e?.y, 20000),
+    role: text(e?.role, 40),
+    type: text(e?.type, 30),
+    name: text(e?.name, 200),
+    id: text(e?.id, 80),
+    href: text(e?.href, 300),
+    placeholder: text(e?.placeholder, 120),
+    label: text(e?.label, 120),
+    text: text(e?.text, 120),
+    // Passwortfelder tragen im Beobachter bereits "***". Die Marke wird
+    // durchgereicht, damit das Modell weiss, dass es dort nichts zu holen gibt.
+    masked: e?.masked === true ? true : undefined,
+    ausserhalbBild: e?.ausserhalbBild === true ? true : undefined,
+    // Alte Worker schicken einen fertigen Selektor mit. Bleibt erlaubt.
+    selector: e?.selector && typeof e.selector === "object"
+      ? { strategy: text(e.selector.strategy, 20), value: text(e.selector.value, 300) }
+      : undefined
+  };
+  for (const [schluessel, wert] of Object.entries(sauber)) {
+    if (wert === undefined) delete sauber[schluessel];
+  }
+  return sauber;
 }
 
 // Body-Validierung pro Endpunkt (fail-closed). Die Engine im Worker validiert
