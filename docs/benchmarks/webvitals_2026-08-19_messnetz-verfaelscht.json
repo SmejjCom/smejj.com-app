@@ -1,0 +1,93 @@
+{
+ "_befund": {
+  "gemessenAm": "2026-08-19",
+  "urteil": "MESSUNG UNBRAUCHBAR — der Engpass ist das Messnetz, nicht smejj.com.",
+  "beleg_gegenprobe": {
+   "smejj.com": {
+    "tls_s": 2.51,
+    "ttfb_s": 4.28
+   },
+   "smejjcom.github.io": {
+    "tls_s": 3.06,
+    "ttfb_s": 4.87
+   },
+   "github.com": {
+    "tls_s": 3.11,
+    "ttfb_s": 10.1
+   },
+   "example.com": {
+    "tls_s": 3.06,
+    "ttfb_s": 4.66
+   }
+  },
+  "begruendung": "example.com ist statisch und weltweit eine der schnellsten Seiten; 4,66 s TTFB ist serverseitig unmoeglich. smejj.com war die SCHNELLSTE der vier gemessenen Domains. Der TLS-Handshake allein kostete 1,7-3,1 s auf ALLEN Domains — das ist die Signatur einer Netzfilterung auf diesem Rechner (vgl. Memory smejj-fortiguard-sperre), nicht eine Eigenschaft der Seite.",
+  "konsequenz": "Die Budget-Verfehlungen dieses Laufs werden NICHT als Regression gewertet und loesen KEINEN Ship-Loop aus. Es waere ein Fehler, die Seite auf Basis dieser Zahlen zu optimieren.",
+  "letzter_gueltiger_benchmark": "docs/benchmarks/webvitals_v214_abnahme_2026-08-04.json (kalt: ttfb 111 ms, lcp 196 ms, cls 0, gewicht 311 KB)",
+  "offen": "Eine gueltige Messung braucht ein ungefiltertes Netz. Restrisiko ehrlich beziffert: die aktuellen Live-Werte von smejj.com sind mit diesem Rechner NICHT messbar."
+ },
+ "kind": "smejj.com-webvitals-report",
+ "url": "https://smejj.com/",
+ "runs": 5,
+ "budgets": {
+  "ttfb_ms": 200,
+  "lcp_ms": 1500,
+  "cls": 0.1,
+  "inp_ms": 200,
+  "pageWeight_kb": 300
+ },
+ "gemessen": {
+  "kalt": {
+   "ttfb_ms": {
+    "p75": 1765,
+    "min": 1202,
+    "max": 1902
+   },
+   "lcp_ms": {
+    "p75": 4096,
+    "min": 3716,
+    "max": 7104
+   },
+   "cls": {
+    "p75": 0
+   },
+   "inp_ms": {
+    "p75": 48
+   },
+   "pageWeight_kb": {
+    "p75": 402,
+    "min": 215,
+    "max": 549
+   },
+   "lcpElement": "H2"
+  },
+  "warm": {
+   "ttfb_ms": {
+    "p75": 1714,
+    "min": 910,
+    "max": 1834
+   },
+   "lcp_ms": {
+    "p75": 3412,
+    "min": 2632,
+    "max": 3452
+   },
+   "cls": {
+    "p75": 0
+   },
+   "inp_ms": {
+    "p75": 56
+   },
+   "pageWeight_kb": {
+    "p75": 2
+   },
+   "lcpElement": "P"
+  }
+ },
+ "budgetsEingehalten": {
+  "cls": true,
+  "inp_ms": true,
+  "ttfb_ms": false,
+  "lcp_ms": false,
+  "pageWeight_kb": false
+ }
+}

@@ -1,0 +1,161 @@
+{
+ "jobId": "job_modelle_medien_20260818",
+ "createdAt": "2026-08-18",
+ "owner": "smejj.com Betreiber",
+ "title": "Modell-Menue, Bilder, Video und Auto-Router — sechs Fehler behoben und live bewiesen",
+ "ziel": "Betreiber-Auftrag im Wortlaut: 'checke selber kommt bei viele Modelle Fehler ... Modelle waehlen haengt auch manchmal kommen komplette Modellen und manchmal kommt nur 2, 3 beheben dieser Fehler' und 'Sollen alle Modelle mit chatten, Codierung, Bilder und Video generieren und so weiter, einwandfrei funktionieren' und 'Auto soll ganz oben 1. sein, smejj 1.0 2. sein'.",
+ "anforderungen": [
+  "Modell-Menue zeigt zuverlaessig alle verfuegbaren Modelle",
+  "Alle Modelle koennen chatten und programmieren",
+  "Bilder und Video funktionieren mit jedem Modell",
+  "Auto steht an erster Stelle im Menue",
+  "Kosten minimal halten (Abo statt Guthaben, wo moeglich)"
+ ],
+ "kontext": {
+  "ausloeser": "Betreiber-Screenshot zeigte ein Modell-Menue mit nur zwei Zeilen statt 16.",
+  "vorbedingung": "ClinePass-Abo wurde vom Betreiber waehrend der Sitzung abgeschlossen (4,99 USD erster Monat, danach 9,99).",
+  "rollbackPunkt": "Git-Tag stand-2026-08-17-v545 (App-Repo feature/design-v11)"
+ },
+ "befunde": {
+  "1_geteilte_bremse": {
+   "symptom": "Modell-Menue zeigte mal alle 16 Modelle, mal nur zwei Zeilen.",
+   "wurzel": "/status, /models und /chat teilten EINEN Rate-Eimer (capacity 12, refill 0,2/s); /chat kostet 2 Marken. Nach sechs Nachrichten in einer Minute bekam das MENUE 429 — und der Frontend-Code legte das als 'kein Key' aus.",
+   "beweis": "Live reproduziert: die 13. Anfrage gab 429 mit retryAfterSec 3.",
+   "fix": "Getrennte Lese-Bremse (leseGate, capacity 60, refill 1/s) fuer GET /status und /models; Menue merkt sich Status und Katalog (sessionStorage, 10 min); 429 wird ehrlich gemeldet und nach Retry-After selbst nachgeladen.",
+   "nachweis": "30x /models = 0x 429 (vorher ab dem 13.); mit leergefahrener Chat-Bremse (200x6, dann 429,429) zeigte das Menue trotzdem alle 16 Modelle."
+  },
+  "2_bildauftraege_zu_lang": {
+   "symptom": "Ausfuehrliche Bildauftraege lieferten Text statt Bild — bei JEDEM Modell.",
+   "wurzel": "istMedienAuftrag() warf jeden Auftrag ueber 600 Zeichen auf den Textweg. Die Weiche sitzt vor der Modellwahl, darum betraf es alle Modelle.",
+   "fix": "Ein Auftrag, der MIT dem Malauftrag beginnt (Verb + Motiv in den ersten Worten), zaehlt in jeder Laenge. Langer Fliesstext bleibt ausgeschlossen.",
+   "nachweis": "tests/medien-absicht.test.mjs, 4 Faelle inkl. Gegenprobe."
+  },
+  "3_router_war_annahme": {
+   "symptom": "Denk-Woerter (architektur, migration, security) zogen Opus 5 aufs Guthaben.",
+   "wurzel": "Die Regel war eine ANNAHME ('das teure Modell kann bestimmt mehr'), nie gemessen.",
+   "messung": "14 nutzbare Modelle x 19 ausgefuehrte Testfaelle (parseDauer-Randfaelle, eingebauter Bug im Median, Intervall-Merge; Code im Blob-Worker WIRKLICH ausgefuehrt, 4-s-Grenze).",
+   "ergebnis": "minimax-m3 19/19 in 8 s; claude-opus-5 19/19 in 12 s; gpt-5.6-sol 19/19 15 s; mimo-v2.5-pro 16 s; glm-5.3 29 s; deepseek-v4-flash 30 s; deepseek-v4-pro 38 s; kimi-k2.7-code 40 s; glm-5.2 78 s; kimi-k3 79 s; qwen3.7-plus 86 s; qwen3.8-max 122 s; kimi-k2.6 184 s. EINZIGER Ausreisser: mimo-v2.5 14/19 (Intervall-Merge 0/5).",
+   "fix": "Guthaben zieht nur noch bei angehaengten Dateien oder ueber 4000 Zeichen. Dass ein grosses Kontextfenster dort hilft, ist plausibel, NICHT bewiesen — steht so im Modul.",
+   "blindgaenger": "qwen3.7-max und x-ai/grok-4.5 liefern HTTP 200 mit 0 Zeichen bei 90-123 s. Nicht in der Standardspur."
+  },
+  "4_bilder_base64_salat": {
+   "symptom": "Bildauftrag lieferte eine Wand aus Base64-Zeichen statt eines Bildes.",
+   "wurzel": "SMEJJ_CHAT_SYNC_ENABLED fehlte in der Control-Umgebung (verloren bei der Umgebungs-Schrumpfung am 14.08.). Die Medien-Ablage gab 503, das Bild blieb als 512-KB-data:-URL im Chat und wurde bei EXAKT 524288 Zeichen mittendrin abgeschnitten — dadurch fehlte die schliessende Klammer des Markdown-Bildes.",
+   "siebenGesundeGlieder": "Weiche, Maler, Antwortformat, Renderer (png/jpeg/svg/mp4 isoliert geprueft), Speicherweg, Marken, Auslieferung — alle in Ordnung. Nur das achte Glied riss.",
+   "fix": "Wert per EINZEL-Mutation gesetzt (createEnvironmentVariable; die ersetzende Sammel-Form ist im Skript gesperrt), danach Control NEU GEBAUT (Neustart zieht keine neue Umgebung).",
+   "nachweis": "Ablage 200, Ruecklauf image/png; lagereMedienAus meldet ausgelagert 1 / gescheitert 0; echter Auftrag zeigte ein 512x512-Bild im Chat."
+  },
+  "5_video_stumm_blockiert": {
+   "symptom": "Video-Auftrag stand 15 Minuten auf 'Erzeuge dein Video laeuft … (ca. 1-2 Minuten)'.",
+   "verraeterischesZeichen": "Ein NICHT-Ereignis: der Fortschritt stand still, obwohl die Bruecke laut Code alle 10 s taktet. Beide Dienste meldeten RUNNING, /health gab 200.",
+   "wurzel": "Der Video-Worker kann nur EIN Video zugleich; ein haengender Auftrag belegte den Platz dauerhaft, ohne dass jemand es meldete.",
+   "fix": "Neustart von smejj-chat-bridge (Lebenszeichen kamen sofort wieder) und smejj-video-worker.",
+   "nachweis": "640x640-MP4 in 103 s, im Chat als <video> mit Player."
+  },
+  "6_endloses_haengen": {
+   "symptom": "Ein verstummter Strom liess den Chat unbegrenzt warten.",
+   "fix": "Stille-Wache in streamChatAnswer: 90 s ohne ein einziges Byte -> Abbruch mit ehrlicher Meldung, Teilantwort bleibt stehen. 90 s liegt bewusst ueber dem 10-s-Takt der Bruecke.",
+   "nachweis": "tests/stille-wache.test.mjs mit beiden Proben (taktender Strom darf nicht abbrechen, verstummter muss)."
+  },
+  "7_menue_reihenfolge": {
+   "auftrag": "Auto soll ganz oben 1. sein, smejj 1.0 2. sein.",
+   "fix": "Bloecke in code-flaeche.js getauscht; Auto ruft weiterhin KEIN /select.",
+   "nachweis": "Live an der ausgelieferten Datei smejj.com/assets/code-flaeche.js?v=40: Auto an Position 15079, smejj 1.0 an 15693."
+  }
+ },
+ "betroffeneDateien": [
+  {
+   "pfad": "public/code-flaeche.js",
+   "sha256": "9230a50c4cc02acc0cf52e2c45dbb2d9effabbaeb8e3451ed829cef8c13ef8d3"
+  },
+  {
+   "pfad": "public/cline-model-menu.js",
+   "sha256": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db"
+  },
+  {
+   "pfad": "public/ai/chat-stream.js",
+   "sha256": "8a362608235dd78c1561344416dbacc7d13826ab8797f4b84d4f516b6e194bfe"
+  },
+  {
+   "pfad": "public/ai/modellRouter.js",
+   "sha256": "ef65b7c0cf45f06b4b557a7e501d04cd6ee807cf6fac805f5185a8dd13ff09ee"
+  },
+  {
+   "pfad": "public/medien-absicht.js",
+   "sha256": "da780274309efac1d4ad683173c679e9363ddf39ba00b84cb75b1eee266d0ac6"
+  },
+  {
+   "pfad": "control-server/src/routes/providerRoutes.js",
+   "sha256": "2f63057321eae995cbfd7bd14d773b0e9bb76d3cb5c1d17e89349f7d7a3995fb"
+  },
+  {
+   "pfad": "scripts/diagnose/funktionen-live.mjs",
+   "sha256": "db79ba4c7023228874c5a88e4eccaeeac3e866035a62f69a0293681485d82937"
+  },
+  {
+   "pfad": "tests/provider-lese-bremse.test.mjs",
+   "sha256": "0b5277060b479a447a30def2852506a0a40d5050046b5a6ca4124962793f3ed3"
+  },
+  {
+   "pfad": "tests/stille-wache.test.mjs",
+   "sha256": "93df8897a1c3de07f771c836840ea9cbfcbcdccb7fac15140544f3792d90d633"
+  },
+  {
+   "pfad": "tests/funktionen-live.test.mjs",
+   "sha256": "2503905bf669d8ec819c5ec13de5b418586ed4c2af70d69487bf5c8127f4acf5"
+  },
+  {
+   "pfad": "tests/modellmenue-reihenfolge.test.mjs",
+   "sha256": "8cf7c6aa135d4a0e1f0941d090fd0de33f7786135263e60f9290ac905bb16b24"
+  },
+  {
+   "pfad": "tests/medien-absicht.test.mjs",
+   "sha256": "a40528a6744434b08319d20508fae928dd635d8f69bd025b7fd547bffe586f31"
+  },
+  {
+   "pfad": "tests/modell-router.test.mjs",
+   "sha256": "6caa91f090e68caa37b4389ddf4f94d8f5da2b6fea66d04228dde4797c071803"
+  }
+ ],
+ "verification": {
+  "tests": "42 Tests gruen (provider-lese-bremse 4, stille-wache 5, funktionen-live 5, modellmenue-reihenfolge 3, medien-absicht 4, modell-router 8, cline-provider + frontend 13)",
+  "syntax": "node --check auf allen geaenderten Dateien",
+  "startLock": "gruen, 34 Dateien, frisch gestempelt",
+  "guidelines": "17 Verstoesse — UNVERAENDERT gegenueber dem Vorgaenger-Commit (gegen git stash gemessen); keiner gehoert dieser Arbeit",
+  "funktionsWaechter": "npm run check:funktionen-live — alle 7 Kernwege antworten",
+  "liveTest": "Produktionsdomain smejj.com: Menue-Datei v40 geprueft, Bild 512x512 im Chat, Video 640x640 im Chat"
+ },
+ "benchmarks": {
+  "webVitals": "docs/benchmarks/webvitals_2026-08-19_messnetz-verfaelscht.json",
+  "urteil": "Budgets formal verfehlt (ttfb p75 1765 ms, lcp p75 4096 ms), ABER die Messung ist unbrauchbar: example.com mass im selben Lauf 4,66 s TTFB und github.com 10,1 s. Der TLS-Handshake kostete auf ALLEN Domains 1,7-3,1 s. Der Engpass ist das Messnetz dieses Rechners, nicht smejj.com — das sogar die schnellste der vier gemessenen Domains war.",
+  "konsequenz": "KEINE Regression, KEIN Ship-Loop. Es waere ein Fehler, die Seite auf diese Zahlen hin zu optimieren.",
+  "letzterGueltigerBenchmark": "webvitals_v214_abnahme_2026-08-04.json (kalt ttfb 111 ms, lcp 196 ms)",
+  "restrisiko": "Die aktuellen echten Live-Werte sind mit diesem Rechner NICHT messbar."
+ },
+ "kosten": {
+  "guthabenVerbrauch": "unter 0,03 USD fuer den gesamten Abend",
+  "abo": "ClinePass 4,99 USD erster Monat (Betreiber-Entscheidung), danach 9,99; jaehrlich 79,92",
+  "beweis": "26 Abo-Anfragen aenderten das Guthaben nicht (50,2069 -> 50,2029); die drei Abo-Limits standen danach weiter bei 0 %",
+  "neueLaufendeKosten": "keine durch diese Arbeit"
+ },
+ "rollback": {
+  "vorher": "stand-2026-08-17-v545",
+  "nachher": "stand-2026-08-18-v546",
+  "frontendRepo": "smejj-app-frontend main ce77e32",
+  "weg": "git checkout <tag> im App-Repo, Frontend-Assets aus dem Tag neu kopieren, Control aus dem Bau-Branch neu bauen"
+ },
+ "qualitaetsbewertung": {
+  "note": "gut",
+  "staerke": "Jeder Fix wurde live an der Produktionsdomain nachgewiesen, nicht nur gebaut. Die Router-Annahme wurde durch AUSFUEHREN widerlegt statt durch Lesen.",
+  "schwaeche": "Task Capsule und Memory_Bank wurden erst NACHTRAeGLICH geschrieben; die Performance-Messpflicht lief erst am Ende. Beides war Pflicht VOR bzw. BEI jeder Aenderung.",
+  "eigeneFehler": [
+   "renderChatMarkdown(node) liest den Text aus dem KNOTEN — mein erster Test uebergab ihn als zweites Argument und haette den Renderer beinahe faelschlich beschuldigt.",
+   "Ein Messlauf lief, waehrend der Betreiber selbst chattete: selectedModel ist globaler Kontozustand, sein Modell wechselte mitten im Gespraech.",
+   "import.meta.url === 'file://' + argv[1] ist in diesem Projekt IMMER falsch (Ordnername mit Leerzeichen) — der neue Waechter lief durch, tat nichts und meldete Erfolg."
+  ]
+ },
+ "training": {
+  "verwendbar": false,
+  "grund": "Enthaelt Betreiberdaten und Fremdmodell-Antworten; Training Capture ist fail-closed aus."
+ }
+}
