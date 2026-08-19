@@ -108,7 +108,20 @@ test("start composer keeps chat inside the start page", () => {
   assert.doesNotMatch(html, /id="log"/);
   assert.doesNotMatch(html, /data-view="chat"/);
   assert.match(app, /submitTask\(task, \{ target: "#startLog" \}\)/);
-  assert.match(app, /runClientChat/);
+  // Der Client-Chat-Weg muss erhalten bleiben — aber er ist seit der
+  // Medien-Weiche EINE Station laenger: app.js ruft chatOhneMedienauftrag(),
+  // und erst medien-absicht.js ruft runClientChat(). Der alte Test suchte den
+  // Namen stur in app.js und war seit dem Umbau rot, obwohl der Weg gesund
+  // ist. Jetzt wird die KETTE geprueft, nicht ein Name an einer Stelle —
+  // damit faellt der Test auch dann, wenn der Wrapper ins Leere zeigt.
+  const rufDirekt = /runClientChat/.test(app);
+  const rufUeberWeiche = /chatOhneMedienauftrag/.test(app);
+  assert.ok(rufDirekt || rufUeberWeiche, "app.js nutzt den Client-Chat-Weg nicht mehr");
+  if (!rufDirekt) {
+    const weiche = fs.readFileSync("public/medien-absicht.js", "utf8");
+    assert.match(weiche, /runClientChat/, "die Medien-Weiche fuehrt nicht mehr zu runClientChat");
+    assert.match(app, /import \{ chatOhneMedienauftrag \} from "\.\/medien-absicht\.js/, "Weiche nicht importiert");
+  }
   assert.match(app, /chat: "start"/);
   assert.match(app, /chat: "\/"/);
   assert.match(app, /"\/chat": "start"/);

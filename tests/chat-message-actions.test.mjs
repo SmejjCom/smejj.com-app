@@ -676,7 +676,11 @@ test("der Verlauf speichert die Fassungen mit Obergrenze", () => {
 
 test("app.js bleibt unangetastet und unter der Zeilengrenze", () => {
   assert.ok(!appJs.includes("chat-actions"), "die Funktion haengt sich selbst ein, app.js kennt sie nicht");
-  assert.ok(appJs.split("\n").length <= 800, "800-Zeilen-Regel (Start-Lock, check-guidelines)");
+  // Zaehlung wie scripts/check-guidelines.mjs:97 — ein Abschluss-Zeilenumbruch
+  // erzeugt bei split() ein leeres Schlusselement und machte die Pruefung um
+  // genau 1 zu streng (app.js mit exakt 800 Zeilen fiel durch).
+  const appZeilen = appJs.endsWith("\n") ? appJs.split("\n").length - 1 : appJs.split("\n").length;
+  assert.ok(appZeilen <= 800, `800-Zeilen-Regel (Start-Lock, check-guidelines) — app.js hat ${appZeilen}`);
 });
 
 test("index.html laedt das Modul, sw.js hat es im Precache", () => {
