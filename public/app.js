@@ -349,10 +349,6 @@ async function submitTask(task, { target = "#startLog" } = {}) {
   const output = addEntry("", "assistant", target);
   try {
     if (routeAutonomousRequest({ task, output, goToView, eventTarget: window })) return showTaskIndicator("done");
-    // Maus-Auftrag ("Erledige mit der Maus im Browser: ...") VOR jedem
-    // Modellweg: er wird nicht beantwortet, sondern ausgefuehrt — Browser auf,
-    // Schritt fuer Schritt, sichtbar. Erkennt die Weiche nichts, laeuft alles
-    // unveraendert weiter (maus-absicht.js).
     if (await mausAuftragErledigt({ task, output })) return showTaskIndicator("done");
     if (await chatOhneMedienauftrag({ task: await groundTask(task), model: state.settings.model, output, offlineNotice: UI_COPY.chatOffline })) return showTaskIndicator("done");
     try {
@@ -430,7 +426,6 @@ function bindCodeTools() {
     downloadText(filename, $("#editor").value);
   });
 }
-
 
 
 function bindStoragePanel() {

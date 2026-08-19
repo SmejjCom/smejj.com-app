@@ -5,6 +5,43 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-19] KOSTENARCHITEKTUR: SIEBEN HEBEL, KEINE DECKEL (job_kostenarchitektur_20260819)
+
+Capsule: `task-capsules/2026/08/job_kostenarchitektur_20260819/capsule.json`
+(Object Brain: `s3://smejj-model-files/capsules/app/job_kostenarchitektur_20260819/`).
+Tags: `stand-2026-08-18-kosten-cache-scharf`, `stand-2026-08-18-gratis-stufe0`,
+`stand-2026-08-19-cache-kreativ`; Frontend `stand-2026-08-18-gratis-stufe0` (9c68294).
+
+**Entscheidung:** Kosten werden durch ARCHITEKTUR gesenkt, nicht durch Limits.
+Ein Tagesdeckel wurde vorgeschlagen und vom Betreiber abgelehnt ("unbeschraenkt,
+kostenlos"). Stattdessen wandert die Rechenarbeit auf das Geraet des Nutzers.
+
+**Begruendung:** Vorher wusste der Server nicht, was eine Anfrage kostet — der
+`usage`-Block wurde verworfen. Die erste Messung widerlegte die eigene
+Rangfolge: groesster Posten waren **Denk-Tokens mit 56 % der Rechnung**, in der
+Planung Platz fuenf. Sieben Hebel, jeder live belegt (Details in der Capsule):
+Token-Messung; Prompt-Caching (`ein 8.884 / cache 8.832` = 99 %); Denk-Bremse
+(1.378 -> 46 Tokens, Tagesanteil 76 % -> 30 %); Zeitbudget (21.000 Zeichen
+laufen durch); Kontext-Diaet mit Symbol-Index (240.000 -> 15.000 Tokens, also
+1,20 -> 0,075 USD je Anfrage); semantischer Cache (85 ms statt 2.950 ms, erst
+im Schatten, dann scharf); Gratis-Stufe 0 (Chromes eingebautes Modell, 200 ms
+bis zum ersten Zeichen, 49 % von 111 echten Chats). Laufende Zusatzkosten: 0 EUR.
+
+**Verifikation:** 324/325 Tests gruen (der rote gehoert einer Parallelsitzung);
+`check:architecture` 7/7; `check:guidelines` fuer src/server.js eingehalten
+(906 -> 797 Zeilen, in vier Module zerlegt). Live nach dem Bau 03:36:30Z: zwei
+echte Anfragen ueber den Agenten-Weg, `spur='agent'`, `DENK 0`.
+
+**Lehre:** Fuenf Fehler dieser Sitzung fand erst der Live-Lauf, keiner die Tests.
+Eine reine Funktion beweist die REGEL, nicht ihre VERDRAHTUNG.
+
+**Offen:** Die Performance-Budgets werden derzeit NICHT erreicht (TTFB p50
+1.387 ms gegen 200 ms; Control-API p95 3.607 ms gegen 300 ms; erste Messung
+ueberhaupt, daher kein Vergleichswert). LCP/INP/CLS fehlen — sie brauchen einen
+Browser. Memory_Bank.md steht bei 855 Zeilen ueber dem 800-Limit; das Archivieren
+alter Eintraege beruehrt fremde Aufzeichnungen und braucht eine Freigabe.
+
+
 ### [2026-08-18] MODELL-MENUE, BILDER, VIDEO UND AUTO-ROUTER (job_modelle_medien_20260818)
 
 Capsule: `task-capsules/2026/08/job_modelle_medien_20260818/capsule.json`

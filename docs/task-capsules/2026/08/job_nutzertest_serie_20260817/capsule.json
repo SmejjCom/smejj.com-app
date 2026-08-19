@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_nutzertest_serie_20260817",
+  "createdAt": "2026-08-17T17:10:00.000Z",
+  "product": "smejj.com",
+  "ziel": "Nutzertest-Serie durch die gesamte App als normaler Nutzer im echten Chrome: jede Flaeche mit echten Klicks pruefen, gefundene Fehler sofort beheben, live ausliefern und beweisen. Dazu Chat 1:1 wie ChatGPT und Code-Bereich 1:1 wie Claude.",
+  "freigabe": {
+    "person": "Wof Kadavanich",
+    "wortlaut": "Master-Prompt (eigenstaendig, live testen, 100 % Schutz) + wiederholte Karten-Abnahmen 'Abgenommen — Tag + Stempel'",
+    "datum": "2026-08-16/17",
+    "beruehrteLocks": ["Start-Lock (mit Betreiber-Wortlaut je Stempel neu eingefroren)"],
+    "budgetrelevant": false,
+    "budgetHinweis": "Keine neue Kostenposition. Nur GitHub Pages Free (statisch) und der bestehende Control Server."
+  },
+  "anforderungen": [
+    "Jede App-Flaeche als normaler Nutzer mit echten Klicks pruefen (kein Build-Erfolg als Beweis)",
+    "Gefundene Fehler sofort beheben, live ausliefern, erneut testen (Ship-Loop)",
+    "Bestehende Funktionen duerfen nicht kaputtgehen (Non-Regression)",
+    "Jeder neue Waechter mit kaputter UND gesunder Probe (Projektregel)",
+    "800-Zeilen-Regel einhalten",
+    "Am Ende: Tag + Start-Lock-Stempel (100 % Schutz)"
+  ],
+  "gepruefteFlaechen": [
+    "Startseite", "Code-Bereich", "Suchen", "Verlauf", "Einstellungen (10 Reiter)", "Konto (8 Panels)",
+    "smejjCloud", "smejjBot", "Papierkorb", "Dateien", "Systemzustand", "KI-Modelle", "Speicher",
+    "Websites/Browser bedienen", "Projects", "rechtes Panel (5 Reiter)", "Sprechen (Sprachmodus)", "Bilder erstellen"
+  ],
+  "gefundeneUndBehobeneFehler": [
+    { "nr": 1, "flaeche": "Code", "befund": "'Neuer Auftrag' leerte nur das Feld, rief nie newChat() — die naechste Aufgabe landete im ALTEN Gespraech", "fix": "spur-start.js ruft newChat()", "sw": "v475" },
+    { "nr": 2, "flaeche": "App-weit", "befund": "fixer Hilfe-Knopf oben verbrauchte Platz", "fix": "topbar-krume.js entfernt ihn", "sw": "v475" },
+    { "nr": 3, "flaeche": "Chat", "befund": "Drei-Punkte lagen auf Blasen- und Kartenraendern", "fix": "design-v11.css: in der letzten Textzeile", "sw": "v475" },
+    { "nr": 4, "flaeche": "Code", "befund": "Anhang- und Diktat-Icon 2 px schmal (ghost-button padding frass den 30px-Knopf)", "fix": "padding 0 + svg flex none", "sw": "v476" },
+    { "nr": 5, "flaeche": "Code", "befund": "Direktaufruf /code zeigte die START-Spur und den Gruss ohne Namen", "fix": "codeAktiv zaehlt den Pfad; Beobachter zeichnet nach", "sw": "v484" },
+    { "nr": 6, "flaeche": "Code", "befund": "leere Code-Seite haengte den Auftrag an das zuletzt offene Gespraech (Urfehler-Rest)", "fix": "senden() trennt zuerst", "sw": "v489/v511" },
+    { "nr": 7, "flaeche": "Auslieferung", "befund": "live ausgeliefertes sw.js stand auf CACHE_NAME v350 — Update-Kette der Clients tot", "fix": "Reparatur-Bump ueber jede je verteilte Nummer", "sw": "v511" },
+    { "nr": 8, "flaeche": "Chat/Verlauf", "befund": "eingefrorene Wartesignale ('Anfrage laeuft … 3 s') standen dauerhaft im gespeicherten Verlauf", "fix": "chat-warte-reste.js mit TUEV-Test", "sw": "v516" },
+    { "nr": 9, "flaeche": "Verlauf", "befund": "JEDER Klick auf das ⋯-Menue warf ReferenceError (confirmingProjektId nie deklariert) — Umbenennen/Anheften/Loeschen unerreichbar", "fix": "Deklaration ergaenzt", "sw": "v518" },
+    { "nr": 10, "flaeche": "Konto", "befund": "Abo-Anzeige crashte (renderZugang aufgerufen, nie definiert)", "fix": "Funktion definiert, fail-safe ohne paidEmail", "sw": "v518" },
+    { "nr": 11, "flaeche": "smejjCloud", "befund": "'Liste aktualisieren' crashte bei jedem Klick (Klick-Ereignis kam als deps an)", "fix": "mit echten Abhaengigkeiten gerufen", "sw": "v527" },
+    { "nr": 12, "flaeche": "Dateien", "befund": "'IDrive e2 pruefen' crashte still (showJson/CLIENT_ROUTES fehlten im Modul)", "fix": "lokal mit dynamischem config-Import", "sw": "v532" },
+    { "nr": 13, "flaeche": "Bilder", "befund": "'Generiere ein Bild von: …' lief ueber den Cline-Textweg — Antwort war ein Bildprompt statt eines Bildes", "fix": "medien-absicht.js als Client-Weiche vor dem Cline-Weg, mit TUEV-Test", "sw": "v535" },
+    { "nr": 14, "flaeche": "Regelwerk", "befund": "app.js auf 804/805 Zeilen — 800-Zeilen-Regel gerissen (Hinweis der Parallelsitzung)", "fix": "Weichen komplett in die Module verschoben (medien-absicht, maus-absicht)", "sw": "v541" },
+    { "nr": 15, "flaeche": "Regelwerk", "befund": "Waechter 'gerendert wird erst am ENDE des Streams' zaehlte stur EINEN Renderaufruf — der neue Stille-Abbruch ist ein zweiter, legitimer Endpunkt", "fix": "Waechter prueft jetzt PRO PFAD, dass nach dem Rendern nichts mehr angehaengt wird", "sw": "v541" }
+  ],
+  "neueFunktionen": [
+    "Runter-Pfeil im Chat wie ChatGPT (chat-runter-pfeil.js)",
+    "Stopp-Knopf waehrend der Antwort wie ChatGPT (chat-stopp.js + Leser-Registry in ai/chat-stream.js)",
+    "Codebloecke wie Claude: Sprach-Kopfleiste, Syntax-Farben (chat-code-farben.js), Download als Datei (chat-code-download.js)",
+    "Status im rechten Panel statt Ansichtswechsel (panel-status.js)",
+    "Warte-Reste-Waechter (chat-warte-reste.js)",
+    "Medien-Weiche vor dem Textmodell (medien-absicht.js)"
+  ],
+  "verifikation": {
+    "build": "n/a (statisches Frontend, Buendel ueber npm run build:start-styles)",
+    "tests": "npm test — 2333 Tests, 5 bekannte Umgebungs-Rote (presign, model-promotion-runner, rag, @resvg-branding, byte-reproducible)",
+    "waechterTuev": "chat-warte-reste und medien-absicht je mit kaputter UND gesunder Probe",
+    "livetest": "Echte Klicks im Chrome des Betreibers auf https://smejj.com — jede Flaeche einzeln, Befunde und Beweise im Sitzungsprotokoll",
+    "performance": "docs/benchmarks/webvitals_v537_nutzertest_2026-08-17.json (mit Messvorbehalt Netzweg)"
+  },
+  "offenePunkte": [
+    "pageWeight beim Erstbesuch 505 KB > Budget 300 KB — Behebung beruehrt index.html und Design (Start-/Design-Lock, Rote Liste): braucht schriftliche Freigabe",
+    "TTFB/LCP von diesem Arbeitsplatz nicht valide messbar (Proxy addiert 1,3-1,8 s je Verbindung) — gueltige Messung braucht ein anderes Netz",
+    "Dauerhaft ueber 800 Zeilen (Altlast, nicht aus dieser Serie): design-v11.css 2331, index.html 995, src/server.js 809, chat-store.js 947, code-flaeche.js 1183"
+  ],
+  "rollback": {
+    "tags": ["stand-2026-08-16-v483", "stand-2026-08-16-v484", "stand-2026-08-17-v516", "stand-2026-08-17-v518", "stand-2026-08-17-v527", "stand-2026-08-17-v532"],
+    "weg": "git checkout <tag> im App-Repo; Frontend-Repo smejj-app-frontend main auf den zugehoerigen Commit zuruecksetzen und sw.js CACHE_NAME hochzaehlen"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-webvitals",
+  "anlass": "Nachgeholte Messpflicht nach der Nutzertest-Serie (sw v475..v540). Master-Prompt Ship-Loop Schritt 13.",
+  "gemessenAm": "2026-08-17",
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "scripts/testing/measure_web_vitals.mjs, Chrome headless ueber DevTools-Protokoll",
+  "MESSVORBEHALT": {
+    "netzweg": "Die Messung lief ueber den Netzweg dieses Arbeitsplatzes (FortiGuard-Proxy). Gegenprobe am selben Netz: example.com TLS 1,32 s / TTFB 2,05 s, docs.github.com nicht erreichbar. Der Proxy addiert rund 1,3-1,8 s auf JEDE Verbindung.",
+    "folge": "ttfb_ms und lcp_ms sind dadurch NICHT vergleichbar mit dem Benchmark vom 2026-08-04 (ttfb p75 111 ms). Sie sind hier als 'nicht valide gemessen' zu lesen, nicht als Regression.",
+    "valide": "cls, inp_ms und pageWeight_kb sind netzunabhaengig und damit gueltig."
+  },
+  "budgets": { "ttfb_ms": 200, "lcp_ms": 1500, "cls": 0.1, "inp_ms": 200, "pageWeight_kb": 300, "api_p95_ms": 300, "api_p99_ms": 800 },
+  "kalt": {
+    "ttfb_ms": { "p75": 1785, "min": 697, "max": 1900, "bewertung": "netzverfaelscht" },
+    "lcp_ms": { "p75": 3936, "min": 2072, "max": 4016, "bewertung": "netzverfaelscht" },
+    "cls": { "p75": 0, "bewertung": "OK" },
+    "inp_ms": { "p75": 48, "min": 40, "max": 504, "bewertung": "OK" },
+    "pageWeight_kb": { "p75": 505, "min": 213, "max": 508, "bewertung": "BUDGET VERFEHLT (gueltig)" },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": { "p75": 1264, "bewertung": "netzverfaelscht" },
+    "lcp_ms": { "p75": 2968, "bewertung": "netzverfaelscht" },
+    "cls": { "p75": 0, "bewertung": "OK" },
+    "inp_ms": { "p75": 56, "bewertung": "OK" },
+    "pageWeight_kb": { "p75": 2, "bewertung": "OK — Service Worker liefert aus dem Cache" }
+  },
+  "offenerBefund": {
+    "titel": "Startseiten-Gewicht beim Erstbesuch 505 KB uebertragen (Budget 300 KB)",
+    "groessteBrocken_gzip": { "assets/start-styles.css": "53 KB (202 KB roh)", "index.html": "17 KB", "assets/chat-store.js": "13 KB", "assets/app.js": "10 KB", "restliche Module": "Summe der uebrigen ~50 Module" },
+    "ursache": "Die Startseite laedt ihre Module einzeln und vollstaendig beim Erstbesuch; start-styles.css buendelt 13 Quelldateien (design-v11.css allein 2331 Zeilen).",
+    "warumHierNichtBehoben": "Der Weg dahin (Module buendeln/nachladen, CSS aufteilen) beruehrt index.html und das Design — Start-Lock und Design-Lock, also Rote Liste. Braucht schriftliche Freigabe des Betreibers.",
+    "warmerBesuch": "Beim Wiederbesuch nur 2 KB — der Service Worker haelt das Budget bereits ein."
+  }
+}
