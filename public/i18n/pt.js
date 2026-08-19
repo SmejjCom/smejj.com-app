@@ -336,4 +336,5 @@ export default {
   "Frag mich alles": "Descreva uma tarefa ou faça uma pergunta.",
   "Generiere ein Bild von:": "Gere uma imagem de:",
   "Generiere ein Video von:": "Gere um vídeo de:",
+  "Erledige mit der Maus im Browser:": "Faça com o mouse no navegador:",
 };

@@ -336,4 +336,5 @@ export default {
   "Frag mich alles": "Bir görev tanımlayın veya bir soru sorun.",
   "Generiere ein Bild von:": "Şunun görselini üret:",
   "Generiere ein Video von:": "Şunun videosunu üret:",
+  "Erledige mit der Maus im Browser:": "Tarayıcıda fareyle hallet:",
 };

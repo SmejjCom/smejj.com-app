@@ -336,4 +336,5 @@ export default {
   "Frag mich alles": "Опишите задачу или задайте вопрос.",
   "Generiere ein Bild von:": "Создай изображение:",
   "Generiere ein Video von:": "Создай видео:",
+  "Erledige mit der Maus im Browser:": "Сделай мышью в браузере:",
 };

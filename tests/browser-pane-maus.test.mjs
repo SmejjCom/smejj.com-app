@@ -196,3 +196,51 @@ test("unverstandene Schritte werden gemeldet, nicht verschluckt", async () => {
   }).catch(() => null);
   assert.equal(gesendet, 0, "bei einem unverstandenen Plan darf nichts gesendet werden");
 });
+
+// --- Freier Modus: hinsehen, entscheiden, handeln ----------------------------
+
+test("Entscheidungen werden in Panel-Aktionen uebersetzt", async () => {
+  const { entscheidungAlsAktion } = await import("../public/browser-pane-maus.js");
+  const akt = entscheidungAlsAktion({ decision: "act", step: { action: "click", target: { selector: { strategy: "text", value: "Weiter" } } } });
+  assert.deepEqual(akt.aktion, { type: "selectorClick", strategy: "text", value: "Weiter" });
+  assert.equal(entscheidungAlsAktion({ decision: "done", reason: "Ziel erreicht" }).fertig, true);
+  assert.match(entscheidungAlsAktion({ decision: "fail", reason: "geht nicht" }).fehler, /geht nicht/);
+  assert.match(entscheidungAlsAktion(null).fehler, /keine_entscheidung/);
+});
+
+// Der ganze Sinn des freien Modus: nach JEDEM Schritt wird neu hingesehen.
+test("vor jedem Schritt wird die Seite angesehen", async () => {
+  const { fuehreFreienLaufAus } = await import("../public/browser-pane-maus.js");
+  const gesendet = [];
+  let runde = 0;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => {
+      runde += 1;
+      return runde < 3
+        ? { ok: true, entscheidung: { decision: "act", step: { action: "scroll", deltaY: 300 } } }
+        : { ok: true, entscheidung: { decision: "done", reason: "unten angekommen" } };
+    }
+  });
+  const e = await fuehreFreienLaufAus({
+    auftrag: "scrolle nach unten",
+    tab: { url: "https://smejj.com/", sessionId: "s1" },
+    schrittUrl: "https://api.test/schritt",
+    sende: async (a) => { gesendet.push(a.type); return { ok: true, beobachtung: { url: "https://smejj.com/", elements: [] } }; }
+  });
+  assert.equal(e.ok, true);
+  // observe, scroll, observe, scroll, observe -> dann "done"
+  assert.deepEqual(gesendet, ["observe", "scroll", "observe", "scroll", "observe"]);
+});
+
+// Ohne Obergrenze koennte die Maus ewig weitermachen.
+test("der freie Lauf hat eine Obergrenze", async () => {
+  const { fuehreFreienLaufAus } = await import("../public/browser-pane-maus.js");
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ ok: true, entscheidung: { decision: "act", step: { action: "scroll", deltaY: 100 } } }) });
+  const e = await fuehreFreienLaufAus({
+    auftrag: "endlos", tab: { url: "https://a.de/", sessionId: "s1" }, schrittUrl: "https://api.test/s",
+    maxSchritte: 3, sende: async () => ({ ok: true, beobachtung: { elements: [] } })
+  });
+  assert.equal(e.ok, false);
+  assert.match(e.grund, /Obergrenze/);
+});
