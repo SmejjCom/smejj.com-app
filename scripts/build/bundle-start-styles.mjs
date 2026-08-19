@@ -32,6 +32,10 @@ export const SOURCES = Object.freeze([
   "branding.css",
   "composer-tools.css",
   "browser-pane.css",
+  // Die Chrome-Angleichung des Panels (2026-08-19 aus browser-pane.css
+  // herausgeloest, 800-Zeilen-Regel). Muss DIREKT dahinter stehen: sie
+  // ueberschreibt Regeln von dort absichtlich.
+  "browser-pane-chrome.css",
   "view-chrome.css",
   "profile-dock.css",
   "chat-markdown.css",

@@ -16,6 +16,15 @@ import { validateLoopDecision } from "../../../workers/maus-engine/interactive-l
 import { createMacroStore } from "../../../workers/maus-engine/macro-store.mjs";
 import { idriveConfigFromEnv } from "../../../workers/maus-engine/artifact-uploader.mjs";
 import { signedS3Request } from "../../../workers/glm-salad/s3.js";
+// 2026-08-19 ausgelagert (800-Zeilen-Regel). buildPlannerClient wird hier
+// zugleich WEITER EXPORTIERT: tests/maus-engine-route.test.mjs holt ihn von
+// dieser Datei, und der bisherige Einstieg soll unveraendert gueltig bleiben.
+import { buildPlannerClient, PLANER_TIMEOUT_MS } from "./mausPlanerClient.js";
+export { buildPlannerClient };
+import {
+  ASYNC_RUN_TIMEOUT_MS, rememberAsyncRun, countRunningAsyncRuns,
+  defaultRunStore, runAsyncInBackground, leseAsyncLauf
+} from "./mausLaeufeSpeicher.js";
 
 const MAX_BODY_BYTES = 128_000;
 const MAX_PLANNER_PROMPT_CHARS = 24_000;
@@ -42,55 +51,11 @@ const MAX_PLANNER_PROMPT_CHARS = 24_000;
 // Merkregel: bevor man die eigene Frist anhebt, messen, WESSEN Frist zuschlaegt.
 // Eine Zahl, die man selbst kontrolliert, ist die verlockendste falsche Antwort.
 const GATEWAY_HARTGRENZE_MS = 300_000;
-// Je Modellversuch beim PLANEN. Siehe die Begruendung bei buildPlannerClient.
-const PLANER_TIMEOUT_MS = 100_000;
 const WORKER_TIMEOUT_MS = 330_000;
 const RATE_CAPACITY = 6;
 const RATE_REFILL_PER_SEC = 0.05;
-const ASYNC_RUN_TIMEOUT_MS = 900_000;
-const ASYNC_RUN_MEMORY_LIMIT = 50;
 const defaultLimiter = createRateLimiter({ capacity: RATE_CAPACITY, refillPerSec: RATE_REFILL_PER_SEC });
 
-// Async-Laeufe (Salad-Gateway/Cloudflare kappt lange Antworten nach ~100 s):
-// POST mit async:true antwortet sofort mit runId; das Ergebnis wird als
-// e2-Objekt persistiert (Task Capsule First) und ueber GET ?runId= gepollt.
-// In-Memory nur als schneller Status-Spiegel (Control laeuft mit 1 Replica);
-// die einzige dauerhafte Wahrheit ist das e2-Objekt — fail-closed.
-const asyncRuns = new Map();
-
-function asyncRunKey(runId) {
-  return `capsules/maus-engine/runs/${runId}.json`;
-}
-
-function rememberAsyncRun(runId, entry) {
-  asyncRuns.set(runId, { ...asyncRuns.get(runId), ...entry, updatedAt: new Date().toISOString() });
-  while (asyncRuns.size > ASYNC_RUN_MEMORY_LIMIT) {
-    asyncRuns.delete(asyncRuns.keys().next().value);
-  }
-}
-
-function countRunningAsyncRuns() {
-  let running = 0;
-  for (const entry of asyncRuns.values()) if (entry.status === "laeuft") running += 1;
-  return running;
-}
-
-function defaultRunStore(env) {
-  return {
-    async put(runId, payload) {
-      const config = idriveConfigFromEnv(env);
-      await signedS3Request(config, "PUT", asyncRunKey(runId), JSON.stringify(payload, null, 2), "application/json");
-    },
-    async get(runId) {
-      const config = idriveConfigFromEnv(env);
-      try {
-        return JSON.parse(await signedS3Request(config, "GET", asyncRunKey(runId)));
-      } catch {
-        return null;
-      }
-    }
-  };
-}
 
 // Budget-Defaults gemaess docs/architecture/MAUS_ENGINE.md (Freigabe Phase 0);
 // Overrides aus dem Request werden hart auf die Schema-Grenzen geklemmt.
@@ -163,115 +128,6 @@ export function readMausEngineConfig(env = process.env) {
   return { configured: missing.length === 0, enabled, workerUrl, token, tokenPresent: Boolean(token), missing };
 }
 
-// Der EINE modellneutrale Planer-Zugang: AI Router entscheidet das Modell
-// (Default-Kette beginnt bei GLM-5.2); die Engine sieht nur Plan-JSON.
-export function buildPlannerClient({ env = process.env, fetchImpl = fetch, requestedModel = "", melde = null } = {}) {
-  return async (prompt) => {
-    const begonnen = performance.now();
-    // ZWEI PROFILE HINTEREINANDER, nicht nur eines.
-    //
-    // BEFUND 2026-08-18: Jeder Maus-Auftrag endete mit
-    // "planer_nicht_erreichbar" — obwohl /api/chat einwandfrei antwortete.
-    // Grund: der Planer fragte NUR die "coding"-Kette, und deren Anbieter
-    // sind auf diesem Server nicht hinterlegt. Mit einem ausdruecklich
-    // genannten Modell lief derselbe Auftrag sofort durch.
-    //
-    // Ein Planer, der ausfaellt, weil EIN Profil unbesetzt ist, obwohl ein
-    // anderes Modell bereitsteht, ist zu streng: er soll planen, nicht ein
-    // bestimmtes Modell durchsetzen. Deshalb haengt die Standardkette hinten
-    // an — dieselbe, mit der der Chat arbeitet.
-    // SCHNELLE KETTE ZUERST — und das ist keine Bequemlichkeit.
-    //
-    // GEMESSEN 2026-08-18: Ein zweiteiliger Auftrag ("lies X und scrolle")
-    // brauchte mit GLM-5.2 ueber 100 s und lief in die Zeitgrenze; jedes
-    // Kettenglied verbrannte seine Frist, am Ende stand "nicht erreichbar".
-    // Der Auftrag selbst ist mit rund 5300 Zeichen klein — es liegt nicht an
-    // der Groesse, sondern am Tempo des Modells.
-    //
-    // Warum ein schnelles Modell hier VERTRETBAR ist: Der Plan wird danach
-    // fail-closed VALIDIERT. Ein schlechter Plan wird abgelehnt und neu
-    // angefordert; er kommt nie zur Ausfuehrung. Die Sicherheit haengt an der
-    // Pruefung, nicht an der Groesse des Modells — anders als bei einer
-    // Chat-Antwort, die der Nutzer ungeprueft liest.
-    //
-    // Reihenfolge: schnell (Groq) -> coding -> default. Faellt die schnelle
-    // Kette aus, aendert sich nur die Wartezeit, nicht das Ergebnis.
-    // resolveChain STATT resolveModelRequest — und das ist der ganze Punkt.
-    //
-    // GEMESSEN 2026-08-18, nachdem ein erster Versuch wirkungslos blieb:
-    //   resolveModelRequest("fast") -> zhipu/glm-5.2, groq/llama-3.1-8b, zhipu
-    //   resolveChain("fast")        -> groq/llama-3.1-8b, zhipu/glm-5.2
-    // resolveModelRequest stellt die REGISTRY-Modelle voran (hier glm-5-2).
-    // Deshalb kam Groq nie dran, obwohl es in der Anbieterliste steht und ich
-    // die "schnelle Kette" bereits nach vorn gesetzt hatte: sie begann selbst
-    // mit GLM. Eine Umstellung, die nichts umstellt, sieht im Code richtig aus.
-    //
-    // Merkregel: wer eine Reihenfolge aendert, muss sie sich AUSGEBEN lassen.
-    // Zwei Zeilen Messung haetten den ersten Anlauf gespart.
-    //
-    // Ein ausdruecklich gewuenschtes Modell hat weiter Vorrang: dann zaehlt
-    // der Wunsch, nicht das Tempo.
-    const chain = [];
-    const gesehen = new Set();
-    const anhaengen = (backends) => {
-      for (const backend of backends || []) {
-        const schluessel = `${backend.name}:${backend.model || ""}`;
-        if (gesehen.has(schluessel)) continue;
-        gesehen.add(schluessel);
-        chain.push(backend);
-      }
-    };
-    if (requestedModel) {
-      anhaengen(resolveModelRequest("coding", requestedModel, env).chain);
-    } else {
-      anhaengen(resolveChain("fast", env));
-    }
-    anhaengen(resolveModelRequest("coding", requestedModel, env).chain);
-    anhaengen(resolveModelRequest("default", requestedModel, env).chain);
-    if (!chain.length) throw new Error("kein_planer_backend_konfiguriert");
-    // Modellneutral: KEINE feste temperature. Provider wie Moonshot/Kimi-Coding
-    // erzwingen modellabhaengige Werte und lehnen andere mit HTTP 400 ab
-    // (Live-Befund 2026-07-14); der Provider-Default gilt fuer jedes Modell.
-    // ZEITGRENZE FUERS PLANEN, nicht fuers Plaudern.
-    //
-    // GEMESSEN 2026-08-18: "Lies die Ueberschrift." -> 60 s, geht.
-    // "Lies die Ueberschrift der Seite und scrolle nach unten." -> 90 s,
-    // scheitert. Reproduzierbar, kein Zufall und keine Drosselung.
-    //
-    // Ursache: der Modellaufruf bricht nach SMEJJ_LLM_TIMEOUT_MS ab, und der
-    // Standard ist 45 s. Das reicht fuer eine Chat-Antwort — ein Plan ist ein
-    // vollstaendiges JSON-Dokument mit Schritten, Selektoren und Policy, und
-    // schon eine zweiteilige Aufgabe braucht laenger. Jeder Kettenglied-
-    // Versuch kostete dann seine 45 s, bis am Ende "nicht erreichbar" stand.
-    //
-    // 100 s je Versuch: bei zwei Kettengliedern sind das 200 s und damit
-    // sicher unter der Plattformgrenze von 300 s, ab der die Verbindung
-    // gekappt wird (siehe GATEWAY_HARTGRENZE_MS oben). Eine Zahl, die den
-    // Aufruf ueberleben laesst, aber nicht die Antwort verhindert.
-    const result = await executeWithFallback(chain, [{ role: "user", content: prompt }], {
-      fetchImpl,
-      stream: false,
-      timeoutMs: PLANER_TIMEOUT_MS
-    });
-    // WER hat geantwortet und wie lange hat es gedauert? Ohne diese Auskunft
-    // ist jede Tempo-Frage Kaffeesatz: executeWithFallback WEISS es, sagte es
-    // aber niemandem. Am 2026-08-18 stand deshalb die Frage im Raum, ob
-    // ueberhaupt Groq antwortet — beantworten liess sie sich nicht.
-    melde?.({
-      backend: result.backend || null,
-      model: result.model || null,
-      ms: Math.round(performance.now() - begonnen),
-      // Fehlversuche kosten die volle Zeitgrenze. Zwei davon erklaeren eine
-      // Minute Wartezeit vollstaendig.
-      fehlversuche: (result.attempts || []).map((a) => `${a.backend || a.name || "?"}/${a.model || "?"}: ${a.error || a.failure || "?"}`)
-    });
-    if (!result.ok) throw new Error("planer_nicht_erreichbar");
-    const payload = await result.response.json();
-    const content = payload?.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || !content.trim()) throw new Error("planer_leere_antwort");
-    return content;
-  };
-}
 
 function clampBudget(overrides = {}) {
   const budget = { ...BUDGET_DEFAULTS };
@@ -454,7 +310,7 @@ export async function handleMausStatus(req, res, { env = process.env, activeWork
   if (!req?.authUser) return json(res, 401, { ok: false, error: "authentication_required" });
   const runId = readRunIdFromRequest(req);
   if (runId) {
-    const memory = asyncRuns.get(runId);
+    const memory = leseAsyncLauf(runId);
     if (memory && memory.status === "laeuft") {
       // planId wird mitgegeben, SOBALD der Plan steht (onPlan) — nicht erst am
       // Ende. Ohne sie kann die Wiedergabe den Live-Pfad in der Capsule nicht
@@ -866,73 +722,4 @@ export async function handleMausRun(req, res, {
   }
 }
 
-// Hintergrund-Ausfuehrung eines Async-Laufs: Ergebnis-Payload bauen, als
-// e2-Objekt persistieren (dauerhafte Wahrheit) und den In-Memory-Spiegel
-// aktualisieren. Harte Zeitobergrenze, damit kein Lauf ewig "laeuft".
-async function runAsyncInBackground({ runId, capsuleRef, execute, store }) {
-  let payload;
-  // Sobald der Plan steht, wird die planId veroeffentlicht — im Spiegel UND
-  // auf e2. Damit findet die Wiedergabe den Live-Pfad, waehrend der Lauf noch
-  // laeuft. Fail-safe: schlaegt das Schreiben fehl, laeuft der Lauf weiter.
-  const onPlan = async ({ planId }) => {
-    rememberAsyncRun(runId, { status: "laeuft", capsuleRef, planId });
-    try {
-      await store.put(runId, { ok: true, status: "laeuft", runId, capsuleRef, planId, startedAt: new Date().toISOString() });
-    } catch {
-      // absichtlich still — der In-Memory-Spiegel traegt die Anzeige weiter
-    }
-  };
-  try {
-    const outcome = await Promise.race([execute(onPlan), asyncTimeoutMarker()]);
-    if (outcome && outcome.ok) {
-      const { artifacts, ...resultSummary } = outcome.result || {};
-      payload = {
-        ok: true,
-        status: "fertig",
-        runId,
-        capsuleRef,
-        planId: outcome.plan?.planId ?? null,
-        plannerCalls: outcome.plannerCalls ?? null,
-        history: outcome.history || [],
-        result: resultSummary,
-        finishedAt: new Date().toISOString()
-      };
-    } else {
-      payload = {
-        ok: false,
-        status: "fehlgeschlagen",
-        runId,
-        capsuleRef,
-        error: outcome?.error || "maus_engine_lauf_fehlgeschlagen",
-        plannerCalls: outcome?.plannerCalls ?? null,
-        history: outcome?.history || [],
-        lastFailure: outcome?.lastFailure
-          ? { failedStep: outcome.lastFailure.failedStep ?? null, aborted: outcome.lastFailure.aborted === true, abortReason: outcome.lastFailure.abortReason ?? null, error: outcome.lastFailure.error ?? null, errors: outcome.lastFailure.errors }
-          : null,
-        finishedAt: new Date().toISOString()
-      };
-    }
-  } catch (error) {
-    payload = {
-      ok: false,
-      status: "fehlgeschlagen",
-      runId,
-      capsuleRef,
-      error: String(error?.message || error).slice(0, 300),
-      finishedAt: new Date().toISOString()
-    };
-  }
-  try {
-    await store.put(runId, payload);
-  } catch (error) {
-    payload.persistError = String(error?.message || error).slice(0, 200);
-  }
-  rememberAsyncRun(runId, { status: payload.status, capsuleRef, payload });
-}
 
-function asyncTimeoutMarker() {
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve({ ok: false, error: "async_zeitueberschreitung" }), ASYNC_RUN_TIMEOUT_MS);
-    timer.unref?.();
-  });
-}
