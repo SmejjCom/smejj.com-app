@@ -299,6 +299,7 @@ const SHELL = [
   "/assets/fuehrung.js",
   "/assets/willkommen-fokus.js",
   "/assets/arbeitsflaeche.js",
+  "/assets/knopf-puffer.js",
   "/assets/spur-schalter.js",
   "/assets/arbeitsbereiche.js",
   "/assets/papierkorb.js",
