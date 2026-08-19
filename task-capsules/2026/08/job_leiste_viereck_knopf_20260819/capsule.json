@@ -1,0 +1,96 @@
+{
+ "jobId": "job_leiste_viereck_knopf_20260819",
+ "createdAt": "2026-08-19T00:30:00-07:00",
+ "owner": "smejj.com App — Sitzung feature/design-v11",
+ "title": "Eingabeleiste: nur das leuchtende Viereck bleibt — und es wird der Stopp-/Play-Knopf",
+ "ziel": "Betreiber-Auftrag in mehreren Schritten, im Wortlaut: 'Warum 2 viereckige Rahmen ganz unten, soll nur bau leutende bleiben, andre bei code & chat raus' -> 'Soll bei Chat & Code nur Denkzeit, Arbeitszeit beleuchten, wenn beendet soll nicht beleuchten' -> 'Kannst du genau 1 zu 1 wie bei Claude machen' -> 'Soll nur Beleuchtende viereckig bleiben, untere raus nehmen. Wenn man drauf klickt soll Chat stoppen, aber Play-Icon werden; wenn Play-Icon klick soll wieder starten und beleuchten.'",
+ "anforderungen": [
+  "Chat UND Code identisch behandeln.",
+  "Hell ist nur, was gerade arbeitet — im Ruhezustand leuchtet nichts.",
+  "Hauptknopf 1:1 wie Claude: leer = aus, Text im Feld = hell, Antwort laeuft = Stopp.",
+  "Der runde Stopp-Knopf faellt weg; das Arbeits-Viereck uebernimmt Stopp und Play.",
+  "Hoechstens 800 Zeilen je Datei (Master-Prompt).",
+  "Keine bestehende Funktion zurueckbauen (Rote Liste)."
+ ],
+ "kontext": {
+  "warum_zwei_rahmen": "Unten standen Mikrofon-Knopf (graue Flaeche) und Senden-/Stopp-Knopf (helle Flaeche) nebeneinander; zusaetzlich das kleine Arbeits-Viereck oben rechts im Feld.",
+  "warum_kein_fortsetzen": "Ein abgebrochener Strom laesst sich nicht an der Abbruchstelle fortsetzen. Betreiber hat 'neu schicken' schriftlich freigegeben ('Ja'). Das Modul merkt sich darum den zuletzt abgeschickten Text je Bereich.",
+  "warum_ohne_neues_javascript_beim_hellen_knopf": ":placeholder-shown am Feld selbst ist die Quelle des Zustands — es kann kein zweiter Zustand auseinanderlaufen."
+ },
+ "betroffene_dateien": [
+  "public/design-v11.css (Quelle der Regeln)",
+  "public/start-styles.css (erzeugt, npm run build:start-styles)",
+  "public/chat-stopp.js (vom Overlay zum Viereck-Knopf umgebaut)",
+  "public/code-flaeche.js + public/code-modell-menue.js (Reparatur, siehe Befund 4)",
+  "public/spur-start.js (Reparatur, siehe Befund 5)",
+  "public/index.html (Kennungen)"
+ ],
+ "befunde": [
+  {
+   "nr": 1,
+   "befund": "Die ID-Regel schlug die Klassenregel — der Code-Senden-Knopf blieb weiss",
+   "quelle": "getComputedStyle im Live-Chrome: codeSenden = rgb(255,255,255)",
+   "konsequenz": "Chat war ruhig, Code nicht — genau der Unterschied, den der Betreiber sah.",
+   "fix": "#code .codeleiste #codeSenden in dieselbe Regel aufgenommen (2,1,0 schlaegt #code #codeSenden mit 2,0,0 nicht, gleiche Spezifitaet + spaeter im Buendel schon)."
+  },
+  {
+   "nr": 2,
+   "befund": "Das Stopp-Quadrat war eckig und 4 px zu hoch",
+   "quelle": "getComputedStyle(#chatStopp): border-radius 0px, height 42px bei 38px Inline-Wert",
+   "konsequenz": "Im Chat stand ein kantiger Klotz ueber dem runden Knopf — der 'zweite Rahmen', den der Betreiber meinte.",
+   "fix": "Zwei fremde Regeln schlugen die eigenen, weil die ohne !important standen: '*, ::before, ::after { border-radius: 0 !important }' und 'button { min-height: 42px }'. #chatStopp.chat-stopp setzt beides jetzt selbst."
+  },
+  {
+   "nr": 3,
+   "befund": "Stoppen stoppte nicht — vier Sekunden spaeter lief die Antwort weiter",
+   "quelle": "Live gemessen: nach dem Stopp-Klick strom:0, dann strom:1, Text +530 Zeichen",
+   "konsequenz": "Der Nutzer drueckt Stopp und die Antwort schreibt weiter. stoppeChatStrom() beendet nur den LAUFENDEN Leser; chatClient.js startet danach den naechsten Anbieter (Rueckfall).",
+   "fix": "Nachzuegler-Bremse in chat-stopp.js: solange ein Viereck auf 'gestoppt' steht, wird jeder neu anlaufende Strom sofort wieder beendet. Aufgehoben nur durch echte Nutzergeste (Play oder neues Absenden). Nachgemessen: 14 s ohne Zeichenzuwachs."
+  },
+  {
+   "nr": 4,
+   "befund": "Der ganze Code-Bereich war kopflos: 'ReferenceError: zeichne is not defined'",
+   "quelle": "read_console_messages im Live-Chrome, bei JEDEM Seitenaufbau und JEDEM Klick",
+   "konsequenz": "initCodeFlaeche brach ab: Gruss unpersoenlich, Projekt-Chip nie sichtbar, Modellanzeige zog nach einer Wahl nicht nach, 'smejj 1.0' waehlen war tot. 509 Tests waren dabei gruen — sie lesen Quelltext, sie laden das Modul nie.",
+   "fix": "zeichne/zeichneProjektChip/zeichneOrdnerChip lagen als tote, nicht exportierte Kopien in code-modell-menue.js, mit Namen die es dort nicht gibt. Jetzt baueKopfzeile(deps): alle Dateifragen als Rueckruf, kein Ringschluss. Der uebersehene Direktaufruf beim Hausmodell wurde zu kontext.beiWahl(). code-flaeche.js bleibt bei 800 Zeilen (logVerwalten mit ausgelagert)."
+  },
+  {
+   "nr": 5,
+   "befund": "404 auf /api/billing/status bei JEDEM Seitenaufruf",
+   "quelle": "performance.getEntriesByType('resource').filter(r => r.responseStatus >= 400)",
+   "konsequenz": "spur-start.js fragte RELATIV, also GitHub Pages — dort gibt es keine API. Die Planzeile fiel still auf 'Frei' zurueck, auch fuer zahlende Kunden.",
+   "fix": "Ueber API_ORIGIN wie alle anderen Aufrufer. Gegenprobe: derselbe Pfad am Control-Server antwortet 401 ohne Sitzung, der Endpunkt ist also da."
+  },
+  {
+   "nr": 6,
+   "befund": "Der Vorrat wurde mit ALTEN Dateien gefuellt",
+   "quelle": "Browser lud start-styles.css mit 202185 Bytes, der Ursprung lieferte 203662",
+   "konsequenz": "Trotz neuem CACHE_NAME sah der Nutzer die alte Fassung (ignoreSearch schluckt jede ?v-Marke).",
+   "fix": "Reihenfolge umgedreht: erst CSS/JS pushen, dann warten bis Pages es WIRKLICH liefert (curl-Schleife), erst danach CACHE_NAME anheben. Seither in einem Durchgang sauber."
+  }
+ ],
+ "verifikation": {
+  "npm run check:start-styles": "gruen — 14 Quelldateien",
+  "npm run check:guidelines": "keine neue Ueberschreitung durch diese Arbeit (code-flaeche.js bleibt 800)",
+  "npm run check:frontend": "509 gruen / 5 rot — alle 5 aus Dateien einer Parallelsitzung (app.js, sw.js, search.js, Ansicht 'websites'), keine aus dieser Kette",
+  "live_ansichten": "23 Ansichten durchgefahren: keine leer, keine JS-Fehler, keine 4xx/5xx",
+  "live_chat": "Frage gestellt, Antwort erhalten (Log wuchs um 47 Zeichen)",
+  "live_zustaende": "chatLeer/codeLeer rgba(0,0,0,0) — chatText/codeText rgb(242,245,244) mit rgb(10,15,22) — Stopp 38x38 rund — Play-Dreieck als ::after",
+  "live_kopfzeile": "Gruss 'Was steht als Naechstes an, Smejj?' und Projekt-Chip 'Projekt: Alan Test Project' wieder da"
+ },
+ "deploy": {
+  "frontend_repo": "SmejjCom/smejj-app-frontend, Branch main (Fast-Forward)",
+  "commits": ["a364aef", "b1edc4c", "5c2821a", "97916f7", "cace2f9", "36c05b9", "356b50e"],
+  "cache_name": "smejj-shell-v600",
+  "kennungen": ["start-styles.css?v=chrome-leiste-20260818b", "code-flaeche.js?v=43", "chat-stopp.js?v=3", "spur-start.js?v=b34m"]
+ },
+ "rollback": {
+  "weg": "git revert der oben genannten Commits im Frontend-Repo, danach CACHE_NAME anheben",
+  "quelle_app_repo": ["0ce01db", "c2de5a9"]
+ },
+ "offen": [
+  "Start-Lock NICHT neu gestempelt: fuenf Dateien einer Parallelsitzung (index.html, app.js, search.js, browser-pane.js, sw.js) sind veraendert und fuenf Frontend-Tests daraus rot. Ein Stempel wuerde fremde, ungeprueffte Arbeit als abgenommen erklaeren.",
+  "Favicon-Lock rot: der Spiegel public/assets/ steht nicht im eingefrorenen Manifest. Die Favicon-Zeilen selbst sind identisch — veraltetes Manifest, kein kaputtes Favicon. Rote Liste, braucht schriftliche Freigabe.",
+  "Probe-Chats aus dem Livetest stehen im Verlauf des Betreibers und wurden bewusst NICHT geloescht."
+ ]
+}
