@@ -62,8 +62,8 @@
       "finger": "da780274309efac1"
     },
     "maus-absicht.js": {
-      "marke": "10",
-      "finger": "20466747a37f014d"
+      "marke": "12",
+      "finger": "4f4fcfcbba49f1dc"
     },
     "panel-layout.js": {
       "marke": "2",
@@ -106,8 +106,8 @@
       "finger": "dc45f6e6412720fb"
     },
     "browser-pane-tableiste.js": {
-      "marke": "browser-pane-20260709-2",
-      "finger": "7a9637ef56db98b8"
+      "marke": "browser-pane-20260819-4",
+      "finger": "2c9eb269b33cc732"
     },
     "browser-pane-fernwege.js": {
       "marke": "browser-pane-20260819-2",
@@ -130,8 +130,8 @@
       "finger": "6e3da6a41c7cfa04"
     },
     "browser-pane-tasten.js": {
-      "marke": "browser-pane-20260709-2",
-      "finger": "ff70366aaf85b058"
+      "marke": "browser-pane-20260819-4",
+      "finger": "6dccfaab3dbb23b0"
     },
     "browser-pane-suche.js": {
       "marke": "browser-pane-20260709-2",
@@ -229,6 +229,10 @@
       "marke": "1",
       "finger": "41971c8ce94f4e09"
     },
+    "knopf-puffer.js": {
+      "marke": "1",
+      "finger": "043bd72b472f850d"
+    },
     "arbeitsflaeche.js": {
       "marke": "2",
       "finger": "5800803325a35c3d"
@@ -250,24 +254,24 @@
       "finger": "d715ec7e61b4ce5f"
     },
     "app.js": {
-      "marke": "b66",
-      "finger": "426adfdbdac6098a"
+      "marke": "b69",
+      "finger": "6d61e415a75612c2"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260817-5",
       "finger": "368a4de8eb1ac038"
     },
     "browser-pane.js": {
-      "marke": "browser-pane-20260819-2",
-      "finger": "a8d631351284dc23"
+      "marke": "browser-pane-20260819-4",
+      "finger": "3566d2b0eacf9cab"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
       "finger": "3144f0486fe13e2f"
     },
     "maus-panel.js": {
-      "marke": "4",
-      "finger": "6e435307b33b883f"
+      "marke": "6",
+      "finger": "d8996cdcda506479"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",
