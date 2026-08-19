@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-webvitals",
+  "anlass": "Ship-Loop Schritt 13 zur Control-Videospur (Commits 25d76b4/03701d4/f375bb7) und zur Abriss-Politur (Frontend 0551b80, sw v583).",
+  "gemessenAm": "2026-08-18",
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "scripts/testing/measure_web_vitals.mjs, Chrome headless ueber DevTools-Protokoll",
+  "vergleichsbenchmark": "webvitals_v537_nutzertest_2026-08-17.json",
+  "MESSVORBEHALT": {
+    "netzweg": "Gleicher Arbeitsplatz-Netzweg wie am 2026-08-17 (Proxy). Gegenprobe an DIESEM Netz, gleiche Stunde: example.com kalt TTFB 2,49 s; auf dauerhafter Verbindung example.com median 903 ms gegenueber smejj.com 811 ms — smejj.com ist also SCHNELLER als die Referenz.",
+    "folge": "ttfb_ms und lcp_ms sind netzverfaelscht und NICHT als Regression zu lesen.",
+    "valide": "cls, inp_ms und pageWeight_kb sind netzunabhaengig und damit gueltig."
+  },
+  "budgets": { "ttfb_ms": 200, "lcp_ms": 1500, "cls": 0.1, "inp_ms": 200, "pageWeight_kb": 300, "api_p95_ms": 300, "api_p99_ms": 800 },
+  "kalt": {
+    "ttfb_ms": { "p75": 1422, "min": 837, "max": 1753, "bewertung": "netzverfaelscht" },
+    "lcp_ms": { "p75": 3952, "min": 1888, "max": 4620, "bewertung": "netzverfaelscht" },
+    "cls": { "p75": 0, "bewertung": "OK" },
+    "inp_ms": { "p75": 40, "min": 32, "max": 40, "bewertung": "OK — besser als 2026-08-17 (48)" },
+    "pageWeight_kb": { "p75": 556, "min": 414, "max": 556, "bewertung": "BUDGET VERFEHLT (gueltig)" },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": { "p75": 1208, "min": 818, "max": 1349, "bewertung": "netzverfaelscht" },
+    "lcp_ms": { "p75": 2904, "min": 2532, "max": 3036, "bewertung": "netzverfaelscht" },
+    "cls": { "p75": 0, "bewertung": "OK" },
+    "inp_ms": { "p75": 64, "min": 48, "max": 64, "bewertung": "OK" },
+    "pageWeight_kb": { "p75": 2, "min": 2, "max": 3, "bewertung": "OK — Service Worker liefert aus dem Cache" },
+    "lcpElement": "P"
+  },
+  "videospur": {
+    "endpunkt": "POST https://smejj-control.zeabur.app/api/chat",
+    "auftrag": "Mach ein Video von einem Leuchtturm am Meer bei Sonnenuntergang",
+    "antwortkopf": { "x-smejj-model-backend": "video-worker:weg-c", "x-smejj-model-id": "smejj-video" },
+    "dauer_s": 135,
+    "lebenszeichen": "Schritt-Ereignis alle 10 s (kein stiller Haenger mehr)",
+    "ergebnis": "data:video/mp4 mit Erzaehlstimme; engine parallax:* (extern:ltx-video noch nicht aktiv — Baustelle der Video-Sitzung)"
+  },
+  "REGRESSIONSBEFUND": {
+    "feld": "kalt.pageWeight_kb",
+    "vorher": 505,
+    "jetzt": 556,
+    "delta_kb": 51,
+    "verursacher": "NICHT diese Arbeit. Zwischen sw v537 und v583 liegen rund 45 fremde Deploys anderer Sitzungen; der Anteil dieser Arbeit an der Startseite betraegt 25 geaenderte Zeilen in assets/ai/chat-stream.js (unter 1 KB, ausserdem nur im Wiederbesuch-Cache relevant).",
+    "status": "OFFEN — Performance-Lock verlangt Rueckfuehrung unter 300 KB; gehoert zur Startseiten-Spur, nicht zur Videospur."
+  },
+  "pflichtchecks": {
+    "tests": "22/22 gruen (7 neue Videospur-Tests + 15 bestehende Video-e2e-Tests — keine Regression)",
+    "node_check": "alle geaenderten Dateien syntaktisch geprueft",
+    "check:cost": "OK",
+    "check:guidelines": "ROT durch ALTLAST fremder Dateien (mausEngineRoutes.js 938, chat-store.js 947, design-v11.css 2351, index.html 995); die neue Datei videoChatRoutes.js hat 244 Zeilen",
+    "check:security": "ROT durch ALTLAST (zwei GitHub-Actions-Dateien, ein secret-aehnlicher Testwert) — nichts davon aus dieser Arbeit",
+    "check:branding": "nicht lauffaehig: Paket @resvg/resvg-js fehlt in der Umgebung (Vorbefund)"
+  }
+}

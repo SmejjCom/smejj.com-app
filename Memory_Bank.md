@@ -5,6 +5,41 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-18] CONTROL-RESERVE RUFT DEN VIDEO-WORKER (job_videospur_anschluss_20260818)
+
+Capsule: `task-capsules/2026/08/job_videospur_anschluss_20260818/capsule.md`.
+Benchmark: `docs/benchmarks/webvitals_v583_videospur_2026-08-18.json`.
+Live belegt: `POST /api/chat` -> Kopf `x-smejj-model-backend: video-worker:weg-c`,
+Lebenszeichen alle 10 s, nach 135 s `data:video/mp4` mit Erzaehlstimme.
+
+- **Entscheidung:** Die Videospur der Control-Reserve ruft denselben
+  `smejj-video-worker` wie die Bruecke (`POST /erzeuge`, 429-Geduld, 180 s),
+  statt einen zweiten Renderweg zu unterhalten. `engine` steuert den
+  Hinweistext (`extern:*` ohne Kamerafahrt-Satz). Neues Modul
+  `control-server/src/routes/videoChatRoutes.js` (244 Zeilen), Einbau in
+  `handleChat` fail-safe (`false` = kein Byte gesendet, Text laeuft normal).
+- **Begruendung:** Ein zweiter Renderweg haette den 2C/8GB-Control belastet,
+  den freigegebenen Weg-C-Stack ungenutzt gelassen und zwei Personenschutz-
+  Implementierungen erzeugt. Der Worker faellt intern selbst zurueck — ein
+  eigener Rueckfall waere doppelte Logik.
+- **Merkregel 1 (Router-Kurzaufrufe):** ohne `thinking: {type:"disabled"}` und
+  `reasoningEffort: "low"` streamt der Router erst `reasoning_content`;
+  sichtbarer Text kommt nie vor der Frist, die Antwort bleibt leer.
+- **Merkregel 2 (Zeabur-Endpunkt):** nach einem Worker-Redeploy kann der
+  interne Dienstname ins Leere routen (ClusterIP tot), waehrend die Pod-IP
+  antwortet und der Prozess kerngesund ist. Erst Pod-direkt gegen DNS-Weg
+  messen, dann den Code verdaechtigen.
+- **Merkregel 3 (Auslieferung):** eine Frontend-Politur wurde von einem
+  spaeteren fremden Commit ueberschrieben — nach dem Deploy die LIVE-Datei
+  gegenpruefen, nicht nur den eigenen Commit.
+- **Verifikation:** 22/22 Tests (7 neue + 15 bestehende Video-e2e, keine
+  Regression), `check:json` und `check:task-capsules` gruen, `check:cost` OK,
+  Live-Klickpfad auf der Produktionsdomain inkl. Personenschutz-Gegenproben.
+- **Offen (nicht Teil dieser Aufgabe):** `engine` war `parallax:*` — der
+  extern-Pfad (LTX) ist im Worker noch nicht aktiv; Startseiten-Gewicht
+  556 KB gegen Budget 300 KB (Ursache: fremde Deploys zwischen sw v537 und
+  v583); `public/ai/chat-stream.js` hinkt der ausgelieferten Fassung um rund
+  170 Zeilen hinterher.
 ### [2026-08-15] EINE WAHRHEIT FUER "IST DIE KI NUTZBAR?" (job_chat_rueckfall_ampel_20260815)
 
 Capsule: `task-capsules/2026/08/job_chat_rueckfall_ampel_20260815/capsule.md`.
