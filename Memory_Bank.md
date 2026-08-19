@@ -984,3 +984,12 @@ Stand auf 5. August 2026 gesetzt.
 - FOLGE fuer bestehende Einwilligungen: sie sind an den alten Hash gebunden und
   werden mit der Umstellung ungueltig. Das ist das gewollte Verhalten — eine
   Einwilligung gilt fuer den Text, den der Nutzer gelesen hat.
+
+**Uebergabe an die Parallelsitzungen (Stand dieses Nachzugs):**
+- ROT in der Suite: `Katalog-Anbieter aktivieren sich nur per Key…`
+  (`control-server/src/llm/modelRouter.test.js`) — gehoert zur laufenden
+  Auto-Router-Arbeit, bewusst nicht angefasst.
+- Start-Lock offen: `public/start-styles.css`, `public/browser-pane.css`
+  sind VERAENDERT. Beide gehoeren zu laufender fremder Arbeit. **Bewusst NICHT
+  gestempelt** — ein Stempel haette unfertige fremde Aenderungen als
+  abgenommen eingefroren (Regel: Sperre pruefen, nicht stempeln).
