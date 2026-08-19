@@ -2349,3 +2349,57 @@ body.spur-zu:not(.right-panel-open) #code .code-wchips button {
   background: transparent;
   color: #f2f5f4;
 }
+
+/* =====================================================================
+ * Betreiber 2026-08-18, zweiter Durchgang: "bei Chat auch raus nehmen —
+ * nur Denkzeit, Arbeitszeit und so weiter sollen beleuchten; wenn
+ * beendet, soll nicht beleuchten."
+ *
+ * Also ruht auch der Hauptknopf als blosses Zeichen: keine gefuellte
+ * Flaeche, kein Schein — weder leer (weisse Welle) noch getippt (Cyan).
+ * Hell bleibt in der Leiste nur, was WIRKLICH gerade arbeitet:
+ *   - das Arbeits-Viereck (#startArbeit / #codeArbeit, Klasse .an)
+ *   - das Stopp-Quadrat waehrend der laufenden Antwort (.chat-stopp)
+ * Beide sind unveraendert und bleiben die einzigen hellen Flaechen.
+ * ===================================================================== */
+#start .prompt-glass .send-button,
+#start .prompt-glass .send-button.ist-sprache,
+#start .prompt-glass .send-button:not(.ist-sprache),
+#code .codeleiste .send-button,
+#code .codeleiste #codeSenden {
+  background: transparent;
+  box-shadow: none;
+  color: rgba(242, 245, 244, 0.74);
+}
+#start .prompt-glass .send-button:hover,
+#code .codeleiste .send-button:hover,
+#code .codeleiste #codeSenden:hover {
+  background: transparent;
+  color: #f2f5f4;
+}
+
+/* =====================================================================
+ * Betreiber 2026-08-18: "genau 1 zu 1 wie bei Claude, fuer Chat UND Code,
+ * mit der Beleuchtung."
+ *
+ * Claudes Hauptknopf kennt drei Zustaende:
+ *   leer      -> aus (nur das Zeichen, keine Flaeche)
+ *   Text da   -> HELL gefuellt, dunkles Zeichen (bereit zum Senden)
+ *   Antwort   -> Stopp-Quadrat (bei uns .chat-stopp bzw. das pulsende
+ *                Arbeits-Viereck im Code-Feld)
+ *
+ * "Text da" wird ohne neues JavaScript erkannt: ein Textfeld mit Inhalt
+ * verliert :placeholder-shown. Der Knopf haengt also am Feld selbst —
+ * es gibt keinen zweiten Zustand, der auseinanderlaufen koennte.
+ * ===================================================================== */
+#start .prompt-glass:has(#startMessage:not(:placeholder-shown)) .send-button,
+#code .codefeld:has(#codeAufgabe:not(:placeholder-shown)) #codeSenden {
+  background: #f2f5f4;
+  color: #0a0f16;
+  box-shadow: none;
+}
+#start .prompt-glass:has(#startMessage:not(:placeholder-shown)) .send-button:hover,
+#code .codefeld:has(#codeAufgabe:not(:placeholder-shown)) #codeSenden:hover {
+  background: #dfe5e3;
+  color: #0a0f16;
+}
