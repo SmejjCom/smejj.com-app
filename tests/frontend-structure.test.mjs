@@ -16,7 +16,15 @@ const startDesignLock = fs.readFileSync("docs/frontend/START_DESIGN_LOCK.md", "u
 const requiredViews = [
   "start",
   "search",
-  "websites",
+  // "websites" ist hier bewusst NICHT mehr aufgefuehrt (Betreiber-Ansage
+  // 2026-08-19: "Nehm Websites raus, fur was ist Websites, wir haben
+  // browser."). Die Ansicht war eine Attrappe — eine Ueberschrift und der
+  // Satz "Website-Bereich bereit." — und diente nur als Rueckfall fuer die
+  // Browser-Knoepfe. Genau dorthin fiel jeder Klick, als browser-pane.js
+  // wegen einer fehlenden Datei nicht hochkam; es sah aus wie eine geaenderte
+  // Navigation. Die Knoepfe tragen jetzt data-browser-oeffnen und koennen
+  // nirgendwo mehr hinfuehren ausser ins Panel.
+  // Dass sie weg BLEIBT, haelt tests/routing-canonical.test.mjs fest.
   "smejjClaw",
   "automation",
   "chatHistory",
