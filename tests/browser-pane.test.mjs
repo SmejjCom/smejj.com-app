@@ -50,7 +50,12 @@ test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
       `${datei} muss dieselbe browser-pane-Version importieren wie index.html — zwei Spezifizierer waeren zwei Modul-Instanzen mit getrenntem state`
     );
   }
-  assert.match(html, /data-jump="websites"[\s\S]*>Browser<\/button>/);
+  // GEAENDERT 2026-08-18: der Knopf trug data-jump="websites" und fiel damit
+  // auf eine leere Ansicht zurueck, wenn dieses Modul nicht geladen war. Jetzt
+  // traegt er ein eigenes Merkmal und kann NIRGENDWO mehr hinfuehren — faellt
+  // browser-pane.js aus, passiert gar nichts statt etwas Falschem.
+  assert.match(html, /data-browser-oeffnen[\s\S]*?>Browser<\/button>/);
+  assert.match(paneJs, /\[data-browser-oeffnen\]/);
 });
 
 test("Service Worker cached Browser-Pane Assets", () => {
@@ -215,7 +220,7 @@ test("Browser-Pane erkennt Challenge-Seiten und zeigt externen Fallback", () => 
     message: "extern oeffnen"
   });
   assert.match(fallback, /bp-fallback/);
-  assert.match(fallback, /Extern oeffnen/);
+  assert.match(fallback, /Extern öffnen/);
   assert.doesNotMatch(fallback, /Max challenge attempts exceeded/);
   assert.match(paneJs, /mode:\s*"external-required"/);
 });
