@@ -35,13 +35,21 @@ test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
   // Bestandsnutzer die alte Datei unter der alten Query behalten (live erlebt).
   // maus-panel.js MUSS dieselbe Query importieren — zwei Spezifizierer waeren
   // zwei getrennte Modul-Instanzen mit getrenntem state.
-  assert.match(html, /\/assets\/browser-pane\.js\?v=browser-pane-20260728-3/);
+  // GEAENDERT 2026-08-18: die Marke stand hier woertlich und musste bei jedem
+  // Bump von Hand nachgezogen werden — beim Bump auf -20260818-1 wurde sie
+  // prompt vergessen. Jetzt wird GLEICHHEIT geprueft statt eines Wortlauts:
+  // derselbe Schutz, aber er kann nicht mehr veralten. Und er deckt jetzt
+  // JEDEN Importeur ab, nicht nur maus-panel.js.
+  const paneMarke = html.match(/\/assets\/browser-pane\.js\?v=([^"']+)/)?.[1];
+  assert.ok(paneMarke, "index.html laedt browser-pane.js ohne ?v=-Marke");
   assert.match(html, /\/assets\/maus-panel\.js\?v=/);
-  assert.match(
-    fs.readFileSync("public/maus-panel.js", "utf8"),
-    /\.\/browser-pane\.js\?v=browser-pane-20260728-3/,
-    "maus-panel.js muss dieselbe browser-pane-Version importieren wie index.html"
-  );
+  for (const datei of ["public/maus-panel.js", "public/maus-absicht.js"]) {
+    assert.match(
+      fs.readFileSync(datei, "utf8"),
+      new RegExp(`\\./browser-pane\\.js\\?v=${paneMarke}`),
+      `${datei} muss dieselbe browser-pane-Version importieren wie index.html — zwei Spezifizierer waeren zwei Modul-Instanzen mit getrenntem state`
+    );
+  }
   assert.match(html, /data-jump="websites"[\s\S]*>Browser<\/button>/);
 });
 

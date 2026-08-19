@@ -1,3 +1,11 @@
+// smejj.com — Maus-Auftraege erkennen und ausfuehren.
+//
+// WARUM DIESE WEICHE VOR JEDEM MODELLWEG STEHT (aus app.js hierher verschoben,
+// 2026-08-17, 800-Zeilen-Regel): Ein Maus-Auftrag ("Erledige mit der Maus im
+// Browser: ...") wird nicht BEANTWORTET, sondern AUSGEFUEHRT — Browser auf,
+// Schritt fuer Schritt, sichtbar. Erkennt die Weiche nichts, laeuft alles
+// unveraendert weiter (fail-safe).
+
 // smejj.com — "Erledige mit der Maus im Browser: ..." direkt aus dem Chat.
 //
 // WARUM ES DIESE DATEI GIBT (Betreiber-Befund 2026-08-18):
@@ -34,8 +42,8 @@
 // Dann zeigte activeTab() auf ein leeres Panel und starteMausLauf() meldete
 // ewig "Der Browser ist noch nicht bereit". Nichts waere kaputt zu sehen,
 // alles waere kaputt.
-const PANEL = "./browser-pane.js?v=browser-pane-20260728-3";
-const PANEL_MAUS = "./browser-pane-maus.js?v=browser-pane-20260709-2";
+const PANEL = "./browser-pane.js?v=browser-pane-20260818-1";
+const PANEL_MAUS = "./browser-pane-maus.js?v=browser-pane-20260818-1";
 
 async function holePanel() {
   const [pane, maus] = await Promise.all([import(PANEL), import(PANEL_MAUS)]);
