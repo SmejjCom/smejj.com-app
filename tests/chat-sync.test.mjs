@@ -1,6 +1,7 @@
 // Verlauf-Sync Stufe 3 (docs/verlauf-pro-konto-plan.md): Server-Bausteine.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { gehoertNutzer } from "../public/chat-owner.js";
 import {
   chatKennungGueltig,
   konfliktSieger,
@@ -376,4 +377,52 @@ test("Route: ?id= mit ungueltiger Kennung gibt 400, nicht 200 mit null", async (
   await routen.handle({ method: "GET" }, res, new URL("https://x/api/chats?id=..%2Ffremd"));
   assert.equal(res.status, 400);
   assert.equal(res.payload.error, "chat_id_ungueltig");
+});
+
+// ---------------------------------------------------------------------------
+// DIE KENNUNGSLUECKE — gefunden am LIVE-Konto (2026-08-19), nicht im Test.
+//
+// Der Server stellte am 15.08. die Kontokennung auf SHA-256 um (Kollisionsleck,
+// siehe chatSyncStore.js) — bewusst OHNE Rueckfall. Der Client stempelt seine
+// Chats aber weiter nach der alten Regel `user_<adresse_mit_unterstrichen>`.
+// Folge: `gehoertNutzer` haelt die eigenen Server-Chats fuer fremd, `importChat`
+// gibt false, und der Abgleich holt sie bei JEDEM Seitenaufruf erneut.
+//
+// Diese Tests halten den Befund fest. Sie beschreiben den IST-Zustand — nicht
+// den gewuenschten. Wird die Luecke geschlossen, muessen sie angepasst werden;
+// genau das ist ihr Zweck: die Aenderung soll nicht unbemerkt durchgehen.
+// ---------------------------------------------------------------------------
+test("BEFUND: Server- und Client-Kennung desselben Kontos sind verschieden", () => {
+  const serverSeitig = kontoKennung({ email: "smejjcom@gmail.com" });
+  const clientSeitig = `user_${"smejjcom@gmail.com".replace(/[^a-z0-9]+/g, "_")}`;
+  assert.equal(serverSeitig, "user_158c1e609cc03bb4c36f70b7e059fbfd", "am Live-Konto gemessen");
+  assert.equal(clientSeitig, "user_smejjcom_gmail_com", "so stempelt der Client lokal");
+  assert.notEqual(serverSeitig, clientSeitig, "genau daran scheitert der Geraete-Sync");
+});
+
+test("BEFUND: gehoertNutzer weist den eigenen Server-Chat ab", () => {
+  const vomServer = { id: "chat_1", ownerId: kontoKennung({ email: "smejjcom@gmail.com" }) };
+  assert.equal(
+    gehoertNutzer(vomServer, "user_smejjcom_gmail_com", ""),
+    false,
+    "der Chat gehoert demselben Menschen — die Kennung sagt etwas anderes"
+  );
+  // Gegenstueck: mit passender Kennung wuerde er angenommen. Die Pruefung selbst
+  // ist also in Ordnung; falsch ist nur, dass beide Seiten anders rechnen.
+  assert.equal(gehoertNutzer(vomServer, vomServer.ownerId, ""), true);
+});
+
+test("der Abgleich ueberspringt genau das, was der Import abweisen wuerde", () => {
+  // Das ist die Zusage der Sparmassnahme in chat-sync.js: uebersprungen wird nur,
+  // was ohnehin nicht angekommen waere. Beide Seiten fragen dieselbe Funktion.
+  const meine = "user_abc";
+  const proben = [
+    [{ id: "a", ownerId: "user_abc" }, true],
+    [{ id: "b", ownerId: "user_xyz" }, false],
+    [{ id: "c" }, true] // Altbestand ohne Besitzer, kein Geraete-Merker
+  ];
+  for (const [chat, erwartet] of proben) {
+    const wuerdeImportiert = gehoertNutzer(chat, meine, "");
+    assert.equal(wuerdeImportiert, erwartet, `falsch bewertet: ${chat.id}`);
+  }
 });

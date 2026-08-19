@@ -114,3 +114,63 @@ test("die Maus arbeitet in einem EIGENEN Tab, nicht im aktiven", () => {
   assert.match(hintergrund, /mausTabId/);
   assert.match(hintergrund, /chrome\.tabs\.create/);
 });
+
+// --- Aus einer Ablehnung lernen ----------------------------------------------
+// Live gemessen 2026-08-18: die Maus kam bis "ueberlegt", der Server lehnte
+// ihren Schritt als Formfehler ab (openLink mit "url" statt "target"), und der
+// ganze Auftrag endete. Das Modell haette sich korrigieren koennen — es erfuhr
+// den Grund nur nie.
+test("eine abgelehnte Entscheidung beendet den Auftrag nicht mehr", async () => {
+  const { fuehreFreienLaufAus, VERWURF_GRENZE } = await import("../public/browser-pane-maus.js");
+  const gesagt = [];
+  let anfragen = 0;
+  const antworten = [
+    { status: 422, leib: { ok: false, error: "entscheidung_abgelehnt", gruende: ["$.steps[0]: Pflichtfeld fehlt: target"] } },
+    { status: 200, leib: { ok: true, entscheidung: { decision: "done", reason: "Impressum ist offen" } } }
+  ];
+  globalThis.fetch = async (_url, o) => {
+    const koerper = JSON.parse(o.body);
+    anfragen += 1;
+    // Der zweite Anlauf MUSS den Grund im Verlauf mitbekommen — sonst wiederholt
+    // das Modell denselben Fehler und das Ganze ist nur eine teure Schleife.
+    if (anfragen === 2) {
+      assert.ok(
+        koerper.verlauf.some((z) => /VERWORFEN/.test(z) && /target/.test(z)),
+        "der Ablehnungsgrund fehlt im zweiten Anlauf"
+      );
+    }
+    const a = antworten[anfragen - 1];
+    return { ok: a.status === 200, status: a.status, json: async () => a.leib };
+  };
+  const ergebnis = await fuehreFreienLaufAus({
+    auftrag: "Impressum oeffnen",
+    tab: { url: "https://smejj.com/", sessionId: "s1" },
+    schrittUrl: "https://beispiel.test/api/maus/run",
+    sende: async () => ({ ok: true, beobachtung: { url: "https://smejj.com/", elements: [] } }),
+    zeige: (t) => gesagt.push(t)
+  });
+  assert.equal(ergebnis.ok, true, "nach der Korrektur muss der Lauf durchgehen");
+  assert.equal(anfragen, 2);
+  assert.match(gesagt.join(" "), /versucht es anders/);
+  assert.ok(VERWURF_GRENZE >= 1);
+});
+
+test("aus dem Lernen wird keine Endlosschleife", async () => {
+  const { fuehreFreienLaufAus, VERWURF_GRENZE } = await import("../public/browser-pane-maus.js");
+  let anfragen = 0;
+  globalThis.fetch = async () => {
+    anfragen += 1;
+    return { ok: false, status: 422, json: async () => ({ ok: false, error: "entscheidung_abgelehnt", gruende: ["immer derselbe Fehler"] }) };
+  };
+  const ergebnis = await fuehreFreienLaufAus({
+    auftrag: "x",
+    tab: { url: "https://smejj.com/", sessionId: "s1" },
+    schrittUrl: "https://beispiel.test/api/maus/run",
+    sende: async () => ({ ok: true, beobachtung: { url: "https://smejj.com/", elements: [] } }),
+    zeige: () => {}
+  });
+  assert.equal(ergebnis.ok, false);
+  assert.equal(anfragen, VERWURF_GRENZE + 1, "nach der Grenze muss Schluss sein");
+  // Und der Grund muss beim Nutzer ankommen, nicht nur die Kennung.
+  assert.match(ergebnis.grund, /immer derselbe Fehler/);
+});
