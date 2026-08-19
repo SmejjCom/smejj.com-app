@@ -143,7 +143,11 @@ test("start composer lower tools are functional", () => {
   assert.match(html, /data-start-tool="voice"/);
   assert.match(html, /data-start-tool="audio"/);
   assert.match(html, /data-start-tool="speaker"/);
-  assert.match(app, /import \{ initComposerTools \} from "\.\/composer-tools\.js(\?[^"]*)?"/);
+  // Seit 2026-08-19 laedt app.js die Composer-Werkzeuge VERZOEGERT: erst der
+  // erste Klick auf ein Werkzeug (oder das Plus) holt das Modul und ruft
+  // initComposerTools() — ladeBeiKlick in app.js. Der Test prueft darum den
+  // Klickweg statt des alten statischen Imports.
+  assert.match(app, /ladeBeiKlick\(\[\s*"\[data-start-tool\]"[\s\S]{0,160}?import\("\.\/composer-tools\.js(\?[^"]*)?"\)/);
   assert.ok(app.includes('initComposerTools()'));
   assert.ok(composerTools.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
   // Die Browser-Sprachausgabe liegt seit Stufe 3 in voice-browser-tts.js
