@@ -1,7 +1,7 @@
 {
   "lock": "smejj einwilligung lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-14T07:50:07.001Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-14: Salad-Endreinigung aus Commit 0a3cb37 bestaetigt — die ausgemusterten Hosts redbean-caesar, loganberry-fruit und starfruit-thyme (*.salad.cloud) aus den CSP-Erlaubnislisten und aus der Empfaengerliste der Datenschutzerklaerung gestrichen, config.js Rueckfall-Origin auf smejj-control.zeabur.app. Nur Streichungen, kein neuer Host, keine Regel gelockert.",
+  "frozenAt": "2026-08-19T17:20:42.425Z",
+  "confirmation": "Betreiber 2026-08-19: 'weiter, komplett fertig machen, nicht offen lassen' — controlAccessPolicy.js geprueft: das ist die Betreiber-veranlasste Haertung vom 14.08. (Adminbereich ohne Anmeldung gefunden -> Politik umgedreht auf Erlaubnisliste, Commit 84cdf32); der Einwilligungs-Stempel war nur aelter als der Fix.",
   "rule": "Keine Aenderung an der Einwilligungs- und Erfassungskette (ob erfasst werden darf, wogegen eingewilligt wird, wer die Routen erreicht) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "src/training/fragenerfassung.js": "5de1223542ffd62f840e3bffcd79eabe56870dda8f8e47e6b96c60f3d1f4c79d",
@@ -9,7 +9,7 @@
     "src/training/consent.js": "01d4a4a7b15e1647848bde1b1c5172714923f93e8e301428ad8629316e2a9fa6",
     "control-server/src/routes/trainingConsentRoutes.js": "6dd0b44d89cf8d9e0e23a244905c82666f82f8e94b1b2782104d4abdd15836cf",
     "src/training/constants.js": "5b5e533d89279711579c2c8845ccb98cc12bab1cf3eed75a4a14303c89b4337c",
-    "src/shared/controlAccessPolicy.js": "a240d9af19ec426cda1ae1eae73de68676ac89f28e5018ed1530f06b299c92f2",
+    "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
     "public/datenschutz.html": "4ea789d21d8f791dbe52e066f4a1f084bb7cbb894accd2ecd4f8ad09e47aa969"
   }
 }

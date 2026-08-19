@@ -62,8 +62,8 @@
       "finger": "da780274309efac1"
     },
     "maus-absicht.js": {
-      "marke": "9",
-      "finger": "4f578bcf44828f92"
+      "marke": "10",
+      "finger": "20466747a37f014d"
     },
     "panel-layout.js": {
       "marke": "2",
@@ -93,6 +93,14 @@
       "marke": "1",
       "finger": "948c8c087e38fa1d"
     },
+    "browser-pane-render.js": {
+      "marke": "browser-pane-20260709-2",
+      "finger": "fedf7baf8aaf3ccc"
+    },
+    "browser-pane-adressen.js": {
+      "marke": "browser-pane-20260819-1",
+      "finger": "482cdff7b8a1f361"
+    },
     "browser-pane-menue.js": {
       "marke": "browser-pane-20260709-2",
       "finger": "dc45f6e6412720fb"
@@ -101,9 +109,9 @@
       "marke": "browser-pane-20260709-2",
       "finger": "7a9637ef56db98b8"
     },
-    "browser-pane-render.js": {
-      "marke": "browser-pane-20260709-2",
-      "finger": "fedf7baf8aaf3ccc"
+    "browser-pane-fernwege.js": {
+      "marke": "browser-pane-20260819-2",
+      "finger": "f0957cd7a979728b"
     },
     "browser-pane-session.js": {
       "marke": "browser-pane-20260709-2",
@@ -136,10 +144,6 @@
     "browser-pane-nachrichten.js": {
       "marke": "browser-pane-20260709-2",
       "finger": "92bcd41688bb541b"
-    },
-    "browser-pane-adressen.js": {
-      "marke": "browser-pane-20260819-1",
-      "finger": "482cdff7b8a1f361"
     },
     "chat-messages.js": {
       "marke": "1",
@@ -226,8 +230,8 @@
       "finger": "41971c8ce94f4e09"
     },
     "arbeitsflaeche.js": {
-      "marke": "1",
-      "finger": "a8a76c53bbc0fbbd"
+      "marke": "2",
+      "finger": "5800803325a35c3d"
     },
     "spur-schalter.js": {
       "marke": "9",
@@ -246,24 +250,24 @@
       "finger": "d715ec7e61b4ce5f"
     },
     "app.js": {
-      "marke": "b65",
-      "finger": "93cb86ce9a65289d"
+      "marke": "b66",
+      "finger": "426adfdbdac6098a"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260817-5",
       "finger": "368a4de8eb1ac038"
     },
     "browser-pane.js": {
-      "marke": "browser-pane-20260819-1",
-      "finger": "65117c4d7901f3f3"
+      "marke": "browser-pane-20260819-2",
+      "finger": "a8d631351284dc23"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
       "finger": "3144f0486fe13e2f"
     },
     "maus-panel.js": {
-      "marke": "3",
-      "finger": "21102c07fa4103db"
+      "marke": "4",
+      "finger": "6e435307b33b883f"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",

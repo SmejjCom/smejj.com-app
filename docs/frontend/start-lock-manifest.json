@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-19T17:11:38.417Z",
-  "confirmation": "Betreiber 2026-08-19: Auswahl 'Lock pruefen + stempeln' — Ich pruefe alle 8 Abweichungen einzeln und stemple dann mit deiner Bestaetigung den neuen Schutzstand.",
+  "frozenAt": "2026-08-19T17:21:47.452Z",
+  "confirmation": "Betreiber 2026-08-19: 'weiter, komplett fertig machen, nicht offen lassen' — Nachzug: Parallel-Commit b019888 zog nur die Marke arbeitsflaeche.js v1->v2 in index.html (Arbeitsflaechen-Fix mit eigenen Tests).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9cdb27d2dc8b51ab03be9ad99699a6c6647f9a24a5e842f02239d8cfea9fbb30",
+    "public/index.html": "9f0ee609812f19a99d842f5502b84213b4e3d4cee84b2b64b10e749261b77a5e",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "7981948ad3998cc51ed55459875ffd47dfdbf067d8828d0719c8ae0b55c2de58",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
