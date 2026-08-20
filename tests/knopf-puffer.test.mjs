@@ -21,11 +21,17 @@ test("der Puffer ist klassisch und importfrei — er muss VOR den Modulen laufen
   assert.match(index, /<script src="\/assets\/knopf-puffer\.js\?v=\d+"><\/script>/);
 });
 
-test("beide Haelften des Handschlags existieren", () => {
-  assert.match(puffer, /smejj:panel-bereit/);
-  assert.match(app, /smejj:panel-bereit/);
-  // und der nachgefeuerte Klick laeuft durch den echten Handler:
+test("der Puffer prueft die WIRKUNG, statt app.js zu befragen", () => {
+  // app.js steht am 800-Zeilen-Limit und soll unangetastet bleiben (eigener
+  // Waechter). Der Puffer verlangt deshalb KEIN Signal von dort: er klickt
+  // und schaut, ob das Panel aufgeht — wirkt es nicht, versucht er es erneut.
+  assert.doesNotMatch(app, /smejj:panel-bereit/, "app.js bleibt unberuehrt");
+  assert.match(puffer, /classList\.contains\("is-open"\)/);
   assert.match(puffer, /knopf\.click\(\)/);
+  // Endliche Frist — ein Puffer, der ewig weiterklickt, waere schlimmer als
+  // der tote Knopf.
+  assert.match(puffer, /VERSUCHE\s*=\s*\d+/);
+  assert.match(puffer, /rest <= 0/);
 });
 
 test("der Puffer liegt im Precache — offline darf der Knopf nicht sterben", () => {
