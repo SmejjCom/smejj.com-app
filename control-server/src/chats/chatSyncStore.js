@@ -15,6 +15,7 @@
 //    bzw. gekappt, damit ein Endlos-Verlauf keine Kosten treibt.
 
 import { signedS3Get, signedS3List, signedS3Put } from "../storage/s3Signer.js";
+import { mapMitGrenze } from "../shared/parallelFetch.js";
 
 export const PRAEFIX = "chats";
 export const MAX_CHATS_PRO_KONTO = 100;
@@ -186,13 +187,21 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
   } catch (error) {
     return { ok: false, error: String(error?.message || "liste_fehlgeschlagen").slice(0, 160), chats: [] };
   }
-  const chats = [];
-  for (const key of schluesselListe.slice(0, limit)) {
-    try {
-      const antwort = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
-      if (antwort?.body) chats.push(JSON.parse(antwort.body));
-    } catch { /* ein defekter Eintrag darf den Rest nicht verhindern */ }
-  }
+  // NEBENLAEUFIG statt nacheinander (Betreiber-Auftrag 2026-08-20,
+  // Startseiten-Gewicht). Die Schleife holte jede Chat-Datei EINZELN und
+  // wartete jedes Mal auf die Rundreise zum Objektspeicher: live gemessen
+  // 88 Chats = 10,9 s, in denen die Startseite auf ihre Liste wartete.
+  // Die Rundreisen ueberlappen jetzt (derselbe Helfer wie Audit-Log und
+  // Freigaben, Grenze 8 — der Control-Server hat 2 vCPU).
+  //
+  // Verhalten bleibt gleich: mapMitGrenze haelt die Reihenfolge der Eingaben
+  // ein und liefert bei einem Fehler `null` an dieser Stelle, statt den
+  // ganzen Lauf zu kippen — genau das tat das leere catch vorher auch.
+  const rohe = await mapMitGrenze(schluesselListe.slice(0, limit), async (key) => {
+    const antwort = await signedS3Get({ ...cfg, key, allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
+    return antwort?.body ? JSON.parse(antwort.body) : null;
+  });
+  const chats = rohe.filter(Boolean);
   chats.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
   // `nurListe` ist bewusst opt-in: ein alter Client, der noch im Browser-Cache
   // liegt, bekommt weiterhin die vollen Chats. Wuerde die Liste einfach duenner,
