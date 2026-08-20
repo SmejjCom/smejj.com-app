@@ -155,6 +155,26 @@ export async function speichereChat({ kontoId, chat, env = process.env, fetchImp
  * `updatedAt` und holt nur, was wirklich neuer ist. Alles andere war bezahlte
  * Bandbreite fuer eine Verwerfung.
  */
+/**
+ * Nur das, was der Abgleich zum ENTSCHEIDEN braucht: drei Felder.
+ *
+ * GEMESSEN 2026-08-20: die schlanke Liste war immer noch 42 KB bei 88 Chats
+ * (~490 Byte je Eintrag) — Titel, Projekt, Modell, Marken und Zeitstempel
+ * reisen mit, obwohl `pull()` in chat-sync.js sie nie ansieht. Es liest
+ * genau `id` (welcher Chat), `updatedAt` (ist er neuer?) und `ownerId`
+ * (gehoert er diesem Konto? — gehoertNutzer). Alles andere wird verworfen,
+ * nachdem es bezahlt wurde.
+ *
+ * Der VOLLE Chat kommt ohnehin einzeln nach, sobald einer wirklich neuer ist.
+ */
+export function nurAbgleichsfelder(chat) {
+  return {
+    id: chat?.id,
+    updatedAt: chat?.updatedAt,
+    ...(chat?.ownerId ? { ownerId: chat.ownerId } : {})
+  };
+}
+
 export function ohneNachrichten(chat) {
   const { messages, ...rest } = chat || {};
   return { ...rest, nachrichtenAnzahl: Array.isArray(messages) ? messages.length : 0 };
@@ -176,7 +196,7 @@ export async function ladeChat({ kontoId, chatId, env = process.env, fetchImpl =
   }
 }
 
-export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch, limit = MAX_CHATS_PRO_KONTO, nurListe = false }) {
+export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch, limit = MAX_CHATS_PRO_KONTO, nurListe = false, nurAbgleich = false }) {
   const cfg = idriveConfig(env);
   if (!cfg) return { ok: false, error: "speicher_nicht_eingerichtet", chats: [] };
   const prefix = `${PRAEFIX}/${kontoId}/`;
@@ -207,6 +227,14 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
   // liegt, bekommt weiterhin die vollen Chats. Wuerde die Liste einfach duenner,
   // importierte er Chats OHNE Nachrichten und ueberschriebe damit seinen eigenen
   // Verlauf — ein Datenverlust, ausgeloest von einem Performance-Fix.
+  // Drei Stufen, jede strikt opt-in — ein alter Client aus dem Browser-Cache
+  // darf NIE weniger bekommen, als seine Fassung erwartet (sonst importiert er
+  // Chats ohne Nachrichten ueber seinen eigenen Verlauf: Datenverlust,
+  // ausgeloest von einem Performance-Fix).
+  //   ohne Parameter  -> volle Chats            (aeltester Vertrag)
+  //   nurListe=1      -> Liste ohne Nachrichten (~42 KB bei 88 Chats)
+  //   nurAbgleich=1   -> nur id/updatedAt/ownerId
+  if (nurAbgleich) return { ok: true, chats: chats.map(nurAbgleichsfelder) };
   return { ok: true, chats: nurListe ? chats.map(ohneNachrichten) : chats };
 }
 

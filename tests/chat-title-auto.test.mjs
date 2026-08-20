@@ -13,6 +13,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { readFileSync } from "node:fs";
 
 const QUELLE = readFileSync(new URL("../public/chat-title-auto.js", import.meta.url), "utf8");
@@ -98,7 +99,19 @@ test("das Modul bleibt fail-safe und ruecksichtsvoll", () => {
 
 test("Kennungen der Importe passen zu den uebrigen Modulen (Befund F-07)", () => {
   // Ein abweichender Spezifizierer erzeugt eine ZWEITE Modulinstanz.
-  assert.match(QUELLE, /from "\/assets\/chat-store\.js\?v=b52"/);
+  //
+  // GEAENDERT 2026-08-20: Die Marke stand hier als fester Wert ("b52"). Damit
+  // pruefte der Test nicht die EIGENSCHAFT ("ueberall dieselbe Kennung"),
+  // sondern eine Zahl — und jede noetige Markenerhoehung machte ihn rot,
+  // obwohl nichts kaputt war. Genau das ist am 2026-08-09 dreimal passiert.
+  // Jetzt wird gegen den Stand der anderen Module verglichen: der Test bleibt
+  // wahr, wenn die Kette sauber nachgezogen wurde, und wird rot, sobald zwei
+  // Kennungen auseinanderlaufen.
+  const andersWo = fs.readFileSync("public/chat-history-view.js", "utf8");
+  const marke = /from "\/assets\/chat-store\.js(\?v=[^"]*)?"/.exec(andersWo)?.[1] || "";
+  assert.ok(marke, "Vergleichsmodul laedt chat-store.js nicht mehr — Test anpassen");
+  assert.ok(QUELLE.includes(`from "/assets/chat-store.js${marke}"`),
+    `chat-store.js wird hier unter einer ANDEREN Kennung geladen als in chat-history-view.js (${marke})`);
   assert.match(QUELLE, /from "\/assets\/ai\/chat-stream\.js"/);
   assert.ok(!/chat-stream\.js\?/.test(QUELLE), "chat-stream.js wird ohne Kennung importiert");
 });

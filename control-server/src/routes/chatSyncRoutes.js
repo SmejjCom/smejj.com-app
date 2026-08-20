@@ -2,6 +2,7 @@
 //
 //   GET    /api/chats             → alle Chats des Kontos, MIT Nachrichten
 //   GET    /api/chats?nurListe=1  → dieselbe Liste OHNE Nachrichten (klein)
+//   GET    /api/chats?nurAbgleich=1 → nur id/updatedAt/ownerId (kleinstmoeglich)
 //   GET    /api/chats?id=<id>     → genau ein Chat, vollstaendig
 //   PUT    /api/chats           → einen Chat ablegen (juengerer Stand gewinnt)
 //   DELETE /api/chats?id=<id>   → einen Chat serverseitig loeschen
@@ -56,8 +57,12 @@ export function createChatSyncRoutes({ env = process.env, readSession, json, rea
       // Nachrichten weg. Opt-in, damit ein alter Client im Browser-Cache
       // weiterhin bekommt, womit er rechnet — sonst importierte er leere Chats
       // ueber seinen eigenen Verlauf.
+      // `nurAbgleich=1` geht noch einen Schritt weiter: nur id/updatedAt/
+      // ownerId, also genau das, was pull() zum Entscheiden liest. Auch das
+      // strikt opt-in, aus demselben Grund wie nurListe.
       const nurListe = url.searchParams.get("nurListe") === "1";
-      const ergebnis = await ladeChats({ kontoId, env, fetchImpl, nurListe });
+      const nurAbgleich = url.searchParams.get("nurAbgleich") === "1";
+      const ergebnis = await ladeChats({ kontoId, env, fetchImpl, nurListe, nurAbgleich });
       json(res, ergebnis.ok ? 200 : 503, ergebnis);
       return true;
     }
