@@ -1,6 +1,7 @@
 // Verlauf-Sync Stufe 3 (docs/verlauf-pro-konto-plan.md): Server-Bausteine.
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import { gehoertNutzer } from "../public/chat-owner.js";
 import {
   chatKennungGueltig,
@@ -355,6 +356,42 @@ test("ein unlesbarer Chat kippt die Liste nicht", async () => {
   assert.equal(ergebnis.ok, true);
   assert.equal(ergebnis.chats.length, 1, "der lesbare Chat muss ankommen");
   assert.equal(ergebnis.chats[0].id, "chat_a");
+});
+
+test("nurAbgleich=true liefert NUR id, updatedAt und ownerId", async () => {
+  const ergebnis = await ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]), nurAbgleich: true });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.chats.length, 2);
+  for (const c of ergebnis.chats) {
+    assert.deepEqual(Object.keys(c).sort(), ["id", "ownerId", "updatedAt"],
+      "jedes zusaetzliche Feld ist Bandbreite, die pull() sofort verwirft");
+  }
+  assert.equal(ergebnis.chats[0].id, "chat_a");
+  assert.equal(ergebnis.chats[0].updatedAt, "2026-08-19T10:00:00Z");
+});
+
+test("nurAbgleich ist WIRKLICH kleiner als nurListe", async () => {
+  // Ohne diese Messung waere die neue Stufe nur eine Behauptung. Gemessen am
+  // echten Konto: 88 Chats = 42 KB mit nurListe, ~10 KB mit nurAbgleich.
+  const [abgleich, liste] = await Promise.all([
+    ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]), nurAbgleich: true }),
+    ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]), nurListe: true })
+  ]);
+  const bytes = (x) => JSON.stringify(x.chats).length;
+  assert.ok(bytes(abgleich) < bytes(liste),
+    `nurAbgleich (${bytes(abgleich)} B) muss kleiner sein als nurListe (${bytes(liste)} B)`);
+});
+
+test("die drei Felder reichen dem Abgleich — mehr liest pull() nicht", async () => {
+  // Diese Zusicherung ist der eigentliche Schutz: sie haelt fest, WARUM drei
+  // Felder genuegen. Wer pull() spaeter um ein viertes Feld erweitert, muss
+  // hier vorbeikommen — sonst faehrt der Abgleich mit einem `undefined`.
+  const quelle = fs.readFileSync("public/chat-sync.js", "utf8");
+  const pullBlock = quelle.slice(quelle.indexOf("async function pull()"), quelle.indexOf("async function push()"));
+  const gelesen = [...pullBlock.matchAll(/\bfern\.([a-zA-Z]+)/g)].map((t) => t[1]);
+  const erlaubt = new Set(["id", "updatedAt", "messages"]); // messages nur als Vorhandenseins-Pruefung
+  const unerwartet = [...new Set(gelesen)].filter((f) => !erlaubt.has(f));
+  assert.deepEqual(unerwartet, [], `pull() liest Felder, die nurAbgleich nicht liefert: ${unerwartet.join(", ")}`);
 });
 
 test("OHNE nurListe bleibt der alte Vertrag unveraendert", async () => {

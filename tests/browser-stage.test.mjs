@@ -57,4 +57,15 @@ test("eine Seite mit Passwortfeld geht in den echten Browser, nie in den Proxy",
   // ... und die Weiche zieht daraus die Folge:
   assert.equal(shouldOpenInRealBrowser('<form><input type="password"></form>', "https://accounts.google.com/"), true);
   assert.equal(shouldOpenInRealBrowser("<p>nur text</p>", "https://beispiel.de/"), false);
+
+  // DER FALL, DER DEN ERSTEN ANLAUF SCHEITERN LIESS (live gemessen
+  // 2026-08-20): Die Google-Anmeldung ist 990 412 Zeichen gross und traegt
+  // ihr Passwortfeld an Position 918 843. shouldOpenInRealBrowser() suchte
+  // nur in den ersten 120 000 Zeichen — die Weiche griff nicht, die Seite
+  // blieb im Proxy, und der Betreiber konnte sich weiterhin nicht anmelden.
+  const wieGoogle = "x".repeat(900000) + '<input type="password" name="pw">';
+  assert.equal(shouldOpenInRealBrowser(wieGoogle, "https://accounts.google.com/"), true,
+    "Anmeldefeld muss auch am Ende einer 990-KB-Seite gefunden werden");
+  assert.equal(shouldOpenInRealBrowser("y".repeat(900000), "https://beispiel.de/"), false,
+    "grosse Seite ohne Anmeldefeld bleibt im schnellen Weg");
 });

@@ -38,12 +38,12 @@
       "finger": "a192efcbefdb12d9"
     },
     "search.js": {
-      "marke": "b39",
-      "finger": "30a6f33c05761834"
+      "marke": "b40",
+      "finger": "7bb2ac76bbf52e91"
     },
     "search-overlay.js": {
-      "marke": "b47c",
-      "finger": "e64215caf38201a2"
+      "marke": "b47d",
+      "finger": "b1f97ba4c0effa68"
     },
     "nachladen.js": {
       "marke": "1",
@@ -62,8 +62,8 @@
       "finger": "da780274309efac1"
     },
     "maus-absicht.js": {
-      "marke": "15",
-      "finger": "a72d44d225cf8c76"
+      "marke": "16",
+      "finger": "1666ffd59a53cfb9"
     },
     "panel-layout.js": {
       "marke": "2",
@@ -86,8 +86,8 @@
       "finger": "2e556eb36aeae6b1"
     },
     "chat-store.js": {
-      "marke": "b52",
-      "finger": "33ebce5bf40daeb6"
+      "marke": "b53",
+      "finger": "8f26ccc2ef5ce1b0"
     },
     "autonomous-thread-run.js": {
       "marke": "1",
@@ -98,8 +98,8 @@
       "finger": "0fd354b7602a030c"
     },
     "browser-pane-adressen.js": {
-      "marke": "browser-pane-20260820-1",
-      "finger": "aff9b118769e7940"
+      "marke": "browser-pane-20260820-2",
+      "finger": "1dd6d7b35e1225f7"
     },
     "browser-pane-menue.js": {
       "marke": "browser-pane-20260709-2",
@@ -114,8 +114,8 @@
       "finger": "2c9eb269b33cc732"
     },
     "browser-pane-fernwege.js": {
-      "marke": "browser-pane-20260820-1",
-      "finger": "e9ee49cd4ecd9b4f"
+      "marke": "browser-pane-20260820-2",
+      "finger": "e157748575e6d1a8"
     },
     "browser-pane-session.js": {
       "marke": "browser-pane-20260709-2",
@@ -166,8 +166,8 @@
       "finger": "1377b0733ae8ceaf"
     },
     "chat-history-cards.js": {
-      "marke": "b47c",
-      "finger": "fd572b086d00dbdb"
+      "marke": "b47d",
+      "finger": "c892404d700d5dd1"
     },
     "chat-markdown.js": {
       "marke": "1",
@@ -182,8 +182,8 @@
       "finger": "5fde077a071065d8"
     },
     "chat-sync.js": {
-      "marke": "2",
-      "finger": "f75d80a345511479"
+      "marke": "3",
+      "finger": "8e905685a3afc0a8"
     },
     "voice-typed-send.js": {
       "marke": "voice-send-20260721",
@@ -218,12 +218,12 @@
       "finger": "50c91127f442aca0"
     },
     "papierkorb.js": {
-      "marke": "1c",
-      "finger": "844b67502969e648"
+      "marke": "1d",
+      "finger": "a07ec9f61eba2619"
     },
     "arbeitsbereiche.js": {
-      "marke": "6",
-      "finger": "e8a184ef68f2afb6"
+      "marke": "7",
+      "finger": "e63d712da531aa41"
     },
     "kamera.js": {
       "marke": "b35live2",
@@ -246,36 +246,36 @@
       "finger": "9c20b31fb9a63a08"
     },
     "spur-start.js": {
-      "marke": "b34m",
-      "finger": "85fca872c1fa681b"
+      "marke": "b34n",
+      "finger": "a26ec1916bf9e0db"
     },
     "projekt-ordner.js": {
       "marke": "1",
       "finger": "77f85949b611b623"
     },
     "code-flaeche.js": {
-      "marke": "43",
-      "finger": "d715ec7e61b4ce5f"
+      "marke": "44",
+      "finger": "3d486a6e79680a54"
     },
     "app.js": {
-      "marke": "b72",
-      "finger": "6f3f29b1cb67e689"
+      "marke": "b73",
+      "finger": "5813f0361a7dfef2"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260817-5",
       "finger": "368a4de8eb1ac038"
     },
     "browser-pane.js": {
-      "marke": "browser-pane-20260820-1",
-      "finger": "048e608ecdacbf78"
+      "marke": "browser-pane-20260820-2",
+      "finger": "fb0a4634d45b3342"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
       "finger": "3144f0486fe13e2f"
     },
     "maus-panel.js": {
-      "marke": "9",
-      "finger": "bd88b5c05f9b9e42"
+      "marke": "10",
+      "finger": "f44588e09c5d2d65"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",
@@ -286,12 +286,12 @@
       "finger": "87b5ea3a03503dd1"
     },
     "chat-history-view.js": {
-      "marke": "b47d",
-      "finger": "03040dc7ca8d837f"
+      "marke": "b47e",
+      "finger": "576427b4bb77b04f"
     },
     "chat-actions.js": {
-      "marke": "b26k",
-      "finger": "4c9452986f611595"
+      "marke": "b26m",
+      "finger": "804901c15efe3ef9"
     },
     "chat-code-copy.js": {
       "marke": "zcode2-20260816",

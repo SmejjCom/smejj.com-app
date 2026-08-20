@@ -254,3 +254,20 @@ test("auch das Wiederholen hat eine Grenze", async () => {
   assert.equal(anfragen, AUSSETZER_GRENZE + 1);
   assert.match(ergebnis.grund, /planer_leere_antwort/);
 });
+
+// --- Fehlende Freigabe ist ein Umweg, kein Abbruch --------------------------
+test("ohne Freigabe weicht die Maus auf den fernen Browser aus", async () => {
+  // Gemessen 2026-08-20: sobald die Bruecke installiert war, endete JEDER
+  // Auftrag auf einer nicht freigegebenen Seite — obwohl der ferne Browser sie
+  // ohne Weiteres haette oeffnen koennen. Die Bruecke ist fuer Seiten da, auf
+  // denen der Nutzer angemeldet ist; fuer alles Oeffentliche genuegt der ferne.
+  const quelle = fs.readFileSync("public/maus-absicht.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("herkunft_nicht_freigegeben"));
+  // Genau dieser Fall muss `false` liefern — nur dann laeuft der Panel-Weg an.
+  assert.match(stelle.slice(0, 800), /return false;/);
+  // Und der Nutzer muss erfahren, wie er den angemeldeten Weg bekommt.
+  assert.match(stelle.slice(0, 800), /30 Minuten erlauben/);
+  // Alle ANDEREN Bruecken-Fehler bleiben ein Abbruch mit Grund: bei einem
+  // stummen Dienst oder http:// waere ein stiller Umweg irrefuehrend.
+  assert.match(quelle, /schreibe\(deuteChromeFehler\(auf\?\.error, ziel\)\);\s*\n\s*return true;/);
+});
