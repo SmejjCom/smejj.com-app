@@ -104,10 +104,19 @@ test("loescheChat schreibt einen Grabstein (kein S3-Delete: Schluessel darf nich
   const ergebnis = await loescheChat({ kontoId: "user_a", chatId: "chat_1", env, fetchImpl, jetztMs: Date.parse("2026-08-13T12:00:00Z") });
   assert.equal(ergebnis.ok, true);
   assert.equal(ergebnis.grabstein, true);
-  assert.equal(anfragen.length, 1);
-  assert.equal(anfragen[0].method, "PUT");
-  assert.match(anfragen[0].url, /chats\/user_a\/chat_1\.json/);
-  const rumpf = JSON.parse(String(anfragen[0].body));
+  // Seit dem Konto-Index (2026-08-20) wird zusaetzlich der Index nachgetragen —
+  // sonst truege er weiter den alten Zeitstempel und die Loeschung erreichte das
+  // zweite Geraet nie. Entscheidend bleibt: KEIN DELETE, und genau EIN Schreiben
+  // auf die Chat-Datei.
+  assert.equal(anfragen.some((a) => a.method === "DELETE"), false, "der Schluessel darf nicht loeschen");
+  const aufChatDatei = anfragen.filter((a) => /chats\/user_a\/chat_1\.json/.test(a.url));
+  assert.equal(aufChatDatei.length, 1);
+  assert.equal(aufChatDatei[0].method, "PUT");
+  // Der Index wurde gelesen; geschrieben wird er hier nicht, weil das Doppel
+  // einen leeren Rumpf liefert — ein unlesbarer Index wird neu gebaut, wo die
+  // Chats ohnehin vorliegen (Lesepfad), nicht im Loeschen.
+  assert.equal(anfragen.some((a) => /_index\.json/.test(a.url) && a.method !== "PUT"), true);
+  const rumpf = JSON.parse(String(aufChatDatei[0].body));
   assert.equal(rumpf.geloescht, true);
   assert.equal(rumpf.messages.length, 0); // Inhalt ist wirklich weg
   assert.equal(rumpf.updatedAt, "2026-08-13T12:00:00.000Z");

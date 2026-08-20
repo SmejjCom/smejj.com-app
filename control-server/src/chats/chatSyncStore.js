@@ -16,6 +16,15 @@
 
 import { signedS3Get, signedS3List, signedS3Put } from "../storage/s3Signer.js";
 import { mapMitGrenze } from "../shared/parallelFetch.js";
+import {
+  baueIndex,
+  eintraegeMitZeit,
+  indexEintragSetzen,
+  indexIstFrisch,
+  indexSchluessel,
+  istIndexSchluessel,
+  leseIndex
+} from "./chatIndex.js";
 
 export const PRAEFIX = "chats";
 export const MAX_CHATS_PRO_KONTO = 100;
@@ -139,6 +148,9 @@ export async function speichereChat({ kontoId, chat, env = process.env, fetchImp
     fetchImpl,
     timeoutMs: S3_TIMEOUT_MS
   });
+  // NACH der Chat-Datei, nie davor: der Index soll juenger sein als jeder Chat,
+  // sonst haelt ihn `indexIstFrisch` zu Recht fuer veraltet.
+  await indexNachtragen({ cfg, kontoId, chat: { ...chat, ownerId: kontoId }, fetchImpl });
   return { ok: true, key };
 }
 
@@ -196,16 +208,90 @@ export async function ladeChat({ kontoId, chatId, env = process.env, fetchImpl =
   }
 }
 
+/**
+ * Schreibt den Konto-Index. Fehler sind bewusst still.
+ *
+ * Der Index ist ein Beschleuniger, keine Quelle. Geht sein Schreiben schief,
+ * ist er beim naechsten Lesen aelter als eine Chat-Datei — `indexIstFrisch`
+ * merkt das und baut ihn neu. Ein fehlgeschlagener Index darf niemals einen
+ * Chat-Upload scheitern lassen: der Chat ist die Nutzlast, der Index nur das
+ * Inhaltsverzeichnis.
+ */
+async function schreibeIndex({ cfg, kontoId, eintraege, fetchImpl }) {
+  try {
+    await signedS3Put({
+      ...cfg,
+      key: indexSchluessel(PRAEFIX, kontoId),
+      body: `${JSON.stringify({ version: baueIndex([]).version, chats: eintraege }, null, 2)}\n`,
+      contentType: "application/json; charset=utf-8",
+      fetchImpl,
+      timeoutMs: S3_TIMEOUT_MS
+    });
+    return true;
+  } catch { return false; }
+}
+
+/**
+ * Traegt einen Chat in den Index nach — nach jedem Upload und jedem Grabstein.
+ *
+ * Liest den vorhandenen Index, setzt den einen Eintrag und schreibt zurueck.
+ * Ist der Index unlesbar oder fehlt er, wird hier NICHTS gebaut: der Neubau
+ * gehoert in den Lesepfad, wo ohnehin alle Chats vorliegen. Hier waere er ein
+ * zweiter, teurer Rundlauf im Upload.
+ */
+async function indexNachtragen({ cfg, kontoId, chat, fetchImpl }) {
+  try {
+    const antwort = await signedS3Get({
+      ...cfg, key: indexSchluessel(PRAEFIX, kontoId), allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS
+    });
+    const vorhanden = antwort?.body ? leseIndex(antwort.body) : null;
+    if (!vorhanden) return false;
+    return await schreibeIndex({ cfg, kontoId, eintraege: indexEintragSetzen(vorhanden, chat), fetchImpl });
+  } catch { return false; }
+}
+
 export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch, limit = MAX_CHATS_PRO_KONTO, nurListe = false, nurAbgleich = false }) {
   const cfg = idriveConfig(env);
   if (!cfg) return { ok: false, error: "speicher_nicht_eingerichtet", chats: [] };
   const prefix = `${PRAEFIX}/${kontoId}/`;
+  const indexKey = indexSchluessel(PRAEFIX, kontoId);
   let schluesselListe = [];
+  let objekte = [];
   try {
     const { body } = await signedS3List({ ...cfg, prefix, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
-    schluesselListe = [...String(body || "").matchAll(/<Key>([^<]+)<\/Key>/g)].map((treffer) => treffer[1]);
+    // Schluessel wie bisher aus den <Key>-Elementen. Bewusst NICHT aus
+    // `eintraegeMitZeit` abgeleitet: das braucht vollstaendige <Contents>-
+    // Bloecke, und wo die fehlen, waere plotzlich die ganze Liste leer statt
+    // nur der schnelle Weg nicht verfuegbar. Die Nutzlast haengt nie an einer
+    // Beschleunigung.
+    // Der Index liegt im selben Ordner und darf NIE als Chat gelesen werden —
+    // "_index" waere eine gueltige Chat-Kennung. Aussortiert am Schluessel,
+    // und zwar fuer JEDEN Lesepfad, auch den alten Vertrag.
+    schluesselListe = [...String(body || "").matchAll(/<Key>([^<]+)<\/Key>/g)]
+      .map((treffer) => treffer[1])
+      .filter((key) => key && !istIndexSchluessel(key));
+    // Zeiten nur fuer die Frische-Pruefung des Index.
+    objekte = eintraegeMitZeit(body);
   } catch (error) {
     return { ok: false, error: String(error?.message || "liste_fehlgeschlagen").slice(0, 160), chats: [] };
+  }
+
+  // DER SCHNELLE WEG (2026-08-20): Wenn nur der Abgleich gefragt ist und der
+  // Index nachweislich juenger ist als jede Chat-Datei, genuegt EIN Abruf statt
+  // einem je Chat. Live gemessen waren das 92 Abrufe und rund 2,5 MB aus dem
+  // Objektspeicher, um 15 KB auszuliefern.
+  // Faellt irgendetwas daran aus — Index fehlt, ist kaputt, ist aelter, oder der
+  // Abruf schlaegt fehl — wird unten regulaer alles gelesen. Der Index ist ein
+  // Beschleuniger, nie eine zweite Wahrheit.
+  if (nurAbgleich && indexIstFrisch(objekte, indexKey)) {
+    try {
+      const antwort = await signedS3Get({ ...cfg, key: indexKey, allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
+      const eintraege = antwort?.body ? leseIndex(antwort.body) : null;
+      if (eintraege) {
+        eintraege.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+        return { ok: true, chats: eintraege.slice(0, limit), ausIndex: true };
+      }
+    } catch { /* faellt auf den regulaeren Weg zurueck */ }
   }
   // NEBENLAEUFIG statt nacheinander (Betreiber-Auftrag 2026-08-20,
   // Startseiten-Gewicht). Die Schleife holte jede Chat-Datei EINZELN und
@@ -234,7 +320,13 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
   //   ohne Parameter  -> volle Chats            (aeltester Vertrag)
   //   nurListe=1      -> Liste ohne Nachrichten (~42 KB bei 88 Chats)
   //   nurAbgleich=1   -> nur id/updatedAt/ownerId
-  if (nurAbgleich) return { ok: true, chats: chats.map(nurAbgleichsfelder) };
+  if (nurAbgleich) {
+    // Alles gelesen — dann kostet der Index nur noch das Schreiben, und der
+    // naechste Aufruf kommt mit einem Abruf aus. Genau HIER gehoert der Neubau
+    // hin: die Chats liegen ohnehin vor.
+    await schreibeIndex({ cfg, kontoId, eintraege: baueIndex(chats).chats, fetchImpl });
+    return { ok: true, chats: chats.map(nurAbgleichsfelder) };
+  }
   return { ok: true, chats: nurListe ? chats.map(ohneNachrichten) : chats };
 }
 
@@ -268,5 +360,8 @@ export async function loescheChat({ kontoId, chatId, env = process.env, fetchImp
     fetchImpl,
     timeoutMs: S3_TIMEOUT_MS
   });
+  // Auch der Grabstein gehoert in den Index — sonst traegt er weiter den alten
+  // Zeitstempel, und die Loeschung erreicht das zweite Geraet nie.
+  await indexNachtragen({ cfg, kontoId, chat: grabstein, fetchImpl });
   return { ok: true, grabstein: true };
 }
