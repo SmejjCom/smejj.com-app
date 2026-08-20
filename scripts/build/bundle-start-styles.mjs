@@ -107,7 +107,7 @@ export function entschlacke(css) {
   return ohneKommentare
     .replace(/[ \t]+$/gm, "")
     .replace(/\n{2,}/g, "\n")
-    .trimEnd();
+    .trim();
 }
 
 // Nur beim direkten Aufruf ausfuehren. Tests importieren SOURCES aus dieser

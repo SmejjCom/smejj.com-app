@@ -62,8 +62,8 @@
       "finger": "da780274309efac1"
     },
     "maus-absicht.js": {
-      "marke": "12",
-      "finger": "4f4fcfcbba49f1dc"
+      "marke": "14",
+      "finger": "c008fc2fd472587c"
     },
     "panel-layout.js": {
       "marke": "2",
@@ -94,8 +94,8 @@
       "finger": "948c8c087e38fa1d"
     },
     "browser-pane-render.js": {
-      "marke": "browser-pane-20260709-2",
-      "finger": "fedf7baf8aaf3ccc"
+      "marke": "browser-pane-20260819-6",
+      "finger": "0fd354b7602a030c"
     },
     "browser-pane-adressen.js": {
       "marke": "browser-pane-20260819-1",
@@ -105,13 +105,17 @@
       "marke": "browser-pane-20260709-2",
       "finger": "dc45f6e6412720fb"
     },
+    "browser-stage.js": {
+      "marke": "2",
+      "finger": "d2b3f29991270ae5"
+    },
     "browser-pane-tableiste.js": {
       "marke": "browser-pane-20260819-4",
       "finger": "2c9eb269b33cc732"
     },
     "browser-pane-fernwege.js": {
-      "marke": "browser-pane-20260819-2",
-      "finger": "f0957cd7a979728b"
+      "marke": "browser-pane-20260819-6",
+      "finger": "eb5bf57b7be2bbf5"
     },
     "browser-pane-session.js": {
       "marke": "browser-pane-20260709-2",
@@ -254,24 +258,24 @@
       "finger": "d715ec7e61b4ce5f"
     },
     "app.js": {
-      "marke": "b69",
-      "finger": "6d61e415a75612c2"
+      "marke": "b71",
+      "finger": "7b811637d5385bdb"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260817-5",
       "finger": "368a4de8eb1ac038"
     },
     "browser-pane.js": {
-      "marke": "browser-pane-20260819-4",
-      "finger": "3566d2b0eacf9cab"
+      "marke": "browser-pane-20260819-6",
+      "finger": "b9cdaa3ae7227c59"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
       "finger": "3144f0486fe13e2f"
     },
     "maus-panel.js": {
-      "marke": "6",
-      "finger": "d8996cdcda506479"
+      "marke": "8",
+      "finger": "d393e6c2780b0e04"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",
