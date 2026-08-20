@@ -1,0 +1,49 @@
+{
+  "jobId": "job_konto_index_20260820",
+  "datum": "2026-08-20",
+  "titel": "Konto-Index: aus 92 Speicher-Abrufen wird einer",
+  "auftrag": "Ladezeit-Budgets angehen -> Index-Datei bauen",
+  "vorgaenger": "job_verlauf_schlank_20260820",
+  "commit": "e0e8885 (Arbeitsbranch) / 59b15d01 (Bau-Branch)",
+  "ausgerollt": "Zeabur-Deployment 2026-08-20T13:00:04Z, RUNNING, aus feature/auth-redesign-github-magiclink",
+  "beweis_live": "chats/<konto>/_index.json existiert (13:40:02.106Z) — nur der neue Code schreibt sie",
+  "gemessen_am_echten_speicher": {
+    "alterWeg": {
+      "abrufe": 100,
+      "ms": 5136,
+      "gelesenKB": 2831
+    },
+    "neuerWeg": {
+      "abrufe": 1,
+      "ms": 241,
+      "gelesenKB": 15.6
+    },
+    "faktorZeit": 21.3,
+    "faktorDaten": 181
+  },
+  "inhalt_geprueft": {
+    "stichprobe": 8,
+    "abweichungen": 0,
+    "traegtNachrichten": false,
+    "indexGroesseKB": 15.6
+  },
+  "nicht_gemessen": "Ende-zu-Ende-Antwortzeit der API — der Chrome-Zugang fiel aus, in der Shell liegt kein Nutzer-Token",
+  "befund_nebenbei": {
+    "titel": "Acht Chats sind serverseitig unerreichbar",
+    "zahlen": "Index 101 Eintraege, Speicher 108 Chat-Dateien",
+    "ursache": "MAX_CHATS_PRO_KONTO = 100, slice(0, limit) — bestand schon vor dieser Aenderung",
+    "status": "NICHT angefasst; die Grenze zu erhoehen beruehrt bestehende Daten"
+  },
+  "wie_es_gebaut_ist": {
+    "modul": "control-server/src/chats/chatIndex.js (156 Zeilen, reine Logik, in Node testbar)",
+    "datei": "chats/<konto>/_index.json — id/updatedAt/ownerId",
+    "geschrieben": "beim Upload und beim Grabstein (indexNachtragen), und im Lesepfad, wo alle Chats ohnehin vorliegen",
+    "tests": "53/53 im Arbeitsbranch, 41/41 im Bau-Branch; der Kerntest ZAEHLT die Abrufe: bei frischem Index null"
+  },
+  "zwei_fallen": {
+    "abkuerzung_waere_falsch": "Die Objektliste liefert LastModified frei mit — das ist aber die HOCHLADEZEIT, nicht updatedAt. Als updatedAt ausgegeben saehe der Fern-Stand dauerhaft neuer aus: der Client holte den Chat, importierte den echten aelteren Wert und holte ihn wieder. Genau die Endlosschleife aus job_verlauf_schlank_20260820.",
+    "frische_ohne_uhrenvergleich": "Der Index gilt nur als frisch, wenn seine LastModified STRENG groesser ist als die jeder Chat-Datei. Beide Werte stammen aus derselben Objektliste, also derselben Uhr — kein Versatz. Schlaegt sein Schreiben fehl, bleibt er aelter und wird neu gebaut."
+  },
+  "fail_safe": "Fehlt der Index, ist er kaputt, veraltet oder sein Abruf schlaegt fehl, wird regulaer alles gelesen. Die Schluesselliste kommt weiter aus den <Key>-Elementen und NICHT aus der neuen Zeit-Auswertung — sonst waere bei fehlenden <Contents>-Bloecken die ganze Liste leer statt nur der schnelle Weg weg.",
+  "lehre": "Ein Testdoppel lieferte den Inhalt ueber text(), signedS3Get liest aber arrayBuffer(). Vier Tests waren rot, obwohl der Code stimmte — dieselbe Falle wie am 2026-08-19. Beim Bauen eines S3-Doppels IMMER den vorhandenen antwort()-Helfer nehmen."
+}
