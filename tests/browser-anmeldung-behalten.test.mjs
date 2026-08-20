@@ -94,8 +94,8 @@ test("der Fern-Browser tarnt sich — und stirbt trotzdem nie am Bildschirm", ()
   const engine = fs.readFileSync("workers/remote-browser/session-engine.js", "utf8");
   // Anti-Erkennung: das Flag setzt navigator.webdriver in der Engine auf false.
   assert.match(engine, /--disable-blink-features=AutomationControlled/);
-  // Nicht mehr fest headless, sondern abschaltbar ueber die Umgebung.
-  assert.match(engine, /SMEJJ_BROWSER_HEADLESS/);
+  // Nicht mehr fest verdrahtet, sondern ueber die Umgebung schaltbar.
+  assert.match(engine, /SMEJJ_BROWSER_HEADFUL/);
   assert.doesNotMatch(engine, /headless: true/, "kein fest verdrahtetes headless mehr");
   // --single-process ist raus: mit echtem Fensterbaum ist er instabil.
   // Geprueft wird die STARTLISTE, nicht die Datei — sonst schlaegt schon der
@@ -106,7 +106,10 @@ test("der Fern-Browser tarnt sich — und stirbt trotzdem nie am Bildschirm", ()
   // DER NOTAUSGANG: fehlt der X-Server, faellt der Start auf headless zurueck
   // statt den ganzen Browser mitzureissen.
   assert.match(engine, /catch \(fehler\) \{[\s\S]{0,120}starte\(true\)/);
-  // Und der Container bringt den Bildschirm mit.
+  // Der Container startet den Worker DIREKT. Ein xvfb-run-Wrapper im CMD hat
+  // am 2026-08-20 den ganzen Dienst am Hochkommen gehindert (live 502) —
+  // der virtuelle Bildschirm gehoert in den Worker, wo sein Fehlschlag nur
+  // den Browser kostet und nicht die Erreichbarkeit.
   const dockerfile = fs.readFileSync("workers/remote-browser/Dockerfile", "utf8");
-  assert.match(dockerfile, /xvfb-run/);
+  assert.doesNotMatch(dockerfile, /CMD \[.*xvfb-run/);
 });

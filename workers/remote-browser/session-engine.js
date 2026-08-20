@@ -297,7 +297,12 @@ export function createSessionEngine({
       "--disable-features=IsolateOrigins,site-per-process",
       "--window-size=1365,900"
     ];
-    const kopflos = String(process.env.SMEJJ_BROWSER_HEADLESS || "").toLowerCase() === "true";
+    // Standard ist headless, bis der virtuelle Bildschirm sauber IM Worker
+    // aufgebaut wird (2026-08-20: der xvfb-run-Wrapper im CMD verhinderte den
+    // Start des ganzen Dienstes — live 502). SMEJJ_BROWSER_HEADFUL=true
+    // schaltet headful ein, sobald ein X-Server bereitsteht; scheitert es,
+    // faengt der Notausgang unten den Start ab.
+    const kopflos = String(process.env.SMEJJ_BROWSER_HEADFUL || "").toLowerCase() !== "true";
     const pageOptions = buildPageOptions(viewport);
     const verzeichnis = profilVerzeichnis(profil);
     // Mit Konto-Profil: dauerhafter Kontext, die Anmeldung ueberlebt die
