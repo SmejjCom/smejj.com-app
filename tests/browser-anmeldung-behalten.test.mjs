@@ -82,3 +82,31 @@ test("eine volle Sitzungsliste verdraengt die aelteste, statt abzulehnen", async
   // Und genug Plaetze, damit Verdraengung die Ausnahme bleibt.
   assert.ok(SESSION_DEFAULTS.maxSessions >= 4, `zu wenige Plaetze: ${SESSION_DEFAULTS.maxSessions}`);
 });
+
+
+// --- Tarnung ja, aber niemals auf Kosten der Verfuegbarkeit ----------------
+//
+// Recherche 2026-08-20: Google blockiert Anmeldungen aus automatisierten
+// Browsern seit Januar 2021 ausdruecklich; headless ist das lauteste Signal,
+// und navigator.webdriver meldet zusaetzlich von selbst "automatisiert".
+// Deshalb laeuft der Fern-Browser headful auf einem virtuellen Bildschirm.
+test("der Fern-Browser tarnt sich — und stirbt trotzdem nie am Bildschirm", () => {
+  const engine = fs.readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  // Anti-Erkennung: das Flag setzt navigator.webdriver in der Engine auf false.
+  assert.match(engine, /--disable-blink-features=AutomationControlled/);
+  // Nicht mehr fest headless, sondern abschaltbar ueber die Umgebung.
+  assert.match(engine, /SMEJJ_BROWSER_HEADLESS/);
+  assert.doesNotMatch(engine, /headless: true/, "kein fest verdrahtetes headless mehr");
+  // --single-process ist raus: mit echtem Fensterbaum ist er instabil.
+  // Geprueft wird die STARTLISTE, nicht die Datei — sonst schlaegt schon der
+  // Kommentar an, der erklaert, warum das Flag fehlt.
+  const liste = engine.slice(engine.indexOf("const startArgs = ["), engine.indexOf("];", engine.indexOf("const startArgs = [")));
+  assert.doesNotMatch(liste, /--single-process/);
+  assert.match(liste, /--disable-blink-features=AutomationControlled/);
+  // DER NOTAUSGANG: fehlt der X-Server, faellt der Start auf headless zurueck
+  // statt den ganzen Browser mitzureissen.
+  assert.match(engine, /catch \(fehler\) \{[\s\S]{0,120}starte\(true\)/);
+  // Und der Container bringt den Bildschirm mit.
+  const dockerfile = fs.readFileSync("workers/remote-browser/Dockerfile", "utf8");
+  assert.match(dockerfile, /xvfb-run/);
+});
