@@ -28,4 +28,4 @@ EXPOSE 8080
 # ohne dass ein Desktop noetig waere; Xvfb liegt im Playwright-Image bereit.
 # --auto-servernum, damit parallele Sitzungen sich keine Bildschirmnummer
 # streiten. SMEJJ_BROWSER_HEADLESS=true schaltet notfalls zurueck.
-CMD ["xvfb-run", "--auto-servernum", "--server-args=-screen 0 1365x900x24", "node", "/app/remote-browser/worker.js"]
+CMD ["node", "/app/remote-browser/worker.js"]
