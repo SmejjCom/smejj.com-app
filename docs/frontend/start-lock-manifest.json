@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-20T05:26:45.881Z",
-  "confirmation": "Betreiber 2026-08-20: Auftrag 'Telefon-Test Stopp/Play machen' — geprueft: index.html/sw.js (Marken fuehrung v2, chat-stopp v7 aus dem Telefon-Test), app.js/browser-pane*.js aus der laufenden Browser-Arbeit der Parallelsitzung, alle committet, 522/522 gruen, Handy-Test 15/15.",
+  "frozenAt": "2026-08-20T15:02:00.796Z",
+  "confirmation": "Eine Datei als Beweis: schriftliche Freigabe fuer EINEN Eintrag in index.html — code-flaeche.js laedt erst beim Oeffnen des Code-Bereichs (Betreiber, 2026-08-20). Betroffen: public/index.html (Skript-Tag durch code-nachladen.js ersetzt) und public/sw.js (Vorrat + CACHE_NAME v636).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "66a224b8a976b81370b2a5131a59a391cb38f838214471dffbccd175ec86954f",
+    "public/index.html": "43ee2090aa223d12459c1f7624c307245a2272220425a404d317a6cafc6326b1",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "76d040005c2c6a578bc714678e8b2c6b072c91ead4f1fd56f9e95135d2152a40",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "38e3490c48ac848a9be39fd44cb1278680126f5a492166c5519eb63b11637208",
+    "public/sw.js": "9b327c09cfa24f78a5b65af09cee702ed86006ffaa2904d04e9cbc88130c377c",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
