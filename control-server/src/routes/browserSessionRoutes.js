@@ -4,6 +4,7 @@
 // den Remote-Browser-Worker weiter (POST /session, /session/act,
 // /session/close). Antworten werden defensiv uebernommen (nur erwartete
 // Felder, nur gueltige Screenshots). Fail-closed in jedem Zweifelsfall.
+import { createHash } from "node:crypto";
 import { json, readJson } from "../http/respond.js";
 import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
 import { isAllowedBrowserCaller, parseBrowserTarget } from "./browserProxyRoutes.js";
@@ -159,7 +160,27 @@ export function saubereBeobachtungsElement(e) {
 
 // Body-Validierung pro Endpunkt (fail-closed). Die Engine im Worker validiert
 // erneut — hier wird nur weitergegeben, was plausibel ist.
-export function validateSessionRequest(kind, body = {}) {
+/**
+ * Profil-Kennung eines Kontos — der Schluessel, unter dem der Fern-Browser
+ * seine Cookies ablegt.
+ *
+ * WARUM GEHASHT (Betreiber-Wunsch 2026-08-20 "angemeldet bleiben"): Der
+ * Worker legt je Kennung ein Browser-Profil an. Stuende dort die Adresse im
+ * Klartext, waere aus einem Verzeichnisnamen ablesbar, WER die Plattform
+ * benutzt. Der Hash trennt genauso zuverlaessig, verraet aber nichts.
+ *
+ * KEINE Identitaet -> KEIN Profil (null): dann arbeitet der Fern-Browser wie
+ * bisher in einem fluechtigen Fenster. Fail-closed, denn ein geteiltes
+ * Profil waere das Schlimmste ueberhaupt — ein Nutzer saesse in der
+ * Anmeldung eines anderen.
+ */
+export function profilKennung(authUser) {
+  const kennung = String(authUser?.userId || authUser?.email || "").trim().toLowerCase();
+  if (!kennung) return null;
+  return createHash("sha256").update(`smejj-browser-profil:${kennung}`).digest("hex").slice(0, 32);
+}
+
+export function validateSessionRequest(kind, body = {}, profil = null) {
   if (kind === "open") {
     const parsed = parseBrowserTarget(body.url);
     if (!parsed.ok) return { ok: false, error: parsed.error };
@@ -171,7 +192,11 @@ export function validateSessionRequest(kind, body = {}) {
         viewport: {
           width: clampInt(viewport.width, 1365, 360, 1920),
           height: clampInt(viewport.height, 900, 360, 1200)
-        }
+        },
+        // Nur die SERVERSEITIG abgeleitete Kennung geht mit — niemals ein
+        // Wert aus dem Anfragekoerper. Sonst koennte ein Aufrufer das Profil
+        // eines fremden Kontos anfordern.
+        ...(profil ? { profil } : {})
       }
     };
   }
@@ -219,7 +244,7 @@ export async function handleBrowserSession(kind, req, res, {
     }
   }
 
-  const request = validateSessionRequest(kind, input || {});
+  const request = validateSessionRequest(kind, input || {}, profilKennung(req?.authUser));
   if (!request.ok) return json(res, 400, { ok: false, error: request.error, remote: false });
 
   const plan = buildRemoteBrowserPlan({ env, activeWorkers });
