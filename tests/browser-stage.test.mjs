@@ -39,3 +39,22 @@ test("die Buehnen-Logik ist vollstaendig umgezogen, nichts doppelt", () => {
     assert.equal(render.includes(stueck), false, stueck + " steht noch in der Vorlage");
   }
 });
+
+// --- Anmeldeseiten gehoeren in den Live-Browser (2026-08-20) -----------------
+//
+// Betreiber: "Google Mail kann ich nicht einloggen, Alibaba nicht." Live
+// nachgestellt: die Google-Anmeldung landete im PROXY (totes Abbild) — das
+// getippte Zeichen erschien nicht einmal im Feld. Anmelden ist dort
+// grundsaetzlich unmoeglich, und nichts sagt es dem Nutzer.
+test("eine Seite mit Passwortfeld geht in den echten Browser, nie in den Proxy", async () => {
+  const { hatAnmeldeFeld, shouldOpenInRealBrowser } = await import("../public/browser-pane-adressen.js");
+  // Erkennung inhaltlich, nicht per Hostliste — jede Anmeldeseite hat eines.
+  assert.equal(hatAnmeldeFeld('<input type="password" name="pw">'), true);
+  assert.equal(hatAnmeldeFeld("<input type='password'>"), true);
+  assert.equal(hatAnmeldeFeld('<input type="PASSWORD">'), true, "Schreibweise egal");
+  assert.equal(hatAnmeldeFeld('<input type="text" name="suche">'), false);
+  assert.equal(hatAnmeldeFeld(""), false);
+  // ... und die Weiche zieht daraus die Folge:
+  assert.equal(shouldOpenInRealBrowser('<form><input type="password"></form>', "https://accounts.google.com/"), true);
+  assert.equal(shouldOpenInRealBrowser("<p>nur text</p>", "https://beispiel.de/"), false);
+});
