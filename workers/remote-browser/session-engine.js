@@ -12,10 +12,25 @@ import { buildObservation } from "../maus-engine/observer.mjs";
 import { randomBytes } from "node:crypto";
 import { lookup } from "node:dns/promises";
 
+// Wo Konto-Profile liegen. /tmp, weil der Container ohnehin kein dauerhaftes
+// Laufwerk hat — der Pfad macht das ehrlich sichtbar, statt Dauerhaftigkeit
+// vorzutaeuschen.
+const PROFIL_WURZEL = process.env.SMEJJ_BROWSER_PROFIL_WURZEL || "/tmp/smejj-browser-profile";
+
 export const SESSION_DEFAULTS = {
   maxSessions: 2,
-  idleTimeoutMs: 90_000,
-  hardLimitMs: 600_000,
+  // BETREIBER-ANSAGE 2026-08-20 ("mach 1 zu 1 wie Chrome"): Ein Browser wirft
+  // dich nicht nach anderthalb Minuten hinaus. Die alten 90 s Untaetigkeit
+  // waren der wahrscheinlichste Grund, dass Anmeldungen abbrachen — wer eine
+  // Adresse eintippt, sein Passwort sucht und auf einen Bestaetigungscode
+  // wartet, ist muehelos laenger still. Mit dem harten Deckel von 10 Minuten
+  // war selbst eine zuegige Anmeldung ein Wettlauf.
+  //
+  // Die Grenzen bleiben ENDLICH, weil jede Sitzung einen echten Chrome auf
+  // dem Server offen haelt (Arbeitsspeicher, und maxSessions ist 2): eine
+  // vergessene Sitzung darf den Platz nicht fuer immer blockieren.
+  idleTimeoutMs: 1_800_000,
+  hardLimitMs: 14_400_000,
   actionTimeoutMs: 15_000,
   navTimeoutMs: 25_000,
   settleTimeoutMs: 4_000,
@@ -28,6 +43,23 @@ export const SESSION_ALLOWED_KEYS = new Set([
   "Enter", "Tab", "Escape", "Backspace", "Delete",
   "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
   "PageUp", "PageDown", "Home", "End"
+]);
+
+// Bearbeiten-Kuerzel, die eine Anmeldung ueberhaupt erst bequem machen:
+// ohne Einfuegen muss man jedes Passwort aus dem Manager ABTIPPEN (Betreiber
+// 2026-08-20). Bewusst eine kurze Liste statt "alle Kombinationen": was hier
+// nicht steht, kommt nicht durch — etwa Kuerzel, die Fenster oeffnen oder
+// Entwicklerwerkzeuge starten.
+//
+// "Control" steht fuer die Modifikatortaste des Systems; Playwright bildet
+// "ControlOrMeta" auf Cmd (macOS) bzw. Strg ab. Der Fern-Browser laeuft unter
+// Linux, der Betreiber sitzt am Mac — deshalb NICHT fest verdrahten.
+export const SESSION_ALLOWED_COMBOS = new Set([
+  "ControlOrMeta+v",  // Einfuegen — der eigentliche Grund fuer diese Liste
+  "ControlOrMeta+c",  // Kopieren
+  "ControlOrMeta+x",  // Ausschneiden
+  "ControlOrMeta+a",  // Alles markieren
+  "ControlOrMeta+z"   // Rueckgaengig
 ]);
 
 // Pure Validierung des Aktions-Objekts (ohne Playwright testbar).
@@ -60,8 +92,11 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
     }
     case "key": {
       const key = String(action.key || "");
-      if (!SESSION_ALLOWED_KEYS.has(key)) return { ok: false, error: "key_not_allowed" };
-      return { ok: true, action: { type: "key", key } };
+      if (SESSION_ALLOWED_KEYS.has(key)) return { ok: true, action: { type: "key", key } };
+      // Kombination? Nur die ausdruecklich erlaubten, in genau dieser
+      // Schreibweise — sonst waere die Liste durch Varianten umgehbar.
+      if (SESSION_ALLOWED_COMBOS.has(key)) return { ok: true, action: { type: "key", key } };
+      return { ok: false, error: "key_not_allowed" };
     }
     case "scroll": {
       const deltaY = Number(action.deltaY);
@@ -180,7 +215,31 @@ export function createSessionEngine({
     };
   }
 
-  async function open({ url, viewport = {} } = {}) {
+  /**
+   * Verzeichnis, in dem ein Konto seine Cookies behaelt.
+   *
+   * BETREIBER-WUNSCH 2026-08-20 ("angemeldet bleiben"): Ohne Profil startet
+   * jede Sitzung bei null — man meldet sich an, und beim naechsten Oeffnen
+   * ist alles wieder weg. Mit Profil bleibt die Anmeldung, solange der
+   * Dienst laeuft.
+   *
+   * GRENZEN, offen benannt: Der Container hat KEIN dauerhaftes Laufwerk.
+   * Ein Neustart oder ein Deploy des Dienstes loescht die Profile — dann
+   * muss man sich einmal neu anmelden. Fuer echte Dauerhaftigkeit muesste
+   * ein Datentraeger eingehaengt werden; das ist eine eigene Entscheidung.
+   *
+   * TRENNUNG: Die Kennung kommt SERVERSEITIG aus der angemeldeten Identitaet
+   * (gehasht, siehe profilKennung im Control-Server). Sie wird hier nochmals
+   * streng geprueft — ein Wert mit Pfadanteilen wuerde sonst aus dem
+   * Profilordner ausbrechen.
+   */
+  function profilVerzeichnis(profil) {
+    const sauber = String(profil || "");
+    if (!/^[a-f0-9]{16,64}$/.test(sauber)) return null;
+    return `${PROFIL_WURZEL}/${sauber}`;
+  }
+
+  async function open({ url, viewport = {}, profil = "" } = {}) {
     if (sessions.size >= cfg.maxSessions) return fail(429, "session_limit_reached");
     const parsed = isAllowedTarget(url);
     if (!parsed.ok) return fail(400, parsed.error);
@@ -190,13 +249,20 @@ export function createSessionEngine({
       return fail(400, "Ziel-Host ist blockiert.");
     }
     const playwright = await playwrightLoader();
-    const browser = await playwright.chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--single-process"]
-    });
+    const startArgs = ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--single-process"];
+    const pageOptions = buildPageOptions(viewport);
+    const verzeichnis = profilVerzeichnis(profil);
+    // Mit Konto-Profil: dauerhafter Kontext, die Anmeldung ueberlebt die
+    // Sitzung. Ohne: fluechtiges Fenster wie bisher (fail-closed).
+    const browser = verzeichnis
+      ? await playwright.chromium.launchPersistentContext(verzeichnis, { headless: true, args: startArgs, ...pageOptions })
+      : await playwright.chromium.launch({ headless: true, args: startArgs });
     try {
-      const pageOptions = buildPageOptions(viewport);
-      const page = await browser.newPage(pageOptions);
+      // launchPersistentContext LIEFERT den Kontext, nicht den Browser: dort
+      // gibt es bereits eine Seite, und newPage() wuerde eine zweite oeffnen.
+      const page = verzeichnis
+        ? (browser.pages()[0] || await browser.newPage())
+        : await browser.newPage(pageOptions);
       const networkSafety = new Map();
       if (typeof page.route === "function") {
         await page.route("**/*", async (route) => {
