@@ -61,3 +61,24 @@ test("ein Profilname mit Pfadanteilen bricht nicht aus dem Ordner aus", () => {
   // Strenge Form: nur Hex, keine Punkte, keine Schraegstriche.
   assert.match(engine, /\^\[a-f0-9\]\{16,64\}\$/);
 });
+
+
+// --- Die Falle, die die Verlaengerung selbst aufgestellt hat ----------------
+//
+// Betreiber 2026-08-20, direkt nach dem Ausrollen: "geht nicht, passwort feld
+// kommt nicht". Der Netzmitschnitt zeigte /api/browser/session -> 429 und
+// danach den Rueckfall auf den Standbild-Worker: in einem Standbild gibt es
+// nichts zu tippen. Ursache war NICHT die Anmeldeseite, sondern das
+// Sitzungslimit — solange Sitzungen nach 90 s starben, raeumten sie sich von
+// selbst weg; mit 30 Minuten blockierten zwei vergessene beide Plaetze.
+test("eine volle Sitzungsliste verdraengt die aelteste, statt abzulehnen", async () => {
+  const engine = fs.readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  // Kein hartes Nein mehr beim Oeffnen ...
+  assert.doesNotMatch(engine, /if \(sessions\.size >= cfg\.maxSessions\) return fail\(429/);
+  // ... sondern Aufraeumen der aeltesten.
+  assert.match(engine, /while \(sessions\.size >= cfg\.maxSessions\)/);
+  assert.match(engine, /sort\(\(a, b\) => a\.createdAt - b\.createdAt\)/);
+  assert.match(engine, /await destroy\(aelteste\.id\)/);
+  // Und genug Plaetze, damit Verdraengung die Ausnahme bleibt.
+  assert.ok(SESSION_DEFAULTS.maxSessions >= 4, `zu wenige Plaetze: ${SESSION_DEFAULTS.maxSessions}`);
+});
