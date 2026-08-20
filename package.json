@@ -104,6 +104,7 @@
     "bundle:bridge": "node scripts/deploy/bundle_chat_bridge.mjs",
     "deploy:bridge": "node scripts/deploy/deploy_chat_bridge_zeabur.mjs",
     "measure:touch": "node scripts/testing/measure_touch_targets.mjs",
+    "measure:stopp-handy": "node scripts/testing/messe_stopp_play_handy.mjs",
     "measure:touch:selbsttest": "node scripts/testing/measure_touch_targets.mjs --selbsttest",
     "measure:touch:app": "node scripts/testing/measure_touch_targets_app.mjs",
     "measure:touch:app:selbsttest": "node scripts/testing/measure_touch_targets_app.mjs --selbsttest",

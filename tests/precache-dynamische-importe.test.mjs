@@ -54,3 +54,35 @@ test("der Waechter beisst wirklich zu", () => {
   assert.ok(!kaputt.includes('"/assets/maus-chrome.js"'), "Probe nicht praepariert");
   assert.ok(sw.includes('"/assets/maus-chrome.js"'), "gesunde Probe: der Eintrag muss da sein");
 });
+
+// ---------------------------------------------------------------------------
+// Der Stopp-Knopf darf auf NICHTS warten.
+//
+// GEMESSEN 2026-08-20 auf einem emulierten Handy: das Arbeits-Viereck war nach
+// 2.061 ms sichtbar, aber erst nach 4.087 ms bedienbar — zwei Sekunden lang
+// ein Stopp-Knopf, der nichts tut. Grund war ein statischer Importblock in
+// chat-stopp.js (fuer das Fortsetzen dazugekommen): ein Modul fuehrt seinen
+// Rumpf erst aus, wenn die GANZE Kette geladen ist, und das Verdrahten der
+// Knoepfe braucht davon nichts.
+//
+// Diese Zusicherung haelt die Bauart fest, nicht die Millisekunden: keine
+// statischen Importe, und die Verdrahtung steht vor jedem Nachladen.
+test("chat-stopp.js verdrahtet SOFORT — keine statischen Importe", () => {
+  const quelle = fs.readFileSync("public/chat-stopp.js", "utf8");
+  const statisch = [...quelle.matchAll(/^\s*import\s+[^(].*?from\s+["'][^"']+["']/gm)].map((t) => t[0].trim());
+  assert.deepEqual(statisch, [],
+    `statische Importe verzoegern das Verdrahten:\n  ${statisch.join("\n  ")}`);
+  // Die Abhaengigkeiten muessen ueberhaupt nachgeladen werden — sonst waere
+  // die Datei nur leer, nicht schnell. Geprueft wird das dynamische import(),
+  // egal ob mit await, in Promise.all oder mit .then().
+  const dynamisch = [...quelle.matchAll(/\bimport\(\s*["'][^"']+["']/g)].length;
+  assert.ok(dynamisch >= 2, `nur ${dynamisch} dynamische Importe — laedt die Datei ihre Abhaengigkeiten noch?`);
+});
+
+test("der Waechter beisst zu, wenn jemand einen Import zurueckholt", () => {
+  // TUEV: eine praeparierte Zeile MUSS gefunden werden, sonst prueft die
+  // Zusicherung oben nichts.
+  const probe = 'import { x } from "./y.js";\nconst a = 1;';
+  const gefunden = [...probe.matchAll(/^\s*import\s+[^(].*?from\s+["'][^"']+["']/gm)];
+  assert.equal(gefunden.length, 1, "Muster erkennt einen statischen Import nicht");
+});
