@@ -175,7 +175,7 @@
 // in docs/frontend/SW_VERSIONSVERLAUF_2026-08.md, so wie es der Kopf dieser
 // Datei verlangt (Touch-Ziele auf 44 px, Startseite und alle 16 Ansichten).
 // Wer den naechsten Stand sucht, schaut also besser dorthin als hierher.
-const CACHE_NAME = "smejj-shell-v625";
+const CACHE_NAME = "smejj-shell-v626";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -290,6 +290,16 @@ const SHELL = [
   // Die Maus aus dem Chat beauftragen (2026-08-18). Ohne Eintrag hier faende
   // der Import von app.js offline nichts — und app.js braeche komplett ab.
   "/assets/maus-absicht.js",
+  // Vom Waechter tests/precache-dynamische-importe.test.mjs am 2026-08-20
+  // gefunden: alle vier werden DYNAMISCH geladen und fehlten offline —
+  // maus-chrome.js (aus maus-absicht.js), maus-auftrag.js (aus maus-panel.js),
+  // chat-sync.js und chat-medien.js (beide aus chat-store.js). Besonders
+  // chat-sync.js wiegt schwer: ohne Eintrag stand der Verlaufs-Abgleich
+  // offline still, und ein Fehlen faellt ONLINE nie auf.
+  "/assets/maus-chrome.js",
+  "/assets/maus-auftrag.js",
+  "/assets/chat-sync.js",
+  "/assets/chat-medien.js",
   "/assets/nav-absichten.js",
   "/assets/topbar-krume.js",
   "/assets/spur-start.js",
