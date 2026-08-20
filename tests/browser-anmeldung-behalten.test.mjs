@@ -103,9 +103,12 @@ test("der Fern-Browser tarnt sich — und stirbt trotzdem nie am Bildschirm", ()
   const liste = engine.slice(engine.indexOf("const startArgs = ["), engine.indexOf("];", engine.indexOf("const startArgs = [")));
   assert.doesNotMatch(liste, /--single-process/);
   assert.match(liste, /--disable-blink-features=AutomationControlled/);
-  // DER NOTAUSGANG: fehlt der X-Server, faellt der Start auf headless zurueck
-  // statt den ganzen Browser mitzureissen.
-  assert.match(engine, /catch \(fehler\) \{[\s\S]{0,120}starte\(true\)/);
+  // DER NOTAUSGANG deckt den GANZEN Aufbau ab, nicht nur den Start:
+  // gemessen 2026-08-21 startete headful sauber und starb erst beim ersten
+  // Seitenaufbau. Ein Notausgang um launch() allein greift dann nicht.
+  assert.match(engine, /async function baueAuf\(ohneBildschirm\)/);
+  assert.match(engine, /baueAuf\(true\)/, "Rueckfall auf headless nach misslungenem Aufbau");
+  assert.match(engine, /await b\.close\(\)/, "der misslungene Versuch wird aufgeraeumt, sonst bleibt ein Chrome zurueck");
   // Der Container startet den Worker DIREKT. Ein xvfb-run-Wrapper im CMD hat
   // am 2026-08-20 den ganzen Dienst am Hochkommen gehindert (live 502) —
   // der virtuelle Bildschirm gehoert in den Worker, wo sein Fehlschlag nur

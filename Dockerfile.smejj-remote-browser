@@ -5,6 +5,11 @@ COPY package.json /app/package.json
 RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install --omit=dev --no-audit --no-fund playwright@1.45.3
 COPY workers/remote-browser/worker.js /app/remote-browser/worker.js
 COPY workers/remote-browser/session-engine.js /app/remote-browser/session-engine.js
+# Der virtuelle Bildschirm. OHNE diese Zeile scheitert der Import in
+# session-engine.js, das Laden der Engine wirft, und der Worker antwortet auf
+# JEDE Sitzung mit 503 session_engine_unavailable — der Grund steht nirgends,
+# weil der Aufrufer den Ladefehler verschluckt (live gemessen 2026-08-21).
+COPY workers/remote-browser/bildschirm.mjs /app/remote-browser/bildschirm.mjs
 # Der Selektor-Aufloeser der Maus wird MITBENUTZT, nicht nachgebaut: der
 # Panel-Browser soll Elemente genauso finden wie die Maus. Zwei Aufloeser
 # waeren zwei Verhalten, und das schwaechere faellt erst live auf.
