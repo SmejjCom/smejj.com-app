@@ -18,7 +18,7 @@ import { lookup } from "node:dns/promises";
 const PROFIL_WURZEL = process.env.SMEJJ_BROWSER_PROFIL_WURZEL || "/tmp/smejj-browser-profile";
 
 export const SESSION_DEFAULTS = {
-  maxSessions: 2,
+  maxSessions: 4,
   // BETREIBER-ANSAGE 2026-08-20 ("mach 1 zu 1 wie Chrome"): Ein Browser wirft
   // dich nicht nach anderthalb Minuten hinaus. Die alten 90 s Untaetigkeit
   // waren der wahrscheinlichste Grund, dass Anmeldungen abbrachen — wer eine
@@ -240,7 +240,26 @@ export function createSessionEngine({
   }
 
   async function open({ url, viewport = {}, profil = "" } = {}) {
-    if (sessions.size >= cfg.maxSessions) return fail(429, "session_limit_reached");
+    // VOLL? Dann die AELTESTE verdraengen statt abzulehnen.
+    //
+    // BEFUND 2026-08-20, unmittelbar nach der Verlaengerung der Lebensdauer:
+    // Der Betreiber bekam beim Anmelden kein Passwortfeld. Ursache war nicht
+    // die Anmeldeseite, sondern dieses Limit — /api/browser/session
+    // antwortete 429, der Client fiel auf den Standbild-Worker zurueck, und
+    // in einem Standbild gibt es nichts zu tippen.
+    //
+    // Verursacht hatte es die eigene Verbesserung: solange Sitzungen nach
+    // 90 s starben, raeumten sie sich von selbst weg. Mit 30 Minuten
+    // blockierten zwei vergessene Sitzungen beide Plaetze eine halbe Stunde.
+    // Eine laengere Lebensdauer VERLANGT deshalb eine Verdraengung — sonst
+    // macht sie das System unbenutzbarer statt besser.
+    //
+    // Ein Browser sagt auch nie "zu viele Tabs": er raeumt still auf.
+    while (sessions.size >= cfg.maxSessions) {
+      const aelteste = [...sessions.values()].sort((a, b) => a.createdAt - b.createdAt)[0];
+      if (!aelteste) break;
+      await destroy(aelteste.id);
+    }
     const parsed = isAllowedTarget(url);
     if (!parsed.ok) return fail(400, parsed.error);
     try {
