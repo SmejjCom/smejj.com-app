@@ -268,14 +268,62 @@ export function createSessionEngine({
       return fail(400, "Ziel-Host ist blockiert.");
     }
     const playwright = await playwrightLoader();
-    const startArgs = ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--single-process"];
+    // WARUM NICHT MEHR HEADLESS (recherchiert und gemessen 2026-08-20):
+    // Google blockiert Anmeldungen aus automatisierten Browsern seit Januar
+    // 2021 ausdruecklich — der Betreiber bekam deshalb "kein Passwortfeld".
+    // Headless ist dabei das lauteste Signal, und `navigator.webdriver`
+    // meldet zusaetzlich von selbst "ich bin automatisiert".
+    //
+    // Zwei Gegenmassnahmen, beide billig:
+    //   * headful auf einem VIRTUELLEN Bildschirm (Xvfb liegt im
+    //     Playwright-Image bereit, der Container startet unter xvfb-run) —
+    //     kein Desktop noetig, aber ein echter Fensterbaum.
+    //   * --disable-blink-features=AutomationControlled setzt
+    //     navigator.webdriver auf false, und zwar in der Engine, nicht per
+    //     nachgeschobenem Skript.
+    //
+    // EHRLICHE GRENZE: Das ist keine Tarnkappe. Google arbeitet aktiv
+    // dagegen und wird Anmeldungen weiter erschweren — fuer Google-Dienste
+    // ist OAuth der richtige Weg, nicht das Nachbauen einer Passworteingabe.
+    // Fuer Amazon, Alibaba und die meisten Seiten reicht es.
+    //
+    // --single-process ist BEWUSST WEG: mit echtem Fensterbaum ist er
+    // instabil (Renderer und Browser im selben Prozess), und genau dort
+    // laufen die Seiten, die uns interessieren.
+    const startArgs = [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-blink-features=AutomationControlled",
+      "--disable-features=IsolateOrigins,site-per-process",
+      "--window-size=1365,900"
+    ];
+    const kopflos = String(process.env.SMEJJ_BROWSER_HEADLESS || "").toLowerCase() === "true";
     const pageOptions = buildPageOptions(viewport);
     const verzeichnis = profilVerzeichnis(profil);
     // Mit Konto-Profil: dauerhafter Kontext, die Anmeldung ueberlebt die
     // Sitzung. Ohne: fluechtiges Fenster wie bisher (fail-closed).
-    const browser = verzeichnis
-      ? await playwright.chromium.launchPersistentContext(verzeichnis, { headless: true, args: startArgs, ...pageOptions })
-      : await playwright.chromium.launch({ headless: true, args: startArgs });
+    // NOTAUSGANG: headful braucht einen laufenden X-Server. Ist er nicht da
+    // (falsch gestarteter Container, fremde Umgebung, kuenftiger Umbau),
+    // scheitert der Start mit "launched a headed browser without having a
+    // XServer running" — und der ganze Browser waere TOT.
+    //
+    // Ein Fern-Browser, der gar nicht startet, ist schlimmer als einer, den
+    // Google erkennt. Deshalb wird bei einem Fehlschlag still auf headless
+    // zurueckgefallen: schlechter getarnt, aber benutzbar. Lokal war headful
+    // nicht pruefbar (amd64-Chrome unter Emulation auf einem ARM-Mac), und
+    // ungeprueft deployen heisst hier: den Dienst aufs Spiel setzen.
+    async function starte(ohneBildschirm) {
+      return verzeichnis
+        ? playwright.chromium.launchPersistentContext(verzeichnis, { headless: ohneBildschirm, args: startArgs, ...pageOptions })
+        : playwright.chromium.launch({ headless: ohneBildschirm, args: startArgs });
+    }
+    let browser;
+    try {
+      browser = await starte(kopflos);
+    } catch (fehler) {
+      if (kopflos) throw fehler;
+      browser = await starte(true);
+    }
     try {
       // launchPersistentContext LIEFERT den Kontext, nicht den Browser: dort
       // gibt es bereits eine Seite, und newPage() wuerde eine zweite oeffnen.
