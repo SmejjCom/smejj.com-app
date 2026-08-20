@@ -78,7 +78,9 @@ test("Config exposes Browser-Proxy route used by Browser-Pane", () => {
   // browser-pane-Module behalten ihre Version, weil sie nur hier importiert werden.
   assert.match(paneJs, /from "\.\/config\.js"/);
   assert.doesNotMatch(paneJs, /\.\/config\.js\?v=/);
-  assert.match(paneJs, /\.\/browser-pane-render\.js\?v=browser-pane-20260709-2/);
+  // Die Marke wandert bei jeder Aenderung (check:markenkette erzwingt das);
+  // gepinnt wird deshalb nur, DASS render.js versioniert importiert wird.
+  assert.match(paneJs, /\.\/browser-pane-render\.js\?v=browser-pane-[0-9-]+/);
 });
 
 test("Browser-Pane erlaubt maximal 7 Tabs", () => {

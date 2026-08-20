@@ -9,7 +9,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { afterFirstPaint } from "../public/deferred-start.js";
-import { SOURCES } from "../scripts/build/bundle-start-styles.mjs";
+import { SOURCES, entschlacke } from "../scripts/build/bundle-start-styles.mjs";
 
 const html = fs.readFileSync("public/index.html", "utf8");
 const appJs = fs.readFileSync("public/app.js", "utf8");
@@ -141,14 +141,29 @@ test("Startseite laedt ein Buendel statt acht Stylesheets", () => {
 });
 
 test("Buendel enthaelt alle Quellen unveraendert und in Reihenfolge", () => {
+  // GEAENDERT 2026-08-20 (Startseiten-Gewicht): das Buendel traegt seit dem
+  // Entschlacken keine Kommentare und keine Leerzeilen mehr — 205 KB -> 134 KB,
+  // ueber die Leitung 53 KB -> 23 KB. Verglichen wird darum die WIRKSAME CSS
+  // (dieselbe Entschlackung wie im Bau), nicht mehr der Rohtext. Die Zusicherung
+  // bleibt dieselbe: jede Quelle steckt vollstaendig und in der richtigen
+  // Reihenfolge im Buendel — die Reihenfolge IST die Kaskade.
   let position = -1;
   for (const name of SOURCES) {
-    const quelle = fs.readFileSync(`public/${name}`, "utf8").trimEnd();
+    const quelle = entschlacke(fs.readFileSync(`public/${name}`, "utf8"));
     assert.ok(bundle.includes(quelle), `${name} fehlt im Buendel oder wurde veraendert`);
     const gefunden = bundle.indexOf(`/* ---- ${name} ---- */`);
     assert.ok(gefunden > position, `${name} steht in falscher Reihenfolge — das aendert die Kaskade`);
     position = gefunden;
   }
+});
+
+test("Entschlacken faellt auf, wenn es je unsicher wuerde", () => {
+  // Der Waechter im Bau: ein '/*' in einem content:- oder url()-Wert wuerde
+  // die Kommentar-Regel mitten im Wert schneiden. Beide Proben, kaputt und
+  // gesund — sonst wuesste niemand, ob der Waechter ueberhaupt zubeisst.
+  assert.throws(() => entschlacke('.a::after { content: "/*"; }'), /nicht sicher/);
+  assert.throws(() => entschlacke('.b { background: url("/i/*x.png"); }'), /nicht sicher/);
+  assert.equal(entschlacke('/* weg */\n.c { color: red; }\n\n'), ".c { color: red; }");
 });
 
 test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", () => {

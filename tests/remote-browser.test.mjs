@@ -278,8 +278,12 @@ test("Remote-Ansicht ist scrollbar und ohne schwarze Flaechen (Chrome-Massstab)"
   assert.doesNotMatch(html, /object-fit:contain/);
   assert.match(html, /width:100%;height:auto/);
   // Scrollposition wird gemeldet und wiederhergestellt.
-  assert.match(html, /smejj\.browser\.scrollState/);
-  assert.match(html, /smejj\.browser\.restoreScroll/);
+  // Der Scrollstand-Sender wohnt seit 2026-08-19 in browser-stage.js —
+  // Inline-Skripte sterben in srcdoc stumm an der geerbten CSP. Die Vorlage
+  // muss die Datei laden, die Datei muss die Meldung senden.
+  assert.match(html, /<script src="\/assets\/browser-stage\.js\?v=\d+"><\/script>/);
+  assert.match(fs.readFileSync("public/browser-stage.js", "utf8"), /smejj\.browser\.scrollState/);
+  assert.match(fs.readFileSync("public/browser-stage.js", "utf8"), /smejj\.browser\.restoreScroll/);
   // Link-Hotspots: nur http(s), als prozentual positionierte Bereiche.
   assert.match(html, /data-nav="https:\/\/example\.com\/a"/);
   assert.doesNotMatch(html, /javascript:alert/);
