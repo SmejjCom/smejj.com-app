@@ -244,6 +244,53 @@ test("nurListe=true liefert die Liste OHNE Nachrichten", async () => {
   assert.equal(ergebnis.chats[0].nachrichtenAnzahl, 2);
 });
 
+test("die Chat-Liste holt NEBENLAEUFIG — 88 Chats dauern nicht 88 Rundreisen", async () => {
+  // Live gemessen 2026-08-20: die Startseite wartete 10,9 s auf ihre Chat-Liste,
+  // weil jede Chat-Datei EINZELN geholt wurde. Dieser Test haelt die Heilung
+  // fest, ohne auf echte Uhrzeiten zu bauen: er misst die groesste Zahl
+  // GLEICHZEITIG offener Anfragen. Nacheinander waere sie 1.
+  const viele = Array.from({ length: 88 }, (_, i) => ({
+    id: `chat_${String(i).padStart(3, "0")}`, ownerId: "user_a", title: `T${i}`,
+    updatedAt: `2026-08-19T10:00:00Z`, messages: [{ role: "user", content: "x" }]
+  }));
+  const liste = viele.map((c) => `<Key>chats/user_a/${c.id}.json</Key>`).join("");
+  let offen = 0;
+  let hoechstensGleichzeitig = 0;
+  const fetchImpl = async (url) => {
+    const text = String(url);
+    if (text.includes("list-type")) return antwort(200, `<ListBucketResult>${liste}</ListBucketResult>`);
+    offen += 1;
+    hoechstensGleichzeitig = Math.max(hoechstensGleichzeitig, offen);
+    await new Promise((fertig) => setTimeout(fertig, 1)); // eine Rundreise
+    offen -= 1;
+    const treffer = viele.find((c) => text.includes(`${c.id}.json`));
+    return treffer ? antwort(200, JSON.stringify(treffer)) : antwort(404, "");
+  };
+
+  const ergebnis = await ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl, nurListe: true });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.chats.length, 88, "kein Chat darf beim Nebenlaeufigmachen verloren gehen");
+  assert.ok(hoechstensGleichzeitig > 1, `holte nacheinander (hoechstens ${hoechstensGleichzeitig} gleichzeitig)`);
+  assert.ok(hoechstensGleichzeitig <= 16, `zu viele gleichzeitig (${hoechstensGleichzeitig}) — der Server hat 2 vCPU`);
+});
+
+test("ein unlesbarer Chat kippt die Liste nicht", async () => {
+  // Das leere catch der alten Schleife hatte genau diesen Zweck; mapMitGrenze
+  // liefert stattdessen null. Beides muss dasselbe bedeuten: der Rest kommt an.
+  const fetchImpl = async (url) => {
+    const text = String(url);
+    if (text.includes("list-type")) {
+      return antwort(200, "<ListBucketResult><Key>chats/user_a/chat_a.json</Key><Key>chats/user_a/kaputt.json</Key></ListBucketResult>");
+    }
+    if (text.includes("kaputt.json")) return antwort(200, "{ kein gueltiges JSON");
+    return antwort(200, JSON.stringify(CHAT_A));
+  };
+  const ergebnis = await ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.chats.length, 1, "der lesbare Chat muss ankommen");
+  assert.equal(ergebnis.chats[0].id, "chat_a");
+});
+
 test("OHNE nurListe bleibt der alte Vertrag unveraendert", async () => {
   // Der wichtigere Test: ein alter Client aus dem Browser-Cache ruft weiterhin
   // /api/chats ohne Parameter. Bekaeme er ploetzlich Chats ohne Nachrichten,
