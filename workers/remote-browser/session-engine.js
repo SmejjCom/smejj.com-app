@@ -10,6 +10,7 @@
 import { resolveLocator } from "../maus-engine/selector.mjs";
 import { buildObservation } from "../maus-engine/observer.mjs";
 import { randomBytes } from "node:crypto";
+import { starteBildschirm } from "./bildschirm.mjs";
 import { lookup } from "node:dns/promises";
 
 // Wo Konto-Profile liegen. /tmp, weil der Container ohnehin kein dauerhaftes
@@ -297,12 +298,19 @@ export function createSessionEngine({
       "--disable-features=IsolateOrigins,site-per-process",
       "--window-size=1365,900"
     ];
-    // Standard ist headless, bis der virtuelle Bildschirm sauber IM Worker
-    // aufgebaut wird (2026-08-20: der xvfb-run-Wrapper im CMD verhinderte den
-    // Start des ganzen Dienstes — live 502). SMEJJ_BROWSER_HEADFUL=true
-    // schaltet headful ein, sobald ein X-Server bereitsteht; scheitert es,
-    // faengt der Notausgang unten den Start ab.
-    const kopflos = String(process.env.SMEJJ_BROWSER_HEADFUL || "").toLowerCase() !== "true";
+    // HEADFUL nur, wenn wirklich ein Bildschirm steht.
+    //
+    // Der Bildschirm wird IM laufenden Worker gestartet (bildschirm.mjs), nicht
+    // per Wrapper im CMD — der hat am 2026-08-20 den ganzen Dienst am
+    // Hochkommen gehindert (live 502). Klappt der Start nicht, liefert
+    // starteBildschirm() null und wir bleiben headless: schlechter getarnt,
+    // aber erreichbar. Verfuegbarkeit schlaegt Tarnung.
+    //
+    // Der Schalter erlaubt zusaetzlich, headful OHNE neuen Bau abzuschalten —
+    // eine Umgebungsvariable wirkt beim naechsten Sitzungsaufbau.
+    const headfulGewuenscht = String(process.env.SMEJJ_BROWSER_HEADFUL || "").toLowerCase() === "true";
+    const bildschirm = headfulGewuenscht ? await starteBildschirm().catch(() => null) : null;
+    const kopflos = !bildschirm;
     const pageOptions = buildPageOptions(viewport);
     const verzeichnis = profilVerzeichnis(profil);
     // Mit Konto-Profil: dauerhafter Kontext, die Anmeldung ueberlebt die
@@ -322,19 +330,39 @@ export function createSessionEngine({
         ? playwright.chromium.launchPersistentContext(verzeichnis, { headless: ohneBildschirm, args: startArgs, ...pageOptions })
         : playwright.chromium.launch({ headless: ohneBildschirm, args: startArgs });
     }
+
+    // Der Notausgang deckt den GANZEN Aufbau ab, nicht nur den Start.
+    //
+    // Gemessen 2026-08-21: headful startete sauber und starb erst beim ERSTEN
+    // Seitenaufbau ("Target page, context or browser has been closed"). Ein
+    // Notausgang, der nur launch() umschliesst, greift dann NICHT — und der
+    // Nutzer bekommt 502 statt eines Browsers. Deshalb gilt der Versuch erst
+    // als gelungen, wenn auch eine Seite steht.
+    async function baueAuf(ohneBildschirm) {
+      const b = await starte(ohneBildschirm);
+      try {
+        // launchPersistentContext LIEFERT den Kontext, nicht den Browser: dort
+        // gibt es bereits eine Seite, und newPage() wuerde eine zweite oeffnen.
+        const p = verzeichnis ? (b.pages()[0] || await b.newPage()) : await b.newPage(pageOptions);
+        return { browser: b, page: p };
+      } catch (fehler) {
+        await b.close().catch(() => {});
+        throw fehler;
+      }
+    }
+
+    const sitzungsId = randomId();
     let browser;
+    let erstesBlatt;
     try {
-      browser = await starte(kopflos);
+      ({ browser, page: erstesBlatt } = await baueAuf(kopflos));
     } catch (fehler) {
       if (kopflos) throw fehler;
-      browser = await starte(true);
+      // Headful hat nicht getragen — headless ist immer noch besser als nichts.
+      ({ browser, page: erstesBlatt } = await baueAuf(true));
     }
     try {
-      // launchPersistentContext LIEFERT den Kontext, nicht den Browser: dort
-      // gibt es bereits eine Seite, und newPage() wuerde eine zweite oeffnen.
-      const page = verzeichnis
-        ? (browser.pages()[0] || await browser.newPage())
-        : await browser.newPage(pageOptions);
+      const page = erstesBlatt;
       const networkSafety = new Map();
       if (typeof page.route === "function") {
         await page.route("**/*", async (route) => {
@@ -349,8 +377,26 @@ export function createSessionEngine({
       page.setDefaultTimeout(cfg.actionTimeoutMs);
       await page.goto(parsed.url.toString(), { waitUntil: "domcontentloaded", timeout: cfg.navTimeoutMs });
       await page.waitForLoadState("networkidle", { timeout: cfg.settleTimeoutMs }).catch(() => {});
+      // EIN STERBENDER BROWSER DARF NICHT DEN DIENST MITNEHMEN.
+      //
+      // Gemessen 2026-08-21: stuerzt Chrome ab (headful war der Ausloeser,
+      // der Fall gilt aber immer), meldet Playwright den Fehler asynchron —
+      // weit ausserhalb jedes try/catch. Der Crash-Guard des Workers macht
+      // daraus pflichtgemaess einen Exit 1, und der GANZE Fern-Browser ist
+      // weg, samt aller anderen Sitzungen. Der Container war danach tot.
+      //
+      // Ein abgestuerzter Browser ist ein normaler Betriebsfall, kein
+      // Programmfehler: wir raeumen die betroffene Sitzung auf und lassen den
+      // Dienst laufen. Die naechste Anfrage baut einfach neu auf.
+      browser.on?.("disconnected", () => {
+        const tot = sessions.get(sitzungsId);
+        if (!tot) return;
+        sessions.delete(sitzungsId);
+        clearTimeout(tot.idleTimer);
+      });
+
       const session = {
-        id: randomId(),
+        id: sitzungsId,
         browser,
         page,
         viewport: pageOptions.viewport,
