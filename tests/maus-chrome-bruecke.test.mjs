@@ -271,3 +271,30 @@ test("ohne Freigabe weicht die Maus auf den fernen Browser aus", async () => {
   // stummen Dienst oder http:// waere ein stiller Umweg irrefuehrend.
   assert.match(quelle, /schreibe\(deuteChromeFehler\(auf\?\.error, ziel\)\);\s*\n\s*return true;/);
 });
+
+// --- Die Freigabe darf nicht mit dem Fenster sterben ------------------------
+test("die Freigabe wird im Hintergrund gemerkt, nicht im Fenster", () => {
+  // Gefunden 2026-08-20 beim ersten echten Freigabe-Versuch des Betreibers:
+  // chrome.permissions.request() laesst Chrome seinen Dialog zeigen, dabei
+  // verliert das Popup den Fokus und WIRD GESCHLOSSEN — mitsamt Skript. Die
+  // Zeile danach, die die Freigabe in den Speicher schrieb, lief nie. Chrome
+  // hatte die Berechtigung erteilt, die Bruecke wusste nichts davon. Fuer den
+  // Betreiber sah es aus, als haette sein Klick nichts genuetzt.
+  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const fenster = fs.readFileSync("extensions/smejj-maus-bruecke/freigabe.js", "utf8");
+
+  assert.match(hintergrund, /permissions\.onAdded/, "der Hintergrund muss die Erteilung selbst mitbekommen");
+  assert.match(hintergrund, /permissions\.onRemoved/, "und den Entzug ebenso — sonst bleibt ein zurueckgenommenes Recht stehen");
+  // Das Fenster darf die Freigabe NICHT mehr selbst schreiben.
+  assert.ok(!/liste\[herkunft\]\s*=/.test(fenster), "das Fenster schreibt wieder selbst — genau das stirbt mit ihm");
+  // Und eine Ablehnung muss sichtbar werden statt still zu verschwinden.
+  assert.match(fenster, /Chrome hat die Berechtigung nicht erteilt/);
+});
+
+test("aus einem Berechtigungsmuster wird die richtige Herkunft", () => {
+  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  // "https://www.alibaba.com/*" -> "https://www.alibaba.com"
+  assert.match(hintergrund, /replace\(\/\\\/\\\*\$\/, ""\)/);
+  // Nur https zaehlt: im angemeldeten Chrome waere http ein Klartext-Leck.
+  assert.match(hintergrund, /startsWith\("https:\/\/"\)/);
+});

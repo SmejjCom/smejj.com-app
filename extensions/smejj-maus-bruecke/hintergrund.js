@@ -280,6 +280,43 @@ function baueEmpfang() {
   };
 }
 
+// DIE FREIGABE WIRD HIER GEMERKT, NICHT IM KLEINEN FENSTER.
+//
+// Gefunden 2026-08-20, als der Betreiber zum ersten Mal wirklich freigab und
+// danach trotzdem "herkunft_nicht_freigegeben" kam:
+//
+// chrome.permissions.request() laesst Chrome seinen eigenen Dialog zeigen.
+// Dabei verliert das Fenster der Erweiterung den Fokus und WIRD GESCHLOSSEN —
+// mitsamt seinem Skript. Die Zeile, die danach die Freigabe in den Speicher
+// schreibt, lief nie. Chrome hatte die Berechtigung erteilt, die Bruecke wusste
+// nichts davon. Fuer den Betreiber sah es aus, als haette er geklickt und es
+// haette nichts genuetzt — die schlimmste Sorte Fehler.
+//
+// Der Hintergrund stirbt nicht mit dem Fenster. Er hoert direkt zu, wenn Chrome
+// eine Host-Berechtigung erteilt, und traegt die Freigabe selbst ein. Damit ist
+// es voellig gleichgueltig, ob das Fenster ueberlebt.
+//
+// Andersherum genauso: wird die Berechtigung entzogen, faellt die Freigabe
+// sofort mit. Sonst stuende im Speicher ein Recht, das Chrome laengst
+// zurueckgenommen hat.
+function herkuenfteAus(berechtigungen) {
+  return (berechtigungen?.origins || [])
+    .map((muster) => String(muster).replace(/\/\*$/, ""))
+    .filter((h) => h.startsWith("https://"));
+}
+
+if (typeof chrome !== "undefined" && chrome.permissions?.onAdded) {
+  chrome.permissions.onAdded.addListener(async (berechtigungen) => {
+    for (const herkunft of herkuenfteAus(berechtigungen)) await freigabeErteilen(herkunft);
+  });
+}
+
+if (typeof chrome !== "undefined" && chrome.permissions?.onRemoved) {
+  chrome.permissions.onRemoved.addListener(async (berechtigungen) => {
+    for (const herkunft of herkuenfteAus(berechtigungen)) await freigabeEntziehen(herkunft);
+  });
+}
+
 if (typeof chrome !== "undefined" && chrome.runtime) {
   const empfang = baueEmpfang();
   chrome.runtime.onMessageExternal?.addListener(empfang);

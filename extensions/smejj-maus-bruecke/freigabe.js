@@ -49,11 +49,19 @@ $("erlauben").addEventListener("click", async () => {
   // Die Host-Berechtigung wird ERST HIER erfragt — im direkten Anschluss an
   // den Klick des Betreibers. Chrome zeigt dabei seinen eigenen Dialog; die
   // Erweiterung bekommt nie mehr Rechte, als er dort bestaetigt.
-  const gewaehrt = await chrome.permissions.request({ origins: [`${herkunft}/*`] });
-  if (!gewaehrt) return;
-  const liste = await lies();
-  liste[herkunft] = Date.now() + FREIGABE_DAUER_MS;
-  await schreibe(liste);
+  // Der Eintrag in den Speicher passiert im HINTERGRUND (permissions.onAdded).
+  // Hier darf er NICHT stehen: waehrend Chromes Dialog offen ist, verliert
+  // dieses Fenster den Fokus und wird geschlossen — mitsamt seinem Skript.
+  // Die Zeile danach lief nie. Chrome hatte die Berechtigung erteilt, die
+  // Bruecke wusste nichts davon. Genau daran ist die erste echte Freigabe am
+  // 2026-08-20 gescheitert, und es sah aus wie ein Klick ohne Wirkung.
+  const gewaehrt = await chrome.permissions.request({ origins: [`${herkunft}/*`] }).catch(() => false);
+  // Ein stilles `return` war der zweite Fehler: wer ablehnt oder den Dialog
+  // wegklickt, sah GAR NICHTS und hielt es fuer erledigt.
+  if (!gewaehrt) {
+    $("stand").textContent = "Chrome hat die Berechtigung nicht erteilt.";
+    return;
+  }
   zeichne();
 });
 
@@ -91,9 +99,7 @@ $("zielErlauben")?.addEventListener("click", async () => {
     $("stand").textContent = "Chrome hat die Berechtigung nicht erteilt.";
     return;
   }
-  const liste = await lies();
-  liste[herkunft] = Date.now() + FREIGABE_DAUER_MS;
-  await schreibe(liste);
+  // Auch hier merkt der Hintergrund die Freigabe (permissions.onAdded).
   $("ziel").value = "";
   zeichne();
 });
