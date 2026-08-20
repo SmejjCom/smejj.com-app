@@ -68,6 +68,9 @@ test("Config exposes Browser-Proxy route used by Browser-Pane", () => {
   assert.match(configJs, /browserFetch:\s*"\/api\/browser\/fetch"/);
   assert.match(configJs, /browserRemote:/);
   assert.match(paneJs, /CLIENT_ROUTES\.api\.browserFetch/);
+  // browserRemote lebt seit der Auslagerung in browser-pane-fernwege.js und
+  // bekommt die Routen als `routes` hineingereicht.
+  assert.match(paneJs, /routes:\s*CLIENT_ROUTES/);
   // config.js wird bewusst OHNE Cache-Version importiert (QA-Welle 1, Befund F-07).
   // Der frueher hier erzwungene Spezifizierer "./config.js?v=browser-pane-..." war
   // der einzige abweichende unter 26 Importen und liess config.js ein zweites Mal
@@ -155,9 +158,14 @@ test("Browser-Pane opens as right 50/50 split instead of navigating fullscreen",
 });
 
 test("Browser-Pane: Scrollposition, Verlauf und Zoom werden pro Tab gespeichert", () => {
-  // Scroll-Meldungen aus srcdoc-Frames werden pro Tab uebernommen.
-  assert.match(paneJs, /smejj\.browser\.scrollState/);
-  assert.match(paneJs, /smejj\.browser\.restoreScroll/);
+  // Scroll-Meldungen aus srcdoc-Frames werden pro Tab uebernommen. Der
+  // SENDER sitzt seit 2026-08-19 in browser-stage.js (CSP), der Empfaenger
+  // im Panel bzw. seinem Nachrichten-Modul — beide Seiten pruefen.
+  const stageJs = fs.readFileSync("public/browser-stage.js", "utf8");
+  const nachrichtenJs = fs.readFileSync("public/browser-pane-nachrichten.js", "utf8");
+  assert.match(stageJs, /smejj\.browser\.scrollState/);
+  assert.match(nachrichtenJs, /smejj\.browser\.scrollState/);
+  assert.match(stageJs, /smejj\.browser\.restoreScroll/);
   // Persistenz enthaelt Scroll, Zoom und Verlauf (nicht nur URL/Titel).
   assert.match(paneJs, /scrollRatio:/);
   assert.match(paneJs, /zoom:\s*tab\.zoom/);

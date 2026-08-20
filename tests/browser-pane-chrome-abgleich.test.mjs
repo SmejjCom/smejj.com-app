@@ -3,6 +3,7 @@
 // hatte — damit sie beim naechsten Umbau nicht still wieder verschwindet.
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
   TAB_MAX_BREITE, TAB_MIN_BREITE,
   tabBreite, zeigtTitel, tabMarke, hostVon, umsortiert
@@ -91,7 +92,11 @@ test("Fehlerseite nennt Grund, Adresse und bietet erneutes Laden", () => {
   assert.match(html, /Keine Verbindung/);
   assert.match(html, /beispiel\.de/);
   assert.match(html, /Erneut laden/);
-  assert.match(html, /smejj\.browser\.reload/);
+  // Die reload-Meldung liegt seit 2026-08-19 in browser-stage.js: Inline-
+  // Skripte in srcdoc sterben stumm an der geerbten CSP. Beide Haelften
+  // pruefen — Vorlage laedt die Datei, Datei sendet die Meldung.
+  assert.match(html, /<script src="\/assets\/browser-stage\.js\?v=\d+"><\/script>/);
+  assert.match(fs.readFileSync("public/browser-stage.js", "utf8"), /smejj\.browser\.reload/);
 });
 
 // Der Grund kommt aus einer fremden Antwort — er darf kein Markup einschleusen.
