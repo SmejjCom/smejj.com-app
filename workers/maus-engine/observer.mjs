@@ -6,8 +6,16 @@
 // KEIN Modell. Der Zustand geht als untrusted DATEN an den Planer
 // (Rahmung uebernimmt prompt-template.buildStepPrompt).
 
+import { buildAriaObservation } from "./aria-baum.mjs";
+
 export const OBSERVATION_LIMIT_CHARS = 6000;
 export const OBSERVATION_MAX_ELEMENTS = 60;
+// Eigenes Limit fuer den Bedienbaum. Er kommt ZUSAETZLICH zur Elementliste,
+// darum bekommt er sein eigenes Budget statt der gemeinsamen Kappung: die
+// Elementliste traegt Koordinaten (fuer Klicks), der Baum traegt Rolle und
+// Beschriftung (fuer stabile role-Selektoren). Keines der beiden darf das
+// andere verdraengen.
+export const BEDIENBAUM_LIMIT_CHARS = 6000;
 const ELEMENT_TEXT_LIMIT = 80;
 const MASKED_VALUE = "***";
 
@@ -143,10 +151,16 @@ function capObservation(observation, maxChars) {
 // schickt sehr wohl einen Befehl an die Erweiterung. Eine Minimal-Beobachtung
 // aus URL und Titel nuetzt dem Planer nichts und kostete dort einen Zugriff
 // auf eine Seite, die vielleicht gerade gesperrt wurde.
+// `mitBedienbaum` (2026-08-21, ZCode-Vorbild): holt zusaetzlich Chromiums
+// Accessibility-Baum und legt ihn als `bedienbaum` dazu. Fail-open wie
+// evaluate — der Chrome-Adapter des Betreibers kennt weder das eine noch das
+// andere, und eine Beobachtung ohne Baum ist besser als gar keine.
 export async function buildObservation(page, {
   maxChars = OBSERVATION_LIMIT_CHARS,
   maxElements = OBSERVATION_MAX_ELEMENTS,
-  nurMitElementen = false
+  nurMitElementen = false,
+  mitBedienbaum = false,
+  baumMaxChars = BEDIENBAUM_LIMIT_CHARS
 } = {}) {
   let snapshot = { text: "", elements: [] };
   let konnteLesen = false;
@@ -177,7 +191,18 @@ export async function buildObservation(page, {
     textExcerpt: truncate(snapshot.text.replace(/\s+/g, " ").trim(), 2000),
     truncated: snapshot.elements.length > maxElements
   };
-  return capObservation(observation, maxChars);
+  // Der Baum wird NACH der Kappung angehaengt und selbst nicht mitgekappt:
+  // sonst raesse eine lange Elementliste dem Auge den Boden weg.
+  const gekappt = capObservation(observation, maxChars);
+  if (!mitBedienbaum) return gekappt;
+  try {
+    const aria = await buildAriaObservation(page, { limitChars: baumMaxChars });
+    if (aria?.baum) {
+      gekappt.bedienbaum = aria.baum;
+      if (aria.gekappt) gekappt.bedienbaumGekappt = true;
+    }
+  } catch { /* fail-open: ohne Baum ist die Beobachtung immer noch gueltig */ }
+  return gekappt;
 }
 
 // Kompakte Textdarstellung fuer den Prompt (deterministisch, gleiche

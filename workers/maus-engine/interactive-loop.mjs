@@ -89,7 +89,13 @@ function taskText(task) {
 // ohne Browser): plannerClient(prompt) -> Antworttext; runAction(step, i)
 // fuehrt einen validierten Schritt deterministisch aus (Produktion:
 // Interpreter ctx.runMacroSteps + enforcePageAllowed, siehe loop-runner.mjs).
-export async function observeDecideAct({ task, policyInput, page, plannerClient, runAction, observer = buildObservation, onDecision = null, clock = Date }) {
+// Der Standard-Beobachter holt seit 2026-08-21 den Bedienbaum MIT (ZCode-
+// Vorbild): das Modell soll Rolle und Beschriftung aus Chromiums eigenem
+// Baum lesen, statt Selektoren zu raten. Fail-open — bleibt der Baum aus
+// (Chrome-Adapter kann es nicht), arbeitet der Loop wie bisher weiter.
+const LOOP_OBSERVER = (page) => buildObservation(page, { mitBedienbaum: true });
+
+export async function observeDecideAct({ task, policyInput, page, plannerClient, runAction, observer = LOOP_OBSERVER, onDecision = null, clock = Date }) {
   if (typeof plannerClient !== "function" || typeof runAction !== "function") {
     throw new Error("loop_parameter_fehlen");
   }
