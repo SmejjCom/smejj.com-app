@@ -9,6 +9,7 @@
 // worker.js, damit exakt dieselben Pruefungen gelten wie beim Einmal-Rendern.
 import { resolveLocator } from "../maus-engine/selector.mjs";
 import { buildObservation } from "../maus-engine/observer.mjs";
+import { buildAriaObservation } from "../maus-engine/aria-baum.mjs";
 import { randomBytes } from "node:crypto";
 import { starteBildschirm } from "./bildschirm.mjs";
 import { lookup } from "node:dns/promises";
@@ -136,6 +137,13 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
     // muss sie alles vorab planen und scheitert an jeder Ueberraschung.
     case "observe":
       return { ok: true, action: { type: "observe" } };
+    // HINSEHEN MIT DEM ARIA-BAUM. Dasselbe Ziel wie "observe", aber die
+    // Quelle ist Chromiums eigener Bedienbaum statt einer Selektorliste —
+    // das Vorbild ist ZCodes domSnapshot. Bewusst eine EIGENE Aktion und
+    // kein Umbau von "observe": der alte Weg bleibt unveraendert gueltig,
+    // solange der neue nicht an echten Seiten bewiesen ist.
+    case "ariaObserve":
+      return { ok: true, action: { type: "ariaObserve" } };
     case "find": {
       // Suche in der Seite. Der Text ist Nutzereingabe und wird NICHT als
       // Code ausgefuehrt — er geht als Argument in page.evaluate, nie in
@@ -466,6 +474,13 @@ export function createSessionEngine({
         // eigenen Browser und entscheidet dort anders.
         const beobachtung = await buildObservation(page);
         return { beobachtung };
+      }
+      case "ariaObserve": {
+        // Chromiums Bedienbaum. Er sieht die GANZE Seite, nicht nur was in
+        // eine Selektorliste passt — der Grund, warum "observe" auf
+        // Anmeldeseiten leer ausging (Memory: smejj-fern-browser-blind).
+        const ariaBeobachtung = await buildAriaObservation(page);
+        return { ariaBeobachtung };
       }
       case "find": {
         // Gesucht wird IM echten Browser — hier liegt das Dokument wirklich
