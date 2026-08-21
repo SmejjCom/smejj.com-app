@@ -17,6 +17,10 @@ COPY workers/maus-engine/selector.mjs /app/maus-engine/selector.mjs
 # Der Beobachter ebenso: die Maus muss im Panel DENSELBEN Seitenzustand
 # sehen wie in ihrem eigenen Browser, sonst entscheidet sie dort anders.
 COPY workers/maus-engine/observer.mjs /app/maus-engine/observer.mjs
+# Das ARIA-Auge (ZCode-Vorbild): Chromiums Bedienbaum statt Selektorliste.
+# Fehlt diese Zeile, wirft der Import in session-engine.js und der Worker
+# antwortet auf JEDE Sitzung mit 503 — dieselbe Falle wie bei bildschirm.mjs.
+COPY workers/maus-engine/aria-baum.mjs /app/maus-engine/aria-baum.mjs
 COPY workers/smejj-worker /app/smejj-worker
 # worker.js importiert ../process-crash-guard.mjs — ohne diese Kopie stirbt
 # der Container mit ERR_MODULE_NOT_FOUND (live gemessen 2026-08-13).
