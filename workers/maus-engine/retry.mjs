@@ -16,6 +16,13 @@ export async function withRetries(fn, { retries = 0, delayMs = DEFAULT_RETRY_DEL
       return { ok: true, value: await fn(attempt), attempts: attempt + 1 };
     } catch (error) {
       lastError = error;
+      // Manche Fehler gehen durch Warten NICHT weg (Betreiber-Freigabe
+      // 2026-08-21, ZCode-Regel). Ein mehrdeutiger Selektor bleibt
+      // mehrdeutig — wer ihn dreimal probiert, verbrennt nur Zeit und
+      // Budget und verschleiert, dass der Selektor falsch gebaut war.
+      // Sofort hochgeben heisst: der Planer holt einen frischen Bedienbaum
+      // und faengt den Selektor enger, statt im Dunkeln zu wiederholen.
+      if (error?.nichtWiederholen === true) break;
       if (attempt < attempts - 1) await wait(delayMs);
     }
   }

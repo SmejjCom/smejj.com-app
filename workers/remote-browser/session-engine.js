@@ -7,7 +7,7 @@
 // (Idle-Timeout + Hard-Limit) — keine laufenden Fixkosten.
 // Sicherheits-Helfer (SSRF-Schutz) kommen per Dependency Injection aus
 // worker.js, damit exakt dieselben Pruefungen gelten wie beim Einmal-Rendern.
-import { resolveLocator } from "../maus-engine/selector.mjs";
+import { resolveLocator, resolveEindeutig } from "../maus-engine/selector.mjs";
 import { buildObservation } from "../maus-engine/observer.mjs";
 import { buildAriaObservation } from "../maus-engine/aria-baum.mjs";
 import { randomBytes } from "node:crypto";
@@ -453,7 +453,13 @@ export function createSessionEngine({
         // ihrem eigenen Browser, und das faellt erst live auf.
         const def = { strategy: action.strategy, value: action.value };
         if (action.name !== undefined) def.name = action.name;
-        const locator = resolveLocator(page, def).first();
+        // EINDEUTIG statt .first() (Betreiber-Freigabe 2026-08-21, ZCode-Regel).
+        // Vorher nahm diese Zeile bei mehreren Treffern kommentarlos den
+        // ersten: auf einer Seite mit zwei "Anmelden"-Knoepfen wurde
+        // stillschweigend der falsche geklickt. Lesen (selectorText) darf
+        // weiterhin mehrdeutig sein — es veraendert nichts.
+        const locator = await resolveEindeutig(page, def, { erlaubeMehrere: action.type === "selectorText" })
+          .then((l) => (action.type === "selectorText" ? l.first() : l));
         await locator.waitFor({ state: "visible", timeout: cfg.settleTimeoutMs }).catch(() => {});
         if (action.type === "selectorText") {
           const text = await locator.innerText({ timeout: cfg.settleTimeoutMs }).catch(() => "");
