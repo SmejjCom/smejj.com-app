@@ -115,6 +115,26 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
           ? payload.beobachtung.elements.slice(0, 60).map((e) => saubereBeobachtungsElement(e))
           : []
       }
+      : undefined,
+    // Der ARIA-Bedienbaum (Aktion ariaObserve, ZCode-Vorbild). GEMESSEN
+    // 2026-08-21 am Live-Dienst: die Aktion antwortete ok:true, und das Feld
+    // fiel GENAU HIER still weg — dieselbe Erlaubnisliste, die oben im
+    // Kommentar schon einmal die ganze Beobachtung geleert hat. Ein Feld
+    // bauen und es hier nicht nennen heisst: es kommt nie an.
+    //
+    // Erlaubnisliste bleibt Erlaubnisliste: einzeln genannt, hart gekappt.
+    // Das Zeichenlimit ist dasselbe wie im Worker (BEDIENBAUM_LIMIT_CHARS);
+    // der Baum geht als UNTRUSTED Text in einen Modell-Prompt.
+    ariaBeobachtung: payload.ariaBeobachtung && typeof payload.ariaBeobachtung === "object"
+      ? {
+        url: String(payload.ariaBeobachtung.url || "").slice(0, 2000),
+        titel: String(payload.ariaBeobachtung.titel || "").slice(0, 300),
+        baum: String(payload.ariaBeobachtung.baum || "").slice(0, 6000),
+        knoten: Number.isFinite(Number(payload.ariaBeobachtung.knoten))
+          ? Math.max(0, Math.min(5000, Math.round(Number(payload.ariaBeobachtung.knoten))))
+          : undefined,
+        gekappt: payload.ariaBeobachtung.gekappt === true ? true : undefined
+      }
       : undefined
   };
 }
