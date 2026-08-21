@@ -41,14 +41,23 @@ function isSessionScreenshot(value) {
 export function sanitizeSessionPayload(payload, fallbackUrl = "") {
   if (!payload || payload.ok !== true) return null;
   const sessionId = sanitizeSessionId(payload.sessionId);
-  if (!sessionId || !isSessionScreenshot(payload.screenshot)) return null;
+  // Ein Bild ist Pflicht — mit EINER benannten Ausnahme: steht ein JS-Dialog
+  // offen, kann Chromium keinen Screenshot liefern (es blockiert jede Arbeit
+  // an der Seite). Ruft eine Seite schon beim Laden alert(), gibt es auch
+  // kein frueheres Bild. Ohne diese Ausnahme faellt die GANZE Antwort weg
+  // und der Aufrufer sieht eine tote Seite, statt die offene Frage zu lesen.
+  const dialogOffen = Boolean(payload.dialog && typeof payload.dialog === "object");
+  if (!sessionId) return null;
+  if (!isSessionScreenshot(payload.screenshot) && !dialogOffen) return null;
   const viewport = payload.viewport || {};
   return {
     ok: true,
     remote: true,
     interactive: true,
     sessionId,
-    screenshot: String(payload.screenshot),
+    // Bei offenem Dialog kann das Bild fehlen (siehe oben) — dann ein
+    // leerer String statt "undefined" als Text.
+    screenshot: isSessionScreenshot(payload.screenshot) ? String(payload.screenshot) : "",
     finalUrl: typeof payload.finalUrl === "string" && /^https?:\/\//i.test(payload.finalUrl)
       ? payload.finalUrl.slice(0, 2000)
       : fallbackUrl,
@@ -114,6 +123,23 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
         elements: Array.isArray(payload.beobachtung.elements)
           ? payload.beobachtung.elements.slice(0, 60).map((e) => saubereBeobachtungsElement(e))
           : []
+      }
+      : undefined,
+    // Ein offener JS-Dialog (alert/confirm/prompt). Die Nachricht kommt aus
+    // einer untrusted Seite — gekappt, nie als Anweisung gelesen. Ohne diese
+    // Zeile saehe der Aufrufer eine Seite, die auf nichts mehr reagiert, und
+    // erfuehre nie, dass eine Frage offen steht.
+    dialog: payload.dialog && typeof payload.dialog === "object"
+      ? {
+        art: String(payload.dialog.art || "").slice(0, 40),
+        nachricht: String(payload.dialog.nachricht || "").slice(0, 1000),
+        vorgabe: payload.dialog.vorgabe ? String(payload.dialog.vorgabe).slice(0, 500) : undefined
+      }
+      : undefined,
+    dialogBeantwortet: payload.dialogBeantwortet && typeof payload.dialogBeantwortet === "object"
+      ? {
+        art: String(payload.dialogBeantwortet.art || "").slice(0, 40),
+        wie: payload.dialogBeantwortet.wie === "bestaetigt" ? "bestaetigt" : "abgelehnt"
       }
       : undefined,
     // Der ARIA-Bedienbaum (Aktion ariaObserve, ZCode-Vorbild). GEMESSEN

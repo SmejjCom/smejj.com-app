@@ -144,6 +144,22 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
     // solange der neue nicht an echten Seiten bewiesen ist.
     case "ariaObserve":
       return { ok: true, action: { type: "ariaObserve" } };
+    // JS-DIALOGE beantworten. Zwei Aktionen statt einer mit Schalter: was
+    // eine Seite bestaetigt, ist nicht umkehrbar ("Wirklich loeschen?"),
+    // und dafuer soll im Protokoll ein eigenes Wort stehen.
+    case "dialogAccept": {
+      // Nur ein prompt() nimmt Text entgegen; bei alert/confirm wird er
+      // ignoriert (Playwright tut das ohnehin) — hier nur gekappt.
+      const text = action.text === undefined ? undefined : String(action.text).slice(0, limits.typeMaxChars);
+      if (text !== undefined && /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)) {
+        return { ok: false, error: "type_text_invalid" };
+      }
+      const gebaut = { type: "dialogAccept" };
+      if (text !== undefined) gebaut.text = text;
+      return { ok: true, action: gebaut };
+    }
+    case "dialogDismiss":
+      return { ok: true, action: { type: "dialogDismiss" } };
     case "find": {
       // Suche in der Seite. Der Text ist Nutzereingabe und wird NICHT als
       // Code ausgefuehrt — er geht als Argument in page.evaluate, nie in
@@ -209,14 +225,66 @@ export function createSessionEngine({
     return true;
   }
 
+  /**
+   * JS-Dialoge (alert/confirm/prompt/beforeunload) sichtbar machen.
+   *
+   * OHNE Handler verwirft Playwright jeden Dialog automatisch. Das sieht
+   * harmlos aus, ist es aber nicht: eine Seite fragt "Wirklich loeschen?",
+   * und der Fern-Browser antwortet IMMER "Abbrechen" — ohne dass Nutzer
+   * oder Maus je erfahren, dass gefragt wurde. Wer im Panel sitzt, sieht
+   * eine Seite, die auf seinen Klick scheinbar nicht reagiert.
+   *
+   * Mit Handler bleibt der Dialog offen, bis jemand entscheidet. Genau das
+   * ist gewollt (ZCode macht es mit getJsDialog() ebenso) — aber es hat
+   * eine Folge, die man kennen MUSS: solange ein Dialog offen ist,
+   * blockiert Chromium jede weitere Arbeit an der Seite, screenshot() und
+   * title() eingeschlossen. Deshalb liefert snapshot() dann das zuletzt
+   * gemachte Bild statt zu haengen.
+   */
+  function merkeDialoge(session) {
+    if (typeof session.page?.on !== "function") return;
+    session.page.on("dialog", (dialog) => {
+      session.dialog = {
+        art: String(dialog.type?.() ?? "dialog"),
+        // Der Text kommt aus einer untrusted Seite: gekappt, nie ausgefuehrt.
+        nachricht: String(dialog.message?.() ?? "").slice(0, 1000),
+        vorgabe: String(dialog.defaultValue?.() ?? "").slice(0, 500),
+        griff: dialog
+      };
+    });
+  }
+
+  // Was der Aufrufer ueber einen offenen Dialog erfahren darf (ohne den
+  // Playwright-Griff, der gehoert nur uns).
+  function dialogNachAussen(session) {
+    if (!session.dialog) return undefined;
+    const { art, nachricht, vorgabe } = session.dialog;
+    return { art, nachricht, vorgabe: vorgabe || undefined };
+  }
+
   async function snapshot(session) {
     const page = session.page;
+    // Bei offenem Dialog KEIN Screenshot: der Aufruf kaeme nie zurueck.
+    if (session.dialog) {
+      return {
+        ok: true,
+        sessionId: session.id,
+        screenshot: session.letztesBild || "",
+        finalUrl: page.url(),
+        title: "",
+        viewport: session.viewport,
+        expiresInMs: expiresInMs(session),
+        dialog: dialogNachAussen(session)
+      };
+    }
     const screenshot = await page.screenshot({ type: "jpeg", quality: cfg.jpegQuality });
     const title = await page.title().catch(() => "");
+    const bild = `data:image/jpeg;base64,${screenshot.toString("base64")}`;
+    session.letztesBild = bild;
     return {
       ok: true,
       sessionId: session.id,
-      screenshot: `data:image/jpeg;base64,${screenshot.toString("base64")}`,
+      screenshot: bild,
       finalUrl: page.url(),
       title,
       viewport: session.viewport,
@@ -410,8 +478,12 @@ export function createSessionEngine({
         viewport: pageOptions.viewport,
         createdAt: now(),
         idleTimer: null,
-        busy: false
+        busy: false,
+        // Ein offener JS-Dialog (alert/confirm/prompt). Siehe merkeDialoge().
+        dialog: null,
+        letztesBild: null
       };
+      merkeDialoge(session);
       sessions.set(session.id, session);
       touch(session);
       return await snapshot(session);
@@ -480,6 +552,22 @@ export function createSessionEngine({
         // eigenen Browser und entscheidet dort anders.
         const beobachtung = await buildObservation(page);
         return { beobachtung };
+      }
+      case "dialogAccept":
+      case "dialogDismiss": {
+        const offen = session.dialog;
+        if (!offen) throw new Error("kein_dialog_offen");
+        // ERST vergessen, DANN beantworten: wirft accept()/dismiss(), waere
+        // die Sitzung sonst dauerhaft auf einen Dialog festgenagelt, den es
+        // nicht mehr gibt — und jede weitere Aktion liefe ins Leere.
+        session.dialog = null;
+        if (action.type === "dialogAccept") {
+          await offen.griff.accept(action.text ?? undefined);
+        } else {
+          await offen.griff.dismiss();
+        }
+        await page.waitForTimeout?.(200)?.catch?.(() => {});
+        return { dialogBeantwortet: { art: offen.art, wie: action.type === "dialogAccept" ? "bestaetigt" : "abgelehnt" } };
       }
       case "ariaObserve": {
         // Chromiums Bedienbaum. Er sieht die GANZE Seite, nicht nur was in
@@ -567,6 +655,15 @@ export function createSessionEngine({
     }
     const verdict = validateSessionAction(action, cfg);
     if (!verdict.ok) return fail(400, verdict.error);
+    // Solange ein JS-Dialog offen ist, blockiert Chromium jede Arbeit an der
+    // Seite. Ein Klick liefe dann bis ins Zeitlimit und kaeme als "Netz weg"
+    // zurueck — der wahre Grund ("da steht eine Frage") stuende nirgends.
+    // Also fail-fast mit dem Dialog IM Fehler, damit der Aufrufer weiss,
+    // was zu tun ist. Hinsehen bleibt erlaubt.
+    const DIALOG_ERLAUBT = new Set(["dialogAccept", "dialogDismiss", "observe", "ariaObserve"]);
+    if (session.dialog && !DIALOG_ERLAUBT.has(verdict.action.type)) {
+      return { ...fail(409, "dialog_offen"), dialog: dialogNachAussen(session) };
+    }
     if (session.busy) return fail(409, "session_busy");
     session.busy = true;
     try {
