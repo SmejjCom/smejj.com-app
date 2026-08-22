@@ -92,7 +92,13 @@ Automatisch erzeugt von scripts/verlauf/messlauf-taeglich.sh (Betreiber-Freigabe
 2026-08-04). Gemessen wurde die Live-Kette; ein technisch gescheiterter Lauf
 haette nichts geschrieben." || { echo "ABBRUCH: git commit fehlgeschlagen."; exit 1; }
 
-  git push -q "$APP_REPO_HTTPS" HEAD 2>&1 | tail -3
+  # KEINE Pipe um den Push: `git push ... | tail` liefert den Exit-Code von
+  # `tail`, nie den von git. Genau so ist der Fehlschlag hier monatelang
+  # unbemerkt geblieben (Befund 2026-08-22).
+  if ! APP_PUSH="$(git push -q "$APP_REPO_HTTPS" HEAD 2>&1)"; then
+    echo "$APP_PUSH" | tail -3
+    echo "$(date -u +%FT%TZ) HINWEIS: Der Messwert liegt im App-Repo als Commit, wurde aber NICHT gepusht."
+  fi
 fi
 
 # --- 4. Ins Frontend-Repo und live -----------------------------------------
@@ -108,6 +114,26 @@ if git diff --quiet -- verlauf-messwerte.json; then
 fi
 git add -- verlauf-messwerte.json
 git commit -q -m "deploy(qualitaet): Messlauf $(date -u +%F) — $PUNKTE" || { echo "ABBRUCH: Frontend-Commit fehlgeschlagen."; exit 1; }
-git push -q origin HEAD:main 2>&1 | tail -3
+# DER FEHLER, DER DIE QUALITAETSSEITE EINFROR (Befund 2026-08-22):
+# Hier stand `git push ... 2>&1 | tail -3`, und danach wurde bedingungslos
+# "FERTIG — live in wenigen Minuten" gemeldet. Eine Pipe liefert aber den
+# Exit-Code des LETZTEN Glieds, also den von `tail` — der Push konnte
+# scheitern, wie er wollte.
+# Genau das passierte seit dem 14.08. bei jedem Lauf:
+#   fatal: could not read Username for 'https://github.com': Device not configured
+# cron kann den macOS-Schluesselbund nicht lesen, den der HTTPS-Push braucht.
+# Die Messungen liefen weiter (heute 65,69 % mit 7 kritischen Fehlern), die
+# oeffentliche Seite zeigte unveraendert 97,06 % vom 14.08., und das Protokoll
+# meldete jedes Mal Erfolg. Eine zu gute Zahl, die niemand anzweifelt, ist
+# schlimmer als gar keine.
+if ! FRONTEND_PUSH="$(git push -q origin HEAD:main 2>&1)"; then
+  echo "$FRONTEND_PUSH" | tail -3
+  echo "$(date -u +%FT%TZ) ABBRUCH: $PUNKTE gemessen, aber NICHT veroeffentlicht — die"
+  echo "oeffentliche Qualitaetsseite zeigt weiterhin den alten Stand. Der Commit liegt"
+  echo "im Frontend-Klon bereit; es fehlt ein Anmeldeweg, den cron nutzen kann"
+  echo "(Schluesselbund ist fuer Hintergrunddienste unlesbar — es braucht einen"
+  echo "Deploy-Key ueber SSH)."
+  exit 1
+fi
 
 echo "$(date -u +%FT%TZ) FERTIG: $PUNKTE — live in wenigen Minuten."
