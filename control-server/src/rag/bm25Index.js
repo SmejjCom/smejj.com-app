@@ -109,15 +109,61 @@ export function searchIndex(index, query, k = 5) {
     });
 }
 
-// Kurzer Ausschnitt rund um den ersten Treffer-Term (max ~280 Zeichen).
+const SNIPPET_LEN = 280;
+const SNIPPET_VORLAUF = 80;
+const MAX_FUNDSTELLEN_JE_BEGRIFF = 8;
+
+// Ausschnitt rund um die DICHTESTE Stelle (max ~280 Zeichen).
+//
+// Bis 2026-08-22 nahm diese Funktion den ERSTEN Begriff der Frage, der
+// irgendwo vorkam, und schnitt 280 Zeichen um ihn herum heraus. Bei kurzen
+// Abschnitten faellt das nicht auf. Bei langen schon:
+//
+// Gemessen an "Auf welchen Servern laeuft smejj.com?" — MASTER_PROMPT.md stand
+// voellig richtig auf Platz 1 (Punktzahl 38,8, die Anreicherung aus
+// infrastrukturFrage.js wirkte). Der Abschnitt ist 2468 Zeichen lang und
+// enthaelt die vollstaendige Dienste-Uebersicht MIT "IDrive". Der Schnipsel traf
+// aber die Passage "Domain und DNS: Spaceship" ganz vorne — 280 von 2468
+// Zeichen, und ausgerechnet die ohne den Hauptspeicher. Im Prompt landeten
+// "GitHub Pages" und "Salad", "IDrive" fehlte. Der Waechter
+// tests/rag-infrastruktur.test.mjs meldete das seit Tagen als fehlendes Wissen
+// — dabei war das Wissen da und nur der Ausschnitt falsch gewaehlt.
+//
+// Jetzt gewinnt das Fenster, das die MEISTEN VERSCHIEDENEN Fragebegriffe deckt.
+// Bei Gleichstand das fruehere: gleich gute Fenster sollen nicht zufaellig
+// wandern, sonst aendert sich der Prompt ohne Grund.
 function buildSnippet(text, terms) {
   const folded = foldGerman(text.toLowerCase());
-  let position = -1;
+
+  const fundstellen = [];
   for (const term of terms) {
-    position = folded.indexOf(term);
-    if (position >= 0) break;
+    let von = folded.indexOf(term);
+    let gezaehlt = 0;
+    while (von >= 0 && gezaehlt < MAX_FUNDSTELLEN_JE_BEGRIFF) {
+      fundstellen.push({ pos: von, term });
+      von = folded.indexOf(term, von + Math.max(1, term.length));
+      gezaehlt += 1;
+    }
   }
-  const start = Math.max(0, position < 0 ? 0 : position - 80);
-  const raw = text.slice(start, start + 280).trim();
-  return `${start > 0 ? "…" : ""}${raw}${start + 280 < text.length ? "…" : ""}`;
+
+  let start = 0;
+  if (fundstellen.length > 0) {
+    let bestDeckung = -1;
+    let bestStart = 0;
+    // Kandidaten in Textreihenfolge, damit der Gleichstand das fruehere Fenster nimmt.
+    for (const kandidat of [...fundstellen].sort((a, b) => a.pos - b.pos)) {
+      const von = Math.max(0, kandidat.pos - SNIPPET_VORLAUF);
+      const bis = von + SNIPPET_LEN;
+      const begriffe = new Set();
+      for (const f of fundstellen) if (f.pos >= von && f.pos < bis) begriffe.add(f.term);
+      if (begriffe.size > bestDeckung) {
+        bestDeckung = begriffe.size;
+        bestStart = von;
+      }
+    }
+    start = bestStart;
+  }
+
+  const raw = text.slice(start, start + SNIPPET_LEN).trim();
+  return `${start > 0 ? "…" : ""}${raw}${start + SNIPPET_LEN < text.length ? "…" : ""}`;
 }

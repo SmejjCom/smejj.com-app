@@ -396,3 +396,47 @@ test("rag wrapper counts calls with and without context", async () => {
   assert.equal(stats.aufrufeOhneKontext, 1);
   assert.equal(stats.zeichenGesamt, 5);
 });
+
+// --- Der Schnipsel traf die falsche Stelle im richtigen Abschnitt --------------
+//
+// Befund 2026-08-22 an "Auf welchen Servern laeuft smejj.com?": MASTER_PROMPT.md
+// stand voellig richtig auf Platz 1 (Punktzahl 38,8), der Abschnitt ist 2468
+// Zeichen lang und traegt die vollstaendige Dienste-Uebersicht MIT "IDrive".
+// Der Schnipsel schnitt aber 280 Zeichen um den ERSTEN vorkommenden Fragebegriff
+// heraus — das war "Domain und DNS: Spaceship" ganz vorne. Im Prompt landeten
+// "GitHub Pages" und "Salad", "IDrive" fehlte, und der Waechter meldete tagelang
+// eine Wissensluecke, die keine war.
+//
+// Waechter-TUEV: gesunde Probe (dichteste Stelle gewinnt) und kaputte Probe
+// (ein einzelner frueher Treffer darf das Fenster NICHT mehr an sich reissen).
+
+test("der Schnipsel nimmt die dichteste Stelle, nicht die erste", () => {
+  // "server" steht ganz vorne allein; weiter hinten stehen drei Fragebegriffe
+  // dicht beieinander. Frueher gewann die erste Stelle und der Rest fiel weg.
+  const vorne = "Server allgemein. " + "Fuelltext ohne Bezug. ".repeat(30);
+  const hinten = "Hosting laeuft ueber GitHub Pages, Speicher ueber IDrive e2, Rechenarbeit ueber Zeabur.";
+  const index = buildIndex([{ id: "m", source: "m.md", text: vorne + hinten + " Nachspann." }]);
+  const [treffer] = searchIndex(index, "server hosting speicher rechenarbeit idrive zeabur", 1);
+  assert.ok(treffer, "der Abschnitt muss ueberhaupt gefunden werden");
+  assert.match(treffer.snippet, /IDrive/, "der Hauptspeicher gehoert in den Schnipsel");
+  assert.match(treffer.snippet, /Zeabur/);
+  assert.match(treffer.snippet, /GitHub Pages/);
+});
+
+test("ein einzelner frueher Treffer reisst das Fenster nicht mehr an sich", () => {
+  // Kaputte Probe: genau der alte Fehler, isoliert. Ohne die Dichte-Wahl
+  // stuende hier der Vorspann und nichts sonst.
+  const text = "Domain und DNS: Spaceship. " + "x ".repeat(400) + "Speicher: IDrive e2 ist der Hauptspeicher.";
+  const index = buildIndex([{ id: "m", source: "m.md", text }]);
+  const [treffer] = searchIndex(index, "domain speicher idrive hauptspeicher", 1);
+  assert.match(treffer.snippet, /IDrive/, "die dichtere Stelle hinten muss gewinnen");
+  assert.ok(treffer.snippet.startsWith("…"), "ein Ausschnitt aus der Mitte wird als solcher markiert");
+});
+
+test("ohne jeden Treffer bleibt es beim Anfang des Abschnitts", () => {
+  // Fail-safe: die Suche liefert hier nichts, aber buildSnippet darf nie leer
+  // ausgehen, wenn es doch einmal ohne Termtreffer aufgerufen wird.
+  const index = buildIndex([{ id: "m", source: "m.md", text: "Erster Satz. Zweiter Satz." }]);
+  const [treffer] = searchIndex(index, "erster", 1);
+  assert.ok(treffer.snippet.startsWith("Erster Satz"));
+});
