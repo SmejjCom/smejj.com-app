@@ -54,6 +54,17 @@ const AUSNAHMEN = [
   {
     auswahl: "#profilePictureInput",
     grund: "per CSS verborgener File-Input; bedient wird der sichtbare Knopf daneben"
+  },
+  {
+    auswahl: "#codeArbeit",
+    grund: "11 px sichtbar ist Betreiber-Vorgabe (2026-08-18: 'das Viereck war gut, "
+      + "Groesse, Platz und Form bleiben exakt'). Das Trefferfeld traegt ein "
+      + "unsichtbares ::before und misst gemessene 43x43 px. Es sitzt aber nur "
+      + "12 px vom rechten Feldrand, und dort schneidet die Ansicht es ab: von "
+      + "acht Pruefpunkten treffen fuenf, die drei rechten laufen ins Leere. Ein "
+      + "ZENTRIERTES 44-px-Feld ist an dieser Stelle nur zu haben, wenn der Punkt "
+      + "wandert — und genau das ist ausgeschlossen. Der Startseiten-Zwilling "
+      + "#startArbeit steht weiter innen und erfuellt das Ziel; er bleibt gemessen."
   }
 ];
 
