@@ -106,8 +106,26 @@ if [ ! -d "$FRONTEND/.git" ]; then
   echo "$(date -u +%FT%TZ) HINWEIS: Frontend-Repo nicht gefunden — im App-Repo veroeffentlicht, aber nicht live."
   exit 0
 fi
-cp "$DATEI" "$FRONTEND/verlauf-messwerte.json" || { echo "ABBRUCH: Kopieren fehlgeschlagen."; exit 1; }
 cd "$FRONTEND" || exit 1
+
+# ERST auffrischen, DANN schreiben. Der Klon wird von mehreren Sitzungen
+# bespielt; wer auf einem alten Stand committet, bekommt beim Push
+#   ! [remote rejected] HEAD -> main (cannot lock ref 'refs/heads/main':
+#     is at <fremd> but expected <alt>)
+# Genau das trat am 2026-08-22 beim Nachmessen auf — ein ZWEITER Grund fuer
+# denselben stillen Ausfall, neben dem fehlenden Anmeldeweg. Ohne Auffrischen
+# wuerde der Lauf ab jetzt zwar ehrlich abbrechen, aber jedes Mal aus einem
+# Grund, den man selbst verursacht hat.
+if ! FRONTEND_HOLEN="$(git fetch -q origin main 2>&1)"; then
+  echo "$FRONTEND_HOLEN" | tail -3
+  echo "$(date -u +%FT%TZ) ABBRUCH: Frontend-Repo nicht erreichbar — nichts veroeffentlicht."
+  exit 1
+fi
+# --hard ist hier gefahrlos: in diesem Klon liegt NUR die Messwert-Datei, und
+# die wird gleich neu geschrieben. Eigene Arbeit gibt es hier nicht.
+git reset -q --hard origin/main || { echo "ABBRUCH: Frontend-Klon liess sich nicht angleichen."; exit 1; }
+
+cp "$DATEI" "$FRONTEND/verlauf-messwerte.json" || { echo "ABBRUCH: Kopieren fehlgeschlagen."; exit 1; }
 if git diff --quiet -- verlauf-messwerte.json; then
   echo "$(date -u +%FT%TZ) Frontend war bereits auf diesem Stand."
   exit 0
