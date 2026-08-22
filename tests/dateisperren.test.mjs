@@ -14,6 +14,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -29,7 +30,10 @@ const ALLE_SPERREN = [
   "scripts/check-security-lock.mjs",
   "scripts/check-deploy-lock.mjs",
   "scripts/check-admin-lock.mjs",
-  "scripts/check-abo-lock.mjs"
+  "scripts/check-abo-lock.mjs",
+  // Der Auslieferungs-Waechter (2026-08-22): alle Sperren oben bewachen nur
+  // public/, die App laedt aber aus /assets/. Er prueft die Gleichheit.
+  "scripts/check-auslieferung-lock.mjs"
 ];
 
 // Die Startseiten-Liste wird NICHT aus dem Skript importiert: check-start-lock.mjs
@@ -84,6 +88,43 @@ test("die Deploy-Sperre schlaegt bei einer geaenderten Spiegel-Datei an", () => 
   }
   const { code } = sperreAufrufen("scripts/check-deploy-lock.mjs");
   assert.equal(code, 0, "nach dem Zuruecksetzen muss die Sperre wieder erfuellt sein");
+});
+
+test("der Auslieferungs-Waechter schlaegt an, wo die anderen Sperren blind sind", () => {
+  // Die eigentliche Zusicherung, und zugleich der Beweis fuer die Luecke:
+  // eine verstellte AUSLIEFERUNG bei unberuehrter Quelle. Der Start-Lock
+  // meldet dabei weiter OK — er sieht die Kopie gar nicht.
+  const opfer = "public/assets/eckig.css";
+  const original = fs.readFileSync(opfer);
+  try {
+    fs.appendFileSync(opfer, "\n/* Probe der Auslieferungs-Sperre */\n");
+    const { code, ausgabe } = sperreAufrufen("scripts/check-auslieferung-lock.mjs");
+    assert.equal(code, 1, "eine verstellte Auslieferung MUSS fehlschlagen");
+    assert.match(ausgabe, /VERLETZT \(1\)/);
+    assert.match(ausgabe, /public\/assets\/eckig\.css/);
+    assert.match(ausgabe, /build:assets/, "die Heilung muss dabeistehen");
+    // Der Nachweis der Luecke: die Quelle ist unberuehrt, also schweigt
+    // der Start-Lock.
+    assert.equal(sperreAufrufen("scripts/check-start-lock.mjs").code, 0,
+      "der Start-Lock sieht die Auslieferung nicht — genau darum gibt es diesen Waechter");
+  } finally {
+    fs.writeFileSync(opfer, original);
+  }
+  assert.equal(sperreAufrufen("scripts/check-auslieferung-lock.mjs").code, 0,
+    "nach dem Zuruecksetzen muss der Waechter wieder gruen sein");
+});
+
+test("Auslieferung und Sync teilen EINE Ausnahmeliste", async () => {
+  // Zwei getrennte Listen wuerden auseinanderlaufen: der Waechter wuerde dann
+  // "npm run build:assets" empfehlen fuer Dateien, die der Sync gar nicht
+  // anfasst. Beim ersten Lauf ist genau das passiert (chat-bridge.js).
+  const waechter = await import("../scripts/check-auslieferung-lock.mjs");
+  const sync = await import("../scripts/build/sync-assets.mjs");
+  const quelle = fs.readFileSync("scripts/check-auslieferung-lock.mjs", "utf8");
+  assert.match(quelle, /import \{ AUSNAHMEN \} from "\.\/build\/sync-assets\.mjs"/,
+    "der Waechter muss die Ausnahmen des Sync importieren, nicht nachbauen");
+  assert.ok(Object.keys(sync.AUSNAHMEN).length > 0);
+  assert.ok(typeof waechter.pruefe === "function");
 });
 
 test("die vier Sperren teilen sich keine Datei — sonst gaebe es zwei Wahrheiten", () => {
@@ -219,6 +260,21 @@ test("check-start-lock.mjs bleibt digest-gepinnt — die Doppelung ist Absicht",
   const gepinnt = suite.execution.protectedAssets.map((a) => a.path);
   assert.ok(gepinnt.includes("scripts/check-start-lock.mjs"),
     "der Start-Lock muss digest-gepinnt bleiben");
+
+  // Und der Digest muss auch STIMMEN. Bis zum 2026-08-22 prueft dieser Test
+  // nur, DASS ein Eintrag existiert — nicht, ob die Datei noch dazu passt.
+  // Am selben Tag wurde check-start-lock.mjs erweitert und der Pin dabei
+  // gebrochen; die ganze Suite blieb gruen und meldete weiter
+  // "bleibt digest-gepinnt". Ein Pin, dessen Bruch niemand bemerkt, ist
+  // Dekoration. Gleiche Familie wie der Fokusring-Test in
+  // konto-formulare.test.mjs: die Zusicherung stand im Namen, gerechnet
+  // hat sie niemand.
+  const eintrag = suite.execution.protectedAssets.find((a) => a.path === "scripts/check-start-lock.mjs");
+  if (eintrag?.sha256) {
+    const ist = createHash("sha256").update(fs.readFileSync("scripts/check-start-lock.mjs")).digest("hex");
+    assert.equal(ist, eintrag.sha256,
+      "check-start-lock.mjs weicht vom gepinnten Digest ab — die Datei ist immutable (overwriteAllowed: false); Aenderungen gehoeren DANEBEN, nicht hinein");
+  }
   assert.equal(suite.immutable, true);
   assert.equal(suite.protection.overwriteAllowed, false);
   // Die neue Mechanik darf NICHT im Start-Lock landen, solange der Pin gilt.
