@@ -39,6 +39,19 @@ test("die Erfolgsmeldung steht NACH der Pruefung, nicht davor", () => {
     "\"FERTIG\" darf erst kommen, wenn der Push nachweislich durch ist");
 });
 
+test("der Frontend-Klon wird vor dem Schreiben aufgefrischt", () => {
+  // Zweiter Grund fuer denselben stillen Ausfall, am 2026-08-22 beim Nachmessen
+  // aufgetreten: mehrere Sitzungen pushen in dasselbe Repo, und der Mess-Klon
+  // stand auf einem alten Stand —
+  //   ! [remote rejected] ... cannot lock ref 'refs/heads/main'
+  // Ein Lauf, der ehrlich abbricht, aber aus selbstverschuldetem Grund, ist
+  // kaum besser als einer, der schweigt.
+  const iFetch = skript.indexOf("git fetch -q origin main");
+  const iKopie = skript.indexOf('cp "$DATEI" "$FRONTEND/verlauf-messwerte.json"');
+  assert.ok(iFetch > 0, "der Frontend-Klon wird nicht aufgefrischt");
+  assert.ok(iKopie > iFetch, "aufgefrischt werden muss VOR dem Schreiben der Datei");
+});
+
 test("der Abbruch nennt die Ursache, nicht nur das Scheitern", () => {
   // Ein Abbruch ohne Grund erzeugt nur Ratlosigkeit im Protokoll.
   const nachPush = skript.slice(skript.indexOf("FRONTEND_PUSH="), skript.indexOf("FERTIG:"));
