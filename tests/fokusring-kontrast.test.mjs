@@ -99,3 +99,43 @@ test("kein Fokusring haengt an einer fast durchsichtigen weissen Linie", () => {
   assert.match(v11, /\.view\.premium-view input:focus[\s\S]{0,200}var\(--v11-fokus\)/,
     "die Eingabefelder muessen den geprueften Fokuston nehmen");
 });
+
+// ---------------------------------------------------------------------------
+// Das Browser-Panel: geprueft, in Ordnung — und gegen den Tag abgesichert,
+// an dem sich das aendert.
+//
+// Gemessen am 2026-08-22: die vier Fokusringe in browser-pane-chrome.css
+// (rgba(159,231,212,.8/.9)) liegen auf dem Panelgrund #090a0c und erreichen
+// 11.38 bzw. 9.15 — muehelos ueber der Schwelle. Sie sind KEIN Problem,
+// weil das Panel zur Shell gehoert und keine helle Fassung hat.
+//
+// Genau daraus entsteht aber die Falle. In app-surfaces.css steht der
+// Beleg, dass sie schon einmal zugeschnappt ist: .glass-icon und
+// .split-icon gehoeren ebenfalls zur Shell, "erben deren Farbschema nicht"
+// und blieben im hellen Schema "hell auf hell (Kontrast 1.03:1, praktisch
+// unsichtbar)". Wer dem Panel eines Tages ein helles Schema gibt, holt
+// sich denselben Fehler zurueck: auf hellem Grund faellt der Ring auf 1.39.
+const PANEL_RING = "#9fe7d4"; // rgba(159, 231, 212, …)
+
+test("die Panel-Fokusringe tragen auf dem dunklen Panelgrund", () => {
+  assert.ok(kontrast(PANEL_RING, "#090a0c") >= SCHWELLE,
+    "auf dem Panelgrund muessen die Ringe tragen");
+});
+
+test("bekommt das Panel je ein helles Schema, muessen die Ringe mitziehen", () => {
+  // Der Waechter schlaegt an, SOBALD jemand browser-pane-chrome.css eine
+  // light-Regel gibt, ohne die Ringe anzupassen. Solange es keine gibt,
+  // ist nichts zu tun — und der Test sagt genau das.
+  const css = fs.readFileSync("public/browser-pane-chrome.css", "utf8");
+  const hatHellesSchema = /\[data-settings-theme="light"\]|prefers-color-scheme:\s*light/.test(css);
+  if (!hatHellesSchema) {
+    assert.ok(kontrast(PANEL_RING, "#fdfdfb") < SCHWELLE,
+      "Sicherung: der Ring faellt auf Hell durch — genau darum darf das Panel kein helles Schema haben, ohne die Ringe mitzuziehen");
+    return;
+  }
+  assert.fail(
+    "browser-pane-chrome.css hat jetzt ein helles Schema. Die vier Fokusringe " +
+    "stehen auf rgba(159,231,212,…) und erreichen auf hellem Grund nur 1.39 " +
+    "(gefordert 3.0) — sie brauchen eine Variable je Schema, wie --v11-fokus.");
+});
+
