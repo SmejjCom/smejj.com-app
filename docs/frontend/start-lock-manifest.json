@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-20T15:02:00.796Z",
-  "confirmation": "Eine Datei als Beweis: schriftliche Freigabe fuer EINEN Eintrag in index.html — code-flaeche.js laedt erst beim Oeffnen des Code-Bereichs (Betreiber, 2026-08-20). Betroffen: public/index.html (Skript-Tag durch code-nachladen.js ersetzt) und public/sw.js (Vorrat + CACHE_NAME v636).",
+  "frozenAt": "2026-08-22T03:59:28.229Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-21 auf die Frage 'Das Dialogfenster braucht deine Freigabe — die Datei steht unter dem Start-Lock (100%-Schutz). Gibst du sie frei?': Antwort 'Ja, freigeben'. Umfang: JS-Dialogfenster (alert/confirm/prompt) im Live-Browser-Rahmen von public/browser-pane-render.js — Markup, Stil, Cache-Marke v=5. Kein Eingriff in die Startseite selbst.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "43ee2090aa223d12459c1f7624c307245a2272220425a404d317a6cafc6326b1",
@@ -10,7 +10,7 @@
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
-    "public/app-surfaces.css": "88fa3192b55f0e5372d711fb04d3709e52c2609e6cd4b8f6759ce1f16cba406f",
+    "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
     "public/app.js": "eb268604bc762fb4850ca42f5b584f0a6bf99c5022ad3f92821d25b9b2ae305e",
@@ -25,7 +25,7 @@
     "public/composer-plus-menu.js": "7b0fe7ebb9dae557789899fbb6e98cc3c5a6f8b8687c9abe29a80140e2d0206b",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "e6d7e7436dddbedcfb5d142bc6637ccfa35ce42a95ddd951f91c164a819a250a",
-    "public/browser-pane-render.js": "682282f1f58032255e2e9c0c5f8522ac6e6b76c514dd6090708b7a9c5df56f38",
+    "public/browser-pane-render.js": "fcf48d6c9f40f06a96ecd58b616aba8b41a9cc929ac258c458c1b7f86ba5d4ac",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
     "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
