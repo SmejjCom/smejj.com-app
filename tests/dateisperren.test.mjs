@@ -53,6 +53,21 @@ function sperreAufrufen(skript, args = []) {
   }
 }
 
+test("jede Sperre laeuft auch in check:all — sonst schuetzt sie nur auf Zuruf", () => {
+  // Befund 2026-08-22: der abo-lock hatte keinen npm-Alias und stand nicht in
+  // check:all. Er lief einzig ueber diese Testdatei — und war ueber Tage
+  // verletzt, ohne dass die Pflichtpruefung das je gemeldet haette. Eine
+  // Sperre, die nur auf Zuruf laeuft, ist die "Schutz gebaut, nicht
+  // angeschlossen"-Familie.
+  const paket = JSON.parse(fs.readFileSync("package.json", "utf8"));
+  for (const skript of ALLE_SPERREN) {
+    const alias = Object.entries(paket.scripts).find(([, befehl]) => befehl.includes(skript));
+    assert.ok(alias, `${skript} braucht einen npm-Alias`);
+    assert.ok(paket.scripts["check:all"].includes(`npm run ${alias[0]}`),
+      `${alias[0]} muss in check:all haengen, sonst laeuft die Sperre nie von selbst`);
+  }
+});
+
 test("alle Sperren melden sich ueberhaupt — kein stiller Exitcode 0", () => {
   // Der Fehler beim Bau: kein Wort Ausgabe, Exitcode 0, Schutz nur auf dem
   // Papier. Eine leere Ausgabe ist deshalb selbst ein Fehler.
