@@ -22,6 +22,30 @@ import { API_ORIGIN } from "./config.js";
 export const MODELL_KEY = "smejj.model.selected.v2";
 export const CLINE_MODEL_KEY = "smejj.cline.model.v1";
 const TOKEN_KEY = "smejj.apiToken.v1";
+
+// Wohin mit einem Menue, das links aus seiner Spalte laeuft? Reine Rechnung,
+// ohne DOM — damit sie sich pruefen laesst (siehe tests/code-modell-menue.test.mjs).
+//
+// Das Menue haengt rechtsbuendig am Modellknopf (`right` relativ zur schmalen
+// .model-picker-Huelle) und waechst nach links. Drei Stufen, in dieser Folge:
+//   1. nach rechts schieben, so weit `right` es hergibt (nicht unter 0),
+//   2. reicht das nicht: Breite deckeln, aber nie unter `mindestBreite` —
+//      darunter ist ein Modellname nicht mehr lesbar,
+//   3. reicht das immer noch nicht: ueber den Knopfrand hinausschieben
+//      (negatives `right`, hier ausdruecklich gewollt).
+//
+// Input: Kanten des Menues und die linke Grenze, alles in Fenster-Pixeln.
+// Output: null = passt schon, sonst { right, maxWidth } (maxWidth null = frei).
+export function klemmeInSpalte({ links, rechts, grenze, rechtsJetzt, mindestBreite = 120 }) {
+  if (links >= grenze) return null;
+  const rechtsNeu = Math.max(0, rechtsJetzt - (grenze - links));
+  const verschoben = rechtsJetzt - rechtsNeu;
+  if (links + verschoben >= grenze) return { right: Math.round(rechtsNeu), maxWidth: null };
+  const rechteKante = rechts + verschoben;
+  const breite = Math.max(mindestBreite, Math.round(rechteKante - grenze));
+  const fehlt = Math.max(0, Math.round(grenze - (rechteKante - breite)));
+  return { right: Math.round(rechtsNeu - fehlt), maxWidth: breite };
+}
 // Betreiber 2026-08-17: NUR kurze Modellnamen, keine zweite Zeile, keine
 // Gruppen — uebersichtlich wie seine Beispiel-Liste. Gezeigt wird ein
 // Eintrag nur, wenn seine ID wirklich im Cline-Katalog steht (ehrlich);
@@ -229,7 +253,44 @@ export async function oeffneModellMenue(kontext = {}) {
       }
     } catch { /* still */ }
   };
+
+  // Nie nach LINKS aus der eigenen Spalte laufen. Das Menue haengt rechtsbuendig
+  // am Modellknopf und waechst nach links; seine Breite ist der Inhalt
+  // (width: max-content). In einer schmalen Mitte — offenes Browser-Fenster,
+  // Handy — schob es sich damit unter die Seitenleiste.
+  //
+  // Live gemessen 2026-08-22 bei 962 px Fensterbreite mit offenem Browser-Panel:
+  // das Menue begann bei x=134, die Seitenleiste reichte bis x=195. Die ersten
+  // 61 Pixel JEDER Zeile lagen dahinter — auf dem Bildschirm stand "eek V4 Pro"
+  // statt "Deepseek V4 Pro" und "ax M3" statt "Minimax M3".
+  //
+  // Erst schieben; ist die Spalte schmaler als das Menue, die Breite deckeln
+  // statt Text zu verstecken. Laeuft wie imFensterHalten nach JEDEM Fuellen,
+  // weil die Zeilen asynchron aus dem Katalog nachkommen und das Menue dabei
+  // nach oben UND nach links waechst.
+  const inDerSpalteHalten = () => {
+    try {
+      // Grenze ist der linke Rand der MITTE, nicht des Modellknopfes: `feld`
+      // ist nur die schmale .model-picker-Huelle (live 88 px) — daran gemessen
+      // wuerde das Menue nach rechts geschoben und unbrauchbar schmal.
+      // <main> beginnt immer rechts der Seitenleiste (live 196 px), plus 8 px
+      // Luft. Ohne <main> (Code-Flaeche) bleibt der Fensterrand die Grenze.
+      let mitte = 0;
+      try { mitte = Math.round(document.querySelector("main")?.getBoundingClientRect().left || 0); } catch { mitte = 0; }
+      const kasten = menue.getBoundingClientRect();
+      const plan = klemmeInSpalte({
+        links: kasten.left,
+        rechts: kasten.right,
+        grenze: Math.max(8, mitte + 8),
+        rechtsJetzt: parseFloat(menue.style.right || "0") || 0
+      });
+      if (!plan) return;
+      menue.style.right = `${plan.right}px`;
+      if (plan.maxWidth !== null) menue.style.maxWidth = `${plan.maxWidth}px`;
+    } catch { /* Standardposition bleibt */ }
+  };
   imFensterHalten();
+  inDerSpalteHalten();
   // Cline-Katalog LIVE nachladen — erst Status (Key da?), dann Modelle.
   // Fail-safe: ohne Token/Key eine ehrliche Hinweis-Zeile statt Attrappe.
   try {
@@ -260,6 +321,7 @@ export async function oeffneModellMenue(kontext = {}) {
         aktion: () => { zu(); }
       });
       imFensterHalten();
+      inDerSpalteHalten();
       // Automatisch nachladen, sobald die Bremse wieder auf ist.
       setTimeout(() => {
         if (!document.getElementById(menueId)) return;
@@ -275,6 +337,7 @@ export async function oeffneModellMenue(kontext = {}) {
         aktion: () => { zu(); document.querySelector('.nav-button[data-view="settings"]')?.click(); }
       });
       imFensterHalten();
+      inDerSpalteHalten();
       return;
     }
     // Betreiber-Nachtrag: ALLE Katalog-Modelle, aber im selben Stil —
@@ -351,6 +414,7 @@ export async function oeffneModellMenue(kontext = {}) {
       baueZeile(kurz, m.id);
     }
     imFensterHalten();
+    inDerSpalteHalten();
   } catch { /* fail-safe: Menue zeigt dann nur das Hausmodell */ }
 }
 

@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { buildExternalFallbackHtml, clampZoom, normalizeAddress, normalizeAgentBrowserUrl, shouldOpenInRealBrowser, shouldPreferRealBrowserUrl } from "../public/browser-pane.js";
+import { buildExternalFallbackHtml, paneBreiteAus, clampZoom, normalizeAddress, normalizeAgentBrowserUrl, shouldOpenInRealBrowser, shouldPreferRealBrowserUrl } from "../public/browser-pane.js";
 import {
   extractTitle,
   handleBrowserFetch,
@@ -151,10 +151,12 @@ test("Browser-Pane header aligns active tab row with URL row", () => {
   assert.match(css, /\.bp-tabs\s*\{[\s\S]*min-width:\s*0;/);
 });
 
-test("Browser-Pane opens as right 50/50 split instead of navigating fullscreen", () => {
-  assert.match(paneJs, /const PANE_WIDTH = "50vw";/);
+test("Browser-Pane oeffnet rechts daneben statt bildschirmfuellend", () => {
+  // Bis 2026-08-22 stand hier ein festes "50vw". Es liess dem Chat bei 962 px
+  // Fensterbreite nur 285 px — die Breite wird jetzt gerechnet (paneBreiteAus).
+  assert.match(paneJs, /export function paneBreiteAus/);
   assert.match(paneJs, /document\.body\.classList\.add\("right-panel-open", "browser-pane-open"\)/);
-  assert.match(paneJs, /document\.body\.style\.setProperty\("--right-panel-width", PANE_WIDTH\)/);
+  assert.match(paneJs, /document\.body\.style\.setProperty\("--right-panel-width", paneBreite\(\)\)/);
   assert.match(paneJs, /event\.stopImmediatePropagation\(\)/);
   assert.doesNotMatch(paneJs, /goToView\("websites"/);
 });
@@ -352,4 +354,54 @@ test("handleBrowserFetch: fremde Origin -> 403", async () => {
   const url = new URL("https://smejj.com/api/browser/fetch?url=https%3A%2F%2Fexample.com%2F");
   await handleBrowserFetch(url, res, { req: { headers: { origin: "https://evil.example" } }, fetchImpl: async () => { throw new Error("nicht erreichen"); } });
   assert.equal(out[0], 403);
+});
+
+// --- Das Panel liess dem Chat 246 Pixel ----------------------------------------
+//
+// Live gemessen 2026-08-22 im echten Chrome bei 962 px Fensterbreite: das Panel
+// nahm stur "50vw" (481 px). Es liegt aber per position:fixed UEBER dem Chat,
+// und die linke Spur (196 px) zaehlt mit — dem Chat blieben 285 px. Das
+// Eingabefeld war oben angeschnitten, Antworten brachen nach drei Woertern um,
+// und das Modellmenue rutschte unter die Seitenleiste.
+//
+// Waechter-TUEV: die kaputte Probe (schmales Fenster) UND die gesunde
+// (breiter Bildschirm, wo sich nichts aendern darf).
+test("schmales Fenster: das Panel weicht dem Chat", () => {
+  // Der gemessene Fall. 962 - 196 - 380 = 386, statt 481.
+  assert.equal(paneBreiteAus({ fenster: 962, mitteLinks: 196 }), "386px");
+});
+
+test("breiter Bildschirm: es bleibt bei der Haelfte", () => {
+  // 1280 - 196 - 380 = 704, mehr als die Haelfte — also aendert sich nichts.
+  assert.equal(paneBreiteAus({ fenster: 1280, mitteLinks: 196 }), "640px");
+  assert.equal(paneBreiteAus({ fenster: 1600, mitteLinks: 196 }), "800px");
+});
+
+test("sehr schmal: das Panel selbst behaelt eine Untergrenze", () => {
+  // 800 - 196 - 380 = 224 — darunter waere das Panel selbst unbrauchbar.
+  assert.equal(paneBreiteAus({ fenster: 800, mitteLinks: 196 }), "320px");
+});
+
+test("Handy: die Medienregel in browser-pane.css uebernimmt", () => {
+  assert.equal(paneBreiteAus({ fenster: 680, mitteLinks: 0 }), "50vw");
+  assert.equal(paneBreiteAus({ fenster: 390, mitteLinks: 0 }), "50vw");
+});
+
+test("ohne gemessene Mitte bleibt es bei der alten Haelfte", () => {
+  // Fail-safe: findet paneBreite() kein <main>, darf es nicht enger werden
+  // als vorher. 1200/2 = 600, und 1200 - 0 - 380 = 820 liegt darueber.
+  assert.equal(paneBreiteAus({ fenster: 1200, mitteLinks: 0 }), "600px");
+});
+
+test("die Panel-Breite wird berechnet, nicht fest verdrahtet", () => {
+  const quelle = fs.readFileSync(new URL("../public/browser-pane.js", import.meta.url), "utf8");
+  assert.ok(!/PANE_WIDTH\s*=\s*"50vw"/.test(quelle), 'das feste "50vw" muss weg sein');
+  assert.match(quelle, /setProperty\("--right-panel-width", paneBreite\(\)\)/);
+  assert.match(quelle, /breiteBeobachten\(\)/, "beim Fenster-Ziehen muss sie mitwandern");
+});
+
+test("der Spiegel unter /assets traegt dieselbe Fassung", () => {
+  const quelle = fs.readFileSync(new URL("../public/browser-pane.js", import.meta.url), "utf8");
+  const spiegel = fs.readFileSync(new URL("../public/assets/browser-pane.js", import.meta.url), "utf8");
+  assert.equal(spiegel, quelle);
 });

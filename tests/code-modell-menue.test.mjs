@@ -9,6 +9,7 @@
 // Waechter-TUEV: jeder Fall hat eine gesunde UND eine kaputte Probe.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 // ---- DOM-Attrappe. Bewusst handgeschrieben wie in den uebrigen Tests des
 // Hauses (kein jsdom im Projekt) — sie kann genau so viel, wie das Menue
@@ -177,4 +178,62 @@ test("ein zweiter Aufruf schliesst das offene Menue statt es zu verdoppeln", asy
   assert.ok(document.getElementById("codeModellMenue"));
   await oeffneModellMenue({ chip });
   assert.equal(document.getElementById("codeModellMenue"), null);
+});
+
+// --- Das Menue lief links aus der Spalte ---------------------------------------
+//
+// Live gemessen 2026-08-22 im echten Chrome, Fenster 962 px, Browser-Panel offen:
+// das Modellmenue begann bei x=134, die Seitenleiste reichte bis x=195. Die
+// ersten 61 Pixel JEDER Zeile lagen dahinter — auf dem Bildschirm stand
+// "eek V4 Pro" statt "Deepseek V4 Pro" und "ax M3" statt "Minimax M3".
+// imFensterHalten() deckelte nur nach OBEN, nach links gab es keine Kappe.
+//
+// Waechter-TUEV: gesunde Probe (passt schon), kaputte Probe (ragt hinaus) und
+// die Grenzfaelle dazwischen.
+const { klemmeInSpalte } = await import("../public/code-modell-menue.js");
+
+test("passt das Menue schon, wird nichts angefasst", () => {
+  assert.equal(klemmeInSpalte({ links: 333, rechts: 509, grenze: 204, rechtsJetzt: 16 }), null);
+  // Genau auf der Grenze zaehlt als drinnen.
+  assert.equal(klemmeInSpalte({ links: 204, rechts: 380, grenze: 204, rechtsJetzt: 0 }), null);
+});
+
+test("reicht ein Schub nach rechts, bleibt die Breite unangetastet", () => {
+  // 40 px zu weit links, aber 60 px Luft im `right` — schieben genuegt.
+  const plan = klemmeInSpalte({ links: 164, rechts: 340, grenze: 204, rechtsJetzt: 60 });
+  assert.deepEqual(plan, { right: 20, maxWidth: null });
+});
+
+test("der echte Fall vom 22.08.: schieben reicht nicht, also deckeln", () => {
+  // Gemessen: links 134, rechts 310, Grenze 204, right stand auf 16.
+  const plan = klemmeInSpalte({ links: 134, rechts: 310, grenze: 204, rechtsJetzt: 16 });
+  assert.equal(plan.right, 0, "weiter als bis zum Knopfrand geht der Schub nicht");
+  assert.equal(plan.maxWidth, 122, "Rest zwischen Grenze und rechter Kante");
+  // Probe: die linke Kante liegt danach GENAU auf der Grenze, nichts mehr verdeckt.
+  assert.equal(310 + 16 - plan.maxWidth, 204);
+});
+
+test("ist die Spalte schmaler als 120 px, schiebt es ueber den Knopf hinaus", () => {
+  // Extremfall: nur 60 px zwischen Grenze und rechter Kante. Ein 60-px-Menue
+  // waere unlesbar — also 120 px breit und nach rechts aus dem Knopf heraus.
+  const plan = klemmeInSpalte({ links: 100, rechts: 264, grenze: 204, rechtsJetzt: 0 });
+  assert.equal(plan.maxWidth, 120);
+  assert.ok(plan.right < 0, "negatives right ist hier gewollt");
+  assert.equal(264 - plan.right - plan.maxWidth, 204, "linke Kante sitzt auf der Grenze");
+});
+
+test("die Klemme haengt an JEDEM Fuellen, nicht nur am ersten", () => {
+  // Die Modellzeilen kommen asynchron aus dem Katalog; das Menue waechst dabei
+  // nach oben UND nach links. Wer nur einmal klemmt, klemmt das leere Menue.
+  const quelle = readFileSync(new URL("../public/code-modell-menue.js", import.meta.url), "utf8");
+  const obenKappen = (quelle.match(/^[ \t]*imFensterHalten\(\);$/gm) || []).length;
+  const linksKappen = (quelle.match(/^[ \t]*inDerSpalteHalten\(\);$/gm) || []).length;
+  assert.ok(obenKappen >= 3, `zu wenige Kappen oben: ${obenKappen}`);
+  assert.equal(linksKappen, obenKappen, "jede Kappe nach oben braucht eine nach links");
+});
+
+test("der Spiegel unter /assets traegt dieselbe Fassung", () => {
+  const quelle = readFileSync(new URL("../public/code-modell-menue.js", import.meta.url), "utf8");
+  const spiegel = readFileSync(new URL("../public/assets/code-modell-menue.js", import.meta.url), "utf8");
+  assert.equal(spiegel, quelle, "smejj.com liefert /assets/ aus");
 });
