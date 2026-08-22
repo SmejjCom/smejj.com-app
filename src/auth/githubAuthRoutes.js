@@ -20,6 +20,7 @@ export function createGithubAuthHandlers({
   fetchGithubUser,
   ROUTES,
   fetchImpl = fetch,
+  anmeldeProtokoll = { notiere() { return null; } },
   env = process.env
 }) {
   function safeReturnOrigin(value) {
@@ -101,6 +102,10 @@ export function createGithubAuthHandlers({
       // Anmeldeseite zurueck, mit einem Grund, den man lesen kann.
       const hinterlegt = sessionHandoffStore.complete(state.handoff, { token: serializeSessionToken(user), user });
       if (!hinterlegt?.ok) {
+        anmeldeProtokoll.notiere({
+          schritt: "ticket-hinterlegt", anbieter: "github", ok: false,
+          grund: hinterlegt?.error || "ticket_nicht_einloesbar", email, ticket: state.handoff
+        });
         res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?fehler=anmeldung_abgelaufen` });
         return res.end();
       }

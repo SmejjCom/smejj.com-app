@@ -1471,3 +1471,30 @@ Parallelsitzung, die ihren eigenen Deploy-Rhythmus hat.
 v645 folgt auf v644 einer Parallelsitzung. Live-Nummer vor dem Bump
 gemessen; sw.js war inhaltlich identisch zum lokalen Stand, nur die
 Nummer wich ab — es wurde nichts Fremdes ueberschrieben.
+
+## v646 (2026-08-22) — Nachzug: elf Frontend-Dateien der Parallelsitzung
+
+Zweiter Deploy des Tages. v645 brachte die V11-Arbeit an Einstellungen
+und Konto; hier folgt, was im Frontend-Repo sonst noch aelter war als
+der abgenommene Stand:
+
+  404.html · browser-pane.css · browser-pane-nachrichten.js ·
+  design-v11.css · index.html · status.html · verlauf.html
+  NEU: browser-pane-chrome.css · danke-abo.html · programmieren.html ·
+       willkommen.html
+
+Der Bump ist noetig, weil v645 den Vorrat bereits mit den ALTEN Fassungen
+dieser Dateien gefuellt hat — ohne neue Nummer liefert der Service Worker
+sie weiter (cache-first mit ignoreSearch; ein ?v= in der URL hilft dort
+nicht).
+
+Abgestimmt mit der Parallelsitzung, die diese Dateien committet hat:
+freigegeben, mit der Bitte um einen aktuellen Ausgangsstand. Geprueft vor
+dem Kopieren — public/ war identisch mit dem neuesten Commit, und ihre
+Dialog-Arbeit lag vollstaendig darin (browser-pane-render.js 6x bpDialog,
+browser-stage.js 8x dialogOffen). Beide Dateien standen ohnehin nicht auf
+der Liste.
+
+WIEDER NICHT dabei: chat-bridge.js (gebuendeltes Artefakt) und
+assets/sw.js (Leiche seit v302, wird nie registriert — massgeblich ist
+die Wurzel-sw.js, siehe v645).
