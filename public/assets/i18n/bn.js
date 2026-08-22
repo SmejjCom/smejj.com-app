@@ -336,4 +336,5 @@ export default {
   "Frag mich alles": "একটি কাজ বর্ণনা করুন বা একটি প্রশ্ন করুন।",
   "Generiere ein Bild von:": "এর ছবি তৈরি করো:",
   "Generiere ein Video von:": "এর ভিডিও তৈরি করো:",
+  "Erledige mit der Maus im Browser:": "ব্রাউজারে মাউস দিয়ে করো:",
 };

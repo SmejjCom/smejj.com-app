@@ -336,4 +336,5 @@ export default {
   "Frag mich alles": "صف مهمة أو اطرح سؤالاً.",
   "Generiere ein Bild von:": "ولّد صورة لـ:",
   "Generiere ein Video von:": "ولّد فيديو لـ:",
+  "Erledige mit der Maus im Browser:": "نفّذ بالفأرة في المتصفح:",
 };

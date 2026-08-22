@@ -318,6 +318,45 @@ export async function starteMausLauf({ auftrag, zeige } = {}) {
 }
 
 /**
+ * Ein Lauf mit einem FREMDEN Sender — heute: der eigene Chrome des Nutzers.
+ *
+ * Warum hier und nicht als eigene Datei: Zustand (`laeuft`, `anhalten`) muss
+ * geteilt werden. Haette der Chrome-Weg seinen eigenen, koennten zwei Maeuse
+ * gleichzeitig klicken, und der Not-Aus des Panel-Knopfes wuerde den einen
+ * nicht erreichen. Ein Lauf, den man nicht stoppen kann, ist keiner, dem man
+ * zusehen moechte — das gilt fuer jeden Weg gleichermassen.
+ *
+ * @param {{auftrag:string, sende:Function, seitenUrl:string, schrittUrl:string,
+ *          holeToken?:Function, zeige?:Function}} o
+ */
+export async function starteMausLaufMitSender({ auftrag, sende, seitenUrl, schrittUrl, holeToken, zeige } = {}) {
+  const text = String(auftrag || "").trim();
+  if (!text) return { ok: false, grund: "Es fehlt die Aufgabe." };
+  if (laeuft) return { ok: false, grund: "Die Maus arbeitet schon an einem Auftrag." };
+
+  laeuft = true;
+  anhalten = false;
+  const knopf = bausteine?.knopf;
+  knopf?.classList.add("laeuft");
+  try {
+    return await fuehreFreienLaufAus({
+      auftrag: text,
+      tab: { url: seitenUrl },
+      braucheSitzung: false,
+      schrittUrl,
+      holeToken,
+      sende,
+      zeige,
+      abbruch: () => anhalten
+    });
+  } finally {
+    laeuft = false;
+    knopf?.classList.remove("laeuft");
+    bausteine?.render?.();
+  }
+}
+
+/**
  * Verdrahtet den Maus-Knopf der Kopfleiste.
  * Nimmt die Panel-Bausteine — so bleibt in browser-pane.js eine Zeile stehen.
  * Dieselben Bausteine bedienen ab jetzt auch den Chat-Einstieg (starteMausLauf).
@@ -360,6 +399,8 @@ export function verdrahteMausKnopf({ knopf, activeTab, planeUrl, holeToken, send
 // und dieser hier ist fuer das, was vorher gar nicht ging.
 
 export const FREI_MAX_SCHRITTE = 10;
+export const VERWURF_GRENZE = 2;
+export const AUSSETZER_GRENZE = 3;
 
 /** Eine Entscheidung der Maus in eine Panel-Aktion uebersetzen. */
 export function entscheidungAlsAktion(entscheidung) {
@@ -382,14 +423,25 @@ export function entscheidungAlsAktion(entscheidung) {
  */
 export async function fuehreFreienLaufAus({
   auftrag, tab, schrittUrl, holeToken = () => "", sende, zeige = () => {},
-  abbruch = () => false, maxSchritte = FREI_MAX_SCHRITTE
+  abbruch = () => false, maxSchritte = FREI_MAX_SCHRITTE, braucheSitzung = true
 } = {}) {
   const hosts = erlaubteHosts(tab?.url);
   if (!hosts.length) return { ok: false, grund: "Erst eine Seite oeffnen — die Maus arbeitet nur dort." };
-  if (!tab?.sessionId) return { ok: false, grund: "Die Maus braucht den Live-Browser. Diese Ansicht hat keinen." };
+  // Die Sitzungspflicht gilt nur fuer den FERNEN Browser. Arbeitet die Maus im
+  // eigenen Chrome des Nutzers (Bruecken-Erweiterung), gibt es keine Sitzung,
+  // die hochkommen muesste — die Seite ist ja schon offen. Genau daran ist der
+  // ferne Weg regelmaessig gescheitert.
+  if (braucheSitzung && !tab?.sessionId) return { ok: false, grund: "Die Maus braucht den Live-Browser. Diese Ansicht hat keinen." };
 
   const verlauf = [];
   const gelesen = {};
+  // Wie oft darf eine Entscheidung abgelehnt werden, bevor der Lauf endet?
+  // Zwei Versuche reichen fuer einen Formfehler; wer dreimal danebenliegt,
+  // hat ein anderes Problem als die Formulierung.
+  let verworfen = 0;
+  // Aussetzer sind etwas anderes als Ablehnungen: sie werden nicht gezaehlt
+  // wie ein Schritt, weil nichts geschehen ist.
+  let aussetzer = 0;
   for (let n = 1; n <= maxSchritte; n += 1) {
     if (abbruch()) return { ok: false, grund: `Maus angehalten nach ${n - 1} Schritten.`, gelesen };
 
@@ -419,7 +471,57 @@ export async function fuehreFreienLaufAus({
       });
       antwort = await r.json().catch(() => null);
       if (!r.ok || !antwort?.ok) {
-        return { ok: false, grund: `Maus konnte nicht entscheiden: ${antwort?.error || r.status}`, gelesen };
+        // DIE GRUENDE MITNEHMEN. Der Server schickt bei einer abgelehnten
+        // Entscheidung `gruende` mit — genau das, was man zum Verstehen
+        // braucht. Vorher stand hier nur "entscheidung_abgelehnt", und
+        // damit war jede Fehlersuche blind: dieselbe Kennung fuer eine
+        // gesperrte Domain, einen unbekannten Schritt und ein Feld, das
+        // das Modell falsch benannt hat. Live erlebt am 2026-08-18.
+        const gruende = Array.isArray(antwort?.gruende) && antwort.gruende.length
+          ? antwort.gruende.map((g) => (typeof g === "string" ? g : JSON.stringify(g))).join("; ").slice(0, 300)
+          : "";
+
+        // AUS DER ABLEHNUNG LERNEN, STATT AUFZUGEBEN.
+        //
+        // Eine abgelehnte Entscheidung ist fast nie eine Sackgasse, sondern ein
+        // Formfehler: das Modell nennt einen Schritt richtig, haengt aber das
+        // falsche Feld daran (live gemessen 2026-08-18: openLink mit "url"
+        // statt "target" — openLink verlangt laut Schema ein Ziel, keine
+        // Adresse). Das Modell KANN das korrigieren, wenn es den Grund
+        // erfaehrt. Vorher endete der ganze Auftrag an dieser Stelle, und der
+        // Nutzer sah nur "entscheidung_abgelehnt".
+        //
+        // Der Grund wandert deshalb in den Verlauf — denselben Weg, auf dem
+        // das Modell auch seine eigenen Schritte wiedersieht — und der Lauf
+        // geht weiter. Begrenzt, damit aus dem Lernen keine Endlosschleife
+        // wird: nach VERWURF_GRENZE Fehlversuchen ist Schluss.
+        if (r.status === 422 && verworfen < VERWURF_GRENZE) {
+          verworfen += 1;
+          verlauf.push(`VERWORFEN (bitte anders formulieren): ${gruende || antwort?.error || "ohne Grund"}`);
+          zeige(`Maus ${n}/${maxSchritte}: Vorschlag abgelehnt, sie versucht es anders ...`);
+          continue;
+        }
+
+        // AUSSETZER DES PLANERS: einfach noch einmal fragen.
+        //
+        // Gemessen 2026-08-19, dieselbe Anfrage dreimal hintereinander an den
+        // Live-Server: 200 (fertige Entscheidung), dann 502 planer_leere_antwort,
+        // dann noch einmal 502. Das Modell liefert bei gleicher Eingabe mal eine
+        // Antwort und mal gar keine — ein Aussetzer, kein Denkfehler.
+        //
+        // Hier gehoert AUSDRUECKLICH nichts in den Verlauf: dem Modell
+        // vorzuhalten, es habe geschwiegen, wuerde seine naechste Antwort nur
+        // verwirren. Wiederholt wird stillschweigend, aber sichtbar — der
+        // Nutzer soll sehen, dass gewartet wird, statt eine stumme Pause zu
+        // erleben. Zwei Fehlschlaege hintereinander waren im Test bereits die
+        // Ausnahme; wer dreimal schweigt, hat ein anderes Problem.
+        if (r.status >= 500 && aussetzer < AUSSETZER_GRENZE) {
+          aussetzer += 1;
+          zeige(`Maus ${n}/${maxSchritte}: keine Antwort erhalten, sie fragt noch einmal ...`);
+          n -= 1; // dieser Schritt zaehlt nicht — es wurde ja nichts getan
+          continue;
+        }
+        return { ok: false, grund: `Maus konnte nicht entscheiden: ${antwort?.error || r.status}${gruende ? ` (${gruende})` : ""}`, gelesen };
       }
     } catch {
       return { ok: false, grund: "Maus nicht erreichbar.", gelesen };

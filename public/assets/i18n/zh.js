@@ -336,4 +336,5 @@ export default {
   "Frag mich alles": "描述一个任务或提出一个问题。",
   "Generiere ein Bild von:": "生成这个的图片：",
   "Generiere ein Video von:": "生成这个的视频：",
+  "Erledige mit der Maus im Browser:": "用鼠标在浏览器里完成：",
 };
