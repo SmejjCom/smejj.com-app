@@ -1,6 +1,23 @@
 import crypto from "node:crypto";
 
-const DEFAULT_TTL_MS = 2 * 60 * 1000;
+// Wie lange ein Anmelde-Ticket gilt.
+//
+// BEFUND 2026-08-22 (Betreiber: "Google Login hat nicht geklappt", Konto
+// gewaehlt, dann Fehler): Das Ticket galt 2 Minuten — der `state`, den Google
+// zurueckschickt, aber 10. Wer bei Google laenger brauchte als zwei Minuten,
+// war dort ERFOLGREICH angemeldet und kam trotzdem ohne Token zurueck.
+//
+// Zwei Minuten sind schnell vorbei: Kontoauswahl (der Betreiber hat sechs
+// Google-Konten im Chrome), Passwort, Bestaetigung per Handy. Der Fehler
+// trifft also gerade die vorsichtigen Anmeldungen.
+//
+// Jetzt 10 Minuten — genau die Frist des `state`. Zwei Uhren, die dasselbe
+// Fenster bewachen, muessen gleich gehen; die kuerzere entscheidet sonst
+// still. Sicherheitsseitig kostet das wenig: das Ticket ist einmalig
+// (`consume` verbraucht es), an den Ziel-Origin gebunden und ohne den
+// signierten `state` wertlos.
+const DEFAULT_TTL_MS = 10 * 60 * 1000;
+const MAX_TTL_MS = 10 * 60 * 1000;
 const DEFAULT_MAX_PENDING = 128;
 const DEFAULT_MAX_PER_ORIGIN = 8;
 const HANDOFF_ID_PATTERN = /^[A-Za-z0-9_-]{43}$/;
@@ -90,7 +107,9 @@ function normalizeOrigin(value) {
 
 function boundedTtl(value) {
   const number = Number(value);
-  return Number.isFinite(number) ? Math.min(5 * 60 * 1000, Math.max(30_000, Math.floor(number))) : DEFAULT_TTL_MS;
+  // Die Kappung lag bei 5 Minuten und haette die neue Frist still halbiert —
+  // genau die Art Deckel, die eine Aenderung wirkungslos macht.
+  return Number.isFinite(number) ? Math.min(MAX_TTL_MS, Math.max(30_000, Math.floor(number))) : DEFAULT_TTL_MS;
 }
 
 function failure(status, error) {

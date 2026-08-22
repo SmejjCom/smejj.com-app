@@ -60,7 +60,15 @@ export function createGoogleAuthHandlers({
     // zur App zurueckleiten. Die App holt den Token (Bearer) und ist dort angemeldet.
     const handoffReturn = safeReturnOrigin(state?.handoffReturn);
     if (body.redirect && state?.handoff && handoffReturn) {
-      sessionHandoffStore.complete(state.handoff, { token: serializeSessionToken(user), user });
+      // Schlaegt das Hinterlegen fehl (Ticket verfallen oder schon benutzt),
+      // ist der Nutzer bei Google zwar angemeldet — die App bekaeme aber nie
+      // einen Token und zeigte eine kaputte Seite. Dann lieber ehrlich auf die
+      // Anmeldeseite zurueck, mit einem Grund, den man lesen kann.
+      const hinterlegt = sessionHandoffStore.complete(state.handoff, { token: serializeSessionToken(user), user });
+      if (!hinterlegt?.ok) {
+        res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?fehler=anmeldung_abgelaufen` });
+        return res.end();
+      }
       res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}` });
       return res.end();
     }
