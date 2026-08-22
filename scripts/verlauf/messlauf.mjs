@@ -25,7 +25,7 @@
 // Schreiben. Lieber ein alter Stand (den die Seite als alt ausweist) als eine
 // falsche Zahl.
 import { spawn } from "node:child_process";
-import { readFile, writeFile, mkdtemp, rm } from "node:fs/promises";
+import { readFile, writeFile, mkdtemp, mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,6 +36,11 @@ const HIER = path.dirname(fileURLToPath(import.meta.url));
 export const REPO = path.resolve(HIER, "../..");
 
 const SUITE = "evals/suites/smejj-chat-core-v1.json";
+// Wo auffaellige Berichte liegen bleiben. Ausserhalb des Repos (oeffentlich
+// lesbar) und ausserhalb der Arbeitskopie (wird vor jedem Lauf hart
+// zurueckgesetzt). Ueber SMEJJ_BEFUND_ORDNER umstellbar.
+const BEFUND_ORDNER = process.env.SMEJJ_BEFUND_ORDNER
+  || path.join(process.env.HOME || ".", ".local/share/smejj-qualitaet/befunde");
 const ZIEL_DATEI = "public/verlauf-messwerte.json";
 // Die Bruecke laesst 12 Anfragen je Minute und Client zu. 14 Faelle x 3 Laeufe
 // sind 42 Aufrufe — ohne Taktung endet der Lauf in HTTP 429 (am 2026-08-04
@@ -107,6 +112,34 @@ function starteEval(berichtPfad) {
   });
 }
 
+/**
+ * Bewahrt den Bericht auf, wenn der Lauf auffaellig war.
+ *
+ * WARUM (Befund 2026-08-22): Die Note fiel ueber Nacht von 100 auf 65,69 %, und
+ * die Ursache liess sich nicht mehr klaeren — gespeichert war nur die
+ * Punktzahl. Man wusste, DASS fuenf Faelle wackelten, aber nicht, was das
+ * Modell stattdessen sagte. Der vollstaendige Bericht lag im Temp-Ordner und
+ * wurde am Ende geloescht, wie bei jedem Lauf.
+ *
+ * Aufbewahrt wird NUR bei Auffaelligkeit (kritische Verstoesse oder wackelige
+ * Faelle) — ein sauberer Lauf erklaert nichts und braucht keinen Platz.
+ *
+ * Der Ort liegt bewusst AUSSERHALB des Repos: die Belege enthalten Wortlaut aus
+ * Modellantworten, und das Repo ist oeffentlich lesbar. Ausserdem waere eine
+ * Datei in der Arbeitskopie beim naechsten Lauf weg — die wird vorher hart
+ * zurueckgesetzt.
+ */
+export async function bewahreBefund(bericht, { ordner = BEFUND_ORDNER, schreibe = writeFile, lege = mkdir } = {}) {
+  const s = bericht?.summary || {};
+  const auffaellig = Number(s.criticalFailures || 0) > 0 || Number(s.wackelig || 0) > 0;
+  if (!auffaellig) return "";
+  const stempel = String(bericht?.run?.startedAt || new Date().toISOString()).replace(/[:.]/g, "-");
+  const ziel = path.join(ordner, `bericht-${stempel}.json`);
+  await lege(ordner, { recursive: true });
+  await schreibe(ziel, `${JSON.stringify(bericht, null, 2)}\n`, "utf8");
+  return ziel;
+}
+
 async function main() {
   const arbeitsordner = await mkdtemp(path.join(tmpdir(), "smejj-messlauf-"));
   const berichtPfad = path.join(arbeitsordner, "bericht.json");
@@ -135,6 +168,13 @@ async function main() {
       process.exitCode = 1;
       return;
     }
+
+    // Vor dem Fortschreiben: bei Auffaelligkeit den Wortlaut sichern.
+    const befundPfad = await bewahreBefund(bericht).catch((fehler) => {
+      melde(`HINWEIS: Befund liess sich nicht ablegen (${String(fehler?.message || fehler).slice(0, 80)}).`);
+      return "";
+    });
+    if (befundPfad) melde(`Auffaelliger Lauf — Wortlaut der Antworten liegt in ${befundPfad}`);
 
     const eintrag = alsVerlaufEintrag(bericht);
     const zielPfad = path.join(REPO, ZIEL_DATEI);

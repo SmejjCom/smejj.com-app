@@ -123,6 +123,12 @@ export function parseArguments(argv, env = process.env) {
  * kaputten TRANSPORT, wiederholungen misst dasselbe Modell mehrfach, weil es mit
  * temperature 0.35 antwortet und jede Ziehung anders ausfallen darf.
  */
+// Wie viel Wortlaut je nicht bestandenem Durchgang aufbewahrt wird. 1200
+// Zeichen reichen, um Rueckfalltext, abgeschnittene Antwort oder schlicht eine
+// falsche Zahl zu erkennen — und halten den Bericht klein genug, um ihn
+// mitzuschicken.
+export const ANTWORT_BELEG_MAX = 1200;
+
 export async function runEvalSuite({
   suite,
   cases,
@@ -149,11 +155,22 @@ export async function runEvalSuite({
       }
       // Das angeforderte Modell ist nicht zwingend das antwortende: der Router darf
       // zurueckfallen. Ohne diese Zuordnung waere die Messung nicht belastbar.
+      const bewertet = scoreCase(evalCase, result);
       laeufe.push({
-        ...scoreCase(evalCase, result),
+        ...bewertet,
         attempts,
         backend: String(result?.backend || "unknown"),
-        resolvedModelId: String(result?.modelId || "")
+        resolvedModelId: String(result?.modelId || ""),
+        // DIE ANTWORT SELBST — aber nur, wenn dieser Durchgang NICHT bestanden
+        // hat. Am 2026-08-22 fiel die Note ueber Nacht von 100 auf 65,69 %, und
+        // die Ursache liess sich nicht mehr klaeren: gespeichert war nur die
+        // Punktzahl. Man wusste, DASS "regel-800-zeilen" 1 von 3 Mal bestand,
+        // aber nicht, was das Modell stattdessen sagte — Rueckfalltext? falsche
+        // Zahl? abgeschnitten? Ohne den Wortlaut ist jede Erklaerung geraten.
+        // Bestandene Durchgaenge brauchen keinen Beleg; sie erklaeren nichts.
+        ...(bewertet.status === "passed"
+          ? {}
+          : { antwort: String(result?.text || "").slice(0, ANTWORT_BELEG_MAX) })
       });
       letztesErgebnis = result;
       // Der Abstand gilt zwischen JEDEM Modellaufruf, nicht je Fall. Mehr
@@ -163,6 +180,15 @@ export async function runEvalSuite({
       if (delayMs > 0) await sleep(delayMs);
     }
     const scored = aggregateCaseRuns(laeufe);
+    // Belege wandern nur bei auffaelligen Faellen in den Bericht: wackelig oder
+    // nicht bestanden. Ein sauber bestandener Fall braucht keinen Wortlaut, und
+    // alle mitzuschreiben blaehte jeden Bericht um das Zwanzigfache.
+    if (scored && (scored.wackelig === true || scored.status !== "passed")) {
+      const belege = laeufe
+        .map((lauf, i) => ({ durchgang: i + 1, status: lauf.status, antwort: lauf.antwort }))
+        .filter((b) => typeof b.antwort === "string" && b.antwort.length > 0);
+      if (belege.length) scored.belege = belege;
+    }
     caseScores.push(scored);
     onCase(scored, letztesErgebnis);
   }
