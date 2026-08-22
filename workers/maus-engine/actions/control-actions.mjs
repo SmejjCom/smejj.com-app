@@ -97,5 +97,28 @@ export const controlActions = {
     const { substituteMacroParams } = await import("../macro-store.mjs");
     const steps = substituteMacroParams(macro.steps, step.params || {});
     return ctx.runMacroSteps(steps, step.macroRef);
+  },
+
+  // JS-Dialoge der Seite beantworten (2026-08-21). Bis hierher verwarf
+  // Playwright jede Frage stillschweigend — die Maus antwortete auf
+  // "Wirklich loeschen?" IMMER mit Abbrechen und erfuhr nie davon.
+  //
+  // Zwei Aktionen statt einer mit Schalter: eine Bestaetigung ist nicht
+  // umkehrbar und verdient im Protokoll ein eigenes Wort.
+  async dialogAccept(ctx, step) {
+    return beantworteOffenenDialog(ctx, { bestaetigen: true, text: step.text });
+  },
+
+  async dialogDismiss(ctx) {
+    return beantworteOffenenDialog(ctx, { bestaetigen: false });
   }
 };
+
+// Gemeinsamer Kern beider Dialog-Aktionen. Die Wache haengt am TAB, nicht am
+// Browser: zwei Tabs koennen gleichzeitig fragen.
+async function beantworteOffenenDialog(ctx, { bestaetigen, text }) {
+  const { wacheFuerAktivenTab, beantworteDialog } = await import("../dialog-wache.mjs");
+  const wache = wacheFuerAktivenTab(ctx.state);
+  if (!wache?.offen) throw new Error("kein_dialog_offen");
+  return beantworteDialog(wache, { bestaetigen, text });
+}

@@ -79,6 +79,10 @@ export function createInterpreter(plan, options = {}) {
   const budget = plan.policy.budget;
   const state = sessionState || {
     browser: null, context: null, pages: new Map(),
+    // Je Tab eine Dialog-Wache (dialog-wache.mjs). Ohne sie verwirft
+    // Playwright alert/confirm/prompt still, und die Maus antwortet auf jede
+    // Frage "Abbrechen", ohne es je zu erfahren.
+    dialogWachen: new Map(),
     activeTabId: null, downloads: [], extracted: {},
     executedActions: 0
   };

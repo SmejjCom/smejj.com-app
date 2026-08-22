@@ -10,6 +10,7 @@
 import { resolveLocator, resolveEindeutig } from "../maus-engine/selector.mjs";
 import { buildObservation } from "../maus-engine/observer.mjs";
 import { buildAriaObservation } from "../maus-engine/aria-baum.mjs";
+import { haengeDialogWacheAn, dialogNachAussen, beantworteDialog } from "../maus-engine/dialog-wache.mjs";
 import { randomBytes } from "node:crypto";
 import { starteBildschirm } from "./bildschirm.mjs";
 import { lookup } from "node:dns/promises";
@@ -225,47 +226,17 @@ export function createSessionEngine({
     return true;
   }
 
-  /**
-   * JS-Dialoge (alert/confirm/prompt/beforeunload) sichtbar machen.
-   *
-   * OHNE Handler verwirft Playwright jeden Dialog automatisch. Das sieht
-   * harmlos aus, ist es aber nicht: eine Seite fragt "Wirklich loeschen?",
-   * und der Fern-Browser antwortet IMMER "Abbrechen" — ohne dass Nutzer
-   * oder Maus je erfahren, dass gefragt wurde. Wer im Panel sitzt, sieht
-   * eine Seite, die auf seinen Klick scheinbar nicht reagiert.
-   *
-   * Mit Handler bleibt der Dialog offen, bis jemand entscheidet. Genau das
-   * ist gewollt (ZCode macht es mit getJsDialog() ebenso) — aber es hat
-   * eine Folge, die man kennen MUSS: solange ein Dialog offen ist,
-   * blockiert Chromium jede weitere Arbeit an der Seite, screenshot() und
-   * title() eingeschlossen. Deshalb liefert snapshot() dann das zuletzt
-   * gemachte Bild statt zu haengen.
-   */
+  // JS-Dialoge: die Wache liegt in ../maus-engine/dialog-wache.mjs und wird
+  // von der Maus MITBENUTZT — zwei Fassungen waeren zwei Verhalten. Dort
+  // steht auch, warum bei offenem Dialog kein Screenshot moeglich ist.
   function merkeDialoge(session) {
-    if (typeof session.page?.on !== "function") return;
-    session.page.on("dialog", (dialog) => {
-      session.dialog = {
-        art: String(dialog.type?.() ?? "dialog"),
-        // Der Text kommt aus einer untrusted Seite: gekappt, nie ausgefuehrt.
-        nachricht: String(dialog.message?.() ?? "").slice(0, 1000),
-        vorgabe: String(dialog.defaultValue?.() ?? "").slice(0, 500),
-        griff: dialog
-      };
-    });
-  }
-
-  // Was der Aufrufer ueber einen offenen Dialog erfahren darf (ohne den
-  // Playwright-Griff, der gehoert nur uns).
-  function dialogNachAussen(session) {
-    if (!session.dialog) return undefined;
-    const { art, nachricht, vorgabe } = session.dialog;
-    return { art, nachricht, vorgabe: vorgabe || undefined };
+    session.dialogWache = haengeDialogWacheAn(session.page);
   }
 
   async function snapshot(session) {
     const page = session.page;
     // Bei offenem Dialog KEIN Screenshot: der Aufruf kaeme nie zurueck.
-    if (session.dialog) {
+    if (session.dialogWache?.offen) {
       return {
         ok: true,
         sessionId: session.id,
@@ -274,7 +245,7 @@ export function createSessionEngine({
         title: "",
         viewport: session.viewport,
         expiresInMs: expiresInMs(session),
-        dialog: dialogNachAussen(session)
+        dialog: dialogNachAussen(session.dialogWache)
       };
     }
     const screenshot = await page.screenshot({ type: "jpeg", quality: cfg.jpegQuality });
@@ -479,8 +450,8 @@ export function createSessionEngine({
         createdAt: now(),
         idleTimer: null,
         busy: false,
-        // Ein offener JS-Dialog (alert/confirm/prompt). Siehe merkeDialoge().
-        dialog: null,
+        // Die Dialog-Wache haengt merkeDialoge() an (dialog-wache.mjs).
+        dialogWache: null,
         letztesBild: null
       };
       merkeDialoge(session);
@@ -555,19 +526,12 @@ export function createSessionEngine({
       }
       case "dialogAccept":
       case "dialogDismiss": {
-        const offen = session.dialog;
-        if (!offen) throw new Error("kein_dialog_offen");
-        // ERST vergessen, DANN beantworten: wirft accept()/dismiss(), waere
-        // die Sitzung sonst dauerhaft auf einen Dialog festgenagelt, den es
-        // nicht mehr gibt — und jede weitere Aktion liefe ins Leere.
-        session.dialog = null;
-        if (action.type === "dialogAccept") {
-          await offen.griff.accept(action.text ?? undefined);
-        } else {
-          await offen.griff.dismiss();
-        }
+        const ergebnis = await beantworteDialog(session.dialogWache, {
+          bestaetigen: action.type === "dialogAccept",
+          text: action.text
+        });
         await page.waitForTimeout?.(200)?.catch?.(() => {});
-        return { dialogBeantwortet: { art: offen.art, wie: action.type === "dialogAccept" ? "bestaetigt" : "abgelehnt" } };
+        return { dialogBeantwortet: ergebnis };
       }
       case "ariaObserve": {
         // Chromiums Bedienbaum. Er sieht die GANZE Seite, nicht nur was in
@@ -661,8 +625,8 @@ export function createSessionEngine({
     // Also fail-fast mit dem Dialog IM Fehler, damit der Aufrufer weiss,
     // was zu tun ist. Hinsehen bleibt erlaubt.
     const DIALOG_ERLAUBT = new Set(["dialogAccept", "dialogDismiss", "observe", "ariaObserve"]);
-    if (session.dialog && !DIALOG_ERLAUBT.has(verdict.action.type)) {
-      return { ...fail(409, "dialog_offen"), dialog: dialogNachAussen(session) };
+    if (session.dialogWache?.offen && !DIALOG_ERLAUBT.has(verdict.action.type)) {
+      return { ...fail(409, "dialog_offen"), dialog: dialogNachAussen(session.dialogWache) };
     }
     if (session.busy) return fail(409, "session_busy");
     session.busy = true;

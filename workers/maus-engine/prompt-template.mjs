@@ -82,11 +82,20 @@ function contractBlock() {
     // ihm fehlte nur ein Feld, das niemand genannt hatte.
     '  scroll: to = <Selektor> ODER direction = "down|up|left|right" + amountPx (Zahl)',
     "  screenshot: name (Pflicht, kurzer Dateiname ohne Endung)",
+    // GEMESSEN 2026-08-18 bei scroll: eine Aktion, die in dieser Liste fehlt,
+    // laesst das Modell die Form RATEN — und es raet falsch. Jede neue
+    // Aktion gehoert hierher, am selben Tag, an dem sie ins Schema kommt.
+    '  dialogAccept: optional text (NUR bei prompt) — bestaetigt die Frage der Seite',
+    "  dialogDismiss: KEINE weiteren Felder — lehnt die Frage ab",
     "  extract/extractTable: name (Pflicht) + target (Selektor)",
     '  download: saveAs (Pflicht) + trigger (Selektor) ODER url',
     "  watchDownloads: expectFiles (optional)",
     "  httpRequest: method, url, optional headers/body/expectStatus",
     "- openBrowser/closeBrowser haben KEINE weiteren Felder.",
+    "- Fragt die Seite per alert/confirm/prompt, blockiert sie JEDE weitere",
+    "  Arbeit, bis geantwortet ist. Dann gehoert dialogAccept oder",
+    "  dialogDismiss als NAECHSTER Schritt in den Plan — nicht ein weiterer",
+    "  Klick, der ohnehin nicht ankaeme.",
     "- Erster Browser-Schritt ist openBrowser, letzter ist closeBrowser.",
     "- Nutze waitFor vor Interaktionen mit dynamischen Elementen und assert,",
     "  um das Aufgabenziel nachweisbar zu machen (Screenshot als Beweis).",

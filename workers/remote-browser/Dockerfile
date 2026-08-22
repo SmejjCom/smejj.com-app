@@ -21,6 +21,11 @@ COPY workers/maus-engine/observer.mjs /app/maus-engine/observer.mjs
 # Fehlt diese Zeile, wirft der Import in session-engine.js und der Worker
 # antwortet auf JEDE Sitzung mit 503 — dieselbe Falle wie bei bildschirm.mjs.
 COPY workers/maus-engine/aria-baum.mjs /app/maus-engine/aria-baum.mjs
+# Die Dialog-Wache — dieselbe, die die Maus benutzt. Wieder dieselbe Falle:
+# ohne diese Zeile wirft der Import und der Dienst antwortet auf JEDE Sitzung
+# mit 503. Der Waechter tests/dockerfile-kopien-gleich.test.mjs hat sie hier
+# gefunden, bevor sie live ging.
+COPY workers/maus-engine/dialog-wache.mjs /app/maus-engine/dialog-wache.mjs
 COPY workers/smejj-worker /app/smejj-worker
 # worker.js importiert ../process-crash-guard.mjs — ohne diese Kopie stirbt
 # der Container mit ERR_MODULE_NOT_FOUND (live gemessen 2026-08-13).
