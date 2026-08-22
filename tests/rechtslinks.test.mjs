@@ -19,6 +19,8 @@ const PFLICHTSEITEN = ["impressum.html", "datenschutz.html", "agb.html", "widerr
 
 const startHtml = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
 const settings = readFileSync(new URL("../public/settings-surface.js", import.meta.url), "utf8");
+const authLogin = readFileSync(new URL("../public/auth/login/index.html", import.meta.url), "utf8");
+const authRegister = readFileSync(new URL("../public/auth/register/index.html", import.meta.url), "utf8");
 
 test("alle vier Pflichtseiten liegen ueberhaupt im Auslieferungsordner", () => {
   for (const seite of PFLICHTSEITEN) {
@@ -62,5 +64,18 @@ test("der Spiegel unter /assets traegt dieselben Links", () => {
     const quelle = readFileSync(new URL(`../public/${datei}`, import.meta.url), "utf8");
     const spiegel = readFileSync(new URL(`../public/assets/${datei}`, import.meta.url), "utf8");
     assert.equal(spiegel, quelle, `${datei}: smejj.com liefert /assets/ aus`);
+  }
+});
+
+test("die Registrierungsseite nennt die Nutzungsbedingungen", () => {
+  // Gefunden 2026-08-22: die ANMELDEseite verlinkte die AGB, die
+  // REGISTRIERUNG nicht — dabei wird genau dort der Vertrag geschlossen.
+  // Beide Rechtszeilen muessen dieselben drei Punkte tragen.
+  for (const [name, seite] of [["login", authLogin], ["register", authRegister]]) {
+    const zeile = seite.match(/<p class="auth-legal">[\s\S]*?<\/p>/);
+    assert.ok(zeile, `${name}: die Rechtszeile muss es geben`);
+    for (const ziel of ["/agb.html", "/datenschutz.html", "/impressum.html"]) {
+      assert.ok(zeile[0].includes(ziel), `${name}: ${ziel} fehlt in der Rechtszeile`);
+    }
   }
 });

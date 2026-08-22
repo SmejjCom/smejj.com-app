@@ -1,11 +1,11 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-19T17:18:18.174Z",
-  "confirmation": "Betreiber 2026-08-19: 'weiter, komplett fertig machen, nicht offen lassen' — account-privacy.js geprueft: +18 Zeilen renderZugang (Anzeige 'Bezahlt wurde mit', Crash-Fix 64d7f68), keine Anmeldung/Endpunkte/Uebertragung beruehrt.",
+  "frozenAt": "2026-08-22T12:52:01.788Z",
+  "confirmation": "Betreiber-Auswahl 2026-08-22 im Chat: 'Registrierungsseite angleichen'. Einzige Aenderung an public/auth/register/index.html ist ein zusaetzlicher Link auf /agb.html in der Rechtszeile — die Anmeldeseite trug ihn schon, die Registrierung nicht, obwohl dort der Vertrag geschlossen wird. Kein Passwortfeld, kein Formular, keine Kontoloeschung angefasst.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "6e3e0842fbc5d030e30e8cdedc46daefc8c040f7874f424639ae372cadac7905",
-    "public/auth/register/index.html": "e4d40a128d6c683b520e81cddeea8e48793b99569cd3911fe2875578a45177c5",
+    "public/auth/register/index.html": "2312f88a40c7c956c23e48ca1441865dc6ab3eb379635d5e38fcbca74549e8e0",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
