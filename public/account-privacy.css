@@ -26,10 +26,10 @@
   --konto-ok-bg: rgba(45, 212, 191, 0.15);
   --konto-ok-line: rgba(45, 212, 191, 0.4);
   padding: 72px clamp(14px, 4vw, 48px) 28px;
-  /* Farbige Lichtflecken NUR in dieser Ansicht — die App-Huelle bleibt unberuehrt. */
-  background-image:
-    radial-gradient(950px 520px at 82% -8%, rgba(45, 212, 191, 0.10), transparent 60%),
-    radial-gradient(750px 550px at -8% 42%, rgba(88, 101, 242, 0.07), transparent 60%);
+  /* Die "farbigen Lichtflecken NUR in dieser Ansicht" sind am 2026-08-22
+     entfallen — genau das war der Punkt: sie galten nur hier, und seit dem
+     Abraeumen von design-cyan-views.css trug jede ANDERE Ansicht den ruhigen
+     Grundton der App. Damit war diese hier (mit /settings) die letzte bunte. */
 }
 
 /* Helles Farbschema (Befund iPhone-PWA 2026-07-26: Systemschema "hell" macht
@@ -54,10 +54,10 @@
   --konto-ok-text: #0c6b5e;
   --konto-ok-bg: rgba(45, 212, 191, 0.16);
   --konto-ok-line: rgba(12, 107, 94, 0.45);
-  background-image:
-    radial-gradient(950px 520px at 82% -8%, rgba(45, 212, 191, 0.14), transparent 60%),
-    radial-gradient(750px 550px at -8% 42%, rgba(88, 101, 242, 0.10), transparent 60%),
-    linear-gradient(180deg, #fbfbf9, #f3f4f1);
+  /* Der DECKENDE Verlauf bleibt — er ist der Fail-safe gegen dunklen Text
+     auf dunklem Glas (Befund iPhone-PWA 2026-07-26, siehe Kommentar oben).
+     Entfallen sind nur die zwei Lichtflecken darueber. */
+  background-image: linear-gradient(180deg, #fbfbf9, #f3f4f1);
 }
 
 /* Primaer-Knopf: app-surfaces.css (Start-Lock) faerbt #saveProfile per
