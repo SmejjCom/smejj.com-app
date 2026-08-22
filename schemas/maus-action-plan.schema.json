@@ -4,12 +4,29 @@
   "title": "smejj.com Maus-Engine Aktionsplan (v1, modellneutral)",
   "description": "Einzige Schnittstelle zwischen Planer-Modellen und der smejj.com Maus-Engine. Die Engine liest 'planner' nie fuer Entscheidungen (reine Provenienz). Validierung ist fail-closed: ungueltige Plaene werden abgelehnt, egal von welchem Modell.",
   "type": "object",
-  "required": ["schemaVersion", "planId", "createdAt", "capsuleRef", "planner", "policy", "steps"],
+  "required": [
+    "schemaVersion",
+    "planId",
+    "createdAt",
+    "capsuleRef",
+    "planner",
+    "policy",
+    "steps"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "planId": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "createdAt": { "type": "string", "minLength": 1 },
+    "schemaVersion": {
+      "const": 1
+    },
+    "planId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "createdAt": {
+      "type": "string",
+      "minLength": 1
+    },
     "capsuleRef": {
       "type": "string",
       "minLength": 1,
@@ -18,37 +35,94 @@
     "planner": {
       "type": "object",
       "description": "Reine Provenienz fuer Audit/Logs. Die Engine trifft hieraus keine Entscheidung.",
-      "required": ["modelId", "promptTemplateVersion"],
+      "required": [
+        "modelId",
+        "promptTemplateVersion"
+      ],
       "additionalProperties": false,
       "properties": {
-        "modelId": { "type": "string", "minLength": 1 },
-        "promptTemplateVersion": { "type": "string", "minLength": 1 }
+        "modelId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promptTemplateVersion": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
-    "goal": { "type": "string", "maxLength": 2000, "description": "Menschlich lesbares Ziel fuer Logs. Keine Steuerwirkung." },
+    "goal": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Menschlich lesbares Ziel fuer Logs. Keine Steuerwirkung."
+    },
     "policy": {
       "type": "object",
-      "required": ["domainAllowlist", "budget"],
+      "required": [
+        "domainAllowlist",
+        "budget"
+      ],
       "additionalProperties": false,
       "properties": {
         "domainAllowlist": {
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "minLength": 1, "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$" },
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$"
+          },
           "description": "Erlaubte Hostnamen (optional *.-Praefix fuer Subdomains). Jede Navigation, jeder Redirect, Frame und httpRequest wird geprueft; ausserhalb -> sofortiger Abbruch."
         },
         "budget": {
           "type": "object",
-          "required": ["maxActions", "maxLocalRetries", "maxPlannerRoundtrips", "maxDurationMs", "defaultActionTimeoutMs"],
+          "required": [
+            "maxActions",
+            "maxLocalRetries",
+            "maxPlannerRoundtrips",
+            "maxDurationMs",
+            "defaultActionTimeoutMs"
+          ],
           "additionalProperties": false,
           "properties": {
-            "maxActions": { "type": "integer", "minimum": 1, "maximum": 500 },
-            "maxLocalRetries": { "type": "integer", "minimum": 0, "maximum": 5 },
-            "maxPlannerRoundtrips": { "type": "integer", "minimum": 0, "maximum": 3 },
-            "maxDurationMs": { "type": "integer", "minimum": 1000, "maximum": 1800000 },
-            "defaultActionTimeoutMs": { "type": "integer", "minimum": 100, "maximum": 120000 },
-            "maxVisionCalls": { "type": "integer", "minimum": 0, "maximum": 10, "default": 0 },
-            "maxLoopSteps": { "type": "integer", "minimum": 0, "maximum": 25, "default": 0, "description": "Interaktiver Loop-Modus (schemas/maus-step-decision.schema.json): harte Obergrenze Modell-Aufrufe pro Aufgabe. 0 = Loop aus (Standard). Additiv, optional — bestehende Plaene bleiben gueltig." }
+            "maxActions": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "maxLocalRetries": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "maxPlannerRoundtrips": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "maxDurationMs": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 1800000
+            },
+            "defaultActionTimeoutMs": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 120000
+            },
+            "maxVisionCalls": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 0
+            },
+            "maxLoopSteps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 25,
+              "default": 0,
+              "description": "Interaktiver Loop-Modus (schemas/maus-step-decision.schema.json): harte Obergrenze Modell-Aufrufe pro Aufgabe. 0 = Loop aus (Standard). Additiv, optional — bestehende Plaene bleiben gueltig."
+            }
           }
         },
         "visionAllowed": {
@@ -60,10 +134,26 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "downloadAllowed": { "type": "boolean", "default": false },
-            "uploadAllowed": { "type": "boolean", "default": false },
-            "allowedExtensions": { "type": "array", "items": { "type": "string", "pattern": "^\\.[a-z0-9]+$" } },
-            "maxFileBytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 }
+            "downloadAllowed": {
+              "type": "boolean",
+              "default": false
+            },
+            "uploadAllowed": {
+              "type": "boolean",
+              "default": false
+            },
+            "allowedExtensions": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^\\.[a-z0-9]+$"
+              }
+            },
+            "maxFileBytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1073741824
+            }
           },
           "description": "Downloads/Uploads nur gemaess dieser Definition; alles andere wird blockiert (fail-closed)."
         },
@@ -71,10 +161,22 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "trace": { "type": "boolean", "default": true },
-            "har": { "type": "boolean", "default": true },
-            "consoleLog": { "type": "boolean", "default": true },
-            "screenshotOnError": { "type": "boolean", "default": true }
+            "trace": {
+              "type": "boolean",
+              "default": true
+            },
+            "har": {
+              "type": "boolean",
+              "default": true
+            },
+            "consoleLog": {
+              "type": "boolean",
+              "default": true
+            },
+            "screenshotOnError": {
+              "type": "boolean",
+              "default": true
+            }
           },
           "description": "Aktionsprotokoll-JSON wird immer erzeugt. Alle Artefakte werden komprimiert in die Capsule (result/) auf IDrive e2 geladen."
         }
@@ -84,47 +186,116 @@
       "type": "array",
       "minItems": 1,
       "maxItems": 500,
-      "items": { "$ref": "#/$defs/step" }
+      "items": {
+        "$ref": "#/$defs/step"
+      }
     }
   },
   "$defs": {
     "selector": {
       "type": "object",
-      "required": ["strategy", "value"],
+      "required": [
+        "strategy",
+        "value"
+      ],
       "additionalProperties": false,
       "properties": {
-        "strategy": { "enum": ["role", "testId", "label", "text", "css", "xpath"] },
-        "value": { "type": "string", "minLength": 1, "maxLength": 1000 },
-        "name": { "type": "string", "maxLength": 300, "description": "Nur bei strategy=role: Accessible Name." },
-        "frame": { "type": "string", "maxLength": 500, "description": "Optionaler Frame-Selektor (css)." },
-        "nth": { "type": "integer", "minimum": 0, "maximum": 999 },
+        "strategy": {
+          "enum": [
+            "role",
+            "testId",
+            "label",
+            "text",
+            "css",
+            "xpath"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Nur bei strategy=role: Accessible Name."
+        },
+        "frame": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Optionaler Frame-Selektor (css)."
+        },
+        "nth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999
+        },
         "fallbacks": {
           "type": "array",
           "maxItems": 3,
-          "items": { "$ref": "#/$defs/selectorNoFallback" },
+          "items": {
+            "$ref": "#/$defs/selectorNoFallback"
+          },
           "description": "Alternative Selektoren fuer lokale Retries ohne Modell."
         }
       }
     },
     "selectorNoFallback": {
       "type": "object",
-      "required": ["strategy", "value"],
+      "required": [
+        "strategy",
+        "value"
+      ],
       "additionalProperties": false,
       "properties": {
-        "strategy": { "enum": ["role", "testId", "label", "text", "css", "xpath"] },
-        "value": { "type": "string", "minLength": 1, "maxLength": 1000 },
-        "name": { "type": "string", "maxLength": 300 },
-        "frame": { "type": "string", "maxLength": 500 },
-        "nth": { "type": "integer", "minimum": 0, "maximum": 999 }
+        "strategy": {
+          "enum": [
+            "role",
+            "testId",
+            "label",
+            "text",
+            "css",
+            "xpath"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "frame": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "nth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999
+        }
       }
     },
     "coordinates": {
       "type": "object",
-      "required": ["x", "y"],
+      "required": [
+        "x",
+        "y"
+      ],
       "additionalProperties": false,
       "properties": {
-        "x": { "type": "integer", "minimum": 0, "maximum": 20000 },
-        "y": { "type": "integer", "minimum": 0, "maximum": 20000 }
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        }
       },
       "description": "Nur Stufe 3 (Vision). Ungueltig, wenn policy.visionAllowed nicht true ist (Laufzeitpruefung, fail-closed)."
     },
@@ -134,268 +305,813 @@
       "minProperties": 1,
       "maxProperties": 1,
       "properties": {
-        "selector": { "$ref": "#/$defs/selector" },
-        "coordinates": { "$ref": "#/$defs/coordinates" }
+        "selector": {
+          "$ref": "#/$defs/selector"
+        },
+        "coordinates": {
+          "$ref": "#/$defs/coordinates"
+        }
       }
     },
     "stepBase": {
       "type": "object",
-      "required": ["id", "action"],
+      "required": [
+        "id",
+        "action"
+      ],
       "properties": {
-        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
-        "action": { "type": "string" },
-        "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 120000 },
-        "retries": { "type": "integer", "minimum": 0, "maximum": 5, "description": "Ueberschreibt budget.maxLocalRetries fuer diesen Schritt (nur nach unten wirksam)." },
-        "onFailure": { "enum": ["abort", "continue"], "default": "abort" },
-        "note": { "type": "string", "maxLength": 500 }
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "action": {
+          "type": "string"
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "Ueberschreibt budget.maxLocalRetries fuer diesen Schritt (nur nach unten wirksam)."
+        },
+        "onFailure": {
+          "enum": [
+            "abort",
+            "continue"
+          ],
+          "default": "abort"
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 500
+        }
       }
     },
     "step": {
-      "allOf": [{ "$ref": "#/$defs/stepBase" }],
+      "allOf": [
+        {
+          "$ref": "#/$defs/stepBase"
+        }
+      ],
       "unevaluatedProperties": false,
       "oneOf": [
         {
           "properties": {
-            "action": { "const": "openBrowser" },
+            "action": {
+              "const": "openBrowser"
+            },
             "viewport": {
               "type": "object",
-              "required": ["width", "height"],
+              "required": [
+                "width",
+                "height"
+              ],
               "additionalProperties": false,
               "properties": {
-                "width": { "type": "integer", "minimum": 320, "maximum": 3840 },
-                "height": { "type": "integer", "minimum": 320, "maximum": 2160 }
+                "width": {
+                  "type": "integer",
+                  "minimum": 320,
+                  "maximum": 3840
+                },
+                "height": {
+                  "type": "integer",
+                  "minimum": 320,
+                  "maximum": 2160
+                }
               }
             }
           }
         },
-        { "properties": { "action": { "const": "closeBrowser" } } },
         {
           "properties": {
-            "action": { "const": "navigate" },
-            "url": { "type": "string", "minLength": 1, "pattern": "^https?://" },
-            "waitUntil": { "enum": ["load", "domcontentloaded", "networkidle"], "default": "domcontentloaded" }
-          },
-          "required": ["url"]
-        },
-        {
-          "properties": {
-            "action": { "const": "openLink" },
-            "target": { "$ref": "#/$defs/selector" },
-            "newTab": { "type": "boolean", "default": false },
-            "tabId": { "type": "string", "maxLength": 64, "description": "Pflicht bei newTab=true." }
-          },
-          "required": ["target"]
-        },
-        { "properties": { "action": { "const": "click" }, "target": { "$ref": "#/$defs/clickTarget" } }, "required": ["target"] },
-        { "properties": { "action": { "const": "doubleClick" }, "target": { "$ref": "#/$defs/clickTarget" } }, "required": ["target"] },
-        { "properties": { "action": { "const": "rightClick" }, "target": { "$ref": "#/$defs/clickTarget" } }, "required": ["target"] },
-        { "properties": { "action": { "const": "hover" }, "target": { "$ref": "#/$defs/clickTarget" } }, "required": ["target"] },
-        {
-          "properties": {
-            "action": { "const": "scroll" },
-            "target": { "$ref": "#/$defs/selector" },
-            "direction": { "enum": ["up", "down", "left", "right"] },
-            "amountPx": { "type": "integer", "minimum": 1, "maximum": 20000 },
-            "to": { "enum": ["top", "end"] }
+            "action": {
+              "const": "closeBrowser"
+            }
           }
         },
         {
           "properties": {
-            "action": { "const": "dragAndDrop" },
-            "source": { "$ref": "#/$defs/selector" },
-            "target": { "$ref": "#/$defs/selector" }
+            "action": {
+              "const": "navigate"
+            },
+            "url": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^https?://"
+            },
+            "waitUntil": {
+              "enum": [
+                "load",
+                "domcontentloaded",
+                "networkidle"
+              ],
+              "default": "domcontentloaded"
+            }
           },
-          "required": ["source", "target"]
+          "required": [
+            "url"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "type" },
-            "target": { "$ref": "#/$defs/selector" },
-            "text": { "type": "string", "maxLength": 10000 },
-            "secretRef": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Vault-Referenz. Klartext-Credentials sind im Plan verboten; Wert wird zur Laufzeit aufgeloest und in allen Logs maskiert." },
-            "clearFirst": { "type": "boolean", "default": true },
-            "pressEnter": { "type": "boolean", "default": false }
+            "action": {
+              "const": "openLink"
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            },
+            "newTab": {
+              "type": "boolean",
+              "default": false
+            },
+            "tabId": {
+              "type": "string",
+              "maxLength": 64,
+              "description": "Pflicht bei newTab=true."
+            }
           },
-          "required": ["target"],
-          "oneOf": [{ "required": ["text"] }, { "required": ["secretRef"] }]
+          "required": [
+            "target"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "hotkey" },
-            "keys": { "type": "array", "minItems": 1, "maxItems": 4, "items": { "type": "string", "minLength": 1, "maxLength": 20 } }
+            "action": {
+              "const": "click"
+            },
+            "target": {
+              "$ref": "#/$defs/clickTarget"
+            }
           },
-          "required": ["keys"]
+          "required": [
+            "target"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "newTab" },
-            "tabId": { "type": "string", "minLength": 1, "maxLength": 64 },
-            "url": { "type": "string", "pattern": "^https?://" }
+            "action": {
+              "const": "doubleClick"
+            },
+            "target": {
+              "$ref": "#/$defs/clickTarget"
+            }
           },
-          "required": ["tabId"]
+          "required": [
+            "target"
+          ]
         },
-        { "properties": { "action": { "const": "switchTab" }, "tabId": { "type": "string", "minLength": 1, "maxLength": 64 } }, "required": ["tabId"] },
-        { "properties": { "action": { "const": "closeTab" }, "tabId": { "type": "string", "minLength": 1, "maxLength": 64 } }, "required": ["tabId"] },
         {
           "properties": {
-            "action": { "const": "fillForm" },
+            "action": {
+              "const": "rightClick"
+            },
+            "target": {
+              "$ref": "#/$defs/clickTarget"
+            }
+          },
+          "required": [
+            "target"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "hover"
+            },
+            "target": {
+              "$ref": "#/$defs/clickTarget"
+            }
+          },
+          "required": [
+            "target"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "scroll"
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            },
+            "direction": {
+              "enum": [
+                "up",
+                "down",
+                "left",
+                "right"
+              ]
+            },
+            "amountPx": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20000
+            },
+            "to": {
+              "enum": [
+                "top",
+                "end"
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "dragAndDrop"
+            },
+            "source": {
+              "$ref": "#/$defs/selector"
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            }
+          },
+          "required": [
+            "source",
+            "target"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "type"
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 10000
+            },
+            "secretRef": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Vault-Referenz. Klartext-Credentials sind im Plan verboten; Wert wird zur Laufzeit aufgeloest und in allen Logs maskiert."
+            },
+            "clearFirst": {
+              "type": "boolean",
+              "default": true
+            },
+            "pressEnter": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "oneOf": [
+            {
+              "required": [
+                "text"
+              ]
+            },
+            {
+              "required": [
+                "secretRef"
+              ]
+            }
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "hotkey"
+            },
+            "keys": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 4,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              }
+            }
+          },
+          "required": [
+            "keys"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "newTab"
+            },
+            "tabId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://"
+            }
+          },
+          "required": [
+            "tabId"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "switchTab"
+            },
+            "tabId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "tabId"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "closeTab"
+            },
+            "tabId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "tabId"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "fillForm"
+            },
             "fields": {
               "type": "array",
               "minItems": 1,
               "maxItems": 100,
               "items": {
                 "type": "object",
-                "required": ["target"],
+                "required": [
+                  "target"
+                ],
                 "additionalProperties": false,
                 "properties": {
-                  "target": { "$ref": "#/$defs/selector" },
-                  "kind": { "enum": ["text", "select", "checkbox", "radio"], "default": "text" },
-                  "value": { "type": "string", "maxLength": 10000 },
-                  "secretRef": { "type": "string", "minLength": 1, "maxLength": 200 },
-                  "checked": { "type": "boolean" }
+                  "target": {
+                    "$ref": "#/$defs/selector"
+                  },
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "select",
+                      "checkbox",
+                      "radio"
+                    ],
+                    "default": "text"
+                  },
+                  "value": {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  "secretRef": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "checked": {
+                    "type": "boolean"
+                  }
                 },
-                "oneOf": [{ "required": ["value"] }, { "required": ["secretRef"] }, { "required": ["checked"] }]
+                "oneOf": [
+                  {
+                    "required": [
+                      "value"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "secretRef"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "checked"
+                    ]
+                  }
+                ]
               }
             },
-            "submit": { "$ref": "#/$defs/selector" }
+            "submit": {
+              "$ref": "#/$defs/selector"
+            }
           },
-          "required": ["fields"]
+          "required": [
+            "fields"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "uploadFile" },
-            "target": { "$ref": "#/$defs/selector" },
-            "capsulePath": { "type": "string", "minLength": 1, "maxLength": 500, "description": "Nur Dateien aus der Task Capsule; verlangt policy.files.uploadAllowed=true." }
+            "action": {
+              "const": "uploadFile"
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            },
+            "capsulePath": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "description": "Nur Dateien aus der Task Capsule; verlangt policy.files.uploadAllowed=true."
+            }
           },
-          "required": ["target", "capsulePath"]
+          "required": [
+            "target",
+            "capsulePath"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "download" },
-            "trigger": { "$ref": "#/$defs/selector" },
-            "url": { "type": "string", "pattern": "^https?://" },
-            "saveAs": { "type": "string", "minLength": 1, "maxLength": 300, "description": "Zielname im Capsule-Artefaktpfad; verlangt policy.files.downloadAllowed=true." }
+            "action": {
+              "const": "download"
+            },
+            "trigger": {
+              "$ref": "#/$defs/selector"
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https?://"
+            },
+            "saveAs": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300,
+              "description": "Zielname im Capsule-Artefaktpfad; verlangt policy.files.downloadAllowed=true."
+            }
           },
-          "required": ["saveAs"],
-          "oneOf": [{ "required": ["trigger"] }, { "required": ["url"] }]
+          "required": [
+            "saveAs"
+          ],
+          "oneOf": [
+            {
+              "required": [
+                "trigger"
+              ]
+            },
+            {
+              "required": [
+                "url"
+              ]
+            }
+          ]
         },
         {
           "properties": {
-            "action": { "const": "watchDownloads" },
-            "expectFiles": { "type": "integer", "minimum": 1, "maximum": 100, "default": 1 }
+            "action": {
+              "const": "watchDownloads"
+            },
+            "expectFiles": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 1
+            }
           }
         },
         {
           "properties": {
-            "action": { "const": "screenshot" },
-            "name": { "type": "string", "minLength": 1, "maxLength": 200 },
-            "fullPage": { "type": "boolean", "default": false }
+            "action": {
+              "const": "screenshot"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "fullPage": {
+              "type": "boolean",
+              "default": false
+            }
           },
-          "required": ["name"]
+          "required": [
+            "name"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "savePdf" },
-            "name": { "type": "string", "minLength": 1, "maxLength": 200 }
+            "action": {
+              "const": "savePdf"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
           },
-          "required": ["name"]
+          "required": [
+            "name"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "extract" },
-            "name": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Ergebnisschluessel im Aktionsprotokoll." },
-            "target": { "$ref": "#/$defs/selector" },
-            "attribute": { "type": "string", "maxLength": 100, "description": "Leer = Textinhalt." },
-            "multiple": { "type": "boolean", "default": false }
+            "action": {
+              "const": "extract"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Ergebnisschluessel im Aktionsprotokoll."
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            },
+            "attribute": {
+              "type": "string",
+              "maxLength": 100,
+              "description": "Leer = Textinhalt."
+            },
+            "multiple": {
+              "type": "boolean",
+              "default": false
+            }
           },
-          "required": ["name", "target"]
+          "required": [
+            "name",
+            "target"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "extractTable" },
-            "name": { "type": "string", "minLength": 1, "maxLength": 200 },
-            "target": { "$ref": "#/$defs/selector" }
+            "action": {
+              "const": "extractTable"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            }
           },
-          "required": ["name", "target"]
+          "required": [
+            "name",
+            "target"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "cookies" },
-            "op": { "enum": ["get", "set", "clear"] },
+            "action": {
+              "const": "cookies"
+            },
+            "op": {
+              "enum": [
+                "get",
+                "set",
+                "clear"
+              ]
+            },
             "cookies": {
               "type": "array",
               "maxItems": 100,
               "items": {
                 "type": "object",
-                "required": ["name", "value", "domain"],
+                "required": [
+                  "name",
+                  "value",
+                  "domain"
+                ],
                 "additionalProperties": false,
                 "properties": {
-                  "name": { "type": "string", "minLength": 1, "maxLength": 200 },
-                  "value": { "type": "string", "maxLength": 5000 },
-                  "domain": { "type": "string", "minLength": 1, "maxLength": 300 },
-                  "path": { "type": "string", "maxLength": 300, "default": "/" },
-                  "secure": { "type": "boolean", "default": true },
-                  "httpOnly": { "type": "boolean", "default": false }
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "value": {
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  "domain": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "path": {
+                    "type": "string",
+                    "maxLength": 300,
+                    "default": "/"
+                  },
+                  "secure": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "httpOnly": {
+                    "type": "boolean",
+                    "default": false
+                  }
                 }
               }
             }
           },
-          "required": ["op"]
+          "required": [
+            "op"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "saveSession" },
-            "name": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Session/Cookies als e2-Objekt der Capsule; nie persistent auf dem Worker." }
+            "action": {
+              "const": "saveSession"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Session/Cookies als e2-Objekt der Capsule; nie persistent auf dem Worker."
+            }
           },
-          "required": ["name"]
+          "required": [
+            "name"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "restoreSession" },
-            "name": { "type": "string", "minLength": 1, "maxLength": 200 }
+            "action": {
+              "const": "restoreSession"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
           },
-          "required": ["name"]
+          "required": [
+            "name"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "waitFor" },
-            "condition": { "enum": ["selectorVisible", "selectorHidden", "urlMatches", "networkIdle", "delay"] },
-            "target": { "$ref": "#/$defs/selector" },
-            "urlPattern": { "type": "string", "maxLength": 500 },
-            "ms": { "type": "integer", "minimum": 1, "maximum": 60000 }
+            "action": {
+              "const": "waitFor"
+            },
+            "condition": {
+              "enum": [
+                "selectorVisible",
+                "selectorHidden",
+                "urlMatches",
+                "networkIdle",
+                "delay"
+              ]
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            },
+            "urlPattern": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000
+            }
           },
-          "required": ["condition"]
+          "required": [
+            "condition"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "assert" },
-            "condition": { "enum": ["selectorExists", "selectorTextContains", "selectorTextEquals", "urlMatches", "titleContains", "downloadExists"] },
-            "target": { "$ref": "#/$defs/selector" },
-            "text": { "type": "string", "maxLength": 2000 },
-            "urlPattern": { "type": "string", "maxLength": 500 },
-            "fileName": { "type": "string", "maxLength": 300 }
+            "action": {
+              "const": "assert"
+            },
+            "condition": {
+              "enum": [
+                "selectorExists",
+                "selectorTextContains",
+                "selectorTextEquals",
+                "urlMatches",
+                "titleContains",
+                "downloadExists"
+              ]
+            },
+            "target": {
+              "$ref": "#/$defs/selector"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "urlPattern": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "fileName": {
+              "type": "string",
+              "maxLength": 300
+            }
           },
-          "required": ["condition"]
+          "required": [
+            "condition"
+          ]
         },
         {
           "properties": {
-            "action": { "const": "httpRequest" },
-            "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] },
-            "url": { "type": "string", "minLength": 1, "pattern": "^https?://" },
-            "headers": { "type": "object", "maxProperties": 30, "additionalProperties": { "type": "string", "maxLength": 2000 } },
-            "body": { "type": "string", "maxLength": 100000 },
-            "expectStatus": { "type": "integer", "minimum": 100, "maximum": 599 },
-            "saveAs": { "type": "string", "maxLength": 300, "description": "Antwort als Capsule-Artefakt speichern (Stufe 1, kein Browser)." }
-          },
-          "required": ["method", "url"]
+            "action": {
+              "const": "dialogAccept"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          }
         },
         {
           "properties": {
-            "action": { "const": "runMacro" },
-            "macroRef": { "type": "string", "minLength": 1, "maxLength": 300, "description": "e2-Referenz eines gespeicherten, schema-validierten Makros (Phase 2). Laeuft ohne Planer-Modell." },
-            "params": { "type": "object", "maxProperties": 30, "additionalProperties": { "type": "string", "maxLength": 5000 } }
+            "action": {
+              "const": "dialogDismiss"
+            }
+          }
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "httpRequest"
+            },
+            "method": {
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "HEAD"
+              ]
+            },
+            "url": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^https?://"
+            },
+            "headers": {
+              "type": "object",
+              "maxProperties": 30,
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 2000
+              }
+            },
+            "body": {
+              "type": "string",
+              "maxLength": 100000
+            },
+            "expectStatus": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 599
+            },
+            "saveAs": {
+              "type": "string",
+              "maxLength": 300,
+              "description": "Antwort als Capsule-Artefakt speichern (Stufe 1, kein Browser)."
+            }
           },
-          "required": ["macroRef"]
+          "required": [
+            "method",
+            "url"
+          ]
+        },
+        {
+          "properties": {
+            "action": {
+              "const": "runMacro"
+            },
+            "macroRef": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300,
+              "description": "e2-Referenz eines gespeicherten, schema-validierten Makros (Phase 2). Laeuft ohne Planer-Modell."
+            },
+            "params": {
+              "type": "object",
+              "maxProperties": 30,
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 5000
+              }
+            }
+          },
+          "required": [
+            "macroRef"
+          ]
         }
       ]
     }

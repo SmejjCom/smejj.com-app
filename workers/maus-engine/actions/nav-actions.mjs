@@ -4,6 +4,11 @@
 // Allowlist-Pruefung (fail-closed); Cookie-Banner werden heuristisch
 // geschlossen (kein Modell).
 import { closeCookieBanner } from "../cookie-banner.mjs";
+// Jede neue Seite bekommt eine Dialog-Wache. Ohne sie verwirft Playwright
+// alert/confirm/prompt stillschweigend, und die Maus antwortet auf jede Frage
+// "Abbrechen" — ohne es zu merken. Die Wache ist dieselbe wie im
+// Fern-Browser, damit beide gleich reagieren.
+import { bewacheSeite } from "../dialog-wache.mjs";
 
 export const navActions = {
   async openBrowser(ctx, step) {
@@ -16,6 +21,7 @@ export const navActions = {
       const tabId = ctx.state.activeTabId || "main";
       if (!ctx.state.pages.has(tabId)) {
         const page = await ctx.state.context.newPage();
+        bewacheSeite(ctx.state, tabId, page);
         ctx.state.pages.set(tabId, page);
       }
       ctx.state.activeTabId = tabId;
@@ -30,6 +36,7 @@ export const navActions = {
       });
     }
     const page = await context.newPage();
+    bewacheSeite(ctx.state, "main", page);
     ctx.state.pages.set("main", page);
     ctx.state.activeTabId = "main";
     return { tabId: "main" };
@@ -77,6 +84,7 @@ export const navActions = {
   async newTab(ctx, step) {
     if (ctx.state.pages.has(step.tabId)) throw new Error(`tab_id_belegt: ${step.tabId}`);
     const page = await ctx.state.context.newPage();
+    bewacheSeite(ctx.state, step.tabId, page);
     ctx.state.pages.set(step.tabId, page);
     ctx.state.activeTabId = step.tabId;
     if (step.url) {
