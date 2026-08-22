@@ -28,7 +28,14 @@ COPY --chown=node:node gatekeeper ./gatekeeper
 COPY --chown=node:node worker-templates ./worker-templates
 COPY --chown=node:node public ./public
 COPY --chown=node:node docs ./docs
-COPY --chown=node:node Memory_Bank.md AI_Guidelines.md Project_Goals.md AGENTS.md README.md ./
+# Die fuenf Wurzeldokumente des RAG-Korpus (ROOT_KNOWLEDGE_FILES in
+# control-server/src/rag/knowledgeCorpus.js) plus Memory_Bank.md.
+# MASTER_PROMPT.md fehlte hier bis 2026-08-22 — ausgerechnet das Dokument mit
+# der vollstaendigen Dienste-Uebersicht. Live antwortete der Chat auf
+# "Auf welchen Servern laeuft smejj.com?" darum ausweichend, obwohl die
+# Anreicherung in rag/infrastrukturFrage.js genau auf dieses Dokument zielt:
+# es war nie im Abbild. tests/rag-korpus-im-abbild.test.mjs haelt das fest.
+COPY --chown=node:node Memory_Bank.md AI_Guidelines.md MASTER_PROMPT.md Project_Goals.md AGENTS.md README.md ./
 
 # ACHTUNG, rc1-Absturzklasse (2026-07-17): Diese beiden Zeilen fehlen im alten
 # deploy/control-server/Dockerfile. src/server.js laedt ueber
