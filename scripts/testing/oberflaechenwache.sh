@@ -7,8 +7,9 @@
 #   monatelang live, ohne dass irgendetwas anschlug — gemessen wurde nur bei
 #   375 px und nur von Hand. Diese Wache faehrt beide Waechter jede Nacht
 #   gegen die ECHTE Seite:
-#     measure:responsive   19 Ansichten x 8 Geraeteklassen (320 bis 1920 px)
-#     measure:touch:app    jedes bedienbare Element bei 375 px, echte Tipps
+#     measure:responsive        19 Ansichten x 8 Geraeteklassen (320 bis 1920 px)
+#     measure:touch:app         jedes bedienbare Element bei 375 px, echte Tipps
+#     check:control-umgebung    fehlt ein Betriebswert, ohne den etwas stillsteht?
 #
 #   Gegen https://smejj.com und nicht gegen einen lokalen Server: was zaehlt,
 #   ist was der Nutzer wirklich bekommt — samt Buendel, /assets/-Kopie und
@@ -47,7 +48,7 @@ CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 FEHLER=0
 
 echo ""
-echo "--- 1/2 Responsive (19 Ansichten x 8 Geraeteklassen) ---"
+echo "--- 1/3 Responsive (19 Ansichten x 8 Geraeteklassen) ---"
 if node scripts/testing/messe_responsive.mjs --url "$ZIEL"; then
   echo "[wache] responsive: gruen"
 else
@@ -56,7 +57,7 @@ else
 fi
 
 echo ""
-echo "--- 2/2 Touch-Ziele (375 px, echte Tipps) ---"
+echo "--- 2/3 Touch-Ziele (375 px, echte Tipps) ---"
 if node scripts/testing/measure_touch_targets_app.mjs --url "$ZIEL"; then
   echo "[wache] touch: gruen"
 else
@@ -65,9 +66,26 @@ else
 fi
 
 echo ""
-if [ "$FEHLER" -eq 0 ]; then
-  echo "[wache] BEIDE WAECHTER GRUEN — die ausgelieferte Oberflaeche haelt Mass."
+echo "--- 3/3 Betriebswerte des Control-Servers ---"
+# Warum das hier mitlaeuft und nicht in einer eigenen Wache: es ist dieselbe
+# Frage — haelt der ausgelieferte Betrieb, was er verspricht? Und es ist die
+# Luecke, die am teuersten war: SMEJJ_AUTOPILOT_KEYS fehlte vom 15. bis zum
+# 22.08. im Zeabur-Env, die Ampel war blind, und der Pruefer dafuer existierte
+# die ganze Zeit — er wurde nur nirgends aufgerufen. Ein zweiter Zeitgeber
+# waere ein zweiter Ort, an dem genau das wieder passieren kann.
+# Der Pruefer meldet nur FEHLENDE PFLICHTWERTE als Fehler; die uebrigen
+# Luecken sind Hinweise mit Standard.
+if node scripts/diagnose/control-umgebung-luecken.mjs; then
+  echo "[wache] betriebswerte: gruen"
 else
-  echo "[wache] ROT — mindestens ein Waechter meldet Verstoesse. Die Zeilen darueber nennen Ansicht und Element."
+  echo "[wache] betriebswerte: PFLICHTWERT FEHLT (siehe oben)"
+  FEHLER=1
+fi
+
+echo ""
+if [ "$FEHLER" -eq 0 ]; then
+  echo "[wache] ALLE DREI GRUEN — die ausgelieferte Oberflaeche haelt Mass, die Betriebswerte sind vollstaendig."
+else
+  echo "[wache] ROT — mindestens eine Pruefung meldet Verstoesse. Die Zeilen darueber nennen Ansicht, Element oder fehlenden Wert."
 fi
 exit "$FEHLER"
