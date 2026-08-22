@@ -11,6 +11,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { bewahreBefund } from "../scripts/verlauf/messlauf.mjs";
 import { runEvalSuite, ANTWORT_BELEG_MAX } from "../scripts/evaluation/run_model_eval.mjs";
+import { buildEvalReport } from "../src/evaluation/evalReport.js";
 
 function attrappen() {
   const geschrieben = [];
@@ -75,6 +76,42 @@ test("nicht bestandene Durchgaenge tragen ihren Wortlaut, bestandene nicht", asy
   assert.ok(Array.isArray(fall.belege) && fall.belege.length === 1,
     `genau der gefallene Durchgang gehoert belegt, nicht der bestandene: ${JSON.stringify(fall.belege)}`);
   assert.match(fall.belege[0].antwort, /Verstanden\. Ich kann daraus/);
+});
+
+test("der Wortlaut kommt bis in den BERICHT, nicht nur in den Zwischenschritt", async () => {
+  // DIE LUECKE, die der erste Versuch hatte: buildEvalReport baut die Faelle
+  // aus einer festen Feldauswahl. Was dort nicht steht, faellt still weg — die
+  // Belege waren in runEvalSuite fertig und kamen im Bericht nie an. Getestet
+  // war nur der Zwischenschritt, und der war gruen. Gemerkt habe ich es erst
+  // an einer Gegenprobe gegen die echte Kette.
+  const evalCase = { id: "probe", prompt: "Frage", assertions: [{ type: "contains_all", values: ["richtig"] }] };
+  const callModel = async () => ({ ok: true, text: "falsch geantwortet", backend: "test", modelId: "m" });
+  const { caseScores } = await runEvalSuite({
+    suite: { id: "s" }, cases: [evalCase], callModel, wiederholungen: 1, delayMs: 0, sleep: async () => {}
+  });
+  const bericht = buildEvalReport({
+    suite: { suiteId: "s", version: 1, budgets: { minScore: 0.8 }, integrity: {} },
+    run: { startedAt: new Date().toISOString(), finishedAt: new Date().toISOString() },
+    caseScores
+  });
+  const fall = bericht.cases[0];
+  assert.ok(Array.isArray(fall.belege) && fall.belege.length === 1,
+    `im Bericht fehlen die Belege: ${JSON.stringify(Object.keys(fall))}`);
+  assert.match(fall.belege[0].antwort, /falsch geantwortet/);
+});
+
+test("ein bestandener Fall traegt im Bericht KEINE Belege", async () => {
+  const evalCase = { id: "probe", prompt: "Frage", assertions: [{ type: "contains_all", values: ["richtig"] }] };
+  const callModel = async () => ({ ok: true, text: "richtig", backend: "test", modelId: "m" });
+  const { caseScores } = await runEvalSuite({
+    suite: { id: "s" }, cases: [evalCase], callModel, wiederholungen: 1, delayMs: 0, sleep: async () => {}
+  });
+  const bericht = buildEvalReport({
+    suite: { suiteId: "s", version: 1, budgets: { minScore: 0.8 }, integrity: {} },
+    run: { startedAt: new Date().toISOString(), finishedAt: new Date().toISOString() },
+    caseScores
+  });
+  assert.equal(bericht.cases[0].belege, undefined);
 });
 
 test("der Wortlaut wird gekuerzt, nicht unbegrenzt mitgeschleppt", async () => {
