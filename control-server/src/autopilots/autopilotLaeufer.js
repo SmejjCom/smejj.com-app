@@ -546,9 +546,22 @@ export async function laufMedienQualitaet({ mitNetz = true, env = process.env, f
   const ziele = [
     { name: "Video-Worker", url: String(env.SMEJJ_VIDEO_WORKER_URL || "http://smejj-video-worker.zeabur.internal:8080") }
   ];
-  if (env.SMEJJ_BILDER_WORKER_URL) {
-    ziele.push({ name: "Bild-Maler", url: String(env.SMEJJ_BILDER_WORKER_URL) });
-  }
+  // Der Bild-Maler stand hier hinter einem `if` ohne Ausweg: fehlt
+  // SMEJJ_BILDER_WORKER_URL, wurde er stillschweigend ausgelassen und die
+  // Medien-Ampel meldete gruen, obwohl die Bilderzeugung nie angefasst wurde —
+  // falsches Gruen ist schlimmer als rot. Gemessen am 2026-08-22: die Variable
+  // ist im Dienst nicht gesetzt (und war es seit den Env-Loeschungen vom 14.08.
+  // nicht), waehrend der Video-Worker seinen internen Standard hatte und darum
+  // weiter geprueft wurde.
+  // Zeabur legt fuer jeden Dienst eine <DIENST>_HOST-Variable an; die ist hier
+  // der zweite Weg. Der interne Standard ist der dritte, gebaut wie beim
+  // Video-Worker (Dockerfile.smejj-bild-maler: PORT=8080).
+  const bildMalerUrl = String(
+    env.SMEJJ_BILDER_WORKER_URL
+    || (env.SMEJJ_BILD_MALER_HOST ? `http://${env.SMEJJ_BILD_MALER_HOST}:8080` : "")
+    || "http://smejj-bild-maler.zeabur.internal:8080"
+  ).trim();
+  ziele.push({ name: "Bild-Maler", url: bildMalerUrl });
   const befunde = [];
   let allesOk = true;
   for (const ziel of ziele) {

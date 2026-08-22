@@ -565,3 +565,47 @@ test("bug-predictor: entschaerfte Timer und Fliesstext sind keine Befunde", () =
   assert.equal(iv("src/x.js", "// ein simpler setInterval(7 Tage) wuerde nie feuern"), 0, "Kommentar");
   assert.equal(http("src/x.js", 'fix: "Aendere http:// zu https://."'), 0, "Fliesstext ohne Host ist kein Endpunkt");
 });
+
+// --- Medien-Qualitaet: der Bild-Maler darf nicht stillschweigend entfallen ---
+// Befund 2026-08-22: er stand hinter einem `if (env.SMEJJ_BILDER_WORKER_URL)`
+// ohne Ausweg. Die Variable fehlte im Dienst, der Autopilot prueft seither nur
+// den Video-Worker und meldete gruen — waehrend die Bilderzeugung nie angefasst
+// wurde. Falsches Gruen ist schlimmer als rot.
+import { laufMedienQualitaet } from "./autopilotLaeufer.js";
+
+test("Medien-Qualitaet prueft den Bild-Maler auch ohne gesetzte URL", async () => {
+  const gefragt = [];
+  const fetchImpl = async (url) => {
+    gefragt.push(String(url));
+    return { ok: true, status: 200, json: async () => ({ bereit: true }) };
+  };
+  await laufMedienQualitaet({ mitNetz: true, env: {}, fetchImpl });
+  assert.ok(gefragt.some((u) => u.includes("smejj-bild-maler")),
+    `Bild-Maler wurde nicht gefragt. Gefragt: ${gefragt.join(", ")}`);
+  assert.ok(gefragt.some((u) => u.includes("smejj-video-worker")), "Video-Worker fehlt");
+});
+
+test("Medien-Qualitaet nimmt die Zeabur-Host-Variable als zweiten Weg", async () => {
+  // Zeabur legt fuer jeden Dienst <DIENST>_HOST an; im Dienst ist genau das
+  // gesetzt (SMEJJ_BILD_MALER_HOST), nicht die URL-Variable, die der Code las.
+  const gefragt = [];
+  const fetchImpl = async (url) => {
+    gefragt.push(String(url));
+    return { ok: true, status: 200, json: async () => ({ bereit: true }) };
+  };
+  await laufMedienQualitaet({ mitNetz: true, env: { SMEJJ_BILD_MALER_HOST: "malerhost" }, fetchImpl });
+  assert.ok(gefragt.some((u) => u.includes("http://malerhost:8080")),
+    `Host-Variable nicht benutzt. Gefragt: ${gefragt.join(", ")}`);
+});
+
+test("Medien-Qualitaet meldet den Bild-Maler rot, wenn er nicht antwortet", async () => {
+  // Die Gegenprobe zum falschen Gruen: faellt der Bild-Maler aus, MUSS es
+  // auffallen.
+  const fetchImpl = async (url) => {
+    if (String(url).includes("bild-maler")) throw new Error("nicht erreichbar");
+    return { ok: true, status: 200, json: async () => ({ bereit: true }) };
+  };
+  const ergebnis = await laufMedienQualitaet({ mitNetz: true, env: {}, fetchImpl });
+  assert.equal(ergebnis.ok, false, "ein toter Bild-Maler muss rot sein");
+  assert.match(String(ergebnis.meldung), /Bild-Maler/);
+});
