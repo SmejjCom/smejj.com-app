@@ -45,6 +45,13 @@ const MIT_ECHTER_MESSUNG = new Set([
   "voice-region-check",  // Lebenszeichen des Dienstes, ehrlich beschriftet
   "konkurrenz-radar",    // Lebenszeichen des Dienstes, ehrlich beschriftet
   "brueckenwaechter",    // wird vom Control-Server abgefragt (frageWaechterAb)
+  // Misst wirklich, und zwar die ausgelieferte Seite: 19 Ansichten x 8
+  // Geraetegroessen auf Ueberlauf, jedes bedienbare Element bei 375 px gegen
+  // das 44-px-Ziel, dazu die Betriebswerte des Control-Servers. Der Herzschlag
+  // geht aus scripts/testing/oberflaechenwache-geplant.sh raus, mit derselben
+  // Warteschlange wie Messlauf und Spiegel. Ohne hinterlegten Schluessel
+  // meldet sie NICHTS und bleibt grau — das ist ehrlich, nicht getarnt.
+  "oberflaechenwache",   // echte Messung gegen https://smejj.com
   "salad-sonden",        // Eigenmeldung des Control-Servers
   // --- Im Control-Server, betrieben vom Autopilot-Laeufer (alle 30 min) ---
   // Jeder bekommt eine Aufgabe mit feststehender Antwort und wird ROT, wenn

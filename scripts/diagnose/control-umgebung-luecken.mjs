@@ -41,9 +41,12 @@ const RELEVANT = /^(SMEJJ_|IDRIVE_|STRIPE_|GOOGLE_|PRESIGN_|FREE_DEMO_)/;
 export const PFLICHT = Object.freeze([
   {
     name: "SMEJJ_AUTOPILOT_KEYS",
-    folge: "Kein Autopilot kann sich melden — die ganze Ampel im Adminbereich ist blind.",
+    folge: "Kein Autopilot, der von AUSSEN meldet, kommt durch — Qualitaetsmessung, "
+      + "Codeberg-Spiegel und die Betriebswache laufen, ihre Ampeln bleiben aber grau. "
+      + "Die im Control-Server laufenden melden intern weiter (interneMeldung braucht keinen Schluessel).",
     beleg: "2026-08-22: Herzschlag-Endpunkt antwortet auf JEDE ID mit 503 autopilot_keys_missing, "
-      + "21 Meldungen stauten sich seit dem 15.08. in der Warteschlange, die Laeufe selbst waren gruen."
+      + "21 Meldungen stauten sich seit dem 15.08. in der Warteschlange, die Laeufe selbst waren gruen "
+      + "(Logs beider Mac-Jobs: 'beendet mit Code 0')."
   },
   {
     name: "SMEJJ_SESSION_SECRET",

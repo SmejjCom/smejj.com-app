@@ -106,11 +106,15 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     trainiert: "Qualitäts-Eval-Suites, Prompt-Varianten & Antwort-Präzision",
     verbessert: "Modell-Genauigkeit +12%, 100% Pass-Rate auf Standard-Testsets",
     neuigkeiten: ["Tages-Messung 7:10 UTC erfolgreich absolviert", "Antwortqualität 100% stabil im Soll"],
-    ort: "Zeabur (smejj-autopilot-jobs)",
-    // Diese Zeile ist eine VORGABE, keine Messung: sie steht fest im Code und
-    // weiß nichts vom Dienst-Env. Am 2026-08-14 liefen die Messungen um 02:16
-    // und 14:15 UTC, während hier 7:10/19:10 stand — deshalb der Zusatz.
-    zeitplan: "vorgesehen täglich 7:10 und 19:10 UTC (Dienst-Env kann abweichen)",
+    // KORRIGIERT 2026-08-22 (gemessen, nicht vermutet): Der Dienst
+    // smejj-autopilot-jobs existiert in KEINEM Zeabur-Projekt — abgefragt über
+    // die Zeabur-API, neun Dienste im Projekt, keiner davon dieser. Der
+    // Messlauf läuft seit dem Umzug auf dem Mac des Betreibers per crontab
+    // (~/.local/share/smejj-qualitaet/messlauf.sh, 7:10 und 19:10 Mac-Zeit).
+    // Wer hier "Zeabur" liest, sucht das Protokoll im Zeabur-Portal und findet
+    // nichts — es steht in ~/Library/Logs/smejj-qualitaetsmessung.log.
+    ort: "Mac des Betreibers (crontab → ~/.local/share/smejj-qualitaet/messlauf.sh)",
+    zeitplan: "täglich 7:10 und 19:10 Mac-Zeit (crontab)",
     messung: "heartbeat",
     erwartetAlleMs: 12 * STUNDE_MS,
     schonfristMs: 6 * STUNDE_MS,
@@ -122,7 +126,7 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     name: "02. Codeberg-Spiegel",
     kurz: "Sichert jede Nacht eine Kopie des Codes nach Codeberg — seit 11. August 2026 vom Zeabur-Dauerdienst, nicht mehr vom Mac.",
     funktionen: [
-      "Läuft täglich um 11:20 UTC (= 4:20 Uhr Mac-Zeit) im Dienst smejj-autopilot-jobs auf Zeabur.",
+      "Läuft täglich um 4:20 Uhr Mac-Zeit per crontab auf dem Rechner des Betreibers (~/.local/share/smejj-qualitaet/spiegel.sh). KORRIGIERT 2026-08-22: hier stand 'Dienst smejj-autopilot-jobs auf Zeabur' — diesen Dienst gibt es in keinem Zeabur-Projekt, gemessen über die Zeabur-API.",
       "Spiegelt das Repository nach Codeberg (zweiter, unabhängiger Aufbewahrungsort).",
       "Holt einen verpassten Tageslauf nach einem Neustart selbst nach.",
       "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
@@ -130,8 +134,8 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     trainiert: "Git-Ref-Bäume, Repository-Hashes & Commit-Historien",
     verbessert: "Ausfallsicherheit & Unabhängigkeit durch 2. unabhängigen Open-Source-Spiegel",
     neuigkeiten: ["Spiegelung nach Codeberg synchron auf Stand 2026-08-11", "Repository vollstaendig gesichert"],
-    ort: "Zeabur (smejj-autopilot-jobs)",
-    zeitplan: "täglich 11:20 UTC",
+    ort: "Mac des Betreibers (crontab → ~/.local/share/smejj-qualitaet/spiegel.sh)",
+    zeitplan: "täglich 4:20 Uhr Mac-Zeit (crontab)",
     messung: "heartbeat",
     erwartetAlleMs: TAG_MS,
     schonfristMs: 6 * STUNDE_MS,
@@ -164,6 +168,7 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     name: "04. Konkurrenz-Radar",
     kurz: "Durchsucht jeden Montag die öffentlichen Quellen der Konkurrenz nach neuen Funktionen und schlägt Verbesserungen vor.",
     funktionen: [
+      "OHNE ZUHAUSE (gemessen 2026-08-22): Der Dienst smejj-autopilot-jobs, der diesen Lauf ausloesen soll, existiert in KEINEM Zeabur-Projekt — abgefragt ueber die Zeabur-API: neun Dienste im Projekt, keiner davon dieser. Der Worker-Code liegt unter workers/smejj-autopilot-jobs/, wird aber nirgends betrieben. Dieser Autopilot laeuft also derzeit NICHT. Die Ampel zeigt das nicht als rot, sondern als grau — es meldet sich schlicht niemand.",
       "Läuft jeden Montag um 6:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
       "EHRLICH: Der Zeabur-Lauf ist bisher nur ein Lebenszeichen des Dienstes — der echte Quellenscan ist noch nicht angebunden.",
       "Erstellt nur bei echten Funden einen Bericht."
@@ -171,8 +176,8 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     trainiert: "AI Benchmark Leaderboards & Öffentliche Tech Release Notes",
     verbessert: "Strategische Überholspur durch wöchentliches Benchmarking der Top-Anbieter",
     neuigkeiten: ["Wochen-Radar erfolgreich ausgeführt", "Keine ungeprüften Konkurrenz-Abweichungen"],
-    ort: "Zeabur (smejj-autopilot-jobs)",
-    zeitplan: "montags 6:00 UTC",
+    ort: "NICHT BETRIEBEN — vorgesehen war Zeabur (smejj-autopilot-jobs), diesen Dienst gibt es nicht",
+    zeitplan: "vorgesehen montags 6:00 UTC — laeuft derzeit nicht",
     messung: "heartbeat",
     erwartetAlleMs: 7 * TAG_MS,
     schonfristMs: 12 * STUNDE_MS,
@@ -184,6 +189,7 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     name: "05. Training-Loop",
     kurz: "Überwacht und taktet die Evaluierungs- und Trainingszyklen im Dienst smejj-autopilot-jobs auf Zeabur.",
     funktionen: [
+      "OHNE ZUHAUSE (gemessen 2026-08-22): Der Dienst smejj-autopilot-jobs, der diesen Lauf ausloesen soll, existiert in KEINEM Zeabur-Projekt — abgefragt ueber die Zeabur-API: neun Dienste im Projekt, keiner davon dieser. Der Worker-Code liegt unter workers/smejj-autopilot-jobs/, wird aber nirgends betrieben. Dieser Autopilot laeuft also derzeit NICHT. Die Ampel zeigt das nicht als rot, sondern als grau — es meldet sich schlicht niemand.",
       "Läuft täglich um 12:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
       "Prüft Evaluierungsberichte und Auswertungsschleifen.",
       "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
@@ -191,8 +197,8 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     trainiert: "Modell-Evaluierungsberichte & Inferenz-Metriken",
     verbessert: "Planmäßige Taktung aller Trainings- und DPO-Schleifen rund um die Uhr",
     neuigkeiten: ["Dauertrainings-Takt 100% synchronisiert auf Zeabur", "Eval-Pipeline grün"],
-    ort: "Zeabur (smejj-autopilot-jobs)",
-    zeitplan: "täglich 12:00 UTC",
+    ort: "NICHT BETRIEBEN — vorgesehen war Zeabur (smejj-autopilot-jobs), diesen Dienst gibt es nicht; der Dienst smejj-training-loop existiert, hat aber keinen oeffentlichen Gesundheitspfad und wird von niemandem getaktet",
+    zeitplan: "vorgesehen täglich 12:00 UTC — laeuft derzeit nicht",
     messung: "geplant",
     messungHinweis: "Stillgelegt seit 2026-08-02 (Betreiber-Entscheidung: RAG statt Training). Ein stillgelegter Kreislauf meldet nichts.",
     erwartetAlleMs: TAG_MS,
