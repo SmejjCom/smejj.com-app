@@ -127,6 +127,36 @@ test("Auslieferung und Sync teilen EINE Ausnahmeliste", async () => {
   assert.ok(typeof waechter.pruefe === "function");
 });
 
+test("keine Stil-Marke in der abo-gesperrten Kontodatei", () => {
+  // Betreiber-Freigabe 2026-08-22 ("Marke auslagern"). Hintergrund: die
+  // CSS-Marke muss bei JEDER Aenderung an account-privacy.css steigen, sonst
+  // laedt ein offener Browser die alte Datei. Sie stand aber in
+  // account-privacy.js — und die liegt im Abo-Lock. Damit brach jede
+  // Designarbeit am Kontobereich die Zahlungs-Sperre, und wer sie dann
+  // routinemaessig neu stempelt, gewoehnt sich genau das ab, wovor sie
+  // schuetzt. Gemessen: der Lock war rot, und der GESAMTE Unterschied zum
+  // eingefrorenen Stand war diese eine Zeile.
+  const konto = fs.readFileSync("public/account-privacy.js", "utf8");
+  const marke = fs.readFileSync("public/account-auth-state.js", "utf8");
+
+  assert.match(marke, /export const KONTO_STIL_MARKE = "[^"]+";/,
+    "die Marke gehoert in die ungesperrte Datei");
+  assert.match(konto, /const STYLE_VERSION = KONTO_STIL_MARKE;/,
+    "die gesperrte Datei darf die Marke nur noch REFERENZIEREN, nie selbst setzen");
+  assert.ok(!/const STYLE_VERSION = "/.test(konto),
+    "ein fester Marken-String hier wuerde den Abo-Lock bei jeder Stil-Aenderung brechen");
+
+  // Und der Import darf keine eigene Marke tragen — sonst muesste die
+  // gesperrte Datei bei jeder Aenderung an account-auth-state.js wieder
+  // angefasst werden. Dasselbe Problem, nur eine Ebene weiter.
+  assert.match(konto, /from "\.\/account-auth-state\.js";/,
+    "der Import muss ohne ?v= auskommen; frisch kommt die Datei ueber den sw-Precache");
+
+  // Die ausgelagerte Datei MUSS im Precache stehen, sonst ist sie offline tot.
+  assert.match(fs.readFileSync("public/sw.js", "utf8"), /account-auth-state\.js/,
+    "account-auth-state.js muss im Precache bleiben");
+});
+
 test("die vier Sperren teilen sich keine Datei — sonst gaebe es zwei Wahrheiten", () => {
   // Eine Datei unter zwei Manifesten hiesse: zwei Stellen, die sie freigeben
   // koennen, und zwei Staende, die auseinanderlaufen duerfen.
