@@ -9,7 +9,7 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readFileSync } from "node:fs";
-import { erwarteteSchluessel, PFLICHT } from "../scripts/diagnose/control-umgebung-luecken.mjs";
+import { erwarteteSchluessel, einstufung, PFLICHT } from "../scripts/diagnose/control-umgebung-luecken.mjs";
 
 function mitProbe(inhalt, pruefung) {
   const ordner = mkdtempSync(join(tmpdir(), "smejj-envtest-"));
@@ -51,6 +51,31 @@ test("gesunde Probe: was keine Serverkonfiguration ist, wird nicht gemeldet", ()
   mitProbe('if (env.NODE_ENV === "test") return process.env.PATH;', (namen) => {
     assert.deepEqual(namen, [], `unerwartet gemeldet: ${namen.join(", ")}`);
   });
+});
+
+test("die Einstufung trennt Vorgabe, Schalter und wirklich offen", () => {
+  // Der Grund fuer die Einstufung: 185 Namen standen gleichberechtigt
+  // untereinander, und wer 185 Hinweise sieht, liest keinen. Nach der
+  // Einstufung bleiben 46 uebrig, die eine Frage wert sind.
+  const stelle = (text) => [{ datei: "x.js", zeile: 1, text }];
+
+  // Vorgabewert in allen ueblichen Schreibweisen — kein Befund.
+  assert.equal(einstufung("SMEJJ_X_WERT", stelle('const a = env.SMEJJ_X_WERT || 5;')), "standard");
+  assert.equal(einstufung("SMEJJ_X_WERT", stelle('const a = env.SMEJJ_X_WERT ?? "auto";')), "standard");
+  assert.equal(einstufung("SMEJJ_X_WERT", stelle('clampInt(process.env.SMEJJ_X_WERT, 20, 1, 200);')), "standard");
+
+  // Schalter: fehlt er, ist die Funktion aus — das ist sein Zweck.
+  assert.equal(einstufung("SMEJJ_X_AN", stelle('if (env.SMEJJ_X_AN !== "YES") return;')), "schalter");
+
+  // Roh: kein Vorgabewert weit und breit. NUR das ist zu pruefen.
+  assert.equal(einstufung("SMEJJ_X_KEY", stelle('signiere(env.SMEJJ_X_KEY);')), "roh");
+
+  // Eine rohe Fundstelle genuegt: an anderer Stelle eine Vorgabe zu haben,
+  // rettet die Zeile nicht, in der keine steht.
+  assert.equal(einstufung("SMEJJ_X_KEY", [
+    { datei: "a.js", zeile: 1, text: 'const a = env.SMEJJ_X_KEY || "";' },
+    { datei: "b.js", zeile: 9, text: 'signiere(env.SMEJJ_X_KEY);' }
+  ]), "roh");
 });
 
 test("jeder Pflichtwert traegt Folge UND Beleg", () => {

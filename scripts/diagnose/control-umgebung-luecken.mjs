@@ -70,17 +70,55 @@ function dateien(wurzel) {
 
 /** Alle Konfigurationsnamen, die der Quelltext liest. */
 export function erwarteteSchluessel(wurzeln = QUELLEN) {
-  const namen = new Set();
+  return [...fundstellen(wurzeln).keys()].sort();
+}
+
+/** Name -> die Zeilen, in denen er gelesen wird. Grundlage der Einstufung. */
+export function fundstellen(wurzeln = QUELLEN) {
+  const gefunden = new Map();
   for (const wurzel of wurzeln) {
     for (const datei of dateien(wurzel)) {
-      const text = readFileSync(datei, "utf8");
-      for (const treffer of text.matchAll(MUSTER)) {
-        const name = treffer[1] || treffer[2];
-        if (RELEVANT.test(name)) namen.add(name);
+      const zeilen = readFileSync(datei, "utf8").split("\n");
+      for (let i = 0; i < zeilen.length; i += 1) {
+        for (const treffer of zeilen[i].matchAll(MUSTER)) {
+          const name = treffer[1] || treffer[2];
+          if (!RELEVANT.test(name)) continue;
+          if (!gefunden.has(name)) gefunden.set(name, []);
+          gefunden.get(name).push({ datei, zeile: i + 1, text: zeilen[i].trim().slice(0, 130) });
+        }
       }
     }
   }
-  return [...namen].sort();
+  return gefunden;
+}
+
+/**
+ * Was bedeutet es, wenn dieser Wert fehlt? Drei Antworten, und nur eine davon
+ * ist ueberhaupt eine Frage wert. Ohne diese Einstufung standen 185 Namen
+ * gleichberechtigt untereinander — wer 185 Hinweise sieht, liest keinen.
+ *
+ *   "standard"  irgendwo steht ein Vorgabewert (`env.X || 5`, `clampInt(env.X, 20, ...)`).
+ *               Fehlt der Wert, greift die Vorgabe. Kein Befund.
+ *   "schalter"  wird gegen einen festen Text geprueft (`env.X === "YES"`).
+ *               Fehlt er, ist die Funktion AUS — das ist der Sinn eines Schalters.
+ *   "roh"       kein erkennbarer Vorgabewert. NUR diese Gruppe ist zu pruefen.
+ *
+ * Die Einstufung liest die Zeile, nicht den Sinn — sie schlaegt eine Richtung
+ * vor, sie faellt kein Urteil. Das Urteil steht in PFLICHT, und dort nur mit
+ * Beleg.
+ */
+export function einstufung(name, stellen) {
+  const e = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const arten = stellen.map(({ text }) => {
+    if (new RegExp(e + '\\s*(===|!==)\\s*["\']').test(text)) return "schalter";
+    if (new RegExp(e + "\\s*(\\|\\||\\?\\?)").test(text)) return "standard";
+    // helper(env.X, <Vorgabe>, ...) — nach dem Namen folgt ein Literal
+    if (new RegExp(e + '\\s*,\\s*(-?\\d|["\']|true|false)').test(text)) return "standard";
+    return "roh";
+  });
+  if (arten.every((a) => a === "standard")) return "standard";
+  if (arten.some((a) => a === "schalter") && arten.every((a) => a !== "roh")) return "schalter";
+  return "roh";
 }
 
 // Der Hauptteil laeuft NUR beim direkten Aufruf. Vorher stand er nackt in der
@@ -104,10 +142,23 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   console.log(`Pflichtwerte: ${PFLICHT.length - kritischFehlend.length}/${PFLICHT.length} vorhanden.`);
 
   if (fehlend.length) {
-    console.log(`\n${fehlend.length} Schluessel werden gelesen, sind aber NICHT gesetzt.`);
-    console.log("Die meisten davon sind optional und haben einen Standard — deshalb sind sie");
-    console.log("ein Hinweis und kein Urteil. Vollstaendige Liste mit --alle.");
-    if (process.argv.includes("--alle")) for (const k of fehlend) console.log(`  ${k}`);
+    const stellen = fundstellen();
+    const nachArt = { standard: [], schalter: [], roh: [] };
+    for (const k of fehlend) nachArt[einstufung(k, stellen.get(k) || [])].push(k);
+    console.log(`\n${fehlend.length} Schluessel werden gelesen, sind aber NICHT gesetzt:`);
+    console.log(`  ${String(nachArt.standard.length).padStart(3)} mit Vorgabewert im Code — die Vorgabe greift, kein Befund`);
+    console.log(`  ${String(nachArt.schalter.length).padStart(3)} Schalter (=== "YES") — fehlt er, ist die Funktion AUS, so gedacht`);
+    console.log(`  ${String(nachArt.roh.length).padStart(3)} ohne erkennbare Vorgabe — NUR diese sind zu pruefen`);
+    if (nachArt.roh.length) {
+      console.log("\nZu pruefen (Nachweis eines Ausfalls gehoert dann in PFLICHT):");
+      for (const k of nachArt.roh) console.log(`  ${k}`);
+    }
+    if (process.argv.includes("--alle")) {
+      for (const art of ["standard", "schalter"]) {
+        console.log(`\n${art}:`);
+        for (const k of nachArt[art]) console.log(`  ${k}`);
+      }
+    }
   }
 
   if (!kritischFehlend.length) {
