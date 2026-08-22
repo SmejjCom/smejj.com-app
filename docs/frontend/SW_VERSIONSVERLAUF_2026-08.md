@@ -1435,3 +1435,39 @@ Verstoesse (eine begruendete Ausnahme: #codeArbeit), check:start-styles
 aktuell, Start-Lock OK. v639 folgt auf v638 einer Parallelsitzung
 (JS-Dialoge im Panel); vor dem Push wurde jede Live-Datei gegen den
 eigenen Ausgangsstand geprueft — es wurde nichts Fremdes ueberschrieben.
+
+## v645 (2026-08-22) — V11 fuer Einstellungen und Konto, Fokusring repariert
+
+Deploy der letzten zwei Bereiche, die noch eine eigene Farbwelt hatten.
+Sieben Dateien: account-privacy.css/js, settings-surface.css/js,
+account-auth-state.js, design-cyan-views.css, design-v11-views.css.
+
+Inhaltlich:
+- design-cyan-views.css ist LEER. Sie faerbte die Flaeche unter allen 19
+  Nicht-Start-Ansichten kalt ein (#080d14 plus zwei cyane Radial-
+  Verlaeufe). Die richtige, neutrale Fassung lag die ganze Zeit darunter
+  in app-surfaces.css und war nur ueberdeckt. Gemessen: 0 -> 18 von 18
+  Ansichten ohne eigene Flaeche.
+- Der "Light-Leak" im Kontobereich ist raus (Leuchtrahmen plus zwei
+  220-px-Leuchtkugeln je Tafel, im Ton --v11-marke). Beleg fuer die
+  Entscheidung: Effekt vom 2026-08-11, Betreiber-Ansage "Leuchten
+  gedaempft, Augen schonen" vom 2026-08-16 — fuenf Tage spaeter, diese
+  Datei wurde dabei nie mitgezogen. Die Willkommens-Karte behaelt ihn.
+- FOKUSRING repariert: er trug #2dd4bf und der Test behauptete
+  "Akzentfarbe traegt in hell und dunkel". Nachgerechnet (WCAG non-text,
+  Schwelle 3.0) war das nie wahr — 1.86 gegen den hellen Konto-Grund.
+  Tastaturnutzer im hellen Schema hatten keinen sichtbaren Ring. Jetzt
+  eigene Variable je Schema: dunkel var(--v11-cy) 13.84, hell #0c6b5e
+  6.18.
+- Die CSS-Marke wanderte aus der abo-gesperrten account-privacy.js nach
+  account-auth-state.js (KONTO_STIL_MARKE). Sie musste bei jeder
+  Stil-Aenderung steigen und brach dadurch jedes Mal die Zahlungs-Sperre.
+
+BEWUSST NICHT im Deploy: chat-bridge.js (im Frontend-Repo das
+gebuendelte Artefakt — die Quelle dorthin zu kopieren crasht den
+Zeabur-Dienst mit ERR_MODULE_NOT_FOUND) und die uebrige Arbeit der
+Parallelsitzung, die ihren eigenen Deploy-Rhythmus hat.
+
+v645 folgt auf v644 einer Parallelsitzung. Live-Nummer vor dem Bump
+gemessen; sw.js war inhaltlich identisch zum lokalen Stand, nur die
+Nummer wich ab — es wurde nichts Fremdes ueberschrieben.
