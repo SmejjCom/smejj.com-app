@@ -4,6 +4,7 @@
 // Handoff-Rueckkehr und JSON-Antwort.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createGoogleAuthHandlers } from "../src/auth/googleAuthRoutes.js";
 
 function mockRes() {
@@ -93,4 +94,109 @@ test("Login ohne redirect: 200 JSON mit accessToken; unverifizierte E-Mail -> 40
   const res2 = mockRes();
   await h2.handleGoogleAuth({}, res2);
   assert.equal(res2.statusCode, 403);
+});
+
+// --- Die JSON-Sackgasse nach Google --------------------------------------------
+//
+// Vom Betreiber gemeldet am 2026-08-22: nach einem Google-Login stand im
+// Browser nur noch
+//   {"error": "Google Login State ist abgelaufen."}
+// auf smejj-control.zeabur.app — kein Zurueck, kein Knopf, nichts. Das Ticket
+// haelt zehn Minuten; seines war aelter, weil der Control-Server dazwischen neu
+// gebaut wurde und er einen zweiten Anlauf nahm.
+//
+// Der Fehler selbst ist richtig (ein altes Ticket darf nicht gelten) — die
+// SACKGASSE ist der Mangel. Fuer das verfallene Handoff-Ticket gab es das
+// richtige Muster schon: zurueck auf die Anmeldeseite mit lesbarem Grund.
+//
+// Waechter-TUEV: abgelaufen im Browser (Rueckleitung), ungueltig im Browser
+// (Rueckleitung, aber KEIN fremdes Ziel), und der Maschinenweg bleibt JSON.
+
+const abgelaufenDeps = {
+  ...basisDeps,
+  leseGoogleAuthState: () => ({
+    ok: false,
+    grund: "abgelaufen",
+    daten: { handoffReturn: "https://smejj.com", handoff: "t1" }
+  })
+};
+
+test("abgelaufenes Ticket im Browser: zurueck zur Anmeldeseite statt JSON", async () => {
+  const h = createGoogleAuthHandlers({
+    ...abgelaufenDeps,
+    config: { googleClientId: "cid", sessionSecret: "s" },
+    readAuthBody: async () => ({ state: "alt", credential: "x", redirect: true })
+  });
+  const res = mockRes();
+  await h.handleGoogleAuth({ headers: {} }, res);
+  assert.equal(res.statusCode, 303);
+  assert.equal(res.headers.Location, "https://smejj.com/auth/login/?abgelaufen=1");
+  assert.equal(res.body, "", "eine Weiterleitung traegt keinen JSON-Koerper");
+});
+
+test("ungueltige Signatur bestimmt KEIN Rueckkehrziel", async () => {
+  // Kaputte Probe: ein fremdes Ticket darf nicht steuern, wohin der Nutzer geht.
+  // Ohne eigene Daten faellt die Route auf die feste App-Adresse zurueck.
+  const h = createGoogleAuthHandlers({
+    ...basisDeps,
+    leseGoogleAuthState: () => ({ ok: false, grund: "ungueltig", daten: { handoffReturn: "https://boese.example" } }),
+    config: { googleClientId: "cid", sessionSecret: "s" },
+    readAuthBody: async () => ({ state: "fremd", credential: "x", redirect: true })
+  });
+  const res = mockRes();
+  await h.handleGoogleAuth({ headers: {} }, res);
+  assert.equal(res.statusCode, 303);
+  assert.ok(res.headers.Location.startsWith("https://smejj.com/"), `fremdes Ziel durchgelassen: ${res.headers.Location}`);
+});
+
+test("ohne Browser-Rueckweg bleibt es bei einer ehrlichen JSON-Antwort", async () => {
+  // Maschinenweg (JSON-Aufruf, kein form_post): hier ist eine Weiterleitung
+  // sinnlos, der Aufrufer braucht den Grund als Text.
+  const h = createGoogleAuthHandlers({
+    ...abgelaufenDeps,
+    config: { googleClientId: "cid", sessionSecret: "s" },
+    readAuthBody: async () => ({ state: "alt", credential: "x" })
+  });
+  const res = mockRes();
+  await h.handleGoogleAuth({ headers: {} }, res);
+  assert.equal(res.statusCode, 400);
+  assert.match(res.body, /abgelaufen/);
+});
+
+test("gueltiges Ticket laeuft unveraendert durch", async () => {
+  // Gesunde Probe: die Reparatur darf den Normalfall nicht anfassen.
+  const h = createGoogleAuthHandlers({
+    ...basisDeps,
+    leseGoogleAuthState: () => ({ ok: true, daten: { nonce: "n", returnTo: "/profile?google=ok" } }),
+    config: { googleClientId: "cid", sessionSecret: "s" },
+    readAuthBody: async () => ({ state: "frisch", credential: "x", redirect: true })
+  });
+  const res = mockRes();
+  await h.handleGoogleAuth({ headers: {} }, res);
+  assert.equal(res.statusCode, 303);
+  assert.equal(res.headers.Location, "/profile?google=ok");
+});
+
+test("der Grund kommt in dem Parameter, den die Anmeldeseite liest", () => {
+  // auth-page.js prueft `params.get("abgelaufen")` und macht daraus den Satz
+  // "Deine Anmeldung ist abgelaufen. Bitte melde dich erneut an." Ein anderer
+  // Parametername landet stumm auf der Seite — der Nutzer weiss dann nicht,
+  // warum er wieder hier steht. Genau das war bei `fehler=anmeldung_abgelaufen`
+  // der Fall: kein einziger Leser im Frontend.
+  // Kommentarzeilen raus: der alte Parametername wird dort ausdruecklich
+  // ERWAEHNT, damit spaeter niemand wieder zu ihm greift. Gemeint ist der Code.
+  const route = readFileSync(new URL("../src/auth/googleAuthRoutes.js", import.meta.url), "utf8")
+    .split("\n").filter((zeile) => !/^\s*\/\//.test(zeile)).join("\n");
+  const seite = readFileSync(new URL("../public/auth/auth-page.js", import.meta.url), "utf8");
+  assert.match(seite, /params\.get\("abgelaufen"\)/, "die Anmeldeseite muss den Parameter lesen");
+  // `handoff` ist der ERFOLGSweg (Ticket hinterlegt) und bleibt aussen vor —
+  // geprueft werden die Rueckwege, die einen GRUND transportieren sollen.
+  const gruende = [...route.matchAll(/\/auth\/login\/?\?([a-z_]+)=/g)]
+    .map((treffer) => treffer[1])
+    .filter((name) => name !== "handoff");
+  assert.ok(gruende.length >= 2, `zu wenige Rueckwege gefunden: ${gruende.length}`);
+  for (const name of gruende) {
+    assert.equal(name, "abgelaufen", `unbekannter Parameter im Rueckweg: ${name}`);
+  }
+  assert.ok(!/fehler=anmeldung_abgelaufen/.test(route), "der stumme Parameter muss weg sein");
 });

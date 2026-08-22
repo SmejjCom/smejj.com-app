@@ -44,6 +44,40 @@ export function verifyGoogleAuthState(state, secret, nowMs = Date.now()) {
   return data;
 }
 
+/**
+ * Liest den State, OHNE zu werfen — fuer den Rueckweg aus dem Browser.
+ *
+ * Warum es das braucht (Befund 2026-08-22, vom Betreiber gemeldet): Kam der
+ * Nutzer mit einem abgelaufenen Ticket von Google zurueck, warf
+ * verifyGoogleAuthState, und der Browser stand auf einer nackten JSON-Seite
+ * der API-Domain: {"error":"Google Login State ist abgelaufen."} — kein Zurueck,
+ * kein Knopf, nichts. Die Route kann das nur abfangen, wenn sie den Grund
+ * erfaehrt, statt einen Fehler zu bekommen.
+ *
+ * Bei ABGELAUFEN wird der Inhalt trotzdem zurueckgegeben: die Signatur war
+ * gueltig, das Ticket stammt also nachweislich von uns — nur die Frist ist
+ * verstrichen. Damit kennt die Route das Rueckkehrziel und kann den Nutzer
+ * dorthin schicken. Bei UNGUELTIGER Signatur gibt es bewusst KEINE Daten:
+ * ein fremdes Ticket darf kein Ziel bestimmen.
+ *
+ * @returns {{ok: true, daten: object} | {ok: false, grund: "abgelaufen"|"ungueltig", daten: object|null}}
+ */
+export function leseGoogleAuthState(state, secret, nowMs = Date.now()) {
+  try {
+    return { ok: true, daten: verifyGoogleAuthState(state, secret, nowMs) };
+  } catch (fehler) {
+    const abgelaufen = /abgelaufen/.test(String(fehler?.message || ""));
+    if (!abgelaufen) return { ok: false, grund: "ungueltig", daten: null };
+    let daten = null;
+    try {
+      daten = JSON.parse(base64UrlDecode(String(state).split(".")[0]).toString("utf8"));
+    } catch {
+      daten = null;
+    }
+    return { ok: false, grund: "abgelaufen", daten };
+  }
+}
+
 async function getGooglePublicKey(kid, fetchImpl) {
   const response = await fetchImpl("https://www.googleapis.com/oauth2/v3/certs", { redirect: "error" });
   if (!response.ok) throw new Error("Google Zertifikate konnten nicht geladen werden.");

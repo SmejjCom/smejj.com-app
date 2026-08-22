@@ -50,8 +50,9 @@ import { bearerSessionToken, issueSessionToken, issueAccessToken, verifySessionT
 import { createSessionHandoffStore, isSessionHandoffId } from "../control-server/src/auth/sessionHandoff.js";
 import { handleTrainingCaptureRoute } from "../control-server/src/routes/trainingCaptureRoutes.js";
 import { handleTrainingConsentRoute } from "../control-server/src/routes/trainingConsentRoutes.js";
-import { signGoogleAuthState, verifyGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
+import { signGoogleAuthState, verifyGoogleAuthState, leseGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
 import { createGoogleAuthHandlers } from "./auth/googleAuthRoutes.js";
+import { createAnmeldeProtokoll } from "../control-server/src/auth/anmeldeProtokoll.js";
 import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
 import { mailerConfig } from "../control-server/src/auth/mailer.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
@@ -457,6 +458,10 @@ function requestOrigin(req) {
 
 // Google-Login-Handler: ausgelagert nach src/auth/googleAuthRoutes.js (2026-07-15).
 // Verhalten unveraendert; Abhaengigkeiten werden injiziert (erstmals unit-testbar).
+// Protokoll der Anmeldeversuche. EINE Instanz fuer alle Wege, damit die
+// Zeilen im Log dasselbe Format haben und zusammen auswertbar bleiben.
+const anmeldeProtokoll = createAnmeldeProtokoll({ env: process.env });
+
 const { handleGoogleAuth, handleGoogleAuthStart } = createGoogleAuthHandlers({
   config,
   json,
@@ -472,8 +477,10 @@ const { handleGoogleAuth, handleGoogleAuthStart } = createGoogleAuthHandlers({
   allowedOriginsFromEnv,
   signGoogleAuthState,
   verifyGoogleAuthState,
+  leseGoogleAuthState,
   verifyGoogleIdToken,
   ROUTES,
+  anmeldeProtokoll,
   env: process.env
 });
 
@@ -483,7 +490,7 @@ const routeExtraAuth = createExtraAuthRouter({
   config, json, readJson, SECURITY_HEADERS,
   // H1: nur Client-Bearer (siehe Google-Router oben) -> serializeAccessToken.
   serializeSessionCookie, serializeSessionToken: serializeAccessToken,
-  sessionHandoffStore, allowedOriginsFromEnv, ROUTES, env: process.env
+  sessionHandoffStore, allowedOriginsFromEnv, ROUTES, anmeldeProtokoll, env: process.env
 });
 
 async function handleAuthLogout(req, res) {
