@@ -49,7 +49,22 @@ export const PFLICHT = Object.freeze([
     name: "SMEJJ_SESSION_SECRET",
     folge: "Keine Sitzung laesst sich ausstellen oder pruefen — Anmeldung und Mess-Token sind tot.",
     beleg: "Der Qualitaets-Messlauf bricht ohne ihn ab (qualitaets-messlauf.yml: 'es wurde NICHTS gemessen')."
-  }
+  },
+  // Die fuenf Werte der Trainings-Einwilligung stehen zusammen, weil sie
+  // zusammen wirken: trainingConsentConfig meldet `ready` nur, wenn Signier-
+  // und Bindeschluessel da, VERSCHIEDEN und beide von den uebrigen getrennt
+  // sind — plus ein gueltiger Hash des Datenschutzhinweises. Fehlt einer,
+  // faellt alles.
+  ...["SMEJJ_TRAINING_CONSENT_SIGNING_KEY_B64", "SMEJJ_TRAINING_CONSENT_SIGNING_KEY_ID",
+      "SMEJJ_TRAINING_CONSENT_BINDING_KEY_B64", "SMEJJ_TRAINING_CONSENT_BINDING_KEY_ID",
+      "SMEJJ_TRAINING_PRIVACY_NOTICE_SHA256"].map((name) => ({
+    name,
+    folge: "Die Trainings-Einwilligung ist fuer Nutzer nicht erteilbar: der Schalter im Konto "
+      + "springt zurueck und meldet 'Einwilligung derzeit nicht moeglich'.",
+    beleg: "2026-08-22 gemessen: GET https://smejj-control.zeabur.app/api/training/consent/notice "
+      + "antwortet 503 consent_configuration_incomplete (handleNotice bei !config.ready). "
+      + "fetchTrainingNotice liefert daraufhin null, account-privacy.js:358 setzt den Schalter zurueck."
+  }))
 ]);
 
 function dateien(wurzel) {
@@ -167,11 +182,19 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
 
   console.log(`\nFEHLENDE PFLICHTWERTE (${kritischFehlend.length}) — hier steht Betrieb still:`);
+  // Nach Folge gruppiert. Fuenf Schluessel derselben Funktion fuenfmal mit
+  // demselben Beleg zu wiederholen ist genau das Rauschen, gegen das die
+  // Pflichtliste gebaut wurde.
+  const nachFolge = new Map();
   for (const k of kritischFehlend) {
     const eintrag = PFLICHT.find((pf) => pf.name === k);
-    console.log(`  ${k}`);
-    console.log(`    ohne ihn: ${eintrag.folge}`);
-    console.log(`    gemessen: ${eintrag.beleg}`);
+    if (!nachFolge.has(eintrag.folge)) nachFolge.set(eintrag.folge, { beleg: eintrag.beleg, namen: [] });
+    nachFolge.get(eintrag.folge).namen.push(k);
+  }
+  for (const [folge, { beleg, namen }] of nachFolge) {
+    console.log(`\n  ${namen.join("\n  ")}`);
+    console.log(`    ohne sie: ${folge}`);
+    console.log(`    gemessen: ${beleg}`);
   }
   console.log("\nSetzen NUR ueber die Zeabur-Oberflaeche: updateEnvironmentVariable ERSETZT");
   console.log("die ganze Umgebung und hat am 2026-08-14 genau diesen Schaden angerichtet.");
