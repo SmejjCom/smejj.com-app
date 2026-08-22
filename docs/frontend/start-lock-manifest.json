@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-22T15:43:14.515Z",
-  "confirmation": "Betreiber 2026-08-22: 'Rest der Parallelsitzung ausrollen' (Folgeauftrag zu 'Ja, bumpen und stempeln'). CACHE_NAME v645 -> v646 fuer den Nachzug von elf Frontend-Dateien; ohne Bump liefert der Vorrat aus v645 die alten Fassungen weiter. Aenderung an sw.js ist ausschliesslich die Versionszeile.",
+  "frozenAt": "2026-08-22T16:24:11.103Z",
+  "confirmation": "Betreiber 2026-08-22: 'mach weiter mit dem was noch offen ist' — Markenkette geschlossen: account-privacy.js von ?v=b46m auf ?v=b47 in premium-surfaces.js. Aenderung ist ausschliesslich diese eine Import-Marke. Wirkung fuer Besucher OHNE Service Worker; SW-Nutzer haben die Datei durch den v646-Precache (ignoreSearch) bereits frisch. Bewusst KEIN eigener Deploy dafuer — sie geht beim naechsten Deploy mit.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "d949ef6c1d437420d91fba32e7a5503025693bc0a35b2b2cc47127a1b49987d3",
@@ -17,7 +17,7 @@
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "6f2cc54cb595530dceb18b039a17af0b47fe00c1565944429048031a713966ca",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "438d3eb0d94865a98040bb5310e385e1a45547729d35488bbe36ec78d91e2e07",
+    "public/premium-surfaces.js": "f8c3b26d0cbfddbf52973c249ca7d294f240aaf1db92d718aaeaaa73700e5085",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "7bb2ac76bbf52e910e1cb807fd1701a547cfa92921558bf0e38e5f6498ce8b06",
