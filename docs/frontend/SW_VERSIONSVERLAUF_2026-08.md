@@ -1498,3 +1498,39 @@ der Liste.
 WIEDER NICHT dabei: chat-bridge.js (gebuendeltes Artefakt) und
 assets/sw.js (Leiche seit v302, wird nie registriert — massgeblich ist
 die Wurzel-sw.js, siehe v645).
+
+## v648 (2026-08-22) — Fokusring app-weit sichtbar, Markenkette geschlossen
+
+Vierter und letzter Deploy des Tages. Gesammelt, statt fuer jeden
+Einzelpunkt einen eigenen Cache-Sprung zu machen.
+
+1. FOKUSRING (design-v11-views.css): Er war unsichtbar, sobald jemand
+   das helle Schema nutzt — und das gilt fuer JEDE premium-view
+   (app-surfaces.css:627), nicht nur fuer Einstellungen und Konto.
+   Nachgerechnet (WCAG non-text, Schwelle 3.0):
+     app-surfaces  rgba(255,255,255,0.09) auf #fdfdfb -> ~1.0
+                   (weiss auf weiss, buchstaeblich unsichtbar)
+     V11-Akzent    #32f6ea                auf #fdfdfb -> 1.33
+   Jetzt --v11-fokus: dunkel var(--v11-cy) 13.84, hell #0c6b5e 6.29.
+   app-surfaces.css blieb unberuehrt (Start-Lock), ueberschrieben wird
+   in design-v11-views.css.
+
+2. MARKENKETTE geschlossen (95 Module, jedes mit genau EINER Marke):
+   - account-privacy.js b46m -> b47 (premium-surfaces.js)
+   - browser-pane-render.js  20260820-3 -> 20260822-1
+   - browser-pane-session.js 20260709-2 -> 20260822-1
+   - browser-pane-fernwege.js 20260820-3 -> 20260822-1
+   Die letzten drei gehoeren der Parallelsitzung, die sie heute geaendert
+   hat; ihre Sitzung war beendet, die Marken blieben offen. Nur die
+   Marken angefasst, kein inhaltlicher Eingriff. Dabei die Kettenregel
+   bezahlt: fernwege.js zu aendern zwang seine EIGENE Marke hoch — "die
+   Kette bricht oben".
+
+Alle vier Punkte treffen ausschliesslich Besucher OHNE Service Worker;
+wer einen hat, bekommt die Dateien durch diesen Bump ohnehin frisch.
+Genau darum wurde gesammelt.
+
+Nebenbei geprueft und in Ordnung: die vier Fokusringe im Browser-Panel
+(11.38 bzw. 9.15) — sie tragen, weil das Panel zur Shell gehoert und
+keine helle Fassung hat. Gegen den Tag, an dem sich das aendert, steht
+jetzt ein Test.

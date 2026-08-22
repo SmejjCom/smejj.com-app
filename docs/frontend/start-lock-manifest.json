@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-22T16:55:14.158Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-22 auf die Frage 'Damit er bei dir ankommt, muss der Vorratsname in sw.js hoch (v646 -> v647) — Freigabe?': Antwort 'Ja, ausrollen'. Umfang: NUR CACHE_NAME smejj-shell-v646 -> v647 plus Verlaufseintrag als Kommentar. Grund: ohne Sprung behaelt jeder wiederkehrende Nutzer die alte chatClient.js aus dem Vorrat. Kein Eingriff in Startseiten-Markup, -Stil oder -Verhalten.",
+  "frozenAt": "2026-08-22T16:58:16.034Z",
+  "confirmation": "Betreiber 2026-08-22: 'alles zusammen ausrollen'. Enthaelt (a) CACHE_NAME v647 -> v648 — v647 war bereits von einer Parallelsitzung fuer ihren Chat-Fix vergeben, live gemessen stand v646; (b) die Markenkette in browser-pane.js: browser-pane-render/-session/-fernwege auf 20260822-1. NACHTRAG ZUR EHRLICHKEIT: der Stempel von 16:55:14 (Wortlaut 'Vorratsname v646 -> v647') hat meine damals uncommitteten Marken-Aenderungen an browser-pane.js unbeabsichtigt miteingefroren — gemeinsame Arbeitskopie zweier Sitzungen. Dieser Stempel benennt sie ausdruecklich. Nur Import-Marken geaendert, kein inhaltlicher Eingriff in fremde Arbeit.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "d949ef6c1d437420d91fba32e7a5503025693bc0a35b2b2cc47127a1b49987d3",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "0f04844edd25a8a6d1b5d33f7962d554120ce9717af3db6da6ced768cac7bc57",
+    "public/sw.js": "e31c9149f3c0539967a5a214df9ea8f8aae02bcf94dbe70f97e51748087a05c8",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
