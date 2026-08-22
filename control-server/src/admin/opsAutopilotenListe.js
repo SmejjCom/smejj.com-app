@@ -787,7 +787,7 @@ const BASIS_AUTOPILOTEN = Object.freeze([
   },
   {
     id: "oberflaechenwache",
-    name: "40. Oberflächenwache (Responsive & Touch)",
+    name: "40. Betriebswache (Responsive, Touch & Betriebswerte)",
     kurz: "Misst jede Nacht die AUSGELIEFERTE Oberfläche auf acht Bildschirmgrößen — läuft überall Inhalt über den Rand, und ist jeder Knopf mit dem Finger zu treffen?",
     funktionen: [
       "Läuft täglich um 5:30 Uhr Mac-Zeit auf dem Rechner des Betreibers (crontab, Skript außerhalb von Google Drive — macOS lässt Hintergrunddienste dort nicht lesen).",
@@ -795,6 +795,7 @@ const BASIS_AUTOPILOTEN = Object.freeze([
       "Prüfung 2 — Touch: jedes bedienbare Element bei 375 px gegen das 44-px-Ziel, mit echten Tippunkten statt Elementmaßen. Damit unterscheidet sie 'zu klein' von 'verdeckt' und von 'sieht klein aus, ist aber groß zu treffen'.",
       "Gemessen wird gegen https://smejj.com, nicht gegen einen lokalen Server: was zählt, ist was der Nutzer wirklich bekommt — samt Bündel, /assets/-Kopie und Service-Worker-Vorrat.",
       "WARUM ES SIE GIBT: Das V11-Design hatte 32 Touch-Ziele wieder unter 44 px gedrückt und vier Ansichten liefen auf Tablet und kleinem Handy über den Rand. Beides stand monatelang live, ohne dass irgendetwas anschlug.",
+      "Prüfung 3 — Betriebswerte: fehlt im Zeabur-Env des Control-Servers ein Wert, ohne den nachweislich etwas stillsteht? Genau diese Lücke kostete vom 15. bis 22.08. die ganze Ampel: SMEJJ_AUTOPILOT_KEYS war weg, kein Autopilot konnte melden, und der Prüfer dafür existierte — er wurde nur nirgends aufgerufen.",
       "Fail-closed: kein Chrome, kein node, kein Netz = Fehler. 'Konnte nicht messen' ist nicht 'in Ordnung'.",
       "Protokoll: ~/Library/Logs/smejj-oberflaechenwache.log, Urteil in ~/.local/share/smejj-oberflaeche/letzter-lauf.json."
     ],
