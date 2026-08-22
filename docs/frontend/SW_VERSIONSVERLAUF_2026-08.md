@@ -1534,3 +1534,34 @@ Nebenbei geprueft und in Ordnung: die vier Fokusringe im Browser-Panel
 (11.38 bzw. 9.15) — sie tragen, weil das Panel zur Shell gehoert und
 keine helle Fassung hat. Gegen den Tag, an dem sich das aendert, steht
 jetzt ein Test.
+
+## v649 (2026-08-22) — EIN Cyanton, auch auf der Startseite
+
+Betreiber: "startseite auch auf den einheitlichen ton".
+
+Der Anlass fuer design-v11.css steht in dessen eigenem Kopf: "Cyan lag in
+SECHS Dateien und in DREI verschiedenen Toenen — #2dd4bf, #32f6ea,
+#2fd4c9." Die Ansichten tragen seit heute frueh den einen Ton; die
+Startseite und das Such-Overlay waren die letzten mit dem alten.
+
+15 Farbwerte rgba(45,212,191,x) -> rgba(50,246,234,x) in:
+  start-glass.css     6  (Radial oben, Markenwort, Glasflaeche,
+                          Schreibfeld-Rahmen, Chips)
+  search-overlay.css  8  (Panel, Formular, Zeilen, Trenner)
+  view-chrome.css     1  (innerer Schein)
+Deckkraft und Struktur unveraendert — nur der Ton.
+
+WIRKUNG NACHGERECHNET, weil der neue Ton 41 % heller ist und die
+Betreiber-Ansage vom 2026-08-16 "Leuchten gedaempft, Augen schonen"
+lautet: Auf dem dunklen Grund (#0d0e10) und bei 0.13-0.35 Deckkraft
+bleibt von den 41 % eine effektive Abweichung von 5-15 auf 255 uebrig,
+also 2-6 %. Im A/B-Screenshot nicht unterscheidbar. Kein Widerspruch.
+
+Buendel-Integritaet geprueft: 1184 Regeln vorher wie nachher, exakt 15
+abweichende Zeilen, Bytezahl identisch (die zwei Farbschreibweisen sind
+gleich lang). Keine Regel zerrissen — die sed-Falle bei CSS-Sammelregeln
+war hier nicht im Spiel, weil nur Werte innerhalb von Deklarationen
+ersetzt wurden, keine Selektorzeilen.
+
+Der Treffer in design-v11.css bleibt: er steht im Kommentar, der die
+Ton-Vielfalt historisch erklaert.
