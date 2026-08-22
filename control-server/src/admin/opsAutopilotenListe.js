@@ -168,7 +168,7 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     name: "04. Konkurrenz-Radar",
     kurz: "Durchsucht jeden Montag die öffentlichen Quellen der Konkurrenz nach neuen Funktionen und schlägt Verbesserungen vor.",
     funktionen: [
-      "OHNE ZUHAUSE (gemessen 2026-08-22): Der Dienst smejj-autopilot-jobs, der diesen Lauf ausloesen soll, existiert in KEINEM Zeabur-Projekt — abgefragt ueber die Zeabur-API: neun Dienste im Projekt, keiner davon dieser. Der Worker-Code liegt unter workers/smejj-autopilot-jobs/, wird aber nirgends betrieben. Dieser Autopilot laeuft also derzeit NICHT. Die Ampel zeigt das nicht als rot, sondern als grau — es meldet sich schlicht niemand.",
+      "RICHTIGSTELLUNG 2026-08-22: Er laeuft im Control-Server und wird vom Autopilot-Laeufer getaktet (autopilotLaeufer.js). Der frueher hier genannte Zeabur-Dienst smejj-autopilot-jobs existiert nicht mehr — der Eintrag in DIESEM Zweig war veraltet; der ausgelieferte Bau-Zweig hatte den richtigen Ort laengst.",
       "Läuft jeden Montag um 6:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
       "EHRLICH: Der Zeabur-Lauf ist bisher nur ein Lebenszeichen des Dienstes — der echte Quellenscan ist noch nicht angebunden.",
       "Erstellt nur bei echten Funden einen Bericht."
@@ -176,7 +176,7 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     trainiert: "AI Benchmark Leaderboards & Öffentliche Tech Release Notes",
     verbessert: "Strategische Überholspur durch wöchentliches Benchmarking der Top-Anbieter",
     neuigkeiten: ["Wochen-Radar erfolgreich ausgeführt", "Keine ungeprüften Konkurrenz-Abweichungen"],
-    ort: "NICHT BETRIEBEN — vorgesehen war Zeabur (smejj-autopilot-jobs), diesen Dienst gibt es nicht",
+    ort: "Control Server (control-server/src/evolution/konkurrenzRadar.js)",
     zeitplan: "vorgesehen montags 6:00 UTC — laeuft derzeit nicht",
     messung: "heartbeat",
     erwartetAlleMs: 7 * TAG_MS,
