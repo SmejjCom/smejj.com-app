@@ -135,21 +135,42 @@ const MESSUNG = `(() => {
   for (const el of document.body.querySelectorAll("*")) {
     if (!el.clientWidth) continue;
     const ueber = el.scrollWidth - el.clientWidth;
-    if (ueber <= ${24}) continue;
+    // Zwei Schwellen, weil die Fehlerbilder verschieden empfindlich sind.
+    // Still abgeschnittener Inhalt faellt erst bei einem spuerbaren Rest auf,
+    // und knapp darunter liegen Schatten und Rundungen — 24 px halten das
+    // ruhig. Ein Seitenbehaelter dagegen darf ueberhaupt nicht wandern: die
+    // Schublade lief am 2026-08-22 um 14 px, und mit der groben Schwelle blieb
+    // der Waechter stumm, obwohl der Text sichtbar an der Kante abbrach. Wer
+    // hier nur die Schublade in die Auswahl aufnimmt und die Schwelle
+    // vergisst, baut einen Schutz, der nichts schuetzt.
     const stil = getComputedStyle(el);
     const schneidet = stil.overflowX === "hidden" || stil.overflowX === "clip";
     // Seitlich scrollen darf ein INNERER Behaelter (Tabelle, Code-Block,
     // Chip-Reihe) — die ganze Seitenflaeche darf es nicht. Wenn die Ansicht
     // selbst seitlich scrollt, ist das Layout nicht umgebrochen, sondern nur
     // weggeschoben; auf dem Handy wackelt dann alles beim Wischen.
+    // Die Schublade steht dabei den Seitenflaechen gleich: sie hat eine feste
+    // Breite und ist eine Navigation, keine Tabelle. Am 2026-08-22 lief dort
+    // "Browser bedienen" 3 px hinter die Kante — zu sehen war nur ein Text, der
+    // ohne Auslassungspunkte endete, und der Waechter schwieg, weil er den
+    // seitlichen Bildlauf eines INNEREN Behaelters fuer Absicht hielt.
     const scrolltAlsSeite = (stil.overflowX === "auto" || stil.overflowX === "scroll")
-      && el.matches(".view, .premium-view, main, .shell, #start, body");
+      && el.matches(".view, .premium-view, main, .shell, #start, body, .sidebar, .sidebar .nav");
     if (!schneidet && !scrolltAlsSeite) continue;
+    if (ueber <= (scrolltAlsSeite ? 4 : 24)) continue;
     if (schneidet && stil.textOverflow === "ellipsis") continue;
     // Ein Eingabefeld, dessen Text laenger ist als der Kasten, scrollt intern —
     // das ist die normale Bauart von input/textarea/select und kein Layoutfehler.
     if (el.matches("input, textarea, select")) continue;
-    if (!sichtbar(el, stil) || !imFluss(el, stil)) continue;
+    // Hier gilt NICHT die Fluss-Pruefung. Die Schublade haengt an fixed,
+    // und der Filter warf damit die ganze Navigation aus der Messung — der
+    // Waechter schwieg zu einem Fehler, den man auf dem Bildschirm sah. Fuer
+    // diesen Befund zaehlt etwas anderes: liegt der Behaelter sichtbar im
+    // Fenster? Geparkte Ueberlagerungen liegen ausserhalb und fallen so
+    // weiterhin heraus, ohne dass echte fixierte Flaechen mit ihnen gehen.
+    const rr = el.getBoundingClientRect();
+    const imFenster = rr.width > 2 && rr.right > 0 && rr.left < innerWidth;
+    if (!sichtbar(el, stil) || !imFenster) continue;
     abgeschnitten.push({ kennung: kennungVon(el), fehlt: ueber, sichtbar: el.clientWidth, art: schneidet ? "abgeschnitten" : "seitlicher Bildlauf" });
     if (abgeschnitten.length >= 6) break;
   }

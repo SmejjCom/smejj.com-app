@@ -64,6 +64,8 @@ test("beide Fehlerbilder werden gesucht: Ueberstand UND stilles Abschneiden", ()
   assert.match(skript, /ueberstand/);
   assert.match(skript, /abgeschnitten/);
   assert.match(skript, /scrolltAlsSeite/, "eine seitlich scrollende Seitenflaeche ist ebenfalls ein Fehler");
+  assert.match(skript, /\.sidebar \.nav/,
+    "die Schublade zaehlt dazu: feste Breite, Navigation statt Tabelle");
 });
 
 test("jede Ausnahme traegt eine Begruendung", () => {
