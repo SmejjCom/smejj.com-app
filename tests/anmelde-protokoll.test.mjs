@@ -86,10 +86,37 @@ test("abschaltbar per SMEJJ_ANMELDE_LOG=aus", () => {
   assert.equal(zeilen.length, 0);
 });
 
-// NOCH NICHT HIER: der Pruefer "DIE KETTE" (Protokoll wird bis zu den
-// Handlern durchgereicht) und die Abbruchstellen-Liste des Google-Wegs.
-// Beide messen src/server.js und src/auth/googleAuthRoutes.js — die tragen
-// gerade uncommittete Zeilen einer PARALLELSITZUNG (leseGoogleAuthState,
-// "JSON-Sackgasse nach Google"). Sie kommen im Folgecommit dazu, sobald die
-// Dateien frei sind; der Text liegt bereit.
+test("DIE KETTE: das Protokoll wird bis zu den Handlern durchgereicht", () => {
+  // Ein gebautes Protokoll, das niemand bekommt, schreibt nichts — genau die
+  // Familie "gebaut, aber nicht angeschlossen".
+  const server = readFileSync(join(WURZEL, "src", "server.js"), "utf8");
+  assert.match(server, /createAnmeldeProtokoll\(/, "server.js baut kein Protokoll");
+  assert.match(server, /anmeldeProtokoll,/, "die Google-Handler bekommen es nicht");
+  const extra = readFileSync(join(WURZEL, "src", "auth", "extraAuthRoutes.js"), "utf8");
+  assert.match(extra, /ROUTES, anmeldeProtokoll, env/,
+    "der Zwischen-Router reicht es nicht an die GitHub-Handler weiter");
+});
+
+test("JEDE Abbruchstelle des Google-Wegs schreibt eine Zeile", () => {
+  const quelle = readFileSync(join(WURZEL, "src", "auth", "googleAuthRoutes.js"), "utf8");
+  for (const grund of [
+    "google_nicht_konfiguriert", "session_secret_fehlt",
+    "email_nicht_bestaetigt", "konto_nicht_freigegeben",
+    "ticket_nicht_einloesbar", "ohne_ticket_control_domain",
+    // Die Abbruchstelle der Parallelsitzung: abgelaufener oder gefaelschter
+    // state. Ohne sie fehlte genau der Fall, den der Betreiber gesehen hat.
+    "state_abgelaufen", "state_ungueltig"
+  ]) {
+    assert.ok(quelle.includes(grund), `Abbruchgrund "${grund}" wird nicht protokolliert`);
+  }
+});
+
+test("beim GEFAELSCHTEN state wird nichts aus dem Ticket mitgeloggt", () => {
+  // Ist die Signatur falsch, stammt der Inhalt nicht von uns — er gehoert
+  // nicht ins Log. Nur beim ABGELAUFENEN Ticket kommt das Alter mit.
+  const quelle = readFileSync(join(WURZEL, "src", "auth", "googleAuthRoutes.js"), "utf8");
+  const stelle = quelle.slice(quelle.indexOf("const alterSek ="), quelle.indexOf("if (body.redirect)", quelle.indexOf("const alterSek =")));
+  assert.match(stelle, /grund === "abgelaufen" && Number\.isFinite/, "das Alter wird auch bei ungueltigem state berechnet");
+  assert.ok(!/state_ungueltig[^"]*\$\{/.test(stelle), "beim ungueltigen state wird etwas eingesetzt");
+});
 

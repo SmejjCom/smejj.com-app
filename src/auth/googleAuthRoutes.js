@@ -70,6 +70,22 @@ export function createGoogleAuthHandlers({
       ? leseState(String(body.state), config.sessionSecret)
       : { ok: true, daten: null };
     if (!gelesen.ok) {
+      // Protokollzeile fuer genau diesen Abbruch (Grundtext von der Sitzung,
+      // die den Fall gefunden hat). Beim ABGELAUFENEN Ticket kommt das Alter
+      // in Sekunden mit: dann sieht man beim naechsten Mal sofort, ob es an
+      // den zehn Minuten lag oder an etwas anderem.
+      //
+      // Bei "ungueltig" wird NICHTS aus dem Ticket mitgeloggt — die Signatur
+      // war falsch, der Inhalt stammt also nicht von uns.
+      const alterSek = gelesen.grund === "abgelaufen" && Number.isFinite(Number(gelesen.daten?.exp))
+        ? Math.round((Date.now() - Number(gelesen.daten.exp)) / 1000)
+        : undefined;
+      anmeldeProtokoll.notiere({
+        schritt: "rueckkehr", anbieter: "google", ok: false,
+        grund: gelesen.grund === "abgelaufen"
+          ? `state_abgelaufen${alterSek === undefined ? "" : ` (+${alterSek}s)`}`
+          : "state_ungueltig"
+      });
       if (body.redirect) {
         const ziel = safeReturnOrigin(gelesen.daten?.handoffReturn) || STANDARD_APP_ORIGIN;
         res.writeHead(303, { ...SECURITY_HEADERS, Location: `${ziel}/auth/login/?abgelaufen=1` });
