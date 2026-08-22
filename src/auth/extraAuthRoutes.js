@@ -15,11 +15,14 @@ import {
 export function createExtraAuthRouter({
   config, json, readJson, SECURITY_HEADERS,
   serializeSessionCookie, serializeSessionToken,
-  sessionHandoffStore, allowedOriginsFromEnv, ROUTES, env = process.env
+  sessionHandoffStore, allowedOriginsFromEnv, ROUTES,
+  // Muss DURCHGEREICHT werden — sonst protokolliert der GitHub-Weg still nichts.
+  anmeldeProtokoll = { notiere() { return null; } },
+  env = process.env
 }) {
   const shared = {
     json, SECURITY_HEADERS, serializeSessionCookie, serializeSessionToken,
-    sessionHandoffStore, allowedOriginsFromEnv, ROUTES, env
+    sessionHandoffStore, allowedOriginsFromEnv, ROUTES, anmeldeProtokoll, env
   };
   const github = createGithubAuthHandlers({
     ...shared, config,

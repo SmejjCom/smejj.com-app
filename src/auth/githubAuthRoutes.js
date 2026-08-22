@@ -24,6 +24,7 @@ export function createGithubAuthHandlers({
   merkeKonto = merkeOauthBestaetigung,
   ROUTES,
   fetchImpl = fetch,
+  anmeldeProtokoll = { notiere() { return null; } },
   env = process.env
 }) {
   function safeReturnOrigin(value) {
