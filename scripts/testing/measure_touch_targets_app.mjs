@@ -74,11 +74,57 @@ const MESSUNG = (nurAktiveAnsicht) => `(() => {
     gezaehlt += 1;
     if (r.width >= ${MIN_ZIEL} && r.height >= ${MIN_ZIEL}) continue;
     if (ausnahmen.some((a) => el.matches(a))) continue;
+    // Ein Element kann KLEINER aussehen als es zu treffen ist: ein
+    // unsichtbares ::before vergroessert die Klickflaeche, ohne das Bild zu
+    // aendern. Genau so ist der Stopp-Punkt gebaut — 11 px sichtbar (so vom
+    // Betreiber bestellt), 45 px fassbar (design-v11.css, inset: -17px).
+    // Wer nur getBoundingClientRect misst, meldet ihn seit Monaten falsch rot
+    // und verleitet dazu, ein bewusstes Designmass "zu reparieren".
+    // Darum wird hier getippt statt gerechnet: acht Punkte am Rand eines
+    // ${MIN_ZIEL}-px-Feldes um die Mitte. Treffen alle dasselbe Element, ist
+    // das Ziel gross genug — liegt ein Nachbar darueber, faellt es durch.
+    const mitteX = r.left + r.width / 2;
+    const mitteY = r.top + r.height / 2;
+    const rand = ${MIN_ZIEL} / 2 - 1;
+    const punkte = [[-rand, -rand], [rand, -rand], [-rand, rand], [rand, rand],
+                    [0, -rand], [0, rand], [-rand, 0], [rand, 0]];
+    // elementsFromPoint (Plural) liefert den ganzen Stapel an einem Punkt.
+    // Daraus lassen sich die zwei Fehlerbilder sauber trennen:
+    //   liegt das Element ueberall IM Stapel -> die Klickflaeche ist gross
+    //   genug; steht es dort nicht obenauf -> es ist VERDECKT, nicht zu klein.
+    let obenauf = 0;
+    let imStapel = 0;
+    let darueber = "";
+    for (const [dx, dy] of punkte) {
+      const x = mitteX + dx;
+      const y = mitteY + dy;
+      if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) break;
+      const stapel = document.elementsFromPoint(x, y);
+      const platz = stapel.findIndex((z) => z === el || el.contains(z));
+      if (platz < 0) continue;
+      imStapel += 1;
+      if (platz === 0) { obenauf += 1; continue; }
+      if (!darueber) {
+        const z = stapel[0];
+        darueber = (z.id ? "#" + z.id : z.tagName.toLowerCase())
+          + (typeof z.className === "string" && z.className.trim()
+              ? "." + z.className.trim().split(/\\s+/)[0] : "");
+      }
+    }
+    if (obenauf === punkte.length) continue;
     const name = (el.getAttribute("aria-label") || el.title || el.value || el.textContent || "")
       .replace(/\\s+/g, " ").trim().slice(0, 34);
     const kennung = (el.id ? "#" + el.id : el.tagName.toLowerCase())
       + (typeof el.className === "string" && el.className ? "." + el.className.trim().split(/\\s+/)[0] : "");
-    klein.push({ groesse: Math.round(r.width) + "x" + Math.round(r.height), kennung, name });
+    klein.push({
+      groesse: Math.round(r.width) + "x" + Math.round(r.height), kennung, name,
+      // Ein Ziel mit ausreichend grosser Klickflaeche, das trotzdem nicht
+      // ueberall trifft, ist verdeckt — nicht zu klein.
+      // Nur wenn die Klickflaeche AN ALLEN Punkten reicht, ist Verdeckung die
+      // Ursache. Sonst ist das Ziel schlicht zu klein und der Nachbar daneben
+      // ist kein "Ueberlagerer".
+      verdecktVon: imStapel === punkte.length ? darueber : ""
+    });
   }
   return JSON.stringify({
     ansicht: aktiv ? (aktiv.id || "?") : (${nurAktiveAnsicht} ? "KEINE aktive Ansicht" : "start"),
@@ -212,6 +258,7 @@ try {
   }
 
   const verstoesse = [];
+  const hinweise = [];
   for (const [name, d] of bereiche) {
     if (d.ansicht === "KEINE aktive Ansicht") {
       verstoesse.push(`${name}: Ansicht liess sich nicht oeffnen — nicht gemessen`);
@@ -219,6 +266,14 @@ try {
     }
     if (d.ueberlauf) verstoesse.push(`${name}: laeuft ueber den rechten Rand`);
     for (const t of d.klein) {
+      // Verdeckung ist ein Hinweis, kein Verstoss: bei offenem Menue liegt mit
+      // Absicht etwas ueber dem Rest. Was davon ein Fehler ist, entscheidet
+      // der Mensch — der Waechter wird davon nicht rot, sonst meldet er bei
+      // jedem offenen Menue Alarm und man liest ihn bald nicht mehr.
+      if (t.verdecktVon) {
+        hinweise.push(`${name}/${t.kennung} "${t.name}": Klickflaeche reicht (${t.groesse} px sichtbar), liegt aber unter ${t.verdecktVon}`);
+        continue;
+      }
       verstoesse.push(`${name}/${t.kennung} "${t.name}": ${t.groesse} px, gefordert ${MIN_ZIEL}`);
     }
   }
@@ -228,6 +283,7 @@ try {
     geraet: "375x812, mobile, pointer coarse",
     bereiche: bereiche.map(([name, d]) => ({ name, gezaehlt: d.gezaehlt, unterZiel: d.klein.length, ueberlauf: d.ueberlauf })),
     ausnahmen: AUSNAHMEN,
+    hinweise,
     verstoesse
   };
 
@@ -240,6 +296,7 @@ try {
       console.log(`  ${b.name.padEnd(36)} ${String(b.gezaehlt).padStart(3)} bedienbar — ${rest}${b.ueberlauf ? ", LAEUFT UEBER" : ""}`);
     }
     for (const a of AUSNAHMEN) console.log(`  Ausnahme ${a.auswahl}: ${a.grund}`);
+    if (hinweise.length) console.log(`  HINWEISE (kein Verstoss):\n    ${hinweise.join("\n    ")}`);
     console.log(verstoesse.length ? `  VERSTOESSE:\n    ${verstoesse.join("\n    ")}` : "  Alle Touch-Ziele eingehalten.");
   }
 
