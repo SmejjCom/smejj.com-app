@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-22T16:51:19.672Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-22 auf die Frage nach den zwei Maengeln in public/ai/chatClient.js: Antwort 'Ja freigegeben, mach beides'. Umfang: (1) Rueckfall auf das dauerhafte Token-Fach, wenn das Sitzungsfach leer ist — der Chat sagte sonst nach einem Browser-Neustart faelschlich 'nicht angemeldet'. (2) Ehrliche Fehlermeldung: nennt nur die Anmeldung, nicht mehr zusaetzlich Cline/Anbieter, die gar nicht geprueft wurden. Kein Eingriff in Startseiten-Markup oder -Stil.",
+  "frozenAt": "2026-08-22T16:55:14.158Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-22 auf die Frage 'Damit er bei dir ankommt, muss der Vorratsname in sw.js hoch (v646 -> v647) — Freigabe?': Antwort 'Ja, ausrollen'. Umfang: NUR CACHE_NAME smejj-shell-v646 -> v647 plus Verlaufseintrag als Kommentar. Grund: ohne Sprung behaelt jeder wiederkehrende Nutzer die alte chatClient.js aus dem Vorrat. Kein Eingriff in Startseiten-Markup, -Stil oder -Verhalten.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "d949ef6c1d437420d91fba32e7a5503025693bc0a35b2b2cc47127a1b49987d3",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "261deb2f4feee34411e4c54dffafa7265b715fc63126360d00dfb799798abf55",
     "public/composer-plus-menu.js": "7b0fe7ebb9dae557789899fbb6e98cc3c5a6f8b8687c9abe29a80140e2d0206b",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "54905c8ffa2aa1a32a3e870ebb2a411caab0eed726e1e9aac91de21e37c66b69",
+    "public/browser-pane.js": "66d0e7324937b177452f9b62ce53bbbce5d78d358de99b70b749490f1f272ba7",
     "public/browser-pane-render.js": "fcf48d6c9f40f06a96ecd58b616aba8b41a9cc929ac258c458c1b7f86ba5d4ac",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "715171616e6f7b5c0730520e80e744f6bc7484beaf787e7d05a12fe42ded9506",
+    "public/sw.js": "0f04844edd25a8a6d1b5d33f7962d554120ce9717af3db6da6ced768cac7bc57",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
