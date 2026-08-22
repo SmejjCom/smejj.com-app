@@ -5,6 +5,11 @@ import crypto from "node:crypto";
 
 import { merkeOauthBestaetigung } from "../../control-server/src/auth/oauthKonto.js";
 
+// Wohin ein gescheiterter Rueckweg fuehrt, wenn das Ticket kein eigenes Ziel
+// mehr hergibt. smejj.com steht fest in DEFAULT_ALLOWED_ORIGINS (cors.js) —
+// damit ist es nie ein offener Redirect.
+const STANDARD_APP_ORIGIN = "https://smejj.com";
+
 export function createGoogleAuthHandlers({
   config,
   json,
@@ -16,14 +21,30 @@ export function createGoogleAuthHandlers({
   allowedOriginsFromEnv,
   signGoogleAuthState,
   verifyGoogleAuthState,
+  leseGoogleAuthState,
   verifyGoogleIdToken,
   // Der Nutzerdatensatz wird hier festgehalten (siehe oauthKonto.js). Als
   // Abhaengigkeit hereingereicht, damit der Flow ohne Objektspeicher testbar
   // bleibt — dieselbe Bauart wie bei allem anderen in dieser Datei.
   merkeKonto = merkeOauthBestaetigung,
   ROUTES,
+  // Protokoll der Anmeldeversuche. Injiziert wie alles andere hier; ohne
+  // Uebergabe ein stiller Ersatz, damit Tests und Altaufrufe nicht brechen.
+  anmeldeProtokoll = { notiere() { return null; } },
   env = process.env
 }) {
+  // Faellt der nicht-werfende Leser weg (aeltere Aufrufer, Unit-Tests, die nur
+  // verifyGoogleAuthState einspeisen), wird er aus diesem gebaut. So bleibt
+  // jeder bestehende Aufruf gueltig und der Rueckweg trotzdem abgesichert.
+  const leseState = leseGoogleAuthState || ((state, secret) => {
+    try {
+      return { ok: true, daten: verifyGoogleAuthState(state, secret) };
+    } catch (fehler) {
+      const abgelaufen = /abgelaufen/.test(String(fehler?.message || ""));
+      return { ok: false, grund: abgelaufen ? "abgelaufen" : "ungueltig", daten: null };
+    }
+  });
+
   // Nur erlaubte App-Origins duerfen Ziel eines Google-Login-Redirects sein
   // (kein Open-Redirect). Leerer/fremder Wert -> null.
   function safeReturnOrigin(value) {
@@ -32,19 +53,50 @@ export function createGoogleAuthHandlers({
   }
 
   async function handleGoogleAuth(req, res) {
-    if (!config.googleClientId) return json(res, 503, { error: "Google Login ist noch nicht konfiguriert." });
-    if (!config.sessionSecret) return json(res, 503, { error: "Session Secret fehlt." });
+    // Ab hier wird protokolliert: genau diese Stelle fehlte am 2026-08-22,
+    // als der Login brach und im Log nichts stand.
+    if (!config.googleClientId) {
+      anmeldeProtokoll.notiere({ schritt: "rueckkehr", anbieter: "google", ok: false, grund: "google_nicht_konfiguriert" });
+      return json(res, 503, { error: "Google Login ist noch nicht konfiguriert." });
+    }
+    if (!config.sessionSecret) {
+      anmeldeProtokoll.notiere({ schritt: "rueckkehr", anbieter: "google", ok: false, grund: "session_secret_fehlt" });
+      return json(res, 503, { error: "Session Secret fehlt." });
+    }
     const body = await readAuthBody(req);
-    const state = body.state ? verifyGoogleAuthState(String(body.state), config.sessionSecret) : null;
+    // Rueckweg aus dem Browser (Google postet per form_post, readAuthBody setzt
+    // dann redirect=true). Ein abgelaufenes Ticket darf hier NIE als nackte
+    // JSON-Seite enden — der Nutzer stuende auf der API-Domain ohne Weg zurueck.
+    // Genau das ist dem Betreiber am 2026-08-22 passiert, waehrend der
+    // Control-Server neu gebaut wurde: sein erstes Ticket war beim zweiten
+    // Anlauf aelter als die zehn Minuten.
+    // Dasselbe Muster gilt weiter unten schon fuer das verfallene Handoff-Ticket.
+    const gelesen = body.state
+      ? leseState(String(body.state), config.sessionSecret)
+      : { ok: true, daten: null };
+    if (!gelesen.ok) {
+      if (body.redirect) {
+        const ziel = safeReturnOrigin(gelesen.daten?.handoffReturn) || STANDARD_APP_ORIGIN;
+        res.writeHead(303, { ...SECURITY_HEADERS, Location: `${ziel}/auth/login/?abgelaufen=1` });
+        return res.end();
+      }
+      return json(res, 400, { error: `Google Login State ist ${gelesen.grund}.` });
+    }
+    const state = gelesen.daten;
     const payload = await verifyGoogleIdToken(String(body.credential || body.idToken || ""), {
       clientId: config.googleClientId,
       expectedNonce: state?.nonce
     });
     const email = String(payload.email || "").toLowerCase();
-    if (!payload.email_verified) return json(res, 403, { error: "Google E-Mail ist nicht verifiziert." });
+    if (!payload.email_verified) {
+      anmeldeProtokoll.notiere({ schritt: "rueckkehr", anbieter: "google", ok: false, grund: "email_nicht_bestaetigt", email });
+      return json(res, 403, { error: "Google E-Mail ist nicht verifiziert." });
+    }
     if (config.googleAllowedEmail && email !== config.googleAllowedEmail) {
+      anmeldeProtokoll.notiere({ schritt: "rueckkehr", anbieter: "google", ok: false, grund: "konto_nicht_freigegeben", email });
       return json(res, 403, { error: "Dieses Google Konto ist fuer smejj.com nicht freigegeben." });
     }
+    anmeldeProtokoll.notiere({ schritt: "rueckkehr", anbieter: "google", ok: true, email });
     const user = {
       email,
       name: String(payload.name || email),
@@ -73,9 +125,20 @@ export function createGoogleAuthHandlers({
       // Anmeldeseite zurueck, mit einem Grund, den man lesen kann.
       const hinterlegt = sessionHandoffStore.complete(state.handoff, { token: serializeSessionToken(user), user });
       if (!hinterlegt?.ok) {
-        res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?fehler=anmeldung_abgelaufen` });
+        // DIE Zeile, die am 2026-08-22 gefehlt hat: hier bricht es, und
+        // genau hier stand vorher nichts.
+        anmeldeProtokoll.notiere({
+          schritt: "ticket-hinterlegt", anbieter: "google", ok: false,
+          grund: hinterlegt?.error || "ticket_nicht_einloesbar", email, ticket: state.handoff
+        });
+        // `abgelaufen=1` ist der Parameter, den auth-page.js wirklich liest
+        // (Zeile 371) und in einen lesbaren Satz uebersetzt. Das bisherige
+        // `fehler=anmeldung_abgelaufen` kannte niemand — der Nutzer landete
+        // stumm auf der Anmeldeseite und wusste nicht, warum.
+        res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login/?abgelaufen=1` });
         return res.end();
       }
+      anmeldeProtokoll.notiere({ schritt: "ticket-hinterlegt", anbieter: "google", ok: true, email, ticket: state.handoff });
       res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?handoff=${encodeURIComponent(state.handoff)}` });
       return res.end();
     }
@@ -104,6 +167,14 @@ export function createGoogleAuthHandlers({
       handoffReturn: handoff && handoffReturn ? handoffReturn : "",
       exp: Date.now() + 10 * 60 * 1000
     }, config.sessionSecret);
+    // OHNE Ticket landet der Nutzer nach dem Login auf der Control-Domain
+    // statt in der App (siehe der catch in public/auth/auth-page.js). Das
+    // sieht man dem Ergebnis nicht an — hier steht es.
+    anmeldeProtokoll.notiere({
+      schritt: "weiterleitung", anbieter: "google", ok: true,
+      grund: handoff && handoffReturn ? undefined : "ohne_ticket_control_domain",
+      ticket: handoff
+    });
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", config.googleClientId);
     authUrl.searchParams.set("redirect_uri", `${origin}${ROUTES.api.authGoogle}`);
