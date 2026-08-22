@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-22T06:41:38.167Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-22 (Auswahlkarte 'Live stellen'): Deploy der Responsive- und Touch-Aenderungen nach smejj-app-frontend af27ecf, CACHE_NAME smejj-shell-v638 -> v639. Einzige Abweichung zum vorigen Stempel ist diese Nummer; live nachgemessen: measure:responsive 152/152, measure:touch:app 0 Verstoesse.",
+  "frozenAt": "2026-08-22T08:10:03.333Z",
+  "confirmation": "Betreiber-Auswahl 2026-08-22 im Chat: 'Start-Lock freigeben + ausrollen' — NUR public/index.html neu gestempelt, einzige Abweichung ist die Marke profile-dock.js?v=b46 -> b47, damit der Chat-Fix (Token in beide Faecher, public/auth-gate.js) die Nutzer ueberhaupt erreicht. styles.css und start-styles.css wurden BEWUSST auf ihren alten Hashes belassen: sie wurden waehrend dieses Laufs von einer Parallelsitzung geaendert und gehoeren nicht zu dieser Freigabe.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "43ee2090aa223d12459c1f7624c307245a2272220425a404d317a6cafc6326b1",
+    "public/index.html": "fb389a392c1a2917a99b041f92636c002652f6da0eda1203325a8d154768ef90",
     "public/styles.css": "54b403a380184da7250c4e6a01b27cb05d1de38fbfa30b300fd578207cd7cb00",
     "public/start-styles.css": "6350b3ddf13ad94e26e3a7c5ec2c9468685c0bc4bcc53f8a5f0aa2ac0562461c",
     "public/start-glass.css": "5b8451f5f6ab411e6674af59c3a324a5afbc14cfb6dc6116023376bc521df042",

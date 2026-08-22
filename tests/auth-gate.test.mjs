@@ -9,6 +9,8 @@ import fs from "node:fs";
 import { readFileSync } from "node:fs";
 // verifyStoredSession kam am 2026-08-04 dazu (halber Anmeldezustand).
 const { verifyStoredSession } = await import("../public/auth-gate.js");
+// holeApiTokenUeberCookie kam am 2026-08-22 dazu (zwei Schluesselbunde).
+const { holeApiTokenUeberCookie } = await import("../public/auth-gate.js");
 
 const { isPublicPath, hasSession, enforceAuthGate } = await import("../public/auth-gate.js");
 
@@ -112,14 +114,14 @@ test("Kaputter Storage gilt als abgemeldet (fail-closed)", () => {
 });
 
 test("Gate haengt an App-Shell und Sprachseiten, ohne Start-Lock-Dateien", () => {
-  assert.match(dockJs, /import "\.\/auth-gate\.js\?v=1";/);
+  assert.match(dockJs, /import "\.\/auth-gate\.js\?v=2";/);
   // Die Sprachseiten haengen seit dem 2026-08-04 UEBER voice-landing-signin.js
   // am Gate: das Modul importiert hasSession und entscheidet, ob der
-  // Sprachmodus oder nur ein Anmelde-Knopf gebaut wird. Dieselbe Kennung ?v=1
+  // Sprachmodus oder nur ein Anmelde-Knopf gebaut wird. Dieselbe Kennung ?v=2
   // wie ueberall sonst — zwei Kennungen waeren zwei Modulinstanzen.
-  assert.match(landingJs, /import \{ darfSprechen, buildLoginCta \} from "\.\/voice-landing-signin\.js\?v=1";/);
+  assert.match(landingJs, /import \{ darfSprechen, buildLoginCta \} from "\.\/voice-landing-signin\.js\?v=2";/);
   const signinJs = fs.readFileSync("public/voice-landing-signin.js", "utf8");
-  assert.match(signinJs, /import \{ hasSession \} from "\.\/auth-gate\.js\?v=1";/);
+  assert.match(signinJs, /import \{ hasSession \} from "\.\/auth-gate\.js\?v=2";/);
   assert.match(gateJs, /fail-closed|Fail-closed/);
 });
 
@@ -230,8 +232,10 @@ test("auf oeffentlichen Seiten wird nicht umgeleitet, das Token aber geraeumt", 
 
 test("die Pruefung blockiert das Rendern nicht", async () => {
   const quelle = readFileSync(new URL("../public/auth-gate.js", import.meta.url), "utf8");
-  assert.match(quelle, /if \(!umgeleitet\) verifyStoredSession\(window\)\.catch/,
+  assert.match(quelle, /if \(!umgeleitet\) \{\s*\n\s*verifyStoredSession\(window\)\s*\n\s*\.catch/,
     "sie laeuft nebenher und nur, wenn die Seite bleibt");
+  assert.match(quelle, /\.then\(\(\) => holeApiTokenUeberCookie\(window\)\)/,
+    "danach wird das Chat-Token nachgezogen — ebenfalls nebenher");
   assert.ok(!/await verifyStoredSession/.test(quelle.split("\n").at(-6) || ""),
     "kein await auf Modulebene");
 });
@@ -295,4 +299,111 @@ test("der Hinweis erscheint in der Sprache des Nutzers, nicht auf Deutsch", () =
   const zweig = seite.match(/if \(params\.get\("abgelaufen"\)\) \{[\s\S]*?\n  \}/)[0];
   assert.ok(zweig.indexOf("await loadUiLanguage") < zweig.indexOf("status("),
     "die Sprache muss VOR der Meldung geladen sein");
+});
+
+
+// --- Die zwei Schluesselbunde --------------------------------------------------
+//
+// Befund 2026-08-22, im angemeldeten Chrome des Betreibers live gemessen: der
+// Chat antwortete "Bitte zuerst anmelden und Cline unter Einstellungen ->
+// Modelle verbinden" und schickte KEINE Anfrage an den Server. Die Anmeldung
+// war in Ordnung — das dauerhafte Token lieferte an /api/auth/me sauber
+// authenticated=true. Nur las der Chat aus einem ANDEREN Fach:
+// sessionStorage["smejj.apiToken.v1"], das mit dem Browserfenster stirbt.
+// Diese Tests halten fest, dass das Gate beide Faecher fuellt.
+// ---------------------------------------------------------------------------
+
+function fensterMitFaechern({ token = "", pfad = "/" } = {}) {
+  const dauerhaft = new Map();
+  const sitzung = new Map();
+  if (token) dauerhaft.set("smejj.auth.accessToken.v1", token);
+  const win = {
+    location: { pathname: pfad, replace(ziel) { win.location.ersetztDurch = ziel; } },
+    localStorage: {
+      getItem: (k) => dauerhaft.get(k) ?? null,
+      removeItem: (k) => dauerhaft.delete(k),
+      setItem: (k, v) => dauerhaft.set(k, v)
+    },
+    sessionStorage: {
+      getItem: (k) => sitzung.get(k) ?? null,
+      removeItem: (k) => sitzung.delete(k),
+      setItem: (k, v) => sitzung.set(k, v)
+    }
+  };
+  return { win, dauerhaft, sitzung };
+}
+
+test("das frische Token landet AUCH im Fach, aus dem der Chat liest", async () => {
+  const { win, sitzung } = fensterMitFaechern({ token: "altes.token", pfad: "/" });
+  const ergebnis = await verifyStoredSession(win, {
+    fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" }, accessToken: "frisch.token" }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "gueltig");
+  assert.equal(sitzung.get("smejj.apiToken.v1"), "frisch.token",
+    "ohne diesen Eintrag antwortet der Chat mit 'Bitte zuerst anmelden'");
+});
+
+test("ohne dauerhaftes Token holt der Cookie-Weg eines", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: antwortMit({ accessToken: "cookie.token" }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "geholt");
+  assert.equal(sitzung.get("smejj.apiToken.v1"), "cookie.token");
+});
+
+test("eine Absage des Servers legt KEIN Token ab", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: antwortMit({ error: "unauthorized" }, { ok: false }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "keine-sitzung");
+  assert.equal(sitzung.has("smejj.apiToken.v1"), false, "ein erfundenes Token waere schlimmer als keines");
+});
+
+test("ein Netzfehler laesst den Zustand, wie er ist", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: async () => { throw new Error("offline"); },
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "unklar");
+  assert.equal(sitzung.has("smejj.apiToken.v1"), false);
+});
+
+test("liegt das Token schon da, wird nicht noch einmal gefragt", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  sitzung.set("smejj.apiToken.v1", "schon.da");
+  let gefragt = 0;
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: async () => { gefragt += 1; return { ok: true, json: async () => ({ accessToken: "neu" }) }; },
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "vorhanden");
+  assert.equal(gefragt, 0, "kein Netzaufruf im Regelfall");
+  assert.equal(sitzung.get("smejj.apiToken.v1"), "schon.da");
+});
+
+test("jeder Importeur laedt die neue Marke des Gates", () => {
+  // Markenketten-Regel: eine geaenderte Datei, deren ?v= gleich bleibt, wird
+  // vom Browser nicht neu geholt — der Fix waere ausgeliefert und wirkungslos.
+  for (const datei of [
+    "../public/profile-dock.js",
+    "../public/voice-landing-signin.js",
+    "../public/assets/profile-dock.js",
+    "../public/assets/voice-landing-signin.js"
+  ]) {
+    const quelle = readFileSync(new URL(datei, import.meta.url), "utf8");
+    assert.match(quelle, /auth-gate\.js\?v=2/, datei);
+    assert.ok(!/auth-gate\.js\?v=1\b/.test(quelle), `${datei} traegt noch die alte Marke`);
+  }
+});
+
+test("der Spiegel unter /assets ist Zeichen fuer Zeichen gleich", () => {
+  const quelle = readFileSync(new URL("../public/auth-gate.js", import.meta.url), "utf8");
+  const spiegel = readFileSync(new URL("../public/assets/auth-gate.js", import.meta.url), "utf8");
+  assert.equal(spiegel, quelle, "smejj.com liefert /assets/ aus — ein alter Spiegel macht den Fix unsichtbar");
 });
