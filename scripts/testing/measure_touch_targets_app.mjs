@@ -191,6 +191,39 @@ const SCHUTZ_ENTFERNEN = `(() => {
   return getroffen;
 })()`;
 
+// Wartet, bis die Seite WIRKLICH steht — nicht bis die Uhr abgelaufen ist.
+// Begruendung und Bauart wie in messe_responsive.mjs: gegen die Live-Seite
+// schwankt die Ladezeit auf dieser Leitung zwischen 0,8 und 11 Sekunden. Beim
+// ersten Nachtlauf der Oberflaechenwache am 2026-08-22 meldete dieser Waechter
+// drei Knoepfe mit 21x16 px, die in Wahrheit 44 px gross sind — gemessen wurde
+// eine halbfertige Seite. Eine Wache, die ohne Grund rot meldet, liest bald
+// niemand mehr.
+async function warteBisRuhig(auswertenFn, hoechstensMs = 20000) {
+  const SIGNATUR = [
+    '(() => {',
+    '  if (document.readyState !== "complete") return "laedt";',
+    '  let summe = 0;',
+    '  let anzahl = 0;',
+    '  for (const el of document.querySelectorAll("button, a[href], input, select, textarea, [role=button]")) {',
+    '    const r = el.getBoundingClientRect();',
+    '    if (r.width < 1 || r.height < 1) continue;',
+    '    anzahl += 1;',
+    '    summe += Math.round(r.width) * 31 + Math.round(r.height) * 7 + Math.round(r.top);',
+    '  }',
+    '  return anzahl + ":" + summe;',
+    '})()'
+  ].join("\n");
+  let vorher = "";
+  const runden = Math.ceil(hoechstensMs / 350);
+  for (let i = 0; i < runden; i += 1) {
+    const jetzt = await auswertenFn(SIGNATUR);
+    if (jetzt !== "laedt" && jetzt === vorher) return true;
+    vorher = jetzt;
+    await sleep(350);
+  }
+  return false;
+}
+
 async function auswerten(page, ausdruck) {
   const { result, exceptionDetails } = await page("Runtime.evaluate", {
     expression: ausdruck, returnByValue: true, awaitPromise: true
@@ -229,9 +262,10 @@ try {
   await page("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 
   await page("Page.navigate", { url: URL_UNTER_TEST });
-  await sleep(2800);
+  await sleep(800);
+  await warteBisRuhig((x) => auswerten(page, x));
   await aufbauen(page);
-  await sleep(900);
+  await warteBisRuhig((x) => auswerten(page, x));
 
   if (!(await auswerten(page, `matchMedia("(pointer: coarse)").matches`))) {
     throw new Error("Emulation griff nicht: pointer ist nicht coarse — die Messung waere wertlos.");
@@ -264,7 +298,10 @@ try {
   // 4ff: jede Ansicht einzeln.
   for (const [name, pfad] of ANSICHTEN) {
     await auswerten(page, `(() => { history.pushState({}, "", ${JSON.stringify(pfad)}); dispatchEvent(new PopStateEvent("popstate")); })()`);
-    await sleep(1000);
+    await sleep(350);
+    if (!(await warteBisRuhig((x) => auswerten(page, x)))) {
+      console.error(`  HINWEIS: ${name} kam in 20 s nicht zur Ruhe — der Befund kann von der Ladezeit stammen.`);
+    }
     bereiche.push([name, JSON.parse(await auswerten(page, MESSUNG(true)))]);
   }
 

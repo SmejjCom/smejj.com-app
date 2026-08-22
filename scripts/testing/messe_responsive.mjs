@@ -248,9 +248,51 @@ async function auswerten(page, ausdruck) {
   return result.value;
 }
 
+// Wartet, bis die Seite WIRKLICH steht — nicht bis die Uhr abgelaufen ist.
+//
+// Warum: gegen die Live-Seite schwankt die Ladezeit auf dieser Leitung
+// zwischen 0,8 und 11 Sekunden. Eine feste Wartezeit misst darum mal die
+// fertige Seite und mal eine halbfertige. Beim ersten Nachtlauf der
+// Oberflaechenwache am 2026-08-22 kamen so drei Knoepfe mit 21x16 px heraus,
+// die in Wahrheit 44 px gross sind — eine Wache, die ohne Grund rot meldet,
+// liest bald niemand mehr.
+//
+// Gewartet wird auf zwei Dinge: das Dokument ist fertig, UND das Layout
+// bewegt sich nicht mehr. Die Signatur ist die Summe der Masse aller
+// sichtbaren Bedienelemente; bleibt sie zweimal im Abstand von 350 ms gleich,
+// steht die Seite. Laeuft die Geduld ab, wird trotzdem gemessen — mit Vermerk.
+async function warteBisRuhig(auswertenFn, hoechstensMs = 20000) {
+  const SIGNATUR = [
+    '(() => {',
+    '  if (document.readyState !== "complete") return "laedt";',
+    '  let summe = 0;',
+    '  let anzahl = 0;',
+    '  for (const el of document.querySelectorAll("button, a[href], input, select, textarea, [role=button]")) {',
+    '    const r = el.getBoundingClientRect();',
+    '    if (r.width < 1 || r.height < 1) continue;',
+    '    anzahl += 1;',
+    '    summe += Math.round(r.width) * 31 + Math.round(r.height) * 7 + Math.round(r.top);',
+    '  }',
+    '  return anzahl + ":" + summe;',
+    '})()'
+  ].join("\n");
+  let vorher = "";
+  const runden = Math.ceil(hoechstensMs / 350);
+  for (let i = 0; i < runden; i += 1) {
+    const jetzt = await auswertenFn(SIGNATUR);
+    if (jetzt !== "laedt" && jetzt === vorher) return true;
+    vorher = jetzt;
+    await sleep(350);
+  }
+  return false;
+}
+
 async function ansichtOeffnen(page, pfad) {
   await auswerten(page, `(() => { history.pushState({}, "", ${JSON.stringify(pfad)}); dispatchEvent(new PopStateEvent("popstate")); })()`);
-  await sleep(700);
+  await sleep(350);
+  if (!(await warteBisRuhig((x) => auswerten(page, x)))) {
+    console.error(`  HINWEIS: ${pfad} kam in 20 s nicht zur Ruhe — gemessen wird trotzdem, der Befund kann von der Ladezeit stammen.`);
+  }
   if (pfad === "/") {
     await auswerten(page, INHALT_AUFBAUEN);
     await sleep(300);
@@ -292,7 +334,8 @@ try {
     // Messung meldete dann Ueberlaeufe, die kein Geraet je zeigt. Ein echtes
     // Geraet laedt die Seite in seiner Groesse — genau das hier.
     await page("Page.navigate", { url: URL_UNTER_TEST });
-    await sleep(2600);
+    await sleep(800);
+    await warteBisRuhig((x) => auswerten(page, x));
 
     if (!(await auswerten(page, `matchMedia("(pointer: ${zeiger})").matches`))) {
       throw new Error(`Emulation griff nicht: pointer ist nicht ${zeiger} — die Messung waere wertlos.`);
