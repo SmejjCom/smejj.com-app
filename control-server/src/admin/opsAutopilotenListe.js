@@ -784,6 +784,33 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     schonfristMs: STUNDE_MS,
     startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
     stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
+  },
+  {
+    id: "oberflaechenwache",
+    name: "40. Oberflächenwache (Responsive & Touch)",
+    kurz: "Misst jede Nacht die AUSGELIEFERTE Oberfläche auf acht Bildschirmgrößen — läuft überall Inhalt über den Rand, und ist jeder Knopf mit dem Finger zu treffen?",
+    funktionen: [
+      "Läuft täglich um 5:30 Uhr Mac-Zeit auf dem Rechner des Betreibers (crontab, Skript außerhalb von Google Drive — macOS lässt Hintergrunddienste dort nicht lesen).",
+      "Prüfung 1 — Responsive: 19 Ansichten × 8 Gerätegrößen (320/375/430 mit Finger, 768/1024 Tablet, 1280/1440/1920 mit Maus) = 152 Messpunkte. Gemessen wird mit echten Inhalten (lange Adresse ohne Leerzeichen, Code-Block, Tabelle) — eine leere Ansicht läuft nie über.",
+      "Prüfung 2 — Touch: jedes bedienbare Element bei 375 px gegen das 44-px-Ziel, mit echten Tippunkten statt Elementmaßen. Damit unterscheidet sie 'zu klein' von 'verdeckt' und von 'sieht klein aus, ist aber groß zu treffen'.",
+      "Gemessen wird gegen https://smejj.com, nicht gegen einen lokalen Server: was zählt, ist was der Nutzer wirklich bekommt — samt Bündel, /assets/-Kopie und Service-Worker-Vorrat.",
+      "WARUM ES SIE GIBT: Das V11-Design hatte 32 Touch-Ziele wieder unter 44 px gedrückt und vier Ansichten liefen auf Tablet und kleinem Handy über den Rand. Beides stand monatelang live, ohne dass irgendetwas anschlug.",
+      "Fail-closed: kein Chrome, kein node, kein Netz = Fehler. 'Konnte nicht messen' ist nicht 'in Ordnung'.",
+      "Protokoll: ~/Library/Logs/smejj-oberflaechenwache.log, Urteil in ~/.local/share/smejj-oberflaeche/letzter-lauf.json."
+    ],
+    trainiert: "Nichts — sie misst. Layoutmaße und Trefferflächen der ausgelieferten Seite.",
+    verbessert: "Ein Rückschritt an der Oberfläche fällt binnen eines Tages auf, statt monatelang live zu stehen",
+    neuigkeiten: ["Neu am 2026-08-22, nachdem 32 abgesenkte Touch-Ziele und vier überlaufende Ansichten von Hand gefunden werden mussten"],
+    ort: "Mac des Betreibers (crontab → ~/.local/share/smejj-oberflaeche/wache.sh)",
+    zeitplan: "täglich 5:30 Uhr Mac-Zeit",
+    messung: "heartbeat",
+    // Täglich plus großzügige Schonfrist: der Mac kann nachts aus sein, und ein
+    // verschlafener Lauf ist kein Ausfall. Erst wenn zwei Nächte ohne Meldung
+    // vergehen, stimmt etwas nicht.
+    erwartetAlleMs: TAG_MS,
+    schonfristMs: TAG_MS,
+    startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-oberflaeche/wache.sh (der Zeitplan steht in der crontab).",
+    stopAnleitung: "Auf dem Mac den crontab-Eintrag smejj-oberflaechenwache entfernen."
   }
 ]);
 
