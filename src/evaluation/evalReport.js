@@ -128,7 +128,14 @@ export function buildEvalReport({ suite, run, caseScores, baseline = null } = {}
       error: entry.error,
       failedAssertions: entry.assertions
         .filter((assertion) => !assertion.ok)
-        .map((assertion) => ({ type: assertion.type, critical: assertion.critical }))
+        .map((assertion) => ({ type: assertion.type, critical: assertion.critical })),
+      // Der WORTLAUT der nicht bestandenen Durchgaenge, sofern der Lauf ihn
+      // mitgegeben hat. Diese Liste ist eine Erlaubnisliste: was hier nicht
+      // steht, faellt still weg — genau daran ist der erste Versuch am
+      // 2026-08-22 gescheitert. Die Mechanik war fertig und getestet, aber
+      // getestet wurde `runEvalSuite`, nicht der Weg bis in die Datei; im
+      // Bericht kam nichts an. Wer ein Feld ergaenzt, ergaenzt es HIER mit.
+      ...(Array.isArray(entry.belege) && entry.belege.length ? { belege: entry.belege } : {})
     }))
   };
 }
