@@ -219,14 +219,50 @@ test("die Formulare benutzen keine erfundene Variable", () => {
     "die Formularflaeche muss dieselbe Glas-Variable nehmen wie die uebrigen Flaechen");
 });
 
+// Kontrast nach WCAG 2.1 (relative Luminanz). Schwelle fuer Fokusringe und
+// andere Nicht-Text-Elemente: 3.0.
+function kontrast(vorne, hinten) {
+  const luminanz = (hex) => {
+    const c = hex.replace("#", "");
+    const kanaele = [0, 2, 4]
+      .map((i) => parseInt(c.substr(i, 2), 16) / 255)
+      .map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * kanaele[0] + 0.7152 * kanaele[1] + 0.0722 * kanaele[2];
+  };
+  const [hell, dunkel] = [luminanz(vorne), luminanz(hinten)].sort((a, b) => b - a);
+  return (hell + 0.05) / (dunkel + 0.05);
+}
+
 test("der Fokusring ist in BEIDEN Schemata sichtbar", () => {
   // --konto-edge ist im hellen Schema rgba(255,255,255,0.9): ein weisser Ring
   // auf hellem Grund ist kein Ring. Tastaturnutzer verlieren damit die Position.
+  //
+  // Diese Pruefung stand bis zum 2026-08-22 auf `outline: 2px solid #2dd4bf`
+  // und behauptete dazu "Akzentfarbe traegt in hell und dunkel". Nachgerechnet
+  // war das NIE wahr: #2dd4bf erreicht gegen den hellen Konto-Grund #fbfbf9
+  // gerade 1.86, gefordert sind 3.0. Der Pin auf einen Literalwert gab
+  // Sicherheit, die er nicht liefern konnte — er haette jede Farbe
+  // durchgewinkt, solange sie nur diese eine war. Jetzt wird gerechnet.
   const regel = CSS_CODE.match(/#profile \.account-inline-form input:focus-visible \{[\s\S]*?\n\}/)[0];
   assert.ok(!/var\(--konto-edge\)/.test(regel),
     "der Fokusring darf nicht an der Kantenfarbe haengen");
-  assert.match(regel, /outline: 2px solid #2dd4bf/,
-    "Akzentfarbe traegt in hell und dunkel");
+  assert.match(regel, /outline: 2px solid var\(--konto-fokus\)/,
+    "der Ring gehoert an eine eigene Variable, damit jedes Schema seinen Wert setzen kann");
+
+  // Beide Schemata muessen die Variable setzen — sonst faellt eines still
+  // auf den Erbwert zurueck.
+  const dunkel = CSS_CODE.match(/#profile\.premium-view \{([\s\S]*?)\n\}/)[1];
+  const hell = CSS_CODE.match(/#profile\.premium-view\[data-settings-theme="light"\] \{([\s\S]*?)\n\}/)[1];
+  assert.match(dunkel, /--konto-fokus:/, "dunkles Schema definiert --konto-fokus");
+  assert.match(hell, /--konto-fokus:/, "helles Schema definiert --konto-fokus");
+
+  // Und der helle Wert muss den Kontrast wirklich schaffen. Das ist der
+  // Punkt, den die alte Fassung nur behauptet hat.
+  const hellerWert = hell.match(/--konto-fokus:\s*(#[0-9a-fA-F]{6})/)?.[1];
+  assert.ok(hellerWert, "der helle Wert muss ein fester Farbwert sein, damit er pruefbar ist");
+  const gemessen = kontrast(hellerWert, "#fbfbf9");
+  assert.ok(gemessen >= 3,
+    `Fokusring ${hellerWert} auf hellem Grund: Kontrast ${gemessen.toFixed(2)}, gefordert 3.0`);
 });
 
 test("beide Schemata definieren jede benutzte Konto-Variable", () => {
