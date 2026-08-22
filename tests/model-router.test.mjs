@@ -219,10 +219,21 @@ test("Coding-Profil waehlt das Coding-Modell des Anbieters, default waehlt sein 
 test("Coding-Profil bei einem Anbieter OHNE Coding-Modell faellt auf dessen Standard zurueck, nie ins Leere", () => {
   // groq hat kein Coding-Modell. Fail-closed heisst hier: der Standard greift,
   // es wird nichts geraten und kein anderer Anbieter heimlich aktiviert.
+  //
+  // Der Modellname stand bis 2026-08-22 auf "llama-3.3-70b-versatile" und war
+  // seit dem 18.08. rot. Der Grund lag NICHT im Router: die beiden
+  // Llama-Eintraege gibt es bei Groq nicht mehr, jeder Aufruf endete mit
+  // HTTP 404 (gemessen gegen die echte Modellliste des Kontos, Commit ee6b3f3).
+  // Der Router wurde damals richtig auf gpt-oss umgestellt — nur dieser Test
+  // hielt an den toten Namen fest und behauptete vier Tage lang einen Fehler,
+  // den es nicht gab.
   const env = { SMEJJ_LLM_PROVIDER_ORDER: "groq", SMEJJ_LLM_GROQ_API_KEY: "k" };
   const chain = resolveChain("coding", env);
   assert.equal(chain.length, 1);
-  assert.equal(chain[0].model, "llama-3.3-70b-versatile");
+  assert.equal(chain[0].model, "openai/gpt-oss-120b");
+  // Gegenprobe: der schnelle Weg ist ein ANDERES Modell — faellt beides auf
+  // denselben Namen, ist die Tabelle kaputt und niemand merkt es.
+  assert.equal(resolveChain("fast", env)[0].model, "openai/gpt-oss-20b");
 });
 
 test("classifyProfile erkennt die Coding-Absicht des fehlgeschlagenen Eval-Falls", () => {

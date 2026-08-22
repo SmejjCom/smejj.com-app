@@ -140,41 +140,71 @@ test("storage presign route is fail-closed without IDrive env", async () => {
   assert.match(payload.reason, /^missing_env:/);
 });
 
-test("storage presign route returns upload and download envelopes", async () => {
-  const env = {
-    IDRIVE_E2_ENDPOINT: "https://s3.us-west-2.idrivee2.com",
-    IDRIVE_E2_REGION: "us-west-2",
-    IDRIVE_E2_ACCESS_KEY: "example_access_key",
-    IDRIVE_E2_SECRET_KEY: "example_secret_key",
-    IDRIVE_E2_BUCKET: "smejj-app",
-    PRESIGN_HARD_LIMIT_ALLOWED: "true",
-    PRESIGN_REMAINING: "3"
-  };
+// Presign-Umgebung fuer die drei Tests darunter. Beispielschluessel, kein Netz:
+// createPresignedIdriveUrl rechnet die Signatur selbst aus.
+const PRESIGN_ENV = {
+  IDRIVE_E2_ENDPOINT: "https://s3.us-west-2.idrivee2.com",
+  IDRIVE_E2_REGION: "us-west-2",
+  IDRIVE_E2_ACCESS_KEY: "example_access_key",
+  IDRIVE_E2_SECRET_KEY: "example_secret_key",
+  IDRIVE_E2_BUCKET: "smejj-app",
+  PRESIGN_HARD_LIMIT_ALLOWED: "true",
+  PRESIGN_REMAINING: "3"
+};
 
-  const uploadRes = fakeRes();
+test("Presign ohne Adminrolle: 401 statt signierter Adresse", async () => {
+  // Dieser Test stand seit dem 2026-08-14 auf Rot und behauptete einen Fehler,
+  // den es nicht gab. Er erwartete 200 fuer einen Upload OHNE jede Anmeldung —
+  // genau das war die Luecke, die Commit 3d34b37d geschlossen hat
+  // ("zwei Wege in fremde Daten geschlossen: Kontokennung und Presign").
+  // Signierte Adressen ausserhalb der Replay-Aufnahmen sind seitdem der
+  // Betreiberverwaltung vorbehalten. Der Test pinnt jetzt die Zusage statt
+  // ihres Gegenteils.
+  const res = fakeRes();
   await handleStoragePresign(jsonReq({
     operation: "upload",
     key: "objects/presign-test.txt",
     contentType: "text/plain",
     contentLength: 4
-  }), uploadRes, { env });
-  assert.equal(uploadRes.statusCode, 200);
-  const upload = JSON.parse(uploadRes.chunks.join(""));
-  assert.equal(upload.ok, true);
-  assert.equal(upload.method, "PUT");
-  assert.equal(upload.headers["Content-Type"], "text/plain");
-  assert.match(upload.url, /^https:\/\/s3\.us-west-2\.idrivee2\.com\/smejj-app\/objects\/presign-test\.txt\?/);
+  }), res, { env: PRESIGN_ENV });
+  assert.equal(res.statusCode, 401);
+  const payload = JSON.parse(res.chunks.join(""));
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error, "presign_admin_required");
+});
 
-  const downloadRes = fakeRes();
+test("Presign fuer eine Replay-Aufnahme: der eine Weg ohne Adminrolle", async () => {
+  // Gesunde Probe zur kaputten oben. Eine Maus-Aufnahme LESEN darf jeder
+  // angemeldete Nutzer — dieser Weg muss weiter eine gueltige Adresse liefern,
+  // sonst waere die Wiedergabe tot. Das Praefix muss zu DOWNLOAD_ONLY_KEY_PREFIXES
+  // in gatekeeper/policy.js passen.
+  const res = fakeRes();
   await handleStoragePresign(jsonReq({
     operation: "download",
-    key: "objects/presign-test.txt"
-  }), downloadRes, { env });
-  assert.equal(downloadRes.statusCode, 200);
-  const download = JSON.parse(downloadRes.chunks.join(""));
+    key: "capsules/maus-engine/lauf-1/aufnahme.json"
+  }), res, { env: PRESIGN_ENV });
+  assert.equal(res.statusCode, 200);
+  const download = JSON.parse(res.chunks.join(""));
   assert.equal(download.ok, true);
   assert.equal(download.method, "GET");
   assert.deepEqual(download.headers, {});
+  assert.match(
+    download.url,
+    /^https:\/\/s3\.us-west-2\.idrivee2\.com\/smejj-app\/capsules\/maus-engine\/lauf-1\/aufnahme\.json\?/
+  );
+});
+
+test("Schreiben bleibt auch mit Replay-Praefix der Verwaltung vorbehalten", async () => {
+  // Die Weiche haengt an operation UND key. Ein Upload unter demselben Praefix
+  // waere sonst ein offener Schreibweg in fremde Daten.
+  const res = fakeRes();
+  await handleStoragePresign(jsonReq({
+    operation: "upload",
+    key: "capsules/maus-engine/lauf-1/untergeschoben.json",
+    contentType: "application/json",
+    contentLength: 2
+  }), res, { env: PRESIGN_ENV });
+  assert.equal(res.statusCode, 401);
 });
 
 test("handleJobStatus returns 404 for unknown job and 200 with capsule plan for known job", async () => {
