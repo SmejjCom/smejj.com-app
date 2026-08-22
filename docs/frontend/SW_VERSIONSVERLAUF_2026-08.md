@@ -1396,3 +1396,42 @@ v486) sass es direkt neben dem fixen Logo oben links und verdeckte es.
 Der Gruss selbst bleibt unveraendert. Die CSS-Regel
 #code .codegruss-zeichen bleibt stehen (schadet nicht, greift ins
 Leere) — entfernt wird nur das Markup.
+
+v638 -> v639 (2026-08-22, Betreiber-Freigabe "wie im Code-Bereich"):
+Touch-Ziele und Responsive-Fehler in einem Rutsch. Ein Sprung ist noetig,
+weil app-surfaces.css und start-styles.css im Vorrat liegen — ohne neue
+Nummer haetten bestehende Nutzer die alten Fassungen behalten.
+
+Zwei Messungen stecken dahinter. Erstens der neue Waechter
+`npm run measure:responsive`: 19 Ansichten x 8 Geraeteklassen (320 bis
+1920 px) = 152 Messpunkte, mit echtem Inhalt gemessen (lange Adresse ohne
+Leerzeichen, Code-Block, Tabelle). Er fand vier Fehler, drei davon aus
+derselben Ursache — eine Medienabfrage sieht das FENSTER, nicht den Platz:
+bei 768 px stehen links 200 px Schublade und rechts, sobald die Flaeche
+angedockt ist, noch einmal 200 px, der Ansicht bleiben 368 px. Konto und
+Einstellungen bekamen dort ein festes 250px-Raster und liefen um 78 bzw.
+200 px ueber; jetzt umbrechende Flex-Zeilen. Die Modell-Liste scrollt
+allein statt die ganze Ansicht mitzunehmen. Der Lichtschein der
+Konto-Tafel sass 40 px ueber der Ecke und liess die Seite bei 320 px um
+33 px seitlich wandern.
+
+Zweitens `npm run measure:touch:app`: das V11-Design hatte 32 Ziele wieder
+unter 44 px gedrueckt, weil design-v11.css als LETZTE Buendelquelle die
+alten 600-px-Regeln mit den Mockup-Massen ueberschrieb (".fknopf: 38px").
+Der neue Block steht darum am Ende von design-v11.css — eine Medienabfrage
+erhoeht die Spezifitaet NICHT. Gehoben werden unter 600 px: Chat-Eingabe
+38 -> 44, Startmenue 28 -> 44, Spur-Reiter und Einfuehrung 42 -> 44,
+Code-Auftragsfeld 26 -> 44, Modus-Chip 40 breit -> 44. Am Bild aendert
+sich nichts: die Icons haben seit dem 18.08. weder Flaeche noch Rahmen.
+
+Der Waechter selbst misst jetzt mit echten Tippunkten (elementsFromPoint
+an acht Randpunkten) statt mit getBoundingClientRect. Damit unterscheidet
+er "zu klein" von "verdeckt" und von "sieht klein aus, ist aber gross zu
+treffen" — der Stopp-Punkt (11 px sichtbar, 43 px fassbar) galt monatelang
+zu Unrecht als Fehler.
+
+Stand nach dem Deploy: measure:responsive 152/152, measure:touch:app 0
+Verstoesse (eine begruendete Ausnahme: #codeArbeit), check:start-styles
+aktuell, Start-Lock OK. v639 folgt auf v638 einer Parallelsitzung
+(JS-Dialoge im Panel); vor dem Push wurde jede Live-Datei gegen den
+eigenen Ausgangsstand geprueft — es wurde nichts Fremdes ueberschrieben.
