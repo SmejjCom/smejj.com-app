@@ -298,3 +298,70 @@ test("aus einem Berechtigungsmuster wird die richtige Herkunft", () => {
   // Nur https zaehlt: im angemeldeten Chrome waere http ein Klartext-Leck.
   assert.match(hintergrund, /startsWith\("https:\/\/"\)/);
 });
+
+// --- Die Zustandsauskunft: gebaut UND angeschlossen -------------------------
+//
+// Der Hintergrund verstand "zustand" und "hallo" schon, bevor die Seite die
+// Woerter aussprechen konnte: sendeAnChrome verpackte alles fest als
+// { aktion }. Beide Wege waren damit tot — lautlos, wie immer bei dieser
+// Falle. Diese Tests halten beide Enden zusammen.
+test("die Zustandsfrage kommt als 'zustand' heraus, nicht als Aktion", async () => {
+  const { frageZustand } = await import("../public/maus-chrome.js");
+  const fenster = fensterAttrappe();
+  await frageZustand({ fenster, grenzeMs: 50 });
+
+  const raus = fenster.gesendet.at(-1);
+  assert.equal(raus.nachricht.zustand, true, "der Hintergrund erkennt die Frage nur an diesem Wort");
+  assert.ok(!("aktion" in raus.nachricht), "als Aktion verpackt landet sie im falschen Weg");
+});
+
+test("der Anklopf-Test nimmt den Hallo-Weg", async () => {
+  const { brueckeAntwortet } = await import("../public/maus-chrome.js");
+  const vorher = globalThis.document;
+  globalThis.document = { documentElement: { dataset: { smejjMausBruecke: "0.5.0" } } };
+  try {
+    const fenster = fensterAttrappe();
+    await brueckeAntwortet({ fenster, grenzeMs: 50 });
+    assert.equal(fenster.gesendet.at(-1).nachricht.hallo, true);
+  } finally {
+    if (vorher === undefined) delete globalThis.document; else globalThis.document = vorher;
+  }
+});
+
+test("der Hintergrund kennt beide Woerter und hat sie VOR dem alten Weg", () => {
+  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  assert.match(hintergrund, /nachricht\?\.zustand/);
+  assert.match(hintergrund, /nachricht\?\.hallo/);
+  // Reihenfolge zaehlt: fuehreAus(nachricht?.befehl) ist der Auffangzweig und
+  // muss zuletzt stehen, sonst schluckt er die neuen Woerter.
+  assert.ok(
+    hintergrund.indexOf("nachricht?.zustand") < hintergrund.indexOf("fuehreAus(nachricht?.befehl)"),
+    "der Auffangzweig steht vor der Zustandsfrage und verschluckt sie"
+  );
+});
+
+test("die Zustandsauskunft nennt BEIDE Seiten nebeneinander", () => {
+  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const auskunft = hintergrund.slice(hintergrund.indexOf("export async function zustandZeigen"));
+  // Genau darum geht es: gemerkte Freigabe UND tatsaechliches Chrome-Recht.
+  // Nur eine der beiden Zahlen zu zeigen war der Fehler vom 2026-08-20.
+  assert.match(auskunft, /freigaben:/);
+  assert.match(auskunft, /chromeRechte:/);
+  // Und sie darf nichts ausfuehren — nur lesen.
+  assert.ok(!/fuehreAktionAus|chrome\.scripting/.test(auskunft.slice(0, auskunft.indexOf("\n}"))));
+});
+
+test("das Panel zeigt den Zustand NACH dem Rendern — und ohne gesperrte Datei", () => {
+  const panel = fs.readFileSync("public/maus-panel.js", "utf8");
+  // render() baut das Panel neu auf. Wer vorher schreibt, schreibt ins Leere.
+  const nachRender = panel.indexOf("render();", panel.indexOf("export function openMausReplay"));
+  assert.ok(nachRender > 0, "openMausReplay rendert nicht mehr?");
+  assert.ok(
+    panel.indexOf("zeigeBrueckenZustand()", nachRender) > nachRender,
+    "der Zustand wird vor render() geschrieben und sofort wieder weggewischt"
+  );
+  // Die Zeile muss aus dem Modul kommen: index.html steht unter dem Start-Lock.
+  assert.match(panel, /document\.createElement\("p"\)/);
+  // Und sie darf bei einem Fehler nicht leer bleiben — leer sieht aus wie "alles gut".
+  assert.match(panel, /Zustand der Bruecke nicht lesbar/);
+});

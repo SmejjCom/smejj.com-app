@@ -97,6 +97,36 @@ function herkunftVon(url) {
   }
 }
 
+// Nur-lesende Auskunft ueber den eigenen Zustand.
+//
+// WARUM: Ohne sie war der Zustand der Bruecke von aussen unsichtbar. Ob eine
+// Freigabe angekommen ist, liess sich nur erraten — und am 2026-08-20/21 sind
+// daran mehrere Runden draufgegangen: das Fenster zeigte "Freigegeben noch 30
+// Minuten", der Speicher war leer, und niemand konnte beides gleichzeitig
+// sehen. Diese Auskunft nennt beide Seiten nebeneinander: was die Bruecke
+// gespeichert hat UND was Chrome tatsaechlich an Rechten haelt.
+//
+// Sie gibt nichts preis, was der Aufrufer nicht ohnehin darf: nur smejj.com
+// erreicht diesen Weg, und Herkuenfte sind keine Geheimnisse.
+export async function zustandZeigen() {
+  const gespeichert = await freigaben();
+  let rechte = [];
+  try {
+    const alle = await chrome.permissions.getAll();
+    rechte = (alle?.origins || []).map(String);
+  } catch { /* ohne Rechte-API bleibt die Liste leer */ }
+  return {
+    ok: true,
+    version: chrome.runtime.getManifest().version,
+    freigaben: Object.entries(gespeichert).map(([herkunft, bis]) => ({
+      herkunft,
+      restMinuten: Math.max(0, Math.ceil((Number(bis) - Date.now()) / 60000))
+    })),
+    chromeRechte: rechte,
+    arbeitsTab: mausTabId === null ? null : mausTabId
+  };
+}
+
 // --- Der Maus-Weg: dieselben Aktionen wie im fernen Browser -------------------
 //
 // Fail-closed an drei Stellen, und jede nennt ihren Grund im Klartext: eine
@@ -268,7 +298,9 @@ function baueEmpfang() {
     // Zwei Woerter, zwei Wege: `befehl` ist der alte Adapter-Weg der
     // Maus-Engine, `aktion` der neue der Seite. Sie bleiben getrennt, damit
     // der bestehende Weg samt seiner 13 Tests unberuehrt weiterlaeuft.
-    const arbeit = nachricht?.aktion
+    const arbeit = nachricht?.zustand
+      ? zustandZeigen()
+      : nachricht?.aktion
       ? fuehreAktionAus(nachricht.aktion)
       : nachricht?.hallo
         ? Promise.resolve({ ok: true, bereit: true, version: chrome.runtime.getManifest().version })

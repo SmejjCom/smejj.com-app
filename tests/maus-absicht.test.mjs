@@ -174,3 +174,71 @@ test("der Rat beim fehlenden Live-Browser schickt niemanden im Kreis", async () 
   assert.ok(!/neu laden/i.test(nie.grund), "Neuladen hilft nicht, also darf es nicht empfohlen werden");
   assert.match(nie.grund, /Server/);
 });
+
+// --- Der Zustand der Bruecke: die zwei Seiten muessen sich WIDERSPRECHEN duerfen
+//
+// Am 2026-08-20/21 sind mehrere Runden daran verlorengegangen, dass das
+// Erweiterungsfenster "Freigegeben noch 30 Minuten" zeigte, der Speicher der
+// Bruecke aber leer war. Wer nur EINE der beiden Zahlen anzeigt, baut die
+// Falle wieder auf. Diese Tests halten fest, dass der Unterschied auffaellt.
+const { deuteBrueckenZustand } = await import("../public/maus-absicht.js");
+
+test("ohne Bruecke sagt es das, statt zu schweigen", () => {
+  const befund = deuteBrueckenZustand(null, { installiert: false });
+  assert.equal(befund.ton, "fehlt");
+  assert.match(befund.text, /nicht installiert/);
+});
+
+test("antwortet die Bruecke nicht, folgt daraus ein Handgriff", () => {
+  const befund = deuteBrueckenZustand({ ok: false, error: "bruecke_antwortet_nicht" });
+  assert.equal(befund.ton, "warnung");
+  assert.match(befund.text, /chrome:\/\/extensions/);
+});
+
+test("DER FALL VOM 20.08.: gemerkt, aber Chrome haelt das Recht nicht", () => {
+  const befund = deuteBrueckenZustand({
+    ok: true, version: "0.5.0",
+    freigaben: [{ herkunft: "https://mail.google.com", restMinuten: 28 }],
+    chromeRechte: []
+  });
+  assert.equal(befund.ton, "warnung");
+  assert.match(befund.text, /mail\.google\.com/);
+  assert.match(befund.text, /Chrome haelt das Recht NICHT/);
+});
+
+test("der umgekehrte Fall faellt ebenso auf", () => {
+  const befund = deuteBrueckenZustand({
+    ok: true, version: "0.5.0",
+    freigaben: [],
+    chromeRechte: ["https://www.alibaba.com/*"]
+  });
+  assert.equal(befund.ton, "warnung");
+  assert.match(befund.text, /nicht kennt/);
+});
+
+test("eine ABGELAUFENE Freigabe zaehlt nicht als offen", () => {
+  const befund = deuteBrueckenZustand({
+    ok: true, freigaben: [{ herkunft: "https://mail.google.com", restMinuten: 0 }], chromeRechte: []
+  });
+  assert.equal(befund.ton, "gut");
+  assert.match(befund.text, /keine Freigabe aktiv/);
+});
+
+test("sind sich beide Seiten einig, steht die Restzeit da", () => {
+  const befund = deuteBrueckenZustand({
+    ok: true, version: "0.5.0",
+    freigaben: [{ herkunft: "https://mail.google.com", restMinuten: 28 }],
+    chromeRechte: ["https://mail.google.com/*"]
+  });
+  assert.equal(befund.ton, "gut", befund.text);
+  assert.match(befund.text, /noch 28 min/);
+});
+
+test("Muster und Herkunft meinen dasselbe — kein erfundener Unterschied", () => {
+  for (const recht of ["https://mail.google.com/*", "https://mail.google.com/", "https://mail.google.com"]) {
+    const befund = deuteBrueckenZustand({
+      ok: true, freigaben: [{ herkunft: "https://mail.google.com", restMinuten: 5 }], chromeRechte: [recht]
+    });
+    assert.equal(befund.ton, "gut", `${recht} wurde als Unterschied gelesen: ${befund.text}`);
+  }
+});
