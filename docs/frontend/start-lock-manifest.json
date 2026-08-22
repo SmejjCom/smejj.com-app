@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-22T16:24:11.103Z",
-  "confirmation": "Betreiber 2026-08-22: 'mach weiter mit dem was noch offen ist' — Markenkette geschlossen: account-privacy.js von ?v=b46m auf ?v=b47 in premium-surfaces.js. Aenderung ist ausschliesslich diese eine Import-Marke. Wirkung fuer Besucher OHNE Service Worker; SW-Nutzer haben die Datei durch den v646-Precache (ignoreSearch) bereits frisch. Bewusst KEIN eigener Deploy dafuer — sie geht beim naechsten Deploy mit.",
+  "frozenAt": "2026-08-22T16:51:19.672Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-22 auf die Frage nach den zwei Maengeln in public/ai/chatClient.js: Antwort 'Ja freigegeben, mach beides'. Umfang: (1) Rueckfall auf das dauerhafte Token-Fach, wenn das Sitzungsfach leer ist — der Chat sagte sonst nach einem Browser-Neustart faelschlich 'nicht angemeldet'. (2) Ehrliche Fehlermeldung: nennt nur die Anmeldung, nicht mehr zusaetzlich Cline/Anbieter, die gar nicht geprueft wurden. Kein Eingriff in Startseiten-Markup oder -Stil.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "d949ef6c1d437420d91fba32e7a5503025693bc0a35b2b2cc47127a1b49987d3",
@@ -31,7 +31,7 @@
     "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
     "public/cline-model-menu.css": "44599e36922c6f340e3b19df0728f85b9dc89ba09590ca0f0e644dfd29acfa84",
     "public/auth/passkey-ui.js": "ff1335c193e6458b0e5bdf43627ffe3bc2fa94aa94f67c8bf3d53a4ba4f24019",
-    "public/ai/chatClient.js": "8b605f34848133c81a7051d019491418f972bb5f12ce63139949600f42edb59f",
+    "public/ai/chatClient.js": "5fe2f20ec73a9018cc1106753dcf428084ad4a231e830ed1289f9d25df1798f7",
     "public/ai/index.js": "f21fcef60cecb99c454783909fc6f63aedf3f8d2211e1df04380327debe87997",
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
