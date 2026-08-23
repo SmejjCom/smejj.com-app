@@ -1,0 +1,62 @@
+{
+  "jobId": "job_chats_zu_gross_20260823",
+  "createdAt": "2026-08-23T05:00:00.000Z",
+  "owner": "smejj.com",
+  "title": "Zehn Chats waren seit Wochen NICHT gesichert — Bestand gerettet",
+  "ziel": "Betreiber-Auswahl 2026-08-23: 'Zu grosse Chats retten'. Chats ueber der Server-Grenze werden still nicht synchronisiert und gehen beim Geraetewechsel verloren.",
+  "ausgangslage": {
+    "gemessen": "Live im angemeldeten Konto, 113 Chats, Median 7 KB, Summe 15.076 KB",
+    "betroffen": "10 Chats ueber 512 KB, zusammen 11.534 KB, seit Wochen nur auf einem Geraet",
+    "ursache": "Nicht zu viel Text — immer ein Medium, und zwar dreifach abgelegt (text, html, raw)"
+  },
+  "dreiBefundeNacheinander": [
+    {
+      "nr": 1,
+      "befund": "Der Fix vom 22.08. lagert Medien beim SPEICHERN aus und wirkt nur vorwaerts. Alte Chats werden nie neu gespeichert, behalten ihre data:-URLs und werden bei jedem Sync-Versuch aufs Neue abgewiesen.",
+      "loesung": "public/chat-medien-rettung.js — bei Abweisung retten und einmal erneut senden"
+    },
+    {
+      "nr": 2,
+      "befund": "Der Server hat ZWEI Grenzen: 512 KB - 1 MB gibt HTTP 400 chat_zu_gross, ueber 1 MB gibt HTTP 500 'Request too large' (Body-Leser, maxJsonBodyBytes). chat-sync behandelte nur 4xx — sechs der zehn Chats lagen im blinden Fleck und wurden weder gerettet noch gemeldet.",
+      "loesung": "istZuGross(status, grund) erkennt beide Absagen und 413; Rettung UND Meldung haengen an dieser Weiche"
+    },
+    {
+      "nr": 3,
+      "befund": "Die Rettung haengt am Sende-Weg. push() arbeitet 113 Gespraeche der Reihe nach ab; nach gut einer Minute war genau EINER gerettet. Wer die App kurz oeffnet, kommt nie bei seinem Bestand an — der Fix haette funktioniert und trotzdem nichts bewirkt.",
+      "loesung": "raeumeBestandAuf() sucht betroffene Chats direkt, hoechstens einmal am Tag, 12 s nach dem Start, Deckel bei 25 je Lauf"
+    }
+  ],
+  "ergebnisJeChat": [
+    { "titel": "Immobiliensuche San Francisco", "vorherKB": 1938, "nachherKB": 19, "typ": "video/mp4" },
+    { "titel": "Generiere ein Video von: Berlin", "vorherKB": 1621, "nachherKB": 15, "typ": "video/mp4" },
+    { "titel": "Generiere ein Bild von: einem kleinen Haus", "vorherKB": 1537, "nachherKB": 2, "typ": "image/png" },
+    { "titel": "Zeichne mir einen roten Leuchtturm", "vorherKB": 1537, "nachherKB": 2, "typ": "image/png" },
+    { "titel": "Generiere ein Bild von: einem roten …", "vorherKB": 1417, "nachherKB": 2, "typ": "image/png" },
+    { "titel": "Generiere ein Bild von: einem roten …", "vorherKB": 1070, "nachherKB": 2, "typ": "image/png" },
+    { "titel": "Generiere ein Bild von: Ibrahim …", "vorherKB": 670, "nachherKB": 2, "typ": "image/png" },
+    { "titel": "Generiere ein Bild von: Paris …", "vorherKB": 622, "nachherKB": 2, "typ": "image/png" },
+    { "titel": "Bildgenerierung Kim Kardashian", "vorherKB": 579, "nachherKB": 3, "typ": "video/mp4" },
+    { "titel": "Zeichne mir einen blauen Leuchtturm", "vorherKB": 543, "nachherKB": 2, "typ": "image/png" }
+  ],
+  "verifikation": {
+    "summe": "11.534 KB -> 51 KB, kein einziges 'gescheitert'",
+    "kontoGesamt": "15.076 KB -> 3.593 KB (113 Chats unveraendert, 0 ueber der Grenze)",
+    "aufDemServerAngekommen": "die fuenf groessten per PUT gesendet: alle HTTP 200 mit ok:true, Schluessel unter chats/user_158c1e6…",
+    "medienWeiterAbrufbar": "video/mp4 480 KB, image/png 384 KB, video/mp4 144 KB — alle HTTP 200, richtige Typen",
+    "restDatenUris": 0,
+    "bestandslaufLaeuftAutomatisch": "nach dem Neuladen Merker smejj.chat.bestandslauf.v1 gesetzt; geladen chat-store b57, chat-sync v6, chat-medien-rettung v3 — je genau eine Fassung",
+    "tests": "check:frontend 611/611 gruen (20 Faelle im neuen Waechter)",
+    "weitereChecks": "module-queries 185, markenkette 97, precache 154, assets 209, modell-menue-lock gruen",
+    "konsole": "keine Fehler"
+  },
+  "auslieferung": {
+    "sw": "v652 -> v655 in drei Schritten, Nummer jedes Mal vorher live gegengeprueft",
+    "frontendCommits": ["e2b5ccb", "4acfd9f", "722fe06"],
+    "appCommits": ["8f9a4ef3", "b151770c", "ed73fb6e"],
+    "startLock": "dreimal neu gestempelt, Umfang je Stempel im Wortlaut hinterlegt (nur Cache-Marken)"
+  },
+  "abstimmungMitParallelsitzung": "Die Sitzung, die den 22.08.-Fix gebaut hat, meldete eine Abweichung: mein Muster erfasste auch audio, der Server kennt in ERLAUBTE_TYPEN aber nur png, jpeg, webp, mp4, webm. Uebernommen (Vorschlag a): audio entfernt, weil brauchtRettung() sonst 'ja' meldet, die Rettung anlaeuft und nichts bewirkt. Ein Waechter haelt die drei Stellen jetzt zusammen.",
+  "offenerBefund": "Das HTTP 500 fuer 'Request too large' ist die falsche Fehlerklasse — 413 waere richtig. src/server.js gehoerte waehrend der Arbeit einer Parallelsitzung; das Frontend faengt beide Formen ohnehin ab. Als eigene Aufgabe gemeldet.",
+  "nichtAngefasst": "Die Modell-Menues stehen seit heute unter Schutz (docs/frontend/MODELL_MENUE_LOCK.md) und wurden nicht beruehrt. Das Favicon-Manifest wurde NICHT mitgestempelt: public/entwickler.html einer Parallelsitzung fehlt dort, das ist deren Arbeit.",
+  "status": "abgeschlossen"
+}
