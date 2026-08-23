@@ -10,6 +10,7 @@
 //   - Einsicht in eine Nutzerakte: liest zwar nur, ist aber ein Zugriff auf
 //     personenbezogene Daten und gehoert deshalb nachgewiesen. Ohne Grund
 //     keine Einsicht; schlaegt der Nachweis fehl, gibt es keine Daten.
+import { nutzerLage } from "../admin/opsNutzerLage.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { privateJson, readJson } from "../http/respond.js";
 import { getUserByEmail, userRole, userStatus } from "../auth/emailUserStore.js";
@@ -46,6 +47,8 @@ export async function handleAdminRoute(req, url, res, { env = process.env } = {}
   try {
     if (readMethod && rest === "me") return respondMe(res, actor), true;
     if (readMethod && rest === "users") return await respondUsers(res, actor, url, env), true;
+    // Modul B, Teil 2: Nutzer-Lage (Plan, bezahlt als, zuletzt, Verbrauch) — Design-Vorschlag 2026-08-23.
+    if (readMethod && rest === "users/lage") return await respondNutzerLage(res, actor, url, env), true;
     if (readMethod && rest.startsWith("users/") && rest !== "users/index/rebuild") {
       return await respondUserDetail(req, res, actor, decodeURIComponent(rest.slice("users/".length)), url, env), true;
     }
@@ -75,6 +78,18 @@ function respondMe(res, actor) {
     // daran nichts geaendert: der Betriebsbereich ist rein lesend.
     writable: true
   });
+}
+
+async function respondNutzerLage(res, actor, url, env) {
+  const gate = checkActorPermission(actor, "users.read");
+  if (!gate.ok) return privateJson(res, gate.status, { ok: false, error: gate.error });
+  const lage = await nutzerLage({
+    env,
+    query: url.searchParams.get("query") || "",
+    offset: url.searchParams.get("offset"),
+    limit: url.searchParams.get("limit")
+  });
+  return privateJson(res, lage.ok ? 200 : 409, lage);
 }
 
 async function respondUsers(res, actor, url, env) {

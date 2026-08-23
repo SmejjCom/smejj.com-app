@@ -99,6 +99,8 @@ export const PROTECTED_FILES = [
   // Modul L Teil 2 "Sicherheitslage" (2026-08-23): Endpunkte, Sperren, Vier-Augen, Zugaenge.
   "control-server/src/admin/opsSicherheitsLage.js",
   "control-server/admin-ui/views-stage6.js",
+  // Modul B Teil 2 "Nutzer-Lage" (2026-08-23): bezahlt als, Plan, zuletzt, Verbrauch.
+  "control-server/src/admin/opsNutzerLage.js",
   "control-server/admin-ui/views-stage9.js"
 ];
 

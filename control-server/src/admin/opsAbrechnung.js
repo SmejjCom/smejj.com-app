@@ -113,7 +113,10 @@ function aufbereiten(k, adressen, jetztMs) {
     tageBisEnde: Number.isFinite(endeMs) ? Math.ceil((endeMs - jetztMs) / 86_400_000) : null,
     kuendigtZumPeriodenende: k.cancelAtPeriodEnd === true,
     livemodus: typeof k.livemode === "boolean" ? k.livemode : null,
-    abonnementId: k.subscriptionId || null
+    abonnementId: k.subscriptionId || null,
+    // Bestaetigte Kaufadresse aus dem Checkout — die Spalte "bezahlt als" der
+    // Nutzer-Lage. Nur Anzeige, nie mit der Konto-Adresse verwechseln.
+    paidEmail: k.paidEmail || null
   };
 }
 

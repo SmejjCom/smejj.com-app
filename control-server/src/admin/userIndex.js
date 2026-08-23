@@ -52,6 +52,13 @@ export function indexEntryFrom(record) {
     createdAt: record?.createdAt || null,
     updatedAt: record?.updatedAt || null,
     activeSessions: sessions.filter((s) => !s?.revokedAt && new Date(s?.expiresAt || 0).getTime() > now).length,
+    // "Zuletzt gesehen": die juengste Sitzungsberuehrung. Seit 2026-08-23 fuer die
+    // Nutzer-Lage (Spalte "Zuletzt", Kennzahl "heute aktiv"). Ein alter Index
+    // traegt das Feld nicht — erst der Neubau.
+    lastSeenAt: sessions.reduce((max, s) => {
+      const t = String(s?.lastSeenAt || s?.createdAt || "");
+      return t > max ? t : max;
+    }, "") || null,
     loginLockedUntil: record?.loginGuard?.lockedUntil || null
   };
 }

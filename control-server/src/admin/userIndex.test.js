@@ -143,6 +143,12 @@ test("indexEntryFrom zaehlt nur lebende Sitzungen", () => {
   });
   assert.equal(entry.activeSessions, 1);
   assert.equal(entry.role, "support");
+  assert.equal(entry.lastSeenAt, null, "ohne lastSeenAt/createdAt in den Sitzungen bleibt 'zuletzt' leer");
+  const mitZeit = indexEntryFrom({ userId: "u_2", email: "b@example.de", sessions: [
+    { sid: "a", createdAt: "2026-08-01T00:00:00.000Z", lastSeenAt: "2026-08-02T00:00:00.000Z", expiresAt: gestern },
+    { sid: "b", createdAt: "2026-08-20T00:00:00.000Z", lastSeenAt: "2026-08-21T00:00:00.000Z", expiresAt: gestern, revokedAt: "2026-08-22T00:00:00.000Z" }
+  ] });
+  assert.equal(mitZeit.lastSeenAt, "2026-08-21T00:00:00.000Z", "die juengste Beruehrung zaehlt, auch einer widerrufenen Sitzung");
   assert.equal(entry.emailVerified, true);
   assert.equal("passwordHash" in entry, false);
 });
