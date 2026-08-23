@@ -58,18 +58,18 @@
     "willkommen.html: @media 640px — Leiste war 440 px breit auf 375-px-Geraet, jetzt 375 (scroll-Screenshot wk-neu-0.jpg)",
     "google-login.js: 'fuer' -> 'für' (2 Stellen)",
     "Server (Bauzweig 393f0a0b): Magic-Link-Verify-Fehler -> 303 zur App-Anmeldeseite statt rohes JSON; Mail mit echten Umlauten; 3 neue Tests (10/10)",
-    "Betreiber-Freigabe per Karte: ai/chatClient.js v5 — 'smejj denkt nach …' bleibt im Cline-Pfad bis zum ersten Delta (live gemessen: Wartetext 12 ms bis 3.739 ms, Leiste erst mit Text); Marken medien-absicht v5, app b87, sw v662; Start-Lock neu eingefroren 2026-08-23T12:13Z; Frontend 3373664, Arbeitszweig 904caa4e"
+    "Betreiber-Freigabe per Karte: ai/chatClient.js v5 — 'smejj denkt nach …' bleibt im Cline-Pfad bis zum ersten Delta (live gemessen: Wartetext 12 ms bis 3.739 ms, Leiste erst mit Text); Marken medien-absicht v5, app b87, sw v662; Start-Lock neu eingefroren 2026-08-23T12:13Z; Frontend 3373664, Arbeitszweig 904caa4e",
+    "Betreiber-Freigabe per Karte ('Komplett umstellen, 3 Locks freigeben'): eigene API-Domain api.smejj.com (CNAME bestand schon) — config.js DEFAULT_API_ORIGIN + Fallbacks, CSP connect-src in 31 Seiten additiv (Zeabur-Adresse bleibt erlaubt), Admin-Konsole aus dem Bauzweig (CONTROL_ORIGIN api.smejj.com, ALT_ORIGIN Zeabur), Google-Weiterleitungs-URI eingetragen. Live bewiesen: Google-Consent 'Weiter zu smejj.com' (vorher smejj-control.zeabur.app), Login zurück mit Verlauf, Chat/Cline über api.smejj.com ('Olympia.'), Konsole /admin/cockpit über api.smejj.com ohne Konsolenfehler, Magic-Link-Mail mit https://api.smejj.com/... und echten Umlauten. Start-/Security-Lock (12:39/12:40Z) und Admin-Lock (Bauzweig 12:35Z) neu eingefroren; Frontend f88dedc (chat-actions b35, sw v663), Bauzweig 78291b9f, Arbeitszweig c6ed46a3."
   ],
   "commits": {
-    "frontend_main": "b4251b2 (spur-start b43, sw v661), 3373664 (chatClient v5, app b87, sw v662)",
-    "bauzweig": "393f0a0b — Zeabur baute von selbst, gestartetAm 2026-08-23T11:55:19Z",
+    "frontend_main": "b4251b2 (spur-start b43, sw v661), 3373664 (chatClient v5, app b87, sw v662), f88dedc (api.smejj.com, chat-actions b35, sw v663)",
+    "bauzweig": "393f0a0b — Zeabur baute von selbst, gestartetAm 2026-08-23T11:55:19Z; 78291b9f Admin-Konsole api.smejj.com (Control gestartetAm 12:36:15Z)",
     "arbeitszweig": "siehe git log stand-2026-08-23-nutzerreise"
   },
   "bewusst_nicht_gebaut": [
     "Start-Lock (index.html/app.js/ai/chatClient.js): Stopp-Viereck 11x11 px; 'Frei'/'Nachdenken' bleiben auf Englisch deutsch; 8 Icon-Knoepfe ohne Text; Spur-Label 'Neuer Chat ⌘K' zeigt das Such-Kuerzel",
     "Modell-Menue-Lock (23.08.): Start-Picker zeigt kein Haekchen am aktiven Modell und 'BYOK'-Jargon — laut Lock genau so eingefroren",
     "Security-Lock (auth-page.js): 'Send link by email' ohne Adresse -> Meldung unter dem Falz, Fokus bleibt am Knopf; 'E-Mail oder Passwort ist falsch.' ohne Weg (Passwort vergessen?)",
-    "Infrastruktur: Google-Consent und Magic-Link-URL zeigen smejj-control.zeabur.app — braucht eigene API-Domain (z. B. api.smejj.com) bei Zeabur + Google-Console; keine Kosten, aber Betreiber-Entscheidung",
     "Preise nur in EUR fuer US-Nutzer; Landingpage/Hilfe/Mail nur Deutsch — Produktentscheidung",
     "Konto-Anlage mit Passwort und das Klicken des Magic-Links (= Konto anlegen) — Regel: keine Konten anlegen, keine Passwoerter eingeben; Passkey braucht echte Biometrie",
     "Chrome-Fenster liess sich nicht auf 375 px verkleinern, iOS-Simulator braucht Xcode — Handy-Messung lief headless mit iPhone-UA, Touch-Emulation, 375x812"
@@ -80,5 +80,10 @@
     "tests/module-queries: chat-owner.js unter v=2 und v=3 in public/assets — Spiegel der Parallelsitzung"
   ],
   "tests": "i18n-ui 13/13, check:frontend 618/619 (1 fremd), magic-link 10/10; Sperren: start/favicon/security/admin/deploy/auslieferung/einwilligung/modell-menue OK, abo-lock rot (fremd)",
-  "messfalle": "sw v662 precachte app.js noch in der alten Fassung (Marke b87, Inhalt alt — Pages verteilt je Datei unterschiedlich schnell). Heilung: caches.open(CACHE_NAME).delete('/assets/app.js',{ignoreSearch:true}) + reload. Siehe Memory 'Markenkette bricht oben', Nachtrag v494."
+  "messfalle": "sw v662 precachte app.js noch in der alten Fassung (Marke b87, Inhalt alt — Pages verteilt je Datei unterschiedlich schnell). Heilung: caches.open(CACHE_NAME).delete('/assets/app.js',{ignoreSearch:true}) + reload. Siehe Memory 'Markenkette bricht oben', Nachtrag v494.",
+  "offen": [
+    "GitHub-Rueckruf-URI https://api.smejj.com/api/auth/github/callback muss der Betreiber selbst unter github.com/settings/applications/3737209 eintragen (Klassifikator blockierte das Tippen; leerer Versuch wurde von GitHub abgelehnt, nichts veraendert) — bis dahin scheitert 'Mit GitHub fortfahren' mit redirect_uri-Fehler.",
+    "danke-abo.html (Abo-Lock) und datenschutz.html (Einwilligungs-Lock) tragen noch die Zeabur-Adresse in der CSP — nicht freigegeben, und die alte Adresse funktioniert weiter.",
+    "Arbeitszweig control-server/admin-ui ist nicht aus dem Bauzweig nachgezogen (Konsole gehoert dem Bauzweig)."
+  ]
 }

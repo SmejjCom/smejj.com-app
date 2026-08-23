@@ -779,3 +779,5 @@ Landeseite stand.
 - Messfalle: i18n-Cache — erster Lauf nach neuem en.js zeigt noch Deutsch, erst der ZWEITE Lauf ist uebersetzt.
 - Freigabe per Karte: Wartetext bleibt im Cline-Pfad (chatClient v5, sw v662), live 12 ms bis 3,7 s gemessen.
 - Rote Liste offen: Consent-Domain smejj-control.zeabur.app, Modell-Picker ohne Haekchen, Stopp-Viereck 11 px, Icon-Knoepfe ohne Text.
+- Freigabe per Karte: eigene API-Domain api.smejj.com LIVE (CNAME bestand schon) — Google sagt jetzt "Weiter zu smejj.com";
+  CSP additiv, Zeabur-Adresse bleibt Zweitzugang; OFFEN: GitHub-Rueckruf-URI traegt der Betreiber ein.
