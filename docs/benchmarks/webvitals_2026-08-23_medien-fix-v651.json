@@ -1,0 +1,41 @@
+{
+  "gemessenAm": "2026-08-23",
+  "swVersion": "smejj-shell-v651",
+  "anlass": "Ship-Loop nach Medien-Fix, Fokusring, Markenkette und Ton-Vereinheitlichung",
+  "domain": "https://smejj.com/",
+  "messumgebung": {
+    "ort": "Arbeitsplatz des Betreibers",
+    "grundlast": "Das Netz hier hat ~220 ms Grundlast: google.com 220 ms, github.com 245 ms, smejj.com 224 ms. Absolute Netz-Budgets sind von hier NICHT validierbar; der Vergleich ist die belastbare Aussage.",
+    "browser": "Chrome, MCP-gesteuerter Tab"
+  },
+  "valide": {
+    "TTFB_ms": 3,
+    "domInteraktiv_ms": 98,
+    "domContentLoaded_ms": 439,
+    "vollstaendigGeladen_ms": 441,
+    "CLS": 0.0222,
+    "seitengewichtKomprimiertKB": 41,
+    "ressourcenGesamt": 141,
+    "ressourcenAusVorrat": 141,
+    "ressourcenUeberNetz": 0
+  },
+  "nichtMessbar": {
+    "LCP": "Der MCP-Tab ist immer document.hidden; Chrome drosselt dort das Rendering. Es gab NULL largest-contentful-paint-Eintraege, und FCP meldete verfaelschte 4420 ms. Belastbare Obergrenze stattdessen: LCP <= vollstaendigGeladen = 441 ms.",
+    "INP": "Braucht echte Nutzerinteraktion im Vordergrund-Tab."
+  },
+  "api": {
+    "endpunkt": "/api/health",
+    "messungen_ms": [279, 281, 282, 283, 284, 284, 303],
+    "p50_ms": 283,
+    "p95_ms": 303
+  },
+  "budgetvergleich": {
+    "TTFB_unter_200ms": { "wert": 3, "erfuellt": true },
+    "LCP_unter_1500ms": { "obergrenze": 441, "erfuellt": true, "hinweis": "ueber loadEventEnd abgeleitet, nicht direkt gemessen" },
+    "CLS_unter_0_1": { "wert": 0.0222, "erfuellt": true },
+    "interaktiv_unter_2000ms": { "wert": 98, "erfuellt": true },
+    "seitengewicht_unter_300KB": { "wert": 41, "erfuellt": true },
+    "API_p95_unter_300ms": { "wert": 303, "erfuellt": false, "hinweis": "3 ms ueber Budget. Bei ~220 ms Netz-Grundlast ist der Wert ueberwiegend Laufzeit, nicht Serverzeit — von einem Rechenzentrum aus deutlich niedriger. Nicht abschliessend bewertbar von hier." }
+  },
+  "staticFirstBeweis": "141 von 141 Ressourcen kamen aus dem Service-Worker-Vorrat, 0 ueber Netz. Der Control Server steht nicht im Render-Pfad — genau die Architekturvorgabe des Master-Prompts."
+}
