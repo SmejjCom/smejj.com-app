@@ -500,6 +500,23 @@ export async function readableError(response, offlineNotice = "") {
 // meldet die Zahl laufender Stroeme an die Oberflaeche (Stopp-Knopf).
 const aktiveLeser = new Set();
 
+/**
+ * Ein abgerissener Bild-/Video-Strom hinterlaesst ein `![...](data:...`-Markdown
+ * ohne schliessende Klammer — dann steht 100+ KB base64 als Rohtext im Chat
+ * (live gesehen 2026-08-13 bei einem Bruecken-Neustart mitten im Malen).
+ * Das Fragment wird abgeschnitten und durch einen verstaendlichen Satz ersetzt.
+ */
+export function entferneAbgerisseneMedien(text) {
+  const roh = String(text || "");
+  const start = roh.lastIndexOf("![");
+  if (start === -1) return roh;
+  const rest = roh.slice(start);
+  const klammer = rest.indexOf("](data:");
+  if (klammer === -1 || rest.indexOf(")", klammer) !== -1) return roh;
+  const art = rest.slice(klammer).startsWith("](data:video") ? "Video" : "Bild";
+  return `${roh.slice(0, start).trimEnd()}\n\nDie ${art}-Übertragung ist abgerissen — bitte fordere es einfach noch einmal an.`;
+}
+
 function meldeStromstand() {
   try {
     window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: aktiveLeser.size } }));
@@ -674,6 +691,11 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
     }
     output.scrollIntoView({ block: "end" });
   }
+  } catch (abriss) {
+    // Netzabbruch mitten im Bild-/Video-Strom: ohne Saeuberung stuenden hier
+    // 100+ KB base64-Rohtext in der Blase.
+    output.textContent = entferneAbgerisseneMedien(output.textContent);
+    throw abriss;
   } finally {
     // Immer deregistrieren — auch wenn read() wirft (Netzabbruch): sonst
     // bliebe der Stopp-Knopf fuer immer stehen.
@@ -689,8 +711,10 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   // und die bisherige Teilantwort behalten, sie ist nicht falsch.
   if (stilleGemeldet) {
     // Wortlaut aus strom-stillstand.js, gemeinsam mit chatClient.js: derselbe
-    // Vorfall darf nicht je nach Modellwahl anders klingen.
-    output.textContent = stilleText(output.textContent);
+    // Vorfall darf nicht je nach Modellwahl anders klingen. Die Saeuberung
+    // bleibt DAVOR — ein abgerissener Bildstrom soll nicht als base64-Wand
+    // stehen bleiben, nur weil die Meldung jetzt woanders herkommt.
+    output.textContent = stilleText(entferneAbgerisseneMedien(output.textContent));
     renderMarkdown?.(output);
     falteSchritte(output, schritteOhneFundZahl);
     return;
@@ -698,6 +722,7 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   // Der Lauf endete ohne Schlussantwort (alle Runden gingen in Werkzeuge).
   // Dann ist die letzte Arbeitsnotiz besser als eine leere Blase.
   if (!output.textContent.trim() && letzteNotiz.trim()) output.textContent = letzteNotiz;
+  output.textContent = entferneAbgerisseneMedien(output.textContent);
   // VOR renderMarkdown: der Renderer liest textContent und ersetzt innerHTML —
   // danach angehaengter Text bliebe roher Stern-Text.
   output.textContent += quellenHinweis({
