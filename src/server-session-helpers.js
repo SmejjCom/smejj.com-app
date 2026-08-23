@@ -1,3 +1,4 @@
+import { zuGrossFehler } from "../control-server/src/http/respond.js";
 // smejj.com — Sitzungs- und Token-Helfer des Control Servers.
 //
 // Ausgelagert aus src/server.js (2026-08-13): die Datei stand bei 806 Zeilen
@@ -31,7 +32,7 @@ export function readAuthBody(req) {
     let raw = "";
     req.on("data", (chunk) => {
       raw += chunk;
-      if (raw.length > SECURITY_LIMITS.maxJsonBodyBytes) reject(new Error("Request too large"));
+      if (raw.length > SECURITY_LIMITS.maxJsonBodyBytes) reject(zuGrossFehler());
     });
     req.on("end", () => {
       try {

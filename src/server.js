@@ -7,7 +7,7 @@ import { SECURITY_LIMITS } from "./shared/securityPolicy.js";
 // der Endpunkte bleibt (800-Zeilen-Grenze, AI_Guidelines Abschnitt 2).
 import { boundedInteger, createSessionHelpers, readAuthBody } from "./server-session-helpers.js";
 import { createWerkstatt } from "./routes/werkstattRoutes.js";
-import { json, readJson } from "../control-server/src/http/respond.js";
+import { json, readJson, fehlerAntwort } from "../control-server/src/http/respond.js";
 import { parseS3Keys, signedS3List } from "../control-server/src/storage/s3Signer.js";
 import {
   handleApproveJob,
@@ -308,7 +308,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && isAppRoute(url.pathname)) return serveFile(res, "index.html");
     json(res, 404, { error: "Not found" });
   } catch (error) {
-    json(res, 500, { error: error.message || "Internal error" });
+    fehlerAntwort(res, error); // Status aus dem Fehler; Begruendung in respond.js
   }
 });
 
