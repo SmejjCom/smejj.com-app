@@ -29,15 +29,67 @@ const SAMMEL_GRENZE = 20_000;
  */
 export async function pipeVisibleStream(body, res) {
   const decoder = new TextDecoder();
-  const state = { buffer: "", pending: "", insideThink: false, sichtbar: "" };
+  const state = { buffer: "", pending: "", insideThink: false, sichtbar: "", werkzeuge: new Map() };
   for await (const chunk of body) {
     state.buffer += decoder.decode(chunk, { stream: true });
     drainEvents(state, res, false);
   }
   state.buffer += decoder.decode();
   drainEvents(state, res, true);
+  // Schnellspur mit Werkzeug (2026-08-23): hat das Modell frage_stellen
+  // gerufen, kommen die Argumente in Bruchstuecken — erst am Ende ist die
+  // Karte vollstaendig. Dann geht sie raus wie vom Control-Server.
+  const frage = frageAusWerkzeugen(state.werkzeuge);
+  if (frage) res.write(`data: ${JSON.stringify({ smejj_frage: frage })}\n\n`);
   res.write("data: [DONE]\n\n");
   return state.sichtbar;
+}
+
+/**
+ * Das eine Werkzeug der Schnellspur: die Rueckfrage-Karte. Dieselbe Form wie
+ * im Control-Server (toolLoop.js), damit das Modell auf beiden Wegen dasselbe
+ * lernt. Bewusst NUR dieses Werkzeug — Suche und Lesen bleiben beim Control.
+ */
+export const FRAGE_WERKZEUG = Object.freeze({
+  type: "function",
+  function: {
+    name: "frage_stellen",
+    description: "Stellt dem Nutzer EINE Rueckfrage mit 2 bis 4 Antwortoptionen und wartet auf seine Antwort. "
+      + "Nutze das nur, wenn die Aufgabe ohne seine Entscheidung nicht sinnvoll loesbar ist "
+      + "(mehrdeutiges Ziel, fehlende Angabe, folgenreiche Wahl). Die erste Option ist deine Empfehlung. "
+      + "Schreibe dann KEINE Frage in den Text — die Karte stellt sie.",
+    parameters: {
+      type: "object",
+      properties: {
+        frage: { type: "string", description: "Die Frage, ein Satz, endet mit Fragezeichen." },
+        optionen: { type: "array", minItems: 2, maxItems: 4, items: { type: "string" }, description: "2 bis 4 kurze Optionen, die erste ist die Empfehlung." }
+      },
+      required: ["frage", "optionen"]
+    }
+  }
+});
+
+/** Sammelt tool_calls-Bruchstuecke (OpenAI-Streamformat) je Index. */
+export function sammleWerkzeug(delta, werkzeuge) {
+  for (const teil of Array.isArray(delta?.tool_calls) ? delta.tool_calls : []) {
+    const index = Number.isInteger(teil?.index) ? teil.index : 0;
+    const bisher = werkzeuge.get(index) || { name: "", argumente: "" };
+    if (teil?.function?.name) bisher.name += teil.function.name;
+    if (typeof teil?.function?.arguments === "string") bisher.argumente += teil.function.arguments;
+    werkzeuge.set(index, bisher);
+  }
+}
+
+/** Die fertige Karte aus den gesammelten Aufrufen — oder null. */
+export function frageAusWerkzeugen(werkzeuge) {
+  for (const aufruf of werkzeuge?.values?.() || []) {
+    if (aufruf.name !== "frage_stellen") continue;
+    let args;
+    try { args = JSON.parse(aufruf.argumente || "{}"); } catch { continue; }
+    const frage = frageDurchreichen(JSON.stringify({ smejj_frage: args }));
+    if (frage) return frage;
+  }
+  return null;
 }
 
 function drainEvents(state, res, flush) {
@@ -64,6 +116,7 @@ export function filterSsePayload(payload, state = { pending: "", insideThink: fa
   }
   const choice = parsed?.choices?.[0] || {};
   const delta = choice.delta || {};
+  if (state.werkzeuge) sammleWerkzeug(delta, state.werkzeuge);
   const raw = typeof delta.content === "string" ? delta.content : "";
   if (!raw) return "";
   const visible = stripInternalReferences(stripThinking(raw, state));

@@ -164,3 +164,38 @@ test("die Bruecke reicht smejj_frage gepruef t durch, alles andere nicht", () =>
   assert.equal(frageDurchreichen(JSON.stringify({ choices: [{ delta: { content: "Text" } }] })), null);
   assert.equal(frageDurchreichen("{kaputt"), null);
 });
+
+// Schnellspur der Bruecke (Groq, eigener Modellaufruf): frage_stellen kommt dort
+// als tool_calls-Bruchstuecke — pipeVisibleStream sammelt sie und schickt am
+// Ende EINE Karte, nie Werkzeug-Rohtext.
+const { pipeVisibleStream, FRAGE_WERKZEUG } = await import("../public/chat-bridge-strom.js");
+
+function bridgeStrom(events) {
+  return { async *[Symbol.asyncIterator]() { const enc = new TextEncoder(); for (const e of events) yield enc.encode(`data: ${e}\n\n`); } };
+}
+const toolTeil = (index, teil) => JSON.stringify({ choices: [{ delta: { tool_calls: [{ index, ...teil }] } }] });
+
+test("Schnellspur: frage_stellen-Bruchstuecke werden zur Karte, Text bleibt Text", async () => {
+  const stuecke = [];
+  const res = { write: (t) => stuecke.push(t) };
+  const sichtbar = await pipeVisibleStream(bridgeStrom([
+    JSON.stringify({ choices: [{ delta: { content: "Kurz eine Frage." } }] }),
+    toolTeil(0, { id: "c1", function: { name: "frage_stellen", arguments: '{"frage":"Welche Sta' } }),
+    toolTeil(0, { function: { arguments: 'dt?","optionen":["Berlin","Hamburg"]}' } }),
+    JSON.stringify({ choices: [{ delta: {}, finish_reason: "tool_calls" }] }),
+    "[DONE]"
+  ]), res);
+  const gesendet = stuecke.join("");
+  assert.equal(sichtbar, "Kurz eine Frage.");
+  const karten = stuecke.filter((s) => s.includes("smejj_frage")).map((s) => JSON.parse(s.replace(/^data: /, "").trim()).smejj_frage);
+  assert.deepEqual(karten, [{ frage: "Welche Stadt?", optionen: ["Berlin", "Hamburg"] }]);
+  assert.ok(!gesendet.includes("tool_calls"), "Werkzeug-Rohtext geht nie raus");
+  assert.ok(gesendet.indexOf("smejj_frage") < gesendet.indexOf("[DONE]"), "Karte vor dem Abschluss");
+  assert.equal(FRAGE_WERKZEUG.function.name, "frage_stellen");
+});
+
+test("Schnellspur ohne Werkzeugaufruf: keine Karte", async () => {
+  const stuecke = [];
+  await pipeVisibleStream(bridgeStrom([JSON.stringify({ choices: [{ delta: { content: "Nur Text." } }] }), "[DONE]"]), { write: (t) => stuecke.push(t) });
+  assert.ok(!stuecke.join("").includes("smejj_frage"));
+});

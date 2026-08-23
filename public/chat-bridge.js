@@ -8,7 +8,7 @@ import { buildWebContext } from "./chat-bridge-websuche.js";
 // Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit 2026-08-05
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
-import { pipeVisibleStream } from "./chat-bridge-strom.js";
+import { FRAGE_WERKZEUG, pipeVisibleStream } from "./chat-bridge-strom.js";
 import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, vorLetzterNutzerNachricht, withRagBlock } from "./chat-bridge-rag.js";
@@ -79,7 +79,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260823-v141-frage-karte";
+const BRIDGE_VERSION = "20260823-v142-frage-karte-schnellspur";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -475,6 +475,11 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
         messages,
         stream: true,
         temperature: 0.35,
+        // Rueckfrage-Karte auch auf der Schnellspur (Betreiber 2026-08-23):
+        // das Modell darf EIN Werkzeug rufen — frage_stellen. Die Bruchstuecke
+        // sammelt pipeVisibleStream und schickt am Ende die Karte.
+        tools: [FRAGE_WERKZEUG],
+        tool_choice: "auto",
         // Antwort-Abbruch am Ende (Befund 2026-08-13, "...2-Zimmer-Buero b"):
         // 700 Token sind rund 500 Woerter — eine Tabelle mit sechs Zeilen plus
         // Erklaerung reisst mitten im Wort ab. Der Nutzer sieht keinen Fehler,

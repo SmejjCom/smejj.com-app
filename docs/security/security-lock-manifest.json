@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T14:34:44.430Z",
-  "confirmation": "Betreiber 2026-08-23: \"Zum Schluss bitte 100 % Schutz aktivieren: nichts darf kaputtgehen, geloescht oder ohne meine schriftliche Freigabe geaendert werden\" — Frage-Karte + Bridge v141 (chat-history-context, chat-bridge) eingefroren",
+  "frozenAt": "2026-08-23T14:42:30.222Z",
+  "confirmation": "Betreiber 2026-08-23: Karte auch auf der Schnellspur (Empfehlung) — Bridge v142",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "48595610972fd8f9e504414bf5784d349f47021f05aa4c7d5852b9608c20d793",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "d43ea78477701439e797bd6f6b7733997f77365478d0a57bd899627ba96554eb",
-    "public/chat-bridge.js": "2857bf41616c12c982c765e2f511f092922f34589f12a3f524d45165386e5f00",
+    "public/chat-bridge.js": "f29407808cb0a87cd4e29ed44407e916e3cfd694d8bb637268d4da519aec287a",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
