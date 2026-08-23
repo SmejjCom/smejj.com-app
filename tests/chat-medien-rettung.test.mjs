@@ -13,7 +13,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   MAX_CHAT_BYTES, VORSORGE_BYTES, groesseInBytes, enthaeltDatenUri, brauchtRettung,
-  istZuGross, rettteWert, rettteChat, rettteUndSpeichere, raeumeBestandAuf, BESTAND_MERKER
+  istZuGross, naechsterZeitstempel, rettteWert, rettteChat, rettteUndSpeichere,
+  raeumeBestandAuf, BESTAND_MERKER
 } from "../public/chat-medien-rettung.js";
 
 const BILD = "data:image/png;base64," + "A".repeat(520 * 1024);
@@ -418,4 +419,56 @@ test("ein kleiner Chat mit kleinem Bild bleibt in Ruhe", async () => {
   });
   assert.equal(ergebnis.gerettet, 0);
   assert.equal(gespeichert.length, 0, "nichts hochgeladen, nichts geschrieben");
+});
+
+// --- Der Zeitstempel (Live-Befund 2026-08-23, Ship-Loop Runde 2) -----------
+//
+// Die Rettung lief, der Chat schrumpfte lokal von 466 KB auf 2 KB — und auf
+// dem Server blieb er 466 KB gross. speichereChat ueberspringt bei GLEICHEM
+// updatedAt ("server_ist_neuer"). Bei den zu grossen Chats fiel das nicht auf:
+// die lagen serverseitig gar nicht oder nur aelter. Die grenznahen liegen dort
+// mit EXAKT demselben Zeitstempel — der geheilte Stand wurde jedes Mal still
+// verworfen. Ohne diese Tests faellt genau das beim naechsten Mal wieder durch.
+
+test("ein geretteter Chat bekommt einen neueren Zeitstempel", async () => {
+  const chat = {
+    id: "chat_zeit",
+    updatedAt: "2026-08-22T08:25:35.832Z",
+    messages: [{ role: "assistant", raw: BILD }]
+  };
+  const { chat: gerettet, ersetzt } = await rettteChat(chat, { auslagern: auslagernErfolg });
+  assert.ok(ersetzt > 0);
+  assert.ok(Date.parse(gerettet.updatedAt) > Date.parse("2026-08-22T08:25:35.832Z"),
+    "sonst haelt der Server ihn fuer denselben Stand und schreibt nicht");
+});
+
+test("der Sprung ist EINE Millisekunde — der Verlauf sortiert sich nicht um", () => {
+  // Ein `new Date()` waere ein Sprung von Tagen und hoebe einen alten Chat an
+  // die Spitze der Liste, obwohl niemand ihn angefasst hat.
+  assert.equal(naechsterZeitstempel("2026-08-22T08:25:35.832Z"), "2026-08-22T08:25:35.833Z");
+  // Ein unbrauchbarer Wert bleibt, wie er ist — nichts wird erfunden.
+  assert.equal(naechsterZeitstempel("kein datum"), "kein datum");
+  assert.equal(naechsterZeitstempel(""), "");
+});
+
+test("ohne Ersetzung bleibt der Zeitstempel unangetastet", async () => {
+  // Sonst schoebe jeder Leerlauf den ganzen Verlauf durcheinander.
+  const ohne = {
+    id: "chat_ohne",
+    updatedAt: "2026-08-22T08:25:35.832Z",
+    messages: [{ role: "assistant", raw: "nur Text" }]
+  };
+  const { chat: danach, ersetzt } = await rettteChat(ohne, { auslagern: auslagernErfolg });
+  assert.equal(ersetzt, 0);
+  assert.equal(danach.updatedAt, "2026-08-22T08:25:35.832Z");
+});
+
+test("der geheilte Stand ist nach der Server-Regel der Sieger", async () => {
+  // Gegen die ECHTE Serverfunktion geprueft, nicht gegen einen Nachbau: sie
+  // entscheidet live darueber, ob geschrieben wird.
+  const { konfliktSieger } = await import("../control-server/src/chats/chatSyncStore.js");
+  const stand = "2026-08-22T08:25:35.832Z";
+  assert.equal(konfliktSieger(stand, stand), "gleich", "das war der Fehler");
+  assert.equal(konfliktSieger(naechsterZeitstempel(stand), stand), "neu",
+    "mit dem angehobenen Zeitstempel schreibt der Server");
 });
