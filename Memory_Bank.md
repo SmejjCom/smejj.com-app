@@ -5,6 +5,46 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-23] ANTWORTZEIT 46 s -> 1 s — ES LAG NIE AM MODELL (job_antwortzeit_20260823)
+
+Capsule: `task-capsules/2026/08/job_antwortzeit_20260823/capsule.json`.
+App-Repo `aef8291c`, `01d1d54d`. sw v669 -> v672.
+
+**Die Zerlegung zuerst, sonst raet man:** Grundlast `/api/health` 152 ms;
+Cline-Status ohne Modell 211 ms; Cline-Chat mit Modell 1202 ms; die ECHTE
+App-Anfrage, mitgeschnitten, Ende zu Ende **1299 ms**. Sichtbar fuer den
+Nutzer: **46 Sekunden**. Weder Modell noch Anbieter noch Netz — die Zeit ging
+im Browser verloren.
+
+**Befund 1 — hundert Uploads pro Frage:** Eine EINZIGE Chat-Frage loeste ueber
+100 PUTs an `/api/chats` aus, jeder der 113 Chats, einzelne mit 188 KB. Und
+der Server verwirft die meisten sofort wieder (`server_ist_neuer` bei gleichem
+oder aelterem Zeitstempel). Wir luden 188 KB hoch, damit er sagt "kenn ich
+schon". → `public/chat-sync-auswahl.js`: erst abgleichen
+(`?nurAbgleich=1`, eine Anfrage fuer alle), dann nur senden, was er annehmen
+wuerde. Von 114 bleiben 2.
+
+**Befund 2 — die Sicherung nahm der Antwort die Leitung weg:** Danach ging die
+Modell-Anfrage IMMER NOCH erst nach 10,5 s raus (5644 ms und 6911 ms lagen
+zwei Verlauf-Anfragen davor). Der Browser oeffnet pro Gegenstelle nur wenige
+Verbindungen. → `erzeugeVorfahrt()`: solange ein Antwortstrom laeuft, wartet
+die Sicherung; sie haengt an `smejj:chat-strom`, dem Signal, das BEIDE
+Stromfamilien senden. Was liegen bleibt, wird nachgeholt — sonst waere aus
+einer Verzoegerung ein Datenverlust geworden.
+
+**Ergebnis live:** 1 s / 1,5 s / 1 s bei je EINER Anfrage. Der erste Lauf nach
+dem Neuladen braucht noch 11 s (einmaliger Start-Sync). Das Budget "erster
+Token unter 1,0 s" ist im Alltag erreicht.
+
+**Verhaltensgleich und gegengeprueft:** `konfliktSieger()` im Frontend ist
+wortgleich mit der Serverfassung, ein Waechter vergleicht beide an zehn echten
+Wertepaaren. Faellt der Abgleich aus, wird alles gesendet wie bisher.
+
+**Methodische Lehre:** Der Verdacht lag beim Modell — gemessen war es der
+eigene Verlauf-Sync. Ohne die Zerlegung in Grundlast, Server-ohne-Modell,
+Server-mit-Modell und Ende-zu-Ende haette ich am falschen Ende optimiert.
+
+
 ### [2026-08-23] CHAT HING — NUR EINE STROMFAMILIE WAR BEWACHT (job_chat_stille_20260823)
 
 Capsule: `task-capsules/2026/08/job_chat_stille_20260823/capsule.json`.

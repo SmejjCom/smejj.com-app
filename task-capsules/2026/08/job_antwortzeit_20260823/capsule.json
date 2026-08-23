@@ -1,0 +1,45 @@
+{
+  "jobId": "job_antwortzeit_20260823",
+  "createdAt": "2026-08-23T14:30:00.000Z",
+  "owner": "smejj.com",
+  "title": "Antwortzeit von 46 s auf 1 s — es lag nie am Modell",
+  "ziel": "Betreiber-Auftrag 2026-08-23: 'Antwortzeiten fixen, 60 Sekunden ist viel zu lang.'",
+  "zerlegung": {
+    "hinweis": "Erst messen, wo die Zeit hingeht. Eine einzige Zahl ist eine Beobachtung, keine Diagnose.",
+    "grundlast_health_ms": 152,
+    "clineStatusOhneModell_ms": 211,
+    "clineChatMitModell_ms": 1202,
+    "echteAppAnfrageEndeZuEnde_ms": 1299,
+    "sichtbarFuerDenNutzer_s": 46,
+    "schluss": "Weder Modell noch Anbieter noch Netz — die Zeit ging im Browser verloren."
+  },
+  "befund1": {
+    "was": "Eine EINZIGE Chat-Frage loeste ueber 100 PUT-Anfragen an /api/chats aus. Jeder der 113 Chats wurde hochgeladen, einzelne mit 188 KB, 131 KB, 126 KB.",
+    "absurditaet": "Der Server verwirft die meisten sofort wieder: speichereChat() antwortet bei gleichem oder aelterem Zeitstempel mit 'server_ist_neuer' und schreibt nichts. Wir luden 188 KB hoch, damit er sagt 'kenn ich schon'.",
+    "loesung": "public/chat-sync-auswahl.js — erst abgleichen (?nurAbgleich=1 liefert id/updatedAt fuer alle Chats in EINER Anfrage), dann nur senden, was der Server auch annehmen wuerde.",
+    "wirkung": "von 114 Chats bleiben 2; 5 statt 100 Anfragen; 2 KB statt rund 2 MB"
+  },
+  "befund2": {
+    "was": "Danach ging die Modell-Anfrage IMMER NOCH erst nach 10,5 s raus.",
+    "zeitleiste": ["3 ms abgeschickt", "5644 ms Antwortkopf /api/chats", "6911 ms Antwortkopf /api/chats", "10454 ms Antwortkopf /api/agent"],
+    "ursache": "Der Browser oeffnet pro Gegenstelle nur eine Handvoll Verbindungen — die waren mit dem Verlauf belegt.",
+    "loesung": "erzeugeVorfahrt(): solange ein Antwortstrom laeuft, wartet die Sicherung. Haengt an smejj:chat-strom, dem Signal, das BEIDE Stromfamilien senden.",
+    "nachholen": "Pflicht, nicht Kuer: was waehrend der Antwort liegen bleibt, laeuft danach von selbst. Sonst waere aus einer Verzoegerung ein Datenverlust geworden."
+  },
+  "ergebnisLive": {
+    "vorher": "3,6 s bis 60 s, im Messlauf 46 s",
+    "nachher": [
+      { "lauf": 1, "sichtbar_s": 11, "hinweis": "erster nach dem Neuladen — einmaliger Start-Sync" },
+      { "lauf": 2, "sichtbar_s": 1, "modellAnfrageNach_ms": 950, "anfragen": 1 },
+      { "lauf": 3, "sichtbar_s": 1.5, "modellAnfrageNach_ms": 1273, "anfragen": 1 },
+      { "lauf": 4, "sichtbar_s": 1, "modellAnfrageNach_ms": 979, "anfragen": 1 }
+    ],
+    "budget": "Erster Token unter 1,0 s — im Alltag jetzt erreicht."
+  },
+  "verhaltensgleichheit": "konfliktSieger() im Frontend ist wortgleich mit der Serverfassung in chatSyncStore.js; ein Waechter vergleicht beide an zehn echten Wertepaaren. Laeuft eine davon, sendet der Client zu wenig — das waere Datenverlust. Die Millisekunden-Regel der Parallelsitzung ('der geheilte Chat kam nie an') hat einen eigenen Fall.",
+  "failSafe": "Scheitert der Abgleich (kein Netz, alter Server, unerwartete Antwort), wird alles gesendet wie bisher. Sechs Faelle pruefen das an kaputten Antworten.",
+  "tests": "tests/chat-sync-auswahl.test.mjs, 14 Faelle. check:frontend 633/633, markenkette 99, module-queries 188, precache 156.",
+  "auslieferung": { "sw": "v669 -> v672", "frontend": ["bcd01705", "danach der Vorfahrt-Commit"], "app": ["aef8291c", "01d1d54d"] },
+  "restBefund": "Der erste Lauf nach dem Neuladen braucht noch 11 s — der einmalige Start-Sync laeuft vor der ersten Frage. Danach 1 s.",
+  "status": "abgeschlossen"
+}
