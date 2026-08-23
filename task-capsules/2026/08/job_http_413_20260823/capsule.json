@@ -1,0 +1,37 @@
+{
+  "jobId": "job_http_413_20260823",
+  "createdAt": "2026-08-23T05:45:00.000Z",
+  "owner": "smejj.com",
+  "title": "\"Request too large\" ist 413, nicht 500 — und die Leitung wird geschlossen",
+  "ziel": "Betreiber-Auswahl 2026-08-23: 'Server: 500 zu 413 richtigstellen'.",
+  "ausgangslage": "Der Body-Leser warf ein nacktes new Error('Request too large'). Der oberste Handler machte daraus ein 500 — der Client bekam fuer eine Absage, die ER verursacht hat, einen Serverfehler. Das Frontend behandelte (richtig) nur 4xx als Absage; sechs zu grosse Chats fielen wochenlang durch jede Pruefung.",
+  "loesung": {
+    "anDerQuelle": "httpFehler/zuGrossFehler in control-server/src/http/respond.js — der Fehler bringt seinen Status selbst mit; fehlerAntwort nimmt ihn. Wirkt fuer JEDE Route auf einmal, nicht nur fuer die eine, die aufgefallen ist.",
+    "beideLeser": "respond.js und der Auth-Leser teilen sich dieselbe Absage. Im Arbeitszweig steht er in src/server.js, im Bauzweig in src/server-session-helpers.js.",
+    "kein500Verlust": "Ohne eigenen Status bleibt es bei 500. Unsinnige Werte (0, 42, 200, 600, 'kaputt', NaN) kommen nicht durch — sonst koennte ein Fehler aus einer fremden Bibliothek eine 200-Antwort erzwingen."
+  },
+  "zweiterBefundImLiveTest": {
+    "was": "Der 413 kam korrekt zustande, aber er kam nicht AN.",
+    "gemessen": "1,2-MB-Upload -> TimeoutError nach 60 s (vorher: sofort 500)",
+    "warum": "Der Body-Leser lehnt ab, der Client weiss davon nichts und sendet weiter. HTTP/1.1 laesst die Antwort erst durch, wenn der Request zu Ende ist.",
+    "bewertung": "Das war eine VERSCHLECHTERUNG durch den eigenen Commit — ein Zeitablauf ist schlimmer als ein falscher Statuscode, denn der Nutzer sieht dann gar nichts. Gefunden im Live-Test, nicht im Testlauf.",
+    "loesung": "fehlerAntwort schliesst bei 413 aktiv (req.destroy()). Nur bei 413. Zugleich eine Lastfrage: ein Server, der abgelehnte Uploads trotzdem vollstaendig entgegennimmt, verschenkt genau die Bandbreite, die er sich sparen wollte."
+  },
+  "verifikationLive": {
+    "controlBau": "gestartetAm 05:38:26 -> 05:39:33 (deploy(gitRef), nicht redeploy)",
+    "ueber1MB": "1172 KB -> HTTP 413 {\"error\":\"Request too large\",\"code\":\"request_zu_gross\"} in 2,7 s",
+    "zwischen512KBund1MB": "684 KB -> HTTP 400 chat_zu_gross in 2,1 s — unveraendert",
+    "normalerBetrieb": "echten Chat speichern 200 in 0,4 s; Liste abrufen 200 in 0,5 s",
+    "frontendErkenntEs": "istZuGross(413, 'Request too large') -> true"
+  },
+  "tests": {
+    "neu": "tests/http-fehlerstatus.test.mjs, 13 Faelle",
+    "besonderheit": "Der Waechter SUCHT seine Dateien, statt sie festzunageln — derselbe Auth-Leser steht in den beiden Zweigen an verschiedenen Orten. Ein Test, der eine Datei festnagelt, meldet nach einem Umzug gruen und schuetzt nichts mehr.",
+    "arbeitszweig": "check:control-server 230/230 gruen",
+    "bauzweig": "229/230 — die eine Rote ('storage presign route returns upload and download envelopes') ist eine Altlast dieses Zweigs, per git stash gegengeprueft: ohne diese Arbeit 216/217, mit ihr 229/230, derselbe Fall rot."
+  },
+  "zweiVeralteteZusagenNachgezogen": "tests/chat-sync.test.mjs zaehlte die meldeAbweisung-Aufrufe (genau 2) und verglich direkt auf 'chat_zu_gross'. Beides ersetzt durch das, was gemeint war: JEDER Sende-Weg hat eine Meldung, und die Weiche heisst istZuGross. Eine Zusage, die bei jeder Verbesserung bricht, wird beim naechsten Mal einfach hochgezaehlt — und schuetzt dann nichts.",
+  "commits": { "arbeitszweig": ["c2c2ca66", "f7b72436", "ce706bd4"], "bauzweig": ["fd95cde5", "b32860de"] },
+  "offen": "Der rote presign-Test im Bauzweig. Nicht aus dieser Arbeit, nicht angefasst.",
+  "status": "abgeschlossen"
+}

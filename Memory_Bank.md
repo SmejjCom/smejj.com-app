@@ -5,6 +5,50 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-23] "REQUEST TOO LARGE" IST 413, NICHT 500 (job_http_413_20260823)
+
+Capsule: `task-capsules/2026/08/job_http_413_20260823/capsule.json`.
+Arbeitszweig `c2c2ca66`, `f7b72436`, `ce706bd4`. Bauzweig `fd95cde5`, `b32860de`.
+Control neu gebaut: `gestartetAm` 05:38:26 -> 05:39:33.
+
+**Entscheidung:** Ein Fehler bringt seinen HTTP-Status selbst mit
+(`httpFehler`/`zuGrossFehler` in `control-server/src/http/respond.js`), und der
+oberste Handler nimmt ihn (`fehlerAntwort`). An der Quelle behoben, nicht in
+der einen Route, die aufgefallen ist — es wirkt fuer jede Route auf einmal.
+
+**Begruendung:** Der Body-Leser warf ein nacktes `new Error("Request too
+large")`. Der oberste Handler macht aus jedem Fehler ohne Status ein 500 —
+der Client bekam fuer eine Absage, die ER verursacht hat, einen SERVERFEHLER.
+Das Frontend behandelte (voellig richtig) nur 4xx als "der Server nimmt das
+nicht": sechs zu grosse Chats fielen wochenlang durch jede Pruefung, weder
+gerettet noch gemeldet. Ein 500 heisst "unser Fehler, versuch es spaeter", und
+genau das hat die App getan.
+
+**Der zweite Befund, und der wichtigere — gefunden erst NACH dem Ausrollen:**
+Der 413 kam korrekt zustande, aber er kam nicht an. Ein 1,2-MB-Upload lief 60
+Sekunden ins Leere und endete im Zeitablauf. Der Leser lehnt ab, der Client
+weiss nichts davon und sendet weiter, und HTTP/1.1 laesst die Antwort erst
+durch, wenn der Request zu Ende ist. Das war eine VERSCHLECHTERUNG durch den
+eigenen Commit: ein Zeitablauf ist schlimmer als ein falscher Statuscode, denn
+dann sieht der Nutzer gar nichts mehr. `fehlerAntwort` schliesst bei 413 jetzt
+aktiv (`req.destroy()`) — nur bei 413, andere Fehler abzuschneiden koennte eine
+gueltige Antwort verstuemmeln. Das ist zugleich eine Lastfrage: ein Server, der
+abgelehnte Uploads trotzdem vollstaendig entgegennimmt, verschenkt genau die
+Bandbreite, die er sich sparen wollte.
+
+**Verifikation live nach dem Bau:** 1172 KB -> `413 request_zu_gross` in 2,7 s;
+684 KB -> `400 chat_zu_gross` in 2,1 s (unveraendert); echten Chat speichern
+200 in 0,4 s; Liste abrufen 200 in 0,5 s; `istZuGross(413)` im Frontend true.
+`check:control-server` 230/230 im Arbeitszweig, 229/230 im Bauzweig — die eine
+Rote (`storage presign route`) ist dort eine Altlast, per `git stash`
+gegengeprueft.
+
+**Nebenbei gelernt (zweimal an einem Tag):** ein Waechter, der eine Datei
+festnagelt, schuetzt nach einem Umzug nichts mehr. Derselbe Auth-Body-Leser
+steht im Arbeitszweig in `server.js` und im Bauzweig in
+`server-session-helpers.js`. Der Waechter SUCHT die Stelle jetzt.
+
+
 ### [2026-08-23] ZEHN CHATS WAREN NICHT GESICHERT — BESTAND GERETTET (job_chats_zu_gross_20260823)
 
 Capsule: `task-capsules/2026/08/job_chats_zu_gross_20260823/capsule.json`.
