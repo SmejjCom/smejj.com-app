@@ -1,7 +1,7 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T04:09:56.590Z",
-  "confirmation": "Betreiber 2026-08-23: \"Genau diese Liste ich will haben und musst du sichern soll nicht geaendert werden nicht kaputt gemacht werden ohne meine schriftliche Bestaetigung.\" — Geschuetzt sind beide Modell-Menues (Auto ganz oben, danach die lange Liste aus dem Cline-Katalog), ihre ausgelieferten /assets/-Kopien sowie Katalog-Holer und Endpunkt, ohne die die lange Liste still leer bleibt.",
+  "frozenAt": "2026-08-23T21:41:07.997Z",
+  "confirmation": "Betreiber 2026-08-24, Wortlaut: \"Muss alles zentralisiert sein ... muss immer eine einzige Menü sein\" — Modell-Menue zentral (modell-menue-start v1, code-flaeche v56, sw v687)",
   "rule": "Keine Aenderung an der Modell-Liste (die beiden Menues, ihre ausgelieferten Kopien, der Katalog-Holer und seine Route) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",

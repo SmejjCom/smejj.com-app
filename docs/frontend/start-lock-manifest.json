@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T20:46:28.226Z",
-  "confirmation": "Betreiber 2026-08-24: \"sende icon sieht man nicht mehr\" — Pfeil bei Text hell statt dunkel-auf-dunkel (pfeilhell-20260824, sw v686)",
+  "frozenAt": "2026-08-23T21:41:07.968Z",
+  "confirmation": "Betreiber 2026-08-24, Wortlaut: \"Muss alles zentralisiert sein ... muss immer eine einzige Menü sein\" — Modell-Menue zentral (modell-menue-start v1, code-flaeche v56, sw v687)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c03262c1756d27108dbb8e4492a13be702cd96a33fe96a2afc7094efd6dc42d7",
+    "public/index.html": "551fc673b9357748c2060323b71d0d507226e7bf6f5aefd71d1287c34aa6c570",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "2506dae396701172d2d2cc2939f0ca05ca650016a5a54dee55ab01f41abaab23",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "7eb4b34cfcd84ef74d57045e4543edcb1655a277e828701f1bdc297a794791a6",
+    "public/sw.js": "227a7fdf6e2fe0bc19851c87bef3ad34768623048fe105ecc42d8efcf8a5fdd4",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

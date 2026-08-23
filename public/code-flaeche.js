@@ -401,7 +401,11 @@ export function initCodeFlaeche() {
   // Menue (app.js) nicht zusaetzlich aufgeht — es bleibt unangetastet im
   // DOM (Rote Liste), wird nur nicht mehr geoeffnet.
   const startKnopf = document.getElementById("modelPickerButton");
-  startKnopf?.addEventListener("click", (e) => {
+  // Zentral seit 2026-08-24: modell-menue-start.js (laedt IMMER mit der
+  // Seite) verdrahtet den Knopf. Nur wenn es fehlt (alter Cache), springt
+  // die bisherige Verdrahtung hier ein — nie beide (sonst oeffnet und
+  // schliesst derselbe Klick das Menue wieder).
+  if (startKnopf?.dataset.modellZentral !== "an") startKnopf?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopImmediatePropagation();
     const alt = document.getElementById("modelPickerMenu");
