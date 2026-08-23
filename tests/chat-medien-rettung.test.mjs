@@ -12,8 +12,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  MAX_CHAT_BYTES, groesseInBytes, enthaeltDatenUri, brauchtRettung, istZuGross,
-  rettteWert, rettteChat, rettteUndSpeichere, raeumeBestandAuf, BESTAND_MERKER
+  MAX_CHAT_BYTES, VORSORGE_BYTES, groesseInBytes, enthaeltDatenUri, brauchtRettung,
+  istZuGross, rettteWert, rettteChat, rettteUndSpeichere, raeumeBestandAuf, BESTAND_MERKER
 } from "../public/chat-medien-rettung.js";
 
 const BILD = "data:image/png;base64," + "A".repeat(520 * 1024);
@@ -330,4 +330,92 @@ test("chat-sync startet den Bestandslauf wirklich", async () => {
   assert.match(sync, /raeumeBestandAuf/, "das Modul wird importiert");
   assert.match(sync, /setTimeout\(\(\) => \{ bestandAufraeumen\(\); \}/, "und beim Start angestossen");
   assert.match(sync, /ergebnis\?\.gerettet > 0\) planePush\(\)/, "danach wird gesendet, nicht gewartet");
+});
+
+// --- Die Zahl darf es nur EINMAL geben ------------------------------------
+
+test("der Client-Deckel ist derselbe Wert wie der Server-Deckel", async () => {
+  // MAX_CHAT_BYTES steht an zwei Stellen: hier (Browser-Modul) und in
+  // chatSyncStore.js (Server-Modul). Ein Import ueber die Grenze ist nicht
+  // moeglich, also haelt dieser Test sie zusammen. Laufen sie auseinander,
+  // winkt der Client genau die Chats durch, die der Server abweist — und das
+  // ist der stille Verlust, gegen den diese ganze Datei gebaut wurde.
+  const { MAX_CHAT_BYTES: server } = await import("../control-server/src/chats/chatSyncStore.js");
+  assert.equal(MAX_CHAT_BYTES, server,
+    "Client- und Server-Deckel sind auseinandergelaufen — eine der beiden Zahlen ist falsch");
+});
+
+// --- Vorsorge: der Rest, den keine Absage je erreicht ----------------------
+//
+// Gemessen 2026-08-23 an der echten Ablage: vier Chats bei 466 / 293 / 280 /
+// 263 KB. Alle UNTER der Grenze, also nie abgewiesen, also nie gerettet — und
+// alle vier tragen ein vollstaendiges Video im `raw`-Feld (bei 466,3 KB sind
+// das 464,6 KB). Eine weitere Nachricht kippt sie ueber die Grenze, und dann
+// faellt genau der Chat aus, in dem gerade gearbeitet wird.
+
+test("die Vorsorge-Schwelle liegt unter der Server-Grenze, aber nicht bei null", () => {
+  assert.ok(VORSORGE_BYTES < MAX_CHAT_BYTES,
+    "sonst waere die Vorsorge wirkungslos — sie soll VOR der Grenze greifen");
+  assert.ok(VORSORGE_BYTES >= 64 * 1024,
+    "sonst wuerde jedes kleine eingebettete Bild einen Upload ausloesen");
+  assert.equal(VORSORGE_BYTES, 128 * 1024);
+});
+
+test("ein grenznaher Chat wird entlastet, bevor er kippt", async () => {
+  // Der live gemessene Fall, verkleinert nachgebaut: unter der Grenze, aber
+  // mit einem Medium im raw-Feld. brauchtRettung() sagt mit der Server-Grenze
+  // "nein" — genau darum misst der Bestandslauf mit der Vorsorge-Schwelle.
+  const medium = "data:image/png;base64," + "B".repeat(200 * 1024);
+  const grenznah = {
+    id: "chat_grenznah",
+    updatedAt: "2026-08-22T08:25:35.832Z",
+    messages: [{
+      role: "assistant",
+      html: '<img src="/api/chat-medien?id=schon_da.png">',
+      raw: `![Erstelltes Bild](${medium})`
+    }]
+  };
+  assert.ok(groesseInBytes(grenznah) < MAX_CHAT_BYTES, "der Fall liegt UNTER der Grenze");
+  assert.equal(brauchtRettung(grenznah, MAX_CHAT_BYTES), false,
+    "mit der Server-Grenze gemessen faellt er durch — das war die Luecke");
+  assert.equal(brauchtRettung(grenznah, VORSORGE_BYTES), true,
+    "mit der Vorsorge-Schwelle wird er erkannt");
+
+  const gespeichert = [];
+  const ergebnis = await raeumeBestandAuf({
+    listen: async () => [{ id: grenznah.id }],
+    laden: async () => grenznah,
+    speichern: async (chat) => { gespeichert.push(chat); },
+    auslagern: auslagernErfolg,
+    jetzt: 1_000_000,
+    speicher: speicherAttrappe()
+  });
+  assert.equal(ergebnis.gelaufen, true);
+  assert.equal(ergebnis.gerettet, 1, "der grenznahe Chat MUSS entlastet werden");
+  assert.equal(gespeichert.length, 1);
+  assert.ok(!JSON.stringify(gespeichert[0]).includes("data:image/"),
+    "der Datenberg muss weg sein");
+  assert.ok(groesseInBytes(gespeichert[0]) < VORSORGE_BYTES,
+    "und der Chat deutlich kleiner");
+});
+
+test("ein kleiner Chat mit kleinem Bild bleibt in Ruhe", async () => {
+  // Die Gegenprobe zur Schwelle: unter 128 KB wird nichts angefasst. Sonst
+  // loeste jedes eingebettete Vorschaubild einen Upload aus.
+  const klein = {
+    id: "chat_klein",
+    updatedAt: "2026-08-22T00:00:00.000Z",
+    messages: [{ role: "assistant", raw: "data:image/png;base64," + "C".repeat(2 * 1024) }]
+  };
+  const gespeichert = [];
+  const ergebnis = await raeumeBestandAuf({
+    listen: async () => [{ id: klein.id }],
+    laden: async () => klein,
+    speichern: async (chat) => { gespeichert.push(chat); },
+    auslagern: auslagernErfolg,
+    jetzt: 2_000_000,
+    speicher: speicherAttrappe()
+  });
+  assert.equal(ergebnis.gerettet, 0);
+  assert.equal(gespeichert.length, 0, "nichts hochgeladen, nichts geschrieben");
 });
