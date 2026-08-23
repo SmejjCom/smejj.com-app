@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T16:25:27.544Z",
-  "confirmation": "Betreiber 2026-08-23, Abnahme: Naechster Schritt = Start-Lock stempeln (Empfehlung) — Stopp/Arbeitsanzeige Startseite, Bild-Auslagerung, Browser-Modell, Datei-Anhang, Coding-Gruss, bereichNeu 44 px, Umlaute (sw v683, app b94)",
+  "frozenAt": "2026-08-23T16:29:45.744Z",
+  "confirmation": "Betreiber 2026-08-23, Abnahme: 'Start-Lock stempeln (Empfehlung)' — Nachtrag: start-styles-Marke einviereck-20260823 (Parallelsitzung) zurueckgesetzt, sw v684",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "da4f02089bf62c250f66bdf7ef82c85827b73fa07bb98c42047fbff43560a4f3",
+    "public/index.html": "410af3f2e6c7cb6fb4c8476ccb7deebf86b6a3e906cc1edda81f19fce003f28f",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "37c6326fcc6354d129717f9897054429c547ab9fc699e0d35ec7fca760ec3ad5",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "4bdfedcbded48a18668bfcdc7eba31be4496f82892b0b27d58c89888be555750",
+    "public/sw.js": "29f14e92f4c63a1ce21f982af0f26b422b445e3a4e42e61b19ee313f62c3754c",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
