@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T13:35:41.140Z",
-  "confirmation": "Betreiber 2026-08-23: Denk-Zeile bauen (Empfehlung) — Dachte N s eingeklappt ueber der Antwort, dann live",
+  "frozenAt": "2026-08-23T13:45:00.517Z",
+  "confirmation": "Betreiber 2026-08-23: Schrittgruppen mit Unterzeilen (Empfehlung) — Werkzeugzeilen gruppieren, dann live",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "2b337721128935408cfc3de47734804c1583c06f9b1f252355e4f00d13353443",
+    "public/index.html": "7b95de52ccf5ad387cd51bb84af59ae40bbfa7b7bc8e3e7181598068ab53ab01",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "7c0c51efe4861a48fa3dfa4e506d1aad35c0993ed60427f138319b227f7f03a2",
+    "public/start-styles.css": "b26045c5e6381320d6dc788246eb12bf3b49eab15fe71777b836b2038c674051",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6d1a89e522c4c3630c355b190cea0178604be3f3afa333cfbc7c76ec14731bb5",
+    "public/sw.js": "890de21ebc7c3480a2a9e314e605f1b5fbfe1320153af4d5a66ce25254f90bd1",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
