@@ -759,3 +759,9 @@ Landeseite stand.
 - Index-Falle: nach Zeit "frisch", nach Inhalt unvollstaendig (121 von 126) — jetzt zaehlt auch die Menge.
 - OFFEN (Rote Liste): 26 Chats mit ALTER Kontokennung bleiben abgewiesen; das pruneOld-Loeschrisiko
   dagegen ist mit 500 weg. Capsule: task-capsules/2026/08/job_chat_grenze_500_20260823/capsule.json
+
+## 2026-08-23 — Kontokennung: Server-Alias, Geraete-Sync lebt wieder (job_kontokennung_alias_20260823)
+
+- WURZEL seit 15.08.: Server stempelt SHA-Kennung, Client verglich Sitzungs-ID -> JEDER Server-Import fremd.
+- LIVE: `konto` in GET /api/chats, Alias je Sitzung in chat-owner.js v3; Seitenleiste "Alle 126 Gespraeche".
+- Messfalle: index.html 10 min aus HTTP-Cache -> alte Marken-Kette trotz neuem sw. Erst cache:'reload'.

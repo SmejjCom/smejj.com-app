@@ -1,0 +1,25 @@
+{
+  "jobId": "job_kontokennung_alias_20260823",
+  "datum": "2026-08-23",
+  "titel": "Server-Kontokennung als Sitzungs-Alias — Geraete-Sync lebt wieder",
+  "auftrag": "Betreiber-Freigabe per Karte: 'Alte Kontokennung angleichen'. Vorgaenger job_chat_grenze_500_20260823.",
+  "rollback": "Bauzweig 5b71cebb, Frontend 706ca65 (sw v659), Arbeitszweig aec00016",
+  "wurzel": "Seit 15.08. stempelt der Server jede Chat-Datei mit kontoKennung() (SHA-256), der Client verglich Besitzer mit seiner Sitzungs-ID. Jeder Server->Client-Import scheiterte — nicht nur die 26, der ganze Geraete-Sync. Lokal gespeicherte Chats fielen nicht auf, weil pull() sie vor der Besitzpruefung ueberspringt (schon vorhanden).",
+  "loesung": "GET /api/chats antwortet zusaetzlich mit `konto` (nur an den angemeldeten Eigentuemer). chat-owner.js: gehoertNutzer(chat, userId, besitzer, aliase); merkeKontoKennung/kontoAliase binden den Alias an die userId — ein zweites Konto am selben Browser erbt ihn nie. chat-store.js: eigen() an 8 Stellen; chat-sync.js pull() merkt und nutzt den Alias.",
+  "commits": {
+    "bauzweig": "411e129d",
+    "frontend_main": "301842c (chat-owner v3, chat-store b61, chat-sync v9, 12 Marken, sw v660)",
+    "arbeitszweig": "2f598497"
+  },
+  "ausgerollt": "Control gestartetAm 2026-08-23T10:52:59.767Z; Pages sw v660, /assets/chat-owner.js?v=3 traegt kontoAliase",
+  "live_gemessen": {
+    "api": { "konto": "user_158c1e6…", "eintraege": 126 },
+    "client_nach_reload": { "marken": ["chat-store.js?v=b61", "chat-owner.js?v=3", "chat-sync.js?v=9"], "aliasGesetzt": true, "einzelAbrufe": 26, "sichtbar": 126, "mitNachrichten": 126, "aeltester": "2026-07-21T20:42:19.720Z" },
+    "oberflaeche": "Seitenleiste zeigt 'Alle 126 Gespraeche' (Screenshot ss_3187gqtgz)",
+    "vorher": { "sichtbar": 100, "konsole": "26 Chat(s) … andere Kontokennung" }
+  },
+  "messfalle": "Nach dem Deploy kam index.html 10 min aus dem HTTP-Cache (max-age 600): alte Kette b60/v2/v8 lief trotz sw v660. fetch('/', {cache:'reload'}) + reload loeste es.",
+  "tests": "58/58 (chat-owner +3, chat-sync +1, chat-index, chat-grenze)",
+  "pruefer": { "start-lock": "OK 34 Dateien", "node --check": "alle geaenderten Dateien" },
+  "regression": "keine: bisherige 100 Chats unveraendert, Besitzpruefung ohne Alias verhaelt sich wie vorher (Test), fail-closed ohne Sitzung"
+}
