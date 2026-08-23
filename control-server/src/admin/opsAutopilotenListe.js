@@ -2,6 +2,9 @@
 // Ausgelagert aus opsAutopiloten.js zur Einhaltung der 800-Zeilen-Regel.
 
 import { EVOLUTION_AUTOPILOTEN } from "./opsAutopilotenListeEvolution.js";
+// Teil 3+4 (Nr. 44-60, Betreiber-Freigabe 2026-08-24 "Ja, alle 17 bauen"):
+import { SCHUTZ_AUTOPILOTEN } from "./opsAutopilotenListeSchutz.js";
+import { WACHSTUM_AUTOPILOTEN } from "./opsAutopilotenListeWachstum.js";
 
 const TAG_MS = 24 * 60 * 60 * 1000;
 const STUNDE_MS = 60 * 60 * 1000;
@@ -843,4 +846,4 @@ const BASIS_AUTOPILOTEN = Object.freeze([
  * Wer einen Autopiloten sucht, findet ihn ueber AUTOPILOTEN, nicht ueber die
  * Teillisten.
  */
-export const AUTOPILOTEN = Object.freeze([...BASIS_AUTOPILOTEN, ...EVOLUTION_AUTOPILOTEN]);
+export const AUTOPILOTEN = Object.freeze([...BASIS_AUTOPILOTEN, ...EVOLUTION_AUTOPILOTEN, ...SCHUTZ_AUTOPILOTEN, ...WACHSTUM_AUTOPILOTEN]);

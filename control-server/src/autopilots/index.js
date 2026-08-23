@@ -25,3 +25,7 @@ export * from "./realtimeVoicePairAutopilot.js";
 export * from "./autonomousGitBotAutopilot.js";
 export * from "./syntheticUserWatchdogAutopilot.js";
 export * from "./syncAliasAutopilot.js";
+// Nr. 44-60 (2026-08-24) stehen ABSICHTLICH nicht hier: jedes der 17 Module
+// exportiert fuehreSelbsttestAus, und mehrfache Stern-Exporte desselben
+// Namens machen ihn stumm-mehrdeutig. Der Taktgeber bindet sie direkt ueber
+// schutzUndWachstumLaeufe.js ein.

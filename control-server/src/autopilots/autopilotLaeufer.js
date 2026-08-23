@@ -53,6 +53,9 @@ import { laufEvolutionEngine, laufMissingFunctionDetector, laufSupervisor, schre
 import { erkenneLuecken, baueLueckenAufgaben } from "../evolution/missingFunctionDetector.js";
 import { erfasseAktion } from "../evolution/aiEvolutionEngine.js";
 import { searchWebDetailed } from "../../../src/search/webSearch.js";
+// Nr. 44-60 (Schutz, Sicherheit, Kosten, Wachstum, Tagesmappe) — eigene Datei,
+// 800-Zeilen-Regel; Betreiber-Freigabe 2026-08-24 ("Ja, alle 17 bauen").
+import { baueSchutzUndWachstumLaeufe, SCHUTZ_UND_WACHSTUM_IDS } from "./schutzUndWachstumLaeufe.js";
 
 /**
  * Die Konkurrenzlücken als fertige Backlog-Aufgaben. Eigene Funktion, damit
@@ -92,7 +95,8 @@ export const IM_LAEUFER_BETRIEBEN = Object.freeze([
   "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot",
   "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check",
   "ai-evolution-engine", "missing-function-detector", "autopilot-supervisor", "evolution-ablage",
-  "nachweis-kette"
+  "nachweis-kette",
+  ...SCHUTZ_UND_WACHSTUM_IDS
 ]);
 
 // Zaehler der Selbstheilung: id -> {versuche, letzterMs, eskaliert}. Lebt im
@@ -620,6 +624,9 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     // Lebenszeichen ohne Suche, und der Dienst ist von aussen nicht erreichbar
     // (derselbe Umzug wie bei der Voice-Region-Pruefung am 2026-08-13).
     ["konkurrenz-radar", () => laufKonkurrenzRadar({ mitNetz, suche: searchWebDetailed })],
+    // Nr. 44-60: dieselbe Dateiliste, derselbe Netz-Schalter — die Läufe
+    // selbst wohnen in schutzUndWachstumLaeufe.js (800-Zeilen-Regel).
+    ...baueSchutzUndWachstumLaeufe({ dateien, mitNetz }),
     // Als Letztes und nur mit Netz: der einzige Lauf, der die Aussenwelt
     // anfasst (echter Chat ueber die Bruecke). Faellt er aus, sagt das etwas
     // ueber die LIVE-Kette — deshalb gehoert er hierher und nicht in einen

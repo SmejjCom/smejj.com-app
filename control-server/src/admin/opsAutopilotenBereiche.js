@@ -30,7 +30,11 @@ const ZUORDNUNG = Object.freeze({
   ],
   "Sicherheit & Wachdienst": [
     "nachweis-kette", "synthetic-user-watchdog", "bug-predictor", "evolutionary-mutation",
-    "brueckenwaechter", "container-puls", "support-sla", "oberflaechenwache", "selbstheilung", "sync-waechter"
+    "brueckenwaechter", "container-puls", "support-sla", "oberflaechenwache", "selbstheilung", "sync-waechter",
+    // Nr. 44-54 (2026-08-24): der Schutz-Block aus dem 135-Piloten-Vergleich.
+    "rueck-roller", "log-wache", "daten-sicherung", "wiederherstellungs-probe",
+    "geheimnis-spaeher", "zertifikats-wache", "missbrauchs-wache", "konto-wache",
+    "inhalts-schutz", "abhaengigkeits-wache"
   ],
   "Modelle & Wissen": [
     "modell-einkaeufer", "live-arena-leaderboard", "knowledge-distiller", "model-lifecycle",
@@ -41,7 +45,10 @@ const ZUORDNUNG = Object.freeze({
     "realtime-voice-pair", "multimodal-engine", "deep-research", "voice-region-check"
   ],
   "Betrieb & Auslieferung": [
-    "codeberg-spiegel", "qualitaetsmessung", "autopilot-laeufer", "evolution-ablage"
+    "codeberg-spiegel", "qualitaetsmessung", "autopilot-laeufer", "evolution-ablage",
+    // Nr. 50, 55-60 (2026-08-24): Nutzersicht, Kosten, Last, Wachstum, Mappe.
+    "fehler-faenger", "kosten-wache", "last-probe", "auffindbarkeits-wache",
+    "willkommens-wache", "experiment-meister", "tagesmappe"
   ]
 });
 

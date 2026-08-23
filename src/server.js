@@ -67,6 +67,10 @@ import { handlePublicApiRoute } from "../control-server/src/publicapi/publicApiR
 import { handleDeveloperKeyRoute } from "../control-server/src/routes/developerKeyRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
+// Fehler-Fänger (Nr. 50) und Missbrauchs-Wache (Nr. 51), Freigabe 2026-08-24.
+import { handleFehlerRoute } from "../control-server/src/routes/fehlerRoutes.js";
+import { beobachteAnfrage } from "../control-server/src/autopilots/missbrauchsWacheAutopilot.js";
+import { clientKeyFromRequest } from "../control-server/src/http/rateLimiter.js";
 import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
 import { handleFeedbackRoute } from "../control-server/src/routes/feedbackRoutes.js";
 import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
@@ -164,6 +168,9 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
     if (await handlePublicApiRoute(req, url, res)) return; // /v1: Bearer statt Sitzung, muss VOR allem stehen (Grund dort)
     if (url.pathname.startsWith("/api/")) {
+      // Missbrauchs-Wache (Nr. 51): jede API-Anfrage einmal zählen — Absender
+      // und Pfadklasse, sonst nichts. Darf den Weg nie aufhalten.
+      try { beobachteAnfrage({ absender: clientKeyFromRequest(req), pathname: url.pathname }); } catch { /* zählen ist Beiwerk */ }
       if (handlePreflight(req, res)) return; // OPTIONS-Preflight (204 erlaubt / 403 fremd)
       const cors = corsHeadersFor(req.headers.origin);
       if (cors) for (const [name, value] of Object.entries(cors)) res.setHeader(name, value);
@@ -248,6 +255,8 @@ const server = http.createServer(async (req, res) => {
     if (await handleVoiceRoute(req, url, res)) return;
     // Herzschlag der Autopiloten (Maschinen-Absender, eigener Schluessel je Automatik) — autopilotRoutes.js.
     if (await handleAutopilotHeartbeat(req, url, res)) return;
+    // Fehler-Fänger (Nr. 50): Browserfehler angemeldeter Nutzer — fehlerRoutes.js.
+    if (await handleFehlerRoute(req, res, url)) return;
     // Kundensupport Stufe 1: Ticket + KI-Sofortantwort (angemeldete Nutzer) — supportRoutes.js.
     if (await handleSupportRoute(req, url, res)) return;
     // Daten-Schwungrad Stufe 1: Daumen-Signale der Nutzer — feedbackRoutes.js.

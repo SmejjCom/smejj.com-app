@@ -15,6 +15,8 @@ import {
 import { starteMailLogAufraeumen } from "../auth/mailLogJanitor.js";
 import { starteAutopilotLaeufer, baueEskalationsVersand } from "./autopilotLaeufer.js";
 import { starteModellEinkaeufer } from "./modellEinkaeufer.js";
+// Log-Wache (Nr. 45): die Prozess-Haken muessen VOR dem ersten Fehler haengen.
+import { registriereProzessWache } from "./logWacheAutopilot.js";
 import { interneMeldung } from "../admin/opsAutopiloten.js";
 import { sendAuthMail } from "../auth/mailer.js";
 
@@ -31,6 +33,8 @@ export function starteAutopiloten({ env = process.env } = {}) {
       console.error(`[autopiloten] ${name} startete NICHT: ${String(fehler?.message || fehler).slice(0, 160)}`);
     }
   };
+  // Log-Wache (Nr. 45) zuerst: was vor den Haken passiert, sieht niemand.
+  sicher("logWacheProzessHaken", () => registriereProzessWache());
   // Zustellprotokoll: 90 Tage aufbewahren (Betreiber-Freigabe 2026-07-29).
   sicher("mailLogAufraeumen", () => starteMailLogAufraeumen({ env }));
   // Eigenmeldung der Sonden: der laufende Container bezeugt sich selbst.

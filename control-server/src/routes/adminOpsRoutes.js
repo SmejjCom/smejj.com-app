@@ -27,6 +27,8 @@ import { analytikUebersicht } from "../admin/opsAnalytik.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { cockpitUebersicht } from "../admin/opsCockpit.js";
 import { auslieferungUebersicht } from "../admin/opsAuslieferung.js";
+// Tagesmappe (Nr. 60): die 10-Minuten-Ansicht des Betreibers (Freigabe 2026-08-24).
+import { baueTagesmappe } from "../autopilots/tagesmappeAutopilot.js";
 import { evolutionDashboard } from "../admin/opsEvolution.js";
 // Token-Verbrauch: die Zahl, ohne die jede Kostenentscheidung geraten ist.
 import { bericht as verbrauchsBericht } from "../llm/tokenMesser.js";
@@ -44,7 +46,7 @@ const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
   "cockpit", "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
-  "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch", "auslieferung"
+  "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch", "auslieferung", "tagesmappe"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -90,6 +92,8 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "evolution") return privateJson(res, 200, await evolutionDashboard({ env })), true;
     // Modul AL: Live-Stand gegen Bau-Stand je Dienst (Design-Vorschlag "Was ist wirklich live?").
     if (bereich === "auslieferung") return privateJson(res, 200, await auslieferungUebersicht({ env, startzeitMs: GESTARTET_MS })), true;
+    // Nr. 60: alles, was auf eine Betreiber-Entscheidung wartet, in EINER Mappe.
+    if (bereich === "tagesmappe") return privateJson(res, 200, await baueTagesmappe({ env })), true;
     // Der Speicher ist nach jedem Control-Neustart leer — die vollstaendige
     // Historie steht in den Logzeilen "[verbrauch] {...}". Diese Ansicht ist
     // die schnelle Sicht auf den laufenden Prozess, nicht das Archiv.

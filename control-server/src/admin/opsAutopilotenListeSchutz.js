@@ -1,0 +1,196 @@
+// smejj.com — Modul AP, Registry-Teil 3: die Schutz- und Sicherheits-
+// Autopiloten Nr. 44-54 (Betreiber-Freigabe 2026-08-24: "Ja, alle 17 bauen").
+//
+// Eigene Datei aus demselben Grund wie Teil 2 (Evolution): die Hauptliste
+// steht längst an der 800-Zeilen-Regel. Wer einen Autopiloten sucht, findet
+// ihn über AUTOPILOTEN in opsAutopilotenListe.js.
+//
+// Alle elf laufen im Autopilot-Läufer (alle 30 Minuten) und folgen dem
+// Ehrlichkeits-Beschluss: Selbsttest mit kaputter UND gesunder Probe, dann
+// echte Messung mit Zahlen — siehe tests/autopiloten-ehrlichkeit.test.mjs
+// und tests/schutz-autopiloten.test.mjs.
+
+const STUNDE_MS = 60 * 60 * 1000;
+
+const LAEUFER = Object.freeze({
+  ort: "Control Server (Autopilot-Läufer)",
+  zeitplan: "alle 30 Minuten",
+  messung: "heartbeat",
+  erwartetAlleMs: STUNDE_MS,
+  schonfristMs: STUNDE_MS,
+  startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+  stopAnleitung: "Nur durch Anhalten des Control-Servers."
+});
+
+export const SCHUTZ_AUTOPILOTEN = Object.freeze([
+  {
+    id: "rueck-roller",
+    name: "Rück-Roller",
+    nummer: "44",
+    kurz: "Erkennt, wenn ein frischer Deploy die Kern-Ampeln umwirft, und legt die fertige Rückroll-Empfehlung vor — Protokoll-Modus, er rollt nie selbst.",
+    funktionen: [
+      "Stempelt den laufenden Stand (ZEABUR_GIT_COMMIT_SHA) als stabil, sobald ALLE Kern-Ampeln grün sind — neustart-fest in der Ablage.",
+      "Werden 2+ Kern-Ampeln rot UND der Stand hat gewechselt, schreibt er eine Rückroll-Empfehlung (von/zu/Grund) und wird ROT — die Alarm-Wache mailt.",
+      "PROTOKOLL-MODUS MIT ABSICHT: der Zeabur-Schlüssel liegt beim Betreiber, nicht am Dienst — und ein Automat greift erst ein, nachdem seine Empfehlungen eine Beobachtungsphase lang richtig waren.",
+      "Rote Kerne OHNE Standwechsel lösen keine Empfehlung aus: Rückrollen würde denselben Stand noch einmal bauen."
+    ],
+    trainiert: "Nichts — er misst Ampeln gegen Deploy-Stände",
+    verbessert: "Eine Deploy-Havarie hat nach 30 Minuten eine fertige Rückroll-Entscheidung statt einer Fehlersuche um Mitternacht",
+    neuigkeiten: ["Neu am 2026-08-24 (Lücke aus dem 135-Piloten-Vergleich)"],
+    ...LAEUFER
+  },
+  {
+    id: "log-wache",
+    name: "Log-Wache",
+    nummer: "45",
+    kurz: "Liest die Fehlersignale des eigenen Prozesses und macht ein stilles Sterben sichtbar — unbehandelte Ausnahmen, Speicher, Ports, Verbindungsabrisse.",
+    funktionen: [
+      "Prozess-Haken (uncaughtException, unhandledRejection, warning) füllen einen Ringpuffer; der Lauf wertet die Zeilen seit dem letzten Takt aus.",
+      "Sechs Störmuster mit Klartext-Namen (Speicher erschöpft, Port belegt, Verbindung abgerissen, DNS tot, Datei-Handles, unbehandelte Ausnahme).",
+      "Meldet Heap- und RSS-Verbrauch mit — das früheste Signal des Speicher-Todes.",
+      "Sind die Haken NICHT registriert, ist die Ampel rot: eine blinde Wache darf nicht grün aussehen."
+    ],
+    trainiert: "Nichts — sie misst den eigenen Prozess",
+    verbessert: "Der Control-Server stirbt nicht mehr still: das Muster steht in der Ampel, bevor der Dienst steht",
+    neuigkeiten: ["Neu am 2026-08-24 (Befund: Control stirbt still, Instanz-Restart heilt)"],
+    ...LAEUFER
+  },
+  {
+    id: "daten-sicherung",
+    name: "Daten-Sicherung",
+    nummer: "46",
+    kurz: "Sichert einmal täglich die Betriebs-Ablagen (Tickets, Aufgaben, Einwilligungen, Nutzer-Gedächtnis) und liest die Kopie SOFORT mit Prüfsumme zurück.",
+    funktionen: [
+      "Acht Ablagen mit Deckel je Quelle in EINEN täglichen Schnappschuss (sicherung/taeglich) — mit SHA-256-Prüfsumme über den Inhalt.",
+      "Nach dem Schreiben wird ZURÜCKGELESEN und die Prüfsumme verglichen — geschrieben heißt noch nicht lesbar (Lehre des Nachweis-Wächters).",
+      "GRENZE, ehrlich: gleicher Eimer, eigenes Präfix — schützt gegen Überschreiben und kaputte Datensätze, nicht gegen Eimer-Verlust. Der zweite Eimer ist eine Betreiber-Entscheidung und steht in der Tagesmappe.",
+      "Nutzer-Chats bewusst nicht dabei: sie brauchen den zweiten Eimer, keinen Schnappschuss daneben."
+    ],
+    trainiert: "Nichts — sie sichert und beweist",
+    verbessert: "Die Betriebsdaten haben erstmals ein tägliches, rückgelesenes Backup statt gar keines",
+    neuigkeiten: ["Neu am 2026-08-24 (Codeberg spiegelt nur den CODE)"],
+    ...LAEUFER
+  },
+  {
+    id: "wiederherstellungs-probe",
+    name: "Wiederherstellungs-Probe",
+    nummer: "47",
+    kurz: "Liest im Takt die jüngste Sicherung vollständig zurück und misst die zwei Ernstfall-Zahlen: Alter (Datenverlust-Fenster) und Rücklese-Dauer.",
+    funktionen: [
+      "Prüfsummen-Vergleich über den kompletten Schnappschuss — eine manipulierte oder halb geschriebene Kopie fällt auf.",
+      "Ist die jüngste intakte Sicherung älter als 2 Tage, wird die Ampel rot: so viel wäre im Ernstfall verloren.",
+      "Ein Backup ohne geprüfte Rücksicherung ist eine Hoffnung — die Branchen-Regel, aus der es diesen Lauf gibt."
+    ],
+    trainiert: "Nichts — sie probt den Ernstfall",
+    verbessert: "Ob sich die Sicherung wirklich zurückspielen lässt, ist eine gemessene Zahl statt einer Annahme",
+    neuigkeiten: ["Neu am 2026-08-24"],
+    ...LAEUFER
+  },
+  {
+    id: "geheimnis-spaeher",
+    name: "Geheimnis-Späher",
+    nummer: "48",
+    kurz: "Scannt im Takt den echten Quelltext des Containers auf Schlüssel, Tokens und private Schlüsselblöcke — JEDER Fund ist sofort rot.",
+    funktionen: [
+      "Sieben Mustergruppen (OpenAI-artig, AWS, GitHub, Slack, Google, Private-Key-Blöcke, harte Passwörter im Code) über dieselbe Dateiliste wie der Bug-Predictor.",
+      "Zeilen mit Entwarnungs-Wörtern (beispiel, probe, example) zählen nicht — Doku und Tests dürfen Muster zeigen; die Grenze steht dokumentiert im Modul.",
+      "Die Selbsttest-Proben sind ZUSAMMENGESETZT, damit der Release-Secret-Scanner diese Datei nicht selbst als Fund meldet (Falle vom 2026-08-14)."
+    ],
+    trainiert: "Nichts — er sucht, was niemand finden soll",
+    verbessert: "Ein eingechecktes Geheimnis lebt höchstens 30 Minuten statt bis zum nächsten Sicherheitsvorfall",
+    neuigkeiten: ["Neu am 2026-08-24"],
+    ...LAEUFER
+  },
+  {
+    id: "zertifikats-wache",
+    name: "Zertifikats-Wache",
+    nummer: "49",
+    kurz: "Misst per echtem TLS-Handshake die Restlaufzeit der Zertifikate von smejj.com, api.smejj.com und den Zeabur-Diensten — rot unter 21 Tagen.",
+    funktionen: [
+      "Vier Domains je Lauf; gemessen wird das Zertifikat selbst (valid_to), nicht die HTTP-Antwort dahinter.",
+      "Rot bei Restlaufzeit unter 21 Tagen (Let's Encrypt erneuert bei 30 — wer da noch nicht erneuert hat, hat ein Problem) und bei totem Handshake.",
+      "GRENZE, ehrlich: das Ablaufdatum der Domain-REGISTRIERUNG ist ohne WHOIS nicht messbar — ein auslaufendes Zertifikat fällt trotzdem vorher auf."
+    ],
+    trainiert: "Nichts — sie liest Ablaufdaten",
+    verbessert: "Ein ablaufendes Zertifikat ist Wochen vorher eine gelbe Zahl statt plötzlich eine rote Browser-Warnseite",
+    neuigkeiten: ["Neu am 2026-08-24"],
+    ...LAEUFER
+  },
+  {
+    id: "fehler-faenger",
+    name: "Fehler-Fänger",
+    nummer: "50",
+    kurz: "Sammelt die JavaScript-Fehler echter Nutzer-Browser (POST /api/fehler) und gruppiert sie zu Befunden — rot ab 3 Vorkommen desselben Fehlers.",
+    funktionen: [
+      "Annahme mit Sitzungspflicht, Bremse (10/min je Absender) und PII-Maskierung VOR dem Speichern — dieselbe Regel wie beim Daten-Schwungrad.",
+      "Gruppierung mit zahlenfreier Signatur: 'Zeile 4711' und 'Zeile 4712' sind derselbe Fehler nach einem neuen Bündel.",
+      "Unterscheidet ehrlich 'keine Fehler' von 'niemand kann melden': solange der Browser-Haken nicht ausgeliefert ist, sagt die Meldung das ausdrücklich.",
+      "WARUM: unsichtbarer Senden-Pfeil, nie geladenes Modul, tote Stopp-Taste — alles stand live bei grünen Server-Ampeln."
+    ],
+    trainiert: "Nichts — er hört den Browsern zu",
+    verbessert: "Ein Frontend-Fehler hat nach Minuten eine Zahl statt nach Wochen einen Zufallsfund",
+    neuigkeiten: ["Neu am 2026-08-24; Browser-Haken folgt als eigener Frontend-Schritt"],
+    ...LAEUFER
+  },
+  {
+    id: "missbrauchs-wache",
+    name: "Missbrauchs-Wache",
+    nummer: "51",
+    kurz: "Sieht jede API-Anfrage einmal und erkennt in 10-Minuten-Fenstern, was kein einzelner Rate-Limiter sieht: Dauerfeuer und Anmelde-Stürme.",
+    funktionen: [
+      "Ein billiger Zähl-Haken im Server-Einstieg: Absender-Schlüssel, Pfadklasse, Zähler — nie Pfade, Körper oder Sitzungen (datensparsam mit Absicht).",
+      "Dauerfeuer: 900+ Anfragen je Absender in 10 Minuten. Anmelde-Sturm: 40+ Anmelde-Anfragen — Adress-Rütteln.",
+      "Die Wache SPERRT nichts: ein Befund ist der Moment, in dem ein Mensch über eine Sperre entscheidet."
+    ],
+    trainiert: "Nichts — sie zählt Verkehrsmuster",
+    verbessert: "Bots und Missbrauch stehen als Zahl in der Ampel, bevor sie in der Rechnung stehen",
+    neuigkeiten: ["Neu am 2026-08-24"],
+    ...LAEUFER
+  },
+  {
+    id: "konto-wache",
+    name: "Konto-Wache",
+    nummer: "52",
+    kurz: "Bewacht die Grundpfeiler von Anmeldung und Berechtigung: Sitzungsgeheimnis, Admin-Eigentümerliste — und meldet jede Änderung der Liste 24 h lang rot.",
+    funktionen: [
+      "Konfiguration: SMEJJ_SESSION_SECRET vorhanden und mindestens 32 Zeichen; SMEJJ_ADMIN_OWNER_EMAILS gesetzt.",
+      "Berechtigungs-Drift: die Eigentümerliste wird gegen die gestempelte Referenz in der Ablage geprüft — NEU/WEG wird benannt, 24 h Alarm, dann gilt der neue Stand.",
+      "WARUM: der offene Adminbereich (25.07.) und der Passwort-Reset über window.prompt (04.08.) waren genau diese Klasse Fehler."
+    ],
+    trainiert: "Nichts — sie prüft Grundpfeiler",
+    verbessert: "Ein stiller Admin-Zuwachs oder ein schwaches Sitzungsgeheimnis ist binnen 30 Minuten eine rote Zahl",
+    neuigkeiten: ["Neu am 2026-08-24"],
+    ...LAEUFER
+  },
+  {
+    id: "inhalts-schutz",
+    name: "Inhalts-Schutz",
+    nummer: "53",
+    kurz: "Prüft echte Inhaltsströme (gemeldete Antworten, Wissens-Ernte) gegen vier feste Gefahrenklassen — deterministisch, mit Beleg, ohne Modell-Urteil.",
+    funktionen: [
+      "Vier Klassen: Anleitung Selbstverletzung, Gewalt-Aufruf, Missbrauch Minderjähriger, Anleitung Straftat — konservative Muster, deutsch und englisch.",
+      "Geprüft werden die Daumen-runter-Antworten der letzten 7 Tage und das jüngste Ernte-Thema — genau die Ströme, durch die Fremdes hereinkommt.",
+      "Ein Fund heißt: ein Mensch schaut hin. Gelöscht wird nichts automatisch.",
+      "GRENZE, ehrlich: Wortlisten erkennen Offensichtliches — sie sind die unterste Schutzschicht, die Modell-Anbieter filtern zusätzlich."
+    ],
+    trainiert: "Nichts — er prüft gegen feste Klassen",
+    verbessert: "Gefährliche Inhalte in den eigenen Strömen haben einen Wächter statt eines blinden Flecks",
+    neuigkeiten: ["Neu am 2026-08-24"],
+    ...LAEUFER
+  },
+  {
+    id: "abhaengigkeits-wache",
+    name: "Abhängigkeits-Wache",
+    nummer: "54",
+    kurz: "Fragt einmal täglich osv.dev, ob eine der wirklich installierten Abhängigkeiten (package-lock des Containers) eine bekannte Schwachstelle trägt.",
+    funktionen: [
+      "Liest die package-lock des laufenden Containers und fragt osv.dev in Blöcken — dedupliziert je Schwachstellen-Kennung (die Doppelzähl-Falle des lokalen CVE-Wächters).",
+      "Zwischen zwei Tagesabfragen meldet die Ampel den gemessenen Stand aus der Ablage, nie einen Pauschaltext.",
+      "Ergänzt den lokalen npm run check:cve: der läuft nur, wenn jemand ihn startet — dieser hier läuft im Takt des Dienstes."
+    ],
+    trainiert: "Nichts — sie fragt eine Schwachstellen-Datenbank",
+    verbessert: "Eine bekannte Lücke in einer Abhängigkeit steht binnen eines Tages in der Ampel statt im nächsten Audit",
+    neuigkeiten: ["Neu am 2026-08-24"],
+    ...LAEUFER
+  }
+]);

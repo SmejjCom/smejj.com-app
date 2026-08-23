@@ -96,7 +96,29 @@ const MIT_ECHTER_MESSUNG = new Set([
   "ai-evolution-engine",      // 12 Medientyp-Pruefer + Sperrfrist-Nachweis
   "missing-function-detector",// Luecken-Erkennung + Beleg-Pruefung gegen den echten Quelltext
   "autopilot-supervisor",     // Abnahme, blind UND blockierend geprueft
-  "evolution-ablage"          // bucht Kennzahlen und Aufgaben dauerhaft weg
+  "evolution-ablage",         // bucht Kennzahlen und Aufgaben dauerhaft weg
+  // --- Schutz, Sicherheit, Kosten, Wachstum (Nr. 44-60), seit 2026-08-24 ---
+  // Alle laufen im Autopilot-Laeufer (schutzUndWachstumLaeufe.js); jeder
+  // beginnt mit einem Selbsttest aus kaputter UND gesunder Probe und misst
+  // dann echte Daten. Belegt in tests/schutz-autopiloten.test.mjs und
+  // tests/wachstum-autopiloten.test.mjs.
+  "rueck-roller",             // Ampeln gegen Deploy-Staende; Empfehlung in die Ablage
+  "log-wache",                // Ringpuffer der eigenen Prozess-Fehlersignale
+  "daten-sicherung",          // taeglicher Schnappschuss + sofortige Ruecklese mit Pruefsumme
+  "wiederherstellungs-probe", // juengste Sicherung vollstaendig zurueckgelesen (RPO/RTO)
+  "geheimnis-spaeher",        // scannt die echten Quelldateien des Containers
+  "zertifikats-wache",        // echte TLS-Handshakes gegen die vier Domains
+  "fehler-faenger",           // echte Browserfehler ueber POST /api/fehler
+  "missbrauchs-wache",        // zaehlt jede echte API-Anfrage (Haken in src/server.js)
+  "konto-wache",              // Sitzungsgeheimnis + Admin-Listen-Drift gegen die Ablage
+  "inhalts-schutz",           // prueft echte Daumen-runter-Antworten und Ernte-Themen
+  "abhaengigkeits-wache",     // package-lock des Containers gegen osv.dev, dedupliziert
+  "kosten-wache",             // Tagesbericht des Token-Messers gegen das Budget
+  "last-probe",               // 20 echte Parallel-Anfragen gegen /health, woechentlich
+  "auffindbarkeits-wache",    // die ausgelieferte Startseite, taeglich
+  "willkommens-wache",        // der echte Nutzer-Index (createdAt/lastSeenAt)
+  "experiment-meister",       // Zuteilungs- und Urteils-Mathematik + echte Ablage
+  "tagesmappe"                // baut die Mappe aus den echten Quellen, stumme benannt
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

@@ -26,9 +26,9 @@ test("Der Laeufer betreibt alle Selbsttest-Autopiloten und meldet jeden einzeln"
   const gemeldet = [];
   const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; }, mitNetz: false });
 
-  assert.equal(ergebnisse.length, 32, "31 Autopiloten laufen ohne Netz im Control-Server (seit 2026-08-15 mit dem Nachweis-Waechter, Nr. 41)");
-  assert.equal(gemeldet.length, 33, "32 Laeufe + der Taktgeber, der sich selbst bezeugt");
-  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 33, "keine Kennung doppelt");
+  assert.equal(ergebnisse.length, 49, "48 Autopiloten laufen ohne Netz im Control-Server (seit 2026-08-24 mit den 17 Schutz- und Wachstums-Laeufen Nr. 44-60)");
+  assert.equal(gemeldet.length, 50, "49 Laeufe + der Taktgeber, der sich selbst bezeugt");
+  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 50, "keine Kennung doppelt");
   assert.ok(gemeldet.some((g) => g.id === "autopilot-laeufer"), "der Taktgeber bezeugt sich selbst");
 
   // Jede Meldung muss ein Ergebnis tragen, keinen Pauschaltext.
@@ -64,7 +64,7 @@ test("Ein abstuerzendes Modul reisst den Lauf nicht mit", async () => {
     dateienLader: () => { throw new Error("Dateisystem weg"); },
     mitNetz: false
   });
-  assert.equal(ergebnisse.length, 32, "alle anderen laufen trotzdem");
+  assert.equal(ergebnisse.length, 49, "alle anderen laufen trotzdem");
   assert.equal(gemeldet.get("smart-router").status, "ok");
 });
 
@@ -76,7 +76,7 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
     melde: (id, e) => { gemeldet.set(id, e); return true; },
     mitNetz: true
   });
-  assert.equal(ergebnisse.length, 35, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe");
+  assert.equal(ergebnisse.length, 52, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe");
   const sw = gemeldet.get("sync-waechter");
   assert.ok(sw, "der Sync-Waechter muss melden");
   assert.equal(sw.status, "fehler", "ohne Geheimnis ist er rot, nie gruen");
