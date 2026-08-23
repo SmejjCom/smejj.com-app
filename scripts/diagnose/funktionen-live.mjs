@@ -27,6 +27,13 @@ const WEGE = [
   ["Projekte (Sync)", "/api/projekte"],
   ["Medien-Ablage (Bilder/Video im Chat)", "/api/chat-medien?id=probe"],
   ["Cline-Anbieter", "/api/providers/cline/status"],
+  // Die Modell-Liste des Betreibers haengt an DIESEM Weg, nicht an /status:
+  // beide Modell-Menues holen hier bei jedem Oeffnen den Katalog. Bleibt die
+  // Antwort aus, zeigen sie stillschweigend nur noch ihre kurze Restliste —
+  // ohne Fehlermeldung. Genau dieser Ausfall wurde am 2026-08-23 gemeldet,
+  // und /status war dabei die ganze Zeit gruen. Siehe
+  // docs/frontend/MODELL_MENUE_LOCK.md.
+  ["Modell-Liste (Cline-Katalog)", "/api/providers/cline/models"],
   ["Eigene Anbieter-Keys", "/api/keys"],
   ["Abrechnung", "/api/billing/status"],
   ["Compliance", "/api/compliance"]
