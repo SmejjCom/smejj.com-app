@@ -9,6 +9,7 @@ import { GRANT, can } from "../admin/adminRoles.js";
 import { resolveAdminActor } from "../admin/adminAuth.js";
 import { abrechnungUebersicht } from "../admin/opsAbrechnung.js";
 import { kostenUebersicht } from "../admin/opsKosten.js";
+import { apiUebersicht } from "../admin/opsApi.js";
 
 const PREFIX = "/api/admin/geld";
 const RECHT = "billing.read";
@@ -46,6 +47,8 @@ export async function handleAdminGeldRoute(req, url, res, { env = process.env } 
   try {
     if (bereich === "abos") return privateJson(res, 200, await abrechnungUebersicht({ env })), true;
     if (bereich === "kosten") return privateJson(res, 200, await kostenUebersicht({ env })), true;
+    // Modul G: die oeffentliche API aus Betreibersicht (Konten, Schluessel, Umsatz).
+    if (bereich === "api") return privateJson(res, 200, await apiUebersicht({ env })), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {

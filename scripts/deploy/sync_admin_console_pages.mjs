@@ -46,7 +46,7 @@ const SEITEN_ORDNER = Object.freeze([
   "moderation", "dsgvo", "ankuendigungen", "flags",
   "modelle", "jobs", "worker", "deploy", "speicher",
   "schluessel", "ereignisse", "adminverwaltung",
-  "abrechnung", "kosten",
+  "abrechnung", "kosten", "api",
   "wissen", "sprachen", "experimente", "email", "analytik", "aufgaben",
   "autopiloten"
 ]);
