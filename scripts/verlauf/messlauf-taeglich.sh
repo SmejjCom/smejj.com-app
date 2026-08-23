@@ -149,7 +149,23 @@ git commit -q -m "deploy(qualitaet): Messlauf $(date -u +%F) — $PUNKTE" || { e
 # oeffentliche Seite zeigte unveraendert 97,06 % vom 14.08., und das Protokoll
 # meldete jedes Mal Erfolg. Eine zu gute Zahl, die niemand anzweifelt, ist
 # schlimmer als gar keine.
-if ! FRONTEND_PUSH="$(git push -q origin HEAD:main 2>&1)"; then
+#
+# SEIT 2026-08-24 DARUM SSH STATT SCHLUESSELBUND: eigener Deploy-Key NUR fuer
+# dieses Repo unter ~/.ssh/smejjcom_frontend_ed25519 (GitHub bindet Deploy-Keys
+# je Repo — der App-Key wird hier abgewiesen, am 05.08. gemessen). Liegt der
+# Schluessel nicht vor, bleibt der HTTPS-Weg fuer interaktive Sitzungen.
+FRONTEND_KEY="$HOME/.ssh/smejjcom_frontend_ed25519"
+FRONTEND_PUSH_ZIEL="origin"
+if [ -r "$FRONTEND_KEY" ]; then
+  FRONTEND_SSH="ssh -i $FRONTEND_KEY -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20"
+  # Port-22-Weiche wie in messlauf.sh: faellt SSH aus, bleibt ssh.github.com:443.
+  if ! nc -z -G 8 github.com 22 2>/dev/null; then
+    FRONTEND_SSH="$FRONTEND_SSH -o HostName=ssh.github.com -o Port=443"
+  fi
+  export GIT_SSH_COMMAND="$FRONTEND_SSH"
+  FRONTEND_PUSH_ZIEL="git@github.com:SmejjCom/smejj-app-frontend.git"
+fi
+if ! FRONTEND_PUSH="$(git push -q "$FRONTEND_PUSH_ZIEL" HEAD:main 2>&1)"; then
   echo "$FRONTEND_PUSH" | tail -3
   echo "$(date -u +%FT%TZ) ABBRUCH: $PUNKTE gemessen, aber NICHT veroeffentlicht — die"
   echo "oeffentliche Qualitaetsseite zeigt weiterhin den alten Stand. Der Commit liegt"
