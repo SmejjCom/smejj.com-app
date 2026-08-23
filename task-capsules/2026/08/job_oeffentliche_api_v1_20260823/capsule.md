@@ -33,4 +33,6 @@ Domain `api.smejj.com` am Dienst angemeldet (Status `INVALID_DNS`, CNAME bei Spa
 
 **Runde 5 (Abrechnung + Konto-Reiter):** App ff2178d6 (design-v11) / Bau-Branch 1d33c033; Frontend b55d405 (sw v658). Prepaid-Guthaben, Ereignisprotokoll je Anfrage, Stripe-Checkout, 402 bei 0; Reiter „API & Schluessel" in den Einstellungen. Live: Startguthaben 1,00 USD sichtbar, Anfrage gebucht, Checkout `cs_live_…` erzeugt. 39+611 Tests gruen.
 
+**Runde 6 (Adminbereich):** Modul G „API & Schluessel“ (opsApi.js, views/console-stage7, Route geld/api). App 3cffd760+dacab15f; Frontend 0c84b93 (smejj.com/admin/api/ live). 31 Tests gruen.
+
 **Offen:** echte Aufladung durch den Betreiber (Kreis schliessen), Nachrechnen-Skript; Abrechnung (Verbrauch wird gezaehlt, nicht bepreist). Menueeintrag zu `/entwickler` (index.html unter Start-Lock).
