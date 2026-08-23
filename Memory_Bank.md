@@ -752,3 +752,10 @@ Landeseite stand.
 - WURZEL: SMEJJ_AUTOPILOT_KEYS fehlt im Control-Server (503 autopilot_keys_missing) —
   nachziehen mit scripts/deploy/autopilot_schluessel_setzen.mjs (Bau-Branch) + control-neu-bauen.
 - Capsule: docs/task-capsules/2026/08/job_autopiloten_seite_20260823/capsule.md (Bau-Branch).
+
+## 2026-08-23 — Chat-Grenze 100 -> 500 + Index-Vollstaendigkeit (job_chat_grenze_500_20260823)
+
+- LIVE: Server liefert 126/126 Chats (vorher 100), Frontend chat-store b60 / sw v659, Control 10:40:08Z.
+- Index-Falle: nach Zeit "frisch", nach Inhalt unvollstaendig (121 von 126) — jetzt zaehlt auch die Menge.
+- OFFEN (Rote Liste): 26 Chats mit ALTER Kontokennung bleiben abgewiesen; das pruneOld-Loeschrisiko
+  dagegen ist mit 500 weg. Capsule: task-capsules/2026/08/job_chat_grenze_500_20260823/capsule.json

@@ -1,0 +1,23 @@
+{
+  "jobId": "job_chat_grenze_500_20260823",
+  "datum": "2026-08-23",
+  "titel": "Chat-Grenze je Konto 100 -> 500 und Index-Vollstaendigkeit",
+  "auftrag": "Betreiber-Freigabe per Karte: 'Ja, auf 500 anheben'. Vorher: 126 Chat-Dateien am Betreiberkonto, 26 serverseitig unerreichbar.",
+  "rollback": "Bauzweig c1293d9a, Frontend b6d518c (sw v658), Arbeitszweig 9bb15cb2",
+  "commits": {
+    "bauzweig": ["cb1d55f1 Grenze 500 + tests/chat-grenze.test.mjs", "5b71cebb Index mit Luecken wird neu gebaut"],
+    "frontend_main": "706ca65 chat-store b60, Marken-Kette (12 Dateien), sw v659",
+    "arbeitszweig": "6f09a0c2 Spiegel"
+  },
+  "ausgerollt": "Control gestartetAm 2026-08-23T10:40:08.247Z; GitHub Pages sw v659, /assets/chat-store.js?v=b60 traegt MAX_CHATS = 500",
+  "befund_unterwegs": "Der Index hatte 121 Eintraege bei 126 Dateien: er entstand einst aus den 100 gekappten Chats und wuchs nur durch Nachtragen. Nach Zeit 'frisch', nach Inhalt unvollstaendig. Neu: Eintraege < min(Dateien, limit) gilt als unvollstaendig -> Neubau.",
+  "live_gemessen": {
+    "api_nurAbgleich": { "eintraege": 126, "erstabruf_ms": 3302, "danach_ms": [668, 628], "anmerkung": "Erstabruf = einmaliger Index-Neubau" },
+    "startseite": { "ttfb_ms": 209, "dcl_ms": 671, "load_ms": 678, "marken": ["chat-store.js?v=b60", "app.js?v=b85"], "swCache": "smejj-shell-v659" },
+    "client": { "sichtbar": 100, "papierkorb": 6, "vomServerAbgewiesen": 26 }
+  },
+  "nicht_geloest_bewusst": "Die 26 fehlenden Chats tragen die ALTE Kontokennung (user_smejjcom_gmail_com statt SHA-256) und werden von gehoertNutzer abgewiesen — Konsole: 'smejj Verlauf-Sync: 26 Chat(s) ... andere Kontokennung'. Bekannt seit 19.08., Rote Liste (Besitzpruefung). Mit MAX_CHATS=500 faellt aber das Loesch-Risiko durch pruneOld weg, das bisher gegen ein Angleichen sprach.",
+  "tests": "55/55 (chat-index 14 inkl. neuem Fall, chat-sync, chat-grenze)",
+  "pruefer": { "start-lock": "OK 34 Dateien", "favicon-lock": "OK", "guidelines": "rot durch Altlasten (Memory_Bank 911 Zeilen, 2 Serverdateien >800, 1 Naming) — nicht aus dieser Arbeit" },
+  "regression": "keine: sichtbare Chats 100 wie vorher, Nachrichten unveraendert, Startseite byte-identisch"
+}
