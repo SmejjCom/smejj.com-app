@@ -73,3 +73,5 @@ Live-Seite gemessene Widersprüche beheben (Betreiber-Auswahl: „Punkte 1–4")
 - Commits Bau-Branch 8df4540c, 9b3aaf01, 69fc75fe; Frontend 6638625, d6565eb, 9b7870c. Admin-Lock 21 Dateien.
 - Nicht umgesetzt (andere Seiten des Vorschlags: Nutzer, Umsatz, Sicherheit, Auslieferung, Cockpit-Dienste):
   enthalten erfundene Zahlen, brauchen je eigene Datenquellen.
+
+- NACHTRAG 2026-08-23 05:26Z: Messlauf-Exit-1 behoben (a70d003b: cp mit absolutem Pfad nach cd in den Klon). Handlauf Exit 0, Herzschlag zugestellt; Messung 97,06 %, 1 kritisch, blocked — Qualitaetsbefund, kein Skriptfehler.
