@@ -19,3 +19,5 @@ Gleich 3 (smejj.com v657 = main v657; smejj-control 8396ae14 = Branch-Spitze; Br
 - **Sicherheits-Lock „Verändert": `public/chat-bridge.js` weicht vom eingefrorenen Stand (15.08.) ab** —
   jemand hat die Datei auf dem Bau-Branch geändert, ohne neu einzufrieren. Nicht angefasst (Betreiber-Entscheidung).
 - Favicon-Lock-Manifest hat ein anderes Format (kein `files`-Objekt) → Anzeige „0 Dateien / nicht im Abbild".
+
+- NACHTRAG 05:53Z: Befund geprüft — Abweichung = Prompt-Caching-Fassung 18.08. (Cherry-Pick aa07a12b ohne Neustempel). Mit Betreiber-Freigabe neu eingefroren (6ddf0433).
