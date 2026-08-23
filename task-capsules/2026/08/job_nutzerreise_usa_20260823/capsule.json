@@ -84,7 +84,7 @@
   "messfalle": "sw v662 precachte app.js noch in der alten Fassung (Marke b87, Inhalt alt — Pages verteilt je Datei unterschiedlich schnell). Heilung: caches.open(CACHE_NAME).delete('/assets/app.js',{ignoreSearch:true}) + reload. Siehe Memory 'Markenkette bricht oben', Nachtrag v494.",
   "offen": [
     "danke-abo.html (Abo-Lock) und datenschutz.html (Einwilligungs-Lock) tragen noch die Zeabur-Adresse in der CSP — nicht freigegeben, und die alte Adresse funktioniert weiter.",
-    "Arbeitszweig control-server/admin-ui ist nicht aus dem Bauzweig nachgezogen (Konsole gehoert dem Bauzweig).",
-    "Erstklick-Befund, DREIMAL reproduziert (Google 2x, GitHub 1x): der erste Klick auf einen Anmelde-Knopf setzt nur den Fokus, erst der zweite startet — auth-page.js (Security-Lock), Ursache noch nicht gemessen."
-  ]
+    "Arbeitszweig control-server/admin-ui ist nicht aus dem Bauzweig nachgezogen (Konsole gehoert dem Bauzweig)."
+  ],
+  "messfalle_erstklick": "Der 'Erstklick-Befund' (erster Klick auf Google/GitHub-Knopf tut nichts) war ein Artefakt des Chrome-MCP-Klicks: Capture-Listener auf document sahen beim ersten Klick KEIN pointerdown/mousedown/click, nur der Fokusring erschien. Gegenprobe headless mit echten CDP-Mausereignissen (Input.dispatchMouseEvent, frisches Profil): der ERSTE Klick fuehrt sofort zu accounts.google.com bzw. github.com. Seite entlastet — nie einen Knopf-Befund nur aus dem Automaten-Klick ableiten, immer mit echten Eingabeereignissen gegenpruefen."
 }
