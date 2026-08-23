@@ -40,6 +40,9 @@ Vorsicht beim Commit: die Parallelsitzung hatte `"/assets/shared/auth-me-speiche
 3. „@"-Menü ragte über den oberen Rand: max-height min(320px, 100vh−360px).
 Live (echte Tastatur, eingeloggtes Chrome): „Plane mir einen Wochenendtrip" → Karte nach 4 s „Wohin möchtest du …?" (Städtetrip Europa (Empfehlung) / Natur & Berge / Strand & Meer / Überrasche mich). „@" per Tastatur → Liste mit 8 Chats.
 
+## Nachtrag 24.08. — Code-Bereich: „Ich frage was und kommt nichts" (App 45414193, Frontend 194341e, sw v685)
+Ursache: code-flaeche.js sendet über einen programmatischen Klick auf #startSend, nachdem der Vorlauf beide Vierecke auf „an" gestellt hat; der Stopp-Fang schluckte den Klick (Feld geleert, Quadrat an, nichts geschickt — genau der Betreiber-Screenshot). Fix in chat-stopp.js: Klick mit Text im Feld ist immer Senden, nur der Klick bei leerem Feld stoppt. Chrome-Test danach: Code 3 Fragen (391, Bash, PowerShell), Chat 3 Fragen (Wolga, drei Sätze, Restaurant → Frage-Karte Wien/Berlin/Zürich), keine JS-Fehler. Nebenbefund: nach Wechsel Code → Chat mit „Neu" lief der Verlauf weiter (Antwort begann mit Bash/PowerShell-Wiederholung) — Chat-Trennung beim Ansichtswechsel prüfen.
+
 ## Offen
 - Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht).
 - `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
