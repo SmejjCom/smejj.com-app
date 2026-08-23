@@ -13,7 +13,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   MAX_CHAT_BYTES, groesseInBytes, enthaeltDatenUri, brauchtRettung, istZuGross,
-  rettteWert, rettteChat, rettteUndSpeichere
+  rettteWert, rettteChat, rettteUndSpeichere, raeumeBestandAuf, BESTAND_MERKER
 } from "../public/chat-medien-rettung.js";
 
 const BILD = "data:image/png;base64," + "A".repeat(520 * 1024);
@@ -216,4 +216,118 @@ test("chat-sync ruft die Rettung wirklich auf — und nur bei 'zu gross'", async
   assert.match(sync, /istZuGross\(antwort\.status, grund\) && await rette\(/, "und an der gemeinsamen Weiche gerufen");
   assert.match(sync, /grossFehler \|\| istZuGross\(/, "das 500 des Body-Lesers wird mit erfasst");
   assert.match(sync, /if \(zweiter\?\.ok\) continue;/, "nach der Rettung wird erneut gesendet");
+});
+
+// ---- der Bestandslauf ---------------------------------------------------------
+//
+// WARUM ER SEIN EIGENES KAPITEL BEKOMMT: die Rettung oben haengt am Sende-Weg
+// und setzt voraus, dass ein Chat ueberhaupt gesendet wird. Live gemessen
+// 2026-08-23 arbeitet sich push() durch 113 Gespraeche — nach gut einer Minute
+// war genau EINER der zehn grossen gerettet. Wer die App kurz oeffnet, kommt
+// nie bei seinem Bestand an.
+
+/** Ein Speicher, der sich wie localStorage verhaelt, aber im Test lebt. */
+function speicherAttrappe(start = {}) {
+  const daten = { ...start };
+  return {
+    getItem: (k) => (k in daten ? daten[k] : null),
+    setItem: (k, v) => { daten[k] = String(v); },
+    _daten: daten
+  };
+}
+
+function bestandDeps(chats, speicher, jetzt = 1_000_000_000_000) {
+  const abgelegt = [];
+  return {
+    deps: {
+      listen: async () => chats.map((c) => ({ id: c.id })),
+      laden: async (id) => chats.find((c) => c.id === id),
+      speichern: async (c) => { abgelegt.push(c); const i = chats.findIndex((x) => x.id === c.id); chats[i] = c; },
+      auslagern: auslagernErfolg,
+      speicher, jetzt
+    },
+    abgelegt
+  };
+}
+
+test("der Bestandslauf findet und rettet genau die zu grossen Chats", async () => {
+  gesehen = [];
+  const chats = [
+    { id: "klein-1", messages: [{ role: "user", text: "hallo" }] },
+    { ...grosserChat(), id: "gross-1" },
+    { id: "klein-2", messages: [{ role: "user", text: "auch klein" }] },
+    { ...grosserChat(), id: "gross-2" }
+  ];
+  const { deps, abgelegt } = bestandDeps(chats, speicherAttrappe());
+  const e = await raeumeBestandAuf(deps);
+  assert.equal(e.gelaufen, true);
+  assert.equal(e.geprueft, 4, "jeder Chat wird angesehen");
+  assert.equal(e.gerettet, 2, "nur die beiden grossen werden angefasst");
+  assert.deepEqual(abgelegt.map((c) => c.id), ["gross-1", "gross-2"]);
+  assert.ok(chats.every((c) => groesseInBytes(c) < MAX_CHAT_BYTES), "danach passt jeder durch");
+});
+
+test("hoechstens einmal am Tag", async () => {
+  const chats = [{ ...grosserChat(), id: "g" }];
+  const sp = speicherAttrappe();
+  const ersteDeps = bestandDeps(chats, sp, 1_000_000_000_000).deps;
+  assert.equal((await raeumeBestandAuf(ersteDeps)).gelaufen, true);
+
+  // Eine Stunde spaeter: nicht noch einmal.
+  const chats2 = [{ ...grosserChat(), id: "g2" }];
+  const spaeter = bestandDeps(chats2, sp, 1_000_000_000_000 + 3_600_000);
+  const zweite = await raeumeBestandAuf(spaeter.deps);
+  assert.equal(zweite.gelaufen, false);
+  assert.equal(zweite.grund, "heute_schon");
+  assert.equal(spaeter.abgelegt.length, 0);
+
+  // Am naechsten Tag wieder.
+  const chats3 = [{ ...grosserChat(), id: "g3" }];
+  const morgen = bestandDeps(chats3, sp, 1_000_000_000_000 + 25 * 3_600_000);
+  assert.equal((await raeumeBestandAuf(morgen.deps)).gelaufen, true);
+  assert.equal(morgen.abgelegt.length, 1);
+});
+
+test("der Merker wird VOR dem Lauf gesetzt", async () => {
+  // Sonst begaenne ein abgebrochener Lauf bei jedem Seitenaufruf von vorn und
+  // versuchte jedes Mal dieselben Uploads.
+  const sp = speicherAttrappe();
+  let merkerBeimLaden = "noch nicht gelesen";
+  await raeumeBestandAuf({
+    listen: async () => [{ id: "g" }],
+    laden: async () => { merkerBeimLaden = sp.getItem(BESTAND_MERKER); return grosserChat(); },
+    speichern: async () => {},
+    auslagern: auslagernErfolg,
+    speicher: sp, jetzt: 1_700_000_000_000
+  });
+  assert.equal(merkerBeimLaden, "1700000000000");
+});
+
+test("ein Fehler mittendrin bleibt still und beschaedigt nichts", async () => {
+  const sp = speicherAttrappe();
+  const e = await raeumeBestandAuf({
+    listen: async () => { throw new Error("Datenbank zu"); },
+    laden: async () => null, speichern: async () => { throw new Error("nie"); },
+    auslagern: auslagernErfolg, speicher: sp
+  });
+  assert.equal(e.gelaufen, false);
+  assert.equal(e.grund, "fehlgeschlagen");
+});
+
+test("der Lauf deckelt sich selbst — kein Upload-Sturm beim ersten Start", async () => {
+  const chats = Array.from({ length: 30 }, (_, i) => ({ ...grosserChat(), id: `g${i}` }));
+  const { deps, abgelegt } = bestandDeps(chats, speicherAttrappe());
+  const e = await raeumeBestandAuf({ ...deps, hoechstens: 5 });
+  assert.equal(e.gerettet, 5);
+  assert.equal(abgelegt.length, 5);
+  assert.equal(e.offen, 25, "der Rest wird beim naechsten Lauf geholt, nicht verschwiegen");
+});
+
+test("chat-sync startet den Bestandslauf wirklich", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath } = await import("node:url");
+  const sync = readFileSync(fileURLToPath(new URL("../public/chat-sync.js", import.meta.url)), "utf8");
+  assert.match(sync, /raeumeBestandAuf/, "das Modul wird importiert");
+  assert.match(sync, /setTimeout\(\(\) => \{ bestandAufraeumen\(\); \}/, "und beim Start angestossen");
+  assert.match(sync, /ergebnis\?\.gerettet > 0\) planePush\(\)/, "danach wird gesendet, nicht gewartet");
 });
