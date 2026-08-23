@@ -5,6 +5,50 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-23] CHAT HING — NUR EINE STROMFAMILIE WAR BEWACHT (job_chat_stille_20260823)
+
+Capsule: `task-capsules/2026/08/job_chat_stille_20260823/capsule.json`.
+App-Repo `8da2df72`, `9f40fb69`. Frontend `53ab01d3`. sw v666 -> v667.
+
+**Befund:** Eine von fuenf Anfragen stand nach 55 s noch auf "smejj denkt
+nach …" — keine Meldung, kein Abbruch, kein Wiederholen. Die Frage blieb als
+Torso im Verlauf (zwei user-Nachrichten hintereinander).
+
+**Ursache — ein altbekanntes Muster:** `chat-stream.js` hat seit dem 17.08.
+eine Stille-Wache. `chatClient.js` (Cline/BYOK) hatte sie NICHT, und der Chat
+stand auf "Cline · Auto". Dasselbe wie beim Stopp-Knopf, der auch nur bei
+einer der beiden Familien griff.
+
+**Warum die vorhandene Zeitgrenze nicht reicht:** `fetch-retry.js` bewacht den
+Weg BIS ZUM ANTWORTKOPF und laesst das Streaming danach ausdruecklich ohne
+Grenze laufen, damit lange Antworten nie abgeschnitten werden. Der Fall
+"Server hat geantwortet und verstummt dann" faellt dadurch.
+
+**Entscheidung:** `public/ai/strom-stillstand.js` — die Wache an EINER Stelle,
+exportiert und pruefbar. Gemessen wird die STILLE, nicht die Gesamtdauer: eine
+lange Antwort troepfelt, eine tote schweigt. 90 s bleiben — im Live-Test
+brauchte eine echte Antwort 60 s, eine kuerzere Grenze haette sie abgewuergt.
+
+**Beinahe-Fehler, den das Deploy-Sicherheitsnetz gefangen hat:** 39 Zeilen
+standen LIVE, aber nicht im lokalen Stand — darunter
+`entferneAbgerisseneMedien()`, die abgerissene Bildstroeme aufraeumt (sonst
+100+ KB base64 in der Blase). Meine Fassung haette sie geloescht. Die
+Live-Fassung wurde zur Basis, die Aenderung liegt darauf, die Quelle ist
+nachgezogen. **Vor jedem Frontend-Deploy Marken ausklammern und pruefen, was
+nur live steht.**
+
+**Nebenbei behoben:** `chat-store.js` lief live unter ZWEI Marken (b61 und b59
+via `chat-actions.js`) — zwei Modulinstanzen mit getrenntem Zustand. Jetzt
+laden alle 10 Stellen dieselbe.
+
+**Verifikation:** Serie von fuenf live 3,6 / 8 / 8 / 60 s, kein Haenger, keine
+Doppelmarke mehr. `check:frontend` 619/619, `check:llm-router` 334/334,
+module-queries 187, markenkette 98, precache 155.
+
+**Offen:** Die Antwortzeiten schwanken 3,6 s bis 60 s fuer dieselbe triviale
+Frage. Budget fuer den ersten Token ist 1 s.
+
+
 ### [2026-08-23] MEMORY_BANK BEWACHT SICH JETZT SELBST (job_memory_bank_waechter_20260823)
 
 Capsule: `task-capsules/2026/08/job_memory_bank_waechter_20260823/capsule.json`.
