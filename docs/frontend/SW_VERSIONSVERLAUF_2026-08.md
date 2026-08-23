@@ -1606,3 +1606,21 @@ genau EINER Marke.
 
 Ohne Bump saehen Besucher mit Vorrat weiter die alten Marken — die
 Dateien selbst kamen zwar mit v650, die Kette war aber formal offen.
+
+## v652 (2026-08-23) — Favicon auf der Landeseite vervollstaendigt
+
+Betreiber-Freigabe 2026-08-23 ("Reparieren + neu stempeln", Rote Liste).
+
+BEFUND: willkommen.html — die LANDESEITE, erste Seite fuer jeden neuen
+Besucher — trug nur EINE Favicon-Referenz statt fuenf, ebenso
+programmieren.html. Es fehlten die PNG-Fallbacks (32x32, 16x16), das
+apple-touch-icon und die Cache-Marke ?v=112. Folge: in Browsern ohne
+SVG-Favicon und beim Hinzufuegen zum Homescreen fehlte das Icon.
+
+Die Verletzung besteht seit b97f5b02 (2026-08-15); der favicon-lock war
+am 2026-08-14 eingefroren worden. Sie stammt also NICHT aus dieser
+Sitzung, wurde hier nur gefunden.
+
+Ergaenzt wurde exakt der Block aus index.html. Alle fuenf Zieldateien
+vorher geprueft: lokal vorhanden UND live 200 — keine toten Referenzen.
+favicon-lock danach neu eingefroren.

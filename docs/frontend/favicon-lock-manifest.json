@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "frozenAt": "2026-08-14T05:56:55.496Z",
-  "approval": "Das Browser-Favicon ist jetzt final und funktioniert einwandfrei. Bitte behandle es ab sofort als geschützt und unveränderlich.",
+  "frozenAt": "2026-08-23T04:18:26.201Z",
+  "approval": "Betreiber-Freigabe 2026-08-23: \"Reparieren + neu stempeln\". willkommen.html (Landeseite) und programmieren.html trugen nur EINE Favicon-Referenz statt fuenf; ergaenzt wurde exakt der Block aus index.html (favicon.ico, SVG, 32x32, 16x16, apple-touch-icon, alle mit ?v=112). Die Favicon-DATEIEN selbst und webManifestIcons sind unveraendert — nur Referenzen. Alle Zieldateien vorher geprueft: lokal vorhanden und live HTTP 200.",
   "assets": {
     "public/favicon.ico": "a514be650bd471347a9811bd3dc8ae5be8ae8372c4b1265de7d3112e9731eb15",
     "public/icons/smejj_favicon.svg": "309ac8ddec0addbf470d5bd132530321e53a4a4754b41db943a93efce9a7f680",
@@ -31,6 +31,90 @@
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
     "public/ar/index.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/404.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/agb.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/auth/index.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/danke-abo.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/datenschutz.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/hilfe.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/impressum.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/index.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/programmieren.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/status.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/widerruf.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/assets/willkommen.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
       "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
@@ -177,6 +261,13 @@
       "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
+    "public/programmieren.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
     "public/pt/index.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
@@ -206,6 +297,13 @@
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
     "public/widerruf.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/willkommen.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
       "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
@@ -245,6 +343,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "nachtrag": "2026-08-14: Seitenliste um public/danke-abo.html erweitert (Abo-Dankeseite). Favicon-Dateien, Generatorquellen und Web-Manifest unveraendert; die neue Seite traegt denselben Block wie die anderen 28. Freigabe des Betreibers: 'alles gruen machen ... Mach du alle ich mache nicht.'"
+  ]
 }
