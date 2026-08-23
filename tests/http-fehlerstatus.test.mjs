@@ -104,12 +104,44 @@ test("ein Rumpf unter der Grenze kommt unveraendert durch", async () => {
   assert.equal(await lauf, '{"chat":{"id":"x"}}');
 });
 
+test("bei 413 wird die Leitung geschlossen, nicht nur geantwortet", () => {
+  // LIVE GEMESSEN 2026-08-23, nachdem der erste Anlauf ausgerollt war:
+  // ein 1,2-MB-Upload lief 60 Sekunden ins Leere und endete im Zeitablauf.
+  // Der Body-Leser hatte laengst abgelehnt — aber der Client wusste nichts
+  // davon und sendete weiter, und HTTP/1.1 laesst die Antwort erst durch,
+  // wenn der Request zu Ende ist. Ein Zeitablauf ist SCHLIMMER als ein
+  // falscher Statuscode: der Nutzer sieht dann gar nichts mehr.
+  let zerstoert = 0;
+  const req = { destroy() { zerstoert += 1; } };
+  const res = antwortAttrappe();
+  fehlerAntwort(res, zuGrossFehler(), req);
+  assert.equal(res.status, 413);
+  assert.equal(zerstoert, 1, "die Leitung muss aktiv geschlossen werden");
+});
+
+test("andere Fehler lassen die Leitung in Ruhe", () => {
+  // Nur der Groessen-Fall bricht ab. Bei allen anderen laeuft der Request
+  // normal aus — ihn abzuschneiden koennte eine gueltige Antwort verstuemmeln.
+  for (const fehler of [new Error("Datenbank weg"), httpFehler(400, "ungueltig"), httpFehler(401, "keine_anmeldung")]) {
+    let zerstoert = 0;
+    fehlerAntwort(antwortAttrappe(), fehler, { destroy() { zerstoert += 1; } });
+    assert.equal(zerstoert, 0, `Status ${fehler.status || 500} darf nicht abbrechen`);
+  }
+});
+
+test("ohne req bleibt alles beim Alten — die Antwort geht trotzdem raus", () => {
+  // Aufrufer, die kein req durchreichen, duerfen nicht scheitern.
+  const res = antwortAttrappe();
+  fehlerAntwort(res, zuGrossFehler());
+  assert.equal(res.status, 413);
+});
+
 test("der oberste Handler ist wirklich angeschlossen", () => {
   // Gegenprobe zum Muster "gebaut, aber nicht verdrahtet": ohne diese Zeile
   // bliebe jede Absage weiterhin ein 500, und alle Pruefungen oben waeren
   // gruen fuer nichts.
   const server = readFileSync(fileURLToPath(new URL("../src/server.js", import.meta.url)), "utf8");
-  assert.match(server, /fehlerAntwort\(res, error\)/, "der oberste catch nutzt fehlerAntwort");
+  assert.match(server, /fehlerAntwort\(res, error, req\)/, "der oberste catch nutzt fehlerAntwort MIT req — sonst bleibt die Leitung offen");
   assert.doesNotMatch(server, /json\(res, 500, \{ error: error\.message/, "das pauschale 500 ist weg");
 });
 

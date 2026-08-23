@@ -46,11 +46,26 @@ export function zuGrossFehler() {
  * eigenen Status mit 500. Fail-safe: was hier hereinkommt, ist bereits ein
  * Fehlerfall, also darf diese Funktion selbst keinen neuen ausloesen.
  */
-export function fehlerAntwort(res, error) {
+export function fehlerAntwort(res, error, req = null) {
   const status = Number(error?.status) >= 400 && Number(error?.status) < 600 ? Number(error.status) : 500;
   const nutzlast = { error: error?.message || "Internal error" };
   if (error?.code) nutzlast.code = error.code;
   json(res, status, nutzlast);
+  // ABBRECHEN, NICHT NUR ANTWORTEN — live gemessen 2026-08-23:
+  //
+  // Der Body-Leser lehnt ab, sobald die Grenze faellt. Der Client weiss davon
+  // nichts und sendet weiter; HTTP/1.1 laesst die Antwort erst durch, wenn der
+  // Request zu Ende ist. Ein 1,2-MB-Upload lief deshalb 60 Sekunden ins Leere
+  // und endete im Zeitablauf statt in einer Absage — schlimmer als ein
+  // falscher Statuscode, denn der Nutzer sieht gar nichts mehr.
+  //
+  // Bei 413 wird die Leitung darum aktiv geschlossen. Das ist nicht nur
+  // hoeflicher, es ist eine Lastfrage: ein Server, der abgelehnte Uploads
+  // trotzdem vollstaendig entgegennimmt, verschenkt genau die Bandbreite,
+  // die er sich gerade sparen wollte.
+  if (status === 413 && req && typeof req.destroy === "function") {
+    try { req.destroy(); } catch { /* schon zu */ }
+  }
 }
 
 export function readRawBody(req) {
