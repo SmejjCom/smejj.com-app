@@ -5,14 +5,50 @@
   "auftrag": "Betreiber: komplette Nutzerreise Schritt fuer Schritt LIVE, parallel ChatGPT/Claude/Gemini/Perplexity, Urteil kinderleicht/geht/verwirrend, Verwirrendes sofort im Ship-Loop beheben, Locks nur mit Freigabe.",
   "rollback": "Frontend main fa464f6 (sw v660), Bauzweig f992c61d, Arbeitszweig d0af359a",
   "gemessen": {
-    "startseite_eingeloggt": { "ttfb_ms": 199, "dcl_ms": 808, "lcp_ms": 3284, "konsolenfehler": 0 },
-    "landingpage_handy": { "ttfb_ms": 117, "load_ms": 379, "scrollWidth_vorher": 440, "scrollWidth_nachher": 375 },
-    "login_handy": { "load_ms": 829, "sprache": "en", "wege": 4 },
-    "register_handy": { "load_ms": 572, "felder": 2, "wege": 5, "kleine_ziele": 0 },
-    "erster_chat": { "cline_auto_erster_text_ms": 3687, "smejj10_erster_text_ms": ">7000", "platzhalter_cline": "leer 3,6 s (ai/chatClient.js loescht 'denkt nach' sofort)", "platzhalter_smejj10": "'smejj denkt nach...' bleibt bis zum ersten Token" },
-    "magic_link": { "anforderung_ms": 3500, "mail_zustellung": "<30 s, Absender s@smejj.com, Klartext", "ungueltiger_link_vorher": "400 JSON {\"error\":\"Magic Link ist ungueltig.\"} auf smejj-control.zeabur.app", "ungueltiger_link_nachher": "303 -> smejj.com/auth/login/?abgelaufen=1 mit Satz 'Your session has expired. Please sign in again.'" },
-    "google_login": { "klicks": 2, "sekunden": 6, "hinweis": "Google zeigt 'Weiter zu smejj-control.zeabur.app' — fremde Domain im Vertrauensmoment" },
-    "logout": { "ziel": "/willkommen.html", "sekunden": 3 },
+    "startseite_eingeloggt": {
+      "ttfb_ms": 199,
+      "dcl_ms": 808,
+      "lcp_ms": 3284,
+      "konsolenfehler": 0
+    },
+    "landingpage_handy": {
+      "ttfb_ms": 117,
+      "load_ms": 379,
+      "scrollWidth_vorher": 440,
+      "scrollWidth_nachher": 375
+    },
+    "login_handy": {
+      "load_ms": 829,
+      "sprache": "en",
+      "wege": 4
+    },
+    "register_handy": {
+      "load_ms": 572,
+      "felder": 2,
+      "wege": 5,
+      "kleine_ziele": 0
+    },
+    "erster_chat": {
+      "cline_auto_erster_text_ms": 3687,
+      "smejj10_erster_text_ms": ">7000",
+      "platzhalter_cline": "leer 3,6 s (ai/chatClient.js loescht 'denkt nach' sofort)",
+      "platzhalter_smejj10": "'smejj denkt nach...' bleibt bis zum ersten Token"
+    },
+    "magic_link": {
+      "anforderung_ms": 3500,
+      "mail_zustellung": "<30 s, Absender s@smejj.com, Klartext",
+      "ungueltiger_link_vorher": "400 JSON {\"error\":\"Magic Link ist ungueltig.\"} auf smejj-control.zeabur.app",
+      "ungueltiger_link_nachher": "303 -> smejj.com/auth/login/?abgelaufen=1 mit Satz 'Your session has expired. Please sign in again.'"
+    },
+    "google_login": {
+      "klicks": 2,
+      "sekunden": 6,
+      "hinweis": "Google zeigt 'Weiter zu smejj-control.zeabur.app' — fremde Domain im Vertrauensmoment"
+    },
+    "logout": {
+      "ziel": "/willkommen.html",
+      "sekunden": 3
+    },
     "cmd_k": "oeffnet Suche sofort; Label 'Neuer Chat ⌘K' in der Spur widerspricht dem (Suche, nicht neuer Chat)"
   },
   "vergleich": "ChatGPT/Claude/Gemini: 0 Klicks bis zur ersten Antwort (tippen + Enter), Schnellaktionen MIT Textlabel; Perplexity: fragt ohne Konto, Cookie-Banner. smejj: 0 Klicks, 8 Schnellaktionen NUR als Icon (index.html, Start-Lock).",
@@ -21,15 +57,16 @@
     "spur-start.js b43 ueber t() — Screenshot ss_75880zvgd zeigt 'New chat / Search / TODAY / YESTERDAY / All 127 conversations'",
     "willkommen.html: @media 640px — Leiste war 440 px breit auf 375-px-Geraet, jetzt 375 (scroll-Screenshot wk-neu-0.jpg)",
     "google-login.js: 'fuer' -> 'für' (2 Stellen)",
-    "Server (Bauzweig 393f0a0b): Magic-Link-Verify-Fehler -> 303 zur App-Anmeldeseite statt rohes JSON; Mail mit echten Umlauten; 3 neue Tests (10/10)"
+    "Server (Bauzweig 393f0a0b): Magic-Link-Verify-Fehler -> 303 zur App-Anmeldeseite statt rohes JSON; Mail mit echten Umlauten; 3 neue Tests (10/10)",
+    "Betreiber-Freigabe per Karte: ai/chatClient.js v5 — 'smejj denkt nach …' bleibt im Cline-Pfad bis zum ersten Delta (live gemessen: Wartetext 12 ms bis 3.739 ms, Leiste erst mit Text); Marken medien-absicht v5, app b87, sw v662; Start-Lock neu eingefroren 2026-08-23T12:13Z; Frontend 3373664, Arbeitszweig 904caa4e"
   ],
   "commits": {
-    "frontend_main": "b4251b2 (spur-start b43, sw v661)",
+    "frontend_main": "b4251b2 (spur-start b43, sw v661), 3373664 (chatClient v5, app b87, sw v662)",
     "bauzweig": "393f0a0b — Zeabur baute von selbst, gestartetAm 2026-08-23T11:55:19Z",
     "arbeitszweig": "siehe git log stand-2026-08-23-nutzerreise"
   },
   "bewusst_nicht_gebaut": [
-    "Start-Lock (index.html/app.js/ai/chatClient.js): leere Antwortblase 3,6 s im Cline-Pfad; Stopp-Viereck 11x11 px; 'Frei'/'Nachdenken' bleiben auf Englisch deutsch; 8 Icon-Knoepfe ohne Text; Spur-Label 'Neuer Chat ⌘K' zeigt das Such-Kuerzel",
+    "Start-Lock (index.html/app.js/ai/chatClient.js): Stopp-Viereck 11x11 px; 'Frei'/'Nachdenken' bleiben auf Englisch deutsch; 8 Icon-Knoepfe ohne Text; Spur-Label 'Neuer Chat ⌘K' zeigt das Such-Kuerzel",
     "Modell-Menue-Lock (23.08.): Start-Picker zeigt kein Haekchen am aktiven Modell und 'BYOK'-Jargon — laut Lock genau so eingefroren",
     "Security-Lock (auth-page.js): 'Send link by email' ohne Adresse -> Meldung unter dem Falz, Fokus bleibt am Knopf; 'E-Mail oder Passwort ist falsch.' ohne Weg (Passwort vergessen?)",
     "Infrastruktur: Google-Consent und Magic-Link-URL zeigen smejj-control.zeabur.app — braucht eigene API-Domain (z. B. api.smejj.com) bei Zeabur + Google-Console; keine Kosten, aber Betreiber-Entscheidung",
@@ -42,5 +79,6 @@
     "check:guidelines rot (styles.css 1598 Zeilen, src/server.js 808, 2 Naming) — vorbestehend",
     "tests/module-queries: chat-owner.js unter v=2 und v=3 in public/assets — Spiegel der Parallelsitzung"
   ],
-  "tests": "i18n-ui 13/13, check:frontend 618/619 (1 fremd), magic-link 10/10; Sperren: start/favicon/security/admin/deploy/auslieferung/einwilligung/modell-menue OK, abo-lock rot (fremd)"
+  "tests": "i18n-ui 13/13, check:frontend 618/619 (1 fremd), magic-link 10/10; Sperren: start/favicon/security/admin/deploy/auslieferung/einwilligung/modell-menue OK, abo-lock rot (fremd)",
+  "messfalle": "sw v662 precachte app.js noch in der alten Fassung (Marke b87, Inhalt alt — Pages verteilt je Datei unterschiedlich schnell). Heilung: caches.open(CACHE_NAME).delete('/assets/app.js',{ignoreSearch:true}) + reload. Siehe Memory 'Markenkette bricht oben', Nachtrag v494."
 }

@@ -777,4 +777,5 @@ Landeseite stand.
 - Registrieren/Anmelden ist kinderleicht (2 Felder, 5 Wege, Google 2 Klicks/6 s); verwirrend waren Sprache, Handy-Kopf, Magic-Link-Fehler.
 - LIVE: en.js +155 Texte (Spur, Konto, Abo, API), Landingpage-Leiste 440->375 px, Magic-Link-Fehler 303 -> Anmeldeseite statt JSON.
 - Messfalle: i18n-Cache — erster Lauf nach neuem en.js zeigt noch Deutsch, erst der ZWEITE Lauf ist uebersetzt.
-- Rote Liste offen: leere Antwortblase 3,6 s (ai/chatClient.js, Cline-Pfad), Consent-Domain smejj-control.zeabur.app, Modell-Picker ohne Haekchen.
+- Freigabe per Karte: Wartetext bleibt im Cline-Pfad (chatClient v5, sw v662), live 12 ms bis 3,7 s gemessen.
+- Rote Liste offen: Consent-Domain smejj-control.zeabur.app, Modell-Picker ohne Haekchen, Stopp-Viereck 11 px, Icon-Knoepfe ohne Text.
