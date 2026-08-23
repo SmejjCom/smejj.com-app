@@ -199,3 +199,15 @@ test("Schnellspur ohne Werkzeugaufruf: keine Karte", async () => {
   await pipeVisibleStream(bridgeStrom([JSON.stringify({ choices: [{ delta: { content: "Nur Text." } }] }), "[DONE]"]), { write: (t) => stuecke.push(t) });
   assert.ok(!stuecke.join("").includes("smejj_frage"));
 });
+
+// Das Browser-Modell (Gemini Nano) kann keine Karte stellen: antwortet es mit
+// Rueckfragen, muss der Server ran (live 23.08.: "Wo wohnst du? Was magst du?").
+const { istRueckfrage } = await import("../public/ai/lokalesModell.js");
+
+test("istRueckfrage erkennt Fragenlisten und 'brauche ich ein paar Infos'", () => {
+  assert.equal(istRueckfrage("Gerne! Wo wohnst du? Was interessiert dich?"), true);
+  assert.equal(istRueckfrage("Um dir zu helfen, brauche ich noch ein paar Infos: Region, Budget."), true);
+  assert.equal(istRueckfrage("Die Hauptstadt von Frankreich ist Paris."), false);
+  assert.equal(istRueckfrage("Meinst du das ernst? Dann: ja."), false, "eine einzelne Rueckfrage im Fluss ist keine Fragenliste");
+  assert.equal(istRueckfrage(""), false);
+});
