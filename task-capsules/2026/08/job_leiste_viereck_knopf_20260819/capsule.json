@@ -76,7 +76,7 @@
   "live_ansichten": "23 Ansichten durchgefahren: keine leer, keine JS-Fehler, keine 4xx/5xx",
   "live_chat": "Frage gestellt, Antwort erhalten (Log wuchs um 47 Zeichen)",
   "live_zustaende": "chatLeer/codeLeer rgba(0,0,0,0) — chatText/codeText rgb(242,245,244) mit rgb(10,15,22) — Stopp 38x38 rund — Play-Dreieck als ::after",
-  "live_kopfzeile": "Gruss 'Was steht als Naechstes an, Smejj?' und Projekt-Chip 'Projekt: Alan Test Project' wieder da"
+  "live_kopfzeile": "Gruss 'Was steht als Naechstes an, <Kontoname>?' und Projekt-Chip 'Projekt: Alan Test Project' wieder da"
  },
  "deploy": {
   "frontend_repo": "SmejjCom/smejj-app-frontend, Branch main (Fast-Forward)",

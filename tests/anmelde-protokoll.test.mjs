@@ -51,7 +51,7 @@ test("DER KERNPUNKT: die E-Mail steht NIE im Klartext im Log", () => {
 });
 
 test("derselbe Mensch ergibt denselben Fingerabdruck — auch mit Grossbuchstaben", () => {
-  assert.equal(adressFingerabdruck("Wof@Smejj.COM "), adressFingerabdruck("wof@smejj.com"));
+  assert.equal(adressFingerabdruck("Wof@Example.COM "), adressFingerabdruck("wof@example.com"));
   assert.notEqual(adressFingerabdruck("a@b.de"), adressFingerabdruck("c@d.de"));
   assert.equal(adressFingerabdruck(""), "", "ohne Adresse kein Feld");
 });
