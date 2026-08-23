@@ -1,7 +1,8 @@
 # Die oeffentliche smejj-API (`/v1`)
 
-Stand 2026-08-23. Gebaut, lokal Ende-zu-Ende bewiesen, **noch nicht live** —
-der letzte Schritt ist eine Umgebungsvariable in Zeabur (unten).
+Stand 2026-08-23. **LIVE** auf https://smejj-control.zeabur.app seit 04:49Z
+(Bau-Branch `feature/auth-redesign-github-magiclink`, Commits abe70763, cbf9fe8b,
+254447b2). Live-Nachweis: task-capsules/2026/08/job_oeffentliche_api_v1_20260823/.
 
 ## Was es ist
 
@@ -113,11 +114,32 @@ Vorausgesetzt (steht bereits, weil BYOK sie nutzt):
 * Ohne Schluessel `401` mit `WWW-Authenticate`, ohne Flag `503`.
 * 18 automatische Pruefungen: `node --test tests/oeffentliche-api.test.mjs`.
 
+## Zwei Dinge, die erst der Live-Test zeigte
+
+1. **Denken aus.** `max_tokens=50` an smejj-1.0 verbrauchte 50 Reasoning-Token und
+   lieferte `content:""` mit `finish_reason: length`. Seitdem: `thinking: disabled`
+   fuer alles ausser `smejj-1.0-reasoning`.
+2. **Das Modell stellt sich selbst vor** („the GLM language model trained by Z.ai").
+   Das Umschreiben des `model`-Feldes faengt das nicht. Seitdem steht eine konstante
+   Identitaets-Systemnachricht an Position 0 jeder Anfrage (stabiler Cache-Praefix).
+
+## Eigene Domain `api.smejj.com`
+
+Profis nennen den Hoster nicht in der Kunden-URL. `api.smejj.com` ist am
+Zeabur-Dienst angemeldet; es fehlt der DNS-Eintrag bei Spaceship:
+
+| Typ | Host | Wert |
+|---|---|---|
+| CNAME | `api` | `smejj-control.zeabur.app` |
+
+Danach `SMEJJ_PUBLIC_API_BASE_URL=https://api.smejj.com/v1` setzen — die
+Entwicklerseite zeigt dann nur noch diese Adresse.
+
 ## Was fuer ein Produkt noch fehlt
 
 1. **Abrechnung.** Der Verbrauch wird gezaehlt, aber nicht bepreist. Stripe ist
    verdrahtet (`/api/billing/*`), rechnet heute aber Abos ab, keine Token.
 2. **Ereignisprotokoll** statt Tagesaggregat, sobald Geld daran haengt.
-3. **Menueeintrag** zur Seite `/entwickler` — sie ist heute nur ueber die
-   Adresse erreichbar; `public/index.html` steht unter dem Start-Lock.
+3. **Menueeintrag** zur Seite `/entwickler.html` — heute nur ueber die Adresse
+   erreichbar; `public/index.html` steht unter dem Start-Lock.
 4. **`/v1/embeddings`**, falls Kunden danach fragen.
