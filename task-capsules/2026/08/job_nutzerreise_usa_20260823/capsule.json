@@ -82,8 +82,9 @@
   "tests": "i18n-ui 13/13, check:frontend 618/619 (1 fremd), magic-link 10/10; Sperren: start/favicon/security/admin/deploy/auslieferung/einwilligung/modell-menue OK, abo-lock rot (fremd)",
   "messfalle": "sw v662 precachte app.js noch in der alten Fassung (Marke b87, Inhalt alt — Pages verteilt je Datei unterschiedlich schnell). Heilung: caches.open(CACHE_NAME).delete('/assets/app.js',{ignoreSearch:true}) + reload. Siehe Memory 'Markenkette bricht oben', Nachtrag v494.",
   "offen": [
-    "GitHub-Rueckruf-URI https://api.smejj.com/api/auth/github/callback muss der Betreiber selbst unter github.com/settings/applications/3737209 eintragen (Klassifikator blockierte das Tippen; leerer Versuch wurde von GitHub abgelehnt, nichts veraendert) — bis dahin scheitert 'Mit GitHub fortfahren' mit redirect_uri-Fehler.",
+    "GitHub-Rueckruf-URI https://api.smejj.com/api/auth/github/callback FEHLT weiterhin bei GitHub (15:55Z gepruft: nur die Zeabur-Adresse eingetragen) — live gemessen: 'Mit GitHub fortfahren' endet bei GitHub mit 'The redirect_uri is not associated with this application'. Der Betreiber traegt sie unter github.com/settings/applications/3737209 ein ('Add redirect URI', speichern).",
     "danke-abo.html (Abo-Lock) und datenschutz.html (Einwilligungs-Lock) tragen noch die Zeabur-Adresse in der CSP — nicht freigegeben, und die alte Adresse funktioniert weiter.",
-    "Arbeitszweig control-server/admin-ui ist nicht aus dem Bauzweig nachgezogen (Konsole gehoert dem Bauzweig)."
+    "Arbeitszweig control-server/admin-ui ist nicht aus dem Bauzweig nachgezogen (Konsole gehoert dem Bauzweig).",
+    "Erster Klick auf 'Mit Google fortfahren' tut zweimal beobachtet nichts (nur Fokus), erst der zweite startet — auth-page.js (Security-Lock), Ursache noch nicht gemessen."
   ]
 }
