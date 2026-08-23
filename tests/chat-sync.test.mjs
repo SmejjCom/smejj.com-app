@@ -368,3 +368,21 @@ test("Route: ?id= mit ungueltiger Kennung gibt 400, nicht 200 mit null", async (
   assert.equal(res.status, 400);
   assert.equal(res.payload.error, "chat_id_ungueltig");
 });
+
+test("Route: die Liste nennt die Kontokennung des Servers (konto) — Alias fuer den Client", async () => {
+  // 2026-08-23: der Server stempelt jede Datei mit kontoKennung(), der Client
+  // vergleicht mit seiner Sitzungs-ID. Ohne `konto` galt jeder Server-Chat
+  // als fremd — live 26 Chats unsichtbar, Geraete-Sync tot.
+  const routen = createChatSyncRoutes({
+    env: S3_ENV,
+    readSession: () => ({ userId: "user_a" }),
+    json: fakeJson,
+    readJson: async () => ({}),
+    fetchImpl: s3Doppel([CHAT_A])
+  });
+  const res = fakeRes();
+  await routen.handle({ method: "GET" }, res, new URL("https://x/api/chats?nurAbgleich=1"));
+  assert.equal(res.status, 200);
+  assert.equal(res.payload.konto, kontoKennung({ userId: "user_a" }));
+  assert.match(res.payload.konto, /^user_[0-9a-f]{32}$/);
+});

@@ -63,7 +63,11 @@ export function createChatSyncRoutes({ env = process.env, readSession, json, rea
       const nurListe = url.searchParams.get("nurListe") === "1";
       const nurAbgleich = url.searchParams.get("nurAbgleich") === "1";
       const ergebnis = await ladeChats({ kontoId, env, fetchImpl, nurListe, nurAbgleich });
-      json(res, ergebnis.ok ? 200 : 503, ergebnis);
+      // `konto` (2026-08-23): die Kontokennung, mit der der Server jede Datei
+      // stempelt. Der Client vergleicht Besitzer mit seiner Sitzungs-ID — ohne
+      // diese Angabe hielt er JEDEN Chat vom Server fuer fremd (Sync tot,
+      // live 26 Chats unsichtbar). Nur an den angemeldeten Eigentuemer.
+      json(res, ergebnis.ok ? 200 : 503, ergebnis.ok ? { ...ergebnis, konto: kontoId } : ergebnis);
       return true;
     }
 

@@ -106,6 +106,29 @@ export const PROTECTED_FILES = [
   // Cockpit "Die eine Seite, die du morgens ansiehst" (2026-08-23).
   "control-server/src/admin/opsCockpit.js",
   "control-server/admin-ui/views-cockpit.js",
+  // 100%-Schutz 2026-08-23 (Betreiber: "Alles ist fertig — zum Schluss 100 % Schutz
+  // aktivieren"): der gesamte Adminbereich nach dem Design-Vorschlag — Kern der
+  // Konsole, Nutzer-Lage, Abrechnung, Abo-Umhaengen und alle Stufen-Ansichten.
+  "control-server/admin-ui/console.js",
+  "control-server/admin-ui/views.js",
+  "control-server/admin-ui/index.html",
+  "control-server/admin-ui/console.css",
+  "control-server/admin-ui/views-stage5.js",
+  "control-server/admin-ui/views-stage7.js",
+  "control-server/admin-ui/console-stage6.js",
+  "control-server/admin-ui/console-stage7.js",
+  "control-server/admin-ui/console-stage9.js",
+  "control-server/admin-ui/console-stage12.js",
+  "control-server/admin-ui/console-cockpit.js",
+  "control-server/src/admin/opsAbrechnung.js",
+  "control-server/src/admin/userActions.js",
+  "control-server/src/admin/userIndex.js",
+  "control-server/src/billing/aboUmhaengen.js",
+  "control-server/src/routes/adminRoutes.js",
+  "control-server/src/routes/adminGeldRoutes.js",
+  "control-server/src/routes/adminSicherheitRoutes.js",
+  "control-server/src/routes/adminOpsRoutes.js",
+  "scripts/deploy/sync_admin_console_pages.mjs",
   "control-server/admin-ui/views-stage9.js"
 ];
 

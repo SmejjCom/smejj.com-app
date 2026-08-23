@@ -65,3 +65,36 @@ test("gehoertNutzer: leerer ownerId zaehlt wie kein Besitzer, Leerzeichen egal",
   assert.equal(gehoertNutzer({ ownerId: " user_a " }, "user_a", ""), true);
   assert.equal(gehoertNutzer(null, "user_a", "user_a"), true); // fehlendes Objekt = kein Besitzer
 });
+
+// ---- Stufe 4: die Kontokennung des Servers als Alias der Sitzung ----
+import { kontoAliase, merkeKontoKennung, KONTO_KEY } from "../public/chat-owner.js";
+
+function fakeStorage() {
+  const m = new Map();
+  return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+}
+
+test("Alias: der Server-Besitzer gilt als eigen, aber nur mit Alias", () => {
+  const chat = { ownerId: "user_158c1e609cc03bb4c36f70b7e059fbfd" };
+  assert.equal(gehoertNutzer(chat, "user_sitzung", ""), false, "ohne Alias bleibt es fremd (bisheriges Verhalten)");
+  assert.equal(gehoertNutzer(chat, "user_sitzung", "", ["user_158c1e609cc03bb4c36f70b7e059fbfd"]), true);
+  assert.equal(gehoertNutzer(chat, "", "", ["user_158c1e609cc03bb4c36f70b7e059fbfd"]), false, "ohne Sitzung nie");
+  assert.equal(gehoertNutzer({ ownerId: "user_dritter" }, "user_sitzung", "", ["user_158c1e609cc03bb4c36f70b7e059fbfd"]), false);
+});
+
+test("Alias wird nur fuer DIESELBE Sitzung ausgegeben — ein zweites Konto erbt ihn nie", () => {
+  const s = fakeStorage();
+  assert.equal(merkeKontoKennung(s, "user_a", "user_158c1e609cc03bb4c36f70b7e059fbfd"), true);
+  assert.deepEqual(kontoAliase(s, "user_a"), ["user_158c1e609cc03bb4c36f70b7e059fbfd"]);
+  assert.deepEqual(kontoAliase(s, "user_b"), []);
+  assert.deepEqual(kontoAliase(s, ""), []);
+});
+
+test("Alias: nur saubere Kennungen werden gemerkt, kaputter Speicher gibt leer", () => {
+  const s = fakeStorage();
+  assert.equal(merkeKontoKennung(s, "user_a", "../fremd"), false);
+  assert.equal(merkeKontoKennung(s, "", "user_x"), false);
+  assert.equal(s.getItem(KONTO_KEY), null);
+  s.setItem(KONTO_KEY, "{kein json");
+  assert.deepEqual(kontoAliase(s, "user_a"), []);
+});

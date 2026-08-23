@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T09:33:04.490Z",
-  "confirmation": "Betreiber am 2026-08-23: 'Fehler beheben' (1 bezahltes Abo passt zu keinem Konto) — neue Kontoaktion user.billing.relink (Recht users.billing.relink: Owner/Admin/Finance), haengt einen Stripe-Kunden auf ein bestehendes Konto; Grund, Step-up und Audit mit Vorher/Nachher wie jede Kontoaktion; Kaufadresse bleibt als Beleg, nichts wird geloescht.",
+  "frozenAt": "2026-08-23T10:48:18.175Z",
+  "confirmation": "Betreiber am 2026-08-23: 'Alles ist fertig — zum Schluss 100 % Schutz aktivieren' — gesamter Adminbereich nach dem Design-Vorschlag (8 Bildschirme, Abo-Umhaengen, Kopfzeile, Konsolenkern) eingefroren. Keine Aenderung ohne schriftliche Freigabe.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -32,6 +32,26 @@
     "control-server/src/admin/opsUmsatz.js": "63b88ce20ade6c4b0c9670d4f1aff6b819d30d63c57f488ec5b972eaa4d7a989",
     "control-server/src/admin/opsCockpit.js": "2c485eb065457978faddf372dc9ec4e7369579ae27005acc5a456c7af82d555a",
     "control-server/admin-ui/views-cockpit.js": "e10ffc62485492bf689ec4737965c76ee4a807811daa81341a080b694d27825d",
+    "control-server/admin-ui/console.js": "a5dc4e21cc608690b1167dfddc0f459d293bcbae74c011f3122d6ee74d87eb50",
+    "control-server/admin-ui/views.js": "6b4b905bb989d5db03e10b931be01b7a36ff218381a0e1cd399aacc0993774c1",
+    "control-server/admin-ui/index.html": "6f1800fd835ef508b88b2ffa9aa21cbb293704278f0dbf3720177817fcaadb86",
+    "control-server/admin-ui/console.css": "6db84483a7641c459aa75772d3f2ca210106d36690b9e9cd32005a667e44683c",
+    "control-server/admin-ui/views-stage5.js": "fcffea722ad7b24a1ed85ffc90a63b4f472c833b3a8fc41aa547b22a3847ca27",
+    "control-server/admin-ui/views-stage7.js": "4d2340da641edf235518c29c8f801650b5b8b3cc2d424782dd1a6e4f4a97da23",
+    "control-server/admin-ui/console-stage6.js": "590e2f1b0bf1a6b84bf3ee0d758e08b930da57fb10c985c2df78f396c3d7152a",
+    "control-server/admin-ui/console-stage7.js": "cdd769431b35f269928824c15dc0435c3e33f32e117b522d1f47a113e8dc21d7",
+    "control-server/admin-ui/console-stage9.js": "86a7baf596f1ce13954489e82aa47e7046ddba2b2a561288d63f6f032af11682",
+    "control-server/admin-ui/console-stage12.js": "04993b73ee961ea108c5f2eaeec53d3110fc70f4fa29703fd0c1d8836f94b553",
+    "control-server/admin-ui/console-cockpit.js": "6035114b40a3c32a786ab1435bbf231e71ae553b68eb331f061f92fe77079d8b",
+    "control-server/src/admin/opsAbrechnung.js": "cd35180f12612e0348d7b68ed5d3c232e1a1a343bb51da289f72c2cb9dc5f2d2",
+    "control-server/src/admin/userActions.js": "544a1988b601b235905308c1f93a994ae7e72437bee261de1bfca37f920f4268",
+    "control-server/src/admin/userIndex.js": "8cca94949db97af3ba6031086f4938f917fe29a06fc2e6144c5f344d3ac645f9",
+    "control-server/src/billing/aboUmhaengen.js": "a2b1f395cc528031b01466ae85b987c6d67dfb282e3c08387cf0400aec52dcbf",
+    "control-server/src/routes/adminRoutes.js": "d15425a554ae95ff974c687fad588bf8acf1e0fce49317b3b1cc8dc778a050e1",
+    "control-server/src/routes/adminGeldRoutes.js": "1d3df353ff05758962eb5104374a3d5cbbf35518098285078ab4d49db95cd865",
+    "control-server/src/routes/adminSicherheitRoutes.js": "56f4aaada4a90cd38ab529257f38a74b13dca9116dfce9dfcd2aebd644ac2ba1",
+    "control-server/src/routes/adminOpsRoutes.js": "3360059237e8015f7a3a1a5d549257ce031c194a0afe01620b0c111ab41cdaf5",
+    "scripts/deploy/sync_admin_console_pages.mjs": "9719f87f466f05572815202d8efeefc12a9118c3c1d639d36d7c9e77cfe43d30",
     "control-server/admin-ui/views-stage9.js": "460a51a127546e824f8172528e7fea53c8d66ab0ee5a61a64ab68c55db261601"
   }
 }
