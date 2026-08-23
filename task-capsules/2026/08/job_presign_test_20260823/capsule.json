@@ -1,0 +1,29 @@
+{
+  "jobId": "job_presign_test_20260823",
+  "createdAt": "2026-08-23T06:00:00.000Z",
+  "owner": "smejj.com",
+  "title": "Der rote presign-Test war eine veraltete Zusage — die Kette ist gesund",
+  "ziel": "Betreiber-Auswahl 2026-08-23: 'Roten presign-Test klaeren'. Messen, ob live etwas betroffen ist, und beheben.",
+  "befund": {
+    "was": "tests/control-server.test.mjs erwartete HTTP 200 fuer einen Presign-Upload OHNE jede Anmeldung. Live kommt 401.",
+    "warumRot": "Commit d2b30d7e vom 2026-08-14 hat genau diese Luecke geschlossen: signierte Speicheradressen waren fuer JEDEN Angemeldeten zu bekommen. Seither braucht alles ausser dem Replay-Lesefall eine Adminrolle. Der Test wurde nicht nachgezogen.",
+    "bewertung": "Kein Defekt — der Test behauptete einen Fehler, den es nicht gab, und forderte woertlich genau das Verhalten zurueck, das aus Sicherheitsgruenden abgeschafft wurde."
+  },
+  "warumEsNeunTageStand": "Im Arbeitszweig war der Test am 2026-08-22 bereits nachgezogen (Commit 3b25e41a). Der BAUZWEIG feature/auth-redesign-github-magiclink — aus dem der Control-Server live gebaut wird — hat diesen Nachzug nie bekommen. Ein dauerhaft roter Fall faerbt die ganze Suite und macht den naechsten echten Fehler unsichtbar.",
+  "loesung": "3b25e41a in den Bauzweig uebertragen (Cherry-Pick, zwei reine Testdateien, kein Produktivcode). Kein Control-Bau noetig: Tests werden nicht ausgeliefert.",
+  "verifikationLive": {
+    "ohneAnmeldung": "POST /api/storage/presign -> HTTP 401, korrekt abgewiesen",
+    "nutzerfallReplayDownload": "operation=download, key=capsules/maus-engine/... -> HTTP 200 mit signierter Adresse auf s3.us-west-2.idrivee2.com/smejj-model-files/",
+    "uploadAlsBetreiber": "HTTP 200 mit signierter PUT-Adresse",
+    "fremderPfad": "download auf chats/user_fremd/... -> HTTP 403 object_key_not_allowed — die Pfadsperre greift zusaetzlich zur Rollenpruefung",
+    "tests": "check:control-server im Bauzweig 232/232 gruen (vorher 229/230)"
+  },
+  "nebenbefundFuerDenBetreiber": {
+    "was": "Arbeitszweig feature/design-v11 und Bauzweig feature/auth-redesign-github-magiclink sind divergiert: 589 Commits Unterschied, davon 56 Serverdateien.",
+    "richtung": "NICHT einseitig. Der Bauzweig ist an Stellen neuer (z. B. src/server-session-helpers.js gibt es nur dort), der Arbeitszweig an anderen.",
+    "geprueft": "Stichprobe an den auffaelligsten Faellen: /v1/models, /v1/chat/completions und /api/developer/keys antworten live mit 401 — die Funktionen SIND da, nur ueber andere Commits. Kein Beleg fuer fehlende Funktionen.",
+    "empfehlung": "Kein eigenmaechtiger Merge — das waere Rote Liste und bei dieser Groesse riskant. Der Betreiber sollte entscheiden, ob die Zweige zusammengefuehrt werden."
+  },
+  "commits": { "bauzweig": ["cb261438"] },
+  "status": "abgeschlossen"
+}

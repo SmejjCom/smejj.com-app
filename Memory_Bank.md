@@ -5,6 +5,40 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-23] DER ROTE PRESIGN-TEST WAR EINE VERALTETE ZUSAGE (job_presign_test_20260823)
+
+Capsule: `task-capsules/2026/08/job_presign_test_20260823/capsule.json`.
+Bauzweig `cb261438`.
+
+**Befund:** `tests/control-server.test.mjs` erwartete HTTP 200 fuer einen
+Presign-Upload OHNE jede Anmeldung. Genau das war die Luecke, die Commit
+`d2b30d7e` am 2026-08-14 geschlossen hat — signierte Speicheradressen waren
+fuer jeden Angemeldeten zu bekommen. Der Test forderte woertlich das
+Verhalten zurueck, das aus Sicherheitsgruenden abgeschafft wurde. Kein
+Defekt.
+
+**Warum er neun Tage stand — das ist die Lehre:** Im Arbeitszweig war er am
+22.08. nachgezogen (`3b25e41a`). Der BAUZWEIG, aus dem der Control-Server
+live gebaut wird, hat den Nachzug nie bekommen. Ein dauerhaft roter Fall
+faerbt die ganze Suite und macht den naechsten echten Fehler unsichtbar.
+Wer im Arbeitszweig einen Test repariert, hat ihn im Bauzweig nicht
+repariert.
+
+**Live geprueft, die Kette ist gesund:** ohne Anmeldung 401; der Nutzerfall
+(Replay-Download auf `capsules/maus-engine/`) 200 mit signierter Adresse;
+Upload als Betreiber 200; fremder Pfad 403 `object_key_not_allowed` — die
+Pfadsperre greift zusaetzlich zur Rollenpruefung. `check:control-server` im
+Bauzweig 232/232 (vorher 229/230).
+
+**Nebenbefund:** Arbeitszweig und Bauzweig sind divergiert — 589 Commits,
+davon 56 Serverdateien, und NICHT einseitig (der Bauzweig ist an Stellen
+neuer). Stichprobe an den auffaelligsten Faellen: `/v1/models`,
+`/v1/chat/completions`, `/api/developer/keys` antworten live mit 401, die
+Funktionen sind also da — nur ueber andere Commits. Kein Beleg fuer
+fehlende Funktionen, aber ein Zusammenfuehren waere eine Betreiber-
+Entscheidung, kein Nebenbei.
+
+
 ### [2026-08-23] "REQUEST TOO LARGE" IST 413, NICHT 500 (job_http_413_20260823)
 
 Capsule: `task-capsules/2026/08/job_http_413_20260823/capsule.json`.
@@ -306,77 +340,34 @@ Meldung "kein Modell erreichbar".
 
 ### [2026-08-18] MODELL-MENUE, BILDER, VIDEO UND AUTO-ROUTER (job_modelle_medien_20260818)
 
-Capsule: `task-capsules/2026/08/job_modelle_medien_20260818/capsule.json`
+Capsule: `task-capsules/2026/08/job_modelle_medien_20260818/capsule.json`, Volltext
+wortgleich: `task-capsules/2026/08/job_modelle_medien_20260818/capsule.md`
 (Object Brain: `s3://smejj-model-files/capsules/app/job_modelle_medien_20260818/`).
 Rollback `stand-2026-08-17-v545` -> abgenommen `stand-2026-08-18-v546`.
 Live: `smejj-shell-v578`, `code-flaeche.js?v=40`, Control-Bau 2026-08-18T00:42Z.
 
-Sechs Fehler, jeder live an der Produktionsdomain nachgewiesen:
+Sechs Fehler, jeder live an der Produktionsdomain nachgewiesen — die Merkregeln:
 
-- **Eine Rate-Bremse fuer teure UND billige Wege.** `/status`, `/models` und
-  `/chat` teilten einen Eimer (capacity 12, refill 0,2/s); `/chat` kostet 2
-  Marken. Nach sechs Nachrichten bekam das Modell-MENUE 429 — und der Code las
-  das als "kein Key". Fix: getrennte `leseGate` (60 / 1 pro s) fuer die
-  GET-Wege, Menue merkt sich Status und Katalog, 429 wird ehrlich gemeldet und
-  selbst nachgeladen. Nachweis: 30x `/models` = 0x 429; mit leergefahrener
-  Chat-Bremse (200x6, dann 429,429) zeigte das Menue trotzdem alle 16 Modelle.
-  **Merkregel: eine Bremse nie ueber teure und billige Wege legen — der Nutzer
-  erlebt den Ausfall dort, wo niemand die Ursache vermutet.**
-- **600-Zeichen-Falle bei Bildauftraegen.** `istMedienAuftrag()` warf jeden
-  Auftrag ueber 600 Zeichen auf den Textweg; die Weiche sitzt vor der
-  Modellwahl, also traf es ALLE Modelle. Fix: ein Auftrag, der MIT dem
-  Malauftrag beginnt, zaehlt in jeder Laenge. **Merkregel: eine Laengengrenze
-  als Heuristik-Schutz darf den EINDEUTIGEN Fall nie mitfangen.**
-- **Der Auto-Router war eine Annahme.** 14 nutzbare Modelle x 19 AUSGEFUEHRTE
-  Testfaelle (Code im Blob-Worker wirklich laufen lassen, nicht gelesen):
-  minimax-m3 19/19 in 8 s, claude-opus-5 19/19 in 12 s, gpt-5.6-sol 19/19 15 s,
-  mimo-v2.5-pro 16 s, glm-5.3 29 s, deepseek-v4-flash 30 s, deepseek-v4-pro
-  38 s, kimi-k2.7-code 40 s, glm-5.2 78 s, kimi-k3 79 s, qwen3.7-plus 86 s,
-  qwen3.8-max 122 s, kimi-k2.6 184 s. Einziger Ausreisser: mimo-v2.5 14/19.
-  Folge: Denk-Woerter kosten kein Guthaben mehr, Opus 5 nur noch bei Dateien
-  oder ueber 4000 Zeichen. Blindgaenger (HTTP 200, 0 Zeichen, 90-123 s):
-  qwen3.7-max und x-ai/grok-4.5.
-- **Bilder erschienen als Base64-Salat.** SIEBEN Kettenglieder waren gesund;
-  schuld war EINE fehlende Umgebungszeile (`SMEJJ_CHAT_SYNC_ENABLED`, verloren
-  am 14.08.): die Medien-Ablage gab 503, das Bild blieb als 512-KB-data:-URL im
-  Chat und wurde bei exakt 524288 Zeichen mittendrin abgeschnitten. Fix per
-  EINZEL-Mutation + Control-Neubau. Nachweis: 512x512-Bild im Chat.
-- **Video hing 15 Minuten stumm.** Beide Dienste meldeten RUNNING, `/health`
-  gab 200 — verraeterisch war ein NICHT-Ereignis: der Fortschritt stand still,
-  obwohl die Bruecke alle 10 s taktet. Ein haengender Auftrag belegte den
-  einzigen Video-Platz. Fix: Neustart Bruecke + Worker. Nachweis: 640x640-MP4
-  in 103 s. **Merkregel: bei "haengt" nicht den Dienst-Status lesen (RUNNING
-  sagt nur, dass ein Prozess laeuft), sondern den FORTSCHRITT.**
-- **Stille-Wache.** `streamChatAnswer` bricht nach 90 s ohne ein einziges Byte
-  ab und sagt es ehrlich; Teilantwort bleibt stehen. 90 s liegt bewusst ueber
-  dem 10-s-Takt der Bruecke.
+- **Eine Bremse nie ueber teure UND billige Wege legen.** `/status`, `/models`
+  und `/chat` teilten einen Rate-Eimer; das Modell-MENUE bekam 429, und der
+  Code las das als "kein Key". Fix: getrennte `leseGate` fuer die GET-Wege.
+- **Eine Laengengrenze als Heuristik-Schutz darf den EINDEUTIGEN Fall nie
+  mitfangen.** `istMedienAuftrag()` warf Bildauftraege ueber 600 Zeichen auf den
+  Textweg — die Weiche sitzt vor der Modellwahl, also traf es ALLE Modelle.
+- **Der Auto-Router war eine Annahme.** 14 Modelle x 19 AUSGEFUEHRTE Testfaelle
+  (Code wirklich laufen lassen) ordneten ihn neu; minimax-m3 19/19 in 8 s.
+- **Bilder als Base64-Salat:** sieben Kettenglieder waren gesund, schuld war EINE
+  fehlende Umgebungszeile (`SMEJJ_CHAT_SYNC_ENABLED`, verloren am 14.08.).
+- **Bei "haengt" nicht den Dienst-Status lesen** (RUNNING sagt nur, dass ein
+  Prozess laeuft), sondern den FORTSCHRITT. Dazu: `streamChatAnswer` bricht nach
+  90 s ohne ein einziges Byte ehrlich ab.
+- **Bevor eine Performance-Zahl eine Optimierung ausloest, eine bekannt schnelle
+  Fremddomain im selben Lauf gegenmessen** — der Engpass war das Messnetz
+  (`webvitals_2026-08-19_messnetz-verfaelscht.json`, gueltig bleibt
+  `webvitals_v214_abnahme_2026-08-04.json`).
 
-Dazu auf Betreiber-Auftrag: **Auto steht jetzt an erster Stelle** im
-Modell-Menue, `smejj 1.0` darunter (live geprueft an
-`smejj.com/assets/code-flaeche.js?v=40`).
-
-**Verifikation:** 42 Tests gruen; `check:start-lock` gruen und frisch
-gestempelt; `check:guidelines` unveraendert bei 17 Altlast-Meldungen (gegen den
-Vorgaenger-Commit gemessen, keine gehoert dieser Arbeit);
-`npm run check:funktionen-live` — alle 7 Kernwege antworten.
-
-**Benchmark mit Vorbehalt:** `docs/benchmarks/webvitals_2026-08-19_messnetz-verfaelscht.json`.
-Die Budgets sind formal verfehlt (TTFB p75 1765 ms, LCP p75 4096 ms), aber die
-MESSUNG ist unbrauchbar: im selben Lauf mass `example.com` 4,66 s TTFB und
-`github.com` 10,1 s; der TLS-Handshake kostete auf ALLEN Domains 1,7-3,1 s.
-Der Engpass ist das Messnetz dieses Rechners — smejj.com war die schnellste der
-vier Domains. Kein Ship-Loop, keine Regression. **Merkregel: bevor eine
-Performance-Zahl eine Optimierung ausloest, eine bekannt schnelle Fremddomain
-im selben Lauf gegenmessen.** Letzter gueltiger Benchmark bleibt
-`webvitals_v214_abnahme_2026-08-04.json`.
-
-**Kosten:** unter 0,03 USD Guthaben fuer den gesamten Abend; 26 Abo-Anfragen
-aenderten das Guthaben nicht. Keine neue laufende Kostenposition.
-
-**Neuer Waechter:** `npm run check:funktionen-live` meldet Funktionen, die sich
-live als abgeschaltet ausgeben — ohne Token, weil die Abschalt-Pruefung vor der
-Anmeldung laeuft (503 = aus, 401 = an). Gebaut, weil die Medien-Ablage
-wochenlang aus war und es niemand sah.
+Neuer Waechter daraus: `npm run check:funktionen-live` meldet live abgeschaltete
+Funktionen ohne Token (503 = aus, 401 = an). 42 Tests gruen, unter 0,03 USD.
 
 
 ### [2026-08-11] DAUERHAFTER GOOGLE-LOGIN & SLIDING TOKEN RENEWAL (job_google_login_permanent_20260811)
@@ -760,147 +751,47 @@ statt ihn still zu wiederholen.
 
 ## 2026-08-20 — Startgewicht: die Code-Flaeche laedt erst beim Oeffnen (job_startgewicht_20260820)
 
-Capsule: `task-capsules/2026/08/job_startgewicht_20260820/capsule.json`
+Capsule: `task-capsules/2026/08/job_startgewicht_20260820/capsule.json`, Volltext
+wortgleich: `task-capsules/2026/08/job_startgewicht_20260820/capsule.md`
 (Object Brain: `s3://smejj-model-files/capsules/app/job_startgewicht_20260820/`).
-Tag: `stand-2026-08-20-startgewicht`. App-Repo `8588fd99`, Frontend `94fd602`,
-ausgeliefert mit `smejj-shell-v636`.
+Tag `stand-2026-08-20-startgewicht`, ausgeliefert mit `smejj-shell-v636`.
 
-**Zuerst das Messgeraet geprueft — und es war falsch.** Der Service Worker
-beantwortet Anfragen aus dem Vorrat; `performance.getEntriesByType` meldet dann
-die ROHE Groesse und `transferSize: 0`. Gemessen an `chat-store.js`: 40.711 B
-gemeldet, 13.048 B tatsaechlich uebertragen. Die Zahlen, die an diesem Tag als
-"Seitengewicht" galten (4.054 -> 1.174 KB), sind also die Browser-Zahl, nicht
-die Uebertragung. Gegen das 300-KB-Budget zaehlen uebertragene Bytes — gemessen
-per gzip von aussen. (Die Chat-Verkehrszahlen 2,50 MB -> 15 KB sind NICHT
-betroffen: API-Antworten liegen nicht im Vorrat.)
+Kern: `code-nachladen.js` (1,79 KB) holt die Code-Flaeche erst, wenn `#code`
+aufgeht — MutationObserver auf `#code.is-active`, NICHT IntersectionObserver.
+Gewandert sind `code-flaeche.js` und `code-modell-menue.js`, netto 17,9 KB gzip
+(sofort geladen 383 -> 365 KB). `app.js` blieb byte-identisch, weil die Funktion
+sich selbst einhaengt. Noch offen: rund 128 KB gzip (Browser-Panel 59,9, Verlauf
+38,2, Maus 10,8, Konto 7,6, Kamera 7,1, Sprache 4,3) — jede Verschiebung braucht
+eine eigene Freigabe.
 
-**Entscheidung:** `index.html` laedt ueber 20 Module per `<script>`-Tag sofort.
-Mit schriftlicher Freigabe des Betreibers fuer EINEN Eintrag holt jetzt
-`code-nachladen.js` (1,79 KB) die Code-Flaeche, sobald `#code` aufgeht.
-
-**Verifikation (gzip, ausgelieferte Seite):**
-
-| | vorher | nachher |
-|---|---|---|
-| sofort geladen | 383 KB | 365 KB |
-| erst bei Bedarf | 125 KB | 145 KB |
-
-Gewandert sind `code-flaeche.js` (11,7 KB) und `code-modell-menue.js` (7,9 KB);
-netto 17,9 KB. Die vorab genannten 27,1 KB waren zu hoch — das Gruppen-Muster
-zaehlte Dateien mit, die gar nicht an der Code-Flaeche haengen.
-
-Live geprueft: Startseite ohne `code-flaeche.js`; Klick auf "Code" laedt nach
-731 ms, `initCodeFlaeche` laeuft, Senden-Knopf und Feld da; direkter Aufruf von
-`/code` nach 359 ms mit Modellanzeige "Auto"; Fehlerkonsole leer. Tests 8/8.
-
-**Der Mechanismus:** MutationObserver auf `#code.is-active` — der einzige Weg,
-auf dem der Bereich sichtbar wird (Klick, Zurueck/Vor, programmatisch). NICHT
-IntersectionObserver, den die Tests verbieten (scrollabhaengig). Nach einem
-Fehlschlag meldet sich der Beobachter nicht ab, der Fehler steht im Protokoll.
-
-**Unterwegs korrigiert:** Der erste Entwurf haengte zwei Zeilen in `app.js` —
-die steht exakt auf 800 Zeilen und waere auf 813 gesprungen; zwei Pruefer
-schlugen an. Derselbe Test nennt das richtige Muster: "die Funktion haengt sich
-selbst ein, app.js kennt sie nicht". `app.js` blieb byte-identisch. Ein
-zunaechst ergaenztes `ladeFuerAnsicht` wurde wieder entfernt — ungenutzter Code
-waere ein Blindgaenger.
-
-**Noch offen (gzip):** Browser-Panel 59,9 KB, Verlauf 38,2, Maus 10,8, Konto
-7,6, Kamera 7,1, Sprache 4,3 — rund 128 KB, die beim ersten Aufbau niemand
-sieht. Jede Verschiebung braucht eine eigene Freigabe.
-
-**Lehre:** Eine Optimierung muss zuerst ihr eigenes Messgeraet pruefen. Die
-Zahl, die den ganzen Tag als Seitengewicht galt, haette jeden Fortschritt
-falsch bewertet.
+MESSFALLE ZUERST GEKLAERT: Der Service Worker liefert aus dem Vorrat, dann meldet
+`performance.getEntriesByType` die ROHE Groesse und `transferSize: 0`
+(chat-store.js: 40.711 B gemeldet, 13.048 B uebertragen). Gegen das 300-KB-Budget
+zaehlen uebertragene Bytes, per gzip von aussen gemessen.
 
 ---
 
 ## 2026-08-23 — V11 komplett, Medien-Fix, und vier Pruefer, die nichts prueften
 
-**Ergebnis:** 20 von 20 Bereichen im neuen Design, live (sw v645 -> v651).
-Fuenf Deploys, alle im Browser gegen den echten Service-Worker-Vorrat verifiziert.
+Volltext, wortgleich: [docs/memory/Memory_Bank_2026-08-23_v11_pruefer_medien.md](docs/memory/Memory_Bank_2026-08-23_v11_pruefer_medien.md).
+Medien-Fix im Detail: `task-capsules/2026/08/job_chats_zu_gross_20260823/capsule.json`.
+Benchmark: `docs/benchmarks/webvitals_2026-08-23_medien-fix-v651.json`.
 
-**Design.** Der sichtbare Bruch zwischen Startseite und Rest war keine schlechte
-Regel, sondern eine ueberfluessige SCHICHT: design-cyan-views.css faerbte die
-Flaeche unter allen 19 Nicht-Start-Ansichten kalt ein. Die richtige, neutrale
-Fassung lag die ganze Zeit darunter in app-surfaces.css und war nur ueberdeckt.
-Geheilt durch Abraeumen, nicht durch eine vierte Generation Gegenregeln.
-Gemessen 0 -> 18 von 18 Ansichten ohne eigene Flaeche. Zuletzt trug auch die
-Startseite den einen Cyanton (15 Werte, 41 % heller — auf dunklem Grund bei
-0.13-0.35 Deckkraft aber nur 2-6 % effektive Abweichung, im A/B nicht
-unterscheidbar).
-
-**Der teuerste Befund: vier Pruefer, die etwas behaupteten, ohne es zu messen.**
-1. Die assets/-Kopie pflegte kein Skript. Zwei am selben Tag committete Fixes
-   waren live nie angekommen — lautlos. -> `npm run check:assets`
-2. Alle sieben Dateisperren bewachten die QUELLEN, nicht die Auslieferung. Die
-   live laufende Startseite war ungeschuetzt. -> `check:auslieferung-lock`
-3. Ein Test pinnte `outline: 2px solid #2dd4bf` und versprach "sichtbar in
-   beiden Schemata". Nachgerechnet: 1.86 gegen 3.0 gefordert. Tastaturnutzer im
-   hellen Schema hatten seit jeher keinen Fokusring — app-weit, nicht nur im
-   Konto. -> `tests/fokusring-kontrast.test.mjs`, das RECHNET.
-4. Der Digest-Test prueft nur, DASS ein Pin existiert. Als ich selbst eine
-   Manipulationssperre brach, blieb die Suite gruen. Er rechnet jetzt nach.
-Dazu: der abo-lock hatte keinen npm-Alias und lief nie in check:all — deshalb
-blieb seine Verletzung tagelang unbemerkt.
-
-**Medien-Fix (der groesste Einzelfund).** Zehn von 113 Gespraechen wurden NIE
-gesichert. Median aller Chats 7 KB, groesster 1938 KB bei NEUN Nachrichten,
-einer 1537 KB bei DREI — nie zu viel Text, immer ein Medium. Ursache:
-readEntries() speichert dasselbe Medium DREIFACH (html/text/raw, gemessen
-7/4/10 Vorkommen, 11,5 MB). Die Auslagerung arbeitete nur auf dem DOM und fand
-<img>/<video>: drei von sieben. Die anderen standen als Markdown da —
-`![Bild](data:…)`, kein Element. Jetzt drei Wege mit EINER gemeinsamen Karte.
-Die 512-KB-Grenze und chatSyncStore.js (vier Sperren) blieben unberuehrt.
-
-**Benchmark (docs/benchmarks/webvitals_2026-08-23_medien-fix-v651.json):**
-TTFB 3 ms, domInteraktiv 98 ms, vollstaendig geladen 441 ms, CLS 0.0222,
-Seitengewicht 41 KB komprimiert. **141 von 141 Ressourcen aus dem Vorrat, 0
-ueber Netz** — der Static-First-Beweis. API-p95 303 ms (Budget 300), bei ~220 ms
-Netz-Grundlast hier ueberwiegend Laufzeit. LCP nicht messbar: der MCP-Tab ist
-immer document.hidden, es gab NULL LCP-Eintraege; Obergrenze ueber
-loadEventEnd = 441 ms.
-
-**Verifizierte Muster (fuer kuenftige Arbeit):**
-* Ein Test, der einen Literalwert festnagelt, prueft die Schreibweise, nicht die
-  Sache. Wo eine Zusicherung im Testnamen steht ("sichtbar", "gepinnt",
-  "aktuell"), muss sie NACHGERECHNET werden.
-* Jeder neue Waechter braucht einen TUEV (kaputte UND gesunde Probe) und ein
-  Fund-Minimum — sonst meldet er bei leerer Trefferliste gruen.
-* Cache-Nummern IMMER live messen: v647 war bereits von einer Parallelsitzung
-  vergeben.
-* chat-history-cards.js ist zum dritten Mal das vergessene Glied der
-  chat-store-Kette. Grund gefunden: der Import ist MEHRZEILIG, der Modulname
-  steht in eigener Zeile und entgeht jeder einzeiligen Suche. Nur
-  check:markenkette findet es. Eine Aenderung an chat-store.js zieht ELF Module
-  ueber VIER Stufen nach sich, bis app.js.
-* assets/sw.js ist eine LEICHE (v328). app.js registriert /sw.js aus der WURZEL.
-
-**Offen, mit Freigabebedarf:** favicon-lock ist verletzt (htmlHeadReferences).
-Ursache liegt vor dieser Sitzung: seit b97f5b02 (15.08.) liegen HTML-Seiten in
-public/assets/, der Lock wurde am 14.08. eingefroren. Dabei ein echter Fund:
-willkommen.html (die LANDESEITE) und programmieren.html tragen nur EINE
-Favicon-Referenz statt fuenf — es fehlen die PNG-Fallbacks, apple-touch-icon
-und die Cache-Marke ?v=112. Favicons sind Rote Liste, deshalb nicht angefasst.
-
-**Nachtrag 2026-08-23 — favicon-lock geschlossen (sw v652).** Der Ship-Loop
-deckte auf, was seit dem 15.08. bestand: willkommen.html — die LANDESEITE, erste
-Seite fuer jeden neuen Besucher — trug nur EINE Favicon-Referenz statt fuenf
-(nur das SVG, ohne favicon.ico, ohne PNG-Fallbacks 32x32/16x16, ohne
-apple-touch-icon, ohne Cache-Marke ?v=112). Dasselbe bei programmieren.html.
-Wirkung: in Browsern ohne SVG-Favicon und beim Hinzufuegen zum Homescreen fehlte
-das Icon. Herkunft nachgemessen: b97f5b02 (15.08.) gegen Lock-Einfrierung
-(14.08.) — nicht aus dieser Sitzung. Mit Betreiber-Freigabe repariert (exakt der
-Block aus index.html), vorher UND nachher geprueft: alle fuenf Zieldateien live
-HTTP 200, die Favicon-DATEIEN selbst und webManifestIcons unveraendert — nur
-Referenzen. favicon-lock neu eingefroren (6 Dateien, 43 HTML-Seiten), voriger
-Manifest-Stand unter backups/ gesichert.
-
-**Schutzstand am Ende des Tages: 8 von 8 Sperren gruen** — start, security, abo,
-einwilligung, deploy, admin, favicon, auslieferung. 591 Tests gruen,
-markenkette 95/95. MERKREGEL daraus: check:favicon-lock gehoert in JEDEN
-Ship-Loop mit Frontend-Anteil — er hat einen Fehler gefunden, der acht Tage lang
-auf der wichtigsten Seite der Plattform stand und den niemand gesehen hat.
+Kern: 20 von 20 Bereichen im neuen Design, live (sw v645 -> v652). Der Bruch
+zwischen Startseite und Rest war eine ueberfluessige SCHICHT
+(design-cyan-views.css), keine schlechte Regel — geheilt durch Abraeumen.
+Teuerster Befund: VIER Pruefer behaupteten etwas, ohne es zu messen
+(assets/-Kopie pflegte kein Skript, alle sieben Sperren bewachten die QUELLEN
+statt der Auslieferung, der Fokusring war nur gepinnt statt gerechnet — 1.86
+gegen 3.0 gefordert, der Digest-Test prueft nur DASS ein Pin existiert). Daraus
+`check:assets`, `check:auslieferung-lock` und `tests/fokusring-kontrast.test.mjs`.
+Medien-Fix: zehn von 113 Gespraechen wurden NIE gesichert — readEntries()
+speichert dasselbe Medium DREIFACH, und die Auslagerung sah nur den DOM;
+Markdown-Bilder (`![Bild](data:…)`) sind kein Element. 141 von 141 Ressourcen
+kamen aus dem Vorrat, 0 ueber Netz (Static-First-Beweis). Am Tagesende 8 von 8
+Sperren gruen, 591 Tests. MERKREGEL: `check:favicon-lock` gehoert in JEDEN
+Ship-Loop mit Frontend-Anteil — er fand einen Fehler, der acht Tage lang auf der
+Landeseite stand.
 
 ## 2026-08-23 — Autopiloten-Seite: Grau ist zweierlei (job_autopiloten_seite_20260823)
 
