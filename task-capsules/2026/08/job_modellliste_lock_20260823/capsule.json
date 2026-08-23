@@ -1,0 +1,69 @@
+{
+  "jobId": "job_modellliste_lock_20260823",
+  "createdAt": "2026-08-23T04:10:00.000Z",
+  "owner": "smejj.com",
+  "title": "Die Modell-Liste ist 100% gesichert — zwei Schloesser, beide mit TUEV",
+  "ziel": "Betreiber-Anordnung 2026-08-23 im Wortlaut: 'Genau diese Liste ich will haben und musst du sichern soll nicht geaendert werden nicht kaputt gemacht werden ohne meine schriftliche Bestaetigung.' Die Modell-Liste dauerhaft gegen Aenderung und stillen Ausfall sichern.",
+  "ausgangslage": {
+    "meldung": "Der Betreiber meldete, seine Modell-Liste sei geaendert worden — gestern habe sie noch mit Auto ganz oben und der langen Liste darunter funktioniert.",
+    "ersteAntwortWarZuKurzGegriffen": "Ein erster Vergleich pruefte nur die feste 14er-Wunschliste in code-modell-menue.js und meldete 'nichts geaendert'. Die lange Liste steht dort aber gar nicht — sie wird bei jedem Oeffnen frisch vom Katalog-Endpunkt geholt.",
+    "messung": "Live im angemeldeten Chrome des Betreibers auf https://smejj.com gemessen: BEIDE Menues waren vollstaendig und gesund. Nichts war kaputt."
+  },
+  "gesicherterZustand": {
+    "menue1": {
+      "wo": "Start-Picker -> 'Coding-Agent (Cline)' (Untermenue)",
+      "datei": "public/cline-model-menu.js",
+      "aufbau": ["Auto (aktiv)", "Gruppe Cline Pass: 12 Modelle", "Gruppe Empfohlen: 3 Modelle", "Alle Modelle & Key -> Einstellungen"],
+      "gemessen": "15 Modelle + Auto, 2026-08-23"
+    },
+    "menue2": {
+      "wo": "Code-Flaeche -> Modellknopf unten rechts",
+      "datei": "public/code-modell-menue.js",
+      "aufbau": ["Auto (aktiv)", "smejj 1.0", "14 Wunschmodelle Opus 5 bis Mimo V2.5"],
+      "gemessen": "16 Zeilen, Reihenfolge exakt nach Betreiber-Freigabe 2026-08-17"
+    },
+    "katalog": {
+      "endpunkt": "GET /api/providers/cline/models",
+      "gemessen": "HTTP 200, 20 Modelle (13 cline-pass, 4 recommended, 3 free); alle 14 Wunschmodelle vorhanden"
+    }
+  },
+  "kernbefund": "Die lange Liste steht NICHT im Code. Ein Schutz, der nur die zwei Menue-Dateien einfriert, waere halb blind: bleibt die Katalog-Antwort leer, baut das Menue stillschweigend eine kurze Liste — ohne Fehlermeldung, ohne rote Ampel. Darum stehen Katalog-Holer und Endpunkt mit unter Schutz.",
+  "zweiterBefund": "Der Funktions-Waechter klopfte an /api/providers/cline/status, nicht an /models. Die Liste haengt aber an /models. Faellt sie aus, bleibt /status gruen — genau so konnte der gemeldete Ausfall unbemerkt bleiben.",
+  "geaenderteDateien": [
+    "scripts/check-modell-menue-lock.mjs (neu, 83 Zeilen) — byte-genaue Dateisperre ueber 6 Dateien",
+    "tests/modellmenue-lock.test.mjs (neu, 173 Zeilen) — Struktur-Waechter, 10 Faelle",
+    "docs/frontend/MODELL_MENUE_LOCK.md (neu, 110 Zeilen) — Lock-Dokument mit Betreiber-Wortlaut",
+    "docs/approvals/modell-menue-lock-manifest.json (neu) — Manifest mit Wortlaut und Hashes",
+    "package.json — check:modell-menue-lock, eingehaengt in check:all und check:frontend",
+    "scripts/diagnose/funktionen-live.mjs — Katalog-Endpunkt bekommt eine eigene Ampel"
+  ],
+  "geschuetzteDateien": [
+    "public/cline-model-menu.js",
+    "public/code-modell-menue.js",
+    "public/assets/cline-model-menu.js",
+    "public/assets/code-modell-menue.js",
+    "control-server/src/providers/clineClient.js",
+    "control-server/src/routes/providerRoutes.js"
+  ],
+  "nichtAngefasst": "Kein Zeichen am Menue-Code selbst. Der Auftrag war sichern, nicht umbauen.",
+  "verifikation": {
+    "waechterTuevDateisperre": "Zeile an public/cline-model-menu.js angehaengt -> 'modell-menue-lock VERLETZT (1)', Exit-Code 1. Zurueckgesetzt -> gruen.",
+    "waechterTuevStruktur": "5 kaputte Proben schlagen an (Auto nach unten gerutscht, Gruppe entfernt, Katalog-Nachbau geloescht, slice(0,10) eingebaut, Katalog-Abruf gekappt), 5 gesunde bleiben gruen.",
+    "checkFrontend": "591/591 gruen",
+    "checkJson": "gruen",
+    "checkGuidelines": "18 Altlast-Meldungen, unveraendert — keine aus dieser Arbeit",
+    "checkFunktionenLive": "8 von 8 Funktionen 'an' (vorher 7 geprueft), Modell-Liste (Cline-Katalog) 401 authentication_required",
+    "quelleGegenAuslieferung": "sha256 /assets/cline-model-menu.js = public/cline-model-menu.js = 368a4de8eb1ac038; code-modell-menue.js = c357d67f795dc475",
+    "livetestKlickpfad1": "smejj.com -> Modellknopf -> Coding-Agent (Cline): Auto oben, Cline Pass 12, Empfohlen 3, unten 'Alle Modelle & Key'. Screenshot belegt.",
+    "livetestKlickpfad2": "smejj.com/code -> Modellknopf: Auto, smejj 1.0, 14 Modelle in Betreiber-Reihenfolge. Screenshot belegt.",
+    "konsole": "keine Fehler"
+  },
+  "rollback": {
+    "tag": "stand-2026-08-23-modellmenue-lock",
+    "backup": "backups/modell-menue-lock/2026-08-23T04-09-56-590Z/"
+  },
+  "commits": ["1784b2dc", "6bb53322"],
+  "grenzeDesSchutzes": "Der Lock schuetzt unseren Code, nicht den fremden Katalog. Wirft Cline selbst ein Modell raus, verschwindet es aus der Liste, ohne dass hier eine Datei anders wird. Dagegen misst nur check:funktionen-live.",
+  "nebenbefund": "Beim Live-Test erschien der Toast 'Ein Chat ist zu gross und wurde NICHT gesichert'. Nicht Teil dieses Auftrags, als eigene Aufgabe gemeldet.",
+  "status": "abgeschlossen"
+}

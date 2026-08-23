@@ -5,6 +5,58 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-23] MODELL-LISTE 100% GESICHERT — ZWEI SCHLOESSER (job_modellliste_lock_20260823)
+
+Capsule: `task-capsules/2026/08/job_modellliste_lock_20260823/capsule.json`.
+App-Repo `1784b2dc` (Schutz) und `6bb53322` (Ampel).
+Rollback-Punkt: Tag `stand-2026-08-23-modellmenue-lock`.
+
+**Anordnung des Betreibers im Wortlaut:** "Genau diese Liste ich will haben und
+musst du sichern soll nicht geaendert werden nicht kaputt gemacht werden ohne
+meine schriftliche Bestaetigung."
+
+**Entscheidung:** Zwei getrennte Schloesser statt eines. Die Dateisperre
+`scripts/check-modell-menue-lock.mjs` friert sechs Dateien byte-genau ein
+(eigenes Manifest unter `docs/approvals/`, NICHT der Start-Lock — der wird
+mehrmals taeglich neu eingefroren und wuerde die Liste sonst stillschweigend
+mitabsegnen). Der Struktur-Waechter `tests/modellmenue-lock.test.mjs` prueft
+die Substanz: Auto ganz oben, Gruppenfolge Cline Pass/Empfohlen, der
+Katalog-Nachbau vorhanden, kein Deckel auf der Laenge, Quelle gleich
+ausgelieferte Kopie.
+
+**Begruendung — der Punkt, den ein naiver Schutz verfehlt:** Die lange Liste
+steht NICHT im Code. Sie wird bei jedem Oeffnen frisch von
+`GET /api/providers/cline/models` geholt. Wer nur die zwei Menue-Dateien
+einfriert, laesst sie weiter jederzeit verschwinden: bleibt die Antwort leer,
+faengt `code-modell-menue.js` den Fehler ab und zeigt nur noch das Hausmodell —
+ohne Fehlermeldung, ohne rote Ampel. Darum stehen `clineClient.js` (der
+Katalog-Holer mit seinem Vorrat) und `providerRoutes.js` (der Endpunkt) mit
+unter Schutz. Aus demselben Grund braucht es BEIDE Schloesser: Hashes melden
+jede Aenderung und sagen nichts ueber Funktion; der Struktur-Waechter meldet
+den Ausfall und laesst harmlose Umbauten durch.
+
+**Zweiter Befund, gleich mitbehoben:** Der Funktions-Waechter klopfte an
+`/api/providers/cline/status`. Die Liste haengt aber an `/models`. Faellt sie
+aus, bleibt `/status` gruen — genau so konnte der gemeldete Ausfall unbemerkt
+bleiben. `/models` hat jetzt eine eigene Ampel (8 statt 7 Funktionen).
+
+**Verifikation:** Waechter-TUEV auf beiden Schloessern — Dateisperre meldet bei
+einer angehaengten Zeile "VERLETZT (1)" mit Exit 1 und wird nach dem
+Zuruecksetzen wieder gruen; der Struktur-Waechter erkennt 5 kaputte Proben
+(Auto nach unten, Gruppe entfernt, Katalog-Nachbau geloescht, `slice(0,10)`,
+Abruf gekappt) und laesst 5 gesunde durch. `check:frontend` 591/591 gruen,
+`check:json` gruen, `check:guidelines` unveraendert bei 18 Altlast-Meldungen.
+Live byte-verifiziert: `/assets/cline-model-menu.js` und
+`/assets/code-modell-menue.js` sind identisch zur Quelle (sha256
+368a4de8eb1ac038 / c357d67f795dc475). Echter Klickpfad auf der
+Produktionsdomain im angemeldeten Chrome, beide Menues vollstaendig, keine
+Konsolenfehler.
+
+**Grenze des Schutzes:** Er sichert unseren Code, nicht den fremden Katalog.
+Wirft Cline selbst ein Modell raus, verschwindet es aus der Liste, ohne dass
+hier eine Datei anders wird. Dagegen misst nur `check:funktionen-live`.
+
+
 ### [2026-08-18] 800-ZEILEN-REGEL: MODELL-MENUE HERAUSGELOEST (job_modul_modellmenue_20260818)
 
 Capsule: `task-capsules/2026/08/job_modul_modellmenue_20260818/capsule.json`
