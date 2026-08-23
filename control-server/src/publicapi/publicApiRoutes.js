@@ -22,6 +22,7 @@
 // versehentlich ausgerollter Stand verschenkt so keine Modellzeit.
 import crypto from "node:crypto";
 import { executeWithFallback, resolveModelRequest } from "../llm/modelRouter.js";
+import { THINKING_DISABLED } from "../../../src/ai/chatThinkingPolicy.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { readJson } from "../http/respond.js";
 import { bearerSchluessel, pruefeSchluessel } from "./publicApiKeys.js";
@@ -143,11 +144,18 @@ async function chatCompletions(req, res, zugang, { env, fetchImpl, anfrageId }) 
   }
 
   const stream = body?.stream === true;
-  const { chain } = resolveModelRequest(profilFuerModell(angefragtesModell), "", env);
+  const profil = profilFuerModell(angefragtesModell);
+  const { chain } = resolveModelRequest(profil, "", env);
   const lauf = await executeWithFallback(chain, nachrichten.messages, {
     fetchImpl,
     stream,
     env,
+    // Denken AUS, ausser der Kunde bestellt ausdruecklich das Denk-Modell.
+    // Live gemessen 2026-08-23: eine Anfrage mit max_tokens=50 verbrauchte
+    // 50 Reasoning-Token und lieferte content:"" mit finish_reason "length" —
+    // der Kunde bezahlt und bekommt NICHTS. Dieselbe Regel gilt seit dem
+    // 2026-07-28 im internen Chat (chatThinkingPolicy.js).
+    ...(profil === "reasoning" ? {} : { thinking: THINKING_DISABLED }),
     ...(body?.temperature === undefined ? {} : { temperature: zahlImBereich(body.temperature, 0, 2) }),
     ...(body?.max_tokens === undefined ? {} : { maxTokens: ganzzahlImBereich(body.max_tokens, 1, 32_000) }),
     ...(Array.isArray(body?.tools) && body.tools.length ? { tools: body.tools } : {}),

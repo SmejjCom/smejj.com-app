@@ -282,6 +282,38 @@ test("Stream ohne usage-Block: geschaetzt statt null gezaehlt", async () => {
   assert.equal(verbrauch.completionTokens, 5); // 20 Zeichen / 4
 });
 
+test("Denken ist aus — ausser beim Denk-Modell (sonst frisst es das Token-Budget)", async () => {
+  frischerSpeicher();
+  // `thinking` wird nur an Backends gesendet, die es kennen (GLM) — darum hier
+  // ein GLM-Modellname, sonst prueft der Test ins Leere.
+  const env = testEnv({ SMEJJ_LLM_MODEL: "glm-testmodell" });
+  const { klartext } = await erzeugeSchluessel(KONTO, {}, env);
+  const kopf = { authorization: `Bearer ${klartext}` };
+  const koerper = [];
+  const merkendesBackend = (_url, optionen) => {
+    koerper.push(JSON.parse(optionen.body));
+    return Promise.resolve(new Response(JSON.stringify({
+      id: "c", model: "fremdmodell-x7",
+      choices: [{ index: 0, message: { role: "assistant", content: "ok" } }],
+      usage: { prompt_tokens: 3, completion_tokens: 1 }
+    }), { status: 200, headers: { "content-type": "application/json" } }));
+  };
+
+  await ruf("/v1/chat/completions", {
+    method: "POST", env, headers: kopf, fetchImpl: merkendesBackend,
+    body: { model: "smejj-1.0", messages: [{ role: "user", content: "hi" }] }
+  });
+  await ruf("/v1/chat/completions", {
+    method: "POST", env, headers: kopf, fetchImpl: merkendesBackend,
+    body: { model: "smejj-1.0-reasoning", messages: [{ role: "user", content: "hi" }] }
+  });
+
+  // Live gemessen 2026-08-23: ohne diese Regel kam content:"" zurueck, weil
+  // 50 von 50 erlaubten Token ins Denken gingen (finish_reason "length").
+  assert.equal(koerper[0].thinking?.type, "disabled", "Allzweckmodell muss ohne Denken laufen");
+  assert.equal(koerper[1].thinking, undefined, "das Denk-Modell darf denken");
+});
+
 test("Unbekanntes Modell und leere messages werden sauber abgewiesen", async () => {
   frischerSpeicher();
   const env = testEnv();
