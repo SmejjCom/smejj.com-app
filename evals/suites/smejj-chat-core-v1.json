@@ -21,7 +21,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "ec203399f8c080e6f8f7271f1d75b9fb84a3160ba73df4ab3fd15e1065d4d922"
+    "contentSha256": "a2864f6900fe88f6508cb52238e00c3a9e78c014d4f5ea8a431b9af46b89998d"
   },
   "cases": [
     {
