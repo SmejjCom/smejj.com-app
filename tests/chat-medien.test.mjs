@@ -20,7 +20,8 @@ import {
 } from "../control-server/src/chats/medienStore.js";
 import {
   ADRESSE_ATTRIBUT, VIDEO_QUELLE_ATTRIBUT, adresseFuer, entwaessere, findeAuslagerbare,
-  istMedienAdresse, lagereMedienAus, rehydriereMedien
+  istMedienAdresse, lagereMedienAus, lagereMedienAusText, lagereMedienAusTextknoten,
+  rehydriereMedien
 } from "../public/chat-medien.js";
 
 const png = (inhalt = "hallo") => `data:image/png;base64,${Buffer.from(inhalt).toString("base64")}`;
@@ -326,4 +327,104 @@ test("die Reihenfolge beim Speichern ist die einzige, die sicher ist", async () 
     "auslagern MUSS vor dem Schnappschuss stehen, sonst wandert der Datenberg ins html");
   assert.ok(schnappschuss < holen,
     "holen MUSS nach dem Schnappschuss stehen, sonst wandert ein blob: ins html");
+});
+
+// --- Die drei Orte (Befund 2026-08-22) -------------------------------------
+//
+// An 113 echten Gespraechen gemessen: zehn lagen ueber MAX_CHAT_BYTES und
+// wurden NIE gesichert. Der Median aller Chats ist 7 KB — es war nie zu viel
+// Text, immer ein Medium. Dasselbe Medium steckt in DREI Feldern, die
+// readEntries() speichert: html (4 Vorkommen), text (7) und raw (10).
+// Der reine DOM-Weg erreichte davon drei.
+
+test("Markdown-Medien werden ausgelagert — sie sind kein Element", async () => {
+  // Genau die Form, die live gefunden wurde: ![Erstelltes Bild](data:…)
+  const roh = `Hier ist dein Bild:\n\n![Erstelltes Bild](${png("markdown-bild")})\n\nViel Spass.`;
+  const { text, ersetzt, gescheitert } = await lagereMedienAusText(roh, {
+    basis: "https://api.test/api/chat-medien",
+    hochladen: async () => "abc123"
+  });
+  assert.equal(ersetzt, 1);
+  assert.equal(gescheitert, 0);
+  assert.ok(!text.includes("data:image/"), "der Datenberg muss weg sein");
+  assert.match(text, /!\[Erstelltes Bild\]\(https:\/\/api\.test\/api\/chat-medien\?id=abc123\)/,
+    "die Markdown-Klammer muss heil bleiben");
+});
+
+test("dasselbe Medium wird nur EINMAL hochgeladen", async () => {
+  // Der Grund fuer die gemeinsame Karte: ein Bild steht in html, text UND raw.
+  const bild = png("dreifach");
+  const karte = new Map();
+  let hochladungen = 0;
+  const hochladen = async () => { hochladungen += 1; return "gleich"; };
+  const optionen = { basis: "https://api.test/api/chat-medien", hochladen, karte };
+  for (const feld of [`a ${bild}`, `b ${bild}`, `c ${bild}`]) {
+    await lagereMedienAusText(feld, optionen);
+  }
+  assert.equal(hochladungen, 1, "drei Felder, ein Upload");
+  assert.equal(karte.size, 1);
+});
+
+test("scheitert die Ablage, bleibt der Text unveraendert", async () => {
+  // Dieselbe Zusage wie im DOM-Weg: lieber ein grosser Chat als einer ohne Bild.
+  const roh = `![Bild](${png("bleibt")})`;
+  const { text, ersetzt, gescheitert } = await lagereMedienAusText(roh, {
+    basis: "https://api.test/api/chat-medien",
+    hochladen: async () => ""
+  });
+  assert.equal(ersetzt, 0);
+  assert.equal(gescheitert, 1);
+  assert.equal(text, roh, "nichts darf verlorengehen");
+});
+
+test("ohne Adresse passiert nichts, und Text ohne Medium bleibt gleich", async () => {
+  const ohneBasis = await lagereMedienAusText(`![x](${png()})`, { basis: "", hochladen: async () => "id" });
+  assert.equal(ohneBasis.ersetzt, 0);
+  const ohneMedium = await lagereMedienAusText("nur Text", {
+    basis: "https://api.test/api/chat-medien", hochladen: async () => "id"
+  });
+  assert.equal(ohneMedium.ersetzt, 0);
+  assert.equal(ohneMedium.text, "nur Text");
+});
+
+// Mini-DOM fuer Textknoten — im Stil von knoten() oben: nur das, was
+// lagereMedienAusTextknoten wirklich anfasst (TreeWalker + nodeValue).
+function textBaum(werte) {
+  const knoten = werte.map((w) => ({ nodeValue: w }));
+  return {
+    knoten,
+    ownerDocument: {
+      createTreeWalker: () => {
+        let i = -1;
+        const lauf = {
+          currentNode: null,
+          nextNode() {
+            i += 1;
+            if (i >= knoten.length) return null;
+            lauf.currentNode = knoten[i];
+            return lauf.currentNode;
+          }
+        };
+        return lauf;
+      }
+    }
+  };
+}
+
+test("Textknoten werden gesaeubert, ohne das Markup neu zu schreiben", async () => {
+  // Kein innerHTML-Neuschreiben: daran haengen Daumen, Kopieren und Vorlesen.
+  // Der Beweis dafuer ist die Identitaet der Knoten — es wird NUR nodeValue
+  // gesetzt, nichts ersetzt.
+  const baum = textBaum(["Vorher, ohne Medium", `![Bild](${png("knoten")})`]);
+  const vorher = baum.knoten[1];
+  const { ersetzt, gescheitert } = await lagereMedienAusTextknoten(baum, {
+    basis: "https://api.test/api/chat-medien",
+    hochladen: async () => "knot1"
+  });
+  assert.equal(ersetzt, 1);
+  assert.equal(gescheitert, 0);
+  assert.equal(baum.knoten[0].nodeValue, "Vorher, ohne Medium", "unbeteiligter Text bleibt");
+  assert.ok(!baum.knoten[1].nodeValue.includes("data:image/"), "der Datenberg muss weg sein");
+  assert.match(baum.knoten[1].nodeValue, /chat-medien\?id=knot1/);
+  assert.equal(baum.knoten[1], vorher, "derselbe Knoten — nichts wurde ersetzt");
 });
