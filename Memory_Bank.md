@@ -5,6 +5,47 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-23] SEITENGEWICHT 335,6 -> 256,6 KB (job_seitengewicht_20260823)
+
+Capsule: `task-capsules/2026/08/job_seitengewicht_20260823/capsule.json`.
+App-Repo `f65d0b28`. sw v673 -> v674.
+
+**Messmethode zuerst, sonst optimiert man ins Leere:** Die Browser-Zahlen
+taugen fuer das 300-KB-Budget NICHT. `performance.getEntriesByType` meldet bei
+uns unkomprimierte Groessen und `transferSize: 0`, weil der Service Worker aus
+dem Vorrat liefert — dieselbe Seite "wiegt" dort 1.124 KB. Gezaehlt wird gzip
+ueber die Import-Kette.
+
+**Befund:** Browser-Panel und Maus-Panel wiegen samt Kette 63,3 KB in 16
+Modulen. Beide gehen erst auf Knopfdruck auf — beim ersten Bildaufbau sieht sie
+niemand, und trotzdem zahlte sie jeder Seitenaufruf.
+
+**Warum beide zusammen:** Nur das Browser-Panel auszulagern bringt 1,9 KB.
+`maus-panel.js` importiert dieselbe `browser-pane-*`-Kette und zieht sie doch
+wieder herein.
+
+**Entscheidung:** `public/browser-nachladen.js` nach dem Muster von
+`code-nachladen.js`, aber mit DREI Ausloesern statt einem — Panel geht auf,
+Klick auf `#mausButton`, oder ein `smejj:maus-*`-Ereignis aus dem Chat. Der
+dritte ist der heikle: das Ereignis ist durch, wenn das Modul ankommt, und wird
+nach dem Laden ERNEUT gefeuert. Ohne dieses Nachreichen verpasst ein
+Maus-Auftrag aus dem Chat seine Anzeige, und nichts sieht kaputt aus.
+
+**Ein echter Fehler, den der Waechter vor dem Deploy fand:** `beobachter` stand
+als `const` NACH der Funktion, die ihn benutzt — beim Pfad "Panel schon offen"
+ein ReferenceError, genau bei dem Nutzer, der die Seite mit offenem Panel
+aufruft.
+
+**Ergebnis:** 256,6 KB, 21 Module weniger, 43 KB Luft zum Budget. Live
+funktionsgeprueft: Panel mit Tableiste, Adresszeile, verbundenem Live-Browser;
+beide Knoepfe da. `check:frontend` 653/653, module-queries 191, precache 158.
+
+**Fremde Luecke mitgeschlossen:** `/assets/auth-gate-frueh.js` fehlte im
+Precache, obwohl es das ERSTE Skript im head ist (`fffa1170` einer
+Parallelsitzung, live ebenfalls nicht im Vorrat). Offline waere die App tot
+gewesen.
+
+
 ### [2026-08-23] ANTWORTZEIT 46 s -> 1 s — ES LAG NIE AM MODELL (job_antwortzeit_20260823)
 
 Capsule: `task-capsules/2026/08/job_antwortzeit_20260823/capsule.json`.

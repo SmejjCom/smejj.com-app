@@ -1,0 +1,39 @@
+{
+  "jobId": "job_seitengewicht_20260823",
+  "createdAt": "2026-08-23T14:45:00.000Z",
+  "owner": "smejj.com",
+  "title": "Seitengewicht 335,6 -> 256,6 KB — zwei Flaechen, die niemand sofort sieht",
+  "ziel": "Master-Prompt, Performance-Budget: 'Gesamtgewicht der Startseite unter 300 KB komprimiert (ohne Bilder)'. Gemessen waren 335,6 KB.",
+  "messmethode": {
+    "wichtig": "Die Browser-Zahlen taugen dafuer NICHT. performance.getEntriesByType meldet bei uns unkomprimierte Groessen und transferSize 0, weil der Service Worker aus dem Vorrat liefert — dieselbe Seite 'wiegt' dort 1.124 KB.",
+    "richtig": "gzip, ueber die Import-Kette gerechnet: index.html + CSS + alle erreichbaren Module."
+  },
+  "befund": {
+    "vorher_KB": 335.6,
+    "browserPanelUndMaus_KB": 63.3,
+    "module": 16,
+    "warumBeide": "Nur das Browser-Panel auszulagern bringt 1,9 KB — maus-panel.js importiert dieselbe browser-pane-*-Kette und zieht sie doch wieder herein. Eine halbe Loesung waere hier keine."
+  },
+  "loesung": {
+    "neu": "public/browser-nachladen.js nach dem Muster von code-nachladen.js",
+    "dreiAusloeser": [
+      "#browserPanel bekommt is-open (der Browser-Knopf)",
+      "Klick auf #mausButton (liegt ausserhalb des Panels)",
+      "die Ereignisse smejj:maus-* — sie kommen aus dem CHAT, ohne dass vorher ein Panel offen war"
+    ],
+    "derHeikleFall": "Fall 3: das Ereignis ist durch, wenn das Modul ankommt. Es wird nach dem Laden ERNEUT gefeuert. Ohne dieses Nachreichen verpasst ein Maus-Auftrag aus dem Chat seine Anzeige — und nichts saehe kaputt aus."
+  },
+  "echterFehlerVorDemDeployGefunden": "`beobachter` stand als const NACH der Funktion, die ihn benutzt. Beim Pfad 'Panel schon offen' waere das ein ReferenceError gewesen — genau bei dem Nutzer, der die Seite mit offenem Panel aufruft. Der Waechter hat ihn gefunden.",
+  "dreiTestsNachgezogen": "browser-pane.test.mjs, browser-pane-backdrop.test.mjs, maus-absicht.test.mjs pruefen Reihenfolge (Waechter nach dem Pane) und Markengleichheit (zwei Kennungen waeren zwei Modul-Instanzen mit getrenntem state). Referenz ist jetzt der Nachlader statt index.html — dieselbe Zusage, andere Quelle. Keine abgeschwaecht.",
+  "fremdeLueckeMitgeschlossen": "/assets/auth-gate-frueh.js fehlte im sw.js-Precache, obwohl es das ERSTE Skript im head ist (Commit fffa1170 einer Parallelsitzung; live ebenfalls nicht im Vorrat). Offline waere die App tot gewesen. Eine Zeile, kein Eingriff in fremde Logik.",
+  "ergebnis": { "nachher_KB": 256.6, "gespart_KB": 79, "moduleWeniger": 21, "budget_KB": 300, "urteil": "unter Budget, 43 KB Luft" },
+  "verifikationLive": {
+    "auslieferung": "sw v673 -> v674; index.html ohne feste Tags fuer browser-pane/backdrop/maus-panel; /assets/browser-nachladen.js HTTP 200",
+    "funktionstest": "Browser-Panel offen mit Tableiste (4 Tabs), Adresszeile, Live-Browser verbunden, Inhalt sichtbar; Browser-Knopf und Maus-Knopf vorhanden; maus-panel.js geladen. Screenshot im Bericht.",
+    "hinweis": "Beim Betreiber ist das Panel offen (gespeicherte Tabs), darum laedt der Nachlader dort sofort — genau das gewollte Verhalten. Die Ersparnis gilt fuer jeden Aufruf mit geschlossenem Panel.",
+    "tests": "check:frontend 653/653, module-queries 191, markenkette gruen, precache 158"
+  },
+  "designUnveraendert": "Nur die Ladereihenfolge. Start-Lock neu gestempelt, Umfang im Wortlaut hinterlegt.",
+  "commits": { "app": ["f65d0b28"], "frontend": ["nach origin/main gepusht"] },
+  "status": "abgeschlossen"
+}
