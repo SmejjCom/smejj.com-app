@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T14:57:27.319Z",
-  "confirmation": "Betreiber 2026-08-23: @-Erwaehnung und Staerke-Stufe (Empfehlung) — erwaehnung.js v1, Verlauf nimmt Erwaehnungs-Kontext mit, sw v676",
+  "frozenAt": "2026-08-23T15:26:07.669Z",
+  "confirmation": "Betreiber 2026-08-23: \"W heisst Weiter\" — Frage-Karte kam auf der Schnellspur nicht (Regel fehlte), @-Menue oben abgeschnitten; Bridge v143, start-styles erwaehnung2, sw v678",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "48595610972fd8f9e504414bf5784d349f47021f05aa4c7d5852b9608c20d793",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
-    "public/chat-bridge.js": "f29407808cb0a87cd4e29ed44407e916e3cfd694d8bb637268d4da519aec287a",
+    "public/chat-bridge.js": "4e2536c9aa06fc280369d5c34a55bd736e1d66f583169af2d1cceac5b4e854d9",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

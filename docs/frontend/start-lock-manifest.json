@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T15:01:11.228Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-23: \"Startphase auch fixen, auth/me nur einmal\". Gemessen lief /api/auth/me ZWEIMAL — bei 750 ms (auth-gate.js) und 4316 ms (google-login.js), zusammen 1,9 s fuer dieselbe Antwort; der In-Flight-Dedup in getJson greift nur bei GLEICHZEITIGEN Anfragen. Neu: public/shared/auth-me-speicher.js, ein gemeinsamer Speicher mit 5 s Frist, der Fehlschlaege NICHT merkt und bei An-/Abmeldung verworfen wird. http-json.js bleibt unangetastet. Umfang dieses Stempels: sw.js CACHE_NAME v676->v677 plus Precache-Eintrag /assets/shared/auth-me-speicher.js; index.html, app.js und search.js tragen ausschliesslich erhoehte ?v=-Marken.",
+  "frozenAt": "2026-08-23T15:26:07.627Z",
+  "confirmation": "Betreiber 2026-08-23: \"W heisst Weiter\" — Frage-Karte kam auf der Schnellspur nicht (Regel fehlte), @-Menue oben abgeschnitten; Bridge v143, start-styles erwaehnung2, sw v678",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "74164fcef4f53a5d141370da17d9d7663a2adead756297946a2df0e1c63b1e78",
+    "public/index.html": "573a3a602438014423ce01f7030dd8fe5f2d1e903ae4718bd2ca20bf342fede4",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "721878ac058e347b246600f073dae8231eac71d9845135df4a7a38a86c27f83d",
+    "public/start-styles.css": "bb007ddb2ed699d0821b0ccb095dc253beb2953bdf97ba7558fb724a14eb8832",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "9250299a43734aad2364ec2a1d7f3b200cb888f57a2e3c9579f7828fe0069d94",
+    "public/sw.js": "098ac1d0524aeba55e2edd684a6a0072274f4f265eaded38d7d8e78c37f7a12c",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

@@ -29,8 +29,13 @@ Nebenbefund im Screenshot: das rechte Vorschau-Panel drückte die Chatmitte auf 
 ## Nachtrag 14:55Z — „Panel frisst die Mitte", zweite Ursache (App 451f28ad, Frontend 8e4c075, sw v675)
 Der Fix vom 22.08. (paneBreiteAus) griff nur beim Öffnen per openPane(). Beim Wiederherstellen der gemerkten Breite (`smejj.ui.rightPanelWidth.v9`, hier 520) und beim Ziehen rechnete panel-layout.js mit centerMin 120 — dem Chat blieben bei 828 px Fenster 140 px. Jetzt `maxPanelBreite(side, {fenster, mitteLinks})`: rechts Fenster − Spur − 380, nie unter 188, nie über 520. Live: Panel 520 → 252 px, Chat 380 px (Screenshot). Test tests/panel-layout-breite.test.mjs (kaputte + gesunde Probe).
 
+## Nachtrag 15:05Z — „@"-Erwähnung live (App ad6c0db1, Frontend ef5ebc9, sw v676)
+`erwaehnung.js`: „@" am Wortanfang im Startfeld öffnet die Liste der eigenen Chats (Titel-Filter, max. 8, viereckig, 44-px-Zeilen); Auswahl schreibt „@Titel " und legt einen unsichtbaren Kontextknoten (`data-smejj-erwaehnung`, KEIN .entry → wird nicht gesichert) ins Protokoll, den `collectConversationHistory` als Nutzernachricht mitschickt — wirkt auf Bridge, Schnellspur und Control gleich. Live im eingeloggten Chrome: „Fasse mir @Büro" → 6 Treffer → Klick → Frage → das Modell fasste den erwähnten Chat korrekt zusammen. Tests 4/4.
+Stärke-Stufe: gab es schon — Modellwahl zeigt „smejj 1.0 (Schnell/Gründlich)" wie Antigravitys „(High)", plus Nachdenken-Pille; nichts zu bauen.
+Vorsicht beim Commit: die Parallelsitzung hatte `"/assets/shared/auth-me-speicher.js"` unversioniert in sw.js eingetragen (Datei nicht committet) — im Frontend-Deploy bewusst weggelassen (addAll wäre live gescheitert); im App-Commit ad6c0db1 steht die Zeile, weil der Arbeitsbaum wegen fremder Merge-Konflikte (codeberg_spiegel_sync.sh, motor.py) keinen Korrektur-Commit zuließ.
+
 ## Offen
-- Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht), „@"-Erwähnung, Stärke-Stufe im Start-Bereich.
+- Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht).
 - `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
 
 ## Fallen (für die Memory_Bank)

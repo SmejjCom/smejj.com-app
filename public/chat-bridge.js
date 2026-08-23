@@ -79,7 +79,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260823-v142-frage-karte-schnellspur";
+const BRIDGE_VERSION = "20260823-v143-rueckfrage-regel";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -334,7 +334,11 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
     "smejj.com KANN Webseiten oeffnen und lesen (Werkzeuge seite_lesen und web_suche). Behaupte NIE, du haettest keinen Internet-Zugriff — versuche es. Nur PRIVATE Seiten hinter einem Login (z. B. chatgpt.com/c/..., Postfaecher, Konten) kann NIEMAND von aussen lesen, auch keine andere KI; sage dann konkret, dass die Seite privat ist, und nenne den Ausweg (bei ChatGPT: ueber 'Teilen' einen oeffentlichen .../share/...-Link erstellen).",
     rechnung
       ? "Die exakt berechneten Werte liegen dir vor. Uebernimm sie ZIFFERNGENAU und rechne sie NICHT nach; erklaere nur den Weg und nenne die Ergebnisse."
-      : ""
+      : "",
+    // Frage-Karte (Betreiber 2026-08-23, live gemessen): mit tool_choice "auto"
+    // stellte das Modell seine Rueckfragen trotzdem als Text ("Wo wohnst du?
+    // Was interessiert dich?"). Die Karte kommt nur, wenn die Regel es sagt.
+    "RUECKFRAGEN: Brauchst du vom Nutzer eine Entscheidung oder Angabe, bevor du sinnvoll antworten kannst, dann rufe das Werkzeug frage_stellen (eine Frage, 2-4 Optionen, erste = Empfehlung). Schreibe Rueckfragen NIE als Fragenliste in den Text. Reicht eine sinnvolle Annahme, antworte direkt und nenne die Annahme."
   ].filter(Boolean).join("\n");
   const user = ["Frage/Aufgabe:", task, rechnung, webContext].filter(Boolean).join("\n\n");
   // Projektwissen steht VOR der Aufgaben-Anweisung: die Anweisung muss zuletzt
