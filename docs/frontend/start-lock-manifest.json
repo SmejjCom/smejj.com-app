@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T13:20:50.412Z",
-  "confirmation": "Betreiber 2026-08-23: Geist-Knoepfe und Chips eckig (Empfehlung) — Mikro, Stimme, Plus, Werkzeug-Chips viereckig und live",
+  "frozenAt": "2026-08-23T13:22:47.058Z",
+  "confirmation": "Betreiber-Auswahl 2026-08-23 nach dem Komplettcheck: \"Haengenden Chat\" beheben. Befund: eine von fuenf Anfragen stand nach 55 s noch auf \"smejj denkt nach\" — chat-stream.js hatte seit dem 17.08. eine Stille-Wache, chatClient.js (Cline/BYOK) nicht, und der Chat stand auf \"Cline · Auto\". Umfang dieses Stempels: sw.js CACHE_NAME v666->v667 plus Precache-Eintrag /assets/ai/strom-stillstand.js; index.html, app.js und search.js tragen ausschliesslich erhoehte ?v=-Marken. Keine Startseiten-Logik, kein Design, keine Favicons, keine Modelle entfernt.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "5a4e3ede957ded67c5f7c0992bbcccc6e515e7d93df11f3eebc085471b57cace",
+    "public/index.html": "3d0afe283e4e1537866cf3d284183d14abdf1c0b25c11082ce77d5e1c9d1f6c8",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "ac4ebd1d5e4d71a7c4f63daef7a7fa1271713131b32c042cfc50799c0ab24a66",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "b090a7ec8072eb283987b12749acc2129062798a51ce291298d37f4bd3626a17",
+    "public/app.js": "2c513549164e00b8b8a1c00eea83c3553bc7510bb8a91e85996b74264b0c716d",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "63bff297478e12be57fc64790ab0b91ff171268c6603fa19cfccac194c7ce652",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
-    "public/search.js": "7fcf6e9116030fa13f36cbf96dbb9446cdbba5599be9da39dfb605da7a141884",
+    "public/search.js": "fe666a5dbb9a4b3598608de57650f382a0d04a3049ad9d47fc9954932b88144c",
     "public/composer-tools.js": "261deb2f4feee34411e4c54dffafa7265b715fc63126360d00dfb799798abf55",
     "public/composer-plus-menu.js": "7b0fe7ebb9dae557789899fbb6e98cc3c5a6f8b8687c9abe29a80140e2d0206b",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "359604a1be3d159756130611eb5c69f81133eb88f2bf2bc1aa1f55704354e8af",
+    "public/sw.js": "776d05a0d8c6a734079bfa759a31b65163d8213fcf78a692c828a221da19e831",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
