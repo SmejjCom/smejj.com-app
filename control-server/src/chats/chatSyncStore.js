@@ -27,7 +27,12 @@ import {
 } from "./chatIndex.js";
 
 export const PRAEFIX = "chats";
-export const MAX_CHATS_PRO_KONTO = 100;
+// 500 seit 2026-08-23 (Betreiber-Freigabe): am Betreiberkonto lagen 126 Dateien,
+// die Grenze von 100 schnitt 26 Chats serverseitig ab. Der Index haelt auch
+// 500 Eintraege in EINEM Abruf (~60 KB); der Vollpfad bleibt bei 8 parallel.
+// Muss mit MAX_CHATS in public/chat-store.js uebereinstimmen — der Client
+// raeumt sonst lokal weg, was der Server gerade geliefert hat.
+export const MAX_CHATS_PRO_KONTO = 500;
 export const MAX_CHAT_BYTES = 512 * 1024; // ein Chat mit 8 Fassungen bleibt klar darunter
 // S3-Schreibwege ohne Zeitlimit scheitern STILL (Befund 2026-08-xx, S3-Timeout).
 export const S3_TIMEOUT_MS = 2500;
