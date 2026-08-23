@@ -1,0 +1,14 @@
+{
+  "lock": "smejj modell-menue lock v1 (100% Schutz)",
+  "frozenAt": "2026-08-23T04:09:56.590Z",
+  "confirmation": "Betreiber 2026-08-23: \"Genau diese Liste ich will haben und musst du sichern soll nicht geaendert werden nicht kaputt gemacht werden ohne meine schriftliche Bestaetigung.\" — Geschuetzt sind beide Modell-Menues (Auto ganz oben, danach die lange Liste aus dem Cline-Katalog), ihre ausgelieferten /assets/-Kopien sowie Katalog-Holer und Endpunkt, ohne die die lange Liste still leer bleibt.",
+  "rule": "Keine Aenderung an der Modell-Liste (die beiden Menues, ihre ausgelieferten Kopien, der Katalog-Holer und seine Route) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
+  "files": {
+    "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
+    "public/code-modell-menue.js": "c357d67f795dc4753b74059e3ced1c4d12cd628c006184d4442df92aa1715942",
+    "public/assets/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
+    "public/assets/code-modell-menue.js": "c357d67f795dc4753b74059e3ced1c4d12cd628c006184d4442df92aa1715942",
+    "control-server/src/providers/clineClient.js": "84c08a6aced06a82dade2694d99f48c6434ec73a3701d49cb4dc741c0051dbb8",
+    "control-server/src/routes/providerRoutes.js": "2f63057321eae995cbfd7bd14d773b0e9bb76d3cb5c1d17e89349f7d7a3995fb"
+  }
+}
