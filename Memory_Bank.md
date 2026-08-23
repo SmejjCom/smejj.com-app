@@ -873,3 +873,7 @@ Stand auf 5. August 2026 gesetzt.
 - Admin-Lock um opsAutopiloten.js, opsAutopilotenListe*.js und views-stage9.js erweitert
   (Betreiber-Wortlaut 2026-08-23 "100 % Schutz aktivieren").
 - Capsule: docs/task-capsules/2026/08/job_autopiloten_seite_20260823/capsule.md
+- NACHTRAG 2026-08-23: Autopiloten-Seite nach dem Design-Vorschlag (26.6.26) umgebaut — Tabelle nach
+  Bereichen (opsAutopilotenBereiche.js), Detail mit Knöpfen zuerst; Optik der Konsole behalten (eckig,
+  groß, eine Farbe). Falle: kachelBlock/kopfBlock escapen selbst — nie HTML übergeben. Nach jedem
+  Control-Neustart fehlen 30 min die Einzelläufe: „Ohne Einzellauf" ist kein Befund.

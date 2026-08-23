@@ -58,3 +58,18 @@ Live-Seite gemessene Widersprüche beheben (Betreiber-Auswahl: „Punkte 1–4")
   (`cp: public/verlauf-messwerte.json: No such file or directory`) — eigener Befund.
 - Punkte 5–10 der Durchsicht (Gruppierung der 35 Taktgeber-Zeilen, Vorfall-Bündelung, eine Uhr,
   Start-Knopf statt POST-Anleitung, leere Pillen „Index —/Kette —") nicht beauftragt.
+
+## Nachtrag — Design-Vorschlag „smejj.com — Adminbereich" (26.6.26) übernommen (Karte: „Struktur übernehmen, Optik anpassen")
+
+- Liste als Tabelle nach sechs Bereichen (`opsAutopilotenBereiche.js`, Test erzwingt Vollständigkeit):
+  Nr · Was er tut · Takt · Zustand · Letzter echter Lauf; Suche; Register Alle/Läuft/Braucht dich/Aus.
+- Detail „Ein Autopilot von innen": Zurück, Knöpfe zuerst, vier Kennzahlen, Grund, Heute, 90 Tage,
+  letzte Läufe, Steckbrief, Funktionen, Anleitung. Vorfall-Protokoll auf 8 gekürzt, aufklappbar.
+- Optik bewusst NICHT übernommen (Rundungen 999px/16px, 13,5 px, Vollcyan): Konsole bleibt viereckig,
+  ≥15 px, eine Akzentfarbe (`console.css` nur ergänzt).
+- Zwei Live-Fixes im Ship-Loop: (1) nach jedem Control-Neustart standen 39 unter „Braucht dich" →
+  heute Gemessene ohne Einzellauf heißen „Ohne Einzellauf" und sind kein Befund; Lage-Satz nennt max. 5 Namen.
+  (2) Takt-Kachel zeigte rohes HTML → Klartext an kachelBlock/kopfBlock.
+- Commits Bau-Branch 8df4540c, 9b3aaf01, 69fc75fe; Frontend 6638625, d6565eb, 9b7870c. Admin-Lock 21 Dateien.
+- Nicht umgesetzt (andere Seiten des Vorschlags: Nutzer, Umsatz, Sicherheit, Auslieferung, Cockpit-Dienste):
+  enthalten erfundene Zahlen, brauchen je eigene Datenquellen.
