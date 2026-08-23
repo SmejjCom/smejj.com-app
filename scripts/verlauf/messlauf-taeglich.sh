@@ -125,7 +125,12 @@ fi
 # die wird gleich neu geschrieben. Eigene Arbeit gibt es hier nicht.
 git reset -q --hard origin/main || { echo "ABBRUCH: Frontend-Klon liess sich nicht angleichen."; exit 1; }
 
-cp "$DATEI" "$FRONTEND/verlauf-messwerte.json" || { echo "ABBRUCH: Kopieren fehlgeschlagen."; exit 1; }
+# ABSOLUT, nicht "$DATEI": seit dem Auffrischen des Klons (31ccf4dc) steht
+# der Aufruf NACH `cd "$FRONTEND"` — ein relatives public/… zeigte dann in den
+# Klon, wo es keinen public/-Ordner gibt. Folge 22.–23.08.: jeder geplante
+# Lauf endete mit "cp: No such file" und Exit 1, die Ampel stand auf Rot,
+# obwohl die Messung selbst 100 % ergab.
+cp "$APP/$DATEI" "$FRONTEND/verlauf-messwerte.json" || { echo "ABBRUCH: Kopieren fehlgeschlagen."; exit 1; }
 if git diff --quiet -- verlauf-messwerte.json; then
   echo "$(date -u +%FT%TZ) Frontend war bereits auf diesem Stand."
   exit 0
