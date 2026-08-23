@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { APP_INFO, CAPABILITIES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE } from "./shared/platform.js";
 import { SECURITY_LIMITS } from "./shared/securityPolicy.js";
 import { createWerkstatt } from "./routes/werkstattRoutes.js";
-import { json, readJson } from "../control-server/src/http/respond.js";
+import { json, readJson, fehlerAntwort, zuGrossFehler } from "../control-server/src/http/respond.js";
 import { parseS3Keys, signedS3List } from "../control-server/src/storage/s3Signer.js";
 import {
   handleApproveJob,
@@ -279,7 +279,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && isAppRoute(url.pathname)) return serveFile(res, "index.html");
     json(res, 404, { error: "Not found" });
   } catch (error) {
-    json(res, 500, { error: error.message || "Internal error" });
+    fehlerAntwort(res, error); // Status aus dem Fehler; Begruendung in respond.js
   }
 });
 
@@ -726,7 +726,7 @@ function readAuthBody(req) {
     let raw = "";
     req.on("data", (chunk) => {
       raw += chunk;
-      if (raw.length > SECURITY_LIMITS.maxJsonBodyBytes) reject(new Error("Request too large"));
+      if (raw.length > SECURITY_LIMITS.maxJsonBodyBytes) reject(zuGrossFehler());
     });
     req.on("end", () => {
       try {

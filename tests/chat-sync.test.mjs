@@ -203,17 +203,35 @@ import { readFileSync } from "node:fs";
 
 const SYNC_QUELLE = readFileSync("public/chat-sync.js", "utf8");
 
-test("eine 4xx-Ablehnung wird gemeldet statt verschluckt — auf BEIDEN Sende-Wegen", () => {
-  const meldungen = SYNC_QUELLE.match(/await meldeAbweisung\(/g) || [];
-  assert.equal(meldungen.length, 2, "Chat-Push und Projekte-Push muessen beide melden");
+test("eine Ablehnung wird gemeldet statt verschluckt — auf BEIDEN Sende-Wegen", () => {
+  // NICHT die ANZAHL der Aufrufe pruefen, sondern dass jeder Sende-Weg einen
+  // hat. Die Zahl stand hier fruher auf 2 und wurde am 2026-08-23 zu Recht
+  // falsch: der Chat-Push meldet seither auch, wenn der Versuch NACH einer
+  // Rettung erneut scheitert. Eine Zusage, die bei jeder Verbesserung bricht,
+  // wird beim naechsten Mal einfach hochgezaehlt — und schuetzt dann nichts.
+  const chatPush = SYNC_QUELLE.slice(SYNC_QUELLE.indexOf("async function push()"),
+                                     SYNC_QUELLE.indexOf("async function pushProjekte()"));
+  const projektPush = SYNC_QUELLE.slice(SYNC_QUELLE.indexOf("async function pushProjekte()"));
+  assert.match(chatPush, /await meldeAbweisung\(/, "der Chat-Push meldet");
+  assert.match(projektPush, /await meldeAbweisung\(/, "der Projekte-Push meldet");
+
   assert.match(SYNC_QUELLE, /antwort\.status >= 400 && antwort\.status < 500/,
     "der ganze 4xx-Bereich zaehlt, nicht nur die 400 selbst");
+  // Und seit 2026-08-23 zusaetzlich das 500 des Body-Lesers: "Request too
+  // large" kommt heraus, BEVOR die Chat-Pruefung laeuft. Sechs zu grosse
+  // Chats des Betreibers fielen genau dort durch — weder gemeldet noch
+  // gerettet. Die Statusklasse allein reicht als Frage nicht.
+  assert.match(SYNC_QUELLE, /istZuGross\(/, "auch die Absage ausserhalb 4xx wird erkannt");
 });
 
 test("die Meldung nennt beim Groessen-Fall den KLARTEXT, nicht den Fehlercode", () => {
   // "chat_zu_gross" sagt einem Nutzer nichts. Er muss erfahren, was das fuer
   // ihn bedeutet: der Chat liegt nur noch auf diesem Geraet.
-  assert.match(SYNC_QUELLE, /grund === "chat_zu_gross"/);
+  // Die Weiche heisst seit 2026-08-23 istZuGross(status, grund) — sie deckt
+  // BEIDE Absagen des Servers ab (400 chat_zu_gross und 500 Request too
+  // large). Frueher stand hier der direkte Vergleich auf "chat_zu_gross";
+  // die Zusage dahinter ist unveraendert: der Nutzer liest Klartext.
+  assert.match(SYNC_QUELLE, /istZuGross\(status, grund\)/);
   assert.match(SYNC_QUELLE, /zu gross und wurde NICHT gesichert/);
   assert.match(SYNC_QUELLE, /nur auf diesem Geraet/);
 });
