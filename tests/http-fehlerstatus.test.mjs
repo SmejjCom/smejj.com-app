@@ -13,7 +13,7 @@
 // 413 sagt die Wahrheit: die Anfrage ist zu gross, Wiederholen hilft nicht.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { EventEmitter } from "node:events";
 import {
@@ -106,11 +106,40 @@ test("ein Rumpf unter der Grenze kommt unveraendert durch", async () => {
 
 test("der oberste Handler ist wirklich angeschlossen", () => {
   // Gegenprobe zum Muster "gebaut, aber nicht verdrahtet": ohne diese Zeile
-  // in server.js bliebe jede Absage weiterhin ein 500, und alle Pruefungen
-  // oben waeren gruen fuer nichts.
+  // bliebe jede Absage weiterhin ein 500, und alle Pruefungen oben waeren
+  // gruen fuer nichts.
   const server = readFileSync(fileURLToPath(new URL("../src/server.js", import.meta.url)), "utf8");
   assert.match(server, /fehlerAntwort\(res, error\)/, "der oberste catch nutzt fehlerAntwort");
   assert.doesNotMatch(server, /json\(res, 500, \{ error: error\.message/, "das pauschale 500 ist weg");
-  assert.match(server, /reject\(zuGrossFehler\(\)\)/, "auch der zweite Body-Leser wirft den Fehler mit Status");
-  assert.doesNotMatch(server, /new Error\("Request too large"\)/, "kein nackter Fehler mehr");
+});
+
+test("KEIN Body-Leser wirft mehr einen nackten Fehler", () => {
+  // Diese Pruefung SUCHT ihre Dateien, statt sie fest zu kennen: der
+  // Auth-Body-Leser stand am 2026-08-23 im Arbeitszweig noch in server.js,
+  // im Bauzweig war er laengst nach server-session-helpers.js ausgelagert.
+  // Ein Test, der eine Datei festnagelt, meldet nach so einem Umzug gruen
+  // und schuetzt nichts mehr — dieselbe Falle wie beim Modellmenue-Waechter.
+  //
+  // Gesucht wird die STELLE, die abweist (`reject(` plus die Grenze), nicht
+  // jede Datei, die das Wort kennt: securityPolicy.js definiert die Zahl nur.
+  const wurzeln = ["../src/", "../control-server/src/http/"];
+  const treffer = [];
+  for (const wurzel of wurzeln) {
+    const ordner = fileURLToPath(new URL(wurzel, import.meta.url));
+    for (const name of readdirSync(ordner)) {
+      if (!name.endsWith(".js")) continue;
+      const text = readFileSync(ordner + name, "utf8");
+      if (/maxJsonBodyBytes\) reject\(/.test(text)) treffer.push({ name, text });
+    }
+  }
+  assert.ok(treffer.length >= 2, `mindestens zwei Body-Leser erwartet, gefunden: ${treffer.length}`);
+  for (const { name, text } of treffer) {
+    assert.match(text, /maxJsonBodyBytes\) reject\(zuGrossFehler\(\)\)/,
+      `${name} muss den Fehler MIT Status werfen`);
+    // Nur die Wurfstelle prueft hier, nicht der Fliesstext: respond.js
+    // ERKLAERT den alten nackten Fehler in einem Kommentar, und das soll es
+    // auch — die Begruendung ist der halbe Wert der Aenderung.
+    assert.doesNotMatch(text, /reject\(new Error\("Request too large"\)\)/,
+      `${name} wirft noch nackt`);
+  }
 });
