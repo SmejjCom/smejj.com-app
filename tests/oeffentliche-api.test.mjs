@@ -312,6 +312,12 @@ test("Denken ist aus — ausser beim Denk-Modell (sonst frisst es das Token-Budg
   // 50 von 50 erlaubten Token ins Denken gingen (finish_reason "length").
   assert.equal(koerper[0].thinking?.type, "disabled", "Allzweckmodell muss ohne Denken laufen");
   assert.equal(koerper[1].thinking, undefined, "das Denk-Modell darf denken");
+
+  // Identitaet: live sagte das Backend "the GLM language model trained by Z.ai".
+  // Erste Nachricht ist IMMER unsere Systemnachricht, die des Kunden folgt.
+  assert.equal(koerper[0].messages[0].role, "system");
+  assert.match(koerper[0].messages[0].content, /smejj 1\.0/);
+  assert.equal(koerper[0].messages[1].content, "hi");
 });
 
 test("Unbekanntes Modell und leere messages werden sauber abgewiesen", async () => {

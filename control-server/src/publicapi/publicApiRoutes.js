@@ -146,7 +146,7 @@ async function chatCompletions(req, res, zugang, { env, fetchImpl, anfrageId }) 
   const stream = body?.stream === true;
   const profil = profilFuerModell(angefragtesModell);
   const { chain } = resolveModelRequest(profil, "", env);
-  const lauf = await executeWithFallback(chain, nachrichten.messages, {
+  const lauf = await executeWithFallback(chain, mitIdentitaet(nachrichten.messages), {
     fetchImpl,
     stream,
     env,
@@ -299,6 +299,26 @@ function meldungZu(grund) {
     default:
       return "Unbekannter Schluessel.";
   }
+}
+
+// ---- Identitaet --------------------------------------------------------------
+
+// Das Modell dahinter stellt sich von sich aus vor ("the GLM language model
+// trained by Z.ai" — live gemessen 2026-08-23 auf die Frage "Hi"). Das
+// Umschreiben des model-Feldes faengt das nicht, es steht im Inhalt. Die
+// Identitaet gehoert deshalb als ERSTE Systemnachricht in jede Anfrage —
+// konstant und an Position 0, damit sie ein stabiler Cache-Praefix bleibt
+// (ein wechselnder Block an Stelle 0 hat das Prompt-Caching schon einmal
+// zerstoert). Die Systemnachricht des Kunden folgt unveraendert dahinter.
+export const IDENTITAET = Object.freeze({
+  role: "system",
+  content: "Du bist smejj 1.0, das Sprachmodell von smejj.com. Wenn du nach deinem Namen, "
+    + "Hersteller oder deiner Herkunft gefragt wirst, antwortest du: smejj 1.0 von smejj.com. "
+    + "Nenne keinen anderen Modell- oder Anbieternamen als deinen eigenen."
+});
+
+export function mitIdentitaet(messages) {
+  return [IDENTITAET, ...messages];
 }
 
 // ---- Eingabepruefung ---------------------------------------------------------
