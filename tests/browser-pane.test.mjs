@@ -40,14 +40,22 @@ test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
   // prompt vergessen. Jetzt wird GLEICHHEIT geprueft statt eines Wortlauts:
   // derselbe Schutz, aber er kann nicht mehr veralten. Und er deckt jetzt
   // JEDEN Importeur ab, nicht nur maus-panel.js.
-  const paneMarke = html.match(/\/assets\/browser-pane\.js\?v=([^"']+)/)?.[1];
-  assert.ok(paneMarke, "index.html laedt browser-pane.js ohne ?v=-Marke");
-  assert.match(html, /\/assets\/maus-panel\.js\?v=/);
+  // GEAENDERT 2026-08-23: browser-pane.js und maus-panel.js standen als feste
+  // <script>-Tags in index.html und wogen samt Kette 63,3 KB von 335,6 KB, die
+  // JEDER Seitenaufruf zahlte — fuer Flaechen, die erst auf Knopfdruck
+  // aufgehen. Sie kommen jetzt aus browser-nachladen.js. Die Zusage ist
+  // unveraendert: ALLE Importeure muessen dieselbe Marke nennen, sonst sind es
+  // zwei Modul-Instanzen mit getrenntem state.
+  const nachlader = fs.readFileSync("public/browser-nachladen.js", "utf8");
+  const paneMarke = nachlader.match(/browser-pane\.js\?v=([^"']+)/)?.[1];
+  assert.ok(paneMarke, "browser-nachladen.js laedt browser-pane.js ohne ?v=-Marke");
+  assert.match(nachlader, /maus-panel\.js\?v=/);
+  assert.match(html, /browser-nachladen\.js/, "der Nachlader steht in index.html");
   for (const datei of ["public/maus-panel.js", "public/maus-absicht.js"]) {
     assert.match(
       fs.readFileSync(datei, "utf8"),
       new RegExp(`\\./browser-pane\\.js\\?v=${paneMarke}`),
-      `${datei} muss dieselbe browser-pane-Version importieren wie index.html — zwei Spezifizierer waeren zwei Modul-Instanzen mit getrenntem state`
+      `${datei} muss dieselbe browser-pane-Version importieren wie der Nachlader — zwei Spezifizierer waeren zwei Modul-Instanzen mit getrenntem state`
     );
   }
   // GEAENDERT 2026-08-18: der Knopf trug data-jump="websites" und fiel damit

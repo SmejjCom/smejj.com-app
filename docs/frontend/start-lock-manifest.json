@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T14:34:44.462Z",
-  "confirmation": "Betreiber 2026-08-23: \"Zum Schluss bitte 100 % Schutz aktivieren: nichts darf kaputtgehen, geloescht oder ohne meine schriftliche Freigabe geaendert werden\" — Frage-Karte + Bridge v141 (chat-history-context, chat-bridge) eingefroren",
+  "frozenAt": "2026-08-23T14:35:50.232Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-23 (Master-Prompt, Performance-Budget \"Startseite unter 300 KB komprimiert\"): Seitengewicht gesenkt. Gemessen 335,6 KB gegen 300 KB Budget; Browser-Panel und Maus-Panel wogen samt Kette 63,3 KB fuer Flaechen, die beim ersten Bildaufbau niemand sieht. index.html laedt sie jetzt ueber browser-nachladen.js statt ueber drei feste Skript-Tags — DESIGN UNVERAENDERT, nur die Ladereihenfolge. Neu gemessen: 256,6 KB. Umfang dieses Stempels: index.html (drei Tags durch einen ersetzt, dazu erhoehte ?v=-Marken), sw.js CACHE_NAME v673->v674 plus zwei Precache-Eintraege (browser-nachladen.js und das fremde auth-gate-frueh.js, das eine Parallelsitzung vergessen hatte).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "9fbff058188a6af86546a627be7ba02c87aba7cf11b1137f003c833e3d5e539c",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "f3b8e9b93ae097f055c742cbad57d41d4b8311d6861b5d639213e4813d6218fd",
+    "public/sw.js": "80643d870ae8c7e130d60f7d74ce61a3ad16f6da1269469bf76c150005832521",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

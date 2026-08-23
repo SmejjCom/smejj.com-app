@@ -51,11 +51,18 @@ test("Import in Node ist gefahrlos (document-Waechter greift)", async () => {
   await assert.doesNotReject(() => import("../public/browser-pane-backdrop.js"));
 });
 
-test("index.html laedt den Waechter als Modul nach browser-pane.js", () => {
-  assert.match(html, /<script src="\/assets\/browser-pane-backdrop\.js\?v=2" type="module"><\/script>/);
-  const paneAt = html.indexOf("/assets/browser-pane.js?v=");
-  const guardAt = html.indexOf("/assets/browser-pane-backdrop.js?v=2");
-  assert.ok(paneAt > -1 && guardAt > paneAt, "Waechter muss nach browser-pane.js stehen");
+test("der Waechter wird nach browser-pane.js geladen", () => {
+  // GEAENDERT 2026-08-23: beide standen als feste <script>-Tags in index.html
+  // und wogen samt Kette 63,3 KB von 335,6 KB, die JEDER Seitenaufruf zahlte —
+  // fuer eine Flaeche, die erst auf Knopfdruck aufgeht. Sie kommen jetzt aus
+  // browser-nachladen.js. Die Zusage ist dieselbe geblieben: der Waechter
+  // NACH dem Pane, sonst findet er dessen Zustand nicht.
+  const nachlader = fs.readFileSync("public/browser-nachladen.js", "utf8");
+  const paneAt = nachlader.indexOf("browser-pane.js?v=");
+  const guardAt = nachlader.indexOf("browser-pane-backdrop.js?v=2");
+  assert.ok(paneAt > -1, "browser-pane.js wird nicht nachgeladen");
+  assert.ok(guardAt > paneAt, "Waechter muss nach browser-pane.js stehen");
+  assert.ok(!html.includes('<script src="/assets/browser-pane-backdrop.js'), "kein festes Tag mehr");
 });
 
 test("sw.js hat den Waechter im Precache (cache-first erreicht Bestandsnutzer nur so)", () => {

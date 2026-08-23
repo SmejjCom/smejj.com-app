@@ -89,6 +89,18 @@
       "marke": "1",
       "finger": "948c8c087e38fa1d"
     },
+    "browser-pane.js": {
+      "marke": "browser-pane-20260822-1",
+      "finger": "66d0e7324937b177"
+    },
+    "browser-pane-backdrop.js": {
+      "marke": "2",
+      "finger": "3144f0486fe13e2f"
+    },
+    "maus-panel.js": {
+      "marke": "13",
+      "finger": "aa75c137f31c07d2"
+    },
     "browser-pane-render.js": {
       "marke": "browser-pane-20260822-1",
       "finger": "fcf48d6c9f40f06a"
@@ -217,6 +229,10 @@
       "marke": "1",
       "finger": "b50a3990a72a3b35"
     },
+    "auth-gate-frueh.js": {
+      "marke": "1",
+      "finger": "565135779c469702"
+    },
     "start-chips.js": {
       "marke": "b32b",
       "finger": "8e081f94e0cf0165"
@@ -281,17 +297,9 @@
       "marke": "cline-submenu-20260817-5",
       "finger": "368a4de8eb1ac038"
     },
-    "browser-pane.js": {
-      "marke": "browser-pane-20260822-1",
-      "finger": "66d0e7324937b177"
-    },
-    "browser-pane-backdrop.js": {
-      "marke": "2",
-      "finger": "3144f0486fe13e2f"
-    },
-    "maus-panel.js": {
-      "marke": "13",
-      "finger": "aa75c137f31c07d2"
+    "browser-nachladen.js": {
+      "marke": "1",
+      "finger": "7172e180ab03addc"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",
@@ -393,9 +401,13 @@
       "marke": "2",
       "finger": "0c15929fd1c29c5f"
     },
+    "willkommen-sprache.js": {
+      "marke": "1",
+      "finger": "96d889c5e5c07ef5"
+    },
     "willkommen-fokus.js": {
-      "marke": "w2",
-      "finger": "04b22fdb85bb41d7"
+      "marke": "w3",
+      "finger": "d9dbf3c2ce375747"
     }
   }
 }

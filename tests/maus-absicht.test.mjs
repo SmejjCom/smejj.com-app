@@ -125,7 +125,10 @@ test("?v=-Marken zeigen auf DIESELBE Kopie wie index.html", () => {
   // Eine abweichende Marke ist fuer den Browser eine zweite Datei mit eigenem
   // Zustand — die Maus fande dann nie einen Tab. Nichts waere zu sehen.
   const modul = fs.readFileSync("public/maus-absicht.js", "utf8");
-  const html = fs.readFileSync("public/index.html", "utf8");
+  // Seit 2026-08-23 laedt nicht mehr index.html das Pane, sondern
+  // browser-nachladen.js (63,3 KB weniger beim ersten Aufbau). Die Referenz
+  // fuer die Marke ist damit der Nachlader — die Zusage selbst ist dieselbe.
+  const html = fs.readFileSync("public/browser-nachladen.js", "utf8");
   const pane = fs.readFileSync("public/browser-pane.js", "utf8");
   const marke = (text, datei) => text.match(new RegExp(`${datei}(\\?v=[^"']*)`))?.[1];
   assert.equal(marke(modul, "browser-pane\\.js"), marke(html, "browser-pane\\.js"));
