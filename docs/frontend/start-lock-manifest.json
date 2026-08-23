@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T04:29:39.777Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-23: zu grosse Chats retten (\"Zu grosse Chats retten\"), umgesetzt mit \"erledige … live gehen, live testen\". Umfang: NUR Cache-Marken. sw.js CACHE_NAME v652->v653 plus Precache-Eintrag /assets/chat-medien-rettung.js; index.html, app.js und search.js tragen ausschliesslich erhoehte ?v=-Marken der Markenkette (chat-store b54->b55, chat-history-view b48->b49, chat-actions b27->b28, chat-history-cards b48->b49, search b41->b42, search-overlay b48->b49, spur-start b35->b36, app b79->b80, papierkorb 2->3, arbeitsbereiche 8->9, code-nachladen 2->3, code-flaeche 45->46, chat-sync 3->4). Keine Zeile Startseiten-Logik, kein Design, keine Favicons.",
+  "frozenAt": "2026-08-23T04:40:56.197Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-23 \"Zu grosse Chats retten\", Fortsetzung nach dem Live-Test: der Server weist Chats ueber 1 MB mit HTTP 500 \"Request too large\" ab (Body-Leser, maxJsonBodyBytes), nicht mit 400 chat_zu_gross — sechs der zehn ungesicherten Chats lagen in diesem blinden Fleck und wurden weder gerettet noch gemeldet. Umfang dieses Stempels: sw.js CACHE_NAME v653->v654; index.html, app.js und search.js tragen ausschliesslich erhoehte ?v=-Marken der Markenkette. Keine Zeile Startseiten-Logik, kein Design, keine Favicons.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "ff06a64361fb4c088d253f00505a4b36adbe905b505899a04ccafa6b39fbca9d",
+    "public/index.html": "5aad1d483b562fd0780a53c50b6d357a24fe11f4d5b7182512f5e8964a8d8c87",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "48d109ee80a7f9644a5f0de1773cd62bd504d0cda28c9145a20be0027425aa3f",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "3d550373694e50456fdb16ea7b2db244d5b898ad165ea486c71e3889abe1ee4b",
+    "public/app.js": "4342512f161898b73b6403cde7ba04ce4dc22a7403bd52265e1ac7d72f59002e",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "6f2cc54cb595530dceb18b039a17af0b47fe00c1565944429048031a713966ca",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "f8c3b26d0cbfddbf52973c249ca7d294f240aaf1db92d718aaeaaa73700e5085",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
-    "public/search.js": "b3e5161fb589c5c1b833e71330a182d1819f97ec5fb68fb8ed899b03f68dc22e",
+    "public/search.js": "1dde6714acb4dd54ee94db585723aef0503a86974e577858bd5b7cb228602179",
     "public/composer-tools.js": "261deb2f4feee34411e4c54dffafa7265b715fc63126360d00dfb799798abf55",
     "public/composer-plus-menu.js": "7b0fe7ebb9dae557789899fbb6e98cc3c5a6f8b8687c9abe29a80140e2d0206b",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ec1c0049d3b549ba059ddfbcf6e783acc1f02110f0f4e0fb419382cb631994d4",
+    "public/sw.js": "1a2b526de72e80496ead66847f546e693dd913db57ac1d06d0ebdb02ef7aa742",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

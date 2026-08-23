@@ -12,7 +12,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  MAX_CHAT_BYTES, groesseInBytes, enthaeltDatenUri, brauchtRettung,
+  MAX_CHAT_BYTES, groesseInBytes, enthaeltDatenUri, brauchtRettung, istZuGross,
   rettteWert, rettteChat, rettteUndSpeichere
 } from "../public/chat-medien-rettung.js";
 
@@ -78,6 +78,26 @@ test("das Muster erfasst genau die Typen, die der Server annimmt", async () => {
 
   // Und das Schwestermuster in chat-medien.js darf nicht auseinanderlaufen.
   assert.match(lies("../public/chat-medien.js"), /data:\(\?:image\|video\)/);
+});
+
+test("BEIDE Absagen des Servers werden als 'zu gross' erkannt", () => {
+  // Live gemessen 2026-08-23 an den echten Chats des Betreibers:
+  //   543 KB  -> HTTP 400 {"error":"chat_zu_gross"}   (MAX_CHAT_BYTES)
+  //  1537 KB  -> HTTP 500 {"error":"Request too large"} (Body-Leser, 1 MB)
+  // Der zweite Fall war der blinde Fleck: chat-sync meldete nur 4xx, also
+  // fielen SECHS der zehn ungesicherten Chats durch — ohne Hinweis, ohne
+  // Rettungsversuch. Wer nur auf "chat_zu_gross" hoert, rettet vier von zehn.
+  assert.equal(istZuGross(400, "chat_zu_gross"), true, "die saubere Absage");
+  assert.equal(istZuGross(500, "Request too large"), true, "der rohe Body-Leser");
+  assert.equal(istZuGross(413, ""), true, "413 ohne Grund reicht");
+
+  // Und die Gegenprobe — sonst wuerde jeder Serverfehler als "zu gross"
+  // gedeutet und die Rettung liefe bei echten Stoerungen ins Leere.
+  assert.equal(istZuGross(500, "internal_error"), false);
+  assert.equal(istZuGross(503, "wartung"), false);
+  assert.equal(istZuGross(401, "authentication_required"), false);
+  assert.equal(istZuGross(400, "zeitstempel_ungueltig"), false);
+  assert.equal(istZuGross(200, ""), false);
 });
 
 test("die Grenze ist die des Servers", () => {
@@ -193,6 +213,7 @@ test("chat-sync ruft die Rettung wirklich auf — und nur bei 'zu gross'", async
   const { fileURLToPath } = await import("node:url");
   const sync = readFileSync(fileURLToPath(new URL("../public/chat-sync.js", import.meta.url)), "utf8");
   assert.match(sync, /chat-medien-rettung\.js/, "das Modul wird importiert");
-  assert.match(sync, /grund === "chat_zu_gross" && await rette\(/, "und bei genau diesem Grund gerufen");
+  assert.match(sync, /istZuGross\(antwort\.status, grund\) && await rette\(/, "und an der gemeinsamen Weiche gerufen");
+  assert.match(sync, /grossFehler \|\| istZuGross\(/, "das 500 des Body-Lesers wird mit erfasst");
   assert.match(sync, /if \(zweiter\?\.ok\) continue;/, "nach der Rettung wird erneut gesendet");
 });
