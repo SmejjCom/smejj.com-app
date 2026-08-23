@@ -46,6 +46,9 @@ Ursache: code-flaeche.js sendet über einen programmatischen Klick auf #startSen
 ## Nachtrag 24.08. (2) — „sende icon sieht man nicht mehr" (App 449317d4, Frontend 9a60ca4, sw v686)
 Der Beleuchtungs-Block vom 18.08. färbte den Pfeil bei Text dunkel (für die damals helle Fläche); nach dem Transparent-Umbau war er in Chat und Code unsichtbar. Fix: helles Zeichen, Hover Logo-Cyan. Live bewiesen (computed color + Screenshot + echte Antwort „alles gut" im eingeloggten Chrome). Die „Verbindung unterbrochen"-Meldungen des Betreibers fielen in ein Bridge-Neustart-Fenster (restartService, 30–60 s); Senden läuft wieder. Start-Lock neu gestempelt.
 
+## Nachtrag 24.08. (3) — EIN Modell-Menue, zentral (App 16b220e9, Frontend 6c7d05e, sw v687)
+Betreiber-Befund: nach Browser-Aktualisieren zeigte der Start-Knopf das alte statische Menü. Ursache: die Verdrahtung wohnte im NACHGELADENEN code-flaeche.js. Lösung: modell-menue-start.js lädt immer mit der Seite, verdrahtet zentral (Capture, Wachhund data-modell-zentral), altes Menü bleibt zu. Live bewiesen: frisches Laden → „Auto/smejj 1.0/Opus 5/…", zweimal in Folge, Code-Bereich identisch. Tests 3/3; start-lock + modell-menue-lock neu gestempelt.
+
 ## Offen
 - Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht).
 - `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
