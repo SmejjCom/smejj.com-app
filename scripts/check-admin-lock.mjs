@@ -80,7 +80,19 @@ export const PROTECTED_FILES = [
   // Der Spiegel public/admin/gate.js steht bewusst NICHT unter einer Sperre:
   // tests/adminbereich-anmeldepflicht.test.mjs erzwingt bereits, dass er
   // byte-gleich zu dieser Quelle ist. Zwei Sperren waeren zwei Wahrheiten.
-  "control-server/admin-ui/gate.js"
+  "control-server/admin-ui/gate.js",
+  // Die Autopiloten-Seite (Modul AP). Aufgenommen am 2026-08-23 auf Anordnung
+  // des Betreibers ("100 % Schutz aktivieren"), nachdem vier Widersprueche
+  // der Live-Seite behoben waren: Grau mit Meldepflicht ist ein Befund
+  // (Register "Braucht dich"), Nummer 40 war doppelt, die Akten 01/02/05
+  // nannten einen Zeabur-Dienst, den es nicht gibt, Vorfaelle tragen den
+  // aktuellen Namen. Registry (Namen, Nummern, Anleitungen), Ampel-Logik und
+  // Ansicht gehoeren zusammen eingefroren — eine Aenderung an nur einer
+  // Stelle erzeugt genau die Widersprueche, die hier behoben wurden.
+  "control-server/src/admin/opsAutopiloten.js",
+  "control-server/src/admin/opsAutopilotenListe.js",
+  "control-server/src/admin/opsAutopilotenListeEvolution.js",
+  "control-server/admin-ui/views-stage9.js"
 ];
 
 export const ADMIN_LOCK = {

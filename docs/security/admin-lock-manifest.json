@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-15T05:16:50.075Z",
-  "confirmation": "Betreiber am 2026-08-14/15: 'wenn es alles fertig sicherer alles soll nicht mehr kaputt gehen, nicht mehr geändert werden ohne schriftliche Bestätigung' — Neustempelung nach Pruefung auf dem Bau-Zweig; Aenderungen gelesen (Cockpit/Radar + ein erlaubter Fremdpfad), Absturzpfad ueber geerbte Namen behoben",
+  "frozenAt": "2026-08-23T04:40:51.536Z",
+  "confirmation": "Betreiber am 2026-08-23: 'Zum Schluss bitte 100 % Schutz aktivieren: nichts darf kaputtgehen, gelöscht oder ohne meine schriftliche Freigabe geändert werden. Bestehende Funktionen, Daten, Design, Einstellungen und Zugänge müssen sicher bleiben' — Autopiloten-Seite (Registry, Ampel-Logik, Ansicht) nach vier Live-Fixes aufgenommen; Live bewiesen auf smejj.com/admin/autopiloten/",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -19,6 +19,10 @@
     "control-server/src/routes/adminUiRoutes.js": "7aeeda3af7589cc609fad850731a36109ddb09be948cc846e6a284a085f00552",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
     "control-server/admin-ui/api.js": "b2ac0d7c03ad325e0fec113c44fcd1026af4169b709a269f8f7159b4fdc5b17a",
-    "control-server/admin-ui/gate.js": "d9e9bb407b063600208b1ba1881e8fc18120fb5d37e2e7c65a06afbc9736de2f"
+    "control-server/admin-ui/gate.js": "d9e9bb407b063600208b1ba1881e8fc18120fb5d37e2e7c65a06afbc9736de2f",
+    "control-server/src/admin/opsAutopiloten.js": "55bbc1e7755cb25f43ce15d2cadb07f9e655bf90bd161d06ac83d137d0dbfb0b",
+    "control-server/src/admin/opsAutopilotenListe.js": "ca824b3fb6a4885b17b6bfca18d2c2f3257a8c930f4688c950c19225399abf97",
+    "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
+    "control-server/admin-ui/views-stage9.js": "6441c8d4b78ef6b53cd4f11b393bcdf26d2214d2e9825c3ffa2fff36133cb3e3"
   }
 }

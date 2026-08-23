@@ -860,3 +860,16 @@ Stand auf 5. August 2026 gesetzt.
 - FOLGE fuer bestehende Einwilligungen: sie sind an den alten Hash gebunden und
   werden mit der Umstellung ungueltig. Das ist das gewollte Verhalten — eine
   Einwilligung gilt fuer den Text, den der Nutzer gelesen hat.
+
+## 2026-08-23 — Autopiloten-Seite: Grau ist zweierlei (job_autopiloten_seite_20260823)
+
+- LIVE bewiesen: smejj.com/admin/autopiloten/ zeigt "3 melden sich nicht" (Qualitäts-Prüfer,
+  Code-Sicherung, Betriebswache) im Register "Braucht dich" statt "Kein Alarm" über "Still 4".
+  Betriebswache = Nr. 42 (40 war doppelt), Akten 01/02/05 ohne den nicht existierenden
+  Dienst smejj-autopilot-jobs, Vorfälle tragen den aktuellen Kurznamen.
+- WURZEL der Stille: Control-Server antwortet auf jeden Herzschlag mit 503 autopilot_keys_missing
+  (SMEJJ_AUTOPILOT_KEYS fehlt in Zeabur). Nachziehen: CONFIRM_AUTOPILOT_KEYS=YES
+  node scripts/deploy/autopilot_schluessel_setzen.mjs, danach control-neu-bauen.mjs.
+- Admin-Lock um opsAutopiloten.js, opsAutopilotenListe*.js und views-stage9.js erweitert
+  (Betreiber-Wortlaut 2026-08-23 "100 % Schutz aktivieren").
+- Capsule: docs/task-capsules/2026/08/job_autopiloten_seite_20260823/capsule.md
