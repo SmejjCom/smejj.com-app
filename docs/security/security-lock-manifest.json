@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-15T01:01:08.271Z",
-  "confirmation": "wenn es alles fertig sicherer alles soll nicht mehr kaputt gehen, nicht mehr geaendert werden ohne schriftliche Bestaetigung (Betreiber, 2026-08-14)",
+  "frozenAt": "2026-08-23T05:52:13.578Z",
+  "confirmation": "Betreiber am 2026-08-23 (Karte): 'Ja, neu einfrieren' — public/chat-bridge.js traegt auf dem Bau-Branch die am 2026-08-18 live bewiesene Prompt-Caching-Fassung (RAG-Block vor die letzte Nutzerfrage, Verlauf in 4er-Bloecken); keine Aenderung an Anmeldung, Konto-Sicherheit oder Endpunktwahl. Befund der Seite 'Was ist wirklich live?'.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "842af267e98833f359a4b6044b6e234ea871c5e79834332ebcc4fe6929215546",
@@ -12,7 +12,7 @@
     "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
     "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "82c62f446b1c28c89facb6eda5d20a8ae659cb6ce9fe4a4dd5595cbd6ffeb93c",
+    "public/chat-bridge.js": "86005dfa3147100f5edd1b0fe788899c30b105f75b427152bd67a259a8d1c8ae",
     "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
