@@ -101,6 +101,8 @@ export const PROTECTED_FILES = [
   "control-server/admin-ui/views-stage6.js",
   // Modul B Teil 2 "Nutzer-Lage" (2026-08-23): bezahlt als, Plan, zuletzt, Verbrauch.
   "control-server/src/admin/opsNutzerLage.js",
+  // Modul E Teil 2 "Abos & Umsatz" (2026-08-23): MRR, Aufladungen, Kosten, je Plan.
+  "control-server/src/admin/opsUmsatz.js",
   "control-server/admin-ui/views-stage9.js"
 ];
 

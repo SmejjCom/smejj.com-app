@@ -10,6 +10,10 @@ import { resolveAdminActor } from "../admin/adminAuth.js";
 import { abrechnungUebersicht } from "../admin/opsAbrechnung.js";
 import { kostenUebersicht } from "../admin/opsKosten.js";
 import { apiUebersicht } from "../admin/opsApi.js";
+import { umsatzUebersicht } from "../admin/opsUmsatz.js";
+
+// Startzeit des Prozesses: die Modellkosten des Token-Messers zaehlen ab hier.
+const GESTARTET_MS = Date.now();
 
 const PREFIX = "/api/admin/geld";
 const RECHT = "billing.read";
@@ -46,6 +50,8 @@ export async function handleAdminGeldRoute(req, url, res, { env = process.env } 
   const bereich = url.pathname.slice(PREFIX.length).replace(/^\//, "");
   try {
     if (bereich === "abos") return privateJson(res, 200, await abrechnungUebersicht({ env })), true;
+    // Modul E Teil 2: Abos & Umsatz — Abrechnung plus MRR, Aufladungen, Kosten, je Plan (Design-Vorschlag 2026-08-23).
+    if (bereich === "umsatz") return privateJson(res, 200, await umsatzUebersicht({ env, startzeitMs: GESTARTET_MS })), true;
     if (bereich === "kosten") return privateJson(res, 200, await kostenUebersicht({ env })), true;
     // Modul G: die oeffentliche API aus Betreibersicht (Konten, Schluessel, Umsatz).
     if (bereich === "api") return privateJson(res, 200, await apiUebersicht({ env })), true;
