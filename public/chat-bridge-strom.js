@@ -99,12 +99,42 @@ export function schrittDurchreichen(payload) {
   };
 }
 
+/**
+ * Rueckfrage-Karte (`smejj_frage`, Werkzeug frage_stellen im Control-Server,
+ * 2026-08-23) — wie die Schritte neu serialisiert aus geprueften Feldern:
+ * eine Frage, 2-4 kurze Optionen, sonst nichts. Ohne diese Zeilen warf der
+ * Filter die Karte fort — live gemessen am 2026-08-23: der Control-Server
+ * sendete sie, beim Nutzer kam nur der Text davor an.
+ */
+export function frageDurchreichen(payload) {
+  let parsed;
+  try {
+    parsed = JSON.parse(payload);
+  } catch {
+    return null;
+  }
+  const frage = parsed?.smejj_frage;
+  if (!frage || typeof frage !== "object") return null;
+  const text = String(frage.frage || "").trim().slice(0, 300);
+  const optionen = (Array.isArray(frage.optionen) ? frage.optionen : [])
+    .map((o) => String(o || "").trim().slice(0, 80))
+    .filter(Boolean)
+    .slice(0, 4);
+  if (!text || optionen.length < 2) return null;
+  return { frage: text, optionen };
+}
+
 function handleSseEvent(event, state, res) {
   const data = event.split("\n").find((line) => line.startsWith("data: "))?.slice(6);
   if (!data || data === "[DONE]") return;
   const schritt = schrittDurchreichen(data);
   if (schritt) {
     res.write(`data: ${JSON.stringify({ smejj_schritt: schritt })}\n\n`);
+    return;
+  }
+  const frage = frageDurchreichen(data);
+  if (frage) {
+    res.write(`data: ${JSON.stringify({ smejj_frage: frage })}\n\n`);
     return;
   }
   const visible = filterSsePayload(data, state);

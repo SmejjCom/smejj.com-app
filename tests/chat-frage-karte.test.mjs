@@ -149,3 +149,18 @@ test("faellt die Karte, landet ihr JSON trotzdem NIE in der Antwort", async () =
   ]);
   assert.equal(antwort.textContent, "Dazu brauche ich eine Angabe.");
 });
+
+// Die Bruecke laesst nur Erlaubtes durch (chat-bridge-strom.js) — die Karte
+// muss dort ausdruecklich stehen, sonst kommt sie nie beim Nutzer an
+// (live gemessen 2026-08-23: Control sendete sie, der Filter warf sie fort).
+const { frageDurchreichen } = await import("../public/chat-bridge-strom.js");
+
+test("die Bruecke reicht smejj_frage gepruef t durch, alles andere nicht", () => {
+  assert.deepEqual(
+    frageDurchreichen(JSON.stringify({ smejj_frage: { frage: "Welche Stadt?", optionen: ["Berlin", "Hamburg", "x".repeat(200), "d", "e"], fremd: "weg" } })),
+    { frage: "Welche Stadt?", optionen: ["Berlin", "Hamburg", "x".repeat(80), "d"] }
+  );
+  assert.equal(frageDurchreichen(JSON.stringify({ smejj_frage: { frage: "x?", optionen: ["nur eine"] } })), null);
+  assert.equal(frageDurchreichen(JSON.stringify({ choices: [{ delta: { content: "Text" } }] })), null);
+  assert.equal(frageDurchreichen("{kaputt"), null);
+});
