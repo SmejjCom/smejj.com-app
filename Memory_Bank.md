@@ -878,3 +878,4 @@ Landeseite stand.
   CSP additiv, Zeabur-Adresse bleibt Zweitzugang; OFFEN: GitHub-Rueckruf-URI traegt der Betreiber ein.
 - Runde 2: Landeseite spricht die Sprache des Besuchers (willkommen-sprache.js, 82 Texte, fail-safe deutsch) — live en-US bewiesen.
 - GEMESSEN: Auth-Gate (profile-dock.js, Skript 24/34) leitet Anonyme erst nach 3,7 s Desktop / 15 s iPhone um — Fruehstart-Gate in index.html braucht Start-Lock-Freigabe.
+- Freigabe per Karte: fruehes Tor (auth-gate-frueh.js, erstes Skript im head) — Umleitung Anonymer 15 s -> 1,7 s iPhone, 3,7 s -> 0,13 s Desktop; Start-Lock neu eingefroren.
