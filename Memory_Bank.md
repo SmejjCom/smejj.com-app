@@ -766,3 +766,22 @@ public/assets/, der Lock wurde am 14.08. eingefroren. Dabei ein echter Fund:
 willkommen.html (die LANDESEITE) und programmieren.html tragen nur EINE
 Favicon-Referenz statt fuenf — es fehlen die PNG-Fallbacks, apple-touch-icon
 und die Cache-Marke ?v=112. Favicons sind Rote Liste, deshalb nicht angefasst.
+
+**Nachtrag 2026-08-23 — favicon-lock geschlossen (sw v652).** Der Ship-Loop
+deckte auf, was seit dem 15.08. bestand: willkommen.html — die LANDESEITE, erste
+Seite fuer jeden neuen Besucher — trug nur EINE Favicon-Referenz statt fuenf
+(nur das SVG, ohne favicon.ico, ohne PNG-Fallbacks 32x32/16x16, ohne
+apple-touch-icon, ohne Cache-Marke ?v=112). Dasselbe bei programmieren.html.
+Wirkung: in Browsern ohne SVG-Favicon und beim Hinzufuegen zum Homescreen fehlte
+das Icon. Herkunft nachgemessen: b97f5b02 (15.08.) gegen Lock-Einfrierung
+(14.08.) — nicht aus dieser Sitzung. Mit Betreiber-Freigabe repariert (exakt der
+Block aus index.html), vorher UND nachher geprueft: alle fuenf Zieldateien live
+HTTP 200, die Favicon-DATEIEN selbst und webManifestIcons unveraendert — nur
+Referenzen. favicon-lock neu eingefroren (6 Dateien, 43 HTML-Seiten), voriger
+Manifest-Stand unter backups/ gesichert.
+
+**Schutzstand am Ende des Tages: 8 von 8 Sperren gruen** — start, security, abo,
+einwilligung, deploy, admin, favicon, auslieferung. 591 Tests gruen,
+markenkette 95/95. MERKREGEL daraus: check:favicon-lock gehoert in JEDEN
+Ship-Loop mit Frontend-Anteil — er hat einen Fehler gefunden, der acht Tage lang
+auf der wichtigsten Seite der Plattform stand und den niemand gesehen hat.
