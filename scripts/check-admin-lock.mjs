@@ -92,6 +92,7 @@ export const PROTECTED_FILES = [
   "control-server/src/admin/opsAutopiloten.js",
   "control-server/src/admin/opsAutopilotenListe.js",
   "control-server/src/admin/opsAutopilotenListeEvolution.js",
+  "control-server/src/admin/opsAutopilotenBereiche.js",
   "control-server/admin-ui/views-stage9.js"
 ];
 

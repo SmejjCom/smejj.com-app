@@ -21,6 +21,7 @@ import {
   _ablageLeeren,
   _herzschlaegeZuruecksetzen
 } from "./opsAutopiloten.js";
+import { BEREICHE, zugeordneteKennungen } from "./opsAutopilotenBereiche.js";
 
 const JETZT = Date.parse("2026-08-07T12:00:00.000Z");
 const ENV = { SMEJJ_AUTOPILOT_KEYS: "qualitaetsmessung:geheim1,codeberg-spiegel:geheim2" };
@@ -477,4 +478,14 @@ test("die Ansicht erfaehrt, ob ein Herzschlag erwartet wird (messung) — grau i
   const still = u.autopiloten.find((a) => a.id === "training-loop");
   assert.equal(pflicht.messung, "heartbeat");
   assert.equal(still.messung, "geplant");
+});
+
+test("jeder Autopilot steht in genau einem Bereich — und jeder zugeordnete existiert", () => {
+  const ids = new Set(AUTOPILOTEN.map((a) => a.id));
+  for (const id of zugeordneteKennungen()) assert.ok(ids.has(id), "zugeordnet, aber nicht in der Registry: " + id);
+  const u = autopilotUebersicht({ jetztMs: JETZT });
+  for (const a of u.autopiloten) {
+    assert.ok(BEREICHE.includes(a.bereich), a.id + " ohne Bereich");
+    assert.ok(zugeordneteKennungen().includes(a.id), a.id + " fehlt in opsAutopilotenBereiche.js");
+  }
 });

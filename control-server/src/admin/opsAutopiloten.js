@@ -21,6 +21,7 @@ import { sendAuthMail } from "../auth/mailer.js";
 import { createWochenbericht } from "./opsWochenbericht.js";
 import { pruefeAlarmCore, vorfaelleFortschreiben as vorfaelleFortschreibenCore, ladeVorfaelle as ladeVorfaelleCore } from "./opsAutopilotenAlerts.js";
 import { AUTOPILOTEN } from "./opsAutopilotenListe.js";
+import { bereichVon } from "./opsAutopilotenBereiche.js";
 
 export { AUTOPILOTEN };
 
@@ -191,6 +192,7 @@ function bewerten(a, jetztMs) {
     // Ob ueberhaupt ein Herzschlag erwartet wird: die Ansicht trennt daran
     // "stumm, obwohl er melden sollte" (Befund) von "stillgelegt" (normal).
     messung: a.messung,
+    bereich: bereichVon(a.id),
     kurz: a.kurz,
     funktionen: a.funktionen,
     ort: a.ort,

@@ -1,0 +1,61 @@
+// smejj.com — Modul AP: die Bereiche, in denen die Autopiloten auf der Seite
+// stehen (Design-Vorschlag "Adminbereich" vom 26.06./15.08.2026, uebernommen
+// am 2026-08-23).
+//
+// WARUM BEREICHE STATT NUMMERN: "Bei einer Stoerung sucht man nach dem
+// Bereich, nicht nach der Nummer." 42 Zeilen untereinander sind eine Liste,
+// keine Uebersicht. Die Nummer bleibt als Feld erhalten (Notizen, Zettel).
+//
+// Die Zuordnung wohnt HIER und nicht in der Registry, damit die 800-Zeilen-
+// Regel haelt und die Frage "wo steht was" an einer Stelle beantwortet ist.
+// Jede Kennung der Registry MUSS hier vorkommen — der Test erzwingt es.
+
+export const BEREICHE = Object.freeze([
+  "Antwortqualität & Sprache",
+  "Code & Bauen",
+  "Sicherheit & Wachdienst",
+  "Modelle & Wissen",
+  "Medien & Sprache",
+  "Betrieb & Auslieferung"
+]);
+
+const ZUORDNUNG = Object.freeze({
+  "Antwortqualität & Sprache": [
+    "antwort-tuev", "angelina-autopilot", "process-reward", "user-feedback-flywheel",
+    "self-improvement", "self-healing", "ai-evolution-engine", "autopilot-supervisor"
+  ],
+  "Code & Bauen": [
+    "werkstatt-autopilot", "autonomous-git-bot", "instant-web-container",
+    "multi-file-repo-architect", "code-interpreter", "task-orchestrator", "knowledge-graph"
+  ],
+  "Sicherheit & Wachdienst": [
+    "nachweis-kette", "synthetic-user-watchdog", "bug-predictor", "evolutionary-mutation",
+    "brueckenwaechter", "container-puls", "support-sla", "oberflaechenwache", "selbstheilung"
+  ],
+  "Modelle & Wissen": [
+    "modell-einkaeufer", "live-arena-leaderboard", "knowledge-distiller", "model-lifecycle",
+    "realtime-internet-harvester", "smart-router", "memory-sync", "missing-function-detector",
+    "konkurrenz-radar", "training-loop"
+  ],
+  "Medien & Sprache": [
+    "realtime-voice-pair", "multimodal-engine", "deep-research", "voice-region-check"
+  ],
+  "Betrieb & Auslieferung": [
+    "codeberg-spiegel", "qualitaetsmessung", "autopilot-laeufer", "evolution-ablage"
+  ]
+});
+
+const BEREICH_VON_ID = new Map();
+for (const [bereich, ids] of Object.entries(ZUORDNUNG)) {
+  for (const id of ids) BEREICH_VON_ID.set(id, bereich);
+}
+
+/** Der Bereich einer Kennung; unbekannte landen sichtbar in "Betrieb & Auslieferung". */
+export function bereichVon(id) {
+  return BEREICH_VON_ID.get(String(id)) || BEREICHE[BEREICHE.length - 1];
+}
+
+/** Fuer den Test: Kennungen, die in der Zuordnung stehen. */
+export function zugeordneteKennungen() {
+  return [...BEREICH_VON_ID.keys()];
+}
