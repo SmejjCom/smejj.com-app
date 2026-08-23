@@ -132,11 +132,42 @@ nach ~4 min `PROVISIONED`, `SMEJJ_PUBLIC_API_BASE_URL` per
 `updateSingleEnvironmentVariable` (braucht eine Feldauswahl `{ key }`, sonst 422;
 `createEnvironmentVariable` lehnt vorhandene Schluessel ab).
 
+## Abrechnung — PREPAID (LIVE seit 2026-08-23 06:03Z)
+
+Wie OpenAI, Anthropic, DeepSeek: Guthaben aufladen, jede Anfrage bucht ab,
+bei 0 antwortet `/v1` mit **402 `insufficient_quota`** (SDKs wiederholen das
+nicht blind — ein 429 wuerden sie wiederholen).
+
+| Modell | Eingabe | Ausgabe | (USD je 1 Mio Token) |
+|---|---|---|---|
+| smejj-1.0 | 0,50 | 1,50 | Voreinstellung |
+| smejj-1.0-fast | 0,20 | 0,60 | |
+| smejj-1.0-code | 1,00 | 3,00 | |
+| smejj-1.0-reasoning | 1,00 | 4,00 | einziges Modell mit Denken |
+
+* `publicApiPreise.js`: Preise je Markenmodell, gerechnet in ganzzahligen Mikro-USD.
+* `publicApiLedger.js`: `api-billing/konten/<kontoId>.json` (Guthaben, Summen),
+  `api-billing/ereignisse/<kontoId>/<tag>/<anfrageId>.json` (EIN Objekt je Anfrage —
+  das ist die Buchhaltung; der Tageszaehler bleibt Anzeige),
+  `api-billing/aufladungen/<stripeSessionId>.json` (Idempotenz).
+* Startguthaben 1 USD je Konto, einmalig (`SMEJJ_PUBLIC_API_STARTGUTHABEN_USD`).
+* Aufladen: `POST /api/developer/guthaben/checkout {betragUsd: 10|25|50|100}` ->
+  Stripe-Checkout (Einmalzahlung, `price_data` inline, Konto in `metadata`);
+  Webhook `checkout.session.completed` mit `metadata.zweck=api-guthaben` schreibt gut.
+* Oberflaeche: Einstellungen -> Reiter **„API & Schluessel"** (api-konto-surface.js,
+  nachgeladen) und dieselben vier Karten auf `/entwickler.html`.
+* Bekannte Grenze: Konto-Objekt read-modify-write; bei mehreren Instanzen aus
+  dem Ereignisprotokoll nachrechnen.
+
+Live bewiesen 2026-08-23: Seite zeigt 1,00 USD Startguthaben, 4 Stufen, 4 Preise;
+`/v1`-Anfrage (87+30 Token) gebucht; Checkout-Sitzung `cs_live_…` erzeugt (nicht
+bezahlt); lokal: 402 bei 0, Webhook doppelt zugestellt = einmal verbucht.
+
 ## Was fuer ein Produkt noch fehlt
 
-1. **Abrechnung.** Der Verbrauch wird gezaehlt, aber nicht bepreist. Stripe ist
-   verdrahtet (`/api/billing/*`), rechnet heute aber Abos ab, keine Token.
-2. **Ereignisprotokoll** statt Tagesaggregat, sobald Geld daran haengt.
+1. **Echte Zahlung Ende-zu-Ende** (Checkout ist erzeugt, der Webhook-Pfad ist
+   getestet — eine echte 10-USD-Aufladung durch den Betreiber schliesst den Kreis).
+2. **Nachrechnen-Skript** aus dem Ereignisprotokoll (Mehrinstanz-Fall).
 3. **Menueeintrag** zur Seite `/entwickler.html` — heute nur ueber die Adresse
    erreichbar; `public/index.html` steht unter dem Start-Lock.
 4. **`/v1/embeddings`**, falls Kunden danach fragen.

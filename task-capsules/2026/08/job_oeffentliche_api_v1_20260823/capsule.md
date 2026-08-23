@@ -31,4 +31,6 @@ Domain `api.smejj.com` am Dienst angemeldet (Status `INVALID_DNS`, CNAME bei Spa
 
 **Runde 4 (api.smejj.com):** CNAME bei Spaceship per Browser gesetzt (SOA 1786072502 -> 1787462499), Zeabur `PROVISIONED` nach 220 s, `https://api.smejj.com/v1/models` -> 401 + `WWW-Authenticate`, OPTIONS 204. `SMEJJ_PUBLIC_API_BASE_URL=https://api.smejj.com/v1` (51 Variablen, nichts verloren). Entwicklerseite zeigt `https://api.smejj.com/v1`; zusaetzlich ins Frontend-Repo deployt (smejj.com/entwickler.html, Commit 2e353a7).
 
-**Offen:** Abrechnung (Verbrauch wird gezaehlt, nicht bepreist). Menueeintrag zu `/entwickler` (index.html unter Start-Lock).
+**Runde 5 (Abrechnung + Konto-Reiter):** App ff2178d6 (design-v11) / Bau-Branch 1d33c033; Frontend b55d405 (sw v658). Prepaid-Guthaben, Ereignisprotokoll je Anfrage, Stripe-Checkout, 402 bei 0; Reiter „API & Schluessel" in den Einstellungen. Live: Startguthaben 1,00 USD sichtbar, Anfrage gebucht, Checkout `cs_live_…` erzeugt. 39+611 Tests gruen.
+
+**Offen:** echte Aufladung durch den Betreiber (Kreis schliessen), Nachrechnen-Skript; Abrechnung (Verbrauch wird gezaehlt, nicht bepreist). Menueeintrag zu `/entwickler` (index.html unter Start-Lock).
