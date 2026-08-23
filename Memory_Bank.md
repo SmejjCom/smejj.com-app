@@ -877,3 +877,8 @@ Stand auf 5. August 2026 gesetzt.
   Bereichen (opsAutopilotenBereiche.js), Detail mit Knöpfen zuerst; Optik der Konsole behalten (eckig,
   groß, eine Farbe). Falle: kachelBlock/kopfBlock escapen selbst — nie HTML übergeben. Nach jedem
   Control-Neustart fehlen 30 min die Einzelläufe: „Ohne Einzellauf" ist kein Befund.
+
+## 2026-08-23 — Seite „Was ist wirklich live?" (job_auslieferung_seite_20260823)
+- Modul AL live: smejj.com/admin/auslieferung/ — Live-Stand gegen Bau-Stand je Dienst, Sperren im Abbild.
+- Zeabur liefert `ZEABUR_GIT_COMMIT_SHA` in die Umgebung — der Control-Server kennt seinen Commit.
+- BEFUND: Sicherheits-Lock meldet `public/chat-bridge.js` als verändert (seit 15.08. nicht neu eingefroren).

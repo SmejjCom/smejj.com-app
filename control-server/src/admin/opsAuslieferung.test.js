@@ -103,9 +103,15 @@ test("Sperren im Abbild: stimmt / veraendert / nicht im Abbild", () => {
     JSON.stringify({ frozenAt: "2026-08-23T05:00:00Z", files: { "x/a.js": sha("A") } }));
   writeFileSync(path.join(wurzel, "docs", "security", "security-lock-manifest.json"),
     JSON.stringify({ files: { "x/b.js": sha("B") } }));
+  // Favicon-Lock: Dateien unter "assets" statt "files" — live zeigte die Seite sonst "0 Dateien".
+  mkdirSync(path.join(wurzel, "docs", "frontend"), { recursive: true });
+  writeFileSync(path.join(wurzel, "docs", "frontend", "favicon-lock-manifest.json"),
+    JSON.stringify({ assets: { "x/a.js": sha("A") } }));
   const s = Object.fromEntries(sperrenImAbbild({ wurzel }).map((x) => [x.name, x]));
   assert.equal(s["Admin-Lock"].zustand, "stimmt");
   assert.equal(s["Sicherheits-Lock"].zustand, "veraendert");
   assert.deepEqual(s["Sicherheits-Lock"].abweichend, ["x/b.js"]);
   assert.equal(s["Start-Lock"].zustand, "fehlt");
+  assert.equal(s["Favicon-Lock"].zustand, "stimmt");
+  assert.equal(s["Favicon-Lock"].dateien, 1);
 });

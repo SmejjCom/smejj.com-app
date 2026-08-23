@@ -165,7 +165,8 @@ export function sperrenImAbbild({ wurzel = process.cwd() } = {}) {
     if (!existsSync(voll)) return { name: m.name, zustand: "fehlt", satz: "Manifest nicht im Abbild.", dateien: 0, abweichend: [], fehlend: [] };
     let manifest;
     try { manifest = JSON.parse(readFileSync(voll, "utf8")); } catch { return { name: m.name, zustand: "fehlt", satz: "Manifest nicht lesbar.", dateien: 0, abweichend: [], fehlend: [] }; }
-    const dateien = manifest.files || {};
+    // Favicon-Lock schreibt seine Dateien unter "assets", die anderen unter "files".
+    const dateien = manifest.files || manifest.assets || {};
     const abweichend = [], fehlend = [];
     for (const [rel, soll] of Object.entries(dateien)) {
       const p = path.join(wurzel, rel);
