@@ -39,6 +39,12 @@ Daraus folgt fuer JEDE Session:
 ## 2. Code-Begrenzung & Modularitaet
 
 - **Harte Grenze: max. 800 Zeilen pro Datei.** Bei Erreichen sofort modular aufteilen.
+- `Memory_Bank.md` waechst von selbst und reisst die Grenze darum immer wieder.
+  Bewachung: `npm run check:memory-bank` — ab 760 Zeilen eine Warnung mit den
+  auszulagernden Abschnitten, ab 800 ein Fehler. Beim Kuerzen wandert der
+  Volltext WORTGLEICH in die zugehoerige Task Capsule (`task-capsules/<jahr>/<monat>/<job-id>/capsule.md`)
+  oder nach `docs/memory/`, in der Bank bleibt eine Kurzfassung MIT Pfad.
+  Derselbe Waechter meldet jeden Verweis, dessen Ziel nicht existiert.
 - Single Responsibility Principle (Unix-Philosophie): eine Komponente, eine Aufgabe.
 - Keine zirkulaeren Abhaengigkeiten; gemeinsame Logik in `shared/`-Module.
 - Control Server enthaelt nur Steuerlogik; Rechenarbeit gehoert in Worker-Templates.

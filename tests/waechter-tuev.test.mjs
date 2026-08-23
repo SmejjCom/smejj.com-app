@@ -131,3 +131,145 @@ test("check-precache-imports schweigt, wenn alles vorgeladen ist", () => {
     assert.equal(code, 0, `vollstaendiger Precache darf nicht anschlagen. Ausgabe: ${ausgabe}`);
   } finally { rmSync(wurzel, { recursive: true, force: true }); }
 });
+
+// --- check-memory-bank ------------------------------------------------------
+// Memory_Bank.md ist die einzige Datei, die von selbst waechst; ihr Waechter
+// muss deshalb BEIDE Fehlerarten aushalten. Besonders die "LAUT"-Faelle sind
+// hier echt: beim ersten Lauf gegen die Produktivdatei meldete er zweimal
+// falschen Alarm (ein Archiv im Projektstamm und einen IDrive-e2-Schluessel,
+// der im Repo nie existiert). Beide Faelle stehen jetzt als Probe darunter.
+
+/** Baut eine Memory_Bank-Probe mit gewuenschter Zeilenzahl und Verweisen. */
+function memoryBank({ zeilen = 50, verweise = [], kopfzeilen = [] } = {}) {
+  const block = [...kopfzeilen];
+  verweise.forEach((pfad, i) => {
+    block.push(`### [2026-08-23] Eintrag ${i} ausgelagert`, "", `Volltext: \`${pfad}\`.`, "");
+  });
+  while (block.length < zeilen) block.push(`Zeile ${block.length} mit Fliesstext.`);
+  return block.slice(0, zeilen).join("\n") + "\n";
+}
+
+const ZWOELF_ZIELE = Array.from({ length: 12 }, (_, i) => `docs/memory/teil-${i}.md`);
+/** Die Zieldateien, damit die Verweise nicht tot sind. */
+const zieleAnlegen = (pfade) => Object.fromEntries(pfade.map((p) => [p, "# Volltext\n"]));
+
+test("check-memory-bank schlaegt ueber 800 Zeilen an", () => {
+  const wurzel = baueProbeRepo({
+    "Memory_Bank.md": memoryBank({ zeilen: 850, verweise: ZWOELF_ZIELE }),
+    ...zieleAnlegen(ZWOELF_ZIELE)
+  });
+  legeSkripteBei(wurzel, ["scripts/check-memory-bank.mjs"]);
+  try {
+    const { code, ausgabe } = laufeWaechter(wurzel, "scripts/check-memory-bank.mjs");
+    assert.notEqual(code, 0, "850 Zeilen verletzen die 800-Zeilen-Regel — muss auffallen");
+    assert.match(ausgabe, /850 Zeilen/, "die gemessene Zahl muss in der Meldung stehen");
+  } finally { rmSync(wurzel, { recursive: true, force: true }); }
+});
+
+test("check-memory-bank findet den toten Verweis — der eigentliche Datenverlust", () => {
+  // Das ist der gefaehrliche Fall: die Kurzfassung sieht vollstaendig aus,
+  // aber der Volltext liegt nirgends. Ohne diesen Test faellt es niemandem auf.
+  const wurzel = baueProbeRepo({
+    "Memory_Bank.md": memoryBank({ zeilen: 60, verweise: ["docs/memory/nie-angelegt.md"] }),
+    "docs/memory/platzhalter.md": "# damit es den Ordner docs/ gibt\n"
+  });
+  legeSkripteBei(wurzel, ["scripts/check-memory-bank.mjs"]);
+  try {
+    const { code, ausgabe } = laufeWaechter(wurzel, "scripts/check-memory-bank.mjs");
+    assert.notEqual(code, 0, "ein Verweis ins Leere ist verlorener Inhalt — muss auffallen");
+    assert.match(ausgabe, /nie-angelegt\.md/, "der tote Pfad muss benannt werden");
+  } finally { rmSync(wurzel, { recursive: true, force: true }); }
+});
+
+test("check-memory-bank schlaegt an, wenn eine Auslagerung keinen Pfad nennt", () => {
+  const wurzel = baueProbeRepo({
+    "Memory_Bank.md":
+      "### [2026-08-23] Grosser Eintrag\n\nVolltext wurde ausgelagert.\n\nMehr steht nicht da.\n"
+  });
+  legeSkripteBei(wurzel, ["scripts/check-memory-bank.mjs"]);
+  try {
+    const { code, ausgabe } = laufeWaechter(wurzel, "scripts/check-memory-bank.mjs");
+    assert.notEqual(code, 0, "'ausgelagert' ohne Ziel ist eine leere Zusage");
+    assert.match(ausgabe, /Grosser Eintrag/, "der schuldige Abschnitt muss benannt werden");
+  } finally { rmSync(wurzel, { recursive: true, force: true }); }
+});
+
+test("check-memory-bank meldet sich selbst, wenn sein Suchmuster nichts mehr findet", () => {
+  // Der Pruefer-fuer-Pruefer-Fall: eine grosse Bank ohne einen einzigen
+  // erkannten Verweis heisst entweder "alle Auslagerungen sind weg" oder
+  // "das Muster passt nicht mehr". Beides darf nicht gruen sein.
+  const wurzel = baueProbeRepo({ "Memory_Bank.md": memoryBank({ zeilen: 400 }) });
+  legeSkripteBei(wurzel, ["scripts/check-memory-bank.mjs"]);
+  try {
+    const { code, ausgabe } = laufeWaechter(wurzel, "scripts/check-memory-bank.mjs");
+    assert.notEqual(code, 0, "400 Zeilen ohne jeden Verweis duerfen nicht gruen sein");
+    assert.match(ausgabe, /Selbstpruefung/, "der Waechter muss sich selbst als Verdaechtigen nennen");
+  } finally { rmSync(wurzel, { recursive: true, force: true }); }
+});
+
+test("check-memory-bank schweigt bei einer gesunden Bank", () => {
+  const wurzel = baueProbeRepo({
+    "Memory_Bank.md": memoryBank({ zeilen: 700, verweise: ZWOELF_ZIELE }),
+    ...zieleAnlegen(ZWOELF_ZIELE)
+  });
+  legeSkripteBei(wurzel, ["scripts/check-memory-bank.mjs"]);
+  try {
+    const { code, ausgabe } = laufeWaechter(wurzel, "scripts/check-memory-bank.mjs");
+    assert.equal(code, 0, `700 Zeilen mit gueltigen Verweisen duerfen nicht anschlagen. Ausgabe: ${ausgabe}`);
+    assert.doesNotMatch(ausgabe, /WARNUNG/, "700 liegt unter der Warnschwelle 760");
+  } finally { rmSync(wurzel, { recursive: true, force: true }); }
+});
+
+test("check-memory-bank warnt vor der Grenze, blockiert aber nicht", () => {
+  // Der Kern des Rueckfallschutzes: die Meldung kommt VOR der Grenze. Sie darf
+  // die Arbeit der Parallelsitzungen nicht anhalten — darum Exit 0.
+  const wurzel = baueProbeRepo({
+    "Memory_Bank.md": memoryBank({ zeilen: 780, verweise: ZWOELF_ZIELE }),
+    ...zieleAnlegen(ZWOELF_ZIELE)
+  });
+  legeSkripteBei(wurzel, ["scripts/check-memory-bank.mjs"]);
+  try {
+    const { code, ausgabe } = laufeWaechter(wurzel, "scripts/check-memory-bank.mjs");
+    assert.equal(code, 0, `die Warnung darf niemanden blockieren. Ausgabe: ${ausgabe}`);
+    assert.match(ausgabe, /WARNUNG/, "bei 780 von 800 muss eine Warnung kommen");
+    assert.match(ausgabe, /noch 20/, "die verbleibende Luft muss beziffert werden");
+  } finally { rmSync(wurzel, { recursive: true, force: true }); }
+});
+
+test("check-memory-bank haelt einen IDrive-e2-Schluessel nicht fuer eine Repo-Datei", () => {
+  // Falscher Alarm beim ersten Produktivlauf: `admin/index/analytik-tage.json`
+  // ist ein Objektschluessel, keine Datei im Repo. Ein Waechter, der so etwas
+  // meldet, erzeugt Arbeit, die es nicht gibt — und wird bald ignoriert.
+  const wurzel = baueProbeRepo({
+    "Memory_Bank.md":
+      memoryBank({ zeilen: 60, verweise: ["docs/memory/echt.md"] }) +
+      "\nEin abgeleitetes Objekt `admin/index/analytik-tage.json` auf IDrive e2.\n",
+    "docs/memory/echt.md": "# Volltext\n"
+  });
+  legeSkripteBei(wurzel, ["scripts/check-memory-bank.mjs"]);
+  try {
+    const { code, ausgabe } = laufeWaechter(wurzel, "scripts/check-memory-bank.mjs");
+    assert.equal(code, 0, `ein Objektspeicher-Schluessel ist kein toter Verweis. Ausgabe: ${ausgabe}`);
+  } finally { rmSync(wurzel, { recursive: true, force: true }); }
+});
+
+test("check-memory-bank prueft auch Archive im Projektstamm", () => {
+  // Zweiter falscher Alarm beim ersten Lauf: das Archiv liegt NICHT unter
+  // docs/, sondern im Stamm. Der Markdown-Link muss trotzdem geprueft werden —
+  // sonst waere ausgerechnet die groesste Auslagerung ungedeckt.
+  const mitLink = "## Aeltere Eintraege\n\nStehen in [Archiv.md](Archiv.md).\n";
+  const gesund = baueProbeRepo({ "Memory_Bank.md": mitLink, "Archiv.md": "# Archiv\n" });
+  const krank = baueProbeRepo({ "Memory_Bank.md": mitLink });
+  legeSkripteBei(gesund, ["scripts/check-memory-bank.mjs"]);
+  legeSkripteBei(krank, ["scripts/check-memory-bank.mjs"]);
+  try {
+    assert.equal(laufeWaechter(gesund, "scripts/check-memory-bank.mjs").code, 0,
+      "vorhandenes Archiv im Stamm ist in Ordnung");
+    const { code, ausgabe } = laufeWaechter(krank, "scripts/check-memory-bank.mjs");
+    assert.notEqual(code, 0, "fehlendes Archiv im Stamm muss auffallen");
+    assert.match(ausgabe, /Archiv\.md/, "der tote Pfad muss benannt werden");
+  } finally {
+    rmSync(gesund, { recursive: true, force: true });
+    rmSync(krank, { recursive: true, force: true });
+  }
+});

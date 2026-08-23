@@ -5,6 +5,27 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-23] MEMORY_BANK BEWACHT SICH JETZT SELBST (job_memory_bank_waechter_20260823)
+
+Capsule: `task-capsules/2026/08/job_memory_bank_waechter_20260823/capsule.json`.
+Neu: `npm run check:memory-bank`, eingehaengt in `check:all` nach check:guidelines.
+
+Diese Datei ist die EINZIGE, die von selbst waechst — die 800-Zeilen-Regel reisst
+hier darum immer wieder (868->649 am 03.08., 891->733 am 23.08., dazwischen 20 Tage
+ohne Aufsicht). Ein Ratchet waere falsch: sie MUSS wachsen duerfen. Der Waechter
+warnt deshalb ab 760 Zeilen MIT den drei laengsten Abschnitten (Exit 0, blockiert
+keine Parallelsitzung) und meldet erst ab 800 einen Fehler. Wichtiger als die
+Laenge ist seine zweite Zusage: jeder Verweis auf ausgelagerten Volltext muss
+existieren — eine Kurzfassung, die ins Leere zeigt, sieht vollstaendig aus und ist
+Verlust. TUEV: 8 Proben in `tests/waechter-tuev.test.mjs`, je Zusage kaputt UND
+gesund.
+
+MERKREGEL aus dem ersten Lauf: er schlug zweimal FALSCH an — auf ein Archiv im
+Projektstamm (Muster kannte nur `docs/`) und auf `admin/index/analytik-tage.json`,
+einen IDrive-e2-Schluessel. Ein Backtick-Pfad ist nur dann eine Repo-Datei, wenn
+sein erstes Segment als Verzeichnis existiert. Beide Faelle stehen jetzt als
+Regressionsprobe im TUEV — ein Waechter, der Arbeit erfindet, wird bald ignoriert.
+
 ### [2026-08-23] DER ROTE PRESIGN-TEST WAR EINE VERALTETE ZUSAGE (job_presign_test_20260823)
 
 Capsule: `task-capsules/2026/08/job_presign_test_20260823/capsule.json`.

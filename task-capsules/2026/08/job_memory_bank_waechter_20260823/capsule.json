@@ -1,0 +1,28 @@
+{
+  "jobId": "job_memory_bank_waechter_20260823",
+  "createdAt": "2026-08-23",
+  "owner": "Wof Kadavanich",
+  "title": "Waechter gegen den Rueckfall von Memory_Bank.md",
+  "ziel": "Die 800-Zeilen-Regel soll bei Memory_Bank.md nicht mehr erst dann auffallen, wenn check:guidelines rot ist — und eine Kuerzung soll nicht unbemerkt Inhalt verlieren koennen.",
+  "ausgangslage": "Memory_Bank.md ist die einzige Datei des Projekts, die von selbst waechst: jeder abgeschlossene Auftrag haengt einen Eintrag an. Zweimal gemessen derselbe Verlauf — 2026-08-03 von 868 auf 649 Zeilen (46ed4b16), 2026-08-23 von 891 auf 733 Zeilen (179b7011). Dazwischen 20 Tage ohne Aufsicht. Am Tag der Ueberschreitung stolpern alle Parallelsitzungen ueber denselben roten Check.",
+  "entscheidung": "Eigener Waechter scripts/check-memory-bank.mjs statt einer Ratchet-Baseline in check-guidelines.mjs. Begruendung: ein Ratchet verbietet Wachstum, aber diese Datei MUSS wachsen duerfen. Gebraucht wird eine Frueherkennung mit Handlungsanweisung, kein Verbot.",
+  "zusagen": [
+    "LAENGE: ab 760 Zeilen Warnung mit den drei laengsten Abschnitten (Exit 0, blockiert Parallelsitzungen nicht), ab 800 Zeilen Fehler (Exit 1).",
+    "VERWEISE: jeder als Markdown-Link oder Backtick-Pfad genannte Repo-Pfad muss existieren. Ein toter Verweis ist verlorener Inhalt.",
+    "AUSLAGERUNG: ein Abschnitt, der 'ausgelagert' oder 'Volltext' sagt, muss einen Pfad nennen.",
+    "SELBSTPRUEFUNG: ueber 200 Zeilen ohne mindestens 10 erkannte Verweise ist der Waechter selbst verdaechtig und meldet Exit 1."
+  ],
+  "zweiFalscheAlarmeImErstenLauf": [
+    "Memory_Bank_Archiv_bis_2026-08-05.md liegt im PROJEKTSTAMM, nicht unter docs/ — das erste Muster kannte nur docs/ und task-capsules/. Behoben: Markdown-Links werden immer geprueft, unabhaengig vom Ordner.",
+    "admin/index/analytik-tage.json ist ein IDrive-e2-Objektschluessel, keine Repo-Datei. Behoben: ein Backtick-Pfad gilt nur als Repo-Pfad, wenn sein erstes Segment als Verzeichnis existiert. Keine Pflegeliste noetig."
+  ],
+  "verifikation": {
+    "tuev": "8 neue Proben in tests/waechter-tuev.test.mjs — je Zusage eine kaputte und eine gesunde Probe, dazu beide falschen Alarme als Regressionsprobe. 13/13 gruen.",
+    "rueckfallAmEchtenBestand": "Kopie von Memory_Bank.md manipuliert: 769 Zeilen -> Warnung + Exit 0; 814 Zeilen -> Fehler + Exit 1; Auslagerungsziel umbenannt -> 'toter Verweis' + Exit 1.",
+    "volleSuite": "2955 Tests, 2951 gruen. Die 4 roten sind Vorbefunde einer Parallelsitzung (dateisperren, model-promotion, precache, daten-schwungrad) und ohne diese Aenderung genauso rot.",
+    "guidelines": "18 Verstoesse, unveraendert gegenueber dem Stand vor dieser Arbeit."
+  },
+  "eingehaengt": "npm run check:memory-bank; in check:all direkt nach check:guidelines. Regel dokumentiert in AI_Guidelines.md Abschnitt 2.",
+  "lehre": "Der abo-lock blieb tagelang unbemerkt verletzt, weil er keinen npm-Alias hatte und nie in check:all lief. Ein Waechter ohne Alias und ohne Platz in der Kette ist kein Waechter.",
+  "status": "abgeschlossen"
+}
