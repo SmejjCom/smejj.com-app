@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T12:39:41.546Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-23 per Karte: 'Komplett umstellen, 3 Locks freigeben' — eigene API-Domain api.smejj.com: config.js DEFAULT_API_ORIGIN + Fallbacks, index.html CSP connect-src additiv; Marken chat-actions b35, CACHE_NAME v663.",
+  "frozenAt": "2026-08-23T13:06:17.906Z",
+  "confirmation": "Betreiber 2026-08-23: Stopp-Knopf in Mint bauen (Empfehlung) — Senden-Knopf wird waehrend der Antwort zum Stopp-Quadrat in Logo-Farbe, viereckig",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "db42d66bbeb250e1238f17d0e4ebdca731d383613d33a1c243b7e1d5729092d4",
+    "public/index.html": "93cd13b18e956d1170c1183b434ec8218b31baaf3dbc2f59eeda487b0b17d9b0",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "48d109ee80a7f9644a5f0de1773cd62bd504d0cda28c9145a20be0027425aa3f",
+    "public/start-styles.css": "15a7c673a10f6efe488733b3a12277efc8820dc9a4caff6a758a987b3bdf60f1",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -17,10 +17,10 @@
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "f8c3b26d0cbfddbf52973c249ca7d294f240aaf1db92d718aaeaaa73700e5085",
+    "public/premium-surfaces.js": "63bff297478e12be57fc64790ab0b91ff171268c6603fa19cfccac194c7ce652",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
-    "public/search.js": "cfbcbd32bb3c0b78e17e1ab113cb3418e6acf609363aabcab628505460f13413",
+    "public/search.js": "7fcf6e9116030fa13f36cbf96dbb9446cdbba5599be9da39dfb605da7a141884",
     "public/composer-tools.js": "261deb2f4feee34411e4c54dffafa7265b715fc63126360d00dfb799798abf55",
     "public/composer-plus-menu.js": "7b0fe7ebb9dae557789899fbb6e98cc3c5a6f8b8687c9abe29a80140e2d0206b",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ae8971df238ab18747aa70682b38c8f73d37dd0502007fc45bbcbc7abc770f59",
+    "public/sw.js": "ef1ce67f9307fdf3eea026325cf21e2df3053f2efb1b238d50c5da48d9c3250b",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
