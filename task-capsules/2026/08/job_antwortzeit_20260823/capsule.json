@@ -21,7 +21,12 @@
   },
   "befund2": {
     "was": "Danach ging die Modell-Anfrage IMMER NOCH erst nach 10,5 s raus.",
-    "zeitleiste": ["3 ms abgeschickt", "5644 ms Antwortkopf /api/chats", "6911 ms Antwortkopf /api/chats", "10454 ms Antwortkopf /api/agent"],
+    "zeitleiste": [
+      "3 ms abgeschickt",
+      "5644 ms Antwortkopf /api/chats",
+      "6911 ms Antwortkopf /api/chats",
+      "10454 ms Antwortkopf /api/agent"
+    ],
     "ursache": "Der Browser oeffnet pro Gegenstelle nur eine Handvoll Verbindungen — die waren mit dem Verlauf belegt.",
     "loesung": "erzeugeVorfahrt(): solange ein Antwortstrom laeuft, wartet die Sicherung. Haengt an smejj:chat-strom, dem Signal, das BEIDE Stromfamilien senden.",
     "nachholen": "Pflicht, nicht Kuer: was waehrend der Antwort liegen bleibt, laeuft danach von selbst. Sonst waere aus einer Verzoegerung ein Datenverlust geworden."
@@ -29,17 +34,74 @@
   "ergebnisLive": {
     "vorher": "3,6 s bis 60 s, im Messlauf 46 s",
     "nachher": [
-      { "lauf": 1, "sichtbar_s": 11, "hinweis": "erster nach dem Neuladen — einmaliger Start-Sync" },
-      { "lauf": 2, "sichtbar_s": 1, "modellAnfrageNach_ms": 950, "anfragen": 1 },
-      { "lauf": 3, "sichtbar_s": 1.5, "modellAnfrageNach_ms": 1273, "anfragen": 1 },
-      { "lauf": 4, "sichtbar_s": 1, "modellAnfrageNach_ms": 979, "anfragen": 1 }
+      {
+        "lauf": 1,
+        "sichtbar_s": 11,
+        "hinweis": "erster nach dem Neuladen — einmaliger Start-Sync"
+      },
+      {
+        "lauf": 2,
+        "sichtbar_s": 1,
+        "modellAnfrageNach_ms": 950,
+        "anfragen": 1
+      },
+      {
+        "lauf": 3,
+        "sichtbar_s": 1.5,
+        "modellAnfrageNach_ms": 1273,
+        "anfragen": 1
+      },
+      {
+        "lauf": 4,
+        "sichtbar_s": 1,
+        "modellAnfrageNach_ms": 979,
+        "anfragen": 1
+      },
+      {
+        "lauf": "erste Frage nach dem Neuladen",
+        "sichtbar_s": 2,
+        "vorher_s": 11
+      }
     ],
     "budget": "Erster Token unter 1,0 s — im Alltag jetzt erreicht."
   },
   "verhaltensgleichheit": "konfliktSieger() im Frontend ist wortgleich mit der Serverfassung in chatSyncStore.js; ein Waechter vergleicht beide an zehn echten Wertepaaren. Laeuft eine davon, sendet der Client zu wenig — das waere Datenverlust. Die Millisekunden-Regel der Parallelsitzung ('der geheilte Chat kam nie an') hat einen eigenen Fall.",
   "failSafe": "Scheitert der Abgleich (kein Netz, alter Server, unerwartete Antwort), wird alles gesendet wie bisher. Sechs Faelle pruefen das an kaputten Antworten.",
   "tests": "tests/chat-sync-auswahl.test.mjs, 14 Faelle. check:frontend 633/633, markenkette 99, module-queries 188, precache 156.",
-  "auslieferung": { "sw": "v669 -> v672", "frontend": ["bcd01705", "danach der Vorfahrt-Commit"], "app": ["aef8291c", "01d1d54d"] },
-  "restBefund": "Der erste Lauf nach dem Neuladen braucht noch 11 s — der einmalige Start-Sync laeuft vor der ersten Frage. Danach 1 s.",
-  "status": "abgeschlossen"
+  "auslieferung": {
+    "sw": "v669 -> v673",
+    "frontend": [
+      "bcd01705",
+      "danach der Vorfahrt-Commit"
+    ],
+    "app": [
+      "aef8291c",
+      "01d1d54d"
+    ]
+  },
+  "status": "abgeschlossen",
+  "befund3_startphase": {
+    "auftrag": "Betreiber 2026-08-23: 'Start-Sync auch fixen' — die erste Frage nach dem Neuladen kostete 11 s.",
+    "gemessen_vorher": [
+      "508ms +726 /api/billing/status",
+      "750ms +1409 /api/auth/me",
+      "2317ms +966 /api/chats?nurAbgleich=1 (pull)",
+      "2317ms +684 /api/projekte",
+      "4315ms +151 /api/auth/config",
+      "4316ms +503 /api/auth/me (zum zweiten Mal)",
+      "4317ms +501 /api/models/kimi-k2-7/status",
+      "4318ms +511 /api/models/glm-5-2-fp8/status",
+      "7324ms +1504 /api/chats?nurAbgleich=1 (push, dieselbe Frage)"
+    ],
+    "leitungBelegtBis_ms": 8800,
+    "ursache1": "pull() und push() fragen dasselbe, fuenf Sekunden auseinander. Die zweite Anfrage allein 1504 ms.",
+    "loesung1": "erzeugeAbgleichsSpeicher — beide teilen sich einen Abgleich (Frist 5 s, nach jedem Schreiben verworfen, sonst haelt push den eigenen Schreibstand fuer den Serverstand).",
+    "ursache2": "Die Vorfahrt griff nur, wenn der Strom SCHON lief. Beim Start ist es umgekehrt: der Sync laeuft, dann kommt die Frage.",
+    "loesung2": "Die Push-Schleife bricht ab, sobald eine Antwort anfaengt, und holt den Rest danach nach.",
+    "ergebnisLive": "Abgleiche in der Startphase 2 -> 1. Erste Frage direkt nach dem Laden: 11 s -> 2 s.",
+    "offenGemeldet": "/api/auth/me wird beim Start zweimal geholt (sechs Dateien rufen es), dazu /api/billing/status und zwei Modell-Status-Abfragen. Eigener Auftrag, kein Nebenbei."
+  },
+  "commits_nachtrag": [
+    "43a316ac"
+  ]
 }

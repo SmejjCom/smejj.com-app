@@ -32,9 +32,20 @@ die Sicherung; sie haengt an `smejj:chat-strom`, dem Signal, das BEIDE
 Stromfamilien senden. Was liegen bleibt, wird nachgeholt — sonst waere aus
 einer Verzoegerung ein Datenverlust geworden.
 
-**Ergebnis live:** 1 s / 1,5 s / 1 s bei je EINER Anfrage. Der erste Lauf nach
-dem Neuladen braucht noch 11 s (einmaliger Start-Sync). Das Budget "erster
-Token unter 1,0 s" ist im Alltag erreicht.
+**Befund 3 — die Startphase (Nachtrag, Betreiber: "Start-Sync auch fixen"):**
+`?nurAbgleich=1` lief ZWEIMAL, bei 2317 ms (pull) und 7324 ms (push, allein
+1504 ms). Bis 8,8 s war die Leitung belegt. Beide teilen sich jetzt einen
+Abgleich (Frist 5 s, nach jedem Schreiben verworfen), und die Push-Schleife
+bricht ab, sobald eine Antwort anfaengt — beim Start laeuft der Sync schon,
+wenn die erste Frage kommt.
+
+**Ergebnis live:** 1 s / 1,5 s / 1 s bei je EINER Anfrage; die erste Frage nach
+dem Neuladen 11 s -> **2 s**. Das Budget "erster Token unter 1,0 s" ist im
+Alltag erreicht.
+
+**Offen, als Befund gemeldet:** `/api/auth/me` wird beim Start zweimal geholt
+(sechs Dateien rufen es), dazu `/api/billing/status` und zwei
+Modell-Status-Abfragen.
 
 **Verhaltensgleich und gegengeprueft:** `konfliktSieger()` im Frontend ist
 wortgleich mit der Serverfassung, ein Waechter vergleicht beide an zehn echten
