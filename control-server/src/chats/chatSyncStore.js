@@ -292,7 +292,14 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
     try {
       const antwort = await signedS3Get({ ...cfg, key: indexKey, allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
       const eintraege = antwort?.body ? leseIndex(antwort.body) : null;
-      if (eintraege) {
+      // VOLLSTAENDIGKEIT (2026-08-23): Der Index wurde einst aus den damals 100
+      // gekappten Chats gebaut und wuchs danach nur durch Nachtragen — fuenf
+      // gueltige Chats fehlten dauerhaft, obwohl er nach Zeit "frisch" war.
+      // Zaehlt er weniger Eintraege als die Liste Dateien, ist er unvollstaendig
+      // und wird unten aus allen Chats neu gebaut. Beide Zahlen stammen aus
+      // derselben Objektliste, kostet also keinen weiteren Abruf.
+      const erwartet = Math.min(schluesselListe.length, limit);
+      if (eintraege && eintraege.length >= erwartet) {
         eintraege.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
         return { ok: true, chats: eintraege.slice(0, limit), ausIndex: true };
       }
