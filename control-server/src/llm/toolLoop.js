@@ -108,8 +108,68 @@ export const AGENT_TOOLS = Object.freeze([
         required: ["anfrage"]
       }
     }
+  }),
+  // Rueckfrage als Karte (Betreiber 2026-08-23, Vorbild Antigravity): statt
+  // blind zu raten oder die Frage im Fliesstext zu verstecken, stellt das
+  // Modell EINE Frage mit 2-4 Optionen. Der Client zeigt sie als anklickbare
+  // Karte; die Antwort kommt als naechste Nutzernachricht. Das Werkzeug
+  // BEENDET den Lauf — es gibt nichts zu "ergebnissen", der Nutzer ist dran.
+  Object.freeze({
+    type: "function",
+    function: {
+      name: "frage_stellen",
+      description: "Stellt dem Nutzer EINE Rueckfrage mit 2 bis 4 Antwortoptionen und wartet auf seine Antwort. "
+        + "Nutze das nur, wenn die Aufgabe ohne seine Entscheidung nicht sinnvoll loesbar ist "
+        + "(mehrdeutiges Ziel, fehlende Angabe, folgenreiche Wahl). Frag nie nach Dingen, die du selbst "
+        + "nachsehen kannst. Die erste Option ist deine Empfehlung.",
+      parameters: {
+        type: "object",
+        properties: {
+          frage: { type: "string", description: "Die Frage, ein Satz, endet mit Fragezeichen." },
+          optionen: {
+            type: "array",
+            minItems: 2,
+            maxItems: 4,
+            items: { type: "string" },
+            description: "2 bis 4 kurze Antwortoptionen (je 1-6 Woerter), die erste ist die Empfehlung."
+          }
+        },
+        required: ["frage", "optionen"]
+      }
+    }
   })
 ]);
+
+/**
+ * Liest einen frage_stellen-Aufruf und macht daraus die Karte fuer den Client.
+ * Fail-safe: kaputte Argumente ergeben null — dann laeuft der Lauf normal weiter.
+ * @returns {{frage:string, optionen:string[]}|null}
+ */
+export function leseFrage(call) {
+  if (call?.function?.name !== "frage_stellen") return null;
+  let args;
+  try { args = JSON.parse(call.function.arguments || "{}"); } catch { return null; }
+  const frage = String(args?.frage || "").trim().slice(0, 300);
+  const optionen = (Array.isArray(args?.optionen) ? args.optionen : [])
+    .map((o) => String(o || "").trim().slice(0, 80))
+    .filter(Boolean)
+    .slice(0, 4);
+  if (!frage || optionen.length < 2) return null;
+  return { frage, optionen };
+}
+
+/**
+ * Schreibt die Frage-Karte in den Antwortstrom — eigenes Feld `smejj_frage`,
+ * aus demselben Grund wie `smejj_schritt`: ein alter Client sieht nichts
+ * Kaputtes, ein neuer zeigt die Karte.
+ */
+export function sendeFrage(res, frage) {
+  try {
+    res.write(`data: ${JSON.stringify({ smejj_frage: frage })}\n\n`);
+  } catch {
+    // Ein abgebrochener Strom darf den Lauf nicht mitreissen.
+  }
+}
 
 /**
  * Schreibt einen Fortschritts-Schritt in den Antwortstrom.
@@ -282,6 +342,15 @@ export async function streamWithTools({ result, chain, messages, res, options, e
     const { toolCalls, sawContent } = await pumpRound(current.response.body, res, env, messgeraet);
     sichtbarGesamt += sawContent || "";
     if (!toolCalls.length) return finishStream(res, sichtbarGesamt);
+
+    // Rueckfrage: Karte senden und den Lauf beenden — der Nutzer ist dran.
+    // Bewusst OHNE sichtbaren Text fuer den Cache: eine halbe Antwort mit
+    // offener Frage darf nie als fertige Antwort wiederkommen.
+    const frage = toolCalls.map(leseFrage).find(Boolean);
+    if (frage) {
+      sendeFrage(res, frage);
+      return finishStream(res);
+    }
 
     // Das Modell will ein Werkzeug. Sein bisheriger Text bleibt sichtbar.
     verlauf.push({ role: "assistant", content: sawContent || null, tool_calls: toolCalls });

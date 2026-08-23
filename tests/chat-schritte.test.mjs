@@ -136,7 +136,9 @@ test("Werkzeuge ohne Fortschritt bleiben unveraendert nutzbar", async () => {
 });
 
 test("die Werkzeugliste bleibt unveraendert (Non-Regression)", () => {
-  assert.deepEqual(AGENT_TOOLS.map((e) => e.function.name), ["seite_lesen", "web_suche"]);
+  // frage_stellen kam am 2026-08-23 dazu (Frage-Karte); es laeuft nie als
+  // Werkzeug, sondern beendet den Lauf — siehe tool-loop.test.mjs.
+  assert.deepEqual(AGENT_TOOLS.map((e) => e.function.name), ["seite_lesen", "web_suche", "frage_stellen"]);
 });
 
 // --- Anzeigeseite -----------------------------------------------------------

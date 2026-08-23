@@ -9,7 +9,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AGENT_TOOLS, agentToolsEnabled, runAgentTool, SCHLUSSRUNDE_ANSAGE, streamWithTools, WERKZEUG_VERTRAG, withAgentTools, zuText } from "../control-server/src/llm/toolLoop.js";
+import { AGENT_TOOLS, agentToolsEnabled, leseFrage, runAgentTool, SCHLUSSRUNDE_ANSAGE, streamWithTools, WERKZEUG_VERTRAG, withAgentTools, zuText } from "../control-server/src/llm/toolLoop.js";
 
 // Baut einen Modell-Stream aus fertigen SSE-Ereignissen.
 function stream(events) {
@@ -39,9 +39,12 @@ test("ohne Freigabe-Flag werden keine Werkzeuge angeboten", () => {
 });
 
 test("Werkzeugbeschreibung ist vollstaendig und stabil", () => {
-  assert.equal(AGENT_TOOLS.length, 2);
+  assert.equal(AGENT_TOOLS.length, 3);
   const namen = AGENT_TOOLS.map((eintrag) => eintrag.function.name);
-  assert.deepEqual(namen, ["seite_lesen", "web_suche"]);
+  assert.deepEqual(namen, ["seite_lesen", "web_suche", "frage_stellen"]);
+  const frage = AGENT_TOOLS[2].function;
+  assert.deepEqual(frage.parameters.required, ["frage", "optionen"]);
+  assert.equal(frage.parameters.properties.optionen.maxItems, 4);
   const seite = AGENT_TOOLS[0].function;
   assert.equal(seite.name, "seite_lesen");
   assert.deepEqual(seite.parameters.required, ["url"]);
@@ -410,4 +413,48 @@ test("ohne Werkzeuglauf gibt es auch keine Ansage (Non-Regression)", async () =>
     executeWithFallback: async (_chain, verlauf) => { gesehen.push(verlauf); throw new Error("darf nicht aufgerufen werden"); }
   });
   assert.equal(gesehen.length, 0, "wer kein Werkzeug ruft, braucht keine Schlussansage");
+});
+
+
+// ---------------------------------------------------------------------------
+// Rueckfrage als Karte (Betreiber 2026-08-23, Vorbild Antigravity): das
+// Werkzeug frage_stellen schickt `smejj_frage` und BEENDET den Lauf — der
+// Nutzer ist dran. Kein zweiter Modellaufruf, kein Werkzeuglauf, kein Cache.
+
+test("leseFrage liest Frage und Optionen, fail-safe bei Muell", () => {
+  assert.deepEqual(
+    leseFrage({ function: { name: "frage_stellen", arguments: '{"frage":"Welche Stadt?","optionen":["Berlin","Hamburg"]}' } }),
+    { frage: "Welche Stadt?", optionen: ["Berlin", "Hamburg"] }
+  );
+  assert.equal(leseFrage({ function: { name: "frage_stellen", arguments: '{"frage":"Nur eine?","optionen":["eine"]}' } }), null, "unter zwei Optionen ist keine Wahl");
+  assert.equal(leseFrage({ function: { name: "frage_stellen", arguments: "{kaputt" } }), null);
+  assert.equal(leseFrage({ function: { name: "web_suche", arguments: "{}" } }), null);
+  const viele = leseFrage({ function: { name: "frage_stellen", arguments: JSON.stringify({ frage: "x?", optionen: ["a", "b", "c", "d", "e", ""] }) } });
+  assert.equal(viele.optionen.length, 4, "hoechstens vier Optionen");
+});
+
+test("frage_stellen sendet die Karte und beendet den Lauf ohne zweite Runde", async () => {
+  const res = sammelAntwort();
+  let zweiteRunde = 0;
+  let werkzeugLaeufe = 0;
+  const sichtbar = await streamWithTools({
+    result: { response: { body: stream([
+      textEvent("Dazu brauche ich eine Angabe."),
+      toolEvent(0, { id: "call_f", function: { name: "frage_stellen", arguments: '{"frage":"Fuer welchen Markt?","optionen":["USA","Deutschland","Beide"]}' } }),
+      `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "tool_calls" }] })}`,
+      "data: [DONE]"
+    ]) } },
+    chain: [], messages: [{ role: "user", content: "Suche Bueros" }], res, options: { temperature: 1 },
+    executeWithFallback: async () => { zweiteRunde += 1; return { ok: true, response: { body: stream(["data: [DONE]"]) } }; },
+    runTool: async () => { werkzeugLaeufe += 1; return ""; }
+  });
+  const karten = res.stuecke.filter((s) => s.includes("smejj_frage")).map((s) => JSON.parse(s.replace(/^data: /, "").trim()).smejj_frage);
+  assert.equal(karten.length, 1, "genau eine Karte");
+  assert.deepEqual(karten[0], { frage: "Fuer welchen Markt?", optionen: ["USA", "Deutschland", "Beide"] });
+  assert.equal(zweiteRunde, 0, "keine zweite Modellrunde — der Nutzer ist dran");
+  assert.equal(werkzeugLaeufe, 0, "die Frage ist kein Werkzeuglauf");
+  assert.ok(!res.gesendet().includes("smejj_schritt"), "die Frage erscheint nicht als Arbeitsschritt");
+  assert.equal(res.gesendet().match(/data: \[DONE\]/g).length, 1, "genau ein Abschluss");
+  assert.match(res.gesendet(), /Dazu brauche ich eine Angabe/, "der Text davor bleibt sichtbar");
+  assert.equal(sichtbar, "", "eine offene Frage gehoert nie in den Cache");
 });
