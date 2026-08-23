@@ -765,3 +765,9 @@ Landeseite stand.
 - WURZEL seit 15.08.: Server stempelt SHA-Kennung, Client verglich Sitzungs-ID -> JEDER Server-Import fremd.
 - LIVE: `konto` in GET /api/chats, Alias je Sitzung in chat-owner.js v3; Seitenleiste "Alle 126 Gespraeche".
 - Messfalle: index.html 10 min aus HTTP-Cache -> alte Marken-Kette trotz neuem sw. Erst cache:'reload'.
+
+## 2026-08-23 — Sync-Waechter (job_sync_waechter_20260823)
+
+- LOKAL: `npm run check:sync-alias` (Stufe A Quellen, Stufe B live mit Probe-Token), in check:all.
+- LIVE: Autopilot Nr. 43 "Sync-Waechter" (Bauzweig f992c61d), alle 30 min, prueft eigene API + AUSGELIEFERTE
+  Client-Dateien; erste Ampel gruen 11:19:47Z. Ehrlichkeits-Waechter (Zaehler 35, MIT_ECHTER_MESSUNG) nachgezogen.

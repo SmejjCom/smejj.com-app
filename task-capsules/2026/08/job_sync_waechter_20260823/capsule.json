@@ -1,0 +1,14 @@
+{
+  "jobId": "job_sync_waechter_20260823",
+  "datum": "2026-08-23",
+  "titel": "Sync-Waechter: lokal (check:sync-alias) und als Autopilot Nr. 43 im Adminbereich",
+  "auftrag": "Betreiber per Karte: 'Sync-Waechter bauen', dann 'Waechter als Ampel im Adminbereich — bauen und automatisch ausrollen'.",
+  "vorgaenger": "job_kontokennung_alias_20260823",
+  "rollback": "Bauzweig c6c2dd09, Arbeitszweig 8d9e33c5",
+  "commits": { "arbeitszweig": "d0af359a (check:sync-alias + TUEV 7 Tests, in check:all)", "bauzweig": "f992c61d (Autopilot 43, Laeufer, Katalog, Bereich, TUEV 5 Tests, Zaehler 34->35)" },
+  "was_er_misst": "1) eigene API mit 60-s-Token fuer synthetischen Nutzer sync-waechter@smejj.invalid (leerer Ordner): `konto` muss genannt werden und kontoKennung() entsprechen; 2) AUSGELIEFERTES chat-sync.js merkt `konto`; 3) AUSGELIEFERTES chat-owner.js kennt kontoAliase. Artefakt statt Quelle, weil die auseinanderlaufen koennen.",
+  "ausgerollt": "Control gestartetAm 2026-08-23T11:18:13.806Z",
+  "live_beleg": { "erster_lauf": "2026-08-23T11:19:47.561Z, 257 ms, ok", "ampel": "gruen — 'Letzter Lauf puenktlich und erfolgreich'", "adminseite": "/admin/autopiloten/ Sicherheit & Wachdienst, Nr. 43 Sync-Waechter, Laeuft, vor 2 min erfolgreich (Screenshot ss_1592ry97o)", "lokal": "npm run check:sync-alias: Stufe A OK, Stufe B OK 1.105 ms" },
+  "tests": "21/21 (sync-waechter-autopilot 5, autopilot-laeufer, autopiloten-ehrlichkeit) — beide Ehrlichkeits-Waechter schlugen zuerst korrekt an (Zaehler, MIT_ECHTER_MESSUNG) und wurden bewusst nachgezogen",
+  "hinweis": "opsAutopilotenListe.js war schon vor dieser Arbeit ueber 800 Zeilen (825); der Eintrag kam kompakt dazu. Aufteilen ist eigene Aufgabe."
+}
