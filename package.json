@@ -46,6 +46,7 @@
     "check:admin-lock": "node scripts/check-admin-lock.mjs",
     "check:admin-console-sync": "node scripts/deploy/sync_admin_console_pages.mjs --pruefen",
     "check:admin-konsole": "node scripts/check-admin-konsole.mjs",
+    "check:deploy-abgleich": "node scripts/check-deploy-abgleich.mjs",
     "check:deploy-lock": "node scripts/check-deploy-lock.mjs",
     "rag:export": "node scripts/rag/export_rag_index_to_idrive.mjs",
     "lock:freeze": "node scripts/check-start-lock.mjs --freeze",
