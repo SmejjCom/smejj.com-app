@@ -33,13 +33,14 @@ async function hole(fetchImpl, url, { json = false, jetztMs = Date.now() } = {})
   const alt = cache.get(url);
   if (alt && jetztMs - alt.am < CACHE_MS) return alt.wert;
   let wert;
+  const t0 = Date.now();
   try {
     const antwort = await fetchImpl(url, {
       signal: AbortSignal.timeout(ZEIT_MS),
       headers: { "User-Agent": "smejj.com-control/auslieferung", Accept: json ? "application/json" : "*/*" }
     });
     const text = await antwort.text();
-    wert = { status: antwort.status, text, json: json ? sicherJson(text) : null, ms: null };
+    wert = { status: antwort.status, text, json: json ? sicherJson(text) : null, ms: Date.now() - t0 };
   } catch (fehler) {
     wert = { status: 0, text: "", json: null, fehler: String(fehler?.message || fehler).slice(0, 80) };
   }
@@ -119,7 +120,7 @@ async function control(fetchImpl, jetztMs, env, startzeitMs) {
     id: "control", name: "smejj-control", bautAus: "Zeabur · " + BAU_BRANCH,
     liveStand, bauStand: kurz(bauSha), zustand, satz,
     bauLauf: lauf ? { status: lauf.status, ergebnis: lauf.conclusion, fertigAm: lauf.completed_at } : null,
-    gestartetAm, abgeleitet: !eigenerCommit
+    gestartetAm, abgeleitet: !eigenerCommit, antwortMs: health.ms ?? null
   };
 }
 
@@ -135,16 +136,17 @@ async function bruecke(fetchImpl, jetztMs) {
   else if (!bauStand) { zustand = "unbekannt"; satz = "Buendel im Repo nicht lesbar — kein Vergleich."; }
   else if (liveStand === bauStand) { zustand = "gleich"; satz = "Die Bruecke laeuft das Buendel, das in assets/chat-bridge.js liegt."; }
   else { zustand = "dahinter"; satz = "Im Repo liegt " + bauStand + ", die Bruecke laeuft " + liveStand + " — sie holt ihr Buendel erst beim Neustart."; }
-  return { id: "bruecke", name: "smejj-chat-bridge", bautAus: "Zeabur · holt assets/chat-bridge.js beim Start", liveStand, bauStand, zustand, satz };
+  return { id: "bruecke", name: "smejj-chat-bridge", bautAus: "Zeabur · holt assets/chat-bridge.js beim Start", liveStand, bauStand, zustand, satz, antwortMs: live.ms ?? null };
 }
 
 async function einfacherDienst(fetchImpl, jetztMs, { id, name, bautAus, url, versionAus }) {
   const a = await hole(fetchImpl, url, { json: true, jetztMs });
-  if (a.status === 0) return { id, name, bautAus, liveStand: null, bauStand: null, zustand: "nicht-erreichbar", satz: "Nicht erreichbar: " + (a.fehler || "keine Antwort") + "." };
-  if (a.status === 404) return { id, name, bautAus, liveStand: "antwortet (404)", bauStand: null, zustand: "erreichbar", satz: "Der Dienst antwortet, hat aber keinen Gesundheitspfad — Version nicht messbar." };
-  if (a.status !== 200) return { id, name, bautAus, liveStand: "HTTP " + a.status, bauStand: null, zustand: "nicht-erreichbar", satz: "Antwortet mit HTTP " + a.status + "." };
+  const antwortMs = a.ms ?? null;
+  if (a.status === 0) return { id, name, bautAus, liveStand: null, bauStand: null, zustand: "nicht-erreichbar", satz: "Nicht erreichbar: " + (a.fehler || "keine Antwort") + ".", antwortMs };
+  if (a.status === 404) return { id, name, bautAus, liveStand: "antwortet (404)", bauStand: null, zustand: "erreichbar", satz: "Der Dienst antwortet, hat aber keinen Gesundheitspfad — Version nicht messbar.", antwortMs };
+  if (a.status !== 200) return { id, name, bautAus, liveStand: "HTTP " + a.status, bauStand: null, zustand: "nicht-erreichbar", satz: "Antwortet mit HTTP " + a.status + ".", antwortMs };
   const version = versionAus ? versionAus(a.json) : null;
-  return { id, name, bautAus, liveStand: version || "antwortet", bauStand: null, zustand: "erreichbar", satz: version ? "Meldet Version " + version + "; kein Bau-Stand zum Vergleich hinterlegt." : "Antwortet gesund; Version nicht gemeldet." };
+  return { id, name, bautAus, liveStand: version || "antwortet", bauStand: null, zustand: "erreichbar", satz: version ? "Meldet Version " + version + "; kein Bau-Stand zum Vergleich hinterlegt." : "Antwortet gesund; Version nicht gemeldet.", antwortMs };
 }
 
 // ---- Sperren im gebauten Abbild --------------------------------------------

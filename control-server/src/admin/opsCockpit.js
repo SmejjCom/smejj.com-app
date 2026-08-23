@@ -18,15 +18,97 @@
 
 import { autopilotUebersicht } from "./opsAutopiloten.js";
 import { kontingentUebersicht } from "./opsKontingent.js";
+import { auslieferungUebersicht } from "./opsAuslieferung.js";
+import { mrrBeiStripe } from "./opsUmsatz.js";
+import { readUserIndexFresh } from "./userIndex.js";
+import { readAuditPage } from "./auditLog.js";
+import { listApprovals } from "./approvalStore.js";
+
+// ---- "Die eine Seite, die du morgens ansiehst" (Design-Vorschlag, 2026-08-23) ----
+//
+// Vier Zahlen oben, Dienste links, Protokoll rechts — alles aus den Modulen,
+// die es schon gibt (Auslieferung, Umsatz, Nutzer-Index, Audit, Freigaben).
+// Die Dienste-Tabelle stellt NEBEN die Antwort des Dienstes den letzten
+// ECHTEN Lauf des zugehoerigen Autopiloten: "kein Herzschlag, aber gelaufen"
+// sieht man so in einer Sekunde (der Fall, der einmal in die Irre fuehrte).
+//
+// mitNetz: nur die Route setzt es; Tests rufen ohne und bekommen die alte,
+// netzlose Antwort — kein Test haengt an smejj.com oder Stripe.
+const DIENST_AUTOPILOT = Object.freeze({
+  control: "container-puls", bruecke: "brueckenwaechter", video: "multimodal-engine", maus: null, bild: null, frontend: null, waechter: "brueckenwaechter"
+});
+
+function heuteGemessen(a, jetztMs) {
+  const utcTag = new Date(jetztMs).toISOString().slice(0, 10);
+  return (a.tage || []).some((t) => t.tag === utcTag && ((t.ok || 0) + (t.fehler || 0)) > 0);
+}
+
+/** Grau, obwohl er melden SOLL und heute nichts gemessen wurde — dieselbe Regel wie die Autopiloten-Seite. */
+export function ohneSignal(ap, jetztMs) {
+  return ap.autopiloten.filter((a) => a.ampel === "grau" && a.messung === "heartbeat" && !heuteGemessen(a, jetztMs));
+}
+
+function letzterEchterLauf(ap, id) {
+  const a = id ? ap.autopiloten.find((x) => x.id === id) : null;
+  if (!a) return null;
+  return { autopilot: a.name, nummer: a.nummer || null, ampel: a.ampel, am: a.letzterLauf?.am || null, status: a.letzterLauf?.status || null, grund: a.ampelGrund || null };
+}
+
+async function sicher(fn, leer) {
+  try { return await fn(); } catch (fehler) { return { ...leer, fehler: String(fehler?.message || fehler).slice(0, 100) }; }
+}
+
+async function morgenLage({ env, jetztMs, fetchImpl, ap, startzeitMs, leseDienste, leseMrr, leseIndex, leseAudit, leseFreigaben }) {
+  const [dienste, mrr, index, audit, freigaben] = await Promise.all([
+    sicher(() => leseDienste({ env, fetchImpl, jetztMs, startzeitMs }), { ok: false, dienste: [] }),
+    sicher(() => leseMrr({ env, fetchImpl }), { gemessen: false, cent: 0, abos: 0 }),
+    sicher(() => leseIndex({ env, fetchImpl }), { ok: false, entries: [] }),
+    sicher(() => leseAudit({ limit: 8, env, fetchImpl, nowMs: jetztMs }), { ok: false, entries: [] }),
+    sicher(() => leseFreigaben({ env, fetchImpl, nowMs: jetztMs, limit: 20 }), { ok: false, approvals: [] })
+  ]);
+  const konten = index.ok ? (index.entries || []) : [];
+  const wocheAb = jetztMs - 7 * 86400000;
+  const stumm = ohneSignal(ap, jetztMs);
+  const werkstatt = letzterEchterLauf(ap, "werkstatt-autopilot");
+  const nachweis = letzterEchterLauf(ap, "nachweis-kette");
+  const diensteZeilen = (dienste.dienste || []).map((d) => ({
+    id: d.id, name: d.name, bautAus: d.bautAus, antwortMs: d.antwortMs ?? null, zustand: d.zustand, satz: d.satz,
+    letzterLauf: letzterEchterLauf(ap, DIENST_AUTOPILOT[d.id] || null)
+  }));
+  diensteZeilen.push({ id: "speicher", name: "Speicher IDrive e2", bautAus: "lesen und schreiben", antwortMs: null,
+    zustand: nachweis ? (nachweis.ampel === "gruen" ? "erreichbar" : nachweis.ampel === "rot" ? "nicht-erreichbar" : "unbekannt") : "unbekannt",
+    satz: nachweis ? "Schreibprobe: " + (nachweis.grund || nachweis.ampel) : "Nachweis-Wächter nicht in der Registry.", letzterLauf: nachweis });
+  diensteZeilen.push({ id: "nachtbau", name: "Nachtbau (Werkstatt)", bautAus: "Control Server + Mac", antwortMs: null,
+    zustand: werkstatt ? (werkstatt.ampel === "gruen" ? "erreichbar" : werkstatt.ampel === "rot" ? "nicht-erreichbar" : "unbekannt") : "unbekannt",
+    satz: werkstatt && werkstatt.ampel === "grau" && werkstatt.am ? "Kein Herzschlag gerade — aber gelaufen: " + werkstatt.am : (werkstatt ? werkstatt.grund : "—"), letzterLauf: werkstatt });
+  const gemessen = (dienste.dienste || []).filter((d) => Number.isFinite(d.antwortMs));
+  return {
+    nutzer: { erreichbar: index.ok === true, gesamt: konten.length, neuDieseWoche: konten.filter((n) => Date.parse(n.createdAt || 0) >= wocheAb).length, grund: index.ok ? null : (index.error || index.fehler || "Index nicht lesbar") },
+    umsatz: { gemessen: mrr.gemessen === true, cent: mrr.cent || 0, waehrung: mrr.waehrung || "eur", abos: mrr.abos || 0, grund: mrr.gemessen ? null : (mrr.grund || mrr.fehler || "Stripe nicht lesbar") },
+    antwortzeit: gemessen.length
+      ? { gemessen: true, langsamsterMs: Math.max(...gemessen.map((d) => d.antwortMs)), langsamster: gemessen.sort((a, b) => b.antwortMs - a.antwortMs)[0].name, dienste: gemessen.length, satz: "Gesundheitsabfragen der Dienste, eben gemessen — nicht die Antwortzeit des Chats." }
+      : { gemessen: false, satz: "Kein Dienst hat geantwortet." },
+    ohneSignal: { anzahl: stumm.length, namen: stumm.slice(0, 5).map((a) => a.name), gesamt: ap.autopiloten.length },
+    dienste: diensteZeilen,
+    protokoll: { erreichbar: audit.ok === true, eintraege: (audit.entries || []).slice(0, 8).map((x) => ({ am: x.at, aktion: x.action, wer: x.actorEmail || null, ziel: x.target || null })), grund: audit.ok ? null : (audit.error || audit.fehler || null) },
+    vierAugen: { erreichbar: freigaben.ok !== false, offen: (freigaben.approvals || []).filter((a) => a.status === "pending").map((a) => ({ id: a.id, aktion: a.action, ziel: a.target, angefragtVon: a.requestedBy, angefragtAm: a.requestedAt })) }
+  };
+}
 
 /**
  * Die Lage in einem Satz, plus die Zahlen, die wirklich gemessen sind.
  * @param {object} options
  * @returns {Promise<object>}
  */
-export async function cockpitUebersicht({ jetztMs = Date.now(), env = process.env } = {}) {
+export async function cockpitUebersicht({
+  jetztMs = Date.now(), env = process.env, mitNetz = false, fetchImpl = fetch, startzeitMs = null,
+  leseDienste = auslieferungUebersicht, leseMrr = mrrBeiStripe, leseIndex = readUserIndexFresh, leseAudit = readAuditPage, leseFreigaben = listApprovals
+} = {}) {
   const ap = autopilotUebersicht({ jetztMs });
   const kontingent = await kontingentUebersicht({ env });
+  const morgen = mitNetz
+    ? await morgenLage({ env, jetztMs, fetchImpl, ap, startzeitMs, leseDienste, leseMrr, leseIndex, leseAudit, leseFreigaben })
+    : null;
 
   const gesamt = ap.autopiloten.length;
   const rot = ap.rot || 0;
@@ -73,6 +155,7 @@ export async function cockpitUebersicht({ jetztMs = Date.now(), env = process.en
   return {
     ok: true,
     zeitpunkt: new Date(jetztMs).toISOString(),
+    morgen,
 
     lage,
 
@@ -118,8 +201,8 @@ export async function cockpitUebersicht({ jetztMs = Date.now(), env = process.en
     // eine erfundene zu glauben.
     nichtGemessen: [
       {
-        feld: "Antwortzeit (erster Token, p95)",
-        warum: "Es gibt keine laufende Messung im Control-Server. Einzelmessungen liegen in docs/benchmarks/, sie sind Stichproben und kein Live-Wert."
+        feld: "Antwortzeit des Chats (erster Token, p95)",
+        warum: "Oben steht die Antwortzeit der Gesundheitsabfragen — nicht der Chat. Für den ersten Token gibt es keine laufende Messung; Stichproben liegen in docs/benchmarks/."
       },
       {
         feld: "Ladezeit der Seite (LCP, CLS)",

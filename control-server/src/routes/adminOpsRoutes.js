@@ -74,7 +74,7 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
   const bereich = url.pathname.slice(PREFIX.length).replace(/^\//, "");
   try {
     if (bereich === "") return privateJson(res, 200, { ok: true, bereiche: BEREICHE }), true;
-    if (bereich === "cockpit") return privateJson(res, 200, await cockpitUebersicht({ env })), true;
+    if (bereich === "cockpit") return privateJson(res, 200, await cockpitUebersicht({ env, mitNetz: true, startzeitMs: GESTARTET_MS })), true;
     if (bereich === "modelle") return privateJson(res, 200, modellUebersicht({ env })), true;
     if (bereich === "jobs") return privateJson(res, 200, jobUebersicht({ limit: grenze(url) })), true;
     if (bereich === "worker") return privateJson(res, 200, await workerUebersicht({ env })), true;

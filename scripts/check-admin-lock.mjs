@@ -103,6 +103,9 @@ export const PROTECTED_FILES = [
   "control-server/src/admin/opsNutzerLage.js",
   // Modul E Teil 2 "Abos & Umsatz" (2026-08-23): MRR, Aufladungen, Kosten, je Plan.
   "control-server/src/admin/opsUmsatz.js",
+  // Cockpit "Die eine Seite, die du morgens ansiehst" (2026-08-23).
+  "control-server/src/admin/opsCockpit.js",
+  "control-server/admin-ui/views-cockpit.js",
   "control-server/admin-ui/views-stage9.js"
 ];
 

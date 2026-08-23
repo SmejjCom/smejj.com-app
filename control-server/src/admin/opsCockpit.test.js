@@ -92,3 +92,35 @@ test("Speicher: nicht messbar heisst 'keine Zahl', nicht 'null Bytes'", async ()
       "die Quelle sagt, ob sie vollstaendig zaehlen konnte — das muss durchgereicht werden");
   }
 });
+
+test("Morgen-Lage (mitNetz): vier Zahlen aus Stubs, Dienste mit letztem echten Lauf, nichts erfunden", async () => {
+  const jetztMs = Date.parse("2026-08-23T08:00:00.000Z");
+  const c = await cockpitUebersicht({
+    env: {}, jetztMs, mitNetz: true,
+    leseDienste: async () => ({ ok: true, dienste: [
+      { id: "control", name: "smejj-control", bautAus: "Zeabur", antwortMs: 38, zustand: "gleich", satz: "ok" },
+      { id: "bruecke", name: "smejj-chat-bridge", bautAus: "Zeabur", antwortMs: 210, zustand: "gleich", satz: "ok" },
+      { id: "bild", name: "smejj-bild-maler", bautAus: "Zeabur", antwortMs: null, zustand: "nicht-erreichbar", satz: "weg" }
+    ] }),
+    leseMrr: async () => ({ gemessen: true, cent: 900, abos: 1, waehrung: "eur" }),
+    leseIndex: async () => ({ ok: true, entries: [{ createdAt: "2026-08-22T00:00:00Z" }, { createdAt: "2026-07-01T00:00:00Z" }] }),
+    leseAudit: async () => ({ ok: true, entries: [{ at: "2026-08-23T07:59:00Z", action: "users.index.rebuild", actorEmail: "a@b", target: "admin/index/users.json" }] }),
+    leseFreigaben: async () => ({ ok: true, approvals: [{ id: "x", status: "pending", action: "user.delete", target: "u", requestedBy: "a@b", requestedAt: "2026-08-23T07:40:00Z" }] })
+  });
+  const m = c.morgen;
+  assert.equal(m.nutzer.gesamt, 2);
+  assert.equal(m.nutzer.neuDieseWoche, 1);
+  assert.equal(m.umsatz.cent, 900);
+  assert.equal(m.antwortzeit.langsamsterMs, 210);
+  assert.equal(m.antwortzeit.langsamster, "smejj-chat-bridge");
+  assert.ok(m.ohneSignal.anzahl >= 0 && m.ohneSignal.gesamt > 30);
+  assert.ok(m.dienste.some((d) => d.id === "nachtbau"), "der Nachtbau steht als eigene Zeile");
+  assert.ok(m.dienste.some((d) => d.id === "speicher"), "der Speicher steht mit Schreibprobe");
+  assert.equal(m.protokoll.eintraege.length, 1);
+  assert.equal(m.vierAugen.offen.length, 1);
+});
+
+test("ohne mitNetz bleibt das Cockpit netzlos — morgen ist null", async () => {
+  const c = await cockpitUebersicht({ env: {} });
+  assert.equal(c.morgen, null);
+});
