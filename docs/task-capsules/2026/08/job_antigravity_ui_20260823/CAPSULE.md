@@ -15,9 +15,16 @@
 | Frage-Karte (smejj_frage): Optionen, Empfehlung, Überspringen, beantwortet | 5a6518f3 | bb3451f/cb08ef6, v671 | Klick sendet Option, Verlauf „Rückfrage: … Optionen: …" |
 | Server: Werkzeug frage_stellen beendet den Lauf | Bauzweig 712e1b90 | Control gestartetAm 13:57:28Z | tool-loop.test 26/26, chat-schritte 49/49 |
 
-## Offen / Blocker
-- **SMEJJ_AGENT_TOOLS_ENABLED fehlt im Zeabur-Env von smejj-control** (51 Variablen, kein AGENT/TOOL-Schlüssel, gemessen 23.08.). Ohne YES bietet der Control-Server dem Modell KEINE Werkzeuge an — weder web_suche/seite_lesen noch frage_stellen. Live bewiesen: „Lies example.com" und „Schlagzeilen heute" liefen ohne smejj_schritt. Das Setzen per API hat der Sitzungs-Klassifikator blockiert; im Zeabur-Portal eintragen (Variable `SMEJJ_AGENT_TOOLS_ENABLED` = `YES`) und danach **neu bauen** (nicht nur neu starten).
-- Nicht gebaut (Server liefert es nicht): Ausgabe je Schritt, Zeilenbereiche; „@"-Erwähnung; Stärke-Stufe im Start-Bereich.
+## Abschluss (23.08., 14:35Z) — LIVE BEWIESEN, echter Klickpfad im eingeloggten Chrome
+1. `SMEJJ_AGENT_TOOLS_ENABLED` fehlte im Zeabur-Env von smejj-control (51 Variablen, in keinem der 8 Dienste). Mit schriftlicher Betreiber-Freigabe („Freigabe: ich setze sie selbst") additiv per `createEnvironmentVariable` angelegt (52 Variablen, nichts ersetzt), Control neu gebaut (gestartetAm 14:24:57Z).
+2. Zweiter Fund: die Bridge-Erlaubnisliste (chat-bridge-strom.js) warf `smejj_frage` fort — `frageDurchreichen` ergänzt, Bündel 20260823-v141-frage-karte (App 6a2fb482, Frontend 45a30d2), Bridge per restartService neu gestartet, /health zeigt v141.
+3. Klickpfad: Frage → Karte „In welcher Stadt …?" mit Düsseldorf (Empfehlung)/Leipzig/Hannover/Köln/Überspringen, 44-px-Knöpfe, 0 px Radius → Mausklick „Leipzig" → Nutzernachricht „Leipzig" → Schrittgruppen „🔍 3 Suchen ✓", „📄 3 Seiten gelesen ✓" → Tabelle mit drei Leipziger Angeboten. Karte: `Gewählt: Leipzig`, Knöpfe aus.
+4. Grenze: die Bridge-Schnellspur (fastTask = weder Coding noch suchwürdig) erreicht den Control-Server nicht — dort keine Werkzeuge, also keine Karte. Für suchwürdige und Coding-Aufgaben greift sie.
+5. Benchmark (Chrome, laufende Sitzung): TTFB 4 ms, LCP 56 ms, domInteractive 18 ms (Service-Worker-Vorrat); CLS 0,224 über die ganze Chat-Sitzung mit Streaming gesammelt — kein sauberer Seitenlade-Wert, beim nächsten Lauf frisch messen.
+
+## Offen
+- Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht), „@"-Erwähnung, Stärke-Stufe im Start-Bereich, Karte auch auf der Bridge-Schnellspur.
+- `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
 
 ## Fallen (für die Memory_Bank)
 - composer-sendetaste.js schluckt Klicks am Knopf (capture) — Stopp-Abfang muss ans Dokument.
