@@ -13,7 +13,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { konfliktSieger, abgleichsKarte, mussGesendetWerden, teileAuf, erzeugeVorfahrt } from "../public/chat-sync-auswahl.js";
+import { konfliktSieger, abgleichsKarte, mussGesendetWerden, teileAuf, erzeugeVorfahrt, erzeugeAbgleichsSpeicher } from "../public/chat-sync-auswahl.js";
 import { konfliktSieger as serverSieger } from "../control-server/src/chats/chatSyncStore.js";
 
 const lies = (p) => readFileSync(fileURLToPath(new URL(p, import.meta.url)), "utf8");
@@ -154,4 +154,59 @@ test("chat-sync haengt die Vorfahrt wirklich an das Stromsignal", () => {
   assert.match(sync, /erzeugeVorfahrt\(/, "Vorfahrt wird angelegt");
   assert.match(sync, /smejj:chat-strom/, "und an das Signal gehaengt, das BEIDE Familien senden");
   assert.match(sync, /if \(!vorfahrt\.darfSenden\(\)\) return;/, "push() fragt sie");
+});
+
+// ---- geteilter Abgleich: pull() und push() fragen dasselbe --------------------
+//
+// STARTPHASE GEMESSEN 2026-08-23: /api/chats?nurAbgleich=1 lief ZWEIMAL — bei
+// 2317 ms (pull) und bei 7324 ms (push), die zweite allein 1504 ms lang. Bis
+// 8,8 s nach dem Laden war die Leitung belegt, und die erste Chat-Frage
+// kostete deshalb 11 Sekunden statt einer.
+
+function uhrAttrappe(start = 1000) {
+  let jetzt = start;
+  return { uhr: () => jetzt, vor: (ms) => { jetzt += ms; } };
+}
+
+test("was pull geholt hat, fragt push nicht noch einmal", () => {
+  const u = uhrAttrappe();
+  const sp = erzeugeAbgleichsSpeicher({ frist: 5000, uhr: u.uhr });
+  const karte = abgleichsKarte({ chats: [{ id: "a", updatedAt: "2026-08-23T10:00:00Z" }] });
+  sp.merke(karte);
+  u.vor(4999);
+  assert.equal(sp.hole(), karte, "innerhalb der Frist wird geteilt");
+});
+
+test("nach der Frist wird frisch gefragt", () => {
+  // Ein veralteter Abgleich liesse einen Chat liegen, den ein anderes Geraet
+  // gerade geaendert hat. Lieber eine Anfrage mehr als ein Stand weniger.
+  const u = uhrAttrappe();
+  const sp = erzeugeAbgleichsSpeicher({ frist: 5000, uhr: u.uhr });
+  sp.merke(abgleichsKarte({ chats: [] }));
+  u.vor(5001);
+  assert.equal(sp.hole(), null);
+});
+
+test("nach dem Schreiben ist die Karte hinfaellig", () => {
+  const u = uhrAttrappe();
+  const sp = erzeugeAbgleichsSpeicher({ frist: 5000, uhr: u.uhr });
+  sp.merke(abgleichsKarte({ chats: [{ id: "a", updatedAt: "x" }] }));
+  sp.verwerfen();
+  assert.equal(sp.hole(), null, "sonst haelt push den eigenen Schreibstand fuer den Serverstand");
+});
+
+test("ohne gemerkte Karte gibt es null — und dann wird alles gesendet", () => {
+  const sp = erzeugeAbgleichsSpeicher();
+  assert.equal(sp.hole(), null);
+  assert.equal(mussGesendetWerden({ id: "a", updatedAt: "x" }, sp.hole()), true);
+});
+
+test("chat-sync teilt den Abgleich und laesst sich unterbrechen", () => {
+  const sync = lies("../public/chat-sync.js");
+  assert.match(sync, /erzeugeAbgleichsSpeicher\(/, "Speicher wird angelegt");
+  assert.match(sync, /abgleichsSpeicher\.merke\(abgleichsKarte\(daten\)\)/, "pull legt seinen Abgleich ab");
+  assert.match(sync, /let karte = abgleichsSpeicher\.hole\(\)/, "push nimmt ihn");
+  assert.match(sync, /abgleichsSpeicher\.verwerfen\(\)/, "nach dem Schreiben verworfen");
+  // Und der Kern fuer den Start: die Schleife bricht ab, wenn eine Antwort anfaengt.
+  assert.match(sync, /if \(!vorfahrt\.darfSenden\(\)\) break;/, "laufender Sync macht der Antwort Platz");
 });
