@@ -1624,3 +1624,12 @@ Sitzung, wurde hier nur gefunden.
 Ergaenzt wurde exakt der Block aus index.html. Alle fuenf Zieldateien
 vorher geprueft: lokal vorhanden UND live 200 — keine toten Referenzen.
 favicon-lock danach neu eingefroren.
+
+## v661 — 2026-08-23 — Nutzerreise USA: Englisch vollstaendig, Landingpage-Kopf am Handy
+Precache-Dateien geaendert: spur-start.js (b43, Spur ueber t()), google-login.js (Umlaute).
+en.js +155 Texte (nicht im Precache). Frontend b4251b2.
+
+## v662 — 2026-08-23 — Wartetext bleibt im Cline-Pfad (Betreiber-Freigabe per Karte)
+ai/chatClient.js (v=5 in medien-absicht.js v=5, app.js b87): "smejj denkt nach …"
+faellt erst beim ersten Delta; gemessen vorher 3,6 s leere Blase. Start-Lock neu
+eingefroren mit Wortlaut der Freigabe.

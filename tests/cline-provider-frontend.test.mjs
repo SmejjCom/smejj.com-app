@@ -87,3 +87,17 @@ test("autonomous worker resolves Cline credential only on the control server", (
   assert.match(worker, /job\.providerRuntime/);
   assert.match(worker, /tools: CODING_TOOLS/);
 });
+
+// Betreiber-Freigabe 2026-08-23 (Nutzerreise): der Wartetext "smejj denkt nach …"
+// bleibt im Cline-Pfad bis zum ersten Delta — gemessen waren 3,6 s leere Blase.
+test("Cline-Pfad loescht den Wartetext erst beim ersten Text, nicht vor dem Abruf", () => {
+  const src = fs.readFileSync(new URL("../public/ai/chatClient.js", import.meta.url), "utf8");
+  assert.doesNotMatch(src, /selected === "Cline"\) \{ clearThinking\(\);/, "clearThinking() darf nicht VOR runClineChat laufen");
+  const cline = src.slice(src.indexOf("async function runClineChat"), src.indexOf("// Generischer BYOK-Anbieter"));
+  assert.doesNotMatch(cline, /let answer = "";\s*output\.textContent = "";/, "kein Leeren der Blase vor dem Strom");
+  assert.match(cline, /if \(!answer\) clearThinking\(\);\s*answer \+= delta;/, "Wartetext faellt beim ersten Delta");
+  for (const pfad of ["nichtAngemeldetText", "Automatische Modellwahl", "(leere Antwort)", "Cline-Fehler"]) {
+    const i = cline.indexOf(pfad);
+    assert.ok(i > 0 && cline.slice(Math.max(0, i - 200), i).includes("clearThinking()"), `Fehlerweg '${pfad}' raeumt den Wartetext weg`);
+  }
+});

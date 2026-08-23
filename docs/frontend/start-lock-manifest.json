@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T05:30:32.382Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-23 (Autonomie-Charta, Cache-Nummern), Runde 2: index.html, app.js, search.js, sw.js — ausschliesslich Marken (?v=) und CACHE_NAME v656->v657. Geprueft: 0 Zeilen ohne ?v= oder CACHE_NAME. Anlass: Zeitstempel-Fix aus dem Live-Test.",
+  "frozenAt": "2026-08-23T12:13:01.549Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-23 per Karte: 'Antwortblase-Fix freigeben (Empfehlung)' — ai/chatClient.js: Wartetext bleibt im Cline-Pfad bis zum ersten Delta; dazu nur Marken: app.js medien-absicht v=5, index.html app.js b87, sw.js CACHE_NAME v657->v662.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "039e67b4982fefee45730cf4f947e4001e6110335f6a29ad6525eaf1b2023e87",
+    "public/index.html": "0d04887ea322657775c153f40f3a0bf601dc0f1b147698bf09f566290176b7b5",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "48d109ee80a7f9644a5f0de1773cd62bd504d0cda28c9145a20be0027425aa3f",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "6f2e6e61321f137ab14827e143fbddb54f586fa08e24e08defb3279eb83b7878",
+    "public/app.js": "b090a7ec8072eb283987b12749acc2129062798a51ce291298d37f4bd3626a17",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "6f2cc54cb595530dceb18b039a17af0b47fe00c1565944429048031a713966ca",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -31,12 +31,12 @@
     "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
     "public/cline-model-menu.css": "44599e36922c6f340e3b19df0728f85b9dc89ba09590ca0f0e644dfd29acfa84",
     "public/auth/passkey-ui.js": "ff1335c193e6458b0e5bdf43627ffe3bc2fa94aa94f67c8bf3d53a4ba4f24019",
-    "public/ai/chatClient.js": "5fe2f20ec73a9018cc1106753dcf428084ad4a231e830ed1289f9d25df1798f7",
+    "public/ai/chatClient.js": "bae4ade2bf686234fddc31741b065d70ee4c64b8092fdb033d9f04591d291263",
     "public/ai/index.js": "f21fcef60cecb99c454783909fc6f63aedf3f8d2211e1df04380327debe87997",
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "685b31d0fe27a607d0a6ec0b7b4d4d6d837ed2ce663cfe6e7046991e8ca0f4bd",
+    "public/sw.js": "2633cc3dba5f2110eb6bec2da4dc5101cd791ede49fec710a0f6c841ff6e7ce0",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
