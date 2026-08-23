@@ -26,6 +26,7 @@ import { emailUebersicht } from "../admin/opsEmail.js";
 import { analytikUebersicht } from "../admin/opsAnalytik.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { cockpitUebersicht } from "../admin/opsCockpit.js";
+import { auslieferungUebersicht } from "../admin/opsAuslieferung.js";
 import { evolutionDashboard } from "../admin/opsEvolution.js";
 // Token-Verbrauch: die Zahl, ohne die jede Kostenentscheidung geraten ist.
 import { bericht as verbrauchsBericht } from "../llm/tokenMesser.js";
@@ -43,7 +44,7 @@ const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
   "cockpit", "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
-  "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch"
+  "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch", "auslieferung"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -87,6 +88,8 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "analytik") return privateJson(res, 200, await analytikUebersicht({ env, tage: tageAus(url) })), true;
     if (bereich === "autopiloten") return privateJson(res, 200, autopilotUebersicht({ startzeitMs: GESTARTET_MS })), true;
     if (bereich === "evolution") return privateJson(res, 200, await evolutionDashboard({ env })), true;
+    // Modul AL: Live-Stand gegen Bau-Stand je Dienst (Design-Vorschlag "Was ist wirklich live?").
+    if (bereich === "auslieferung") return privateJson(res, 200, await auslieferungUebersicht({ env, startzeitMs: GESTARTET_MS })), true;
     // Der Speicher ist nach jedem Control-Neustart leer — die vollstaendige
     // Historie steht in den Logzeilen "[verbrauch] {...}". Diese Ansicht ist
     // die schnelle Sicht auf den laufenden Prozess, nicht das Archiv.

@@ -93,6 +93,9 @@ export const PROTECTED_FILES = [
   "control-server/src/admin/opsAutopilotenListe.js",
   "control-server/src/admin/opsAutopilotenListeEvolution.js",
   "control-server/src/admin/opsAutopilotenBereiche.js",
+  // Modul AL "Was ist wirklich live?" (2026-08-23): Live-Stand gegen Bau-Stand.
+  "control-server/src/admin/opsAuslieferung.js",
+  "control-server/admin-ui/views-stage12.js",
   "control-server/admin-ui/views-stage9.js"
 ];
 

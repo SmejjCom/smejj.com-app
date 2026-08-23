@@ -57,7 +57,9 @@ const SEITEN_ORDNER = Object.freeze([
   // die Seite zwar im Control-Server, aber smejj.com/admin/evolution/ waere
   // 404 — genau der Fehler, an dem Cockpit und Radar tagelang unsichtbar
   // blieben. Erst der Ordner macht die Adresse erreichbar.
-  "evolution"
+  "evolution",
+  // 2026-08-23: Modul AL "Was ist wirklich live?" (Design-Vorschlag Adminbereich).
+  "auslieferung"
 ]);
 
 function sha256(inhalt) {

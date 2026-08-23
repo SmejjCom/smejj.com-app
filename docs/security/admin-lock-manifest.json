@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T05:14:02.156Z",
-  "confirmation": "Betreiber am 2026-08-23 (Karte): 'Struktur übernehmen, Optik anpassen' — Live-Test-Fix: Takt-Kachel zeigte rohes HTML (kachelBlock escapet selbst); Klartext statt HTML an kachelBlock/kopfBlock.",
+  "frozenAt": "2026-08-23T05:44:41.165Z",
+  "confirmation": "Betreiber am 2026-08-23: 'Nächste Seite des Vorschlags bauen: Was ist wirklich live?' — Modul AL (Auslieferung) gebaut: Live-Stand gegen Bau-Stand je Dienst, Sperren im Abbild, ehrliche Liste des Nicht-Messbaren; adminUiRoutes.js um views/console-stage12.js erweitert.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -16,7 +16,7 @@
     "control-server/src/admin/auditLog.js": "abc94f207de28ed56aeba04eecf1cec4f4c0a53f5fa3d5395d55ea3676936d5b",
     "control-server/src/admin/approvalStore.js": "0bd996af40f28a8abcc016a8eb072b726e4907ed6a8e5ec7e855556501a68bab",
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
-    "control-server/src/routes/adminUiRoutes.js": "7aeeda3af7589cc609fad850731a36109ddb09be948cc846e6a284a085f00552",
+    "control-server/src/routes/adminUiRoutes.js": "4957059c75c3f03e8579a17449d43a045d038ac7bf9be54b0775c7d2d0a8af91",
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
     "control-server/admin-ui/api.js": "b2ac0d7c03ad325e0fec113c44fcd1026af4169b709a269f8f7159b4fdc5b17a",
     "control-server/admin-ui/gate.js": "d9e9bb407b063600208b1ba1881e8fc18120fb5d37e2e7c65a06afbc9736de2f",
@@ -24,6 +24,8 @@
     "control-server/src/admin/opsAutopilotenListe.js": "ca824b3fb6a4885b17b6bfca18d2c2f3257a8c930f4688c950c19225399abf97",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
     "control-server/src/admin/opsAutopilotenBereiche.js": "629775c386fff37a064ccccfc979ef9be3af50d227221bc216fd56bf0f73f187",
+    "control-server/src/admin/opsAuslieferung.js": "bed430fb6849aae67b8ef16b41fe8474e8a561b5923b0598447d8e981c3c7574",
+    "control-server/admin-ui/views-stage12.js": "eddeddb276b7a6508455f28490d0814d3ac5d07f821ebe403033b432195f0c71",
     "control-server/admin-ui/views-stage9.js": "460a51a127546e824f8172528e7fea53c8d66ab0ee5a61a64ab68c55db261601"
   }
 }
