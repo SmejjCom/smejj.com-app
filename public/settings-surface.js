@@ -226,8 +226,26 @@ async function ladeModellBereiche(view) {
   }
 }
 
+// API-Konto (Schluessel, Guthaben, Preise) erst beim Wechsel auf "api" —
+// 0 KB, solange niemand hinsieht.
+async function ladeApiKonto(view) {
+  try {
+    if (!document.querySelector('link[href^="/assets/entwickler.css"]')) {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "/assets/entwickler.css?v=2";
+      document.head.append(css);
+    }
+    const modul = await import("./api-konto-surface.js?v=1");
+    modul.initApiKontoSurface(view.querySelector("#apiKontoSurface"));
+  } catch {
+    /* fail-safe: uebrige Einstellungen bleiben bedienbar */
+  }
+}
+
 function activate(view, id) {
   activeTab = id;
+  if (id === "api") void ladeApiKonto(view);
   if (id === "models") void ladeModellBereiche(view);
   view.querySelectorAll("[data-settings-tab]").forEach((button) => {
     const active = button.dataset.settingsTab === id;

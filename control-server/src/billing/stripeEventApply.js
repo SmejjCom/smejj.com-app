@@ -16,6 +16,7 @@ import {
 } from "./subscriptionStore.js";
 import { emailKey, normalizeEmail } from "../auth/emailUserStore.js";
 import { sendAuthMail } from "../auth/mailer.js";
+import { verbucheAufladung } from "../publicapi/publicApiLedger.js";
 
 const SUBSCRIPTION_EVENTS = new Set([
   "customer.subscription.created",
@@ -38,6 +39,11 @@ export async function applyStripeEvent(event, env = process.env, sendMail = send
 
 async function applyCheckoutCompleted(event, env, sendMail) {
   const session = event?.data?.object || {};
+  // API-Guthaben (Einmalzahlung, seit 2026-08-23): erkennbar am Zweck in den
+  // Metadaten. Laeuft getrennt vom Abo-Store — ein Guthaben ist kein Plan.
+  if (session.mode === "payment" && String(session.metadata?.zweck || "") === "api-guthaben") {
+    return verbucheAufladung(session, env);
+  }
   if (session.mode !== "subscription") return { handled: false, action: "ignored_non_subscription_checkout" };
   const customerId = String(session.customer || "");
   if (!isStripeCustomerId(customerId)) return { handled: false, action: "ignored_missing_customer" };
