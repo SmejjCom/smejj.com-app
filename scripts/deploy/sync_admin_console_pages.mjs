@@ -46,7 +46,7 @@ const SEITEN_ORDNER = Object.freeze([
   "moderation", "dsgvo", "ankuendigungen", "flags",
   "modelle", "jobs", "worker", "deploy", "speicher",
   "schluessel", "ereignisse", "adminverwaltung",
-  "abrechnung", "kosten",
+  "abrechnung", "kosten", "api",
   "wissen", "sprachen", "experimente", "email", "analytik", "aufgaben",
   "autopiloten",
   // 2026-08-14: beide Seiten lagen fertig im Repo, waren aber nirgends
