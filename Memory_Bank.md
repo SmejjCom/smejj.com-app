@@ -904,3 +904,5 @@ Stand auf 5. August 2026 gesetzt.
 
 ## 2026-08-23 — Seite A „Übersicht" aufgelöst
 - Nav ohne A; /admin/uebersicht/ leitet still aufs Cockpit (AUFGELOEST in console.js). Alarm-Lage (security.alarm aus 50 Audit-Einträgen) lebt jetzt im Cockpit. views.uebersicht + zeigeUebersicht entfernt, Tests nach opsCockpit.test.js.
+
+- 2026-08-23: Kopfzeilen-Pillen „Index —/Kette —" nur noch sichtbar, wenn eine Seite einen Wert liefert (hidden + [hidden]{display:none!important}).
