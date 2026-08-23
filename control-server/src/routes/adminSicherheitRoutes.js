@@ -25,6 +25,8 @@ const gate = createRateLimiter({ capacity: 40, refillPerSec: 0.6, maxKeys: 5_000
 const LESERECHTE = Object.freeze({
   schluessel: "apikeys.read",
   ereignisse: "audit.read",
+  // Die Lage nennt nur, OB Geheimnisse gesetzt sind — dasselbe Leserecht wie die Ereignisse.
+  lage: "audit.read",
   admins: "users.read"
 });
 
