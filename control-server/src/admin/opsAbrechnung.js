@@ -130,7 +130,10 @@ function aufbereiten(k, adressen, jetztMs) {
 // nur fuer die offenen Faelle, nur zur Anzeige, und NICHT gespeichert (der
 // Kunden-Datensatz bleibt bewusst ohne Klartext-Adresse).
 async function ergaenzeZahlendeAdressen(abos, env, fetchImpl) {
-  const offen = abos.filter((a) => !a.konto && a.kundenId);
+  // Auch zugeordnete Abos OHNE gespeicherte Kaufadresse (Bestandskunden vor dem
+  // Feld paidEmail, oder nach dem Umhaengen): die Spalte "bezahlt als" soll die
+  // Adresse zeigen, nicht "unbekannt" (gesehen 2026-08-23 nach dem Umhaengen).
+  const offen = abos.filter((a) => a.kundenId && (!a.konto || !a.paidEmail));
   const schluessel = String(env.STRIPE_SECRET_KEY || "");
   if (!offen.length || !schluessel) return;
   await mapMitGrenze(offen, async (abo) => {
@@ -142,6 +145,7 @@ async function ergaenzeZahlendeAdressen(abos, env, fetchImpl) {
       if (!antwort.ok) return;
       const kunde = await antwort.json();
       abo.zahlendeAdresse = kunde?.email || null;
+      if (abo.konto) return; // zugeordnet: nur die Adresse ergaenzen, kein Handlungsbedarf
       abo.naechsterSchritt = abo.zahlendeAdresse
         ? `Bezahlt als ${abo.zahlendeAdresse} — mit dieser Adresse anmelden, oder das Abo auf die Konto-Adresse umhaengen.`
         : abo.naechsterSchritt;

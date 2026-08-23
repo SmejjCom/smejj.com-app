@@ -909,3 +909,7 @@ Stand auf 5. August 2026 gesetzt.
 
 ## 2026-08-23 — Abo auf Konto umhaengen (Fehler „1 bezahltes Abo passt zu keinem Konto")
 - Neue Kontoaktion `user.billing.relink` (billing/aboUmhaengen.js): zweiter Ref-Datensatz fuer die Konto-Adresse, Kunde zeigt auf sie, `refVorher` bleibt, `paidEmail` unveraendert. Knopf auf der Nutzerseite bei „Abos ohne Konto". Step-up + Audit wie alle Kontoaktionen.
+
+## 2026-08-23 — Abo umgehaengt (ERLEDIGT)
+- cus_V4GGvjGpI1hmUh haengt jetzt an smejjcom@gmail.com (Notweg abo_umhaengen_lokal.mjs, vom Betreiber ausgefuehrt). Live: Konto Smejj Com Plan plus/aktiv, Warnung weg.
+- Nachbesserung: Stripe-Adresse auch fuer zugeordnete Abos ohne paidEmail holen (Spalte „bezahlt als" statt „unbekannt").
