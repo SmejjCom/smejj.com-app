@@ -19,7 +19,7 @@ test("Endpunkte: gezaehlt wird, was ZU ist — und die offene Liste ist kurz und
 
 test("Zugaenge: Werte verlassen das Modul nie; Pflichtwerte fehlen sichtbar", async () => {
   const u = await sicherheitsLage({
-    env: { SMEJJ_SESSION_SECRET: "sehr-geheim-1234567890", IDRIVE_E2_ACCESS_KEY: "AK", SMEJJ_AUTOPILOT_KEYS: "a:1,b:2" },
+    env: { SMEJJ_SESSION_SECRET: "sehr-geheim-1234567890", IDRIVE_E2_ACCESS_KEY: "AK", SMEJJ_AUTOPILOT_KEYS: "a:1,b:2", GROQ_API_KEY: "kurz" },
     jetztMs: JETZT, wurzel: mkdtempSync(path.join(tmpdir(), "sl-")),
     leseFreigaben: async () => ({ ok: true, approvals: [] })
   });
@@ -29,6 +29,8 @@ test("Zugaenge: Werte verlassen das Modul nie; Pflichtwerte fehlen sichtbar", as
   assert.equal(z.SMEJJ_SESSION_SECRET.zustand, "gesetzt");
   assert.equal(z.IDRIVE_E2_SECRET_KEY.zustand, "fehlt-pflicht");
   assert.equal(z.STRIPE_SECRET_KEY.zustand, "fehlt");
+  assert.equal(z.GROQ_API_KEY.zustand, "gesetzt", "der kurze Rueckfall-Name zaehlt als gesetzt");
+  assert.equal(z.SMEJJ_LLM_ZHIPU_API_KEY.zustand, "fehlt");
   assert.equal(z.SMEJJ_AUTOPILOT_KEYS.beleg, "2 Kennungen hinterlegt");
   assert.deepEqual(u.pflichtFehlt, ["IDRIVE_E2_SECRET_KEY"]);
 });

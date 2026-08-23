@@ -46,9 +46,13 @@ const ZUGAENGE = Object.freeze([
   { name: "SMEJJ_AUTOPILOT_KEYS", wofuer: "Herzschlaege der Autopiloten von aussen (Mac-Jobs)", pflicht: true },
   { name: "STRIPE_SECRET_KEY", wofuer: "Abos und Zahlungen", pflicht: false },
   { name: "STRIPE_WEBHOOK_SECRET", wofuer: "Echtheit der Stripe-Rueckrufe", pflicht: false },
-  { name: "ZHIPU_API_KEY", wofuer: "Modell glm-5.2 (Standard-Antworten)", pflicht: false },
-  { name: "GROQ_API_KEY", wofuer: "Schnellspur und Sprach-Ohr", pflicht: false },
-  { name: "MOONSHOT_API_KEY", wofuer: "Modell Kimi", pflicht: false },
+  // Die Anbieter-Schluessel heissen im Control-Server SMEJJ_LLM_<ANBIETER>_API_KEY
+  // (providerBackendFromEnv); die kurzen Namen sind Rueckfall. Live am 23.08.
+  // gesehen: mit den kurzen Namen allein stand glm-5.2 als "nicht gesetzt" da,
+  // obwohl es antwortete.
+  { name: "SMEJJ_LLM_ZHIPU_API_KEY", auch: ["ZHIPU_API_KEY"], wofuer: "Modell glm-5.2 (Standard-Antworten)", pflicht: false },
+  { name: "SMEJJ_LLM_GROQ_API_KEY", auch: ["GROQ_API_KEY"], wofuer: "Schnellspur und Sprach-Ohr", pflicht: false },
+  { name: "SMEJJ_LLM_MOONSHOT_API_KEY", auch: ["MOONSHOT_API_KEY"], wofuer: "Modell Kimi", pflicht: false },
   { name: "SMEJJ_MESS_TOKEN", wofuer: "Messlaeufe (Qualitaets-Pruefer)", pflicht: false },
   { name: "SMEJJ_EVOLUTION_TOKEN", wofuer: "Meldeweg der AI Evolution Engine", pflicht: false },
   { name: "SMEJJ_MAUS_ENGINE_TOKEN", wofuer: "Maus-Engine (Browser-Automat)", pflicht: false }
@@ -59,7 +63,8 @@ function zugangsLage(env, autopiloten) {
   const nachweis = ap("nachweis-kette");
   const laeufer = ap("autopilot-laeufer");
   return ZUGAENGE.map((z) => {
-    const wert = String(env[z.name] || "").trim();
+    const quelle = [z.name, ...(z.auch || [])].find((n) => String(env[n] || "").trim());
+    const wert = quelle ? String(env[quelle]).trim() : "";
     const gesetzt = wert.length > 0;
     let beleg = null;
     if (z.name === "IDRIVE_E2_SECRET_KEY" && nachweis) {
@@ -74,7 +79,7 @@ function zugangsLage(env, autopiloten) {
       beleg = "Admin-Sitzungen laufen (diese Seite ist damit geoeffnet)";
     }
     return {
-      name: z.name, wofuer: z.wofuer, pflicht: z.pflicht,
+      name: quelle || z.name, wofuer: z.wofuer, pflicht: z.pflicht,
       zustand: gesetzt ? "gesetzt" : (z.pflicht ? "fehlt-pflicht" : "fehlt"),
       beleg
     };

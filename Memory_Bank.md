@@ -882,3 +882,8 @@ Stand auf 5. August 2026 gesetzt.
 - Modul AL live: smejj.com/admin/auslieferung/ — Live-Stand gegen Bau-Stand je Dienst, Sperren im Abbild.
 - Zeabur liefert `ZEABUR_GIT_COMMIT_SHA` in die Umgebung — der Control-Server kennt seinen Commit.
 - BEFUND: Sicherheits-Lock meldet `public/chat-bridge.js` als verändert (seit 15.08. nicht neu eingefroren).
+
+## 2026-08-23 — Seite „Sicherheit" (job_sicherheit_seite_20260823)
+- Seite L zeigt Endpunkte (31/57 zu), Sperren 4/4, Vier-Augen, Zugänge gesetzt/fehlt mit Nachweis — aus Messung.
+- FALLE: Frontend-Push 0c84b93 einer Parallelsitzung setzte 37 Konsolen-Dateien zurück. Vor jedem Konsolen-Push
+  `sync_admin_console_pages.mjs` aus dem Bau-Branch-HEAD laufen lassen, nie aus einem alten Worktree.

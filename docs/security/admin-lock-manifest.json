@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T06:03:38.841Z",
-  "confirmation": "Betreiber am 2026-08-23: 'Nächste Seite des Vorschlags bauen: Sicherheit' — Seite L zeigt jetzt Sperren, Vier-Augen, Zugänge und Endpunkte aus Messung (opsSicherheitsLage.js); Ereignisse bleiben darunter.",
+  "frozenAt": "2026-08-23T06:33:58.045Z",
+  "confirmation": "Betreiber am 2026-08-23: 'Nächste Seite des Vorschlags bauen: Sicherheit' — Nachbesserung nach Live-Test: Anbieter-Schlüssel heißen SMEJJ_LLM_<ANBIETER>_API_KEY, kurze Namen als Rückfall.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -26,7 +26,7 @@
     "control-server/src/admin/opsAutopilotenBereiche.js": "629775c386fff37a064ccccfc979ef9be3af50d227221bc216fd56bf0f73f187",
     "control-server/src/admin/opsAuslieferung.js": "2e576363d55f45582c0d05d4c330de028cd0ebd3b19ac5ceb5e363329deb9330",
     "control-server/admin-ui/views-stage12.js": "eddeddb276b7a6508455f28490d0814d3ac5d07f821ebe403033b432195f0c71",
-    "control-server/src/admin/opsSicherheitsLage.js": "d31d077ccf11a0f77a8d5ea37c6a0a4a5a8453e2a604286fba503592102e8477",
+    "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
     "control-server/admin-ui/views-stage6.js": "f35903e30d9ff848b4a34fa6baaaecebb764f84f24331b166ce8ad3921270fd3",
     "control-server/admin-ui/views-stage9.js": "460a51a127546e824f8172528e7fea53c8d66ab0ee5a61a64ab68c55db261601"
   }
