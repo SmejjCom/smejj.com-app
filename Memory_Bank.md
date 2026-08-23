@@ -876,3 +876,5 @@ Landeseite stand.
 - Rote Liste offen: Consent-Domain smejj-control.zeabur.app, Modell-Picker ohne Haekchen, Stopp-Viereck 11 px, Icon-Knoepfe ohne Text.
 - Freigabe per Karte: eigene API-Domain api.smejj.com LIVE (CNAME bestand schon) — Google sagt jetzt "Weiter zu smejj.com";
   CSP additiv, Zeabur-Adresse bleibt Zweitzugang; OFFEN: GitHub-Rueckruf-URI traegt der Betreiber ein.
+- Runde 2: Landeseite spricht die Sprache des Besuchers (willkommen-sprache.js, 82 Texte, fail-safe deutsch) — live en-US bewiesen.
+- GEMESSEN: Auth-Gate (profile-dock.js, Skript 24/34) leitet Anonyme erst nach 3,7 s Desktop / 15 s iPhone um — Fruehstart-Gate in index.html braucht Start-Lock-Freigabe.
