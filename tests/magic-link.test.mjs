@@ -75,9 +75,38 @@ test("Verify: gueltiger Token -> Cookie + 303 zu /profile, danach Single-Use", a
   assert.equal(res.statusCode, 303);
   assert.equal(res.headers.Location, "/profile?magic=ok");
   assert.match(res.headers["Set-Cookie"], /smejj_session=tok-smejjcom@gmail\.com/);
-  // Zweite Verwendung desselben Tokens wird abgelehnt.
+  // Zweite Verwendung desselben Tokens wird abgelehnt — und zwar als Umleitung
+  // auf die Anmeldeseite der App, nicht als nacktes JSON (Nutzerreise 2026-08-23).
   const res2 = mockRes();
-  await assert.rejects(() => h.handleMagicLinkVerify({ headers: {} }, res2, new URL(`https://c.test/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`)), /bereits verwendet/);
+  await h.handleMagicLinkVerify({ headers: {} }, res2, new URL(`https://c.test/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`));
+  assert.equal(res2.statusCode, 303);
+  assert.equal(res2.headers.Location, "https://smejj.com/auth/login/?abgelaufen=1&grund=anmeldelink");
+  assert.equal(res2.headers["Set-Cookie"], undefined, "kein Cookie auf dem Fehlerweg");
+});
+
+test("Verify: verstuemmelter oder abgelaufener Link -> 303 zur Anmeldeseite mit ?abgelaufen=1, nie JSON", async () => {
+  const { h } = makeHandlers();
+  for (const token of ["abc.def", signMagicToken({ email: "a@b.de", jti: "alt", exp: 1 }, "geheim")]) {
+    const res = mockRes();
+    await h.handleMagicLinkVerify({ headers: {} }, res, new URL(`https://c.test/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`));
+    assert.equal(res.statusCode, 303);
+    assert.equal(res.headers.Location, "https://smejj.com/auth/login/?abgelaufen=1&grund=anmeldelink");
+    assert.equal(res.headers["Set-Cookie"], undefined);
+  }
+});
+
+test("Verify: ohne Erlaubnisliste bleibt der Fehler ein Fehler (fail-closed, keine Umleitung ins Leere)", async () => {
+  const { h } = makeHandlers({ allowedOriginsFromEnv: () => [] });
+  const res = mockRes();
+  await assert.rejects(() => h.handleMagicLinkVerify({ headers: {} }, res, new URL("https://c.test/api/auth/magic-link/verify?token=abc.def")), /ungueltig/);
+});
+
+test("Request: die Mail traegt echte Umlaute (kein 'fuer', kein 'gueltig')", async () => {
+  const { h, sent } = makeHandlers();
+  const res = mockRes();
+  await h.handleMagicLinkRequest({ headers: { host: "control.example" }, __body: { email: "a@b.de" }, socket: {} }, res, new URL("https://control.example/api/auth/magic-link/request"));
+  assert.match(sent[0].text, /für smejj\.com \(15 Minuten gültig/);
+  assert.doesNotMatch(sent[0].text, /fuer|gueltig/);
 });
 
 test("Verify: verfallener Handoff wird durch frischen ersetzt (Link lebt 15 Min, Handoff nur 2)", async () => {
