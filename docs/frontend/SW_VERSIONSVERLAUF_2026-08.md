@@ -1595,3 +1595,14 @@ MARKENKETTE: chat-store.js zog elf Module ueber vier Stufen nach sich,
 bis app.js. Zum dritten Mal war chat-history-cards.js das vergessene
 Glied — Grund gefunden: der Import ist dort MEHRZEILIG, der Modulname
 steht in einer eigenen Zeile und entgeht jeder einzeiligen Suche.
+
+## v651 (2026-08-23) — Markenkette 95/95, erstmals komplett gruen
+
+Die drei maus-Module (absicht 18->19, panel 12->13, chrome 1->2) der
+Parallelsitzung nachgezogen. Ihre Dateien waren committet und fertig
+(f8e75af1), nur die Import-Marken blieben offen. Damit meldet
+check:markenkette zum ersten Mal an diesem Tag 95 von 95 Modulen mit
+genau EINER Marke.
+
+Ohne Bump saehen Besucher mit Vorrat weiter die alten Marken — die
+Dateien selbst kamen zwar mit v650, die Kette war aber formal offen.

@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T04:07:07.718Z",
-  "confirmation": "Betreiber 2026-08-23 (Master-Prompt, Gruene Liste): Markenkette geschlossen — maus-absicht 18->19, maus-panel 12->13, maus-chrome 1->2. Aenderungen an index.html und app.js sind ausschliesslich Import-Marken, keine Logik und kein Markup. Danach: markenkette OK, 95 Module, jedes mit genau EINER Marke.",
+  "frozenAt": "2026-08-23T04:07:56.047Z",
+  "confirmation": "Betreiber 2026-08-23 (Master-Prompt): CACHE_NAME v650 -> v651 fuer die geschlossene Markenkette. Ausschliesslich die Versionszeile.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "69f9293196fd579105901af6a217c483acf41e5980bcc72e2bb26eb56d049a9a",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "a6edc3866351a145714491d8954bd3c8745fa159b492efb6cbc9610cdefe33cd",
+    "public/sw.js": "86c8ee4c91f2ebbd693056264f854c79601724fcff1ccfe6e9984888fd44f639",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
