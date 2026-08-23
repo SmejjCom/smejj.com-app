@@ -632,3 +632,45 @@ test("eine ausfuehrliche Antwort wird nicht belehrt", () => {
   assert.equal(quellenHinweis({ gesamt: 3, ohneFund: 3, antwort: lang }), "");
   assert.equal(quellenHinweis({ gesamt: 3, ohneFund: 3, antwort: "A".repeat(399) }), QUELLEN_LEER_HINWEIS);
 });
+
+// ---------------------------------------------------------------------------
+// Denk-Zeile (Betreiber 2026-08-23, Vorbild Antigravity "Thought for 1s ›"):
+// Denk-Text (reasoning_content) gehoert in eine eingeklappte Zeile der
+// Schrittliste, NIE in die Antwort. Vorher begann jede Antwort eines
+// denkenden Modells mit seinem Selbstgespraech.
+
+const denkEreignis = (inhalt) => JSON.stringify({ choices: [{ delta: { reasoning_content: inhalt } }] });
+
+function denkZeile(antwort) {
+  const liste = antwort.parentElement.children[0];
+  return liste?.dataset?.smejjSchritte === "true"
+    ? liste.children.find((k) => k.dataset.denken === "true") : null;
+}
+
+test("Denk-Text landet in der Denk-Zeile, nicht in der Antwort", async () => {
+  const antwort = await laufeStrom([
+    denkEreignis("Der Nutzer will eine Liste. "),
+    denkEreignis("Ich sortiere nach Preis."),
+    textEreignis("Hier ist die Liste.")
+  ]);
+  assert.equal(antwort.textContent, "Hier ist die Liste.", "kein Denk-Text in der Antwort");
+  const zeile = denkZeile(antwort);
+  assert.ok(zeile, "die Denk-Zeile steht in der Schrittliste");
+  assert.equal(zeile.tagName, "details", "eingeklappt per <details>");
+  assert.equal(zeile.children[1].textContent, "Der Nutzer will eine Liste. Ich sortiere nach Preis.");
+  assert.match(zeile.children[0].textContent, /^Dachte \d+ s$/, "Titel wird mit der Antwort zu 'Dachte N s'");
+  assert.equal(zeile.dataset.fertig, "true");
+});
+
+test("ohne Denk-Text entsteht keine Denk-Zeile", async () => {
+  const antwort = await laufeStrom([textEreignis("Nur Antwort.")]);
+  assert.equal(antwort.textContent, "Nur Antwort.");
+  assert.equal(denkZeile(antwort), null);
+});
+
+test("bricht der Strom nach dem Denken ab, bleibt 'Denkt …' nicht stehen", async () => {
+  const antwort = await laufeStrom([denkEreignis("Ueberlege …")]);
+  const zeile = denkZeile(antwort);
+  assert.ok(zeile);
+  assert.match(zeile.children[0].textContent, /^Dachte \d+ s$/);
+});

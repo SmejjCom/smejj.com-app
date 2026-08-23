@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T13:22:47.058Z",
-  "confirmation": "Betreiber-Auswahl 2026-08-23 nach dem Komplettcheck: \"Haengenden Chat\" beheben. Befund: eine von fuenf Anfragen stand nach 55 s noch auf \"smejj denkt nach\" — chat-stream.js hatte seit dem 17.08. eine Stille-Wache, chatClient.js (Cline/BYOK) nicht, und der Chat stand auf \"Cline · Auto\". Umfang dieses Stempels: sw.js CACHE_NAME v666->v667 plus Precache-Eintrag /assets/ai/strom-stillstand.js; index.html, app.js und search.js tragen ausschliesslich erhoehte ?v=-Marken. Keine Startseiten-Logik, kein Design, keine Favicons, keine Modelle entfernt.",
+  "frozenAt": "2026-08-23T13:35:41.140Z",
+  "confirmation": "Betreiber 2026-08-23: Denk-Zeile bauen (Empfehlung) — Dachte N s eingeklappt ueber der Antwort, dann live",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "3d0afe283e4e1537866cf3d284183d14abdf1c0b25c11082ce77d5e1c9d1f6c8",
+    "public/index.html": "2b337721128935408cfc3de47734804c1583c06f9b1f252355e4f00d13353443",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "ac4ebd1d5e4d71a7c4f63daef7a7fa1271713131b32c042cfc50799c0ab24a66",
+    "public/start-styles.css": "7c0c51efe4861a48fa3dfa4e506d1aad35c0993ed60427f138319b227f7f03a2",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "776d05a0d8c6a734079bfa759a31b65163d8213fcf78a692c828a221da19e831",
+    "public/sw.js": "6d1a89e522c4c3630c355b190cea0178604be3f3afa333cfbc7c76ec14731bb5",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
