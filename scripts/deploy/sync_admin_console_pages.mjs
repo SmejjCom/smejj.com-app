@@ -59,7 +59,9 @@ const SEITEN_ORDNER = Object.freeze([
   // blieben. Erst der Ordner macht die Adresse erreichbar.
   "evolution",
   // 2026-08-23: Modul AL "Was ist wirklich live?" (Design-Vorschlag Adminbereich).
-  "auslieferung"
+  "auslieferung",
+  // 2026-08-23: Seite 8 des Design-Vorschlags — die sieben Regeln.
+  "regeln"
 ]);
 
 function sha256(inhalt) {

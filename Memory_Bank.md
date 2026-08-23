@@ -898,3 +898,6 @@ Stand auf 5. August 2026 gesetzt.
 ## 2026-08-23 — Cockpit „Überblick" (job_ueberblick_cockpit_20260823)
 - Startseite /admin/: vier gemessene Zahlen, Dienste mit letztem echten Lauf, Protokoll, Vier-Augen. Antwortzeit = Gesundheitsabfragen, nicht Chat-TTFT.
 - Damit sind alle 6 Seiten des Design-Vorschlags (26.6.26) umgesetzt: Überblick, Autopiloten (Liste+Detail), Nutzer, Abos & Umsatz, Sicherheit, Auslieferung.
+
+## 2026-08-23 — Seite „Regeln" (job_regeln_seite_20260823)
+- /admin/regeln/: sieben Regeln aus echten Vorfällen mit Datum + Wächter-Link. Damit sind alle 8 Bildschirme des Vorschlags umgesetzt.
