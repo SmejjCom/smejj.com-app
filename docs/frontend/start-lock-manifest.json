@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T14:48:38.696Z",
-  "confirmation": "Betreiber 2026-08-23: Panel frisst die Mitte pruefen (Empfehlung) — rechtes Panel laesst dem Chat mindestens 380 px (panel-layout v3, app b91, sw v675)",
+  "frozenAt": "2026-08-23T14:57:27.286Z",
+  "confirmation": "Betreiber 2026-08-23: @-Erwaehnung und Staerke-Stufe (Empfehlung) — erwaehnung.js v1, Verlauf nimmt Erwaehnungs-Kontext mit, sw v676",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "55ddf1c60879dea1c6cffffb20f859ad8c560bdc50faef3ea4369239c661aac8",
+    "public/index.html": "8fd728b8444cd6bb553868cc92ea82ea7c515f8cd927a3f9705e5deda1673ba5",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "16984de1da89a75397d0eefb521cc42dca7ad8996e86486b911d85c2b1ca9622",
+    "public/start-styles.css": "721878ac058e347b246600f073dae8231eac71d9845135df4a7a38a86c27f83d",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e02e0041b563150ec391988fefbecfcbde0403723217a55c1f6d006eb6ecbafb",
+    "public/sw.js": "1af3c91c01cf3a03fd58d3060d608a5e50f400e26f8983ff28ef7930751ae56a",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
