@@ -96,6 +96,9 @@ export const PROTECTED_FILES = [
   // Modul AL "Was ist wirklich live?" (2026-08-23): Live-Stand gegen Bau-Stand.
   "control-server/src/admin/opsAuslieferung.js",
   "control-server/admin-ui/views-stage12.js",
+  // Modul L Teil 2 "Sicherheitslage" (2026-08-23): Endpunkte, Sperren, Vier-Augen, Zugaenge.
+  "control-server/src/admin/opsSicherheitsLage.js",
+  "control-server/admin-ui/views-stage6.js",
   "control-server/admin-ui/views-stage9.js"
 ];
 

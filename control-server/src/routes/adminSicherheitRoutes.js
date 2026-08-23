@@ -15,6 +15,7 @@ import { resolveAdminActor } from "../admin/adminAuth.js";
 import { appendAuditEntry } from "../admin/auditLog.js";
 import { schluesselUebersicht } from "../admin/opsSchluessel.js";
 import { sicherheitsUebersicht } from "../admin/opsSicherheit.js";
+import { sicherheitsLage } from "../admin/opsSicherheitsLage.js";
 import { adminUebersicht } from "../admin/opsAdmins.js";
 import { disableProviderCredential } from "../providers/providerCredentialVault.js";
 
@@ -66,6 +67,8 @@ async function lesend(res, actor, bereich, url, env) {
   }
 
   if (bereich === "schluessel") return privateJson(res, 200, await schluesselUebersicht({ env }));
+  // Modul L, Teil 2: Endpunkte, Sperren, Vier-Augen, Zugaenge (Design-Vorschlag 2026-08-23).
+  if (bereich === "lage") return privateJson(res, 200, await sicherheitsLage({ env }));
   if (bereich === "ereignisse") {
     const tage = Number(url.searchParams.get("tage") || 7);
     return privateJson(res, 200, await sicherheitsUebersicht({ env, tage }));
