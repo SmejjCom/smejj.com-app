@@ -59,6 +59,8 @@ import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSessio
 import { sessionRegistryEnabled, newSessionId, registerSession, isSessionActive, revokeSession } from "../control-server/src/auth/sessionRegistry.js";
 import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
+import { handlePublicApiRoute } from "../control-server/src/publicapi/publicApiRoutes.js";
+import { handleDeveloperKeyRoute } from "../control-server/src/routes/developerKeyRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
 import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
@@ -132,6 +134,7 @@ const projektSyncRoutes = createProjektSyncRoutes({ env: process.env, readSessio
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
+    if (await handlePublicApiRoute(req, url, res)) return; // /v1: Bearer statt Sitzung, muss VOR allem stehen (Grund dort)
     if (url.pathname.startsWith("/api/")) {
       if (handlePreflight(req, res)) return; // OPTIONS-Preflight (204 erlaubt / 403 fremd)
       const cors = corsHeadersFor(req.headers.origin);
@@ -211,6 +214,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname.startsWith("/api/providers/")) return await handleProviderRoute(req, url, res);
     if (url.pathname === "/api/keys" || url.pathname.startsWith("/api/keys/")) return await handleApiKeysRoute(req, url, res);
+    if (await handleDeveloperKeyRoute(req, url, res)) return; // eigene Schluessel: Gegenrichtung zu /api/keys
     // Sprachserver (Wecken/Idle-Stopp/Audio-Proxy, Token-gepflichtig) — voiceWorkerRoutes.js.
     if (await handleVoiceRoute(req, url, res)) return;
     // Herzschlag der Autopiloten (Maschinen-Absender, eigener Schluessel je Automatik) — autopilotRoutes.js.
