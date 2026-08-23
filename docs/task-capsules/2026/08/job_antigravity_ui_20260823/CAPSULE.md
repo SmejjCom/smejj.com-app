@@ -34,6 +34,12 @@ Der Fix vom 22.08. (paneBreiteAus) griff nur beim Öffnen per openPane(). Beim W
 Stärke-Stufe: gab es schon — Modellwahl zeigt „smejj 1.0 (Schnell/Gründlich)" wie Antigravitys „(High)", plus Nachdenken-Pille; nichts zu bauen.
 Vorsicht beim Commit: die Parallelsitzung hatte `"/assets/shared/auth-me-speicher.js"` unversioniert in sw.js eingetragen (Datei nicht committet) — im Frontend-Deploy bewusst weggelassen (addAll wäre live gescheitert); im App-Commit ad6c0db1 steht die Zeile, weil der Arbeitsbaum wegen fremder Merge-Konflikte (codeberg_spiegel_sync.sh, motor.py) keinen Korrektur-Commit zuließ.
 
+## Nachtrag 15:40Z — Betreiber: „kommt nicht" → zwei echte Ursachen, beide behoben
+1. **Browser-Modell schluckte die Rückfrage:** In Chrome beantwortet Gemini Nano (Stufe 0, lokal) geeignete Fragen ohne Server — 14 Antworten heute. „Plane mir einen Wochenendtrip" → lokale Fragenliste als Text, nie eine Karte. Fix `istRueckfrage()` in lokalesModell.js: Antworten mit ≥2 Fragezeichen oder „brauche ich … Infos" gehen an den Server (Grund `rueckfrage-an-server` im Protokoll). sw v679, App 566bcc83, Frontend d3e2ca8.
+2. **Schnellspur rief das Werkzeug nicht:** Regel „RUECKFRAGEN: … rufe frage_stellen, nie als Fragenliste im Text" in den Systemblock der Bridge (v143, App dc483af0, Frontend 595823e).
+3. „@"-Menü ragte über den oberen Rand: max-height min(320px, 100vh−360px).
+Live (echte Tastatur, eingeloggtes Chrome): „Plane mir einen Wochenendtrip" → Karte nach 4 s „Wohin möchtest du …?" (Städtetrip Europa (Empfehlung) / Natur & Berge / Strand & Meer / Überrasche mich). „@" per Tastatur → Liste mit 8 Chats.
+
 ## Offen
 - Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht).
 - `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
