@@ -894,3 +894,7 @@ Stand auf 5. August 2026 gesetzt.
 
 ## 2026-08-23 — Seite „Abos & Umsatz" (job_umsatz_seite_20260823)
 - Seite E: MRR bei Stripe gemessen (Fallback geschätzt, beschriftet), Aufladungen (API), Kosten fest + Modelle seit Neustart, je Plan, Absprünge, Zahlungsweg. Punkte/Marge je Plan + Absprung-Gründe = nicht erfasst.
+
+## 2026-08-23 — Cockpit „Überblick" (job_ueberblick_cockpit_20260823)
+- Startseite /admin/: vier gemessene Zahlen, Dienste mit letztem echten Lauf, Protokoll, Vier-Augen. Antwortzeit = Gesundheitsabfragen, nicht Chat-TTFT.
+- Damit sind alle 6 Seiten des Design-Vorschlags (26.6.26) umgesetzt: Überblick, Autopiloten (Liste+Detail), Nutzer, Abos & Umsatz, Sicherheit, Auslieferung.
