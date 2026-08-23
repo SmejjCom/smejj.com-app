@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T13:46:55.770Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-23: \"Antwortzeiten fixen, 60 Sekunden ist viel zu lang\". Befund: eine einzige Chat-Frage loeste ueber 100 PUTs an /api/chats aus (einzelne 188 KB), waehrend das Modell nach 2,1 s fertig war — die Antwort erschien nach 43 s. Der Push sendet jetzt nur noch, was der Server auch annehmen wuerde. Umfang dieses Stempels: sw.js CACHE_NAME v669->v670 plus Precache-Eintrag /assets/chat-sync-auswahl.js; index.html, app.js und search.js tragen ausschliesslich erhoehte ?v=-Marken.",
+  "frozenAt": "2026-08-23T13:55:14.432Z",
+  "confirmation": "Betreiber 2026-08-23: Frage-Karte (Empfehlung) — Rueckfragen als anklickbare Karte mit Optionen und Uebersprungen-Zustand, dann live",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "0399074465ab65d7f7620202e65837dd0dfdb4a47552496b2632c4ee46c990bc",
+    "public/index.html": "a6ce6fb956aacf8d837381adbfe552e6bcd65a82a9a0a5447fd96f242b73c704",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "b26045c5e6381320d6dc788246eb12bf3b49eab15fe71777b836b2038c674051",
+    "public/start-styles.css": "16984de1da89a75397d0eefb521cc42dca7ad8996e86486b911d85c2b1ca9622",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
