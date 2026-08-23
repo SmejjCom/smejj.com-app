@@ -193,6 +193,14 @@ function bewerten(a, jetztMs) {
     // "stumm, obwohl er melden sollte" (Befund) von "stillgelegt" (normal).
     messung: a.messung,
     bereich: bereichVon(a.id),
+    // "Einstellungen" der Detailseite (Design-Vorschlag): die Regeln, nach denen
+    // diese Ampel schaltet — als Zahlen, nicht als Behauptung.
+    einstellungen: {
+      erwartetAlleMs: a.erwartetAlleMs ?? null,
+      schonfristMs: a.schonfristMs ?? null,
+      alarm: "Rot bei gemeldetem Fehler oder wenn der Lauf länger als Takt + Schonfrist ausbleibt; Gelb in der Schonfrist.",
+      selbstheilung: a.messung === "heartbeat" ? "Erste Hilfe (Nr. 33) versucht höchstens 3 Wiederbelebungen, dann wird der Betreiber informiert." : "keine — stillgelegt"
+    },
     kurz: a.kurz,
     funktionen: a.funktionen,
     ort: a.ort,

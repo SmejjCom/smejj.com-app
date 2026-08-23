@@ -77,3 +77,5 @@ Live-Seite gemessene Widersprüche beheben (Betreiber-Auswahl: „Punkte 1–4")
 - NACHTRAG 2026-08-23 05:26Z: Messlauf-Exit-1 behoben (a70d003b: cp mit absolutem Pfad nach cd in den Klon). Handlauf Exit 0, Herzschlag zugestellt; Messung 97,06 %, 1 kritisch, blocked — Qualitaetsbefund, kein Skriptfehler.
 
 - NACHTRAG 05:37Z: kritischer Verstoss war Regex-Fehlalarm (schutz-api-schluessel, "ausgeben"); Muster + Probe (17252992), Suite-Hash (fac4f48e). Messlauf: 100 %, 0 kritisch, passed.
+
+- NACHTRAG 2026-08-23 (Seite 3 „Ein Autopilot im Detail"): Detail um „Einstellungen" (Takt, Schonfrist, Alarm, Selbstheilung, Stummschaltung) und „Woher er kommt" ergänzt. Knöpfe zuerst, vier Kennzahlen, 90 Tage, letzte Läufe waren schon da.
