@@ -452,3 +452,29 @@ test("jeder Autopilot hat, was die idiotensichere Ansicht braucht", () => {
     }
   }
 });
+
+// ---- 2026-08-23: vier Befunde von der Live-Seite, jeder mit Waechter ----
+
+test("jede Nummer genau einmal — 40 stand live doppelt (Betriebswache + Aufgaben-Gedaechtnis)", () => {
+  const nummern = AUTOPILOTEN.map((a) => a.nummer).filter(Boolean);
+  assert.equal(new Set(nummern).size, nummern.length, "doppelte Nummer: " + nummern.filter((n, i) => nummern.indexOf(n) !== i));
+  assert.ok(AUTOPILOTEN.every((a) => !/^\d+\.\s/.test(a.name)), "die Nummer gehoert ins Feld nummer, nicht in den Namen");
+});
+
+test("die Akte widerspricht sich nicht: Mac-Jobs nennen nirgends den Zeabur-Dienst, den es nicht gibt", () => {
+  for (const id of ["qualitaetsmessung", "codeberg-spiegel"]) {
+    const a = AUTOPILOTEN.find((x) => x.id === id);
+    const texte = [a.kurz, ...a.funktionen, a.startAnleitung, a.stopAnleitung].join(" ");
+    assert.ok(!/smejj-autopilot-jobs\.zeabur|Zeabur-Portal/.test(texte), id + " verweist noch auf Zeabur");
+    assert.ok(/crontab/.test(a.startAnleitung + a.stopAnleitung), id + ": Bedienung muss den crontab nennen");
+  }
+});
+
+test("die Ansicht erfaehrt, ob ein Herzschlag erwartet wird (messung) — grau ist zweierlei", () => {
+  frisch();
+  const u = autopilotUebersicht({ jetztMs: JETZT });
+  const pflicht = u.autopiloten.find((a) => a.id === "qualitaetsmessung");
+  const still = u.autopiloten.find((a) => a.id === "training-loop");
+  assert.equal(pflicht.messung, "heartbeat");
+  assert.equal(still.messung, "geplant");
+});

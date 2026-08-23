@@ -103,10 +103,10 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     nummer: "01",
     kurz: "Misst zweimal täglich die Antwortqualität der Modelle und schreibt das Ergebnis ins Protokoll.",
     funktionen: [
-      "Läuft täglich um 7:10 und 19:10 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
+      "Läuft täglich um 7:10 und 19:10 Uhr Mac-Zeit per crontab auf dem Rechner des Betreibers (~/.local/share/smejj-qualitaet/messlauf.sh). Den früher genannten Zeabur-Dienst smejj-autopilot-jobs gibt es nicht (2026-08-22 über die Zeabur-API gemessen).",
       "Fährt seit 2026-08-12 den ECHTEN Messlauf: Suite smejj-chat-core-v1 (3 Wiederholungen) über den Nutzerweg; die Note steht in der Herzschlag-Meldung.",
-      "Braucht SMEJJ_SESSION_SECRET im Dienst-Env; ohne ihn sendet der Job ein ehrlich beschriftetes Lebenszeichen.",
-      "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
+      "Braucht SMEJJ_SESSION_SECRET in der Umgebung des Skripts; ohne ihn sendet der Lauf ein ehrlich beschriftetes Lebenszeichen.",
+      "Protokoll: ~/Library/Logs/smejj-qualitaetsmessung.log auf dem Mac."
     ],
     trainiert: "Qualitäts-Eval-Suites, Prompt-Varianten & Antwort-Präzision",
     verbessert: "Modell-Genauigkeit +12%, 100% Pass-Rate auf Standard-Testsets",
@@ -116,19 +116,19 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     messung: "heartbeat",
     erwartetAlleMs: 12 * STUNDE_MS,
     schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/qualitaet mit {\"key\":\"<qualitaetsmessung-Schlüssel>\"}",
-    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
+    startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-qualitaet/messlauf.sh (der Zeitplan steht in der crontab).",
+    stopAnleitung: "Auf dem Mac den crontab-Eintrag smejj-qualitaetsmessung entfernen (crontab -e)."
   },
   {
     id: "codeberg-spiegel",
     name: "Code-Sicherung",
     nummer: "02",
-    kurz: "Sichert jede Nacht eine Kopie des Codes nach Codeberg — seit 11. August 2026 vom Zeabur-Dauerdienst, nicht mehr vom Mac.",
+    kurz: "Sichert jede Nacht eine Kopie des Codes nach Codeberg — per crontab vom Mac des Betreibers.",
     funktionen: [
-      "Läuft täglich um 11:20 UTC (= 4:20 Uhr Mac-Zeit) im Dienst smejj-autopilot-jobs auf Zeabur.",
+      "Läuft täglich um 4:20 Uhr Mac-Zeit per crontab auf dem Rechner des Betreibers (~/.local/share/smejj-qualitaet/spiegel.sh).",
       "Spiegelt das Repository nach Codeberg (zweiter, unabhängiger Aufbewahrungsort).",
       "Holt einen verpassten Tageslauf nach einem Neustart selbst nach.",
-      "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
+      "Protokoll: ~/Library/Logs/smejj-codeberg-spiegel.log auf dem Mac."
     ],
     trainiert: "Git-Ref-Bäume, Repository-Hashes & Commit-Historien",
     verbessert: "Ausfallsicherheit & Unabhängigkeit durch 2. unabhängigen Open-Source-Spiegel",
@@ -138,8 +138,8 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     messung: "heartbeat",
     erwartetAlleMs: TAG_MS,
     schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/spiegel mit {\"key\":\"<codeberg-spiegel-Schlüssel>\"}",
-    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
+    startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-qualitaet/spiegel.sh (der Zeitplan steht in der crontab).",
+    stopAnleitung: "Auf dem Mac den crontab-Eintrag smejj-codeberg-spiegel entfernen (crontab -e)."
   },
   {
     id: "voice-region-check",
@@ -190,23 +190,23 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     id: "training-loop",
     name: "Trainings-Takt",
     nummer: "05",
-    kurz: "Überwacht und taktet die Evaluierungs- und Trainingszyklen im Dienst smejj-autopilot-jobs auf Zeabur.",
+    kurz: "Stillgelegt seit 2026-08-02 (Betreiber-Entscheidung: RAG statt Training). Sollte die Evaluierungs- und Trainingszyklen takten.",
     funktionen: [
-      "Läuft täglich um 12:00 UTC im Dienst smejj-autopilot-jobs auf Zeabur.",
-      "Prüft Evaluierungsberichte und Auswertungsschleifen.",
-      "Protokoll: Zeabur-Portal → smejj-autopilot-jobs → Logs."
+      "Vorgesehen war ein täglicher Lauf um 12:00 UTC im Dienst smejj-autopilot-jobs — diesen Dienst gibt es in keinem Zeabur-Projekt.",
+      "Der Dienst smejj-training-loop existiert, wird aber von niemandem getaktet.",
+      "Solange er stillgelegt ist, meldet er nichts — die Ampel bleibt bewusst grau, das ist kein Ausfall."
     ],
     trainiert: "Modell-Evaluierungsberichte & Inferenz-Metriken",
     verbessert: "Planmäßige Taktung aller Trainings- und DPO-Schleifen rund um die Uhr",
     neuigkeiten: ["Dauertrainings-Takt 100% synchronisiert auf Zeabur", "Eval-Pipeline grün"],
-    ort: "NICHT BETRIEBEN — vorgesehen war Zeabur (smejj-autopilot-jobs), diesen Dienst gibt es nicht; smejj-training-loop existiert, wird aber von niemandem getaktet",
-    zeitplan: "vorgesehen täglich 12:00 UTC — laeuft derzeit nicht",
+    ort: "Stillgelegt — läuft nirgends",
+    zeitplan: "kein Zeitplan (stillgelegt seit 2026-08-02)",
     messung: "geplant",
     messungHinweis: "Stillgelegt seit 2026-08-02 (Betreiber-Entscheidung: RAG statt Training). Ein stillgelegter Kreislauf meldet nichts.",
     erwartetAlleMs: TAG_MS,
     schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "POST auf smejj-autopilot-jobs.zeabur.app/lauf/training-loop mit {\"key\":\"<training-loop-Schlüssel>\"}",
-    stopAnleitung: "Im Zeabur-Portal den Dienst smejj-autopilot-jobs anhalten."
+    startAnleitung: "Nicht startbar — der vorgesehene Dienst existiert nicht. Eine Wiederinbetriebnahme ist eine Betreiber-Entscheidung.",
+    stopAnleitung: "Ist bereits still."
   },
   {
     id: "brueckenwaechter",
@@ -787,8 +787,9 @@ const BASIS_AUTOPILOTEN = Object.freeze([
   },
   {
     id: "oberflaechenwache",
-    name: "40. Betriebswache (Responsive, Touch & Betriebswerte)",
-    kurz: "Misst jede Nacht die AUSGELIEFERTE Oberfläche auf acht Bildschirmgrößen — läuft überall Inhalt über den Rand, und ist jeder Knopf mit dem Finger zu treffen?",
+    name: "Betriebswache",
+    nummer: "42", // nicht 40: die trug schon das Aufgaben-Gedächtnis (41 = Nachweis-Wächter)
+    kurz: "Responsive, Touch und Betriebswerte: misst jede Nacht die AUSGELIEFERTE Oberfläche auf acht Bildschirmgrößen — läuft überall Inhalt über den Rand, und ist jeder Knopf mit dem Finger zu treffen?",
     funktionen: [
       "Läuft täglich um 5:30 Uhr Mac-Zeit auf dem Rechner des Betreibers (crontab, Skript außerhalb von Google Drive — macOS lässt Hintergrunddienste dort nicht lesen).",
       "Prüfung 1 — Responsive: 19 Ansichten × 8 Gerätegrößen (320/375/430 mit Finger, 768/1024 Tablet, 1280/1440/1920 mit Maus) = 152 Messpunkte. Gemessen wird mit echten Inhalten (lange Adresse ohne Leerzeichen, Code-Block, Tabelle) — eine leere Ansicht läuft nie über.",

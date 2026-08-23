@@ -188,6 +188,9 @@ function bewerten(a, jetztMs) {
     // lesbar, die Nummer bleibt trotzdem da — in Notizen und Zetteln heisst
     // es weiterhin "Autopilot 36".
     nummer: a.nummer || null,
+    // Ob ueberhaupt ein Herzschlag erwartet wird: die Ansicht trennt daran
+    // "stumm, obwohl er melden sollte" (Befund) von "stillgelegt" (normal).
+    messung: a.messung,
     kurz: a.kurz,
     funktionen: a.funktionen,
     ort: a.ort,
@@ -218,12 +221,20 @@ function bewerten(a, jetztMs) {
     return { ...basis, ampel: "grau", ampelGrund: a.messungHinweis || "Kein Herzschlag angeschlossen." };
   }
   if (!letzter) {
+    // Tagessummen ohne Einzellauf (gesehen 2026-08-23 beim Qualitäts-Prüfer:
+    // "100 % aus 9 Läufen" neben "noch keiner gemessen"): dann hat er frueher
+    // gemeldet, nur der letzte Einzellauf fehlt — das muss der Grund sagen,
+    // sonst widerspricht sich die Akte selbst.
+    const letzterTag = basis.tage.length ? basis.tage[basis.tage.length - 1] : null;
     return {
       ...basis,
       ampel: "grau",
       // Nicht mehr "seit dem Start" — die Ablage überdauert den Neustart.
       // Fehlt hier etwas, hat dieser Autopilot wirklich noch nie gemeldet.
-      ampelGrund: "Von diesem Autopiloten ist noch kein Herzschlag angekommen — auch nicht aus der Ablage. "
+      ampelGrund: (letzterTag
+        ? "Seit dem " + letzterTag.tag + " ist kein Herzschlag mehr angekommen (an dem Tag: "
+          + ((letzterTag.ok || 0) + (letzterTag.fehler || 0)) + " Läufe). Ohne frischen Lauf gibt es kein Grün. "
+        : "Von diesem Autopiloten ist noch kein Herzschlag angekommen — auch nicht aus der Ablage. ")
         + "Nächster erwarteter Lauf: " + a.zeitplan + "."
     };
   }
