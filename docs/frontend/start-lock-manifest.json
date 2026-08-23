@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T03:23:55.244Z",
-  "confirmation": "Betreiber 2026-08-23: 'Ausrollen' des Medien-Fix. CACHE_NAME v649 -> v650; Aenderung an sw.js ist ausschliesslich die Versionszeile. Live-Nummer vorher gemessen (v649).",
+  "frozenAt": "2026-08-23T04:07:07.718Z",
+  "confirmation": "Betreiber 2026-08-23 (Master-Prompt, Gruene Liste): Markenkette geschlossen — maus-absicht 18->19, maus-panel 12->13, maus-chrome 1->2. Aenderungen an index.html und app.js sind ausschliesslich Import-Marken, keine Logik und kein Markup. Danach: markenkette OK, 95 Module, jedes mit genau EINER Marke.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8c2c1206e828b4667fd54d60e7d82362b45f6932e2ed3430f1e7ca233f157e51",
+    "public/index.html": "69f9293196fd579105901af6a217c483acf41e5980bcc72e2bb26eb56d049a9a",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "48d109ee80a7f9644a5f0de1773cd62bd504d0cda28c9145a20be0027425aa3f",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "fe627ef47ec803247655fb2cbea75f3a962c501549456838df3e9bd36bada69f",
+    "public/app.js": "a8b50bc1e46ae795a8508ff094d1076bc6fe9e8d713708c75f1daf13ad89a70f",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "6f2cc54cb595530dceb18b039a17af0b47fe00c1565944429048031a713966ca",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
