@@ -183,23 +183,27 @@ function isVoiceModeActive() {
 function toHtml(source) {
   const blocks = [];
   // Codebloecke zuerst herausnehmen, damit ** und * darin unangetastet bleiben.
+  // Der Platzhalter-Rahmen steht als Escape \x00 im Quelltext, nicht als rohes
+  // NUL-Byte: das machte die Datei fuer git diff und grep zur Binaerdatei
+  // (2026-08-23) — Marken-Kaskaden liefen an ihr vorbei. Laufzeitwert gleich,
+  // in Vorlagen wie in RegExp-Literalen.
   const withoutFences = source.replace(FENCE, (_match, language, code) => {
     const index = blocks.length;
     blocks.push(`<pre class="chat-code"${language ? ` data-language="${escapeHtml(language)}"` : ""}><code>${escapeHtml(code.replace(/\n$/, ""))}</code></pre>`);
-    return ` BLOCK${index} `;
+    return `\x00BLOCK${index}\x00`;
   });
   const paragraphs = withoutFences
     .split(/\n{2,}/)
     .map((part) => renderBlock(part))
     .filter(Boolean)
     .join("");
-  return paragraphs.replace(/ BLOCK(\d+) /g, (_match, index) => blocks[Number(index)] || "");
+  return paragraphs.replace(/\x00BLOCK(\d+)\x00/g, (_match, index) => blocks[Number(index)] || "");
 }
 
 function renderBlock(part) {
   const trimmed = part.trim();
   if (!trimmed) return "";
-  if (/^ BLOCK\d+ $/.test(trimmed)) return trimmed; // reiner Codeblock
+  if (/^\x00BLOCK\d+\x00$/.test(trimmed)) return trimmed; // reiner Codeblock
   const lines = trimmed.split("\n");
   // Tabelle VOR der Liste: eine Trennzeile "|---|---|" beginnt mit "-" und
   // wuerde sonst als Aufzaehlungspunkt durchgehen.

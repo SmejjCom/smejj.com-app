@@ -385,7 +385,7 @@ export async function oeffneModellMenue(kontext = {}) {
             if (knopfText && vorher) knopfText.textContent = vorher;
             chip.textContent = chipVorher;
             try {
-              const { showToast } = await import("/assets/components.js?v=b48");
+              const { showToast } = await import("/assets/components.js?v=b49");
               showToast("Modellwechsel hat nicht geklappt — bitte erneut versuchen.", "warn");
             } catch { /* still */ }
             return;

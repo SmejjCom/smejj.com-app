@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T04:49:13.404Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-23 \"Zu grosse Chats retten\", dritter Stempel: Bestandslauf ergaenzt. Der Live-Test zeigte, dass die Rettung am Sende-Weg allein zu langsam greift (push() arbeitet 113 Chats der Reihe nach ab; nach einer Minute war einer von zehn gerettet). Der neue Lauf sucht betroffene Chats direkt, hoechstens einmal am Tag. Umfang dieses Stempels: sw.js CACHE_NAME v654->v655; index.html, app.js und search.js tragen ausschliesslich erhoehte ?v=-Marken. Keine Startseiten-Logik, kein Design, keine Favicons.",
+  "frozenAt": "2026-08-23T05:13:37.087Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-23: eine Marken-Zeile in public/index.html (chat-history-view.js ?v=b51 -> b52), noetig weil das rohe NUL-Byte aus chat-history-cards.js entfernt wurde",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "444a2bcd0ecb5ca9624803f4cf671c461019d5721afccb914b3e314b700fe930",
+    "public/index.html": "1b9cb4328727c0006045f858e18c768b235e883a88ca0cc5bd85ea48ee7e416c",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "48d109ee80a7f9644a5f0de1773cd62bd504d0cda28c9145a20be0027425aa3f",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",

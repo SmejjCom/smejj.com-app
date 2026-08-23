@@ -13,7 +13,7 @@
 
 // Versionierter Pfad wie in components.js (QA-Welle 1, Befund F-07) — sonst laedt
 // der Browser chat-markdown.js ein zweites Mal als eigenstaendiges Modul.
-import { renderChatMarkdown } from "/assets/chat-markdown.js?v=1";
+import { renderChatMarkdown } from "/assets/chat-markdown.js?v=2";
 // Nachrichten-Modell (2026-07-28): liefert Rohtext, Zeitstempel, Modell und
 // Bewertung je Nachricht. Ohne diese Angaben koennte ein wiederhergestellter
 // Verlauf kein Markdown kopieren und keinen Zeitstempel zeigen.
@@ -747,7 +747,7 @@ function init() {
         // ?v=2: Projekte-Sync (2026-08-13). Ohne den Bump haelt der
         // HTTP-Cache die alte Fassung fest — die Datei ist nicht im
         // Service-Worker-Buendel und erneuert sich sonst nie zuverlaessig.
-        import("/assets/chat-sync.js?v=6").catch(() => {});
+        import("/assets/chat-sync.js?v=7").catch(() => {});
       });
   } catch {
     /* fail-safe: ohne Verlauf laeuft die App unveraendert weiter */
