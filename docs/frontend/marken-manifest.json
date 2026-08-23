@@ -62,8 +62,8 @@
       "finger": "68f4bc38ce635f7d"
     },
     "panel-layout.js": {
-      "marke": "2",
-      "finger": "67014daed2b3a747"
+      "marke": "3",
+      "finger": "d721d9b230859aec"
     },
     "view-routes.js": {
       "marke": "b50",
@@ -79,7 +79,7 @@
     },
     "voice-landing.js": {
       "marke": "blitz-20260822",
-      "finger": "40c206f45641822a"
+      "finger": "a746521be185ef36"
     },
     "chat-store.js": {
       "marke": "b63",
@@ -290,8 +290,8 @@
       "finger": "df798b2238947531"
     },
     "app.js": {
-      "marke": "b90",
-      "finger": "b0ea228c76e32b36"
+      "marke": "b91",
+      "finger": "4a3fa1375f877ab0"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260817-5",
@@ -306,8 +306,8 @@
       "finger": "349521e305ea8b81"
     },
     "profile-dock.js": {
-      "marke": "b47",
-      "finger": "d6a83262d8a04bad"
+      "marke": "b48",
+      "finger": "42fe12b7db9f8428"
     },
     "chat-history-view.js": {
       "marke": "b57",
@@ -336,6 +336,10 @@
     "chat-stopp.js": {
       "marke": "9",
       "finger": "945dd04796bdba14"
+    },
+    "erwaehnung.js": {
+      "marke": "1",
+      "finger": "6223c5a7cf676110"
     },
     "chat-code-farben.js": {
       "marke": "1",
@@ -370,8 +374,8 @@
       "finger": "cefbff9fd67aabce"
     },
     "auth-gate.js": {
-      "marke": "2",
-      "finger": "0dc251c07be6d7f4"
+      "marke": "3",
+      "finger": "1fac2d972e3bb95a"
     },
     "icon-nutzung.js": {
       "marke": "1",
@@ -398,8 +402,8 @@
       "finger": "6c56887975e30f99"
     },
     "voice-landing-signin.js": {
-      "marke": "2",
-      "finger": "0c15929fd1c29c5f"
+      "marke": "3",
+      "finger": "909a9c1d70c0cb64"
     },
     "willkommen-sprache.js": {
       "marke": "1",
