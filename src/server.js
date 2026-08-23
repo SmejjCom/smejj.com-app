@@ -279,7 +279,7 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && isAppRoute(url.pathname)) return serveFile(res, "index.html");
     json(res, 404, { error: "Not found" });
   } catch (error) {
-    fehlerAntwort(res, error); // Status aus dem Fehler; Begruendung in respond.js
+    fehlerAntwort(res, error, req); // Status aus dem Fehler; Begruendung in respond.js
   }
 });
 
