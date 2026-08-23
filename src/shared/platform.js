@@ -149,6 +149,7 @@ export const ROUTES = {
   verlauf: "/verlauf.html",
   verlaufMesswerte: "/verlauf-messwerte.json",
   hilfe: "/hilfe.html",
+  entwickler: "/entwickler.html", // API-Schluessel fuer die oeffentliche /v1-API
   // ---------------------------------------------------------------------
   // Sechs Seiten, die live (GitHub Pages liefert public/ vollstaendig aus)
   // mit HTTP 200 antworten und lokal mit 404 — weil die Erlaubnisliste in
