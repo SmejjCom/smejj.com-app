@@ -26,7 +26,7 @@ const DEFAULTS = {
 
 const GROUPS = [
   ["general", "Allgemein"], ["appearance", "Darstellung"],
-  ["behavior", "Verhalten"], ["models", "Modelle"],
+  ["behavior", "Verhalten"], ["models", "Modelle"], ["api", "API & Schlüssel"],
   ["personalization", "Personalisierung"], ["coding", "Coding"],
   ["permissions", "Berechtigungen"], ["notifications", "Mitteilungen"],
   ["storage", "Speicher & Sync"], ["advanced", "Erweitert"]
@@ -139,6 +139,8 @@ function markup() {
       ${panel("models", "Modelle", "GLM-5.2 bleibt das Qualitätsfundament von smejj.com.", [
         select("Reasoning-Aufwand", "settingsReasoningEffort", [["medium", "Mittel"], ["high", "Hoch"], ["max", "Maximal"]]),
         action("Modellverwaltung", "Standardmodell, BYOK und lokale Modelle.", "KI-Modelle öffnen", "ai")])}
+      ${panel("api", "API & Schlüssel", "Eigene Schlüssel, Guthaben, Verbrauch und Preise — smejj als Modellanbieter in deinen Werkzeugen.", [
+        `<div id="apiKontoSurface" data-api-konto></div>`])}
       ${panel("personalization", "Personalisierung", "Dauerhafte Hinweise für Antworten und Zusammenarbeit.", [
         `<div class="settings-row settings-row-stack"><div class="settings-row-copy"><strong id="settingsPersonalizationLabel">${t("Persönliche Anweisungen")}</strong></div><textarea id="settingsPersonalization" aria-labelledby="settingsPersonalizationLabel" maxlength="4000" placeholder="${t("Zum Beispiel: Antworte auf Deutsch und erkläre Entscheidungen kurz.")}"></textarea></div>`])}
       ${panel("coding", "Coding", "Standards für Coding-Aufgaben und Verifikation.", [
@@ -226,8 +228,25 @@ async function ladeModellBereiche(view) {
   }
 }
 
+// API-Konto (Schluessel, Guthaben, Preise) erst beim Wechsel auf "api".
+async function ladeApiKonto(view) {
+  try {
+    if (!document.querySelector('link[href^="/assets/entwickler.css"]')) {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "/assets/entwickler.css?v=2";
+      document.head.append(css);
+    }
+    const modul = await import("./api-konto-surface.js?v=1");
+    modul.initApiKontoSurface(view.querySelector("#apiKontoSurface"));
+  } catch {
+    /* fail-safe */
+  }
+}
+
 function activate(view, id) {
   activeTab = id;
+  if (id === "api") void ladeApiKonto(view);
   if (id === "models") void ladeModellBereiche(view);
   view.querySelectorAll("[data-settings-tab]").forEach((button) => {
     const active = button.dataset.settingsTab === id;
