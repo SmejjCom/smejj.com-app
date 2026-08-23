@@ -12,9 +12,9 @@ das offizielle OpenAI-SDK ein und ist fertig:
 
 | Angabe | Wert |
 |---|---|
-| Basis-URL | `https://smejj.com/v1` (bzw. der Control-Host) |
+| Basis-URL | `https://api.smejj.com/v1` |
 | Modell | `smejj-1.0` |
-| API-Schluessel | `smejj-live-…`, selbst erzeugt unter `/entwickler` |
+| API-Schluessel | `smejj-live-…`, selbst erzeugt unter https://smejj.com/entwickler.html |
 
 ## Endpunkte
 
@@ -65,7 +65,7 @@ anderen Instanzen nach spaetestens dieser Frist.
 | `POST` | `/api/developer/keys` | neuer Schluessel — Klartext EINMAL |
 | `POST` | `/api/developer/keys/<id>/revoke` | widerrufen |
 
-Sitzungspflichtig. Oberflaeche: `https://smejj.com/entwickler`
+Sitzungspflichtig. Oberflaeche: `https://smejj.com/entwickler.html` (Frontend-Repo, dort ist der Nutzer angemeldet; auf api.smejj.com selbst gibt es keine Sitzung — Cookie ist hostgebunden)
 (`public/entwickler.html` + `entwickler.js` + `entwickler.css`).
 
 ## Deckel gegen Kosten
@@ -93,7 +93,7 @@ Optional:
 
 ```
 SMEJJ_PUBLIC_API_TAGESLIMIT_TOKENS=1000000   # Voreinstellung; -1 oder 0 = kein Deckel
-SMEJJ_PUBLIC_API_BASE_URL=https://smejj.com/v1   # was die Oberflaeche anzeigt
+SMEJJ_PUBLIC_API_BASE_URL=https://api.smejj.com/v1   # was die Oberflaeche anzeigt (LIVE gesetzt)
 ```
 
 Vorausgesetzt (steht bereits, weil BYOK sie nutzt):
@@ -125,15 +125,12 @@ Vorausgesetzt (steht bereits, weil BYOK sie nutzt):
 
 ## Eigene Domain `api.smejj.com`
 
-Profis nennen den Hoster nicht in der Kunden-URL. `api.smejj.com` ist am
-Zeabur-Dienst angemeldet; es fehlt der DNS-Eintrag bei Spaceship:
-
-| Typ | Host | Wert |
-|---|---|---|
-| CNAME | `api` | `smejj-control.zeabur.app` |
-
-Danach `SMEJJ_PUBLIC_API_BASE_URL=https://api.smejj.com/v1` setzen — die
-Entwicklerseite zeigt dann nur noch diese Adresse.
+**LIVE seit 2026-08-23 ~05:30Z.** Profis nennen den Hoster nicht in der
+Kunden-URL. Gesetzt: CNAME `api` -> `smejj-control.zeabur.app` bei Spaceship
+(Advanced DNS, per Browser), Domain am Zeabur-Dienst (`addDomain`), Zertifikat
+nach ~4 min `PROVISIONED`, `SMEJJ_PUBLIC_API_BASE_URL` per
+`updateSingleEnvironmentVariable` (braucht eine Feldauswahl `{ key }`, sonst 422;
+`createEnvironmentVariable` lehnt vorhandene Schluessel ab).
 
 ## Was fuer ein Produkt noch fehlt
 

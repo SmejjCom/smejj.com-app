@@ -29,4 +29,6 @@ Domain `api.smejj.com` am Dienst angemeldet (Status `INVALID_DNS`, CNAME bei Spa
 
 **Tests:** `tests/oeffentliche-api.test.mjs` 19/19; check:frontend 604/604; check:architecture 7/7; favicon-lock OK; start-lock OK; assets-sync OK.
 
-**Offen:** CNAME `api` -> `smejj-control.zeabur.app` bei Spaceship (Betreiber), danach `SMEJJ_PUBLIC_API_BASE_URL=https://api.smejj.com/v1`. Abrechnung (Verbrauch wird gezaehlt, nicht bepreist). Menueeintrag zu `/entwickler` (index.html unter Start-Lock).
+**Runde 4 (api.smejj.com):** CNAME bei Spaceship per Browser gesetzt (SOA 1786072502 -> 1787462499), Zeabur `PROVISIONED` nach 220 s, `https://api.smejj.com/v1/models` -> 401 + `WWW-Authenticate`, OPTIONS 204. `SMEJJ_PUBLIC_API_BASE_URL=https://api.smejj.com/v1` (51 Variablen, nichts verloren). Entwicklerseite zeigt `https://api.smejj.com/v1`; zusaetzlich ins Frontend-Repo deployt (smejj.com/entwickler.html, Commit 2e353a7).
+
+**Offen:** Abrechnung (Verbrauch wird gezaehlt, nicht bepreist). Menueeintrag zu `/entwickler` (index.html unter Start-Lock).
