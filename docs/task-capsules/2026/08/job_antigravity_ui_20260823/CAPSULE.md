@@ -22,8 +22,12 @@
 4. Grenze: die Bridge-Schnellspur (fastTask = weder Coding noch suchwürdig) erreicht den Control-Server nicht — dort keine Werkzeuge, also keine Karte. Für suchwürdige und Coding-Aufgaben greift sie.
 5. Benchmark (Chrome, laufende Sitzung): TTFB 4 ms, LCP 56 ms, domInteractive 18 ms (Service-Worker-Vorrat); CLS 0,224 über die ganze Chat-Sitzung mit Streaming gesammelt — kein sauberer Seitenlade-Wert, beim nächsten Lauf frisch messen.
 
+## Nachtrag 14:50Z — Karte auch auf der Bridge-Schnellspur (Bridge v142, App d06a645b, Frontend 0d1b36a)
+Groq-Schnellspur bekommt das eine Werkzeug `frage_stellen` (tools + tool_choice auto); `pipeVisibleStream` sammelt die tool_calls-Bruchstücke und schickt am Ende die Karte. Live-Klickpfad: „Absage schreiben, frag nach dem Ton" → Karte nach 5 s (Sehr förmlich (Empfehlung) / Freundlich, aber professionell / Locker) → Klick → Nutzernachricht → fertige Absage. Tests 52/52.
+Nebenbefund im Screenshot: das rechte Vorschau-Panel drückte die Chatmitte auf ~140 px (bekanntes Muster „Panel frisst die Mitte", nicht Teil dieses Auftrags).
+
 ## Offen
-- Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht), „@"-Erwähnung, Stärke-Stufe im Start-Bereich, Karte auch auf der Bridge-Schnellspur.
+- Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht), „@"-Erwähnung, Stärke-Stufe im Start-Bereich.
 - `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
 
 ## Fallen (für die Memory_Bank)
