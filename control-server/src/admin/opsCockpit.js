@@ -63,7 +63,9 @@ async function morgenLage({ env, jetztMs, fetchImpl, ap, startzeitMs, leseDienst
     sicher(() => leseDienste({ env, fetchImpl, jetztMs, startzeitMs }), { ok: false, dienste: [] }),
     sicher(() => leseMrr({ env, fetchImpl }), { gemessen: false, cent: 0, abos: 0 }),
     sicher(() => leseIndex({ env, fetchImpl }), { ok: false, entries: [] }),
-    sicher(() => leseAudit({ limit: 8, env, fetchImpl, nowMs: jetztMs }), { ok: false, entries: [] }),
+    // 50 statt 8: die Sicherheitsalarme (security.alarm) werden wie auf der
+    // alten Seite A ueber die letzten 50 Eintraege gezaehlt; gezeigt werden 8.
+    sicher(() => leseAudit({ limit: 50, env, fetchImpl, nowMs: jetztMs }), { ok: false, entries: [] }),
     sicher(() => leseFreigaben({ env, fetchImpl, nowMs: jetztMs, limit: 20 }), { ok: false, approvals: [] })
   ]);
   const konten = index.ok ? (index.entries || []) : [];
@@ -91,6 +93,10 @@ async function morgenLage({ env, jetztMs, fetchImpl, ap, startzeitMs, leseDienst
     ohneSignal: { anzahl: stumm.length, namen: stumm.slice(0, 5).map((a) => a.name), gesamt: ap.autopiloten.length },
     dienste: diensteZeilen,
     protokoll: { erreichbar: audit.ok === true, eintraege: (audit.entries || []).slice(0, 8).map((x) => ({ am: x.at, aktion: x.action, wer: x.actorEmail || null, ziel: x.target || null })), grund: audit.ok ? null : (audit.error || audit.fehler || null) },
+    alarme: (() => {
+      const liste = (audit.entries || []).filter((x) => x && x.action === "security.alarm");
+      return { anzahl: liste.length, geprueft: (audit.entries || []).length, letzter: liste[0] ? { am: liste[0].at, ziel: liste[0].target || null, grund: liste[0].reason || null } : null };
+    })(),
     vierAugen: { erreichbar: freigaben.ok !== false, offen: (freigaben.approvals || []).filter((a) => a.status === "pending").map((a) => ({ id: a.id, aktion: a.action, ziel: a.target, angefragtVon: a.requestedBy, angefragtAm: a.requestedAt })) }
   };
 }

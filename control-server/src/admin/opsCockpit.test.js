@@ -104,7 +104,7 @@ test("Morgen-Lage (mitNetz): vier Zahlen aus Stubs, Dienste mit letztem echten L
     ] }),
     leseMrr: async () => ({ gemessen: true, cent: 900, abos: 1, waehrung: "eur" }),
     leseIndex: async () => ({ ok: true, entries: [{ createdAt: "2026-08-22T00:00:00Z" }, { createdAt: "2026-07-01T00:00:00Z" }] }),
-    leseAudit: async () => ({ ok: true, entries: [{ at: "2026-08-23T07:59:00Z", action: "users.index.rebuild", actorEmail: "a@b", target: "admin/index/users.json" }] }),
+    leseAudit: async () => ({ ok: true, entries: [{ at: "2026-08-23T07:59:00Z", action: "users.index.rebuild", actorEmail: "a@b", target: "admin/index/users.json" }, { at: "2026-08-23T07:50:00Z", action: "security.alarm", target: "login", reason: "zu viele Fehlversuche" }] }),
     leseFreigaben: async () => ({ ok: true, approvals: [{ id: "x", status: "pending", action: "user.delete", target: "u", requestedBy: "a@b", requestedAt: "2026-08-23T07:40:00Z" }] })
   });
   const m = c.morgen;
@@ -116,7 +116,9 @@ test("Morgen-Lage (mitNetz): vier Zahlen aus Stubs, Dienste mit letztem echten L
   assert.ok(m.ohneSignal.anzahl >= 0 && m.ohneSignal.gesamt > 30);
   assert.ok(m.dienste.some((d) => d.id === "nachtbau"), "der Nachtbau steht als eigene Zeile");
   assert.ok(m.dienste.some((d) => d.id === "speicher"), "der Speicher steht mit Schreibprobe");
-  assert.equal(m.protokoll.eintraege.length, 1);
+  assert.equal(m.protokoll.eintraege.length, 2);
+  assert.equal(m.alarme.anzahl, 1, "Sicherheitsalarme aus dem Audit werden gezaehlt (Erbe der Seite A)");
+  assert.equal(m.alarme.letzter.grund, "zu viele Fehlversuche");
   assert.equal(m.vierAugen.offen.length, 1);
 });
 

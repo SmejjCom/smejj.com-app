@@ -901,3 +901,6 @@ Stand auf 5. August 2026 gesetzt.
 
 ## 2026-08-23 — Seite „Regeln" (job_regeln_seite_20260823)
 - /admin/regeln/: sieben Regeln aus echten Vorfällen mit Datum + Wächter-Link. Damit sind alle 8 Bildschirme des Vorschlags umgesetzt.
+
+## 2026-08-23 — Seite A „Übersicht" aufgelöst
+- Nav ohne A; /admin/uebersicht/ leitet still aufs Cockpit (AUFGELOEST in console.js). Alarm-Lage (security.alarm aus 50 Audit-Einträgen) lebt jetzt im Cockpit. views.uebersicht + zeigeUebersicht entfernt, Tests nach opsCockpit.test.js.
