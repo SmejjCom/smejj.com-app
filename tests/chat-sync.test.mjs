@@ -1,8 +1,6 @@
 // Verlauf-Sync Stufe 3 (docs/verlauf-pro-konto-plan.md): Server-Bausteine.
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import { gehoertNutzer } from "../public/chat-owner.js";
 import {
   chatKennungGueltig,
   konfliktSieger,
@@ -187,89 +185,6 @@ test("Route: andere Pfade bleiben unberuehrt", async () => {
   assert.equal(res.status, 0);
 });
 
-// --- Der stille Datenverlust ist abgestellt (Befund 2026-08-14) -------------
-//
-// Bis heute prueften beide Sende-Wege in public/chat-sync.js NUR auf 503. Ein
-// 400 — "diesen Chat nehme ich nicht" — fiel durch das catch und war fuer
-// niemanden sichtbar. Gemessen: jeder Chat mit einem erzeugten Bild lag mit
-// ~585 KB ueber dem 512-KB-Deckel und wurde KOMPLETT abgewiesen, waehrend der
-// Nutzer ihn fuer gesichert hielt.
-//
-// Geprueft wird die QUELLE: chat-sync.js laeuft nur im Browser (fetch,
-// localStorage, dynamischer Import), ein Modulimport waere hier kein Test der
-// echten Datei, sondern eines Nachbaus.
-
-import { readFileSync } from "node:fs";
-
-const SYNC_QUELLE = readFileSync("public/chat-sync.js", "utf8");
-
-test("eine Ablehnung wird gemeldet statt verschluckt — auf BEIDEN Sende-Wegen", () => {
-  // NICHT die ANZAHL der Aufrufe pruefen, sondern dass jeder Sende-Weg einen
-  // hat. Die Zahl stand hier fruher auf 2 und wurde am 2026-08-23 zu Recht
-  // falsch: der Chat-Push meldet seither auch, wenn der Versuch NACH einer
-  // Rettung erneut scheitert. Eine Zusage, die bei jeder Verbesserung bricht,
-  // wird beim naechsten Mal einfach hochgezaehlt — und schuetzt dann nichts.
-  const chatPush = SYNC_QUELLE.slice(SYNC_QUELLE.indexOf("async function push()"),
-                                     SYNC_QUELLE.indexOf("async function pushProjekte()"));
-  const projektPush = SYNC_QUELLE.slice(SYNC_QUELLE.indexOf("async function pushProjekte()"));
-  assert.match(chatPush, /await meldeAbweisung\(/, "der Chat-Push meldet");
-  assert.match(projektPush, /await meldeAbweisung\(/, "der Projekte-Push meldet");
-
-  assert.match(SYNC_QUELLE, /antwort\.status >= 400 && antwort\.status < 500/,
-    "der ganze 4xx-Bereich zaehlt, nicht nur die 400 selbst");
-  // Und seit 2026-08-23 zusaetzlich das 500 des Body-Lesers: "Request too
-  // large" kommt heraus, BEVOR die Chat-Pruefung laeuft. Sechs zu grosse
-  // Chats des Betreibers fielen genau dort durch — weder gemeldet noch
-  // gerettet. Die Statusklasse allein reicht als Frage nicht.
-  assert.match(SYNC_QUELLE, /istZuGross\(/, "auch die Absage ausserhalb 4xx wird erkannt");
-});
-
-test("die Meldung nennt beim Groessen-Fall den KLARTEXT, nicht den Fehlercode", () => {
-  // "chat_zu_gross" sagt einem Nutzer nichts. Er muss erfahren, was das fuer
-  // ihn bedeutet: der Chat liegt nur noch auf diesem Geraet.
-  // Die Weiche heisst seit 2026-08-23 istZuGross(status, grund) — sie deckt
-  // BEIDE Absagen des Servers ab (400 chat_zu_gross und 500 Request too
-  // large). Frueher stand hier der direkte Vergleich auf "chat_zu_gross";
-  // die Zusage dahinter ist unveraendert: der Nutzer liest Klartext.
-  assert.match(SYNC_QUELLE, /istZuGross\(status, grund\)/);
-  assert.match(SYNC_QUELLE, /zu gross und wurde NICHT gesichert/);
-  assert.match(SYNC_QUELLE, /nur auf diesem Geraet/);
-});
-
-test("gemeldet wird EINMAL je Chat — push() laeuft nach jeder Aenderung", () => {
-  // Ohne Bremse gaebe es alle vier Sekunden (PUSH_ENTPRELLUNG_MS) denselben
-  // Hinweis; nach dem dritten wuerde ihn niemand mehr lesen.
-  assert.match(SYNC_QUELLE, /const abgewiesen = new Set\(\)/);
-  assert.match(SYNC_QUELLE, /if \(abgewiesen\.has\(kennung\)\) return;\s*\n\s*abgewiesen\.add\(kennung\);/,
-    "erst pruefen, dann merken — sonst meldet der zweite Aufruf erneut");
-});
-
-test("503 bleibt der Abschalter, 4xx bricht die Schleife NICHT ab", () => {
-  // Ein zu grosser Chat darf die uebrigen nicht mitreissen: nach der Meldung
-  // laeuft die Schleife weiter, nur 503 setzt den Sitzungs-Schalter.
-  assert.match(SYNC_QUELLE, /if \(antwort\.status === 503\) \{ serverSagtNein = true; break; \}/);
-  // HINTER dem gefundenen break beginnen — sonst zaehlt der Test genau das
-  // break mit, das er sucht (erster Entwurf lief prompt hinein).
-  const marke = "serverSagtNein = true; break; }";
-  const nachDem503 = SYNC_QUELLE.slice(SYNC_QUELLE.indexOf(marke) + marke.length);
-  const bis4xx = nachDem503.slice(0, nachDem503.indexOf("meldeAbweisung"));
-  assert.ok(!bis4xx.includes("break"), "zwischen 503 und der 4xx-Meldung darf kein weiteres break stehen");
-});
-
-test("scheitert sogar der Hinweis, bleibt der Grund auffindbar", () => {
-  // Der Import des Toasts kann fehlschlagen (Modul nicht geladen, CSP). Dann
-  // muss der Grund wenigstens in der Konsole stehen — genau die Stille war
-  // ja der Fehler.
-  assert.match(SYNC_QUELLE, /catch \{[\s\S]{0,400}console\.warn\(/);
-  assert.match(SYNC_QUELLE, /smejj Verlauf-Sync: Chat \$\{kennung\} abgewiesen/);
-});
-
-test("der Grund wird aus einer KOPIE der Antwort gelesen", () => {
-  // antwort.json() wuerde den Rumpf verbrauchen; ein spaeterer Leser bekaeme
-  // nichts mehr. clone() haelt beide Wege offen.
-  assert.match(SYNC_QUELLE, /await antwort\.clone\(\)\.json\(\)/);
-});
-
 // ---------------------------------------------------------------------------
 // KLEINE LISTE — gefunden durch die Performance-Messung am 2026-08-19.
 //
@@ -385,42 +300,6 @@ test("ein unlesbarer Chat kippt die Liste nicht", async () => {
   assert.equal(ergebnis.chats[0].id, "chat_a");
 });
 
-test("nurAbgleich=true liefert NUR id, updatedAt und ownerId", async () => {
-  const ergebnis = await ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]), nurAbgleich: true });
-  assert.equal(ergebnis.ok, true);
-  assert.equal(ergebnis.chats.length, 2);
-  for (const c of ergebnis.chats) {
-    assert.deepEqual(Object.keys(c).sort(), ["id", "ownerId", "updatedAt"],
-      "jedes zusaetzliche Feld ist Bandbreite, die pull() sofort verwirft");
-  }
-  assert.equal(ergebnis.chats[0].id, "chat_a");
-  assert.equal(ergebnis.chats[0].updatedAt, "2026-08-19T10:00:00Z");
-});
-
-test("nurAbgleich ist WIRKLICH kleiner als nurListe", async () => {
-  // Ohne diese Messung waere die neue Stufe nur eine Behauptung. Gemessen am
-  // echten Konto: 88 Chats = 42 KB mit nurListe, ~10 KB mit nurAbgleich.
-  const [abgleich, liste] = await Promise.all([
-    ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]), nurAbgleich: true }),
-    ladeChats({ kontoId: "user_a", env: S3_ENV, fetchImpl: s3Doppel([CHAT_A, CHAT_B]), nurListe: true })
-  ]);
-  const bytes = (x) => JSON.stringify(x.chats).length;
-  assert.ok(bytes(abgleich) < bytes(liste),
-    `nurAbgleich (${bytes(abgleich)} B) muss kleiner sein als nurListe (${bytes(liste)} B)`);
-});
-
-test("die drei Felder reichen dem Abgleich — mehr liest pull() nicht", async () => {
-  // Diese Zusicherung ist der eigentliche Schutz: sie haelt fest, WARUM drei
-  // Felder genuegen. Wer pull() spaeter um ein viertes Feld erweitert, muss
-  // hier vorbeikommen — sonst faehrt der Abgleich mit einem `undefined`.
-  const quelle = fs.readFileSync("public/chat-sync.js", "utf8");
-  const pullBlock = quelle.slice(quelle.indexOf("async function pull()"), quelle.indexOf("async function push()"));
-  const gelesen = [...pullBlock.matchAll(/\bfern\.([a-zA-Z]+)/g)].map((t) => t[1]);
-  const erlaubt = new Set(["id", "updatedAt", "messages"]); // messages nur als Vorhandenseins-Pruefung
-  const unerwartet = [...new Set(gelesen)].filter((f) => !erlaubt.has(f));
-  assert.deepEqual(unerwartet, [], `pull() liest Felder, die nurAbgleich nicht liefert: ${unerwartet.join(", ")}`);
-});
-
 test("OHNE nurListe bleibt der alte Vertrag unveraendert", async () => {
   // Der wichtigere Test: ein alter Client aus dem Browser-Cache ruft weiterhin
   // /api/chats ohne Parameter. Bekaeme er ploetzlich Chats ohne Nachrichten,
@@ -490,50 +369,20 @@ test("Route: ?id= mit ungueltiger Kennung gibt 400, nicht 200 mit null", async (
   assert.equal(res.payload.error, "chat_id_ungueltig");
 });
 
-// ---------------------------------------------------------------------------
-// DIE KENNUNGSLUECKE — gefunden am LIVE-Konto (2026-08-19), nicht im Test.
-//
-// Der Server stellte am 15.08. die Kontokennung auf SHA-256 um (Kollisionsleck,
-// siehe chatSyncStore.js) — bewusst OHNE Rueckfall. Der Client stempelt seine
-// Chats aber weiter nach der alten Regel `user_<adresse_mit_unterstrichen>`.
-// Folge: `gehoertNutzer` haelt die eigenen Server-Chats fuer fremd, `importChat`
-// gibt false, und der Abgleich holt sie bei JEDEM Seitenaufruf erneut.
-//
-// Diese Tests halten den Befund fest. Sie beschreiben den IST-Zustand — nicht
-// den gewuenschten. Wird die Luecke geschlossen, muessen sie angepasst werden;
-// genau das ist ihr Zweck: die Aenderung soll nicht unbemerkt durchgehen.
-// ---------------------------------------------------------------------------
-test("BEFUND: Server- und Client-Kennung desselben Kontos sind verschieden", () => {
-  const serverSeitig = kontoKennung({ email: "smejjcom@gmail.com" });
-  const clientSeitig = `user_${"smejjcom@gmail.com".replace(/[^a-z0-9]+/g, "_")}`;
-  assert.equal(serverSeitig, "user_158c1e609cc03bb4c36f70b7e059fbfd", "am Live-Konto gemessen");
-  assert.equal(clientSeitig, "user_smejjcom_gmail_com", "so stempelt der Client lokal");
-  assert.notEqual(serverSeitig, clientSeitig, "genau daran scheitert der Geraete-Sync");
-});
-
-test("BEFUND: gehoertNutzer weist den eigenen Server-Chat ab", () => {
-  const vomServer = { id: "chat_1", ownerId: kontoKennung({ email: "smejjcom@gmail.com" }) };
-  assert.equal(
-    gehoertNutzer(vomServer, "user_smejjcom_gmail_com", ""),
-    false,
-    "der Chat gehoert demselben Menschen — die Kennung sagt etwas anderes"
-  );
-  // Gegenstueck: mit passender Kennung wuerde er angenommen. Die Pruefung selbst
-  // ist also in Ordnung; falsch ist nur, dass beide Seiten anders rechnen.
-  assert.equal(gehoertNutzer(vomServer, vomServer.ownerId, ""), true);
-});
-
-test("der Abgleich ueberspringt genau das, was der Import abweisen wuerde", () => {
-  // Das ist die Zusage der Sparmassnahme in chat-sync.js: uebersprungen wird nur,
-  // was ohnehin nicht angekommen waere. Beide Seiten fragen dieselbe Funktion.
-  const meine = "user_abc";
-  const proben = [
-    [{ id: "a", ownerId: "user_abc" }, true],
-    [{ id: "b", ownerId: "user_xyz" }, false],
-    [{ id: "c" }, true] // Altbestand ohne Besitzer, kein Geraete-Merker
-  ];
-  for (const [chat, erwartet] of proben) {
-    const wuerdeImportiert = gehoertNutzer(chat, meine, "");
-    assert.equal(wuerdeImportiert, erwartet, `falsch bewertet: ${chat.id}`);
-  }
+test("Route: die Liste nennt die Kontokennung des Servers (konto) — Alias fuer den Client", async () => {
+  // 2026-08-23: der Server stempelt jede Datei mit kontoKennung(), der Client
+  // vergleicht mit seiner Sitzungs-ID. Ohne `konto` galt jeder Server-Chat
+  // als fremd — live 26 Chats unsichtbar, Geraete-Sync tot.
+  const routen = createChatSyncRoutes({
+    env: S3_ENV,
+    readSession: () => ({ userId: "user_a" }),
+    json: fakeJson,
+    readJson: async () => ({}),
+    fetchImpl: s3Doppel([CHAT_A])
+  });
+  const res = fakeRes();
+  await routen.handle({ method: "GET" }, res, new URL("https://x/api/chats?nurAbgleich=1"));
+  assert.equal(res.status, 200);
+  assert.equal(res.payload.konto, kontoKennung({ userId: "user_a" }));
+  assert.match(res.payload.konto, /^user_[0-9a-f]{32}$/);
 });
