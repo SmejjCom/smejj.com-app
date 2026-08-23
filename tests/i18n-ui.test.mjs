@@ -22,6 +22,11 @@ const startChips = fs.readFileSync(path.join(publicDir, "start-chips.js"), "utf8
 // die Begruessung nach dem Login die Plan-Karte.
 const searchOverlay = fs.readFileSync(path.join(publicDir, "search.js"), "utf8");
 const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welcome.js"), "utf8");
+// Nutzerreise USA 2026-08-23: drei weitere Oberflaechen rufen t() und bekamen
+// ihre fehlenden englischen Texte — Spur (Start), API-Keys, Entwickler-API.
+const spurStart = fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8");
+const apiKeysSurface = fs.readFileSync(path.join(publicDir, "api-keys-surface.js"), "utf8");
+const apiKontoSurface = fs.readFileSync(path.join(publicDir, "api-konto-surface.js"), "utf8");
 const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
@@ -60,7 +65,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
-    + searchOverlay + onboardingWelcome;
+    + searchOverlay + onboardingWelcome + spurStart + apiKeysSurface + apiKontoSurface;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }

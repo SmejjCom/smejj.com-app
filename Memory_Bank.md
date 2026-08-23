@@ -771,3 +771,10 @@ Landeseite stand.
 - LOKAL: `npm run check:sync-alias` (Stufe A Quellen, Stufe B live mit Probe-Token), in check:all.
 - LIVE: Autopilot Nr. 43 "Sync-Waechter" (Bauzweig f992c61d), alle 30 min, prueft eigene API + AUSGELIEFERTE
   Client-Dateien; erste Ampel gruen 11:19:47Z. Ehrlichkeits-Waechter (Zaehler 35, MIT_ECHTER_MESSUNG) nachgezogen.
+
+## 2026-08-23 — Nutzerreise als US-Neuling: 5 Stellen live verbessert (job_nutzerreise_usa_20260823)
+
+- Registrieren/Anmelden ist kinderleicht (2 Felder, 5 Wege, Google 2 Klicks/6 s); verwirrend waren Sprache, Handy-Kopf, Magic-Link-Fehler.
+- LIVE: en.js +155 Texte (Spur, Konto, Abo, API), Landingpage-Leiste 440->375 px, Magic-Link-Fehler 303 -> Anmeldeseite statt JSON.
+- Messfalle: i18n-Cache — erster Lauf nach neuem en.js zeigt noch Deutsch, erst der ZWEITE Lauf ist uebersetzt.
+- Rote Liste offen: leere Antwortblase 3,6 s (ai/chatClient.js, Cline-Pfad), Consent-Domain smejj-control.zeabur.app, Modell-Picker ohne Haekchen.

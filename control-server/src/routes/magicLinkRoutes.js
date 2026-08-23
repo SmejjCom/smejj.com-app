@@ -66,7 +66,7 @@ export function createMagicLinkHandlers({
       text: [
         "Hallo,",
         "",
-        "hier ist dein Anmeldelink fuer smejj.com (15 Minuten gueltig, nur einmal verwendbar):",
+        "hier ist dein Anmeldelink für smejj.com (15 Minuten gültig, nur einmal verwendbar):",
         link,
         "",
         "Wenn du das nicht angefordert hast, ignoriere diese E-Mail einfach.",
@@ -81,8 +81,24 @@ export function createMagicLinkHandlers({
   async function handleMagicLinkVerify(req, res, url) {
     if (!secret()) return json(res, 503, { ok: false, error: "Session Secret fehlt." });
     const token = String(url.searchParams.get("token") || "").trim();
-    const data = verifyMagicToken(token, secret(), nowMs());
-    if (isConsumed(data.jti, nowMs())) throw new Error("Magic Link wurde bereits verwendet.");
+    let data;
+    try {
+      data = verifyMagicToken(token, secret(), nowMs());
+      if (isConsumed(data.jti, nowMs())) throw new Error("Magic Link wurde bereits verwendet.");
+    } catch (fehler) {
+      // Nutzerreise 2026-08-23, live gemessen: ein abgelaufener, schon benutzter
+      // oder verstuemmelter Link zeigte dem Nutzer nacktes JSON
+      // ({"error":"Magic Link ist ungueltig."}) auf der Control-Adresse — ohne
+      // Weg zurueck. Jetzt: 303 auf die Anmeldeseite der App mit ?abgelaufen=1,
+      // die dort den Satz "Deine Anmeldung ist abgelaufen. Bitte melde dich
+      // erneut an." zeigt (auth-page.js, seit 2026-08-04). Die Zieladresse
+      // kommt NICHT aus dem (unbewiesenen) Token, sondern aus der Erlaubnis-
+      // liste; ohne Eintrag bleibt der alte JSON-Weg.
+      const ziel = allowedOriginsFromEnv(env).find((o) => /^https:\/\//.test(String(o)));
+      if (!ziel) throw fehler;
+      res.writeHead(303, { ...SECURITY_HEADERS, "Cache-Control": "no-store", Location: `${ziel}/auth/login/?abgelaufen=1&grund=anmeldelink` });
+      return res.end();
+    }
     markConsumed(data.jti, data.exp);
     const user = { email: data.email, name: data.email, method: "magiclink" };
     const headers = { ...SECURITY_HEADERS, "Cache-Control": "no-store", "Set-Cookie": serializeSessionCookie(user) };
