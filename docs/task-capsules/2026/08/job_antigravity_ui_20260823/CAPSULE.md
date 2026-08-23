@@ -43,6 +43,9 @@ Live (echte Tastatur, eingeloggtes Chrome): „Plane mir einen Wochenendtrip" �
 ## Nachtrag 24.08. — Code-Bereich: „Ich frage was und kommt nichts" (App 45414193, Frontend 194341e, sw v685)
 Ursache: code-flaeche.js sendet über einen programmatischen Klick auf #startSend, nachdem der Vorlauf beide Vierecke auf „an" gestellt hat; der Stopp-Fang schluckte den Klick (Feld geleert, Quadrat an, nichts geschickt — genau der Betreiber-Screenshot). Fix in chat-stopp.js: Klick mit Text im Feld ist immer Senden, nur der Klick bei leerem Feld stoppt. Chrome-Test danach: Code 3 Fragen (391, Bash, PowerShell), Chat 3 Fragen (Wolga, drei Sätze, Restaurant → Frage-Karte Wien/Berlin/Zürich), keine JS-Fehler. Nebenbefund ENTKRÄFTET (24.08., Codewort-Probe BLAUWAL): der Test hatte auf einen nicht existierenden Knopf geklickt ([data-dock-action=new-chat] gibt es am Start nicht). Der echte Spur-Punkt „Neu"/„Neuer Chat" trennt sauber: Log leer, neuer Chat kennt das Codewort nicht.
 
+## Nachtrag 24.08. (2) — „sende icon sieht man nicht mehr" (App 449317d4, Frontend 9a60ca4, sw v686)
+Der Beleuchtungs-Block vom 18.08. färbte den Pfeil bei Text dunkel (für die damals helle Fläche); nach dem Transparent-Umbau war er in Chat und Code unsichtbar. Fix: helles Zeichen, Hover Logo-Cyan. Live bewiesen (computed color + Screenshot + echte Antwort „alles gut" im eingeloggten Chrome). Die „Verbindung unterbrochen"-Meldungen des Betreibers fielen in ein Bridge-Neustart-Fenster (restartService, 30–60 s); Senden läuft wieder. Start-Lock neu gestempelt.
+
 ## Offen
 - Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht).
 - `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
