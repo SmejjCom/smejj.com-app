@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T05:10:54.515Z",
-  "confirmation": "Betreiber am 2026-08-23 (Karte): 'Struktur übernehmen, Optik anpassen' — Autopiloten-Seite nach dem Design-Vorschlag 'smejj.com — Adminbereich' (26.6.26) umgebaut: Liste als Tabelle nach Bereichen, Detail mit Knöpfen zuerst; Optik bleibt viereckig, große Schrift, eine Akzentfarbe. Registry, Ampel-Logik, Bereiche und Ansicht eingefroren.",
+  "frozenAt": "2026-08-23T05:13:20.271Z",
+  "confirmation": "Betreiber am 2026-08-23 (Karte): 'Struktur übernehmen, Optik anpassen' — Nachschärfung nach Live-Test: heute gemessene Autopiloten ohne Einzellauf seit Neustart sind kein Befund ('Ohne Einzellauf'), Lage-Satz nennt höchstens fünf Namen.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -24,6 +24,6 @@
     "control-server/src/admin/opsAutopilotenListe.js": "ca824b3fb6a4885b17b6bfca18d2c2f3257a8c930f4688c950c19225399abf97",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
     "control-server/src/admin/opsAutopilotenBereiche.js": "629775c386fff37a064ccccfc979ef9be3af50d227221bc216fd56bf0f73f187",
-    "control-server/admin-ui/views-stage9.js": "e040dc52e6967479420c20158ec7a229e5f2c23384fc0ebb9fb8c2c4d4720b9c"
+    "control-server/admin-ui/views-stage9.js": "064f1c12fb0a2c1b91f371eb42610ab4f174ae3301766a37eeb50f3b8bcc5e8d"
   }
 }
