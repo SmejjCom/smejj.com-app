@@ -199,5 +199,8 @@ export const ACTIONS = Object.freeze({
   sessionsRevoke: "user.sessions.revoke",
   verify: "user.verify",
   unlock: "user.unlock",
-  delete: "user.delete"
+  delete: "user.delete",
+  // 2026-08-23: ein bezahltes Abo (Stripe-Kunde) auf dieses Konto haengen —
+  // der Fall "bezahlt als andere Adresse" (billing/aboUmhaengen.js).
+  billingRelink: "user.billing.relink"
 });

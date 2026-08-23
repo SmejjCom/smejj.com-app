@@ -32,6 +32,8 @@ const MATRIX = Object.freeze({
   "users.sessions.revoke": { owner: "allow", admin: "allow", support: "allow", finance: "deny", auditor: "deny", readonly: "deny" },
   "users.verify":      { owner: "allow", admin: "allow", support: "allow",   finance: "deny",  auditor: "deny",  readonly: "deny" },
   "users.unlock":      { owner: "allow", admin: "allow", support: "allow",   finance: "deny",  auditor: "deny",  readonly: "deny" },
+  // Abo auf ein Konto umhaengen: Geld-Zuordnung, darum Owner/Admin/Finance — nie Support.
+  "users.billing.relink": { owner: "allow", admin: "allow", support: "deny", finance: "allow", auditor: "deny", readonly: "deny" },
   "users.content.read":{ owner: "dual",  admin: "deny",  support: "consent", finance: "deny",  auditor: "deny",  readonly: "deny" },
   "impersonation.start":{ owner: "allow",admin: "allow", support: "consent", finance: "deny",  auditor: "deny",  readonly: "deny" },
   "billing.write":     { owner: "allow", admin: "deny",  support: "deny",    finance: "allow", auditor: "deny",  readonly: "deny" },

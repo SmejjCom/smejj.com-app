@@ -29,6 +29,7 @@ import { endImpersonation, listImpersonations, requestImpersonation } from "../a
 import { bestaetigeCode, fordereCode, istErhoeht, oeffneFenster } from "../admin/stepUp.js";
 import { passkeyOptionen, pruefePasskeyAntwort } from "../admin/stepUpPasskey.js";
 import { ARTEN, meldeEreignis } from "../admin/sicherheitsAlarm.js";
+import { aboAufKontoUmhaengen } from "../billing/aboUmhaengen.js";
 
 const PREFIX = "/api/admin";
 // Enger als beim Lesen: schreibende Aktionen sind selten und teuer.
@@ -42,7 +43,8 @@ const RECHT_ZUR_AKTION = Object.freeze({
   [ACTIONS.sessionsRevoke]: "users.sessions.revoke",
   [ACTIONS.verify]: "users.verify",
   [ACTIONS.unlock]: "users.unlock",
-  [ACTIONS.delete]: "users.delete"
+  [ACTIONS.delete]: "users.delete",
+  [ACTIONS.billingRelink]: "users.billing.relink"
 });
 
 export async function handleAdminWriteRoute(req, url, res, { env = process.env } = {}) {
@@ -218,6 +220,7 @@ async function fuehreAus(aktion, email, body, actor, env, approvalId) {
     return setUserRole(email, body?.role, { actor, env, ownerCount: await zaehleOwner(env) });
   }
   if (aktion === ACTIONS.delete) return deleteUserData(email, { actor, approvalId, env });
+  if (aktion === ACTIONS.billingRelink) return aboAufKontoUmhaengen(email, String(body?.customerId || ""), { env });
   return { ok: false, error: "admin_action_unknown" };
 }
 
