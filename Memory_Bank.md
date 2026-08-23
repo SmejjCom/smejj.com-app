@@ -85,74 +85,34 @@ steht im Arbeitszweig in `server.js` und im Bauzweig in
 
 ### [2026-08-23] ZEHN CHATS WAREN NICHT GESICHERT — BESTAND GERETTET (job_chats_zu_gross_20260823)
 
-Capsule: `task-capsules/2026/08/job_chats_zu_gross_20260823/capsule.json`.
-App-Repo `8f9a4ef3`, `b151770c`, `ed73fb6e`. Frontend `e2b5ccb`, `4acfd9f`, `722fe06`.
-sw v652 -> v655.
+Capsule: `task-capsules/2026/08/job_chats_zu_gross_20260823/capsule.json`, Volltext
+wortgleich: `task-capsules/2026/08/job_chats_zu_gross_20260823/capsule.md`
+(Nachmittags-Teil zusaetzlich: `task-capsules/2026/08/job_verlauf_vorsorge_20260823/capsule.md`).
+App-Repo `8f9a4ef3`, `b151770c`, `ed73fb6e`. Frontend `e2b5ccb`, `4acfd9f`, `722fe06`. sw v652 -> v657.
 
-**Ausgangslage:** 113 Chats, Median 7 KB, aber zehn ueber der 512-KB-Grenze und
-damit seit Wochen NUR auf einem Geraet. Nie zu viel Text — immer ein Medium,
-dreifach abgelegt (text, html, raw).
+Zehn von 113 Chats lagen ueber der 512-KB-Grenze und damit seit Wochen NUR auf
+einem Geraet — nie zu viel Text, immer ein Medium, dreifach abgelegt
+(text/html/raw). FUENF Befunde nacheinander, jeder erst durch den Live-Test
+sichtbar; **die ersten Fixes waren richtig und haetten trotzdem nichts bewirkt:**
 
-**DREI Befunde nacheinander, jeder erst durch den Live-Test sichtbar. Das ist
-die eigentliche Lehre: die ersten beiden Fixes waren richtig und haetten
-trotzdem nichts bewirkt.**
+1. Ein Fix beim SPEICHERN wirkt nur VORWAERTS — Bestand holt sich nicht selbst
+   ab. → `public/chat-medien-rettung.js`.
+2. Der Server hat ZWEI Grenzen: 400 `chat_zu_gross` ab 512 KB, `500 Request too
+   large` ueber 1 MB (Body-Leser VOR der Chat-Pruefung). Wer nur 4xx behandelt,
+   hat einen blinden Fleck (hier sechs von zehn). → `istZuGross(status, grund)`.
+3. Die Rettung darf nicht am Sende-Weg haengen: `push()` arbeitet 113 Chats der
+   Reihe nach ab. → `raeumeBestandAuf()`, einmal am Tag, Deckel 25 je Lauf.
+4. Reaktive Rettung reicht nicht: vier Chats UNTER der Grenze trugen trotzdem
+   ein Video im `raw`. → `VORSORGE_BYTES = 128 KB`, nur im Bestandslauf.
+5. `updatedAt` traegt ZWEI Bedeutungen (Sortierung und Sync). Unveraendert
+   gelassen, ueberspringt `speichereChat` — lokal geheilt, serverseitig weiter
+   466,6 KB. → `naechsterZeitstempel()`, eine Millisekunde, kein `new Date()`.
 
-1. Der Fix vom 22.08. lagert Medien beim SPEICHERN aus — er wirkt nur
-   vorwaerts. Ein alter Chat wird nie neu gespeichert und bleibt liegen.
-   → `public/chat-medien-rettung.js` rettet bei Abweisung und sendet erneut.
-2. Der Server hat ZWEI Grenzen, nur eine meldet sich ordentlich:
-   512 KB-1 MB gibt `400 chat_zu_gross`, ueber 1 MB gibt `500 Request too
-   large` (Body-Leser, `maxJsonBodyBytes`, greift VOR der Chat-Pruefung).
-   `chat-sync.js` behandelte nur 4xx — SECHS der zehn lagen im blinden Fleck
-   und waren nicht nur ungerettet, sondern unsichtbar.
-   → `istZuGross(status, grund)` deckt beide Absagen und 413 ab.
-3. Die Rettung haengt am Sende-Weg. `push()` arbeitet 113 Gespraeche der Reihe
-   nach ab; nach gut einer Minute war genau EINER gerettet. Wer die App kurz
-   oeffnet, kommt nie bei seinem Bestand an.
-   → `raeumeBestandAuf()` sucht die betroffenen Chats direkt, hoechstens
-   einmal am Tag, 12 s nach dem Start, Deckel bei 25 je Lauf.
-
-**Verifikation (live, angemeldetes Konto):** 11.534 KB -> 51 KB ueber alle
-zehn, kein einziges "gescheitert"; Konto gesamt 15.076 -> 3.593 KB bei
-unveraendert 113 Chats, 0 ueber der Grenze. Die fuenf groessten per PUT
-gesendet: HTTP 200 `ok:true`, Schluessel unter `chats/user_158c1e6…`. Die
-ausgelagerten Medien danach abgerufen: video/mp4 480 KB, image/png 384 KB,
-video/mp4 144 KB — alle 200. Der Bestandslauf laeuft nach dem Neuladen von
-selbst (Merker gesetzt, je genau eine Modulfassung geladen). `check:frontend`
-611/611, module-queries 185, markenkette 97, precache 154. Keine
-Konsolenfehler.
-
-**Abstimmung mit der Parallelsitzung** (die den 22.08.-Fix gebaut hat): mein
-Muster erfasste auch `audio`, der Server kennt in `ERLAUBTE_TYPEN` nur png,
-jpeg, webp, mp4, webm. Uebernommen — sonst meldet `brauchtRettung()` "ja",
-die Rettung laeuft an und bewirkt nichts. Ein Waechter haelt die drei Stellen
-(Server, `chat-medien.js`, `chat-medien-rettung.js`) jetzt zusammen.
-
-**Offen, bewusst nicht behoben:** das `500` fuer "Request too large" ist die
-falsche Fehlerklasse — 413 waere richtig. `src/server.js` gehoerte waehrend
-der Arbeit einer Parallelsitzung, und das Frontend faengt beide Formen
-ohnehin ab.
-
-**VIERTER und FUENFTER Befund, 2026-08-23 nachmittags.** Capsule:
-`task-capsules/2026/08/job_verlauf_vorsorge_20260823/capsule.md`. sw v655 -> v657.
-
-4. Die Rettung ist REAKTIV. Vier Chats (466/293/280/263 KB) liegen UNTER der
-   Grenze, werden nie abgewiesen und darum nie gerettet — obwohl jeder ein
-   Video im `raw` traegt (bei 466,3 KB sind 464,6 KB genau das).
-   → `VORSORGE_BYTES = 128 KB`, NUR fuer den Bestandslauf.
-5. `updatedAt` traegt ZWEI Bedeutungen: "zuletzt bearbeitet" (Sortierung) und
-   "zuletzt geaendert" (Sync). `speichereChat` ueberspringt bei GLEICHEM Wert —
-   der geheilte Chat schrumpfte lokal auf 2 KB und blieb serverseitig 466,6 KB.
-   Wer `updatedAt` unberuehrt laesst, hat fuer die Sortierung recht und fuer den
-   Sync unrecht. → `naechsterZeitstempel()`: EINE Millisekunde, kein `new Date()`.
-
-**Live:** Konto 3.968,3 -> 2.952,3 KB. Video im geretteten Chat geladen
-(640x640, 4 s) bei 2 KB Chatgroesse. Kein Toast, TTFB 2 ms / LCP 80 ms / CLS 0.
-
-**Lehre (Doppelarbeit):** Eine zweite Sitzung loeste dasselbe am selben Tag,
-gruendlicher. Sie mass LOKAL im Browser, ich serverseitig — dort sieht man nur,
-was durchkam; das Problem ist definitionsgemaess das, was fehlt. Meine Fassung
-wurde verworfen statt gemergt (`claude/verworfen-doppelarbeit-20260823`).
+Live: Konto 15.076 -> 2.952,3 KB bei unveraendert 113 Chats, 0 ueber der Grenze;
+ausgelagerte Medien wieder abrufbar (mp4 480 KB, png 384 KB). `check:frontend`
+611/611. Offen (bewusst): das `500` sollte 413 sein — siehe job_http_413_20260823.
+LEHRE: Eine Parallelsitzung loeste dasselbe am selben Tag gruendlicher, weil sie
+LOKAL im Browser mass; serverseitig sieht man nur, was durchkam.
 
 
 ### [2026-08-23] MODELL-LISTE 100% GESICHERT — ZWEI SCHLOESSER (job_modellliste_lock_20260823)
@@ -699,55 +659,25 @@ weil die Tests den Quelltext lesen statt den Pfad auszufuehren.
 
 ## 2026-08-20 — Verlauf schlank, und ein toter Geraete-Sync kam ans Licht (job_verlauf_schlank_20260820)
 
-Capsule: `task-capsules/2026/08/job_verlauf_schlank_20260820/capsule.json`
+Capsule: `task-capsules/2026/08/job_verlauf_schlank_20260820/capsule.json`, Volltext
+wortgleich: `task-capsules/2026/08/job_verlauf_schlank_20260820/capsule.md`
 (Object Brain: `s3://smejj-model-files/capsules/app/job_verlauf_schlank_20260820/`).
-Tag: `stand-2026-08-20-verlauf-schlank` auf `bb7c8e1`. Frontend live: `44f35a5`.
+Tag `stand-2026-08-20-verlauf-schlank` auf `bb7c8e1`, Frontend live `44f35a5`.
 
-**Entscheidung:** Die Startseite laedt den Verlauf nicht mehr als Volltext.
-`/api/chats?nurAbgleich=1` liefert nur id/updatedAt/ownerId; ein Chat wird per
-`?id=` einzeln nachgeholt, und zwar nur, wenn er wirklich neuer ist. Der alte
-Vertrag (GET ohne Parameter) bleibt fuer aeltere Clients unveraendert.
-Zusaetzlich fragt der Abgleich VOR dem Einzelabruf dieselbe Funktion, die auch
-importiert (`gehoertNutzer`) — was der Import abweisen wuerde, wird gar nicht
-erst geholt.
+Kern: `/api/chats?nurAbgleich=1` liefert nur id/updatedAt/ownerId; ein Chat wird
+per `?id=` einzeln nachgeholt, und nur wenn er wirklich neuer ist. Der alte
+Vertrag (GET ohne Parameter) bleibt fuer aeltere Clients. Gemessen: Seitengewicht
+4.054 -> 1.174 KB, Chat-Verkehr 2.500 -> 15 KB, Einzelabrufe 14-24 -> 0,
+Listen-Abruf 12.100 -> 2.330 ms; 100 Chats unversehrt, 31/31 Tests gruen.
 
-**Begruendung:** Gemessen wurden 2,50 MB je Seitenaufruf bei 88 Chats — 65 %
-des Seitengewichts, und der Control Server stand damit im Pfad jedes normalen
-Aufrufs (Static-First gebrochen). Zum Entscheiden braucht der Abgleich die
-Nachrichten gar nicht.
+DER EIGENTLICHE FUND, nicht behoben und entscheidungspflichtig: Server und Client
+rechnen die Kontokennung verschieden (Server SHA-256 seit 15.08.,
+`user_158c1e60…`; Client nach der alten Adressregel, `user_smejjcom_gmail_com`).
+`gehoertNutzer` haelt die eigenen Chats fuer fremd, `importChat` gibt `false` —
+der Geraete-Sync importiert nichts. Angleichen ist Rote Liste: `MAX_CHATS = 100`
+wuerde `pruneOld()` ausloesen. LEHRE: Der Fehler war vorher genauso da, nur
+unsichtbar; erst die schlanke Liste machte jeden Leerabruf einzeln sichtbar.
 
-**Verifikation (live, smejj.com, angemeldet, Vorrat smejj-shell-v635):**
-
-| | vorher | nachher |
-|---|---|---|
-| Seitengewicht | 4.054 KB | 1.174 KB |
-| Chat-Verkehr | 2.500 KB | 15 KB |
-| Einzelabrufe je Aufruf | 14 bis 24 | 0 |
-| Listen-Abruf | 12.100 ms | 2.330 ms |
-
-Datenstand unversehrt: 100 Chats lokal, 100 mit Nachrichten, 0 leer, 533
-Nachrichten gesamt. Tests 31/31 gruen, `check:start-lock` gruen.
-
-**Der eigentliche Fund — NICHT behoben, entscheidungspflichtig:** Server und
-Client rechnen die Kontokennung verschieden aus. Der Server stellte am
-2026-08-15 auf SHA-256 um (Kollisionsleck, bewusst ohne Rueckfall), der Client
-stempelt weiter nach der alten Adressregel:
-
-    Server: user_158c1e609cc03bb4c36f70b7e059fbfd   (sha256 "email:smejjcom@gmail.com")
-    Client: user_smejjcom_gmail_com
-
-Dasselbe Konto. `gehoertNutzer` haelt die eigenen Server-Chats fuer fremd,
-`importChat` gibt `false` — **der Geraete-Sync importiert nichts.** 24 Chats
-wurden deshalb bei jedem Seitenaufruf einzeln geholt (~72 s, ~1 MB) und
-weggeworfen. Ein Angleichen ist Rote Liste: es importiert ~92 Chats, und
-`MAX_CHATS = 100` loest `pruneOld()` aus — vorhandene lokale Chats wuerden
-geloescht.
-
-**Lehre:** Der Fehler war vorher genauso da. Im 2,5-MB-Paket kamen dieselben
-Chats mit und wurden ebenso abgewiesen — nur sah es niemand. Erst die schlanke
-Liste machte jeden Leerabruf einzeln sichtbar. Eine Optimierung deckte einen
-kaputten Kernweg auf; die Sparmassnahme meldet ihn jetzt einmal je Abgleich,
-statt ihn still zu wiederholen.
 
 ## 2026-08-20 — Startgewicht: die Code-Flaeche laedt erst beim Oeffnen (job_startgewicht_20260820)
 
