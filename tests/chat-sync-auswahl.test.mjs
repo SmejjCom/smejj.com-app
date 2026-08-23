@@ -13,7 +13,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { konfliktSieger, abgleichsKarte, mussGesendetWerden, teileAuf } from "../public/chat-sync-auswahl.js";
+import { konfliktSieger, abgleichsKarte, mussGesendetWerden, teileAuf, erzeugeVorfahrt } from "../public/chat-sync-auswahl.js";
 import { konfliktSieger as serverSieger } from "../control-server/src/chats/chatSyncStore.js";
 
 const lies = (p) => readFileSync(fileURLToPath(new URL(p, import.meta.url)), "utf8");
@@ -91,4 +91,67 @@ test("chat-sync ruft die Auswahl wirklich auf", () => {
   assert.match(sync, /chat-sync-auswahl\.js/, "das Modul wird importiert");
   assert.match(sync, /nurAbgleich=1.*\n?.*abgleichsKarte|abgleichsKarte\(/, "der Abgleich wird geholt");
   assert.match(sync, /teileAuf\(alle, karte\)/, "und angewandt");
+});
+
+// ---- Vorfahrt: die Antwort geht vor der Sicherung ----------------------------
+//
+// GEMESSEN 2026-08-23, nachdem die Upload-Flut behoben war: die Modell-Anfrage
+// ging erst nach 10,5 s raus. Davor lagen zwei Verlauf-Anfragen (5,6 s und
+// 6,9 s) auf der Leitung. Der Server war nach 1,3 s fertig.
+
+test("waehrend eine Antwort laeuft, wird nicht gesichert", () => {
+  let nachgeholt = 0;
+  const v = erzeugeVorfahrt({ jetztSenden: () => { nachgeholt += 1; } });
+  assert.equal(v.darfSenden(), true, "ohne Strom darf gesendet werden");
+  v.stromstand(1);
+  assert.equal(v.darfSenden(), false, "Antwort laeuft -> warten");
+  assert.equal(nachgeholt, 0);
+});
+
+test("was liegen blieb, wird nachgeholt — sonst waere es Datenverlust", () => {
+  let nachgeholt = 0;
+  const v = erzeugeVorfahrt({ jetztSenden: () => { nachgeholt += 1; } });
+  v.stromstand(1);
+  v.darfSenden();                 // wird abgelehnt und gemerkt
+  assert.equal(v.wartet, true);
+  v.stromstand(0);                // Antwort fertig
+  assert.equal(nachgeholt, 1, "der ausgesetzte Push laeuft von selbst nach");
+  assert.equal(v.wartet, false);
+});
+
+test("ohne ausgesetzten Push wird beim Freiwerden NICHT gesendet", () => {
+  // Sonst loeste jede beendete Antwort einen zusaetzlichen Lauf aus.
+  let nachgeholt = 0;
+  const v = erzeugeVorfahrt({ jetztSenden: () => { nachgeholt += 1; } });
+  v.stromstand(1);
+  v.stromstand(0);
+  assert.equal(nachgeholt, 0);
+});
+
+test("mehrere gleichzeitige Stroeme werden richtig gezaehlt", () => {
+  let nachgeholt = 0;
+  const v = erzeugeVorfahrt({ jetztSenden: () => { nachgeholt += 1; } });
+  v.stromstand(2);
+  v.darfSenden();
+  v.stromstand(1);
+  assert.equal(nachgeholt, 0, "einer laeuft noch");
+  assert.equal(v.darfSenden(), false);
+  v.stromstand(0);
+  assert.equal(nachgeholt, 1);
+});
+
+test("unsinnige Stromstaende kippen die Bremse nicht", () => {
+  const v = erzeugeVorfahrt({ jetztSenden: () => {} });
+  for (const unsinn of [null, undefined, "viele", NaN, -3]) {
+    v.stromstand(unsinn);
+    assert.equal(v.stroeme, 0, `${String(unsinn)} muss als 0 gelten`);
+    assert.equal(v.darfSenden(), true);
+  }
+});
+
+test("chat-sync haengt die Vorfahrt wirklich an das Stromsignal", () => {
+  const sync = lies("../public/chat-sync.js");
+  assert.match(sync, /erzeugeVorfahrt\(/, "Vorfahrt wird angelegt");
+  assert.match(sync, /smejj:chat-strom/, "und an das Signal gehaengt, das BEIDE Familien senden");
+  assert.match(sync, /if \(!vorfahrt\.darfSenden\(\)\) return;/, "push() fragt sie");
 });

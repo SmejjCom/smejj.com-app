@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T13:55:39.544Z",
-  "confirmation": "Betreiber 2026-08-23: Frage-Karte (Empfehlung) — Cache-Nummer auf v671, weil eine Parallelsitzung v670 vergeben hat",
+  "frozenAt": "2026-08-23T13:56:50.581Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-23 \"Antwortzeiten fixen\", zweiter Teil: Vorfahrt fuer die Antwort. Gemessen nach der Upload-Entschlackung ging die Modell-Anfrage erst nach 10,5 s raus, weil zwei Verlauf-Anfragen die Verbindungen belegten — der Server war nach 1,3 s fertig. Der Sync wartet jetzt, solange eine Antwort laeuft, und holt danach nach. Umfang: sw.js CACHE_NAME v670->v672; index.html, app.js, search.js nur erhoehte ?v=-Marken.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "a6ce6fb956aacf8d837381adbfe552e6bcd65a82a9a0a5447fd96f242b73c704",
+    "public/index.html": "e5eaa28ea33dba6b5feb1198462d5b740a48dae69d6c901aed45652d3ad6e2f7",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "16984de1da89a75397d0eefb521cc42dca7ad8996e86486b911d85c2b1ca9622",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "3cdfb75e027211c7567f43692720e9ba40055864371fd505895cd30951da723b",
+    "public/app.js": "b264334211744df7daf1aa2ae39ed26d9314471f3163f0a5ad99841cc2c5be9c",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "63bff297478e12be57fc64790ab0b91ff171268c6603fa19cfccac194c7ce652",
     "public/autonomous-coding.js": "819f1c6de635062e6a891e9de4a75011283585d5e2baef803c42d870e0b74848",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
-    "public/search.js": "04f2730a5f4ffea1f40917117b16bb255c2aaa840fcfecf3929bf79ddaba0d46",
+    "public/search.js": "0bfb992ac7230d5212b6ef44934ac85270876fbc2a31978494895b6b8f0be81e",
     "public/composer-tools.js": "261deb2f4feee34411e4c54dffafa7265b715fc63126360d00dfb799798abf55",
     "public/composer-plus-menu.js": "7b0fe7ebb9dae557789899fbb6e98cc3c5a6f8b8687c9abe29a80140e2d0206b",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "1fa1daf2815caeb7b95e83ec77b990794b06742bc11c1aae4447016585576414",
+    "public/sw.js": "d4eeb32b791a7c2d3d1ac1051f5beca8f83eab4d5fcc68e1d21d95fdb1655ec4",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }

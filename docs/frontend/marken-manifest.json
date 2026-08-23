@@ -34,12 +34,12 @@
       "finger": "a192efcbefdb12d9"
     },
     "search.js": {
-      "marke": "b48",
-      "finger": "04f2730a5f4ffea1"
+      "marke": "b49",
+      "finger": "0bfb992ac7230d52"
     },
     "search-overlay.js": {
-      "marke": "b55",
-      "finger": "8bf9d143706271a5"
+      "marke": "b56",
+      "finger": "bbca06f8b01a4264"
     },
     "nachladen.js": {
       "marke": "1",
@@ -82,8 +82,8 @@
       "finger": "40c206f45641822a"
     },
     "chat-store.js": {
-      "marke": "b61",
-      "finger": "eabb9363828d2df5"
+      "marke": "b62",
+      "finger": "0de642b6eee16574"
     },
     "autonomous-thread-run.js": {
       "marke": "1",
@@ -162,8 +162,8 @@
       "finger": "1377b0733ae8ceaf"
     },
     "chat-history-cards.js": {
-      "marke": "b55",
-      "finger": "1c8860f5e0ee2dc5"
+      "marke": "b56",
+      "finger": "3ae67bb9ffa9eafa"
     },
     "chat-markdown.js": {
       "marke": "1",
@@ -178,20 +178,20 @@
       "finger": "d5c26db280e72870"
     },
     "chat-sync.js": {
-      "marke": "10",
-      "finger": "0e9d7c845ca48969"
+      "marke": "11",
+      "finger": "5fa72f0134a87119"
     },
     "chat-sync-auswahl.js": {
-      "marke": "1",
-      "finger": "a4340841d97b587a"
+      "marke": "2",
+      "finger": "ed7c7aa2060578b5"
     },
     "chat-medien-rettung.js": {
       "marke": "5",
       "finger": "278ac4bcbc0e3ed7"
     },
     "code-flaeche.js": {
-      "marke": "52",
-      "finger": "2e824ab01f849a55"
+      "marke": "53",
+      "finger": "d0aece8eeedb69b8"
     },
     "voice-typed-send.js": {
       "marke": "voice-send-20260721",
@@ -234,12 +234,12 @@
       "finger": "50c91127f442aca0"
     },
     "papierkorb.js": {
-      "marke": "9",
-      "finger": "ce4889505a928284"
+      "marke": "10",
+      "finger": "e0d9c8ab115dde2f"
     },
     "arbeitsbereiche.js": {
-      "marke": "15",
-      "finger": "9fe0fe9c92e1e1fd"
+      "marke": "16",
+      "finger": "b4c04c16e5ed4e3e"
     },
     "kamera.js": {
       "marke": "b35live2",
@@ -262,20 +262,20 @@
       "finger": "9c20b31fb9a63a08"
     },
     "spur-start.js": {
-      "marke": "b42",
-      "finger": "4e9efed5b6dc92f9"
+      "marke": "b43",
+      "finger": "888a009e2692b662"
     },
     "projekt-ordner.js": {
       "marke": "1",
       "finger": "77f85949b611b623"
     },
     "code-nachladen.js": {
-      "marke": "9",
-      "finger": "a00b90651d92f1b4"
+      "marke": "10",
+      "finger": "2b366d3c623abf13"
     },
     "app.js": {
-      "marke": "b88",
-      "finger": "3cdfb75e027211c7"
+      "marke": "b89",
+      "finger": "b264334211744df7"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260817-5",
@@ -302,12 +302,12 @@
       "finger": "d6a83262d8a04bad"
     },
     "chat-history-view.js": {
-      "marke": "b55",
-      "finger": "4fde75c4ae0d8cf9"
+      "marke": "b56",
+      "finger": "cd47e8cc5b54f3d3"
     },
     "chat-actions.js": {
-      "marke": "b36",
-      "finger": "d750ef04015c1c9c"
+      "marke": "b38",
+      "finger": "724a9799e0bf0392"
     },
     "chat-code-copy.js": {
       "marke": "zcode2-20260816",
@@ -326,8 +326,8 @@
       "finger": "e276daaff0ec5f79"
     },
     "chat-stopp.js": {
-      "marke": "8",
-      "finger": "f3a2c2dd6a9e8af6"
+      "marke": "9",
+      "finger": "945dd04796bdba14"
     },
     "chat-code-farben.js": {
       "marke": "1",
