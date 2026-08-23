@@ -1565,3 +1565,33 @@ ersetzt wurden, keine Selektorzeilen.
 
 Der Treffer in design-v11.css bleibt: er steht im Kommentar, der die
 Ton-Vielfalt historisch erklaert.
+
+## v650 (2026-08-23) — Medien lagen an DREI Orten, ausgelagert wurde einer
+
+An 113 echten Gespraechen gemessen: ZEHN lagen ueber MAX_CHAT_BYTES und
+wurden deshalb NIE gesichert — sie lebten nur im Browser. Median aller
+Chats 7 KB, groesster 1938 KB bei NEUN Nachrichten, einer 1537 KB bei
+DREI. Es war also nie zu viel Text, immer ein Medium; bei allen zehn
+stand `ausgelagert: 0`.
+
+Ursache: readEntries() speichert dasselbe Medium dreifach — `html`
+(innerHTML), `text` (textContent) und `raw` (Modell-Antwort in den
+Metadaten), gemessen 7 / 4 / 10 Vorkommen und zusammen 11,5 MB.
+lagereMedienAus() arbeitete nur auf dem DOM und fand <img>/<video>:
+drei von sieben in `html`, text und raw nie. Die vier verfehlten standen
+selbst dort als Markdown — ![Erstelltes Bild](data:image/png;base64,…),
+kein Element, also kein querySelector-Treffer.
+
+Jetzt drei Wege mit EINER gemeinsamen Karte (ein Medium, ein Upload):
+Elemente, Textknoten im DOM (ueber TreeWalker — innerHTML neu zu
+schreiben wuerde Daumen, Kopieren und Vorlesen abreissen) und die
+Metadaten. Fail-safe unveraendert: scheitert die Ablage, bleibt der
+Datenberg stehen.
+
+Die 512-KB-Grenze und chatSyncStore.js (vier Sperren) blieben unberuehrt
+— ohne die Datenberge liegen diese Chats weit darunter.
+
+MARKENKETTE: chat-store.js zog elf Module ueber vier Stufen nach sich,
+bis app.js. Zum dritten Mal war chat-history-cards.js das vergessene
+Glied — Grund gefunden: der Import ist dort MEHRZEILIG, der Modulname
+steht in einer eigenen Zeile und entgeht jeder einzeiligen Suche.

@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T03:20:57.842Z",
-  "confirmation": "Betreiber 2026-08-22: 'Luecke schliessen' (Medien-Auslagerung). Die Aenderungen an index.html, app.js und search.js sind AUSSCHLIESSLICH Import-Marken (papierkorb 1d->2, arbeitsbereiche 7->8, search b40->b41, search-overlay b47d->b48, chat-store b53->b54) — keine Logik, kein Markup. Sie sind die Folge der Kettenregel: chat-store.js wurde geaendert, und die Marke muss in JEDER ladenden Datei steigen.",
+  "frozenAt": "2026-08-23T03:23:55.244Z",
+  "confirmation": "Betreiber 2026-08-23: 'Ausrollen' des Medien-Fix. CACHE_NAME v649 -> v650; Aenderung an sw.js ist ausschliesslich die Versionszeile. Live-Nummer vorher gemessen (v649).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "8c2c1206e828b4667fd54d60e7d82362b45f6932e2ed3430f1e7ca233f157e51",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6fcb4a385c50c4acd4a26f70791023f3face0a878575f5805d843c8d8fe9f4d9",
+    "public/sw.js": "a6edc3866351a145714491d8954bd3c8745fa159b492efb6cbc9610cdefe33cd",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
