@@ -19,3 +19,5 @@ Bezahlt als · Plan · Verbrauch seit Neustart · Zuletzt.
 ## Offen
 - „Zuletzt"/„heute aktiv" füllen sich erst nach dem nächsten Index-Neubau (Feld neu).
 - Abo „plus" hängt an 7shahnazaryan@gmail.com statt smejjcom@gmail.com — Betreiber-Entscheidung: Abo umhängen oder mit der Adresse anmelden.
+
+- NACHTRAG 06:58Z: Index neu gebaut — »zuletzt« blieb leer: Google/GitHub/Passkey-Sitzungen hinterlassen keine Spur im Datensatz (sessionRegistry kennt nur die sid). Seite sagt jetzt „nicht messbar"/„nur E-Mail-Konten" statt „—".

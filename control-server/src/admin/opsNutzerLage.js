@@ -82,6 +82,10 @@ export async function nutzerLage({
       userId: n.userId, email: n.email, name: n.name || "", method: n.method || "email",
       role: n.role, status: n.status, emailVerified: n.emailVerified === true,
       activeSessions: n.activeSessions || 0, createdAt: n.createdAt, lastSeenAt: n.lastSeenAt || null,
+      // Nur E-Mail-Anmeldungen hinterlassen Sitzungen im Datensatz. Google/GitHub/
+      // Passkey-Sitzungen sind reine Token (sessionRegistry kennt nur die sid) —
+      // "zuletzt" ist dort NICHT messbar, und genau das steht in der Spalte.
+      zuletztMessbar: String(n.method || "email") === "email",
       plan: abo ? (abo.plan || "—") : "Frei",
       aboZustand: abo ? abo.zustand : null,
       aboKlartext: abo ? abo.klartext : null,
@@ -103,7 +107,8 @@ export async function nutzerLage({
       unreadable: index.unreadable, refreshing: index.refreshing === true, truncated: index.truncated,
       // Ob "Zuletzt" ueberhaupt befuellt sein kann: das Feld kam am 2026-08-23
       // dazu — ein Index von davor traegt es nicht, bis er neu gebaut wird.
-      kenntZuletzt: alle.some((n) => n.lastSeenAt)
+      kenntZuletzt: alle.some((n) => n.lastSeenAt),
+      zuletztMessbarKonten: alle.filter((n) => String(n.method || "email") === "email").length
     },
     konten: {
       gesamt: alle.length,

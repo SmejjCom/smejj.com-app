@@ -60,6 +60,9 @@ test("Kennzahlen: heute aktiv nur mit lastSeenAt; Verbrauch je Konto seit Neusta
   assert.equal(u.konten.heuteAktiv, 1);
   assert.equal(u.konten.neuDieseWoche, 2);
   assert.equal(u.index.kenntZuletzt, true);
+  assert.equal(u.eintraege.find((x) => x.userId === "u1").zuletztMessbar, false, "Google-Konto: zuletzt nicht messbar");
+  assert.equal(u.eintraege.find((x) => x.userId === "u2").zuletztMessbar, true);
+  assert.equal(u.index.zuletztMessbarKonten, 1);
   assert.deepEqual(u.eintraege.find((x) => x.userId === "u1").verbrauch, { anfragen: 12, kostenUsd: 0.04 });
   assert.match(u.verbrauchHinweis, /Neustart/);
 });
