@@ -27,7 +27,7 @@ test("Katalog-Anbieter aktivieren sich nur per Key und respektieren Profil-Overr
   assert.equal(providerBackendFromEnv("groq", {}), null);
   const g = providerBackendFromEnv("groq", { SMEJJ_LLM_GROQ_API_KEY: "k" }, "fast");
   assert.equal(g.name, "groq");
-  assert.equal(g.model, "llama-3.1-8b-instant");
+  assert.equal(g.model, "openai/gpt-oss-20b");
   assert.ok(g.baseUrl.includes("api.groq.com"));
   const gOverride = providerBackendFromEnv("groq", {
     SMEJJ_LLM_GROQ_API_KEY: "k",
