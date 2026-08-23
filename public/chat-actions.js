@@ -580,7 +580,7 @@ function moveMenuFocus(step) {
 // auth-gate.js (TOKEN) und hilfe-support.js (CONTROL) — bewusst dieselben
 // Konstanten, damit ein Schluesselwechsel alle drei Stellen gemeinsam findet.
 const FEEDBACK_TOKEN_KEY = "smejj.auth.accessToken.v1";
-const FEEDBACK_URL = "https://smejj-control.zeabur.app/api/feedback";
+const FEEDBACK_URL = "https://api.smejj.com/api/feedback";
 
 function sendeDaumenSignal(entry, richtung) {
   try {

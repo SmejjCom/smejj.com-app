@@ -35,7 +35,7 @@ const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.SMEJJ_HOST || "::";
 const ALLOWED_ORIGINS = new Set(["https://smejj.com", "https://www.smejj.com"]);
 // Rueckfall = Zeabur-Control; der alte Salad-Control ist seit 2026-08-13 gestoppt.
-const CONTROL_ORIGIN = trimUrl(process.env.SMEJJ_CONTROL_ORIGIN || "https://smejj-control.zeabur.app");
+const CONTROL_ORIGIN = trimUrl(process.env.SMEJJ_CONTROL_ORIGIN || "https://api.smejj.com");
 const CONTROL_ROUTER_ENABLED = /^(1|true|yes)$/i.test(process.env.SMEJJ_MULTI_MODEL_ROUTER_ENABLED || "NO");
 // Salad-Ausstieg (Betreiber-Ansage 2026-08-15: "Salad.com vollstaendig
 // ignorieren und entfernen. Wir arbeiten ausschliesslich mit Zeabur.com").

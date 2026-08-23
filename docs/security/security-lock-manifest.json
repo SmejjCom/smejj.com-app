@@ -1,17 +1,17 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-22T12:52:01.788Z",
-  "confirmation": "Betreiber-Auswahl 2026-08-22 im Chat: 'Registrierungsseite angleichen'. Einzige Aenderung an public/auth/register/index.html ist ein zusaetzlicher Link auf /agb.html in der Rechtszeile — die Anmeldeseite trug ihn schon, die Registrierung nicht, obwohl dort der Vertrag geschlossen wird. Kein Passwortfeld, kein Formular, keine Kontoloeschung angefasst.",
+  "frozenAt": "2026-08-23T12:40:26.455Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-23 per Karte: 'Komplett umstellen, 3 Locks freigeben' — Auth-Seiten: CSP connect-src um api.smejj.com ergaenzt (alte Adresse bleibt), chat-bridge.js Standard-Origin api.smejj.com. Keine Aenderung an Anmeldelogik.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "6e3e0842fbc5d030e30e8cdedc46daefc8c040f7874f424639ae372cadac7905",
-    "public/auth/register/index.html": "2312f88a40c7c956c23e48ca1441865dc6ab3eb379635d5e38fcbca74549e8e0",
+    "public/auth/login/index.html": "48595610972fd8f9e504414bf5784d349f47021f05aa4c7d5852b9608c20d793",
+    "public/auth/register/index.html": "ca5a2988930d4ae400e23436ad237985359ccd760aab02f2b15959863ba9d1de",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
-    "public/chat-bridge.js": "53c1c723ef792c0ce194b35c956aeb9b33ef4f8386d105ac902e464dd9ca6abe",
+    "public/chat-bridge.js": "4b1673b46301cd995b79d8be2dae81a362841b0f3b944aa88368a83867cfab99",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

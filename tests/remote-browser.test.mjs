@@ -242,7 +242,7 @@ test("frontend knows remote browser route and screenshot shell", () => {
   const fernwege = fs.readFileSync("public/browser-pane-fernwege.js", "utf8");
   assert.match(config, /browserRemote:\s*"/);
   assert.match(config, /agent:\s*"https:\/\/smejj-chat-bridge\.zeabur\.app\/api\/agent"/);
-  assert.match(config, /agentFallback:\s*"https:\/\/smejj-control\.zeabur\.app\/api\/agent"/);
+  assert.match(config, /agentFallback:\s*"https:\/\/api\.smejj\.com\/api\/agent"/);
   assert.match(pane, /routes:\s*CLIENT_ROUTES/);
   assert.match(fernwege, /routes\.api\.browserRemote/);
   assert.match(fernwege, /viewportWidth/);
