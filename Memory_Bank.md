@@ -917,3 +917,6 @@ Stand auf 5. August 2026 gesetzt.
 ## 2026-08-23 — 100 % SCHUTZ AKTIVIERT (Betreiber: „Alles ist fertig — zum Schluss 100 % Schutz aktivieren")
 - Tag `stand-2026-08-23-adminbereich-v2` in App-Repo (55944322, Bau-Branch) und Frontend-Repo (706ca65).
 - Admin-Lock 49 Dateien (ganzer Adminbereich), Abo-Lock 9, Favicon-Lock, Sicherheits-Lock 11, Start-Lock 32, Deploy-Lock, Einwilligungs-Lock — alle gruen. Keine Aenderung ohne schriftliche Freigabe.
+
+## 2026-08-23 — 100 % SCHUTZ (v3) nach „Ein Autopilot im Detail"
+- Tag `stand-2026-08-23-adminbereich-v3` in beiden Repos. Admin-Lock 49, Abo 9, Favicon, Sicherheit 11, Start 32, Deploy, Einwilligung — alle gruen.
