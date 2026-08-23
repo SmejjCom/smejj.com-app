@@ -41,6 +41,7 @@ import { inspectResponseHealth, detectRepetitiveLoop } from "./selfHealingAutopi
 // Die uebrigen Selbsttests liegen in einer eigenen Datei (800-Zeilen-Regel).
 import * as S from "./autopilotSelbsttests.js";
 import { runFullSyntheticE2ECycle } from "./syntheticUserWatchdogAutopilot.js";
+import { laufSyncAlias } from "./syncAliasAutopilot.js";
 import { planeHeilung, fuehreHeilungAus } from "./selbstheilung.js";
 import { offeneUeberfaellig, listeTickets } from "../admin/supportTickets.js";
 import { scrubPiiData, getUserFlywheelStats } from "./userFeedbackFlywheelAutopilot.js";
@@ -625,7 +626,9 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     // Selbsttest.
     ...(mitNetz ? [
       ["synthetic-user-watchdog", () => laufSyntheticWatchdog()],
-      ["voice-region-check", () => laufVoiceRegion()]
+      ["voice-region-check", () => laufVoiceRegion()],
+      // Nr. 43: die Sync-Kette, die vom 15.-23.08. unbemerkt tot war.
+      ["sync-waechter", () => laufSyncAlias()]
     ] : [])
   ];
 

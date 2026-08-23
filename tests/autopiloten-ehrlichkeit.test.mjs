@@ -43,6 +43,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "qualitaetsmessung",   // echter Suite-Lauf, workers/smejj-autopilot-jobs/qualitaetJob.mjs
   "codeberg-spiegel",    // echter Git-Spiegel, spiegelJob.mjs
   "voice-region-check",  // Lebenszeichen des Dienstes, ehrlich beschriftet
+  "sync-waechter",       // Nr. 43: eigene API mit Probe-Token + ausgelieferte Client-Dateien (2026-08-23)
   "konkurrenz-radar",    // Lebenszeichen des Dienstes, ehrlich beschriftet
   "brueckenwaechter",
   // Misst wirklich, und zwar die ausgelieferte Seite: 19 Ansichten x 8

@@ -76,7 +76,10 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
     melde: (id, e) => { gemeldet.set(id, e); return true; },
     mitNetz: true
   });
-  assert.equal(ergebnisse.length, 34, "E2E-Waechter und Voice-Region sind die beiden zusaetzlichen Netz-Laeufe");
+  assert.equal(ergebnisse.length, 35, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe");
+  const sw = gemeldet.get("sync-waechter");
+  assert.ok(sw, "der Sync-Waechter muss melden");
+  assert.equal(sw.status, "fehler", "ohne Geheimnis ist er rot, nie gruen");
   const w = gemeldet.get("synthetic-user-watchdog");
   assert.ok(w, "der Waechter muss melden");
   assert.equal(w.status, "fehler", "ohne pruefbare Kette ist er rot, nie gruen");

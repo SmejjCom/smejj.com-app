@@ -30,7 +30,7 @@ const ZUORDNUNG = Object.freeze({
   ],
   "Sicherheit & Wachdienst": [
     "nachweis-kette", "synthetic-user-watchdog", "bug-predictor", "evolutionary-mutation",
-    "brueckenwaechter", "container-puls", "support-sla", "oberflaechenwache", "selbstheilung"
+    "brueckenwaechter", "container-puls", "support-sla", "oberflaechenwache", "selbstheilung", "sync-waechter"
   ],
   "Modelle & Wissen": [
     "modell-einkaeufer", "live-arena-leaderboard", "knowledge-distiller", "model-lifecycle",

@@ -164,6 +164,27 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
   },
   {
+    id: "sync-waechter",
+    name: "Sync-Wächter",
+    nummer: "43",
+    kurz: "Misst alle 30 Minuten, ob Chats vom Server beim Client als eigene ankommen — die Kette, die vom 15. bis 23.08.2026 unbemerkt tot war.",
+    funktionen: [
+      "Prägt ein 60-Sekunden-Token für einen synthetischen Prüfnutzer (leerer Ordner, keine echten Daten) und fragt die eigene Chat-Liste ab: sie muss `konto` nennen, und zwar genau die Kennung, mit der der Server Dateien stempelt.",
+      "Liest die AUSGELIEFERTEN Dateien chat-sync.js und chat-owner.js auf smejj.com — nicht die Quelle: der Browser muss den Alias wirklich kennen.",
+      "Rot heißt: Server-Chats gelten beim Client als fremd, der Geräte-Sync ist tot. Genau das sah acht Tage lang keine Ampel, weil lokal vorhandene Chats vor der Besitzprüfung übersprungen werden."
+    ],
+    trainiert: "Kontokennung des Servers gegen die Besitzprüfung des ausgelieferten Clients",
+    verbessert: "Ein toter Geräte-Sync fällt nach spätestens 30 Minuten auf, nicht nach acht Tagen",
+    neuigkeiten: ["Gebaut am 2026-08-23 nach dem Befund: 26 Chats mit Server-Kennung waren unsichtbar, Sync seit 15.08. tot"],
+    ort: "Control Server (Autopilot-Läufer)",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer). Vom Mac: npm run check:sync-alias.",
+    stopAnleitung: "Über den Autopilot-Läufer im Control-Server steuerbar."
+  },
+  {
     id: "konkurrenz-radar",
     name: "Konkurrenz-Radar",
     nummer: "04",
