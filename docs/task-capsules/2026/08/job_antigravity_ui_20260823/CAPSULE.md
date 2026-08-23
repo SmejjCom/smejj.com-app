@@ -26,6 +26,9 @@
 Groq-Schnellspur bekommt das eine Werkzeug `frage_stellen` (tools + tool_choice auto); `pipeVisibleStream` sammelt die tool_calls-Bruchstücke und schickt am Ende die Karte. Live-Klickpfad: „Absage schreiben, frag nach dem Ton" → Karte nach 5 s (Sehr förmlich (Empfehlung) / Freundlich, aber professionell / Locker) → Klick → Nutzernachricht → fertige Absage. Tests 52/52.
 Nebenbefund im Screenshot: das rechte Vorschau-Panel drückte die Chatmitte auf ~140 px (bekanntes Muster „Panel frisst die Mitte", nicht Teil dieses Auftrags).
 
+## Nachtrag 14:55Z — „Panel frisst die Mitte", zweite Ursache (App 451f28ad, Frontend 8e4c075, sw v675)
+Der Fix vom 22.08. (paneBreiteAus) griff nur beim Öffnen per openPane(). Beim Wiederherstellen der gemerkten Breite (`smejj.ui.rightPanelWidth.v9`, hier 520) und beim Ziehen rechnete panel-layout.js mit centerMin 120 — dem Chat blieben bei 828 px Fenster 140 px. Jetzt `maxPanelBreite(side, {fenster, mitteLinks})`: rechts Fenster − Spur − 380, nie unter 188, nie über 520. Live: Panel 520 → 252 px, Chat 380 px (Screenshot). Test tests/panel-layout-breite.test.mjs (kaputte + gesunde Probe).
+
 ## Offen
 - Ausgabe je Schritt / Zeilenbereiche (Server liefert sie nicht), „@"-Erwähnung, Stärke-Stufe im Start-Bereich.
 - `src/server.js` 808 Zeilen (Parallelsitzung), roter Test precache-dynamische-importe (api-konto-surface, Parallelsitzung).
