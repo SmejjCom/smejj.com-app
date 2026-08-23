@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-23T13:06:17.906Z",
-  "confirmation": "Betreiber 2026-08-23: Stopp-Knopf in Mint bauen (Empfehlung) — Senden-Knopf wird waehrend der Antwort zum Stopp-Quadrat in Logo-Farbe, viereckig",
+  "frozenAt": "2026-08-23T13:17:19.134Z",
+  "confirmation": "Betreiber 2026-08-23: Senden-Knopf auch viereckig (Empfehlung) — Hauptknopf in allen Zustaenden eckig",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "93cd13b18e956d1170c1183b434ec8218b31baaf3dbc2f59eeda487b0b17d9b0",
+    "public/index.html": "e1d1f71d0562889c2529b177f5e4549a27494df20f6b50fbae0ebd2edb94becd",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "15a7c673a10f6efe488733b3a12277efc8820dc9a4caff6a758a987b3bdf60f1",
+    "public/start-styles.css": "ea9a34d8369ae4db8de636976a242015e7cf23333ecb1b8f5211fa4907d85b6c",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -31,12 +31,12 @@
     "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
     "public/cline-model-menu.css": "44599e36922c6f340e3b19df0728f85b9dc89ba09590ca0f0e644dfd29acfa84",
     "public/auth/passkey-ui.js": "ff1335c193e6458b0e5bdf43627ffe3bc2fa94aa94f67c8bf3d53a4ba4f24019",
-    "public/ai/chatClient.js": "bae4ade2bf686234fddc31741b065d70ee4c64b8092fdb033d9f04591d291263",
+    "public/ai/chatClient.js": "8ed1c7047d670704633acb05972daaeb64864decf42a538e3c8d6a6fd9f7f78e",
     "public/ai/index.js": "f21fcef60cecb99c454783909fc6f63aedf3f8d2211e1df04380327debe87997",
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ef1ce67f9307fdf3eea026325cf21e2df3053f2efb1b238d50c5da48d9c3250b",
+    "public/sw.js": "5b33657c8e07682675a2481c94a0138670b3e5f0878974aeeee4ea53ed357467",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
