@@ -887,3 +887,7 @@ Stand auf 5. August 2026 gesetzt.
 - Seite L zeigt Endpunkte (31/57 zu), Sperren 4/4, Vier-Augen, Zugänge gesetzt/fehlt mit Nachweis — aus Messung.
 - FALLE: Frontend-Push 0c84b93 einer Parallelsitzung setzte 37 Konsolen-Dateien zurück. Vor jedem Konsolen-Push
   `sync_admin_console_pages.mjs` aus dem Bau-Branch-HEAD laufen lassen, nie aus einem alten Worktree.
+
+## 2026-08-23 — Seite „Nutzer" (job_nutzer_seite_20260823)
+- Seite B: »bezahlt als« als eigene Spalte, Abos ohne Konto oben (live: plus-Abo bezahlt als 7shahnazaryan@gmail.com, kein Konto).
+- userIndex traegt jetzt lastSeenAt (erst nach Neubau); Verbrauch je authenticatedUserId seit Neustart.
