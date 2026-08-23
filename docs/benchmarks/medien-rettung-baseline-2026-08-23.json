@@ -1,0 +1,36 @@
+{
+  "zweck": "Vorher-Stand fuer den Live-Test der Medien-Rettung (chat-medien-rettung.js, Parallelsitzung). Ohne diese Baseline liesse sich nach der Rettung nicht belegen, dass sie gewirkt hat.",
+  "gemessenAm": "2026-08-23T04:30:11Z",
+  "konto": "Betreiber, gemessen im echten Chrome gegen IndexedDB smejj-chats",
+  "chatsGesamt": 113,
+  "ueberDerGrenze": 10,
+  "grenzeBytes": 524288,
+  "summeKB": 11534,
+  "medianAllerChatsKB": 7,
+  "baseline": [
+    { "id": "chat_178676406", "kb": 1938, "nachrichten": 9, "dataUrls": 3, "ausgelagert": 0 },
+    { "id": "chat_178690091", "kb": 1621, "nachrichten": 5, "dataUrls": 2, "ausgelagert": 0 },
+    { "id": "chat_178698800", "kb": 1537, "nachrichten": 3, "dataUrls": 3, "ausgelagert": 0 },
+    { "id": "chat_178701181", "kb": 1537, "nachrichten": 3, "dataUrls": 3, "ausgelagert": 0 },
+    { "id": "chat_178698964", "kb": 1417, "nachrichten": 3, "dataUrls": 2, "ausgelagert": 0 },
+    { "id": "chat_178698833", "kb": 1070, "nachrichten": 3, "dataUrls": 2, "ausgelagert": 0 },
+    { "id": "chat_178738701", "kb": 670, "nachrichten": 5, "dataUrls": 1, "ausgelagert": 1 },
+    { "id": "chat_178738730", "kb": 622, "nachrichten": 7, "dataUrls": 1, "ausgelagert": 1 }
+  ],
+  "hinweisZuDenLetztenZwei": {
+    "befund": "chat_178738701 und chat_178738730 zeigen ausgelagert:1 UND dataUrls:1. Die Felder html und text sind dort bereits sauber, uebrig ist NUR raw — als Markdown ![Erstelltes Bild](data:...).",
+    "ursache": "Beide wurden zuletzt am 2026-08-22 gespeichert. Der DOM-Weg meines Fixes existierte da schon, der raw-Weg kam erst mit sw v650 am 2026-08-23. Es ist also KEINE Luecke im aktuellen Fix, sondern der Stand einer aelteren Fassung.",
+    "bedeutung": "Genau der Fall, den chat-medien-rettung.js adressiert: ein Chat, den niemand mehr anfasst, wird nie neu gespeichert und behaelt seine data:-URLs."
+  },
+  "erwartungNachRettung": {
+    "ueberDerGrenze": 0,
+    "summeKB": "deutlich unter 100 — aus 1537 KB soll gut 1 KB werden",
+    "pruefpunkte": [
+      "Groesse je Chat vorher/nachher",
+      "dataUrls muss auf 0 fallen, ausgelagert entsprechend steigen",
+      "das Bild muss danach WEITER abrufbar sein (Adresse liefert 200)",
+      "der Hinweis 'Ein Chat ist zu gross' darf nicht mehr erscheinen",
+      "kein Chat darf Nachrichten verlieren (Anzahl bleibt gleich)"
+    ]
+  }
+}
