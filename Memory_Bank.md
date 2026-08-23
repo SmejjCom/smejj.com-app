@@ -891,3 +891,6 @@ Stand auf 5. August 2026 gesetzt.
 ## 2026-08-23 — Seite „Nutzer" (job_nutzer_seite_20260823)
 - Seite B: »bezahlt als« als eigene Spalte, Abos ohne Konto oben (live: plus-Abo bezahlt als 7shahnazaryan@gmail.com, kein Konto).
 - userIndex traegt jetzt lastSeenAt (erst nach Neubau); Verbrauch je authenticatedUserId seit Neustart.
+
+## 2026-08-23 — Seite „Abos & Umsatz" (job_umsatz_seite_20260823)
+- Seite E: MRR bei Stripe gemessen (Fallback geschätzt, beschriftet), Aufladungen (API), Kosten fest + Modelle seit Neustart, je Plan, Absprünge, Zahlungsweg. Punkte/Marge je Plan + Absprung-Gründe = nicht erfasst.
