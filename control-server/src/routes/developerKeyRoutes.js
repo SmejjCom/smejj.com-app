@@ -13,14 +13,18 @@ import { createRateLimiter } from "../http/rateLimiter.js";
 import { erzeugeSchluessel, listeSchluessel, widerrufeSchluessel } from "../publicapi/publicApiKeys.js";
 import { publicApiAktiv } from "../publicapi/publicApiRoutes.js";
 import { verbrauchSnapshot } from "../publicapi/publicApiUsage.js";
+import { AUFLADE_BETRAEGE_USD, erzeugeAufladung, leseKonto } from "../publicapi/publicApiLedger.js";
+import { mikroZuUsd, preislistePayload } from "../publicapi/publicApiPreise.js";
 
 const PREFIX = "/api/developer/keys";
+const GUTHABEN = "/api/developer/guthaben";
 // Schluessel erzeugen ist teuer (zwei verschluesselte Schreibvorgaenge) und
 // wird selten gebraucht — 10 Vorrat, alle 20 s einer zurueck.
 const bremse = createRateLimiter({ capacity: 10, refillPerSec: 0.05, maxKeys: 10_000 });
 
 export async function handleDeveloperKeyRoute(req, url, res, { env = process.env } = {}) {
-  if (url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
+  const istGuthaben = url.pathname === `${GUTHABEN}/checkout`;
+  if (!istGuthaben && url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
 
   const kontoId = authenticatedUserId(req.authUser);
   if (!kontoId) {
@@ -42,12 +46,37 @@ export async function handleDeveloperKeyRoute(req, url, res, { env = process.env
 
   const rest = url.pathname.slice(PREFIX.length).replace(/^\//, "");
   try {
+    if (istGuthaben && req.method === "POST") {
+      // Aufladen: Stripe-Checkout fuer eine Einmalzahlung, Rueckkehr auf die
+      // Entwicklerseite. Der Betrag muss einer der festen Stufen sein.
+      const body = await readJson(req).catch(() => ({}));
+      const email = String(req.authUser?.email || "").trim();
+      const { url: checkoutUrl } = await erzeugeAufladung(kontoId, Number(body?.betragUsd), { env, email });
+      privateJson(res, 200, { ok: true, url: checkoutUrl });
+      return true;
+    }
+    if (istGuthaben) return privateJson(res, 404, { ok: false, error: "developer_key_route_not_found" }), true;
     if (req.method === "GET" && rest === "") {
-      const [schluessel, verbrauch] = await Promise.all([
+      const [schluessel, verbrauch, konto] = await Promise.all([
         listeSchluessel(kontoId, env),
-        verbrauchSnapshot(kontoId, env)
+        verbrauchSnapshot(kontoId, env),
+        leseKonto(kontoId, env)
       ]);
-      privateJson(res, 200, { ok: true, basisUrl: basisUrlAus(req, env), schluessel, verbrauch });
+      privateJson(res, 200, {
+        ok: true,
+        basisUrl: basisUrlAus(req, env),
+        schluessel,
+        verbrauch,
+        guthaben: {
+          usd: mikroZuUsd(konto.guthabenMikro),
+          aufgeladenUsd: mikroZuUsd(konto.aufgeladenMikro),
+          verbrauchtUsd: mikroZuUsd(konto.verbrauchtMikro),
+          anfragen: konto.anfragen,
+          stufenUsd: AUFLADE_BETRAEGE_USD,
+          aufladenMoeglich: Boolean(env.STRIPE_SECRET_KEY)
+        },
+        preise: preislistePayload()
+      });
       return true;
     }
     if (req.method === "POST" && rest === "") {
@@ -74,7 +103,7 @@ export async function handleDeveloperKeyRoute(req, url, res, { env = process.env
     privateJson(res, 404, { ok: false, error: "developer_key_route_not_found" });
     return true;
   } catch (error) {
-    const status = [400, 403, 404, 409, 429].includes(Number(error?.status)) ? Number(error.status) : 503;
+    const status = [400, 403, 404, 409, 429, 502].includes(Number(error?.status)) ? Number(error.status) : 503;
     privateJson(res, status, { ok: false, error: String(error?.message || "developer_key_error").slice(0, 160) });
     return true;
   }

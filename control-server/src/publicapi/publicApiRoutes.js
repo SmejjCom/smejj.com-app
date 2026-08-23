@@ -28,6 +28,8 @@ import { readJson } from "../http/respond.js";
 import { bearerSchluessel, pruefeSchluessel } from "./publicApiKeys.js";
 import { PUBLIC_MODEL_DEFAULT, istPublicModel, modelListePayload, profilFuerModell } from "./publicApiModels.js";
 import { verbrauchSnapshot, zaehleVerbrauch } from "./publicApiUsage.js";
+import { bucheAnfrage, darfAnfragen } from "./publicApiLedger.js";
+import { preislistePayload } from "./publicApiPreise.js";
 
 export const PUBLIC_API_PREFIX = "/v1";
 const TAGESLIMIT_VOREINSTELLUNG = 1_000_000;
@@ -87,7 +89,10 @@ export async function handlePublicApiRoute(req, url, res, { env = process.env, f
 
   try {
     if (req.method === "GET" && url.pathname === `${PUBLIC_API_PREFIX}/models`) {
-      antworte(res, 200, modelListePayload(), anfrageId);
+      const liste = modelListePayload();
+      const preise = preislistePayload();
+      for (const modell of liste.data) modell.pricing = preise[modell.id] || null;
+      antworte(res, 200, liste, anfrageId);
       return true;
     }
     if (req.method === "GET" && url.pathname.startsWith(`${PUBLIC_API_PREFIX}/models/`)) {
@@ -143,6 +148,21 @@ async function chatCompletions(req, res, zugang, { env, fetchImpl, anfrageId }) 
     }
   }
 
+  // Prepaid wie bei jedem Anbieter am Markt: ohne Guthaben keine Anfrage.
+  // OpenAI-Code "insufficient_quota" mit 402 — SDKs zeigen das dem Nutzer an,
+  // statt blind zu wiederholen (429 wuerden sie wiederholen).
+  let guthaben;
+  try {
+    guthaben = await darfAnfragen(zugang.kontoId, env);
+  } catch (error) {
+    console.error(`[public-api] Guthaben nicht lesbar (${anfrageId})`, String(error?.message || error).slice(0, 200));
+    return fehler(res, 503, "server_error", "billing_unavailable", "Das Guthabenkonto ist gerade nicht erreichbar. Bitte erneut versuchen.", anfrageId);
+  }
+  if (!guthaben.ok) {
+    return fehler(res, 402, "insufficient_quota", "insufficient_quota",
+      "Kein Guthaben. Bitte unter https://smejj.com/entwickler.html aufladen.", anfrageId);
+  }
+
   const stream = body?.stream === true;
   const profil = profilFuerModell(angefragtesModell);
   const { chain } = resolveModelRequest(profil, "", env);
@@ -189,6 +209,10 @@ async function antworteEinmalig(res, lauf, { angefragtesModell, zugang, env, anf
     completionTokens: nutzung.completionTokens,
     modell: angefragtesModell,
     env
+  });
+  await bucheAnfrage(zugang.kontoId, {
+    anfrageId, keyId: zugang.keyId, modell: angefragtesModell,
+    promptTokens: nutzung.promptTokens, completionTokens: nutzung.completionTokens, gemessen: nutzung.gemessen, env
   });
 }
 
@@ -244,6 +268,10 @@ async function antworteStrom(res, lauf, { angefragtesModell, zugang, env, anfrag
     completionTokens,
     modell: angefragtesModell,
     env
+  });
+  await bucheAnfrage(zugang.kontoId, {
+    anfrageId, keyId: zugang.keyId, modell: angefragtesModell,
+    promptTokens, completionTokens, gemessen: gemessen.gemessen, env
   });
 }
 
