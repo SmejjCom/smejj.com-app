@@ -99,6 +99,27 @@ falsche Fehlerklasse — 413 waere richtig. `src/server.js` gehoerte waehrend
 der Arbeit einer Parallelsitzung, und das Frontend faengt beide Formen
 ohnehin ab.
 
+**VIERTER und FUENFTER Befund, 2026-08-23 nachmittags.** Capsule:
+`task-capsules/2026/08/job_verlauf_vorsorge_20260823/capsule.md`. sw v655 -> v657.
+
+4. Die Rettung ist REAKTIV. Vier Chats (466/293/280/263 KB) liegen UNTER der
+   Grenze, werden nie abgewiesen und darum nie gerettet — obwohl jeder ein
+   Video im `raw` traegt (bei 466,3 KB sind 464,6 KB genau das).
+   → `VORSORGE_BYTES = 128 KB`, NUR fuer den Bestandslauf.
+5. `updatedAt` traegt ZWEI Bedeutungen: "zuletzt bearbeitet" (Sortierung) und
+   "zuletzt geaendert" (Sync). `speichereChat` ueberspringt bei GLEICHEM Wert —
+   der geheilte Chat schrumpfte lokal auf 2 KB und blieb serverseitig 466,6 KB.
+   Wer `updatedAt` unberuehrt laesst, hat fuer die Sortierung recht und fuer den
+   Sync unrecht. → `naechsterZeitstempel()`: EINE Millisekunde, kein `new Date()`.
+
+**Live:** Konto 3.968,3 -> 2.952,3 KB. Video im geretteten Chat geladen
+(640x640, 4 s) bei 2 KB Chatgroesse. Kein Toast, TTFB 2 ms / LCP 80 ms / CLS 0.
+
+**Lehre (Doppelarbeit):** Eine zweite Sitzung loeste dasselbe am selben Tag,
+gruendlicher. Sie mass LOKAL im Browser, ich serverseitig — dort sieht man nur,
+was durchkam; das Problem ist definitionsgemaess das, was fehlt. Meine Fassung
+wurde verworfen statt gemergt (`claude/verworfen-doppelarbeit-20260823`).
+
 
 ### [2026-08-23] MODELL-LISTE 100% GESICHERT — ZWEI SCHLOESSER (job_modellliste_lock_20260823)
 

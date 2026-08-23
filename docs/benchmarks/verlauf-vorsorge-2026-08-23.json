@@ -1,0 +1,23 @@
+{
+  "job": "job_verlauf_vorsorge_20260823",
+  "gemessenAm": "2026-08-23",
+  "domain": "https://smejj.com",
+  "swVersion": "smejj-shell-v657",
+  "webVitals": { "ttfbMs": 2, "lcpMs": 80, "cls": 0, "domContentLoadedMs": 85 },
+  "budgets": { "ttfbMs": 200, "lcpMs": 1500, "cls": 0.1 },
+  "speicher": {
+    "konto": "user_158c1e609cc03bb4c36f70b7e059fbfd",
+    "vorher": { "chats": 126, "summeKB": 3968.3, "medianKB": 6.6, "groessterKB": 466.6, "ueber256KB": 4 },
+    "nachher": { "chats": 126, "summeKB": 2952.3, "medianKB": 6.1, "groessterKB": 280.1, "ueber256KB": 1 },
+    "eingespartKB": 1016.0
+  },
+  "medienAblage": { "objekte": 14, "hinweis": "alle drei geprueften Videos HTTP 200, video/mp4" },
+  "liveNachweis": {
+    "chatGeoeffnet": "chat_1787387066384_jatarc",
+    "chatGroesseKB": 2.0,
+    "videoGeladen": true, "videoBreite": 640, "videoHoehe": 640, "videoDauerSek": 4,
+    "toastAufStart": false, "toastAufCode": false, "konsolenfehler": 0
+  },
+  "tests": { "rettung": 28, "frontend": 619, "charta": 226, "controlServer": 226, "fehlgeschlagen": 0 },
+  "offen": "chat_1786659168789_zeyjod (280,1 KB) liegt unter fremder Kontokennung und fehlt lokal"
+}
