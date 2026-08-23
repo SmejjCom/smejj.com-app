@@ -27,7 +27,12 @@ import {
 } from "./chatIndex.js";
 
 export const PRAEFIX = "chats";
-export const MAX_CHATS_PRO_KONTO = 100;
+// 500 seit 2026-08-23 (Betreiber-Freigabe): am Betreiberkonto lagen 126 Dateien,
+// die Grenze von 100 schnitt 26 Chats serverseitig ab. Der Index haelt auch
+// 500 Eintraege in EINEM Abruf (~60 KB); der Vollpfad bleibt bei 8 parallel.
+// Muss mit MAX_CHATS in public/chat-store.js uebereinstimmen — der Client
+// raeumt sonst lokal weg, was der Server gerade geliefert hat.
+export const MAX_CHATS_PRO_KONTO = 500;
 export const MAX_CHAT_BYTES = 512 * 1024; // ein Chat mit 8 Fassungen bleibt klar darunter
 // S3-Schreibwege ohne Zeitlimit scheitern STILL (Befund 2026-08-xx, S3-Timeout).
 export const S3_TIMEOUT_MS = 2500;
@@ -287,7 +292,14 @@ export async function ladeChats({ kontoId, env = process.env, fetchImpl = fetch,
     try {
       const antwort = await signedS3Get({ ...cfg, key: indexKey, allowNotFound: true, fetchImpl, timeoutMs: S3_TIMEOUT_MS });
       const eintraege = antwort?.body ? leseIndex(antwort.body) : null;
-      if (eintraege) {
+      // VOLLSTAENDIGKEIT (2026-08-23): Der Index wurde einst aus den damals 100
+      // gekappten Chats gebaut und wuchs danach nur durch Nachtragen — fuenf
+      // gueltige Chats fehlten dauerhaft, obwohl er nach Zeit "frisch" war.
+      // Zaehlt er weniger Eintraege als die Liste Dateien, ist er unvollstaendig
+      // und wird unten aus allen Chats neu gebaut. Beide Zahlen stammen aus
+      // derselben Objektliste, kostet also keinen weiteren Abruf.
+      const erwartet = Math.min(schluesselListe.length, limit);
+      if (eintraege && eintraege.length >= erwartet) {
         eintraege.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
         return { ok: true, chats: eintraege.slice(0, limit), ausIndex: true };
       }

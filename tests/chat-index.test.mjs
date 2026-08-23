@@ -221,6 +221,25 @@ test("veralteter Index: alles wird gelesen UND der Index neu geschrieben", async
     "der naechste Aufruf soll mit einem Abruf auskommen");
 });
 
+test("unvollstaendiger Index (weniger Eintraege als Dateien) wird neu gebaut", async () => {
+  // Live 2026-08-23: Index aus 100 gekappten Chats gebaut, danach nur
+  // nachgetragen — fuenf gueltige Chats fehlten dauerhaft, obwohl er nach
+  // Zeit "frisch" war.
+  const { ladeChats } = await import("../control-server/src/chats/chatSyncStore.js");
+  const chats = Array.from({ length: 8 }, (_, i) => ({ id: `chat_${i}`, zeit: "2026-08-20T10:00:00.000Z", updatedAt: "2026-08-20T09:00:00.000Z" }));
+  const doppel = speicherDoppel({
+    chats,
+    indexZeit: "2026-08-20T10:00:09.000Z",
+    indexRumpf: JSON.stringify({ version: INDEX_VERSION, chats: chats.slice(0, 5).map((c) => ({ id: c.id, updatedAt: c.updatedAt, ownerId: "user_a" })) })
+  });
+  const ergebnis = await ladeChats({ kontoId: "user_a", env: ENV, fetchImpl: doppel.fetchImpl, nurAbgleich: true });
+  assert.equal(ergebnis.ok, true);
+  assert.equal(ergebnis.ausIndex, undefined, "ein Index mit Luecken darf nicht ausgeliefert werden");
+  assert.equal(ergebnis.chats.length, 8, "alle acht Chats, nicht nur die fuenf im Index");
+  assert.equal(doppel.chatAbrufe(), 8);
+  assert.equal(doppel.anfragen.some((a) => a.method === "PUT" && a.url.includes(INDEX_DATEI)), true, "der Index wird vollstaendig neu geschrieben");
+});
+
 test("kaputter Index faellt zurueck, statt halbe Angaben auszuliefern", async () => {
   const { ladeChats } = await import("../control-server/src/chats/chatSyncStore.js");
   const chats = [{ id: "chat_0", zeit: "2026-08-20T10:00:00.000Z", updatedAt: "2026-08-20T09:00:00.000Z" }];
