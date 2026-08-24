@@ -26,7 +26,10 @@ test("Cline selection streams through authenticated backend and supports restart
 test("Cline submenu shows the live catalog grouped like the settings surface", () => {
   assert.match(submenu, /\/api\/providers\/cline/);
   assert.match(submenu, /"cline-pass": "Cline Pass"/);
-  assert.match(submenu, /free: "Kostenlos"/);
+  // Die Gratis-Gruppe fiel bewusst raus: Cline liefert sie nur an eigene
+  // Oberflaechen aus (403 live gemessen 2026-08-17) — hier waren es tote Knoepfe.
+  assert.match(submenu, /"free" steht bewusst NICHT mehr drin/);
+  assert.doesNotMatch(submenu, /free: "Kostenlos"/);
   assert.match(submenu, /recommended: "Empfohlen"/);
   assert.match(submenu, /Alle Modelle & Key → Einstellungen/);
   assert.match(submenu, /aria-checked/);
@@ -45,7 +48,9 @@ test("Cline submenu activates a model instantly without touching the chat path",
 test("Cline submenu stays fail-closed without a connected key", () => {
   assert.match(submenu, /Cline-Key in Einstellungen verbinden/);
   assert.match(submenu, /status\?\.configured/);
-  assert.match(submenu, /\.catch\(\(\) => renderKeyHint\(submenu\)\)/);
+  // Der Fehlerpfad heisst weiter renderKeyHint — der catch traegt inzwischen
+  // einen Fehlerparameter und einen Block.
+  assert.match(submenu, /\.catch\(\(error\) => \{[\s\S]{0,400}renderKeyHint\(submenu\)/);
 });
 
 test("autonomous worker resolves Cline credential only on the control server", () => {

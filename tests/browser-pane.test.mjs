@@ -28,14 +28,17 @@ test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
   // Bestandsnutzer die alte Datei unter der alten Query behalten (live erlebt).
   // maus-panel.js MUSS dieselbe Query importieren — zwei Spezifizierer waeren
   // zwei getrennte Modul-Instanzen mit getrenntem state.
-  assert.match(html, /\/assets\/browser-pane\.js\?v=browser-pane-20260728-3/);
-  assert.match(html, /\/assets\/maus-panel\.js\?v=/);
-  assert.match(
-    fs.readFileSync("public/maus-panel.js", "utf8"),
-    /\.\/browser-pane\.js\?v=browser-pane-20260728-3/,
-    "maus-panel.js muss dieselbe browser-pane-Version importieren wie index.html"
-  );
-  assert.match(html, /data-jump="websites"[\s\S]*>Browser<\/button>/);
+  // Seit der Konsolidierung 24.08. bindet index.html die Pane nicht mehr direkt:
+  // browser-nachladen.js holt sie beim ersten Bedarf. Die EINE-Instanz-Regel
+  // bleibt — Nachlader und maus-panel.js muessen dieselbe Query tragen.
+  assert.match(html, /\/assets\/browser-nachladen\.js\?v=/);
+  const nachladen = fs.readFileSync("public/browser-nachladen.js", "utf8");
+  const querySpur = /browser-pane\.js\?v=([\w-]+)/;
+  const nachladenQuery = querySpur.exec(nachladen)?.[1];
+  assert.ok(nachladenQuery, "browser-nachladen.js importiert browser-pane.js nicht");
+  const mausQuery = querySpur.exec(fs.readFileSync("public/maus-panel.js", "utf8"))?.[1];
+  assert.equal(mausQuery, nachladenQuery,
+    "maus-panel.js muss dieselbe browser-pane-Version importieren wie der Nachlader — zwei Queries waeren zwei Modul-Instanzen");
 });
 
 test("Service Worker cached Browser-Pane Assets", () => {

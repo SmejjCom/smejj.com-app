@@ -182,6 +182,22 @@ function knoten(tag = "div") {
   return self;
 }
 
+
+// Seit den Schrittgruppen (Betreiber 23.08., Antigravity-Vorbild) leben Zeilen
+// derselben Art in aufklappbaren Gruppen — die Tests zaehlen deshalb ueber
+// dieselbe Logik wie alleZeilen() in chat-stream.js, statt flache Kinder anzunehmen.
+function schrittZeilen(knoten) {
+  const aus = [];
+  for (const kind of knoten?.children || []) {
+    if (kind.dataset?.gruppe === "true" || kind.tagName === "details") {
+      for (const enkel of kind.children || []) if (enkel.dataset?.schritt) aus.push(enkel);
+    } else if (kind.dataset?.schritt) {
+      aus.push(kind);
+    }
+  }
+  return aus;
+}
+
 function buehne() {
   const log = knoten("section");
   const antwort = knoten("article");
@@ -207,8 +223,8 @@ test("laeuft und fertig sind DIESELBE Zeile, nicht zwei", () => {
   zeigeSchritt(antwort, { ...schritt, zustand: "laeuft" });
   zeigeSchritt(antwort, { ...schritt, zustand: "fertig", treffer: 8 });
   const liste = log.children[0];
-  assert.equal(liste.children.length, 1, "ein Schritt ist eine Zeile");
-  const zeile = liste.children[0];
+  assert.equal(schrittZeilen(liste).length, 1, "ein Schritt ist eine Zeile");
+  const zeile = schrittZeilen(liste)[0];
   assert.equal(zeile.dataset.zustand, "fertig");
   const staende = zeile.children.filter((k) => k.dataset.stand === "true");
   assert.equal(staende.length, 1, "nur EIN Stand-Anhang");
@@ -220,7 +236,7 @@ test("zwei verschiedene Schritte ergeben zwei Zeilen", () => {
   zeigeSchritt(antwort, { art: "suche", text: "eins", zustand: "laeuft" });
   zeigeSchritt(antwort, { art: "suche", text: "zwei", zustand: "laeuft" });
   zeigeSchritt(antwort, { art: "seite", text: "https://x.example/", zustand: "laeuft" });
-  assert.equal(log.children[0].children.length, 3);
+  assert.equal(schrittZeilen(log.children[0]).length, 3);
 });
 
 test("null Treffer wird ehrlich benannt", () => {
@@ -234,7 +250,7 @@ test("null Treffer wird ehrlich benannt", () => {
 test("eine gelesene Adresse ist ein echter, anklickbarer Link", () => {
   const { log, antwort } = buehne();
   zeigeSchritt(antwort, { art: "seite", text: "https://www.loopnet.com/search/office-space/castro-valley-ca/for-lease/", zustand: "fertig", treffer: 0 });
-  const zeile = log.children[0].children[0];
+  const zeile = schrittZeilen(log.children[0])[0];
   const link = zeile.children.find((k) => k.tagName === "a");
   assert.ok(link, "die Adresse muss ein <a> sein");
   assert.equal(link.getAttribute("href"), "https://www.loopnet.com/search/office-space/castro-valley-ca/for-lease/");
@@ -247,7 +263,7 @@ test("eine gelesene Adresse ist ein echter, anklickbarer Link", () => {
 test("ein Suchbegriff wird NICHT zum Link", () => {
   const { log, antwort } = buehne();
   zeigeSchritt(antwort, { art: "suche", text: "LoopNet office space lease Castro Valley CA", markt: "us", zustand: "laeuft" });
-  const zeile = log.children[0].children[0];
+  const zeile = schrittZeilen(log.children[0])[0];
   assert.equal(zeile.children.filter((k) => k.tagName === "a").length, 0);
   assert.match(zeile.textContent, /🔍 Suche: LoopNet office space lease Castro Valley CA · Markt us/);
 });
@@ -259,7 +275,7 @@ test("nur http und https werden klickbar — sonst gar nicht", () => {
   for (const boese of ["javascript:alert(1)", "data:text/html,<script>", "  javascript:alert(1)", "https://nutzer:geheim@example.com/"]) {
     zeigeSchritt(antwort, { art: "seite", text: boese, zustand: "laeuft" });
   }
-  const zeilen = log.children[0].children;
+  const zeilen = schrittZeilen(log.children[0]);
   assert.equal(zeilen.length, 4);
   for (const zeile of zeilen) {
     assert.equal(zeile.children.filter((k) => k.tagName === "a").length, 0, `darf kein Link sein: ${zeile.textContent}`);
@@ -472,16 +488,17 @@ test("nach dem Ende ist das Protokoll EINE aufklappbare Zeile", () => {
     { art: "seite", text: "https://www.loopnet.com/x", treffer: 0 }
   ]);
   const liste = log.children[0];
-  assert.equal(liste.children.length, 3, "waehrend der Arbeit stehen alle Zeilen offen");
+  assert.equal(schrittZeilen(liste).length, 3, "waehrend der Arbeit stehen alle Zeilen offen");
 
   falteSchritte(antwort, 1);
   assert.equal(liste.children.length, 1, "danach haengt nur noch der Falter drin");
   const falter = liste.children[0];
   assert.equal(falter.tagName, "details");
   assert.equal(falter.children[0].tagName, "summary", "die Zusammenfassung ist die erste Zeile");
-  assert.equal(falter.children.length, 4, "summary + die drei Schrittzeilen");
+  // Seit den Schrittgruppen haengen im Falter die GRUPPEN, darin die Zeilen.
+  assert.equal(schrittZeilen(falter).length, 3, "summary + die drei Schrittzeilen (in Gruppen)");
   // Aufklappbar heisst: die Zeilen sind nicht weg, nur eingeklappt.
-  assert.match(falter.children[1].textContent, /office castro valley/);
+  assert.match(falter.textContent, /office castro valley/);
 });
 
 test("die zugeklappte Zeile sagt, was getan wurde", () => {

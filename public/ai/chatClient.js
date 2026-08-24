@@ -8,12 +8,57 @@
 // Alle anderen Modi geben false zurueck — der bestehende fail-closed Server-Pfad
 // in app.js bleibt unveraendert zustaendig.
 import { validateByokConfig } from "./byok.js";
+import { autoAktiv, sorgeFuerModell } from "./modellRouter.js";
+import { starteStilleWache, stilleText } from "./strom-stillstand.js";
 import { API_ORIGIN, STORAGE_KEYS } from "../config.js";
 
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 8000;
 const SYSTEM_PROMPT = "Du bist der Assistent von smejj.com, einem AI Coding OS. Antworte hilfreich, korrekt und kompakt auf Deutsch, ausser der Nutzer schreibt in einer anderen Sprache.";
 const API_TOKEN_KEY = "smejj.apiToken.v1";
+// Dasselbe Token liegt dauerhaft hier — auth-gate.js fuellt beide Faecher.
+const AUTH_TOKEN_KEY = "smejj.auth.accessToken.v1";
+
+/**
+ * Holt das Zugriffstoken — erst aus dem Fach dieser Seite, dann aus dem
+ * dauerhaften.
+ *
+ * BETREIBER-FREIGABE 2026-08-22 (Start-Lock). Vorher las der Chat NUR
+ * sessionStorage. Das Fach stirbt mit dem Browserfenster, und es wird erst
+ * wieder gefuellt, nachdem auth-gate.js den Server gefragt hat — ein
+ * Netzaufruf. Wer den Browser oeffnete und sofort tippte, bekam in diesem
+ * Fenster "Bitte zuerst anmelden", obwohl die Anmeldung voellig in Ordnung
+ * war. Genau das ist dem Betreiber passiert; er hat dreimal gefragt und
+ * dreimal dieselbe Abfuhr bekommen.
+ *
+ * Das dauerhafte Fach ist ohne Netzaufruf sofort da. Es zuerst zu befuellen
+ * waere der falsche Weg (der Chat soll das Gate nicht ersetzen), aber es zu
+ * LESEN, wenn das eigene Fach leer ist, kostet nichts und macht das
+ * Zeitfenster zu.
+ */
+function holeZugriffsToken() {
+  try {
+    const eigenes = sessionStorage.getItem(API_TOKEN_KEY);
+    if (eigenes) return eigenes;
+  } catch { /* Speicher gesperrt: unten weiterversuchen */ }
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Der Satz, den der Nutzer sieht, wenn kein Token da ist.
+ *
+ * Vorher stand hier "Bitte zuerst anmelden UND <Anbieter> verbinden" — zwei
+ * Ursachen, von denen nur EINE geprueft wurde. Der Betreiber hat daraufhin
+ * bei Cline gesucht, wo nichts kaputt war. Ohne Token wissen wir ueber den
+ * Anbieter nichts; also nennen wir nur, was wir wirklich wissen.
+ */
+function nichtAngemeldetText() {
+  return "Deine Anmeldung ist abgelaufen. Bitte melde dich neu an — dann antworte ich sofort wieder.";
+}
 
 const BYOK_HINT = [
   "BYOK ist noch nicht konfiguriert.",
@@ -116,13 +161,21 @@ async function streamOpenAiCompatible({ baseUrl, apiKey, model, messages, output
     return;
   }
   const reader = response.body.getReader();
+  anbieterLeser.add(reader);
   const decoder = new TextDecoder();
   let buffer = "";
   let text = "";
   output.textContent = "";
+  // Stille-Wache wie in chat-stream.js: schweigt der Strom 90 s, gilt er als
+  // tot. Ohne sie wartet reader.read() fuer immer — genau so blieb am
+  // 2026-08-23 eine von fuenf Anfragen auf "smejj denkt nach …" stehen.
+  let stilleGemeldet = false;
+  const wache = starteStilleWache(reader, () => { stilleGemeldet = true; });
+  try {
   while (true) {
     const { value, done } = await reader.read();
-    if (done) break;
+    if (done || stoppVerlangt) break;
+    wache.lebenszeichen();
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
@@ -141,6 +194,11 @@ async function streamOpenAiCompatible({ baseUrl, apiKey, model, messages, output
       }
     }
   }
+  } finally {
+    wache.beenden();
+  }
+  anbieterLeser.delete(reader);
+  if (stilleGemeldet) { output.textContent = stilleText(text); return; }
   if (!text) output.textContent = "(leere Antwort)";
 }
 
@@ -171,14 +229,69 @@ async function runByokChat({ task, output, offlineNotice }) {
   return true;
 }
 
-async function runClineChat({ task, output, offlineNotice }) {
-  const token = sessionStorage.getItem(API_TOKEN_KEY) || "";
+// Arbeits-Signal fuer die Oberflaeche (Betreiber-Befund 2026-08-18:
+// "laeuft gerade, aber das Viereck leuchtet nicht"). Der normale Weg meldet
+// sich ueber chat-stream.js; die Anbieter-Wege hier taten es NIE — darum
+// blieben Arbeits-Viereck und Stopp-Knopf bei Cline/BYOK stumm. Gleicher
+// Ereignisname, gleiche Nutzlast: { laufen: <Anzahl> }.
+let anbieterLaeufe = 0;
+
+// Stopp-Weg (Betreiber 2026-08-19, live gemessen: "ich klicke Stop, aber
+// macht trotzdem weiter"). stoppeChatStrom() aus chat-stream.js kennt nur
+// die EIGENEN Leser — die Anbieter-Stroeme hier (Cline/BYOK/Provider)
+// liefen daran vorbei und waren nicht abbrechbar (562 -> 3.447 Zeichen
+// NACH dem Stopp-Klick gemessen). Darum meldet sich jeder Leser in dieser
+// Menge an, und chat-stopp.js beendet sie ueber das Ereignis
+// "smejj:chat-stoppen". Das Flag deckt die Luecke zwischen Absenden und
+// erstem Byte: wird in ihr gestoppt, bricht die Schleife beim ersten
+// Lesen ab, obwohl der Leser beim Klick noch gar nicht existierte.
+const anbieterLeser = new Set();
+let stoppVerlangt = false;
+if (typeof window !== "undefined") {
+  window.addEventListener("smejj:chat-stoppen", () => {
+    stoppVerlangt = true;
+    for (const leser of anbieterLeser) {
+      try { leser.cancel(); } catch { /* Strom war schon zu */ }
+    }
+    // Abgebrochene Leser sind tot — die Menge gleich leeren, damit ein
+    // per Fehler uebersprungenes Abmelden keinen Eintrag stehen laesst.
+    anbieterLeser.clear();
+  });
+}
+
+function meldeStrom(delta) {
+  // Ein NEU beginnender Lauf hebt den Stopp-Wunsch auf; laeuft er gegen
+  // einen stehenden Abbruch an, setzt die Nachzuegler-Bremse in
+  // chat-stopp.js das Flag sofort wieder (ihr Ereignis kommt NACH diesem).
+  if (delta > 0) stoppVerlangt = false;
+  anbieterLaeufe = Math.max(0, anbieterLaeufe + delta);
+  try {
+    window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: anbieterLaeufe } }));
+  } catch { /* fail-safe: die Antwort laeuft auch ohne Signal */ }
+}
+
+async function runClineChat({ task, output, offlineNotice, clearThinking = () => {} }) {
+  const token = holeZugriffsToken();
   if (!token) {
-    output.textContent = "Bitte zuerst anmelden und Cline unter Einstellungen → Modelle verbinden.";
+    clearThinking();
+    output.textContent = nichtAngemeldetText();
     return true;
   }
+  meldeStrom(+1);
   try {
     const contextFiles = await resolveWorkspaceReferences(task);
+    // "Auto": vor dem Senden das guenstigste passende Modell setzen. Nur wenn
+    // der Betreiber Auto gewaehlt hat — eine feste Modellwahl bleibt unberuehrt.
+    // Das /select MUSS abgewartet werden (Datensatz auf IDrive e2), sonst
+    // laeuft der Auftrag noch mit dem vorherigen Modell.
+    if (autoAktiv()) {
+      const wahl = await sorgeFuerModell(task, { dateien: contextFiles?.length || 0 });
+      if (!wahl.ok) {
+        clearThinking();
+        output.textContent = "Automatische Modellwahl hat nicht geklappt — bitte ein Modell von Hand waehlen.";
+        return true;
+      }
+    }
     const response = await fetch(`${API_ORIGIN}/api/providers/cline/chat`, {
       method: "POST",
       credentials: "include",
@@ -193,13 +306,17 @@ async function runClineChat({ task, output, offlineNotice }) {
       throw new Error(error.message || error.error || `HTTP ${response.status}`);
     }
     const reader = response.body.getReader();
+  anbieterLeser.add(reader);
     const decoder = new TextDecoder();
     let buffer = "";
     let answer = "";
-    output.textContent = "";
+    // Stille-Wache: derselbe Schutz wie in chat-stream.js (strom-stillstand.js).
+    let stilleGemeldet = false;
+    const wache = starteStilleWache(reader, () => { stilleGemeldet = true; });
     while (true) {
       const { value, done } = await reader.read();
-      if (done) break;
+      if (done || stoppVerlangt) break;
+      wache.lebenszeichen();
       buffer += decoder.decode(value, { stream: true });
       const events = buffer.split("\n\n");
       buffer = events.pop() || "";
@@ -212,14 +329,21 @@ async function runClineChat({ task, output, offlineNotice }) {
         if (choice.finish_reason === "error") throw new Error(choice.error?.message || "Cline stream error");
         const delta = choice.delta?.content || choice.message?.content || "";
         if (delta) {
+          if (!answer) clearThinking();
           answer += delta;
           output.textContent = answer;
         }
       }
     }
-    if (!answer) output.textContent = "(leere Antwort)";
+    wache.beenden();
+    anbieterLeser.delete(reader);
+    if (stilleGemeldet) { clearThinking(); output.textContent = stilleText(answer); return; }
+    if (!answer) { clearThinking(); output.textContent = "(leere Antwort)"; }
   } catch (error) {
+    clearThinking();
     output.textContent = `Cline-Fehler: ${String(error?.message || error).slice(0, 400)}`;
+  } finally {
+    meldeStrom(-1);
   }
   return true;
 }
@@ -229,11 +353,12 @@ async function runClineChat({ task, output, offlineNotice }) {
 // Der Key bleibt serverseitig verschluesselt; hier laeuft nur der authentifizierte
 // Stream ueber die Control-Server-Route — kein Key im Browser.
 async function runProviderChat({ providerId, task, output, offlineNotice }) {
-  const token = sessionStorage.getItem(API_TOKEN_KEY) || "";
+  const token = holeZugriffsToken();
   if (!token) {
-    output.textContent = "Bitte zuerst anmelden und den Anbieter unter Einstellungen → Modelle verbinden.";
+    output.textContent = nichtAngemeldetText();
     return true;
   }
+  meldeStrom(+1);
   try {
     const contextFiles = await resolveWorkspaceReferences(task);
     const response = await fetch(`${API_ORIGIN}/api/keys/${providerId}/chat`, {
@@ -247,13 +372,18 @@ async function runProviderChat({ providerId, task, output, offlineNotice }) {
       throw new Error(error.message || error.error || `HTTP ${response.status}`);
     }
     const reader = response.body.getReader();
+  anbieterLeser.add(reader);
     const decoder = new TextDecoder();
     let buffer = "";
     let answer = "";
     output.textContent = "";
+    // Stille-Wache: derselbe Schutz wie in chat-stream.js (strom-stillstand.js).
+    let stilleGemeldet = false;
+    const wache = starteStilleWache(reader, () => { stilleGemeldet = true; });
     while (true) {
       const { value, done } = await reader.read();
-      if (done) break;
+      if (done || stoppVerlangt) break;
+      wache.lebenszeichen();
       buffer += decoder.decode(value, { stream: true });
       const events = buffer.split("\n\n");
       buffer = events.pop() || "";
@@ -267,9 +397,14 @@ async function runProviderChat({ providerId, task, output, offlineNotice }) {
         if (delta) { answer += delta; output.textContent = answer; }
       }
     }
+    wache.beenden();
+    anbieterLeser.delete(reader);
+    if (stilleGemeldet) { output.textContent = stilleText(answer); return; }
     if (!answer) output.textContent = "(leere Antwort)";
   } catch (error) {
     output.textContent = `Anbieter-Fehler: ${String(error?.message || error).slice(0, 400)}`;
+  } finally {
+    meldeStrom(-1);
   }
   return true;
 }
@@ -397,7 +532,10 @@ export async function runClientChat({ task, model, output, offlineNotice = "" } 
   };
   let handled = false;
   const selected = localStorage.getItem(STORAGE_KEYS.model) || "";
-  if (selected === "Cline") { clearThinking(); handled = await runClineChat({ task, output, offlineNotice }); }
+  // Betreiber-Freigabe 2026-08-23 (Nutzerreise): "smejj denkt nach …" bleibt im
+  // Cline-Pfad stehen, bis der erste Text kommt — gemessen waren es 3,6 s leere
+  // Blase mit Kopier-/Daumen-Leiste. Der Wartetext faellt erst beim ersten Delta.
+  if (selected === "Cline") { handled = await runClineChat({ task, output, offlineNotice, clearThinking }); }
   if (!handled && selected.startsWith("key:")) {
     const providerId = selected.slice(4);
     if (/^[a-z][a-z0-9-]{1,40}$/.test(providerId)) { clearThinking(); handled = await runProviderChat({ providerId, task, output, offlineNotice }); }

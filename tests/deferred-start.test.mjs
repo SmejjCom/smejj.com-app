@@ -92,7 +92,11 @@ test("Control-Server-Aufrufe stehen nicht mehr im Ladepfad", () => {
   assert.match(premium, /afterFirstPaint\(\[\(\) => syncServerAiStatus\(\)\]\)/, "premium-surfaces.js verschiebt /api/health");
   const boot = appJs.slice(appJs.indexOf("function boot()"), appJs.indexOf("function bindNavigation()"));
   const verschoben = boot.slice(boot.indexOf("afterFirstPaint"));
-  for (const aufruf of ["initGoogleLogin", "refreshSessionStatus", "refreshKimiVaultStatus", "refreshGlmVaultStatus"]) {
+  // initGoogleLogin liegt seit dem Abspecken (24.08.) noch weiter hinten: im
+  // Ansichts-Lader (ladeBeiAnsicht) — nie im Ladepfad, nie im Boot.
+  assert.match(appJs, /holeGoogleLogin = ladeBeiAnsicht/);
+  assert.ok(!boot.includes("initGoogleLogin"), "initGoogleLogin darf nicht mehr im Boot stehen");
+  for (const aufruf of ["refreshSessionStatus", "refreshKimiVaultStatus", "refreshGlmVaultStatus"]) {
     assert.ok(verschoben.includes(aufruf), `${aufruf} muss hinter afterFirstPaint stehen`);
     assert.ok(!boot.slice(0, boot.indexOf("afterFirstPaint")).includes(aufruf), `${aufruf} darf nicht mehr direkt beim Start laufen`);
   }
@@ -189,6 +193,9 @@ test("die Startseiten-Optik steht in SOURCES, nicht nur im ausgelieferten Buende
     assert.ok(SOURCES.includes(pflicht), `${pflicht} fehlt in SOURCES — beim naechsten Bau faellt es heraus`);
     assert.ok(fs.existsSync(`public/${pflicht}`), `public/${pflicht} fehlt — SOURCES zeigt ins Leere`);
   }
-  // eckig.css muss die LETZTE sein: sie ueberschreibt jede Rundung.
-  assert.equal(SOURCES[SOURCES.length - 1], "eckig.css", "eckig.css gehoert ans Ende der Kaskade");
+  // Kaskaden-Ende seit Design V11 (Konsolidierung 24.08.): design-v11.css ist
+  // die juengste Betreiber-Linie und darf alles ueberschreiben; eckig.css steht
+  // direkt davor und haelt weiterhin jede Rundung nieder.
+  assert.equal(SOURCES[SOURCES.length - 1], "design-v11.css", "design-v11.css gehoert ans Ende der Kaskade");
+  assert.equal(SOURCES[SOURCES.length - 2], "eckig.css", "eckig.css bleibt direkt vor der V11-Schicht");
 });

@@ -12,6 +12,15 @@ const authPage = fs.readFileSync(path.join(publicDir, "auth", "auth-page.js"), "
 const authLoginHtml = fs.readFileSync(path.join(publicDir, "auth", "login", "index.html"), "utf8");
 const authRegisterHtml = fs.readFileSync(path.join(publicDir, "auth", "register", "index.html"), "utf8");
 const profileDock = fs.readFileSync(path.join(publicDir, "profile-dock.js"), "utf8");
+// Seit der Konsolidierung 24.08. lebt "aktives Modell" u.a. im API-Schluessel-Reiter.
+const apiKeysSurface = fs.readFileSync(path.join(publicDir, "api-keys-surface.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "api-konto-surface.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "chat-history-text.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "chat-history-view.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "profile-dock-menu.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "papierkorb.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "arbeitsbereiche.js"), "utf8");
 const profilePictureControl = fs.readFileSync(path.join(publicDir, "profile-picture-control.js"), "utf8");
 // Der Store liefert deutsche Quelltexte, die profile-picture-control.js per t() uebersetzt.
 const profilePictureStore = fs.readFileSync(path.join(publicDir, "profile-picture-store.js"), "utf8");
@@ -61,7 +70,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore
+    + profileDock + profilePictureControl + profilePictureStore + apiKeysSurface
     + searchOverlay + onboardingWelcome + startseiteHtml;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);

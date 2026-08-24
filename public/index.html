@@ -20,7 +20,11 @@
          localStorage "smejj.apiOrigin.v1" auf die Zeabur-Adresse setzen.
          frame-ancestors fehlt absichtlich: In einer Meta-CSP ignorieren Browser die
          Angabe. Den Klickjacking-Schutz uebernimmt der Rahmenwaechter in app.js. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' blob: data: https://smejj-control.zeabur.app https://smejj-chat-bridge.zeabur.app https://api.openai.com https://api.moonshot.ai https://api.mistral.ai http://localhost:* http://127.0.0.1:*">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' blob: data: https://api.smejj.com https://smejj-control.zeabur.app https://smejj-chat-bridge.zeabur.app https://api.openai.com https://api.moonshot.ai https://api.mistral.ai http://localhost:* http://127.0.0.1:*">
+    <!-- Fruehes Tor (Betreiber-Freigabe 2026-08-23): Anonyme sofort zur Landeseite,
+         statt 3,7 s (Desktop) / 15 s (iPhone) die App-Huelle zu sehen. Kein Modul,
+         kein Import — laeuft vor dem ersten Pixel. Regeln bleiben in auth-gate.js. -->
+    <script src="/assets/auth-gate-frueh.js?v=1"></script>
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#f7f7f4">
     <meta name="description" content="smejj.com ist ein schneller KI- und Code-Assistent fuer Chat, Programmierung und Agenten-Aufgaben.">
@@ -66,7 +70,7 @@
          1452-1531 ms fertig — acht Runden Latenz vor dem ersten Bildaufbau.
          Erzeugt aus den unveraenderten Quelldateien:
          node scripts/build/bundle-start-styles.mjs -->
-    <link rel="stylesheet" href="/assets/start-styles.css?v=glas-eckig-20260813">
+    <link rel="stylesheet" href="/assets/start-styles.css?v=pfeilhell-20260824">
     <!-- Strukturierte Daten (QA-Welle 1, Befund F-13). Die 15 Sprachseiten hatten
          sie bereits, ausgerechnet die Hauptseite nicht. Bewusst ohne FAQPage: Die
          Fragen stehen auf den Landingpages, nicht hier. -->
@@ -94,15 +98,21 @@
     </script>
   </head>
   <body data-left-menu-state="closed">
-    <button id="appMenuButton" class="glass-icon app-menu-button" type="button" aria-label="Menue oeffnen" aria-expanded="false">
-      <span class="split-icon" aria-hidden="true"><span></span><span></span></span>
+    <!-- Betreiber 2026-08-16: das LOGO ist der Spur-Schalter, wie bei
+         ChatGPT — Klick oeffnet und schliesst die linke Spur. Das alte
+         Doppel-Logo daneben blendet design-v11.css aus. -->
+    <button id="appMenuButton" class="glass-icon app-menu-button" type="button" aria-label="Spur öffnen oder schließen" aria-expanded="false">
+      <img class="menu-logo" src="/icons/smejj_favicon.svg" alt="" aria-hidden="true" width="24" height="24">
     </button>
     <a class="app-brand-logo" href="/" aria-label="smejj.com Startseite">
       <img class="app-brand-icon" src="/icons/smejj_icon.svg" alt="" aria-hidden="true" width="2000" height="1532">
       <img class="app-brand-wordmark" src="/icons/smejj_full_logo_on_dark.svg" alt="" aria-hidden="true" width="2920" height="660">
     </a>
-    <button id="browserButton" class="glass-icon browser-button" type="button" aria-label="Browser oeffnen" aria-expanded="false" title="Browser">
-      <span class="split-icon" aria-hidden="true"><span></span><span></span></span>
+    <!-- Betreiber 2026-08-16 (zweite Ansage): rechts oben ein BROWSER-Icon
+         (Globus) — das Profil wohnt unten links in der Spur. Der Knopf
+         oeffnet und schliesst das rechte Fenster. -->
+    <button id="browserButton" class="glass-icon browser-button" type="button" aria-label="Browser-Fenster öffnen oder schließen" aria-expanded="false" title="Browser">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg>
     </button>
     <!-- Freigabe "Maus-Sichtbarkeit" (Wof Kadavanich, 2026-07-28): oeffnet die
          Maus-Engine-Wiedergabe direkt im rechten Browser-Panel (dieselben
@@ -118,14 +128,44 @@
     <main class="shell">
       <aside class="sidebar">
         <nav class="nav" aria-label="Arbeitsbereiche">
-          <button class="nav-button is-active" type="button" data-view="start" data-icon="plus" title="Neu">Neu</button>
-          <button class="nav-button icon-only-nav" type="button" data-view="search" data-icon="search" title="Suche" aria-label="Suche">Suche</button>
-          <button class="nav-button" type="button" data-view="code" data-icon="code" title="Coding">Coding</button>
-          <button class="nav-button" type="button" data-view="projects" data-icon="projects" title="Arbeitsbereich">Arbeitsbereich</button>
-          <button class="nav-button" type="button" data-view="files" data-icon="files" title="Dateien">Dateien</button>
+          <!-- Seitenleiste 1:1 nach Mockup V11, Bildschirm 19 ("Alle Bereiche
+               in der Spur — in vier beschrifteten Gruppen"). Der Trick heisst
+               Gruppieren, nicht Verstecken: vier Ueberschriften machen 15
+               Punkte uebersichtlicher als 5 Punkte plus Raetselmenue. Jede
+               Zeile hat Symbol UND Wort. Abweichungen vom Mockup, ehrlich:
+               "Papierkorb" fehlt (die Ansicht existiert noch nicht) — dafuer
+               bleibt "Dateien" erreichbar; "Bilder erstellen" und "Sprechen"
+               springen zum Chat und loesen dort die vorhandene Funktion aus
+               (nav-absichten.js), weil es keine eigenen Ansichten dafuer gibt. -->
+          <div class="nav-gruppe" aria-hidden="true">Reden</div>
+          <button class="nav-button is-active" type="button" data-view="start" data-icon="chat" title="Chat">Chat</button>
+          <button class="nav-button" type="button" data-view="start" data-icon="mic" data-nav-absicht="sprechen" title="Sprechen">Sprechen</button>
+          <div class="nav-gruppe" aria-hidden="true">Arbeiten</div>
+          <button class="nav-button" type="button" data-view="search" data-icon="search" title="Im Netz suchen">Im Netz suchen</button>
+          <button class="nav-button" type="button" data-view="start" data-icon="image" data-nav-absicht="bilder" title="Bilder erstellen">Bilder erstellen</button>
+          <button class="nav-button" type="button" data-view="code" data-icon="code" title="Programmieren">Programmieren</button>
+          <button class="nav-button" type="button" data-browser-oeffnen data-icon="websites" title="Browser bedienen">Browser bedienen</button>
+          <button class="nav-button" type="button" data-view="automation" data-icon="automation" title="smejjBot">smejjBot</button>
+          <button class="nav-button" type="button" data-view="arbeitsbereiche" data-icon="projects" title="Projects">Projects</button>
+          <div class="nav-gruppe" aria-hidden="true">Meine Sachen</div>
           <button class="nav-button" type="button" data-view="chatHistory" data-icon="history" title="Verlauf">Verlauf</button>
+          <button class="nav-button" type="button" data-view="projects" data-icon="projects" title="smejjCloud">smejjCloud</button>
+          <button class="nav-button" type="button" data-view="files" data-icon="files" title="Dateien">Dateien</button>
+          <button class="nav-button" type="button" data-view="papierkorb" data-icon="trash" title="Papierkorb">Papierkorb</button>
+          <div class="nav-gruppe" aria-hidden="true">Betrieb</div>
+          <button class="nav-button" type="button" data-view="tools" data-icon="system" title="Systemzustand">Systemzustand</button>
+          <button class="nav-button" type="button" data-view="ai" data-icon="model" title="KI-Modelle">KI-Modelle</button>
+          <button class="nav-button" type="button" data-view="storageView" data-icon="storage" title="Speicher">Speicher</button>
         </nav>
         <nav class="nav bottom-nav" aria-label="Nutzer und Einstellungen">
+          <!-- Mockup V11, Bildschirm 19, Fusszeile: "Unten steht, was es
+               kostet — zwei Aengste beantwortet, bevor sie entstehen."
+               Bewusste Abweichung vom Mockup-Beispiel "0,00 € · 13 Bilder
+               uebrig": ein Bilder-Kontingent gibt es nicht, und eine
+               erfundene Zahl waere eine Luege. Die Zeile sagt, was wahr ist
+               (der Kostenschutz startet nichts Kostenpflichtiges), und
+               fuehrt zur Kostenansicht mit den echten Zahlen. -->
+          <button class="nav-button nav-kosten" type="button" data-jump="cost" data-icon="cost" title="Kosten">Kostenschutz an</button>
           <div id="profileDock" class="profile-dock">
             <button id="profileDockButton" class="profile-dock-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="profileDockMenu" title="Profil" aria-label="Profil">
               <span id="profileDockFace" class="profile-avatar is-empty" aria-hidden="true"></span>
@@ -137,9 +177,23 @@
                 <strong id="profileDockMenuName">Nutzer</strong>
                 <span id="profileDockMenuEmail" hidden></span>
               </div>
-              <button type="button" role="menuitem" data-dock-action="account">Konto</button>
+              <!-- Bildschirm 40: neun Eintraege, drei Gruppen, Wert rechts an der
+                   Zeile. Werte sind ECHT (Plan aus dem Abo-Status, Sprache aus
+                   der Laufzeit) oder entfallen — keine erfundenen Zahlen, keine
+                   Kuerzel, die nicht verdrahtet sind. "Papierkorb" folgt, sobald
+                   die Ansicht existiert. -->
+              <button type="button" role="menuitem" data-dock-action="account">Mein Konto<span class="dock-wert" id="dockWertPlanKurz"></span></button>
               <button type="button" role="menuitem" data-dock-action="settings">Einstellungen</button>
-              <button type="button" role="menuitem" data-dock-action="logout" class="profile-dock-menu-logout">Ausloggen</button>
+              <button type="button" role="menuitem" data-dock-action="settings">Sprache<span class="dock-wert" id="dockWertSprache"></span></button>
+              <div class="dock-strich" role="separator" aria-hidden="true"></div>
+              <button type="button" role="menuitem" data-dock-action="account">Mein Plan<span class="dock-wert" id="dockWertPlan"></span></button>
+              <button type="button" role="menuitem" data-jump="cost">Verbrauch</button>
+              <button type="button" role="menuitem" data-jump="papierkorb">Papierkorb<span class="dock-wert" id="dockWertPapierkorb"></span></button>
+              <div class="dock-strich" role="separator" aria-hidden="true"></div>
+              <button type="button" role="menuitem" data-jump="tools">Systemzustand</button>
+              <button type="button" role="menuitem" data-dock-action="hilfe">Hilfe &amp; Rückmeldung</button>
+              <div class="dock-strich" role="separator" aria-hidden="true"></div>
+              <button type="button" role="menuitem" data-dock-action="logout" class="profile-dock-menu-logout">Abmelden</button>
             </div>
           </div>
         </nav>
@@ -148,7 +202,7 @@
 
       <aside id="browserPanel" class="browser-panel" aria-label="Browser Menue">
         <nav class="browser-panel-nav" aria-label="Browser Aktionen">
-          <button type="button" data-jump="websites"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg></span>Browser</button>
+          <button type="button" data-browser-oeffnen><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg></span>Browser</button>
           <button type="button" data-jump="files"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg></span>Quellen</button>
           <button type="button" data-jump="automation"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3"/><path d="M15 22v-3.9a3.4 3.4 0 0 0-1-2.6c3.2-.4 6.5-1.6 6.5-7A5.4 5.4 0 0 0 19 4.8 5 5 0 0 0 18.9 1S17.7.6 15 2.5a13.4 13.4 0 0 0-7 0C5.3.6 4.1 1 4.1 1A5 5 0 0 0 4 4.8a5.4 5.4 0 0 0-1.5 3.7c0 5.4 3.3 6.6 6.5 7a3.4 3.4 0 0 0-1 2.6V22"/></svg></span>GitHub</button>
           <button type="button" data-jump="browser"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4Z"/><path d="M8 15l3-3 2 2 3-4 4 5"/></svg></span>Vorschau</button>
@@ -163,39 +217,94 @@
           <h1 class="visually-hidden">smejj.com — KI- und Code-Assistent</h1>
           <div class="home-feed">
             <header class="home-hero">
-              <h2>Womit kann ich helfen?</h2>
+              <h2>Womit kann ich dir helfen?</h2>
             </header>
             <div id="startLog" class="start-log" aria-label="Start Chat" hidden></div>
             <section class="prompt-glass" aria-label="Start Eingabe">
-              <textarea id="startMessage" rows="1" aria-label="Startprompt" placeholder="Beschreibe eine Aufgabe oder stelle eine Frage."></textarea>
+              <textarea id="startMessage" rows="1" aria-label="Startprompt" placeholder="Frag mich alles"></textarea>
+              <!-- Arbeits-Viereck wie im CODE-Bereich (Betreiber 2026-08-18:
+                   "kannst du das fuer den Chat-Bereich auch machen"):
+                   stiller Umriss in Ruhe, cyan waehrend gearbeitet wird.
+                   Gleiches Signal (smejj:chat-strom), gleiche Optik. -->
+              <span id="startArbeit" class="code-arbeit start-arbeit" aria-hidden="true"></span>
               <div class="prompt-actions">
                 <div class="plus-picker">
                   <button id="composerPlusButton" class="ghost-button icon-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Aktionen" title="Aktionen">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                   </button>
-                  <div id="composerPlusMenu" class="plus-menu" role="menu" hidden>
+                  <div id="composerPlusMenu" class="plus-menu plus-menu-werkzeuge" role="menu" hidden>
+                    <!-- Mockup V11, Bildschirm "Alle Werkzeuge auf einmal — in
+                         drei Gruppen": nichts unter "Weitere", alle acht
+                         sichtbar, jede Zeile mit Namen, Erklaersatz und
+                         Beispiel. Man liest die Ueberschrift und weiss, wo man
+                         suchen muss. -->
+                    <p class="plus-gruppe" role="separator" aria-hidden="true">Sachen hinzufügen</p>
                     <button type="button" role="menuitem" data-composer-action="attach-file">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.5 12.6 21a5.4 5.4 0 0 1-7.6-7.6l8.8-8.8a3.6 3.6 0 0 1 5.1 5.1l-8.8 8.8a1.8 1.8 0 0 1-2.5-2.5l8.1-8.1"/></svg>
-                      Datei anhaengen
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v5h5"/></svg><b>Datei hinzufügen</b>
+                      <span class="werk-was">PDF, Word, Tabelle oder Text. smejj liest sie und du fragst dazu.</span>
+                      <span class="werk-bsp">„Was steht in diesem Vertrag zum Kündigen?"</span>
                     </button>
                     <button type="button" role="menuitem" data-composer-action="attach-photo">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m5 17 4.5-4.5 3 3L16 12l3 3"/></svg>
-                      Foto oder Bild
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m5 17 4.5-4.5 3 3L16 12l3 3"/></svg><b>Bild hinzufügen</b>
+                      <span class="werk-was">Foto oder Bildschirmfoto. smejj sagt dir, was darauf zu sehen ist.</span>
+                      <span class="werk-bsp">„Was bedeutet diese Fehlermeldung?"</span>
                     </button>
-                    <button type="button" role="menuitem" data-composer-action="attach-workspace">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h8l6 6v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Z"/><path d="M14 4v6h6"/></svg>
-                      Workspace-Datei anhaengen
+                    <!-- Betreiber 2026-08-16: "Foto oder Video machen und direkt
+                         hochladen, wie ChatGPT/Gemini" — der capture-Input
+                         oeffnet am Handy/Tablet direkt die Kamera-App, am
+                         Rechner die Aufnahme-/Dateiwahl. Fotos gehen durch den
+                         vorhandenen Bild-Verstehen-Weg; bei Videos sagt die
+                         App EHRLICH, dass Video-Verstehen noch fehlt. -->
+                    <button type="button" role="menuitem" data-composer-action="aufnahme">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h2l2-2h6l2 2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="13" r="3.5"/><path d="M18 3l1 2"/></svg><b>Foto oder Video aufnehmen</b>
+                      <span class="werk-was">Öffnet direkt die Kamera — am Handy, Tablet oder Rechner — und hängt die Aufnahme an.</span>
+                      <span class="werk-bsp">Aufnehmen, fertig — smejj schaut es sich an.</span>
                     </button>
-                    <button type="button" role="menuitem" data-jump="files">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
-                      Projekt-Dateien
+                    <button type="button" role="menuitem" data-kamera-start="kamera">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h2l2-2h6l2 2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><b>Kamera</b>
+                      <span class="werk-was">smejj sieht, was deine Kamera sieht — ein Bild je Aufnahme, keine Daueraufnahme.</span>
+                      <span class="werk-bsp">„Was ist das für ein Bauteil?"</span>
                     </button>
-                    <button type="button" role="menuitem" data-jump="search">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                      Suche oeffnen
+                    <button type="button" role="menuitem" data-kamera-start="bildschirm">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg><b>Bildschirm teilen</b>
+                      <span class="werk-was">smejj sieht die Fehlermeldung, statt sie sich beschreiben zu lassen.</span>
+                      <span class="werk-bsp">„Warum geht dieser Knopf nicht?"</span>
+                    </button>
+                    <button type="button" role="menuitem" data-composer-action="diktat">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg><b>Sprechen statt tippen</b>
+                      <span class="werk-was">Du diktierst, smejj schreibt mit — und liest die Antwort vor, wenn du willst.</span>
+                      <span class="werk-bsp">Einfach draufdrücken und losreden.</span>
+                    </button>
+                    <p class="plus-gruppe" role="separator" aria-hidden="true">Nachschauen</p>
+                    <button type="button" role="menuitem" data-composer-action="vorlage" data-vorlage="Recherchiere für mich: ">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg><b>Im Netz nachsehen</b>
+                      <span class="werk-was">Für alles, was aktuell ist. Die Antwort bekommt Quellen, die du anklicken kannst.</span>
+                      <span class="werk-bsp">„Wie ist das Wetter am Wochenende in München?"</span>
+                    </button>
+                    <button type="button" role="menuitem" data-composer-action="vorlage" data-vorlage="Generiere ein Bild von: ">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m5 17 4.5-4.5 3 3L16 12l3 3"/></svg><b>Bild erstellen</b>
+                      <span class="werk-was">Beschreib, was du sehen willst. Dauert etwa 12 Sekunden.</span>
+                      <span class="werk-bsp">„Ein schlichtes Logo für eine Bäckerei, schwarz-weiß."</span>
+                    </button>
+                    <p class="plus-gruppe" role="separator" aria-hidden="true">Für mich arbeiten</p>
+                    <button type="button" role="menuitem" data-composer-action="vorlage" data-vorlage="Schreibe Code für: ">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg><b>Programmieren</b>
+                      <span class="werk-was">Code schreiben, erklären oder Fehler suchen. Du siehst jede Änderung vorher.</span>
+                      <span class="werk-bsp">„Warum stürzt dieses Skript ab?"</span>
+                    </button>
+                    <button type="button" role="menuitem" data-browser-oeffnen>
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 15 7-7 2-2 7z"/></svg><b>Im Browser für mich klicken</b>
+                      <span class="werk-was">smejj bedient eine Webseite, du siehst live zu und kannst jederzeit stoppen.</span>
+                      <span class="werk-bsp">„Such mir den günstigsten Flug nach Rom."</span>
+                    </button>
+                    <button type="button" role="menuitem" data-jump="automation">
+                      <svg class="werk-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><b>Auftrag laufen lassen</b>
+                      <span class="werk-was">Für größere Arbeiten. Läuft weiter, auch wenn du das Fenster schließt.</span>
+                      <span class="werk-bsp">„Beobachte diesen Preis und sag mir, wenn er fällt."</span>
                     </button>
                     <input id="composerFileInput" class="visually-hidden-input" type="file" multiple aria-hidden="true" tabindex="-1">
                     <input id="composerPhotoInput" class="visually-hidden-input" type="file" accept="image/*" multiple aria-hidden="true" tabindex="-1">
+                    <input id="composerCaptureInput" class="visually-hidden-input" type="file" accept="image/*,video/*" capture="environment" aria-hidden="true" tabindex="-1">
                   </div>
                 </div>
                 <span class="prompt-spacer"></span>
@@ -212,6 +321,10 @@
                     <button type="button" role="menuitem" data-model="Kimi K2.7">Coding-Profi (Kimi K2.7)</button>
                   </div>
                 </div>
+                <!-- Bildschirm 32: die Pille "Nachdenken" — sie schaltet die ECHTE
+                     Gruendlich-Stufe (dieselbe, die im Modellmenue liegt), keine
+                     Attrappe. Verdrahtung in nav-absichten.js. -->
+                <button id="stufeNachdenken" class="ghost-button text-chip fpille-nachdenken" type="button" aria-pressed="false" title="Gründlich nachdenken"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="chip-label">Nachdenken</span></button>
                 <button class="ghost-button icon-button" type="button" data-start-tool="voice" aria-label="Mikrofon" title="Mikrofon">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a4 4 0 0 0-4 4v5a4 4 0 0 0 8 0V7a4 4 0 0 0-4-4Z"/><path d="M5 11v1a7 7 0 0 0 14 0v-1"/><path d="M12 19v3"/></svg>
                 </button>
@@ -226,12 +339,33 @@
                 </button>
               </div>
             </section>
-            <div class="start-chips" aria-label="Beispiele zum Losklicken">
-              <button type="button" data-chip="Schreibe Code für:">Code schreiben</button>
-              <button type="button" data-chip="Verbessere diesen Text:">Text verbessern</button>
-              <button type="button" data-chip="Recherchiere für mich:">Recherchieren</button>
-              <button type="button" data-chip="Generiere ein Bild von:">Bilder generieren</button>
-              <button type="button" data-chip="Generiere ein Video von:">Video generieren</button>
+            <!-- Bildschirm 32, exakt: drei Vorschlagzeilen, darunter die sieben
+                 Werkzeug-Chips. Die Vorlagen (data-chip) sind dieselben wie
+                 bisher — nur die Aufschriften folgen dem Mockup. "Bild
+                 verstehen" und "Datei" oeffnen zusaetzlich die Dateiwahl,
+                 "Browser" springt in die Browser-Ansicht (data-jump). -->
+            <!-- Betreiber-Entscheide 2026-08-15/16 (Chat): ChatGPT-sauber.
+                 DIREKT unter dem Feld die Werkzeuge — "nur als Icons, alle
+                 eine Zeile" (title + aria-label tragen den Namen, das
+                 Label-Wort blendet design-v11.css aus). Darunter die drei
+                 Vorschlaege als nackter Text, wie beim echten ChatGPT. -->
+            <div class="start-chips start-chipreihe" aria-label="Werkzeuge">
+              <button type="button" data-chip="Recherchiere für mich:" title="Im Netz" aria-label="Im Netz"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg><span class="chip-label">Im Netz</span></button>
+              <button type="button" data-chip="Generiere ein Bild von:" title="Bild" aria-label="Bild"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m5 17 4.5-4.5 3 3L16 12l3 3"/></svg><span class="chip-label">Bild</span></button>
+              <button type="button" data-chip="Generiere ein Video von:" title="Video" aria-label="Video"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg><span class="chip-label">Video</span></button>
+              <button type="button" data-chip="Was ist auf diesem Bild zu sehen?" data-composer-action="attach-photo" title="Bild verstehen" aria-label="Bild verstehen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span class="chip-label">Bild verstehen</span></button>
+              <button type="button" data-chip="Verbessere diesen Text:" title="Schreiben oder bearbeiten" aria-label="Schreiben oder bearbeiten"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m14 7 3 3"/></svg><span class="chip-label">Schreiben oder bearbeiten</span></button>
+              <button type="button" data-chip="Schreibe Code für:" title="Programmieren" aria-label="Programmieren"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg><span class="chip-label">Programmieren</span></button>
+              <button type="button" data-chip="Erledige mit der Maus im Browser:" title="Maus — arbeitet für dich" aria-label="Maus — arbeitet für dich"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 15 7-7 2-2 7z"/></svg><span class="chip-label">Browser</span></button>
+              <button type="button" data-composer-action="attach-file" title="Datei" aria-label="Datei"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v5h5"/></svg><span class="chip-label">Datei</span></button>
+            </div>
+            <!-- Betreiber 2026-08-16: die drei Textzeilen sind raus — die
+                 Icon-Zeile darueber traegt jetzt alles (ausgeblendet, nicht
+                 geloescht). -->
+            <div class="start-chips start-vorschlaege" aria-label="Vorschläge" hidden>
+              <button type="button" data-chip="Generiere ein Bild von:"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m5 17 4.5-4.5 3 3L16 12l3 3"/></svg><span class="chip-label">Erstelle ein Bild</span></button>
+              <button type="button" data-chip="Verbessere diesen Text:"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h13"/></svg><span class="chip-label">Schreiben oder überarbeiten</span></button>
+              <button type="button" data-chip="Recherchiere für mich:"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg><span class="chip-label">Im Internet suchen</span></button>
             </div>
             <section class="feed-list" aria-label="Feed" hidden>
               <article class="feed-item">
@@ -252,6 +386,7 @@
               </article>
             </section>
             <div id="homeOutput" class="output" hidden>Bereit. Lokale Arbeit startet sofort; Online-Sync und KI bleiben fail-closed, bis sie sicher konfiguriert sind.</div>
+            <div id="homeOutput" class="output" hidden>Bereit. Lokale Arbeit startet sofort; Online-Sync und KI bleiben fail-closed, bis sie sicher konfiguriert sind.</div>
           </div>
         </section>
 
@@ -271,29 +406,22 @@
           </div>
         </section>
 
-        <section id="websites" class="view" aria-label="Websites">
-          <header class="view-header">
-            <h2>Websites</h2>
-          </header>
-          <div class="output">Website-Bereich bereit.</div>
-        </section>
-
         <section id="smejjClaw" class="view" aria-label="Coding">
           <header class="view-header">
-            <h2>Coding</h2>
+            <h2>Agenten-Arbeitsbereich</h2>
           </header>
           <div class="toolbar">
-            <button type="button" data-jump="automation">Automatisierung</button>
+            <button type="button" data-jump="automation">smejjBot</button>
             <button type="button" data-jump="projects">Arbeitsbereich</button>
           </div>
           <div class="output">Coding bereit.</div>
         </section>
 
-        <section id="automation" class="view" aria-label="Automatisierung">
+        <section id="automation" class="view" aria-label="smejjBot">
           <header class="view-header">
-            <h2>Automatisierung</h2>
+            <h2>smejjBot</h2>
           </header>
-          <div class="output">Automatisierung bereit.</div>
+          <div class="output">smejjBot bereit.</div>
         </section>
 
         <section id="chatHistory" class="view" aria-label="Verlauf">
@@ -307,7 +435,7 @@
           <header class="view-header">
             <p class="eyebrow">Browser</p>
             <h2>Lokaler Browser</h2>
-            <p class="subhead">Schneller Einstieg für lokale Dateien, Uploads und Browser-Speicher.</p>
+            <p class="subhead">Schneller Einstieg für Dateien auf diesem Gerät und zum Hochladen.</p>
           </header>
           <div class="status-grid">
             <div><strong>Browser-Speicher</strong><span>IndexedDB / OPFS</span></div>
@@ -315,7 +443,7 @@
             <div><strong>Sync</strong><span>lokal zuerst</span></div>
           </div>
           <div class="toolbar">
-            <button type="button" data-jump="files">Dateien oeffnen</button>
+            <button type="button" data-jump="files">Dateien öffnen</button>
             <button type="button" data-jump="storageView">Speicher prüfen</button>
             <button type="button" data-jump="ai">Local Browser KI</button>
           </div>
@@ -323,10 +451,123 @@
         </section>
 
         <section id="code" class="view" aria-label="Code-Assistent">
-          <header class="view-header">
-            <p class="eyebrow">Code</p>
-            <h2>Programmieren</h2>
-          </header>
+          <!-- Code-Bereich 1:1 nach Mockup-Bildschirm 26: persoenliche
+               Begruessung oben, leere Flaeche fuer die Auftraege, unten
+               Projektwahl und Schreibfeld. Die Editor-Werkzeuge von frueher
+               bleiben vollstaendig erhalten — eingeklappt darunter (Rote
+               Liste: keine verifizierte Funktion entfernen). Verdrahtung in
+               code-flaeche.js; ohne das Modul bleibt alles bedienbar. -->
+          <div class="codeflaeche">
+            <!-- Betreiber 2026-08-18: das Code-Zeichen vor dem Gruss ist RAUS —
+                 es deckte das Logo oben links zu. -->
+            <div class="codegruss"><span id="codeGruss">Was steht als Nächstes an?</span></div>
+            <div class="codeleer" aria-hidden="true"></div>
+            <!-- Hierher wandert der ECHTE #startLog beim Senden (kein Klon):
+                 der Auftrag streamt auf dieser Seite, wie bei Codex/Claude. -->
+            <div id="codeLogHalter" class="code-log-halter"></div>
+            <div class="codeunten">
+              <!-- Betreiber 2026-08-16: KEINE Projekt-Zeile mehr ueber dem
+                   Feld — der Platz gehoert dem Text. Der Projekt-Chip sitzt
+                   jetzt schlank unten in der Leiste (siehe codeleiste). -->
+              <div class="codefeld">
+                <!-- Anhaenge erscheinen als Chips statt als Text im Feld
+                     (Betreiber: "[Bild angehaengt: …] im Feld ist nicht
+                     professionell"). code-flaeche.js zieht Verweis-Zeilen
+                     hierher; beim Senden reisen sie unsichtbar mit. -->
+                <!-- Ordner-Chip wie Claude: nur sichtbar, wenn ein Ordner
+                     verbunden ist (code-flaeche.js zeichneOrdnerChip). -->
+                <div id="codeOrdnerZeile" class="code-anhaenge" hidden></div>
+                <div id="codeAnhaenge" class="code-anhaenge" hidden></div>
+                <!-- Arbeits-Viereck wie bei Claude (Betreiber 2026-08-16):
+                     ruhig wenn frei, cyan pulsierend solange smejj arbeitet.
+                     Signal: smejj:chat-strom (code-flaeche.js). -->
+                <span id="codeArbeit" class="code-arbeit" aria-hidden="true"></span>
+                <textarea id="codeAufgabe" rows="1" placeholder="Beschreibe eine Aufgabe oder stelle eine Frage" aria-label="Code-Auftrag"></textarea>
+                <!-- Betreiber 2026-08-16: das Plus im CODE-Feld oeffnet ein
+                     Menue wie bei Claude (1:1-Optik: Gruppen, Trennlinie,
+                     Kuerzel rechts, Untermenue-Pfeil). Dahinter liegen NUR
+                     echte smejj-Funktionen — Claudes Skills/Konnektoren/
+                     Plugins gibt es hier nicht und stehen darum nicht drin
+                     (Blindgaenger-Verbot). Verdrahtung: code-flaeche.js. -->
+                <!-- Betreiber-Nachtrag (Screenshot des Claude-CODE-Menues):
+                     GENAU diese Punkte — Dateien/Fotos, Ordner hinzufuegen,
+                     Slash-Befehle, Konnektoren. Claudes fuenfter Punkt
+                     "Plugins hinzufuegen…" fehlt BEWUSST: smejj hat kein
+                     Plugin-System, der Knopf wuerde ins Leere fuehren. -->
+                <div id="codePlusMenue" class="code-plus-menu" role="menu" aria-label="Hinzufügen" hidden>
+                  <button type="button" role="menuitem" data-code-plus="dateien">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05 12 20.5a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.74 9.1L9.17 17.67a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    <span>Dateien oder Fotos hinzufügen</span>
+                    <kbd aria-hidden="true">⌘U</kbd>
+                  </button>
+                  <button type="button" role="menuitem" data-code-plus="ordner">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+                    <span>Ordner hinzufügen</span>
+                  </button>
+                  <button type="button" role="menuitem" data-code-plus="slash">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m14 8-4 8"/></svg>
+                    <span>Slash-Befehle</span>
+                  </button>
+                  <button type="button" role="menuitem" data-code-plus="konnektoren" aria-haspopup="menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/><path d="M11 7h4v4"/></svg>
+                    <span>Konnektoren</span>
+                    <svg class="plus-pfeil" viewBox="0 0 24 24" aria-hidden="true"><path d="m10 7 5 5-5 5"/></svg>
+                  </button>
+                  <button type="button" role="menuitem" data-code-plus="plugins">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22v-3"/><path d="M9 8V5"/><path d="M15 8V5"/><path d="M6 8h12v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4Z"/></svg>
+                    <span>Plugins hinzufügen …</span>
+                  </button>
+                  <!-- Konnektoren-Untermenue wie Claude (Betreiber-Screenshot
+                       2026-08-16): Zeilen mit Schalter, darunter Verwalten und
+                       Durchsuchen. Unser echter schaltbarer Konnektor ist der
+                       Projekt-Ordner (verbinden/trennen, projekt-ordner.js);
+                       der Schalter zeichnet VIERECKIG (Betreiber-Designgesetz
+                       schlaegt Claudes Pille). -->
+                  <div id="codeKonnektorenMenue" class="code-plus-menu code-plus-unter" role="menu" aria-label="Konnektoren" hidden>
+                    <button type="button" role="menuitemcheckbox" aria-checked="false" data-code-konnektor="ordner">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+                      <span>Projekt-Ordner</span>
+                      <span class="code-schalter" aria-hidden="true"></span>
+                    </button>
+                    <div class="code-plus-line" role="separator" aria-hidden="true"></div>
+                    <button type="button" role="menuitem" data-code-konnektor="verwalten">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+                      <span>Konnektoren verwalten</span>
+                    </button>
+                    <button type="button" role="menuitem" data-code-konnektor="durchsuchen">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                      <span>Konnektoren durchsuchen</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="codeleiste">
+                  <button type="button" class="repochip" id="codeModusChip" title="Berechtigungs-Modus — wann smejj vor Änderungen fragt">Auto</button>
+                  <button type="button" class="repochip" id="codeStufeChip" title="Antwortstufe wechseln">Automatisch</button>
+                  <button type="button" class="repochip an" id="codeProjektChip" title="Project und Ordner wählen">Projekt wählen …</button>
+                  <button type="button" class="ghost-button icon-button code-mini" id="codeAnhang" aria-label="Datei anhängen" title="Datei anhängen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+                  <button type="button" class="ghost-button icon-button code-mini" id="codeDiktat" aria-label="Diktieren" title="Diktieren"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+                  <div class="code-rechts">
+                    <!-- Betreiber 2026-08-17: klickbar wie Claudes "Fable 5" —
+                         oeffnet das Modell-Menue (smejj 1.0 + echter
+                         Cline-Katalog, code-flaeche.js). -->
+                    <button type="button" class="repochip" id="codeModellAnzeige" title="Modell wählen"><b>smejj 1.0</b></button>
+                    <span id="codeTiefeAnzeige">Mittel</span>
+                    <button type="button" class="send-button icon-button" id="codeSenden" aria-label="Auftrag senden" title="Auftrag senden">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4"/><path d="M5 11l7-7 7 7"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="start-chips code-wchips" aria-label="Code-Vorlagen">
+                <button type="button" data-chip="Suche den Fehler in:">Fehler suchen</button>
+                <button type="button" data-chip="Baue folgende Funktion ein:">Funktion einbauen</button>
+                <button type="button" data-chip="Schreibe Tests für:">Tests schreiben</button>
+                <button type="button" data-chip="Erkläre mir diesen Code:">Code erklären</button>
+              </div>
+            </div>
+          </div>
+          <details class="code-werkzeuge">
+            <summary>Editor &amp; Dateien</summary>
           <div class="panel-grid">
             <label>
               Dateien
@@ -352,13 +593,14 @@
             <button id="workspaceStatus" type="button">Workspace Status</button>
           </div>
           <div id="codeOutput" class="output"></div>
+        </details>
         </section>
 
-        <section id="projects" class="view" aria-label="Arbeitsbereich">
+        <section id="projects" class="view" aria-label="smejjCloud">
           <header class="view-header">
-            <p class="eyebrow">Arbeitsbereich</p>
-            <h2>Lokale Dateien und Snapshots</h2>
-            <p class="subhead">Projektmanifeste und Snapshots entstehen lokal. IDrive-e2-Sync kommt später über signierte URLs.</p>
+            <p class="eyebrow">Meine Sachen</p>
+            <h2>smejjCloud</h2>
+            <p class="subhead">Deine Projekte und Sicherungen entstehen zuerst auf diesem Gerät. Die Sicherung in der Cloud kommt danach automatisch.</p>
           </header>
           <div class="toolbar">
             <button id="projectCreate" type="button">Projekt erstellen</button>
@@ -387,9 +629,15 @@
 
         <section id="files" class="view" aria-label="Dateien und Uploads">
           <header class="view-header">
-            <p class="eyebrow">Dateien</p>
-            <h2>Uploads und Downloads</h2>
+            <p class="eyebrow">Meine Sachen</p>
+            <h2>Dateien</h2>
+            <!-- Bildschirm 39: die Spalte "Von smejj gelesen" beantwortet
+                 vorab, warum eine Frage zu einer frisch hochgeladenen Datei
+                 manchmal noch nicht funktioniert. Tabelle in
+                 uploads-surface.js, nur echte Werte. -->
+            <p class="subhead">Was du hochgeladen hast — und ob smejj es schon lesen konnte.</p>
           </header>
+          <div id="dateiTabelle" class="output" hidden></div>
           <div class="panel-grid">
             <label>
               Upload-Staging
@@ -407,11 +655,11 @@
           <div id="fileOutput" class="output"></div>
         </section>
 
-        <section id="storageView" class="view" aria-label="Speicher und IDrive e2 Status">
+        <section id="storageView" class="view" aria-label="Wo deine Sachen liegen">
           <header class="view-header">
             <p class="eyebrow">Speicher</p>
-            <h2>IDrive e2 Status</h2>
-            <p class="subhead">IDrive e2 ist Hauptspeicher/Vault. Der Browser bekommt keine IDrive-Secrets.</p>
+            <h2>Wo deine Sachen liegen</h2>
+            <p class="subhead">Deine Dateien liegen in Europa in deinem eigenen Bereich. Die Zugangsschlüssel bekommt dein Browser nie zu sehen.</p>
           </header>
           <div class="status-grid" aria-label="Speicherstatus">
             <div><strong>Primaerspeicher</strong><span>IDrive e2</span></div>
@@ -433,8 +681,8 @@
 
         <section id="memory" class="view" aria-label="Memory und RAG">
           <header class="view-header">
-            <p class="eyebrow">Memory</p>
-            <h2>Merken und Suchen</h2>
+            <p class="eyebrow">Gedächtnis</p>
+            <h2>Was smejj sich merkt</h2>
           </header>
           <div class="panel-grid">
             <label>
@@ -457,9 +705,13 @@
 
         <section id="ai" class="view" aria-label="KI-Modus">
           <header class="view-header">
-            <p class="eyebrow">KI</p>
-            <h2>Modus und Kosten</h2>
-            <p class="subhead">Standard ist sicher deaktiviert. Premium-KI wird nie automatisch oder versteckt kostenpflichtig genutzt.</p>
+            <p class="eyebrow">Betrieb</p>
+            <h2>KI-Modelle &amp; Anbieter</h2>
+            <!-- Bildschirm 56: diese Ansicht ist fuers Betreibercockpit —
+                 hier stehen die echten Modellnamen und Zahlen. Die
+                 Nutzersicht auf dieselbe Sache heisst "smejj schnell/
+                 gruendlich" (Stufen-Chip und Einstellungen). -->
+            <p class="subhead">Standardmäßig ist alles aus. Es wird nie automatisch und nie versteckt etwas benutzt, das Geld kostet.</p>
           </header>
           <div class="panel-grid">
             <label>
@@ -494,11 +746,11 @@
           <div class="output" id="aiOutput">KI ist deaktiviert. Kimi K2.7 ist Vault/BYOK/Partner/Self-host später, nicht kostenloser Standardmotor.</div>
         </section>
 
-        <section id="cost" class="view" aria-label="Kostenstatus und Free-Schutz">
+        <section id="cost" class="view" aria-label="Kostenschutz">
           <header class="view-header">
             <p class="eyebrow">Kosten</p>
-            <h2>Free-Schutz</h2>
-            <p class="subhead">GitHub und GitHub Pages bleiben dauerhaft Free. Paid-Fallbacks, Trials und Auto-Billing sind blockiert.</p>
+            <h2>Kostenschutz</h2>
+            <p class="subhead">Die Auslieferung bleibt dauerhaft kostenlos. Bezahl-Rückfälle, Testphasen und automatische Abbuchung sind gesperrt.</p>
           </header>
           <div class="status-grid">
             <div><strong>GitHub</strong><span>Free only</span></div>
@@ -517,8 +769,12 @@
 
         <section id="tools" class="view" aria-label="Status">
           <header class="view-header">
-            <p class="eyebrow">Status</p>
-            <h2>System</h2>
+            <p class="eyebrow">Betrieb</p>
+            <h2>Systemzustand</h2>
+            <!-- Bildschirm 55: "grau heisst nicht rot" — die Lehre aus den 39
+                 grauen Autopiloten, die trotzdem liefen (455 Laeufe am selben
+                 Tag). Grau heisst nur: kein Herzschlag angekommen. -->
+            <p class="subhead">Läuft · gemeldet-aber-still · steht. Grau heißt nur: kein Herzschlag angekommen — nicht, dass etwas kaputt ist.</p>
           </header>
           <div class="toolbar">
             <button id="capabilities" type="button">Capabilities</button>
@@ -541,8 +797,8 @@
         <section id="settings" class="view" aria-label="Einstellungen">
           <header class="view-header">
             <p class="eyebrow">Einstellungen</p>
-            <h2>App-Modus</h2>
-            <p class="subhead">Einstellungen bleiben lokal, bis Auth, Limits und IDrive-e2-Sync sicher sind.</p>
+            <h2>Wo deine Einstellungen liegen</h2>
+            <p class="subhead">Deine Einstellungen bleiben auf diesem Gerät, bis Anmeldung, Grenzen und Sicherung sicher stehen.</p>
           </header>
           <div class="panel-grid">
             <label>
@@ -564,11 +820,18 @@
           <div class="toolbar">
             <button type="button" data-jump="cost">Kosten &amp; Limits</button>
             <button type="button" data-jump="profile">Nutzer</button>
+            <!-- Die Gedaechtnis-Ansicht war fertig, verdrahtet und ueber KEINEN
+                 Knopf erreichbar (gemessen 2026-08-15): nur wer /memory in die
+                 Adresszeile tippte, kam hin. Hier statt in die Seitenleiste,
+                 weil die dem Betreiber schon zu lang ist. -->
+            <button type="button" data-jump="memory">Was smejj sich merkt</button>
           </div>
           <p class="legal-links">
             Rechtliches:
             <a href="/impressum.html">Impressum</a>
             <a href="/datenschutz.html">Datenschutzerklärung</a>
+            <a href="/agb.html">AGB</a>
+            <a href="/widerruf.html">Widerruf</a>
             <a href="/hilfe.html">Hilfe</a>
             <a href="/status.html">Betriebsstatus</a>
           </p>
@@ -576,8 +839,8 @@
 
         <section id="profile" class="view" aria-label="Nutzer und Login">
           <header class="view-header">
-            <h2>Nutzer</h2>
-            <p class="subhead">Login ist vorbereitet. Serverseitige Nutzer-Daten duerfen erst nach sicherer Auth- und Storage-Policy aktiv werden.</p>
+            <h2>Mein Konto</h2>
+            <p class="subhead">Die Anmeldung steht bereit. Daten auf dem Server werden erst freigeschaltet, wenn Anmeldung und Speicher sicher sind.</p>
           </header>
           <div class="panel-grid">
             <label>
@@ -622,11 +885,36 @@
           <div id="profileOutput" class="output"></div>
         </section>
 
+        <section id="arbeitsbereiche" class="view" aria-label="Projects">
+          <header class="view-header">
+            <p class="eyebrow">Arbeiten</p>
+            <h2>Projects</h2>
+            <!-- Bildschirm 36: ein Ordner mit eigenem Wissen und eigener
+                 Anweisung. Die Dauer-Anweisung WIRKT: chat-store legt sie beim
+                 Oeffnen eines Bereichs-Gespraechs in den Sitzungsspeicher,
+                 settings-runtime nimmt sie in den Systemprompt. -->
+            <p class="subhead">Alle Gespräche eines Bereichs haben denselben Hintergrund — und eine Dauer-Anweisung, die dort in jedem Gespräch gilt.</p>
+          </header>
+          <div id="bereicheListe" class="output"></div>
+        </section>
+
+        <section id="papierkorb" class="view" aria-label="Papierkorb">
+          <header class="view-header">
+            <p class="eyebrow">Meine Sachen</p>
+            <h2>Papierkorb</h2>
+            <!-- Bildschirm 48: "30 Tage lang ist nichts verloren." Geloeschte
+                 Gespraeche liegen hier, wiederherstellbar; nach 30 Tagen
+                 raeumt die App von selbst. Logik in papierkorb.js. -->
+            <p class="subhead">Gelöschte Gespräche bleiben hier 30 Tage. Du kannst sie jederzeit zurückholen — erst danach sind sie wirklich weg.</p>
+          </header>
+          <div id="papierkorbListe" class="output"></div>
+        </section>
+
         <section id="offline" class="view" aria-label="Offline-Seite">
           <header class="view-header">
             <p class="eyebrow">Offline</p>
             <h2>Offline weiterarbeiten</h2>
-            <p class="subhead">Lokale Projekte, Notizen und Snapshots bleiben nutzbar. Online-Sync wartet auf eine sichere Verbindung.</p>
+            <p class="subhead">Deine Projekte, Notizen und Sicherungen bleiben nutzbar. Der Abgleich wartet auf eine sichere Verbindung. Nichts geht verloren.</p>
           </header>
           <div class="empty-state"><strong>Offline-Modus</strong><span>Keine Server-Aktion wird vorgetäuscht. Lokale Arbeit bleibt möglich.</span></div>
         </section>
@@ -634,8 +922,8 @@
         <section id="error" class="view" aria-label="Fehlerseite">
           <header class="view-header">
             <p class="eyebrow">Fehler</p>
-            <h2>Aktion blockiert</h2>
-            <p class="subhead">Wenn Konfiguration, Kostenstatus oder Provider unklar ist, stoppt smejj.com sicher.</p>
+            <h2>Das geht gerade nicht</h2>
+            <p class="subhead">Wenn unklar ist, ob etwas Geld kostet oder ob ein Zugang stimmt, hält smejj.com lieber an. Deine Sachen bleiben unberührt.</p>
           </header>
           <div class="empty-state"><strong>Fail-closed</strong><span>Keine versteckten Kosten, keine stillen Fallbacks, keine unsichere Speicherung.</span></div>
         </section>
@@ -654,7 +942,7 @@
       <section class="search-overlay-panel" role="dialog" aria-modal="true" aria-label="Suche">
         <form id="searchOverlayForm" class="search-overlay-form" role="search">
           <input id="searchOverlayQuery" type="search" placeholder="Chats, Projekte, Dateien durchsuchen …" autocomplete="off" autocapitalize="off" spellcheck="false">
-          <button type="button" class="search-overlay-close" data-search-close aria-label="Suche schließen" title="Schließen (Esc)">Esc</button>
+          <button type="button" class="search-overlay-close" data-search-close aria-label="Suche schließen" title="Schließen (Esc)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </form>
         <div id="searchOverlayLog" class="search-overlay-log" aria-live="polite"></div>
         <p class="search-overlay-hints" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> wählen</span><span><kbd>Enter</kbd> öffnen</span><span><kbd>Esc</kbd> schließen</span></p>
@@ -672,18 +960,33 @@
     </div>
     <script src="/assets/fehler-faenger.js" type="module"></script>
     <script src="/assets/frame-guard.js?v=1" type="module"></script>
-    <script src="/assets/start-chips.js?v=chips-i18n-20260813" type="module"></script>
-    <script src="/assets/app.js?v=stufen-chip-20260809" type="module"></script>
-    <script src="/assets/cline-model-menu.js?v=cline-submenu-20260714-3" type="module"></script>
-    <script src="/assets/browser-pane.js?v=browser-pane-20260728-3" type="module"></script>
-    <script src="/assets/browser-pane-backdrop.js?v=2" type="module"></script>
-    <script src="/assets/maus-panel.js?v=3" type="module"></script>
+    <script src="/assets/start-chips.js?v=b32b" type="module"></script>
+    <script src="/assets/composer-sendetaste.js?v=v11-20260815" type="module"></script>
+    <script src="/assets/nav-absichten.js?v=b32" type="module"></script>
+    <script src="/assets/topbar-krume.js?v=b33f" type="module"></script>
+    <script src="/assets/knopf-puffer.js?v=2"></script>
+    <script src="/assets/arbeitsflaeche.js?v=2" type="module"></script>
+    <script src="/assets/spur-schalter.js?v=9" type="module"></script>
+    <script src="/assets/spur-start.js?v=b45" type="module"></script>
+    <!-- holt code-flaeche.js (27,1 KB) erst, wenn #code aufgeht — Begruendung im Modul -->
+    <script src="/assets/code-nachladen.js?v=13" type="module"></script>
+    <!-- Peripherie (Fuehrung, Papierkorb, Kamera, @-Erwaehnung, Codeblock-Werkzeuge)
+         laedt erst bei ihrer Handlung — Betreiber-Freigabe 2026-08-24 "Startseite abspecken". -->
+    <script src="/assets/bedarf-nachladen.js?v=1" type="module"></script>
+    <script src="/assets/app.js?v=b94" type="module"></script>
+    <script src="/assets/cline-model-menu.js?v=cline-submenu-20260817-5" type="module"></script>
+    <!-- Browser-Panel und Maus-Panel: erst wenn sie gebraucht werden.
+         63,3 KB von 335,6 KB zahlte bisher jeder Seitenaufruf fuer zwei
+         Flaechen, die beim ersten Bildaufbau niemand sieht (browser-nachladen.js). -->
+    <script src="/assets/browser-nachladen.js?v=1" type="module"></script>
     <script src="/assets/auth/passkey-ui.js" type="module"></script>
     <script src="/assets/view-chrome.js?v=view-chrome-20260716-2" type="module"></script>
-    <script src="/assets/profile-dock.js?v=profile-dock-20260717-6" type="module"></script>
-    <script src="/assets/chat-store.js?v=pin-20260806" type="module"></script>
-    <script src="/assets/chat-history-view.js?v=pin-20260806" type="module"></script>
-    <script src="/assets/chat-actions.js?v=msg-actions-20260728-2" type="module"></script>
-    <script src="/assets/chat-code-copy.js?v=code-copy-20260729" type="module"></script>
+    <script src="/assets/profile-dock.js?v=b48" type="module"></script>
+    <script src="/assets/chat-store.js?v=b64" type="module"></script>
+    <script src="/assets/chat-history-view.js?v=b58" type="module"></script>
+    <script src="/assets/chat-actions.js?v=b40" type="module"></script>
+    <script src="/assets/panel-status.js?v=1" type="module"></script>
+    <script src="/assets/chat-stopp.js?v=11" type="module"></script>
+    <script src="/assets/modell-menue-start.js?v=1" type="module"></script>
   </body>
 </html>

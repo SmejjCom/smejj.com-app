@@ -60,22 +60,47 @@ function rememberPanelOpen(panel) {
   }
 }
 
-// Ein Boot-Zuklappen (ohne Eingabe) wird einmal je Seite zurueckgedreht, wenn
-// der Nutzer die Seite offen hinterlassen hat. Zeitlich begrenzt, damit ein
-// spaeteres programmatisches Zuklappen (z. B. Ansichtswechsel) nicht ewig
-// dagegen ankaempfen muss.
-const RUECKDREH_FENSTER_MS = 10000;
-const bereitsZurueckgedreht = { left: false, right: false };
+// Ein Boot-Zuklappen (ohne Eingabe) wird zurueckgedreht, wenn der Nutzer die
+// Seite offen hinterlassen hat. Zeitlich begrenzt, damit ein spaeteres
+// programmatisches Zuklappen nicht ewig dagegen ankaempfen muss.
+//
+// Der Start klappt MEHRMALS zu, nicht einmal (Befund 2026-08-13, angemeldeter
+// Betreiber): erst app.js beim Boot, danach die wiederhergestellte Ansicht.
+// Mit einem einmaligen Rueckdreher gewann der zweite Zugriff — die Seiten
+// standen nach jedem Neuladen wieder zu, obwohl "1" gemerkt war. Darum ein
+// kleiner Zaehler statt eines Schalters: mehrmals zurueckdrehen, aber gedeckelt,
+// damit aus einem Streit keine Endlosschleife wird.
+// 45 statt 10 Sekunden (Betreiber-Befund 2026-08-13, zweiter Anlauf): Der
+// verzoegerte App-Start (deferred-start, Anmelde-Pruefung vorweg) klappt die
+// Seiten auf langsamen Maschinen auch NACH Sekunde 10 noch zu — genau dann
+// endete das alte Fenster, und die Seiten standen wieder zu. Der Zaehler
+// (max 5 je Seite) bleibt die eigentliche Bremse gegen Endlos-Streit.
+const RUECKDREH_FENSTER_MS = 45000;
+const RUECKDREH_MAX = 5;
+const rueckdrehZaehler = { left: 0, right: 0 };
+
+// Der AKTUELLE Merker, nicht der Schnappschuss vom Modul-Laden: Klappt der
+// Nutzer eine Seite von Hand zu, schreibt der Beobachter "0" — der Schnapp-
+// schuss wuesste davon nichts und wuerde sie ihm wieder aufdraengen.
+// (Das Boot-Zuklappen selbst schreibt dank nutzerNah-Wache nie.)
+function gemerktJetzt(side) {
+  try {
+    const wert = localStorage.getItem(PANEL_OPEN_KEYS[side]);
+    return wert === null ? GEMERKT_BEIM_START[side] : wert;
+  } catch {
+    return GEMERKT_BEIM_START[side];
+  }
+}
 
 function bootZuklappenZuruedrehen(panel) {
   const side = panelSide(panel);
-  if (bereitsZurueckgedreht[side]) return;
+  if (rueckdrehZaehler[side] >= RUECKDREH_MAX) return;
   if (nutzerNah()) return;
   if (performance.now() > RUECKDREH_FENSTER_MS) return;
   if (panel.classList.contains("is-open")) return;
-  if (GEMERKT_BEIM_START[side] !== "1") return;
+  if (gemerktJetzt(side) !== "1") return;
   if (typeof window !== "undefined" && window.innerWidth < RESTORE_MIN_WIDTH) return;
-  bereitsZurueckgedreht[side] = true;
+  rueckdrehZaehler[side] += 1;
   setPanelOpen(side, true);
 }
 
@@ -94,11 +119,15 @@ const GEMERKT_BEIM_START = (() => {
   return werte;
 })();
 
-export function restorePanelOpen(doc = document, gemerkt = GEMERKT_BEIM_START) {
+export function restorePanelOpen(doc = document, gemerkt = null) {
   if (typeof window !== "undefined" && window.innerWidth < RESTORE_MIN_WIDTH) return 0;
   let restored = 0;
   for (const side of ["left", "right"]) {
-    if (gemerkt[side] !== "1") continue;
+    // Ohne uebergebene Werte gilt der AKTUELLE Merker (siehe gemerktJetzt):
+    // die spaeten Wiederhol-Anlaeufe unten duerfen ein von Hand zugeklapptes
+    // Panel nicht wieder aufdraengen.
+    const wunsch = gemerkt ? gemerkt[side] : gemerktJetzt(side);
+    if (wunsch !== "1") continue;
     const panel = side === "left" ? doc.querySelector(".sidebar") : doc.querySelector("#browserPanel");
     if (!panel || panel.classList.contains("is-open")) continue;
     setPanelOpen(side, true);
@@ -129,7 +158,9 @@ export function bindPanelResize(selector, side, { $ }) {
   handle.addEventListener("pointerdown", (event) => {
     event.preventDefault();
     document.body.classList.add("is-resizing-panel");
-    handle.setPointerCapture?.(event.pointerId);
+    // Ein ungueltiger pointerId (z. B. aus Tests) warf hier und riss den
+    // ganzen Handler ab — das Ziehen war dann tot, ohne Fehlermeldung.
+    try { handle.setPointerCapture?.(event.pointerId); } catch { /* ohne Capture zieht es trotzdem */ }
     const move = (moveEvent) => {
       const width = side === "left" ? moveEvent.clientX : window.innerWidth - moveEvent.clientX;
       setPanelWidth(side, width);
@@ -149,12 +180,35 @@ export function restorePanelWidths() {
   setPanelWidth("right", getPanelWidth("right"), { persist: false });
 }
 
+// Wie viel Mitte dem Chat mindestens bleiben muss, wenn das RECHTE Panel
+// sich breit macht (Betreiber 2026-08-23, Screenshot: Chat auf ~140 px
+// zusammengedrueckt). Dieselbe Zahl wie CHAT_MIN_PX in browser-pane.js —
+// dort griff sie nur beim Oeffnen per openPane(); beim Wiederherstellen
+// einer gemerkten Breite oder beim Ziehen lief sie ins Leere.
+const CHAT_MIN_PX = 380;
+
+/**
+ * Obergrenze fuer die Panelbreite — reine Rechnung, ohne DOM.
+ * Rechts zaehlt die linke Spur mit: Fenster minus Spur minus Chat-Minimum.
+ * Nie unter min (sonst ist das Panel selbst unbrauchbar), nie ueber max.
+ */
+export function maxPanelBreite(side, { fenster, mitteLinks = 0 }) {
+  const frei = side === "right"
+    ? fenster - Math.max(0, mitteLinks) - CHAT_MIN_PX
+    : fenster - PANEL_WIDTHS.centerMin;
+  return Math.max(PANEL_WIDTHS.min, Math.min(PANEL_WIDTHS.max, frei));
+}
+
+function mitteLinksGemessen() {
+  try { return Math.round(document.querySelector("main")?.getBoundingClientRect().left || 0); } catch { return 0; }
+}
+
 export function setPanelWidth(side, rawWidth, { persist = true } = {}) {
   if (rawWidth < PANEL_WIDTHS.close) {
     setPanelOpen(side, false);
     return;
   }
-  const maxWidth = Math.max(PANEL_WIDTHS.min, Math.min(PANEL_WIDTHS.max, window.innerWidth - PANEL_WIDTHS.centerMin));
+  const maxWidth = maxPanelBreite(side, { fenster: window.innerWidth, mitteLinks: side === "right" ? mitteLinksGemessen() : 0 });
   // Beide Seiten duerfen bis zur schmalen Spur (96 px) heruntergezogen werden.
   // Bis 2026-08-13 klemmte die rechte Seite bei min=188 fest — ihre
   // is-compact-Schwelle (96) war damit unerreichbar, und die CSS-Regeln fuer
@@ -163,7 +217,12 @@ export function setPanelWidth(side, rawWidth, { persist = true } = {}) {
   const width = Math.round(Math.min(Math.max(rawWidth, PANEL_WIDTHS.compact), maxWidth));
   const prop = side === "left" ? "--left-panel-width" : "--right-panel-width";
   document.documentElement.style.setProperty(prop, `${width}px`);
-  applyPanelCompact(side, width, side === "left" ? PANEL_WIDTHS.min - 1 : PANEL_WIDTHS.compact);
+  // Rechts galt bis 2026-08-16 die 28px-Schwelle: zwischen 28 und 188 zeigte
+  // das schmale Panel sein VOLLES Menue — der Kopfzeilen-Knopf lag ueber dem
+  // ersten Eintrag ("Browser" war fuer echte Klicks tot, live gemessen bei
+  // 176 px). Beide Seiten schalten jetzt unter 188 px auf Nur-Icons um;
+  // das Kleinziehen selbst bleibt wie vom Betreiber entschieden.
+  applyPanelCompact(side, width, PANEL_WIDTHS.min - 1);
   if (persist) localStorage.setItem(PANEL_WIDTH_KEYS[side], String(width));
 }
 
@@ -238,8 +297,19 @@ if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") 
   const start = () => {
     watchPanelReachability();
     const wiederherstellen = () => requestAnimationFrame(() => restorePanelOpen());
-    if (document.readyState === "complete") wiederherstellen();
-    else window.addEventListener("load", wiederherstellen, { once: true });
+    // MEHRERE spaete Anlaeufe (Betreiber-Befund 2026-08-13): der verzoegerte
+    // App-Start klappt die Seiten auch lange nach `load` noch zu — ein
+    // einzelner Wiederhersteller direkt bei `load` wurde ueberrollt. Die
+    // Anlaeufe lesen den AKTUELLEN Merker; klappt der Nutzer von Hand zu
+    // (Merker "0"), fasst keiner von ihnen die Seite mehr an.
+    const wiederherstellenMitNachschlag = () => {
+      wiederherstellen();
+      for (const verzoegerung of [2000, 6000, 15000, 30000]) {
+        setTimeout(wiederherstellen, verzoegerung);
+      }
+    };
+    if (document.readyState === "complete") wiederherstellenMitNachschlag();
+    else window.addEventListener("load", wiederherstellenMitNachschlag, { once: true });
   };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", start);

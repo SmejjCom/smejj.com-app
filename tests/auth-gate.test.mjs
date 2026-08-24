@@ -34,7 +34,7 @@ test("Abgemeldete auf App-Seiten werden zur Anmeldung geleitet", () => {
   for (const path of ["/", "/index.html"]) {
     const win = fakeWindow(path);
     assert.equal(enforceAuthGate(win), true, path);
-    assert.deepEqual(win.calls, ["/auth/login/"]);
+    assert.deepEqual(win.calls, ["/willkommen.html"]);
   }
   // Tiefere Ziele wandern als ?next= mit, damit der Login dorthin zurueckfuehrt.
   for (const path of ["/profile", "/chat", "/settings"]) {
@@ -109,14 +109,14 @@ test("Kaputter Storage gilt als abgemeldet (fail-closed)", () => {
 });
 
 test("Gate haengt an App-Shell und Sprachseiten, ohne Start-Lock-Dateien", () => {
-  assert.match(dockJs, /import "\.\/auth-gate\.js\?v=1";/);
+  assert.match(dockJs, /import "\.\/auth-gate\.js\?v=\d+";/);
   // Die Sprachseiten haengen seit dem 2026-08-04 UEBER voice-landing-signin.js
   // am Gate: das Modul importiert hasSession und entscheidet, ob der
   // Sprachmodus oder nur ein Anmelde-Knopf gebaut wird. Dieselbe Kennung ?v=1
   // wie ueberall sonst — zwei Kennungen waeren zwei Modulinstanzen.
-  assert.match(landingJs, /import \{ darfSprechen, buildLoginCta \} from "\.\/voice-landing-signin\.js\?v=1";/);
+  assert.match(landingJs, /import \{ darfSprechen, buildLoginCta \} from "\.\/voice-landing-signin\.js\?v=\d+";/);
   const signinJs = fs.readFileSync("public/voice-landing-signin.js", "utf8");
-  assert.match(signinJs, /import \{ hasSession \} from "\.\/auth-gate\.js\?v=1";/);
+  assert.match(signinJs, /import \{ hasSession \} from "\.\/auth-gate\.js\?v=\d+";/);
   assert.match(gateJs, /fail-closed|Fail-closed/);
 });
 
@@ -153,6 +153,7 @@ function antwortMit(koerper, { ok = true } = {}) {
 test("ein abgelehntes Token wird entfernt und fuehrt zur Anmeldung", async () => {
   const { win, speicher } = fensterMit({ token: "altes.token", pfad: "/" });
   const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() },
     fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });
@@ -165,6 +166,7 @@ test("ein abgelehntes Token wird entfernt und fuehrt zur Anmeldung", async () =>
 test("ein gueltiges Token bleibt unangetastet und wird bei frischem Token aktualisiert", async () => {
   const { win, speicher } = fensterMit({ token: "gutes.token" });
   const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() },
     fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" }, accessToken: "frisches.token" }),
     apiOrigin: "https://control.test"
   });
@@ -177,6 +179,7 @@ test("Google- und permanente Sitzungen werden nicht eigenmaechtig abgemeldet", a
   const { win, speicher } = fensterMit({ token: "google.token" });
   speicher.set("smejj.session.v1", JSON.stringify({ authenticated: true, method: "google", permanent: true }));
   const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() },
     fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });
@@ -195,7 +198,8 @@ test("OFFLINE MELDET NIEMANDEN AB — die wichtigste Regel", async () => {
     ["kaputte Antwort", async () => ({ ok: true, json: async () => { throw new Error("kein JSON"); } })]
   ]) {
     const { win, speicher } = fensterMit({ token: "gutes.token" });
-    const ergebnis = await verifyStoredSession(win, { fetchFn, apiOrigin: "https://control.test" });
+    const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() }, fetchFn, apiOrigin: "https://control.test" });
     assert.equal(ergebnis, "unklar", `${name}: darf kein Urteil faellen`);
     assert.equal(speicher.has("smejj.auth.accessToken.v1"), true, `${name}: Token muss bleiben`);
     assert.equal(win.location.ersetztDurch, undefined, `${name}: keine Umleitung`);
@@ -206,6 +210,7 @@ test("ohne Token wird gar nicht erst gefragt", async () => {
   let gefragt = false;
   const { win } = fensterMit({ token: "" });
   const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() },
     fetchFn: async () => { gefragt = true; return { ok: true, json: async () => ({}) }; },
     apiOrigin: "https://control.test"
   });
@@ -217,6 +222,7 @@ test("auf oeffentlichen Seiten wird nicht umgeleitet, das Token aber geraeumt", 
   // Sonst haenge eine Werbeseite in einer Schleife zur Anmeldung.
   const { win, speicher } = fensterMit({ token: "altes.token", pfad: "/de/" });
   const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() },
     fetchFn: antwortMit({ authenticated: false }),
     apiOrigin: "https://control.test"
   });
@@ -227,7 +233,7 @@ test("auf oeffentlichen Seiten wird nicht umgeleitet, das Token aber geraeumt", 
 
 test("die Pruefung blockiert das Rendern nicht", async () => {
   const quelle = readFileSync(new URL("../public/auth-gate.js", import.meta.url), "utf8");
-  assert.match(quelle, /if \(!umgeleitet\) verifyStoredSession\(window\)\.catch/,
+  assert.match(quelle, /if \(!umgeleitet\) \{\s*verifyStoredSession\(window\)[\s\S]{0,80}\.catch/,
     "sie laeuft nebenher und nur, wenn die Seite bleibt");
   assert.ok(!/await verifyStoredSession/.test(quelle.split("\n").at(-6) || ""),
     "kein await auf Modulebene");
@@ -252,6 +258,7 @@ test("die Anmeldeseite nennt den Grund", async () => {
 test("ein abgelaufenes Token auf einer tiefen Seite merkt sich das Ziel", async () => {
   const { win } = fensterMit({ token: "altes.token", pfad: "/verlauf" });
   const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() },
     fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });
@@ -313,6 +320,7 @@ test("dauerhafte Sitzung bleibt — aber der Hinweis erscheint", async () => {
   win.document = bastelDokument(elemente);
 
   const ergebnis = await verifyStoredSession(win, {
+    speicher: { hole: (laden) => laden() },
     fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });

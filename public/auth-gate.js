@@ -17,6 +17,7 @@
 
 import { API_ORIGIN, STORAGE_KEYS } from "./config.js";
 import { initOfflineBanner } from "./offline-banner.js";
+import { authMeSpeicher } from "./shared/auth-me-speicher.js?v=1";
 
 // App-Shell-weiter Offline-Hinweis (Audit 2026-08-09). Hier eingehaengt, weil das
 // Gate ohnehin auf allen App- und Landeseiten laeuft (profile-dock.js,
@@ -53,7 +54,7 @@ const LANGUAGE_LANDING = new RegExp(`^/(?:${LANGUAGE_CODES})/(?:index\\.html)?$`
 
 // /danke-abo.html ist der Ruecksprung aus dem Stripe-Checkout: Wer gerade
 // bezahlt hat, darf die Bestaetigung nie an einer Login-Umleitung verlieren.
-const PUBLIC_PATHS = [/^\/auth\//, /^\/datenschutz/, /^\/impressum/, /^\/maus-replay/, /^\/status\.html$/, /^\/hilfe\.html$/, /^\/danke-abo\.html$/, LANGUAGE_LANDING];
+const PUBLIC_PATHS = [/^\/auth\//, /^\/datenschutz/, /^\/impressum/, /^\/maus-replay/, /^\/status\.html$/, /^\/hilfe\.html$/, /^\/danke-abo\.html$/, /^\/willkommen\.html$/, /^\/programmieren\.html$/, LANGUAGE_LANDING];
 
 // Oeffentlicher Pfad? Input: pathname (String). Output: boolean.
 export function isPublicPath(pathname) {
@@ -90,6 +91,17 @@ export function loginUrlFuer(win, extraQuery = "") {
 export function enforceAuthGate(win) {
   if (isPublicPath(win.location.pathname)) return false;
   if (hasSession(win.localStorage)) return false;
+  // Landeseite zuerst (Mockup V11, Bildschirm 1): "smejj.com leitet jeden
+  // sofort auf die Anmeldung. Wer nicht weiss, was es ist, meldet sich auch
+  // nicht an." Ein anonymer Besucher der WURZEL sieht darum die Landeseite
+  // mit Anmelden/Kostenlos-starten. Deep-Links in die App (z. B. ein
+  // geteilter /verlauf-Link) gehen weiter direkt zum Login samt
+  // Rueckkehr-Ziel — dort weiss der Besucher schon, wohin er will.
+  const pfad = String(win.location.pathname || "/");
+  if (pfad === "/" || pfad === "/index.html") {
+    win.location.replace("/willkommen.html");
+    return true;
+  }
   win.location.replace(loginUrlFuer(win));
   return true;
 }
@@ -114,6 +126,7 @@ export function enforceAuthGate(win) {
 //     auf einen Netzaufruf warten.
 const SESSION_CHECK_TIMEOUT_MS = 8000;
 const HINWEIS_ID = "smejj-sitzung-abgelaufen";
+
 
 /**
  * Ein Streifen am oberen Rand: "Deine Anmeldung ist abgelaufen."
@@ -159,6 +172,74 @@ export function zeigeAbgelaufenHinweis(win) {
   return true;
 }
 
+
+// --- Der zweite Schluesselbund: smejj.apiToken.v1 ------------------------------
+//
+// Befund 2026-08-22, im angemeldeten Chrome des Betreibers live gemessen: der
+// Chat antwortete auf jede Frage mit "Bitte zuerst anmelden und Cline unter
+// Einstellungen -> Modelle verbinden" — und schickte dabei KEINE einzige
+// Anfrage an den Server. Die Anmeldung war dabei voellig in Ordnung: das
+// dauerhafte Token aus localStorage lieferte an /api/auth/me sauber
+// authenticated=true samt frischem accessToken.
+//
+// Die App fuehrt zwei Schluesselbunde, die nie miteinander gesprochen haben:
+//   localStorage["smejj.auth.accessToken.v1"]  Gate, Profil-Dock — dauerhaft.
+//   sessionStorage["smejj.apiToken.v1"]        Chat (ai/chatClient.js), Suche,
+//                                              eigene Anbieter-Keys, Maus-Wiedergabe.
+// Der zweite wird NUR beim Anmelden gefuellt und stirbt mit dem Browserfenster.
+// Wer den Browser schloss und wiederkam, war angemeldet — und sein Chat tot.
+// Der Hinweistext zeigte dabei auf die falsche Ursache ("Cline verbinden").
+//
+// Geheilt wird hier, weil ai/chatClient.js unter dem Start-Lock und
+// account-sessions.js unter dem Security-Lock steht — beide sind eingefroren.
+// Das Gate haelt das frische Token ohnehin schon in der Hand und legt es jetzt
+// in BEIDE Faecher. Kein zusaetzlicher Netzaufruf fuer den Regelfall.
+const API_TOKEN_KEY = "smejj.apiToken.v1";
+
+// Legt das Token im Fach der Chat-Seite ab. Output: true = abgelegt.
+function legeApiTokenAb(win, token) {
+  if (!token) return false;
+  try {
+    win.sessionStorage.setItem(API_TOKEN_KEY, String(token));
+    return true;
+  } catch {
+    return false; // Privatmodus/Storage gesperrt — der Chat meldet es selbst.
+  }
+}
+
+/**
+ * Nur-Cookie-Fall: kein dauerhaftes Token im Browser, aber eine gueltige
+ * Serversitzung. Dann holt der Cookie-Weg ein frisches Token — dieselbe Route,
+ * die account-sessions.js benutzt. Liegt das Token schon da, passiert nichts.
+ *
+ * Fail-safe wie das ganze Gate: eine Absage oder ein Netzfehler meldet NIEMAND
+ * ab, sie lassen den Zustand einfach, wie er ist.
+ *
+ * @param {object} win window-artiges Objekt
+ * @param {{fetchFn?: Function, apiOrigin?: string}} [deps]
+ * @returns {Promise<"vorhanden"|"geholt"|"keine-sitzung"|"kein-speicher"|"unklar">}
+ */
+export async function holeApiTokenUeberCookie(win, { fetchFn = globalThis.fetch, apiOrigin = API_ORIGIN } = {}) {
+  try {
+    if (win.sessionStorage.getItem(API_TOKEN_KEY)) return "vorhanden";
+  } catch {
+    return "kein-speicher";
+  }
+  if (!apiOrigin) return "unklar";
+  try {
+    const antwort = await fetchFn(`${apiOrigin}/api/auth/session-token`, {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(SESSION_CHECK_TIMEOUT_MS)
+    });
+    if (!antwort.ok) return "keine-sitzung";
+    const payload = await antwort.json();
+    return legeApiTokenAb(win, String(payload?.accessToken || "")) ? "geholt" : "kein-speicher";
+  } catch {
+    return "unklar"; // offline oder Zeitueberschreitung: nichts tun.
+  }
+}
+
 /**
  * Fragt den Server, ob das gespeicherte Token noch gilt, und meldet ab, wenn es
  * eindeutig nicht mehr gilt.
@@ -167,7 +248,7 @@ export function zeigeAbgelaufenHinweis(win) {
  * @param {{fetchFn?: Function, apiOrigin?: string, jetztPruefen?: boolean}} [deps]
  * @returns {Promise<"kein-token"|"gueltig"|"abgelaufen"|"unklar"|"oeffentlich">}
  */
-export async function verifyStoredSession(win, { fetchFn = globalThis.fetch, apiOrigin = API_ORIGIN } = {}) {
+export async function verifyStoredSession(win, { fetchFn = globalThis.fetch, apiOrigin = API_ORIGIN, speicher = authMeSpeicher } = {}) {
   let token = "";
   try {
     token = win.localStorage.getItem(AUTH_TOKEN_KEY) || "";
@@ -178,17 +259,26 @@ export async function verifyStoredSession(win, { fetchFn = globalThis.fetch, api
 
   let urteil = null;
   try {
-    const antwort = await fetchFn(`${apiOrigin}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      signal: AbortSignal.timeout(SESSION_CHECK_TIMEOUT_MS)
+    // Ueber den gemeinsamen Speicher: google-login.js stellt dieselbe Frage
+    // 3,5 s spaeter und bekommt dann diese Antwort, statt eine zweite zu
+    // holen (gemessen 2026-08-23: 750 ms + 503 ms fuer denselben Zustand).
+    const payload = await speicher.hole(async () => {
+      const antwort = await fetchFn(`${apiOrigin}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        signal: AbortSignal.timeout(SESSION_CHECK_TIMEOUT_MS)
+      });
+      // 5xx o. ae. — keine Aussage ueber das Token, und NICHTS zu merken.
+      if (!antwort.ok) return { ok: false };
+      return antwort.json();
     });
-    if (!antwort.ok) return "unklar"; // 5xx o. ae. — keine Aussage ueber das Token.
-    const payload = await antwort.json();
+    if (payload?.ok === false) return "unklar";
     urteil = payload?.authenticated;
     if (urteil === true && payload?.accessToken) {
       try {
         win.localStorage.setItem(AUTH_TOKEN_KEY, payload.accessToken);
       } catch {}
+      // Dasselbe Token gehoert in das Fach, aus dem der Chat liest.
+      legeApiTokenAb(win, payload.accessToken);
     }
   } catch {
     return "unklar"; // offline oder Zeitueberschreitung: nichts tun.
@@ -200,16 +290,9 @@ export async function verifyStoredSession(win, { fetchFn = globalThis.fetch, api
     const rawSession = win.localStorage.getItem(STORAGE_KEYS.session);
     const session = rawSession ? JSON.parse(rawSession) : {};
     if (session && session.authenticated === true) {
+      // Portiert aus der Bau-Branch-Fassung (Konsolidierung 2026-08-24): die
+      // Freigabe des dauerhaften Logins bleibt — aber SCHWEIGEN war der Fehler.
       zeigeAbgelaufenHinweis(win);
-      // ABER NICHT SCHWEIGEN. Befund 2026-08-14, live am Konto des Betreibers:
-      // Der Server sagte eindeutig `authenticated: false`, die App zeigte
-      // trotzdem die volle Oberflaeche — und er war ueberzeugt, angemeldet zu
-      // sein. Erst als eine Anfrage scheiterte, kam es heraus; die Suche danach
-      // kostete eine Stunde.
-      //
-      // Die Freigabe des Betreibers ("dauerhafter Google Login", Commit
-      // 9a46b01) bleibt unangetastet: es wird NICHT abgemeldet und NICHT
-      // umgeleitet. Aber wer es wissen will, sieht es jetzt.
       return "gueltig";
     }
   } catch {}
@@ -230,5 +313,13 @@ export async function verifyStoredSession(win, { fetchFn = globalThis.fetch, api
 if (typeof window !== "undefined") {
   const umgeleitet = enforceAuthGate(window);
   // Nur wenn die Seite bleibt: sonst pruefen wir eine Seite, die gerade geht.
-  if (!umgeleitet) verifyStoredSession(window).catch(() => {});
+  // Nach der Pruefung immer noch einmal nach dem Chat-Token sehen: hat
+  // verifyStoredSession eines mitgebracht, kehrt der Aufruf sofort um; sonst
+  // versucht er den Cookie-Weg. Beides blockiert das Rendern nicht.
+  if (!umgeleitet) {
+    verifyStoredSession(window)
+      .catch(() => {})
+      .then(() => holeApiTokenUeberCookie(window))
+      .catch(() => {});
+  }
 }

@@ -2,23 +2,61 @@ import { CLIENT_ROUTES } from "./config.js";
 // Chats kommen aus dem Speicher, nicht aus dem DOM (QA-Welle 2, Befund W2-01).
 // WICHTIG: derselbe Pfad wie in chat-history-view.js — ein abweichender
 // Spezifizierer (z. B. "./chat-store.js") erzeugt eine ZWEITE Modulinstanz.
-import { listChats, openChat } from "/assets/chat-store.js?v=pin-20260806";
+import { listChats, openChat } from "/assets/chat-store.js?v=b64";
+// Overlay-Logik (Cmd+K, Rendern, Tastatur) wohnt in search-overlay.js — diese
+// Datei bleibt klein und die Such-Seite hier ist nur noch die Rueckfallebene.
+// Seit 2026-08-24 ("Startseite abspecken") wird das Overlay erst beim ERSTEN
+// Cmd+K bzw. Such-Klick geladen und initialisiert; der Service Worker haelt
+// es im Precache, darum ist der erste Aufruf praktisch sofort da.
+let overlayGeladen = null;
+let overlayLader = () => null;
+
+/** Oeffnet das Such-Overlay (laedt es bei Bedarf). Fuer app.js: Promise<boolean>
+ *  oder null, solange initGlobalSearch noch nicht lief (dann Rueckfallebene). */
+export function oeffneSuchOverlay() {
+  const geladen = overlayLader();
+  return geladen ? geladen.then((m) => m.openSearchOverlay()) : null;
+}
+
+// Bildschirm 38: das eine Feld findet auch Einstellungen und Hilfe.
+// Die Bereichsliste spiegelt GROUPS aus settings-surface.js — dort ist die
+// Wahrheit; wer dort umbenennt, zieht hier nach (der Untertitel macht die
+// Zeile auffindbar: "schrift" findet Aussehen & Schriftgroesse).
+const EINSTELLUNGS_BEREICHE = Object.freeze([
+  ["general", "Allgemein", "Sprache, Start, Sicherheitsmodus"],
+  ["appearance", "Aussehen & Schriftgröße", "Größe, Farbschema, Dichte"],
+  ["behavior", "Wie smejj antwortet", "Länge, Gründlichkeit, Stil"],
+  ["models", "KI-Modelle & Anbieter", "Modelle und eigene Schlüssel"],
+  ["personalization", "Persönliches", "Deine Anweisungen an smejj"],
+  ["coding", "Programmieren", "Prüfungen, Vorschau, Zugriff"],
+  ["permissions", "Sicherheit", "Bestätigungen und Grenzen"],
+  ["notifications", "Benachrichtigungen", "Wenn ein Auftrag fertig ist"],
+  ["storage", "Dateien & Speicher", "Offline, Sync, Platz"],
+  ["advanced", "Erweitert", "Diagnose und Zurücksetzen"]
+]);
 
 const STATIC_RESULTS = Object.freeze([
+  ...EINSTELLUNGS_BEREICHE.map(([tab, name, sub]) =>
+    ["Einstellungen", name, `Einstellungen › ${name}`, "settings", `${name} ${sub} einstellungen`, undefined, undefined, undefined, tab]),
+  ["Hilfe", "Hilfe & Anleitung", "Erste Schritte, Bereiche, was tun wenn etwas nicht geht", "hilfe", "hilfe anleitung faq frage antwort erste schritte", undefined, undefined, undefined, undefined, "/hilfe.html"],
+
   ["Arbeitsbereiche", "Neu", "Neuer Chat oder neue Aufgabe starten", "start", "neu chat aufgabe start"],
   ["Arbeitsbereiche", "Coding", "Code schreiben, prüfen und umbauen", "smejjClaw", "coding code programmieren terminal"],
-  ["Arbeitsbereiche", "Projekte", "Projekt öffnen oder wechseln", "projects", "projekt projekte workspace"],
+  // "Arbeitsbereich" statt "Projekte" (2026-08-13): "Projekte" heisst seit dem
+  // Verlauf-Ausbau die Chat-Sammlung. Die alten Suchwoerter bleiben stehen —
+  // wer "projekt" tippt, soll diese Flaeche weiterhin finden.
+  ["Arbeitsbereiche", "Arbeitsbereich", "Lokale Dateien und Snapshots öffnen", "projects", "arbeitsbereich workspace projekt projekte projects dateien"],
   ["Arbeitsbereiche", "Dateien", "Projektdateien und Uploads finden", "files", "dateien files uploads quellen"],
   ["Arbeitsbereiche", "Verlauf", "Alte Chats und Aufgaben finden", "chatHistory", "verlauf history chat task"],
   ["Einstellungen", "Einstellungen", "Konto, Modelle, API-Keys und Sprache", "settings", "settings einstellungen konto modell api key"],
   ["Einstellungen", "Kosten & Limits", "Kostenstatus und Limits prüfen", "cost", "kosten limits budget"],
   ["Einstellungen", "Nutzer", "Lokalen Nutzer und Login prüfen", "profile", "nutzer login konto profil"],
-  ["Werkzeuge", "Browser", "Websites öffnen und prüfen", "websites", "browser websites web"],
+  ["Werkzeuge", "Browser", "Seiten öffnen und bedienen", "browser", "browser websites web"],
   ["Werkzeuge", "Quellen", "Referenzen und Projektdateien", "files", "quellen referenzen links dokumente"],
   ["Werkzeuge", "GitHub", "Repository, Branch und Commit-Status", "settings", "github repo branch commit pr"],
   ["Werkzeuge", "Vorschau", "App oder Website Preview", "browser", "vorschau preview app website"],
   ["Werkzeuge", "Status", "Tests, Build, Deploy und Fehler", "tools", "status tests build deploy fehler"],
-  ["Werkzeuge", "Automatisierung", "Wiederholbare Ablaufe und Agenten", "automation", "automatisierung automation agenten"]
+  ["Werkzeuge", "smejjBot", "Wiederholbare Ablaufe und Agenten", "automation", "smejjbot automatisierung automation auftraege agenten"]
 ]);
 
 export function initGlobalSearch({ $, goToView, showTaskIndicator, showToast, state, workspace }) {
@@ -55,11 +93,24 @@ export function initGlobalSearch({ $, goToView, showTaskIndicator, showToast, st
     if (!button) return;
     openResult({ view: button.dataset.searchView, label: button.dataset.searchLabel, jobId: button.dataset.searchJobId, chatId: button.dataset.searchChatId }, goToView, showTaskIndicator, showToast);
   });
+  overlayLader = () => {
+    overlayGeladen ||= import("./search-overlay.js?v=b58").then((m) => {
+      m.initSearchOverlay({
+        findResults: (query) => findResults(query, state, workspace),
+        openResult: (result) => openResult(result, goToView, showTaskIndicator, showToast)
+      });
+      return m;
+    }).catch((fehler) => { overlayGeladen = null; console.error("[smejj.com] Nachladen fehlgeschlagen:", fehler); throw fehler; });
+    return overlayGeladen;
+  };
   document.addEventListener("keydown", (event) => {
     if (event.key.toLowerCase() !== "k" || (!event.metaKey && !event.ctrlKey)) return;
     event.preventDefault();
-    goToView("search");
-    requestAnimationFrame(() => input.focus());
+    // Overlay zuerst; die Such-Seite bleibt Rueckfallebene, falls das
+    // Overlay-Markup fehlt oder das Nachladen scheitert. Ein Cmd+K darf nie
+    // ins Leere gehen.
+    const zurueckfall = () => { goToView("search"); requestAnimationFrame(() => input.focus()); };
+    overlayLader().then((m) => { if (!m.toggleSearchOverlay()) zurueckfall(); }).catch(zurueckfall);
   });
   renderResults(log, [], "");
 }
@@ -83,12 +134,14 @@ async function findResults(query, state, workspace) {
       ? String(treffer.text).replace(/\s+/g, " ").trim().slice(0, 90)
       : `${messages.length} Nachrichten`;
     const titel = String(chat.title || "").trim() || "Unterhaltung ohne Titel";
-    return ["Chats", titel, detail, "chatHistory", `${titel} ${volltext}`, undefined, chat.id];
+    // Das Chat-Objekt reist mit: das Overlay zeigt damit Treffer-Ausschnitt,
+    // Zeitstempel und den aufbereiteten Titel (chat-history-text.js).
+    return ["Chats", titel, detail, "chatHistory", `${titel} ${volltext}`, undefined, chat.id, chat];
   });
   // Erst nach den Projekten: die Dateiliste haengt an ihnen.
   const fileRows = await loadProjectFileRows(workspace, projectRows).catch(() => []);
   const dynamic = [
-    ...projectRows.map((project) => ["Projekte", project.name || project.id, `Projekt ${project.id}`, "projects", `${project.id} ${project.name} ${project.syncStatus}`]),
+    ...projectRows.map((project) => ["Arbeitsbereich", project.name || project.id, `Projekt ${project.id}`, "projects", `${project.id} ${project.name} ${project.syncStatus}`]),
     ...fileRows,
     ...jobRows.map((job) => ["Aufgaben", job.task || job.id, `${job.status} - ${job.id}`, "automation", `${job.id} ${job.task} ${job.status}`, job.id]),
     ...chatRows,
@@ -97,7 +150,7 @@ async function findResults(query, state, workspace) {
   ];
   return [...STATIC_RESULTS, ...dynamic]
     .filter(([, label, detail,, text]) => `${label} ${detail} ${text}`.toLowerCase().includes(needle))
-    .map(([group, label, detail, view, _text, jobId, chatId]) => ({ group, label, detail, view, jobId, chatId }));
+    .map(([group, label, detail, view, _text, jobId, chatId, chat, settingsTab, href]) => ({ group, label, detail, view, jobId, chatId, chat, settingsTab, href }));
 }
 
 // Projekt-Dateien (Konkurrenz-Radar V4 Stufe 2, 2026-08-06): Bisher fand die
@@ -181,6 +234,15 @@ function empty(text) {
 
 function openResult(result, goToView, showTaskIndicator, showToast) {
   showTaskIndicator("done");
+  // Bildschirm 38: Hilfe-Treffer sind Seiten, Einstellungs-Treffer oeffnen
+  // direkt den richtigen Bereich (nicht nur die Einstellungs-Ansicht).
+  if (result.href) { location.href = result.href; return; }
+  if (result.settingsTab) {
+    goToView("settings");
+    setTimeout(() => document.querySelector(`[data-settings-tab="${result.settingsTab}"]`)?.click(), 250);
+    showToast?.(`${result.label} geoeffnet`);
+    return;
+  }
   // Ein Chat-Treffer oeffnet die Unterhaltung selbst; openChat() wechselt dabei
   // eigenstaendig zur Startansicht. Schlaegt das fehl, bleibt der Verlauf als
   // Rueckfallebene — ein Treffer darf nie ins Leere fuehren.

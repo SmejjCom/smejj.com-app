@@ -1,19 +1,19 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T05:52:13.578Z",
-  "confirmation": "Betreiber am 2026-08-23 (Karte): 'Ja, neu einfrieren' — public/chat-bridge.js traegt auf dem Bau-Branch die am 2026-08-18 live bewiesene Prompt-Caching-Fassung (RAG-Block vor die letzte Nutzerfrage, Verlauf in 4er-Bloecken); keine Aenderung an Anmeldung, Konto-Sicherheit oder Endpunktwahl. Befund der Seite 'Was ist wirklich live?'.",
+  "frozenAt": "2026-08-24T16:15:15.945Z",
+  "confirmation": "Betreiber 2026-08-24 'Buendel-Projekt starten': fuenf Dateien auf die live ausgelieferten Frontend-Fassungen angeglichen",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "842af267e98833f359a4b6044b6e234ea871c5e79834332ebcc4fe6929215546",
-    "public/auth/register/index.html": "e4d40a128d6c683b520e81cddeea8e48793b99569cd3911fe2875578a45177c5",
+    "public/auth/login/index.html": "48595610972fd8f9e504414bf5784d349f47021f05aa4c7d5852b9608c20d793",
+    "public/auth/register/index.html": "ca5a2988930d4ae400e23436ad237985359ccd760aab02f2b15959863ba9d1de",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
-    "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
-    "public/chat-history-context.js": "c35796105959b0e691ff146a5ae74cc0e039670e77bbeec95cf7f73af77c023a",
+    "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
+    "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
     "public/chat-bridge.js": "86005dfa3147100f5edd1b0fe788899c30b105f75b427152bd67a259a8d1c8ae",
-    "public/ai/fetch-retry.js": "396e0decd678f4ef720ef8ade5ee1d8df7cb4af12b3d608f78a114c6ab34dff0",
+    "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
 }

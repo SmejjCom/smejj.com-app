@@ -52,10 +52,12 @@ test("Import in Node ist gefahrlos (document-Waechter greift)", async () => {
 });
 
 test("index.html laedt den Waechter als Modul nach browser-pane.js", () => {
-  assert.match(html, /<script src="\/assets\/browser-pane-backdrop\.js\?v=2" type="module"><\/script>/);
-  const paneAt = html.indexOf("/assets/browser-pane.js?v=");
-  const guardAt = html.indexOf("/assets/browser-pane-backdrop.js?v=2");
-  assert.ok(paneAt > -1 && guardAt > paneAt, "Waechter muss nach browser-pane.js stehen");
+  // Seit der Konsolidierung 24.08. laedt browser-nachladen.js Pane UND Waechter
+  // beim ersten Bedarf — die Reihenfolge-Zusage gilt im Nachlader.
+  const nachladen = fs.readFileSync("public/browser-nachladen.js", "utf8");
+  const paneAt = nachladen.indexOf('import("./browser-pane.js?v=');
+  const guardAt = nachladen.indexOf('import("./browser-pane-backdrop.js?v=2")');
+  assert.ok(paneAt > -1 && guardAt > paneAt, "Waechter muss nach browser-pane.js geladen werden");
 });
 
 test("sw.js hat den Waechter im Precache (cache-first erreicht Bestandsnutzer nur so)", () => {

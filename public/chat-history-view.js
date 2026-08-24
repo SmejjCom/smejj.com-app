@@ -29,7 +29,7 @@
 import {
   listChats, openChat, renameChat, deleteChat, activeChatId, togglePinChat, newChat,
   listProjekte, erstelleProjekt, benenneProjektUm, loescheProjekt, setzeChatProjekt
-} from "/assets/chat-store.js?v=pin-20260806";
+} from "/assets/chat-store.js?v=b64";
 // Holt fuer Chats ohne eigenen Titel einen aus der Bruecke. Von HIER importiert
 // und nicht aus index.html, damit die Startseite unter dem Start-Lock bleibt
 // (gleiches Muster wie icon-nutzung.js in profile-dock.js). Das Modul meldet
@@ -42,14 +42,18 @@ import "/assets/chat-title-auto.js";
 // Teilmenge von text.js aus dem zweiten Schnitt — ist entfallen.
 import {
   anzeigeTitel, anzeigeVorschau, ersteFrage, gruppeVon, mitHervorhebung,
-  ohneBallast, trefferAusschnitt, volltext, zeitText, themaVon, sichereAlsMarkdown,
+  ohneBallast, trefferAusschnitt, volltext, zeitText, themaVon, merkmaleVon, sichereAlsMarkdown,
   projektGruppen
-} from "/assets/chat-history-text.js";
-import { createCardBuilders, createProjektAktionen } from "/assets/chat-history-cards.js?v=split-20260810";
+} from "/assets/chat-history-text.js?v=b47b";
+import { createCardBuilders, createProjektAktionen } from "/assets/chat-history-cards.js?v=b58";
 
 const STYLE_ID = "chatHistoryStyles";
 
 let confirmingId = "";
+// Halb-Commit repariert (Nutzertest 2026-08-17): menuSchliessen setzte diese
+// Variable, deklariert war sie NIE — jeder ⋯-Klick warf einen ReferenceError,
+// bevor das Menue erschien. Umbenennen/Anheften/Loeschen waren unerreichbar.
+let confirmingProjektId = "";
 let confirmTimer = null;
 let suchbegriff = "";
 let themenFilter = "";
@@ -188,6 +192,8 @@ function injectStyles() {
        ::after als Trennlinie; der ⋯-Knopf bekommt order: 2 und steht damit
        HINTER der Linie am rechten Rand. position: relative, weil das
        Projekt-Menue (.ch-menu) absolut am Kopf haengt. */
+    .ch-gruppe-n { font-weight: 400; text-transform: none; letter-spacing: 0;
+      font-size: 13px; opacity: .75; margin-left: 8px; order: 3; }
     .ch-gruppe.ch-projekt { position: relative; opacity: .72; }
     .ch-projekt .ch-projekt-name { color: #78dce8; }
     .ch-projekt .ch-projekt-leer { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: .6; }
@@ -331,13 +337,19 @@ function zeichne(target) {
     chat,
     titel: anzeigeTitel(chat),
     vorschau: anzeigeVorschau(chat),
-    thema: themaVon(chat)
+    thema: themaVon(chat),
+    merkmale: merkmaleVon(chat)
   }));
   entdoppeln(aufbereitet);
 
   const nadel = suchbegriff.trim().toLowerCase();
+  // themenFilter traegt seit Bildschirm 47 MERKMAL-Schluessel
+  // (angeheftet/datei/bild/code) statt Themennamen — gefiltert wird nach dem,
+  // was nachweisbar in der Unterhaltung steckt, nicht nach geratenem Thema.
+  const passtFilter = (eintrag) => !themenFilter
+    || (themenFilter === "angeheftet" ? eintrag.chat.pinned === true : eintrag.merkmale?.[themenFilter] === true);
   const treffer = aufbereitet.filter((eintrag) =>
-    (!themenFilter || eintrag.thema === themenFilter)
+    passtFilter(eintrag)
     && (!nadel || volltext(eintrag.chat).toLowerCase().includes(nadel)));
 
   const stueck = document.createDocumentFragment();
@@ -357,7 +369,7 @@ function zeichne(target) {
 
   if (!treffer.length) {
     beobachterAus();
-    stueck.append(bausteinLeer(nadel ? `Nichts gefunden für „${suchbegriff.trim()}".` : "In diesem Thema liegt nichts."));
+    stueck.append(bausteinLeer(nadel ? `Nichts gefunden für „${suchbegriff.trim()}".` : "Mit diesem Merkmal liegt nichts."));
     ziel.replaceChildren(stueck);
     return;
   }
@@ -391,7 +403,14 @@ function zeichne(target) {
 
   // Angeheftete stehen immer vollstaendig da: es sind wenige, und sie sind
   // ausdruecklich als wichtig markiert. Nachgeladen wird nur die Zeitliste.
-  nachladeZustand = { rest: ohneProjektRest, index: 0, letzteGruppe: "", aktiv, nadel };
+  // Mockup Bildschirm 47: der Gruppenkopf traegt die Anzahl. Einmal vorab
+  // gezaehlt — das Nachladen haengt Karten an, die Koepfe brauchen die Summe.
+  const gruppenAnzahl = new Map();
+  for (const eintrag of ohneProjektRest) {
+    const g = gruppeVon(eintrag.chat.updatedAt);
+    gruppenAnzahl.set(g, (gruppenAnzahl.get(g) || 0) + 1);
+  }
+  nachladeZustand = { rest: ohneProjektRest, index: 0, letzteGruppe: "", aktiv, nadel, gruppenAnzahl };
   stueck.append(naechsteKarten());
   const marke = document.createElement("div");
   marke.className = "ch-marke";
@@ -448,7 +467,7 @@ function naechsteKarten(anzahl = ERSTER_BLOCK) {
     const eintrag = rest[i];
     const gruppe = gruppeVon(eintrag.chat.updatedAt);
     if (gruppe !== nachladeZustand.letzteGruppe) {
-      teil.append(bausteinGruppe(gruppe));
+      teil.append(bausteinGruppe(gruppe, nachladeZustand.gruppenAnzahl?.get(gruppe)));
       nachladeZustand.letzteGruppe = gruppe;
     }
     teil.append(bausteinKarte(eintrag, aktiv, nadel));

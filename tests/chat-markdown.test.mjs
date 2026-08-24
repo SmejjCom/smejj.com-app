@@ -253,9 +253,16 @@ test("Verdrahtung: gerendert wird erst am ENDE des Streams", () => {
   // danach folgt falteSchritte(), das die Schrittliste NEBEN der Antwort
   // zusammenklappt und den Antwort-Knoten gar nicht anfasst. Die eigentliche
   // Zusage wird deshalb direkt geprueft statt ueber die Position.
-  assert.equal((chatStream.match(/renderMarkdown\?\.\(output\)/g) || []).length, 1,
-    "genau EIN Renderaufruf — mehrere hiessen: mittendrin gerendert");
-  assert.doesNotMatch(chatStream, /renderMarkdown\?\.\(output\);[\s\S]*output\.textContent \+=/,
+  // Seit der Stille-Wache gibt es ZWEI Ende-Pfade (Abbruch nach Stillstand und
+  // normales Ende) — beide rendern erst NACH dem letzten textContent-Schreiben.
+  assert.equal((chatStream.match(/renderMarkdown\?\.\(output\)/g) || []).length, 2,
+    "genau die zwei Ende-Renderaufrufe — mehr hiesse: mittendrin gerendert");
+  assert.ok(!/renderMarkdown\?\.\(output\);[\s\S]*?await reader\.read\(\)/.test(chatStream),
+    "kein Renderaufruf vor dem Stromende");
+  // Zwei Ende-Pfade: nur NACH dem letzten Renderaufruf darf nichts mehr an den
+  // Antworttext angehaengt werden (der Stille-Pfad davor endet mit return).
+  const nachLetztemRender = chatStream.slice(chatStream.lastIndexOf("renderMarkdown?.(output)"));
+  assert.ok(!nachLetztemRender.includes("output.textContent +="),
     "nach dem Rendern darf nichts mehr an den Antworttext angehaengt werden");
   assert.match(appJs, /renderMarkdown: renderChatMarkdown/,
     "app.js muss den Markdown-Renderer an den Empfaenger uebergeben");

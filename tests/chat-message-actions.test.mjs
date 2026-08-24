@@ -518,11 +518,14 @@ test("Pfeiltasten laufen im Menue um", () => {
 // --- Leiste und Menue -------------------------------------------------------
 
 test("Belegung der Leiste je Rolle", () => {
+  // Live-Belegung seit der ChatGPT-Aufraeumrunde: die Nutzer-Leiste traegt nur
+  // das Menue (Kopieren/Bearbeiten wanderten hinein), die Antwort-Leiste hat
+  // Vorlesen direkt. Konsolidierung 24.08.: Test folgt der ausgelieferten App.
   const user = barSpecFor("user").map((spec) => spec.act);
-  assert.deepEqual(user, ["copy", "edit", "menu"], "Bearbeiten bleibt — ChatGPT hat es im Mai 2026 entfernt");
+  assert.deepEqual(user, ["menu"], "Bearbeiten bleibt — im Menue (ChatGPT hat es im Mai 2026 ganz entfernt)");
 
   const assistant = barSpecFor("assistant").map((spec) => spec.act);
-  assert.deepEqual(assistant, ["copy", "rate-up", "rate-down", "regen", "menu"]);
+  assert.deepEqual(assistant, ["copy", "speak", "rate-up", "rate-down", "menu"]);
   assert.equal(assistant.at(-1), "menu", "das Ueberlaufmenue steht immer am Ende");
 
   for (const spec of [...barSpecFor("user"), ...barSpecFor("assistant")]) {
@@ -532,10 +535,10 @@ test("Belegung der Leiste je Rolle", () => {
 
 test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   const user = menuItemsFor("user").map((item) => item.act);
-  assert.deepEqual(user, ["fork", "remove"]);
+  assert.deepEqual(user, ["copy", "edit", "fork", "remove"]);
 
   const assistant = menuItemsFor("assistant");
-  assert.deepEqual(assistant.map((item) => item.act), ["copy-plain", "speak", "fork", "remove"]);
+  assert.deepEqual(assistant.map((item) => item.act), ["regen", "copy-plain", "fork", "remove"]);
   assert.equal(assistant.at(-1).danger, true);
   assert.ok(!assistant.some((item) => item.act === "sources"), "keine Quellenliste, solange keine Quellen erfasst werden");
 });
@@ -613,7 +616,9 @@ test("die Leiste wird als Geschwister eingehaengt, nie in die Nachricht", () => 
 
 test("Leser des Nachrichtentexts sehen die Bedienelemente nicht", () => {
   assert.match(store, /querySelectorAll\(":scope > \.entry"\)/, "der Verlauf-Speicher liest nur Nachrichten");
-  assert.match(historyContext, /querySelectorAll\("\.entry\.user, \.entry\.assistant"\)/, "der Modellkontext liest nur Nachrichten");
+  // Die Erwaehnungs-Zettel ([data-smejj-erwaehnung]) gehoeren seit dem "@"-Feature
+  // mit in den Modellkontext — Bedienelemente bleiben weiter aussen vor.
+  assert.match(historyContext, /querySelectorAll\("\.entry\.user, \.entry\.assistant, \[data-smejj-erwaehnung\]"\)/, "der Modellkontext liest nur Nachrichten");
 });
 
 test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
@@ -641,13 +646,17 @@ test("Quellen kommen aus echtem Grounding, nicht aus Raten", () => {
   assert.match(grounding, /if \(!context\) return;/, "ein gescheiterter Abruf begruendet nichts und wird nicht gemerkt");
   assert.match(grounding, /MAX_QUELLEN/, "die Karte waechst nicht unbegrenzt");
 
-  assert.match(actions, /import \{ groundingFor \}/, "die Leiste fragt die echte Quelle ab");
+  // Seit dem Abspecken (24.08.) laedt die Leiste die Quelle nach der Antwort nach.
+  assert.match(actions, /import\("\/assets\/browser-context\.js"\)/, "die Leiste fragt die echte Quelle ab");
   // Live-Befund 2026-07-28: mit "?v=1" entstand eine ZWEITE Modulinstanz mit
   // eigenem Quellen-Gedaechtnis — app.js schrieb in die eine, die Leiste las aus
   // der anderen, und "Quellen anzeigen" waere nie erschienen.
-  const appImport = /from "\.\/browser-context\.js(\?[^"]*)?"/.exec(appJs);
-  assert.ok(appImport, "app.js importiert browser-context.js");
-  const actionsImport = /from "\/assets\/browser-context\.js(\?[^"]*)?"/.exec(actions);
+  // Beide Seiten laden seit dem Abspecken (24.08.) DYNAMISCH — die Regel bleibt:
+  // identischer Spezifizierer (./ in app.js loest auf /assets/ auf), gleiche Query.
+  const sendepfad = fs.readFileSync("public/sendepfad-nachladen.js", "utf8");
+  const appImport = /import\("\.\/browser-context\.js(\?[^"]*)?"\)/.exec(sendepfad);
+  assert.ok(appImport, "der Sendepfad-Nachlader importiert browser-context.js");
+  const actionsImport = /import\("\/assets\/browser-context\.js(\?[^"]*)?"\)/.exec(actions);
   assert.ok(actionsImport, "chat-actions.js importiert browser-context.js");
   assert.equal(
     actionsImport[1] || "",

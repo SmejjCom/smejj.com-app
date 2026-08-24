@@ -16,7 +16,9 @@ const startDesignLock = fs.readFileSync("docs/frontend/START_DESIGN_LOCK.md", "u
 const requiredViews = [
   "start",
   "search",
-  "websites",
+  // "websites" wich 2026-08 der Projects/Arbeitsbereiche-Ansicht (Konsolidierung 24.08.)
+  "arbeitsbereiche",
+  "papierkorb",
   "smejjClaw",
   "automation",
   "chatHistory",
@@ -106,7 +108,9 @@ test("start composer keeps chat inside the start page", () => {
   assert.doesNotMatch(html, /id="log"/);
   assert.doesNotMatch(html, /data-view="chat"/);
   assert.match(app, /submitTask\(task, \{ target: "#startLog" \}\)/);
-  assert.match(app, /runClientChat/);
+  // Seit dem Abspecken (24.08.) laedt der Start-Chat seine Module beim ersten
+  // Senden nach — der Sendepfad bleibt auf der Startseite.
+  assert.match(app, /holeSendepfad/);
   assert.match(app, /chat: "start"/);
   assert.match(app, /chat: "\/"/);
   assert.match(app, /"\/chat": "start"/);
@@ -120,8 +124,7 @@ test("start composer lower tools are functional", () => {
   assert.match(html, /data-start-tool="voice"/);
   assert.match(html, /data-start-tool="audio"/);
   assert.match(html, /data-start-tool="speaker"/);
-  assert.match(app, /import \{ initComposerTools \} from "\.\/composer-tools\.js(\?[^"]*)?"/);
-  assert.ok(app.includes('initComposerTools()'));
+  assert.match(app, /import\("\.\/composer-tools\.js[^"]*"\)\.then\(\(m\) => m\.initComposerTools\(\)\)/);
   assert.ok(composerTools.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
   // Die Browser-Sprachausgabe liegt seit Stufe 3 in voice-browser-tts.js
   // (800-Zeilen-Regel) — der Host muss sie importieren, die Utterance lebt dort.

@@ -33,7 +33,7 @@ test("jeder genannte Arbeitsbereich existiert wirklich", () => {
   // Datei-Flaeche heisst jetzt Arbeitsbereich, "Projekte" gehoert seither den
   // Chat-Gruppen im Verlauf. Der Test trug den alten Namen fest verdrahtet
   // weiter und meldete die vollzogene Umbenennung als Fehler.
-  const bereiche = ["Neu", "Suche", "Coding", "Arbeitsbereich", "Dateien", "Verlauf", "Einstellungen"];
+  const bereiche = ["Chat", "Sprechen", "Im Netz suchen", "Bilder erstellen", "Programmieren", "Browser bedienen", "smejjBot", "Verlauf"];
   for (const name of bereiche) {
     assert.ok(hilfe.includes(`<dt>${name}</dt>`), `Hilfe nennt "${name}" nicht`);
     assert.ok(
@@ -63,7 +63,7 @@ test("die Hilfe nennt genau die Modelle, die die App anbietet", () => {
   assert.ok(absatz, "Der Modell-Absatz der Hilfe wurde nicht gefunden");
   for (const treffer of absatz[1].matchAll(/<strong>([^<]+)<\/strong>/g)) {
     assert.ok(
-      ANGEBOTENE_MODELLE.includes(treffer[1]),
+      ANGEBOTENE_MODELLE.some((m) => treffer[1] === m || treffer[1].includes(`(${m})`)),
       `Die Hilfe nennt "${treffer[1]}", die App bietet es nicht an`
     );
   }

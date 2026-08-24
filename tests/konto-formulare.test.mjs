@@ -225,8 +225,12 @@ test("der Fokusring ist in BEIDEN Schemata sichtbar", () => {
   const regel = CSS_CODE.match(/#profile \.account-inline-form input:focus-visible \{[\s\S]*?\n\}/)[0];
   assert.ok(!/var\(--konto-edge\)/.test(regel),
     "der Fokusring darf nicht an der Kantenfarbe haengen");
-  assert.match(regel, /outline: 2px solid #2dd4bf/,
+  // Seit V11 haengt der Ring an --konto-fokus: cyan im dunklen, dunkles
+  // Petrol (#0c6b5e) im hellen Schema — je Schema definiert, nie edge-weiss.
+  assert.match(regel, /outline: 2px solid var\(--konto-fokus\)/,
     "Akzentfarbe traegt in hell und dunkel");
+  assert.equal((CSS_CODE.match(/--konto-fokus:/g) || []).length >= 2, true,
+    "--konto-fokus braucht eine Definition je Schema");
 });
 
 test("beide Schemata definieren jede benutzte Konto-Variable", () => {

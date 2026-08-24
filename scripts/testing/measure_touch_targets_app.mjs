@@ -38,8 +38,10 @@ const MIN_ZIEL = 44;
 // popstate: ein Klick durchs Menue erreicht nicht jede Ansicht, und die
 // Anmelde-Pflicht steht einem echten Seitenwechsel im Weg.
 const ANSICHTEN = [
-  ["Suche", "/search"], ["Websites", "/websites"], ["smejj Claw", "/smejj-claw"],
-  ["Automatisierung", "/automation"],
+  // Konsolidierung 24.08.: "/websites" wich Projects/Arbeitsbereichen; smejjBot
+  // ersetzt die alte "/automation"-Route (Betreiber 16.08.: "heisst ueberall smejjBot").
+  ["Suche", "/search"], ["Projects", "/bereiche"], ["Papierkorb", "/papierkorb"],
+  ["smejj Claw", "/smejj-claw"], ["smejjBot", "/smejjBot"],
   ["Verlauf", "/chat-history"], ["Browser", "/browser"], ["Coding", "/code"],
   ["Projekte", "/projects"], ["Dateien", "/files"], ["Speicher", "/storage"],
   ["Gedaechtnis", "/memory"], ["Modelle", "/ai"], ["Kosten", "/cost"],

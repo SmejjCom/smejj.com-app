@@ -17,7 +17,8 @@ const sitemap = fs.readFileSync("public/sitemap.xml", "utf8");
 const RESTORE_KEY = "smejj-restore-route";
 const SPA_ROUTES = [
   "/search",
-  "/websites",
+  "/bereiche",
+  "/papierkorb",
   "/projects",
   "/files",
   "/storage",

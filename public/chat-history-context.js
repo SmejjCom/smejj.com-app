@@ -41,6 +41,18 @@ function isPlaceholder(node) {
 
 function entryText(node) {
   if (isPlaceholder(node)) return "";
+  // Die Schrittliste (Werkzeugzeilen, Denk-Zeile) ist KEIN Gespraechsinhalt:
+  // "Websuche … ✓ 3 Treffer" oder das Selbstgespraech des Modells gehoeren
+  // nicht als Assistenten-Antwort in die naechste Anfrage (2026-08-23).
+  if (node?.dataset?.smejjSchritte === "true") return "";
+  // Die Frage-Karte (smejj_frage) geht als das in den Verlauf, was sie ist:
+  // die Rueckfrage samt Optionen — nicht als Knopfbeschriftungs-Salat.
+  if (node?.dataset?.smejjFrage === "true") {
+    const frage = node.querySelector?.(".chat-frage-titel")?.textContent?.trim() || "";
+    const optionen = [...(node.querySelectorAll?.(".chat-frage-option[data-option]") || [])]
+      .map((k) => k.dataset?.option || "").filter(Boolean);
+    return frage ? `Rückfrage: ${frage} Optionen: ${optionen.join(" · ")}`.slice(0, CLIENT_HISTORY_MAX_MESSAGE_CHARS) : "";
+  }
   const text = (node?.textContent || "").trim();
   if (!text) return "";
   if (SKIP_PATTERNS.some((pattern) => pattern.test(text))) return "";
@@ -57,8 +69,10 @@ export function collectConversationHistory(scope = document, logSelector = "#sta
   const log = scope.querySelector?.(logSelector);
   if (!log) return [];
   const history = [];
-  for (const node of log.querySelectorAll(".entry.user, .entry.assistant")) {
-    const role = node.classList.contains("user") ? "user" : "assistant";
+  // Erwaehnungs-Kontext (erwaehnung.js, "@Titel"): unsichtbare Knoten, die
+  // als Nutzernachricht mitgehen — KEIN .entry, darum hier ausdruecklich.
+  for (const node of log.querySelectorAll(".entry.user, .entry.assistant, [data-smejj-erwaehnung]")) {
+    const role = node.classList.contains("user") || node.dataset?.smejjErwaehnung === "true" ? "user" : "assistant";
     const content = entryText(node);
     if (content) history.push({ role, content });
   }

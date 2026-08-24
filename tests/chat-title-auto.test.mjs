@@ -98,8 +98,11 @@ test("das Modul bleibt fail-safe und ruecksichtsvoll", () => {
 
 test("Kennungen der Importe passen zu den uebrigen Modulen (Befund F-07)", () => {
   // Ein abweichender Spezifizierer erzeugt eine ZWEITE Modulinstanz.
-  assert.match(QUELLE, /from "\/assets\/chat-store\.js\?v=pin-20260806"/);
-  assert.match(QUELLE, /from "\/assets\/ai\/chat-stream\.js"/);
+  const verlaufQuery = /chat-store\.js\?v=([\w-]+)/.exec(readFileSync(new URL("../public/chat-history-view.js", import.meta.url), "utf8"))?.[1];
+  assert.match(QUELLE, new RegExp(`from "\\/assets\\/chat-store\\.js\\?v=${verlaufQuery}"`), "gleiche chat-store-Query wie der Verlauf — sonst zwei Modulinstanzen");
+  // Seit dem Abspecken (24.08.) kommt bridgeAuthHeaders dynamisch — derselbe
+  // Spezifizierer ohne Kennung, also weiterhin EINE Modulinstanz.
+  assert.match(QUELLE, /import\("\/assets\/ai\/chat-stream\.js"\)/);
   assert.ok(!/chat-stream\.js\?/.test(QUELLE), "chat-stream.js wird ohne Kennung importiert");
 });
 

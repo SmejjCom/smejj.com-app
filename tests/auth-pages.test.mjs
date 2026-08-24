@@ -27,7 +27,7 @@ test("auth pages expose honest professional sign-in paths", async () => {
     assert.match(page, /src="\/(assets\/)?auth\/auth-page\.js(\?v=[^"]*)?"/);
   }
   // Codex-Stil (Freigabe 2026-07-21): E-Mail zuerst, grosse Knoepfe, beide Themes.
-  assert.match(login, /Willkommen zurück/);
+  assert.match(login, /Anmelden oder registrieren/);
   assert.match(register, /Konto erstellen/);
   assert.match(css, /auth-card/);
   assert.match(css, /prefers-color-scheme: light/);

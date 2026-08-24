@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' blob: data: https://smejj-control.zeabur.app https://smejj-chat-bridge.zeabur.app https://api.openai.com https://api.moonshot.ai https://api.mistral.ai http://localhost:* http://127.0.0.1:*">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; connect-src 'self' blob: data: https://api.smejj.com https://smejj-control.zeabur.app https://smejj-chat-bridge.zeabur.app https://api.openai.com https://api.moonshot.ai https://api.mistral.ai http://localhost:* http://127.0.0.1:*">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#101113">
     <meta name="description" content="Hilfe zu smejj.com – erste Schritte, Arbeitsbereiche, Modelle, Sprache, Datenschutz und was zu tun ist, wenn etwas nicht geht.">
@@ -45,6 +45,7 @@
       </nav>
 
       <h2 id="erste-schritte">Erste Schritte</h2>
+      <p><a href="/?fuehrung=neu">Führung nochmal starten</a> — die vier kurzen Hinweise vom ersten Besuch.</p>
       <div class="card">
         <p>
           <strong>1. Anmelden.</strong> smejj.com verlangt eine Anmeldung, bevor
@@ -71,13 +72,22 @@
       <div class="card">
         <p>Links über das Menü erreichbar. Jeder Bereich hat eine eigene Adresse, Sie können ihn also verlinken.</p>
         <dl class="hilfe-liste">
-          <dt>Neu</dt><dd>Ein leeres Gespräch. Der Startpunkt für alles.</dd>
-          <dt>Suche</dt><dd>Durchsucht Ihren gesamten Gesprächsverlauf, nicht nur das offene Gespräch. Ein Treffer öffnet die Unterhaltung an der Stelle.</dd>
-          <dt>Coding</dt><dd>Aufträge, die Code schreiben oder ändern. Läuft als Auftrag im Hintergrund; der Zustand wird angezeigt.</dd>
-          <dt>Arbeitsbereich</dt><dd>Bündelt Dateien und Verlauf zu einem Vorhaben.</dd>
-          <dt>Dateien</dt><dd>Was Sie hochgeladen oder erzeugt haben.</dd>
+          <!-- Die Spur hat vier Gruppen (Mockup V11, Bildschirm 19). Die Hilfe
+               folgt der Oberflaeche: gleiche Woerter, gleiche Reihenfolge. -->
+          <dt>Chat</dt><dd>Zurück zum laufenden Gespräch. Läuft keines, beginnt ein neues — der Startpunkt für alles.</dd>
+          <dt>Sprechen</dt><dd>Öffnet den Chat und startet sofort den Sprachmodus. Sie reden, smejj antwortet mit Stimme.</dd>
+          <dt>Im Netz suchen</dt><dd>Durchsucht Ihren gesamten Gesprächsverlauf, nicht nur das offene Gespräch. Ein Treffer öffnet die Unterhaltung an der Stelle.</dd>
+          <dt>Bilder erstellen</dt><dd>Öffnet den Chat mit einer fertigen Bild-Vorlage — nur noch beschreiben, was zu sehen sein soll.</dd>
+          <dt>Programmieren</dt><dd>Aufträge, die Code schreiben oder ändern. Läuft im Hintergrund weiter; Sie sehen jederzeit, wie weit es ist.</dd>
+          <dt>Browser bedienen</dt><dd>smejj steuert einen echten Browser für Sie — Seiten öffnen, klicken, ausfüllen.</dd>
+          <dt>smejjBot</dt><dd>Aufgaben, die von allein laufen — einmal einrichten, smejj erledigt sie im Hintergrund.</dd>
           <dt>Verlauf</dt><dd>Alle früheren Gespräche.</dd>
-          <dt>Browser</dt><dd>Rechts einblendbar. Zeigt fremde Seiten an, damit der Assistent auf ihren Inhalt zugreifen kann.</dd>
+          <dt>smejjCloud</dt><dd>Bündelt Dateien und Verlauf zu einem Vorhaben. Gespräche lassen sich darin gruppieren.</dd>
+          <dt>Dateien</dt><dd>Was Sie hochgeladen oder erzeugt haben.</dd>
+          <dt>Papierkorb</dt><dd>Gelöschte Gespräche, 30 Tage lang wiederherstellbar — erst danach wirklich weg.</dd>
+          <dt>Systemzustand</dt><dd>Läuft gerade alles? Jede Fähigkeit mit Ampel und Klartext.</dd>
+          <dt>KI-Modelle</dt><dd>Welche Modelle smejj benutzt — und eigene API-Schlüssel, wenn Sie welche haben.</dd>
+          <dt>Speicher</dt><dd>Wo Ihre Sachen liegen und wie viel Platz sie brauchen.</dd>
           <dt>Einstellungen</dt><dd>Sprache, Sicherheitsmodus, Modelle und eigene API-Schlüssel. Änderungen speichern sich von selbst.</dd>
         </dl>
       </div>
@@ -87,9 +97,9 @@
         <p>
           Unten im Eingabefeld wählen Sie, welches Modell antwortet:
           <strong>smejj 1.0</strong> (Standard, mit den Stufen <em>Schnell</em> und
-          <em>Gründlich</em>), Kraftvoll <strong>GLM-5.2</strong>,
-          Neuestes <strong>Kimi K3</strong>, Coding-Agent <strong>Cline</strong>
-          und Coding-Profi <strong>Kimi K2.7</strong>.
+          <em>Gründlich</em>), <strong>Kraftvoll (GLM-5.2)</strong>,
+          <strong>Neuestes (Kimi K3)</strong>, <strong>Coding-Agent (Cline)</strong>
+          und <strong>Coding-Profi (Kimi K2.7)</strong>.
         </p>
         <p>
           Für manche Modelle brauchen Sie einen eigenen API-Schlüssel. Den

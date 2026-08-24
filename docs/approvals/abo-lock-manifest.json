@@ -1,15 +1,15 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T10:51:26.580Z",
-  "confirmation": "Betreiber am 2026-08-23: 'Alles ist fertig — zum Schluss 100 % Schutz aktivieren' — Abo-Kette neu eingefroren nach gelesenen, additiven Aenderungen: subscriptionStore liefert paidEmail (Kontoseite 'Bezahlt wurde mit'), stripeEventApply verbucht API-Guthaben getrennt vom Abo (1d33c033), opsAbrechnung traegt paidEmail und laedt die Kaufadresse aus Stripe nach (Nutzer-Lage, Abo-Umhaengen).",
+  "frozenAt": "2026-08-24T16:13:07.848Z",
+  "confirmation": "Betreiber 2026-08-24 'Buendel-Projekt starten': account-privacy/account-sessions auf die live ausgelieferten Frontend-Fassungen angeglichen (Konsolidierung Stufe 1)",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "959087778a74f4d49530a58c85b3f40402813e617a1b4ba5c0e2eb15df639925",
     "control-server/src/billing/stripeWebhookVerify.js": "e7a42ade4bc0e78e718bac8cc24cf30e21f46aec70aac8c2d6bcc7ce2a99e6b6",
     "control-server/src/billing/stripeEventApply.js": "71de637a1e577943525db71382bce11fdbfd905c80f5f4e223158e0ecb706d60",
     "control-server/src/billing/subscriptionStore.js": "849806cffa39eebbeb50d67404e567358d38bc5952c717424abea2faa528ffea",
-    "public/account-privacy.js": "0e34fdd2d539413591f939982ace720595af416ef892f4e3d18f1b7dc31d62d5",
-    "public/account-sessions.js": "8e53fe08b349ec91e77f578d1e0da46d52213d5b83216705aebb7870215e6ae7",
+    "public/account-privacy.js": "cefbff9fd67aabce52cbb78b135b0706306100fc69da3a59d2ae1b96b4f374e1",
+    "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/danke-abo.html": "14e2ff0dd497692bddd2add5593f7a3e82d42dfe60c62119fcfb97a912ac5ff9",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",
     "control-server/src/admin/opsAbrechnung.js": "cd35180f12612e0348d7b68ed5d3c232e1a1a343bb51da289f72c2cb9dc5f2d2"

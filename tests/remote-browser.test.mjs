@@ -237,7 +237,8 @@ test("frontend knows remote browser route and screenshot shell", () => {
   const pane = fs.readFileSync("public/browser-pane.js", "utf8");
   assert.match(config, /browserRemote:\s*"/);
   assert.match(config, /agent:\s*"https:\/\/smejj-chat-bridge\.zeabur\.app\/api\/agent"/);
-  assert.match(config, /agentFallback:\s*"https:\/\/smejj-control\.zeabur\.app\/api\/agent"/);
+  // Seit 23.08. laeuft der Rueckfall ueber die eigene API-Domain.
+  assert.match(config, /agentFallback:\s*"https:\/\/api\.smejj\.com\/api\/agent"/);
   assert.match(pane, /CLIENT_ROUTES\.api\.browserRemote/);
   assert.match(pane, /viewportWidth/);
   assert.match(pane, /viewportHeight/);

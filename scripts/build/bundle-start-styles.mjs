@@ -32,6 +32,8 @@ export const SOURCES = Object.freeze([
   "branding.css",
   "composer-tools.css",
   "browser-pane.css",
+  // Chrome-artiger Panel-Kopf — kam im Frontend-Repo dazu (Konsolidierung 24.08.).
+  "browser-pane-chrome.css",
   "view-chrome.css",
   "profile-dock.css",
   "chat-markdown.css",
@@ -48,7 +50,9 @@ export const SOURCES = Object.freeze([
   // eckig.css steht ABSICHTLICH am Ende: sie ueberschreibt jede Rundung.
   "search-overlay.css",
   "start-glass.css",
-  "eckig.css"
+  "eckig.css",
+  // Design V11 — kam im Frontend-Repo dazu (Konsolidierung 24.08.).
+  "design-v11.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

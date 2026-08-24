@@ -93,7 +93,9 @@ test("kopiert wird der Code, nicht der gerenderte Nachrichtentext", () => {
 });
 
 test("Auslieferung: eingebunden, gebuendelt und im Precache", () => {
-  assert.match(indexHtml, /<script src="\/assets\/chat-code-copy\.js\?v=[^"]+" type="module"><\/script>/);
+  // Seit dem Abspecken (24.08.) laedt bedarf-nachladen.js das Modul beim ersten Codeblock.
+  assert.match(indexHtml, /<script src="\/assets\/bedarf-nachladen\.js\?v=[^"]+" type="module"><\/script>/);
+  assert.match(fs.readFileSync("public/bedarf-nachladen.js", "utf8"), /import\("\.\/chat-code-copy\.js\?v=[^"]+"\)/);
   assert.match(sw, /"\/assets\/chat-code-copy\.js"/);
   // Ohne Versionssprung erreicht die Aenderung Bestandsnutzer nicht.
   // Untergrenze statt fester Nummer: jede Aenderung an einer Precache-Datei
