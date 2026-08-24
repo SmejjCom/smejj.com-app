@@ -62,19 +62,13 @@ const LEGACY_BASELINE = new Map([
   // +24 Zeilen, davon 13 Kommentar. Beides sind Zusaetze, keine Umbauten:
   // bestehende Regeln, Farben, Abstaende und Schriftbilder bleiben unveraendert.
   ["public/styles.css", 1589],
-  // Konsolidierung Stufe 1 am 2026-08-24 (Betreiber: "Buendel-Projekt starten"):
-  // public/ traegt jetzt die LIVE ausgelieferten Frontend-Fassungen — die sind im
-  // Frontend-Repo ohne 800er-Waechter gewachsen. Baseline = heutiger Stand,
-  // eingefroren als Ratchet; die Aufteilung ist Stufe-2-Aufgabe des Projekts.
-  // (Zweitkopien unter public/assets/ spiegeln dieselben Dateien byte-gleich.)
-  ["public/chat-store.js", 990],
-  ["public/assets/chat-store.js", 990],
+  // Zeilen-Diaet 2026-08-25 (Buendel-Projekt Stufe 3): chat-store, chat-stream,
+  // code-flaeche, design-v11 und account-privacy sind aufgeteilt und wieder
+  // unter der Regel. NUR index.html bleibt als begruendete Dauer-Baseline:
+  // EINE Seite ist EINE Datei — die Views in Teil-HTMLs zu zerlegen hiesse
+  // Laufzeit-Zusammenbau ohne Nutzen und gegen die Bauart der App-Shell.
+  // Ratchet: sie darf nicht weiter wachsen.
   ["public/index.html", 992],
-  ["public/code-flaeche.js", 804],
-  ["public/design-v11.css", 1955],
-  ["public/account-privacy.css", 896],
-  ["public/assets/account-privacy.css", 896],
-  ["public/ai/chat-stream.js", 998],
   ["src/worker.js", 930]
 ]);
 // Praezise Verstoesse: Markenwort in Grossschreibung (das SMEJJ_-Env-Praefix mit

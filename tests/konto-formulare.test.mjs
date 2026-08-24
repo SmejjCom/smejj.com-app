@@ -20,7 +20,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const QUELLE = fs.readFileSync("public/account-sessions.js", "utf8");
-const CSS = fs.readFileSync("public/account-privacy.css", "utf8");
+// Seit der Zeilen-Diaet (25.08.) zwei Teile — geprueft wird die Gesamtheit.
+const CSS = fs.readFileSync("public/account-privacy.css", "utf8")
+  + fs.readFileSync("public/account-privacy-formulare.css", "utf8");
 // Kommentare beschreiben auch alte Fehler (z. B. die frueher benutzte, nie
 // definierte Variable) — geprueft werden darf nur, was der Browser wirklich liest.
 const CSS_CODE = CSS.replace(/\/\*[\s\S]*?\*\//g, "");

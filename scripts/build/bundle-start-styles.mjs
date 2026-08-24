@@ -51,8 +51,12 @@ export const SOURCES = Object.freeze([
   "search-overlay.css",
   "start-glass.css",
   "eckig.css",
-  // Design V11 — kam im Frontend-Repo dazu (Konsolidierung 24.08.).
-  "design-v11.css"
+  // Design V11 — kam im Frontend-Repo dazu (Konsolidierung 24.08.); seit der
+  // Zeilen-Diaet (25.08.) zweigeteilt, Reihenfolge identisch zur Alt-Fassung.
+  "design-v11.css",
+  "design-v11-spur.css",
+  "design-v11-flaechen.css",
+  "design-v11-fein.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

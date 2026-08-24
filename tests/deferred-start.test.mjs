@@ -196,6 +196,6 @@ test("die Startseiten-Optik steht in SOURCES, nicht nur im ausgelieferten Buende
   // Kaskaden-Ende seit Design V11 (Konsolidierung 24.08.): design-v11.css ist
   // die juengste Betreiber-Linie und darf alles ueberschreiben; eckig.css steht
   // direkt davor und haelt weiterhin jede Rundung nieder.
-  assert.equal(SOURCES[SOURCES.length - 1], "design-v11.css", "design-v11.css gehoert ans Ende der Kaskade");
-  assert.equal(SOURCES[SOURCES.length - 2], "eckig.css", "eckig.css bleibt direkt vor der V11-Schicht");
+  assert.equal(SOURCES[SOURCES.length - 1], "design-v11-fein.css", "die V11-Schicht (seit 25.08. viergeteilt) gehoert ans Ende der Kaskade");
+  assert.ok(SOURCES.indexOf("eckig.css") > SOURCES.indexOf("start-glass.css") && SOURCES.indexOf("eckig.css") < SOURCES.indexOf("design-v11.css"), "eckig.css bleibt direkt vor der V11-Schicht");
 });

@@ -20,7 +20,7 @@ const paneJs = fs.readFileSync("public/browser-pane.js", "utf8");
 // Seit der FE-Modularisierung (19.-22.08., uebernommen in der Konsolidierung
 // Stufe 2) verteilt sich die Pane auf Fachmodule — die Zusagen gelten fuer die
 // GESAMTHEIT der Familie.
-const paneWelt = paneJs + ["render", "adressen", "nachrichten", "fernwege", "session", "tableiste"]
+const paneWelt = paneJs + ["render", "adressen", "nachrichten", "fernwege", "session", "tableiste", "persistenz"]
   .map((t) => { try { return fs.readFileSync(`public/browser-pane-${t}.js`, "utf8"); } catch { return ""; } })
   .join("\n");
 
@@ -116,12 +116,12 @@ test("Browser-Pane opens as right 50/50 split instead of navigating fullscreen",
 test("Browser-Pane: Scrollposition, Verlauf und Zoom werden pro Tab gespeichert", () => {
   // Scroll-Meldungen aus srcdoc-Frames werden pro Tab uebernommen.
   assert.match(paneWelt, /smejj\.browser\.scrollState/);
-  assert.match(paneJs, /smejj\.browser\.restoreScroll/);
+  assert.match(paneWelt, /smejj\.browser\.restoreScroll/);
   // Persistenz enthaelt Scroll, Zoom und Verlauf (nicht nur URL/Titel).
-  assert.match(paneJs, /scrollRatio:/);
-  assert.match(paneJs, /zoom:\s*tab\.zoom/);
-  assert.match(paneJs, /tab\.history\.slice\(-MAX_PERSISTED_HISTORY\)/);
-  assert.match(paneJs, /const MAX_PERSISTED_HISTORY = 50;/);
+  assert.match(paneWelt, /scrollRatio:/);
+  assert.match(paneWelt, /zoom:\s*tab\.zoom/);
+  assert.match(paneWelt, /tab\.history\.slice\(-MAX_PERSISTED_HISTORY\)/);
+  assert.match(paneWelt, /const MAX_PERSISTED_HISTORY = 50;/);
 });
 
 test("Browser-Pane: Remote-Ansicht folgt der Panelgroesse (debounced Refit)", () => {
