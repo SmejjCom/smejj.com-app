@@ -5,6 +5,26 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-24] FEHLER-FAENGER NR. 50 KOMPLETT — BROWSER-HAKEN LIVE (job_fehler_faenger_browser_haken_20260824)
+
+Capsule: `task-capsules/2026/08/job_fehler_faenger_browser_haken_20260824/capsule.md`.
+Live belegt: `assets/fehler-faenger.js` auf smejj.com (SHA-256-gleich, sw v688),
+Start-Lebenszeichen + Testfehler in der Betreiber-Sitzung je 200, Ampel Nr. 50
+gruen mit neuem Wortlaut; Tagesmappe-OFFENE_PUNKTE live auf 1 Eintrag gekuerzt.
+
+- **Entscheidung:** Der Browser-Haken ist ein eigenes markenloses Modul
+  (`public/fehler-faenger.js`, KEIN `?v=`) — frische Staende kommen ueber den
+  sw-Precache, damit die Start-Lock-Datei index.html fuer Haken-Updates nie
+  wieder angefasst werden muss. Nur Angemeldete melden (Anmelde-Signal wie
+  auth-gate.js, fail-closed; Sitzungscookie per `credentials:"include"`),
+  max. 8 Meldungen je Seitenlauf, Dedupe mit der Server-Signatur-Regel.
+- **Begruendung:** Unsichtbarer Senden-Pfeil, nie geladenes Modul, tote
+  Stopp-Taste — Browserfehler brauchen eine Zahl. Und die Ampel kann jetzt
+  "keine Fehler" von "niemand kann melden" unterscheiden (Start-Meldung).
+- **Verifikation:** 27/27 Autopiloten-Tests + Test-Waechter auf Arbeits- und
+  Bauzweig; Start-Lock mit Betreiber-Freigabe als eigener Commit neu
+  gestempelt; Klickpfad-Beweis live (POST 200 fuer Start und Testfehler).
+
 ### [2026-08-24] 60 AUTOPILOTEN — SCHUTZ-, SICHERHEITS- UND WACHSTUMS-BLOCK NR. 44-60 (job_autopiloten_44_60_20260824)
 
 Capsule: `task-capsules/2026/08/job_autopiloten_44_60_20260824/capsule.md`.
