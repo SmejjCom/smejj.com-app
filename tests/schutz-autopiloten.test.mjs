@@ -11,7 +11,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { beurteileLage, laufRueckRoller, KERN_AMPELN } from "../control-server/src/autopilots/rueckRollerAutopilot.js";
-import { werteZeilenAus, laufLogWache, registriereProzessWache, notiereFehlerzeile, _logWacheZuruecksetzen } from "../control-server/src/autopilots/logWacheAutopilot.js";
+import { werteZeilenAus, laufLogWache, registriereProzessWache, notiereFehlerzeile, _logWacheZuruecksetzen, beurteileHeap } from "../control-server/src/autopilots/logWacheAutopilot.js";
+import { baueHeiler } from "../control-server/src/autopilots/autopilotLaeufer.js";
 import { pruefeSchnappschuss, pruefsumme, laufDatenSicherung, laufWiederherstellungsProbe } from "../control-server/src/autopilots/datenSicherungAutopilot.js";
 import { findeGeheimnisse, laufGeheimnisSpaeher } from "../control-server/src/autopilots/geheimnisSpaeherAutopilot.js";
 import { bewerteLaufzeiten, laufZertifikatsWache } from "../control-server/src/autopilots/zertifikatsWacheAutopilot.js";
@@ -239,4 +240,34 @@ test("Nr. 54 Abhängigkeits-Wache: Dedup trägt, der Lauf meldet Funde rot und s
   });
   assert.equal(ohneFremdpakete.ok, true, ohneFremdpakete.meldung);
   assert.match(ohneFremdpakete.meldung, /ohne Fremdpakete/);
+});
+
+test("Zusammenspiel-Audit: voller Heap wird ROT, gesunder nicht (Nr. 45)", () => {
+  assert.equal(beurteileHeap({ heapUsed: 93, heapLimit: 100 }).alarm, true, "93 % Heap MUSS alarmieren");
+  assert.equal(beurteileHeap({ heapUsed: 50, heapLimit: 100 }).alarm, false);
+  _logWacheZuruecksetzen();
+  registriereProzessWache({ prozess: { on: () => {} } });
+  const rot = laufLogWache({ jetztMs: 1000, heapStatistik: () => ({ heap_size_limit: 100 }), speicher: () => ({ heapUsed: 95, rss: 200 }) });
+  assert.equal(rot.ok, false, "95 % Heap muss die Ampel rot machen");
+  assert.match(rot.meldung, /Heap/);
+  _logWacheZuruecksetzen();
+});
+
+test("Zusammenspiel-Audit: die Selbstheilung teilt sich EINEN Wiederbelebungslauf (Nr. 33)", async () => {
+  let laeufe = 0;
+  const heiler = baueHeiler({ melde: () => {}, lauf: async () => { laeufe += 1; return []; } });
+  await heiler["bug-predictor"]();
+  await heiler["smart-router"]();
+  await heiler["log-wache"]();
+  assert.equal(laeufe, 1, "drei rote Autopiloten duerfen nur EINEN Voll-Durchgang ausloesen — nicht drei");
+});
+
+test("Zusammenspiel-Audit: der Absender-Deckel meldet sich, statt still blind zu werden (Nr. 51)", () => {
+  _missbrauchsWacheZuruecksetzen();
+  const jetztMs = Date.now();
+  for (let i = 0; i < 5001; i++) beobachteAnfrage({ absender: "ip-" + i, pathname: "/api/chat" }, { jetztMs });
+  const voll = laufMissbrauchsWache({ jetztMs });
+  assert.equal(voll.ok, false, "erreichter Deckel MUSS als Befund erscheinen");
+  assert.match(voll.meldung, /Deckel/);
+  _missbrauchsWacheZuruecksetzen();
 });

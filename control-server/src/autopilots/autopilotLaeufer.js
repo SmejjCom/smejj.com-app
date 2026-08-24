@@ -691,12 +691,21 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
  * Das ist ein echter Mangel — aber einer, den der Betreiber im Portal lösen
  * muss, nicht einer, den ein Heiler wegzaubern kann.
  */
-export function baueHeiler({ melde = interneMeldung } = {}) {
+export function baueHeiler({ melde = interneMeldung, lauf = laufeAlle } = {}) {
   // Die im Control-Server betriebenen Autopiloten heilt derselbe Griff:
   // ihren Lauf sofort wiederholen, statt bis zum nächsten Takt zu warten.
-  const sofortNochmal = async () => {
-    await laufeAlle({ melde, mitNetz: true });
-    return true;
+  //
+  // EIN Wiederbelebungslauf je Heil-Durchgang (Zusammenspiel-Audit 2026-08-24):
+  // Vorher startete JEDER rote Autopilot seinen eigenen Voll-Durchgang — bei
+  // fünf Roten liefen alle 53 Läufe fünfmal hintereinander, samt TLS-Proben,
+  // Health-Checks und echtem E2E-Chat. Der Heiler soll die Kranken messen,
+  // nicht das System belasten: alle Roten desselben Durchgangs teilen sich
+  // einen Lauf. Der Speicher lebt nur so lange wie dieses Heiler-Objekt —
+  // heileWasRotIst baut es je Takt neu, der nächste Takt misst also frisch.
+  let einmal = null;
+  const sofortNochmal = () => {
+    if (!einmal) einmal = lauf({ melde, mitNetz: true }).then(() => true);
+    return einmal;
   };
   const heiler = {};
   for (const id of IM_LAEUFER_BETRIEBEN) heiler[id] = sofortNochmal;

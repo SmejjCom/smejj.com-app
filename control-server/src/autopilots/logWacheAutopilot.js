@@ -12,6 +12,8 @@
 // Dienste (Brücke, Maler, Video) liest sie nicht — deren Zustand messen die
 // Dienst-Sonden über /health. Was hier rot wird, ist der Control-Server.
 
+import v8 from "node:v8";
+
 const RING_MAX = 300;
 const ring = [];
 let unbehandelteAusnahmen = 0;
@@ -72,9 +74,26 @@ export function werteZeilenAus(zeilen = []) {
   return { funde: [...funde.entries()].map(([name, anzahl]) => ({ name, anzahl })), gesamt: zeilen.length };
 }
 
+/**
+ * Heap-Urteil: ab 92 % des Limits ist der Speicher-Tod nur noch Minuten
+ * entfernt — das ist ein BEFUND, kein Stilrat (Zusammenspiel-Audit
+ * 2026-08-24: der Hinweis stand als Kommentar da, geprüft hat ihn niemand).
+ * Getrennt testbar mit kaputter und gesunder Probe.
+ */
+export const HEAP_ALARM_ANTEIL = 0.92;
+export function beurteileHeap({ heapUsed = 0, heapLimit = 0 } = {}, { alarmAnteil = HEAP_ALARM_ANTEIL } = {}) {
+  if (!heapLimit) return { alarm: false, anteil: null };
+  const anteil = heapUsed / heapLimit;
+  return { alarm: anteil >= alarmAnteil, anteil };
+}
+
 /** Selbsttest: kaputte UND gesunde Zeilen müssen richtig beurteilt werden. */
 export function fuehreSelbsttestAus() {
   const fehler = [];
+  const heapVoll = beurteileHeap({ heapUsed: 95, heapLimit: 100 });
+  if (!heapVoll.alarm) fehler.push("95 % Heap gilt fälschlich als gesund");
+  const heapGesund = beurteileHeap({ heapUsed: 20, heapLimit: 100 });
+  if (heapGesund.alarm) fehler.push("20 % Heap löst fälschlich Alarm aus");
   const kaputt = werteZeilenAus([
     "FATAL ERROR: Reached heap limit — JavaScript heap out of memory",
     "Error: listen EADDRINUSE: address already in use :::8080",
@@ -102,7 +121,7 @@ export function _logWacheZuruecksetzen() {
  * Funde machen die Ampel rot — sie sind Störungen des eigenen Prozesses, und
  * genau die blieben bisher unsichtbar, bis der Dienst stand.
  */
-export function laufLogWache({ jetztMs = Date.now(), speicher = process.memoryUsage } = {}) {
+export function laufLogWache({ jetztMs = Date.now(), speicher = process.memoryUsage, heapStatistik = () => v8.getHeapStatistics() } = {}) {
   const probe = fuehreSelbsttestAus();
   if (!probe.bestanden) {
     return { ok: false, meldung: `Log-Wache erkennt bekannte Störmuster nicht mehr: ${probe.fehler.join("; ")}` };
@@ -113,14 +132,20 @@ export function laufLogWache({ jetztMs = Date.now(), speicher = process.memoryUs
   const auswertung = werteZeilenAus(frisch);
 
   // Der Blick nach vorn: Heap-Auslastung ist das früheste Signal des
-  // Speicher-Todes. >92 % vom Limit ist bereits ein Befund, kein Stilrat.
+  // Speicher-Todes — und wird GEPRÜFT, nicht nur genannt.
   let heapHinweis = "";
+  let heapUrteil = { alarm: false, anteil: null };
   try {
     const mu = speicher();
     const heapMb = Math.round(mu.heapUsed / 1048576);
     const rssMb = Math.round(mu.rss / 1048576);
-    heapHinweis = `Heap ${heapMb} MB, RSS ${rssMb} MB`;
+    const limit = Number(heapStatistik()?.heap_size_limit || 0);
+    heapUrteil = beurteileHeap({ heapUsed: mu.heapUsed, heapLimit: limit });
+    heapHinweis = `Heap ${heapMb} MB${heapUrteil.anteil !== null ? ` (${Math.round(heapUrteil.anteil * 100)} % vom Limit)` : ""}, RSS ${rssMb} MB`;
   } catch { heapHinweis = "Speicherwerte nicht lesbar"; }
+  if (heapUrteil.alarm) {
+    return { ok: false, meldung: `Heap bei ${Math.round(heapUrteil.anteil * 100)} % des Limits — der Speicher-Tod ist nahe, Neustart oder Leck-Suche JETZT (${heapHinweis})` };
+  }
 
   if (!wacheAktiv) {
     return { ok: false, meldung: "Prozess-Haken NICHT registriert — die Wache sieht nichts (registriereProzessWache fehlt im Serverstart)" };
@@ -132,7 +157,7 @@ export function laufLogWache({ jetztMs = Date.now(), speicher = process.memoryUs
   const bilanz = unbehandelteAusnahmen + abgewieseneVersprechen;
   return {
     ok: true,
-    meldung: `Selbsttest 2/2; keine Störmuster seit dem letzten Lauf `
+    meldung: `Selbsttest 4/4; keine Störmuster seit dem letzten Lauf, Heap unter der Alarmgrenze `
       + `(${frisch.length} Zeilen geprüft, seit Start ${bilanz} unbehandelte Signale) — ${heapHinweis}`
   };
 }

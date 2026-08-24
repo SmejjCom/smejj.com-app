@@ -18,6 +18,9 @@ const MAX_ABSENDER = 5_000;
 let fenster = { start: 0, absender: new Map() };
 let vorheriges = null;
 let gesamtSeitStart = 0;
+// Zusammenspiel-Audit 2026-08-24: der Deckel war da, aber sein Erreichen
+// blieb stumm — genau die "stille Quelle", die sonst überall benannt wird.
+let deckelErreicht = false;
 
 /** Schwellen je 10-Minuten-Fenster. Bewusst großzügig — hier geht es um Missbrauch, nicht um Vielnutzer. */
 export const SCHWELLEN = Object.freeze({
@@ -45,7 +48,10 @@ export function beobachteAnfrage({ absender = "", pathname = "" } = {}, { jetztM
   const schluessel = String(absender || "unbekannt");
   let eintrag = fenster.absender.get(schluessel);
   if (!eintrag) {
-    if (fenster.absender.size >= MAX_ABSENDER) return; // Schutz vor Speicherwachstum; der Deckel selbst ist ein Befund im Lauf
+    if (fenster.absender.size >= MAX_ABSENDER) {
+      deckelErreicht = true; // Schutz vor Speicherwachstum — und ab jetzt ein GEMELDETER Befund
+      return;
+    }
     eintrag = { gesamt: 0, anmeldung: 0 };
     fenster.absender.set(schluessel, eintrag);
   }
@@ -92,6 +98,7 @@ export function _missbrauchsWacheZuruecksetzen() {
   fenster = { start: 0, absender: new Map() };
   vorheriges = null;
   gesamtSeitStart = 0;
+  deckelErreicht = false;
 }
 
 /**
@@ -103,6 +110,13 @@ export function laufMissbrauchsWache({ jetztMs = Date.now() } = {}) {
   const probe = fuehreSelbsttestAus();
   if (!probe.bestanden) {
     return { ok: false, meldung: `Missbrauchs-Wache beurteilt bekannte Muster falsch: ${probe.fehler.join("; ")}` };
+  }
+  if (deckelErreicht) {
+    deckelErreicht = false; // einmal melden je Vorkommnis, dann frisch messen
+    return {
+      ok: false,
+      meldung: `Absender-Deckel (${MAX_ABSENDER}) erreicht — mehr verschiedene Absender, als die Wache zählen kann: entweder ein verteilter Ansturm oder der Deckel ist zu klein. Ab hier gibt es blinde Flecken.`
+    };
   }
   const befunde = [
     ...werteFensterAus(fenster.absender),

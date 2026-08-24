@@ -21,7 +21,10 @@ import { listeTickets } from "../admin/supportTickets.js";
 /** Offene Punkte, die nur der Betreiber entscheiden kann. Gepflegt im Code,
  *  damit jeder Eintrag mit seinem Grund im Review steht — KEINE Messwerte. */
 export const OFFENE_PUNKTE = Object.freeze([
-  "Daten-Sicherung liegt im selben Eimer (sicherung/) — ein zweiter Eimer braucht einen zweiten Schlüssel (Betreiber-Entscheidung)"
+  "Daten-Sicherung liegt im selben Eimer (sicherung/) — ein zweiter Eimer braucht einen zweiten Schlüssel (Betreiber-Entscheidung)",
+  // Zusammenspiel-Audit 2026-08-24: Löschen ist Rote Liste — deshalb steht die
+  // Entscheidung HIER statt in einem Automat, der einfach löscht.
+  "Sicherungs-Schnappschüsse (sicherung/taeglich) sammeln sich ohne Aufräumen an — Aufbewahrungsdauer festlegen (auch wegen Löschrechten: user-memory steckt in den Kopien) und das Löschen alter Stände freigeben (Betreiber-Entscheidung)"
 ]);
 
 function neueAblage(praefix, maximal) {

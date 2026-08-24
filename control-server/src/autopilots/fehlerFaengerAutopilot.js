@@ -13,6 +13,18 @@
 // — "keine Fehler" und "niemand kann melden" sind zwei verschiedene Sätze.
 // Der Browser-Haken (public/fehler-faenger.js) ist seit 2026-08-24 dabei.
 import { scrubPiiData } from "./userFeedbackFlywheelAutopilot.js";
+import { createRecordStore } from "../admin/recordStore.js";
+
+// Zusammenspiel-Audit 2026-08-24: Der Ringpuffer lebt im Prozessspeicher —
+// an einem Tag mit vier Deploys war jede gesammelte Meldung viermal weg.
+// Deshalb schreibt der Lauf seine 24-h-Gruppen zusaetzlich als Tagesbild in
+// die Ablage: die Ampel misst weiter ehrlich "seit Start", aber das BILD
+// (welche Fehler, wie oft) ueberlebt jeden Neustart.
+let tagesAblage = null;
+function holeTagesAblage() {
+  if (!tagesAblage) tagesAblage = createRecordStore("fehler/tagesbilder", { maximal: 30 });
+  return tagesAblage;
+}
 
 const RING_MAX = 500;
 const ring = [];
@@ -107,6 +119,13 @@ export function laufFehlerFaenger({ jetztMs = Date.now(), fensterMs = 24 * 60 * 
   }
   const frisch = ring.filter((e) => jetztMs - e.am < fensterMs);
   const gruppen = gruppiereFehler(frisch);
+  if (gruppen.length) {
+    // Neustart-Festigkeit des BILDES: still, fehlertolerant, ueberschreibt
+    // das Tagesbild statt anzuhaeufen. Ein Fehlschlag hier darf die Messung
+    // nie zu Fall bringen — das Tagesbild ist Zugabe, nicht Grundlage.
+    const tag = new Date(jetztMs).toISOString().slice(0, 10);
+    holeTagesAblage().schreib({ id: `fehler_${tag}`, createdAt: new Date(jetztMs).toISOString(), gruppen: gruppen.slice(0, 50) }).catch(() => {});
+  }
   const muster = gruppen.filter((g) => g.anzahl >= 3);
   if (muster.length) {
     const top = muster[0];
