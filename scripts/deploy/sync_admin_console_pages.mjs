@@ -61,7 +61,9 @@ const SEITEN_ORDNER = Object.freeze([
   // 2026-08-23: Modul AL "Was ist wirklich live?" (Design-Vorschlag Adminbereich).
   "auslieferung",
   // 2026-08-23: Seite 8 des Design-Vorschlags — die sieben Regeln.
-  "regeln"
+  "regeln",
+  // 2026-08-24: Tagesmappe (Autopilot Nr. 60) — die 10 Minuten des Betreibers.
+  "tagesmappe"
 ]);
 
 function sha256(inhalt) {
