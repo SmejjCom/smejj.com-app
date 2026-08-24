@@ -47,7 +47,8 @@ test("der Frontend-Klon wird vor dem Schreiben aufgefrischt", () => {
   // Ein Lauf, der ehrlich abbricht, aber aus selbstverschuldetem Grund, ist
   // kaum besser als einer, der schweigt.
   const iFetch = skript.indexOf("git fetch -q origin main");
-  const iKopie = skript.indexOf('cp "$DATEI" "$FRONTEND/verlauf-messwerte.json"');
+  // Seit dem Deploy-Key-Umbau (24.08.) kopiert das Skript aus $APP/$DATEI.
+  const iKopie = skript.indexOf('cp "$APP/$DATEI" "$FRONTEND/verlauf-messwerte.json"');
   assert.ok(iFetch > 0, "der Frontend-Klon wird nicht aufgefrischt");
   assert.ok(iKopie > iFetch, "aufgefrischt werden muss VOR dem Schreiben der Datei");
 });

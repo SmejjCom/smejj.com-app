@@ -10,6 +10,16 @@
 //   5. Endstatus "verifying" → "passed"/"failed" signiert melden
 // Kein lokaler Zustand ueberlebt den Job. Memory lernt hier nichts — das entscheidet
 // der Control Server nur nach bestandener Verification Pipeline.
+
+// KEIN Unit-Test: Diese Datei ist die ausfuehrbare Test-Worker-VORLAGE. Der
+// Ordner heisst "test/" (Worker-Art), darum sammelt `node --test` sie als
+// vermeintliche Testdatei ein und startete sie ohne Capsule-Umgebung — seit
+// jeher der eine rote Dauer-Fail der Suite (behoben 2026-08-25). Im
+// Test-Runner-Kontext steigt sie deshalb sofort sauber aus.
+if (process.env.NODE_TEST_CONTEXT) {
+  console.log("worker-templates/test/worker.js ist die Worker-Vorlage, kein Test — uebersprungen.");
+  process.exit(0);
+}
 import { spawn } from "node:child_process";
 import { controlConfigFromEnv, reportStatus } from "../shared/controlClient.js";
 import { e2ConfigFromEnv, getJson, putJson } from "../shared/e2Client.js";
