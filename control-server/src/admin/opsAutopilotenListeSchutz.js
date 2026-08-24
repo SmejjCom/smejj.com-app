@@ -1,5 +1,6 @@
 // smejj.com — Modul AP, Registry-Teil 3: die Schutz- und Sicherheits-
-// Autopiloten Nr. 44-54 (Betreiber-Freigabe 2026-08-24: "Ja, alle 17 bauen").
+// Autopiloten Nr. 44-54 (Betreiber-Freigabe 2026-08-24: "Ja, alle 17 bauen")
+// sowie Nr. 61, der Test-Wächter (Mac-Cron, nicht Läufer).
 //
 // Eigene Datei aus demselben Grund wie Teil 2 (Evolution): die Hauptliste
 // steht längst an der 800-Zeilen-Regel. Wer einen Autopiloten sucht, findet
@@ -11,6 +12,7 @@
 // und tests/schutz-autopiloten.test.mjs.
 
 const STUNDE_MS = 60 * 60 * 1000;
+const TAG_MS = 24 * STUNDE_MS;
 
 const LAEUFER = Object.freeze({
   ort: "Control Server (Autopilot-Läufer)",
@@ -192,5 +194,31 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     verbessert: "Eine bekannte Lücke in einer Abhängigkeit steht binnen eines Tages in der Ampel statt im nächsten Audit",
     neuigkeiten: ["Neu am 2026-08-24"],
     ...LAEUFER
+  },
+  {
+    id: "test-waechter",
+    name: "Test-Wächter",
+    nummer: "61",
+    kurz: "Führt täglich ALLE Unit-Tests des Control-Servers aus (control-server/src) und wird ROT, sobald einer scheitert — ein roter Test darf nie wieder tagelang unbemerkt bleiben.",
+    funktionen: [
+      "Läuft täglich um 5:45 Uhr Mac-Zeit auf dem Rechner des Betreibers (crontab → ~/.local/share/smejj-tests/wache.sh; Arbeitskopie außerhalb von Google Drive, gleiche Bauart wie die Betriebswache).",
+      "Sucht die Testdateien SELBST (rekursiv per fs statt Shell-Glob — die npm-sh findet mit ** nur Tiefe 2) und übergibt sie node --test als ausdrückliche Liste; unter 60 gefundenen Dateien wird er ROT, statt still weniger zu prüfen.",
+      "Wächter-TÜV vor jeder Messung: eine kaputte und eine gesunde Probe — erkennt er Rot nicht, prüft er gar nicht erst.",
+      "WARUM ES IHN GIBT: modelRouter.test.js stand vom 18. bis 24.08. rot, ohne dass ein Pflicht-Check ihn je ausführte — test:unit existierte, hing aber in keinem Prüfpfad.",
+      "Derselbe Lauf ist als npm run check:unit-server Teil von check:all und damit von release:preflight — Release und Nachtlauf messen dieselbe Frage.",
+      "Fail-closed: kein node, keine erreichbare Arbeitskopie, zu wenige Testdateien = Fehler. 'Konnte nicht prüfen' ist nicht 'grün'."
+    ],
+    trainiert: "Nichts — er misst. Exit-Code und Dateizahl von node --test über control-server/src.",
+    verbessert: "Ein roter Unit-Test fällt binnen eines Tages auf statt erst beim nächsten Release",
+    neuigkeiten: ["Neu am 2026-08-24, nachdem der Groq-Routertest sechs Tage unbemerkt rot stand"],
+    ort: "Mac des Betreibers (crontab → ~/.local/share/smejj-tests/wache.sh)",
+    zeitplan: "täglich 5:45 Uhr Mac-Zeit",
+    messung: "heartbeat",
+    // Täglich plus großzügige Schonfrist wie bei der Betriebswache: der Mac
+    // kann nachts aus sein; erst zwei Nächte ohne Meldung sind ein Ausfall.
+    erwartetAlleMs: TAG_MS,
+    schonfristMs: TAG_MS,
+    startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-tests/wache.sh (der Zeitplan steht in der crontab).",
+    stopAnleitung: "Auf dem Mac den crontab-Eintrag smejj-test-waechter entfernen."
   }
 ]);

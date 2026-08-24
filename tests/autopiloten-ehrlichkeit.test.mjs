@@ -118,7 +118,9 @@ const MIT_ECHTER_MESSUNG = new Set([
   "auffindbarkeits-wache",    // die ausgelieferte Startseite, taeglich
   "willkommens-wache",        // der echte Nutzer-Index (createdAt/lastSeenAt)
   "experiment-meister",       // Zuteilungs- und Urteils-Mathematik + echte Ablage
-  "tagesmappe"                // baut die Mappe aus den echten Quellen, stumme benannt
+  "tagesmappe",               // baut die Mappe aus den echten Quellen, stumme benannt
+  // --- Test-Waechter (Nr. 61), seit 2026-08-24 ---
+  "test-waechter"             // Mac-Cron: node --test ueber control-server/src, Herzschlag wie Betriebswache
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

@@ -34,7 +34,9 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 44-54 (2026-08-24): der Schutz-Block aus dem 135-Piloten-Vergleich.
     "rueck-roller", "log-wache", "daten-sicherung", "wiederherstellungs-probe",
     "geheimnis-spaeher", "zertifikats-wache", "missbrauchs-wache", "konto-wache",
-    "inhalts-schutz", "abhaengigkeits-wache"
+    "inhalts-schutz", "abhaengigkeits-wache",
+    // Nr. 61 (2026-08-24): taegliche Unit-Tests des Control-Servers (Mac-Cron).
+    "test-waechter"
   ],
   "Modelle & Wissen": [
     "modell-einkaeufer", "live-arena-leaderboard", "knowledge-distiller", "model-lifecycle",
