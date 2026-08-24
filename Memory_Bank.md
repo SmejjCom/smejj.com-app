@@ -5,6 +5,28 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-24] 60 AUTOPILOTEN — SCHUTZ-, SICHERHEITS- UND WACHSTUMS-BLOCK NR. 44-60 (job_autopiloten_44_60_20260824)
+
+Capsule: `task-capsules/2026/08/job_autopiloten_44_60_20260824/capsule.md`.
+Live belegt: Ampel 59 gruen / 0 rot / 1 bewusst stillgelegt (Nr. 05); alle 17
+neuen messen echte Werte (Geheimnis-Scan 341 Dateien, TLS 4 Domains, Sicherung
+mit Ruecklese + SHA-256, Last-Probe p95 162/194 ms, Tagesmappe ohne stumme Quellen).
+
+- **Entscheidung:** Die Luecken aus dem 135-Piloten-Vergleich werden als 17
+  eigene Autopiloten im Taktgeber betrieben (schutzUndWachstumLaeufe.js),
+  Registry-Teile 3+4, Bereichs-Zuordnung, `GET /api/admin/ops/tagesmappe`
+  und `POST /api/fehler`. Jeder Lauf: Selbsttest (kaputte UND gesunde Probe),
+  dann echte Messung — kein heartbeat ohne Eintrag in MIT_ECHTER_MESSUNG.
+- **Begruendung:** Betreiber-Ziel „100 % ohne mich, 10 Minuten Freigaben am
+  Tag": Schutz (Rueckroll-Empfehlung, Log-, Sicherungs-, Geheimnis-,
+  Zertifikats-Wache), Nutzersicherheit (Fehler-Faenger, Missbrauchs-,
+  Konto-Wache, Inhalts-Schutz, Abhaengigkeits-Wache), Kosten/Last, Wachstum
+  (SEO, Willkommen, Experimente) und die Tagesmappe als Ein-Blick-Cockpit.
+- **Verifikation:** 22 TUEV-Tests + Anschluss-Beweis; Zaehl-Waechter 49/50/52;
+  drei Live-Deploys mit Ampel-Messung per local-e2e-Token; zwei Live-Befunde
+  des ersten Durchgangs behoben (Repo OHNE package-lock/Container OHNE
+  Fremdpakete = Gruen-Fall; Probe-Schluessel des Git-Bots traegt Entwarnungs-Wort).
+
 ### [2026-08-18] CONTROL-RESERVE RUFT DEN VIDEO-WORKER (job_videospur_anschluss_20260818)
 
 Capsule: `task-capsules/2026/08/job_videospur_anschluss_20260818/capsule.md`.
