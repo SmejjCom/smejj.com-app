@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-24T08:09:11.395Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-24 per Karte: 'Tagesmappe als Adminseite (Empfehlung)' — Stufe 13 (Tagesmappe, Autopilot Nr. 60): views/console-stage13, Registrierung in console.js/index.html, DATEIEN-Karte in adminUiRoutes, Seitenordner im Sync-Skript.",
+  "frozenAt": "2026-08-24T08:09:43.887Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-24: Zusammenfuehrung zweier freigegebener Staende — Tagesmappe Stufe 13 (Karte 'Tagesmappe als Adminseite') + Modell-Katalog-Wache Nr. 62 der Parallelsitzung; Stempel nach Rebase neu gesetzt, keine inhaltliche Aenderung darueber hinaus.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -23,7 +23,7 @@
     "control-server/src/admin/opsAutopiloten.js": "59eded391481365dc339d9b7cbe4215614f8585ebbfc54b91144e57e11f4ea74",
     "control-server/src/admin/opsAutopilotenListe.js": "b439425c0f4d36a3925d8491cfbaa070f5c64082a54d2429faab8892e9526d8b",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
-    "control-server/src/admin/opsAutopilotenBereiche.js": "4b33ad6f91b25826525a10ed9239fad3eee6dfae07491d67812ed4c29adb5758",
+    "control-server/src/admin/opsAutopilotenBereiche.js": "8d2a1c2a9599e608330faba0f82a41f4142e93368deb5fb61db39b8c220ab422",
     "control-server/src/admin/opsAuslieferung.js": "1c8cd6387c543db7796ee7d985b494a0c276cbd7c5b54429c600b6330e3d9051",
     "control-server/admin-ui/views-stage12.js": "01019f1bdf06f40d87f2b2aa5ca05e901ade9be3b0d7f8536f9d19cc279389df",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
