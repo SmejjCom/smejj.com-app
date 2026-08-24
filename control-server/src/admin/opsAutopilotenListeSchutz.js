@@ -65,7 +65,7 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     funktionen: [
       "Acht Ablagen mit Deckel je Quelle in EINEN täglichen Schnappschuss (sicherung/taeglich) — mit SHA-256-Prüfsumme über den Inhalt.",
       "Nach dem Schreiben wird ZURÜCKGELESEN und die Prüfsumme verglichen — geschrieben heißt noch nicht lesbar (Lehre des Nachweis-Wächters).",
-      "GRENZE, ehrlich: gleicher Eimer, eigenes Präfix — schützt gegen Überschreiben und kaputte Datensätze, nicht gegen Eimer-Verlust. Der zweite Eimer ist eine Betreiber-Entscheidung und steht in der Tagesmappe.",
+      "Seit 2026-08-24 zusätzlich im ZWEITEN Eimer: IDrive-e2-Objektreplikation spiegelt die Schnappschüsse (sicherung/-Präfix) und den kompletten Chats-Eimer smejj-app serverseitig nach smejj-sicherung — der Dienst-Schlüssel kann den Sicherungs-Eimer bewusst nicht lesen (Isolation), Kontrolle über die IDrive-Konsole.",
       "Nutzer-Chats bewusst nicht dabei: sie brauchen den zweiten Eimer, keinen Schnappschuss daneben."
     ],
     trainiert: "Nichts — sie sichert und beweist",
