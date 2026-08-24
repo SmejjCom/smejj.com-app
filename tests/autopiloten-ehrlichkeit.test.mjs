@@ -120,7 +120,8 @@ const MIT_ECHTER_MESSUNG = new Set([
   "experiment-meister",       // Zuteilungs- und Urteils-Mathematik + echte Ablage
   "tagesmappe",               // baut die Mappe aus den echten Quellen, stumme benannt
   // --- Test-Waechter (Nr. 61), seit 2026-08-24 ---
-  "test-waechter"             // Mac-Cron: node --test ueber control-server/src, Herzschlag wie Betriebswache
+  "test-waechter",            // Mac-Cron: node --test ueber control-server/src, Herzschlag wie Betriebswache
+  "modell-katalog-wache"      // taeglich /models je Anbieter gegen die aufgeloeste Router-Wahl
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

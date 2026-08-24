@@ -106,5 +106,22 @@ export const WACHSTUM_AUTOPILOTEN = Object.freeze([
     verbessert: "Die tägliche Aufsicht ist ein 10-Minuten-Blick auf eine Mappe statt eine Reise durch sechs Ansichten",
     neuigkeiten: ["Neu am 2026-08-24"],
     ...LAEUFER
+  },
+  {
+    id: "modell-katalog-wache",
+    name: "Modell-Katalog-Wache",
+    nummer: "62",
+    kurz: "Fragt einmal täglich die /models-Endpunkte aller Anbieter mit Schlüssel: existieren die Modelle, die der Router wirklich wählen würde, dort noch — oder zeigt der Katalog auf tote Namen?",
+    funktionen: [
+      "Prüft je Anbieter die AUFGELÖSTE Wahl des Routers (Katalog + Env-Overrides, alle fünf Profile) — den rohen Katalog zu prüfen wäre die falsche Frage.",
+      "Der /models-Endpunkt trennt 'Modell weg' von 'Schlüssel kaputt' in einem Aufruf (Lehre aus dem Groq-Vorfall: zwei tote Llama-Namen sahen aus wie ein kaputter Schlüssel).",
+      "Ein Anbieter ohne /models-Endpunkt ist 'nicht prüfbar' und wird BENANNT, macht aber nicht dauerhaft rot — rot ist nur ein nachweislich fehlendes Modell oder eine Lage, in der gar nichts messbar war.",
+      "Zwischen zwei Tagesabfragen meldet die Ampel den gemessenen Stand aus der Ablage, nie einen Pauschaltext (Bauart der Abhängigkeits-Wache).",
+      "WARUM ES SIE GIBT: Groqs Llama-Einträge starben beim Anbieter; der Katalog zeigte vom 18. bis 24.08. auf tote Namen, und der Router-Test dazu stand unbemerkt rot."
+    ],
+    trainiert: "Nichts — sie fragt die Modelllisten der Anbieter ab",
+    verbessert: "Ein beim Anbieter gestorbenes Modell steht binnen eines Tages in der Ampel statt als 404 beim Nutzer",
+    neuigkeiten: ["Neu am 2026-08-24, nach dem Groq-Llama-Vorfall"],
+    ...LAEUFER
   }
 ]);

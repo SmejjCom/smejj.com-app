@@ -134,12 +134,14 @@ test("ANSCHLUSS-BEWEIS: alle 17 in Registry, Taktgeber und Selbstheilung — Num
     assert.ok(IM_LAEUFER_BETRIEBEN.includes(id), `${id} fehlt in IM_LAEUFER_BETRIEBEN — die Selbstheilung könnte ihn nicht wiederbeleben`);
   }
   const laeufe = baueSchutzUndWachstumLaeufe({ dateien: [], mitNetz: false });
-  assert.equal(laeufe.length, SCHUTZ_UND_WACHSTUM_IDS.length, "der Taktgeber muss ALLE 17 betreiben");
+  assert.equal(laeufe.length, SCHUTZ_UND_WACHSTUM_IDS.length, "der Taktgeber muss ALLE betreiben");
   assert.deepEqual([...laeufe.map(([id]) => id)].sort(), [...SCHUTZ_UND_WACHSTUM_IDS].sort());
 
   const nummern = AUTOPILOTEN.map((a) => a.nummer);
   assert.equal(new Set(nummern).size, nummern.length, "Autopilot-Nummern müssen eindeutig sein");
   const neue = AUTOPILOTEN.filter((a) => SCHUTZ_UND_WACHSTUM_IDS.includes(a.id)).map((a) => Number(a.nummer)).sort((x, y) => x - y);
-  assert.deepEqual(neue, [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]);
-  assert.ok(AUTOPILOTEN.length >= 60, `die Registry muss mindestens 60 Autopiloten führen, hat ${AUTOPILOTEN.length}`);
+  // 44-60 vom 24.08. plus Nr. 62 (Modell-Katalog-Wache, gleicher Tag);
+  // Nr. 61 (Test-Waechter) laeuft auf dem Mac, nicht im Laeufer.
+  assert.deepEqual(neue, [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62]);
+  assert.ok(AUTOPILOTEN.length >= 62, `die Registry muss mindestens 62 Autopiloten führen, hat ${AUTOPILOTEN.length}`);
 });

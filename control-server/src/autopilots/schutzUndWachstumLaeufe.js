@@ -27,6 +27,7 @@ import { laufAuffindbarkeitsWache } from "./auffindbarkeitsWacheAutopilot.js";
 import { laufWillkommensWache } from "./willkommensWacheAutopilot.js";
 import { laufExperimentMeister } from "./experimentMeisterAutopilot.js";
 import { laufTagesmappe } from "./tagesmappeAutopilot.js";
+import { laufModellKatalogWache } from "./modellKatalogWacheAutopilot.js";
 
 /** Die Kennungen — für IM_LAEUFER_BETRIEBEN (Selbstheilung) und die Tests. */
 export const SCHUTZ_UND_WACHSTUM_IDS = Object.freeze([
@@ -34,7 +35,7 @@ export const SCHUTZ_UND_WACHSTUM_IDS = Object.freeze([
   "geheimnis-spaeher", "zertifikats-wache", "fehler-faenger", "missbrauchs-wache",
   "konto-wache", "inhalts-schutz", "abhaengigkeits-wache", "kosten-wache",
   "last-probe", "auffindbarkeits-wache", "willkommens-wache", "experiment-meister",
-  "tagesmappe"
+  "tagesmappe", "modell-katalog-wache"
 ]);
 
 /**
@@ -66,6 +67,7 @@ export function baueSchutzUndWachstumLaeufe({ dateien = [], mitNetz = true } = {
     ["tagesmappe", () => laufTagesmappe()],
     ["zertifikats-wache", () => laufZertifikatsWache({ mitNetz })],
     ["abhaengigkeits-wache", () => laufAbhaengigkeitsWache({ mitNetz })],
+    ["modell-katalog-wache", () => laufModellKatalogWache({ mitNetz })],
     ["last-probe", () => laufLastProbe({ mitNetz })],
     ["auffindbarkeits-wache", () => laufAuffindbarkeitsWache({ mitNetz })]
   ];

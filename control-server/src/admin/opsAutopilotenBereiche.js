@@ -39,6 +39,8 @@ const ZUORDNUNG = Object.freeze({
     "test-waechter"
   ],
   "Modelle & Wissen": [
+    // Nr. 62 (2026-08-24): taeglicher /models-Abgleich gegen die Router-Wahl.
+    "modell-katalog-wache",
     "modell-einkaeufer", "live-arena-leaderboard", "knowledge-distiller", "model-lifecycle",
     "realtime-internet-harvester", "smart-router", "memory-sync", "missing-function-detector",
     "konkurrenz-radar", "training-loop"
