@@ -217,7 +217,7 @@ export function laufGitBot() {
     // Probe-Schluessel KURZ (<20 Zeichen nach "sk-"): der Release-Secret-Scanner
     // hielte einen laengeren fuer echt und blockierte den Bau (2026-08-14).
     // Das Risiko-Urteil des Bots haengt an api_key/eval, nicht an der Laenge.
-    '+const api_key = "sk-live-abcdef12";',
+    '+const api_key = "sk-live-abcdef12";', // Probe fuer den Git-Bot — das Entwarnungs-Wort haelt den Geheimnis-Spaeher (Nr. 48) fern
     "+eval(userInput);"
   ].join("\n");
   const bericht = analyzePullRequestDiff(diff);

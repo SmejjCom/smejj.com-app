@@ -216,4 +216,15 @@ test("Nr. 54 Abhängigkeits-Wache: Dedup trägt, der Lauf meldet Funde rot und s
     fetchImpl: async () => ({ ok: true, json: async () => ({ results: [{}] }) })
   });
   assert.equal(gruen.ok, true, gruen.meldung);
+  // Ohne Lock-Datei (dieses Repo fuehrt keine) MUSS der node_modules-Weg
+  // greifen — der erste Live-Lauf am 2026-08-24 stand genau darueber auf Rot.
+  const fallback = await laufAbhaengigkeitsWache({
+    mitNetz: true,
+    ablage: createRecordStore("test/cve-fallback"),
+    lockLeser: () => { throw new Error("keine Lock-Datei"); },
+    paketLeser: () => [{ name: "beispiel", version: "1.0.0" }],
+    fetchImpl: async () => ({ ok: true, json: async () => ({ results: [{}] }) })
+  });
+  assert.equal(fallback.ok, true, fallback.meldung);
+  assert.match(fallback.meldung, /node_modules/);
 });

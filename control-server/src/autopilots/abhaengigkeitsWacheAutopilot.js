@@ -12,7 +12,7 @@
 //    (Modul-Gedächtnis "CVE-Wächter zählt doppelt").
 // 2. Der Bestand wird in der Ablage gehalten: zwischen zwei Tagesabfragen
 //    meldet die Ampel den gemessenen Stand, nie einen Pauschaltext.
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRecordStore } from "../admin/recordStore.js";
@@ -86,6 +86,40 @@ export function fuehreSelbsttestAus() {
   return { bestanden: fehler.length === 0, fehler };
 }
 
+/**
+ * Liest die WIRKLICH installierten Pakete aus node_modules — die Wahrheit des
+ * Containers. Nötig, weil dieses Repo KEINE package-lock.json führt (pnpm auf
+ * dem Mac, npm install im Bau): der erste Live-Lauf am 2026-08-24 fiel genau
+ * darüber. Eine Ebene plus @scope-Ordner reicht — dort liegen die direkten
+ * und die gehobenen Pakete, und genau die laufen im Prozess.
+ */
+export function lesePaketeAusNodeModules({ wurzel = WURZEL, leseOrdner = readdirSync, leseDatei = readFileSync } = {}) {
+  const basis = path.join(wurzel, "node_modules");
+  const kandidaten = [];
+  let eintraege;
+  try { eintraege = leseOrdner(basis); } catch { return []; }
+  for (const name of eintraege) {
+    if (name.startsWith(".")) continue;
+    if (name.startsWith("@")) {
+      try {
+        for (const unter of leseOrdner(path.join(basis, name))) {
+          if (!unter.startsWith(".")) kandidaten.push(`${name}/${unter}`);
+        }
+      } catch { /* ein unlesbarer Scope-Ordner fällt weg */ }
+    } else {
+      kandidaten.push(name);
+    }
+  }
+  const pakete = [];
+  for (const name of kandidaten) {
+    try {
+      const info = JSON.parse(leseDatei(path.join(basis, name, "package.json"), "utf8"));
+      if (info?.version) pakete.push({ name, version: String(info.version) });
+    } catch { /* Ordner ohne lesbares package.json ist kein Paket */ }
+  }
+  return pakete;
+}
+
 /** Fragt osv.dev in Blöcken zu je 90 Paketen. */
 export async function frageOsv(pakete, { fetchImpl = fetch } = {}) {
   const ergebnisse = [];
@@ -110,7 +144,7 @@ export async function frageOsv(pakete, { fetchImpl = fetch } = {}) {
  * Der Lauf im Takt: Selbsttest, dann täglich die echte Abfrage; dazwischen
  * der gemessene Stand aus der Ablage.
  */
-export async function laufAbhaengigkeitsWache({ mitNetz = true, ablage = null, fetchImpl = fetch, jetztMs = Date.now(), lockLeser = () => readFileSync(path.join(WURZEL, "package-lock.json"), "utf8") } = {}) {
+export async function laufAbhaengigkeitsWache({ mitNetz = true, ablage = null, fetchImpl = fetch, jetztMs = Date.now(), lockLeser = () => readFileSync(path.join(WURZEL, "package-lock.json"), "utf8"), paketLeser = lesePaketeAusNodeModules } = {}) {
   const probe = fuehreSelbsttestAus();
   if (!probe.bestanden) {
     return { ok: false, meldung: `Abhängigkeits-Wache besteht den Selbsttest nicht: ${probe.fehler.join("; ")}` };
@@ -131,13 +165,18 @@ export async function laufAbhaengigkeitsWache({ mitNetz = true, ablage = null, f
     return { ok: true, meldung: "Abfrage fällig — läuft im nächsten Netz-Takt" };
   }
 
-  let lockInhalt;
-  try { lockInhalt = lockLeser(); } catch {
-    return { ok: false, meldung: "package-lock.json im Container nicht lesbar — Abhängigkeiten nicht prüfbar" };
-  }
-  const pakete = lesePaketeAusLock(lockInhalt);
+  // Erst die Lock-Datei (exakt), sonst node_modules (die Wahrheit des
+  // Containers) — dieses Repo führt keine package-lock.json, und der erste
+  // Live-Lauf am 2026-08-24 stand genau deshalb auf Rot.
+  let pakete = [];
+  let quelle = "package-lock.json";
+  try { pakete = lesePaketeAusLock(lockLeser()); } catch { /* unten der zweite Weg */ }
   if (!pakete.length) {
-    return { ok: false, meldung: "package-lock.json enthält keine Pakete — Leseweg prüfen" };
+    pakete = paketLeser();
+    quelle = "node_modules";
+  }
+  if (!pakete.length) {
+    return { ok: false, meldung: "Weder package-lock.json noch node_modules lesbar — Abhängigkeiten nicht prüfbar" };
   }
   let ergebnisse;
   try {
@@ -159,5 +198,5 @@ export async function laufAbhaengigkeitsWache({ mitNetz = true, ablage = null, f
   if (schwachstellen.length) {
     return { ok: false, meldung: `${schwachstellen.length} bekannte Schwachstelle(n) in ${betroffenePakete} von ${pakete.length} Paketen — z. B. ${schwachstellen[0]}` };
   }
-  return { ok: true, meldung: `${pakete.length} installierte Pakete gegen osv.dev geprüft — keine bekannte Schwachstelle` };
+  return { ok: true, meldung: `${pakete.length} installierte Pakete (${quelle}) gegen osv.dev geprüft — keine bekannte Schwachstelle` };
 }
