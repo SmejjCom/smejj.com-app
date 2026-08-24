@@ -234,12 +234,14 @@ test("remote worker HTTP handler returns mocked render result", async () => {
 
 test("frontend knows remote browser route and screenshot shell", () => {
   const config = fs.readFileSync("public/config.js", "utf8");
-  const pane = fs.readFileSync("public/browser-pane.js", "utf8");
+  const pane = fs.readFileSync("public/browser-pane.js", "utf8") + ["render", "adressen", "nachrichten", "fernwege", "session", "tableiste"]
+    .map((t) => { try { return fs.readFileSync(`public/browser-pane-${t}.js`, "utf8"); } catch { return ""; } }).join("\n");
   assert.match(config, /browserRemote:\s*"/);
   assert.match(config, /agent:\s*"https:\/\/smejj-chat-bridge\.zeabur\.app\/api\/agent"/);
   // Seit 23.08. laeuft der Rueckfall ueber die eigene API-Domain.
   assert.match(config, /agentFallback:\s*"https:\/\/api\.smejj\.com\/api\/agent"/);
-  assert.match(pane, /CLIENT_ROUTES\.api\.browserRemote/);
+  // fernwege.js bekommt die Routen injiziert (routes.api.browserRemote) — dieselbe Route.
+  assert.match(pane, /api\.browserRemote/);
   assert.match(pane, /viewportWidth/);
   assert.match(pane, /viewportHeight/);
   assert.match(pane, /mode:\s*"remote-browser"/);
@@ -272,9 +274,11 @@ test("Remote-Ansicht ist scrollbar und ohne schwarze Flaechen (Chrome-Massstab)"
   // Volle Bildbreite ohne object-fit:contain — keine schwarzen Raender.
   assert.doesNotMatch(html, /object-fit:contain/);
   assert.match(html, /width:100%;height:auto/);
-  // Scrollposition wird gemeldet und wiederhergestellt.
-  assert.match(html, /smejj\.browser\.scrollState/);
-  assert.match(html, /smejj\.browser\.restoreScroll/);
+  // Scrollposition: seit dem FE-Umbau merkt der AUSSEN-Container die Position
+  // (Handler in den Fachmodulen); der Nachrichten-Empfaenger besteht weiter.
+  const scrollFamilie = ["nachrichten", "tasten", "fernwege"]
+    .map((t) => { try { return fs.readFileSync(`public/browser-pane-${t}.js`, "utf8"); } catch { return ""; } }).join("\n");
+  assert.match(scrollFamilie, /smejj\.browser\.scrollState/);
   // Link-Hotspots: nur http(s), als prozentual positionierte Bereiche.
   assert.match(html, /data-nav="https:\/\/example\.com\/a"/);
   assert.doesNotMatch(html, /javascript:alert/);

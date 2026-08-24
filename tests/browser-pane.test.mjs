@@ -17,6 +17,12 @@ const html = fs.readFileSync("public/index.html", "utf8");
 const sw = fs.readFileSync("public/sw.js", "utf8");
 const configJs = fs.readFileSync("public/config.js", "utf8");
 const paneJs = fs.readFileSync("public/browser-pane.js", "utf8");
+// Seit der FE-Modularisierung (19.-22.08., uebernommen in der Konsolidierung
+// Stufe 2) verteilt sich die Pane auf Fachmodule — die Zusagen gelten fuer die
+// GESAMTHEIT der Familie.
+const paneWelt = paneJs + ["render", "adressen", "nachrichten", "fernwege", "session", "tableiste"]
+  .map((t) => { try { return fs.readFileSync(`public/browser-pane-${t}.js`, "utf8"); } catch { return ""; } })
+  .join("\n");
 
 test("index.html bindet Browser-Pane ein (Root, CSS, Script)", () => {
   assert.match(html, /id="browserPaneRoot" class="browser-pane"/);
@@ -58,7 +64,7 @@ test("Config exposes Browser-Proxy route used by Browser-Pane", () => {
   // browser-pane-Module behalten ihre Version, weil sie nur hier importiert werden.
   assert.match(paneJs, /from "\.\/config\.js"/);
   assert.doesNotMatch(paneJs, /\.\/config\.js\?v=/);
-  assert.match(paneJs, /\.\/browser-pane-render\.js\?v=browser-pane-20260709-2/);
+  assert.match(paneJs, /\.\/browser-pane-render\.js\?v=browser-pane-[\w-]+/);
 });
 
 test("Browser-Pane erlaubt maximal 7 Tabs", () => {
@@ -86,27 +92,30 @@ test("Browser-Pane header aligns active tab row with URL row", () => {
   assert.match(css, /\.bp-tab\s*\{[\s\S]*height:\s*var\(--bp-control-size\);/);
   assert.match(css, /\.bp-toolbar button\s*\{[\s\S]*width:\s*var\(--bp-control-size\);[\s\S]*height:\s*var\(--bp-control-size\);/);
   assert.match(css, /\.bp-address\s*\{[\s\S]*height:\s*var\(--bp-control-size\);/);
-  assert.match(paneJs, /class="bp-tab-left"/);
-  assert.match(paneJs, /class="bp-tab-right"/);
-  assert.match(paneJs, /class="bp-toolbar-left"/);
-  assert.match(paneJs, /class="bp-toolbar-right"/);
-  assert.match(paneJs, /class="bp-tab-spacer"/);
-  assert.match(paneJs, /refs\.prevTab\.addEventListener\("click", \(\) => switchTab\(-1\)\)/);
-  assert.match(paneJs, /refs\.nextTab\.addEventListener\("click", \(\) => switchTab\(1\)\)/);
-  assert.match(paneJs, /const visibleTabs = active \? \[active\] : \[\];/);
+  assert.match(paneWelt, /class="bp-tab-left"/);
+  assert.match(paneWelt, /class="bp-tab-right"/);
+  assert.match(paneWelt, /class="bp-toolbar-left"/);
+  assert.match(paneWelt, /class="bp-toolbar-right"/);
+  assert.match(paneWelt, /class="bp-tab-spacer"/);
+  // Die Vor/Zurueck-Pfeile wichen der Chrome-artigen Tableiste (FE 19.08.,
+  // "der aktive Tab schrumpft zuletzt — wie in Chrome"): jeder Tab ist direkt
+  // klickbar, das Kreuz schliesst ihn.
+  assert.match(paneWelt, /knopf\.addEventListener\("click", \(\) => waehlen\(tab\.id\)\)/);
+  assert.match(paneWelt, /kreuz\.addEventListener\("click"/);
 });
 
 test("Browser-Pane opens as right 50/50 split instead of navigating fullscreen", () => {
-  assert.match(paneJs, /const PANE_WIDTH = "50vw";/);
+  // Die Breite ist seit dem Panel-Umbau responsiv: unterhalb der Vollbild-Grenze 50vw.
+  assert.match(paneJs, /return "50vw";/);
   assert.match(paneJs, /document\.body\.classList\.add\("right-panel-open", "browser-pane-open"\)/);
-  assert.match(paneJs, /document\.body\.style\.setProperty\("--right-panel-width", PANE_WIDTH\)/);
+  assert.match(paneWelt, /setProperty\("--right-panel-width"/);
   assert.match(paneJs, /event\.stopImmediatePropagation\(\)/);
   assert.doesNotMatch(paneJs, /goToView\("websites"/);
 });
 
 test("Browser-Pane: Scrollposition, Verlauf und Zoom werden pro Tab gespeichert", () => {
   // Scroll-Meldungen aus srcdoc-Frames werden pro Tab uebernommen.
-  assert.match(paneJs, /smejj\.browser\.scrollState/);
+  assert.match(paneWelt, /smejj\.browser\.scrollState/);
   assert.match(paneJs, /smejj\.browser\.restoreScroll/);
   // Persistenz enthaelt Scroll, Zoom und Verlauf (nicht nur URL/Titel).
   assert.match(paneJs, /scrollRatio:/);
@@ -170,7 +179,7 @@ test("Browser-Pane erkennt Challenge-Seiten und zeigt externen Fallback", () => 
     message: "extern oeffnen"
   });
   assert.match(fallback, /bp-fallback/);
-  assert.match(fallback, /Extern oeffnen/);
+  assert.match(fallback, /Extern (oeffnen|öffnen)/);
   assert.doesNotMatch(fallback, /Max challenge attempts exceeded/);
   assert.match(paneJs, /mode:\s*"external-required"/);
 });

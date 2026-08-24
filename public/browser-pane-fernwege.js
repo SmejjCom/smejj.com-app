@@ -1,6 +1,3 @@
-// HINWEIS Konsolidierung 24.08.: Im Buendel laeuft die aeltere Pane-Familie
-// (20260709-2); dieses Frontend-Modul liegt hier fuer den Precache bereit und
-// traegt darum dieselbe render-Kennung wie die Buendel-Pane (EINE Instanz-Regel).
 // smejj.com — die Fern-Browser-Wege des Panels.
 //
 // AUSGELAGERT 2026-08-19: browser-pane.js stand ueber der 800-Zeilen-Grenze,
@@ -10,7 +7,7 @@
 // Zustand traegt (sessionClient, refs, Zeichnen, Speichern), kommt als
 // Baustein herein — dasselbe Muster wie browser-pane-tableiste.js. Dadurch
 // bleibt die Familie ohne DOM testbar.
-import { buildLiveBrowserHtml, buildRemoteBrowserHtml } from "./browser-pane-render.js?v=browser-pane-20260709-2";
+import { buildLiveBrowserHtml, buildRemoteBrowserHtml } from "./browser-pane-render.js?v=browser-pane-20260822-1";
 import { clampViewport, shortHost } from "./browser-pane-adressen.js?v=browser-pane-20260820-2";
 
 export function baueFernwege({ sessionClient, refs, routes, setFrame, setFallbackFrame, commitHistory, showHint, persistTabs, render }) {

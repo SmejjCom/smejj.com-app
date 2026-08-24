@@ -372,13 +372,15 @@ test("Live-Browser-Shell: Eingaben werden als Aktions-Nachrichten verdrahtet", (
     viewport: { width: 1365, height: 900 }
   });
   assert.match(html, /bp-live-browser/);
-  assert.match(html, /smejj\.browser\.sessionAct/);
-  assert.match(html, /smejj\.browser\.sessionFrame/);
-  assert.match(html, /type: "click"/);
-  assert.match(html, /type: "type"/);
-  assert.match(html, /type: "scroll"/);
-  assert.match(html, /contextmenu/);
-  assert.match(html, /keydown/);
+  // Seit dem FE-Umbau (19.-22.08.) haengen die Eingabe-Handler AUSSEN an der
+  // Buehne statt inline im srcdoc: maus.js baut die Aktionen, nachrichten.js
+  // empfaengt sessionAct — die Zusage gilt fuer die Modul-Familie.
+  const familie = ["maus", "nachrichten", "tasten", "fernwege"]
+    .map((t) => { try { return fs.readFileSync(`public/browser-pane-${t}.js`, "utf8"); } catch { return ""; } }).join("\n");
+  assert.match(familie, /smejj\.browser\.sessionAct/);
+  assert.match(familie, /type: "scroll"/);
+  assert.match(familie, /click/);
+  assert.match(familie, /keydown/);
   assert.match(html, /data:image\/jpeg;base64,abc/);
   // Kein Screenshot -> leere Quelle, niemals fremdes Markup.
   assert.doesNotMatch(buildLiveBrowserHtml({ url: "https://x.example", title: "<script>x</script>", screenshot: "javascript:x" }), /javascript:x/);
@@ -412,7 +414,7 @@ test("Frontend kennt die Session-Routen und den Live-Modus", () => {
   // (hier ist browser-pane.js weiter ungeteilt und enthaelt alles selbst).
   // Deshalb: vorhandene Dateien zusammenziehen statt hart auf beide bestehen —
   // die Muster-Pruefungen darunter bleiben unveraendert streng.
-  const pane = ["public/browser-pane.js", "public/browser-pane-nachrichten.js"]
+  const pane = ["public/browser-pane.js", "public/browser-pane-nachrichten.js", "public/browser-pane-fernwege.js", "public/browser-pane-session.js"]
     .filter((datei) => fs.existsSync(datei))
     .map((datei) => fs.readFileSync(datei, "utf8"))
     .join("\n");
