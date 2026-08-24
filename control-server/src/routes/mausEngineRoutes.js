@@ -6,6 +6,8 @@
 // Budget-Gate. Keine Browserarbeit, keine Artefakte im Control Server.
 import crypto from "node:crypto";
 import { json } from "../http/respond.js";
+import { buildPlannerClient, PLANER_TIMEOUT_MS } from "./mausPlannerClient.js";
+import { waitForWorkerReady, buildRunPlan, buildRunLoop, WORKER_TIMEOUT_MS } from "./mausWorkerClient.js";
 import { clientKeyFromRequest, createRateLimiter } from "../http/rateLimiter.js";
 import { evaluateWorkerBudget } from "../budget/budgetGate.js";
 import { aiTransparencyHeaders, transparencyNotice } from "../compliance/aiTransparency.js";
@@ -42,9 +44,6 @@ const MAX_PLANNER_PROMPT_CHARS = 24_000;
 // Merkregel: bevor man die eigene Frist anhebt, messen, WESSEN Frist zuschlaegt.
 // Eine Zahl, die man selbst kontrolliert, ist die verlockendste falsche Antwort.
 const GATEWAY_HARTGRENZE_MS = 300_000;
-// Je Modellversuch beim PLANEN. Siehe die Begruendung bei buildPlannerClient.
-const PLANER_TIMEOUT_MS = 100_000;
-const WORKER_TIMEOUT_MS = 330_000;
 const RATE_CAPACITY = 6;
 const RATE_REFILL_PER_SEC = 0.05;
 const ASYNC_RUN_TIMEOUT_MS = 900_000;
@@ -165,114 +164,8 @@ export function readMausEngineConfig(env = process.env) {
 
 // Der EINE modellneutrale Planer-Zugang: AI Router entscheidet das Modell
 // (Default-Kette beginnt bei GLM-5.2); die Engine sieht nur Plan-JSON.
-export function buildPlannerClient({ env = process.env, fetchImpl = fetch, requestedModel = "", melde = null } = {}) {
-  return async (prompt) => {
-    const begonnen = performance.now();
-    // ZWEI PROFILE HINTEREINANDER, nicht nur eines.
-    //
-    // BEFUND 2026-08-18: Jeder Maus-Auftrag endete mit
-    // "planer_nicht_erreichbar" — obwohl /api/chat einwandfrei antwortete.
-    // Grund: der Planer fragte NUR die "coding"-Kette, und deren Anbieter
-    // sind auf diesem Server nicht hinterlegt. Mit einem ausdruecklich
-    // genannten Modell lief derselbe Auftrag sofort durch.
-    //
-    // Ein Planer, der ausfaellt, weil EIN Profil unbesetzt ist, obwohl ein
-    // anderes Modell bereitsteht, ist zu streng: er soll planen, nicht ein
-    // bestimmtes Modell durchsetzen. Deshalb haengt die Standardkette hinten
-    // an — dieselbe, mit der der Chat arbeitet.
-    // SCHNELLE KETTE ZUERST — und das ist keine Bequemlichkeit.
-    //
-    // GEMESSEN 2026-08-18: Ein zweiteiliger Auftrag ("lies X und scrolle")
-    // brauchte mit GLM-5.2 ueber 100 s und lief in die Zeitgrenze; jedes
-    // Kettenglied verbrannte seine Frist, am Ende stand "nicht erreichbar".
-    // Der Auftrag selbst ist mit rund 5300 Zeichen klein — es liegt nicht an
-    // der Groesse, sondern am Tempo des Modells.
-    //
-    // Warum ein schnelles Modell hier VERTRETBAR ist: Der Plan wird danach
-    // fail-closed VALIDIERT. Ein schlechter Plan wird abgelehnt und neu
-    // angefordert; er kommt nie zur Ausfuehrung. Die Sicherheit haengt an der
-    // Pruefung, nicht an der Groesse des Modells — anders als bei einer
-    // Chat-Antwort, die der Nutzer ungeprueft liest.
-    //
-    // Reihenfolge: schnell (Groq) -> coding -> default. Faellt die schnelle
-    // Kette aus, aendert sich nur die Wartezeit, nicht das Ergebnis.
-    // resolveChain STATT resolveModelRequest — und das ist der ganze Punkt.
-    //
-    // GEMESSEN 2026-08-18, nachdem ein erster Versuch wirkungslos blieb:
-    //   resolveModelRequest("fast") -> zhipu/glm-5.2, groq/llama-3.1-8b, zhipu
-    //   resolveChain("fast")        -> groq/llama-3.1-8b, zhipu/glm-5.2
-    // resolveModelRequest stellt die REGISTRY-Modelle voran (hier glm-5-2).
-    // Deshalb kam Groq nie dran, obwohl es in der Anbieterliste steht und ich
-    // die "schnelle Kette" bereits nach vorn gesetzt hatte: sie begann selbst
-    // mit GLM. Eine Umstellung, die nichts umstellt, sieht im Code richtig aus.
-    //
-    // Merkregel: wer eine Reihenfolge aendert, muss sie sich AUSGEBEN lassen.
-    // Zwei Zeilen Messung haetten den ersten Anlauf gespart.
-    //
-    // Ein ausdruecklich gewuenschtes Modell hat weiter Vorrang: dann zaehlt
-    // der Wunsch, nicht das Tempo.
-    const chain = [];
-    const gesehen = new Set();
-    const anhaengen = (backends) => {
-      for (const backend of backends || []) {
-        const schluessel = `${backend.name}:${backend.model || ""}`;
-        if (gesehen.has(schluessel)) continue;
-        gesehen.add(schluessel);
-        chain.push(backend);
-      }
-    };
-    if (requestedModel) {
-      anhaengen(resolveModelRequest("coding", requestedModel, env).chain);
-    } else {
-      anhaengen(resolveChain("fast", env));
-    }
-    anhaengen(resolveModelRequest("coding", requestedModel, env).chain);
-    anhaengen(resolveModelRequest("default", requestedModel, env).chain);
-    if (!chain.length) throw new Error("kein_planer_backend_konfiguriert");
-    // Modellneutral: KEINE feste temperature. Provider wie Moonshot/Kimi-Coding
-    // erzwingen modellabhaengige Werte und lehnen andere mit HTTP 400 ab
-    // (Live-Befund 2026-07-14); der Provider-Default gilt fuer jedes Modell.
-    // ZEITGRENZE FUERS PLANEN, nicht fuers Plaudern.
-    //
-    // GEMESSEN 2026-08-18: "Lies die Ueberschrift." -> 60 s, geht.
-    // "Lies die Ueberschrift der Seite und scrolle nach unten." -> 90 s,
-    // scheitert. Reproduzierbar, kein Zufall und keine Drosselung.
-    //
-    // Ursache: der Modellaufruf bricht nach SMEJJ_LLM_TIMEOUT_MS ab, und der
-    // Standard ist 45 s. Das reicht fuer eine Chat-Antwort — ein Plan ist ein
-    // vollstaendiges JSON-Dokument mit Schritten, Selektoren und Policy, und
-    // schon eine zweiteilige Aufgabe braucht laenger. Jeder Kettenglied-
-    // Versuch kostete dann seine 45 s, bis am Ende "nicht erreichbar" stand.
-    //
-    // 100 s je Versuch: bei zwei Kettengliedern sind das 200 s und damit
-    // sicher unter der Plattformgrenze von 300 s, ab der die Verbindung
-    // gekappt wird (siehe GATEWAY_HARTGRENZE_MS oben). Eine Zahl, die den
-    // Aufruf ueberleben laesst, aber nicht die Antwort verhindert.
-    const result = await executeWithFallback(chain, [{ role: "user", content: prompt }], {
-      fetchImpl,
-      stream: false,
-      timeoutMs: PLANER_TIMEOUT_MS
-    });
-    // WER hat geantwortet und wie lange hat es gedauert? Ohne diese Auskunft
-    // ist jede Tempo-Frage Kaffeesatz: executeWithFallback WEISS es, sagte es
-    // aber niemandem. Am 2026-08-18 stand deshalb die Frage im Raum, ob
-    // ueberhaupt Groq antwortet — beantworten liess sie sich nicht.
-    melde?.({
-      backend: result.backend || null,
-      model: result.model || null,
-      ms: Math.round(performance.now() - begonnen),
-      // Fehlversuche kosten die volle Zeitgrenze. Zwei davon erklaeren eine
-      // Minute Wartezeit vollstaendig.
-      fehlversuche: (result.attempts || []).map((a) => `${a.backend || a.name || "?"}/${a.model || "?"}: ${a.error || a.failure || "?"}`)
-    });
-    if (!result.ok) throw new Error("planer_nicht_erreichbar");
-    const payload = await result.response.json();
-    const content = payload?.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || !content.trim()) throw new Error("planer_leere_antwort");
-    return content;
-  };
-}
-
+// Planer-Client: ausgelagert nach mausPlannerClient.js (800-Zeilen-Regel).
+export { buildPlannerClient } from "./mausPlannerClient.js";
 function clampBudget(overrides = {}) {
   const budget = { ...BUDGET_DEFAULTS };
   for (const [key, [min, max]] of Object.entries(BUDGET_LIMITS)) {
@@ -308,135 +201,9 @@ async function readBody(req) {
 // Gate treffen Planer-Roundtrips einen toten Worker (Gateway 503).
 // Fail-closed: Wird der Worker im Zeitfenster nicht bereit, bricht der
 // Lauf mit klarem Grund ab — es wird nie blind gesendet.
-export async function waitForWorkerReady({ config, fetchImpl = fetch, maxWaitMs = 240_000, pollMs = 5_000, sleep } = {}) {
-  const pause = sleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
-  const deadline = Date.now() + maxWaitMs;
-  let attempts = 0;
-  while (Date.now() <= deadline) {
-    attempts += 1;
-    try {
-      const response = await fetchImpl(`${config.workerUrl}/health`, { method: "GET" });
-      if (response?.ok === true || response?.status === 200) {
-        const body = await response.json().catch(() => null);
-        if (body?.ok === true) return { ready: true, attempts };
-      }
-    } catch {
-      // Netz-/Gateway-Fehler zaehlen als "noch nicht bereit" — kein Abbruch.
-    }
-    if (Date.now() + pollMs > deadline) break;
-    await pause(pollMs);
-  }
-  return { ready: false, attempts };
-}
-
-// Eine Deutung fuer Plan- und Loop-Pfad: zwei Rechenwege waeren zwei
-// Wahrheiten. `error` bleibt maschinenlesbar (z. B. "nicht_autorisiert"),
-// `abortReason` traegt den Status zusaetzlich fuer die Anzeige.
-// Klartext-Regel: 401/403 heisst Token-Unterschied, nicht "Maus kaputt".
-// Gibt den Fehlerstatus zurueck oder 0, wenn kein Fehler BELEGT ist.
-// Bewusst vorsichtig: nur ein positiv erkannter Nicht-2xx-Status gilt als
-// Fehler. `waitForWorkerReady` akzeptiert oben ebenso `ok` ODER `status` —
-// wer hier strenger prueft, erklaert erfolgreiche Laeufe zu Fehlern, sobald
-// eine Antwort nur eines von beiden Feldern traegt.
-export function workerStatusFehler(response) {
-  if (response?.ok === true) return 0;
-  const status = Number(response?.status ?? 0);
-  if (status >= 200 && status < 300) return 0;
-  return status > 0 ? status : 0;
-}
-
-export function workerHttpFehler(status, summary) {
-  const roh = summary && typeof summary === "object" ? summary.error ?? summary.abortReason : null;
-  const error = String(roh || `worker_http_${status}`).slice(0, 160);
-  const hinweis = status === 401 || status === 403
-    ? " (Token von Control-Server und Maus-Engine stimmen nicht ueberein)"
-    : "";
-  return { infra: true, aborted: true, error, abortReason: `worker_http_${status}: ${error}${hinweis}` };
-}
-
-// Worker-Aufruf: Ausfuehrung ausschliesslich im stateless Salad-Worker.
-// 422 (Plan abgelehnt) wird als Abbruch an den Roundtrip zurueckgemeldet.
-function buildRunPlan({ config, fetchImpl, saveAsMacro, readiness }) {
-  return async (plan) => {
-    const gate = await waitForWorkerReady({ config, fetchImpl, ...(readiness || {}) });
-    if (!gate.ready) {
-      return { ok: false, infra: true, aborted: true, abortReason: `worker_nicht_bereit_nach_${gate.attempts}_versuchen` };
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), WORKER_TIMEOUT_MS);
-    try {
-      const response = await fetchImpl(`${config.workerUrl}/run`, {
-        method: "POST",
-        signal: controller.signal,
-        headers: { authorization: `Bearer ${config.token}`, "content-type": "application/json" },
-        body: JSON.stringify({ plan, ...(saveAsMacro ? { saveAsMacro } : {}) })
-      });
-      const summary = await response.json().catch(() => null);
-      if (!summary || typeof summary !== "object") {
-        return { ok: false, infra: true, aborted: true, abortReason: `worker_antwort_ungueltig_http_${response.status}` };
-      }
-      if (summary.rejected === true) {
-        return { ok: false, aborted: true, abortReason: `plan_abgelehnt: ${(summary.errors || []).slice(0, 3).join(" | ")}` };
-      }
-      // HTTP-Status pruefen. Eine 401/403/500 der Engine ist KEIN inhaltlich
-      // gescheiterter Lauf: ohne diese Pruefung kam der Fehler-Body als
-      // `summary` durch und erzeugte {ok:false} ohne failedStep, ohne aborted,
-      // mit leerem actionLog — eine Signatur, die der Interpreter gar nicht
-      // erzeugen kann. Der echte Grund (z. B. nicht_autorisiert) fiel weg.
-      const fehlerStatus = workerStatusFehler(response);
-      if (fehlerStatus) {
-        return { ok: false, ...workerHttpFehler(fehlerStatus, summary) };
-      }
-      return summary;
-    } catch (error) {
-      const reason = error?.name === "AbortError" ? "worker_timeout" : `worker_fehler: ${String(error?.message || error).slice(0, 160)}`;
-      return { ok: false, infra: true, aborted: true, abortReason: reason };
-    } finally {
-      clearTimeout(timer);
-    }
-  };
-}
-
-// Interaktiver Loop-Modus (additiv 2026-07-15): der Loop laeuft IM Worker
-// (dort lebt der Browser). Der Control Server dispatcht nur den loopTask
-// und reicht das haerte Budget durch; der Worker lehnt ohne eigene
-// Planer-Konfiguration fail-closed ab.
-function buildRunLoop({ config, fetchImpl, readiness }) {
-  return async ({ task, policyInput }) => {
-    const gate = await waitForWorkerReady({ config, fetchImpl, ...(readiness || {}) });
-    if (!gate.ready) {
-      return { ok: false, infra: true, aborted: true, abortReason: `worker_nicht_bereit_nach_${gate.attempts}_versuchen`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), WORKER_TIMEOUT_MS);
-    try {
-      const response = await fetchImpl(`${config.workerUrl}/run`, {
-        method: "POST",
-        signal: controller.signal,
-        headers: { authorization: `Bearer ${config.token}`, "content-type": "application/json" },
-        body: JSON.stringify({ loopTask: { task, policyInput } })
-      });
-      const summary = await response.json().catch(() => null);
-      if (!summary || typeof summary !== "object") {
-        return { ok: false, infra: true, aborted: true, abortReason: `worker_antwort_ungueltig_http_${response.status}`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
-      }
-      if (summary.rejected === true) {
-        return { ok: false, aborted: true, abortReason: `loop_abgelehnt: ${(summary.errors || []).slice(0, 3).join(" | ")}`, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
-      }
-      const fehlerStatusLoop = workerStatusFehler(response);
-      if (fehlerStatusLoop) {
-        return { ok: false, ...workerHttpFehler(fehlerStatusLoop, summary), loopSteps: 0, modelCalls: 0, recordedSteps: [] };
-      }
-      return summary;
-    } catch (error) {
-      const reason = error?.name === "AbortError" ? "worker_timeout" : `worker_fehler: ${String(error?.message || error).slice(0, 160)}`;
-      return { ok: false, infra: true, aborted: true, abortReason: reason, loopSteps: 0, modelCalls: 0, recordedSteps: [] };
-    } finally {
-      clearTimeout(timer);
-    }
-  };
-}
-
+// Worker-Client (Bereitschafts-Gate + Dispatcher): ausgelagert nach
+// mausWorkerClient.js (800-Zeilen-Regel).
+export { waitForWorkerReady, workerStatusFehler, workerHttpFehler, buildRunPlan, buildRunLoop } from "./mausWorkerClient.js";
 // Makro-Store fuer Stufe 0 (0 Modell-Aufrufe) und den Loop-Recorder.
 // Fail-safe: ohne vollstaendige e2-Konfiguration einfach kein Store —
 // Verhalten dann exakt wie vor der Erweiterung.

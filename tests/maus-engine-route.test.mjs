@@ -460,7 +460,9 @@ test("Planer fragt das SCHNELLE Modell zuerst", async () => {
 // Wunsch, nicht das Tempo.
 test("ein gewuenschtes Modell schlaegt die Tempo-Reihenfolge", async () => {
   const fs = await import("node:fs");
-  const quelle = fs.readFileSync("control-server/src/routes/mausEngineRoutes.js", "utf8");
+  // Seit 2026-08-24 wohnt der Planer-Client in mausPlannerClient.js
+  // (800-Zeilen-Regel); mausEngineRoutes.js re-exportiert ihn nur.
+  const quelle = fs.readFileSync("control-server/src/routes/mausPlannerClient.js", "utf8");
   const stelle = quelle.slice(quelle.indexOf("const chain = [];"), quelle.indexOf("if (!chain.length)"));
   assert.match(stelle, /if \(requestedModel\)/, "der Wunsch muss abgefragt werden");
   assert.match(stelle, /resolveChain\("fast", env\)/, "ohne Wunsch die schnelle Anbieterkette");
