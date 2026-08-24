@@ -126,12 +126,12 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     funktionen: [
       "Annahme mit Sitzungspflicht, Bremse (10/min je Absender) und PII-Maskierung VOR dem Speichern — dieselbe Regel wie beim Daten-Schwungrad.",
       "Gruppierung mit zahlenfreier Signatur: 'Zeile 4711' und 'Zeile 4712' sind derselbe Fehler nach einem neuen Bündel.",
-      "Unterscheidet ehrlich 'keine Fehler' von 'niemand kann melden': solange der Browser-Haken nicht ausgeliefert ist, sagt die Meldung das ausdrücklich.",
+      "Unterscheidet ehrlich 'keine Fehler' von 'niemand kann melden': solange sich seit dem Serverstart kein Browser gemeldet hat, sagt die Meldung das ausdrücklich.",
       "WARUM: unsichtbarer Senden-Pfeil, nie geladenes Modul, tote Stopp-Taste — alles stand live bei grünen Server-Ampeln."
     ],
     trainiert: "Nichts — er hört den Browsern zu",
     verbessert: "Ein Frontend-Fehler hat nach Minuten eine Zahl statt nach Wochen einen Zufallsfund",
-    neuigkeiten: ["Neu am 2026-08-24; Browser-Haken folgt als eigener Frontend-Schritt"],
+    neuigkeiten: ["Neu am 2026-08-24; Browser-Haken (public/fehler-faenger.js) seit 2026-08-24 auf der Startseite eingebunden"],
     ...LAEUFER
   },
   {

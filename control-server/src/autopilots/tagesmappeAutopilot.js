@@ -13,7 +13,7 @@
 //   2. ROTE AMPELN   — was gerade kaputt ist (mit Meldung)
 //   3. WARTEN AUF DICH — Support-Tickets ohne Antwort, offene Aufgaben
 //   4. OFFENE PUNKTE — bekannte Baustellen, die eine Betreiber-Entscheidung
-//                      brauchen (zweiter Sicherungs-Eimer, Client-Fehlerhaken)
+//                      brauchen (zweiter Sicherungs-Eimer)
 import { createRecordStore } from "../admin/recordStore.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { listeTickets } from "../admin/supportTickets.js";
@@ -21,8 +21,7 @@ import { listeTickets } from "../admin/supportTickets.js";
 /** Offene Punkte, die nur der Betreiber entscheiden kann. Gepflegt im Code,
  *  damit jeder Eintrag mit seinem Grund im Review steht — KEINE Messwerte. */
 export const OFFENE_PUNKTE = Object.freeze([
-  "Daten-Sicherung liegt im selben Eimer (sicherung/) — ein zweiter Eimer braucht einen zweiten Schlüssel (Betreiber-Entscheidung)",
-  "Fehler-Fänger: der Browser-Haken (public/) ist noch nicht ausgeliefert — Server-Annahme steht bereit"
+  "Daten-Sicherung liegt im selben Eimer (sicherung/) — ein zweiter Eimer braucht einen zweiten Schlüssel (Betreiber-Entscheidung)"
 ]);
 
 function neueAblage(praefix, maximal) {
