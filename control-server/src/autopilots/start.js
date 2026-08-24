@@ -13,7 +13,8 @@ import {
   starteWochenbericht
 } from "../admin/opsAutopiloten.js";
 import { starteMailLogAufraeumen } from "../auth/mailLogJanitor.js";
-import { starteAutopilotLaeufer, baueEskalationsVersand } from "./autopilotLaeufer.js";
+import { baueEskalationsVersand } from "./autopilotLaeufer.js";
+import { starteAutopilotLaeufer } from "./autopilotTaktstart.js";
 import { starteModellEinkaeufer } from "./modellEinkaeufer.js";
 // Log-Wache (Nr. 45): die Prozess-Haken muessen VOR dem ersten Fehler haengen.
 import { registriereProzessWache } from "./logWacheAutopilot.js";

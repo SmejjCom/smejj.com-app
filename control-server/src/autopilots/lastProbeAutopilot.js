@@ -12,6 +12,7 @@
 // Netz), damit das langsame Netz des Betreibers nie in die Zahlen läuft
 // (Modul-Gedächtnis "Netz des Betreibers ist der Flaschenhals").
 import { createRecordStore } from "../admin/recordStore.js";
+import { EIGENPROBE_MERKMAL } from "./missbrauchsWacheAutopilot.js";
 
 const PROBE_ABSTAND_MS = 6.5 * 24 * 60 * 60 * 1000; // wöchentlich, mit Spielraum wie der Modell-Einkäufer
 const ABLAGE_ID = "letzte-last-probe";
@@ -66,7 +67,10 @@ export async function messeZiel(url, { fetchImpl = fetch, parallel = PARALLEL } 
   const einzeln = async () => {
     const begonnen = Date.now();
     try {
-      const antwort = await fetchImpl(url, { signal: AbortSignal.timeout(10_000) });
+      // Eigenproben-Merkmal: die Missbrauchs-Wache (Nr. 51) filtert diese 20
+      // Parallelanfragen aus ihrer Absender-Statistik — fälschungssicher, weil
+      // der Wert je Prozessstart gewürfelt wird und den Prozess nie verlässt.
+      const antwort = await fetchImpl(url, { signal: AbortSignal.timeout(10_000), headers: { "x-smejj-eigenprobe": EIGENPROBE_MERKMAL } });
       return antwort.ok ? { dauerMs: Date.now() - begonnen } : { fehler: true };
     } catch {
       return { fehler: true };
@@ -105,7 +109,10 @@ export async function laufLastProbe({ mitNetz = true, ablage = null, env = proce
 
   const ziele = [
     { name: "Control", url: `${String(env.SMEJJ_CONTROL_ORIGIN || "https://smejj-control.zeabur.app").replace(/\/+$/, "")}/api/health` },
-    { name: "Brücke", url: `${String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "")}/health` }
+    { name: "Brücke", url: `${String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "")}/health` },
+    // Seit 23.08. sprechen die Nutzer primär api.smejj.com an — dieselbe
+    // Maschine, aber ein anderer Weg (eigene Domain, TLS, Zeabur-Routing).
+    { name: "API-Domain", url: "https://api.smejj.com/api/health" }
   ];
   const urteile = [];
   for (const ziel of ziele) {

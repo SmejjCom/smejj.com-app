@@ -11,13 +11,24 @@
 // nie ein Körper, nie eine Sitzung. Die Wache soll Missbrauch sehen, nicht
 // Nutzer beobachten.
 
+import crypto from "node:crypto";
+
 const FENSTER_MS = 10 * 60 * 1000;
 const MAX_ABSENDER = 5_000;
+
+// Eigenproben-Merkmal: Die Last-Probe (Nr. 56) feuert 20 parallele Anfragen
+// gegen den EIGENEN Dienst — die sollen die Missbrauchs-Statistik nicht
+// verschmutzen. Ein fester Header wäre fälschbar (jeder Angreifer könnte ihn
+// setzen und sich unsichtbar machen); darum ist das Merkmal ein Zufallswert
+// je Prozessstart, den nur der eigene Prozess kennt. Die Last-Probe läuft im
+// selben Prozess und importiert ihn direkt.
+export const EIGENPROBE_MERKMAL = crypto.randomUUID();
 
 // Zwei Fenster reichen: das laufende und das letzte volle.
 let fenster = { start: 0, absender: new Map() };
 let vorheriges = null;
 let gesamtSeitStart = 0;
+let eigenprobenSeitStart = 0;
 // Zusammenspiel-Audit 2026-08-24: der Deckel war da, aber sein Erreichen
 // blieb stumm — genau die "stille Quelle", die sonst überall benannt wird.
 let deckelErreicht = false;
@@ -40,7 +51,11 @@ function pfadKlasse(pathname = "") {
  * Wird für jede API-Anfrage einmal gerufen (src/server.js). Muss billig sein:
  * ein Map-Zugriff, zwei Zähler.
  */
-export function beobachteAnfrage({ absender = "", pathname = "" } = {}, { jetztMs = Date.now() } = {}) {
+export function beobachteAnfrage({ absender = "", pathname = "", eigenprobe = "" } = {}, { jetztMs = Date.now() } = {}) {
+  if (eigenprobe && eigenprobe === EIGENPROBE_MERKMAL) {
+    eigenprobenSeitStart += 1; // gezählt, aber getrennt — nie im Absender-Fenster
+    return;
+  }
   if (jetztMs - fenster.start >= FENSTER_MS) {
     vorheriges = fenster.absender.size ? fenster : vorheriges;
     fenster = { start: jetztMs, absender: new Map() };
@@ -98,6 +113,7 @@ export function _missbrauchsWacheZuruecksetzen() {
   fenster = { start: 0, absender: new Map() };
   vorheriges = null;
   gesamtSeitStart = 0;
+  eigenprobenSeitStart = 0;
   deckelErreicht = false;
 }
 
@@ -132,9 +148,10 @@ export function laufMissbrauchsWache({ jetztMs = Date.now() } = {}) {
   if (gesamtSeitStart === 0) {
     return { ok: true, meldung: "Selbsttest 3/3; noch keine API-Anfrage gesehen — Zähl-Haken frisch verdrahtet oder Dienst gerade gestartet" };
   }
+  const eigen = eigenprobenSeitStart ? `, ${eigenprobenSeitStart} Eigenproben ausgefiltert` : "";
   return {
     ok: true,
     meldung: `Selbsttest 3/3; ${fenster.absender.size} Absender im laufenden 10-min-Fenster, `
-      + `${gesamtSeitStart} Anfragen seit Start, kein Missbrauchs-Muster`
+      + `${gesamtSeitStart} Anfragen seit Start${eigen}, kein Missbrauchs-Muster`
   };
 }

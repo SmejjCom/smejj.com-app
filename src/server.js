@@ -170,7 +170,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname.startsWith("/api/")) {
       // Missbrauchs-Wache (Nr. 51): jede API-Anfrage einmal zählen — Absender
       // und Pfadklasse, sonst nichts. Darf den Weg nie aufhalten.
-      try { beobachteAnfrage({ absender: clientKeyFromRequest(req), pathname: url.pathname }); } catch { /* zählen ist Beiwerk */ }
+      try { beobachteAnfrage({ absender: clientKeyFromRequest(req), pathname: url.pathname, eigenprobe: String(req.headers["x-smejj-eigenprobe"] || "") }); } catch { /* zählen ist Beiwerk */ }
       if (handlePreflight(req, res)) return; // OPTIONS-Preflight (204 erlaubt / 403 fremd)
       const cors = corsHeadersFor(req.headers.origin);
       if (cors) for (const [name, value] of Object.entries(cors)) res.setHeader(name, value);

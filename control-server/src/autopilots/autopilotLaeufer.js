@@ -783,29 +783,5 @@ export async function heileWasRotIst({
   return fuehreHeilungAus({ plan, heiler: baueHeiler({ melde }), melde, sendeAlarm, log });
 }
 
-/**
- * Den Laeufer im Takt starten. Standard: alle 30 Minuten — oft genug, damit
- * ein Ausfall binnen einer Stunde auffaellt, selten genug, dass der Scan
- * (einige hundert Dateien) den Server nicht beschaeftigt.
- * `unref()` haelt den Prozess nicht wach.
- */
-export function starteAutopilotLaeufer({ intervallMs = 30 * 60 * 1000, sendeAlarm = null } = {}) {
-  const tick = () => {
-    // Erst arbeiten, dann nachsehen, ob etwas liegen geblieben ist. Die
-    // Reihenfolge ist Absicht: Der Heiler soll die FRISCHEN Ergebnisse
-    // bewerten, nicht die von vor 30 Minuten.
-    laufeAlle()
-      .then(() => heileWasRotIst({ sendeAlarm, log: console.log }))
-      .catch(() => {});
-  };
-  // Der ERSTE Takt kommt 90 Sekunden nach dem Boot, nicht sofort: Beim Start
-  // gehoeren CPU und Speicher dem HTTP-Server und dem Gesundheits-Check.
-  // Ein Container, der in den ersten Sekunden 265 Dateien scannt und 25
-  // Autopiloten betreibt, kann seine eigene Startsonde verpassen — dann
-  // startet ihn die Plattform im Kreis neu (502-Vorfall 2026-08-13).
-  const anlauf = setTimeout(tick, 90_000);
-  if (typeof anlauf.unref === "function") anlauf.unref();
-  const zeitgeber = setInterval(tick, intervallMs);
-  if (typeof zeitgeber.unref === "function") zeitgeber.unref();
-  return zeitgeber;
-}
+// Der Taktstart (starteAutopilotLaeufer) wohnt seit 2026-08-24 in
+// autopilotTaktstart.js — die 800-Zeilen-Regel.

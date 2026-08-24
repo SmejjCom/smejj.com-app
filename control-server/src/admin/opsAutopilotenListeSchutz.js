@@ -1,6 +1,8 @@
 // smejj.com — Modul AP, Registry-Teil 3: die Schutz- und Sicherheits-
-// Autopiloten Nr. 44-54 (Betreiber-Freigabe 2026-08-24: "Ja, alle 17 bauen")
-// sowie Nr. 61, der Test-Wächter (Mac-Cron, nicht Läufer).
+// Autopiloten Nr. 44-54 (Betreiber-Freigabe 2026-08-24: "Ja, alle 17 bauen"),
+// Nr. 61, der Test-Wächter (Mac-LaunchAgent, nicht Läufer), sowie aus der
+// Optimierungs-Runde vom selben Tag ("Alle 5 bauen") Nr. 63, die
+// Web-Vitals-Wache (Mac-LaunchAgent), und Nr. 64, die Speicher-Wache.
 //
 // Eigene Datei aus demselben Grund wie Teil 2 (Evolution): die Hauptliste
 // steht längst an der 800-Zeilen-Regel. Wer einen Autopiloten sucht, findet
@@ -221,5 +223,48 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     schonfristMs: TAG_MS,
     startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-tests/wache.sh (der Zeitplan steht im LaunchAgent ~/Library/LaunchAgents/com.smejj.test-waechter.plist).",
     stopAnleitung: "Auf dem Mac: launchctl bootout gui/$(id -u)/com.smejj.test-waechter und die plist aus ~/Library/LaunchAgents entfernen."
+  },
+  {
+    id: "web-vitals-wache",
+    name: "Web-Vitals-Wache",
+    nummer: "63",
+    kurz: "Misst täglich die ausgelieferte Startseite in einem echten Chrome gegen die verbindlichen Performance-Budgets (LCP < 1,5 s, TTFB < 200 ms, CLS < 0,1, Seitengewicht < 300 KB) — der Performance-Lock bekommt damit seinen Wächter.",
+    funktionen: [
+      "Läuft täglich um 6:15 Uhr Mac-Zeit auf dem Rechner des Betreibers (LaunchAgent com.smejj.web-vitals → ~/.local/share/smejj-webvitals/wache.sh; Arbeitskopie außerhalb von Google Drive, exakt die Bauart des Test-Wächters Nr. 61).",
+      "Misst mit scripts/testing/measure_web_vitals.mjs in einem ECHTEN Chrome über CDP — curl misst am Service Worker vorbei und lieferte am 27.07. schon einmal 1,38 s statt der echten 40 ms.",
+      "Mehrere Läufe je Messung, gemeldet wird der Median — ein einzelner Netz-Schluckauf soll keine rote Ampel machen, ein echter Einbruch schon.",
+      "Der Herzschlag trägt die gemessenen Zahlen (LCP, TTFB, CLS, Gewicht) in der Meldung; Ausbleiben ist der Alarm (Totmannschalter wie bei Nr. 61).",
+      "WARUM ES SIE GIBT: Die Performance-Budgets standen seit Wochen im Master-Prompt, aber kein Automat prüfte sie — eine schleichend langsamer werdende Startseite wäre erst beim Nutzer aufgefallen.",
+      "Fail-closed: kein Chrome, keine Arbeitskopie, Messung bricht ab = Fehler-Herzschlag. 'Konnte nicht messen' ist nicht 'grün'."
+    ],
+    trainiert: "Nichts — sie misst die ausgelieferte Seite",
+    verbessert: "Ein gerissenes Performance-Budget steht binnen eines Tages in der Ampel statt erst im Nutzer-Gefühl",
+    neuigkeiten: ["Neu am 2026-08-24 (Optimierungs-Runde: 'Alle 5 bauen')"],
+    ort: "Mac des Betreibers (LaunchAgent com.smejj.web-vitals → ~/.local/share/smejj-webvitals/wache.sh)",
+    zeitplan: "täglich 6:15 Uhr Mac-Zeit",
+    messung: "heartbeat",
+    // Täglich plus großzügige Schonfrist wie bei Nr. 42/61: der Mac kann
+    // nachts aus sein; erst zwei Nächte ohne Meldung sind ein Ausfall.
+    erwartetAlleMs: TAG_MS,
+    schonfristMs: TAG_MS,
+    startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-webvitals/wache.sh (der Zeitplan steht im LaunchAgent ~/Library/LaunchAgents/com.smejj.web-vitals.plist).",
+    stopAnleitung: "Auf dem Mac: launchctl bootout gui/$(id -u)/com.smejj.web-vitals und die plist aus ~/Library/LaunchAgents entfernen."
+  },
+  {
+    id: "speicher-wache",
+    name: "Speicher-Füllstand-Wache",
+    nummer: "64",
+    kurz: "Misst täglich, wie voll das IDrive-e2-Paket ist (Stand beim Bau: 1,25 von 2 TB), warnt ab 80 % und wird ab 90 % rot — bevor ein Modell-Upload das Paket sprengt und stille Mehrkosten entstehen.",
+    funktionen: [
+      "Listet die erreichbaren Eimer (smejj-model-files, smejj-app) per S3-LIST und SUMMIERT die echten Objektgrößen — keine Schätzung, keine Konsolen-Zahl aus zweiter Hand.",
+      "Der Sicherungs-Eimer smejj-sicherung ist für den Dienst-Schlüssel bewusst unlesbar (Isolation, Betreiber-Entscheidung 24.08.) — die Meldung BENENNT das, statt ihn stumm wegzulassen.",
+      "Grenzen als Paket-Anteil: ab 80 % steht die Warnung in der Meldung, ab 90 % wird die Ampel rot — dann entscheidet der Betreiber (aufräumen oder Paket vergrößern), nie ein Automat.",
+      "Zwischen zwei Tagesmessungen meldet die Ampel den gemessenen Stand aus der Ablage (Bauart der Abhängigkeits-Wache); die Paketgröße ist per SMEJJ_SPEICHER_PAKET_GB anpassbar, Standard 2 TB.",
+      "WARUM ES SIE GIBT: Die Kosten-Wache (Nr. 45) sieht Modell-Ausgaben, aber niemand sah den Speicher — 63 % Füllstand wuchsen unbeobachtet."
+    ],
+    trainiert: "Nichts — sie misst die Eimer",
+    verbessert: "Ein volllaufendes Speicherpaket wird Tage vorher sichtbar statt als überraschende Rechnung",
+    neuigkeiten: ["Neu am 2026-08-24 (Optimierungs-Runde: 'Alle 5 bauen')"],
+    ...LAEUFER
   }
 ]);

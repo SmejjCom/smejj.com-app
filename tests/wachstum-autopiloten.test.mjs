@@ -142,6 +142,6 @@ test("ANSCHLUSS-BEWEIS: alle 17 in Registry, Taktgeber und Selbstheilung — Num
   const neue = AUTOPILOTEN.filter((a) => SCHUTZ_UND_WACHSTUM_IDS.includes(a.id)).map((a) => Number(a.nummer)).sort((x, y) => x - y);
   // 44-60 vom 24.08. plus Nr. 62 (Modell-Katalog-Wache, gleicher Tag);
   // Nr. 61 (Test-Waechter) laeuft auf dem Mac, nicht im Laeufer.
-  assert.deepEqual(neue, [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62]);
+  assert.deepEqual(neue, [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62, 64]);
   assert.ok(AUTOPILOTEN.length >= 62, `die Registry muss mindestens 62 Autopiloten führen, hat ${AUTOPILOTEN.length}`);
 });

@@ -287,3 +287,65 @@ test("Aufbewahrung (Freigabe 24.08.): NUR exakt passende, alte Schnappschuesse w
   const leer = waehleAbgelaufene([{ id: "sicherung_2026-08-23" }], { jetztMs });
   assert.deepEqual(leer, [], "frische Schnappschuesse bleiben unangetastet");
 });
+
+// --- Optimierungs-Runde 2026-08-24 ("Alle 5 bauen") -------------------------
+
+test("Nr. 51 Eigenproben: das Boot-Zufallsmerkmal filtert, ein geratener Wert NIE", async () => {
+  const { EIGENPROBE_MERKMAL } = await import("../control-server/src/autopilots/missbrauchsWacheAutopilot.js");
+  _missbrauchsWacheZuruecksetzen();
+  const jetztMs = Date.now();
+  beobachteAnfrage({ absender: "10.0.0.1", pathname: "/api/health", eigenprobe: EIGENPROBE_MERKMAL }, { jetztMs });
+  beobachteAnfrage({ absender: "10.0.0.2", pathname: "/api/health", eigenprobe: "geraten" }, { jetztMs });
+  const lauf = laufMissbrauchsWache({ jetztMs });
+  assert.equal(lauf.ok, true);
+  assert.match(lauf.meldung, /1 Absender/, "der Spoof-Versuch MUSS als normaler Absender zaehlen");
+  assert.match(lauf.meldung, /1 Eigenproben ausgefiltert/, "die echte Eigenprobe MUSS benannt ausgefiltert sein");
+  _missbrauchsWacheZuruecksetzen();
+});
+
+test("Nr. 64 Speicher-Wache: Parser, Grenzen und Lauf bestehen kaputte UND gesunde Proben", async () => {
+  const { parseListSeite, beurteileFuellstand, fuehreSelbsttestAus, laufSpeicherWache } =
+    await import("../control-server/src/autopilots/speicherWacheAutopilot.js");
+  assert.equal(fuehreSelbsttestAus().bestanden, true, "der eingebaute Selbsttest muss stehen");
+
+  const seite = parseListSeite("<r><Contents><Size>7</Size></Contents><Contents><Size>3</Size></Contents><IsTruncated>false</IsTruncated></r>");
+  assert.deepEqual([seite.bytes, seite.objekte, seite.marke], [10, 2, null]);
+  assert.equal(beurteileFuellstand({ belegtBytes: 0.95 * 2048 * 1024 ** 3, paketGb: 2048 }).ok, false, "95 % MUSS rot sein");
+  assert.equal(beurteileFuellstand({ belegtBytes: 0.3 * 2048 * 1024 ** 3, paketGb: 2048 }).ok, true, "30 % MUSS gruen sein");
+
+  const env = { IDRIVE_E2_ENDPOINT: "https://probe.example", IDRIVE_E2_ACCESS_KEY: "a", IDRIVE_E2_SECRET_KEY: "s", IDRIVE_E2_BUCKET: "haupt" };
+  const xml = "<r><Contents><Size>1048576</Size></Contents><IsTruncated>false</IsTruncated></r>";
+  const gesund = await laufSpeicherWache({
+    ablage: createRecordStore("test/speicher-gesund", { maximal: 5 }), env,
+    listImpl: async () => ({ response: { ok: true }, body: xml })
+  });
+  assert.equal(gesund.ok, true);
+  assert.match(gesund.meldung, /haupt 1\.0 MB\/1 Obj\./, "die Meldung MUSS echte Zahlen je Eimer tragen");
+  assert.match(gesund.meldung, /Sicherungs-Eimer bewusst unlesbar/, "die Isolations-Luecke MUSS benannt sein");
+
+  const kaputt = await laufSpeicherWache({
+    ablage: createRecordStore("test/speicher-kaputt", { maximal: 5 }), env,
+    listImpl: async () => ({ response: { ok: false, status: 403 }, body: "" })
+  });
+  assert.equal(kaputt.ok, false, "kein listbarer Eimer darf NIE gruen sein");
+  assert.match(kaputt.meldung, /403/);
+
+  const ohneNetz = await laufSpeicherWache({ ablage: createRecordStore("test/speicher-ohnenetz", { maximal: 5 }), env, mitNetz: false });
+  assert.equal(ohneNetz.ok, true);
+  assert.match(ohneNetz.meldung, /Netz-Takt/, "ohne Netz wird ehrlich vertagt, nicht behauptet");
+});
+
+test("Nr. 56 Last-Probe: misst auch die API-Domain und traegt das Eigenproben-Merkmal", async () => {
+  const { laufLastProbe } = await import("../control-server/src/autopilots/lastProbeAutopilot.js");
+  const { EIGENPROBE_MERKMAL } = await import("../control-server/src/autopilots/missbrauchsWacheAutopilot.js");
+  const gesehen = [];
+  const lauf = await laufLastProbe({
+    ablage: createRecordStore("test/last-probe-ziele", { maximal: 5 }), env: {},
+    fetchImpl: async (url, optionen) => { gesehen.push({ url, merkmal: optionen?.headers?.["x-smejj-eigenprobe"] }); return { ok: true }; }
+  });
+  assert.equal(lauf.ok, true);
+  const urls = [...new Set(gesehen.map((g) => g.url))];
+  assert.equal(urls.length, 3, "Control, Bruecke UND api.smejj.com muessen gemessen werden");
+  assert.ok(urls.some((u) => u.startsWith("https://api.smejj.com/")), "die API-Domain fehlt in den Zielen");
+  assert.ok(gesehen.every((g) => g.merkmal === EIGENPROBE_MERKMAL), "JEDE Probe-Anfrage MUSS das Eigenproben-Merkmal tragen");
+});

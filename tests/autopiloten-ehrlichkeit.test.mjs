@@ -53,6 +53,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   // Warteschlange wie Messlauf und Spiegel. Ohne hinterlegten Schluessel
   // meldet sie NICHTS und bleibt grau — das ist ehrlich, nicht getarnt.
   "oberflaechenwache",    // wird vom Control-Server abgefragt (frageWaechterAb)
+  "web-vitals-wache",     // Nr. 63: echter Chrome-Lauf (measure_web_vitals.mjs) auf dem Mac, Herzschlag mit Zahlen
   "container-puls",      // Eigenmeldung des Control-Servers, seit 2026-08-14 MIT Zahlen
                          // (hiess bis dahin "salad-sonden" und meldete gruen ohne jede Messung)
   "nachweis-kette",      // echter Schreibversuch in den Adminspeicher (403 => rot)
@@ -122,7 +123,8 @@ const MIT_ECHTER_MESSUNG = new Set([
   "tagesmappe",               // baut die Mappe aus den echten Quellen, stumme benannt
   // --- Test-Waechter (Nr. 61), seit 2026-08-24 ---
   "test-waechter",            // Mac-Cron: node --test ueber control-server/src, Herzschlag wie Betriebswache
-  "modell-katalog-wache"      // taeglich /models je Anbieter gegen die aufgeloeste Router-Wahl
+  "modell-katalog-wache",     // taeglich /models je Anbieter gegen die aufgeloeste Router-Wahl
+  "speicher-wache"            // Nr. 64: taeglich S3-LIST ueber die Eimer, echte Objektgroessen summiert
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

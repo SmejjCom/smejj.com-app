@@ -38,6 +38,7 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 61 (2026-08-24): taegliche Unit-Tests des Control-Servers (Mac-Cron).
     "test-waechter"
   ],
+  // (Nr. 63/64 stehen unten bei "Betrieb & Auslieferung" — Performance und Speicher sind Betriebsfragen.)
   "Modelle & Wissen": [
     // Nr. 62 (2026-08-24): taeglicher /models-Abgleich gegen die Router-Wahl.
     "modell-katalog-wache",
@@ -52,7 +53,9 @@ const ZUORDNUNG = Object.freeze({
     "codeberg-spiegel", "qualitaetsmessung", "autopilot-laeufer", "evolution-ablage",
     // Nr. 50, 55-60 (2026-08-24): Nutzersicht, Kosten, Last, Wachstum, Mappe.
     "fehler-faenger", "kosten-wache", "last-probe", "auffindbarkeits-wache",
-    "willkommens-wache", "experiment-meister", "tagesmappe"
+    "willkommens-wache", "experiment-meister", "tagesmappe",
+    // Nr. 63/64 (2026-08-24, Optimierungs-Runde): Web-Vitals-Budgets und Paket-Fuellstand.
+    "web-vitals-wache", "speicher-wache"
   ]
 });
 
