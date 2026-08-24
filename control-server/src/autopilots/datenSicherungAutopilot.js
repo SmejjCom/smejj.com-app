@@ -17,6 +17,7 @@
 // den zweiten Eimer, nicht einen Schnappschuss daneben.
 import crypto from "node:crypto";
 import { createRecordStore } from "../admin/recordStore.js";
+import { signedS3Delete } from "../storage/s3Signer.js";
 
 /** Die Betriebs-Ablagen, die gesichert werden — mit Deckel je Ablage. */
 export const SICHERUNGS_QUELLEN = Object.freeze([
@@ -31,6 +32,66 @@ export const SICHERUNGS_QUELLEN = Object.freeze([
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;
+
+// AUFBEWAHRUNG (Betreiber-Freigabe 2026-08-24, woertlich: "Aufbewahrungsdauer
+// festlegen: alte Schnappschuesse nach 30 Tagen loeschen freigeben"). Der
+// Daten-Lock verlangt fuer jede Loeschung eine schriftliche Freigabe — DIESE
+// ist sie, und sie gilt AUSSCHLIESSLICH fuer Tages-Schnappschuesse unter
+// sicherung/taeglich/, deren Kennung EXAKT dem Muster sicherung_JJJJ-MM-TT
+// entspricht. Alles andere waehlt die Auswahl nie aus (fail-closed).
+// Im Zweit-Eimer smejj-sicherung erledigt dieselbe 30-Tage-Frist eine
+// IDrive-Lebenszyklus-Regel (Praefix sicherung/) — dort hat der Dienst-
+// Schluessel bewusst keinen Zugriff.
+export const AUFBEWAHRUNG_TAGE = 30;
+const SCHNAPPSCHUSS_MUSTER = /^sicherung_(\d{4}-\d{2}-\d{2})$/;
+const LOESCHUNGEN_JE_LAUF = 5;
+
+/**
+ * Waehlt abgelaufene Tages-Schnappschuesse. Getrennt testbar (kaputt+gesund).
+ * Nur exakt passende Kennungen, nur aelter als die Aufbewahrung — ein
+ * Datensatz mit fremdem Namen wird NIE gewaehlt, egal wie alt er ist.
+ */
+export function waehleAbgelaufene(datensaetze = [], { jetztMs = Date.now(), aufbewahrungTage = AUFBEWAHRUNG_TAGE } = {}) {
+  const grenzeMs = jetztMs - aufbewahrungTage * TAG_MS;
+  const abgelaufene = [];
+  for (const d of datensaetze) {
+    const treffer = SCHNAPPSCHUSS_MUSTER.exec(String(d?.id || ""));
+    if (!treffer) continue;
+    const tagMs = Date.parse(`${treffer[1]}T00:00:00Z`);
+    if (Number.isFinite(tagMs) && tagMs < grenzeMs) abgelaufene.push(d.id);
+  }
+  return abgelaufene.sort();
+}
+
+function eimerKonfig(env = process.env) {
+  const { IDRIVE_E2_ENDPOINT: endpoint, IDRIVE_E2_ACCESS_KEY: accessKey, IDRIVE_E2_SECRET_KEY: secretKey, IDRIVE_E2_BUCKET: bucket } = env;
+  if (!endpoint || !accessKey || !secretKey || !bucket) return null;
+  return { endpoint, accessKey, secretKey, bucket, region: env.IDRIVE_E2_REGION || "us-west-2" };
+}
+
+/**
+ * Loescht abgelaufene Schnappschuesse im HAUPT-Eimer — hoechstens
+ * LOESCHUNGEN_JE_LAUF je Takt, jeder Schluessel einzeln benannt (die
+ * signedS3Delete-Regel: wer loescht, benennt genau ein Objekt).
+ */
+async function raeumeAbgelaufeneAuf({ ablage, env = process.env, jetztMs = Date.now() } = {}) {
+  const liste = await ablage.liste({ limit: 40 });
+  if (!liste.ok) return { geloescht: 0, hinweis: "Ablage nicht listbar" };
+  const abgelaufene = waehleAbgelaufene(liste.datensaetze, { jetztMs }).slice(0, LOESCHUNGEN_JE_LAUF);
+  if (!abgelaufene.length) return { geloescht: 0 };
+  const cfg = eimerKonfig(env);
+  if (!cfg) return { geloescht: 0, hinweis: `${abgelaufene.length} abgelaufen, aber kein Eimer-Zugang (lokal)` };
+  let geloescht = 0;
+  for (const id of abgelaufene) {
+    // Doppelte Schranke direkt vor dem Loeschen: exaktes Muster ODER nichts.
+    if (!SCHNAPPSCHUSS_MUSTER.test(id)) continue;
+    try {
+      await signedS3Delete({ ...cfg, key: `sicherung/taeglich/${id}.json` });
+      geloescht += 1;
+    } catch { /* naechster Takt versucht es erneut — Loeschen ist nie dringend */ }
+  }
+  return { geloescht, aeltester: abgelaufene[0] };
+}
 
 let sicherungsAblage = null;
 function holeSicherungsAblage(ablage) {
@@ -119,7 +180,13 @@ export async function laufDatenSicherung({ ablage = null, quellen = SICHERUNGS_Q
       return { ok: false, meldung: `Heutige Sicherung liegt vor, ist aber NICHT intakt: ${zustand.grund}` };
     }
     const objekte = heutige.quellen.reduce((s, q) => s + q.anzahl, 0);
-    return { ok: true, meldung: `Sicherung aktuell (${heutigeId.slice(10)}): ${heutige.quellen.length} Ablagen, ${objekte} Datensätze, Prüfsumme geprüft${heutige.stummeQuellen?.length ? ` — ${heutige.stummeQuellen.length} stumme Quelle(n)` : ""}` };
+    let aufraeumText = "";
+    try {
+      const aufgeraeumt = await raeumeAbgelaufeneAuf({ ablage: speicher, jetztMs });
+      if (aufgeraeumt.geloescht) aufraeumText = `; ${aufgeraeumt.geloescht} Schnappschuss/Schnappschüsse älter ${AUFBEWAHRUNG_TAGE} Tage gelöscht (Freigabe 24.08.)`;
+      else if (aufgeraeumt.hinweis) aufraeumText = `; Aufräumen: ${aufgeraeumt.hinweis}`;
+    } catch { aufraeumText = "; Aufräumen diesmal nicht möglich"; }
+    return { ok: true, meldung: `Sicherung aktuell (${heutigeId.slice(10)}): ${heutige.quellen.length} Ablagen, ${objekte} Datensätze, Prüfsumme geprüft${heutige.stummeQuellen?.length ? ` — ${heutige.stummeQuellen.length} stumme Quelle(n)` : ""}${aufraeumText}` };
   }
 
   const schnappschuss = await erstelleSchnappschuss({ quellen, storeFabrik, jetztIso });

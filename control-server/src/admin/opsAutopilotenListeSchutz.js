@@ -66,7 +66,8 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
       "Acht Ablagen mit Deckel je Quelle in EINEN täglichen Schnappschuss (sicherung/taeglich) — mit SHA-256-Prüfsumme über den Inhalt.",
       "Nach dem Schreiben wird ZURÜCKGELESEN und die Prüfsumme verglichen — geschrieben heißt noch nicht lesbar (Lehre des Nachweis-Wächters).",
       "Seit 2026-08-24 zusätzlich im ZWEITEN Eimer: IDrive-e2-Objektreplikation spiegelt die Schnappschüsse (sicherung/-Präfix) und den kompletten Chats-Eimer smejj-app serverseitig nach smejj-sicherung — der Dienst-Schlüssel kann den Sicherungs-Eimer bewusst nicht lesen (Isolation), Kontrolle über die IDrive-Konsole.",
-      "Nutzer-Chats bewusst nicht dabei: sie brauchen den zweiten Eimer, keinen Schnappschuss daneben."
+      "Nutzer-Chats bewusst nicht dabei: sie brauchen den zweiten Eimer, keinen Schnappschuss daneben.",
+      "AUFBEWAHRUNG 30 Tage (Betreiber-Freigabe 2026-08-24): Schnappschüsse älter als 30 Tage werden aufgeräumt — im Haupteimer durch diesen Lauf (fail-closed: nur exakte sicherung_JJJJ-MM-TT-Kennungen, höchstens 5 je Takt), im Zweit-Eimer durch die IDrive-Lebenszyklus-Regel (Präfix sicherung/)."
     ],
     trainiert: "Nichts — sie sichert und beweist",
     verbessert: "Die Betriebsdaten haben erstmals ein tägliches, rückgelesenes Backup statt gar keines",

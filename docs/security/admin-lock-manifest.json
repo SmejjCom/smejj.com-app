@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-24T11:03:24.136Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-24 'Punkt aus der Tagesmappe erledigen: zweiter Sicherungs-Eimer einrichten' — Registry-Text Nr. 46 auf den Live-Stand: Eimer smejj-sicherung + zwei IDrive-Replikationsjobs (smejj-app komplett, sicherung/-Praefix), Dienst-Schluessel bewusst ohne Zugriff auf den Sicherungs-Eimer.",
+  "frozenAt": "2026-08-24T11:15:43.986Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-24 woertlich: 'Aufbewahrungsdauer festlegen: alte Schnappschuesse nach 30 Tagen loeschen freigeben' — Registry Nr. 46 um die 30-Tage-Aufbewahrung ergaenzt; Loeschung ausschliesslich exakter sicherung_JJJJ-MM-TT-Schnappschuesse.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",

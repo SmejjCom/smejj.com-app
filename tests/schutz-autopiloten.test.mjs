@@ -13,7 +13,7 @@ import assert from "node:assert/strict";
 import { beurteileLage, laufRueckRoller, KERN_AMPELN } from "../control-server/src/autopilots/rueckRollerAutopilot.js";
 import { werteZeilenAus, laufLogWache, registriereProzessWache, notiereFehlerzeile, _logWacheZuruecksetzen, beurteileHeap } from "../control-server/src/autopilots/logWacheAutopilot.js";
 import { baueHeiler } from "../control-server/src/autopilots/autopilotLaeufer.js";
-import { pruefeSchnappschuss, pruefsumme, laufDatenSicherung, laufWiederherstellungsProbe } from "../control-server/src/autopilots/datenSicherungAutopilot.js";
+import { pruefeSchnappschuss, pruefsumme, laufDatenSicherung, laufWiederherstellungsProbe, waehleAbgelaufene } from "../control-server/src/autopilots/datenSicherungAutopilot.js";
 import { findeGeheimnisse, laufGeheimnisSpaeher } from "../control-server/src/autopilots/geheimnisSpaeherAutopilot.js";
 import { bewerteLaufzeiten, laufZertifikatsWache } from "../control-server/src/autopilots/zertifikatsWacheAutopilot.js";
 import { gruppiereFehler, nimmFehlerAn, laufFehlerFaenger, _fehlerFaengerZuruecksetzen } from "../control-server/src/autopilots/fehlerFaengerAutopilot.js";
@@ -270,4 +270,20 @@ test("Zusammenspiel-Audit: der Absender-Deckel meldet sich, statt still blind zu
   assert.equal(voll.ok, false, "erreichter Deckel MUSS als Befund erscheinen");
   assert.match(voll.meldung, /Deckel/);
   _missbrauchsWacheZuruecksetzen();
+});
+
+test("Aufbewahrung (Freigabe 24.08.): NUR exakt passende, alte Schnappschuesse werden gewaehlt — fremde Namen NIE", () => {
+  const TAG = 86_400_000;
+  const jetztMs = Date.parse("2026-08-24T12:00:00Z");
+  const auswahl = waehleAbgelaufene([
+    { id: "sicherung_2026-07-01" },              // 54 Tage alt -> waehlen
+    { id: "sicherung_2026-08-20" },              // 4 Tage alt -> behalten
+    { id: "rueck-roller-stand" },                // fremder Name -> NIE waehlen
+    { id: "empfehlung_2026-06-01T00" },          // fremdes Muster -> NIE waehlen
+    { id: "sicherung_2020-01-01x" }              // fast passend -> NIE waehlen
+  ], { jetztMs });
+  assert.deepEqual(auswahl, ["sicherung_2026-07-01"],
+    "genau EIN abgelaufener Tages-Schnappschuss darf in der Auswahl stehen");
+  const leer = waehleAbgelaufene([{ id: "sicherung_2026-08-23" }], { jetztMs });
+  assert.deepEqual(leer, [], "frische Schnappschuesse bleiben unangetastet");
 });

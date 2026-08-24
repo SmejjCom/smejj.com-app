@@ -29,7 +29,11 @@ export const OFFENE_PUNKTE = Object.freeze([
   // erreicht das Backup nicht); Kontrolle läuft über die IDrive-Konsole.
   // Zusammenspiel-Audit 2026-08-24: Löschen ist Rote Liste — deshalb steht die
   // Entscheidung HIER statt in einem Automat, der einfach löscht.
-  "Sicherungs-Schnappschüsse (sicherung/taeglich, jetzt auch als Kopie im Eimer smejj-sicherung) sammeln sich ohne Aufräumen an — Aufbewahrungsdauer festlegen (auch wegen Löschrechten: user-memory steckt in den Kopien) und das Löschen alter Stände freigeben (Betreiber-Entscheidung)"
+  // Aufbewahrung ENTSCHIEDEN (Betreiber-Freigabe 2026-08-24): 30 Tage.
+  // Haupteimer: Rotation im Autopiloten Nr. 46 (fail-closed, nur exakte
+  // sicherung_JJJJ-MM-TT-Kennungen). Zweit-Eimer: IDrive-Lebenszyklus-Regel
+  // (Praefix sicherung/, Ablauf 30 Tage). Damit ist die Liste leer — und
+  // eine leere Liste ist der ehrliche Zustand, kein Platzhalter.
 ]);
 
 function neueAblage(praefix, maximal) {
