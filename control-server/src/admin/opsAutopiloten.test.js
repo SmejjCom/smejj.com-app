@@ -489,3 +489,28 @@ test("jeder Autopilot steht in genau einem Bereich — und jeder zugeordnete exi
     assert.ok(zugeordneteKennungen().includes(a.id), a.id + " fehlt in opsAutopilotenBereiche.js");
   }
 });
+
+test("Neustart-Festigkeit: ALLE Autopiloten-Herzschlaege ueberleben das Laden — auch die alphabetisch letzten (Befund 2026-08-24)", async () => {
+  // Der Fall vom 2026-08-24: maximal: 50 schnitt die S3-Schluesselliste
+  // alphabetisch ab — test-waechter und zertifikats-wache verloren ihren
+  // Herzschlag bei JEDEM Neustart. Diese Probe legt fuer jeden Autopiloten
+  // der Registry einen Herzschlag ab und verlangt, dass das Laden JEDEN
+  // zurueckbringt. Faellt die Registry-Groesse je ueber die Ablage-Grenze,
+  // schlaegt dieser Test VOR dem Live-Schaden an.
+  _herzschlaegeZuruecksetzen(); _ablageLeeren();
+  const jetztMs = JETZT;
+  const ids = AUTOPILOTEN.map((a) => a.id);
+  const env = { SMEJJ_AUTOPILOT_KEYS: ids.map((id) => `${id}:probe`).join(",") };
+  for (const id of ids) {
+    const angenommen = heartbeatAnnehmen({ id, key: "probe", status: "ok", meldung: `Probe fuer ${id}`, env, jetztMs });
+    assert.equal(angenommen.ok, true, `${id}: Herzschlag muss angenommen werden`);
+    assert.equal(await persistiereHerzschlag(id, { env: {} }), true, `${id}: Persistenz muss gelingen`);
+  }
+  _herzschlaegeZuruecksetzen();
+  await ladeHerzschlaege({ env: {} });
+  const u = autopilotUebersicht({ jetztMs: jetztMs + 60_000 });
+  const ohneLauf = (u.autopiloten || []).filter((a) => ids.includes(a.id) && !a.letzterLauf).map((a) => a.id);
+  assert.deepEqual(ohneLauf, [],
+    "diese Autopiloten verlieren ihren Herzschlag beim Neustart — die Ablage-Grenze (maximal) ist kleiner als die Registry");
+  _herzschlaegeZuruecksetzen(); _ablageLeeren();
+});

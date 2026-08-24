@@ -60,7 +60,15 @@ function zaehleTag(id, status, jetztMs) {
 // JSON-Datensatz je Autopilot). Die Eigenmeldung der Salad-Sonden wird bewusst
 // NICHT abgelegt — sie bezeugt genau diesen Prozess und waere nach einem
 // Neustart eine konservierte Luege; sie entsteht dort binnen Sekunden neu.
-const ablage = createRecordStore("admin/autopiloten", { maximal: 50 });
+// maximal MUSS deutlich ueber der Zahl der Autopiloten liegen (Befund
+// 2026-08-24): Bei 62 Autopiloten plus Wartungs-, Vorfalls- und
+// Marker-Datensaetzen schnitt maximal: 50 die S3-Schluesselliste ALPHABETISCH
+// ab — test-waechter, willkommens-wache und zertifikats-wache fielen still
+// hinten runter, ihre Herzschlaege ueberlebten keinen Neustart, und die Ampel
+// fiel nach jedem Deploy grundlos auf Grau. 200 laesst Raum fuer Wachstum;
+// wer den 200. Autopiloten baut, hebt diese Zahl MIT (der TUEV in
+// opsAutopiloten.test.js schlaegt vorher an).
+const ablage = createRecordStore("admin/autopiloten", { maximal: 200 });
 
 // Was die Ablage tatsaechlich getan hat — sichtbar in der Ansicht.
 //

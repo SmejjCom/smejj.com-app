@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-24T09:38:13.198Z",
-  "confirmation": "Betreiber-Freigaben 2026-08-24 (laufender Auftrag 'arbeite selbststaendig, korrigiere und verbessere als Expert'): Registry-Aufteilung nach 800-Zeilen-Regel (Commits 6ca3240f/5fe073b4 der Parallelsitzung, neue Teil-Datei opsAutopilotenListeBetrieb.js) + Zusammenspiel-Audit-Fixes 494e5524; Stempel nachgezogen, keine Sicherheitslogik veraendert.",
+  "frozenAt": "2026-08-24T09:53:25.506Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-24 'Herzschlaege neustart-fest machen': Ablage-Deckel admin/autopiloten von 50 auf 200 — bei 62 Autopiloten schnitt der S3-Abschnitt die alphabetisch letzten Herzschlaege still ab (test-waechter u. a. nach jedem Deploy grau); TUEV mit Gegenprobe in opsAutopiloten.test.js.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -20,7 +20,7 @@
     "control-server/src/http/rateLimiter.js": "bda973680f50c21f997920eba63cd65b474ef7a23b8c6f38665d9e37e8633052",
     "control-server/admin-ui/api.js": "5a27c9ee10fa3cf5709ff8f460eb4f8c52c7d094801bbeac7ef75344dfda643f",
     "control-server/admin-ui/gate.js": "b1b81af7891d5973d38f86e06edd9e720237995b84e67c58aef2bcd272a662d8",
-    "control-server/src/admin/opsAutopiloten.js": "59eded391481365dc339d9b7cbe4215614f8585ebbfc54b91144e57e11f4ea74",
+    "control-server/src/admin/opsAutopiloten.js": "bfe5ddc1965e0ef20e4a7ef49fd1d6525a087617e5ecd1727b3558508bc7ddc0",
     "control-server/src/admin/opsAutopilotenListe.js": "e4cfc942e06e9eaf52cb37874be82ca16722fedf02584e3ef1c6620d8457b544",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
     "control-server/src/admin/opsAutopilotenBereiche.js": "8d2a1c2a9599e608330faba0f82a41f4142e93368deb5fb61db39b8c220ab422",
