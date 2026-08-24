@@ -30,7 +30,13 @@ const asJson = Boolean(args.json);
 // Die App leitet Abgemeldete auf /auth/login/. Fuer die Messung der echten
 // Startseite wird im Wegwerf-Profil eine Sitzung vorgetaeuscht — kein Zugang,
 // kein Secret, nur das lokale Kennzeichen, das auth-gate.js prueft.
-const SEED_SESSION = `try { localStorage.setItem("smejj.session.v1", JSON.stringify({ authenticated: true, mode: "messung" })); } catch (error) { void error; }`;
+//
+// Die Fuehrung gilt als gesehen, aus demselben Grund: gemessen wird der
+// angemeldete WIEDERKEHRER, und der hat die Erste Fuehrung hinter sich.
+// Ohne dieses Kennzeichen mass der Lauf einen Widerspruch (Sitzung alt,
+// Fuehrung nie gesehen) — und das LCP war die Fuehrungs-Blase, die absichtlich
+// erst nach 1,6 s erscheint (Befund 2026-08-24: LCP 2,4 s statt echter 0,8 s).
+const SEED_SESSION = `try { localStorage.setItem("smejj.session.v1", JSON.stringify({ authenticated: true, mode: "messung" })); localStorage.setItem("smejj.fuehrung.v1", "gesehen"); } catch (error) { void error; }`;
 
 const COLLECTOR = `
 window.__smejjVitals = { lcp: null, cls: 0, inp: null, lcpElement: null };
