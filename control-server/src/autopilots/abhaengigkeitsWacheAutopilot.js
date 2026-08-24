@@ -176,7 +176,23 @@ export async function laufAbhaengigkeitsWache({ mitNetz = true, ablage = null, f
     quelle = "node_modules";
   }
   if (!pakete.length) {
-    return { ok: false, meldung: "Weder package-lock.json noch node_modules lesbar — Abhängigkeiten nicht prüfbar" };
+    // Kein Paket gefunden ist ZWEIERLEI: Der Container dieses Repos läuft
+    // ABSICHTLICH ohne Fremdpakete (package.json führt keine dependencies,
+    // das Dockerfile installiert nichts — Haus-Regel "bewusst ohne externe
+    // Dependency"). Das ist der beste messbare Zustand, kein Ausfall. Rot
+    // bleibt nur, wenn package.json Abhängigkeiten NENNT, die nicht auffindbar
+    // sind — oder gar nicht lesbar ist.
+    let deklariert = null;
+    try {
+      const eigene = JSON.parse(readFileSync(path.join(WURZEL, "package.json"), "utf8"));
+      deklariert = Object.keys(eigene?.dependencies || {}).length;
+    } catch { /* deklariert bleibt null */ }
+    if (deklariert === 0) {
+      return { ok: true, meldung: "Container läuft ohne Fremdpakete (package.json: 0 dependencies, nichts installiert) — Angriffsfläche über Abhängigkeiten ist null, nichts bei osv.dev abzufragen" };
+    }
+    return { ok: false, meldung: deklariert === null
+      ? "package.json nicht lesbar — Abhängigkeiten nicht prüfbar"
+      : `package.json nennt ${deklariert} dependencies, aber weder Lock noch node_modules sind lesbar — Widerspruch prüfen` };
   }
   let ergebnisse;
   try {

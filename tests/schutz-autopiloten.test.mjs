@@ -227,4 +227,16 @@ test("Nr. 54 Abhängigkeits-Wache: Dedup trägt, der Lauf meldet Funde rot und s
   });
   assert.equal(fallback.ok, true, fallback.meldung);
   assert.match(fallback.meldung, /node_modules/);
+  // Der Container dieses Repos laeuft ABSICHTLICH ohne Fremdpakete: gar kein
+  // Paket + package.json ohne dependencies ist GRUEN, kein Ausfall (der
+  // zweite Live-Lauf am 2026-08-24 stand faelschlich auf Rot).
+  const ohneFremdpakete = await laufAbhaengigkeitsWache({
+    mitNetz: true,
+    ablage: createRecordStore("test/cve-leer"),
+    lockLeser: () => { throw new Error("keine Lock-Datei"); },
+    paketLeser: () => [],
+    fetchImpl: async () => { throw new Error("darf nie gerufen werden"); }
+  });
+  assert.equal(ohneFremdpakete.ok, true, ohneFremdpakete.meldung);
+  assert.match(ohneFremdpakete.meldung, /ohne Fremdpakete/);
 });
