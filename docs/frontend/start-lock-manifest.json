@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-14T20:34:59.574Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-14: EINE Zeile in public/sw.js. '/assets/start-chips.js' in die SHELL-Vorratsliste eingetragen, weil index.html das Skript seit 49fd609 als eigenes <script type=module> laedt und der Eintrag fehlte — offline waere die Startseite ohne ihre Beispiel-Chips gestartet. Nur ein Listeneintrag plus Begruendungskommentar. Neu gestempelt nach Rebase auf 31086f6 einer Parallelsitzung.",
+  "frozenAt": "2026-08-24T08:11:33.152Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-24: Fehler-Faenger Browser-Haken public/fehler-faenger.js in index.html einbinden; Start-Lock muss nach der Aenderung mit Betreiber-Freigabe neu gestempelt werden (Wortlaut des Auftrags in der Sitzung).",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8f3fae986d807c6f3a31dc759c93a2f9d6da40a637a5d48423cc95f602fc8b06",
+    "public/index.html": "37253729480b01a7a9c73d4adaa62e105b7968c1b4384cc33311c4fb229d6127",
     "public/styles.css": "2bb97c86e8c71f9847436f2616b349218e09773aad1370be3292808b945ac2fc",
     "public/start-styles.css": "15b0638e987ab28a90cd88b0e725550b941922f40a22e3ae8f4fdadceba995a6",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "7007291a637110eec0ef4eb0527cbaf0f70799268dc41d3e38626403f9d56cf6",
+    "public/sw.js": "5acebe7bd44b5bb07a25c88eb6ae581ae2ff033ab6836e5105ed725207adf2a1",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
