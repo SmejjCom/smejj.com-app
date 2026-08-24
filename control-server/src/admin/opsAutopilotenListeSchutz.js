@@ -201,7 +201,7 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     nummer: "61",
     kurz: "Führt täglich ALLE Unit-Tests des Control-Servers aus (control-server/src) und wird ROT, sobald einer scheitert — ein roter Test darf nie wieder tagelang unbemerkt bleiben.",
     funktionen: [
-      "Läuft täglich um 5:45 Uhr Mac-Zeit auf dem Rechner des Betreibers (crontab → ~/.local/share/smejj-tests/wache.sh; Arbeitskopie außerhalb von Google Drive, gleiche Bauart wie die Betriebswache).",
+      "Läuft täglich um 5:45 Uhr Mac-Zeit auf dem Rechner des Betreibers (LaunchAgent com.smejj.test-waechter → ~/.local/share/smejj-tests/wache.sh; Arbeitskopie außerhalb von Google Drive, gleiche Bauart wie die Betriebswache — nur launchd statt crontab, weil das crontab-Schreiben eine Admin-Freigabe verlangt, die ein Hintergrundlauf nicht klicken kann).",
       "Sucht die Testdateien SELBST (rekursiv per fs statt Shell-Glob — die npm-sh findet mit ** nur Tiefe 2) und übergibt sie node --test als ausdrückliche Liste; unter 60 gefundenen Dateien wird er ROT, statt still weniger zu prüfen.",
       "Wächter-TÜV vor jeder Messung: eine kaputte und eine gesunde Probe — erkennt er Rot nicht, prüft er gar nicht erst.",
       "WARUM ES IHN GIBT: modelRouter.test.js stand vom 18. bis 24.08. rot, ohne dass ein Pflicht-Check ihn je ausführte — test:unit existierte, hing aber in keinem Prüfpfad.",
@@ -211,14 +211,14 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     trainiert: "Nichts — er misst. Exit-Code und Dateizahl von node --test über control-server/src.",
     verbessert: "Ein roter Unit-Test fällt binnen eines Tages auf statt erst beim nächsten Release",
     neuigkeiten: ["Neu am 2026-08-24, nachdem der Groq-Routertest sechs Tage unbemerkt rot stand"],
-    ort: "Mac des Betreibers (crontab → ~/.local/share/smejj-tests/wache.sh)",
+    ort: "Mac des Betreibers (LaunchAgent com.smejj.test-waechter → ~/.local/share/smejj-tests/wache.sh)",
     zeitplan: "täglich 5:45 Uhr Mac-Zeit",
     messung: "heartbeat",
     // Täglich plus großzügige Schonfrist wie bei der Betriebswache: der Mac
     // kann nachts aus sein; erst zwei Nächte ohne Meldung sind ein Ausfall.
     erwartetAlleMs: TAG_MS,
     schonfristMs: TAG_MS,
-    startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-tests/wache.sh (der Zeitplan steht in der crontab).",
-    stopAnleitung: "Auf dem Mac den crontab-Eintrag smejj-test-waechter entfernen."
+    startAnleitung: "Auf dem Mac: /bin/bash ~/.local/share/smejj-tests/wache.sh (der Zeitplan steht im LaunchAgent ~/Library/LaunchAgents/com.smejj.test-waechter.plist).",
+    stopAnleitung: "Auf dem Mac: launchctl bootout gui/$(id -u)/com.smejj.test-waechter und die plist aus ~/Library/LaunchAgents entfernen."
   }
 ]);
