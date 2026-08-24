@@ -8,9 +8,10 @@
 //
 // Der Weg: Die Seite meldet window.onerror/unhandledrejection per
 // POST /api/fehler (Route: fehlerRoutes.js). Hier wohnen Ringpuffer,
-// PII-Maskierung, Gruppierung und der Ampellauf. EHRLICH: Solange der
-// Client-Haken nicht ausgeliefert ist, sagt die Meldung das ausdrücklich —
-// "keine Fehler" und "niemand kann melden" sind zwei verschiedene Sätze.
+// PII-Maskierung, Gruppierung und der Ampellauf. EHRLICH: Solange sich seit
+// dem Serverstart kein Browser gemeldet hat, sagt die Meldung das ausdrücklich
+// — "keine Fehler" und "niemand kann melden" sind zwei verschiedene Sätze.
+// Der Browser-Haken (public/fehler-faenger.js) ist seit 2026-08-24 dabei.
 import { scrubPiiData } from "./userFeedbackFlywheelAutopilot.js";
 
 const RING_MAX = 500;
@@ -117,7 +118,7 @@ export function laufFehlerFaenger({ jetztMs = Date.now(), fensterMs = 24 * 60 * 
   if (!clientVerdrahtet && angenommen === 0) {
     return {
       ok: true,
-      meldung: "Selbsttest 3/3; Annahme bereit — aber noch KEIN Client hat sich gemeldet: der Browser-Haken ist noch nicht ausgeliefert (offener Punkt, steht in der Tagesmappe)"
+      meldung: "Selbsttest 3/3; Annahme bereit — aber seit dem Serverstart hat sich noch KEIN Browser gemeldet (der Haken sendet erst nach Anmeldung; bleibt das über Stunden so, den Haken auf der Startseite prüfen)"
     };
   }
   return {
