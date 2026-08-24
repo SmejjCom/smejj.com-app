@@ -475,9 +475,18 @@ test("die Ansicht erfaehrt, ob ein Herzschlag erwartet wird (messung) — grau i
   frisch();
   const u = autopilotUebersicht({ jetztMs: JETZT });
   const pflicht = u.autopiloten.find((a) => a.id === "qualitaetsmessung");
-  const still = u.autopiloten.find((a) => a.id === "training-loop");
   assert.equal(pflicht.messung, "heartbeat");
-  assert.equal(still.messung, "geplant");
+  // Das Beispiel fuer "geplant" war der Trainings-Takt — der ist seit
+  // 2026-08-24 auf Betreiber-Anordnung reaktiviert und misst wieder. Seitdem
+  // MISST jeder Autopilot der Registry; die Regel bleibt trotzdem gueltig:
+  // WENN jemand wieder einen geplanten eintraegt, muss er einen Hinweis
+  // tragen (das erzwingt tests/autopiloten-ehrlichkeit.test.mjs). Hier bleibt
+  // die Gegenrichtung: kein Eintrag darf messung ohne Wert fuehren.
+  for (const a of u.autopiloten) {
+    assert.ok(a.messung === "heartbeat" || a.messung === "geplant", a.id + ": messung muss heartbeat oder geplant sein");
+  }
+  const still = u.autopiloten.find((a) => a.id === "training-loop");
+  assert.equal(still.messung, "heartbeat", "Nr. 05 ist seit 2026-08-24 reaktiviert und muss wieder messen");
 });
 
 test("jeder Autopilot steht in genau einem Bereich — und jeder zugeordnete existiert", () => {

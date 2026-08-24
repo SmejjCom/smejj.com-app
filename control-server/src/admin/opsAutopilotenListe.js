@@ -215,23 +215,23 @@ const BASIS_AUTOPILOTEN = Object.freeze([
     id: "training-loop",
     name: "Trainings-Takt",
     nummer: "05",
-    kurz: "Stillgelegt seit 2026-08-02 (Betreiber-Entscheidung: RAG statt Training). Sollte die Evaluierungs- und Trainingszyklen takten.",
+    kurz: "Reaktiviert 2026-08-24 auf Betreiber-Anordnung: misst im Takt die echte Trainingsdaten-Pipeline (DPO-Paare, Destillate, Nutzersignale, Batches) und den Capture-Schalter — GPU-Trainingsläufe bleiben hinter der Kosten-Freigabe.",
     funktionen: [
-      "Vorgesehen war ein täglicher Lauf um 12:00 UTC im Dienst smejj-autopilot-jobs — diesen Dienst gibt es in keinem Zeabur-Projekt.",
-      "Der Dienst smejj-training-loop existiert, wird aber von niemandem getaktet.",
-      "Solange er stillgelegt ist, meldet er nichts — die Ampel bleibt bewusst grau, das ist kein Ausfall."
+      "Läuft im Autopilot-Läufer des Control-Servers — an keinem externen Dienst mehr: der ursprünglich vorgesehene Dienst smejj-autopilot-jobs hat nie existiert, WESHALB die Ampel von 02.08. bis 24.08. bewusst grau stand.",
+      "Misst die vier self-improvement-Ablagen (DPO-Paare, Destillate, Nutzersignale, Batches): Lesbarkeit ist Pflicht, leere Bestände sind ein ehrlicher Anfang.",
+      "Meldet den Capture-Schalter der Trainingsdaten-Policy: 'aus (fail-closed)' ist der GEWOLLTE Zustand und grün — die Policy zu erfüllen ist kein Ausfall.",
+      "STARTET KEINE GPU-Trainingsläufe: echte Trainingszyklen (Salad, stundenweise) sind eine neue Kostenposition und damit Rote Liste — eigene schriftliche Freigabe nötig."
     ],
-    trainiert: "Modell-Evaluierungsberichte & Inferenz-Metriken",
-    verbessert: "Planmäßige Taktung aller Trainings- und DPO-Schleifen rund um die Uhr",
-    neuigkeiten: ["Dauertrainings-Takt 100% synchronisiert auf Zeabur", "Eval-Pipeline grün"],
-    ort: "Stillgelegt — läuft nirgends",
-    zeitplan: "kein Zeitplan (stillgelegt seit 2026-08-02)",
-    messung: "geplant",
-    messungHinweis: "Stillgelegt seit 2026-08-02 (Betreiber-Entscheidung: RAG statt Training). Ein stillgelegter Kreislauf meldet nichts.",
-    erwartetAlleMs: TAG_MS,
-    schonfristMs: 6 * STUNDE_MS,
-    startAnleitung: "Nicht startbar — der vorgesehene Dienst existiert nicht. Eine Wiederinbetriebnahme ist eine Betreiber-Entscheidung.",
-    stopAnleitung: "Ist bereits still."
+    trainiert: "Nichts — er misst die Datenlage, aus der smejj 1.0 einmal lernen soll",
+    verbessert: "Ob die Trainingsdaten-Pipeline lebt, ist eine gemessene Zahl im 30-Minuten-Takt statt einer grauen Ampel",
+    neuigkeiten: ["Reaktiviert 2026-08-24 (Betreiber-Anordnung) als In-Process-Wächter — neustart-fest, kein Geisterdienst mehr"],
+    ort: "Control Server (Autopilot-Läufer)",
+    zeitplan: "alle 30 Minuten",
+    messung: "heartbeat",
+    erwartetAlleMs: STUNDE_MS,
+    schonfristMs: STUNDE_MS,
+    startAnleitung: "Läuft automatisch mit dem Control-Server (starteAutopilotLaeufer).",
+    stopAnleitung: "Nur durch Anhalten des Control-Servers."
   },
   {
     id: "brueckenwaechter",

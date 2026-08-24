@@ -102,6 +102,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   // beginnt mit einem Selbsttest aus kaputter UND gesunder Probe und misst
   // dann echte Daten. Belegt in tests/schutz-autopiloten.test.mjs und
   // tests/wachstum-autopiloten.test.mjs.
+  "training-loop",            // Nr. 05, reaktiviert 2026-08-24: misst die self-improvement-Ablagen + Capture-Schalter im Laeufer
   "rueck-roller",             // Ampeln gegen Deploy-Staende; Empfehlung in die Ablage
   "log-wache",                // Ringpuffer der eigenen Prozess-Fehlersignale
   "daten-sicherung",          // taeglicher Schnappschuss + sofortige Ruecklese mit Pruefsumme

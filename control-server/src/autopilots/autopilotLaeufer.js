@@ -56,6 +56,8 @@ import { searchWebDetailed } from "../../../src/search/webSearch.js";
 // Nr. 44-60 (Schutz, Sicherheit, Kosten, Wachstum, Tagesmappe) — eigene Datei,
 // 800-Zeilen-Regel; Betreiber-Freigabe 2026-08-24 ("Ja, alle 17 bauen").
 import { baueSchutzUndWachstumLaeufe, SCHUTZ_UND_WACHSTUM_IDS } from "./schutzUndWachstumLaeufe.js";
+// Nr. 05, reaktiviert 2026-08-24 (Betreiber-Anordnung): In-Process statt Geisterdienst.
+import { laufTrainingsTakt } from "./trainingsTaktAutopilot.js";
 
 /**
  * Die Konkurrenzlücken als fertige Backlog-Aufgaben. Eigene Funktion, damit
@@ -96,6 +98,7 @@ export const IM_LAEUFER_BETRIEBEN = Object.freeze([
   "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check",
   "ai-evolution-engine", "missing-function-detector", "autopilot-supervisor", "evolution-ablage",
   "nachweis-kette",
+  "training-loop",
   ...SCHUTZ_UND_WACHSTUM_IDS
 ]);
 
@@ -624,6 +627,8 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     // Lebenszeichen ohne Suche, und der Dienst ist von aussen nicht erreichbar
     // (derselbe Umzug wie bei der Voice-Region-Pruefung am 2026-08-13).
     ["konkurrenz-radar", () => laufKonkurrenzRadar({ mitNetz, suche: searchWebDetailed })],
+    // Nr. 05: die Trainingsdaten-Pipeline — ohne Netz, nur Ablagen + Schalter.
+    ["training-loop", () => laufTrainingsTakt()],
     // Nr. 44-60: dieselbe Dateiliste, derselbe Netz-Schalter — die Läufe
     // selbst wohnen in schutzUndWachstumLaeufe.js (800-Zeilen-Regel).
     ...baueSchutzUndWachstumLaeufe({ dateien, mitNetz }),
