@@ -170,5 +170,56 @@ function machEarSend(host, serverText, { totesOhr = false } = {}) {
   check("5e leerer Hinweis => Feld wird weggelassen", ohne === null);
 }
 
+// --- 6. Anmelde-Header des Ohr-Uploads (A-Z-Simulatorbefund 2026-08-26) ------
+// Die Bruecke bindet /api/voice/transcribe an die Anmeldung (kein Token = 401).
+// Ohne Authorization-Kopf bekam auch ein ANGEMELDETER Nutzer nie ein Transkript
+// — im Web-Speech-Duett unsichtbar (Browser-Text gewann still), im Ohr-Solo
+// (iOS) fatal: fuenfmal 401 trotz frischer Magic-Link-Sitzung, live gemessen.
+{
+  const quelle = readFileSync(new URL("../public/voice-ear.js", import.meta.url), "utf8");
+  check("6a Upload traegt authHeaders um den Content-Type",
+    /headers: authHeaders\(\{ "Content-Type": mime \}\)/.test(quelle));
+  check("6b derselbe Schluessel wie auth-gate/voice-premium-tts",
+    quelle.includes('const AUTH_TOKEN_KEY = "smejj.auth.accessToken.v1"'));
+
+  // Verhaltensprobe mit Attrappen: eine komplette Hoer-Runde. Token im
+  // localStorage => Bearer-Kopf am Upload; ohne Token => KEIN Kopf (fail-safe).
+  const { createServerEar } = await import("../public/voice-ear.js");
+  const grossesStueck = new Blob(["x".repeat(5000)], { type: "audio/webm" });
+  class RecorderAttrappe {
+    static isTypeSupported() { return true; }
+    constructor() { this.state = "recording"; this.ondataavailable = null; this.onstop = null; }
+    start() { setTimeout(() => this.ondataavailable?.({ data: grossesStueck }), 0); }
+    stop() { this.state = "inactive"; this.onstop?.(); }
+  }
+  globalThis.MediaRecorder = RecorderAttrappe;
+  const altNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: { mediaDevices: { getUserMedia: async () => ({ getTracks: () => [] }) } } });
+
+  const rundeMitToken = async (token) => {
+    globalThis.localStorage = { getItem: (k) => (k === "smejj.auth.accessToken.v1" ? token : null) };
+    let koepfe = null;
+    const ear = createServerEar({
+      url: "https://bruecke.example/api/voice/transcribe",
+      fetchFn: async (_url, init) => { koepfe = init.headers; return { ok: true, status: 200, json: async () => ({ text: "hallo" }) }; }
+    });
+    await ear.start();
+    await tick();
+    const text = await ear.finish();
+    return { koepfe, text };
+  };
+
+  const mit = await rundeMitToken("probe-token");
+  check("6c mit Sitzung: Bearer-Kopf reist mit und Transkript kommt",
+    mit.koepfe?.Authorization === "Bearer probe-token" && mit.text === "hallo");
+  const ohne = await rundeMitToken(null);
+  check("6d ohne Sitzung: kein Authorization-Kopf (fail-safe, Privatmodus)",
+    ohne.koepfe && !("Authorization" in ohne.koepfe));
+
+  delete globalThis.MediaRecorder;
+  delete globalThis.localStorage;
+  if (altNavigator) Object.defineProperty(globalThis, "navigator", altNavigator);
+}
+
 console.log(`\n${passed} bestanden, ${failed} fehlgeschlagen`);
 if (failed > 0) process.exit(1);
