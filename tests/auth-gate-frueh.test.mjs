@@ -5,16 +5,31 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import crypto from "node:crypto";
 
 const html = fs.readFileSync("public/index.html", "utf8");
 const quelle = fs.readFileSync("public/auth-gate-frueh.js", "utf8");
 const gate = fs.readFileSync("public/auth-gate.js", "utf8");
 
-test("das fruehe Tor ist das ERSTE Skript in index.html und kein Modul", () => {
+test("das fruehe Tor ist das ERSTE Skript in index.html: INLINE und kein Modul", () => {
+  // Seit dem Kaltstart-Umbau (Betreiber-Freigabe 2026-08-25) steht das Tor
+  // INLINE im head — der erste blockierende Request entfaellt damit ganz.
   const erstes = html.match(/<script[^>]*>/)[0];
-  assert.match(erstes, /auth-gate-frueh\.js\?v=/);
+  assert.doesNotMatch(erstes, /src=/, "das Tor braucht keinen eigenen Request mehr");
   assert.doesNotMatch(erstes, /type="module"/);
   assert.ok(html.indexOf(erstes) < html.indexOf("</head>"), "steht im <head>");
+  // EINE Wahrheit: der Inline-Rumpf ist BYTE-GLEICH der Datei — wer das Tor
+  // aendert, muss neu inlinen (und den CSP-Hash nachziehen), sonst rot.
+  assert.ok(html.includes("<script>" + quelle + "</script>"), "Inline-Rumpf == public/auth-gate-frueh.js");
+  // Und der Hash in der CSP passt zum Rumpf, sonst blockt der Browser still.
+  const hash = crypto.createHash("sha256").update(quelle, "utf8").digest("base64");
+  assert.ok(html.includes("'sha256-" + hash + "'"), "CSP-Hash muss zum Inline-Rumpf passen");
+});
+
+test("das Stylesheet wird per preload sofort angestossen (Kaltstart 25.08.)", () => {
+  const preload = html.match(/<link rel="preload" href="\/assets\/start-styles\.css[^"]*" as="style">/);
+  assert.ok(preload, "preload-Link fehlt");
+  assert.ok(html.indexOf(preload[0]) < html.indexOf("<script>"), "preload steht VOR dem Tor");
 });
 
 test("kein Import, keine Abhaengigkeit — sonst waere es wieder spaet", () => {
