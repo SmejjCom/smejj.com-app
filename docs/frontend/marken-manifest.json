@@ -30,16 +30,16 @@
       "finger": "54b1f9b624a2e4c8"
     },
     "composer-paste-attach.js": {
-      "marke": "1",
-      "finger": "a192efcbefdb12d9"
+      "marke": "3",
+      "finger": "237fe67b1757c731"
     },
     "search.js": {
-      "marke": "b50",
-      "finger": "4d252b04e3c61117"
+      "marke": "b51",
+      "finger": "66d82847419212e2"
     },
     "search-overlay.js": {
-      "marke": "b57",
-      "finger": "b524192d052691e6"
+      "marke": "b58",
+      "finger": "9585c430dbe9f7e7"
     },
     "nachladen.js": {
       "marke": "1",
@@ -70,20 +70,20 @@
       "finger": "86a9acdf00a6bf97"
     },
     "premium-surfaces.js": {
-      "marke": "b42c",
-      "finger": "63bff297478e12be"
+      "marke": "b42d",
+      "finger": "38fc3986318f9569"
     },
     "composer-tools.js": {
-      "marke": "werkzeuge-3",
-      "finger": "261deb2f4feee344"
+      "marke": "werkzeuge-5",
+      "finger": "3955ad9b47262764"
     },
     "voice-landing.js": {
       "marke": "blitz-20260822",
       "finger": "a746521be185ef36"
     },
     "chat-store.js": {
-      "marke": "b63",
-      "finger": "afa1d4ad635e1f34"
+      "marke": "b64",
+      "finger": "b51b2e43c4dfca3b"
     },
     "autonomous-thread-run.js": {
       "marke": "1",
@@ -174,8 +174,8 @@
       "finger": "1377b0733ae8ceaf"
     },
     "chat-history-cards.js": {
-      "marke": "b57",
-      "finger": "1e7f7998388b2c60"
+      "marke": "b58",
+      "finger": "3a46bd3b434549a4"
     },
     "chat-markdown.js": {
       "marke": "1",
@@ -202,8 +202,8 @@
       "finger": "278ac4bcbc0e3ed7"
     },
     "code-flaeche.js": {
-      "marke": "54",
-      "finger": "f886a5ad6aba2cd9"
+      "marke": "56",
+      "finger": "bfebada7b543b2fa"
     },
     "voice-typed-send.js": {
       "marke": "voice-send-20260721",
@@ -214,8 +214,8 @@
       "finger": "fa32b5eb22ad439a"
     },
     "composer-plus-menu.js": {
-      "marke": "werkzeuge-2",
-      "finger": "7b0fe7ebb9dae557"
+      "marke": "werkzeuge-4",
+      "finger": "3eb01b8e4f0082aa"
     },
     "frame-guard.js": {
       "marke": "1",
@@ -250,12 +250,12 @@
       "finger": "50c91127f442aca0"
     },
     "papierkorb.js": {
-      "marke": "11",
-      "finger": "401d690c9a3c4161"
+      "marke": "12",
+      "finger": "cc2581c2ccb99361"
     },
     "arbeitsbereiche.js": {
-      "marke": "17",
-      "finger": "f90a37676f9539db"
+      "marke": "18",
+      "finger": "fe68f815e2a22cde"
     },
     "kamera.js": {
       "marke": "b35live2",
@@ -278,20 +278,20 @@
       "finger": "9c20b31fb9a63a08"
     },
     "spur-start.js": {
-      "marke": "b44",
-      "finger": "46644c6fa9b104d5"
+      "marke": "b45",
+      "finger": "cfb9f4344512e32c"
     },
     "projekt-ordner.js": {
       "marke": "1",
       "finger": "77f85949b611b623"
     },
     "code-nachladen.js": {
-      "marke": "11",
-      "finger": "df798b2238947531"
+      "marke": "13",
+      "finger": "3411c36f84ed71f3"
     },
     "app.js": {
-      "marke": "b91",
-      "finger": "4a3fa1375f877ab0"
+      "marke": "b94",
+      "finger": "e31dcf26ab461e92"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260817-5",
@@ -310,12 +310,12 @@
       "finger": "42fe12b7db9f8428"
     },
     "chat-history-view.js": {
-      "marke": "b57",
-      "finger": "7edb265ab5016d70"
+      "marke": "b58",
+      "finger": "90f8a165c0aad2d6"
     },
     "chat-actions.js": {
-      "marke": "b39",
-      "finger": "c81e4143e787b096"
+      "marke": "b40",
+      "finger": "da51b30e01312de5"
     },
     "chat-code-copy.js": {
       "marke": "zcode2-20260816",
@@ -334,12 +334,16 @@
       "finger": "e276daaff0ec5f79"
     },
     "chat-stopp.js": {
-      "marke": "9",
-      "finger": "945dd04796bdba14"
+      "marke": "11",
+      "finger": "a754b64aaad65f99"
     },
     "erwaehnung.js": {
+      "marke": "2",
+      "finger": "bf939b9fccb83ecb"
+    },
+    "modell-menue-start.js": {
       "marke": "1",
-      "finger": "6223c5a7cf676110"
+      "finger": "ce68532752f99818"
     },
     "chat-code-farben.js": {
       "marke": "1",
@@ -362,8 +366,8 @@
       "finger": "a7f008cff4186447"
     },
     "autonomous-coding.js": {
-      "marke": "5",
-      "finger": "819f1c6de635062e"
+      "marke": "6",
+      "finger": "6b08b7a49a30bec1"
     },
     "settings-surface.js": {
       "marke": "b43",

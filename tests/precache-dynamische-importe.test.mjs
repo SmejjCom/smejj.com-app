@@ -1,7 +1,7 @@
 // smejj.com — Jedes dynamisch geladene Modul MUSS im Precache stehen.
 //
 // BEFUND 2026-08-20 (Vergleich Quelle gegen Live): maus-absicht.js laedt
-// maus-chrome.js per import("./maus-chrome.js?v=1"). Im LIVE-Zwischenspeicher
+// maus-chrome.js per import("./maus-chrome.js?v=2"). Im LIVE-Zwischenspeicher
 // stand der Eintrag, in der QUELLE fehlte er — ein Bau aus der Quelle haette
 // ihn entfernt und die Maus-Bruecke offline stumm gemacht.
 //

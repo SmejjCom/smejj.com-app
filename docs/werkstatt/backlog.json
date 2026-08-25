@@ -1,5 +1,5 @@
 {
-  "gesammeltAm": "2026-08-14T15:19:57.653Z",
+  "gesammeltAm": "2026-08-24T20:53:02.295Z",
   "aufgaben": [
     {
       "stufe": 2,
@@ -13,24 +13,12 @@
       "stufe": 2,
       "quelle": "CVE-Waechter",
       "betrifft": "bibliothek:protobuf",
-      "titel": "protobuf 5.29.2: 4 bekannte Schwachstelle(n)",
-      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-7gcm-g887-7qv7, GHSA-8qvm-5x2c-j2w7, PYSEC-2026-1805. Quelle: workers/smejj-voice/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
-      "seit": null
-    },
-    {
-      "stufe": 5,
-      "quelle": "Mail-Protokoll",
-      "betrifft": "email-zustellung",
-      "titel": "3 Mails haben den Server nicht verlassen",
-      "befund": "Gemessen ueber 14 Tage. Gruende stehen im Versandprotokoll (Adminbereich, Ansicht V).",
+      "titel": "protobuf 5.29.5: 2 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-7gcm-g887-7qv7, PYSEC-2026-1805. Quelle: workers/smejj-voice/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
       "seit": null
     }
   ],
   "stummeQuellen": [
-    {
-      "quelle": "Ampel-grau",
-      "grund": "Server erst seit 2 min neu gestartet — 2 Autopilot(en) hatten noch keinen Takt. Grau heisst hier \"noch nicht gemessen\", nicht \"kaputt\"."
-    },
     {
       "quelle": "Pruefsuite",
       "grund": "nicht angefordert (--mit-tests setzen)"
