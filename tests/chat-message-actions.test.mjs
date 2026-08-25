@@ -646,19 +646,13 @@ test("Quellen kommen aus echtem Grounding, nicht aus Raten", () => {
   assert.match(grounding, /if \(!context\) return;/, "ein gescheiterter Abruf begruendet nichts und wird nicht gemerkt");
   assert.match(grounding, /MAX_QUELLEN/, "die Karte waechst nicht unbegrenzt");
 
-  assert.match(actions, /import \{ groundingFor \}/, "die Leiste fragt die echte Quelle ab");
-  // Live-Befund 2026-07-28: mit "?v=1" entstand eine ZWEITE Modulinstanz mit
-  // eigenem Quellen-Gedaechtnis — app.js schrieb in die eine, die Leiste las aus
-  // der anderen, und "Quellen anzeigen" waere nie erschienen.
-  const appImport = /from "\.\/browser-context\.js(\?[^"]*)?"/.exec(appJs);
-  assert.ok(appImport, "app.js importiert browser-context.js");
-  const actionsImport = /from "\/assets\/browser-context\.js(\?[^"]*)?"/.exec(actions);
-  assert.ok(actionsImport, "chat-actions.js importiert browser-context.js");
-  assert.equal(
-    actionsImport[1] || "",
-    appImport[1] || "",
-    "beide muessen DENSELBEN Spezifizierer benutzen, sonst zwei Modulinstanzen"
-  );
+  // Seit "Startseite abspecken" (24.08.) laedt die Leiste das Grounding erst
+  // beim Klick — derselbe kennungsFREIE Spezifizierer wie im Sendepfad, sonst
+  // zwei Modulinstanzen (Live-Befund 2026-07-28 mit ?v=1).
+  const actionsImport = /import\("\/assets\/browser-context\.js(\?[^"]*)?"\)/.exec(actions);
+  assert.ok(actionsImport, "die Leiste fragt die echte Quelle ab (nachgeladen)");
+  assert.equal(actionsImport[1] || "", "", "kennungsfrei — sonst zweite Modulinstanz");
+  assert.match(actions, /groundingFor\(/, "und nutzt groundingFor wirklich");
   assert.match(actions, /const frage = previousUserEntry\(last\);/, "zugeordnet wird ueber die Frage davor, nicht ueber die letzte Quelle");
   assert.match(store, /sources: Array\.isArray\(meta\.sources\)/, "der Verlauf speichert die Quellen");
   assert.match(store, /sources: message\.sources/, "und gibt sie beim Wiederherstellen zurueck");
@@ -764,6 +758,10 @@ test("Vorlesen ist ein Umschalter — der zweite Klick stoppt die Ansage", () =>
   // laufende Ansage war ueber die Oberflaeche nicht abbrechbar.
   const quelle = fs.readFileSync("public/chat-actions.js", "utf8");
   assert.match(quelle, /let vorleseQuelle = null/, "der Vorlese-Zustand muss gemerkt werden");
-  assert.match(quelle, /if \(vorleseQuelle === entry\) \{\n    \/\/ Zweiter Klick auf dieselbe Nachricht: nur stoppen\.\n    vorleseQuelle = null;\n    return;\n  \}/, "zweiter Klick = Stopp, kein Neustart");
-  assert.match(quelle, /utterance\.onend = \(\) => \{ if \(vorleseQuelle === entry\) vorleseQuelle = null; \}/, "nach dem Ende ist der naechste Klick wieder ein Start");
+  // Gehaertete Fassung (b42): Stopp nur, wenn WIRKLICH gesprochen wird
+  // (speaking VOR cancel gelesen), sonst faehrt sich der Umschalter fest.
+  assert.match(quelle, /const warAmSprechen = synthesis\.speaking;/, "speaking wird VOR cancel gelesen");
+  assert.match(quelle, /if \(vorleseQuelle === entry && warAmSprechen\) \{/, "zweiter Klick = Stopp, kein Neustart");
+  assert.match(quelle, /vorleseUtterance = utterance;/, "Utterance bleibt referenziert (Chrome-GC)");
+  assert.match(quelle, /utterance\.onend = \(\) => \{ if \(vorleseQuelle === entry\) \{ vorleseQuelle = null; vorleseUtterance = null; \} \}/, "nach dem Ende ist der naechste Klick wieder ein Start");
 });

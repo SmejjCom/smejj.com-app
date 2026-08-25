@@ -93,7 +93,10 @@ test("kopiert wird der Code, nicht der gerenderte Nachrichtentext", () => {
 });
 
 test("Auslieferung: eingebunden, gebuendelt und im Precache", () => {
-  assert.match(indexHtml, /<script src="\/assets\/chat-code-copy\.js\?v=[^"]+" type="module"><\/script>/);
+  // Seit "Startseite abspecken" (24.08.) haengt chat-code-copy nicht mehr als
+  // eigener Tag in index.html: bedarf-nachladen.js holt es beim ersten Bedarf.
+  const bedarf = fs.readFileSync("public/bedarf-nachladen.js", "utf8");
+  assert.match(bedarf, /import\("\.\/chat-code-copy\.js\?v=[^"]+"\)/, "bedarf-nachladen laedt die Kopierleiste");
   assert.match(sw, /"\/assets\/chat-code-copy\.js"/);
   // Ohne Versionssprung erreicht die Aenderung Bestandsnutzer nicht.
   // Untergrenze statt fester Nummer: jede Aenderung an einer Precache-Datei

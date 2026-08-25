@@ -1,7 +1,7 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T18:14:37.241Z",
-  "confirmation": "Betreiber 2026-08-24, Wortlaut: \"kannst du Stempel liegen 100 pro sichern, soll nicht mehr kaputtgehen und soll ohne schriftliche Bestätigung geändert werden und gelöscht werden\" — alle Tests gruen; Abo-Aenderung stammt aus committetem Prepaid-Ausbau (0fd3fe14)",
+  "frozenAt": "2026-08-25T14:48:40.621Z",
+  "confirmation": "Betreiber-Freigabe 25.08. 'alle Rechte, PWA/iOS/Android professionell': einzige Aenderung an danke-abo.html ist viewport-fit=cover (Safe-Area der iPhone-PWA); Zahlungslogik unangetastet",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "959087778a74f4d49530a58c85b3f40402813e617a1b4ba5c0e2eb15df639925",
@@ -10,7 +10,7 @@
     "control-server/src/billing/subscriptionStore.js": "5ccf64346bd10986da2c94c71738b8c766b59654d23af00196cbe3e179ea5a2a",
     "public/account-privacy.js": "cefbff9fd67aabce52cbb78b135b0706306100fc69da3a59d2ae1b96b4f374e1",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
-    "public/danke-abo.html": "14e2ff0dd497692bddd2add5593f7a3e82d42dfe60c62119fcfb97a912ac5ff9",
+    "public/danke-abo.html": "f842a4a18bf539b73a06a56d4af3e89c39a33846a02c65b460ce4b23d00d000f",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",
     "control-server/src/admin/opsAbrechnung.js": "c2e40bd86aaa114b7c68f2ca99276023214c913adbe7ef98a571b91ff31cc8aa"
   }

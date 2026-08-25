@@ -92,7 +92,11 @@ test("Control-Server-Aufrufe stehen nicht mehr im Ladepfad", () => {
   assert.match(premium, /afterFirstPaint\(\[\(\) => syncServerAiStatus\(\)\]\)/, "premium-surfaces.js verschiebt /api/health");
   const boot = appJs.slice(appJs.indexOf("function boot()"), appJs.indexOf("function bindNavigation()"));
   const verschoben = boot.slice(boot.indexOf("afterFirstPaint"));
-  for (const aufruf of ["initGoogleLogin", "refreshSessionStatus", "refreshKimiVaultStatus", "refreshGlmVaultStatus"]) {
+  // initGoogleLogin ist seit "Startseite abspecken" (24.08.) noch spaeter dran:
+  // google-login.js kommt erst MIT der Ansicht (ladeBeiAnsicht) — das ist
+  // strenger als afterFirstPaint und gilt als verschoben.
+  assert.match(appJs, /ladeBeiAnsicht\(\["start", "chat"\], \(\) => import\("\.\/google-login\.js"\)/, "google-login laedt erst mit der Ansicht");
+  for (const aufruf of ["refreshSessionStatus", "refreshKimiVaultStatus", "refreshGlmVaultStatus"]) {
     assert.ok(verschoben.includes(aufruf), `${aufruf} muss hinter afterFirstPaint stehen`);
     assert.ok(!boot.slice(0, boot.indexOf("afterFirstPaint")).includes(aufruf), `${aufruf} darf nicht mehr direkt beim Start laufen`);
   }

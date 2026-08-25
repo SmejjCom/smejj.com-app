@@ -45,16 +45,20 @@ function kennung(quelle, modul) {
 }
 
 test("Nav-Knopf Suche oeffnet das Overlay, nicht die Seite", () => {
-  assert.ok(kennung(appJs, "search-overlay"), "app.js importiert search-overlay.js nicht mehr");
-  assert.match(appJs, /button\.dataset\.view === "search" && openSearchOverlay\(\)/);
+  // Seit der Such-Diaet (25.08.) laedt app.js search.js erst bei Bedarf ueber
+  // such-nachladen.js; das Overlay kommt weiter aus search.js (overlayLader).
+  assert.match(appJs, /import \{ bindeSuchNachlader, holeSuche \} from "\.\/such-nachladen\.js\?v=1"/, "app.js bindet den Such-Nachlader");
+  assert.match(appJs, /button\.dataset\.view === "search"\) \{ holeSuche\(\)\.then\(\(m\) => Promise\.resolve\(m\.oeffneSuchOverlay\(\)\)\)/, "der Nav-Knopf laedt und oeffnet das Overlay");
 });
 
 test("Cmd+K schaltet das Overlay und search.js reicht die Datenwege durch", () => {
-  assert.equal(
-    kennung(searchJs, "search-overlay"),
-    kennung(appJs, "search-overlay"),
-    "search.js und app.js importieren search-overlay.js unter verschiedenen Kennungen — zweite Modulinstanz"
-  );
+  // app.js importiert search-overlay nicht mehr selbst (Such-Diaet 25.08.);
+  // die EINE Kennung lebt in search.js (overlayLader) — der Nachlader in
+  // such-nachladen.js kennt nur search.js selbst.
+  assert.ok(kennung(searchJs, "search-overlay"), "search.js laedt das Overlay");
+  assert.equal(kennung(appJs, "search-overlay"), null, "app.js importiert das Overlay nicht mehr direkt");
+  const nachladerJs = fs.readFileSync("public/such-nachladen.js", "utf8");
+  assert.match(nachladerJs, /import\("\.\/search\.js\?v=b51"\)/, "der Nachlader laedt search.js unter der App-Kennung");
   assert.match(searchJs, /if \(toggleSearchOverlay\(\)\) return;/);
   assert.match(searchJs, /initSearchOverlay\(\{/);
   // Chat-Treffer tragen das Chat-Objekt (Ausschnitt, Zeit, Titel im Overlay).

@@ -3934,6 +3934,15 @@ body[data-left-menu-state="expanded"] .app-brand-logo {
   border-radius: 999px !important;
 }
 
+/* ---- mobil-composer.css ---- */
+@media (max-width: 600px) {
+  .prompt-actions { flex-wrap: wrap; row-gap: 6px; }
+  .prompt-actions .model-picker button,
+  .prompt-actions .model-picker .mode-pill {
+    max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+}
+
 /* ---- design-v11.css ---- */
 :root {
   --v11-cy: #32f6ea;
@@ -5890,12 +5899,3 @@ body.spur-zu:not(.right-panel-open) #code .code-wchips button {
 #start .erwaehnung-menue [role="menuitem"]:focus-visible { background: rgba(242, 245, 244, 0.08); }
 #start .erwaehnung-menue [role="menuitem"] b { font-weight: 600; color: var(--v11-cy); }
 .chat-erwaehnung[hidden] { display: none !important; }
-
-/* ---- mobil-composer.css ---- */
-@media (max-width: 600px) {
-  .prompt-actions { flex-wrap: wrap; row-gap: 6px; }
-  .prompt-actions .model-picker button,
-  .prompt-actions .model-picker .mode-pill {
-    max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-}

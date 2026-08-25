@@ -76,7 +76,10 @@ const LEGACY_BASELINE = new Map([
   // sie beim naechsten Buendel-Abgleich. Bis dahin: NICHT weiter wachsen.
   // - index.html 999 seit 16b220e9 (Modell-Menue zentral, 24.08.)
   // - src/server.js 808 seit ce706bd4 (413-Fix, Nachzug aus dem Bauzweig)
-  ["public/index.html", 999],
+  // 999 -> 1016 am 25.08.: Live-Spiegel (Inline-Tor +21 = exakt
+  // auth-gate-frueh.js, preload +2, pwa-schnellstart +1) minus alte Zeilen.
+  // Betreiber-Freigaben vom 25.08. woertlich dokumentiert in den Commits.
+  ["public/index.html", 1016],
   ["src/server.js", 808],
   // - code-flaeche.js 804 und design-v11.css 2744: exakt die zwei Dateien,
   //   die die Bauzweig-Diaet (Stufe 3) dort bereits zerlegt hat (754 + vier

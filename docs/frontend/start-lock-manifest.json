@@ -1,19 +1,19 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T14:18:27.126Z",
-  "confirmation": "Betreiber-Anordnung 25.08. (PWA 100% responsiv + Modelle waehlbar): mobil-composer.css als 15. Buendel-Quelle (Chip-Ellipsis+wrap), cline-model-menu App-Token-Fallback, Marken mobilfix/submenu-6, sw v703 — Design unveraendert",
+  "frozenAt": "2026-08-25T14:43:13.488Z",
+  "confirmation": "Betreiber-Freigabe 25.08. 'alle Rechte, muss alles perfekt funktionieren': Spiegel v704-v706 (Emoji-frei, Shortcuts, Such-Diaet, kanonisches Buendel)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9abc6287f2ec12f48d6cdb8ae2da0006bd26c10e82e1b53e0302e339ce86a0a3",
+    "public/index.html": "dec9e7be136f2761add6ce10caafe9a30aaf79b26fbc1350162f3d8074f584b4",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "8ff224e7ef19dc4e8ad7372db77818e15e70113f380e26c4ecacee9e291c3436",
+    "public/start-styles.css": "8318d68794eb90b242c7fa43a78db95a75058d9a27d5d441f5ca53a6543f06a3",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "e33d75e6235aa87b90d7e509b51e0b8ce35cca926a39101294e1811f93489cc4",
+    "public/app.js": "512fae17de73764c2384e939c2016106f91ca2c849bfd62d183c0cedb9c7f4b4",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -21,7 +21,7 @@
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "66d82847419212e2cfb56b21cc0500a391676a8ce04a5e68dfaf23c3b5cec508",
-    "public/composer-tools.js": "a7ad0a83114042176b0ce73fb5b872fdeb017d6d4c5d8bcac9b9b94382979e95",
+    "public/composer-tools.js": "ac59fee98a9dd5f96757a58b99190c216e39eb0ba4806aba60c64569b226af19",
     "public/composer-plus-menu.js": "3eb01b8e4f0082aaff520d1e0976df270199e8f6a183d6557c9977d997e27d03",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "66d0e7324937b177452f9b62ce53bbbce5d78d358de99b70b749490f1f272ba7",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e09ef883b5aacf31707c6e7cc28aa265850b8b7b65726ee3f1c37647d8598c98",
-    "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
+    "public/sw.js": "c2cd9efea9c691786dbec9e180d985c65fa514dfcf7b974e1ee6ee1312827327",
+    "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }

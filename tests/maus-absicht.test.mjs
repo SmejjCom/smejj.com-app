@@ -115,9 +115,14 @@ test("Startseiten-Chip springt nicht mehr weg, sondern setzt die Vorlage", () =>
 });
 
 test("Kette haengt zusammen: app.js -> Modul -> Offline-Vorrat", () => {
+  // Seit dem Sendepfad-Buendel (24.08.) laedt app.js die Weiche erst beim
+  // Senden: app.js -> sendepfad-nachladen.js -> maus-absicht.js. Die Zusage
+  // (Auftrag erkannt -> Maus uebernimmt -> offline vorraetig) ist dieselbe.
   const app = fs.readFileSync("public/app.js", "utf8");
-  assert.match(app, /import \{ mausAuftragErledigt \} from "\.\/maus-absicht\.js/);
-  assert.match(app, /await mausAuftragErledigt\(\{ task, output \}\)/);
+  const sendepfad = fs.readFileSync("public/sendepfad-nachladen.js", "utf8");
+  assert.match(app, /import \{ holeSendepfad \} from "\.\/sendepfad-nachladen\.js\?v=1"/);
+  assert.match(app, /await M\.mausAuftragErledigt\(\{ task, output \}\)/);
+  assert.match(sendepfad, /import\("\.\/maus-absicht\.js\?v=\d+"\)/);
   assert.match(fs.readFileSync("public/sw.js", "utf8"), /"\/assets\/maus-absicht\.js"/);
 });
 

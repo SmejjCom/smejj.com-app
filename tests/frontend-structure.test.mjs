@@ -128,7 +128,10 @@ test("start composer keeps chat inside the start page", () => {
   if (!rufDirekt) {
     const weiche = fs.readFileSync("public/medien-absicht.js", "utf8");
     assert.match(weiche, /runClientChat/, "die Medien-Weiche fuehrt nicht mehr zu runClientChat");
-    assert.match(app, /import \{ chatOhneMedienauftrag \} from "\.\/medien-absicht\.js/, "Weiche nicht importiert");
+    // Seit dem Sendepfad-Buendel (24.08.) kommt die Medien-Weiche mit dem
+    // Buendel: app.js ruft M.chatOhneMedienauftrag, sendepfad-nachladen laedt.
+    assert.match(app, /M\.chatOhneMedienauftrag\(/, "Weiche nicht aufgerufen");
+    assert.match(fs.readFileSync("public/sendepfad-nachladen.js", "utf8"), /import\("\.\/medien-absicht\.js\?v=\d+"\)/, "Weiche nicht importiert");
   }
   assert.match(app, /chat: "start"/);
   assert.match(app, /chat: "\/"/);
