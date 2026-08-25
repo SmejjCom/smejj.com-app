@@ -25,7 +25,18 @@ checkNoUnsafePackageScripts();
 failAndExit("Paid service and security check", failures);
 
 function checkNoGitHubActions() {
-  const workflows = files.filter((file) => file.startsWith(".github/workflows/"));
+  // ERLAUBNISLISTE (Betreiber-Entscheidung 2026-08-15, Begruendung in den
+  // Dateien selbst): Das Repo ist oeffentlich, Actions kosten dort 0 EUR
+  // (docs/policy/GITHUB_KOSTENFREI.md, Konto-Budgets stehen auf $0 mit
+  // Stop-usage). Diese zwei Laeufe ERSETZEN den abgeschafften Zeabur-Dienst
+  // smejj-autopilot-jobs — sie sparen Kosten, statt welche zu erzeugen.
+  // Jede WEITERE Workflow-Datei bleibt verboten (Erlaubnisliste, keine
+  // Verbotsliste): wer eine braucht, traegt sie hier mit Begruendung ein.
+  const erlaubt = new Set([
+    ".github/workflows/codeberg-spiegel.yml",
+    ".github/workflows/qualitaets-messlauf.yml"
+  ]);
+  const workflows = files.filter((file) => file.startsWith(".github/workflows/") && !erlaubt.has(file));
   if (workflows.length) failures.push(`GitHub Actions workflows are not allowed: ${workflows.join(", ")}`);
 }
 

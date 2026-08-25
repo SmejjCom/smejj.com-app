@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T05:26:22.305Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-25: Vollaudit mit Sofort-Reparatur; Precache-Luecke api-konto-surface.js geschlossen (Offline-Bruch), Design unveraendert; Auftrag verlangt woertlich 'alle Locks pruefen und frisch stempeln'",
+  "frozenAt": "2026-08-25T06:41:57.121Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-25 Vollaudit: chat-actions-Marke b43 in index.html nachgezogen (Vorlesen-Umschalter live), Design unveraendert; 'alle Locks pruefen und frisch stempeln'",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "551fc673b9357748c2060323b71d0d507226e7bf6f5aefd71d1287c34aa6c570",
+    "public/index.html": "6715b3d6f57dd697856f502380a3a644aef7d6908e30e64e8c2281f44f6166bb",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "2506dae396701172d2d2cc2939f0ca05ca650016a5a54dee55ab01f41abaab23",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",

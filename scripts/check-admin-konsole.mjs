@@ -127,9 +127,18 @@ function sandboxMitApi() {
  */
 async function adressenDerKonsole() {
   const { kontext, fenster, gerufen } = sandboxMitApi();
-  for (const datei of readdirSync(KONSOLE).filter((n) => /^console-stage\d+\.js$/.test(n)).sort()) {
-    vm.runInContext(readFileSync(path.join(KONSOLE, datei), "utf8"), kontext, { filename: datei });
-  }
+  // Erst die Ansichten, dann die Bedienung (Eichung wortgleich vom Bauzweig,
+  // dort 2026-08-14 aufgefallen): console-stage11.js greift in laden() auf
+  // window.adminViewsStage11 zu. Wurden nur die console-*-Dateien geladen,
+  // war das undefined und der ganze Lauf stuerzte mit einem TypeError ab —
+  // die Pruefung meldete also nicht "Seite kaputt", sondern gar nichts mehr.
+  const laden = (muster) => {
+    for (const datei of readdirSync(KONSOLE).filter((n) => muster.test(n)).sort()) {
+      vm.runInContext(readFileSync(path.join(KONSOLE, datei), "utf8"), kontext, { filename: datei });
+    }
+  };
+  laden(/^views(-stage\d+|-cockpit)?\.js$/);
+  laden(/^console-(stage\d+|cockpit)\.js$/);
 
   const seiten = [];
   for (const schluessel of Object.keys(fenster)) {

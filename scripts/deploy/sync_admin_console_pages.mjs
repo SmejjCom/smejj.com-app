@@ -48,7 +48,14 @@ const SEITEN_ORDNER = Object.freeze([
   "schluessel", "ereignisse", "adminverwaltung",
   "abrechnung", "kosten", "api",
   "wissen", "sprachen", "experimente", "email", "analytik", "aufgaben",
-  "autopiloten"
+  "autopiloten",
+  // 2026-08-25 (Vollaudit): "evolution" nachgetragen — die Konsole DIESES
+  // Zweigs registriert die Seite laengst, live antwortet sie mit 200; nur
+  // dieser Liste fehlte der Eintrag, und der Pruefer meldete einen 404, den
+  // es nie gab. Der Ordner kam aus dem Live-Klon mit. Die uebrigen neueren
+  // Seiten des Bauzweigs (cockpit, radar, auslieferung, regeln, tagesmappe)
+  // registriert erst dessen Konsole — sie kommen mit dem Buendel-Abgleich.
+  "evolution"
 ]);
 
 function sha256(inhalt) {

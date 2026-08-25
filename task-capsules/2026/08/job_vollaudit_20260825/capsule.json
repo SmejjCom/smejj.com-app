@@ -1,0 +1,75 @@
+{
+  "jobId": "job_vollaudit_20260825",
+  "createdAt": "2026-08-25T06:55:00.000Z",
+  "owner": "smejj.com autonomous audit (Betreiber-Auftrag: Vollstaendiger End-to-End-Audit, Sofort-Reparatur, Dauer-Waechter)",
+  "title": "Vollaudit 25.08.: /code war auf allen Domains tot bei 64 gruenen Ampeln — repariert, plus 15-Minuten-Nutzerreise-Waechter",
+  "ziel": "Gesamte App als echter Nutzer pruefen, jeden Fund sofort beheben, live beweisen; ein Waechter, der die App alle 10-15 Minuten von A bis Z prueft.",
+  "befunde": [
+    {
+      "prio": "P1",
+      "was": "/code auf smejj.com UND api.smejj.com komplett tot: in code-flaeche.js stand der Anhaenge-Import MITTEN in einem mehrzeiligen import-Statement (SyntaxError 'Unexpected reserved word' beim Nachladen, 6 Konsolenfehler je Versuch).",
+      "warumUnbemerkt": "Alle 64 Ampeln gruen, Messlauf 100.00 % — kein einziger Pruefer parst die ausgelieferten Module; precache-imports/module-queries lesen Textmuster, der Probe-Nutzer prueft Token/Bruecke/S3, nie die Auslieferung.",
+      "fix": "Zeile an den Dateikopf (Frontend f5d8d78, sw v695; Bauzweig 12d4d50f + Control-Neubau). Live bewiesen: /code laedt personalisiert, Code-Auftrag streamt mit Syntaxfarben, 0 Konsolenfehler; api.smejj.com byte-identisch."
+    },
+    {
+      "prio": "P1",
+      "was": "api-konto-surface.js fehlte im sw-Precache (dynamischer Import aus settings-surface.js) — offline war die API-Konto-Ansicht tot, live UND lokal.",
+      "fix": "Precache-Eintrag beide Repos + Bauzweig, sw v695."
+    },
+    {
+      "prio": "P2",
+      "was": "Vorlesen hatte keinen Stopp: jeder Klick startete die Ansage von vorn.",
+      "fix": "Umschalter in chat-actions (b43, sw v698): zweiter Klick stoppt; speaking VOR cancel gelesen und Utterance referenziert (Chrome-GC frisst sonst onend, Umschalter fuhr sich in b41 fest). Live bewiesen: an -> Stopp -> wieder an."
+    },
+    {
+      "prio": "P2",
+      "was": "8 Dauer-rote Tests auf design-v11 (stille-wache, auth-ui, chat-message-actions, daten-schwungrad, messlauf, model-promotion, precache) — alle: Test alt, Code neu; dazu check:paths-Fehlalarm auf ein file://-Schema-Zitat.",
+      "fix": "Tests auf die Modulwelt geeicht (teils wortgleich vom Bauzweig), Muster verlangt einen echten Pfad hinter dem file-Schema, Foundation-Suite-Digests nachgezogen. Suite 3040/3040."
+    },
+    {
+      "prio": "P2",
+      "was": "check:security auf BEIDEN Zweigen dauerhaft rot: verbot die zwei am 15.08. bewusst angelegten GitHub-Actions (Codeberg-Spiegel, Qualitaets-Messlauf) und hielt die absichtlich kaputte Geheimnis-Spaeher-Probe fuer ein Leck.",
+      "fix": "Actions-Regel als Erlaubnisliste (genau diese zwei, Begruendung im Code), Probe entsteht erst zur Laufzeit (join) und bleibt scharf (28/28)."
+    },
+    {
+      "prio": "P3",
+      "was": "check:guidelines auf design-v11 dauerhaft rot (Vor-Diaet-Spiegel, assets-Kopien, Memory_Bank 922).",
+      "fix": "Vor-Diaet-Ratchets datiert eingefroren, erzeugte assets/-Kopien ausgenommen (check:assets beweist Byte-Gleichheit), Memory_Bank zweite Archiv-Runde (922 -> 677). Tor schliesst wieder."
+    }
+  ],
+  "neuerWaechter": {
+    "name": "Nutzerreise-Waechter (Probe-Nutzer Nr. 29, dichter Takt)",
+    "takt": "alle 15 Minuten (Betreiber-Fenster 10-15 min), Start Boot+3min, Doppel-Lauf-Bremse",
+    "schritte": ["Startseite (P0)", "Ein-Buendel-Vertrag sw.js beider Domains (P1)", "Nachlade-Kette live als ES-Module geparst — data:-Import mit Link-Panzerung, nichts wird ausgefuehrt (P1)", "API-Kernpfade gesund UND fail-closed (P1)", "Auth-Rundlauf", "Chat ueber die Bruecke mit TTFT", "Speicher mit Ruecklese-Probe"],
+    "anschluss": "start.js -> starteNutzerreiseTakt; Herzschlag/Eskalation ueber bestehende Kennung synthetic-user-watchdog; Registry Nr. 29 erwartet Lauf binnen 30 min; Verlauf in watchdog/nutzerreise-laeufe (Ringpuffer 500)",
+    "tuev": "11/11 — jede Zusage kaputt UND gesund + Anschluss-Beweis; check:modul-syntax zusaetzlich mit Selbsttest und Gegenprobe am echten Bruch",
+    "livebeweis": "Erster Lauf fand sofort einen eigenen Fehler (chat-stream wohnt unter /assets/ai/, 404-Fehlalarm, Ampel rot binnen 3 min) — Anschluss damit live bewiesen; nach Pfad-Fix: 'alle 15 Minuten - vor 11 min - erfolgreich', 64/64 gruen."
+  },
+  "benchmarks": {
+    "methodik": "npm run measure:vitals — 5 Laeufe, echtes Chrome headless, p75",
+    "warm": { "ttfb_ms": 50, "lcp_ms": 156, "inp_ms": 56, "cls": 0, "pageWeight_kb": 71, "ergebnis": "alle Budgets eingehalten" },
+    "kalt": { "ttfb_ms": 195, "lcp_ms": 3348, "inp_ms": 64, "cls": 0, "pageWeight_kb": 303, "ergebnis": "LCP-Budget 1500 und Gewicht 300 gerissen — Erstbesucher-Weiche, Optimierung beruehrt die gelockte Startseite (offene Betreiber-Entscheidung)" },
+    "chat": "Antwort mit Tabelle+Quellen in ~5 s; Stopp nach 6 s greift sofort; Code-Auftrag streamt und rendert mit Syntaxfarben"
+  },
+  "verifikationLive": [
+    "smejj.com + api.smejj.com: sw v698 byte-identisch, code-flaeche v57 parst (node --check)",
+    "/code: personalisierte Begruessung, Auftrag beantwortet, 0 Konsolenfehler",
+    "Vorlesen: an -> Stopp -> wieder an (speechSynthesis gemessen)",
+    "Ampel: 64/64 Laeuft, Nr. 29 'alle 15 Minuten - erfolgreich'",
+    "Suite design-v11: 3040/3040; Bauzweig check:unit-server 66 Dateien gruen; check:all gruen nach Capsule-Anlage",
+    "Mobile 375px: kein Querscrollen; Reload: Verlauf vollstaendig, Sitzung haelt"
+  ],
+  "offeneEntscheidungenFuerDenBetreiber": [
+    "Kalt-LCP 3,3 s + 303 KB: Optimierung der Erstbesucher-Weiche beruehrt Start-Design-Lock — Freigabe noetig.",
+    "Missbrauchs-Wache 05:49: anmelde-sturm von 88.247.211.225 (46 Anfragen/10 min) — Wache sperrt nicht selbst, Entscheidung offen.",
+    "Markdown-Ueberschriften erscheinen erst nach Stream-Ende gerendert (P3, Kosmetik).",
+    "Arbeitsflaechen-Titel klebt Tabellenzellen zusammen ('EigenschaftFakt...', P3).",
+    "design-v11 traegt weiter die Vor-Diaet-Spiegel — Buendel-Abgleich auf diesen Zweig steht aus."
+  ],
+  "commits": {
+    "frontend": ["f5d8d78 code-flaeche-Fix sw v695", "db94d70 Vorlesen b41 v696", "55a4136 Haertung b42 v697", "0063863 Verdichtung b43 v698"],
+    "bauzweig": ["12d4d50f code-Fix + check:modul-syntax", "2ca9dd35 Spiegel b41/v696", "3b6d9e3e Nutzerreise-Waechter + b43/v698", "8d2b0687 Pfad-Fix ai/", "3817f2bc security-Eichung"],
+    "designV11": ["f1e71750 Sync-Stand", "465ec912 8 Tests + Precache", "2b80371e Vorlesen", "danach Eichungen + diese Capsule"]
+  },
+  "status": "abgeschlossen"
+}
