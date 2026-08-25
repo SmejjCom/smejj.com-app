@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T12:15:25.094Z",
-  "confirmation": "Betreiber-Auftrag 25.08. (Sprachwelle muss funktionieren): Ohr-Solo-Modus — composer-tools werkzeuge-6, app b95, sw v700 + Precache voice-ohr-solo; Design unveraendert",
+  "frozenAt": "2026-08-25T13:53:06.138Z",
+  "confirmation": "Betreiber-Anordnung 25.08. (PWA iPhone 'mach richtig'): viewport-fit=cover ueberall, sw v701, Design unveraendert",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c039a728ff4f3c49a08c9fefba173d830d93cb4b533db1bb0909bf6621bb1675",
+    "public/index.html": "124e047e779adb2e0807ed135f5435ca2ccddae132205c86a8cbfdef81010409",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "2506dae396701172d2d2cc2939f0ca05ca650016a5a54dee55ab01f41abaab23",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "3bcd0356928e5dfe7decd953c8721b18319e2f0b75b6f4e1d878b5f094bcfa1c",
+    "public/sw.js": "ea6c3a6bbf0cd8d952104846701c2c890639a67ccc749e2bb7c9e9c11ac9411c",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
