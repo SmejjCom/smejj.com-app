@@ -264,12 +264,18 @@
     "messfallenSimulator": [
       "Erste Fuehrung (Tour) liegt ueber dem Composer und frisst den Sende-Klick des frischen Kontos — [data-fuehrung=aus] klicken wie ein echter Nutzer.",
       "PWA-Selbst-Update beim SW-Erstinstall reloadet MITTEN im Test (Overlay zu, window-Spuren weg) — erst SW-Ruhe abwarten, dann selbst reloaden, dann testen.",
-      "Magic-Link-Mails: Gmail droppt/verzoegert wiederholte identische Mails (Minuten, teils SPAM — in:anywhere suchen!); Link ohne Handoff strandet auf api.smejj.com/profile (dann als Nutzer zu smejj.com wechseln, Cookie-Weg holt das Token same-site).",
+      "Magic-Link-Mails: NICHT Spam, NICHT Zustellverzoegerung — Gmails SUCHINDEX hinkt Minuten hinterher (Original-Header: 'Nach 0 Sekunden zugestellt'; in:spam leer). Wer per Gmail-SUCHE auf frische Mails wartet, misst die Indexlatenz, nicht die Zustellung; Link ohne Handoff strandet auf api.smejj.com/profile (dann als Nutzer zu smejj.com wechseln, Cookie-Weg holt das Token same-site).",
       "Verlauf des Kontos fuellt #startLog beim Login — Antwort-Asserts brauchen Zaehlung vorher/nachher, sonst zaehlt alte Historie als Antwort."
     ],
     "randbefundP3": "Schnellspur-Antwort auf 'Was ist smejj.com?' halluzinierte 'Plattform fuer intelligente Immobilienbewertung' — das RAG-Projektwissen greift bei dieser Selbst-Frage nicht (Anreicherung zielt auf Infrastrukturfragen). Offen fuer eine eigene Runde.",
     "offen": [
       "Echter iPhone-Sprechtest des Betreibers bleibt der letzte Punkt (Simulator deckt kein echtes Mikrofon-Erlebnis ab)."
-    ]
+    ],
+    "mailZustellbarkeitGeprueft20260826": {
+      "befund": "Spam-Verdacht WIDERLEGT: in:spam subject:Anmeldelink = 0 Treffer; Original-Header der 01:03-Mail zeigt Zustellung nach 0 Sekunden.",
+      "versandweg": "Weiterhin smtp.gmail.com per ESMTPSA (Return-Path smejjcom@gmail.com, eingeliefert von 43.166.240.69) — die Brevo-Umstellung (docs/deployment/BREVO_MAIL_UMSTELLUNG.md, Stand 13.08.) ist NICHT ausgerollt.",
+      "echtesRestrisiko": "From smejj.com ohne DMARC-Alignment (SPF enthaelt kein Brevo/kein alignter Versender fuer From, DKIM signiert bei fremden Empfaengern d=gmail.com, DMARC p=none). An die eigene Gmail zugestellt immer ok; bei FREMDEN Providern (Outlook/Yahoo/GMX) Spam-Risiko und keine Verschaerfung auf p=quarantine moeglich.",
+      "naechsterSchritt": "Brevo-Ausrollen erfordert BETREIBER-Schritte (Konto anlegen, DNS bei Spaceship: Brevo-TXT + 2 DKIM + SPF um include:spf.brevo.com ERGAENZEN, dann 5 Env-Werte in Zeabur) — Anleitung liegt fertig in docs/deployment/BREVO_MAIL_UMSTELLUNG.md."
+    }
   }
 }
