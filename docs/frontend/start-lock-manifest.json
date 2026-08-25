@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T12:16:49.454Z",
-  "confirmation": "Betreiber-Auftrag 25.08. Sprachwelle: Ohr-Solo gespiegelt (werkzeuge-6, app b95, sw v700), Design unveraendert",
+  "frozenAt": "2026-08-25T13:52:40.313Z",
+  "confirmation": "Betreiber-Anordnung 25.08. (PWA iPhone 'mach richtig'): viewport-fit=cover auf allen Einstiegsseiten, sw v701 — Live-Spiegel, Design unveraendert",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "845074110c55806441af3cf19bc08f86e6f4db88f37b4571a34468afcd0dd72a",
+    "public/index.html": "2b0a7fb8d5c94d299cb873a0a5197adf83fe4447f1726edfda9c73b97e075507",
     "public/styles.css": "0a4e5edcfe344d34e04ba9beb7f7e2b9d3cedd8a5beb879f88bc5a0964819a07",
     "public/start-styles.css": "aff34f9efabadc0d704f83e20812c9a1e08b9f82408bc1a291630aeb7f29ec21",
     "public/branding.css": "149fed004085cd944a3743fdd9acad076f6559d67e70f5dcafd741b5f901095f",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "d03dee4b1c2a7279501a9d7735c915f5ae860385438ad676e304cbf249af6360",
+    "public/sw.js": "087d07dc996104f1ddf4e8f43a03c8c15ed8f214ba7cdd46194d00e0760d5011",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
