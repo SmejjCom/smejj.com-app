@@ -62,6 +62,14 @@ Third-Party-blockiert). MERKE: Was der Chat kann, kann das Menue nur mit
 DERSELBEN Token-Quelle — und ein data-thinking, das stehen bleibt, macht
 eine fertige Antwort fuer ALLES Nachgelagerte unsichtbar.
 
+**Politur-Runde (v704-v706, Freigabe "alle Rechte"):** TTS ohne Emoji-Namen,
+Manifest mit ECHTEN Shortcuts (pwa-schnellstart.js — keine Attrappen-Regel!),
+Install-Screenshots, Such-Diaet (search.js bei Bedarf; Budgetriss 302 KB
+geheilt, Ende 297 KB), kanonisches Buendel (mobil-composer als Quelle, nie als
+Hand-Anhang). design-v11 komplett auf die Live-Welt gezogen (7 fehlende
+Module, 12 Test-Eichungen) — check:all EXIT 0, Suite 3048/3048, Ampel 64/64.
+Anmelde-Sturm: keine Sperre noetig, Login-Drosseln (8/min) fingen ihn.
+
 **Lehre:** Ein Modul, das der Browser nicht PARSEN kann, ist die stillste
 Ausfallsorte — eine Ebene unter "Modul laedt nie". Und: Der nachgezogene
 Anhang-Import kam per Zeilen-Einfuegung an fester Position in eine Datei,

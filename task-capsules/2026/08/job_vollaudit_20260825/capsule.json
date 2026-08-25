@@ -165,5 +165,42 @@
       "Desktop-Voice: Izmir-Wetterfrage beantwortet+gesprochen; Schlagzeilen-Frage nach Fix an Server statt Geraetemodell",
       "Ampel 64 / 59 Laeuft / 0 rot (5 grau = frisch nach Neustart)"
     ]
+  },
+  "nachtragPoliturRunde": {
+    "freigabe": "Betreiber 25.08. woertlich: 'Ich gebe dir alle Rechte. nach hundert Prozent fertig, lass nicht offen ... professionell ... PWA, iOS, Android'",
+    "deploys": {
+      "v704": "TTS ohne Emoji-Namen (kein 'Sanduhr' mehr; Probe kaputt+gesund); Manifest mit description, 3 ECHTEN Shortcuts (pwa-schnellstart.js setzt ?neu=1/?sprechen=1 wirklich um — ?sprechen=1 live bewiesen: Overlay offen, Parameter geputzt) und 2 Install-Screenshots aus echten 390px-Abbildern; Marken-Kaskade inkl. 30 Sprachseiten",
+      "v705": "Such-Diaet: search.js (5,7 KB gz) laedt erst bei Bedarf (such-nachladen.js, einmaliger Cmd+K-Fruehfaenger — live bewiesen: 1. Druck oeffnet, 2. Druck schliesst) — heilt den v704-Budgetriss 302 KB",
+      "v706": "kanonisches Buendel aus den Quellen (mobil-composer als Quelle VOR der V11-Schicht) ersetzt den Hand-Anhang — alle Welten byte-gleich"
+    },
+    "anmeldeSturmEntscheidung": "KEINE IP-Sperre: einmaliger 46er-Burst einer Consumer-ISP-IP; Anmelde-Routen sind bereits gedrosselt (Login 8/min, Registrierung 5/h, Reset 5/15min je IP) — der Sturm lief in 429er; Missbrauchs-Wache beobachtet weiter und meldet Wiederholungen.",
+    "zweigabgleich": "design-v11 vollstaendig auf die Live-Welt gezogen: 7 fehlende Module nachgeholt, 12 veraltete Tests auf die Live-Architektur geeicht, check:modul-syntax auch hier; check:all EXIT 0, Suite 3048/3048; Bauzweig check:frontend 464/464.",
+    "endBenchmarksV706": {
+      "kalt": {
+        "ttfb": 161,
+        "lcp": 388,
+        "inp": 40,
+        "cls": 0,
+        "kb": 297
+      },
+      "warm": {
+        "ttfb": 41,
+        "lcp": 152,
+        "inp": 48,
+        "cls": 0,
+        "kb": 73
+      },
+      "ergebnis": "alle Budgets eingehalten, 3 KB Gewichtspuffer"
+    },
+    "endBeweise": [
+      "sw v706 + start-styles byte-identisch auf smejj.com und api.smejj.com",
+      "Ampel 64/64 laeuft, 0 rot, 0 aus",
+      "?sprechen=1-Shortcut oeffnet den Sprachmodus (headless bewiesen)",
+      "Cmd+K: 1. Druck oeffnet via Lader, 2. Druck schliesst — kein Doppel-Toggle"
+    ],
+    "verbleibendNurBetreiber": [
+      "Xcode installieren + sudo xcode-select fuer echte iOS-Simulator-Laeufe",
+      "iPhone-Praxistest nach App-Neustart (PWA zieht v706 beim naechsten Oeffnen)"
+    ]
   }
 }
