@@ -591,7 +591,10 @@ test("viele LOW-Hinweise sind kein kritischer Befund", () => {
 
 test("ein echter kritischer Befund schlaegt sehr wohl an", () => {
   const bericht = runProjectBugScan([
-    { path: "geheim.js", content: 'const key = "sk-liveGEHEIM1234567890abcdefghij";' }
+    // Die Probe traegt das ECHTE zusammenhaengende Muster erst zur Laufzeit —
+    // die Testdatei selbst darf es nicht enthalten, sonst haelt check:security
+    // ausgerechnet den Waechter-Test fuer ein Leck (Befund 25.08.).
+    { path: "geheim.js", content: 'const key = "' + ["sk-live", "GEHEIM1234567890abcdefghij"].join("") + '";' }
   ]);
   const schwere = bericht.nachSchwere || {};
   const hoch = (schwere.CRITICAL || 0) + (schwere.HIGH || 0);
