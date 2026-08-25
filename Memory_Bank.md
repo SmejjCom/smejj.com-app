@@ -5,6 +5,49 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-25] SPRACHWELLE iPHONE: iOS GING IMMER IN DEN TIPP-FALLBACK (job_vollaudit_20260825, Nachtrag)
+
+Capsule: `task-capsules/2026/08/job_vollaudit_20260825/capsule.json`
+(nachtragSprachwelleIphone). Frontend e1210cb+187b9d5 (sw v708 -> v709),
+design-v11 c0215c6a, Bauzweig 37583343 + Control-Neubau (17:44:09Z).
+
+**Wurzel:** `openVoiceMode()` prueft am Ende `!RecognitionCtor` — auf
+iOS/Safari IMMER wahr — und ging sofort in `enterVoiceFallback`. Der am
+Vormittag gebaute Ohr-Solo-Modus hing nur an zwei SPAETEREN Stellen
+(voiceFailStreak>=3, start-catch), die iOS nie erreicht. Darum: Desktop
+gruen, iPhone stumm.
+
+**Fixes:** (1) iOS-Zweig versucht ZUERST `ohrSolo.aktivieren()` — netto 0
+Zeilen, composer-tools bleibt exakt 800. (2) `await ctx.resume()` nach dem
+AudioContext-Erzeugen — iOS startet "suspended", der Analyser lieferte sonst
+Pegel 0 bis ins 45-s-Zeitlimit; bleibt er suspended, weckt ein einmaliger
+touchend/click-Listener nach. Tests je kaputt UND gesund (gegen HEAD~).
+
+**Beweis ohne Web-Speech:** headless Chrome, Fake-Mikrofon aus WAV (`say`),
+RecognitionCtor geloescht, 390x844: alter Stand -> Tipp-Fallback; neuer
+Stand -> Ohr-Solo hoert, erkennt das Sprech-Ende, POST an
+/api/voice/transcribe. LIVE gegen smejj.com v709: POST -> 401 = Kette steht
+bis zur Auth. MESSFALLE: Fake-Audio liefert dem Analyser nur mit
+`--disable-features=AudioServiceOutOfProcess,AudioServiceSandbox` Pegel
+(sonst exakt 0 bei "running"-Kontext und lebendiger Spur); und die
+PWA-Selbst-Aktualisierung (v707) laedt beim SW-Erstinstall mitten in der
+Probe neu — danach erneut klicken.
+
+**Altbestand des Bauzweigs, dabei geheilt:** `chat-bridge-strom.js` hinkte
+hinter `chat-bridge.js` v144 (FRAGE_WERKZEUG fehlte) — die GEBUENDELTE
+Schnellspur warf und fiel auf streamModel 503 (Projektwissen-Test dauerrot;
+die Live-Bridge war nicht betroffen, ihr Bundle kam von design-v11).
+bilder/websuche/evolution/voice-tts bewusst NICHT angeglichen — die Zweige
+sind dort echt divergiert (Bauzweig hat Foto-Geduld, design-v11 die
+Motiv-Fixes); pauschales Kopieren waere Rueckbau. check:admin-konsole
+geeicht (wertlose Attribute `<span data-x>` zaehlen als gezeichnet, Regeln-
+Seite per Erlaubnisliste, Sandbox kennt Stage 10-13 + Cockpit; Selbstproben
+erweitert). favicon-/abo-/einwilligung-lock trugen noch die vergessenen
+v701-Stempel (Diff je nur die viewport-fit-Zeile) — nachgeholt.
+
+**Offen:** echter iPhone-Sprechtest durch den Betreiber; bewusste
+Zusammenfuehrung der divergierten Bridge-Module.
+
 ### [2026-08-25] VOLLAUDIT: /code WAR AUF ALLEN DOMAINS TOT — BEI 64 GRUENEN AMPELN (job_vollaudit_20260825)
 
 Capsule: `task-capsules/2026/08/job_vollaudit_20260825/capsule.json`.

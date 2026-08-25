@@ -217,5 +217,39 @@
       "sperren": "Start/Security(+chat-bridge)/Abo/Einwilligung/Modell-Menue/Auslieferung frisch gestempelt, beide Zweige",
       "einzigVerbleibend": "Xcode-Installation fuer echte iOS-Simulator-Laeufe (braucht Betreiber-Passwort) + sein Praxis-Neutest"
     }
+  },
+  "nachtragSprachwelleIphone": {
+    "datum": "2026-08-25 abends",
+    "auftrag": "Sprachwelle auf dem iPhone fertig machen — Betreiber: 'Sprachwelle funktioniert wieder nicht' (Desktop-Tests waren gruen)",
+    "wurzel": "openVoiceMode() ging bei fehlendem RecognitionCtor (iOS/Safari IMMER) sofort in enterVoiceFallback — der Ohr-Solo-Modus war nur an zwei spaeteren Stellen verdrahtet (voiceFailStreak>=3, start-catch), die iOS nie erreicht.",
+    "fixes": [
+      "Fix 1 (composer-tools.js, netto 0 Zeilen, bleibt exakt 800): im !RecognitionCtor-Zweig ZUERST ohrSolo.aktivieren(); nur bei false (kein Mikro/Ohr) der Tipp-Fallback.",
+      "Fix 2 (voice-ohr-solo.js): nach dem Erzeugen des AudioContext await ctx.resume() — iOS startet 'suspended', der Analyser lieferte sonst Pegel 0 bis ins 45-s-Zeitlimit; bleibt er suspended, weckt ein einmaliger touchend/click-Listener nach.",
+      "Fix 3 (Beweis): headless Chrome mit Fake-Mikrofon (WAV per say), RecognitionCtor geloescht, 390x844 — kaputte Probe (alter Stand) faellt exakt in den Tipp-Fallback, gesunde Probe geht in Ohr-Solo, erkennt das Sprech-Ende und POSTet an /api/voice/transcribe. LIVE gegen smejj.com v709 wiederholt: POST -> 401 (Kette steht bis zur Auth; curl-Gegenprobe der Bridge: 403)."
+    ],
+    "messfalle": "Chrome headless: --use-file-for-fake-audio-capture liefert dem Analyser NUR mit --disable-features=AudioServiceOutOfProcess,AudioServiceSandbox echte Pegel (sonst exakt 0 bei laufendem Kontext und lebendiger Spur); %noloop ist tueckisch, weil die Datei schon vor dem getUserMedia abgespielt sein kann. Und die PWA-Selbst-Aktualisierung (v707) laedt beim SW-Erstinstall mitten in der Probe neu — danach erneut klicken.",
+    "deploys": {
+      "frontend": [
+        "e1210cb Fix sw v709 / app b98 / werkzeuge-8 / ohr-solo v2",
+        "187b9d5 chat-bridge-strom.js auf v144-Stand (Byte-Gleichheit mit api)"
+      ],
+      "designV11": [
+        "c0215c6a Fix + Tests (kaputt+gesund gegen HEAD~ bewiesen), start-lock neu; Suite 3050/3050, check:all EXIT 0"
+      ],
+      "bauzweig": [
+        "37583343 Spiegel + Altbestand geheilt; Suite 2688/2688, check:all EXIT 0; Control neu gebaut (gestartetAm 17:44:09Z), sha256 beider Domains identisch (sw/index/app/composer-tools/voice-ohr-solo), FRAGE_WERKZEUG-Marker beweist neuen Stand auf api.smejj.com"
+      ]
+    },
+    "altbestandBauzweig": [
+      "chat-bridge-strom.js hinkte hinter chat-bridge.js v144 (FRAGE_WERKZEUG fehlte) — die GEBUENDELTE Schnellspur warf und fiel auf streamModel 503; Projektwissen-Test dauerrot. Live-Bridge war NICHT betroffen (Bundle kam von design-v11, /health zeigt 918 Chunks + fastLaneEnabled).",
+      "bilder/websuche/evolution/voice-tts bewusst NICHT angeglichen: Zweige echt divergiert (Bauzweig-bilder hat Foto-Geduld, design-v11 hat Motiv-Fixes) — pauschales Kopieren waere Rueckbau (Rote Liste). Offen: bewusste Zusammenfuehrung.",
+      "check:admin-konsole geeicht: wertlose Attribute (<span data-x>) galten nicht als gezeichnet (6 Fehlalarme Stage 9/12/13+Cockpit), Regeln-Seite (bewusst serverlos) per Erlaubnisliste, Sandbox kennt jetzt Stage 10-13 + Cockpit; Selbstproben kaputt+gesund erweitert.",
+      "favicon-/abo-/einwilligung-lock: v701-Spiegelung (viewport-fit=cover) hatte die Stempel vergessen — nachgeholt (Diff je nur die Viewport-Zeile)."
+    ],
+    "offen": [
+      "Echter iPhone-Sprechtest durch den Betreiber (Web-Speech gibt es headless nicht; der Solo-Weg ist bewiesen, das echte Mikrofon-Erlebnis nicht).",
+      "Codeberg-Push scheiterte lokal (kein SSH-Schluessel geladen) — Spiegel laeuft ueber die freigegebene GitHub-Action.",
+      "Bewusste Zusammenfuehrung der divergierten Bridge-Module (bilder/websuche/evolution/voice-tts) zwischen den Zweigen."
+    ]
   }
 }
