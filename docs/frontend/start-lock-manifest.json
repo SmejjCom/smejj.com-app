@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T05:47:22.261Z",
-  "confirmation": "Betreiber-Auftrag 2026-08-25 Vollaudit: Code-Flaeche-SyntaxError behoben (Import im Import), sw v695 + Precache api-konto-surface, code-nachladen v14 — Design unveraendert; Auftrag verlangt 'alle Locks pruefen und frisch stempeln'",
+  "frozenAt": "2026-08-25T06:01:18.121Z",
+  "confirmation": "Betreiber-Auftrag 2026-08-25 Vollaudit: Vorlesen-Umschalter (b41) + sw v696 gespiegelt, Design unveraendert; 'alle Locks pruefen und frisch stempeln'",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "14c42396f93ff1aff53b7347193e2ef499896d9ef3ff9d9aeace6f426c52bb89",
+    "public/index.html": "4be0faedb9feff1ef8a7228258a0951a97d0fdef6be75cea64be2cba7996019a",
     "public/styles.css": "0a4e5edcfe344d34e04ba9beb7f7e2b9d3cedd8a5beb879f88bc5a0964819a07",
     "public/start-styles.css": "aff34f9efabadc0d704f83e20812c9a1e08b9f82408bc1a291630aeb7f29ec21",
     "public/branding.css": "149fed004085cd944a3743fdd9acad076f6559d67e70f5dcafd741b5f901095f",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "8ff29701130c98c8884c24bd24ad44e06fe575b501d43ba613b2472af0b3c348",
+    "public/sw.js": "1e2d304fde3f6a9a30d29312a1f7a59e3dbbc7842ee9614eb8691007152c6992",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
