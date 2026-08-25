@@ -68,7 +68,13 @@ const LEGACY_BASELINE = new Map([
   // EINE Seite ist EINE Datei — die Views in Teil-HTMLs zu zerlegen hiesse
   // Laufzeit-Zusammenbau ohne Nutzen und gegen die Bauart der App-Shell.
   // Ratchet: sie darf nicht weiter wachsen.
-  ["public/index.html", 992],
+  // index.html 992 -> 1015 am 2026-08-25 (Kaltstart, Betreiber-Freigabe
+  // woertlich "Ja, freigegeben"): das fruehe Tor steht INLINE im head (+21
+  // Zeilen = exakt public/auth-gate-frueh.js) und das Stylesheet wird per
+  // preload sofort angestossen (+2) — der erste blockierende Request
+  // entfaellt, die kalte Renderkette laeuft parallel statt in Serie.
+  // Ab diesem Stand wieder eingefroren.
+  ["public/index.html", 1015],
   ["src/worker.js", 930]
 ]);
 // Praezise Verstoesse: Markenwort in Grossschreibung (das SMEJJ_-Env-Praefix mit
