@@ -110,7 +110,9 @@ export async function pruefeNachladeKette({ fetchImpl = fetch, ursprung = APP_UR
       return antwort.text();
     };
     const nachlader = await hole("/assets/code-nachladen.js");
-    const ziele = ["/assets/code-nachladen.js", "/assets/chat-stream.js"];
+    // chat-stream wohnt unter /assets/ai/ (app.js importiert es genau so) —
+    // der erste Live-Lauf dieses Waechters bewies das per 404-Fehlalarm.
+    const ziele = ["/assets/code-nachladen.js", "/assets/ai/chat-stream.js"];
     const flaeche = nachlader.match(/import\("\.\/(code-flaeche\.js\?v=\d+)"\)/)?.[1];
     if (flaeche) ziele.push(`/assets/${flaeche}`);
     const inhalte = new Map([["/assets/code-nachladen.js", nachlader]]);

@@ -72,7 +72,7 @@ const NACHLADER = 'const laden = () => import("./code-flaeche.js?v=57");\nexport
 test("Nachlade-Kette: ein Syntaxbruch in der live ausgelieferten Flaeche ist rot", async () => {
   const dateien = {
     "/assets/code-nachladen.js": NACHLADER,
-    "/assets/chat-stream.js": 'export const ok = 1;\nimport { a } from "./b.js";\n',
+    "/assets/ai/chat-stream.js": 'export const ok = 1;\nimport { a } from "./b.js";\n',
     "/assets/code-flaeche.js?v=57": 'import {\nimport { a } from "./b.js";\n} from "./c.js";\n'
   };
   const lauf = await pruefeNachladeKette({ fetchImpl: async (url) => antwort(200, dateien[new URL(url).pathname + (new URL(url).search || "")] ?? "") });
@@ -84,7 +84,7 @@ test("Nachlade-Kette: gesunde Module sind gruen und die Flaechen-Version kommt a
   const geholt = [];
   const dateien = {
     "/assets/code-nachladen.js": NACHLADER,
-    "/assets/chat-stream.js": 'export const ok = 1;\nimport { a } from "./b.js";\n',
+    "/assets/ai/chat-stream.js": 'export const ok = 1;\nimport { a } from "./b.js";\n',
     "/assets/code-flaeche.js?v=57": 'export const flaeche = 1;\nimport { b } from "./c.js";\n'
   };
   const lauf = await pruefeNachladeKette({
@@ -120,7 +120,7 @@ test("API-Kernpfade: 401 ohne Anmeldung ist GESUND, 500 ist krank, 200 auf /api/
 function fetchWelt({ swText = 'const CACHE_NAME = "smejj-shell-v1";', startseite = `<html>smejj${"x".repeat(6000)}</html>` } = {}) {
   const dateien = {
     "/assets/code-nachladen.js": NACHLADER,
-    "/assets/chat-stream.js": 'export const ok = 1;\nimport { a } from "./b.js";\n',
+    "/assets/ai/chat-stream.js": 'export const ok = 1;\nimport { a } from "./b.js";\n',
     "/assets/code-flaeche.js?v=57": 'export const flaeche = 1;\nimport { b } from "./c.js";\n'
   };
   return async (url) => {
