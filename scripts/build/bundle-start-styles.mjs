@@ -53,7 +53,10 @@ export const SOURCES = Object.freeze([
   // eckig.css: es traegt die dokumentierte Rundungs-Ausnahme ("leichter
   // Knick", 8 px) und die eine Farbquelle. Wer hier etwas davorschiebt,
   // bekommt wieder drei Cyantoene.
-  "design-v11.css"
+  "design-v11.css",
+  // Mobil-Composer (25.08.): Chip-Ellipsis + wrap-Netz — steht als LETZTES,
+  // damit die Begrenzung jede fruehere Breitenregel sicher ueberschreibt.
+  "mobil-composer.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

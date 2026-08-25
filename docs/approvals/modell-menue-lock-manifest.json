@@ -1,12 +1,12 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-23T21:41:07.997Z",
-  "confirmation": "Betreiber 2026-08-24, Wortlaut: \"Muss alles zentralisiert sein ... muss immer eine einzige Menü sein\" — Modell-Menue zentral (modell-menue-start v1, code-flaeche v56, sw v687)",
+  "frozenAt": "2026-08-25T14:18:48.565Z",
+  "confirmation": "Betreiber-Anordnung 25.08. woertlich 'Ich kann Modelle auch nicht richtig waehlen ... checke gesamte endlich ... Ich will PWA App ganz normal nutzen wie Browser': cline-model-menu holt das Sitzungs-Token jetzt ZUERST aus dem App-Speicher (localStorage smejj.auth.accessToken.v1), weil der Cookie-Weg zu api.smejj.com in der iPhone-PWA Third-Party-blockiert ist und das Menue faelschlich 'Cline-Key verbinden' zeigte. KEINE Modelle entfernt, Liste unveraendert.",
   "rule": "Keine Aenderung an der Modell-Liste (die beiden Menues, ihre ausgelieferten Kopien, der Katalog-Holer und seine Route) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
+    "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
     "public/code-modell-menue.js": "c357d67f795dc4753b74059e3ced1c4d12cd628c006184d4442df92aa1715942",
-    "public/assets/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
+    "public/assets/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
     "public/assets/code-modell-menue.js": "c357d67f795dc4753b74059e3ced1c4d12cd628c006184d4442df92aa1715942",
     "control-server/src/providers/clineClient.js": "84c08a6aced06a82dade2694d99f48c6434ec73a3701d49cb4dc741c0051dbb8",
     "control-server/src/routes/providerRoutes.js": "2f63057321eae995cbfd7bd14d773b0e9bb76d3cb5c1d17e89349f7d7a3995fb"

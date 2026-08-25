@@ -1,0 +1,11 @@
+/* Mobil-Composer (Betreiber-Befund 2026-08-25, iPhone-PWA).
+   Der Modell-Chip waechst mit "(Gruendlich)" und ragte ueber das Glas hinaus;
+   die Zeile ist nowrap und lief rechts aus dem Bild. Chip begrenzen (Ellipsis),
+   und als Sicherheitsnetz darf die Zeile sauber umbrechen statt ueberzulaufen. */
+@media (max-width: 600px) {
+  .prompt-actions { flex-wrap: wrap; row-gap: 6px; }
+  .prompt-actions .model-picker button,
+  .prompt-actions .model-picker .mode-pill {
+    max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+}
