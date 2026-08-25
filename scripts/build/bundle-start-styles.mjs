@@ -56,7 +56,9 @@ export const SOURCES = Object.freeze([
   "design-v11.css",
   "design-v11-spur.css",
   "design-v11-flaechen.css",
-  "design-v11-fein.css"
+  "design-v11-fein.css",
+  // Mobil-Composer (25.08.): Chip-Ellipsis + wrap-Netz, als LETZTES.
+  "mobil-composer.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

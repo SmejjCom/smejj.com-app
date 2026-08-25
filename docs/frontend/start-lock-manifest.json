@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T13:52:40.313Z",
-  "confirmation": "Betreiber-Anordnung 25.08. (PWA iPhone 'mach richtig'): viewport-fit=cover auf allen Einstiegsseiten, sw v701 — Live-Spiegel, Design unveraendert",
+  "frozenAt": "2026-08-25T14:19:38.135Z",
+  "confirmation": "Betreiber-Anordnung 25.08. (PWA 100% responsiv + Modelle waehlbar): Live-Spiegel v703 — mobil-composer-Buendelquelle, cline-model-menu App-Token-Fallback (KEINE Modelle entfernt), Marken mobilfix/submenu-6",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "2b0a7fb8d5c94d299cb873a0a5197adf83fe4447f1726edfda9c73b97e075507",
+    "public/index.html": "cafb40d657e8149fc27922e89829f046654ff39a1ca87c25944fe2a83b9b525f",
     "public/styles.css": "0a4e5edcfe344d34e04ba9beb7f7e2b9d3cedd8a5beb879f88bc5a0964819a07",
-    "public/start-styles.css": "aff34f9efabadc0d704f83e20812c9a1e08b9f82408bc1a291630aeb7f29ec21",
+    "public/start-styles.css": "11dfebc3d92fb7ade532f20526477973567ca770ab44e5d985f408262fa5d8d9",
     "public/branding.css": "149fed004085cd944a3743fdd9acad076f6559d67e70f5dcafd741b5f901095f",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "d03ddeca9491a25347368441d8f29ce02c4650b8edf1362ac7b04250ed977131",
@@ -26,7 +26,7 @@
     "public/browser-pane-render.js": "fcf48d6c9f40f06a96ecd58b616aba8b41a9cc929ac258c458c1b7f86ba5d4ac",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
-    "public/cline-model-menu.js": "368a4de8eb1ac0386c87ee2f212de0a76b39f7fa4646c01dbbb678c5e19714db",
+    "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
     "public/cline-model-menu.css": "67d1fca090c9200845c6c8ebcb6a66ca2268de32f0479619a6768a837680be4c",
     "public/auth/passkey-ui.js": "ff1335c193e6458b0e5bdf43627ffe3bc2fa94aa94f67c8bf3d53a4ba4f24019",
     "public/ai/chatClient.js": "859303c9a450ffc966b1486d6c8de0737d606e2622f21ced2f0f005aba60300a",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "087d07dc996104f1ddf4e8f43a03c8c15ed8f214ba7cdd46194d00e0760d5011",
+    "public/sw.js": "3133d01c0bf7316edca603728e69f7d211663b86454f5bd99bfcbfaca9946425",
     "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
   }
 }
