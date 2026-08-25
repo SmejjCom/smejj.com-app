@@ -252,6 +252,9 @@ const SHELL = [
   "/assets/panel-backdrop.js",
   "/assets/premium-surfaces.js",
   "/assets/settings-surface.js",
+  // api-konto-surface wird von settings-surface.js dynamisch geladen —
+  // ohne Precache-Eintrag ist die API-Konto-Ansicht offline tot (Befund 25.08.).
+  "/assets/api-konto-surface.js",
   "/assets/settings-runtime.js",
   "/assets/provider-settings.js",
   "/assets/cline-model-menu.js",

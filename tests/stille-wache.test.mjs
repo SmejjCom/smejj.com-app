@@ -13,6 +13,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const quelle = readFileSync(new URL("../public/ai/chat-stream.js", import.meta.url), "utf8");
+// Seit der Auslagerung (job_chat_stille_20260823) lebt die Wache in EINEM
+// Modul: public/ai/strom-stillstand.js exportiert Grenze, Wache und Wortlaut;
+// chat-stream.js importiert sie nur noch. Der Test prueft beide Haelften —
+// die Definition dort, den Anschluss hier.
+const wacheQuelle = readFileSync(new URL("../public/ai/strom-stillstand.js", import.meta.url), "utf8");
 
 // Die Wache ist modulintern (kein Export, damit die oeffentliche Flaeche
 // schmal bleibt). Nachgebaut wird sie hier aus derselben Logik; der Test
@@ -59,20 +64,22 @@ test("beenden() entschaerft die Wache — kein Abbruch nach dem Ende", async () 
 });
 
 test("der Chat-Strom benutzt die Wache wirklich", () => {
-  // Sonst waere oben nur eine huebsche Kopie getestet.
-  assert.match(quelle, /const STILLE_GRENZE_MS = 90_000/);
+  // Sonst waere oben nur eine huebsche Kopie getestet. Die Wache ist seit der
+  // Auslagerung importiert, nicht mehr inline — geprueft wird der ANSCHLUSS.
+  assert.match(quelle, /import \{ starteStilleWache, stilleText, STILLE_GRENZE_MS \} from ".\/strom-stillstand.js"/);
   assert.match(quelle, /const wache = starteStilleWache\(reader, \(\) => \{ stilleGemeldet = true; \}\)/);
   assert.match(quelle, /wache\.lebenszeichen\(\)/);
   assert.match(quelle, /wache\.beenden\(\)/);
   // Und er sagt es dem Nutzer, statt still zu enden.
   assert.match(quelle, /if \(stilleGemeldet\)/);
-  assert.match(quelle, /90 Sekunden lang nicht mehr gemeldet/);
+  assert.match(quelle, /stilleText\(/);
+  assert.match(wacheQuelle, /nicht mehr gemeldet/);
 });
 
 test("die Frist ist grosszuegiger als der Lebenszeichen-Takt der Bruecke", () => {
   // Die Bruecke taktet lange Arbeiten alle 10 s. Eine Frist unter ~30 s
   // wuerde ein langsames, aber gesundes Video abwuergen.
-  const treffer = quelle.match(/const STILLE_GRENZE_MS = ([0-9_]+)/);
-  assert.ok(treffer, "STILLE_GRENZE_MS nicht gefunden");
+  const treffer = wacheQuelle.match(/export const STILLE_GRENZE_MS = ([0-9_]+)/);
+  assert.ok(treffer, "STILLE_GRENZE_MS nicht gefunden (public/ai/strom-stillstand.js)");
   assert.ok(Number(treffer[1].replace(/_/g, "")) >= 30_000);
 });

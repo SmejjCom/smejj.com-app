@@ -196,10 +196,16 @@ test("Medien-Qualitaet: toter Worker ist ROT mit Grund; Bild-Maler nur bei geset
   assert.match(tot.meldung, /Bild-Maler: nicht erreichbar/);
   assert.equal(gefragt.length, 2, "beide Dienste muessen gefragt worden sein");
 
-  const nurVideo = await laufMedienQualitaet({
+  // GEAENDERT mit dem Fix vom 22.08. ("Medien-Ampel falsches Gruen"): Der
+  // Bild-Maler wird auch OHNE gesetzte Variable ueber den Zeabur-internen
+  // Standard-Host gemessen — stilles Auslassen war der Fehler, nicht das Rot.
+  const gefragtOhneEnv = [];
+  const ohneEnv = await laufMedienQualitaet({
     mitNetz: true,
     env: {},
-    fetchImpl: async () => ({ ok: true, json: async () => ({ bereit: true }) })
+    fetchImpl: async (url) => { gefragtOhneEnv.push(url); return { ok: true, json: async () => ({ bereit: true }) }; }
   });
-  assert.equal(/Bild-Maler/.test(nurVideo.meldung), false, "ein nie ausgerollter Dienst wird nicht rot gemalt");
+  assert.equal(ohneEnv.ok, true);
+  assert.match(ohneEnv.meldung, /Bild-Maler/, "der Bild-Maler wird nie mehr still ausgelassen");
+  assert.equal(gefragtOhneEnv.length, 2, "beide Dienste werden auch ohne Env gemessen (interne Standard-Hosts)");
 });

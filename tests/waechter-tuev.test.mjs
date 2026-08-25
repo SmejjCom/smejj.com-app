@@ -273,3 +273,23 @@ test("check-memory-bank prueft auch Archive im Projektstamm", () => {
     rmSync(krank, { recursive: true, force: true });
   }
 });
+
+test("check-no-private-paths schlaegt bei einer echten file-URL an, nicht beim Schema-Zitat", () => {
+  // Falscher Alarm 2026-08-25: die Capsule job_modelle_medien_20260818 zitiert
+  // den Code-String "'file://' + argv[1]" als Lehre. Das blosse Schema ist kein
+  // privater Pfad — eine file-URL MIT Pfad dahinter bleibt verboten.
+  const krank = baueProbeRepo({ "docs/leck.md": "Siehe file:///Users/jemand/geheim.txt\n" });
+  const gesund = baueProbeRepo({ "docs/lehre.md": "import.meta.url === 'file://' + argv[1] ist hier immer falsch.\n" });
+  legeSkripteBei(krank, ["scripts/check-no-private-paths.mjs", "scripts/validation-utils.mjs"]);
+  legeSkripteBei(gesund, ["scripts/check-no-private-paths.mjs", "scripts/validation-utils.mjs"]);
+  try {
+    const kaputt = laufeWaechter(krank, "scripts/check-no-private-paths.mjs");
+    assert.notEqual(kaputt.code, 0, "file:///Users/... muss auffallen — sonst ist der Waechter blind");
+    assert.match(kaputt.ausgabe, /leck\.md/, "die schuldige Datei muss benannt werden");
+    const zitat = laufeWaechter(gesund, "scripts/check-no-private-paths.mjs");
+    assert.equal(zitat.code, 0, `das Schema-Zitat ohne Pfad darf nicht anschlagen. Ausgabe: ${zitat.ausgabe}`);
+  } finally {
+    rmSync(krank, { recursive: true, force: true });
+    rmSync(gesund, { recursive: true, force: true });
+  }
+});

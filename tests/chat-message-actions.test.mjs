@@ -618,7 +618,11 @@ test("die Leiste wird als Geschwister eingehaengt, nie in die Nachricht", () => 
 
 test("Leser des Nachrichtentexts sehen die Bedienelemente nicht", () => {
   assert.match(store, /querySelectorAll\(":scope > \.entry"\)/, "der Verlauf-Speicher liest nur Nachrichten");
-  assert.match(historyContext, /querySelectorAll\("\.entry\.user, \.entry\.assistant"\)/, "der Modellkontext liest nur Nachrichten");
+  // Seit der "@"-Erwaehnung liest der Modellkontext zusaetzlich die
+  // unsichtbaren Erwaehnungs-Knoten ([data-smejj-erwaehnung]) — das sind
+  // Nutzerinhalte, keine Bedienelemente. Die Zusage bleibt: nur .entry-
+  // Nachrichten plus Erwaehnungs-Kontext, nie Leisten oder Knoepfe.
+  assert.match(historyContext, /querySelectorAll\("\.entry\.user, \.entry\.assistant, \[data-smejj-erwaehnung\]"\)/, "der Modellkontext liest nur Nachrichten (+ Erwaehnungs-Kontext)");
 });
 
 test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
