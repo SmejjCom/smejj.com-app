@@ -202,5 +202,20 @@
       "Xcode installieren + sudo xcode-select fuer echte iOS-Simulator-Laeufe",
       "iPhone-Praxistest nach App-Neustart (PWA zieht v706 beim naechsten Oeffnen)"
     ]
+  },
+  "nachtragSchlussrunde": {
+    "freigabe": "Betreiber 25.08. woertlich: 'Ich gebe dir alle Rechte nach hundert Prozent fertig. Lass nicht offen.'",
+    "deploys": {
+      "v707": "PWA-Selbst-Aktualisierung: controllerchange laedt genau einmal neu (ausser waehrend Antwort/Eingabe) — der Handgriff 'App wegwischen' entfaellt dauerhaft",
+      "bruecke v144": "Sprachmodus-Systemregel in der Bruecke (die preferences.voiceMode bisher komplett ignorierte): kurz 1-3 Saetze, gespraechig, keine Listen/URLs/Emojis — auch fuer die Wetter-Schnellspur; Deploy-Falle dokumentiert: buildChatBridgeArtifact() SCHREIBT das Bundle nicht, nur der CLI-Aufruf; Weg = Bundle -> frontend assets/chat-bridge.js -> restartService NACH raw-Verfuegbarkeit",
+      "v708": "dieselbe Sprachregel im Geraete-Schnellspur-Prompt; Hoerbeweis: Anzeige-Emoji des 3B-Modells wird von sanitizeForSpeech NICHT gesprochen"
+    },
+    "endzustand": {
+      "byteIdentisch": "sw v708 + ai/chat-stream.js auf smejj.com und api.smejj.com (Hash)",
+      "bruecke": "20260825-v144-sprachmodus-regel live (/health)",
+      "budgets": "kalt TTFB 110 / LCP 352 / 298 KB; warm LCP 212 — alle gruen",
+      "sperren": "Start/Security(+chat-bridge)/Abo/Einwilligung/Modell-Menue/Auslieferung frisch gestempelt, beide Zweige",
+      "einzigVerbleibend": "Xcode-Installation fuer echte iOS-Simulator-Laeufe (braucht Betreiber-Passwort) + sein Praxis-Neutest"
+    }
   }
 }
