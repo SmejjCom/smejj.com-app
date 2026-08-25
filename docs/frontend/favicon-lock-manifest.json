@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frozenAt": "2026-08-23T10:51:26.606Z",
+  "frozenAt": "2026-08-25T17:13:28.680Z",
   "approval": "Das Browser-Favicon ist jetzt final und funktioniert einwandfrei. Bitte behandle es ab sofort als geschützt und unveränderlich.",
   "assets": {
     "public/favicon.ico": "a514be650bd471347a9811bd3dc8ae5be8ae8372c4b1265de7d3112e9731eb15",
@@ -177,6 +177,13 @@
       "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
+    "public/programmieren.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
     "public/pt/index.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
@@ -206,6 +213,13 @@
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
     "public/widerruf.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
+    "public/willkommen.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
       "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",

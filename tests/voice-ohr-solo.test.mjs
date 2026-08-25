@@ -59,6 +59,8 @@ test("createOhrSolo: leeres Transkript stoesst die naechste Runde an, Text wird 
   const altNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
   Object.defineProperty(globalThis, "navigator", { configurable: true, value: { mediaDevices: { getUserMedia: async () => ({ getTracks: () => [] }) } } });
   globalThis.window = { AudioContext: function () {
+    this.state = "running";
+    this.resume = async () => {};
     this.createMediaStreamSource = () => ({ connect: () => {} });
     this.createAnalyser = () => ({ fftSize: 8, getByteTimeDomainData: () => {}, connect: () => {} });
     this.close = () => {};
@@ -95,13 +97,63 @@ test("createOhrSolo: leeres Transkript stoesst die naechste Runde an, Text wird 
   delete globalThis.window;
 });
 
-test("Anschluss: composer-tools verdrahtet das Solo-Ohr an den drei Stellen", () => {
+test("Anschluss: composer-tools verdrahtet das Solo-Ohr an den vier Stellen", () => {
   const quelle = fs.readFileSync("public/composer-tools.js", "utf8");
-  assert.match(quelle, /import \{ verdrahteOhrSolo \} from "\.\/voice-ohr-solo\.js\?v=1"/);
+  assert.match(quelle, /import \{ verdrahteOhrSolo \} from "\.\/voice-ohr-solo\.js\?v=2"/);
   assert.match(quelle, /if \(state\.ohrSoloAktiv\) return ohrSolo\.hoeren\(\)/, "voiceModeListen hat die Weiche");
   assert.match(quelle, /if \(ohrSolo\.aktivieren\(\)\) return;/, "FailStreak-Zweig versucht erst Solo");
   assert.match(quelle, /if \(!ohrSolo\.aktivieren\(\)\) enterVoiceFallback\(/, "start-catch versucht erst Solo");
   assert.match(quelle, /ohrSolo\.stop\(\)/, "Schliessen/Mute stoppt die Solo-Runde");
   const sw = fs.readFileSync("public/sw.js", "utf8");
   assert.match(sw, /"\/assets\/voice-ohr-solo\.js"/, "Modul steht im Precache — offline sonst tot");
+});
+
+test("iOS-Pfad (25.08. abends): ohne RecognitionCtor uebernimmt ZUERST das Solo-Ohr", () => {
+  // KAPUTTE Probe des alten Standes: openVoiceMode ging auf iOS IMMER sofort
+  // in enterVoiceFallback ("Frage unten eintippen") — die Sprachwelle war
+  // stumm, obwohl das eigene Ohr gesund war. GESUNDE Probe: im
+  // !RecognitionCtor-Block steht ohrSolo.aktivieren() VOR enterVoiceFallback.
+  const quelle = fs.readFileSync("public/composer-tools.js", "utf8");
+  const block = quelle.match(/if \(!RecognitionCtor\) \{[\s\S]{0,400}?\n {6}\}/);
+  assert.ok(block, "openVoiceMode hat den iOS-Zweig (!RecognitionCtor)");
+  const aktivieren = block[0].indexOf("ohrSolo.aktivieren()");
+  const fallback = block[0].indexOf("enterVoiceFallback(");
+  assert.ok(aktivieren >= 0, "iOS-Zweig versucht das Solo-Ohr");
+  assert.ok(fallback > aktivieren, "Tipp-Fallback kommt erst NACH dem Solo-Versuch (alter Stand: sofortiger Fallback)");
+});
+
+test("iOS-Audio: suspended AudioContext wird geweckt (resume + Geste als Reserve)", async () => {
+  // iOS startet AudioContexte "suspended": ohne resume() liefert der Analyser
+  // nur Stille (Pegel 0) und der Automat laeuft ins 45-s-Zeitlimit.
+  // KAPUTTE Probe = alter Stand: kein resume()-Aufruf, kein Gesten-Wecker.
+  const geweckt = [];
+  const listener = [];
+  const altNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: { mediaDevices: { getUserMedia: async () => ({ getTracks: () => [] }) } } });
+  globalThis.window = { AudioContext: function () {
+    this.state = "suspended";
+    this.resume = async () => { geweckt.push("resume"); };
+    this.createMediaStreamSource = () => ({ connect: () => {} });
+    this.createAnalyser = () => ({ fftSize: 8, getByteTimeDomainData: () => {}, connect: () => {} });
+    this.close = () => {};
+  } };
+  globalThis.document = {
+    addEventListener: (typ, fn) => listener.push({ typ, fn }),
+    removeEventListener: () => {}
+  };
+  const solo = createOhrSolo({
+    ear: { start: async () => {}, cancel: () => {}, finish: async () => "" },
+    automatFactory: () => ({ sample: () => null }),
+    taktMs: 5,
+    aufFehler: (f) => geweckt.push("fehler:" + f)
+  });
+  await solo.start();
+  assert.deepEqual(geweckt, ["resume"], "start() weckt den Kontext sofort per resume()");
+  assert.deepEqual(listener.map((l) => l.typ).sort(), ["click", "touchend"], "bleibt er suspended, wartet ein einmaliger Gesten-Wecker");
+  listener[0].fn();
+  assert.equal(geweckt.filter((e) => e === "resume").length, 2, "die Geste versucht resume() erneut");
+  solo.stop();
+  if (altNavigator) Object.defineProperty(globalThis, "navigator", altNavigator);
+  delete globalThis.window;
+  delete globalThis.document;
 });

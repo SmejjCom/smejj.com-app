@@ -1,7 +1,7 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-24T22:27:31.722Z",
-  "confirmation": "Betreiber 2026-08-25 'Stufe 3 Zeilen-Diaet': account-privacy zweigeteilt (Formulare-Teil neu, Marke b51) — Regeln unveraendert uebernommen",
+  "frozenAt": "2026-08-25T17:30:03.681Z",
+  "confirmation": "iPhone-PWA-Runde v701 (Betreiber-Livetest): viewport-fit=cover auf allen Seiten, danke-abo.html eingeschlossen — Stempel in jener Runde vergessen, hier nachgeholt (Auftrag: Sprachwelle iPhone fertig machen)",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "959087778a74f4d49530a58c85b3f40402813e617a1b4ba5c0e2eb15df639925",
@@ -10,7 +10,7 @@
     "control-server/src/billing/subscriptionStore.js": "849806cffa39eebbeb50d67404e567358d38bc5952c717424abea2faa528ffea",
     "public/account-privacy.js": "70ad307a4a688960f8f9ca7abd29fe9b1087de87a10dac97e7ddf0f60379f9ed",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
-    "public/danke-abo.html": "14e2ff0dd497692bddd2add5593f7a3e82d42dfe60c62119fcfb97a912ac5ff9",
+    "public/danke-abo.html": "f842a4a18bf539b73a06a56d4af3e89c39a33846a02c65b460ce4b23d00d000f",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",
     "control-server/src/admin/opsAbrechnung.js": "cd35180f12612e0348d7b68ed5d3c232e1a1a343bb51da289f72c2cb9dc5f2d2"
   }

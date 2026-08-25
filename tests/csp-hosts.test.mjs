@@ -9,6 +9,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import crypto from "node:crypto";
 
 const html = fs.readFileSync("public/index.html", "utf8");
 const config = fs.readFileSync("public/config.js", "utf8");
@@ -34,11 +35,18 @@ test("index.html enthaelt weiterhin kein ausfuehrbares Inline-Skript und keinen 
   // Ohne diese Zusicherung waere script-src 'self' nicht durchhaltbar.
   // JSON-LD (type="application/ld+json") ist ausgenommen: Der Browser fuehrt es
   // nicht aus, CSP behandelt es als Datenblock und script-src greift dort nicht.
-  const inlineSkripte = [...html.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>/gi)]
-    .map((m) => m[1])
-    .filter((attribute) => !/type\s*=\s*"application\/ld\+json"/i.test(attribute));
-  assert.deepEqual(inlineSkripte, [],
-    "Ausfuehrbares Inline-<script> gefunden — es wuerde von der eigenen CSP blockiert.");
+  // AUSNAHME seit dem Kaltstart-Umbau (Betreiber-Freigabe 25.08., "Ja,
+  // freigegeben"): GENAU EIN Inline-Skript — das fruehe Tor. Es ist per
+  // sha256-Hash in script-src erlaubt; Rumpf und Hash werden hier BEIDE
+  // gegen public/auth-gate-frueh.js geprueft. Jedes weitere Inline-Skript
+  // bleibt verboten und wuerde von der CSP blockiert.
+  const inlineSkripte = [...html.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/gi)]
+    .filter((m) => !/type\s*=\s*"application\/ld\+json"/i.test(m[1]));
+  assert.equal(inlineSkripte.length, 1, "genau EIN Inline-Skript (das fruehe Tor) ist erlaubt");
+  const gate = fs.readFileSync("public/auth-gate-frueh.js", "utf8");
+  assert.equal(inlineSkripte[0][2], gate, "der Inline-Rumpf ist byte-gleich public/auth-gate-frueh.js");
+  const hash = crypto.createHash("sha256").update(gate, "utf8").digest("base64");
+  assert.ok(cspMatch[1].includes(`'sha256-${hash}'`), "der CSP-Hash passt zum Inline-Rumpf");
   assert.doesNotMatch(html, /<style[^>]*>/i, "Inline-<style> gefunden.");
 });
 

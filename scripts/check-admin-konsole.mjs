@@ -38,6 +38,13 @@ import { __clearMemoryStoreForTests, createUserRecord, putUser } from "../contro
 const KONSOLE = path.resolve(fileURLToPath(new URL("../control-server/admin-ui/", import.meta.url)));
 const PRUEFER = "pruefer@smejj-check.invalid";
 
+// Erlaubnisliste (2026-08-25), KEINE Verbotsliste: Seiten, die BEWUSST ohne
+// Server auskommen — jede traegt ihre Begruendung. Alles andere ohne Endpunkt
+// bleibt ein Befund.
+//   regeln (Stage 12): reiner Regeltext aus den eigenen Vorfaellen, im Code
+//   dokumentiert als "Die Regeln brauchen keinen Server".
+const BEWUSST_OHNE_ENDPUNKT = new Set(["regeln"]);
+
 // Leere Umgebung = Memory-Zweig ueberall: kein IDrive, kein Schluessel, kein
 // Netz. Die Handler laufen trotzdem echt — nur ihre Speicher sind im Prozess.
 const ENV = { SMEJJ_ADMIN_OWNER_EMAILS: PRUEFER };
@@ -84,7 +91,8 @@ function sandboxMitApi() {
     adminDialog: new Proxy({}, { get: () => () => Promise.resolve(null) }),
     adminViews: zeichnerAttrappe
   };
-  for (const stufe of [4, 5, 6, 7, 8, 9]) fenster[`adminViewsStage${stufe}`] = zeichnerAttrappe;
+  for (const stufe of [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) fenster[`adminViewsStage${stufe}`] = zeichnerAttrappe;
+  fenster.adminViewsCockpit = zeichnerAttrappe;
 
   const sandbox = {
     window: fenster, console, document: nachsichtigesDokument(),
@@ -269,9 +277,14 @@ function haengerBefunde(ziele = haengerZiele(), quellen = konsolenText()) {
   const befunde = [];
   for (const { art, ziel, datei } of ziele) {
     // Erzeugt gilt: als Attribut im HTML-Text ODER per setAttribute gesetzt.
+    // Attribute duerfen im HTML auch WERTLOS stehen (<span data-ckNeu>) — der
+    // fruehere Regex verlangte ${ziel}=" und meldete gesunde Ansichten als
+    // stillen Ausfall (Eichung 2026-08-25, sechs Fehlalarme Stage 9/12/13 +
+    // Cockpit). "]" bleibt ausgenommen, sonst zaehlte der Selektor der
+    // Bedienung ("[data-x]") als Zeichnung.
     const erzeugt = art === "id"
       ? new RegExp(`id="${ziel}"|setAttribute\\(\\s*"id"\\s*,\\s*"${ziel}"`).test(quellen)
-      : new RegExp(`${ziel}="|setAttribute\\(\\s*"${ziel}"`).test(quellen);
+      : new RegExp(`${ziel}(?:="|[\\s>])|setAttribute\\(\\s*"${ziel}"`).test(quellen);
     if (!erzeugt) {
       befunde.push({
         datei, ziel: art === "id" ? `#${ziel}` : `[${ziel}]`,
@@ -312,6 +325,17 @@ async function main() {
       + `(blind=${probeBlind.length}, gesund=${probeGesund.length}).`);
     process.exit(1);
   }
+  // Dasselbe fuer Attribute — inkl. WERTLOSER Schreibweise (<span data-x>),
+  // an der die Pruefung am 2026-08-25 sechs Fehlalarme erzeugte. Der Selektor
+  // der Bedienung ("[data-x]") darf weiterhin NICHT als Zeichnung zaehlen.
+  const attrBlind = haengerBefunde([{ art: "attribut", ziel: "data-gibts-nicht", datei: "probe" }], 'querySelector("[data-gibts-nicht]")');
+  const attrWertlos = haengerBefunde([{ art: "attribut", ziel: "data-gibtsWertlos", datei: "probe" }], '<span class="btn" data-gibtsWertlos>Neu</span>');
+  const attrMitWert = haengerBefunde([{ art: "attribut", ziel: "data-gibtsMitWert", datei: "probe" }], '<input data-gibtsMitWert="1">');
+  if (attrBlind.length !== 1 || attrWertlos.length !== 0 || attrMitWert.length !== 0) {
+    console.error("admin-konsole KAPUTT — die Attribut-Selbstprobe schlug nicht an "
+      + `(blind=${attrBlind.length}, wertlos=${attrWertlos.length}, mitWert=${attrMitWert.length}).`);
+    process.exit(1);
+  }
 
   const { seiten, kern } = await adressenDerKonsole();
   const alle = [...kern, ...seiten];
@@ -319,7 +343,7 @@ async function main() {
   let geprueft = 0;
 
   for (const { seite, adressen } of alle) {
-    if (adressen.length === 0) {
+    if (adressen.length === 0 && !BEWUSST_OHNE_ENDPUNKT.has(seite)) {
       befunde.push({ seite, pfad: "(keine)", grund: "die Seite ruft gar keinen Endpunkt — Attrappe oder Seite pruefen" });
       continue;
     }
