@@ -1,17 +1,17 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T14:19:38.135Z",
-  "confirmation": "Betreiber-Anordnung 25.08. (PWA 100% responsiv + Modelle waehlbar): Live-Spiegel v703 — mobil-composer-Buendelquelle, cline-model-menu App-Token-Fallback (KEINE Modelle entfernt), Marken mobilfix/submenu-6",
+  "frozenAt": "2026-08-25T14:42:29.471Z",
+  "confirmation": "Betreiber-Freigabe 25.08. 'alle Rechte': kanonisches Buendel v706, mobilfix2",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "cafb40d657e8149fc27922e89829f046654ff39a1ca87c25944fe2a83b9b525f",
+    "public/index.html": "dec9e7be136f2761add6ce10caafe9a30aaf79b26fbc1350162f3d8074f584b4",
     "public/styles.css": "0a4e5edcfe344d34e04ba9beb7f7e2b9d3cedd8a5beb879f88bc5a0964819a07",
-    "public/start-styles.css": "11dfebc3d92fb7ade532f20526477973567ca770ab44e5d985f408262fa5d8d9",
+    "public/start-styles.css": "b50b113e0ba8d1accf39a03b533f82ce40f905acfa07cb25b33f0853a2a6bede",
     "public/branding.css": "149fed004085cd944a3743fdd9acad076f6559d67e70f5dcafd741b5f901095f",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "d03ddeca9491a25347368441d8f29ce02c4650b8edf1362ac7b04250ed977131",
     "public/browser-pane.css": "622baf9419cbb8d951674fb058f490598420c9709c4049d33f5fa1fd9bc34eb1",
-    "public/app.js": "f33813781f928095352608ec3582f71c51a8662d8530445aaf6098bb14858b44",
+    "public/app.js": "512fae17de73764c2384e939c2016106f91ca2c849bfd62d183c0cedb9c7f4b4",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -19,7 +19,7 @@
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "09d360d67c22388e52bcd6b13231655bd3ecad24e1bb36281e19d23afd63cf5d",
-    "public/composer-tools.js": "a7ad0a83114042176b0ce73fb5b872fdeb017d6d4c5d8bcac9b9b94382979e95",
+    "public/composer-tools.js": "ac59fee98a9dd5f96757a58b99190c216e39eb0ba4806aba60c64569b226af19",
     "public/composer-plus-menu.js": "3eb01b8e4f0082aaff520d1e0976df270199e8f6a183d6557c9977d997e27d03",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "2ba65af03e6ea3f14b35ed650dc4a0a1fa042fdf93d6213c5b851655c592cfed",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "3133d01c0bf7316edca603728e69f7d211663b86454f5bd99bfcbfaca9946425",
-    "public/manifest.webmanifest": "6db18f5ad79c3b2b0cb58ffd37e04737337ea7a01513542343231743ef056832"
+    "public/sw.js": "c2cd9efea9c691786dbec9e180d985c65fa514dfcf7b974e1ee6ee1312827327",
+    "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }

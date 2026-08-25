@@ -56,9 +56,10 @@ export const SOURCES = Object.freeze([
   "design-v11.css",
   "design-v11-spur.css",
   "design-v11-flaechen.css",
-  "design-v11-fein.css",
-  // Mobil-Composer (25.08.): Chip-Ellipsis + wrap-Netz, als LETZTES.
-  "mobil-composer.css"
+  // Mobil-Composer (25.08.): Chip-Ellipsis + wrap-Netz — direkt vor der
+  // V11-Feinschicht, die vertragsgemaess das Kaskaden-Ende bleibt.
+  "mobil-composer.css",
+  "design-v11-fein.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.

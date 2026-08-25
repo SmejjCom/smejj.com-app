@@ -74,7 +74,9 @@ const LEGACY_BASELINE = new Map([
   // preload sofort angestossen (+2) — der erste blockierende Request
   // entfaellt, die kalte Renderkette laeuft parallel statt in Serie.
   // Ab diesem Stand wieder eingefroren.
-  ["public/index.html", 1015],
+  // 1015 -> 1016 am 25.08. abends: +1 Zeile fuer das pwa-schnellstart-Modul
+  // (echte Manifest-Shortcuts). Ab diesem Stand wieder eingefroren.
+  ["public/index.html", 1016],
   ["src/worker.js", 930]
 ]);
 // Praezise Verstoesse: Markenwort in Grossschreibung (das SMEJJ_-Env-Praefix mit
