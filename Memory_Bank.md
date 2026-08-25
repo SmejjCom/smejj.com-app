@@ -51,6 +51,17 @@ preload sofort — der erste blockierende Request entfaellt. Wasserfall-Beweis
 live; p75-Nachweis unter 1,5 s steht aus (Betreiber-Netz stoerte massiv,
 bester kalter Lauf 1032 ms), Nr. 63 misst 6:15.
 
+**Nachtrag iPhone-PWA-Runde (Betreiber-Livetest mit Screenshots):** Vier
+Deploys v700-v703 — Ohr-Solo (taube SpeechRecognition faellt aufs eigene Ohr),
+viewport-fit=cover (safe-area war 0, PWA klebte unter der Notch),
+Schnellspur-Abschluss (clearThinkingState fehlte im Geraete-Pfad: Antwort
+blieb roh/stumm/ohne Leiste; Echtzeit-Woerter jetzt an den Server) und
+Mobil-Composer (Chip-Ellipsis als 15. Buendel-Quelle; cline-model-menu nimmt
+das App-Token zuerst, der Cookie-Weg zu api.smejj.com ist in der PWA
+Third-Party-blockiert). MERKE: Was der Chat kann, kann das Menue nur mit
+DERSELBEN Token-Quelle — und ein data-thinking, das stehen bleibt, macht
+eine fertige Antwort fuer ALLES Nachgelagerte unsichtbar.
+
 **Lehre:** Ein Modul, das der Browser nicht PARSEN kann, ist die stillste
 Ausfallsorte — eine Ebene unter "Modul laedt nie". Und: Der nachgezogene
 Anhang-Import kam per Zeilen-Einfuegung an fester Position in eine Datei,

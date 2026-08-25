@@ -116,5 +116,54 @@
     "umbau": "Fruehes Tor INLINE im head (CSP per sha256-Hash, Inline-Rumpf byte-gleich public/auth-gate-frueh.js, Test erzwingt beides) + start-styles per preload sofort. sw v699, Frontend 60e784b, Bauzweig a1669040 (index-Baseline 992 -> 1015 mit Freigabe), design-v11 70aae2c6.",
     "beweis": "Wasserfall nachher: CSS ist der ERSTE Request, alle Nebenressourcen parallel, kein Gate-Request mehr; Abgemeldete landen weiter auf /willkommen.html (0 Konsolenfehler), Angemeldete laden die App ohne CSP-Block; index.html + sw.js byte-identisch auf beiden Domains.",
     "offen": "p75-Nachweis unter 1500 ms steht aus — das Betreiber-Netz stoerte waehrend der Nachmessung massiv (TTFB 470-1223 ms statt 93-205 ms am Vormittag; bester kalter Lauf schon 1032 ms). Nr. 63 misst morgen 6:15 unter stabilem Netz."
+  },
+  "nachtragIphonePwaRunde": {
+    "anlass": "Betreiber testete live auf dem iPhone (PWA) und meldete mit Screenshots: Sprachwelle stumm/haengend, 'Sanduhr' vorgelesen, Icons verrutscht, Chip ragt ueber das Glas, Modell-Menue zeigt nur 'Cline-Key verbinden'.",
+    "fixes": [
+      {
+        "sw": "v700",
+        "was": "Ohr-Solo-Modus: taube SpeechRecognition (sofortiges onend ohne onstart/onerror, Google-Dienst im Netz blockiert) faellt aufs eigene Ohr zurueck (Pegel-Automat + Groq); Waechter 6/6"
+      },
+      {
+        "sw": "v701",
+        "was": "viewport-fit=cover auf allen 15 Einstiegsseiten — env(safe-area-inset-*) war in der iPhone-PWA 0, Layout klebte unter Notch/Statusleiste"
+      },
+      {
+        "sw": "v702",
+        "was": "Schnellspur: clearThinkingState VOR dem Geraete-Stream (data-thinking blieb: keine Leiste, kein Vorlesen, Voice 'keine Antwort', Verlauf/Markdown kaputt) + Echtzeit-Woerter schlagzeilen/presse/zeitung an den Server (Geraetemodell erfand Nachrichten von '16. Mai 2024')"
+      },
+      {
+        "sw": "v703",
+        "was": "Modell-Chip-Ellipsis + wrap-Netz als 15. Buendel-Quelle mobil-composer.css (Chip 'smejj 1.0 (Gruendlich)' ragte uebers Glas; Vorab-Beweis am 390px-Headless-Abbild, live bestaetigt) + cline-model-menu nimmt das App-Token ZUERST (Cookie-Weg zu api.smejj.com ist in der PWA Third-Party-blockiert -> Menue hielt den Angemeldeten fuer schluessellos)"
+      }
+    ],
+    "offen": [
+      "TTS liest Emoji-Namen vor ('Sanduhr') — sanitizeForSpeech um Emoji-Strip ergaenzen (P3)",
+      "iPhone-Praxis-Neutest des Betreibers nach App-Neustart (SW-Update auf v703 greift beim naechsten Oeffnen)",
+      "Startseitengewicht steht EXAKT am 300-KB-Budget — naechster Zuwachs reisst; Diaet-Kandidat einplanen"
+    ],
+    "benchmarksNachV703": {
+      "kalt": {
+        "ttfb": 178,
+        "lcp": 476,
+        "inp": 56,
+        "cls": 0,
+        "kb": 300
+      },
+      "warm": {
+        "ttfb": 63,
+        "lcp": 192,
+        "inp": 64,
+        "cls": 0,
+        "kb": 73
+      },
+      "ergebnis": "alle Budgets eingehalten"
+    },
+    "beweise": [
+      "sw v703 + /assets/start-styles.css byte-identisch auf smejj.com und api.smejj.com",
+      "390px-Abbild: langer Chip bleibt 88px mit Ellipsis, Zeile intakt",
+      "Desktop-Voice: Izmir-Wetterfrage beantwortet+gesprochen; Schlagzeilen-Frage nach Fix an Server statt Geraetemodell",
+      "Ampel 64 / 59 Laeuft / 0 rot (5 grau = frisch nach Neustart)"
+    ]
   }
 }
