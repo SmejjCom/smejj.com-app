@@ -251,5 +251,25 @@
       "Codeberg-Push scheiterte lokal (kein SSH-Schluessel geladen) — Spiegel laeuft ueber die freigegebene GitHub-Action.",
       "Bewusste Zusammenfuehrung der divergierten Bridge-Module (bilder/websuche/evolution/voice-tts) zwischen den Zweigen."
     ]
+  },
+  "nachtragSimulatorAZ": {
+    "datum": "2026-08-26 nachts",
+    "auftrag": "Betreiber: 'Ich gebe dir alle Rechte. Mit zwei Simulatoren komplett von A bis Z testen, vollautomatisch, ohne Rueckfragen.' Kein Xcode auf dem Mac -> zwei emulierte iOS-Geraete (iPhone 390x844, iPad 820x1180; RecognitionCtor geloescht, Mobile-UA, Touch, Fake-Mikrofon) in echtem Chrome GEGEN DAS ECHTE LIVE-SYSTEM.",
+    "reise": "willkommen.html (Erstbesucher-Weiche) -> Anmelden-Knopf -> /auth/login/ -> E-Mail + Magic-Link-Knopf -> echte Mail aus Gmail des Betreibers -> verify -> Sitzung -> getippte Chat-Frage mit gestreamter Antwort -> Sprachwelle: Ohr-Solo hoert, Sprech-Ende, POST transcribe 200 ('Wie spät ist es?'), Antwort, Premium-TTS. iPhone 13/13 UND iPad 13/13 BESTANDEN; Screenshots + JSON in Session-Scratchpad reise/.",
+    "neuerKernbefund": {
+      "was": "voice-ear.js schickte den Transcribe-Upload OHNE Authorization-Header — die Bruecke bindet /api/voice/transcribe aber an die Anmeldung (kein Token = 401). Ohne Header bekam auch ein ANGEMELDETER Nutzer NIE ein Transkript: fuenfmal 401 trotz frischer Magic-Link-Sitzung, live gemessen.",
+      "warumUnbemerkt": "Im Web-Speech-Duett fail-safe unsichtbar — der Browser-Text gewann still, das Ohr lieferte einfach ''. Erst der Ohr-Solo-Modus (iOS, seit v709) machte den 401 fatal. Das eigentliche v709-Fix-Ziel (Ohr-Solo statt Tipp-Fallback) war korrekt, ABER ohne diesen zweiten Fix haette das iPhone weiter geschwiegen.",
+      "fix": "authHeaders wie in voice-premium-tts (localStorage smejj.auth.accessToken.v1, Schluessel bewusst dupliziert), sw v710. Waechter 6a-6d in tests/voice-ear.test.mjs: Quelltext + Verhaltensprobe (Token->Bearer-Kopf, ohne Token->kein Kopf), kaputte Probe gegen HEAD~ bewiesen. Frontend 41eedd0, design-v11 08950e95, Bauzweig 06afa5b9 + Control-Neubau (gestartetAm 22:33:06Z); 7 Dateien beider Domains sha256-identisch."
+    },
+    "messfallenSimulator": [
+      "Erste Fuehrung (Tour) liegt ueber dem Composer und frisst den Sende-Klick des frischen Kontos — [data-fuehrung=aus] klicken wie ein echter Nutzer.",
+      "PWA-Selbst-Update beim SW-Erstinstall reloadet MITTEN im Test (Overlay zu, window-Spuren weg) — erst SW-Ruhe abwarten, dann selbst reloaden, dann testen.",
+      "Magic-Link-Mails: Gmail droppt/verzoegert wiederholte identische Mails (Minuten, teils SPAM — in:anywhere suchen!); Link ohne Handoff strandet auf api.smejj.com/profile (dann als Nutzer zu smejj.com wechseln, Cookie-Weg holt das Token same-site).",
+      "Verlauf des Kontos fuellt #startLog beim Login — Antwort-Asserts brauchen Zaehlung vorher/nachher, sonst zaehlt alte Historie als Antwort."
+    ],
+    "randbefundP3": "Schnellspur-Antwort auf 'Was ist smejj.com?' halluzinierte 'Plattform fuer intelligente Immobilienbewertung' — das RAG-Projektwissen greift bei dieser Selbst-Frage nicht (Anreicherung zielt auf Infrastrukturfragen). Offen fuer eine eigene Runde.",
+    "offen": [
+      "Echter iPhone-Sprechtest des Betreibers bleibt der letzte Punkt (Simulator deckt kein echtes Mikrofon-Erlebnis ab)."
+    ]
   }
 }

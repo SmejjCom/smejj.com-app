@@ -48,6 +48,23 @@ v701-Stempel (Diff je nur die viewport-fit-Zeile) — nachgeholt.
 **Offen:** echter iPhone-Sprechtest durch den Betreiber; bewusste
 Zusammenfuehrung der divergierten Bridge-Module.
 
+**Nachtrag Simulator-A-Z (26.08. nachts, "alle Rechte, vollautomatisch"):**
+Kein Xcode auf dem Mac -> zwei emulierte iOS-Geraete (iPhone 390x844, iPad
+820x1180; RecognitionCtor geloescht, Fake-Mikrofon) liefen die ECHTE Reise
+gegen live: Willkommen-Weiche -> Login -> Magic-Link aus der Betreiber-Gmail
+-> Chat -> Sprachwelle -> Transkript -> gesprochene Antwort. BEIDE 13/13
+BESTANDEN. Dabei der eigentliche Endgegner: voice-ear.js schickte den
+Transcribe-Upload OHNE Authorization-Header — die Bruecke verlangt ihn (kein
+Token = 401). Im Web-Speech-Duett war das JAHRELANG unsichtbar (Browser-Text
+gewann still), im Ohr-Solo fatal: 5x401 trotz frischer Sitzung. Fix:
+authHeaders wie voice-premium-tts, sw v710 (Frontend 41eedd0, design-v11
+08950e95, Bauzweig 06afa5b9, Control neu 22:33Z, 7 Dateien beider Domains
+sha256-identisch); Waechter 6a-6d kaputt+gesund. Simulator-Messfallen:
+Erste-Fuehrung frisst den Sende-Klick; SW-Erstinstall-Reload mitten im Test;
+Gmail verzoegert/spam-t wiederholte Magic-Link-Mails (in:anywhere!); Link
+ohne Handoff strandet auf api.smejj.com. P3: Schnellspur halluziniert bei
+"Was ist smejj.com?" (RAG zielt nur auf Infrastrukturfragen).
+
 ### [2026-08-25] VOLLAUDIT: /code WAR AUF ALLEN DOMAINS TOT — BEI 64 GRUENEN AMPELN (job_vollaudit_20260825)
 
 Capsule: `task-capsules/2026/08/job_vollaudit_20260825/capsule.json`.
