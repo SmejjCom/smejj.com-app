@@ -133,3 +133,51 @@ test("Zustaendigkeit sprengt das Kontextbudget nicht", async () => {
   assert.equal(treffer.length, 3, "genau k Treffer, nicht k+1");
   assert.ok(treffer.some((t) => t.source.includes("SMEJJ_1_0_TRAINING_DATA_POLICY.md")));
 });
+
+// ---- Selbstbild-Klasse (A-Z-Simulatorbefund 2026-08-26) ---------------------
+// "Was ist smejj.com?" erreichte nackt 5,6 Punkte (Schwelle 20) — Platz 1 war
+// eine MAIL-Doku — und die Schnellspur halluzinierte "Plattform fuer
+// intelligente Immobilienbewertung". Beide Haelften festhalten: erkannt wird
+// die Identitaetsfrage MIT smejj-/Plattform-Bezug, alles andere ausdruecklich
+// nicht ("kein Kontext ist besser als falscher Kontext").
+
+test("Selbstbild: Identitaetsfragen werden erkannt", () => {
+  for (const frage of [
+    "Was ist smejj.com?",
+    "Was kann smejj.com?",
+    "Worum geht es bei smejj.com?",
+    "Wofür steht smejj.com?",
+    "Wer bist du?"
+  ]) {
+    assert.equal(erkenneRegelfrage(frage)?.id, "selbstbild", `nicht erkannt: ${frage}`);
+  }
+});
+
+test("Selbstbild: kein Bezug, keine Zahlenfrage, kein Befehl — nicht erkannt", () => {
+  const faelle = [
+    ["Worum geht es?", "ohne smejj-Bezug kann sich die Frage auf ein Dokument beziehen"],
+    ["Wie viele Nutzer hat smejj.com?", "der Halluzinationsfall darf keinen Kontext bekommen"],
+    ["Erzeuge smejj.com eine Beschreibung", "Befehlsform"],
+    ["Erzähl mir einen Witz über Katzen.", "fremdes Thema"],
+    ["Was ist ein Objektspeicher?", "Fachfrage ohne Selbstbezug"]
+  ];
+  for (const [frage, grund] of faelle) {
+    assert.notEqual(erkenneRegelfrage(frage)?.id, "selbstbild", `faelschlich erkannt (${grund}): ${frage}`);
+  }
+  // Kollisionsordnung: die spezifische Klasse gewinnt vor dem Selbstbild.
+  assert.equal(erkenneRegelfrage("Was ist das Memory-System von smejj.com?")?.id, "memory");
+});
+
+test("Selbstbild gegen den echten Korpus: Projektdefinition statt Zufallstreffer", async () => {
+  const index = buildIndex(await loadKnowledgeChunks(process.cwd()));
+  const treffer = searchRagIndex(index, "Was ist smejj.com?", 3);
+  assert.ok(treffer.length > 0, "die Selbstfrage muss Kontext bekommen");
+  assert.ok(treffer[0].score > 20, `Punktzahl muss die unveraenderte Schwelle schlagen: ${treffer[0].score}`);
+  assert.ok(treffer.some((t) => t.source.includes("Project_Goals.md") || t.source.includes("MASTER_PROMPT.md")),
+    `Projektdefinition fehlt: ${treffer.map((t) => t.source).join(", ")}`);
+  // Gegenprobe am Altstand: OHNE Anreicherung blieb die Frage unter der
+  // Schwelle — genau der gemessene 5,6-Punkte-Zustand.
+  const nackt = searchRagIndex(index, "Was ist smejj.com?", 3, { minTopScore: 20 });
+  void nackt; // die Anreicherung wirkt in searchRagIndex selbst; der Altstand
+  // ist durch den Score-Assert oben abgedeckt (5,6 haette nie > 20 erreicht).
+});

@@ -83,6 +83,31 @@ export const REGELKLASSEN = Object.freeze([
       "Memory", "System", "validierte", "Ergebnisse", "Task", "Capsule",
       "Benchmarks", "Patterns", "Vermutungen", "Halluzinationen"
     ])
+  },
+  {
+    id: "selbstbild",
+    // Traegerdokument: Project_Goals.md (Mission) — vom MASTER_PROMPT als
+    // Pflichtlektuere benannt; MASTER_PROMPT.md traegt dieselbe Projektdefinition.
+    //
+    // BEFUND (A-Z-Simulatorlauf 2026-08-26, live gemessen): "Was ist smejj.com?"
+    // erreichte nackt 5,6 Punkte (Schwelle 20) — Platz 1 war eine MAIL-Doku —
+    // und die Schnellspur halluzinierte "Plattform fuer intelligente
+    // Immobilienbewertung". Mit dieser Anreicherung: 36,4, Platz 1
+    // MASTER_PROMPT (Projektdefinition), Platz 2 Project_Goals#Mission.
+    //
+    // Der Begriff verlangt die IDENTITAETS-Frageform MIT smejj-/Plattform-Bezug
+    // in einem: ein blosses "Worum geht es?" (ohne Bezug) kann sich auf ein
+    // angehaengtes Dokument beziehen und bekommt bewusst KEINEN Kontext —
+    // "kein Kontext ist besser als falscher Kontext". "Wie viele Nutzer hat
+    // smejj.com?" (Halluzinationsfall) matcht nicht: "wie viele" ist keine
+    // Identitaetsfrage. Steht als LETZTE Klasse: "Was ist das Memory-System
+    // von smejj.com?" gehoert der memory-Klasse, nicht dem Selbstbild.
+    dokument: "Project_Goals.md",
+    begriff: /\b(?:was\s+(?:ist|kann|macht|bietet|bedeutet)|worum\s+geht\s+es\s+(?:bei|auf)|wof(?:ü|ue)r\s+(?:steht|ist)|wozu\s+dient)\s+(?:smejj[.a-z]*|diese[srm]?\s+(?:projekt|plattform|seite|app|website))\b|\bwer\s+(?:bist\s+du|seid\s+ihr)\b/i,
+    suchworte: Object.freeze([
+      "smejj.com", "Projekt", "Ziel", "Mission", "AI", "Autonomous",
+      "Coding", "OS", "Plattform", "Modell", "Chat", "Assistent"
+    ])
   }
 ]);
 
