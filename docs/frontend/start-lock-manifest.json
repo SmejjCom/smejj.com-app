@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-25T14:42:29.471Z",
-  "confirmation": "Betreiber-Freigabe 25.08. 'alle Rechte': kanonisches Buendel v706, mobilfix2",
+  "frozenAt": "2026-08-25T16:02:54.708Z",
+  "confirmation": "Betreiber-Freigabe 25.08. 'alle Rechte, 100% fertig': Schluss-Spiegel v708 + Bruecke v144 (Sprachmodus-Regeln, PWA-Selbst-Update)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "dec9e7be136f2761add6ce10caafe9a30aaf79b26fbc1350162f3d8074f584b4",
+    "public/index.html": "65de3439590663cbccb632613e3f525aa9d841da45dbaa8c97ac2a02e31829a5",
     "public/styles.css": "0a4e5edcfe344d34e04ba9beb7f7e2b9d3cedd8a5beb879f88bc5a0964819a07",
     "public/start-styles.css": "b50b113e0ba8d1accf39a03b533f82ce40f905acfa07cb25b33f0853a2a6bede",
     "public/branding.css": "149fed004085cd944a3743fdd9acad076f6559d67e70f5dcafd741b5f901095f",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "c2cd9efea9c691786dbec9e180d985c65fa514dfcf7b974e1ee6ee1312827327",
+    "public/sw.js": "f6df8f91da3f902b27502415468acdbb6a6cba54da0178d98da2372116a838b8",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }

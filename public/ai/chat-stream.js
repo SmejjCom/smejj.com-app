@@ -324,6 +324,11 @@ async function versucheLokaleAntwort(body, output, renderMarkdown) {
   // eine lokal beantwortete Frage erzeugt KEINE Server-Logzeile.
   merkeEntscheidung(urteil.grund);
   if (!urteil.ok) return false;
+  // Ab hier antwortet WIRKLICH das Geraet: Wartetext + Denk-Flag muessen weg,
+  // sonst haelt alles Nachgelagerte (Aktionsleiste, Vorlesen, Sprachmodus,
+  // Verlauf, Markdown-Renderer) die fertige Antwort fuer einen Platzhalter —
+  // Betreiber-Befund 25.08.: Schlagzeilen-Antwort blieb roh, stumm, ohne Leiste.
+  clearThinkingState(output);
 
   let text = "";
   // LIVE GEMESSEN 2026-08-23 (Abnahme): vier Fragen nacheinander beantwortete
@@ -340,7 +345,12 @@ async function versucheLokaleAntwort(body, output, renderMarkdown) {
   let ergebnis;
   try {
     ergebnis = await frageLokal(lage.frage, {
-      system: "Du bist der Assistent von smejj.com. Antworte kurz, korrekt und in der Sprache des Nutzers.",
+      // Sprachmodus (25.08.): auch das Geraetemodell muss "sprechbar" antworten
+      // — sonst kamen Emojis und Listen, die die Stimme stoerten.
+      system: "Du bist der Assistent von smejj.com. Antworte kurz, korrekt und in der Sprache des Nutzers."
+        + (body?.preferences?.voiceMode === true
+          ? " Der Nutzer HOERT deine Antwort als Sprachausgabe: 1-3 Saetze, gespraechig, keine Listen, kein Markdown, keine URLs, keine Emojis."
+          : ""),
       verlauf: lage.verlauf,
       abgebrochen: () => gestoppt,
       onDelta: (zuwachs) => {

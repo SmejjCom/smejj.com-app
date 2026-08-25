@@ -1,18 +1,18 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-24T16:15:15.945Z",
-  "confirmation": "Betreiber 2026-08-24 'Buendel-Projekt starten': fuenf Dateien auf die live ausgelieferten Frontend-Fassungen angeglichen",
+  "frozenAt": "2026-08-25T16:02:54.738Z",
+  "confirmation": "Betreiber-Freigabe 25.08. 'alle Rechte': chat-bridge v144 Sprachmodus-Systemregel, Sicherheitslogik unangetastet",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/auth/login/index.html": "48595610972fd8f9e504414bf5784d349f47021f05aa4c7d5852b9608c20d793",
-    "public/auth/register/index.html": "ca5a2988930d4ae400e23436ad237985359ccd760aab02f2b15959863ba9d1de",
+    "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
+    "public/auth/register/index.html": "673885f4a0482ed19c0f31621195e5272fc851e3b1c9427cb370b4bd4076485c",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
-    "public/chat-bridge.js": "86005dfa3147100f5edd1b0fe788899c30b105f75b427152bd67a259a8d1c8ae",
+    "public/chat-bridge.js": "02c176d6b2dafe4573d1371fb52a772d99ffc2240f5cc0b3dae43ac17181887d",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

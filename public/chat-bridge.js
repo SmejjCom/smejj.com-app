@@ -8,8 +8,8 @@ import { buildWebContext } from "./chat-bridge-websuche.js";
 // Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit 2026-08-05
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
 import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
-import { pipeVisibleStream } from "./chat-bridge-strom.js";
-import { meldeAntwort, evolutionMelderStatus } from "./chat-bridge-evolution.js";
+import { FRAGE_WERKZEUG, pipeVisibleStream } from "./chat-bridge-strom.js";
+import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
 import { buildRagBlockMitVerlauf, lastUserContent, previousUserContent, ragIndexStatus, vorLetzterNutzerNachricht, withRagBlock } from "./chat-bridge-rag.js";
 // Gespraechsgedaechtnis. Bewusst DIESELBE gepruefte Bereinigung wie der Control
@@ -35,19 +35,33 @@ const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.SMEJJ_HOST || "::";
 const ALLOWED_ORIGINS = new Set(["https://smejj.com", "https://www.smejj.com"]);
 // Rueckfall = Zeabur-Control; der alte Salad-Control ist seit 2026-08-13 gestoppt.
-const CONTROL_ORIGIN = trimUrl(process.env.SMEJJ_CONTROL_ORIGIN || "https://smejj-control.zeabur.app");
+const CONTROL_ORIGIN = trimUrl(process.env.SMEJJ_CONTROL_ORIGIN || "https://api.smejj.com");
 const CONTROL_ROUTER_ENABLED = /^(1|true|yes)$/i.test(process.env.SMEJJ_MULTI_MODEL_ROUTER_ENABLED || "NO");
-const LLM_BASE_URL = trimUrl(process.env.SMEJJ_LLM_SALAD_BASE_URL || process.env.SMEJJ_LLM_BASE_URL || "");
-const LLM_API_KEY = process.env.SMEJJ_LLM_SALAD_API_KEY || process.env.SMEJJ_LLM_API_KEY || "";
-const LLM_MODEL = process.env.SMEJJ_LLM_SALAD_MODEL || process.env.SMEJJ_LLM_MODEL || "tgi";
-const LLM_HEADER = process.env.SMEJJ_LLM_HEADER || (process.env.SMEJJ_LLM_SALAD_API_KEY ? "Salad-Api-Key" : "Authorization");
+// Salad-Ausstieg (Betreiber-Ansage 2026-08-15: "Salad.com vollstaendig
+// ignorieren und entfernen. Wir arbeiten ausschliesslich mit Zeabur.com").
+//
+// Die neutralen Namen stehen ab hier ZUERST. Die alten SMEJJ_LLM_SALAD_*
+// bleiben als Rueckfall stehen und sind als veraltet markiert — sie werden
+// NICHT entfernt, solange nicht gemessen ist, dass sie in keiner Umgebung
+// mehr gesetzt sind. Live gemessen am 2026-08-15: /health meldet
+// modelConfigured=false, also ist hier ohnehin nichts gesetzt; der Rueckfall
+// kostet nichts und verhindert, dass ein vergessener Altwert stumm ausfaellt.
+// Wer die Altnamen entfernt, muss vorher die Zeabur-Umgebung pruefen.
+const LLM_BASE_URL = trimUrl(process.env.SMEJJ_LLM_BASE_URL || process.env.SMEJJ_LLM_SALAD_BASE_URL || "");
+const LLM_API_KEY = process.env.SMEJJ_LLM_API_KEY || process.env.SMEJJ_LLM_SALAD_API_KEY || "";
+const LLM_MODEL = process.env.SMEJJ_LLM_MODEL || process.env.SMEJJ_LLM_SALAD_MODEL || "tgi";
+// Der Kopfzeilen-Name haengt am Anbieter, nicht am Variablennamen: nur wenn
+// ausschliesslich der Altschluessel gesetzt ist, braucht das Gegenueber noch
+// die alte Kopfzeile. Sonst gilt der Standard.
+const LLM_HEADER = process.env.SMEJJ_LLM_HEADER
+  || (!process.env.SMEJJ_LLM_API_KEY && process.env.SMEJJ_LLM_SALAD_API_KEY ? "Salad-Api-Key" : "Authorization");
 const REQUEST_TIMEOUT_MS = Number(process.env.SMEJJ_CHAT_BRIDGE_TIMEOUT_MS || 60000);
 // Eigenes Zeitbudget fuer die Mal-Spur (Befund 2026-08-14): Der Bild-Maler
 // braucht seit dem Qualitaets-Tuning (3 Schritte + Foto-Anreicherung) rund
 // zwei Minuten je Bild — die Logs zeigen POST /erzeuge 200 nach ~110 s, aber
-// die Lane wartete nur REQUEST_TIMEOUT_MS (60 s). Der Maler malte fertig und
-// antwortete einem toten Socket; der Nutzer sah einen ewig schimmernden
-// Platzhalter. 240 s = doppelte gemessene Malzeit als Reserve.
+// die Lane wartete nur REQUEST_TIMEOUT_MS (60 s). Ergebnis: der Maler malte
+// fertig und antwortete einem toten Socket, der Nutzer sah einen ewig
+// schimmernden Platzhalter. 240 s = doppelte gemessene Malzeit als Reserve.
 const BILDER_TIMEOUT_MS = Number(process.env.SMEJJ_BILDER_TIMEOUT_MS || 240000);
 // Fast Lane (Welle 2, 0-Euro-Freigabe 2026-07-21): Groq Free-Tier NUR fuer schnelle
 // Konversationsantworten; Coding/Web bleiben auf der Deep Lane (GLM-5.2).
@@ -65,7 +79,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260814-v143-motiv-zuerst";
+const BRIDGE_VERSION = "20260825-v144-sprachmodus-regel";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -258,11 +272,13 @@ async function handleAgent(req, res) {
   // ohne Kontext oder bei Fast-Lane-Fehler laeuft unveraendert der alte Pfad.
   if (!coding && isWeatherTask(task)) {
     const weatherContext = await buildWeatherContext(task);
-    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, rechnung, history: body.history }), "web", body.model, stufe)) return;
+    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, rechnung, history: body.history, voiceMode: body?.preferences?.voiceMode === true }), "web", body.model, stufe)) return;
   }
   if (await streamViaControl(res, "/api/agent", body)) return;
   const webContext = !coding && shouldSearchWeb(task) ? await buildWebContext(task, CONTROL_ORIGIN) : "";
-  const messages = buildAgentMessages({ task, coding, webContext, wissen, rechnung, history: body.history });
+  const modus = ["plan", "manuell", "akzeptieren"].includes(String(body?.preferences?.modus || "")) ? body.preferences.modus : "auto";
+  const voiceMode = body?.preferences?.voiceMode === true;
+  const messages = buildAgentMessages({ task, coding, webContext, wissen, rechnung, history: body.history, modus, voiceMode });
   return streamModel(res, messages, coding ? "coding" : webContext ? "web" : "fast", body.model);
 }
 
@@ -290,12 +306,20 @@ function nutzerfragenRueckwaerts(history, grenze = 6) {
     .map((n) => n.content);
 }
 
-function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = "", history }) {
+function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = "", history, modus = "auto", voiceMode = false }) {
+  // Berechtigungs-Modus der Code-Seite (Betreiber 2026-08-16, wie Claude
+  // Code). Der Halt MUSS hier im Server-Prompt stehen: eine Client-Zeile
+  // verlor zweimal gemessen gegen die Diff-Anweisung dieses Prompts.
+  const codingAnweisung = {
+    plan: "Antworte AUSSCHLIESSLICH mit einem kurzen nummerierten Plan und der Schlussfrage \"Soll ich so umsetzen?\". Schreibe in dieser Antwort KEINEN Code, keine Diffs und keine Dateien — die Umsetzung folgt erst nach der Freigabe des Nutzers in seiner naechsten Nachricht.",
+    manuell: "Antworte zuerst NUR mit 1-3 Saetzen, WAS du tun wuerdest, und der Frage \"Soll ich das so machen?\". Schreibe in dieser Antwort KEINEN Code und keine Diffs — erst nach einem Ja des Nutzers.",
+    akzeptieren: "Liefere einen kompakten Plan und konkrete Code-/Diff-Vorschlaege in EINEM Zug und fasse am Ende kurz zusammen, was du getan hast. Behaupte nicht, dass Dateien geaendert wurden."
+  }[modus] || "Liefere einen kompakten Plan und konkrete Code-/Diff-Vorschlaege. Behaupte nicht, dass Dateien geaendert wurden.";
   const system = [
     coding ? "You are smejj.com Code Agent." : "Du bist der Assistent von smejj.com.",
     "Antworte sofort sichtbar und direkt. Gib keine Denk-Tags, kein <think>, keine internen Notizen und keine Rohdaten aus.",
     coding
-      ? "Liefere einen kompakten Plan und konkrete Code-/Diff-Vorschlaege. Behaupte nicht, dass Dateien geaendert wurden."
+      ? codingAnweisung
       : "Beantworte in der Sprache des Nutzers korrekt, knapp und hilfreich.",
     webContext
       ? "Nutze nur die Live-Internet-Ergebnisse. Antworte in maximal 5 kurzen Saetzen. Schreibe am Ende genau eine Zeile: Quellen: URL1, URL2 (Stand: ISO-Zeit)."
@@ -311,6 +335,15 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
     "smejj.com KANN Webseiten oeffnen und lesen (Werkzeuge seite_lesen und web_suche). Behaupte NIE, du haettest keinen Internet-Zugriff — versuche es. Nur PRIVATE Seiten hinter einem Login (z. B. chatgpt.com/c/..., Postfaecher, Konten) kann NIEMAND von aussen lesen, auch keine andere KI; sage dann konkret, dass die Seite privat ist, und nenne den Ausweg (bei ChatGPT: ueber 'Teilen' einen oeffentlichen .../share/...-Link erstellen).",
     rechnung
       ? "Die exakt berechneten Werte liegen dir vor. Uebernimm sie ZIFFERNGENAU und rechne sie NICHT nach; erklaere nur den Weg und nenne die Ergebnisse."
+      : "",
+    // Frage-Karte (Betreiber 2026-08-23, live gemessen): mit tool_choice "auto"
+    // stellte das Modell seine Rueckfragen trotzdem als Text ("Wo wohnst du?
+    // Was interessiert dich?"). Die Karte kommt nur, wenn die Regel es sagt.
+    "RUECKFRAGEN: Brauchst du vom Nutzer eine Entscheidung oder Angabe, bevor du sinnvoll antworten kannst, dann rufe das Werkzeug frage_stellen (eine Frage, 2-4 Optionen, erste = Empfehlung). Schreibe Rueckfragen NIE als Fragenliste in den Text. Reicht eine sinnvolle Annahme, antworte direkt und nenne die Annahme.",
+    // Sprachmodus (25.08.): Die Antwort wird VORGELESEN. Ohne diese Regel kamen
+    // lange Listen-Antworten mit Emojis — die Stimme las "Sanduhr" vor.
+    voiceMode && !coding
+      ? "Sprachmodus: Der Nutzer HOERT deine Antwort als Sprachausgabe. Antworte wie in einem natuerlichen Gespraech: kurz (1-3 Saetze), direkt und freundlich. Keine Listen, keine Tabellen, kein Markdown, keine Code-Bloecke, keine URLs, keine Emojis."
       : ""
   ].filter(Boolean).join("\n");
   const user = ["Frage/Aufgabe:", task, rechnung, webContext].filter(Boolean).join("\n\n");
@@ -391,7 +424,13 @@ async function streamViaControl(res, route, body) {
   const antwortText = await pipeVisibleStream(upstream.body, res);
   // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
   // der Text bleibt hier). Nie erwartet, nie werfend.
-  meldeAntwort({ prompt: String(body?.task || lastUserContent(body?.messages || [])), antwort: antwortText, quelle: "bruecke-control-router" });
+  meldeAktion({
+    art: "text",
+    prompt: String(body?.task || lastUserContent(body?.messages || [])),
+    ergebnis: antwortText,
+    quelle: "bruecke-control-router",
+    betrifft: "chat-antwort"
+  });
   res.end();
   return true;
 }
@@ -446,6 +485,11 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
         messages,
         stream: true,
         temperature: 0.35,
+        // Rueckfrage-Karte auch auf der Schnellspur (Betreiber 2026-08-23):
+        // das Modell darf EIN Werkzeug rufen — frage_stellen. Die Bruchstuecke
+        // sammelt pipeVisibleStream und schickt am Ende die Karte.
+        tools: [FRAGE_WERKZEUG],
+        tool_choice: "auto",
         // Antwort-Abbruch am Ende (Befund 2026-08-13, "...2-Zimmer-Buero b"):
         // 700 Token sind rund 500 Woerter — eine Tabelle mit sechs Zeilen plus
         // Erklaerung reisst mitten im Wort ab. Der Nutzer sieht keinen Fehler,
@@ -476,7 +520,7 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
   const antwortText = await pipeVisibleStream(upstream.body, res);
   // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
   // der Text bleibt hier). Nie erwartet, nie werfend.
-  meldeAntwort({ prompt: lastUserContent(messages), antwort: antwortText, quelle: "bruecke-chat" });
+  meldeAktion({ art: "text", prompt: lastUserContent(messages), ergebnis: antwortText, quelle: "bruecke-chat", betrifft: "chat-antwort" });
   res.end();
   return true;
 }
@@ -528,7 +572,7 @@ async function streamModel(res, messages, profile, requestedModel = "") {
   const antwortText = await pipeVisibleStream(upstream.body, res);
   // AI Evolution Engine: die eigene Antwort messen (Urteil geht an Control,
   // der Text bleibt hier). Nie erwartet, nie werfend.
-  meldeAntwort({ prompt: lastUserContent(messages), antwort: antwortText, quelle: "bruecke-chat" });
+  meldeAktion({ art: "text", prompt: lastUserContent(messages), ergebnis: antwortText, quelle: "bruecke-chat", betrifft: "chat-antwort" });
   res.end();
 }
 
