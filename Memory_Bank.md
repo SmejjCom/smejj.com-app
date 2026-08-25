@@ -42,6 +42,15 @@ ausgenommen); Memory_Bank zweite Archiv-Runde (922 -> ~670).
 TTFB 50 ms); kalt LCP p75 3348 ms > 1500 und 303 KB > 300 — offene
 Optimierung, beruehrt die gelockte Startseite (Betreiber-Entscheidung).
 
+**Nachtrag Kaltstart (Freigabe "Ja, freigegeben"):** Die kalte Renderkette
+lief in SERIE (Dokument -> blockierendes Tor-Skript -> erst dann das
+blockierende Stylesheet). Seit sw v699 steht das fruehe Tor INLINE im head
+(CSP per sha256-Hash; Test erzwingt Byte-Gleichheit von Inline-Rumpf und
+public/auth-gate-frueh.js UND den passenden Hash) und start-styles laedt per
+preload sofort — der erste blockierende Request entfaellt. Wasserfall-Beweis
+live; p75-Nachweis unter 1,5 s steht aus (Betreiber-Netz stoerte massiv,
+bester kalter Lauf 1032 ms), Nr. 63 misst 6:15.
+
 **Lehre:** Ein Modul, das der Browser nicht PARSEN kann, ist die stillste
 Ausfallsorte — eine Ebene unter "Modul laedt nie". Und: Der nachgezogene
 Anhang-Import kam per Zeilen-Einfuegung an fester Position in eine Datei,

@@ -40,15 +40,37 @@
   "neuerWaechter": {
     "name": "Nutzerreise-Waechter (Probe-Nutzer Nr. 29, dichter Takt)",
     "takt": "alle 15 Minuten (Betreiber-Fenster 10-15 min), Start Boot+3min, Doppel-Lauf-Bremse",
-    "schritte": ["Startseite (P0)", "Ein-Buendel-Vertrag sw.js beider Domains (P1)", "Nachlade-Kette live als ES-Module geparst — data:-Import mit Link-Panzerung, nichts wird ausgefuehrt (P1)", "API-Kernpfade gesund UND fail-closed (P1)", "Auth-Rundlauf", "Chat ueber die Bruecke mit TTFT", "Speicher mit Ruecklese-Probe"],
+    "schritte": [
+      "Startseite (P0)",
+      "Ein-Buendel-Vertrag sw.js beider Domains (P1)",
+      "Nachlade-Kette live als ES-Module geparst — data:-Import mit Link-Panzerung, nichts wird ausgefuehrt (P1)",
+      "API-Kernpfade gesund UND fail-closed (P1)",
+      "Auth-Rundlauf",
+      "Chat ueber die Bruecke mit TTFT",
+      "Speicher mit Ruecklese-Probe"
+    ],
     "anschluss": "start.js -> starteNutzerreiseTakt; Herzschlag/Eskalation ueber bestehende Kennung synthetic-user-watchdog; Registry Nr. 29 erwartet Lauf binnen 30 min; Verlauf in watchdog/nutzerreise-laeufe (Ringpuffer 500)",
     "tuev": "11/11 — jede Zusage kaputt UND gesund + Anschluss-Beweis; check:modul-syntax zusaetzlich mit Selbsttest und Gegenprobe am echten Bruch",
     "livebeweis": "Erster Lauf fand sofort einen eigenen Fehler (chat-stream wohnt unter /assets/ai/, 404-Fehlalarm, Ampel rot binnen 3 min) — Anschluss damit live bewiesen; nach Pfad-Fix: 'alle 15 Minuten - vor 11 min - erfolgreich', 64/64 gruen."
   },
   "benchmarks": {
     "methodik": "npm run measure:vitals — 5 Laeufe, echtes Chrome headless, p75",
-    "warm": { "ttfb_ms": 50, "lcp_ms": 156, "inp_ms": 56, "cls": 0, "pageWeight_kb": 71, "ergebnis": "alle Budgets eingehalten" },
-    "kalt": { "ttfb_ms": 195, "lcp_ms": 3348, "inp_ms": 64, "cls": 0, "pageWeight_kb": 303, "ergebnis": "LCP-Budget 1500 und Gewicht 300 gerissen — Erstbesucher-Weiche, Optimierung beruehrt die gelockte Startseite (offene Betreiber-Entscheidung)" },
+    "warm": {
+      "ttfb_ms": 50,
+      "lcp_ms": 156,
+      "inp_ms": 56,
+      "cls": 0,
+      "pageWeight_kb": 71,
+      "ergebnis": "alle Budgets eingehalten"
+    },
+    "kalt": {
+      "ttfb_ms": 195,
+      "lcp_ms": 3348,
+      "inp_ms": 64,
+      "cls": 0,
+      "pageWeight_kb": 303,
+      "ergebnis": "LCP-Budget 1500 und Gewicht 300 gerissen — Erstbesucher-Weiche, Optimierung beruehrt die gelockte Startseite (offene Betreiber-Entscheidung)"
+    },
     "chat": "Antwort mit Tabelle+Quellen in ~5 s; Stopp nach 6 s greift sofort; Code-Auftrag streamt und rendert mit Syntaxfarben"
   },
   "verifikationLive": [
@@ -67,9 +89,32 @@
     "design-v11 traegt weiter die Vor-Diaet-Spiegel — Buendel-Abgleich auf diesen Zweig steht aus."
   ],
   "commits": {
-    "frontend": ["f5d8d78 code-flaeche-Fix sw v695", "db94d70 Vorlesen b41 v696", "55a4136 Haertung b42 v697", "0063863 Verdichtung b43 v698"],
-    "bauzweig": ["12d4d50f code-Fix + check:modul-syntax", "2ca9dd35 Spiegel b41/v696", "3b6d9e3e Nutzerreise-Waechter + b43/v698", "8d2b0687 Pfad-Fix ai/", "3817f2bc security-Eichung"],
-    "designV11": ["f1e71750 Sync-Stand", "465ec912 8 Tests + Precache", "2b80371e Vorlesen", "danach Eichungen + diese Capsule"]
+    "frontend": [
+      "f5d8d78 code-flaeche-Fix sw v695",
+      "db94d70 Vorlesen b41 v696",
+      "55a4136 Haertung b42 v697",
+      "0063863 Verdichtung b43 v698"
+    ],
+    "bauzweig": [
+      "12d4d50f code-Fix + check:modul-syntax",
+      "2ca9dd35 Spiegel b41/v696",
+      "3b6d9e3e Nutzerreise-Waechter + b43/v698",
+      "8d2b0687 Pfad-Fix ai/",
+      "3817f2bc security-Eichung"
+    ],
+    "designV11": [
+      "f1e71750 Sync-Stand",
+      "465ec912 8 Tests + Precache",
+      "2b80371e Vorlesen",
+      "danach Eichungen + diese Capsule"
+    ]
   },
-  "status": "abgeschlossen"
+  "status": "abgeschlossen",
+  "nachtragKaltstart": {
+    "freigabe": "Betreiber 2026-08-25 woertlich 'Ja, freigegeben' (Design-Lock index.html)",
+    "befund": "Kalte Renderkette lief in SERIE: Dokument -> auth-gate-frueh.js (blockierend) -> ERST DANACH start-styles.css (blockierend) -> Render. Zwei volle blockierende Runden vor dem LCP.",
+    "umbau": "Fruehes Tor INLINE im head (CSP per sha256-Hash, Inline-Rumpf byte-gleich public/auth-gate-frueh.js, Test erzwingt beides) + start-styles per preload sofort. sw v699, Frontend 60e784b, Bauzweig a1669040 (index-Baseline 992 -> 1015 mit Freigabe), design-v11 70aae2c6.",
+    "beweis": "Wasserfall nachher: CSS ist der ERSTE Request, alle Nebenressourcen parallel, kein Gate-Request mehr; Abgemeldete landen weiter auf /willkommen.html (0 Konsolenfehler), Angemeldete laden die App ohne CSP-Block; index.html + sw.js byte-identisch auf beiden Domains.",
+    "offen": "p75-Nachweis unter 1500 ms steht aus — das Betreiber-Netz stoerte waehrend der Nachmessung massiv (TTFB 470-1223 ms statt 93-205 ms am Vormittag; bester kalter Lauf schon 1032 ms). Nr. 63 misst morgen 6:15 unter stabilem Netz."
+  }
 }
