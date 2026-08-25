@@ -15,6 +15,7 @@ export const BETRIEB_AUTOPILOTEN = Object.freeze([
     nummer: "29",
     kurz: "Simuliert rund um die Uhr echte Nutzer-Abläufe (Login, Chat, Inferenz, S3-Speicher) und schlägt bei Fehlern sofort Alarm.",
     funktionen: [
+      "Führt alle 15 Minuten die volle Nutzerreise aus: Startseite, Bündel-Gleichheit beider Domains, Nachlade-Kette (Module live als ES-Module geparst), API-Kernpfade fail-closed, Anmeldung, Chat, Speicher (Betreiber-Auftrag 2026-08-25).",
       "Führt alle 30 Minuten einen ECHTEN End-to-End-Durchlauf aus: Anmeldung, Chat über die Brücke, Speicher.",
       "Anmeldung: stellt ein Token aus und prüft beide Richtungen — gültig wird angenommen, verfälscht wird abgelehnt.",
       "Chat: echter Aufruf über dieselbe Adresse wie die App, misst die Antwortzeit; ein leerer 200er gilt als Ausfall.",
@@ -23,11 +24,13 @@ export const BETRIEB_AUTOPILOTEN = Object.freeze([
     trainiert: "Synthetic User Journeys (Auth -> Chat -> TTFT -> IDrive e2 S3 Storage)",
     verbessert: "24/7 End-to-End Qualitätsgarantie & automatische Ausfallerkennung in unter 60 Sekunden",
     neuigkeiten: ["Synthetic User Watchdog aktiv (alle 5 Min)", "100% E2E Flow grün verifiziert"],
-    ort: "Control Server (E2E Watchdog)",
-    zeitplan: "alle 30 Minuten (Autopilot-Läufer im Control-Server)",
+    ort: "Control Server (E2E Watchdog + Nutzerreise-Takt)",
+    zeitplan: "alle 15 Minuten (eigener Nutzerreise-Takt) und im 30-Minuten-Durchgang",
     messung: "heartbeat",
-    erwartetAlleMs: STUNDE_MS,
-    schonfristMs: STUNDE_MS,
+    // Herzschlag kommt alle 15 min — nach 30 min ohne Lauf gilt er als
+    // ueberfaellig, nach weiteren 30 min ist die Ampel rot.
+    erwartetAlleMs: 30 * 60 * 1000,
+    schonfristMs: 30 * 60 * 1000,
     startAnleitung: "Läuft kontinuierlich als permanenter E2E-Endnutzer-Wächter.",
     stopAnleitung: "Über Watchdog-Policy konfigurierbar."
   },

@@ -16,6 +16,9 @@ import { starteMailLogAufraeumen } from "../auth/mailLogJanitor.js";
 import { baueEskalationsVersand } from "./autopilotLaeufer.js";
 import { starteAutopilotLaeufer } from "./autopilotTaktstart.js";
 import { starteModellEinkaeufer } from "./modellEinkaeufer.js";
+// Nutzerreise-Waechter: der dichte 15-Minuten-A-bis-Z-Takt des Probe-Nutzers
+// (Betreiber-Auftrag 2026-08-25).
+import { starteNutzerreiseTakt } from "./nutzerreiseWaechter.js";
 // Log-Wache (Nr. 45): die Prozess-Haken muessen VOR dem ersten Fehler haengen.
 import { registriereProzessWache } from "./logWacheAutopilot.js";
 import { interneMeldung } from "../admin/opsAutopiloten.js";
@@ -58,4 +61,8 @@ export function starteAutopiloten({ env = process.env } = {}) {
   // "start.js ruft jeden importierten starte*-Dienst auch auf" haelt die
   // ganze Fehlerklasse seitdem fest.
   sicher("modellEinkaeufer", () => starteModellEinkaeufer({ env, melde: interneMeldung }));
+  // Probe-Nutzer (Nr. 29) im dichten Takt: alle 15 Minuten die ganze App als
+  // Nutzer — Startseite, Buendel-Gleichheit, Nachlade-Kette, API-Kernpfade,
+  // Anmeldung, Chat, Speicher. Der 30-Minuten-Durchgang bleibt unveraendert.
+  sicher("nutzerreiseTakt", () => starteNutzerreiseTakt({ melde: interneMeldung }));
 }
