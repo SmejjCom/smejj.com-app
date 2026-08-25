@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-25T14:47:31.599Z",
-  "confirmation": "Betreiber-Freigabe 25.08. woertlich 'Ich gebe dir alle Rechte ... PWA, iOS, Android': viewport-fit=cover auf den Auth-Seiten (Safe-Area in der iPhone-PWA war 0) — einzige Aenderung, Sicherheit#logik unangetastet",
+  "frozenAt": "2026-08-25T16:00:36.522Z",
+  "confirmation": "Betreiber-Freigabe 25.08. woertlich 'Ich gebe dir alle Rechte nach hundert Prozent fertig. Lass nicht offen': chat-bridge v144 — einzige Aenderung ist die Sprachmodus-Systemregel (kurz, keine Emojis/Listen/URLs) + Versionskennung; Sicherheitslogik (Anmeldepflicht, Sanitizing, Injection-Schutz) unangetastet, Bridge-Tests 110/110 + Anmeldepflicht 20/20 gruen",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
-    "public/chat-bridge.js": "4e2536c9aa06fc280369d5c34a55bd736e1d66f583169af2d1cceac5b4e854d9",
+    "public/chat-bridge.js": "02c176d6b2dafe4573d1371fb52a772d99ffc2240f5cc0b3dae43ac17181887d",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

@@ -79,7 +79,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260823-v143-rueckfrage-regel";
+const BRIDGE_VERSION = "20260825-v144-sprachmodus-regel";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -272,12 +272,13 @@ async function handleAgent(req, res) {
   // ohne Kontext oder bei Fast-Lane-Fehler laeuft unveraendert der alte Pfad.
   if (!coding && isWeatherTask(task)) {
     const weatherContext = await buildWeatherContext(task);
-    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, rechnung, history: body.history }), "web", body.model, stufe)) return;
+    if (weatherContext && await streamFastLane(res, buildAgentMessages({ task, coding: false, webContext: weatherContext, wissen, rechnung, history: body.history, voiceMode: body?.preferences?.voiceMode === true }), "web", body.model, stufe)) return;
   }
   if (await streamViaControl(res, "/api/agent", body)) return;
   const webContext = !coding && shouldSearchWeb(task) ? await buildWebContext(task, CONTROL_ORIGIN) : "";
   const modus = ["plan", "manuell", "akzeptieren"].includes(String(body?.preferences?.modus || "")) ? body.preferences.modus : "auto";
-  const messages = buildAgentMessages({ task, coding, webContext, wissen, rechnung, history: body.history, modus });
+  const voiceMode = body?.preferences?.voiceMode === true;
+  const messages = buildAgentMessages({ task, coding, webContext, wissen, rechnung, history: body.history, modus, voiceMode });
   return streamModel(res, messages, coding ? "coding" : webContext ? "web" : "fast", body.model);
 }
 
@@ -305,7 +306,7 @@ function nutzerfragenRueckwaerts(history, grenze = 6) {
     .map((n) => n.content);
 }
 
-function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = "", history, modus = "auto" }) {
+function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = "", history, modus = "auto", voiceMode = false }) {
   // Berechtigungs-Modus der Code-Seite (Betreiber 2026-08-16, wie Claude
   // Code). Der Halt MUSS hier im Server-Prompt stehen: eine Client-Zeile
   // verlor zweimal gemessen gegen die Diff-Anweisung dieses Prompts.
@@ -338,7 +339,12 @@ function buildAgentMessages({ task, coding, webContext, wissen = "", rechnung = 
     // Frage-Karte (Betreiber 2026-08-23, live gemessen): mit tool_choice "auto"
     // stellte das Modell seine Rueckfragen trotzdem als Text ("Wo wohnst du?
     // Was interessiert dich?"). Die Karte kommt nur, wenn die Regel es sagt.
-    "RUECKFRAGEN: Brauchst du vom Nutzer eine Entscheidung oder Angabe, bevor du sinnvoll antworten kannst, dann rufe das Werkzeug frage_stellen (eine Frage, 2-4 Optionen, erste = Empfehlung). Schreibe Rueckfragen NIE als Fragenliste in den Text. Reicht eine sinnvolle Annahme, antworte direkt und nenne die Annahme."
+    "RUECKFRAGEN: Brauchst du vom Nutzer eine Entscheidung oder Angabe, bevor du sinnvoll antworten kannst, dann rufe das Werkzeug frage_stellen (eine Frage, 2-4 Optionen, erste = Empfehlung). Schreibe Rueckfragen NIE als Fragenliste in den Text. Reicht eine sinnvolle Annahme, antworte direkt und nenne die Annahme.",
+    // Sprachmodus (25.08.): Die Antwort wird VORGELESEN. Ohne diese Regel kamen
+    // lange Listen-Antworten mit Emojis — die Stimme las "Sanduhr" vor.
+    voiceMode && !coding
+      ? "Sprachmodus: Der Nutzer HOERT deine Antwort als Sprachausgabe. Antworte wie in einem natuerlichen Gespraech: kurz (1-3 Saetze), direkt und freundlich. Keine Listen, keine Tabellen, kein Markdown, keine Code-Bloecke, keine URLs, keine Emojis."
+      : ""
   ].filter(Boolean).join("\n");
   const user = ["Frage/Aufgabe:", task, rechnung, webContext].filter(Boolean).join("\n\n");
   // Projektwissen steht VOR der Aufgaben-Anweisung: die Anweisung muss zuletzt
