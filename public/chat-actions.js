@@ -380,6 +380,11 @@ function commitEdit(editor) {
   applyResubmitPlan(plan);
 }
 
+// Merkt sich, WELCHE Nachricht gerade vorgelesen wird: der zweite Klick auf
+// denselben Knopf ist ein STOPP, kein Neustart. Vorher las jeder Klick von
+// vorn, und es gab keinen Weg, eine laufende Ansage zu beenden (Befund 25.08.).
+let vorleseQuelle = null;
+
 function speakEntry(entry) {
   const synthesis = window.speechSynthesis;
   if (!synthesis) {
@@ -388,10 +393,19 @@ function speakEntry(entry) {
   }
   synthesis.cancel();
   document.querySelector('[data-start-tool="speaker"]')?.classList.remove("is-speaking");
+  if (vorleseQuelle === entry) {
+    // Zweiter Klick auf dieselbe Nachricht: nur stoppen.
+    vorleseQuelle = null;
+    return;
+  }
   const text = sanitizeForSpeech(rawOf(entry), { lang: "de" });
   if (!text) return;
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "de-DE";
+  vorleseQuelle = entry;
+  // Nach dem natuerlichen Ende ist der naechste Klick wieder ein Start; der
+  // Guard schuetzt den Fall, dass inzwischen eine ANDERE Nachricht laeuft.
+  utterance.onend = () => { if (vorleseQuelle === entry) vorleseQuelle = null; };
   synthesis.speak(utterance);
 }
 

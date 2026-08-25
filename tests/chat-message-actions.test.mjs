@@ -758,3 +758,12 @@ test("auf schmalen Schirmen sind die Aktionsknoepfe 44 px", () => {
   const mausAusnahme = actionsCss.split("@media (max-width: 600px) and (pointer: fine)")[1] || "";
   assert.match(mausAusnahme, /min-height: 28px;/, "mit Maus bleibt es bei 28 px");
 });
+
+test("Vorlesen ist ein Umschalter — der zweite Klick stoppt die Ansage", () => {
+  // Befund 2026-08-25: speakEntry startete bei JEDEM Klick von vorn; eine
+  // laufende Ansage war ueber die Oberflaeche nicht abbrechbar.
+  const quelle = fs.readFileSync("public/chat-actions.js", "utf8");
+  assert.match(quelle, /let vorleseQuelle = null/, "der Vorlese-Zustand muss gemerkt werden");
+  assert.match(quelle, /if \(vorleseQuelle === entry\) \{\n    \/\/ Zweiter Klick auf dieselbe Nachricht: nur stoppen\.\n    vorleseQuelle = null;\n    return;\n  \}/, "zweiter Klick = Stopp, kein Neustart");
+  assert.match(quelle, /utterance\.onend = \(\) => \{ if \(vorleseQuelle === entry\) vorleseQuelle = null; \}/, "nach dem Ende ist der naechste Klick wieder ein Start");
+});
