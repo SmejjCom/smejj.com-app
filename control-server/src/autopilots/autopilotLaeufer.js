@@ -58,6 +58,9 @@ import { searchWebDetailed } from "../../../src/search/webSearch.js";
 import { baueSchutzUndWachstumLaeufe, SCHUTZ_UND_WACHSTUM_IDS } from "./schutzUndWachstumLaeufe.js";
 // Nr. 05, reaktiviert 2026-08-24 (Betreiber-Anordnung): In-Process statt Geisterdienst.
 import { laufTrainingsTakt } from "./trainingsTaktAutopilot.js";
+// Nr. 65 (2026-08-26, Betreiber-Freigabe): misst die Reife der Trainingsdaten
+// und legt die Entscheidungskarte für die Tagesmappe ab — startet selbst nichts.
+import { laufTrainingsReife } from "./trainingsReifeAutopilot.js";
 
 /**
  * Die Konkurrenzlücken als fertige Backlog-Aufgaben. Eigene Funktion, damit
@@ -99,6 +102,7 @@ export const IM_LAEUFER_BETRIEBEN = Object.freeze([
   "ai-evolution-engine", "missing-function-detector", "autopilot-supervisor", "evolution-ablage",
   "nachweis-kette",
   "training-loop",
+  "trainings-reife",
   ...SCHUTZ_UND_WACHSTUM_IDS
 ]);
 
@@ -629,6 +633,9 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["konkurrenz-radar", () => laufKonkurrenzRadar({ mitNetz, suche: searchWebDetailed })],
     // Nr. 05: die Trainingsdaten-Pipeline — ohne Netz, nur Ablagen + Schalter.
     ["training-loop", () => laufTrainingsTakt()],
+    // Nr. 65: dieselben vier Ablagen gegen das Reife-Ziel gerechnet; die
+    // Entscheidungskarte landet in der Tagesmappe — gebaut wird nichts.
+    ["trainings-reife", () => laufTrainingsReife()],
     // Nr. 44-60: dieselbe Dateiliste, derselbe Netz-Schalter — die Läufe
     // selbst wohnen in schutzUndWachstumLaeufe.js (800-Zeilen-Regel).
     ...baueSchutzUndWachstumLaeufe({ dateien, mitNetz }),

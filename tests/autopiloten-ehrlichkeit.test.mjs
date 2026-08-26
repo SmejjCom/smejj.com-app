@@ -124,7 +124,9 @@ const MIT_ECHTER_MESSUNG = new Set([
   // --- Test-Waechter (Nr. 61), seit 2026-08-24 ---
   "test-waechter",            // Mac-Cron: node --test ueber control-server/src, Herzschlag wie Betriebswache
   "modell-katalog-wache",     // taeglich /models je Anbieter gegen die aufgeloeste Router-Wahl
-  "speicher-wache"            // Nr. 64: taeglich S3-LIST ueber die Eimer, echte Objektgroessen summiert
+  "speicher-wache",           // Nr. 64: taeglich S3-LIST ueber die Eimer, echte Objektgroessen summiert
+  // Nr. 65 (2026-08-26): liest die VIER echten Trainings-Ablagen und rechnet sie
+  "trainings-reife"           //   gegen das Reife-Ziel; Entscheidungskarte in der Tagesmappe-Ablage
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

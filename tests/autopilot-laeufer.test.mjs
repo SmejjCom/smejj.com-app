@@ -26,9 +26,9 @@ test("Der Laeufer betreibt alle Selbsttest-Autopiloten und meldet jeden einzeln"
   const gemeldet = [];
   const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; }, mitNetz: false });
 
-  assert.equal(ergebnisse.length, 52, "51 Autopiloten laufen ohne Netz im Control-Server (seit 2026-08-24 auch Trainings-Takt Nr. 05 und Speicher-Wache Nr. 64)");
-  assert.equal(gemeldet.length, 53, "52 Laeufe + der Taktgeber, der sich selbst bezeugt");
-  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 53, "keine Kennung doppelt");
+  assert.equal(ergebnisse.length, 53, "52 Autopiloten laufen ohne Netz im Control-Server (seit 2026-08-26 auch Trainings-Reife Nr. 65)");
+  assert.equal(gemeldet.length, 54, "53 Laeufe + der Taktgeber, der sich selbst bezeugt");
+  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 54, "keine Kennung doppelt");
   assert.ok(gemeldet.some((g) => g.id === "autopilot-laeufer"), "der Taktgeber bezeugt sich selbst");
 
   // Jede Meldung muss ein Ergebnis tragen, keinen Pauschaltext.
@@ -64,7 +64,7 @@ test("Ein abstuerzendes Modul reisst den Lauf nicht mit", async () => {
     dateienLader: () => { throw new Error("Dateisystem weg"); },
     mitNetz: false
   });
-  assert.equal(ergebnisse.length, 52, "alle anderen laufen trotzdem");
+  assert.equal(ergebnisse.length, 53, "alle anderen laufen trotzdem");
   assert.equal(gemeldet.get("smart-router").status, "ok");
 });
 
@@ -76,7 +76,7 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
     melde: (id, e) => { gemeldet.set(id, e); return true; },
     mitNetz: true
   });
-  assert.equal(ergebnisse.length, 55, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe");
+  assert.equal(ergebnisse.length, 56, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe (plus Trainings-Reife Nr. 65 ohne Netz)");
   const sw = gemeldet.get("sync-waechter");
   assert.ok(sw, "der Sync-Waechter muss melden");
   assert.equal(sw.status, "fehler", "ohne Geheimnis ist er rot, nie gruen");
