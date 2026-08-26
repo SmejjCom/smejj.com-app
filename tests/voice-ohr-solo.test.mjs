@@ -9,7 +9,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { createSoloAutomat, rmsPegel, createOhrSolo } from "../public/voice-ohr-solo.js";
+import { createSoloAutomat, rmsPegel, createOhrSolo, verdrahteOhrSolo } from "../public/voice-ohr-solo.js";
 
 test("Automat: Sprache und anhaltende Stille ergeben 'ende' (gesunde Kette)", () => {
   const automat = createSoloAutomat({ warmupMs: 100, minSprechMs: 200, stilleMs: 1000 });
@@ -99,13 +99,80 @@ test("createOhrSolo: leeres Transkript stoesst die naechste Runde an, Text wird 
 
 test("Anschluss: composer-tools verdrahtet das Solo-Ohr an den vier Stellen", () => {
   const quelle = fs.readFileSync("public/composer-tools.js", "utf8");
-  assert.match(quelle, /import \{ verdrahteOhrSolo \} from "\.\/voice-ohr-solo\.js\?v=2"/);
+  assert.match(quelle, /import \{ verdrahteOhrSolo \} from "\.\/voice-ohr-solo\.js\?v=3"/);
   assert.match(quelle, /if \(state\.ohrSoloAktiv\) return ohrSolo\.hoeren\(\)/, "voiceModeListen hat die Weiche");
-  assert.match(quelle, /if \(ohrSolo\.aktivieren\(\)\) return;/, "FailStreak-Zweig versucht erst Solo");
+  assert.match(quelle, /if \(taubwache\.ende\(\)\) return;/, "onend fragt die Taubheits-Wache");
+  assert.match(quelle, /const taubwache = ohrSolo\.bewache\(recognition\)/, "die Wache wird vor start() scharf");
+  assert.match(quelle, /taubwache\.ergebnis\(\)/, "onresult meldet Leben an die Wache");
+  assert.match(quelle, /taubwache\.fehler\(event\.error\)/, "onerror meldet no-speech an die Wache");
   assert.match(quelle, /if \(!ohrSolo\.aktivieren\(\)\) enterVoiceFallback\(/, "start-catch versucht erst Solo");
   assert.match(quelle, /ohrSolo\.stop\(\)/, "Schliessen/Mute stoppt die Solo-Runde");
   const sw = fs.readFileSync("public/sw.js", "utf8");
   assert.match(sw, /"\/assets\/voice-ohr-solo\.js"/, "Modul steht im Precache — offline sonst tot");
+});
+
+test("Taubheits-Wache (Livebefund 26.08.): haengende/leere Erkennung geht ins Ohr, Schweigen bleibt gesund", () => {
+  // Attrappen-Host: nur was bewache() braucht. aktivieren() verlangt ein
+  // Mikrofon — in Node wie in den Nachbartests per navigator-Attrappe.
+  const altNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { configurable: true, value: { mediaDevices: { getUserMedia: async () => ({ getTracks: () => [] }) } } });
+  const rufe = [];
+  const state = { voiceRecognition: null, ohrSoloAktiv: false, voiceFailStreak: 0 };
+  const host = {
+    createServerEar: () => ({ start() {}, cancel() {}, finish: async () => "" }),
+    url: "x", state, earAlive: () => true,
+    setStatus() {}, setTranskript() {}, senden() {}, fallback: (t) => rufe.push("fallback:" + t),
+    stopInterrupt() {}, stopBarge() {}, hoerenNeu: () => rufe.push("hoerenNeu")
+  };
+  const solo = verdrahteOhrSolo(host);
+  const recognition = { abort: () => rufe.push("abort") };
+
+  // GESUND, Schweigen: Chrome meldet "no-speech" -> kein Umschalten, Streak 0.
+  state.voiceRecognition = recognition;
+  let w = solo.bewache(recognition, { taubMs: 60_000 });
+  w.fehler("no-speech");
+  assert.equal(w.ende(), false, "Schweigen ist kein Taubheitsfall");
+  assert.equal(state.voiceFailStreak, 0);
+
+  // GESUND, Ergebnis kam: ebenfalls kein Umschalten.
+  w = solo.bewache(recognition, { taubMs: 60_000 });
+  w.ergebnis();
+  assert.equal(w.ende(), false);
+  assert.equal(state.voiceFailStreak, 0);
+
+  // TAUB (Altstand-Luecke): zwei leere Enden ohne "no-speech" -> Ohr-Solo an.
+  w = solo.bewache(recognition, { taubMs: 60_000 });
+  assert.equal(w.ende(), false, "das erste taube Ende zaehlt nur");
+  assert.equal(state.voiceFailStreak, 1);
+  w = solo.bewache(recognition, { taubMs: 60_000 });
+  assert.equal(w.ende(), true, "das zweite taube Ende schaltet um");
+  assert.equal(state.ohrSoloAktiv, true, "Ohr-Solo ist an");
+  assert.ok(rufe.includes("hoerenNeu"), "und hoert sofort");
+  if (altNavigator) Object.defineProperty(globalThis, "navigator", altNavigator);
+});
+
+test("Taubheits-Wache: der 12-s-Haenger bricht die stumme Erkennung ab", async () => {
+  const state = { voiceRecognition: null, ohrSoloAktiv: false, voiceFailStreak: 0 };
+  const host = {
+    createServerEar: () => ({ start() {}, cancel() {}, finish: async () => "" }),
+    url: "x", state, earAlive: () => true,
+    setStatus() {}, setTranskript() {}, senden() {}, fallback() {},
+    stopInterrupt() {}, stopBarge() {}, hoerenNeu() {}
+  };
+  const solo = verdrahteOhrSolo(host);
+  let abgebrochen = 0;
+  const recognition = { abort: () => { abgebrochen += 1; } };
+  state.voiceRecognition = recognition;
+  const w = solo.bewache(recognition, { taubMs: 20 });
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(abgebrochen, 1, "der Haenger wird abgebrochen (loest onend aus)");
+  assert.equal(state.voiceFailStreak, 1, "und zaehlt wie ein leeres Ende");
+  // Gesunde Gegenprobe: ein Ergebnis entschaerft den Wecker.
+  const w2 = solo.bewache(recognition, { taubMs: 20 });
+  w2.ergebnis();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(abgebrochen, 1, "mit Ergebnis bricht nichts ab");
+  void w;
 });
 
 test("iOS-Pfad (25.08. abends): ohne RecognitionCtor uebernimmt ZUERST das Solo-Ohr", () => {
