@@ -147,6 +147,53 @@ export const MODEL_REGISTRY = Object.freeze({
       recommendedRamGb: 0
     })
   }),
+  // Ox Alpha — Stealth-Preview-Modell ueber OpenRouter (Betreiber-Auftrag
+  // 2026-08-26: "ox alpha an 3. Stelle" im Modell-Menue). REIN API-only wie
+  // Kimi K3: kein Vault, kein Storage — der Anbieter ist anonym, die Gewichte
+  // sind nicht verfuegbar. Slug laut openrouter.ai/stealth/ox-alpha:
+  // "stealth/ox-alpha", 1,05M Kontext, in der Preview $0/M (KEINE neue
+  // laufende Kostenposition; BYOK-Key des Betreibers, Budget-Gate wie immer).
+  // FAIL-CLOSED: ohne SMEJJ_OX_ALPHA_ENABLED + Key (eigener
+  // SMEJJ_LLM_OX_ALPHA_API_KEY oder der OpenRouter-Konto-Key
+  // SMEJJ_LLM_OPENROUTER_API_KEY) bleibt das Modell inaktiv und der Router
+  // faellt stabil auf GLM-5.2 zurueck. Es verdraengt nie den Standard.
+  "ox-alpha": Object.freeze({
+    id: "ox-alpha",
+    name: "Ox Alpha",
+    aliases: Object.freeze(["ox alpha", "ox-alpha", "ox", "stealth/ox-alpha"]),
+    provider: "openrouter",
+    status: "api-only-runtime-configurable",
+    contextTokens: 1_050_000,
+    codingCapability: "flagship",
+    enabledByDefault: false,
+    featureFlag: "SMEJJ_OX_ALPHA_ENABLED",
+    fallbackModelId: DEFAULT_MODEL_ID,
+    storage: null,
+    capabilities: Object.freeze({
+      chat: true,
+      coding: true,
+      fileAnalysis: true,
+      projectAnalysis: true,
+      agentTasks: true,
+      streaming: true,
+      patchPlanning: true,
+      testExplanation: true
+    }),
+    runtime: Object.freeze({
+      envPrefix: "OX_ALPHA",
+      // Derselbe OpenRouter-Konto-Key traegt alle OpenRouter-Modelle — ein
+      // eigener SMEJJ_LLM_OX_ALPHA_API_KEY hat Vorrang (Muster Kimi K3/K2.7).
+      keyFallbackEnvPrefix: "OPENROUTER",
+      defaultBaseUrl: "https://openrouter.ai/api/v1",
+      defaultModel: "stealth/ox-alpha",
+      defaultHeader: "Authorization",
+      storageFirstMode: null,
+      engines: Object.freeze(["openai-compatible"]),
+      workerEngines: Object.freeze([]),
+      requiredLocalCacheGb: 0,
+      recommendedRamGb: 0
+    })
+  }),
   // smejj fast 1.0 — EIGENES, selbst gehostetes Modell auf gemieteter Salad-GPU.
   // Zweck: kurze Chat-Antworten (Profil "fast"), waehrend GLM-5.2 das
   // Qualitaets-/Coding-Fundament bleibt.
