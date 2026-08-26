@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-26T00:38:30.520Z",
-  "confirmation": "Betreiber 2026-08-26: 'behebe endlich ... checke gesamte App von A bis Z ... professionell als Expert' — Taubheits-Wache Sprachwelle + Diktat-Ohr (sw v711, b99, werkzeuge-9, ohr-solo v3), Livebefund Desktop-Chrome taube Web-Speech",
+  "frozenAt": "2026-08-26T00:58:44.130Z",
+  "confirmation": "Betreiber 2026-08-26: Ox-Alpha-Auftrag — sw CACHE v712 (Cache-Busting fuer code-modell-menue)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "fec6624f15bd2c53cf599d3a7be885fe25715f70823014d80d590eb3df5a786e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "af61ff92a972179f7459b0d5b45a0cb3773a74e4bc39ac0736d03cebfeff91fe",
+    "public/sw.js": "ea7fbaf403d0b429c5488581f6023dc329fd10f5f16fe756f5d36b5d180d3e64",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }
