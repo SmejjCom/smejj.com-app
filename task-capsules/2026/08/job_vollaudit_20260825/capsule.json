@@ -290,5 +290,27 @@
     ],
     "deploys": "Bridge v145-selbstbild-rag live (Bundle -> Frontend main 0d2797b -> restartService, /health im ersten Anlauf); design-v11 0e0483f8, Bauzweig 3b4ee87e + Control-Neubau (23:25:40Z). Architektur-Notiz: smejj.com/assets/chat-bridge.js ist das BUNDLE (Bridge-Startdatei via raw.github), api.smejj.com/assets/chat-bridge.js die QUELLE — beide v145, DIFF gewollt; der Buendel-Vertrag misst sw.js.",
     "waechterBewaehrt": "Nutzerreise-Waechter Nr. 29 meldete um 01:04 korrekt die reale sw-Abweichung (v710/v709) mitten im Deploy-Fenster der Ohr-Runde — seit dem Control-Neubau 01:33 geheilt; genau dafuer ist er da."
+  },
+  "nachtragTaubwacheDiktatOx": {
+    "datum": "2026-08-26 frueh (dritte Nachtrunde)",
+    "betreiberBefunde": [
+      "Sprachwelle Desktop-Chrome: haengt ewig in 'Ich höre zu ...' — Web-Speech war STILL taub (weder Ergebnis noch no-speech noch Ende); der alte Schutz zaehlte nur Sofort-Enden <1,5 s.",
+      "Diktat-Mikrofon: leuchtet rot, schreibt nie — reines Web-Speech ohne Rueckfallebene.",
+      "Code-Bereich: Aktionsleisten-Icons gestapelt (Screenshots 03:01-03:03)."
+    ],
+    "fixesV711": [
+      "Taubheits-Wache (voice-ohr-solo.bewache): 12-s-Haenger bricht ab; Ende ohne Ergebnis UND ohne Chromes ehrliches no-speech zaehlt; zwei taube Runden -> Ohr-Solo. SCHWEIGEN (no-speech) bleibt gesund. Tests kaputt+gesund.",
+      "Diktat-Ohr: eigenes Server-Ohr nimmt parallel auf; liefert Web-Speech bis zum Stopp-Klick nichts, schreibt das Ohr-Transkript ins Feld (fail-safe, serverOhr optional)."
+    ],
+    "livebeweisTaub": "taub-desktop-livetest gegen smejj.com v711 mit still-tauber Erkennungs-Attrappe: Diktat schreibt 'Wie spät ist es?' nach Stopp; Sprachwelle schaltet auf Ohr-Solo, Transkript 200, KEIN Tipp-Fallback. 5/5 OK.",
+    "codeLeiste": "Am aktuellen Stand in 4 Livemessungen (Desktop 1280/560, frisch gesendet, Verlauf geoeffnet) NICHT reproduzierbar — Leiste ueberall gesunde Reihe (z. B. 520x28). Betreiber-Screenshots fielen exakt ins naechtliche Deploy-Fenster; wahrscheinlichste Ursache Misch-Cache (der Waechter Nr. 29 meldete zeitgleich Buendel-Abweichung). sw v711/v712 erzwingen frische Dateien. Falls es nach Hard-Reload wieder auftritt: Fenstermass + Screenshot noetig. Messbefund: Log wird erst beim SENDEN in die Code-Flaeche adoptiert — blosser View-Wechsel laesst ihn unsichtbar in #start (0x0).",
+    "oxAlphaV146": {
+      "auftrag": "Betreiber schriftlich: 'ox alpha an 3. Stelle (1. Auto, 2. smejj 1.0, 3. Ox Alpha)'",
+      "bau": "Registry ox-alpha (provider openrouter, Slug stealth/ox-alpha laut openrouter.ai — Stealth-Preview, 1,05M Kontext, in der Preview $0/M, keine neue Kostenposition), api-only wie Kimi K3, fail-closed hinter SMEJJ_OX_ALPHA_ENABLED; Key SMEJJ_LLM_OX_ALPHA_API_KEY oder Fallback SMEJJ_LLM_OPENROUTER_API_KEY. Menue code-modell-menue Nr. 3 (nichts entfernt), Bruecke v146: Schnellspur gibt \\box\\b ab.",
+      "livebeweis": "POST /api/agent mit model 'Ox Alpha': x-smejj-bridge multi-model-router (Schnellspur gibt ab), x-smejj-model-fallback true + backend zhipu:glm-5.2 (ehrlicher Fallback ohne Key). Menue-DOM live: Auto, smejj 1.0(aktiv), Ox Alpha, Cline-Key — Position 3 bestaetigt.",
+      "betreiberSchritt": "API-Keys darf der Agent nicht anfassen (Sicherheitsregel). Zeabur -> smejj-control -> Variables: SMEJJ_OX_ALPHA_ENABLED=1 und SMEJJ_LLM_OPENROUTER_API_KEY=<Key von openrouter.ai/settings/keys> setzen, Redeploy; danach zeigt derselbe curl-Test backend openrouter und fallback false."
+    },
+    "werkzeuge": "Sitzungs-Token-Kette per curl (verify -> Cookie -> session-token) beendet die Magic-Link-Warterei fuer Livetests; Token-Seed macht Messlaeufe in ~60 s moeglich.",
+    "deploys": "Frontend fb76b19+4a12f34 (sw v711->v712), design-v11 a6f08a5a..c64adafb, Bauzweig 19524b05..40d3b616, Bruecke v146, Control-Neubauten 00:44Z/01:03Z; sw v712 byte-identisch auf beiden Domains."
   }
 }

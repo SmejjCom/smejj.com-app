@@ -5,6 +5,38 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-26] TAUBE WEB-SPEECH FAELLT IMMER AUFS OHR + OX ALPHA NR. 3 (job_vollaudit_20260825, dritte Nachtrunde)
+
+Capsule: `task-capsules/2026/08/job_vollaudit_20260825/capsule.json`
+(nachtragTaubwacheDiktatOx). sw v711/v712, Bruecke v146.
+
+**Betreiber-Livebefund Desktop:** Sprachwelle haengt ewig in "Ich höre zu ..."
+— Web-Speech STILL taub (weder Ergebnis noch no-speech noch Ende; der alte
+Schutz zaehlte nur Sofort-Enden <1,5 s). Diktat: Knopf rot, schreibt nie.
+**Fixes:** Taubheits-Wache (`voice-ohr-solo.bewache`): 12-s-Haenger bricht ab,
+Ende ohne Ergebnis UND ohne ehrliches "no-speech" zaehlt, zwei taube Runden ->
+Ohr-Solo; SCHWEIGEN bleibt gesund. Diktat: Server-Ohr nimmt parallel auf und
+schreibt nach Stopp, wenn Web-Speech stumm blieb. Livebeweis mit still-tauber
+Erkennungs-Attrappe gegen v711: Diktat schreibt, Sprachwelle schaltet um,
+Transkript 200. MERKE: gesundes Schweigen erkennt man an Chromes "no-speech" —
+nur dessen FEHLEN beweist Taubheit.
+
+**Ox Alpha (Betreiber schriftlich, Nr. 3 im Menue):** Registry `ox-alpha`
+(openrouter, Slug `stealth/ox-alpha`, Preview $0/M), api-only wie Kimi K3,
+fail-closed hinter `SMEJJ_OX_ALPHA_ENABLED` + Key (eigener oder
+`SMEJJ_LLM_OPENROUTER_API_KEY`); Menue 1. Auto, 2. smejj 1.0, 3. Ox Alpha
+(nichts entfernt); Bruecke v146 gibt `\box\b` an den Control-Router ab.
+Live: multi-model-router + fallback:true ohne Key — Header machen den
+Fallback ehrlich sichtbar. Key traegt der Betreiber selbst ein (Agent fasst
+Keys nie an).
+
+**Messwerkzeug:** Sitzungs-Token per curl-Kette (verify -> Cookie ->
+session-token) statt Magic-Link-Warterei; Token-Seed macht Live-Messlaeufe in
+~60 s moeglich. Code-Leisten-Befund des Betreibers war in 4 Messungen nicht
+reproduzierbar (Misch-Cache im Deploy-Fenster, Waechter Nr. 29 meldete
+zeitgleich Buendel-Abweichung); Log wird erst beim SENDEN in die Code-Flaeche
+adoptiert — blosser View-Wechsel laesst ihn 0x0 in #start.
+
 ### [2026-08-25] SPRACHWELLE iPHONE: iOS GING IMMER IN DEN TIPP-FALLBACK (job_vollaudit_20260825, Nachtrag)
 
 Capsule: `task-capsules/2026/08/job_vollaudit_20260825/capsule.json`
