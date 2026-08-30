@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-30T18:53:13.813Z",
-  "confirmation": "Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen. (Wof Kadavanich, 2026-08-30, Freigabe Divergenz-Angleich: Hotfix-Rueckportierung chat-store-Diaet/account-privacy-Split/Code-Fix + Marken-Kaskade b65/b49/b48/b52 u.a.)",
+  "frozenAt": "2026-08-30T19:04:51.839Z",
+  "confirmation": "Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen. (Wof Kadavanich, 2026-08-30, Freigabe Divergenz-Angleich inkl. SW v716-Stempel — Precache-Pflicht)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "88b8aea5e4e362cfdd34c62dddfd8e1892b6af0886506b3ef848e7aecabd0491",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "b70be6ece2b6d58b950701beab3db1b33439489cb3ed282a815d28e8ee988c31",
+    "public/sw.js": "2f57e07c0792e8bd0a899e891bf25f6021aa0f44c205b58fe570fd612a8f6281",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }
