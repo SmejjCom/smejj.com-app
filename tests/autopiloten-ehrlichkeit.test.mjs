@@ -126,7 +126,15 @@ const MIT_ECHTER_MESSUNG = new Set([
   "modell-katalog-wache",     // taeglich /models je Anbieter gegen die aufgeloeste Router-Wahl
   "speicher-wache",           // Nr. 64: taeglich S3-LIST ueber die Eimer, echte Objektgroessen summiert
   // Nr. 65 (2026-08-26): liest die VIER echten Trainings-Ablagen und rechnet sie
-  "trainings-reife"           //   gegen das Reife-Ziel; Entscheidungskarte in der Tagesmappe-Ablage
+  "trainings-reife",          //   gegen das Reife-Ziel; Entscheidungskarte in der Tagesmappe-Ablage
+  // --- Deckungs-Waechter (Nr. 66-70), seit 2026-08-30 ---
+  // Alle fünf laufen im Autopilot-Laeufer und messen echte Ablagen; belegt in
+  // tests/deckungs-waechter.test.mjs (kaputte UND gesunde Probe je Wächter).
+  "email-zustell",            // Nr. 66: echtes Zustellprotokoll mail/zustellung der letzten 7 Tage
+  "dsgvo-fristen",            // Nr. 67: echte Vorgangs-Ablage admin/gdpr mit gerechneter Restfrist
+  "ai-act-wache",             // Nr. 68: Bestandsverzeichnis gegen die aktiven Registry-Modelle gerechnet
+  "abo-umsatz-wache",         // Nr. 69: Abo-Spiegel billing/customers + Trend-Karte über den letzten Lauf
+  "flaggen-wache"             // Nr. 70: Flag-Ablage admin/flags mit updatedAt-Alter je Entscheidung
 ]);
 
 const TAG_MS = 24 * 60 * 60 * 1000;

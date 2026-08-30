@@ -61,3 +61,4 @@ docs/mockups/*.html
 # scripts/build/bundle-start-styles.mjs) und ist dort ausdruecklich von der
 # Regel ausgenommen.
 public/assets/start-styles.css
+__pycache__/

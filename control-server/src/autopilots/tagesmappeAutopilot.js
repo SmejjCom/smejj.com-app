@@ -18,6 +18,8 @@ import { createRecordStore } from "../admin/recordStore.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { listeTickets } from "../admin/supportTickets.js";
 import { TRAININGS_REIFE_ABLAGE } from "./trainingsReifeAutopilot.js";
+import { DSGVO_FRISTEN_ABLAGE } from "./dsgvoFristenAutopilot.js";
+import { FLAGGEN_ABLAGE } from "./flaggenAutopilot.js";
 
 /** Offene Punkte, die nur der Betreiber entscheiden kann. Gepflegt im Code,
  *  damit jeder Eintrag mit seinem Grund im Review steht — KEINE Messwerte. */
@@ -142,6 +144,47 @@ export async function baueTagesmappe({
     }
   } catch { stumm.push("Trainings-Reife-Ablage"); }
 
+  // 8. DSGVO-Fristen-Karte (Nr. 67): kritische Fristen (≤ 5 Tage) und
+  // überschrittene sind eine Entscheidung — bearbeiten oder (nach Begründung)
+  // verlängern. Dieselbe Frisch-Regel wie oben: älter als 3 Tage = stumm.
+  try {
+    const liste = await storeFabrik(DSGVO_FRISTEN_ABLAGE, 10).liste({ limit: 1 });
+    if (!liste.ok) stumm.push("DSGVO-Fristen-Ablage");
+    else {
+      const karte = liste.datensaetze[0];
+      const frisch = karte && jetztMs - Date.parse(karte.createdAt || 0) < 3 * 86_400_000;
+      if (!karte || !frisch) stumm.push("DSGVO-Fristen-Ablage (veraltet)");
+      else if (Number(karte.ueberschritten) > 0 || Number(karte.kritisch) > 0) {
+        const dringend = karte.dringendste?.faelligAm ? `, dringendste fällig ${String(karte.dringendste.faelligAm).slice(0, 10)}` : "";
+        entscheiden.push({
+          art: "dsgvo-frist",
+          text: `DSGVO: ${karte.ueberschritten} über der Frist, ${karte.kritisch} kritisch (≤ 5 Tage)${dringend}`
+            + ` — Bußgeld-Risiko, Vorgang bearbeiten oder Frist begründet verlängern`
+        });
+      }
+    }
+  } catch { stumm.push("DSGVO-Fristen-Ablage"); }
+
+  // 9. Flaggen-Karte (Nr. 70): vergessene Flag-Entscheidungen (on/partial
+  // unverändert über 30 Tage) als EINE Karte — aufräumen oder bewusst lassen.
+  try {
+    const liste = await storeFabrik(FLAGGEN_ABLAGE, 10).liste({ limit: 1 });
+    if (!liste.ok) stumm.push("Flaggen-Ablage");
+    else {
+      const karte = liste.datensaetze[0];
+      const frisch = karte && jetztMs - Date.parse(karte.createdAt || 0) < 3 * 86_400_000;
+      if (!karte || !frisch) stumm.push("Flaggen-Ablage (veraltet)");
+      else if (Number(karte.veraltetAnzahl) > 0) {
+        const namen = (karte.veraltetNamen || []).slice(0, 5).join(", ");
+        entscheiden.push({
+          art: "flaggen",
+          text: `${karte.veraltetAnzahl} Feature-Flag(s) länger als 30 Tage unverändert (${namen})`
+            + ` — aufräumen oder bewusst lassen`
+        });
+      }
+    }
+  } catch { stumm.push("Flaggen-Ablage"); }
+
   return {
     ok: true,
     erstelltAm: new Date(jetztMs).toISOString(),
@@ -170,7 +213,11 @@ export async function fuehreSelbsttestAus() {
     ticketLader: async () => [{ id: "T1", status: "offen", betreff: "Hilfe" }],
     storeFabrik: (praefix) => praefix === TRAININGS_REIFE_ABLAGE
       ? { liste: async () => ({ ok: true, datensaetze: [{ stufe: 3, gesamt: 5200, ziel: 5000, createdAt: new Date().toISOString() }] }) }
-      : { liste: async () => ({ ok: true, datensaetze: [] }) }
+      : praefix === DSGVO_FRISTEN_ABLAGE
+        ? { liste: async () => ({ ok: true, datensaetze: [{ ueberschritten: 0, kritisch: 1, bald: 0, dringendste: { faelligAm: "2026-09-02" }, createdAt: new Date().toISOString() }] }) }
+        : praefix === FLAGGEN_ABLAGE
+          ? { liste: async () => ({ ok: true, datensaetze: [{ veraltetAnzahl: 2, veraltetNamen: ["neu-menue", "sprach-test"], createdAt: new Date().toISOString() }] }) }
+          : { liste: async () => ({ ok: true, datensaetze: [] }) }
   });
   if (gesund.roteAmpeln.length !== 1) fehler.push("rote Ampel fehlt in der gesunden Mappe");
   if (gesund.wartenAufDich.length !== 1) fehler.push("offenes Ticket fehlt in der gesunden Mappe");
@@ -188,6 +235,34 @@ export async function fuehreSelbsttestAus() {
   });
   if (frueh.entscheiden.some((e) => e.art === "trainings-reife")) {
     fehler.push("Stufe 1 darf noch keine Entscheidung erzeugen");
+  }
+  // Nr. 67: kritische DSGVO-Frist muss eine Karte sein; eine entspannte Lage nicht.
+  if (!gesund.entscheiden.some((e) => e.art === "dsgvo-frist")) {
+    fehler.push("kritische DSGVO-Frist fehlt unter ENTSCHEIDEN");
+  }
+  const dsgvoRuhig = await baueTagesmappe({
+    uebersicht: () => ({ autopiloten: [] }),
+    ticketLader: async () => [],
+    storeFabrik: (praefix) => praefix === DSGVO_FRISTEN_ABLAGE
+      ? { liste: async () => ({ ok: true, datensaetze: [{ ueberschritten: 0, kritisch: 0, bald: 0, createdAt: new Date().toISOString() }] }) }
+      : { liste: async () => ({ ok: true, datensaetze: [] }) }
+  });
+  if (dsgvoRuhig.entscheiden.some((e) => e.art === "dsgvo-frist")) {
+    fehler.push("entspannte DSGVO-Lage darf keine Karte erzeugen");
+  }
+  // Nr. 70: vergessene Flags müssen eine Karte sein; gepflegte nicht.
+  if (!gesund.entscheiden.some((e) => e.art === "flaggen")) {
+    fehler.push("vergessene Feature-Flags fehlen unter ENTSCHEIDEN");
+  }
+  const flaggenRuhig = await baueTagesmappe({
+    uebersicht: () => ({ autopiloten: [] }),
+    ticketLader: async () => [],
+    storeFabrik: (praefix) => praefix === FLAGGEN_ABLAGE
+      ? { liste: async () => ({ ok: true, datensaetze: [{ veraltetAnzahl: 0, veraltetNamen: [], createdAt: new Date().toISOString() }] }) }
+      : { liste: async () => ({ ok: true, datensaetze: [] }) }
+  });
+  if (flaggenRuhig.entscheiden.some((e) => e.art === "flaggen")) {
+    fehler.push("gepflegte Flags dürfen keine Karte erzeugen");
   }
   return { bestanden: fehler.length === 0, fehler };
 }
@@ -212,5 +287,5 @@ export async function laufTagesmappe() {
   if (mappe.stummeQuellen.length) {
     return { ok: false, meldung: `Mappe unvollständig — stumme Quellen: ${mappe.stummeQuellen.join(", ").slice(0, 120)}` };
   }
-  return { ok: true, meldung: `Selbsttest 6/6; Mappe gebaut: ${mappe.zusammenfassung} (GET /api/admin/ops/tagesmappe)` };
+  return { ok: true, meldung: `Selbsttest 10/10; Mappe gebaut: ${mappe.zusammenfassung} (GET /api/admin/ops/tagesmappe)` };
 }

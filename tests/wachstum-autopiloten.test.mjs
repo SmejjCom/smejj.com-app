@@ -17,6 +17,8 @@ import { berechneWillkommensLage, laufWillkommensWache } from "../control-server
 import { weiseVarianteZu, werteExperimentAus, laufExperimentMeister } from "../control-server/src/autopilots/experimentMeisterAutopilot.js";
 import { baueTagesmappe, laufTagesmappe } from "../control-server/src/autopilots/tagesmappeAutopilot.js";
 import { TRAININGS_REIFE_ABLAGE } from "../control-server/src/autopilots/trainingsReifeAutopilot.js";
+import { DSGVO_FRISTEN_ABLAGE } from "../control-server/src/autopilots/dsgvoFristenAutopilot.js";
+import { FLAGGEN_ABLAGE } from "../control-server/src/autopilots/flaggenAutopilot.js";
 import { baueSchutzUndWachstumLaeufe, SCHUTZ_UND_WACHSTUM_IDS } from "../control-server/src/autopilots/schutzUndWachstumLaeufe.js";
 import { IM_LAEUFER_BETRIEBEN } from "../control-server/src/autopilots/autopilotLaeufer.js";
 import { AUTOPILOTEN } from "../control-server/src/admin/opsAutopilotenListe.js";
@@ -125,7 +127,11 @@ test("Nr. 60 Tagesmappe: stumme Quellen werden benannt, gesunde Mappe ist vollst
     // in der gesunden Welt liegt darin eine frische Karte ab Stufe 2.
     storeFabrik: (praefix) => praefix === TRAININGS_REIFE_ABLAGE
       ? { liste: async () => ({ ok: true, datensaetze: [{ stufe: 2, gesamt: 2600, ziel: 5000, createdAt: new Date().toISOString() }] }) }
-      : { liste: async () => ({ ok: true, datensaetze: [] }) }
+      : praefix === DSGVO_FRISTEN_ABLAGE
+        ? { liste: async () => ({ ok: true, datensaetze: [{ ueberschritten: 0, kritisch: 0, bald: 0, createdAt: new Date().toISOString() }] }) }
+        : praefix === FLAGGEN_ABLAGE
+          ? { liste: async () => ({ ok: true, datensaetze: [{ veraltetAnzahl: 0, veraltetNamen: [], createdAt: new Date().toISOString() }] }) }
+          : { liste: async () => ({ ok: true, datensaetze: [] }) }
   });
   assert.equal(gesund.stummeQuellen.length, 0);
   assert.equal(gesund.roteAmpeln.length, 1);

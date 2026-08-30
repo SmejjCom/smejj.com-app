@@ -23,6 +23,40 @@ const START_VERZOEGERUNG_MS = 3 * 60 * 1000;
 const APP_URSPRUNG = "https://smejj.com";
 const API_URSPRUNG = "https://api.smejj.com";
 
+// NETZ-POLSTER (Befund 2026-08-30): 50 Rot-Phasen in wenigen Tagen, jede
+// genau EINEN 15-Minuten-Takt lang, alle mit Verbindungsfehler ("fetch
+// failed") — sporadische Netzstöße des Containers, keine Ausfälle der Seite:
+// die parallel laufenden Wächter (Brücke rund um die Uhr, Auffindbarkeit
+// täglich) blieben grün. Dasselbe Muster wie beim Mailer am 2026-08-13,
+// dieselbe Antwort: EIN Wiederholungsversuch, AUSSCHLIESSLICH bei
+// Verbindungsfehlern. Ein HTTP-Status ist eine echte Antwort des Servers und
+// wird nie wiederholt; ein Zeitlimit-Ueberlauf auch nicht (er kann echte
+// Trägheit der Auslieferung bedeuten — die soll sichtbar bleiben).
+const VERBINDUNGS_FEHLER = /fetch failed|ECONNRESET|ECONNREFUSED|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|ECONNABORTED|EHOSTUNREACH|ENETUNREACH|UND_ERR/i;
+const POLSTER_PAUSE_MS = 1_000;
+
+/**
+ * Ein Abruf mit Netz-Polster: Verbindungsfehler werden GENAU EINMAL wieder-
+ * holt (1 s Pause). Scheitert der zweite Versuch auch, steht die Versuchzahl
+ * im Fehlertext — ein Doppelschlag 1 s auseinander ist weiterhin ROT, nur der
+ * einzelne Netzstoß wird herausgefiltert.
+ */
+export async function holeMitPolster(url, { fetchImpl = fetch, timeoutMs = 15_000, versuche = 2, pauseMs = POLSTER_PAUSE_MS } = {}) {
+  const insgesamt = Math.max(1, Math.min(3, Number(versuche) || 2));
+  for (let versuch = 1; versuch <= insgesamt; versuch += 1) {
+    try {
+      return await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
+    } catch (fehler) {
+      const grund = String(fehler?.message || fehler);
+      const verbindung = VERBINDUNGS_FEHLER.test(grund) && fehler?.name !== "TimeoutError";
+      if (!verbindung || versuch === insgesamt) {
+        throw new Error(`${grund}${versuch > 1 ? ` (${versuch} Versuche)` : ""}`);
+      }
+      await new Promise((fertig) => { setTimeout(fertig, pauseMs); });
+    }
+  }
+}
+
 // Verlauf im Adminbereich: jeder Durchlauf wird abgelegt (Ringpuffer 500),
 // mit Prioritaet je Befund — P0 kritisch bis P3 kosmetisch.
 let reiseAblage = null;
@@ -36,7 +70,7 @@ export async function pruefeStartseite({ fetchImpl = fetch, ursprung = APP_URSPR
   const start = Date.now();
   const schritt = "startseite";
   try {
-    const antwort = await fetchImpl(`${ursprung}/`, { signal: AbortSignal.timeout(15_000) });
+    const antwort = await holeMitPolster(`${ursprung}/`, { fetchImpl });
     const ms = Date.now() - start;
     if (!antwort.ok) return { schritt, passed: false, ms, prio: "P0", error: `HTTP ${antwort.status}` };
     const html = await antwort.text();
@@ -58,8 +92,8 @@ export async function pruefeBuendelGleichheit({ fetchImpl = fetch, a = APP_URSPR
   const start = Date.now();
   try {
     const [swA, swB] = await Promise.all([
-      fetchImpl(`${a}/sw.js`, { signal: AbortSignal.timeout(15_000) }).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status} von ${a}`)))),
-      fetchImpl(`${b}/sw.js`, { signal: AbortSignal.timeout(15_000) }).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status} von ${b}`))))
+      holeMitPolster(`${a}/sw.js`, { fetchImpl }).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status} von ${a}`)))),
+      holeMitPolster(`${b}/sw.js`, { fetchImpl }).then((r) => (r.ok ? r.text() : Promise.reject(new Error(`HTTP ${r.status} von ${b}`))))
     ]);
     const ms = Date.now() - start;
     const nameA = swA.match(/CACHE_NAME = "([^"]+)"/)?.[1] || "?";
@@ -105,7 +139,7 @@ export async function pruefeNachladeKette({ fetchImpl = fetch, ursprung = APP_UR
   const geprueft = [];
   try {
     const hole = async (pfad) => {
-      const antwort = await fetchImpl(`${ursprung}${pfad}`, { signal: AbortSignal.timeout(15_000) });
+      const antwort = await holeMitPolster(`${ursprung}${pfad}`, { fetchImpl });
       if (!antwort.ok) throw new Error(`HTTP ${antwort.status} fuer ${pfad}`);
       return antwort.text();
     };
@@ -142,7 +176,7 @@ export async function pruefeApiKernpfade({ fetchImpl = fetch, ursprung = API_URS
   ];
   for (const probe of proben) {
     try {
-      const antwort = await fetchImpl(`${ursprung}${probe.pfad}`, { signal: AbortSignal.timeout(15_000) });
+      const antwort = await holeMitPolster(`${ursprung}${probe.pfad}`, { fetchImpl });
       if (!probe.erwartet(antwort.status)) befunde.push(`${probe.pfad} antwortete HTTP ${antwort.status} (erwartet: ${probe.sinn})`);
     } catch (fehler) {
       befunde.push(`${probe.pfad}: ${String(fehler?.message || fehler).slice(0, 80)}`);
