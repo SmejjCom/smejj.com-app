@@ -114,3 +114,19 @@ komprimiert), api/health HTTP 200. Tagesgenaue Budget-Messung macht Nr. 63.
 - Beobachtung (kein Handeln): die Vorfall-Historie der Nr. 29 sollte nach dem
   Polster deutlich ruhiger werden; wiederholt sich das Muster trotz Polster,
   ist der Container-Netzweg selbst krank (dann Zeabur-Diagnose, nicht die App).
+
+## Nachcheck-Runde 30.08. 11:04 (Betreiber: "checke noch mal")
+- Oberfläche zeigte 69 grün / 1 rot — aber das Nr. 29-Grün war eine
+  MASKIERUNG: Der schmale 3-Schritt-Kernlauf (30-Min-Takt, laufSyntheticWatchdog)
+  ueberschrieb rot gemeldete Nutzerreise-Befunde wieder grün ( gemeinsame
+  Kennung, unterschiedlicher Blick). Befund per Zeitstempel bewiesen
+  (10:40:54 "Echter Nutzer-Durchlauf 3/3" statt "Nutzerreise 7/7").
+- **Gefixt und live (6bd8bce2, Control-Neubau 11:01:43)**: Der 30-Min-Eintrag
+  misst jetzt dieselbe SIEBEN-Schritt-Nutzerreise; Laeufer-Konvention {ok,
+  meldung} (ein status-Feld ohne ok wurde zu grüner Ampel trotz roter
+  Meldung — im Test bewiesen und korrigiert). Suiten 35/35, check:all EXIT 0.
+- Live bewiesen 11:04:45: Nr. 29 ROT "buendel_gleichheit: smejj.com traegt
+  v714, api.smejj.com v712" — bleibt rot (kein Maskieren mehr). Die Parallel-
+  Session liefert unterdessen v714; der Bündel-Abgleich bleibt der eigene
+  Auftrag. Endstand dieser Runde: 70 Autopiloten, 68 grün, 2 rot (Nr. 29
+  echter Drift, Nr. 67 Betreiber-Klick).
