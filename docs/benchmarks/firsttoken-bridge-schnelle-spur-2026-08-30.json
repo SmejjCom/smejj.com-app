@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-first-token-probe",
+  "endpointName": "bridge",
+  "bodyMode": "chat",
+  "auth": "anonym-fail-closed",
+  "model": null,
+  "prompt": "Nenne in einem Satz, wofuer der zentrale Objektspeicher von smejj.com zustaendig ist.",
+  "startedAt": "2026-08-30T09:43:59.360Z",
+  "finishedAt": "2026-08-30T09:44:01.779Z",
+  "backends": [],
+  "summary": {
+    "runs": 1,
+    "ok": 0,
+    "failed": 1,
+    "ttfbMsMedian": null,
+    "firstFrameMsMedian": null,
+    "firstVisibleMsMedian": null,
+    "firstVisibleMsP95": null,
+    "totalMsMedian": null,
+    "unsichtbarWartezeitMsMedian": null,
+    "charsMedian": null
+  },
+  "probes": [
+    {
+      "ok": false,
+      "ttfbMs": 2418,
+      "firstFrameMs": null,
+      "firstVisibleMs": null,
+      "totalMs": 2418,
+      "frames": 0,
+      "chars": 0,
+      "backend": "unbekannt",
+      "error": "http_401"
+    }
+  ]
+}
