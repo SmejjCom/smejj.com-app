@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-webvitals",
+  "anlass": "Experten-Performance-Check 2026-08-30 (Auftrag: 'Alles professionell pruefen und optimieren'). Erste gueltige Messung seit sw v537 (2026-08-17); dazwischen lagen ca. 175 Cache-Staende (v537 -> v712).",
+  "gemessenAm": "2026-08-30",
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "scripts/testing/measure_web_vitals.mjs, Chrome headless ueber DevTools-Protokoll",
+  "MESSVORBEHALT": {
+    "netzweg": "TTFB-Referenzmessung am selben Arbeitsplatz: example.com 331-468 ms, smejj.com 274-497 ms (curl, je 3-5 Laeufe). Der Netzweg hat ~280-500 ms Grundlatenz auf JEDE HTTPS-Verbindung; smejj.com ist darin nicht schlechter als die Referenz.",
+    "folge": "ttfb_ms ist hier netzgefaelscht; gueltiger Referenzwert bleibt der Benchmark 2026-08-04 mit ttfb p75 111 ms. lcp_ms (1120 ms kalt) liegt trotz Netzlast UNTER dem 1500-ms-Budget und ist damit aussagekraeftig.",
+    "valide": "cls, inp_ms, pageWeight_kb und lcp_ms (weil unter Budget trotz Netzlast).",
+    "firsttoken": "measure_first_token.mjs scheitert anonym mit http_401 (Bridge-Anmeldepflicht, fail-closed gewollt). Gueltige Schnellspur-Messung braucht einen angemeldeten Lauf; letzte Tiefe-Spur-Referenz (Kimi K3 max, Salad-Kaltstart): firstVisibleMsMedian 4928 ms (2026-07-28)."
+  },
+  "budgets": {
+    "ttfb_ms": 200,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300,
+    "api_p95_ms": 300,
+    "api_p99_ms": 800,
+    "firsttoken_ms": 1000
+  },
+  "kalt": {
+    "ttfb_ms": { "p75": 492, "bewertung": "netzgefaelscht (Referenz 2026-08-04: 111 ms p75)" },
+    "lcp_ms": { "p75": 1120, "bewertung": "OK" },
+    "cls": { "p75": 0, "bewertung": "OK" },
+    "inp_ms": { "p75": 56, "bewertung": "OK" },
+    "pageWeight_kb": { "p75": 298, "bewertung": "OK — Budget nach Verstoß 2026-08-17 (505 KB) wieder eingehalten" },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": { "p75": 415, "bewertung": "netzgefaelscht" },
+    "lcp_ms": { "p75": 516, "bewertung": "OK" },
+    "cls": { "p75": 0, "bewertung": "OK" },
+    "inp_ms": { "p75": 64, "bewertung": "OK" },
+    "pageWeight_kb": { "p75": 4, "bewertung": "OK — Service Worker bedient alles aus dem Cache (stale-while-revalidate)" }
+  },
+  "ressourcenAnalyse": {
+    "htmlKomprimiertKb": 18,
+    "direkteAssets": "26 Dateien, 117 KB komprimiert",
+    "topBloeckeKomprimiert": [
+      "start-styles.css 26,0 KB",
+      "chat-store.js 12,4 KB",
+      "chat-actions.js 11,9 KB",
+      "chat-history-view.js 11,1 KB",
+      "app.js 10,5 KB",
+      "chat-stopp.js 7,1 KB"
+    ],
+    "restVon298Kb": "Dynamisch nachgeladene Chat-/i18n-Module im Messfenster"
+  },
+  "fazit": "Alle gueltigen Metriken im Budget; kein Performance-Regressionsschritt gegen 2026-08-04/17. Optimierungsreserven fuer kuenftiges Wachstum: siehe Expertenbericht (CSS-Split, Chat-Modul-Buendelung) — nicht akut, keine Aenderung erzwungen."
+}
