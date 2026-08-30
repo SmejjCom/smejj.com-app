@@ -55,17 +55,33 @@ selbst ein; Nr. 69 schreibt nichts nach Stripe; Nr. 70 bestraft Absicht nicht.
 - `npm run check:all` EXIT 0 + `npm run check:guidelines` OK (2009 Dateien,
   Läufer nach Auslagerung 799 Zeilen).
 
-## Live-Befunde der ersten Durchgänge
-- Erste Rot-Phase der Nr. 68 war ein ECHTER Befund: ein aktiviertes Modell
-  ohne Bestandsverzeichnis-Eintrag. Falls ox-alpha (aktiv seit 2026-08-30)
-  im Control-Server aktiviert ist, muss der Betreiber es ins
-  Bestandsverzeichnis (aiTransparency.js) eintragen — die Wache meldet das
-  dann rot, bis die Einordnung steht (rechtliche Einordnung = Betreiber).
-- Nr. 66 wird beim ersten Live-Lauf sagen, ob SMTP im Control-Server
-  konfiguriert ist (fail-closed: unkonfiguriert = rot).
+## Live-Befunde des ersten Durchgangs (30.08., nach dem Deploy)
+Kopfzeile der Seite: **Alle 70 · Läuft 68 · Braucht dich 2 · Aus 0** — alle
+sechs neuen/deployten Wächter maßen beim ersten Lauf ECHTE Werte:
+- Nr. 66 E-Mail: GRÜN — „84 von 84 Mails zugestellt" (7-Tage-Fenster); SMTP
+  konfiguriert, Magic-Link-Kette gesund.
+- Nr. 67 DSGVO: ROT — ECHTER Befund: 1 Vorgang über der Frist
+  (dsgvo_5EuyuQark7kl, Auskunft Art. 15, fällig 19.08., −11 Tage). Es ist der
+  TESTeintrag der Modul-Abnahme (pruefung@example.de / pruefer@example.de vom
+  28.07.). Empfehlung an den Betreiber: als Testeintrag abschließen —
+  BEWUSST als Ein-Klick-Entscheidung liegengeblieben (Betreiber-Wunsch:
+  wichtige Entscheidungen per einem Klick selbst zustimmen).
+- Nr. 68 AI-Act: ROT (echt) — „aktives Modell ohne Bestandsverzeichnis-Eintrag:
+  ox-alpha". GESCHLOSSEN im Folgebau 5ce94deb: ox-alpha in aiTransparency.js
+  + Bestandsverzeichnis-Doku eingetragen (begrenztes Risiko Art. 50, wie die
+  Schwester-Chat-Modelle); Historie mit Drift-Befund als Grund.
+- Nr. 69 Abos: GRÜN — „1 zahlendes Abo von 1; Trend: vorher 1; Trend-Karte
+  abgelegt".
+- Nr. 70 Flags: GRÜN — „1 Flag länger als 30 Tage unverändert (probe-flag):
+  Entscheidung in der Tagesmappe" (Karte liegt).
+- Nr. 65 Trainings-Reife: GRÜN — „Reife Stufe 1/3 (1 von 5000); Capture aus
+  (fail-closed, gewollt — Policy)".
+- Non-Regression: smejj.com, api, chat-bridge, maus-engine, control je HTTP
+  200; training-loop antwortet (404 auf /health = Route nicht belegt, Server lebt).
 
 ## Offene Punkte
-- Keine aus diesem Auftrag. Beobachtung (kein Handeln nötig): die
-  Vorfall-Historie der Nr. 29 sollte nach dem Polster deutlich ruhiger werden;
-  wiederholt sich das Muster trotz Polster, ist der Container-Netzweg selbst
-  krank (dann Zeabur-Diagnose, nicht die App).
+- EIN Betreiber-Klick: DSGVO-Testvorgang abschließen (Empfehlung oben) —
+  danach ist Nr. 67 dauerhaft grün. Alles andere aus diesem Auftrag erledigt.
+- Beobachtung (kein Handeln): die Vorfall-Historie der Nr. 29 sollte nach dem
+  Polster deutlich ruhiger werden; wiederholt sich das Muster trotz Polster,
+  ist der Container-Netzweg selbst krank (dann Zeabur-Diagnose, nicht die App).
