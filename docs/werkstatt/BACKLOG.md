@@ -1,6 +1,6 @@
 # Werkstatt-Backlog (Autopilot Nr. 30, Station 1)
 
-Gesammelt am 2026-08-24T20:53:02.295Z aus ECHTEN Messungen — nicht aus Vermutungen.
+Gesammelt am 2026-08-29T20:01:43.424Z aus ECHTEN Messungen — nicht aus Vermutungen.
 Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem Lauf neu geschrieben.
 
 **Quellen, die geantwortet haben:** Autopiloten-Ampel, CVE-Waechter, Mail-Zustellprotokoll
@@ -11,8 +11,14 @@ Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem L
 
 > Eine stumme Quelle ist kein leeres Backlog. Was hier fehlt, ist ungeprueft, nicht erledigt.
 
-## 2 Aufgaben, nach Dringlichkeit
+## 3 Aufgaben, nach Dringlichkeit
 
+
+### Stufe 1 — Ausfall
+
+- **Ausfall: Web-Vitals-Wache**
+  - Betrifft: `web-vitals-wache` · Quelle: Ampel-Vorfall · offen seit 2026-08-28T03:17:32.501Z
+  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Exit 1.
 
 ### Stufe 2 — Sicherheit
 

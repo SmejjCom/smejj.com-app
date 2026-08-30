@@ -168,6 +168,29 @@
   }
 }
 
+/* Betreiber-Anweisung 2026-08-30 ("Icons in einer Zeile und nicht unten
+   rutschen"): Das Wort-Label des Versionswaehlers ("Version 2 von 3", je
+   Fassung laenger mit "· geändert …") machte die Leiste bei 375–430 px zu
+   breit — der Waehler wanderte in eine zweite Zeile (der Umbruch war am
+   2026-07-28 bewusst gewaehlt worden, um die Touch-Ziele zu halten).
+   Ohne Label passt die Regelmaessigkeit: sechs Aktionen (264 px) stehen
+   immer in einer Zeile; mit Versionspfeilen (358 px) wird bei 375 px um
+   wenige Pixel WAAGRECHT gescrollt statt zu umbrechen — die 44-px-Ziele
+   bleiben unangetastet. Die Nummer traegt der title des Waehlers
+   (chat-actions.js). Nutzerzeilen starten linksbündig, sobald die Zeile
+   voll ist: Eine rechtsbündige, ueberlaufende Flexbox-Zeile ist im Browser
+   nach links nicht erreichbar (scrollLeft geht nicht unter 0). */
+@media (max-width: 600px) {
+  .msg-version-label { display: none; }
+  .msg-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none; /* die Leiste ist kein Scroll-Bereich, nur Netz */
+  }
+  .msg-actions::-webkit-scrollbar { display: none; }
+  .msg-actions.is-user { justify-content: flex-start; }
+}
+
 @media (max-width: 600px) and (pointer: fine) {
   #startLog .msg-act,
   .msg-actions .msg-act.msg-act {

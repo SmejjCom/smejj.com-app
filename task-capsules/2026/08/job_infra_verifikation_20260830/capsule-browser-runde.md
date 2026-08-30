@@ -8,7 +8,7 @@ In-App-Browser (IAB), Tabs seriell, DOM-Snapshots als Beweisgrundlage.
 
 | Portal | Status | Beweis |
 |---|---|---|
-| Zeabur | **eingeloggt** (Smejj Com) | Projektliste mit beiden Projekten sichtbar |
+| Zeabur | **eingeloggt** (smejj.com) | Projektliste mit beiden Projekten sichtbar |
 | GitHub | **eingeloggt** | „You own SmejjCom/smejj.com-app", Avatar, Settings sichtbar |
 | Salad-Portal | **eingeloggt** (smejjcom@gmail.com) | Organisation „smejjcom", Containerliste sichtbar |
 | Spaceship | **NICHT eingeloggt** | „actions for logged out user" |
@@ -37,10 +37,10 @@ Ein Login wäre nur für Portal-Änderungen nötig — es stand keine an.
 
 ## Falle dokumentiert: IDrive-Google-SSO im IAB
 
-„Continue as Smejj" öffnet einen OAuth-Popup (accounts.google.com), der per
+„Continue as smejj.com" öffnet einen OAuth-Popup (accounts.google.com), der per
 postMessage zum Opener zurückredet. Im IAB riss die Kette (erster Popup
 blockiert, zweiter verwaist); Klicks auf die Konto-Auswahl blieben
 wirkungslos (Rollen-, Text- und node_id-Klick je Timeout/ohne Effekt).
 Lehre: IDrive-Konsole-Login beim Betreiber im eigenen Browser erledigen
-(ein Klick auf „Continue as Smejj"); Agent prüft Speicher zustände über
+(ein Klick auf „Continue as smejj.com"); Agent prüft Speicher zustände über
 die S3-API (idrive:check), nicht über die Web-Konsole.

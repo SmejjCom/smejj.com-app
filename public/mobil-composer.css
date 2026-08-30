@@ -1,11 +1,27 @@
 /* Mobil-Composer (Betreiber-Befund 2026-08-25, iPhone-PWA).
    Der Modell-Chip waechst mit "(Gruendlich)" und ragte ueber das Glas hinaus;
-   die Zeile ist nowrap und lief rechts aus dem Bild. Chip begrenzen (Ellipsis),
-   und als Sicherheitsnetz darf die Zeile sauber umbrechen statt ueberzulaufen. */
+   Chip begrenzen (Ellipsis).
+
+   Betreiber-Anweisung 2026-08-30 ("Icons muessen in einer Zeile stehen,
+   nicht unten rutschen"): Die Werkzeugzeile des Composers (+, Nachdenken,
+   Modell, Mikrofon, Senden) darf NICHT mehr umbrechen. Das alte
+   Sicherheitsnetz (flex-wrap: wrap) schickte bei gewachsenem Chip Knöpfe
+   in eine dritte Zeile. Jetzt werden Chip UND Nachdenken-Pille so
+   geklemmt, dass die Zeile bei 375–430 px passt:
+   38 + 92 + 109 + 38 + 38 + 5·6 px Steg = 345 px ≤ 358 px (390er iPhone).
+   Unter 360 px fällt das Pillen-Wort weg (Icon bleibt), das Icon allein
+   reicht zum Erkennen; der Zustand steht im aria-pressed. */
 @media (max-width: 600px) {
-  .prompt-actions { flex-wrap: wrap; row-gap: 6px; }
+  .prompt-actions { flex-wrap: nowrap; row-gap: 6px; }
   .prompt-actions .model-picker button,
   .prompt-actions .model-picker .mode-pill {
-    max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 28vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  .prompt-actions .fpille-nachdenken { max-width: 24vw; }
+  .prompt-actions .fpille-nachdenken .chip-label {
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+}
+@media (max-width: 360px) {
+  .prompt-actions .fpille-nachdenken .chip-label { display: none; }
 }

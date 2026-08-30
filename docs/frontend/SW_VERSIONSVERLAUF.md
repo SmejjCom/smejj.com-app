@@ -439,3 +439,13 @@ Die einzelne "Regression"-Meldung im zweiten Lauf war reine Kimi-
 Latenzstreuung (im dritten Lauf lag p95 unter dem Ausgangswert) — Berichte in
 docs/benchmarks/modeleval-smejj-chat-core-live-default-2026-08-08.json und
 ...-2026-08-09.json.
+
+
+## v713 — 2026-08-30 — Mobil: Icons in EINER Zeile (Betreiber-Anweisung)
+start-styles.css neu (Quelldateien chat-actions.css, mobil-composer.css,
+chat-actions.js +1 title): Composer-Werkzeugzeile bricht nicht mehr in eine
+dritte Zeile (Chip/Pille geklemmt, Ellipsis; unter 360 px Pillen-Wort weg);
+Chat-Aktionsleiste behält den Versionswaehler in derselben Zeile (Label weg,
+Nummer im title, waagrechtes Scrollen als Netz, Nutzerzeilen dann linksbündig).
+Ursprung: Betreiber-Screenshot iPhone 2026-08-30 10:34 — Icons "rutschen
+unten runter". 44-px-Touchziele unangetastet; Desktop unverändert.

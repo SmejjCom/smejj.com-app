@@ -1,6 +1,14 @@
 {
-  "gesammeltAm": "2026-08-24T20:53:02.295Z",
+  "gesammeltAm": "2026-08-29T20:01:43.424Z",
   "aufgaben": [
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "web-vitals-wache",
+      "titel": "Ausfall: Web-Vitals-Wache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1.",
+      "seit": "2026-08-28T03:17:32.501Z"
+    },
     {
       "stufe": 2,
       "quelle": "CVE-Waechter",
