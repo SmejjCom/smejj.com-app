@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-30T10:32:16.770Z",
-  "confirmation": "Ich finde deinen Vorschlag gut. Kannst Du umsetzen - Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen. (Wof Kadavanich, 2026-08-30, Freigabe Mobil-Fix-Paket: Icons eine Zeile + Sprachwelle-Fehlermeldung)",
+  "frozenAt": "2026-08-30T10:46:02.838Z",
+  "confirmation": "Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen. (Wof Kadavanich, 2026-08-30, Freigabe Mobil-Fix-Paket inkl. SW v714 — Precache-Pflicht laut sw.js-Kommentar)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "0abffdd3a53c0f7c9512d5fe99ba31b9400724c93d0591c5c1c53ae8e51b1d73",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "24b6f8c12f37ad5d36b74dc45e44839fd929ac6f769db9bcfa63ededaa7c5621",
+    "public/sw.js": "2da4f2eb12d19869878fe0aee15e754662a18bc0dcac26506976ec651bcd1c5f",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }

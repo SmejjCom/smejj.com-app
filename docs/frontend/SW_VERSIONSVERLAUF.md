@@ -449,3 +449,15 @@ Chat-Aktionsleiste behält den Versionswaehler in derselben Zeile (Label weg,
 Nummer im title, waagrechtes Scrollen als Netz, Nutzerzeilen dann linksbündig).
 Ursprung: Betreiber-Screenshot iPhone 2026-08-30 10:34 — Icons "rutschen
 unten runter". 44-px-Touchziele unangetastet; Desktop unverändert.
+
+
+## v714 — 2026-08-30 — Sprachwelle: präzise Mikrofon-Fehlermeldungen
+voice-ohr-solo.js, composer-tools.js, app.js und index.html neu (Markenkette
+?v=4 → werkzeuge-10 → b100). Eigener Stempel ist Pflicht: alle vier liegen im
+Precache, und der Fetch-Handler matcht mit ignoreSearch — ?v=-Marker allein
+erreichen Bestandsnutzer nicht (gemessen nach dem v713-Deploy: index frisch,
+Assets blieben alt). Inhalt: Das eigene Ohr meldet eine gesperrte Mikrofon-
+Freigabe (iOS-HomeScreen-PWA) mit klarem Weg — Einstellungen › Datenschutz ›
+Mikrofon für smejj.com erlauben oder einmal in Safari öffnen — statt des
+irreführenden Generikums; fehlendes Mikrofon ebenso. Antwort-Vorlesen (Tipp-
+Fallback) bleibt. Rollback: Frontend revert auf 4bb4de4.
