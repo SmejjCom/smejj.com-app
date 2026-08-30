@@ -12,6 +12,7 @@
 
 import { idriveConfigFromEnv } from "../maus-engine/artifact-uploader.mjs";
 import { signedS3Request } from "../glm-salad/s3.js";
+import { leeresRegister } from "./versionen.js";
 
 export function standardZustand() {
   return Object.freeze({
@@ -91,6 +92,42 @@ export async function leseBestenStand({ env = process.env, key, idriveConfig, re
     // Kein bester Stand = es gab noch keinen. Der erste erfolgreiche Zyklus
     // wird dann automatisch der Beste (siehe sweep.js#istNeuerBester).
     return null;
+  }
+}
+
+/**
+ * Liest das Versionsregister (versionen.js). Ein 404 ist der Normalfall des
+ * allerersten Eintrags. Jeder ANDERE Lesefehler wird geworfen: das Register
+ * ist Chronik — wer hier still ein leeres Register liefert, wuerde beim
+ * naechsten Schreibvorgang die bisherige Versionsgeschichte ausloeschen.
+ */
+export async function leseRegister({ env = process.env, key, idriveConfig, request = signedS3Request } = {}) {
+  try {
+    const config = idriveConfig || idriveConfigFromEnv(env);
+    const body = await request(config, "GET", key);
+    return { ...leeresRegister(), ...JSON.parse(body) };
+  } catch (error) {
+    // Ein 404 ist der Normalfall des allerersten Eintrags. Jeder ANDERE
+    // Lesefehler wird geworfen: das Register ist Chronik — wer hier still ein
+    // leeres Register liefert, wuerde beim naechsten Schreiben die
+    // bisherige Versionsgeschichte ausloeschen.
+    if (/_404/.test(String(error?.message || error))) return leeresRegister();
+    throw error;
+  }
+}
+
+/**
+ * Legt das Versionsregister ab. EIN Schreibversuch mit Rueckgabewert: das
+ * Register ist Chronik, nicht Geldbremse — ein verlorener Eintrag wird vom
+ * naechsten Besten-Wechsel ersetzt, aber der Aufrufer meldet den Verlust laut.
+ */
+export async function schreibeRegister(register, { env = process.env, key, idriveConfig, request = signedS3Request } = {}) {
+  try {
+    const config = idriveConfig || idriveConfigFromEnv(env);
+    await request(config, "PUT", key, `${JSON.stringify(register, null, 2)}\n`, "application/json; charset=utf-8");
+    return true;
+  } catch {
+    return false;
   }
 }
 

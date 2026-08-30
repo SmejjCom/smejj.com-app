@@ -23,6 +23,7 @@ import {
   tatsaechlicheKostenUsd
 } from "./budget.js";
 import { gitterErschoepft, istNeuerBester, konfigurationFuer } from "./sweep.js";
+import { naechsteVersion, versionsEintrag } from "./versionen.js";
 import { brichTrainingAb, starteTraining, trainerErreichbar, trainingZustand } from "./trainerClient.js";
 
 const ABFRAGE_ABSTAND_MS = 30_000;
@@ -74,6 +75,7 @@ export async function fuehreZyklusAus({
   pruefeDaten,
   messe,
   speichereBesten,
+  speichereVersion,
   fetchImpl,
   warte = (ms) => new Promise((r) => setTimeout(r, ms)),
   abfrageAbstandMs = ABFRAGE_ABSTAND_MS,
@@ -230,19 +232,61 @@ export async function fuehreZyklusAus({
   // --- Schritt 4: behalten oder verwerfen ---
   const vergleich = istNeuerBester(messung.kennzahlen, besterStand);
   let alsBestemGespeichert = false;
+  let version = null;
+  let versionAbgelegt = null;
   if (vergleich.besser) {
+    // Nur ein Stand, der das Gate (istNeuerBester) bestanden hat, bekommt
+    // einen Versionsnamen — siehe versionen.js (Kopfzeilen zur Abgrenzung
+    // gegen die menschliche Befoerderung). Fail-soft mit lauter Meldung: ein
+    // verweigerter Name darf den bereits bezahlten Zyklus nicht sprengen.
+    version = await sicher(
+      () => naechsteVersion(besterStand, basismodell?.hfRepo)?.version || null,
+      null
+    );
+    const eintrag = version
+      ? await sicher(() => versionsEintrag({
+          version,
+          konfiguration,
+          kennzahlen: messung.kennzahlen,
+          adapterSchluessel: zustand.adapterSchluessel,
+          basismodell,
+          datensatz,
+          freigabeId: grenzen.freigabeId,
+          zyklusIndex,
+          gemessenAm: jetzt().toISOString()
+        }), null)
+      : null;
+    if (version && !eintrag) {
+      log(`[smejj-lora-loop] Zyklus ${zyklusIndex}: Version ${version} VERWEIGERT`
+        + ` (kein Artefakt oder ungueltige Kennzahlen) — bester-stand ohne Versionsnamen.`);
+      version = null;
+    }
     alsBestemGespeichert = await sicher(() => speichereBesten?.({
       zyklusIndex,
       konfiguration,
+      version,
+      // Die Basis reist im besten-stand mit: ohne sie ist ein spaeterer
+      // Generationswechsel (smejj-2-0) nicht maschinell beweisbar.
+      basismodell,
       kennzahlen: messung.kennzahlen,
       adapterSchluessel: zustand.adapterSchluessel,
       gemessenAm: jetzt().toISOString()
     }), false) === true;
+    // Register ist Chronik, nicht Tor: schlaegt sie fehl, bleibt der
+    // beste-stand (und damit die Version) unberuehrt — aber es wird laut.
+    if (eintrag) {
+      versionAbgelegt = await sicher(() => speichereVersion?.(eintrag), false) === true;
+      if (!versionAbgelegt) {
+        log(`[smejj-lora-loop] Zyklus ${zyklusIndex}: Version ${version} im besten-stand, ABER Register NICHT abgelegt.`);
+      }
+    }
   }
 
-  log(`[smejj-lora-loop] Zyklus ${zyklusIndex} ${konfiguration.kennung}:` +
-    ` punktzahl=${messung.kennzahlen?.punktzahl} kritisch=${messung.kennzahlen?.kritischeFehler}` +
-    ` kosten=${kostenUsd}USD ${vergleich.besser ? "NEUER BESTER" : `verworfen (${vergleich.gruende.join(", ")})`}`);
+  log(`[smejj-lora-loop] Zyklus ${zyklusIndex} ${konfiguration.kennung}:`
+    + ` punktzahl=${messung.kennzahlen?.punktzahl} kritisch=${messung.kennzahlen?.kritischeFehler}`
+    + ` kosten=${kostenUsd}USD ${vergleich.besser
+      ? `NEUER BESTER ${version}${versionAbgelegt === false ? " (Register offen)" : ""}`
+      : `verworfen (${vergleich.gruende.join(", ")})`}`);
 
   return ergebnis({
     gestartet: true,
@@ -254,6 +298,8 @@ export async function fuehreZyklusAus({
     kennzahlen: messung.kennzahlen,
     besser: vergleich.besser,
     alsBestemGespeichert,
+    version,
+    versionAbgelegt,
     adapterSchluessel: zustand.adapterSchluessel,
     jetzt
   });
@@ -263,7 +309,8 @@ export async function fuehreZyklusAus({
 function ergebnis({
   gestartet, gruende = [], zyklusIndex, konfiguration = null, kostenUsd = 0,
   gelaufeneMinuten = 0, kennzahlen = null, besser = false, alsBestemGespeichert = false,
-  adapterSchluessel = null, abbruchBestaetigt = null, restUsd = null, jetzt = () => new Date()
+  version = null, versionAbgelegt = null, adapterSchluessel = null,
+  abbruchBestaetigt = null, restUsd = null, jetzt = () => new Date()
 }) {
   return Object.freeze({
     zeitpunkt: jetzt().toISOString(),
@@ -278,6 +325,8 @@ function ergebnis({
     kennzahlen,
     besser,
     alsBestemGespeichert,
+    version,
+    versionAbgelegt,
     adapterSchluessel,
     abbruchBestaetigt,
     restUsd

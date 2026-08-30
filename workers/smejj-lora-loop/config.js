@@ -72,7 +72,8 @@ export function ladeLoopKonfiguration(env = process.env) {
     verlaufMax: begrenzteZahl(env.SMEJJ_LORA_VERLAUF_MAX, 200, 1, 2000),
 
     zustandKey: env.SMEJJ_LORA_ZUSTAND_KEY || "ops/smejj-lora-loop/zustand.json",
-    bestenKey: env.SMEJJ_LORA_BESTEN_KEY || "ops/smejj-lora-loop/bester-stand.json"
+    bestenKey: env.SMEJJ_LORA_BESTEN_KEY || "ops/smejj-lora-loop/bester-stand.json",
+    versionsKey: env.SMEJJ_LORA_VERSIONEN_KEY || "ops/smejj-lora-loop/versionen.json"
   });
 }
 

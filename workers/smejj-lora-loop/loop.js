@@ -8,12 +8,16 @@
 // kostet: der Zustand liegt auf IDrive e2, nicht im Arbeitsspeicher.
 
 import { fuehreZyklusAus } from "./cycle.js";
-import { leseBestenStand, leseZustand, schreibeBestenStand, schreibeZustand, standardZustand } from "./state.js";
+import { leseBestenStand, leseRegister, leseZustand, schreibeBestenStand, schreibeRegister, schreibeZustand, standardZustand } from "./state.js";
+import { registerMitEintrag } from "./versionen.js";
 
 export function erzeugeLoop({ config, env = process.env, log = console.log, deps = {} }) {
   let status = { state: "starting", lastTickAt: null, letzterGrund: null };
   let laeuft = false;
   let zustandImSpeicher = null;
+  // Die aktive Version = der aktuelle Kandidat auf dem besten-stand. Nur fuer
+  // /health und Berichte; die Schaltung an Nutzer bleibt modelPromotion + Mensch.
+  let aktiveVersion = deps.besterStand?.version || null;
   const verlauf = [];
 
   function aufzeichnen(eintrag) {
@@ -56,6 +60,7 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
       const besterStand = deps.besterStand !== undefined
         ? deps.besterStand
         : await leseBestenStand({ env, key: config.bestenKey, idriveConfig: deps.idriveConfig, request: deps.bestenRequest });
+      aktiveVersion = aktiveVersion || besterStand?.version || null;
 
       const ergebnis = await fuehreZyklusAus({
         grenzen: config.grenzen,
@@ -71,12 +76,21 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
         messe: deps.messe,
         speichereBesten: deps.speichereBesten
           || ((stand) => schreibeBestenStand(stand, { env, key: config.bestenKey, idriveConfig: deps.idriveConfig, request: deps.bestenRequest })),
+        speichereVersion: deps.speichereVersion
+          || (async (eintrag) => {
+            // Lesefehler werden absichtlich NICHT geschluckt: ein leeres
+            // Ersatzregister wuerde die Versionsgeschichte beim Schreiben
+            // ausloeschen (siehe state.js#leseRegister).
+            const register = await leseRegister({ env, key: config.versionsKey, idriveConfig: deps.idriveConfig, request: deps.versionsRequest });
+            return schreibeRegister(registerMitEintrag(register, eintrag), { env, key: config.versionsKey, idriveConfig: deps.idriveConfig, request: deps.versionsRequest });
+          }),
         fetchImpl: deps.fetchImpl,
         warte: deps.warte,
         abfrageAbstandMs: config.abfrageAbstandMs,
         log,
         jetzt
       });
+      if (ergebnis.version && ergebnis.alsBestemGespeichert) aktiveVersion = ergebnis.version;
 
       const naechster = naechsterZustand(zustand, ergebnis, jetzt);
       zustandImSpeicher = naechster;
@@ -112,7 +126,7 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
 
   return Object.freeze({
     tick,
-    getStatus: () => ({ ...status, verlaufAnzahl: verlauf.length }),
+    getStatus: () => ({ ...status, verlaufAnzahl: verlauf.length, aktiveVersion }),
     getVerlauf: () => verlauf.map((e) => ({ ...e })),
     getZustand: () => ({ ...(zustandImSpeicher || standardZustand()) })
   });
@@ -164,6 +178,8 @@ function verlaufEintrag(ergebnis, zustand, abgelegt) {
     gelaufeneMinuten: ergebnis.gelaufeneMinuten,
     besser: ergebnis.besser,
     alsBestemGespeichert: ergebnis.alsBestemGespeichert,
+    version: ergebnis.version,
+    versionAbgelegt: ergebnis.versionAbgelegt,
     abbruchBestaetigt: ergebnis.abbruchBestaetigt,
     abgelegt
   };
