@@ -1,0 +1,30 @@
+{
+  "anlass": "Messpflicht nach Angleich-Deploy v716 (Divergenz-Angleich 166+59+7 Dateien; Doppel-Import chat-store b64+b65 im ersten Wurf gemessen und per Nach-Deploy 91874cd behoben)",
+  "vergleich": "docs/benchmarks/webvitals_v715_nachdeploy_2026-08-30.json",
+  "frontedCommits": "fd75784 + 91874cd",
+  "appCommit": "64a07a23",
+  "sw": "smejj-shell-v716",
+  "datum": "2026-08-30",
+  "budgetsErfuellt": {
+    "cls": "0 < 0.1 OK",
+    "inp_ms": "48 < 200 OK",
+    "pageWeight_kb": "298 < 300 OK (Doppel-Import behoben: 310 -> 298)",
+    "lcp_ms": "siehe Netz-Hinweis",
+    "ttfb_ms": "siehe Netz-Hinweis"
+  },
+  "netzHinweis": "TTFB kalt median 499 ms / LCP 2068 ms: Kontrollmessung gegen fremde GitHub-Pages-Site zeigt GLEICHE Degradation (TTFB 570 ms; curl 0.48s vs 0.57s) — Abend-Netzweg, nicht der Deploy. Am selben Tag mittags mass derselbe Inhalt 142/780 ms (v715-Benchmark). CLS/INP/Gewicht unveraendert gut.",
+  "kaltMedian": {
+    "ttfb_ms": 499,
+    "lcp_ms": 2068,
+    "cls": 0,
+    "inp_ms": 48,
+    "pageWeight_kb": 298
+  },
+  "warmMedian": {
+    "ttfb_ms": 336,
+    "lcp_ms": 424,
+    "cls": 0,
+    "inp_ms": 48,
+    "pageWeight_kb": 0
+  }
+}

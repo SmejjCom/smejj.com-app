@@ -122,3 +122,43 @@ warm, headless Chrome gegen Produktion).
    muessen, nicht ueberschrieben. Das ist ein eigenes Abgleichsprojekt
    Datei fuer Datei — dokumentiert, nicht ueberstuerzt (Abgleichs-Lehre
    23.08., Non-Regression-Pflicht).
+
+## Nachtrag 2: Divergenz-Angleich abgeschlossen (Abend, gleicher Tag)
+
+**Richtungsanalyse** (Commit-Daten beidseitig): 11 Assets-Dateien waren LIVE
+neuer als die Quelle (unrueckportierte Hotfixes vom 24./25.08.), die
+statischen HTML-Seiten waren im App-Repo neuer. Zurueckportiert:
+chat-store-Diaet (Papierkorb/Projekte -> chat-store-bereiche.js, Re-Exporte),
+account-privacy-Zweiteilung (+ account-privacy-formulare.css), Code-
+Anhaenge-Import-Fix (SyntaxError live gefixt worden), auth-gate, profile-
+dock, search, code-flaeche/-nachladen, chat-title-auto, account-auth-state.
+
+**Tests als zweite Wahrheit** angepasst (bewusst, mit Datum+Begruendung im
+Test): chat-store-Selbstheilungs-Harness schreibt jetzt BEIDE Zyklus-Module
+in tmp (store<->bereiche importieren sich gegenseitig); konto-formulare liest
+beide CSS-Teile (der Lader laedt beide); chat-title-auto akzeptiert den
+dynamischen chat-stream-Import (Diaet).
+
+**Marken-Kaskade bis Fixpunkt** automatisiert (chat-store b65, profile-dock
+b49, account-privacy b48, search b52, app b103, pwa v4 + 12 Folgelader;
+check:markenkette 110 Module OK). SW v716 (Precache-Pflicht).
+Start-Lock UND Abo-Lock (account-privacy haengt an der Zahlungskette) mit
+Betreiber-Wortlaut neu gestempelt; check:all EXIT 0.
+
+**Deploy-Lehre nachgemessen**: Der erste Angleich (fd75784) liess 7 Dateien
+alt, die im App-Repo nur im ROOT existieren (noch nie in assets/ gespiegelt):
+chat-store-bereiche, pwa-schnellstart, bedarf-nachladen, such-nachladen,
+maus-chrome, manifest, verlauf-messwerte. Folge: live gemessener DOPPEL-
+IMPORT chat-store b64+b65 (zweite Modulinstanz, F-07-Verstoess) und +12 KB
+Gewicht. Nach-Deploy 91874cd behob beide — live bewiesen: b64=0, b65=1,
+298 KB.
+
+**Benchmark v716**: CLS 0, INP 48 ms, Gewicht 298 KB — im Budget. TTFB/LCP
+am Abend netzdegradiert (499/2068 ms), aber KONTROLLMESSUNG gegen eine
+fremde GitHub-Pages-Site zeigt dieselbe Degradation (570 ms; curl 0.48s
+gegen 0.57s) — Netzweg, nicht Deploy; derselbe Inhalt mass mittags 142/780.
+Beleg inkl. Kontrolle: webvitals_v716_nachdeploy_2026-08-30.json.
+
+**Endstand der Divergenz**: App-Repo und Frontend-Repo sind bis auf die 7
+by-design-Bruecken-Buendel (nur via bundle:bridge) inhaltlich identisch. Das
+147-Dateien-Projekt ist ABGESCHLOSSEN.
