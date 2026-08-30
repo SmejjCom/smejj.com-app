@@ -461,3 +461,23 @@ Freigabe (iOS-HomeScreen-PWA) mit klarem Weg — Einstellungen › Datenschutz �
 Mikrofon für smejj.com erlauben oder einmal in Safari öffnen — statt des
 irreführenden Generikums; fehlendes Mikrofon ebenso. Antwort-Vorlesen (Tipp-
 Fallback) bleibt. Rollback: Frontend revert auf 4bb4de4.
+
+
+## v715 — 2026-08-30 — 100 % Mobil + Sprachwelle lebendig (Betreiber-Massgabe)
+Audit-Befund iPhone-Chrome quer: Touchziele fielen auf 34/38 px, weil die
+44-px-Regel nur bis 600 px Breite griff — Querformat-Handys sind breit, aber
+flach; neue Regel (max-height: 500px) and (pointer: coarse). Drei 100vh-
+Stellen (Code-Flaeche, Chat-Halter, Erwaehnungs-Menue) hinter der Adress-
+leiste — dvh-Fallback nachgezogen. Pull-to-Refresh im Browser-Tab abgestellt
+(overscroll-behavior-y). Android-Tastatur: interactive-widget=resizes-content
+im Viewport-Meta; iOS: neues mobil-tastatur.js setzt --tastatur-hoehe aus
+dem visualViewport, das Sprach-Overlay pollstert darueber (Tipp-Fallback-
+Eingabe war hinter der Tastatur unerreichbar). Sprachwelle fluessig wie
+ChatGPT: Sprechpause 1100 -> 750 ms (sendet wie ChatGPT nach ~0,7 s), die
+Chevron-Spitzen, Punkte und die Aura des Sprach-Logos folgen im Zuhoer-
+Zustand dem ECHTEN Mikrofonpegel (--pegel aus dem Ohr-Solo-Takt; Formel
+live bewiesen: Scale 1.102 bei Pegel 0.85), Denken/Sprechen behalten ihre
+gewachsenen Animationen.
+Markenkette: voice-ohr-solo v5 -> werkzeuge-11 -> b101; start-styles
+mobilfix3-20260830; mobil-tastatur.js neu im SHELL. Rollback: Frontend
+revert auf den Stand vor diesem Paket (siehe Kapsel).

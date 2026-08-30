@@ -99,7 +99,7 @@ test("createOhrSolo: leeres Transkript stoesst die naechste Runde an, Text wird 
 
 test("Anschluss: composer-tools verdrahtet das Solo-Ohr an den vier Stellen", () => {
   const quelle = fs.readFileSync("public/composer-tools.js", "utf8");
-  assert.match(quelle, /import \{ verdrahteOhrSolo \} from "\.\/voice-ohr-solo\.js\?v=3"/);
+  assert.match(quelle, /import \{ verdrahteOhrSolo \} from "\.\/voice-ohr-solo\.js\?v=6"/);
   assert.match(quelle, /if \(state\.ohrSoloAktiv\) return ohrSolo\.hoeren\(\)/, "voiceModeListen hat die Weiche");
   assert.match(quelle, /if \(taubwache\.ende\(\)\) return;/, "onend fragt die Taubheits-Wache");
   assert.match(quelle, /const taubwache = ohrSolo\.bewache\(recognition\)/, "die Wache wird vor start() scharf");

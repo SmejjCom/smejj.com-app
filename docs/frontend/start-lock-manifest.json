@@ -1,19 +1,19 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-30T10:46:02.838Z",
-  "confirmation": "Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen. (Wof Kadavanich, 2026-08-30, Freigabe Mobil-Fix-Paket inkl. SW v714 — Precache-Pflicht laut sw.js-Kommentar)",
+  "frozenAt": "2026-08-30T11:33:43.524Z",
+  "confirmation": "muss hundert Prozent Mobilversion angepasst werden ... fuege von dir aus und mach eine komplette Check, muss hundert Prozent mobil angepasst werden (Wof Kadavanich, 2026-08-30, Freigabe Mobil-Paket 2: Querformat-44px, dvh, Overscroll, Tastatur-Bruecke, Sprach-Logo live, SW v715)",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "0abffdd3a53c0f7c9512d5fe99ba31b9400724c93d0591c5c1c53ae8e51b1d73",
+    "public/index.html": "49fd52c3cb768a3d869af2b780c4590272fe2bc0df0c6c6519d20f7053b0a9b0",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "6c3b8a047743a1c97666678cad737e0c7fad31abd9ae7dc3465964f6ef1c8f48",
+    "public/start-styles.css": "fe38d6fd25c3fcfed119c38dd1ae1d471affa36305b7bbae98f75c21611af21c",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
-    "public/composer-tools.css": "b38f0a40172aee0f243cbc360287ce61283b9cba07ab823755a467adf51f5170",
+    "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "00a12b3c14317024dd3e867932e83e9aaff5d2105c2c4f235a4fee240ae9a69e",
+    "public/app.js": "ff3f9a15744e8eb7415cf7ce3baaf8748c6cf4cfc1f7ac611299b7cacad9f383",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -21,7 +21,7 @@
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "66d82847419212e2cfb56b21cc0500a391676a8ce04a5e68dfaf23c3b5cec508",
-    "public/composer-tools.js": "d305e20d96e7cb8e5be0c0cae7e9241ec6342e8f7b3147a810f0744d4b16e9e8",
+    "public/composer-tools.js": "27bc70526384b437fc404df7d2af72704031ab9786cfcf20f3e279c7b80c75c1",
     "public/composer-plus-menu.js": "3eb01b8e4f0082aaff520d1e0976df270199e8f6a183d6557c9977d997e27d03",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "66d0e7324937b177452f9b62ce53bbbce5d78d358de99b70b749490f1f272ba7",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "2da4f2eb12d19869878fe0aee15e754662a18bc0dcac26506976ec651bcd1c5f",
+    "public/sw.js": "b70be6ece2b6d58b950701beab3db1b33439489cb3ed282a815d28e8ee988c31",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }
