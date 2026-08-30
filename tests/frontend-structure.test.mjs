@@ -16,9 +16,15 @@ const startDesignLock = fs.readFileSync("docs/frontend/START_DESIGN_LOCK.md", "u
 const requiredViews = [
   "start",
   "search",
-  // "websites" wich 2026-08 der Projects/Arbeitsbereiche-Ansicht (Konsolidierung 24.08.)
-  "arbeitsbereiche",
-  "papierkorb",
+  // "websites" ist hier bewusst NICHT mehr aufgefuehrt (Betreiber-Ansage
+  // 2026-08-19: "Nehm Websites raus, fur was ist Websites, wir haben
+  // browser."). Die Ansicht war eine Attrappe — eine Ueberschrift und der
+  // Satz "Website-Bereich bereit." — und diente nur als Rueckfall fuer die
+  // Browser-Knoepfe. Genau dorthin fiel jeder Klick, als browser-pane.js
+  // wegen einer fehlenden Datei nicht hochkam; es sah aus wie eine geaenderte
+  // Navigation. Die Knoepfe tragen jetzt data-browser-oeffnen und koennen
+  // nirgendwo mehr hinfuehren ausser ins Panel.
+  // Dass sie weg BLEIBT, haelt tests/routing-canonical.test.mjs fest.
   "smejjClaw",
   "automation",
   "chatHistory",
@@ -26,6 +32,8 @@ const requiredViews = [
   "code",
   "projects",
   "files",
+  "papierkorb",
+  "arbeitsbereiche",
   "storageView",
   "memory",
   "ai",
@@ -108,9 +116,23 @@ test("start composer keeps chat inside the start page", () => {
   assert.doesNotMatch(html, /id="log"/);
   assert.doesNotMatch(html, /data-view="chat"/);
   assert.match(app, /submitTask\(task, \{ target: "#startLog" \}\)/);
-  // Seit dem Abspecken (24.08.) laedt der Start-Chat seine Module beim ersten
-  // Senden nach — der Sendepfad bleibt auf der Startseite.
-  assert.match(app, /holeSendepfad/);
+  // Der Client-Chat-Weg muss erhalten bleiben — aber er ist seit der
+  // Medien-Weiche EINE Station laenger: app.js ruft chatOhneMedienauftrag(),
+  // und erst medien-absicht.js ruft runClientChat(). Der alte Test suchte den
+  // Namen stur in app.js und war seit dem Umbau rot, obwohl der Weg gesund
+  // ist. Jetzt wird die KETTE geprueft, nicht ein Name an einer Stelle —
+  // damit faellt der Test auch dann, wenn der Wrapper ins Leere zeigt.
+  const rufDirekt = /runClientChat/.test(app);
+  const rufUeberWeiche = /chatOhneMedienauftrag/.test(app);
+  assert.ok(rufDirekt || rufUeberWeiche, "app.js nutzt den Client-Chat-Weg nicht mehr");
+  if (!rufDirekt) {
+    const weiche = fs.readFileSync("public/medien-absicht.js", "utf8");
+    assert.match(weiche, /runClientChat/, "die Medien-Weiche fuehrt nicht mehr zu runClientChat");
+    // Seit dem Sendepfad-Buendel (24.08.) kommt die Medien-Weiche mit dem
+    // Buendel: app.js ruft M.chatOhneMedienauftrag, sendepfad-nachladen laedt.
+    assert.match(app, /M\.chatOhneMedienauftrag\(/, "Weiche nicht aufgerufen");
+    assert.match(fs.readFileSync("public/sendepfad-nachladen.js", "utf8"), /import\("\.\/medien-absicht\.js\?v=\d+"\)/, "Weiche nicht importiert");
+  }
   assert.match(app, /chat: "start"/);
   assert.match(app, /chat: "\/"/);
   assert.match(app, /"\/chat": "start"/);
@@ -124,7 +146,12 @@ test("start composer lower tools are functional", () => {
   assert.match(html, /data-start-tool="voice"/);
   assert.match(html, /data-start-tool="audio"/);
   assert.match(html, /data-start-tool="speaker"/);
-  assert.match(app, /import\("\.\/composer-tools\.js[^"]*"\)\.then\(\(m\) => m\.initComposerTools\(\)\)/);
+  // Seit 2026-08-19 laedt app.js die Composer-Werkzeuge VERZOEGERT: erst der
+  // erste Klick auf ein Werkzeug (oder das Plus) holt das Modul und ruft
+  // initComposerTools() — ladeBeiKlick in app.js. Der Test prueft darum den
+  // Klickweg statt des alten statischen Imports.
+  assert.match(app, /ladeBeiKlick\(\[\s*"\[data-start-tool\]"[\s\S]{0,160}?import\("\.\/composer-tools\.js(\?[^"]*)?"\)/);
+  assert.ok(app.includes('initComposerTools()'));
   assert.ok(composerTools.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
   // Die Browser-Sprachausgabe liegt seit Stufe 3 in voice-browser-tts.js
   // (800-Zeilen-Regel) — der Host muss sie importieren, die Utterance lebt dort.

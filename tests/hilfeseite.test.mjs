@@ -29,11 +29,14 @@ test("die Hilfeseite liegt im Precache", () => {
 });
 
 test("jeder genannte Arbeitsbereich existiert wirklich", () => {
-  // "Arbeitsbereich" statt "Projekte" (Umbenennung 2026-08-13): die alte
-  // Datei-Flaeche heisst jetzt Arbeitsbereich, "Projekte" gehoert seither den
-  // Chat-Gruppen im Verlauf. Der Test trug den alten Namen fest verdrahtet
-  // weiter und meldete die vollzogene Umbenennung als Fehler.
-  const bereiche = ["Chat", "Sprechen", "Im Netz suchen", "Bilder erstellen", "Programmieren", "Browser bedienen", "smejjBot", "Verlauf"];
+  // Die Hilfe folgt der Oberflaeche, nicht umgekehrt. Seit dem Klartext-
+  // Tausch (Design V11, Freigabe 2026-08-15) heisst "Coding" -> "Programmieren"
+  // und "Arbeitsbereich" -> "Meine Sachen": beides Fachjargon, den ein
+  // Anfaenger nicht deuten kann. Genau dieser Test hat die Luecke gefunden.
+  // Seit der Vier-Gruppen-Spur (Mockup V11, Bildschirm 19, 2026-08-15):
+  // Reden / Arbeiten / Meine Sachen / Betrieb, 13 Eintraege plus das
+  // Einstellungen-Zahnrad unten.
+  const bereiche = ["Chat", "Sprechen", "Im Netz suchen", "Bilder erstellen", "Programmieren", "Browser bedienen", "smejjBot", "Verlauf", "smejjCloud", "Dateien", "Papierkorb", "Systemzustand", "KI-Modelle", "Speicher", "Einstellungen"];
   for (const name of bereiche) {
     assert.ok(hilfe.includes(`<dt>${name}</dt>`), `Hilfe nennt "${name}" nicht`);
     assert.ok(
@@ -48,13 +51,22 @@ test("jeder genannte Arbeitsbereich existiert wirklich", () => {
 // aber die umgekehrte Luecke blieb blind: ein NEUES Modell (Kimi K3) fehlte in
 // der Hilfe, ohne dass irgendetwas rot wurde. Deshalb wird die Liste jetzt aus
 // index.html GELESEN statt behauptet, und beide Richtungen werden geprueft.
-const ANGEBOTENE_MODELLE = [...index.matchAll(/data-model="([^"]+)"/g)].map((t) => t[1]);
+// Zwei Namen pro Modell: die technische Kennung (data-model) und die
+// Beschriftung, die der Nutzer im Menue liest ("Kraftvoll (GLM-5.2)").
+// Die Hilfe spricht mit dem Nutzer, also darf sie die Beschriftung nennen —
+// vorher zaehlte nur die Kennung, und jede lesbare Bezeichnung war rot.
+const ANGEBOTENE_MODELLE = [...index.matchAll(/data-model="([^"]+)"[^>]*>([^<]+)</g)]
+  .flatMap((treffer) => [treffer[1], treffer[2].trim()])
+  .filter(Boolean);
 
 test("die Hilfe nennt genau die Modelle, die die App anbietet", () => {
   assert.ok(ANGEBOTENE_MODELLE.length >= 2, "index.html bietet gar keine Modellwahl — Testgrundlage fehlt");
   // Richtung 1: was die App anbietet, muss erklaert sein.
-  for (const modell of ANGEBOTENE_MODELLE) {
-    assert.ok(hilfe.includes(modell), `Die App bietet "${modell}" an, die Hilfe erklaert es nicht`);
+  for (const [, kennung, beschriftung] of index.matchAll(/data-model="([^"]+)"[^>]*>([^<]+)</g)) {
+    assert.ok(
+      hilfe.includes(kennung) || hilfe.includes(beschriftung.trim()),
+      `Die App bietet "${beschriftung.trim()}" an, die Hilfe erklaert es nicht`
+    );
   }
   // Richtung 2: was die Hilfe als waehlbar auszeichnet, muss es auch geben.
   // Nur die <strong>-Auszeichnungen im Modell-Absatz zaehlen — Fliesstext ueber
@@ -63,7 +75,7 @@ test("die Hilfe nennt genau die Modelle, die die App anbietet", () => {
   assert.ok(absatz, "Der Modell-Absatz der Hilfe wurde nicht gefunden");
   for (const treffer of absatz[1].matchAll(/<strong>([^<]+)<\/strong>/g)) {
     assert.ok(
-      ANGEBOTENE_MODELLE.some((m) => treffer[1] === m || treffer[1].includes(`(${m})`)),
+      ANGEBOTENE_MODELLE.includes(treffer[1]),
       `Die Hilfe nennt "${treffer[1]}", die App bietet es nicht an`
     );
   }

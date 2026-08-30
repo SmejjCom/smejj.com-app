@@ -1,0 +1,70 @@
+{
+  "jobId": "job_startgewicht_20260820",
+  "datum": "2026-08-20",
+  "titel": "Startgewicht: die Code-Flaeche laedt erst beim Oeffnen",
+  "auftrag": "Seitengewicht angehen",
+  "freigabe": "Betreiber, schriftlich: EIN Eintrag in index.html — code-flaeche.js laedt erst beim Oeffnen des Code-Bereichs (Start-Lock)",
+  "tag": "stand-2026-08-20-startgewicht",
+  "commits": { "app": "8588fd99", "frontend": "94fd602", "vorrat": "smejj-shell-v636" },
+
+  "messfalle_zuerst_geklaert": {
+    "befund": "Der Service Worker liefert aus dem Vorrat: performance.getEntriesByType meldet die ROHE Groesse und transferSize 0",
+    "beleg": "chat-store.js — encodedBodySize 40711 = decodedBodySize 40711, tatsaechlich uebertragen 13048 (gzip)",
+    "folge": "Frueher an diesem Tag genannte Seitengewichte (4.054 -> 1.174 KB) sind die Browser-Zahl, NICHT die Uebertragung",
+    "nicht_betroffen": "Die Chat-Verkehrszahlen 2,50 MB -> 15 KB: API-Antworten liegen nicht im Vorrat",
+    "richtig_messen": "curl -s --compressed -o /dev/null -w '%{size_download}' bzw. content-length ueber die Modulkette summieren"
+  },
+
+  "gemessen_gzip": {
+    "sofort": { "vorher_kb": 383, "nachher_kb": 365, "dateien": 106, "javascript_kb": 317 },
+    "bei_bedarf": { "vorher_kb": 125, "nachher_kb": 145, "dateien": 40 },
+    "gespart_kb": 17.9,
+    "gewandert": ["code-flaeche.js 11,7 KB", "code-modell-menue.js 7,9 KB"],
+    "neuer_lader_kb": 1.79,
+    "korrektur": "Vorab genannt waren 27,1 KB — zu hoch, das Gruppen-Muster zaehlte Dateien mit, die nicht an der Code-Flaeche haengen"
+  },
+
+  "live_geprueft": {
+    "startseite": "code-flaeche.js NICHT geladen",
+    "klick_auf_code": "nach 731 ms da, initCodeFlaeche gelaufen (dataset.bereit=an), Senden-Knopf und Eingabefeld vorhanden",
+    "direkt_slash_code": "nach 359 ms da, Modellanzeige 'Auto'",
+    "fehlerkonsole": "leer auf beiden Wegen"
+  },
+
+  "mechanismus": {
+    "modul": "public/code-nachladen.js — haengt sich selbst ein",
+    "ausloeser": "MutationObserver auf #code.is-active — der einzige Weg, auf dem der Bereich sichtbar wird (Navigationsklick, Zurueck/Vor, programmatisch)",
+    "warum_nicht_intersectionobserver": "von den Tests verboten: misst Sichtfenster-Sichtbarkeit und meldet je nach Scrollstand verschieden; ein Klassenwechsel ist eindeutig",
+    "direkter_aufruf": "/code laedt ohne Umweg sofort",
+    "fail_safe": "nach einem Fehlschlag meldet sich der Beobachter NICHT ab, der Fehler steht im Protokoll; sw.js hat das Modul im Vorrat"
+  },
+
+  "unterwegs_korrigiert": [
+    "Erster Entwurf haengte zwei Zeilen in app.js — die steht exakt auf 800 Zeilen und waere auf 813 gesprungen. check:guidelines UND tests/chat-message-actions schlugen an. Derselbe Test nennt das richtige Muster: 'die Funktion haengt sich selbst ein, app.js kennt sie nicht'. public/app.js ist byte-identisch geblieben.",
+    "Ein zunaechst ergaenztes ladeFuerAnsicht in nachladen.js wurde wieder entfernt — ungenutzter Code waere ein Blindgaenger.",
+    "Beim Ausliefern: im Frontend-Repo liegen ZWEI Kopien (root und assets/). Per Pruefsumme gegen die Live-Seite gemessen — root ist die ausgelieferte, assets/ ist alt. Chirurgisch geaendert statt die ganze Datei zu kopieren, sonst waere die Parallelsitzung ueberschrieben worden."
+  ],
+
+  "noch_offen_gzip": {
+    "browser_panel_kb": 59.9,
+    "verlauf_kb": 38.2,
+    "maus_kb": 10.8,
+    "konto_kb": 7.6,
+    "kamera_kb": 7.1,
+    "sprache_kb": 4.3,
+    "summe_kb": 128,
+    "hinweis": "Jede Verschiebung braucht eine eigene Freigabe (Start-Lock); das Browser-Panel liegt in aktiver Arbeit der Parallelsitzung"
+  },
+
+  "waechter": {
+    "tests": "8/8 (tests/code-nachladen.test.mjs) — loesen den echten Weg aus statt Quelltext zu lesen",
+    "check:start-lock": "GRUEN, neu eingefroren (34 Dateien) mit dem Wortlaut der Freigabe; beanstandet waren genau die zwei Dateien dieser Arbeit",
+    "check:architecture": "GRUEN",
+    "rot_aber_fremd": [
+      "check:favicon-lock (htmlHeadReferences) — der <head> ist von dieser Arbeit nachweislich unberuehrt (diff gegen 58e1e7ca)",
+      "check:frontend (8 Precache-Luecken) — Skript-Tags der Parallelsitzung; code-nachladen.js steht in keiner Beanstandung"
+    ]
+  },
+
+  "lehre": "Eine Optimierung muss zuerst ihr eigenes Messgeraet pruefen. Die Zahl, die den ganzen Tag als 'Seitengewicht' galt, war die unkomprimierte Vorrats-Summe — sie haette jeden Fortschritt falsch bewertet."
+}

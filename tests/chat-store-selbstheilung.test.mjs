@@ -29,22 +29,13 @@ const PROJEKT_STORE = "projekte";
 // chat-store.js importiert seine Nachbarn ueber Browser-Pfade ("/assets/…"),
 // die Node nicht aufloest. Fuer den Test werden sie auf file://-URLs
 // umgeschrieben — der zu pruefende Code selbst bleibt unveraendert.
-const assetsZuDatei = (text) => text.replace(
+const QUELLE = fs.readFileSync("public/chat-store.js", "utf8").replace(
   /from "\/assets\/([^"?]+)(\?[^"]*)?"/g,
   (_treffer, datei) => `from ${JSON.stringify(pathToFileURL(path.resolve("public", datei)).href)}`
 );
-// Seit der Zeilen-Diaet (25.08.) besteht der Verlauf aus Kern + Bereiche-Modul.
-// BEIDE reisen in die Sandbox, ihre Querverweise werden dort zusammengebogen —
-// sonst saehe der Test zwei Modulinstanzen und pruefte am Zustand vorbei.
 const MODUL = path.join(os.tmpdir(), "smejj-chat-store-test.mjs");
-const MODUL_BEREICHE = path.join(os.tmpdir(), "smejj-chat-store-bereiche-test.mjs");
-const QUELLE = assetsZuDatei(fs.readFileSync("public/chat-store.js", "utf8"))
-  .replace(/from "\.\/chat-store-bereiche\.js(\?[^"]*)?"/g, `from ${JSON.stringify(pathToFileURL(MODUL_BEREICHE).href)}`);
-const QUELLE_BEREICHE = assetsZuDatei(fs.readFileSync("public/chat-store-bereiche.js", "utf8"))
-  .replace(/from "\.\/chat-store\.js(\?[^"]*)?"/g, `from ${JSON.stringify(pathToFileURL(MODUL).href)}`);
 fs.writeFileSync(MODUL, QUELLE);
-fs.writeFileSync(MODUL_BEREICHE, QUELLE_BEREICHE);
-process.on("exit", () => { for (const m of [MODUL, MODUL_BEREICHE]) { try { fs.unlinkSync(m); } catch { /* schon weg */ } } });
+process.on("exit", () => { try { fs.unlinkSync(MODUL); } catch { /* schon weg */ } });
 
 /**
  * Nachgebaute IndexedDB — nur so viel, wie chat-store.js wirklich anfasst.

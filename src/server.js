@@ -3,11 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { APP_INFO, CAPABILITIES, COST_POLICY, ROUTES, SECURITY_HEADERS, STORAGE } from "./shared/platform.js";
 import { SECURITY_LIMITS } from "./shared/securityPolicy.js";
-// Sitzungs- und Token-Helfer: ausgelagert, damit diese Datei die Landkarte
-// der Endpunkte bleibt (800-Zeilen-Grenze, AI_Guidelines Abschnitt 2).
-import { boundedInteger, createSessionHelpers, readAuthBody } from "./server-session-helpers.js";
 import { createWerkstatt } from "./routes/werkstattRoutes.js";
-import { json, readJson, fehlerAntwort } from "../control-server/src/http/respond.js";
+import { json, readJson, fehlerAntwort, zuGrossFehler } from "../control-server/src/http/respond.js";
 import { parseS3Keys, signedS3List } from "../control-server/src/storage/s3Signer.js";
 import {
   handleApproveJob,
@@ -51,7 +48,6 @@ import { isSafeMutatingControlRequest, requiresAuthenticatedControlAccess } from
 import { createPublicModelRateGate } from "./shared/modelRatePolicy.js";
 import { bearerSessionToken, issueSessionToken, issueAccessToken, verifySessionToken } from "../control-server/src/auth/sessionToken.js";
 import { createSessionHandoffStore, isSessionHandoffId } from "../control-server/src/auth/sessionHandoff.js";
-import { createSessionHandoffRoutes } from "./auth/sessionHandoffRoutes.js";
 import { handleTrainingCaptureRoute } from "../control-server/src/routes/trainingCaptureRoutes.js";
 import { handleTrainingConsentRoute } from "../control-server/src/routes/trainingConsentRoutes.js";
 import { signGoogleAuthState, verifyGoogleAuthState, leseGoogleAuthState, verifyGoogleIdToken } from "./auth/googleAuth.js";
@@ -67,10 +63,6 @@ import { handlePublicApiRoute } from "../control-server/src/publicapi/publicApiR
 import { handleDeveloperKeyRoute } from "../control-server/src/routes/developerKeyRoutes.js";
 import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRoutes.js";
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
-// Fehler-Fänger (Nr. 50) und Missbrauchs-Wache (Nr. 51), Freigabe 2026-08-24.
-import { handleFehlerRoute } from "../control-server/src/routes/fehlerRoutes.js";
-import { beobachteAnfrage } from "../control-server/src/autopilots/missbrauchsWacheAutopilot.js";
-import { clientKeyFromRequest } from "../control-server/src/http/rateLimiter.js";
 import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
 import { handleFeedbackRoute } from "../control-server/src/routes/feedbackRoutes.js";
 import { starteAutopiloten } from "../control-server/src/autopilots/start.js";
@@ -80,8 +72,6 @@ import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoute
 // Bilder sprengten MAX_CHAT_BYTES, Videos wurden als toter blob: gespeichert).
 import { createChatMedienRoutes } from "../control-server/src/routes/chatMedienRoutes.js";
 import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyncRoutes.js";
-import { createVideoChatRoutes } from "../control-server/src/routes/videoChatRoutes.js";
-import { createBildExternRoutes } from "../control-server/src/routes/bildExternRoutes.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 import { leseUndKuerze } from "./agent/dateiKontext.js";
 import { baueCacheLage, befrageCache, darfAusliefern, liefereAusCache, merkeFuerSpaeter } from "./agent/cacheSpur.js";
@@ -128,20 +118,6 @@ const config = {
 const SHORT_ACCESS_TOKEN = ["1", "true", "yes"].includes(String(process.env.SMEJJ_SHORT_ACCESS_TOKEN || "").toLowerCase());
 const SESSION_COOKIE_SAMESITE = SHORT_ACCESS_TOKEN ? "None; Partitioned" : "Lax";
 
-// Die Sitzungs-Helfer bekommen ihren Kontext EINMAL — danach bleibt jede
-// Aufrufstelle unten unveraendert (Muster wie createVoiceTts in der Bruecke).
-// sessionSecret kommt aus config, NICHT erneut aus der Umgebung: dort laeuft
-// es durch normalizeSecret und kennt den Fallback GOOGLE_SESSION_SECRET.
-// Ein zweiter Nachbau haette Sitzungen mit einem anderen Geheimnis
-// signiert — alle Anmeldungen waeren still ungueltig geworden.
-const {
-  ensureRegistrySid, readSession, serializeAccessToken,
-  serializeSessionCookie, serializeSessionToken, sessionStillValid
-} = createSessionHelpers({
-  sessionSecret: config.sessionSecret, SESSION_COOKIE_SAMESITE, SHORT_ACCESS_TOKEN
-});
-
-
 const forbiddenSegments = new Set([".env", ".git", "node_modules", "dist", "build"]);
 // Lesen, Schreiben, Terminal, Git — die einzige Gruppe, die ans Dateisystem
 // geht. Steht seit 2026-08-08 in src/routes/werkstattRoutes.js (800-Zeilen-Regel).
@@ -155,22 +131,11 @@ const sessionHandoffStore = createSessionHandoffStore();
 const chatSyncRoutes = createChatSyncRoutes({ env: process.env, readSession, json, readJson });
 const chatMedienRoutes = createChatMedienRoutes({ env: process.env, readSession, json, readJson });
 const projektSyncRoutes = createProjektSyncRoutes({ env: process.env, readSession, json, readJson });
-// Video-Reserve (Befund docs/video/BEFUND_CONTROL_SPUR_RUFT_WORKER_NICHT.md):
-// /api/chat gibt Video-Auftraege an den Video-Worker (Weg C) statt sie als
-// Text zu beantworten. Fail-safe: ohne Worker laeuft alles unveraendert.
-const videoChatRoutes = createVideoChatRoutes({ env: process.env, securityHeaders: SECURITY_HEADERS, resolveModelRequest, executeWithFallback });
-// Bild-Erzeugung ueber den eigenen Zhipu-Zugang (CogView). Der Schluessel steht
-// NUR hier, nicht an der Bruecke — darum kommt der Auftrag zum Schluessel und
-// nicht umgekehrt (bildExternRoutes.js erklaert es ausfuehrlich).
-const bildExternRoutes = createBildExternRoutes({ env: process.env, readSession, sessionStillValid, json, readJson });
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host}`);
     if (await handlePublicApiRoute(req, url, res)) return; // /v1: Bearer statt Sitzung, muss VOR allem stehen (Grund dort)
     if (url.pathname.startsWith("/api/")) {
-      // Missbrauchs-Wache (Nr. 51): jede API-Anfrage einmal zählen — Absender
-      // und Pfadklasse, sonst nichts. Darf den Weg nie aufhalten.
-      try { beobachteAnfrage({ absender: clientKeyFromRequest(req), pathname: url.pathname, eigenprobe: String(req.headers["x-smejj-eigenprobe"] || "") }); } catch { /* zählen ist Beiwerk */ }
       if (handlePreflight(req, res)) return; // OPTIONS-Preflight (204 erlaubt / 403 fremd)
       const cors = corsHeadersFor(req.headers.origin);
       if (cors) for (const [name, value] of Object.entries(cors)) res.setHeader(name, value);
@@ -208,9 +173,9 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname === ROUTES.api.authConfig) return handleAuthConfig(res);
     if (readMethod && url.pathname === ROUTES.api.authMe) return handleAuthMe(req, res);
     if (readMethod && url.pathname === ROUTES.api.authSessionToken) return handleAuthSessionToken(req, res);
-    if (req.method === "POST" && url.pathname === ROUTES.api.authSessionHandoffStart) return await sessionHandoffRoutes.start(req, res);
-    if (["GET", "POST"].includes(req.method) && url.pathname === ROUTES.api.authSessionHandoffComplete) return await sessionHandoffRoutes.complete(req, url, res);
-    if (readMethod && url.pathname.startsWith(`${ROUTES.api.authSessionHandoff}/`)) return sessionHandoffRoutes.poll(req, url, res);
+    if (req.method === "POST" && url.pathname === ROUTES.api.authSessionHandoffStart) return await handleSessionHandoffStart(req, res);
+    if (["GET", "POST"].includes(req.method) && url.pathname === ROUTES.api.authSessionHandoffComplete) return await handleSessionHandoffComplete(req, url, res);
+    if (readMethod && url.pathname.startsWith(`${ROUTES.api.authSessionHandoff}/`)) return handleSessionHandoffPoll(req, url, res);
     if (readMethod && url.pathname === ROUTES.api.authGoogle) {
       try {
         return await handleGoogleAuthStart(req, res, url);
@@ -232,7 +197,6 @@ const server = http.createServer(async (req, res) => {
     // schlank bleibt. Abgeschaltet, solange SMEJJ_CHAT_SYNC_ENABLED fehlt.
     if (url.pathname === "/api/chats" && await chatSyncRoutes.handle(req, res, url)) return;
     if (url.pathname === "/api/chat-medien" && await chatMedienRoutes.handle(req, res, url)) return;
-    if (url.pathname === "/api/bild/erzeuge" && await bildExternRoutes.handle(req, res, url)) return;
     // Projekte-Sync (2026-08-13): benannte Sammlungen fuer Chats, gleiches Flag.
     if (url.pathname === "/api/projekte" && await projektSyncRoutes.handle(req, res, url)) return;
     if (req.method === "POST" && url.pathname === ROUTES.api.authLogout) return await handleAuthLogout(req, res);
@@ -255,8 +219,6 @@ const server = http.createServer(async (req, res) => {
     if (await handleVoiceRoute(req, url, res)) return;
     // Herzschlag der Autopiloten (Maschinen-Absender, eigener Schluessel je Automatik) — autopilotRoutes.js.
     if (await handleAutopilotHeartbeat(req, url, res)) return;
-    // Fehler-Fänger (Nr. 50): Browserfehler angemeldeter Nutzer — fehlerRoutes.js.
-    if (await handleFehlerRoute(req, res, url)) return;
     // Kundensupport Stufe 1: Ticket + KI-Sofortantwort (angemeldete Nutzer) — supportRoutes.js.
     if (await handleSupportRoute(req, url, res)) return;
     // Daten-Schwungrad Stufe 1: Daumen-Signale der Nutzer — feedbackRoutes.js.
@@ -365,9 +327,6 @@ async function handleChat(req, res) {
   // bisher sein Default (PROVIDER_CATALOG) — es wird nichts geraten und kein
   // Anbieter neu aktiviert.
   const prompt = latestUserPrompt(messages);
-  // Video-Auftraege gehen an den Video-Worker (Weg C) — komplett oder gar
-  // nicht: false heisst, es wurde kein Byte gesendet und Text laeuft normal.
-  if (prompt && await videoChatRoutes.handle(res, prompt)) return;
   return streamLLM(res, messages, {
     // Ohne erkennbare Nutzerfrage bleibt es beim bisherigen "default".
     ...(prompt ? { profile: classifyProfile(prompt) } : {}),
@@ -451,21 +410,45 @@ function handleAuthSessionToken(req, res) {
   });
 }
 
-// Sitzungs-Uebergabe: die drei Handler stehen seit 2026-08-14 in
-// src/auth/sessionHandoffRoutes.js (800-Zeilen-Regel). Verhalten unveraendert,
-// Abhaengigkeiten werden injiziert.
-const sessionHandoffRoutes = createSessionHandoffRoutes({
-  sessionHandoffStore,
-  isSessionHandoffId,
-  allowedOriginsFromEnv,
-  serializeAccessToken,
-  requestOrigin,
-  readJson,
-  noStoreJson,
-  securityHeaders: SECURITY_HEADERS,
-  routes: ROUTES,
-  env: process.env
-});
+async function handleSessionHandoffStart(req, res) {
+  const origin = requestOrigin(req);
+  const body = await readJson(req);
+  const returnOrigin = String(body.returnOrigin || "").replace(/\/$/, "");
+  if (!allowedOriginsFromEnv(process.env).includes(origin) || returnOrigin !== origin) {
+    return noStoreJson(res, 403, { ok: false, error: "session_handoff_origin_not_allowed" });
+  }
+  const result = sessionHandoffStore.start(returnOrigin);
+  return noStoreJson(res, result.status, result);
+}
+
+async function handleSessionHandoffComplete(req, url, res) {
+  const handoffId = req.method === "GET"
+    ? url.searchParams.get("handoffId")
+    : (await readJson(req)).handoffId;
+  const result = sessionHandoffStore.complete(handoffId, {
+    token: serializeAccessToken(req.authUser),
+    user: req.authUser
+  });
+  if (req.method === "GET" && result.ok) {
+    res.writeHead(303, {
+      ...SECURITY_HEADERS,
+      "Cache-Control": "no-store",
+      Pragma: "no-cache",
+      Location: "/profile?session-handoff-complete=1"
+    });
+    return res.end();
+  }
+  return noStoreJson(res, result.status, result.ok
+    ? { ok: true, state: "completed", expiresAt: result.expiresAt }
+    : result);
+}
+
+function handleSessionHandoffPoll(req, url, res) {
+  const handoffId = decodeURIComponent(url.pathname.slice(`${ROUTES.api.authSessionHandoff}/`.length));
+  if (!isSessionHandoffId(handoffId)) return noStoreJson(res, 404, { ok: false, error: "session_handoff_not_found" });
+  const result = sessionHandoffStore.consume(handoffId, requestOrigin(req));
+  return noStoreJson(res, result.status, result);
+}
 
 function noStoreJson(res, status, payload) {
   res.setHeader("Cache-Control", "no-store");
@@ -729,4 +712,97 @@ async function streamLLM(res, messages, { profile = "default", requestedModel = 
   const sichtbar = await streamWithTools({ result, chain, messages, res, options: modelOptions, executeWithFallback, authUser, spur });
   res.end();
   return sichtbar;
+}
+
+function boundedInteger(value, min, max, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(max, Math.max(min, Math.floor(number))) : fallback;
+}
+
+
+function readAuthBody(req) {
+  const contentType = String(req.headers["content-type"] || "");
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", (chunk) => {
+      raw += chunk;
+      if (raw.length > SECURITY_LIMITS.maxJsonBodyBytes) reject(zuGrossFehler());
+    });
+    req.on("end", () => {
+      try {
+        if (contentType.includes("application/x-www-form-urlencoded")) {
+          const params = new URLSearchParams(raw);
+          return resolve({
+            credential: params.get("credential") || "",
+            idToken: params.get("id_token") || "",
+            state: params.get("state") || "",
+            redirect: true
+          });
+        }
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch {
+        reject(new Error("Invalid auth request"));
+      }
+    });
+  });
+}
+
+function serializeSessionCookie(user) {
+  // H2: genau HIER (Cookie wird nur beim Login gesetzt, nicht bei /me-Renewal)
+  // bekommt eine Nicht-E-Mail-Sitzung ihre sid und einen Registry-Eintrag —
+  // damit auch Google/Passkey/GitHub/Magic fern-widerrufbar werden.
+  ensureRegistrySid(user);
+  const maxAge = user?.permanent || user?.method === "google" ? 315360000 : 604800;
+  return `smejj_session=${serializeSessionToken(user)}; Path=/; HttpOnly; Secure; SameSite=${SESSION_COOKIE_SAMESITE}; Max-Age=${maxAge}`;
+}
+
+// H2 (Flag SMEJJ_SESSION_REGISTRY): vergibt einer frisch angemeldeten
+// Nicht-E-Mail-Sitzung eine sid und hinterlegt sie als aktiv. Synchron die sid
+// (sie muss sofort in Cookie UND Access-Token), die Registrierung best-effort im
+// Hintergrund (isSessionActive wertet "noch kein Eintrag" als aktiv -> kein
+// Aussperren). E-Mail-Sitzungen haben ihre eigene Registry und werden hier
+// ausgelassen. Ohne Flag passiert nichts (Rollback per Flag).
+function ensureRegistrySid(user) {
+  if (!sessionRegistryEnabled(process.env)) return;
+  if (!user || user.method === "email" || user.sid) return;
+  user.sid = newSessionId();
+  registerSession({
+    sid: user.sid,
+    subject: user.userId || user.sub || user.email,
+    method: user.method,
+    expiresAtMs: Date.now() + 180 * 24 * 60 * 60 * 1000
+  }, process.env).catch(() => {});
+}
+
+// Generalisierte Sitzungspruefung: E-Mail wie bisher; Nicht-E-Mail nur dann, wenn
+// die Registry aktiv ist UND das Token eine sid traegt. Legacy-Tokens ohne sid
+// (vor Flag-Aktivierung ausgestellt) bleiben gueltig.
+async function sessionStillValid(user, env = process.env) {
+  if (!user) return false;
+  if (user.method === "email") return emailSessionStillValid(user, env);
+  if (sessionRegistryEnabled(env) && user.sid) return isSessionActive(user.sid, env);
+  return true;
+}
+
+function serializeSessionToken(user) {
+  return issueSessionToken({ secret: config.sessionSecret, user });
+}
+
+// H1-Haertung (2026-08-09, Flag SMEJJ_SHORT_ACCESS_TOKEN): der JS-lesbare Bearer,
+// den das Frontend an die Cross-Origin-Bridge schickt, ist bei aktivem Flag nur
+// noch ein kurzlebiges Access-Token (10 min, kind:"access"). Das 180-Tage-Token
+// bleibt ausschliesslich im HttpOnly-Cookie. verifySessionToken akzeptiert beide
+// Arten -> keine bestehende Sitzung bricht. Flag aus = altes Verhalten (Bearer =
+// Langzeit-Token), damit ist der Rollback ein einziges Env-Flag.
+function serializeAccessToken(user) {
+  if (user?.permanent || user?.method === "google") return serializeSessionToken(user);
+  return SHORT_ACCESS_TOKEN
+    ? issueAccessToken({ secret: config.sessionSecret, user })
+    : serializeSessionToken(user);
+}
+
+function readSession(req) {
+  const match = String(req.headers.cookie || "").match(/(?:^|;\s*)smejj_session=([^;]+)/);
+  const token = bearerSessionToken(req.headers || {}) || match?.[1] || "";
+  return verifySessionToken(token, { secret: config.sessionSecret });
 }

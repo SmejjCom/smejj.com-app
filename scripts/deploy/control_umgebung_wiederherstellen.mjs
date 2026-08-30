@@ -43,19 +43,27 @@ const GEBRAUCHT = Object.freeze([
   // Ohne das hier ist jede Ablage stumm: Verlauf, Aufgaben, Kennzahlen.
   { name: "IDRIVE_E2_ACCESS_KEY", wofuer: "Speicher (Verlauf, Aufgaben, Kennzahlen)" },
   { name: "IDRIVE_E2_SECRET_KEY", wofuer: "Speicher" },
-  // NICHT aus env.local! Dort steht `smejj-model-files` — der Eimer fuer
-  // Modelldateien, den die LOKALEN Skripte benutzen. Die App-Daten (Konten,
-  // Verlauf, Aufgaben) liegen in `smejj-app`. Am 2026-08-14 hat genau diese
-  // Verwechslung den Control-Server auf einen leeren Eimer zeigen lassen:
-  // die Anmeldung wurde angenommen, aber KEIN Konto war auffindbar
-  // (admin_email_not_verified). env.local ist die Konfiguration der
-  // Werkzeuge auf diesem Mac — nicht eine Kopie der Produktionsumgebung.
-  { name: "IDRIVE_E2_BUCKET", wofuer: "Speicher (App-Daten)", festwert: "smejj-app" },
+  { name: "IDRIVE_E2_BUCKET", wofuer: "Speicher" },
   { name: "IDRIVE_E2_ENDPOINT", wofuer: "Speicher" },
   { name: "IDRIVE_E2_REGION", wofuer: "Speicher" },
   { name: "SMEJJ_SEARCH_TAVILY_API_KEY", wofuer: "Websuche (Recherche, Konkurrenz-Radar)" },
   { name: "SMEJJ_ADMIN_OWNER_EMAILS", wofuer: "Betreiber-Zugang zur Konsole" },
-  { name: "GOOGLE_ALLOWED_EMAIL", wofuer: "Anmeldung ueber Google" }
+  { name: "GOOGLE_ALLOWED_EMAIL", wofuer: "Anmeldung ueber Google" },
+  // Ohne diese drei ist der Login-Knopf "Mit Google anmelden" schlicht weg:
+  // /api/auth/config meldet dann google:false, und niemand kommt mehr hinein.
+  // Genau das passierte am 2026-08-14 — der Betreiber war ausgesperrt.
+  { name: "GOOGLE_CLIENT_ID", wofuer: "Anmeldung ueber Google (ohne: Knopf verschwindet)" },
+  { name: "SMEJJ_GITHUB_LOGIN_CLIENT_ID", wofuer: "Anmeldung ueber GitHub" },
+  { name: "SMEJJ_GITHUB_LOGIN_CLIENT_SECRET", wofuer: "Anmeldung ueber GitHub" },
+  { name: "SMEJJ_GITHUB_OWNER_ALLOWLIST", wofuer: "Anmeldung ueber GitHub: wer darf" },
+  // Mailversand. Das App-Passwort ist der heikelste Eintrag der Liste: Google
+  // zeigt es nur EINMAL an. Ging es verloren, half kein Backup des Anbieters —
+  // der Betreiber musste ein neues erzeugen. Seitdem steht es in env.local.
+  { name: "SMEJJ_SMTP_HOST", wofuer: "Mailversand (Anmeldelink, Adressbestaetigung)" },
+  { name: "SMEJJ_SMTP_PORT", wofuer: "Mailversand" },
+  { name: "SMEJJ_SMTP_USER", wofuer: "Mailversand" },
+  { name: "SMEJJ_SMTP_FROM", wofuer: "Mailversand: Absenderadresse" },
+  { name: "SMEJJ_SMTP_PASS", wofuer: "Mailversand: App-Passwort — vom Anbieter NICHT erneut auslesbar" }
 ]);
 
 function abdruck(wert) {
@@ -98,8 +106,7 @@ async function main() {
 
   for (const eintrag of GEBRAUCHT) {
     if (schonDa.has(eintrag.name)) { uebersprungen.push(eintrag.name); continue; }
-    // Ein Festwert schlaegt env.local: siehe die Eimer-Verwechslung oben.
-    const wert = eintrag.festwert || String(process.env[eintrag.name] || "").trim();
+    const wert = String(process.env[eintrag.name] || "").trim();
     if (!wert) { fehlend.push(eintrag); continue; }
     try {
       await setzeEinzeln(eintrag.name, wert);

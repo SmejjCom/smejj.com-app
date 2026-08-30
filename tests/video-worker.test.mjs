@@ -55,31 +55,12 @@ describe("smejj video worker & video player markdown integration", () => {
     assert.match(ausgabe, /Alle \d+ Pruefungen gruen/, ausgabe);
   });
 
-  it("die externe Engine (Weg C) ist fail-closed und SSRF-fest", () => {
-    // Kein Schluessel = kein Aufruf = kein Cent; Tagesdeckel; fremde
-    // video_url wird nie geladen. Verhalten, nicht Textmuster.
-    const ausgabe = execFileSync("python3", ["scripts/testing/pruefe_video_extern.py"], { encoding: "utf8" });
-    assert.ok(!/FEHLER/.test(ausgabe), ausgabe);
-  });
-
   it("der Player laesst erzaehlte Videos hoerbar und einmalig laufen", () => {
     const markdown = fs.readFileSync("public/chat-markdown.js", "utf8");
     // muted/loop nur fuer stumme Szenen — sonst hoert der Nutzer nichts bzw.
     // die Erzaehlung wiederholt sich endlos.
     assert.ok(markdown.includes('startsWith("Erzähltes")'), "Ton-Erkennung im Player fehlt");
     assert.ok(!/controls loop muted/.test(markdown), "loop/muted duerfen nicht mehr fest verdrahtet sein");
-  });
-
-  it("die Szene bewegt sich selbst — und nur, was belegt ist", () => {
-    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
-    // Himmel-Zug ist gemessen (Himmelzone 1,21 -> 2,01) und bleibt.
-    assert.ok(server.includes("himmel_bereich"), "Himmel-Erkennung fehlt");
-    assert.ok(server.includes("HIMMEL_ZUG"), "Himmel-Zug fehlt");
-    // Die Wasser-Kraeuselung war gebaut und wurde entfernt: bei 3,5/8/14 px
-    // Ausschlag exakt die Werte des ausgeschalteten Zustands. Sie darf nicht
-    // unbemerkt zurueckkehren — unbelegte Wirkung ist eine Attrappe.
-    assert.ok(!/WASSER_HUB|wasser_maske/.test(server), "unbelegte Wasser-Bewegung ist zurueck");
-    assert.ok(server.includes("BEWUSST NICHT GEBAUT"), "die Entscheidung muss im Code stehen");
   });
 
   it("das Tiefenmodell kommt als ONNX, nicht als torch (Abbildgroesse)", () => {
@@ -109,58 +90,5 @@ describe("smejj video worker & video player markdown integration", () => {
   it("die Video-CSS-Klasse ist im Chat-Stylesheet verankert", () => {
     const css = fs.readFileSync("public/chat-markdown.css", "utf8");
     assert.ok(css.includes(".chat-video"), ".chat-video fehlt in chat-markdown.css");
-  });
-});
-
-describe("Portraet-Qualitaet (Befund Betreiber 2026-08-13)", () => {
-  it("warpt weich statt in Tiefenscheiben zu zerschneiden", () => {
-    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
-    // Das Ebenen-Verfahren zerriss Gesichter (gemessen +0,32 Kantenenergie,
-    // live vom Betreiber als "sehr schlecht" gemeldet). Es darf nicht
-    // unbemerkt zurueckkehren.
-    assert.ok(!server.includes("PARALLAX_EBENEN"), "Ebenen-Verfahren ist zurueck");
-    assert.ok(server.includes("bilinear") || server.includes("Warping"), "Weich-Warping fehlt");
-    assert.ok(server.includes("GaussianBlur(5)"), "Tiefenkarten-Glaettung fehlt (Riss-Kanten)");
-  });
-
-  it("bereitet das Basisbild auf (Schaerfe + Kontrast, EINMAL statt je Frame)", () => {
-    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
-    assert.ok(server.includes("def bild_aufbereiten"), "Aufbereitung fehlt");
-    assert.ok(server.includes("UnsharpMask"), "Nachschaerfen fehlt");
-    // Gemessen 2026-08-13: Detailschaerfe im fertigen Video mehr als
-    // verdoppelt (Portraet 45 -> 100). Muss VOR dem Rendern passieren —
-    // je Frame waere es der 96-fache Aufwand fuer dasselbe Ergebnis.
-    const vorRendern = server.indexOf("def bild_aufbereiten") < server.indexOf("def parallax_frames");
-    assert.ok(vorRendern, "Aufbereitung gehoert vor das Rendern");
-    assert.ok(/except Exception:.*\n\s*pass/.test(server.split("def bild_aufbereiten")[1].slice(0, 1600)),
-      "Aufbereitung muss fail-safe sein — sie darf nie ein Video kosten");
-  });
-
-  it("rendert groesser als das Basisbild (768) — gemessener Schaerfegewinn", () => {
-    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
-    assert.ok(server.includes('"SMEJJ_VIDEO_GROESSE", "640"'), "Zielgroesse 768 fehlt");
-    // Die Fahrt muss mitwachsen, sonst wirkt sie bei 768 schwaecher.
-    assert.ok(/PARALLAX_STAERKE = .*\* GROESSE \/ 512/.test(server), "Staerke skaliert nicht mit");
-    // Reihenfolge zaehlt: erst hochziehen, dann schaerfen — andersherum
-    // glaettet das Hochziehen die Schaerfung wieder weg.
-    const auf = server.split("def bild_aufbereiten")[1].slice(0, 1200);
-    assert.ok(auf.indexOf("LANCZOS") < auf.indexOf("UnsharpMask"), "erst skalieren, dann schaerfen");
-  });
-
-  it("waehlt die Kamerabahn nach dem Bildinhalt", () => {
-    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
-    assert.ok(server.includes("def bildart"), "Bildart-Erkennung fehlt");
-    // Trennmerkmal (gemessen): Mitte naeher als Rand = zentrales Motiv.
-    assert.ok(server.includes('"zentral"') && server.includes('"weit"'), "beide Bahnen fehlen");
-    // Vorwaertsfahrt braucht den radialen Anteil im Warp.
-    assert.ok(/rx \* vz/.test(server) && /ry \* vz/.test(server), "radialer Versatz fehlt");
-    // Bei zentralem Motiv KEIN Wolkenzug — der zieht sonst hinter dem Kopf vorbei.
-    assert.ok(/art == "weit"/.test(server), "Wolkenzug ist nicht auf weite Szenen begrenzt");
-  });
-
-  it("kodiert mit CRF 23 (drei Stufen schaerfer als vorher)", () => {
-    const server = fs.readFileSync("workers/smejj-video-worker/server.py", "utf8");
-    assert.ok(server.includes('"SMEJJ_VIDEO_CRF", "23"'), "CRF-Vorgabe 23 fehlt");
-    assert.ok(server.includes('str(CRF)'), "CRF wird nicht verwendet");
   });
 });

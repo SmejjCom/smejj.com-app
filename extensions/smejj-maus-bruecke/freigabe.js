@@ -1,3 +1,4 @@
+import { alsHerkunft } from "./adresse.js";
 // smejj.com Maus-Bruecke — sichtbare Freigabe pro Herkunft.
 // Single Responsibility: dem Betreiber zeigen, WO die Maus gerade arbeiten
 // duerfte, und ihn das ein- und ausschalten lassen. Ohne einen Klick hier
@@ -48,11 +49,19 @@ $("erlauben").addEventListener("click", async () => {
   // Die Host-Berechtigung wird ERST HIER erfragt — im direkten Anschluss an
   // den Klick des Betreibers. Chrome zeigt dabei seinen eigenen Dialog; die
   // Erweiterung bekommt nie mehr Rechte, als er dort bestaetigt.
-  const gewaehrt = await chrome.permissions.request({ origins: [`${herkunft}/*`] });
-  if (!gewaehrt) return;
-  const liste = await lies();
-  liste[herkunft] = Date.now() + FREIGABE_DAUER_MS;
-  await schreibe(liste);
+  // Der Eintrag in den Speicher passiert im HINTERGRUND (permissions.onAdded).
+  // Hier darf er NICHT stehen: waehrend Chromes Dialog offen ist, verliert
+  // dieses Fenster den Fokus und wird geschlossen — mitsamt seinem Skript.
+  // Die Zeile danach lief nie. Chrome hatte die Berechtigung erteilt, die
+  // Bruecke wusste nichts davon. Genau daran ist die erste echte Freigabe am
+  // 2026-08-20 gescheitert, und es sah aus wie ein Klick ohne Wirkung.
+  const gewaehrt = await chrome.permissions.request({ origins: [`${herkunft}/*`] }).catch(() => false);
+  // Ein stilles `return` war der zweite Fehler: wer ablehnt oder den Dialog
+  // wegklickt, sah GAR NICHTS und hielt es fuer erledigt.
+  if (!gewaehrt) {
+    $("stand").textContent = "Chrome hat die Berechtigung nicht erteilt.";
+    return;
+  }
   zeichne();
 });
 
@@ -67,3 +76,30 @@ $("entziehen").addEventListener("click", async () => {
 });
 
 zeichne();
+
+// --- Ein Ziel freigeben, ohne vorher hinzunavigieren -------------------------
+//
+// Bis hierher liess sich nur die GERADE OFFENE Seite freigeben. Fuer den
+// eigentlichen Zweck ist das umstaendlich: wer der Maus auf smejj.com einen
+// Gmail-Auftrag gibt, muesste erst selbst Gmail oeffnen, hier klicken und
+// zurueckwechseln. Genau der Umweg, den die Maus abnehmen soll.
+//
+// chrome.permissions.request laeuft weiterhin direkt auf den Klick des
+// Betreibers, und Chrome zeigt dabei seinen eigenen Dialog — die Erweiterung
+// bekommt kein Recht, das er dort nicht bestaetigt. Nur der Weg dorthin ist
+// kuerzer geworden, nicht die Schranke niedriger.
+$("zielErlauben")?.addEventListener("click", async () => {
+  const herkunft = alsHerkunft($("ziel").value);
+  if (!herkunft) {
+    $("stand").textContent = "Das ist keine gueltige https-Adresse.";
+    return;
+  }
+  const gewaehrt = await chrome.permissions.request({ origins: [`${herkunft}/*`] });
+  if (!gewaehrt) {
+    $("stand").textContent = "Chrome hat die Berechtigung nicht erteilt.";
+    return;
+  }
+  // Auch hier merkt der Hintergrund die Freigabe (permissions.onAdded).
+  $("ziel").value = "";
+  zeichne();
+});

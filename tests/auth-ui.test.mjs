@@ -53,12 +53,11 @@ test("Google login uses popup callback flow without redirect URI registration", 
 });
 
 test("Google login fails closed when the public Control Server is offline", () => {
-  const googleLogin = fs.readFileSync(new URL("../public/google-login.js", import.meta.url), "utf8");
-  assert.match(googleLogin, /Google Login: Control Server ist noch nicht online\./);
-  assert.match(googleLogin, /Google Login wartet auf den Control Server\./);
-  // Der /me-Abruf laeuft seit 23.08. ueber den geteilten authMeSpeicher (In-Flight-
-  // Dedup mit auth-gate.js) — der Offline-Fall bleibt gefangen.
-  assert.match(googleLogin, /authMeSpeicher\.hole\(\(\) => getJson\(CLIENT_ROUTES\.api\.authMe\)\)/);
+  assert.match(app, /Google Login: Control Server ist noch nicht online\./);
+  assert.match(app, /Google Login wartet auf den Control Server\./);
+  // Seit dem gemeinsamen /api/auth/me-Speicher (2026-08-23) laeuft der Abruf
+  // ueber authMeSpeicher.hole(...) — der .catch sitzt auf der Kette dahinter.
+  assert.match(app, /authMeSpeicher\.hole\(\(\) => getJson\(CLIENT_ROUTES\.api\.authMe\)\)\s*\n?\s*\.catch/);
 });
 
 test("Google login has signed redirect fallback for browsers that block GIS popup token return", () => {

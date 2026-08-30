@@ -16,7 +16,9 @@ export function createExtraAuthRouter({
   config, json, readJson, SECURITY_HEADERS,
   serializeSessionCookie, serializeSessionToken,
   sessionHandoffStore, allowedOriginsFromEnv, ROUTES,
-  // Muss DURCHGEREICHT werden — sonst protokolliert der GitHub-Weg still nichts.
+  // Muss DURCHGEREICHT werden: dieser Router ist nur die Zwischenstation.
+  // Faellt es hier heraus, protokolliert der GitHub-Weg still nichts —
+  // dieselbe Familie wie die Erlaubnisliste im Browser-Panel.
   anmeldeProtokoll = { notiere() { return null; } },
   env = process.env
 }) {

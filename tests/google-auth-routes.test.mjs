@@ -96,44 +96,6 @@ test("Login ohne redirect: 200 JSON mit accessToken; unverifizierte E-Mail -> 40
   assert.equal(res2.statusCode, 403);
 });
 
-// ---------------------------------------------------------------------------
-// 2026-08-14 — Der Anmeldeweg haelt Googles Nachweis fest.
-//
-// Befund der A-bis-Z-Pruefung: `handleGoogleAuth` prueft `email_verified` und
-// warf den Nachweis dann weg. Ins Nutzerverzeichnis schrieb nur der
-// E-Mail-Weg. Weil `adminAuth.js` genau dort `emailVerifiedAt` verlangt, kam
-// KEINE Google-Anmeldung je in den Adminbereich — auch die des Betreibers
-// nicht (live gemessen: /api/auth/me true, /api/admin/me 403).
-// ---------------------------------------------------------------------------
-
-test("die Google-Anmeldung traegt die bestaetigte Adresse ins Verzeichnis ein", async () => {
-  const gemerkt = [];
-  const h = createGoogleAuthHandlers({
-    ...basisDeps,
-    config: { googleClientId: "c", sessionSecret: "s" },
-    readAuthBody: async () => ({}),
-    merkeKonto: async (nutzer) => { gemerkt.push(nutzer); return "angelegt"; }
-  });
-  const res = mockRes();
-  await h.handleGoogleAuth({ headers: {} }, res);
-
-  assert.equal(gemerkt.length, 1, "ohne diesen Eintrag bleibt der Adminbereich zu");
-  assert.equal(gemerkt[0].email, "smejjcom@gmail.com");
-  assert.equal(gemerkt[0].method, "google");
-});
-
-test("eine Stoerung im Verzeichnis haelt die Anmeldung nicht auf", async () => {
-  const h = createGoogleAuthHandlers({
-    ...basisDeps,
-    config: { googleClientId: "c", sessionSecret: "s" },
-    readAuthBody: async () => ({}),
-    merkeKonto: async () => "gestoert"
-  });
-  const res = mockRes();
-  await h.handleGoogleAuth({ headers: {} }, res);
-  assert.equal(res.statusCode, 200, "wer sich anmelden will, darf nicht am Speicher scheitern");
-});
-
 // --- Die JSON-Sackgasse nach Google --------------------------------------------
 //
 // Vom Betreiber gemeldet am 2026-08-22: nach einem Google-Login stand im

@@ -3,8 +3,7 @@
 // One-Time-Handoff fuer die Cross-Origin-Rueckkehr in die App, kein Open-Redirect.
 // Eigene OAuth-App (SMEJJ_GITHUB_LOGIN_*), getrennt vom Repo-Publisher.
 import crypto from "node:crypto";
-
-import { merkeOauthBestaetigung } from "../../control-server/src/auth/oauthKonto.js";
+import { sichereAnbieterKonto } from "./anbieterKonto.js";
 
 export function createGithubAuthHandlers({
   config,
@@ -19,9 +18,6 @@ export function createGithubAuthHandlers({
   githubAuthorizeUrl,
   exchangeGithubCode,
   fetchGithubUser,
-  // Siehe googleAuthRoutes.js: `fetchGithubUser` wirft, wenn die Adresse nicht
-  // verifiziert ist — der Nachweis liegt also vor und gehoert ins Verzeichnis.
-  merkeKonto = merkeOauthBestaetigung,
   ROUTES,
   fetchImpl = fetch,
   anmeldeProtokoll = { notiere() { return null; } },
@@ -93,7 +89,10 @@ export function createGithubAuthHandlers({
       sub: String(profile.sub || ""),
       method: "github"
     };
-    await merkeKonto(user, { env });
+    // fetchGithubUser liefert ausschliesslich `verified`-Adressen (githubAuth.js) —
+    // diesen Nachweis im Kontospeicher vermerken, sonst bleibt der Adminbereich
+    // fuer reine GitHub-Konten unerreichbar. Siehe src/auth/anbieterKonto.js.
+    await sichereAnbieterKonto({ email, name: user.name, method: "github" }, env);
     const headers = { ...SECURITY_HEADERS, "Set-Cookie": serializeSessionCookie(user) };
     const handoffReturn = safeReturnOrigin(state?.handoffReturn);
     if (state?.handoff && handoffReturn) {
@@ -103,6 +102,10 @@ export function createGithubAuthHandlers({
       // Anmeldeseite zurueck, mit einem Grund, den man lesen kann.
       const hinterlegt = sessionHandoffStore.complete(state.handoff, { token: serializeSessionToken(user), user });
       if (!hinterlegt?.ok) {
+        anmeldeProtokoll.notiere({
+          schritt: "ticket-hinterlegt", anbieter: "github", ok: false,
+          grund: hinterlegt?.error || "ticket_nicht_einloesbar", email, ticket: state.handoff
+        });
         res.writeHead(303, { ...headers, Location: `${handoffReturn}/auth/login?fehler=anmeldung_abgelaufen` });
         return res.end();
       }

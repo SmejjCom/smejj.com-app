@@ -2,8 +2,7 @@
 // Verhalten byteweise unveraendert; alle Abhaengigkeiten werden injiziert,
 // damit der Flow erstmals unit-testbar ist (vorher nur live verifiziert).
 import crypto from "node:crypto";
-
-import { merkeOauthBestaetigung } from "../../control-server/src/auth/oauthKonto.js";
+import { sichereAnbieterKonto } from "./anbieterKonto.js";
 
 // Wohin ein gescheiterter Rueckweg fuehrt, wenn das Ticket kein eigenes Ziel
 // mehr hergibt. smejj.com steht fest in DEFAULT_ALLOWED_ORIGINS (cors.js) —
@@ -23,10 +22,6 @@ export function createGoogleAuthHandlers({
   verifyGoogleAuthState,
   leseGoogleAuthState,
   verifyGoogleIdToken,
-  // Der Nutzerdatensatz wird hier festgehalten (siehe oauthKonto.js). Als
-  // Abhaengigkeit hereingereicht, damit der Flow ohne Objektspeicher testbar
-  // bleibt — dieselbe Bauart wie bei allem anderen in dieser Datei.
-  merkeKonto = merkeOauthBestaetigung,
   ROUTES,
   // Protokoll der Anmeldeversuche. Injiziert wie alles andere hier; ohne
   // Uebergabe ein stiller Ersatz, damit Tests und Altaufrufe nicht brechen.
@@ -121,12 +116,10 @@ export function createGoogleAuthHandlers({
       method: "google",
       permanent: "true"
     };
-    // Googles `email_verified` ist derselbe Nachweis, den der Magic-Link
-    // erbringt — er wurde hier bisher geprueft und dann weggeworfen. Ohne
-    // Eintrag im Verzeichnis bleibt der Adminbereich fuer Google-Anmeldungen
-    // dauerhaft zu (403 admin_email_not_verified). Eine Stoerung darf die
-    // Anmeldung nicht aufhalten, deshalb ohne await-Abbruch bewertet.
-    await merkeKonto(user, { env });
+    // Google hat die Adresse bestaetigt (oben geprueft) — das im Kontospeicher
+    // vermerken. Ohne diesen Schritt bleibt der Adminbereich fuer reine
+    // Google-Konten unerreichbar, siehe src/auth/anbieterKonto.js. Wirft nie.
+    await sichereAnbieterKonto({ email, name: user.name, method: "google" }, env);
     const headers = {
       ...SECURITY_HEADERS,
       "Set-Cookie": serializeSessionCookie(user)

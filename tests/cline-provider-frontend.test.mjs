@@ -26,13 +26,31 @@ test("Cline selection streams through authenticated backend and supports restart
 test("Cline submenu shows the live catalog grouped like the settings surface", () => {
   assert.match(submenu, /\/api\/providers\/cline/);
   assert.match(submenu, /"cline-pass": "Cline Pass"/);
-  // Die Gratis-Gruppe fiel bewusst raus: Cline liefert sie nur an eigene
-  // Oberflaechen aus (403 live gemessen 2026-08-17) — hier waren es tote Knoepfe.
-  assert.match(submenu, /"free" steht bewusst NICHT mehr drin/);
-  assert.doesNotMatch(submenu, /free: "Kostenlos"/);
   assert.match(submenu, /recommended: "Empfohlen"/);
   assert.match(submenu, /Alle Modelle & Key → Einstellungen/);
   assert.match(submenu, /aria-checked/);
+});
+
+// Messlatte BEWUSST verschoben (2026-08-17): der Test verlangte bis hierher
+// eine Gruppe "Kostenlos". Live gemessen liefern genau diese Modelle 403
+// ("only available via Cline product surfaces") — der alte Vertrag forderte
+// also tote Knoepfe. Jetzt wird das Gegenteil festgehalten.
+test("Cline submenu bietet keine toten Knoepfe an", () => {
+  assert.doesNotMatch(submenu, /free: "Kostenlos"/);
+  assert.match(submenu, /GROUP_ORDER = \["cline-pass", "recommended"\]/);
+  // Die zwei Blindgaenger (HTTP 200, aber leere Antwort) fliegen ebenfalls raus.
+  assert.match(submenu, /BLINDGAENGER = new Set\(\["cline-pass\/qwen3\.7-max", "x-ai\/grok-4\.5"\]\)/);
+  assert.match(submenu, /!BLINDGAENGER\.has\(model\.id\)/);
+});
+
+test("Cline submenu bietet Auto an und ruft dafuer kein /select", () => {
+  assert.match(submenu, /const AUTO_MARKE = "auto"/);
+  assert.match(submenu, /submenu\.append\(autoButton\(submenu, active\)\)/);
+  // Auto darf NICHT ueber die /select-Route gehen: das Modell steht erst fest,
+  // wenn der Auftrag da ist (ai/modellRouter.js waehlt dann und wartet ab).
+  const autoBlock = submenu.slice(submenu.indexOf("function autoButton"), submenu.indexOf("function modelButton"));
+  assert.doesNotMatch(autoBlock, /\/select/);
+  assert.match(autoBlock, /activateCline\(AUTO_MARKE\)/);
 });
 
 test("Cline submenu activates a model instantly without touching the chat path", () => {
@@ -48,13 +66,38 @@ test("Cline submenu activates a model instantly without touching the chat path",
 test("Cline submenu stays fail-closed without a connected key", () => {
   assert.match(submenu, /Cline-Key in Einstellungen verbinden/);
   assert.match(submenu, /status\?\.configured/);
-  // Der Fehlerpfad heisst weiter renderKeyHint — der catch traegt inzwischen
-  // einen Fehlerparameter und einen Block.
-  assert.match(submenu, /\.catch\(\(error\) => \{[\s\S]{0,400}renderKeyHint\(submenu\)/);
+  assert.match(submenu, /renderKeyHint\(submenu\)/);
+});
+
+// Betreiber-Befund 2026-08-17: "manchmal kommen komplette Modelle und
+// manchmal nur 2, 3". Ursache war ein 429 der geteilten Bremse, das der
+// alte Code als "kein Key" auslegte. Gebremst ist NICHT fehlend.
+test("Gebremst (429) wird nicht als fehlender Key ausgegeben", () => {
+  assert.match(submenu, /fehler\?\.status === 429/);
+  assert.match(submenu, /retryAfterSec/);
+  // Der 429-Zweig muss VOR renderKeyHint zurueckkehren, sonst luegt das Menue.
+  const zweig = submenu.slice(submenu.indexOf("fehler?.status === 429"), submenu.indexOf("renderKeyHint(submenu);\n    });"));
+  assert.match(zweig, /return;/);
+  // Und er laedt selbst nach, statt den Nutzer klicken zu lassen.
+  assert.match(zweig, /setTimeout\([\s\S]*openSubmenu\(trigger, submenu, true\)/);
 });
 
 test("autonomous worker resolves Cline credential only on the control server", () => {
   assert.match(worker, /getProviderCredential\(job\.userId, "cline"/);
   assert.match(worker, /job\.providerRuntime/);
   assert.match(worker, /tools: CODING_TOOLS/);
+});
+
+// Betreiber-Freigabe 2026-08-23 (Nutzerreise): der Wartetext "smejj denkt nach …"
+// bleibt im Cline-Pfad bis zum ersten Delta — gemessen waren 3,6 s leere Blase.
+test("Cline-Pfad loescht den Wartetext erst beim ersten Text, nicht vor dem Abruf", () => {
+  const src = fs.readFileSync(new URL("../public/ai/chatClient.js", import.meta.url), "utf8");
+  assert.doesNotMatch(src, /selected === "Cline"\) \{ clearThinking\(\);/, "clearThinking() darf nicht VOR runClineChat laufen");
+  const cline = src.slice(src.indexOf("async function runClineChat"), src.indexOf("// Generischer BYOK-Anbieter"));
+  assert.doesNotMatch(cline, /let answer = "";\s*output\.textContent = "";/, "kein Leeren der Blase vor dem Strom");
+  assert.match(cline, /if \(!answer\) clearThinking\(\);\s*answer \+= delta;/, "Wartetext faellt beim ersten Delta");
+  for (const pfad of ["nichtAngemeldetText", "Automatische Modellwahl", "(leere Antwort)", "Cline-Fehler"]) {
+    const i = cline.indexOf(pfad);
+    assert.ok(i > 0 && cline.slice(Math.max(0, i - 200), i).includes("clearThinking()"), `Fehlerweg '${pfad}' raeumt den Wartetext weg`);
+  }
 });

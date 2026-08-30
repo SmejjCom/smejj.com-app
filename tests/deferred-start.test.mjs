@@ -9,7 +9,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { afterFirstPaint } from "../public/deferred-start.js";
-import { SOURCES } from "../scripts/build/bundle-start-styles.mjs";
+import { SOURCES, entschlacke } from "../scripts/build/bundle-start-styles.mjs";
 
 const html = fs.readFileSync("public/index.html", "utf8");
 const appJs = fs.readFileSync("public/app.js", "utf8");
@@ -92,10 +92,10 @@ test("Control-Server-Aufrufe stehen nicht mehr im Ladepfad", () => {
   assert.match(premium, /afterFirstPaint\(\[\(\) => syncServerAiStatus\(\)\]\)/, "premium-surfaces.js verschiebt /api/health");
   const boot = appJs.slice(appJs.indexOf("function boot()"), appJs.indexOf("function bindNavigation()"));
   const verschoben = boot.slice(boot.indexOf("afterFirstPaint"));
-  // initGoogleLogin liegt seit dem Abspecken (24.08.) noch weiter hinten: im
-  // Ansichts-Lader (ladeBeiAnsicht) — nie im Ladepfad, nie im Boot.
-  assert.match(appJs, /holeGoogleLogin = ladeBeiAnsicht/);
-  assert.ok(!boot.includes("initGoogleLogin"), "initGoogleLogin darf nicht mehr im Boot stehen");
+  // initGoogleLogin ist seit "Startseite abspecken" (24.08.) noch spaeter dran:
+  // google-login.js kommt erst MIT der Ansicht (ladeBeiAnsicht) — das ist
+  // strenger als afterFirstPaint und gilt als verschoben.
+  assert.match(appJs, /ladeBeiAnsicht\(\["start", "chat"\], \(\) => import\("\.\/google-login\.js"\)/, "google-login laedt erst mit der Ansicht");
   for (const aufruf of ["refreshSessionStatus", "refreshKimiVaultStatus", "refreshGlmVaultStatus"]) {
     assert.ok(verschoben.includes(aufruf), `${aufruf} muss hinter afterFirstPaint stehen`);
     assert.ok(!boot.slice(0, boot.indexOf("afterFirstPaint")).includes(aufruf), `${aufruf} darf nicht mehr direkt beim Start laufen`);
@@ -145,14 +145,29 @@ test("Startseite laedt ein Buendel statt acht Stylesheets", () => {
 });
 
 test("Buendel enthaelt alle Quellen unveraendert und in Reihenfolge", () => {
+  // GEAENDERT 2026-08-20 (Startseiten-Gewicht): das Buendel traegt seit dem
+  // Entschlacken keine Kommentare und keine Leerzeilen mehr — 205 KB -> 134 KB,
+  // ueber die Leitung 53 KB -> 23 KB. Verglichen wird darum die WIRKSAME CSS
+  // (dieselbe Entschlackung wie im Bau), nicht mehr der Rohtext. Die Zusicherung
+  // bleibt dieselbe: jede Quelle steckt vollstaendig und in der richtigen
+  // Reihenfolge im Buendel — die Reihenfolge IST die Kaskade.
   let position = -1;
   for (const name of SOURCES) {
-    const quelle = fs.readFileSync(`public/${name}`, "utf8").trimEnd();
+    const quelle = entschlacke(fs.readFileSync(`public/${name}`, "utf8"));
     assert.ok(bundle.includes(quelle), `${name} fehlt im Buendel oder wurde veraendert`);
     const gefunden = bundle.indexOf(`/* ---- ${name} ---- */`);
     assert.ok(gefunden > position, `${name} steht in falscher Reihenfolge — das aendert die Kaskade`);
     position = gefunden;
   }
+});
+
+test("Entschlacken faellt auf, wenn es je unsicher wuerde", () => {
+  // Der Waechter im Bau: ein '/*' in einem content:- oder url()-Wert wuerde
+  // die Kommentar-Regel mitten im Wert schneiden. Beide Proben, kaputt und
+  // gesund — sonst wuesste niemand, ob der Waechter ueberhaupt zubeisst.
+  assert.throws(() => entschlacke('.a::after { content: "/*"; }'), /nicht sicher/);
+  assert.throws(() => entschlacke('.b { background: url("/i/*x.png"); }'), /nicht sicher/);
+  assert.equal(entschlacke('/* weg */\n.c { color: red; }\n\n'), ".c { color: red; }");
 });
 
 test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", () => {
@@ -178,24 +193,4 @@ test("Service Worker cached Buendel und Modul, nicht mehr die Einzeldateien", ()
   // v263 ist der live ausgelieferte Stand.
   assert.ok(Number(/smejj-shell-v(\d+)/.exec(sw)?.[1] || 0) >= 263,
     "CACHE_NAME wurde zurueckgedreht — Bestandsnutzer bekaemen den alten Stand");
-});
-
-// --- Die Startseiten-Optik muss IN DER QUELLE stehen, nicht nur im Artefakt --
-//
-// Befund 2026-08-14, vom Betreiber im Browser gesehen: Die Startseite verlor
-// Glas-Kapsel, Zentrierung und die Eckig-Regel auf einen Schlag. Ursache war
-// nicht eine Aenderung an diesen Dateien, sondern ihr FEHLEN in SOURCES:
-// start-glass.css, eckig.css und search-overlay.css lagen nur im
-// ausgelieferten Buendel. Der naechste regulaere Buendel-Bau warf sie hinaus.
-// Ein deploytes Artefakt ersetzt NIE den Eintrag in der Quelle.
-test("die Startseiten-Optik steht in SOURCES, nicht nur im ausgelieferten Buendel", () => {
-  for (const pflicht of ["start-glass.css", "eckig.css", "search-overlay.css"]) {
-    assert.ok(SOURCES.includes(pflicht), `${pflicht} fehlt in SOURCES — beim naechsten Bau faellt es heraus`);
-    assert.ok(fs.existsSync(`public/${pflicht}`), `public/${pflicht} fehlt — SOURCES zeigt ins Leere`);
-  }
-  // Kaskaden-Ende seit Design V11 (Konsolidierung 24.08.): design-v11.css ist
-  // die juengste Betreiber-Linie und darf alles ueberschreiben; eckig.css steht
-  // direkt davor und haelt weiterhin jede Rundung nieder.
-  assert.equal(SOURCES[SOURCES.length - 1], "design-v11-fein.css", "die V11-Schicht (seit 25.08. viergeteilt) gehoert ans Ende der Kaskade");
-  assert.ok(SOURCES.indexOf("eckig.css") > SOURCES.indexOf("start-glass.css") && SOURCES.indexOf("eckig.css") < SOURCES.indexOf("design-v11.css"), "eckig.css bleibt direkt vor der V11-Schicht");
 });

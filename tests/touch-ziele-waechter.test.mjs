@@ -56,6 +56,25 @@ test("der App-Waechter prueft auch den Ueberlauf, nicht nur die Groesse", () => 
   assert.match(skript, /ueberlauf/);
 });
 
+test("der Waechter tippt, statt nur zu rechnen", () => {
+  // Ein Element kann kleiner AUSSEHEN als es zu treffen ist: der Stopp-Punkt
+  // ist 11 px gross (so bestellt) und 45 px fassbar (unsichtbares ::before).
+  // Wer nur getBoundingClientRect misst, meldet ihn falsch rot — und verleitet
+  // dazu, ein bewusstes Designmass zu "reparieren".
+  assert.match(skript, /elementsFromPoint/, "der Stapel an acht Randpunkten");
+  assert.match(skript, /obenauf/);
+});
+
+test("Verdeckung wird als eigenes Fehlerbild erkannt und macht nicht rot", () => {
+  // Liegt das Ziel ueberall im Stapel, nur nicht obenauf, ist es verdeckt und
+  // nicht zu klein. Bei offenem Menue ist genau das Absicht — der Waechter
+  // wuerde sonst bei jedem Menue Alarm schlagen und bald nicht mehr gelesen.
+  assert.match(skript, /verdecktVon/);
+  assert.match(skript, /hinweise\.push/, "Verdeckung landet in den Hinweisen");
+  assert.ok(!/verstoesse\.push\(`\$\{name\}\/\$\{t\.kennung\}[^`]*VERDECKT/.test(skript),
+    "Verdeckung darf den Exit-Code nicht rot faerben");
+});
+
 test("jede Ausnahme traegt eine Begruendung", () => {
   const block = skript.split("const AUSNAHMEN = [")[1]?.split("];")[0] || "";
   const auswahlen = [...block.matchAll(/auswahl:/g)].length;

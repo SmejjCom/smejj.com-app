@@ -1,0 +1,316 @@
+{
+  "jobId": "job_vollaudit_20260825",
+  "createdAt": "2026-08-25T06:55:00.000Z",
+  "owner": "smejj.com autonomous audit (Betreiber-Auftrag: Vollstaendiger End-to-End-Audit, Sofort-Reparatur, Dauer-Waechter)",
+  "title": "Vollaudit 25.08.: /code war auf allen Domains tot bei 64 gruenen Ampeln — repariert, plus 15-Minuten-Nutzerreise-Waechter",
+  "ziel": "Gesamte App als echter Nutzer pruefen, jeden Fund sofort beheben, live beweisen; ein Waechter, der die App alle 10-15 Minuten von A bis Z prueft.",
+  "befunde": [
+    {
+      "prio": "P1",
+      "was": "/code auf smejj.com UND api.smejj.com komplett tot: in code-flaeche.js stand der Anhaenge-Import MITTEN in einem mehrzeiligen import-Statement (SyntaxError 'Unexpected reserved word' beim Nachladen, 6 Konsolenfehler je Versuch).",
+      "warumUnbemerkt": "Alle 64 Ampeln gruen, Messlauf 100.00 % — kein einziger Pruefer parst die ausgelieferten Module; precache-imports/module-queries lesen Textmuster, der Probe-Nutzer prueft Token/Bruecke/S3, nie die Auslieferung.",
+      "fix": "Zeile an den Dateikopf (Frontend f5d8d78, sw v695; Bauzweig 12d4d50f + Control-Neubau). Live bewiesen: /code laedt personalisiert, Code-Auftrag streamt mit Syntaxfarben, 0 Konsolenfehler; api.smejj.com byte-identisch."
+    },
+    {
+      "prio": "P1",
+      "was": "api-konto-surface.js fehlte im sw-Precache (dynamischer Import aus settings-surface.js) — offline war die API-Konto-Ansicht tot, live UND lokal.",
+      "fix": "Precache-Eintrag beide Repos + Bauzweig, sw v695."
+    },
+    {
+      "prio": "P2",
+      "was": "Vorlesen hatte keinen Stopp: jeder Klick startete die Ansage von vorn.",
+      "fix": "Umschalter in chat-actions (b43, sw v698): zweiter Klick stoppt; speaking VOR cancel gelesen und Utterance referenziert (Chrome-GC frisst sonst onend, Umschalter fuhr sich in b41 fest). Live bewiesen: an -> Stopp -> wieder an."
+    },
+    {
+      "prio": "P2",
+      "was": "8 Dauer-rote Tests auf design-v11 (stille-wache, auth-ui, chat-message-actions, daten-schwungrad, messlauf, model-promotion, precache) — alle: Test alt, Code neu; dazu check:paths-Fehlalarm auf ein file://-Schema-Zitat.",
+      "fix": "Tests auf die Modulwelt geeicht (teils wortgleich vom Bauzweig), Muster verlangt einen echten Pfad hinter dem file-Schema, Foundation-Suite-Digests nachgezogen. Suite 3040/3040."
+    },
+    {
+      "prio": "P2",
+      "was": "check:security auf BEIDEN Zweigen dauerhaft rot: verbot die zwei am 15.08. bewusst angelegten GitHub-Actions (Codeberg-Spiegel, Qualitaets-Messlauf) und hielt die absichtlich kaputte Geheimnis-Spaeher-Probe fuer ein Leck.",
+      "fix": "Actions-Regel als Erlaubnisliste (genau diese zwei, Begruendung im Code), Probe entsteht erst zur Laufzeit (join) und bleibt scharf (28/28)."
+    },
+    {
+      "prio": "P3",
+      "was": "check:guidelines auf design-v11 dauerhaft rot (Vor-Diaet-Spiegel, assets-Kopien, Memory_Bank 922).",
+      "fix": "Vor-Diaet-Ratchets datiert eingefroren, erzeugte assets/-Kopien ausgenommen (check:assets beweist Byte-Gleichheit), Memory_Bank zweite Archiv-Runde (922 -> 677). Tor schliesst wieder."
+    }
+  ],
+  "neuerWaechter": {
+    "name": "Nutzerreise-Waechter (Probe-Nutzer Nr. 29, dichter Takt)",
+    "takt": "alle 15 Minuten (Betreiber-Fenster 10-15 min), Start Boot+3min, Doppel-Lauf-Bremse",
+    "schritte": [
+      "Startseite (P0)",
+      "Ein-Buendel-Vertrag sw.js beider Domains (P1)",
+      "Nachlade-Kette live als ES-Module geparst — data:-Import mit Link-Panzerung, nichts wird ausgefuehrt (P1)",
+      "API-Kernpfade gesund UND fail-closed (P1)",
+      "Auth-Rundlauf",
+      "Chat ueber die Bruecke mit TTFT",
+      "Speicher mit Ruecklese-Probe"
+    ],
+    "anschluss": "start.js -> starteNutzerreiseTakt; Herzschlag/Eskalation ueber bestehende Kennung synthetic-user-watchdog; Registry Nr. 29 erwartet Lauf binnen 30 min; Verlauf in watchdog/nutzerreise-laeufe (Ringpuffer 500)",
+    "tuev": "11/11 — jede Zusage kaputt UND gesund + Anschluss-Beweis; check:modul-syntax zusaetzlich mit Selbsttest und Gegenprobe am echten Bruch",
+    "livebeweis": "Erster Lauf fand sofort einen eigenen Fehler (chat-stream wohnt unter /assets/ai/, 404-Fehlalarm, Ampel rot binnen 3 min) — Anschluss damit live bewiesen; nach Pfad-Fix: 'alle 15 Minuten - vor 11 min - erfolgreich', 64/64 gruen."
+  },
+  "benchmarks": {
+    "methodik": "npm run measure:vitals — 5 Laeufe, echtes Chrome headless, p75",
+    "warm": {
+      "ttfb_ms": 50,
+      "lcp_ms": 156,
+      "inp_ms": 56,
+      "cls": 0,
+      "pageWeight_kb": 71,
+      "ergebnis": "alle Budgets eingehalten"
+    },
+    "kalt": {
+      "ttfb_ms": 195,
+      "lcp_ms": 3348,
+      "inp_ms": 64,
+      "cls": 0,
+      "pageWeight_kb": 303,
+      "ergebnis": "LCP-Budget 1500 und Gewicht 300 gerissen — Erstbesucher-Weiche, Optimierung beruehrt die gelockte Startseite (offene Betreiber-Entscheidung)"
+    },
+    "chat": "Antwort mit Tabelle+Quellen in ~5 s; Stopp nach 6 s greift sofort; Code-Auftrag streamt und rendert mit Syntaxfarben"
+  },
+  "verifikationLive": [
+    "smejj.com + api.smejj.com: sw v698 byte-identisch, code-flaeche v57 parst (node --check)",
+    "/code: personalisierte Begruessung, Auftrag beantwortet, 0 Konsolenfehler",
+    "Vorlesen: an -> Stopp -> wieder an (speechSynthesis gemessen)",
+    "Ampel: 64/64 Laeuft, Nr. 29 'alle 15 Minuten - erfolgreich'",
+    "Suite design-v11: 3040/3040; Bauzweig check:unit-server 66 Dateien gruen; check:all gruen nach Capsule-Anlage",
+    "Mobile 375px: kein Querscrollen; Reload: Verlauf vollstaendig, Sitzung haelt"
+  ],
+  "offeneEntscheidungenFuerDenBetreiber": [
+    "Kalt-LCP 3,3 s + 303 KB: Optimierung der Erstbesucher-Weiche beruehrt Start-Design-Lock — Freigabe noetig.",
+    "Missbrauchs-Wache 05:49: anmelde-sturm von 88.247.211.225 (46 Anfragen/10 min) — Wache sperrt nicht selbst, Entscheidung offen.",
+    "Markdown-Ueberschriften erscheinen erst nach Stream-Ende gerendert (P3, Kosmetik).",
+    "Arbeitsflaechen-Titel klebt Tabellenzellen zusammen ('EigenschaftFakt...', P3).",
+    "design-v11 traegt weiter die Vor-Diaet-Spiegel — Buendel-Abgleich auf diesen Zweig steht aus."
+  ],
+  "commits": {
+    "frontend": [
+      "f5d8d78 code-flaeche-Fix sw v695",
+      "db94d70 Vorlesen b41 v696",
+      "55a4136 Haertung b42 v697",
+      "0063863 Verdichtung b43 v698"
+    ],
+    "bauzweig": [
+      "12d4d50f code-Fix + check:modul-syntax",
+      "2ca9dd35 Spiegel b41/v696",
+      "3b6d9e3e Nutzerreise-Waechter + b43/v698",
+      "8d2b0687 Pfad-Fix ai/",
+      "3817f2bc security-Eichung"
+    ],
+    "designV11": [
+      "f1e71750 Sync-Stand",
+      "465ec912 8 Tests + Precache",
+      "2b80371e Vorlesen",
+      "danach Eichungen + diese Capsule"
+    ]
+  },
+  "status": "abgeschlossen",
+  "nachtragKaltstart": {
+    "freigabe": "Betreiber 2026-08-25 woertlich 'Ja, freigegeben' (Design-Lock index.html)",
+    "befund": "Kalte Renderkette lief in SERIE: Dokument -> auth-gate-frueh.js (blockierend) -> ERST DANACH start-styles.css (blockierend) -> Render. Zwei volle blockierende Runden vor dem LCP.",
+    "umbau": "Fruehes Tor INLINE im head (CSP per sha256-Hash, Inline-Rumpf byte-gleich public/auth-gate-frueh.js, Test erzwingt beides) + start-styles per preload sofort. sw v699, Frontend 60e784b, Bauzweig a1669040 (index-Baseline 992 -> 1015 mit Freigabe), design-v11 70aae2c6.",
+    "beweis": "Wasserfall nachher: CSS ist der ERSTE Request, alle Nebenressourcen parallel, kein Gate-Request mehr; Abgemeldete landen weiter auf /willkommen.html (0 Konsolenfehler), Angemeldete laden die App ohne CSP-Block; index.html + sw.js byte-identisch auf beiden Domains.",
+    "offen": "p75-Nachweis unter 1500 ms steht aus — das Betreiber-Netz stoerte waehrend der Nachmessung massiv (TTFB 470-1223 ms statt 93-205 ms am Vormittag; bester kalter Lauf schon 1032 ms). Nr. 63 misst morgen 6:15 unter stabilem Netz."
+  },
+  "nachtragIphonePwaRunde": {
+    "anlass": "Betreiber testete live auf dem iPhone (PWA) und meldete mit Screenshots: Sprachwelle stumm/haengend, 'Sanduhr' vorgelesen, Icons verrutscht, Chip ragt ueber das Glas, Modell-Menue zeigt nur 'Cline-Key verbinden'.",
+    "fixes": [
+      {
+        "sw": "v700",
+        "was": "Ohr-Solo-Modus: taube SpeechRecognition (sofortiges onend ohne onstart/onerror, Google-Dienst im Netz blockiert) faellt aufs eigene Ohr zurueck (Pegel-Automat + Groq); Waechter 6/6"
+      },
+      {
+        "sw": "v701",
+        "was": "viewport-fit=cover auf allen 15 Einstiegsseiten — env(safe-area-inset-*) war in der iPhone-PWA 0, Layout klebte unter Notch/Statusleiste"
+      },
+      {
+        "sw": "v702",
+        "was": "Schnellspur: clearThinkingState VOR dem Geraete-Stream (data-thinking blieb: keine Leiste, kein Vorlesen, Voice 'keine Antwort', Verlauf/Markdown kaputt) + Echtzeit-Woerter schlagzeilen/presse/zeitung an den Server (Geraetemodell erfand Nachrichten von '16. Mai 2024')"
+      },
+      {
+        "sw": "v703",
+        "was": "Modell-Chip-Ellipsis + wrap-Netz als 15. Buendel-Quelle mobil-composer.css (Chip 'smejj 1.0 (Gruendlich)' ragte uebers Glas; Vorab-Beweis am 390px-Headless-Abbild, live bestaetigt) + cline-model-menu nimmt das App-Token ZUERST (Cookie-Weg zu api.smejj.com ist in der PWA Third-Party-blockiert -> Menue hielt den Angemeldeten fuer schluessellos)"
+      }
+    ],
+    "offen": [
+      "TTS liest Emoji-Namen vor ('Sanduhr') — sanitizeForSpeech um Emoji-Strip ergaenzen (P3)",
+      "iPhone-Praxis-Neutest des Betreibers nach App-Neustart (SW-Update auf v703 greift beim naechsten Oeffnen)",
+      "Startseitengewicht steht EXAKT am 300-KB-Budget — naechster Zuwachs reisst; Diaet-Kandidat einplanen"
+    ],
+    "benchmarksNachV703": {
+      "kalt": {
+        "ttfb": 178,
+        "lcp": 476,
+        "inp": 56,
+        "cls": 0,
+        "kb": 300
+      },
+      "warm": {
+        "ttfb": 63,
+        "lcp": 192,
+        "inp": 64,
+        "cls": 0,
+        "kb": 73
+      },
+      "ergebnis": "alle Budgets eingehalten"
+    },
+    "beweise": [
+      "sw v703 + /assets/start-styles.css byte-identisch auf smejj.com und api.smejj.com",
+      "390px-Abbild: langer Chip bleibt 88px mit Ellipsis, Zeile intakt",
+      "Desktop-Voice: Izmir-Wetterfrage beantwortet+gesprochen; Schlagzeilen-Frage nach Fix an Server statt Geraetemodell",
+      "Ampel 64 / 59 Laeuft / 0 rot (5 grau = frisch nach Neustart)"
+    ]
+  },
+  "nachtragPoliturRunde": {
+    "freigabe": "Betreiber 25.08. woertlich: 'Ich gebe dir alle Rechte. nach hundert Prozent fertig, lass nicht offen ... professionell ... PWA, iOS, Android'",
+    "deploys": {
+      "v704": "TTS ohne Emoji-Namen (kein 'Sanduhr' mehr; Probe kaputt+gesund); Manifest mit description, 3 ECHTEN Shortcuts (pwa-schnellstart.js setzt ?neu=1/?sprechen=1 wirklich um — ?sprechen=1 live bewiesen: Overlay offen, Parameter geputzt) und 2 Install-Screenshots aus echten 390px-Abbildern; Marken-Kaskade inkl. 30 Sprachseiten",
+      "v705": "Such-Diaet: search.js (5,7 KB gz) laedt erst bei Bedarf (such-nachladen.js, einmaliger Cmd+K-Fruehfaenger — live bewiesen: 1. Druck oeffnet, 2. Druck schliesst) — heilt den v704-Budgetriss 302 KB",
+      "v706": "kanonisches Buendel aus den Quellen (mobil-composer als Quelle VOR der V11-Schicht) ersetzt den Hand-Anhang — alle Welten byte-gleich"
+    },
+    "anmeldeSturmEntscheidung": "KEINE IP-Sperre: einmaliger 46er-Burst einer Consumer-ISP-IP; Anmelde-Routen sind bereits gedrosselt (Login 8/min, Registrierung 5/h, Reset 5/15min je IP) — der Sturm lief in 429er; Missbrauchs-Wache beobachtet weiter und meldet Wiederholungen.",
+    "zweigabgleich": "design-v11 vollstaendig auf die Live-Welt gezogen: 7 fehlende Module nachgeholt, 12 veraltete Tests auf die Live-Architektur geeicht, check:modul-syntax auch hier; check:all EXIT 0, Suite 3048/3048; Bauzweig check:frontend 464/464.",
+    "endBenchmarksV706": {
+      "kalt": {
+        "ttfb": 161,
+        "lcp": 388,
+        "inp": 40,
+        "cls": 0,
+        "kb": 297
+      },
+      "warm": {
+        "ttfb": 41,
+        "lcp": 152,
+        "inp": 48,
+        "cls": 0,
+        "kb": 73
+      },
+      "ergebnis": "alle Budgets eingehalten, 3 KB Gewichtspuffer"
+    },
+    "endBeweise": [
+      "sw v706 + start-styles byte-identisch auf smejj.com und api.smejj.com",
+      "Ampel 64/64 laeuft, 0 rot, 0 aus",
+      "?sprechen=1-Shortcut oeffnet den Sprachmodus (headless bewiesen)",
+      "Cmd+K: 1. Druck oeffnet via Lader, 2. Druck schliesst — kein Doppel-Toggle"
+    ],
+    "verbleibendNurBetreiber": [
+      "Xcode installieren + sudo xcode-select fuer echte iOS-Simulator-Laeufe",
+      "iPhone-Praxistest nach App-Neustart (PWA zieht v706 beim naechsten Oeffnen)"
+    ]
+  },
+  "nachtragSchlussrunde": {
+    "freigabe": "Betreiber 25.08. woertlich: 'Ich gebe dir alle Rechte nach hundert Prozent fertig. Lass nicht offen.'",
+    "deploys": {
+      "v707": "PWA-Selbst-Aktualisierung: controllerchange laedt genau einmal neu (ausser waehrend Antwort/Eingabe) — der Handgriff 'App wegwischen' entfaellt dauerhaft",
+      "bruecke v144": "Sprachmodus-Systemregel in der Bruecke (die preferences.voiceMode bisher komplett ignorierte): kurz 1-3 Saetze, gespraechig, keine Listen/URLs/Emojis — auch fuer die Wetter-Schnellspur; Deploy-Falle dokumentiert: buildChatBridgeArtifact() SCHREIBT das Bundle nicht, nur der CLI-Aufruf; Weg = Bundle -> frontend assets/chat-bridge.js -> restartService NACH raw-Verfuegbarkeit",
+      "v708": "dieselbe Sprachregel im Geraete-Schnellspur-Prompt; Hoerbeweis: Anzeige-Emoji des 3B-Modells wird von sanitizeForSpeech NICHT gesprochen"
+    },
+    "endzustand": {
+      "byteIdentisch": "sw v708 + ai/chat-stream.js auf smejj.com und api.smejj.com (Hash)",
+      "bruecke": "20260825-v144-sprachmodus-regel live (/health)",
+      "budgets": "kalt TTFB 110 / LCP 352 / 298 KB; warm LCP 212 — alle gruen",
+      "sperren": "Start/Security(+chat-bridge)/Abo/Einwilligung/Modell-Menue/Auslieferung frisch gestempelt, beide Zweige",
+      "einzigVerbleibend": "Xcode-Installation fuer echte iOS-Simulator-Laeufe (braucht Betreiber-Passwort) + sein Praxis-Neutest"
+    }
+  },
+  "nachtragSprachwelleIphone": {
+    "datum": "2026-08-25 abends",
+    "auftrag": "Sprachwelle auf dem iPhone fertig machen — Betreiber: 'Sprachwelle funktioniert wieder nicht' (Desktop-Tests waren gruen)",
+    "wurzel": "openVoiceMode() ging bei fehlendem RecognitionCtor (iOS/Safari IMMER) sofort in enterVoiceFallback — der Ohr-Solo-Modus war nur an zwei spaeteren Stellen verdrahtet (voiceFailStreak>=3, start-catch), die iOS nie erreicht.",
+    "fixes": [
+      "Fix 1 (composer-tools.js, netto 0 Zeilen, bleibt exakt 800): im !RecognitionCtor-Zweig ZUERST ohrSolo.aktivieren(); nur bei false (kein Mikro/Ohr) der Tipp-Fallback.",
+      "Fix 2 (voice-ohr-solo.js): nach dem Erzeugen des AudioContext await ctx.resume() — iOS startet 'suspended', der Analyser lieferte sonst Pegel 0 bis ins 45-s-Zeitlimit; bleibt er suspended, weckt ein einmaliger touchend/click-Listener nach.",
+      "Fix 3 (Beweis): headless Chrome mit Fake-Mikrofon (WAV per say), RecognitionCtor geloescht, 390x844 — kaputte Probe (alter Stand) faellt exakt in den Tipp-Fallback, gesunde Probe geht in Ohr-Solo, erkennt das Sprech-Ende und POSTet an /api/voice/transcribe. LIVE gegen smejj.com v709 wiederholt: POST -> 401 (Kette steht bis zur Auth; curl-Gegenprobe der Bridge: 403)."
+    ],
+    "messfalle": "Chrome headless: --use-file-for-fake-audio-capture liefert dem Analyser NUR mit --disable-features=AudioServiceOutOfProcess,AudioServiceSandbox echte Pegel (sonst exakt 0 bei laufendem Kontext und lebendiger Spur); %noloop ist tueckisch, weil die Datei schon vor dem getUserMedia abgespielt sein kann. Und die PWA-Selbst-Aktualisierung (v707) laedt beim SW-Erstinstall mitten in der Probe neu — danach erneut klicken.",
+    "deploys": {
+      "frontend": [
+        "e1210cb Fix sw v709 / app b98 / werkzeuge-8 / ohr-solo v2",
+        "187b9d5 chat-bridge-strom.js auf v144-Stand (Byte-Gleichheit mit api)"
+      ],
+      "designV11": [
+        "c0215c6a Fix + Tests (kaputt+gesund gegen HEAD~ bewiesen), start-lock neu; Suite 3050/3050, check:all EXIT 0"
+      ],
+      "bauzweig": [
+        "37583343 Spiegel + Altbestand geheilt; Suite 2688/2688, check:all EXIT 0; Control neu gebaut (gestartetAm 17:44:09Z), sha256 beider Domains identisch (sw/index/app/composer-tools/voice-ohr-solo), FRAGE_WERKZEUG-Marker beweist neuen Stand auf api.smejj.com"
+      ]
+    },
+    "altbestandBauzweig": [
+      "chat-bridge-strom.js hinkte hinter chat-bridge.js v144 (FRAGE_WERKZEUG fehlte) — die GEBUENDELTE Schnellspur warf und fiel auf streamModel 503; Projektwissen-Test dauerrot. Live-Bridge war NICHT betroffen (Bundle kam von design-v11, /health zeigt 918 Chunks + fastLaneEnabled).",
+      "bilder/websuche/evolution/voice-tts bewusst NICHT angeglichen: Zweige echt divergiert (Bauzweig-bilder hat Foto-Geduld, design-v11 hat Motiv-Fixes) — pauschales Kopieren waere Rueckbau (Rote Liste). Offen: bewusste Zusammenfuehrung.",
+      "check:admin-konsole geeicht: wertlose Attribute (<span data-x>) galten nicht als gezeichnet (6 Fehlalarme Stage 9/12/13+Cockpit), Regeln-Seite (bewusst serverlos) per Erlaubnisliste, Sandbox kennt jetzt Stage 10-13 + Cockpit; Selbstproben kaputt+gesund erweitert.",
+      "favicon-/abo-/einwilligung-lock: v701-Spiegelung (viewport-fit=cover) hatte die Stempel vergessen — nachgeholt (Diff je nur die Viewport-Zeile)."
+    ],
+    "offen": [
+      "Echter iPhone-Sprechtest durch den Betreiber (Web-Speech gibt es headless nicht; der Solo-Weg ist bewiesen, das echte Mikrofon-Erlebnis nicht).",
+      "Codeberg-Push scheiterte lokal (kein SSH-Schluessel geladen) — Spiegel laeuft ueber die freigegebene GitHub-Action.",
+      "Bewusste Zusammenfuehrung der divergierten Bridge-Module (bilder/websuche/evolution/voice-tts) zwischen den Zweigen."
+    ]
+  },
+  "nachtragSimulatorAZ": {
+    "datum": "2026-08-26 nachts",
+    "auftrag": "Betreiber: 'Ich gebe dir alle Rechte. Mit zwei Simulatoren komplett von A bis Z testen, vollautomatisch, ohne Rueckfragen.' Kein Xcode auf dem Mac -> zwei emulierte iOS-Geraete (iPhone 390x844, iPad 820x1180; RecognitionCtor geloescht, Mobile-UA, Touch, Fake-Mikrofon) in echtem Chrome GEGEN DAS ECHTE LIVE-SYSTEM.",
+    "reise": "willkommen.html (Erstbesucher-Weiche) -> Anmelden-Knopf -> /auth/login/ -> E-Mail + Magic-Link-Knopf -> echte Mail aus Gmail des Betreibers -> verify -> Sitzung -> getippte Chat-Frage mit gestreamter Antwort -> Sprachwelle: Ohr-Solo hoert, Sprech-Ende, POST transcribe 200 ('Wie spät ist es?'), Antwort, Premium-TTS. iPhone 13/13 UND iPad 13/13 BESTANDEN; Screenshots + JSON in Session-Scratchpad reise/.",
+    "neuerKernbefund": {
+      "was": "voice-ear.js schickte den Transcribe-Upload OHNE Authorization-Header — die Bruecke bindet /api/voice/transcribe aber an die Anmeldung (kein Token = 401). Ohne Header bekam auch ein ANGEMELDETER Nutzer NIE ein Transkript: fuenfmal 401 trotz frischer Magic-Link-Sitzung, live gemessen.",
+      "warumUnbemerkt": "Im Web-Speech-Duett fail-safe unsichtbar — der Browser-Text gewann still, das Ohr lieferte einfach ''. Erst der Ohr-Solo-Modus (iOS, seit v709) machte den 401 fatal. Das eigentliche v709-Fix-Ziel (Ohr-Solo statt Tipp-Fallback) war korrekt, ABER ohne diesen zweiten Fix haette das iPhone weiter geschwiegen.",
+      "fix": "authHeaders wie in voice-premium-tts (localStorage smejj.auth.accessToken.v1, Schluessel bewusst dupliziert), sw v710. Waechter 6a-6d in tests/voice-ear.test.mjs: Quelltext + Verhaltensprobe (Token->Bearer-Kopf, ohne Token->kein Kopf), kaputte Probe gegen HEAD~ bewiesen. Frontend 41eedd0, design-v11 08950e95, Bauzweig 06afa5b9 + Control-Neubau (gestartetAm 22:33:06Z); 7 Dateien beider Domains sha256-identisch."
+    },
+    "messfallenSimulator": [
+      "Erste Fuehrung (Tour) liegt ueber dem Composer und frisst den Sende-Klick des frischen Kontos — [data-fuehrung=aus] klicken wie ein echter Nutzer.",
+      "PWA-Selbst-Update beim SW-Erstinstall reloadet MITTEN im Test (Overlay zu, window-Spuren weg) — erst SW-Ruhe abwarten, dann selbst reloaden, dann testen.",
+      "Magic-Link-Mails: NICHT Spam, NICHT Zustellverzoegerung — Gmails SUCHINDEX hinkt Minuten hinterher (Original-Header: 'Nach 0 Sekunden zugestellt'; in:spam leer). Wer per Gmail-SUCHE auf frische Mails wartet, misst die Indexlatenz, nicht die Zustellung; Link ohne Handoff strandet auf api.smejj.com/profile (dann als Nutzer zu smejj.com wechseln, Cookie-Weg holt das Token same-site).",
+      "Verlauf des Kontos fuellt #startLog beim Login — Antwort-Asserts brauchen Zaehlung vorher/nachher, sonst zaehlt alte Historie als Antwort."
+    ],
+    "randbefundP3": "Schnellspur-Antwort auf 'Was ist smejj.com?' halluzinierte 'Plattform fuer intelligente Immobilienbewertung' — das RAG-Projektwissen greift bei dieser Selbst-Frage nicht (Anreicherung zielt auf Infrastrukturfragen). Offen fuer eine eigene Runde.",
+    "offen": [
+      "Echter iPhone-Sprechtest des Betreibers bleibt der letzte Punkt (Simulator deckt kein echtes Mikrofon-Erlebnis ab)."
+    ],
+    "mailZustellbarkeitGeprueft20260826": {
+      "befund": "Spam-Verdacht WIDERLEGT: in:spam subject:Anmeldelink = 0 Treffer; Original-Header der 01:03-Mail zeigt Zustellung nach 0 Sekunden.",
+      "versandweg": "Weiterhin smtp.gmail.com per ESMTPSA (Return-Path smejjcom@gmail.com, eingeliefert von 43.166.240.69) — die Brevo-Umstellung (docs/deployment/BREVO_MAIL_UMSTELLUNG.md, Stand 13.08.) ist NICHT ausgerollt.",
+      "echtesRestrisiko": "From smejj.com ohne DMARC-Alignment (SPF enthaelt kein Brevo/kein alignter Versender fuer From, DKIM signiert bei fremden Empfaengern d=gmail.com, DMARC p=none). An die eigene Gmail zugestellt immer ok; bei FREMDEN Providern (Outlook/Yahoo/GMX) Spam-Risiko und keine Verschaerfung auf p=quarantine moeglich.",
+      "naechsterSchritt": "Brevo-Ausrollen erfordert BETREIBER-Schritte (Konto anlegen, DNS bei Spaceship: Brevo-TXT + 2 DKIM + SPF um include:spf.brevo.com ERGAENZEN, dann 5 Env-Werte in Zeabur) — Anleitung liegt fertig in docs/deployment/BREVO_MAIL_UMSTELLUNG.md."
+    }
+  },
+  "nachtragSelbstbildRag": {
+    "datum": "2026-08-26 nachts, zweite Runde",
+    "auftrag": "Betreiber-Auswahl: 'Halluzination fixen' — 'Was ist smejj.com?' antwortete 'Plattform fuer intelligente Immobilienbewertung'.",
+    "wurzel": "Die Frage erreichte nackt 5,6 Punkte (Relevanzschwelle 20, bewusst unangetastet) — Platz 1 war eine Mail-Doku; die Schnellspur riet frei.",
+    "fix": "Neue REGELKLASSE 'selbstbild' in control-server/src/rag/regelfragen.js (Traeger Project_Goals.md/Mission): Identitaets-Frageform MIT smejj-/Plattform-Bezug in einem Muster; gemessen 5,6 -> 60,4, Platz 1 Project_Goals#Mission. Gegenproben unveraendert ohne Kontext: 'Wie viele Nutzer...' (Halluzinationsfall), 'Worum geht es?' ohne Bezug, Befehlsformen, Memory-Kollision ('Was ist das Memory-System von smejj.com?' -> memory).",
+    "beweise": [
+      "Tests kaputt+gesund (Altstand erkennt die Selbstfrage nicht, per git show bewiesen); design-v11 Suite 3053/3053, Bauzweig 2691/2691, check:all beidseitig EXIT 0.",
+      "Ketten-Beweis am echten Buendel: Kontextblock + Missionsquelle + 'Coding OS' erreichen das Modell (Stub sah den System-Prompt).",
+      "LIVE im echten Klickpfad (iPhone-Emulation, frischer Magic-Link-Login): Antwort jetzt 'smejj.com ist eine KI- und Code-Assistent-Plattform...' mit echten Funktionen — keine Immobilien-Halluzination. Screenshot selbstbild-live.png."
+    ],
+    "deploys": "Bridge v145-selbstbild-rag live (Bundle -> Frontend main 0d2797b -> restartService, /health im ersten Anlauf); design-v11 0e0483f8, Bauzweig 3b4ee87e + Control-Neubau (23:25:40Z). Architektur-Notiz: smejj.com/assets/chat-bridge.js ist das BUNDLE (Bridge-Startdatei via raw.github), api.smejj.com/assets/chat-bridge.js die QUELLE — beide v145, DIFF gewollt; der Buendel-Vertrag misst sw.js.",
+    "waechterBewaehrt": "Nutzerreise-Waechter Nr. 29 meldete um 01:04 korrekt die reale sw-Abweichung (v710/v709) mitten im Deploy-Fenster der Ohr-Runde — seit dem Control-Neubau 01:33 geheilt; genau dafuer ist er da."
+  },
+  "nachtragTaubwacheDiktatOx": {
+    "datum": "2026-08-26 frueh (dritte Nachtrunde)",
+    "betreiberBefunde": [
+      "Sprachwelle Desktop-Chrome: haengt ewig in 'Ich höre zu ...' — Web-Speech war STILL taub (weder Ergebnis noch no-speech noch Ende); der alte Schutz zaehlte nur Sofort-Enden <1,5 s.",
+      "Diktat-Mikrofon: leuchtet rot, schreibt nie — reines Web-Speech ohne Rueckfallebene.",
+      "Code-Bereich: Aktionsleisten-Icons gestapelt (Screenshots 03:01-03:03)."
+    ],
+    "fixesV711": [
+      "Taubheits-Wache (voice-ohr-solo.bewache): 12-s-Haenger bricht ab; Ende ohne Ergebnis UND ohne Chromes ehrliches no-speech zaehlt; zwei taube Runden -> Ohr-Solo. SCHWEIGEN (no-speech) bleibt gesund. Tests kaputt+gesund.",
+      "Diktat-Ohr: eigenes Server-Ohr nimmt parallel auf; liefert Web-Speech bis zum Stopp-Klick nichts, schreibt das Ohr-Transkript ins Feld (fail-safe, serverOhr optional)."
+    ],
+    "livebeweisTaub": "taub-desktop-livetest gegen smejj.com v711 mit still-tauber Erkennungs-Attrappe: Diktat schreibt 'Wie spät ist es?' nach Stopp; Sprachwelle schaltet auf Ohr-Solo, Transkript 200, KEIN Tipp-Fallback. 5/5 OK.",
+    "codeLeiste": "Am aktuellen Stand in 4 Livemessungen (Desktop 1280/560, frisch gesendet, Verlauf geoeffnet) NICHT reproduzierbar — Leiste ueberall gesunde Reihe (z. B. 520x28). Betreiber-Screenshots fielen exakt ins naechtliche Deploy-Fenster; wahrscheinlichste Ursache Misch-Cache (der Waechter Nr. 29 meldete zeitgleich Buendel-Abweichung). sw v711/v712 erzwingen frische Dateien. Falls es nach Hard-Reload wieder auftritt: Fenstermass + Screenshot noetig. Messbefund: Log wird erst beim SENDEN in die Code-Flaeche adoptiert — blosser View-Wechsel laesst ihn unsichtbar in #start (0x0).",
+    "oxAlphaV146": {
+      "auftrag": "Betreiber schriftlich: 'ox alpha an 3. Stelle (1. Auto, 2. smejj 1.0, 3. Ox Alpha)'",
+      "bau": "Registry ox-alpha (provider openrouter, Slug stealth/ox-alpha laut openrouter.ai — Stealth-Preview, 1,05M Kontext, in der Preview $0/M, keine neue Kostenposition), api-only wie Kimi K3, fail-closed hinter SMEJJ_OX_ALPHA_ENABLED; Key SMEJJ_LLM_OX_ALPHA_API_KEY oder Fallback SMEJJ_LLM_OPENROUTER_API_KEY. Menue code-modell-menue Nr. 3 (nichts entfernt), Bruecke v146: Schnellspur gibt \\box\\b ab.",
+      "livebeweis": "POST /api/agent mit model 'Ox Alpha': x-smejj-bridge multi-model-router (Schnellspur gibt ab), x-smejj-model-fallback true + backend zhipu:glm-5.2 (ehrlicher Fallback ohne Key). Menue-DOM live: Auto, smejj 1.0(aktiv), Ox Alpha, Cline-Key — Position 3 bestaetigt.",
+      "betreiberSchritt": "API-Keys darf der Agent nicht anfassen (Sicherheitsregel). Zeabur -> smejj-control -> Variables: SMEJJ_OX_ALPHA_ENABLED=1 und SMEJJ_LLM_OPENROUTER_API_KEY=<Key von openrouter.ai/settings/keys> setzen, Redeploy; danach zeigt derselbe curl-Test backend openrouter und fallback false."
+    },
+    "werkzeuge": "Sitzungs-Token-Kette per curl (verify -> Cookie -> session-token) beendet die Magic-Link-Warterei fuer Livetests; Token-Seed macht Messlaeufe in ~60 s moeglich.",
+    "deploys": "Frontend fb76b19+4a12f34 (sw v711->v712), design-v11 a6f08a5a..c64adafb, Bauzweig 19524b05..40d3b616, Bruecke v146, Control-Neubauten 00:44Z/01:03Z; sw v712 byte-identisch auf beiden Domains."
+  }
+}

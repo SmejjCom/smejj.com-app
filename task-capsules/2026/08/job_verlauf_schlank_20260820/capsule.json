@@ -1,0 +1,59 @@
+{
+  "jobId": "job_verlauf_schlank_20260820",
+  "datum": "2026-08-20",
+  "titel": "Verlauf schlank laden — und die Leerabrufe abstellen",
+  "auftrag": "bau das jetzt, mit Live-Test",
+  "tag": "stand-2026-08-20-verlauf-schlank",
+  "commit": "bb7c8e1",
+  "messung": {
+    "art": "live, smejj.com, angemeldet, Vorrat smejj-shell-v635",
+    "seitengewichtKB": {
+      "vorher": 4054,
+      "nachher": 1174
+    },
+    "chatVerkehrKB": {
+      "vorher": 2500,
+      "nachher": 15
+    },
+    "einzelabrufeJeAufruf": {
+      "vorher": "14 bis 24",
+      "nachher": 0
+    },
+    "listenAbrufMs": {
+      "vorher": 12100,
+      "nachher": 2330
+    },
+    "datenstand": {
+      "chatsLokal": 100,
+      "mitNachrichten": 100,
+      "leer": 0,
+      "nachrichtenGesamt": 533
+    }
+  },
+  "schritte": [
+    "Startseite laedt nur noch die Liste, Volltext per ?id= — alter Vertrag fuer alte Clients unveraendert",
+    "Parallelsitzung: ?nurAbgleich=1 liefert nur id/updatedAt/ownerId (38 -> 15 KB)",
+    "Abgleich holt nicht mehr, was der Import ohnehin abweist (diese Arbeit)"
+  ],
+  "befund_offen": {
+    "titel": "Kontokennung: zwei Systeme — der Geraete-Sync importiert NICHTS",
+    "server": "user_158c1e609cc03bb4c36f70b7e059fbfd (sha256 email, seit 2026-08-15)",
+    "client": "user_smejjcom_gmail_com (alte Adressregel)",
+    "wirkung": "gehoertNutzer weist die eigenen Server-Chats ab, importChat gibt false; 24 Chats wurden je Seitenaufruf geholt und weggeworfen",
+    "status": "Verschwendung behoben, Ursache NICHT behoben",
+    "warum_nicht": "Angleichen importiert ~92 Chats; MAX_CHATS=100 loest pruneOld() aus und loescht vorhandene lokale Chats — Rote Liste, braucht schriftliche Freigabe"
+  },
+  "waechter": {
+    "tests": "31/31 gruen (tests/chat-sync.test.mjs)",
+    "check:start-lock": "gruen",
+    "rot_aber_fremd": [
+      "check:favicon-lock (htmlHeadReferences) — public/index.html, zuletzt d253894, Parallelsitzung",
+      "check:frontend (4 fehlende SHELL-Eintraege) — eingefuegt von 0cf06c3, Parallelsitzung"
+    ],
+    "beruehrte_dateien": [
+      "public/chat-sync.js (7 Zeilen)",
+      "tests/chat-sync.test.mjs (37 Zeilen)"
+    ]
+  },
+  "lehre": "Der Fehler war vorher genauso da — im 2,5-MB-Paket kamen dieselben Chats mit und wurden ebenso abgewiesen, nur sah es niemand. Erst die schlanke Liste machte jeden Leerabruf einzeln sichtbar. Eine Optimierung deckte einen kaputten Kernweg auf."
+}

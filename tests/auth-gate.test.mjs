@@ -3,12 +3,18 @@
 // Diese Tests sichern: Abgemeldete landen auf der Anmeldeseite, Angemeldete
 // bleiben ungestoert, oeffentliche Seiten (Auth, Rechtstexte) bleiben frei,
 // und das Gate haengt an beiden Einstiegen (App-Shell + Sprachseiten).
+// Jeder Fall bekommt einen FRISCHEN Speicher: der gemeinsame haelt die
+// Antwort fuenf Sekunden, und ein Testfall darf nicht die Antwort des
+// vorigen erben.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { readFileSync } from "node:fs";
+import { erzeugeAuthMeSpeicher } from "../public/shared/auth-me-speicher.js";
 // verifyStoredSession kam am 2026-08-04 dazu (halber Anmeldezustand).
-const { verifyStoredSession, zeigeAbgelaufenHinweis } = await import("../public/auth-gate.js");
+const { verifyStoredSession } = await import("../public/auth-gate.js");
+// holeApiTokenUeberCookie kam am 2026-08-22 dazu (zwei Schluesselbunde).
+const { holeApiTokenUeberCookie } = await import("../public/auth-gate.js");
 
 const { isPublicPath, hasSession, enforceAuthGate } = await import("../public/auth-gate.js");
 
@@ -30,7 +36,10 @@ function fakeWindow(pathname, entries = {}) {
 }
 
 test("Abgemeldete auf App-Seiten werden zur Anmeldung geleitet", () => {
-  // Standardziele ohne ?next= — der Chat ("/") ist ohnehin das Login-Ziel.
+  // Landeseite zuerst (Mockup V11 Bildschirm 1, Betreiber-Auftrag
+  // 2026-08-15): ein anonymer Besucher der WURZEL sieht die Landeseite mit
+  // Anmelden/Kostenlos-starten — nicht sofort das Login-Formular. Wer nicht
+  // weiss, was smejj ist, meldet sich auch nicht an.
   for (const path of ["/", "/index.html"]) {
     const win = fakeWindow(path);
     assert.equal(enforceAuthGate(win), true, path);
@@ -109,14 +118,17 @@ test("Kaputter Storage gilt als abgemeldet (fail-closed)", () => {
 });
 
 test("Gate haengt an App-Shell und Sprachseiten, ohne Start-Lock-Dateien", () => {
-  assert.match(dockJs, /import "\.\/auth-gate\.js\?v=\d+";/);
+  // Marke nicht woertlich (siehe unten): gleich muss sie sein, nicht "2".
+  const gateMarke = dockJs.match(/import "\.\/auth-gate\.js\?v=([a-z0-9-]+)";/)?.[1];
+  assert.ok(gateMarke, "profile-dock.js laedt das Gate ohne Marke");
   // Die Sprachseiten haengen seit dem 2026-08-04 UEBER voice-landing-signin.js
   // am Gate: das Modul importiert hasSession und entscheidet, ob der
-  // Sprachmodus oder nur ein Anmelde-Knopf gebaut wird. Dieselbe Kennung ?v=1
+  // Sprachmodus oder nur ein Anmelde-Knopf gebaut wird. Dieselbe Kennung ?v=2
   // wie ueberall sonst — zwei Kennungen waeren zwei Modulinstanzen.
-  assert.match(landingJs, /import \{ darfSprechen, buildLoginCta \} from "\.\/voice-landing-signin\.js\?v=\d+";/);
+  assert.match(landingJs, /import \{ darfSprechen, buildLoginCta \} from "\.\/voice-landing-signin\.js\?v=[a-z0-9-]+";/);
   const signinJs = fs.readFileSync("public/voice-landing-signin.js", "utf8");
-  assert.match(signinJs, /import \{ hasSession \} from "\.\/auth-gate\.js\?v=\d+";/);
+  const signinMarke = signinJs.match(/import \{ hasSession \} from "\.\/auth-gate\.js\?v=([a-z0-9-]+)";/)?.[1];
+  assert.equal(signinMarke, gateMarke, "zwei Kennungen waeren zwei Modulinstanzen");
   assert.match(gateJs, /fail-closed|Fail-closed/);
 });
 
@@ -153,7 +165,7 @@ function antwortMit(koerper, { ok = true } = {}) {
 test("ein abgelehntes Token wird entfernt und fuehrt zur Anmeldung", async () => {
   const { win, speicher } = fensterMit({ token: "altes.token", pfad: "/" });
   const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() },
+    speicher: erzeugeAuthMeSpeicher(),
     fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });
@@ -166,7 +178,7 @@ test("ein abgelehntes Token wird entfernt und fuehrt zur Anmeldung", async () =>
 test("ein gueltiges Token bleibt unangetastet und wird bei frischem Token aktualisiert", async () => {
   const { win, speicher } = fensterMit({ token: "gutes.token" });
   const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() },
+    speicher: erzeugeAuthMeSpeicher(),
     fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" }, accessToken: "frisches.token" }),
     apiOrigin: "https://control.test"
   });
@@ -179,7 +191,7 @@ test("Google- und permanente Sitzungen werden nicht eigenmaechtig abgemeldet", a
   const { win, speicher } = fensterMit({ token: "google.token" });
   speicher.set("smejj.session.v1", JSON.stringify({ authenticated: true, method: "google", permanent: true }));
   const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() },
+    speicher: erzeugeAuthMeSpeicher(),
     fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });
@@ -198,8 +210,7 @@ test("OFFLINE MELDET NIEMANDEN AB — die wichtigste Regel", async () => {
     ["kaputte Antwort", async () => ({ ok: true, json: async () => { throw new Error("kein JSON"); } })]
   ]) {
     const { win, speicher } = fensterMit({ token: "gutes.token" });
-    const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() }, fetchFn, apiOrigin: "https://control.test" });
+    const ergebnis = await verifyStoredSession(win, { speicher: erzeugeAuthMeSpeicher(), fetchFn, apiOrigin: "https://control.test" });
     assert.equal(ergebnis, "unklar", `${name}: darf kein Urteil faellen`);
     assert.equal(speicher.has("smejj.auth.accessToken.v1"), true, `${name}: Token muss bleiben`);
     assert.equal(win.location.ersetztDurch, undefined, `${name}: keine Umleitung`);
@@ -210,7 +221,7 @@ test("ohne Token wird gar nicht erst gefragt", async () => {
   let gefragt = false;
   const { win } = fensterMit({ token: "" });
   const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() },
+    speicher: erzeugeAuthMeSpeicher(),
     fetchFn: async () => { gefragt = true; return { ok: true, json: async () => ({}) }; },
     apiOrigin: "https://control.test"
   });
@@ -222,7 +233,7 @@ test("auf oeffentlichen Seiten wird nicht umgeleitet, das Token aber geraeumt", 
   // Sonst haenge eine Werbeseite in einer Schleife zur Anmeldung.
   const { win, speicher } = fensterMit({ token: "altes.token", pfad: "/de/" });
   const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() },
+    speicher: erzeugeAuthMeSpeicher(),
     fetchFn: antwortMit({ authenticated: false }),
     apiOrigin: "https://control.test"
   });
@@ -233,8 +244,10 @@ test("auf oeffentlichen Seiten wird nicht umgeleitet, das Token aber geraeumt", 
 
 test("die Pruefung blockiert das Rendern nicht", async () => {
   const quelle = readFileSync(new URL("../public/auth-gate.js", import.meta.url), "utf8");
-  assert.match(quelle, /if \(!umgeleitet\) \{\s*verifyStoredSession\(window\)[\s\S]{0,80}\.catch/,
+  assert.match(quelle, /if \(!umgeleitet\) \{\s*\n\s*verifyStoredSession\(window\)\s*\n\s*\.catch/,
     "sie laeuft nebenher und nur, wenn die Seite bleibt");
+  assert.match(quelle, /\.then\(\(\) => holeApiTokenUeberCookie\(window\)\)/,
+    "danach wird das Chat-Token nachgezogen — ebenfalls nebenher");
   assert.ok(!/await verifyStoredSession/.test(quelle.split("\n").at(-6) || ""),
     "kein await auf Modulebene");
 });
@@ -258,7 +271,7 @@ test("die Anmeldeseite nennt den Grund", async () => {
 test("ein abgelaufenes Token auf einer tiefen Seite merkt sich das Ziel", async () => {
   const { win } = fensterMit({ token: "altes.token", pfad: "/verlauf" });
   const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() },
+    speicher: erzeugeAuthMeSpeicher(),
     fetchFn: antwortMit({ authenticated: false, user: null }),
     apiOrigin: "https://control.test"
   });
@@ -301,69 +314,120 @@ test("der Hinweis erscheint in der Sprache des Nutzers, nicht auf Deutsch", () =
     "die Sprache muss VOR der Meldung geladen sein");
 });
 
-// ---------------------------------------------------------------------------
-// 2026-08-15 — Dauerhaft angemeldet bleiben, aber nicht schweigen.
+
+// --- Die zwei Schluesselbunde --------------------------------------------------
 //
-// Befund am Konto des Betreibers: Der Server sagte eindeutig
-// `authenticated: false`, die App zeigte trotzdem die volle Oberflaeche. Er
-// war ueberzeugt, angemeldet zu sein; erst eine scheiternde Anfrage brachte es
-// heraus, die Suche danach kostete eine Stunde.
-//
-// Die Freigabe "dauerhafter Google Login" (9a46b01) bleibt: es wird NICHT
-// abgemeldet und NICHT umgeleitet. Neu ist nur der sichtbare Hinweis.
+// Befund 2026-08-22, im angemeldeten Chrome des Betreibers live gemessen: der
+// Chat antwortete "Bitte zuerst anmelden und Cline unter Einstellungen ->
+// Modelle verbinden" und schickte KEINE Anfrage an den Server. Die Anmeldung
+// war in Ordnung — das dauerhafte Token lieferte an /api/auth/me sauber
+// authenticated=true. Nur las der Chat aus einem ANDEREN Fach:
+// sessionStorage["smejj.apiToken.v1"], das mit dem Browserfenster stirbt.
+// Diese Tests halten fest, dass das Gate beide Faecher fuellt.
 // ---------------------------------------------------------------------------
 
-test("dauerhafte Sitzung bleibt — aber der Hinweis erscheint", async () => {
-  const { win, speicher } = fensterMit({ token: "google.token" });
-  speicher.set("smejj.session.v1", JSON.stringify({ authenticated: true, method: "google", permanent: true }));
-  const elemente = [];
-  win.document = bastelDokument(elemente);
-
-  const ergebnis = await verifyStoredSession(win, {
-    speicher: { hole: (laden) => laden() },
-    fetchFn: antwortMit({ authenticated: false, user: null }),
-    apiOrigin: "https://control.test"
-  });
-
-  assert.equal(ergebnis, "gueltig", "die Freigabe des Betreibers bleibt unangetastet");
-  assert.equal(speicher.has("smejj.auth.accessToken.v1"), true, "es wird nicht abgemeldet");
-  assert.equal(win.location.ersetztDurch, undefined, "es wird nicht umgeleitet");
-  assert.equal(elemente.filter((e) => e.id === "smejj-sitzung-abgelaufen").length, 1,
-    "genau EIN Hinweis — schweigen war der Fehler");
-});
-
-test("bei gueltiger Sitzung erscheint kein Hinweis", async () => {
-  const { win } = fensterMit({ token: "gutes.token" });
-  const elemente = [];
-  win.document = bastelDokument(elemente);
-  await verifyStoredSession(win, {
-    fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" } }),
-    apiOrigin: "https://control.test"
-  });
-  assert.equal(elemente.length, 0, "ein Hinweis ohne Anlass waere nur Laerm");
-});
-
-test("der Hinweis kommt nicht doppelt", () => {
-  const elemente = [];
-  const win = { document: bastelDokument(elemente), location: { pathname: "/", search: "" } };
-  assert.equal(zeigeAbgelaufenHinweis(win), true);
-  assert.equal(zeigeAbgelaufenHinweis(win), false, "zweimal derselbe Streifen waere ein Fehler");
-  assert.equal(elemente.length, 1);
-});
-
-/** Ein document, das gerade so viel kann, wie der Hinweis braucht. */
-function bastelDokument(gesammelt) {
-  const machElement = () => {
-    const el = {
-      style: { cssText: "" }, id: "", href: "", type: "", textContent: "",
-      setAttribute() {}, addEventListener() {}, remove() {},
-      append(...kinder) { el.kinder = (el.kinder || []).concat(kinder); }
-    };
-    return el;
+function fensterMitFaechern({ token = "", pfad = "/" } = {}) {
+  const dauerhaft = new Map();
+  const sitzung = new Map();
+  if (token) dauerhaft.set("smejj.auth.accessToken.v1", token);
+  const win = {
+    location: { pathname: pfad, replace(ziel) { win.location.ersetztDurch = ziel; } },
+    localStorage: {
+      getItem: (k) => dauerhaft.get(k) ?? null,
+      removeItem: (k) => dauerhaft.delete(k),
+      setItem: (k, v) => dauerhaft.set(k, v)
+    },
+    sessionStorage: {
+      getItem: (k) => sitzung.get(k) ?? null,
+      removeItem: (k) => sitzung.delete(k),
+      setItem: (k, v) => sitzung.set(k, v)
+    }
   };
-  return {
-    createElement: machElement,
-    getElementById: (id) => gesammelt.find((e) => e.id === id) || null,
-    body: { appendChild: (el) => gesammelt.push(el) }
-  };
+  return { win, dauerhaft, sitzung };
 }
+
+test("das frische Token landet AUCH im Fach, aus dem der Chat liest", async () => {
+  const { win, sitzung } = fensterMitFaechern({ token: "altes.token", pfad: "/" });
+  const ergebnis = await verifyStoredSession(win, {
+    speicher: erzeugeAuthMeSpeicher(),
+    fetchFn: antwortMit({ authenticated: true, user: { email: "a@b.c" }, accessToken: "frisch.token" }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "gueltig");
+  assert.equal(sitzung.get("smejj.apiToken.v1"), "frisch.token",
+    "ohne diesen Eintrag antwortet der Chat mit 'Bitte zuerst anmelden'");
+});
+
+test("ohne dauerhaftes Token holt der Cookie-Weg eines", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: antwortMit({ accessToken: "cookie.token" }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "geholt");
+  assert.equal(sitzung.get("smejj.apiToken.v1"), "cookie.token");
+});
+
+test("eine Absage des Servers legt KEIN Token ab", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: antwortMit({ error: "unauthorized" }, { ok: false }),
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "keine-sitzung");
+  assert.equal(sitzung.has("smejj.apiToken.v1"), false, "ein erfundenes Token waere schlimmer als keines");
+});
+
+test("ein Netzfehler laesst den Zustand, wie er ist", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: async () => { throw new Error("offline"); },
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "unklar");
+  assert.equal(sitzung.has("smejj.apiToken.v1"), false);
+});
+
+test("liegt das Token schon da, wird nicht noch einmal gefragt", async () => {
+  const { win, sitzung } = fensterMitFaechern({ pfad: "/" });
+  sitzung.set("smejj.apiToken.v1", "schon.da");
+  let gefragt = 0;
+  const ergebnis = await holeApiTokenUeberCookie(win, {
+    fetchFn: async () => { gefragt += 1; return { ok: true, json: async () => ({ accessToken: "neu" }) }; },
+    apiOrigin: "https://control.test"
+  });
+  assert.equal(ergebnis, "vorhanden");
+  assert.equal(gefragt, 0, "kein Netzaufruf im Regelfall");
+  assert.equal(sitzung.get("smejj.apiToken.v1"), "schon.da");
+});
+
+test("jeder Importeur laedt DIESELBE Marke des Gates", () => {
+  // Markenketten-Regel: eine geaenderte Datei, deren ?v= gleich bleibt, wird
+  // vom Browser nicht neu geholt — der Fix waere ausgeliefert und wirkungslos.
+  //
+  // GEAENDERT 2026-08-23: hier stand die Marke WOERTLICH ("?v=2") und musste
+  // bei jedem Bump von Hand nachgezogen werden. Beim Bump auf 3 (der Gate
+  // holt seither den Anmeldezustand ueber den gemeinsamen Speicher) war sie
+  // prompt vergessen. Jetzt wird GLEICHHEIT geprueft — derselbe Schutz, aber
+  // er kann nicht mehr veralten. Dieselbe Lehre wie beim browser-pane-Test.
+  const dateien = [
+    "../public/profile-dock.js",
+    "../public/voice-landing-signin.js",
+    "../public/assets/profile-dock.js",
+    "../public/assets/voice-landing-signin.js"
+  ];
+  const marken = new Set();
+  for (const datei of dateien) {
+    const quelle = readFileSync(new URL(datei, import.meta.url), "utf8");
+    const marke = quelle.match(/auth-gate\.js\?v=([a-z0-9-]+)/)?.[1];
+    assert.ok(marke, `${datei} laedt das Gate ohne ?v=-Marke`);
+    marken.add(marke);
+  }
+  assert.equal(marken.size, 1, `zwei Kennungen waeren zwei Modulinstanzen: ${[...marken].join(", ")}`);
+});
+
+test("der Spiegel unter /assets ist Zeichen fuer Zeichen gleich", () => {
+  const quelle = readFileSync(new URL("../public/auth-gate.js", import.meta.url), "utf8");
+  const spiegel = readFileSync(new URL("../public/assets/auth-gate.js", import.meta.url), "utf8");
+  assert.equal(spiegel, quelle, "smejj.com liefert /assets/ aus — ein alter Spiegel macht den Fix unsichtbar");
+});

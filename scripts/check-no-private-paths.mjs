@@ -11,7 +11,9 @@ const privatePathPatterns = [
   /(^|[\s"'(])\/Users\/[^"'\s)]+/,
   /(^|[\s"'(])\/home\/[^"'\s)]+/,
   /[A-Za-z]:\\Users\\/,
-  /file:\/\/\/?/i,
+  // Nur echte file-URLs mit Pfad — das blosse Schema "file://" darf als
+  // Code-Zitat in Lehrtexten vorkommen (Capsule job_modelle_medien_20260818).
+  /file:\/\/\/[^"'\s)]/i,
   /GoogleDrive-[^"'\s)]+/i,
   /Meine Ablage/i
 ];

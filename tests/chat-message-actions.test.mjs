@@ -518,14 +518,14 @@ test("Pfeiltasten laufen im Menue um", () => {
 // --- Leiste und Menue -------------------------------------------------------
 
 test("Belegung der Leiste je Rolle", () => {
-  // Live-Belegung seit der ChatGPT-Aufraeumrunde: die Nutzer-Leiste traegt nur
-  // das Menue (Kopieren/Bearbeiten wanderten hinein), die Antwort-Leiste hat
-  // Vorlesen direkt. Konsolidierung 24.08.: Test folgt der ausgelieferten App.
   const user = barSpecFor("user").map((spec) => spec.act);
-  assert.deepEqual(user, ["menu"], "Bearbeiten bleibt — im Menue (ChatGPT hat es im Mai 2026 ganz entfernt)");
+  assert.deepEqual(user, ["menu"], "eigene Nachrichten: ruhige Zeile, alles im Menue");
 
+  // Betreiber 2026-08-16, Runde 2 (ZCode-Abgleich, ersetzt den
+  // Drei-Punkte-Entscheid vom selben Tag): Antworten zeigen wie ZCode
+  // Kopieren + Daumen direkt, das Menue bleibt am Ende.
   const assistant = barSpecFor("assistant").map((spec) => spec.act);
-  assert.deepEqual(assistant, ["copy", "speak", "rate-up", "rate-down", "menu"]);
+  assert.deepEqual(assistant, ["copy", "speak", "rate-up", "rate-down", "menu"], "Betreiber 2026-08-16: Vorlesen direkt nach Kopieren");
   assert.equal(assistant.at(-1), "menu", "das Ueberlaufmenue steht immer am Ende");
 
   for (const spec of [...barSpecFor("user"), ...barSpecFor("assistant")]) {
@@ -538,7 +538,9 @@ test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   assert.deepEqual(user, ["copy", "edit", "fork", "remove"]);
 
   const assistant = menuItemsFor("assistant");
-  assert.deepEqual(assistant.map((item) => item.act), ["regen", "copy-plain", "fork", "remove"]);
+  // Kopieren/Daumen stehen seit dem ZCode-Abgleich sichtbar in der Leiste —
+  // im Menue nur noch, was dort NICHT steht (doppelte Wege verwirren).
+  assert.deepEqual(assistant.map((item) => item.act), ["regen", "copy-plain", "fork", "remove"], "Vorlesen sitzt sichtbar in der Leiste");
   assert.equal(assistant.at(-1).danger, true);
   assert.ok(!assistant.some((item) => item.act === "sources"), "keine Quellenliste, solange keine Quellen erfasst werden");
 });
@@ -616,9 +618,11 @@ test("die Leiste wird als Geschwister eingehaengt, nie in die Nachricht", () => 
 
 test("Leser des Nachrichtentexts sehen die Bedienelemente nicht", () => {
   assert.match(store, /querySelectorAll\(":scope > \.entry"\)/, "der Verlauf-Speicher liest nur Nachrichten");
-  // Die Erwaehnungs-Zettel ([data-smejj-erwaehnung]) gehoeren seit dem "@"-Feature
-  // mit in den Modellkontext — Bedienelemente bleiben weiter aussen vor.
-  assert.match(historyContext, /querySelectorAll\("\.entry\.user, \.entry\.assistant, \[data-smejj-erwaehnung\]"\)/, "der Modellkontext liest nur Nachrichten");
+  // Seit der "@"-Erwaehnung liest der Modellkontext zusaetzlich die
+  // unsichtbaren Erwaehnungs-Knoten ([data-smejj-erwaehnung]) — das sind
+  // Nutzerinhalte, keine Bedienelemente. Die Zusage bleibt: nur .entry-
+  // Nachrichten plus Erwaehnungs-Kontext, nie Leisten oder Knoepfe.
+  assert.match(historyContext, /querySelectorAll\("\.entry\.user, \.entry\.assistant, \[data-smejj-erwaehnung\]"\)/, "der Modellkontext liest nur Nachrichten (+ Erwaehnungs-Kontext)");
 });
 
 test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
@@ -626,17 +630,13 @@ test("der Verlauf speichert Rohtext und gibt ihn zurueck", () => {
   assert.match(store, /createdAt: String\(meta\.createdAt \|\| ""\)/);
   assert.match(store, /seedMeta\(node, \{/, "beim Wiederherstellen zurueckgeben");
   assert.match(store, /export async function createChatFrom/, "Abzweigen legt einen eigenen Chat an");
-  // NUR den Rumpf von createChatFrom pruefen, nicht den ganzen Rest der Datei.
-  // Der Schnitt "alles nach dem Funktionsnamen" schlug am 2026-08-13 falsch an:
-  // hinter createChatFrom stehen inzwischen deleteChat und loescheProjekt
-  // ("Projekte"), die selbstverstaendlich loeschen duerfen. Ein Test, der ueber
-  // die eigene Funktion hinausgreift, meldet fremde Arbeit als eigenen Fehler.
-  const rumpfCreateChatFrom = (store.split("export async function createChatFrom")[1] || "")
-    .split(/\nexport /)[0];
-  // Faengt den stillen Ausfall ab: wird die Funktion umbenannt, waere der Rumpf
-  // leer und die Pruefung darunter immer gruen, ohne je etwas zu pruefen.
-  assert.ok(rumpfCreateChatFrom.length > 0, "createChatFrom hat einen Rumpf");
-  assert.ok(!/store\.delete/.test(rumpfCreateChatFrom), "Abzweigen loescht nichts");
+  // Nur die FUNKTION selbst pruefen (bis zum naechsten export), nicht den Rest
+  // der Datei: seit dem Grabstein-Loeschen (a848bab) steht weiter unten ein
+  // legitimes store.delete in importChat — die alte Bis-zum-Dateiende-Pruefung
+  // schlug dadurch falsch an, obwohl Abzweigen weiterhin nichts loescht.
+  const createChatFromRumpf = (store.split("export async function createChatFrom")[1] || "").split(/\nexport /)[0];
+  assert.ok(createChatFromRumpf.length > 0, "createChatFrom hat einen Rumpf");
+  assert.ok(!/store\.delete/.test(createChatFromRumpf), "Abzweigen loescht nichts");
 });
 
 test("Quellen kommen aus echtem Grounding, nicht aus Raten", () => {
@@ -646,23 +646,13 @@ test("Quellen kommen aus echtem Grounding, nicht aus Raten", () => {
   assert.match(grounding, /if \(!context\) return;/, "ein gescheiterter Abruf begruendet nichts und wird nicht gemerkt");
   assert.match(grounding, /MAX_QUELLEN/, "die Karte waechst nicht unbegrenzt");
 
-  // Seit dem Abspecken (24.08.) laedt die Leiste die Quelle nach der Antwort nach.
-  assert.match(actions, /import\("\/assets\/browser-context\.js"\)/, "die Leiste fragt die echte Quelle ab");
-  // Live-Befund 2026-07-28: mit "?v=1" entstand eine ZWEITE Modulinstanz mit
-  // eigenem Quellen-Gedaechtnis — app.js schrieb in die eine, die Leiste las aus
-  // der anderen, und "Quellen anzeigen" waere nie erschienen.
-  // Beide Seiten laden seit dem Abspecken (24.08.) DYNAMISCH — die Regel bleibt:
-  // identischer Spezifizierer (./ in app.js loest auf /assets/ auf), gleiche Query.
-  const sendepfad = fs.readFileSync("public/sendepfad-nachladen.js", "utf8");
-  const appImport = /import\("\.\/browser-context\.js(\?[^"]*)?"\)/.exec(sendepfad);
-  assert.ok(appImport, "der Sendepfad-Nachlader importiert browser-context.js");
+  // Seit "Startseite abspecken" (24.08.) laedt die Leiste das Grounding erst
+  // beim Klick — derselbe kennungsFREIE Spezifizierer wie im Sendepfad, sonst
+  // zwei Modulinstanzen (Live-Befund 2026-07-28 mit ?v=1).
   const actionsImport = /import\("\/assets\/browser-context\.js(\?[^"]*)?"\)/.exec(actions);
-  assert.ok(actionsImport, "chat-actions.js importiert browser-context.js");
-  assert.equal(
-    actionsImport[1] || "",
-    appImport[1] || "",
-    "beide muessen DENSELBEN Spezifizierer benutzen, sonst zwei Modulinstanzen"
-  );
+  assert.ok(actionsImport, "die Leiste fragt die echte Quelle ab (nachgeladen)");
+  assert.equal(actionsImport[1] || "", "", "kennungsfrei — sonst zweite Modulinstanz");
+  assert.match(actions, /groundingFor\(/, "und nutzt groundingFor wirklich");
   assert.match(actions, /const frage = previousUserEntry\(last\);/, "zugeordnet wird ueber die Frage davor, nicht ueber die letzte Quelle");
   assert.match(store, /sources: Array\.isArray\(meta\.sources\)/, "der Verlauf speichert die Quellen");
   assert.match(store, /sources: message\.sources/, "und gibt sie beim Wiederherstellen zurueck");
@@ -684,7 +674,11 @@ test("der Verlauf speichert die Fassungen mit Obergrenze", () => {
 
 test("app.js bleibt unangetastet und unter der Zeilengrenze", () => {
   assert.ok(!appJs.includes("chat-actions"), "die Funktion haengt sich selbst ein, app.js kennt sie nicht");
-  assert.ok(appJs.split("\n").length <= 800, "800-Zeilen-Regel (Start-Lock, check-guidelines)");
+  // Zaehlung wie scripts/check-guidelines.mjs:97 — ein Abschluss-Zeilenumbruch
+  // erzeugt bei split() ein leeres Schlusselement und machte die Pruefung um
+  // genau 1 zu streng (app.js mit exakt 800 Zeilen fiel durch).
+  const appZeilen = appJs.endsWith("\n") ? appJs.split("\n").length - 1 : appJs.split("\n").length;
+  assert.ok(appZeilen <= 800, `800-Zeilen-Regel (Start-Lock, check-guidelines) — app.js hat ${appZeilen}`);
 });
 
 test("index.html laedt das Modul, sw.js hat es im Precache", () => {
@@ -757,4 +751,17 @@ test("auf schmalen Schirmen sind die Aktionsknoepfe 44 px", () => {
   // die neue, hoeher gewichtete Regel die 28 px mit der Maus ueberschreiben.
   const mausAusnahme = actionsCss.split("@media (max-width: 600px) and (pointer: fine)")[1] || "";
   assert.match(mausAusnahme, /min-height: 28px;/, "mit Maus bleibt es bei 28 px");
+});
+
+test("Vorlesen ist ein Umschalter — der zweite Klick stoppt die Ansage", () => {
+  // Befund 2026-08-25: speakEntry startete bei JEDEM Klick von vorn; eine
+  // laufende Ansage war ueber die Oberflaeche nicht abbrechbar.
+  const quelle = fs.readFileSync("public/chat-actions.js", "utf8");
+  assert.match(quelle, /let vorleseQuelle = null/, "der Vorlese-Zustand muss gemerkt werden");
+  // Gehaertete Fassung (b42): Stopp nur, wenn WIRKLICH gesprochen wird
+  // (speaking VOR cancel gelesen), sonst faehrt sich der Umschalter fest.
+  assert.match(quelle, /const warAmSprechen = synthesis\.speaking;/, "speaking wird VOR cancel gelesen");
+  assert.match(quelle, /if \(vorleseQuelle === entry && warAmSprechen\) \{/, "zweiter Klick = Stopp, kein Neustart");
+  assert.match(quelle, /vorleseUtterance = utterance;/, "Utterance bleibt referenziert (Chrome-GC)");
+  assert.match(quelle, /utterance\.onend = \(\) => \{ if \(vorleseQuelle === entry\) \{ vorleseQuelle = null; vorleseUtterance = null; \} \}/, "nach dem Ende ist der naechste Klick wieder ein Start");
 });

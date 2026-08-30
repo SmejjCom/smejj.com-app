@@ -38,10 +38,10 @@ const MIN_ZIEL = 44;
 // popstate: ein Klick durchs Menue erreicht nicht jede Ansicht, und die
 // Anmelde-Pflicht steht einem echten Seitenwechsel im Weg.
 const ANSICHTEN = [
-  // Konsolidierung 24.08.: "/websites" wich Projects/Arbeitsbereichen; smejjBot
-  // ersetzt die alte "/automation"-Route (Betreiber 16.08.: "heisst ueberall smejjBot").
-  ["Suche", "/search"], ["Projects", "/bereiche"], ["Papierkorb", "/papierkorb"],
-  ["smejj Claw", "/smejj-claw"], ["smejjBot", "/smejjBot"],
+  ["papierkorb", "/papierkorb"],
+  ["arbeitsbereiche", "/bereiche"],
+  ["Suche", "/search"], ["Websites", "/websites"], ["smejj Claw", "/smejj-claw"],
+  ["smejjBot", "/smejjBot"],
   ["Verlauf", "/chat-history"], ["Browser", "/browser"], ["Coding", "/code"],
   ["Projekte", "/projects"], ["Dateien", "/files"], ["Speicher", "/storage"],
   ["Gedaechtnis", "/memory"], ["Modelle", "/ai"], ["Kosten", "/cost"],
@@ -54,6 +54,17 @@ const AUSNAHMEN = [
   {
     auswahl: "#profilePictureInput",
     grund: "per CSS verborgener File-Input; bedient wird der sichtbare Knopf daneben"
+  },
+  {
+    auswahl: "#codeArbeit",
+    grund: "11 px sichtbar ist Betreiber-Vorgabe (2026-08-18: 'das Viereck war gut, "
+      + "Groesse, Platz und Form bleiben exakt'). Das Trefferfeld traegt ein "
+      + "unsichtbares ::before und misst gemessene 43x43 px. Es sitzt aber nur "
+      + "12 px vom rechten Feldrand, und dort schneidet die Ansicht es ab: von "
+      + "acht Pruefpunkten treffen fuenf, die drei rechten laufen ins Leere. Ein "
+      + "ZENTRIERTES 44-px-Feld ist an dieser Stelle nur zu haben, wenn der Punkt "
+      + "wandert — und genau das ist ausgeschlossen. Der Startseiten-Zwilling "
+      + "#startArbeit steht weiter innen und erfuellt das Ziel; er bleibt gemessen."
   }
 ];
 
@@ -74,11 +85,57 @@ const MESSUNG = (nurAktiveAnsicht) => `(() => {
     gezaehlt += 1;
     if (r.width >= ${MIN_ZIEL} && r.height >= ${MIN_ZIEL}) continue;
     if (ausnahmen.some((a) => el.matches(a))) continue;
+    // Ein Element kann KLEINER aussehen als es zu treffen ist: ein
+    // unsichtbares ::before vergroessert die Klickflaeche, ohne das Bild zu
+    // aendern. Genau so ist der Stopp-Punkt gebaut — 11 px sichtbar (so vom
+    // Betreiber bestellt), 45 px fassbar (design-v11.css, inset: -17px).
+    // Wer nur getBoundingClientRect misst, meldet ihn seit Monaten falsch rot
+    // und verleitet dazu, ein bewusstes Designmass "zu reparieren".
+    // Darum wird hier getippt statt gerechnet: acht Punkte am Rand eines
+    // ${MIN_ZIEL}-px-Feldes um die Mitte. Treffen alle dasselbe Element, ist
+    // das Ziel gross genug — liegt ein Nachbar darueber, faellt es durch.
+    const mitteX = r.left + r.width / 2;
+    const mitteY = r.top + r.height / 2;
+    const rand = ${MIN_ZIEL} / 2 - 1;
+    const punkte = [[-rand, -rand], [rand, -rand], [-rand, rand], [rand, rand],
+                    [0, -rand], [0, rand], [-rand, 0], [rand, 0]];
+    // elementsFromPoint (Plural) liefert den ganzen Stapel an einem Punkt.
+    // Daraus lassen sich die zwei Fehlerbilder sauber trennen:
+    //   liegt das Element ueberall IM Stapel -> die Klickflaeche ist gross
+    //   genug; steht es dort nicht obenauf -> es ist VERDECKT, nicht zu klein.
+    let obenauf = 0;
+    let imStapel = 0;
+    let darueber = "";
+    for (const [dx, dy] of punkte) {
+      const x = mitteX + dx;
+      const y = mitteY + dy;
+      if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) break;
+      const stapel = document.elementsFromPoint(x, y);
+      const platz = stapel.findIndex((z) => z === el || el.contains(z));
+      if (platz < 0) continue;
+      imStapel += 1;
+      if (platz === 0) { obenauf += 1; continue; }
+      if (!darueber) {
+        const z = stapel[0];
+        darueber = (z.id ? "#" + z.id : z.tagName.toLowerCase())
+          + (typeof z.className === "string" && z.className.trim()
+              ? "." + z.className.trim().split(/\\s+/)[0] : "");
+      }
+    }
+    if (obenauf === punkte.length) continue;
     const name = (el.getAttribute("aria-label") || el.title || el.value || el.textContent || "")
       .replace(/\\s+/g, " ").trim().slice(0, 34);
     const kennung = (el.id ? "#" + el.id : el.tagName.toLowerCase())
       + (typeof el.className === "string" && el.className ? "." + el.className.trim().split(/\\s+/)[0] : "");
-    klein.push({ groesse: Math.round(r.width) + "x" + Math.round(r.height), kennung, name });
+    klein.push({
+      groesse: Math.round(r.width) + "x" + Math.round(r.height), kennung, name,
+      // Ein Ziel mit ausreichend grosser Klickflaeche, das trotzdem nicht
+      // ueberall trifft, ist verdeckt — nicht zu klein.
+      // Nur wenn die Klickflaeche AN ALLEN Punkten reicht, ist Verdeckung die
+      // Ursache. Sonst ist das Ziel schlicht zu klein und der Nachbar daneben
+      // ist kein "Ueberlagerer".
+      verdecktVon: imStapel === punkte.length ? darueber : ""
+    });
   }
   return JSON.stringify({
     ansicht: aktiv ? (aktiv.id || "?") : (${nurAktiveAnsicht} ? "KEINE aktive Ansicht" : "start"),
@@ -134,6 +191,39 @@ const SCHUTZ_ENTFERNEN = `(() => {
   return getroffen;
 })()`;
 
+// Wartet, bis die Seite WIRKLICH steht — nicht bis die Uhr abgelaufen ist.
+// Begruendung und Bauart wie in messe_responsive.mjs: gegen die Live-Seite
+// schwankt die Ladezeit auf dieser Leitung zwischen 0,8 und 11 Sekunden. Beim
+// ersten Nachtlauf der Oberflaechenwache am 2026-08-22 meldete dieser Waechter
+// drei Knoepfe mit 21x16 px, die in Wahrheit 44 px gross sind — gemessen wurde
+// eine halbfertige Seite. Eine Wache, die ohne Grund rot meldet, liest bald
+// niemand mehr.
+async function warteBisRuhig(auswertenFn, hoechstensMs = 20000) {
+  const SIGNATUR = [
+    '(() => {',
+    '  if (document.readyState !== "complete") return "laedt";',
+    '  let summe = 0;',
+    '  let anzahl = 0;',
+    '  for (const el of document.querySelectorAll("button, a[href], input, select, textarea, [role=button]")) {',
+    '    const r = el.getBoundingClientRect();',
+    '    if (r.width < 1 || r.height < 1) continue;',
+    '    anzahl += 1;',
+    '    summe += Math.round(r.width) * 31 + Math.round(r.height) * 7 + Math.round(r.top);',
+    '  }',
+    '  return anzahl + ":" + summe;',
+    '})()'
+  ].join("\n");
+  let vorher = "";
+  const runden = Math.ceil(hoechstensMs / 350);
+  for (let i = 0; i < runden; i += 1) {
+    const jetzt = await auswertenFn(SIGNATUR);
+    if (jetzt !== "laedt" && jetzt === vorher) return true;
+    vorher = jetzt;
+    await sleep(350);
+  }
+  return false;
+}
+
 async function auswerten(page, ausdruck) {
   const { result, exceptionDetails } = await page("Runtime.evaluate", {
     expression: ausdruck, returnByValue: true, awaitPromise: true
@@ -172,9 +262,10 @@ try {
   await page("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 
   await page("Page.navigate", { url: URL_UNTER_TEST });
-  await sleep(2800);
+  await sleep(800);
+  await warteBisRuhig((x) => auswerten(page, x));
   await aufbauen(page);
-  await sleep(900);
+  await warteBisRuhig((x) => auswerten(page, x));
 
   if (!(await auswerten(page, `matchMedia("(pointer: coarse)").matches`))) {
     throw new Error("Emulation griff nicht: pointer ist nicht coarse — die Messung waere wertlos.");
@@ -207,11 +298,15 @@ try {
   // 4ff: jede Ansicht einzeln.
   for (const [name, pfad] of ANSICHTEN) {
     await auswerten(page, `(() => { history.pushState({}, "", ${JSON.stringify(pfad)}); dispatchEvent(new PopStateEvent("popstate")); })()`);
-    await sleep(1000);
+    await sleep(350);
+    if (!(await warteBisRuhig((x) => auswerten(page, x)))) {
+      console.error(`  HINWEIS: ${name} kam in 20 s nicht zur Ruhe — der Befund kann von der Ladezeit stammen.`);
+    }
     bereiche.push([name, JSON.parse(await auswerten(page, MESSUNG(true)))]);
   }
 
   const verstoesse = [];
+  const hinweise = [];
   for (const [name, d] of bereiche) {
     if (d.ansicht === "KEINE aktive Ansicht") {
       verstoesse.push(`${name}: Ansicht liess sich nicht oeffnen — nicht gemessen`);
@@ -219,6 +314,14 @@ try {
     }
     if (d.ueberlauf) verstoesse.push(`${name}: laeuft ueber den rechten Rand`);
     for (const t of d.klein) {
+      // Verdeckung ist ein Hinweis, kein Verstoss: bei offenem Menue liegt mit
+      // Absicht etwas ueber dem Rest. Was davon ein Fehler ist, entscheidet
+      // der Mensch — der Waechter wird davon nicht rot, sonst meldet er bei
+      // jedem offenen Menue Alarm und man liest ihn bald nicht mehr.
+      if (t.verdecktVon) {
+        hinweise.push(`${name}/${t.kennung} "${t.name}": Klickflaeche reicht (${t.groesse} px sichtbar), liegt aber unter ${t.verdecktVon}`);
+        continue;
+      }
       verstoesse.push(`${name}/${t.kennung} "${t.name}": ${t.groesse} px, gefordert ${MIN_ZIEL}`);
     }
   }
@@ -228,6 +331,7 @@ try {
     geraet: "375x812, mobile, pointer coarse",
     bereiche: bereiche.map(([name, d]) => ({ name, gezaehlt: d.gezaehlt, unterZiel: d.klein.length, ueberlauf: d.ueberlauf })),
     ausnahmen: AUSNAHMEN,
+    hinweise,
     verstoesse
   };
 
@@ -240,6 +344,7 @@ try {
       console.log(`  ${b.name.padEnd(36)} ${String(b.gezaehlt).padStart(3)} bedienbar — ${rest}${b.ueberlauf ? ", LAEUFT UEBER" : ""}`);
     }
     for (const a of AUSNAHMEN) console.log(`  Ausnahme ${a.auswahl}: ${a.grund}`);
+    if (hinweise.length) console.log(`  HINWEISE (kein Verstoss):\n    ${hinweise.join("\n    ")}`);
     console.log(verstoesse.length ? `  VERSTOESSE:\n    ${verstoesse.join("\n    ")}` : "  Alle Touch-Ziele eingehalten.");
   }
 

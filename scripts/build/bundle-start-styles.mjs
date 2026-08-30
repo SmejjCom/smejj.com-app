@@ -32,7 +32,9 @@ export const SOURCES = Object.freeze([
   "branding.css",
   "composer-tools.css",
   "browser-pane.css",
-  // Chrome-artiger Panel-Kopf — kam im Frontend-Repo dazu (Konsolidierung 24.08.).
+  // Die Chrome-Angleichung des Panels (2026-08-19 aus browser-pane.css
+  // herausgeloest, 800-Zeilen-Regel). Muss DIREKT dahinter stehen: sie
+  // ueberschreibt Regeln von dort absichtlich.
   "browser-pane-chrome.css",
   "view-chrome.css",
   "profile-dock.css",
@@ -40,26 +42,21 @@ export const SOURCES = Object.freeze([
   // Aktionen pro Nachricht (2026-07-28). Bewusst im Buendel statt als eigenes
   // <link>: die Startseite soll genau EIN render-blockierendes Stylesheet laden.
   "chat-actions.css",
-  // Such-Overlay (Cmd+K), Glas-Startseite und die App-weite Eckig-Regel.
-  // WARUM SIE HIER STEHEN MUESSEN (Befund 2026-08-14): Die drei Dateien lagen
-  // nur im ausgelieferten Buendel, nicht in dieser Liste. Beim naechsten
-  // regulaeren Buendel-Bau fielen sie heraus — und die Startseite verlor
-  // Glas-Kapsel, Zentrierung und Eckig-Regel auf einen Schlag, ohne dass
-  // jemand etwas an ihnen geaendert haette. Ein Artefakt zu deployen ersetzt
-  // NIE den Eintrag in der Quelle.
-  // eckig.css steht ABSICHTLICH am Ende: sie ueberschreibt jede Rundung.
+  // Such-Overlay (Cmd+K), Glas-Startseite und die App-weite Eckig-Regel
+  // (2026-08-13). Alle drei kamen zuerst als eigenes <link> dazu und haben
+  // damit den Ein-Buendel-Vertrag gebrochen — hier gehoeren sie hin.
+  // eckig.css steht ABSICHTLICH am Ende: es ueberschreibt jede Rundung.
   "search-overlay.css",
   "start-glass.css",
   "eckig.css",
-  // Design V11 — kam im Frontend-Repo dazu (Konsolidierung 24.08.); seit der
-  // Zeilen-Diaet (25.08.) zweigeteilt, Reihenfolge identisch zur Alt-Fassung.
-  "design-v11.css",
-  "design-v11-spur.css",
-  "design-v11-flaechen.css",
+  // Design V11 (Betreiber-Freigabe 2026-08-15). Steht ABSICHTLICH nach
+  // eckig.css: es traegt die dokumentierte Rundungs-Ausnahme ("leichter
+  // Knick", 8 px) und die eine Farbquelle. Wer hier etwas davorschiebt,
+  // bekommt wieder drei Cyantoene.
   // Mobil-Composer (25.08.): Chip-Ellipsis + wrap-Netz — direkt vor der
-  // V11-Feinschicht, die vertragsgemaess das Kaskaden-Ende bleibt.
+  // V11-Schicht, die vertragsgemaess das Kaskaden-Ende bleibt.
   "mobil-composer.css",
-  "design-v11-fein.css"
+  "design-v11.css"
 ]);
 
 const HEADER = `/* ERZEUGT — nicht von Hand aendern.
@@ -88,9 +85,32 @@ export async function buildBundle() {
         throw new Error(`${name} enthaelt den relativen Pfad url(${pfad}) — Buendeln waere nicht mehr sicher.`);
       }
     }
-    parts.push(`\n/* ---- ${name} ---- */\n${css.trimEnd()}\n`);
+    parts.push(`\n/* ---- ${name} ---- */\n${entschlacke(css)}\n`);
   }
   return parts.join("");
+}
+
+// Kommentare und Leerzeilen fliegen NUR aus dem ERGEBNIS (Betreiber-Auftrag
+// 2026-08-19, Startseiten-Gewicht): 205 KB -> 134 KB, gemessen -35 %. Die
+// Quelldateien behalten jede Erklaerung; start-styles.css ist ohnehin reines
+// Ergebnis und sein Kopf verweist auf die Quellen.
+//
+// Warum das sicher ist — und wo es NICHT sicher waere: Ein "/*" darf in
+// keiner Zeichenkette stehen, sonst schneidet die Regel mitten im Wert.
+// Betroffen waeren nur content:- und url()-Werte. Der Waechter unten bricht
+// den Bau ab, falls das je vorkommt; lieber kein Buendel als ein kaputtes.
+export function entschlacke(css) {
+  const ohneKommentare = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const [, wert] of ohneKommentare.matchAll(/content\s*:\s*([^;}]*)/g)) {
+    if (wert.includes("/*")) throw new Error("content-Wert enthaelt '/*' — Entschlacken waere nicht sicher.");
+  }
+  for (const [, wert] of ohneKommentare.matchAll(/url\(([^)]*)\)/g)) {
+    if (wert.includes("/*")) throw new Error("url()-Wert enthaelt '/*' — Entschlacken waere nicht sicher.");
+  }
+  return ohneKommentare
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
 }
 
 // Nur beim direkten Aufruf ausfuehren. Tests importieren SOURCES aus dieser

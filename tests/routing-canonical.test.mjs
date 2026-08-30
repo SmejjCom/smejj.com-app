@@ -15,10 +15,14 @@ const html = fs.readFileSync("public/index.html", "utf8");
 const sitemap = fs.readFileSync("public/sitemap.xml", "utf8");
 
 const RESTORE_KEY = "smejj-restore-route";
+// "/websites" ist hier bewusst NICHT mehr aufgefuehrt (Betreiber-Entscheid
+// 2026-08-18: "Nehm Websites raus, wir haben browser"). Die Ansicht war eine
+// leere Attrappe ("Website-Bereich bereit.") und diente nur als Rueckfall,
+// wenn browser-pane.js nicht geladen war — genau dort landete am 2026-08-18
+// jeder Klick auf "Browser", als das Modul wegen einer fehlenden Datei nicht
+// hochkam. Der Test unten haelt fest, dass die Route weg BLEIBT.
 const SPA_ROUTES = [
   "/search",
-  "/bereiche",
-  "/papierkorb",
   "/projects",
   "/files",
   "/storage",
@@ -87,4 +91,18 @@ test("Sitemap enthaelt keine server-seitigen 404-Routen", () => {
   assert.match(sitemap, /<loc>https:\/\/smejj\.com\/<\/loc>/);
   assert.match(sitemap, /<loc>https:\/\/smejj\.com\/impressum\.html<\/loc>/);
   assert.match(sitemap, /<loc>https:\/\/smejj\.com\/datenschutz\.html<\/loc>/);
+});
+
+test("die leere Websites-Attrappe bleibt verschwunden", () => {
+  // Sie kann nur ueber einen Rueckfall zurueckkommen — deshalb wird an allen
+  // drei Stellen zugleich geprueft: Route, Markup und Weiterleitungsliste.
+  const routen = fs.readFileSync("public/view-routes.js", "utf8");
+  const markup = fs.readFileSync("public/index.html", "utf8");
+  assert.ok(!routen.includes("/websites"), "die Route ist wieder da");
+  assert.ok(!markup.includes('id="websites"'), "die leere Ansicht ist wieder da");
+  assert.ok(!markup.includes('data-jump="websites"'), "ein Knopf fuehrt wieder auf die Attrappe");
+  assert.ok(!markup.includes('data-view="websites"'), "ein Knopf fuehrt wieder auf die Attrappe");
+  assert.ok(!notFound.includes('"/websites"'), "die Weiterleitungsliste kennt sie wieder");
+  // Und der Ersatz muss da sein, sonst ist der Browser unerreichbar.
+  assert.match(markup, /data-browser-oeffnen/);
 });

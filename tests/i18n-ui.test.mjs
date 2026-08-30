@@ -12,28 +12,22 @@ const authPage = fs.readFileSync(path.join(publicDir, "auth", "auth-page.js"), "
 const authLoginHtml = fs.readFileSync(path.join(publicDir, "auth", "login", "index.html"), "utf8");
 const authRegisterHtml = fs.readFileSync(path.join(publicDir, "auth", "register", "index.html"), "utf8");
 const profileDock = fs.readFileSync(path.join(publicDir, "profile-dock.js"), "utf8");
-// Seit der Konsolidierung 24.08. lebt "aktives Modell" u.a. im API-Schluessel-Reiter.
-const apiKeysSurface = fs.readFileSync(path.join(publicDir, "api-keys-surface.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "api-konto-surface.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "chat-history-text.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "chat-history-view.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "profile-dock-menu.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "papierkorb.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "arbeitsbereiche.js"), "utf8");
 const profilePictureControl = fs.readFileSync(path.join(publicDir, "profile-picture-control.js"), "utf8");
 // Der Store liefert deutsche Quelltexte, die profile-picture-control.js per t() uebersetzt.
 const profilePictureStore = fs.readFileSync(path.join(publicDir, "profile-picture-store.js"), "utf8");
+// Die Beispiel-Chips der Startseite sind seit 2026-08-13 uebersetzt; ihre
+// deutschen Quelltexte stehen im Markup und im Chip-Modul.
+const startChips = fs.readFileSync(path.join(publicDir, "start-chips.js"), "utf8");
 // Zwei weitere t()-Oberflaechen: das Such-Overlay traegt die Bereichsnamen,
 // die Begruessung nach dem Login die Plan-Karte.
 const searchOverlay = fs.readFileSync(path.join(publicDir, "search.js"), "utf8");
-// Die Startseite selbst ist ebenfalls eine t()-Oberflaeche: start-chips.js
-// uebersetzt Hero, Platzhalter und die Chip-Beschriftungen, deren deutsche
-// Quelltexte im Markup stehen (Aufschrift UND data-chip). Ohne diese Datei
-// galten die Chip-Schluessel als "verwaist", obwohl sie taeglich benutzt
-// werden — der Test schaute schlicht nicht dorthin.
-const startseiteHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welcome.js"), "utf8");
+// Nutzerreise USA 2026-08-23: drei weitere Oberflaechen rufen t() und bekamen
+// ihre fehlenden englischen Texte — Spur (Start), API-Keys, Entwickler-API.
+const spurStart = fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8");
+const apiKeysSurface = fs.readFileSync(path.join(publicDir, "api-keys-surface.js"), "utf8");
+const apiKontoSurface = fs.readFileSync(path.join(publicDir, "api-konto-surface.js"), "utf8");
+const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
 
@@ -70,8 +64,8 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
-    + profileDock + profilePictureControl + profilePictureStore + apiKeysSurface
-    + searchOverlay + onboardingWelcome + startseiteHtml;
+    + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
+    + searchOverlay + onboardingWelcome + spurStart + apiKeysSurface + apiKontoSurface;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }

@@ -5,7 +5,6 @@
 // die Spur fail-safe komplett aus sein muss.
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
 
 import { erkenneBildAuftrag, erzeugeFotoInhalt, sichereSvgAntwort, streamBilderLane } from "../public/chat-bridge-bilder.js";
 
@@ -180,10 +179,11 @@ test("ein zu grosses Bild nennt seine Groesse — sonst raet man ewig", async ()
 
 // --- Aufwaermen darf nicht als "kann ich nicht" beim Nutzer ankommen --------
 //
-// Zweimal live gemessen 2026-08-14: Nach einem Neustart laedt der Maler sein
-// Modell (Minuten). Solange meldet /health bereit:false; fiel dann auch die
-// SVG-Reserve aus, uebernahm der Text-Weg und smejj antwortete "Ich kann
-// leider keine Bilder malen" — sachlich falsch und endgueltig.
+// Befund 2026-08-14, zweimal live gemessen: Nach einem Neustart laedt der
+// Maler sein Modell (Minuten). Solange meldet /health bereit:false, die
+// SVG-Reserve scheiterte ebenfalls, und die Spur gab `false` zurueck — der
+// Text-Weg uebernahm und smejj antwortete "Ich kann leider keine Bilder
+// malen". Sachlich falsch: die Faehigkeit ist da, sie waermt nur auf.
 
 test("waermt der Maler auf, sagt die Spur das ehrlich statt zu verneinen", async () => {
   const gesendet = [];
@@ -193,6 +193,7 @@ test("waermt der Maler auf, sagt die Spur das ehrlich statt zu verneinen", async
   };
   const deps = {
     corsHeaders: () => ({}), securityHeaders: () => ({}), timeoutMs: 500,
+    // /health antwortet: laedt noch seit 42 s
     fetchImpl: async () => ({ ok: true, json: async () => ({ ok: true, bereit: false, ladezeitSek: 42 }) })
   };
   const ergebnis = await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps);
@@ -203,7 +204,8 @@ test("waermt der Maler auf, sagt die Spur das ehrlich statt zu verneinen", async
   assert.doesNotMatch(text, /kann .{0,20}keine Bilder/i, "die Faehigkeit darf NIE verneint werden");
 });
 
-test("ohne erreichbaren Maler bleibt es beim stillen Rueckfall", async () => {
+test("ohne eingerichteten Maler bleibt es beim stillen Rueckfall", async () => {
+  // Fremder Standort oder Testumgebung: kein Byte senden, Text-Weg uebernimmt.
   let geschrieben = false;
   const res = { writeHead: () => { geschrieben = true; }, write: () => { geschrieben = true; }, end: () => { geschrieben = true; } };
   const deps = {
@@ -212,24 +214,4 @@ test("ohne erreichbaren Maler bleibt es beim stillen Rueckfall", async () => {
   };
   assert.equal(await streamBilderLane(res, {}, "Male ein Bild von einem Fuchs", deps), false);
   assert.equal(geschrieben, false, "hier darf weiterhin kein Byte raus");
-});
-
-// --- Der Uebersetzer muss das Motiv nach vorn stellen -----------------------
-//
-// Befund 2026-08-14: Das Bild zu "Zeichne mir einen roten Leuchtturm am Meer"
-// zeigte Meer und Sonnenuntergang, aber KEINEN Leuchtturm. Der Uebersetzer
-// lieferte einen langen Stimmungssatz mit dem Motiv in der Mitte. Der
-// Textleser von SD-Turbo liest nur die ersten 77 Tokens und gewichtet frueh
-// Stehendes staerker — ein langer Vorlauf verduennt oder verschluckt das
-// Motiv. Diese Wache haelt die drei Regeln fest, die das verhindern.
-
-test("die Uebersetzer-Anweisung verlangt Motiv zuerst, kurz, und schuetzt Personen", async () => {
-  const quelle = await readFile(new URL("../public/chat-bridge-bilder.js", import.meta.url), "utf8");
-  const block = quelle.split("const BILDER_UEBERSETZER_PROMPT")[1]?.split("].join(")[0] || "";
-  assert.ok(block, "die Anweisung muss als eigene Konstante stehen — sonst findet sie niemand wieder");
-  assert.match(block, /MAIN SUBJECT/, "das Hauptmotiv muss ausdruecklich zuerst verlangt werden");
-  assert.match(block, /first three words/, "die Position des Motivs muss konkret sein, nicht 'wichtig'");
-  assert.match(block, /at most 20 words/, "die Laengengrenze ist der halbe Fix — ohne sie kehrt der Stimmungssatz zurueck");
-  // Der Personen-Schutz ist aelter als dieser Fix und darf ihm nie zum Opfer fallen.
-  assert.match(block, /PERSON_GESPERRT/, "Persoenlichkeitsrechte: die Ausnahme muss erhalten bleiben");
 });

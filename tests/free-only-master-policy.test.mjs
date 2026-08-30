@@ -35,7 +35,7 @@ test("README points to the master policy and does not recommend paid core paths"
 });
 
 test("platform constants state the free-only storage policy", () => {
-  assert.match(platform, /GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Zeabur runs the control server and compute./);
+  assert.match(platform, /GitHub Free and GitHub Pages only for code and hosting; IDrive e2 is primary storage; Zeabur runs the control server and compute/);
   assert.match(platform, /provider: "idrive-e2"/);
   assert.match(platform, /role: "primary"/);
 });

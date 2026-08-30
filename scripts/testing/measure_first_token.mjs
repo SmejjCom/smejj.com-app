@@ -16,6 +16,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { probeFirstToken, summarizeProbes } from "../../src/evaluation/firstTokenProbe.js";
+import { loadSecureLocalEnv, secureLocalEnvPath } from "../../src/shared/env.js";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
 const REPO_ROOT = path.resolve(path.dirname(SCRIPT_FILE), "../..");
@@ -81,6 +82,7 @@ export async function runProbeSeries({
   prompt,
   runs,
   bodyMode = "chat",
+  authToken = "",
   delayMs = 0,
   probe = probeFirstToken,
   onProbe = () => {},
@@ -92,7 +94,7 @@ export async function runProbeSeries({
   ];
   const probes = [];
   for (let index = 0; index < runs; index += 1) {
-    const result = await probe({ endpoint, messages, model, bodyMode });
+    const result = await probe({ endpoint, messages, model, bodyMode, authToken });
     probes.push(result);
     onProbe(result, index);
     if (delayMs > 0 && index < runs - 1) await sleep(delayMs);
@@ -111,6 +113,10 @@ function usage() {
     "  --prompt <text>        eigene Frage",
     "  --body-mode <art>      chat oder agent; ohne Angabe passend zum Endpunkt",
     "  --out <pfad>           Zielpfad des Berichts",
+    "",
+    "Anmeldung: SMEJJ_FIRSTTOKEN_TOKEN in ~/.config/smejj.com/env.local",
+    "(Bearer) macht die Messung angemeldet; ohne Token scheitert sie ehrlich",
+    "an der 401-Schwelle der Bridge (fail-closed). Der Token erscheint nie im Bericht.",
     ""
   ].join("\n");
 }
@@ -130,7 +136,14 @@ async function main() {
 
   const endpoint = ENDPOINTS[options.endpoint] || options.endpoint;
   const label = options.model || "schnelle-spur";
-  process.stdout.write(`Messreihe: ${options.runs} Aufrufe gegen ${options.endpoint}, Modell ${label}\n`);
+  // Anmeldepflicht: Der Token kommt ausschliesslich aus der sicheren lokalen
+  // Env (~/.config/smejj.com/env.local, Schluessel SMEJJ_FIRSTTOKEN_TOKEN),
+  // nie aus einer Datei im Repo und nie in einen Bericht. Ohne Token bleibt
+  // die Messung anonym und scheitert ehrlich an der 401-Schwelle (fail-closed).
+  loadSecureLocalEnv(secureLocalEnvPath());
+  const authToken = String(process.env.SMEJJ_FIRSTTOKEN_TOKEN || "").trim();
+  const authArt = authToken ? "bearer-aus-sicherer-env" : "anonym-fail-closed";
+  process.stdout.write(`Messreihe: ${options.runs} Aufrufe gegen ${options.endpoint}, Modell ${label}, Anmeldung: ${authArt}\n`);
 
   const startedAt = new Date().toISOString();
   const probes = await runProbeSeries({
@@ -139,6 +152,7 @@ async function main() {
     prompt: options.prompt,
     runs: options.runs,
     bodyMode: options.bodyMode,
+    authToken,
     delayMs: options.delayMs,
     onProbe: (result, index) => {
       process.stdout.write(`  ${index + 1}. ` + (result.ok
@@ -154,6 +168,7 @@ async function main() {
     kind: "smejj.com-first-token-probe",
     endpointName: options.endpoint,
     bodyMode: options.bodyMode,
+    auth: authArt,
     model: options.model || null,
     prompt: options.prompt,
     startedAt,

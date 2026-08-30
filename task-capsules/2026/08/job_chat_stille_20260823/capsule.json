@@ -1,0 +1,39 @@
+{
+  "jobId": "job_chat_stille_20260823",
+  "createdAt": "2026-08-23T14:00:00.000Z",
+  "owner": "smejj.com",
+  "title": "Der Chat hing, weil nur EINE der beiden Stromfamilien bewacht war",
+  "ziel": "Betreiber-Auswahl nach dem Komplettcheck 2026-08-23: 'Haengenden Chat' beheben.",
+  "befund": {
+    "gemessen": "Eine von fuenf Anfragen stand nach 55 s noch auf 'smejj denkt nach …' — keine Meldung, kein Abbruch, kein Wiederholen. Die Frage blieb als Torso ohne Antwort im Verlauf (zwei user-Nachrichten hintereinander).",
+    "ursache": "chat-stream.js hat seit dem 2026-08-17 eine Stille-Wache. chatClient.js — der Weg fuer Cline und BYOK — hatte sie NICHT. Der Chat stand auf 'Cline · Auto' und lief daran vorbei.",
+    "muster": "Dasselbe wie beim Stopp-Knopf: eine Schutzmassnahme nur in einer der beiden Stromfamilien.",
+    "warumDieVorhandeneZeitgrenzeNichtReicht": "fetch-retry.js bewacht den Weg BIS ZUM ANTWORTKOPF und laesst das Streaming danach ausdruecklich ohne Grenze laufen, damit lange Antworten nie abgeschnitten werden. Der Fall 'Server hat geantwortet und verstummt dann' faellt dadurch durch."
+  },
+  "loesung": {
+    "neu": "public/ai/strom-stillstand.js — die Wache an EINER Stelle, exportiert und pruefbar, statt lokal in einer Datei.",
+    "chatClient": "alle DREI Lesestellen bewacht",
+    "chatStream": "nutzt statt seiner eigenen Kopie dieselbe Mechanik und denselben Wortlaut",
+    "wasGemessenWird": "die STILLE, nicht die Gesamtdauer. Eine lange Antwort troepfelt, eine tote schweigt. Eine Gesamtgrenze wuerde genau die langen Antworten abschneiden, die fetch-retry.js schuetzt.",
+    "grenze": "90 s, unveraendert — im Live-Test brauchte eine echte Antwort 60 s. Eine kuerzere Grenze haette sie abgewuergt."
+  },
+  "beinaheFehler": {
+    "was": "Das Deploy-Sicherheitsnetz meldete 39 Zeilen, die LIVE standen, aber nicht im lokalen Stand — darunter entferneAbgerisseneMedien(), die abgerissene Bild-/Video-Stroeme aufraeumt (sonst 100+ KB base64-Rohtext in der Chatblase).",
+    "folge": "Haette ich meine Fassung hochgeladen, waere die Funktion geloescht worden.",
+    "richtiggestellt": "Die LIVE-Fassung ist die Basis geworden, die Aenderung liegt darauf, die Quelle ist nachgezogen. Die Saeuberung bleibt VOR der Stille-Meldung."
+  },
+  "nebenbeiBehoben": "chat-store.js wurde live unter ZWEI Marken geladen (b61 und b59 via chat-actions.js) — zwei Modulinstanzen mit getrenntem Zustand. Nach dem Ziehen der Markenkette laden alle 10 Stellen dieselbe (b60), live nachgemessen.",
+  "verifikationLive": {
+    "auslieferung": "sw v666 -> v667; strom-stillstand.js byte-identisch; chatClient.js 4x starteStilleWache; entferneAbgerisseneMedien 4x erhalten",
+    "serieVonFuenf": "3,6 s / 8 s / 8 s / 60 s / fertig — kein Haenger, die Wache musste nicht eingreifen",
+    "moduleMitZweiMarken": "keine mehr",
+    "tests": "check:frontend 619/619, check:llm-router 334/334, module-queries 187, markenkette 98, precache 155"
+  },
+  "waechter": {
+    "datei": "tests/strom-stillstand.test.mjs, 10 Faelle",
+    "kern": "Zwei Faelle pruefen, dass BEIDE Familien die Wache haben und die Meldung aus DERSELBEN Quelle beziehen — genau die zwei Wege, auf denen es auseinandergelaufen ist. Sie waren rot, bevor chatClient.js verdrahtet war."
+  },
+  "offenerBefund": "Die Antwortzeiten schwanken stark: 3,6 s bis 60 s fuer dieselbe triviale Frage. Budget fuer den ersten Token ist 1 s. Nicht Teil dieses Auftrags.",
+  "commits": { "arbeitszweig": ["8da2df72", "9f40fb69"], "frontend": ["53ab01d3"] },
+  "status": "abgeschlossen"
+}

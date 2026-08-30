@@ -1,0 +1,33 @@
+/* smejj.com — ABGERAEUMT am 2026-08-22 (Betreiber-Ansage "Grundflaeche
+ * zuerst"). Diese Datei trug das Cyan-Cockpit der INNEREN Ansichten
+ * (Screens 4-14 der alten 15-Screen-Vorlage). Sie ist jetzt leer.
+ *
+ * WARUM LEER STATT GELOESCHT: premium-surfaces.js laedt sie namentlich
+ * (Zeile 183) und steht im Start-Lock. Eine fehlende Datei gaebe dort
+ * einen 404 bei jedem Ansichtswechsel. Sobald premium-surfaces.js aus
+ * einem anderen Grund ohnehin gestempelt wird, kann die Zeile mit weg.
+ *
+ * WARUM UEBERHAUPT WEG — der Befund vom 2026-08-22:
+ * Die Startseite trug laengst den ruhigen, warmen Grundton der App
+ * (styles.css: #141517 -> #0d0e10). Jede ANDERE Ansicht bekam von hier
+ * ein kaltes, blaustichiges #080d14 plus zwei cyane Radial-Verlaeufe
+ * darueber. Das war der sichtbare Bruch zwischen Start und dem Rest:
+ * nicht einzelne Knoepfe, sondern die Flaeche darunter.
+ *
+ * WAS AN DIE STELLE TRITT — nichts Neues, sondern das, was schon da war:
+ * app-surfaces.css traegt im Dunkel-Block (Zeile 427ff) bereits die
+ * neutrale Fassung JEDER Regel, die hier stand:
+ *   .premium-view              -> background: transparent
+ *   .premium-view::before      -> grauer Verlauf ohne Cyan (Zeile 442)
+ *   .model-state-ready::before -> #4bd48a (Zeile 184)
+ *   .nav-button.is-active      -> ruhige helle Toenung (Zeile 672,
+ *                                 wortgleiches Duplikat der Regel hier)
+ *   .premium-view#search …     -> border-radius 8px (Zeile 598)
+ * Kante, Flaeche und Knopf-Aussehen kommen aus design-v11-views.css,
+ * das nach dieser Datei geladen wird. Es ist also KEINE Regel ersatzlos
+ * verschwunden — es faellt nur die Schicht weg, die sie eingefaerbt hat.
+ *
+ * Die vollstaendige alte Vorlage liegt unveraendert in design-cyan.css
+ * (verwaist, als Referenz), der Endstand dieser Datei in der Git-
+ * Historie vor diesem Commit.
+ */

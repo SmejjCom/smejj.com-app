@@ -57,7 +57,18 @@ test("die Datei liegt im Precache — sonst ist die App offline tot", () => {
     `ohne Versionssprung erreicht der Fix Bestandsnutzer nicht (v${version[1]})`);
 });
 
+
+// Zeilen zaehlen wie scripts/check-guidelines.mjs (Zeile 97), der kanonische
+// Pruefer des Projekts: eine Datei, die mit Zeilenumbruch endet, hat NICHT
+// eine Zeile mehr. `split("\n")` liefert dort ein leeres Schlusselement und
+// machte diesen Test um genau 1 zu streng — public/app.js mit exakt 800
+// Zeilen fiel durch, obwohl check:guidelines sie als konform fuehrt.
+function zeilenZahl(text) {
+  const zeilen = text.split("\n");
+  return text.endsWith("\n") ? zeilen.length - 1 : zeilen.length;
+}
+
 test("app.js bleibt unter der 800-Zeilen-Grenze", () => {
-  const zeilen = readFileSync(new URL("../public/app.js", import.meta.url), "utf8").split("\n").length;
+  const zeilen = zeilenZahl(readFileSync(new URL("../public/app.js", import.meta.url), "utf8"));
   assert.ok(zeilen <= 800, `app.js hat ${zeilen} Zeilen`);
 });

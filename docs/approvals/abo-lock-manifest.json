@@ -1,14 +1,14 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-25T17:30:03.681Z",
-  "confirmation": "iPhone-PWA-Runde v701 (Betreiber-Livetest): viewport-fit=cover auf allen Seiten, danke-abo.html eingeschlossen — Stempel in jener Runde vergessen, hier nachgeholt (Auftrag: Sprachwelle iPhone fertig machen)",
+  "frozenAt": "2026-08-30T18:43:46.720Z",
+  "confirmation": "Betreiber-Freigabe 2026-08-30 (Autonomie-Runde 4, 'alle Rechte von A bis z'): Bündel-Abgleich v715 — account-privacy.js lädt jetzt das konsolidierte Konto-Stylesheet (design-v11 vereinigte account-privacy.css + formulare zu EINER Datei; funktionsgleicher Loader, durch konto-formulare-Tests abgedeckt)",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "959087778a74f4d49530a58c85b3f40402813e617a1b4ba5c0e2eb15df639925",
     "control-server/src/billing/stripeWebhookVerify.js": "e7a42ade4bc0e78e718bac8cc24cf30e21f46aec70aac8c2d6bcc7ce2a99e6b6",
     "control-server/src/billing/stripeEventApply.js": "71de637a1e577943525db71382bce11fdbfd905c80f5f4e223158e0ecb706d60",
     "control-server/src/billing/subscriptionStore.js": "849806cffa39eebbeb50d67404e567358d38bc5952c717424abea2faa528ffea",
-    "public/account-privacy.js": "70ad307a4a688960f8f9ca7abd29fe9b1087de87a10dac97e7ddf0f60379f9ed",
+    "public/account-privacy.js": "cefbff9fd67aabce52cbb78b135b0706306100fc69da3a59d2ae1b96b4f374e1",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/danke-abo.html": "f842a4a18bf539b73a06a56d4af3e89c39a33846a02c65b460ce4b23d00d000f",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",

@@ -26,8 +26,13 @@ test("auth pages expose honest professional sign-in paths", async () => {
     assert.match(page, /href="\/(assets\/)?auth\/auth\.css(\?v=[^"]*)?"/);
     assert.match(page, /src="\/(assets\/)?auth\/auth-page\.js(\?v=[^"]*)?"/);
   }
-  // Codex-Stil (Freigabe 2026-07-21): E-Mail zuerst, grosse Knoepfe, beide Themes.
+  // Vier-Zeilen-Fassung (Mockup V11 Bildschirm 4, Betreiber-Freigabe
+  // 2026-08-15 im Chat): EINE Seite fuer Anmelden UND Registrieren, der
+  // E-Mail-Weg ist die vierte Zeile und klappt auf (vier-zeilen.js).
   assert.match(login, /Anmelden oder registrieren/);
+  assert.match(login, /Mit E-Mail fortfahren/);
+  assert.match(login, /id="emailWegBlock"/);
+  assert.match(login, /src="\/auth\/vier-zeilen\.js(\?v=[^"]*)?"/);
   assert.match(register, /Konto erstellen/);
   assert.match(css, /auth-card/);
   assert.match(css, /prefers-color-scheme: light/);

@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "suiteId": "smejj-1-0-phase1-foundation",
-  "version": "2026-07-28.5",
-  "createdAt": "2026-07-21T12:00:00Z",
-  "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite.",
+  "version": "2026-08-14.1",
+  "createdAt": "2026-08-14T06:00:09.591Z",
+  "description": "Immutable smejj.com Phase 1 foundation, safety, non-regression and cost benchmark suite. (Version 2026-08-14.1: Pruefsummen von check-start-lock.mjs und check-guidelines.mjs nachgezogen; Betreiber-Freigabe 'Ja, nachziehen'. Suite-Inhalt sonst unveraendert.)",
   "immutable": true,
   "eligibleForTraining": false,
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "0ff92f5283adee3e63bebf32cb53bd91efb65f995fa6ecd66a5d83533f79b49b"
+    "contentSha256": "18b87e97b7cfd41e1c026419fb325e0aee25d3e15e7d9d749f1e67ccf5e481d6"
   },
   "protection": {
     "versionedObjectKey": "evaluations/suites/smejj-1-0-phase1-foundation/2026-07-28.5/manifest.json",
@@ -111,7 +111,7 @@
       },
       {
         "path": "scripts/check-no-private-paths.mjs",
-        "sha256": "eb89c45002fdb351e70d18412676c9dbf3dd2defee759134e317dab68a5054a4"
+        "sha256": "ee45bb9ba8e653feaa50b049073bc547088adcf47018125d100ac0878c88615c"
       },
       {
         "path": "scripts/check-no-paid-services.mjs",
@@ -123,11 +123,11 @@
       },
       {
         "path": "scripts/check-guidelines.mjs",
-        "sha256": "13618c141dbf3df3ebc24822bbdd40be6d68fd5ed06a8f53204cc68b1cad8d06"
+        "sha256": "b15032bf205cadbf6964809bf7fa884190148f6f6af399c858682316522e663f"
       },
       {
         "path": "scripts/check-start-lock.mjs",
-        "sha256": "31ee36415a994a01d686762dd1ce5bee6a7c74c2c71bd2589ac964e6c8246941"
+        "sha256": "e8406365fb83418bc09c3848a22bb18240a0749476e7d17a9f0053ee69da532b"
       },
       {
         "path": "tests/training-manifest-policy.test.mjs",
@@ -135,7 +135,7 @@
       },
       {
         "path": "tests/free-only-master-policy.test.mjs",
-        "sha256": "db827b5865564c7eb45a5a54f18b6030b0febb1c62e36b6333b4752155e6adf8"
+        "sha256": "5fc9f3d89672d63fab1f311bb25d24c4548780e2f7323fe0559cb3e9e008b1b6"
       },
       {
         "path": "tests/security-abuse.test.mjs",

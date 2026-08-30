@@ -61,23 +61,39 @@ const LEGACY_BASELINE = new Map([
   // 24x24 px fuer die Rechtslinks der Fusszeile (F-21, WCAG 2.2 AA).
   // +24 Zeilen, davon 13 Kommentar. Beides sind Zusaetze, keine Umbauten:
   // bestehende Regeln, Farben, Abstaende und Schriftbilder bleiben unveraendert.
-  ["public/styles.css", 1589],
-  // Zeilen-Diaet 2026-08-25 (Buendel-Projekt Stufe 3): chat-store, chat-stream,
-  // code-flaeche, design-v11 und account-privacy sind aufgeteilt und wieder
-  // unter der Regel. NUR index.html bleibt als begruendete Dauer-Baseline:
-  // EINE Seite ist EINE Datei — die Views in Teil-HTMLs zu zerlegen hiesse
-  // Laufzeit-Zusammenbau ohne Nutzen und gegen die Bauart der App-Shell.
-  // Ratchet: sie darf nicht weiter wachsen.
-  // index.html 992 -> 1015 am 2026-08-25 (Kaltstart, Betreiber-Freigabe
-  // woertlich "Ja, freigegeben"): das fruehe Tor steht INLINE im head (+21
-  // Zeilen = exakt public/auth-gate-frueh.js) und das Stylesheet wird per
-  // preload sofort angestossen (+2) — der erste blockierende Request
-  // entfaellt, die kalte Renderkette laeuft parallel statt in Serie.
-  // Ab diesem Stand wieder eingefroren.
-  // 1015 -> 1016 am 25.08. abends: +1 Zeile fuer das pwa-schnellstart-Modul
-  // (echte Manifest-Shortcuts). Ab diesem Stand wieder eingefroren.
+  // styles.css 1589 -> 1598 am 2026-08-24 (5514a47d): "Browser bedienen"
+  // brach hart an der Kante ab — Scroll-Verhalten der Schublade repariert.
+  // Nachtraeglich als Baseline dokumentiert im Vollaudit 2026-08-25; die
+  // Datei war seither ueber der alten Baseline, ohne dass check:guidelines
+  // im Alltag lief. Ab diesem Stand wieder eingefroren.
+  ["public/styles.css", 1598],
+  ["src/worker.js", 930],
+  // Vollaudit 2026-08-25: zwei weitere Altlasten dieses ARBEITSZWEIGS als
+  // eingefrorene Baselines dokumentiert, damit das Tor wieder schliesst und
+  // ECHTE neue Risse sichtbar werden. Die eigentliche Aufteilung ist auf dem
+  // Bauzweig bereits geschehen (Zeilen-Diaet Stufe 3, e6978155 — dort ist
+  // index.html die einzige begruendete Dauer-Baseline); dieser Zweig erbt
+  // sie beim naechsten Buendel-Abgleich. Bis dahin: NICHT weiter wachsen.
+  // - index.html 999 seit 16b220e9 (Modell-Menue zentral, 24.08.)
+  // - src/server.js 808 seit ce706bd4 (413-Fix, Nachzug aus dem Bauzweig)
+  // 999 -> 1016 am 25.08.: Live-Spiegel (Inline-Tor +21 = exakt
+  // auth-gate-frueh.js, preload +2, pwa-schnellstart +1) minus alte Zeilen.
+  // Betreiber-Freigaben vom 25.08. woertlich dokumentiert in den Commits.
   ["public/index.html", 1016],
-  ["src/worker.js", 930]
+  ["src/server.js", 808],
+  // - code-flaeche.js 804 und design-v11.css 2744: exakt die zwei Dateien,
+  //   die die Bauzweig-Diaet (Stufe 3) dort bereits zerlegt hat (754 + vier
+  //   Teile). Hier eingefroren bis zum Buendel-Abgleich.
+  ["public/code-flaeche.js", 804],
+  ["public/design-v11.css", 2744],
+  ["public/account-privacy.css", 896],
+  ["public/ai/chat-stream.js", 998],
+  ["public/browser-pane.js", 818],
+  ["public/chat-store.js", 990],
+  // Dokumentations-Altlasten dieses Zweigs (Bauzweig: Verlauf in 4 Teile
+  // geteilt, Memory_Bank konsolidiert auf 482):
+  ["docs/frontend/SW_VERSIONSVERLAUF_2026-08.md", 1635],
+  ["control-server/src/autopilots/autopilotLaeufer.js", 863]
 ]);
 // Praezise Verstoesse: Markenwort in Grossschreibung (das SMEJJ_-Env-Praefix mit
 // Unterstrich ist erlaubt) sowie grossgeschriebene Varianten ohne ".com"-Suffix.
@@ -90,7 +106,13 @@ const CHECK_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".md", ".json", ".html",
 // kein handgepflegter Quellcode. Die acht Quelldateien bleiben einzeln unter der
 // 800-Zeilen-Regel und werden weiterhin geprueft; das Buendel ist nur ihr Ergebnis
 // und wird von check:start-styles gegen die Quellen verifiziert (2026-07-27).
-const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/start-styles\.css$/];
+// Auch die Auslieferungs-Kopie des Buendels ist erzeugt, nicht handgepflegt
+// (public/assets/ spiegelt die Wurzel fuer den lokalen Server, 2026-08-13).
+// public/assets/ ist KOMPLETT erzeugt (npm run build:assets kopiert die
+// ratchet-gepruefte Wurzel 1:1; check:assets/auslieferung-lock beweisen die
+// Byte-Gleichheit) — dieselbe Zeile doppelt zu zaehlen ist kein zweiter
+// Befund, sondern Laerm (Vollaudit 2026-08-25).
+const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/(assets\/)?start-styles\.css$/, /^public\/assets\//];
 
 const failures = [];
 const files = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8" })

@@ -36,9 +36,11 @@ import path from "node:path";
 import readline from "node:readline";
 import { loadSecureLocalEnv } from "../../src/shared/env.js";
 import { periodEndeAus, planFromStripeItem, putCustomerRecord, putRefRecord } from "../../control-server/src/billing/subscriptionStore.js";
+import { setzeUmgebungswerte, starteDienstNeu } from "./zeabur-umgebung-setzen.mjs";
 import { emailKey, normalizeEmail } from "../../control-server/src/auth/emailUserStore.js";
 
 const CONTROL_ORIGIN = "https://smejj-control.zeabur.app";
+const ZEABUR_DIENST = "smejj-control";
 const WEBHOOK_URL = `${CONTROL_ORIGIN}/api/billing/stripe/webhook`;
 const DANKE_URL = "https://smejj.com/danke-abo.html";
 const WEBHOOK_EVENTS = [
@@ -205,13 +207,30 @@ async function main() {
     console.log("   (Kontrolle uebersprungen — Token-Minten nicht moeglich; kein Fehler fuer den Lauf.)");
   }
 
-  // 6) Secrets nach Zeabur — nur per Zwischenablage, nie im Log
-  console.log("6/6 Zwei Werte in Zeabur eintragen (Service smejj-control -> Variables):");
-  inZwischenablage(webhookSecret);
-  await frage(`   a) STRIPE_WEBHOOK_SECRET liegt in der Zwischenablage (${fingerabdruck(webhookSecret)}).\n      In Zeabur als Variable STRIPE_WEBHOOK_SECRET einfuegen, speichern — dann hier Enter druecken ...`);
-  inZwischenablage(stripeKey);
-  await frage(`   b) STRIPE_SECRET_KEY liegt jetzt in der Zwischenablage (${fingerabdruck(stripeKey)}).\n      In Zeabur als Variable STRIPE_SECRET_KEY einfuegen, speichern — dann hier Enter druecken ...`);
-  inZwischenablage("");
+  // 6) Secrets nach Zeabur. Zuerst der automatische Weg ueber die Zeabur-API
+  // (der Zugang liegt in ~/.config/zeabur/cli.yaml); nur wenn der nicht traegt,
+  // der alte Weg ueber die Zwischenablage. Werte erscheinen in keinem Fall im
+  // Log — weder hier noch bei Zeabur in einer Fehlermeldung.
+  console.log("6/6 Werte am Dienst smejj-control setzen ...");
+  const werte = { STRIPE_WEBHOOK_SECRET: webhookSecret, STRIPE_SECRET_KEY: stripeKey };
+  let automatisch = false;
+  try {
+    const gesetzt = await setzeUmgebungswerte(ZEABUR_DIENST, werte);
+    console.log(`   ok — ${gesetzt.anzahl} Werte gesetzt (${gesetzt.mutation}), ohne Zutun.`);
+    automatisch = true;
+    const neu = await starteDienstNeu(ZEABUR_DIENST).catch(() => ({ ok: false, grund: "fehlgeschlagen" }));
+    console.log(neu.ok ? "   Neustart angestossen." : "   Neustart nicht noetig oder nicht moeglich — Zeabur startet nach Variablenaenderung meist selbst.");
+  } catch (fehler) {
+    console.log(`   Automatik nicht moeglich (${String(fehler?.message || fehler).slice(0, 80)}) — Handweg:`);
+  }
+
+  if (!automatisch) {
+    inZwischenablage(webhookSecret);
+    await frage(`   a) STRIPE_WEBHOOK_SECRET liegt in der Zwischenablage (${fingerabdruck(webhookSecret)}).\n      In Zeabur als Variable STRIPE_WEBHOOK_SECRET einfuegen, speichern — dann hier Enter druecken ...`);
+    inZwischenablage(stripeKey);
+    await frage(`   b) STRIPE_SECRET_KEY liegt jetzt in der Zwischenablage (${fingerabdruck(stripeKey)}).\n      In Zeabur als Variable STRIPE_SECRET_KEY einfuegen, speichern — dann hier Enter druecken ...`);
+    inZwischenablage("");
+  }
 
   console.log("   Warte auf den Neustart des Servers (misst, bis der Webhook 400 statt 503 antwortet) ...");
   const start = Date.now();

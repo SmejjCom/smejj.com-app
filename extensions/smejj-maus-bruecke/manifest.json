@@ -1,11 +1,18 @@
 {
   "manifest_version": 3,
   "name": "smejj.com Maus-Bruecke",
-  "version": "0.1.0",
-  "description": "Laesst die Maus von smejj.com den echten Chrome bedienen - nur auf Seiten, die der Betreiber sichtbar freigegeben hat.",
+  "version": "0.5.0",
+  "description": "Laesst die Maus von smejj.com den echten Chrome bedienen - sie sieht die Seite als Bedienbaum und klickt darin, nur auf Seiten, die der Betreiber sichtbar freigegeben hat.",
   "minimum_chrome_version": "116",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "optional_host_permissions": ["https://*/*"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
   "background": {
     "service_worker": "hintergrund.js",
     "type": "module"
@@ -15,6 +22,19 @@
     "default_popup": "freigabe.html"
   },
   "externally_connectable": {
-    "matches": ["https://smejj.com/*"]
-  }
+    "matches": [
+      "https://smejj.com/*"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://smejj.com/*"
+      ],
+      "js": [
+        "seiten-bruecke.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
 }
