@@ -1,0 +1,117 @@
+{
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+  "kalt": {
+    "ttfb_ms": {
+      "median": 235,
+      "p75": 250,
+      "min": 128,
+      "max": 250
+    },
+    "fcp_ms": {
+      "median": 908,
+      "p75": 976,
+      "min": 300,
+      "max": 1376
+    },
+    "lcp_ms": {
+      "median": 908,
+      "p75": 976,
+      "min": 300,
+      "max": 1376
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "inp_ms": {
+      "median": 40,
+      "p75": 40,
+      "min": 32,
+      "max": 40
+    },
+    "domInteractive_ms": {
+      "median": 915,
+      "p75": 955,
+      "min": 255,
+      "max": 1424
+    },
+    "pageWeight_kb": {
+      "median": 297,
+      "p75": 297,
+      "min": 293,
+      "max": 297
+    },
+    "resources": {
+      "median": 97,
+      "p75": 97,
+      "min": 96,
+      "max": 97
+    },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": {
+      "median": 143,
+      "p75": 151,
+      "min": 70,
+      "max": 381
+    },
+    "fcp_ms": {
+      "median": 212,
+      "p75": 240,
+      "min": 164,
+      "max": 444
+    },
+    "lcp_ms": {
+      "median": 212,
+      "p75": 240,
+      "min": 164,
+      "max": 444
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "inp_ms": {
+      "median": 40,
+      "p75": 48,
+      "min": 40,
+      "max": 56
+    },
+    "domInteractive_ms": {
+      "median": 169,
+      "p75": 195,
+      "min": 132,
+      "max": 403
+    },
+    "pageWeight_kb": {
+      "median": 73,
+      "p75": 73,
+      "min": 0,
+      "max": 73
+    },
+    "resources": {
+      "median": 97,
+      "p75": 97,
+      "min": 97,
+      "max": 97
+    },
+    "lcpElement": "H2"
+  },
+  "budgets": {
+    "ttfb_ms": 200,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "verstoesse": [
+    "kalt: ttfb_ms p75 250 > Budget 200"
+  ]
+}
