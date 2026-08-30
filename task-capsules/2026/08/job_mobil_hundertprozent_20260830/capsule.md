@@ -100,3 +100,25 @@ backups/start-design-lock/2026-08-30T11-33-43-524Z/.
 Keine Regression; LCP und TTFB verbessert. Benchmark:
 docs/benchmarks/webvitals_v715_nachdeploy_2026-08-30.json (5 Laeufe, kalt +
 warm, headless Chrome gegen Produktion).
+
+## Nachtrag Abschluss (Betreiber-Freigabe "alle Rechte A-Z, lass nichts offen")
+
+1. **Codeberg-Spiegel GESCHLOSSEN**: Schlüssel ~/.ssh/codeberg_smejj_ed25519
+   existierte, war nur nicht im Agent (.git/config erzwingt per core.sshcommand
+   den GITHUB-Schlüssel mit IdentitiesOnly — Codeberg bekam den falschen
+   angeboten). Loesung ohne Config-Aenderung:
+   GIT_SSH_COMMAND="ssh -i ~/.ssh/codeberg_smejj_ed25519 -o IdentitiesOnly=yes"
+   git push codeberg feature/design-v11 -> 29fd706d..037242ff.
+2. **Spiegel-Angleich (Frontend 7ef4c7d)**: genau 3 ungefaehrliche Dateien
+   auf App-Stand gebracht — assets/index.html (ungenutzt: kein Precache,
+   kein Import, bewiesen), Root-Spiegel app.js + composer-tools.js (keine
+   Seite laedt sie). Alle GELADENEN Dateien vorher gegen App-Stand verifiziert
+   identisch; Produktion danach bewiesen intakt (200, b102, v715, Hotfixes).
+3. **Gesamtdivergenz vermessen: 147 von 492 gemeinsamen Dateien** weichen
+   ab (u. a. assets/chat-bridge.js 5286 Diff-Zeilen — gebuendeltes Artefakt,
+   nur ueber bundle:bridge; ai/chat-stream.js 550; admin/* Flut). Bewusst
+   NICHT blind angeglichen: Die Frontend-Seite traegt Produktions-Hotfixes
+   (wie frueher viewport-fit/Inline-Gate), die zurueckportiert werden
+   muessen, nicht ueberschrieben. Das ist ein eigenes Abgleichsprojekt
+   Datei fuer Datei — dokumentiert, nicht ueberstuerzt (Abgleichs-Lehre
+   23.08., Non-Regression-Pflicht).
