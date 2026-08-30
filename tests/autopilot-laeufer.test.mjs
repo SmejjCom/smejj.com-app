@@ -83,7 +83,9 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
   const w = gemeldet.get("synthetic-user-watchdog");
   assert.ok(w, "der Waechter muss melden");
   assert.equal(w.status, "fehler", "ohne pruefbare Kette ist er rot, nie gruen");
-  assert.match(w.meldung, /gescheitert/i);
+  // Seit 2026-08-30 meldet der 30-Minuten-Eintrag dieselbe SIEBEN-Schritt-
+  // Nutzerreise wie der 15-Minuten-Takt — nicht mehr den schmalen Kern.
+  assert.match(w.meldung, /Nutzerreise .*kaputt/);
   assert.ok(gemeldet.get("voice-region-check"), "Voice-Region laeuft im Control-Server, nicht mehr im Jobs-Dienst");
 });
 
