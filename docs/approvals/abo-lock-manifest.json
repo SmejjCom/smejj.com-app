@@ -1,14 +1,14 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-25T14:48:40.621Z",
-  "confirmation": "Betreiber-Freigabe 25.08. 'alle Rechte, PWA/iOS/Android professionell': einzige Aenderung an danke-abo.html ist viewport-fit=cover (Safe-Area der iPhone-PWA); Zahlungslogik unangetastet",
+  "frozenAt": "2026-08-30T18:56:22.291Z",
+  "confirmation": "Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen. (Wof Kadavanich, 2026-08-30, Freigabe Divergenz-Angleich — Rueckportierung des LIVE-Stands von account-privacy.js, Abo-Kette inhaltlich unveraendert)",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "control-server/src/routes/billingRoutes.js": "959087778a74f4d49530a58c85b3f40402813e617a1b4ba5c0e2eb15df639925",
     "control-server/src/billing/stripeWebhookVerify.js": "e7a42ade4bc0e78e718bac8cc24cf30e21f46aec70aac8c2d6bcc7ce2a99e6b6",
     "control-server/src/billing/stripeEventApply.js": "8ec8e5ca3b6153f97abb2f0e413c7047ac4524c43a26a7ebb8e0d69e302b4476",
     "control-server/src/billing/subscriptionStore.js": "5ccf64346bd10986da2c94c71738b8c766b59654d23af00196cbe3e179ea5a2a",
-    "public/account-privacy.js": "cefbff9fd67aabce52cbb78b135b0706306100fc69da3a59d2ae1b96b4f374e1",
+    "public/account-privacy.js": "70ad307a4a688960f8f9ca7abd29fe9b1087de87a10dac97e7ddf0f60379f9ed",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/danke-abo.html": "f842a4a18bf539b73a06a56d4af3e89c39a33846a02c65b460ce4b23d00d000f",
     "public/danke-abo.js": "7dca3de8137a55cebebd2f20b12db9faddcd060f47559dba4c63ce153e45197f",

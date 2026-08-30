@@ -20,7 +20,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const QUELLE = fs.readFileSync("public/account-sessions.js", "utf8");
-const CSS = fs.readFileSync("public/account-privacy.css", "utf8");
+// Diaet 2026-08-25 (zurueckportiert 30.08.): die Stile sind zweigeteilt — der
+// Lader (account-privacy.js) haelt beide Teile; der Test prueft sie gemeinsam.
+const CSS = fs.readFileSync("public/account-privacy.css", "utf8")
+  + "\n" + fs.readFileSync("public/account-privacy-formulare.css", "utf8");
 // Kommentare beschreiben auch alte Fehler (z. B. die frueher benutzte, nie
 // definierte Variable) — geprueft werden darf nur, was der Browser wirklich liest.
 const CSS_CODE = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
