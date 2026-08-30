@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-24T12:30:37.986Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-24: 'Alle 5 bauen (Empfehlung)' — Optimierungs-Runde Nr. 63/64 + Boot-Luecke + Eigenproben + API-Domain-Lastprobe",
+  "frozenAt": "2026-08-26T08:37:33.148Z",
+  "confirmation": "Ich finde deinen Vorschlag gut kannst du das umsetzen",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -23,7 +23,7 @@
     "control-server/src/admin/opsAutopiloten.js": "bfe5ddc1965e0ef20e4a7ef49fd1d6525a087617e5ecd1727b3558508bc7ddc0",
     "control-server/src/admin/opsAutopilotenListe.js": "243aac45c915d44b7b9636402251675df4f3a2665988c67af655a95f8e917409",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
-    "control-server/src/admin/opsAutopilotenBereiche.js": "15bbb8964b404a0cb10c3fcd07b9379e1caae127547378e39aaa805fbbdd21a4",
+    "control-server/src/admin/opsAutopilotenBereiche.js": "1fe0ddd4df9e73cb18fa29ae7c3dfe851a7dda315f65dbdc2c0f92aa1adb3b54",
     "control-server/src/admin/opsAuslieferung.js": "1c8cd6387c543db7796ee7d985b494a0c276cbd7c5b54429c600b6330e3d9051",
     "control-server/admin-ui/views-stage12.js": "01019f1bdf06f40d87f2b2aa5ca05e901ade9be3b0d7f8536f9d19cc279389df",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",

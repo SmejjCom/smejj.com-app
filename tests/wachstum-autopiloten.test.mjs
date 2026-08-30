@@ -16,6 +16,7 @@ import { pruefeSeitenQuelle, laufAuffindbarkeitsWache } from "../control-server/
 import { berechneWillkommensLage, laufWillkommensWache } from "../control-server/src/autopilots/willkommensWacheAutopilot.js";
 import { weiseVarianteZu, werteExperimentAus, laufExperimentMeister } from "../control-server/src/autopilots/experimentMeisterAutopilot.js";
 import { baueTagesmappe, laufTagesmappe } from "../control-server/src/autopilots/tagesmappeAutopilot.js";
+import { TRAININGS_REIFE_ABLAGE } from "../control-server/src/autopilots/trainingsReifeAutopilot.js";
 import { baueSchutzUndWachstumLaeufe, SCHUTZ_UND_WACHSTUM_IDS } from "../control-server/src/autopilots/schutzUndWachstumLaeufe.js";
 import { IM_LAEUFER_BETRIEBEN } from "../control-server/src/autopilots/autopilotLaeufer.js";
 import { AUTOPILOTEN } from "../control-server/src/admin/opsAutopilotenListe.js";
@@ -120,11 +121,16 @@ test("Nr. 60 Tagesmappe: stumme Quellen werden benannt, gesunde Mappe ist vollst
   const gesund = await baueTagesmappe({
     uebersicht: () => ({ autopiloten: [{ id: "x", name: "X", ampel: "rot", letzterLauf: { meldung: "kaputt" } }] }),
     ticketLader: async () => [{ id: "T1", status: "offen", betreff: "Hilfe" }],
-    storeFabrik: () => ({ liste: async () => ({ ok: true, datensaetze: [] }) })
+    // Nr. 65 (2026-08-26): die Trainings-Reife-Ablage gehört zu den Quellen —
+    // in der gesunden Welt liegt darin eine frische Karte ab Stufe 2.
+    storeFabrik: (praefix) => praefix === TRAININGS_REIFE_ABLAGE
+      ? { liste: async () => ({ ok: true, datensaetze: [{ stufe: 2, gesamt: 2600, ziel: 5000, createdAt: new Date().toISOString() }] }) }
+      : { liste: async () => ({ ok: true, datensaetze: [] }) }
   });
   assert.equal(gesund.stummeQuellen.length, 0);
   assert.equal(gesund.roteAmpeln.length, 1);
   assert.equal(gesund.wartenAufDich.length, 1);
+  assert.ok(gesund.entscheiden.some((e) => e.art === "trainings-reife"), "die reife Karte muss unter ENTSCHEIDEN stehen");
 });
 
 test("ANSCHLUSS-BEWEIS: alle 17 in Registry, Taktgeber und Selbstheilung — Nummern 44-60 eindeutig", () => {

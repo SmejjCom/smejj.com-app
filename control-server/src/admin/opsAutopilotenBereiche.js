@@ -44,7 +44,9 @@ const ZUORDNUNG = Object.freeze({
     "modell-katalog-wache",
     "modell-einkaeufer", "live-arena-leaderboard", "knowledge-distiller", "model-lifecycle",
     "realtime-internet-harvester", "smart-router", "memory-sync", "missing-function-detector",
-    "konkurrenz-radar", "training-loop"
+    "konkurrenz-radar", "training-loop",
+    // Nr. 65 (2026-08-26): die Reife der Trainingsdaten gehört zu den Modellen.
+    "trainings-reife"
   ],
   "Medien & Sprache": [
     "realtime-voice-pair", "multimodal-engine", "deep-research", "voice-region-check"

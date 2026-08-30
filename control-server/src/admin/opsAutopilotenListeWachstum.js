@@ -1,5 +1,6 @@
 // smejj.com — Modul AP, Registry-Teil 4: Kosten, Leistung, Wachstum und die
-// Tagesmappe — Nr. 55-60 (Betreiber-Freigabe 2026-08-24: "Ja, alle 17 bauen").
+// Tagesmappe — Nr. 55-60 (Betreiber-Freigabe 2026-08-24: "Ja, alle 17 bauen")
+// und Nr. 65 (Betreiber-Freigabe 2026-08-26: Trainings-Reife-Wache).
 //
 // Eigene Datei wie Teil 2 und 3 (800-Zeilen-Regel der Hauptliste).
 
@@ -122,6 +123,22 @@ export const WACHSTUM_AUTOPILOTEN = Object.freeze([
     trainiert: "Nichts — sie fragt die Modelllisten der Anbieter ab",
     verbessert: "Ein beim Anbieter gestorbenes Modell steht binnen eines Tages in der Ampel statt als 404 beim Nutzer",
     neuigkeiten: ["Neu am 2026-08-24, nach dem Groq-Llama-Vorfall"],
+    ...LAEUFER
+  },
+  {
+    id: "trainings-reife",
+    name: "Trainings-Reife-Wache",
+    nummer: "65",
+    kurz: "Rechnet die vier Trainings-Ablagen gegen das Reife-Ziel und legt die Entscheidungskarte in der Tagesmappe ab — damit das ruhende Training (Charta §0) wieder sichtbar näherkommt, statt blind zu sammeln.",
+    funktionen: [
+      "Misst dieselben vier Ablagen wie der Trainings-Takt (Nr. 05) — DPO-Paare, Destillate, Nutzersignale, Batches — und rechnet sie gegen SMEJJ_TRAINING_REIFE_ZIEL_GESAMT (Standard 5000).",
+      "Vier Stufen: 0 = leerer ehrlicher Anfang, 1 = Daten da, 2 = nah dran (ab der Hälfte), 3 = reif. Erst Stufe 2 erzeugt eine Karte unter ENTSCHEIDEN in der Tagesmappe (Nr. 60).",
+      "SIE STARTET KEIN TRAINING und schätzt keine Preise: der GPU-Lauf bleibt Rote Liste hinter der schriftlichen Kosten-Freigabe — dieselbe Grenze wie im Trainings-Takt.",
+      "Unlesbare Ablagen sind rot; eine veraltete Karte (über 3 Tage) erscheint als stumme Quelle in der Mappe, statt zu schweigen."
+    ],
+    trainiert: "Nichts — sie rechnet Bestände gegen ein Ziel",
+    verbessert: "Die Frage 'wären wir schon trainierbereit?' ist eine gemessene Zahl alle 30 Minuten statt ein Bauchgefühl mit still wachsenden Ablagen",
+    neuigkeiten: ["Neu am 2026-08-26 (Lücke aus der A-bis-Z-Deckungsprüfung)"],
     ...LAEUFER
   }
 ]);

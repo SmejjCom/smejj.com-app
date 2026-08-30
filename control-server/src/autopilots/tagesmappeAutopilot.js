@@ -17,6 +17,7 @@
 import { createRecordStore } from "../admin/recordStore.js";
 import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { listeTickets } from "../admin/supportTickets.js";
+import { TRAININGS_REIFE_ABLAGE } from "./trainingsReifeAutopilot.js";
 
 /** Offene Punkte, die nur der Betreiber entscheiden kann. Gepflegt im Code,
  *  damit jeder Eintrag mit seinem Grund im Review steht — KEINE Messwerte. */
@@ -120,6 +121,27 @@ export async function baueTagesmappe({
     }
   } catch { stumm.push("Aufgaben-Ablage"); }
 
+  // 7. Trainings-Reife-Karte (Nr. 65): erst ab Stufe 2 ("nah dran" oder "reif")
+  // eine Entscheidung — bei Stufe 0/1 ist "weiter sammeln" kein Beschluss wert.
+  // Eine veraltete Karte (älter als 3 Tage) zählt als stumme Quelle: die Wache
+  // läuft alle 30 Minuten; schweigt sie länger, steht das HIER, nicht nirgends.
+  try {
+    const liste = await storeFabrik(TRAININGS_REIFE_ABLAGE, 10).liste({ limit: 1 });
+    if (!liste.ok) stumm.push("Trainings-Reife-Ablage");
+    else {
+      const karte = liste.datensaetze[0];
+      const frisch = karte && jetztMs - Date.parse(karte.createdAt || 0) < 3 * 86_400_000;
+      if (!karte || !frisch) stumm.push("Trainings-Reife-Ablage (veraltet)");
+      else if (Number(karte.stufe) >= 2) {
+        entscheiden.push({
+          art: "trainings-reife",
+          text: `Trainingsdaten Stufe ${karte.stufe}/3: ${karte.gesamt}/${karte.ziel} Datensätze`
+            + ` — GPU-Lauf braucht deine Kosten-Freigabe (Rote Liste)`
+        });
+      }
+    }
+  } catch { stumm.push("Trainings-Reife-Ablage"); }
+
   return {
     ok: true,
     erstelltAm: new Date(jetztMs).toISOString(),
@@ -146,11 +168,27 @@ export async function fuehreSelbsttestAus() {
   const gesund = await baueTagesmappe({
     uebersicht: () => ({ autopiloten: [{ id: "x", name: "X", ampel: "rot", letzterLauf: { meldung: "kaputt" } }] }),
     ticketLader: async () => [{ id: "T1", status: "offen", betreff: "Hilfe" }],
-    storeFabrik: () => ({ liste: async () => ({ ok: true, datensaetze: [] }) })
+    storeFabrik: (praefix) => praefix === TRAININGS_REIFE_ABLAGE
+      ? { liste: async () => ({ ok: true, datensaetze: [{ stufe: 3, gesamt: 5200, ziel: 5000, createdAt: new Date().toISOString() }] }) }
+      : { liste: async () => ({ ok: true, datensaetze: [] }) }
   });
   if (gesund.roteAmpeln.length !== 1) fehler.push("rote Ampel fehlt in der gesunden Mappe");
   if (gesund.wartenAufDich.length !== 1) fehler.push("offenes Ticket fehlt in der gesunden Mappe");
   if (gesund.stummeQuellen.length !== 0) fehler.push("gesunde Mappe meldet fälschlich stumme Quellen");
+  if (!gesund.entscheiden.some((e) => e.art === "trainings-reife")) {
+    fehler.push("reife Trainings-Karte fehlt unter ENTSCHEIDEN");
+  }
+  // Stufe 1 ist bewusst KEINE Entscheidung: weiter sammeln ist kein Beschluss.
+  const frueh = await baueTagesmappe({
+    uebersicht: () => ({ autopiloten: [] }),
+    ticketLader: async () => [],
+    storeFabrik: (praefix) => praefix === TRAININGS_REIFE_ABLAGE
+      ? { liste: async () => ({ ok: true, datensaetze: [{ stufe: 1, gesamt: 900, ziel: 5000, createdAt: new Date().toISOString() }] }) }
+      : { liste: async () => ({ ok: true, datensaetze: [] }) }
+  });
+  if (frueh.entscheiden.some((e) => e.art === "trainings-reife")) {
+    fehler.push("Stufe 1 darf noch keine Entscheidung erzeugen");
+  }
   return { bestanden: fehler.length === 0, fehler };
 }
 
@@ -174,5 +212,5 @@ export async function laufTagesmappe() {
   if (mappe.stummeQuellen.length) {
     return { ok: false, meldung: `Mappe unvollständig — stumme Quellen: ${mappe.stummeQuellen.join(", ").slice(0, 120)}` };
   }
-  return { ok: true, meldung: `Selbsttest 4/4; Mappe gebaut: ${mappe.zusammenfassung} (GET /api/admin/ops/tagesmappe)` };
+  return { ok: true, meldung: `Selbsttest 6/6; Mappe gebaut: ${mappe.zusammenfassung} (GET /api/admin/ops/tagesmappe)` };
 }
