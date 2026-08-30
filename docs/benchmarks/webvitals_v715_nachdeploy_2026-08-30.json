@@ -1,0 +1,122 @@
+{
+  "anlass": "Messpflicht nach Deploy v715 (100 %-Mobil-Paket: Querformat-44px, dvh, overscroll, Tastatur-Bruecke, Sprach-Logo live, Pause 750ms)",
+  "vergleich": "docs/benchmarks/webvitals_v713_nachdeploy_2026-08-30.json",
+  "frontedCommit": "fca2127",
+  "appCommit": "9950a720",
+  "sw": "smejj-shell-v715",
+  "datum": "2026-08-30",
+  "befund": "Alle Budgets erfuellt, KEINE Regression: LCP verbessert (976 -> 780 ms Median kalt), INP gleich (40 ms), CLS 0, Gewicht +1 KB (297 -> 298 KB, Budget 300), TTFB p75 173 ms (< 200).",
+  "url": "https://smejj.com/",
+  "runs": 5,
+  "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+  "kalt": {
+    "ttfb_ms": {
+      "median": 142,
+      "p75": 173,
+      "min": 65,
+      "max": 180
+    },
+    "fcp_ms": {
+      "median": 780,
+      "p75": 784,
+      "min": 380,
+      "max": 940
+    },
+    "lcp_ms": {
+      "median": 780,
+      "p75": 784,
+      "min": 380,
+      "max": 940
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "inp_ms": {
+      "median": 40,
+      "p75": 48,
+      "min": 40,
+      "max": 56
+    },
+    "domInteractive_ms": {
+      "median": 717,
+      "p75": 824,
+      "min": 350,
+      "max": 949
+    },
+    "pageWeight_kb": {
+      "median": 298,
+      "p75": 298,
+      "min": 294,
+      "max": 298
+    },
+    "resources": {
+      "median": 97,
+      "p75": 97,
+      "min": 96,
+      "max": 97
+    },
+    "lcpElement": "H2"
+  },
+  "warm": {
+    "ttfb_ms": {
+      "median": 77,
+      "p75": 82,
+      "min": 63,
+      "max": 91
+    },
+    "fcp_ms": {
+      "median": 160,
+      "p75": 160,
+      "min": 144,
+      "max": 172
+    },
+    "lcp_ms": {
+      "median": 160,
+      "p75": 160,
+      "min": 144,
+      "max": 172
+    },
+    "cls": {
+      "median": 0,
+      "p75": 0,
+      "min": 0,
+      "max": 0
+    },
+    "inp_ms": {
+      "median": 40,
+      "p75": 56,
+      "min": 40,
+      "max": 56
+    },
+    "domInteractive_ms": {
+      "median": 111,
+      "p75": 115,
+      "min": 104,
+      "max": 128
+    },
+    "pageWeight_kb": {
+      "median": 73,
+      "p75": 73,
+      "min": 4,
+      "max": 73
+    },
+    "resources": {
+      "median": 97,
+      "p75": 97,
+      "min": 97,
+      "max": 97
+    },
+    "lcpElement": "H2"
+  },
+  "budgets": {
+    "ttfb_ms": 200,
+    "lcp_ms": 1500,
+    "cls": 0.1,
+    "inp_ms": 200,
+    "pageWeight_kb": 300
+  },
+  "verstoesse": []
+}

@@ -86,3 +86,17 @@ Querformat live 44×44 (vorher 38/34) ✓, Portrait-Minimum 44 ✓, kein
 Frontend: git revert fca2127 auf main (Pages deployt sofort zurück).
 App-Repo: git revert 9950a720. Start-Lock-Backup:
 backups/start-design-lock/2026-08-30T11-33-43-524Z/.
+
+## Messpflicht erfuellt (Nachher gegen v713)
+
+| Metrik | v713 | v715 | Budget |
+|---|---|---|---|
+| CLS | 0 | 0 | < 0,1 OK |
+| INP kalt | 40 ms | 40 ms (p75 48) | < 200 OK |
+| LCP kalt | 976 ms | **780 ms** | < 1.500 OK |
+| TTFB kalt p75 | 250 ms | 173 ms | < 200 OK |
+| Gewicht kalt | 297 KB | 298 KB | < 300 OK |
+
+Keine Regression; LCP und TTFB verbessert. Benchmark:
+docs/benchmarks/webvitals_v715_nachdeploy_2026-08-30.json (5 Laeufe, kalt +
+warm, headless Chrome gegen Produktion).
