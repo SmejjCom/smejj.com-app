@@ -104,10 +104,10 @@ test("Nr. 68 EU-AI-Act-Wache: Drift rot, Schreibweisen gleich, sauber grün", as
   const drift = await laufAiAct({
     env: {},
     jetztIso: "2026-08-30T00:00:00.000Z",
-    modelle: () => ["glm-5-2", "ox-alpha"]
+    modelle: () => ["glm-5-2", "zukuenftiges-modell-x"]
   });
   assert.equal(drift.ok, false, "ein aktives Modell ohne Verzeichnis-Eintrag muss rot melden");
-  assert.match(drift.meldung, /ox-alpha/);
+  assert.match(drift.meldung, /zukuenftiges-modell-x/);
 
   const sauber = await laufAiAct({
     env: {},

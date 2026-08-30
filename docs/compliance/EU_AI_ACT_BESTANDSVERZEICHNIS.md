@@ -32,6 +32,7 @@ der Fremdmodelle werden nicht veraendert; es findet kein Fine-Tuning statt
 | **glm-5.2** | Chat, Codeerzeugung, Reasoning | Zhipu / Z.ai (API) | begrenztes Risiko (Art. 50) | erforderlich | Job-Protokoll + Audit-Log |
 | **llama-4-70b** (Welle 2) | Schnellantworten | Groq (API) | begrenztes Risiko (Art. 50) | erforderlich | Job-Protokoll |
 | **kimi-k2.7 / k3** | Reserve-Fundament | Moonshot (API) | begrenztes Risiko (Art. 50) | erforderlich | Job-Protokoll |
+| **ox-alpha** | Chat-Antworten (Menü Nr. 3) | Stealth / OpenRouter (API) | begrenztes Risiko (Art. 50) | erforderlich | Job-Protokoll |
 | **cline-bridge** | Coding-Agent | Cline (API) | begrenztes Risiko (Art. 50) | erforderlich | Job-Protokoll |
 | **maus-engine-v2** | autonome Browser-Steuerung | smejj.com (eigen) | begrenztes Risiko, **kein Hochrisiko** — siehe `RISIKOEINSTUFUNG_MAUS_ENGINE.md` | erforderlich, **verschaerft** | Job-Protokoll + Artefakte + Audit-Log |
 | **voice-tts-premium** | Sprachausgabe | smejj.com (eigen) | begrenztes Risiko (Art. 50 Abs. 2) | erforderlich | Job-Protokoll |
@@ -92,6 +93,7 @@ schriftliche Freigabe.
 
 | Datum | Aenderung | Wer | Grund |
 |---|---|---|---|
+| 2026-08-30 | ox-alpha ins Verzeichnis aufgenommen | ZCode (Betreiber-Freigabe "alle Rechte von A bis z") | Drift-Befund der EU-AI-Act-Wache (Nr. 68): aktives Modell ohne Eintrag |
 | 2026-07-28 | Bestandsverzeichnis angelegt | Wof Kadavanich | AI-Act-Frist 2026-08-02 |
 | 2026-07-28 | glm-5.2 auf Prioritaet 1 | Wof Kadavanich | Qualitaet |
 | 2026-07-21 | Groq Welle 2 aufgenommen | Wof Kadavanich | 0-Euro-Runbook |

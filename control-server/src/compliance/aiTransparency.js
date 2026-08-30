@@ -30,6 +30,12 @@ export const AI_SYSTEMS = Object.freeze([
     id: "kimi-k2.7", zweck: "Reserve-Fundament", anbieter: "Moonshot",
     risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
   }),
+  // Ox Alpha (2026-08-30): aktives Chat-Modell über OpenRouter — nach dem
+  // Drift-Befund der EU-AI-Act-Wache (Nr. 68) ins Verzeichnis aufgenommen.
+  Object.freeze({
+    id: "ox-alpha", zweck: "Chat-Antworten (Menü Nr. 3)", anbieter: "Stealth / OpenRouter",
+    risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
+  }),
   Object.freeze({
     id: "cline-bridge", zweck: "Coding-Agent", anbieter: "Cline",
     risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
