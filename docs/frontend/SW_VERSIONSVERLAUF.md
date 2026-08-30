@@ -481,3 +481,18 @@ gewachsenen Animationen.
 Markenkette: voice-ohr-solo v5 -> werkzeuge-11 -> b101; start-styles
 mobilfix3-20260830; mobil-tastatur.js neu im SHELL. Rollback: Frontend
 revert auf den Stand vor diesem Paket (siehe Kapsel).
+
+
+## v716 — 2026-08-30 — Divergenz-Angleich: Live-Hotfixes heimgeholt + Marken-Kaskade
+Der Abgleich App-Repo gegen das Deploy-Repo (147 abweichende Dateien) ergab
+11 Dateien, die LIVE NEUER waren als die Quelle: die chat-store-Diaet
+(Papierkorb/Projekte in chat-store-bereiche.js mit Re-Exporten), die
+account-privacy-Zweiteilung (+ account-privacy-formulare.css), der Code-
+Anhaenge-Import-Fix und die Abspecken-Reste (auth-gate, profile-dock,
+search, code-flaeche/-nachladen, chat-title-auto, account-auth-state).
+Alle zurueckportiert; danach Markenkaskade bis Fixpunkt (chat-store b65,
+profile-dock b49, account-privacy b48, search b52, app b103, pwa v4 und
+Folgelader). Stempel Pflicht: es sind Precache-Dateien veraendert, und der
+Fetch-Handler matcht ignoreSearch — ohne neuen CACHE_NAME behielten
+Bestandsnutzer die alten Kopien (Lehre aus v714). Rollback: Frontend revert
+auf den Stand vor dem Angleich-Deploy; App-Repo revert dieses Commits.
