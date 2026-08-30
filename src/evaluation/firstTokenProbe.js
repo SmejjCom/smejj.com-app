@@ -28,6 +28,7 @@ export async function probeFirstToken({
   messages,
   model = "",
   bodyMode = "chat",
+  authToken = "",
   fetchImpl = fetch,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   now = () => Date.now()
@@ -36,14 +37,19 @@ export async function probeFirstToken({
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    // Anmeldepflicht der Bridge: ohne Token messen wir ehrlich die 401-Schwelle
+    // (fail-closed), mit Token den echten angemeldeten First-Token-Weg.
+    // Der Token wird NUR als Header gesendet, nie in Berichte geschrieben.
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      Origin: "https://smejj.com"
+    };
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
     const response = await fetchImpl(endpoint, {
       method: "POST",
       signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        Origin: "https://smejj.com"
-      },
+      headers,
       body: JSON.stringify(buildProbeBody({ messages, model, bodyMode }))
     });
     const ttfbMs = now() - started;
