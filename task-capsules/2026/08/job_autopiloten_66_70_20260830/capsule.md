@@ -130,3 +130,38 @@ komprimiert), api/health HTTP 200. Tagesgenaue Budget-Messung macht Nr. 63.
   Session liefert unterdessen v714; der Bündel-Abgleich bleibt der eigene
   Auftrag. Endstand dieser Runde: 70 Autopiloten, 68 grün, 2 rot (Nr. 29
   echter Drift, Nr. 67 Betreiber-Klick).
+
+## Autonomie-Runde 3 (Betreiber: "Vorschläge umsetzen, alle Rechte") — Bündel-Abgleich gestoppt, Rest diszipliniert abgeschlossen
+
+**Bündel-Abgleich v714 (eigener Auftrag, bewiesen begonnen):** Beweis
+design-v11 HEAD 29fd706d sw.js == live smejj.com sw.js (SHA-256 2da4f2eb…).
+Vollspiegel public/** + Kette durchgeführt — die Pipeline deckte in 8 Runden
+die GESAMTE Abhängigkeitskette auf: public (253) → scripts (51, inkl.
+build:assets, check-memory-bank) → evals/schemas → Memory_Bank-Verweise (19)
+→ favicon-manifest (12 neue Seiten, KEINE geschützten Einträge geändert —
+Kartenerweiterung) → tests (~100+, bis auf meine 6 Autopilot-/Polster-Tests)
+→ control-server/src/routes — und DORT bricht der Abtrag ab: design-v11
+LÖSCHT fehlerRoutes.js (Endpunkt POST /api/fehler des Fehler-Fängers Nr. 50,
+live verifiziert) sowie bildExtern/videoChat-Routes und benennt
+mausPlannerClient um. Ohne Beweis eines funktionsgleichen Ersatzes wäre die
+Übernahme ein Change-Lock-Bruch. Nach Ship-Loop-Regel 10 gestoppt, auf
+981647b6 zurückgerollt, voll zertifiziert (check:all EXIT 0, alle Locks grün,
+63/63 betroffene Suiten). **Der Abgleich ist eine Rebase-Klasse-Eigenaufgabe
+mit Sicherung des Fehler-Fänger-Endpunkts — diese Karte ist die Baustelle.**
+
+**Tagesmappe-Ein-Klick-Tieflinks:** 3-Zeilen-Patch fertig (views-stage13.js
+ENTSCHEIDUNGS_ZIEL ergänzen um trainings-reife→/admin/modelle/,
+dsgvo-frist→/admin/dsgvo/, flaggen→/admin/flags/) — zurückgenommen, weil das
+Ausliefern über den Frontend-Pages-Spiegel läuft (sync_admin_console_pages
+verlangt den Frontend-Klon; gefundener Ordner ist nur die Sicherung vom
+10.08.). PATCH LIEGT FERTIG HIER — im nächsten Frontend-Zyklus 3 Zeilen in
+ENTSCHEIDUNGS_ZIEL ergänzen, dann Admin-Konsole spiegeln + deployen.
+
+**DSGVO:** Step-up-Code um 11:47 angefordert (HTTP 200, 'Code an die
+Admin-Adresse geschickt', 600 s gültig) — Abschluss bereit, sobald der
+Betreiber den Code durchgibt oder in der Tagesmappe selbst klickt.
+
+**Zwischenfall ohne Folgen:** Ein transienter Google-Drive-cd-Fehler lenkte
+zwei Aufrufe; alle Schreibzugriffe blieben nachweislich im Worktree
+(Hauptbaum unverändert, versehentliche Freeze-Artefakte zurückgenommen).
+Lehre: bei cd-Fehler NICHT blind weiterlaufen lassen.
