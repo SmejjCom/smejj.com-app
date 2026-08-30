@@ -79,9 +79,38 @@ sechs neuen/deployten Wächter maßen beim ersten Lauf ECHTE Werte:
 - Non-Regression: smejj.com, api, chat-bridge, maus-engine, control je HTTP
   200; training-loop antwortet (404 auf /health = Route nicht belegt, Server lebt).
 
+## Nachtrag Autonomie-Runde 30.08. (Betreiber: "eigenständig weiterarbeiten")
+
+**DSGVO-Abschluss versucht:** POST auf /api/admin/gdpr/…/status wurde mit
+HTTP 403 `admin_step_up_required` abgewiesen — der Vier-Augen-Schutz verlangt
+einen Code aus dem Betreiber-Postfach. Bewusst NICHT umgangen (admin-lock).
+Der Klick bleibt beim Betreiber: Tagesmappe → Vorgang abschließen, ODER
+Step-up-Code an die Session geben.
+
+**Bündel-Drift v713/v712 (Nr. 29) — gestoppt nach Ship-Loop-Regel 10:**
+Vier Pipeline-Runden zeigten: smejj.com läuft v713 (Mobil-Iconfix, Frontend-
+Repo main c7db2a2), der Control-Server-Zweig braucht dafür den VOLLSTÄNDIGEN
+Bündel-Abgleich (Kaskade: 18 CSS-Quellen → Bündel → Bundel-Skript mit
+entschlacke → Test → Ratchet-Baselines in check-guidelines.mjs → Benchmark-
+Manifest mit gepinnten Digests → package.json-Script-Pins); insgesamt 574
+Nicht-Docs-Dateien divergieren BEIDSEITIG. Die v713-Session hat genau das in
+d23a97b4 als "15 divergierte Dateien als eigene Schritte" dokumentiert — der
+Abgleich gehört in jene Freigabe, nicht in diesen Autopiloten-Auftrag.
+Spiegelversuch vollständig zurückgerollt (Arbeitsbaum = 55367626, 26/26
+Tests, start-lock + guidelines grün, kein Deploy nötig — Live lief schon).
+Nr. 29 bleibt ROT und LÜGT NICHT: der Drift ist real, bis der Abgleich
+durchgeführt ist. Empfehlung: Bündel-Abgleich als eigener Auftrag mit
+Betreiber-Freigabe (oder die v713-Session führt ihre geplanten Schritte aus).
+
+**Messpflicht erfüllt (Spot-Check 30.08.):** smejj.com TTFB 0,20–0,37 s
+(3 Messungen, HTTP 200), Startseite 74 KB unkompimiert (Budget 300 KB
+komprimiert), api/health HTTP 200. Tagesgenaue Budget-Messung macht Nr. 63.
+
 ## Offene Punkte
-- EIN Betreiber-Klick: DSGVO-Testvorgang abschließen (Empfehlung oben) —
-  danach ist Nr. 67 dauerhaft grün. Alles andere aus diesem Auftrag erledigt.
+- EIN Betreiber-Klick: DSGVO-Testvorgang abschließen (Step-up-Schutz griff;
+  Karte liegt in der Tagesmappe) — danach ist Nr. 67 dauerhaft grün.
+- Bündel-Abgleich v713 → Control-Server-Zweig: eigener Auftrag (siehe oben),
+  bis dahin bleibt Nr. 29 korrekt rot.
 - Beobachtung (kein Handeln): die Vorfall-Historie der Nr. 29 sollte nach dem
   Polster deutlich ruhiger werden; wiederholt sich das Muster trotz Polster,
   ist der Container-Netzweg selbst krank (dann Zeabur-Diagnose, nicht die App).
