@@ -48,6 +48,15 @@ benötigte Subdomains".
 prüft NS, SPF, DMARC, MX und den Gratis-Empfang gegen die Live-Auflösung —
 Stand 30.08.2026: **OK**.
 
+## Portal-Gegenprobe (30.08., Spaceship-Konsole, lesend)
+
+Advanced-DNS-App: Nameserver launch1/launch2, Propagationsstatus **Online**,
+insgesamt **13 DNS-Einträge** (3× Email-Forwarding, 1× URL-Redirect
+`admin` → 15.197.162.184, 9× benutzerdefiniert) — arithmetisch und im Inhalt
+konsistent mit der dig-Messung oben (11 Bestandseinträge vom 06.08. + `api`
++ `admin`). Das Spaceship-Konto verwaltet 43 Domains; allein smejj.com
+gehört zum smejj.com-Stack.
+
 ## Zwei-SPF-Eigenheit (weiterhin gültig)
 
 Spaceship führt die zwei im Portal getrennten SPF-Zeilen (Forwarder + Google)
