@@ -19,3 +19,16 @@ Auffrischung per `scripts/deploy/codeberg_spiegel_sync.sh`).
 
 Regeln: Nichts löschen oder überschreiben ohne schriftliche Freigabe;
 vor jeder Änderung Rollback-Punkt sichern (AGENTS.md Change-Lock).
+
+## Live-Beweis der Backup-Kette (2026-08-30, IDrive-Konsole + S3-API)
+
+| Kettenglied | Beweis |
+| --- | --- |
+| Konsole | eingeloggt; 7 Eimer, 759,32 GB, 7.210 Objekte, Regionen Frankfurt-2 + Los Angeles |
+| Replikations-Job 2430_1 („Chats Sicherung smejj app in zweiten Eimer") | Status **Running**, 1.631 Objekte / 11,81 MB nach `smejj-sicherung`, zuletzt aktualisiert 27.08. |
+| Tägliche Schnappschüsse | `sicherung/taeglich/sicherung_2026-08-30.json` (heute) + Vortag in `smejj-model-files` per S3-API gelistet |
+| Eimer-Isolation | `smejj-app` und `smejj-sicherung` mit Laptop-Schlüssel HTTP 403 (gewollt; Details in `../storage/IDRIVE_E2_CONNECTION_TEST.md`) |
+
+Eimer-Bestand (Konsole): `smejj-app`, `smejj-model-files`, `smejj-sicherung`
+(Kern) sowie `imild-media`, `smyst-memories` und zwei Staging-Eimer vom
+11.07. (`smejj-rc9-*`).
