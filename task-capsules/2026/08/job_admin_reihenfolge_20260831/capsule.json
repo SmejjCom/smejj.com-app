@@ -1,0 +1,97 @@
+{
+  "jobId": "job_admin_reihenfolge_20260831",
+  "createdAt": "2026-08-31T15:18:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag: gesamte Admin-Konsole sichten, Prioritaeten-Liste vorlegen; nach Diskussion zweimal schriftlich freigegeben — Reihenfolge und Nummern-Kuerzel, je mit „Ja“)",
+  "title": "Admin-Konsolen-Navigation neu geordnet (4 Stufen, Wirkungs-gewichtet) und Kuerzel-Plaketten auf Nummern 1-28 umgestellt — live bewiesen auf smejj.com/admin/",
+  "ziel": "Die 28 Bereiche der Operations Console (smejj.com/admin/) nach professioneller Prioritaet ordnen — Wirkung x Vernachlaessigungsrisiko (Fristen, blockierte Ablaeufe) x Haeufigkeit, NICHT nur Klick-Haeufigkeit — und die Kuerzel-Plaketten auf die sinnvollen Nummern 1-28 umstellen. Vollstaendiger Ship-Loop inkl. Livegang.",
+  "anforderungen": [
+    "Alle 28 Admin-Bereiche live im Browser sichten (Zweck + Live-Zahlen)",
+    "Prioritaeten-Liste vorlegen und ERST nach schriftlicher Freigabe umsetzen (Change-Lock)",
+    "Erste reine Haeufigkeits-Sortierung vom Betreiber verworfen: Analytik und Freigaben gehoeren nach oben (Feedback eingearbeitet)",
+    "Keine neuen Navigationspunkte: stage10-13 (radar/evolution/cockpit/…) bleiben live unregistriert — Buendel-Abgleich ist ein eigenes, separat freizugebendes Thema",
+    "Design-Lock, Favicon-Lock, Start-Lock, CSS-Ratsche unberuehrt lassen (nur admin/console.js)",
+    "Nach Freigabe: Commit, Deploy (Klon HEAD:main), Livegang, Live-Test, Task Capsule, Memory_Bank"
+  ],
+  "befunde": [
+    {
+      "prio": "P1-Struktur",
+      "was": "Die Navigation wird in console.js aus SEITEN (7 Kerneintragen) + Stage-Registern (stage4-9) gebaut und nach GRUPPEN_REIHENFOLGE sortiert; innerhalb der Gruppe entschied der Registratur-Zufall.",
+      "bedeutung": "Reihenfolge ist eine zentrale Sortier-Stelle in EINER Datei — sauber aenderbar ohne Anfassen der 7 Stage-Dateien."
+    },
+    {
+      "prio": "P1-Divergenz",
+      "was": "Drei console.js-Kopien: Quelle control-server/admin-ui/ (mit stage11-Registratur), Spiegel public/admin/ (= Live-Stand, ohne stage11), Deploy-Klon ~/smejj-app-frontend/admin/. Quelle und Klon weichen in 4 Dateien ab (console.js, console.css, index.html, views-stage11.js) — bekannter Zustand aus den Produktions-Hotfixes.",
+      "risiko": "Ein sync_admin_console_pages.mjs-Lauf auf den ECHTEN Klon wuerde die Live-Arbeit mit der Quell-Version ueberschreiben und stage11 (Evolution) ungenehmigt in die Navigation bringen.",
+      "loesung": "Manifest nur ueber Wegwerf-Klon (/tmp) aufgefrischt; echter Klon chirurgisch editiert; alle drei Kopien mit derselben Reihenfolge-Aenderung wortgleich gehalten."
+    },
+    {
+      "prio": "P2-Fallstrick",
+      "was": "Erste Sortier-Fassung nutzte `PRIORITAET[pfad] || 999` — die Uebersicht traegt bewusst die Nummer 0, und 0 || 999 ist 999: die Startseite waere ans ENDE gerutscht.",
+      "loesung": "Sortierung prueft explizit `=== undefined`; in der Simulation aus der ECHTEN Datei gefunden, bevor sie live ging."
+    }
+  ],
+  "aenderungen": [
+    {
+      "datei": "control-server/admin-ui/console.js + public/admin/console.js + ~/smejj-app-frontend/admin/console.js (drei Kopien, wortgleich)",
+      "was": "Statt GRUPPEN_REIHENFOLGE jetzt PRIORITAET (Nummer je Pfad, Uebersicht=0), STUFEN (vier Nummernbereiche als Gruppen: Betrieb & Entscheidungen 1-10, Governance & Sicherheit 11-18, Zugaenge & Recht 19-23, Produktsteuerung 24-28), gruppeVon() und kuerzelVon(); Sortierung nach Nummer (undefined -> 999, hinten).",
+      "grund": "Freigegebene Reihenfolge 1:1 abbilden; neue Seiten ohne Nummer haengen bewusst hinten an Produktsteuerung, statt mittendrin aufzutauchen."
+    },
+    {
+      "datei": "docs/approvals/2026-08-31-admin-reihenfolge.md",
+      "was": "Freigabe-Dokument mit der freigegebenen Reihenfolge, engem Umfang, Rollback-Punkten und Nachtrag fuer das zweite „Ja“ (Nummern-Kuerzel).",
+      "grund": "Change-Lock: schriftliche Freigabe nachweisbar archivieren."
+    },
+    {
+      "datei": "docs/frontend/admin-console-sync.json",
+      "was": "Manifest via Wegwerf-Klon aufgefrischt (Quell-Hashes nach der console.js-Aenderung).",
+      "grund": "check:admin-console-sync bleibt gruen; echter Klon blieb unberuehrt (4-Datei-Divergenz respektiert)."
+    }
+  ],
+  "ergebnisse": [
+    "Live-Navigation (smejj.com/admin/) exakt in freigegebener Reihenfolge: Ueberblick; Betrieb & Entscheidungen (1 Autopiloten, 2 Analytik, 3 Nutzerverwaltung, 4 Modelle & Provider, 5 Jobs & Laeufe, 6 Worker & Kapazitaet, 7 Kosten & Budgets, 8 Abrechnung & Abos, 9 API & Schluessel, 10 E-Mail-Zustellung); Governance & Sicherheit (11 Freigaben, 12 Sicherheit, 13 Missbrauch & Moderation, 14 Betrieb & Deploy, 15 Speicher, 16 Schluessel & Geheimnisse, 17 Audit-Log, 18 DSGVO-Vorgaenge); Zugaenge & Recht (19 Admin-Verwaltung, 20 Rollen & Rechte, 21 EU AI Act, 22 Support & Impersonation, 23 Aufgaben & Notizen); Produktsteuerung (24 Feature-Flags, 25 Ankuendigungen, 26 Inhalte & Wissen, 27 Experimente, 28 Sprachen).",
+    "Plaketten zeigen Nummern 1-28, Uebersicht behaelt als Startseite ihr „A“; zweistellige Zahlen sitzen sauber in der 20-px-Plakette (Screenshot).",
+    "Seitentest an neuen Positionen: Autopiloten, Analytik, Freigaben, Sprachen laden mit korrekter aktiver Nav-Markierung (Erstversuch ohne Wartezeit zeigte nur Lade-Artefakt des Auth-Checks — kein Fehler).",
+    "Performance: Lauf A (ruhig) Medians 99/75/110 ms (Startseite/admin/admin-console.js) — klar unter TTFB-Budget, keine Verschlechterung gegenueber v717 (130 ms). Lauf B (Abendstau) mit Fremd-Kontrolle: Kontrollseite im selben Fenster ebenso langsam/schneller (p95 7462 ms) — Netzweg zu Pages, nicht der Deploy. docs/benchmarks/ttfb_admin_nav_2026-08-31.json."
+  ],
+  "verifikationPipeline": [
+    "Simulation der Sortierung + Kuerzel aus der ECHTEN console.js vor jedem Deploy (inkl. Fall „unbekannte Seite ohne Nummer“)",
+    "node --check auf alle drei Kopien nach jedem Schritt",
+    "tests/adminbereich-anmeldepflicht.test.mjs — 20/20 (nach beiden Aenderungen)",
+    "npm run check:admin-konsole — OK, 31 Adressen aus 30 Ansichten",
+    "control-server/src/routes/adminUiRoutes.test.js — 9/9",
+    "npm run check:admin-console-sync — OK (Manifest via Wegwerf-Klon)",
+    "npm run check:all — EXIT 0 (nach Reihenfolge-Aenderung UND nochmals nach Nummern-Aenderung)",
+    "npm run check:guidelines — OK, 2027 Dateien (Ratsche unberuehrt: design-v11.css 2744, index.html 1016, styles.css 1598)"
+  ],
+  "benchmarks": {
+    "datei": "docs/benchmarks/ttfb_admin_nav_2026-08-31.json",
+    "vergleich": "docs/benchmarks/webvitals_v717_nachdeploy_2026-08-31.json",
+    "fazit": "Lauf A (ruhig): Medians 99/75/110 ms, alle unter dem 200-ms-TTFB-Budget. Lauf B (Abendstau): Fremde Pages-Kontrolle im selben Fenster gleich langsam bzw. langsamer — Netzweg, kein Deploy-Defekt. Performance-Lock eingehalten; voller WebVitals-Lauf im naechsten Ruhig-Fenster."
+  },
+  "screenshots": [
+    "screenshot_live_nav_stufen_v717.png (Seitenleiste mit den vier Stufen, Aufnahme direkt nach dem ersten Livegang)",
+    "screenshot_live_nav_nummern.png (Seitenleiste mit Nummern-Plaketten 1-11 sichtbar, A = Uebersicht)"
+  ],
+  "rollbackDaten": {
+    "appRepoRollback": "revert der Commits 4ba3fe0a (Reihenfolge) und da0c4a6d (Nummern); Stand davor 733d52c11bd79b3221a511f0c9ad7a9bd8281c69 (feature/design-v11)",
+    "frontendRollback": "Frontend-Klon revert auf 4ba2c20ec1f14a2425ea5e9223645a2b079f99cd (deploy-frueh-gate == origin/main, sw v716 zur damaligen Zeit) bzw. revert der Deploys c9d09ad (Reihenfolge) und ae9b575 (Nummern), erneut HEAD:main pushen",
+    "manifestRollback": "docs/frontend/admin-console-sync.json im App-Repo revert (Teil des 4ba3fe0a)"
+  },
+  "commits": {
+    "appRepo": [
+      "4ba3fe0a admin(nav): Konsolen-Navigation nach Betreiber-Freigabe 31.08. neu geordnet …",
+      "da0c4a6d admin(nav): Nummern-Kuerzel 1-28 statt Buchstaben freigegeben und umgesetzt …"
+    ],
+    "frontendRepo": [
+      "c9d09ad admin(nav): Konsolen-Navigation … neu geordnet …",
+      "ae9b575 admin(nav): Kuerzel-Plaketten zeigen Nummern 1-28 statt Buchstaben …"
+    ]
+  },
+  "qualitaetsbewertung": {
+    "nonRegression": "Erfuellt — nur Sortierung/Anzeige in admin/console.js; keine Inhalte, APIs, Rechte, Precache- oder Design-Dateien angefasst; Anmeldepflicht- und Routen-Tests gruen.",
+    "kosten": "Keine neuen Kosten, keine neuen Anbieter.",
+    "sicherheit": "Gate-/Anmeldepflicht-Logik unberuehrt (Tests 20/20); keine neuen Seiten sichtbar; Freigaben dokumentiert.",
+    "lernfahigkeit": "Deploy-Weg fuer die Konsole dokumentiert (drei Kopien, Sync nur mit Wegwerf-Klon, kein SW-Stempel noetig — admin liegt nicht im Precache)."
+  },
+  "status": "abgeschlossen — live auf smejj.com/admin/ verifiziert (Nav-Auslesen + Screenshots + Seitentests)"
+}

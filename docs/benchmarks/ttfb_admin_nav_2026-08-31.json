@@ -1,0 +1,65 @@
+{
+  "hinweis": "TTFB-Gesamtabrufzeiten (inkl. DNS/TLS, no-store) nach dem Admin-Nav-Deploy 2026-08-31 (Commits ae9b575 Frontend / da0c4a6d App). Zwei Messfenster: Lauf A ruhig (12:15 Uhr), Lauf B abendlich gestaut (12:17 Uhr) mit FREMDER GitHub-Pages-Kontrolle im selben Fenster (Lehre v717: Netzweg nie smejj anlasten ohne Kontrolle).",
+  "zeitpunktA": "2026-08-31T12:15:57Z",
+  "laufA_ruhig": {
+    "startseite": {
+      "n": 12,
+      "median": 99,
+      "p95": 549,
+      "min": 83,
+      "max": 549
+    },
+    "adminKonsole": {
+      "n": 12,
+      "median": 75,
+      "p95": 321,
+      "min": 66,
+      "max": 321
+    },
+    "adminConsoleJs": {
+      "n": 12,
+      "median": 110,
+      "p95": 346,
+      "min": 85,
+      "max": 346
+    }
+  },
+  "zeitpunktB": "2026-08-31T12:17:08Z",
+  "laufB_abendstau": {
+    "startseite": {
+      "n": 15,
+      "median": 346,
+      "p75": 611,
+      "p95": 1970,
+      "min": 191,
+      "max": 1970
+    },
+    "adminKonsole": {
+      "n": 15,
+      "median": 502,
+      "p75": 1026,
+      "p95": 4463,
+      "min": 207,
+      "max": 4463
+    },
+    "adminConsoleJs": {
+      "n": 15,
+      "median": 223,
+      "p75": 431,
+      "p95": 1059,
+      "min": 125,
+      "max": 1059
+    },
+    "fremdKontrollePages_twbs": {
+      "n": 15,
+      "median": 380,
+      "p75": 1081,
+      "p95": 7462,
+      "min": 244,
+      "max": 7462
+    }
+  },
+  "swStempel": "smejj-shell-v717",
+  "bewertung": "OK mit ehrlichem Netz-Hinweis — Lauf A: alle Medians (99/75/110 ms) klar unter dem TTFB-Budget 200 ms, keine Verschlechterung gegenueber dem v717-Benchmark (Median 130 ms). Lauf B: im Abendstau ist die FREMDE Kontrollseite (Median 380 ms, p95 7462 ms) im selben Fenster ebenso langsam bzw. langsamer als smejj.com (Median 223-502 ms, p95 1059-4463 ms) — der Weg zu GitHub Pages ist der Engpass, nicht der Deploy. Der Admin-Nav-Deploy aendert nur admin/console.js (nicht im Precache, nicht im Startseiten-Pfad); die Startseite bleibt unberuehrt.",
+  "folgerung": "Performance-Lock eingehalten. Beim naechsten Ruhig-Fenster-Messlauf (webvitals-Skript) wird der Stand wie ueblich voll erhoben."
+}

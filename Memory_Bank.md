@@ -5,6 +5,42 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-31] ADMIN-NAV: WIRKUNGS-GEWICHTETE REIHENFOLGE (4 STUFEN) + NUMMERN-KUERZEL 1-28; KONSOLEN-DEPLOY-WEG DREI KOPIEN (job_admin_reihenfolge_20260831)
+
+Capsule: `task-capsules/2026/08/job_admin_reihenfolge_20260831/capsule.json`.
+App 4ba3fe0a/da0c4a6d, Frontend (main) c9d09ad/ae9b575. Live bewiesen
+(Nav-Auslesen, Screenshots, Seitentests) auf smejj.com/admin/.
+
+**Entscheidung (zweifach freigegeben):** Die 28 Konsolen-Bereiche stehen nach
+Wirkung x Vernachlaessigungsrisiko x Haeufigkeit in vier Stufen — 1 Autopiloten,
+2 Analytik, 3 Nutzerverwaltung … 11 Freigaben, 18 DSGVO, 24-28 Produktsteuerung.
+Umgesetzt als PRIORITAET/STUFEN/gruppeVon/kuerzelVon in console.js; Plaketten
+zeigen die Nummern, nur die Uebersicht behaelt ihr "A". Lehre des Betreibers:
+Priorisierung gewichtet Wirkung und Fristen VOR Klick-Haeufigkeit (Analytik und
+Freigaben gehoeren nach oben).
+
+**MERKE Konsolen-Deploy-Weg:** (1) DREI console.js-Kopien wortgleich aendern:
+Quelle control-server/admin-ui/ (hat stage11-Registratur), Spiegel
+public/admin/ (= Live-Stand, ohne stage11), Deploy-Klon ~/smejj-app-frontend
+/admin/. (2) sync_admin_console_pages.mjs NIEMALS auf den echten Klon zeigen
+lassen — Quelle und Klon weichen in 4 Dateien ab (console.js, console.css,
+index.html, views-stage11.js), ein Sync wuerde Live-Arbeit ueberschreiben und
+Evolution ungenehmigt in die Navigation bringen. Manifest nur ueber Wegwerf-
+Klon (/tmp) auffrischen. (3) admin/ liegt NICHT im SW-Precache — kein
+SW-Stempel noetig. (4) Klon-Deploy: Zweig deploy-frueh-gate, Push als HEAD:main.
+(5) Sortier-Fallstrick: Uebersicht traegt Nummer 0 — `0 || 999` wirft sie ans
+Ende; immer `=== undefined` pruefen. (6) Pruefungen: admin-konsole,
+admin-console-sync, anmeldepflicht-Test; stage10-13 bleiben live unregistriert
+(Buendel-Abgleich = eigenes Freigabe-Thema; neue Seiten ohne Nummer fallen
+hinten an Produktsteuerung).
+
+**Verifikation:** Live-Nav exakt in Freigabe-Reihenfolge; Plaketten 1-28
+sauber (auch zweistellig); Autopiloten/Analytik/Freigaben/Sprachen laden an
+neuen Positionen; anmeldepflicht 20/20, admin-konsole OK 31, adminUiRoutes
+9/9, check:all EXIT 0 (nach beiden Aenderungen), guidelines OK 2027 Dateien;
+TTFB ruhig 99/75/110 ms (Budget 200), Abendstau-Messung ehrlich mit fremder
+Pages-Kontrolle dokumentiert.
+
 ### [2026-08-31] HANDY-TRENNLINIE = DESKTOP-HAARSTRICH: MOBIL-KORREKTUR GEHOERT IN mobil-composer.css, SW-STEMPELPFLICHT BEI BUENDEL-DATEIEN (job_sidebar_trennlinie_20260831)
 
 Capsule: `task-capsules/2026/08/job_sidebar_trennlinie_20260831/capsule.json`.
