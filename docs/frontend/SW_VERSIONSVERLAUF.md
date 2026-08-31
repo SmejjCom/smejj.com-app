@@ -496,3 +496,16 @@ Folgelader). Stempel Pflicht: es sind Precache-Dateien veraendert, und der
 Fetch-Handler matcht ignoreSearch — ohne neuen CACHE_NAME behielten
 Bestandsnutzer die alten Kopien (Lehre aus v714). Rollback: Frontend revert
 auf den Stand vor dem Angleich-Deploy; App-Repo revert dieses Commits.
+
+## v717 — 2026-08-31 — Sidebar-Trennlinie aus der Handy-Ansicht entfernt
+Precache-Datei geaendert: /assets/start-styles.css (start-styles.css-Buendel).
+Der Fix liegt in mobil-composer.css (@media max-width 767px: .sidebar
+.bottom-nav border-top 0) — die helle Linie ueber der Profilzeile der
+Handy-Schublade war der Desktop-Haarstrich und fiel im Overlay als
+Fremdkoerper auf (Betreiber-Befund 31.08., 375 px; Pixel-Beweis 27/32/36 ->
+8/15/20). Desktop ab 768 px unveraendert (Haarstrich bleibt). Buendel
+bytegleich aus App-Repo 75f70601 uebernommen, alle 15 Bundle-Quellen vorher
+als identisch geprueft. Stempel-Pflicht nach ignoreSearch-Lehre (v714):
+ohne neuen CACHE_NAME haetten Bestandsnutzer das alte Buendel behalten.
+Frontend f322ac4. Rollback: Frontend revert auf c9d09ad; App-Repo revert
+dieses Commits.
