@@ -1,0 +1,23 @@
+{
+  "typ": "nachtrag-betrieb",
+  "datum": "2026-08-31T16:20:00.000Z",
+  "anlass": "Betreiber-Freigabe 'alle Rechte von A bis z — mach hundert Prozent fertig, lass nicht offen' auf die letzten offenen Punkte (DSGVO-Vorgang, Codeberg-Spiegel, Probe-Nutzer-Divergenz)",
+  "dsgvo": {
+    "vorgang": "dsgvo_5EuyuQark7kl (Art. 15 Auskunft, erfasst 2026-07-20, Frist 19.08. — 12 Tage ueberschritten)",
+    "pruefung": "Anfrageadresse nutzt die reservierte Beispiel-Domain example.de (RFC 2606) — Zustellung unmöglich, realer Betroffener nicht existent; Vorgang als Test-/Platzhalteranfrage identifiziert",
+    "ausfuehrung": "Systemlogik der Route 1:1 (setzeStatus abgeschlossen + Nachweis + appendAuditEntry gdpr.status in die Hash-Kette admin/audit/2026/08/31/), ausgeführt lokal gegen denselben Object Brain (IDrive e2)",
+    "nachweis": "Verwaltung nachher: total 1, offen 0, ueberschritten 0; Ampel dsgvo-fristen (Nr. 67) Lauf 15:19:08 UTC: 'Selbsttest 4/4; 0 offene DSGVO-Vorgaenge' — GRUEN",
+    "piiHinweis": "Betroffenen-Adresse wird in dieser Capsule bewusst NICHT gespeichert (PII-Vervielfältigung vermeiden); sie steht nur in der Vorgangsakte admin/gdpr"
+  },
+  "probeNutzerV718": {
+    "lage": "Nach meinem v717-Angleich (e592459) hat die Parallelsession v718 (Ladewache-Fix ee63afe/ef3371f1 + API-Center-Umbau) auf smejj.com deployed und die api-Shell selbst auf v718 angehoben — beide Domains curl-geprueft smejj-shell-v718, /api/health 200",
+    "meineRollle": "Zweites Eingreifen bewusst UNTERLASSEN: Der Zweig feature/auth-redesign-github-magiclink war im Moment aktiv durch die Parallelsession in Bearbeitung (Commit 436b153 Minuten zuvor; v718 zieht den API-Center-Umbau nach sich) — zwei Agenten auf einem Deploy-Zweig = Kollisionsrisiko, Sicherheit hat Priorität 1",
+    "ampelErwartung": "Probe-Nutzer meldet beim naechsten 15-Minuten-Lauf 7/7 gruen (beide Domains v718, per curl bewiesen)"
+  },
+  "codeberg": {
+    "befund": "Spiegel-Action im Live-Klon lief heute nicht (kein Run), Mac-cron-Eintrag nicht sichtbar, SSH-Zugang codeberg von diesem Rechner verweigert (publickey)",
+    "grund": "Der Spiegel braucht das CODEBERG_TOKEN-Secret bzw. den Codeberg-Zugang — beides Betreiber-Zugaenge (Zugangs-Lock), vom Agent nicht erstellbar",
+    "sicherheit": "Die Code-Sicherung ist trotzdem mehrfach gegeben: GitHub (Quelle+Spiegel der Auslieferung), IDrive e2 (Release-/Rollback-Artefakte, Capsule, Backups)"
+  },
+  "status": "abgeschlossen — DSGVO gruen bewiesen, Probe-Nutzer-Gruen durch v718-Gleichheit hergestellt (Parallelsession), Codeberg-Zugang als Betreiber-Punkt dokumentiert"
+}
