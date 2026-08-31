@@ -1,0 +1,30 @@
+{
+  "typ": "nachtrag",
+  "datum": "2026-08-31T13:00:00.000Z",
+  "anlass": "Betreiber-Freigabe: Vorschlag umsetzen — Probe-Nutzer-Waechter laufen lassen und gruene Nutzerreise beweisen",
+  "befund": {
+    "waechter": "synthetic-user-watchdog (Probe-Nutzer, Nr. 29, alle 15 Minuten)",
+    "ampelStand": "2026-08-31T12:25:21.173Z — ROT, aber nur 1 von 7 Schritten kaputt",
+    "schritt": "buendel_gleichheit",
+    "meldung": "sw.js weicht ab: https://smejj.com traegt smejj-shell-v717, https://api.smejj.com traegt smejj-shell-v715",
+    "gruenBeweis": "Die anderen 6 Schritte bestehen LIVE: Startseite, Nachlade-Kette (Module als ES-Module geparst), API-Kernpfade fail-closed, Anmeldung, Chat, Speicher mit Ruecklese-Probe. Eigene curl-Verifikation: smejj.com/sw.js = v717, api.smejj.com/sw.js = v715.",
+    "historie": "Divergenz besteht seit 2026-08-30T11:00 (damals v714 vs v715) und wurde durch den v716-App-Deploy am 30.08. und den v717-App-Deploy heute jeweils NICHT am api-Server angeglichen — sie ist nicht durch diesen Auftrag entstanden."
+  },
+  "behebungsweg": {
+    "was": "Control-Release bzw. Shell-Overlay fuer api.smejj.com auf v717 bringen (Verfahren: deterministisches Control-Artefakt aus sauberem git-Stand -> IDrive-Upload -> Overlay-Sync -> Push SmejjCom/smejj-control -> Env-Pin (SMEJJ_CONTROL_BOOTSTRAP_URL) auf neuen Commit -> Container-Neustart -> Ampel wird beim naechsten 15-Minuten-Lauf gruen)",
+    "referenzVerfahren": "docs/memory/MEMORY_ARCHIV_2026-07-B.md (Auth-Release-Orchestrierung: preflight -> Artefakt -> IDrive -> Overlay-Sync 37 Dateien -> smejj-control-Push -> Live-Route-Probe) + scripts/deploy/build_control_overlay_release.mjs + verify_control_overlay_baseline.mjs"
+  },
+  "warumHierGestoppt": [
+    "ROTE LISTE (Daten-Lock): Das bestehende Release-/Overlay-Artefakt an der Bootstrap-Stelle auf IDrive e2 muss UEBERSCHRIEBEN werden — Ueberschreiben bestehender Daten/Rollback-Punkte erfordert die punktuelle schriftliche Freigabe, nicht nur die Pauschalformel.",
+    "ROTE LISTE (Zugangs-/Betriebsstand): SMEJJ_CONTROL_BOOTSTRAP_URL ist ein Commit-Pin im Zeabur-Env — Aenderung des Betriebsstands des Control Servers (letzte dokumentierte Prozedur dieser Klasse war ein eigener freigegebener Livegang).",
+    "KOLLISIONSRISIKO: Eine parallele Session arbeitet gerade an genau dieser Kette (uncommitted: control-server/admin-ui/console.js, public/admin/console.js, public/api-center-surface.css, docs/approvals/2026-08-31-admin-reihenfolge.md). Ein Release aus dem Arbeitsbaum wuerde deren unfertige Arbeit live bringen; ein Deploy jetzt kann ihren Ablauf kollidieren. Release nur aus sauberem git-Stand (git archive/worktree), zeitlich abgestimmt.",
+    "Nicht blockierend: Die Nutzerreise ist 6/7 gruen (Produkt funktioniert); die Wache bleibt so lange ehrlich rot, bis der api-Shell-Stand nachzieht."
+  ],
+  "vorschlagFuerDenBetreiber": "Zwei Woerter Freigabe ('Control-Overlay freigegeben') und ich baue das Overlay aus dem committeten Stand (ohne die Parallel-Dateien), schiebe es nach Verfahren live und liefere den Ampel-Gruen-Beweis. Alternativ die laufende Admin-Konsole-Session das mitziehen lassen.",
+  "dsgvoEinordnung": {
+    "waechter": "dsgvo-fristen (Nr. 67)",
+    "meldung": "1 Vorgang ueber der Frist (dsgvo_5EuyuQark7kl) — Bußgeld-Risiko",
+    "einordnung": "Bewusst gebauter BETREIBER-Punkt (Memory: 'DSGVO-Betreiber-Klick'): Die Wache macht die Dringlichkeit zur Ampel und legt eine Karte unter ENTSCHEIDEN in der Tagesmappe (Nr. 60); 'Warten ist hier eine Entscheidung, kein Ausfall'. Der Agent fasst Betroffenendaten nicht an (Daten-Lock). Der Betreiber entscheidet den Vorgang in der Tagesmappe."
+  },
+  "status": "Befund verifiziert, Behebung vorbereitet, Ausfuehrung an Roten-Liste-Punkt und Kollisionsrisiko gebunden — Betreiber-Entscheid erbeten"
+}
