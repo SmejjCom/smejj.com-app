@@ -6,7 +6,7 @@ import { PROVIDER_CATALOG, catalogProvider, selectableProviders } from "../publi
 import { assertSafeProviderBaseUrl, resolveProviderBaseUrl, isCatalogProvider } from "../control-server/src/providers/genericProviderCatalog.js";
 import { normalizeApiKey, isModelId } from "../control-server/src/providers/genericOpenAiClient.js";
 
-const surface = fs.readFileSync("public/api-keys-surface.js", "utf8");
+const surface = fs.readFileSync("public/api-center-surface.js", "utf8");
 const routes = fs.readFileSync("control-server/src/routes/apiKeysRoutes.js", "utf8");
 
 test("Katalog: neuer Anbieter = ein Eintrag, mit Key- und Billing-Link", () => {
@@ -52,7 +52,7 @@ test("Frontend speichert oder rendert niemals den Klartext-Key dauerhaft", () =>
   assert.doesNotMatch(surface, /localStorage\.setItem\([^\n]*apiKey/i);
   assert.doesNotMatch(surface, /sessionStorage\.setItem\([^\n]*apiKey/i);
   // Key-Feld wird nach dem Anlegen geleert; Vollanzeige nur einmal mit Hinweis.
-  assert.match(surface, /#akApiKey"\)\.value = ""/);
+  assert.match(surface, /\[data-ac-key\]"\)\.value = ""/);
   assert.match(surface, /wird danach nicht mehr angezeigt/);
   // In der Liste nur maskiert (keyHint), Klartext nie aus dem Server zurueck.
   assert.match(surface, /keyHint/);

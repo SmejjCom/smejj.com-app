@@ -107,7 +107,7 @@ test("auch die letzten drei Startaufrufe stehen nicht im Ladepfad", () => {
   // Cline-Aufrufe. Alle drei Quellen muessen ueber afterFirstPaint laufen.
   const faelle = [
     ["public/account-privacy.js", /afterFirstPaint\(\[\(\) => hydrateAuthSession\(view\)\]\)/, /\n {2}hydrateAuthSession\(view\);/],
-    ["public/api-keys-surface.js", /afterFirstPaint\(\[\(\) => refresh\(root\)/, /\n {2}refresh\(root\)\.catch/],
+    ["public/api-center-surface.js", /afterFirstPaint\(\[\(\) => laden\(root, zustand\)/, /\n {2}laden\(root, zustand\)\.catch/],
     ["public/provider-settings.js", /afterFirstPaint\(\[\(\) => load\(root\)/, /\n {2}load\(root\)\.catch/]
   ];
   for (const [datei, verschoben, direkt] of faelle) {
