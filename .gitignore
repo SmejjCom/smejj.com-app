@@ -43,3 +43,6 @@ scripts/model-management/run_glm_fp8_contabo_transfer 2.sh
 
 # Generierte Design-Mockups (Einzeldatei > 800 Zeilen, kein Code)
 docs/mockups/*.html
+
+# Python-Bytecode-Cache der Worker — wird bei jedem Lauf neu erzeugt, gehoert nie ins Git
+__pycache__/
