@@ -66,6 +66,22 @@ dokumentieren und gegen eine FREMDE Pages-Site kontrollieren (v717: fremd
 375 px border-top 0 px / 1280 px 1 px (lokal UND live, echte Sitzung);
 check:all EXIT 0; Benchmark v717 warm alle Budgets OK, kalt besser als v716.
 
+**Nachtrag (Probe-Nutzer 7/7 gruen, Freigabe "Control-Overlay"):**
+api.smejj.com traegt eine EIGENE Shell und baut aus dem App-Repo-Zweig
+feature/auth-redesign-github-magiclink (Zeabur PREBUILT_V2; ermittelt per
+Zeabur-GraphQL: template + gitTrigger — Environment hat KEINE envVars, sie
+haengen an service.variables(environmentID){key value}). Keine Overlay-/
+Bootstrap-Pins in der Env: die v715-Shell steckte im Image-Build vom
+30.08. 19:09 UTC. Fix e592459 auf den Deploy-Zweig (5 Dateien: 3 aus dem
+Fix + Stempelzeile v715 -> v717 in beiden sw.js; Kontrolle-Code/index.html
+unberuehrt; bundle-check gruenn — die uebrigen 14 CSS-Quellen waren
+byteidentisch): Zeabur baute automatisch (Deployment 6a958610...), curl
+bewies v717 auf BEIDEN Domains, Ampel danach "Nutzerreise bestanden: 7/7
+Schritte in 3025 ms" gruen. MERKE: Hebt ein Frontend-Deploy die SW-Version
+an, braucht die api-Shell den passenden Stempel-Commit auf
+feature/auth-redesign-github-magiclink — sonst bleibt die
+Bündel-Gleichheits-Wache (Nr. 29) ehrlich rot.
+
 ### [2026-08-26] TAUBE WEB-SPEECH FAELLT IMMER AUFS OHR + OX ALPHA NR. 3 (job_vollaudit_20260825, dritte Nachtrunde)
 
 Capsule: `task-capsules/2026/08/job_vollaudit_20260825/capsule.json`

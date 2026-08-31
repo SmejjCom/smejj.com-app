@@ -1,0 +1,25 @@
+{
+  "typ": "nachtrag-erfolg",
+  "datum": "2026-08-31T14:05:00.000Z",
+  "anlass": "Betreiber-Freigabe: 'Control-Overlay freigegeben' — api.smejj.com-Shell auf v717 bringen, Probe-Nutzer-Waechter gruen beweisen",
+  "lage": "Der Control-Dienst ist ein Zeabur PREBUILT_V2-Dienst und baut aus GitHub SmejjCom/smejj.com-app, Branch feature/auth-redesign-github-magiclink (env-frei ermittelt via Zeabur-GraphQL: template PREBUILT_V2, gitTrigger GITHUB, branchName feature/auth-redesign-github-magiclink). Keine Overlay-/Bootstrap-Pins in der Env (59 Keys geprueft) — die v715-Shell steckte im Image-Build vom 30.08. 19:09 UTC. Docker fehlt lokal, also war der ghcr-Weg nicht gangbar; der GitTrigger-Weg war der sauberste.",
+  "umsetzung": {
+    "commit": "e592459 auf feature/auth-redesign-github-magiclink (Shallow-Klon in /tmp, getrennt vom geteilten Arbeitsbaum wegen aktiver Parallel-Session)",
+    "dateien": [
+      "public/mobil-composer.css (+12: Fix + Kommentar)",
+      "public/start-styles.css (+3: Fix im Buendel)",
+      "public/assets/start-styles.css (+3: Spiegel)",
+      "public/sw.js (Stempelzeile v715 -> v717, einzige Differenz)",
+      "public/assets/sw.js (Stempelzeile v715 -> v717)"
+    ],
+    "konsistenz": "node scripts/build/bundle-start-styles.mjs --check gruenn im Zweig-Stand (15 Quellen byteidentisch bis auf den Fix); Kontrolle-Code und index.html unberuehrt"
+  },
+  "liveBeweis": [
+    "Zeabur-Deployment 6a9586109ed7d65609e270ea RUNNING (13:48 UTC), altes Deployment entfernt",
+    "curl https://api.smejj.com/sw.js -> smejj-shell-v717; /api/health 200; Startseite 200",
+    "curl https://smejj.com/sw.js -> smejj-shell-v717 — Bündel-Gleichheit hergestellt",
+    "Ampel synthetic-user-watchdog nach dem naechsten 15-Minuten-Lauf (13:51:44 UTC): GRUEN, 'Nutzerreise bestanden: 7/7 Schritte in 3025 ms (Startseite, Bündel, Nachlade-Kette, API, Anmeldung, Chat 2317 ms, Speicher)'"
+  ],
+  "dsgvo": "Betreiber-Punkt bleibt: Vorgang dsgvo_5EuyuQark7kl in der Tagesmappe (Nr. 60) entscheiden — bewusster Klick-Lock, Agent fasst Betroffenendaten nicht an.",
+  "status": "abgeschlossen — Probe-Nutzer 7/7 gruen live"
+}
