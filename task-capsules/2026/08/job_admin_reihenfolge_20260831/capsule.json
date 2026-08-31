@@ -93,5 +93,20 @@
     "sicherheit": "Gate-/Anmeldepflicht-Logik unberuehrt (Tests 20/20); keine neuen Seiten sichtbar; Freigaben dokumentiert.",
     "lernfahigkeit": "Deploy-Weg fuer die Konsole dokumentiert (drei Kopien, Sync nur mit Wegwerf-Klon, kein SW-Stempel noetig — admin liegt nicht im Precache)."
   },
-  "status": "abgeschlossen — live auf smejj.com/admin/ verifiziert (Nav-Auslesen + Screenshots + Seitentests)"
+  "status": "abgeschlossen — live auf smejj.com/admin/ verifiziert (Nav-Auslesen + Screenshots + Seitentests)",
+  "nachtragLadewache": {
+    "anlass": "Betreiber-Befund 16:51 (Screenshot): Tuersteher-Meldung \"Konsole nicht geladen\" auf /admin/autopiloten/ — Freigabe zum Beheben im Chat (\"behebe\").",
+    "ursache": "Kaltstart-Kette (~20 Konsolendateien von Pages + Auth-Ruf) dauerte im Abendstau live 13,5 s und lief gegen die starre 15-s-Wache aus gate.js; api.js holeEinmal hatte KEIN Zeitlimit, ein haengender Ruf blockierte den bewaehrten Host-Wechsel. Nichts war kaputt — der erneute Versuch ging schnell (Browser-Cache).",
+    "aenderungen": [
+      "gate.js (3 Kopien): Wache 15 s -> 30 s mit Befund-Kommentar.",
+      "api.js (3 Kopien): holeEinmal mit AbortController-Zeitlimit 12 s je Versuch — Abbruch ist Status 0 und loest den bestaehigen Host-Wechsel aus; Timeout-Puffer checks stellen AbortController bereit.",
+      "index.html (3 Kopien): preconnect zum Control-Server — TLS-Handschlag frueh statt beim ersten API-Ruf."
+    ],
+    "commits": {
+      "appRepo": "ef3371f1",
+      "frontendRepo": "ee63afe (HEAD:main)"
+    },
+    "verifikation": "anmeldepflicht 20/20, admin-konsole OK 31, admin-console-sync OK, check:all EXIT 0, guidelines OK; LIVE: gate.js liefert 30000, api.js enthaelt AbortController, index.html preconnect; Echt-Fall-Beweis im Abendstau — Navigation brach nach 10 s ab, Konsole kam dennoch durch, KEIN Fehlerblock, h1 Autopiloten (Screenshot screenshot_live_ladewache_fix_autopiloten.png).",
+    "rollback": "revert ee63afe (Frontend) bzw. ef3371f1 (App)"
+  }
 }

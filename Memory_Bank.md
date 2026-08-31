@@ -41,6 +41,18 @@ neuen Positionen; anmeldepflicht 20/20, admin-konsole OK 31, adminUiRoutes
 TTFB ruhig 99/75/110 ms (Budget 200), Abendstau-Messung ehrlich mit fremder
 Pages-Kontrolle dokumentiert.
 
+**NACHTRAG 31.08. (Ladewache):** Betreiber sah auf /admin/autopiloten/
+"Konsole nicht geladen" — Ursache: Kaltstart-Kette (20 Dateien + Auth-Ruf)
+dauerte im Abendstau live 13,5 s gegen die starre 15-s-Wache; api.js
+holeEinmal hatte KEIN Zeitlimit (haengender Ruf blockierte den Host-Wechsel).
+Fix (ee63afe Frontend / ef3371f1 App): Wache 30 s, holeEinmal mit
+AbortController 12 s je Versuch (Abbruch = Status 0 = bestaehiger
+Host-Wechsel), preconnect zum Control-Server in allen drei index.html.
+Echt-Fall-Beweis: Navigation brach nach 10 s ab, Konsole kam trotzdem durch,
+kein Fehlerblock. MERKE: die gate-Wache muss immer groesser sein als die
+langsamste beobachtete Kaltstart-Kette; Timeout-Puffer der check:admin-
+konsole-Sandbox stellen AbortController bereit.
+
 ### [2026-08-31] HANDY-TRENNLINIE = DESKTOP-HAARSTRICH: MOBIL-KORREKTUR GEHOERT IN mobil-composer.css, SW-STEMPELPFLICHT BEI BUENDEL-DATEIEN (job_sidebar_trennlinie_20260831)
 
 Capsule: `task-capsules/2026/08/job_sidebar_trennlinie_20260831/capsule.json`.
