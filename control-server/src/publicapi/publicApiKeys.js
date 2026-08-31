@@ -43,6 +43,14 @@ const CACHE_MS = 60_000;
 const CACHE_NEGATIV_MS = 10_000;
 const cache = new Map();
 
+// Nutzung je Schluessel: Der Router meldet jede beantwortete Anfrage hier.
+// Geschrieben wird GEDROSSELT — hoechstens alle 60 s je Schluessel ein Index-
+// Schreibvorgang; dazwischen liegt der Zuwachs im Puffer. Geld-Buchhaltung
+// bleibt beim Ledger (sofort, je Anfrage) — hier geht es nur um die Anzeige.
+const NUTZUNG_SCHREIB_ABSTAND_MS = 60_000;
+const nutzungPuffer = new Map(); // keyId -> { anfragen, token }
+const nutzungSchreibMarken = new Map(); // keyId -> epoch ms
+
 /** Erzeugt einen neuen Klartext-Schluessel samt Abdruck. Kein Speichern. */
 export function baueSchluessel(zufall = crypto.randomBytes) {
   const rohdaten = zufall(ZUFALL_BYTES);
@@ -138,6 +146,43 @@ export async function widerrufeSchluessel(kontoId, keyId, env = process.env) {
   return maskiere(eintrag);
 }
 
+/**
+ * Bucht eine beantwortete Anfrage auf den Schluessel: Zeitstempel + Summen.
+ * Wirft nie — die Antwort ist beim Kunden; ein Schreibfehler landet nur im Log.
+ */
+export async function merkeBenutzung(kontoId, keyId, { promptTokens = 0, completionTokens = 0 } = {}, env = process.env, jetzt = () => new Date()) {
+  const id = String(keyId || "").slice(0, 40);
+  if (!id) return;
+  const token = Math.max(0, Math.floor(Number(promptTokens) || 0)) + Math.max(0, Math.floor(Number(completionTokens) || 0));
+  const puffer = nutzungPuffer.get(id) || { anfragen: 0, token: 0 };
+  puffer.anfragen += 1;
+  puffer.token += token;
+  nutzungPuffer.set(id, puffer);
+  const marke = nutzungSchreibMarken.get(id) || 0;
+  if (jetzt().getTime() - marke < NUTZUNG_SCHREIB_ABSTAND_MS) return;
+  nutzungSchreibMarken.set(id, jetzt().getTime());
+  const sprung = nutzungPuffer.get(id) || { anfragen: 0, token: 0 };
+  nutzungPuffer.delete(id);
+  try {
+    const index = await leseIndex(kontoId, env);
+    const eintrag = index.schluessel.find((item) => item.id === id);
+    if (!eintrag) return;
+    eintrag.zuletztBenutztAm = jetzt().toISOString();
+    eintrag.nutzung = eintrag.nutzung || { anfragen: 0, token: 0 };
+    eintrag.nutzung.anfragen += sprung.anfragen;
+    eintrag.nutzung.token += sprung.token;
+    await schreibeIndex(kontoId, index, env);
+  } catch (error) {
+    console.error(`[public-api] Nutzungs-Schreibvorgang uebersprungen (${id}):`, String(error?.message || error).slice(0, 160));
+  }
+}
+
+/** Nur fuer Tests. */
+export function __leereBenutzungPuffer() {
+  nutzungPuffer.clear();
+  nutzungSchreibMarken.clear();
+}
+
 // ---- Torwaechter -------------------------------------------------------------
 
 /**
@@ -198,6 +243,11 @@ function maskiere(eintrag) {
     keyHint: `${SCHLUESSEL_PRAEFIX}••••${eintrag.letzte4}`,
     erstelltAm: eintrag.erstelltAm,
     widerrufenAm: eintrag.widerrufenAm || "",
+    zuletztBenutztAm: eintrag.zuletztBenutztAm || "",
+    nutzung: {
+      anfragen: Math.max(0, Math.floor(Number(eintrag.nutzung?.anfragen) || 0)),
+      token: Math.max(0, Math.floor(Number(eintrag.nutzung?.token) || 0))
+    },
     zustand: eintrag.widerrufenAm ? "widerrufen" : "aktiv"
   };
 }
