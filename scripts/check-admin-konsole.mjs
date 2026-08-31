@@ -142,7 +142,10 @@ async function adressenDerKonsole() {
 
   const seiten = [];
   for (const schluessel of Object.keys(fenster)) {
-    if (!/^adminStage\d+$/.test(schluessel)) continue;
+    // "adminStageCockpit" traegt ein Wort statt einer Zahl — das Cockpit
+    // (Buendel-Abgleich 2026-08-31) gehoert genauso unter die Pruefung wie
+    // die nummerierten Stufen, sonst laufe seine Adressen still ins Leere.
+    if (!/^adminStage(\d+|Cockpit)$/.test(schluessel)) continue;
     const gruppe = fenster[schluessel].seiten || fenster[schluessel];
     for (const [pfad, def] of Object.entries(gruppe)) {
       if (!def || typeof def.laden !== "function") continue;

@@ -55,6 +55,13 @@ const SEITEN_ORDNER = Object.freeze([
   // es nie gab. Der Ordner kam aus dem Live-Klon mit. Die uebrigen neueren
   // Seiten des Bauzweigs (cockpit, radar, auslieferung, regeln, tagesmappe)
   // registriert erst dessen Konsole — sie kommen mit dem Buendel-Abgleich.
+  // 2026-08-31 (Buendel-Abgleich, Betreiber-Freigabe "alle Rechte von A bis
+  // z — mach hundert Prozent fertig"): cockpit kommt hinzu (vollstaendige
+  // Pruefkette: Ordner, Endpunkte, Ansicht). radar/auslieferung/regeln/
+  // tagesmappe bleiben bewusst AUSGENOMMEN — ihre Frontends rufen teils
+  // keine Endpunkte bzw. treten auf fehlende Server-Routen (Befund
+  // check-admin-konsole 31.08.); eigene Baustelle, kommt spaeter.
+  "cockpit",
   "evolution"
 ]);
 
@@ -63,8 +70,12 @@ function sha256(inhalt) {
 }
 
 export function konsolenDateien(quelle = QUELLE) {
-  return readdirSync(quelle)
-    .filter((name) => !name.startsWith("."))
+  return readdirSync(quelle, { withFileTypes: true })
+    // Seit dem Buendel-Abgleich 2026-08-31 liegen in admin-ui/ auch Seiten-
+    // ordner (cockpit/ radar/ …) mit je einer index.html — Ordner sind keine
+    // Konsolendateien und duerfen weder gespiegelt noch gehasht werden.
+    .filter((eintrag) => eintrag.isFile())
+    .map((eintrag) => eintrag.name)
     // Tests liegen neben dem Code, gehoeren aber NICHT ins Netz: gespiegelt
     // waeren sie unter smejj.com/admin/<name>.test.js oeffentlich abrufbar.
     // (Der Control-Server liefert sie ohnehin nie aus — seine Dateiliste ist

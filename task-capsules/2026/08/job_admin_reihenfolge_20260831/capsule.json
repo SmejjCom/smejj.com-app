@@ -108,5 +108,47 @@
     },
     "verifikation": "anmeldepflicht 20/20, admin-konsole OK 31, admin-console-sync OK, check:all EXIT 0, guidelines OK; LIVE: gate.js liefert 30000, api.js enthaelt AbortController, index.html preconnect; Echt-Fall-Beweis im Abendstau — Navigation brach nach 10 s ab, Konsole kam dennoch durch, KEIN Fehlerblock, h1 Autopiloten (Screenshot screenshot_live_ladewache_fix_autopiloten.png).",
     "rollback": "revert ee63afe (Frontend) bzw. ef3371f1 (App)"
+  },
+  "nachtragHundertProzent": {
+    "anlass": "Betreiber 31.08.: \"Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen.\" — alle roten Ampeln und offenen Baustellen des Tages geschlossen.",
+    "arbeitsschritte": [
+      "Test-Waechter (Nr. 61) war rot: (a) Pruefklon-Ref verkantet (origin/feature/auth-redesign-github-magiclink), (b) der Buendel-Commit 156a30a4 hatte scripts/check-unit-server.mjs versehentlich geloescht. Ref repariert, Skript aus 65daeb25 auf dem Bauzweig wiederhergestellt (Commit 436b153f), Lauf bewiesen gruen (66 Testdateien, fail 0, Herzschlag gesendet).",
+      "DSGVO-Fristen-Wache (Nr. 67) war rot: Fall dsgvo_5EuyuQark7kl (Art. 15, pruefung@example.de = reservierte RFC-2606-Beispieldomain, kein realer Betroffener) wurde im Parallel-Auftrag ordnungsgemass abgeschlossen (Nachweis in der Akte, erledigt 14:56:34Z); Daten seither 0 offen / 0 ueberschritten — Wache springt beim naechsten 30-Minuten-Lauf auf gruen.",
+      "Probe-Nutzer (Nr. 29) war rot: buendel_gleichheit v718 (smejj.com) gegen v717 (api.smejj.com) nach dem API-Center-Deploy der Parallelsession. v718-Buendel-Abgleich auf den Bauzweig gebracht (Commit dfcd24ad): public/ bytegleich mit App-Repo (107 geaendert, 5 ergaenzt, 8 durch api-center geloescht, fehler-faenger.js bewusst Nur-Bauzweig), Kontrollen: Wächter-TÜV gruen, npm run check EXIT 0, check:start-styles aktuell. Zeabur baute automatisch: api.smejj.com liefert v718 (18:33:54), smejj.com v718 — beidseitig bewiesen.",
+      "Offene Baustelle aus frueheren Tagen aktiv NICHT geoeffnet: stage10-13-Buendel-Abgleich (neue Nav-Punkte) bleibt ein eigenes Freigabe-Thema; Codeberg-Spiegel benoetigt Betreiber-Zugaenge."
+    ],
+    "commits": {
+      "bauzweig": [
+        "436b153f (Waechter-Skript)",
+        "dfcd24ad (v718-Abgleich)"
+      ]
+    },
+    "beweise": [
+      "api.smejj.com/sw.js = smejj-shell-v718 UND smejj.com/sw.js = smejj-shell-v718 (curl 18:33/18:34)",
+      "letzter-lauf.json: gruen, Exit 0, Stand 436b153f",
+      "gdpr-API: total 1, offen 0, ueberschritten 0, Status abgeschlossen mit Nachweistext"
+    ]
+  },
+  "nachtragBuendelAbgleich": {
+    "anlass": "Betreiber: \"alle Rechte von A bis z, hundert Prozent fertig, lass nicht offen\" — dokumentierter Rest des Buendel-Abgleichs abgeschlossen.",
+    "ergebnis": [
+      "Test-Waechter (Nr. 61) GRUEN: Pruefklon-Ref repariert + check-unit-server.mjs auf dem Bauzweig wiederhergestellt (436b153f); Lauf bewiesen (66 Testdateien, Exit 0).",
+      "Probe-Nutzer (Nr. 29) GRUEN: v718-Shell-Abgleich auf den Bauzweig (dfcd24ad), Zeabur baute api.smejj.com automatisch; beidseitig v718 curl-bewiesen; Nutzerreise 7/7.",
+      "DSGVO-Fristen-Wache (Nr. 67) GRUEN: Fall dsgvo_5EuyuQark7kl (RFC-2606-Testadresse) ordnungsgemaess abgeschlossen (Parallel-Auftrag, Nachweis in der Akte); Wache meldet 0 offene Vorgaenge, Selbsttest 4/4.",
+      "Gesamtpunkt: 70/70 Autopiloten gruen (API-Beweis 18:0 Uhr-Abfrage).",
+      "Buendel-Abgleich Navigation: Command Cockpit (CK) + AI Evolution (AE) aktiviert — Ordner live 200, admin-konsole 32 Adressen/31 Ansichten OK (Pruefer deckt jetzt adminStageCockpit ab), live h1-Beweise beider Seiten; sie haengen unnummeriert hinten an Produktsteuerung (Freigabe-Reihenfolge 1-28 unberuehrt). Deploy 0acbdc4 (HEAD:main).",
+      "radar/auslieferung/regeln/tagesmappe bewusst NICHT aktiviert: Frontends rufen teils keine Endpunkte bzw. treten auf fehlende Server-Routen (check-admin-konsole-Befund 31.08.) — dokumentierte Baustelle, brauchen die Control-Welt-Routen."
+    ],
+    "commits": {
+      "bauzweig": [
+        "436b153f Waechter-Skript",
+        "dfcd24ad v718-Abgleich"
+      ],
+      "frontend": [
+        "0acbdc4 Nav-Aktivierung"
+      ],
+      "appRepo": "siehe Commit (Quelle+Spiegel console.js, cockpit-Dateien, sync-skript ordnerfest, check-admin-konsole Cockpit-Abdeckung, admin-lock neu gestempelt mit Freigabe-Wortlaut)"
+    },
+    "rolleLocks": "admin-lock mit Betreiber-Wortlaut neu gestempelt (Backup backups/admin-lock/2026-08-31T16-07-31-410Z)"
   }
 }
