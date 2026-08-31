@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-31T19:53:06.490Z",
-  "confirmation": "Betreiber-Freigabe 31.08. — Nachschleife: Fix unter NEUER Marke b50/b42l/b110 ausgeliefert (Lehre: Inhalt unter gleicher Marke ist Cache-Gift); Rollback: revert oder backups/start-design-lock/",
+  "frozenAt": "2026-08-31T19:58:39.519Z",
+  "confirmation": "Betreiber-Freigabe 31.08. — SW-Stempel-Pflicht nachgezogen: Precache-Inhalt (b50-Fix) erfordert v720; Rollback: revert oder backups/start-design-lock/",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "fdc5068a1cae86e5bc9c7ac35a3eec6806bcdc26d8a486a9d65d21c635b27424",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "2421b4f6e65963a2f76ba6caa0fbce1aeec3c0946724ba46e92043c52ecb3456",
+    "public/sw.js": "dcb3b9e2a0d825e13f39813b405ef445f7074cbc4e4a9a685751af83632038f3",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }

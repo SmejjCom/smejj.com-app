@@ -237,3 +237,11 @@ Einstellungs-Panel ohne eigene Ueberschrift (die Flaeche bringt "API-Keys"
 selbst mit). i18n: 4 Waisen entfernt, 9 neue Schluessel in 14 Sprachen.
 Marken (Schlussstand): app.js b108, premium-surfaces b42j,
 settings-surface b48, api-center-surface v5, css v3, entwickler.js v=7.
+
+## v720 — 2026-08-31 — Nachschleife: Fix braucht eigenen Stempel (Lehre wiederholt)
+
+Der b50-Fix (Kommentarleck im API-Panel) lief unter UNVERAENDERTEM sw.js —
+Folge: der Vorrat hielt weiter die geleakte settings-surface.js (Precache,
+ignoreSearch). v720 zwingt alle Browser zum frischen Vorrat. Lehre (schon
+v713/v714): JEDE Aenderung an einer Precache-Datei = SW-Stempel, ohne
+Ausnahme, auch Stunden-Debounces nach dem eigentlichen Deploy.
