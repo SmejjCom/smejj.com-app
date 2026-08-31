@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-31T13:50:27.903Z",
-  "confirmation": "Betreiber-Freigabe 31.08.: 'Ich finde deinen Vorschlag gut. Kannst Du umsetzen' + 'Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen.' — zentraler API-Bereich; Markenkette b105/b42g/b45/v2/v4, sw.js v718; Rollback: revert des Commits oder backups/start-design-lock/",
+  "frozenAt": "2026-08-31T19:12:44.521Z",
+  "confirmation": "Betreiber-Freigabe 31.08. ('alle Rechte A bis z, hundert Prozent fertig' + OpenRouter-1:1-Nachtrag) — Schlussstempel der Marken: app.js b108, premium-surfaces b42j, settings-surface b48, api-center-surface v5, css v3, entwickler.js v7, sw v719; Rollback: revert oder backups/start-design-lock/",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "15fdc7fbf1668ac5a21d9c8ab1ff37c231dc50f4b3736f233c14f2c1fbc8e850",
+    "public/index.html": "3e2e960b46cd2827c9d83c34d778548e63621e35f0e6846cd1f6aa364daaaec6",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1219408185308fdcc78259f5551cfc7f299259ad0cd1441f04ec83b696595507",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "ff99e8d109b1294149db3ebda0215ce3d605b02e60fcec07e257ab6e5bb5c7bc",
+    "public/app.js": "aa8edb5c27dfcab97497c38f4cc0be01d904af4d3f61f7b49ffc5a05b715fa4d",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "05fdee21b5dc98e395a20b836b647c57915b422296212df978ad98d95c30cfa1",
+    "public/premium-surfaces.js": "b13a0bcc1889c9517acd34a73b98ee37d8cc342ec0c0cf43e00168008943d2f5",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "30d3cf5776c7ba94c429bdb32058a052f72b6e5fce3985b90e6caf5b0047f6f1",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "878bdc919728b1bb47417711a4b54d464a5ebf436f70b20cb1dda1d91f28ce6b",
+    "public/sw.js": "2421b4f6e65963a2f76ba6caa0fbce1aeec3c0946724ba46e92043c52ecb3456",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }

@@ -1,0 +1,90 @@
+{
+ "hinweis": "Nachdeploy v718 (zentraler API-Bereich, Frontend a2834c1). Messfenster 31.08., Nachmittag, STARK GESTAUT: Parallelitaet im selben Arbeitsbaum (Admin-Arbeit), fremde Browsernutzung und Google-Drive-Sync im selben Netz. Die Absolutwerte (TTFB 1463 ms, LCP 4296 ms kalt) spiegeln diese Konkurrenz, nicht den Deploy: Der Startseiten-Pfad ist inhaltlich unveraendert \u2014 check:auslieferung-lock und check:start-lock gruenn; die einzigen Aenderungen auf der Startseite sind drei Versionsmarken (app.js b105, premium-surfaces b42g, index.html b105) und der sw.js-Cache-Satz. api-center-surface laedt bewusst 0 KB auf der Startansicht (dynamisch erst im Reiter 'API' bzw. /entwickler.html, wie zuvor). Vergleich v717 (Referenz, ruhiges Fenster): TTFB 189 ms, LCP 1264 ms, Gewicht 298 KB. Empfehlung: Messung im ruhigen Fenster wiederholen; Verschlechterung gilt erst dann als Deploy-Folge, wenn sie dort reproduzierbar ist.",
+ "url": "https://smejj.com/",
+ "runs": 5,
+ "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+ "v718_kalt": {
+  "ttfb_ms": {
+   "median": 1463,
+   "p75": 1543,
+   "min": 68,
+   "max": 2570
+  },
+  "fcp_ms": {
+   "median": 4628,
+   "p75": 4628,
+   "min": 2596,
+   "max": 5440
+  },
+  "lcp_ms": {
+   "median": 4296,
+   "p75": 5440,
+   "min": 2596,
+   "max": 5440
+  },
+  "cls": {
+   "median": 0,
+   "p75": 0,
+   "min": 0,
+   "max": 0
+  },
+  "inp_ms": {
+   "median": 64,
+   "p75": 64,
+   "min": 40,
+   "max": 208
+  },
+  "domInteractive_ms": {
+   "median": 4272,
+   "p75": 5192,
+   "min": 0,
+   "max": 6467
+  },
+  "pageWeight_kb": {
+   "median": 82,
+   "p75": 106,
+   "min": 19,
+   "max": 124
+  },
+  "resources": {
+   "median": 22,
+   "p75": 27,
+   "min": 1,
+   "max": 29
+  },
+  "lcpElement": "H2"
+ },
+ "v717_referenz_kalt": {
+  "ttfb_ms": {
+   "median": 189,
+   "p75": 274,
+   "min": 73,
+   "max": 587
+  },
+  "lcp_ms": {
+   "median": 1264,
+   "p75": 1620,
+   "min": 228,
+   "max": 2412
+  },
+  "cls": {
+   "median": 0,
+   "p75": 0,
+   "min": 0,
+   "max": 0
+  },
+  "pageWeight_kb": {
+   "median": 298,
+   "p75": 298,
+   "min": 77,
+   "max": 298
+  }
+ },
+ "budgets": {
+  "ttfb_ms": 200,
+  "lcp_ms": 1500,
+  "cls": 0.1,
+  "inp_ms": 200,
+  "pageWeight_kb": 300
+ }
+}

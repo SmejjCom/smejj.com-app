@@ -736,3 +736,11 @@ Landeseite stand.
 - Runde 2: Landeseite spricht die Sprache des Besuchers (willkommen-sprache.js, 82 Texte, fail-safe deutsch) — live en-US bewiesen.
 - GEMESSEN: Auth-Gate (profile-dock.js, Skript 24/34) leitet Anonyme erst nach 3,7 s Desktop / 15 s iPhone um — Fruehstart-Gate in index.html braucht Start-Lock-Freigabe.
 - Freigabe per Karte: fruehes Tor (auth-gate-frueh.js, erstes Skript im head) — Umleitung Anonymer 15 s -> 1,7 s iPhone, 3,7 s -> 0,13 s Desktop; Start-Lock neu eingefroren.
+
+## 2026-08-31 — Zentraler API-Bereich im OpenRouter-Layout (job_api_zentrum_20260831)
+
+- Betreiber-Freigabe: „Ich finde deinen Vorschlag gut … alle Rechte von A bis z" + Nachtrag „mach 1 zu 1 genau wie openrouter.ai/workspaces/default/keys, gleiche Design".
+- EINE Fläche api-center-surface.js/.css ersetzt api-keys-surface + api-konto-surface + entwickler.css (gelöscht); Reiter heißt „API", /entwickler.html rendert dasselbe Modul. LIVE: sw v718/v719, Klon a2834c1 + Nachfolger.
+- Look 1:1 OpenRouter: große Überschrift + ein Hauptknopf, große immer sichtbare Suche, Spalten Schlüssel·Typ·Läuft ab·Zuletzt genutzt·Verbrauch·Limit·⋮, Fusszeile „N Schlüssel", Menü mit Icons, Verbindung/Preise eingeklappt.
+- Gelernt: (1) hidden verliert gegen Autoren-display — jede Fläche braucht [hidden]-Regeln; (2) i18n-Pflege-Regexe müssen RAW-UTF8 matchen, json.dumps escapet und lässt Duplikate stehen; (3) assets/ai/ liegt nur im Klon — lokale Tests brauchen die Kopie; (4) html.p-recht h2 (2em) schlägt Flächen-CSS gleicher Spezifität; (5) Klon live neuer als App-Repo — abgleich-Meldungen je Datei klassifizieren, chirurgisch kopieren.
+- Offen: check:admin-console-sync rot durch Parallelsitzung (deren admin/console.js live neuer); IDrive-Artefakt-Upload an Netzstau gescheitert; „Zuletzt genutzt"/per-Key-Verbrauch liefert das Backend nicht (Spalten zeigen Nie/—) — Backend-Erweiterung als Werkstatt-Kandidat.

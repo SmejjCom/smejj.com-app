@@ -224,3 +224,16 @@ Sprachdateien (14) um 26 Waisen erleichtert, 25 neue Schluessel in allen
 Sprachen. Marken: app.js b105, premium-surfaces b42g, settings-surface b45,
 api-center-surface v2, entwickler.js v=4 (entwickler.html). Start-Lock mit Freigabewortlaut neu
 eingefroren; Details docs/approvals/2026-08-31-api-zentrum.md.
+
+## v719 — 2026-08-31 — API-Zentrum im OpenRouter-Layout 1:1 (Betreiber-Nachtrag: "mach 1 zu 1 genau wie openrouter.ai/workspaces/default/keys — gleiche Design")
+
+Nur Design, gleiche Funktionen: grosse Ueberschrift "API-Keys" + ein
+Hauptknopf oben rechts, KEINE Kacheln mehr (Guthaben/Verbraucht/Heute als
+schlanke Zeile), eine Karte mit grosser Suche ("Nach Name oder Schlüssel
+suchen …"), Spalten Schlüssel · Typ · Läuft ab · Zuletzt genutzt · Verbrauch ·
+Limit · ⋮, Fusszeile "N Schlüssel", Menue mit Icons. Widerrufene Zeilen
+ausgegraut. Verbindung & Preise eingeklappt unter "Verbinden & Preise".
+Einstellungs-Panel ohne eigene Ueberschrift (die Flaeche bringt "API-Keys"
+selbst mit). i18n: 4 Waisen entfernt, 9 neue Schluessel in 14 Sprachen.
+Marken (Schlussstand): app.js b108, premium-surfaces b42j,
+settings-surface b48, api-center-surface v5, css v3, entwickler.js v=7.
