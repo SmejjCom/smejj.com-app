@@ -56,6 +56,18 @@ Quelle-/Live-Divergenz (stage11-Registratur) bleibt unberührt.
   Deploy-Commits und erneut pushen; die Änderung liegt nur in
   `admin/console.js` (nicht im SW-Precache, daher kein SW-Stempel nötig).
 
+## Nachtrag: Kürzel-Nummern statt Buchstaben (zweites „Ja", 31.08.2026)
+
+Der Betreiber hat am selben Tag zusätzlich freigegeben, auf den Navigations-
+Plaketten statt der Buchstaben die Nummern 1–28 zu zeigen (Vorschlag +
+Begründung im Chat, Antwort „Ja"). Umsetzung:
+
+- Übersicht behält als Startseite als Einzige ihr „A".
+- Die 28 Bereiche zeigen ihre Nummer aus der obigen Reihenfolge.
+- Nur Anzeige in `console.js` (`kuerzelVon`); der Buchstabe bleibt als
+  Rückfall für künftig nicht nummerierte Seiten erhalten.
+- Plakette (20×20 px, 9,5 px) passt für zweistellige Zahlen — kein CSS-Eingriff.
+
 ## Prüfpflichten vor Deploy
 
 `check:admin-console-sync`, `check:admin-konsole`, Test
