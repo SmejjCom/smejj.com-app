@@ -1,0 +1,60 @@
+# smejj.com — Hausmodell-Dienst (llama.cpp + Node-Steuerung) fuer Zeabur.
+#
+# Weg + Fallen: Memory smejj-zeabur-neuer-dienst-weg
+#   - Dockerfile.<dienstname> im Wurzelverzeichnis, damit Zeabur genau diesen
+#     Dienst damit baut und die anderen unberuehrt bleiben.
+#   - Fester CMD gegen die Auto-Erkennung, die sonst "pnpm start" (= Control
+#     Server) startet.
+#   - Der neue Worker MUSS in .dockerignore freigeschaltet sein, sonst bricht
+#     der Bau mit "failed to calculate checksum of ref" ab.
+#
+# BASIS ubuntu:24.04, nicht node:*-slim: die llama.cpp-Release-Binaries werden
+# auf ubuntu-latest gebaut und verlangen dessen glibc. Node kommt als
+# offizielles Tarball dazu (braucht nur glibc 2.28+).
+#
+# KEIN Kompilieren: llama.cpp liefert fertige Linux-x64-Binaries (16,7 MB).
+# Das spart auf einem 2-Kern-Server rund 10 Minuten Bauzeit je Deploy.
+FROM ubuntu:24.04
+
+ARG LLAMA_VERSION=b10729
+ARG NODE_VERSION=22.14.0
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl xz-utils libgomp1 libcurl4 libstdc++6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Node als Tarball statt apt: Ubuntu 24.04 liefert Node 18, der Dienst nutzt
+# Readable.fromWeb auf fetch-Stroeme und will einen aktuellen Unterbau.
+RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz \
+    && mkdir -p /opt/node \
+    && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 \
+    && rm /tmp/node.tar.xz \
+    && ln -s /opt/node/bin/node /usr/local/bin/node \
+    && node --version
+
+# llama.cpp: Binaries und die zugehoerigen .so-Dateien liegen flach im Archiv.
+RUN curl -fsSL "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_VERSION}/llama-${LLAMA_VERSION}-bin-ubuntu-x64.tar.gz" -o /tmp/llama.tgz \
+    && mkdir -p /opt/llama \
+    && tar -xzf /tmp/llama.tgz -C /opt/llama --strip-components=1 \
+    && rm /tmp/llama.tgz \
+    && chmod +x /opt/llama/llama-server \
+    && LD_LIBRARY_PATH=/opt/llama /opt/llama/llama-server --version
+
+ENV LD_LIBRARY_PATH=/opt/llama
+
+WORKDIR /app
+COPY workers/smejj-hausmodell/ ./workers/smejj-hausmodell/
+
+# Warm-Cache auf der Server-SSD. Der Deckel steckt in
+# SMEJJ_HAUSMODELL_CACHE_GB, das Aufraeumen macht das Depot (LRU).
+RUN mkdir -p /var/cache/hausmodell
+ENV SMEJJ_HAUSMODELL_CACHE=/var/cache/hausmodell
+ENV SMEJJ_HAUSMODELL_LLAMA=/opt/llama/llama-server
+ENV PORT=8080
+EXPOSE 8080
+
+# Kein Vorladen im Abbild: das Modell holt der Dienst bei der ERSTEN Anfrage
+# aus e2. So bleibt das Abbild klein und der Leerlauf-Speicher bei 0 MB.
+CMD ["node", "workers/smejj-hausmodell/server.js"]

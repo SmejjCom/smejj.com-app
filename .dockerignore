@@ -53,3 +53,8 @@ schemas/*
 !schemas/maus-step-decision.schema.json
 *.xlsx
 .DS_Store
+# Hausmodell-Dienst (eigener Dienst seit 2026-09-01). Ohne diese zwei Zeilen
+# bricht der Docker-Bau mit "failed to calculate checksum of ref" ab — dieselbe
+# Falle, die schon Training-Loop und Bruecken-Waechter je einen Anlauf kostete.
+!workers/smejj-hausmodell
+!workers/smejj-hausmodell/**
