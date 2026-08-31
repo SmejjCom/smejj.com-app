@@ -25,7 +25,7 @@ import { executeWithFallback, resolveModelRequest } from "../llm/modelRouter.js"
 import { THINKING_DISABLED } from "../../../src/ai/chatThinkingPolicy.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { readJson } from "../http/respond.js";
-import { bearerSchluessel, pruefeSchluessel } from "./publicApiKeys.js";
+import { bearerSchluessel, merkeBenutzung, pruefeSchluessel } from "./publicApiKeys.js";
 import { PUBLIC_MODEL_DEFAULT, istPublicModel, modelListePayload, profilFuerModell } from "./publicApiModels.js";
 import { verbrauchSnapshot, zaehleVerbrauch } from "./publicApiUsage.js";
 import { bucheAnfrage, darfAnfragen } from "./publicApiLedger.js";
@@ -214,6 +214,7 @@ async function antworteEinmalig(res, lauf, { angefragtesModell, zugang, env, anf
     anfrageId, keyId: zugang.keyId, modell: angefragtesModell,
     promptTokens: nutzung.promptTokens, completionTokens: nutzung.completionTokens, gemessen: nutzung.gemessen, env
   });
+  await merkeBenutzung(zugang.kontoId, zugang.keyId, nutzung, env);
 }
 
 async function antworteStrom(res, lauf, { angefragtesModell, zugang, env, anfrageId, nachrichten }) {
@@ -273,6 +274,7 @@ async function antworteStrom(res, lauf, { angefragtesModell, zugang, env, anfrag
     anfrageId, keyId: zugang.keyId, modell: angefragtesModell,
     promptTokens, completionTokens, gemessen: gemessen.gemessen, env
   });
+  await merkeBenutzung(zugang.kontoId, zugang.keyId, { promptTokens, completionTokens }, env);
 }
 
 /** Eine SSE-Zeile: Marke ersetzen, usage mitnehmen, Rest unveraendert lassen. */

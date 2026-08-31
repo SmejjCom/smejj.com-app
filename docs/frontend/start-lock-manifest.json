@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-08-31T19:58:39.519Z",
-  "confirmation": "Betreiber-Freigabe 31.08. — SW-Stempel-Pflicht nachgezogen: Precache-Inhalt (b50-Fix) erfordert v720; Rollback: revert oder backups/start-design-lock/",
+  "frozenAt": "2026-08-31T22:40:55.473Z",
+  "confirmation": "Nutzung je Schluessel: Versionskaskade (api-center-surface v6, settings b51, premium b43l, app b111, entwickler v8, SW v721) — Betreiber-Freigabe Vollautonomie API-Zentrum",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "fdc5068a1cae86e5bc9c7ac35a3eec6806bcdc26d8a486a9d65d21c635b27424",
+    "public/index.html": "4acaec3003e28cafb0b81584fbae073046504d146f0bab5488e532bd55608233",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1219408185308fdcc78259f5551cfc7f299259ad0cd1441f04ec83b696595507",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "b1ad11287441b78611473e965475421044e67fddb2f9b01eacb74cf50995231d",
+    "public/app.js": "e6e0c022331b883630f8de625d8ef62e3b51d84e2f254c1c24a2d963267ab9b8",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "ca0750757f1f8ef9215792125f573140845697b293cab36dcd765007e57ced9b",
+    "public/premium-surfaces.js": "aee3feca638d14d7974f3bee55c80a0e2e2b4c68af549353d80c7dd2b9894b94",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "30d3cf5776c7ba94c429bdb32058a052f72b6e5fce3985b90e6caf5b0047f6f1",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "dcb3b9e2a0d825e13f39813b405ef445f7074cbc4e4a9a685751af83632038f3",
+    "public/sw.js": "935add8f1de96c02de7ba28ecefd06aa812cebc405f847dea69188aa2dd59b1c",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }
