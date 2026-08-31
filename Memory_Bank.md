@@ -5,6 +5,31 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-08-31] HANDY-TRENNLINIE = DESKTOP-HAARSTRICH: MOBIL-KORREKTUR GEHOERT IN mobil-composer.css, SW-STEMPELPFLICHT BEI BUENDEL-DATEIEN (job_sidebar_trennlinie_20260831)
+
+Capsule: `task-capsules/2026/08/job_sidebar_trennlinie_20260831/capsule.json`.
+Fix 75f70601 (App) / f322ac4 (Frontend, main), SW v717.
+
+**Betreiber-Befund Handy (375 px):** helle Linie ueber der Profilzeile der
+geoeffneten Spur. Ursache: `.sidebar .bottom-nav { border-top }` aus
+styles.css — am Desktop Teil des V11-Bilds, im Handy-Overlay ein Fremdkoerper.
+**Fix:** `@media (max-width: 767px) { .sidebar .bottom-nav { border-top: 0; } }`
+in mobil-composer.css — NICHT in design-v11.css (Ratsche 2744) und nicht in
+styles.css (1598): mobil-composer.css bleibt der wachstumsfreie Mobil-Ort
+vor dem Kaskaden-Ende; gleiche Spezifitaet (0,2,0) spaeter im Buendel gewinnt.
+767 px = dieselbe Kante wie die Desktop-Spur (min-width: 768).
+**MERKE:** (1) Mobile-Korrekturen an Desktop-Regeln laufen ueber Position im
+Buendel + Spezifitaet, nie ueber design-v11.css. (2) Jede Aenderung einer
+Precache-Datei (start-styles.css!) erzwingt CACHE_NAME +1 — ignoreSearch-
+Lehre v714. (3) Das erzeugte start-styles.css-Buendel ist Teil des
+34-Datei-Start-Locks: Neu-Stempel nur mit `--freeze --confirm "<Freigabe>"`.
+(4) Kalt-p75-Netzverstoesse bei Pages-Abendmessung ehrlich als Netz-Hinweis
+dokumentieren und gegen eine FREMDE Pages-Site kontrollieren (v717: fremd
+455 ms vs smejj 189 ms TTFB kalt).
+**Verifikation:** Pixelbeweis 27/32/36 -> 8/15/20 an der Linienstelle;
+375 px border-top 0 px / 1280 px 1 px (lokal UND live, echte Sitzung);
+check:all EXIT 0; Benchmark v717 warm alle Budgets OK, kalt besser als v716.
+
 ### [2026-08-26] TAUBE WEB-SPEECH FAELLT IMMER AUFS OHR + OX ALPHA NR. 3 (job_vollaudit_20260825, dritte Nachtrunde)
 
 Capsule: `task-capsules/2026/08/job_vollaudit_20260825/capsule.json`

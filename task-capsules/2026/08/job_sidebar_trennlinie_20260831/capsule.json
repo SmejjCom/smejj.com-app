@@ -1,0 +1,94 @@
+{
+  "jobId": "job_sidebar_trennlinie_20260831",
+  "createdAt": "2026-08-31T12:00:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag: Trennlinie der Seitenleiste in der Handy-Ansicht finden, beheben, bei 375 px im Browser beweisen; spaeter freigegeben: Committen und Deploy-Fenster inkl. Livegang)",
+  "title": "Sidebar-Trennlinie aus der Handy-Ansicht entfernt — Ursache war der Desktop-Haarstrich an .sidebar .bottom-nav; SW v717, live bewiesen bei 375 px und 1280 px",
+  "ziel": "Die helle horizontale Trennlinie, die in der Handy-Ansicht (375 px) beim Oeffnen der linken Spur ueber der Profilzeile sichtbar war, entfernen — ohne Aenderung am Desktop-Design (Haarstrich ab 768 px bleibt). Vollstaendiger Ship-Loop inkl. Livegang und Messpflicht.",
+  "anforderungen": [
+    "Ursache im Code finden und beheben",
+    "Browsertest bei 375 px: Linie weg, sonst nichts kaputt",
+    "Design-Lock respektieren: Startseite/Eingabefeld unveraendert; CSS-Ratsche (design-v11.css 2744, styles.css 1598) nicht brechen",
+    "Nach Freigabe: Commit, Deploy-Fenster (Klon nachziehen, SW-Stempel), Livegang, Live-Test, Messpflicht, Task Capsule, Memory_Bank"
+  ],
+  "befunde": [
+    {
+      "prio": "P1",
+      "was": "Helle Linie ueber der Profilzeile der geoeffneten Handy-Spur (375 px). Pixelmessung an der Stelle (x=100, y=590): RGB 27/32/36 gegen Umgebung 7/15/20 — eine echte 1-px-Linie.",
+      "ursache": ".sidebar .bottom-nav { border-top: 1px solid rgba(255,255,255,0.1) } aus public/styles.css (~Zeile 895). Am Desktop Teil des V11-Bilds der immer offenen Spur; im Handy-Overlay ein Fremdkoerper im Leerraum ueber der Profilzeile.",
+      "ausgeschlossen": "Nicht die Kante des sidebar-backdrop (Abdunklung, Overlay-Standard), nicht Knopf-Kartenkanten (Scans gefunden, aber keine Linien), nicht die alten styles.css-Media-Regeln (border-bottom computed 0 px)."
+    }
+  ],
+  "aenderungen": [
+    {
+      "datei": "public/mobil-composer.css",
+      "was": "Neu: @media (max-width: 767px) { .sidebar .bottom-nav { border-top: 0; } } — 767 px ist dieselbe Kante, ab der design-v11.css die Spur als Desktop-Spur fuehrt (min-width: 768). Gleiche Spezifitaet (0,2,0) wie die styles.css-Regel, aber spaeter im start-styles-Buendel — gewinnt dort. Bewusst in mobil-composer.css: wachstumsfreier Mobil-Ort vor dem Kaskaden-Ende design-v11.css (Ratsche 2744) — siehe css-ratsche-und-kaskadenvertrag.",
+      "grund": "Handy-Overlay ohne Fremdlinie; Desktop unveraendert."
+    },
+    {
+      "datei": "public/start-styles.css + public/assets/start-styles.css",
+      "was": "Buendel neu erzeugt (node scripts/build/bundle-start-styles.mjs) und Auslieferungs-Spiegel aktualisiert (npm run build:assets). Bytegleich ausgerollt.",
+      "grund": "start-styles.css ist Precache-Datei — Stempel-Pflicht."
+    },
+    {
+      "datei": "docs/frontend/start-lock-manifest.json",
+      "was": "Start-Lock (34 Dateien inkl. Buendel) mit Freigabewortlaut neu gestempelt: node scripts/check-start-lock.mjs --freeze --confirm \"<Freigabe>\"; Backup backups/start-design-lock/2026-08-31T10-52-22-437Z.",
+      "grund": "Das erzeugte Buendel ist Teil des 34-Datei-Locks; Neu-Stempel nur mit schriftlicher Freigabe (lag vor)."
+    },
+    {
+      "datei": "sw.js + assets/sw.js (Deploy-Repo)",
+      "was": "CACHE_NAME smejj-shell-v716 -> smejj-shell-v717 (beide Kopien).",
+      "grund": "Precache-Pflicht nach ignoreSearch-Lehre (v714): ohne neuen CACHE_NAME behalten Bestandsnutzer das alte Buendel."
+    }
+  ],
+  "ergebnisse": [
+    "375 px (lokal und LIVE): border-top-width der Profilzeilengruppe 0 px; Linie pixelmessbar verschwunden (27/32/36 -> 8/15/20); Spur-Inhalt (Reiter, New chat, Search, smejjCloud, smejjBot, Profil) unveraendert.",
+    "1280 px (lokal und LIVE): border-top-width weiterhin 1 px — Desktop-Design unveraendert.",
+    "Regressionstour bei 375 px: geschlossene Ansicht identisch, Profilmenue mit bewussten dock-strich-Trennern intakt, Such-Overlay oeffnet/schliesst sauber, Spur-Toggle intakt.",
+    "Live-Beweise: https://smejj.com/assets/start-styles.css enthaelt die Fix-Regel; https://smejj.com/sw.js antwortet smejj-shell-v717; Live-Test mit echter angemeldeter Sitzung im Browser."
+  ],
+  "verifikationPipeline": [
+    "npm run check:all — EXIT 0 (mehrfach, zuletzt nach allen Commits)",
+    "npm run check:guidelines — OK, 2027 Dateien (Ratsche unberuehrt: design-v11.css 2744, styles.css 1598, index.html 1016)",
+    "npm run check:start-styles — OK (Buendel aktuell); check:assets — OK (218 Dateien)",
+    "npm run check:start-lock — OK nach Neu-Stempel; check:favicon-lock — OK; check:branding — OK",
+    "npm run check + check:paths + release:guard — OK (release:guard war vorher an zwei FREE_ONLY-policywidigen GitHub-Actions-Dateien rot: 55589b64 entfernt sie, Funktionsverlagerung laut 3ef5ddfd bereits erledigt)",
+    "E2E-Smoke 17/18 — einziger roter Punkt 'chat fallback' umgebungbedingt (lokale API-Keys aktiv, echtes Modell statt Offline-Fallback-Text), kein Codefehler",
+    "Staging-Test: Deploy-Klon lokal serviert, 375 px Spur sauber (border-top-width 0 px) vor dem Push"
+  ],
+  "benchmarks": {
+    "datei": "docs/benchmarks/webvitals_v717_nachdeploy_2026-08-31.json",
+    "vergleich": "docs/benchmarks/webvitals_v716_nachdeploy_2026-08-30.json",
+    "warm": "TTFB median 130 ms (<200), LCP median 204 ms (<1500), CLS 0 (<0.1), INP 56 ms (<200), Gewicht <300 KB — alle Budgets OK",
+    "kalt": "TTFB median 189 ms (<200) / LCP median 1264 ms (<1500); p75-Verstoesse (274/1620) sind Abend-Netzweg zu GitHub Pages: Kontrollmessung gegen FREMDE Pages-Site (twbs.github.io/bootstrap) im selben Zeitraum 455/1484 ms — smejj.com schneller als die Kontrolle",
+    "fazit": "Keine Verschlechterung gegenueber v716 (kalt median dort 499/2068). Performance-Lock eingehalten."
+  },
+  "screenshots": [
+    "screenshot_vorher_lokal_375_linie_sichtbar.png",
+    "screenshot_nachher_lokal_375_linie_weg.png",
+    "screenshot_nachher_lokal_1280_desktop_unveraendert.png",
+    "screenshot_live_375_linie_weg.png",
+    "screenshot_live_1280_desktop_unveraendert.png"
+  ],
+  "rollbackDaten": {
+    "idriveArtefakt": "s3://smejj-model-files/deployment-artifacts/smejj-com/20260831/20260831T112244Z-55589b647152.json.gz (+ .manifest.json)",
+    "frontendRollback": "Frontend-Repo revert auf c9d09ad (Stand vor f322ac4)",
+    "appRepoRollback": "revert der Commits 75f70601 / 55589b64 / 0a8bba89 / d93ff60d",
+    "startLockBackup": "backups/start-design-lock/2026-08-31T10-52-22-437Z"
+  },
+  "commits": {
+    "appRepo": [
+      "75f70601 fix(sidebar): Trennlinie aus der Handy-Ansicht entfernt",
+      "55589b64 chore(policy): zwei GitHub-Actions-Dateien entfernt (FREE_ONLY, release:guard Production Stopper)",
+      "0a8bba89 docs(sw): v717 im Versionsverlauf",
+      "d93ff60d chore(werkstatt): Backlog-Sammler-Stand 30.08. + .gitignore __pycache__"
+    ],
+    "frontendRepo": ["f322ac4 fix(sidebar): ... auf deploy-frueh-gate, dann Fast-Forward nach main (Livegang)"]
+  },
+  "qualitaetsbewertung": {
+    "scopeKontrolle": "Nur eine CSS-Regel plus generierte Artefakte; keine Funktionslogik angeruehrt",
+    "nonRegression": "Desktop-Design, Profilmenue, Such-Overlay, Spur-Toggle, Startansicht bewiesen unveraendert",
+    "locks": "Design-Lock, Favicon-Lock, Start-Lock (neu gestempelt MIT Freigabe), Ratsche — alle geprueft und gruen",
+    "kostenseite": "Keine neue Kostenposition; GitHub Pages Free, IDrive e2 Jahrespaket"
+  },
+  "status": "abgeschlossen — live auf https://smejj.com/ (SW v717), Messpflicht erfuellt, Memory_Bank.md aktualisiert"
+}

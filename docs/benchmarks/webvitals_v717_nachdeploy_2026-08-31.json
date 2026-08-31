@@ -1,0 +1,133 @@
+{
+ "url": "https://smejj.com/",
+ "runs": 5,
+ "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+ "kalt": {
+  "ttfb_ms": {
+   "median": 189,
+   "p75": 274,
+   "min": 73,
+   "max": 587
+  },
+  "fcp_ms": {
+   "median": 1264,
+   "p75": 1620,
+   "min": 228,
+   "max": 2412
+  },
+  "lcp_ms": {
+   "median": 1264,
+   "p75": 1620,
+   "min": 228,
+   "max": 2412
+  },
+  "cls": {
+   "median": 0,
+   "p75": 0,
+   "min": 0,
+   "max": 0
+  },
+  "inp_ms": {
+   "median": 40,
+   "p75": 40,
+   "min": 40,
+   "max": 40
+  },
+  "domInteractive_ms": {
+   "median": 1193,
+   "p75": 1219,
+   "min": 389,
+   "max": 2951
+  },
+  "pageWeight_kb": {
+   "median": 298,
+   "p75": 298,
+   "min": 77,
+   "max": 298
+  },
+  "resources": {
+   "median": 97,
+   "p75": 97,
+   "min": 19,
+   "max": 97
+  },
+  "lcpElement": "H2"
+ },
+ "warm": {
+  "ttfb_ms": {
+   "median": 130,
+   "p75": 165,
+   "min": 98,
+   "max": 921
+  },
+  "fcp_ms": {
+   "median": 204,
+   "p75": 256,
+   "min": 196,
+   "max": 1016
+  },
+  "lcp_ms": {
+   "median": 204,
+   "p75": 256,
+   "min": 196,
+   "max": 1016
+  },
+  "cls": {
+   "median": 0,
+   "p75": 0,
+   "min": 0,
+   "max": 0
+  },
+  "inp_ms": {
+   "median": 56,
+   "p75": 56,
+   "min": 40,
+   "max": 56
+  },
+  "domInteractive_ms": {
+   "median": 167,
+   "p75": 211,
+   "min": 139,
+   "max": 966
+  },
+  "pageWeight_kb": {
+   "median": 4,
+   "p75": 73,
+   "min": 0,
+   "max": 73
+  },
+  "resources": {
+   "median": 97,
+   "p75": 97,
+   "min": 97,
+   "max": 97
+  },
+  "lcpElement": "H2"
+ },
+ "budgets": {
+  "ttfb_ms": 200,
+  "lcp_ms": 1500,
+  "cls": 0.1,
+  "inp_ms": 200,
+  "pageWeight_kb": 300
+ },
+ "verstoesse": [
+  "kalt: ttfb_ms p75 274 > Budget 200",
+  "kalt: lcp_ms p75 1620 > Budget 1500"
+ ],
+ "anlass": "Messpflicht nach Sidebar-Trennlinien-Deploy v717 (mobil-composer.css border-top 0 bei max-width 767px, Buendel + Precache-Stempel v716 -> v717)",
+ "vergleich": "docs/benchmarks/webvitals_v716_nachdeploy_2026-08-30.json",
+ "frontendCommits": "f322ac4 (deploy-frueh-gate == main)",
+ "appCommit": "75f70601 + 0a8bba89 + d93ff60d",
+ "sw": "smejj-shell-v717 (live verifiziert)",
+ "datum": "2026-08-31",
+ "budgetsErfuellt": {
+  "warmTtfb": "130 ms median < 200 OK",
+  "warmLcp": "204 ms median < 1500 OK",
+  "cls": "0 < 0.1 OK",
+  "inp_ms": "56 < 200 OK",
+  "pageWeight_kb": "siehe warm, unter 300 OK"
+ },
+ "netzHinweis": "Kalt-p75-Verstoesse (ttfb 274 > 200, lcp 1620 > 1500) = Abend-Netzweg zu GitHub Pages: Kontrollmessung gegen FREMDE Pages-Site (twbs.github.io/bootstrap) im selben Zeitraum TTFB kalt 455 ms / LCP 1484 ms — gleiche Degradation-Kultur wie im v716-Befund dokumentiert. smejj.com war dabei SCHNELLER als die fremde Site. Kalt-median 189/1264 ist deutlich besser als der v716-Vergleich (499/2068): keine Verschlechterung gegenueber dem letzten Benchmark.",
+ "failClosedExit": "Skript-Exit 1 wegen der beiden Kalt-p75-Netz-Verstoese — bewusst unveraendert dokumentiert (Fail-closed-Kultur)"
+}
