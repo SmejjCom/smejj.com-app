@@ -7,7 +7,7 @@ import { baueRechenKontext } from "./chat-bridge-rechner.js";
 import { buildWebContext } from "./chat-bridge-websuche.js";
 // Wer fragen darf: Anmeldepflicht vor den modellkostenden Routen (seit 2026-08-05
 // wieder scharf); der Zaehler in /health zeigt daneben, was wirklich ankommt.
-import { allowAuthenticated, anmeldeStatistik, beobachteAnmeldung } from "./chat-bridge-auth.js";
+import { allowAuthenticated, anmeldeStatistik, bearerToken, befreiteKonten, beobachteAnmeldung, istBefreit } from "./chat-bridge-auth.js";
 import { FRAGE_WERKZEUG, pipeVisibleStream } from "./chat-bridge-strom.js";
 import { meldeAktion, evolutionMelderStatus } from "./chat-bridge-evolution.js";
 // Stufe 4 (Groq-Ohr): Whisper-Transkription ueber den Welle-2-Groq-Zugang.
@@ -159,7 +159,9 @@ function healthPayload() {
     costProfile: "cpu-only-no-gpu-no-storage",
     premiumVoiceConfigured: Boolean(trimUrl(process.env.SMEJJ_VOICE_TTS_ORIGIN || "")),
     earConfigured: Boolean(GROQ_API_KEY),
-    publicRateLimit: { perClientPerMinute: RATE_PER_CLIENT, globalPerMinute: RATE_GLOBAL },
+    // Anzahl statt Kontonamen: /health ist oeffentlich. Sichtbar bleibt nur,
+    // OB eine Befreiung aktiv ist — nicht, fuer wen.
+    publicRateLimit: { perClientPerMinute: RATE_PER_CLIENT, globalPerMinute: RATE_GLOBAL, befreiteKonten: befreiteKonten().length },
     anmeldung: anmeldeStatistik(),
     // Sichtbar machen, ob die Qualitaetsmessung ueberhaupt meldet: eine stille
     // Messung sieht sonst wie "alles gemessen" aus.
@@ -169,6 +171,9 @@ function healthPayload() {
 }
 
 function allowModelRequest(req, res) {
+  // Befreite Konten (der Betreiber) gehen an der Bremse vorbei. Reine Abfrage im
+  // Zwischenspeicher — kein Netzverkehr, Begruendung in chat-bridge-auth.js.
+  if (istBefreit(bearerToken(req.headers))) return true;
   const client = clientLimiter.take(clientKey(req));
   const global = client.allowed ? globalLimiter.take("global") : { allowed: true, retryAfterMs: 0 };
   if (client.allowed && global.allowed) return true;
