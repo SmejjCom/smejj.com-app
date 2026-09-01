@@ -27,7 +27,8 @@ const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welco
 // 2026-08-31: die beiden API-Flaechen (api-keys-surface, api-konto-surface)
 // sind im zentralen API-Bereich (api-center-surface) aufgegangen.
 const spurStart = fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8");
-const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8");
+const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8");
 const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
