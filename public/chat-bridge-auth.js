@@ -51,9 +51,9 @@ function cacheLesen(schluessel, jetzt) {
   return eintrag.ok;
 }
 
-function cacheSchreiben(schluessel, ok, jetzt) {
+function cacheSchreiben(schluessel, ok, jetzt, epost = "") {
   if (authCache.size >= AUTH_CACHE_MAX) authCache.delete(authCache.keys().next().value);
-  authCache.set(schluessel, { ok, bis: jetzt + (ok ? AUTH_CACHE_OK_MS : AUTH_CACHE_BAD_MS) });
+  authCache.set(schluessel, { ok, epost, bis: jetzt + (ok ? AUTH_CACHE_OK_MS : AUTH_CACHE_BAD_MS) });
 }
 
 /** Bearer-Token aus dem Kopf. Leer, wenn keiner mitgeschickt wurde. */
@@ -73,6 +73,7 @@ export async function pruefeToken(token, { jetzt = Date.now(), fetchFn = fetch, 
   const gemerkt = cacheLesen(schluessel, jetzt);
   if (gemerkt !== null) return gemerkt ? "ja" : "nein";
   let urteil = "unbekannt";
+  let epost = "";
   try {
     const antwort = await fetchFn(`${controlOrigin}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json", Origin: "https://smejj.com" },
@@ -81,14 +82,72 @@ export async function pruefeToken(token, { jetzt = Date.now(), fetchFn = fetch, 
     // 5xx sagt etwas ueber den Server, nichts ueber das Token.
     if (antwort.status >= 500) urteil = "unbekannt";
     else if (!antwort.ok) urteil = "nein";
-    else urteil = (await antwort.json())?.authenticated === true ? "ja" : "nein";
+    else {
+      const nutzdaten = await antwort.json();
+      urteil = nutzdaten?.authenticated === true ? "ja" : "nein";
+      // Die Kennung wird NUR fuer die Befreiungsliste gebraucht (siehe unten)
+      // und lebt genau so lange wie das Urteil selbst.
+      epost = String(nutzdaten?.user?.email || "").trim().toLowerCase();
+    }
   } catch {
     urteil = "unbekannt"; // Netzfehler oder Zeitueberschreitung
   }
   // Nur eindeutige Urteile werden gemerkt — ein "unbekannt" darf sich nicht
   // festsetzen und die naechsten zehn Minuten mitbestimmen.
-  if (urteil !== "unbekannt") cacheSchreiben(schluessel, urteil === "ja", jetzt);
+  if (urteil !== "unbekannt") cacheSchreiben(schluessel, urteil === "ja", jetzt, epost);
   return urteil;
+}
+
+// --- Befreiung von der Ratenbremse -------------------------------------------
+//
+// Die Bremse in chat-bridge.js zaehlt nach IP-Adresse und trifft damit AUCH den
+// Betreiber: 12 Anfragen je Minute, dann 429. Fuer einen Menschen am Chat reicht
+// das; fuer den Betreiber, der die Bruecke im Agentenbetrieb benutzt, nicht.
+//
+// Freigabe Wof Kadavanich, 2026-09-01: "nur fuer mich, mach die Code-Aenderung".
+//
+// WARUM DIE LISTE AUF KONTEN ZEIGT UND NICHT AUF IP-ADRESSEN:
+// Eine IP-Ausnahme wuerde jeden befreien, der zufaellig dieselbe Adresse hat
+// (Mobilfunk, geteiltes WLAN) — und der Betreiber wechselt selbst staendig die
+// Adresse. Das Konto ist das einzige stabile und pruefbare Merkmal.
+//
+// WARUM NUR AUS DEM ZWISCHENSPEICHER GELESEN WIRD:
+// Die Bremse laeuft VOR der Anmeldepruefung. Wuerde sie selbst beim Control
+// Server nachfragen, koennte jeder mit einem erfundenen Token einen Rundlauf
+// ausloesen — die Bremse waere dann ein Verstaerker statt eines Schutzes.
+// Darum: kein Netz, nur was ohnehin schon bekannt ist. Praktisch heisst das,
+// die erste Anfrage nach einer Pause laeuft normal durch die Bremse (sie liegt
+// weit unter dem Limit), fuellt dabei den Zwischenspeicher, und ab da greift
+// die Befreiung. Genau dann wird sie gebraucht.
+//
+// OHNE GESETZTE UMGEBUNGSVARIABLE AENDERT SICH NICHTS: leere Liste = niemand
+// befreit = bisheriges Verhalten.
+
+/** Konten, die von der Ratenbremse ausgenommen sind. Leer, wenn nicht gesetzt. */
+export function befreiteKonten(env = process.env) {
+  return String(env.SMEJJ_RATE_LIMIT_BEFREIT || "")
+    .split(",")
+    .map((eintrag) => eintrag.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * Gehoert dieses Token einem befreiten Konto? Fragt NICHT nach — es zaehlt nur,
+ * was der Zwischenspeicher aus einer frueheren Anmeldepruefung schon weiss.
+ * @returns {boolean} false, solange etwas unklar ist
+ */
+export function istBefreit(token, { jetzt = Date.now(), env = process.env } = {}) {
+  if (!token) return false;
+  const konten = befreiteKonten(env);
+  if (!konten.length) return false;
+  const eintrag = authCache.get(createHash("sha256").update(token).digest("hex"));
+  if (!eintrag || eintrag.bis <= jetzt || !eintrag.ok) return false;
+  return Boolean(eintrag.epost) && konten.includes(eintrag.epost);
+}
+
+/** Nur fuer Tests: leert den Zwischenspeicher der Anmeldepruefung. */
+export function _leereAuthCache() {
+  authCache.clear();
 }
 
 /** Boolesche Kurzform fuer die Zaehler: gilt das Token sicher? */

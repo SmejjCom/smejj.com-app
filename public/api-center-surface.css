@@ -15,7 +15,9 @@
 
 /* ── Kopf: Titel links, Hauptknopf rechts ───────────────────── */
 .ac-head { display: flex; align-items: flex-start; gap: 16px; }
-.ac-head h2 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; }
+.ac-head h2 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; }
+/* html.p-recht h2 (entwickler.html) setzt 2em Abstand — hier bewusst drueber */
+.ac-surface .ac-head h2 { margin: 0; font-size: 30px; }
 .ac-head .ac-subhead { margin-top: 8px; font-size: 15px; color: var(--premium-muted, #9aa4b2); }
 .ac-spacer { flex: 1 1 auto; }
 .ac-primary {
@@ -213,7 +215,7 @@ details.ac-anhang[open] summary::after { content: "▾"; }
 .ac-status[data-error="true"] { color: #ffb9b9; }
 
 /* hidden schlaegt gegen Autoren-display */
-.ac-stats-vorhanden-nicht-mehr { display: revert; }
+.ac-kontozeile[hidden] { display: none; }
 .ac-stufen[hidden] { display: none; }
 .ac-search[hidden] { display: none; }
 

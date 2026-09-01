@@ -20,8 +20,8 @@ import { afterFirstPaint } from "./deferred-start.js";
 import { API_ORIGIN } from "./config.js";
 import { catalogProvider, selectableProviders } from "./ai/providers-catalog.js?v=1";
 import { t } from "./i18n/ui.js?v=3";
+import { api, baseAnbieterId, cssEscape, datum, escapeAttr, escapeHtml, fehlerText, kurz, kurzZahl, statusStufe, usd, zahl } from "./api-center-helfer.js?v=1";
 
-const TOKEN_KEY = "smejj.apiToken.v1";
 const MODELL_KEY = "smejj.model.selected.v2";
 const AKTIVER_ANBIETER_KEY = "smejj.activeProvider.v1";
 const BYOK_PREFIX = `${API_ORIGIN}/api/keys`;
@@ -60,34 +60,39 @@ export function initApiCenter(wurzel, optionen = {}) {
 function markup(kopf) {
   const anbieterOptionen = selectableProviders()
     .map((entry) => `<option value="${entry.id}">${entry.name}</option>`).join("");
-  const kopfZeile = kopf === "voll"
-    ? `<div class="ac-head"><h2>${t("API-Keys")}</h2><p class="ac-subhead">${t("Schlüssel erstellen und verwalten — smejj-Schlüssel und eigene Anbieter, verschlüsselt gespeichert.")}</p></div>`
-    : `<span class="ac-sub">${t("smejj-Schlüssel und eigene Anbieter — verschlüsselt gespeichert.")}</span>`;
+  // Layout 1:1 nach OpenRouter/keys: grosse Ueberschrift, ein Hauptknopf,
+  // keine Kacheln — das Konto liegt als schlanke Zeile darunter.
+  const kopfZeile = kopf === "kompakt"
+    ? `<span class="ac-sub">${t("smejj-Schlüssel und eigene Anbieter — verschlüsselt gespeichert.")}</span>`
+    : `<span class="ac-breadcrumb">${t("Schlüssel erstellen und verwalten.")}</span>`;
   return `<div class="api-center-surface ac-surface" data-ac-root>
     ${kopfZeile}
-    <div class="ac-actionbar">
+    <div class="ac-head">
+      <div>
+        <h2>${t("API-Keys")}</h2>
+        <p class="ac-subhead">${t("Schlüssel erstellen und verwalten — smejj-Schlüssel für Programme und eigene Anbieter-Schlüssel für den Chat. Alles verschlüsselt gespeichert.")}</p>
+      </div>
       <span class="ac-spacer"></span>
       <button type="button" class="ac-primary" data-ac="neu">＋ ${t("Schlüssel erstellen")}</button>
     </div>
 
     <div class="ac-stats" data-ac-stats hidden>
-      <div class="ac-stat">
-        <div class="ac-stat-cap">${t("Guthaben")}</div>
-        <div class="ac-stat-val"><span data-ac-guthaben>–</span> <small>USD</small><button type="button" class="ac-aufladen" data-ac="aufladen" hidden>${t("Aufladen")}</button></div>
-        <div class="ac-stufen" data-ac-stufen hidden></div>
+      <div class="ac-stat-block">
+        <span class="ac-stat-label">GUTHABEN</span>
+        <span class="ac-stat-value"><span data-ac-guthaben>–</span> USD</span>
+        <button type="button" class="ac-stat-link" data-ac="aufladen" hidden>${t("Aufladen")}</button>
       </div>
-      <div class="ac-stat">
-        <div class="ac-stat-cap">${t("Verbraucht")}</div>
-        <div class="ac-stat-val"><span data-ac-verbraucht>–</span> <small>USD</small></div>
+      <div class="ac-stat-divider"></div>
+      <div class="ac-stat-block">
+        <span class="ac-stat-label">${t("Verbraucht")} (30 TAGE)</span>
+        <span class="ac-stat-value"><span data-ac-verbraucht>–</span></span>
       </div>
-      <div class="ac-stat">
-        <div class="ac-stat-cap">${t("Anfragen heute")}</div>
-        <div class="ac-stat-val" data-ac-anfragen>0</div>
+      <div class="ac-stat-divider"></div>
+      <div class="ac-stat-block">
+        <span class="ac-stat-label">${t("HEUTE")}</span>
+        <span class="ac-stat-value"><span data-ac-anfragen>0</span> ${t("Anfragen")}</span>
       </div>
-      <div class="ac-stat">
-        <div class="ac-stat-cap">${t("Token heute")}</div>
-        <div class="ac-stat-val" data-ac-token>0</div>
-      </div>
+      <div class="ac-stufen" data-ac-stufen hidden></div>
     </div>
 
     <form class="ac-form" data-ac-form hidden>
@@ -125,41 +130,53 @@ function markup(kopf) {
 
     <div class="ac-card">
       <div class="ac-toolbar">
-        <input type="search" class="ac-search" data-ac-suche placeholder="${t("Key suchen …")}" aria-label="${t("Key suchen …")}">
+        <input type="search" class="ac-search" data-ac-suche placeholder="• ${t("Nach Name suchen …")}" aria-label="${t("Nach Name oder Schlüssel suchen …")}">
         <div class="ac-chips" role="group" aria-label="${t("Nach Typ filtern")}">
           <button type="button" class="ac-chip" data-ac="filter" data-filter="alle" aria-pressed="true">${t("Alle")}</button>
           <button type="button" class="ac-chip" data-ac="filter" data-filter="smejj" aria-pressed="false">smejj</button>
           <button type="button" class="ac-chip" data-ac="filter" data-filter="anbieter" aria-pressed="false">${t("Anbieter")}</button>
         </div>
-        <span class="ac-count" data-ac-count></span>
       </div>
       <div class="ac-cols" aria-hidden="true">
-        <span>${t("Schlüssel")}</span><span>${t("Typ")}</span><span>${t("Status")}</span><span class="ac-col-erstellt">${t("Erstellt")}</span><span></span>
+        <span>${t("Schlüssel")}</span><span>${t("Typ")}</span><span>${t("Status")}</span><span>${t("Zuletzt genutzt")}</span><span></span>
       </div>
       <div class="ac-rows" data-ac-rows></div>
-      <p class="ac-foot" data-ac-foot>${t("Widerrufene Schlüssel bleiben sichtbar. Klartext wird nie wieder angezeigt.")}</p>
+      <div class="ac-foot-row">
+        <span class="ac-count" data-ac-count title="${t("Läuft ab")}"></span>
+        <p class="ac-foot">${t("Gelöschte Schlüssel verschwinden endgültig • Schlüssel werden nie im Klartext angezeigt")}</p>
+      </div>
     </div>
 
-    <div class="ac-lower">
-      <section class="ac-mini">
-        <h3>${t("Verbinden")}</h3>
-        <div class="ac-mini-row">${t("Basis-URL")} <code class="ac-code" data-ac-basis-url>https://api.smejj.com/v1</code><button type="button" class="ac-copy" data-ac="kopiere-basis" title="${t("Kopieren")}" aria-label="${t("Kopieren")}">⧉</button></div>
-        <div class="ac-mini-row">${t("Modell")} <code class="ac-code">smejj-1.0</code></div>
-        <details class="ac-beispiel">
-          <summary>${t("curl-Beispiel anzeigen")}</summary>
-          <pre><code>curl <span data-ac-basis-url-2>https://api.smejj.com/v1</span>/chat/completions \\
-  -H "Authorization: Bearer smejj-live-…" \\
-  -H "Content-Type: application/json" \\
+    <div class="ac-unten">
+      <section class="ac-unten-karte ac-token-card" data-ac-token-card hidden>
+        <h3>${t("Token heute")}</h3>
+        <span class="ac-token-big" data-ac-token>0</span>
+        <span class="ac-token-verdacht">${t("Anfragen heute")}: —</span>
+      </section>
+      <details class="ac-anhang">
+      <summary>${t("Verbinden & Preise")}</summary>
+      <div class="ac-anhang-inhalt">
+        <section class="ac-mini">
+          <h3>${t("Verbinden")}</h3>
+          <div class="ac-mini-row">${t("Basis-URL")} <code class="ac-code" data-ac-basis-url>https://api.smejj.com/v1</code><button type="button" class="ac-copy" data-ac="kopiere-basis" title="${t("Kopieren")}" aria-label="${t("Kopieren")}">⧉</button></div>
+          <div class="ac-mini-row">${t("Modell")} <code class="ac-code">smejj-1.0</code></div>
+          <div class="ac-beispiel">
+            <button type="button" class="ac-mini-link" data-ac="zeige-beispiel">${t("curl-Beispiel anzeigen")}</button>
+            <pre data-ac-beispiel hidden><code>curl <span data-ac-basis-url-2>https://api.smejj.com/v1</span>/chat/completions \
+  -H "Authorization: Bearer smejj-live-…" \
+  -H "Content-Type: application/json" \
   -d '{"model":"smejj-1.0","messages":[{"role":"user","content":"Hallo"}]}'</code></pre>
-        </details>
-      </section>
-      <section class="ac-mini">
-        <h3>${t("Preise")}</h3>
-        <table class="ac-preise"><thead><tr><th>${t("Modell")}</th><th>${t("Eingabe")}</th><th>${t("Ausgabe")}</th></tr></thead><tbody data-ac-preise></tbody></table>
-        <p class="ac-klein">${t("USD je 1 Million Token. Welches Modell dahinter rechnet, entscheidet smejj — Ihr Aufruf bleibt gleich.")}</p>
-      </section>
-    </div>
+          </div>
+        </section>
+        <section class="ac-mini">
+          <h3>${t("Preise")}</h3>
+          <table class="ac-preise"><thead><tr><th>${t("Modell")}</th><th>${t("Eingabe")}</th><th>${t("Ausgabe")}</th></tr></thead><tbody data-ac-preise></tbody></table>
+          <p class="ac-klein">${t("USD je 1 Million Token. Welches Modell dahinter rechnet, entscheidet smejj — Ihr Aufruf bleibt gleich.")}</p>
+        </section>
+      </div>
+    </details>
 
+    </div>
     <p class="ac-status" data-ac-status role="status" aria-live="polite">${t("Wird geladen …")}</p>
   </div>`;
 }
@@ -221,12 +238,20 @@ function alleEintraege(zustand) {
 
 function smejjEintrag(k) {
   const widerrufen = k.zustand === "widerrufen";
+  const inaktiv = k.zustand === "inaktiv";
+  const status = widerrufen ? { lvl: "o", txt: t("Widerrufen") }
+    : inaktiv ? { lvl: "o", txt: t("Inaktiv") }
+    : { lvl: "g", txt: t("Aktiv") };
   return {
     art: "smejj", id: k.id,
     name: k.name || t("Ohne Namen"),
     hinweis: k.keyHint || "",
     erstellt: datum(k.erstelltAm),
-    status: widerrufen ? { lvl: "o", txt: t("Widerrufen") } : { lvl: "g", txt: t("Aktiv") },
+    zuletztBenutzt: datum(k.zuletztBenutztAm),
+    nutzungAnfragen: (k.nutzung && k.nutzung.anfragen) || 0,
+    nutzungToken: (k.nutzung && k.nutzung.token) || 0,
+    widerrufen, inaktiv,
+    status,
     off: widerrufen
   };
 }
@@ -262,6 +287,15 @@ function zeichneKonto(root, zustand) {
   const aufladen = root.querySelector("[data-ac='aufladen']");
   aufladen.hidden = guthaben.aufladenMoeglich === false;
   aufladen.dataset.stufen = JSON.stringify(guthaben.stufenUsd || []);
+  // Token-Karte
+  const tokenCard = root.querySelector("[data-ac-token-card]");
+  const tokens = verbrauch?.gesamtTokens || 0;
+  const anfragenVal = verbrauch?.anfragen || 0;
+  tokenCard.hidden = !tokens && !anfragenVal;
+  root.querySelector("[data-ac-token]").textContent = kurzZahl(tokens);
+  const verd = root.querySelector(".ac-token-verdacht");
+  const verbrauchtUsd = guthaben?.verbrauchtUsd || 0;
+  verd.textContent = verbrauchtUsd ? `$${usd(verbrauchtUsd)} · ${kurzZahl(tokens)} Token` : "—";
 }
 
 function zeichneVerbindung(root, zustand) {
@@ -295,31 +329,30 @@ function zeichneListe(root, zustand) {
   const liste = root.querySelector("[data-ac-rows]");
   liste.textContent = "";
   liste.innerHTML = eintraege.map((eintrag) => zeilenMarkup(eintrag, zustand)).join("");
-  const suche = root.querySelector("[data-ac-suche]");
-  const zeigeSuche = eintraege.length >= SUCHSCHWELLE;
-  suche.hidden = !zeigeSuche;
-  if (!zeigeSuche) { suche.value = ""; zustand.such = ""; }
+  // OpenRouter zeigt das Suchfeld immer — auch mit wenigen Schluesseln.
   const anzahl = eintraege.length;
   root.querySelector("[data-ac-count]").textContent = anzahl ? `${zahl(anzahl)} ${t("Schlüssel")}` : "";
   filtere(root, zustand);
 }
 
+
 function zeilenMarkup(eintrag, zustand) {
-  const pill = eintrag.art === "smejj"
-    ? `<span class="ac-pill ac-pill-smejj">smejj API</span>`
-    : `<span class="ac-pill ac-pill-prov">${t("Anbieter")}</span>`;
+  const typ = eintrag.art === "smejj" ? "smejj API" : t("Anbieter");
   const suchText = escapeAttr(`${eintrag.name} ${eintrag.hinweis} ${eintrag.art}`.toLowerCase());
   const klassen = ["ac-row"];
   if (eintrag.status.lvl === "r") klassen.push("ac-row-red");
   if (eintrag.off) klassen.push("ac-row-off");
+  const badge = `<span class="ac-badge ac-badge-${eintrag.status.lvl}">• ${escapeHtml(eintrag.status.txt)}</span>`;
   return `<div class="${klassen.join(" ")}" data-ac-zeile="${escapeAttr(eintrag.id)}" data-art="${eintrag.art}" data-name="${suchText}">
-    <div class="ac-who"><span class="ac-avatar">${escapeHtml(buchstabe(eintrag))}</span>
-      <span class="ac-kennung"><span class="ac-name">${escapeHtml(eintrag.name)}</span>
-      <span class="ac-sub"><code>${escapeHtml(eintrag.hinweis)}</code>${eintrag.erstellt ? ` · ${escapeHtml(eintrag.erstellt)}` : ""}</span></span></div>
-    ${pill}
-    <span class="ac-state"><span class="ac-dot ac-dot-${eintrag.status.lvl}"></span>${escapeHtml(eintrag.status.txt)}</span>
-    <span class="ac-dim ac-erstellt">${escapeHtml(eintrag.erstellt || "—")}</span>
-    <button type="button" class="ac-kebab" data-ac="menue" data-popid="${escapeAttr(popId(eintrag))}" aria-haspopup="menu" aria-expanded="false" aria-label="${t("Weitere Aktionen")}">⋯</button>
+    <div class="ac-who">
+      <span class="ac-name">${escapeHtml(eintrag.name)}</span>
+      <span class="ac-sub"><code>${escapeHtml(eintrag.hinweis)}</code>${eintrag.erstellt ? ` · ${escapeHtml(eintrag.erstellt)}` : ""}</span>
+      <button type="button" class="ac-row-copy" data-ac="kopieren" data-id="${escapeAttr(eintrag.id)}" title="${t("Kopieren")}" aria-label="${t("Kopieren")}">⧉</button>
+    </div>
+    <span class="ac-cell ac-cell-typ">${escapeHtml(typ)}</span>
+    <span class="ac-cell ac-cell-status">${badge}</span>
+    <span class="ac-cell ac-cell-when">${eintrag.zuletztBenutzt || t("Nie")}</span>
+    <span class="ac-zelle-menu"><button type="button" class="ac-kebab" data-ac="menue" data-popid="${escapeAttr(popId(eintrag))}" aria-haspopup="menu" aria-expanded="false" aria-label="${t("Weitere Aktionen")}">…</button></span>
     <div class="ac-popover" data-ac-pop="${escapeAttr(popId(eintrag))}" role="menu" hidden></div>
   </div>`;
 }
@@ -342,9 +375,18 @@ async function klick(root, zustand, event) {
   if (aktion === "modell-waehlen") return modellMenue(root, zustand, trigger.dataset.popid);
   if (aktion === "kopieren") return kopiereHint(root, zustand, trigger.dataset.id);
   if (aktion === "widerrufen") return widerrufe(root, zustand, trigger.dataset.id);
+  if (aktion === "umbenennen") return umbenenne(root, zustand, trigger.dataset.id);
+  if (aktion === "loeschen") return loescheEndgueltig(root, zustand, trigger.dataset.id);
+  if (aktion === "umschalten") return schalteUm(root, zustand, trigger.dataset.id);
+  if (aktion === "aktivitaet") return zeigeAktivitaet(root, zustand, trigger.dataset.id);
   if (aktion === "entfernen") return entferne(root, zustand, trigger.dataset.id);
   if (aktion === "aufladen") return stufenMenue(root, trigger);
   if (aktion === "kopiere-basis") return kopiereText(root, root.querySelector("[data-ac-basis-url]")?.textContent || "");
+  if (aktion === "zeige-beispiel") {
+    const pre = root.querySelector("[data-ac-beispiel]");
+    if (pre) pre.hidden = !pre.hidden;
+    return;
+  }
   if (aktion === "stufe") {
     root.querySelector("[data-ac-stufen]").hidden = true;
     return ladeAuf(root, Number(trigger.dataset.betrag));
@@ -452,18 +494,27 @@ function menueMarkup(root, zustand, popid) {
   if (!eintrag) return `<div class="ac-pop-empty">${t("Keine Modelle verfügbar.")}</div>`;
   const teile = [];
   if (eintrag.art === "smejj") {
-    teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="kopieren" data-id="${escapeAttr(eintrag.id)}">${t("Maskierten Schlüssel kopieren")}</button>`);
-    teile.push(`<button type="button" role="menuitem" class="ac-item ac-item-danger" data-ac="widerrufen" data-id="${escapeAttr(eintrag.id)}">${t("Widerrufen")}</button>`);
+    // Menue 1:1 wie OpenRouter/keys: Bearbeiten, Aktivitaet, Deaktivieren, Loeschen.
+    // Loeschen ist ENDGUELTIG (Eintrag verschwindet sofort und fuer immer) — der
+    // umkehrbare Schritt ist "Deaktivieren". Widerrufene bleiben nur bis zum
+    // naechsten Klick: "Endgültig löschen" nimmt sie ganz raus.
+    if (!eintrag.widerrufen) {
+      teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="umbenennen" data-id="${escapeAttr(eintrag.id)}"><span class="ac-item-icon">✎</span>${t("Bearbeiten")}</button>`);
+      teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="aktivitaet" data-id="${escapeAttr(eintrag.id)}"><span class="ac-item-icon">📊</span>${t("Aktivität")}</button>`);
+      teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="umschalten" data-id="${escapeAttr(eintrag.id)}"><span class="ac-item-icon">⊗</span>${eintrag.inaktiv ? t("Aktivieren") : t("Deaktivieren")}</button>`);
+    }
+    teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="kopieren" data-id="${escapeAttr(eintrag.id)}"><span class="ac-item-icon">⧉</span>${t("Maskierten Schlüssel kopieren")}</button>`);
+    teile.push(`<button type="button" role="menuitem" class="ac-item ac-item-danger" data-ac="loeschen" data-id="${escapeAttr(eintrag.id)}"><span class="ac-item-icon">🗑</span>${eintrag.widerrufen ? t("Endgültig löschen") : t("Löschen")}</button>`);
   } else {
     const cat = catalogProvider(baseAnbieterId(eintrag.id));
     if (eintrag.provider.modelCount > 1 || eintrag.provider.selectedModel) {
-      teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="modell-waehlen" data-popid="${escapeAttr(popid)}">${t("Modell wählen")} ▾</button>`);
+      teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="modell-waehlen" data-popid="${escapeAttr(popid)}"><span class="ac-item-icon">☰</span>${t("Modell wählen")}</button>`);
     }
     if (cat?.billingUrl) {
-      teile.push(`<a role="menuitem" class="ac-item" href="${escapeAttr(cat.billingUrl)}" target="_blank" rel="noopener noreferrer">${t("Guthaben aufladen")}</a>`);
+      teile.push(`<a role="menuitem" class="ac-item" href="${escapeAttr(cat.billingUrl)}" target="_blank" rel="noopener noreferrer"><span class="ac-item-icon">＋</span>${t("Guthaben aufladen")}</a>`);
     }
-    teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="kopieren" data-id="${escapeAttr(eintrag.id)}">${t("Maskierten Schlüssel kopieren")}</button>`);
-    teile.push(`<button type="button" role="menuitem" class="ac-item ac-item-danger" data-ac="entfernen" data-id="${escapeAttr(eintrag.id)}">${t("Entfernen")}</button>`);
+    teile.push(`<button type="button" role="menuitem" class="ac-item" data-ac="kopieren" data-id="${escapeAttr(eintrag.id)}"><span class="ac-item-icon">⧉</span>${t("Maskierten Schlüssel kopieren")}</button>`);
+    teile.push(`<button type="button" role="menuitem" class="ac-item ac-item-danger" data-ac="entfernen" data-id="${escapeAttr(eintrag.id)}"><span class="ac-item-icon">🗑</span>${t("Entfernen")}</button>`);
   }
   return teile.join("");
 }
@@ -530,14 +581,14 @@ function kopiereText(root, text) {
   navigator.clipboard?.writeText(text).then(() => melde(root, t("In die Zwischenablage kopiert.")));
 }
 
-async function widerrufe(root, zustand, id) {
+async function loescheEndgueltig(root, zustand, id) {
   const eintrag = alleEintraege(zustand).find((e) => e.id === id);
   const name = eintrag ? `\n${eintrag.name}` : "";
-  if (!confirm(`${t("Diesen Schlüssel dauerhaft widerrufen? Programme, die ihn benutzen, bekommen danach 401.")}${name}`)) return;
+  if (!confirm(`${t("Endgültig löschen? Der Schlüssel verschwindet komplett und kann nicht zurückgeholt werden. Programme mit diesem Schlüssel bekommen danach 401.")}${name}`)) return;
   try {
-    await api(`${DEV_PREFIX}/${encodeURIComponent(id)}/revoke`, { method: "POST", body: {} });
+    await api(`${DEV_PREFIX}/${encodeURIComponent(id)}/delete`, { method: "POST", body: {} });
     await laden(root, zustand);
-    melde(root, t("Schlüssel widerrufen."));
+    melde(root, t("Schlüssel endgültig gelöscht."));
   } catch (error) {
     melde(root, fehlerText(error), true);
   }
@@ -555,6 +606,55 @@ async function entferne(root, zustand, id) {
   } catch (error) {
     melde(root, fehlerText(error), true);
   }
+}
+
+async function umbenenne(root, zustand, id) {
+  schliessePopovers(root);
+  const eintrag = alleEintraege(zustand).find((e) => e.id === id);
+  if (!eintrag) return;
+  const name = prompt(t("Neuer Name für den Schlüssel"), eintrag.name);
+  if (name === null) return;
+  if (!name.trim()) return melde(root, t("Der Name darf nicht leer sein."), true);
+  try {
+    await api(`${DEV_PREFIX}/${encodeURIComponent(id)}/rename`, { method: "POST", body: { name: name.trim() } });
+    await laden(root, zustand);
+    melde(root, t("Name geändert."));
+  } catch (error) {
+    melde(root, fehlerText(error), true);
+  }
+}
+
+async function schalteUm(root, zustand, id) {
+  schliessePopovers(root);
+  const eintrag = alleEintraege(zustand).find((e) => e.id === id);
+  if (!eintrag) return;
+  const aktiv = !!eintrag.inaktiv;
+  try {
+    await api(`${DEV_PREFIX}/${encodeURIComponent(id)}/toggle`, { method: "POST", body: { aktiv } });
+    await laden(root, zustand);
+    melde(root, aktiv ? t("Schlüssel aktiviert.") : t("Schlüssel deaktiviert — Aufrufe bekommen jetzt 401."));
+  } catch (error) {
+    melde(root, fehlerText(error), true);
+  }
+}
+
+function zeigeAktivitaet(root, zustand, id) {
+  schliessePopovers(root);
+  const eintrag = alleEintraege(zustand).find((e) => e.id === id);
+  if (!eintrag) return;
+  const zeilen = [
+    [t("Zuletzt genutzt"), eintrag.zuletztBenutzt || t("Nie")],
+    [t("Anfragen"), zahl(eintrag.nutzungAnfragen)],
+    [t("Token"), zahl(eintrag.nutzungToken)],
+    [t("Erstellt"), eintrag.erstellt || "—"]
+  ];
+  const pop = root.querySelector(`[data-ac-zeile="${cssEscape(id)}"] .ac-popover`);
+  if (!pop) return;
+  pop.innerHTML = `<div class="ac-aktivitaet">
+    <div class="ac-pop-head">${escapeHtml(eintrag.name)}</div>
+    ${zeilen.map(([label, wert]) => `<div class="ac-aktivitaet-zeile"><span>${escapeHtml(label)}</span><b>${escapeHtml(String(wert))}</b></div>`).join("")}
+  </div>`;
+  pop.hidden = false;
 }
 
 // ---- Formular absenden --------------------------------------------------------
@@ -612,7 +712,8 @@ function zeigeEinmal(root, apiKey) {
   box.hidden = false;
   box.innerHTML = `<div class="ac-reveal-key"><code>${escapeHtml(apiKey)}</code>
     <button type="button" class="ac-copy" data-ac-kopiere-voll title="${t("Kopieren")}" aria-label="${t("Kopieren")}">⧉</button></div>
-    <span class="ac-reveal-note">${t("wird danach nicht mehr angezeigt")}</span>`;
+    <span class="ac-reveal-note">${t("wird danach nicht mehr angezeigt")}</span>
+    <button type="button" class="ac-primary ac-reveal-done" data-ac="form-zu">${t("Fertig")}</button>`;
   box.querySelector("[data-ac-kopiere-voll]").addEventListener("click", () => {
     navigator.clipboard?.writeText(apiKey).then(() => melde(root, t("In die Zwischenablage kopiert.")));
   });
@@ -630,106 +731,13 @@ function providerGewechselt(root) {
   } else help.hidden = true;
 }
 
-// ---- Netzwerk / Auth (Muster wie in provider-settings.js, dort begruendet) ------
-
-async function api(url, { method = "GET", body } = {}) {
-  const token = sessionStorage.getItem(TOKEN_KEY) || holeLokalesToken() || await holeSitzungsToken();
-  const response = await fetch(url, {
-    method,
-    credentials: "include",
-    headers: {
-      ...(body ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
-    ...(body ? { body: JSON.stringify(body) } : {})
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(payload.message || payload.error || `HTTP ${response.status}`);
-    error.status = response.status;
-    error.code = payload.error || "";
-    error.retryAfterSec = payload.retryAfterSec;
-    throw error;
-  }
-  return payload;
-}
-
-function holeLokalesToken() {
-  const token = String(localStorage.getItem("smejj.auth.accessToken.v1") || "");
-  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) return "";
-  sessionStorage.setItem(TOKEN_KEY, token);
-  return token;
-}
-
-async function holeSitzungsToken() {
-  const response = await fetch(`${API_ORIGIN}/api/auth/session-token`, { credentials: "include" }).catch(() => null);
-  if (!response?.ok) return "";
-  const payload = await response.json().catch(() => ({}));
-  const token = String(payload.accessToken || "");
-  if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) sessionStorage.setItem(TOKEN_KEY, token);
-  return token;
-}
-
-function fehlerText(error) {
-  if (error?.code === "authentication_required" || error?.status === 401) return t("Bitte zuerst bei smejj.com anmelden.");
-  if (error?.code === "public_api_disabled") return t("Die Entwickler-API ist auf diesem Server noch nicht eingeschaltet.");
-  if (error?.code === "api_key_limit_reached") return t("Zu viele aktive Schlüssel. Bitte zuerst einen widerrufen.");
-  if (error?.code === "billing_not_configured") return t("Aufladen ist auf diesem Server noch nicht eingerichtet.");
-  if (error?.status === 429) return t("Zu viele Versuche. Bitte kurz warten.");
-  if (error?.code === "provider_api_key_rejected") return t("Der API-Key wurde vom Anbieter abgelehnt (ungültig).");
-  if (error?.code === "provider_insufficient_credits" || error?.status === 402) return t("Der Anbieter meldet unzureichendes Guthaben. Kein kostenpflichtiger Fallback gestartet.");
-  if (error?.code === "provider_rate_limit") return t("Rate-Limit erreicht. Bitte später erneut versuchen.");
-  if (error?.code === "provider_credential_encryption_not_configured") return t("Der verschlüsselte Credential-Vault ist serverseitig noch nicht konfiguriert.");
-  return `${t("Verbindung fehlgeschlagen:")} ${String(error?.message || error).slice(0, 240)}`;
-}
-
-// ---- Kleine Helfer ------------------------------------------------------------
-
-function statusStufe(p) {
-  if (p.status === "invalid" || p.status === "error" || p.status === "no_credits") return "red";
-  if (p.status === "low_credits") return "yellow";
-  return "green";
-}
-
-function baseAnbieterId(id) {
-  return String(id || "").replace(/^custom-/, "").replace(/-[a-z0-9]{1,6}$/, "");
-}
+// ---- Oberflaechen-Helfer (Netzwerk/Format/Escaping liegen in api-center-helfer.js) ----
 
 function buchstabe(eintrag) {
   if (eintrag.art === "smejj") return "s";
   const cat = catalogProvider(baseAnbieterId(eintrag.id));
   if (cat?.logo) return cat.logo;
   return (eintrag.name || "?").trim().slice(0, 1).toUpperCase();
-}
-
-function kurz(model) {
-  const value = String(model).split("/").pop() || String(model);
-  return value.length > 28 ? `${value.slice(0, 27)}…` : value;
-}
-
-function usd(wert) {
-  return new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(wert) || 0);
-}
-
-function zahl(wert) {
-  return new Intl.NumberFormat("de-DE").format(Number(wert) || 0);
-}
-
-function datum(iso) {
-  const zeit = new Date(iso || "");
-  return Number.isNaN(zeit.getTime()) ? "" : zeit.toLocaleDateString("de-DE");
-}
-
-function escapeHtml(value) {
-  return String(value || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
-function escapeAttr(value) {
-  return escapeHtml(value).replace(/`/g, "&#96;");
-}
-
-function cssEscape(value) {
-  return String(value).replace(/["\\]/g, "\\$&");
 }
 
 function setzeBeschaeftigt(root, beschaeftigt) {
@@ -748,6 +756,6 @@ function loadStyles() {
   if (document.querySelector('link[href^="/assets/api-center-surface.css"]')) return;
   const link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = "/assets/api-center-surface.css?v=1";
+  link.href = "/assets/api-center-surface.css?v=7";
   document.head.append(link);
 }

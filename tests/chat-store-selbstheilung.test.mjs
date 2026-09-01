@@ -29,13 +29,40 @@ const PROJEKT_STORE = "projekte";
 // chat-store.js importiert seine Nachbarn ueber Browser-Pfade ("/assets/…"),
 // die Node nicht aufloest. Fuer den Test werden sie auf file://-URLs
 // umgeschrieben — der zu pruefende Code selbst bleibt unveraendert.
-const QUELLE = fs.readFileSync("public/chat-store.js", "utf8").replace(
-  /from "\/assets\/([^"?]+)(\?[^"]*)?"/g,
-  (_treffer, datei) => `from ${JSON.stringify(pathToFileURL(path.resolve("public", datei)).href)}`
-);
+//
+// Diaet 2026-08-25 (zurueckportiert 30.08.): chat-store und
+// chat-store-bereiche.js importieren sich GEGENSEITIG (Re-Exporte, EINE
+// Instanz). Beide bekommen deshalb tmp-Kopien mit umgeschriebenen
+// Spezifizierern — die Original-Datei bereiche waere sonst die UNBEHANDELTE
+// Kopie, deren "/assets/…"-Importe in Node crashen.
 const MODUL = path.join(os.tmpdir(), "smejj-chat-store-test.mjs");
+const MODUL_BEREICHE = path.join(os.tmpdir(), "smejj-chat-store-bereiche-test.mjs");
+const dateiUrl = (name) => JSON.stringify(pathToFileURL(path.resolve("public", name)).href);
+
+const QUELLE_BEREICHE = fs.readFileSync("public/chat-store-bereiche.js", "utf8").replace(
+  /from "\.\/chat-store\.js(\?[^"]*)?"/g,
+  `from ${JSON.stringify(pathToFileURL(MODUL).href)}`
+);
+const QUELLE = fs.readFileSync("public/chat-store.js", "utf8")
+  .replace(
+    /from "\/assets\/([^"?]+)(\?[^"]*)?"/g,
+    (_treffer, datei) => `from ${dateiUrl(datei)}`
+  )
+  .replace(
+    /from "\.\/chat-store-bereiche\.js(\?[^"]*)?"/g,
+    `from ${JSON.stringify(pathToFileURL(MODUL_BEREICHE).href)}`
+  )
+  .replace(
+    // dynamische relative Imports (chat-medien) — laufen im Test nie los,
+    // muessen aber gueltig sein, falls ein Pfad sie doch anfasst.
+    /import\("\.\/([^"?]+)(\?[^"]*)?"\)/g,
+    (_treffer, datei) => `import(${dateiUrl(datei)})`
+  );
 fs.writeFileSync(MODUL, QUELLE);
-process.on("exit", () => { try { fs.unlinkSync(MODUL); } catch { /* schon weg */ } });
+fs.writeFileSync(MODUL_BEREICHE, QUELLE_BEREICHE);
+process.on("exit", () => {
+  for (const pfad of [MODUL, MODUL_BEREICHE]) { try { fs.unlinkSync(pfad); } catch { /* schon weg */ } }
+});
 
 /**
  * Nachgebaute IndexedDB — nur so viel, wie chat-store.js wirklich anfasst.

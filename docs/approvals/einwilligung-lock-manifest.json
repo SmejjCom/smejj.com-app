@@ -1,7 +1,7 @@
 {
   "lock": "smejj einwilligung lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-25T17:39:18.946Z",
-  "confirmation": "iPhone-PWA-Runde v701 (Betreiber-Livetest): viewport-fit=cover auf allen Seiten, datenschutz.html eingeschlossen — Stempel in jener Runde vergessen, hier nachgeholt (Auftrag: Sprachwelle iPhone fertig machen)",
+  "frozenAt": "2026-08-30T18:57:36.842Z",
+  "confirmation": "Ich finde deinen Vorschlag gut. Kannst Du umsetzen - Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen. (2026-08-30, Freigabe des Einbaus der Trainings-Einwilligung fuer den smejj-1-1-Weg; Abschnitt 11 datenschutz.html: smejj-Modellreihe statt nur smejj 1.0)",
   "rule": "Keine Aenderung an der Einwilligungs- und Erfassungskette (ob erfasst werden darf, wogegen eingewilligt wird, wer die Routen erreicht) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "src/training/fragenerfassung.js": "5de1223542ffd62f840e3bffcd79eabe56870dda8f8e47e6b96c60f3d1f4c79d",
@@ -10,6 +10,6 @@
     "control-server/src/routes/trainingConsentRoutes.js": "6dd0b44d89cf8d9e0e23a244905c82666f82f8e94b1b2782104d4abdd15836cf",
     "src/training/constants.js": "5b5e533d89279711579c2c8845ccb98cc12bab1cf3eed75a4a14303c89b4337c",
     "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
-    "public/datenschutz.html": "d2628549feaaa121bab98e43fa2d3a3c86047bd4ba818adb52ba1dd304bd5d3c"
+    "public/datenschutz.html": "160e4d191295f91afe44d7ec8cdee50c56932156d61dbad318930976db0eb673"
   }
 }
