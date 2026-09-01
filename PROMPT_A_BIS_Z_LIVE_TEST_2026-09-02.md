@@ -37,6 +37,16 @@ Die Plattform heißt ausnahmslos exakt smejj.com. Niemals SMEJJ, SMEJJ.COM, Smej
 – i18n: 14 Sprachen unter public/i18n/ (ar bn de en es fr hi id it ja ko pt ru tr zh); jeder neue UI-Text in alle Sprachen.
 – Kosten-Policy: docs/architecture/FREE_ONLY_MASTER_POLICY.md ist verbindlich. GitHub nur Free, kein Cloudflare, DNS bei Spaceship, keine Trials, kein neuer Anbieter ohne Freigabe.
 
+## Anbieter-Landkarte und Zugänge (nur diese Dienste, kein weiterer ohne Freigabe)
+– Spaceship: Domain smejj.com, DNS (A, CNAME, TXT, MX), api.smejj.com als CNAME auf Zeabur. Kein netim, kein anderer Registrar.
+– GitHub (SmejjCom, nur Free): Repo smejj.com-app (Code, beide Zweige) und smejj-app-frontend (GitHub Pages, Deploy-from-Branch main). Keine Actions-Minuten in privaten Repos, kein LFS, keine Packages, keine Codespaces.
+– Codeberg: kostenloser Spiegel smejj/smejj.com-app, nie Deploy-Pfad.
+– Docker Hub: nur kostenlose Funktionen; Images für Zeabur-Dienste (Dockerfile.smejj-*), ghcr nur lesend.
+– Zeabur: Control-Server und alle Worker-Dienste (6 USD/Monat Flat). Contabo, Hetzner oder andere Server sind NICHT Teil des Systems und wären eine neue Kostenposition (Rote Liste).
+– IDrive e2: Object Brain (drei Eimer: smejj-app, smejj-model-files, smejj-sicherung).
+– Native Apps: Es gibt keine Android- oder iOS-App und keinen Store-Eintrag. smejj.com ist eine PWA (Manifest, Service Worker, Zum-Home-Bildschirm). Play Store und App Store Connect nur nach schriftlicher Freigabe als eigenes Projekt.
+– Secrets liegen ausschließlich in Zeabur-Umgebungsvariablen, in ~/.config/smejj.com und im Cline-Tresor (AES). Nie im Repo, nie im Chat. Platzhalter in .env.example: ZEABUR_API_TOKEN, IDRIVE_E2_*, SMEJJ_LLM_*_API_KEY, GITHUB_TOKEN, CODEBERG_TOKEN, DOCKER_USERNAME, DOCKER_TOKEN, STRIPE_*. Bestehende Zugänge werden nie rotiert, gelöscht oder überschrieben ohne Freigabe.
+
 ## Schutz-Sperren (rote Sperre NIE einfach neu stempeln)
 Start-Lock (Startseite + Eingabefeld, 34 Dateien), Favicon-Lock, Security-Lock, Admin-Lock, Deploy-Lock, Abo-Lock, Einwilligungs-Lock, Modell-Menü-Lock, Auslieferungs-Lock. Schlägt eine Sperre rot an: zeigen, was sich geändert hat, Betreiber entscheidet, erst dann einfrieren. Prüfen mit `npm run check:start-lock`, `check:favicon-lock`, `check:security-lock`, `check:modell-menue-lock`.
 
