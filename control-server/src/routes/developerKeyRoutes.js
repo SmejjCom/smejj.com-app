@@ -10,7 +10,7 @@
 import { privateJson, readJson } from "../http/respond.js";
 import { authenticatedUserId } from "../jobs/jobAccess.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
-import { benenneSchluesselUm, erzeugeSchluessel, listeSchluessel, setzeSchluesselAktiv, widerrufeSchluessel } from "../publicapi/publicApiKeys.js";
+import { benenneSchluesselUm, erzeugeSchluessel, listeSchluessel, loescheSchluessel, setzeSchluesselAktiv, widerrufeSchluessel } from "../publicapi/publicApiKeys.js";
 import { publicApiAktiv } from "../publicapi/publicApiRoutes.js";
 import { verbrauchSnapshot } from "../publicapi/publicApiUsage.js";
 import { AUFLADE_BETRAEGE_USD, erzeugeAufladung, leseKonto } from "../publicapi/publicApiLedger.js";
@@ -110,6 +110,11 @@ export async function handleDeveloperKeyRoute(req, url, res, { env = process.env
       const body = await readJson(req).catch(() => ({}));
       const schluessel = await setzeSchluesselAktiv(kontoId, keyId, Boolean(body?.aktiv), env);
       privateJson(res, 200, { ok: true, schluessel });
+      return true;
+    }
+    if (req.method === "POST" && aktion === "delete" && /^key_[a-f0-9]{12}$/.test(keyId)) {
+      const ergebnis = await loescheSchluessel(kontoId, keyId, env);
+      privateJson(res, 200, { ok: true, geloescht: ergebnis.geloescht, id: ergebnis.id });
       return true;
     }
     privateJson(res, 404, { ok: false, error: "developer_key_route_not_found" });
