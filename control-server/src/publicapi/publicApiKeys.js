@@ -146,6 +146,33 @@ export async function widerrufeSchluessel(kontoId, keyId, env = process.env) {
   return maskiere(eintrag);
 }
 
+export async function loescheSchluessel(kontoId, keyId, env = process.env) {
+  const index = await leseIndex(kontoId, env);
+  const eintrag = index.schluessel.find((item) => item.id === keyId);
+  if (!eintrag) {
+    const fehler = new Error("api_key_not_found");
+    fehler.status = 404;
+    throw fehler;
+  }
+  // Endgueltig raus: Eintrag aus dem Index, Lookup-Grabstein disable + Grabstein-Markierung,
+  // Prüfcache leer. Der Klartext ist ohnehin nie gespeichert; ohne Index-Eintrag bleibt der
+  // Schluessel unsichtbar und der Torwaechter lehnt ihn ab (fail-closed).
+  const jetzt = new Date().toISOString();
+  index.schluessel = index.schluessel.filter((item) => item.id !== keyId);
+  await putProviderCredential(eintrag.abdruck, LOOKUP_PROVIDER, {
+    enabled: false,
+    apiKey: "",
+    kontoId,
+    keyId: eintrag.id,
+    erstelltAm: eintrag.erstelltAm,
+    widerrufenAm: eintrag.widerrufenAm || jetzt,
+    geloeschtAm: jetzt
+  }, env);
+  await schreibeIndex(kontoId, index, env);
+  cache.delete(eintrag.abdruck);
+  return { geloescht: true, id: keyId };
+}
+
 export async function benenneSchluesselUm(kontoId, keyId, name, env = process.env) {
   const index = await leseIndex(kontoId, env);
   const eintrag = index.schluessel.find((item) => item.id === keyId);
