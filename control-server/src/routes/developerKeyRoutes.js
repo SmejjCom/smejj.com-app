@@ -10,7 +10,7 @@
 import { privateJson, readJson } from "../http/respond.js";
 import { authenticatedUserId } from "../jobs/jobAccess.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
-import { erzeugeSchluessel, listeSchluessel, widerrufeSchluessel } from "../publicapi/publicApiKeys.js";
+import { benenneSchluesselUm, erzeugeSchluessel, listeSchluessel, setzeSchluesselAktiv, widerrufeSchluessel } from "../publicapi/publicApiKeys.js";
 import { publicApiAktiv } from "../publicapi/publicApiRoutes.js";
 import { verbrauchSnapshot } from "../publicapi/publicApiUsage.js";
 import { AUFLADE_BETRAEGE_USD, erzeugeAufladung, leseKonto } from "../publicapi/publicApiLedger.js";
@@ -97,6 +97,18 @@ export async function handleDeveloperKeyRoute(req, url, res, { env = process.env
     const [keyId, aktion] = rest.split("/");
     if (req.method === "POST" && aktion === "revoke" && /^key_[a-f0-9]{12}$/.test(keyId)) {
       const schluessel = await widerrufeSchluessel(kontoId, keyId, env);
+      privateJson(res, 200, { ok: true, schluessel });
+      return true;
+    }
+    if (req.method === "POST" && aktion === "rename" && /^key_[a-f0-9]{12}$/.test(keyId)) {
+      const body = await readJson(req).catch(() => ({}));
+      const schluessel = await benenneSchluesselUm(kontoId, keyId, body?.name, env);
+      privateJson(res, 200, { ok: true, schluessel });
+      return true;
+    }
+    if (req.method === "POST" && aktion === "toggle" && /^key_[a-f0-9]{12}$/.test(keyId)) {
+      const body = await readJson(req).catch(() => ({}));
+      const schluessel = await setzeSchluesselAktiv(kontoId, keyId, Boolean(body?.aktiv), env);
       privateJson(res, 200, { ok: true, schluessel });
       return true;
     }

@@ -146,6 +146,53 @@ export async function widerrufeSchluessel(kontoId, keyId, env = process.env) {
   return maskiere(eintrag);
 }
 
+export async function benenneSchluesselUm(kontoId, keyId, name, env = process.env) {
+  const index = await leseIndex(kontoId, env);
+  const eintrag = index.schluessel.find((item) => item.id === keyId);
+  if (!eintrag) {
+    const fehler = new Error("api_key_not_found");
+    fehler.status = 404;
+    throw fehler;
+  }
+  const sauber = sichererName(name);
+  if (!sauber) {
+    const fehler = new Error("api_key_name_required");
+    fehler.status = 400;
+    throw fehler;
+  }
+  eintrag.name = sauber;
+  await schreibeIndex(kontoId, index, env);
+  return maskiere(eintrag);
+}
+
+export async function setzeSchluesselAktiv(kontoId, keyId, aktiv, env = process.env) {
+  const index = await leseIndex(kontoId, env);
+  const eintrag = index.schluessel.find((item) => item.id === keyId);
+  if (!eintrag) {
+    const fehler = new Error("api_key_not_found");
+    fehler.status = 404;
+    throw fehler;
+  }
+  if (eintrag.widerrufenAm && aktiv) {
+    const fehler = new Error("api_key_revoked");
+    fehler.status = 409;
+    throw fehler;
+  }
+  const jetzt = new Date().toISOString();
+  eintrag.deaktiviertAm = aktiv ? "" : jetzt;
+  await putProviderCredential(eintrag.abdruck, LOOKUP_PROVIDER, {
+    enabled: Boolean(aktiv),
+    apiKey: "",
+    kontoId,
+    keyId: eintrag.id,
+    erstelltAm: eintrag.erstelltAm,
+    widerrufenAm: eintrag.widerrufenAm || ""
+  }, env);
+  await schreibeIndex(kontoId, index, env);
+  if (!aktiv) cache.delete(eintrag.abdruck);
+  return maskiere(eintrag);
+}
+
 /**
  * Bucht eine beantwortete Anfrage auf den Schluessel: Zeitstempel + Summen.
  * Wirft nie — die Antwort ist beim Kunden; ein Schreibfehler landet nur im Log.
@@ -248,7 +295,8 @@ function maskiere(eintrag) {
       anfragen: Math.max(0, Math.floor(Number(eintrag.nutzung?.anfragen) || 0)),
       token: Math.max(0, Math.floor(Number(eintrag.nutzung?.token) || 0))
     },
-    zustand: eintrag.widerrufenAm ? "widerrufen" : "aktiv"
+    deaktiviertAm: eintrag.deaktiviertAm || "",
+    zustand: eintrag.widerrufenAm ? "widerrufen" : (eintrag.deaktiviertAm ? "inaktiv" : "aktiv")
   };
 }
 
