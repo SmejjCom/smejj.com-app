@@ -1,7 +1,7 @@
 {
   "jobId": "job_a_bis_z_20260902",
   "createdAt": "2026-09-02T21:30:00.000Z",
-  "owner": "smejj.com autonomous coding (Betreiber-Auftrag: Prompt auf heutigen Stand bringen, dann smejj.com von A bis Z live testen und alles beheben; Freigabe im Wortlaut: „Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.")",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag: Prompt auf heutigen Stand bringen, dann smejj.com von A bis Z live testen und alles beheben; Freigabe im Wortlaut: „Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.“)",
   "title": "A-bis-Z-Live-Test smejj.com 2026-09-02 — Server-Regression 156a30a4 behoben, Bündel-Abgleich v726 in den Bauzweig, assets-i18n nachgezogen, SEO auf 6 Seiten, Anrede vereinheitlicht",
   "ziel": "smejj.com live von A bis Z prüfen (Seiten, Routen, Auth, Chat, tiefe Spur, Code-Fläche, API-Center, Admin-Konsole, PWA, Handy, SEO/GEO, Sperren, Prüfsuite) und jeden Befund beheben, live stellen und beweisen. Vorab den A-bis-Z-Prüfauftrag als Prompt auf den heutigen Systemstand aktualisieren (PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md, Kopier-Seite als Artefakt).",
   "anforderungen": [
@@ -14,7 +14,7 @@
   "befunde": [
     {
       "prio": "P0-Regression",
-      "was": "Commit 156a30a4 (30.08., „Bündel-Abgleich v715 … Control-Welt bleibt hiesig") hatte src/server.js im Bauzweig durch die Arbeitszweig-Fassung ersetzt und src/server-session-helpers.js sowie src/auth/sessionHandoffRoutes.js gelöscht. Verloren: handleFehlerRoute (Nr. 50), beobachteAnfrage (Nr. 51), createVideoChatRoutes, createBildExternRoutes.",
+      "was": "Commit 156a30a4 (30.08., „Bündel-Abgleich v715 … Control-Welt bleibt hiesig“) hatte src/server.js im Bauzweig durch die Arbeitszweig-Fassung ersetzt und src/server-session-helpers.js sowie src/auth/sessionHandoffRoutes.js gelöscht. Verloren: handleFehlerRoute (Nr. 50), beobachteAnfrage (Nr. 51), createVideoChatRoutes, createBildExternRoutes.",
       "beweis": "Live vor dem Fix: POST /api/fehler mit Sitzung = 404 (ohne Sitzung 401 durch den globalen Wächter), /api/bild/erzeuge 401/404, keine Zählung der Missbrauchs-Wache. Alle 64 Ampeln grün — die Autopiloten prüfen ihre Logik, nicht die Verdrahtung.",
       "loesung": "Bauzweig d89ef4f3: die drei Dateien auf 156a30a4^ zurückgesetzt (kein späterer Commit hatte sie berührt). Zeabur-Neubau 22:43 UTC. Live danach: POST /api/fehler {art:start} = 200 {ok:true}."
     },
@@ -45,7 +45,7 @@
     },
     {
       "prio": "Befund ohne Änderung",
-      "was": "Chat-Kurzprompts werden im Chrome des Betreibers LOKAL beantwortet (Gemini Nano, Konsole „[lokal] geeignet") — kein Serveraufruf. Serverweg bewiesen mit „genauer:"-Präfix über die Brücke /api/agent (Antwort in ~4 s). GLM-5.2 meldet in /api/health status=degraded, runtimeAvailable=false; die tiefe Spur antwortete korrekt (17·23 = 391) — Ursache liegt im Registry-Status, nicht im Antwortweg; nicht angefasst.",
+      "was": "Chat-Kurzprompts werden im Chrome des Betreibers LOKAL beantwortet (Gemini Nano, Konsole „[lokal] geeignet“) — kein Serveraufruf. Serverweg bewiesen mit „genauer:“-Präfix über die Brücke /api/agent (Antwort in ~4 s). GLM-5.2 meldet in /api/health status=degraded, runtimeAvailable=false; die tiefe Spur antwortete korrekt (17·23 = 391) — Ursache liegt im Registry-Status, nicht im Antwortweg; nicht angefasst.",
       "loesung": "Gedächtnis-Notiz smejj-chat-test-antwortet-lokal; Modell-Status als offener Punkt gemeldet."
     }
   ],
@@ -90,7 +90,8 @@
     "smejj-app-frontend": ["e8ac079"]
   },
   "offenGeblieben": [
-    "Start-Lock-Stempel: index.html hat 11 fehlende Umlaute (Meta-Description „fuer", „Projekt oeffnen", „Primaerspeicher", „geprueft", „Ich hoere zu", „druecken"). Die Änderung ist vorbereitet, aber zurückgenommen, weil der Auto-Modus jeden --freeze-Aufruf blockiert; braucht den Betreiber-Klick (Befehle im Bericht).",
+    "Start-Lock-Stempel: index.html hat 11 fehlende Umlaute (Meta-Description „fuer“, „Projekt oeffnen“, „Primaerspeicher“, „geprueft“, „Ich hoere zu“, „druecken“). Die Änderung ist vorbereitet, aber zurückgenommen, weil der Auto-Modus jeden --freeze-Aufruf blockiert. Ein-Klick-Kaskade für den Betreiber: scripts/einmal/startseite-umlaute-2026-09-02.sh (Umlaute, SW +1, Stempel, Commit, Klon-Deploy, Bauzweig-Sync, Live-Beweis).",
+    "Nutzerreise-Wächter 02:09–02:10 lokal (23:09–23:10 UTC): chat_inference_flow — Brücke antwortete HTTP 503, zeitgleich mit dem dritten Zeabur-Neubau (a9a6182a); danach per curl nachgemessen, siehe Bericht.",
     "security-lock design-v11 rot seit e6f22ae5 (public/chat-bridge.js, Ratenbremse-Ausnahme) — Stempel per Betreiber-Klick.",
     "abo-lock Bauzweig rot (public/account-privacy.js, Vorbestand) — Stempel im Worktree per Betreiber-Klick.",
     "GLM-5.2 in /api/health status=degraded, runtimeAvailable=false — Modell-Registry prüfen (Zeabur-Env SMEJJ_LLM_ZHIPU_API_KEY?).",
