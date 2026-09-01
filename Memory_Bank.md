@@ -744,3 +744,29 @@ Landeseite stand.
 - Look 1:1 OpenRouter: große Überschrift + ein Hauptknopf, große immer sichtbare Suche, Spalten Schlüssel·Typ·Läuft ab·Zuletzt genutzt·Verbrauch·Limit·⋮, Fusszeile „N Schlüssel", Menü mit Icons, Verbindung/Preise eingeklappt.
 - Gelernt: (1) hidden verliert gegen Autoren-display — jede Fläche braucht [hidden]-Regeln; (2) i18n-Pflege-Regexe müssen RAW-UTF8 matchen, json.dumps escapet und lässt Duplikate stehen; (3) assets/ai/ liegt nur im Klon — lokale Tests brauchen die Kopie; (4) html.p-recht h2 (2em) schlägt Flächen-CSS gleicher Spezifität; (5) Klon live neuer als App-Repo — abgleich-Meldungen je Datei klassifizieren, chirurgisch kopieren.
 - Offen: check:admin-console-sync rot durch Parallelsitzung (deren admin/console.js live neuer); IDrive-Artefakt-Upload an Netzstau gescheitert; „Zuletzt genutzt"/per-Key-Verbrauch liefert das Backend nicht (Spalten zeigen Nie/—) — Backend-Erweiterung als Werkstatt-Kandidat.
+
+## 2026-09-02 — A-bis-Z-Live-Test: Bündel-Abgleich hatte src/ mitgerissen (job_a_bis_z_20260902)
+
+Capsule: `task-capsules/2026/09/job_a_bis_z_20260902/capsule.json`. Bauzweig d89ef4f3/b0a8ffc3/a9a6182a,
+design-v11 b0352feb + Folgecommit, Frontend e8ac079 + Folge. Live bewiesen (POST /api/fehler = 200,
+api.smejj.com/sw.js = v726, canonical/OG live, Hilfe in du-Form).
+
+**Entscheidung:** Der Bündel-Abgleich in den Bauzweig trägt NUR `public/` plus Lock-Manifeste
+(docs/frontend/*.json, docs/approvals/*), nie `src/` oder `control-server/`. Commit 156a30a4
+(30.08.) hatte trotz Titel „Control-Welt bleibt hiesig" `src/server.js` durch die Arbeitszweig-
+Fassung ersetzt: Fehler-Fänger (Nr. 50), Missbrauchs-Wache (Nr. 51), Video-Spur und Bild-Route
+waren drei Tage live tot, alle 64 Ampeln grün. Wiederhergestellt auf 156a30a4^ (732 Zeilen,
+Helfer ausgelagert), Tests 230/654/73 grün.
+
+**MERKE:** (1) Nach jedem Bauzweig-Deploy die Rand-Routen mit Sitzung anfassen — 401 ohne
+Sitzung beweist nichts, der globale Wächter verdeckt fehlende Routen. (2) Kurze Chat-Prompts
+beantwortet Chrome lokal (Gemini Nano, Konsole „[lokal] geeignet"); Serverweg nur mit
+„genauer:". (3) `public/assets/i18n` wird von `build:assets` gefüllt — ohne den Lauf sind
+Sprachtexte in 13 Sprachen live unwirksam, check:assets sagt es. (4) Der Auto-Modus blockiert
+jeden `--freeze --confirm`-Aufruf; Stempel gehen nur per Betreiber-Klick.
+
+**Verifikation:** 14/14 Seiten und 19/19 Sitemap-URLs 200; Admin-Konsole 69 grün/1 rot (Probe-
+Nutzer, Ursache behoben); Handy 375 px ohne Überbreite; check:assets/favicon/modul-syntax/
+guidelines/start-lock/markenkette OK. Offen: Start-Lock-Stempel für 11 Umlaute in index.html,
+security-lock (e6f22ae5) und abo-lock (Bauzweig) — je ein Betreiber-Klick; GLM-5.2 in
+/api/health degraded.

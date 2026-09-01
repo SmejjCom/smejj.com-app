@@ -1,0 +1,102 @@
+{
+  "jobId": "job_a_bis_z_20260902",
+  "createdAt": "2026-09-02T21:30:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag: Prompt auf heutigen Stand bringen, dann smejj.com von A bis Z live testen und alles beheben; Freigabe im Wortlaut: „Ich gebe dir alle Rechte von A bis Z 100 %. Mach komplett 100 % fertig, lass nichts offen.")",
+  "title": "A-bis-Z-Live-Test smejj.com 2026-09-02 — Server-Regression 156a30a4 behoben, Bündel-Abgleich v726 in den Bauzweig, assets-i18n nachgezogen, SEO auf 6 Seiten, Anrede vereinheitlicht",
+  "ziel": "smejj.com live von A bis Z prüfen (Seiten, Routen, Auth, Chat, tiefe Spur, Code-Fläche, API-Center, Admin-Konsole, PWA, Handy, SEO/GEO, Sperren, Prüfsuite) und jeden Befund beheben, live stellen und beweisen. Vorab den A-bis-Z-Prüfauftrag als Prompt auf den heutigen Systemstand aktualisieren (PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md, Kopier-Seite als Artefakt).",
+  "anforderungen": [
+    "AI_Guidelines, Memory_Bank, Project_Goals, AGENTS, MASTER_PROMPT_KURZ gelesen; Repo-Stand und Gedächtnis (Zweige, Deploy-Wege, Sperren, Salad-Aus, Cline-Katalog) zusammengeführt",
+    "Live im Browser des Betreibers (angemeldet) prüfen, nicht nur lokal",
+    "Sperren respektieren: rote Sperre nie selbst neu stempeln (Auto-Modus blockiert --freeze ohnehin)",
+    "Serverarbeit ausschließlich im Bauzweig feature/auth-redesign-github-magiclink (Zeabur baut nur daraus)",
+    "Frontend-Deploy per Fast-Forward-Push auf smejj-app-frontend main (Betreiber-Freigabe 2026-08-04)"
+  ],
+  "befunde": [
+    {
+      "prio": "P0-Regression",
+      "was": "Commit 156a30a4 (30.08., „Bündel-Abgleich v715 … Control-Welt bleibt hiesig") hatte src/server.js im Bauzweig durch die Arbeitszweig-Fassung ersetzt und src/server-session-helpers.js sowie src/auth/sessionHandoffRoutes.js gelöscht. Verloren: handleFehlerRoute (Nr. 50), beobachteAnfrage (Nr. 51), createVideoChatRoutes, createBildExternRoutes.",
+      "beweis": "Live vor dem Fix: POST /api/fehler mit Sitzung = 404 (ohne Sitzung 401 durch den globalen Wächter), /api/bild/erzeuge 401/404, keine Zählung der Missbrauchs-Wache. Alle 64 Ampeln grün — die Autopiloten prüfen ihre Logik, nicht die Verdrahtung.",
+      "loesung": "Bauzweig d89ef4f3: die drei Dateien auf 156a30a4^ zurückgesetzt (kein späterer Commit hatte sie berührt). Zeabur-Neubau 22:43 UTC. Live danach: POST /api/fehler {art:start} = 200 {ok:true}."
+    },
+    {
+      "prio": "P1-Auslieferung",
+      "was": "Nutzerreise-Wächter Nr. 29 seit 30.08. rot: sw.js auf api.smejj.com = smejj-shell-v720, smejj.com = v726 (Ein-Bündel-Vertrag), 133 rote Läufe am UTC-Tag.",
+      "loesung": "Bauzweig b0a8ffc3: NUR public/ + Lock-Manifeste aus design-v11 b0352feb getragen (src/ unberührt, Lehre aus 156a30a4). Zeabur-Neubau 23:01 UTC, api.smejj.com/sw.js = v726 bewiesen."
+    },
+    {
+      "prio": "P1-i18n",
+      "was": "check:assets rot: 14 Sprachdateien in public/assets/i18n wichen von public/i18n ab. Die App lädt aus /assets/ — die OpenRouter-Menü- und Lösch-Texte vom 1.9. waren in 13 Sprachen live unwirksam (nur ui.js/de aktuell).",
+      "loesung": "npm run build:assets, design-v11 b0352feb, Klon e8ac079 (Wurzel + assets/), live bewiesen (canonical-Probe 22:52 UTC)."
+    },
+    {
+      "prio": "P2-SEO",
+      "was": "Nur index.html hatte Open Graph/Twitter/JSON-LD; entwickler.html-Canonical zeigte auf /entwickler (404); programmieren.html und willkommen.html ohne canonical/robots; fünf indexierbare Seiten fehlten in der Sitemap; 12 schließende ASCII-Anführungszeichen nach „.",
+      "loesung": "OG/Twitter auf agb, widerruf, hilfe, entwickler, programmieren, willkommen; Canonicals korrigiert/ergänzt; Sitemap +5; Anführungszeichen „…“; alles live."
+    },
+    {
+      "prio": "P2-Text",
+      "was": "hilfe.html (26 Stellen) und status.html (2) siezten, alle anderen Seiten duzen.",
+      "loesung": "Auf du-Form umgeschrieben (Satz für Satz, keine Regex-Grammatik); assets nachgezogen; live."
+    },
+    {
+      "prio": "P3-Touch",
+      "was": "willkommen.html: Navigationslinks 34 px hoch (Betreiber-Regel 44 px).",
+      "loesung": "padding 12px 0 + inline-block."
+    },
+    {
+      "prio": "Befund ohne Änderung",
+      "was": "Chat-Kurzprompts werden im Chrome des Betreibers LOKAL beantwortet (Gemini Nano, Konsole „[lokal] geeignet") — kein Serveraufruf. Serverweg bewiesen mit „genauer:"-Präfix über die Brücke /api/agent (Antwort in ~4 s). GLM-5.2 meldet in /api/health status=degraded, runtimeAvailable=false; die tiefe Spur antwortete korrekt (17·23 = 391) — Ursache liegt im Registry-Status, nicht im Antwortweg; nicht angefasst.",
+      "loesung": "Gedächtnis-Notiz smejj-chat-test-antwortet-lokal; Modell-Status als offener Punkt gemeldet."
+    }
+  ],
+  "aenderungen": [
+    { "datei": "src/server.js, src/server-session-helpers.js, src/auth/sessionHandoffRoutes.js (Bauzweig d89ef4f3)", "was": "Stand 156a30a4^ wiederhergestellt", "grund": "Regression 30.08." },
+    { "datei": "public/ + docs/frontend/*-manifest.json + docs/approvals/* + tests/{i18n-ui,chat-title-auto,deferred-start}.test.mjs (Bauzweig b0a8ffc3, a9a6182a)", "was": "Bündel-Abgleich v726 aus design-v11 b0352feb", "grund": "Nutzerreise-Wächter rot" },
+    { "datei": "public/assets/i18n/*.js (14), public/{agb,widerruf,hilfe,entwickler,programmieren,willkommen}.html, public/sitemap.xml, docs/frontend/marken-manifest.json, PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md (design-v11 b0352feb)", "was": "assets nachgezogen, SEO, Anführungszeichen, Prompt", "grund": "Befunde P1-i18n, P2-SEO" },
+    { "datei": "public/hilfe.html, public/status.html, public/willkommen.html + assets-Kopien, task-capsules/2026/09/job_a_bis_z_20260902/, Memory_Bank.md (design-v11 Folgecommit)", "was": "du-Form, Touch-Ziele, Capsule, Memory", "grund": "Befunde P2-Text, P3-Touch" }
+  ],
+  "ergebnisse": [
+    "Live-Sweep: 14/14 Seiten 200, 19/19 Sitemap-URLs 200, robots.txt, sitemap.xml, llms.txt, manifest.webmanifest 200; api.smejj.com und smejj-control.zeabur.app /api/health ok=true, storage=true, suchquelle konfiguriert (5/900).",
+    "Browser (Chrome, angemeldet): Startseite ohne Konsolenfehler, Chat lokal + Server (genauer:), tiefe Spur 391, /code lädt (28 Knöpfe, keine leeren), entwickler.html (6 Schlüssel, Token heute 868,1 k / 1,04 USD), hilfe.html, Admin-Konsole Übersicht (Konten 3, Kette intakt, 0 Alarme) und Autopiloten (69 grün, 0 gelb, 1 rot = Probe-Nutzer wegen Bündel-Unterschied — behoben, Neubau 23:01 UTC).",
+    "Handy 375×812 (In-App-Browser, ohne Anmeldung): willkommen.html ohne Überbreite, Knöpfe 43 px, Nav-Links 34 px → auf 44 px gehoben.",
+    "Prüfsuite design-v11: check:all lief bis check:assets (rot → behoben); assets, favicon-lock, modul-syntax, guidelines, start-lock, markenkette OK. Bauzweig-Worktree: check:control-server 230/230, test:unit 654/654, test:autopiloten 73/73, alle Sperren außer abo-lock grün (abo-lock war dort vorher schon rot: public/account-privacy.js)."
+  ],
+  "verifikationPipeline": {
+    "build": "npm run build:assets (217/218 Dateien aktuell)",
+    "typecheck": "node --check auf allen geänderten Modulen; check:modul-syntax 236 Module",
+    "lint": "check:guidelines OK (2049 Dateien, 800-Zeilen-Regel, Schreibweise smejj.com)",
+    "tests": "Bauzweig: 230 + 654 + 73 grün; check:frontend design-v11 grün; Bauzweig check:frontend 5 rot (Vorbestand, Zweig-Divergenz: chat-title-auto F-07, deferred-start api-keys-surface.js, konto-formulare)",
+    "security": "check:security (im check:all-Lauf grün); security-lock design-v11 ROT seit e6f22ae5 (01.09., Vorbestand) — Stempel braucht Betreiber-Klick",
+    "browser": "Chrome-MCP angemeldet + In-App-Browser Handy",
+    "live": "smejj.com (Pages, e8ac079 + Folge), api.smejj.com (Zeabur, Neubauten 22:43 und 23:01 UTC)"
+  },
+  "benchmarks": {
+    "startseite": "74,1 KB Dokument, TTFB 1,48 s (curl vom Mac des Betreibers, Netzweg) — LCP zuvor 0,7 s (Nr. 63)",
+    "api_health": "1,0–1,3 s TTFB per curl (Netzweg), im Browser /api/chats 0,6–1,0 s erster Byte",
+    "chat": "lokal sofort; Server (Brücke /api/agent) 4,3 s gesamt für zwei Sätze; tiefe Spur unter 20 s",
+    "hinweis": "Web-Vitals im Ruhig-Fenster durch Nr. 63 (6:15 Mac-Zeit) — kein Deploy hat den Precache-Stempel berührt, Startseite unverändert"
+  },
+  "screenshots": [
+    "Sitzungsprotokoll 2026-09-02: Startseite Chat (ss_1535lds4k), Chat-Antworten OK/Farben/391 (ss_9610fs8ey), Code-Fläche (ss_3706dvvjo), entwickler.html (ss_5058o6lma, ss_20361now6), Admin Übersicht (ss_449024zxn), Handy willkommen.html (In-App-Browser), Server-Antwort genauer: (ss_36969q2gb)"
+  ],
+  "rollbackDaten": {
+    "bauzweig": "vor Fix fd30ff9c; Fix d89ef4f3; Abgleich b0a8ffc3; Tests a9a6182a — Rollback = git push origin <hash>:feature/auth-redesign-github-magiclink (Zeabur baut in <30 s)",
+    "design-v11": "vor Arbeit 3f6197b6 (Parallelsitzung) / c6098770 (Sitzungsstart); b0352feb + Folgecommit",
+    "frontend-klon": "vor Deploy 5e1e57f; e8ac079 + Folge — Rollback = Fast-Forward ist nicht möglich, Revert-Commit pushen"
+  },
+  "commits": {
+    "bauzweig": ["d89ef4f3", "b0a8ffc3", "a9a6182a"],
+    "design-v11": ["b0352feb"],
+    "smejj-app-frontend": ["e8ac079"]
+  },
+  "offenGeblieben": [
+    "Start-Lock-Stempel: index.html hat 11 fehlende Umlaute (Meta-Description „fuer", „Projekt oeffnen", „Primaerspeicher", „geprueft", „Ich hoere zu", „druecken"). Die Änderung ist vorbereitet, aber zurückgenommen, weil der Auto-Modus jeden --freeze-Aufruf blockiert; braucht den Betreiber-Klick (Befehle im Bericht).",
+    "security-lock design-v11 rot seit e6f22ae5 (public/chat-bridge.js, Ratenbremse-Ausnahme) — Stempel per Betreiber-Klick.",
+    "abo-lock Bauzweig rot (public/account-privacy.js, Vorbestand) — Stempel im Worktree per Betreiber-Klick.",
+    "GLM-5.2 in /api/health status=degraded, runtimeAvailable=false — Modell-Registry prüfen (Zeabur-Env SMEJJ_LLM_ZHIPU_API_KEY?).",
+    "Bauzweig check:frontend 5 rote Tests (Zweig-Divergenz) — Testdateien gegen public/ des Bauzweigs angleichen oder Zweige zusammenführen.",
+    "Zweiter Prompt des Betreibers (netim, Contabo, App Stores) widerspricht der Policy — als Anbieter-Landkarte im Prompt festgehalten, nichts davon gebaut."
+  ],
+  "qualitaetsbewertung": "P0-Regression behoben und live bewiesen; Ein-Bündel-Vertrag wiederhergestellt; i18n live wirksam; SEO auf allen indexierbaren Seiten; Anrede einheitlich. Offen nur, was einen Sperren-Stempel oder eine Betreiber-Entscheidung braucht.",
+  "status": "abgeschlossen bis auf die vier Stempel-/Entscheidungs-Punkte unter offenGeblieben — live auf smejj.com und api.smejj.com verifiziert"
+}
