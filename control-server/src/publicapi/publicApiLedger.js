@@ -20,6 +20,7 @@
 // Instanz laeuft, ist das exakt; bei mehreren wird aus dem Ereignisprotokoll
 // nachgerechnet (scripts/diagnose/api-abrechnung-nachrechnen.mjs, offen).
 import { signedS3Get, signedS3Put } from "../storage/s3Signer.js";
+import { authenticatedUserId } from "../jobs/jobAccess.js";
 import { kostenMikro, usdZuMikro } from "./publicApiPreise.js";
 
 const memoryStore = new Map();
@@ -46,8 +47,50 @@ export async function leseKonto(kontoId, env = process.env) {
   return konto;
 }
 
+// ---- Unbegrenzte Konten (Betreiber) ------------------------------------------
+//
+// Der Betreiber betreibt diese API selbst. Ihn gegen sein eigenes Prepaid-
+// Guthaben laufen zu lassen ist sinnlos: er wuerde sich selbst Geld schulden,
+// und bei 0 stuende sein eigenes Modell still — genau das ist am 02.09.2026
+// passiert (Guthaben 0,00 USD, smejj-1.0 antwortete nicht mehr).
+//
+// Freigabe Wof Kadavanich 2026-09-02: "smejj 1.0 unsere eigene Modell ist?
+// Kannst Du unbegrenzt erstellen".
+//
+// EINTRAEGE: `SMEJJ_API_UNBEGRENZT` nimmt Konto-Kennungen (user_xxxxxxxx) ODER
+// E-Mail-Adressen. E-Mails werden mit derselben Ableitung wie beim Anmelden zu
+// einer Konto-Kennung gerechnet. Beides, weil die Kennung je nach Anmeldeweg
+// aus userId, sub ODER E-Mail entsteht — welches davon greift, sieht man dem
+// Konto von aussen nicht an.
+//
+// WAS UNBEGRENZT HEISST: Die Guthabenpruefung entfaellt, und es wird nichts
+// abgebucht. Das Ereignisprotokoll wird WEITER geschrieben — der Verbrauch
+// bleibt also sichtbar, nur bezahlt wird er nicht. Eine Buchhaltung, die
+// aufhoert zu zaehlen, sobald jemand nichts zahlt, waere blind.
+//
+// OHNE GESETZTE VARIABLE AENDERT SICH NICHTS: leere Liste = jeder zahlt.
+
+/** Konten mit unbegrenzter Nutzung. Leer, wenn nichts gesetzt ist. */
+export function unbegrenzteKonten(env = process.env) {
+  const roh = String(env.SMEJJ_API_UNBEGRENZT || "").split(",").map((e) => e.trim()).filter(Boolean);
+  const ids = new Set();
+  for (const eintrag of roh) {
+    if (/^user_[a-f0-9]{8}$/i.test(eintrag)) ids.add(eintrag.toLowerCase());
+    else if (eintrag.includes("@")) ids.add(authenticatedUserId({ email: eintrag }));
+  }
+  ids.delete("");
+  return ids;
+}
+
+/** Laeuft dieses Konto unbegrenzt? */
+export function istUnbegrenzt(kontoId, env = process.env) {
+  const id = sichereKontoId(kontoId);
+  return Boolean(id) && unbegrenzteKonten(env).has(id.toLowerCase());
+}
+
 /** Darf diese Anfrage starten? Guthaben > 0 reicht — die Kosten kennt man erst danach. */
 export async function darfAnfragen(kontoId, env = process.env) {
+  if (istUnbegrenzt(kontoId, env)) return { ok: true, unbegrenzt: true, guthabenMikro: Number.POSITIVE_INFINITY };
   const konto = await leseKonto(kontoId, env);
   return { ok: konto.guthabenMikro > 0, guthabenMikro: konto.guthabenMikro };
 }
@@ -79,7 +122,9 @@ export async function bucheAnfrage(kontoId, {
     const tag = zeit.toISOString().slice(0, 10);
     await schreibe(`api-billing/ereignisse/${id}/${tag}/${ereignis.anfrageId || zeit.getTime()}.json`, ereignis, env);
     const konto = await leseKonto(id, env);
-    konto.guthabenMikro -= kosten; // darf unter 0 fallen: die letzte Anfrage war schon unterwegs
+    // Unbegrenzte Konten werden nicht belastet — gezaehlt wird trotzdem, sonst
+    // waere der Verbrauch des Betreibers unsichtbar.
+    if (!istUnbegrenzt(id, env)) konto.guthabenMikro -= kosten; // darf unter 0 fallen: die letzte Anfrage war schon unterwegs
     konto.verbrauchtMikro += kosten;
     konto.anfragen += 1;
     konto.zuletztAm = ereignis.zeitpunkt;
