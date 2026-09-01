@@ -23,10 +23,12 @@ const startChips = fs.readFileSync(path.join(publicDir, "start-chips.js"), "utf8
 const searchOverlay = fs.readFileSync(path.join(publicDir, "search.js"), "utf8");
 const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welcome.js"), "utf8");
 // Nutzerreise USA 2026-08-23: drei weitere Oberflaechen rufen t() und bekamen
-// ihre fehlenden englischen Texte — Spur (Start), API-Keys, Entwickler-API.
+// ihre fehlenden englischen Texte — Spur (Start) und die API-Flaechen.
+// 2026-08-31: die beiden API-Flaechen (api-keys-surface, api-konto-surface)
+// sind im zentralen API-Bereich (api-center-surface) aufgegangen.
 const spurStart = fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8");
-const apiKeysSurface = fs.readFileSync(path.join(publicDir, "api-keys-surface.js"), "utf8");
-const apiKontoSurface = fs.readFileSync(path.join(publicDir, "api-konto-surface.js"), "utf8");
+const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
+  + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8");
 const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
@@ -65,7 +67,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
-    + searchOverlay + onboardingWelcome + spurStart + apiKeysSurface + apiKontoSurface;
+    + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }
