@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-01T06:51:40.299Z",
-  "confirmation": "Betreiber-Freigabe 01.09.: vertikale Trennlinie der Seitenleiste am Handy entfernt (mobil-composer.css, .left-panel-resizer display:none <=767px), SW v722, Assets synchronisiert",
+  "frozenAt": "2026-09-01T10:01:46.270Z",
+  "confirmation": "API-Bereich Design 1:1 nach Vorschlag: Stats-Leiste, 4-Spalten-Tabelle, Token-Karte, Status-Badges, Handy-Karten. Kaskade v7/b52/b44l/b112/v9/v723",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4acaec3003e28cafb0b81584fbae073046504d146f0bab5488e532bd55608233",
+    "public/index.html": "999a92ea436aef7fe0850ee1f1ddac220364fd7d390efaa8c4388ea3188102f5",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "5119a1e8483d78ec8b6519f60f3a206cc340bc5a2971cb2603b914087feb43bc",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "e6e0c022331b883630f8de625d8ef62e3b51d84e2f254c1c24a2d963267ab9b8",
+    "public/app.js": "62246bccc60ee85eea887c4d92ec69bc33f0e5c664fb2e6878b60dacb09c632a",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "aee3feca638d14d7974f3bee55c80a0e2e2b4c68af549353d80c7dd2b9894b94",
+    "public/premium-surfaces.js": "65d358f3501c73e4515d87b7c016b210f3890cb30dea6c0b28559ad727e8c501",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "7b4b78471ee3f763c385bf82103cdd08d471c5f675b814e630e9cec64776fa49",
     "public/search.js": "30d3cf5776c7ba94c429bdb32058a052f72b6e5fce3985b90e6caf5b0047f6f1",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "94a793d3fe39ad78c48dcc416fea9fcccac817d24e23bb292436a0581bfb6492",
+    "public/sw.js": "88f09be619b14e940392971dc039135df2d3600ee7a03d4f5944480e06026b88",
     "public/manifest.webmanifest": "e5de136917df62ed5740b8febeecf47a338825023999943b6ef457d4c675b810"
   }
 }
