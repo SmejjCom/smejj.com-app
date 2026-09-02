@@ -783,3 +783,18 @@ nicht gibt (public/assets/manifest.webmanifest), killt die Kaskade NACH dem Stem
 `ls` pruefen. (3) Die Reste (Commit, Klon, Bauzweig) darf die Sitzung selbst erledigen; nur der Stempel braucht
 den Klick. (4) Aus dem Terminal der App liest man Doppelklick-Laeufe nicht — Spuren: ps, sw.js-Version,
 start-lock-manifest.json, git status.
+
+## 2026-09-03 — Web-Vitals-Wache rot: Netz UND ein echter Seitenbefund (chat-store.js zweimal geladen)
+
+Wache Nr. 63 seit 02.09. rot (TTFB p75 878 ms, LCP 3,3 s, Gewicht 324 KB). Zerlegt: (1) TTFB/LCP kommen vom
+Betreiber-Netz — RTT zum GitHub-Pages-Edge 130–250 ms, erster Hop bis 200 ms, WLAN 2,4 GHz; Varnish liefert
+mit age < 10 s. Parallelsitzung hat TTFB am 02.09. auf 500 ms/"nur Hinweis" gestellt (Bauzweig 731461e3).
+(2) Gewicht ist echt: `public/erste-schritte.js` (Nr. 9) importierte `/assets/chat-store.js` OHNE `?v=b65`,
+index.html und sechs Module MIT — der Browser lud die Datei zweimal (12,9 KB, zweite Modulinstanz mit eigener
+IndexedDB-Verbindung). Fix auf design-v11: Import auf `?v=b65`; neuer Waechter `tests/modul-einmal-instanz.test.mjs`
+(ein Spezifizierer je Zieldatei, kaputte + gesunde Probe) in check:frontend; Suite 666/666 gruen.
+**MERKE:** (1) Gewicht mit der Ressourcenliste aus dem kalten Chrome-Lauf messen — doppelte Basisnamen darin sind
+die Spezifizierer-Falle. (2) Der Kommentar "anderer Spezifizierer = zweite Instanz" stand seit Wochen in
+chat-history-view.js und search.js, nur maschinell hat es niemand geprueft. (3) Live braucht SW v730 (Assets
+cache-first) → Start-Lock → Betreiber-Doppelklick `smejj.com chat-store einmal laden ausliefern.command`
+(Kaskade scripts/einmal/einmal-instanz-chat-store-2026-09-03.sh, Dateiliste vorher mit ls geprueft).
