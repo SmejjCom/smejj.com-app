@@ -745,3 +745,10 @@ design-v11 69b8ea36/33233fa0. **MERKE:** (1) Ein Modul, das beim Start wirken so
 Versionskennung (?v=4, ?v=b55) bleiben bis 10 min im HTTP-Cache; zum Beweis fetch(cache:'reload'), sonst
 prueft man das alte Modul. (3) Neue t()-Schluessel brauchen ihr Modul im Korpus von tests/i18n-ui.test.mjs,
 sonst gilt der Schluessel als verwaist.
+
+## 2026-09-02 — UI/UX Nr. 10: Rueckgaengig statt Bestaetigung beim Chat-Loeschen (job_a_bis_z_20260902, Nachtrag 7)
+
+design-v11 694c48e5. Weiches Loeschen (Papierkorb 30 Tage) braucht keine Rueckfrage — eine Leiste mit
+„Rueckgaengig“ (8 s, restoreChat) ersetzt den Dialog. **MERKE:** Der Verlauf ist SECTION#chatHistory, geoeffnet
+per [data-view="chatHistory"]; der Seitenleisten-Knopf „Alle N Gespraeche“ oeffnet ihn im Automaten NICHT.
+Karten sind weder li noch article — Beweise ueber den Text von #chatHistory und den Zaehler „Alle N“ fuehren.

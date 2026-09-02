@@ -181,7 +181,8 @@
       "Nr. 5: Kachel Datenschutz & Training in den Einstellungen mit Klartext und Zwei-Klick-Sprung zum Schalter (14 Sprachen) — design-v11 6ef4902f/2f5e4ff8, Klon 15070ef/f58936f, live 17:06 UTC",
       "Nachbesserung Nr. 1: Frage aus body.task (4435aa53), Knopf ohne Umbruch; Klick-Beweis 16:50 UTC",
       "Klick-Beweis Nr. 5 (17:20 UTC): Einstellungen -> Kachel -> Zum Schalter -> /profile, Reiter Meine Daten, Schalter sichtbar. Falle: der Browser hielt settings-surface.js?v=b55 im HTTP-Cache (max-age 600); erst fetch(cache:'reload') brachte das neue Modul. Die Versionskennung ?v=b55 steht in premium-surfaces.js (Start-Lock) - wiederkehrende Besucher brauchen den SW-Sprung.",
-      "Nr. 4: Kurzwoerter unter den Symbolen der Antwort-Leiste auf dem Handy (chat-actions-woerter.js, Haken in chat-actions-menu.js, 14 Sprachen) - design-v11 69b8ea36/33233fa0, Klon 20af230/f893696, live 19:45 UTC; Handy-Darstellung nur per Media-Regel geprueft"
+      "Nr. 4: Kurzwoerter unter den Symbolen der Antwort-Leiste auf dem Handy (chat-actions-woerter.js, Haken in chat-actions-menu.js, 14 Sprachen) - design-v11 69b8ea36/33233fa0, Klon 20af230/f893696, live 19:45 UTC; Handy-Darstellung nur per Media-Regel geprueft",
+      "Nr. 10 (Chat): Loeschen im Verlauf ohne Rueckfrage, Leiste „Rueckgaengig“ 8 s (restoreChat) — design-v11 694c48e5, Klon ffb0e60, live 20:29 UTC, Klick-Beweis 20:44 UTC (180 -> 179 -> 180); Schluessel/Projekt behalten den Dialog"
     ],
     "tests": "tests/antwort-aktionsknopf.test.mjs 4/4, check:frontend gruen (Buendel-Test erzwang Stil im Modul statt chat-actions.css)",
     "offen": [

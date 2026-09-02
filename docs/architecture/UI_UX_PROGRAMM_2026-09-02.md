@@ -36,7 +36,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", Umlaute | index.html, i18n | Start-Lock | Skript + Stempel |
 | 8 | Modell-Chips erklären: „smejj 1.0 (Gründlich)" → „Antwortet gründlich (langsamer)"; Tooltip in Klartext | Composer | Start-Lock | Stempel nötig |
 | 9 | Erste-Schritte-Führung nach dem ersten Login: drei Karten (Frag etwas, Bild erzeugen, Code) statt leerer Fläche | hilfe.html-Führung, chat-empty-state | keine | offen |
-| 10 | Rückgängig bei Löschen (Chat, Schlüssel, Projekt) als 8-Sekunden-Leiste statt Bestätigungsdialog | chat-history, api-center | keine | offen |
+| 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
 
@@ -81,6 +81,15 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Live-Beweis 19:45 UTC (Desktop): Modul geladen, 12 Knöpfe, Wörter Mehr/Kopieren/Vorlesen/Gut/Schwach im DOM,
   auf dem Desktop unsichtbar. Restrisiko: Handy-Darstellung nur per Media-Regel im Quelltext geprüft,
   nicht auf echtem Gerät (In-App-Browser ist nicht angemeldet, Chrome-Automat skaliert nicht).
+
+### Nr. 10 (20:44 UTC) — Chat löschen ohne Rückfrage
+- `public/chat-history-view.js`: „🗑 Löschen“ im ⋯-Menü verschiebt sofort (Papierkorb, 30 Tage) und zeigt
+  unter der Liste eine Leiste (role=status): „„<Titel>“ in den Papierkorb verschoben — 30 Tage
+  wiederherstellbar.“ + Knopf „Rückgängig“ (restoreChat). Nach 8 s verschwindet die Leiste, der Chat bleibt
+  im Papierkorb. Bündel-Klassen msg-undo/msg-undo-button, darum kein neuer Stil.
+- Tests `tests/chat-history-rueckgaengig.test.mjs` 2/2; design-v11 694c48e5, Klon ffb0e60.
+- Live-Beweis im Chrome 20:44 UTC: Verlauf 180 → Löschen → 179, kein Dialog, Leiste sichtbar → „Rückgängig“ →
+  180, Chat wieder in der Liste. Schlüssel (api-center) und Projekte haben noch den Bestätigungsdialog.
 
 ## 4. Regeln für jede weitere Vereinfachung
 
