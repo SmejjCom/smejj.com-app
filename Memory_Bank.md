@@ -677,6 +677,11 @@ Schlüssel im Portal eintragen — FALSCH: Router-Logzeile mit Adresse (b07c6b4e
 Coding-Adresse: die 12:47 angelegte Variable war um 13:20 wieder GELÖSCHT (irgendein Prozess schreibt die ganze
 Variablenliste zurück — Verdacht set_training_storage_env.mjs der Parallelsitzung). 13:21 erneut angelegt, Redeploy
 13:38:56 → zhipu:glm-5.2 antwortet (391), GLM ready. Schlüssel waren richtig; Groq-Tageskontingent bleibt erschöpft.
+**Touch 44 px (Betriebswache Nr. 42, 2026-09-02):** Claw-Toolbar 38→44 px (ui-modern.css) und smejjBot-Aktionen
+40→44 px (autonomous-coding.css), SW v728, design-v11 2dea1cca / Frontend 380d46b / Bauzweig 2a8ba76a;
+live 16:02 UTC alle 17 Ansichten „Touch-Ziele eingehalten“. Nr. 42 bleibt rot, bis der Zeabur-Schlüssel
+(Betriebswerte-Teil) erneuert ist; Nr. 63 rot wegen TTFB p75 420 ms > Budget 200 (LCP 600 ms, Netz/Edge).
+
 **Umgebungs-Wache Nr. 71** (Bauzweig dcae45f0): misst im Takt die Prozess-Umgebung — Coding-Adresse,
 Pflichtschlüssel, Registry-Auflösung — und wird rot, bevor der Chat 502/503 liefert; Zähl-Wächter auf 59/62 Läufe.
 (3) groq gpt-oss-20b hat 8000 Tokens/Minute: als einziger Rückfall im Router reißt ein großer Prompt
