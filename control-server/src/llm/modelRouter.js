@@ -487,7 +487,9 @@ async function protokolliereAnbieterFehler(backend, response) {
   if (typeof response?.text !== "function") return;
   try {
     const text = String(await response.text()).replace(/\s+/g, " ").slice(0, 200);
-    console.warn(`[anbieter] ${backend.name} ${backend.model} http_${response.status} ${text}`);
+    // Adresse mit ins Log (kein Geheimnis): am 2026-09-02 war unklar, ob die
+    // Coding-Adresse aus der Umgebung ueberhaupt ankam.
+    console.warn(`[anbieter] ${backend.name} ${backend.model} ${String(backend.baseUrl || "")} http_${response.status} ${text}`);
   } catch {
     // Ein unlesbarer Fehlerkoerper darf die Kette nicht anhalten.
   }
