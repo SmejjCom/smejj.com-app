@@ -787,5 +787,7 @@ design-v11 a0748acd/2f248ca6. **MERKE:** (1) Erst messen (Kinder je Ansicht mit 
 Regeln — die 60 px unter jeder Kopfzeile waren vier kleine Abstaende (12+10+20+18), keiner allein auffaellig.
 (2) `body .view.is-active.is-active` (0,3,1) verliert gegen `#settings.view.is-active` (1,2,0): fuer Ansichten
 mit id-Regeln im Buendel braucht die Modul-Regel die id. (3) Kompakt heisst Abstaende, nie Ziele oder Schrift —
-der Test verbietet font-size/height/width im Regelwerk. (4) GitHub Pages baut nach mehreren Pushes in Folge
-verzoegert (>10 min); last-modified im Header zeigt den ausgelieferten Stand.
+der Test verbietet font-size/height/width im Regelwerk. (4) GitHub Pages kann einen Bau still
+verwerfen: Deployment 71a4cb4 stand auf „failure“ (Statuses-API, ohne gh lesbar unter
+api.github.com/repos/<repo>/deployments), die Seite lieferte 14 min den Vorgaenger. Heilung: leerer Commit
+(`git commit --allow-empty`) — Bau in 30 s gruen. Vor jedem „live“ den Header last-modified oder die Statuses lesen.

@@ -158,7 +158,7 @@ Gemessen im Chrome (Desktop, 669 px hoch), Abstände vor → nach `public/kompak
 
 Regeln: nur Ränder und Abstände. Ziele bleiben 44 px, Schrift bleibt groß (Betreiber-Regel), keine Größen im Modul
 (Test `tests/kompakt.test.mjs` prüft das). Stil aus dem Modul, weil alle betroffenen Regeln in start-styles.css
-(Start-Bündel) liegen; Haken in chat-actions-menu.js. design-v11 a0748acd + 2f248ca6, Klon 1bac92f + 71a4cb4.
+(Start-Bündel) liegen; Haken in chat-actions-menu.js. design-v11 a0748acd + 2f248ca6, Klon 1bac92f + 71a4cb4 (Pages-Bau fehlgeschlagen, neu angestoßen mit aacbe00, live 22:00 UTC).
 
 Offen für Stufe 2: Chat-Nachrichten (Abstand zwischen Antworten, Antwort-Leiste), Start-Feld unten,
 Konto/Profil-Seite, Handy-Maße (der Automat misst nicht unter 606 px — Beweis nur mit iPhone-Screenshot).
