@@ -96,6 +96,11 @@
       "datei": "scripts/testing/measure_web_vitals.mjs, control-server/src/admin/opsAutopilotenListeSchutz.js (Bauzweig 7197c3b1)",
       "was": "TTFB-Budget 200 → 500 ms (LCP 1,5 s, CLS 0,1, Gewicht 300 KB unveraendert); Beschreibung Nr. 63 nachgezogen",
       "grund": "Betreiber-Entscheidung 2026-09-02: Messung vom Mac gegen GitHub Pages schwankt (p75 216–878 ms bei LCP 0,6–1,1 s), 200 ms war dauerhaft rot ohne Handlungsmoeglichkeit"
+    },
+    {
+      "datei": "scripts/testing/measure_web_vitals.mjs (Bauzweig 731461e3 + e61a1ba2)",
+      "was": "TTFB nur noch Hinweis (NUR_HINWEIS), LCP/CLS/INP/Gewicht bleiben fail-closed; TDZ-Absturz der ersten Fassung behoben",
+      "grund": "HTML ist im SW network-first — auch der warme Lauf misst das Netz des Betreibers (p75 216–878 ms)"
     }
   ],
   "verifikation": [
@@ -104,7 +109,8 @@
     "Live nach Erholung: Brücke /api/agent 200 (zhipu glm-5.2, „bereit“), Control /api/agent 200 (1006 Prompt-Tokens, 832 gecacht), Probe-Nutzer 05:34 und 05:35 UTC 7/7.",
     "LIVE 09:16 UTC nach Kaskade (Betreiber-Freigabe im Wortlaut „Ich gebe dir alle Rechte. Mach Du hundert Prozent fertig. Lass nicht offen.“): Security-Lock gestempelt, design-v11 fa57f7a8, Frontend 6a8c678, Brücke per Portal-Restart auf 20260902-v147-groq-gpt-oss; /api/chat 200 chat-fast-lane groq:gpt-oss-120b 1,2 s, /api/agent 200 chat-fast-lane 0,9 s; Probe-Nutzer 7/7 in 922 ms (Chat 240 ms), Ampeln 67 grün / 3 rot.",
     "Router-Fix d015526c per Push in den Bauzweig, Zeabur-Neubau 09:04:12 UTC; erster Agent-Aufruf danach 200 über groq:gpt-oss-120b (x-smejj-model-fallback: true), zweiter 502 (alle vier Versuche 429 — auch 120b) → Groq-Schlüssel des Control ist im Minutenlimit.",
-    "16:02 UTC: measure_touch_targets_app.mjs gegen smejj.com — alle Ansichten in Ordnung (smejj Claw 4, smejjBot 19). Web-Vitals-Wache 16:03 UTC: LCP 600 ms, CLS 0, Gewicht 298 KB, aber TTFB p75 kalt 420 ms > Budget 200 → Nr. 63 bleibt rot (Netz/Edge, kein Seitenproblem). Nr. 42 bleibt rot, weil der Betriebswerte-Teil (control-umgebung-luecken.mjs) den abgelaufenen Zeabur-Schluessel braucht."
+    "16:02 UTC: measure_touch_targets_app.mjs gegen smejj.com — alle Ansichten in Ordnung (smejj Claw 4, smejjBot 19). Web-Vitals-Wache 16:03 UTC: LCP 600 ms, CLS 0, Gewicht 298 KB, aber TTFB p75 kalt 420 ms > Budget 200 → Nr. 63 bleibt rot (Netz/Edge, kein Seitenproblem). Nr. 42 bleibt rot, weil der Betriebswerte-Teil (control-umgebung-luecken.mjs) den abgelaufenen Zeabur-Schluessel braucht.",
+    "Web-Vitals 16:35 UTC (TTFB als Hinweis): LCP p75 2164 ms > 1500 bei TTFB 532 ms — das Netz des Betreibers war in dieser Minute langsam (16:03: LCP 600 ms, TTFB 263 ms). Urteil bleibt rot, bis eine Messung in einem ruhigen Netzmoment gruen ist (taeglich 6:15 Mac-Zeit)."
   ],
   "offen": [
     "Wer löscht SMEJJ_LLM_ZHIPU_BASE_URL? Parallelsitzung smejj-com-app-28 angeschrieben (13:20 UTC). Bis zur Antwort: KEIN Skript darf die Variablenliste von smejj-control ganz zurückschreiben; set_training_storage_env.mjs vor dem Schreiben frisch lesen und nur ergänzen.",
