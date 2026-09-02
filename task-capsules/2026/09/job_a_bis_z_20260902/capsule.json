@@ -185,7 +185,9 @@
       "Nr. 10 (Chat): Loeschen im Verlauf ohne Rueckfrage, Leiste „Rueckgaengig“ 8 s (restoreChat) — design-v11 694c48e5, Klon ffb0e60, live 20:29 UTC, Klick-Beweis 20:44 UTC (180 -> 179 -> 180); Schluessel/Projekt behalten den Dialog",
       "Nr. 9: Erste-Schritte-Karten auf der leeren Startseite (erste-schritte.js, Haken chat-actions-menu.js, 14 Sprachen, ?erste-schritte=1 als Pruefschalter) — design-v11 3da01c75/212593ab, Klon ab53531, live 20:55 UTC, Klick-Beweis 20:56 UTC (Bild-Karte fuellt Feld, Ausblenden setzt Merker)",
       "Nr. 6: rechtes Panel nur je Browser-Sitzung (panel-layout.js speicherFuer: rechts sessionStorage) — design-v11 12ff454c, Klon 95051f2, live 03.09. 21:07 UTC; Desktop-Beweis >= 900 px offen (Automat 793 px)",
-      "Nr. 7 + 8: Betreiber-Skript scripts/einmal/deutsch-modellchips-2026-09-03.sh (+ .ersetzungen.cjs, 15 Stellen in index.html, Start-Lock-Stempel, SW +1, Klon, Bauzweig) — wartet auf den Klick"
+      "Nr. 7 + 8: Betreiber-Skript scripts/einmal/deutsch-modellchips-2026-09-03.sh (+ .ersetzungen.cjs, 15 Stellen in index.html, Start-Lock-Stempel, SW +1, Klon, Bauzweig) — wartet auf den Klick",
+      "Nr. 7 + 8 zur Laufzeit (deutsch-klartext.js, 15 Texte idempotent, Haken chat-actions-menu.js) — design-v11 fc64cf1e, Klon 37c5b6d, live 03.09. 21:27 UTC; Betreiber-Skript fuers Markup dreimal nicht gelaufen (Terminal leer)",
+      "Nr. 11 Code-Feld am unteren Rand (code-feld-unten.js: Flaeche flex 1 statt calc(100dvh - 96px), 14 px/safe-area) — design-v11 b9fab9d2, Klon 5dc86a3, live 03.09. 21:30 UTC"
     ],
     "tests": "tests/antwort-aktionsknopf.test.mjs 4/4, check:frontend gruen (Buendel-Test erzwang Stil im Modul statt chat-actions.css)",
     "offen": [

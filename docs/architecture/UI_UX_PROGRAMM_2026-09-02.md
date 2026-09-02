@@ -33,10 +33,11 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 4 | Antwort-Leiste auf dem Handy: Kurzwort unter jedem Symbol (Kopieren, Vorlesen, Gut, Schwach, Ändern, Neu, Mehr), Knöpfe bleiben 44 px breit, eine Zeile | chat-actions-woerter.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 02.09. 19:45 UTC** |
 | 5 | Einstellungen → Kachel „Datenschutz & Training": Klartext (nur Fragen, nie Antworten, nur mit Ja, widerrufbar) + Knopf „Zum Schalter" (Konto → Meine Daten, 14 Sprachen) | settings-surface.js, i18n | keine | **gebaut, live 02.09. 17:06 UTC** |
 | 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Browser-Sitzung benutzt (sessionStorage) | panel-layout.js (nicht gesperrt) | keine | **gebaut, live 03.09. 21:07 UTC** |
-| 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", „Disabled" → „Aus", „Capabilities" → „Fähigkeiten" (Umlaute seit 8e86530e) | index.html | Start-Lock | **Skript bereit:** `scripts/einmal/deutsch-modellchips-2026-09-03.sh` |
-| 8 | Modell-Chips erklären: Menüpunkte „Schnell — Antwort in Sekunden", „Gründlich — ausführlich, dauert länger", Tooltips am Modell-Knopf und an „Nachdenken" | index.html (Composer) | Start-Lock | **Skript bereit:** dasselbe Skript wie Nr. 7 |
+| 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", „Disabled" → „Aus", „Capabilities" → „Fähigkeiten" (Umlaute seit 8e86530e) | deutsch-klartext.js (Laufzeit); Markup per `scripts/einmal/deutsch-modellchips-2026-09-03.sh` | Start-Lock (nur Markup) | **live zur Laufzeit 03.09. 21:27 UTC**, Markup wartet auf Klick |
+| 8 | Modell-Chips erklären: Menüpunkte „Schnell — Antwort in Sekunden", „Gründlich — ausführlich, dauert länger", Tooltips am Modell-Knopf und an „Nachdenken" | deutsch-klartext.js (Laufzeit); Markup per Skript wie Nr. 7 | Start-Lock (nur Markup) | **live zur Laufzeit 03.09. 21:27 UTC** |
 | 9 | Erste-Schritte-Karten auf der leeren Startseite: Frag etwas, Bild erzeugen, Code schreiben — nur ohne Gespräche, verschwinden mit dem ersten | erste-schritte.js (neu), Haken in chat-actions-menu.js, 14 Sprachen | keine | **gebaut, live 02.09. 20:55 UTC** |
 | 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
+| 11 | Code-Bereich: Schreibfeld am unteren Rand — Fläche füllt die Ansicht (flex 1) statt calc(100dvh − 96px), 14 px bzw. safe-area unten | code-feld-unten.js (neu), Haken in chat-actions-menu.js | keine (mobil-composer.css liegt im Bündel) | **gebaut, live 03.09. 21:30 UTC** |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
 
@@ -121,6 +122,24 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Die Knopf-Aufschrift bleibt kurz: sie kommt aus STUFE_LABEL (app.js) bzw. dem data-model-Wert, nicht aus dem
   Menütext. Kaskade: SW +1, Start-Lock-Stempel, design-v11, Klon, Bauzweig, Live-Beweis auf beiden Domains.
   Trocken geprüft an einer Kopie der index.html.
+
+### Nr. 7 + Nr. 8 zur Laufzeit (03.09., 21:27 UTC)
+- Der Betreiber-Klick blieb dreimal aus (Terminal leer, live unverändert). Darum `public/deutsch-klartext.js`:
+  dieselben 15 Texte/Tooltips werden beim Start gesetzt — nur wo noch der alte Wortlaut steht (idempotent),
+  keine ids, keine data-Attribute, keine Verdrahtung. Läuft das Skript später, findet das Modul nichts mehr.
+- Tests `tests/deutsch-klartext.test.mjs` 3/3; design-v11 fc64cf1e, Klon 37c5b6d.
+
+### Nr. 11 (03.09., 21:30 UTC) — Code-Feld am unteren Rand
+- Betreiber-Frage: „Warum ist das Feld im Code-Bereich nicht ganz unten?“ Gemessen (Desktop 757 px): 126 px Luft.
+  Ursache: `#code .codeflaeche` war auf calc(100dvh − 96px) begrenzt; die 96 px galten der alten Kopfzeile
+  (.view-chrome), die im Code-Bereich ausgeblendet ist.
+- Profi-Bauart wie ChatGPT/Claude/Codex: das Feld ist eine eigene Schicht am Rand, der Verlauf scrollt in seinem
+  Container (#codeLogHalter, gab es schon). `public/code-feld-unten.js`: Fläche `flex:1 1 auto`, keine geratene
+  Höhe, `.codeunten` mit `max(14px, env(safe-area-inset-bottom))` unten. Robust gegen Kopfleisten am Handy,
+  weil die Fläche den Rest der Flex-Spalte nimmt statt vom Fenster zu rechnen.
+- Tests `tests/code-feld-unten.test.mjs` 3/3; design-v11 b9fab9d2, Klon 5dc86a3.
+- Live-Beweis im Chrome 21:30 UTC: Fläche 4 → 757 px (Fensterhöhe 757), Feld 14 px über dem Rand statt 126 px;
+  im selben Lauf Nr. 7+8 bewiesen: Spur „Projekte“, Menü „Schnell — Antwort in Sekunden“ …, Tooltips gesetzt.
 
 ## 4. Regeln für jede weitere Vereinfachung
 

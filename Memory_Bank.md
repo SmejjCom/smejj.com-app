@@ -770,3 +770,13 @@ Erklaerungen tragen. (3) Der Auto-Modus blockiert auch das Anlegen eines Stempel
 Skripte mit dem Write-Werkzeug anlegen, Ersetzungen in eine eigene .cjs-Datei, die sich an einer Kopie trocken
 pruefen laesst. (4) Chrome-Automat: JS-Klicks zaehlen nicht als nutzerNah() (kein pointerdown), Merker werden
 dann nicht geschrieben; resize_window aendert innerWidth nicht.
+
+## 2026-09-03 — Code-Feld 126 px ueber dem Rand: geratene Hoehe statt Flex (job_a_bis_z_20260902, Nachtrag 10)
+
+design-v11 b9fab9d2. **MERKE:** (1) `calc(100dvh - 96px)` war ein Rest der ausgeblendeten Kopfzeile — feste
+Abzuege vom Fenster veralten still, wenn das Element verschwindet; in einer Flex-Spalte nimmt `flex:1 1 auto;
+min-height:0` immer den Rest, egal welche Leisten oben stehen. (2) Betreiber-Skripte laufen oft NICHT, obwohl
+die Karte „gelaufen“ gewaehlt wird — vor jedem Nachtrag Terminal lesen (read_terminal) UND live messen; wenn
+der Klick dreimal ausbleibt, die Wirkung zur Laufzeit liefern (deutsch-klartext.js) und das Markup-Skript
+liegen lassen. (3) mobil-composer.css ist KEINE eigene Datei mehr im Browser — sie steckt in start-styles.css
+(Start-Buendel); neue Regeln kommen aus einem Modul mit `<style id>` und drei Klassen fuer die Spezifitaet.
