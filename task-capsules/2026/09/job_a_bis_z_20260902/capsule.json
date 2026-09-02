@@ -177,12 +177,15 @@
     "gebaut": [
       "Nr. 1: Knopf 'Gruendlicher antworten' nach lokalen Antworten, 'Erneut versuchen' bei Verbindungsfehler (chat-stream.js, Stil aus dem Modul, Knopf ueberlebt den Verlaufs-Neuaufbau per Merker+Beobachter) — design-v11 7272c769/b76bb143, Klon 7ae2d68/3ddd772, live 14:14 UTC",
       "Nr. 2: willkommen.html Handy-Ziele 44 px — kleiner-44-Zaehler von 17 auf 6 (Rest: Breite<44 bei Textlinks, Logo 34 px)",
-      "Nr. 3: Klartext + Handlung bei jeder roten Chat-Meldung (verstaendlicheMeldung, fehlerAktion) — design-v11 1bc1d862, Klon ac2faa8, live 16:13 UTC, Tests 5/5"
+      "Nr. 3: Klartext + Handlung bei jeder roten Chat-Meldung (verstaendlicheMeldung, fehlerAktion) — design-v11 1bc1d862, Klon ac2faa8, live 16:13 UTC, Tests 5/5",
+      "Nr. 5: Kachel Datenschutz & Training in den Einstellungen mit Klartext und Zwei-Klick-Sprung zum Schalter (14 Sprachen) — design-v11 6ef4902f/2f5e4ff8, Klon 15070ef/f58936f, live 17:06 UTC",
+      "Nachbesserung Nr. 1: Frage aus body.task (4435aa53), Knopf ohne Umbruch; Klick-Beweis 16:50 UTC"
     ],
     "tests": "tests/antwort-aktionsknopf.test.mjs 4/4, check:frontend gruen (Buendel-Test erzwang Stil im Modul statt chat-actions.css)",
     "offen": [
       "Live-Klickbeweis des Knopfs im Chrome stand aus: Chrome-Erweiterung brach die Verbindung ab (14:15 UTC); Modul live bewiesen per curl",
-      "SW-Bump fuer chat-stream.js (Betreiber-Skript)"
+      "SW-Bump fuer chat-stream.js (Betreiber-Skript)",
+      "Klick-Beweis fuer Nr. 5 (Zum Schalter → Konto → Meine Daten) steht aus: Chrome-Erweiterung erneut getrennt 17:07 UTC; Modul live per curl bewiesen"
     ]
   }
 }

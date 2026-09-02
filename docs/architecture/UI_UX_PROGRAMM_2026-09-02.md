@@ -31,7 +31,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 2 | Handy: alle Ziele der Probier-Zeile 44 px | willkommen.html | keine | **gebaut, live 02.09.** |
 | 3 | Fehlermeldungen mit Handlung: Klartext statt Code, 401/403 → Anmelden, 402 → Einstellungen, 429 → 20-s-Zähler, 5xx → Erneut versuchen | chat-stream.js | keine | **gebaut, live 02.09. 16:13 UTC** |
 | 4 | Antwort-Leiste auf Handy mit sichtbaren Wörtern statt nur Symbolen (Kopieren, Vorlesen, Hilfreich) | chat-actions.js | keine | offen |
-| 5 | Einstellungen → Datenschutz: direkter Sprung zum Schalter „Modelltraining erlauben" + Klartext, was gesammelt wird | settings-Module, account-privacy.js | keine | offen |
+| 5 | Einstellungen → Kachel „Datenschutz & Training": Klartext (nur Fragen, nie Antworten, nur mit Ja, widerrufbar) + Knopf „Zum Schalter" (Konto → Meine Daten, 14 Sprachen) | settings-surface.js, i18n | keine | **gebaut, live 02.09. 17:06 UTC** |
 | 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Sitzung benutzt | browser-pane.js | Start-Lock | Stempel nötig |
 | 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", Umlaute | index.html, i18n | Start-Lock | Skript + Stempel |
 | 8 | Modell-Chips erklären: „smejj 1.0 (Gründlich)" → „Antwortet gründlich (langsamer)"; Tooltip in Klartext | Composer | Start-Lock | Stempel nötig |
@@ -56,6 +56,17 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - `fehlerAktion(output, status, frage)`: 401/403 → Knopf „Anmelden" (zurück zur Seite), 402 → „Zu den
   Einstellungen", 429 → „In 20 s erneut versuchen" mit Zähler, alles andere → „Erneut versuchen".
 - Tests 5/5, design-v11 1bc1d862, Klon ac2faa8.
+
+### Nr. 5 (17:06 UTC) und Nachbesserungen an Nr. 1
+- settings-surface.js: neue Gruppe `privacy` mit zwei Klartext-Zeilen und Sprung `kontoDaten`
+  (pushState auf /profile + popstate, dann Reiter „Meine Daten", scrollt zum Schalter).
+  Neun Texte in 14 Sprachen (i18n-Test 13/13).
+- Live gemessen: Der Knopf „Gründlicher antworten" schickte anfangs nur „genauer:" — die App
+  sendet die Frage als `task`, nicht als `messages`. Behoben in chat-stream.js und
+  frage-erfassung.js (4435aa53); Layout: kein Zeilenumbruch, Platz unter dem Knopf, damit die
+  Symbolleiste der Antwort nicht darüberliegt.
+- Klick-Beweis im Chrome 16:50 UTC: lokale Antwort → Knopf 44 px → Klick → Serverantwort mit
+  drei ausführlichen Sätzen.
 
 ## 4. Regeln für jede weitere Vereinfachung
 

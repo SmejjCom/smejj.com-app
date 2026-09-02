@@ -729,3 +729,11 @@ angehängte Knoten verschwinden; Knöpfe brauchen Merker + MutationObserver auf 
 (2) chat-actions.css liegt im Start-Bündel (Start-Lock); Stile für ungesperrte Module kommen
 aus dem Modul selbst (`<style id>`), sonst reißt der Bündel-Test. (3) Kurze Fragen beantwortet
 Chrome lokal — der Knopf „Gründlicher antworten" ersetzt das Abtippen von »genauer«.
+
+## 2026-09-02 — UI/UX Nr. 5 live; Lehre: die App schickt `task`, die Brücke `messages` (job_a_bis_z_20260902, Nachtrag 5)
+
+design-v11 4435aa53/6ef4902f/2f5e4ff8. **MERKE:** Wer im Frontend „die letzte Nutzerfrage" braucht,
+liest `body.task` (app.js) UND `body.messages` (Brücke) — sonst schickt ein Knopf nur „genauer:".
+Es gibt keinen Knopf mit data-view="profile"; die Konto-Ansicht erreicht man in der App per
+`history.pushState("/profile")` + `PopStateEvent` (restoreViewFromUrl). Einstellungs-Texte gehen
+durch t() — neue Schlüssel in alle 14 i18n-Dateien, sonst reißt tests/i18n-ui.test.mjs.
