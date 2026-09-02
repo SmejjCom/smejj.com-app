@@ -32,6 +32,19 @@ COPY --chown=node:node control-server/src/storage/s3Signer.js ./control-server/s
 COPY --chown=node:node control-server/src/shared/hash.js ./control-server/src/shared/hash.js
 COPY --chown=node:node control-server/src/training/consentLedger.js ./control-server/src/training/consentLedger.js
 COPY --chown=node:node evals/suites ./evals/suites
+# Seit dem Projektwissen-Umbau (feat(rag), 01.09.2026) zieht src/evaluation
+# beim Start control-server/src/rag nach sich, und das wiederum Autopilot-,
+# Record- und Websuche-Module. Lokal gemessen (abbild-sim, 02.09.2026): ohne
+# diese Zeilen ERR_MODULE_NOT_FOUND auf agentContext.js; mit ihnen startet der
+# Worker und meldet 'listening'. smejj-lora-loop wird vom LoRA-Anbau lazy
+# geladen - ohne ihn lief der Loop zwar, aber ohne LoRA.
+COPY --chown=node:node control-server/src/rag ./control-server/src/rag
+COPY --chown=node:node control-server/src/autopilots/deepResearchAutopilot.js ./control-server/src/autopilots/deepResearchAutopilot.js
+COPY --chown=node:node control-server/src/autopilots/realtimeInternetHarvesterAutopilot.js ./control-server/src/autopilots/realtimeInternetHarvesterAutopilot.js
+COPY --chown=node:node control-server/src/admin/recordStore.js ./control-server/src/admin/recordStore.js
+COPY --chown=node:node control-server/src/shared/parallelFetch.js ./control-server/src/shared/parallelFetch.js
+COPY --chown=node:node src/search ./src/search
+COPY --chown=node:node workers/smejj-lora-loop ./workers/smejj-lora-loop
 
 # Nicht als root laufen (Sicherheit ist Pflicht).
 USER node
