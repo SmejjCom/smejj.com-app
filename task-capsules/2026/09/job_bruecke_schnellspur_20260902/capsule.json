@@ -39,6 +39,11 @@
       "id": "P1-zhipu-trotz-coding-adresse",
       "was": "12:47 UTC: SMEJJ_LLM_ZHIPU_BASE_URL=https://api.z.ai/api/coding/paas/v4 im Zeabur-Portal auf smejj-control angelegt (Formularfeld, Save, Redeploy), Neubau 12:55:56 UTC, Variable in der Liste bestätigt. Danach weiter zhipu http_429 (8 Fehler in Folge, alle vier Kettenversuche 429); Chat läuft über groq gpt-oss-20b/120b. Vom Mac aus antwortet die Coding-Adresse mit demselben Anfragestil (stream, thinking, usage) 200, die allgemeine Adresse 429/1113. Die Laufzeit-Logs (Portal) enthalten keine Anbieter-Fehlertexte, nur [verbrauch]/[sem-cache]. Offen: Schlüssel auf Zeabur ≠ lokaler Schlüssel, oder Kontingent des Coding-Pakets für den Server-Schlüssel erschöpft — nur im Z.ai-Konto des Betreibers prüfbar.",
       "status": "offen — Betreiber: Z.ai-Konto (Coding-Plan-Kontingent) und den auf Zeabur hinterlegten SMEJJ_LLM_ZHIPU_API_KEY mit dem lokalen vergleichen"
+    },
+    {
+      "id": "P0-URSACHE-BELEGT",
+      "was": "Router loggt seit b4715ba0 (Neubau 13:06 UTC) den Anbieter-Fehlertext. Laufzeit-Log 13:08 UTC: zhipu glm-5.2 http_429 {code 1113 „Insufficient balance or no resource package“} — TROTZ Coding-Adresse. groq gpt-oss-20b http_429 „tokens per day (TPD): Limit 200000, Used 196882“, gpt-oss-120b „Used 199552“ (Organisation org_01kxtmhzzsej4byqpm5ca4ymbb, service tier on_demand). Vom Mac aus antworten beide Anbieter mit den Schlüsseln aus ~/.config/smejj.com/env.local 200 (zhipu Coding-Adresse, groq mit freiem Minutenkontingent). Folgerung: Die auf Zeabur hinterlegten SMEJJ_LLM_ZHIPU_API_KEY und SMEJJ_LLM_GROQ_API_KEY sind ANDERE Schlüssel als die lokalen — der Zhipu-Schlüssel dort hat kein Coding-Paket, der Groq-Schlüssel dort ist die Organisation mit erschöpftem Tageskontingent (Reset täglich).",
+      "status": "Ursache belegt — Behebung nur durch den Betreiber (Schlüssel eintragen)"
     }
   ],
   "aenderungen": [
@@ -66,6 +71,11 @@
       "datei": "control-server/src/llm/modelRouter.js + modelRouter.test.js (Bauzweig, Branch fix/router-groq-zweitmodell-20260902, Commit d015526c im Worktree /tmp/claude-501/bauzweig)",
       "was": "resolveChain: zweiter Versuch beim selben Anbieter mit dessen Standardmodell, wenn das Profil ein anderes führt (fast: 20b → 120b); Test 13/13",
       "grund": "ein 429 je Modell darf die Kette nicht mehr allein beenden"
+    },
+    {
+      "datei": "control-server/src/llm/modelRouter.js (Bauzweig b4715ba0)",
+      "was": "protokolliereAnbieterFehler: bei nicht-ok Antwort die ersten 200 Zeichen des Anbieter-Fehlerkörpers als [anbieter]-Zeile (console.warn), nie der Schlüssel; Tests 655/655",
+      "grund": "http_429 allein ließ die Diagnose blind"
     }
   ],
   "verifikation": [
@@ -76,11 +86,9 @@
     "Router-Fix d015526c per Push in den Bauzweig, Zeabur-Neubau 09:04:12 UTC; erster Agent-Aufruf danach 200 über groq:gpt-oss-120b (x-smejj-model-fallback: true), zweiter 502 (alle vier Versuche 429 — auch 120b) → Groq-Schlüssel des Control ist im Minutenlimit."
   ],
   "offen": [
-    "Zhipu bleibt trotz Coding-Adresse 429: im Z.ai-Konto Kontingent/Schlüssel prüfen; Control loggt Anbieter-Fehlertexte nicht — Vorschlag: modelRouter bei http_429 die ersten 120 Zeichen des Antwortkörpers als [anbieter]-Zeile loggen.",
-    "Kaskade scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.sh vom Betreiber starten (stempelt Security-Lock, pusht Bündel, braucht Restart-Klick im Zeabur-Portal, wenn kein gültiger Schlüssel).",
-    "Neuen Zeabur-API-Schlüssel in ~/.config/zeabur/cli.yaml (Feld token) ablegen — ohne ihn keine Logs, keine Env-Änderung, kein Control-Neubau per Skript.",
-    "Ursache der 429-Phase bleibt unbelegt: zhipu Coding-Paket (Fenster/Concurrency?) und groq 8000 TPM. Mit Schlüssel: runtimeLogs 02:00–05:40 UTC lesen.",
-    "Control-Router: groq-Rückfall gpt-oss-20b hat 8000 Tokens/Minute — ein größerer Prompt reißt das Limit allein; Kette um qwen3.6-27b oder gpt-oss-120b erweitern (Bauzweig, braucht Neubau)."
+    "BETREIBER: Im Zeabur-Portal bei smejj-control (Variable, Stift-Symbol) SMEJJ_LLM_ZHIPU_API_KEY und SMEJJ_LLM_GROQ_API_KEY auf die Werte aus ~/.config/smejj.com/env.local setzen (diese Schlüssel antworten nachweislich), dann Redeploy. Dasselbe für smejj-chat-bridge (SMEJJ_LLM_GROQ_API_KEY) und Restart. Der Assistent darf keine Schlüssel in Felder eintragen.",
+    "Groq-Tageskontingent 200.000 Tokens je Modell ist bis zum Reset erschöpft; bis dahin antwortet der Chat nicht (zhipu 1113, groq TPD).",
+    "Neuen Zeabur-API-Schlüssel ablegen (cli.yaml 401), damit Variablen künftig per Skript gehen."
   ],
   "quellen": [
     "https://console.groq.com/docs/deprecations",

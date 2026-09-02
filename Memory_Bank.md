@@ -670,7 +670,10 @@ Seitenleisten-Klick landet auf der Maus-Engine — Titel pruefen!). Variablen ti
 zhipu 429/1113 seit dem Neubau 05:41; nur der Betreiber kann sie im Portal neu anlegen (Add, Einzelwert, Redeploy).
 12:47 UTC per Formularfeld im Portal angelegt (Klassifikator sperrt Tippen, nicht form_input), Neubau 12:55 —
 zhipu trotzdem 429 (8 in Folge); lokal antwortet dieselbe Adresse 200. Verdacht: anderer Schlüssel auf Zeabur
-oder Coding-Paket-Kontingent erschöpft; Control loggt keine Anbieter-Fehlertexte.
+oder Coding-Paket-Kontingent erschöpft. BELEGT 13:08 UTC (Router loggt jetzt Anbieter-Fehlertexte, b4715ba0):
+zhipu 1113 „no resource package“ trotz Coding-Adresse, groq „tokens per day: Limit 200000, Used 196882/199552“
+→ die Schlüssel auf Zeabur sind ANDERE als die in env.local (die antworten 200). Betreiber muss die lokalen
+Schlüssel im Portal eintragen (Assistent darf keine Schlüssel in Felder tippen).
 (3) groq gpt-oss-20b hat 8000 Tokens/Minute: als einziger Rückfall im Router reißt ein großer Prompt
 das Limit allein.
 
