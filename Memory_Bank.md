@@ -751,3 +751,10 @@ als neu und klickte den Browser-Knopf — bei jedem Laden, auch am Handy. (2) We
 Klassen-Falle: DOMTokenList.prototype.toggle/add abfangen und new Error().stack loggen — MutationObserver
 liefert keinen Verursacher. (3) Alles, was „Neues“ automatisch aufklappt, muss zwischen Strom und
 Wiederherstellung unterscheiden (smejj:chat-strom), sonst wird es beim Start zur Falle.
+
+## 2026-09-03 — Kompakt Stufe 2 und Verlauf ganz unten (job_a_bis_z_20260902, Nachtrag 13)
+
+design-v11 3a370366/ae06f8ba. **MERKE:** (1) 20-px-Luft zwischen Kopfzeile, Feld und Chips war der
+`gap` der Flex-Spalte (.home-feed), nicht ein Rand — Rand-Regeln an den Kindern addieren sich nur dazu
+(gemessen: 20 -> 32). Erst Raster, dann Raender. (2) Kein Modul scrollte den wiederhergestellten Verlauf
+ans Ende; ein Beobachter auf #startLog mit Nutzer-Fenster (Rad/Touch 1,5 s) und Strom-Sperre reicht.

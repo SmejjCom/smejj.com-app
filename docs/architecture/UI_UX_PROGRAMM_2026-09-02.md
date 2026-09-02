@@ -38,6 +38,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 9 | Erste-Schritte-Karten auf der leeren Startseite: Frag etwas, Bild erzeugen, Code schreiben — nur ohne Gespräche, verschwinden mit dem ersten | erste-schritte.js (neu), Haken in chat-actions-menu.js, 14 Sprachen | keine | **gebaut, live 02.09. 20:55 UTC** |
 | 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
 | 11 | Code-Bereich: Schreibfeld am unteren Rand — Fläche füllt die Ansicht (flex 1) statt calc(100dvh − 96px); Leiste auf der unteren Kante, nur safe-area bleibt | code-feld-unten.js (neu), Haken in chat-actions-menu.js | keine (mobil-composer.css liegt im Bündel) | **gebaut, live 03.09. 21:30 UTC** |
+| 12 | Verlauf steht nach dem Öffnen eines Chats ganz unten (letzte Antwort mit Leiste sofort sichtbar); nie im Strom, nie gegen eigenes Scrollen | verlauf-unten.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 03.09. 22:26 UTC** |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
 
@@ -149,6 +150,12 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Tests `tests/code-feld-unten.test.mjs` 3/3; design-v11 b9fab9d2, Klon 5dc86a3.
 - Live-Beweis im Chrome 21:30 UTC: Fläche 4 → 757 px (Fensterhöhe 757), Feld 14 px über dem Rand statt 126 px;
   im selben Lauf Nr. 7+8 bewiesen: Spur „Projekte“, Menü „Schnell — Antwort in Sekunden“ …, Tooltips gesetzt.
+
+### Nr. 12 (22:26 UTC) — Verlauf ganz unten
+- Befund beim Kompakt-Beweis: nach dem Wiederherstellen lag die letzte Antwort-Leiste 98 px unter der Kante des
+  Scroll-Containers; kein Modul scrollte je. `public/verlauf-unten.js` beobachtet #startLog (childList) und springt
+  beim Block-Aufbau ans Ende — nicht im Strom (`smejj:chat-strom`), nicht wenn der Nutzer in den letzten 1,5 s
+  selbst gescrollt hat (Rad/Touch). Tests 2/2; design-v11 ae06f8ba, Klon fda66bd.
 
 ## 3b. Kompakt-Programm (Betreiber 03.09.: „die ganze App kompakt“)
 
