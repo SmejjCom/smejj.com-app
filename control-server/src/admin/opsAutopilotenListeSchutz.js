@@ -228,7 +228,7 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     id: "web-vitals-wache",
     name: "Web-Vitals-Wache",
     nummer: "63",
-    kurz: "Misst täglich die ausgelieferte Startseite in einem echten Chrome gegen die verbindlichen Performance-Budgets (LCP < 1,5 s, TTFB < 500 ms, CLS < 0,1, Seitengewicht < 300 KB) — der Performance-Lock bekommt damit seinen Wächter.",
+    kurz: "Misst täglich die ausgelieferte Startseite in einem echten Chrome gegen die verbindlichen Performance-Budgets (LCP < 1,5 s, CLS < 0,1, Seitengewicht < 300 KB; TTFB wird gemeldet, ist aber Netzwert und reisst kein Budget) — der Performance-Lock bekommt damit seinen Wächter.",
     funktionen: [
       "Läuft täglich um 6:15 Uhr Mac-Zeit auf dem Rechner des Betreibers (LaunchAgent com.smejj.web-vitals → ~/.local/share/smejj-webvitals/wache.sh; Arbeitskopie außerhalb von Google Drive, exakt die Bauart des Test-Wächters Nr. 61).",
       "Misst mit scripts/testing/measure_web_vitals.mjs in einem ECHTEN Chrome über CDP — curl misst am Service Worker vorbei und lieferte am 27.07. schon einmal 1,38 s statt der echten 40 ms.",

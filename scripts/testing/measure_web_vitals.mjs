@@ -15,7 +15,7 @@
 import { launchChrome, openPage, sleep } from "./cdp-client.mjs";
 
 const BUDGETS = Object.freeze({
-  // TTFB 500 statt 200 (Betreiber-Entscheidung 2026-09-02): Gemessen wird vom
+  // TTFB 500 statt 200 und nur noch Hinweis (Betreiber-Entscheidung 2026-09-02): Gemessen wird vom
   // Mac des Betreibers gegen GitHub Pages; der p75 aus fuenf kalten Laeufen lag
   // heute bei 216, 420 und 878 ms bei LCP 0,6-1,1 s — das Netz zum Edge
   // schwankt, nicht die Seite. 200 ms machte die Wache dauerhaft rot, ohne
@@ -189,9 +189,19 @@ function summarise(list) {
   return out;
 }
 
+// TTFB ist ein Netzwert, kein Seitenwert: HTML bleibt im Service Worker
+// network-first (sw.js), also misst auch der "warme" Lauf den Weg vom Mac des
+// Betreibers zum GitHub-Pages-Edge. Am 2026-09-02 lagen die p75-Werte bei
+// 216, 420, 819 und 878 ms — bei LCP 0,6-1,1 s und Gewicht < 300 KB. Eine
+// rote Ampel, die niemand durch eine Aenderung an der Seite gruen bekommt,
+// ist keine Wache. TTFB wird darum gemessen und gemeldet, reisst aber kein
+// Budget mehr; LCP, CLS, INP und Gewicht bleiben fail-closed.
+const NUR_HINWEIS = new Set(["ttfb_ms"]);
+
 function checkBudgets(summary) {
   const failures = [];
   for (const [key, budget] of Object.entries(BUDGETS)) {
+    if (NUR_HINWEIS.has(key)) continue;
     const measured = summary[key]?.p75;
     if (typeof measured !== "number") continue;
     if (measured > budget) failures.push(`${key} p75 ${measured} > Budget ${budget}`);
