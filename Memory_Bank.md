@@ -719,3 +719,13 @@ Eimer antwortet e2 403 (Sonde `trainingsSpeicher` in /api/health zeigt Stufe + C
 (2) `training/fragen/` fehlte in IDRIVE_E2_TRAINING_ALLOWED_PREFIXES → capture_not_persisted.
 **MERKE:** Ein stummes 503 (consent_service_unavailable) kostete zwei Stunden; die Sonde in
 /api/health ist der Weg, den Speicher-Zustand ohne Logs und ohne Geheimnisse zu sehen.
+
+## 2026-09-02 — UI/UX-Programm Nr. 1–3 live: Knopf statt Tipp, 44-px-Ziele, Fehler mit Handlung (job_a_bis_z_20260902, Nachtrag 4)
+
+design-v11 7272c769/b76bb143/1bc1d862, Klon 7ae2d68/3ddd772/ac2faa8. Programm-Dokument
+`docs/architecture/UI_UX_PROGRAMM_2026-09-02.md` (Messung, Messlatte, zehn Vereinfachungen).
+**MERKE:** (1) Der Verlauf wird nach jeder Antwort aus gespeichertem Text neu aufgebaut —
+angehängte Knoten verschwinden; Knöpfe brauchen Merker + MutationObserver auf #startLog.
+(2) chat-actions.css liegt im Start-Bündel (Start-Lock); Stile für ungesperrte Module kommen
+aus dem Modul selbst (`<style id>`), sonst reißt der Bündel-Test. (3) Kurze Fragen beantwortet
+Chrome lokal — der Knopf „Gründlicher antworten" ersetzt das Abtippen von »genauer«.

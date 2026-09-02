@@ -176,7 +176,8 @@
     "programm": "docs/architecture/UI_UX_PROGRAMM_2026-09-02.md (Messung Handy/Desktop, Messlatte, zehn Vereinfachungen)",
     "gebaut": [
       "Nr. 1: Knopf 'Gruendlicher antworten' nach lokalen Antworten, 'Erneut versuchen' bei Verbindungsfehler (chat-stream.js, Stil aus dem Modul, Knopf ueberlebt den Verlaufs-Neuaufbau per Merker+Beobachter) — design-v11 7272c769/b76bb143, Klon 7ae2d68/3ddd772, live 14:14 UTC",
-      "Nr. 2: willkommen.html Handy-Ziele 44 px — kleiner-44-Zaehler von 17 auf 6 (Rest: Breite<44 bei Textlinks, Logo 34 px)"
+      "Nr. 2: willkommen.html Handy-Ziele 44 px — kleiner-44-Zaehler von 17 auf 6 (Rest: Breite<44 bei Textlinks, Logo 34 px)",
+      "Nr. 3: Klartext + Handlung bei jeder roten Chat-Meldung (verstaendlicheMeldung, fehlerAktion) — design-v11 1bc1d862, Klon ac2faa8, live 16:13 UTC, Tests 5/5"
     ],
     "tests": "tests/antwort-aktionsknopf.test.mjs 4/4, check:frontend gruen (Buendel-Test erzwang Stil im Modul statt chat-actions.css)",
     "offen": [

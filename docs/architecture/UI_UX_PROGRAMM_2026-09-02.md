@@ -29,7 +29,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 |---|---|---|---|---|
 | 1 | Ein Klick statt Tipp: „Gründlicher antworten" nach lokalen Antworten, „Erneut versuchen" bei Verbindungsfehler | chat-stream.js | keine | **gebaut, live 02.09.** |
 | 2 | Handy: alle Ziele der Probier-Zeile 44 px | willkommen.html | keine | **gebaut, live 02.09.** |
-| 3 | Fehlermeldungen mit Handlung: jede rote Meldung im Chat bekommt Knopf (Neu laden, Anmelden, Erneut) | chat-stream.js, readableError | keine | offen |
+| 3 | Fehlermeldungen mit Handlung: Klartext statt Code, 401/403 → Anmelden, 402 → Einstellungen, 429 → 20-s-Zähler, 5xx → Erneut versuchen | chat-stream.js | keine | **gebaut, live 02.09. 16:13 UTC** |
 | 4 | Antwort-Leiste auf Handy mit sichtbaren Wörtern statt nur Symbolen (Kopieren, Vorlesen, Hilfreich) | chat-actions.js | keine | offen |
 | 5 | Einstellungen → Datenschutz: direkter Sprung zum Schalter „Modelltraining erlauben" + Klartext, was gesammelt wird | settings-Module, account-privacy.js | keine | offen |
 | 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Sitzung benutzt | browser-pane.js | Start-Lock | Stempel nötig |
@@ -49,6 +49,13 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Tests: `tests/antwort-aktionsknopf.test.mjs` (4), check:frontend grün.
 - Live: smejj-app-frontend main; chat-stream.js ist im Precache — wiederkehrende Besucher
   bekommen die Knöpfe mit dem nächsten Service-Worker-Sprung (`scripts/einmal/sw-bump-2026-09-02b.sh`).
+
+### Nr. 3 (16:13 UTC)
+- `verstaendlicheMeldung(status, roh)`: Server-Codes wie `authentication_required` oder „All model
+  backends failed" werden Sätze für Menschen; fremde Hinweise bleiben unverändert.
+- `fehlerAktion(output, status, frage)`: 401/403 → Knopf „Anmelden" (zurück zur Seite), 402 → „Zu den
+  Einstellungen", 429 → „In 20 s erneut versuchen" mit Zähler, alles andere → „Erneut versuchen".
+- Tests 5/5, design-v11 1bc1d862, Klon ac2faa8.
 
 ## 4. Regeln für jede weitere Vereinfachung
 
