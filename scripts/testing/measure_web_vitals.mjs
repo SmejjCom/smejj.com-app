@@ -28,6 +28,15 @@ const BUDGETS = Object.freeze({
   pageWeight_kb: 300
 });
 
+// TTFB ist ein Netzwert, kein Seitenwert: HTML bleibt im Service Worker
+// network-first (sw.js), also misst auch der "warme" Lauf den Weg vom Mac des
+// Betreibers zum GitHub-Pages-Edge. Am 2026-09-02 lagen die p75-Werte bei
+// 216, 420, 819 und 878 ms — bei LCP 0,6-1,1 s und Gewicht < 300 KB. Eine
+// rote Ampel, die niemand durch eine Aenderung an der Seite gruen bekommt,
+// ist keine Wache. TTFB wird darum gemessen und gemeldet, reisst aber kein
+// Budget mehr; LCP, CLS, INP und Gewicht bleiben fail-closed.
+const NUR_HINWEIS = new Set(["ttfb_ms"]);
+
 const args = parseArgs(process.argv.slice(2));
 const url = args.url || "https://smejj.com/";
 const runs = Math.max(1, Number(args.runs) || 5);
@@ -188,15 +197,6 @@ function summarise(list) {
   out.lcpElement = list.map((entry) => entry.lcpElement).find(Boolean) || null;
   return out;
 }
-
-// TTFB ist ein Netzwert, kein Seitenwert: HTML bleibt im Service Worker
-// network-first (sw.js), also misst auch der "warme" Lauf den Weg vom Mac des
-// Betreibers zum GitHub-Pages-Edge. Am 2026-09-02 lagen die p75-Werte bei
-// 216, 420, 819 und 878 ms — bei LCP 0,6-1,1 s und Gewicht < 300 KB. Eine
-// rote Ampel, die niemand durch eine Aenderung an der Seite gruen bekommt,
-// ist keine Wache. TTFB wird darum gemessen und gemeldet, reisst aber kein
-// Budget mehr; LCP, CLS, INP und Gewicht bleiben fail-closed.
-const NUR_HINWEIS = new Set(["ttfb_ms"]);
 
 function checkBudgets(summary) {
   const failures = [];
