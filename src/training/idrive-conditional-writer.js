@@ -563,15 +563,19 @@ function validateAttestorPrefix(prefix) {
 // ausdruecklich benannt, welcher Zugang gelten soll — genau das wird
 // uebernommen. Ohne Verweis bleibt es beim eigenen Wert; stillschweigend
 // auf allgemeine Zugaenge zurueckzufallen gibt es weiterhin nicht.
-const REFERENCE = /^\$\{([A-Z][A-Z0-9_]*)\}$/;
+// Zwei Schreibweisen: ${NAME} (Shell-Stil) und verweis:NAME. Die zweite gibt
+// es, weil Zeabur "${...}" in Umgebungswerten selbst anfasst und einen
+// unbekannten Namen zu einem Leerstring macht — der Verweis kam nie an.
+const REFERENCE = /^(?:\$\{([A-Z][A-Z0-9_]*)\}|verweis:([A-Z][A-Z0-9_]*))$/;
 
 function required(env, name) {
   const raw = String(env?.[name] || "").trim();
   if (!raw) throw writerError(`training_idrive_config_missing:${name}`);
   const reference = REFERENCE.exec(raw);
   if (!reference) return raw;
-  const target = String(env?.[reference[1]] || "").trim();
-  if (!target) throw writerError(`training_idrive_config_reference_missing:${name}->${reference[1]}`);
+  const zielName = reference[1] || reference[2];
+  const target = String(env?.[zielName] || "").trim();
+  if (!target) throw writerError(`training_idrive_config_reference_missing:${name}->${zielName}`);
   return target;
 }
 
