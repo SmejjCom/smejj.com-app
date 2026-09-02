@@ -50,11 +50,31 @@
     }
   ],
   "aenderungen": [
-    { "datei": "src/server.js, src/server-session-helpers.js, src/auth/sessionHandoffRoutes.js (Bauzweig d89ef4f3)", "was": "Stand 156a30a4^ wiederhergestellt", "grund": "Regression 30.08." },
-    { "datei": "public/ + docs/frontend/*-manifest.json + docs/approvals/* + tests/{i18n-ui,chat-title-auto,deferred-start}.test.mjs (Bauzweig b0a8ffc3, a9a6182a)", "was": "Bündel-Abgleich v726 aus design-v11 b0352feb", "grund": "Nutzerreise-Wächter rot" },
-    { "datei": "public/assets/i18n/*.js (14), public/{agb,widerruf,hilfe,entwickler,programmieren,willkommen}.html, public/sitemap.xml, docs/frontend/marken-manifest.json, PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md (design-v11 b0352feb)", "was": "assets nachgezogen, SEO, Anführungszeichen, Prompt", "grund": "Befunde P1-i18n, P2-SEO" },
-    { "datei": "public/hilfe.html, public/status.html, public/willkommen.html + assets-Kopien, task-capsules/2026/09/job_a_bis_z_20260902/, Memory_Bank.md (design-v11 Folgecommit)", "was": "du-Form, Touch-Ziele, Capsule, Memory", "grund": "Befunde P2-Text, P3-Touch" },
-    { "datei": "task-capsules/2026/09/job_a_bis_z_20260902/kopier-seite-prompt-a-bis-z.html, .gitignore (design-v11 Aufraeum-Commit 02.09.)", "was": "Kopier-Seite des Prompts (Rohtext byte-identisch mit PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md, 144 Zeilen) aus der Repo-Wurzel in die Capsule archiviert; verirrte npm package-lock.json entfernt und dauerhaft ignoriert (Repo fuehrt pnpm-lock.yaml)", "grund": "Arbeitsbaum sauber, Artefakt ersetzt nie die Quelle" }
+    {
+      "datei": "src/server.js, src/server-session-helpers.js, src/auth/sessionHandoffRoutes.js (Bauzweig d89ef4f3)",
+      "was": "Stand 156a30a4^ wiederhergestellt",
+      "grund": "Regression 30.08."
+    },
+    {
+      "datei": "public/ + docs/frontend/*-manifest.json + docs/approvals/* + tests/{i18n-ui,chat-title-auto,deferred-start}.test.mjs (Bauzweig b0a8ffc3, a9a6182a)",
+      "was": "Bündel-Abgleich v726 aus design-v11 b0352feb",
+      "grund": "Nutzerreise-Wächter rot"
+    },
+    {
+      "datei": "public/assets/i18n/*.js (14), public/{agb,widerruf,hilfe,entwickler,programmieren,willkommen}.html, public/sitemap.xml, docs/frontend/marken-manifest.json, PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md (design-v11 b0352feb)",
+      "was": "assets nachgezogen, SEO, Anführungszeichen, Prompt",
+      "grund": "Befunde P1-i18n, P2-SEO"
+    },
+    {
+      "datei": "public/hilfe.html, public/status.html, public/willkommen.html + assets-Kopien, task-capsules/2026/09/job_a_bis_z_20260902/, Memory_Bank.md (design-v11 Folgecommit)",
+      "was": "du-Form, Touch-Ziele, Capsule, Memory",
+      "grund": "Befunde P2-Text, P3-Touch"
+    },
+    {
+      "datei": "task-capsules/2026/09/job_a_bis_z_20260902/kopier-seite-prompt-a-bis-z.html, .gitignore (design-v11 Aufraeum-Commit 02.09.)",
+      "was": "Kopier-Seite des Prompts (Rohtext byte-identisch mit PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md, 144 Zeilen) aus der Repo-Wurzel in die Capsule archiviert; verirrte npm package-lock.json entfernt und dauerhaft ignoriert (Repo fuehrt pnpm-lock.yaml)",
+      "grund": "Arbeitsbaum sauber, Artefakt ersetzt nie die Quelle"
+    }
   ],
   "ergebnisse": [
     "Live-Sweep: 14/14 Seiten 200, 19/19 Sitemap-URLs 200, robots.txt, sitemap.xml, llms.txt, manifest.webmanifest 200; api.smejj.com und smejj-control.zeabur.app /api/health ok=true, storage=true, suchquelle konfiguriert (5/900).",
@@ -86,9 +106,17 @@
     "frontend-klon": "vor Deploy 5e1e57f; e8ac079 + Folge — Rollback = Fast-Forward ist nicht möglich, Revert-Commit pushen"
   },
   "commits": {
-    "bauzweig": ["d89ef4f3", "b0a8ffc3", "a9a6182a"],
-    "design-v11": ["b0352feb"],
-    "smejj-app-frontend": ["e8ac079"]
+    "bauzweig": [
+      "d89ef4f3",
+      "b0a8ffc3",
+      "a9a6182a"
+    ],
+    "design-v11": [
+      "b0352feb"
+    ],
+    "smejj-app-frontend": [
+      "e8ac079"
+    ]
   },
   "offenGeblieben": [
     "Start-Lock-Stempel: index.html hat 11 fehlende Umlaute (Meta-Description „fuer“, „Projekt oeffnen“, „Primaerspeicher“, „geprueft“, „Ich hoere zu“, „druecken“). Die Änderung ist vorbereitet, aber zurückgenommen, weil der Auto-Modus jeden --freeze-Aufruf blockiert. Ein-Klick-Kaskade für den Betreiber: scripts/einmal/startseite-umlaute-2026-09-02.sh (Umlaute, SW +1, Stempel, Commit, Klon-Deploy, Bauzweig-Sync, Live-Beweis).",
@@ -100,5 +128,11 @@
     "Zweiter Prompt des Betreibers (netim, Contabo, App Stores) widerspricht der Policy — als Anbieter-Landkarte im Prompt festgehalten, nichts davon gebaut."
   ],
   "qualitaetsbewertung": "P0-Regression behoben und live bewiesen; Ein-Bündel-Vertrag wiederhergestellt; i18n live wirksam; SEO auf allen indexierbaren Seiten; Anrede einheitlich. Offen nur, was einen Sperren-Stempel oder eine Betreiber-Entscheidung braucht.",
-  "status": "abgeschlossen bis auf die vier Stempel-/Entscheidungs-Punkte unter offenGeblieben — live auf smejj.com und api.smejj.com verifiziert"
+  "status": "abgeschlossen bis auf die vier Stempel-/Entscheidungs-Punkte unter offenGeblieben — live auf smejj.com und api.smejj.com verifiziert",
+  "nachtragZhipu": {
+    "datum": "2026-09-02",
+    "befund": "Tiefe Spur (Nachdenken) und Control-Reserve antworteten 502: Zhipu HTTP 429 Code 1113 (Insufficient balance). Der Betreiber hatte das GLM Coding Plan Monatspaket (18 USD) gebucht; es gilt NUR an der Coding-Adresse https://api.z.ai/api/coding/paas/v4, die Standardadresse /api/paas/v4 prueft das leere Pay-as-you-go-Guthaben. Direkt sondiert: Coding-Adresse + glm-5.2 = 200.",
+    "loesung": "SMEJJ_LLM_ZHIPU_BASE_URL war auf Zeabur nicht gesetzt (51 Variablen, Code-Default = Standardadresse). Ueber das Zeabur-Portal (Variable, Add, Einzelwert, KEIN Raw-Editor) gesetzt und per Redeploy neu gestartet; Zeabur-API-Token in ~/.config/zeabur/cli.yaml ist abgelaufen (401). Ergebnis 05:33 UTC: glm runtime ready, /api/chat streamt mit x-smejj-model-backend zhipu:glm-5.2 (Antwort-Modell glm-5.3 laut Coding-Plan).",
+    "offen": "Zeabur-API-Token erneuern (Betreiber, Zugangs-Lock); Groq-Reserve bleibt Gratis-Limit 8.000 Tokens/min."
+  }
 }
