@@ -15,7 +15,13 @@
 import { launchChrome, openPage, sleep } from "./cdp-client.mjs";
 
 const BUDGETS = Object.freeze({
-  ttfb_ms: 200,
+  // TTFB 500 statt 200 (Betreiber-Entscheidung 2026-09-02): Gemessen wird vom
+  // Mac des Betreibers gegen GitHub Pages; der p75 aus fuenf kalten Laeufen lag
+  // heute bei 216, 420 und 878 ms bei LCP 0,6-1,1 s — das Netz zum Edge
+  // schwankt, nicht die Seite. 200 ms machte die Wache dauerhaft rot, ohne
+  // dass jemand etwas haette aendern koennen; 500 ms faengt einen echten
+  // Einbruch (Server statt CDN, kaputter Cache) weiterhin ab.
+  ttfb_ms: 500,
   lcp_ms: 1500,
   cls: 0.1,
   inp_ms: 200,
