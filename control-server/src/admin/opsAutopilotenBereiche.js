@@ -61,7 +61,9 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 63/64 (2026-08-24, Optimierungs-Runde): Web-Vitals-Budgets und Paket-Fuellstand.
     "web-vitals-wache", "speicher-wache",
     // Nr. 66/69/70 (2026-08-30): Mail-Zustellung, Umsatz-Seite, Flags — Betriebsfragen.
-    "email-zustell", "abo-umsatz-wache", "flaggen-wache"
+    "email-zustell", "abo-umsatz-wache", "flaggen-wache",
+    // Nr. 71 (2026-09-02): die Zeabur-Umgebung selbst — Coding-Adresse und Pflichtschluessel.
+    "umgebungs-wache"
   ]
 });
 

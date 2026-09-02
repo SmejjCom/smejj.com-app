@@ -93,5 +93,20 @@ export const DECKUNG_AUTOPILOTEN = Object.freeze([
     verbessert: "Ein 10-%-partial von vor sechs Wochen war eine gestellte Frage, die niemand mehr beantwortete — jetzt liegt sie als Karte in der Mappe",
     neuigkeiten: ["Neu am 2026-08-30 (Lücke aus der A-bis-Z-Deckungsprüfung)"],
     ...LAEUFER
+  },
+  {
+    id: "umgebungs-wache",
+    name: "Umgebungs-Wache",
+    nummer: "71",
+    kurz: "Misst im Takt die Zeabur-Umgebung des Control-Servers: Zhipu-Coding-Adresse und Pflichtschlüssel — rot, bevor der Chat 502/503 liefert.",
+    funktionen: [
+      "Prüft SMEJJ_LLM_ZHIPU_BASE_URL gegen die Coding-Adresse api.z.ai/api/coding/paas/v4 (der Betreiber-Schlüssel gehört zum GLM Coding Plan; jede andere Adresse endet mit 429/1113).",
+      "Prüft die Pflichtschlüssel SMEJJ_LLM_ZHIPU_API_KEY und SMEJJ_LLM_GROQ_API_KEY nur auf Vorhandensein — nie ein Wert im Log.",
+      "Prüft, dass die Registry für das Standardmodell wirklich diese Adresse auflöst — eine gesetzte, aber nicht angekommene Variable fällt so auf."
+    ],
+    trainiert: "Nichts — sie liest Umgebungsvariablen",
+    verbessert: "Am 2026-09-02 verschwand die Coding-Adresse zweimal aus der Umgebung; der Chat stand Stunden bei grünen Ampeln — jetzt wird das im 30-Minuten-Takt rot",
+    neuigkeiten: ["Neu am 2026-09-02 (Befund job_bruecke_schnellspur_20260902)"],
+    ...LAEUFER
   }
 ]);
