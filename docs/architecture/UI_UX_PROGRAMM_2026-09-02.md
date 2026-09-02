@@ -32,7 +32,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 3 | Fehlermeldungen mit Handlung: Klartext statt Code, 401/403 → Anmelden, 402 → Einstellungen, 429 → 20-s-Zähler, 5xx → Erneut versuchen | chat-stream.js | keine | **gebaut, live 02.09. 16:13 UTC** |
 | 4 | Antwort-Leiste auf dem Handy: Kurzwort unter jedem Symbol (Kopieren, Vorlesen, Gut, Schwach, Ändern, Neu, Mehr), Knöpfe bleiben 44 px breit, eine Zeile | chat-actions-woerter.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 02.09. 19:45 UTC** |
 | 5 | Einstellungen → Kachel „Datenschutz & Training": Klartext (nur Fragen, nie Antworten, nur mit Ja, widerrufbar) + Knopf „Zum Schalter" (Konto → Meine Daten, 14 Sprachen) | settings-surface.js, i18n | keine | **gebaut, live 02.09. 17:06 UTC** |
-| 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Browser-Sitzung benutzt (sessionStorage) | panel-layout.js (nicht gesperrt) | keine | **gebaut, live 03.09. 21:07 UTC** |
+| 6 | Rechtes Panel nie von selbst offen: Wurzel war die Arbeitsfläche (lange Antwort im wiederhergestellten Chat klappte das Panel bei jedem Laden auf); jetzt nur bei laufendem Strom und ab 900 px; Merker rechts je Sitzung | arbeitsflaeche.js + panel-layout.js (beide nicht gesperrt) | keine | **gebaut, live 03.09. 22:08 UTC** |
 | 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", „Disabled" → „Aus", „Capabilities" → „Fähigkeiten" (Umlaute seit 8e86530e) | deutsch-klartext.js (Laufzeit); Markup per `scripts/einmal/deutsch-modellchips-2026-09-03.sh` | Start-Lock (nur Markup) | **live zur Laufzeit 03.09. 21:27 UTC**, Markup wartet auf Klick |
 | 8 | Modell-Chips erklären: Menüpunkte „Schnell — Antwort in Sekunden", „Gründlich — ausführlich, dauert länger", Tooltips am Modell-Knopf und an „Nachdenken" | deutsch-klartext.js (Laufzeit); Markup per Skript wie Nr. 7 | Start-Lock (nur Markup) | **live zur Laufzeit 03.09. 21:27 UTC** |
 | 9 | Erste-Schritte-Karten auf der leeren Startseite: Frag etwas, Bild erzeugen, Code schreiben — nur ohne Gespräche, verschwinden mit dem ersten | erste-schritte.js (neu), Haken in chat-actions-menu.js, 14 Sprachen | keine | **gebaut, live 02.09. 20:55 UTC** |
@@ -112,6 +112,14 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Live-Beweis 21:08 UTC: Modul mit `speicherFuer` geladen; alter Dauer-Merker „1“ öffnet das Panel nicht mehr.
   Restrisiko: der Chrome-Automat läuft mit 793 px Breite, die Wiederherstellung am breiten Desktop (≥ 900 px)
   ist nur im Quelltext geprüft.
+
+#### Nr. 6, zweiter Teil (22:08 UTC) — die eigentliche Wurzel
+- Trotz Sitzungs-Merker stand das Panel bei jedem Laden offen (606 px, kein Merker). Klassen-Falle im Chrome
+  (DOMTokenList.toggle abgefangen) zeigte den Stack: `oeffneRechts → panelAuf → #browserButton.click` in
+  `public/arbeitsflaeche.js` — der Beobachter auf #startLog hielt die beim Start wiederhergestellte lange
+  Antwort für neu und klappte das Panel auf, mit dem alten Inhalt. Genau der Befund vom 02.09.
+- Fix: `darfAutoOeffnen()` — nur wenn `smejj:chat-strom` läuft oder unter 5 s her ist, und nur ab 900 px.
+  Wiederhergestellte Antworten behalten die Karte „Rechts öffnen“. design-v11 5d2a8215, Klon a1318de.
 
 ### Nr. 7 + Nr. 8 — Ein-Klick-Skript für den Betreiber
 - `scripts/einmal/deutsch-modellchips-2026-09-03.sh` mit den Ersetzungen in

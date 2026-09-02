@@ -791,3 +791,12 @@ der Test verbietet font-size/height/width im Regelwerk. (4) GitHub Pages kann ei
 verwerfen: Deployment 71a4cb4 stand auf „failure“ (Statuses-API, ohne gh lesbar unter
 api.github.com/repos/<repo>/deployments), die Seite lieferte 14 min den Vorgaenger. Heilung: leerer Commit
 (`git commit --allow-empty`) — Bau in 30 s gruen. Vor jedem „live“ den Header last-modified oder die Statuses lesen.
+
+## 2026-09-03 — Nr. 6 Wurzel: nicht der Merker, die Arbeitsflaeche (job_a_bis_z_20260902, Nachtrag 12)
+
+design-v11 5d2a8215. **MERKE:** (1) „Panel oeffnet mit altem Inhalt“ hatte zwei Ursachen; der Sitzungs-Merker
+war nur die zweite. Ein Beobachter auf #startLog (arbeitsflaeche.js) sah die wiederhergestellte lange Antwort
+als neu und klickte den Browser-Knopf — bei jedem Laden, auch am Handy. (2) Wer klickt, findet man mit einer
+Klassen-Falle: DOMTokenList.prototype.toggle/add abfangen und new Error().stack loggen — MutationObserver
+liefert keinen Verursacher. (3) Alles, was „Neues“ automatisch aufklappt, muss zwischen Strom und
+Wiederherstellung unterscheiden (smejj:chat-strom), sonst wird es beim Start zur Falle.
