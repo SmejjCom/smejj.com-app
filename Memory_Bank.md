@@ -644,7 +644,10 @@ ist abgelaufen (401). Beweis 05:33 UTC: glm runtime ready, /api/chat streamt zhi
 ## 2026-09-02 — Probe-Nutzer 3 h rot: Brücke 503, weil beide Anbieter 429 gaben und die Groq-Schnellspur auf ein abgeschaltetes Modell zeigte (job_bruecke_schnellspur_20260902)
 
 Capsule: `task-capsules/2026/09/job_bruecke_schnellspur_20260902/capsule.json`. design-v11 (Kaskade
-`scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.sh`, Brücke v147 wartet auf Betreiber-Klick).
+`scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.sh`, design-v11 fa57f7a8, Frontend 6a8c678, Bauzweig
+d015526c). LIVE bewiesen 09:16 UTC: Brücke v147, /api/chat und /api/agent mit x-smejj-bridge: chat-fast-lane
+(gpt-oss-120b, 0,9–1,2 s), Probe-Nutzer 7/7 grün (Chat 240 ms), Router-Zweitversuch griff nach dem
+Neubau 09:04 UTC sofort (erste Antwort groq:gpt-oss-120b, fallback=true).
 
 **Befund:** 02:17–05:34 UTC meldete Nr. 29 „chat_inference_flow: Brücke antwortete HTTP 503“. Kette:
 Brücke → Control /api/agent → zhipu 429, groq gpt-oss-20b 429 → 502 → Brücke fällt auf streamModel
@@ -661,6 +664,10 @@ reasoning_effort low nur auf der Schnellspur. Datei liegt unter dem Security-Loc
 fastLaneModel, aber nicht, ob das Modell noch existiert; Modell-Katalog-Wache Nr. 62 prüft nur den
 Router, nicht die Brücke. (2) Der Zeabur-Schlüssel in ~/.config/zeabur/cli.yaml ist abgelaufen (401):
 ohne ihn keine runtimeLogs, kein Neustart, kein Neubau per Skript — die 429-Ursache blieb darum unbelegt.
+Der Bruecken-Neustart ging ueber das Zeabur-Portal im Chrome des Betreibers (Restart-Knopf; erster
+Seitenleisten-Klick landet auf der Maus-Engine — Titel pruefen!). Variablen tippen blockiert der Auto-Modus.
+(4) `SMEJJ_LLM_ZHIPU_BASE_URL` (Coding-Adresse, 05:33 gesetzt) FEHLTE um 09:10 UTC wieder auf smejj-control —
+zhipu 429/1113 seit dem Neubau 05:41; nur der Betreiber kann sie im Portal neu anlegen (Add, Einzelwert, Redeploy).
 (3) groq gpt-oss-20b hat 8000 Tokens/Minute: als einziger Rückfall im Router reißt ein großer Prompt
 das Limit allein.
 
