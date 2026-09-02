@@ -752,3 +752,11 @@ design-v11 694c48e5. Weiches Loeschen (Papierkorb 30 Tage) braucht keine Rueckfr
 „Rueckgaengig“ (8 s, restoreChat) ersetzt den Dialog. **MERKE:** Der Verlauf ist SECTION#chatHistory, geoeffnet
 per [data-view="chatHistory"]; der Seitenleisten-Knopf „Alle N Gespraeche“ oeffnet ihn im Automaten NICHT.
 Karten sind weder li noch article — Beweise ueber den Text von #chatHistory und den Zaehler „Alle N“ fuehren.
+
+## 2026-09-02 — UI/UX Nr. 9: Erste-Schritte-Karten nur fuer Nutzer ohne Gespraeche (job_a_bis_z_20260902, Nachtrag 8)
+
+design-v11 3da01c75. **MERKE:** (1) Ein Leerzustand, den der Betreiber nie sieht (180 Chats), braucht einen
+Pruefschalter (?erste-schritte=1) — sonst gibt es keinen Live-Beweis. (2) Werkzeug-Chips werden ueber
+aria-label (deutsche Quelle) gefunden, nicht ueber .chip-label (uebersetzt). (3) build:assets kopiert neue
+Wurzel-Module NICHT nach public/assets/ — chat-actions-woerter.js und erste-schritte.js existieren dort nicht;
+der Klon bekommt beide Kopien per cp. (4) tests/i18n-ui: ui.js passt auf /^[a-z]{2}\.js$/ — beim Zaehlen ausschliessen.

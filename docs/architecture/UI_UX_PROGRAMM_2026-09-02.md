@@ -35,7 +35,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Sitzung benutzt | browser-pane.js | Start-Lock | Stempel nötig |
 | 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", Umlaute | index.html, i18n | Start-Lock | Skript + Stempel |
 | 8 | Modell-Chips erklären: „smejj 1.0 (Gründlich)" → „Antwortet gründlich (langsamer)"; Tooltip in Klartext | Composer | Start-Lock | Stempel nötig |
-| 9 | Erste-Schritte-Führung nach dem ersten Login: drei Karten (Frag etwas, Bild erzeugen, Code) statt leerer Fläche | hilfe.html-Führung, chat-empty-state | keine | offen |
+| 9 | Erste-Schritte-Karten auf der leeren Startseite: Frag etwas, Bild erzeugen, Code schreiben — nur ohne Gespräche, verschwinden mit dem ersten | erste-schritte.js (neu), Haken in chat-actions-menu.js, 14 Sprachen | keine | **gebaut, live 02.09. 20:55 UTC** |
 | 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
@@ -90,6 +90,18 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Tests `tests/chat-history-rueckgaengig.test.mjs` 2/2; design-v11 694c48e5, Klon ffb0e60.
 - Live-Beweis im Chrome 20:44 UTC: Verlauf 180 → Löschen → 179, kein Dialog, Leiste sichtbar → „Rückgängig“ →
   180, Chat wieder in der Liste. Schlüssel (api-center) und Projekte haben noch den Bestätigungsdialog.
+
+### Nr. 9 (20:55 UTC) — Erste-Schritte-Karten
+- Neues Modul `public/erste-schritte.js`: unter der Werkzeugzeile drei Karten (Frag etwas / Bild erzeugen /
+  Code schreiben) mit Kurztext und Knopf „Ausblenden“. Sichtbar nur, solange `listChats()` leer ist und
+  `smejj.erste-schritte.v1` nicht „weg“ sagt; ein MutationObserver auf #startLog räumt sie beim ersten
+  Gespräch weg. Klick füllt das Startfeld (Frage) oder drückt den Werkzeug-Chip (Bild, Programmieren) —
+  gesendet wird vom Nutzer, wie bei start-chips.js. Prüfschalter für Konten mit Bestand: `?erste-schritte=1`.
+- Viereckig (border-radius 0), Karten 176×104 px, „Ausblenden“ 44 px, drei Spalten, unter 600 px eine.
+  Neun Texte in 14 Sprachen; Haken im Startmodul chat-actions-menu.js (wie Nr. 4).
+- Tests `tests/erste-schritte.test.mjs` 5/5, i18n grün; design-v11 3da01c75/212593ab, Klon ab53531.
+- Live-Beweis im Chrome 20:56 UTC: Block sichtbar nach der Chip-Zeile, „Bild erzeugen“ → Feld „Generiere ein
+  Bild von: “ mit Fokus, „Frag etwas“ → Vorlage im Feld, „Ausblenden“ → Block weg, Merker gesetzt.
 
 ## 4. Regeln für jede weitere Vereinfachung
 
