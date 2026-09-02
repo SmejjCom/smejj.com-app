@@ -697,3 +697,18 @@ chat-stream.js (Precache), abo-lock im Bauzweig.
 Trainings-Schreibers (Endpoint, Region, Bucket, Allowed-Prefixes, Access-/Secret-Key) —
 die fünf Consent-Schlüssel sind da (notice = 200). Ohne die sechs ist keine Einwilligung
 erteilbar, keine Frage speicherbar. Liste mit Werten im Trainingsplan, Stufe 1.
+
+## 2026-09-02 — Fragen-Erfassung END-ZU-END LIVE: Verweise statt Schlüssel, Sonde in /api/health (job_a_bis_z_20260902, Nachtrag 3)
+
+Bauzweig 9a50df07/0c673f9e/97333a98, design-v11 1dd3c052…7f23063a. Beweis 13:40 UTC:
+`/api/training/consent/decision` = granted/verified, `POST /api/training/capture` = 201 erfasst:true.
+
+**Was fehlte:** die sechs IDRIVE_E2_TRAINING_*-Werte und SMEJJ_TRAINING_CAPTURE_ENABLED auf
+Zeabur (Env-Löschung 14.08.). Schlüssel darf die Sitzung nicht eintippen — darum zeigen die
+Trainings-Werte jetzt per `verweis:IDRIVE_E2_ACCESS_KEY` auf die vorhandenen Hauptwerte;
+`required()` löst `verweis:NAME` und `${NAME}` auf (Zeabur lässt `${...}` wörtlich stehen).
+**Zwei Fallen:** (1) Der Haupt-Eimer ist **smejj-model-files**, nicht smejj-app — mit dem falschen
+Eimer antwortet e2 403 (Sonde `trainingsSpeicher` in /api/health zeigt Stufe + Code, nie Werte).
+(2) `training/fragen/` fehlte in IDRIVE_E2_TRAINING_ALLOWED_PREFIXES → capture_not_persisted.
+**MERKE:** Ein stummes 503 (consent_service_unavailable) kostete zwei Stunden; die Sonde in
+/api/health ist der Weg, den Speicher-Zustand ohne Logs und ohne Geheimnisse zu sehen.
