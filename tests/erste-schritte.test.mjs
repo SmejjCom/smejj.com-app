@@ -11,7 +11,7 @@ const quelle = readFileSync(new URL("../public/erste-schritte.js", import.meta.u
 async function ladeModul() {
   const ersetzt = quelle
     .replace('import { t } from "/assets/i18n/ui.js?v=3";', "const t = (s) => s;")
-    .replace('import { listChats } from "/assets/chat-store.js";', "const listChats = async () => [];");
+    .replace('import { listChats } from "/assets/chat-store.js?v=b65";', "const listChats = async () => [];");
   assert.ok(!ersetzt.includes("/assets/"), "alle Browser-Importe ersetzt");
   const datei = join(mkdtempSync(join(tmpdir(), "smejj-erste-")), "erste.mjs");
   writeFileSync(datei, ersetzt);
