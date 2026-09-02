@@ -36,3 +36,17 @@ test("letzteNutzerfrage nimmt die letzte user-Nachricht, content oder text", asy
   assert.equal(modul.letzteNutzerfrage({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b" }, { role: "user", text: " c " }] }), "c");
   assert.equal(modul.letzteNutzerfrage({}), "");
 });
+
+test("Nr. 3: Fehlercodes werden Klartext, und jeder Status bekommt eine Handlung", async () => {
+  const start = quelle.indexOf("export function verstaendlicheMeldung");
+  const ende = quelle.indexOf("\n}\n", start) + 3;
+  const m = await import("data:text/javascript;base64," + Buffer.from(quelle.slice(start, ende)).toString("base64"));
+  assert.match(m.verstaendlicheMeldung(401, "authentication_required"), /nicht mehr angemeldet/);
+  assert.match(m.verstaendlicheMeldung(429, "public_ai_rate_limit_reached"), /20 Sekunden/);
+  assert.match(m.verstaendlicheMeldung(502, "All model backends failed"), /Modelle antworten gerade nicht/);
+  assert.equal(m.verstaendlicheMeldung(400, "Eigener Hinweis vom Server"), "Eigener Hinweis vom Server");
+  assert.ok(quelle.includes("fehlerAktion(output, response.status, letzteNutzerfrage(body));"), "der Fehlerzweig ruft die Handlung");
+  const fa = quelle.slice(quelle.indexOf("export function fehlerAktion"), quelle.indexOf("export async function readableError"));
+  assert.match(fa, /"Anmelden"/); assert.match(fa, /"Erneut versuchen"/); assert.match(fa, /In 20 s erneut versuchen/);
+  assert.match(fa, /\/auth\/login\//);
+});
