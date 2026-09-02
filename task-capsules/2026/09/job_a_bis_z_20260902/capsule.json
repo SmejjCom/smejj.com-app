@@ -141,5 +141,34 @@
     "gebaut": "public/ai/frage-erfassung.js + Haken in chat-stream.js (design-v11 626f33b0, Klon 964c011), Test tests/frage-erfassung.test.mjs 6/6; Plan docs/architecture/SMEJJ_1_1_TRAININGSPLAN_2026-09-02.md; Ein-Klick scripts/einmal/sw-bump-2026-09-02b.sh",
     "befund": "Messlauf misst die Schnellspur (Groq gpt-oss, 62 %), tiefe Spur GLM-5.2 = 97 %; Einwilligungs-Ledger 503 wegen fehlender IDRIVE_E2_TRAINING_*-Werte auf Zeabur; Auto-Modus blockierte das Setzen von SMEJJ_TRAINING_CAPTURE_ENABLED im Portal",
     "offen": "7 Zeabur-Werte (Betreiber), SW-Bump-Skript (Betreiber), Stufe 0 Schnellspur mit Projektwissen (Brücke, Security-Lock)"
+  },
+  "nachtragStufe1": {
+    "zeitpunkt": "2026-09-02T13:40:00Z",
+    "ergebnis": "Fragen-Erfassung END-ZU-END LIVE: Einwilligung im Konto des Betreibers erteilt (decision granted/verified/captureAllowed), POST /api/training/capture = 201 erfasst:true.",
+    "zeaburWerte": [
+      "SMEJJ_TRAINING_CAPTURE_ENABLED=YES",
+      "IDRIVE_E2_TRAINING_ENDPOINT=verweis:IDRIVE_E2_ENDPOINT",
+      "IDRIVE_E2_TRAINING_REGION=verweis:IDRIVE_E2_REGION",
+      "IDRIVE_E2_TRAINING_BUCKET=verweis:IDRIVE_E2_BUCKET (= smejj-model-files)",
+      "IDRIVE_E2_TRAINING_ACCESS_KEY=verweis:IDRIVE_E2_ACCESS_KEY",
+      "IDRIVE_E2_TRAINING_SECRET_KEY=verweis:IDRIVE_E2_SECRET_KEY",
+      "IDRIVE_E2_TRAINING_ALLOWED_PREFIXES=…,training/fragen/"
+    ],
+    "code": [
+      "required() loest verweis:NAME und ${NAME} auf (design-v11 1dd3c052/bfc5…, Bauzweig 9a50df07/0c673f9e)",
+      "Sonde trainingsSpeicher in /api/health (design-v11 42b76fdb, Bauzweig 97333a98) — Stufe konfiguration|speicher|ok + Code, nie Werte",
+      ".env.example training/fragen/ ergaenzt (53469a43)"
+    ],
+    "fallen": [
+      "Zeabur laesst ${...} woertlich stehen",
+      "Haupt-Eimer ist smejj-model-files, nicht smejj-app (403)",
+      "training/fragen/ fehlte in den erlaubten Praefixen (capture_not_persisted)",
+      "Web-Terminal von Zeabur nimmt keine Tastatureingaben ueber den Browser-Automaten an"
+    ],
+    "offen": [
+      "SW-Bump fuer chat-stream.js (scripts/einmal/sw-bump-2026-09-02b.sh, Betreiber-Klick) — bis dahin bekommen wiederkehrende Besucher den Haken erst nach Cache-Wechsel",
+      "Abo-Sperre im Bauzweig (Betreiber-Klick)",
+      "Stufe 0: Schnellspur mit Projektwissen (Security-Lock)"
+    ]
   }
 }
