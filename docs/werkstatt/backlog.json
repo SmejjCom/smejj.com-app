@@ -1,5 +1,5 @@
 {
-  "gesammeltAm": "2026-09-02T05:55:18.119Z",
+  "gesammeltAm": "2026-09-02T09:24:55.184Z",
   "aufgaben": [
     {
       "stufe": 1,
@@ -16,14 +16,6 @@
       "titel": "Ausfall: Qualitäts-Prüfer",
       "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1.",
       "seit": "2026-09-02T04:27:24.743Z"
-    },
-    {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "synthetic-user-watchdog",
-      "titel": "Ausfall: Probe-Nutzer",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P0: 1 von 7 Schritten kaputt — chat_inference_flow: Brücke antwortete HTTP 503.",
-      "seit": "2026-09-02T02:17:24.701Z"
     },
     {
       "stufe": 1,

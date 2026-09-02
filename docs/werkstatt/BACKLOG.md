@@ -1,6 +1,6 @@
 # Werkstatt-Backlog (Autopilot Nr. 30, Station 1)
 
-Gesammelt am 2026-09-02T05:55:18.119Z aus ECHTEN Messungen — nicht aus Vermutungen.
+Gesammelt am 2026-09-02T09:24:55.184Z aus ECHTEN Messungen — nicht aus Vermutungen.
 Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem Lauf neu geschrieben.
 
 **Quellen, die geantwortet haben:** Autopiloten-Ampel, CVE-Waechter, Mail-Zustellprotokoll
@@ -11,7 +11,7 @@ Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem L
 
 > Eine stumme Quelle ist kein leeres Backlog. Was hier fehlt, ist ungeprueft, nicht erledigt.
 
-## 7 Aufgaben, nach Dringlichkeit
+## 6 Aufgaben, nach Dringlichkeit
 
 
 ### Stufe 1 — Ausfall
@@ -22,9 +22,6 @@ Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem L
 - **Ausfall: Qualitäts-Prüfer**
   - Betrifft: `qualitaetsmessung` · Quelle: Ampel-Vorfall · offen seit 2026-09-02T04:27:24.743Z
   - Befund: Der letzte Lauf hat einen Fehler gemeldet: Exit 1.
-- **Ausfall: Probe-Nutzer**
-  - Betrifft: `synthetic-user-watchdog` · Quelle: Ampel-Vorfall · offen seit 2026-09-02T02:17:24.701Z
-  - Befund: Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P0: 1 von 7 Schritten kaputt — chat_inference_flow: Brücke antwortete HTTP 503.
 - **Ausfall: Web-Vitals-Wache**
   - Betrifft: `web-vitals-wache` · Quelle: Ampel-Vorfall · offen seit 2026-09-02T03:17:24.724Z
   - Befund: Der letzte Lauf hat einen Fehler gemeldet: Budget gerissen: kalt: ttfb_ms p75 878 > Budget 200; kalt: lcp_ms p75 3284 > Budget 1500; warm: ttfb_ms p75 608 > Budget 200 — LCP 2440 ms, TTFB 781 ms, CLS 
