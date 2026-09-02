@@ -45,7 +45,7 @@ npm run -s check:modul-syntax | tail -1
 node --test tests/i18n-ui.test.mjs 2>&1 | grep -E "^ℹ (pass|fail)" | tr '\n' ' '; echo
 
 echo "== 4. Commit design-v11"
-git add public/index.html public/sw.js public/assets/index.html public/assets/sw.js docs/frontend/start-lock-manifest.json
+git add public/index.html public/sw.js public/manifest.webmanifest public/assets/index.html public/assets/sw.js public/assets/manifest.webmanifest docs/frontend/start-lock-manifest.json
 git commit -q -m "feat(ux): Nr. 7 Deutsch durchgängig + Nr. 8 Modell-Chips erklärt in index.html, SW smejj-shell-v${NEXT}, Start-Lock gestempelt (Betreiber-Freigabe 2026-09-02)"
 QUELLE=$(git rev-parse --short HEAD); echo "design-v11 $QUELLE"
 
@@ -53,7 +53,7 @@ echo "== 5. Live stellen (Frontend-Klon, Fast-Forward)"
 cd "$KLON"
 git fetch -q origin main
 git merge-base --is-ancestor HEAD origin/main && git merge -q --ff-only origin/main || true
-for f in index.html sw.js; do cp "$REPO/public/$f" "$KLON/$f"; cp "$REPO/public/$f" "$KLON/assets/$f"; done
+for f in index.html sw.js manifest.webmanifest; do cp "$REPO/public/$f" "$KLON/$f"; cp "$REPO/public/$f" "$KLON/assets/$f"; done
 git add -A && git commit -q -m "deploy(ux): Nr. 7 + Nr. 8 index.html, SW v${NEXT} — Quelle smejj.com-app $QUELLE"
 git merge-base --is-ancestor origin/main HEAD && git push -q origin HEAD:main
 echo "Klon $(git rev-parse --short HEAD) gepusht"
@@ -65,7 +65,7 @@ WT=$(mktemp -d /tmp/smejj-bauzweig.XXXXXX)
 git worktree add -q --detach "$WT" "origin/$BAUZWEIG"
 (
   cd "$WT"
-  git checkout "$QUELLE" -- public/index.html public/sw.js public/assets/index.html public/assets/sw.js docs/frontend/start-lock-manifest.json
+  git checkout "$QUELLE" -- public/index.html public/sw.js public/manifest.webmanifest public/assets/index.html public/assets/sw.js public/assets/manifest.webmanifest docs/frontend/start-lock-manifest.json
   git diff --cached --quiet -- src control-server || { echo "ABBRUCH: src/ waere betroffen"; exit 1; }
   git commit -q -m "chore(auslieferung): index.html (Nr. 7+8) + SW v${NEXT} aus design-v11 $QUELLE (nur public/ + Start-Lock-Manifest)"
   git push -q origin "HEAD:$BAUZWEIG"
