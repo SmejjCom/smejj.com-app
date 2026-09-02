@@ -81,6 +81,11 @@
       "datei": "control-server/src/llm/modelRouter.js (Bauzweig b4715ba0)",
       "was": "protokolliereAnbieterFehler: bei nicht-ok Antwort die ersten 200 Zeichen des Anbieter-Fehlerkörpers als [anbieter]-Zeile (console.warn), nie der Schlüssel; Tests 655/655",
       "grund": "http_429 allein ließ die Diagnose blind"
+    },
+    {
+      "datei": "control-server/src/autopilots/umgebungsWacheAutopilot.js + deckungsLaeufe.js, admin/opsAutopilotenListeDeckung.js, opsAutopilotenBereiche.js, tests/umgebungs-wache.test.mjs (Bauzweig dcae45f0)",
+      "was": "Umgebungs-Wache Nr. 71: prüft im 30-Minuten-Takt SMEJJ_LLM_ZHIPU_BASE_URL gegen die Coding-Adresse, Pflichtschlüssel auf Vorhandensein und die Registry-Auflösung; Selbsttest kaputt+gesund; nie ein Wert im Log; Läufer 59/62, Ehrlichkeits-Liste, Zähl-Tests nachgezogen; 655/655 + 30/30 grün",
+      "grund": "die Umgebung selbst war unbewacht — Variable verschwand zweimal, Chat stand bei grünen Ampeln"
     }
   ],
   "verifikation": [
@@ -92,7 +97,6 @@
   ],
   "offen": [
     "Wer löscht SMEJJ_LLM_ZHIPU_BASE_URL? Parallelsitzung smejj-com-app-28 angeschrieben (13:20 UTC). Bis zur Antwort: KEIN Skript darf die Variablenliste von smejj-control ganz zurückschreiben; set_training_storage_env.mjs vor dem Schreiben frisch lesen und nur ergänzen.",
-    "Vorschlag Wächter: Nr. 62 Modell-Katalog-Wache oder eine neue Umgebungs-Wache prüft je Neustart, dass SMEJJ_LLM_ZHIPU_BASE_URL die Coding-Adresse trägt (aus /api/health lesbar machen, ohne Geheimnis).",
     "Groq-Tageskontingent 200.000 Tokens je Modell (Organisation des Zeabur-Schlüssels) ist heute erschöpft — Schnellspur der Brücke fällt bis zum Reset auf den Control-Router (zhipu) zurück; das ist jetzt wieder ein funktionierender Weg.",
     "Zeabur-API-Schlüssel erneuern (cli.yaml 401)."
   ],
