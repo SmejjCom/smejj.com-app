@@ -1,13 +1,37 @@
 {
-  "gesammeltAm": "2026-09-01T20:01:02.765Z",
+  "gesammeltAm": "2026-09-02T05:55:18.119Z",
   "aufgaben": [
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "oberflaechenwache",
+      "titel": "Ausfall: Betriebswache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Responsive+Touch gegen smejj.com: rot.",
+      "seit": "2026-09-02T02:37:24.704Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "qualitaetsmessung",
+      "titel": "Ausfall: Qualitäts-Prüfer",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1.",
+      "seit": "2026-09-02T04:27:24.743Z"
+    },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
       "betrifft": "synthetic-user-watchdog",
       "titel": "Ausfall: Probe-Nutzer",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v721, https://api.smejj.com traegt smejj",
-      "seit": "2026-08-31T23:00:24.834Z"
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P0: 1 von 7 Schritten kaputt — chat_inference_flow: Brücke antwortete HTTP 503.",
+      "seit": "2026-09-02T02:17:24.701Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "web-vitals-wache",
+      "titel": "Ausfall: Web-Vitals-Wache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Budget gerissen: kalt: ttfb_ms p75 878 > Budget 200; kalt: lcp_ms p75 3284 > Budget 1500; warm: ttfb_ms p75 608 > Budget 200 — LCP 2440 ms, TTFB 781 ms, CLS ",
+      "seit": "2026-09-02T03:17:24.724Z"
     },
     {
       "stufe": 2,
