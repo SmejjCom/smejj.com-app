@@ -1,6 +1,6 @@
 # Werkstatt-Backlog (Autopilot Nr. 30, Station 1)
 
-Gesammelt am 2026-09-02T09:24:55.184Z aus ECHTEN Messungen — nicht aus Vermutungen.
+Gesammelt am 2026-09-02T16:12:58.097Z aus ECHTEN Messungen — nicht aus Vermutungen.
 Erzeugt von `scripts/werkstatt/sammle-backlog.mjs`. Diese Datei wird bei jedem Lauf neu geschrieben.
 
 **Quellen, die geantwortet haben:** Autopiloten-Ampel, CVE-Waechter, Mail-Zustellprotokoll
