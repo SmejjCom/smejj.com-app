@@ -156,6 +156,8 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
   Scroll-Containers; kein Modul scrollte je. `public/verlauf-unten.js` beobachtet #startLog (childList) und springt
   beim Block-Aufbau ans Ende — nicht im Strom (`smejj:chat-strom`), nicht wenn der Nutzer in den letzten 1,5 s
   selbst gescrollt hat (Rad/Touch). Tests 2/2; design-v11 ae06f8ba, Klon fda66bd.
+- Live-Beweis 22:28 UTC: zwei lange Chats (2.225 und 1.888 px Verlauf) stehen nach dem Öffnen auf Rest 0, die letzte
+  Antwort-Leiste ist sichtbar. Nebenbefund: zwei Chats des Betreibers enden mit gespeichertem „smejj denkt nach…“.
 
 ## 3b. Kompakt-Programm (Betreiber 03.09.: „die ganze App kompakt“)
 
