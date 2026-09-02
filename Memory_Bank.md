@@ -774,3 +774,12 @@ wandert der letzte Knopf in die naechste Zeile. (2) Vollbild-PWA auf iOS = `appl
 black-translucent` + dunkle `theme-color` + safe-area-Innenabstand; `display: fullscreen` im Manifest kann iOS
 nicht. (3) Die installierte PWA laedt Start-Module aus dem Precache — Laufzeit-Module, die an einem precached
 Startmodul haengen, erreichen das iPhone erst mit dem SW-Sprung. Beweise am Desktop-Chrome sagen darueber nichts.
+
+## 2026-09-03 — Kaskade Nr. 7+8+15 lief per Doppelklick, brach an einer Dateiliste (job_a_bis_z_20260902, Nachtrag 16)
+
+design-v11 4bcb15b6, SW v729. **MERKE:** (1) Der Betreiber startet Skripte per Finder-Doppelklick auf eine
+.command-Datei — nicht per Run-Knopf; `open -R` zeigt sie ihm. (2) `set -e` + `git add` mit einer Datei, die es
+nicht gibt (public/assets/manifest.webmanifest), killt die Kaskade NACH dem Stempel — Dateilisten vorher mit
+`ls` pruefen. (3) Die Reste (Commit, Klon, Bauzweig) darf die Sitzung selbst erledigen; nur der Stempel braucht
+den Klick. (4) Aus dem Terminal der App liest man Doppelklick-Laeufe nicht — Spuren: ps, sw.js-Version,
+start-lock-manifest.json, git status.

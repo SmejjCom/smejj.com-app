@@ -33,15 +33,15 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 4 | Antwort-Leiste auf dem Handy: Kurzwort unter jedem Symbol (Kopieren, Vorlesen, Gut, Schwach, Ändern, Neu, Mehr), Knöpfe bleiben 44 px breit, eine Zeile | chat-actions-woerter.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 02.09. 19:45 UTC** |
 | 5 | Einstellungen → Kachel „Datenschutz & Training": Klartext (nur Fragen, nie Antworten, nur mit Ja, widerrufbar) + Knopf „Zum Schalter" (Konto → Meine Daten, 14 Sprachen) | settings-surface.js, i18n | keine | **gebaut, live 02.09. 17:06 UTC** |
 | 6 | Rechtes Panel nie von selbst offen: Wurzel war die Arbeitsfläche (lange Antwort im wiederhergestellten Chat klappte das Panel bei jedem Laden auf); jetzt nur bei laufendem Strom und ab 900 px; Merker rechts je Sitzung | arbeitsflaeche.js + panel-layout.js (beide nicht gesperrt) | keine | **gebaut, live 03.09. 22:08 UTC** |
-| 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", „Disabled" → „Aus", „Capabilities" → „Fähigkeiten" (Umlaute seit 8e86530e) | deutsch-klartext.js (Laufzeit); Markup per `scripts/einmal/deutsch-modellchips-2026-09-03.sh` | Start-Lock (nur Markup) | **live zur Laufzeit 03.09. 21:27 UTC**, Markup wartet auf Klick |
-| 8 | Modell-Chips erklären: Menüpunkte „Schnell — Antwort in Sekunden", „Gründlich — ausführlich, dauert länger", Tooltips am Modell-Knopf und an „Nachdenken" | deutsch-klartext.js (Laufzeit); Markup per Skript wie Nr. 7 | Start-Lock (nur Markup) | **live zur Laufzeit 03.09. 21:27 UTC** |
+| 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", „Disabled" → „Aus", „Capabilities" → „Fähigkeiten" (Umlaute seit 8e86530e) | deutsch-klartext.js (Laufzeit); Markup per `scripts/einmal/deutsch-modellchips-2026-09-03.sh` | Start-Lock (nur Markup) | **Markup live 03.09. 22:55 UTC** (Betreiber-Klick, SW v729) |
+| 8 | Modell-Chips erklären: Menüpunkte „Schnell — Antwort in Sekunden", „Gründlich — ausführlich, dauert länger", Tooltips am Modell-Knopf und an „Nachdenken" | deutsch-klartext.js (Laufzeit); Markup per Skript wie Nr. 7 | Start-Lock (nur Markup) | **Markup live 03.09. 22:55 UTC** (SW v729) |
 | 9 | Erste-Schritte-Karten auf der leeren Startseite: Frag etwas, Bild erzeugen, Code schreiben — nur ohne Gespräche, verschwinden mit dem ersten | erste-schritte.js (neu), Haken in chat-actions-menu.js, 14 Sprachen | keine | **gebaut, live 02.09. 20:55 UTC** |
 | 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
 | 11 | Code-Bereich: Schreibfeld am unteren Rand — Fläche füllt die Ansicht (flex 1) statt calc(100dvh − 96px); Leiste auf der unteren Kante, nur safe-area bleibt | code-feld-unten.js (neu), Haken in chat-actions-menu.js | keine (mobil-composer.css liegt im Bündel) | **gebaut, live 03.09. 21:30 UTC** |
 | 12 | Verlauf steht nach dem Öffnen eines Chats ganz unten (letzte Antwort mit Leiste sofort sichtbar); nie im Strom, nie gegen eigenes Scrollen | verlauf-unten.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 03.09. 22:26 UTC** |
 | 13 | Wartetext „smejj denkt nach…“ wird nie gespeichert; gespeicherter Altbestand wird beim Öffnen übersprungen (zwei Betreiber-Chats endeten damit) | chat-store.js (readEntries, renderEntriesInto) | keine | **gebaut, live 03.09. 22:32 UTC** |
 | 14 | Handy: Werkzeugzeile des Schreibfelds bleibt eine Zeile (Sprachwelle neben dem Mikrofon); Pillen schrumpfen, Symbol-Knöpfe 44 px | composer-zeile.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 03.09. 22:43 UTC** (iPhone-Beweis nach SW-Sprung) |
-| 15 | PWA Vollbild: Statusleiste transparent über dem Rahmen (black-translucent), Leistenfarbe dunkel (#101113), Manifest-Farben dunkel | index.html, manifest.webmanifest | Start-Lock | **in der Kaskade** `deutsch-modellchips-2026-09-03.sh` (ein Klick liefert 7, 8, 15 und den SW-Sprung) |
+| 15 | PWA Vollbild: Statusleiste transparent über dem Rahmen (black-translucent), Leistenfarbe dunkel (#101113), Manifest-Farben dunkel | index.html, manifest.webmanifest | Start-Lock | **live 03.09. 22:55 UTC** (Kaskade per Betreiber-Doppelklick, Stempel 22:46 UTC, SW v729 auf beiden Domains) |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
 
@@ -181,6 +181,12 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
   dunkel; `viewport-fit=cover` und `env(safe-area-inset-*)` am body gibt es schon.
 - Wichtig fürs iPhone: die PWA hält chat-actions-menu.js im Precache. Alle heutigen Laufzeit-Module (Kompakt, Nr. 6,
   7, 8, 11, 12, 14) erreichen die installierte App erst mit dem Service-Worker-Sprung — den macht dieselbe Kaskade.
+
+### Kaskade Nr. 7 + 8 + 15 (22:55 UTC)
+- Der Betreiber-Doppelklick stempelte den Start-Lock (22:46 UTC) und hob den SW auf v729, brach aber beim
+  Commit ab: die Dateiliste nannte `public/assets/manifest.webmanifest`, das es nicht gibt (`set -e`). Rest per
+  Hand: design-v11 4bcb15b6, Klon b58dba8, Bauzweig 4dcf9b00; beide Domains 22:55 UTC auf v729,
+  `black-translucent`, Modell-Menü und „Projekte“ im Markup. Skript korrigiert.
 
 ## 3b. Kompakt-Programm (Betreiber 03.09.: „die ganze App kompakt“)
 
