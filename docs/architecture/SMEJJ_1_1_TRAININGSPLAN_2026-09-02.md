@@ -37,12 +37,29 @@ später Unabhängigkeit von fremden Anbietern.
 ## 3. Stufen, Kosten, Stoppregeln
 
 ### Stufe 0 — Live-Note zurück auf ≥ 95 % (0 USD, sofort)
+**Nachtrag 02.09., 06:35 UTC (manueller Messlauf nach dem GLM-Fix): weiter 62,1 %, 9 kritisch.**
+Grund gemessen: Der Messlauf fragt die Brücke als `live-default` — das ist die **Schnellspur**
+(Groq gpt-oss, ohne Projektwissen). Die 97 % stammen von der **tiefen Spur** (GLM-5.2), die
+die Brücke nur bei „Nachdenken", Coding oder ausdrücklicher Modellwahl nimmt. Die Note ist
+also kein Rückfall, sondern zwei verschiedene Ketten. Entscheidung für Stufe 0: Schnellspur
+bekommt Projektwissen (RAG-Schnipsel aus dem Control-Index) — Änderung in
+`public/chat-bridge.js` (Security-Lock, Stempel = Betreiber-Klick), Messlatte danach ≥ 95 %
+auf derselben Suite bei erstem Token < 1,5 s.
 Seit 02.09. antwortet GLM-5.2 wieder. Der nächste Messlauf (Mac, 07:10/19:10) muss
 ≥ 95 % zeigen. Zusätzlich: Groq-Rückfall darf nie wieder ohne Projektwissen antworten
 (Messlauf 16:10 zeigte `rag: false`) — Brücke bekommt RAG auch auf dem Rückfallweg.
 Stopp: Note < 95 % zweimal hintereinander → erst Ursache, dann weiter.
 
 ### Stufe 1 — Einwilligung und Sammler (0 USD, Woche 1, dann 2–6 Wochen Sammeln)
+**Stand 02.09.:** Einwilligung (Schalter „Modelltraining erlauben", signierter Ledger auf e2)
+und Erfassungs-Route `/api/training/capture` existierten bereits — nur der Aufrufer in der App
+fehlte. Neu: `public/ai/frage-erfassung.js` + Haken in `chat-stream.js` (design-v11 626f33b0,
+live 964c011). Erfasst wird NUR die Frage — Antworten aus GLM/Kimi/Groq sind laut Rechteprüfung
+vom 17.07. für Training gesperrt (Anti-Distillation). **Folge für den Datensatz:** Antworten
+müssen aus erlaubter Quelle kommen — vom Betreiber gebilligt/umgeschrieben oder vom eigenen
+Hausmodell (Qwen3-4B, Apache-2.0) mit Projektwissen erzeugt. Offen: Zeabur-Variable
+`SMEJJ_TRAINING_CAPTURE_ENABLED=YES` (Auto-Modus blockiert den Klick — Betreiber setzt sie
+im Portal: smejj-control → Variable → Add → Save → Redeploy).
 1. Einwilligungstext aus dem Entwurf vom 30.08. in die PWA (Einstellungen, Schalter,
    Widerruf jederzeit). **Braucht schriftliche Freigabe + Einwilligungs-Lock-Stempel.**
 2. Sammler: nur bei gesetzter Einwilligung werden Frage + gebilligte Antwort
