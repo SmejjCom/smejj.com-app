@@ -36,6 +36,20 @@ COPY control-server/src/storage/s3Signer.js ./control-server/src/storage/s3Signe
 COPY control-server/src/shared/hash.js ./control-server/src/shared/hash.js
 COPY control-server/src/training/consentLedger.js ./control-server/src/training/consentLedger.js
 COPY evals/suites ./evals/suites
+# Nachgezogen 02.09.2026 (Zeabur-Log: ERR_MODULE_NOT_FOUND, Dienst pausiert):
+# worker.mjs importiert seit aa07a12b den Brueckenwaechter, und
+# src/evaluation/evalRagContext.js zieht seit feat(rag) control-server/src/rag
+# samt Autopilot-, Record- und Websuche-Modulen nach sich. Lokal aus GENAU
+# diesen COPY-Pfaden zusammengestellt startet der Worker ("listening").
+# Achtung: Zeabur baut aus DIESER Datei (Dockerfile.<dienstname>), nicht aus
+# workers/smejj-training-loop/Dockerfile - beide werden gleich gehalten.
+COPY workers/smejj-brueckenwaechter/brueckenWaechter.js ./workers/smejj-brueckenwaechter/brueckenWaechter.js
+COPY control-server/src/rag ./control-server/src/rag
+COPY control-server/src/autopilots/deepResearchAutopilot.js ./control-server/src/autopilots/deepResearchAutopilot.js
+COPY control-server/src/autopilots/realtimeInternetHarvesterAutopilot.js ./control-server/src/autopilots/realtimeInternetHarvesterAutopilot.js
+COPY control-server/src/admin/recordStore.js ./control-server/src/admin/recordStore.js
+COPY control-server/src/shared/parallelFetch.js ./control-server/src/shared/parallelFetch.js
+COPY src/search ./src/search
 
 # Pflicht-Env zur Laufzeit (alles fail-closed ohne sie — der Dienst laeuft
 # dann nur mit /health und tickt nie):
