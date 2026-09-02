@@ -32,9 +32,9 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 3 | Fehlermeldungen mit Handlung: Klartext statt Code, 401/403 → Anmelden, 402 → Einstellungen, 429 → 20-s-Zähler, 5xx → Erneut versuchen | chat-stream.js | keine | **gebaut, live 02.09. 16:13 UTC** |
 | 4 | Antwort-Leiste auf dem Handy: Kurzwort unter jedem Symbol (Kopieren, Vorlesen, Gut, Schwach, Ändern, Neu, Mehr), Knöpfe bleiben 44 px breit, eine Zeile | chat-actions-woerter.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 02.09. 19:45 UTC** |
 | 5 | Einstellungen → Kachel „Datenschutz & Training": Klartext (nur Fragen, nie Antworten, nur mit Ja, widerrufbar) + Knopf „Zum Schalter" (Konto → Meine Daten, 14 Sprachen) | settings-surface.js, i18n | keine | **gebaut, live 02.09. 17:06 UTC** |
-| 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Sitzung benutzt | browser-pane.js | Start-Lock | Stempel nötig |
-| 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", Umlaute | index.html, i18n | Start-Lock | Skript + Stempel |
-| 8 | Modell-Chips erklären: „smejj 1.0 (Gründlich)" → „Antwortet gründlich (langsamer)"; Tooltip in Klartext | Composer | Start-Lock | Stempel nötig |
+| 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Browser-Sitzung benutzt (sessionStorage) | panel-layout.js (nicht gesperrt) | keine | **gebaut, live 03.09. 21:07 UTC** |
+| 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", „Disabled" → „Aus", „Capabilities" → „Fähigkeiten" (Umlaute seit 8e86530e) | index.html | Start-Lock | **Skript bereit:** `scripts/einmal/deutsch-modellchips-2026-09-03.sh` |
+| 8 | Modell-Chips erklären: Menüpunkte „Schnell — Antwort in Sekunden", „Gründlich — ausführlich, dauert länger", Tooltips am Modell-Knopf und an „Nachdenken" | index.html (Composer) | Start-Lock | **Skript bereit:** dasselbe Skript wie Nr. 7 |
 | 9 | Erste-Schritte-Karten auf der leeren Startseite: Frag etwas, Bild erzeugen, Code schreiben — nur ohne Gespräche, verschwinden mit dem ersten | erste-schritte.js (neu), Haken in chat-actions-menu.js, 14 Sprachen | keine | **gebaut, live 02.09. 20:55 UTC** |
 | 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
 
@@ -102,6 +102,25 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Tests `tests/erste-schritte.test.mjs` 5/5, i18n grün; design-v11 3da01c75/212593ab, Klon ab53531.
 - Live-Beweis im Chrome 20:56 UTC: Block sichtbar nach der Chip-Zeile, „Bild erzeugen“ → Feld „Generiere ein
   Bild von: “ mit Fokus, „Frag etwas“ → Vorlage im Feld, „Ausblenden“ → Block weg, Merker gesetzt.
+
+### Nr. 6 (03.09., 21:07 UTC) — rechtes Panel nur je Sitzung
+- `public/panel-layout.js` (nicht im Start-Lock): `speicherFuer(side)` — rechts sessionStorage, links weiter
+  localStorage. Ein Panel, das der Nutzer in dieser Browser-Sitzung geöffnet hat, überlebt das Neuladen; nach
+  dem Schließen des Browsers startet die App ohne Panel. Unter 900 px wie bisher nie.
+- Tests `tests/panel-rechts-nur-sitzung.test.mjs` 2/2; design-v11 12ff454c, Klon 95051f2.
+- Live-Beweis 21:08 UTC: Modul mit `speicherFuer` geladen; alter Dauer-Merker „1“ öffnet das Panel nicht mehr.
+  Restrisiko: der Chrome-Automat läuft mit 793 px Breite, die Wiederherstellung am breiten Desktop (≥ 900 px)
+  ist nur im Quelltext geprüft.
+
+### Nr. 7 + Nr. 8 — Ein-Klick-Skript für den Betreiber
+- `scripts/einmal/deutsch-modellchips-2026-09-03.sh` mit den Ersetzungen in
+  `deutsch-modellchips-2026-09-03.ersetzungen.cjs` (15 Stellen in index.html): Projects → Projekte (Spur, Ansicht,
+  Überschrift), Workspace → Arbeitsbereich, Disabled → Aus, Local Browser → Lokaler Browser, Capabilities →
+  Fähigkeiten; Modell-Menü: „smejj 1.0 (Standard) — passt sich der Frage an“, „Schnell — Antwort in Sekunden“,
+  „Gründlich — ausführlich, dauert länger“, Tooltips am Modell-Knopf und an „Nachdenken“.
+- Die Knopf-Aufschrift bleibt kurz: sie kommt aus STUFE_LABEL (app.js) bzw. dem data-model-Wert, nicht aus dem
+  Menütext. Kaskade: SW +1, Start-Lock-Stempel, design-v11, Klon, Bauzweig, Live-Beweis auf beiden Domains.
+  Trocken geprüft an einer Kopie der index.html.
 
 ## 4. Regeln für jede weitere Vereinfachung
 

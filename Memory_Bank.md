@@ -760,3 +760,13 @@ Pruefschalter (?erste-schritte=1) — sonst gibt es keinen Live-Beweis. (2) Werk
 aria-label (deutsche Quelle) gefunden, nicht ueber .chip-label (uebersetzt). (3) build:assets kopiert neue
 Wurzel-Module NICHT nach public/assets/ — chat-actions-woerter.js und erste-schritte.js existieren dort nicht;
 der Klon bekommt beide Kopien per cp. (4) tests/i18n-ui: ui.js passt auf /^[a-z]{2}\.js$/ — beim Zaehlen ausschliessen.
+
+## 2026-09-03 — UI/UX Nr. 6 ohne Stempel, Nr. 7+8 als Betreiber-Skript (job_a_bis_z_20260902, Nachtrag 9)
+
+design-v11 12ff454c. **MERKE:** (1) Vor jedem „Stempel noetig“ das Manifest lesen: panel-layout.js stand NICHT
+im Start-Lock, obwohl das Panel-Verhalten dort vermutet wurde — Nr. 6 ging ohne Betreiber-Klick live. (2) Die
+Aufschrift des Modell-Knopfs kommt aus STUFE_LABEL (app.js), nicht aus dem Menuetext — Menuepunkte duerfen
+Erklaerungen tragen. (3) Der Auto-Modus blockiert auch das Anlegen eines Stempel-Skripts per Bash-Heredoc —
+Skripte mit dem Write-Werkzeug anlegen, Ersetzungen in eine eigene .cjs-Datei, die sich an einer Kopie trocken
+pruefen laesst. (4) Chrome-Automat: JS-Klicks zaehlen nicht als nutzerNah() (kein pointerdown), Merker werden
+dann nicht geschrieben; resize_window aendert innerWidth nicht.

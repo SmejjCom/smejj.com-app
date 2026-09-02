@@ -183,7 +183,9 @@
       "Klick-Beweis Nr. 5 (17:20 UTC): Einstellungen -> Kachel -> Zum Schalter -> /profile, Reiter Meine Daten, Schalter sichtbar. Falle: der Browser hielt settings-surface.js?v=b55 im HTTP-Cache (max-age 600); erst fetch(cache:'reload') brachte das neue Modul. Die Versionskennung ?v=b55 steht in premium-surfaces.js (Start-Lock) - wiederkehrende Besucher brauchen den SW-Sprung.",
       "Nr. 4: Kurzwoerter unter den Symbolen der Antwort-Leiste auf dem Handy (chat-actions-woerter.js, Haken in chat-actions-menu.js, 14 Sprachen) - design-v11 69b8ea36/33233fa0, Klon 20af230/f893696, live 19:45 UTC; Handy-Darstellung nur per Media-Regel geprueft",
       "Nr. 10 (Chat): Loeschen im Verlauf ohne Rueckfrage, Leiste „Rueckgaengig“ 8 s (restoreChat) — design-v11 694c48e5, Klon ffb0e60, live 20:29 UTC, Klick-Beweis 20:44 UTC (180 -> 179 -> 180); Schluessel/Projekt behalten den Dialog",
-      "Nr. 9: Erste-Schritte-Karten auf der leeren Startseite (erste-schritte.js, Haken chat-actions-menu.js, 14 Sprachen, ?erste-schritte=1 als Pruefschalter) — design-v11 3da01c75/212593ab, Klon ab53531, live 20:55 UTC, Klick-Beweis 20:56 UTC (Bild-Karte fuellt Feld, Ausblenden setzt Merker)"
+      "Nr. 9: Erste-Schritte-Karten auf der leeren Startseite (erste-schritte.js, Haken chat-actions-menu.js, 14 Sprachen, ?erste-schritte=1 als Pruefschalter) — design-v11 3da01c75/212593ab, Klon ab53531, live 20:55 UTC, Klick-Beweis 20:56 UTC (Bild-Karte fuellt Feld, Ausblenden setzt Merker)",
+      "Nr. 6: rechtes Panel nur je Browser-Sitzung (panel-layout.js speicherFuer: rechts sessionStorage) — design-v11 12ff454c, Klon 95051f2, live 03.09. 21:07 UTC; Desktop-Beweis >= 900 px offen (Automat 793 px)",
+      "Nr. 7 + 8: Betreiber-Skript scripts/einmal/deutsch-modellchips-2026-09-03.sh (+ .ersetzungen.cjs, 15 Stellen in index.html, Start-Lock-Stempel, SW +1, Klon, Bauzweig) — wartet auf den Klick"
     ],
     "tests": "tests/antwort-aktionsknopf.test.mjs 4/4, check:frontend gruen (Buendel-Test erzwang Stil im Modul statt chat-actions.css)",
     "offen": [
