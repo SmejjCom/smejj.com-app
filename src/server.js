@@ -72,7 +72,6 @@ import { createChatSyncRoutes } from "../control-server/src/routes/chatSyncRoute
 // Bilder sprengten MAX_CHAT_BYTES, Videos wurden als toter blob: gespeichert).
 import { createChatMedienRoutes } from "../control-server/src/routes/chatMedienRoutes.js";
 import { createProjektSyncRoutes } from "../control-server/src/routes/projektSyncRoutes.js";
-// Trainings-Speicher-Sonde fuer /api/health (Stufe + Fehlercode, nie Werte) — speicherStand.js.
 import { trainingsSpeicherStand } from "./training/speicherStand.js";
 import { buildChatMessages } from "./agent/conversationHistory.js";
 import { leseUndKuerze } from "./agent/dateiKontext.js";
@@ -365,10 +364,7 @@ async function handleHealth(res) {
     // Ohne diese Anzeige ist "konfiguriert" von "Kontingent aufgebraucht" nicht
     // zu unterscheiden — beides sieht im Chat wie "nichts gefunden" aus.
     suchquelle: keyProviderUsage(process.env),
-    // Einwilligung + Fragen-Erfassung haengen an diesem Speicher; 503 dort war
-    // am 2026-09-02 ohne diese Zeile nicht zu unterscheiden (Konfiguration?
-    // Verweis? 403?). Nie ein Wert, nur Stufe und Code.
-    trainingsSpeicher: await trainingsSpeicherStand(process.env)
+    trainingsSpeicher: await trainingsSpeicherStand(process.env) // Stufe + Code, nie Werte (speicherStand.js)
   });
 }
 
