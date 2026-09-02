@@ -91,6 +91,11 @@
       "datei": "public/ui-modern.css, public/autonomous-coding.css, public/sw.js (v728), public/index.html (start-styles ?v=touch44), assets-Kopien, docs/frontend/start-lock-manifest.json (design-v11 2dea1cca; Frontend 380d46b; Bauzweig 2a8ba76a)",
       "was": "Betriebswache Nr. 42: Claw-Toolbar (38→44 px) und smejjBot-Aktionen (40→44 px); Start-Lock gestempelt; live 16:02 UTC: sw v728 auf beiden Domains, Touch-Messung aller 17 Ansichten „Alle Touch-Ziele eingehalten“",
       "grund": "Betreiber-Regel 44 px, elf Knoepfe massen 42 px"
+    },
+    {
+      "datei": "scripts/testing/measure_web_vitals.mjs, control-server/src/admin/opsAutopilotenListeSchutz.js (Bauzweig 7197c3b1)",
+      "was": "TTFB-Budget 200 → 500 ms (LCP 1,5 s, CLS 0,1, Gewicht 300 KB unveraendert); Beschreibung Nr. 63 nachgezogen",
+      "grund": "Betreiber-Entscheidung 2026-09-02: Messung vom Mac gegen GitHub Pages schwankt (p75 216–878 ms bei LCP 0,6–1,1 s), 200 ms war dauerhaft rot ohne Handlungsmoeglichkeit"
     }
   ],
   "verifikation": [
@@ -105,7 +110,6 @@
     "Wer löscht SMEJJ_LLM_ZHIPU_BASE_URL? Parallelsitzung smejj-com-app-28 angeschrieben (13:20 UTC). Bis zur Antwort: KEIN Skript darf die Variablenliste von smejj-control ganz zurückschreiben; set_training_storage_env.mjs vor dem Schreiben frisch lesen und nur ergänzen.",
     "Groq-Tageskontingent 200.000 Tokens je Modell (Organisation des Zeabur-Schlüssels) ist heute erschöpft — Schnellspur der Brücke fällt bis zum Reset auf den Control-Router (zhipu) zurück; das ist jetzt wieder ein funktionierender Weg.",
     "Zeabur-API-Schlüssel erneuern (cli.yaml 401).",
-    "Nr. 63 Web-Vitals: TTFB-Budget 200 ms wird von GitHub Pages aus dem Netz des Betreibers nicht stabil erreicht (p75 216–878 ms heute); Budget prüfen oder Messung von einem stabilen Ort.",
     "Nr. 42 Betriebswache: Betriebswerte-Teil braucht einen gültigen Zeabur-Schlüssel (cli.yaml 401) — Betreiber erneuert den Token, danach wird die Wache grün (Touch-Teil ist grün)."
   ],
   "quellen": [
