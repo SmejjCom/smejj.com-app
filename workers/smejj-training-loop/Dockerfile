@@ -19,6 +19,10 @@ WORKDIR /app
 # bestehenden relativen Imports in den kopierten Dateien unveraendert funktionieren
 # (gleiches Muster wie workers/maus-engine/Dockerfile).
 COPY --chown=node:node workers/smejj-training-loop ./workers/smejj-training-loop
+# worker.mjs importiert den Brueckenwaechter (seit aa07a12b) - ohne diese Zeile
+# startet der Container nicht (ERR_MODULE_NOT_FOUND, gemessen 02.09.2026 im
+# Zeabur-Log) und Zeabur pausiert den Dienst nach der Absturzschleife.
+COPY --chown=node:node workers/smejj-brueckenwaechter/brueckenWaechter.js ./workers/smejj-brueckenwaechter/brueckenWaechter.js
 COPY --chown=node:node workers/maus-engine/artifact-uploader.mjs ./workers/maus-engine/artifact-uploader.mjs
 COPY --chown=node:node workers/glm-salad/s3.js ./workers/glm-salad/s3.js
 COPY --chown=node:node src/evaluation ./src/evaluation
