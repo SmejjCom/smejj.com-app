@@ -241,7 +241,19 @@ export function resolveChain(profile = "default", env = process.env) {
     else if (name === "custom") chain.push(...expandKeys(customBackendFromEnv(env), keyPool(env.SMEJJ_LLM_API_KEY || env.OPENAI_COMPATIBLE_API_KEY || env.OPENAI_API_KEY, env.SMEJJ_LLM_API_KEYS, env.OPENAI_COMPATIBLE_API_KEYS, env.OPENAI_API_KEYS)));
     else {
       const upper = name.toUpperCase();
-      chain.push(...expandKeys(providerBackendFromEnv(name, env, safeProfile), keyPool(env[`SMEJJ_LLM_${upper}_API_KEY`], env[`SMEJJ_LLM_${upper}_API_KEYS`])));
+      const keys = keyPool(env[`SMEJJ_LLM_${upper}_API_KEY`], env[`SMEJJ_LLM_${upper}_API_KEYS`]);
+      const erst = providerBackendFromEnv(name, env, safeProfile);
+      chain.push(...expandKeys(erst, keys));
+      // Zweiter Versuch beim SELBEN Anbieter mit dessen Standardmodell, wenn das
+      // Profil ein anderes Modell fuehrt. Grund (gemessen 2026-09-02): Groq
+      // deckelt je MODELL 8000 Tokens/Minute. Als zhipu 429 gab, war
+      // openai/gpt-oss-20b (Profil fast) der einzige Rueckfall — und riss das
+      // Minutenlimit allein; gpt-oss-120b antwortete im selben Zeitraum 35-mal.
+      // Die Kette endete darum mit "All model backends failed", Bruecke 503,
+      // Probe-Nutzer Nr. 29 drei Stunden rot. Ein Anbieter mit einem Modell
+      // (zhipu) bekommt keinen zweiten Eintrag — dedupeBackends filtert ohnehin.
+      const zweit = providerBackendFromEnv(name, env, "default");
+      if (erst && zweit && zweit.model !== erst.model) chain.push(...expandKeys(zweit, keys));
     }
   }
   return chain.filter(Boolean);

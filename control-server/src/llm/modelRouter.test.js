@@ -123,3 +123,14 @@ test("custom-Backend: Bestandsverhalten unveraendert", () => {
   assert.equal(c.name, "custom");
   assert.equal(c.baseUrl, "https://x/v1");
 });
+
+test("Groq-Kette bekommt das Standardmodell als zweiten Versuch, wenn das Profil ein anderes Modell fuehrt (429 je Modell, 2026-09-02)", () => {
+  const env = { SMEJJ_LLM_PROVIDER_ORDER: "groq", SMEJJ_LLM_GROQ_API_KEY: "k" };
+  const fast = resolveChain("fast", env);
+  assert.deepEqual(fast.map((b) => b.model), ["openai/gpt-oss-20b", "openai/gpt-oss-120b"]);
+  // Gleiches Modell fuer Profil und Standard: kein zweiter Eintrag (kein doppelter Aufruf).
+  assert.deepEqual(resolveChain("default", env).map((b) => b.model), ["openai/gpt-oss-120b"]);
+  // Ein Anbieter mit nur einem Modell bleibt bei einem Eintrag.
+  const zhipu = resolveChain("fast", { SMEJJ_LLM_PROVIDER_ORDER: "zhipu", SMEJJ_LLM_ZHIPU_API_KEY: "k" });
+  assert.equal(zhipu.length, 1);
+});
