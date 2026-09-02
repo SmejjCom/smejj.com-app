@@ -6,9 +6,10 @@ import { readFileSync } from "node:fs";
 const quelle = readFileSync(new URL("../public/code-feld-unten.js", import.meta.url), "utf8");
 const m = await import("data:text/javascript;base64," + Buffer.from(quelle.split("\nif (typeof document")[0]).toString("base64"));
 
-test("Regeln: Flaeche flex 1 ohne feste Hoehe, Feld mit 14 px bzw. safe-area unten, Spezifitaet 1,3,0", () => {
+test("Regeln: Flaeche flex 1 ohne feste Hoehe, Leiste auf der Kante (nur safe-area), Spezifitaet 1,3,0", () => {
   assert.match(m.REGELN, /#code \.codeflaeche\.codeflaeche\.codeflaeche\{flex:1 1 auto;height:auto;max-height:none;min-height:0\}/);
-  assert.match(m.REGELN, /#code \.codeunten\.codeunten\{padding-bottom:max\(14px,env\(safe-area-inset-bottom\)\)\}/);
+  assert.match(m.REGELN, /#code \.codeunten\.codeunten\{padding-bottom:env\(safe-area-inset-bottom,0px\)\}/);
+  assert.match(m.REGELN, /#code \.codefeld\.codefeld\{padding-bottom:0\}/);
   assert.ok(!/100d?vh - 96px/.test(m.REGELN), "keine geratene Hoehe mehr");
 });
 
