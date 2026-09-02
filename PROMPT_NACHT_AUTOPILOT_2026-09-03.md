@@ -36,11 +36,11 @@ Du arbeitest ab jetzt vollständig autonom an smejj.com. Der Betreiber (Wof Kada
 - UI/UX-Programm Nr. 1–15 live: Knopf statt Tipp, 44-px-Ziele, Fehler mit Handlung, Kurzwörter unter den Symbolen (Handy), Datenschutz-Kachel, rechtes Panel nie von selbst (Wurzel: Arbeitsfläche), Deutsch durchgängig, Modell-Chips erklärt, Erste-Schritte-Karten, Rückgängig beim Chat-Löschen, Code-Feld auf der Kante, Verlauf scrollt ans Ende, kein gespeicherter Wartetext, Handy-Werkzeugzeile eine Zeile, PWA-Vollbild-Meta (SW v729 auf beiden Domains).
 - Kompakt-Programm Stufe 1+2: Ansichten, Einstellungen, Verlauf, Chat-Feld — Abstände halbiert, Ziele und Schrift unverändert.
 - Fragen-Erfassung fürs Training end-zu-end live (Einwilligung → capture 201), Trainingsplan smejj 1.1 freigegeben (Qwen3-4B-Basis, 10 USD/Monat, Salad hinter Budget-Gate; unter 3.000 Paaren kein Lauf).
-- Letzte Commits: design-v11 f3bb510b, Klon b58dba8, Bauzweig 4dcf9b00.
+- Letzte Commits: design-v11 f65f0503 (Inventar), Klon b58dba8, Bauzweig 4dcf9b00.
 
 ## 4. Offen — Prioritäten dieser Nacht (in dieser Reihenfolge)
 
-1. **Inventar** aller Funktionen (öffentliche Seiten, App-Ansichten, KI-Funktionen, Browser, Voice, Admin, Autopiloten, Abo) als `docs/architecture/INVENTAR_2026-09-03.md`. Erst danach große Änderungen.
+1. **Inventar liegt vor** (`docs/architecture/INVENTAR_2026-09-03.md`, 23:15 UTC, Commit f65f0503): nur lesen, die mit „?" markierten Zuordnungen klären (z. B. `#smejjClaw` ohne Modul, Autopiloten-Nummern 41–62 gegen die Ampeln abgleichen). Keine zweite Bestandsaufnahme — sofort Phase 2.
 2. **P0/P1 finden** und mit Live-Beweis markieren. Bekannte Kandidaten: Antworten, die nie ankamen (zwei Betreiber-Chats endeten mit „smejj denkt nach…" — Ursache in der Brücke/Router prüfen: 429/503, Schnellspur, `/api/fehler`); Chat-Verlauf nach Wiederherstellung; Stopp nach 5+ s; Verbindung unterbrochen.
 3. **Voice (höchste Priorität):** Ablauf Mikrofon starten → sprechen → stoppen/pausieren → verarbeiten → antworten → fortsetzen als eindeutige Zustandsmaschine IDLE → LISTENING → PROCESSING → RESPONDING → IDLE mit Pause/Stop/Cancel/Retry/Error; UI zeigt immer, was gerade passiert. Fallen aus der Memory_Bank: iOS hat nie RecognitionCtor (Ohr-Solo zuerst), ctx.resume gegen suspended, zwei Stromfamilien beim Stopp. Tests automatisiert + im Chrome.
 4. **Mobile:** alle Ansichten bei 375/390/430 px aus dem Quelltext rechnen (keine Überbreite, keine Ziele unter 44 px, keine Überlappung, safe-area oben/unten); Landscape; Tastatur (`interactive-widget=resizes-content` ist gesetzt).
