@@ -37,7 +37,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 8 | Modell-Chips erklären: Menüpunkte „Schnell — Antwort in Sekunden", „Gründlich — ausführlich, dauert länger", Tooltips am Modell-Knopf und an „Nachdenken" | deutsch-klartext.js (Laufzeit); Markup per Skript wie Nr. 7 | Start-Lock (nur Markup) | **live zur Laufzeit 03.09. 21:27 UTC** |
 | 9 | Erste-Schritte-Karten auf der leeren Startseite: Frag etwas, Bild erzeugen, Code schreiben — nur ohne Gespräche, verschwinden mit dem ersten | erste-schritte.js (neu), Haken in chat-actions-menu.js, 14 Sprachen | keine | **gebaut, live 02.09. 20:55 UTC** |
 | 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
-| 11 | Code-Bereich: Schreibfeld am unteren Rand — Fläche füllt die Ansicht (flex 1) statt calc(100dvh − 96px), 14 px bzw. safe-area unten | code-feld-unten.js (neu), Haken in chat-actions-menu.js | keine (mobil-composer.css liegt im Bündel) | **gebaut, live 03.09. 21:30 UTC** |
+| 11 | Code-Bereich: Schreibfeld am unteren Rand — Fläche füllt die Ansicht (flex 1) statt calc(100dvh − 96px); Leiste auf der unteren Kante, nur safe-area bleibt | code-feld-unten.js (neu), Haken in chat-actions-menu.js | keine (mobil-composer.css liegt im Bündel) | **gebaut, live 03.09. 21:30 UTC** |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
 
@@ -135,7 +135,8 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
   (.view-chrome), die im Code-Bereich ausgeblendet ist.
 - Profi-Bauart wie ChatGPT/Claude/Codex: das Feld ist eine eigene Schicht am Rand, der Verlauf scrollt in seinem
   Container (#codeLogHalter, gab es schon). `public/code-feld-unten.js`: Fläche `flex:1 1 auto`, keine geratene
-  Höhe, `.codeunten` mit `max(14px, env(safe-area-inset-bottom))` unten. Robust gegen Kopfleisten am Handy,
+  Höhe. Nachtrag 21:38 UTC (Betreiber: „Leiste soll die untere Kante treffen, alles kompakt“): `.codeunten`
+  und `.codefeld` ohne Rand unten, nur `env(safe-area-inset-bottom)` bleibt (design-v11 1da3dee1, Klon 208e6ff). Robust gegen Kopfleisten am Handy,
   weil die Fläche den Rest der Flex-Spalte nimmt statt vom Fenster zu rechnen.
 - Tests `tests/code-feld-unten.test.mjs` 3/3; design-v11 b9fab9d2, Klon 5dc86a3.
 - Live-Beweis im Chrome 21:30 UTC: Fläche 4 → 757 px (Fensterhöhe 757), Feld 14 px über dem Rand statt 126 px;
