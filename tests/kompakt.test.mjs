@@ -10,6 +10,7 @@ test("Regeln halbieren die gemessenen Abstaende: Ansicht-Gap 20->10, Kopf 12+10-
   assert.match(m.REGELN, /body \.view\.is-active\.is-active\{gap:10px;padding-top:24px\}/);
   assert.match(m.REGELN, /:has\(> \.view-chrome\)\{padding-top:42px\}/, "Ansichten mit Kopfleiste bleiben unter der Leiste");
   assert.match(m.REGELN, /\.view-header\.view-header\{padding-bottom:6px;margin-bottom:4px\}/);
+  assert.match(m.REGELN, /body #settings\.view\.is-active\{padding-top:28px\}/, "Einstellungen 72 -> 28 (id-Regel im Buendel)");
   assert.match(m.REGELN, /\.settings-panel\.settings-panel\{padding:14px\}/);
   assert.match(m.REGELN, /\.ch-gruppe\.ch-gruppe\{margin-top:12px\}/);
 });
