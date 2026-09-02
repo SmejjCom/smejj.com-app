@@ -780,3 +780,12 @@ die Karte „gelaufen“ gewaehlt wird — vor jedem Nachtrag Terminal lesen (re
 der Klick dreimal ausbleibt, die Wirkung zur Laufzeit liefern (deutsch-klartext.js) und das Markup-Skript
 liegen lassen. (3) mobil-composer.css ist KEINE eigene Datei mehr im Browser — sie steckt in start-styles.css
 (Start-Buendel); neue Regeln kommen aus einem Modul mit `<style id>` und drei Klassen fuer die Spezifitaet.
+
+## 2026-09-03 — Kompakt-Programm Stufe 1: Abstaende halbiert, Buendel-id schlaegt Klassenregel (job_a_bis_z_20260902, Nachtrag 11)
+
+design-v11 a0748acd/2f248ca6. **MERKE:** (1) Erst messen (Kinder je Ansicht mit top/margin/padding), dann
+Regeln — die 60 px unter jeder Kopfzeile waren vier kleine Abstaende (12+10+20+18), keiner allein auffaellig.
+(2) `body .view.is-active.is-active` (0,3,1) verliert gegen `#settings.view.is-active` (1,2,0): fuer Ansichten
+mit id-Regeln im Buendel braucht die Modul-Regel die id. (3) Kompakt heisst Abstaende, nie Ziele oder Schrift —
+der Test verbietet font-size/height/width im Regelwerk. (4) GitHub Pages baut nach mehreren Pushes in Folge
+verzoegert (>10 min); last-modified im Header zeigt den ausgelieferten Stand.

@@ -142,6 +142,27 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 - Live-Beweis im Chrome 21:30 UTC: Fläche 4 → 757 px (Fensterhöhe 757), Feld 14 px über dem Rand statt 126 px;
   im selben Lauf Nr. 7+8 bewiesen: Spur „Projekte“, Menü „Schnell — Antwort in Sekunden“ …, Tooltips gesetzt.
 
+## 3b. Kompakt-Programm (Betreiber 03.09.: „die ganze App kompakt“)
+
+Gemessen im Chrome (Desktop, 669 px hoch), Abstände vor → nach `public/kompakt.js` (Stufe 1, live 21:44 UTC):
+
+| Ansicht | Vorher | Nachher | Regel |
+|---|---|---|---|
+| Verlauf: Kopfzeile bis Liste | Inhalt ab 123 px (60 px Luft) | ab 97 px | Ansicht-Gap 20 → 10, Kopf 12+10 → 6+4, output 18 → 10 |
+| Verlauf: vor jeder Gruppe („Gestern“) | 24 px | 12 px | `.ch-gruppe` margin-top |
+| KI-Modelle, Dateien: Kopfzeile bis Inhalt | ab 206 px | ab 180 px | dieselben Ansicht-Regeln |
+| Einstellungen: Rand oben | 72 px | 28 px | id-Regel `#settings.view.is-active` (Bündel-Regel hatte höhere Spezifität) |
+| Einstellungen: Kopf, Schale, Kacheln | 18 / 24 / 24 px | 10 / 12 / 14 px | settings-header, -shell, -panel |
+| Code: Leiste bis Fensterkante | 126 px, dann 18 px | 0 px | code-feld-unten.js (Nr. 11) |
+| Startseite | Feld mittig, 312 px Luft unten | unverändert | bewusst wie ChatGPT: leere Seite = Einladung; Kompakt-Stufe 2 wäre „Feld unten wie im Code-Bereich“ |
+
+Regeln: nur Ränder und Abstände. Ziele bleiben 44 px, Schrift bleibt groß (Betreiber-Regel), keine Größen im Modul
+(Test `tests/kompakt.test.mjs` prüft das). Stil aus dem Modul, weil alle betroffenen Regeln in start-styles.css
+(Start-Bündel) liegen; Haken in chat-actions-menu.js. design-v11 a0748acd + 2f248ca6, Klon 1bac92f + 71a4cb4.
+
+Offen für Stufe 2: Chat-Nachrichten (Abstand zwischen Antworten, Antwort-Leiste), Start-Feld unten,
+Konto/Profil-Seite, Handy-Maße (der Automat misst nicht unter 606 px — Beweis nur mit iPhone-Screenshot).
+
 ## 4. Regeln für jede weitere Vereinfachung
 
 1. Erst messen (Handy 375 px + Desktop, Anfänger-Blick), dann bauen, dann live beweisen.
