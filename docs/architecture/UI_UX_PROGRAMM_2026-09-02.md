@@ -40,6 +40,8 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 11 | Code-Bereich: Schreibfeld am unteren Rand — Fläche füllt die Ansicht (flex 1) statt calc(100dvh − 96px); Leiste auf der unteren Kante, nur safe-area bleibt | code-feld-unten.js (neu), Haken in chat-actions-menu.js | keine (mobil-composer.css liegt im Bündel) | **gebaut, live 03.09. 21:30 UTC** |
 | 12 | Verlauf steht nach dem Öffnen eines Chats ganz unten (letzte Antwort mit Leiste sofort sichtbar); nie im Strom, nie gegen eigenes Scrollen | verlauf-unten.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 03.09. 22:26 UTC** |
 | 13 | Wartetext „smejj denkt nach…“ wird nie gespeichert; gespeicherter Altbestand wird beim Öffnen übersprungen (zwei Betreiber-Chats endeten damit) | chat-store.js (readEntries, renderEntriesInto) | keine | **gebaut, live 03.09. 22:32 UTC** |
+| 14 | Handy: Werkzeugzeile des Schreibfelds bleibt eine Zeile (Sprachwelle neben dem Mikrofon); Pillen schrumpfen, Symbol-Knöpfe 44 px | composer-zeile.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 03.09. 22:43 UTC** (iPhone-Beweis nach SW-Sprung) |
+| 15 | PWA Vollbild: Statusleiste transparent über dem Rahmen (black-translucent), Leistenfarbe dunkel (#101113), Manifest-Farben dunkel | index.html, manifest.webmanifest | Start-Lock | **in der Kaskade** `deutsch-modellchips-2026-09-03.sh` (ein Klick liefert 7, 8, 15 und den SW-Sprung) |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
 
@@ -167,6 +169,18 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
   Wartetext ohne Rohtext übersprungen (Altbestand). Der Nutzer sieht seine Frage ohne Antwort und fragt neu.
   Tests 2/2; design-v11 66f80b65, Klon f21cb41. chat-store.js steht jetzt bei 800 Zeilen — die nächste Änderung
   muss auslagern.
+
+### Nr. 14 + 15 (22:43 UTC) — iPhone-Screenshot des Betreiber
+- Befund: Sprachwelle in der dritten Zeile des Schreibfelds; Statusleiste als dunkler Balken, Rahmen nicht bis oben.
+- Nr. 14, Ursache in start-styles.css: unter 560 px ist `.prompt-actions` `display:contents`, die Knöpfe liegen direkt
+  im wrappenden `.prompt-glass`. Bei 375 px: 44 + 90 + 105 + 44 + 44 + 4 × 6 = 351 px auf 327 px Fläche. Neues
+  Modul `public/composer-zeile.js`: Pillen 20/22 vw mit Ellipse, Symbol-Knöpfe fest 44 px, unter 390 px nur das
+  Symbol von „Nachdenken“ → 313 px. Tests 2/2; design-v11 1b2afe29, Klon 71d00d0.
+- Nr. 15: `apple-mobile-web-app-status-bar-style` stand auf `default`, `theme-color` auf hellem #f7f7f4 — iOS malte
+  darum einen eigenen Balken. In der Kaskade: `black-translucent`, `#101113` (html-Hintergrund), Manifest-Farben
+  dunkel; `viewport-fit=cover` und `env(safe-area-inset-*)` am body gibt es schon.
+- Wichtig fürs iPhone: die PWA hält chat-actions-menu.js im Precache. Alle heutigen Laufzeit-Module (Kompakt, Nr. 6,
+  7, 8, 11, 12, 14) erreichen die installierte App erst mit dem Service-Worker-Sprung — den macht dieselbe Kaskade.
 
 ## 3b. Kompakt-Programm (Betreiber 03.09.: „die ganze App kompakt“)
 

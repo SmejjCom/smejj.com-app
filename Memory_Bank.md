@@ -765,3 +765,12 @@ design-v11 66f80b65. **MERKE:** readEntries() nahm jeden .entry-Knoten mit — a
 „smejj denkt nach…“ (data-thinking), wenn der Nutzer die Seite vor der Antwort verliess. Zwei Betreiber-Chats
 zeigten das dauerhaft. Regel: Speichern filtert Platzhalter, Wiederherstellen ueberspringt Altbestand ohne
 Rohtext. chat-store.js steht bei 800 Zeilen — ab jetzt nur noch auslagern.
+
+## 2026-09-03 — iPhone: Welle in Zeile drei, Statusleiste als Balken (job_a_bis_z_20260902, Nachtrag 15)
+
+design-v11 1b2afe29. **MERKE:** (1) Unter 560 px ist .prompt-actions `display:contents` — die Knoepfe leben im
+wrappenden .prompt-glass; wer dort Breiten aendert, muss die Summe bei 375 px rechnen (Flaeche 327 px), sonst
+wandert der letzte Knopf in die naechste Zeile. (2) Vollbild-PWA auf iOS = `apple-mobile-web-app-status-bar-style
+black-translucent` + dunkle `theme-color` + safe-area-Innenabstand; `display: fullscreen` im Manifest kann iOS
+nicht. (3) Die installierte PWA laedt Start-Module aus dem Precache — Laufzeit-Module, die an einem precached
+Startmodul haengen, erreichen das iPhone erst mit dem SW-Sprung. Beweise am Desktop-Chrome sagen darueber nichts.
