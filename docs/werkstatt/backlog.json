@@ -1,21 +1,13 @@
 {
-  "gesammeltAm": "2026-08-30T20:00:53.021Z",
+  "gesammeltAm": "2026-09-01T20:01:02.765Z",
   "aufgaben": [
-    {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "dsgvo-fristen",
-      "titel": "Ausfall: DSGVO-Fristen-Wache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: DSGVO: 1 DSGVO-Vorgang/Vorgänge über der Frist (dsgvo_5EuyuQark7kl) — Bußgeld-Risiko, sofort bearbeiten; Karte in der Tagesmappe-Ablage.",
-      "seit": "2026-08-30T10:08:04.394Z"
-    },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
       "betrifft": "synthetic-user-watchdog",
       "titel": "Ausfall: Probe-Nutzer",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v714, https://api.smejj.com traegt smejj",
-      "seit": "2026-08-30T11:00:33.173Z"
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v721, https://api.smejj.com traegt smejj",
+      "seit": "2026-08-31T23:00:24.834Z"
     },
     {
       "stufe": 2,
@@ -34,12 +26,12 @@
       "seit": null
     },
     {
-      "stufe": 4,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "qualitaetsmessung",
-      "titel": "Verspaetung: Qualitäts-Prüfer",
-      "befund": "Verspätet: der nächste Lauf hätte schon kommen müssen, die Schonfrist läuft noch.",
-      "seit": "2026-08-30T16:21:43.884Z"
+      "stufe": 2,
+      "quelle": "CVE-Waechter",
+      "betrifft": "bibliothek:transformers",
+      "titel": "transformers 5.5.0: 1 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-xrqw-3rrv-vx5w. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
+      "seit": null
     }
   ],
   "stummeQuellen": [
