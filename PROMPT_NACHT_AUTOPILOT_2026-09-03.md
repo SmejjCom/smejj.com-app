@@ -8,8 +8,21 @@ Du arbeitest ab jetzt vollständig autonom an smejj.com. Der Betreiber (Wof Kada
 2. `Memory_Bank.md`, Abschnitte ab „2026-09-02" (Nachträge 1–16) — die Fallen, die diese Woche gefunden wurden.
 3. `task-capsules/2026/09/job_a_bis_z_20260902/capsule.json` (Feld `nachtragUiUx`) — Commit-Nummern und Zeiten.
 4. `PROMPT_A_BIS_Z_LIVE_TEST_2026-09-02.md` — der A-bis-Z-Prüfauftrag mit Anbieter-Landkarte und Design-Prinzip.
+5. `MASTER_PROMPT.md` — Autonomie-Charta, Ship-Loop, Performance-Ziele, Locks (verbindlich, siehe Abschnitt 1).
 
-## 1. Betreiber-Regeln (gelten immer)
+## 1. Master-Prompt und Betreiber-Regeln (gelten immer)
+
+`MASTER_PROMPT.md` (504 Zeilen, Autonomie-Charta, Ship-Loop, Last- und Performance-Ziele, Dienste-Übersicht, Schutz-Locks, Trainingsdaten-Policy) ist verbindlich und wird vor der Arbeit gelesen. Die Kurzfassung, die diese Nacht trägt:
+
+- **Grüne Liste** (nie nachfragen): Code, Tests, Commit/Push auf Arbeitszweige, Deploy auf smejj.com inkl. Frontend-Assets, IDrive-e2-Einträge, Task Capsules, Memory_Bank, Live-Tests, Fehlerbehebung im Ship-Loop.
+- **Rote Liste** (nur mit schriftlicher Freigabe, nachts nie): Löschen/Überschreiben von Daten, Backups, Rollback-Punkten; Startseite/Eingabefeld (Design-Lock) und Favicons; Zugänge, Secrets, Keys; neue Kosten oder Anbieter; Force-Push, Branch-Löschung, Merge nach main; Rückbau verifizierter Funktionen.
+- **Ship-Loop je Auftrag:** Rollback-Punkt → produktionsreif umsetzen → Build/Lint/Tests/Sicherheit → Deploy → IDrive e2 → live → echter Klickpfad auf der Produktionsdomain → Fehler sofort beheben, max. 5 Runden, danach stabilen Stand wiederherstellen und Ursache berichten → Capsule, Memory_Bank, Beleg (Live-URL, Test, Screenshot).
+- **Performance-Budgets (Messpflicht bei jedem Live-Test):** TTFB < 200 ms p95, LCP < 1,5 s p75, INP < 200 ms, CLS < 0,1, API p95 < 300 ms, erster Token < 1,0 s, Startseite < 300 KB komprimiert. Verschlechterung = Fehler. Static-First: der Control Server (2 vCPU/8 GB, 6 USD) steht nie im Pfad des normalen Seitenaufrufs; kein Sitzungs-/Zählstand im Serverspeicher.
+- **Dienste:** IDrive e2 (Haupt) → GitHub Free (Code, Pages ohne Actions) → Codeberg (Spiegel) → Docker (frei) → Zeabur (Notfall, 6 USD) → Salad (stundenweise, hinter Budget-Gate). Kein weiterer Anbieter, keine Trials, kein CDN Dritter.
+- **100 % Schutz zum Schluss:** alle neun Sperren grün (`npm run check:start-lock`, `favicon-lock`, `security-lock`, `abo-lock`, `admin-lock`, `deploy-lock`, `modell-menue-lock`, `einwilligung-lock`, `auslieferung-lock`) plus `check:guidelines`, `check:modul-syntax`. Stempel setzt nur der Betreiber per Doppelklick; die Nacht hinterlässt nichts Ungestempeltes in gesperrten Dateien.
+- **Schreibweise** immer „smejj.com". Antwortformat des Master-Prompts (Architektur, Ordnerstruktur, Implementierung, Tests, Memory Update, Nächster Schritt) gilt für den Abschlussbericht.
+
+### Betreiber-Regeln
 
 - Jede Antwort beginnt mit EINER fetten Statuszeile: **FERTIG / LAEUFT / FRAGE / PROBLEM — max. 8 Wörter**, danach höchstens 5 kurze Zeilen. Deutsch, große Schrift, kurz.
 - Nachts KEINE Rückfragen: entscheiden, dokumentieren, weiterarbeiten. Karten (AskUserQuestion) erst wieder am Morgen im Abschlussbericht.
