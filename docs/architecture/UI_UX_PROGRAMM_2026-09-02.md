@@ -39,6 +39,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 10 | Rückgängig bei Löschen als 8-Sekunden-Leiste statt Bestätigungsdialog — Chat gebaut; Schlüssel/Projekt folgen | chat-history-view.js | keine | **Chat gebaut, live 02.09. 20:44 UTC** |
 | 11 | Code-Bereich: Schreibfeld am unteren Rand — Fläche füllt die Ansicht (flex 1) statt calc(100dvh − 96px); Leiste auf der unteren Kante, nur safe-area bleibt | code-feld-unten.js (neu), Haken in chat-actions-menu.js | keine (mobil-composer.css liegt im Bündel) | **gebaut, live 03.09. 21:30 UTC** |
 | 12 | Verlauf steht nach dem Öffnen eines Chats ganz unten (letzte Antwort mit Leiste sofort sichtbar); nie im Strom, nie gegen eigenes Scrollen | verlauf-unten.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 03.09. 22:26 UTC** |
+| 13 | Wartetext „smejj denkt nach…“ wird nie gespeichert; gespeicherter Altbestand wird beim Öffnen übersprungen (zwei Betreiber-Chats endeten damit) | chat-store.js (readEntries, renderEntriesInto) | keine | **gebaut, live 03.09. 22:32 UTC** |
 
 ## 3. Was heute gebaut wurde (Nr. 1 und 2)
 
@@ -158,6 +159,14 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
   selbst gescrollt hat (Rad/Touch). Tests 2/2; design-v11 ae06f8ba, Klon fda66bd.
 - Live-Beweis 22:28 UTC: zwei lange Chats (2.225 und 1.888 px Verlauf) stehen nach dem Öffnen auf Rest 0, die letzte
   Antwort-Leiste ist sichtbar. Nebenbefund: zwei Chats des Betreibers enden mit gespeichertem „smejj denkt nach…“.
+
+### Nr. 13 (22:32 UTC) — kein gespeicherter Wartetext
+- Beim Scroll-Beweis fielen zwei Chats des Betreibers auf, deren letzte Antwort dauerhaft „smejj denkt nach…“ war:
+  die Seite wurde verlassen, bevor die Antwort kam, und `readEntries()` speicherte den Platzhalter-Knoten mit.
+- `public/chat-store.js`: Knoten mit `data-thinking` fallen beim Speichern weg; beim Öffnen wird ein gespeicherter
+  Wartetext ohne Rohtext übersprungen (Altbestand). Der Nutzer sieht seine Frage ohne Antwort und fragt neu.
+  Tests 2/2; design-v11 66f80b65, Klon f21cb41. chat-store.js steht jetzt bei 800 Zeilen — die nächste Änderung
+  muss auslagern.
 
 ## 3b. Kompakt-Programm (Betreiber 03.09.: „die ganze App kompakt“)
 

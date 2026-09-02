@@ -758,3 +758,10 @@ design-v11 3a370366/ae06f8ba. **MERKE:** (1) 20-px-Luft zwischen Kopfzeile, Feld
 `gap` der Flex-Spalte (.home-feed), nicht ein Rand — Rand-Regeln an den Kindern addieren sich nur dazu
 (gemessen: 20 -> 32). Erst Raster, dann Raender. (2) Kein Modul scrollte den wiederhergestellten Verlauf
 ans Ende; ein Beobachter auf #startLog mit Nutzer-Fenster (Rad/Touch 1,5 s) und Strom-Sperre reicht.
+
+## 2026-09-03 — Wartetext im Verlauf gespeichert (job_a_bis_z_20260902, Nachtrag 14)
+
+design-v11 66f80b65. **MERKE:** readEntries() nahm jeden .entry-Knoten mit — auch den Platzhalter
+„smejj denkt nach…“ (data-thinking), wenn der Nutzer die Seite vor der Antwort verliess. Zwei Betreiber-Chats
+zeigten das dauerhaft. Regel: Speichern filtert Platzhalter, Wiederherstellen ueberspringt Altbestand ohne
+Rohtext. chat-store.js steht bei 800 Zeilen — ab jetzt nur noch auslagern.
