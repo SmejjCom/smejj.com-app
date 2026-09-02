@@ -83,6 +83,7 @@ test("letzteFrage: ohne Nutzernachricht leer, Anhang-Objekte werden nicht zu Tex
   const m = await ladeModul();
   assert.equal(m.letzteFrage({ messages: [{ role: "assistant", content: "nur Antwort" }] }), "");
   assert.equal(m.letzteFrage({}), "");
+  assert.equal(m.letzteFrage({ task: "genauer:  Was  kostet smejj.com? " }), "Was kostet smejj.com?");
   assert.equal(m.letzteFrage({ messages: [{ role: "user", text: "Feld text statt content" }] }), "Feld text statt content");
 });
 

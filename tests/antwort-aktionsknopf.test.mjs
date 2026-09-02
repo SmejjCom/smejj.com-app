@@ -35,6 +35,8 @@ test("letzteNutzerfrage nimmt die letzte user-Nachricht, content oder text", asy
   const modul = await import("data:text/javascript;base64," + Buffer.from(quelle.slice(start, ende)).toString("base64"));
   assert.equal(modul.letzteNutzerfrage({ messages: [{ role: "user", content: "a" }, { role: "assistant", content: "b" }, { role: "user", text: " c " }] }), "c");
   assert.equal(modul.letzteNutzerfrage({}), "");
+  // Die App-Form: task statt messages (live 16:50 UTC: der Knopf schickte sonst nur "genauer:").
+  assert.equal(modul.letzteNutzerfrage({ task: "  Nenne drei Obstsorten, kurz. ", history: [] }), "Nenne drei Obstsorten, kurz.");
 });
 
 test("Nr. 3: Fehlercodes werden Klartext, und jeder Status bekommt eine Handlung", async () => {
