@@ -29,3 +29,13 @@ test("der Beobachter beruehrt nur das Log — die Flaeche haengt im Panel", () =
   assert.match(quelle, /document\.getElementById\("browserPanel"\)/);
   assert.doesNotMatch(quelle, /log\.append\(f\)/);
 });
+
+test("Nr. 6: von selbst oeffnet die Flaeche nur, was gerade gestroemt ist — nie beim Wiederherstellen, nie am Handy", async () => {
+  const m = await import("../public/arbeitsflaeche.js");
+  assert.equal(m.darfAutoOeffnen({ laeuft: false, ende: -Infinity, jetzt: 1e6, breite: 1280 }), false, "wiederhergestellter Chat");
+  assert.equal(m.darfAutoOeffnen({ laeuft: true, breite: 1280 }), true, "Strom laeuft");
+  assert.equal(m.darfAutoOeffnen({ laeuft: false, ende: 1e6 - 2000, jetzt: 1e6, breite: 1280 }), true, "kurz nach Stromende");
+  assert.equal(m.darfAutoOeffnen({ laeuft: false, ende: 1e6 - 9000, jetzt: 1e6, breite: 1280 }), false, "Nachlauf vorbei");
+  assert.equal(m.darfAutoOeffnen({ laeuft: true, breite: 606 }), false, "Handy/schmal nie");
+  assert.match(quelle, /if \(darfAutoOeffnen\(\)\) oeffneRechts\(entry\);/);
+});
