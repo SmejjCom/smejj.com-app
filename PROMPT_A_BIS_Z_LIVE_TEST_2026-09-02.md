@@ -67,6 +67,14 @@ Start-Lock (Startseite + Eingabefeld, 34 Dateien), Favicon-Lock, Security-Lock, 
 – Admin-Konsole: alle 28 Bereiche laden, Ampeln ehrlich, Tagesmappe
 – Logs, Task Capsules, Benchmarks, Rollback-Daten
 
+## Oberstes Design-Prinzip (Betreiber-Auftrag 02.09.)
+Komplexität im Hintergrund, Einfachheit im Vordergrund. Jede Funktion muss ein neuer Nutzer ohne Anleitung sofort verstehen. Sieht etwas kompliziert aus oder braucht unnötige Schritte, prüfe in dieser Reihenfolge: vereinfachen, automatisieren, KI hilft, Schritt streichen, weniger Klicks. Ziel ist nicht „funktioniert", sondern besser, einfacher, schneller, intelligenter und professioneller als ChatGPT, Claude, Gemini, Kimi und ZCode — ohne zu kopieren.
+– kinderleicht bedienbar, klare Navigation, wichtige Funktionen in wenigen Klicks, Fehler vermeiden statt melden, Rückgängig bei wichtigen Aktionen
+– schnelle Suche, klare Lade-/Erfolgs-/Warn-/Fehlerzustände, stabil bei schlechter Verbindung, Datenschutz verständlich
+– Barrierefrei: 44-px-Klickflächen, Kontrast, Tastaturbedienung, große Schrift
+– jede Veröffentlichung aus Sicht Anfänger, Normalnutzer und Power-User testen, auf Handy, Tablet, Desktop, PWA, Touch, Maus, Tastatur
+– Pflicht-Check vor jeder Veröffentlichung: Einfachheit → Verständlichkeit → Benutzerfreundlichkeit → Geschwindigkeit → Responsive → Mobile → Barrierefreiheit → Sicherheit → Datenschutz → Stabilität → Fehlerfreiheit → Performance → professionelles Bild
+
 ## Design-Pflicht
 – UI modern, kompakt, sauber, viereckig, wenig Farbe, ruhig
 – alle Abstände, Icons, Farben, Schriften, Header, Footer, Navigationen konsistent
