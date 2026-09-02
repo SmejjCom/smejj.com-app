@@ -46,3 +46,6 @@ docs/mockups/*.html
 
 # Python-Bytecode-Cache der Worker — wird bei jedem Lauf neu erzeugt, gehoert nie ins Git
 __pycache__/
+
+# npm-Lock ist ein Fremdkoerper: das Repo fuehrt pnpm-lock.yaml (Capsule Nr. 54, 24.08.)
+/package-lock.json
