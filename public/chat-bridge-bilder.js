@@ -26,7 +26,9 @@ import { meldeAktion } from "./chat-bridge-evolution.js";
 // Derselbe Groq-Zugang, der smejj 1.0 heute traegt — fuer den SVG-Weg.
 const BILDER_API_KEY = process.env.SMEJJ_LLM_GROQ_API_KEY || "";
 const BILDER_BASE_URL = String(process.env.SMEJJ_LLM_GROQ_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, "");
-const BILDER_MODEL = process.env.SMEJJ_BILDER_MODEL || process.env.SMEJJ_LLM_GROQ_MODEL || "llama-3.3-70b-versatile";
+// llama-3.3-70b-versatile ist bei Groq seit August 2026 abgeschaltet (404);
+// gleicher Ersatz wie in chat-bridge.js (Groq-Abkuendigung vom 2026-06-17).
+const BILDER_MODEL = process.env.SMEJJ_BILDER_MODEL || process.env.SMEJJ_LLM_GROQ_MODEL || "openai/gpt-oss-120b";
 // Der eigene Bild-Maler & Video-Maler (Zeabur-intern, keine Public Domain).
 const BILDER_WORKER_URL = String(process.env.SMEJJ_BILDER_WORKER_URL || "http://smejj-bild-maler.zeabur.internal:8080").replace(/\/+$/, "");
 const BILDER_WORKER_KEY = process.env.SMEJJ_BILDER_WORKER_KEY || "";
