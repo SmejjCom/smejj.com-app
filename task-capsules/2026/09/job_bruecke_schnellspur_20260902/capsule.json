@@ -5,16 +5,58 @@
   "title": "Probe-Nutzer rot 02:17–05:34 UTC: Chat-Brücke 503, weil beide Anbieter 429 lieferten und die Groq-Schnellspur seit August auf ein abgeschaltetes Modell zeigte — Ersatz gpt-oss-120b vorbereitet (Brücke v147, Ein-Klick-Kaskade)",
   "ziel": "Den im Werkstatt-Backlog gemeldeten Ausfall des Probe-Nutzers (Nr. 29) messen, die Ursache belegen und beheben.",
   "befunde": [
-    { "id": "P0-bruecke-503", "was": "Probe-Nutzer meldete von 02:17 bis 05:34 UTC „chat_inference_flow: Brücke antwortete HTTP 503“. Nachgestellt: POST /api/agent an smejj-chat-bridge.zeabur.app mit gültigem Sitzungstoken → 503 „Model backend is not configured.“ Kette: Brücke → streamViaControl → Control /api/agent → modelRouter → zhipu glm-5.2 http_429, groq openai/gpt-oss-20b http_429, zhipu http_429 → 502 → Brücke fällt auf streamModel zurück, dort ist SMEJJ_LLM_BASE_URL/API_KEY/MODEL nicht gesetzt → 503. Control-Health: glm-5-2 status=degraded, consecutiveFailures=9, reason=http_429. Um 05:34 UTC wieder 7/7 Schritte grün, ohne Eingriff.", "status": "erholt, Ursache der 429 nicht belegbar" },
-    { "id": "P1-schnellspur-tot", "was": "Die Groq-Schnellspur der Brücke (GROQ_MODEL-Vorgabe llama-3.3-70b-versatile) ist seit August 2026 tot: Groq hat das Modell am 2026-06-17 abgekündigt, die Modellliste des Kontos führt es nicht mehr, ein Aufruf endet mit 404 model_not_found. streamFastLane gibt dann still false zurück, jede Anfrage läuft über den Control-Router — live bewiesen: stufe=schnell antwortete mit x-smejj-bridge: multi-model-router statt chat-fast-lane. Damit fehlte in der 429-Phase der zweite Weg. Der Control-Router selbst war bereits am 2026-08-22 auf gpt-oss umgestellt (tests/model-router.test.mjs).", "status": "Fix vorbereitet, Deploy braucht Betreiber-Klick" },
-    { "id": "P2-zeabur-schluessel", "was": "Der Zeabur-Schlüssel aus ~/.config/zeabur/cli.yaml (am 2026-08-14 noch gültig) antwortet jetzt mit HTTP 401. Damit sind Laufzeit-Logs (runtimeLogs), Env-Änderungen und Neustarts per API nicht möglich; die 429-Körper von zhipu/groq konnten deshalb nicht gelesen werden. Der Verbrauchs-Speicher des Control-Servers beginnt mit dem Neustart 05:23 UTC neu und trägt die Phase nicht.", "status": "offen — neuer Zeabur-Schlüssel nötig" },
-    { "id": "P3-buendel-alt", "was": "Der ursprüngliche Backlog-Punkt (sw.js smejj.com v721 vs. api.smejj.com) war bereits am 02.09. 01:27 UTC geschlossen; live tragen beide Domains smejj-shell-v727.", "status": "erledigt (Vortag)" }
+    {
+      "id": "P0-bruecke-503",
+      "was": "Probe-Nutzer meldete von 02:17 bis 05:34 UTC „chat_inference_flow: Brücke antwortete HTTP 503“. Nachgestellt: POST /api/agent an smejj-chat-bridge.zeabur.app mit gültigem Sitzungstoken → 503 „Model backend is not configured.“ Kette: Brücke → streamViaControl → Control /api/agent → modelRouter → zhipu glm-5.2 http_429, groq openai/gpt-oss-20b http_429, zhipu http_429 → 502 → Brücke fällt auf streamModel zurück, dort ist SMEJJ_LLM_BASE_URL/API_KEY/MODEL nicht gesetzt → 503. Control-Health: glm-5-2 status=degraded, consecutiveFailures=9, reason=http_429. Um 05:34 UTC wieder 7/7 Schritte grün, ohne Eingriff.",
+      "status": "erholt, Ursache der 429 nicht belegbar"
+    },
+    {
+      "id": "P1-schnellspur-tot",
+      "was": "Die Groq-Schnellspur der Brücke (GROQ_MODEL-Vorgabe llama-3.3-70b-versatile) ist seit August 2026 tot: Groq hat das Modell am 2026-06-17 abgekündigt, die Modellliste des Kontos führt es nicht mehr, ein Aufruf endet mit 404 model_not_found. streamFastLane gibt dann still false zurück, jede Anfrage läuft über den Control-Router — live bewiesen: stufe=schnell antwortete mit x-smejj-bridge: multi-model-router statt chat-fast-lane. Damit fehlte in der 429-Phase der zweite Weg. Der Control-Router selbst war bereits am 2026-08-22 auf gpt-oss umgestellt (tests/model-router.test.mjs).",
+      "status": "Fix vorbereitet, Deploy braucht Betreiber-Klick"
+    },
+    {
+      "id": "P2-zeabur-schluessel",
+      "was": "Der Zeabur-Schlüssel aus ~/.config/zeabur/cli.yaml (am 2026-08-14 noch gültig) antwortet jetzt mit HTTP 401. Damit sind Laufzeit-Logs (runtimeLogs), Env-Änderungen und Neustarts per API nicht möglich; die 429-Körper von zhipu/groq konnten deshalb nicht gelesen werden. Der Verbrauchs-Speicher des Control-Servers beginnt mit dem Neustart 05:23 UTC neu und trägt die Phase nicht.",
+      "status": "offen — neuer Zeabur-Schlüssel nötig"
+    },
+    {
+      "id": "P3-buendel-alt",
+      "was": "Der ursprüngliche Backlog-Punkt (sw.js smejj.com v721 vs. api.smejj.com) war bereits am 02.09. 01:27 UTC geschlossen; live tragen beide Domains smejj-shell-v727.",
+      "status": "erledigt (Vortag)"
+    },
+    {
+      "id": "P0-zhipu-seit-neubau-tot",
+      "was": "Seit dem Control-Neubau 05:40:58 UTC (Parallelsitzung, Commit 72a0f7cd: Zeabur-Variable SMEJJ_LLM_ZHIPU_BASE_URL auf die Coding-Adresse gesetzt) hat KEINE zhipu-Anfrage mehr geantwortet: /api/admin/ops/verbrauch zählt 40 Anfragen, alle über groq (35× gpt-oss-120b, 5× gpt-oss-20b); Laufzeit-Gesundheit glm-5-2 consecutiveFailures 225, reason http_429. Zwischen 05:33 und 05:38 UTC (vor dem Neubau) antwortete zhipu nachweislich. gpt-oss-20b liefert zeitweise 429 (8000 Tokens/Minute je Modell), dann endet die Kette fast: zhipu → 20b → zhipu mit 502 und die Brücke mit 503. Vom Mac aus antworten beide Anbieter 200.",
+      "status": "offen — Zeabur-Variable/Logs prüfen (Parallelsitzung smejj-com-app-28 angeschrieben)"
+    }
   ],
   "aenderungen": [
-    { "datei": "scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.patch", "was": "public/chat-bridge.js: GROQ_MODEL-Vorgabe openai/gpt-oss-120b, reasoning_effort low nur für gpt-oss auf der Schnellspur, BRIDGE_VERSION 20260902-v147-groq-gpt-oss", "grund": "Datei liegt unter dem Security-Lock, der Auto-Modus blockiert --freeze; Patch wird von der Kaskade angewendet" },
-    { "datei": "public/chat-bridge-bilder.js", "was": "BILDER_MODEL-Vorgabe openai/gpt-oss-120b (nicht gesperrt, direkt committet)", "grund": "gleiche tote Vorgabe im SVG-Bild-Weg" },
-    { "datei": "scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.sh", "was": "Kaskade: Patch, Tests (95 grün), assets, Security-Lock-Stempel, Commit, Bündel v147 ins Frontend-Repo, Neustart (API oder Portal), Live-Beweis Schnellspur", "grund": "Betreiber will fertige Arbeit per Klick" },
-    { "datei": "docs/werkstatt/BACKLOG.md, backlog.json", "was": "Sammler frisch gegen die Live-Ampel gelaufen", "grund": "Backlog auf Ist-Stand" }
+    {
+      "datei": "scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.patch",
+      "was": "public/chat-bridge.js: GROQ_MODEL-Vorgabe openai/gpt-oss-120b, reasoning_effort low nur für gpt-oss auf der Schnellspur, BRIDGE_VERSION 20260902-v147-groq-gpt-oss",
+      "grund": "Datei liegt unter dem Security-Lock, der Auto-Modus blockiert --freeze; Patch wird von der Kaskade angewendet"
+    },
+    {
+      "datei": "public/chat-bridge-bilder.js",
+      "was": "BILDER_MODEL-Vorgabe openai/gpt-oss-120b (nicht gesperrt, direkt committet)",
+      "grund": "gleiche tote Vorgabe im SVG-Bild-Weg"
+    },
+    {
+      "datei": "scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.sh",
+      "was": "Kaskade: Patch, Tests (95 grün), assets, Security-Lock-Stempel, Commit, Bündel v147 ins Frontend-Repo, Neustart (API oder Portal), Live-Beweis Schnellspur",
+      "grund": "Betreiber will fertige Arbeit per Klick"
+    },
+    {
+      "datei": "docs/werkstatt/BACKLOG.md, backlog.json",
+      "was": "Sammler frisch gegen die Live-Ampel gelaufen",
+      "grund": "Backlog auf Ist-Stand"
+    },
+    {
+      "datei": "control-server/src/llm/modelRouter.js + modelRouter.test.js (Bauzweig, Branch fix/router-groq-zweitmodell-20260902, Commit d015526c im Worktree /tmp/claude-501/bauzweig)",
+      "was": "resolveChain: zweiter Versuch beim selben Anbieter mit dessen Standardmodell, wenn das Profil ein anderes führt (fast: 20b → 120b); Test 13/13",
+      "grund": "ein 429 je Modell darf die Kette nicht mehr allein beenden"
+    }
   ],
   "verifikation": [
     "Lokal: Patch angewendet → check:modul-syntax 236 Module OK, Brücken-Tests 95/95 grün, Bündel 828.004 Byte mit BRIDGE_VERSION v147 gebaut; danach Patch zurückgenommen, Security-Lock wieder grün.",
@@ -25,7 +67,9 @@
     "Kaskade scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.sh vom Betreiber starten (stempelt Security-Lock, pusht Bündel, braucht Restart-Klick im Zeabur-Portal, wenn kein gültiger Schlüssel).",
     "Neuen Zeabur-API-Schlüssel in ~/.config/zeabur/cli.yaml (Feld token) ablegen — ohne ihn keine Logs, keine Env-Änderung, kein Control-Neubau per Skript.",
     "Ursache der 429-Phase bleibt unbelegt: zhipu Coding-Paket (Fenster/Concurrency?) und groq 8000 TPM. Mit Schlüssel: runtimeLogs 02:00–05:40 UTC lesen.",
-    "Control-Router: groq-Rückfall gpt-oss-20b hat 8000 Tokens/Minute — ein größerer Prompt reißt das Limit allein; Kette um qwen3.6-27b oder gpt-oss-120b erweitern (Bauzweig, braucht Neubau)."
+    "Control-Router: groq-Rückfall gpt-oss-20b hat 8000 Tokens/Minute — ein größerer Prompt reißt das Limit allein; Kette um qwen3.6-27b oder gpt-oss-120b erweitern (Bauzweig, braucht Neubau).",
+    "Router-Fix d015526c in den Bauzweig pushen (Zeabur baut neu) — Push ist Produktions-Deploy, braucht Betreiber oder Sitzung mit Freigabe.",
+    "Kaskade v147 lief NICHT (Betreiber-Klick meldete „lief“, aber kein Commit, Brücke weiterhin v146): Befehl erneut ausführen."
   ],
   "quellen": [
     "https://console.groq.com/docs/deprecations",
