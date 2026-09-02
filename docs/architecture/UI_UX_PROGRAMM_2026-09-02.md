@@ -65,6 +65,9 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
   sendet die Frage als `task`, nicht als `messages`. Behoben in chat-stream.js und
   frage-erfassung.js (4435aa53); Layout: kein Zeilenumbruch, Platz unter dem Knopf, damit die
   Symbolleiste der Antwort nicht darüberliegt.
+- Klick-Beweis Nr. 5 im Chrome 17:20 UTC: Kachel → „Zum Schalter“ → Konto, Reiter „Meine Daten“, Schalter sichtbar.
+  Falle: Module mit Versionskennung (`?v=b55` in premium-surfaces.js, Start-Lock) bleiben bis zu 10 min im
+  HTTP-Cache; wiederkehrende Besucher sehen neue Einstellungs-Texte erst nach dem Service-Worker-Sprung.
 - Klick-Beweis im Chrome 16:50 UTC: lokale Antwort → Knopf 44 px → Klick → Serverantwort mit
   drei ausführlichen Sätzen.
 
