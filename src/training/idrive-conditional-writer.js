@@ -556,10 +556,23 @@ function validateAttestorPrefix(prefix) {
   if (String(prefix) !== "jobs/") throw writerError("training_attestor_prefix_invalid");
 }
 
+// Verweis-Form: Ein Trainings-Wert darf auf eine ANDERE Variable zeigen,
+// z. B. IDRIVE_E2_TRAINING_ACCESS_KEY=${IDRIVE_E2_ACCESS_KEY}. Zeabur loest
+// diese Schreibweise nicht auf (gemessen 2026-09-02: der Ledger sah den
+// Wortlaut "${...}" und scheiterte am Speicher). Der Betreiber hat so
+// ausdruecklich benannt, welcher Zugang gelten soll — genau das wird
+// uebernommen. Ohne Verweis bleibt es beim eigenen Wert; stillschweigend
+// auf allgemeine Zugaenge zurueckzufallen gibt es weiterhin nicht.
+const REFERENCE = /^\$\{([A-Z][A-Z0-9_]*)\}$/;
+
 function required(env, name) {
-  const value = String(env?.[name] || "").trim();
-  if (!value) throw writerError(`training_idrive_config_missing:${name}`);
-  return value;
+  const raw = String(env?.[name] || "").trim();
+  if (!raw) throw writerError(`training_idrive_config_missing:${name}`);
+  const reference = REFERENCE.exec(raw);
+  if (!reference) return raw;
+  const target = String(env?.[reference[1]] || "").trim();
+  if (!target) throw writerError(`training_idrive_config_reference_missing:${name}->${reference[1]}`);
+  return target;
 }
 
 function integerSetting(value, fallback, min, max) {

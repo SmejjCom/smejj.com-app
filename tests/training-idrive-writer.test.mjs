@@ -702,3 +702,30 @@ function assertValidSigV4(url, method, headers) {
   const expectedSignature = crypto.createHmac("sha256", kSigning).update(stringToSign).digest("hex");
   assert.equal(actualSignature, expectedSignature);
 }
+
+test("Trainings-Werte duerfen per ${NAME} auf eine andere Variable zeigen; leerer Verweis bleibt fail-closed", () => {
+  const env = {
+    IDRIVE_E2_ENDPOINT: "https://s3.us-west-2.idrivee2.com",
+    IDRIVE_E2_ACCESS_KEY: "AKIAHAUPT",
+    IDRIVE_E2_SECRET_KEY: "geheim-haupt",
+    IDRIVE_E2_TRAINING_ENDPOINT: "${IDRIVE_E2_ENDPOINT}",
+    IDRIVE_E2_TRAINING_REGION: "us-west-2",
+    IDRIVE_E2_TRAINING_ACCESS_KEY: "${IDRIVE_E2_ACCESS_KEY}",
+    IDRIVE_E2_TRAINING_SECRET_KEY: "${IDRIVE_E2_SECRET_KEY}",
+    IDRIVE_E2_TRAINING_BUCKET: "smejj-app",
+    IDRIVE_E2_TRAINING_ALLOWED_PREFIXES: "training/consents/"
+  };
+  const config = readTrainingIdriveConfig(env);
+  assert.equal(config.endpoint, "https://s3.us-west-2.idrivee2.com");
+  assert.equal(config.accessKey, "AKIAHAUPT");
+  assert.equal(config.secretKey, "geheim-haupt");
+  assert.throws(
+    () => readTrainingIdriveConfig({ ...env, IDRIVE_E2_TRAINING_SECRET_KEY: "${IDRIVE_E2_FEHLT}" }),
+    /training_idrive_config_reference_missing:IDRIVE_E2_TRAINING_SECRET_KEY->IDRIVE_E2_FEHLT/
+  );
+  // Ohne Verweis: kein stiller Rueckgriff auf allgemeine Zugaenge.
+  assert.throws(
+    () => readTrainingIdriveConfig({ ...env, IDRIVE_E2_TRAINING_ACCESS_KEY: "" }),
+    /training_idrive_config_missing:IDRIVE_E2_TRAINING_ACCESS_KEY/
+  );
+});
