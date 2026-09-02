@@ -673,7 +673,10 @@ zhipu trotzdem 429 (8 in Folge); lokal antwortet dieselbe Adresse 200. Verdacht:
 oder Coding-Paket-Kontingent erschöpft. BELEGT 13:08 UTC (Router loggt jetzt Anbieter-Fehlertexte, b4715ba0):
 zhipu 1113 „no resource package“ trotz Coding-Adresse, groq „tokens per day: Limit 200000, Used 196882/199552“
 → die Schlüssel auf Zeabur sind ANDERE als die in env.local (die antworten 200). Betreiber muss die lokalen
-Schlüssel im Portal eintragen (Assistent darf keine Schlüssel in Felder tippen).
+Schlüssel im Portal eintragen — FALSCH: Router-Logzeile mit Adresse (b07c6b4e) zeigte api.z.ai/api/paas/v4 statt
+Coding-Adresse: die 12:47 angelegte Variable war um 13:20 wieder GELÖSCHT (irgendein Prozess schreibt die ganze
+Variablenliste zurück — Verdacht set_training_storage_env.mjs der Parallelsitzung). 13:21 erneut angelegt, Redeploy
+13:38:56 → zhipu:glm-5.2 antwortet (391), GLM ready. Schlüssel waren richtig; Groq-Tageskontingent bleibt erschöpft.
 (3) groq gpt-oss-20b hat 8000 Tokens/Minute: als einziger Rückfall im Router reißt ein großer Prompt
 das Limit allein.
 

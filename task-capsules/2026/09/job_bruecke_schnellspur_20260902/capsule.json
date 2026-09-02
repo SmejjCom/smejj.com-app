@@ -44,6 +44,11 @@
       "id": "P0-URSACHE-BELEGT",
       "was": "Router loggt seit b4715ba0 (Neubau 13:06 UTC) den Anbieter-Fehlertext. Laufzeit-Log 13:08 UTC: zhipu glm-5.2 http_429 {code 1113 „Insufficient balance or no resource package“} — TROTZ Coding-Adresse. groq gpt-oss-20b http_429 „tokens per day (TPD): Limit 200000, Used 196882“, gpt-oss-120b „Used 199552“ (Organisation org_01kxtmhzzsej4byqpm5ca4ymbb, service tier on_demand). Vom Mac aus antworten beide Anbieter mit den Schlüsseln aus ~/.config/smejj.com/env.local 200 (zhipu Coding-Adresse, groq mit freiem Minutenkontingent). Folgerung: Die auf Zeabur hinterlegten SMEJJ_LLM_ZHIPU_API_KEY und SMEJJ_LLM_GROQ_API_KEY sind ANDERE Schlüssel als die lokalen — der Zhipu-Schlüssel dort hat kein Coding-Paket, der Groq-Schlüssel dort ist die Organisation mit erschöpftem Tageskontingent (Reset täglich).",
       "status": "Ursache belegt — Behebung nur durch den Betreiber (Schlüssel eintragen)"
+    },
+    {
+      "id": "P0-GELOEST-variable-wurde-geloescht",
+      "was": "Router-Logzeile mit Adresse (Bauzweig b07c6b4e, 13:18 UTC) bewies: der Server rief https://api.z.ai/api/paas/v4 (Registry-Standard) und open.bigmodel.cn (Katalog-Standard) — SMEJJ_LLM_ZHIPU_BASE_URL war im Container NICHT gesetzt, obwohl 12:47 UTC angelegt: um 13:20 UTC fehlte sie erneut in der Variablenliste. Die Schlüssel auf Zeabur sind also dieselben wie lokal (Zhipu 1113 kam nur von der falschen Adresse); der Groq-Tageskontingent-Befund bleibt. Irgendein Prozess schreibt die komplette Variablenliste zurück (Verdacht: Parallelsitzung mit scripts/deploy/set_training_storage_env.mjs, „gelesen, ergänzt, ganz zurückgeschrieben“ — mit veraltetem Lesestand fällt jede zwischenzeitlich neue Variable weg; Memory: updateEnvironmentVariable ERSETZT alles). 13:21 UTC Variable erneut angelegt, Redeploy 13:38:56 UTC → zhipu:glm-5.2 antwortet 391 in 5–7 s, GLM ready.",
+      "status": "gelöst — Wache nötig, damit die Variable nicht wieder verschwindet"
     }
   ],
   "aenderungen": [
@@ -86,9 +91,10 @@
     "Router-Fix d015526c per Push in den Bauzweig, Zeabur-Neubau 09:04:12 UTC; erster Agent-Aufruf danach 200 über groq:gpt-oss-120b (x-smejj-model-fallback: true), zweiter 502 (alle vier Versuche 429 — auch 120b) → Groq-Schlüssel des Control ist im Minutenlimit."
   ],
   "offen": [
-    "BETREIBER: Im Zeabur-Portal bei smejj-control (Variable, Stift-Symbol) SMEJJ_LLM_ZHIPU_API_KEY und SMEJJ_LLM_GROQ_API_KEY auf die Werte aus ~/.config/smejj.com/env.local setzen (diese Schlüssel antworten nachweislich), dann Redeploy. Dasselbe für smejj-chat-bridge (SMEJJ_LLM_GROQ_API_KEY) und Restart. Der Assistent darf keine Schlüssel in Felder eintragen.",
-    "Groq-Tageskontingent 200.000 Tokens je Modell ist bis zum Reset erschöpft; bis dahin antwortet der Chat nicht (zhipu 1113, groq TPD).",
-    "Neuen Zeabur-API-Schlüssel ablegen (cli.yaml 401), damit Variablen künftig per Skript gehen."
+    "Wer löscht SMEJJ_LLM_ZHIPU_BASE_URL? Parallelsitzung smejj-com-app-28 angeschrieben (13:20 UTC). Bis zur Antwort: KEIN Skript darf die Variablenliste von smejj-control ganz zurückschreiben; set_training_storage_env.mjs vor dem Schreiben frisch lesen und nur ergänzen.",
+    "Vorschlag Wächter: Nr. 62 Modell-Katalog-Wache oder eine neue Umgebungs-Wache prüft je Neustart, dass SMEJJ_LLM_ZHIPU_BASE_URL die Coding-Adresse trägt (aus /api/health lesbar machen, ohne Geheimnis).",
+    "Groq-Tageskontingent 200.000 Tokens je Modell (Organisation des Zeabur-Schlüssels) ist heute erschöpft — Schnellspur der Brücke fällt bis zum Reset auf den Control-Router (zhipu) zurück; das ist jetzt wieder ein funktionierender Weg.",
+    "Zeabur-API-Schlüssel erneuern (cli.yaml 401)."
   ],
   "quellen": [
     "https://console.groq.com/docs/deprecations",
