@@ -462,6 +462,11 @@ export async function executeWithFallback(chain, messages, {
         error: `http_${response.status}`
       });
       markModelRuntimeFailure(backend, `http_${response.status}`);
+      // Den Fehlertext des Anbieters ins Laufzeit-Log (gekuerzt, nie den
+      // Schluessel). Grund (2026-09-02): zhipu antwortete stundenlang 429, und
+      // "http_429" allein sagt nicht, ob es Kontingent (1113), Takt (1302) oder
+      // etwas Drittes ist — die Diagnose blieb blind, obwohl das Log lesbar war.
+      await protokolliereAnbieterFehler(backend, response);
     } catch (error) {
       const failure = error?.name === "AbortError" ? "timeout" : "network_error";
       attempts.push({
@@ -476,6 +481,16 @@ export async function executeWithFallback(chain, messages, {
     }
   }
   return { ok: false, attempts };
+}
+
+async function protokolliereAnbieterFehler(backend, response) {
+  if (typeof response?.text !== "function") return;
+  try {
+    const text = String(await response.text()).replace(/\s+/g, " ").slice(0, 200);
+    console.warn(`[anbieter] ${backend.name} ${backend.model} http_${response.status} ${text}`);
+  } catch {
+    // Ein unlesbarer Fehlerkoerper darf die Kette nicht anhalten.
+  }
 }
 
 function dedupeBackends(backends) {
