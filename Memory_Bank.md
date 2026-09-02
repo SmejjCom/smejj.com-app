@@ -737,3 +737,11 @@ liest `body.task` (app.js) UND `body.messages` (Brücke) — sonst schickt ein K
 Es gibt keinen Knopf mit data-view="profile"; die Konto-Ansicht erreicht man in der App per
 `history.pushState("/profile")` + `PopStateEvent` (restoreViewFromUrl). Einstellungs-Texte gehen
 durch t() — neue Schlüssel in alle 14 i18n-Dateien, sonst reißt tests/i18n-ui.test.mjs.
+
+## 2026-09-02 — UI/UX Nr. 4 live: Woerter unter den Symbolen ohne Bruch der Ein-Zeilen-Regel (job_a_bis_z_20260902, Nachtrag 6)
+
+design-v11 69b8ea36/33233fa0. **MERKE:** (1) Ein Modul, das beim Start wirken soll, haengt an einem Start-Modul
+(chat-actions-menu.js), nicht an chat-stream.js, das erst beim ersten Senden laedt. (2) Module mit
+Versionskennung (?v=4, ?v=b55) bleiben bis 10 min im HTTP-Cache; zum Beweis fetch(cache:'reload'), sonst
+prueft man das alte Modul. (3) Neue t()-Schluessel brauchen ihr Modul im Korpus von tests/i18n-ui.test.mjs,
+sonst gilt der Schluessel als verwaist.

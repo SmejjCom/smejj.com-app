@@ -30,7 +30,7 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
 | 1 | Ein Klick statt Tipp: „Gründlicher antworten" nach lokalen Antworten, „Erneut versuchen" bei Verbindungsfehler | chat-stream.js | keine | **gebaut, live 02.09.** |
 | 2 | Handy: alle Ziele der Probier-Zeile 44 px | willkommen.html | keine | **gebaut, live 02.09.** |
 | 3 | Fehlermeldungen mit Handlung: Klartext statt Code, 401/403 → Anmelden, 402 → Einstellungen, 429 → 20-s-Zähler, 5xx → Erneut versuchen | chat-stream.js | keine | **gebaut, live 02.09. 16:13 UTC** |
-| 4 | Antwort-Leiste auf Handy mit sichtbaren Wörtern statt nur Symbolen (Kopieren, Vorlesen, Hilfreich) | chat-actions.js | keine | offen |
+| 4 | Antwort-Leiste auf dem Handy: Kurzwort unter jedem Symbol (Kopieren, Vorlesen, Gut, Schwach, Ändern, Neu, Mehr), Knöpfe bleiben 44 px breit, eine Zeile | chat-actions-woerter.js (neu), Haken in chat-actions-menu.js | keine | **gebaut, live 02.09. 19:45 UTC** |
 | 5 | Einstellungen → Kachel „Datenschutz & Training": Klartext (nur Fragen, nie Antworten, nur mit Ja, widerrufbar) + Knopf „Zum Schalter" (Konto → Meine Daten, 14 Sprachen) | settings-surface.js, i18n | keine | **gebaut, live 02.09. 17:06 UTC** |
 | 6 | Rechtes Panel auf Handy nie automatisch offen; Desktop: nur wenn in dieser Sitzung benutzt | browser-pane.js | Start-Lock | Stempel nötig |
 | 7 | Deutsch durchgängig: „Projects" → „Projekte", „Workspace" → „Arbeitsbereich", Umlaute | index.html, i18n | Start-Lock | Skript + Stempel |
@@ -70,6 +70,17 @@ mit einer Handlung, Startseite unter 300 KB, LCP unter 1,5 s.
   HTTP-Cache; wiederkehrende Besucher sehen neue Einstellungs-Texte erst nach dem Service-Worker-Sprung.
 - Klick-Beweis im Chrome 16:50 UTC: lokale Antwort → Knopf 44 px → Klick → Serverantwort mit
   drei ausführlichen Sätzen.
+
+### Nr. 4 (19:45 UTC)
+- Neues Modul `public/chat-actions-woerter.js`: beobachtet #startLog, setzt unter jedes Symbol der Leiste ein
+  Kurzwort (Spalte), Stil aus dem Modul, nur unter 600 px sichtbar. Die Betreiber-Regel vom 30.08. („alle
+  Aktionen in einer Zeile“) bleibt: Knöpfe 44 px breit, die Zeile wird höher, nie breiter.
+- Eigenes Modul, weil chat-actions.js bei 799 Zeilen steht und chat-actions.css im Start-Bündel liegt. Der
+  Haken sitzt in chat-actions-menu.js (lädt beim Start), chat-stream.js kommt erst beim ersten Senden.
+- Zwei Wörter neu in 14 Sprachen („Vorlesen“, „Ändern“); i18n-Korpus im Test ergänzt. Tests 4/4, i18n 17/17.
+- Live-Beweis 19:45 UTC (Desktop): Modul geladen, 12 Knöpfe, Wörter Mehr/Kopieren/Vorlesen/Gut/Schwach im DOM,
+  auf dem Desktop unsichtbar. Restrisiko: Handy-Darstellung nur per Media-Regel im Quelltext geprüft,
+  nicht auf echtem Gerät (In-App-Browser ist nicht angemeldet, Chrome-Automat skaliert nicht).
 
 ## 4. Regeln für jede weitere Vereinfachung
 
