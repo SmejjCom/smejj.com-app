@@ -162,14 +162,17 @@ Gemessen im Chrome (Desktop, 669 px hoch), Abstände vor → nach `public/kompak
 | Einstellungen: Rand oben | 72 px | 28 px | id-Regel `#settings.view.is-active` (Bündel-Regel hatte höhere Spezifität) |
 | Einstellungen: Kopf, Schale, Kacheln | 18 / 24 / 24 px | 10 / 12 / 14 px | settings-header, -shell, -panel |
 | Code: Leiste bis Fensterkante | 126 px, dann 18 px | 0 px | code-feld-unten.js (Nr. 11) |
-| Startseite | Feld mittig, 312 px Luft unten | unverändert | bewusst wie ChatGPT: leere Seite = Einladung; Kompakt-Stufe 2 wäre „Feld unten wie im Code-Bereich“ |
+| Startseite leer: Kopfzeile → Feld → Chips | 20 / 20 px | 12 / 12 px | Stufe 2 (22:17 UTC): Raster-Abstand `.home-feed` gap 20 → 12 |
+| Chat offen: Schreibfeld bis Fensterkante | 6 px, Polster 9 px | 0 px (nur safe-area), Polster 6 px, Feld 110 → 104 px | Stufe 2: `.prompt-glass` |
+| Chat: Verlauf-Innenrand | 6 / 10 px | 4 / 6 px | Stufe 2: `#startLog` |
+| Startseite leer, Feld mittig | 312 px Luft unten | unverändert | bewusst wie ChatGPT: leere Seite = Einladung |
 
 Regeln: nur Ränder und Abstände. Ziele bleiben 44 px, Schrift bleibt groß (Betreiber-Regel), keine Größen im Modul
 (Test `tests/kompakt.test.mjs` prüft das). Stil aus dem Modul, weil alle betroffenen Regeln in start-styles.css
 (Start-Bündel) liegen; Haken in chat-actions-menu.js. design-v11 a0748acd + 2f248ca6, Klon 1bac92f + 71a4cb4 (Pages-Bau fehlgeschlagen, neu angestoßen mit aacbe00, live 22:00 UTC).
 
-Offen für Stufe 2: Chat-Nachrichten (Abstand zwischen Antworten, Antwort-Leiste), Start-Feld unten,
-Konto/Profil-Seite, Handy-Maße (der Automat misst nicht unter 606 px — Beweis nur mit iPhone-Screenshot).
+Stufe 2 (Chat) live 22:17 UTC: design-v11 f9e4dbc0 + 3a370366, Klon f32d119 + 30e6222. Nachrichten selbst waren schon
+dicht (Einträge 6 px, Lücke 5 px). Offen für Stufe 3: Konto/Profil-Seite, Handy-Maße (der Automat misst nicht unter 606 px — Beweis nur mit iPhone-Screenshot).
 
 ## 4. Regeln für jede weitere Vereinfachung
 
