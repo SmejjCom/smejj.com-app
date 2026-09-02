@@ -134,5 +134,12 @@
     "befund": "Tiefe Spur (Nachdenken) und Control-Reserve antworteten 502: Zhipu HTTP 429 Code 1113 (Insufficient balance). Der Betreiber hatte das GLM Coding Plan Monatspaket (18 USD) gebucht; es gilt NUR an der Coding-Adresse https://api.z.ai/api/coding/paas/v4, die Standardadresse /api/paas/v4 prueft das leere Pay-as-you-go-Guthaben. Direkt sondiert: Coding-Adresse + glm-5.2 = 200.",
     "loesung": "SMEJJ_LLM_ZHIPU_BASE_URL war auf Zeabur nicht gesetzt (51 Variablen, Code-Default = Standardadresse). Ueber das Zeabur-Portal (Variable, Add, Einzelwert, KEIN Raw-Editor) gesetzt und per Redeploy neu gestartet; Zeabur-API-Token in ~/.config/zeabur/cli.yaml ist abgelaufen (401). Ergebnis 05:33 UTC: glm runtime ready, /api/chat streamt mit x-smejj-model-backend zhipu:glm-5.2 (Antwort-Modell glm-5.3 laut Coding-Plan).",
     "offen": "Zeabur-API-Token erneuern (Betreiber, Zugangs-Lock); Groq-Reserve bleibt Gratis-Limit 8.000 Tokens/min."
+  },
+  "nachtragTraining": {
+    "datum": "2026-09-02",
+    "freigabe": "Betreiber: alle vier Punkte des Trainingsplans smejj 1.1",
+    "gebaut": "public/ai/frage-erfassung.js + Haken in chat-stream.js (design-v11 626f33b0, Klon 964c011), Test tests/frage-erfassung.test.mjs 6/6; Plan docs/architecture/SMEJJ_1_1_TRAININGSPLAN_2026-09-02.md; Ein-Klick scripts/einmal/sw-bump-2026-09-02b.sh",
+    "befund": "Messlauf misst die Schnellspur (Groq gpt-oss, 62 %), tiefe Spur GLM-5.2 = 97 %; Einwilligungs-Ledger 503 wegen fehlender IDRIVE_E2_TRAINING_*-Werte auf Zeabur; Auto-Modus blockierte das Setzen von SMEJJ_TRAINING_CAPTURE_ENABLED im Portal",
+    "offen": "7 Zeabur-Werte (Betreiber), SW-Bump-Skript (Betreiber), Stufe 0 Schnellspur mit Projektwissen (Brücke, Security-Lock)"
   }
 }

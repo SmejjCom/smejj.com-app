@@ -60,6 +60,24 @@ müssen aus erlaubter Quelle kommen — vom Betreiber gebilligt/umgeschrieben od
 Hausmodell (Qwen3-4B, Apache-2.0) mit Projektwissen erzeugt. Offen: Zeabur-Variable
 `SMEJJ_TRAINING_CAPTURE_ENABLED=YES` (Auto-Modus blockiert den Klick — Betreiber setzt sie
 im Portal: smejj-control → Variable → Add → Save → Redeploy).
+**Befund 02.09., 06:45 UTC — der Ledger kann nicht antworten:** `GET /api/training/consent/decision`
+und der Erfassungsversuch enden mit 503, weil auf Zeabur die sechs Speicherwerte des
+Trainings-Schreibers fehlen (seit den Env-Löschungen vom 14.08.). Ohne sie ist keine
+Einwilligung erteilbar und keine Frage speicherbar — fail-closed, wie gebaut. **Sieben Werte
+setzt der Betreiber im Portal (Variable → Add, je Einzelwert, dann Redeploy):**
+
+| Variable | Wert |
+|---|---|
+| SMEJJ_TRAINING_CAPTURE_ENABLED | YES |
+| IDRIVE_E2_TRAINING_ENDPOINT | gleicher Wert wie IDRIVE_E2_ENDPOINT |
+| IDRIVE_E2_TRAINING_REGION | gleicher Wert wie IDRIVE_E2_REGION |
+| IDRIVE_E2_TRAINING_BUCKET | smejj-app |
+| IDRIVE_E2_TRAINING_ALLOWED_PREFIXES | training/sanitized/candidates/,training/quarantine/,training/consents/,training/evidence/,training/record-proofs/,training/probes/ |
+| IDRIVE_E2_TRAINING_ACCESS_KEY | Zugangsschlüssel (Kopie von IDRIVE_E2_ACCESS_KEY oder eigener e2-Schlüssel nur für training/) |
+| IDRIVE_E2_TRAINING_SECRET_KEY | Geheimschlüssel dazu |
+
+Beweis danach: `decision` antwortet 200, Schalter „Modelltraining erlauben" bleibt an,
+Erfassungsprobe antwortet `{"erfasst": true}`.
 1. Einwilligungstext aus dem Entwurf vom 30.08. in die PWA (Einstellungen, Schalter,
    Widerruf jederzeit). **Braucht schriftliche Freigabe + Einwilligungs-Lock-Stempel.**
 2. Sammler: nur bei gesetzter Einwilligung werden Frage + gebilligte Antwort

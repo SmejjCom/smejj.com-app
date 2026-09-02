@@ -675,3 +675,9 @@ sind die tiefe Spur (GLM-5.2). Beides ist richtig, es sind zwei Ketten — nicht
 deuten. Stufe 0 des Plans = Schnellspur mit Projektwissen (Brücke, Security-Lock).
 Offen (Betreiber-Klicks): Zeabur `SMEJJ_TRAINING_CAPTURE_ENABLED=YES`, SW-Bump für die geänderte
 chat-stream.js (Precache), abo-lock im Bauzweig.
+
+**Nachtrag 02.09. 06:45 UTC (job_a_bis_z_20260902):** Einwilligungs-Ledger antwortet 503
+(`consent_request_failed`): auf Zeabur fehlen die sechs `IDRIVE_E2_TRAINING_*`-Werte des
+Trainings-Schreibers (Endpoint, Region, Bucket, Allowed-Prefixes, Access-/Secret-Key) —
+die fünf Consent-Schlüssel sind da (notice = 200). Ohne die sechs ist keine Einwilligung
+erteilbar, keine Frage speicherbar. Liste mit Werten im Trainingsplan, Stufe 1.
