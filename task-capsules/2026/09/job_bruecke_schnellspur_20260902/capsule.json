@@ -34,6 +34,11 @@
       "id": "P0-zhipu-variable-weg",
       "was": "Um 09:10 UTC im Zeabur-Portal (Variable-Tab smejj-control) geprüft: SMEJJ_LLM_ZHIPU_BASE_URL ist NICHT vorhanden (nur SMEJJ_LLM_ZHIPU_API_KEY, SMEJJ_LLM_GROQ_API_KEY, SMEJJ_LLM_GROQ_MODEL_FAST). Die Parallelsitzung hatte sie um 05:33 gesetzt (Memory_Bank-Nachtrag „Z.ai Coding-Paket braucht die Coding-Adresse“); seit dem Neubau 05:41 fehlt sie → Code-Default open.bigmodel.cn → 429/1113 Insufficient balance. Eintippen im Portal blockiert der Auto-Modus-Klassifikator.",
       "status": "OFFEN — Betreiber: Variable, Add, Key SMEJJ_LLM_ZHIPU_BASE_URL, Wert https://api.z.ai/api/coding/paas/v4, Save, Redeploy"
+    },
+    {
+      "id": "P1-zhipu-trotz-coding-adresse",
+      "was": "12:47 UTC: SMEJJ_LLM_ZHIPU_BASE_URL=https://api.z.ai/api/coding/paas/v4 im Zeabur-Portal auf smejj-control angelegt (Formularfeld, Save, Redeploy), Neubau 12:55:56 UTC, Variable in der Liste bestätigt. Danach weiter zhipu http_429 (8 Fehler in Folge, alle vier Kettenversuche 429); Chat läuft über groq gpt-oss-20b/120b. Vom Mac aus antwortet die Coding-Adresse mit demselben Anfragestil (stream, thinking, usage) 200, die allgemeine Adresse 429/1113. Die Laufzeit-Logs (Portal) enthalten keine Anbieter-Fehlertexte, nur [verbrauch]/[sem-cache]. Offen: Schlüssel auf Zeabur ≠ lokaler Schlüssel, oder Kontingent des Coding-Pakets für den Server-Schlüssel erschöpft — nur im Z.ai-Konto des Betreibers prüfbar.",
+      "status": "offen — Betreiber: Z.ai-Konto (Coding-Plan-Kontingent) und den auf Zeabur hinterlegten SMEJJ_LLM_ZHIPU_API_KEY mit dem lokalen vergleichen"
     }
   ],
   "aenderungen": [
@@ -71,7 +76,7 @@
     "Router-Fix d015526c per Push in den Bauzweig, Zeabur-Neubau 09:04:12 UTC; erster Agent-Aufruf danach 200 über groq:gpt-oss-120b (x-smejj-model-fallback: true), zweiter 502 (alle vier Versuche 429 — auch 120b) → Groq-Schlüssel des Control ist im Minutenlimit."
   ],
   "offen": [
-    "SMEJJ_LLM_ZHIPU_BASE_URL=https://api.z.ai/api/coding/paas/v4 auf smejj-control im Zeabur-Portal neu anlegen und Redeploy — bis dahin läuft der gesamte Chat über Groq (gpt-oss-120b, 8000 Tokens/Minute).",
+    "Zhipu bleibt trotz Coding-Adresse 429: im Z.ai-Konto Kontingent/Schlüssel prüfen; Control loggt Anbieter-Fehlertexte nicht — Vorschlag: modelRouter bei http_429 die ersten 120 Zeichen des Antwortkörpers als [anbieter]-Zeile loggen.",
     "Kaskade scripts/einmal/bruecke-schnellspur-gpt-oss-2026-09-02.sh vom Betreiber starten (stempelt Security-Lock, pusht Bündel, braucht Restart-Klick im Zeabur-Portal, wenn kein gültiger Schlüssel).",
     "Neuen Zeabur-API-Schlüssel in ~/.config/zeabur/cli.yaml (Feld token) ablegen — ohne ihn keine Logs, keine Env-Änderung, kein Control-Neubau per Skript.",
     "Ursache der 429-Phase bleibt unbelegt: zhipu Coding-Paket (Fenster/Concurrency?) und groq 8000 TPM. Mit Schlüssel: runtimeLogs 02:00–05:40 UTC lesen.",

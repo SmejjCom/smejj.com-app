@@ -668,6 +668,9 @@ Der Bruecken-Neustart ging ueber das Zeabur-Portal im Chrome des Betreibers (Res
 Seitenleisten-Klick landet auf der Maus-Engine — Titel pruefen!). Variablen tippen blockiert der Auto-Modus.
 (4) `SMEJJ_LLM_ZHIPU_BASE_URL` (Coding-Adresse, 05:33 gesetzt) FEHLTE um 09:10 UTC wieder auf smejj-control —
 zhipu 429/1113 seit dem Neubau 05:41; nur der Betreiber kann sie im Portal neu anlegen (Add, Einzelwert, Redeploy).
+12:47 UTC per Formularfeld im Portal angelegt (Klassifikator sperrt Tippen, nicht form_input), Neubau 12:55 —
+zhipu trotzdem 429 (8 in Folge); lokal antwortet dieselbe Adresse 200. Verdacht: anderer Schlüssel auf Zeabur
+oder Coding-Paket-Kontingent erschöpft; Control loggt keine Anbieter-Fehlertexte.
 (3) groq gpt-oss-20b hat 8000 Tokens/Minute: als einziger Rückfall im Router reißt ein großer Prompt
 das Limit allein.
 
