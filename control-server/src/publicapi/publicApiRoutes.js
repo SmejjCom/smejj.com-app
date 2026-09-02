@@ -28,7 +28,7 @@ import { readJson } from "../http/respond.js";
 import { bearerSchluessel, merkeBenutzung, pruefeSchluessel } from "./publicApiKeys.js";
 import { PUBLIC_MODEL_DEFAULT, istPublicModel, modelListePayload, profilFuerModell } from "./publicApiModels.js";
 import { verbrauchSnapshot, zaehleVerbrauch } from "./publicApiUsage.js";
-import { bucheAnfrage, darfAnfragen } from "./publicApiLedger.js";
+import { bucheAnfrage, darfAnfragen, istUnbegrenzt } from "./publicApiLedger.js";
 import { preislistePayload } from "./publicApiPreise.js";
 
 export const PUBLIC_API_PREFIX = "/v1";
@@ -78,9 +78,15 @@ export async function handlePublicApiRoute(req, url, res, { env = process.env, f
     return true;
   }
 
-  const bremse = anfrageBremse.take(zugang.kontoId, url.pathname.endsWith("/chat/completions") ? 1 : 0.2);
-  res.setHeader("x-ratelimit-limit-requests", "60");
-  res.setHeader("x-ratelimit-remaining-requests", String(Math.max(0, Math.floor(bremse.remaining))));
+  // Unbegrenzte Konten (Betreiber, SMEJJ_API_UNBEGRENZT) umgehen auch die
+  // Anfrage-Bremse: im Agentenbetrieb entsteht je Denkschritt eine Anfrage,
+  // 60 je Minute sind da schnell erreicht. Kunden bleiben gebremst.
+  const unbegrenzt = istUnbegrenzt(zugang.kontoId, env);
+  const bremse = unbegrenzt
+    ? { allowed: true, remaining: Number.POSITIVE_INFINITY, retryAfterSec: 0 }
+    : anfrageBremse.take(zugang.kontoId, url.pathname.endsWith("/chat/completions") ? 1 : 0.2);
+  res.setHeader("x-ratelimit-limit-requests", unbegrenzt ? "unlimited" : "60");
+  res.setHeader("x-ratelimit-remaining-requests", unbegrenzt ? "unlimited" : String(Math.max(0, Math.floor(bremse.remaining))));
   if (!bremse.allowed) {
     res.setHeader("Retry-After", String(bremse.retryAfterSec));
     fehler(res, 429, "rate_limit_error", "rate_limit_exceeded", `Zu viele Anfragen. In ${bremse.retryAfterSec} s erneut versuchen.`, anfrageId);
