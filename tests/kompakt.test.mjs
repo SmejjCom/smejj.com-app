@@ -13,6 +13,9 @@ test("Regeln halbieren die gemessenen Abstaende: Ansicht-Gap 20->10, Kopf 12+10-
   assert.match(m.REGELN, /body #settings\.view\.is-active\{padding-top:28px\}/, "Einstellungen 72 -> 28 (id-Regel im Buendel)");
   assert.match(m.REGELN, /\.settings-panel\.settings-panel\{padding:14px\}/);
   assert.match(m.REGELN, /\.ch-gruppe\.ch-gruppe\{margin-top:12px\}/);
+  // Stufe 2: Chat-Feld auf die Kante (nur safe-area), Polster 6, Kopfzeile/Chips 12 statt 20
+  assert.match(m.REGELN, /\.prompt-glass\.prompt-glass\{padding:6px 8px 6px 12px;margin-bottom:env\(safe-area-inset-bottom,0px\)\}/);
+  assert.match(m.REGELN, /\.start-chipreihe\.start-chipreihe\{margin-top:12px\}/);
 });
 
 test("keine Schriftgroessen, keine min-height/height, keine width — Ziele bleiben 44 px, Schrift bleibt gross", () => {
