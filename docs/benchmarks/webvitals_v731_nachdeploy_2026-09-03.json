@@ -1,0 +1,119 @@
+{
+ "hinweis": "Nachdeploy v731 (UX-Haken in chat-actions-menu.js laden erst bei Bedarf: Handy-Stile nur <=600 px, verlauf-unten erst mit Chat im Log, code-feld-unten erst im Code-Bereich, Klartext/Karten nur Startseite; design-v11 bce132a4, Klon 14be942, Betreiber-Doppelklick 03.09. spaet UTC). Live-Ressourcenliste Desktop kalt: 100 Ressourcen, 289 KB, nur kompakt/deutsch-klartext/erste-schritte geladen. Messfenster: Betreiber-Netz mit RTT 130-250 ms zum Pages-Edge, TTFB/LCP kalt schwanken dadurch stark (Wache im Bauzweig fuehrt TTFB seit 02.09. nur als Hinweis). Gewicht im Messlauf 307 KB — enthaelt API-Antworten der Mess-Sitzung (auth/me, Chat-Abgleich), daher hoeher als die reine Asset-Liste. Naechster Hebel unter 300 KB: chat-history-text/-cards (15 KB, erst bei sichtbarem Verlauf) und chat-markdown (8 KB, erst bei der ersten Antwort).",
+ "url": "https://smejj.com/",
+ "runs": 3,
+ "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+ "kalt": {
+  "ttfb_ms": {
+   "median": 187,
+   "p75": 194,
+   "min": 136,
+   "max": 194
+  },
+  "fcp_ms": {
+   "median": 1096,
+   "p75": 1156,
+   "min": 424,
+   "max": 1156
+  },
+  "lcp_ms": {
+   "median": 1096,
+   "p75": 1156,
+   "min": 424,
+   "max": 1156
+  },
+  "cls": {
+   "median": 0.015,
+   "p75": 0.016,
+   "min": 0.015,
+   "max": 0.016
+  },
+  "inp_ms": {
+   "median": 16,
+   "p75": 16,
+   "min": 16,
+   "max": 16
+  },
+  "domInteractive_ms": {
+   "median": 1160,
+   "p75": 1518,
+   "min": 1085,
+   "max": 1518
+  },
+  "pageWeight_kb": {
+   "median": 307,
+   "p75": 307,
+   "min": 307,
+   "max": 307
+  },
+  "resources": {
+   "median": 100,
+   "p75": 100,
+   "min": 100,
+   "max": 100
+  },
+  "lcpElement": "H2"
+ },
+ "warm": {
+  "ttfb_ms": {
+   "median": 201,
+   "p75": 282,
+   "min": 152,
+   "max": 282
+  },
+  "fcp_ms": {
+   "median": 260,
+   "p75": 332,
+   "min": 200,
+   "max": 332
+  },
+  "lcp_ms": {
+   "median": 260,
+   "p75": 332,
+   "min": 200,
+   "max": 332
+  },
+  "cls": {
+   "median": 0.016,
+   "p75": 0.016,
+   "min": 0.015,
+   "max": 0.016
+  },
+  "inp_ms": {
+   "median": 24,
+   "p75": 24,
+   "min": 24,
+   "max": 24
+  },
+  "domInteractive_ms": {
+   "median": 235,
+   "p75": 326,
+   "min": 169,
+   "max": 326
+  },
+  "pageWeight_kb": {
+   "median": 73,
+   "p75": 73,
+   "min": 0,
+   "max": 73
+  },
+  "resources": {
+   "median": 100,
+   "p75": 100,
+   "min": 100,
+   "max": 100
+  },
+  "lcpElement": "H2"
+ },
+ "budgets": {
+  "ttfb_ms": 200,
+  "lcp_ms": 1500,
+  "cls": 0.1,
+  "inp_ms": 200,
+  "pageWeight_kb": 300
+ },
+ "verstoesse": [
+  "kalt: pageWeight_kb p75 307 > Budget 300",
+  "warm: ttfb_ms p75 282 > Budget 200"
+ ]
+}
