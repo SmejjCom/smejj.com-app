@@ -39,6 +39,7 @@ import { buildAgentWebContext, handleWebSearch } from "./search/webSearchRoute.j
 import { answerLiveIntent, detectLiveInternetIntent } from "../control-server/src/live/liveInternet.js";
 import { classifyProfile, executeWithFallback, resolveModelRequest } from "../control-server/src/llm/modelRouter.js";
 import { evaluateAiAvailability, resolveServerAiGate } from "../control-server/src/llm/aiAvailability.js";
+import { createVoiceLiveUpgrade } from "../control-server/src/voice/liveRelay.js";
 import { streamWithTools, withAgentTools, agentToolsEnabled } from "../control-server/src/llm/streamFilter.js";
 import { localAssistantStream } from "../control-server/src/llm/localAssistant.js";
 import { chatThinkingMode, denkBremse, latestUserPrompt } from "./ai/chatThinkingPolicy.js";
@@ -326,6 +327,14 @@ const server = http.createServer(async (req, res) => {
 // HOST bleibt lokal 127.0.0.1 (sicher); Container/Salad setzen SMEJJ_HOST=0.0.0.0.
 const listenHost = process.env.SMEJJ_HOST || "127.0.0.1";
 await recoverWorkerRuntimeOnStartup({ env: process.env });
+// Sprachwelle LIVE (2026-09-03): WebSocket-Upgrade nur fuer /api/voice-realtime — Sitzung im
+// Unterprotokoll, Kostenschutz-Ampel als Tor, Relay zur Gemini Live API (liveRelay.js). Fremde
+// Upgrade-Pfade werden fail-closed getrennt; ohne Schluessel antwortet der Relay 503 und der Browser
+// faellt auf die alte Sprachkette zurueck.
+const voiceLiveUpgrade = createVoiceLiveUpgrade({ env: process.env, readSession, sessionStillValid, aiGate: (env) => resolveServerAiGate(env).ai });
+server.on("upgrade", (req, socket, head) => {
+  voiceLiveUpgrade(req, socket, head).then((behandelt) => { if (!behandelt) socket.destroy(); }).catch(() => socket.destroy());
+});
 server.listen(config.port, listenHost, () => {
   console.log(`smejj.com Code MVP: http://${listenHost}:${config.port}`);
   console.log(`Sandbox: ${config.projectRoot}`);
