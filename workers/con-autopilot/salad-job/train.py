@@ -13,7 +13,7 @@ Regeln aus dem Auftrag, hier maschinell:
 Datensatz: JSONL, je Zeile {"messages":[{"role":..,"content":..}, ...]}
 (oder {"prompt","response"}). Nur der Assistenten-Anteil traegt Verlust.
 """
-import glob
+import gc
 import json
 import os
 import re
@@ -212,6 +212,22 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
                    "beispiele": len(beispiele), "globalStep": trainer.state.global_step,
                    "trainLoss": getattr(ergebnis, "training_loss", None), "sekunden": round(dauer),
                    "abgebrochen": bool(abbruch())}, f, indent=2)
-    return {"adapterPfad": adapter_pfad, "globalStep": trainer.state.global_step,
+    schritte = trainer.state.global_step
+    abbruch_gewuenscht = bool(abbruch())
+    # VRAM freigeben, BEVOR die Messung dasselbe Modell ein zweites Mal laedt.
+    # Ohne das laufen Training und Messung nacheinander in dieselbe 24-GB-Karte
+    # und die Messung stirbt mit CUDA out of memory.
+    try:
+        del trainer
+        del modell
+        gc.collect()
+        if cuda:
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
+            status.setze(schritt="vram_freigegeben",
+                         vramBelegtMiB=int(torch.cuda.memory_allocated() // (1024 * 1024)))
+    except Exception as fehler:  # noqa: BLE001 — Aufraeumen darf den Lauf nie kippen
+        status.setze(schritt="vram_freigeben_fehler", hinweis=str(fehler)[:120])
+    return {"adapterPfad": adapter_pfad, "globalStep": schritte,
             "trainLoss": getattr(ergebnis, "training_loss", None), "sekunden": round(dauer),
-            "beispiele": len(beispiele), "abgebrochen": bool(abbruch()), "zielModule": ziele}
+            "beispiele": len(beispiele), "abgebrochen": abbruch_gewuenscht, "zielModule": ziele}
