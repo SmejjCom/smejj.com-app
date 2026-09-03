@@ -159,3 +159,14 @@ test("daten: Filter fuer Schluessel, PII, Injection, Duplikate, Varianten und Su
   assert.equal(bericht.abgelehnt.suitenfall, 1);
   assert.equal(bericht.ok, false); // unter 50 eindeutigen Antworten
 });
+
+test("gueltigkeits-tor: leere Messung darf keine Messlatte setzen", async () => {
+  const { pruefeGueltigkeit } = await import("../workers/con-autopilot/bewertung.js");
+  assert.equal(pruefeGueltigkeit({ laeufe: 46, leere: 46, tokensGesamt: 0 }).gueltig, false);
+  assert.equal(pruefeGueltigkeit({ laeufe: 46, leere: 30, tokensGesamt: 100 }).gueltig, false);
+  assert.equal(pruefeGueltigkeit({ laeufe: 46, leere: 2, tokensGesamt: 900 }).gueltig, true);
+  assert.equal(pruefeGueltigkeit({ laeufe: 0 }).gueltig, false);
+  const suiten = await ladeSuiten(path.join(ROOT, "workers/con-autopilot/suites"));
+  const leer = { version: "x", jobId: "j", leistung: { antworten: 1, tokensGesamt: 0 }, suiten: [{ suiteId: "con-sprache", cases: [{ id: "fakt-hauptstadt", runs: [{ text: "", latencyMs: 8 }] }] }] };
+  assert.equal(bewerteAntworten(leer, suiten).gueltig, false);
+});

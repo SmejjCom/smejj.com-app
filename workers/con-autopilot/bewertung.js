@@ -125,7 +125,12 @@ export function bewerteAntworten(antworten, suiten) {
     score: v.gewicht ? round(v.punkte / v.gewicht) : 0, faelle: v.faelle, kritisch: v.kritisch, fehler: v.fehler
   }]));
   const leistung = antworten.leistung || {};
+  const alleLaeufe = (antworten.suiten || []).flatMap((s) => (s.cases || []).flatMap((c) => c.runs || []));
+  const leere = alleLaeufe.filter((l) => !String(l.text || "").trim()).length;
+  const gueltigkeit = pruefeGueltigkeit({ laeufe: alleLaeufe.length, leere, tokensGesamt: leistung.tokensGesamt });
   return {
+    gueltig: gueltigkeit.gueltig,
+    ungueltigGrund: gueltigkeit.grund,
     version: antworten.version || null,
     jobId: antworten.jobId || null,
     gesamt: gewichtGesamt ? round(punkteGesamt / gewichtGesamt) : 0,
@@ -174,6 +179,18 @@ export function vergleiche(kandidat, stabil, { rauschschwelle = RAUSCHSCHWELLE }
   if (!besser) gruende.push(`kein_messbarer_vorsprung:${delta}`);
   if (gruende.length) return { entscheidung: "REJECT", gruende, delta };
   return { entscheidung: "PROMOTE", gruende: [`vorsprung:${delta}`], delta };
+}
+
+/**
+ * Gueltigkeits-Tor: eine Messung, die (fast) nur leere Antworten oder null erzeugte Tokens
+ * enthaelt, ist ein Messfehler, keine Modellqualitaet — sie darf NIE eine Messlatte setzen.
+ * (03.09.: 46 leere Antworten in 8 ms wurden als con-1.0.0 mit 2,8 % befoerdert.)
+ */
+export function pruefeGueltigkeit({ laeufe = 0, leere = 0, tokensGesamt = null } = {}) {
+  if (!laeufe) return { gueltig: false, grund: "keine_antworten" };
+  if (Number(tokensGesamt) === 0) return { gueltig: false, grund: "null_tokens_erzeugt" };
+  if (leere / laeufe > 0.5) return { gueltig: false, grund: `leere_antworten:${leere}/${laeufe}` };
+  return { gueltig: true, grund: null };
 }
 
 /** Schwaechste Kategorie (fuer den Trainingsplan): kleinster Score, bei Gleichstand meiste kritischen Fehler. */

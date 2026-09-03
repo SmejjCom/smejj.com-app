@@ -160,6 +160,13 @@ async function bewerteUndEntscheide(ctx, z, job, ergebnis) {
   const suiten = await ladeSuiten(konfig.suitesDir);
   const bewertung = bewerteAntworten(antworten, suiten);
   await e2.putJson(`${ergebnis.messung.prefix}/bewertung.json`, bewertung);
+  if (!bewertung.gueltig) {
+    // Messfehler: kein Registereintrag, keine Entscheidung. Der naechste Takt plant die Messung erneut.
+    z.letzteEntscheidung = { version: job.version, entscheidung: "MESSUNG_UNGUELTIG", gruende: [bewertung.ungueltigGrund], zeit: new Date().toISOString(), gegen: null };
+    notiere(z, `Messung ${job.version} UNGUELTIG (${bewertung.ungueltigGrund}) — kein Registereintrag`);
+    log(`Messung ${job.version} ungueltig: ${bewertung.ungueltigGrund}`);
+    return bewertung;
+  }
   const registry = await leseRegistry(e2);
   const stabil = stabileVersion(registry);
   const version = job.version;
