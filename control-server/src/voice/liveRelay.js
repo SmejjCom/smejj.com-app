@@ -95,9 +95,45 @@ function zahl(wert, vorgabe, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
+/** Alle Schluessel in Reihenfolge: Einzelschluessel, dann Liste (Komma/Leerzeichen), dann Router-Rueckfall. */
+export function schluesselListe(env = {}) {
+  const roh = [env.SMEJJ_VOICE_LIVE_API_KEY, ...String(env.SMEJJ_VOICE_LIVE_API_KEYS || "").split(/[\s,;]+/), env.SMEJJ_LLM_GEMINI_API_KEY];
+  return [...new Set(roh.map((k) => String(k || "").trim()).filter(Boolean))];
+}
+
+/**
+ * Schluessel-Pool (Betreiber 2026-09-03: "wenn bei Google das Limit erreicht ist, weitermachen"):
+ * mehrere Gratis-Schluessel aus verschiedenen Google-Projekten; meldet die Gegenseite
+ * Kontingent (429 / RESOURCE_EXHAUSTED), ruht der Schluessel fuer sperreMs und der naechste
+ * uebernimmt — dieselbe Bauart wie keyPool() im Modell-Router.
+ */
+export function createSchluesselPool(liste, { jetzt = () => Date.now(), sperreMs = 10 * 60000 } = {}) {
+  const gesperrt = new Map();
+  let zeiger = 0;
+  const aktuelle = () => (typeof liste === "function" ? liste() : liste) || [];
+  return {
+    frei() { const t = jetzt(); return aktuelle().filter((k) => !(gesperrt.get(k) > t)); },
+    waehle(ausser = []) {
+      const kandidaten = this.frei().filter((k) => !ausser.includes(k));
+      if (!kandidaten.length) return "";
+      const k = kandidaten[zeiger % kandidaten.length];
+      zeiger += 1;
+      return k;
+    },
+    sperre(schluessel) { if (schluessel) gesperrt.set(schluessel, jetzt() + sperreMs); },
+    groesse() { return aktuelle().length; }
+  };
+}
+
+/** Sieht eine Schliess-/Fehlermeldung der Gegenseite nach Kontingent aus? */
+export function istKontingentFehler(text = "", code = 0) {
+  return /quota|resource_exhausted|rate.?limit|too many|429/i.test(String(text || "")) || code === 1008 || code === 1013;
+}
+
 export function liveKonfiguration(env = {}) {
   return {
-    schluessel: String(env.SMEJJ_VOICE_LIVE_API_KEY || env.SMEJJ_LLM_GEMINI_API_KEY || "").trim(),
+    schluessel: schluesselListe(env)[0] || "",
+    schluesselPool: schluesselListe(env),
     aktiv: env.SMEJJ_VOICE_LIVE_ENABLED !== "false",
     modell: String(env.SMEJJ_VOICE_LIVE_MODEL || LIVE_STANDARD_MODELL).replace(/^models\//, ""),
     stimme: String(env.SMEJJ_VOICE_LIVE_VOICE || "Kore"),
@@ -213,7 +249,8 @@ function schreibeAbsage(socket, status, grund) {
  * optional aiGate(env) -> boolean (Kostenschutz-Ampel), optional WebSocketCtor (Test).
  * Output: (req, socket, head) => Promise<boolean> — true, wenn der Pfad hier behandelt wurde.
  */
-export function createVoiceLiveUpgrade({ env = process.env, readSession, sessionStillValid, aiGate = null, WebSocketCtor = globalThis.WebSocket, verbrauch = createLiveVerbrauch(), log = console } = {}) {
+export function createVoiceLiveUpgrade({ env = process.env, readSession, sessionStillValid, aiGate = null, WebSocketCtor = globalThis.WebSocket, verbrauch = createLiveVerbrauch(), log = console, pool = null } = {}) {
+  const schluesselPool = pool || createSchluesselPool(() => schluesselListe(env));
   return async function handleVoiceLiveUpgrade(req, socket, head) {
     let pfad = "";
     try { pfad = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`).pathname; } catch { pfad = ""; }
@@ -255,36 +292,67 @@ export function createVoiceLiveUpgrade({ env = process.env, readSession, session
     const pingUhr = setInterval(() => { if (!zu) try { socket.write(kodiereRahmen(OPCODE.ping)); } catch { /* weg */ } }, 20000);
     const deckelUhr = setTimeout(() => schliesse("session_time_limit"), k.sitzungsMinuten * 60000);
 
-    try {
-      oben = new WebSocketCtor(`${k.upstreamUrl}?key=${encodeURIComponent(k.schluessel)}`);
-      oben.binaryType = "arraybuffer";
-    } catch (fehler) {
-      log.warn?.(`[voice-live] Gegenseite nicht erreichbar: ${fehler?.message || fehler}`);
-      schliesse("upstream_connect_failed");
-      return true;
-    }
-    oben.addEventListener("open", () => {
-      try { oben.send(JSON.stringify(baueSetup({ modell: k.modell, stimme: k.stimme }))); } catch { schliesse("upstream_setup_failed"); }
-    });
-    oben.addEventListener("message", (ereignis) => {
-      let text = "";
-      if (typeof ereignis.data === "string") text = ereignis.data;
-      else if (ereignis.data instanceof ArrayBuffer) text = Buffer.from(ereignis.data).toString("utf8");
-      else if (Buffer.isBuffer(ereignis.data)) text = ereignis.data.toString("utf8");
-      let nachricht = null;
-      try { nachricht = JSON.parse(text); } catch { return; }
-      for (const e of uebersetzeServerNachricht(nachricht, zustand)) {
-        if (e.art === "binaer") sendeBinaer(e.daten); else sendeText(e.json);
+    let bereit = false;
+    const versucht = [];
+    const oeffneOben = () => {
+      const schluesselJetzt = schluesselPool.waehle(versucht);
+      if (!schluesselJetzt) { schliesse(versucht.length ? "voice_live_quota_all_keys" : "voice_live_key_missing"); return; }
+      versucht.push(schluesselJetzt);
+      let dieser = null;
+      try {
+        dieser = new WebSocketCtor(`${k.upstreamUrl}?key=${encodeURIComponent(schluesselJetzt)}`);
+        dieser.binaryType = "arraybuffer";
+      } catch (fehler) {
+        log.warn?.(`[voice-live] Gegenseite nicht erreichbar: ${fehler?.message || fehler}`);
+        schliesse("upstream_connect_failed");
+        return;
       }
-    });
-    oben.addEventListener("error", (ereignis) => {
-      log.warn?.(`[voice-live] Gegenseite Fehler: ${ereignis?.message || ereignis?.error?.message || "unbekannt"}`);
-      schliesse("upstream_error");
-    });
-    oben.addEventListener("close", (ereignis) => {
-      if (!zu) log.info?.(`[voice-live] Gegenseite zu: ${ereignis?.code || ""} ${String(ereignis?.reason || "").slice(0, 160)}`);
-      schliesse(zu ? "" : "upstream_closed");
-    });
+      oben = dieser;
+      const wechsle = (grund, text) => {
+        // Kontingent VOR dem ersten Ton: Schluessel ruhen lassen, naechsten nehmen — der Browser merkt nichts.
+        if (!bereit && istKontingentFehler(text) && versucht.length < schluesselPool.groesse()) {
+          schluesselPool.sperre(schluesselJetzt);
+          log.info?.(`[voice-live] Kontingent bei Schluessel ${versucht.length}/${schluesselPool.groesse()} — wechsle`);
+          try { dieser.close?.(); } catch { /* egal */ }
+          oeffneOben();
+          return true;
+        }
+        return false;
+      };
+      dieser.addEventListener("open", () => {
+        try { dieser.send(JSON.stringify(baueSetup({ modell: k.modell, stimme: k.stimme }))); } catch { schliesse("upstream_setup_failed"); }
+      });
+      dieser.addEventListener("message", (ereignis) => {
+        if (oben !== dieser) return;
+        let text = "";
+        if (typeof ereignis.data === "string") text = ereignis.data;
+        else if (ereignis.data instanceof ArrayBuffer) text = Buffer.from(ereignis.data).toString("utf8");
+        else if (Buffer.isBuffer(ereignis.data)) text = ereignis.data.toString("utf8");
+        let nachricht = null;
+        try { nachricht = JSON.parse(text); } catch { return; }
+        if (nachricht?.error && wechsle("upstream_error", nachricht.error?.message || JSON.stringify(nachricht.error))) return;
+        for (const e of uebersetzeServerNachricht(nachricht, zustand)) {
+          if (e.art === "binaer") sendeBinaer(e.daten);
+          else { if (e.json.type === "session.ready") bereit = true; sendeText(e.json); }
+        }
+      });
+      dieser.addEventListener("error", (ereignis) => {
+        if (oben !== dieser) return;
+        const text = ereignis?.message || ereignis?.error?.message || "unbekannt";
+        log.warn?.(`[voice-live] Gegenseite Fehler: ${text}`);
+        if (wechsle("upstream_error", text)) return;
+        schliesse("upstream_error");
+      });
+      dieser.addEventListener("close", (ereignis) => {
+        if (oben !== dieser) return;
+        const text = String(ereignis?.reason || "");
+        if (!zu) log.info?.(`[voice-live] Gegenseite zu: ${ereignis?.code || ""} ${text.slice(0, 160)}`);
+        if (!zu && (istKontingentFehler(text, ereignis?.code) && wechsle("upstream_closed", text || String(ereignis?.code)))) return;
+        schliesse(zu ? "" : "upstream_closed");
+      });
+    };
+    oeffneOben();
+    if (zu) return true;
 
     // 3) Browser -> Gegenseite.
     if (head?.length) rest = Buffer.concat([rest, head]);

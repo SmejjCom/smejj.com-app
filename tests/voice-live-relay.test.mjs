@@ -165,3 +165,56 @@ test("Upgrade: angemeldet -> 101 mit Unterprotokoll, Setup geht raus, Audio wird
   assert.equal(FakeWs.instanz.readyState, 3);
   assert.equal(s.beendet, true);
 });
+
+import { createSchluesselPool, schluesselListe, istKontingentFehler } from "../control-server/src/voice/liveRelay.js";
+
+test("Pool: Liste aus Einzel + Liste + Router-Rueckfall, ohne Doppel, Sperre ruht 10 min", () => {
+  const liste = schluesselListe({ SMEJJ_VOICE_LIVE_API_KEY: "a", SMEJJ_VOICE_LIVE_API_KEYS: "b, c a", SMEJJ_LLM_GEMINI_API_KEY: "d" });
+  assert.deepEqual(liste, ["a", "b", "c", "d"]);
+  let t = 0;
+  const pool = createSchluesselPool(["a", "b"], { jetzt: () => t, sperreMs: 1000 });
+  assert.equal(pool.waehle(), "a");
+  assert.equal(pool.waehle(), "b");
+  pool.sperre("a");
+  assert.deepEqual(pool.frei(), ["b"]);
+  assert.equal(pool.waehle(["b"]), "", "kein freier Schluessel ausser den versuchten");
+  t = 1001;
+  assert.deepEqual(pool.frei(), ["a", "b"]);
+  assert.ok(istKontingentFehler("RESOURCE_EXHAUSTED: quota exceeded"));
+  assert.ok(istKontingentFehler("", 1008));
+  assert.equal(istKontingentFehler("network down", 1006), false);
+});
+
+test("Upgrade: Kontingent beim ersten Schluessel -> zweiter Schluessel uebernimmt, Browser bekommt ready", async () => {
+  const instanzen = [];
+  class FakeWs extends EventEmitter {
+    constructor(url) { super(); this.url = url; this.readyState = 0; this.gesendet = []; instanzen.push(this); setTimeout(() => { this.readyState = 1; this.emit("open", {}); }, 0); }
+    addEventListener(n, f) { this.on(n, f); }
+    send(d) { this.gesendet.push(d); }
+    close() { this.readyState = 3; }
+  }
+  const h = createVoiceLiveUpgrade({
+    env: { SMEJJ_VOICE_LIVE_API_KEY: "erster", SMEJJ_VOICE_LIVE_API_KEYS: "zweiter", SMEJJ_VOICE_LIVE_UPSTREAM_URL: "wss://fake/ws" },
+    readSession: () => ({ id: "u1" }),
+    WebSocketCtor: FakeWs,
+    log: { warn() {}, info() {} }
+  });
+  const s = fakeSocket();
+  const req = { url: "/api/voice-realtime", headers: { host: "api", upgrade: "websocket", "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==", "sec-websocket-protocol": "smejj.sitzung.tok1" } };
+  assert.equal(await h(req, s, Buffer.alloc(0)), true);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.ok(instanzen[0].url.includes("key=erster"));
+  instanzen[0].emit("close", { code: 1008, reason: "RESOURCE_EXHAUSTED: quota" });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(instanzen.length, 2, "zweite Gegenseite geoeffnet");
+  assert.ok(instanzen[1].url.includes("key=zweiter"));
+  assert.equal(s.beendet, undefined, "Browser-Verbindung bleibt offen");
+  instanzen[1].emit("message", { data: JSON.stringify({ setupComplete: {} }) });
+  const { rahmen } = dekodiereRahmen(s.geschrieben[s.geschrieben.length - 1]);
+  assert.equal(JSON.parse(rahmen[0].nutzlast.toString()).type, "session.ready");
+  // Nach ready zaehlt ein Kontingent-Schliessen als normales Ende (kein dritter Versuch)
+  instanzen[1].emit("close", { code: 1008, reason: "quota" });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(instanzen.length, 2);
+  assert.equal(s.beendet, true);
+});
