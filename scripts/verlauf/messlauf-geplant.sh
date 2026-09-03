@@ -104,7 +104,15 @@ smejj_ap_herzschlag() {
 
   # 2) Der aktuelle Herzschlag. Ohne key abgelegt — der kommt erst beim Senden
   #    dazu, damit die Warteschlangendatei kein Geheimnis traegt.
-  AP_KERN="{\"id\":\"${AP_ID}\",\"status\":\"${AP_STATUS}\",\"meldung\":\"Exit ${AP_EXIT}\",\"dauerMs\":${AP_DAUER_MS},\"am\":\"${AP_AM}\"}"
+  # Die Note reist im Herzschlag mit (Audit 03.09.: Nr. 72 las "Exit 0" und fand
+  # keine Referenz). Quelle ist der juengste Bericht unter befunde/; scheitert das
+  # Lesen, bleibt die Meldung bei "Exit N" — nie eine erfundene Zahl.
+  AP_NOTE=""
+  AP_BERICHT=$(ls -t "$HOME/.local/share/smejj-qualitaet/befunde"/bericht-*.json 2>/dev/null | head -1)
+  if [ -n "$AP_BERICHT" ] && command -v node >/dev/null 2>&1; then
+    AP_NOTE=$(node -e 'try{const j=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const s=j.summary||{};if(typeof s.weightedScore==="number"){const p=(s.weightedScore*100).toFixed(1).replace(".",",");process.stdout.write(" — Note "+p+" % ("+(s.cases||0)+" Faelle, "+(s.criticalFailures||0)+" kritisch, "+String((j.run||{}).modelId||"")+")")}}catch{}' "$AP_BERICHT" 2>/dev/null)
+  fi
+  AP_KERN="{\"id\":\"${AP_ID}\",\"status\":\"${AP_STATUS}\",\"meldung\":\"Exit ${AP_EXIT}${AP_NOTE}\",\"dauerMs\":${AP_DAUER_MS},\"am\":\"${AP_AM}\"}"
   if ! smejj_ap_senden "${AP_KERN%\}},\"key\":\"${AP_KEY}\"}"; then
     printf '%s\n' "$AP_KERN" >> "$AP_QUEUE"
     tail -n 100 "$AP_QUEUE" > "${AP_QUEUE}.kopf.$$" && mv "${AP_QUEUE}.kopf.$$" "$AP_QUEUE"
