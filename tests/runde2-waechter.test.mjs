@@ -91,6 +91,34 @@ test("Nr. 75 und Nr. 79: Selbsttests grün, Läufe ohne Netz melden ehrlich", as
   assert.equal(r.ok, true); assert.match(r.meldung, /5 Injektions-Proben/);
 });
 
+test("Nr. 75/79 Messlauf: 429 wird einmal wiederholt, Laeufe stehen in EINER Warteschlange, alte Ablage wird neu gemessen", async () => {
+  const env = { SMEJJ_SESSION_SECRET: "geheim-fuer-test", SMEJJ_BRUECKE_URL: "https://bruecke.test" };
+  const gut = fall("g", [{ type: "contains_any", values: ["smejj.com"], critical: true }]);
+  let anfragen = 0;
+  const erstZuViel = async () => { anfragen += 1; return anfragen === 1 ? antwort(429, "zu viel", { "retry-after": "1" }) : sseAntwort("smejj.com"); };
+  const a = speicherMock();
+  const pausen = [];
+  await messlaufImTakt({ kennung: "test-429", faelleLader: async () => [gut], ablage: a, env, fetchImpl: erstZuViel, sleep: async (ms) => { pausen.push(ms); } });
+  await warteAufMessung("test-429");
+  assert.equal(a.m.get(ABLAGE_ID).ok, true, "nach der Wiederholung ist der Fall gemessen");
+  assert.ok(pausen.includes(65_000), "vor der Wiederholung wird 65 s gewartet (Brücken-Fenster 60 s)");
+  // Warteschlange: der zweite Lauf startet erst nach dem ersten.
+  const reihenfolge = [];
+  const langsam = async (url, init) => { const id = JSON.parse(init.body).messages.at(-1).content; reihenfolge.push("start " + id); await new Promise((f) => setTimeout(f, 30)); reihenfolge.push("ende " + id); return sseAntwort("smejj.com"); };
+  const f1 = { ...gut, id: "eins", prompt: "eins" }; const f2 = { ...gut, id: "zwei", prompt: "zwei" };
+  const b1 = speicherMock(); const b2 = speicherMock();
+  await messlaufImTakt({ kennung: "q-1", faelleLader: async () => [f1], ablage: b1, env, fetchImpl: langsam, sleep: async () => {} });
+  await messlaufImTakt({ kennung: "q-2", faelleLader: async () => [f2], ablage: b2, env, fetchImpl: langsam, sleep: async () => {} });
+  await warteAufMessung("q-1"); await warteAufMessung("q-2");
+  assert.deepEqual(reihenfolge, ["start eins", "ende eins", "start zwei", "ende zwei"], "nie zwei Messungen gleichzeitig gegen die Brücke");
+  // Alte Ablage ohne version wird nicht als frisch gewertet.
+  const alt = speicherMock(); alt.m.set(ABLAGE_ID, { id: ABLAGE_ID, ok: false, grund: "nicht messbar: alt", createdAt: new Date().toISOString() });
+  const e = await messlaufImTakt({ kennung: "test-alt", faelleLader: async () => [gut], ablage: alt, env, fetchImpl: async () => sseAntwort("smejj.com"), sleep: async () => {} });
+  assert.match(e.meldung, /Messung gestartet/);
+  await warteAufMessung("test-alt");
+  assert.equal(alt.m.get(ABLAGE_ID).version, 2);
+});
+
 // ---------------------------------------------------------------- Nr. 76
 test("Nr. 76 Bau-Wache: alter Push ohne Bau rot, gleicher Commit grün, GitHub-Mock durchlaufen", async () => {
   assert.equal(bauSelbsttest().bestanden, true);

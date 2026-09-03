@@ -25,9 +25,20 @@ import { loadEvalSuite, expandPack } from "../../../src/evaluation/evalPacks.js"
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 export const ABSTAND_MS = 5_500;
 export const MESS_ABSTAND_MS = 22 * 60 * 60 * 1000;
+/** Nach "nicht messbar" wird frueher neu gemessen — ein Transportfehler ist kein Tagesurteil. */
+export const NACHMESS_ABSTAND_MS = 2 * 60 * 60 * 1000;
 export const ABLAGE_ID = "letzter-lauf";
+/** Bauart-Stand der Ablage: aeltere Datensaetze (ohne version) werden sofort neu gemessen. */
+export const ABLAGE_VERSION = 2;
+/** Zeitlimit je Anfrage: die tiefe Spur denkt nach, 60 s reichten live nicht (03.09.). */
+export const ANFRAGE_TIMEOUT_MS = 120_000;
 
 const laufend = new Map();
+// GENAU EINE Messung gleichzeitig ueber alle Kennungen: am 03.09. starteten
+// Nr. 75 (14 Faelle) und Nr. 79 (5 Faelle) im selben Takt, teilten sich die
+// 12 Anfragen je Minute der Bruecke und 12 von 14 Faellen endeten als
+// Transportfehler. Die Warteschlange reiht die Laeufe hintereinander.
+let warteschlange = Promise.resolve();
 
 /** Lädt die 14 Fälle der Kernsuite (nur die Dateien, die im Abbild liegen). */
 export async function ladeKernsuite() {
@@ -55,18 +66,30 @@ export function beurteileMessung(summary, { mindestNote = 0.95 } = {}) {
   return { ok: true, grund: zahlen, prozent };
 }
 
+/** Zaehlt Transportfehler nach Grund — die Meldung soll sagen, WAS scheiterte. */
+export function fehlerGruende(scores = []) {
+  const z = new Map();
+  for (const s of scores) if (s.status === "error") z.set(s.error || "unbekannt", (z.get(s.error || "unbekannt") || 0) + 1);
+  return [...z.entries()].sort((a, b) => b[1] - a[1]).map(([g, n]) => `${g} ×${n}`).join(", ");
+}
+
 async function messe({ faelle, modelId, env, fetchImpl, sleep }) {
   const secret = String(env.SMEJJ_SESSION_SECRET || "").trim();
   if (!secret) throw new Error("SMEJJ_SESSION_SECRET fehlt — Brücke nicht anfragbar");
   const basis = String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "");
-  const token = issueSessionToken({ secret, user: { userId: "messlauf-autopilot", email: "messlauf@smejj.invalid", method: "local-e2e" }, ttlMs: 30 * 60 * 1000 });
+  const token = issueSessionToken({ secret, user: { userId: "messlauf-autopilot", email: "messlauf@smejj.invalid", method: "local-e2e" }, ttlMs: 60 * 60 * 1000 });
   const scores = [];
   for (const fall of faelle) {
-    const ergebnis = await callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: 60_000, headers: { Authorization: `Bearer ${token}` } });
+    let ergebnis = await callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
+    // Rate-Limit oder kurzer Aussetzer: einmal warten und wiederholen (Bauart des Modell-Einkaeufers).
+    if (!ergebnis.ok && /^http_(429|502|503|504)$/.test(String(ergebnis.error || ""))) {
+      await sleep(ergebnis.error === "http_429" ? 65_000 : 15_000);
+      ergebnis = await callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
+    }
     scores.push(scoreCase(fall, ergebnis));
     await sleep(ABSTAND_MS);
   }
-  return { summary: aggregateCaseScores(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed })) };
+  return { summary: aggregateCaseScores(scores), gruende: fehlerGruende(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed, fehler: s.error || null })) };
 }
 
 /**
@@ -82,22 +105,26 @@ export async function messlaufImTakt({
   let stand = null;
   try { stand = await speicher.lies(ABLAGE_ID); } catch { /* neu messen */ }
   const alterMs = stand ? jetztMs - Date.parse(stand.createdAt || 0) : Infinity;
-  const frisch = stand && Number.isFinite(alterMs) && alterMs < messAbstandMs;
+  // Ein gemessenes Urteil haelt einen Tag; "nicht messbar" wird nach 2 h neu versucht.
+  const haltbarMs = stand && /nicht messbar/.test(String(stand.grund || "")) ? Math.min(messAbstandMs, NACHMESS_ABSTAND_MS) : messAbstandMs;
+  const frisch = stand && stand.version === ABLAGE_VERSION && Number.isFinite(alterMs) && alterMs < haltbarMs;
   const bericht = stand ? `${stand.grund} (vor ${Math.max(0, Math.round(alterMs / 3_600_000))} h gegen ${stand.modelId || "Schnellspur"})` : "noch keine Messung abgelegt";
   if (frisch) return { ok: stand.ok !== false, meldung: bericht };
   if (!mitNetz) return { ok: stand ? stand.ok !== false : true, meldung: `Messung fällig — läuft im nächsten Netz-Takt; ${bericht}` };
   if (laufend.get(kennung)) return { ok: stand ? stand.ok !== false : true, meldung: `Messung läuft gerade im Hintergrund; ${bericht}` };
 
-  const arbeit = (async () => {
+  const arbeit = warteschlange.then(async () => {
     try {
       const faelle = await faelleLader();
-      const { summary, faelle: einzeln } = await messe({ faelle, modelId, env, fetchImpl, sleep });
+      const { summary, faelle: einzeln, gruende } = await messe({ faelle, modelId, env, fetchImpl, sleep });
       const urteil = beurteileMessung(summary, { mindestNote });
-      await speicher.schreib({ id: ABLAGE_ID, createdAt: new Date().toISOString(), ok: urteil.ok, grund: urteil.grund, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
+      const grund = summary.errors > 0 && gruende ? `${urteil.grund} — ${gruende}` : urteil.grund;
+      await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: urteil.ok, grund, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
     } catch (f) {
-      try { await speicher.schreib({ id: ABLAGE_ID, createdAt: new Date().toISOString(), ok: false, grund: `nicht messbar: ${String(f?.message || f).slice(0, 80)}`, modelId: modelId || "live-default" }, { timeoutMs: 5000 }); } catch { /* still */ }
+      try { await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: false, grund: `nicht messbar: ${String(f?.message || f).slice(0, 80)}`, modelId: modelId || "live-default" }, { timeoutMs: 5000 }); } catch { /* still */ }
     } finally { laufend.delete(kennung); }
-  })();
+  });
+  warteschlange = arbeit.catch(() => {});
   laufend.set(kennung, arbeit);
   return { ok: stand ? stand.ok !== false : true, meldung: `Messung gestartet (Hintergrund, ${modelId || "Schnellspur"}); ${bericht}` };
 }
