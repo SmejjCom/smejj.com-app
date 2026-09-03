@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T13:33:48.612Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Sprachwelle LIVE, Browser-Teil — voice-realtime.js (Sprache-zu-Sprache ueber /api/voice-realtime, Gemini Live API), Einhaengung in composer-tools.js (LIVE zuerst, Rueckfall auf Ohr/Erkennung), Precache-Eintrag in sw.js, Marken werkzeuge-13 und b117 in app.js/index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Sprachwelle wie ChatGPT und Gemini', Wahl 'Weg A starten'.",
+  "frozenAt": "2026-09-03T16:07:01.586Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Content-Security-Policy connect-src um wss://api.smejj.com ergaenzt, damit die Sprachwelle LIVE (Sprache-zu-Sprache ueber /api/voice-realtime) im Browser verbinden darf; Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Sprachwelle wie ChatGPT und Gemini' und 'alle Rechte, 100 % fertig'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c62660ea06384711b12693b449f16391ad11c7ae4c1e507d5af911695539707f",
+    "public/index.html": "f7a5efe5492df8ed28f52c62fb0a654f1ebabb04a9f379e0aae80b859a2c080b",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "7867c1e13a6ba3b52e0d04723a5ef86bad4233780d8ca1b0a3b187c592dea0ea",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "a8035f7b5803e5a0995e73ab28a6b43aa0506f61e35d5d097f908c1230756ed4",
+    "public/sw.js": "158bf0167376c93a5300314066ed71fd7950732ee3b6770adff87d1a3c927221",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
