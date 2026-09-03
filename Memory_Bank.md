@@ -619,3 +619,24 @@ cache-first) → Start-Lock → Betreiber-Doppelklick `smejj.com chat-store einm
 
 v731 (UX-Haken in chat-actions-menu.js: Handy-Stile nur <=600 px, verlauf-unten erst mit Chat im Log, code-feld-unten erst im Code-Bereich) und v733 (chat-history-view.js laedt Verlaufs-Text, Karten-Bausteine und Titel-Automatik per ladeBausteine()/import() beim ersten Zeichnen; spur-start.js zieht merkmaleVon aus dem neuen chat-merkmale.js, im Precache). Desktop-Asset-Liste kalt 324 -> 270 KB, Messlauf 288 KB — erstmals seit 02.09. unter dem 300-KB-Budget. Dazu Betriebswache: Modell-Chip 30x44 durch composer-zeile.js min-width:0 (behoben, live ohne SW-Sprung, nicht precached); Betriebswerte bleiben rot bis der Betreiber den Zeabur-Token erneuert (401).
 **MERKE:** (1) Nur precached Dateien (SHELL in sw.js) brauchen den SW-Sprung und damit den Doppelklick — alles andere liefert der Fetch-Handler netzwerk-zuerst. (2) Tests, die den Haken-Wortlaut `import("/assets/X.js").catch(() => {})` pruefen, bleiben gruen, wenn der Wortlaut in einem Thunk steht. (3) Node haelt `x.js` und `x.js?v=1` fuer zwei Instanzen — Tests importieren dieselbe Kennung wie das Modul. (4) Markdown (7,4 KB) bleibt am Start: components.js/app.js sind im Start-Lock. Waechter: tests/modul-einmal-instanz.test.mjs, tests/verlauf-nachladen.test.mjs.
+## 2026-09-03 — Betriebswache und CVE-Runde: Touch-Chip behoben, protobuf zu, transformers zweimal live gescheitert (job_a_bis_z_20260902, Nachtrag 18)
+
+Betriebswache (cron 05:30) war aus zwei Gruenden rot. (1) Touch: `#modelPickerButton` 30x44 px bei 375 px —
+composer-zeile.js (03.09.) setzte dem Modell-Chip `min-width:0`, obwohl die Zeile 327 px fuer 244 px Inhalt hat;
+Fix `min-width:44px` (design-v11 f9f8f37f, Klon a2b1523, Bauzweig 35c96d3c), live 44x44, Touch-Messung gegen
+smejj.com gruen. Kein SW-Sprung noetig: composer-zeile.js ist nicht precached, der Fetch-Handler liefert
+netzwerk-zuerst. (2) Betriebswerte: `control-umgebung-luecken.mjs` bekommt von der Zeabur-API 401 — Token in
+cli.yaml abgelaufen; bleibt rot, bis der Betreiber ihn erneuert (Rote Liste, Zugang).
+CVE-Waechter (Backlog Stufe 2): protobuf 5.29.5 -> 5.29.6 (GHSA-7gcm-g887-7qv7/PYSEC-2026-1805, Bauzweig
+062cefab); pipecat-ai bleibt 0.0.67 (nicht gebaut, sauber erst 1.4.0+ mit API-Umbau, neueste 1.8.1);
+transformers 5.5.0 -> 5.10.4 im Bild-Maler ZWEIMAL live gescheitert: 597c7cf0 (nur Pin) und 922d964d (Pin +
+torch 2.7.1/torchvision 0.22.1 im Dockerfile) — Dienst jeweils bereit:false, diffusers 0.38 "PreTrainedModel"
+nicht importierbar; beide per Revert zurueck (0eaafe5f, 06260151), Rollback-Zweig sicherung/maler-vor-cve-2026-09-03,
+Maler seit 07:55 UTC wieder bereit. design-v11 001562f7 / Bauzweig df208c13 spiegeln den gebauten Stand.
+**MERKE:** (1) Wurzel von Anlauf 1 lokal exakt reproduziert (uv, Python 3.11, torch 2.5.1): transformers 5.10
+nutzt `torch.float8_e8m0fnu`, das torch 2.5.1 nicht hat. (2) Anlauf 2 importiert in der abbild-getreuen
+Nachstellung (gfpgan vor den Requirements, torch 2.7.1) sauber — der Unterschied zum Zeabur-Bau steht nur im
+Baulog, ohne Token unerreichbar: STOPP nach 2 von 5 Runden. (3) Requirements muessen den GEBAUTEN Stand zeigen,
+sonst ist der CVE-Waechter falsch gruen; die Luecke (save_pretrained-Pfad) ruft server.py nie. (4) Vor jedem
+Maler-Push zuerst `sicherung/maler-vor-cve-<datum>` auf die Spitze setzen; Zeabur-Bau ohne Token nur ueber
+/health beobachten (ladezeitSek springt beim Neustart auf klein, `fehler` traegt den Importfehler).
