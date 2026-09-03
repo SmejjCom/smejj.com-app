@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-02T23:49:21.295Z",
+  "frozenAt": "2026-09-03T05:39:57.870Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): UX-Haken in chat-actions-menu.js laden erst bei Bedarf (Handy-Stile nur am Handy, Verlauf/Code-Helfer erst in der Ansicht), Service-Worker-Cache +1. Grundlage: Freigabe 2026-09-02 'Ich gebe dir alle Rechte von A bis Z 100 %.'",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "10763d585618e930504be47ac73c950495a6ef2ae71e28014031686f01467be5",
+    "public/sw.js": "21055eceb0f6e45d556dc5dec768fa5fa8113641eb7ac6e855cd9dcb04292623",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
