@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T17:33:30.921Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Vollbild am Handy — Glas-Gefaelle auf dem Wurzelelement (html:root), kein schwarzer Streifen ueber dem Home-Balken; mobil-composer.css, Buendel-Marke mobil102-20260903 in index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Vollbild, gesamte Flaeche' und 'alle Rechte, 100 % fertig'.",
+  "frozenAt": "2026-09-03T19:24:37.801Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Vollbild am Handy — Glas-Gefaelle auf dem Wurzelelement (html:root), kein schwarzer Streifen ueber dem Home-Balken; Anhang-Chips fuer Video/PDF/Dokument statt Textzeile im Schreibfeld (composer-anhang-chips.js, composer-plus-menu.js, composer-paste-attach.js, chat-actions.css, Marken werkzeuge-5/v4/werkzeuge-14/b118, Precache); mobil-composer.css, Buendel-Marke mobil102-20260903 in index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Vollbild, gesamte Flaeche' und 'alle Rechte, 100 % fertig'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "4a49447acabb57f0acbc204af5f86eef38985b84c2c745c59b4192fde7fbf9fc",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "9a64d2a07625f3a3819a0f9b35a3d58306a3d78d135b84e2e0d2d3426ee38bea",
+    "public/sw.js": "8648172c0b4808015844a2ad38e84ca615821566347be0664a304303a3350d76",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
