@@ -66,3 +66,18 @@ SMEJJ_LLM_TIMEOUT_MS=45000                           # Timeout je Versuch
 - Kein Anbieter wird ohne expliziten Key angesprochen; keine Trials, kein Auto-Upgrade.
 - Fallback: faellt ein Anbieter aus (Fehler/Limit/Timeout), uebernimmt der naechste.
 - Rollback: vorherige Images unter Commit-SHA-Tags auf ghcr.io.
+
+## Sprachwelle LIVE (Sprache-zu-Sprache, Gemini Live API) — seit 2026-09-03
+Eigener Schluessel, bewusst getrennt vom Modell-Router (kein Einfluss auf die Chat-Kette).
+Ohne Schluessel antwortet der Relay 503 und die Welle laeuft wie bisher (Ohr -> Whisper -> Stimme).
+```
+SMEJJ_VOICE_LIVE_API_KEY=<KEY>            # Google AI Studio, Gratis-Kontingent; Rueckfall: SMEJJ_LLM_GEMINI_API_KEY
+SMEJJ_VOICE_LIVE_ENABLED=true             # "false" schaltet den Relay ab (fail-closed)
+SMEJJ_VOICE_LIVE_MODEL=gemini-3.1-flash-live-preview
+SMEJJ_VOICE_LIVE_VOICE=Kore               # prebuiltVoiceConfig.voiceName
+SMEJJ_VOICE_LIVE_MAX_MINUTES_PER_DAY=60   # Tagesdeckel (Prozess-Speicher), 0 = kein Deckel
+SMEJJ_VOICE_LIVE_MAX_SESSION_MINUTES=14   # Google kappt Audio-Sitzungen bei 15
+SMEJJ_VOICE_LIVE_MAX_SESSIONS=3           # gleichzeitige Gespraeche
+```
+Weg: Zeabur-Portal -> smejj-control -> Variables -> Add -> Redeploy (Bau ~30 min).
+Relay: control-server/src/voice/liveRelay.js, Browser: public/voice-realtime.js.
