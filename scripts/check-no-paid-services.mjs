@@ -49,13 +49,16 @@ function checkNoCloudflareArtifacts() {
 }
 
 function checkNoSecrets() {
+  // "verweis:<VARIABLE>" ist die dokumentierte Verweis-Form der Trainings-Umgebung (ein Wert zeigt auf
+  // eine andere Variable) und kein Geheimnis; ebenso Zeaburs ${VARIABLE}-Form. Beide standen 2026-09-03
+  // dreimal im Repo (Kommentar, Capsule) und machten check:all rot — Fehlalarm, kein Schluessel.
   const secretPatterns = [
     /\bsk-[A-Za-z0-9_-]{20,}\b/,
     /\bAKIA[0-9A-Z]{16}\b/,
     /\bASIA[0-9A-Z]{16}\b/,
     /-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----/,
-    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?SECRET_KEY=(?!$|replace_me|<set>|\.\.\.)[^\s]+/,
-    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?ACCESS_KEY=(?!$|replace_me|<set>|\.\.\.)[^\s]+/,
+    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?SECRET_KEY=(?!$|replace_me|<set>|\.\.\.|verweis:|\$\{)[^\s]+/,
+    /IDRIVE_E2_(?:(?:TRAINING|WATCHDOG)_)?ACCESS_KEY=(?!$|replace_me|<set>|\.\.\.|verweis:|\$\{)[^\s]+/,
     /SMEJJ_LLM_API_KEY=(?!$|replace_me|local)[^\s]+/
   ];
 
