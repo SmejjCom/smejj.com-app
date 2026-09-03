@@ -1,0 +1,119 @@
+{
+ "hinweis": "Nachdeploy v733 (Verlaufs-Text, Karten-Bausteine und Titel-Automatik laden erst bei sichtbarem Verlauf — ladeBausteine() in chat-history-view.js; merkmaleVon fuer spur-start.js im neuen chat-merkmale.js, im Precache; design-v11 d9278922, Klon f3f0c29, Betreiber-Doppelklick 03.09. 06:3x UTC). Live-Klickpfad im headless Chrome: Start laedt nur chat-history-view + chat-merkmale, Klick auf Verlauf laedt die drei Module nach, Ansicht zeichnet, keine Seitenfehler. Live-Ressourcenliste Desktop kalt: 98 Ressourcen, 270 KB (v731: 100 / 289 KB; v729: 306-324 KB). Messlauf inkl. API-Antworten: 288 KB — erstmals seit 02.09. unter dem 300-KB-Budget. TTFB/LCP kalt schwanken mit dem Betreiber-Netz (RTT 130-250 ms), die Wache im Bauzweig fuehrt TTFB nur als Hinweis. Markdown (7,4 KB) bleibt am Start: haengt an components.js/app.js im Start-Lock.",
+ "url": "https://smejj.com/",
+ "runs": 3,
+ "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+ "kalt": {
+  "ttfb_ms": {
+   "median": 280,
+   "p75": 485,
+   "min": 188,
+   "max": 485
+  },
+  "fcp_ms": {
+   "median": 928,
+   "p75": 1160,
+   "min": 468,
+   "max": 1160
+  },
+  "lcp_ms": {
+   "median": 928,
+   "p75": 1160,
+   "min": 468,
+   "max": 1160
+  },
+  "cls": {
+   "median": 0.015,
+   "p75": 0.015,
+   "min": 0.015,
+   "max": 0.015
+  },
+  "inp_ms": {
+   "median": 16,
+   "p75": 16,
+   "min": 16,
+   "max": 16
+  },
+  "domInteractive_ms": {
+   "median": 900,
+   "p75": 1220,
+   "min": 514,
+   "max": 1220
+  },
+  "pageWeight_kb": {
+   "median": 288,
+   "p75": 288,
+   "min": 288,
+   "max": 288
+  },
+  "resources": {
+   "median": 98,
+   "p75": 98,
+   "min": 98,
+   "max": 98
+  },
+  "lcpElement": "H2"
+ },
+ "warm": {
+  "ttfb_ms": {
+   "median": 446,
+   "p75": 835,
+   "min": 295,
+   "max": 835
+  },
+  "fcp_ms": {
+   "median": 480,
+   "p75": 860,
+   "min": 348,
+   "max": 860
+  },
+  "lcp_ms": {
+   "median": 480,
+   "p75": 860,
+   "min": 348,
+   "max": 860
+  },
+  "cls": {
+   "median": 0.016,
+   "p75": 0.016,
+   "min": 0.016,
+   "max": 0.016
+  },
+  "inp_ms": {
+   "median": 16,
+   "p75": 24,
+   "min": 16,
+   "max": 24
+  },
+  "domInteractive_ms": {
+   "median": 461,
+   "p75": 845,
+   "min": 345,
+   "max": 845
+  },
+  "pageWeight_kb": {
+   "median": 0,
+   "p75": 73,
+   "min": 0,
+   "max": 73
+  },
+  "resources": {
+   "median": 98,
+   "p75": 98,
+   "min": 98,
+   "max": 98
+  },
+  "lcpElement": "H2"
+ },
+ "budgets": {
+  "ttfb_ms": 200,
+  "lcp_ms": 1500,
+  "cls": 0.1,
+  "inp_ms": 200,
+  "pageWeight_kb": 300
+ },
+ "verstoesse": [
+  "kalt: ttfb_ms p75 485 > Budget 200",
+  "warm: ttfb_ms p75 835 > Budget 200"
+ ]
+}
