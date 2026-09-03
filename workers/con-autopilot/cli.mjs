@@ -100,6 +100,18 @@ switch (befehl) {
     console.log(JSON.stringify({ vorher, probeCanary: probeVersion, metriken, pruefung: p, rollback: r, nachher: { stable: nachher.stable, canary: nachher.canary, letzterRollback: nachher.letzterRollback }, bewiesen: nachher.canary === vorher.stable && r.noetig }, null, 2));
     break;
   }
+  case "daten:bauen": {
+    // node cli.mjs daten:bauen <name> <e2-quellprefix-train.jsonl> [maxPaare] [kategorien,kommagetrennt]
+    const [name, quelle, maxPaare, kats] = args;
+    if (!name || !quelle) throw new Error("Aufruf: daten:bauen <name> <e2-key train.jsonl> [maxPaare] [kategorien]");
+    const { baueDatensatz, veroeffentliche } = await import("./daten.js");
+    const roh = await e2.getText(quelle);
+    if (!roh) throw new Error("Quelle fehlt: " + quelle);
+    const { paare, bericht } = baueDatensatz(roh, { suiten: await ladeSuiten(konfig.suitesDir), maxPaare: maxPaare ? Number(maxPaare) : null });
+    const manifest = await veroeffentliche(e2, { name, paare, bericht, quelle: { key: quelle, sha256: (await import("./daten.js")).hashText(roh) }, kategorien: (kats || "allgemein,sprache").split(",") });
+    console.log(JSON.stringify({ name, paare: paare.length, bericht, sha256: manifest.dateien[0].sha256 }, null, 2));
+    break;
+  }
   case "dashboard": {
     const html = dashboardHtml(await baueStatus({ konfig, e2, salad }));
     await writeFile(args[0] || "con-dashboard.html", html);

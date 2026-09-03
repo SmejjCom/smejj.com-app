@@ -95,10 +95,28 @@ class Health(BaseHTTPRequestHandler):
         pass
 
 
+class DualStackServer(ThreadingHTTPServer):
+    # Salads Sonden erreichen den Container auch ueber IPv6 (der fruehere Trainer band an "::").
+    # Dual-Stack: IPv6-Socket ohne V6ONLY beantwortet IPv4 und IPv6.
+    import socket as _socket
+    address_family = _socket.AF_INET6
+
+    def server_bind(self):
+        try:
+            self.socket.setsockopt(self._socket.IPPROTO_IPV6, self._socket.IPV6_V6ONLY, 0)
+        except OSError:
+            pass
+        super().server_bind()
+
+
 def starte_health():
     port = int(os.environ.get("PORT", "8080"))
-    srv = ThreadingHTTPServer(("0.0.0.0", port), Health)
+    try:
+        srv = DualStackServer(("::", port), Health)
+    except OSError:
+        srv = ThreadingHTTPServer(("0.0.0.0", port), Health)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
+    print(f"health-server auf Port {port} ({type(srv).__name__})", flush=True)
 
 
 def herzschlag():
