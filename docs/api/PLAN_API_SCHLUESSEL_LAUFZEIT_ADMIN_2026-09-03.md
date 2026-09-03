@@ -43,7 +43,7 @@ davon ist gebaut. Wer hier weiterarbeitet: erst diesen Plan lesen, dann bauen.
 - Datei: `public/assets/api-center-surface.js` (+ `?v=`-Marke in
   `entwickler.js` und im Einstellungsreiter nachziehen, SW-Precache pruefen).
 
-### 2. Laufzeit beim Erstellen waehlbar (Kern)
+### 2. Laufzeit beim Erstellen waehlbar (Kern) — GEBAUT 2026-09-03 (Server dfe41f7c → Bauzweig 63c6c35f; Oberflaeche e6cb439c auf feature/api-laufzeit; Auslieferung per Betreiber-Kaskade scripts/einmal/api-laufzeit-2026-09-03.sh)
 
 - Neues Feld im Eintrag: `laeuftAbAm` (ISO-Datum oder `""` = unbefristet).
   Auch in den Rueckschlag-Datensatz (`putProviderCredential`) schreiben,
