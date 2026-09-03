@@ -242,9 +242,12 @@
     return REGISTER.filter(function (r) { return r.id === id; })[0] || null;
   }
 
-  /** Ohne Wahl: das Register mit dem Problem — sonst "Alle". */
-  function standardRegister(alle) {
-    return alle.some(registerFuer("achtung").passt) ? "achtung" : "alle";
+  /** Ohne Wahl immer "Alle" (Betreiber-Anordnung 03.09.2026: "Wenn ich alle klicke,
+   *  soll alle Autopilot zeigen. Soll wieder alle sein."). Bis dahin sprang die Seite
+   *  bei einem Problem in "Braucht dich" — und der Betreiber sah nur die Roten und
+   *  suchte die Übersicht. Das Register "Braucht dich" trägt die Zahl weiterhin rot. */
+  function standardRegister() {
+    return "alle";
   }
 
   function registerLeiste(alle, aktivId) {

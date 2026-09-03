@@ -11,7 +11,7 @@
 set -u
 
 BAUZWEIG="/private/tmp/claude-501/bau-zweig"
-WORTLAUT="Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Audit A bis Z, Wahl Runde 1: Nr. 73 Tuerwaechter registriert, Heiler-Liste +5, Registry-Texte ehrlich, Erste Hilfe ohne Doppel-Rot; Wahl Runde 2: Nr. 74-80 (Einwilligung, Tiefe Spur, Bau, Projektwissen, Sprachseiten, Red-Team, Agenten) angeschlossen; Stempel per Betreiber-Doppelklick"
+WORTLAUT="Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Audit A bis Z, Wahl Runde 1: Nr. 73 Tuerwaechter registriert, Heiler-Liste +5, Registry-Texte ehrlich, Erste Hilfe ohne Doppel-Rot; Wahl Runde 2: Nr. 74-80 (Einwilligung, Tiefe Spur, Bau, Projektwissen, Sprachseiten, Red-Team, Agenten) angeschlossen; Betreiber-Anordnung: Autopiloten-Seite oeffnet mit Register Alle (views-stage9.js); Stempel per Betreiber-Doppelklick"
 
 if [ ! -d "$BAUZWEIG/.git" ] && [ ! -f "$BAUZWEIG/.git" ]; then
   echo "ABBRUCH: Arbeitskopie des Bauzweigs fehlt unter $BAUZWEIG"
