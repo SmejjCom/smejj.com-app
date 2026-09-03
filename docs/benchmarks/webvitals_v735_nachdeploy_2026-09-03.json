@@ -1,0 +1,120 @@
+{
+ "hinweis": "Nachdeploy v735 (A-bis-Z 2026-09-03, Kaskade 4: Markenkette geheilt — 23 ?v=-Marken bis index.html, Markenkette eingefroren; design-v11 5e6b9262, Klon 0e0b008, Bauzweig 09952487). Browser laedt live nur neue Marken (app.js b116, chat-store b66, panel-layout 4), keine alte. Asset-Liste Desktop kalt 98 Ressourcen / 270 KB; Messlauf inkl. API-Antworten 288 KB. LCP/TTFB kalt schwanken mit dem Betreiber-Netz (RTT 130-250 ms), die Wache im Bauzweig fuehrt TTFB nur als Hinweis. INP 16 ms, CLS 0,016.",
+ "url": "https://smejj.com/",
+ "runs": 3,
+ "gemessenMit": "Chrome headless ueber DevTools-Protokoll, ohne Zusatzpakete",
+ "kalt": {
+  "ttfb_ms": {
+   "median": 439,
+   "p75": 719,
+   "min": 231,
+   "max": 719
+  },
+  "fcp_ms": {
+   "median": 1012,
+   "p75": 2892,
+   "min": 552,
+   "max": 2892
+  },
+  "lcp_ms": {
+   "median": 1012,
+   "p75": 2892,
+   "min": 552,
+   "max": 2892
+  },
+  "cls": {
+   "median": 0.019,
+   "p75": 0.019,
+   "min": 0.015,
+   "max": 0.019
+  },
+  "inp_ms": {
+   "median": 16,
+   "p75": 24,
+   "min": 16,
+   "max": 24
+  },
+  "domInteractive_ms": {
+   "median": 1094,
+   "p75": 3380,
+   "min": 541,
+   "max": 3380
+  },
+  "pageWeight_kb": {
+   "median": 288,
+   "p75": 288,
+   "min": 288,
+   "max": 288
+  },
+  "resources": {
+   "median": 98,
+   "p75": 98,
+   "min": 98,
+   "max": 98
+  },
+  "lcpElement": "H2"
+ },
+ "warm": {
+  "ttfb_ms": {
+   "median": 542,
+   "p75": 741,
+   "min": 472,
+   "max": 741
+  },
+  "fcp_ms": {
+   "median": 572,
+   "p75": 784,
+   "min": 504,
+   "max": 784
+  },
+  "lcp_ms": {
+   "median": 572,
+   "p75": 784,
+   "min": 504,
+   "max": 784
+  },
+  "cls": {
+   "median": 0.017,
+   "p75": 0.017,
+   "min": 0.015,
+   "max": 0.017
+  },
+  "inp_ms": {
+   "median": 16,
+   "p75": 16,
+   "min": 16,
+   "max": 16
+  },
+  "domInteractive_ms": {
+   "median": 552,
+   "p75": 758,
+   "min": 480,
+   "max": 758
+  },
+  "pageWeight_kb": {
+   "median": 0,
+   "p75": 0,
+   "min": 0,
+   "max": 0
+  },
+  "resources": {
+   "median": 98,
+   "p75": 98,
+   "min": 98,
+   "max": 98
+  },
+  "lcpElement": "H2"
+ },
+ "budgets": {
+  "ttfb_ms": 200,
+  "lcp_ms": 1500,
+  "cls": 0.1,
+  "inp_ms": 200,
+  "pageWeight_kb": 300
+ },
+ "verstoesse": [
+  "kalt: ttfb_ms p75 719 > Budget 200",
+  "kalt: lcp_ms p75 2892 > Budget 1500",
+  "warm: ttfb_ms p75 741 > Budget 200"
+ ]
+}

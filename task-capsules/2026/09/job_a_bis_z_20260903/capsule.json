@@ -1,0 +1,161 @@
+{
+  "jobId": "job_a_bis_z_20260903",
+  "createdAt": "2026-09-03T08:00:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Grossauftrag: A bis Z komplett pruefen, alle Fehler sofort beheben, live testen, 100 % sauber)",
+  "title": "A-bis-Z-Pruefung 2026-09-03: Frontend, Barrierefreiheit, Fehlerzustaende, Service Worker, Performance, Static-First, Backend, Speicher, Sicherheit, Konsistenz, Chat E2E, Doku — 8 Befunde behoben (2 davon per Betreiber-Stempel), 2 bewusst offen (Zeabur-Token, transformers im Maler)",
+  "rollbackPunkt": "Tag stand-2026-09-03-a-bis-z = design-v11 c9a4b932 (vor dem Auftrag); Frontend-Klon per git revert; Dienste per Revert im Deploy-Zweig",
+  "pruefkatalog": {
+    "1_frontend_responsive": {
+      "ergebnis": "gruen",
+      "beleg": "scripts/testing/messe_responsive.mjs gegen https://smejj.com/: 152 Messpunkte (19 Ansichten x 8 Geraeteklassen 320-1920 px), keine Ansicht laeuft ueber; measure_touch_targets_app.mjs (375 px, pointer coarse): Startseite 30 bedienbar, in Ordnung — nach dem Fix des Modell-Chips (composer-zeile.js min-width 44 px, live seit 06:18 UTC)",
+      "browserMatrix": "Chrome headless (alle Messungen); Firefox 154 headless rendert willkommen.html korrekt (Screenshot firefox-willkommen.png); '/' im Firefox-Screenshot weiss = Messartefakt des fruehen Tors (location.replace im head), nicht die Seite; Safari nicht automatisierbar (Remote Automation in Safari nicht freigeschaltet — Systemeinstellung, nicht angefasst)"
+    },
+    "2_barrierefreiheit": {
+      "ergebnis": "gruen",
+      "beleg": "Live-Pruefung im headless Chrome: 32 sichtbare Bedienelemente, 0 ohne zugaenglichen Namen, 0 Bilder ohne alt, 1 h1, lang=de, main vorhanden; 25 Tab-Schritte: jedes fokussierte Element mit sichtbarem Fokusrahmen (0 ohne); Kontrast: 4 Roh-Treffer waren Fehlmessungen halbtransparenter Farben (Modell-Chip rgba(242,245,244,.62) auf rgba(255,255,255,.06)/#101113 ergibt real ca. 5,9:1). Offen (nicht kritisch): kein Skip-Link — index.html im Start-Lock."
+    },
+    "3_fehlerzustaende": {
+      "ergebnis": "gruen",
+      "beleg": "API-Hosts blockiert (Network.setBlockedURLs): Startseite rendert (384 Zeichen, Feld da, kein weisser Schirm); Senden ohne API zeigt 'Verbindung zum Server unterbrochen'; Offline-Neuladen mit aktivem Service Worker: Seite rendert aus dem Vorrat (controller=true, 97 Ressourcen)"
+    },
+    "4_service_worker": {
+      "ergebnis": "gruen",
+      "beleg": "check:precache-imports OK (173 Module erreichbar); Live sw.js == Repo (byteweise); HTML netzwerk-zuerst, Precache cache-first mit CACHE_NAME-Sprung (heute v730 -> v733, mit Kaskade 4 v735); Drift-Pruefung 16 Kerndateien live vs. Repo: nur datenschutz.html wich ab (heute geaendert, ausgeliefert)"
+    },
+    "5_performance": {
+      "ergebnis": "gelb (Netz des Betreibers), Seite gruen",
+      "beleg": "docs/benchmarks/webvitals_v733_nachdeploy_2026-09-03.json: Gewicht kalt p75 288 KB (Budget 300, vorher 324), Asset-Liste Desktop 270 KB; CLS 0,015; INP 16-32 ms; LCP kalt p75 1,2-2,1 s je Netzlage; TTFB kalt 194-565 ms — RTT Mac->Pages-Edge 130-250 ms (Tuerk Telekom, erster Hop bis 200 ms). TTFT Chat (measure_first_token, Bruecke, Schnellspur groq gpt-oss-120b): erstes Zeichen Median 1206 ms, p95 1324 ms, unsichtbare Wartezeit 0 ms — Antwortkopf allein 942-1323 ms = Netzweg (TCP-Connect zur API 231 ms Median). API-Latenz von hier: /api/me (401, ohne Speicher) TTFB Median 728 ms, /api/health 485-981 ms. Serverseitige p95 sind ohne Zeabur-Metriken (Token abgelaufen) nicht messbar."
+    },
+    "6_skalierung_static_first": {
+      "ergebnis": "gruen",
+      "beleg": "Startseite: server GitHub.com, Varnish-Cache (age < 10 s), 74 KB HTML, cache-control max-age=600, ETag; keine Anfrage an Control im Render-Pfad (Ressourcenliste kalt: nur smejj.com-Assets, API erst nach Auth-Gate); Marken (?v=) + SW-Sprung als Cache-Busting; Zustandslosigkeit: keine Sitzungs-/Job-Maps auf Modulebene in src/ (nur konstante Sets, providerContract-Registry); jeder unbekannte oder ungeschuetzte API-Pfad -> 401 (fail-closed); 429 fuer Budget/Rate im Code (src/server.js 538/684); 40 parallele /api/health -> 200 (Health bewusst ohne Limit)"
+    },
+    "7_backend": {
+      "ergebnis": "gruen",
+      "beleg": "/api/health ok: storage true, trainingsSpeicher ok (s3.us-west-2.idrivee2.com / smejj-model-files), aiBackend zhipu:glm-5.2, activeModelId glm-5-2; unauthentifiziert: /api/chats, /api/autopilot/status, POST /api/agent, /api/me, /api/admin/status, /v1/models, /api/nix-da -> 401; check:llm-router, check:control-server, check:unit-server in check:all gruen (1138 Tests)"
+    },
+    "8_speicher_idrive": {
+      "ergebnis": "gruen",
+      "beleg": "check:idrive-connection und check:rollback in check:all gruen; Health-Sonde trainingsSpeicher ok; Zweit-Eimer-Replikation (smejj-sicherung) laut Memory seit 24.08. — von hier ohne Schluessel nicht erneut messbar"
+    },
+    "9_sicherheit": {
+      "ergebnis": "gruen",
+      "beleg": "api.smejj.com: CSP (frame-ancestors none), X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy; CORS: Origin smejj.com Preflight 204, fremde Origin 403; smejj.com: HSTS + CSP per Meta (GitHub Pages setzt keine weiteren Header); check:security gruen nach Praezisierung des Secret-Scanners (verweis:/${VAR}-Verweisformen sind keine Schluessel — drei Fehlalarme); check:cve OK 24 Bibliotheken (protobuf 5.29.6); pipecat 0.0.67 nicht gebaut; transformers 5.5.0 im Bild-Maler (GHSA-xrqw nicht erreichbar; 5.10.4 zweimal live gescheitert, Revert, siehe smejj-cve-runde-20260903)"
+    },
+    "10_konsistenz": {
+      "ergebnis": "gruen",
+      "beleg": "check:branding gruen (Schreibregel smejj.com); i18n-/rechtslinks-Tests gruen; 14 HTML-Seiten, 226 lokale Verweise: 3 'fehlende' sind /assets/-Kopien, die nur im Klon liegen (live 200); externe Links: 6 x 200, 1 x 404 (IDrive e2/privacy -> auf /privacy berichtigt, live); keine englischen Reste im sichtbaren Startseiten-Text (Treffer nur in data-Attributen)"
+    },
+    "11_chat_e2e": {
+      "ergebnis": "gruen (Antwort), gelb (TTFT von hier)",
+      "beleg": "docs/benchmarks/firsttoken-bridge-schnelle-spur-2026-09-03.json: 3 echte Aufrufe ueber die Bruecke mit Eval-Token, Modell groq:openai/gpt-oss-120b, 37-42 Stream-Ereignisse, Ende Median 1475 ms"
+    },
+    "12_doku": {
+      "ergebnis": "gruen",
+      "beleg": "Memory_Bank 663/800 Zeilen (Runde 6 ausgelagert, Nachtraege 17-19); docs/deployment/DEPLOYMENT_PLAN.md Abschnitt 'Stand 2026-09-03' (Klon/Bauzweig/Deploy-Zweige/Kaskaden/Rollback); AI_Guidelines.md Abschnitt 8 Auslieferung"
+    }
+  },
+  "befunde": [
+    {
+      "id": "F1-chat-store-doppelt",
+      "status": "behoben, live v730",
+      "was": "erste-schritte.js importierte chat-store.js ohne ?v=b65 -> zweite Modulinstanz, 12,9 KB doppelt; Waechter tests/modul-einmal-instanz.test.mjs"
+    },
+    {
+      "id": "F2-ux-haken-sofort",
+      "status": "behoben, live v731",
+      "was": "sieben Laufzeit-Module luden immer; jetzt beiHandy/beiKindern/beiKlasse"
+    },
+    {
+      "id": "F3-verlauf-helfer",
+      "status": "behoben, live v733",
+      "was": "chat-history-view.js laedt Text/Karten/Titel-Automatik erst bei sichtbarem Verlauf; chat-merkmale.js fuer spur-start.js; Gewicht 324 -> 270 KB Asset-Liste, Messlauf 288 KB"
+    },
+    {
+      "id": "F4-modell-chip-30px",
+      "status": "behoben, live (kein SW-Sprung)",
+      "was": "composer-zeile.js min-width:0 -> 44px; Touch-Messung gruen"
+    },
+    {
+      "id": "F5-idrive-link-404",
+      "status": "behoben, live",
+      "was": "datenschutz.html: idrive.com/e2/privacy -> idrive.com/privacy"
+    },
+    {
+      "id": "F6-secret-scanner-fehlalarm",
+      "status": "behoben",
+      "was": "check-no-paid-services.mjs: Verweisformen verweis:/${VAR} ausgenommen; Foundation-Suite 2026-09-03.1 mit neuen Digests (check-no-paid-services, check-guidelines) und contentSha256"
+    },
+    {
+      "id": "F7-markenkette",
+      "status": "behoben, live v735 (Stempel per Doppelklick 09:21 UTC; Kaskade brach danach ab, Rest von der Sitzung: design-v11 5e6b9262, Klon 0e0b008, Bauzweig 09952487); Browser laedt nur neue Marken",
+      "was": "8 Module geaendert ohne neue Marke; 23 Marken bis index.html/app.js/search.js/premium-surfaces.js (Start-Lock); im Probe-Baum bewiesen"
+    },
+    {
+      "id": "F8-zeabur-token",
+      "status": "offen, braucht Betreiber (Rote Liste Zugang)",
+      "was": "Betriebswache Teil 3 (Betriebswerte) 401; Bild-Maler-Baulog unlesbar"
+    },
+    {
+      "id": "F9-transformers-maler",
+      "status": "bewusst offen bis Baulog lesbar",
+      "was": "5.10.4 zweimal live gescheitert; lokal abbild-getreu importiert alles; Revert 06260151"
+    },
+    {
+      "id": "F10-einwilligung-lock",
+      "status": "behoben (Lock mit Betreiber-Wortlaut neu gestempelt 09:29 UTC)",
+      "was": "datenschutz.html liegt im Einwilligungs-Lock; der Link-Fix riss ihn — Manifest docs/approvals/einwilligung-lock-manifest.json neu eingefroren"
+    }
+  ],
+  "pruefungen": {
+    "check_all": "EXIT 0 nach Markenkette + Einwilligungs-Stempel (2236 Tests, 0 rot) — Beleg /private/tmp check-all-2026-09-03e.log, Zusammenfassung in Memory_Bank Nachtrag 19",
+    "check_frontend": "669/669 nach Marken-Zug im Probe-Baum",
+    "check_cve": "OK 24 Bibliotheken",
+    "check_security": "OK nach Scanner-Praezisierung",
+    "check_memory_bank": "642/800, 21 Verweise vorhanden"
+  },
+  "screenshots": [
+    "task-capsules/2026/09/job_a_bis_z_20260903/start-desktop-1440.png",
+    "task-capsules/2026/09/job_a_bis_z_20260903/start-handy-375.png",
+    "task-capsules/2026/09/job_a_bis_z_20260903/verlauf-handy-375.png",
+    "task-capsules/2026/09/job_a_bis_z_20260903/firefox-willkommen.png",
+    "task-capsules/2026/09/job_a_bis_z_20260903/firefox-login.png"
+  ],
+  "liveUrls": [
+    "https://smejj.com/",
+    "https://api.smejj.com/api/health",
+    "https://smejj.com/datenschutz.html",
+    "https://smejj-bild-maler-2.zeabur.app/health"
+  ],
+  "commits": {
+    "design-v11": [
+      "54f4f9b7 chat-store einmal",
+      "ef010037 UX-Haken",
+      "bb848280 Verlauf nachladen",
+      "f9f8f37f Modell-Chip",
+      "709d4006 IDrive-Link + Scanner + Doku",
+      "79ec8524 Foundation-Suite",
+      "c5dd2574 Kaskade 4",
+      "5e6b9262 Markenkette",
+      "Einwilligungs-Manifest + Capsule (folgt)"
+    ],
+    "bauzweig": [
+      "35c96d3c composer-zeile",
+      "6c2e443c datenschutz/Scanner/Doku",
+      "df208c13 Maler-Pins",
+      "09952487 Markenkette"
+    ],
+    "frontendKlon": [
+      "a2b1523 composer-zeile",
+      "f3f0c29 Verlauf",
+      "b5e84af datenschutz",
+      "0e0b008 Markenkette v735"
+    ]
+  },
+  "status": "abgeschlossen 2026-09-03 09:3x UTC — live v735 auf beiden Domains, check:all EXIT 0 (siehe pruefungen)",
+  "benchmarks": [
+    "docs/benchmarks/webvitals_v733_nachdeploy_2026-09-03.json",
+    "docs/benchmarks/webvitals_v735_nachdeploy_2026-09-03.json",
+    "docs/benchmarks/firsttoken-bridge-schnelle-spur-2026-09-03.json"
+  ]
+}

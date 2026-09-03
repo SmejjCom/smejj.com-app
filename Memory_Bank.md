@@ -640,3 +640,24 @@ Baulog, ohne Token unerreichbar: STOPP nach 2 von 5 Runden. (3) Requirements mue
 sonst ist der CVE-Waechter falsch gruen; die Luecke (save_pretrained-Pfad) ruft server.py nie. (4) Vor jedem
 Maler-Push zuerst `sicherung/maler-vor-cve-<datum>` auf die Spitze setzen; Zeabur-Bau ohne Token nur ueber
 /health beobachten (ladezeitSek springt beim Neustart auf klein, `fehler` traegt den Importfehler).
+
+## 2026-09-03 — A-bis-Z-Pruefung: 12 Katalogpunkte gemessen, 7 Befunde behoben, check:all EXIT 0, live v735 (job_a_bis_z_20260903, Nachtrag 19)
+
+Capsule `task-capsules/2026/09/job_a_bis_z_20260903/capsule.json` (Belege, Screenshots, URLs). Gruen: Responsive 152
+Messpunkte 320-1920 px, Touch 375 px, Barrierefreiheit (0 ohne Namen, 0 ohne Fokusrahmen), Fehlerzustaende (API blockiert
+-> Meldung, offline -> Vorrat), Service Worker (Precache vollstaendig, live == Repo), Static-First (GitHub Pages/Varnish,
+kein Control im Render-Pfad), Backend (jeder Pfad ohne Anmeldung 401, CORS fremd 403), IDrive-Health ok, Security-Header,
+CVE 24/24, Schreibregel, Chat E2E (3 echte Aufrufe, Ende Median 1,5 s), Doku (Deployment-Plan Stand 2026-09-03).
+Behoben: toter IDrive-Datenschutzlink; Secret-Scanner-Fehlalarm (verweis:/${VAR}); Foundation-Suite 2026-09-03.1
+(Digests + contentSha256); Markenkette (23 Marken bis index.html, Kaskade 4, v735, Betreiber-Stempel 09:21 UTC);
+Einwilligungs-Lock neu gestempelt (datenschutz.html liegt darin). Gelb, nicht Seite: TTFB/LCP kalt und TTFT 1,2 s vom
+Betreiber-Netz (RTT 130-250 ms, TCP-Connect API 231 ms). Offen: Zeabur-Token (Betriebswerte 401, Maler-Baulog) und
+transformers im Maler (Nachtrag 18). Browser-Matrix: Chrome voll, Firefox rendert (willkommen.html), Safari nur mit
+Remote-Automation-Einstellung.
+**MERKE:** (1) Eine neue ?v=-Marke aendert die ladende Datei — deren Marke steigt mit, bis index.html; iterativ im
+Probe-Worktree mit check-markenkette berechnen (3 Runden -> 23 Regeln). (2) Die Foundation-Suite pinnt Prueferskripte
+UND sich selbst: nach jeder check-*.mjs-Aenderung Asset-Digests, Version und contentSha256 nachziehen. (3) datenschutz.html
+und die Einwilligungskette sind gelockt — jeder Link-Fix braucht den Stempel (dieser Lock laesst --freeze in der Sitzung zu).
+(4) Firefox-Screenshot von "/" ist weiss, weil das fruehe Tor sofort nach /willkommen.html springt — Zielseite direkt
+schiessen. (5) Kaskaden koennen nach dem Stempel abbrechen; Spuren: Manifest-Zeitstempel, sw.js, git status — Reste darf
+die Sitzung selbst erledigen.

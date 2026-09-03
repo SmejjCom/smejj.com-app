@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "kind": "smejj.com-first-token-probe",
+  "endpointName": "bridge",
+  "bodyMode": "chat",
+  "auth": "bearer-aus-sicherer-env",
+  "model": null,
+  "prompt": "Nenne in einem Satz, wofuer der zentrale Objektspeicher von smejj.com zustaendig ist.",
+  "startedAt": "2026-09-03T08:59:51.391Z",
+  "finishedAt": "2026-09-03T09:00:07.607Z",
+  "backends": [
+    "groq:openai/gpt-oss-120b"
+  ],
+  "summary": {
+    "runs": 3,
+    "ok": 3,
+    "failed": 0,
+    "ttfbMsMedian": 1205,
+    "firstFrameMsMedian": 1206,
+    "firstVisibleMsMedian": 1206,
+    "firstVisibleMsP95": 1324,
+    "totalMsMedian": 1475,
+    "unsichtbarWartezeitMsMedian": 0,
+    "charsMedian": 179
+  },
+  "probes": [
+    {
+      "ok": true,
+      "ttfbMs": 1323,
+      "firstFrameMs": 1324,
+      "firstVisibleMs": 1324,
+      "totalMs": 1576,
+      "frames": 39,
+      "chars": 179,
+      "backend": "groq:openai/gpt-oss-120b",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 942,
+      "firstFrameMs": 943,
+      "firstVisibleMs": 943,
+      "totalMs": 1162,
+      "frames": 37,
+      "chars": 170,
+      "backend": "groq:openai/gpt-oss-120b",
+      "error": null
+    },
+    {
+      "ok": true,
+      "ttfbMs": 1205,
+      "firstFrameMs": 1206,
+      "firstVisibleMs": 1206,
+      "totalMs": 1475,
+      "frames": 42,
+      "chars": 186,
+      "backend": "groq:openai/gpt-oss-120b",
+      "error": null
+    }
+  ]
+}
