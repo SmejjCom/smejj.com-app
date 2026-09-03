@@ -20,7 +20,9 @@
 # [ueberholt] diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es
 # [ueberholt] existiert derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36).
 diffusers==0.38.0
-transformers==5.5.0
+# 2026-09-03: 5.5.0 trug GHSA-xrqw-3rrv-vx5w (save_pretrained-Pfadueberschreitung), behoben ab 5.10.0;
+# 5.10.4 ist der letzte Patch der Reihe (osv.dev: 0). Bedingungen: huggingface-hub <2.0 wie diffusers 0.38.
+transformers==5.10.4
 accelerate==1.1.1
 # 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
 # ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die

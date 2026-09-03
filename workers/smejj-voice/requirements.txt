@@ -23,6 +23,8 @@
 # nicht gebaut: kein erreichbares Risiko, also auch kein Grund, einen Umbau
 # ungetestet einzubauen. Sobald smejj-voice wieder gebaut wird, ist 1.4.0+ der
 # Weg — nicht 0.0.94, das waere ein Rueckschritt.
+# NACHGEMESSEN 2026-09-03: neueste 1.8.1; 0.0.67 traegt weiter GHSA-c2jg-5cp7-6wc7 (Pickle-RCE ueber
+# LiveKit, den smejj-voice nicht nutzt). Entscheidung unveraendert: erst mit dem Neubau auf 1.4.0+.
 pipecat-ai[silero,whisper,openai]==0.0.67
 
 # Speech-to-text engine (also pulled by the whisper extra; pinned for clarity).
@@ -46,7 +48,9 @@ aiohttp==3.14.3
 # 5.29.2 verletzte die Bedingung von pipecat und war ein latenter Baufehler
 # derselben Art wie der safetensors-Widerspruch beim Maler. 5.29.5 erfuellt
 # alle drei und ist die einzige Fassung, die beides zugleich loest.
-protobuf==5.29.5
+# 2026-09-03: 5.29.5 trug 2 Luecken (GHSA-7gcm-g887-7qv7 / PYSEC-2026-1805, JSON-Rekursionstiefe);
+# 5.29.6 schliesst beide (osv.dev: 0) und bleibt in der 5.29-Reihe, die pipecat 0.0.67 verlangt.
+protobuf==5.29.6
 
 # Silero VAD runtime (CPU is enough for VAD).
 onnxruntime==1.20.1
