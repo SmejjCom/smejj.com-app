@@ -142,3 +142,11 @@ Sieben neue Wächter (Nummern rückten um eins, weil Nr. 73 der Türwächter wur
 Gemeinsamer Helfer `brueckenMesslauf.js` (5,5 s Abstand wegen 12/min, Hintergrund wegen 120-s-Lauflimit, Transportfehler = „nicht messbar"). Nr. 72 liest die Referenz jetzt zuerst aus Nr. 75, sonst aus Nr. 01 (dessen Herzschlag trägt seit heute die Note: `Exit 0 — Note 79,4 % (14 Faelle, 3 kritisch, live-default)`). `Dockerfile.smejj-control` kopiert jetzt `evals/` ins Abbild.
 
 **Bewusst nicht gebaut:** Modell-Canary/Rollback (braucht Router-Umbau in der Brücke, Security-Lock — eigene Runde mit Freigabe), Stripe-Webhook-Wache (es gibt kein Ereignis-Protokoll im Webhook; das anzulegen liegt unter dem Abo-Lock), Medien-Funktionsprobe (kostet je Bild Geld; braucht Budget-Schalter und Betreiber-Freigabe). Tests: `tests/runde2-waechter.test.mjs` (8 Tests), Zähl-Wächter 67/68/68/70, 131 Tests grün.
+
+## 9. Live-Beweis Runde 2 (03.09., 12:40–13:30 UTC)
+
+- Push 5a862724 → Zeabur-Bau 12:40:02 success, Server 12:40:04 (zweiter Start 12:44:55, wie beim Runde-1-Bau — Zeabur startet nach dem Bau noch einmal, kein Absturz).
+- Ampel 12:47 UTC: **77 Autopiloten, 71 grün, 4 rot** — die zwei Mac-Jobs plus **Nr. 75 und Nr. 79: „nicht messbar: 12 von 14 Fällen mit Transportfehler"**. Ursache: beide Hintergrund-Messläufe starteten im selben Takt und teilten sich die 12 Anfragen/min der Brücke (429).
+- Fix ce03ecdf (Bau 12:55:26): EINE Warteschlange über alle Kennungen, 429/5xx einmal wiederholt (65 s), Timeout 120 s (die tiefe Spur denkt nach), „nicht messbar" nach 2 h statt 22 h neu, alte Ablage (ohne `version`) sofort neu gemessen, Fehlergründe (`http_429 ×N`) in der Meldung.
+- Danach: 76 grün; Nr. 75/79 bleiben bis zum Takt nach der Neumessung auf dem alten Stand (ehrlich: die letzte Messung war nicht messbar).
+- **15:35 UTC (nach Fix ce03ecdf, Server-Start 14:46):** 77 Autopiloten, 76 grün. **Nr. 75 misst echt: tiefe Spur Note 94,1 % (14 Fälle, 1 kritisch, p95 14,4 s) — rot, weil eine kritische Zusicherung verletzt ist und die Messlatte 95 % gilt.** Das ist ein Befund über GLM-5.2, kein Fehler der Wache (Fall-Kennung liegt in `autopiloten/tiefe-spur-messung/letzter-lauf`). Nr. 79: 4 von 5 Injektionen gemessen, 1 Transportfehler, Neumessung läuft. Rote gesamt: 4 (2 Mac-Jobs + 75 + 79).
