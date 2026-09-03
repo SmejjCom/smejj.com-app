@@ -8,22 +8,30 @@
 # Jahre aelteres diffusers gegen transformers 5 zu stellen waere die eigentlich
 # riskante Kombination gewesen. Beide verlangen huggingface-hub <2.0 — kein
 # Versionskonflikt.
-# 0.38.0 statt 0.36.0 (2026-08-14, Betreiber-Karte "Ganzes Paket, jetzt"):
-# Version fuer Version gegen api.osv.dev gemessen —
-#   0.31.0 (bisher hier) und 0.36.0 -> 5 Luecken, 0.37.0 -> 5,
-#   **0.38.0 -> 0**, 0.39.0 -> 0.
-# Eine aeltere Notiz sagte, es gebe KEINE saubere Fassung; diese Pruefung
-# endete bei 0.36. server.py nutzt nur diffusers.AutoPipelineForText2Image —
-# eine API, die ueber diese Versionen stabil ist. Der Beweis liegt trotzdem
-# erst am laufenden Dienst (erstes echtes Bild nach dem Bau).
+# NACHTRAG 2026-08-14, 02:00 Pazifik — die Zeile darunter ist ueberholt:
+# frisch gegen api.osv.dev gemessen, Version fuer Version:
+#   0.36.0 -> 5 Luecken, 0.37.0 -> 5, 0.38.0 -> 0, 0.39.0 -> 0.
+# Es gibt also sehr wohl eine saubere Fassung; die urspruengliche Pruefung
+# endete bei 0.36. NICHT blind anheben: server.py haengt an
+# diffusers.AutoPipelineForText2Image, und ein Sprung ueber zwei
+# Nebenversionen laesst sich nur am laufenden Dienst beweisen, nicht lokal.
+# Als Aufgabe im Werkstatt-Backlog (Stufe 2) hinterlegt.
+#
+# [ueberholt] diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es
+# [ueberholt] existiert derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36).
 diffusers==0.38.0
-transformers==5.5.0
+# 2026-09-03: 5.5.0 trug GHSA-xrqw-3rrv-vx5w (save_pretrained-Pfadueberschreitung), behoben ab 5.10.0.
+# ERSTER ANLAUF 5.10.4 (deploy 597c7cf0) SCHEITERTE LIVE: transformers 5.10 nutzt torch.float8_e8m0fnu,
+# das torch 2.5.1 (Dockerfile.smejj-bild-maler) nicht kennt -> modeling_utils faellt, diffusers meldet
+# "PreTrainedModel" nicht importierbar, Dienst blieb bereit:false. Revert 0eaafe5f.
+# ZWEITER ANLAUF: torch 2.7.1 + torchvision 0.22.1 im Abbild. Lokal exakt nachgestellt (uv, Python 3.11):
+# torch 2.5.1 -> derselbe Fehler; torch 2.7.1 -> Import von PreTrainedModel, AutoPipelineForText2Image
+# und diffusers.loaders.peft sauber. Bedingungen: huggingface-hub <2.0 wie diffusers 0.38.
+transformers==5.10.4
 accelerate==1.1.1
-# 0.8.0 statt 0.4.5 (2026-08-14): NICHT wegen Luecken — beide Fassungen sind
-# sauber (osv.dev: je 0). Reiner Vertraeglichkeitszwang: diffusers 0.38.0
-# verlangt safetensors>=0.8.0, mit dem alten Pin brach der Bau mit
-# "ResolutionImpossible" ab. transformers 5.5.0 fordert nur >=0.4.3 und
-# traegt die neuere Fassung mit.
+# 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
+# ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die
+# Sicherheitsaktualisierung selbst falsch gewesen.
 safetensors==0.8.0
 fastapi==0.115.5
 uvicorn==0.32.1
