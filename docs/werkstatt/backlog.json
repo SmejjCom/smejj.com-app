@@ -1,5 +1,5 @@
 {
-  "gesammeltAm": "2026-09-02T16:12:58.097Z",
+  "gesammeltAm": "2026-09-02T20:01:13.822Z",
   "aufgaben": [
     {
       "stufe": 1,
@@ -8,14 +8,6 @@
       "titel": "Ausfall: Betriebswache",
       "befund": "Der letzte Lauf hat einen Fehler gemeldet: Responsive+Touch gegen smejj.com: rot.",
       "seit": "2026-09-02T02:37:24.704Z"
-    },
-    {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "qualitaetsmessung",
-      "titel": "Ausfall: Qualitäts-Prüfer",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1.",
-      "seit": "2026-09-02T04:27:24.743Z"
     },
     {
       "stufe": 1,
