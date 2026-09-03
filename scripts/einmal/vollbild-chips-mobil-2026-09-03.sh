@@ -55,7 +55,7 @@ node --test tests/touch-ziele-waechter.test.mjs tests/frontend-structure.test.mj
 
 echo "== 3. Commit design-v11"
 GEAENDERT=$(git diff --name-only -- public docs/frontend | tr '\n' ' ')
-git add $GEAENDERT
+git add ${=GEAENDERT}
 git commit -q -m "feat(mobil): Vollbild am Handy (Glas bis in die Safe-Area) + alle acht Werkzeug-Chips wischbar, Raster-Falle .home-feed min-width:0, Buendel-Marke mobil100-20260903, SW smejj-shell-v${NEXT}, Start-Lock gestempelt (Betreiber-Doppelklick 2026-09-03)"
 QUELLE=$(git rev-parse --short HEAD); echo "design-v11 $QUELLE"
 
