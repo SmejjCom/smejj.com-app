@@ -44,7 +44,7 @@ grep -n "const CACHE_NAME" public/sw.js
 echo "== 2. Buendel + assets nachziehen, Start-Lock stempeln, Pruefungen"
 npm run -s build:start-styles | tail -1
 npm run -s build:assets | tail -1
-grep -q 'Raster-Falle' public/assets/start-styles.css || { echo "ABBRUCH: Buendel unter /assets/ ohne Umbau."; exit 1; }
+grep -q 'scroll-padding-top: 52px' public/assets/start-styles.css || { echo "ABBRUCH: Buendel unter /assets/ ohne Umbau."; exit 1; }
 node scripts/check-markenkette.mjs | tail -1
 node scripts/check-start-lock.mjs --freeze --confirm "$FREIGABE" | tail -1
 npm run -s check:start-lock | tail -1
@@ -90,7 +90,7 @@ echo "== 6. Live-Beweis (bis 3 Minuten)"
 for i in $(seq 1 18); do
   v=$(curl -s -m 15 https://smejj.com/sw.js | grep -o 'smejj-shell-v[0-9]*' | head -1)
   a=$(curl -s -m 15 https://api.smejj.com/sw.js | grep -o 'smejj-shell-v[0-9]*' | head -1)
-  e=$(curl -s -m 15 'https://smejj.com/assets/start-styles.css?v=mobil100-20260903' | grep -c 'Raster-Falle' || true)
+  e=$(curl -s -m 15 'https://smejj.com/assets/start-styles.css?v=mobil100-20260903' | grep -c 'scroll-padding-top: 52px' || true)
   m=$(curl -s -m 15 https://smejj.com/ | grep -c 'start-styles.css?v=mobil100-20260903' || true)
   echo "$(date +%H:%M:%S) smejj.com=$v api=$a buendel-fix=$e marke-in-index=$m"
   if [ "$v" = "smejj-shell-v${NEXT}" ] && [ "$a" = "smejj-shell-v${NEXT}" ] && [ "$e" -ge 1 ] && [ "$m" -ge 1 ]; then
@@ -100,5 +100,5 @@ for i in $(seq 1 18); do
   fi
   sleep 10
 done
-echo "Noch nicht ueberall live — in 5 Minuten erneut pruefen: curl -s 'https://smejj.com/assets/start-styles.css?v=mobil100-20260903' | grep -c Raster-Falle"
+echo "Noch nicht ueberall live — in 5 Minuten erneut pruefen: curl -s 'https://smejj.com/assets/start-styles.css?v=mobil100-20260903' | grep -c 'scroll-padding-top: 52px'"
 exit 1
