@@ -1,13 +1,13 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T09:21:31.916Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick, Grossauftrag A bis Z 'alle Rechte erteilt'): Markenkette heilen — 23 ?v=-Marken bis index.html/app.js/search.js/premium-surfaces.js gezogen, Service-Worker-Cache +1. Keine inhaltliche Aenderung an Startseite oder Eingabefeld.",
+  "frozenAt": "2026-09-03T11:29:57.832Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Vollbild am Handy — Glas-Gefaelle bis in die Safe-Area (mobil-composer.css), alle acht Werkzeug-Chips in einer wischbaren Zeile (start-glass.css, mobil-composer.css), Chat-Verlauf am Handy 52 px unter der Icon-Zeile, Buendel-Marke mobil100-20260903 in index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'unsere App soll Vollbildschirm sein' und 'wenn alle funktionieren, sollen wir alle haben'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "1cd10dc83b582f20da9401a8d793ef7688fec5a0442bc1bf5f4b4976da614ff8",
+    "public/index.html": "5592863a214ff35563bb4be6e6295742416d0be9ad4074d1943c95ef2d2ebc5b",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "5119a1e8483d78ec8b6519f60f3a206cc340bc5a2971cb2603b914087feb43bc",
-    "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
+    "public/start-styles.css": "9be2cad6bca522437625efe7b3353d0bf74326cc1f8e1cbca57cb7b12dd33340",
+    "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "bf3a104e0be33c031fba6fa0472dea2ca5af6ec8e8c268fdcea7e2cdea9e8e6c",
+    "public/sw.js": "3547ec3744d31c0fd372c5a4005960d955ac6d2444e8d932f7191a0b4ad1c58c",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
