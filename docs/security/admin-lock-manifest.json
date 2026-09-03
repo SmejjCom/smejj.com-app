@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-30T09:50:22.853Z",
-  "confirmation": "Betreiber-Freigabe 2026-08-30: 'Ich finde deinen Vorschlag gut. Kannst Du umsetzen. Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen.' — Autopiloten Nr. 66-70 (Mail-Zustellung, DSGVO-Fristen, EU-AI-Act, Abo-Umsatz, Feature-Flags)",
+  "frozenAt": "2026-09-03T11:27:08.723Z",
+  "confirmation": "Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Stempel per Betreiber-Doppelklick",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -23,7 +23,7 @@
     "control-server/src/admin/opsAutopiloten.js": "bfe5ddc1965e0ef20e4a7ef49fd1d6525a087617e5ecd1727b3558508bc7ddc0",
     "control-server/src/admin/opsAutopilotenListe.js": "95756a8dfb3a70a55079dc43a2127f0929914944cb87d59dfb9bbbfcaf95b00f",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
-    "control-server/src/admin/opsAutopilotenBereiche.js": "bc92281ec5d0ecb6f315008706d20082a093948eb05122a566ef82bd12fc76c8",
+    "control-server/src/admin/opsAutopilotenBereiche.js": "13fa47399a3f4d148cf3e8406a23fc5a4c2e13455451dddfa0cb3926dee9bc3b",
     "control-server/src/admin/opsAuslieferung.js": "1c8cd6387c543db7796ee7d985b494a0c276cbd7c5b54429c600b6330e3d9051",
     "control-server/admin-ui/views-stage12.js": "01019f1bdf06f40d87f2b2aa5ca05e901ade9be3b0d7f8536f9d19cc279389df",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
