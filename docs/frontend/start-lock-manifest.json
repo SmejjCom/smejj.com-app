@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T06:34:40.961Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Verlaufs-Text, Karten-Bausteine und Titel-Automatik laden erst bei sichtbarem Verlauf (chat-history-view.js), spur-start.js haengt nur an chat-merkmale.js; chat-merkmale.js in den Precache, Service-Worker-Cache +1. Grundlage: Freigabe 2026-09-02 'Ich gebe dir alle Rechte von A bis Z 100 %.'",
+  "frozenAt": "2026-09-03T09:21:31.916Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick, Grossauftrag A bis Z 'alle Rechte erteilt'): Markenkette heilen — 23 ?v=-Marken bis index.html/app.js/search.js/premium-surfaces.js gezogen, Service-Worker-Cache +1. Keine inhaltliche Aenderung an Startseite oder Eingabefeld.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "edda0020e0800fb5afbb0d59187250180986d7967f95e1ebbe0962dc9113313f",
+    "public/index.html": "1cd10dc83b582f20da9401a8d793ef7688fec5a0442bc1bf5f4b4976da614ff8",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "5119a1e8483d78ec8b6519f60f3a206cc340bc5a2971cb2603b914087feb43bc",
     "public/start-glass.css": "0148d8abcf404cf1685969a647d76a05ff9270174a62f882b1bee019de77b2da",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "341e31a65978aeed8d7de83bad891e2f5a7d5eec244bf0cf771387be9c6f1ddc",
+    "public/app.js": "f7838ae3afdf9cb5984016cf93d2e569876881453669258aabefe5f925c220a8",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "67079736799f1cf8cd3ca3ef0a33561dba744ae91432c63994db25813ced0dd4",
+    "public/premium-surfaces.js": "b17a3221b829b090a4b707c8929629a77aa7a64776c605a6446ae3a1adeeabe5",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
-    "public/search.js": "30d3cf5776c7ba94c429bdb32058a052f72b6e5fce3985b90e6caf5b0047f6f1",
+    "public/search.js": "fa43bbe38c5eac0aec8bdb769187108239fce4d3377a1d778c2ba1cb19e31677",
     "public/composer-tools.js": "27bc70526384b437fc404df7d2af72704031ab9786cfcf20f3e279c7b80c75c1",
     "public/composer-plus-menu.js": "3eb01b8e4f0082aaff520d1e0976df270199e8f6a183d6557c9977d997e27d03",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6e9ee42e19ca01a499885458250af0352e948a1ddd5956ecfa6e37b5c01223dd",
+    "public/sw.js": "bf3a104e0be33c031fba6fa0472dea2ca5af6ec8e8c268fdcea7e2cdea9e8e6c",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
