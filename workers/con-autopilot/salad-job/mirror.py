@@ -118,8 +118,16 @@ def spiegle(repo, prefix, arbeitsverzeichnis, status, revision="main", behalte_l
             if ist != d["sha256"]:
                 os.remove(lokal)
                 raise RuntimeError(f"SHA-256 falsch fuer {d['name']}: erwartet {d['sha256'][:12]}…, ist {ist[:12]}…")
-        status.setze(schritt="upload")
-        e2.lade_hoch(lokal, key)
+        status.setze(schritt="upload", aktuellBytes=0)
+        hochgeladen = [0, time.time()]
+
+        def _upload_fortschritt(n):
+            hochgeladen[0] += n
+            if time.time() - hochgeladen[1] > 20:
+                hochgeladen[1] = time.time()
+                status.setze(aktuellBytes=hochgeladen[0])
+
+        e2.lade_hoch(lokal, key, fortschritt=_upload_fortschritt)
         if e2.groesse(key) != os.path.getsize(lokal):
             raise RuntimeError(f"Upload unvollstaendig: {key}")
         fertig_bytes += d["size"]

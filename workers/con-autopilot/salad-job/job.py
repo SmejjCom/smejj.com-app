@@ -121,6 +121,9 @@ def starte_health():
 
 def herzschlag():
     while True:
+        # Jede Minute ein frischer Stand, auch wenn sich fachlich nichts geaendert hat —
+        # sonst sieht ein 20-Minuten-Upload von aussen wie ein toter Job aus.
+        STATUS.setze(herzschlag=_iso(time.time()))
         STATUS.schreibe()
         if time.time() - START > MAX_MINUTEN * 60 and not _ABBRUCH.is_set():
             STATUS.setze(hinweis="zeitgrenze_erreicht")
