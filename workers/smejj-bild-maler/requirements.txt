@@ -20,14 +20,15 @@
 # [ueberholt] diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es
 # [ueberholt] existiert derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36).
 diffusers==0.38.0
-# 2026-09-03: 5.5.0 trug GHSA-xrqw-3rrv-vx5w (save_pretrained-Pfadueberschreitung), behoben ab 5.10.0.
-# ERSTER ANLAUF 5.10.4 (deploy 597c7cf0) SCHEITERTE LIVE: transformers 5.10 nutzt torch.float8_e8m0fnu,
-# das torch 2.5.1 (Dockerfile.smejj-bild-maler) nicht kennt -> modeling_utils faellt, diffusers meldet
-# "PreTrainedModel" nicht importierbar, Dienst blieb bereit:false. Revert 0eaafe5f.
-# ZWEITER ANLAUF: torch 2.7.1 + torchvision 0.22.1 im Abbild. Lokal exakt nachgestellt (uv, Python 3.11):
-# torch 2.5.1 -> derselbe Fehler; torch 2.7.1 -> Import von PreTrainedModel, AutoPipelineForText2Image
-# und diffusers.loaders.peft sauber. Bedingungen: huggingface-hub <2.0 wie diffusers 0.38.
-transformers==5.10.4
+# 2026-09-03: 5.5.0 traegt GHSA-xrqw-3rrv-vx5w (save_pretrained-Pfadueberschreitung ueber Chat-Template-
+# Namen; server.py ruft save_pretrained NIE — nicht erreichbar). ZWEI LIVE-ANLAEUFE auf 5.10.4 SCHEITERTEN:
+#   1. 597c7cf0 (nur Pin): Dienst bereit:false, diffusers 0.38 meldet "PreTrainedModel" nicht importierbar.
+#      Lokal (uv, Python 3.11, torch 2.5.1) exakt reproduziert: transformers 5.10 nutzt torch.float8_e8m0fnu.
+#   2. 922d964d (Pin + torch 2.7.1/torchvision 0.22.1 im Dockerfile): lokal importiert alles sauber,
+#      live derselbe Fehler — die Ursache steckt tiefer im Abbild (gfpgan-Kette vor den Requirements?).
+# Beide per Revert zurueck (0eaafe5f, 06260151). Diese Datei spiegelt den GEBAUTEN Stand; der
+# CVE-Waechter darf hier nicht falsch gruen sein. Naechster Anlauf nur mit Ursachenkette aus dem Abbild.
+transformers==5.5.0
 accelerate==1.1.1
 # 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
 # ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die
