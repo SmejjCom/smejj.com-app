@@ -166,7 +166,7 @@ test("Upgrade: angemeldet -> 101 mit Unterprotokoll, Setup geht raus, Audio wird
   assert.equal(s.beendet, true);
 });
 
-import { createSchluesselPool, schluesselListe, istKontingentFehler } from "../control-server/src/voice/liveRelay.js";
+import { createSchluesselPool, schluesselListe, istKontingentFehler, istModellFehler, modellListe } from "../control-server/src/voice/liveRelay.js";
 
 test("Pool: Liste aus Einzel + Liste + Router-Rueckfall, ohne Doppel, Sperre ruht 10 min", () => {
   const liste = schluesselListe({ SMEJJ_VOICE_LIVE_API_KEY: "a", SMEJJ_VOICE_LIVE_API_KEYS: "b, c a", SMEJJ_LLM_GEMINI_API_KEY: "d" });
@@ -181,7 +181,7 @@ test("Pool: Liste aus Einzel + Liste + Router-Rueckfall, ohne Doppel, Sperre ruh
   t = 1001;
   assert.deepEqual(pool.frei(), ["a", "b"]);
   assert.ok(istKontingentFehler("RESOURCE_EXHAUSTED: quota exceeded"));
-  assert.ok(istKontingentFehler("", 1008));
+  assert.equal(istKontingentFehler("", 1008), false, "1008 allein ist Modell/Policy, kein Kontingent");
   assert.equal(istKontingentFehler("network down", 1006), false);
 });
 
@@ -217,4 +217,37 @@ test("Upgrade: Kontingent beim ersten Schluessel -> zweiter Schluessel uebernimm
   await new Promise((r) => setTimeout(r, 5));
   assert.equal(instanzen.length, 2);
   assert.equal(s.beendet, true);
+});
+
+test("Modell-Rueckfall: 1008 'denied access' beim ersten Modell -> zweites Modell mit demselben Schluessel", async () => {
+  const instanzen = [];
+  class FakeWs extends EventEmitter {
+    constructor(url) { super(); this.url = url; this.readyState = 0; this.gesendet = []; instanzen.push(this); setTimeout(() => { this.readyState = 1; this.emit("open", {}); }, 0); }
+    addEventListener(n, f) { this.on(n, f); }
+    send(d) { this.gesendet.push(d); }
+    close() { this.readyState = 3; }
+  }
+  assert.ok(istModellFehler("Your project has been denied access. Please contact support.", 1008));
+  assert.equal(istModellFehler("quota exceeded", 1008), false);
+  assert.deepEqual(modellListe({}).slice(0, 2), ["gemini-3.1-flash-live-preview", "gemini-2.5-flash-native-audio-preview-12-2025"]);
+  const h = createVoiceLiveUpgrade({
+    env: { SMEJJ_VOICE_LIVE_API_KEY: "einzig", SMEJJ_VOICE_LIVE_UPSTREAM_URL: "wss://fake/ws" },
+    readSession: () => ({ id: "u1" }), WebSocketCtor: FakeWs, log: { warn() {}, info() {} }
+  });
+  const s = fakeSocket();
+  const req = { url: "/api/voice-realtime", headers: { host: "api", upgrade: "websocket", "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==", "sec-websocket-protocol": "smejj.sitzung.tok1" } };
+  assert.equal(await h(req, s, Buffer.alloc(0)), true);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(JSON.parse(instanzen[0].gesendet[0]).setup.model, "models/gemini-3.1-flash-live-preview");
+  instanzen[0].emit("close", { code: 1008, reason: "Your project has been denied access. Please contact support." });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(instanzen.length, 2, "zweites Modell probiert");
+  assert.ok(instanzen[1].url.includes("key=einzig"), "derselbe Schluessel");
+  assert.equal(JSON.parse(instanzen[1].gesendet[0]).setup.model, "models/gemini-2.5-flash-native-audio-preview-12-2025");
+  assert.equal(s.beendet, undefined);
+  instanzen[1].emit("message", { data: JSON.stringify({ setupComplete: {} }) });
+  const { rahmen } = dekodiereRahmen(s.geschrieben[s.geschrieben.length - 1]);
+  assert.equal(JSON.parse(rahmen[0].nutzlast.toString()).type, "session.ready");
+  s.emit("close");
+  assert.equal(instanzen[1].readyState, 3, "Gegenseite mit dem Browser geschlossen");
 });

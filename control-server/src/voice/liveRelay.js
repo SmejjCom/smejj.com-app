@@ -36,6 +36,20 @@ const WS_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 export const LIVE_PFAD = "/api/voice-realtime";
 export const LIVE_SUBPROTOKOLL_PRAEFIX = "smejj.sitzung.";
 export const LIVE_STANDARD_MODELL = "gemini-3.1-flash-live-preview";
+// Rueckfall-Modelle (Live-Beweis 2026-09-03 16:10Z: das 3.1-Vorschaumodell schliesst auf der
+// Gratis-Stufe mit 1008 "Your project has been denied access" — das native 2.5-Audio-Modell
+// ist laut Preisliste in der Gratis-Stufe verfuegbar). Der Relay probiert die Liste der Reihe
+// nach VOR dem ersten Ton durch; der Browser merkt davon nichts.
+export const LIVE_RUECKFALL_MODELLE = Object.freeze([
+  "gemini-2.5-flash-native-audio-preview-12-2025",
+  "gemini-live-2.5-flash-preview",
+  "gemini-2.0-flash-live-001"
+]);
+export function modellListe(env = {}) {
+  const erst = String(env.SMEJJ_VOICE_LIVE_MODEL || LIVE_STANDARD_MODELL).replace(/^models\//, "");
+  const extra = String(env.SMEJJ_VOICE_LIVE_MODELS || "").split(/[\s,;]+/).map((m) => m.replace(/^models\//, "")).filter(Boolean);
+  return [...new Set([erst, ...extra, ...LIVE_RUECKFALL_MODELLE])];
+}
 const OPCODE = Object.freeze({ fortsetzung: 0x0, text: 0x1, binaer: 0x2, schliessen: 0x8, ping: 0x9, pong: 0xa });
 const GOOGLE_WS = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
 const SYSTEM_TEXT = "Du bist smejj, der Sprachassistent von smejj.com. Sprich Deutsch, es sei denn, "
@@ -127,7 +141,13 @@ export function createSchluesselPool(liste, { jetzt = () => Date.now(), sperreMs
 
 /** Sieht eine Schliess-/Fehlermeldung der Gegenseite nach Kontingent aus? */
 export function istKontingentFehler(text = "", code = 0) {
-  return /quota|resource_exhausted|rate.?limit|too many|429/i.test(String(text || "")) || code === 1008 || code === 1013;
+  return /quota|resource_exhausted|rate.?limit|too many|429/i.test(String(text || "")) || code === 1013;
+}
+
+/** Modell fuer dieses Projekt/diesen Schluessel nicht freigegeben oder unbekannt? (1008 ohne Kontingent-Text) */
+export function istModellFehler(text = "", code = 0) {
+  const t = String(text || "");
+  return !istKontingentFehler(t, code) && (code === 1008 || /denied access|not found|not supported|not implemented|invalid argument|model/i.test(t));
 }
 
 export function liveKonfiguration(env = {}) {
@@ -135,7 +155,8 @@ export function liveKonfiguration(env = {}) {
     schluessel: schluesselListe(env)[0] || "",
     schluesselPool: schluesselListe(env),
     aktiv: env.SMEJJ_VOICE_LIVE_ENABLED !== "false",
-    modell: String(env.SMEJJ_VOICE_LIVE_MODEL || LIVE_STANDARD_MODELL).replace(/^models\//, ""),
+    modell: modellListe(env)[0],
+    modelle: modellListe(env),
     stimme: String(env.SMEJJ_VOICE_LIVE_VOICE || "Kore"),
     tagesMinuten: zahl(env.SMEJJ_VOICE_LIVE_MAX_MINUTES_PER_DAY, 60, 0, 1440),
     sitzungsMinuten: zahl(env.SMEJJ_VOICE_LIVE_MAX_SESSION_MINUTES, 14, 1, 15),
@@ -291,10 +312,13 @@ export function createVoiceLiveUpgrade({ env = process.env, readSession, session
     };
     const pingUhr = setInterval(() => { if (!zu) try { socket.write(kodiereRahmen(OPCODE.ping)); } catch { /* weg */ } }, 20000);
     const deckelUhr = setTimeout(() => schliesse("session_time_limit"), k.sitzungsMinuten * 60000);
+    pingUhr.unref?.(); deckelUhr.unref?.(); // Uhren halten den Prozess nicht am Leben (Tests, sauberes Beenden)
 
     let bereit = false;
     const versucht = [];
+    let modellZeiger = 0;
     const oeffneOben = () => {
+      const modellJetzt = k.modelle[modellZeiger] || k.modelle[0];
       const schluesselJetzt = schluesselPool.waehle(versucht);
       if (!schluesselJetzt) { schliesse(versucht.length ? "voice_live_quota_all_keys" : "voice_live_key_missing"); return; }
       versucht.push(schluesselJetzt);
@@ -308,9 +332,20 @@ export function createVoiceLiveUpgrade({ env = process.env, readSession, session
         return;
       }
       oben = dieser;
-      const wechsle = (grund, text) => {
+      const wechsle = (grund, text, code = 0) => {
+        if (bereit) return false;
+        // Modell fuer dieses Projekt gesperrt/unbekannt (1008 "denied access", "not found"): naechstes
+        // Modell mit DEMSELBEN Schluessel — der Schluessel bleibt frei, nur das Modell wandert.
+        if (istModellFehler(text, code) && modellZeiger + 1 < k.modelle.length) {
+          modellZeiger += 1;
+          versucht.pop();
+          log.info?.(`[voice-live] Modell ${modellJetzt} abgelehnt (${String(text).slice(0, 80)}) — versuche ${k.modelle[modellZeiger]}`);
+          try { dieser.close?.(); } catch { /* egal */ }
+          oeffneOben();
+          return true;
+        }
         // Kontingent VOR dem ersten Ton: Schluessel ruhen lassen, naechsten nehmen — der Browser merkt nichts.
-        if (!bereit && istKontingentFehler(text) && versucht.length < schluesselPool.groesse()) {
+        if (istKontingentFehler(text, code) && versucht.length < schluesselPool.groesse()) {
           schluesselPool.sperre(schluesselJetzt);
           log.info?.(`[voice-live] Kontingent bei Schluessel ${versucht.length}/${schluesselPool.groesse()} — wechsle`);
           try { dieser.close?.(); } catch { /* egal */ }
@@ -320,7 +355,7 @@ export function createVoiceLiveUpgrade({ env = process.env, readSession, session
         return false;
       };
       dieser.addEventListener("open", () => {
-        try { dieser.send(JSON.stringify(baueSetup({ modell: k.modell, stimme: k.stimme }))); } catch { schliesse("upstream_setup_failed"); }
+        try { dieser.send(JSON.stringify(baueSetup({ modell: modellJetzt, stimme: k.stimme }))); } catch { schliesse("upstream_setup_failed"); }
       });
       dieser.addEventListener("message", (ereignis) => {
         if (oben !== dieser) return;
@@ -331,6 +366,7 @@ export function createVoiceLiveUpgrade({ env = process.env, readSession, session
         let nachricht = null;
         try { nachricht = JSON.parse(text); } catch { return; }
         if (nachricht?.error && wechsle("upstream_error", nachricht.error?.message || JSON.stringify(nachricht.error))) return;
+        if (nachricht?.setupComplete) log.info?.(`[voice-live] bereit mit ${modellJetzt}`);
         for (const e of uebersetzeServerNachricht(nachricht, zustand)) {
           if (e.art === "binaer") sendeBinaer(e.daten);
           else { if (e.json.type === "session.ready") bereit = true; sendeText(e.json); }
@@ -347,7 +383,7 @@ export function createVoiceLiveUpgrade({ env = process.env, readSession, session
         if (oben !== dieser) return;
         const text = String(ereignis?.reason || "");
         if (!zu) log.info?.(`[voice-live] Gegenseite zu: ${ereignis?.code || ""} ${text.slice(0, 160)}`);
-        if (!zu && (istKontingentFehler(text, ereignis?.code) && wechsle("upstream_closed", text || String(ereignis?.code)))) return;
+        if (!zu && wechsle("upstream_closed", text || String(ereignis?.code), ereignis?.code)) return;
         schliesse(zu ? "" : "upstream_closed");
       });
     };
