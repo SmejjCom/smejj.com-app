@@ -11,7 +11,8 @@ import { createHash } from "node:crypto";
 
 export const MAX_VARIANTEN = 3;
 const SCHLUESSEL = [/\bsk-[A-Za-z0-9_-]{12,}/, /\bAKIA[0-9A-Z]{16}\b/, /\bgh[pousr]_[A-Za-z0-9]{20,}/, /\bxox[baprs]-[A-Za-z0-9-]{10,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/, /\b(api[_-]?key|secret|token|passwort|password)\s*[:=]\s*["']?[A-Za-z0-9_\-]{16,}/i];
-const PII = [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, /\+?\d[\d ()\/-]{8,}\d/, /\b(IBAN|DE\d{2}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{2})\b/];
+// Telefonnummern beginnen mit + oder 0 (ISO-Datumsangaben wie 2026-07-15 sind KEINE Nummern — 1.815 Fehltreffer am 03.09.).
+const PII = [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, /(?:\+|\b0)\d[\d ()\/-]{7,}\d/, /\b(IBAN|DE\d{2}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{2})\b/];
 const PII_AUSNAHMEN = [/@example\.(org|com|net)/i, /@verein\.example/i, /@evil\.example/i];
 const INJECTION = [/ignor(e|iere)\s+(alle\s+)?(vorherigen|previous|bisherigen|all)/i, /systemanweisung/i, /\bDAN\b.*ohne regeln/i, /reveal.*(system prompt|secret)/i, /gib.*(freigabecode|api[_-]?key|passwort).*aus/i];
 const SPAM = [/(.)\1{9,}/, /(https?:\/\/\S+\s*){4,}/i, /^(?:[^a-zA-ZäöüÄÖÜß]*)$/];
