@@ -1,5 +1,11 @@
 # Die oeffentliche smejj-API (`/v1`)
 
+> **Beschluss 2026-09-03 (offen, noch nicht gebaut):** Schluessel bekommen eine
+> waehlbare Laufzeit (1 Jahr Vorauswahl bis unbefristet) und der Admin einen
+> eigenen Bereich fuer ausgestellte Schluessel (`smejj-adm-…`). Plan mit
+> Reihenfolge und Abnahme: `docs/api/PLAN_API_SCHLUESSEL_LAUFZEIT_ADMIN_2026-09-03.md`.
+> Wer an `/api/developer/keys` oder `api-center-surface.js` arbeitet, liest zuerst den Plan.
+
 Stand 2026-08-23. **LIVE** auf https://smejj-control.zeabur.app seit 04:49Z
 (Bau-Branch `feature/auth-redesign-github-magiclink`, Commits abe70763, cbf9fe8b,
 254447b2). Live-Nachweis: task-capsules/2026/08/job_oeffentliche_api_v1_20260823/.
