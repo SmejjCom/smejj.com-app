@@ -10,7 +10,7 @@ test("Breitenrechnung bei 375 px geht auf: 44+75+82+44+44 plus 4 Luecken a 6 < 3
   const pille = Math.floor(375 * 0.20), modell = Math.floor(375 * 0.22);
   assert.ok(44 + pille + modell + 44 + 44 + 4 * 6 < 375 - 32 - 16, `${44 + pille + modell + 44 + 44 + 24}`);
   assert.match(m.REGELN, /fpille-nachdenken\.fpille-nachdenken\{max-width:20vw;min-width:0/);
-  assert.match(m.REGELN, /\.text-chip\.text-chip\{max-width:22vw;min-width:0/);
+  assert.match(m.REGELN, /\.text-chip\.text-chip\{max-width:22vw;min-width:44px/, "Modell-Chip nie unter 44 px (Betriebswache 03.09.: 30x44)");
   assert.match(m.REGELN, /\.send-button\.send-button\{width:44px;min-width:44px;flex:0 0 44px\}/);
 });
 
