@@ -105,3 +105,7 @@ Bestehende Pflichtpruefungen bleiben gueltig: `npm run check:architecture` nach 
 ## 7. Kosten-Guardrails
 
 `docs/architecture/FREE_ONLY_MASTER_POLICY.md` ist verbindlich: GitHub ausschliesslich Free-Tier, Hosting nur GitHub Pages Free, DNS/Domain bei Spaceship, Cloudflare wird nicht genutzt, Salad nur pay-per-use hinter Budget-Gate; keine Trials, keine Auto-Billing-Pfade. IDrive e2 ist der einzige zentrale Speicher fuer grosse Dateien und Artefakte.
+
+## 8. Auslieferung (Stand 2026-09-03)
+
+Der tatsaechliche Weg steht in docs/deployment/DEPLOYMENT_PLAN.md, Abschnitt "Stand 2026-09-03": Frontend ueber den Klon nach GitHub Pages, Control ueber den Bauzweig nach Zeabur, Dienste ueber ihre deploy/-Zweige. Start-Lock-Dateien und Service-Worker-Spruenge nur per Betreiber-Doppelklick (Kaskaden unter scripts/einmal/). Vor jedem Auftrag ein Rollback-Tag, nach jedem Deploy Live-Beweis und Benchmark.

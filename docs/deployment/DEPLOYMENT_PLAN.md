@@ -52,3 +52,22 @@ Produktion stoppt sofort bei:
 - fehlgeschlagenem Free-Tier-Guard,
 - Secret-, Pfad-, JSON-, Manifest- oder Paid-Service-Fehler,
 - unklarem GitHub-Pages-Free-Status.
+
+## Stand 2026-09-03 — der tatsaechliche Auslieferungsweg (Nachtrag, ersetzt Schritte 10–13 oben)
+
+Die Schritte oben stammen vom 2026-07-17 (Staging-Denke, gh-pages-Branch). Seit August gilt:
+
+| Ebene | Quelle | Ziel | Weg |
+| --- | --- | --- | --- |
+| Frontend smejj.com | App-Repo `feature/design-v11`, Ordner `public/` | GitHub Pages (Frontend-Klon `~/smejj-app-frontend`, Branch `main`, Wurzel + `assets/`) | Dateien in den Klon kopieren, Commit, `git push origin HEAD:main`; Pages baut in 1–3 Minuten |
+| api.smejj.com + Control Server | Bauzweig `feature/auth-redesign-github-magiclink` | Zeabur `smejj-control` (2 vCPU / 8 GB) | Ein-Buendel-Vertrag: dieselben `public/`-Dateien + Manifeste per Worktree in den Bauzweig, Push loest den Zeabur-Bau aus (< 1 Minute); `src/` nur ueber den Bauzweig, nie ueber design-v11 |
+| Chat-Bruecke | App-Repo, `npm run bundle:bridge` | Zeabur `smejj-chat-bridge` (laedt von raw.github) | Buendel ins Frontend-Repo pushen, Dienst neu starten (`scripts/deploy/deploy_chat_bridge_zeabur.mjs`) |
+| Bild-Maler / Video-Worker | `deploy/smejj-bild-maler`, `deploy/smejj-video-worker` (Dockerfile.<dienst> in der Repo-Wurzel) | Zeabur | Nur die betroffenen Dateien per Worktree in den Deploy-Zweig, vorher Sicherungszweig `sicherung/<dienst>-vor-<grund>-<datum>` auf die Spitze setzen |
+
+Sperren und Freigaben:
+- Start-Lock (`docs/frontend/start-lock-manifest.json`, 34 Dateien inkl. `index.html`, `sw.js`, `app.js`, `components.js`) und Favicon-Lock: Aenderungen nur mit Stempel `node scripts/check-start-lock.mjs --freeze --confirm "<Freigabe>"`. Im Auto-Modus wird `--freeze` verworfen; der Betreiber stempelt per Doppelklick auf eine `.command`-Datei in der Repo-Wurzel, die eine Kaskade unter `scripts/einmal/` ruft (Muster: `smejj.com Verlauf nachladen ausliefern.command`).
+- Service-Worker: precached Dateien (SHELL-Liste in `public/sw.js`) erreichen Wiederkehrer nur mit `CACHE_NAME`-Sprung — also nur ueber die Kaskade. Nicht precached Dateien liefert der Fetch-Handler netzwerk-zuerst und brauchen keinen Sprung.
+- Rollback: Tag `stand-<datum>-<grund>` auf design-v11 vor jedem Auftrag; Frontend per `git revert` im Klon; Dienste per Revert im Deploy-Zweig (Beispiel 2026-09-03: Bild-Maler 597c7cf0 → 0eaafe5f).
+- Zeabur-API-Token liegt in `~/.config/zeabur/cli.yaml`; ohne gueltigen Token sind Baulogs und Umgebungsvariablen unerreichbar, Deploys per Git-Push gehen trotzdem.
+
+Live-Beweis nach jedem Deploy: `curl -s https://smejj.com/sw.js | grep -o 'smejj-shell-v[0-9]*'` auf beiden Domains, `node scripts/testing/measure_web_vitals.mjs --runs 3`, Klickpfad im headless Chrome, Benchmark unter `docs/benchmarks/`.
