@@ -1,6 +1,6 @@
 # Die oeffentliche smejj-API (`/v1`)
 
-> **Beschluss 2026-09-03 (offen, noch nicht gebaut):** Schluessel bekommen eine
+> **Beschluss 2026-09-03 (Punkt 2 Laufzeit GEBAUT 2026-09-03, Admin-Bereich offen):** Schluessel bekommen eine
 > waehlbare Laufzeit (1 Jahr Vorauswahl bis unbefristet) und der Admin einen
 > eigenen Bereich fuer ausgestellte Schluessel (`smejj-adm-…`). Plan mit
 > Reihenfolge und Abnahme: `docs/api/PLAN_API_SCHLUESSEL_LAUFZEIT_ADMIN_2026-09-03.md`.
@@ -177,3 +177,24 @@ bezahlt); lokal: 402 bei 0, Webhook doppelt zugestellt = einmal verbucht.
 3. **Menueeintrag** zur Seite `/entwickler.html` — heute nur ueber die Adresse
    erreichbar; `public/index.html` steht unter dem Start-Lock.
 4. **`/v1/embeddings`**, falls Kunden danach fragen.
+
+## Laufzeit der Schluessel (seit 2026-09-03)
+
+Beim Erstellen (`POST /api/developer/keys`, Feld `laufzeit`) waehlt der Kunde,
+wie lange der Schluessel gilt. Codes: `30t`, `90t`, `1j` (Vorauswahl der
+Oberflaeche), `2j`, `5j`, `10j`, `20j`, `30j`, `unbefristet`. `GET
+/api/developer/keys` nennt die Liste als `laufzeiten` + `laufzeitVorauswahl`.
+Ein Client, der KEIN `laufzeit` schickt, bekommt wie bisher einen unbefristeten
+Schluessel; alte Eintraege ohne Feld bleiben unbefristet (Fix wirkt nur vorwaerts).
+
+- Jeder Eintrag traegt `laeuftAbAm` (ISO oder `""` = unbefristet) und den
+  Zustand `aktiv | inaktiv | abgelaufen | widerrufen`.
+- Der Torwaechter an `/v1` lehnt Abgelaufene mit **401** und `error.code =
+  api_key_expired` ab. Der Pruef-Cache endet spaetestens am Ablaufdatum.
+- Unbekannter Code → **400** `api_key_laufzeit_invalid`.
+- Verlaengern gibt es nicht: neuen Schluessel erzeugen, alten widerrufen
+  (Rotation). Umschalten/Widerruf tragen das Ablaufdatum mit.
+
+Tests: `tests/oeffentliche-api.test.mjs` (Laufzeit, Ablauf trotz warmem
+Cache, 401 an /v1, Umschalten rettet nicht) und `tests/api-laufzeit.test.mjs`
+(Codes Server = Oberflaeche, Uebersetzungen in 14 Sprachen, Rechnung).
