@@ -17,6 +17,7 @@ hochgeladen.
 import hashlib
 import json
 import os
+import threading
 import time
 import urllib.request
 
@@ -94,6 +95,27 @@ def spiegle(repo, prefix, arbeitsverzeichnis, status, revision="main", behalte_l
     manifest_key = prefix.rstrip("/") + "/manifest.json"
     fertig_bytes = 0
     ergebnis = []
+    def _braucht_download(d):
+        key = prefix.rstrip("/") + "/" + d["name"]
+        in_e2 = e2.groesse(key)
+        return not (in_e2 is not None and in_e2 == d["size"])
+
+    def _lade(d):
+        lokal = os.path.join(arbeitsverzeichnis, d["name"])
+        url = f"https://huggingface.co/{repo}/resolve/{revision}/{d['name']}"
+        _lade_mit_fortsetzung(url, lokal, d["size"], lambda n: status.setze(aktuellBytes=n))
+
+    vorab = {}  # name -> Thread, der die Datei schon herunterlaedt
+
+    def _vorab_starten(ab_index):
+        for d in dateien[ab_index:ab_index + 1]:
+            if d["name"] in vorab or abbruch():
+                continue
+            if _braucht_download(d):
+                t = threading.Thread(target=_lade, args=(d,), daemon=True)
+                t.start()
+                vorab[d["name"]] = t
+
     for i, d in enumerate(dateien):
         if abbruch():
             status.setze(phase="spiegel", hinweis="abbruch_gewuenscht", fertigDateien=i, vonDateien=len(dateien))
@@ -109,11 +131,17 @@ def spiegle(repo, prefix, arbeitsverzeichnis, status, revision="main", behalte_l
             if behalte_lokal and not (os.path.exists(lokal) and os.path.getsize(lokal) == d["size"]):
                 e2.lade_herunter(key, lokal)
             continue
-        url = f"https://huggingface.co/{repo}/resolve/{revision}/{d['name']}"
         status.setze(phase="spiegel", aktuell=d["name"], schritt="download", fertigDateien=i, vonDateien=len(dateien),
                      fertigBytes=fertig_bytes, gesamtBytes=gesamt)
-        _lade_mit_fortsetzung(url, lokal, d["size"], lambda n: status.setze(aktuellBytes=n))
+        t = vorab.pop(d["name"], None)
+        if t is not None:
+            t.join()
+        if not (os.path.exists(lokal) and os.path.getsize(lokal) >= (d["size"] or 1)):
+            _lade(d)
+        # Naechste Datei schon laden, waehrend diese geprueft und hochgeladen wird (Leitung doppelt genutzt).
+        _vorab_starten(i + 1)
         if d["sha256"]:
+            status.setze(schritt="pruefen")
             ist = _sha256_datei(lokal)
             if ist != d["sha256"]:
                 os.remove(lokal)

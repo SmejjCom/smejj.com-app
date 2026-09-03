@@ -21,9 +21,10 @@ _BUCKET = None
 
 # 16 MiB-Teile, wenige parallele Teile: passt zu Salad-Knoten mit schwankender
 # Leitung und haelt den Speicherbedarf klein.
+# Gemessen 03.09.: 4 Teile x 16 MiB ergaben nur ~5 MB/s vom Salad-Knoten nach e2.
 _TRANSFER = TransferConfig(multipart_threshold=64 * 1024 * 1024,
-                           multipart_chunksize=16 * 1024 * 1024,
-                           max_concurrency=4,
+                           multipart_chunksize=32 * 1024 * 1024,
+                           max_concurrency=int(os.environ.get("CON_E2_PARALLEL", "10")),
                            use_threads=True)
 
 
