@@ -29,6 +29,27 @@ export const SCHLUESSEL_PRAEFIX = "smejj-live-";
 const INDEX_PROVIDER = "smejj-api-index";
 const LOOKUP_PROVIDER = "smejj-api-lookup";
 const MAX_SCHLUESSEL_JE_KONTO = 20;
+// Laufzeit (Betreiber-Beschluss 2026-09-03, docs/api/PLAN_API_SCHLUESSEL_LAUFZEIT_ADMIN_2026-09-03.md):
+// Der Kunde waehlt beim Erstellen, wie lange der Schluessel gilt. Das Ablaufdatum
+// steht im Konto-Index UND im Rueckschlag — der Torwaechter prueft es ohne
+// zweiten Lesevorgang. "" heisst unbefristet. Alte Eintraege ohne Feld bleiben
+// unbefristet, und ein Client, der keine Laufzeit schickt, bekommt weiter das,
+// was er vor dem Umbau bekam: unbefristet (der Fix wirkt nur vorwaerts).
+// Verlaengern gibt es absichtlich nicht — wer laenger braucht, erzeugt einen
+// neuen Schluessel und widerruft den alten (Rotation, wie bei OpenAI/Stripe).
+export const LAUFZEITEN = Object.freeze({
+  "30t": 30,
+  "90t": 90,
+  "1j": 365,
+  "2j": 730,
+  "5j": 1826,
+  "10j": 3652,
+  "20j": 7305,
+  "30j": 10957,
+  "unbefristet": 0
+});
+export const LAUFZEIT_VORAUSWAHL = "1j";
+const TAG_MS = 86_400_000;
 // 24 Zufallsbytes = 192 Bit. Ein Abdruck ist damit nicht rueckrechenbar, auch
 // ohne Pepper: es gibt nichts zu raten. Deshalb reicht hier SHA-256 statt
 // eines langsamen Passwort-Hashes (Argon2 & Co. schuetzen kurze Geheimnisse).
@@ -63,6 +84,28 @@ export function abdruckVon(klartext) {
   return crypto.createHash("sha256").update(String(klartext || ""), "utf8").digest("hex");
 }
 
+/**
+ * Ablaufdatum aus der gewaehlten Laufzeit. undefined/null/"" = kein Wunsch
+ * geaeussert = unbefristet (Altverhalten). Unbekannte Werte werfen 400.
+ */
+export function laeuftAbAus(laufzeit, ab = new Date()) {
+  if (laufzeit === undefined || laufzeit === null || String(laufzeit).trim() === "") return "";
+  const tage = LAUFZEITEN[String(laufzeit).trim().toLowerCase()];
+  if (tage === undefined) {
+    const fehler = new Error("api_key_laufzeit_invalid");
+    fehler.status = 400;
+    throw fehler;
+  }
+  if (!tage) return "";
+  return new Date(ab.getTime() + tage * TAG_MS).toISOString();
+}
+
+/** true, wenn ein Ablaufdatum gesetzt ist und hinter uns liegt. */
+export function istAbgelaufen(laeuftAbAm, jetztMs = Date.now()) {
+  const zeit = Date.parse(String(laeuftAbAm || ""));
+  return Number.isFinite(zeit) && zeit <= jetztMs;
+}
+
 /** Formprüfung ohne Speicherzugriff — spart dem Torwaechter den Umweg. */
 export function hatSchluesselForm(wert) {
   return SCHLUESSEL_MUSTER.test(String(wert || ""));
@@ -85,7 +128,11 @@ export async function listeSchluessel(kontoId, env = process.env) {
   return index.schluessel.map(maskiere);
 }
 
-export async function erzeugeSchluessel(kontoId, { name } = {}, env = process.env) {
+export async function erzeugeSchluessel(kontoId, { name, laufzeit } = {}, env = process.env, jetztDatum = () => new Date()) {
+  // Laufzeit ZUERST pruefen: ein ungueltiger Wunsch darf keinen Schluessel
+  // erzeugen, der dann mit falscher Laufzeit im Speicher liegt.
+  const ab = jetztDatum();
+  const laeuftAbAm = laeuftAbAus(laufzeit, ab);
   const index = await leseIndex(kontoId, env);
   const aktive = index.schluessel.filter((eintrag) => !eintrag.widerrufenAm);
   if (aktive.length >= MAX_SCHLUESSEL_JE_KONTO) {
@@ -94,13 +141,14 @@ export async function erzeugeSchluessel(kontoId, { name } = {}, env = process.en
     throw fehler;
   }
   const { klartext, abdruck, letzte4 } = baueSchluessel();
-  const jetzt = new Date().toISOString();
+  const jetzt = ab.toISOString();
   const eintrag = {
     id: `key_${crypto.randomBytes(6).toString("hex")}`,
     name: sichererName(name) || `Schluessel ${jetzt.slice(0, 10)}`,
     abdruck,
     letzte4,
     erstelltAm: jetzt,
+    laeuftAbAm,
     widerrufenAm: "",
     zuletztBenutztAm: ""
   };
@@ -114,6 +162,7 @@ export async function erzeugeSchluessel(kontoId, { name } = {}, env = process.en
     kontoId,
     keyId: eintrag.id,
     erstelltAm: jetzt,
+    laeuftAbAm,
     widerrufenAm: ""
   }, env);
 
@@ -139,6 +188,7 @@ export async function widerrufeSchluessel(kontoId, keyId, env = process.env) {
     apiKey: "",
     kontoId,
     keyId: eintrag.id,
+    laeuftAbAm: eintrag.laeuftAbAm || "",
     widerrufenAm: jetzt
   }, env);
   await schreibeIndex(kontoId, index, env);
@@ -165,6 +215,7 @@ export async function loescheSchluessel(kontoId, keyId, env = process.env) {
     kontoId,
     keyId: eintrag.id,
     erstelltAm: eintrag.erstelltAm,
+    laeuftAbAm: eintrag.laeuftAbAm || "",
     widerrufenAm: eintrag.widerrufenAm || jetzt,
     geloeschtAm: jetzt
   }, env);
@@ -213,6 +264,7 @@ export async function setzeSchluesselAktiv(kontoId, keyId, aktiv, env = process.
     kontoId,
     keyId: eintrag.id,
     erstelltAm: eintrag.erstelltAm,
+    laeuftAbAm: eintrag.laeuftAbAm || "",
     widerrufenAm: eintrag.widerrufenAm || ""
   }, env);
   await schreibeIndex(kontoId, index, env);
@@ -270,10 +322,12 @@ export async function pruefeSchluessel(klartext, env = process.env, jetzt = () =
   if (zwischenstand && zwischenstand.gueltigBis > jetzt()) return zwischenstand.ergebnis;
 
   let ergebnis;
+  let record = null;
   try {
-    const record = await getProviderCredential(abdruck, LOOKUP_PROVIDER, env);
+    record = await getProviderCredential(abdruck, LOOKUP_PROVIDER, env);
     if (!record) ergebnis = { ok: false, grund: "api_key_unknown" };
     else if (record.enabled !== true || record.widerrufenAm) ergebnis = { ok: false, grund: "api_key_revoked" };
+    else if (istAbgelaufen(record.laeuftAbAm, jetzt())) ergebnis = { ok: false, grund: "api_key_expired" };
     else ergebnis = { ok: true, kontoId: String(record.kontoId || ""), keyId: String(record.keyId || "") };
   } catch (error) {
     // Speicher oder Verschluesselung nicht bereit: NICHT als "unbekannter
@@ -282,7 +336,12 @@ export async function pruefeSchluessel(klartext, env = process.env, jetzt = () =
     return { ok: false, grund: "api_key_store_unavailable", status: 503, ursache: String(error?.message || error).slice(0, 120) };
   }
   if (ergebnis.ok && !ergebnis.kontoId) ergebnis = { ok: false, grund: "api_key_unknown" };
-  cache.set(abdruck, { ergebnis, gueltigBis: jetzt() + (ergebnis.ok ? CACHE_MS : CACHE_NEGATIV_MS) });
+  // Ein positiver Cache-Eintrag darf NIE ueber das Ablaufdatum hinaus gelten —
+  // sonst liefe ein abgelaufener Schluessel bis zu 60 s weiter.
+  let gueltigBis = jetzt() + (ergebnis.ok ? CACHE_MS : CACHE_NEGATIV_MS);
+  const ablauf = Date.parse(String(record?.laeuftAbAm || ""));
+  if (ergebnis.ok && Number.isFinite(ablauf)) gueltigBis = Math.min(gueltigBis, ablauf);
+  cache.set(abdruck, { ergebnis, gueltigBis });
   return ergebnis;
 }
 
@@ -316,6 +375,7 @@ function maskiere(eintrag) {
     name: eintrag.name,
     keyHint: `${SCHLUESSEL_PRAEFIX}••••${eintrag.letzte4}`,
     erstelltAm: eintrag.erstelltAm,
+    laeuftAbAm: eintrag.laeuftAbAm || "",
     widerrufenAm: eintrag.widerrufenAm || "",
     zuletztBenutztAm: eintrag.zuletztBenutztAm || "",
     nutzung: {
@@ -323,7 +383,9 @@ function maskiere(eintrag) {
       token: Math.max(0, Math.floor(Number(eintrag.nutzung?.token) || 0))
     },
     deaktiviertAm: eintrag.deaktiviertAm || "",
-    zustand: eintrag.widerrufenAm ? "widerrufen" : (eintrag.deaktiviertAm ? "inaktiv" : "aktiv")
+    zustand: eintrag.widerrufenAm ? "widerrufen"
+      : istAbgelaufen(eintrag.laeuftAbAm) ? "abgelaufen"
+      : (eintrag.deaktiviertAm ? "inaktiv" : "aktiv")
   };
 }
 

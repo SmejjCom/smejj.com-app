@@ -19,6 +19,7 @@ import {
   hatSchluesselForm,
   listeSchluessel,
   pruefeSchluessel,
+  setzeSchluesselAktiv,
   widerrufeSchluessel
 } from "../control-server/src/publicapi/publicApiKeys.js";
 import {
@@ -147,6 +148,56 @@ test("Pruefung: gueltig, unbekannt, widerrufen", async () => {
   const tot = await pruefeSchluessel(klartext, env);
   assert.equal(tot.ok, false);
   assert.equal(tot.grund, "api_key_revoked");
+});
+
+test("Laufzeit: Wahl beim Erstellen, Altverhalten unbefristet, Ablauf sperrt trotz warmem Cache", async () => {
+  frischerSpeicher();
+  const env = testEnv();
+  // Alte Clients schicken keine Laufzeit: unbefristet, wie vor dem Umbau.
+  const alt = await erzeugeSchluessel(KONTO, { name: "Alt" }, env);
+  assert.equal(alt.schluessel.laeuftAbAm, "");
+  const ewig = await erzeugeSchluessel(KONTO, { name: "Ewig", laufzeit: "unbefristet" }, env);
+  assert.equal(ewig.schluessel.laeuftAbAm, "");
+  const jahr = await erzeugeSchluessel(KONTO, { name: "Jahr", laufzeit: "1j" }, env);
+  const ablauf = Date.parse(jahr.schluessel.laeuftAbAm);
+  const tage = (ablauf - Date.parse(jahr.schluessel.erstelltAm)) / 86_400_000;
+  assert.ok(Math.abs(tage - 365) < 0.01, `1 Jahr = 365 Tage, gemessen ${tage}`);
+  await assert.rejects(() => erzeugeSchluessel(KONTO, { name: "Kaputt", laufzeit: "3 wochen" }, env), /api_key_laufzeit_invalid/);
+
+  // Uhr vorstellen: eine Sekunde vor Ablauf gueltig (und damit im Cache) —
+  // eine Millisekunde danach abgelaufen. Der Cache darf das nicht ueberdecken.
+  const gut = await pruefeSchluessel(jahr.klartext, env, () => ablauf - 1000);
+  assert.equal(gut.ok, true);
+  const tot = await pruefeSchluessel(jahr.klartext, env, () => ablauf + 1);
+  assert.equal(tot.ok, false);
+  assert.equal(tot.grund, "api_key_expired");
+  // Der Unbefristete bleibt — auch in zehn Jahren.
+  const nochGut = await pruefeSchluessel(ewig.klartext, env, () => ablauf + 3650 * 86_400_000);
+  assert.equal(nochGut.ok, true);
+  const liste = await listeSchluessel(KONTO, env);
+  assert.equal(liste.find((k) => k.id === jahr.schluessel.id).zustand, "aktiv");
+  assert.equal(liste.find((k) => k.id === jahr.schluessel.id).laeuftAbAm, jahr.schluessel.laeuftAbAm);
+});
+
+test("Abgelaufener Schluessel: Zustand in der Liste, 401 api_key_expired an /v1, Umschalten rettet ihn nicht", async () => {
+  frischerSpeicher();
+  const env = testEnv();
+  const vor40Tagen = () => new Date(Date.now() - 40 * 86_400_000);
+  const { klartext, schluessel } = await erzeugeSchluessel(KONTO, { name: "Alt30", laufzeit: "30t" }, env, vor40Tagen);
+  const liste = await listeSchluessel(KONTO, env);
+  assert.equal(liste[0].zustand, "abgelaufen");
+
+  const { res } = await ruf("/v1/models", { env, headers: { authorization: `Bearer ${klartext}` } });
+  assert.equal(res.zustand.status, 401);
+  assert.equal(payload(res).error.code, "api_key_expired");
+  assert.match(payload(res).error.message, /abgelaufen/);
+
+  // Deaktivieren + Aktivieren schreibt den Rueckschlag neu — das Ablaufdatum muss ueberleben.
+  await setzeSchluesselAktiv(KONTO, schluessel.id, false, env);
+  await setzeSchluesselAktiv(KONTO, schluessel.id, true, env);
+  const danach = await pruefeSchluessel(klartext, env);
+  assert.equal(danach.ok, false);
+  assert.equal(danach.grund, "api_key_expired");
 });
 
 test("Speicher nicht bereit meldet 503, nicht 'unbekannter Schluessel'", async () => {

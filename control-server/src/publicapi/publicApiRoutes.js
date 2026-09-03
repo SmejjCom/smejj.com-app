@@ -330,6 +330,8 @@ function meldungZu(grund) {
       return "Der Schluessel hat nicht die Form smejj-live-… (43 Zeichen).";
     case "api_key_revoked":
       return "Dieser Schluessel wurde widerrufen.";
+    case "api_key_expired":
+      return "Dieser Schluessel ist abgelaufen. Bitte unter smejj.com/entwickler.html einen neuen erzeugen.";
     case "api_key_store_unavailable":
       return "Der Schluesselspeicher ist gerade nicht erreichbar. Bitte erneut versuchen.";
     default:
