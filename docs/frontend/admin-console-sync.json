@@ -42,8 +42,8 @@
     "console-stage6.js": "85d04b0a3093274b8a53bd65d9051844463d0331e67b0eb72b5d24435df66f06",
     "console-stage7.js": "c2e8cffaf378f731b34fe057818bad95986b3f0815d9f603a31863b9c49fa010",
     "console-stage8.js": "778d89b1ec1a071a581f4030acf0dbef72de52aa2b370a4cc3092c38d6d78bfb",
-    "console-stage9.js": "7861fa393614b6a3fd47b23d439430360c5b5d667c008a0116c2b02647fc6c21",
-    "console.css": "475abaeedbb81341f7bb6ab1d60b4a6f7fb136f5baf233a1bf93c0329157d7f4",
+    "console-stage9.js": "86a7baf596f1ce13954489e82aa47e7046ddba2b2a561288d63f6f032af11682",
+    "console.css": "30682d166a7122fc2b53a069cc5626e4ae870c9b41299950064f0dd938e0d68c",
     "console.js": "3954988d430f6ce0ae296427fc088097dd02f108844e727a37eb3293fc6dd9a7",
     "dialog.js": "e6784e914c7573b6fe9d28bfcebc1c3b3c2e17d4cc2a1b56c4f2f8917f781a5d",
     "gate.js": "26a2b477bce904dfab0e3126809b129818b69fada70c0497f03d1983e090c75e",
@@ -55,7 +55,7 @@
     "views-stage6.js": "7de341e1cb168e4e6ab9efa138586ca23298de10c8d8f76495ede3622956ef4c",
     "views-stage7.js": "0a7ac082fd2a08cc60127da20a107634a4aa5cca36875b8cccaa04921e57df90",
     "views-stage8.js": "b023606eeac6580b6edae72f12cb4794bc305711dc44bded3fee77b1fc5b92cb",
-    "views-stage9.js": "8930a333815cf0154e6603047f2bdee0b4a16c3b5c9897df677cdd4f4ffa25ae",
+    "views-stage9.js": "47ccda8b25972bd66dd33b239faa01f91833c7656dc5ed7ec8e77cc36a019e5e",
     "views.js": "73af84dad9f961298c4a4942c1888a32e15101107707fe1b9173344dbaf7061f"
   }
 }
