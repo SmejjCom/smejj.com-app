@@ -9,8 +9,22 @@
 #   silero  -> Silero VAD (barge-in)
 #   whisper -> faster-whisper STT (large-v3, auto-detect)
 #   openai  -> OpenAI-compatible LLM client (smejj.com router, BYOK)
-# BEWUSST NICHT angehoben: 0.0.94 traegt SELBST 4 Luecken — ein Wechsel
-# taeuscht Fortschritt vor, ohne einen zu bringen.
+# BEWUSST NICHT angehoben — aber nicht, weil Anheben grundsaetzlich schadet.
+# VOLLSTAENDIGE MESSREIHE 2026-08-14 abends (api.osv.dev, Version fuer Version):
+#   0.0.67 -> 2   (Pickle-RCE ueber LiveKit)
+#   0.0.94 -> 4   (die RCE ist weg, vier neue Luecken sind dazugekommen)
+#   1.2.0  -> 2
+#   1.4.0  -> 0
+#   1.7.0  -> 0   (neueste)
+# Die fruehere Messung stoppte bei 0.0.90 und schloss daraus "Anheben
+# verschlechtert immer". Das stimmt fuer die 0.0.x-Reihe — und nur dort.
+# SAUBER IST ERST 1.4.0. Das ist ein Hauptversionssprung mit API-Umbau
+# (die Importpfade in src/ muessten mitwandern), und der Dienst wird derzeit
+# nicht gebaut: kein erreichbares Risiko, also auch kein Grund, einen Umbau
+# ungetestet einzubauen. Sobald smejj-voice wieder gebaut wird, ist 1.4.0+ der
+# Weg — nicht 0.0.94, das waere ein Rueckschritt.
+# NACHGEMESSEN 2026-09-03: neueste 1.8.1; 0.0.67 traegt weiter GHSA-c2jg-5cp7-6wc7 (Pickle-RCE ueber
+# LiveKit, den smejj-voice nicht nutzt). Entscheidung unveraendert: erst mit dem Neubau auf 1.4.0+.
 pipecat-ai[silero,whisper,openai]==0.0.67
 
 # Speech-to-text engine (also pulled by the whisper extra; pinned for clarity).
@@ -21,10 +35,22 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 # 3.11.11 trug 66 bekannte Luecken (osv.dev, 2026-08-14); sauber erst ab 3.14.3.
 aiohttp==3.14.3
-# BEWUSST NICHT angehoben (2026-08-14): 4 Luecken, sauber erst ab 6.33.5 —
-# das waere ein Hauptversionssprung (5 -> 6) bei einer Kernbibliothek, an
-# der onnxruntime und pipecat haengen. Risiko groesser als der Nutzen.
-protobuf==5.29.2
+# Ein Hauptversionssprung (5 -> 6) bleibt ausgeschlossen: daran haengen
+# onnxruntime und pipecat, das Risiko waere groesser als der Nutzen.
+# MESSUNG 2026-08-14, 02:05 Pazifik (api.osv.dev, Version fuer Version):
+#   5.29.2 -> 4 Luecken, 5.29.5 -> 2, 6.33.0 -> 2.
+# Der Zwischenschritt 5.29.5 halbiert die Zahl und bleibt in der 5er-Reihe.
+# NACHGEMESSEN 2026-08-14 abends (PyPI requires_dist) — und dabei kam heraus,
+# dass 5.29.2 gar nicht zulaessig war:
+#   pipecat-ai 0.0.67 verlangt  protobuf~=5.29.3  (also >=5.29.3, <5.30)
+#   onnxruntime 1.20.1 verlangt protobuf          (ohne Einschraenkung)
+#   faster-whisper 1.1.0        stellt keine Bedingung
+# 5.29.2 verletzte die Bedingung von pipecat und war ein latenter Baufehler
+# derselben Art wie der safetensors-Widerspruch beim Maler. 5.29.5 erfuellt
+# alle drei und ist die einzige Fassung, die beides zugleich loest.
+# 2026-09-03: 5.29.5 trug 2 Luecken (GHSA-7gcm-g887-7qv7 / PYSEC-2026-1805, JSON-Rekursionstiefe);
+# 5.29.6 schliesst beide (osv.dev: 0) und bleibt in der 5.29-Reihe, die pipecat 0.0.67 verlangt.
+protobuf==5.29.6
 
 # Silero VAD runtime (CPU is enough for VAD).
 onnxruntime==1.20.1
