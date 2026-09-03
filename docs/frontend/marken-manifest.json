@@ -70,8 +70,8 @@
       "finger": "b17a3221b829b090"
     },
     "composer-tools.js": {
-      "marke": "werkzeuge-12",
-      "finger": "27bc70526384b437"
+      "marke": "werkzeuge-13",
+      "finger": "59880e95d1722c70"
     },
     "voice-landing.js": {
       "marke": "emojifrei-20260825x",
@@ -269,6 +269,10 @@
       "marke": "blitz2-20260726",
       "finger": "fa32b5eb22ad439a"
     },
+    "voice-realtime.js": {
+      "marke": "1",
+      "finger": "e91ca1252b24edb7"
+    },
     "composer-plus-menu.js": {
       "marke": "werkzeuge-4",
       "finger": "3eb01b8e4f0082aa"
@@ -326,8 +330,8 @@
       "finger": "a895a0033a41a25a"
     },
     "app.js": {
-      "marke": "b116",
-      "finger": "f7838ae3afdf9cb5"
+      "marke": "b117",
+      "finger": "6ac41f78e9d2e832"
     },
     "pwa-schnellstart.js": {
       "marke": "5",

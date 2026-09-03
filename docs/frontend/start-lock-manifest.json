@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T12:43:02.863Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Chat am Handy — Schreibfeld ueber dem Home-Balken (Hoehe 100dvh minus Safe-Area, Variablen --sa-top/--sa-bottom), Frage-Blase ohne Ueberdeckung (Aktionsleiste min-height 34 px), Tabellen ohne Riesenzeilen (white-space normal); mobil-composer.css, Buendel-Marke mobil101-20260903 in index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'kompakt, uebersichtlich wie ChatGPT, Claude, Gemini' und 'Icons an der Unterkante versteckt, behebe endlich diesen Fehler'.",
+  "frozenAt": "2026-09-03T13:33:48.612Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Sprachwelle LIVE, Browser-Teil — voice-realtime.js (Sprache-zu-Sprache ueber /api/voice-realtime, Gemini Live API), Einhaengung in composer-tools.js (LIVE zuerst, Rueckfall auf Ohr/Erkennung), Precache-Eintrag in sw.js, Marken werkzeuge-13 und b117 in app.js/index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Sprachwelle wie ChatGPT und Gemini', Wahl 'Weg A starten'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8ac622912a52d8ae9d869eddd2bd2d93b6473ea8e0405f1d6feee9311266652d",
+    "public/index.html": "c62660ea06384711b12693b449f16391ad11c7ae4c1e507d5af911695539707f",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "7867c1e13a6ba3b52e0d04723a5ef86bad4233780d8ca1b0a3b187c592dea0ea",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "f7838ae3afdf9cb5984016cf93d2e569876881453669258aabefe5f925c220a8",
+    "public/app.js": "6ac41f78e9d2e8328485702ba071cd388be80bdb6313755968289fdfd0cfd283",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -21,7 +21,7 @@
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "fa43bbe38c5eac0aec8bdb769187108239fce4d3377a1d778c2ba1cb19e31677",
-    "public/composer-tools.js": "27bc70526384b437fc404df7d2af72704031ab9786cfcf20f3e279c7b80c75c1",
+    "public/composer-tools.js": "59880e95d1722c705a3569936c45ef2e34e8d2b2287fd4914fdc6a05fefd4fd5",
     "public/composer-plus-menu.js": "3eb01b8e4f0082aaff520d1e0976df270199e8f6a183d6557c9977d997e27d03",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "66d0e7324937b177452f9b62ce53bbbce5d78d358de99b70b749490f1f272ba7",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "a61dec3f56fd75dd8dc97ed47281a752c88bfc89a320fd3ae228e8e74c8524b8",
+    "public/sw.js": "a8035f7b5803e5a0995e73ab28a6b43aa0506f61e35d5d097f908c1230756ed4",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }

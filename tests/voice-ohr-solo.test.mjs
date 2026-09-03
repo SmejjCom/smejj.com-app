@@ -175,17 +175,21 @@ test("Taubheits-Wache: der 12-s-Haenger bricht die stumme Erkennung ab", async (
   void w;
 });
 
-test("iOS-Pfad (25.08. abends): ohne RecognitionCtor uebernimmt ZUERST das Solo-Ohr", () => {
+test("iOS-Pfad (25.08. abends, LIVE 03.09.): ohne RecognitionCtor uebernimmt ZUERST das Solo-Ohr", () => {
   // KAPUTTE Probe des alten Standes: openVoiceMode ging auf iOS IMMER sofort
   // in enterVoiceFallback ("Frage unten eintippen") — die Sprachwelle war
-  // stumm, obwohl das eigene Ohr gesund war. GESUNDE Probe: im
-  // !RecognitionCtor-Block steht ohrSolo.aktivieren() VOR enterVoiceFallback.
+  // stumm, obwohl das eigene Ohr gesund war. GESUNDE Probe: im Rueckfall-Block
+  // nach liveWelle.starten() steht ohrSolo.aktivieren() VOR enterVoiceFallback,
+  // und die Erkennung (RecognitionCtor) wird davor abgefragt. Seit 03.09. wird
+  // LIVE (Sprache-zu-Sprache) zuerst versucht; der alte Weg bleibt der Rueckfall.
   const quelle = fs.readFileSync("public/composer-tools.js", "utf8");
-  const block = quelle.match(/if \(!RecognitionCtor\) \{[\s\S]{0,400}?\n {6}\}/);
-  assert.ok(block, "openVoiceMode hat den iOS-Zweig (!RecognitionCtor)");
-  const aktivieren = block[0].indexOf("ohrSolo.aktivieren()");
-  const fallback = block[0].indexOf("enterVoiceFallback(");
-  assert.ok(aktivieren >= 0, "iOS-Zweig versucht das Solo-Ohr");
+  const start = quelle.indexOf("liveWelle.starten().then(");
+  assert.ok(start >= 0, "openVoiceMode versucht zuerst die LIVE-Welle");
+  const block = quelle.slice(start, start + 600);
+  const erkennung = block.indexOf("RecognitionCtor");
+  const aktivieren = block.indexOf("ohrSolo.aktivieren()");
+  const fallback = block.indexOf("enterVoiceFallback(");
+  assert.ok(erkennung >= 0 && aktivieren > erkennung, "ohne Erkennung (iOS) versucht der Rueckfall das Solo-Ohr");
   assert.ok(fallback > aktivieren, "Tipp-Fallback kommt erst NACH dem Solo-Versuch (alter Stand: sofortiger Fallback)");
 });
 
