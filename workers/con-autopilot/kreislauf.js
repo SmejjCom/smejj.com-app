@@ -245,6 +245,18 @@ async function planeUndStarte(ctx, z) {
   }
 }
 
+/** Aktueller Stand der Pruefsuiten aus git: {suiteId: contentSha256}. */
+export async function suitenStand(suitesDir) {
+  const suiten = await ladeSuiten(suitesDir);
+  return Object.fromEntries(suiten.map((s) => [s.suiteId, s.integrity?.contentSha256 || null]));
+}
+
+/** Welche Suiten haben sich seit dieser Note geaendert (oder sind neu)? */
+export function abweichendeSuiten(gemessenerStand, aktuellerStand) {
+  if (!gemessenerStand) return Object.keys(aktuellerStand);
+  return Object.keys(aktuellerStand).filter((id) => gemessenerStand[id] !== aktuellerStand[id]);
+}
+
 export async function planeNaechstenSchritt(ctx, z, registry) {
   const { e2, konfig } = ctx;
   const stabil = stabileVersion(registry);
@@ -257,6 +269,15 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
     if (vorhanden?.status === "rejected") return { phase: "gestoppt", grund: "con-1.0.0 wurde verworfen — Betreiber-Entscheidung noetig" };
     return { schritt: "messlatte", job: { modus: basisKomplett ? "messung" : "spiegel+messung", version, ziel: `Messlatte ${version} (Basis ${konfig.basis.repo}${basisKomplett ? "" : ", erst spiegeln"})`,
       parameter: { CON_VERSION: version, CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
+  }
+  // 1b. Latte hat sich geaendert: die stabile Version zuerst neu messen. Ein Kandidat gegen eine
+  // Note zu halten, die mit einer anderen Suite entstanden ist, waere ein unfairer Vergleich.
+  const aktuell = await suitenStand(konfig.suitesDir);
+  const veraendert = abweichendeSuiten(stabil.benchmarks?.suitenStand, aktuell);
+  if (veraendert.length) {
+    return { schritt: "latte_neu_messen", job: { modus: "messung", version: stabil.version, adapterPrefix: stabil.adapterPrefix || null,
+      ziel: `Stabile Version ${stabil.version} mit geaenderter Latte neu messen (${veraendert.join(", ")})`,
+      parameter: { CON_VERSION: stabil.version, ...(stabil.adapterPrefix ? { CON_ADAPTER_PREFIX: stabil.adapterPrefix } : {}), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
   }
   // 2. Kandidat mit Adapter, aber ohne Bewertung: messen.
   const kandidat = registry.versions.find((v) => v.status === "candidate" && v.adapterPrefix && !v.benchmarks);

@@ -172,16 +172,44 @@ test("gueltigkeits-tor: leere Messung darf keine Messlatte setzen", async () => 
 });
 
 test("planung: geretteter Kandidat aus abgebrochenem Training wird als naechstes gemessen", async () => {
-  const { planeNaechstenSchritt } = await import("../workers/con-autopilot/kreislauf.js");
+  const { planeNaechstenSchritt, suitenStand } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
   const registry = { versions: [
-    { version: "con-1.0.0", status: "stable", basisPrefix: "con/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: { reasoning: { score: 0.83, kritisch: 1 } } } },
+    { version: "con-1.0.0", status: "stable", basisPrefix: "con/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: { reasoning: { score: 0.83, kritisch: 1 } }, suitenStand: stand } },
     { version: "con-1.1.0", status: "candidate", adapterPrefix: "con/versions/con-1.1.0/adapter", benchmarks: null }
   ] };
   const e2Attrappe = { getJson: async () => null, liste: async () => [] };
-  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1 };
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
   const plan = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, { schwaechste: null }, registry);
   assert.equal(plan.schritt, "kandidat_messen");
   assert.equal(plan.job.modus, "messung");
   assert.equal(plan.job.version, "con-1.1.0");
   assert.equal(plan.job.parameter.CON_ADAPTER_PREFIX, "con/versions/con-1.1.0/adapter");
+});
+
+test("faire Latte: geaenderte Suite erzwingt Neumessung der stabilen Version", async () => {
+  const { planeNaechstenSchritt, suitenStand, abweichendeSuiten } = await import("../workers/con-autopilot/kreislauf.js");
+  const dir = path.join(ROOT, "workers/con-autopilot/suites");
+  const aktuell = await suitenStand(dir);
+  assert.ok(Object.keys(aktuell).length >= 6);
+  assert.deepEqual(abweichendeSuiten(aktuell, aktuell), []);
+  assert.deepEqual(abweichendeSuiten({ ...aktuell, "con-sicherheit": "alt" }, aktuell), ["con-sicherheit"]);
+  assert.equal(abweichendeSuiten(null, aktuell).length, Object.keys(aktuell).length);
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir: dir };
+  const e2Attrappe = { getJson: async () => ({ komplett: true }), liste: async () => [] };
+  // Alte Note mit veralteter Latte -> zuerst die stabile Version neu messen, nicht den Kandidaten.
+  const alt = { versions: [
+    { version: "con-1.0.0", status: "stable", basisPrefix: "con/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: {}, suitenStand: { ...aktuell, "con-sicherheit": "veraltet" } } },
+    { version: "con-1.1.0", status: "candidate", adapterPrefix: "con/versions/con-1.1.0/adapter", benchmarks: null }
+  ] };
+  const planAlt = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, {}, alt);
+  assert.equal(planAlt.schritt, "latte_neu_messen");
+  assert.equal(planAlt.job.version, "con-1.0.0");
+  // Gleiche Latte -> der Kandidat ist dran.
+  const neu = structuredClone(alt);
+  neu.versions[0].benchmarks.suitenStand = aktuell;
+  const planNeu = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, {}, neu);
+  assert.equal(planNeu.schritt, "kandidat_messen");
+  assert.equal(planNeu.job.version, "con-1.1.0");
 });

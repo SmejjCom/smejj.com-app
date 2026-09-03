@@ -121,6 +121,9 @@ export function bewerteAntworten(antworten, suiten) {
         gruende: laeufe.flatMap((l) => l.details.filter((d) => !d.ok).map((d) => `${d.type}${d.grund ? ":" + d.grund : ""}`)).slice(0, 4) });
     }
   }
+  // Welcher Suiten-Stand hat diese Note erzeugt? Ohne diese Angabe liesse sich eine
+  // spaetere, geaenderte Latte gegen eine alte Note halten — ein unfairer Vergleich.
+  const suitenStand = Object.fromEntries(suiten.map((s) => [s.suiteId, s.integrity?.contentSha256 || null]));
   const kat = Object.fromEntries(Object.entries(kategorien).map(([k, v]) => [k, {
     score: v.gewicht ? round(v.punkte / v.gewicht) : 0, faelle: v.faelle, kritisch: v.kritisch, fehler: v.fehler
   }]));
@@ -144,6 +147,7 @@ export function bewerteAntworten(antworten, suiten) {
       vramMaxMiB: antworten.modell?.vramMaxMiB ?? null
     },
     modell: antworten.modell || null,
+    suitenStand,
     warnungen,
     faelleDetail: faelleAus,
     bewertetAm: new Date().toISOString()

@@ -82,7 +82,7 @@ export function reject(registry, version, urteil, bewertung) {
 
 export function zusammenfassung(b) {
   if (!b) return null;
-  return { gesamt: b.gesamt, kritisch: b.kritisch, faelle: b.faelle, kategorien: b.kategorien, leistung: b.leistung, jobId: b.jobId, bewertetAm: b.bewertetAm };
+  return { gesamt: b.gesamt, kritisch: b.kritisch, faelle: b.faelle, kategorien: b.kategorien, leistung: b.leistung, jobId: b.jobId, suitenStand: b.suitenStand || null, bewertetAm: b.bewertetAm };
 }
 
 export function schwaechen(b) {
