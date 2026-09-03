@@ -272,7 +272,7 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (CON_MIN_PAARE)` };
   if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
   const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix, art: "minor" });
-  const trainKonfig = JSON.parse(process.env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":2048,"checkpointMinuten":5}');
+  const trainKonfig = JSON.parse(process.env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15}');
   return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
     ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
     parameter: { CON_VERSION: stabil.version, CON_KANDIDAT: version, CON_DATENSATZ_PREFIX: daten.prefix, CON_TRAIN_KONFIG: JSON.stringify(trainKonfig), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };

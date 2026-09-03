@@ -149,7 +149,12 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
                                      os.path.join(ausgabe, f"checkpoint-{letzter}"))
         resume = os.path.join(ausgabe, f"checkpoint-{letzter}")
 
-    sicherungs_minuten = float(konfig.get("checkpointMinuten", 5))
+    # Gemessen 03.09. auf einer RTX 3090 mit 27B/nf4: ein Zwischenstand traegt Adapter UND
+    # Optimierer-Zustand (zusammen ueber 1 GB) nach e2 und dauert damit laenger als ein
+    # Trainingsschritt. Bei 5 Minuten Abstand verdoppelte sich die Zeit je Schritt von 2 auf 4
+    # Minuten. 15 Minuten sind der Kompromiss: bei einem Salad-Abbruch geht hoechstens eine
+    # Viertelstunde verloren, die Rechenzeit bleibt aber ueberwiegend Rechenzeit.
+    sicherungs_minuten = float(konfig.get("checkpointMinuten", 15))
 
     class E2Sicherung(TrainerCallback):
         def __init__(self):
