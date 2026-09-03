@@ -173,19 +173,60 @@ def spiegle(repo, prefix, arbeitsverzeichnis, status, revision="main", behalte_l
     return manifest
 
 
-def hole_aus_e2(prefix, arbeitsverzeichnis, status):
-    """Basismodell (oder Adapter) komplett aus e2 nach lokal. Liefert Manifest oder wirft."""
+def hole_aus_e2(prefix, arbeitsverzeichnis, status, parallel=None):
+    """Basismodell (oder Adapter) komplett aus e2 nach lokal. Liefert Manifest oder wirft.
+
+    Parallel, weil es der Zeitfresser jedes Mess-Jobs ist: 55,6 GB nacheinander
+    brauchen bei rund 10 MB/s ueber 90 Minuten und fressen damit die Zeitgrenze
+    auf, bevor ueberhaupt gemessen wird. Mehrere Dateien gleichzeitig nutzen die
+    Leitung des Knotens aus; boto3 laedt jede Datei zusaetzlich in Teilen.
+    Bereits vollstaendig vorhandene Dateien werden uebersprungen (Wiederaufnahme).
+    """
     manifest = e2.get_json(prefix.rstrip("/") + "/manifest.json")
     if not manifest or not manifest.get("komplett"):
         raise RuntimeError(f"Kein vollstaendiges Manifest unter {prefix} — erst spiegeln")
-    n = len(manifest["dateien"])
-    for i, d in enumerate(manifest["dateien"]):
+    dateien = manifest["dateien"]
+    n = len(dateien)
+    if parallel is None:
+        parallel = int(os.environ.get("CON_E2_DATEIEN_PARALLEL", "4"))
+    parallel = max(1, min(8, parallel))
+
+    offen = []
+    fertig = [0]
+    for d in dateien:
         ziel = os.path.join(arbeitsverzeichnis, d["name"])
-        status.setze(phase="laden", aktuell=d["name"], fertigDateien=i, vonDateien=n)
         if os.path.exists(ziel) and os.path.getsize(ziel) == d["size"]:
-            continue
-        e2.lade_herunter(manifest["prefix"] + d["name"], ziel)
-        if os.path.getsize(ziel) != d["size"]:
-            raise RuntimeError(f"Download unvollstaendig: {d['name']}")
+            fertig[0] += 1
+        else:
+            offen.append(d)
+    status.setze(phase="laden", fertigDateien=fertig[0], vonDateien=n, parallel=parallel)
+
+    sperre = threading.Lock()
+    fehler = []
+
+    def _hole(d):
+        ziel = os.path.join(arbeitsverzeichnis, d["name"])
+        try:
+            e2.lade_herunter(manifest["prefix"] + d["name"], ziel)
+            if os.path.getsize(ziel) != d["size"]:
+                raise RuntimeError(f"Download unvollstaendig: {d['name']}")
+        except Exception as f:  # noqa: BLE001 — Fehler eines Strangs darf die anderen nicht verschlucken
+            with sperre:
+                fehler.append(f"{d['name']}: {str(f)[:200]}")
+            return
+        with sperre:
+            fertig[0] += 1
+            status.setze(phase="laden", aktuell=d["name"], fertigDateien=fertig[0], vonDateien=n)
+
+    for start in range(0, len(offen), parallel):
+        gruppe = offen[start:start + parallel]
+        straenge = [threading.Thread(target=_hole, args=(d,), daemon=True) for d in gruppe]
+        for t in straenge:
+            t.start()
+        for t in straenge:
+            t.join()
+        if fehler:
+            raise RuntimeError("Laden aus e2 gescheitert: " + " | ".join(fehler[:3]))
+
     status.setze(phase="laden", fertigDateien=n, vonDateien=n)
     return manifest
