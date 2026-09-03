@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T20:20:34.586Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Anhaenge Stufe 2C — Tonspur von Video und Audio wird im Browser geholt, in 60-s-Stuecken an das Whisper-Ohr geschickt und als Transkript-Chip angehaengt (anhang-tonspur.js, composer-plus-menu.js), Marken werkzeuge-8 / werkzeuge-17 / b121, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Anhaenge Stufe 2 bauen' und 'alle Rechte, 100 % fertig'.",
+  "frozenAt": "2026-09-03T20:32:22.926Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Anhaenge Stufe 2B — Word, Excel und PowerPoint werden im Browser gelesen (anhang-office-text.js, eigener ZIP-Leser, kein Fremdpaket) und als Chip mit Inhalt angehaengt; composer-plus-menu.js, Marken werkzeuge-9 / werkzeuge-18 / b122, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Anhaenge Stufe 2 bauen' und 'alle Rechte, 100 % fertig'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "c6b4fbc7dec23fc10347e28763f18335d412ef7fe5235f7eb9b7d0bc79280dbb",
+    "public/index.html": "dd733e8b36c6677bf9132ae61a1515fdbaff2e902d305ebc0d64586d2b91a6a7",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "69c21011c1f20954b1686febf314f1cb0a7695e9fe23a2e5416cf9df467c6942",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "0413563e84b0585248b371fdc56b8b7406d884ec5dc30b9ecff8cf7959c6b325",
+    "public/app.js": "15bc7927b11f7b6fb6b49232e3ea1a845609ead1a2321e588d6bd20248b7b846",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -21,8 +21,8 @@
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "fa43bbe38c5eac0aec8bdb769187108239fce4d3377a1d778c2ba1cb19e31677",
-    "public/composer-tools.js": "1b2a9e21c16d6ba092cc2a32b7084e37b86e28acf7be16207be87d00ebacc000",
-    "public/composer-plus-menu.js": "903660f581aac0a9e88be404d1a9d99353ecfa880b3161c97988b2c244069062",
+    "public/composer-tools.js": "99fbb0d3a1edf184109f695075e33c6a5de6b7ac92237491ce1ebb4c4696768a",
+    "public/composer-plus-menu.js": "5f3a314dd8c9ba09feb9a52348e3f6e75971f2993c50e3a18da94a6776334091",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "66d0e7324937b177452f9b62ce53bbbce5d78d358de99b70b749490f1f272ba7",
     "public/browser-pane-render.js": "fcf48d6c9f40f06a96ecd58b616aba8b41a9cc929ac258c458c1b7f86ba5d4ac",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "4607d933e5a1df93ed9f8358926f57a8a06a78c6376842e98d7536fa320d41e8",
+    "public/sw.js": "e19f2606dab17d8c30e3a0f4005bf644f7bdecae4948bc760d301b130f734c9e",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
