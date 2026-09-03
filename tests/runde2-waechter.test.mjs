@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { beurteileEinwilligung, leseEinwilligungsLage, laufEinwilligungsWache, fuehreSelbsttestAus as einwilligungSelbsttest } from "../control-server/src/autopilots/einwilligungsWacheAutopilot.js";
-import { messlaufImTakt, beurteileMessung, warteAufMessung, ABLAGE_ID } from "../control-server/src/autopilots/brueckenMesslauf.js";
+import { messlaufImTakt, beurteileMessung, warteAufMessung, ABLAGE_ID, ABLAGE_VERSION } from "../control-server/src/autopilots/brueckenMesslauf.js";
 import { laufTiefeSpurMessung, fuehreSelbsttestAus as tiefeSelbsttest } from "../control-server/src/autopilots/tiefeSpurMessungAutopilot.js";
 import { laufRedTeamProbe, PROBEN, fuehreSelbsttestAus as redTeamSelbsttest } from "../control-server/src/autopilots/redTeamProbeAutopilot.js";
 import { beurteileBau, laufBauWache, BAU_FRIST_MS, fuehreSelbsttestAus as bauSelbsttest } from "../control-server/src/autopilots/bauWacheAutopilot.js";
@@ -116,7 +116,7 @@ test("Nr. 75/79 Messlauf: 429 wird einmal wiederholt, Laeufe stehen in EINER War
   const e = await messlaufImTakt({ kennung: "test-alt", faelleLader: async () => [gut], ablage: alt, env, fetchImpl: async () => sseAntwort("smejj.com"), sleep: async () => {} });
   assert.match(e.meldung, /Messung gestartet/);
   await warteAufMessung("test-alt");
-  assert.equal(alt.m.get(ABLAGE_ID).version, 2);
+  assert.equal(alt.m.get(ABLAGE_ID).version, ABLAGE_VERSION);
 });
 
 // ---------------------------------------------------------------- Nr. 76

@@ -82,7 +82,10 @@ async function messe({ faelle, modelId, env, fetchImpl, sleep }) {
   for (const fall of faelle) {
     let ergebnis = await callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
     // Rate-Limit oder kurzer Aussetzer: einmal warten und wiederholen (Bauart des Modell-Einkaeufers).
-    if (!ergebnis.ok && /^http_(429|502|503|504)$/.test(String(ergebnis.error || ""))) {
+    // Rate-Limit, kurzer Aussetzer ODER Zeitueberschreitung (die tiefe Spur denkt
+    // mal 60 s+): einmal warten und wiederholen — sonst kippt EIN Timeout von 14
+    // Faellen den ganzen Tageswert auf "nicht messbar" (gemessen 03.09., 17:5x).
+    if (!ergebnis.ok && /^(http_(429|502|503|504)|timeout)$/.test(String(ergebnis.error || ""))) {
       await sleep(ergebnis.error === "http_429" ? 65_000 : 15_000);
       ergebnis = await callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
     }
