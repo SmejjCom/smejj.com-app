@@ -15,8 +15,8 @@
 // der Browser chat-markdown.js ein zweites Mal als eigenstaendiges Modul.
 import { renderChatMarkdown } from "/assets/chat-markdown.js?v=1";
 // Papierkorb & Projekte/Bereiche: chat-store-bereiche.js (Diaet 25.08.); Re-Export = EINE Instanz.
-import { aktualisiereBereichsAnweisung, verbraucheBereichVormerkung, BEREICH_ANWEISUNG_KEY, BEREICH_NEU_KEY } from "./chat-store-bereiche.js?v=1";
-export { restoreChat, endgueltigLoeschen, listGeloeschteChats, listProjekte, getProjekt, erstelleProjekt, benenneProjektUm, setzeProjektAnweisung, neuesGespraechImBereich, loescheProjekt, setzeChatProjekt, importProjekt } from "./chat-store-bereiche.js?v=1";
+import { aktualisiereBereichsAnweisung, verbraucheBereichVormerkung, BEREICH_ANWEISUNG_KEY, BEREICH_NEU_KEY } from "./chat-store-bereiche.js?v=2";
+export { restoreChat, endgueltigLoeschen, listGeloeschteChats, listProjekte, getProjekt, erstelleProjekt, benenneProjektUm, setzeProjektAnweisung, neuesGespraechImBereich, loescheProjekt, setzeChatProjekt, importProjekt } from "./chat-store-bereiche.js?v=2";
 
 // Nachrichten-Modell (2026-07-28): liefert Rohtext, Zeitstempel, Modell und
 // Bewertung je Nachricht. Ohne diese Angaben koennte ein wiederhergestellter
@@ -243,9 +243,10 @@ function readEntries() {
       // Neuladen nicht mehr nachvollziehbar, worauf sie beruht.
       sources: Array.isArray(meta.sources) ? meta.sources : [],
       versions,
-      active: clampVersionIndex((Number(meta.active) || 0) - verworfen, versions.length)
+      active: clampVersionIndex((Number(meta.active) || 0) - verworfen, versions.length),
+      platzhalter: node.dataset.thinking === "true" // Wartetext nie speichern (Befund 03.09.: zwei Chats endeten mit „smejj denkt nach…“)
     };
-  }).filter((entry) => entry.text.trim().length > 0);
+  }).filter((entry) => entry.text.trim().length > 0 && !entry.platzhalter);
 }
 
 function titleFrom(messages) {
@@ -566,6 +567,7 @@ function renderEntriesInto(log, messages) {
   try {
     log.innerHTML = "";
     for (const message of messages) {
+      if (message.role !== "user" && !String(message.raw || "").trim() && /^smejj denkt nach/i.test(String(message.text || "").trim())) continue; // Altbestand: gespeicherter Wartetext
       const node = document.createElement("article");
       node.className = `entry ${message.role === "user" ? "user" : "assistant"}`;
       if (message.role === "assistant" && message.html) {

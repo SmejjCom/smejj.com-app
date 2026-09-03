@@ -26,13 +26,13 @@ export function statischeVerlaufsImporte(quelle) {
 }
 
 test("kaputte Probe: ein statischer Import wird erkannt", () => {
-  const probe = 'import { x } from "/assets/chat-history-text.js?v=b47b";\nimport "/assets/chat-title-auto.js";\nconst y = import("/assets/chat-history-cards.js?v=b59");';
-  assert.deepEqual(statischeVerlaufsImporte(probe), ["/assets/chat-history-text.js?v=b47b", "/assets/chat-title-auto.js"]);
+  const probe = 'import { x } from "/assets/chat-history-text.js?v=b47c";\nimport "/assets/chat-title-auto.js";\nconst y = import("/assets/chat-history-cards.js?v=b60");';
+  assert.deepEqual(statischeVerlaufsImporte(probe), ["/assets/chat-history-text.js?v=b47c", "/assets/chat-title-auto.js"]);
 });
 
 test("gesunde Probe: chat-history-view.js laedt Text, Karten und Titel-Automatik nur per import()", () => {
   assert.deepEqual(statischeVerlaufsImporte(ANSICHT), []);
-  for (const modul of ["/assets/chat-history-text.js?v=b47b", "/assets/chat-history-cards.js?v=b59", "/assets/chat-title-auto.js"]) {
+  for (const modul of ["/assets/chat-history-text.js?v=b47c", "/assets/chat-history-cards.js?v=b60", "/assets/chat-title-auto.js"]) {
     assert.ok(ANSICHT.includes(`import("${modul}")`), `${modul} fehlt in ladeBausteine()`);
   }
   assert.match(ANSICHT, /async function render\(\) \{\n\s*await ladeBausteine\(\);/, "render wartet nicht auf die Bausteine");
