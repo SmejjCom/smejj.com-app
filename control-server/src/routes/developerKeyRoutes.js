@@ -10,7 +10,7 @@
 import { privateJson, readJson } from "../http/respond.js";
 import { authenticatedUserId } from "../jobs/jobAccess.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
-import { benenneSchluesselUm, erzeugeSchluessel, listeSchluessel, loescheSchluessel, setzeSchluesselAktiv, widerrufeSchluessel } from "../publicapi/publicApiKeys.js";
+import { LAUFZEITEN, LAUFZEIT_VORAUSWAHL, benenneSchluesselUm, erzeugeSchluessel, listeSchluessel, loescheSchluessel, setzeSchluesselAktiv, widerrufeSchluessel } from "../publicapi/publicApiKeys.js";
 import { publicApiAktiv } from "../publicapi/publicApiRoutes.js";
 import { verbrauchSnapshot } from "../publicapi/publicApiUsage.js";
 import { AUFLADE_BETRAEGE_USD, erzeugeAufladung, leseKonto } from "../publicapi/publicApiLedger.js";
@@ -66,6 +66,9 @@ export async function handleDeveloperKeyRoute(req, url, res, { env = process.env
         ok: true,
         basisUrl: basisUrlAus(req, env),
         schluessel,
+        // Was die Oberflaeche zur Wahl stellt — eine Quelle, nicht zwei Listen.
+        laufzeiten: Object.keys(LAUFZEITEN),
+        laufzeitVorauswahl: LAUFZEIT_VORAUSWAHL,
         verbrauch,
         guthaben: {
           usd: mikroZuUsd(konto.guthabenMikro),
@@ -81,7 +84,7 @@ export async function handleDeveloperKeyRoute(req, url, res, { env = process.env
     }
     if (req.method === "POST" && rest === "") {
       const body = await readJson(req).catch(() => ({}));
-      const ergebnis = await erzeugeSchluessel(kontoId, { name: body?.name }, env);
+      const ergebnis = await erzeugeSchluessel(kontoId, { name: body?.name, laufzeit: body?.laufzeit }, env);
       // Der Klartext geht GENAU HIER einmal heraus. Er steht in keinem Log und
       // ist danach nicht wiederherstellbar — der Speicher kennt nur den Abdruck.
       privateJson(res, 201, {
