@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T16:07:01.586Z",
+  "frozenAt": "2026-09-03T16:28:43.821Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Content-Security-Policy connect-src um wss://api.smejj.com ergaenzt, damit die Sprachwelle LIVE (Sprache-zu-Sprache ueber /api/voice-realtime) im Browser verbinden darf; Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Sprachwelle wie ChatGPT und Gemini' und 'alle Rechte, 100 % fertig'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "158bf0167376c93a5300314066ed71fd7950732ee3b6770adff87d1a3c927221",
+    "public/sw.js": "ccb1d7bb6a50a3b306adfd5963daa3e64fe6f7de1c7b91a102db32bbb6d13689",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
