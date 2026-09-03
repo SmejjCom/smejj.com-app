@@ -20,13 +20,14 @@
 # [ueberholt] diffusers bleibt auch auf 0.36.0 bei 5 gemeldeten Luecken: es
 # [ueberholt] existiert derzeit KEINE saubere Fassung (0.32/0.33/0.35/0.36).
 diffusers==0.38.0
-# 2026-09-03: 5.5.0 traegt GHSA-xrqw-3rrv-vx5w (save_pretrained-Pfadueberschreitung ueber Chat-Template-
-# Namen). server.py ruft save_pretrained NIE — nicht erreichbar. Anheben auf 5.10.4 wurde LIVE PROBIERT
-# (deploy/smejj-bild-maler 597c7cf0): Bau lief, aber der Dienst blieb "bereit:false" — diffusers 0.38
-# konnte transformers.PreTrainedModel nicht importieren. Lokal (Python 3.13, torch aktuell) importieren
-# 0.38+5.10.4 UND 0.40+5.10.4 sauber: die Ursache liegt im Bau-Abbild (Python/torch des zbpack-Baus),
-# nicht in den Pins. Revert 0eaafe5f. Naechster Anlauf nur mit torch-Pin, der im Abbild bewiesen ist.
-transformers==5.5.0
+# 2026-09-03: 5.5.0 trug GHSA-xrqw-3rrv-vx5w (save_pretrained-Pfadueberschreitung), behoben ab 5.10.0.
+# ERSTER ANLAUF 5.10.4 (deploy 597c7cf0) SCHEITERTE LIVE: transformers 5.10 nutzt torch.float8_e8m0fnu,
+# das torch 2.5.1 (Dockerfile.smejj-bild-maler) nicht kennt -> modeling_utils faellt, diffusers meldet
+# "PreTrainedModel" nicht importierbar, Dienst blieb bereit:false. Revert 0eaafe5f.
+# ZWEITER ANLAUF: torch 2.7.1 + torchvision 0.22.1 im Abbild. Lokal exakt nachgestellt (uv, Python 3.11):
+# torch 2.5.1 -> derselbe Fehler; torch 2.7.1 -> Import von PreTrainedModel, AutoPipelineForText2Image
+# und diffusers.loaders.peft sauber. Bedingungen: huggingface-hub <2.0 wie diffusers 0.38.
+transformers==5.10.4
 accelerate==1.1.1
 # 0.8.0 ist PFLICHT fuer diffusers 0.38: der erste Bau mit 0.4.5 scheiterte an
 # ResolutionImpossible, und ein fehlgeschlagener Bau sieht aus, als waere die

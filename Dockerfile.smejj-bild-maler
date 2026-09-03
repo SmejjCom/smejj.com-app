@@ -6,7 +6,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+# 2.7.1 statt 2.5.1 (2026-09-03): transformers 5.10 braucht torch.float8_e8m0fnu.
+RUN pip install --no-cache-dir torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu
 
 COPY workers/smejj-bild-maler/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
