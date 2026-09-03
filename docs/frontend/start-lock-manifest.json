@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-03T19:24:37.801Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Vollbild am Handy — Glas-Gefaelle auf dem Wurzelelement (html:root), kein schwarzer Streifen ueber dem Home-Balken; Anhang-Chips fuer Video/PDF/Dokument statt Textzeile im Schreibfeld (composer-anhang-chips.js, composer-plus-menu.js, composer-paste-attach.js, chat-actions.css, Marken werkzeuge-5/v4/werkzeuge-14/b118, Precache); mobil-composer.css, Buendel-Marke mobil102-20260903 in index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Vollbild, gesamte Flaeche' und 'alle Rechte, 100 % fertig'.",
+  "frozenAt": "2026-09-03T20:04:30.653Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Anhaenge Stufe 2A — PDF lesen im Browser (anhang-pdf-text.js mit pdf.js 6.3.289 Apache-2.0 unter public/vendor/pdfjs, nur bei Bedarf geladen), Einhaengung in composer-plus-menu.js, Marken anhang-pdf-text v2 / composer-plus-menu werkzeuge-7 / composer-tools werkzeuge-16 / app.js b120, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'Anhaenge Stufe 2 bauen' und 'alle Rechte, 100 % fertig'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4a49447acabb57f0acbc204af5f86eef38985b84c2c745c59b4192fde7fbf9fc",
+    "public/index.html": "3933953200c0c6db83b09cbe0192d8f9caa7559f217cc24ba16fa496377c5e2e",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "69c21011c1f20954b1686febf314f1cb0a7695e9fe23a2e5416cf9df467c6942",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "ec42f3d0b63b7c09d8f07723eb4473a25ca5f933869893abf2c6e0491f196e74",
+    "public/app.js": "7cbecf793b28f8db02c46db2ea317d422023b9d1c0b60faa0b38d0b4b36b001f",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -21,8 +21,8 @@
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "fa43bbe38c5eac0aec8bdb769187108239fce4d3377a1d778c2ba1cb19e31677",
-    "public/composer-tools.js": "72ac91b3c26fe8d17bf3793b150a4145f5dd5c44b7e4b88fcf4cf87a9341903a",
-    "public/composer-plus-menu.js": "90d3575cd4cb9b08d57b9cbe89da0945b42c87ea93557acbda423567d084ad60",
+    "public/composer-tools.js": "bbd894f05a8cf878a8ce16c61117aaa84271c17f6119a4a145beb2761f9dde24",
+    "public/composer-plus-menu.js": "ef815a032aaaf4d06dc0c7ba378a86eaa25a1034278e0793370ac2b3ccfcd99f",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "66d0e7324937b177452f9b62ce53bbbce5d78d358de99b70b749490f1f272ba7",
     "public/browser-pane-render.js": "fcf48d6c9f40f06a96ecd58b616aba8b41a9cc929ac258c458c1b7f86ba5d4ac",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "8648172c0b4808015844a2ad38e84ca615821566347be0664a304303a3350d76",
+    "public/sw.js": "9bfd9181cd23f2222b86a7e91cda81684f583de910a13d43102849fb2591b9a8",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
