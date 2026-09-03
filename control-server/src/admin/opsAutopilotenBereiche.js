@@ -22,7 +22,9 @@ export const BEREICHE = Object.freeze([
 const ZUORDNUNG = Object.freeze({
   "Antwortqualität & Sprache": [
     "antwort-tuev", "angelina-autopilot", "process-reward", "user-feedback-flywheel",
-    "self-improvement", "self-healing", "ai-evolution-engine", "autopilot-supervisor"
+    "self-improvement", "self-healing", "ai-evolution-engine", "autopilot-supervisor",
+    // Nr. 75 (2026-09-03, Runde 2): die tiefe Spur (GLM) taeglich gegen die Kernsuite.
+    "tiefe-spur-messung"
   ],
   "Code & Bauen": [
     "werkstatt-autopilot", "autonomous-git-bot", "instant-web-container",
@@ -40,7 +42,9 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 61 (2026-08-24): taegliche Unit-Tests des Control-Servers (Mac-Cron).
     "test-waechter",
     // Nr. 73 (2026-09-03, Audit): der Tuerwaechter lief seit 14.08. ohne Registry-Eintrag.
-    "tuerwaechter"
+    "tuerwaechter",
+    // Nr. 79 (2026-09-03, Runde 2): Prompt-Injection live gegen die Bruecke.
+    "red-team-probe"
   ],
   // (Nr. 63/64 stehen unten bei "Betrieb & Auslieferung" — Performance und Speicher sind Betriebsfragen.)
   "Modelle & Wissen": [
@@ -52,7 +56,9 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 65 (2026-08-26): die Reife der Trainingsdaten gehört zu den Modellen.
     "trainings-reife",
     // Nr. 72 (2026-09-03): der Modell-Evolutions-Takt — Messen, Schwaeche, Tore, Zyklus-Protokoll.
-    "modell-evolution"
+    "modell-evolution",
+    // Nr. 74/77 (2026-09-03, Runde 2): Einwilligungs-Weg des Trainings, Frische des Projektwissens.
+    "einwilligungs-wache", "projektwissen-frische"
   ],
   "Medien & Sprache": [
     "realtime-voice-pair", "multimodal-engine", "deep-research", "voice-region-check"
@@ -67,7 +73,9 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 66/69/70 (2026-08-30): Mail-Zustellung, Umsatz-Seite, Flags — Betriebsfragen.
     "email-zustell", "abo-umsatz-wache", "flaggen-wache",
     // Nr. 71 (2026-09-02): die Zeabur-Umgebung selbst — Coding-Adresse und Pflichtschluessel.
-    "umgebungs-wache"
+    "umgebungs-wache",
+    // Nr. 76/78/80 (2026-09-03, Runde 2): Bau-Kontrolle, 15 Sprachseiten, Agenten-Worker.
+    "bau-wache", "sprachseiten-wache", "agenten-sonde"
   ]
 });
 

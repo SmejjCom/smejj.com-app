@@ -26,9 +26,9 @@ test("Der Laeufer betreibt alle Selbsttest-Autopiloten und meldet jeden einzeln"
   const gemeldet = [];
   const ergebnisse = await laufeAlle({ melde: (id, e) => { gemeldet.push({ id, ...e }); return true; }, mitNetz: false });
 
-  assert.equal(ergebnisse.length, 60, "60 Autopiloten laufen ohne Netz im Control-Server (seit 2026-08-26 Trainings-Reife Nr. 65, seit 2026-08-30 die fünf Deckungs-Wächter Nr. 66-70, seit 2026-09-03 der Modell-Evolutions-Takt Nr. 72)");
-  assert.equal(gemeldet.length, 61, "60 Laeufe + der Taktgeber, der sich selbst bezeugt");
-  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 61, "keine Kennung doppelt");
+  assert.equal(ergebnisse.length, 67, "67 Autopiloten laufen ohne Netz im Control-Server (seit 2026-08-26 Trainings-Reife Nr. 65, seit 2026-08-30 die fünf Deckungs-Wächter Nr. 66-70, seit 2026-09-03 der Modell-Evolutions-Takt Nr. 72)");
+  assert.equal(gemeldet.length, 68, "67 Laeufe + der Taktgeber, der sich selbst bezeugt");
+  assert.equal(new Set(gemeldet.map((g) => g.id)).size, 68, "keine Kennung doppelt");
   assert.ok(gemeldet.some((g) => g.id === "autopilot-laeufer"), "der Taktgeber bezeugt sich selbst");
 
   // Jede Meldung muss ein Ergebnis tragen, keinen Pauschaltext.
@@ -64,7 +64,7 @@ test("Ein abstuerzendes Modul reisst den Lauf nicht mit", async () => {
     dateienLader: () => { throw new Error("Dateisystem weg"); },
     mitNetz: false
   });
-  assert.equal(ergebnisse.length, 60, "alle anderen laufen trotzdem");
+  assert.equal(ergebnisse.length, 67, "alle anderen laufen trotzdem");
   assert.equal(gemeldet.get("smart-router").status, "ok");
 });
 
@@ -76,7 +76,7 @@ test("Mit Netz kommt der E2E-Waechter dazu — und meldet ehrlich, wenn er nicht
     melde: (id, e) => { gemeldet.set(id, e); return true; },
     mitNetz: true
   });
-  assert.equal(ergebnisse.length, 63, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe (plus Nr. 65, die fuenf Deckungs-Waechter Nr. 66-70 und Nr. 72 ohne Netz)");
+  assert.equal(ergebnisse.length, 70, "E2E-Waechter, Voice-Region und Sync-Waechter sind die drei zusaetzlichen Netz-Laeufe (plus Nr. 65, die fuenf Deckungs-Waechter Nr. 66-70 und Nr. 72 ohne Netz)");
   const sw = gemeldet.get("sync-waechter");
   assert.ok(sw, "der Sync-Waechter muss melden");
   assert.equal(sw.status, "fehler", "ohne Geheimnis ist er rot, nie gruen");

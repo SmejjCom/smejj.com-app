@@ -640,7 +640,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     // Entscheidungskarte landet in der Tagesmappe — gebaut wird nichts.
     ["trainings-reife", () => laufTrainingsReife()],
     // Nr. 66-70: die Abdeckungs-Lücken — Zustellprotokoll, DSGVO-Fristen, AI-Act, Abos, Flags.
-    ...baueDeckungsLaeufe(),
+    ...baueDeckungsLaeufe({ mitNetz }),
     // Nr. 44-60: dieselbe Dateiliste, derselbe Netz-Schalter — die Läufe
     // selbst wohnen in schutzUndWachstumLaeufe.js (800-Zeilen-Regel).
     ...baueSchutzUndWachstumLaeufe({ dateien, mitNetz }),

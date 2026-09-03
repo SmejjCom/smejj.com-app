@@ -28,6 +28,8 @@ COPY --chown=node:node gatekeeper ./gatekeeper
 COPY --chown=node:node worker-templates ./worker-templates
 COPY --chown=node:node public ./public
 COPY --chown=node:node docs ./docs
+# Audit 03.09.: Nr. 75/79 messen die Kernsuite und das Sicherheits-Pack im Takt.
+COPY --chown=node:node evals ./evals
 # Die fuenf Wurzeldokumente des RAG-Korpus (ROOT_KNOWLEDGE_FILES in
 # control-server/src/rag/knowledgeCorpus.js) plus Memory_Bank.md.
 # MASTER_PROMPT.md fehlte hier bis 2026-08-22 — ausgerechnet das Dokument mit

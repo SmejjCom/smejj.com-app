@@ -11,7 +11,7 @@
 set -u
 
 BAUZWEIG="/private/tmp/claude-501/bau-zweig"
-WORTLAUT="Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Audit A bis Z, Wahl 'Runde 1 bauen (Empfehlung)': Nr. 73 Tuerwaechter registriert, Heiler-Liste +5, Registry-Texte ehrlich, Erste Hilfe ohne Doppel-Rot; Stempel per Betreiber-Doppelklick"
+WORTLAUT="Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Audit A bis Z, Wahl Runde 1: Nr. 73 Tuerwaechter registriert, Heiler-Liste +5, Registry-Texte ehrlich, Erste Hilfe ohne Doppel-Rot; Wahl Runde 2: Nr. 74-80 (Einwilligung, Tiefe Spur, Bau, Projektwissen, Sprachseiten, Red-Team, Agenten) angeschlossen; Stempel per Betreiber-Doppelklick"
 
 if [ ! -d "$BAUZWEIG/.git" ] && [ ! -f "$BAUZWEIG/.git" ]; then
   echo "ABBRUCH: Arbeitskopie des Bauzweigs fehlt unter $BAUZWEIG"
@@ -26,7 +26,7 @@ if [ "$ZWEIG" != "feature/auth-redesign-github-magiclink" ]; then
 fi
 
 echo "1/4 Tests fuer Nr. 72 ..."
-node --test tests/modell-evolution.test.mjs tests/trainings-reife.test.mjs tests/wachstum-autopiloten.test.mjs || { echo "ABBRUCH: Tests rot — nicht gestempelt"; exit 4; }
+node --test tests/modell-evolution.test.mjs tests/trainings-reife.test.mjs tests/wachstum-autopiloten.test.mjs tests/runde2-waechter.test.mjs tests/selbstheilung.test.mjs || { echo "ABBRUCH: Tests rot — nicht gestempelt"; exit 4; }
 
 echo "2/4 Stempel Admin-Lock ..."
 node scripts/check-admin-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Stempel fehlgeschlagen"; exit 5; }

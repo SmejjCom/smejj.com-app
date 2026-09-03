@@ -124,3 +124,21 @@ im Läufer; „—" = niemand misst.
 - Tests: 82 grün (Selbstheilung, Türwächter, Ehrlichkeit, Deckung, Wachstum, Nr. 65/71/72, Registry, Autopiloten) + Läufer-Tests; check:guidelines und check:modul-syntax grün.
 - **Admin-Lock:** der Betreiber-Stempel vom 03.09. 11:27 UTC deckte nur Nr. 72; Runde 1 ändert zusätzlich opsAutopilotenListe.js → zweiter Doppelklick nötig (dasselbe .command, Skript-Fehler „docs/approvals" statt „docs/security" behoben).
 - **Nicht in dieser Runde:** Melder-Token (Zeabur-Portal, Betreiber), Startseite < 300 KB (Arbeitszweig), Nr. 74–82.
+
+## 8. Nachtrag: Runde 2 umgesetzt (03.09., Bauzweig, Betreiber-Wahl „Runde 2: Nr. 74–82 bauen")
+
+Sieben neue Wächter (Nummern rückten um eins, weil Nr. 73 der Türwächter wurde):
+
+| Nr. | Wächter | misst | Bauart |
+|---|---|---|---|
+| 74 | Einwilligungs-Wache | API-Schalter, Consent-Schlüssel, IDRIVE_E2_TRAINING_*, Präfixe; mit Netz Ledger-LIST | ohne Netz, rot bei 503-Lage |
+| 75 | Tiefe-Spur-Messung | 14 Fälle der Kernsuite gegen die Brücke mit `model: glm-5-2`, Bewertung wie am Mac | täglich, Hintergrund, Ablage `autopiloten/tiefe-spur-messung`; Messlatte ≥ 95 %, 0 kritisch |
+| 76 | Bau-Wache | ZEABUR_GIT_COMMIT_SHA vs. jüngster Commit + Zeabur-Check-Run (GitHub-API, öffentlich) | je Takt, rot nach 30 min ohne Bau |
+| 77 | Projektwissen-Frische | `/health` der Brücke: enabled, chunkCount ≥ 100, exportedAt ≤ 7 Tage | je Takt |
+| 78 | Sprachseiten-Wache | 15 Locales: 200, Titel, lang, kein NOINDEX | täglich, Ablage `betrieb/sprachseiten` |
+| 79 | Red-Team-Probe | 5 Injektions-Fälle aus `evals/packs/sicherheit-abwehr.json` gegen die Schnellspur | täglich, Hintergrund, Ablage `autopiloten/red-team-probe` |
+| 80 | Agenten-Sonde | Maus-Engine + Fern-Browser: enabled/configured/`/health` | je Takt, „aus" ist grün mit Hinweis |
+
+Gemeinsamer Helfer `brueckenMesslauf.js` (5,5 s Abstand wegen 12/min, Hintergrund wegen 120-s-Lauflimit, Transportfehler = „nicht messbar"). Nr. 72 liest die Referenz jetzt zuerst aus Nr. 75, sonst aus Nr. 01 (dessen Herzschlag trägt seit heute die Note: `Exit 0 — Note 79,4 % (14 Faelle, 3 kritisch, live-default)`). `Dockerfile.smejj-control` kopiert jetzt `evals/` ins Abbild.
+
+**Bewusst nicht gebaut:** Modell-Canary/Rollback (braucht Router-Umbau in der Brücke, Security-Lock — eigene Runde mit Freigabe), Stripe-Webhook-Wache (es gibt kein Ereignis-Protokoll im Webhook; das anzulegen liegt unter dem Abo-Lock), Medien-Funktionsprobe (kostet je Bild Geld; braucht Budget-Schalter und Betreiber-Freigabe). Tests: `tests/runde2-waechter.test.mjs` (8 Tests), Zähl-Wächter 67/68/68/70, 131 Tests grün.

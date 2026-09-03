@@ -127,11 +127,18 @@ export function fuehreSelbsttestAus() {
   return { bestanden: fehler.length === 0, fehler, geprueft: 6 };
 }
 
+// Referenz zuerst aus der tiefen Spur (Nr. 75, GLM — die Kette, die Nachdenken
+// und Coding bekommen), sonst aus dem Mac-Messlauf der Schnellspur (Nr. 01).
+const REFERENZ_QUELLEN = Object.freeze([["tiefe-spur-messung", "Nr. 75"], ["qualitaetsmessung", "Nr. 01"]]);
 function referenzAusAmpel(uebersicht) {
   const liste = uebersicht?.autopiloten || [];
-  const eintrag = liste.find((a) => a.id === "qualitaetsmessung");
-  const meldung = eintrag?.letzterLauf?.meldung || "";
-  return { note: leseProzent(meldung), ampel: eintrag?.ampel || "unbekannt" };
+  for (const [id, name] of REFERENZ_QUELLEN) {
+    const eintrag = liste.find((a) => a.id === id);
+    const note = leseProzent(eintrag?.letzterLauf?.meldung || "");
+    if (Number.isFinite(note)) return { note, ampel: `${name}, ${eintrag?.ampel || "unbekannt"}` };
+  }
+  const nr01 = liste.find((a) => a.id === "qualitaetsmessung");
+  return { note: null, ampel: `Nr. 01: ${nr01?.ampel || "unbekannt"}` };
 }
 
 /**
@@ -208,7 +215,7 @@ export async function laufModellEvolution({
     ablageStatus = "Protokoll NICHT abgelegt (Ablage gestört)";
   }
 
-  const referenzText = Number.isFinite(referenz.note) ? `Referenz ${referenz.note} % (Nr. 01, ${referenz.ampel})` : `Referenz nicht messbar (Nr. 01: ${referenz.ampel})`;
+  const referenzText = Number.isFinite(referenz.note) ? `Referenz ${referenz.note} % (${referenz.ampel})` : `Referenz nicht messbar (${referenz.ampel})`;
   const schwaechText = schwaechste
     ? `schwächste Fähigkeit ${schwaechste.art} Note ${schwaechste.note}/100 (n=${schwaechste.gemessen}, 7 Tage)`
     : `keine Fähigkeit mit ≥ ${MINDEST_MESSUNGEN} Messungen in 7 Tagen`;

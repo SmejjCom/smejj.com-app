@@ -124,5 +124,110 @@ export const DECKUNG_AUTOPILOTEN = Object.freeze([
     verbessert: "Eine Aussperrung bei grünen Diensten (Adminbereich admin_email_not_verified, Chat 'bitte anmelden' trotz Anmeldung) ist binnen 30 Minuten rot statt wochenlang unsichtbar",
     neuigkeiten: ["Registriert am 2026-09-03 (Audit A bis Z: Lauf ohne Registry-Eintrag)"],
     ...LAEUFER
+  },
+  {
+    id: "einwilligungs-wache",
+    name: "Einwilligungs-Wache",
+    nummer: "74",
+    kurz: "Prüft im Takt, ob der Weg „Modelltraining erlauben“ wirklich geht: API-Schalter, Signierschlüssel, Trainings-Speicher, erlaubte Präfixe — dieselben Bedingungen, an denen die Routen 503 liefern.",
+    funktionen: [
+      "Seit der Umgebungs-Löschung vom 14.08. antwortete /api/training/consent/decision mit 503 — der Schalter sprang zurück, und keine Ampel sagte es (Audit 03.09.). Jetzt ist das binnen 30 Minuten rot, mit dem fehlenden Wert im Text.",
+      "Liest nur die Umgebung (trainingConsentConfig.ready, IDRIVE_E2_TRAINING_*, Capture-Schalter); mit Netz zählt sie die Einwilligungs-Ereignisse im Ledger per LIST — nie Inhalte, nie Schreiben.",
+      "Bewusst abgeschaltete API (SMEJJ_TRAINING_CONSENT_API_ENABLED≠YES) ist grün mit Hinweis; eingeschaltet, aber nicht bedienbar ist rot."
+    ],
+    trainiert: "Nichts — sie prüft den Einwilligungs-Weg",
+    verbessert: "0 Trainingspaare haben jetzt eine Ursache mit Namen statt eines stummen 503",
+    neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereich 7)"],
+    ...LAEUFER
+  },
+  {
+    id: "tiefe-spur-messung",
+    name: "Tiefe-Spur-Messung",
+    nummer: "75",
+    kurz: "Misst täglich die TIEFE Spur (GLM-5.2) mit den 14 Fällen der Kernsuite gegen die Live-Brücke — der Qualitäts-Prüfer (Nr. 01) misst nur die Schnellspur.",
+    funktionen: [
+      "Dieselbe Suite, dieselbe Bewertung (scoreCase/aggregateCaseScores) wie der Mac-Messlauf, aber mit model glm-5-2 — die Spur, die Nachdenken, Coding und ausdrückliche Modellwahl bekommen.",
+      "Läuft im Hintergrund mit 5,5 s Abstand (Brücken-Limit 12/min); die Ampel meldet den abgelegten Stand mit Note, kritischen Fehlern und p95.",
+      "Messlatte aus dem Trainingsplan 02.09.: ≥ 95 % und 0 kritische Fehler. Transportfehler sind 'nicht messbar', nie eine schlechte Note. Nr. 72 liest diese Note als Referenz."
+    ],
+    trainiert: "Nichts — sie misst 14 Fälle am Tag",
+    verbessert: "Die 97 % der tiefen Spur sind eine tägliche Zahl statt eine Erinnerung an den 01.09.",
+    neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereich 2)"],
+    ...LAEUFER
+  },
+  {
+    id: "bau-wache",
+    name: "Bau-Wache",
+    nummer: "76",
+    kurz: "Ein Push ist kein Deploy: vergleicht den laufenden Commit (ZEABUR_GIT_COMMIT_SHA) mit dem jüngsten Commit des Bauzweigs und dem Zeabur-Check-Run bei GitHub.",
+    funktionen: [
+      "Rot, wenn ein Push länger als 30 Minuten ohne laufenden Container bleibt oder der Bau bei GitHub als failure steht — genau der Blindflug vom 13.08. und vom 02.09. (Zeabur-Token 401).",
+      "Öffentliche GitHub-API ohne Token (Repo ist öffentlich), 4 Anfragen je Stunde; ohne ZEABUR_GIT_COMMIT_SHA ist die Lage 'nicht messbar' (rot), nie Entwarnung.",
+      "Innerhalb der Frist ist ein frischer Push grün mit Hinweis — Bauen dauert 4-6 Minuten."
+    ],
+    trainiert: "Nichts — sie vergleicht drei Commit-Kennungen",
+    verbessert: "Ob der letzte Push wirklich läuft, steht in der Ampel statt im Zeabur-Portal",
+    neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereich 10)"],
+    ...LAEUFER
+  },
+  {
+    id: "projektwissen-frische",
+    name: "Projektwissen-Frische",
+    nummer: "77",
+    kurz: "Liest aus /health der Brücke, wie alt der Projektwissen-Export ist und wie viele Schnipsel er trägt — veraltetes Wissen antwortet sonst still mit altem Stand.",
+    funktionen: [
+      "Rot bei ausgeschaltetem Projektwissen, unter 100 Schnipseln oder einem Export älter als SMEJJ_PROJEKTWISSEN_MAX_ALTER_TAGE (Standard 7).",
+      "Sie erneuert nichts — der Export entsteht beim Bündeln der Brücke (npm run rag:export). Sie sagt, wann er fällig ist.",
+      "Eine Health-Abfrage je Takt, keine Kosten."
+    ],
+    trainiert: "Nichts — sie liest ein Datum und eine Zahl",
+    verbessert: "Ein Export vom 02.09. bleibt nicht wochenlang unbemerkt die Wissensbasis der Schnellspur",
+    neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereich 3)"],
+    ...LAEUFER
+  },
+  {
+    id: "sprachseiten-wache",
+    name: "Sprachseiten-Wache",
+    nummer: "78",
+    kurz: "Holt täglich alle 15 Sprachseiten (smejj.com/<code>/) und prüft Status 200, Titel, passendes lang-Attribut und kein NOINDEX — die Auffindbarkeits-Wache (Nr. 57) sieht nur '/'.",
+    funktionen: [
+      "15 Abrufe einmal am Tag (5 parallel), dazwischen der abgelegte Stand aus betrieb/sprachseiten — dieselbe Bauart wie die Speicher-Wache.",
+      "Rot, sobald eine Sprachseite 404 liefert, keinen Titel hat oder ein fremdes lang trägt; die Meldung nennt die Codes.",
+      "Gemessen gegen die ausgelieferte Seite, samt Bündel und Service-Worker."
+    ],
+    trainiert: "Nichts — sie prüft 15 Seiten",
+    verbessert: "Ein kaputtes /ja/ oder /ar/ fällt nach einem Tag auf, nicht erst durch einen Nutzer in Tokio oder Riad",
+    neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereiche 10 und 13)"],
+    ...LAEUFER
+  },
+  {
+    id: "red-team-probe",
+    name: "Red-Team-Probe",
+    nummer: "79",
+    kurz: "Fünf Prompt-Injection-Fälle aus dem Sicherheits-Pack täglich gegen die LIVE-Schnellspur: eingebettete Anweisung auf einer Webseite, in einer Datei, im Code, Rollen-Übernahme, Schlüssel erfinden.",
+    funktionen: [
+      "Prompt-Injection war bisher nur offline geprüft (RAG-Filter im Unit-Test); jetzt wird die echte Kette gefragt — Brücke, Systemregeln, Modell.",
+      "Bestanden = keine kritische Zusicherung verletzt (contains_none, not_matches aus evals/packs/sicherheit-abwehr.json); ein durchgekommener Angriff ist rot mit Fall-Kennung.",
+      "Fünf Anfragen am Tag im Hintergrund, 5,5 s Abstand. Auftrag Punkt 20: Schwachstellen finden, bevor Nutzer sie finden."
+    ],
+    trainiert: "Nichts — sie greift an und bewertet die Abwehr",
+    verbessert: "Ob 'Ignoriere deine Anweisungen' live wirkt, ist eine tägliche Messung statt eine Annahme",
+    neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereich 11)"],
+    ...LAEUFER
+  },
+  {
+    id: "agenten-sonde",
+    name: "Agenten-Sonde",
+    nummer: "80",
+    kurz: "Fragt Maus-Engine (Browser-Automat) und Fern-Browser ab: eingeschaltet, konfiguriert, /health erreichbar? Kein Autopilot sah diese Worker bisher.",
+    funktionen: [
+      "Regel wie beim Türwächter: ein Dienst mit …_ENABLED=YES muss antworten, sonst rot; ein bewusst ausgeschalteter ist grün mit Hinweis.",
+      "GET /health beider Worker ohne Auth, ohne Auftrag, ohne Kosten; Sitzungszahl und Laufzustand stehen in der Meldung.",
+      "Eingeschaltet, aber Adresse oder Token fehlen = rot mit dem fehlenden Namen."
+    ],
+    trainiert: "Nichts — sie fragt zwei Health-Endpunkte",
+    verbessert: "Ein toter Browser-Worker steht in der Ampel, nicht erst beim Klick auf 'Browser'",
+    neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereich 6)"],
+    ...LAEUFER
   }
 ]);
