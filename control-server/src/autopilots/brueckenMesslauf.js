@@ -29,7 +29,7 @@ export const MESS_ABSTAND_MS = 22 * 60 * 60 * 1000;
 export const NACHMESS_ABSTAND_MS = 2 * 60 * 60 * 1000;
 export const ABLAGE_ID = "letzter-lauf";
 /** Bauart-Stand der Ablage: aeltere Datensaetze (ohne version) werden sofort neu gemessen. */
-export const ABLAGE_VERSION = 3;
+export const ABLAGE_VERSION = 4;
 /** Zeitlimit je Anfrage: die tiefe Spur denkt nach, 60 s reichten live nicht (03.09.). */
 export const ANFRAGE_TIMEOUT_MS = 120_000;
 
@@ -92,7 +92,11 @@ async function messe({ faelle, modelId, env, fetchImpl, sleep }) {
     scores.push(scoreCase(fall, ergebnis));
     await sleep(ABSTAND_MS);
   }
-  return { summary: aggregateCaseScores(scores), gruende: fehlerGruende(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed, fehler: s.error || null })) };
+  // Wenige Transportfehler (hoechstens 1 je 10 Faelle) kippen nicht den ganzen
+  // Tageswert: gemessen wird ueber die beantworteten Faelle, die fehlenden werden
+  // in der Meldung gezaehlt und benannt (03.09.: 13 von 14 gemessen = 'nicht messbar').
+  const gemessen = scores.filter((s) => s.status !== "error");
+  return { summary: aggregateCaseScores(scores), summaryGemessen: gemessen.length ? aggregateCaseScores(gemessen) : null, gruende: fehlerGruende(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed, fehler: s.error || null })) };
 }
 
 /**
@@ -119,9 +123,13 @@ export async function messlaufImTakt({
   const arbeit = warteschlange.then(async () => {
     try {
       const faelle = await faelleLader();
-      const { summary, faelle: einzeln, gruende } = await messe({ faelle, modelId, env, fetchImpl, sleep });
-      const urteil = beurteileMessung(summary, { mindestNote });
-      const grund = summary.errors > 0 && gruende ? `${urteil.grund} — ${gruende}` : urteil.grund;
+      const { summary, summaryGemessen, faelle: einzeln, gruende } = await messe({ faelle, modelId, env, fetchImpl, sleep });
+      const toleranz = Math.max(1, Math.floor((summary.cases || 0) / 10));
+      const basis = summary.errors > 0 && summary.errors <= toleranz && summaryGemessen ? summaryGemessen : summary;
+      const urteil = beurteileMessung(basis, { mindestNote });
+      const grund = summary.errors > 0 && gruende
+        ? (basis === summary ? `${urteil.grund} — ${gruende}` : `${urteil.grund} — ${summary.errors} von ${summary.cases} Fällen nicht messbar (${gruende})`)
+        : urteil.grund;
       await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: urteil.ok, grund, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
     } catch (f) {
       try { await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: false, grund: `nicht messbar: ${String(f?.message || f).slice(0, 80)}`, modelId: modelId || "live-default" }, { timeoutMs: 5000 }); } catch { /* still */ }
