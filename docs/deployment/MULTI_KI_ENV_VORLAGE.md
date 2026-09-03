@@ -72,6 +72,7 @@ Eigener Schluessel, bewusst getrennt vom Modell-Router (kein Einfluss auf die Ch
 Ohne Schluessel antwortet der Relay 503 und die Welle laeuft wie bisher (Ohr -> Whisper -> Stimme).
 ```
 SMEJJ_VOICE_LIVE_API_KEY=<KEY>            # Google AI Studio, Gratis-Kontingent; Rueckfall: SMEJJ_LLM_GEMINI_API_KEY
+SMEJJ_VOICE_LIVE_API_KEYS=<KEY2>,<KEY3>       # Pool: weitere Gratis-Schluessel (andere Google-Projekte), Wechsel bei Kontingent
 SMEJJ_VOICE_LIVE_ENABLED=true             # "false" schaltet den Relay ab (fail-closed)
 SMEJJ_VOICE_LIVE_MODEL=gemini-3.1-flash-live-preview
 SMEJJ_VOICE_LIVE_VOICE=Kore               # prebuiltVoiceConfig.voiceName
