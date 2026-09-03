@@ -25,7 +25,7 @@ set -euo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="$HOME/smejj-app-frontend"
 BAUZWEIG="feature/auth-redesign-github-magiclink"
-FREIGABE="Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Vollbild am Handy — Glas-Gefaelle bis in die Safe-Area (mobil-composer.css), alle acht Werkzeug-Chips in einer wischbaren Zeile (start-glass.css, mobil-composer.css), Buendel-Marke mobil100-20260903 in index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'unsere App soll Vollbildschirm sein' und 'wenn alle funktionieren, sollen wir alle haben'."
+FREIGABE="Betreiber Wof Kadavanich, 2026-09-03 (Doppelklick): Vollbild am Handy — Glas-Gefaelle bis in die Safe-Area (mobil-composer.css), alle acht Werkzeug-Chips in einer wischbaren Zeile (start-glass.css, mobil-composer.css), Chat-Verlauf am Handy 52 px unter der Icon-Zeile, Buendel-Marke mobil100-20260903 in index.html, Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'unsere App soll Vollbildschirm sein' und 'wenn alle funktionieren, sollen wir alle haben'."
 
 cd "$REPO"
 echo "== 0. Ausgangslage"
