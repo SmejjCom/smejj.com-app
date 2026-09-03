@@ -8,7 +8,11 @@ import { isSafePattern } from "./evalSuite.js";
 /** Bewertet eine einzelne Erwartung. Liefert nie eine Ausnahme. */
 export function evaluateAssertion(assertion, { text = "", latencyMs = null } = {}) {
   const type = assertion?.type;
-  const haystack = String(text || "");
+  // Unicode-Leerzeichen (U+00A0, U+202F, U+2007, U+2009 …) werden zu gewoehnlichen:
+  // Groq gpt-oss schrieb am 03.09. "IDrive\u202Fe2", und "idrive e2" war unauffindbar —
+  // eine richtige Antwort zaehlte als kritischer Verstoss. Die Erwartung bleibt scharf,
+  // nur die Schreibweise des Leerzeichens entscheidet nichts mehr.
+  const haystack = String(text || "").replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, " ");
   const lower = haystack.toLowerCase();
 
   switch (type) {
