@@ -1,9 +1,13 @@
 // smejj.com — Adminbereich Stufe 7: Geld (Module E und F).
 //
-// Rein lesend. Abrechnung wird bei Stripe geaendert, nicht hier: eine zweite
+// Rein lesend — mit EINER Ausnahme seit 2026-09-03: unter /api das Ausstellen
+// und Widerrufen von Admin-Schluesseln (smejj-adm-…, publicApiAdminKeys.js).
+// Abrechnung wird weiter bei Stripe geaendert, nicht hier: eine zweite
 // Stelle, an der man ein Abo umstellen kann, waere eine zweite Wahrheit ueber
 // Geld — und die faellt frueher oder later auseinander.
-import { privateJson } from "../http/respond.js";
+import { privateJson, readJson } from "../http/respond.js";
+import { appendAuditEntry } from "../admin/auditLog.js";
+import { listeAusgestellt, stelleAus, widerrufeAusgestellt } from "../publicapi/publicApiAdminKeys.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { GRANT, can } from "../admin/adminRoles.js";
 import { resolveAdminActor } from "../admin/adminAuth.js";
@@ -22,7 +26,8 @@ const gate = createRateLimiter({ capacity: 40, refillPerSec: 0.6, maxKeys: 5_000
 export async function handleAdminGeldRoute(req, url, res, { env = process.env } = {}) {
   if (url.pathname !== PREFIX && !url.pathname.startsWith(`${PREFIX}/`)) return false;
 
-  if (req.method !== "GET" && req.method !== "HEAD") {
+  const schreibend = req.method === "POST" && (url.pathname === `${PREFIX}/api/ausstellen` || url.pathname === `${PREFIX}/api/widerrufen`);
+  if (req.method !== "GET" && req.method !== "HEAD" && !schreibend) {
     privateJson(res, 405, {
       ok: false,
       error: "admin_method_not_allowed",
@@ -55,10 +60,89 @@ export async function handleAdminGeldRoute(req, url, res, { env = process.env } 
     if (bereich === "kosten") return privateJson(res, 200, await kostenUebersicht({ env })), true;
     // Modul G: die oeffentliche API aus Betreibersicht (Konten, Schluessel, Umsatz).
     if (bereich === "api") return privateJson(res, 200, await apiUebersicht({ env })), true;
+    // Vom Admin ausgestellte Schluessel (Beschluss 2026-09-03).
+    if (bereich === "api/ausgestellt") return await ausgestellt(res, actor, env), true;
+    if (bereich === "api/ausstellen") return await ausstellen(req, res, actor, env), true;
+    if (bereich === "api/widerrufen") return await widerrufen(req, res, actor, env), true;
     privateJson(res, 404, { ok: false, error: "admin_route_not_found" });
     return true;
   } catch (error) {
-    privateJson(res, 503, { ok: false, error: String(error?.message || "admin_unavailable").slice(0, 160) });
+    const status = [400, 404, 409].includes(Number(error?.status)) ? Number(error.status) : 503;
+    privateJson(res, status, { ok: false, error: String(error?.message || "admin_unavailable").slice(0, 160) });
     return true;
   }
+}
+
+async function ausgestellt(res, actor, env) {
+  if (can(actor.role, "apikeys.read") !== GRANT.allow) {
+    return privateJson(res, 403, { ok: false, error: "admin_permission_denied", recht: "apikeys.read" });
+  }
+  return privateJson(res, 200, await listeAusgestellt(env));
+}
+
+async function ausstellen(req, res, actor, env) {
+  if (can(actor.role, "apikeys.issue") !== GRANT.allow) {
+    return privateJson(res, 403, { ok: false, error: "admin_permission_denied", recht: "apikeys.issue" });
+  }
+  const body = await readJson(req).catch(() => ({}));
+  const ergebnis = await stelleAus({
+    actor,
+    ausgestelltFuer: body?.ausgestelltFuer,
+    laufzeit: body?.laufzeit,
+    notiz: body?.notiz
+  }, env);
+  const s = ergebnis.schluessel;
+  await appendAuditEntry({
+    actor,
+    action: "apikey.issue",
+    target: `adm:${s.id}`,
+    before: null,
+    after: { ausgestelltFuer: s.ausgestelltFuer, laufzeit: String(body?.laufzeit || ""), laeuftAbAm: s.laeuftAbAm || "unbefristet", keyHint: s.keyHint },
+    reason: `Ausgestellt fuer ${s.ausgestelltFuer}${s.notiz ? ` — ${s.notiz}` : ""}`,
+    ip: clientIp(req)
+  }, { env });
+  // Der Klartext geht GENAU HIER einmal heraus — wie bei /api/developer/keys.
+  return privateJson(res, 201, {
+    ok: true,
+    hinweis: "Dieser Schluessel wird nur jetzt angezeigt. Danach ist er nicht mehr abrufbar.",
+    apiKey: ergebnis.klartext,
+    basisUrl: basisUrlAus(req, env),
+    modell: "smejj-1.0",
+    schluessel: s
+  });
+}
+
+async function widerrufen(req, res, actor, env) {
+  if (can(actor.role, "apikeys.revoke") !== GRANT.allow) {
+    return privateJson(res, 403, { ok: false, error: "admin_permission_denied", recht: "apikeys.revoke" });
+  }
+  const body = await readJson(req).catch(() => ({}));
+  const id = String(body?.id || "").trim();
+  const grund = String(body?.reason || "").trim();
+  if (!/^adm_[a-f0-9]{12}$/.test(id)) return privateJson(res, 400, { ok: false, error: "schluessel_ziel_fehlt" });
+  if (grund.length < 10) {
+    return privateJson(res, 400, { ok: false, error: "admin_reason_required", hinweis: "Mindestens 10 Zeichen." });
+  }
+  const s = await widerrufeAusgestellt(id, actor, env);
+  await appendAuditEntry({
+    actor,
+    action: "apikey.revoke",
+    target: `adm:${id}`,
+    before: { aktiv: true, ausgestelltFuer: s.ausgestelltFuer },
+    after: { aktiv: false, widerrufenAm: s.widerrufenAm },
+    reason: grund,
+    ip: clientIp(req)
+  }, { env });
+  return privateJson(res, 200, { ok: true, schluessel: s, hinweis: "Der Schluessel ist unbrauchbar. Programme damit bekommen ab jetzt 401." });
+}
+
+function basisUrlAus(req, env) {
+  const gesetzt = String(env.SMEJJ_PUBLIC_API_BASE_URL || "").trim().replace(/\/$/, "");
+  if (gesetzt) return gesetzt;
+  return "https://api.smejj.com/v1";
+}
+
+function clientIp(req) {
+  const forwarded = String(req?.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || String(req?.socket?.remoteAddress || "");
 }

@@ -26,6 +26,10 @@ import {
 } from "../providers/providerCredentialVault.js";
 
 export const SCHLUESSEL_PRAEFIX = "smejj-live-";
+// Vom Admin ausgestellte Schluessel (publicApiAdminKeys.js) tragen ein eigenes
+// Praefix: jeder Log, jeder Waechter und der Secret-Scanner erkennen die Art
+// am Anfang, ohne nachzuschlagen.
+export const ADMIN_PRAEFIX = "smejj-adm-";
 const INDEX_PROVIDER = "smejj-api-index";
 const LOOKUP_PROVIDER = "smejj-api-lookup";
 const MAX_SCHLUESSEL_JE_KONTO = 20;
@@ -54,7 +58,7 @@ const TAG_MS = 86_400_000;
 // ohne Pepper: es gibt nichts zu raten. Deshalb reicht hier SHA-256 statt
 // eines langsamen Passwort-Hashes (Argon2 & Co. schuetzen kurze Geheimnisse).
 const ZUFALL_BYTES = 24;
-const SCHLUESSEL_MUSTER = /^smejj-live-[A-Za-z0-9_-]{32}$/;
+const SCHLUESSEL_MUSTER = /^smejj-(live|adm)-[A-Za-z0-9_-]{32}$/;
 
 // Jede Anfrage an /v1 muesste sonst zwei S3-Lesevorgaenge kosten. Der Cache
 // haelt gepruefte Abdruecke kurz. Preis dafuer: ein Widerruf greift auf einer
@@ -73,9 +77,9 @@ const nutzungPuffer = new Map(); // keyId -> { anfragen, token }
 const nutzungSchreibMarken = new Map(); // keyId -> epoch ms
 
 /** Erzeugt einen neuen Klartext-Schluessel samt Abdruck. Kein Speichern. */
-export function baueSchluessel(zufall = crypto.randomBytes) {
+export function baueSchluessel(zufall = crypto.randomBytes, praefix = SCHLUESSEL_PRAEFIX) {
   const rohdaten = zufall(ZUFALL_BYTES);
-  const klartext = `${SCHLUESSEL_PRAEFIX}${rohdaten.toString("base64url")}`;
+  const klartext = `${praefix}${rohdaten.toString("base64url")}`;
   return { klartext, abdruck: abdruckVon(klartext), letzte4: klartext.slice(-4) };
 }
 
@@ -279,6 +283,13 @@ export async function setzeSchluesselAktiv(kontoId, keyId, aktiv, env = process.
 export async function merkeBenutzung(kontoId, keyId, { promptTokens = 0, completionTokens = 0 } = {}, env = process.env, jetzt = () => new Date()) {
   const id = String(keyId || "").slice(0, 40);
   if (!id) return;
+  // Admin-ausgestellte Schluessel (adm_…) liegen nicht im Konto-Index, sondern
+  // im Admin-Index — dort wird ihre Nutzung gebucht. Spaet geladen, damit die
+  // beiden Module sich nicht gegenseitig importieren.
+  if (id.startsWith("adm_")) {
+    const { merkeAdminBenutzung } = await import("./publicApiAdminKeys.js");
+    return merkeAdminBenutzung(id, { promptTokens, completionTokens }, env, jetzt);
+  }
   const token = Math.max(0, Math.floor(Number(promptTokens) || 0)) + Math.max(0, Math.floor(Number(completionTokens) || 0));
   const puffer = nutzungPuffer.get(id) || { anfragen: 0, token: 0 };
   puffer.anfragen += 1;

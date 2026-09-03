@@ -24,6 +24,15 @@ test("Audit-Log ist fuer jede Rolle unveraenderlich — auch fuer den Owner", ()
   }
 });
 
+test("apikeys.issue: nur Owner und Admin stellen Schluessel aus (Beschluss 2026-09-03)", () => {
+  assert.equal(can("owner", "apikeys.issue"), GRANT.allow);
+  assert.equal(can("admin", "apikeys.issue"), GRANT.allow);
+  for (const rolle of ["support", "finance", "auditor", "readonly", "user"]) {
+    assert.equal(can(rolle, "apikeys.issue"), GRANT.deny, rolle);
+  }
+  assert.ok(PERMISSIONS.includes("apikeys.issue"));
+});
+
 test("Matrix aus Modul C: Trennung von Support und Finance", () => {
   // Support hilft, sieht aber keine Abrechnung und loescht nichts.
   assert.equal(can("support", "users.read"), GRANT.allow);

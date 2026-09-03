@@ -243,6 +243,47 @@
         + '<div class="ns">Guthaben fast leer oder Testzahlung — steht in der Spalte „Hinweis“.</div></div></div>'
       : '<div class="note glass"><div class="nx">◆</div><div><div class="nt">Keine Hinweise</div><div class="ns">' + e(d.hinweis || "") + "</div></div></div>";
 
+    // ---- Ausgestellte Schluessel (Admin, smejj-adm-…) — Beschluss 2026-09-03 ----
+    const adm = d.ausgestellt || {};
+    const LAUFZEITEN = [["30t", "30 Tage"], ["90t", "90 Tage"], ["1j", "1 Jahr"], ["2j", "2 Jahre"], ["5j", "5 Jahre"],
+      ["10j", "10 Jahre"], ["20j", "20 Jahre"], ["30j", "30 Jahre"], ["unbefristet", "Unbefristet"]];
+    const optionen = LAUFZEITEN.map(function (p) {
+      return '<option value="' + p[0] + '"' + (p[0] === "1j" ? " selected" : "") + ">" + e(p[1]) + "</option>";
+    }).join("");
+    const admFormular = '<div class="bar">'
+      + '<input class="suche-feld" id="admFuer" type="text" placeholder="Ausgestellt für — Name oder E-Mail">'
+      + '<select id="admLaufzeit" aria-label="Laufzeit">' + optionen + "</select>"
+      + '<input class="suche-feld" id="admNotiz" type="text" placeholder="Notiz (optional)">'
+      + '<span class="act" id="admAusstellen">Schlüssel ausstellen</span>'
+      + "</div>";
+    const admFrisch = d.frisch && d.frisch.apiKey
+      ? '<div class="note glass"><div class="nx">🔑</div><div>'
+        + '<div class="nt">Neuer Schlüssel für ' + e((d.frisch.schluessel || {}).ausgestelltFuer || "") + " — wird nur jetzt angezeigt</div>"
+        + '<div class="ns mono">' + e(d.frisch.apiKey) + "</div>"
+        + '<div class="ns">Basis-URL ' + e(d.frisch.basisUrl || "https://api.smejj.com/v1") + " · Modell " + e(d.frisch.modell || "smejj-1.0")
+        + " · läuft ab " + ((d.frisch.schluessel || {}).laeuftAbAm ? e(A.datum(d.frisch.schluessel.laeuftAbAm)) : "nie (unbefristet)") + "</div>"
+        + "</div></div>"
+      : "";
+    const admZeilen = (adm.schluessel || []).map(function (s) {
+      const n = s.nutzung || {};
+      return "<tr><td><b>" + e(s.ausgestelltFuer) + "</b>" + (s.notiz ? '<br><span class="s">' + e(s.notiz) + "</span>" : "") + "</td>"
+        + '<td><span class="mono">' + e(s.keyHint) + "</span></td>"
+        + "<td>" + pille(s.zustand === "aktiv" ? "aktiv" : s.zustand === "abgelaufen" ? "abgelaufen" : "widerrufen",
+          s.zustand === "aktiv" ? "ok" : s.zustand === "abgelaufen" ? "warn" : "bad") + "</td>"
+        + "<td>" + (s.laeuftAbAm ? e(A.datum(s.laeuftAbAm)) : '<span class="s">unbefristet</span>') + "</td>"
+        + "<td>" + zahl(n.anfragen) + " / " + zahl(n.token) + "</td>"
+        + "<td>" + (s.zuletztBenutztAm ? e(A.datum(s.zuletztBenutztAm)) : "—") + "</td>"
+        + "<td>" + e(s.ausgestelltVon || "—") + '<br><span class="s">' + e(A.datum(s.erstelltAm)) + "</span></td>"
+        + "<td>" + (s.zustand === "widerrufen" ? "—" : '<span class="act dg" data-admWiderruf="' + e(s.id) + '">Widerrufen</span>') + "</td></tr>";
+    });
+    const admFehler = adm.ok === false
+      ? '<div class="note glass fehler"><div class="nx">▲</div><div><div class="nt">Ausgestellte Schlüssel nicht lesbar</div><div class="ns">' + e(adm.error || "") + "</div></div></div>"
+      : "";
+    const admPanel = V.panelBlock("Ausgestellte Schlüssel", "vom Betreiber vergeben · smejj-adm-… · Verbrauch auf dein Konto",
+      admFehler + admFrisch + admFormular
+      + V.tabelleBlock(["Für", "Kennzeichen", "Zustand", "Läuft ab", "Anfragen / Token", "Zuletzt", "Ausgestellt von", ""], admZeilen)
+      + '<div class="s">' + e(adm.hinweis || "Der Wert eines Schlüssels wird nie angezeigt — er erscheint genau einmal beim Ausstellen.") + "</div>");
+
     return V.kopfBlock("G", "API", "API & Schlüssel",
       "Wer nutzt smejj als Modellanbieter — Konten, Schlüssel, Verbrauch, Umsatz.")
       + '<div class="kpis">'
@@ -252,8 +293,9 @@
       + V.kachelBlock("30 Tage", zahl((d.tage30 || {}).anfragen), "Anfragen · " + usd((d.tage30 || {}).umsatzUsd))
       + V.kachelBlock("Eingezahlt", usd(d.eingezahltUsd), (d.eingezahltTestUsd ? "+ " + usd(d.eingezahltTestUsd) + " Test" : "echte Zahlungen"))
       + V.kachelBlock("Guthaben offen", usd(d.guthabenGesamtUsd), "Summe aller Konten", "dim")
+      + V.kachelBlock("Ausgestellt", String(adm.aktiv || 0), (adm.unbefristet || 0) + " unbefristet · " + (adm.abgelaufen || 0) + " abgelaufen", (adm.unbefristet || 0) > 0 ? "warn" : "dim")
       + "</div>"
-      + '<div class="stack">' + alarmHinweis
+      + '<div class="stack">' + alarmHinweis + admPanel
       + V.panelBlock("Kunden", "größter Umsatz (30 Tage) zuerst",
         V.tabelleBlock(["Konto", "Guthaben", "Schlüssel", "Anfragen h/7/30", "Token 30 T", "Umsatz 30 T", "Aufgeladen", "Zuletzt", "Hinweis"], kontenZeilen))
       + V.panelBlock("Nach Modell", "30 Tage", V.tabelleBlock(["Modell", "Konten", "Anfragen", "Token", "Umsatz"], modellZeilen))

@@ -327,7 +327,7 @@ function meldungZu(grund) {
     case "api_key_missing":
       return "Kein Schluessel. Erwartet wird: Authorization: Bearer smejj-live-…";
     case "api_key_malformed":
-      return "Der Schluessel hat nicht die Form smejj-live-… (43 Zeichen).";
+      return "Der Schluessel hat nicht die Form smejj-live-… oder smejj-adm-… (43 bzw. 42 Zeichen).";
     case "api_key_revoked":
       return "Dieser Schluessel wurde widerrufen.";
     case "api_key_expired":

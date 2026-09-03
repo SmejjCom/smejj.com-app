@@ -45,6 +45,11 @@ const MATRIX = Object.freeze({
   "billing.read":      { owner: "allow", admin: "allow", support: "allow",   finance: "allow", auditor: "allow", readonly: "deny" },
   "models.write":      { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   "apikeys.revoke":    { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
+  // Schluessel AUSSTELLEN (smejj-adm-…, Beschluss 2026-09-03): der Betreiber
+  // gibt Dritten Zugang auf sein Konto, bis zu unbefristet. Das ist Geld und
+  // Reichweite zugleich — deshalb nur Owner/Admin, und jede Ausstellung mit
+  // Empfaenger, Laufzeit und Grund im Audit-Log.
+  "apikeys.issue":     { owner: "allow", admin: "allow", support: "deny",    finance: "deny",  auditor: "deny",  readonly: "deny" },
   // Schluessel-METADATEN lesen: welcher Anbieter, welches Konto, aktiv oder
   // widerrufen, letzte vier Zeichen. Nie der Wert. Ein Auditor muss nachweisen
   // koennen, dass ein Schluessel widerrufen wurde — deshalb lesend erlaubt,
