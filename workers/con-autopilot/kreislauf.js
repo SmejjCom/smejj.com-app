@@ -143,7 +143,11 @@ async function beendeJob(ctx, z, grund, ergebnis) {
   } else if (ergebnis?.ok && ergebnis.spiegel) {
     task.ergebnisKurz = `Spiegel komplett: ${ergebnis.spiegel.dateien} Dateien`;
   } else {
-    task.ergebnisKurz = grund;
+    // Gerettete Arbeit: Ein Trainingslauf, den die Zeitgrenze abgeschnitten hat, hinterlaesst
+    // trotzdem einen fertigen Adapter in e2. Ohne Registereintrag findet ihn niemand wieder und
+    // der naechste Takt bezahlt dasselbe Training noch einmal.
+    const gerettet = await rettteAdapter(ctx, z, job);
+    task.ergebnisKurz = gerettet ? `${grund} — Adapter ${gerettet} gerettet, wird gemessen` : grund;
   }
   task.naechsterSchritt = naechsterSchrittText(z);
   await schreibeTask(e2, task);
@@ -151,6 +155,35 @@ async function beendeJob(ctx, z, grund, ergebnis) {
   z.letzterJob = job;
   z.laufenderJob = null;
   z.phase = "ueberwachen";
+}
+
+/**
+ * Sucht nach einem Adapter, den ein abgebrochener Trainingslauf schon nach e2 gelegt hat,
+ * und traegt ihn als Kandidaten ein. Der naechste Takt misst ihn dann nur noch.
+ * @returns {Promise<string|null>} die Version des geretteten Kandidaten
+ */
+async function rettteAdapter(ctx, z, job) {
+  const { e2, konfig, log = () => {} } = ctx;
+  const kandidat = job?.kandidat;
+  if (!kandidat) return null;
+  const training = await e2.getJson(`con/versions/${kandidat}/training.json`, null);
+  if (!training) return null;
+  const adapterPrefix = `con/versions/${kandidat}/adapter`;
+  const dateien = await e2.liste(`${adapterPrefix}/`);
+  const hatGewichte = dateien.some((d) => /adapter_model\.(safetensors|bin)$/.test(d.key));
+  if (!hatGewichte) return null;
+  const registry = await leseRegistry(e2);
+  trageKandidatEin(registry, {
+    version: kandidat, basisPrefix: konfig.basis.prefix, basisRepo: konfig.basis.repo,
+    adapterPrefix, datensatz: job.datensatz || training.datensatzPrefix || null,
+    trainingsKonfig: job.trainingsKonfig || training.konfig || null,
+    kostenUsd: job.kosten?.usd ?? null, jobId: job.jobId, training,
+    hinweis: "Training an der Zeitgrenze abgebrochen — Adapter vollstaendig, Messung steht aus"
+  });
+  await schreibeRegistry(e2, registry);
+  notiere(z, `Adapter ${kandidat} aus abgebrochenem Training gerettet (${dateien.length} Dateien) — wird gemessen`);
+  log(`Adapter ${kandidat} gerettet, Messung folgt`);
+  return kandidat;
 }
 
 async function bewerteUndEntscheide(ctx, z, job, ergebnis) {

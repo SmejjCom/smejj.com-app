@@ -225,6 +225,10 @@ def lauf():
         t = train.trainiere(modell_dir, train_pfad, ausgabe, checkpoint_prefix, STATUS, konfig, abbruch=_ABBRUCH.is_set)
         ergebnis["training"] = {k: v for k, v in t.items() if k != "adapterPfad"}
         adapter_prefix = f"con/versions/{kandidat}/adapter"
+        # Auch ein an der Zeitgrenze abgebrochener Lauf hinterlaesst einen brauchbaren Adapter.
+        # Der Pfad gehoert ins Ergebnis, damit der Autopilot ihn ohne Suchen wiederfindet.
+        ergebnis["training"]["adapterPrefix"] = adapter_prefix
+        ergebnis["training"]["kandidat"] = kandidat
         STATUS.setze(phase="adapter_sichern")
         e2.lade_verzeichnis_hoch(t["adapterPfad"], adapter_prefix)
         e2.put_json(f"con/versions/{kandidat}/training.json", {**ergebnis["training"], "basisPrefix": basis_prefix,

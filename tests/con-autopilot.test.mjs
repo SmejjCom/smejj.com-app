@@ -170,3 +170,18 @@ test("gueltigkeits-tor: leere Messung darf keine Messlatte setzen", async () => 
   const leer = { version: "x", jobId: "j", leistung: { antworten: 1, tokensGesamt: 0 }, suiten: [{ suiteId: "con-sprache", cases: [{ id: "fakt-hauptstadt", runs: [{ text: "", latencyMs: 8 }] }] }] };
   assert.equal(bewerteAntworten(leer, suiten).gueltig, false);
 });
+
+test("planung: geretteter Kandidat aus abgebrochenem Training wird als naechstes gemessen", async () => {
+  const { planeNaechstenSchritt } = await import("../workers/con-autopilot/kreislauf.js");
+  const registry = { versions: [
+    { version: "con-1.0.0", status: "stable", basisPrefix: "con/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: { reasoning: { score: 0.83, kritisch: 1 } } } },
+    { version: "con-1.1.0", status: "candidate", adapterPrefix: "con/versions/con-1.1.0/adapter", benchmarks: null }
+  ] };
+  const e2Attrappe = { getJson: async () => null, liste: async () => [] };
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1 };
+  const plan = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, { schwaechste: null }, registry);
+  assert.equal(plan.schritt, "kandidat_messen");
+  assert.equal(plan.job.modus, "messung");
+  assert.equal(plan.job.version, "con-1.1.0");
+  assert.equal(plan.job.parameter.CON_ADAPTER_PREFIX, "con/versions/con-1.1.0/adapter");
+});
