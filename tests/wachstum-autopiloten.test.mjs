@@ -19,6 +19,7 @@ import { baueTagesmappe, laufTagesmappe } from "../control-server/src/autopilots
 import { TRAININGS_REIFE_ABLAGE } from "../control-server/src/autopilots/trainingsReifeAutopilot.js";
 import { DSGVO_FRISTEN_ABLAGE } from "../control-server/src/autopilots/dsgvoFristenAutopilot.js";
 import { FLAGGEN_ABLAGE } from "../control-server/src/autopilots/flaggenAutopilot.js";
+import { MODELL_EVOLUTION_ABLAGE } from "../control-server/src/autopilots/modellEvolutionAutopilot.js";
 import { baueSchutzUndWachstumLaeufe, SCHUTZ_UND_WACHSTUM_IDS } from "../control-server/src/autopilots/schutzUndWachstumLaeufe.js";
 import { IM_LAEUFER_BETRIEBEN } from "../control-server/src/autopilots/autopilotLaeufer.js";
 import { AUTOPILOTEN } from "../control-server/src/admin/opsAutopilotenListe.js";
@@ -131,7 +132,10 @@ test("Nr. 60 Tagesmappe: stumme Quellen werden benannt, gesunde Mappe ist vollst
         ? { liste: async () => ({ ok: true, datensaetze: [{ ueberschritten: 0, kritisch: 0, bald: 0, createdAt: new Date().toISOString() }] }) }
         : praefix === FLAGGEN_ABLAGE
           ? { liste: async () => ({ ok: true, datensaetze: [{ veraltetAnzahl: 0, veraltetNamen: [], createdAt: new Date().toISOString() }] }) }
-          : { liste: async () => ({ ok: true, datensaetze: [] }) }
+          // Nr. 72 (2026-09-03): der Evolutions-Takt liefert seinen jüngsten Zyklus per lies().
+          : praefix === MODELL_EVOLUTION_ABLAGE
+            ? { lies: async () => ({ zyklus: 1, referenzNote: null, tor: { offen: false, gesamt: 7, zu: ["Daten"] }, createdAt: new Date().toISOString() }) }
+            : { liste: async () => ({ ok: true, datensaetze: [] }) }
   });
   assert.equal(gesund.stummeQuellen.length, 0);
   assert.equal(gesund.roteAmpeln.length, 1);

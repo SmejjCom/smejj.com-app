@@ -20,6 +20,7 @@ import { listeTickets } from "../admin/supportTickets.js";
 import { TRAININGS_REIFE_ABLAGE } from "./trainingsReifeAutopilot.js";
 import { DSGVO_FRISTEN_ABLAGE } from "./dsgvoFristenAutopilot.js";
 import { FLAGGEN_ABLAGE } from "./flaggenAutopilot.js";
+import { MODELL_EVOLUTION_ABLAGE, LETZTER_ZYKLUS_ID } from "./modellEvolutionAutopilot.js";
 
 /** Offene Punkte, die nur der Betreiber entscheiden kann. Gepflegt im Code,
  *  damit jeder Eintrag mit seinem Grund im Review steht — KEINE Messwerte. */
@@ -144,6 +145,23 @@ export async function baueTagesmappe({
     }
   } catch { stumm.push("Trainings-Reife-Ablage"); }
 
+  // 7b. Modell-Evolutions-Karte (Nr. 72): erst wenn ALLE Tore offen sind, ist
+  // ein Trainingslauf eine Entscheidung — ein zu Tor heißt "weiter sammeln"
+  // und ist kein Beschluss wert. Dieselbe Frisch-Regel: älter als 3 Tage =
+  // stumm, denn der Takt läuft alle 30 Minuten.
+  try {
+    const zyklus = await storeFabrik(MODELL_EVOLUTION_ABLAGE, 400).lies(LETZTER_ZYKLUS_ID);
+    const frisch = zyklus && jetztMs - Date.parse(zyklus.createdAt || 0) < 3 * 86_400_000;
+    if (!zyklus || !frisch) stumm.push("Modell-Evolutions-Ablage (veraltet)");
+    else if (zyklus.tor?.offen === true) {
+      entscheiden.push({
+        art: "modell-evolution",
+        text: `Trainings-Tor offen (Zyklus ${zyklus.zyklus}, alle ${zyklus.tor.gesamt} Tore belegt): Lauf smejj 1.1`
+          + ` startet NUR per Betreiber-Klick — Referenz ${zyklus.referenzNote ?? "?"} %, Deckel 10 USD/Monat (Rote Liste)`
+      });
+    }
+  } catch { stumm.push("Modell-Evolutions-Ablage"); }
+
   // 8. DSGVO-Fristen-Karte (Nr. 67): kritische Fristen (≤ 5 Tage) und
   // überschrittene sind eine Entscheidung — bearbeiten oder (nach Begründung)
   // verlängern. Dieselbe Frisch-Regel wie oben: älter als 3 Tage = stumm.
@@ -217,7 +235,9 @@ export async function fuehreSelbsttestAus() {
         ? { liste: async () => ({ ok: true, datensaetze: [{ ueberschritten: 0, kritisch: 1, bald: 0, dringendste: { faelligAm: "2026-09-02" }, createdAt: new Date().toISOString() }] }) }
         : praefix === FLAGGEN_ABLAGE
           ? { liste: async () => ({ ok: true, datensaetze: [{ veraltetAnzahl: 2, veraltetNamen: ["neu-menue", "sprach-test"], createdAt: new Date().toISOString() }] }) }
-          : { liste: async () => ({ ok: true, datensaetze: [] }) }
+          : praefix === MODELL_EVOLUTION_ABLAGE
+            ? { lies: async () => ({ zyklus: 12, referenzNote: 97, tor: { offen: true, gesamt: 7, zu: [] }, createdAt: new Date().toISOString() }) }
+            : { liste: async () => ({ ok: true, datensaetze: [] }) }
   });
   if (gesund.roteAmpeln.length !== 1) fehler.push("rote Ampel fehlt in der gesunden Mappe");
   if (gesund.wartenAufDich.length !== 1) fehler.push("offenes Ticket fehlt in der gesunden Mappe");
@@ -264,6 +284,20 @@ export async function fuehreSelbsttestAus() {
   if (flaggenRuhig.entscheiden.some((e) => e.art === "flaggen")) {
     fehler.push("gepflegte Flags dürfen keine Karte erzeugen");
   }
+  // Nr. 72: offenes Trainings-Tor muss eine Karte sein; ein zu Tor nicht.
+  if (!gesund.entscheiden.some((e) => e.art === "modell-evolution")) {
+    fehler.push("offenes Trainings-Tor fehlt unter ENTSCHEIDEN");
+  }
+  const torZu = await baueTagesmappe({
+    uebersicht: () => ({ autopiloten: [] }),
+    ticketLader: async () => [],
+    storeFabrik: (praefix) => praefix === MODELL_EVOLUTION_ABLAGE
+      ? { lies: async () => ({ zyklus: 3, referenzNote: 97, tor: { offen: false, gesamt: 7, zu: ["Daten"] }, createdAt: new Date().toISOString() }) }
+      : { liste: async () => ({ ok: true, datensaetze: [] }) }
+  });
+  if (torZu.entscheiden.some((e) => e.art === "modell-evolution")) {
+    fehler.push("ein zu Trainings-Tor darf keine Karte erzeugen");
+  }
   return { bestanden: fehler.length === 0, fehler };
 }
 
@@ -287,5 +321,5 @@ export async function laufTagesmappe() {
   if (mappe.stummeQuellen.length) {
     return { ok: false, meldung: `Mappe unvollständig — stumme Quellen: ${mappe.stummeQuellen.join(", ").slice(0, 120)}` };
   }
-  return { ok: true, meldung: `Selbsttest 10/10; Mappe gebaut: ${mappe.zusammenfassung} (GET /api/admin/ops/tagesmappe)` };
+  return { ok: true, meldung: `Selbsttest 12/12; Mappe gebaut: ${mappe.zusammenfassung} (GET /api/admin/ops/tagesmappe)` };
 }

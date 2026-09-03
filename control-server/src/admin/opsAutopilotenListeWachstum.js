@@ -140,5 +140,22 @@ export const WACHSTUM_AUTOPILOTEN = Object.freeze([
     verbessert: "Die Frage 'wären wir schon trainierbereit?' ist eine gemessene Zahl alle 30 Minuten statt ein Bauchgefühl mit still wachsenden Ablagen",
     neuigkeiten: ["Neu am 2026-08-26 (Lücke aus der A-bis-Z-Deckungsprüfung)"],
     ...LAEUFER
+  },
+  {
+    id: "modell-evolution",
+    name: "Modell-Evolutions-Takt",
+    nummer: "72",
+    kurz: "Der 24/7-Kreislauf der Modellfamilie: alle 30 Minuten MESSEN → SCHWÄCHE FINDEN → TORE PRÜFEN → PROTOKOLL. Jeder Durchgang ist ein nummerierter Zyklus in der Ablage — ob er rund um die Uhr läuft, ist eine ablesbare Zahl.",
+    funktionen: [
+      "MESSEN: Referenz-Note der Live-Kette aus dem Herzschlag der Qualitätsmessung (Nr. 01), Noten je Fähigkeit (Text, Code, Bild, Recherche, Werkzeug …) aus der Kennzahlen-Ablage der Evolution-Engine (Nr. 37), Datenreife aus der Karte der Reife-Wache (Nr. 65).",
+      "SCHWÄCHE FINDEN: die Fähigkeit mit der niedrigsten Note der letzten 7 Tage — nur ab 5 Messungen, sonst ist es Rauschen. Sie steht mit Zahl in der Meldung und im Protokoll.",
+      "SIEBEN TORE vor einem Trainingslauf, fail-closed: Daten (Reife Stufe 3), Einwilligung (Capture AN), Kostenfreigabe (Freigabe-ID + Monatsbetrag ≤ 10 USD), Basismodell, GPU-Heimat, Schalter (kein Notaus), Messlatte (Referenz gemessen). Die Meldung nennt das erste zu Tor und den Handgriff, der es öffnet.",
+      "PROTOKOLL: je Zyklus ein überschriebener Datensatz plus einer je Tag in autopiloten/modell-evolution — Referenz, Schwäche, Reife, Tore, 'trainingGestartet: false'. Sobald ALLE Tore offen sind, liegt eine Karte unter ENTSCHEIDEN in der Tagesmappe (Nr. 60).",
+      "ER STARTET KEIN TRAINING und mietet keine GPU: der Lauf smejj 1.1 bleibt Rote Liste hinter dem Betreiber-Klick (Charta §0, Trainingsplan 02.09.). Nur bessere Versionen werden übernommen — das Versions-Gate (modelPromotion.js) bleibt die zweite, menschliche Schwelle."
+    ],
+    trainiert: "Nichts — er misst, findet Schwächen und prüft Tore; der GPU-Lauf ist Betreiber-Klick",
+    verbessert: "Der Betreiber-Auftrag '24/7 dauerhaft trainieren' war bisher nirgends ein Takt: Training ruhte still, und niemand sagte, welches Tor noch zu ist — jetzt steht es alle 30 Minuten mit Zyklusnummer in der Ampel",
+    neuigkeiten: ["Neu am 2026-09-03 (Betreiber-Auftrag: permanentes Modell-Evolutions-System)"],
+    ...LAEUFER
   }
 ]);
