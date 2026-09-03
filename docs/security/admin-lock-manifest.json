@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-03T11:37:36.134Z",
-  "confirmation": "Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Audit A bis Z, Wahl 'Runde 1 bauen (Empfehlung)': Nr. 73 Tuerwaechter registriert, Heiler-Liste +5, Registry-Texte ehrlich, Erste Hilfe ohne Doppel-Rot; Stempel per Betreiber-Doppelklick",
+  "frozenAt": "2026-09-03T21:06:50.008Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): Admin-Schluessel — Owner/Admin stellen in der Konsole unter 'API & Schluessel' Schluessel smejj-adm-… fuer Dritte aus (Empfaenger, Laufzeit 30 Tage bis 30 Jahre oder unbefristet, Notiz), widerrufen sie mit Grund, alles im Audit-Log; Recht apikeys.issue (adminRoles.js), Route adminGeldRoutes.js, Konsole views-stage7.js/console-stage7.js. Der Stempel deckt auch opsAutopilotenBereiche.js und views-stage9.js aus dem Nr.-72-Audit vom 03.09. Grundlage: Beschluss 2026-09-03 (docs/api/PLAN_API_SCHLUESSEL_LAUFZEIT_ADMIN_2026-09-03.md) und Wahl 'Admin-Bereich bauen'.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -12,7 +12,7 @@
     "control-server/src/routes/adminStage4Routes.js": "2d9ae83dc42f7dfd18e5f253e5ef18caa67a4d27461e236ba11d075e4dd073cc",
     "control-server/src/routes/adminAutopilotAktionen.js": "e79e9f79104837ff98b3fc2783756d9908b9663c97edf3f404831975283566d7",
     "control-server/src/admin/adminAuth.js": "805519c67e3a964995aa55d672c000176808abd278a7b88a086c9d983cd6b2dd",
-    "control-server/src/admin/adminRoles.js": "15a72cefaea9e42f1f99ec1d19ae11a016f2815ae4c7928f07afa38de54bb38b",
+    "control-server/src/admin/adminRoles.js": "d3937d70503e88b8347f742fc5443530467c4b1a90fc20cb2ec234fd12479141",
     "control-server/src/admin/auditLog.js": "abc94f207de28ed56aeba04eecf1cec4f4c0a53f5fa3d5395d55ea3676936d5b",
     "control-server/src/admin/approvalStore.js": "0bd996af40f28a8abcc016a8eb072b726e4907ed6a8e5ec7e855556501a68bab",
     "control-server/src/admin/impersonation.js": "75d115e637ad9f10210bb5e4937275100259ee72ca18c510125c51d76e6d3620",
@@ -23,7 +23,7 @@
     "control-server/src/admin/opsAutopiloten.js": "bfe5ddc1965e0ef20e4a7ef49fd1d6525a087617e5ecd1727b3558508bc7ddc0",
     "control-server/src/admin/opsAutopilotenListe.js": "84e13bdbc89126583acd194b520688c4efe9015cecce9a6554b1a32440ee172c",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
-    "control-server/src/admin/opsAutopilotenBereiche.js": "60f6f629b3189a235b4c672cd3394dd9f6ab9f324aa4a335446f7f6e1bb57b03",
+    "control-server/src/admin/opsAutopilotenBereiche.js": "0b13c7f9777c23249ed66334dce854b1b16bb55d891e57347b46ecbb4fbd8184",
     "control-server/src/admin/opsAuslieferung.js": "1c8cd6387c543db7796ee7d985b494a0c276cbd7c5b54429c600b6330e3d9051",
     "control-server/admin-ui/views-stage12.js": "01019f1bdf06f40d87f2b2aa5ca05e901ade9be3b0d7f8536f9d19cc279389df",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
@@ -37,9 +37,9 @@
     "control-server/admin-ui/index.html": "b3c7f1cd8650bfe225c154fe4267eaaeca44b0a55918f8207c261398862e97c1",
     "control-server/admin-ui/console.css": "6db84483a7641c459aa75772d3f2ca210106d36690b9e9cd32005a667e44683c",
     "control-server/admin-ui/views-stage5.js": "fcffea722ad7b24a1ed85ffc90a63b4f472c833b3a8fc41aa547b22a3847ca27",
-    "control-server/admin-ui/views-stage7.js": "4d2340da641edf235518c29c8f801650b5b8b3cc2d424782dd1a6e4f4a97da23",
+    "control-server/admin-ui/views-stage7.js": "cbc4c80d08ad1878d463108ccddc0c70cb5a16140ff21063739bbaca3d43ed1c",
     "control-server/admin-ui/console-stage6.js": "590e2f1b0bf1a6b84bf3ee0d758e08b930da57fb10c985c2df78f396c3d7152a",
-    "control-server/admin-ui/console-stage7.js": "cdd769431b35f269928824c15dc0435c3e33f32e117b522d1f47a113e8dc21d7",
+    "control-server/admin-ui/console-stage7.js": "31292f64c3d79a9bdd3d65572c716aad7b49310e9d14dd1b6f91cb40ce2b8bab",
     "control-server/admin-ui/console-stage9.js": "86a7baf596f1ce13954489e82aa47e7046ddba2b2a561288d63f6f032af11682",
     "control-server/admin-ui/console-stage12.js": "04993b73ee961ea108c5f2eaeec53d3110fc70f4fa29703fd0c1d8836f94b553",
     "control-server/admin-ui/console-cockpit.js": "6035114b40a3c32a786ab1435bbf231e71ae553b68eb331f061f92fe77079d8b",
@@ -48,10 +48,10 @@
     "control-server/src/admin/userIndex.js": "8cca94949db97af3ba6031086f4938f917fe29a06fc2e6144c5f344d3ac645f9",
     "control-server/src/billing/aboUmhaengen.js": "a2b1f395cc528031b01466ae85b987c6d67dfb282e3c08387cf0400aec52dcbf",
     "control-server/src/routes/adminRoutes.js": "d15425a554ae95ff974c687fad588bf8acf1e0fce49317b3b1cc8dc778a050e1",
-    "control-server/src/routes/adminGeldRoutes.js": "1d3df353ff05758962eb5104374a3d5cbbf35518098285078ab4d49db95cd865",
+    "control-server/src/routes/adminGeldRoutes.js": "d11b2103468a924d5722cff0f1aad0f6e6952f0909f1ea3302486b3fb6d4fdda",
     "control-server/src/routes/adminSicherheitRoutes.js": "56f4aaada4a90cd38ab529257f38a74b13dca9116dfce9dfcd2aebd644ac2ba1",
     "control-server/src/routes/adminOpsRoutes.js": "1f179d19b274abff19ab079b06ed453ea95018c250e20d1889e1a73341f55870",
     "scripts/deploy/sync_admin_console_pages.mjs": "2eedadb1a38839cd6c9f43ab7724a1e31fe85f052c5b828bdf70cffe643c6f30",
-    "control-server/admin-ui/views-stage9.js": "5e850866710b984c593d2cc0531c537d5bccba8f9a06014d12ba88b40d6f8b3a"
+    "control-server/admin-ui/views-stage9.js": "47ccda8b25972bd66dd33b239faa01f91833c7656dc5ed7ec8e77cc36a019e5e"
   }
 }
