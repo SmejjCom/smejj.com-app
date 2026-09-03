@@ -69,8 +69,12 @@ npm run -s check:auslieferung-lock | tail -1
 npm run -s check:favicon-lock | tail -1
 npm run -s check:modul-syntax | tail -1
 node scripts/check-precache-imports.mjs | tail -1
-node --test tests/api-laufzeit.test.mjs tests/i18n-ui.test.mjs tests/oeffentliche-api.test.mjs tests/assets-sync.test.mjs tests/module-queries.test.mjs tests/frontend-structure.test.mjs tests/modul-einmal-instanz.test.mjs 2>&1 | grep -E "^ℹ (pass|fail)" | tr '\n' ' '; echo
-node --test tests/api-laufzeit.test.mjs tests/i18n-ui.test.mjs tests/oeffentliche-api.test.mjs tests/assets-sync.test.mjs tests/module-queries.test.mjs tests/frontend-structure.test.mjs tests/modul-einmal-instanz.test.mjs 2>&1 | grep -q "^ℹ fail 0" || { echo "ABBRUCH: Tests rot — nichts wird gestempelt ausgeliefert. Bitte Ausgabe in den Chat kopieren."; exit 1; }
+# Tests EINMAL in eine Datei — kein grep -q auf der Pipe: das schliesst die Pipe, node stirbt an
+# SIGPIPE, pipefail meldet rot. Genau so brach der erste Klick 2026-09-03 bei 70/70 gruen ab.
+TESTLOG=$(mktemp /tmp/smejj-tests.XXXXXX)
+node --test tests/api-laufzeit.test.mjs tests/i18n-ui.test.mjs tests/oeffentliche-api.test.mjs tests/assets-sync.test.mjs tests/module-queries.test.mjs tests/frontend-structure.test.mjs tests/modul-einmal-instanz.test.mjs > "$TESTLOG" 2>&1 || true
+grep -E "^ℹ (pass|fail)" "$TESTLOG" | tr '\n' ' '; echo
+grep -q "^ℹ fail 0" "$TESTLOG" || { echo "ABBRUCH: Tests rot — nichts wird gestempelt ausgeliefert. Bitte Ausgabe in den Chat kopieren."; exit 1; }
 
 echo "== 5. Commit design-v11 (nur verfolgte Dateien unter public/ und docs/frontend)"
 git add -u public docs/frontend
