@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "con-sprache",
+  "version": "1.0.0",
+  "kategorie": "sprache",
+  "createdAt": "2026-09-03T00:00:00Z",
+  "description": "Sprachqualitaet: Fakten, Struktur, Zusammenfassen, Uebersetzen, Kuerze. Deterministisch pruefbar, kein Modell-als-Richter.",
+  "eligibleForTraining": false,
+  "budgets": {
+    "minScore": 0.7,
+    "latencyMsP95": 120000,
+    "firstTokenMs": 60000,
+    "maxCasesPerRun": 50
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "4ccd3d92e5d66f42987813d63d1259df2fa5a51e36884de38567f0aa24ad3eef"
+  },
+  "cases": [
+    {
+      "id": "fakt-hauptstadt",
+      "profile": "default",
+      "weight": 2,
+      "maxTokens": 60,
+      "system": "Antworte auf Deutsch, kurz und praezise.",
+      "prompt": "Wie heisst die Hauptstadt von Australien? Antworte nur mit dem Namen.",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "Canberra"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "Sydney",
+            "Melbourne"
+          ]
+        },
+        {
+          "type": "max_length",
+          "value": 40
+        }
+      ]
+    },
+    {
+      "id": "zusammenfassung-ein-satz",
+      "profile": "default",
+      "weight": 2,
+      "maxTokens": 120,
+      "system": "Antworte auf Deutsch.",
+      "prompt": "Fasse den folgenden Text in genau einem Satz zusammen: 'Die Stadtbibliothek verlaengert ab Oktober ihre Oeffnungszeiten. Sie ist dann montags bis freitags bis 20 Uhr geoeffnet, samstags bis 16 Uhr. Grund ist die hohe Nachfrage von Berufstaetigen. Die Ausleihe bleibt kostenlos.'",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "Oeffnungszeiten",
+            "Öffnungszeiten",
+            "laenger",
+            "länger",
+            "20 Uhr"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_any",
+          "values": [
+            "Bibliothek",
+            "Stadtbibliothek"
+          ]
+        },
+        {
+          "type": "not_matches",
+          "pattern": "[.!?]\\s+[A-ZÄÖÜ][^.!?]*[.!?]\\s+[A-ZÄÖÜ]"
+        },
+        {
+          "type": "max_length",
+          "value": 300
+        }
+      ]
+    },
+    {
+      "id": "uebersetzung-de-en",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 80,
+      "system": "Du bist ein Uebersetzer. Gib nur die Uebersetzung aus.",
+      "prompt": "Uebersetze ins Englische: 'Der Zug faehrt um sieben Uhr morgens ab und kommt gegen Mittag in Muenchen an.'",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "train"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_any",
+          "values": [
+            "seven",
+            "7"
+          ]
+        },
+        {
+          "type": "contains_any",
+          "values": [
+            "Munich",
+            "München",
+            "Muenchen"
+          ]
+        },
+        {
+          "type": "contains_any",
+          "values": [
+            "noon",
+            "midday"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "struktur-json",
+      "profile": "default",
+      "weight": 2,
+      "maxTokens": 150,
+      "system": "Antworte ausschliesslich mit gueltigem JSON ohne Markdown-Zaeune.",
+      "prompt": "Erzeuge ein JSON-Objekt mit den Feldern name (\"Anna Beispiel\"), alter (34) und sprachen (Liste mit \"Deutsch\" und \"Englisch\").",
+      "assertions": [
+        {
+          "type": "json_parses",
+          "critical": true
+        },
+        {
+          "type": "contains_all",
+          "values": [
+            "Anna Beispiel",
+            "34",
+            "Deutsch",
+            "Englisch"
+          ],
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "```"
+        }
+      ]
+    },
+    {
+      "id": "kuerze-einhalten",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte auf Deutsch.",
+      "prompt": "Erklaere in hoechstens zwoelf Woertern, was ein Passwort-Manager macht.",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "Passw",
+            "passw",
+            "Kennw",
+            "Zugangs"
+          ],
+          "critical": true
+        },
+        {
+          "type": "max_length",
+          "value": 140
+        }
+      ]
+    },
+    {
+      "id": "rechtschreibung-korrigieren",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 80,
+      "system": "Korrigiere nur die Rechtschreibung und gib den korrigierten Satz aus, sonst nichts.",
+      "prompt": "Ich habe gestern ein interresantes Buch über die Geschichte der Eisenban gelesen.",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "interessantes",
+            "Eisenbahn"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "interresantes",
+            "Eisenban"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "liste-drei-punkte",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 120,
+      "system": "Antworte auf Deutsch. Verwende fuer Listen Zeilen, die mit '- ' beginnen.",
+      "prompt": "Nenne genau drei Vorteile von regelmaessigen Datensicherungen als Aufzaehlung.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|\\n)\\s*[-*•]\\s+.+\\n\\s*[-*•]\\s+.+\\n\\s*[-*•]\\s+.+",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|\\n)\\s*[-*•]\\s+.+\\n\\s*[-*•]\\s+.+\\n\\s*[-*•]\\s+.+\\n\\s*[-*•]\\s+"
+        }
+      ]
+    },
+    {
+      "id": "unsicherheit-zugeben",
+      "profile": "default",
+      "weight": 2,
+      "maxTokens": 80,
+      "system": "Antworte auf Deutsch. Wenn du etwas nicht wissen kannst, sage das klar.",
+      "prompt": "Wie lautet die Telefonnummer der Baeckerei Hinterhuber in Kleinwalsertal, die im Jahr 2031 eroeffnet?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(nicht|kein|unbekannt|keine Information|weiss ich nicht|weiß ich nicht|kann ich nicht)",
+          "critical": true,
+          "ignoreCase": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "\\+?\\d[\\d /-]{6,}\\d",
+          "critical": true
+        }
+      ]
+    }
+  ]
+}

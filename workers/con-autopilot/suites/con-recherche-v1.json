@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "con-recherche",
+  "version": "1.0.0",
+  "kategorie": "recherche",
+  "createdAt": "2026-09-03T00:00:00Z",
+  "description": "Browser-/Recherche-Faehigkeit ohne Netz: Angaben aus gegebenem Seitentext ziehen, Quellen unterscheiden, Fehlendes als fehlend melden, Quelle nennen.",
+  "eligibleForTraining": false,
+  "budgets": {
+    "minScore": 0.7,
+    "latencyMsP95": 120000,
+    "firstTokenMs": 60000,
+    "maxCasesPerRun": 50
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "e4f98750ab8e5aa1e3de14c60cb14843b51e850561ccc36c355d05f1c529997f"
+  },
+  "cases": [
+    {
+      "id": "preis-aus-seite",
+      "profile": "web",
+      "weight": 1,
+      "maxTokens": 80,
+      "system": "Du beantwortest Fragen NUR aus dem gegebenen Seitentext. Antworte kurz auf Deutsch.",
+      "prompt": "Seitentext (https://beispiel-shop.example/produkt/417): 'Rucksack Nordwind 28 L. Farbe: Graphit. Preis: 79,90 EUR inkl. MwSt. Lieferzeit 2-3 Werktage. Bewertung 4,6 von 5 (212 Stimmen).'\n\nFrage: Was kostet der Rucksack?",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "79,90"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "4,6",
+            "212"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "datum-aus-seite",
+      "profile": "web",
+      "weight": 1,
+      "maxTokens": 80,
+      "system": "Du beantwortest Fragen NUR aus dem gegebenen Seitentext. Antworte kurz auf Deutsch.",
+      "prompt": "Seitentext (https://stadt.example/news/123): 'Die Sanierung der Rheinbruecke beginnt am 14. April 2027 und dauert voraussichtlich bis Ende September 2027. Waehrend der Arbeiten ist eine Fahrspur je Richtung gesperrt.'\n\nFrage: Wann beginnt die Sanierung?",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "14. April 2027",
+            "14.04.2027",
+            "14. April"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "September"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fehlendes-melden",
+      "profile": "web",
+      "weight": 3,
+      "maxTokens": 80,
+      "system": "Du beantwortest Fragen NUR aus dem gegebenen Seitentext. Steht die Antwort nicht im Text, antworte mit 'Nicht im Text enthalten.' und erfinde nichts.",
+      "prompt": "Seitentext (https://verein.example/kontakt): 'Schachverein Springer 1921 e.V. Training dienstags 18 Uhr im Buergerhaus. Anfragen per E-Mail an vorstand@verein.example.'\n\nFrage: Wie hoch ist der Mitgliedsbeitrag?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "nicht (im Text )?enthalten|nicht angegeben|keine Angabe|nicht genannt|steht nicht",
+          "critical": true,
+          "ignoreCase": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "\\d+\\s*(EUR|€|Euro)",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "quelle-nennen",
+      "profile": "web",
+      "weight": 1,
+      "maxTokens": 120,
+      "system": "Du beantwortest Fragen aus gegebenen Quellen und nennst am Ende die URL der benutzten Quelle.",
+      "prompt": "Quelle A (https://wetter.example/kiel): 'Kiel, Donnerstag: 17 Grad, bewoelkt.'\nQuelle B (https://sport.example/kiel): 'Handball: Kiel gewinnt 31:27.'\n\nFrage: Wie warm wird es Donnerstag in Kiel?",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "17"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_all",
+          "values": [
+            "https://wetter.example/kiel"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "31:27"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "widerspruch-erkennen",
+      "profile": "web",
+      "weight": 2,
+      "maxTokens": 160,
+      "system": "Du vergleichst Quellen. Wenn sie sich widersprechen, sage das ausdruecklich und nenne beide Angaben.",
+      "prompt": "Quelle A (https://museum.example/besuch, aktualisiert 2026-08-30): 'Eintritt 12 EUR.'\nQuelle B (https://blog.example/museumstipp, aktualisiert 2024-02-10): 'Eintritt 9 EUR.'\n\nFrage: Was kostet der Eintritt?",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "12"
+          ],
+          "critical": true
+        },
+        {
+          "type": "matches",
+          "pattern": "(widerspr|unterschied|veraltet|aelter|älter|aktuell|neuer)",
+          "critical": true,
+          "ignoreCase": true
+        }
+      ]
+    },
+    {
+      "id": "tabelle-lesen",
+      "profile": "web",
+      "weight": 1,
+      "maxTokens": 80,
+      "system": "Du beantwortest Fragen NUR aus dem gegebenen Seitentext. Antworte nur mit dem Wert.",
+      "prompt": "Seitentext (https://bahn.example/fahrplan): 'Abfahrt | Ankunft | Gleis\n08:12 | 10:45 | 4\n09:40 | 12:05 | 7\n11:15 | 13:50 | 4'\n\nFrage: Auf welchem Gleis faehrt der Zug um 09:40 ab?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])7([^\\d:]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d:])4([^\\d:]|$)"
+        }
+      ]
+    }
+  ]
+}

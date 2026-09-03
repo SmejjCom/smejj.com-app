@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "con-coding",
+  "version": "1.0.0",
+  "kategorie": "coding",
+  "createdAt": "2026-09-03T00:00:00Z",
+  "description": "Programmieraufgaben, die WIRKLICH ausgefuehrt werden: der Autopilot zieht den ersten JavaScript-Block aus der Antwort und laesst die Tests laufen (code_tests).",
+  "eligibleForTraining": false,
+  "budgets": {
+    "minScore": 0.6,
+    "latencyMsP95": 180000,
+    "firstTokenMs": 60000,
+    "maxCasesPerRun": 50
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "a35b5fd0d90481b790f12eb5f3b31f469b6253df4090e57cc1692be2d49d6412"
+  },
+  "cases": [
+    {
+      "id": "js-summe",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 300,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion summe(zahlen), die die Summe eines Arrays von Zahlen zurueckgibt. Leeres Array ergibt 0. Exportiere nichts, definiere nur die Funktion.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(summe([1,2,3]), 6); assert.strictEqual(summe([]), 0); assert.strictEqual(summe([-5, 5, 2.5]), 2.5);"
+        }
+      ]
+    },
+    {
+      "id": "js-palindrom",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 350,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion istPalindrom(text), die true liefert, wenn der Text vorwaerts und rueckwaerts gleich ist. Gross-/Kleinschreibung und Leerzeichen sollen ignoriert werden.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(istPalindrom('Anna'), true); assert.strictEqual(istPalindrom('Reit tier'), true); assert.strictEqual(istPalindrom('Hallo'), false); assert.strictEqual(istPalindrom(''), true);"
+        }
+      ]
+    },
+    {
+      "id": "js-fizzbuzz",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion fizzbuzz(n), die ein Array der Laenge n liefert: fuer Vielfache von 3 'Fizz', von 5 'Buzz', von beiden 'FizzBuzz', sonst die Zahl selbst (als Zahl).",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.deepStrictEqual(fizzbuzz(15), [1,2,'Fizz',4,'Buzz','Fizz',7,8,'Fizz','Buzz',11,'Fizz',13,14,'FizzBuzz']); assert.deepStrictEqual(fizzbuzz(0), []);"
+        }
+      ]
+    },
+    {
+      "id": "js-bug-fix",
+      "profile": "coding",
+      "weight": 2,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```) mit der korrigierten Funktion, keine Erklaerung.",
+      "prompt": "Diese Funktion soll den groessten Wert eines nicht-leeren Arrays liefern, liefert aber falsche Ergebnisse. Korrigiere sie:\n\nfunction maxWert(werte) {\n  let max = 0;\n  for (let i = 1; i < werte.length; i++) {\n    if (werte[i] < max) max = werte[i];\n  }\n  return max;\n}",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(maxWert([3, 9, 2]), 9); assert.strictEqual(maxWert([-7, -3, -12]), -3); assert.strictEqual(maxWert([5]), 5);"
+        }
+      ]
+    },
+    {
+      "id": "js-parse-kv",
+      "profile": "coding",
+      "weight": 2,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion parseKv(text), die einen String wie 'a=1;b=hallo;c=' in ein Objekt {a:'1', b:'hallo', c:''} umwandelt. Leere Eintraege (doppelte Semikolons) werden ignoriert, Werte bleiben Strings.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.deepStrictEqual(parseKv('a=1;b=hallo;c='), {a:'1', b:'hallo', c:''}); assert.deepStrictEqual(parseKv(''), {}); assert.deepStrictEqual(parseKv('x=y=z;;k=v'), {x:'y=z', k:'v'});"
+        }
+      ]
+    },
+    {
+      "id": "js-fibonacci",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 300,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion fib(n), die die n-te Fibonacci-Zahl liefert (fib(0)=0, fib(1)=1). Sie muss fuer n=90 in unter einer Sekunde antworten und ein exaktes Ergebnis als BigInt liefern.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(fib(0), 0n); assert.strictEqual(fib(1), 1n); assert.strictEqual(fib(10), 55n); assert.strictEqual(fib(90), 2880067194370816120n);"
+        }
+      ]
+    },
+    {
+      "id": "code-erklaeren",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 200,
+      "system": "Antworte auf Deutsch in hoechstens drei Saetzen.",
+      "prompt": "Was macht dieser Code? const u = [...new Set(liste)].sort((a, b) => a - b);",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "Duplikat",
+            "doppelt",
+            "eindeutig",
+            "Set"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_any",
+          "values": [
+            "sortier",
+            "aufsteigend",
+            "Sortier"
+          ],
+          "critical": true
+        },
+        {
+          "type": "max_length",
+          "value": 600
+        }
+      ]
+    },
+    {
+      "id": "js-test-schreiben",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Gegeben ist die Funktion function runde(x) { return Math.round(x * 100) / 100; }. Schreibe die Funktion selbst und darunter eine Funktion testeRunde(), die mindestens drei Pruefungen mit assert.strictEqual ausfuehrt und bei Erfolg die Zahl der Pruefungen zurueckgibt. assert ist als globale Variable vorhanden.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(runde(1.005), 1); assert.strictEqual(runde(2.345), 2.35); const n = testeRunde(); assert.ok(n >= 3, 'mindestens 3 Pruefungen');"
+        }
+      ]
+    }
+  ]
+}

@@ -58,3 +58,7 @@ schemas/*
 # Falle, die schon Training-Loop und Bruecken-Waechter je einen Anlauf kostete.
 !workers/smejj-hausmodell
 !workers/smejj-hausmodell/**
+# con-Autopilot (eigener Zeabur-Dienst seit 2026-09-03). Ohne diese Zeilen scheitert der Docker-Bau
+# mit "failed to calculate checksum of ref" — dieselbe Falle wie beim Training-Loop.
+!workers/con-autopilot
+!workers/con-autopilot/**

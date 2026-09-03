@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "con-reasoning",
+  "version": "1.0.0",
+  "kategorie": "reasoning",
+  "createdAt": "2026-09-03T00:00:00Z",
+  "description": "Logik, Rechnen, Planen, Zaehlen. Jede Erwartung ist eine feste Zahl oder ein festes Wort.",
+  "eligibleForTraining": false,
+  "budgets": {
+    "minScore": 0.7,
+    "latencyMsP95": 120000,
+    "firstTokenMs": 60000,
+    "maxCasesPerRun": 50
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "437ef6ca36ddaea30795b2a8d539e303f3da6332bdd18b67c20a83cce3f82c49"
+  },
+  "cases": [
+    {
+      "id": "mathe-multiplikation",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte nur mit der Zahl.",
+      "prompt": "Wie viel ist 17 mal 23?",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "391"
+          ],
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "mathe-gleichung",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit dem Wert von x.",
+      "prompt": "Loese: 3x + 7 = 22",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d.,])5([^\\d.,]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d.,])(4|6|15)([^\\d.,]|$)"
+        }
+      ]
+    },
+    {
+      "id": "logik-syllogismus",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte nur mit Ja oder Nein.",
+      "prompt": "Alle Katzen sind Saeugetiere. Mimi ist eine Katze. Ist Mimi ein Saeugetier?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "^\\W*ja\\b",
+          "critical": true,
+          "ignoreCase": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "\\bnein\\b",
+          "ignoreCase": true
+        }
+      ]
+    },
+    {
+      "id": "planung-reihenfolge",
+      "profile": "reasoning",
+      "weight": 2,
+      "maxTokens": 60,
+      "system": "Antworte nur mit den Buchstaben in der richtigen Reihenfolge, durch Kommas getrennt.",
+      "prompt": "Bringe die Schritte fuer Tee in die richtige Reihenfolge: A) Tee ziehen lassen, B) Wasser kochen, C) Teebeutel in die Tasse legen, D) Wasser in die Tasse giessen.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "B\\W*[CD]\\W*[CD]\\W*A",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "einheiten-umrechnen",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte nur mit der Zahl.",
+      "prompt": "Wie viele Minuten sind 2,5 Stunden?",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "150"
+          ],
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "kalender-wochentag",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte nur mit dem Wochentag.",
+      "prompt": "Heute ist Montag. Welcher Wochentag ist in drei Tagen?",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "Donnerstag"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "Mittwoch",
+            "Freitag"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zaehlen-buchstaben",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte nur mit der Zahl.",
+      "prompt": "Wie oft kommt der Buchstabe r im Wort Erdbeermarmelade vor?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])3([^\\d]|$)",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "wahrscheinlichkeit-muenze",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte kurz mit dem Ergebnis.",
+      "prompt": "Eine faire Muenze wird zweimal geworfen. Wie gross ist die Wahrscheinlichkeit fuer zweimal Kopf?",
+      "assertions": [
+        {
+          "type": "contains_any",
+          "values": [
+            "1/4",
+            "25",
+            "0,25",
+            "0.25",
+            "ein Viertel"
+          ],
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "textaufgabe-alter",
+      "profile": "reasoning",
+      "weight": 2,
+      "maxTokens": 80,
+      "system": "Antworte nur mit der Zahl.",
+      "prompt": "Lena ist heute dreimal so alt wie ihr Bruder. In 6 Jahren ist sie doppelt so alt wie er. Wie alt ist Lena heute?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])18([^\\d]|$)",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "ausschluss-logik",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte nur mit dem Namen.",
+      "prompt": "Drei Kinder: Ali, Ben, Cem. Ali ist nicht der Groesste. Cem ist kleiner als Ben. Ben ist nicht der Kleinste. Wer ist der Groesste?",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "Ben"
+          ],
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "Ali",
+            "Cem"
+          ]
+        }
+      ]
+    }
+  ]
+}
