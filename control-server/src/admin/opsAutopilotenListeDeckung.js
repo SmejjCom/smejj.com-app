@@ -108,5 +108,21 @@ export const DECKUNG_AUTOPILOTEN = Object.freeze([
     verbessert: "Am 2026-09-02 verschwand die Coding-Adresse zweimal aus der Umgebung; der Chat stand Stunden bei grünen Ampeln — jetzt wird das im 30-Minuten-Takt rot",
     neuigkeiten: ["Neu am 2026-09-02 (Befund job_bruecke_schnellspur_20260902)"],
     ...LAEUFER
+  },
+  {
+    id: "tuerwaechter",
+    name: "Türwächter",
+    nummer: "73",
+    kurz: "Geht alle 30 Minuten den Weg, den ein Mensch geht — Anmeldung, Adminbereich, Chat — und schlägt an, wenn eine Tür zu ist, obwohl alle Dienste grün sind.",
+    funktionen: [
+      "Prüft die Kette mit einem echten Mess-Token gegen den Control-Server: jede Stufe ist eine nachprüfbare Aussage über eine HTTP-Antwort, ohne Modell, ohne Rauschen.",
+      "Unterscheidet 'zu' von 'gestört': nur eine eindeutige Abweisung (401/403 mit bekanntem Grund) zählt als Aussperrung; ein Netzfehler oder 503 ist 'unklar' und macht nicht rot.",
+      "Ohne Mess-Token meldet er 'nicht messbar' (rot) statt Entwarnung — eine Ampel, die grün zeigt, weil sie nichts messen konnte, wäre eine Attrappe.",
+      "WARUM ER IN DER REGISTRY STEHT: Er lief seit dem 14.08. im Takt, aber sein Ergebnis wurde verworfen, weil die Kennung fehlte (Audit 03.09.) — zwei stille Aussperrungen vom 14.08. hätte niemand gesehen."
+    ],
+    trainiert: "Nichts — er geht durch die Türen",
+    verbessert: "Eine Aussperrung bei grünen Diensten (Adminbereich admin_email_not_verified, Chat 'bitte anmelden' trotz Anmeldung) ist binnen 30 Minuten rot statt wochenlang unsichtbar",
+    neuigkeiten: ["Registriert am 2026-09-03 (Audit A bis Z: Lauf ohne Registry-Eintrag)"],
+    ...LAEUFER
   }
 ]);

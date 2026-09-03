@@ -11,7 +11,7 @@
 set -u
 
 BAUZWEIG="/private/tmp/claude-501/bau-zweig"
-WORTLAUT="Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Stempel per Betreiber-Doppelklick"
+WORTLAUT="Betreiber-Auftrag 2026-09-03: Autopilot fuer 24/7-Modell-Evolution bauen, Wahl 'Nr. 65 bauen (Empfehlung)', umgesetzt als Nr. 72 Modell-Evolutions-Takt; Audit A bis Z, Wahl 'Runde 1 bauen (Empfehlung)': Nr. 73 Tuerwaechter registriert, Heiler-Liste +5, Registry-Texte ehrlich, Erste Hilfe ohne Doppel-Rot; Stempel per Betreiber-Doppelklick"
 
 if [ ! -d "$BAUZWEIG/.git" ] && [ ! -f "$BAUZWEIG/.git" ]; then
   echo "ABBRUCH: Arbeitskopie des Bauzweigs fehlt unter $BAUZWEIG"
@@ -33,12 +33,12 @@ node scripts/check-admin-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBR
 node scripts/check-admin-lock.mjs || { echo "ABBRUCH: Admin-Lock nach dem Stempel nicht gruen"; exit 6; }
 
 echo "3/4 Manifest committen ..."
-GEAENDERT="$(git status --short docs/approvals | awk '{print $2}')"
+GEAENDERT="$(git status --short docs/security docs/approvals | awk '{print $2}')"
 if [ -z "$GEAENDERT" ]; then
   echo "Hinweis: kein Manifest geaendert — war schon gestempelt."
 else
   git add $GEAENDERT || exit 7
-  git commit -q -m "chore(admin-lock): Stempel nach Anschluss von Nr. 72 (opsAutopilotenBereiche.js), Betreiber-Doppelklick 2026-09-03" \
+  git commit -q -m "chore(admin-lock): Stempel nach Nr. 72 + Audit-Runde 1 (opsAutopilotenBereiche.js, opsAutopilotenListe.js), Betreiber-Doppelklick 2026-09-03" \
     -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || exit 7
 fi
 

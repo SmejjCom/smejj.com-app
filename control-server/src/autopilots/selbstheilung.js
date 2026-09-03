@@ -34,12 +34,20 @@ export const ABSTAENDE_MS = Object.freeze([0, 5 * 60 * 1000, 15 * 60 * 1000]);
  * @param {Array} p.autopiloten Liste aus autopilotUebersicht().
  * @param {Map<string, {versuche: number, letzterMs: number, eskaliert: boolean}>} p.zustand
  * @param {number} p.jetztMs
- * @returns {{heilen: Array<{id: string, versuch: number}>, eskalieren: Array<{id: string, name: string, grund: string}>, warten: Array<{id: string, nochMs: number}>}}
+ * @param {Set<string>|null} [p.erreichbar] Kennungen, fuer die ein Start-Weg
+ *   existiert. Ist die Menge gesetzt und ein roter Autopilot fehlt darin
+ *   (Mac-Cron, fremder Dienst), gibt es KEINEN Versuch und KEINE Eskalation:
+ *   er landet einmal je Rot-Phase unter `betreiber`. Audit 03.09.: Erste
+ *   Hilfe stand tagelang rot, weil sie zwei Mac-Jobs "nach 3 Versuchen
+ *   aufgab", die sie nie haette starten koennen — ein Doppel-Rot ohne
+ *   Aussage, denn die Mac-Jobs sind selbst schon rot und tragen den Grund.
+ * @returns {{heilen: Array<{id: string, versuch: number}>, eskalieren: Array<{id: string, name: string, grund: string}>, warten: Array<{id: string, nochMs: number}>, betreiber: Array<{id: string, name: string}>}}
  */
-export function planeHeilung({ autopiloten = [], zustand = new Map(), jetztMs = Date.now() } = {}) {
+export function planeHeilung({ autopiloten = [], zustand = new Map(), jetztMs = Date.now(), erreichbar = null } = {}) {
   const heilen = [];
   const eskalieren = [];
   const warten = [];
+  const betreiber = [];
 
   for (const a of autopiloten) {
     const eintrag = zustand.get(a.id);
@@ -54,6 +62,15 @@ export function planeHeilung({ autopiloten = [], zustand = new Map(), jetztMs = 
 
     // Wartung heisst: bewusst stillgelegt. Da wird nichts wiederbelebt.
     if (a.wartung) continue;
+
+    // Kein Start-Weg von hier aus: Betreiber-Punkt, genau einmal je Rot-Phase.
+    if (erreichbar && !erreichbar.has(a.id)) {
+      if (!eintrag?.betreiber) {
+        zustand.set(a.id, { versuche: 0, letzterMs: jetztMs, eskaliert: false, betreiber: true });
+        betreiber.push({ id: a.id, name: a.name || a.id });
+      }
+      continue;
+    }
 
     const stand = eintrag || { versuche: 0, letzterMs: 0, eskaliert: false };
     if (stand.eskaliert) continue; // Mensch ist informiert, Ruhe bewahren.
@@ -82,7 +99,7 @@ export function planeHeilung({ autopiloten = [], zustand = new Map(), jetztMs = 
     heilen.push({ id: a.id, versuch: stand.versuche });
   }
 
-  return { heilen, eskalieren, warten };
+  return { heilen, eskalieren, warten, betreiber };
 }
 
 /**
@@ -120,19 +137,25 @@ export async function fuehreHeilungAus({ plan, heiler = {}, melde = null, sendeA
     log(`[selbstheilung] ESKALATION ${e.id}: ${e.grund}`);
     if (sendeAlarm) await sendeAlarm(e).catch(() => {});
   }
+  // Betreiber-Punkte nur ins Log: die Rot-Mail je Episode schickt schon die
+  // Alarm-Wache fuer den betroffenen Autopiloten selbst — eine zweite Mail
+  // waere derselbe Alarm in anderer Verpackung.
+  const betreiber = plan.betreiber || [];
+  for (const b of betreiber) log(`[selbstheilung] BETREIBER-PUNKT ${b.id}: kein Start-Weg von hier (Mac/extern), Grund steht an seiner Ampel`);
 
   // Der Heiler bezeugt sich selbst — sonst wüsste niemand, ob er überhaupt
   // arbeitet. Dieselbe Regel wie beim Taktgeber.
   if (melde) {
     const versucht = ergebnisse.length;
     const gelungen = ergebnisse.filter((r) => r.ok).length;
+    const anhang = betreiber.length ? `; ${betreiber.length} ohne Start-Weg (Mac/extern) = Betreiber-Punkt, nicht eskaliert` : "";
     melde("selbstheilung", {
       status: plan.eskalieren.length ? "fehler" : "ok",
-      meldung: plan.eskalieren.length
+      meldung: (plan.eskalieren.length
         ? `${plan.eskalieren.length} Autopilot(en) nach ${VERSUCHE_MAX} Versuchen aufgegeben — Betreiber informiert`
         : versucht
           ? `${gelungen}/${versucht} Wiederbelebung(en) angestoßen, ${plan.warten.length} warten auf ihren Abstand`
-          : "Nichts zu heilen — kein Autopilot steht auf rot",
+          : "Nichts zu heilen — kein wiederbelebbarer Autopilot steht auf rot") + anhang,
       dauerMs: null
     });
   }

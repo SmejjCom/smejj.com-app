@@ -112,3 +112,15 @@ im Läufer; „—" = niemand misst.
 - Die Ampel-API (`/api/admin/ops/autopiloten`) antwortete im Browser dreimal nicht binnen 40 s — die Zahlen oben stammen aus der gerenderten Seite und der Tagesmappe. Der Endpunkt selbst gehört auf die Liste (Nr. 56 misst nur `/health`).
 - Registry-TÜV = Code-Lesung im Bauzweig; ob jeder Selbsttest live so läuft, zeigt nur die Ampel.
 - Die Ursache des Melder-Ausfalls (Token) ist Verdacht mit Beleg, kein gemessener 401 — das Portal entscheidet.
+
+## 7. Nachtrag: Runde 1 umgesetzt (03.09., Bauzweig, Betreiber-Wahl „Runde 1 bauen")
+
+- **Nr. 73 Türwächter registriert** (lief seit 14.08. ohne Registry-Eintrag, Ergebnis verworfen): Registry Deckung, Bereich „Sicherheit & Wachdienst", Ehrlichkeits-Liste.
+- **Heiler-Liste +5:** konkurrenz-radar, angelina-autopilot, support-sla, sync-waechter, tuerwaechter sind jetzt wiederbelebbar.
+- **Erste Hilfe ohne Doppel-Rot:** `planeHeilung` kennt `erreichbar`; rote Autopiloten ohne Start-Weg (Mac/extern) werden einmal je Rot-Phase als Betreiber-Punkt geloggt, nie „nach 3 Versuchen aufgegeben". Test in `tests/selbstheilung.test.mjs`.
+- **Registry ehrlich:** 15 Selbsttest-Autopiloten (08–11, 13, 14, 16, 18, 20–22, 25–28) tragen jetzt `ort: … nur Selbsttest`, `zeitplan: alle 30 Minuten (Selbsttest der Bausteine)` und ein „EHRLICH (03.09.)"-`verbessert`; Nr. 12 als Health-Sonde beschrieben; Nr. 32 „24 Autopiloten" → „über 60 Läufe".
+- **Tote Selbsttests entfernt:** laufMultimodal, laufUserFeedbackFlywheel, laufInternetHarvester (34 Zeilen).
+- **Attrappen-Kachel entfernt:** Bauzweig `public/admin/views-stage9.js`; Arbeitszweig design-v11 beide Kopien (Commit 1cdd693c) — live erst nach Frontend-Push.
+- Tests: 82 grün (Selbstheilung, Türwächter, Ehrlichkeit, Deckung, Wachstum, Nr. 65/71/72, Registry, Autopiloten) + Läufer-Tests; check:guidelines und check:modul-syntax grün.
+- **Admin-Lock:** der Betreiber-Stempel vom 03.09. 11:27 UTC deckte nur Nr. 72; Runde 1 ändert zusätzlich opsAutopilotenListe.js → zweiter Doppelklick nötig (dasselbe .command, Skript-Fehler „docs/approvals" statt „docs/security" behoben).
+- **Nicht in dieser Runde:** Melder-Token (Zeabur-Portal, Betreiber), Startseite < 300 KB (Arbeitszweig), Nr. 74–82.

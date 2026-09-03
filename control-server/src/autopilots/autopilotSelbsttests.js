@@ -60,14 +60,6 @@ export function laufMemory() {
   ]);
 }
 
-export function laufMultimodal() {
-  const gut = validateMultimodalInput({ type: "image", data: "iVBORw0KGgo=", mimeType: "image/png" });
-  const schlecht = validateMultimodalInput(null);
-  return auswerten("Eingabepruefung", [
-    { was: "gueltige Eingabe wird angenommen", erfuellt: gut?.valid === true || gut?.ok === true },
-    { was: "leere Eingabe wird abgewiesen", erfuellt: schlecht?.valid === false || schlecht?.ok === false }
-  ]);
-}
 
 export function laufTaskOrchestrator() {
   const graph = buildTaskGraph("Baue eine Anmeldeseite mit Tests und Dokumentation");
@@ -114,15 +106,6 @@ export function laufModelLifecycle() {
   ]);
 }
 
-export function laufUserFeedbackFlywheel() {
-  const roh = "Schreib an alan.best@example.com, mein Schluessel ist sk-abcdef123456 und die IP 192.168.10.5";
-  const sauber = String(scrubPiiData(roh) || "");
-  return auswerten("PII-Maskierung", [
-    { was: "E-Mail wird maskiert", erfuellt: !sauber.includes("alan.best@example.com") },
-    { was: "Schluessel wird maskiert", erfuellt: !sauber.includes("sk-abcdef123456") },
-    { was: "Text bleibt erhalten", erfuellt: sauber.length > 20 }
-  ]);
-}
 
 export function laufProcessReward() {
   const kette = "Schritt 1: Wir setzen x = 4.\nSchritt 2: Wir quadrieren x, also 16.\nSchritt 3: Wir ziehen 6 ab, Ergebnis 10.";
@@ -153,17 +136,6 @@ export function laufEvolutionaryMutation() {
   ]);
 }
 
-export function laufInternetHarvester() {
-  const fakten = extractHarvestedFacts(
-    "Node.js 24 wurde veroeffentlicht. Die Version bringt einen schnelleren Startvorgang. "
-    + "Ausserdem wurde CVE-2026-1234 im HTTP-Parser behoben.",
-    "Node.js"
-  );
-  return auswerten("Faktenernte", [
-    { was: "liefert Fakten", erfuellt: Array.isArray(fakten) ? fakten.length > 0 : Boolean(fakten) },
-    { was: "Inhalt taucht auf", erfuellt: JSON.stringify(fakten || "").toLowerCase().includes("node") }
-  ]);
-}
 
 /** Prueft die ECHTE Architektur dieses Containers, kein Beispielprojekt. */
 export function laufRepoArchitect(dateien = []) {

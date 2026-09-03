@@ -102,7 +102,7 @@ export const IM_LAEUFER_BETRIEBEN = Object.freeze([
   "live-arena-leaderboard", "instant-web-container", "realtime-voice-pair", "autonomous-git-bot",
   "werkstatt-autopilot", "synthetic-user-watchdog", "voice-region-check",
   "ai-evolution-engine", "missing-function-detector", "autopilot-supervisor", "evolution-ablage",
-  "nachweis-kette",
+  "nachweis-kette", "konkurrenz-radar", "angelina-autopilot", "support-sla", "sync-waechter", "tuerwaechter", // Audit 03.09.: liefen im Läufer, fehlten hier
   "training-loop",
   "trainings-reife",
   ...DECKUNG_IDS,
@@ -427,7 +427,8 @@ export function messTokenBesorgen({ env = process.env, ausstellen = issueSession
 }
 
 /**
- * Türwächter (Nr. 40): geht den Weg, den ein Mensch geht, und meldet, wenn eine
+ * Türwächter (Nr. 73, seit dem Audit 03.09. in der Registry — vorher wurde
+ * sein Ergebnis von interneMeldung verworfen): geht den Weg, den ein Mensch geht, und meldet, wenn eine
  * Tür zu ist. Er ist die Antwort auf zwei stille Aussperrungen am 2026-08-14,
  * bei denen alle übrigen Autopiloten grün waren — sie messen Dienste, nicht
  * Türen. Siehe tuerwaechterAutopilot.js.
@@ -790,8 +791,9 @@ export async function heileWasRotIst({
   log = () => {}
 } = {}) {
   const daten = uebersicht({ jetztMs });
-  const plan = planeHeilung({ autopiloten: daten.autopiloten || [], zustand, jetztMs });
-  return fuehreHeilungAus({ plan, heiler: baueHeiler({ melde }), melde, sendeAlarm, log });
+  const heiler = baueHeiler({ melde });
+  const plan = planeHeilung({ autopiloten: daten.autopiloten || [], zustand, jetztMs, erreichbar: new Set(Object.keys(heiler)) });
+  return fuehreHeilungAus({ plan, heiler, melde, sendeAlarm, log });
 }
 
 // Der Taktstart (starteAutopilotLaeufer) wohnt seit 2026-08-24 in

@@ -282,7 +282,6 @@
       + V.kachelBlock("Grün", String(d.gruen || 0), "läuft nachweislich", (d.gruen || 0) > 0 ? "up" : "")
       + V.kachelBlock("Gelb", String(d.gelb || 0), "verspätet, Schonfrist läuft")
       + V.kachelBlock("Rot", String(d.rot || 0), (d.rot || 0) > 0 ? "sofort ansehen" : "keiner", (d.rot || 0) > 0 ? "dn" : "up")
-      + V.kachelBlock("DPO Self-Training", "24/7 Aktiv", "Ground-Truth Self-Play & Benchmarks", "up")
       + ((d.wartung || 0) > 0
         ? V.kachelBlock("Wartung", String(d.wartung), "stummgeschaltet, kein Alarm")
         : "")

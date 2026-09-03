@@ -136,6 +136,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "abo-umsatz-wache",         // Nr. 69: Abo-Spiegel billing/customers + Trend-Karte über den letzten Lauf
   "flaggen-wache",            // Nr. 70: Flag-Ablage admin/flags mit updatedAt-Alter je Entscheidung
   "umgebungs-wache",          // Nr. 71: liest die echte Prozess-Umgebung (Zhipu-Coding-Adresse, Pflichtschluessel)
+  "tuerwaechter",             // Nr. 73: echte HTTP-Kette (Anmeldung, Admin, Chat) mit Mess-Token gegen den Control-Server
   "modell-evolution"          // Nr. 72: Referenz aus Nr. 01, Noten je Faehigkeit aus evolution/kennzahlen, Reife-Karte Nr. 65, echte Umgebung; Zyklus-Protokoll
 ]);
 

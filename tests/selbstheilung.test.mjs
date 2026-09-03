@@ -90,6 +90,36 @@ test("In Wartung wird nichts wiederbelebt", () => {
   assert.deepEqual(plan.heilen, [], "stillgelegt heisst stillgelegt");
 });
 
+test("Audit 03.09.: ohne Start-Weg ist ein Roter ein Betreiber-Punkt — kein Versuch, keine Eskalation, kein Doppel-Rot", async () => {
+  const zustand = new Map();
+  const erreichbar = new Set(["im-laeufer"]);
+  let t = 1_000_000;
+  const ap = [rot("web-vitals-wache"), rot("im-laeufer")];
+  const p1 = planeHeilung({ autopiloten: ap, zustand, jetztMs: t, erreichbar });
+  assert.deepEqual(p1.heilen, [{ id: "im-laeufer", versuch: 1 }], "nur der erreichbare wird versucht");
+  assert.deepEqual(p1.betreiber.map((b) => b.id), ["web-vitals-wache"], "der Mac-Job ist ein Betreiber-Punkt");
+  // Drei Takte spaeter: kein Versuchszaehler, keine Eskalation, der Punkt wird nicht wiederholt.
+  for (let i = 0; i < 4; i += 1) { t += ABSTAENDE_MS[2] + 1; planeHeilung({ autopiloten: ap, zustand, jetztMs: t, erreichbar }); }
+  const p5 = planeHeilung({ autopiloten: ap, zustand, jetztMs: t + 1, erreichbar });
+  assert.equal(p5.eskalieren.some((e) => e.id === "web-vitals-wache"), false, "ein Mac-Job wird NIE 'nach 3 Versuchen aufgegeben'");
+  assert.deepEqual(p5.betreiber, [], "der Betreiber-Punkt kommt genau einmal je Rot-Phase");
+  // Wieder gruen setzt auch den Betreiber-Punkt zurueck.
+  planeHeilung({ autopiloten: [gruen("web-vitals-wache")], zustand, jetztMs: t + 2, erreichbar });
+  assert.equal(zustand.has("web-vitals-wache"), false);
+  // Und die Selbstmeldung bleibt gruen, nennt den Punkt aber mit Zahl.
+  const gemeldet = new Map();
+  await fuehreHeilungAus({
+    plan: { heilen: [], eskalieren: [], warten: [], betreiber: [{ id: "web-vitals-wache", name: "Web-Vitals-Wache" }] },
+    heiler: {},
+    melde: (id, e) => { gemeldet.set(id, e); return true; }
+  });
+  assert.equal(gemeldet.get("selbstheilung").status, "ok");
+  assert.match(gemeldet.get("selbstheilung").meldung, /1 ohne Start-Weg \(Mac\/extern\) = Betreiber-Punkt/);
+  // Ohne erreichbar-Menge bleibt das alte Verhalten (Rueckwaertskompatibel).
+  const alt = planeHeilung({ autopiloten: [rot("x")], zustand: new Map(), jetztMs: 1 });
+  assert.deepEqual(alt.heilen, [{ id: "x", versuch: 1 }]);
+});
+
 test("Ohne hinterlegten Weg wird ehrlich eskaliert statt Erfolg vorzutaeuschen", async () => {
   const alarme = [];
   const ergebnisse = await fuehreHeilungAus({

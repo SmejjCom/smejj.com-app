@@ -38,7 +38,9 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 67+68 (2026-08-30): Fristen- und Bestands-Wächter — Recht ist Wachdienst.
     "dsgvo-fristen", "ai-act-wache",
     // Nr. 61 (2026-08-24): taegliche Unit-Tests des Control-Servers (Mac-Cron).
-    "test-waechter"
+    "test-waechter",
+    // Nr. 73 (2026-09-03, Audit): der Tuerwaechter lief seit 14.08. ohne Registry-Eintrag.
+    "tuerwaechter"
   ],
   // (Nr. 63/64 stehen unten bei "Betrieb & Auslieferung" — Performance und Speicher sind Betriebsfragen.)
   "Modelle & Wissen": [
