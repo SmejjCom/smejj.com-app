@@ -198,3 +198,26 @@ Schluessel; alte Eintraege ohne Feld bleiben unbefristet (Fix wirkt nur vorwaert
 Tests: `tests/oeffentliche-api.test.mjs` (Laufzeit, Ablauf trotz warmem
 Cache, 401 an /v1, Umschalten rettet nicht) und `tests/api-laufzeit.test.mjs`
 (Codes Server = Oberflaeche, Uebersetzungen in 14 Sprachen, Rechnung).
+
+## Vom Betreiber ausgestellte Schluessel (seit 2026-09-04)
+
+Owner und Admin stellen in der Konsole unter **API & Schluessel** Schluessel fuer
+Dritte aus (`smejj-adm-…`, Recht `apikeys.issue`). Pflichtfelder: Empfaenger
+(Name oder E-Mail) und Laufzeit (dieselben Codes wie oben, inkl. `unbefristet`
+nach Rueckfrage), optional eine Notiz. Der Empfaenger braucht kein smejj-Konto.
+
+- Speicher: EIN Index fuer alle Admins (`smejj-api-admin` / `smejj-api-admin-index`),
+  Rueckschlag wie bei Kundenschluesseln — der Torwaechter an `/v1` kennt nur
+  einen Weg. Kennung `adm_…`, Praefix `smejj-adm-`.
+- Verbrauch laeuft auf das API-Konto des ausstellenden Admins (Unbegrenzt-
+  Regel `SMEJJ_API_UNBEGRENZT` gilt damit mit). Nutzung (Anfragen/Token,
+  zuletzt benutzt) steht je Schluessel in der Konsole.
+- Routen: `GET /api/admin/geld/api/ausgestellt` (apikeys.read),
+  `POST …/api/ausstellen` (apikeys.issue, Antwort 201 mit Klartext genau einmal),
+  `POST …/api/widerrufen` (apikeys.revoke, Grund ≥ 10 Zeichen). Ausstellung und
+  Widerruf stehen im Audit-Log (`apikey.issue`, `apikey.revoke`), nie der Klartext.
+- Ablauf → 401 `api_key_expired`, Widerruf → 401 `api_key_revoked`.
+- Noch offen: Monatsbudget je Schluessel, Tagesmappe-Zeile "N unbefristete im Umlauf".
+
+Tests: `tests/admin-api-schluessel.test.mjs` (Rechte, Eingaben, Torwaechter,
+Nutzung, Ablauf, Widerruf, Audit) und `adminRoles.test.js` (apikeys.issue).

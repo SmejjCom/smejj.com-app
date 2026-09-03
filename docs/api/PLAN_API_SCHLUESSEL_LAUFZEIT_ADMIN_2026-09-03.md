@@ -61,7 +61,7 @@ davon ist gebaut. Wer hier weiterarbeitet: erst diesen Plan lesen, dann bauen.
 - Alte Schluessel ohne Feld bleiben unbefristet (Rueckwaertskompatibel,
   "Fix wirkt nur vorwaerts").
 
-### 3. Admin-Schluessel-Bereich (Konsole)
+### 3. Admin-Schluessel-Bereich (Konsole) — GEBAUT 2026-09-04 (Bauzweig 3f211fde: publicApiAdminKeys.js, Route /api/admin/geld/api/*, Recht apikeys.issue, Konsole "API & Schluessel"; Stempel Admin-Lock + Auslieferung per Betreiber-Kaskade scripts/einmal/admin-schluessel-2026-09-04.sh; Monatsbudget je Schluessel NOCH OFFEN)
 
 - Neuer Bereich in der Admin-Konsole "Ausgestellte Schluessel".
 - Neues Recht in `adminRoles.js`: `apikeys.issue` mit
@@ -78,14 +78,14 @@ davon ist gebaut. Wer hier weiterarbeitet: erst diesen Plan lesen, dann bauen.
   `keyId` getrennt sichtbar (publicApiLedger.js kennt keyId bereits ueber
   `merkeBenutzung`).
 
-### 4. Praefix trennt die Arten
+### 4. Praefix trennt die Arten — GEBAUT 2026-09-04 (smejj-adm-, Torwaechter kennt beide)
 
 - Nutzer: `smejj-live-…` (bleibt).
 - Admin-ausgestellt: `smejj-adm-…`.
 - `SCHLUESSEL_MUSTER` erweitern; jeder Log, jeder Waechter und der
   Secret-Scanner erkennen die Art am Praefix.
 
-### 5. Sicherheit, die Profis erwarten
+### 5. Sicherheit, die Profis erwarten — GEBAUT 2026-09-04 (Audit apikey.issue/apikey.revoke mit Grund; Tagesmappe-Zeile NOCH OFFEN)
 
 - Klartext nur einmal anzeigen (bleibt).
 - Jede Erzeugung, jeder Widerruf, jede Loeschung ins Admin-Protokoll
