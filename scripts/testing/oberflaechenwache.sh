@@ -50,18 +50,22 @@ FEHLER=0
 echo ""
 echo "--- 1/3 Responsive (19 Ansichten x 8 Geraeteklassen) ---"
 if node scripts/testing/messe_responsive.mjs --url "$ZIEL"; then
+  RESPONSIVE="gruen"
   echo "[wache] responsive: gruen"
 else
   echo "[wache] responsive: VERSTOESSE (siehe oben)"
+  RESPONSIVE="Verstoesse"
   FEHLER=1
 fi
 
 echo ""
 echo "--- 2/3 Touch-Ziele (375 px, echte Tipps) ---"
 if node scripts/testing/measure_touch_targets_app.mjs --url "$ZIEL"; then
+  TOUCH="gruen"
   echo "[wache] touch: gruen"
 else
   echo "[wache] touch: VERSTOESSE (siehe oben)"
+  TOUCH="Verstoesse"
   FEHLER=1
 fi
 
@@ -75,14 +79,33 @@ echo "--- 3/3 Betriebswerte des Control-Servers ---"
 # waere ein zweiter Ort, an dem genau das wieder passieren kann.
 # Der Pruefer meldet nur FEHLENDE PFLICHTWERTE als Fehler; die uebrigen
 # Luecken sind Hinweise mit Standard.
-if node scripts/diagnose/control-umgebung-luecken.mjs; then
+BETRIEB_AUSGABE="$(node scripts/diagnose/control-umgebung-luecken.mjs 2>&1)"
+BETRIEB_CODE=$?
+printf '%s\n' "$BETRIEB_AUSGABE"
+if [ "$BETRIEB_CODE" -eq 0 ]; then
+  BETRIEB="gruen"
   echo "[wache] betriebswerte: gruen"
+elif printf '%s' "$BETRIEB_AUSGABE" | grep -q "zeabur_http_401"; then
+  # NICHT dasselbe wie ein fehlender Wert: wir konnten gar nicht nachsehen.
+  # Fail-closed bleibt (rot), aber die Meldung nennt die echte Ursache.
+  BETRIEB="nicht messbar (Zeabur-Schluessel abgelaufen, HTTP 401 — Betreiber muss ihn erneuern)"
+  echo "[wache] betriebswerte: NICHT MESSBAR — Zeabur antwortet 401 (Schluessel abgelaufen)"
+  FEHLER=1
+elif printf '%s' "$BETRIEB_AUSGABE" | grep -qE "zeabur_http_|Error:|ECONNREFUSED|ENOTFOUND"; then
+  BETRIEB="nicht messbar (Zeabur nicht erreichbar)"
+  echo "[wache] betriebswerte: NICHT MESSBAR — Zeabur nicht erreichbar"
+  FEHLER=1
 else
+  BETRIEB="Pflichtwert fehlt"
   echo "[wache] betriebswerte: PFLICHTWERT FEHLT (siehe oben)"
   FEHLER=1
 fi
 
 echo ""
+# EINE Zeile, die der Zeitgeber als Ampel-Meldung uebernimmt. Sie nennt jede der
+# drei Pruefungen einzeln — die alte Pauschalmeldung "Responsive+Touch: rot"
+# zeigte tagelang auf die falsche Ursache (Befund 2026-09-04).
+echo "[wache] BEFUND: responsive ${RESPONSIVE:-unbekannt}, touch ${TOUCH:-unbekannt}, betriebswerte ${BETRIEB:-unbekannt}"
 if [ "$FEHLER" -eq 0 ]; then
   echo "[wache] ALLE DREI GRUEN — die ausgelieferte Oberflaeche haelt Mass, die Betriebswerte sind vollstaendig."
 else

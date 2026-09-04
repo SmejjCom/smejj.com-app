@@ -182,14 +182,22 @@ fi
 STAND="$(git -C "$KOPIE" log --oneline -1)"
 echo "Arbeitskopie auf $STAND"
 
-/bin/bash "$KOPIE/scripts/testing/oberflaechenwache.sh"
-ERGEBNIS=$?
+BEFUND_DATEI="$BASIS/letzter-befund.txt"
+set -o pipefail
+/bin/bash "$KOPIE/scripts/testing/oberflaechenwache.sh" 2>&1 | tee "$BEFUND_DATEI"
+ERGEBNIS=${PIPESTATUS[0]}
+set +o pipefail
 
 URTEIL=gruen
 [ "$ERGEBNIS" -ne 0 ] && URTEIL=rot
 # Die Meldung soll das Urteil tragen, nicht nur eine Zahl: in der Ampel steht
 # sonst "Exit 1" und man muss erst das Log suchen.
-AP_BEFUND="Responsive+Touch gegen smejj.com: ${URTEIL}"
+# Die Meldung kommt aus der BEFUND-Zeile der Pruefung: sie nennt, WELCHE der
+# drei Pruefungen rot ist. Fehlt die Zeile (alte Fassung im Repo), bleibt der
+# bisherige Text — nie eine leere Ampel.
+AP_BEFUND="$(grep -a "\[wache\] BEFUND:" "$BEFUND_DATEI" 2>/dev/null | tail -1 | sed 's/^\[wache\] BEFUND: //')"
+[ -z "$AP_BEFUND" ] && AP_BEFUND="Responsive+Touch gegen smejj.com: ${URTEIL}"
+AP_BEFUND="smejj.com: ${AP_BEFUND}"
 printf '{"am":"%s","urteil":"%s","exit":%d,"stand":"%s"}\n' \
   "$(date -u +%FT%TZ)" "$URTEIL" "$ERGEBNIS" "${STAND//\"/}" > "$ZUSTAND"
 echo "Urteil: $URTEIL (Exit $ERGEBNIS), festgehalten in $ZUSTAND"
