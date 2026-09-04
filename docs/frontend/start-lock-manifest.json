@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T09:21:44.701Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): pdf.js-Worker in zwei Teilen im Repo (Sicherheitsregel: keine Datei ueber 1 MB), ganze Datei per build:pdfjs-worker gebaut und git-ignoriert; anhang-pdf-text.js laedt den Worker wie zuvor als eine Datei; Marken anhang-pdf-text v3 / composer-plus-menu werkzeuge-10 / composer-tools werkzeuge-19 / app.js b124; Service-Worker-Cache +1. Grundlage: Auftrag 2026-09-03 'alle Rechte, 100 % fertig, lass nichts offen' — check:all muss gruen sein.",
+  "frozenAt": "2026-09-04T09:37:33.606Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): Der API-Bereich bekommt zwei Reiter — 'Meine smejj-Schluessel' und 'Eigene Anbieter' statt einer gemischten Liste; Typ- und Filter-Chips entfallen, Basis-URL und Modell stehen oben im smejj-Reiter. Dafuer Marken api-center-surface v12, CSS v8, entwickler.js v15 und die drei Kettenglieder darueber (settings-surface, premium-surfaces, app.js, index.html), Service-Worker-Cache +1. Grundlage: Beschluss 2026-09-03 (docs/api/PLAN_API_SCHLUESSEL_LAUFZEIT_ADMIN_2026-09-03.md, Punkt 1) und Wahl 'Zwei Reiter bauen'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "13ece4b6fee664c2b8d45f9f094ab93510a297b550d38493e3cc0d76764ab07e",
+    "public/index.html": "2437f83bdbf70c6e490fef7d9bccd09408bb44c1057d1ffaeeaffe336b54465c",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "69c21011c1f20954b1686febf314f1cb0a7695e9fe23a2e5416cf9df467c6942",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "01c3240722197acb6c6f3dd70a7fbf6de8d42120b9cd78083644bac14ba6f08e",
+    "public/app.js": "dc538de8e0fe41601254aa7356642c2a454effe70cb609b9cb7139b4595d43b6",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "24cacb5458631b23415d5b0a69f0fb3a228873a4c1dc2464a20b5a7c861f6dde",
+    "public/premium-surfaces.js": "ea9ebd3f93612ce516558adac3ddc8f8060bb5e01be6adc5e684f4cc0136574e",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "fa43bbe38c5eac0aec8bdb769187108239fce4d3377a1d778c2ba1cb19e31677",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6a467c584bb152b7175f5950160215e8b215979b0140043d91a80c4760f69a20",
+    "public/sw.js": "8e64bd9e3e1ec3fa8ceb181e198c91214161820ed9007ac58c4d362b6a7c58b0",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
