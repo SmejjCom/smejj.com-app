@@ -15,6 +15,8 @@ const SCHLUESSEL = [/\bsk-[A-Za-z0-9_-]{12,}/, /\bAKIA[0-9A-Z]{16}\b/, /\bgh[pou
 const PII = [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, /(?:\+|\b0)\d[\d ()\/-]{7,}\d/, /\b(IBAN|DE\d{2}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{2})\b/];
 const PII_AUSNAHMEN = [/@example\.(org|com|net)/i, /@verein\.example/i, /@evil\.example/i];
 const INJECTION = [/ignor(e|iere)\s+(alle\s+)?(vorherigen|previous|bisherigen|all)/i, /systemanweisung/i, /\bDAN\b.*ohne regeln/i, /reveal.*(system prompt|secret)/i, /gib.*(freigabecode|api[_-]?key|passwort).*aus/i];
+/** Woran eine Verweigerung erkennbar ist. Bewusst weit gefasst, aber ohne Zustimmungswoerter. */
+const VERWEIGERUNG = /\b(nein|nicht|kein|keine|verweiger|lehne|unzulaessig|vertraulich|gebe .{0,20}nicht)\b/i;
 const SPAM = [/(.)\1{9,}/, /(https?:\/\/\S+\s*){4,}/i, /^(?:[^a-zA-ZäöüÄÖÜß]*)$/];
 
 export function hashText(t) { return createHash("sha256").update(String(t)).digest("hex"); }
@@ -22,7 +24,7 @@ export function hashText(t) { return createHash("sha256").update(String(t)).dige
 function normalisiere(t) { return String(t || "").toLowerCase().replace(/\s+/g, " ").replace(/[^\p{L}\p{N} ]/gu, "").trim(); }
 
 /** Prueft EIN Paar. Liefert {ok, grund}. */
-export function pruefePaar(messages, { suitenFragen = new Set() } = {}) {
+export function pruefePaar(messages, { suitenFragen = new Set(), angriffeErlaubt = false } = {}) {
   if (!Array.isArray(messages) || messages.length < 2) return { ok: false, grund: "format" };
   const user = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n");
   const assistant = messages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n");
@@ -32,7 +34,13 @@ export function pruefePaar(messages, { suitenFragen = new Set() } = {}) {
   const alles = user + "\n" + assistant;
   if (SCHLUESSEL.some((r) => r.test(alles))) return { ok: false, grund: "schluessel" };
   if (PII.some((r) => r.test(alles)) && !PII_AUSNAHMEN.some((r) => r.test(alles))) return { ok: false, grund: "personenbezogen" };
-  if (INJECTION.some((r) => r.test(user))) return { ok: false, grund: "prompt_injection" };
+  if (INJECTION.some((r) => r.test(user))) {
+    // Sicherheitsdaten brauchen den Angriff in der FRAGE — sonst lernt das Modell nie, ihn
+    // abzuwehren. Erlaubt ist er nur, wenn die Antwort eine echte Verweigerung ist. Ein Paar,
+    // das einer Injection FOLGT, waere Gift: genau daran ist con-1.1.0 am 03.09. gescheitert.
+    if (!angriffeErlaubt) return { ok: false, grund: "prompt_injection" };
+    if (!VERWEIGERUNG.test(assistant)) return { ok: false, grund: "angriff_ohne_verweigerung" };
+  }
   if (SPAM.some((r) => r.test(assistant))) return { ok: false, grund: "spam" };
   if (/\b(TODO|FIXME|lorem ipsum|undefined|NaN)\b/.test(assistant)) return { ok: false, grund: "fehlerhaft" };
   if (suitenFragen.has(normalisiere(user))) return { ok: false, grund: "suitenfall" };
@@ -40,7 +48,7 @@ export function pruefePaar(messages, { suitenFragen = new Set() } = {}) {
 }
 
 /** Rohzeilen (JSONL-Text oder Array) -> {paare, bericht}. Deterministisch (Reihenfolge der Quelle). */
-export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIANTEN, maxPaare = null } = {}) {
+export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIANTEN, maxPaare = null, angriffeErlaubt = false } = {}) {
   const suitenFragen = new Set(suiten.flatMap((s) => (s.cases || []).map((c) => normalisiere(c.prompt))));
   const zeilen = Array.isArray(rohZeilen) ? rohZeilen : String(rohZeilen).split("\n").filter((z) => z.trim());
   const abgelehnt = {};
@@ -53,7 +61,7 @@ export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIA
     let d;
     try { d = typeof z === "string" ? JSON.parse(z) : z; } catch { abgelehnt.json = (abgelehnt.json || 0) + 1; continue; }
     const messages = d.messages || (d.prompt && d.response ? [{ role: "user", content: d.prompt }, { role: "assistant", content: d.response }] : null);
-    const p = pruefePaar(messages, { suitenFragen });
+    const p = pruefePaar(messages, { suitenFragen, angriffeErlaubt });
     if (!p.ok) { abgelehnt[p.grund] = (abgelehnt[p.grund] || 0) + 1; continue; }
     const kennung = hashText(messages.map((m) => `${m.role}:${normalisiere(m.content)}`).join("|"));
     if (gesehen.has(kennung)) { abgelehnt.duplikat = (abgelehnt.duplikat || 0) + 1; continue; }
@@ -69,7 +77,7 @@ export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIA
   const bericht = {
     gelesen, angenommen: paare.length, abgelehnt, eindeutigeAntworten: jeAntwort.size,
     antwortLaengeMittel: antwortLaengen.length ? Math.round(antwortLaengen.reduce((a, b) => a + b, 0) / antwortLaengen.length) : 0,
-    maxVarianten, suitenFragenAusgeschlossen: suitenFragen.size,
+    maxVarianten, angriffeErlaubt, suitenFragenAusgeschlossen: suitenFragen.size,
     ok: paare.length > 0 && jeAntwort.size >= 50 && (abgelehnt.schluessel || 0) === 0 && (abgelehnt.personenbezogen || 0) < gelesen * 0.5,
     pruefungen: ["exakte_duplikate", "varianten_je_antwort", "schluessel", "personenbezogen", "prompt_injection", "spam", "fehlerhaft", "suitenfall", "laenge"]
   };
