@@ -92,3 +92,10 @@ test("Alle neuen Texte sind in allen 14 Sprachen uebersetzt", async () => {
     }
   }
 });
+
+test("Widerrufene und abgelaufene Schluessel zeigen kein Ablaufdatum-Versprechen (Live-Befund 2026-09-04)", () => {
+  // In der Ablauf-Spalte stand bei widerrufenen Zeilen "Unbefristet" — das liest
+  // sich wie eine Zusage, obwohl der Schluessel gar nicht mehr gilt.
+  assert.match(surface, /function ablaufText\(eintrag\) \{\s*if \(eintrag\.widerrufen \|\| eintrag\.abgelaufen\) return "—";/);
+  assert.match(surface, /ac-cell-ablauf">\$\{ablaufText\(eintrag\)\}/);
+});
