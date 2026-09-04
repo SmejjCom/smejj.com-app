@@ -40,6 +40,25 @@ export function tagesschluessel(datum = new Date()) {
   return `con/logs/kosten/${datum.toISOString().slice(0, 10)}.json`;
 }
 
+/**
+ * Zeitgrenze je Betriebsart. Gemessen am 03./04.09. auf einer RTX 3090:
+ * ein reiner Messlauf brauchte 36 Minuten (16 Modell holen, 5 auf die Karte, 10 messen),
+ * ein Trainingslauf 210. Vorher reservierte JEDER Job die Trainingszeit — das band
+ * unnoetig Budget und liess kleine Jobs am Deckel scheitern.
+ */
+export const MINUTEN_JE_MODUS = Object.freeze({
+  messung: 90,
+  training: 200,
+  "training+messung": 220,
+  "spiegel+messung": 200,
+  spiegel: 170
+});
+
+export function minutenFuer(modus, grenzen) {
+  const vorgabe = MINUTEN_JE_MODUS[modus] ?? grenzen.jobMaxMinuten;
+  return Math.min(vorgabe, grenzen.jobMaxMinuten);
+}
+
 export function leseGrenzen(env = process.env) {
   const tages = Number(env.CON_TAGESBUDGET_USD);
   const gesamt = Number(env.CON_GESAMTDECKEL_USD);

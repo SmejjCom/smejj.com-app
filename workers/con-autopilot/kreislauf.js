@@ -11,7 +11,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { bewerteAntworten, schwaechsteKategorie, vergleiche } from "./bewertung.js";
-import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch } from "./budget.js";
+import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch, minutenFuer } from "./budget.js";
 import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, stabileVersion, trageKandidatEin, findeVersion } from "./registry.js";
 import { bereiteJobVor, gruppenZustand } from "./salad.js";
 import { rollbackWennNoetig, setzeCanary } from "./canary.js";
@@ -313,7 +313,8 @@ async function starteJob(ctx, z, jobPlan) {
   if (!salad) return { ok: false, gruende: ["kein_salad_client"] };
   const tagesbuch = await leseTagesbuch(e2, jetzt());
   const gesamt = await leseGesamtverbrauch(e2);
-  const minuten = konfig.grenzen.jobMaxMinuten;
+  // Nur so viel Zeit reservieren, wie diese Betriebsart wirklich braucht.
+  const minuten = minutenFuer(jobPlan.modus, konfig.grenzen);
   const pruefung = darfStarten({ grenzen: konfig.grenzen, tagesbuch, gesamt, gpuKlassen: konfig.salad.gpuKlassen, prioritaet: konfig.salad.prioritaet, minuten });
   if (!pruefung.ok) return { ok: false, gruende: pruefung.gruende };
   const jobId = `con-${jetzt().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${jobPlan.modus.replace(/[^a-z]/g, "")}`;

@@ -218,3 +218,15 @@ test("faire Latte: geaenderte Suite erzwingt Neumessung der stabilen Version", a
   assert.equal(planNeu.schritt, "kandidat_messen");
   assert.equal(planNeu.job.version, "con-1.1.0");
 });
+
+test("budget: Zeitgrenze je Betriebsart reserviert nur, was die Art wirklich braucht", async () => {
+  const { minutenFuer, MINUTEN_JE_MODUS } = await import("../workers/con-autopilot/budget.js");
+  const grenzen = { jobMaxMinuten: 300 };
+  assert.equal(minutenFuer("messung", grenzen), 90);
+  assert.equal(minutenFuer("training+messung", grenzen), 220);
+  assert.ok(MINUTEN_JE_MODUS.messung < MINUTEN_JE_MODUS["training+messung"]);
+  // Der harte Deckel des Betreibers gewinnt immer.
+  assert.equal(minutenFuer("training+messung", { jobMaxMinuten: 60 }), 60);
+  // Unbekannte Art faellt auf den Deckel zurueck, nie auf etwas Groesseres.
+  assert.equal(minutenFuer("unbekannt", { jobMaxMinuten: 75 }), 75);
+});
