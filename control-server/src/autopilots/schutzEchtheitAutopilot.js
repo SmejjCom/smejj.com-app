@@ -28,7 +28,25 @@
 // geladen: EIN Ort, an dem die Regel steht — der Autopilot gibt ihr nur einen
 // Takt. Zwei Fassungen derselben Pruefung liefen frueher oder spaeter
 // auseinander, und dann bewacht die eine, was die andere durchlaesst.
-import { MANIFESTE, pruefeManifest } from "../../../scripts/check-schutz-echtheit.mjs";
+// FAIL-SAFE STATT FAIL-FATAL (Befund 2026-09-05): Dieser Import stand als
+// statische Zeile hier — und als die Datei im Abbild fehlte, startete der
+// GANZE Control-Server nicht mehr. api.smejj.com antwortete eine Stunde mit
+// 502, Chat und Anmeldung waren tot, wegen eines Waechters.
+//
+// Ein Waechter darf den Dienst, den er bewacht, niemals mitreissen. Der Import
+// laeuft deshalb dynamisch und faellt weich: fehlt die Datei, meldet der
+// Autopilot ehrlich "nicht messbar" — und alles andere laeuft weiter.
+let MANIFESTE = [];
+let pruefeManifest = null;
+let ladeFehler = null;
+try {
+  const m = await import("../../../scripts/check-schutz-echtheit.mjs");
+  MANIFESTE = m.MANIFESTE;
+  pruefeManifest = m.pruefeManifest;
+} catch (f) {
+  ladeFehler = String(f?.message || f).slice(0, 120);
+}
+export { MANIFESTE, ladeFehler };
 
 /**
  * Selbsttest aus kaputter UND gesunder Probe. Ein Waechter, der nur die heile
@@ -54,6 +72,11 @@ export async function fuehreSelbsttestAus() {
 
 /** Der Lauf im Takt. Ohne Netz wird nichts behauptet. */
 export async function laufSchutzEchtheit({ mitNetz = true, basis = "https://smejj.com" } = {}) {
+  // Fehlt die Pruefsatz-Datei, ist das "nicht messbar" — kein Verstoss und
+  // erst recht kein Grund, den Lauf mit einem TypeError abzubrechen.
+  if (ladeFehler || typeof pruefeManifest !== "function") {
+    return { ok: true, meldung: `Nicht messbar: die Pruefsatz-Datei fehlt im Abbild (${ladeFehler || "pruefeManifest nicht geladen"}) — COPY-Zeile im Dockerfile pruefen` };
+  }
   const probe = await fuehreSelbsttestAus();
   if (!probe.bestanden) {
     return { ok: false, meldung: `Schutz-Echtheit beurteilt bekannte Lagen falsch: ${probe.fehler.join("; ")}` };

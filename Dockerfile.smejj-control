@@ -51,6 +51,17 @@ COPY --chown=node:node Memory_Bank.md AI_Guidelines.md MASTER_PROMPT.md Project_
 # wer dort etwas ergaenzt, ergaenzt es auch hier.
 COPY --chown=node:node workers ./workers
 COPY --chown=node:node schemas ./schemas
+# BEFUND 2026-09-05, 00:32 UTC: Der Control-Server stuerzte in einer
+# Neustart-Schleife ab — "Cannot find module /app/scripts/check-schutz-echtheit.mjs,
+# imported from control-server/src/autopilots/schutzEchtheitAutopilot.js".
+# api.smejj.com antwortete rund eine Stunde mit 502; Chat und Anmeldung waren
+# tot, die Seiten liefen weiter (GitHub Pages).
+#
+# Ursache: Autopilot Nr. 82 laedt seine Pruefsatz aus scripts/, und scripts/
+# wurde nie ins Abbild kopiert. Dieselbe fehlende COPY-Zeile wie beim
+# con-Abbild-Waechter. Kopiert wird NUR diese eine Datei — scripts/ enthaelt
+# Einmal-Kaskaden und Diagnosewerkzeuge, die im Abbild nichts verloren haben.
+COPY --chown=node:node scripts/check-schutz-echtheit.mjs ./scripts/check-schutz-echtheit.mjs
 
 # Nicht als root laufen (Sicherheit ist Pflicht).
 USER node
