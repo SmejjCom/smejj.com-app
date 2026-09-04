@@ -46,7 +46,7 @@
     "check:admin-lock": "node scripts/check-admin-lock.mjs",
     "check:autopilot-nummern": "node scripts/check-autopilot-nummern.mjs",
     "check:menue-nummern": "node scripts/check-menue-nummern.mjs",
-    "check:admin-schiene": "node --test tests/admin-schiene.test.mjs",
+    "check:admin-schiene": "node --test tests/admin-schiene.test.mjs tests/admin-ladewache.test.mjs",
     "check:nummern-schutz": "npm run check:autopilot-nummern && npm run check:menue-nummern && node --test tests/nummern-schutz.test.mjs",
     "check:admin-console-sync": "node scripts/deploy/sync_admin_console_pages.mjs --pruefen",
     "check:admin-konsole": "node scripts/check-admin-konsole.mjs",
