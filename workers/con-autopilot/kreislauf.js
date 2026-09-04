@@ -350,7 +350,10 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
           CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
   }
   // 3. Schwaeche -> Trainingsplan -> Daten pruefen -> Training.
-  const schwaeche = z.schwaechste || (stabil.benchmarks ? schwaechsteKategorie(stabil.benchmarks) : null);
+  // Die Schwaeche der STABILEN Version zaehlt, nicht die des zuletzt Gemessenen. Nach einem
+  // REJECT stand am 04.09. die Schwaeche des verworfenen Kandidaten im Zustand — der naechste
+  // Lauf haette gegen eine Schwaeche trainiert, die es im gefuehrten Stand gar nicht gibt.
+  const schwaeche = (stabil.benchmarks ? schwaechsteKategorie(stabil.benchmarks) : null) || z.schwaechste || null;
   const daten = await findeDatensatz(e2, schwaeche?.kategorie);
   const minPaare = Number(process.env.CON_MIN_PAARE) > 0 ? Number(process.env.CON_MIN_PAARE) : 3000;
   if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter con/datasets/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };

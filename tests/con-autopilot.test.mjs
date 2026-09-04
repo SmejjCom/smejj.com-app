@@ -320,3 +320,26 @@ test("Notbremse: dreimal derselbe Fehler haelt den Kreislauf an", async () => {
   const z2 = await tick({ konfig, e2, salad: null, log: () => {} });
   assert.notEqual(z2.phase, "gestoppt");
 });
+
+test("Trainingsziel ist die Schwaeche der STABILEN Version, nicht die des verworfenen Kandidaten", async () => {
+  const { planeNaechstenSchritt, suitenStand } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      if (k === `con/base/x/manifest.json`) return { komplett: true };
+      if (k === "con/datasets/index.json") return { datensaetze: [{ name: "d1", prefix: "con/datasets/d1", paare: 5000, kategorien: ["allgemein"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-04" }] };
+      return standard;
+    },
+    liste: async () => []
+  };
+  const registry = { versions: [{ version: "con-1.0", status: "stable", basisPrefix: "con/base/x",
+    benchmarks: { gesamt: 0.97, kritisch: 1, suitenStand: stand,
+      kategorien: { reasoning: { score: 0.83, kritisch: 1 }, sicherheit: { score: 1, kritisch: 0 } } } }] };
+  // Im Zustand steht noch die Schwaeche des VERWORFENEN Kandidaten — sie darf nicht gewinnen.
+  const z = { schwaechste: { kategorie: "sicherheit", score: 0.66, kritisch: 2 } };
+  const plan = await planeNaechstenSchritt({ e2, konfig }, z, registry);
+  assert.equal(plan.schritt, "training");
+  assert.equal(plan.schwaeche.kategorie, "reasoning", "die Schwaeche des gefuehrten Standes zaehlt");
+});
