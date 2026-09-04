@@ -13,25 +13,39 @@ Doppelklick im Finder auf **`smejj.com con-Autopilot Zeabur-Werte kopieren.comma
 wuerfelt einen frischen `CON_ADMIN_KEY` und legt alle 21 Zeilen in die Zwischenablage.
 Nichts davon verlaesst den Rechner, nichts wird protokolliert.
 
-## Schritt 2 — Dienst anlegen (Portal, Projekt `untitled-1`, Server Silicon Valley)
+## Schritt 2 — Dienst (ERLEDIGT am 2026-09-04)
 
-1. Add Service → Git → Repository `SmejjCom/smejj.com-app`
-2. Branch `feature/auth-redesign-github-magiclink`
-3. Dienstname **genau `con-autopilot`** — nur dann waehlt Zeabur `Dockerfile.con-autopilot`
-   (am Docker-Wal-Symbol erkennbar; alle anderen Dienste bleiben unberuehrt)
-4. Port 8080, Domain optional (nur fuer das Dashboard im Browser)
-5. Variables → **Bulk edit** → Befehl+V → Save → Redeploy abwarten
+Angelegt in Projekt `untitled-1` (Tencent Silicon Valley 2C 8GB):
 
-**Falle:** Zeabur ERSETZT die Variablenliste beim Schreiben komplett. Immer alle Zeilen
-auf einmal einfuegen, nie einzelne nachtragen.
+| | |
+|---|---|
+| Dienst | `con-autopilot`, service-6a9a7baf39c2940e7ee092d8 |
+| Quelle | GitHub `SmejjCom/smejj.com-app`, Branch `feature/auth-redesign-github-magiclink` |
+| Bauplan | `Dockerfile.con-autopilot` (Zeabur waehlt ihn ueber den DIENSTNAMEN — der Name muss exakt stimmen) |
+| Adresse | https://smejj-con-autopilot.zeabur.app |
+| Abbild | 80 MB, Startzeile im Protokoll: `[con] listening 0.0.0.0:8080` |
 
-## Schritt 3 — Pruefen
+**Zwei Fallen, beide live gemessen:**
+1. Die Bauplan-Vorschau zeigt trotzdem `nodejs / pnpm start`. Das ist die generische Erkennung;
+   beim echten Bau greift `Dockerfile.<dienstname>`. Nicht davon irritieren lassen.
+2. Ein Bau kann an Zeaburs Docker-Spiegel scheitern
+   (`load metadata for docker.io/library/node:22-slim … failed to do request`). Das ist ein
+   Aussetzer des Hosters, kein Code-Fehler — der naechste Bau laeuft durch.
+
+## Schritt 3 — Umgebung setzen (einziger Schritt, der den Betreiber braucht)
+
+Doppelklick auf `smejj.com con-Autopilot Zeabur-Werte kopieren.command`, dann im Portal
+Dienst `con-autopilot` → **Variable** → **Edit Raw Variables** → alles ersetzen → Save → Redeploy.
+Zeabur ersetzt die Liste komplett; immer alle 21 Zeilen auf einmal einfuegen.
+
+## Schritt 4 — Pruefen
 
 | Adresse | Erwartung |
 |---|---|
 | `/health` | `{"ok":true,"aktiviert":true,"e2":true,"salad":true}` |
-| `/api/con/dashboard` | Tabelle mit con-1.0.0 (stabil) und con-1.1.0 (verworfen) |
-| Zeabur-Log | `listening 0.0.0.0:8080 aktiviert=true takt=300s`, danach alle 5 min ein Takt |
+| `/api/con/status` ohne Schluessel | 401 — Betriebsdaten sind verschlossen |
+| `/api/con/dashboard?key=<CON_ADMIN_KEY>` | Tabelle mit con-1.0.0 (stabil) und con-1.1.0 (verworfen) |
+| e2 `con/autopilot/zustand.json` | `letzterTick` nicht aelter als 5 Minuten — der einzige Beweis, dass er wirklich arbeitet |
 
 ## Was der Dienst dann von allein tut
 
