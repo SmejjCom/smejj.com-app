@@ -49,6 +49,17 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const WURZEL = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const OEFFENTLICH = path.join(WURZEL, "public");
 const SEITE = path.join(OEFFENTLICH, "index.html");
+
+// Die uebrigen Seiten, die der Betreiber und die Nutzer wirklich aufrufen.
+// Sie haben KEINE eigene Messlatte (sie sind alle deutlich leichter als die
+// Startseite); der Waechter meldet sie, wenn eine ueber die Vorgabe geht.
+// Der Adminbereich fehlt bewusst: er hat seine eigene Kette und seinen eigenen
+// Schutz (check:admin-console-sync, admin-lock).
+const WEITERE_SEITEN = Object.freeze([
+  "verlauf.html", "programmieren.html", "entwickler.html", "hilfe.html",
+  "status.html", "willkommen.html", "agb.html", "datenschutz.html",
+  "impressum.html", "widerruf.html", "danke-abo.html", "404.html"
+]);
 const MESSLATTE = path.join(WURZEL, "docs/frontend/startgewicht-messlatte.json");
 const ZIEL_KB = 300;
 
@@ -91,14 +102,19 @@ export function statischeImporte(datei) {
 }
 
 /** Alles, was der Browser ohne Zutun des Nutzers holt. */
-export function eigengewicht() {
-  const html = readFileSync(SEITE, "utf8");
+export function eigengewicht(seite = SEITE) {
+  const html = readFileSync(seite, "utf8");
   const einstiege = [];
   for (const t of html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)) einstiege.push(t[1]);
   for (const t of html.matchAll(/<link[^>]*rel="stylesheet"[^>]*\shref="([^"]+)"/g)) einstiege.push(t[1]);
   for (const t of html.matchAll(/<link[^>]*\shref="([^"]+)"[^>]*rel="stylesheet"/g)) einstiege.push(t[1]);
 
-  const gesehen = new Map();          // Datei -> Bytes gzip
+  // Die Seite SELBST zaehlt mit — sie ist das erste, was ueber die Leitung geht.
+  // Der erste Entwurf zaehlte nur die externen Dateien und meldete fuer
+  // programmieren.html "0 KB / 0 Dateien". Die Seite ist aber 8,5 KB gross und
+  // traegt ihren ganzen Stil in einem <style>-Block: nach der alten Rechnung
+  // waere sie gewichtslos gewesen, obwohl sie geladen wird.
+  const gesehen = new Map([[seite, gzipSync(readFileSync(seite)).length]]);
   const offen = [...einstiege];
   const nichtGefunden = [];
   while (offen.length) {
@@ -150,13 +166,14 @@ function messlatteLesen() {
   return existsSync(MESSLATTE) ? JSON.parse(readFileSync(MESSLATTE, "utf8")) : null;
 }
 
-function messlatteSchreiben(mess, wortlaut) {
+function messlatteSchreiben(mess, wortlaut, methodikVonKb) {
   writeFileSync(MESSLATTE, `${JSON.stringify({
     hinweis: "Messlatte fuer das Eigengewicht der Startseite. Erzeugt von scripts/check-startgewicht.mjs.",
     regel: "Die Startseite darf nicht schwerer werden als dieser Wert. Wird sie leichter, wird die Messlatte nachgezogen — zurueck geht es nie.",
     zielKb: ZIEL_KB,
     gesetztAm: new Date().toISOString(),
     freigabe: wortlaut,
+    ...(methodikVonKb ? { methodikwechselVonKb: methodikVonKb } : {}),
     grenzeBytes: mess.bytes,
     grenzeKb: mess.kb,
     dateien: mess.dateien,
@@ -186,16 +203,37 @@ function main() {
       process.exit(1);
     }
     const alt = messlatteLesen();
-    if (alt && mess.bytes > alt.grenzeBytes) {
+    // Die Ratsche geht NUR nach unten — mit genau einer Ausnahme: wenn sich die
+    // MESSMETHODE aendert und dieselbe Seite deshalb eine andere Zahl bekommt.
+    // Das ist am 2026-09-04 sofort passiert: erst zaehlte der Waechter nur die
+    // externen Dateien, dann auch die Seite selbst (+18 KB). Ohne diese
+    // Ausnahme muesste man das Manifest von Hand aendern — und wer das einmal
+    // tut, tut es beim naechsten Wachsen wieder. Die Ausnahme verlangt ein
+    // eigenes Wort (--methodik) und landet als Begruendung im Manifest.
+    const methodik = process.argv.includes("--methodik");
+    if (alt && mess.bytes > alt.grenzeBytes && !methodik) {
       console.error(`startgewicht: die Messlatte darf nur SINKEN. Jetzt ${mess.kb} KB, Messlatte ${alt.grenzeKb} KB.`);
+      console.error(`  Hat sich die MESSMETHODE geaendert? Dann --methodik dazu und im --confirm sagen, was jetzt anders gezaehlt wird.`);
       process.exit(1);
     }
-    messlatteSchreiben(mess, wortlaut);
+    messlatteSchreiben(mess, wortlaut, methodik ? (alt ? alt.grenzeKb : null) : null);
     console.log(`startgewicht: Messlatte auf ${mess.kb} KB gesetzt${alt ? ` (vorher ${alt.grenzeKb} KB)` : ""}.`);
     return;
   }
 
   if (argv.includes("--bericht")) { bericht(mess); return; }
+
+  if (argv.includes("--alle")) {
+    console.log(`  ${String(mess.kb).padStart(4)} KB  index.html  (Messlatte)`);
+    for (const name of WEITERE_SEITEN) {
+      const datei = path.join(OEFFENTLICH, name);
+      if (!existsSync(datei)) { console.log(`         —  ${name} (fehlt)`); continue; }
+      const m = eigengewicht(datei);
+      console.log(`  ${String(m.kb).padStart(4)} KB  ${name}${m.kb > ZIEL_KB ? "  UEBER DER VORGABE" : ""}`
+        + `   ${m.dateien} Dateien`);
+    }
+    return;
+  }
 
   const latte = messlatteLesen();
   if (!latte) {
@@ -212,6 +250,20 @@ function main() {
     for (const a of mess.nichtGefunden) console.error(`  - ${a}`);
     process.exit(1);
   }
+  // Die uebrigen Seiten haben keine eigene Messlatte, aber dieselbe Vorgabe.
+  const zuSchwer = [];
+  for (const name of WEITERE_SEITEN) {
+    const datei = path.join(OEFFENTLICH, name);
+    if (!existsSync(datei)) continue;
+    const m = eigengewicht(datei);
+    if (m.kb > ZIEL_KB) zuSchwer.push(`${name}: ${m.kb} KB gzip`);
+  }
+  if (zuSchwer.length) {
+    console.error(`startgewicht VERLETZT: ${zuSchwer.length} Seite(n) ueber der Vorgabe von ${ZIEL_KB} KB:`);
+    for (const z of zuSchwer) console.error(`  - ${z}`);
+    process.exit(1);
+  }
+
   const offenKb = mess.kb - ZIEL_KB;
   if (mess.bytes > latte.grenzeBytes) {
     console.error(`startgewicht VERLETZT: die Startseite ist SCHWERER geworden — ${mess.kb} KB statt hoechstens ${latte.grenzeKb} KB.`);

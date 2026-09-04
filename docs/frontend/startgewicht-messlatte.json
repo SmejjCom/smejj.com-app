@@ -2,16 +2,17 @@
   "hinweis": "Messlatte fuer das Eigengewicht der Startseite. Erzeugt von scripts/check-startgewicht.mjs.",
   "regel": "Die Startseite darf nicht schwerer werden als dieser Wert. Wird sie leichter, wird die Messlatte nachgezogen — zurueck geht es nie.",
   "zielKb": 300,
-  "gesetztAm": "2026-09-04T15:14:28.752Z",
-  "freigabe": "Erst Waechter, dann abspecken. Danach alles 100% schuetzen: Bestehende Funktionen duerfen nicht kaputtgehen und nichts darf ohne meine schriftliche Bestaetigung geaendert werden. (Betreiber, 2026-09-04)",
-  "grenzeBytes": 215346,
-  "grenzeKb": 210,
-  "dateien": 81,
+  "gesetztAm": "2026-09-04T15:45:17.036Z",
+  "freigabe": "Methodikwechsel 2026-09-04: die Seite selbst zaehlt jetzt mit (+18 KB), vorher nur die externen Dateien. Aufgefallen, weil programmieren.html mit 0 KB gemeldet wurde, obwohl sie ihren ganzen Stil in einem style-Block traegt. Betreiber-Auftrag: weitere Seiten messen.",
+  "methodikwechselVonKb": 210,
+  "grenzeBytes": 233734,
+  "grenzeKb": 228,
+  "dateien": 82,
   "groessteFuenf": [
     "assets/start-styles.css — 25 KB",
+    "index.html — 18 KB",
     "assets/chat-store.js — 12 KB",
     "assets/chat-actions.js — 12 KB",
-    "assets/chat-history-view.js — 11 KB",
-    "assets/app.js — 10 KB"
+    "assets/chat-history-view.js — 11 KB"
   ]
 }
