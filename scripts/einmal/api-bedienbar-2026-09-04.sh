@@ -7,7 +7,7 @@
 # Eingabefelder 34 px, das Laufzeit-Menue 19 px, alle ohne Beschriftung in einer Leiste,
 # und die Erfolgsmeldung stand weit oben ausserhalb des Blickfelds.
 #
-# Was schon passiert ist (ohne Klick): Commit bde1c6b7 im Worktree
+# Was schon passiert ist (ohne Klick): Commit fed29299 im Worktree
 # /private/tmp/claude-501/api-budget — beschriftetes Formular mit Pflicht-Kennzeichnung,
 # alle Felder und der Hauptknopf 44 px, echter Knopf statt Textzeile, Rueckmeldung direkt
 # am Knopf, Sperre + "Wird ausgestellt …" waehrend des Laufs, Sprung ins leere Pflichtfeld,
@@ -19,7 +19,7 @@
 # den Frontend-Klon spiegeln -> Bauzweig pushen (Zeabur) -> Klon pushen (smejj.com/admin) ->
 # Live-Beweis.
 #
-# Rollback: git revert bde1c6b7 im Bauzweig + neuer Stempel; im Klon git revert des
+# Rollback: git revert fed29299 im Bauzweig + neuer Stempel; im Klon git revert des
 # Deploy-Commits.
 set -uo pipefail
 W="/private/tmp/claude-501/api-budget"
@@ -34,7 +34,7 @@ cd "$W" || abbruch "cd $W" 2
 echo "== 0. Ausgangslage"
 git log --oneline -1
 [ "$(git branch --show-current)" = "feature/api-budget" ] || abbruch "erwartet feature/api-budget, gefunden $(git branch --show-current)" 3
-git merge-base --is-ancestor bde1c6b7 HEAD || abbruch "Commit bde1c6b7 (bedienbare Ausgabe) liegt nicht auf HEAD" 3
+git merge-base --is-ancestor fed29299 HEAD || abbruch "Commit fed29299 (bedienbare Ausgabe) liegt nicht auf HEAD" 3
 [ -z "$(git status --porcelain -- control-server src tests | grep -v '^??')" ] || { git status --short -- control-server src tests | head; abbruch "ungesicherte Aenderungen"; }
 
 echo "== 1. Auf origin nachziehen (Parallelsitzungen arbeiten am selben Zweig)"
