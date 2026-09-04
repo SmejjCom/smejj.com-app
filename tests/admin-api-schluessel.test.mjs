@@ -201,3 +201,16 @@ test("Andere Methoden bleiben bei Stripe: PUT/DELETE auf /api/admin/geld/* antwo
   const post = await admin("POST", "/api/admin/geld/abos", OWNER, {});
   assert.equal(post.status, 405);
 });
+
+test("Sicherheits-Seite zaehlt Ausstellung (hoch) und Widerruf (mittel) mit", async () => {
+  const { sicherheitsUebersicht } = await import("../control-server/src/admin/opsSicherheit.js");
+  __clearAuditMemoryForTests();
+  await aufbauen();
+  const a = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Zaehltest", laufzeit: "1j" });
+  await admin("POST", "/api/admin/geld/api/widerrufen", OWNER, { id: a.body.schluessel.id, reason: "Zaehltest, sofort wieder weg" });
+  const u = await sicherheitsUebersicht({ env: ENV, tage: 1 });
+  const nach = Object.fromEntries((u.ereignisse.nachAktion || []).map((e) => [e.aktion, e]));
+  assert.equal(nach["apikey.issue"]?.gewicht, "hoch", JSON.stringify(u.ereignisse).slice(0, 300));
+  assert.equal(nach["apikey.revoke"]?.gewicht, "mittel");
+  assert.equal(u.ereignisse.davonHoch, 1);
+});

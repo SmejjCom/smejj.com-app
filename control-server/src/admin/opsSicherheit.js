@@ -31,7 +31,11 @@ const GEWICHTE = Object.freeze({
   "user.verify": "niedrig",
   "users.unlock": "niedrig",
   "users.verify": "niedrig",
-  "audit.read": "niedrig"
+  "audit.read": "niedrig",
+  // Admin stellt API-Schluessel aus (smejj-adm-…, 2026-09-04): gibt Dritten Zugang
+  // auf das Konto des Ausstellers, bis zu unbefristet — hoch. Widerruf: mittel.
+  "apikey.issue": "hoch",
+  "apikey.revoke": "mittel"
 });
 
 const TAG_MS = 24 * 60 * 60 * 1000;
