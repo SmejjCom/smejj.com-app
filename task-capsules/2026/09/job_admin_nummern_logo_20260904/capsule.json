@@ -66,5 +66,18 @@
     "app": "376e3e7d (Bau), 7d122f96 (Stempel) auf feature/admin-nummern-logo-final",
     "frontend": "d7af3df (live), 5dd7a95 (Spiegel byte-gleich) auf smejj-app-frontend main"
   },
-  "status": "abgeschlossen"
+  "status": "abgeschlossen",
+  "nachtragMerge": {
+    "wann": "2026-09-04T12:20:00.000Z",
+    "freigabe": "Betreiber-Wahl 'Merge in den Bauzweig' — damit ist die Rote-Liste-Position schriftlich freigegeben.",
+    "vorfall": "Waehrend der Abnahme spiegelte die Parallelsitzung mit Klon-Commit 2bf8cca ('breite Tabellen scrollen') aus einer Quelle OHNE die Nummern und den Logo-Knopf und baute beides LIVE zurueck (grep -c rail-zu admin/console.css = 0). Zweiter Fall derselben Falle am selben Tag.",
+    "heilung": "Erst gemergt (700a5694 in den Bauzweig), dann aus dem gemergten Stand neu gespiegelt (Klon f64a36a). Klon und Quelle tragen jetzt BEIDE Arbeiten: body.rail-zu + SEITEN_NUMMERN UND .panel>.pb.flush:has(>table){overflow-x:auto}.",
+    "regelDaraus": "Erst in den Bauzweig mergen, dann spiegeln. Wer aus einem Feature-Zweig direkt in den Klon spiegelt, macht seine eigene Arbeit zum naechsten Opfer. Nach dem eigenen Deploy noch einmal live nachmessen.",
+    "commits": {
+      "bauzweig": "7359aa4f (Merge 700a5694 + Nachzug 53a62700), GitHub und Codeberg",
+      "frontend": "f64a36a auf smejj-app-frontend main"
+    },
+    "pruefungNachMerge": "check:admin-lock OK (49 Dateien, gestempelt 12:13:56Z), check:nummern-schutz OK (81 Nummern, 8 Gruppen, 34 Bereiche, 14/14 Tests), check:guidelines OK (2160 Dateien), check:admin-console-sync OK. Die 8 uebrigen roten Punkte der Kaskade waren vorher schon rot (nachgemessen auf 56042b94).",
+    "verifikationLiveNachMerge": "smejj.com/admin/autopiloten/ zeigt 'Alle 81' mit Nummern; Schiene eingeklappt mit lesbaren Nummern; Logo-Klick auf der Unterseite fuehrt nach /admin/; console.css live traegt rail-zu (18 Treffer) UND pb.flush:has (1 Treffer)."
+  }
 }
