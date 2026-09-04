@@ -281,3 +281,26 @@ test("Versionsnummern werden nie zweimal vergeben", async () => {
   assert.equal(naechsteVersion(stabil, { basisPrefix: "con/base/NEU", art: "minor", vergeben: ["con-2.0.0"] }), "con-3.0.0");
   assert.equal(naechsteVersion(null, { vergeben: ["con-1.0.0"] }), "con-1.0.1");
 });
+
+test("Rettung nimmt nur den Adapter DES EIGENEN Laufs", async () => {
+  const { tick } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const geschrieben = {};
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      if (k === "con/autopilot/zustand.json") return { phase: "job_laeuft", ticks: 1, historie: [], laufenderJob: { jobId: "job-NEU", taskId: "t1", modus: "training+messung", version: "con-1.0.0", kandidat: "con-1.1.0", gestartet: new Date().toISOString(), maxMinuten: 200 } };
+      if (k === "con/versions/con-1.1.0/training.json") return { jobId: "job-ALT-vom-vortag" };
+      if (k === "con/logs/jobs/job-NEU/ergebnis.json") return { ok: false, grund: "abbruch" };
+      if (k === "con/registry.json") return { versions: [{ version: "con-1.0.0", status: "stable", benchmarks: { gesamt: 0.9, kritisch: 0, kategorien: {} } }] };
+      return standard;
+    },
+    putJson: async (k, v) => { geschrieben[k] = v; },
+    liste: async () => [{ key: "con/versions/con-1.1.0/adapter/adapter_model.safetensors", size: 1 }]
+  };
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir,
+    grenzen: { tagesbudgetUsd: 5, gesamtdeckelUsd: 10, jobMaxMinuten: 200, freigabe: false, notaus: false }, taktMs: 300000 };
+  await tick({ konfig, e2, salad: null, log: () => {} });
+  const registry = geschrieben["con/registry.json"];
+  const kandidat = (registry?.versions || []).find((v) => v.version === "con-1.1.0");
+  assert.equal(kandidat, undefined, "ein Adapter aus einem FREMDEN Lauf darf nie als Kandidat eingetragen werden");
+});

@@ -190,6 +190,14 @@ async function rettteAdapter(ctx, z, job) {
   if (!kandidat) return null;
   const training = await e2.getJson(`con/versions/${kandidat}/training.json`, null);
   if (!training) return null;
+  // NUR den Adapter DIESES Laufs retten. Am 04.09. sammelte diese Funktion den Adapter vom
+  // Vortag auf, weil er unter derselben Nummer lag: der Autopilot trug verworfene Arbeit als
+  // frischen Kandidaten ein und mass sie ein drittes Mal. Ein fremder Lauf wird ignoriert.
+  if (training.jobId && job.jobId && training.jobId !== job.jobId) {
+    notiere(z, `Adapter unter ${kandidat} stammt aus Job ${training.jobId}, nicht aus ${job.jobId} — nicht gerettet`);
+    log(`Adapter ${kandidat} gehoert zu einem fremden Lauf (${training.jobId}) — ignoriert`);
+    return null;
+  }
   const adapterPrefix = `con/versions/${kandidat}/adapter`;
   const dateien = await e2.liste(`${adapterPrefix}/`);
   const hatGewichte = dateien.some((d) => /adapter_model\.(safetensors|bin)$/.test(d.key));
