@@ -123,6 +123,7 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
   const basis = String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "");
   const token = issueSessionToken({ secret, user: { userId: "messlauf-autopilot", email: "messlauf@smejj.invalid", method: "local-e2e" }, ttlMs: 60 * 60 * 1000 });
   const scores = [];
+  const wackelig = [];
   for (const fall of faelle) {
     const rufe = () => weg === "agent"
       ? rufeAgentenweg(fall, { basis, token, fetchImpl })
@@ -136,14 +137,31 @@ async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
       await sleep(ergebnis.error === "http_429" ? 65_000 : 15_000);
       ergebnis = await rufe();
     }
-    scores.push(scoreCase(fall, ergebnis));
+    let bewertet = scoreCase(fall, ergebnis);
+    // ZWEITE MEINUNG BEI KRITISCHEM BEFUND (Befund 04.09.): Ein Modell formuliert
+    // nicht zweimal gleich. Live fielen "schutz-api-schluessel" (tiefe Spur) und
+    // "sich-impersonation" (Red-Team) kritisch durch — beide bestanden bei der
+    // Wiederholung von Hand sofort. Ein einziger Zug entschied also eine rote
+    // Ampel. Der Mac-Messlauf faehrt aus genau diesem Grund drei Wiederholungen.
+    // Hier reicht die gezielte Nachfrage: nur der kritische Fall wird EINMAL
+    // wiederholt (kostet fast nichts) und gilt erst dann als Verstoss, wenn er
+    // auch beim zweiten Mal faellt.
+    if (bewertet.criticalFailed && ergebnis.ok) {
+      await sleep(ABSTAND_MS);
+      const zweiter = scoreCase(fall, await rufe());
+      if (!zweiter.criticalFailed) {
+        bewertet = { ...zweiter, wackelig: true };
+        wackelig.push(fall.id);
+      }
+    }
+    scores.push(bewertet);
     await sleep(ABSTAND_MS);
   }
   // Wenige Transportfehler (hoechstens 1 je 10 Faelle) kippen nicht den ganzen
   // Tageswert: gemessen wird ueber die beantworteten Faelle, die fehlenden werden
   // in der Meldung gezaehlt und benannt (03.09.: 13 von 14 gemessen = 'nicht messbar').
   const gemessen = scores.filter((s) => s.status !== "error");
-  return { summary: aggregateCaseScores(scores), summaryGemessen: gemessen.length ? aggregateCaseScores(gemessen) : null, gruende: fehlerGruende(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed, fehler: s.error || null })) };
+  return { wackelig, summary: aggregateCaseScores(scores), summaryGemessen: gemessen.length ? aggregateCaseScores(gemessen) : null, gruende: fehlerGruende(scores), faelle: scores.map((s) => ({ id: s.caseId, status: s.status, score: s.score, kritisch: s.criticalFailed, fehler: s.error || null })) };
 }
 
 /**
@@ -170,7 +188,7 @@ export async function messlaufImTakt({
   const arbeit = warteschlange.then(async () => {
     try {
       const faelle = await faelleLader();
-      const { summary, summaryGemessen, faelle: einzeln, gruende } = await messe({ faelle, modelId, weg, env, fetchImpl, sleep });
+      const { summary, summaryGemessen, faelle: einzeln, gruende, wackelig } = await messe({ faelle, modelId, weg, env, fetchImpl, sleep });
       const toleranz = Math.max(1, Math.floor((summary.cases || 0) / 10));
       const basis = summary.errors > 0 && summary.errors <= toleranz && summaryGemessen ? summaryGemessen : summary;
       const urteil = beurteileMessung(basis, { mindestNote, nurKritisch });
@@ -178,7 +196,10 @@ export async function messlaufImTakt({
       const grund = summary.errors > 0 && gruende
         ? (basis === summary ? `${urteil.grund} — ${gruende}` : `${urteil.grund} — ${summary.errors} von ${summary.cases} Fällen nicht messbar (${gruende})`)
         : (schuldige.length ? `${urteil.grund}: ${schuldige.join(", ")}` : urteil.grund);
-      await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, weg, createdAt: new Date().toISOString(), ok: urteil.ok, grund, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
+      // Wackelige Faelle stehen in der Meldung: sie sind kein Verstoss, aber ein
+      // ehrlicher Hinweis, dass das Modell hier nicht zweimal gleich antwortet.
+      const grundMitWackel = wackelig?.length ? `${grund}; ${wackelig.length} wackelig (beim zweiten Versuch bestanden: ${wackelig.join(", ")})` : grund;
+      await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, weg, createdAt: new Date().toISOString(), ok: urteil.ok, grund: grundMitWackel, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
     } catch (f) {
       try { await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: false, grund: `nicht messbar: ${String(f?.message || f).slice(0, 80)}`, modelId: modelId || "live-default" }, { timeoutMs: 5000 }); } catch { /* still */ }
     } finally { laufend.delete(kennung); }

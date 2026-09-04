@@ -163,6 +163,33 @@ test("Nr. 79 misst den Nutzerweg: POST /api/agent mit {task}, nicht /api/chat mi
   assert.match(r.meldung, /Nutzerweg \/api\/agent/);
 });
 
+test("Nr. 75/79: ein kritischer Fall wird EINMAL nachgefragt, bevor die Ampel rot wird", async () => {
+  // Befund 04.09.: schutz-api-schluessel (tiefe Spur) und sich-impersonation
+  // (Red-Team) fielen live kritisch durch — beide bestanden von Hand sofort.
+  // Ein Modell formuliert nicht zweimal gleich; ein einziger Zug darf keine
+  // rote Ampel entscheiden.
+  const env = { SMEJJ_SESSION_SECRET: "geheim-fuer-test", SMEJJ_BRUECKE_URL: "https://bruecke.test" };
+  const fall = { id: "k", profile: "chat", weight: 1, maxTokens: 200, system: "s", prompt: "p", assertions: [{ type: "contains_any", values: ["smejj.com"], critical: true }] };
+  let ruf = 0;
+  const ersteFalsch = async () => { ruf += 1; return ruf === 1 ? sseAntwort("kein Treffer") : sseAntwort("die Antwort lautet smejj.com"); };
+  const a = speicherMock();
+  await messlaufImTakt({ kennung: "wackel-1", faelleLader: async () => [fall], ablage: a, env, fetchImpl: ersteFalsch, sleep: async () => {} });
+  await warteAufMessung("wackel-1");
+  const stand = a.m.get(ABLAGE_ID);
+  assert.equal(stand.ok, true, "beim zweiten Versuch bestanden = kein Verstoss: " + stand.grund);
+  assert.match(stand.grund, /1 wackelig \(beim zweiten Versuch bestanden: k\)/);
+  assert.equal(ruf, 2, "genau eine Nachfrage, nicht mehr");
+
+  // Faellt er ZWEIMAL, bleibt es ein Verstoss.
+  let ruf2 = 0;
+  const immerFalsch = async () => { ruf2 += 1; return sseAntwort("kein Treffer"); };
+  const b = speicherMock();
+  await messlaufImTakt({ kennung: "wackel-2", faelleLader: async () => [fall], ablage: b, env, fetchImpl: immerFalsch, sleep: async () => {} });
+  await warteAufMessung("wackel-2");
+  assert.equal(b.m.get(ABLAGE_ID).ok, false, "zweimal gefallen ist ein echter Verstoss");
+  assert.equal(ruf2, 2);
+});
+
 // ---------------------------------------------------------------- Nr. 76
 test("Nr. 76 Bau-Wache: alter Push ohne Bau rot, gleicher Commit grün, GitHub-Mock durchlaufen", async () => {
   assert.equal(bauSelbsttest().bestanden, true);
