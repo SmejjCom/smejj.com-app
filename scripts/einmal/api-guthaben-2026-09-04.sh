@@ -6,7 +6,7 @@
 # (30 Tage), Heute — standen untereinander statt nebeneinander, und die beiden Trenner
 # liefen als 720 px breite Balken quer durch die Seite.
 #
-# Was schon passiert ist (ohne Klick): Commit 5ea30f27 auf dem Zweig
+# Was schon passiert ist (ohne Klick): Commit 326ad464 auf dem Zweig
 # feature/api-guthaben-leiste im eigenen Worktree /private/tmp/claude-501/api-guthaben —
 # eine Zeile mit Rahmen, Beschriftungen klein und in Grossbuchstaben, Werte gross,
 # Trenner 1x34 px, "Aufladen" als Knopf statt nackter Text, am Handy ohne Trenner
@@ -33,7 +33,7 @@ echo "== 0. Ausgangslage"
 git log --oneline -1
 [ "$(git branch --show-current)" = "feature/design-v11" ] || abbruch "Arbeitskopie steht auf '$(git branch --show-current)', nicht auf feature/design-v11" 3
 git rev-parse --verify -q "$ZWEIG" >/dev/null || abbruch "Zweig $ZWEIG fehlt" 3
-git merge-base --is-ancestor 5ea30f27 "$ZWEIG" || abbruch "Commit 5ea30f27 liegt nicht auf $ZWEIG" 3
+git merge-base --is-ancestor 326ad464 "$ZWEIG" || abbruch "Commit 326ad464 liegt nicht auf $ZWEIG" 3
 DIRTY=$(git status --porcelain -- public docs/frontend | grep -v '^??' | wc -l | tr -d ' ')
 if [ "$DIRTY" != "0" ]; then
   git status --short -- public docs/frontend | head -20
@@ -42,7 +42,7 @@ fi
 BASIS=$(git rev-parse HEAD)
 
 echo "== 1. Zweig $ZWEIG in design-v11 mergen"
-if ! git merge -q --no-ff "$ZWEIG" -m "merge(api-bereich): Guthaben-Leiste gestaltet ($ZWEIG: 5ea30f27)"; then
+if ! git merge -q --no-ff "$ZWEIG" -m "merge(api-bereich): Guthaben-Leiste gestaltet ($ZWEIG: 326ad464)"; then
   git merge --abort 2>/dev/null
   abbruch "Merge-Konflikt — design-v11 ist seit dem Zweig weitergelaufen" 3
 fi
@@ -112,11 +112,11 @@ git push -q origin feature/design-v11 || true
 echo "== 8. Live-Beweis (bis 5 Minuten)"
 for i in $(seq 1 20); do
   v=$(curl -s -m 15 https://smejj.com/sw.js | grep -o 'smejj-shell-v[0-9]*' | head -1)
-  e=$(curl -s -m 15 "https://smejj.com/assets/entwickler.js?v=18" | grep -c 'api-center-surface.js?v=15' || true)
-  r=$(curl -s -m 15 "https://smejj.com/assets/api-center-surface.css?v=9" | grep -c 'ac-stat-divider' || true)
+  e=$(curl -s -m 15 "https://smejj.com/assets/entwickler.js?v=19" | grep -c 'api-center-surface.js?v=16' || true)
+  r=$(curl -s -m 15 "https://smejj.com/assets/api-center-surface.css?v=10" | grep -c 'ac-stat-divider' || true)
   h=$(curl -s -m 15 https://smejj.com/entwickler.html | grep -o 'entwickler.js?v=[0-9]*')
   echo "$(date -u +%H:%M:%S) sw=$v entwickler=$e leiste=$r seite=$h"
-  if [ "$v" = "smejj-shell-v${NEXT}" ] && [ "$e" -ge 1 ] && [ "$r" -ge 1 ] && [ "$h" = "entwickler.js?v=18" ]; then
+  if [ "$v" = "smejj-shell-v${NEXT}" ] && [ "$e" -ge 1 ] && [ "$r" -ge 1 ] && [ "$h" = "entwickler.js?v=19" ]; then
     echo "FERTIG — Guthaben-Leiste live: https://smejj.com/entwickler.html (am iPhone: App schliessen und neu oeffnen)."
     exit 0
   fi
