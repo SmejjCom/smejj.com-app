@@ -36,10 +36,10 @@ WORTLAUT="Betreiber Wof Kadavanich, 2026-09-04: 'Danach alles 100% schuetzen: Be
 [ -e "$QUELLE/.git" ] || { echo "ABBRUCH: Arbeitskopie fehlt unter $QUELLE"; exit 2; }
 cd "$QUELLE" || exit 2
 
-echo "1/6 Stand holen ..."
+echo "1/8 Stand holen ..."
 git fetch -q origin "$ZWEIG" || exit 3
 
-echo "2/6 Frischen Arbeitsbaum anlegen (fremde Arbeit bleibt unberuehrt) ..."
+echo "2/8 Frischen Arbeitsbaum anlegen (fremde Arbeit bleibt unberuehrt) ..."
 git worktree prune
 git worktree add -q --detach "$BAUM" "origin/$ZWEIG" || exit 4
 # Die Tests brauchen die Abhaengigkeiten; ein frischer Baum hat keine.
@@ -47,18 +47,24 @@ ln -sfn "$QUELLE/node_modules" "$BAUM/node_modules"
 cd "$BAUM" || exit 4
 echo "    $(git log --oneline -1)"
 
-# Der Baum wird NUR im Erfolgsfall abgeraeumt. Befund 2026-09-04: eine Kaskade
-# meldete FERTIG, ohne gestempelt zu haben — und hatte ihren eigenen Baum schon
-# geloescht, bevor jemand nachsehen konnte, was darin lag. Ein Fehlerfall ohne
-# Beweisstueck ist nicht nachvollziehbar.
 aufraeumen() { cd "$QUELLE" 2>/dev/null; git worktree remove --force "$BAUM" 2>/dev/null; }
-behalten() { echo "    Der Arbeitsbaum bleibt zum Nachsehen stehen: $BAUM"; }
 
-echo "3/6 Tests der betroffenen Bereiche ..."
+# Bei einem Abbruch wird der Arbeitsbaum NICHT abgeraeumt (Befund 04.09. abends):
+# Als die Kaskade FERTIG meldete, ohne etwas zu hinterlassen, war der einzige
+# Ort, an dem man haette nachsehen koennen, schon geloescht. Ein Fehler, den man
+# nicht mehr ansehen kann, kostet eine ganze Runde.
+behalten() {
+  echo "         Der Arbeitsbaum bleibt zum Nachsehen stehen:"
+  echo "           $BAUM"
+  echo "         Aufraeumen spaeter mit:  git -C \"$QUELLE\" worktree remove --force \"$BAUM\""
+  exit "$1"
+}
+
+echo "3/8 Tests der betroffenen Bereiche ..."
 if ! node --test tests/tool-loop.test.mjs tests/chat-schritte.test.mjs tests/runde2-waechter.test.mjs \
       tests/besucher-puls.test.mjs tests/konto-formulare.test.mjs tests/rechtslinks.test.mjs \
       tests/smejj-1-1-datensatz.test.mjs tests/trainings-reife.test.mjs tests/modell-evolution.test.mjs; then
-  echo "ABBRUCH: Tests rot — nicht gestempelt"; behalten; exit 5
+  echo "ABBRUCH: Tests rot — nicht gestempelt"; behalten 5
 fi
 
 # PHANTOM-PROBE (Befund 2026-09-04, zweimal am selben Tag): Ein Stempel friert
@@ -71,7 +77,7 @@ fi
 # gehalten. Eine Abweichung heisst: der Stempel wuerde eine Fassung einfrieren,
 # die niemand bekommt — und check:start-lock meldet danach den Unterschied als
 # Verstoss, obwohl live und Repo beide in Ordnung sind.
-echo "4/7 Phantom-Probe: stimmt der Baum mit smejj.com ueberein? ..."
+echo "4/8 Phantom-Probe: stimmt der Baum mit smejj.com ueberein? ..."
 PHANTOME=0
 for DATEI in $(node -e '
 const m = JSON.parse(require("fs").readFileSync("docs/frontend/start-lock-manifest.json", "utf8"));
@@ -93,67 +99,81 @@ if [ "$PHANTOME" -gt 0 ]; then
   echo "ABBRUCH: $PHANTOME Datei(en) im Baum weichen von der Auslieferung ab."
   echo "         Ein Stempel wuerde Fassungen einfrieren, die niemand bekommt."
   echo "         Bitte diese Ausgabe in den Chat kopieren."
-  behalten; exit 6
+  behalten 6
 fi
 echo "    alle geprueften Dateien sind byte-gleich mit smejj.com"
 
-echo "5/7 Sperren stempeln ..."
-node scripts/check-start-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Start-Lock nicht gestempelt"; behalten; exit 10; }
-node scripts/check-security-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Security-Lock nicht gestempelt"; behalten; exit 10; }
+echo "5/8 Sperren stempeln ..."
+node scripts/check-start-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Start-Lock nicht gestempelt"; behalten 10; }
+node scripts/check-security-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Security-Lock nicht gestempelt"; behalten 10; }
 
-echo "6/7 Alle vier Sperren pruefen ..."
+echo "6/8 Alle vier Sperren pruefen ..."
 for pruefung in start security admin favicon; do
-  node "scripts/check-${pruefung}-lock.mjs" || { echo "ABBRUCH: ${pruefung}-lock rot"; behalten; exit 7; }
+  node "scripts/check-${pruefung}-lock.mjs" || { echo "ABBRUCH: ${pruefung}-lock rot"; behalten 7; }
 done
 
-echo "7/7 Manifeste committen und hochladen ..."
+echo "7/8 Manifeste committen und hochladen ..."
 GEAENDERT="$(git status --short docs/security docs/frontend docs/approvals | awk '{print $2}')"
 if [ -z "$GEAENDERT" ]; then
-  # BEFUND 2026-09-04: Genau hier fiel die Kaskade durch zu "FERTIG — alle vier
-  # Sperren gruen und eingefroren", obwohl NICHTS gestempelt wurde. Der
-  # Betreiber sah eine Erfolgsmeldung, im Zweig stand kein Stempel-Commit, und
-  # vier Eintraege im Manifest waren Fassungen, die niemand ausliefert.
+  # KEIN stiller Durchmarsch mehr (Befund 2026-09-04 abends): Hier stand
+  # frueher nur ein Hinweis, und danach lief das Skript bis zur Erfolgszeile
+  # "FERTIG — alle vier Sperren gruen und eingefroren" durch. Der Betreiber
+  # hat geklickt, FERTIG gelesen — und der Schutz war NICHT in Kraft: das
+  # start-lock-Manifest stand unveraendert auf 11:47:51 und bewachte vier
+  # Fassungen, die smejj.com gar nicht ausliefert (composer-plus-menu.js,
+  # index.html, app.js, sw.js). Ein Nichts-Tun sah aus wie ein Erfolg.
   #
-  # Ein Nichts-Tun darf nicht aussehen wie ein Erfolg. Unveraenderte Manifeste
-  # koennen zweierlei heissen: schon gestempelt (in Ordnung) oder der Stempel
-  # hat nicht gegriffen (nicht in Ordnung). Unterscheidbar ist das nur an einem:
-  # steht das eingefrorene Datum im Zweig, oder nicht?
-  echo "Kein Manifest geaendert — pruefe, ob der Stand schon im Zweig steht ..."
-  LIES='let s="";process.stdin.on("data",c=>s+=c).on("end",()=>{try{const d=JSON.parse(s);console.log(d.frozenAt||d.eingefroren||"")}catch{console.log("")}})'
-  HIER="$(node -e "$LIES" < docs/frontend/start-lock-manifest.json 2>/dev/null)"
-  DORT="$(git show "origin/$ZWEIG:docs/frontend/start-lock-manifest.json" 2>/dev/null | node -e "$LIES")"
-  if [ -n "$HIER" ] && [ "$HIER" = "$DORT" ]; then
-    echo "    In Ordnung: der Zweig traegt denselben Stempel ($HIER)."
-  else
-    echo "ABBRUCH: Der Stempel ist NICHT im Zweig angekommen."
-    echo "         hier:  ${HIER:-unbekannt}"
-    echo "         Zweig: ${DORT:-unbekannt}"
-    echo "         Bitte diese Ausgabe in den Chat kopieren."
-    behalten; exit 11
-  fi
+  # Wenn hier nichts zu committen ist, ist das entweder harmlos (war wirklich
+  # schon gestempelt) oder der Beweis, dass Schritt 5 nichts geschrieben hat.
+  # Schritt 8 unterscheidet das — gegen origin, nicht gegen diese Ausgabe.
+  echo "    kein Manifest geaendert — pruefe in Schritt 8, ob der Stand schon steht"
 else
-  git add $GEAENDERT || { behalten; exit 8; }
+  git add $GEAENDERT || { behalten 8; }
   git -c user.name="Wof Kadavanich" -c user.email="smejjcom@gmail.com" commit -q \
     -m "chore(schutz): Start- und Security-Lock nach dem A-bis-Z-Livetest gestempelt (Betreiber-Doppelklick 2026-09-04)" \
     -m "sw.js v755, index.html mit preconnect, composer-plus-menu.js auf den ausgelieferten Stand, controlAccessPolicy.js mit /api/puls." \
-    -m "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>" || { behalten; exit 8; }
+    -m "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>" || { behalten 8; }
   if ! git push -q origin "HEAD:$ZWEIG"; then
     echo "Push abgelehnt (der Zweig hat sich bewegt) — bitte Claude Code Bescheid geben."
-    behalten; exit 9
+    behalten 9
   fi
-  # Erst wenn der Stempel WIRKLICH im Zweig steht, ist er gueltig. Ein Fenster,
-  # das FERTIG sagt, ist kein Beweis (Befund 2026-09-04).
-  git fetch -q origin "$ZWEIG"
-  if [ "$(git rev-parse HEAD)" != "$(git rev-parse "origin/$ZWEIG")" ]; then
-    echo "ABBRUCH: Der Stempel-Commit steht nicht als Spitze im Zweig."
-    behalten; exit 12
-  fi
-  echo "    Nachgeprueft: der Stempel steht im Zweig."
 fi
 
 echo
 git log --oneline -2
+
+# ---------------------------------------------------------------------------
+echo
+echo "8/8 Gegenprobe gegen origin: steht der Stempel WIRKLICH im Zweig? ..."
+#
+# Die entscheidende Frage, und die einzige, die heute niemand gestellt hat:
+# nicht "hat das Skript FERTIG gesagt", sondern "haelt das Manifest AUF DEM
+# SERVER genau das fest, was smejj.com ausliefert?". Alles davor kann in einem
+# Arbeitsbaum passieren, der gleich danach abgeraeumt wird — und dann ist der
+# Stempel weg, ohne dass es jemand merkt.
+git fetch -q origin "$ZWEIG" || { echo "ABBRUCH: konnte den Zweig nicht nachlesen"; exit 11; }
+FEHLER=0
+for MANIFEST in docs/frontend/start-lock-manifest.json docs/security/security-lock-manifest.json; do
+  HIER="$(shasum -a 256 < "$MANIFEST" | cut -d' ' -f1)"
+  DORT="$(git show "origin/$ZWEIG:$MANIFEST" 2>/dev/null | shasum -a 256 | cut -d' ' -f1)"
+  if [ "$HIER" != "$DORT" ]; then
+    echo "    NICHT ANGEKOMMEN: $MANIFEST steht im Zweig anders als hier"
+    FEHLER=$((FEHLER + 1))
+  else
+    echo "    ok: $MANIFEST"
+  fi
+done
+if [ "$FEHLER" -gt 0 ]; then
+  echo
+  echo "ABBRUCH: Der Stempel ist NICHT im Zweig gelandet. Der Schutz ist damit"
+  echo "         nicht in Kraft, egal was oben stand."
+  echo "         Der Arbeitsbaum bleibt zum Nachsehen stehen:"
+  echo "           $BAUM"
+  echo "         Bitte diese Ausgabe in den Chat kopieren."
+  exit 12
+fi
+
 aufraeumen
 echo
-echo "FERTIG — alle vier Sperren gruen und eingefroren."
+echo "FERTIG — alle vier Sperren gruen, eingefroren UND im Zweig nachgewiesen."
 exit 0
