@@ -38,7 +38,7 @@
   "nebenbefundeGeheilt": [
     "control-server/admin-ui/views-stage7.js und console.css waren im Bauzweig AELTER als der Live-Stand (bedienbare Schluessel-Ausgabe, Sechs-Spalten-Tabelle, .adm-tabelle). Der erste Spiegel-Lauf haette das live zurueckgebaut; beim Diff aufgefallen, der Live-Stand wurde stattdessen in die Quelle uebernommen.",
     "Autopilot Nr. 81 (besucher-puls) lief, stand aber nicht in der Konsolen-Liste. Er kam waehrend der Arbeit aus einer Parallelsitzung nach und ist jetzt im Nummern-Manifest.",
-    "workers/con-autopilot/tarball.js: Schreibweise 'SMEJJ-Buendel' -> 'smejj.com-Buendel' (check:guidelines war rot)."
+    "workers/con-autopilot/tarball.js: die Plattform stand in Grossbuchstaben im Wort 'Buendel' — auf die einzig zulaessige Schreibweise smejj.com gebracht (check:guidelines war rot)."
   ],
   "verifikationLive": [
     "https://smejj.com/admin/ — Gruppen tragen 1..8, Bereiche 1.1..8.2, Kuerzel am Zeilenrand (Chrome, angemeldet als Owner, Stufe 8)",

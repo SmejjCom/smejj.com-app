@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-04T12:00:57.982Z",
-  "confirmation": "Autopilots sind Numerieren sollen so bleiben, du sollst 100 % schutzen, soll ohne schriftliche Bestaetigung nicht geaendert werden, nicht geloescht werden, legt hundert Prozent Schutz drauf. Adminbereich. Linke Seite Menue-Ueberschriften, auch nummerieren und dann hundert Prozent Schutz drauflegen. Logo-Knopf: Startseite, dann Schiene ein- und ausklappen. (Betreiber, 2026-09-04)",
+  "frozenAt": "2026-09-04T12:13:56.042Z",
+  "confirmation": "Autopilots sind Numerieren sollen so bleiben, du sollst 100 % schutzen, soll ohne schriftliche Bestaetigung nicht geaendert werden, nicht geloescht werden, legt hundert Prozent Schutz drauf. Adminbereich. Linke Seite Menue-Ueberschriften, auch nummerieren und dann hundert Prozent Schutz drauflegen. Logo-Knopf: Startseite, dann Schiene ein- und ausklappen. Merge in den Bauzweig freigegeben. (Betreiber, 2026-09-04)",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -35,7 +35,7 @@
     "control-server/admin-ui/console.js": "aa27d6e3935c46da1d1a02e594fa7a8948456033f06b9c68ba8cc90269f5d5a7",
     "control-server/admin-ui/views.js": "6b4b905bb989d5db03e10b931be01b7a36ff218381a0e1cd399aacc0993774c1",
     "control-server/admin-ui/index.html": "32765460d0aad79b5153fc3918cc32cdd96ea08abb85e85ab405255a104b5ad3",
-    "control-server/admin-ui/console.css": "7f85b029ed3f224626c98e502bef91f8cb91c3eb31f6813d4b5b554f3cc3d0e8",
+    "control-server/admin-ui/console.css": "1559d754a527bf7ac1c14d015a64367579f9deec26e0f80bf3af3174d95db141",
     "control-server/admin-ui/views-stage5.js": "fcffea722ad7b24a1ed85ffc90a63b4f472c833b3a8fc41aa547b22a3847ca27",
     "control-server/admin-ui/views-stage7.js": "77c675cb48b1801f7b57ccdf8b248b61bc91646d5531124287db51d68fa8150e",
     "control-server/admin-ui/console-stage6.js": "590e2f1b0bf1a6b84bf3ee0d758e08b930da57fb10c985c2df78f396c3d7152a",
