@@ -109,3 +109,26 @@ test("freigeben und abweisen raeumen BEIDE Wachen ab", () => {
   const ab = /function abweisen\(was\) \{[\s\S]*?clearTimeout\(hinweisNetz\);/.exec(GATE);
   assert.ok(ab, "abweisen muss auch den Hinweis-Zeitgeber stoppen");
 });
+
+test("alle Konsolen-Skripte laden mit defer — und in unveraenderter Reihenfolge", () => {
+  // Der Befund vom 04.09. im Browser des Betreibers: die 26 Skripte luden
+  // STRENG NACHEINANDER, jede Datei startete genau dann, wenn die vorige fertig
+  // war. Auf 3G (1,5 Mbit/s, 500 ms Umlaufzeit) war die letzte erst nach 21 s
+  // da. Faellt ein defer weg, kommt genau dieses Verhalten zurueck.
+  const koerper = HTML.split("</head>")[1];
+  const ohne = [...koerper.matchAll(/<script src="(\/admin\/[^"]+)"/g)].map((t) => t[1]);
+  assert.deepEqual(ohne, [], `diese Skripte laden noch parser-blockierend: ${ohne.join(", ")}`);
+  const mit = [...koerper.matchAll(/<script defer src="\/admin\/([^"]+)"/g)].map((t) => t[1]);
+  assert.ok(mit.length >= 26, `nur ${mit.length} Skripte mit defer`);
+  // Die Reihenfolge ist Teil des Vertrags: jede console-stage*.js meldet ihre
+  // Seiten an, BEVOR console.js sie einsammelt.
+  assert.equal(mit[mit.length - 1], "console.js", "console.js muss zuletzt ausgefuehrt werden");
+  assert.ok(mit.indexOf("api.js") < mit.indexOf("console.js"));
+  assert.ok(mit.indexOf("schiene.js") < mit.indexOf("console.js"));
+});
+
+test("gate.js bleibt OHNE defer im Kopf", () => {
+  const kopf = HTML.split("</head>")[0];
+  assert.match(kopf, /<script src="\/admin\/gate\.js"><\/script>/,
+    "gate.js muss vor dem ersten Pixel laufen — mit defer blitzt der Adminbereich auf, bevor umgeleitet wird");
+});
