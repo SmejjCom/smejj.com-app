@@ -181,7 +181,16 @@ const OEFFENTLICH_EXAKT = new Set([
   // Bis dahin bleiben sie hier eingetragen — sichtbar, begruendet, gebremst.
   ROUTES.api.webSearch,
   ROUTES.api.browserFetch,
-  ROUTES.api.browserRemote
+  ROUTES.api.browserRemote,
+
+  // (d) Besucher-Puls (Nr. 81, 2026-09-04): Die Landeseite meldet EINMAL je
+  //     Browser-Sitzung eine Strichliste (Seite, Sprache, Herkunfts-Host).
+  //     Sie MUSS offen sein — die Menschen, um die es geht, haben noch kein
+  //     Konto. Gespeichert wird nichts Personenbezogenes, der Eingang erhoeht
+  //     nur Zahlen im Arbeitsspeicher (5 Anfragen/min je Absender, darueber
+  //     still verworfen). Ohne diese Zahl ist "kommt niemand" nicht von
+  //     "niemand kann melden" zu unterscheiden.
+  "/api/puls"
 ]);
 
 // Praefixe. Bewusst kurz gehalten: ein Praefix oeffnet auch alles, was jemand

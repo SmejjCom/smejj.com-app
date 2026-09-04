@@ -63,6 +63,10 @@ import { laufTrainingsTakt } from "./trainingsTaktAutopilot.js";
 import { laufTrainingsReife } from "./trainingsReifeAutopilot.js";
 // Nr. 66-70 (2026-08-30): Läufe und Kennungen in deckungsLaeufe.js (800-Zeilen-Regel).
 import { baueDeckungsLaeufe, DECKUNG_IDS } from "./deckungsLaeufe.js";
+// Nr. 81 (2026-09-04): der Besucher-Puls stellt Besuche neben Konten — dieselbe
+// Quelle wie die Willkommens-Wache (Nr. 58), damit nur EINE Zahl im Umlauf ist.
+import { readUserIndex } from "../admin/userIndex.js";
+import { berechneWillkommensLage } from "./willkommensWacheAutopilot.js";
 
 /**
  * Die Konkurrenzlücken als fertige Backlog-Aufgaben. Eigene Funktion, damit
@@ -640,7 +644,11 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     // Entscheidungskarte landet in der Tagesmappe — gebaut wird nichts.
     ["trainings-reife", () => laufTrainingsReife({ mitNetz })],
     // Nr. 66-70: die Abdeckungs-Lücken — Zustellprotokoll, DSGVO-Fristen, AI-Act, Abos, Flags.
-    ...baueDeckungsLaeufe({ mitNetz }),
+    ...baueDeckungsLaeufe({ mitNetz, kontenLeser: async () => {
+      const eintraege = await readUserIndex();
+      const lage = berechneWillkommensLage(Array.isArray(eintraege) ? eintraege : (eintraege?.eintraege || []));
+      return { gesamt: lage.gesamt, neu7Tage: lage.neue7Tage };
+    } }),
     // Nr. 44-60: dieselbe Dateiliste, derselbe Netz-Schalter — die Läufe
     // selbst wohnen in schutzUndWachstumLaeufe.js (800-Zeilen-Regel).
     ...baueSchutzUndWachstumLaeufe({ dateien, mitNetz }),

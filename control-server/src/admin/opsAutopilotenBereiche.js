@@ -75,7 +75,9 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 71 (2026-09-02): die Zeabur-Umgebung selbst — Coding-Adresse und Pflichtschluessel.
     "umgebungs-wache",
     // Nr. 76/78/80 (2026-09-03, Runde 2): Bau-Kontrolle, 15 Sprachseiten, Agenten-Worker.
-    "bau-wache", "sprachseiten-wache", "agenten-sonde"
+    "bau-wache", "sprachseiten-wache", "agenten-sonde",
+    // Nr. 81 (2026-09-04): Besucherzahl der Landeseite — Wachstum ist Betrieb.
+    "besucher-puls"
   ]
 });
 

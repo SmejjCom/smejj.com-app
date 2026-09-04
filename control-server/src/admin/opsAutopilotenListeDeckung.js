@@ -229,5 +229,21 @@ export const DECKUNG_AUTOPILOTEN = Object.freeze([
     verbessert: "Ein toter Browser-Worker steht in der Ampel, nicht erst beim Klick auf 'Browser'",
     neuigkeiten: ["Neu am 2026-09-03 (Audit A bis Z, Lücke Bereich 6)"],
     ...LAEUFER
+  },
+  {
+    id: "besucher-puls",
+    name: "Besucher-Puls",
+    nummer: "81",
+    kurz: "Zählt, wie viele Menschen die Landeseite überhaupt erreichen — und stellt die Zahl neben die Anmeldungen. Ohne sie ist 'kommt niemand' nicht von 'niemand kann melden' zu unterscheiden.",
+    funktionen: [
+      "Die Landeseite meldet EINMAL je Browser-Sitzung eine Strichliste: Seite, Sprache, Herkunfts-Host. Kein Cookie, keine Kennung, keine IP, kein Pfad mit Parametern — eine Strichliste, keine Nutzerverfolgung.",
+      "Gebaut für 1 Milliarde Besucher: der Eingang erhöht nur Zahlen im Arbeitsspeicher (O(1)), der Tagesstand wird höchstens alle 5 Minuten abgelegt — höchstens 288 Schreibvorgänge am Tag, egal wie viele Menschen kommen.",
+      "ROT nur, wenn NIE ein Puls ankam: dann ist der Haken nicht ausgeliefert oder der Eingang blockiert. Gemessene 0 Besuche sind grün und ehrlich — dieselbe Unterscheidung, die dem Fehler-Fänger (Nr. 50) einst fehlte.",
+      "Meldet Besuche, neue Konten und die Anmeldequote nebeneinander; Tagesstände unter betrieb/besucher-puls."
+    ],
+    trainiert: "Nichts — er zählt Besuche",
+    verbessert: "Am 04.09. standen 3 Konten und 1 neues in 7 Tagen ohne jede Besuchszahl daneben: niemand konnte sagen, ob die Auffindbarkeit oder der Trichter das Problem ist",
+    neuigkeiten: ["Neu am 2026-09-04 (Betreiber-Auftrag: Nutzer-Baustelle)"],
+    ...LAEUFER
   }
 ]);

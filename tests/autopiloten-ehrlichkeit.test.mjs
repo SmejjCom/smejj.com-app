@@ -145,6 +145,7 @@ const MIT_ECHTER_MESSUNG = new Set([
   "sprachseiten-wache",       // Nr. 78: 15 Sprachseiten live, Ablage betrieb/sprachseiten
   "red-team-probe",           // Nr. 79: 5 Injektions-Faelle gegen die Bruecke, Ablage autopiloten/red-team-probe
   "agenten-sonde",            // Nr. 80: /health von Maus-Engine und Fern-Browser
+  "besucher-puls",          // Nr. 81: echte Strichliste der Landeseite (POST /api/puls), Tagesstand betrieb/besucher-puls
   "modell-evolution"          // Nr. 72: Referenz aus Nr. 01, Noten je Faehigkeit aus evolution/kennzahlen, Reife-Karte Nr. 65, echte Umgebung; Zyklus-Protokoll
 ]);
 

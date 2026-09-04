@@ -70,6 +70,7 @@ import { handleAdminSurface } from "../control-server/src/routes/adminSurfaceRou
 import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilotRoutes.js";
 // Fehler-Fänger (Nr. 50) und Missbrauchs-Wache (Nr. 51), Freigabe 2026-08-24.
 import { handleFehlerRoute } from "../control-server/src/routes/fehlerRoutes.js";
+import { handlePulsRoute } from "../control-server/src/routes/pulsRoutes.js";
 import { beobachteAnfrage } from "../control-server/src/autopilots/missbrauchsWacheAutopilot.js";
 import { clientKeyFromRequest } from "../control-server/src/http/rateLimiter.js";
 import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
@@ -202,17 +203,6 @@ const server = http.createServer(async (req, res) => {
     if (readMethod && url.pathname.startsWith("/assets/storage/")) return serveStorageModule(res, url.pathname.replace("/assets/storage/", ""));
     if (readMethod && url.pathname.startsWith("/assets/ai/")) return serveAiModule(res, url.pathname.replace("/assets/ai/", ""));
     if (readMethod && url.pathname.startsWith("/assets/shared/")) return serveSharedModule(res, url.pathname.replace("/assets/shared/", ""));
-    // pdf.js-Worker (1,27 MB): liegt im Repo als zwei Teile, weil check-no-paid-services.mjs
-    // keine Datei ueber 1 MB erlaubt. Im Container gibt es die zusammengesetzte Datei nicht
-    // (sie ist git-ignoriert), darum setzt der Server sie hier aus den Teilen zusammen — einmal
-    // gelesen, dann aus dem Speicher. Fehlen die Teile, uebernimmt die normale Dateiauslieferung.
-    if (readMethod && url.pathname === "/assets/vendor/pdfjs/pdf.worker.min.js") {
-      const fertig = await pdfWorkerAusTeilen();
-      if (fertig) {
-        res.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "public, max-age=31536000, immutable" });
-        return res.end(fertig);
-      }
-    }
     if (readMethod && url.pathname.startsWith("/assets/")) return serveFile(res, url.pathname.replace("/assets/", ""));
     if (readMethod && isPublicAsset(url.pathname)) return serveFile(res, url.pathname.slice(1));
     if (readMethod && url.pathname === "/impressum") return serveFile(res, "impressum.html");
@@ -271,6 +261,9 @@ const server = http.createServer(async (req, res) => {
     if (await handleAutopilotHeartbeat(req, url, res)) return;
     // Fehler-Fänger (Nr. 50): Browserfehler angemeldeter Nutzer — fehlerRoutes.js.
     if (await handleFehlerRoute(req, res, url)) return;
+    // Besucher-Puls (Nr. 81): EINE Strichliste je Browser-Sitzung, ohne Konto,
+    // ohne Kennung — pulsRoutes.js. Erhoeht nur Zahlen im Speicher.
+    if (await handlePulsRoute(req, res, url)) return;
     // Kundensupport Stufe 1: Ticket + KI-Sofortantwort (angemeldete Nutzer) — supportRoutes.js.
     if (await handleSupportRoute(req, url, res)) return;
     // Daten-Schwungrad Stufe 1: Daumen-Signale der Nutzer — feedbackRoutes.js.
@@ -334,22 +327,6 @@ const server = http.createServer(async (req, res) => {
     fehlerAntwort(res, error, req); // Status aus dem Fehler; Begruendung in respond.js
   }
 });
-
-// pdf.js-Worker aus seinen zwei Repo-Teilen — Begruendung an der Route oben.
-let pdfWorkerSpeicher = null;
-async function pdfWorkerAusTeilen() {
-  if (pdfWorkerSpeicher !== null) return pdfWorkerSpeicher || null;
-  const ordner = path.join(publicDir, "vendor", "pdfjs");
-  try {
-    const { readFile } = await import("node:fs/promises");
-    const teile = await Promise.all(["pdf.worker.min.part1.js", "pdf.worker.min.part2.js"].map((n) => readFile(path.join(ordner, n))));
-    pdfWorkerSpeicher = Buffer.concat(teile);
-    console.log("[pdfjs] Worker aus 2 Teilen zusammengesetzt: " + pdfWorkerSpeicher.length + " Byte");
-  } catch {
-    pdfWorkerSpeicher = false; // Teile fehlen: normale Dateiauslieferung uebernimmt
-  }
-  return pdfWorkerSpeicher || null;
-}
 
 // HOST bleibt lokal 127.0.0.1 (sicher); Container/Salad setzen SMEJJ_HOST=0.0.0.0.
 const listenHost = process.env.SMEJJ_HOST || "127.0.0.1";

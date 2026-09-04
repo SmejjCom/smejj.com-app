@@ -21,6 +21,7 @@ import { laufProjektwissenFrische } from "./projektwissenFrischeAutopilot.js";
 import { laufSprachseitenWache } from "./sprachseitenWacheAutopilot.js";
 import { laufRedTeamProbe } from "./redTeamProbeAutopilot.js";
 import { laufAgentenSonde } from "./agentenSondeAutopilot.js";
+import { laufBesucherPuls } from "./besucherPulsAutopilot.js";
 
 /** Die Kennungen, damit der Läufer sie in IM_LAEUFER_BETRIEBEN aufführen kann. */
 export const DECKUNG_IDS = Object.freeze([
@@ -32,11 +33,13 @@ export const DECKUNG_IDS = Object.freeze([
   "modell-evolution",
   // Nr. 74-80 (Audit 03.09., Runde 2): die Luecken der Deckungs-Matrix.
   "einwilligungs-wache", "tiefe-spur-messung", "bau-wache", "projektwissen-frische",
-  "sprachseiten-wache", "red-team-probe", "agenten-sonde"
+  "sprachseiten-wache", "red-team-probe", "agenten-sonde",
+  // Nr. 81 (2026-09-04): der Besucher-Puls — die fehlende Zahl im Nutzer-Trichter.
+  "besucher-puls"
 ]);
 
 /** Die [kennung, lauf]-Paare für laufeAlle. */
-export function baueDeckungsLaeufe({ mitNetz = true } = {}) {
+export function baueDeckungsLaeufe({ mitNetz = true, kontenLeser = null } = {}) {
   return [
     ["email-zustell", () => laufEmailZustell()],
     ["dsgvo-fristen", () => laufDsgvoFristen()],
@@ -55,6 +58,8 @@ export function baueDeckungsLaeufe({ mitNetz = true } = {}) {
     ["bau-wache", () => laufBauWache({ mitNetz })],
     ["projektwissen-frische", () => laufProjektwissenFrische({ mitNetz })],
     ["sprachseiten-wache", () => laufSprachseitenWache({ mitNetz })],
-    ["agenten-sonde", () => laufAgentenSonde({ mitNetz })]
+    ["agenten-sonde", () => laufAgentenSonde({ mitNetz })],
+    // Nr. 81: reine Speicher-Zaehlung, Ablage hoechstens alle 5 Minuten.
+    ["besucher-puls", () => laufBesucherPuls({ kontenLeser })]
   ];
 }
