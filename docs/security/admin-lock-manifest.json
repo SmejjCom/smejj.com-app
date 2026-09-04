@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-04T14:41:15.451Z",
-  "confirmation": "Autopilots sind Numerieren sollen so bleiben, du sollst 100 % schutzen, soll ohne schriftliche Bestaetigung nicht geaendert werden, nicht geloescht werden, legt hundert Prozent Schutz drauf. Adminbereich linke Seite Menue-Ueberschriften auch nummerieren und dann hundert Prozent Schutz drauflegen. Logo-Knopf und Zieh-Griff auf der Trennlinie. Danach alles 100% schuetzen: Bestehende Funktionen duerfen nicht kaputtgehen und nichts darf ohne meine schriftliche Bestaetigung geaendert werden. (Betreiber, 2026-09-04)",
+  "frozenAt": "2026-09-04T14:59:35.146Z",
+  "confirmation": "Alte Admin-Kopien aufraeumen. Danach alles 100% schuetzen: Bestehende Funktionen duerfen nicht kaputtgehen und nichts darf ohne meine schriftliche Bestaetigung geaendert werden. (Betreiber, 2026-09-04)",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -52,7 +52,7 @@
     "control-server/src/routes/adminGeldRoutes.js": "2e4debc7ecc1e225d5a919cc0e342d633bec28823dd84e9e1887b91f85c53b22",
     "control-server/src/routes/adminSicherheitRoutes.js": "56f4aaada4a90cd38ab529257f38a74b13dca9116dfce9dfcd2aebd644ac2ba1",
     "control-server/src/routes/adminOpsRoutes.js": "1f179d19b274abff19ab079b06ed453ea95018c250e20d1889e1a73341f55870",
-    "scripts/deploy/sync_admin_console_pages.mjs": "2eedadb1a38839cd6c9f43ab7724a1e31fe85f052c5b828bdf70cffe643c6f30",
+    "scripts/deploy/sync_admin_console_pages.mjs": "4891ba3b5e415cfc0cccebd9cf99c0853c37008ba9a77c2b8d11abc5cc10e329",
     "control-server/admin-ui/views-stage9.js": "792ca51453ed313147280d9640c1d3259c095252762a6e1b6b4d419ad5657f74"
   }
 }
