@@ -40,14 +40,14 @@ const BASIS_VORGABE = "https://smejj.com";
 
 /** Die Manifeste, die Dateien per Hash einfrieren. */
 export const MANIFESTE = Object.freeze([
-  { name: "start-lock", pfad: "docs/frontend/start-lock-manifest.json" },
-  { name: "security-lock", pfad: "docs/security/security-lock-manifest.json" },
-  { name: "admin-lock", pfad: "docs/security/admin-lock-manifest.json" },
-  { name: "favicon-lock", pfad: "docs/frontend/favicon-lock-manifest.json" },
-  { name: "abo-lock", pfad: "docs/approvals/abo-lock-manifest.json" },
-  { name: "einwilligung-lock", pfad: "docs/approvals/einwilligung-lock-manifest.json" },
-  { name: "modell-menue-lock", pfad: "docs/approvals/modell-menue-lock-manifest.json" },
-  { name: "deploy-lock", pfad: "docs/deploy/deploy-lock-manifest.json" }
+  { name: "start-lock", pfad: "docs/frontend/start-lock-manifest.json", stempel: "scripts/check-start-lock.mjs" },
+  { name: "security-lock", pfad: "docs/security/security-lock-manifest.json", stempel: "scripts/check-security-lock.mjs" },
+  { name: "admin-lock", pfad: "docs/security/admin-lock-manifest.json", stempel: "scripts/check-admin-lock.mjs" },
+  { name: "favicon-lock", pfad: "docs/frontend/favicon-lock-manifest.json", stempel: "scripts/check-favicon-lock.mjs" },
+  { name: "abo-lock", pfad: "docs/approvals/abo-lock-manifest.json", stempel: "scripts/check-abo-lock.mjs" },
+  { name: "einwilligung-lock", pfad: "docs/approvals/einwilligung-lock-manifest.json", stempel: "scripts/check-einwilligung-lock.mjs" },
+  { name: "modell-menue-lock", pfad: "docs/approvals/modell-menue-lock-manifest.json", stempel: "scripts/check-modell-menue-lock.mjs" },
+  { name: "deploy-lock", pfad: "docs/deploy/deploy-lock-manifest.json", stempel: "scripts/check-deploy-lock.mjs" }
 ]);
 
 /**
@@ -99,7 +99,7 @@ async function holen(adresse) {
  */
 export async function pruefeManifest(eintrag, basis = BASIS_VORGABE, hole = holen) {
   const voll = path.join(WURZEL, eintrag.pfad);
-  if (!existsSync(voll)) return { name: eintrag.name, fehlt: true, geprueft: 0, nichtMessbar: [], artefakte: [], phantome: [], veraltet: [] };
+  if (!existsSync(voll)) return { name: eintrag.name, stempel: eintrag.stempel, fehlt: true, geprueft: 0, nichtMessbar: [], artefakte: [], phantome: [], veraltet: [] };
   const manifest = JSON.parse(readFileSync(voll, "utf8"));
   const dateien = manifest.files || {};
   const phantome = [];
@@ -133,7 +133,7 @@ export async function pruefeManifest(eintrag, basis = BASIS_VORGABE, hole = hole
     const stumm = inKopie !== null && inKopie === eingefroren;
     (stumm ? phantome : veraltet).push({ datei, eingefroren, live, inKopie });
   }
-  return { name: eintrag.name, geprueft, nichtMessbar, artefakte, phantome, veraltet, frozenAt: manifest.frozenAt || "?" };
+  return { name: eintrag.name, stempel: eintrag.stempel, geprueft, nichtMessbar, artefakte, phantome, veraltet, frozenAt: manifest.frozenAt || "?" };
 }
 
 async function main() {
@@ -164,7 +164,17 @@ async function main() {
   if (mitPhantomen.length || fehlend.length) {
     console.error(`\n  Diese Manifeste sind GRUEN und trotzdem wirkungslos: sie bewachen etwas,`);
     console.error(`  das niemand bekommt, waehrend die echten Dateien ungeschuetzt sind.`);
-    console.error(`  Beheben: die ausgelieferten Fassungen in den Zweig holen, dann neu stempeln.`);
+    console.error(`\n  SO WIRD ES BEHOBEN — in dieser Reihenfolge, sonst friert der Stempel`);
+    console.error(`  wieder eine Fassung ein, die niemand ausliefert:`);
+    console.error(`    1. Die AUSGELIEFERTEN Fassungen in den Zweig holen (nicht umgekehrt).`);
+    console.error(`    2. Alle Pruefungen gruen bekommen.`);
+    console.error(`    3. Diesen Waechter erneut laufen lassen — er muss 0 Phantome melden.`);
+    console.error(`    4. Dann stempeln:`);
+    for (const b of mitPhantomen) {
+      if (b.stempel) console.error(`         node ${b.stempel} --freeze --confirm "<Wortlaut der Freigabe>"`);
+    }
+    console.error(`\n  NICHT automatisch stempeln. Ein Stempel ohne Blick haette am 2026-09-04`);
+    console.error(`  genau die Phantom-Fassungen abgesegnet, die er verhindern soll.`);
     process.exit(1);
   }
   const nichtMessbar = berichte.reduce((s, b) => s + b.nichtMessbar.length, 0);

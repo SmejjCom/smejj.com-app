@@ -52,6 +52,7 @@
     "check:admin-altlasten": "node --test tests/admin-altlast-adressen.test.mjs",
     "check:startgewicht": "node scripts/check-startgewicht.mjs && node --test tests/startgewicht.test.mjs",
     "check:schutz-echtheit": "node scripts/check-schutz-echtheit.mjs && node --test tests/schutz-echtheit.test.mjs",
+    "nach-auslieferung": "node scripts/check-schutz-echtheit.mjs",
     "check:admin-konsole": "node scripts/check-admin-konsole.mjs",
     "check:deploy-abgleich": "node scripts/check-deploy-abgleich.mjs",
     "check:deploy-lock": "node scripts/check-deploy-lock.mjs",
