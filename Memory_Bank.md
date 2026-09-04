@@ -418,6 +418,45 @@ Die Eintraege vom 2026-07-28 bis 2026-08-11 (zweite Runde) stehen in
 - [2026-08-25] Vollaudit: /code war auf allen Domains tot bei 64 gruenen Ampeln (job_vollaudit_20260825) — Import-Zeile MITTEN in einem import-Statement (Einfuegen nach Zeilennummer), kein Pruefer parst die Auslieferung; seitdem check:modul-syntax in check:frontend, Nutzerreise-Waechter Nr. 29 (sw v698); Menue kann nur, was der Chat kann.
 - [2026-08-23] Modell-Liste 100 % gesichert, zwei Schloesser (job_modellliste_lock_20260823) — Betreiber-Anordnung im Wortlaut; Dateisperre check-modell-menue-lock (sechs Dateien byte-genau, Tag stand-2026-08-23-modellmenue-lock) + Live-Ampel gegen den Cline-Katalog; die Liste steht NICHT im Code.
 
+## 2026-09-04 — Besucher-Puls (Autopilot Nr. 81): die fehlende Zahl im Nutzer-Trichter
+
+**Befund (gemessen):** Die Analytik zaehlte Registrierungen, Verwaltung, Mails und Laeufe —
+aber NICHT, ob ueberhaupt jemand ankommt. Bei 3 Konten und 1 neuem in 7 Tagen war damit
+unbeantwortbar, ob die Auffindbarkeit oder der Trichter das Problem ist.
+
+**Gebaut (job_besucher_puls_20260904):** POST /api/puls (oeffentlich, 5/min je Absender,
+still 204 darueber) + besucherPulsAutopilot.js. Der Eingang erhoeht nur Zahlen im
+Arbeitsspeicher (O(1)); der Tagesstand wird hoechstens alle 5 Minuten nach
+betrieb/besucher-puls abgelegt — hoechstens 288 Schreibvorgaenge am Tag, bei 3 wie bei
+3 Milliarden Besuchern (Master-Prompt: keine zentrale Zaehlung, die mitwaechst).
+Die Landeseite meldet EINMAL je Browser-Sitzung; kein Cookie, keine Kennung, keine IP,
+kein Pfad mit Parametern.
+
+**Vier Ship-Loop-Runden, jede aus einem LIVE-Befund:**
+1. 6490c74e — 204 live, aber "Bestand 0" (readUserIndex liefert { ok, entries }, nicht die Liste)
+   und "Herkunft: unbekannt" (der Client kuerzt schon auf den Host; der Server verwarf ihn als URL).
+2. 6e435e19 — nach dem Bau rot: "noch kein Puls". Der Zaehler lebt im Speicher, ein Deploy
+   setzt ihn auf null.
+3. 54f2d2e2 — Tagesstand wird beim ersten Lauf aus der Ablage zurueckgeholt, Schonfrist 60 min,
+   drei Faelle statt Pauschalalarm.
+4. 0a1f5927 — "Anmeldequote 200 %" (1 Besuch gegen 2 neue Konten in 7 Tagen): Quote erst ab
+   20 Besuchen, darunter der ehrliche Satz.
+
+**Merkregeln, die daraus bleiben:**
+* Ein Zaehler im Arbeitsspeicher ist nach jedem Deploy leer — wer daraus einen Alarm baut,
+  baut einen Alarm gegen sich selbst. Stand zurueckholen ODER Schonfrist.
+* Zwei verschiedene Zeitfenster gegeneinander gerechnet ergeben bei kleinen Zahlen Unsinn
+  (200 %). Eine Zahl, die niemand glauben kann, entwertet die ganze Meldung.
+* "0 Besuche" ist zweierlei: niemand da oder niemand kann melden. Die Unterscheidung gehoert
+  von Anfang an in die Bewertung, nicht spaeter.
+
+**Live-Beweis:** smejj.com/willkommen.html laedt /assets/besucher-puls.js (200) und sendet
+POST /api/puls (204, im Browser-Netzprotokoll nachgewiesen); Ampel Nr. 81 gruen mit
+"heute 1 Besuche, 2 neue Konten in 7 Tagen (Bestand 4)". 81 Autopiloten, 74 gruen.
+
+**Offen:** Admin- und Security-Lock stempeln (Doppelklick-Datei "smejj.com 100 Prozent Schutz
+aktivieren.command").
+
 ## 2026-09-02 — A-bis-Z-Live-Test: Bündel-Abgleich hatte src/ mitgerissen (job_a_bis_z_20260902)
 
 Capsule: `task-capsules/2026/09/job_a_bis_z_20260902/capsule.json`. Bauzweig d89ef4f3/b0a8ffc3/a9a6182a,
