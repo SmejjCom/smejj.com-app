@@ -44,4 +44,4 @@ Beides sind Geheimnisse; ich darf sie weder erzeugen noch in Formulare eintragen
 * Wache: `npm run check:con-wache` prueft Erreichbarkeit, Herzschlag, Fehler, Blockaden und
   Kosten gegen den Deckel **des Dienstes**. Exit 1 bei Rot.
 * Datensatz `con-grundfaehigkeiten-v1` in e2: 3.707 gepruefte Paare, davon Rechnen und Logik
-  gegen die gemessene Schwaeche und Sicherheitsbeispiele gegen den Rueckfall von con-1.1.0.
+  gegen die gemessene Schwaeche und Sicherheitsbeispiele gegen den Rueckfall von con-1.1.

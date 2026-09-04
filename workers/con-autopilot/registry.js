@@ -5,30 +5,32 @@
 export const REGISTRY_KEY = "con/registry.json";
 export const STATUS = Object.freeze({ CANDIDATE: "candidate", STABLE: "stable", REJECTED: "rejected", SUPERSEDED: "superseded" });
 
+/**
+ * Versionsnummer der Familie con. ZWEI Stellen, so wie der Auftrag es vorgibt:
+ * con 1.0 → con 1.1 → con 1.2 → … Eine dritte Stelle gibt es nicht.
+ * Alte dreistellige Namen (con-1.0.0) werden noch GELESEN, damit vorhandene Staende
+ * nicht verlorengehen — geschrieben wird ausschliesslich zweistellig.
+ */
 export function parseVersion(v) {
-  const m = String(v || "").match(/^con-(\d+)\.(\d+)\.(\d+)$/);
-  return m ? { major: +m[1], minor: +m[2], patch: +m[3] } : null;
+  const m = String(v || "").match(/^con-(\d+)\.(\d+)(?:\.(\d+))?$/);
+  return m ? { major: +m[1], minor: +m[2] } : null;
 }
 
-export function formatVersion({ major, minor, patch }) {
-  return `con-${major}.${minor}.${patch}`;
+export function formatVersion({ major, minor }) {
+  return `con-${major}.${minor}`;
 }
 
 /**
- * Naechste Version nach Regel: major = neue Basis, minor = neuer Adapter/Datensatz,
- * patch = nur Konfig/Prompt/Routing.
- *
- * `vergeben` sind alle schon benutzten Nummern. Eine Nummer wird NIE zweimal vergeben —
- * sonst ueberschreibt ein neuer Kandidat den Eintrag eines verworfenen Vorgaengers und
- * der Beleg fuer das Verwerfen ist weg (am 04.09. beinahe passiert: con-1.1.0).
+ * Naechste Nummer: neue Basis erhoeht die erste Stelle, ein neuer Adapter oder Datensatz
+ * die zweite. `vergeben` sind alle schon benutzten Namen — eine Nummer wird NIE zweimal
+ * vergeben, sonst ueberschreibt ein neuer Kandidat den Eintrag eines verworfenen Vorgaengers.
  */
-export function naechsteVersion(stabil, { basisPrefix, art, vergeben = [] } = {}) {
+export function naechsteVersion(stabil, { basisPrefix, vergeben = [] } = {}) {
   const benutzt = new Set(vergeben);
-  const frei = (name) => (benutzt.has(name) ? null : name);
   if (!stabil) {
     for (let i = 0; i < 100; i += 1) {
-      const name = formatVersion({ major: 1, minor: 0, patch: i });
-      if (frei(name)) return name;
+      const name = formatVersion({ major: 1, minor: i });
+      if (!benutzt.has(name)) return name;
     }
     throw new Error("keine freie Startnummer");
   }
@@ -37,11 +39,9 @@ export function naechsteVersion(stabil, { basisPrefix, art, vergeben = [] } = {}
   const neueBasis = Boolean(basisPrefix && stabil.basisPrefix && basisPrefix !== stabil.basisPrefix);
   for (let i = 1; i < 200; i += 1) {
     const name = neueBasis
-      ? formatVersion({ major: v.major + i, minor: 0, patch: 0 })
-      : art === "patch"
-        ? formatVersion({ ...v, patch: v.patch + i })
-        : formatVersion({ major: v.major, minor: v.minor + i, patch: 0 });
-    if (frei(name)) return name;
+      ? formatVersion({ major: v.major + i, minor: 0 })
+      : formatVersion({ major: v.major, minor: v.minor + i });
+    if (!benutzt.has(name)) return name;
   }
   throw new Error("keine freie Versionsnummer gefunden");
 }

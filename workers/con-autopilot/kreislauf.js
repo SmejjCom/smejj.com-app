@@ -323,7 +323,7 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   const basisKomplett = Boolean(basisManifest?.komplett);
   // 1. Keine stabile Version: Messlatte con-1.0.0 setzen (Basismodell unveraendert).
   if (!stabil) {
-    const version = "con-1.0.0";
+    const version = "con-1.0";
     const vorhanden = findeVersion(registry, version);
     if (vorhanden?.status === "rejected") return { phase: "gestoppt", grund: "con-1.0.0 wurde verworfen — Betreiber-Entscheidung noetig" };
     return { schritt: "messlatte", job: { modus: basisKomplett ? "messung" : "spiegel+messung", version, ziel: `Messlatte ${version} (Basis ${konfig.basis.repo}${basisKomplett ? "" : ", erst spiegeln"})`,
@@ -356,7 +356,7 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter con/datasets/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };
   if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (CON_MIN_PAARE)` };
   if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
-  const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix, art: "minor",
+  const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix,
     vergeben: registry.versions.map((v) => v.version) });
   // maxZeilen ist Pflicht, nicht Geschmack: gemessen 03.09. braucht EIN Trainingsschritt
   // auf dem 27B-Modell rund zwei Minuten. Ein Lauf ueber alle 3.707 Paare waere bei

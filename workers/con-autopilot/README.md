@@ -17,6 +17,14 @@ beweisen (`bewertung.js#vergleiche`). Sonst REJECT mit Begruendung.
 | **Zeabur** (rund um die Uhr, ohne GPU) | Takt-Uhr, Kreislauf, Bewertung, Register, Kostenwaechter, Dashboard | `server.mjs`, `kreislauf.js`, … |
 | **Mac** | zeigt nur an (`cli.mjs status`, Dashboard) und dient als kostenloser Mess-Endpunkt (MLX-Server) fuer Probelaeufe | `cli.mjs` |
 
+## Versionsnummern
+
+Zwei Stellen, so wie der Auftrag es vorgibt: **con 1.0 → con 1.1 → con 1.2 → …**
+Die erste Stelle steigt nur bei einem neuen Basismodell (con 2.0), die zweite bei
+jedem neuen Adapter oder Datensatz auf derselben Basis. Eine dritte Stelle gibt es nicht.
+Eine Nummer wird nie zweimal vergeben — auch nicht die eines verworfenen Standes,
+sonst waere der Beleg fuer das Verwerfen weg.
+
 ## Bremsen (jede fuer sich ausreichend)
 
 1. `CON_SALAD_FREIGABE=YES` fehlt → kein Salad-Start (Freigabe-Tor).

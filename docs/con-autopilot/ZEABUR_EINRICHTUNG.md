@@ -44,7 +44,7 @@ Zeabur ersetzt die Liste komplett; immer alle 21 Zeilen auf einmal einfuegen.
 |---|---|
 | `/health` | `{"ok":true,"aktiviert":true,"e2":true,"salad":true}` |
 | `/api/con/status` ohne Schluessel | 401 — Betriebsdaten sind verschlossen |
-| `/api/con/dashboard?key=<CON_ADMIN_KEY>` | Tabelle mit con-1.0.0 (stabil) und con-1.1.0 (verworfen) |
+| `/api/con/dashboard?key=<CON_ADMIN_KEY>` | Tabelle mit con-1.0 (stabil) und con-1.1 (verworfen) |
 | e2 `con/autopilot/zustand.json` | `letzterTick` nicht aelter als 5 Minuten — der einzige Beweis, dass er wirklich arbeitet |
 
 ## Was der Dienst dann von allein tut
