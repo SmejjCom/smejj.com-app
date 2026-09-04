@@ -219,12 +219,17 @@ export async function merkeAdminBenutzung(keyId, { promptTokens = 0, completionT
   const marke = nutzungSchreibMarken.get(id) || 0;
   if (jetzt().getTime() - marke < NUTZUNG_SCHREIB_ABSTAND_MS) return;
   nutzungSchreibMarken.set(id, jetzt().getTime());
-  const sprung = nutzungPuffer.get(id) || { anfragen: 0, token: 0 };
-  nutzungPuffer.delete(id);
+  const sprung = { ...(nutzungPuffer.get(id) || { anfragen: 0, token: 0 }) };
+  // Der Puffer wird ERST NACH dem Schreiben verkleinert. Waehrend des
+  // Schreibvorgangs (S3, gut 100-300 ms) steht der Verbrauch sonst nirgends:
+  // nicht mehr im Puffer, noch nicht im Index — und budgetStand saehe null.
+  // Genau diese Luecke liess am 2026-09-04 live eine Anfrage ueber den Deckel
+  // hinaus durch. Doppelt gezaehlt wird nichts: abgezogen wird nur der Betrag,
+  // der wirklich geschrieben wurde; was in der Zwischenzeit dazukam, bleibt.
   try {
     const index = await leseIndex(env);
     const eintrag = index.schluessel.find((s) => s.id === id);
-    if (!eintrag) return;
+    if (!eintrag) { zieheAbPuffer(id, sprung); return; }
     eintrag.zuletztBenutztAm = jetzt().toISOString();
     eintrag.nutzung = eintrag.nutzung || { anfragen: 0, token: 0 };
     eintrag.nutzung.anfragen += sprung.anfragen;
@@ -235,11 +240,25 @@ export async function merkeAdminBenutzung(keyId, { promptTokens = 0, completionT
     if (eintrag.monat?.monat !== monat) eintrag.monat = { monat, token: 0, anfragen: 0 };
     eintrag.monat.token += sprung.token;
     eintrag.monat.anfragen += sprung.anfragen;
-    budgetCache.delete(id);
     await schreibeIndex(index, env);
+    zieheAbPuffer(id, sprung);
+    budgetCache.delete(id);
   } catch (error) {
+    // Nicht geschrieben heisst: der Betrag bleibt im Puffer und zaehlt weiter
+    // gegen das Budget. Lieber einmal zu frueh gedeckelt als einmal zu spaet.
+    nutzungSchreibMarken.delete(id);
     console.error(`[public-api] Nutzung (adm) uebersprungen (${id}):`, String(error?.message || error).slice(0, 160));
   }
+}
+
+/** Zieht den geschriebenen Betrag aus dem Puffer ab — was inzwischen dazukam, bleibt. */
+function zieheAbPuffer(id, geschrieben) {
+  const rest = nutzungPuffer.get(id);
+  if (!rest) return;
+  rest.anfragen = Math.max(0, rest.anfragen - (geschrieben.anfragen || 0));
+  rest.token = Math.max(0, rest.token - (geschrieben.token || 0));
+  if (rest.anfragen === 0 && rest.token === 0) nutzungPuffer.delete(id);
+  else nutzungPuffer.set(id, rest);
 }
 
 /** Nur fuer Tests. */

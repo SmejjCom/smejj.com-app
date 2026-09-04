@@ -316,3 +316,24 @@ test("Liste zaehlt, wieviele Schluessel am Deckel stehen", async () => {
   const liste = await admin("GET", "/api/admin/geld/api/ausgestellt", OWNER);
   assert.equal(liste.body.amDeckel, 1, JSON.stringify(liste.body.schluessel.map((s) => [s.ausgestelltFuer, s.budgetToken, s.monat])));
 });
+
+test("Budget: waehrend des Schreibvorgangs zaehlt der Verbrauch weiter — keine Luecke (Live-Befund 2026-09-04)", async () => {
+  const { budgetStand, merkeAdminBenutzung } = await import("../control-server/src/publicapi/publicApiAdminKeys.js");
+  await aufbauen();
+  const a = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Luecke", laufzeit: "1j", budgetToken: 5 });
+  const id = a.body.schluessel.id;
+  // Buchung anstossen, aber NICHT abwarten: genau der Zustand, in dem live die
+  // zweite Anfrage durchkam (Puffer schon geleert, Index noch nicht geschrieben).
+  const laeuft = merkeAdminBenutzung(id, { promptTokens: 40, completionTokens: 0 }, ENV);
+  const waehrenddessen = await budgetStand(id, ENV);
+  assert.equal(waehrenddessen.ok, false, "Deckel muss schon waehrend des Schreibens greifen: " + JSON.stringify(waehrenddessen));
+  assert.ok(waehrenddessen.verbrauchtToken >= 40);
+  await laeuft;
+  const danach = await budgetStand(id, ENV);
+  assert.equal(danach.ok, false);
+  assert.equal(danach.verbrauchtToken, 40, "nach dem Schreiben genau einmal gezaehlt, nicht doppelt");
+  const liste = await admin("GET", "/api/admin/geld/api/ausgestellt", OWNER);
+  const s = liste.body.schluessel.find((x) => x.id === id);
+  assert.equal(s.monat.token, 40);
+  assert.equal(s.nutzung.token, 40);
+});
