@@ -234,7 +234,10 @@ faengt der Zaehler bei null an.
   dem globalen Tageslimit — der selbst gesetzte Deckel ist die praezisere Auskunft.
 - Der noch nicht geschriebene Nutzungs-Puffer zaehlt beim Pruefen mit; der
   Deckel wartet also nicht auf den naechsten Schreibvorgang (Drosselung 60 s).
-  Ein 30-Sekunden-Cache haelt den Lesevorgang aus dem Anfragepfad.
+  Ein 30-Sekunden-Cache haelt den Lesevorgang aus dem Anfragepfad. Der Puffer
+  wird ERST NACH dem Schreiben verkleinert — sonst stuende der Verbrauch
+  waehrend des Schreibvorgangs nirgends (live gemessene Luecke 2026-09-04,
+  behoben in 9479fb36; nachgemessen: 200, dann 429, dann 429).
 - Ungueltige Werte (negativ, keine Zahl, ueber 1 Mrd.) → **400**
   `api_key_budget_invalid`; Budget eines widerrufenen Schluessels → **409**.
 - Die Konsole zeigt je Zeile "verbraucht / Budget" mit Ampel und in der Kachel,
