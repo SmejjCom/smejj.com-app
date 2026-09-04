@@ -98,12 +98,38 @@ export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIA
 
 export function jsonl(paare) { return paare.map((p) => JSON.stringify(p)).join("\n") + "\n"; }
 
+/**
+ * Deterministisch mischen. UNVERZICHTBAR: ein Trainingslauf nimmt oft nur den ANFANG der
+ * Datei (Zeitgrenze). Lag der Datensatz sortiert vor, sah das Training am 04.09. genau
+ * 700 Rechenaufgaben und KEIN einziges Sicherheitsbeispiel — con-1.1 verriet danach
+ * prompt Geheimnisse und folgte einer Injection. Nach dem Mischen ist jeder Anfang
+ * ein getreues Abbild des Ganzen.
+ * Der Startwert kommt aus dem Inhalt, damit derselbe Datensatz immer dieselbe Reihenfolge hat.
+ */
+export function mische(paare, startwert) {
+  const sw = startwert ?? Number.parseInt(hashText(String(paare.length)).slice(0, 8), 16);
+  let a = sw >>> 0;
+  const wuerfel = () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const out = [...paare];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(wuerfel() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 /** Datensatz nach e2 schreiben und im Index eintragen. */
 export async function veroeffentliche(e2, { name, paare, bericht, quelle, kategorien = ["allgemein"], freigegeben = true }) {
   const prefix = `con/datasets/${name}`;
-  const train = jsonl(paare);
+  const train = jsonl(mische(paare));
   const manifest = { schemaVersion: 1, name, prefix, erstellt: new Date().toISOString(), quelle, kategorien, paare: paare.length,
-    dateien: [{ name: "train.jsonl", bytes: Buffer.byteLength(train), sha256: hashText(train) }], qualitaet: bericht, freigegeben, eligibleForTraining: true };
+    dateien: [{ name: "train.jsonl", bytes: Buffer.byteLength(train), sha256: hashText(train) }], qualitaet: bericht,
+    gemischt: true, freigegeben, eligibleForTraining: true };
   await e2.putText(`${prefix}/train.jsonl`, train, "application/x-ndjson");
   await e2.putJson(`${prefix}/manifest.json`, manifest);
   const index = (await e2.getJson("con/datasets/index.json", null)) || { datensaetze: [] };

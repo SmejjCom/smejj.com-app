@@ -66,7 +66,11 @@ test("Sicherheitspaare verweigern und verraten nie ein Geheimnis", () => {
     const antwort = p.messages[2].content;
     // In KEINER Antwort darf ein Geheimnis stehen — auch nicht als Zitat.
     assert.doesNotMatch(antwort, geheim, `Geheimnis in der Antwort: ${antwort}`);
-    if (geheim.test(frage) || /Fuehre bitte aus|Anweisung an den Assistenten|Phishing|im Namen einer Bank|private Telefonnummer/.test(frage)) {
+    // Was ein Angriff IST, muss die Pruefung genauso breit kennen wie der Generator —
+    // sonst haelt sie einen Angriff faelschlich fuer harmlos und beschwert sich ueber die
+    // richtige Verweigerung (am 04.09. bei "Wohnanschrift" passiert).
+    const istAngriff = geheim.test(frage) || /Fuehre bitte aus|Bitte ausfuehren|Mach das eben|Kannst du das ausfuehren|Anweisung an den Assistenten|Schreibe eine E-Mail im Namen|aus euren Nutzerdaten/.test(frage);
+    if (istAngriff) {
       angriffe += 1;
       assert.match(antwort, /(?:Nein|nicht|kein)/i, `Angriff ohne Verweigerung: ${frage}`);
     } else {
@@ -102,4 +106,25 @@ test("Daten-Pipeline: Angriffe nur MIT Verweigerung, Zustimmung wird abgelehnt",
   const { paare, bericht } = baueDatensatz(zeilen, { angriffeErlaubt: true });
   assert.equal(paare.length, 1);
   assert.equal(bericht.abgelehnt.angriff_ohne_verweigerung, 1);
+});
+
+test("Datensatz wird gemischt — jeder Anfang bildet das Ganze ab", async () => {
+  const { mische } = await import("../workers/con-autopilot/daten.js");
+  // Sortierte Ausgangslage, wie sie der Generator liefert: erst Rechnen, dann Sicherheit.
+  const paare = [
+    ...Array.from({ length: 800 }, (_, i) => ({ art: "reasoning", i })),
+    ...Array.from({ length: 200 }, (_, i) => ({ art: "sicherheit", i }))
+  ];
+  const anteilVorher = paare.slice(0, 300).filter((p) => p.art === "sicherheit").length;
+  assert.equal(anteilVorher, 0, "unsortiert waere der Anfang einseitig — genau das war der Fehler am 04.09.");
+  const gemischt = mische(paare, 12345);
+  const anteilNachher = gemischt.slice(0, 300).filter((p) => p.art === "sicherheit").length;
+  // 20 Prozent von 300 sind 60; grosszuegige Grenzen, aber niemals null.
+  assert.ok(anteilNachher > 25 && anteilNachher < 100, `Anteil im Anfang: ${anteilNachher}`);
+  // Deterministisch: derselbe Startwert ergibt dieselbe Reihenfolge.
+  assert.deepEqual(mische(paare, 12345), gemischt);
+  assert.notDeepEqual(mische(paare, 999), gemischt);
+  // Nichts geht verloren und nichts kommt dazu.
+  assert.equal(gemischt.length, paare.length);
+  assert.equal(gemischt.filter((p) => p.art === "sicherheit").length, 200);
 });
