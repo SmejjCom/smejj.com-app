@@ -100,15 +100,18 @@ test("registry: Versionsregel und promote nur mit PROMOTE-Urteil", () => {
 
 test("budget: ohne Freigabe nie, Tages- und Gesamtdeckel greifen", () => {
   const grenzen = { tagesbudgetUsd: 5.5, gesamtdeckelUsd: 2, jobMaxMinuten: 170, notaus: false, freigabe: true };
-  const ok = darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "medium", minuten: 170 });
+  const ok = darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 170 });
   assert.equal(ok.ok, true);
-  assert.equal(ok.preisProStunde, 0.253);
-  assert.ok(ok.geplantUsd < 0.8);
-  assert.equal(darfStarten({ grenzen: { ...grenzen, freigabe: false }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "medium", minuten: 60 }).ok, false);
-  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 5.4 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "medium", minuten: 60 }).ok, false);
-  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 1.9 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "medium", minuten: 60 }).ok, false);
-  assert.equal(darfStarten({ grenzen: { ...grenzen, notaus: true }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "medium", minuten: 60 }).ok, false);
-  assert.equal(teuersterPreisProStunde(["unbekannt"], "medium"), 0);
+  // Standardauswahl sind die drei guenstigen 24-GB-Karten; teuerste davon 0,10 USD/h auf batch.
+  assert.equal(ok.preisProStunde, 0.10);
+  assert.ok(ok.geplantUsd < 0.30, `geplant ${ok.geplantUsd}`);
+  assert.equal(darfStarten({ grenzen: { ...grenzen, freigabe: false }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 5.45 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(darfStarten({ grenzen, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 1.95 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(darfStarten({ grenzen: { ...grenzen, notaus: true }, tagesbuch: { summeUsd: 0 }, gesamt: { summeUsd: 0 }, gpuKlassen: STANDARD_GPU_KLASSEN, prioritaet: "batch", minuten: 60 }).ok, false);
+  assert.equal(teuersterPreisProStunde(["unbekannt"], "batch"), 0);
+  // Die teure RTX 4090 gehoert bewusst NICHT zur Standardauswahl.
+  assert.equal(STANDARD_GPU_KLASSEN.includes("ed563892-aacd-40f5-80b7-90c9be6c759b"), false);
 });
 
 test("tarball: Buendel enthaelt alle Job-Dateien und ist gueltiges gzip", () => {

@@ -12,10 +12,22 @@ export const GPU_KLASSEN = Object.freeze({
   "9998fe42-04a5-4807-b3a5-849943f16c38": { name: "RTX 3090 Ti (24 GB)", vramGb: 24, preis: { high: 0.28, medium: 0.22, low: 0.16, batch: 0.10 } },
   "ed563892-aacd-40f5-80b7-90c9be6c759b": { name: "RTX 4090 (24 GB)", vramGb: 24, preis: { high: 0.30, medium: 0.253, low: 0.207, batch: 0.16 } }
 });
-export const STANDARD_GPU_KLASSEN = Object.freeze(Object.keys(GPU_KLASSEN));
+/**
+ * Standardauswahl: die drei GUENSTIGEN 24-GB-Karten. Die RTX 4090 ist bewusst NICHT dabei —
+ * sie kostet auf Stapel-Prioritaet 0,16 statt 0,09-0,10 USD/h, und der Kostenwaechter rechnet
+ * immer mit der teuersten erlaubten Karte. Eine einzige teure Klasse in der Liste hebt damit
+ * die Reservierung fuer JEDEN Job um zwei Drittel. Wer sie braucht (Verfuegbarkeit), setzt
+ * CON_GPU_KLASSEN ausdruecklich.
+ */
+export const STANDARD_GPU_KLASSEN = Object.freeze([
+  "a5db5c50-cbcb-4596-ae80-6a0c8090d80f", // RTX 3090 (24 GB)   0,09 batch
+  "6d4e9e99-d27e-4751-8d7d-393f7d8ea949", // RTX A5000 (24 GB)  0,09 batch
+  "9998fe42-04a5-4807-b3a5-849943f16c38"  // RTX 3090 Ti (24 GB) 0,10 batch
+]);
+export const ALLE_GPU_KLASSEN = Object.freeze(Object.keys(GPU_KLASSEN));
 export const PRIORITAETEN = Object.freeze(["high", "medium", "low", "batch"]);
 
-export function teuersterPreisProStunde(gpuKlassen = STANDARD_GPU_KLASSEN, prioritaet = "medium") {
+export function teuersterPreisProStunde(gpuKlassen = STANDARD_GPU_KLASSEN, prioritaet = "batch") {
   let max = 0;
   for (const id of gpuKlassen) {
     const p = GPU_KLASSEN[id]?.preis?.[prioritaet];
