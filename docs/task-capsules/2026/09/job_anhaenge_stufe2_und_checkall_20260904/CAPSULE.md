@@ -136,3 +136,47 @@ Nachtest: Welle öffnet, Status „Ich höre zu …", kein Fehlertext, kein Tipp
 **Nichts gelöscht (Zugangs-Lock gewahrt):** `SMEJJ_VOICE_LIVE_API_KEY` bleibt unangetastet liegen.
 Ein Wechsel der einen Variable auf `true` schaltet die LIVE-Welle wieder ein, sobald Google das
 Konto freigibt. Reversibel in einem Handgriff, kein Code-Deploy nötig.
+
+---
+
+## Nachtrag 2 — A-bis-Z-Test auf der Produktionsdomain (04.09. abends)
+
+**Auftrag:** „Bitte oeffne smejj.com im Browser und teste die gesamte App von A bis Z. Wenn du
+Fehler findest, behebe sie sofort, deploye erneut und teste live weiter."
+
+**Geprueft (angemeldete Sitzung, echter Klickpfad):** Startseite (749 ms Ladezeit, keine
+Konsolenfehler, acht Werkzeug-Chips), 20 Ansichten nacheinander (alle mit Inhalt, keine
+Ueberbreite), Chat mit echter Frage (2295 ms Serverantwort, korrekte Antwort), Anhaenge
+(PDF/Word gelesen, Video als Kachel), Code-Bereich (Eingabefeld und fuenf Module geladen),
+Suche, Verlauf, Einstellungen, Kosten, Speicher, Dateien, Gedaechtnis, Projekte, Papierkorb,
+Browser, smejjBot, Agenten-Arbeitsbereich, Systemzustand.
+
+**EIN echter Fehler gefunden: die globale Suche war tot.** Jede Eingabe verschwand, nie ein
+Treffer, weder ueber das Menue noch Enter noch den Knopf. Kein Konsolenfehler, keine
+fehlgeschlagene Anfrage — der Bereich sah gesund aus.
+
+**Ursache, zweimal dieselbe Zeile:** `such-nachladen.js` rief `ladeBeiAnsicht(["search"], holeSuche)`.
+Erstens nennt der erste Parameter jener Funktion laut ihrer eigenen Dokumentation die Ansichten,
+die NICHT ausloesen — ausgerechnet die Such-Ansicht war also ausgeschlossen. Zweitens wurde der
+Rueckgabewert (der Haken) verworfen, also rief ihn niemand je auf. `search.js` wurde nie geladen,
+das Formular hatte keinen Handler. Klassiker aus dem Gedaechtnis: „Modul laedt nie, kein Test
+merkt es" — beide Module sind fuer sich fehlerfrei, nur die Naht zwischen ihnen war es nicht.
+
+**Fix:** `such-nachladen.js` exportiert `ladeSucheFuerAnsicht(ansichtId)`, `app.js` ruft ihn in
+`goToView` neben `holeFlaechen`/`holeGoogleLogin` auf. Die Gewichts-Diaet bleibt: geladen wird nur
+beim Oeffnen der Such-Ansicht und bei Cmd+K.
+
+**Live bewiesen (Cache geleert, smejj.com v756):** `search.js` geladen, Eingabe „chat" liefert
+sofort Treffer aus Arbeitsbereichen und Chats.
+
+**Zwei Nacharbeiten aus der Zusammenfuehrung mit der Parallelsitzung:**
+* Konflikt in `sw.js` (beide Seiten hatten die Cache-Nummer erhoeht) — die hoehere gewinnt, v756.
+* Markenkette geheilt: chat-store b67, chat-actions b47, app.js b131 und neun weitere Module.
+  Ohne das waeren die Fixes der Parallelsitzung („toter Aktionsknopf im Verlauf", „Gruendlicher
+  antworten war 30 px breit") ausgeliefert, aber im Browser unwirksam geblieben.
+* `tests/verlauf-nachladen.test.mjs` pruefte feste Cache-Marken und wurde bei jeder Erhoehung rot,
+  ohne dass etwas kaputt war — jetzt prueft er den Modulnamen und ist gegen Markenwechsel robust.
+
+**Endstand:** `check:all` EXIT 0, 686 Frontend-Tests gruen, alle neun Schutz-Locks gruen,
+smejj.com und api.smejj.com synchron auf `smejj-shell-v756`, alle Zweige gepusht und auf
+Codeberg gespiegelt.
