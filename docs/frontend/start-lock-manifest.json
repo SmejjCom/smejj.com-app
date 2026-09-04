@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T21:23:40.979Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 (Doppelklick): Der Rundlauf /api/providers/cline/select vor jedem Auftrag entfaellt, wenn das gewuenschte Modell serverseitig schon steht — live gemessen kostete er 1,07 s von 1,87 s bis zum ersten Wort. Drei Notbremsen halten den Merker ehrlich (Fehlschlag, Handwahl per Ereignis, Antwortkopf eines zweiten Tabs). Geaendert: public/ai/modellRouter.js (Merker und Notbremsen), public/ai/chatClient.js (liest den Antwortkopf), public/app.js und public/index.html nur Cache-Marken. Grundlage: Auftrag 2026-09-05 'Vorlauf einsparen' nach der Untersuchung der Antwortzeit.",
+  "frozenAt": "2026-09-04T23:01:39.377Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05: Vollbild-Fix iPhone-PWA (body::before position:fixed) plus Service-Worker-Cache v760; Freigabe im Wortlaut 'Ich gebe dir alle Rechte. Mach Du hundert Prozent fertig.'",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "344fdfee7c817c667dcd44cda016d3363d91744a9d4cebdd82510f50f616f64b",
+    "public/index.html": "9bb247b7bd35998ccc5c7331088009ae86ee2812dbe4e7fcca02b94a79d382b0",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "69c21011c1f20954b1686febf314f1cb0a7695e9fe23a2e5416cf9df467c6942",
+    "public/start-styles.css": "0bfa525b4a71f84534a67fa37be723847b8112a8f10bd0225cf30eebb91c3f65",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "4193fa291d2c601773f527da4c96dd068802c96efd3acc1c8f6d3cc601f068e5",
+    "public/sw.js": "6cc212c33ca83879f3c6aff754b0d45fb793b456fabbe51c9c295a9ea88e25bf",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
