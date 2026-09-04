@@ -695,3 +695,33 @@ test("bricht der Strom nach dem Denken ab, bleibt 'Denkt …' nicht stehen", asy
   assert.ok(zeile);
   assert.match(zeile.children[0].textContent, /^Dachte \d+ s$/);
 });
+
+// ---------------------------------------------------------------------------
+// Ein gespeicherter Aktionsknopf ist ein toter Knopf
+//
+// BEFUND 2026-09-04, live: Unter einer alten Antwort stand "Gruendlicher
+// antworten" — 30 px breit, ohne Klick-Wirkung. readEntries() speichert
+// node.innerHTML samt Knopf; beim Wiederherstellen kommt er als Bild zurueck,
+// ohne Ereignis und ohne Stil (chat-stream.js ist auf der Startseite gar nicht
+// geladen). Er wird deshalb beim Speichern UND beim Anzeigen entfernt.
+// ---------------------------------------------------------------------------
+const { ohneToteAktion } = await import("../public/chat-messages.js");
+
+test("ohneToteAktion entfernt den Knopf-Block, laesst die Antwort stehen", () => {
+  const html = '<p>Der Mond ist der erdnahe Trabant.</p>'
+    + '<p class="antwort-aktion"><button type="button" class="ghost-button antwort-aktion-knopf">Gründlicher antworten</button></p>';
+  assert.equal(ohneToteAktion(html), "<p>Der Mond ist der erdnahe Trabant.</p>");
+});
+
+test("ohneToteAktion laesst Antworten ohne Knopf unveraendert", () => {
+  const html = '<p>Nur Text, kein Knopf.</p><pre><code>1 + 1</code></pre>';
+  assert.equal(ohneToteAktion(html), html);
+  assert.equal(ohneToteAktion(""), "");
+  assert.equal(ohneToteAktion(null), "");
+});
+
+test("ohneToteAktion raeumt auch mehrere Knoepfe ab", () => {
+  const html = '<p>A</p><p class="antwort-aktion"><button>Erneut versuchen</button></p>'
+    + '<p>B</p><p class="antwort-aktion"><button>Gründlicher antworten</button></p>';
+  assert.equal(ohneToteAktion(html), "<p>A</p><p>B</p>");
+});
