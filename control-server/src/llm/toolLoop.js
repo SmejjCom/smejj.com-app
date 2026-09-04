@@ -215,11 +215,34 @@ export function beschreibeWerkzeug(call) {
 
 /**
  * Zaehlt die Treffer in einem Werkzeugergebnis. Grundlage ist das eigene
- * Ausgabeformat ("1. Titel"), nicht der Text des Anbieters — deshalb stabil.
+ * Ausgabeformat, nicht der Text des Anbieters — deshalb stabil.
+ *
+ * BEFUND 2026-09-04 (live im angemeldeten Browser, Frage "Lies
+ * https://example.com und nenne mir die Ueberschrift"): Die Seite WURDE
+ * gelesen, das Modell nannte die Ueberschrift richtig — und darunter stand
+ * "Keine der abgefragten Quellen hat Daten geliefert — die Antwort oben steht
+ * deshalb auf nichts." Der Schritt hiess "1 Seite gelesen — ohne Fund".
+ *
+ * Ursache: gezaehlt wurden nur nummerierte Zeilen ("1. Titel") — das ist das
+ * Format der SUCHE. Eine gelesene Seite liefert Fliesstext und kam damit immer
+ * auf null. Ein Erfolg sah aus wie ein Fehlschlag; die Anzeige log ueber ihre
+ * eigene Arbeit (Hausregel: Ampel ehrlich).
+ *
+ * Deshalb zaehlt die Art mit. Fuer "seite" gilt das eigene Erfolgsformat aus
+ * leseSeite(): der Kopf "URL: …" steht nur da, wenn wirklich Text ankam.
+ * Abgelehnte Adresse, Zeitueberschreitung, Sperrhinweis und die leere Seite
+ * fangen anders an und bleiben null — dort ist "ohne Fund" die Wahrheit.
+ *
  * @param {string} ergebnis Rueckgabe von runAgentTool.
+ * @param {string} [art] Schrittart aus beschreibeWerkzeug ("suche" | "seite").
  */
-export function zaehleTreffer(ergebnis) {
-  const zeilen = String(ergebnis || "").match(/^\s*\d+\.\s/gm);
+export function zaehleTreffer(ergebnis, art = "") {
+  const text = String(ergebnis || "");
+  if (art === "seite") {
+    if (!/^URL:\s*\S/.test(text)) return 0;
+    return text.includes("(kein Textinhalt gefunden)") ? 0 : 1;
+  }
+  const zeilen = text.match(/^\s*\d+\.\s/gm);
   return zeilen ? zeilen.length : 0;
 }
 
@@ -364,7 +387,7 @@ export async function streamWithTools({ result, chain, messages, res, options, e
       const schritt = beschreibeWerkzeug(call);
       sendeSchritt(res, { ...schritt, zustand: "laeuft" });
       const ergebnis = await runTool(call, { env }).catch((error) => `Werkzeugfehler: ${String(error?.message || error).slice(0, 200)}`);
-      sendeSchritt(res, { ...schritt, zustand: "fertig", treffer: zaehleTreffer(ergebnis) });
+      sendeSchritt(res, { ...schritt, zustand: "fertig", treffer: zaehleTreffer(ergebnis, schritt.art) });
       // AI Evolution Engine (2026-08-14): jeder Werkzeuglauf wird bewertet.
       // Ein Werkzeug meldet seinen Fehler als TEXT zurueck (der Agent soll
       // darauf reagieren koennen) — deshalb wird hier an genau den Saetzen

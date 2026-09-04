@@ -9,7 +9,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AGENT_TOOLS, agentToolsEnabled, leseFrage, runAgentTool, SCHLUSSRUNDE_ANSAGE, streamWithTools, WERKZEUG_VERTRAG, withAgentTools, zuText } from "../control-server/src/llm/toolLoop.js";
+import { AGENT_TOOLS, agentToolsEnabled, leseFrage, runAgentTool, SCHLUSSRUNDE_ANSAGE, sperrHinweis, streamWithTools, WERKZEUG_VERTRAG, withAgentTools, zaehleTreffer, zuText } from "../control-server/src/llm/toolLoop.js";
 
 // Baut einen Modell-Stream aus fertigen SSE-Ereignissen.
 function stream(events) {
@@ -457,4 +457,57 @@ test("frage_stellen sendet die Karte und beendet den Lauf ohne zweite Runde", as
   assert.equal(res.gesendet().match(/data: \[DONE\]/g).length, 1, "genau ein Abschluss");
   assert.match(res.gesendet(), /Dazu brauche ich eine Angabe/, "der Text davor bleibt sichtbar");
   assert.equal(sichtbar, "", "eine offene Frage gehoert nie in den Cache");
+});
+
+// ---------------------------------------------------------------------------
+// Eine gelesene Seite IST ein Fund
+//
+// BEFUND 2026-09-04, live im angemeldeten Browser: Auf "Lies
+// https://example.com und nenne mir die Ueberschrift" nannte das Modell die
+// Ueberschrift richtig — und die Oberflaeche schrieb darunter "Keine der
+// abgefragten Quellen hat Daten geliefert". Der Schritt hiess "1 Seite gelesen
+// — ohne Fund". Gezaehlt wurden nur nummerierte Zeilen; die kommen von der
+// Suche, nie von einer gelesenen Seite.
+//
+// Kaputte UND gesunde Probe (Hausregel Waechter-TUEV): Erfolg zaehlt 1,
+// jeder Fehlschlag bleibt 0 — sonst wuerde der ehrliche Schlusssatz seinerseits
+// verschwinden, wenn wirklich nichts ankam.
+// ---------------------------------------------------------------------------
+
+const SEITE_OK = [
+  "URL: https://example.com/",
+  "HTTP-Status: 200",
+  "Titel: Example Domain",
+  "",
+  "Example Domain This domain is for use in illustrative examples."
+].join("\n");
+
+test("zaehleTreffer: gelesene Seite mit Text zaehlt als ein Fund", () => {
+  assert.equal(zaehleTreffer(SEITE_OK, "seite"), 1);
+});
+
+test("zaehleTreffer: Seite ohne Textinhalt bleibt ohne Fund", () => {
+  const leer = "URL: https://leer.example/\nHTTP-Status: 200\n\n(kein Textinhalt gefunden)";
+  assert.equal(zaehleTreffer(leer, "seite"), 0);
+});
+
+test("zaehleTreffer: Sperre, Zeitueberschreitung und Ablehnung sind kein Fund", () => {
+  assert.equal(zaehleTreffer(sperrHinweis("https://gesperrt.example/", 403), "seite"), 0);
+  assert.equal(zaehleTreffer("Seite nicht ladbar: Zeitueberschreitung", "seite"), 0);
+  assert.equal(zaehleTreffer("Adresse abgelehnt: ungueltig", "seite"), 0);
+  assert.equal(zaehleTreffer("Werkzeugfehler: kaputt", "seite"), 0);
+});
+
+test("zaehleTreffer: die Suche zaehlt weiter ihre nummerierten Zeilen", () => {
+  const suche = "1. Erster Treffer\n2. Zweiter Treffer\n3. Dritter Treffer";
+  assert.equal(zaehleTreffer(suche, "suche"), 3);
+  assert.equal(zaehleTreffer(suche), 3, "ohne Art unveraendert — alte Aufrufer bleiben gueltig");
+  assert.equal(zaehleTreffer("Die Suche ist fehlgeschlagen: kaputt", "suche"), 0);
+});
+
+test("zaehleTreffer: der Seitentext zaehlt NICHT wie eine Trefferliste", () => {
+  // Eine gelesene Seite, die selbst eine nummerierte Liste enthaelt, ergab
+  // frueher zufaellig "3 Treffer" — eine Zahl ohne Bedeutung.
+  const seiteMitListe = "URL: https://liste.example/\nHTTP-Status: 200\n\n1. eins\n2. zwei\n3. drei";
+  assert.equal(zaehleTreffer(seiteMitListe, "seite"), 1);
 });

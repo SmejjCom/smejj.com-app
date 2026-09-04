@@ -20,7 +20,22 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const QUELLE = fs.readFileSync("public/account-sessions.js", "utf8");
-const CSS = fs.readFileSync("public/account-privacy.css", "utf8");
+
+// BEFUND 2026-09-04: Diese Tests lasen nur account-privacy.css. Beim
+// Zeilen-Diaet-Split wanderten die Formular-Regeln nach
+// account-privacy-formulare.css — der Test fand seinen Block nicht mehr und
+// starb an `null[0]`, statt etwas zu pruefen. Er war blind, nicht rot aus
+// gutem Grund (Hausregel: Pruefung prueft die falsche Frage).
+//
+// Deshalb wird die Liste NICHT hier gepflegt, sondern aus dem Lader gelesen:
+// wer die Dateien wirklich in den Browser holt, bestimmt auch, was geprueft
+// wird. Ein dritter Split macht den Test damit nie wieder blind.
+const LADER = fs.readFileSync("public/account-privacy.js", "utf8");
+const CSS_DATEIEN = [...LADER.matchAll(/"(account-privacy[a-z-]*\.css)"/g)].map((m) => m[1]);
+if (CSS_DATEIEN.length < 2) {
+  throw new Error(`Lader nennt nur ${CSS_DATEIEN.length} Stylesheet(s) — Muster in account-privacy.js geaendert?`);
+}
+const CSS = CSS_DATEIEN.map((name) => fs.readFileSync(`public/${name}`, "utf8")).join("\n");
 // Kommentare beschreiben auch alte Fehler (z. B. die frueher benutzte, nie
 // definierte Variable) — geprueft werden darf nur, was der Browser wirklich liest.
 const CSS_CODE = CSS.replace(/\/\*[\s\S]*?\*\//g, "");

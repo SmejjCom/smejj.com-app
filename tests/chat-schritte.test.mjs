@@ -651,3 +651,22 @@ test("eine ausfuehrliche Antwort wird nicht belehrt", () => {
   assert.equal(quellenHinweis({ gesamt: 3, ohneFund: 3, antwort: lang }), "");
   assert.equal(quellenHinweis({ gesamt: 3, ohneFund: 3, antwort: "A".repeat(399) }), QUELLEN_LEER_HINWEIS);
 });
+
+// ---------------------------------------------------------------------------
+// Eine gelesene Seite heisst "gelesen", nicht "1 Treffer"
+//
+// BEFUND 2026-09-04 (live): hinter der erfolgreich gelesenen Seite stand
+// "✓ nichts gefunden". Der Zaehler im Control-Server ist repariert (er kennt
+// jetzt die Art); hier faellt nur noch die Sprache: Treffer hat die Suche,
+// eine Seite ist gelesen.
+// ---------------------------------------------------------------------------
+test("gelesene Seite meldet 'gelesen', Suche meldet Treffer", () => {
+  const { log, antwort } = buehne();
+  zeigeSchritt(antwort, { art: "seite", text: "https://example.com", zustand: "fertig", treffer: 1 });
+  zeigeSchritt(antwort, { art: "suche", text: "buero castro valley", zustand: "fertig", treffer: 3 });
+  const staende = schrittZeilen(log.children[0])
+    .flatMap((z) => z.children.filter((k) => k.dataset.stand === "true"))
+    .map((k) => k.textContent);
+  assert.deepEqual(staende, [" \u2713 gelesen", " \u2713 3 Treffer"]);
+  assert.ok(!staende.some((s) => /1 Treffer|nichts gefunden/.test(s)), "keine Suchsprache und kein Falschbefund an der Seite");
+});

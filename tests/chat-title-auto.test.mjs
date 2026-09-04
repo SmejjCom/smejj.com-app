@@ -112,7 +112,14 @@ test("Kennungen der Importe passen zu den uebrigen Modulen (Befund F-07)", () =>
   assert.ok(marke, "Vergleichsmodul laedt chat-store.js nicht mehr — Test anpassen");
   assert.ok(QUELLE.includes(`from "/assets/chat-store.js${marke}"`),
     `chat-store.js wird hier unter einer ANDEREN Kennung geladen als in chat-history-view.js (${marke})`);
-  assert.match(QUELLE, /from "\/assets\/ai\/chat-stream\.js"/);
+  // GEAENDERT 2026-09-04: Geprueft wurde die statische Form `from "…"`. Beim
+  // Abspecken der Startseite wurde der Import bewusst dynamisch
+  // (`await import("/assets/ai/chat-stream.js")`), damit die Kette nicht mehr
+  // beim Start mitkommt — der Test wurde davon rot, obwohl nichts kaputt war.
+  // Er prueft jetzt wieder die EIGENSCHAFT: derselbe Pfad, ohne Kennung,
+  // gleich in welcher Importform.
+  assert.match(QUELLE, /(?:from|import\()\s*"\/assets\/ai\/chat-stream\.js"/,
+    "chat-stream.js muss unter genau diesem Pfad geladen werden (statisch oder dynamisch)");
   assert.ok(!/chat-stream\.js\?/.test(QUELLE), "chat-stream.js wird ohne Kennung importiert");
 });
 
