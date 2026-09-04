@@ -245,5 +245,23 @@ export const DECKUNG_AUTOPILOTEN = Object.freeze([
     verbessert: "Am 04.09. standen 3 Konten und 1 neues in 7 Tagen ohne jede Besuchszahl daneben: niemand konnte sagen, ob die Auffindbarkeit oder der Trichter das Problem ist",
     neuigkeiten: ["Neu am 2026-09-04 (Betreiber-Auftrag: Nutzer-Baustelle)"],
     ...LAEUFER
+  },
+  {
+    id: "schutz-echtheit",
+    name: "Schutz-Echtheit",
+    nummer: "82",
+    kurz: "Bewacht jede Sperre noch das, was die Nutzer WIRKLICH bekommen? Vergleicht jeden eingefrorenen Hash mit der Auslieferung auf smejj.com.",
+    funktionen: [
+      "Die Luecke, die er schliesst: jede Sperre vergleicht ihr Manifest mit der ARBEITSKOPIE. Beide koennen uebereinstimmen und trotzdem beide falsch sein.",
+      "Am 04.09. war genau das der Fall: der Start-Lock meldete GRUEN und bewachte vier Fassungen, die smejj.com nicht ausliefert — composer-plus-menu.js, index.html, app.js, sw.js. Die echten Dateien waren ungeschuetzt.",
+      "ROT nur beim stummen Phantom: Manifest gleich Arbeitskopie, aber ungleich Auslieferung. Nur diesen Fall sieht sonst niemand.",
+      "GELB bei veraltet (Manifest ungleich Arbeitskopie) — die eigene Sperre meldet das bereits, zweimal derselbe Befund laesst zweimal suchen.",
+      "Nicht abrufbare Serverdateien und gebuendelte Artefakte werden uebersprungen, nie als Verstoss gewertet: 'nicht messbar' ist kein Verstoss.",
+      "Liest ausschliesslich oeffentliche Dateien — keine Anmeldung, kein Auftrag, keine Kosten."
+    ],
+    trainiert: "Nichts — er haelt Hashes gegen die Auslieferung",
+    verbessert: "Eine Sperre, die gruen meldet und ins Leere bewacht, faellt am naechsten Tag auf statt nach Wochen",
+    neuigkeiten: ["Neu am 2026-09-04 (Betreiber-Auftrag 'taeglichen Phantom-Waechter bauen')"],
+    ...LAEUFER
   }
 ]);
