@@ -49,3 +49,8 @@ __pycache__/
 
 # npm-Lock ist ein Fremdkoerper: das Repo fuehrt pnpm-lock.yaml (Capsule Nr. 54, 24.08.)
 /package-lock.json
+
+# pdf.js-Worker (1,27 MB): liegt als zwei Teile im Repo (Regel: keine Datei ueber 1 MB),
+# die ganze Datei entsteht per "npm run build:pdfjs-worker" und wird nie eingecheckt.
+public/vendor/pdfjs/pdf.worker.min.js
+public/assets/vendor/pdfjs/pdf.worker.min.js

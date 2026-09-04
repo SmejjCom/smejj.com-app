@@ -9,6 +9,10 @@
 // Verweis-Chip); Text wird bei MAX_ZEICHEN gekappt (Bruecken-Body 1 MB); der
 // Worker laeuft unter worker-src 'self' (CSP) von derselben Herkunft.
 const PDFJS_URL = "/assets/vendor/pdfjs/pdf.min.js";
+// Der Worker (1,27 MB) liegt als ZWEI Teile im Repo (Regel: keine Datei ueber 1 MB) und wird
+// per "npm run build:pdfjs-worker" zu dieser einen Datei zusammengesetzt (git-ignoriert).
+// Zur Laufzeit ist es eine ganz normale Datei — pdf.js laedt seinen Worker per import(),
+// ein Blob-Modul wuerde an script-src der Content-Security-Policy scheitern.
 const WORKER_URL = "/assets/vendor/pdfjs/pdf.worker.min.js";
 export const MAX_ZEICHEN = 200_000;
 export const MAX_SEITEN = 300;
