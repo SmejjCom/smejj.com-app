@@ -325,7 +325,11 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
   const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix, art: "minor",
     vergeben: registry.versions.map((v) => v.version) });
-  const trainKonfig = JSON.parse(process.env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15}');
+  // maxZeilen ist Pflicht, nicht Geschmack: gemessen 03.09. braucht EIN Trainingsschritt
+  // auf dem 27B-Modell rund zwei Minuten. Ein Lauf ueber alle 3.707 Paare waere bei
+  // gradAkk 8 rund 460 Schritte, also 15 Stunden — die Zeitgrenze von 220 Minuten schnitte
+  // ihn bei 13 Prozent ab. 700 Zeilen ergeben ~88 Schritte und passen mit Laden und Messen.
+  const trainKonfig = JSON.parse(process.env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
   return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
     ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
     parameter: { CON_VERSION: stabil.version, CON_KANDIDAT: version, CON_DATENSATZ_PREFIX: daten.prefix, CON_TRAIN_KONFIG: JSON.stringify(trainKonfig), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
