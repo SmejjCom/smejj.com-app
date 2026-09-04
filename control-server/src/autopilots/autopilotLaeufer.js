@@ -645,8 +645,12 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["trainings-reife", () => laufTrainingsReife({ mitNetz })],
     // Nr. 66-70: die Abdeckungs-Lücken — Zustellprotokoll, DSGVO-Fristen, AI-Act, Abos, Flags.
     ...baueDeckungsLaeufe({ mitNetz, kontenLeser: async () => {
-      const eintraege = await readUserIndex();
-      const lage = berechneWillkommensLage(Array.isArray(eintraege) ? eintraege : (eintraege?.eintraege || []));
+      // readUserIndex liefert { ok, entries } — nicht die Liste selbst. Beim
+      // ersten Anlauf las der Puls "Bestand 0", waehrend Nr. 58 drei Konten
+      // meldete: dieselbe Quelle, andere Form (live gemessen 04.09.).
+      const index = await readUserIndex({});
+      if (!index?.ok) return { gesamt: null, neu7Tage: null };
+      const lage = berechneWillkommensLage(index.entries || []);
       return { gesamt: lage.gesamt, neu7Tage: lage.neue7Tage };
     } }),
     // Nr. 44-60: dieselbe Dateiliste, derselbe Netz-Schalter — die Läufe

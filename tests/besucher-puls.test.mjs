@@ -36,6 +36,13 @@ test("Nr. 81: der Puls zählt, ohne je etwas Personenbezogenes zu behalten", () 
   assert.equal(s.jeHerkunft.intern, 1);
   assert.ok(!JSON.stringify(s).includes("geheime"), "kein Suchbegriff darf im Stand landen");
   assert.ok(!JSON.stringify(s).includes("utm_source"), "keine Kampagnen-Parameter im Stand");
+  // Der Client kuerzt schon; der Server darf das nicht als kaputt verwerfen
+  // (live gemessen 04.09.: "direkt" wurde zu "unbekannt").
+  assert.equal(herkunftsHost("google.com"), "google.com");
+  assert.equal(herkunftsHost("direkt"), "direkt");
+  assert.equal(herkunftsHost("intern"), "intern");
+  assert.equal(herkunftsHost("www.smejj.com"), "intern");
+  assert.equal(herkunftsHost("/pfad?q=geheim"), "unbekannt", "ein Pfad ist keine Herkunft");
 });
 
 test("Nr. 81: Tageswechsel setzt zurück, Schlüssel-Flut wird gebündelt", () => {

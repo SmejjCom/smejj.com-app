@@ -49,8 +49,19 @@ function zaehle(karte, roh) {
 
 /** Reduziert einen Verweis auf den HOST — nie Pfad, nie Parameter (die tragen Suchbegriffe). */
 export function herkunftsHost(verweis = "") {
-  const roh = String(verweis || "").trim();
+  const roh = String(verweis || "").trim().toLowerCase();
   if (!roh) return "direkt";
+  // Der Client kuerzt bereits auf den Host (besucher-puls.js) — hier kam
+  // deshalb "direkt"/"intern"/"google.com" an und wurde als kaputte URL zu
+  // "unbekannt" (live gemessen 04.09.). Beides muss durchgehen; alles andere
+  // wird verworfen, damit nie ein Pfad oder Suchbegriff in die Zaehlung faellt.
+  if (roh === "direkt" || roh === "intern" || roh === "unbekannt") return roh;
+  if (!roh.includes("://")) {
+    // Ein Host hat mindestens einen Punkt — "kaputt" ist keiner.
+    return /^[a-z0-9][a-z0-9-]{0,30}(\.[a-z0-9-]{1,20}){1,4}$/.test(roh)
+      ? (roh.replace(/^www\./, "") === "smejj.com" ? "intern" : roh.replace(/^www\./, "").slice(0, 40))
+      : "unbekannt";
+  }
   try {
     const host = new URL(roh).hostname.toLowerCase().replace(/^www\./, "");
     if (!host) return "direkt";
@@ -131,7 +142,9 @@ export function fuehreSelbsttestAus() {
   if (herkunftsHost("https://www.google.com/search?q=geheim") !== "google.com") fehler.push("Herkunft muss auf den Host reduziert werden");
   if (herkunftsHost("") !== "direkt" || herkunftsHost("kaputt") !== "unbekannt") fehler.push("leere und kaputte Verweise falsch behandelt");
   if (herkunftsHost("https://smejj.com/hilfe.html") !== "intern") fehler.push("eigener Verweis muss intern heissen");
-  return { bestanden: fehler.length === 0, fehler, geprueft: 6 };
+  if (herkunftsHost("google.com") !== "google.com" || herkunftsHost("direkt") !== "direkt") fehler.push("schon gekuerzte Herkunft muss durchgehen");
+  if (herkunftsHost("/pfad/mit/geheim?q=x") !== "unbekannt") fehler.push("ein Pfad darf nie als Herkunft zaehlen");
+  return { bestanden: fehler.length === 0, fehler, geprueft: 8 };
 }
 
 /**
