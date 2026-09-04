@@ -15,7 +15,10 @@ export function leseKonfig(env = process.env) {
     apiKey: String(env.SALAD_API_KEY || "").trim(),
     gruppe: String(env.CON_SALAD_GRUPPE || "con-job").trim(),
     gpuKlassen: String(env.CON_GPU_KLASSEN || "").split(",").map((s) => s.trim()).filter(Boolean),
-    prioritaet: String(env.CON_SALAD_PRIORITAET || "medium").trim(),
+    // "batch" ist die guenstigste Stufe (24-GB-Karten: 0,09-0,16 statt 0,20-0,25 USD/h).
+    // Der Preis dafuer ist Wartezeit, bis ein Rechner frei wird — und Warten kostet den
+    // Autopiloten nichts, er tickt ohnehin nur alle fuenf Minuten.
+    prioritaet: String(env.CON_SALAD_PRIORITAET || "batch").trim(),
     image: String(env.CON_SALAD_IMAGE || "docker.io/pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime").trim(),
     speicherGb: Number(env.CON_SALAD_SPEICHER_GB) > 0 ? Number(env.CON_SALAD_SPEICHER_GB) : 150,
     ramMb: Number(env.CON_SALAD_RAM_MB) > 0 ? Number(env.CON_SALAD_RAM_MB) : 30720,
