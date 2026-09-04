@@ -193,9 +193,16 @@ export async function messlaufImTakt({
       const basis = summary.errors > 0 && summary.errors <= toleranz && summaryGemessen ? summaryGemessen : summary;
       const urteil = beurteileMessung(basis, { mindestNote, nurKritisch });
       const schuldige = kritischeFaelle(einzeln);
+      // Der Name des schuldigen Falls gehoert IMMER in die Meldung — auch wenn
+      // gleichzeitig etwas nicht messbar war. BEFUND 2026-09-04: Nr. 75 meldete
+      // "1 kritisch ... — 1 von 14 Fällen nicht messbar (empty_response ×1)"
+      // und verschwieg dabei, WELCHER Fall durchfiel: der Zweig mit den
+      // Transportfehlern ueberschrieb die Namensliste. Ohne Namen ist ein
+      // roter Befund nicht nachpruefbar (Hausregel, siehe kritischeFaelle).
+      const mitNamen = schuldige.length ? `${urteil.grund}: ${schuldige.join(", ")}` : urteil.grund;
       const grund = summary.errors > 0 && gruende
-        ? (basis === summary ? `${urteil.grund} — ${gruende}` : `${urteil.grund} — ${summary.errors} von ${summary.cases} Fällen nicht messbar (${gruende})`)
-        : (schuldige.length ? `${urteil.grund}: ${schuldige.join(", ")}` : urteil.grund);
+        ? (basis === summary ? `${mitNamen} — ${gruende}` : `${mitNamen} — ${summary.errors} von ${summary.cases} Fällen nicht messbar (${gruende})`)
+        : mitNamen;
       // Wackelige Faelle stehen in der Meldung: sie sind kein Verstoss, aber ein
       // ehrlicher Hinweis, dass das Modell hier nicht zweimal gleich antwortet.
       const grundMitWackel = wackelig?.length ? `${grund}; ${wackelig.length} wackelig (beim zweiten Versuch bestanden: ${wackelig.join(", ")})` : grund;
