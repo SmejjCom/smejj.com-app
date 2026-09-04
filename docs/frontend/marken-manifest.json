@@ -29,6 +29,10 @@
       "marke": "1",
       "finger": "75d8f6d38069a366"
     },
+    "api-center-aktionen.js": {
+      "marke": "1",
+      "finger": "263c0f99723ba475"
+    },
     "components.js": {
       "marke": "b48",
       "finger": "54b1f9b624a2e4c8"
@@ -66,8 +70,8 @@
       "finger": "86a9acdf00a6bf97"
     },
     "premium-surfaces.js": {
-      "marke": "b47o",
-      "finger": "ea9ebd3f93612ce5"
+      "marke": "b47p",
+      "finger": "a8cc2634e3a68f2f"
     },
     "composer-tools.js": {
       "marke": "werkzeuge-19",
@@ -298,12 +302,12 @@
       "finger": "98bd70646d64741e"
     },
     "entwickler.js": {
-      "marke": "15",
-      "finger": "5e9ac36fc1037b59"
+      "marke": "16",
+      "finger": "c43b7d4b6f04f4b6"
     },
     "api-center-surface.js": {
-      "marke": "12",
-      "finger": "b33da350d8c96057"
+      "marke": "13",
+      "finger": "1bf90506c3692fc1"
     },
     "start-chips.js": {
       "marke": "b32b",
@@ -346,8 +350,8 @@
       "finger": "a895a0033a41a25a"
     },
     "app.js": {
-      "marke": "b125",
-      "finger": "dc538de8e0fe4160"
+      "marke": "b126",
+      "finger": "cd32cc15405b989b"
     },
     "pwa-schnellstart.js": {
       "marke": "5",
@@ -410,8 +414,8 @@
       "finger": "6b08b7a49a30bec1"
     },
     "settings-surface.js": {
-      "marke": "b58",
-      "finger": "b5ceb3505cd9c627"
+      "marke": "b59",
+      "finger": "bd7b2f3de9258e0e"
     },
     "account-privacy.js": {
       "marke": "b48",

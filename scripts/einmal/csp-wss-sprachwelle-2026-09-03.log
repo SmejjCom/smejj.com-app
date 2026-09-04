@@ -1,0 +1,25 @@
+== 0. Ausgangslage
+5b1ddc7a fix(csp): connect-src erlaubt wss://api.smejj.com — Sprachwelle LIVE darf verbinden; SW smejj-shell-v739, Start-Lock gestempelt (Betreiber-Doppelklick 2026-09-03)
+== 1. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v740";
+== 2. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 112 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-03T16-28-43-821Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-03T16:28:43.821Z).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 245 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 174 Module erreichbar, Precache vollstaendig.
+ℹ pass 42 ℹ fail 0 
+== 3. Commit design-v11
+design-v11 0b7197c9
+== 4. Live stellen (Frontend-Klon, Fast-Forward)
+Klon d7c1d10 gepusht
+== 5. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig (nur public/, docs/frontend, tests/)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 5f4f9ac3 gepusht — Zeabur baut
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+== 6. Live-Beweis (bis 3 Minuten, smejj.com genuegt fuer den Browser)
+19:29:18 smejj.com=smejj-shell-v739 csp-wss=1
+19:29:31 smejj.com=smejj-shell-v740 csp-wss=1
+FERTIG — CSP live, Sprachwelle LIVE darf verbinden (smejj.com v740; api.smejj.com zieht mit dem naechsten Zeabur-Bau nach).

@@ -1,0 +1,43 @@
+== 0. Ausgangslage
+ba2468ca chore(einmal): Doppelklick-Datei 'Zwei Reiter ausliefern'
+ M docs/frontend/marken-manifest.json
+ M public/app.js
+ M public/assets/app.js
+ M public/assets/composer-tools.js
+ M public/assets/index.html
+ M public/composer-tools.js
+ M public/index.html
+ABBRUCH: Eine andere Sitzung hat ungesicherte Aenderungen an public/ — erst DEREN Kaskade klicken, dann diese hier — bitte diese Ausgabe in den Chat kopieren.
+== 0. Ausgangslage
+5b1daffe fix(anhang): pdf.js-Worker in zwei Teilen (Regel: keine Datei ueber 1 MB) — Modul-Syntax-Pruefer nimmt public/vendor/ als Fremdcode aus, Marken v3/werkzeuge-10/werkzeuge-19/b124, SW smejj-shell-v747, Start-Lock gestempelt (Betreiber-Doppelklick 2026-09-04)
+== 1. Zweig feature/api-reiter in design-v11 mergen
+9066ab06 merge(api-bereich): zwei Reiter statt gemischter Liste (feature/api-reiter: dfbd30a1)
+== 2. Gesperrte Kettenglieder hochziehen (premium-surfaces -> app.js -> index.html)
+public/premium-surfaces.js: settings-surface.js b57 -> b58
+public/app.js: premium-surfaces.js b47n -> b47o
+public/index.html: app.js b124 -> b125
+Marken-Heber fertig.
+markenkette OK — 116 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+== 3. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v748";
+== 4. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 116 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T09-37-33-606Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T09:37:33.606Z).
+auslieferung-lock OK — 38 geschuetzte Dateien werden unveraendert ausgeliefert (10 ohne eigene Kopie, direkt aus der Quelle; 1 erzeugte Artefakte ausgenommen).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 249 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 175 Module erreichbar, Precache vollstaendig.
+ℹ pass 69 ℹ fail 0 
+== 5. Commit design-v11
+design-v11 92096862 (Basis 5b1daffe)
+== 6. Live stellen (Frontend-Klon) — Wurzel UND assets/
+Klon 56ead3f gepusht
+== 7. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 9d8d2cae gepusht — Zeabur baut
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+== 8. Live-Beweis (bis 5 Minuten)
+09:38:21 sw=smejj-shell-v748 entwickler=1 reiter=2 seite=entwickler.js?v=15
+FERTIG — zwei Reiter live: https://smejj.com/entwickler.html (am iPhone: App schliessen und neu oeffnen).

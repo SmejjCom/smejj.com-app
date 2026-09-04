@@ -1,0 +1,24 @@
+== 0. Ausgangslage
+35827b70 chore(einmal): Kaskade + Doppelklick-Datei fuer Office lesen (Stufe 2B)
+== 1. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v745";
+== 2. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 116 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-03T20-32-22-926Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-03T20:32:22.926Z).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 251 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 175 Module erreichbar, Precache vollstaendig.
+ℹ pass 45 ℹ fail 0 
+== 3. Commit design-v11 (git add -A: neue Dateien kommen mit)
+design-v11 1bba9cc4
+== 4. Live stellen (Frontend-Klon, Fast-Forward) — Wurzel UND assets/
+Klon afef42e gepusht
+== 5. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig (nur public/, docs/frontend, tests/)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 31cf226a gepusht — Zeabur baut
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+== 6. Live-Beweis (bis 3 Minuten)
+23:33:05 smejj.com=smejj-shell-v745 office=200 marke=1
+FERTIG — Office lesen live (smejj.com v745). Am iPhone: App schliessen, neu oeffnen, Word-Datei anhaengen.

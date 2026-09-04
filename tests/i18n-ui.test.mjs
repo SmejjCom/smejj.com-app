@@ -32,7 +32,10 @@ const chatActionsWoerter = fs.readFileSync(path.join(publicDir, "chat-actions-wo
 // Erste-Schritte-Karten auf der leeren Startseite (UI/UX-Programm 02.09., Nr. 9).
 const ersteSchritte = fs.readFileSync(path.join(publicDir, "erste-schritte.js"), "utf8");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8");
+  + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
+  // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
+  // ihre Texte gehoeren weiterhin zum API-Bereich, sonst gelten sie hier als verwaist.
+  + fs.readFileSync(path.join(publicDir, "api-center-aktionen.js"), "utf8");
 const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");

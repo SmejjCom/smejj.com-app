@@ -1,0 +1,23 @@
+== 0. Ausgangslage
+93625588 chore(einmal): Kaskade + Marken-Heber + Doppelklick-Datei fuer 'API-Laufzeit ausliefern' (mergt feature/api-laufzeit, zieht die gesperrten Kettenglieder zur Laufzeit hoch, stempelt, liefert aus)
+== 1. Zweig feature/api-laufzeit in design-v11 mergen
+e7413992 merge(api): Laufzeit fuer API-Schluessel (feature/api-laufzeit: Server dfe41f7c, Oberflaeche e6cb439c)
+== 2. Gesperrte Kettenglieder hochziehen (premium-surfaces -> app.js -> index.html)
+public/premium-surfaces.js: settings-surface.js b56 -> b57
+public/app.js: premium-surfaces.js b47m -> b47n
+public/index.html: app.js b122 -> b123
+Marken-Heber fertig.
+markenkette OK — 116 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+== 3. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v746";
+== 4. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 116 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-03T20-36-29-587Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-03T20:36:29.587Z).
+auslieferung-lock OK — 38 geschuetzte Dateien werden unveraendert ausgeliefert (10 ohne eigene Kopie, direkt aus der Quelle; 1 erzeugte Artefakte ausgenommen).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 251 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 175 Module erreichbar, Precache vollstaendig.
+ℹ pass 70 ℹ fail 0 
+ABBRUCH: Tests rot — nichts wird gestempelt ausgeliefert. Bitte Ausgabe in den Chat kopieren.
