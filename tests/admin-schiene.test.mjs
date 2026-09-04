@@ -187,7 +187,14 @@ test("der Griff liegt genau auf der Kante und ist gross genug zum Treffen", () =
   assert.ok(breite && Number(breite[1]) >= 8, "unter 8 px trifft die Maus die Linie nicht zuverlaessig");
   assert.match(CSS, /\.rail-griff\{[\s\S]*?cursor:col-resize/);
   assert.match(CSS, /\.rail-griff\{[\s\S]*?touch-action:none/);
-  assert.match(CSS, /body\.rail-zieht \.shell\{transition:none;\}/);
+  // Regressionsschutz mit Begruendung (Befund 2026-09-04): ein Uebergang auf
+  // grid-template-columns liess die Schiene einen Schritt hinterherhinken —
+  // der Wert kommt aus einer Custom Property, der Uebergang startet dann auf
+  // dem schon geaenderten Ausgangswert und kommt nie an.
+  // Kommentare raus, sonst schlaegt die Probe auf der Begruendung an, die
+  // genau diese Zeichenkette nennt.
+  const ohneKommentare = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.doesNotMatch(ohneKommentare, /transition:[^;}]*grid-template-columns/);
 });
 
 test("der Control-Server liefert schiene.js aus", () => {
