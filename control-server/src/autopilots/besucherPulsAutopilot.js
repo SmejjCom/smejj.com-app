@@ -46,6 +46,8 @@ const zustand = {
 const START_MS = Date.now();
 /** So lange nach dem Start gilt Stille als normal (Nacht, wenige Besucher). */
 export const SCHONFRIST_MS = 60 * 60 * 1000;
+/** Unter so wenigen Besuchen am Tag ist jede Anmeldequote Zufall, keine Aussage. */
+export const QUOTE_AB_BESUCHEN = 20;
 
 function tagVon(jetztMs) { return new Date(jetztMs).toISOString().slice(0, 10); }
 
@@ -142,11 +144,14 @@ export function beurteilePuls({ besuche = 0, jePulsGesehen = false, konten = nul
   if (besuche === 0) {
     return { ok: true, grund: `heute 0 Besuche gemessen${anmeldung}${bestand} — der Haken meldet, es kommt nur niemand` };
   }
-  const quote = Number.isFinite(neueKonten) && besuche > 0 ? Math.round((neueKonten / besuche) * 1000) / 10 : null;
-  return {
-    ok: true,
-    grund: `heute ${besuche} Besuche${anmeldung}${bestand}` + (quote !== null ? `; Anmeldequote ${String(quote).replace(".", ",")} % (7-Tage-Konten gegen Tagesbesuche)` : "")
-  };
+  // KEINE Quote aus zwei verschiedenen Zeitfenstern bei kleinen Zahlen: bei
+  // 1 Besuch und 2 neuen Konten in 7 Tagen stand dort „Anmeldequote 200 %"
+  // (live gemessen 04.09. 10:52). Eine Zahl, die niemand glauben kann, macht
+  // die ganze Meldung wertlos — lieber ehrlich sagen, ab wann sie trägt.
+  const quote = Number.isFinite(neueKonten) && besuche >= QUOTE_AB_BESUCHEN
+    ? `; Anmeldequote grob ${String(Math.round((neueKonten / besuche) * 1000) / 10).replace(".", ",")} % (7-Tage-Konten gegen Tagesbesuche)`
+    : Number.isFinite(neueKonten) ? `; Anmeldequote erst ab ${QUOTE_AB_BESUCHEN} Besuchen am Tag aussagekräftig` : "";
+  return { ok: true, grund: `heute ${besuche} Besuche${anmeldung}${bestand}${quote}` };
 }
 
 /** Selbsttest nach Hausregel: kaputte UND gesunde Probe. */
@@ -158,13 +163,15 @@ export function fuehreSelbsttestAus() {
   const leer = beurteilePuls({ besuche: 0, jePulsGesehen: true, neueKonten: 0 });
   if (!leer.ok || !/nur niemand/.test(leer.grund)) fehler.push("gemessene 0 Besuche sind ein Zustand, kein Ausfall");
   const voll = beurteilePuls({ besuche: 200, jePulsGesehen: true, neueKonten: 2, konten: 5 });
-  if (!voll.ok || !/200 Besuche/.test(voll.grund) || !/Anmeldequote 1 %/.test(voll.grund)) fehler.push(`Quote falsch gerechnet: ${voll.grund}`);
+  if (!voll.ok || !/200 Besuche/.test(voll.grund) || !/Anmeldequote grob 1 %/.test(voll.grund)) fehler.push(`Quote falsch gerechnet: ${voll.grund}`);
+  const winzig = beurteilePuls({ besuche: 1, jePulsGesehen: true, neueKonten: 2, konten: 4 });
+  if (!winzig.ok || /200 %/.test(winzig.grund) || !/erst ab 20 Besuchen/.test(winzig.grund)) fehler.push("bei 1 Besuch darf keine Quote behauptet werden");
   if (herkunftsHost("https://www.google.com/search?q=geheim") !== "google.com") fehler.push("Herkunft muss auf den Host reduziert werden");
   if (herkunftsHost("") !== "direkt" || herkunftsHost("kaputt") !== "unbekannt") fehler.push("leere und kaputte Verweise falsch behandelt");
   if (herkunftsHost("https://smejj.com/hilfe.html") !== "intern") fehler.push("eigener Verweis muss intern heissen");
   if (herkunftsHost("google.com") !== "google.com" || herkunftsHost("direkt") !== "direkt") fehler.push("schon gekuerzte Herkunft muss durchgehen");
   if (herkunftsHost("/pfad/mit/geheim?q=x") !== "unbekannt") fehler.push("ein Pfad darf nie als Herkunft zaehlen");
-  return { bestanden: fehler.length === 0, fehler, geprueft: 10 };
+  return { bestanden: fehler.length === 0, fehler, geprueft: 11 };
 }
 
 /**

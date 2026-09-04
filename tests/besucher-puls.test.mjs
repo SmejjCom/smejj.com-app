@@ -82,6 +82,8 @@ test("Nr. 81 ENTSCHEIDEND: 'niemand da' und 'niemand kann melden' sind zweierlei
   assert.match(da.meldung, /heute 1 Besuche/);
   assert.match(da.meldung, /1 neue Konten in 7 Tagen/);
   assert.match(da.meldung, /Bestand 3/);
+  assert.ok(!/Anmeldequote grob/.test(da.meldung), "bei 1 Besuch wird keine Quote behauptet");
+  assert.match(da.meldung, /erst ab 20 Besuchen/);
 });
 
 test("Nr. 81: der Tagesstand wird höchstens alle 5 Minuten abgelegt (Deckel gegen Last)", async () => {
