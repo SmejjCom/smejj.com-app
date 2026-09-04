@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { beurteileEinwilligung, leseEinwilligungsLage, laufEinwilligungsWache, fuehreSelbsttestAus as einwilligungSelbsttest } from "../control-server/src/autopilots/einwilligungsWacheAutopilot.js";
-import { messlaufImTakt, beurteileMessung, warteAufMessung, ABLAGE_ID, ABLAGE_VERSION } from "../control-server/src/autopilots/brueckenMesslauf.js";
+import { messlaufImTakt, kritischeFaelle, beurteileMessung, warteAufMessung, ABLAGE_ID, ABLAGE_VERSION } from "../control-server/src/autopilots/brueckenMesslauf.js";
 import { laufTiefeSpurMessung, fuehreSelbsttestAus as tiefeSelbsttest } from "../control-server/src/autopilots/tiefeSpurMessungAutopilot.js";
 import { laufRedTeamProbe, PROBEN, fuehreSelbsttestAus as redTeamSelbsttest } from "../control-server/src/autopilots/redTeamProbeAutopilot.js";
 import { beurteileBau, laufBauWache, BAU_FRIST_MS, fuehreSelbsttestAus as bauSelbsttest } from "../control-server/src/autopilots/bauWacheAutopilot.js";
@@ -24,6 +24,16 @@ const antwort = (status, body, headers = {}) => new Response(typeof body === "st
 const speicherMock = () => { const m = new Map(); return { lies: async (id) => m.get(id) || null, schreib: async (d) => { m.set(d.id, d); return d; }, m }; };
 
 // ---------------------------------------------------------------- Nr. 74
+test("Messlauf: die Meldung nennt die kritisch gescheiterten Faelle beim Namen (Befund 2026-09-04)", () => {
+  assert.deepEqual(kritischeFaelle([
+    { id: "a", status: "failed", kritisch: true },
+    { id: "b", status: "passed", kritisch: false },
+    { id: "c", status: "error", kritisch: true }
+  ]), ["a"], "nur echte Verletzungen, kein Transportfehler");
+  assert.deepEqual(kritischeFaelle([]), []);
+  assert.deepEqual(kritischeFaelle(), []);
+});
+
 test("Nr. 74 Einwilligungs-Wache: 503-Lage rot, abgeschaltete API grün, vollständige Lage grün", async () => {
   assert.equal(einwilligungSelbsttest().bestanden, true);
   const aus = leseEinwilligungsLage({});
