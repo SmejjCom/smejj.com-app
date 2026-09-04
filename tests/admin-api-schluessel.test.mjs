@@ -373,3 +373,62 @@ test("Tagesmappe meldet unbefristete, bald ablaufende und gedeckelte Schluessel 
   const selbsttest = await fuehreSelbsttestAus();
   assert.equal(selbsttest.bestanden, true, JSON.stringify(selbsttest.fehler));
 });
+
+// ---- Bedienbarkeit der Konsole (Betreiber-Befund 2026-09-04) ------------------
+//
+// "Schluessel ausstellen klick, macht nichts, ist kaputt." Gemessen war der
+// Aufruf jedes Mal korrekt — der Ausloeser war nur ein 17 px hoher Text ohne
+// Rahmen. Diese Tests halten fest, was die Flaeche koennen MUSS, damit der
+// Befund nicht zurueckkommt.
+test("Konsole: echter Knopf, beschriftete Felder, 44 px — kein Text-Link mehr", async () => {
+  const fs = await import("node:fs");
+  const views = fs.readFileSync("control-server/admin-ui/views-stage7.js", "utf8");
+  const konsole = fs.readFileSync("control-server/admin-ui/console-stage7.js", "utf8");
+  const css = fs.readFileSync("control-server/admin-ui/console.css", "utf8");
+
+  // Ausloeser ist ein <button>, kein <span class="act">.
+  assert.match(views, /<button type="button" class="btn primary adm-gross" id="admAusstellen">/);
+  assert.doesNotMatch(views, /<span class="act" id="admAusstellen">/);
+  // Auch die Zeilen-Aktionen sind Knoepfe.
+  assert.match(views, /<button type="button" class="btn" data-admBudget=/);
+  assert.match(views, /<button type="button" class="btn danger" data-admWiderruf=/);
+  assert.doesNotMatch(views, /<span class="act[^"]*" data-adm/);
+
+  // Jedes Feld hat eine sichtbare Beschriftung, nicht nur einen Platzhalter.
+  for (const label of ["Für wen ist der Schlüssel?", "Wie lange soll er gelten?", "Monatsbudget", "Notiz"]) {
+    assert.ok(views.includes(label), `Beschriftung fehlt: ${label}`);
+  }
+  assert.match(views, /class="adm-pflicht">Pflicht</, "Pflichtfeld ist als solches erkennbar");
+
+  // 44 px fuer Felder und Hauptknopf (Touch-Ziel).
+  assert.match(css, /\.adm-feld input,\.adm-feld select\{[^}]*min-height:44px/);
+  assert.match(css, /\.btn\.adm-gross\{[^}]*min-height:44px/);
+
+  // Rueckmeldung am Knopf, Sprung ins Pflichtfeld, Sperre waehrend des Laufs.
+  assert.match(konsole, /function sageAmKnopf\(text, schlecht\)/);
+  assert.match(konsole, /ausstellen\.disabled = true;/);
+  assert.match(konsole, /ausstellen\.textContent = "Wird ausgestellt …";/);
+  assert.match(konsole, /feld\.focus\(\); feld\.select\(\);/);
+  // Eine unsinnige Budget-Eingabe wird vor dem Absenden abgefangen.
+  assert.match(konsole, /if \(budgetToken && !\/\^\\d\+\$\/\.test\(budgetToken\)\)/);
+});
+
+test("Konsole: Zustand steht ausgeschrieben und farbig da (gruen Aktiv)", async () => {
+  const fs = await import("node:fs");
+  const views = fs.readFileSync("control-server/admin-ui/views-stage7.js", "utf8");
+  assert.match(views, /function zustandPilleAdm\(zustand\)/);
+  assert.match(views, /return pille\("● Aktiv", "ok"\)/);
+  assert.match(views, /return pille\("● Abgelaufen", "warn"\)/);
+  assert.match(views, /return pille\("● Widerrufen", "bad"\)/);
+});
+
+test("Konsole: der frische Schluessel bekommt einen eigenen Kasten mit Kopier-Knopf", async () => {
+  const fs = await import("node:fs");
+  const views = fs.readFileSync("control-server/admin-ui/views-stage7.js", "utf8");
+  const konsole = fs.readFileSync("control-server/admin-ui/console-stage7.js", "utf8");
+  assert.match(views, /class="adm-frisch"/);
+  assert.match(views, /id="admFrischKey"/);
+  assert.match(views, /id="admKopieren">Kopieren<\/button>/);
+  assert.match(views, /Jetzt kopieren — er wird nie wieder angezeigt\./);
+  assert.match(konsole, /navigator\.clipboard\.writeText\(code\.textContent\.trim\(\)\)/);
+});
