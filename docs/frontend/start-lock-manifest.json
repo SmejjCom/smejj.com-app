@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T23:01:39.377Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05: Vollbild-Fix iPhone-PWA (body::before position:fixed) plus Service-Worker-Cache v760; Freigabe im Wortlaut 'Ich gebe dir alle Rechte. Mach Du hundert Prozent fertig.'",
+  "frozenAt": "2026-09-04T23:37:01.707Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05: VORUEBERGEHENDE Messanzeige gegen den schwarzen Balken am iPhone. Drei Fixversuche blieben wirkungslos, weil ohne Messung geraten wurde (kein Xcode auf dem Mac, kein Simulator). public/pwa-diagnose.js zeigt NUR im Vollbild am Telefon Geraetehoehe, Seitenhoehe und Safe-Area an; index.html bindet es ein, sw.js precacht es. Freigabe im Wortlaut: 'Mach endlich richtig' und Master-Prompt 'Arbeite eigenstaendig weiter, erledige die Aufgabe vollstaendig'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9bb247b7bd35998ccc5c7331088009ae86ee2812dbe4e7fcca02b94a79d382b0",
+    "public/index.html": "09dc7c059e4a9a688f3c8ca6d4c4e45f4b0ddc77b14b013a5ddfbbf619980fa7",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "0bfa525b4a71f84534a67fa37be723847b8112a8f10bd0225cf30eebb91c3f65",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "6cc212c33ca83879f3c6aff754b0d45fb793b456fabbe51c9c295a9ea88e25bf",
+    "public/sw.js": "0d6fcd862703d0259f7192d56937d25ec0e1b0d2c53ba60bbbe3ef18901c382f",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
