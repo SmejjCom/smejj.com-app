@@ -432,3 +432,19 @@ test("Konsole: der frische Schluessel bekommt einen eigenen Kasten mit Kopier-Kn
   assert.match(views, /Jetzt kopieren — er wird nie wieder angezeigt\./);
   assert.match(konsole, /navigator\.clipboard\.writeText\(code\.textContent\.trim\(\)\)/);
 });
+
+test("Konsole: die Schluessel-Tabelle passt ins Fenster (Live-Befund 2026-09-04)", async () => {
+  // Neun Spalten ergaben 1441 px bei 1154 px sichtbarer Flaeche, und die Huelle
+  // scrollt nicht: der Knopf "Widerrufen" lag ausserhalb des Fensters und war
+  // nicht anklickbar. Sechs Spalten passen; ein Scrollbalken sichert den Rest ab.
+  const fs = await import("node:fs");
+  const views = fs.readFileSync("control-server/admin-ui/views-stage7.js", "utf8");
+  const css = fs.readFileSync("control-server/admin-ui/console.css", "utf8");
+  const kopf = /V\.tabelleBlock\(\[([^\]]*)\], admZeilen\)/.exec(views);
+  assert.ok(kopf, "Tabellenkopf nicht gefunden");
+  const spalten = kopf[1].split(",").length;
+  assert.equal(spalten, 6, `Tabelle hat ${spalten} Spalten — mehr als sechs passen nicht ins Fenster`);
+  assert.match(views, /Verbrauch \(Monat\)/);
+  assert.doesNotMatch(views, /"Ausgestellt von", ""/, "Aussteller steht jetzt in der ersten Spalte");
+  assert.match(css, /\.adm-tabelle\{overflow-x:auto;\}/);
+});
