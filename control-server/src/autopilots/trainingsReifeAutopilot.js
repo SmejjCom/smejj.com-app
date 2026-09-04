@@ -16,7 +16,7 @@ import { createRecordStore } from "../admin/recordStore.js";
 import { isCaptureEnabled } from "../../../src/training/constants.js";
 import { TRAININGS_QUELLEN } from "./trainingsTaktAutopilot.js";
 import { readTrainingIdriveConfig } from "../../../src/training/idrive-conditional-writer.js";
-import { signedS3List, parseS3ListPage } from "../storage/s3Signer.js";
+import { signedS3Get, signedS3List, parseS3ListPage } from "../storage/s3Signer.js";
 
 /**
  * WO DIE ECHTEN NUTZERFRAGEN LIEGEN (Befund 2026-09-04): Die Erfassung schreibt
@@ -28,6 +28,20 @@ import { signedS3List, parseS3ListPage } from "../storage/s3Signer.js";
  */
 export const FRAGEN_PRAEFIX = "training/fragen/";
 const MAX_LIST_SEITEN = 40;
+
+/**
+ * WO DIE GEBAUTEN PAARE LIEGEN (Betreiber-Entscheidung 2026-09-04: "Eigene
+ * Paare bauen"). Gemessen am selben Tag: 1 erfasste Nutzerfrage bei einem
+ * Besuch am Tag — auf dem Sammelweg kommen die geforderten 3.000 Paare nie
+ * zusammen. Der Trainingsweg (Stufe 0) erlaubt ausdruecklich "neu erzeugte,
+ * selbst geschriebene Beispielpaare"; sie liegen als Datensatz auf e2 und
+ * werden im Index gefuehrt.
+ *
+ * Sie zaehlen GETRENNT. Ein erzeugtes Paar ist nicht dasselbe wie eine echte
+ * Frage eines echten Menschen — beides in eine Zahl zu werfen waere genau die
+ * Art Schoenrechnerei, gegen die diese Wache gebaut wurde.
+ */
+export const DATENSATZ_INDEX = "datasets/index.json";
 
 /** Zaehlt die erfassten Fragen per LIST (nur Schluessel, nie Inhalte). */
 export async function zaehleFragen({ env = process.env, listImpl = signedS3List, fetchImpl = fetch } = {}) {
@@ -45,6 +59,36 @@ export async function zaehleFragen({ env = process.env, listImpl = signedS3List,
     if (!marke) return { lesbar: true, anzahl, abgeschnitten: true };
   }
   return { lesbar: true, anzahl, abgeschnitten: true };
+}
+
+/**
+ * Zaehlt die Paare der gebauten Datensaetze aus dem Index (ein GET, keine
+ * Liste ueber tausende Schluessel). Fehlt der Index, ist das kein Ausfall —
+ * dann gibt es eben noch keinen gebauten Datensatz.
+ */
+export async function zaehleGebaute({ env = process.env, getImpl = signedS3Get, fetchImpl = fetch } = {}) {
+  // BEWUSST die NORMALE e2-Konfiguration, nicht die Trainings-Konfiguration:
+  // Der strenge Trainings-Speicher mit eigener Erlaubnisliste existiert, weil
+  // dort Fragen echter Menschen liegen. Gebaute Paare enthalten keine
+  // Nutzerdaten — sie an dieselbe Schluesselkette zu binden hiesse, dass der
+  // Zaehler auch dann blind bleibt, wenn gar nichts Schuetzenswertes da ist.
+  const cfg = {
+    endpoint: env.IDRIVE_E2_ENDPOINT, accessKey: env.IDRIVE_E2_ACCESS_KEY,
+    secretKey: env.IDRIVE_E2_SECRET_KEY, bucket: env.IDRIVE_E2_BUCKET,
+    region: env.IDRIVE_E2_REGION || "us-west-2"
+  };
+  if (!cfg.endpoint || !cfg.accessKey || !cfg.secretKey || !cfg.bucket) {
+    return { lesbar: false, grund: "IDRIVE_E2_* nicht gesetzt" };
+  }
+  let antwort;
+  try { antwort = await getImpl({ ...cfg, key: DATENSATZ_INDEX, allowNotFound: true, fetchImpl, timeoutMs: 8000 }); }
+  catch (f) { return { lesbar: false, grund: String(f?.message || f).slice(0, 60) }; }
+  if (!antwort?.ok) return { lesbar: true, anzahl: 0, namen: [] };
+  let index;
+  try { index = JSON.parse(antwort.body); } catch { return { lesbar: false, grund: "Index ist kein JSON" }; }
+  const saetze = (index?.datensaetze || []).filter((d) => d?.freigegeben !== false);
+  const anzahl = saetze.reduce((summe, d) => summe + (Number(d?.paare) || 0), 0);
+  return { lesbar: true, anzahl, namen: saetze.map((d) => d.name).filter(Boolean) };
 }
 
 /** Die Ablage der Entscheidungskarte — liest die Tagesmappe (Nr. 60). */
@@ -118,7 +162,8 @@ export async function laufTrainingsReife({
   quellen = TRAININGS_QUELLEN,
   kartenAblage = null,
   mitNetz = true,
-  fragenZaehler = zaehleFragen
+  fragenZaehler = zaehleFragen,
+  gebauteZaehler = zaehleGebaute
 } = {}) {
   const probe = fuehreSelbsttestAus({ env });
   if (!probe.bestanden) {
@@ -142,6 +187,11 @@ export async function laufTrainingsReife({
     // (Nr. 74) ist dafuer zustaendig und nennt den fehlenden Wert.
     if (fragen.lesbar) gemessen.push({ name: "erfasste Fragen", lesbar: true, anzahl: fragen.anzahl });
     else gemessen.push({ name: `erfasste Fragen (nicht zaehlbar: ${fragen.grund || "unbekannt"})`, lesbar: true, anzahl: 0 });
+    // Die gebauten Paare — getrennt benannt, damit niemand sie fuer echte
+    // Nutzerfragen haelt.
+    const gebaut = await Promise.resolve().then(() => gebauteZaehler({ env })).catch((f) => ({ lesbar: false, grund: String(f?.message || f).slice(0, 60) }));
+    if (gebaut.lesbar) gemessen.push({ name: `gebaute Paare${gebaut.namen?.length ? ` (${gebaut.namen.join(", ")})` : ""}`, lesbar: true, anzahl: gebaut.anzahl });
+    else gemessen.push({ name: `gebaute Paare (nicht zaehlbar: ${gebaut.grund || "unbekannt"})`, lesbar: true, anzahl: 0 });
   }
   const urteil = beurteileReife(gemessen, reifeZiel({ env }));
   if (!urteil.ok) {

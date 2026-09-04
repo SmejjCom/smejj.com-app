@@ -113,3 +113,63 @@ test("Nr. 65 zaehlt die erfassten Fragen aus training/fragen/ mit", async () => 
   assert.equal(f.ok, true);
   assert.match(f.meldung, /nicht zaehlbar/);
 });
+
+// ---------------------------------------------------------------------------
+// Gebaute Paare zaehlen — getrennt von echten Nutzerfragen
+//
+// Betreiber-Entscheidung 2026-09-04: "Eigene Paare bauen". Ohne diesen Zaehler
+// bliebe das Daten-Tor des Modell-Evolutions-Takts (Nr. 72) fuer immer zu,
+// egal wie viele Paare gebaut werden — die Wache sah nur training/fragen/.
+//
+// Kaputte UND gesunde Probe: fehlender Index ist "0 gebaute Paare" (kein
+// Ausfall), fehlende Zugangsdaten sind "nicht zaehlbar", ein Index mit
+// Datensaetzen wird summiert.
+// ---------------------------------------------------------------------------
+const { zaehleGebaute } = await import("../control-server/src/autopilots/trainingsReifeAutopilot.js");
+const E2_ENV = {
+  IDRIVE_E2_ENDPOINT: "https://e2.example", IDRIVE_E2_ACCESS_KEY: "a",
+  IDRIVE_E2_SECRET_KEY: "s", IDRIVE_E2_BUCKET: "eimer"
+};
+
+test("zaehleGebaute summiert die Paare aus dem Index", async () => {
+  const index = { datensaetze: [{ name: "smejj-1-1", paare: 10769 }, { name: "alt", paare: 231 }] };
+  const r = await zaehleGebaute({ env: E2_ENV, getImpl: async () => ({ ok: true, body: JSON.stringify(index) }) });
+  assert.equal(r.lesbar, true);
+  assert.equal(r.anzahl, 11000);
+  assert.deepEqual(r.namen, ["smejj-1-1", "alt"]);
+});
+
+test("zaehleGebaute laesst gesperrte Datensaetze aussen vor", async () => {
+  const index = { datensaetze: [{ name: "gut", paare: 100 }, { name: "gesperrt", paare: 900, freigegeben: false }] };
+  const r = await zaehleGebaute({ env: E2_ENV, getImpl: async () => ({ ok: true, body: JSON.stringify(index) }) });
+  assert.equal(r.anzahl, 100, "ein gesperrter Datensatz darf kein Tor oeffnen");
+});
+
+test("kein Index ist 0 Paare, keine Zugangsdaten sind 'nicht zaehlbar'", async () => {
+  const ohne = await zaehleGebaute({ env: E2_ENV, getImpl: async () => ({ ok: false }) });
+  assert.deepEqual(ohne, { lesbar: true, anzahl: 0, namen: [] }, "noch kein Datensatz ist ein Zustand, kein Fehler");
+  const blind = await zaehleGebaute({ env: {}, getImpl: async () => { throw new Error("darf nicht gerufen werden"); } });
+  assert.equal(blind.lesbar, false);
+  assert.match(blind.grund, /IDRIVE_E2/);
+});
+
+test("kaputter Index ist 'nicht lesbar', nicht heimlich null", async () => {
+  const r = await zaehleGebaute({ env: E2_ENV, getImpl: async () => ({ ok: true, body: "{kein json" }) });
+  assert.equal(r.lesbar, false);
+  assert.match(r.grund, /JSON/);
+});
+
+test("die Meldung nennt gebaute Paare und erfasste Fragen GETRENNT", async () => {
+  const lauf = await laufTrainingsReife({
+    env: { ...E2_ENV, SMEJJ_TRAINING_REIFE_ZIEL_GESAMT: "5000" },
+    storeFabrik: () => ({ liste: async () => ({ ok: true, datensaetze: [] }), schreib: async () => {} }),
+    quellen: [{ name: "DPO-Paare", praefix: "x", limit: 10 }],
+    fragenZaehler: async () => ({ lesbar: true, anzahl: 1 }),
+    gebauteZaehler: async () => ({ lesbar: true, anzahl: 10769, namen: ["smejj-1-1"] }),
+    mitNetz: true
+  });
+  assert.equal(lauf.ok, true);
+  assert.match(lauf.meldung, /1 erfasste Fragen/, "echte Fragen bleiben sichtbar");
+  assert.match(lauf.meldung, /10769 gebaute Paare \(smejj-1-1\)/, "gebaute Paare stehen mit Namen daneben");
+  assert.match(lauf.meldung, /Stufe 3\/3/, "10.770 von 5.000 ist Stufe 3");
+});
