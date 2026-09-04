@@ -67,3 +67,49 @@ test("Nr. 65: der Selbsttest fällt durch, wenn die Mathematik kippt", () => {
   const probe = fuehreSelbsttestAus({ env: {} });
   assert.equal(probe.bestanden, true, `Selbsttest muss grün sein: ${probe.fehler.join("; ")}`);
 });
+
+// ---- Befund 2026-09-04: die erfassten Nutzerfragen wurden nie gezaehlt ----
+test("Nr. 65 zaehlt die erfassten Fragen aus training/fragen/ mit", async () => {
+  const { zaehleFragen, FRAGEN_PRAEFIX, laufTrainingsReife: lauf } = await import("../control-server/src/autopilots/trainingsReifeAutopilot.js");
+  assert.equal(FRAGEN_PRAEFIX, "training/fragen/");
+  const env = {
+    IDRIVE_E2_TRAINING_ENDPOINT: "https://s3.us-west-2.idrivee2.com", IDRIVE_E2_TRAINING_REGION: "us-west-2",
+    IDRIVE_E2_TRAINING_BUCKET: "smejj-app", IDRIVE_E2_TRAINING_ACCESS_KEY: "training-access-key", IDRIVE_E2_TRAINING_SECRET_KEY: "training-secret-key-value",
+    IDRIVE_E2_TRAINING_ALLOWED_PREFIXES: "training/fragen/,training/consents/"
+  };
+  const seite = (keys, weiter = false) => ({
+    response: { ok: true, status: 200 },
+    body: `<ListBucketResult>${keys.map((k) => `<Contents><Key>${k}</Key></Contents>`).join("")}<IsTruncated>${weiter}</IsTruncated>${weiter ? "<NextContinuationToken>tok</NextContinuationToken>" : ""}</ListBucketResult>`
+  });
+  const z = await zaehleFragen({ env, listImpl: async ({ continuationToken }) => continuationToken
+    ? seite(["training/fragen/2026/09/04/c.json"])
+    : seite(["training/fragen/2026/09/04/a.json", "training/fragen/2026/09/04/b.json", "training/fragen/2026/09/04/"], true) });
+  assert.equal(z.lesbar, true);
+  assert.equal(z.anzahl, 3, "beide Seiten zaehlen, Ordner-Schluessel ohne .json nicht");
+
+  const ohne = await zaehleFragen({ env: {}, listImpl: async () => seite([]) });
+  assert.equal(ohne.lesbar, false, "ohne Trainings-Speicher ist nicht zaehlbar");
+
+  // Im Lauf: die Fragen erhoehen den Bestand und stehen in der Meldung.
+  const karten = [];
+  const e = await lauf({
+    env: { SMEJJ_TRAINING_REIFE_ZIEL_GESAMT: "10" },
+    storeFabrik: () => ({ liste: async () => ({ ok: true, datensaetze: [] }), schreib: async (d) => { karten.push(d); return d; } }),
+    quellen: [{ praefix: "self-improvement/dpo-dataset", name: "DPO-Paare", limit: 10 }],
+    fragenZaehler: async () => ({ lesbar: true, anzahl: 7 })
+  });
+  assert.equal(e.ok, true, e.meldung);
+  assert.match(e.meldung, /7 erfasste Fragen/);
+  assert.match(e.meldung, /Stufe 2\/3/, "7 von 10 ist Stufe 2 — vorher waere es Stufe 0 geblieben");
+  assert.equal(karten.at(-1).gesamt, 7);
+
+  // Fehlender Speicher darf die Wache nicht rot machen (Nr. 74 ist dafuer da).
+  const f = await lauf({
+    env: {},
+    storeFabrik: () => ({ liste: async () => ({ ok: true, datensaetze: [] }), schreib: async () => ({}) }),
+    quellen: [{ praefix: "self-improvement/dpo-dataset", name: "DPO-Paare", limit: 10 }],
+    fragenZaehler: async () => ({ lesbar: false, grund: "IDRIVE_E2_TRAINING_ENDPOINT fehlt" })
+  });
+  assert.equal(f.ok, true);
+  assert.match(f.meldung, /nicht zaehlbar/);
+});

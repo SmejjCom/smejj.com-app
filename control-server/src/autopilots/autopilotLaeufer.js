@@ -638,7 +638,7 @@ export async function laufeAlle({ melde = interneMeldung, dateienLader = sammleQ
     ["training-loop", () => laufTrainingsTakt()],
     // Nr. 65: dieselben vier Ablagen gegen das Reife-Ziel gerechnet; die
     // Entscheidungskarte landet in der Tagesmappe — gebaut wird nichts.
-    ["trainings-reife", () => laufTrainingsReife()],
+    ["trainings-reife", () => laufTrainingsReife({ mitNetz })],
     // Nr. 66-70: die Abdeckungs-Lücken — Zustellprotokoll, DSGVO-Fristen, AI-Act, Abos, Flags.
     ...baueDeckungsLaeufe({ mitNetz }),
     // Nr. 44-60: dieselbe Dateiliste, derselbe Netz-Schalter — die Läufe

@@ -15,6 +15,37 @@
 import { createRecordStore } from "../admin/recordStore.js";
 import { isCaptureEnabled } from "../../../src/training/constants.js";
 import { TRAININGS_QUELLEN } from "./trainingsTaktAutopilot.js";
+import { readTrainingIdriveConfig } from "../../../src/training/idrive-conditional-writer.js";
+import { signedS3List, parseS3ListPage } from "../storage/s3Signer.js";
+
+/**
+ * WO DIE ECHTEN NUTZERFRAGEN LIEGEN (Befund 2026-09-04): Die Erfassung schreibt
+ * jede eingewilligte Frage nach training/fragen/JJJJ/MM/TT/<id>.json auf IDrive
+ * e2 — NICHT in eine recordStore-Ablage. Diese Wache zaehlte bis heute nur die
+ * vier self-improvement-Ablagen; die Fragen, um die es im Trainingsplan geht,
+ * sah sie nie. Damit waere das Daten-Tor des Modell-Evolutions-Takts (Nr. 72)
+ * auch nach der ersten Einwilligung fuer immer zu geblieben.
+ */
+export const FRAGEN_PRAEFIX = "training/fragen/";
+const MAX_LIST_SEITEN = 40;
+
+/** Zaehlt die erfassten Fragen per LIST (nur Schluessel, nie Inhalte). */
+export async function zaehleFragen({ env = process.env, listImpl = signedS3List, fetchImpl = fetch } = {}) {
+  let cfg;
+  try { cfg = readTrainingIdriveConfig(env); } catch (f) { return { lesbar: false, grund: String(f?.message || f).slice(0, 60) }; }
+  let marke = null;
+  let anzahl = 0;
+  for (let seite = 0; seite < MAX_LIST_SEITEN; seite += 1) {
+    const { response, body } = await listImpl({ ...cfg, prefix: FRAGEN_PRAEFIX, continuationToken: marke, fetchImpl, timeoutMs: 8000 });
+    if (!response.ok) return { lesbar: false, grund: `HTTP ${response.status}` };
+    const s = parseS3ListPage(body);
+    anzahl += (s.keys || []).filter((k) => k.endsWith(".json")).length;
+    if (!s.isTruncated) return { lesbar: true, anzahl };
+    marke = s.nextContinuationToken || null;
+    if (!marke) return { lesbar: true, anzahl, abgeschnitten: true };
+  }
+  return { lesbar: true, anzahl, abgeschnitten: true };
+}
 
 /** Die Ablage der Entscheidungskarte — liest die Tagesmappe (Nr. 60). */
 export const TRAININGS_REIFE_ABLAGE = "autopiloten/trainings-reife";
@@ -85,7 +116,9 @@ export async function laufTrainingsReife({
   env = process.env,
   storeFabrik = createRecordStore,
   quellen = TRAININGS_QUELLEN,
-  kartenAblage = null
+  kartenAblage = null,
+  mitNetz = true,
+  fragenZaehler = zaehleFragen
 } = {}) {
   const probe = fuehreSelbsttestAus({ env });
   if (!probe.bestanden) {
@@ -100,6 +133,15 @@ export async function laufTrainingsReife({
     } catch {
       gemessen.push({ name: q.name, lesbar: false, anzahl: 0 });
     }
+  }
+  // Die erfassten Nutzerfragen: die Quelle, die der Trainingsplan meint.
+  if (mitNetz) {
+    const fragen = await Promise.resolve().then(() => fragenZaehler({ env })).catch((f) => ({ lesbar: false, grund: String(f?.message || f).slice(0, 60) }));
+    // Ohne eingerichteten Trainings-Speicher ist "nicht lesbar" kein Ausfall,
+    // sondern der gewollte fail-closed-Zustand — die Einwilligungs-Wache
+    // (Nr. 74) ist dafuer zustaendig und nennt den fehlenden Wert.
+    if (fragen.lesbar) gemessen.push({ name: "erfasste Fragen", lesbar: true, anzahl: fragen.anzahl });
+    else gemessen.push({ name: `erfasste Fragen (nicht zaehlbar: ${fragen.grund || "unbekannt"})`, lesbar: true, anzahl: 0 });
   }
   const urteil = beurteileReife(gemessen, reifeZiel({ env }));
   if (!urteil.ok) {
