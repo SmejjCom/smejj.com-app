@@ -19,6 +19,11 @@ import os
 import re
 import time
 
+# Gemessen 04.09. auf einer RTX 3090: das Laden fuer das Training scheiterte mit
+# "CUDA out of memory, tried to allocate 4.74 GiB" bei 19,07 GiB belegt. Zerstueckelter
+# Speicher ist ein Teil davon; expandable_segments legt zusammenhaengend nach.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 import e2
 
 
@@ -95,7 +100,25 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
     if modell is None:
         raise RuntimeError("Modell laesst sich nicht laden: " + " | ".join(fehler))
     if quant is not None:
-        modell = prepare_model_for_kbit_training(modell, use_gradient_checkpointing=True)
+        # prepare_model_for_kbit_training rechnet ALLE nicht quantisierten Schichten auf
+        # float32 hoch — bei Qwen3.8 ist die Ausgabeschicht wegen des Wortschatzes von
+        # 248.320 rund 1,27 Milliarden Werte gross, in float32 also gut 5 GB. Genau diese
+        # 4,74 GiB fehlten am 04.09. auf der 24-GB-Karte.
+        # Der schlanke Weg macht dasselbe fuer das Training Noetige, ohne den Aufpreis:
+        # Gradientenpruefpunkte an, und die Eingaenge muessen Gradienten annehmen, damit
+        # die Pruefpunkte bei eingefrorenen Gewichten ueberhaupt greifen.
+        try:
+            modell.gradient_checkpointing_enable()
+            if hasattr(modell, "enable_input_require_grads"):
+                modell.enable_input_require_grads()
+            else:
+                modell.get_input_embeddings().register_forward_hook(
+                    lambda _m, _e, ausgabe: ausgabe.requires_grad_(True))
+            modell.config.use_cache = False
+            status.setze(schritt="vorbereitet", weg="schlank_ohne_fp32_upcast")
+        except Exception as fehler:  # noqa: BLE001 — im Zweifel der erprobte Weg
+            status.setze(schritt="vorbereitet", weg="prepare_model_for_kbit_training", hinweis=str(fehler)[:120])
+            modell = prepare_model_for_kbit_training(modell, use_gradient_checkpointing=True)
     ziele = _ziel_module(modell)
     lora = LoraConfig(r=int(konfig.get("r", 16)), lora_alpha=int(konfig.get("alpha", 32)),
                       lora_dropout=float(konfig.get("dropout", 0.05)), bias="none",
