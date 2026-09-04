@@ -32,8 +32,12 @@ test("kaputte Probe: ein statischer Import wird erkannt", () => {
 
 test("gesunde Probe: chat-history-view.js laedt Text, Karten und Titel-Automatik nur per import()", () => {
   assert.deepEqual(statischeVerlaufsImporte(ANSICHT), []);
-  for (const modul of ["/assets/chat-history-text.js?v=b47c", "/assets/chat-history-cards.js?v=b60", "/assets/chat-title-auto.js"]) {
-    assert.ok(ANSICHT.includes(`import("${modul}")`), `${modul} fehlt in ladeBausteine()`);
+  // Geprueft wird der MODULNAME, nicht seine Cache-Marke: die Marke wandert bei
+  // jeder Aenderung am Modul (Markenkette), und ein Test, der sie festnagelt,
+  // wird bei jeder Erhoehung rot, ohne dass etwas kaputt ist (04.09. passiert).
+  for (const modul of ["chat-history-text.js", "chat-history-cards.js", "chat-title-auto.js"]) {
+    const gefunden = new RegExp(`import\\("/assets/${modul.replace(/\./g, "\\.")}(\\?v=[A-Za-z0-9-]+)?"\\)`).test(ANSICHT);
+    assert.ok(gefunden, `${modul} fehlt in ladeBausteine()`);
   }
   assert.match(ANSICHT, /async function render\(\) \{\n\s*await ladeBausteine\(\);/, "render wartet nicht auf die Bausteine");
   assert.match(ANSICHT, /function zeichne\(target\) \{\n\s*if \(!entdoppeln\)/, "zeichne ohne Bausteine muss nachladen statt werfen");
