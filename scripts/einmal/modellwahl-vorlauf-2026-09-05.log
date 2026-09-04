@@ -17,3 +17,14 @@ check:module-queries OK — 229 Module, jedes unter genau einer Kennung.
 check:precache-imports OK — 176 Module erreichbar, Precache vollstaendig.
 ℹ pass 73 ℹ fail 0 
 == 3. Commit design-v11 (git add -A: neue Dateien kommen mit)
+design-v11 783bab4d
+== 4. Live stellen (Frontend-Klon, Fast-Forward)
+Klon b318fb7 gepusht
+== 5. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 06455fda gepusht — Zeabur baut
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+== 6. Live-Beweis (bis 3 Minuten)
+00:24:14 smejj.com=smejj-shell-v758 router=0 marke=0
+00:24:27 smejj.com=smejj-shell-v759 router=1 marke=1
+FERTIG — der Vorlauf entfaellt, live auf smejj.com (v759).
