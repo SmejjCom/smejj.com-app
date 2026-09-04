@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T23:37:01.707Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05: VORUEBERGEHENDE Messanzeige gegen den schwarzen Balken am iPhone. Drei Fixversuche blieben wirkungslos, weil ohne Messung geraten wurde (kein Xcode auf dem Mac, kein Simulator). public/pwa-diagnose.js zeigt NUR im Vollbild am Telefon Geraetehoehe, Seitenhoehe und Safe-Area an; index.html bindet es ein, sw.js precacht es. Freigabe im Wortlaut: 'Mach endlich richtig' und Master-Prompt 'Arbeite eigenstaendig weiter, erledige die Aufgabe vollstaendig'.",
+  "frozenAt": "2026-09-04T23:58:05.299Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05: iPhone-Vollbild endgueltig, Ursache am Geraet GEMESSEN (S812 V759 D53 SAoben53 SAunten29 ST1 DPR3): iOS meldet im Vollbild mit black-translucent einen um die obere Safe-Area verkuerzten Layout-Viewport; jedes fixierte Element endete darum 53 pt ueber der Geraetekante. Der Grund reicht jetzt mit 120 px Ueberstand darueber hinaus. Messanzeige wieder entfernt, Marke mobil104-20260905, SW v762. Freigabe im Wortlaut: 'mach endlich fertig ... mach ganze Nacht durch'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "09dc7c059e4a9a688f3c8ca6d4c4e45f4b0ddc77b14b013a5ddfbbf619980fa7",
+    "public/index.html": "e256f347d80477bd51ed76f3442875e9c6ee63ab017eec052e6048a593f8c61f",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "0bfa525b4a71f84534a67fa37be723847b8112a8f10bd0225cf30eebb91c3f65",
+    "public/start-styles.css": "ca65fbbd817be546c72faedc70bdce16bc9fa2c1b8d2471eab194143dcdcfc69",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "0d6fcd862703d0259f7192d56937d25ec0e1b0d2c53ba60bbbe3ef18901c382f",
+    "public/sw.js": "26f727fb16d48d7324c8debb2e91a4cc11d5bea3c9517e745ba51974e59e302e",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
