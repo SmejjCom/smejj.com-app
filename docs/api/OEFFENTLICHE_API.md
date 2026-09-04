@@ -221,3 +221,21 @@ nach Rueckfrage), optional eine Notiz. Der Empfaenger braucht kein smejj-Konto.
 
 Tests: `tests/admin-api-schluessel.test.mjs` (Rechte, Eingaben, Torwaechter,
 Nutzung, Ablauf, Widerruf, Audit) und `adminRoles.test.js` (apikeys.issue).
+
+### Monatsbudget je ausgestelltem Schluessel (seit 2026-09-04)
+
+Beim Ausstellen optional `budgetToken` (0 = kein Budget), spaeter aenderbar per
+`POST /api/admin/geld/api/budget` (`{id, budgetToken}`, Recht `apikeys.issue`,
+Audit `apikey.budget`). Gezaehlt wird je Kalendermonat (UTC); am Monatsersten
+faengt der Zaehler bei null an.
+
+- Ueber dem Deckel antwortet `/v1` mit **429** und `error.code =
+  key_budget_exceeded`, samt Stand und Monat im Text. Die Pruefung steht VOR
+  dem globalen Tageslimit — der selbst gesetzte Deckel ist die praezisere Auskunft.
+- Der noch nicht geschriebene Nutzungs-Puffer zaehlt beim Pruefen mit; der
+  Deckel wartet also nicht auf den naechsten Schreibvorgang (Drosselung 60 s).
+  Ein 30-Sekunden-Cache haelt den Lesevorgang aus dem Anfragepfad.
+- Ungueltige Werte (negativ, keine Zahl, ueber 1 Mrd.) → **400**
+  `api_key_budget_invalid`; Budget eines widerrufenen Schluessels → **409**.
+- Die Konsole zeigt je Zeile "verbraucht / Budget" mit Ampel und in der Kachel,
+  wieviele Schluessel gerade am Deckel stehen.
