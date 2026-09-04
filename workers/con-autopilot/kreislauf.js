@@ -65,6 +65,17 @@ export async function tick(ctx) {
   const z = await leseZustand(e2);
   z.ticks = (z.ticks || 0) + 1;
   z.letzterTick = jetzt().toISOString();
+  // Der Zustand beschreibt sich selbst: eine Wache von aussen kann sonst nur ihre EIGENEN
+  // Standardwerte vergleichen und meldet falsches Rot (gemessen 04.09.: Deckel 2 statt 10).
+  z.grenzen = {
+    tagesbudgetUsd: konfig.grenzen.tagesbudgetUsd,
+    gesamtdeckelUsd: konfig.grenzen.gesamtdeckelUsd,
+    jobMaxMinuten: konfig.grenzen.jobMaxMinuten,
+    freigabe: konfig.grenzen.freigabe,
+    notaus: konfig.grenzen.notaus,
+    prioritaet: konfig.salad?.prioritaet || null,
+    taktMs: konfig.taktMs
+  };
   z.naechsterTick = new Date(jetzt().getTime() + konfig.taktMs).toISOString();
   try {
     if (konfig.grenzen.notaus) {

@@ -137,12 +137,14 @@
     "verbrauch:bericht": "node scripts/diagnose/verbrauch-bericht.mjs",
     "verbrauch:holen": "node scripts/diagnose/verbrauch-holen.mjs",
     "cache:paare": "node scripts/diagnose/cache-paare.mjs",
-    "test:con-autopilot": "node --test tests/con-autopilot.test.mjs",
+    "test:con-autopilot": "node --test tests/con-autopilot.test.mjs tests/con-daten-generator.test.mjs tests/con-wache.test.mjs",
     "check:con-autopilot": "node --check workers/con-autopilot/server.mjs && node --check workers/con-autopilot/kreislauf.js && node --check workers/con-autopilot/salad.js && node workers/con-autopilot/suites/hash-suites.mjs --pruefen && python3 -m py_compile workers/con-autopilot/salad-job/*.py && node scripts/check-con-abbild.mjs",
     "con:status": "node workers/con-autopilot/cli.mjs status",
     "con:plan": "node workers/con-autopilot/cli.mjs plan",
     "con:tick": "node workers/con-autopilot/cli.mjs tick",
-    "check:con-abbild": "node scripts/check-con-abbild.mjs"
+    "check:con-abbild": "node scripts/check-con-abbild.mjs",
+    "check:con-wache": "node scripts/check-con-wache.mjs",
+    "test:con-daten": "node --test tests/con-daten-generator.test.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2"
