@@ -142,6 +142,16 @@ async function beendeJob(ctx, z, grund, ergebnis) {
   job.beendet = jetzt().toISOString();
   job.grund = grund;
   job.kosten = kosten;
+  // Wiederholte Fehlschlaege derselben Art zaehlen. Ein Job, der immer wieder an
+  // derselben Stelle stirbt, kostet bei jedem Versuch Miete und wird durch Wiederholen
+  // nicht besser (04.09.: dreimal "CUDA out of memory" waeren 0,09 USD fuer nichts).
+  const artDesFehlers = grund === "fertig" ? null : String(ergebnis?.fehler || grund).slice(0, 120);
+  if (artDesFehlers) {
+    const bisher = z.fehlschlaege && z.fehlschlaege.art === artDesFehlers ? z.fehlschlaege.anzahl : 0;
+    z.fehlschlaege = { art: artDesFehlers, anzahl: bisher + 1, zuletzt: jetzt().toISOString(), jobId: job.jobId };
+  } else {
+    z.fehlschlaege = null;
+  }
   const task = (await e2.getJson(`con/logs/tasks/${job.taskId}.json`, null)) || { id: job.taskId, ziel: job.ziel, plan: [], status: "laeuft" };
   task.status = grund === "fertig" ? "fertig" : "fehlgeschlagen";
   task.fehler = grund === "fertig" ? null : grund;
@@ -260,8 +270,23 @@ async function bewerteUndEntscheide(ctx, z, job, ergebnis) {
 }
 
 /** Plant den naechsten Schritt und startet hoechstens EINEN Job. */
+export const FEHLSCHLAG_GRENZE = 3;
+
 async function planeUndStarte(ctx, z) {
   const { e2, konfig, log = () => {} } = ctx;
+  // Notbremse gegen die Wiederholungsschleife: dreimal derselbe Fehler heisst, dass
+  // Wiederholen nicht hilft. Der Kreislauf haelt an und nennt den Grund, statt Miete
+  // zu verbrennen. Ein neuer Stand (Deploy) oder ein Eingriff loest die Bremse.
+  if (z.fehlschlaege && z.fehlschlaege.anzahl >= FEHLSCHLAG_GRENZE) {
+    z.phase = "gestoppt";
+    z.plan = { schritt: "angehalten", grund: `${z.fehlschlaege.anzahl}-mal derselbe Fehler: ${z.fehlschlaege.art}` };
+    if (!z.fehlschlaege.gemeldet) {
+      notiere(z, `ANGEHALTEN nach ${z.fehlschlaege.anzahl} gleichen Fehlschlaegen: ${z.fehlschlaege.art}`);
+      log(`ANGEHALTEN: ${z.fehlschlaege.art}`);
+      z.fehlschlaege.gemeldet = true;
+    }
+    return;
+  }
   const registry = await leseRegistry(e2);
   const stabil = stabileVersion(registry);
   await rollbackWennNoetig(ctx, z, registry);

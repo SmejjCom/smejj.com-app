@@ -68,6 +68,10 @@ try {
       melde(u.ok, `Herzschlag ${u.alterMin.toFixed(0)} min alt (erlaubt ${MAX_ALTER_MIN}), Phase ${zustand.phase}, Takt ${zustand.ticks}`);
       if (zustand.letzterFehler) melde(false, `letzter Takt-Fehler: ${String(zustand.letzterFehler.text).slice(0, 100)}`);
       if (zustand.startBlockiert) melde(false, `Start blockiert: ${(zustand.startBlockiert.gruende || []).join("; ").slice(0, 120)}`);
+      // Die Notbremse ist kein stiller Zustand: sie MUSS in der Wache rot leuchten,
+      // sonst steht der Kreislauf und niemand erfaehrt es.
+      if (zustand.phase === "gestoppt") melde(false, `ANGEHALTEN: ${zustand.plan?.grund || "ohne Grund"}`);
+      if (zustand.fehlschlaege?.anzahl >= 2) melde(false, `${zustand.fehlschlaege.anzahl} gleiche Fehlschlaege: ${String(zustand.fehlschlaege.art).slice(0, 90)}`);
     }
     const kosten = await e2.getJson("con/logs/kosten/gesamt.json", { summeUsd: 0 });
     // Der Deckel des DIENSTES gilt, nicht der Standardwert dieser Wache. Der Autopilot

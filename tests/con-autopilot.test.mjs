@@ -304,3 +304,28 @@ test("Rettung nimmt nur den Adapter DES EIGENEN Laufs", async () => {
   const kandidat = (registry?.versions || []).find((v) => v.version === "con-1.1.0");
   assert.equal(kandidat, undefined, "ein Adapter aus einem FREMDEN Lauf darf nie als Kandidat eingetragen werden");
 });
+
+test("Notbremse: dreimal derselbe Fehler haelt den Kreislauf an", async () => {
+  const { tick, FEHLSCHLAG_GRENZE } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir, taktMs: 300000,
+    grenzen: { tagesbudgetUsd: 5, gesamtdeckelUsd: 10, jobMaxMinuten: 200, freigabe: true, notaus: false },
+    salad: { prioritaet: "batch" } };
+  const zustand = { phase: "ueberwachen", ticks: 0, historie: [], fehlschlaege: { art: "CUDA out of memory", anzahl: FEHLSCHLAG_GRENZE } };
+  let geschrieben = null;
+  const e2 = {
+    getJson: async (k, standard = null) => (k === "con/autopilot/zustand.json" ? zustand : standard),
+    putJson: async (k, v) => { if (k === "con/autopilot/zustand.json") geschrieben = v; },
+    liste: async () => []
+  };
+  const z = await tick({ konfig, e2, salad: null, log: () => {} });
+  assert.equal(z.phase, "gestoppt");
+  assert.equal(z.plan.schritt, "angehalten");
+  assert.match(z.plan.grund, /CUDA out of memory/);
+  assert.ok(geschrieben, "der Zustand muss geschrieben werden, sonst sieht es niemand");
+  // Unter der Grenze laeuft er weiter.
+  zustand.fehlschlaege = { art: "CUDA out of memory", anzahl: FEHLSCHLAG_GRENZE - 1 };
+  zustand.phase = "ueberwachen";
+  const z2 = await tick({ konfig, e2, salad: null, log: () => {} });
+  assert.notEqual(z2.phase, "gestoppt");
+});
