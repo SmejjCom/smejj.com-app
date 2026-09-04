@@ -37,12 +37,24 @@ export const MAX_MINUTEN = 60;
 // gross wie Qwen3.8-27B.
 export const SPEICHER_GB = 30;
 
-/** Baut die Konfiguration fuer den Spiegel-Job — eigene Gruppe, eigenes Ziel. */
+/**
+ * Baut die Konfiguration fuer den Spiegel-Job — eigene Gruppe, eigenes Ziel,
+ * KEINE Grafikkarte.
+ *
+ * BEFUND 2026-09-04, live gemessen: Der erste Lauf stand 27 Minuten auf
+ * "deploying" ohne eine einzige Instanz. Die Gruppe hatte drei GPU-Klassen
+ * geerbt (aus der con-Konfiguration) und wartete auf eine freie RTX 3090 — fuer
+ * einen Job, der nur Dateien von Hugging Face nach e2 schaufelt. job.py
+ * verlangt CUDA nur bei "messung" und "training".
+ *
+ * Ohne GPU-Anforderung nimmt Salad einen gewoehnlichen Rechner: schneller zu
+ * bekommen und deutlich billiger.
+ */
 export function spiegelKonfig(basis) {
   return {
     ...basis,
     basis: { repo: REPO, prefix: PREFIX },
-    salad: { ...basis.salad, gruppe: GRUPPE, speicherGb: SPEICHER_GB }
+    salad: { ...basis.salad, gruppe: GRUPPE, speicherGb: SPEICHER_GB, gpuKlassen: [] }
   };
 }
 

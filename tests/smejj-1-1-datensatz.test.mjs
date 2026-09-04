@@ -136,3 +136,16 @@ test("der Spiegel traegt Zeitgrenze und passenden Plattenplatz", () => {
   // 8 GB Modell brauchen keine 150 GB Platte wie das 27B des con-Jobs.
   assert.ok(SPEICHER_GB >= 20 && SPEICHER_GB < 150, `Platte ${SPEICHER_GB} GB`);
 });
+
+test("der Spiegel fordert KEINE Grafikkarte an", () => {
+  // BEFUND 2026-09-04, live: Der erste Lauf stand 27 Minuten auf "deploying"
+  // ohne eine einzige Instanz. Die Gruppe hatte drei GPU-Klassen aus der
+  // con-Konfiguration geerbt und wartete auf eine freie RTX 3090 — fuer einen
+  // Job, der nur Dateien von Hugging Face nach e2 schaufelt. job.py verlangt
+  // CUDA nur bei "messung" und "training".
+  const k = spiegelKonfig({
+    basis: { repo: "Qwen/Qwen3.8-27B", prefix: "con/base/qwen3.8-27b" },
+    salad: { gruppe: "con-job", speicherGb: 150, gpuKlassen: ["3090", "3090ti", "4090"] }
+  });
+  assert.deepEqual(k.salad.gpuKlassen, [], "eine GPU, auf die man wartet und die man nicht braucht, kostet Zeit und Geld");
+});
