@@ -1,0 +1,18 @@
+== 0. Ausgangslage
+7c6eedbc chore(einmal): Kaskade + Doppelklick-Datei fuer die Aufteilung des API-Bereichs
+check:guidelines OK — 2107 Dateien geprueft (max 800 Zeilen, Naming-Regel smejj.com).
+== 1. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v749";
+== 2. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+pdfjs-worker gebaut — 1265413 Byte aus 2 Teilen, 2 Orte.
+markenkette OK — 117 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T10-10-07-021Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T10:10:07.021Z).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 249 Module als ES-Module geparst (Arbeitsstand).
+check:module-queries OK — 228 Module, jedes unter genau einer Kennung.
+ℹ duration_ms 57.152333
+check:precache-imports OK — 176 Module erreichbar, Precache vollstaendig.
+ℹ pass 49 ℹ fail 0 
+== 3. Commit design-v11 (git add -A: neue Dateien kommen mit)

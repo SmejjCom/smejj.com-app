@@ -196,14 +196,32 @@ test("mobile and tablet breakpoints keep layouts single-column on small screens"
 test("no automatic model or paid provider downloads are wired into public assets", () => {
   const publicFiles = fs.readdirSync("public", { recursive: true })
     .filter((file) => fs.statSync(path.join("public", file)).isFile());
+  // public/vendor/ ist benannter Fremdcode mit Lizenz (heute: pdf.js von Mozilla, Apache-2.0,
+  // fuer das Lesen angehaengter PDFs). Er faellt nicht unter die 512-KB-Schranke, die
+  // Modellgewichte und stille Grossdownloads fernhaelt — dafuer wird er unten strenger geprueft:
+  // Lizenz und Version muessen dabeiliegen, und Gewichtsdateien sind auch dort verboten.
+  // Quelle public/vendor/ UND ihre erzeugte Kopie public/assets/vendor/.
+  const istFremdcode = (file) => /(^|[\\/\\\\])vendor[\\/\\\\]/.test(file);
   for (const file of publicFiles) {
     const fullPath = path.join("public", file);
     const size = fs.statSync(fullPath).size;
-    assert.ok(size < 512 * 1024, `${file} is unexpectedly large`);
+    if (!istFremdcode(file)) assert.ok(size < 512 * 1024, `${file} is unexpectedly large`);
+    assert.doesNotMatch(file, /\.(gguf|safetensors|onnx|bin|pt|pth)$/i, `${file} looks like model weights`);
     if (/\.(js|html|css|txt|webmanifest|svg)$/.test(file)) {
       const text = fs.readFileSync(fullPath, "utf8");
       assert.doesNotMatch(text, /fetch\([^)]*(workers-ai|cloudflare-r2|trial-api|auto-billing|\.gguf|\.safetensors)/i, `${file} contains forbidden provider autoload`);
       assert.doesNotMatch(text, /import\([^)]*(\.gguf|\.safetensors|model-files)/i, `${file} imports model files`);
+    }
+  }
+  // Jeder Fremdcode-Ordner traegt seine Lizenz und seine Version — sonst weiss niemand,
+  // was da liegt und woher es kommt.
+  const vendorWurzel = path.join("public", "vendor");
+  if (fs.existsSync(vendorWurzel)) {
+    for (const ordner of fs.readdirSync(vendorWurzel)) {
+      const voll = path.join(vendorWurzel, ordner);
+      if (!fs.statSync(voll).isDirectory()) continue;
+      assert.ok(fs.existsSync(path.join(voll, "LICENSE")), `public/vendor/${ordner}: LICENSE fehlt`);
+      assert.ok(fs.existsSync(path.join(voll, "VERSION")), `public/vendor/${ordner}: VERSION fehlt`);
     }
   }
 });

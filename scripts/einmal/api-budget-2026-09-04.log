@@ -1,0 +1,25 @@
+== 0. Ausgangslage
+8c3754e6 chore(einmal): Kaskade 'Budget je Schluessel ausliefern' (nachziehen, Tests, Stempel, spiegeln, Bauzweig + Klon pushen, Live-Beweis)
+== 1. Auf origin nachziehen (Parallelsitzungen arbeiten am selben Zweig)
+f0fca5cb chore(einmal): Kaskade 'Budget je Schluessel ausliefern' (nachziehen, Tests, Stempel, spiegeln, Bauzweig + Klon pushen, Live-Beweis)
+== 2. Tests + Konsolen-Pruefer
+ℹ pass 72 ℹ fail 0 
+admin-konsole OK — 36 Adressen aus 34 Ansichten kommen beim Server an; 50 Bedienelemente werden auch gezeichnet.
+== 3. Admin-Lock stempeln
+admin-lock eingefroren: 49 Dateien, Manifest docs/security/admin-lock-manifest.json, Backup backups/admin-lock/2026-09-04T08-15-46-645Z/
+admin-lock OK — 49 Adminbereich-Sicherheitsdateien byte-identisch zum eingefrorenen Stand (2026-09-04T08:15:46.645Z).
+== 4. Konsole in den Frontend-Klon spiegeln
+  "modus": "spiegeln",
+admin-console-sync OK — Quelle gespiegelt, 34 Konsolen-Seiten haben ihren Ordner.
+== 5. Bauzweig pushen (Zeabur baut smejj-control)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig e7e0d24e gepusht — Zeabur baut
+== 6. Klon pushen (smejj.com/admin)
+Klon 985c9e1 gepusht
+== 7. Live-Beweis (bis 6 Minuten)
+08:16:03 konsole=0/0 control-neustart=2026-09-04T08:14:57.905Z
+08:16:23 konsole=0/0 control-neustart=2026-09-04T08:14:57.905Z
+08:16:43 konsole=2/1 control-neustart=2026-09-04T08:14:57.905Z
+08:17:04 konsole=2/1 control-neustart=2026-09-04T08:14:57.905Z
+08:17:24 konsole=2/1 control-neustart=2026-09-04T08:17:09.083Z
+FERTIG — Budget je Schluessel live: https://smejj.com/admin/api/ (Seite neu laden, falls sie offen war).

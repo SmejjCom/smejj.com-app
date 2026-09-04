@@ -27,8 +27,15 @@ const onboardingWelcome = fs.readFileSync(path.join(publicDir, "onboarding-welco
 // 2026-08-31: die beiden API-Flaechen (api-keys-surface, api-konto-surface)
 // sind im zentralen API-Bereich (api-center-surface) aufgegangen.
 const spurStart = fs.readFileSync(path.join(publicDir, "spur-start.js"), "utf8");
+// Woerter unter den Symbolen der Antwort-Leiste (UI/UX-Programm 02.09., Nr. 4).
+const chatActionsWoerter = fs.readFileSync(path.join(publicDir, "chat-actions-woerter.js"), "utf8");
+// Erste-Schritte-Karten auf der leeren Startseite (UI/UX-Programm 02.09., Nr. 9).
+const ersteSchritte = fs.readFileSync(path.join(publicDir, "erste-schritte.js"), "utf8");
 const apiCenterSurface = fs.readFileSync(path.join(publicDir, "api-center-surface.js"), "utf8")
-  + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8");
+  + fs.readFileSync(path.join(publicDir, "api-center-helfer.js"), "utf8")
+  // Die vier Listen-Aktionen liegen seit dem 04.09. in einem eigenen Modul (800-Zeilen-Regel);
+  // ihre Texte gehoeren weiterhin zum API-Bereich, sonst gelten sie hier als verwaist.
+  + fs.readFileSync(path.join(publicDir, "api-center-aktionen.js"), "utf8");
 const startHtml = fs.readFileSync(path.join(publicDir, "index.html"), "utf8");
 const uiRuntime = fs.readFileSync(path.join(publicDir, "i18n", "ui.js"), "utf8");
 const languageOptionsSource = fs.readFileSync(path.join(publicDir, "language-options.js"), "utf8");
@@ -67,7 +74,7 @@ test("alle Uebersetzungswerte sind nicht-leere Strings", async () => {
 test("jeder Uebersetzungsschluessel ist ein echter deutscher Quelltext einer uebersetzten Oberflaeche", async () => {
   const combined = settingsSurface + accountPrivacy + authPage + authLoginHtml + authRegisterHtml
     + profileDock + profilePictureControl + profilePictureStore + startChips + startHtml
-    + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface;
+    + searchOverlay + onboardingWelcome + spurStart + apiCenterSurface + chatActionsWoerter + ersteSchritte;
   for (const key of Object.keys(await loadMessages("en"))) {
     assert.ok(combined.includes(key), `Verwaister Schluessel (nicht im Quellcode): ${key}`);
   }

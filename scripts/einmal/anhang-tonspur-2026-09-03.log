@@ -1,0 +1,25 @@
+== 0. Ausgangslage
+5351190b chore(einmal): Kaskade + Doppelklick-Datei fuer Tonspur transkribieren (Stufe 2C)
+== 1. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v744";
+== 2. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 115 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-03T20-20-34-586Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-03T20:20:34.586Z).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 250 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 175 Module erreichbar, Precache vollstaendig.
+ℹ pass 42 ℹ fail 0 
+== 3. Commit design-v11 (git add -A: neue Dateien kommen mit)
+design-v11 e9ad38b7
+== 4. Live stellen (Frontend-Klon, Fast-Forward) — Wurzel UND assets/
+Klon 73da8bc gepusht
+== 5. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig (nur public/, docs/frontend, tests/)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 949f09e5 gepusht — Zeabur baut
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+== 6. Live-Beweis (bis 3 Minuten)
+23:21:09 smejj.com=smejj-shell-v743 tonspur=404 marke=0
+23:21:22 smejj.com=smejj-shell-v744 tonspur=200 marke=1
+FERTIG — Tonspur live (smejj.com v744). Am iPhone: App schliessen, neu oeffnen, Video anhaengen, kurz warten.

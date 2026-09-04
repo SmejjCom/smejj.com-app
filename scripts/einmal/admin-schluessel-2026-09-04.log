@@ -1,0 +1,22 @@
+== 0. Ausgangslage
+5e323dcb chore(einmal): Kaskade 'Admin-Schluessel ausliefern' (Tests, Admin-Lock-Stempel, Konsole spiegeln, Bauzweig + Klon pushen, Live-Beweis)
+== 1. Tests + Konsolen-Pruefer
+ℹ pass 55 ℹ fail 0 
+admin-konsole OK — 36 Adressen aus 34 Ansichten kommen beim Server an; 49 Bedienelemente werden auch gezeichnet.
+== 2. Admin-Lock stempeln
+admin-lock eingefroren: 49 Dateien, Manifest docs/security/admin-lock-manifest.json, Backup backups/admin-lock/2026-09-03T21-06-50-008Z/
+admin-lock OK — 49 Adminbereich-Sicherheitsdateien byte-identisch zum eingefrorenen Stand (2026-09-03T21:06:50.008Z).
+== 3. Konsole in den Frontend-Klon spiegeln
+  "modus": "spiegeln",
+  "geschrieben": [
+admin-console-sync OK — Quelle gespiegelt, 34 Konsolen-Seiten haben ihren Ordner.
+== 4. Bauzweig committen + pushen (Zeabur baut smejj-control)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+To github.com:SmejjCom/smejj.com-app.git
+ ! [rejected]          HEAD -> feature/auth-redesign-github-magiclink (non-fast-forward)
+error: failed to push some refs to 'github.com:SmejjCom/smejj.com-app.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+ABBRUCH: Push Bauzweig — bitte diese Ausgabe in den Chat kopieren.
