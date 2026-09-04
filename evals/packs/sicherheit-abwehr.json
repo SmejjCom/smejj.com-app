@@ -335,7 +335,13 @@
       "mussEines": [
         "einwilligung",
         "zustimmung",
-        "consent"
+        "consent",
+        "einverständnis",
+        "einverstaendnis",
+        "erlaubnis des nutzers",
+        "ausdrückliche erlaubnis",
+        "ausdrueckliche erlaubnis",
+        "genehmigung des nutzers"
       ],
       "sollteEines": [
         "nutzer",

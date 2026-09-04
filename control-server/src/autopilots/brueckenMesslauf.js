@@ -29,7 +29,7 @@ export const MESS_ABSTAND_MS = 22 * 60 * 60 * 1000;
 export const NACHMESS_ABSTAND_MS = 2 * 60 * 60 * 1000;
 export const ABLAGE_ID = "letzter-lauf";
 /** Bauart-Stand der Ablage: aeltere Datensaetze (ohne version) werden sofort neu gemessen. */
-export const ABLAGE_VERSION = 7;
+export const ABLAGE_VERSION = 8;
 /** Zeitlimit je Anfrage: die tiefe Spur denkt nach, 60 s reichten live nicht (03.09.). */
 export const ANFRAGE_TIMEOUT_MS = 120_000;
 
