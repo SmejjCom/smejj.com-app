@@ -44,7 +44,7 @@ export const MINDEST_MESSUNGEN = 5;
  */
 export const TORE = Object.freeze([
   { id: "daten", name: "Daten", hinweis: "Einwilligungs-Paare sammeln, bis die Reife-Wache (Nr. 65) Stufe 3 meldet" },
-  { id: "einwilligung", name: "Einwilligung", hinweis: "SMEJJ_TRAINING_CAPTURE_ENABLED=YES und IDRIVE_E2_TRAINING_* im Zeabur-Portal setzen" },
+  { id: "einwilligung", name: "Einwilligung", hinweis: "SMEJJ_TRAINING_CAPTURE_ENABLED=YES und IDRIVE_E2_TRAINING_* im Zeabur-Portal setzen — ODER, wenn ohne Nutzerdaten trainiert wird, SMEJJ_TRAINING_QUELLE=erzeugt" },
   { id: "kostenfreigabe", name: "Kostenfreigabe", hinweis: "schriftliche Freigabe als SMEJJ_LORA_FREIGABE_ID + Monatsbetrag innerhalb des Deckels hinterlegen" },
   { id: "basismodell", name: "Basismodell", hinweis: "Qwen3-4B nach e2 models/staging/ ablegen und SMEJJ_LORA_BASIS_PREFIX setzen" },
   { id: "gpu-heimat", name: "GPU-Heimat", hinweis: "Trainer-Adresse SMEJJ_LORA_TRAINER_URL (Rote Liste: Anbieter-Entscheidung)" },
@@ -78,12 +78,36 @@ function wahr(wert) {
  *
  * @param {{reifeStufe:number|null, captureAn:boolean, referenzNote:number|null, env:object}} lage
  */
+/**
+ * Was das Einwilligungs-Tor wirklich schuetzt: dass keine Frage eines Menschen
+ * ohne dessen Ja ins Training geraet. Es prueft dafuer die ERFASSUNG.
+ *
+ * BEFUND 2026-09-04: Der Betreiber hat entschieden, ohne Nutzerdaten zu
+ * arbeiten und den Datensatz zu BAUEN (bei einem Besuch am Tag kommen 3.000
+ * eingewilligte Fragen nie zusammen). Damit prueft das Tor eine Erfassung, die
+ * es gar nicht geben soll — es waere fuer immer zu, obwohl nichts
+ * Schuetzenswertes im Datensatz liegt.
+ *
+ * Der zweite Weg ist deshalb an einen EIGENEN, ausdruecklichen Schalter
+ * gebunden: SMEJJ_TRAINING_QUELLE=erzeugt. Er faellt nicht nebenbei an, steht
+ * im Portal neben den anderen Werten und ist damit eine sichtbare Entscheidung
+ * — fail-closed bleibt fail-closed. Steht die Erfassung AN, gilt weiterhin
+ * ihre Pruefung; beides zugleich ist erlaubt.
+ */
+export function einwilligungGeklaert({ captureAn = false, env = {} } = {}) {
+  if (captureAn === true) return { ok: true, weg: "Erfassung mit Einwilligung" };
+  if (String(env.SMEJJ_TRAINING_QUELLE || "").trim().toLowerCase() === "erzeugt") {
+    return { ok: true, weg: "erzeugte Paare (SMEJJ_TRAINING_QUELLE=erzeugt, keine Nutzerdaten)" };
+  }
+  return { ok: false, weg: null };
+}
+
 export function pruefeTore({ reifeStufe = null, captureAn = false, referenzNote = null, env = {} } = {}) {
   const deckel = Number(env.SMEJJ_TRAINING_BUDGET_MONAT_USD) > 0 ? Number(env.SMEJJ_TRAINING_BUDGET_MONAT_USD) : BUDGET_MONAT_USD_STANDARD;
   const monatsbetrag = Number(env.SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD);
   const offen = {
     daten: Number(reifeStufe) >= 3,
-    einwilligung: captureAn === true,
+    einwilligung: einwilligungGeklaert({ captureAn, env }).ok,
     kostenfreigabe: Boolean(String(env.SMEJJ_LORA_FREIGABE_ID || "").trim()) && Number.isFinite(monatsbetrag) && monatsbetrag > 0 && monatsbetrag <= deckel,
     basismodell: Boolean(String(env.SMEJJ_LORA_BASIS_PREFIX || "").trim()),
     "gpu-heimat": Boolean(String(env.SMEJJ_LORA_TRAINER_URL || "").trim()),

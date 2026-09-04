@@ -212,3 +212,50 @@ test("Nr. 72: der Selbsttest fällt durch, wenn die Tor-Mathematik kippt", () =>
   assert.equal(probe.bestanden, true, `Selbsttest muss grün sein: ${probe.fehler.join("; ")}`);
   assert.equal(probe.geprueft, 6);
 });
+
+// ---------------------------------------------------------------------------
+// Das Einwilligungs-Tor und der zweite, ausdrueckliche Weg
+//
+// Was es schuetzt: dass keine Frage eines Menschen ohne dessen Ja ins Training
+// geraet. Es prueft dafuer die ERFASSUNG. Der Betreiber hat am 04.09.
+// entschieden, ohne Nutzerdaten zu arbeiten und den Datensatz zu BAUEN — dann
+// prueft das Tor eine Erfassung, die es gar nicht geben soll.
+//
+// Kaputte UND gesunde Probe: ohne beides bleibt es ZU (fail-closed), mit
+// Erfassung offen, mit dem ausdruecklichen Schalter offen — und ein
+// Tippfehler im Schalterwert oeffnet NICHTS.
+// ---------------------------------------------------------------------------
+const { einwilligungGeklaert: geklaert } = await import("../control-server/src/autopilots/modellEvolutionAutopilot.js");
+
+test("Einwilligungs-Tor: ohne Erfassung und ohne Schalter bleibt es zu", () => {
+  assert.equal(geklaert({ captureAn: false, env: {} }).ok, false);
+  assert.equal(geklaert({}).ok, false, "fail-closed auch ohne jede Angabe");
+});
+
+test("Einwilligungs-Tor: Erfassung an oeffnet es wie bisher", () => {
+  const r = geklaert({ captureAn: true, env: {} });
+  assert.equal(r.ok, true);
+  assert.match(r.weg, /Erfassung/);
+});
+
+test("Einwilligungs-Tor: der ausdrueckliche Schalter oeffnet den erzeugten Weg", () => {
+  const r = geklaert({ captureAn: false, env: { SMEJJ_TRAINING_QUELLE: "erzeugt" } });
+  assert.equal(r.ok, true);
+  assert.match(r.weg, /erzeugte Paare/);
+  assert.equal(geklaert({ captureAn: false, env: { SMEJJ_TRAINING_QUELLE: "  ERZEUGT " } }).ok, true, "Gross-/Kleinschreibung und Leerzeichen duerfen nicht entscheiden");
+});
+
+test("Einwilligungs-Tor: ein anderer Wert oeffnet NICHTS", () => {
+  for (const wert of ["gesammelt", "ja", "true", "1", "erzeugt-vielleicht", ""]) {
+    assert.equal(geklaert({ captureAn: false, env: { SMEJJ_TRAINING_QUELLE: wert } }).ok, false,
+      `"${wert}" darf das Tor nicht oeffnen`);
+  }
+});
+
+test("pruefeTore: mit gebautem Datensatz und Schalter faellt genau dieses Tor", () => {
+  const ohne = pruefeTore({ reifeStufe: 3, captureAn: false, referenzNote: 97, env: offeneUmgebungFuerTest() });
+  assert.ok(ohne.zu.includes("Einwilligung"), "ohne Schalter bleibt es zu");
+  const mit = pruefeTore({ reifeStufe: 3, captureAn: false, referenzNote: 97, env: { ...offeneUmgebungFuerTest(), SMEJJ_TRAINING_QUELLE: "erzeugt" } });
+  assert.equal(mit.offen, true, `noch zu: ${mit.zu.join(", ")}`);
+  assert.equal(mit.offenAnzahl, 7);
+});
