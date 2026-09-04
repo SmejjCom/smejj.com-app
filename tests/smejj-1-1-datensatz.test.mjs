@@ -105,3 +105,34 @@ test("die Teile sind einzeln klein genug fuer den 30-s-Deckel des Signierers", (
   }
   assert.equal(stuecke.join("").split("\n").filter(Boolean).length, 3200, "kein Paar geht beim Teilen verloren");
 });
+
+// ---------------------------------------------------------------------------
+// Der Spiegel-Job fasst den con-Autopiloten nicht an
+//
+// Der con-Autopilot laeuft rund um die Uhr. Seine Salad-Gruppe (con-job)
+// umzukonfigurieren wuerde einen laufenden Trainingslauf abbrechen — am
+// 04.09. lief dort gerade con-1.1.0 gegen die Schwaeche reasoning.
+// ---------------------------------------------------------------------------
+const { spiegelKonfig, REPO, PREFIX, GRUPPE, MAX_MINUTEN, SPEICHER_GB } = await import("../scripts/training/smejj-1-1-basis-spiegeln.mjs");
+
+test("der Spiegel nutzt eine EIGENE Gruppe und ein eigenes Ziel", () => {
+  const basis = {
+    basis: { repo: "Qwen/Qwen3.8-27B", prefix: "con/base/qwen3.8-27b" },
+    salad: { gruppe: "con-job", speicherGb: 150, prioritaet: "batch", vcpu: 8, ramMb: 30720 }
+  };
+  const k = spiegelKonfig(basis);
+  assert.equal(k.salad.gruppe, GRUPPE);
+  assert.notEqual(k.salad.gruppe, "con-job", "con-job umzukonfigurieren bricht einen laufenden Trainingslauf ab");
+  assert.equal(k.basis.repo, REPO);
+  assert.equal(k.basis.prefix, PREFIX);
+  assert.ok(!PREFIX.startsWith("con/"), "der Spiegel darf nicht in das con-Lager schreiben");
+  assert.equal(basis.salad.gruppe, "con-job", "die uebergebene Konfiguration bleibt unveraendert");
+  assert.equal(basis.basis.prefix, "con/base/qwen3.8-27b");
+});
+
+test("der Spiegel traegt Zeitgrenze und passenden Plattenplatz", () => {
+  // Ohne Zeitgrenze wird nicht gestartet (Regel des con-Autopiloten).
+  assert.ok(MAX_MINUTEN > 0 && MAX_MINUTEN <= 120, `Zeitgrenze ${MAX_MINUTEN} min`);
+  // 8 GB Modell brauchen keine 150 GB Platte wie das 27B des con-Jobs.
+  assert.ok(SPEICHER_GB >= 20 && SPEICHER_GB < 150, `Platte ${SPEICHER_GB} GB`);
+});
