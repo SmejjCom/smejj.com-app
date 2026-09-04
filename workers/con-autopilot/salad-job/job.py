@@ -247,23 +247,54 @@ def lauf():
         if not suiten:
             raise RuntimeError("Keine Suiten im Job-Buendel")
         messweg = os.environ.get("CON_MESSWEG", "transformers")
+        # Mehrere Staende in EINEM Job: das Modell wird einmal geladen, die Adapter danach
+        # angehaengt. Ein zweiter Job haette das 55-GB-Fundament erneut geholt (16 min + Miete).
+        auftraege = json.loads(os.environ.get("CON_MESS_VERSIONEN", "[]") or "[]")
+        if not auftraege:
+            auftraege = [{"version": version, "adapterPrefix": adapter_prefix or None}]
+        # Fundament zuerst — ein angehaengter Adapter laesst sich nicht mehr sauber abnehmen.
+        auftraege.sort(key=lambda a: 1 if a.get("adapterPrefix") else 0)
         if messweg == "openai":
+            if len(auftraege) > 1:
+                raise RuntimeError("Der openai-Messweg kann nur EINEN Stand messen")
             weg = evalrun.OpenAiWeg(os.environ["CON_MESS_ENDPUNKT"], os.environ.get("CON_MESS_MODELL", "default"),
                                     os.environ.get("CON_MESS_KEY", ""))
         else:
-            if adapter_prefix and not adapter_dir:
-                adapter_dir = os.path.join(ARBEIT, "adapter")
-                e2.lade_verzeichnis_herunter(adapter_prefix, adapter_dir, lambda n: STATUS.setze(phase="adapter_laden", aktuell=n))
+            erster = auftraege[0]
+            erster_adapter = None
+            if erster.get("adapterPrefix"):
+                erster_adapter = adapter_dir or os.path.join(ARBEIT, "adapter-0")
+                if not (adapter_dir and os.path.isdir(adapter_dir)):
+                    e2.lade_verzeichnis_herunter(erster["adapterPrefix"], erster_adapter,
+                                                 lambda n: STATUS.setze(phase="adapter_laden", aktuell=n))
             STATUS.setze(phase="modell_laden")
-            weg = evalrun.TransformersWeg(modell_dir, adapter_dir, STATUS)
+            weg = evalrun.TransformersWeg(modell_dir, erster_adapter, STATUS)
         wdh = int(os.environ.get("CON_WIEDERHOLUNGEN", "1"))
-        antworten = evalrun.fuehre_aus(weg, suiten, STATUS, abbruch=_ABBRUCH.is_set, wiederholungen=wdh)
-        antworten.update({"jobId": JOB_ID, "version": version, "adapterPrefix": adapter_prefix or None,
-                          "basisPrefix": basis_prefix, "stand": _iso(time.time()), "abgebrochen": _ABBRUCH.is_set()})
-        eval_prefix = f"{os.environ.get('CON_EVAL_PREFIX', 'con/evals').rstrip('/')}/{version}/{JOB_ID}"
-        e2.put_json(eval_prefix + "/antworten.json", antworten)
-        ergebnis["messung"] = {"prefix": eval_prefix, "leistung": antworten["leistung"], "modell": antworten["modell"],
-                               "suiten": [s["suiteId"] for s in antworten["suiten"]], "abgebrochen": _ABBRUCH.is_set()}
+        ergebnis["messungen"] = []
+        for i, auftrag in enumerate(auftraege):
+            if _ABBRUCH.is_set():
+                break
+            stand = auftrag.get("version") or version
+            praefix = auftrag.get("adapterPrefix")
+            if i > 0 and praefix and messweg != "openai":
+                ziel = os.path.join(ARBEIT, f"adapter-{i}")
+                STATUS.setze(phase="adapter_laden", stand=stand)
+                e2.lade_verzeichnis_herunter(praefix, ziel, lambda n: STATUS.setze(aktuell=n))
+                weg.haenge_adapter_an(ziel)
+            STATUS.setze(phase="messung", stand=stand, standNr=i + 1, staende=len(auftraege))
+            antworten = evalrun.fuehre_aus(weg, suiten, STATUS, abbruch=_ABBRUCH.is_set, wiederholungen=wdh)
+            antworten.update({"jobId": JOB_ID, "version": stand, "adapterPrefix": praefix,
+                              "basisPrefix": basis_prefix, "stand": _iso(time.time()),
+                              "abgebrochen": _ABBRUCH.is_set()})
+            eval_prefix = f"{os.environ.get('CON_EVAL_PREFIX', 'con/evals').rstrip('/')}/{stand}/{JOB_ID}"
+            e2.put_json(eval_prefix + "/antworten.json", antworten)
+            ergebnis["messungen"].append({"version": stand, "adapterPrefix": praefix, "prefix": eval_prefix,
+                                          "leistung": antworten["leistung"], "modell": antworten["modell"],
+                                          "suiten": [s["suiteId"] for s in antworten["suiten"]],
+                                          "abgebrochen": _ABBRUCH.is_set()})
+        # Rueckwaertsvertraeglich: aeltere Auswertung liest ergebnis["messung"].
+        if ergebnis["messungen"]:
+            ergebnis["messung"] = ergebnis["messungen"][-1]
     ergebnis["ok"] = not _ABBRUCH.is_set()
     if _ABBRUCH.is_set():
         ergebnis["grund"] = "zeitgrenze"
