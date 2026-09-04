@@ -114,8 +114,9 @@ async function main() {
       await mkdir(path.dirname(path.join(ziel, q)), { recursive: true });
       await cp(von, path.join(ziel, q), { recursive: true });
     }
+    const PROBE_SCHLUESSEL = "abbild-probe-" + Math.random().toString(36).slice(2, 10);
     const kind = spawn(process.execPath, [EINSTIEG], {
-      cwd: ziel, env: { PATH: process.env.PATH, PORT: String(PORT), SMEJJ_HOST: "127.0.0.1" },
+      cwd: ziel, env: { PATH: process.env.PATH, PORT: String(PORT), SMEJJ_HOST: "127.0.0.1", CON_ADMIN_KEY: PROBE_SCHLUESSEL },
       stdio: ["ignore", "pipe", "pipe"]
     });
     let ausgabe = "";
@@ -135,14 +136,28 @@ async function main() {
       };
       versuch();
     });
-    kind.kill("SIGKILL");
     if (!antwort.ok) {
+      kind.kill("SIGKILL");
       console.log("Stufe 2 ROT:", antwort.grund || `HTTP ${antwort.status}`);
       console.log(ausgabe.split("\n").slice(0, 12).join("\n"));
       process.exit(1);
     }
     console.log("Stufe 2 gruen: Dienst startet im Abbild und /health antwortet:",
       JSON.stringify({ ok: antwort.koerper.ok, dienst: antwort.koerper.dienst, aktiviert: antwort.koerper.aktiviert }));
+
+    // Stufe 3: Betriebsdaten duerfen nie offen im Netz stehen, sobald ein Schluessel gesetzt ist.
+    const hole = (kopf) => fetch(`http://127.0.0.1:${PORT}/api/con/status`,
+      { headers: kopf, signal: AbortSignal.timeout(4000) }).catch(() => null);
+    const ohne = await hole(undefined);
+    const falsch = await hole({ "x-con-key": "falsch" });
+    const richtig = await hole({ "x-con-key": PROBE_SCHLUESSEL });
+    kind.kill("SIGKILL");
+    if (!(ohne?.status === 401 && falsch?.status === 401 && richtig && richtig.status !== 401)) {
+      console.log("Stufe 3 ROT: /api/con/status ist nicht durch CON_ADMIN_KEY geschuetzt",
+        JSON.stringify({ ohne: ohne?.status, falsch: falsch?.status, richtig: richtig?.status }));
+      process.exit(1);
+    }
+    console.log(`Stufe 3 gruen: /api/con/status verlangt den Schluessel (ohne/falsch 401, richtig ${richtig.status}).`);
   } finally {
     await rm(ziel, { recursive: true, force: true });
   }

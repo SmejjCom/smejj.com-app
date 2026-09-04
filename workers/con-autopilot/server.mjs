@@ -1,6 +1,7 @@
 // con-Autopilot — Dienst fuer Zeabur (Single Responsibility: Takt-Uhr + HTTP-Fenster).
 // /health (Sonde), /api/con/status (JSON fuer Ampeln), /api/con/dashboard (HTML), /api/con/tick (manuell, mit Schluessel).
 // Ohne CON_AUTOPILOT_ENABLED=YES tickt nichts (fail-closed), der Dienst antwortet nur auf /health.
+import crypto from "node:crypto";
 import http from "node:http";
 import { leseKonfig } from "./config.js";
 import { e2Client } from "./e2.js";
@@ -28,11 +29,26 @@ async function einTakt(ausloeser) {
   } finally { tickLaeuft = false; }
 }
 
+/** Zeitkonstanter Vergleich — ein einfaches === verraet ueber die Laufzeit Zeichen fuer Zeichen. */
+function sicherGleich(a, b) {
+  const x = Buffer.from(String(a));
+  const y = Buffer.from(String(b));
+  if (x.length !== y.length) return false;
+  return crypto.timingSafeEqual(x, y);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   const senden = (code, body, typ = "application/json") => { const b = typeof body === "string" ? body : JSON.stringify(body, null, 2); res.writeHead(code, { "content-type": typ + "; charset=utf-8", "content-length": Buffer.byteLength(b) }); res.end(b); };
   try {
     if (url.pathname === "/health") return senden(200, { ok: true, dienst: "con-autopilot", aktiviert: konfig.aktiviert, e2: Boolean(e2), salad: Boolean(salad), letzterTick });
+    // Alles ausser /health zeigt Betriebsdaten (Versionen, Noten, Kosten, Job-Kennungen). Sobald ein
+    // Verwaltungsschluessel gesetzt ist, ist es verschlossen: Kopf x-con-key oder ?key=.
+    // Ohne gesetzten Schluessel bleibt es offen, damit ein Dienst ohne Umgebung nicht stumm wirkt.
+    const mitgebracht = req.headers["x-con-key"] || url.searchParams.get("key") || "";
+    if (konfig.adminKey && !sicherGleich(String(mitgebracht), konfig.adminKey)) {
+      return senden(401, { ok: false, grund: "schluessel_fehlt_oder_falsch" });
+    }
     if (!e2) return senden(503, { ok: false, grund: "e2 nicht konfiguriert", fehlend: konfig.e2.fehlend });
     if (url.pathname === "/api/con/status") return senden(200, await baueStatus({ konfig, e2, salad }));
     if (url.pathname === "/api/con/dashboard" || url.pathname === "/") return senden(200, dashboardHtml(await baueStatus({ konfig, e2, salad })), "text/html");
