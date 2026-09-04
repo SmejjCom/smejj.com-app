@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "jobId": "job_besucher_puls_20260904",
+  "titel": "Besucher-Puls (Autopilot Nr. 81) — die fehlende Zahl im Nutzer-Trichter",
+  "auftrag": "Betreiber 2026-09-04: „Nutzer-Baustelle angehen“ — messen, woran es bei 3 Konten wirklich hängt.",
+  "ziel": "Sichtbar machen, ob niemand ankommt (Auffindbarkeit) oder ob Ankommende sich nicht anmelden (Trichter). Ohne diese Zahl ist jede Wachstums-Maßnahme Raten.",
+  "befund_vorher": {
+    "konten": 3,
+    "neueKonten7Tage": 1,
+    "analytik": "zählt Registrierungen, Verwaltung, Mails, Läufe — KEINE Besucher",
+    "folge": "Die entscheidende Frage war unbeantwortbar."
+  },
+  "umsetzung": {
+    "server": [
+      "control-server/src/autopilots/besucherPulsAutopilot.js — Zählung O(1) im Speicher, Tagesstand höchstens alle 5 Minuten nach betrieb/besucher-puls, Wiederherstellung nach Neustart, Schonfrist 60 min, Selbsttest 11/11",
+      "control-server/src/routes/pulsRoutes.js — POST /api/puls, 5 Anfragen/min je Absender, darüber still 204, kaputter Body kippt nichts",
+      "src/server.js — Route eingehängt; src/shared/controlAccessPolicy.js — /api/puls öffentlich (die Menschen haben noch kein Konto), begründet"
+    ],
+    "frontend": [
+      "public/assets/besucher-puls.js — sendBeacon nach load, EINE Meldung je Browser-Sitzung (sessionStorage), Verweis schon auf dem Gerät auf den Host gekürzt",
+      "public/willkommen.html — Skript eingebunden, CSP additiv um https://api.smejj.com erweitert (connect-src)"
+    ],
+    "registrierung": "Registry (Nr. 81), Bereiche (Betrieb & Auslieferung), Deckungsläufe, Ehrlichkeitsliste, Zähl-Wächter 68/69/71",
+    "tests": "tests/besucher-puls.test.mjs — 6 Tests: keine personenbezogenen Daten im Stand, Tageswechsel, drei Stille-Fälle, Ablage-Deckel, Route mit Bremse, Anschluss-Beweis"
+  },
+  "datenschutz": "Kein Cookie, keine Kennung, keine IP, kein Pfad mit Parametern. Gezählt werden Seite, Sprache (2 Buchstaben), Herkunfts-Host. Test hält fest, dass kein Suchbegriff und kein utm_-Parameter im Stand landet.",
+  "lastregel": "Master-Prompt: keine zentrale Zählung, die mit der Besucherzahl mitwächst. Der Eingang erhöht nur Zahlen im Speicher; höchstens 288 Schreibvorgänge am Tag — bei 3 wie bei 3 Milliarden Besuchern.",
+  "ship_loop": [
+    { "runde": 1, "commit": "6490c74e", "bau": "2026-09-04T10:32:53Z", "befund": "Live 204, aber Ampel meldete „Bestand 0“ (readUserIndex liefert { ok, entries }) und „Herkunft: unbekannt“ (Client kürzt schon, Server verwarf den Host als kaputte URL)" },
+    { "runde": 2, "commit": "6e435e19", "bau": "2026-09-04T10:42:36Z", "befund": "Nach dem Bau rot: „noch kein Puls“ — der Zähler lebt im Speicher, ein Deploy setzt ihn auf null" },
+    { "runde": 3, "commit": "54f2d2e2", "bau": "2026-09-04T10:50:08Z", "befund": "Grün mit echten Zahlen, aber „Anmeldequote 200 %“ (1 Besuch gegen 2 neue Konten in 7 Tagen)" },
+    { "runde": 4, "commit": "0a1f5927", "bau": "2026-09-04T10:5x", "befund": "Quote erst ab 20 Besuchen, darunter der ehrliche Satz" }
+  ],
+  "live_beweis": {
+    "endpunkt": "POST https://api.smejj.com/api/puls → 204",
+    "seite": "https://smejj.com/willkommen.html lädt /assets/besucher-puls.js (200) und sendet den Puls — im Browser-Netzprotokoll nachgewiesen",
+    "ampel": "Nr. 81 grün: „Selbsttest 10/10; heute 1 Besuche, 2 neue Konten in 7 Tagen (Bestand 4); Seiten: /willkommen.html 1“",
+    "gesamt": "81 Autopiloten, 74 grün, 2 rot (Betriebswache/Mac, Red-Team-Probe)"
+  },
+  "offen": [
+    "Start-Lock und Admin-Lock stempeln (Betreiber-Doppelklick)",
+    "Nr. 79 Red-Team: 2 von 5 Angriffen kommen über /api/chat noch durch (v149 schützt den Nutzerweg /api/agent)",
+    "Betriebswache (Mac) prüft morgen früh erneut"
+  ]
+}
