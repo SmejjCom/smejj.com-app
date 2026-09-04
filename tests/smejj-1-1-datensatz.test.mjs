@@ -13,6 +13,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { erzeugeErgaenzung, abwehrPaare, gegenprobePaare, ehrlichkeitsPaare, formPaare } from "../scripts/training/smejj-1-1-generator.mjs";
+import { MASCHEN } from "../scripts/training/smejj-1-1-abwehr.mjs";
+import { HANDLUNGEN } from "../scripts/training/smejj-1-1-gegenprobe.mjs";
+
+/** Wie der Peer-Waechter misst: klein, ohne Satzzeichen, ohne Mehrfach-Leerzeichen. */
+const norm = (s) => String(s || "").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
+const antworten = (paare) => paare.map((p) => norm(p.messages.at(-1).content));
+const haeufigkeiten = (liste) => { const z = {}; for (const x of liste) z[x] = (z[x] || 0) + 1; return z; };
 import { baue, leseSuiten, MENGEN, STARTWERT } from "../scripts/training/smejj-1-1-datensatz-bauen.mjs";
 import { teile, PAARE_JE_TEIL } from "../scripts/training/smejj-1-1-hochladen.mjs";
 import { wuerfel, erzeuge } from "../workers/con-autopilot/daten/generator.mjs";
@@ -148,4 +155,107 @@ test("der Spiegel fordert KEINE Grafikkarte an", () => {
     salad: { gruppe: "con-job", speicherGb: 150, gpuKlassen: ["3090", "3090ti", "4090"] }
   });
   assert.deepEqual(k.salad.gpuKlassen, [], "eine GPU, auf die man wartet und die man nicht braucht, kostet Zeit und Geld");
+});
+
+// ---------------------------------------------------------------------------
+// Vielfalt: Haltung oder Textbausteine?
+//
+// BEFUND 2026-09-04: Die erste Abwehr hatte 8 Nein-Saetze mal 12 Gruende — 96
+// moegliche Antworten auf 4.119 Paare, **1,6 % Vielfalt**. Ein Modell lernt
+// daraus sechs Saetze auswendig, nicht die Haltung dahinter. Und wer die
+// Schablone kennt, findet die Frage, die sie nicht abdeckt.
+//
+// Die Schwellen stammen aus der Parallelsitzung (smejj-com-app-58): unter 5 %
+// Vielfalt sind es Bausteine; traegt eine einzelne Antwort mehr als 10 %, ist
+// sie die Schablone.
+// ---------------------------------------------------------------------------
+test("die Abwehr-Antworten sind vielfaeltig genug fuer Haltung statt Schablone", () => {
+  const a = antworten(abwehrPaare(wuerfel(21), 6000));
+  const z = haeufigkeiten(a);
+  const vielfalt = Object.keys(z).length / a.length;
+  const schablone = Math.max(...Object.values(z)) / a.length;
+  assert.ok(vielfalt > 0.05, `nur ${(vielfalt * 100).toFixed(1)} % verschiedene Antworten — das sind Textbausteine`);
+  assert.ok(schablone < 0.10, `eine einzelne Antwort traegt ${(schablone * 100).toFixed(1)} % — das ist die Schablone`);
+});
+
+test("der GRUND traegt die Vielfalt, nicht nur der Vorspann", () => {
+  // Sonst taeuschen acht Nein-Saetze eine Vielfalt vor, die nur im ersten Wort
+  // steckt: dieselbe Begruendung, achtfach verpackt.
+  const a = antworten(abwehrPaare(wuerfel(23), 4000));
+  const ohneVorspann = a.map((s) => s.split(" ").slice(2).join(" "));
+  const vielfalt = new Set(ohneVorspann).size / ohneVorspann.length;
+  assert.ok(vielfalt > 0.05, `ohne den Vorspann bleiben nur ${(vielfalt * 100).toFixed(1)} % verschiedene Antworten`);
+});
+
+test("jede Masche bringt ihre EIGENEN Gruende mit", () => {
+  // Der Kern des Umbaus: Wer nach Base64 fragt, bekommt "eine andere Kodierung
+  // macht aus einem Geheimnis kein oeffentliches Wort" — nicht irgendeine Zeile.
+  const alle = [];
+  for (const [name, m] of Object.entries(MASCHEN)) {
+    assert.ok(m.formen.length >= 2, `${name}: zu wenige Angriffsformen`);
+    assert.ok(m.gruende.length >= 3, `${name}: zu wenige Gruende`);
+    alle.push(...m.gruende);
+  }
+  assert.equal(new Set(alle).size, alle.length, "kein Grund darf in zwei Maschen stehen — sonst passt er zu keiner");
+  assert.ok(Object.keys(MASCHEN).length >= 10, "zu wenige Maschen, um Verhalten zu lernen");
+});
+
+// ---------------------------------------------------------------------------
+// Ueberverweigerung ist kein kleinerer Fehler als Ausplaudern
+//
+// BEFUND 2026-09-04, am gebauten Datensatz gemessen: Von allen Fragen mit
+// "Schluessel", "Passwort", "Token" oder "Zugang" wurden 2.481 abgelehnt und
+// 115 beantwortet — eine hilfreiche Antwort auf 22 Ablehnungen. Ein Modell
+// lernt daraus nicht "Geheimnisse nicht herausgeben", sondern "beim Wort
+// Schluessel zumachen".
+// ---------------------------------------------------------------------------
+// Dasselbe Vokabular, das die Angriffe benutzen — inklusive der Begriffe, die
+// nicht auf "-schluessel" enden (Wiederherstellungscode, Zugangsdaten).
+//
+// Das "ue" ist der Grund, warum die erste Messung log: der Datensatz schreibt
+// durchgehend "Schluessel" in ASCII-Umschreibung, das Muster suchte
+// "schlüssel" oder "schlussel" — und fand 137 von 400 passenden Fragen NICHT.
+// Die daraus errechnete Zahl "1 hilfreiche Antwort auf 22 Ablehnungen" war
+// damit selbst ein Messfehler. Ein Muster, das seinen eigenen Gegenstand nicht
+// schreiben kann, misst nichts.
+const HEIKEL = /schl(ue|[uü])ssel|passwort|token|zugang|geheim|code|kennwort|\.env|admin/i;
+const ABLEHNUNG = /^(nein|das mache ich nicht|das kann ich nicht tun|ich gebe das nicht heraus|damit kann ich nicht dienen|das lehne ich ab)/i;
+
+test("auf jede Ablehnung kommen genug hilfreiche Antworten zu denselben Woertern", () => {
+  const r = wuerfel(27);
+  const paare = [...abwehrPaare(r, 3000), ...gegenprobePaare(r, 2000)];
+  let abgelehnt = 0, beantwortet = 0;
+  for (const p of paare) {
+    if (!HEIKEL.test(p.messages[1].content)) continue;
+    ABLEHNUNG.test(p.messages.at(-1).content.trim()) ? (abgelehnt += 1) : (beantwortet += 1);
+  }
+  assert.ok(beantwortet > 0, "keine einzige hilfreiche Antwort zu heiklen Woertern");
+  const verhaeltnis = abgelehnt / beantwortet;
+  assert.ok(verhaeltnis <= 4, `1 hilfreiche Antwort auf ${verhaeltnis.toFixed(1)} Ablehnungen — das trainiert Ueberverweigerung`);
+});
+
+test("die Gegenproben tragen dieselben Woerter wie die Angriffe", () => {
+  // Wer nur Fragen ueber das Wetter dagegenstellt, hat nichts bewiesen: die
+  // Unterscheidung faellt dort, wo die Woerter gleich sind und die Absicht
+  // verschieden ist.
+  const paare = gegenprobePaare(wuerfel(29), 500);
+  const mitHeikel = paare.filter((p) => HEIKEL.test(p.messages[1].content)).length;
+  assert.ok(mitHeikel / paare.length > 0.9, `nur ${Math.round(mitHeikel / paare.length * 100)} % der Gegenproben sind nah genug an der Abwehr`);
+  for (const p of paare.slice(0, 200)) {
+    const a = p.messages.at(-1).content;
+    assert.ok(!ABLEHNUNG.test(a.trim()), `legitime Frage abgelehnt: ${p.messages[1].content.slice(0, 50)}`);
+    assert.ok(a.length > 80, "eine Gegenprobe muss wirklich etwas erklaeren, nicht abwimmeln");
+  }
+});
+
+test("jede Handlung der Gegenprobe antwortet fachlich, nicht ausweichend", () => {
+  for (const [name, h] of Object.entries(HANDLUNGEN)) {
+    assert.ok(h.fragen.length >= 2, `${name}: zu wenige Fragen`);
+    assert.ok(h.antworten.length >= 3, `${name}: zu wenige Antworten`);
+    for (const bauer of h.antworten) {
+      const text = bauer({ der: "der API-Schluessel", den: "einen API-Schluessel", kurz: "API-Schluessel" });
+      assert.ok(text.length > 100, `${name}: Antwort zu duenn — "${text.slice(0, 40)}"`);
+      assert.ok(!ABLEHNUNG.test(text.trim()), `${name}: die Gegenprobe darf nicht ablehnen`);
+    }
+  }
 });
