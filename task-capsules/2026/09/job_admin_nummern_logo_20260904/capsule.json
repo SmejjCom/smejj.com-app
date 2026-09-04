@@ -79,5 +79,46 @@
     },
     "pruefungNachMerge": "check:admin-lock OK (49 Dateien, gestempelt 12:13:56Z), check:nummern-schutz OK (81 Nummern, 8 Gruppen, 34 Bereiche, 14/14 Tests), check:guidelines OK (2160 Dateien), check:admin-console-sync OK. Die 8 uebrigen roten Punkte der Kaskade waren vorher schon rot (nachgemessen auf 56042b94).",
     "verifikationLiveNachMerge": "smejj.com/admin/autopiloten/ zeigt 'Alle 81' mit Nummern; Schiene eingeklappt mit lesbaren Nummern; Logo-Klick auf der Unterseite fuehrt nach /admin/; console.css live traegt rail-zu (18 Treffer) UND pb.flush:has (1 Treffer)."
+  },
+  "nachtragRoteAmpeln": {
+    "wann": "2026-09-04T12:45:00.000Z",
+    "auftrag": "Betreiber-Wahl: die vier roten Autopiloten ansehen und beheben.",
+    "befunde": [
+      {
+        "nr": "29",
+        "name": "Probe-Nutzer",
+        "id": "synthetic-user-watchdog",
+        "grund": "Ein-Buendel-Vertrag verletzt: smejj.com lieferte smejj-shell-v752, api.smejj.com smejj-shell-v751. nutzerreiseWaechter.js verlangt BYTE-gleiche sw.js auf beiden Domains, nicht nur dieselbe Nummer.",
+        "ursache": "Commit 895d7931 trug die Guthaben-Leiste aus design-v11 d9a90308 in den Bauzweig, liess dabei aber public/sw.js aus. Der Rand (GitHub Pages) bekam v752 ueber den Frontend-Klon, der Control-Server (api.smejj.com baut aus dem Bauzweig) blieb auf v751.",
+        "behebung": "public/sw.js byte-identisch zur Live-Fassung nachgezogen (d5579ed1). check:precache-imports OK (176 Module). Zeabur hat um 12:37:03Z neu gebaut.",
+        "beweis": "sha256 beider Domains gleich: 4ee54f9838baada8a5ccfa7f743f6b23438b013b99e593101763d571a6a18bbf",
+        "status": "behoben"
+      },
+      {
+        "nr": "42",
+        "name": "Betriebswache",
+        "id": "oberflaechenwache",
+        "grund": "responsive gruen, touch gruen, Betriebswerte nicht messbar — Zeabur-Schluessel abgelaufen, HTTP 401.",
+        "behebung": "NICHT von mir zu beheben: Zugangs-Lock (Rote Liste). Der Betreiber muss den Zeabur-API-Token erneuern; danach wird die Ampel von selbst gruen.",
+        "status": "Betreiber-Aufgabe"
+      },
+      {
+        "nr": "75",
+        "name": "Tiefe-Spur-Messung",
+        "id": "tiefe-spur-messung",
+        "grund": "Note 91,2 % (14 Faelle, 1 kritisch, p95 8298 ms) — kritische Zusicherung verletzt, gemessen gegen glm-5-2.",
+        "einordnung": "Der abgelegte Stand war eine Stunde alt und stammte aus Ablage-Version 6. Die frisch gemergte Fassung (53a62700/e41ed3f3, ABLAGE_VERSION 7) wiederholt einen kritischen Befund EINMAL, bevor die Ampel rot wird — genau weil live 'schutz-api-schluessel' (tiefe Spur) und 'sich-impersonation' (Red Team) bei der Wiederholung von Hand sofort bestanden. Der Versionssprung erzwingt eine Neumessung.",
+        "status": "beobachtet — Neumessung mit der neuen Logik laeuft"
+      },
+      {
+        "nr": "79",
+        "name": "Red-Team-Probe",
+        "id": "red-team-probe",
+        "grund": "Note 61,7 % (5 Faelle, 1 kritisch, p95 27447 ms) gegen den Nutzerweg /api/agent.",
+        "einordnung": "Gleiche Ursache wie Nr. 75: alter Ablage-Stand vor der Zweite-Meinung-Logik.",
+        "status": "beobachtet — Neumessung mit der neuen Logik laeuft"
+      }
+    ],
+    "startLockBefund": "Der Start-Lock ist auf dem Bauzweig verletzt, und zwar ZU RECHT: das Manifest wurde am 04.09. 11:47 auf feature/design-v11 eingefroren, wo public/composer-plus-menu.js eine NEUERE Fassung hat (6d26716c) als Bauzweig und live (5f3a314d). Da liegt also eine noch nicht ausgelieferte Aenderung. Bewusst NICHT gestempelt — das ist die Arbeit einer anderen Sitzung. Meine sw.js-Angleichung erscheint in derselben Sperre; sie ist byte-identisch zu dem, was smejj.com ausliefert."
   }
 }
