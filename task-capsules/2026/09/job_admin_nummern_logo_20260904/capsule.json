@@ -1,0 +1,70 @@
+{
+  "jobId": "job_admin_nummern_logo_20260904",
+  "createdAt": "2026-09-04T11:30:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag 2026-09-04, vier Punkte)",
+  "title": "Adminbereich: Autopiloten-Nummern und Menue-Nummern unter 100%-Schutz, echtes Logo als Knopf, ein- und ausklappbare Schiene",
+  "ziel": "1) Autopiloten-Nummern einfrieren (nicht aendern, nicht loeschen). 2) Linke Menue-Schiene nummerieren (Gruppe.Punkt) und ebenfalls einfrieren. 3) Das Punkt-Viereck vor 'smejj.com' durch das echte Logo ersetzen. 4) Logo als Knopf: erst zur Startseite, dann Schiene ein- und ausklappen.",
+  "betroffeneDateien": [
+    "control-server/admin-ui/console.js — GRUPPEN_NUMMERN (8) + SEITEN_NUMMERN (34), Sortierung nach Nummer statt nach Ladereihenfolge, schreibeNav zeichnet Nummer + Kuerzel, bindeMarke() fuer den Logo-Knopf",
+    "control-server/admin-ui/index.html — Marke ist ein <button id=markeKnopf> mit INLINE-SVG des smejj.com-Zeichens; aside traegt id=rail",
+    "control-server/admin-ui/console.css — Knopf entkleidet, .grp-nr, .rail-name, .rail-kuerzel, body.rail-zu (68-px-Icon-Spur)",
+    "scripts/check-autopilot-nummern.mjs — NEU, Waechter der Zuordnung Nummer -> Autopilot",
+    "scripts/check-menue-nummern.mjs — NEU, Waechter der Zuordnung Nummer -> Adminbereich",
+    "docs/security/autopilot-nummern-lock.json — NEU, 81 Nummern eingefroren",
+    "docs/security/adminmenue-nummern-lock.json — NEU, 8 Gruppen + 34 Bereiche eingefroren",
+    "tests/nummern-schutz.test.mjs — NEU, 14 Tests, jede Regel mit gesunder UND kaputter Probe",
+    "package.json — check:nummern-schutz in check:all, direkt hinter check:admin-lock",
+    "docs/security/admin-lock-manifest.json — neu gestempelt (49 Dateien)"
+  ],
+  "architekturentscheidung": {
+    "frage": "Datei-Hash oder Nummern-Manifest fuer den 100%-Schutz?",
+    "entscheidung": "Nummern-Manifest (semantische Sperre), nicht Datei-Hash.",
+    "begruendung": "Ein Hash ueber opsAutopilotenListe*.js bzw. console.js haette jeden Tippfehler in einer Beschreibung zum Sicherheitsvorfall gemacht und gleichzeitig jeden Weiterbau blockiert — Autopilot Nr. 82 nur noch mit Neu-Einfrieren. Wer staendig neu einfriert, segnet irgendwann alles mit ab; dieselbe Begruendung steht seit 2026-08-04 in scripts/lib/datei-sperre.mjs. Geschuetzt wird deshalb GENAU das, was der Betreiber genannt hat: die Zuordnung. Bestand ist unantastbar, Zuwachs bleibt erlaubt und wird gemeldet.",
+    "beweis": "Beim Rebase auf den aktuellen Bauzweig kam Autopilot Nr. 81 (besucher-puls) dazu. Der Waechter meldete ihn als erlaubte neue Nummer und blieb gruen — genau das gewuenschte Verhalten."
+  },
+  "nummerierung": {
+    "gruppen": "1 UEBERBLICK, 2 MENSCHEN, 3 SICHERHEIT, 4 GELD, 5 BETRIEB, 6 PRODUKT, 7 RECHT, 8 VERWALTUNG",
+    "bereiche": "1.1-1.3, 2.1-2.3, 3.1-3.3, 4.1-4.3, 5.1-5.8, 6.1-6.9, 7.1-7.3, 8.1-8.2 (34 Stueck)",
+    "hinweis": "Die Nummern bilden den Stand vom 2026-09-04 eins zu eins ab. Auf dem Bildschirm hat sich nichts verschoben — es kamen nur Nummern dazu. Das alte Buchstaben-Kuerzel (CK, RG, B, ...) steht jetzt leise am rechten Zeilenrand statt auf der Plakette; es war mehrfach vergeben (G zweimal, Y zweimal) und taugte nie als Kennung.",
+    "autopiloten": "81 Nummern, 01-81, keine Luecke, keine Doppelvergabe"
+  },
+  "logoKnopf": {
+    "verhalten": "Ziel zuerst, dann Klappe (Betreiber-Wahl). Steht man nicht auf der Startseite, fuehrt der Klick dorthin; steht man schon dort, klappt er die Schiene zu und wieder auf.",
+    "warumNichtStarr123": "Ein starres 1-2-3 waere auf jeder Unterseite die falsche Reihenfolge — von dort will man zuerst nach Hause.",
+    "warum68pxStattNull": "Die Schiene faellt auf eine Icon-Spur zusammen statt zu verschwinden. Bei Breite 0 waere das Logo weg und es gaebe keinen Weg zurueck.",
+    "zustand": "localStorage smejj.admin.schiene — jeder Seitenwechsel auf smejj.com ist eine ECHTE Navigation (eigener Ordner je Seite), ohne Ablage waere die Schiene nach jedem Klick wieder offen. Rein oertlich, keine Kennung, kein Netz.",
+    "logoQuelle": "Form aus /icons/smejj_favicon.svg, INLINE im Markup. Der Control-Server liefert die Konsole mit fester Dateiliste aus (adminUiRoutes.js) — ein Bild aus /icons/ waere dort 404. Inline kostet ausserdem keine zweite Anfrage."
+  },
+  "nebenbefundeGeheilt": [
+    "control-server/admin-ui/views-stage7.js und console.css waren im Bauzweig AELTER als der Live-Stand (bedienbare Schluessel-Ausgabe, Sechs-Spalten-Tabelle, .adm-tabelle). Der erste Spiegel-Lauf haette das live zurueckgebaut; beim Diff aufgefallen, der Live-Stand wurde stattdessen in die Quelle uebernommen.",
+    "Autopilot Nr. 81 (besucher-puls) lief, stand aber nicht in der Konsolen-Liste. Er kam waehrend der Arbeit aus einer Parallelsitzung nach und ist jetzt im Nummern-Manifest.",
+    "workers/con-autopilot/tarball.js: Schreibweise 'SMEJJ-Buendel' -> 'smejj.com-Buendel' (check:guidelines war rot)."
+  ],
+  "verifikationLive": [
+    "https://smejj.com/admin/ — Gruppen tragen 1..8, Bereiche 1.1..8.2, Kuerzel am Zeilenrand (Chrome, angemeldet als Owner, Stufe 8)",
+    "Logo-Klick auf der Startseite: Schiene faellt auf 68 px zusammen (Nummern bleiben lesbar, Gruppen werden Trennstriche)",
+    "Zweiter Klick: Schiene wieder offen",
+    "Eingeklappt zu /admin/autopiloten/ navigiert: Zustand bleibt eingeklappt (localStorage)",
+    "Logo-Klick auf /admin/autopiloten/: fuehrt nach /admin/ statt zu klappen",
+    "Keine Konsolenfehler; Cockpit misst weiter (Nutzer 4, Umsatz 9,00 EUR, Antwortzeit 0,6 s, smejj.com Ampel gruen)"
+  ],
+  "pruefungen": {
+    "check:guidelines": "OK — 2147 Dateien",
+    "check:modul-syntax": "OK — 245 Module",
+    "check:admin-konsole": "OK — 36 Adressen aus 34 Ansichten, 57 Bedienelemente",
+    "check:admin-console-sync": "OK — Quelle gespiegelt, 34 Seiten haben ihren Ordner",
+    "check:nummern-schutz": "OK — 81 Autopiloten-Nummern, 8 Gruppen, 34 Bereiche; 14/14 Tests",
+    "check:admin-lock": "OK — 49 Dateien, neu gestempelt 2026-09-04T12:00:57Z",
+    "check:all": "53 von 54 Punkten wie auf dem Bauzweig; die 8 roten Punkte (memory-bank, evaluation, markenkette, frontend, start-lock, security-lock, abo-lock, einwilligung-lock) waren VOR dieser Arbeit schon rot und stammen aus Parallelsitzungen — nachgemessen auf 56042b94."
+  },
+  "offeneEntscheidungenFuerDenBetreiber": [
+    "Merge nach main (Bauzweig feature/auth-redesign-github-magiclink) — Rote Liste. Der Zweig feature/admin-nummern-logo-final wartet auf die Freigabe. Bis dahin traegt der Live-Stand die Arbeit, der Bauzweig noch nicht.",
+    "abo-lock, security-lock, start-lock und einwilligung-lock sind auf dem Bauzweig verletzt (public/account-privacy.js, src/shared/controlAccessPolicy.js, public/composer-plus-menu.js). Das sind fremde Aenderungen aus Parallelsitzungen — bewusst NICHT mitgestempelt.",
+    "Der Auslieferungs-Waechter meldet zeitweise 'Dahinter' fuer smejj.com: der Rand liefert SW v752, der Bauzweig traegt v746. Auch das stammt aus den api-bereich-Deploys anderer Sitzungen."
+  ],
+  "commits": {
+    "app": "376e3e7d (Bau), 7d122f96 (Stempel) auf feature/admin-nummern-logo-final",
+    "frontend": "d7af3df (live), 5dd7a95 (Spiegel byte-gleich) auf smejj-app-frontend main"
+  },
+  "status": "abgeschlossen"
+}

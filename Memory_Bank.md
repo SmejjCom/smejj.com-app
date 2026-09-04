@@ -5,6 +5,63 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-04] 100%-SCHUTZ ALS NUMMERN-MANIFEST, NICHT ALS DATEI-HASH; ADMIN-MENUE NUMMERIERT; LOGO IST DER KNOPF (job_admin_nummern_logo_20260904)
+
+Capsule: `task-capsules/2026/09/job_admin_nummern_logo_20260904/capsule.json`.
+
+**Entscheidung.** Der vom Betreiber verlangte 100%-Schutz fuer die
+Autopiloten-Nummern und die Nummern im Admin-Menue ist eine SEMANTISCHE
+Sperre: `docs/security/autopilot-nummern-lock.json` (81 Nummern) und
+`docs/security/adminmenue-nummern-lock.json` (8 Gruppen, 34 Bereiche)
+frieren die ZUORDNUNG ein, nicht die Dateien. `scripts/check-autopilot-nummern.mjs`
+und `scripts/check-menue-nummern.mjs` weisen fail-closed ab: umnummeriert,
+geloescht, doppelt vergeben, zwei Nummern auf einem Ding, Ding ohne Nummer —
+beim Menue zusaetzlich "registrierte Seite ohne Nummer" und "Nummer ohne
+Seite". Beide laufen in `npm run check:all` hinter `check:admin-lock`.
+
+**Begruendung.** Ein Datei-Hash haette jeden Tippfehler in einer
+Beschreibung zum Sicherheitsvorfall gemacht und zugleich den Weiterbau
+blockiert: Autopilot Nr. 82 nur noch mit Neu-Einfrieren. Wer staendig neu
+einfriert, segnet irgendwann alles mit ab — dieselbe Begruendung steht seit
+2026-08-04 in `scripts/lib/datei-sperre.mjs`. Bestand ist unantastbar,
+Zuwachs bleibt erlaubt und wird gemeldet.
+
+**Verifikation, die es beweist.** Waehrend der Arbeit kam aus einer
+Parallelsitzung Autopilot Nr. 81 (`besucher-puls`) dazu. Der Waechter
+meldete "neue Nummer 81 (erlaubt)" und blieb gruen — kein Fehlalarm, keine
+Blockade. `tests/nummern-schutz.test.mjs` prueft jede Regel mit gesunder UND
+kaputter Probe (14/14).
+
+**Menue-Nummern bestimmen jetzt die Reihenfolge.** Vorher entschied darueber
+die Ladereihenfolge der `console-stage*.js` — unsichtbar und damit nicht
+schuetzbar. `GRUPPEN_NUMMERN`/`SEITEN_NUMMERN` in `console.js` bilden den
+Stand vom 2026-09-04 eins zu eins ab: auf dem Bildschirm hat sich nichts
+verschoben, es kamen nur Nummern dazu (1 UEBERBLICK … 8 VERWALTUNG,
+1.1 Cockpit … 8.2 Admin-Verwaltung). Das Buchstaben-Kuerzel steht leise am
+rechten Zeilenrand; es war mehrfach vergeben (G und Y je zweimal).
+
+**Logo als Knopf, "Ziel zuerst, dann Klappe".** Steht man nicht auf der
+Startseite, fuehrt der Klick dorthin; steht man schon dort, klappt er die
+Schiene auf 68 px zusammen und wieder auf. NICHT auf Breite 0: dann waere das
+Logo weg und es gaebe keinen Weg zurueck. Zustand in `localStorage`, weil
+jeder Seitenwechsel auf smejj.com eine echte Navigation ist. Das Zeichen
+liegt INLINE im Markup — der Control-Server liefert die Konsole mit fester
+Dateiliste aus, ein Bild aus `/icons/` waere dort 404.
+
+**Falle, die fast zugeschnappt waere.** `control-server/admin-ui/views-stage7.js`
+und `console.css` waren im Bauzweig AELTER als der Live-Stand (bedienbare
+Schluessel-Ausgabe aus `feature/api-budget`, nie in den Bauzweig gemergt).
+Der erste `sync_admin_console_pages.mjs`-Lauf haette das live zurueckgebaut.
+Regel daraus: **vor jedem Spiegeln den Diff Quelle-gegen-Klon lesen, nicht nur
+das Ergebnis.** Was im Klon steht und in der Quelle fehlt, ist meistens
+juengere Live-Arbeit eines anderen Zweigs — nicht Muell.
+
+Verifikation live (Chrome, angemeldet, Stufe 8): Nummern sichtbar auf
+smejj.com/admin/, Logo klappt zu und auf, Zustand ueberlebt die Navigation,
+Logo-Klick auf /admin/autopiloten/ fuehrt nach /admin/. Keine
+Konsolenfehler. `check:admin-lock` neu gestempelt (49 Dateien).
+
+
 ### [2026-08-31] ADMIN-NAV: WIRKUNGS-GEWICHTETE REIHENFOLGE (4 STUFEN) + NUMMERN-KUERZEL 1-28; KONSOLEN-DEPLOY-WEG DREI KOPIEN (job_admin_reihenfolge_20260831)
 
 Capsule: `task-capsules/2026/08/job_admin_reihenfolge_20260831/capsule.json`.
