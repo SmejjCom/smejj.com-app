@@ -259,3 +259,40 @@ test("jede Handlung der Gegenprobe antwortet fachlich, nicht ausweichend", () =>
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// Der Trainingslauf fasst weder con noch das con-Lager an
+// ---------------------------------------------------------------------------
+const { trainingsKonfig, jobParameter, KANDIDAT, DATENSATZ_PREFIX, GRUPPE: TRAIN_GRUPPE, MAX_MINUTEN: TRAIN_MINUTEN } =
+  await import("../scripts/training/smejj-1-1-trainieren.mjs");
+
+test("der Trainingslauf laeuft in einer EIGENEN Gruppe", () => {
+  const basis = {
+    basis: { repo: "Qwen/Qwen3.8-27B", prefix: "con/base/qwen3.8-27b" },
+    salad: { gruppe: "con-job", speicherGb: 150, gpuKlassen: ["3090"] }
+  };
+  const k = trainingsKonfig(basis);
+  assert.equal(k.salad.gruppe, TRAIN_GRUPPE);
+  assert.notEqual(k.salad.gruppe, "con-job", "con-job umzukonfigurieren bricht einen laufenden con-Lauf ab");
+  assert.notEqual(k.salad.gruppe, "smejj-spiegel", "auch nicht die Spiegel-Gruppe — sonst stoeren sich zwei Laeufe");
+  assert.equal(basis.salad.gruppe, "con-job", "die uebergebene Konfiguration bleibt unveraendert");
+  // Anders als der Spiegel BRAUCHT das Training eine Grafikkarte.
+  assert.ok((k.salad.gpuKlassen || []).length > 0, "QLoRA ohne GPU gibt es nicht");
+});
+
+test("die Job-Parameter zeigen auf den smejj-Datensatz und einen eigenen Kandidaten", () => {
+  const p = jobParameter();
+  assert.equal(p.CON_KANDIDAT, KANDIDAT);
+  assert.equal(p.CON_DATENSATZ_PREFIX, DATENSATZ_PREFIX);
+  assert.ok(!p.CON_DATENSATZ_PREFIX.startsWith("con/"), "nicht aus dem con-Lager lesen");
+  assert.ok(!p.CON_CHECKPOINT_PREFIX.startsWith("con/"), "nicht ins con-Lager schreiben");
+  const konfig = JSON.parse(p.CON_TRAIN_KONFIG);
+  assert.ok(konfig.rang > 0 && konfig.epochen > 0 && konfig.lernrate > 0, "unvollstaendige Trainingskonfiguration");
+});
+
+test("die Zeitgrenze ist gesetzt und bleibt im Rahmen des Deckels", () => {
+  // Ohne Zeitgrenze wird nicht gestartet. 170 min auf einer 24-GB-Karte zu
+  // 0,10 USD/h sind rund 0,28 USD — der Monatsdeckel liegt bei 10 USD.
+  assert.ok(TRAIN_MINUTEN > 0 && TRAIN_MINUTEN <= 240, `Zeitgrenze ${TRAIN_MINUTEN} min`);
+  assert.ok((TRAIN_MINUTEN / 60) * 0.10 < 1, "ein einzelner Lauf darf keinen Dollar kosten");
+});
