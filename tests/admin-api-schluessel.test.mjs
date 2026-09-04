@@ -447,4 +447,8 @@ test("Konsole: die Schluessel-Tabelle passt ins Fenster (Live-Befund 2026-09-04)
   assert.match(views, /Verbrauch \(Monat\)/);
   assert.doesNotMatch(views, /"Ausgestellt von", ""/, "Aussteller steht jetzt in der ersten Spalte");
   assert.match(css, /\.adm-tabelle\{overflow-x:auto;\}/);
+  // Und die Regel muss auch VERGEBEN werden — eine Regel ohne Element ist ein
+  // Schutz, der nur im Stylesheet steht (Lehre: Schutz gebaut, nicht angeschlossen).
+  assert.match(views, /<div class="adm-tabelle">'\s*\n\s*\+ V\.tabelleBlock/,
+    "die Tabelle steckt nicht in der scrollbaren Huelle");
 });
