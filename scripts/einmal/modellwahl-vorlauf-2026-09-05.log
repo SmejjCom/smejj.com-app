@@ -1,0 +1,19 @@
+== 0. Ausgangslage
+019b99e4 fix(chat): Client-Antworten rendern Markdown wie der Server-Weg — live gefunden im Code-Bereich (Cline-Modell zeigte Code-Zaeune als Rohtext), Marken v6/v6/v2/b132, SW smejj-shell-v758, Start-Lock gestempelt (Betreiber-Doppelklick 2026-09-04)
+ℹ pass 44 ℹ fail 0 
+== 1. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v759";
+== 2. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+pdfjs-worker gebaut — 1265413 Byte aus 2 Teilen, 2 Orte.
+markenkette OK — 118 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T21-23-40-979Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T21:23:40.979Z).
+modell-menue-lock OK — 6 Modell-Listen-Dateien byte-identisch zum eingefrorenen Stand (2026-08-26T00:55:09.912Z).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 250 Module als ES-Module geparst (Arbeitsstand).
+check:module-queries OK — 229 Module, jedes unter genau einer Kennung.
+ℹ duration_ms 60.033708
+check:precache-imports OK — 176 Module erreichbar, Precache vollstaendig.
+ℹ pass 73 ℹ fail 0 
+== 3. Commit design-v11 (git add -A: neue Dateien kommen mit)
