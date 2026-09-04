@@ -34,7 +34,7 @@ davon ist gebaut. Wer hier weiterarbeitet: erst diesen Plan lesen, dann bauen.
 
 ## Der Plan in fuenf Punkten
 
-### 1. Zwei Reiter statt einer Liste (Oberflaeche)
+### 1. Zwei Reiter statt einer Liste (Oberflaeche) — GEBAUT + LIVE 2026-09-04 (design-v11 92096862, SW v748; Ablauf-Strich nachgeschoben 2d7b29d9)
 
 - Reiter A "Meine smejj-Schluessel" (fuer Programme).
 - Reiter B "Eigene Anbieter" (BYOK, fuer den Chat).
@@ -106,6 +106,13 @@ davon ist gebaut. Wer hier weiterarbeitet: erst diesen Plan lesen, dann bauen.
 5. Deploy: Server-Teil in den Bauzweig (smejj-control neu BAUEN), Frontend
    ueber das Buendel; nichts davon ist im Start-Lock, api-center-surface.js
    ist nicht gesperrt (vorher `node scripts/check-start-lock.mjs`).
+
+## Stand 2026-09-04: ALLE FUENF PUNKTE GEBAUT UND LIVE
+
+Laufzeit (Punkt 2) live 03.09. 20:42 UTC, Admin-Bereich + Praefix + Audit (3-5) live
+04.09. 06:15 UTC, Monatsbudget live 08:17 UTC (Deckel-Luecke 9479fb36 behoben und
+nachgemessen), Tagesmappe-Zeile live 10:11 UTC, zwei Reiter live 09:38 UTC.
+Jeder Punkt wurde live geprueft, nicht nur getestet.
 
 ## Was bewusst NICHT im Plan ist
 
