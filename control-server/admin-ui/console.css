@@ -233,6 +233,13 @@ body{
 .panel>.ph .spacer{flex:1;}
 .panel>.pb{padding:18px 18px;}
 .panel>.pb.flush{padding:0;}
+/* Breite Tabellen scrollen in IHRER Huelle, nie die ganze Seite (Befund 2026-09-04,
+   gemeldet aus der Schluessel-Seite und hier nachgemessen): Bei 375 px lagen alle
+   sieben Autopiloten-Tabellen 708-808 px breit in einer 375-px-Huelle mit
+   overflow-x:visible — die letzte Spalte ("Letzter echter Lauf", bei den Schluesseln
+   der Knopf "Widerrufen") lag ausserhalb des Fensters. Nur die Huelle scrollt;
+   overflow-y bleibt sichtbar, damit nichts abgeschnitten wird, was darueber liegt. */
+.panel>.pb.flush:has(>table){overflow-x:auto;overflow-y:visible;}
 
 /* Tabelle */
 table{width:100%;border-collapse:collapse;font-size:15px;}
