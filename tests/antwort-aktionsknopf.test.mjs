@@ -52,3 +52,23 @@ test("Nr. 3: Fehlercodes werden Klartext, und jeder Status bekommt eine Handlung
   assert.match(fa, /"Anmelden"/); assert.match(fa, /"Erneut versuchen"/); assert.match(fa, /In 20 s erneut versuchen/);
   assert.match(fa, /\/auth\/login\//);
 });
+
+// ---------------------------------------------------------------------------
+// Der Knopf muss so breit sein wie sein Wort
+//
+// BEFUND 2026-09-04, live im Code-Bereich gemessen: Der Knopf war 30 px breit,
+// zu lesen war nur "cher antworten". Er traegt zusaetzlich .ghost-button — und
+// die ist anderswo ein SYMBOL-Knopf: width:30px, height:34px, padding:0,
+// display:grid. Die eigenen Regeln ueberschrieben Hoehe und Innenabstand, die
+// BREITE aber nicht. Ein Knopf, dessen Beschriftung abgeschnitten ist, ist
+// keine Bedienung mehr (Betreiber-Regel: grosse Schrift, 44 px).
+// ---------------------------------------------------------------------------
+test("der Aktionsknopf hebt die feste Symbolgroesse von .ghost-button auf", () => {
+  const stil = /stil\.textContent = ([\s\S]*?);\n/.exec(quelle)?.[1] || "";
+  assert.ok(stil, "Stilblock nicht gefunden — Aufbau geaendert?");
+  assert.match(stil, /width:auto/, "die geerbte width:30px muss aufgehoben werden");
+  assert.match(stil, /height:auto/, "die geerbte height:34px muss aufgehoben werden");
+  assert.match(stil, /min-height:44px/, "Touch-Ziel bleibt 44 px");
+  assert.match(stil, /\.antwort-aktion \.antwort-aktion-knopf/,
+    "zweiteiliger Selektor: der Knopf darf nicht von der Ladefolge abhaengen");
+});
