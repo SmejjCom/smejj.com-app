@@ -1,6 +1,6 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-04T06:49:58.251Z",
+  "frozenAt": "2026-09-04T07:50:05.435Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-03: Audit A bis Z, Wahl Red-Team-Fund schliessen — v148 reichte nicht (gpt-oss folgte der Anweisung dreimal trotz Regel); v149 stellt die Schutz-Regel an die Spitze der Systemregeln, Bruecke v149",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
