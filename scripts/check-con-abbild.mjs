@@ -45,6 +45,32 @@ async function importBaum(start) {
   return [...gesehen].sort();
 }
 
+/**
+ * Bildet `.dockerignore` nach: liefert true, wenn Docker diesen Pfad NICHT in den Bau-Kontext
+ * legt. Die letzte zutreffende Regel gewinnt; eine Zeile mit `!` nimmt wieder auf.
+ * Ohne diese Pruefung gruent der Waechter, waehrend der echte Bau mit
+ * "failed to calculate checksum of ref" abbricht — die Falle, die schon den Training-Loop kostete.
+ */
+async function dockerignoreFilter() {
+  const datei = path.join(WURZEL, ".dockerignore");
+  if (!existsSync(datei)) return () => false;
+  const regeln = (await readFile(datei, "utf8")).split("\n")
+    .map((z) => z.trim())
+    .filter((z) => z && !z.startsWith("#"))
+    .map((z) => (z.startsWith("!") ? { negiert: true, muster: z.slice(1) } : { negiert: false, muster: z }));
+  const zuRegex = (muster) => new RegExp("^" + muster
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*\*/g, "\u0000")
+    .replace(/\*/g, "[^/]*")
+    .replace(/\u0000/g, ".*")
+    .replace(/\?/g, "[^/]") + "(/.*)?$");
+  return (relPfad) => {
+    let ignoriert = false;
+    for (const r of regeln) if (zuRegex(r.muster).test(relPfad)) ignoriert = !r.negiert;
+    return ignoriert;
+  };
+}
+
 async function copyZiele() {
   const text = await readFile(path.join(WURZEL, DOCKERFILE), "utf8");
   return text.split("\n")
@@ -68,6 +94,16 @@ async function main() {
     process.exit(1);
   }
   console.log("Stufe 1 gruen: jede importierte Datei ist im Abbild.");
+
+  // Stufe 1b: Was .dockerignore ausschliesst, landet nie im Bau-Kontext — auch wenn eine COPY-Zeile es nennt.
+  const ignoriert = await dockerignoreFilter();
+  const ausgesperrt = [...noetig, ...quellen].filter((d) => ignoriert(d));
+  if (ausgesperrt.length) {
+    console.log("Von .dockerignore ausgesperrt, obwohl gebraucht:");
+    for (const d of [...new Set(ausgesperrt)]) console.log("  !" + d);
+    process.exit(1);
+  }
+  console.log("Stufe 1b gruen: .dockerignore sperrt nichts Gebrauchtes aus.");
 
   const ziel = await mkdtemp(path.join(os.tmpdir(), "con-abbild-"));
   try {
