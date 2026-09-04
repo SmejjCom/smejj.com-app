@@ -99,3 +99,24 @@ test("Widerrufene und abgelaufene Schluessel zeigen kein Ablaufdatum-Versprechen
   assert.match(surface, /function ablaufText\(eintrag\) \{\s*if \(eintrag\.widerrufen \|\| eintrag\.abgelaufen\) return "—";/);
   assert.match(surface, /ac-cell-ablauf">\$\{ablaufText\(eintrag\)\}/);
 });
+
+test("Guthaben-Leiste ist gestaltet: nebeneinander, schmale Trenner, Aufladen als Knopf (Live-Befund 2026-09-04)", () => {
+  // Fuer .ac-stats gab es KEINE Regel — live standen die drei Bloecke
+  // untereinander und die Trenner liefen als 720-px-Balken quer durch die Seite.
+  assert.match(css, /\.ac-stats \{[^}]*display: flex/);
+  assert.match(css, /\.ac-stats\[hidden\] \{ display: none; \}/);
+  assert.match(css, /\.ac-stat-block \{[^}]*flex-direction: column/);
+  assert.match(css, /\.ac-stat-label \{[^}]*text-transform: uppercase/);
+  assert.match(css, /\.ac-stat-value \{[^}]*font-weight: 700/);
+  // Der Trenner braucht eine feste Hoehe, sonst wird er zum Balken.
+  assert.match(css, /\.ac-stat-divider \{[^}]*width: 1px;[^}]*height: 34px/);
+  // "Aufladen" ist ein Knopf mit Flaeche, kein nackter Text.
+  assert.match(css, /\.ac-stat-link \{[^}]*min-height: 32px/);
+  assert.match(css, /\.ac-stat-link\[hidden\] \{ display: none; \}/);
+  // Jede Klasse aus dem Markup hat auch eine Regel — sonst faellt wieder
+  // etwas ungestaltet durch.
+  for (const klasse of ["ac-stats", "ac-stat-block", "ac-stat-label", "ac-stat-value", "ac-stat-link", "ac-stat-divider"]) {
+    assert.ok(surface.includes(`class="${klasse}`), `${klasse} fehlt im Markup`);
+    assert.ok(css.includes(`.${klasse}`), `${klasse} hat keine Stil-Regel`);
+  }
+});
