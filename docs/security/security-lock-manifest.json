@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-26T01:00:34.867Z",
-  "confirmation": "Betreiber 2026-08-26: Ox-Alpha — chat-bridge v146 Weiche \\box\\b (2 Zeilen), Spiegel design-v11",
+  "frozenAt": "2026-09-04T16:30:26.233Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04: 'Danach alles 100% schuetzen: Bestehende Funktionen duerfen nicht kaputtgehen und nichts darf ohne meine schriftliche Bestaetigung geaendert werden.' — Nachstempel, weil der Doppelklick zwar FERTIG meldete, aber kein Manifest hinterliess: start-lock stand weiter auf 11:47:51 mit vier Fassungen, die smejj.com nicht ausliefert. Vor diesem Stempel alle 34 Dateien gegen die Auslieferung geprueft: 0 Phantome.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
@@ -9,7 +9,7 @@
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
     "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
-    "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
+    "src/shared/controlAccessPolicy.js": "dc43435481d8381d698e6ad706b874bb677f18f2c87fb54e50e44e88dadf5066",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
     "public/chat-bridge.js": "5cc2dda877e5502b494e6a5374866f2b0cc0f6b0e734eda8e555452565b85714",
