@@ -21,6 +21,7 @@ import { TRAININGS_REIFE_ABLAGE } from "./trainingsReifeAutopilot.js";
 import { DSGVO_FRISTEN_ABLAGE } from "./dsgvoFristenAutopilot.js";
 import { FLAGGEN_ABLAGE } from "./flaggenAutopilot.js";
 import { MODELL_EVOLUTION_ABLAGE, LETZTER_ZYKLUS_ID } from "./modellEvolutionAutopilot.js";
+import { listeAusgestellt } from "../publicapi/publicApiAdminKeys.js";
 
 /** Offene Punkte, die nur der Betreiber entscheiden kann. Gepflegt im Code,
  *  damit jeder Eintrag mit seinem Grund im Review steht — KEINE Messwerte. */
@@ -52,6 +53,7 @@ export async function baueTagesmappe({
   uebersicht = autopilotUebersicht,
   ticketLader = listeTickets,
   storeFabrik = neueAblage,
+  schluesselLader = listeAusgestellt,
   env = process.env,
   jetztMs = Date.now()
 } = {}) {
@@ -203,6 +205,50 @@ export async function baueTagesmappe({
     }
   } catch { stumm.push("Flaggen-Ablage"); }
 
+  // 10. Vom Betreiber ausgestellte Schluessel (smejj-adm-…, seit 2026-09-04):
+  // Unbefristete stehen JEDEN Tag in der Mappe. Sie laufen nie von selbst ab —
+  // wer sie einmal vergeben hat, sieht sie sonst nie wieder an, und genau so
+  // ueberlebt ein Zugang den Anlass, fuer den er gedacht war. Dazu die, deren
+  // Laufzeit in den naechsten 30 Tagen endet: rechtzeitig rotieren ist ein
+  // Handgriff, ein abgelaufener Schluessel beim Kunden ist ein Ausfall.
+  try {
+    const liste = await schluesselLader(env);
+    if (!liste?.ok) stumm.push("Ausgestellte Schluessel");
+    else {
+      const aktive = (liste.schluessel || []).filter((s) => s.zustand === "aktiv");
+      const unbefristet = aktive.filter((s) => !s.laeuftAbAm);
+      if (unbefristet.length) {
+        const namen = unbefristet.slice(0, 5).map((s) => s.ausgestelltFuer).join(", ");
+        wartenAufDich.push({
+          art: "api-schluessel",
+          text: `${unbefristet.length} unbefristete${unbefristet.length === 1 ? "r" : ""} API-Schluessel im Umlauf (${namen})`
+            + " — laeuft nie von selbst ab; pruefen, ob der Zugang noch gebraucht wird"
+        });
+      }
+      const bald = aktive
+        .filter((s) => s.laeuftAbAm && Date.parse(s.laeuftAbAm) - jetztMs < 30 * 86_400_000)
+        .sort((a, b) => Date.parse(a.laeuftAbAm) - Date.parse(b.laeuftAbAm));
+      if (bald.length) {
+        const erster = bald[0];
+        wartenAufDich.push({
+          art: "api-schluessel",
+          text: `${bald.length} API-Schluessel laufen in den naechsten 30 Tagen ab`
+            + ` (zuerst ${erster.ausgestelltFuer} am ${String(erster.laeuftAbAm).slice(0, 10)})`
+            + " — rechtzeitig neuen ausstellen, alten widerrufen"
+        });
+      }
+      // Am Monatsdeckel: dort kommt beim Kunden gerade 429 an.
+      const amDeckel = Number(liste.amDeckel || 0);
+      if (amDeckel > 0) {
+        wartenAufDich.push({
+          art: "api-schluessel",
+          text: `${amDeckel} ausgestellte${amDeckel === 1 ? "r" : ""} Schluessel am Monatsbudget`
+            + " — die Aufrufe bekommen 429; Budget anheben oder so lassen"
+        });
+      }
+    }
+  } catch (f) { stumm.push(`Ausgestellte Schluessel (${String(f?.message || f).slice(0, 50)})`); }
+
   return {
     ok: true,
     erstelltAm: new Date(jetztMs).toISOString(),
@@ -223,12 +269,20 @@ export async function fuehreSelbsttestAus() {
   const kaputt = await baueTagesmappe({
     uebersicht: () => { throw new Error("Ampel weg"); },
     ticketLader: async () => { throw new Error("Tickets weg"); },
-    storeFabrik: () => ({ liste: async () => { throw new Error("Ablage weg"); } })
+    storeFabrik: () => ({ liste: async () => { throw new Error("Ablage weg"); } }),
+    schluesselLader: async () => { throw new Error("Schluessel weg"); }
   });
+  if (!kaputt.stummeQuellen.some((q) => /Ausgestellte Schluessel/.test(q))) {
+    fehler.push("kaputte Schluessel-Quelle wurde nicht als stumm benannt");
+  }
   if (kaputt.stummeQuellen.length < 3) fehler.push(`kaputte Quellen: nur ${kaputt.stummeQuellen.length} als stumm benannt`);
   const gesund = await baueTagesmappe({
     uebersicht: () => ({ autopiloten: [{ id: "x", name: "X", ampel: "rot", letzterLauf: { meldung: "kaputt" } }] }),
     ticketLader: async () => [{ id: "T1", status: "offen", betreff: "Hilfe" }],
+    schluesselLader: async () => ({
+      ok: true, amDeckel: 0,
+      schluessel: [{ id: "adm_1", ausgestelltFuer: "Partner", zustand: "aktiv", laeuftAbAm: "" }]
+    }),
     storeFabrik: (praefix) => praefix === TRAININGS_REIFE_ABLAGE
       ? { liste: async () => ({ ok: true, datensaetze: [{ stufe: 3, gesamt: 5200, ziel: 5000, createdAt: new Date().toISOString() }] }) }
       : praefix === DSGVO_FRISTEN_ABLAGE
@@ -240,7 +294,12 @@ export async function fuehreSelbsttestAus() {
             : { liste: async () => ({ ok: true, datensaetze: [] }) }
   });
   if (gesund.roteAmpeln.length !== 1) fehler.push("rote Ampel fehlt in der gesunden Mappe");
-  if (gesund.wartenAufDich.length !== 1) fehler.push("offenes Ticket fehlt in der gesunden Mappe");
+  // Zwei Karten: das offene Ticket und der unbefristete Schluessel aus der Probe.
+  if (!gesund.wartenAufDich.some((w) => w.art === "support")) fehler.push("offenes Ticket fehlt in der gesunden Mappe");
+  if (!gesund.wartenAufDich.some((w) => w.art === "api-schluessel" && /unbefristet/.test(w.text))) {
+    fehler.push("unbefristeter Schluessel fehlt in der gesunden Mappe");
+  }
+  if (gesund.wartenAufDich.length !== 2) fehler.push(`gesunde Mappe: ${gesund.wartenAufDich.length} wartende Karten statt 2`);
   if (gesund.stummeQuellen.length !== 0) fehler.push("gesunde Mappe meldet fälschlich stumme Quellen");
   if (!gesund.entscheiden.some((e) => e.art === "trainings-reife")) {
     fehler.push("reife Trainings-Karte fehlt unter ENTSCHEIDEN");

@@ -337,3 +337,39 @@ test("Budget: waehrend des Schreibvorgangs zaehlt der Verbrauch weiter — keine
   assert.equal(s.monat.token, 40);
   assert.equal(s.nutzung.token, 40);
 });
+
+test("Tagesmappe meldet unbefristete, bald ablaufende und gedeckelte Schluessel (Plan Punkt 5)", async () => {
+  const { baueTagesmappe, fuehreSelbsttestAus } = await import("../control-server/src/autopilots/tagesmappeAutopilot.js");
+  const leer = { uebersicht: () => ({ autopiloten: [] }), ticketLader: async () => [],
+    storeFabrik: () => ({ liste: async () => ({ ok: true, datensaetze: [] }), lies: async () => null }) };
+  const jetztMs = Date.parse("2026-09-04T00:00:00.000Z");
+
+  const ohne = await baueTagesmappe({ ...leer, jetztMs, schluesselLader: async () => ({ ok: true, amDeckel: 0, schluessel: [] }) });
+  assert.equal(ohne.wartenAufDich.filter((w) => w.art === "api-schluessel").length, 0, "ohne Schluessel keine Zeile");
+
+  const mappe = await baueTagesmappe({
+    ...leer, jetztMs,
+    schluesselLader: async () => ({
+      ok: true, amDeckel: 2,
+      schluessel: [
+        { id: "adm_1", ausgestelltFuer: "Partner Nord", zustand: "aktiv", laeuftAbAm: "" },
+        { id: "adm_2", ausgestelltFuer: "Agentur", zustand: "aktiv", laeuftAbAm: "2026-09-20T00:00:00.000Z" },
+        { id: "adm_3", ausgestelltFuer: "Weit weg", zustand: "aktiv", laeuftAbAm: "2036-01-01T00:00:00.000Z" },
+        { id: "adm_4", ausgestelltFuer: "Alt", zustand: "widerrufen", laeuftAbAm: "" }
+      ]
+    })
+  });
+  const zeilen = mappe.wartenAufDich.filter((w) => w.art === "api-schluessel").map((w) => w.text);
+  assert.equal(zeilen.length, 3, JSON.stringify(zeilen));
+  assert.match(zeilen[0], /^1 unbefristeter API-Schluessel im Umlauf \(Partner Nord\)/, "widerrufene zaehlen nicht mit");
+  assert.match(zeilen[1], /^1 API-Schluessel laufen in den naechsten 30 Tagen ab \(zuerst Agentur am 2026-09-20\)/);
+  assert.match(zeilen[2], /^2 ausgestellte Schluessel am Monatsbudget/);
+
+  // Stumme Quelle: faellt die Liste aus, steht das IN der Mappe.
+  const stumm = await baueTagesmappe({ ...leer, jetztMs, schluesselLader: async () => { throw new Error("e2 weg"); } });
+  assert.ok(stumm.stummeQuellen.some((q) => /Ausgestellte Schluessel/.test(q)), JSON.stringify(stumm.stummeQuellen));
+
+  // Der eigene Selbsttest der Mappe (Waechter-TUEV: kaputte UND gesunde Probe).
+  const selbsttest = await fuehreSelbsttestAus();
+  assert.equal(selbsttest.bestanden, true, JSON.stringify(selbsttest.fehler));
+});
