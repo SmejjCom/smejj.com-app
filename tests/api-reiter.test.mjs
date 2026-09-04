@@ -110,6 +110,10 @@ test("Guthaben-Leiste ist gestaltet: nebeneinander, schmale Trenner, Aufladen al
   assert.match(css, /\.ac-stat-value \{[^}]*font-weight: 700/);
   // Der Trenner braucht eine feste Hoehe, sonst wird er zum Balken.
   assert.match(css, /\.ac-stat-divider \{[^}]*width: 1px;[^}]*height: 34px/);
+  // Oben ausrichten, sonst fluchten Beschriftungen und Werte nicht: der
+  // Guthaben-Block ist wegen des Aufladen-Knopfes hoeher als die anderen.
+  assert.match(css, /\.ac-stats \{[^}]*align-items: flex-start/);
+  assert.match(css, /\.ac-stat-divider \{[^}]*align-self: center/);
   // "Aufladen" ist ein Knopf mit Flaeche, kein nackter Text.
   assert.match(css, /\.ac-stat-link \{[^}]*min-height: 32px/);
   assert.match(css, /\.ac-stat-link\[hidden\] \{ display: none; \}/);

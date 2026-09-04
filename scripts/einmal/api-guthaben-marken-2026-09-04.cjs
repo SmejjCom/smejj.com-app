@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // smejj.com — Marken-Heber fuer die Betreiber-Kaskade "Guthaben-Leiste" (2026-09-04).
 //
-// Der Zweig aendert settings-surface.js (laedt api-center-surface.js?v=15).
+// Der Zweig aendert settings-surface.js (laedt api-center-surface.js?v=16).
 // Darueber liegen drei GESPERRTE Kettenglieder (Start-Lock):
 //   premium-surfaces.js -> app.js -> index.html
 // Sie werden bewusst NICHT im Zweig angefasst, sondern hier ZUR LAUFZEIT
@@ -32,8 +32,8 @@ function hebe(datei, modul) {
 }
 
 const settings = fs.readFileSync("public/settings-surface.js", "utf8");
-if (!settings.includes("./api-center-surface.js?v=15")) {
-  console.error("ABBRUCH: public/settings-surface.js laedt nicht api-center-surface.js?v=15 — Zweig nicht gemergt?");
+if (!settings.includes("./api-center-surface.js?v=16")) {
+  console.error("ABBRUCH: public/settings-surface.js laedt nicht api-center-surface.js?v=16 — Zweig nicht gemergt?");
   process.exit(1);
 }
 hebe("public/premium-surfaces.js", "settings-surface.js");
