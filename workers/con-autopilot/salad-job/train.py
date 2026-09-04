@@ -128,7 +128,26 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
     status.setze(schritt="daten", zielModule=ziele, trainierbareParameter=trainierbar)
 
     max_len = int(konfig.get("maxLen", 2048))
-    zeilen = _lade_zeilen(datensatz_pfad, konfig.get("maxZeilen"))
+    # Wie viel Zeit bleibt wirklich? Das Laden des 55-GB-Modells dauert je nach Knoten
+    # zwischen 16 und ueber 60 Minuten (gemessen 03./04.09.). Eine feste Zeilenzahl fuehrt
+    # auf einem langsamen Knoten dazu, dass die Zeitgrenze mitten im Lernplan zuschlaegt:
+    # die Lernrate ist dann noch nicht abgeklungen, der Adapter halbgar. Darum richtet sich
+    # die Menge nach der RESTZEIT, nicht nach einer Wunschzahl.
+    rest_min = konfig.get("restMinuten")
+    if rest_min is None:
+        frist = os.environ.get("CON_JOB_MAX_MINUTEN")
+        rest_min = float(frist) if frist else 180.0
+    mess_reserve = float(konfig.get("messReserveMinuten", 35))
+    minuten_je_schritt = float(konfig.get("minutenJeSchritt", 2.5))
+    batch = int(konfig.get("batch", 1))
+    grad_akk = int(konfig.get("gradAkk", 8))
+    moegliche_schritte = max(4, int((float(rest_min) - mess_reserve) / minuten_je_schritt))
+    zeilen_grenze_zeit = moegliche_schritte * batch * grad_akk
+    wunsch = konfig.get("maxZeilen")
+    zeilen_grenze = min(int(wunsch), zeilen_grenze_zeit) if wunsch else zeilen_grenze_zeit
+    status.setze(schritt="daten", restMinuten=round(float(rest_min), 1), moeglicheSchritte=moegliche_schritte,
+                 zeilenGrenze=zeilen_grenze, wunsch=wunsch)
+    zeilen = _lade_zeilen(datensatz_pfad, zeilen_grenze)
     if not zeilen:
         raise RuntimeError("Datensatz leer")
 

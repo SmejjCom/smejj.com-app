@@ -215,6 +215,8 @@ def lauf():
         datensatz_prefix = os.environ["CON_DATENSATZ_PREFIX"].rstrip("/")
         kandidat = os.environ.get("CON_KANDIDAT", version)
         konfig = json.loads(os.environ.get("CON_TRAIN_KONFIG", "{}"))
+        # Restzeit bis zur Frist, gemessen JETZT — nach dem Laden, nicht davor.
+        konfig.setdefault("restMinuten", max(5.0, MAX_MINUTEN - (time.time() - START) / 60.0))
         daten_dir = os.path.join(ARBEIT, "daten")
         e2.lade_verzeichnis_herunter(datensatz_prefix, daten_dir, lambda n: STATUS.setze(phase="daten", aktuell=n))
         train_pfad = os.path.join(daten_dir, "train.jsonl")
