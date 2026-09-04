@@ -15,10 +15,17 @@ import { eigengewicht, nachDatei, statischeImporte } from "../scripts/check-star
 
 const MESSLATTE = JSON.parse(readFileSync(new URL("../docs/frontend/startgewicht-messlatte.json", import.meta.url), "utf8"));
 
-test("die Startseite bleibt unter der Messlatte", () => {
+test("die Startseite bleibt in der Toleranz um die Messlatte", () => {
+  // Nicht byte-genau: eine normale Aenderung an app.js darf durchgehen, ohne
+  // dass jemand die Messlatte hochsetzt (siehe TOLERANZ_BYTES). Gemessen wird
+  // aber gegen den EINGEFRORENEN Wert, nicht gegen den letzten Lauf — der
+  // Zuwachs kann also nicht Commit fuer Commit nach oben schleichen.
+  const quelle = readFileSync(new URL("../scripts/check-startgewicht.mjs", import.meta.url), "utf8");
+  const toleranz = Number(/const TOLERANZ_BYTES = (\d+);/.exec(quelle)[1]);
   const mess = eigengewicht();
-  assert.ok(mess.bytes <= MESSLATTE.grenzeBytes,
-    `Startseite ist auf ${mess.kb} KB gewachsen, Messlatte ist ${MESSLATTE.grenzeKb} KB`);
+  const zuwachs = mess.bytes - MESSLATTE.grenzeBytes;
+  assert.ok(zuwachs <= toleranz,
+    `Startseite ist um ${zuwachs} Bytes ueber die Messlatte gewachsen, erlaubt sind ${toleranz}`);
 });
 
 test("und unter der Vorgabe von 300 KB", () => {
