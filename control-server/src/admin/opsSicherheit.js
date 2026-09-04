@@ -35,7 +35,8 @@ const GEWICHTE = Object.freeze({
   // Admin stellt API-Schluessel aus (smejj-adm-…, 2026-09-04): gibt Dritten Zugang
   // auf das Konto des Ausstellers, bis zu unbefristet — hoch. Widerruf: mittel.
   "apikey.issue": "hoch",
-  "apikey.revoke": "mittel"
+  "apikey.revoke": "mittel",
+  "apikey.budget": "niedrig"
 });
 
 const TAG_MS = 24 * 60 * 60 * 1000;

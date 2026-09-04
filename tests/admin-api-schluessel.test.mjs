@@ -69,11 +69,12 @@ async function admin(method, pfad, authUser, koerper) {
   return { behandelt, status: res.status, body: res.body };
 }
 
-async function v1(pfad, klartext) {
-  const req = Readable.from([]);
-  req.method = "GET";
+async function v1(pfad, klartext, koerper) {
+  const roh = koerper === undefined ? "" : JSON.stringify(koerper);
+  const req = Readable.from(roh ? [roh] : []);
+  req.method = koerper === undefined ? "GET" : "POST";
   req.url = pfad;
-  req.headers = { host: "smejj.com", authorization: `Bearer ${klartext}` };
+  req.headers = { host: "smejj.com", authorization: `Bearer ${klartext}`, "content-type": "application/json" };
   const res = attrappe();
   await handlePublicApiRoute(req, new URL(pfad, "https://smejj.com"), res, { env: ENV, fetchImpl: () => { throw new Error("kein fetch erwartet"); } });
   return res;
@@ -213,4 +214,105 @@ test("Sicherheits-Seite zaehlt Ausstellung (hoch) und Widerruf (mittel) mit", as
   assert.equal(nach["apikey.issue"]?.gewicht, "hoch", JSON.stringify(u.ereignisse).slice(0, 300));
   assert.equal(nach["apikey.revoke"]?.gewicht, "mittel");
   assert.equal(u.ereignisse.davonHoch, 1);
+});
+
+// ---- Monatsbudget je Schluessel (2026-09-04) ---------------------------------
+
+test("Budget: beim Ausstellen setzbar, Deckel greift an /v1 mit 429", async () => {
+  const { budgetStand, merkeAdminBenutzung } = await import("../control-server/src/publicapi/publicApiAdminKeys.js");
+  await aufbauen();
+  const a = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Deckel", laufzeit: "1j", budgetToken: 1000 });
+  assert.equal(a.status, 201);
+  assert.equal(a.body.schluessel.budgetToken, 1000);
+  const id = a.body.schluessel.id;
+
+  assert.equal((await budgetStand(id, ENV)).ok, true);
+  assert.equal((await v1("/v1/models", a.body.apiKey)).status, 200);
+
+  await merkeAdminBenutzung(id, { promptTokens: 900, completionTokens: 200 }, ENV);
+  const stand = await budgetStand(id, ENV);
+  assert.equal(stand.ok, false, JSON.stringify(stand));
+  assert.equal(stand.budgetToken, 1000);
+  assert.ok(stand.verbrauchtToken >= 1000);
+
+  const res = await v1("/v1/chat/completions", a.body.apiKey,
+    { model: "smejj-1.0", messages: [{ role: "user", content: "Hallo" }] });
+  assert.equal(res.status, 429, JSON.stringify(res.body));
+  assert.equal(res.body.error.code, "key_budget_exceeded");
+  assert.match(res.body.error.message, /Monatsbudget/);
+});
+
+test("Budget: ungeschriebener Puffer zaehlt sofort mit — der Deckel wartet nicht auf den Schreibvorgang", async () => {
+  const { budgetStand, merkeAdminBenutzung } = await import("../control-server/src/publicapi/publicApiAdminKeys.js");
+  await aufbauen();
+  const a = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Puffer", laufzeit: "1j", budgetToken: 500 });
+  const id = a.body.schluessel.id;
+  const t0 = new Date();
+  // Erste Buchung schreibt, die zweite landet nur im Puffer (Drosselung 60 s).
+  await merkeAdminBenutzung(id, { promptTokens: 100, completionTokens: 0 }, ENV, () => t0);
+  await merkeAdminBenutzung(id, { promptTokens: 450, completionTokens: 0 }, ENV, () => t0);
+  const stand = await budgetStand(id, ENV, () => t0);
+  assert.equal(stand.verbrauchtToken, 550, "Index 100 + Puffer 450");
+  assert.equal(stand.ok, false);
+});
+
+test("Budget: ohne Budget kein Deckel, Monatswechsel setzt den Zaehler zurueck", async () => {
+  const { budgetStand, merkeAdminBenutzung, monatVon } = await import("../control-server/src/publicapi/publicApiAdminKeys.js");
+  await aufbauen();
+  const ohne = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Frei", laufzeit: "1j" });
+  assert.equal(ohne.body.schluessel.budgetToken, 0);
+  const frei = await budgetStand(ohne.body.schluessel.id, ENV);
+  assert.equal(frei.ok, true);
+  assert.equal(frei.budgetToken, 0);
+
+  const mit = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Monat", laufzeit: "1j", budgetToken: 100 });
+  const id = mit.body.schluessel.id;
+  const september = new Date("2026-09-15T12:00:00.000Z");
+  const oktober = new Date("2026-10-01T00:00:01.000Z");
+  await merkeAdminBenutzung(id, { promptTokens: 150, completionTokens: 0 }, ENV, () => september);
+  assert.equal((await budgetStand(id, ENV, () => september)).ok, false);
+  assert.equal(monatVon(oktober), "2026-10");
+  const neu = await budgetStand(id, ENV, () => oktober);
+  assert.equal(neu.ok, true, JSON.stringify(neu));
+  assert.equal(neu.verbrauchtToken, 0);
+  assert.equal(neu.monat, "2026-10");
+});
+
+test("Budget aendern: nur Owner/Admin, Zahl geprueft, Audit-Eintrag, widerrufener Schluessel 409", async () => {
+  await aufbauen();
+  const a = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Aendern", laufzeit: "1j", budgetToken: 100 });
+  const id = a.body.schluessel.id;
+
+  const support = await admin("POST", "/api/admin/geld/api/budget", SUPPORT, { id, budgetToken: 999 });
+  assert.equal(support.status, 403);
+  const kaputt = await admin("POST", "/api/admin/geld/api/budget", OWNER, { id, budgetToken: -5 });
+  assert.equal(kaputt.status, 400);
+  assert.equal(kaputt.body.error, "api_key_budget_invalid");
+  const gross = await admin("POST", "/api/admin/geld/api/budget", OWNER, { id, budgetToken: 2_000_000_000 });
+  assert.equal(gross.status, 400);
+
+  const hoch = await admin("POST", "/api/admin/geld/api/budget", OWNER, { id, budgetToken: 50_000 });
+  assert.equal(hoch.status, 200);
+  assert.equal(hoch.body.schluessel.budgetToken, 50_000);
+  const weg = await admin("POST", "/api/admin/geld/api/budget", OWNER, { id, budgetToken: 0 });
+  assert.equal(weg.body.schluessel.budgetToken, 0, "0 entfernt das Budget");
+
+  const audit = await readAuditPage({ env: ENV });
+  const eintraege = (audit.entries || []).filter((e) => e.action === "apikey.budget");
+  assert.equal(eintraege.length, 2);
+  assert.equal(eintraege[0].target, `adm:${id}`);
+
+  await admin("POST", "/api/admin/geld/api/widerrufen", OWNER, { id, reason: "Budget-Test beendet, Schluessel weg" });
+  const nachher = await admin("POST", "/api/admin/geld/api/budget", OWNER, { id, budgetToken: 10 });
+  assert.equal(nachher.status, 409);
+});
+
+test("Liste zaehlt, wieviele Schluessel am Deckel stehen", async () => {
+  const { merkeAdminBenutzung } = await import("../control-server/src/publicapi/publicApiAdminKeys.js");
+  await aufbauen();
+  const a = await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Voll", laufzeit: "1j", budgetToken: 10 });
+  await admin("POST", "/api/admin/geld/api/ausstellen", OWNER, { ausgestelltFuer: "Leer", laufzeit: "1j", budgetToken: 1_000_000 });
+  await merkeAdminBenutzung(a.body.schluessel.id, { promptTokens: 50, completionTokens: 0 }, ENV);
+  const liste = await admin("GET", "/api/admin/geld/api/ausgestellt", OWNER);
+  assert.equal(liste.body.amDeckel, 1, JSON.stringify(liste.body.schluessel.map((s) => [s.ausgestelltFuer, s.budgetToken, s.monat])));
 });

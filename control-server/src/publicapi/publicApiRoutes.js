@@ -144,6 +144,19 @@ async function chatCompletions(req, res, zugang, { env, fetchImpl, anfrageId }) 
     return fehler(res, 400, "invalid_request_error", nachrichten.code, nachrichten.meldung, anfrageId);
   }
 
+  // Monatsbudget eines vom Admin ausgestellten Schluessels (2026-09-04).
+  // Steht VOR dem Tageslimit: ein Deckel, den der Betreiber selbst gesetzt hat,
+  // ist die praezisere Auskunft als das globale Kontingent.
+  if (String(zugang.keyId || "").startsWith("adm_")) {
+    const { budgetStand } = await import("./publicApiAdminKeys.js");
+    const stand = await budgetStand(zugang.keyId, env).catch(() => null);
+    if (stand && !stand.ok) {
+      res.setHeader("Retry-After", "3600");
+      return fehler(res, 429, "rate_limit_error", "key_budget_exceeded",
+        `Monatsbudget dieses Schluessels erreicht (${stand.verbrauchtToken} von ${stand.budgetToken} Token, ${stand.monat}). Es setzt zum Monatsanfang zurueck.`, anfrageId);
+    }
+  }
+
   const tageslimit = tageslimitAus(env);
   if (tageslimit > 0) {
     const stand = await verbrauchSnapshot(zugang.kontoId, env);
