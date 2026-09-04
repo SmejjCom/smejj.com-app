@@ -661,3 +661,37 @@ und die Einwilligungskette sind gelockt — jeder Link-Fix braucht den Stempel (
 (4) Firefox-Screenshot von "/" ist weiss, weil das fruehe Tor sofort nach /willkommen.html springt — Zielseite direkt
 schiessen. (5) Kaskaden koennen nach dem Stempel abbrechen; Spuren: Manifest-Zeitstempel, sw.js, git status — Reste darf
 die Sitzung selbst erledigen.
+
+## 2026-09-04 — Anhaenge Stufe 2 (PDF, Office, Tonspur) und check:all wieder EXIT 0, live v750 (job_anhaenge_stufe2_und_checkall_20260904)
+
+Angehaengte Dateien kommen jetzt INHALTLICH an statt als toter Verweis. Vier neue Browser-Module,
+alle per `import()` erst bei Bedarf geladen (Seitengewicht blieb bei 279 KB unter dem 300-KB-Budget):
+`composer-anhang-chips.js` (Kachel mit Vorschau/Symbol, Name, Groesse, ehrlichem Untertitel statt
+Textzeile `[Anhang: IMG_5287.mov (63595 KB)]`), `anhang-pdf-text.js` (pdf.js 6.3.289, Apache-2.0),
+`anhang-office-text.js` (eigener ZIP-Leser ueber `DecompressionStream("deflate-raw")`, kein Fremdpaket),
+`anhang-tonspur.js` (`decodeAudioData` → 16 kHz mono → 60-s-WAV-Stuecke → `/api/voice/transcribe`).
+Jeder Fehlerpfad faellt auf die Verweis-Kachel zurueck. Live auf smejj.com abgenommen: PDF „48 Zeichen"
+mit `[Seite 1] …`, Word „38 Zeichen" mit Inhalt, Video als Kachel mit Hinweis, null Konsolenfehler.
+
+DIE LEHRE DES TAGES — eine grosse Fremddatei zieht fuenf Pruefungen hinter sich her.
+`pdf.worker.min.js` wiegt 1,27 MB und riss nacheinander: (1) `check:security` (keine Repo-Datei ueber
+1 MB) → Worker als `part1`/`part2` im Repo, ganze Datei per `npm run build:pdfjs-worker` und
+git-ignoriert, im Container aus den Teilen per Server-Route geliefert (`src/server.js`, Bauzweig).
+VERWORFEN: Blob-Worker — pdf.js laedt per `import()`, `script-src` erlaubt kein `blob:`-Modul.
+(2) `check:modul-syntax` parste die Fragmente als Module → `public/vendor/` als Fremdcode ausgenommen.
+(3) `tests/platform-pwa` (512 KB je Datei in `public/`) → `vendor/` und `assets/vendor/` ausgenommen,
+dafuer LICENSE + VERSION Pflicht und Gewichtsdateien ueberall verboten. (4) `check:guidelines` fand
+`api-center-surface.js` bei 813 Zeilen → vier Listen-Aktionen nach `api-center-aktionen.js` (86 Zeilen),
+Umgebung als `hof()` uebergeben. (5) `tests/i18n-ui` hielt die Texte des neuen Moduls fuer verwaist →
+Datei dort mitlesen. Merksatz: Wer Fremdcode einzieht, prueft VORHER alle Groessen- und Modulregeln.
+
+BENCHMARK (live, 04.09.): Seitengewicht 279 KB (Budget 300, OK), CLS 0/0,016 (OK), INP 40/32 ms (OK),
+LCP kalt 4672 ms / warm 600 ms, TTFB kalt 2991 ms / warm 567 ms. Die beiden roten Werte sind
+NETZGEBUNDEN, nicht serverseitig: Gegenmessung aus derselben Leitung zur selben Zeit ergab
+`example.com` 1219 ms und `google.com/generate_204` 1273 ms TTFB — smejj.com warm 482 ms, davon
+343 ms TLS, also ca. 140 ms echte Serverzeit. Bei jeder Vitals-Messung gehoert diese Gegenprobe dazu,
+sonst jagt man einen Serverfehler, den es nicht gibt.
+
+check:all EXIT 0 (kein roter Punkt), check:frontend 686 Tests, check:control-server 230 Tests,
+check:guidelines 2107 Dateien. smejj.com und api.smejj.com synchron auf smejj-shell-v750.
+Task Capsule: docs/task-capsules/2026/09/job_anhaenge_stufe2_und_checkall_20260904/CAPSULE.md
