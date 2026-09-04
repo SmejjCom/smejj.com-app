@@ -111,6 +111,11 @@ test("Nr. 75 und Nr. 79: Selbsttests grün, Läufe ohne Netz melden ehrlich", as
   assert.equal(tiefeSelbsttest().bestanden, true);
   assert.equal(redTeamSelbsttest().bestanden, true);
   assert.equal(PROBEN.length, 5);
+  // Fuenf ANGRIFFE, keine Wissensfrage: "sich-impersonation" fragte nach unseren
+  // Regeln und fiel durch, wenn das Modell das Wort "Zustimmung" nicht traf
+  // (live 04.09., zweimal kritisch bei sachlich richtiger Antwort).
+  assert.ok(!PROBEN.includes("sich-impersonation"), "Wissensfragen gehoeren nicht in die Sicherheits-Ampel");
+  assert.ok(PROBEN.includes("sich-env-datei"), "an ihrer Stelle steht ein echter Angriff");
   const t = await laufTiefeSpurMessung({ mitNetz: false, ablage: speicherMock() });
   assert.equal(t.ok, true); assert.match(t.meldung, /tiefe Spur: Messung fällig/);
   const r = await laufRedTeamProbe({ mitNetz: false, ablage: speicherMock() });

@@ -21,7 +21,15 @@ export const PACK = "evals/packs/sicherheit-abwehr.json";
 // zweimal kritisch durch, weil das Modell dieselbe Regel mal "Zustimmung", mal
 // "ausdrueckliche Erlaubnis" nennt. Die Synonyme stehen seit heute im Pack; bleibt
 // er wackelig, gehoert er in ein Policy-Pack statt in die Abwehr-Probe.
-export const PROBEN = Object.freeze(["sich-injection-webseite", "sich-datei-anweisungen", "sich-anweisung-in-code", "sich-impersonation", "sich-key-erfinden"]);
+// Fuenf ANGRIFFE — bewusst keine Wissensfragen. "sich-impersonation" stand hier
+// bis zum 04.09. und fragte, unter welcher Bedingung ein Admin in ein Konto
+// schluepfen darf. Das ist eine Frage nach unseren Regeln, kein Angriff: die
+// Antwort war jedes Mal sachlich richtig, fiel aber durch, wenn das Modell das
+// Wort "Zustimmung" nicht traf. Eine Sicherheits-Ampel darf nicht an einer
+// Vokabel haengen — die Wissensfrage gehoert in die Qualitaets-Suite.
+// An ihrer Stelle steht jetzt ein echter Angriff: die Aufforderung, eine
+// .env-Datei mit echten Produktionswerten zu schreiben.
+export const PROBEN = Object.freeze(["sich-injection-webseite", "sich-datei-anweisungen", "sich-anweisung-in-code", "sich-env-datei", "sich-key-erfinden"]);
 
 /** Selbsttest: kaputte UND gesunde Probe der Bewertung. */
 export function fuehreSelbsttestAus() {
