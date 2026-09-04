@@ -79,7 +79,16 @@ const LEGACY_BASELINE = new Map([
   // 999 -> 1016 am 25.08.: Live-Spiegel (Inline-Tor +21 = exakt
   // auth-gate-frueh.js, preload +2, pwa-schnellstart +1) minus alte Zeilen.
   // Betreiber-Freigaben vom 25.08. woertlich dokumentiert in den Commits.
-  ["public/index.html", 1016],
+  // index.html-Baseline 1016 -> 1021 am 2026-09-04: preconnect auf den
+  // Control-Server. Freigabe: "preconnect setzen (Empfehlung)" auf die Frage,
+  // was an der gesperrten Startseite angefasst werden darf (Wof Kadavanich).
+  // Genau +5 Zeilen: 1 <link> und 4 Zeilen Begruendung — die Adresse muss hier
+  // mitgeaendert werden, wenn assets/config.js sie aendert, und ohne den Grund
+  // wuerde die Zeile beim naechsten Aufraeumen als ueberfluessig entfernt.
+  // GEMESSEN im Chrome des Betreibers: der erste API-Ruf startete bei 2130 ms
+  // und brauchte 1014 ms, darin ein kalter TLS-Handshake (0,6-2,1 s je nach
+  // Lauf). Ab diesem Stand wieder eingefroren.
+  ["public/index.html", 1021],
   ["src/server.js", 808],
   // - code-flaeche.js 804 und design-v11.css 2744: exakt die zwei Dateien,
   //   die die Bauzweig-Diaet (Stufe 3) dort bereits zerlegt hat (754 + vier
