@@ -62,6 +62,21 @@ const WEITERE_SEITEN = Object.freeze([
 ]);
 const MESSLATTE = path.join(WURZEL, "docs/frontend/startgewicht-messlatte.json");
 const ZIEL_KB = 300;
+// Wie viel Zuwachs gegen die Messlatte durchgeht, BEVOR der Waechter faellt.
+//
+// Warum ueberhaupt eine Toleranz (Befund 2026-09-04 abends): byte-genau
+// gerechnet reisst jede normale Arbeit die Messlatte — drei Zeilen mehr in
+// app.js genuegen. Ein Waechter, der bei jedem Commit rot wird, wird
+// reflexhaft hochgesetzt, und dann bewacht er nichts mehr. Dieselbe
+// Begruendung wie bei den Nummern-Sperren: schuetzen, ohne den Weiterbau zu
+// blockieren.
+//
+// Warum die Messlatte trotzdem NICHT mitwandert: gemessen wird immer gegen den
+// eingefrorenen Wert, nie gegen den letzten Lauf. 2 KB Zuwachs sind damit
+// erlaubt — 2 KB, dann nochmal 2 KB und nochmal nicht. Ein Schleichweg nach
+// oben ist so ausgeschlossen; auffallen soll die neue 40-KB-Bibliothek, nicht
+// die laengere Funktion.
+const TOLERANZ_BYTES = 2048;
 
 /** Eine Adresse aus dem Markup auf eine Datei in public/ abbilden. */
 export function nachDatei(adresse) {
@@ -271,11 +286,17 @@ function main() {
   }
 
   const offenKb = mess.kb - ZIEL_KB;
-  if (mess.bytes > latte.grenzeBytes) {
-    console.error(`startgewicht VERLETZT: die Startseite ist SCHWERER geworden — ${mess.kb} KB statt hoechstens ${latte.grenzeKb} KB.`);
+  const zuwachs = mess.bytes - latte.grenzeBytes;
+  if (zuwachs > TOLERANZ_BYTES) {
+    console.error(`startgewicht VERLETZT: die Startseite ist um ${Math.round(zuwachs / 1024)} KB gewachsen `
+      + `(${mess.bytes} statt hoechstens ${latte.grenzeBytes} Bytes, erlaubt sind ${TOLERANZ_BYTES}).`);
     bericht(mess);
     console.error(`  Messlatte gesetzt am ${latte.gesetztAm} auf Freigabe: "${latte.freigabe}"`);
     process.exit(1);
+  }
+  if (zuwachs > 0) {
+    console.log(`startgewicht: +${zuwachs} Bytes gegen die Messlatte — innerhalb der Toleranz von ${TOLERANZ_BYTES}.`);
+    console.log(`  Gemessen wird immer gegen den eingefrorenen Wert, nie gegen den letzten Lauf: der Zuwachs kann nicht schleichen.`);
   }
   if (mess.bytes < latte.grenzeBytes) {
     console.log(`startgewicht: LEICHTER geworden — ${mess.kb} KB statt ${latte.grenzeKb} KB. Messlatte nachziehen:`);

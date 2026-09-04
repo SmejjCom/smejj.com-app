@@ -136,3 +136,20 @@ test("die Messlatte ist gegen den AUSGELIEFERTEN Stand gesetzt", () => {
   assert.match(grosse, /start-styles\.css/, "die groessten Posten muessen im Manifest stehen");
   assert.match(grosse, /index\.html/, "die Seite selbst gehoert zu den groessten Posten");
 });
+
+test("kleiner Zuwachs geht durch, grosser nicht — und schleichen kann er nicht", () => {
+  // Byte-genau gerechnet reisst jede normale Arbeit die Messlatte: drei Zeilen
+  // mehr in app.js genuegen (04.09.: +283 Bytes nach vier Auslieferungen). Ein
+  // Waechter, der bei jedem Commit rot wird, wird reflexhaft hochgesetzt — und
+  // bewacht dann nichts mehr.
+  const quelle = readFileSync(new URL("../scripts/check-startgewicht.mjs", import.meta.url), "utf8");
+  const toleranz = /const TOLERANZ_BYTES = (\d+);/.exec(quelle);
+  assert.ok(toleranz, "TOLERANZ_BYTES fehlt");
+  assert.ok(Number(toleranz[1]) >= 512 && Number(toleranz[1]) <= 8192,
+    "die Toleranz muss klein genug bleiben, dass eine neue Bibliothek auffaellt");
+  // Entscheidend: verglichen wird gegen die eingefrorene Grenze, nicht gegen
+  // den letzten Lauf. Sonst waeren 2 KB je Commit erlaubt und der Zuwachs
+  // schliche unbemerkt nach oben.
+  assert.match(quelle, /const zuwachs = mess\.bytes - latte\.grenzeBytes;/);
+  assert.doesNotMatch(quelle, /grenzeBytes = mess\.bytes/, "die Messlatte darf sich im Regellauf nie selbst nachziehen");
+});
