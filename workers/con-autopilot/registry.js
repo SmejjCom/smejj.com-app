@@ -14,14 +14,36 @@ export function formatVersion({ major, minor, patch }) {
   return `con-${major}.${minor}.${patch}`;
 }
 
-/** Naechste Version nach Regel: major = neue Basis, minor = neuer Adapter/Datensatz, patch = nur Konfig/Prompt/Routing. */
-export function naechsteVersion(stabil, { basisPrefix, art }) {
-  if (!stabil) return "con-1.0.0";
+/**
+ * Naechste Version nach Regel: major = neue Basis, minor = neuer Adapter/Datensatz,
+ * patch = nur Konfig/Prompt/Routing.
+ *
+ * `vergeben` sind alle schon benutzten Nummern. Eine Nummer wird NIE zweimal vergeben —
+ * sonst ueberschreibt ein neuer Kandidat den Eintrag eines verworfenen Vorgaengers und
+ * der Beleg fuer das Verwerfen ist weg (am 04.09. beinahe passiert: con-1.1.0).
+ */
+export function naechsteVersion(stabil, { basisPrefix, art, vergeben = [] } = {}) {
+  const benutzt = new Set(vergeben);
+  const frei = (name) => (benutzt.has(name) ? null : name);
+  if (!stabil) {
+    for (let i = 0; i < 100; i += 1) {
+      const name = formatVersion({ major: 1, minor: 0, patch: i });
+      if (frei(name)) return name;
+    }
+    throw new Error("keine freie Startnummer");
+  }
   const v = parseVersion(stabil.version);
   if (!v) throw new Error(`Stabile Version unlesbar: ${stabil.version}`);
-  if (basisPrefix && stabil.basisPrefix && basisPrefix !== stabil.basisPrefix) return formatVersion({ major: v.major + 1, minor: 0, patch: 0 });
-  if (art === "patch") return formatVersion({ ...v, patch: v.patch + 1 });
-  return formatVersion({ major: v.major, minor: v.minor + 1, patch: 0 });
+  const neueBasis = Boolean(basisPrefix && stabil.basisPrefix && basisPrefix !== stabil.basisPrefix);
+  for (let i = 1; i < 200; i += 1) {
+    const name = neueBasis
+      ? formatVersion({ major: v.major + i, minor: 0, patch: 0 })
+      : art === "patch"
+        ? formatVersion({ ...v, patch: v.patch + i })
+        : formatVersion({ major: v.major, minor: v.minor + i, patch: 0 });
+    if (frei(name)) return name;
+  }
+  throw new Error("keine freie Versionsnummer gefunden");
 }
 
 export async function leseRegistry(e2) {

@@ -258,3 +258,26 @@ test("planung: geaenderte Latte UND wartender Kandidat werden in EINEM Job gemes
   assert.equal(p2.schritt, "kandidat_messen");
   assert.equal(p2.job.staende.length, 1);
 });
+
+test("Endlosschleife: nach einem Regressionslauf gilt die Latte als frisch", async () => {
+  const { zusammenfassung } = await import("../workers/con-autopilot/registry.js");
+  const { abweichendeSuiten, suitenStand } = await import("../workers/con-autopilot/kreislauf.js");
+  const stand = await suitenStand(path.join(ROOT, "workers/con-autopilot/suites"));
+  // Genau das schreibt der Regressionslauf ins Register.
+  const b = zusammenfassung({ gesamt: 0.97, kritisch: 1, faelle: 46, kategorien: {}, leistung: {}, jobId: "j", suitenStand: stand, bewertetAm: "x" });
+  assert.ok(b.suitenStand, "die Zusammenfassung MUSS den Suiten-Stand tragen");
+  // Sonst haelt der Planer die Latte fuer veraltet und misst dieselbe Version endlos neu.
+  assert.deepEqual(abweichendeSuiten(b.suitenStand, stand), []);
+});
+
+test("Versionsnummern werden nie zweimal vergeben", async () => {
+  const { naechsteVersion } = await import("../workers/con-autopilot/registry.js");
+  const stabil = { version: "con-1.0.0", basisPrefix: "con/base/a" };
+  assert.equal(naechsteVersion(stabil, { basisPrefix: "con/base/a", art: "minor" }), "con-1.1.0");
+  // con-1.1.0 ist schon vergeben (verworfener Vorgaenger) -> die naechste freie Nummer.
+  assert.equal(naechsteVersion(stabil, { basisPrefix: "con/base/a", art: "minor", vergeben: ["con-1.0.0", "con-1.1.0"] }), "con-1.2.0");
+  assert.equal(naechsteVersion(stabil, { basisPrefix: "con/base/a", art: "minor", vergeben: ["con-1.1.0", "con-1.2.0", "con-1.3.0"] }), "con-1.4.0");
+  assert.equal(naechsteVersion(stabil, { basisPrefix: "con/base/a", art: "patch", vergeben: ["con-1.0.1"] }), "con-1.0.2");
+  assert.equal(naechsteVersion(stabil, { basisPrefix: "con/base/NEU", art: "minor", vergeben: ["con-2.0.0"] }), "con-3.0.0");
+  assert.equal(naechsteVersion(null, { vergeben: ["con-1.0.0"] }), "con-1.0.1");
+});

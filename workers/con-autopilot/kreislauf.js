@@ -12,7 +12,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { bewerteAntworten, schwaechsteKategorie, vergleiche } from "./bewertung.js";
 import { bucheEnde, bucheStart, darfStarten, leseGesamtverbrauch, leseTagesbuch, minutenFuer } from "./budget.js";
-import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, stabileVersion, trageKandidatEin, findeVersion } from "./registry.js";
+import { leseRegistry, naechsteVersion, promote, reject, schreibeRegistry, schwaechen, stabileVersion, trageKandidatEin, findeVersion, zusammenfassung } from "./registry.js";
 import { bereiteJobVor, gruppenZustand } from "./salad.js";
 import { rollbackWennNoetig, setzeCanary } from "./canary.js";
 
@@ -232,7 +232,11 @@ async function bewerteUndEntscheide(ctx, z, job, ergebnis) {
   if (stabil && stabil.version === version) {
     // Erneute Messung der stabilen Version (Regressionslauf): nur Kennzahlen nachtragen.
     eintrag.status = "stable";
-    eintrag.benchmarks = { gesamt: bewertung.gesamt, kritisch: bewertung.kritisch, faelle: bewertung.faelle, kategorien: bewertung.kategorien, leistung: bewertung.leistung, jobId: job.jobId, bewertetAm: bewertung.bewertetAm };
+    // WICHTIG: dieselbe Zusammenfassung wie beim Befoerdern — sie traegt den suitenStand.
+    // Ohne ihn haelt planeNaechstenSchritt die Latte weiter fuer veraltet und misst
+    // dieselbe Version endlos neu (am 04.09. live passiert, 0,16 USD je Runde).
+    eintrag.benchmarks = zusammenfassung(bewertung);
+    eintrag.bekannteSchwaechen = schwaechen(bewertung);
     z.letzteEntscheidung = { version, entscheidung: "REGRESSIONSLAUF", gruende: ["stabile_version_erneut_gemessen"], zeit: new Date().toISOString() };
   } else {
     const urteil = vergleiche(bewertung, stabil?.benchmarks ? { ...stabil.benchmarks } : null);
@@ -319,7 +323,8 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter con/datasets/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };
   if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (CON_MIN_PAARE)` };
   if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
-  const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix, art: "minor" });
+  const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix, art: "minor",
+    vergeben: registry.versions.map((v) => v.version) });
   const trainKonfig = JSON.parse(process.env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15}');
   return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
     ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
