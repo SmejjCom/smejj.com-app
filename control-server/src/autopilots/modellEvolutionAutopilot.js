@@ -47,7 +47,7 @@ export const TORE = Object.freeze([
   { id: "einwilligung", name: "Einwilligung", hinweis: "SMEJJ_TRAINING_CAPTURE_ENABLED=YES und IDRIVE_E2_TRAINING_* im Zeabur-Portal setzen — ODER, wenn ohne Nutzerdaten trainiert wird, SMEJJ_TRAINING_QUELLE=erzeugt" },
   { id: "kostenfreigabe", name: "Kostenfreigabe", hinweis: "schriftliche Freigabe als SMEJJ_LORA_FREIGABE_ID + Monatsbetrag innerhalb des Deckels hinterlegen" },
   { id: "basismodell", name: "Basismodell", hinweis: "Qwen3-4B nach e2 models/staging/ ablegen und SMEJJ_LORA_BASIS_PREFIX setzen" },
-  { id: "gpu-heimat", name: "GPU-Heimat", hinweis: "Trainer-Adresse SMEJJ_LORA_TRAINER_URL (Rote Liste: Anbieter-Entscheidung)" },
+  { id: "gpu-heimat", name: "GPU-Heimat", hinweis: "Trainer-Adresse SMEJJ_LORA_TRAINER_URL — ODER, fuer den Job-Betrieb ohne Dauerdienst, SMEJJ_LORA_TRAINER=salad-job (Rote Liste: Anbieter-Entscheidung)" },
   { id: "schalter", name: "Schalter", hinweis: "SMEJJ_LORA_LOOP_ENABLED und SMEJJ_LORA_TRAINING_ENABLED auf true, kein SMEJJ_LORA_NOTAUS" },
   { id: "messlatte", name: "Messlatte", hinweis: "Referenz-Note der Live-Kette muss gemessen vorliegen (Qualitätsmessung Nr. 01)" }
 ]);
@@ -102,6 +102,32 @@ export function einwilligungGeklaert({ captureAn = false, env = {} } = {}) {
   return { ok: false, weg: null };
 }
 
+/**
+ * Wo trainiert wird. Zwei Wege, beide ausdruecklich.
+ *
+ * Der urspruengliche Weg war ein DAUERDIENST auf Salad mit fester Adresse
+ * (SMEJJ_LORA_TRAINER_URL) — so lief es im August, mit einem Deckel von 50 USD
+ * und einer Schleife, die an einer Werkzeugsitzung hing und dreimal mitten im
+ * Zyklus starb.
+ *
+ * Der con-Autopilot hat seit dem 03.09. den besseren Weg bewiesen: EIN JOB je
+ * Lauf in einer eigenen Salad-Gruppe, mit Zeitgrenze und Selbstabschaltung,
+ * Deckel 10 USD im Monat. Zwischen zwei Laeufen kostet er nichts, und es gibt
+ * keine Adresse, die stehen bleiben und Geld verbrauchen koennte.
+ *
+ * Betreiber-Entscheidung 2026-09-05: "Salad, wie con". Der Job-Weg braucht
+ * keine URL — aber er braucht eine sichtbare Angabe, sonst waere ein
+ * vergessener Wert von einer bewussten Entscheidung nicht zu unterscheiden.
+ */
+export function gpuHeimatGeklaert(env = {}) {
+  const adresse = String(env.SMEJJ_LORA_TRAINER_URL || "").trim();
+  if (adresse) return { ok: true, weg: `Dauerdienst ${adresse}` };
+  if (String(env.SMEJJ_LORA_TRAINER || "").trim().toLowerCase() === "salad-job") {
+    return { ok: true, weg: "Salad im Job-Betrieb (kein Dauerdienst, Zeitgrenze und Selbstabschaltung je Lauf)" };
+  }
+  return { ok: false, weg: null };
+}
+
 export function pruefeTore({ reifeStufe = null, captureAn = false, referenzNote = null, env = {} } = {}) {
   const deckel = Number(env.SMEJJ_TRAINING_BUDGET_MONAT_USD) > 0 ? Number(env.SMEJJ_TRAINING_BUDGET_MONAT_USD) : BUDGET_MONAT_USD_STANDARD;
   const monatsbetrag = Number(env.SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD);
@@ -110,7 +136,7 @@ export function pruefeTore({ reifeStufe = null, captureAn = false, referenzNote 
     einwilligung: einwilligungGeklaert({ captureAn, env }).ok,
     kostenfreigabe: Boolean(String(env.SMEJJ_LORA_FREIGABE_ID || "").trim()) && Number.isFinite(monatsbetrag) && monatsbetrag > 0 && monatsbetrag <= deckel,
     basismodell: Boolean(String(env.SMEJJ_LORA_BASIS_PREFIX || "").trim()),
-    "gpu-heimat": Boolean(String(env.SMEJJ_LORA_TRAINER_URL || "").trim()),
+    "gpu-heimat": gpuHeimatGeklaert(env).ok,
     schalter: wahr(env.SMEJJ_LORA_LOOP_ENABLED) && wahr(env.SMEJJ_LORA_TRAINING_ENABLED) && !String(env.SMEJJ_LORA_NOTAUS || "").trim(),
     messlatte: Number.isFinite(referenzNote)
   };

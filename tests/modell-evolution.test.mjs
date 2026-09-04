@@ -259,3 +259,52 @@ test("pruefeTore: mit gebautem Datensatz und Schalter faellt genau dieses Tor", 
   assert.equal(mit.offen, true, `noch zu: ${mit.zu.join(", ")}`);
   assert.equal(mit.offenAnzahl, 7);
 });
+
+// ---------------------------------------------------------------------------
+// Wo trainiert wird: Dauerdienst ODER Job-Betrieb
+//
+// Der urspruengliche Weg war ein Dauerdienst auf Salad mit fester Adresse. Der
+// con-Autopilot hat seit dem 03.09. den besseren gezeigt: ein Job je Lauf, mit
+// Zeitgrenze und Selbstabschaltung, der zwischen zwei Laeufen nichts kostet.
+// Betreiber-Entscheidung 2026-09-05: "Salad, wie con".
+//
+// Kaputte UND gesunde Probe: ohne beides bleibt das Tor zu, ein Tippfehler
+// oeffnet nichts, und eine leere Adresse gilt nicht als Adresse.
+// ---------------------------------------------------------------------------
+const { gpuHeimatGeklaert } = await import("../control-server/src/autopilots/modellEvolutionAutopilot.js");
+
+test("GPU-Heimat: ohne Angabe bleibt das Tor zu", () => {
+  assert.equal(gpuHeimatGeklaert({}).ok, false);
+  assert.equal(gpuHeimatGeklaert({ SMEJJ_LORA_TRAINER_URL: "   " }).ok, false, "Leerzeichen sind keine Adresse");
+});
+
+test("GPU-Heimat: Dauerdienst-Adresse oeffnet wie bisher", () => {
+  const r = gpuHeimatGeklaert({ SMEJJ_LORA_TRAINER_URL: "https://trainer.example" });
+  assert.equal(r.ok, true);
+  assert.match(r.weg, /Dauerdienst/);
+});
+
+test("GPU-Heimat: der Job-Betrieb braucht keine Adresse, aber eine Ansage", () => {
+  const r = gpuHeimatGeklaert({ SMEJJ_LORA_TRAINER: "salad-job" });
+  assert.equal(r.ok, true);
+  assert.match(r.weg, /Job-Betrieb/);
+  assert.equal(gpuHeimatGeklaert({ SMEJJ_LORA_TRAINER: " SALAD-JOB " }).ok, true);
+});
+
+test("GPU-Heimat: ein anderer Wert oeffnet NICHTS", () => {
+  for (const w of ["salad", "job", "true", "ja", "salad job", ""]) {
+    assert.equal(gpuHeimatGeklaert({ SMEJJ_LORA_TRAINER: w }).ok, false, `"${w}" darf nicht oeffnen`);
+  }
+});
+
+test("pruefeTore: mit Job-Betrieb sind alle sieben Tore offen", () => {
+  const env = {
+    SMEJJ_TRAINING_QUELLE: "erzeugt", SMEJJ_LORA_FREIGABE_ID: "freigabe-test",
+    SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD: "10", SMEJJ_LORA_BASIS_PREFIX: "models/staging/qwen3-4b-instruct/",
+    SMEJJ_LORA_TRAINER: "salad-job", SMEJJ_LORA_LOOP_ENABLED: "true", SMEJJ_LORA_TRAINING_ENABLED: "true"
+  };
+  const t = pruefeTore({ reifeStufe: 3, captureAn: false, referenzNote: 90.3, env });
+  assert.equal(t.offen, true, `noch zu: ${t.zu.join(", ")}`);
+  assert.equal(t.offenAnzahl, 7);
+  assert.match(t.naechsterSchritt, /Betreiber-Klick/);
+});
