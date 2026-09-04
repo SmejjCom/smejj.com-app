@@ -173,7 +173,7 @@ function messlatteSchreiben(mess, wortlaut, methodikVonKb) {
     zielKb: ZIEL_KB,
     gesetztAm: new Date().toISOString(),
     freigabe: wortlaut,
-    ...(methodikVonKb ? { methodikwechselVonKb: methodikVonKb } : {}),
+    ...(methodikVonKb ? { angehobenVonKb: methodikVonKb } : {}),
     grenzeBytes: mess.bytes,
     grenzeKb: mess.kb,
     dateien: mess.dateien,
@@ -203,20 +203,26 @@ function main() {
       process.exit(1);
     }
     const alt = messlatteLesen();
-    // Die Ratsche geht NUR nach unten — mit genau einer Ausnahme: wenn sich die
-    // MESSMETHODE aendert und dieselbe Seite deshalb eine andere Zahl bekommt.
-    // Das ist am 2026-09-04 sofort passiert: erst zaehlte der Waechter nur die
-    // externen Dateien, dann auch die Seite selbst (+18 KB). Ohne diese
-    // Ausnahme muesste man das Manifest von Hand aendern — und wer das einmal
-    // tut, tut es beim naechsten Wachsen wieder. Die Ausnahme verlangt ein
-    // eigenes Wort (--methodik) und landet als Begruendung im Manifest.
-    const methodik = process.argv.includes("--methodik");
-    if (alt && mess.bytes > alt.grenzeBytes && !methodik) {
+    // Die Ratsche geht NUR nach unten. Eine Anhebung braucht ein eigenes Wort
+    // (--anheben) und einen Grund, der im Manifest landet — sonst waere sie
+    // still, und wer das Manifest einmal von Hand hochsetzt, tut es beim
+    // naechsten Wachsen wieder.
+    //
+    // Zwei Anhebungen gab es am 2026-09-04, beide KEIN Wachsen der Seite:
+    //   210 -> 228: die Messmethode aenderte sich (die Seite selbst zaehlt mit).
+    //   228 -> 229: die Messlatte war auf einem Zweig gesetzt worden, dessen
+    //               app.js und premium-surfaces.js AELTER waren als die
+    //               ausgelieferten. Sie mass eine Fassung, die niemand bekommt.
+    // Die zweite ist die unangenehmere Lehre: eine Messlatte ist nur so ehrlich
+    // wie der Baum, in dem sie gesetzt wurde. Vor dem Setzen gegen live pruefen.
+    const anheben = process.argv.includes("--anheben") || process.argv.includes("--methodik");
+    if (alt && mess.bytes > alt.grenzeBytes && !anheben) {
       console.error(`startgewicht: die Messlatte darf nur SINKEN. Jetzt ${mess.kb} KB, Messlatte ${alt.grenzeKb} KB.`);
-      console.error(`  Hat sich die MESSMETHODE geaendert? Dann --methodik dazu und im --confirm sagen, was jetzt anders gezaehlt wird.`);
+      console.error(`  Ist die Seite wirklich schwerer, oder misst du etwas anderes als vorher?`);
+      console.error(`  Wenn die Anhebung begruendet ist: --anheben dazu und im --confirm sagen, WARUM.`);
       process.exit(1);
     }
-    messlatteSchreiben(mess, wortlaut, methodik ? (alt ? alt.grenzeKb : null) : null);
+    messlatteSchreiben(mess, wortlaut, anheben ? (alt ? alt.grenzeKb : null) : null);
     console.log(`startgewicht: Messlatte auf ${mess.kb} KB gesetzt${alt ? ` (vorher ${alt.grenzeKb} KB)` : ""}.`);
     return;
   }

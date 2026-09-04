@@ -118,11 +118,21 @@ test("jede weitere Seite bleibt unter der Vorgabe", () => {
   }
 });
 
-test("ein Methodikwechsel steht als solcher im Manifest", () => {
-  // Die Ratsche geht nur nach unten. Die EINE Ausnahme (--methodik) muss im
-  // Manifest sichtbar sein, sonst laesst sich eine stille Anhebung nicht von
-  // einer begruendeten unterscheiden.
-  if (MESSLATTE.methodikwechselVonKb === undefined) return;   // kein Wechsel: nichts zu pruefen
-  assert.ok(MESSLATTE.methodikwechselVonKb < MESSLATTE.grenzeKb);
-  assert.match(MESSLATTE.freigabe, /Methodik/i, "der Wortlaut muss sagen, WAS jetzt anders gezaehlt wird");
+test("eine Anhebung steht als solche im Manifest, mit Grund", () => {
+  // Die Ratsche geht nur nach unten. Jede Anhebung muss im Manifest sichtbar
+  // sein UND einen Grund tragen — sonst laesst sich eine begruendete nicht von
+  // einer stillen unterscheiden.
+  if (MESSLATTE.angehobenVonKb === undefined) return;   // keine Anhebung: nichts zu pruefen
+  assert.ok(MESSLATTE.angehobenVonKb < MESSLATTE.grenzeKb);
+  assert.ok(MESSLATTE.freigabe.length > 60, "der Wortlaut muss den Grund nennen, nicht nur nicken");
+});
+
+test("die Messlatte ist gegen den AUSGELIEFERTEN Stand gesetzt", () => {
+  // Die unangenehmste Lehre vom 04.09.: die erste Messlatte wurde auf einem
+  // Zweig gesetzt, dessen app.js und premium-surfaces.js aelter waren als die
+  // ausgelieferten. Sie mass eine Fassung, die niemand bekommt. Eine Messlatte
+  // ist nur so ehrlich wie der Baum, in dem sie entstand.
+  const grosse = MESSLATTE.groessteFuenf.join(" ");
+  assert.match(grosse, /start-styles\.css/, "die groessten Posten muessen im Manifest stehen");
+  assert.match(grosse, /index\.html/, "die Seite selbst gehoert zu den groessten Posten");
 });
