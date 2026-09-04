@@ -60,11 +60,24 @@ test("Nr. 81: Tageswechsel setzt zurück, Schlüssel-Flut wird gebündelt", () =
 test("Nr. 81 ENTSCHEIDEND: 'niemand da' und 'niemand kann melden' sind zweierlei", async () => {
   assert.equal(fuehreSelbsttestAus().bestanden, true);
   _pulsZuruecksetzen();
-  const nie = await laufBesucherPuls({ storeFabrik: () => ({ schreib: async () => ({}) }), jetztMs: T0 });
+  const leereAblage = () => ({ schreib: async () => ({}), lies: async () => null });
+  // Frisch gestartet: Stille ist normal, die Schonfrist laeuft.
+  const frisch = await laufBesucherPuls({ storeFabrik: leereAblage, jetztMs: T0, startMs: T0 - 60_000 });
+  assert.equal(frisch.ok, true, "in der ersten Stunde nach dem Start ist Stille kein Ausfall");
+  assert.match(frisch.meldung, /Schonfrist/);
+  // Ablage kennt einen frueheren Puls: der Haken laeuft, es kommt nur niemand.
+  _pulsZuruecksetzen();
+  const bekannt = await laufBesucherPuls({ storeFabrik: () => ({ schreib: async () => ({}), lies: async (id) => id === "tag-2026-09-03" ? { tag: "2026-09-03", besuche: 4, letzterPulsAm: "2026-09-03T19:00:00Z" } : null }), jetztMs: T0, startMs: T0 - 5 * 60 * 60 * 1000 });
+  assert.equal(bekannt.ok, true, bekannt.meldung);
+  assert.match(bekannt.meldung, /zuletzt gemeldet 2026-09-03/);
+  // Nie ein Puls UND Schonfrist vorbei: rot.
+  _pulsZuruecksetzen();
+  const nie = await laufBesucherPuls({ storeFabrik: leereAblage, jetztMs: T0, startMs: T0 - 5 * 60 * 60 * 1000 });
   assert.equal(nie.ok, false, "ohne je einen Puls MUSS die Ampel rot sein");
   assert.match(nie.meldung, /nicht ausgeliefert|blockiert/);
+  _pulsZuruecksetzen();
   nimmPulsAn({ seite: "/willkommen.html", sprache: "de" }, { jetztMs: T0 });
-  const da = await laufBesucherPuls({ storeFabrik: () => ({ schreib: async () => ({}) }), kontenLeser: async () => ({ gesamt: 3, neu7Tage: 1 }), jetztMs: T0 + 1000 });
+  const da = await laufBesucherPuls({ storeFabrik: leereAblage, kontenLeser: async () => ({ gesamt: 3, neu7Tage: 1 }), jetztMs: T0 + 1000 });
   assert.equal(da.ok, true, da.meldung);
   assert.match(da.meldung, /heute 1 Besuche/);
   assert.match(da.meldung, /1 neue Konten in 7 Tagen/);
@@ -74,7 +87,7 @@ test("Nr. 81 ENTSCHEIDEND: 'niemand da' und 'niemand kann melden' sind zweierlei
 test("Nr. 81: der Tagesstand wird höchstens alle 5 Minuten abgelegt (Deckel gegen Last)", async () => {
   _pulsZuruecksetzen();
   const geschrieben = [];
-  const fabrik = (praefix) => ({ schreib: async (d) => { geschrieben.push({ praefix, id: d.id, besuche: d.besuche }); return d; } });
+  const fabrik = (praefix) => ({ lies: async () => null, schreib: async (d) => { geschrieben.push({ praefix, id: d.id, besuche: d.besuche }); return d; } });
   nimmPulsAn({ seite: "/willkommen.html", sprache: "de" }, { jetztMs: T0 });
   await laufBesucherPuls({ storeFabrik: fabrik, jetztMs: T0 });
   assert.equal(geschrieben.length, 1);
@@ -86,7 +99,7 @@ test("Nr. 81: der Tagesstand wird höchstens alle 5 Minuten abgelegt (Deckel geg
   await laufBesucherPuls({ storeFabrik: fabrik, jetztMs: T0 + ABLAGE_ABSTAND_MS + 1000 });
   assert.equal(geschrieben.length, 2, "nach 5 Minuten wieder");
   // Eine gestörte Ablage darf den Lauf nicht rot machen — der Zähler steht trotzdem.
-  const kaputt = await laufBesucherPuls({ storeFabrik: () => ({ schreib: async () => { throw new Error("e2 weg"); } }), jetztMs: T0 + 3 * ABLAGE_ABSTAND_MS });
+  const kaputt = await laufBesucherPuls({ storeFabrik: () => ({ lies: async () => null, schreib: async () => { throw new Error("e2 weg"); } }), jetztMs: T0 + 3 * ABLAGE_ABSTAND_MS });
   assert.equal(kaputt.ok, true);
   assert.match(kaputt.meldung, /NICHT abgelegt/);
 });
