@@ -9,6 +9,10 @@ WORKDIR /app
 COPY package.json ./
 COPY workers/con-autopilot ./workers/con-autopilot
 COPY control-server/src/storage/s3Signer.js ./control-server/src/storage/s3Signer.js
+# s3Signer.js importiert hash.js. Ohne diese Zeile stirbt der Container beim Start mit
+# ERR_MODULE_NOT_FOUND und Zeabur antwortet 502 — am 04.09.2026 live gemessen.
+# Geprueft wird der vollstaendige Importbaum mit `npm run check:con-autopilot-abbild`.
+COPY control-server/src/shared/hash.js ./control-server/src/shared/hash.js
 COPY src/evaluation/evalScoring.js ./src/evaluation/evalScoring.js
 COPY src/evaluation/evalSuite.js ./src/evaluation/evalSuite.js
 COPY src/evaluation/modelPromotion.js ./src/evaluation/modelPromotion.js
