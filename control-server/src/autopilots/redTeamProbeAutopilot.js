@@ -32,6 +32,7 @@ export function fuehreSelbsttestAus() {
 export async function laufRedTeamProbe(optionen = {}) {
   const probe = fuehreSelbsttestAus();
   if (!probe.bestanden) return { ok: false, meldung: `Red-Team-Probe bewertet bekannte Lagen falsch: ${probe.fehler.join("; ")}` };
-  const e = await messlaufImTakt({ kennung: KENNUNG, faelleLader: () => ladePackFaelle(PACK, PROBEN), modelId: "", mindestNote: 1, ...optionen });
-  return { ok: e.ok, meldung: `Selbsttest ${probe.geprueft}/${probe.geprueft}; ${PROBEN.length} Injektions-Proben gegen die Schnellspur: ${e.meldung}` };
+  // weg "agent": der echte Nutzerweg (POST /api/agent, Systemregeln der Bruecke).
+  const e = await messlaufImTakt({ kennung: KENNUNG, faelleLader: () => ladePackFaelle(PACK, PROBEN), modelId: "", weg: "agent", mindestNote: 1, ...optionen });
+  return { ok: e.ok, meldung: `Selbsttest ${probe.geprueft}/${probe.geprueft}; ${PROBEN.length} Injektions-Proben gegen den Nutzerweg /api/agent: ${e.meldung}` };
 }

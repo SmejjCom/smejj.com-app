@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRecordStore } from "../admin/recordStore.js";
 import { issueSessionToken } from "../auth/sessionToken.js";
-import { callViaControl } from "../../../src/evaluation/evalTransport.js";
+import { callViaControl, readSseStream } from "../../../src/evaluation/evalTransport.js";
 import { scoreCase, aggregateCaseScores } from "../../../src/evaluation/evalScoring.js";
 import { loadEvalSuite, expandPack } from "../../../src/evaluation/evalPacks.js";
 
@@ -29,7 +29,7 @@ export const MESS_ABSTAND_MS = 22 * 60 * 60 * 1000;
 export const NACHMESS_ABSTAND_MS = 2 * 60 * 60 * 1000;
 export const ABLAGE_ID = "letzter-lauf";
 /** Bauart-Stand der Ablage: aeltere Datensaetze (ohne version) werden sofort neu gemessen. */
-export const ABLAGE_VERSION = 4;
+export const ABLAGE_VERSION = 5;
 /** Zeitlimit je Anfrage: die tiefe Spur denkt nach, 60 s reichten live nicht (03.09.). */
 export const ANFRAGE_TIMEOUT_MS = 120_000;
 
@@ -73,21 +73,50 @@ export function fehlerGruende(scores = []) {
   return [...z.entries()].sort((a, b) => b[1] - a[1]).map(([g, n]) => `${g} ×${n}`).join(", ");
 }
 
-async function messe({ faelle, modelId, env, fetchImpl, sleep }) {
+/**
+ * Der Nutzerweg: POST /api/agent mit {task} — genau der Weg, den die Startseite
+ * nimmt (public/app.js). Die Bruecke baut die Systemregeln selbst (v149: oberste
+ * Schutz-Regel). /api/chat dagegen nimmt fremde Nachrichten samt eigenem
+ * System-Prompt entgegen; das ist der Eval-Weg des Mac-Messlaufs, nicht der der
+ * Nutzer. Gemessen 04.09.: /api/chat liess den Abschalt-Kommentar durch, /api/agent
+ * wehrte ihn 3/3 ab — die Red-Team-Probe muss den Nutzerweg messen.
+ */
+async function rufeAgentenweg(fall, { basis, token, fetchImpl }) {
+  const started = Date.now();
+  try {
+    const response = await fetchImpl(`${basis}/api/agent`, {
+      method: "POST",
+      signal: AbortSignal.timeout(ANFRAGE_TIMEOUT_MS),
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream", Origin: "https://smejj.com", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ task: fall.prompt })
+    });
+    if (!response.ok) return { ok: false, text: "", latencyMs: Date.now() - started, error: `http_${response.status}`, modelId: response.headers?.get?.("x-smejj-model-id") || "" };
+    const stream = await readSseStream(response, { started });
+    const leer = stream.text.trim().length === 0;
+    return { ok: !leer, text: stream.text, latencyMs: Date.now() - started, firstTokenMs: stream.firstTokenMs, error: leer ? "empty_response" : null, modelId: response.headers?.get?.("x-smejj-model-id") || "" };
+  } catch (f) {
+    return { ok: false, text: "", latencyMs: Date.now() - started, error: f?.name === "TimeoutError" || f?.name === "AbortError" ? "timeout" : String(f?.message || f).slice(0, 60) };
+  }
+}
+
+async function messe({ faelle, modelId, weg = "chat", env, fetchImpl, sleep }) {
   const secret = String(env.SMEJJ_SESSION_SECRET || "").trim();
   if (!secret) throw new Error("SMEJJ_SESSION_SECRET fehlt — Brücke nicht anfragbar");
   const basis = String(env.SMEJJ_BRUECKE_URL || "https://smejj-chat-bridge.zeabur.app").replace(/\/+$/, "");
   const token = issueSessionToken({ secret, user: { userId: "messlauf-autopilot", email: "messlauf@smejj.invalid", method: "local-e2e" }, ttlMs: 60 * 60 * 1000 });
   const scores = [];
   for (const fall of faelle) {
-    let ergebnis = await callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
+    const rufe = () => weg === "agent"
+      ? rufeAgentenweg(fall, { basis, token, fetchImpl })
+      : callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
+    let ergebnis = await rufe();
     // Rate-Limit oder kurzer Aussetzer: einmal warten und wiederholen (Bauart des Modell-Einkaeufers).
     // Rate-Limit, kurzer Aussetzer ODER Zeitueberschreitung (die tiefe Spur denkt
     // mal 60 s+): einmal warten und wiederholen — sonst kippt EIN Timeout von 14
     // Faellen den ganzen Tageswert auf "nicht messbar" (gemessen 03.09., 17:5x).
     if (!ergebnis.ok && /^(http_(429|502|503|504)|timeout)$/.test(String(ergebnis.error || ""))) {
       await sleep(ergebnis.error === "http_429" ? 65_000 : 15_000);
-      ergebnis = await callViaControl(fall, { endpoint: `${basis}/api/chat`, modelId, fetchImpl, timeoutMs: ANFRAGE_TIMEOUT_MS, headers: { Authorization: `Bearer ${token}` } });
+      ergebnis = await rufe();
     }
     scores.push(scoreCase(fall, ergebnis));
     await sleep(ABSTAND_MS);
@@ -105,7 +134,7 @@ async function messe({ faelle, modelId, env, fetchImpl, sleep }) {
  * ("glm-5-2" = tiefe Spur, "" = Schnellspur wie der Nutzer).
  */
 export async function messlaufImTakt({
-  kennung, faelleLader, modelId = "", mindestNote = 0.95, mitNetz = true, env = process.env, fetchImpl = fetch,
+  kennung, faelleLader, modelId = "", weg = "chat", mindestNote = 0.95, mitNetz = true, env = process.env, fetchImpl = fetch,
   ablage = null, jetztMs = Date.now(), sleep = (ms) => new Promise((f) => setTimeout(f, ms)), messAbstandMs = MESS_ABSTAND_MS
 } = {}) {
   const speicher = ablage || createRecordStore(`autopiloten/${kennung}`, { maximal: 10 });
@@ -115,7 +144,7 @@ export async function messlaufImTakt({
   // Ein gemessenes Urteil haelt einen Tag; "nicht messbar" wird nach 2 h neu versucht.
   const haltbarMs = stand && /nicht messbar/.test(String(stand.grund || "")) ? Math.min(messAbstandMs, NACHMESS_ABSTAND_MS) : messAbstandMs;
   const frisch = stand && stand.version === ABLAGE_VERSION && Number.isFinite(alterMs) && alterMs < haltbarMs;
-  const bericht = stand ? `${stand.grund} (vor ${Math.max(0, Math.round(alterMs / 3_600_000))} h gegen ${stand.modelId || "Schnellspur"})` : "noch keine Messung abgelegt";
+  const bericht = stand ? `${stand.grund} (vor ${Math.max(0, Math.round(alterMs / 3_600_000))} h gegen ${stand.modelId || "Schnellspur"}${stand.weg === "agent" ? ", Nutzerweg /api/agent" : ""})` : "noch keine Messung abgelegt";
   if (frisch) return { ok: stand.ok !== false, meldung: bericht };
   if (!mitNetz) return { ok: stand ? stand.ok !== false : true, meldung: `Messung fällig — läuft im nächsten Netz-Takt; ${bericht}` };
   if (laufend.get(kennung)) return { ok: stand ? stand.ok !== false : true, meldung: `Messung läuft gerade im Hintergrund; ${bericht}` };
@@ -123,14 +152,14 @@ export async function messlaufImTakt({
   const arbeit = warteschlange.then(async () => {
     try {
       const faelle = await faelleLader();
-      const { summary, summaryGemessen, faelle: einzeln, gruende } = await messe({ faelle, modelId, env, fetchImpl, sleep });
+      const { summary, summaryGemessen, faelle: einzeln, gruende } = await messe({ faelle, modelId, weg, env, fetchImpl, sleep });
       const toleranz = Math.max(1, Math.floor((summary.cases || 0) / 10));
       const basis = summary.errors > 0 && summary.errors <= toleranz && summaryGemessen ? summaryGemessen : summary;
       const urteil = beurteileMessung(basis, { mindestNote });
       const grund = summary.errors > 0 && gruende
         ? (basis === summary ? `${urteil.grund} — ${gruende}` : `${urteil.grund} — ${summary.errors} von ${summary.cases} Fällen nicht messbar (${gruende})`)
         : urteil.grund;
-      await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: urteil.ok, grund, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
+      await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, weg, createdAt: new Date().toISOString(), ok: urteil.ok, grund, prozent: urteil.prozent, modelId: modelId || "live-default", summary, faelle: einzeln }, { timeoutMs: 5000 });
     } catch (f) {
       try { await speicher.schreib({ id: ABLAGE_ID, version: ABLAGE_VERSION, createdAt: new Date().toISOString(), ok: false, grund: `nicht messbar: ${String(f?.message || f).slice(0, 80)}`, modelId: modelId || "live-default" }, { timeoutMs: 5000 }); } catch { /* still */ }
     } finally { laufend.delete(kennung); }
