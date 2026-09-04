@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-03T21:06:50.008Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): Admin-Schluessel — Owner/Admin stellen in der Konsole unter 'API & Schluessel' Schluessel smejj-adm-… fuer Dritte aus (Empfaenger, Laufzeit 30 Tage bis 30 Jahre oder unbefristet, Notiz), widerrufen sie mit Grund, alles im Audit-Log; Recht apikeys.issue (adminRoles.js), Route adminGeldRoutes.js, Konsole views-stage7.js/console-stage7.js. Der Stempel deckt auch opsAutopilotenBereiche.js und views-stage9.js aus dem Nr.-72-Audit vom 03.09. Grundlage: Beschluss 2026-09-03 (docs/api/PLAN_API_SCHLUESSEL_LAUFZEIT_ADMIN_2026-09-03.md) und Wahl 'Admin-Bereich bauen'.",
+  "frozenAt": "2026-09-04T08:15:46.645Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): Monatsbudget je ausgestelltem API-Schluessel — Owner/Admin setzen in der Konsole unter 'API & Schluessel' ein Token-Budget je Kalendermonat, der Torwaechter lehnt darueber mit 429 key_budget_exceeded ab; Route /api/admin/geld/api/budget mit Audit apikey.budget, Konsole views-stage7.js/console-stage7.js, adminGeldRoutes.js. Der Stempel deckt auch console.css und views-stage9.js aus der Autopiloten-Arbeit anderer Sitzungen. Grundlage: Beschluss 2026-09-03 (docs/api/PLAN_API_SCHLUESSEL_LAUFZEIT_ADMIN_2026-09-03.md) und Wahl 'Budget je Schluessel bauen'.",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -35,11 +35,11 @@
     "control-server/admin-ui/console.js": "987afe77b7cd8cc2698a8b94634a2edf4a94d0be9cd8616fc65d4ac74c7d005a",
     "control-server/admin-ui/views.js": "6b4b905bb989d5db03e10b931be01b7a36ff218381a0e1cd399aacc0993774c1",
     "control-server/admin-ui/index.html": "b3c7f1cd8650bfe225c154fe4267eaaeca44b0a55918f8207c261398862e97c1",
-    "control-server/admin-ui/console.css": "6db84483a7641c459aa75772d3f2ca210106d36690b9e9cd32005a667e44683c",
+    "control-server/admin-ui/console.css": "90bab0eb9b8b77172767a0915dd4e7ccb64a5ead74bd20abe05ff5a97fe8b00a",
     "control-server/admin-ui/views-stage5.js": "fcffea722ad7b24a1ed85ffc90a63b4f472c833b3a8fc41aa547b22a3847ca27",
-    "control-server/admin-ui/views-stage7.js": "cbc4c80d08ad1878d463108ccddc0c70cb5a16140ff21063739bbaca3d43ed1c",
+    "control-server/admin-ui/views-stage7.js": "2558418fb7494117ee0f40891058f6e6858b3573a0d4354fd6e48b2c1e8423ba",
     "control-server/admin-ui/console-stage6.js": "590e2f1b0bf1a6b84bf3ee0d758e08b930da57fb10c985c2df78f396c3d7152a",
-    "control-server/admin-ui/console-stage7.js": "31292f64c3d79a9bdd3d65572c716aad7b49310e9d14dd1b6f91cb40ce2b8bab",
+    "control-server/admin-ui/console-stage7.js": "496e3982e6d26159be41cf0a8de2e17885d6dea00e2c55c6ea80bc5f1a0dccd2",
     "control-server/admin-ui/console-stage9.js": "86a7baf596f1ce13954489e82aa47e7046ddba2b2a561288d63f6f032af11682",
     "control-server/admin-ui/console-stage12.js": "04993b73ee961ea108c5f2eaeec53d3110fc70f4fa29703fd0c1d8836f94b553",
     "control-server/admin-ui/console-cockpit.js": "6035114b40a3c32a786ab1435bbf231e71ae553b68eb331f061f92fe77079d8b",
@@ -48,10 +48,10 @@
     "control-server/src/admin/userIndex.js": "8cca94949db97af3ba6031086f4938f917fe29a06fc2e6144c5f344d3ac645f9",
     "control-server/src/billing/aboUmhaengen.js": "a2b1f395cc528031b01466ae85b987c6d67dfb282e3c08387cf0400aec52dcbf",
     "control-server/src/routes/adminRoutes.js": "d15425a554ae95ff974c687fad588bf8acf1e0fce49317b3b1cc8dc778a050e1",
-    "control-server/src/routes/adminGeldRoutes.js": "d11b2103468a924d5722cff0f1aad0f6e6952f0909f1ea3302486b3fb6d4fdda",
+    "control-server/src/routes/adminGeldRoutes.js": "2e4debc7ecc1e225d5a919cc0e342d633bec28823dd84e9e1887b91f85c53b22",
     "control-server/src/routes/adminSicherheitRoutes.js": "56f4aaada4a90cd38ab529257f38a74b13dca9116dfce9dfcd2aebd644ac2ba1",
     "control-server/src/routes/adminOpsRoutes.js": "1f179d19b274abff19ab079b06ed453ea95018c250e20d1889e1a73341f55870",
     "scripts/deploy/sync_admin_console_pages.mjs": "2eedadb1a38839cd6c9f43ab7724a1e31fe85f052c5b828bdf70cffe643c6f30",
-    "control-server/admin-ui/views-stage9.js": "47ccda8b25972bd66dd33b239faa01f91833c7656dc5ed7ec8e77cc36a019e5e"
+    "control-server/admin-ui/views-stage9.js": "792ca51453ed313147280d9640c1d3259c095252762a6e1b6b4d419ad5657f74"
   }
 }
