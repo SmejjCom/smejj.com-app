@@ -1,5 +1,5 @@
 // con-Autopilot — Job-Buendel als tar.gz/base64 (Single Responsibility: Dateien -> Umgebungsvariable).
-// Salad bekommt den Code des Jobs als SMEJJ-Buendel in einer Umgebungsvariablen,
+// Salad bekommt den Code des Jobs als smejj.com-Buendel in einer Umgebungsvariablen,
 // genau wie der fruehere LoRA-Trainer. Kein Registry-Abbild, kein Docker-Bau
 // auf dem Mac (dort gibt es kein Docker). Reines ustar ohne Abhaengigkeiten.
 import { createHash } from "node:crypto";
