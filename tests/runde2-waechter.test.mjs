@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { beurteileEinwilligung, leseEinwilligungsLage, laufEinwilligungsWache, fuehreSelbsttestAus as einwilligungSelbsttest } from "../control-server/src/autopilots/einwilligungsWacheAutopilot.js";
 import { messlaufImTakt, beurteileMessung, warteAufMessung, ABLAGE_ID, ABLAGE_VERSION } from "../control-server/src/autopilots/brueckenMesslauf.js";
 import { laufTiefeSpurMessung, fuehreSelbsttestAus as tiefeSelbsttest } from "../control-server/src/autopilots/tiefeSpurMessungAutopilot.js";
-import { laufRedTeamProbe, PROBEN, fuehreSelbsttestAus as redTeamSelbsttest } from "../control-server/src/autopilots/redTeamProbeAutopilot.js";
+import { laufRedTeamProbe, PROBEN, ohneLaengenregel, fuehreSelbsttestAus as redTeamSelbsttest } from "../control-server/src/autopilots/redTeamProbeAutopilot.js";
 import { beurteileBau, laufBauWache, BAU_FRIST_MS, fuehreSelbsttestAus as bauSelbsttest } from "../control-server/src/autopilots/bauWacheAutopilot.js";
 import { beurteileProjektwissen, laufProjektwissenFrische, fuehreSelbsttestAus as frischeSelbsttest } from "../control-server/src/autopilots/projektwissenFrischeAutopilot.js";
 import { pruefeSprachseite, laufSprachseitenWache, SPRACHEN, fuehreSelbsttestAus as sprachSelbsttest } from "../control-server/src/autopilots/sprachseitenWacheAutopilot.js";
@@ -89,6 +89,28 @@ test("Nr. 75 und Nr. 79: Selbsttests grün, Läufe ohne Netz melden ehrlich", as
   assert.equal(t.ok, true); assert.match(t.meldung, /tiefe Spur: Messung fällig/);
   const r = await laufRedTeamProbe({ mitNetz: false, ablage: speicherMock() });
   assert.equal(r.ok, true); assert.match(r.meldung, /5 Injektions-Proben gegen den Nutzerweg/);
+});
+
+test("Nr. 79: die Kuerze-Regel des Packs zaehlt nicht als Abwehr (Befund 2026-09-04)", () => {
+  // Live gemessen: alle fuenf Angriffe abgewehrt, 0 kritisch — aber drei
+  // Antworten laenger als maxZeichen -> Note 80 %, Ampel rot. Eine
+  // Sicherheits-Wache darf nicht wegen Ausfuehrlichkeit Alarm schlagen.
+  const gefiltert = ohneLaengenregel([
+    { id: "a", assertions: [
+      { type: "contains_any", values: ["nein"], critical: true },
+      { type: "max_length", value: 500, critical: false }
+    ] }
+  ]);
+  assert.deepEqual(gefiltert[0].assertions.map((z) => z.type), ["contains_any"], "max_length faellt weg");
+  // Ohne Zusicherungen bleibt der Fall unveraendert leer — kein Absturz.
+  assert.deepEqual(ohneLaengenregel([{ id: "b" }])[0].assertions, []);
+  // Die inhaltlichen Zusicherungen bleiben vollstaendig erhalten.
+  const voll = ohneLaengenregel([{ id: "c", assertions: [
+    { type: "contains_any", values: ["x"], critical: true },
+    { type: "not_contains", values: ["sk-"], critical: true },
+    { type: "not_matches", pattern: "\\d{28,}", critical: true }
+  ] }]);
+  assert.equal(voll[0].assertions.length, 3);
 });
 
 test("Nr. 75/79 Messlauf: 429 wird einmal wiederholt, Laeufe stehen in EINER Warteschlange, alte Ablage wird neu gemessen", async () => {
