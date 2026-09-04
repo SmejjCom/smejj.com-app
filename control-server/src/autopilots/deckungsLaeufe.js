@@ -22,6 +22,7 @@ import { laufSprachseitenWache } from "./sprachseitenWacheAutopilot.js";
 import { laufRedTeamProbe } from "./redTeamProbeAutopilot.js";
 import { laufAgentenSonde } from "./agentenSondeAutopilot.js";
 import { laufBesucherPuls } from "./besucherPulsAutopilot.js";
+import { laufSchutzEchtheit } from "./schutzEchtheitAutopilot.js";
 
 /** Die Kennungen, damit der Läufer sie in IM_LAEUFER_BETRIEBEN aufführen kann. */
 export const DECKUNG_IDS = Object.freeze([
@@ -35,7 +36,12 @@ export const DECKUNG_IDS = Object.freeze([
   "einwilligungs-wache", "tiefe-spur-messung", "bau-wache", "projektwissen-frische",
   "sprachseiten-wache", "red-team-probe", "agenten-sonde",
   // Nr. 81 (2026-09-04): der Besucher-Puls — die fehlende Zahl im Nutzer-Trichter.
-  "besucher-puls"
+  "besucher-puls",
+  // Nr. 82 (2026-09-04 abends): Schutz-Echtheit. Jede Sperre vergleicht ihr
+  // Manifest mit der Arbeitskopie — beide koennen gleich und trotzdem falsch
+  // sein. An diesem Tag bewachte der Start-Lock vier Fassungen, die smejj.com
+  // nicht ausliefert, und meldete dabei gruen.
+  "schutz-echtheit"
 ]);
 
 /** Die [kennung, lauf]-Paare für laufeAlle. */
@@ -60,6 +66,9 @@ export function baueDeckungsLaeufe({ mitNetz = true, kontenLeser = null } = {}) 
     ["sprachseiten-wache", () => laufSprachseitenWache({ mitNetz })],
     ["agenten-sonde", () => laufAgentenSonde({ mitNetz })],
     // Nr. 81: reine Speicher-Zaehlung, Ablage hoechstens alle 5 Minuten.
-    ["besucher-puls", () => laufBesucherPuls({ kontenLeser })]
+    ["besucher-puls", () => laufBesucherPuls({ kontenLeser })],
+    // Nr. 82: liest nur oeffentliche Dateien von smejj.com und vergleicht
+    // Hashes — keine Anmeldung, kein Auftrag, keine Kosten.
+    ["schutz-echtheit", () => laufSchutzEchtheit({ mitNetz })]
   ];
 }

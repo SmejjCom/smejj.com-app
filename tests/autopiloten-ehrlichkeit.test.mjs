@@ -146,6 +146,10 @@ const MIT_ECHTER_MESSUNG = new Set([
   "red-team-probe",           // Nr. 79: 5 Injektions-Faelle gegen die Bruecke, Ablage autopiloten/red-team-probe
   "agenten-sonde",            // Nr. 80: /health von Maus-Engine und Fern-Browser
   "besucher-puls",          // Nr. 81: echte Strichliste der Landeseite (POST /api/puls), Tagesstand betrieb/besucher-puls
+  // Nr. 82: haelt jeden eingefrorenen Hash gegen die AUSLIEFERUNG auf smejj.com
+  // (echter GET, echter Vergleich). Ohne Netz meldet er NICHTS und bleibt grau —
+  // "nicht messbar" ist kein Verstoss und wird auch nicht als Messung ausgegeben.
+  "schutz-echtheit",
   "modell-evolution"          // Nr. 72: Referenz aus Nr. 01, Noten je Faehigkeit aus evolution/kennzahlen, Reife-Karte Nr. 65, echte Umgebung; Zyklus-Protokoll
 ]);
 
