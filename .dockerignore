@@ -12,6 +12,12 @@ tests
 scripts/*
 !scripts/evaluation
 !scripts/evaluation/run_model_eval.mjs
+# BEFUND 2026-09-05: Autopilot Nr. 82 (Schutz-Echtheit) laedt seine Pruefsaetze
+# aus scripts/check-schutz-echtheit.mjs. Ohne diese Ausnahme fehlt die Datei im
+# Abbild, der Control-Server startet nicht mehr — api.smejj.com antwortete rund
+# eine Stunde mit 502. Der erste Reparaturversuch scheiterte am Bau selbst,
+# weil hier die Ausnahme fehlte und COPY die Datei gar nicht sah.
+!scripts/check-schutz-echtheit.mjs
 idrive-layout
 examples
 workers/*
