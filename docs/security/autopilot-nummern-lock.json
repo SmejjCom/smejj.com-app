@@ -1,10 +1,10 @@
 {
   "lock": "smejj autopilot nummern lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-04T11:56:28.746Z",
-  "confirmation": "Autopilots sind Numerieren sollen so bleiben, du sollst 100 % schutzen, soll ohne schriftliche Bestaetigung nicht geaendert werden, nicht geloescht werden, legt hundert Prozent Schutz drauf. (Betreiber, 2026-09-04)",
+  "frozenAt": "2026-09-04T17:12:35.886Z",
+  "confirmation": "Taeglichen Phantom-Waechter bauen. (Betreiber, 2026-09-04 abends) — Autopilot Nr. 82 Schutz-Echtheit: prueft taeglich, ob jede Sperre noch das bewacht, was smejj.com wirklich ausliefert. Bestand 01-81 unveraendert.",
   "rule": "Eine vergebene Autopiloten-Nummer darf ohne ausdrueckliche schriftliche Freigabe des Betreibers nicht wandern, nicht doppelt vergeben und nicht geloescht werden. Neue Nummern fuer neue Autopiloten bleiben erlaubt.",
   "quelle": "control-server/src/admin/opsAutopilotenListe.js",
-  "anzahl": 81,
+  "anzahl": 82,
   "nummern": {
     "10": "memory-sync",
     "11": "self-healing",
@@ -78,6 +78,7 @@
     "79": "red-team-probe",
     "80": "agenten-sonde",
     "81": "besucher-puls",
+    "82": "schutz-echtheit",
     "01": "qualitaetsmessung",
     "02": "codeberg-spiegel",
     "03": "voice-region-check",
