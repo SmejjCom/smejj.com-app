@@ -100,3 +100,39 @@ Ziel erreicht: Anhaenge kommen inhaltlich an, `check:all` ist gruen, Live-Abnahm
 keine bestehende Funktion angetastet. Offen bleibt allein die Sprachwelle LIVE — technisch
 fertig und bewiesen, aber von Google auf Kontoebene gesperrt (1008 „project denied access",
 auch mit neuem Projekt). Das ist eine Betreiber-Entscheidung (Abrechnung), keine offene Arbeit.
+
+---
+
+## Nachtrag 04.09. — eigener API-Schluessel und Abschaltung des toten Google-Versuchs
+
+**Auftrag (Betreiber, wörtlich):** „geh chrome browser nehm von smejj Model Api Key, (von Google
+Brauchst du nicht mehr) Unsere Api Kannst du unbefristet machen. Immer Kostenlos nutzen weil ist
+unsere einege Model ist. Wenn Du andere Stellen auch brauchst, kannst Du auch von hier für andere
+Stellen auch nehmen und verwenden."
+
+**Umgesetzt.** Über https://smejj.com/admin/api/ einen Schlüssel ausgestellt: für
+`smejj.com Sitzung (Claude Code)`, Laufzeit **unbefristet** (Rückfrage „Unbefristet wirklich?"
+bestätigt), **ohne Budget**. Präfix `smejj-adm-`, 42 Zeichen. Abgelegt unter
+`~/.config/smejj.com/api-schluessel-smejj-unbefristet.txt` (Rechte 600, Ordner 700) — bewusst
+ausserhalb des Repos, damit weder Secret-Scanner noch Git-Historie ihn je sehen.
+
+**Bewiesen:** `GET /v1/models` → 200, vier Modelle (`smejj-1.0`, `-fast`, `-code`, `-reasoning`).
+`POST /v1/chat/completions` → 200 mit echter Antwort in 5,5 s. Die Konsole zählte den Aufruf mit
+(Anfragen heute 5 → 6, 30 Tage 101 → 102).
+
+**Fachliche Klarstellung an den Betreiber:** Alle vier eigenen Modelle sind Textmodelle. Für die
+Sprachwelle LIVE braucht es Sprache-zu-Sprache (Audio rein, Audio raus, Hineinreden) — das leistet
+kein Textmodell über einen API-Schlüssel. Der eigene Schlüssel ersetzt Gemini dafür also nicht.
+**Der Betreiber hat aber im Kern recht:** die Sprachwelle braucht Google nicht — sie läuft über die
+eigene Kette (Groq-Whisper-Ohr → Router/smejj 1.0 → Stimme).
+
+**Daraus abgeleitete Verbesserung, live gemessen:** Der LIVE-Relay probierte bei JEDEM Wellenstart
+vier von Google gesperrte Modelle durch, bevor er zurückfiel — **1833 ms im Mittel** aus drei
+Messungen (1518 / 2815 / 1167 ms). Mit `SMEJJ_VOICE_LIVE_ENABLED=false` (Zeabur-Portal,
+smejj-control, Redeploy) sagt der Relay sofort ab: **889 ms im Mittel** (765 / 1236 / 667 ms) —
+und das ist reine Netzlaufzeit, kein Google-Versuch mehr. **Gewinn rund 950 ms je Wellenstart.**
+Nachtest: Welle öffnet, Status „Ich höre zu …", kein Fehlertext, kein Tipp-Rückfall.
+
+**Nichts gelöscht (Zugangs-Lock gewahrt):** `SMEJJ_VOICE_LIVE_API_KEY` bleibt unangetastet liegen.
+Ein Wechsel der einen Variable auf `true` schaltet die LIVE-Welle wieder ein, sobald Google das
+Konto freigibt. Reversibel in einem Handgriff, kein Code-Deploy nötig.
