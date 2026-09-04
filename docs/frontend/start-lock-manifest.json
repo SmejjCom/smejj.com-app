@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T10:10:07.021Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): API-Bereich aufgeteilt — die vier Listen-Aktionen liegen in public/api-center-aktionen.js (800-Zeilen-Regel), Precache ergaenzt, Marken api-center-surface v13 / entwickler v16 / settings-surface b59 / premium-surfaces b47p / app.js b126, Service-Worker-Cache +1; Pruefungen kennen das neue Modul (i18n) und den Fremdcode-Ordner public/vendor (platform-pwa, modul-syntax). Grundlage: Auftrag 2026-09-03 'alle Rechte, 100 % fertig, lass nichts offen' — check:all muss gruen sein.",
+  "frozenAt": "2026-09-04T10:19:38.900Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): In der Spalte 'Laeuft ab' des API-Bereichs steht bei widerrufenen und abgelaufenen Schluesseln ein Strich statt 'Unbefristet' — die alte Anzeige las sich wie eine Zusage fuer einen Zugang, der nicht mehr gilt. Dafuer Marken api-center-surface v14, entwickler.js v17 und die drei Kettenglieder darueber, Service-Worker-Cache +1. Grundlage: Live-Pruefung 2026-09-04 und Wahl 'Zwei Reiter bauen'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9be85e07ac05b56b144e5d26f22abb1395df1e92313f3c854f002ecff6828ef0",
+    "public/index.html": "3db53cd84e97f33b05635bd16c40a898870b8a4915cd77832e9bfe52b7295f61",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "69c21011c1f20954b1686febf314f1cb0a7695e9fe23a2e5416cf9df467c6942",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "cd32cc15405b989bc156119ff7b87015b1f8116a052e5234f67da99bc905dee4",
+    "public/app.js": "bbc1cb199f6e5dd9e0e6adaa88fb41bd9f2101d2adfd3ed134643e6d144b6887",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "a8cc2634e3a68f2f6f3353773228d1da8acb6b43e43638df15e1ba124d856bc3",
+    "public/premium-surfaces.js": "6059ca3eca5d2323a286c45c3c88500cf78183b9a90e919341f6d9118c426d55",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "fa43bbe38c5eac0aec8bdb769187108239fce4d3377a1d778c2ba1cb19e31677",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "29e320c87cb87b86c46126a9b57d41c66fc6bcd5f00a442691e8b3982ac3ef3a",
+    "public/sw.js": "b769b978222b72a7b3236877f9ab415143b83702163a93ebcd29ed8fe2df448d",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
