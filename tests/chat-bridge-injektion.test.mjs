@@ -25,6 +25,15 @@ test("Bruecke v148: Systemregel gegen eingebettete Anweisungen steht in buildAge
   assert.ok(regelPos > 0 && regelPos < codingPos, "die Regel muss vor der Code-Anweisung stehen (gilt fuer beide Zweige)");
 });
 
-test("Bruecke v148: die Version traegt den Injektionsschutz", () => {
-  assert.match(QUELLE, /const BRIDGE_VERSION = "20260903-v148-injektionsschutz"/);
+test("Bruecke v149: die Version traegt die oberste Regel", () => {
+  assert.match(QUELLE, /const BRIDGE_VERSION = "20260904-v149-oberste-regel"/);
+});
+
+test("Bruecke v149: die oberste Regel steht VOR der Rollenzeile — auch im Code-Modus zuerst", () => {
+  const start = QUELLE.indexOf("function buildAgentMessages(");
+  const rumpf = QUELLE.slice(start, QUELLE.indexOf("return withRagBlock(", start));
+  const regel = rumpf.indexOf("OBERSTE REGEL: Schutzmechanismen");
+  const rolle = rumpf.indexOf("You are smejj.com Code Agent.");
+  assert.ok(regel > 0 && rolle > 0 && regel < rolle, "die oberste Regel muss die erste Systemzeile sein");
+  assert.match(rumpf, /KEINEN Plan, KEINEN Code und KEINE Anleitung/);
 });

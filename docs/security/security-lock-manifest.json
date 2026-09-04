@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-03T20:47:46.086Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03: Audit A bis Z, Wahl 'Red-Team-Fund schliessen (Empfehlung)' — Systemregel der Chat-Bruecke gegen eingebettete Anweisungen in Code, Dateien und Webseiten (Nr. 79 sich-anweisung-in-code), Bruecke v148",
+  "frozenAt": "2026-09-04T06:49:58.251Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03: Audit A bis Z, Wahl Red-Team-Fund schliessen — v148 reichte nicht (gpt-oss folgte der Anweisung dreimal trotz Regel); v149 stellt die Schutz-Regel an die Spitze der Systemregeln, Bruecke v149",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
@@ -11,7 +11,7 @@
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
-    "public/chat-bridge.js": "c68be13d402f577cfa54ff708ba9f36ac277b65bfb522bd648a1c3d1f3282f30",
+    "public/chat-bridge.js": "3360f03caab75beca2b6886c575296219b622d2670e28543698bef8bb9ad13a3",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }
