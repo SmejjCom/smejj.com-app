@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T20:40:33.517Z",
+  "frozenAt": "2026-09-04T20:48:36.288Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): Antworten der Client-Wege (Cline-Katalog, eigener Anbieter-Schluessel, BYOK, lokales Browser-Modell) rendern jetzt Markdown wie der Server-Weg — live gefunden im Code-Bereich, wo eine echte Programmieraufgabe als Rohtext mit sichtbaren Code-Zaeunen erschien. Geaendert: public/ai/chatClient.js (Renderaufruf am Ende von runClientChat), public/app.js und public/index.html nur Cache-Marken (sendepfad-nachladen v2, app.js b132). Grundlage: Auftrag 2026-09-03 'Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter' und 2026-09-04 'teste jetzt den Code-Bereich live mit einer echten Aufgabe'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "dfffc1758ad8a25059eaa6f260608f69fba045755d8e59be86c83529a5b632dd",
+    "public/sw.js": "c7a04292125b27fd008e70a3ddcd7daa7c3694c68f7d9f2c7cd0310f5087070d",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
