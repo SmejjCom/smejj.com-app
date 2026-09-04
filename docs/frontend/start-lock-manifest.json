@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T17:53:34.034Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04, schriftlich im Chat: 'teste die gesamte App von A bis Z, Fehler sofort beheben, erneut deployen'. Reparatur der globalen Suche (such-nachladen.js exportiert ladeSucheFuerAnsicht, app.js ruft ihn beim Ansichtswechsel auf) plus Markenkette geheilt nach dem Zusammenfuehren mit der Parallelsitzung (chat-store b67, chat-actions b47, app.js b131 und weitere), Service-Worker-Cache v756.",
+  "frozenAt": "2026-09-04T20:40:33.517Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): Antworten der Client-Wege (Cline-Katalog, eigener Anbieter-Schluessel, BYOK, lokales Browser-Modell) rendern jetzt Markdown wie der Server-Weg — live gefunden im Code-Bereich, wo eine echte Programmieraufgabe als Rohtext mit sichtbaren Code-Zaeunen erschien. Geaendert: public/ai/chatClient.js (Renderaufruf am Ende von runClientChat), public/app.js und public/index.html nur Cache-Marken (sendepfad-nachladen v2, app.js b132). Grundlage: Auftrag 2026-09-03 'Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter' und 2026-09-04 'teste jetzt den Code-Bereich live mit einer echten Aufgabe'.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "98a4c7ec8c043d80d9758bc641a72176c68d38fde9e566f45ba460cda46d9392",
+    "public/index.html": "742326840340d001706093a1c11815625ce80875deec66a6c03bcc39229eedef",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "69c21011c1f20954b1686febf314f1cb0a7695e9fe23a2e5416cf9df467c6942",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "6837387537cbb0ade8ac4c85cb115ffbef432f713d8f9cc405bccaa7fc481cdf",
+    "public/app.js": "7e4b98775e4497554cff62c7d8e1e5c06714bd6ed04d6244907da9b3e50fe1e9",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -31,12 +31,12 @@
     "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
     "public/cline-model-menu.css": "44599e36922c6f340e3b19df0728f85b9dc89ba09590ca0f0e644dfd29acfa84",
     "public/auth/passkey-ui.js": "ff1335c193e6458b0e5bdf43627ffe3bc2fa94aa94f67c8bf3d53a4ba4f24019",
-    "public/ai/chatClient.js": "859303c9a450ffc966b1486d6c8de0737d606e2622f21ced2f0f005aba60300a",
+    "public/ai/chatClient.js": "219133104d3bf07e0de6bfb01576d7b49cf1c6442b5aabb711697119ddcf7254",
     "public/ai/index.js": "f21fcef60cecb99c454783909fc6f63aedf3f8d2211e1df04380327debe87997",
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "590c18ee9f529cab9c6175c50cd597e0e9b79449e5f50844d6fbd646dc64eb6e",
+    "public/sw.js": "dfffc1758ad8a25059eaa6f260608f69fba045755d8e59be86c83529a5b632dd",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }

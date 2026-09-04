@@ -1,0 +1,3 @@
+== 0. Ausgangslage
+d7848852 fix(marken): Kette nach dem Zusammenfuehren geheilt (chat-store b67, chat-actions b47, app.js b131 u.a.) und Verlaufs-Test auf Modulnamen statt fester Marke umgestellt; Start-Lock neu gestempelt
+ABBRUCH: Marke v4 fehlt.

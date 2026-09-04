@@ -383,3 +383,32 @@ test("mp4CodecsAuslesen: liest avc1-Profil/Level und erkennt AAC (Nacht-Umbau Me
   const falscheVersion = new Uint8Array([0x61,0x76,0x63,0x43, 9, 0x64, 0x00, 0x1E]);
   assert.equal(mp4CodecsAuslesen(falscheVersion.buffer), "");
 });
+
+test("Verdrahtung: auch die CLIENT-Wege rendern am Ende Markdown", () => {
+  // LIVE GEFUNDEN 2026-09-04 im Code-Bereich (Betreiber: "teste mit einer echten
+  // Aufgabe"). Mit gewaehltem Cline-Katalogmodell stand die Antwort als ROHTEXT
+  // in der Blase: die ```-Zaeune sichtbar, kein <pre>, kein Kopier-Knopf.
+  // Gegenprobe mit smejj 1.0 im selben Feld: <pre><code> plus Knopfleiste.
+  // Ursache war die NAHT — jeder Weg in chatClient.js endet mit
+  // `output.textContent`, und anders als chat-stream.js rief keiner den
+  // Renderer. Beide Module waren fuer sich fehlerfrei; genau darum fiel es
+  // keinem Test auf. Diese Zusage haelt die Naht fest.
+  const chatClient = fs.readFileSync("public/ai/chatClient.js", "utf8");
+  assert.match(chatClient, /import\(["'`]\/assets\/chat-markdown\.js/,
+    "chatClient.js muss den gemeinsamen Renderer laden");
+  const handledBlock = chatClient.split(/if \(handled\)/)[1] || "";
+  const bisEnde = handledBlock.split(/return handled;/)[0];
+  assert.match(bisEnde, /rendereAntwort\(output\)/,
+    "nach einer erledigten Client-Antwort muss gerendert werden");
+  // Reihenfolge: die Speichern-Knoepfe lesen die ```-Zaeune aus textContent.
+  // Nach dem Rendern sind sie weg — attachCodeActions MUSS davor laufen.
+  assert.ok(
+    bisEnde.indexOf("attachCodeActions") >= 0
+      && bisEnde.indexOf("attachCodeActions") < bisEnde.indexOf("rendereAntwort"),
+    "attachCodeActions muss VOR dem Rendern laufen (liest die Code-Zaeune)"
+  );
+  // Sprachmodus bleibt ausgenommen: die Vorlese-Warteschlange verfolgt den
+  // wachsenden Rohtext ueber einen Offset (siehe Kopf von chat-markdown.js).
+  assert.match(chatClient, /voiceMode === true\) return;/,
+    "im Sprachmodus darf nicht gerendert werden");
+});
