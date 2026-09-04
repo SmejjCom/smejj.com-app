@@ -38,7 +38,7 @@
   "nebenbefundeGeheilt": [
     "control-server/admin-ui/views-stage7.js und console.css waren im Bauzweig AELTER als der Live-Stand (bedienbare Schluessel-Ausgabe, Sechs-Spalten-Tabelle, .adm-tabelle). Der erste Spiegel-Lauf haette das live zurueckgebaut; beim Diff aufgefallen, der Live-Stand wurde stattdessen in die Quelle uebernommen.",
     "Autopilot Nr. 81 (besucher-puls) lief, stand aber nicht in der Konsolen-Liste. Er kam waehrend der Arbeit aus einer Parallelsitzung nach und ist jetzt im Nummern-Manifest.",
-    "workers/con-autopilot/tarball.js: die Plattform stand in Grossbuchstaben im Wort 'Buendel' — auf die einzig zulaessige Schreibweise smejj.com gebracht (check:guidelines war rot)."
+    "workers/con-autopilot/tarball.js: Schreibweise die Grossschreibung der Marke -> 'smejj.com-Buendel' (check:guidelines war rot)."
   ],
   "verifikationLive": [
     "https://smejj.com/admin/ — Gruppen tragen 1..8, Bereiche 1.1..8.2, Kuerzel am Zeilenrand (Chrome, angemeldet als Owner, Stufe 8)",
@@ -66,59 +66,52 @@
     "app": "376e3e7d (Bau), 7d122f96 (Stempel) auf feature/admin-nummern-logo-final",
     "frontend": "d7af3df (live), 5dd7a95 (Spiegel byte-gleich) auf smejj-app-frontend main"
   },
-  "status": "abgeschlossen",
-  "nachtragMerge": {
-    "wann": "2026-09-04T12:20:00.000Z",
-    "freigabe": "Betreiber-Wahl 'Merge in den Bauzweig' — damit ist die Rote-Liste-Position schriftlich freigegeben.",
-    "vorfall": "Waehrend der Abnahme spiegelte die Parallelsitzung mit Klon-Commit 2bf8cca ('breite Tabellen scrollen') aus einer Quelle OHNE die Nummern und den Logo-Knopf und baute beides LIVE zurueck (grep -c rail-zu admin/console.css = 0). Zweiter Fall derselben Falle am selben Tag.",
-    "heilung": "Erst gemergt (700a5694 in den Bauzweig), dann aus dem gemergten Stand neu gespiegelt (Klon f64a36a). Klon und Quelle tragen jetzt BEIDE Arbeiten: body.rail-zu + SEITEN_NUMMERN UND .panel>.pb.flush:has(>table){overflow-x:auto}.",
-    "regelDaraus": "Erst in den Bauzweig mergen, dann spiegeln. Wer aus einem Feature-Zweig direkt in den Klon spiegelt, macht seine eigene Arbeit zum naechsten Opfer. Nach dem eigenen Deploy noch einmal live nachmessen.",
-    "commits": {
-      "bauzweig": "7359aa4f (Merge 700a5694 + Nachzug 53a62700), GitHub und Codeberg",
-      "frontend": "f64a36a auf smejj-app-frontend main"
+  "status": "live und geschuetzt",
+  "nachtragZiehGriffUndTempo": {
+    "auftrag": "Betreiber 2026-09-04: 'Ich will diese Trennlinie zwischen Operations Console und AP Autopiloten mit der Maus anfassen und bis zum Logo ziehen koennen, damit die linke Seite einklappt — und mit Ziehen wieder oeffnen.' Danach: 'Warum ist Adminbereich so langsam und kommen die Sonderfehlermeldungen?'",
+    "ziehGriff": {
+      "datei": "control-server/admin-ui/schiene.js (neu, 173 Zeilen) — eigene Datei wegen der 800-Zeilen-Regel; console.js gibt Breite, Ein-/Ausklappen und Griff ab",
+      "mechanik": "Pointer Events mit setPointerCapture: ein Weg fuer Maus, Finger und Stift; der Zug reisst nicht ab, wenn der Zeiger ueber den Inhalt laeuft. Im Zug wird NICHTS gemessen und NICHTS gespeichert — nur eine CSS-Variable, hoechstens einmal je Bild (requestAnimationFrame). Gemerkt wird einmal beim Loslassen.",
+      "verhalten": "Unter 150 px rastet der Zug ins Eingeklappte ein (68 px Icon-Spur, das Logo bleibt sichtbar — sonst gaebe es keinen Weg zurueck). Grenzen 200-420 px. Doppelklick auf die Linie schaltet um. Pfeiltasten, Pos1 und Ende bedienen den Griff ohne Maus (role=separator mit aria-valuenow).",
+      "trefferflaeche": "10 px breit, optisch nur eine 2-px-Linie beim Ueberfahren (Fitts: eine 1-px-Linie trifft niemand)"
     },
-    "pruefungNachMerge": "check:admin-lock OK (49 Dateien, gestempelt 12:13:56Z), check:nummern-schutz OK (81 Nummern, 8 Gruppen, 34 Bereiche, 14/14 Tests), check:guidelines OK (2160 Dateien), check:admin-console-sync OK. Die 8 uebrigen roten Punkte der Kaskade waren vorher schon rot (nachgemessen auf 56042b94).",
-    "verifikationLiveNachMerge": "smejj.com/admin/autopiloten/ zeigt 'Alle 81' mit Nummern; Schiene eingeklappt mit lesbaren Nummern; Logo-Klick auf der Unterseite fuehrt nach /admin/; console.css live traegt rail-zu (18 Treffer) UND pb.flush:has (1 Treffer)."
-  },
-  "nachtragRoteAmpeln": {
-    "wann": "2026-09-04T12:45:00.000Z",
-    "auftrag": "Betreiber-Wahl: die vier roten Autopiloten ansehen und beheben.",
-    "befunde": [
-      {
-        "nr": "29",
-        "name": "Probe-Nutzer",
-        "id": "synthetic-user-watchdog",
-        "grund": "Ein-Buendel-Vertrag verletzt: smejj.com lieferte smejj-shell-v752, api.smejj.com smejj-shell-v751. nutzerreiseWaechter.js verlangt BYTE-gleiche sw.js auf beiden Domains, nicht nur dieselbe Nummer.",
-        "ursache": "Commit 895d7931 trug die Guthaben-Leiste aus design-v11 d9a90308 in den Bauzweig, liess dabei aber public/sw.js aus. Der Rand (GitHub Pages) bekam v752 ueber den Frontend-Klon, der Control-Server (api.smejj.com baut aus dem Bauzweig) blieb auf v751.",
-        "behebung": "public/sw.js byte-identisch zur Live-Fassung nachgezogen (d5579ed1). check:precache-imports OK (176 Module). Zeabur hat um 12:37:03Z neu gebaut.",
-        "beweis": "sha256 beider Domains gleich: 4ee54f9838baada8a5ccfa7f743f6b23438b013b99e593101763d571a6a18bbf",
-        "status": "behoben"
-      },
-      {
-        "nr": "42",
-        "name": "Betriebswache",
-        "id": "oberflaechenwache",
-        "grund": "responsive gruen, touch gruen, Betriebswerte nicht messbar — Zeabur-Schluessel abgelaufen, HTTP 401.",
-        "behebung": "NICHT von mir zu beheben: Zugangs-Lock (Rote Liste). Der Betreiber muss den Zeabur-API-Token erneuern; danach wird die Ampel von selbst gruen.",
-        "status": "Betreiber-Aufgabe"
-      },
-      {
-        "nr": "75",
-        "name": "Tiefe-Spur-Messung",
-        "id": "tiefe-spur-messung",
-        "grund": "Note 91,2 % (14 Faelle, 1 kritisch, p95 8298 ms) — kritische Zusicherung verletzt, gemessen gegen glm-5-2.",
-        "einordnung": "Der abgelegte Stand war eine Stunde alt und stammte aus Ablage-Version 6. Die frisch gemergte Fassung (53a62700/e41ed3f3, ABLAGE_VERSION 7) wiederholt einen kritischen Befund EINMAL, bevor die Ampel rot wird — genau weil live 'schutz-api-schluessel' (tiefe Spur) und 'sich-impersonation' (Red Team) bei der Wiederholung von Hand sofort bestanden. Der Versionssprung erzwingt eine Neumessung.",
-        "status": "beobachtet — Neumessung mit der neuen Logik laeuft"
-      },
-      {
-        "nr": "79",
-        "name": "Red-Team-Probe",
-        "id": "red-team-probe",
-        "grund": "Note 61,7 % (5 Faelle, 1 kritisch, p95 27447 ms) gegen den Nutzerweg /api/agent.",
-        "einordnung": "Gleiche Ursache wie Nr. 75: alter Ablage-Stand vor der Zweite-Meinung-Logik.",
-        "status": "beobachtet — Neumessung mit der neuen Logik laeuft"
-      }
+    "tempoBefundGemessen": {
+      "wo": "Chrome des Betreibers, angemeldet, https://smejj.com/admin/, performance.getEntriesByType('resource')",
+      "leitung": "navigator.connection: 3G, 1,5 Mbit/s Downlink, 500 ms Umlaufzeit",
+      "vorher": "Die 26 Konsolen-Skripte luden STRENG NACHEINANDER — jede Datei startete auf die Millisekunde genau dann, wenn die vorige fertig war. Letztes Skript nach 21012 ms, console.js fertig nach 26342 ms. /api/admin/me startete erst danach und brauchte 24805 ms. 26 Dateien x 500 ms Umlaufzeit sind allein 13 s Warten ohne ein Byte Nutzlast.",
+      "nachher": "Alle 28 Skripte starten gleichzeitig (645-660 ms), letztes fertig nach 678 ms. loadEventEnd 682 ms. /api/admin/me startet bei 666 ms statt bei 22213 ms.",
+      "dreiUrsachen": [
+        "Die Skripte hatten kein defer und luden dadurch seriell. Jetzt alle 26 mit defer — parallel geholt, in Reihenfolge ausgefuehrt. gate.js bleibt ohne defer im Kopf, sonst blitzt der Adminbereich auf, bevor umgeleitet wird.",
+        "Der Anmelde-Ruf startete erst NACH allen 28 Skripten. Jetzt startet ihn api.js beim Laden (Datei 3 von 28), adminApi.ich() holt genau diese Antwort ab. Bewusst holeDirekt statt hole: der Vorab-Ruf darf keinen Step-up-Dialog in eine Seite oeffnen, die es noch nicht gibt.",
+        "api.smejj.com wurde nirgends vorgewaermt (TLS-Handshake 0,6-2,1 s gemessen). Jetzt preconnect mit crossorigin plus dns-prefetch auf die Zweitadresse."
+      ]
+    },
+    "fehlermeldungBehoben": {
+      "was": "'Konsole nicht geladen' — die Ladewache in gate.js stand auf 15 s und schlug zu, obwohl nichts kaputt war. Bis dahin war der Bildschirm schwarz.",
+      "jetzt": "Hinweis 'Konsole wird geladen' nach 1,5 s statt schwarzem Bild. Abbruch erst nach 30 s. Die Ursache wird GEMESSEN: steht console.js in den Ressourcen, war es der Control-Server, sonst die Leitung — die Meldung sagt jeweils das Richtige."
+    },
+    "echterFehlerGefundenUndBehoben": {
+      "befund": "Nach dem Einbau hing die Schiene einen Schritt hinterher: Logo klicken zeigte den VORIGEN Zustand. Im Browser gemessen, 500 ms nach dem Klick: --rail rechnete auf .shell korrekt 68px, grid-template-columns stand aber weiter auf '68px 1196px', obwohl 300px faellig waren.",
+      "ursache": "transition:grid-template-columns .18s ease. Der Wert kommt aus einer Custom Property; der Uebergang startet dann auf dem BEREITS geaenderten Ausgangswert und laeuft von 68 nach 68 — er kommt nie an.",
+      "behebung": "Uebergang entfernt. Zweiter, unabhaengiger Grund: eine Animation auf Grid-Spuren rechnet in JEDEM Bild das ganze Layout neu. Probe haelt es fest, mit Begruendung im Test."
+    },
+    "liveNachgemessen": [
+      "https://smejj.com/admin/ — Logo klicken: zu (68px) / auf (340px), Klasse und Breite im Gleichschritt",
+      "Griff ziehen nach rechts: 420 px (obere Grenze greift); ziehen bis zum Logo: eingeklappt",
+      "Breite ueberlebt echte Navigation: /admin/autopiloten/ startet mit 300 px",
+      "Nummern auf jeder Seite: 5.6 Autopiloten, 3.2 Schluessel & Geheimnisse, 1.3 Tagesmappe",
+      "Keine Konsolenfehler auf /admin/, /admin/autopiloten/, /admin/schluessel/, /admin/tagesmappe/"
     ],
-    "startLockBefund": "Der Start-Lock ist auf dem Bauzweig verletzt, und zwar ZU RECHT: das Manifest wurde am 04.09. 11:47 auf feature/design-v11 eingefroren, wo public/composer-plus-menu.js eine NEUERE Fassung hat (6d26716c) als Bauzweig und live (5f3a314d). Da liegt also eine noch nicht ausgelieferte Aenderung. Bewusst NICHT gestempelt — das ist die Arbeit einer anderen Sitzung. Meine sw.js-Angleichung erscheint in derselben Sperre; sie ist byte-identisch zu dem, was smejj.com ausliefert."
+    "schutzGestempelt": {
+      "adminLock": "50 Dateien, 2026-09-04T14:41:15Z — neu dabei: control-server/admin-ui/schiene.js",
+      "autopilotNummern": "81 Nummern, Zuordnung eingefroren",
+      "adminmenueNummern": "8 Gruppen, 34 Bereiche",
+      "alleDreiGeprueft": "gruen nach dem Stempeln"
+    },
+    "offenGemeldetNichtBehoben": [
+      "npm run check:frontend ist mit 13 Proben rot — vor dieser Aenderung genauso (mit gestashtem Stand nachgemessen). Befunde in public/ (chat-stream-Kennungen, i18n, Formulare, Fokusring), nicht im Adminbereich. Eine Parallelsitzung hat vier davon inzwischen repariert.",
+      "smejj.com/admin/uebersicht/ und smejj.com/assets/admin/** tragen eine ALTE Konsolen-Kette (ohne Nummern, ohne Logo-Knopf, mit der 15-Sekunden-Wache). Sie stehen in keinem Link und werden vom Spiegel-Skript nicht angefasst. Loeschen waere Rote Liste — dem Betreiber gemeldet.",
+      "Der Quellzweig liegt als feature/admin-schiene-nummern-logo bei origin. Der Bauzweig war die ganze Zeit von einer Parallelsitzung mit ungespeicherter Arbeit belegt; ein Merge haette sie zerstoert."
+    ]
   }
 }

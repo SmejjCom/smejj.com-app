@@ -68,6 +68,12 @@ export const PROTECTED_FILES = [
   "control-server/src/admin/impersonation.js",
   // Auslieferung der Konsole (feste Dateiliste).
   "control-server/src/routes/adminUiRoutes.js",
+  // Die linke Schiene (Betreiber-Freigabe 2026-09-04): sie entscheidet, was der
+  // Betreiber im Adminbereich ueberhaupt SIEHT — Nummern, Breite, Ein- und
+  // Ausklappen. Wer sie stillegt, nimmt ihm die Navigation, ohne dass eine
+  // Route oder ein Recht sich aendert. Steht deshalb unter demselben Schutz wie
+  // console.js und console.css.
+  "control-server/admin-ui/schiene.js",
   // Mechanik hinter allen Drosseln.
   "control-server/src/http/rateLimiter.js",
   // Der zentrale Step-up-Umweg der Oberflaeche.

@@ -176,6 +176,14 @@ async function adressenDerKonsole() {
 async function kernAdressen() {
   const { fenster, gerufen } = sandboxMitApi();
   const A = fenster.adminApi;
+  // Seit 2026-09-04 startet api.js den Anmelde-Ruf schon BEIM LADEN (Vorab-
+  // Anmeldung: so liegt die Antwortzeit des Control-Servers neben dem Download
+  // der 28 Skripte statt dahinter). Dieser Ruf steht damit bereits in
+  // `gerufen`, bevor hier die erste Seite gefragt wird — er gehoert zum Start,
+  // nicht zu einer Seite. Er wird als eigener Eintrag gefuehrt UND einmal
+  // abgeholt, damit das nachfolgende A.ich() wieder frisch fragt.
+  const vorabAdressen = gerufen.slice(0);
+  await A.ich();
   const kernrufe = [
     ["A Übersicht / B Nutzer", () => A.nutzer({ limit: 1 })],
     ["C Rollen & Rechte", () => A.ich()],
@@ -185,7 +193,7 @@ async function kernAdressen() {
     ["Audit-Log", () => A.audit({ limit: 50 })],
     ["Compliance", () => A.compliance()]
   ];
-  const seiten = [];
+  const seiten = [{ seite: "Start · Anmeldung (Vorab-Ruf aus api.js)", adressen: vorabAdressen }];
   for (const [name, ruf] of kernrufe) {
     const vorher = gerufen.length;
     await ruf();

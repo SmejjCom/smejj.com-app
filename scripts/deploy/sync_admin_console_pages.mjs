@@ -66,6 +66,80 @@ const SEITEN_ORDNER = Object.freeze([
   "tagesmappe"
 ]);
 
+// ---- Altlasten: Adressen, die es einmal gab -------------------------------
+//
+// BEFUND 2026-09-04 (Betreiber-Auftrag "alte Admin-Kopien aufraeumen"):
+// Zwei Stellen im Frontend-Klon trugen eine ALTE Konsolen-Huelle, die dieses
+// Skript nie angefasst hat, weil keine Seite sie registriert:
+//
+//   /admin/uebersicht/     — die 2026-08-23 aufgeloeste Startseite
+//   /assets/admin/**       — eine vollstaendige Kopie aus der Salad-Zeit (sw v364)
+//
+// Sie waren nicht harmlos. Ihre index.html laedt die Skripte ueber ABSOLUTE
+// Pfade aus /admin/ — also die AKTUELLEN Dateien, aber mit der ALTEN Liste:
+// ohne schiene.js, ohne die Stufen 11-13, ohne defer, ohne preconnect und ohne
+// das Markup fuer Logo-Knopf und Zieh-Griff. Wer eines dieser Lesezeichen
+// oeffnete, bekam eine halbe Konsole, die zaeh laedt und deren linke Schiene
+// sich nicht bedienen laesst.
+//
+// WARUM WEITERLEITUNG UND KEINE ZWEITE KOPIE: Eine zweite gepflegte Fassung
+// derselben Konsole laeuft frueher oder spaeter auseinander — genau das ist
+// hier passiert, und dieselbe Begruendung steht in adminUiRoutes.js. Die
+// Adressen bleiben gueltig, sie zeigen nur wieder auf die eine echte Konsole.
+// Geloescht wird NICHTS (Rote Liste).
+//
+// Die Weiterleitung ist ein <meta http-equiv="refresh">, kein Skript: die CSP
+// der Konsole verbietet Inline-Skripte, und ein Link muss auch dann tragen,
+// wenn JavaScript aus ist.
+const ALTLASTEN_WURZELN = Object.freeze(["admin/uebersicht", "assets/admin"]);
+
+function weiterleitung(ziel) {
+  return `<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="refresh" content="0; url=${ziel}">
+<title>Umgezogen — smejj.com Operations Console</title>
+<link rel="canonical" href="https://smejj.com${ziel}">
+</head>
+<body>
+<p>Diese Adresse ist umgezogen. <a href="${ziel}">Weiter zur Operations Console</a></p>
+</body>
+</html>
+`;
+}
+
+/**
+ * Schreibt fuer jede Altlast-Adresse eine Weiterleitung auf die echte Seite.
+ * Ordner, die es heute noch als Konsolen-Seite gibt, zeigen auf ihre Seite;
+ * alles andere auf /admin/.
+ */
+function altlastenSchreiben(zielWurzel, pruefen) {
+  const geschrieben = [];
+  for (const wurzel of ALTLASTEN_WURZELN) {
+    const basis = path.join(zielWurzel, wurzel);
+    if (!existsSync(basis)) continue;
+    const stellen = [""];
+    for (const eintrag of readdirSync(basis, { withFileTypes: true })) {
+      if (eintrag.isDirectory()) stellen.push(eintrag.name);
+    }
+    for (const stelle of stellen) {
+      const seite = stelle || path.basename(wurzel);
+      const nachZu = SEITEN_ORDNER.includes(seite) ? `/admin/${seite}/` : "/admin/";
+      const datei = path.join(basis, stelle, "index.html");
+      const inhalt = weiterleitung(nachZu);
+      if (existsSync(datei) && readFileSync(datei, "utf8") === inhalt) continue;
+      geschrieben.push(path.relative(zielWurzel, datei));
+      if (pruefen) continue;
+      mkdirSync(path.dirname(datei), { recursive: true });
+      writeFileSync(datei, inhalt);
+    }
+  }
+  return geschrieben;
+}
+
 function sha256(inhalt) {
   return createHash("sha256").update(inhalt).digest("hex");
 }
@@ -215,10 +289,18 @@ export function spiegeln(zielWurzel, { pruefen = false, quelle = QUELLE } = {}) 
       geschrieben.push(seite + "/index.html");
     }
   }
+  // Altlast-Adressen auf die echte Konsole zeigen lassen (siehe
+  // ALTLASTEN_WURZELN oben). Sie zaehlen bewusst NICHT als Abweichung: sie sind
+  // keine Spiegel der Quelle, sondern Wegweiser.
+  const altlasten = altlastenSchreiben(zielWurzel, pruefen);
+
   // Nach dem Spiegeln festhalten, WAS gespiegelt wurde — daraus lebt die
   // Pruefung ohne Klon.
   if (!pruefen) manifestSchreiben(quelle);
-  return { dateien: konsolenDateien(quelle).length + SEITEN_ORDNER.length, abweichungen, geschrieben };
+  return {
+    dateien: konsolenDateien(quelle).length + SEITEN_ORDNER.length,
+    abweichungen, geschrieben, altlasten
+  };
 }
 
 function main() {
