@@ -226,8 +226,8 @@ test("faire Latte: geaenderte Suite erzwingt Neumessung der stabilen Version", a
 test("budget: Zeitgrenze je Betriebsart reserviert nur, was die Art wirklich braucht", async () => {
   const { minutenFuer, MINUTEN_JE_MODUS } = await import("../workers/con-autopilot/budget.js");
   const grenzen = { jobMaxMinuten: 300 };
-  assert.equal(minutenFuer("messung", grenzen), 90);
-  assert.equal(minutenFuer("training+messung", grenzen), 220);
+  assert.equal(minutenFuer("messung", grenzen), 150);
+  assert.equal(minutenFuer("training+messung", grenzen), 260);
   assert.ok(MINUTEN_JE_MODUS.messung < MINUTEN_JE_MODUS["training+messung"]);
   // Der harte Deckel des Betreibers gewinnt immer.
   assert.equal(minutenFuer("training+messung", { jobMaxMinuten: 60 }), 60);

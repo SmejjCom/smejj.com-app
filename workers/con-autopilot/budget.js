@@ -47,11 +47,16 @@ export function tagesschluessel(datum = new Date()) {
  * unnoetig Budget und liess kleine Jobs am Deckel scheitern.
  */
 export const MINUTEN_JE_MODUS = Object.freeze({
-  messung: 90,
-  training: 200,
-  "training+messung": 220,
-  "spiegel+messung": 200,
-  spiegel: 170
+  // Gemessen 03./04.09.: ein Messlauf dauerte 36 Minuten auf einem schnellen Knoten und
+  // ueber 115 auf einem langsamen — das Holen der 55,6 GB aus e2 schwankt um den Faktor
+  // drei. 90 Minuten waren am besten Fall bemessen und rissen am 04.09. eine Messung ab,
+  // NACHDEM das Training bereits bezahlt war. Die Grenze richtet sich ab jetzt nach dem
+  // schlechten Fall; bezahlt wird ohnehin nur die tatsaechliche Zeit.
+  messung: 150,
+  training: 220,
+  "training+messung": 260,
+  "spiegel+messung": 240,
+  spiegel: 200
 });
 
 export function minutenFuer(modus, grenzen) {
