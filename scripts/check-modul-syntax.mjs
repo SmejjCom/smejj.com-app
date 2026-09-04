@@ -30,8 +30,12 @@ function moduleAusGit() {
   // /assets/-Kopien sind erzeugte Zwillinge; kaputt waeren sie nur, wenn die
   // Quelle kaputt ist — und die wird hier geprueft. Doppelt pruefen kostet
   // nur Zeit, findet aber nichts Eigenes.
+  // public/vendor/ ist FREMDCODE (pdf.js von Mozilla, Apache-2.0): nicht unsere
+  // Schreibweise, teils Dateifragmente (der Worker liegt als part1/part2, weil das
+  // Projekt keine Datei ueber 1 MB im Repo erlaubt). Ein Fragment ist per Bauart kein
+  // gueltiges Modul — es hier zu parsen meldet einen Fehler, den es nicht gibt.
   return [...new Set(raus.split("\n").filter(Boolean))]
-    .filter((p) => !p.startsWith("public/assets/"));
+    .filter((p) => !p.startsWith("public/assets/") && !p.startsWith("public/vendor/"));
 }
 
 /** Parst EINE Datei als ES-Modul. Rueckgabe: "" bei Erfolg, sonst der Fehler. */
