@@ -752,3 +752,58 @@ sonst jagt man einen Serverfehler, den es nicht gibt.
 check:all EXIT 0 (kein roter Punkt), check:frontend 686 Tests, check:control-server 230 Tests,
 check:guidelines 2107 Dateien. smejj.com und api.smejj.com synchron auf smejj-shell-v750.
 Task Capsule: docs/task-capsules/2026/09/job_anhaenge_stufe2_und_checkall_20260904/CAPSULE.md
+
+## 2026-09-04 · Adminbereich: Nummern, Logo-Knopf, Zieh-Griff — und warum er langsam war (job_admin_nummern_logo_20260904)
+
+**Nummern mit 100%-Schutz.** Das Admin-Menue traegt jetzt 1..8 fuer die Gruppen
+und 1.1..8.2 fuer die Bereiche; die Tabelle in `console.js` bestimmt zugleich die
+Reihenfolge (vorher entschied darueber die Ladereihenfolge der `console-stage*.js`
+— unsichtbar und damit nicht schuetzbar). Geschuetzt wird die ZUORDNUNG, nicht die
+Datei: `scripts/check-menue-nummern.mjs` und `scripts/check-autopilot-nummern.mjs`
+vergleichen bei jedem `check:all` gegen ihre Manifeste. Eine vergebene Nummer darf
+nicht wandern, nicht doppelt vorkommen, nicht verschwinden — eine NEUE Nummer fuer
+etwas Neues bleibt erlaubt. Ein Datei-Hash haette den Weiterbau blockiert und den
+Schutz durch staendiges Neu-Einfrieren entwertet.
+
+**Der Adminbereich war langsam — gemessen, nicht geraten.** Im Chrome des
+Betreibers: `navigator.connection` meldet 3G, 1,5 Mbit/s, **500 ms Umlaufzeit**.
+Die 26 Konsolen-Skripte luden STRENG NACHEINANDER, jede Datei startete auf die
+Millisekunde genau dann, wenn die vorige fertig war: letztes Skript nach
+**21 Sekunden**, `console.js` nach 26. Der Anmelde-Ruf startete erst DANACH.
+Daher die Meldung "Konsole nicht geladen" — die 15-Sekunden-Wache in `gate.js`
+schlug zu, obwohl nichts kaputt war.
+
+Drei Ursachen, alle behoben — nachher starten alle 28 Skripte gleichzeitig und
+sind nach **678 ms** da:
+1. Kein `defer`. Jetzt alle 26 mit `defer` (parallel geholt, in Reihenfolge
+   ausgefuehrt). `gate.js` bleibt ohne `defer` im Kopf.
+2. Der Anmelde-Ruf lag hinter dem Download. `api.js` startet ihn jetzt beim
+   Laden; `adminApi.ich()` holt genau diese Antwort ab. Bewusst `holeDirekt`,
+   nicht `hole` — der Vorab-Ruf darf keinen Step-up-Dialog in eine Seite oeffnen,
+   die es noch nicht gibt.
+3. Kein `preconnect` auf `api.smejj.com` (0,6-2,1 s TLS-Handshake mitten im
+   Wartebalken). Jetzt gesetzt, mit `crossorigin` — ohne das waermt es die
+   falsche Verbindung.
+
+**Falle, die zweimal Zeit gekostet hat: `transition` auf einer Eigenschaft, deren
+Wert aus einer Custom Property kommt.** `.shell{transition:grid-template-columns}`
+liess die Schiene einen Schritt HINTERHERHINKEN: `--rail` rechnete korrekt 68px,
+`grid-template-columns` stand 500 ms spaeter immer noch auf dem alten Wert. Der
+Uebergang startet auf dem BEREITS geaenderten Ausgangswert und laeuft von 68 nach
+68. Unabhaengig davon rechnet eine Animation auf Grid-Spuren in jedem Bild das
+ganze Layout neu. Entfernt, Probe haelt es fest.
+
+**Zieh-Griff auf der Trennlinie** (`schiene.js`, eigene Datei wegen der
+800-Zeilen-Regel): Pointer Events mit `setPointerCapture` — ein Weg fuer Maus,
+Finger und Stift. Im Zug wird nichts gemessen und nichts gespeichert, nur eine
+CSS-Variable, hoechstens einmal je Bild. Unter 150 px rastet es ein; eingeklappt
+bleiben 68 px Icon-Spur stehen, damit das Logo klickbar bleibt.
+
+**Vor dem Spiegeln IMMER den Diff Quelle-gegen-Klon lesen.** `console.css` trug
+live eine Regel (`.panel>.pb.flush:has(>table)`), die in der Quelle fehlte — der
+Spiegel-Lauf haette sie geloescht. In die Quelle zurueckgeholt.
+
+Live und geschuetzt: Admin-Lock 50 Dateien (neu dabei `schiene.js`), 81
+Autopiloten-Nummern, 8 Gruppen und 34 Bereiche. Quellzweig
+`feature/admin-schiene-nummern-logo` bei origin — der Bauzweig war durchgehend
+von einer Parallelsitzung mit ungespeicherter Arbeit belegt.

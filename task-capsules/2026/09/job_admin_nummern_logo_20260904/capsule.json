@@ -66,5 +66,52 @@
     "app": "376e3e7d (Bau), 7d122f96 (Stempel) auf feature/admin-nummern-logo-final",
     "frontend": "d7af3df (live), 5dd7a95 (Spiegel byte-gleich) auf smejj-app-frontend main"
   },
-  "status": "abgeschlossen"
+  "status": "live und geschuetzt",
+  "nachtragZiehGriffUndTempo": {
+    "auftrag": "Betreiber 2026-09-04: 'Ich will diese Trennlinie zwischen Operations Console und AP Autopiloten mit der Maus anfassen und bis zum Logo ziehen koennen, damit die linke Seite einklappt — und mit Ziehen wieder oeffnen.' Danach: 'Warum ist Adminbereich so langsam und kommen die Sonderfehlermeldungen?'",
+    "ziehGriff": {
+      "datei": "control-server/admin-ui/schiene.js (neu, 173 Zeilen) — eigene Datei wegen der 800-Zeilen-Regel; console.js gibt Breite, Ein-/Ausklappen und Griff ab",
+      "mechanik": "Pointer Events mit setPointerCapture: ein Weg fuer Maus, Finger und Stift; der Zug reisst nicht ab, wenn der Zeiger ueber den Inhalt laeuft. Im Zug wird NICHTS gemessen und NICHTS gespeichert — nur eine CSS-Variable, hoechstens einmal je Bild (requestAnimationFrame). Gemerkt wird einmal beim Loslassen.",
+      "verhalten": "Unter 150 px rastet der Zug ins Eingeklappte ein (68 px Icon-Spur, das Logo bleibt sichtbar — sonst gaebe es keinen Weg zurueck). Grenzen 200-420 px. Doppelklick auf die Linie schaltet um. Pfeiltasten, Pos1 und Ende bedienen den Griff ohne Maus (role=separator mit aria-valuenow).",
+      "trefferflaeche": "10 px breit, optisch nur eine 2-px-Linie beim Ueberfahren (Fitts: eine 1-px-Linie trifft niemand)"
+    },
+    "tempoBefundGemessen": {
+      "wo": "Chrome des Betreibers, angemeldet, https://smejj.com/admin/, performance.getEntriesByType('resource')",
+      "leitung": "navigator.connection: 3G, 1,5 Mbit/s Downlink, 500 ms Umlaufzeit",
+      "vorher": "Die 26 Konsolen-Skripte luden STRENG NACHEINANDER — jede Datei startete auf die Millisekunde genau dann, wenn die vorige fertig war. Letztes Skript nach 21012 ms, console.js fertig nach 26342 ms. /api/admin/me startete erst danach und brauchte 24805 ms. 26 Dateien x 500 ms Umlaufzeit sind allein 13 s Warten ohne ein Byte Nutzlast.",
+      "nachher": "Alle 28 Skripte starten gleichzeitig (645-660 ms), letztes fertig nach 678 ms. loadEventEnd 682 ms. /api/admin/me startet bei 666 ms statt bei 22213 ms.",
+      "dreiUrsachen": [
+        "Die Skripte hatten kein defer und luden dadurch seriell. Jetzt alle 26 mit defer — parallel geholt, in Reihenfolge ausgefuehrt. gate.js bleibt ohne defer im Kopf, sonst blitzt der Adminbereich auf, bevor umgeleitet wird.",
+        "Der Anmelde-Ruf startete erst NACH allen 28 Skripten. Jetzt startet ihn api.js beim Laden (Datei 3 von 28), adminApi.ich() holt genau diese Antwort ab. Bewusst holeDirekt statt hole: der Vorab-Ruf darf keinen Step-up-Dialog in eine Seite oeffnen, die es noch nicht gibt.",
+        "api.smejj.com wurde nirgends vorgewaermt (TLS-Handshake 0,6-2,1 s gemessen). Jetzt preconnect mit crossorigin plus dns-prefetch auf die Zweitadresse."
+      ]
+    },
+    "fehlermeldungBehoben": {
+      "was": "'Konsole nicht geladen' — die Ladewache in gate.js stand auf 15 s und schlug zu, obwohl nichts kaputt war. Bis dahin war der Bildschirm schwarz.",
+      "jetzt": "Hinweis 'Konsole wird geladen' nach 1,5 s statt schwarzem Bild. Abbruch erst nach 30 s. Die Ursache wird GEMESSEN: steht console.js in den Ressourcen, war es der Control-Server, sonst die Leitung — die Meldung sagt jeweils das Richtige."
+    },
+    "echterFehlerGefundenUndBehoben": {
+      "befund": "Nach dem Einbau hing die Schiene einen Schritt hinterher: Logo klicken zeigte den VORIGEN Zustand. Im Browser gemessen, 500 ms nach dem Klick: --rail rechnete auf .shell korrekt 68px, grid-template-columns stand aber weiter auf '68px 1196px', obwohl 300px faellig waren.",
+      "ursache": "transition:grid-template-columns .18s ease. Der Wert kommt aus einer Custom Property; der Uebergang startet dann auf dem BEREITS geaenderten Ausgangswert und laeuft von 68 nach 68 — er kommt nie an.",
+      "behebung": "Uebergang entfernt. Zweiter, unabhaengiger Grund: eine Animation auf Grid-Spuren rechnet in JEDEM Bild das ganze Layout neu. Probe haelt es fest, mit Begruendung im Test."
+    },
+    "liveNachgemessen": [
+      "https://smejj.com/admin/ — Logo klicken: zu (68px) / auf (340px), Klasse und Breite im Gleichschritt",
+      "Griff ziehen nach rechts: 420 px (obere Grenze greift); ziehen bis zum Logo: eingeklappt",
+      "Breite ueberlebt echte Navigation: /admin/autopiloten/ startet mit 300 px",
+      "Nummern auf jeder Seite: 5.6 Autopiloten, 3.2 Schluessel & Geheimnisse, 1.3 Tagesmappe",
+      "Keine Konsolenfehler auf /admin/, /admin/autopiloten/, /admin/schluessel/, /admin/tagesmappe/"
+    ],
+    "schutzGestempelt": {
+      "adminLock": "50 Dateien, 2026-09-04T14:41:15Z — neu dabei: control-server/admin-ui/schiene.js",
+      "autopilotNummern": "81 Nummern, Zuordnung eingefroren",
+      "adminmenueNummern": "8 Gruppen, 34 Bereiche",
+      "alleDreiGeprueft": "gruen nach dem Stempeln"
+    },
+    "offenGemeldetNichtBehoben": [
+      "npm run check:frontend ist mit 13 Proben rot — vor dieser Aenderung genauso (mit gestashtem Stand nachgemessen). Befunde in public/ (chat-stream-Kennungen, i18n, Formulare, Fokusring), nicht im Adminbereich. Eine Parallelsitzung hat vier davon inzwischen repariert.",
+      "smejj.com/admin/uebersicht/ und smejj.com/assets/admin/** tragen eine ALTE Konsolen-Kette (ohne Nummern, ohne Logo-Knopf, mit der 15-Sekunden-Wache). Sie stehen in keinem Link und werden vom Spiegel-Skript nicht angefasst. Loeschen waere Rote Liste — dem Betreiber gemeldet.",
+      "Der Quellzweig liegt als feature/admin-schiene-nummern-logo bei origin. Der Bauzweig war die ganze Zeit von einer Parallelsitzung mit ungespeicherter Arbeit belegt; ein Merge haette sie zerstoert."
+    ]
+  }
 }
