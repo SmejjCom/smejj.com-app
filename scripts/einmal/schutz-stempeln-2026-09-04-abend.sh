@@ -56,16 +56,52 @@ if ! node --test tests/tool-loop.test.mjs tests/chat-schritte.test.mjs tests/run
   echo "ABBRUCH: Tests rot — nicht gestempelt"; aufraeumen; exit 5
 fi
 
-echo "4/6 Sperren stempeln ..."
-node scripts/check-start-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Start-Lock nicht gestempelt"; aufraeumen; exit 6; }
-node scripts/check-security-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Security-Lock nicht gestempelt"; aufraeumen; exit 6; }
+# PHANTOM-PROBE (Befund 2026-09-04, zweimal am selben Tag): Ein Stempel friert
+# ein, was im Baum LIEGT — nicht, was smejj.com AUSLIEFERT. Beides lief heute
+# zweimal auseinander: erst composer-plus-menu.js (eine Fassung, die es
+# nirgends gab), dann app.js, premium-surfaces.js und die Marke in index.html.
+# Live ist die VEREINIGUNG beider Zweige; kein Zweig allein entspricht ihr.
+#
+# Darum wird vor dem Stempeln jede geschuetzte Datei gegen die Auslieferung
+# gehalten. Eine Abweichung heisst: der Stempel wuerde eine Fassung einfrieren,
+# die niemand bekommt — und check:start-lock meldet danach den Unterschied als
+# Verstoss, obwohl live und Repo beide in Ordnung sind.
+echo "4/7 Phantom-Probe: stimmt der Baum mit smejj.com ueberein? ..."
+PHANTOME=0
+for DATEI in $(node -e '
+const m = JSON.parse(require("fs").readFileSync("docs/frontend/start-lock-manifest.json", "utf8"));
+const liste = m.dateien || m.files || m;
+for (const p of Object.keys(liste)) if (p.startsWith("public/") && !p.includes("/assets/")) console.log(p);
+' 2>/dev/null); do
+  [ -f "$DATEI" ] || continue
+  ADRESSE="https://smejj.com/${DATEI#public/}"
+  HIER="$(shasum -a 256 < "$DATEI" | awk '{print $1}')"
+  DORT="$(curl -sf --max-time 20 "$ADRESSE" | shasum -a 256 | awk '{print $1}')"
+  if [ -z "$DORT" ]; then
+    echo "    ? $DATEI — nicht abrufbar, uebersprungen"
+  elif [ "$HIER" != "$DORT" ]; then
+    echo "    PHANTOM: $DATEI weicht von $ADRESSE ab"
+    PHANTOME=$((PHANTOME + 1))
+  fi
+done
+if [ "$PHANTOME" -gt 0 ]; then
+  echo "ABBRUCH: $PHANTOME Datei(en) im Baum weichen von der Auslieferung ab."
+  echo "         Ein Stempel wuerde Fassungen einfrieren, die niemand bekommt."
+  echo "         Bitte diese Ausgabe in den Chat kopieren."
+  aufraeumen; exit 6
+fi
+echo "    alle geprueften Dateien sind byte-gleich mit smejj.com"
 
-echo "5/6 Alle vier Sperren pruefen ..."
+echo "5/7 Sperren stempeln ..."
+node scripts/check-start-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Start-Lock nicht gestempelt"; aufraeumen; exit 10; }
+node scripts/check-security-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Security-Lock nicht gestempelt"; aufraeumen; exit 10; }
+
+echo "6/7 Alle vier Sperren pruefen ..."
 for pruefung in start security admin favicon; do
   node "scripts/check-${pruefung}-lock.mjs" || { echo "ABBRUCH: ${pruefung}-lock rot"; aufraeumen; exit 7; }
 done
 
-echo "6/6 Manifeste committen und hochladen ..."
+echo "7/7 Manifeste committen und hochladen ..."
 GEAENDERT="$(git status --short docs/security docs/frontend docs/approvals | awk '{print $2}')"
 if [ -z "$GEAENDERT" ]; then
   echo "Hinweis: kein Manifest geaendert — war schon gestempelt."
