@@ -209,8 +209,10 @@ test("faire Latte: geaenderte Suite erzwingt Neumessung der stabilen Version", a
     { version: "con-1.1.0", status: "candidate", adapterPrefix: "con/versions/con-1.1.0/adapter", benchmarks: null }
   ] };
   const planAlt = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, {}, alt);
-  assert.equal(planAlt.schritt, "latte_neu_messen");
+  // Latte veraltet UND Kandidat wartet -> ein gemeinsamer Job, Fundament zuerst.
+  assert.equal(planAlt.schritt, "latte_und_kandidat");
   assert.equal(planAlt.job.version, "con-1.0.0");
+  assert.equal(planAlt.job.staende[0].version, "con-1.0.0");
   // Gleiche Latte -> der Kandidat ist dran.
   const neu = structuredClone(alt);
   neu.versions[0].benchmarks.suitenStand = aktuell;
@@ -229,4 +231,30 @@ test("budget: Zeitgrenze je Betriebsart reserviert nur, was die Art wirklich bra
   assert.equal(minutenFuer("training+messung", { jobMaxMinuten: 60 }), 60);
   // Unbekannte Art faellt auf den Deckel zurueck, nie auf etwas Groesseres.
   assert.equal(minutenFuer("unbekannt", { jobMaxMinuten: 75 }), 75);
+});
+
+test("planung: geaenderte Latte UND wartender Kandidat werden in EINEM Job gemessen", async () => {
+  const { planeNaechstenSchritt, suitenStand } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
+  const e2Attrappe = { getJson: async () => ({ komplett: true }), liste: async () => [] };
+  const registry = { versions: [
+    { version: "con-1.0.0", status: "stable", basisPrefix: "con/base/x", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: {}, suitenStand: { ...stand, "con-sicherheit": "veraltet" } } },
+    { version: "con-1.1.0", status: "candidate", basisPrefix: "con/base/x", adapterPrefix: "con/versions/con-1.1.0/adapter", benchmarks: null }
+  ] };
+  const plan = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, {}, registry);
+  assert.equal(plan.schritt, "latte_und_kandidat");
+  assert.equal(plan.job.staende.length, 2);
+  // Das Fundament muss zuerst kommen: ein angehaengter Adapter laesst sich nicht mehr abnehmen.
+  assert.equal(plan.job.staende[0].version, "con-1.0.0");
+  assert.equal(plan.job.staende[0].adapterPrefix, null);
+  assert.equal(plan.job.staende[1].version, "con-1.1.0");
+  assert.deepEqual(JSON.parse(plan.job.parameter.CON_MESS_VERSIONEN), plan.job.staende);
+  // Nur der Kandidat faellig -> ein Stand, alter Name bleibt.
+  const nurKandidat = structuredClone(registry);
+  nurKandidat.versions[0].benchmarks.suitenStand = stand;
+  const p2 = await planeNaechstenSchritt({ e2: e2Attrappe, konfig }, {}, nurKandidat);
+  assert.equal(p2.schritt, "kandidat_messen");
+  assert.equal(p2.job.staende.length, 1);
 });

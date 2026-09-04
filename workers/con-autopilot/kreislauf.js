@@ -137,9 +137,20 @@ async function beendeJob(ctx, z, grund, ergebnis) {
   task.kosten = kosten;
   task.ergebnis = ergebnis || null;
   let bewertung = null;
-  if (ergebnis?.ok && ergebnis.messung?.prefix) {
-    bewertung = await bewerteUndEntscheide(ctx, z, job, ergebnis);
-    task.ergebnisKurz = bewertung ? `gesamt ${bewertung.gesamt} · kritisch ${bewertung.kritisch} · ${z.letzteEntscheidung?.entscheidung || "-"}` : null;
+  // Ein Job kann mehrere Staende gemessen haben (Fundament + Kandidat, EIN Modell-Ladevorgang).
+  // Reihenfolge zaehlt: das Fundament wird zuerst bewertet, damit der Kandidat gegen die
+  // frische Latte antritt und nicht gegen eine alte Note.
+  const messungen = Array.isArray(ergebnis?.messungen) && ergebnis.messungen.length
+    ? ergebnis.messungen
+    : (ergebnis?.messung?.prefix ? [ergebnis.messung] : []);
+  if (ergebnis?.ok && messungen.length) {
+    const kurz = [];
+    for (const m of messungen) {
+      const teilJob = { ...job, version: m.version || job.version, adapterPrefix: m.adapterPrefix ?? job.adapterPrefix };
+      bewertung = await bewerteUndEntscheide(ctx, z, teilJob, { ...ergebnis, messung: m });
+      kurz.push(bewertung ? `${teilJob.version}: ${bewertung.gesamt} (${z.letzteEntscheidung?.entscheidung || "-"})` : `${teilJob.version}: ungueltig`);
+    }
+    task.ergebnisKurz = kurz.join(" · ");
   } else if (ergebnis?.ok && ergebnis.spiegel) {
     task.ergebnisKurz = `Spiegel komplett: ${ergebnis.spiegel.dateien} Dateien`;
   } else {
@@ -274,16 +285,21 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   // Note zu halten, die mit einer anderen Suite entstanden ist, waere ein unfairer Vergleich.
   const aktuell = await suitenStand(konfig.suitesDir);
   const veraendert = abweichendeSuiten(stabil.benchmarks?.suitenStand, aktuell);
-  if (veraendert.length) {
-    return { schritt: "latte_neu_messen", job: { modus: "messung", version: stabil.version, adapterPrefix: stabil.adapterPrefix || null,
-      ziel: `Stabile Version ${stabil.version} mit geaenderter Latte neu messen (${veraendert.join(", ")})`,
-      parameter: { CON_VERSION: stabil.version, ...(stabil.adapterPrefix ? { CON_ADAPTER_PREFIX: stabil.adapterPrefix } : {}), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
-  }
-  // 2. Kandidat mit Adapter, aber ohne Bewertung: messen.
   const kandidat = registry.versions.find((v) => v.status === "candidate" && v.adapterPrefix && !v.benchmarks);
-  if (kandidat) {
-    return { schritt: "kandidat_messen", job: { modus: "messung", version: kandidat.version, adapterPrefix: kandidat.adapterPrefix, ziel: `Kandidat ${kandidat.version} messen`,
-      parameter: { CON_VERSION: kandidat.version, CON_ADAPTER_PREFIX: kandidat.adapterPrefix, CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
+  // Beides faellig? Dann in EINEM Job. Das 55-GB-Fundament wird einmal geholt statt zweimal;
+  // gemessen 04.09.: ein zusaetzlicher Job kostet 16 Minuten Ladezeit und die halbe Jobmiete.
+  const staende = [];
+  if (veraendert.length) staende.push({ version: stabil.version, adapterPrefix: stabil.adapterPrefix || null });
+  if (kandidat) staende.push({ version: kandidat.version, adapterPrefix: kandidat.adapterPrefix });
+  if (staende.length) {
+    const ziel = staende.length > 1
+      ? `Fundament ${stabil.version} und Kandidat ${kandidat.version} in einem Lauf messen (Latte geaendert: ${veraendert.join(", ")})`
+      : (veraendert.length ? `Stabile Version ${stabil.version} mit geaenderter Latte neu messen (${veraendert.join(", ")})` : `Kandidat ${kandidat.version} messen`);
+    return { schritt: staende.length > 1 ? "latte_und_kandidat" : (veraendert.length ? "latte_neu_messen" : "kandidat_messen"),
+      job: { modus: "messung", version: staende[0].version, adapterPrefix: staende[0].adapterPrefix, staende, ziel,
+        parameter: { CON_VERSION: staende[0].version, CON_MESS_VERSIONEN: JSON.stringify(staende),
+          ...(staende[0].adapterPrefix ? { CON_ADAPTER_PREFIX: staende[0].adapterPrefix } : {}),
+          CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };
   }
   // 3. Schwaeche -> Trainingsplan -> Daten pruefen -> Training.
   const schwaeche = z.schwaechste || (stabil.benchmarks ? schwaechsteKategorie(stabil.benchmarks) : null);

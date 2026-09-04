@@ -129,6 +129,14 @@ class TransformersWeg:
         neu = seq[prompt_len:] if int(seq.shape[-1]) > prompt_len and bool((seq[:prompt_len] == input_ids[0]).all()) else seq
         return tok.decode(neu, skip_special_tokens=True), int(neu.shape[-1])
 
+    def haenge_adapter_an(self, adapterpfad):
+        """Adapter nachtraeglich anlegen. Spart einen kompletten Modell-Ladevorgang, wenn in
+        EINEM Job erst das Fundament und danach der Kandidat gemessen wird."""
+        from peft import PeftModel
+        self.modell = PeftModel.from_pretrained(self.modell, adapterpfad)
+        self.modell.eval()
+        self.adapterpfad = adapterpfad
+
     def beschreibung(self):
         vram = None
         try:
