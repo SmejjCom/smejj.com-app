@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-04T11:47:51.969Z",
+  "frozenAt": "2026-09-04T11:52:45.234Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-04 (Doppelklick): Die Guthaben-Leiste auf smejj.com/entwickler.html bekommt ihre fehlende Gestaltung — die drei Bloecke stehen wieder nebeneinander, die Trenner sind schmale Striche statt Balken quer durch die Seite, 'Aufladen' ist ein Knopf. Dafuer Marken api-center-surface v15, CSS v9, entwickler.js v18 und die drei Kettenglieder darueber, Service-Worker-Cache +1. Grundlage: Live-Pruefung der Entwicklerseite 2026-09-04.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4b450e890525bc3c429cc5157613539047549590eb2e3635b4ce1d02ff97c0d7",
+    "public/index.html": "111d04c68d4d02154ca038941e561791633afe174261e1f000cc98037b5bf353",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "69c21011c1f20954b1686febf314f1cb0a7695e9fe23a2e5416cf9df467c6942",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "5342b75e431b962d0c9fc0aee9a89e03252dd239536bf313a3089243f409e892",
+    "public/app.js": "7a0263e75c164054526409fcbc50cafb2ac74990fe5965ff52be85a3a6dbd6cd",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "032d27397f6233ded9cae7e0bee60f6053ddb5434c4b4a33bfe01f4839c2333b",
+    "public/premium-surfaces.js": "0ca8c19dc2def88e065df664dac1eae25c0d8d7d3a6409562aba59b58bdb36b9",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "fa43bbe38c5eac0aec8bdb769187108239fce4d3377a1d778c2ba1cb19e31677",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "ca1dd35dcc390d7d0bc318d8132e864e99715c77c5f230c8736ff71455a2d674",
+    "public/sw.js": "4ee54f9838baada8a5ccfa7f743f6b23438b013b99e593101763d571a6a18bbf",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
