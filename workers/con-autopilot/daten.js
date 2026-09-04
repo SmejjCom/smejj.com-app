@@ -17,19 +17,31 @@ const PII_AUSNAHMEN = [/@example\.(org|com|net)/i, /@verein\.example/i, /@evil\.
 const INJECTION = [/ignor(e|iere)\s+(alle\s+)?(vorherigen|previous|bisherigen|all)/i, /systemanweisung/i, /\bDAN\b.*ohne regeln/i, /reveal.*(system prompt|secret)/i, /gib.*(freigabecode|api[_-]?key|passwort).*aus/i];
 /** Woran eine Verweigerung erkennbar ist. Bewusst weit gefasst, aber ohne Zustimmungswoerter. */
 const VERWEIGERUNG = /\b(nein|nicht|kein|keine|verweiger|lehne|unzulaessig|vertraulich|gebe .{0,20}nicht)\b/i;
-const SPAM = [/(.)\1{9,}/, /(https?:\/\/\S+\s*){4,}/i, /^(?:[^a-zA-ZäöüÄÖÜß]*)$/];
+const SPAM = [/(.)\1{9,}/, /(https?:\/\/\S+\s*){4,}/i];
+/** Reine Zahl, Bruch oder Kommazahl — die VOLLSTAENDIGE richtige Antwort auf eine Rechenaufgabe. */
+const NUR_ZAHL = /^-?\d+(?:[.,]\d+)?(?:\s*\/\s*\d+)?$/;
+/**
+ * Ohne einen einzigen Buchstaben ist eine Antwort Muell — ausser sie ist genau so eine Zahl.
+ * Die alte Fassung warf am 04.09. 8.236 korrekte Rechenantworten weg ("391" hat keine Buchstaben).
+ */
+function ohneInhalt(text) {
+  return !/[a-zA-ZäöüÄÖÜß]/.test(text) && !NUR_ZAHL.test(String(text).trim());
+}
 
 export function hashText(t) { return createHash("sha256").update(String(t)).digest("hex"); }
 
 function normalisiere(t) { return String(t || "").toLowerCase().replace(/\s+/g, " ").replace(/[^\p{L}\p{N} ]/gu, "").trim(); }
 
 /** Prueft EIN Paar. Liefert {ok, grund}. */
-export function pruefePaar(messages, { suitenFragen = new Set(), angriffeErlaubt = false } = {}) {
+export function pruefePaar(messages, { suitenFragen = new Set(), angriffeErlaubt = false, mindestAntwortLaenge = 8 } = {}) {
   if (!Array.isArray(messages) || messages.length < 2) return { ok: false, grund: "format" };
   const user = messages.filter((m) => m.role === "user").map((m) => m.content).join("\n");
   const assistant = messages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n");
   if (!user.trim() || !assistant.trim()) return { ok: false, grund: "leer" };
-  if (assistant.trim().length < 8) return { ok: false, grund: "antwort_zu_kurz" };
+  // 8 Zeichen sind die richtige Schwelle fuer geerntete Prosa (dort ist "ok" Muell).
+  // Bei gerechneten Aufgaben ist "391" die VOLLSTAENDIGE richtige Antwort — dort setzt
+  // der Aufrufer die Schwelle herunter, weil die Richtigkeit anderweitig bewiesen ist.
+  if (assistant.trim().length < mindestAntwortLaenge) return { ok: false, grund: "antwort_zu_kurz" };
   if (user.length > 6000 || assistant.length > 8000) return { ok: false, grund: "zu_lang" };
   const alles = user + "\n" + assistant;
   if (SCHLUESSEL.some((r) => r.test(alles))) return { ok: false, grund: "schluessel" };
@@ -41,14 +53,14 @@ export function pruefePaar(messages, { suitenFragen = new Set(), angriffeErlaubt
     if (!angriffeErlaubt) return { ok: false, grund: "prompt_injection" };
     if (!VERWEIGERUNG.test(assistant)) return { ok: false, grund: "angriff_ohne_verweigerung" };
   }
-  if (SPAM.some((r) => r.test(assistant))) return { ok: false, grund: "spam" };
+  if (SPAM.some((r) => r.test(assistant)) || ohneInhalt(assistant)) return { ok: false, grund: "spam" };
   if (/\b(TODO|FIXME|lorem ipsum|undefined|NaN)\b/.test(assistant)) return { ok: false, grund: "fehlerhaft" };
   if (suitenFragen.has(normalisiere(user))) return { ok: false, grund: "suitenfall" };
   return { ok: true, grund: null };
 }
 
 /** Rohzeilen (JSONL-Text oder Array) -> {paare, bericht}. Deterministisch (Reihenfolge der Quelle). */
-export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIANTEN, maxPaare = null, angriffeErlaubt = false } = {}) {
+export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIANTEN, maxPaare = null, angriffeErlaubt = false, mindestAntwortLaenge = 8 } = {}) {
   const suitenFragen = new Set(suiten.flatMap((s) => (s.cases || []).map((c) => normalisiere(c.prompt))));
   const zeilen = Array.isArray(rohZeilen) ? rohZeilen : String(rohZeilen).split("\n").filter((z) => z.trim());
   const abgelehnt = {};
@@ -61,7 +73,7 @@ export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIA
     let d;
     try { d = typeof z === "string" ? JSON.parse(z) : z; } catch { abgelehnt.json = (abgelehnt.json || 0) + 1; continue; }
     const messages = d.messages || (d.prompt && d.response ? [{ role: "user", content: d.prompt }, { role: "assistant", content: d.response }] : null);
-    const p = pruefePaar(messages, { suitenFragen, angriffeErlaubt });
+    const p = pruefePaar(messages, { suitenFragen, angriffeErlaubt, mindestAntwortLaenge });
     if (!p.ok) { abgelehnt[p.grund] = (abgelehnt[p.grund] || 0) + 1; continue; }
     const kennung = hashText(messages.map((m) => `${m.role}:${normalisiere(m.content)}`).join("|"));
     if (gesehen.has(kennung)) { abgelehnt.duplikat = (abgelehnt.duplikat || 0) + 1; continue; }
@@ -77,7 +89,7 @@ export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIA
   const bericht = {
     gelesen, angenommen: paare.length, abgelehnt, eindeutigeAntworten: jeAntwort.size,
     antwortLaengeMittel: antwortLaengen.length ? Math.round(antwortLaengen.reduce((a, b) => a + b, 0) / antwortLaengen.length) : 0,
-    maxVarianten, angriffeErlaubt, suitenFragenAusgeschlossen: suitenFragen.size,
+    maxVarianten, angriffeErlaubt, mindestAntwortLaenge, suitenFragenAusgeschlossen: suitenFragen.size,
     ok: paare.length > 0 && jeAntwort.size >= 50 && (abgelehnt.schluessel || 0) === 0 && (abgelehnt.personenbezogen || 0) < gelesen * 0.5,
     pruefungen: ["exakte_duplikate", "varianten_je_antwort", "schluessel", "personenbezogen", "prompt_injection", "spam", "fehlerhaft", "suitenfall", "laenge"]
   };

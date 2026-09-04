@@ -17,7 +17,7 @@ function nachrechnen(frage) {
   if ((m = frage.match(/Wie viele Minuten sind ([\d,]+) Stunden\?/))) return String(Math.round(Number(m[1].replace(",", ".")) * 60));
   if ((m = frage.match(/Heute ist (\w+)\. Welcher Wochentag ist in (\d+) Tagen\?/))) return WOCHENTAGE[(WOCHENTAGE.indexOf(m[1]) + Number(m[2])) % 7];
   if ((m = frage.match(/(\d+) \S+ kosten je (\d+) Euro/))) return String(Number(m[1]) * Number(m[2]));
-  if ((m = frage.match(/Wie viel sind (\d+) Prozent von (\d+)\?/))) return String((Number(m[2]) * Number(m[1])) / 100);
+  if ((m = frage.match(/Wie viel sind (\d+) Prozent von (\d+)\?/))) return String((Number(m[2]) * Number(m[1])) / 100).replace(".", ",");
   if ((m = frage.match(/Buchstabe (\w) im Wort (\w+) vor\?/))) return String([...m[2].toLowerCase()].filter((c) => c === m[1]).length);
   if ((m = frage.match(/(\d+) unterscheidbare Buecher/))) { let f = 1; for (let i = 2; i <= Number(m[1]); i += 1) f *= i; return String(f); }
   if ((m = frage.match(/Wuerfel mit (\d+) Seiten/))) return `1/${m[1]}`;

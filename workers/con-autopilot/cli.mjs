@@ -100,6 +100,33 @@ switch (befehl) {
     console.log(JSON.stringify({ vorher, probeCanary: probeVersion, metriken, pruefung: p, rollback: r, nachher: { stable: nachher.stable, canary: nachher.canary, letzterRollback: nachher.letzterRollback }, bewiesen: nachher.canary === vorher.stable && r.noetig }, null, 2));
     break;
   }
+  case "daten:erzeugen": {
+    // node cli.mjs daten:erzeugen <name> [startwert]
+    // Erzeugt Aufgaben mit berechneter Loesung + Sicherheitspaare und legt sie nach e2.
+    const [name, startwert] = args;
+    if (!name) throw new Error("Aufruf: daten:erzeugen <name> [startwert]");
+    const { erzeuge } = await import("./daten/generator.mjs");
+    const { baueDatensatz, veroeffentliche, hashText } = await import("./daten.js");
+    const roh = erzeuge({ startwert: Number(startwert) || 20260904, reasoning: 9000, sicherheit: 2500, sprache: 1500 });
+    const { paare, bericht } = baueDatensatz(roh.map((p) => ({ messages: p.messages })), {
+      suiten: await ladeSuiten(konfig.suitesDir),
+      // Verweigern ist ein VERHALTEN, kein Fakt: dieselbe richtige Antwort auf viele
+      // verschiedene Angriffe ist erwuenscht, nicht Ueberanpassung. Darum mehr Varianten
+      // als bei Faktenwissen (dort blieb es bei 3 — Lehre vom 06.08.).
+      maxVarianten: 8,
+      angriffeErlaubt: true,
+      // "391" ist die vollstaendige richtige Antwort auf eine Rechenaufgabe. Die
+      // Prosa-Schwelle von 8 Zeichen warf hier 3.084 korrekte Paare weg (gemessen 04.09.).
+      // Die Richtigkeit dieser Daten haengt nicht an ihrer Laenge, sondern an
+      // tests/con-daten-generator.test.mjs, das jede Aufgabe nachrechnet.
+      mindestAntwortLaenge: 1
+    });
+    const manifest = await veroeffentliche(e2, { name, paare, bericht,
+      quelle: { art: "erzeugt", generator: "workers/con-autopilot/daten/generator.mjs", startwert: Number(startwert) || 20260904, sha256: hashText(JSON.stringify(roh)) },
+      kategorien: ["reasoning", "sicherheit", "sprache", "allgemein"] });
+    console.log(JSON.stringify({ name, paare: paare.length, bericht, sha256: manifest.dateien[0].sha256 }, null, 2));
+    break;
+  }
   case "daten:bauen": {
     // node cli.mjs daten:bauen <name> <e2-quellprefix-train.jsonl> [maxPaare] [kategorien,kommagetrennt]
     const [name, quelle, maxPaare, kats] = args;

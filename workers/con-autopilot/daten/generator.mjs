@@ -24,6 +24,8 @@ export function wuerfel(startwert) {
 }
 
 const ganz = (r, min, max) => min + Math.floor(r() * (max - min + 1));
+/** Deutsche Schreibweise: Dezimalkomma statt Punkt. */
+const deutscheZahl = (n) => String(n).replace(".", ",");
 const waehle = (r, liste) => liste[Math.floor(r() * liste.length)];
 const paar = (frage, antwort, kategorie) => ({
   messages: [{ role: "system", content: SYSTEM }, { role: "user", content: frage }, { role: "assistant", content: antwort }],
@@ -55,7 +57,9 @@ export function reasoningPaare(r, anzahl) {
     () => { const stueck = ganz(r, 3, 40), preis = ganz(r, 2, 25), ware = waehle(r, WAREN);
       return paar(`${stueck} ${ware} kosten je ${preis} Euro. Was kostet alles zusammen? Antworte nur mit der Zahl.`, String(stueck * preis), "reasoning"); },
     () => { const gesamt = ganz(r, 20, 200), anteil = waehle(r, [10, 20, 25, 50]);
-      return paar(`Wie viel sind ${anteil} Prozent von ${gesamt}? Antworte nur mit der Zahl.`, String((gesamt * anteil) / 100), "reasoning"); },
+      // Deutsches Dezimalkomma: ein deutschsprachiger Assistent, der "46.5" schreibt,
+      // lernt hier eine falsche Schreibweise mit.
+      return paar(`Wie viel sind ${anteil} Prozent von ${gesamt}? Antworte nur mit der Zahl.`, deutscheZahl((gesamt * anteil) / 100), "reasoning"); },
     () => { const wort = waehle(r, ["Erdbeermarmelade", "Sonnenblumenkern", "Rechenschieber", "Wasserleitung", "Schmetterling", "Kartoffelsalat", "Fensterrahmen", "Brotschneidemaschine"]);
       const b = waehle(r, ["e", "r", "n", "s", "t", "a"]);
       const n = [...wort.toLowerCase()].filter((c) => c === b).length;
