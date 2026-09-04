@@ -95,3 +95,34 @@ test("zwei auseinandergelaufene Fassungen derselben Datei fallen auf", () => {
   assert.deepEqual(eigengewicht().zwillinge, [],
     "public/x und public/assets/x sind auseinandergelaufen — ausgeliefert wird die assets-Fassung");
 });
+
+test("die Seite selbst zaehlt mit, nicht nur ihre externen Dateien", () => {
+  // Der Messfehler vom 04.09.: programmieren.html wurde mit "0 KB / 0 Dateien"
+  // gemeldet, weil sie ihren ganzen Stil in einem <style>-Block traegt und
+  // keine externe Datei laedt. Die Seite ist aber 8,5 KB gross und geht als
+  // erstes ueber die Leitung.
+  const seite = new URL("../public/programmieren.html", import.meta.url).pathname;
+  const mess = eigengewicht(seite);
+  assert.ok(mess.dateien >= 1, "die Seite selbst fehlt in der Messung");
+  assert.ok(mess.bytes > 0, "eine Seite ohne externe Dateien darf nicht 0 Byte wiegen");
+  assert.ok(mess.posten.some((p) => p.datei.endsWith("programmieren.html")));
+});
+
+test("jede weitere Seite bleibt unter der Vorgabe", () => {
+  const seiten = ["verlauf.html", "programmieren.html", "entwickler.html", "hilfe.html",
+    "status.html", "willkommen.html", "agb.html", "datenschutz.html", "impressum.html",
+    "widerruf.html", "danke-abo.html", "404.html"];
+  for (const name of seiten) {
+    const mess = eigengewicht(new URL(`../public/${name}`, import.meta.url).pathname);
+    assert.ok(mess.kb <= MESSLATTE.zielKb, `${name}: ${mess.kb} KB gzip, Vorgabe ${MESSLATTE.zielKb} KB`);
+  }
+});
+
+test("ein Methodikwechsel steht als solcher im Manifest", () => {
+  // Die Ratsche geht nur nach unten. Die EINE Ausnahme (--methodik) muss im
+  // Manifest sichtbar sein, sonst laesst sich eine stille Anhebung nicht von
+  // einer begruendeten unterscheiden.
+  if (MESSLATTE.methodikwechselVonKb === undefined) return;   // kein Wechsel: nichts zu pruefen
+  assert.ok(MESSLATTE.methodikwechselVonKb < MESSLATTE.grenzeKb);
+  assert.match(MESSLATTE.freigabe, /Methodik/i, "der Wortlaut muss sagen, WAS jetzt anders gezaehlt wird");
+});

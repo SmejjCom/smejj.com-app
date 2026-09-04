@@ -476,63 +476,13 @@ Die Eintraege vom 2026-07-28 bis 2026-08-11 (zweite Runde) stehen in
 - [2026-08-23] Modell-Liste 100 % gesichert, zwei Schloesser (job_modellliste_lock_20260823) — Betreiber-Anordnung im Wortlaut; Dateisperre check-modell-menue-lock (sechs Dateien byte-genau, Tag stand-2026-08-23-modellmenue-lock) + Live-Ampel gegen den Cline-Katalog; die Liste steht NICHT im Code.
 
 ### Ausgelagert 2026-09-04, Runde 7 (Volltexte: `docs/memory/Memory_Bank_2026-09-04_archiv_runde7.md`)
+- [2026-09-03] 2026-09-03 — Volltext im Archiv.
+- [2026-09-02] A-bis-Z-Live-Test: Bündel-Abgleich hatte src/ mitgerissen — Volltext im Archiv.
+- [2026-09-02] Z.ai Coding-Paket braucht die Coding-Adresse — Volltext im Archiv.
+- [2026-09-02] smejj 1.1 freigegeben; Fragen-Erfassung angeschlossen; zwei Ketten, zwei Noten — Volltext im Archiv.
 
 - [2026-09-03] Web-Vitals-Wache rot: das Netz UND ein echter Seitenbefund — `chat-store.js` wurde zweimal geladen (Import ohne `?v=`); TTFB/LCP-Rot war das Betreiber-Netz.
 - [2026-09-03] Web-Vitals Runde 2+3: UX-Haken und Verlaufs-Helfer laden erst bei Bedarf (job_a_bis_z_20260902, Nachtrag 17).
-
-## 2026-09-02 — A-bis-Z-Live-Test: Bündel-Abgleich hatte src/ mitgerissen (job_a_bis_z_20260902)
-
-Capsule: `task-capsules/2026/09/job_a_bis_z_20260902/capsule.json`. Bauzweig d89ef4f3/b0a8ffc3/a9a6182a,
-design-v11 b0352feb + Folgecommit, Frontend e8ac079 + Folge. Live bewiesen (POST /api/fehler = 200,
-api.smejj.com/sw.js = v726, canonical/OG live, Hilfe in du-Form).
-
-**Entscheidung:** Der Bündel-Abgleich in den Bauzweig trägt NUR `public/` plus Lock-Manifeste
-(docs/frontend/*.json, docs/approvals/*), nie `src/` oder `control-server/`. Commit 156a30a4
-(30.08.) hatte trotz Titel „Control-Welt bleibt hiesig" `src/server.js` durch die Arbeitszweig-
-Fassung ersetzt: Fehler-Fänger (Nr. 50), Missbrauchs-Wache (Nr. 51), Video-Spur und Bild-Route
-waren drei Tage live tot, alle 64 Ampeln grün. Wiederhergestellt auf 156a30a4^ (732 Zeilen,
-Helfer ausgelagert), Tests 230/654/73 grün.
-
-**MERKE:** (1) Nach jedem Bauzweig-Deploy die Rand-Routen mit Sitzung anfassen — 401 ohne
-Sitzung beweist nichts, der globale Wächter verdeckt fehlende Routen. (2) Kurze Chat-Prompts
-beantwortet Chrome lokal (Gemini Nano, Konsole „[lokal] geeignet"); Serverweg nur mit
-„genauer:". (3) `public/assets/i18n` wird von `build:assets` gefüllt — ohne den Lauf sind
-Sprachtexte in 13 Sprachen live unwirksam, check:assets sagt es. (4) Der Auto-Modus blockiert
-jeden `--freeze --confirm`-Aufruf; Stempel gehen nur per Betreiber-Klick.
-
-**Verifikation:** 14/14 Seiten und 19/19 Sitemap-URLs 200; Admin-Konsole 69 grün/1 rot (Probe-
-Nutzer, Ursache behoben); Handy 375 px ohne Überbreite; check:assets/favicon/modul-syntax/
-guidelines/start-lock/markenkette OK. Offen: Start-Lock-Stempel für 11 Umlaute in index.html,
-security-lock (e6f22ae5) und abo-lock (Bauzweig) — je ein Betreiber-Klick; GLM-5.2 in
-/api/health degraded.
-
-## 2026-09-02 — Z.ai Coding-Paket braucht die Coding-Adresse (job_a_bis_z_20260902, Nachtrag)
-
-Tiefe Spur und Control-Reserve waren tot: Zhipu 429/1113 (Insufficient balance), obwohl der
-Betreiber das GLM Coding Plan Monatspaket (18 USD) gebucht hatte. Das Paket gilt nur unter
-`https://api.z.ai/api/coding/paas/v4`; `/api/paas/v4` prueft das leere Pay-as-you-go-Guthaben.
-`SMEJJ_LLM_ZHIPU_BASE_URL` fehlte auf Zeabur (Code-Default = Standardadresse). Gesetzt ueber das
-Portal (Variable, Add, Einzelwert, nie Raw-Editor) + Redeploy; Zeabur-API-Token in cli.yaml
-ist abgelaufen (401). Beweis 05:33 UTC: glm runtime ready, /api/chat streamt zhipu:glm-5.2.
-**MERKE:** 429/1113 trotz Paket = falsche Basis-Adresse, nicht fehlendes Geld.
-
-## 2026-09-02 — smejj 1.1 freigegeben; Fragen-Erfassung angeschlossen; zwei Ketten, zwei Noten (job_a_bis_z_20260902, Nachtrag 2)
-
-Betreiber gab den Trainingsplan (`docs/architecture/SMEJJ_1_1_TRAININGSPLAN_2026-09-02.md`) in
-allen vier Punkten frei. Gebaut: `public/ai/frage-erfassung.js` + Haken in `chat-stream.js`
-(design-v11 626f33b0, Klon 964c011) — die Route `/api/training/capture` hatte seit 24.07. keinen
-Aufrufer. Nur die Frage wird erfasst; Fremdmodell-Antworten bleiben für Training gesperrt.
-**MERKE:** Der Qualitäts-Messlauf misst die SCHNELLSPUR (Groq gpt-oss, ohne RAG, 62 %); die 97 %
-sind die tiefe Spur (GLM-5.2). Beides ist richtig, es sind zwei Ketten — nicht als Einbruch
-deuten. Stufe 0 des Plans = Schnellspur mit Projektwissen (Brücke, Security-Lock).
-Offen (Betreiber-Klicks): Zeabur `SMEJJ_TRAINING_CAPTURE_ENABLED=YES`, SW-Bump für die geänderte
-chat-stream.js (Precache), abo-lock im Bauzweig.
-
-**Nachtrag 02.09. 06:45 UTC (job_a_bis_z_20260902):** Einwilligungs-Ledger antwortet 503
-(`consent_request_failed`): auf Zeabur fehlen die sechs `IDRIVE_E2_TRAINING_*`-Werte des
-Trainings-Schreibers (Endpoint, Region, Bucket, Allowed-Prefixes, Access-/Secret-Key) —
-die fünf Consent-Schlüssel sind da (notice = 200). Ohne die sechs ist keine Einwilligung
-erteilbar, keine Frage speicherbar. Liste mit Werten im Trainingsplan, Stufe 1.
 
 ## 2026-09-02 — Fragen-Erfassung END-ZU-END LIVE: Verweise statt Schlüssel, Sonde in /api/health (job_a_bis_z_20260902, Nachtrag 3)
 
@@ -589,16 +539,6 @@ Pruefschalter (?erste-schritte=1) — sonst gibt es keinen Live-Beweis. (2) Werk
 aria-label (deutsche Quelle) gefunden, nicht ueber .chip-label (uebersetzt). (3) build:assets kopiert neue
 Wurzel-Module NICHT nach public/assets/ — chat-actions-woerter.js und erste-schritte.js existieren dort nicht;
 der Klon bekommt beide Kopien per cp. (4) tests/i18n-ui: ui.js passt auf /^[a-z]{2}\.js$/ — beim Zaehlen ausschliessen.
-
-## 2026-09-03 — UI/UX Nr. 6 ohne Stempel, Nr. 7+8 als Betreiber-Skript (job_a_bis_z_20260902, Nachtrag 9)
-
-design-v11 12ff454c. **MERKE:** (1) Vor jedem „Stempel noetig“ das Manifest lesen: panel-layout.js stand NICHT
-im Start-Lock, obwohl das Panel-Verhalten dort vermutet wurde — Nr. 6 ging ohne Betreiber-Klick live. (2) Die
-Aufschrift des Modell-Knopfs kommt aus STUFE_LABEL (app.js), nicht aus dem Menuetext — Menuepunkte duerfen
-Erklaerungen tragen. (3) Der Auto-Modus blockiert auch das Anlegen eines Stempel-Skripts per Bash-Heredoc —
-Skripte mit dem Write-Werkzeug anlegen, Ersetzungen in eine eigene .cjs-Datei, die sich an einer Kopie trocken
-pruefen laesst. (4) Chrome-Automat: JS-Klicks zaehlen nicht als nutzerNah() (kein pointerdown), Merker werden
-dann nicht geschrieben; resize_window aendert innerWidth nicht.
 
 ## 2026-09-03 — Code-Feld 126 px ueber dem Rand: geratene Hoehe statt Flex (job_a_bis_z_20260902, Nachtrag 10)
 
@@ -793,3 +733,49 @@ Live und geschuetzt: Admin-Lock 50 Dateien (neu dabei `schiene.js`), 81
 Autopiloten-Nummern, 8 Gruppen und 34 Bereiche. Quellzweig
 `feature/admin-schiene-nummern-logo` bei origin — der Bauzweig war durchgehend
 von einer Parallelsitzung mit ungespeicherter Arbeit belegt.
+
+## 2026-09-04 · Tempo und Gewicht: preconnect live, Startgewichts-Waechter gebaut (job_admin_nummern_logo_20260904, Nachtrag 2)
+
+**preconnect ist live.** `<link rel="preconnect" href="https://api.smejj.com" crossorigin>`
+in `public/index.html`, genau 5 Zeilen. Der erste API-Ruf startet jetzt bei
+**436 ms statt 2130 ms**; der kalte TLS-Handshake (0,6-2,1 s gemessen) ist aus
+jedem Ruf raus. `crossorigin` ist Pflicht — ohne waermt es eine ANDERE
+Verbindung als `fetch()` benutzt. Heikel war das Inline-Skript des fruehen
+Tors: es haengt an einem CSP-Hash, ein Byte darin haette es stillgelegt. Zeilen
+davor gesetzt, Hash danach nachgerechnet, lokal und live.
+
+**Waechter fuer das Startgewicht gebaut** (`check:startgewicht`). Der Auftrag
+"unter 300 KB" stand seit dem 19./24.08. — gemessen hat ihn NIE jemand, kein
+Test im ganzen Repo. Gemessen wird gzip ueber die Seite selbst plus den
+statischen Importbaum; dynamische `import()` zaehlen nicht (sie sind das
+Mittel zum Abspecken). Ratsche statt Mauer: rot beim Schwererwerden, Messlatte
+sinkt beim Leichterwerden.
+
+**Die Messfalle, die fast eine Falschmeldung wurde:** `performance` liefert bei
+Antworten aus dem Cache `encodedBodySize === decodedBodySize` — die **ROHE**
+Groesse. Ich sah 777 KB und haette "2,6-fach ueber Budget" gemeldet. Gegen die
+Leitung nachgemessen: das echte Eigengewicht ist **228 KB gzip** — unter der
+Vorgabe. Alle 13 Seiten gemessen, keine drueber (34 entwickler, 12 verlauf,
+3 programmieren).
+
+**Zwei Fallen, in die der Waechter selbst tappte** — beide jetzt als Probe
+festgehalten: `/assets/` ist eine AUSLIEFERUNGS-Adresse fuer `public/`, kein
+Ordner (erster Entwurf fand 53 statt 81 Dateien und meldete gruen); und die
+Seite selbst zaehlte nicht mit (`programmieren.html` kam mit "0 KB" heraus,
+obwohl sie ihren Stil in einem `<style>`-Block traegt). Beim ersten Lauf nach
+der Korrektur fing er sofort den eigenen preconnect-Commit: `index.html` wich
+von `assets/index.html` ab — die Parallelsitzung hatte denselben Befund
+unabhaengig ueber `tests/rechtslinks.test.mjs`.
+
+**"51 % ungenutztes CSS" war eine Luege.** Im Browser trafen 51 % der 1157
+Regeln kein Element (71 KB). Danach zu loeschen haette die Seite zerlegt —
+`#code.view.is-active` trifft nichts, solange man nicht in der Code-Ansicht
+steht. Zustandslos gemessen (`scripts/diagnose/tote-css-regeln.mjs`: kommt die
+Klasse irgendwo im Markup oder in einem Modul vor?): **23 von 1159 Regeln
+wirklich tot, unter 1 KB gzip.** Das Buendel ist zu 96 % lebendig.
+
+**Kein Eingriff ins Gewicht.** 228 gegen 300 KB, und die Bytes sind verdient:
+die 69 KB Chat-Module braucht, wer `index.html` laedt (Anonyme schickt das
+fruehe Tor vorher zur Landeseite). Ein Schnitt haette den Design-Lock gekostet
+— fuer unter 1 KB. Betreiber-Entscheidung 04.09.: der `preload` fuer
+`start-styles.css` bleibt VOR dem Tor ("So lassen").

@@ -113,5 +113,33 @@
       "smejj.com/admin/uebersicht/ und smejj.com/assets/admin/** tragen eine ALTE Konsolen-Kette (ohne Nummern, ohne Logo-Knopf, mit der 15-Sekunden-Wache). Sie stehen in keinem Link und werden vom Spiegel-Skript nicht angefasst. Loeschen waere Rote Liste — dem Betreiber gemeldet.",
       "Der Quellzweig liegt als feature/admin-schiene-nummern-logo bei origin. Der Bauzweig war die ganze Zeit von einer Parallelsitzung mit ungespeicherter Arbeit belegt; ein Merge haette sie zerstoert."
     ]
+  },
+  "nachtragTempoUndGewicht": {
+    "auftrag": "Betreiber 2026-09-04, in dieser Reihenfolge: 'Restliche App auf Tempo pruefen' -> 'erst Waechter, dann abspecken' -> 'weitere Seiten messen' -> 'Gewicht der Startseite druecken' -> 'preconnect setzen'.",
+    "preconnect": {
+      "was": "<link rel=preconnect href=https://api.smejj.com crossorigin> in public/index.html, genau 5 Zeilen",
+      "wirkung": "erster API-Ruf startet bei 436 ms statt 2130 ms; /api/auth/me 502 ms auf warmer Verbindung. Der kalte TLS-Handshake (0,6-2,1 s) ist aus jedem Ruf raus.",
+      "heikel": "Das fruehe Tor ist ein Inline-Skript an einem CSP-Hash (sha256-VlE1d5...). Ein Byte darin haette das Tor stillgelegt. Zeilen davor gesetzt, Hash danach nachgerechnet — lokal und live.",
+      "ratchet": "public/index.html 1016 -> 1021 Zeilen, dokumentiert nach dem Muster der bestehenden Eintraege",
+      "nichtGespiegelt": "public/app.js, sw.js und composer-plus-menu.js sind in diesem Zweig AELTER als live. Ein Buendel-Abgleich haette die Arbeit der Parallelsitzung zurueckgebaut; im Klon wurden nur die 5 Zeilen eingefuegt."
+    },
+    "startgewichtWaechter": {
+      "warum": "Der Auftrag 'unter 300 KB' steht seit dem 19./24.08., aber NICHTS hat je gemessen — kein Test im ganzen Repo. Der Performance-Lock hatte fuer das Gewicht keine Zaehne.",
+      "wie": "scripts/check-startgewicht.mjs: gzip ueber jedes <script src>/<link stylesheet> aus der Seite PLUS den statischen Importbaum PLUS die Seite selbst. Dynamische import() zaehlen nicht — sie sind das Mittel zum Abspecken.",
+      "ratsche": "rot beim Schwererwerden, Messlatte wird beim Leichterwerden nachgezogen. Die eine Ausnahme (--methodik) landet als methodikwechselVonKb im Manifest.",
+      "zweiEigeneMessfehler": [
+        "Erster Entwurf fand 53 statt 81 Dateien und meldete trotzdem gruen: /assets/ ist eine AUSLIEFERUNGS-Adresse fuer public/, kein Ordner im Repo (storage/ und ai/ liegen nur in public/).",
+        "Zweiter: programmieren.html kam mit '0 KB / 0 Dateien' heraus — sie traegt ihren Stil in einem <style>-Block. Die Seite selbst zaehlt jetzt mit (+18 KB bei index.html, Messlatte 210 -> 228)."
+      ],
+      "eigenerEinfuehrungsfehlerGefangen": "Beim ersten Lauf nach der Erweiterung meldete der Waechter 'index.html weicht von assets/index.html ab' — der preconnect-Commit hatte den Zwilling nicht mitgezogen. Die Parallelsitzung hatte denselben Befund unabhaengig ueber tests/rechtslinks.test.mjs.",
+      "alleSeiten": "228 index | 34 entwickler | 12 verlauf | 11 hilfe | 11 willkommen | 10 status | 9 datenschutz | 9 danke-abo | 8 agb | 7 widerruf | 6 impressum | 5 404 | 3 programmieren (KB gzip). Keine ueber der Vorgabe von 300 KB."
+    },
+    "gewichtDrueckenErgebnis": {
+      "schnappschussLog": "Im Browser trafen 51 % der 1157 CSS-Regeln kein Element (71 KB). Danach zu loeschen haette die Seite zerlegt: #code.view.is-active trifft nichts, solange man nicht in der Code-Ansicht steht.",
+      "statischGemessen": "scripts/diagnose/tote-css-regeln.mjs fragt zustandslos: kommt die Klasse irgendwo im Markup oder in einem Modul vor? Ergebnis: 23 von 1159 Regeln wirklich tot, 3 KB roh, unter 1 KB gzip. Das Buendel ist zu 96 % lebendig.",
+      "chatModule": "Die 69 KB Chat-Module sind NICHT verschwendet: das fruehe Tor schickt Anonyme zur Landeseite, bevor ein Modul laedt. Wer index.html laedt, ist angemeldet und braucht den Chat sofort.",
+      "entscheidung": "Kein Eingriff. 228 gegen 300 KB, und die Bytes sind verdient. Ein Schnitt haette den Design-Lock gekostet — fuer unter 1 KB.",
+      "betreiberEntscheidung": "Der preload fuer start-styles.css bleibt VOR dem fruehen Tor (Betreiber 04.09.: 'So lassen'). Anonyme laden 25 KB umsonst, Angemeldete sparen dafuer eine Umlaufzeit."
+    }
   }
 }
