@@ -1,0 +1,65 @@
+== 0. Ausgangslage
+c35fdadb chore(einmal): Kaskade 'Bedienbare Schluessel-Ausgabe ausliefern'
+== 1. Auf origin nachziehen (Parallelsitzungen arbeiten am selben Zweig)
+03686bb9 chore(einmal): Kaskade 'Bedienbare Schluessel-Ausgabe ausliefern'
+== 2. Tests + Konsolen-Pruefer
+ℹ pass 77 ℹ fail 0 
+admin-konsole OK — 36 Adressen aus 34 Ansichten kommen beim Server an; 55 Bedienelemente werden auch gezeichnet.
+== 3. Admin-Lock stempeln
+admin-lock eingefroren: 49 Dateien, Manifest docs/security/admin-lock-manifest.json, Backup backups/admin-lock/2026-09-04T10-42-40-708Z/
+admin-lock OK — 49 Adminbereich-Sicherheitsdateien byte-identisch zum eingefrorenen Stand (2026-09-04T10:42:40.708Z).
+== 4. Konsole in den Frontend-Klon spiegeln
+  "modus": "spiegeln",
+admin-console-sync OK — Quelle gespiegelt, 34 Konsolen-Seiten haben ihren Ordner.
+== 5. Bauzweig pushen (Zeabur baut smejj-control)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig a302b574 gepusht — Zeabur baut
+== 6. Klon pushen (smejj.com/admin)
+Klon c84af08 gepusht
+== 7. Live-Beweis (bis 6 Minuten)
+10:42:58 formular=0 knopf=0 stile=0
+10:43:17 formular=0 knopf=0 stile=0
+10:43:36 formular=1 knopf=5 stile=1
+FERTIG — bedienbare Schluessel-Ausgabe live: https://smejj.com/admin/api/ (Seite neu laden, falls sie offen war).
+== 0. Ausgangslage
+08b6a4b3 chore(einmal): Kaskade zeigt auf den Commit mit der schlankeren Tabelle
+== 1. Auf origin nachziehen (Parallelsitzungen arbeiten am selben Zweig)
+bc3e6bfa chore(einmal): Kaskade zeigt auf den Commit mit der schlankeren Tabelle
+== 2. Tests + Konsolen-Pruefer
+ℹ pass 78 ℹ fail 0 
+admin-konsole OK — 36 Adressen aus 34 Ansichten kommen beim Server an; 55 Bedienelemente werden auch gezeichnet.
+== 3. Admin-Lock stempeln
+admin-lock eingefroren: 49 Dateien, Manifest docs/security/admin-lock-manifest.json, Backup backups/admin-lock/2026-09-04T11-02-01-764Z/
+admin-lock OK — 49 Adminbereich-Sicherheitsdateien byte-identisch zum eingefrorenen Stand (2026-09-04T11:02:01.764Z).
+== 4. Konsole in den Frontend-Klon spiegeln
+  "modus": "spiegeln",
+admin-console-sync OK — Quelle gespiegelt, 34 Konsolen-Seiten haben ihren Ordner.
+== 5. Bauzweig pushen (Zeabur baut smejj-control)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig b9d63113 gepusht — Zeabur baut
+== 6. Klon pushen (smejj.com/admin)
+Klon d25ee81 gepusht
+== 7. Live-Beweis (bis 6 Minuten)
+11:02:22 formular=1 knopf=5 stile=1
+FERTIG — bedienbare Schluessel-Ausgabe live: https://smejj.com/admin/api/ (Seite neu laden, falls sie offen war).
+== 0. Ausgangslage
+d2b6ec9a chore(einmal): Kaskade zeigt auf den Commit mit angeschlossener Scroll-Huelle
+== 1. Auf origin nachziehen (Parallelsitzungen arbeiten am selben Zweig)
+316491a1 chore(einmal): Kaskade zeigt auf den Commit mit angeschlossener Scroll-Huelle
+== 2. Tests + Konsolen-Pruefer
+ℹ pass 78 ℹ fail 0 
+admin-konsole OK — 36 Adressen aus 34 Ansichten kommen beim Server an; 55 Bedienelemente werden auch gezeichnet.
+== 3. Admin-Lock stempeln
+admin-lock eingefroren: 49 Dateien, Manifest docs/security/admin-lock-manifest.json, Backup backups/admin-lock/2026-09-04T11-20-11-713Z/
+admin-lock OK — 49 Adminbereich-Sicherheitsdateien byte-identisch zum eingefrorenen Stand (2026-09-04T11:20:11.713Z).
+== 4. Konsole in den Frontend-Klon spiegeln
+  "modus": "spiegeln",
+admin-console-sync OK — Quelle gespiegelt, 34 Konsolen-Seiten haben ihren Ordner.
+== 5. Bauzweig pushen (Zeabur baut smejj-control)
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig c2d8f829 gepusht — Zeabur baut
+== 6. Klon pushen (smejj.com/admin)
+Klon 4698c19 gepusht
+== 7. Live-Beweis (bis 6 Minuten)
+11:20:34 formular=1 knopf=5 stile=1
+FERTIG — bedienbare Schluessel-Ausgabe live: https://smejj.com/admin/api/ (Seite neu laden, falls sie offen war).

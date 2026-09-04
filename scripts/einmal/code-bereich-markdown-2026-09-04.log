@@ -1,0 +1,18 @@
+== 0. Ausgangslage
+50855bbe docs(capsule): A-bis-Z-Test live — die globale Suche war tot (Modul wurde nie geladen), behoben und live bewiesen; Markenkette nach Zusammenfuehrung geheilt
+ℹ pass 54 ℹ fail 0 
+== 1. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v757";
+== 2. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+pdfjs-worker gebaut — 1265413 Byte aus 2 Teilen, 2 Orte.
+markenkette OK — 118 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T20-40-33-517Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T20:40:33.517Z).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 250 Module als ES-Module geparst (Arbeitsstand).
+check:module-queries OK — 229 Module, jedes unter genau einer Kennung.
+ℹ duration_ms 55.510708
+check:precache-imports OK — 176 Module erreichbar, Precache vollstaendig.
+ℹ pass 83 ℹ fail 0 
+== 3. Commit design-v11 (git add -A: neue Dateien kommen mit)

@@ -1,0 +1,36 @@
+== 0. Ausgangslage
+832a756e chore(einmal): Doppelklick-Datei 'Ablauf-Strich ausliefern'
+== 1. Zweig feature/api-ablauf in design-v11 mergen
+9d6836a6 merge(api-bereich): Ablauf-Strich statt Unbefristet (feature/api-ablauf: 4305fa31)
+== 2. Gesperrte Kettenglieder hochziehen (premium-surfaces -> app.js -> index.html)
+public/premium-surfaces.js: settings-surface.js b59 -> b60
+public/app.js: premium-surfaces.js b47p -> b47q
+public/index.html: app.js b126 -> b127
+Marken-Heber fertig.
+markenkette OK — 117 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+== 3. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v750";
+== 4. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 117 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T10-19-38-900Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T10:19:38.900Z).
+auslieferung-lock OK — 38 geschuetzte Dateien werden unveraendert ausgeliefert (10 ohne eigene Kopie, direkt aus der Quelle; 1 erzeugte Artefakte ausgenommen).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 250 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 176 Module erreichbar, Precache vollstaendig.
+ℹ pass 70 ℹ fail 0 
+== 5. Commit design-v11
+design-v11 2d7b29d9 (Basis 832a756e)
+== 6. Live stellen (Frontend-Klon) — Wurzel UND assets/
+Klon 101fb5b gepusht
+== 7. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 4a70cf43 gepusht — Zeabur baut
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+== 8. Live-Beweis (bis 5 Minuten)
+10:20:34 sw=smejj-shell-v749 entwickler=0 strich=0 seite=entwickler.js?v=16
+10:21:00 sw=smejj-shell-v749 entwickler=0 strich=0 seite=entwickler.js?v=16
+10:21:21 sw=smejj-shell-v749 entwickler=0 strich=0 seite=entwickler.js?v=17
+10:21:44 sw=smejj-shell-v750 entwickler=1 strich=1 seite=entwickler.js?v=17
+FERTIG — Ablauf-Strich live: https://smejj.com/entwickler.html (am iPhone: App schliessen und neu oeffnen).

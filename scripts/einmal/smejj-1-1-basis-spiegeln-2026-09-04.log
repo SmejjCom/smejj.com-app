@@ -1,0 +1,22 @@
+1/3 Zugangsdaten laden ...
+/Users/alanbest/.config/smejj.com/env.local:58: command not found: nwmu
+2/3 Probelauf — was wuerde passieren?
+Basismodell:  Qwen/Qwen3-4B-Instruct
+Ziel auf e2:  models/staging/qwen3-4b-instruct
+Salad-Gruppe: smejj-spiegel (eigene — con-job bleibt unberuehrt)
+Grenzen:      60 min, 30 GB Platte, Priorität batch, Selbstabschaltung an
+Salad-Gruppe smejj-spiegel: deploying (Job smejj11-20260904162622-spiegel, Modus spiegel)
+e2 models/staging/qwen3-4b-instruct: noch nichts abgelegt
+
+Probelauf — nichts gestartet. Mit --starten wird der Job wirklich angelegt und gestartet.
+
+3/3 Jetzt wirklich starten? Das kostet Salad-Zeit (Erwartung: unter 1 USD).
+   Zum Starten 'ja' eingeben, alles andere bricht ab: Basismodell:  Qwen/Qwen3-4B-Instruct
+Ziel auf e2:  models/staging/qwen3-4b-instruct
+Salad-Gruppe: smejj-spiegel (eigene — con-job bleibt unberuehrt)
+Grenzen:      60 min, 30 GB Platte, Priorität batch, Selbstabschaltung an
+Salad-Gruppe smejj-spiegel: deploying (Job smejj11-20260904162622-spiegel, Modus spiegel)
+e2 models/staging/qwen3-4b-instruct: noch nichts abgelegt
+ABBRUCH: gruppe_nicht_gestoppt:deploying
+
+ABBRUCH mit Code 4 — bitte diese Ausgabe in den Chat kopieren.

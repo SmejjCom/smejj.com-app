@@ -1,0 +1,94 @@
+== 0. Ausgangslage
+8b49fce3 chore(einmal): Doppelklick-Datei 'Guthaben-Leiste ausliefern'
+== 1. Zweig feature/api-guthaben-leiste in design-v11 mergen
+4b474886 merge(api-bereich): Guthaben-Leiste gestaltet (feature/api-guthaben-leiste: 5ea30f27)
+== 2. Gesperrte Kettenglieder hochziehen (premium-surfaces -> app.js -> index.html)
+public/premium-surfaces.js: settings-surface.js b60 -> b61
+public/app.js: premium-surfaces.js b47q -> b47r
+public/index.html: app.js b127 -> b128
+Marken-Heber fertig.
+markenkette OK — 118 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+== 3. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v751";
+== 4. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 118 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T11-47-51-969Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T11:47:51.969Z).
+auslieferung-lock OK — 38 geschuetzte Dateien werden unveraendert ausgeliefert (10 ohne eigene Kopie, direkt aus der Quelle; 1 erzeugte Artefakte ausgenommen).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 250 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 176 Module erreichbar, Precache vollstaendig.
+ℹ pass 71 ℹ fail 0 
+== 5. Commit design-v11
+design-v11 2cdd18a3 (Basis 8b49fce3)
+== 6. Live stellen (Frontend-Klon) — Wurzel UND assets/
+Klon 1d45f5e gepusht
+== 7. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 56042b94 gepusht — Zeabur baut
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+== 8. Live-Beweis (bis 5 Minuten)
+11:48:21 sw=smejj-shell-v750 entwickler=0 leiste=0 seite=entwickler.js?v=17
+11:48:39 sw=smejj-shell-v751 entwickler=1 leiste=2 seite=entwickler.js?v=18
+FERTIG — Guthaben-Leiste live: https://smejj.com/entwickler.html (am iPhone: App schliessen und neu oeffnen).
+== 0. Ausgangslage
+134da9f2 docs(capsule): Nr. 79 war rot fuer Ausfuehrlichkeit — Ursache live nachgemessen, Fix im Bauzweig 73c05022
+== 1. Zweig feature/api-guthaben-leiste in design-v11 mergen
+1c3d395e merge(api-bereich): Guthaben-Leiste gestaltet (feature/api-guthaben-leiste: 326ad464)
+== 2. Gesperrte Kettenglieder hochziehen (premium-surfaces -> app.js -> index.html)
+public/premium-surfaces.js: settings-surface.js b61 -> b62
+public/app.js: premium-surfaces.js b47r -> b47s
+public/index.html: app.js b128 -> b129
+Marken-Heber fertig.
+markenkette OK — 118 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+== 3. Service-Worker-Cache +1 (gemessen am Live-Stand)
+193:const CACHE_NAME = "smejj-shell-v752";
+== 4. assets nachziehen, Start-Lock stempeln, Pruefungen
+  sw.js
+markenkette OK — 118 markierte Module, jedes mit genau EINER Marke und passendem Inhalt.
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T11-52-45-234Z/
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T11:52:45.234Z).
+auslieferung-lock OK — 38 geschuetzte Dateien werden unveraendert ausgeliefert (10 ohne eigene Kopie, direkt aus der Quelle; 1 erzeugte Artefakte ausgenommen).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+check:modul-syntax OK — 250 Module als ES-Module geparst (Arbeitsstand).
+check:precache-imports OK — 176 Module erreichbar, Precache vollstaendig.
+ℹ pass 71 ℹ fail 0 
+== 5. Commit design-v11
+design-v11 d9a90308 (Basis 134da9f2)
+== 6. Live stellen (Frontend-Klon) — Wurzel UND assets/
+Klon d423b12 gepusht
+== 7. Ein-Buendel-Vertrag: dieselben Dateien in den Bauzweig
+github_kostenfrei: pruefe /private/tmp/smejj-bauzweig.fS7vZb
+  origin: git@github.com:SmejjCom/smejj.com-app.git
+
+  TREFFER-A .github/workflows/codeberg-spiegel.yml
+  TREFFER-A .github/workflows/qualitaets-messlauf.yml
+  [1] Sichtbarkeit des Repos NICHT feststellbar (GitHub nicht erreichbar).
+      Deshalb wird wie bei einem privaten Repo geprueft — das ist Vorsicht,
+      keine Feststellung. Ist das Repo oeffentlich, kosten Actions dort
+      nichts: kurz warten und erneut pushen, dann greift die Abfrage wieder.
+  [2] GitHub-Actions-Workflow im privaten Repo: siehe TREFFER-A oben.
+      Kosten: 0,002 $/min Plattformgebuehr ab der ERSTEN Minute, danach
+      0,006 $/min ueber dem 2.000-min-Freikontingent.
+      Regel A in docs/policy/GITHUB_KOSTENFREI.md. CI gehoert ins
+      oeffentliche Frontend-Repo oder auf 'npm run check:all' lokal.
+
+github_kostenfrei: BLOCKIERT — 2 Fund(e).
+
+  Nichts wurde geaendert oder geloescht. Entweder die Datei(en) entfernen,
+  oder die Regel mit schriftlicher Freigabe des Betreibers aendern
+  (docs/policy/GITHUB_KOSTENFREI.md, Abschnitt 9).
+  Einmaliges bewusstes Uebergehen: git push --no-verify
+
+PUSH ABGEBROCHEN — docs/policy/GITHUB_KOSTENFREI.md
+error: failed to push some refs to 'github.com:SmejjCom/smejj.com-app.git'
+Bauzweig cb41e759 gepusht — Zeabur baut
+github_kostenfrei: pruefe /Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App
+  origin: git@github.com:SmejjCom/smejj.com-app.git
+
+
+github_kostenfrei: OK — keine Kostenquelle gefunden. GitHub bleibt bei 0,00 EUR.
+== 8. Live-Beweis (bis 5 Minuten)
+11:53:25 sw=smejj-shell-v752 entwickler=1 leiste=2 seite=entwickler.js?v=19
+FERTIG — Guthaben-Leiste live: https://smejj.com/entwickler.html (am iPhone: App schliessen und neu oeffnen).

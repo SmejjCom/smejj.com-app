@@ -25,6 +25,10 @@
       "marke": "1",
       "finger": "4eb33b829e6c99a0"
     },
+    "chat-markdown.js": {
+      "marke": "1",
+      "finger": "25f42cbcf497f9c2"
+    },
     "api-center-helfer.js": {
       "marke": "1",
       "finger": "75d8f6d38069a366"
@@ -50,8 +54,8 @@
       "finger": "f5f01394ee4dab0a"
     },
     "sendepfad-nachladen.js": {
-      "marke": "1",
-      "finger": "5687de50b11b9c6a"
+      "marke": "2",
+      "finger": "4db2823dcea5b92d"
     },
     "panel-backdrop.js": {
       "marke": "panel-backdrop-20260803",
@@ -221,10 +225,6 @@
       "marke": "b61",
       "finger": "323a44afe2e026e5"
     },
-    "chat-markdown.js": {
-      "marke": "1",
-      "finger": "25f42cbcf497f9c2"
-    },
     "chat-store-bereiche.js": {
       "marke": "3",
       "finger": "410aeb78a1320d39"
@@ -350,8 +350,8 @@
       "finger": "0667a98555341525"
     },
     "app.js": {
-      "marke": "b131",
-      "finger": "6837387537cbb0ad"
+      "marke": "b132",
+      "finger": "7e4b98775e449755"
     },
     "pwa-schnellstart.js": {
       "marke": "6",
@@ -442,8 +442,8 @@
       "finger": "cde90abd4c8485db"
     },
     "medien-absicht.js": {
-      "marke": "5",
-      "finger": "ecd329f77d51eb4c"
+      "marke": "6",
+      "finger": "718d579a9b455dc7"
     },
     "settings-runtime.js": {
       "marke": "b39",

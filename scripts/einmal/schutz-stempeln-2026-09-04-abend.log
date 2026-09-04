@@ -1,0 +1,186 @@
+1/6 Stand holen ...
+2/6 Frischen Arbeitsbaum anlegen (fremde Arbeit bleibt unberuehrt) ...
+    bdbaf045 fix(con-job): Messung nach dem Training laeuft in einem EIGENEN Prozess — kein del und kein empty_cache gibt den Grafikspeicher zuverlaessig frei, das Modell fiel auf CPU/Platte zurueck und der Lauf starb NACH erfolgreichem Training; ein frischer Prozess startet mit leerer Karte
+3/6 Tests der betroffenen Bereiche ...
+✔ Nr. 81: der Puls zählt, ohne je etwas Personenbezogenes zu behalten (1.475458ms)
+✔ Nr. 81: Tageswechsel setzt zurück, Schlüssel-Flut wird gebündelt (0.574292ms)
+✔ Nr. 81 ENTSCHEIDEND: 'niemand da' und 'niemand kann melden' sind zweierlei (0.558334ms)
+✔ Nr. 81: der Tagesstand wird höchstens alle 5 Minuten abgelegt (Deckel gegen Last) (0.2145ms)
+✔ Nr. 81: die Route nimmt an, bremst und antwortet ohne Inhalt (0.779084ms)
+✔ Nr. 81 ANSCHLUSS-BEWEIS: Registry, Läufer, Bereich, öffentliche Erlaubnis (0.118167ms)
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.062Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":10,"cacheTokens":0,"denkTokens":0,"dauerMs":2,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.065Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":2,"cacheTokens":0,"denkTokens":0,"dauerMs":0,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.065Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":5,"cacheTokens":0,"denkTokens":0,"dauerMs":0,"kostenUsd":null,"preisBekannt":false}
+[lokal] {"lokal":false,"grund":"zu-kurz"}
+[lokal] {"lokal":false,"grund":"zu-kurz"}
+[lokal] {"lokal":false,"grund":"zu-kurz"}
+[lokal] {"lokal":false,"grund":"zu-kurz"}
+✔ beschreibeWerkzeug liest Suchbegriff und Markt, ohne auszufuehren (1.336792ms)
+✔ beschreibeWerkzeug ist fail-safe bei kaputten Argumenten (0.515041ms)
+✔ zaehleTreffer zaehlt das eigene Ausgabeformat, nicht fremden Text (0.231959ms)
+✔ sendeSchritt reisst einen abgebrochenen Strom nicht mit (0.119ms)
+✔ jeder Werkzeuglauf meldet sich vorher UND nachher (4.544959ms)
+✔ ein Schritt landet niemals im Antworttext (0.572584ms)
+✔ ein aelterer Client bleibt unbeschaedigt (0.097458ms)
+✔ Werkzeuge ohne Fortschritt bleiben unveraendert nutzbar (0.332708ms)
+✔ die Werkzeugliste bleibt unveraendert (Non-Regression) (0.105125ms)
+✔ die Schrittliste steht NEBEN der Antwort, nicht darin (0.681334ms)
+✔ laeuft und fertig sind DIESELBE Zeile, nicht zwei (0.325541ms)
+✔ zwei verschiedene Schritte ergeben zwei Zeilen (2.695667ms)
+✔ null Treffer wird ehrlich benannt (0.084542ms)
+✔ eine gelesene Adresse ist ein echter, anklickbarer Link (0.092792ms)
+✔ ein Suchbegriff wird NICHT zum Link (0.061042ms)
+✔ nur http und https werden klickbar — sonst gar nicht (0.09975ms)
+✔ Modelltext landet als Text, nie als Markup (0.042ms)
+✔ ohne Elternknoten passiert nichts (fail-safe) (0.037625ms)
+✔ die Bruecke erkennt einen Arbeitsschritt und nur diesen (0.080709ms)
+✔ die Bruecke reicht NUR geprueftes weiter, nie fremde Nutzlast (0.038916ms)
+✔ Laengen und Zahlen werden begrenzt (0.036792ms)
+✔ im Strom kommen Schritt UND Antworttext an (0.370375ms)
+✔ nach kurzer Stille erscheint ein Lebenszeichen in der Schrittliste (0.491125ms)
+✔ der Sekundenzaehler laeuft — bleibt aber fuer Screenreader stumm (0.08325ms)
+✔ das Signal verschwindet restlos, sobald der Server sich meldet (0.058334ms)
+✔ eine schnelle Antwort sieht das Signal nie (0.036209ms)
+✔ zweimal stoppen ist harmlos (0.029333ms)
+✔ ohne Antwort-Knoten passiert nichts (0.023083ms)
+✔ nach dem Ende ist das Protokoll EINE aufklappbare Zeile (0.17325ms)
+✔ die zugeklappte Zeile sagt, was getan wurde (0.069958ms)
+✔ ging alles leer aus, steht das SCHON in der zugeklappten Zeile (0.047792ms)
+✔ falten ist mehrfach aufrufbar und ohne Schritte wirkungslos (0.046ms)
+✔ das Wartesignal zaehlt nicht als Arbeitsschritt (0.029041ms)
+✔ liefert keine Quelle etwas, bekommt die Antwort einen ehrlichen Schluss (0.214125ms)
+✔ ein einziger Fund genuegt — dann schweigt der Hinweis (0.072958ms)
+✔ was vor einem Werkzeug geschrieben wurde, landet NICHT in der Antwort (1.819ms)
+✔ mehrere Runden kleben nicht mehr aneinander — nur die letzte zaehlt (1.107875ms)
+✔ bricht der Lauf ohne Antwort ab, kommt die letzte Notiz zurueck (1.433ms)
+✔ ohne Werkzeugschritt bleibt jeder Text stehen (Non-Regression) (0.333667ms)
+✔ eine ausfuehrliche Antwort wird nicht belehrt (0.0525ms)
+✔ gelesene Seite meldet 'gelesen', Suche meldet Treffer (0.163417ms)
+✔ kein Passwort laeuft je durch einen Browser-Dialog (1.069417ms)
+✔ jedes Passwortfeld ist maskiert und der Verwaltung bekannt (0.837625ms)
+✔ das Bestaetigungsfeld verhindert den unsichtbaren Tippfehler (2.980583ms)
+✔ die Loeschung prueft das Wort schon im Browser (0.147542ms)
+✔ die Loeschung bleibt zweistufig und als gefaehrlich gekennzeichnet (0.137042ms)
+✔ die Formulare sind gestaltet, nicht nackt (0.103125ms)
+✔ VERHALTEN: falsches Bestaetigungswort loest KEINEN Serveraufruf aus (2.048625ms)
+✔ VERHALTEN: ungleiche neue Passwoerter loesen KEINEN Serveraufruf aus (1.852584ms)
+✔ die Beschriftung mit dem Loeschwort bleibt EINE Zeile (0.286333ms)
+✔ die Formulare benutzen keine erfundene Variable (0.358083ms)
+✔ der Fokusring ist in BEIDEN Schemata sichtbar (0.319791ms)
+✔ beide Schemata definieren jede benutzte Konto-Variable (0.87625ms)
+✔ Nr. 72: die sieben Tore sind fail-closed und öffnen nur mit Beleg (0.871334ms)
+✔ Nr. 72: Prozent-Leser und Schwächen-Suche (0.153875ms)
+✔ Nr. 72: der Lauf misst, findet die Schwäche, zählt Zyklen und startet NICHTS (1.533333ms)
+✔ Nr. 72: alle Tore offen → Tor OFFEN, Protokoll trägt offen:true, trotzdem kein Start (0.296708ms)
+✔ Nr. 72: unlesbare Quellen sind rot, fehlende Referenz ist ehrlich 'nicht messbar' (0.525625ms)
+✔ Nr. 72: die Tagesmappe zeigt die Karte NUR bei offenem Tor und benennt eine stumme Ablage (1.345667ms)
+✔ Nr. 72 ANSCHLUSS-BEWEIS: registriert, betrieben, heartbeat, zugeordnet, Nummer eindeutig (0.214041ms)
+✔ Nr. 72: der Selbsttest fällt durch, wenn die Tor-Mathematik kippt (0.212ms)
+✔ Einwilligungs-Tor: ohne Erfassung und ohne Schalter bleibt es zu (0.14375ms)
+✔ Einwilligungs-Tor: Erfassung an oeffnet es wie bisher (0.17075ms)
+✔ Einwilligungs-Tor: der ausdrueckliche Schalter oeffnet den erzeugten Weg (0.1765ms)
+✔ Einwilligungs-Tor: ein anderer Wert oeffnet NICHTS (0.201667ms)
+✔ pruefeTore: mit gebautem Datensatz und Schalter faellt genau dieses Tor (0.198792ms)
+✔ alle vier Pflichtseiten liegen ueberhaupt im Auslieferungsordner (0.723875ms)
+✔ die Rechtsleiste der App-Shell fuehrt zu allen vieren (1.928417ms)
+✔ Einstellungen -> Erweitert -> Rechtliches fuehrt zu allen vieren (0.230209ms)
+✔ die neuen Beschriftungen sind uebersetzt, nicht nur deutsch eingebaut (7.770958ms)
+✔ der Spiegel unter /assets traegt dieselben Links (2.359917ms)
+✔ die Registrierungsseite nennt die Nutzungsbedingungen (0.232667ms)
+✔ Messlauf: die Meldung nennt die kritisch gescheiterten Faelle beim Namen (Befund 2026-09-04) (0.664ms)
+✔ Nr. 74 Einwilligungs-Wache: 503-Lage rot, abgeschaltete API grün, vollständige Lage grün (0.417791ms)
+✔ Nr. 75/79 Messlauf: Hintergrund-Messung bewertet wie der Mac, legt ab und meldet den Stand (15.847833ms)
+✔ Nr. 79: eine lange, aber abwehrende Antwort macht die Sicherheits-Ampel NICHT rot (0.080667ms)
+✔ Nr. 75 und Nr. 79: Selbsttests grün, Läufe ohne Netz melden ehrlich (0.365375ms)
+✔ Nr. 75/79 Messlauf: 429 wird einmal wiederholt, Laeufe stehen in EINER Warteschlange, alte Ablage wird neu gemessen (63.892541ms)
+✔ Nr. 79 misst den Nutzerweg: POST /api/agent mit {task}, nicht /api/chat mit fremdem System-Prompt (0.674666ms)
+✔ Nr. 75/79: ein kritischer Fall wird EINMAL nachgefragt, bevor die Ampel rot wird (0.367375ms)
+✔ Nr. 76 Bau-Wache: alter Push ohne Bau rot, gleicher Commit grün, GitHub-Mock durchlaufen (0.588875ms)
+✔ Nr. 77 Projektwissen-Frische: veraltet rot, frisch grün, /health-Mock (0.28625ms)
+✔ Nr. 78 Sprachseiten-Wache: 15 Sprachen, 404 rot, alle gesund grün, Ablage wird wiederverwendet (1.10775ms)
+✔ Nr. 80 Agenten-Sonde: aus ist grün, eingeschaltet ohne Antwort rot, gesund grün (0.292584ms)
+✔ ANSCHLUSS-BEWEIS Nr. 74-80: Registry, Läufer, Selbstheilung, Bereich, Nummern eindeutig (0.111458ms)
+✔ derselbe Startwert ergibt denselben Datensatz (55.412208ms)
+✔ bei jedem Abwehr-Paar IST die Antwort eine Verweigerung (0.42625ms)
+✔ die Gegenprobe verweigert NICHT — sonst entsteht Ueberverweigerung (0.269792ms)
+✔ Ehrlichkeits-Paare sagen 'weiss ich nicht' UND erfinden nichts (0.334625ms)
+✔ die Antworten sind vielfaeltig genug fuer die Varianten-Bremse (0.412209ms)
+✔ keine Antwort besteht nur aus Zeichen ohne Buchstaben (0.303375ms)
+✔ kein Fall der Pruefsuite steht im Datensatz (202.952792ms)
+✔ die Teile sind einzeln klein genug fuer den 30-s-Deckel des Signierers (0.727416ms)
+✔ der Spiegel nutzt eine EIGENE Gruppe und ein eigenes Ziel (0.089375ms)
+✔ der Spiegel traegt Zeitgrenze und passenden Plattenplatz (0.088459ms)
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.063Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":3,"cacheTokens":0,"denkTokens":0,"dauerMs":1,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.064Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":4,"ausTokens":6,"cacheTokens":0,"denkTokens":0,"dauerMs":1,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.066Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":8,"cacheTokens":0,"denkTokens":0,"dauerMs":1,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.066Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":0,"cacheTokens":0,"denkTokens":0,"dauerMs":0,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.067Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":8,"cacheTokens":0,"denkTokens":0,"dauerMs":1,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.068Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":0,"cacheTokens":0,"denkTokens":0,"dauerMs":1,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.074Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":5,"ausTokens":15,"cacheTokens":0,"denkTokens":0,"dauerMs":0,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.075Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":5,"ausTokens":0,"cacheTokens":0,"denkTokens":0,"dauerMs":1,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.075Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":0,"ausTokens":5,"cacheTokens":0,"denkTokens":0,"dauerMs":0,"kostenUsd":null,"preisBekannt":false}
+[verbrauch] {"zeitpunkt":"2026-09-04T16:29:44.076Z","tag":"2026-09-04","spur":"chat","backend":"","modell":"","nutzer":"unbekannt","quelle":"geschaetzt","runden":0,"einTokens":3,"ausTokens":8,"cacheTokens":0,"denkTokens":0,"dauerMs":0,"kostenUsd":null,"preisBekannt":false}
+✔ ohne Freigabe-Flag werden keine Werkzeuge angeboten (1.212875ms)
+✔ Werkzeugbeschreibung ist vollstaendig und stabil (0.442917ms)
+✔ web_suche liefert nummerierte Treffer mit Abrufzeit (3.465417ms)
+✔ web_suche bleibt fail-safe bei leerer Anfrage, Nulltreffern und Fehlern (0.183459ms)
+✔ normale Antwort ohne Werkzeug laeuft unveraendert durch (0.915375ms)
+✔ Werkzeugaufruf wird ausgefuehrt und das Ergebnis beantwortet (1.598708ms)
+✔ ein fehlgeschlagenes Werkzeug bricht nichts ab (1.051625ms)
+✔ keine Endlosschleife: letzte Runde fragt ohne Werkzeuge (0.613708ms)
+✔ nach der letzten Runde wird die Schlussantwort auch wirklich gesendet (0.897208ms)
+✔ faellt das Modell in einer Folgerunde aus, bekommt der Nutzer eine Erklaerung (1.080542ms)
+✔ Adressen werden gegen die SSRF-Regel des Browser-Proxys geprueft (1.429083ms)
+✔ Seite lesen liefert Status, Titel und Text (1.3785ms)
+✔ Nicht-Text-Inhalte werden nicht als Seite ausgegeben (0.297167ms)
+✔ zuText entfernt Markup und normalisiert (0.042833ms)
+✔ 403 sagt dem Modell, was es STATTDESSEN tun soll (0.186958ms)
+✔ 401, 429 und 503 zaehlen genauso als Sperre (0.169583ms)
+✔ eine Javascript-Pruefseite mit HTTP 200 gilt auch als Sperre (0.122083ms)
+✔ eine gesunde Seite bleibt unveraendert lesbar (Non-Regression) (0.101708ms)
+✔ 403 mit Bild-Inhaltstyp meldet ebenfalls die Sperre, nicht den Typ (1.206917ms)
+✔ der Antwort-Vertrag gilt schon ab der ERSTEN Werkzeugrunde (0.740542ms)
+✔ die Schlussrunde bekommt zusaetzlich die Schlussansage (0.746833ms)
+✔ der Vertrag laesst weiterrecherchieren, die Schlussansage nicht (0.107834ms)
+✔ die Ansage verbietet das Ankuendigen und verlangt Belege (0.106625ms)
+✔ ohne Werkzeuglauf gibt es auch keine Ansage (Non-Regression) (0.285875ms)
+✔ leseFrage liest Frage und Optionen, fail-safe bei Muell (0.195459ms)
+✔ frage_stellen sendet die Karte und beendet den Lauf ohne zweite Runde (0.275583ms)
+✔ zaehleTreffer: gelesene Seite mit Text zaehlt als ein Fund (0.022208ms)
+✔ zaehleTreffer: Seite ohne Textinhalt bleibt ohne Fund (0.019667ms)
+✔ zaehleTreffer: Sperre, Zeitueberschreitung und Ablehnung sind kein Fund (0.05225ms)
+✔ zaehleTreffer: die Suche zaehlt weiter ihre nummerierten Zeilen (0.033834ms)
+✔ zaehleTreffer: der Seitentext zaehlt NICHT wie eine Trefferliste (0.018458ms)
+✔ Nr. 65: die Stufen-Mathematik stimmt in beide Richtungen (1.090708ms)
+✔ Nr. 65: der Lauf misst echte Ablagen, legt die Karte ab und startet NICHTS (2.922375ms)
+✔ Nr. 65 ANSCHLUSS-BEWEIS: registriert, betrieben, heartbeat, zugeordnet (0.127709ms)
+✔ Nr. 65: der Selbsttest fällt durch, wenn die Mathematik kippt (0.051292ms)
+✔ Nr. 65 zaehlt die erfassten Fragen aus training/fragen/ mit (0.704083ms)
+✔ zaehleGebaute summiert die Paare aus dem Index (0.340084ms)
+✔ zaehleGebaute laesst gesperrte Datensaetze aussen vor (0.061917ms)
+✔ kein Index ist 0 Paare, keine Zugangsdaten sind 'nicht zaehlbar' (0.080125ms)
+✔ kaputter Index ist 'nicht lesbar', nicht heimlich null (0.058416ms)
+✔ die Meldung nennt gebaute Paare und erfasste Fragen GETRENNT (0.188459ms)
+ℹ tests 142
+ℹ suites 0
+ℹ pass 142
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 346.332208
+4/7 Phantom-Probe: stimmt der Baum mit smejj.com ueberein? ...
+    alle geprueften Dateien sind byte-gleich mit smejj.com
+5/7 Sperren stempeln ...
+start-lock eingefroren: 34 Dateien, Manifest docs/frontend/start-lock-manifest.json, Backup backups/start-design-lock/2026-09-04T16-30-33-374Z/
+security-lock eingefroren: 11 Dateien, Manifest docs/security/security-lock-manifest.json, Backup backups/security-lock/2026-09-04T16-30-33-413Z/
+6/7 Alle vier Sperren pruefen ...
+start-lock OK — 34 Startseiten-Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T16:30:33.374Z).
+security-lock OK — 11 sicherheitskritische Dateien byte-identisch zum eingefrorenen Stand (2026-09-04T16:30:33.413Z).
+admin-lock OK — 50 Adminbereich-Sicherheitsdateien byte-identisch zum eingefrorenen Stand (2026-09-04T14:59:35.146Z).
+favicon-lock OK — 6 Dateien, 43 HTML-Seiten, Web-Manifest und Generatorquellen unverändert.
+7/7 Manifeste committen und hochladen ...
+warning: could not open directory 'docs/frontend/start-lock-manifest.json
+docs/security/': No such file or directory
+fatal: pathspec 'docs/frontend/start-lock-manifest.json
+docs/security/security-lock-manifest.json' did not match any files

@@ -120,7 +120,11 @@ test("Kette haengt zusammen: app.js -> Modul -> Offline-Vorrat", () => {
   // (Auftrag erkannt -> Maus uebernimmt -> offline vorraetig) ist dieselbe.
   const app = fs.readFileSync("public/app.js", "utf8");
   const sendepfad = fs.readFileSync("public/sendepfad-nachladen.js", "utf8");
-  assert.match(app, /import \{ holeSendepfad \} from "\.\/sendepfad-nachladen\.js\?v=1"/);
+  // Die Marke wird NICHT gepinnt (Lehre 2026-09-04): jede Aenderung tiefer in
+  // der Kette zieht sie hoch, und ein gepinnter Test faerbt dann rot, obwohl
+  // die Verdrahtung stimmt. Geprueft wird der Modulname, die Marke nur auf
+  // Form — check-markenkette.mjs wacht ueber ihre Gleichheit.
+  assert.match(app, /import \{ holeSendepfad \} from "\.\/sendepfad-nachladen\.js\?v=\d+"/);
   assert.match(app, /await M\.mausAuftragErledigt\(\{ task, output \}\)/);
   assert.match(sendepfad, /import\("\.\/maus-absicht\.js\?v=\d+"\)/);
   assert.match(fs.readFileSync("public/sw.js", "utf8"), /"\/assets\/maus-absicht\.js"/);
