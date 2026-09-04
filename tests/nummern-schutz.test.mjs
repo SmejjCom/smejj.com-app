@@ -55,7 +55,9 @@ test("Autopiloten: ein NEUER Autopilot mit neuer Nummer bleibt erlaubt", async (
   const erweitert = [...bestand, { nummer: "99", id: "probe-neu", name: "Probe" }];
   const { befunde, neu } = pruefeAutopiloten(erweitert, AP_MANIFEST);
   assert.deepEqual(befunde, [], befunde.join(" | "));
-  assert.deepEqual(neu, [{ nummer: "99", id: "probe-neu" }]);
+  // "enthaelt" statt "ist gleich": zwischen zwei Einfrieren stehen auch echte
+  // neue Autopiloten in dieser Liste — sie sind erlaubt, genau darum geht es.
+  assert.ok(neu.some((n) => n.nummer === "99" && n.id === "probe-neu"), JSON.stringify(neu));
 });
 
 // ---- Admin-Menue -----------------------------------------------------------

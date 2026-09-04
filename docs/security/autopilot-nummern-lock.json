@@ -1,10 +1,10 @@
 {
   "lock": "smejj autopilot nummern lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-04T11:20:14.636Z",
+  "frozenAt": "2026-09-04T11:56:28.746Z",
   "confirmation": "Autopilots sind Numerieren sollen so bleiben, du sollst 100 % schutzen, soll ohne schriftliche Bestaetigung nicht geaendert werden, nicht geloescht werden, legt hundert Prozent Schutz drauf. (Betreiber, 2026-09-04)",
   "rule": "Eine vergebene Autopiloten-Nummer darf ohne ausdrueckliche schriftliche Freigabe des Betreibers nicht wandern, nicht doppelt vergeben und nicht geloescht werden. Neue Nummern fuer neue Autopiloten bleiben erlaubt.",
   "quelle": "control-server/src/admin/opsAutopilotenListe.js",
-  "anzahl": 80,
+  "anzahl": 81,
   "nummern": {
     "10": "memory-sync",
     "11": "self-healing",
@@ -77,6 +77,7 @@
     "78": "sprachseiten-wache",
     "79": "red-team-probe",
     "80": "agenten-sonde",
+    "81": "besucher-puls",
     "01": "qualitaetsmessung",
     "02": "codeberg-spiegel",
     "03": "voice-region-check",
