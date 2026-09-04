@@ -243,7 +243,41 @@ def lauf():
             return ergebnis
         version = kandidat
 
-    if "messung" in MODUS and not _ABBRUCH.is_set():
+    if "messung" in MODUS and "training" in MODUS and not _ABBRUCH.is_set():
+        # Nach dem Training bleibt Grafikspeicher belegt, den kein del und kein empty_cache
+        # zuverlaessig freigibt (accelerate haelt Geraete-Haken, peft haelt Verweise).
+        # Gemessen 04.09.: das Modell fuer die Messung fiel deshalb auf CPU/Platte zurueck
+        # ("Some modules are dispatched on the CPU or the disk") und der Lauf starb NACH
+        # erfolgreichem Training. Ein eigener Prozess startet mit leerer Karte — das ist
+        # die einzige Freigabe, die immer wirkt.
+        rest = max(5.0, MAX_MINUTEN - (time.time() - START) / 60.0)
+        umgebung = dict(os.environ)
+        umgebung.update({
+            "CON_JOB_MODUS": "messung",
+            "CON_JOB_MAX_MINUTEN": str(int(rest)),
+            "CON_VERSION": version,
+            "CON_ADAPTER_PREFIX": adapter_prefix or "",
+            "CON_SELBST_STOP": "NO",           # das Abschalten macht der Elternprozess
+            "PORT": str(int(os.environ.get("PORT", "8080")) + 1),
+            "CON_KIND_PROZESS": "ja"
+        })
+        STATUS.setze(phase="messung_eigener_prozess", rest=round(rest, 1))
+        import subprocess
+        lauf = subprocess.run([sys.executable, os.path.abspath(__file__)], env=umgebung,
+                              capture_output=True, text=True, timeout=max(300, int(rest * 60)))
+        print((lauf.stdout or "")[-2000:], flush=True)
+        if lauf.returncode != 0:
+            raise RuntimeError("Messung im eigenen Prozess scheitert: " + ((lauf.stderr or lauf.stdout)[-500:]))
+        eval_prefix = f"{os.environ.get('CON_EVAL_PREFIX', 'con/evals').rstrip('/')}/{version}/{JOB_ID}"
+        antworten = e2.get_json(eval_prefix + "/antworten.json")
+        if not antworten:
+            raise RuntimeError("Messung lieferte keine antworten.json")
+        ergebnis["messungen"] = [{"version": version, "adapterPrefix": adapter_prefix, "prefix": eval_prefix,
+                                  "leistung": antworten.get("leistung"), "modell": antworten.get("modell"),
+                                  "suiten": [s["suiteId"] for s in antworten.get("suiten", [])],
+                                  "abgebrochen": False}]
+        ergebnis["messung"] = ergebnis["messungen"][0]
+    elif "messung" in MODUS and not _ABBRUCH.is_set():
         import evalrun
         suiten = evalrun.lade_suiten(os.path.join(os.path.dirname(os.path.abspath(__file__)), "suites"))
         if not suiten:
