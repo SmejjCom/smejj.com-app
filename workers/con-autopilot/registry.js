@@ -88,9 +88,28 @@ export function findeVersion(registry, version) {
  * dem 04.09., dieser Fall sei erledigt — geflickt war aber nur die Zusammenfassung,
  * nicht der Weg ins Register.
  */
+/**
+ * Felder ohne Inhalt (null/undefined) entfernen.
+ *
+ * Ein reiner Messlauf kennt weder Datensatz noch Trainingskonfiguration und
+ * reicht sie als null herein. Ohne dieses Sieb ueberschreibt die Messung, was
+ * der Trainingslauf aufgeschrieben hat — die Herkunft der Version waere weg.
+ *
+ * Live am 05.09.: con-1.3 verlor bei der Neumessung sein Feld `datensatz`.
+ * Damit griff die Sperre "dieser Datensatz wurde fuer den stabilen Stand schon
+ * benutzt" nicht mehr, und der Autopilot trainierte denselben Versuch erneut —
+ * con-1.4 wurde mit 89,1 Prozent abgelehnt, con-1.5 lief mit exakt denselben
+ * Daten und derselben Konfiguration nochmal los. Rund 0,37 USD je Runde.
+ */
+function ohneLeere(eintrag) {
+  return Object.fromEntries(Object.entries(eintrag).filter(([, wert]) => wert !== null && wert !== undefined));
+}
+
 export function trageKandidatEin(registry, eintrag) {
   const alt = findeVersion(registry, eintrag.version);
-  const neu = { status: STATUS.CANDIDATE, createdAt: new Date().toISOString(), ...(alt || {}), ...eintrag,
+  // `version` muss immer durch, alles andere nur mit Inhalt.
+  const gefiltert = { ...ohneLeere(eintrag), version: eintrag.version };
+  const neu = { status: STATUS.CANDIDATE, createdAt: new Date().toISOString(), ...(alt || {}), ...gefiltert,
     updatedAt: new Date().toISOString() };
   if (alt) { Object.assign(alt, neu); return alt; }
   registry.versions.push(neu);

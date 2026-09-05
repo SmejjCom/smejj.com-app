@@ -332,6 +332,11 @@ export function abweichendeSuiten(gemessenerStand, aktuellerStand) {
   return Object.keys(aktuellerStand).filter((id) => gemessenerStand[id] !== aktuellerStand[id]);
 }
 
+/** Die Trainingskonfiguration aus der Umgebung — an EINER Stelle, damit Plan und Sperre dieselbe sehen. */
+export function trainingsKonfigAusUmgebung(env = process.env) {
+  return JSON.parse(env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
+}
+
 export async function planeNaechstenSchritt(ctx, z, registry) {
   const { e2, konfig } = ctx;
   const stabil = stabileVersion(registry);
@@ -375,13 +380,25 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter con/datasets/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };
   if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (CON_MIN_PAARE)` };
   if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
+  // Ein Versuch, der schon einmal abgelehnt wurde, wird nicht wiederholt.
+  // Gleiche Daten plus gleiche Konfiguration ergeben (bis auf Rauschen) dasselbe
+  // Ergebnis. Am 05.09. lief genau das: con-1.4 fiel mit 89,1 Prozent durch, und
+  // der naechste Takt startete con-1.5 mit demselben Datensatz und derselben
+  // Konfiguration — 0,37 USD und zwei Stunden fuer ein bekanntes Ergebnis.
+  const konfigText = JSON.stringify(trainingsKonfigAusUmgebung());
+  const schonGescheitert = registry.versions.find((v) => v.status === "rejected"
+    && v.datensatz === daten.name && JSON.stringify(v.trainingsKonfig || null) === konfigText);
+  if (schonGescheitert) {
+    return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche,
+      grund: `Datensatz ${daten.name} mit dieser Konfiguration wurde als ${schonGescheitert.version} schon abgelehnt (${schonGescheitert.benchmarks?.gesamt != null ? Math.round(schonGescheitert.benchmarks.gesamt * 1000) / 10 + " %" : "ohne Note"}) — neue Daten oder eine andere Konfiguration noetig` };
+  }
   const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix,
     vergeben: registry.versions.map((v) => v.version) });
   // maxZeilen ist Pflicht, nicht Geschmack: gemessen 03.09. braucht EIN Trainingsschritt
   // auf dem 27B-Modell rund zwei Minuten. Ein Lauf ueber alle 3.707 Paare waere bei
   // gradAkk 8 rund 460 Schritte, also 15 Stunden — die Zeitgrenze von 220 Minuten schnitte
   // ihn bei 13 Prozent ab. 700 Zeilen ergeben ~88 Schritte und passen mit Laden und Messen.
-  const trainKonfig = JSON.parse(process.env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
+  const trainKonfig = trainingsKonfigAusUmgebung();
   return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
     ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
     parameter: { CON_VERSION: stabil.version, CON_KANDIDAT: version, CON_DATENSATZ_PREFIX: daten.prefix, CON_TRAIN_KONFIG: JSON.stringify(trainKonfig), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };

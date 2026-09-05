@@ -553,3 +553,55 @@ test("Prosa-Muster in den Suiten ignorieren Gross- und Kleinschreibung", async (
   }
   assert.deepEqual(ohne, [], "Prosa-Muster ohne ignoreCase bewerten richtige Antworten als Fehler");
 });
+
+test("Eine Messung loescht die Herkunft der Version nicht", async () => {
+  // Ein reiner Messlauf kennt weder Datensatz noch Trainingskonfiguration und
+  // reicht sie als null herein. Am 05.09. ueberschrieb das die Felder von con-1.3.
+  // Damit griff die Sperre "Datensatz schon benutzt" nicht mehr: con-1.4 fiel mit
+  // 89,1 Prozent durch, con-1.5 lief mit exakt denselben Daten nochmal los.
+  const { trageKandidatEin } = await import("../workers/con-autopilot/registry.js");
+  const registry = { versions: [{ version: "con-1.3", status: "stable",
+    datensatz: "con-grundfaehigkeiten-v3", trainingsKonfig: { r: 16 }, adapterPrefix: "con/versions/con-1.3/adapter" }] };
+  trageKandidatEin(registry, { version: "con-1.3", datensatz: null, trainingsKonfig: null,
+    adapterPrefix: "con/versions/con-1.3/adapter", jobId: "messlauf-1", kostenUsd: null });
+  const e = registry.versions[0];
+  assert.equal(e.datensatz, "con-grundfaehigkeiten-v3", "die Messung darf den Datensatz nicht loeschen");
+  assert.deepEqual(e.trainingsKonfig, { r: 16 }, "die Messung darf die Konfiguration nicht loeschen");
+  assert.equal(e.jobId, "messlauf-1", "echte neue Werte werden weiterhin uebernommen");
+});
+
+test("Ein abgelehnter Versuch wird nicht mit denselben Daten wiederholt", async () => {
+  // Gleiche Daten plus gleiche Konfiguration ergeben dasselbe Ergebnis. Am 05.09.
+  // startete der Autopilot nach dem Reject von con-1.4 sofort con-1.5 mit exakt
+  // demselben Datensatz — 0,37 USD und zwei Stunden fuer ein bekanntes Ergebnis.
+  const { planeNaechstenSchritt, suitenStand, trainingsKonfigAusUmgebung } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      if (k === "con/base/x/manifest.json") return { komplett: true };
+      if (k === "con/datasets/index.json") {
+        return { datensaetze: [{ name: "con-grundfaehigkeiten-v3", prefix: "con/datasets/con-grundfaehigkeiten-v3",
+          paare: 4696, kategorien: ["reasoning"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-05" }] };
+      }
+      return standard;
+    },
+    liste: async () => []
+  };
+  const registry = { versions: [
+    { version: "con-1.3", status: "stable", benchmarks: { gesamt: 0.961, kritisch: 5,
+      kategorien: { reasoning: { score: 0.909, kritisch: 2 }, coding: { score: 1, kritisch: 0 } }, suitenStand: stand } },
+    { version: "con-1.4", status: "rejected", datensatz: "con-grundfaehigkeiten-v3",
+      trainingsKonfig: trainingsKonfigAusUmgebung(), benchmarks: { gesamt: 0.891, kritisch: 8 } }
+  ] };
+  const plan = await planeNaechstenSchritt({ e2, konfig }, { schwaechste: null }, registry);
+  assert.equal(plan.job, undefined, "kein Job: derselbe Versuch ist schon gescheitert");
+  assert.equal(plan.phase, "warten_auf_daten");
+  assert.match(plan.grund, /con-1\.4 schon abgelehnt/);
+  // Mit einem NEUEN Datensatz laeuft es weiter.
+  registry.versions[1].datensatz = "con-grundfaehigkeiten-v2";
+  const plan2 = await planeNaechstenSchritt({ e2, konfig }, { schwaechste: null }, registry);
+  assert.ok(plan2.job, "neue Daten muessen wieder ein Training ergeben");
+  assert.equal(plan2.job.datensatz, "con-grundfaehigkeiten-v3");
+});
