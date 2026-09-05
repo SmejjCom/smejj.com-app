@@ -1,0 +1,55 @@
+== 0. Ausgangslage
+06972afc fix(con): Trainingsziel ist die Schwaeche der STABILEN Version — nach einem REJECT stand die Schwaeche des verworfenen Kandidaten im Zustand, der naechste Lauf haette gegen etwas trainiert, das im gefuehrten Stand gar nicht schwach ist
+== 1. Arbeitsbaum auf dem Bauzweig
+== 2. Regel setzen (idempotent)
+Codeblock-Regel gesetzt: 86 Zeilen
+== 3. Pruefen
+ℹ tests 27 ℹ pass 27 ℹ fail 0 
+Waechter-TUEV im Lauf bestanden (ohne Regel rot, mit Regel gruen).
+== 4. Commit und Push (Zeabur baut)
+src/agent/systemregeln.js
+tests/systemregeln-codeblock.test.mjs
+public/ unberuehrt — richtig.
+github_kostenfrei: oeffentliches Repo (git@github.com:SmejjCom/smejj.com-app.git) — Actions dort kostenlos, keine Pruefung.
+Bauzweig 0ec84c06 gepusht — Zeabur baut
+== 5. Warten, bis der Bau durch ist (bis 6 Minuten)
+00:42:04 api.smejj.com/health=502
+00:42:15 api.smejj.com/health=502
+00:42:27 api.smejj.com/health=502
+00:42:37 api.smejj.com/health=502
+00:42:49 api.smejj.com/health=502
+00:43:00 api.smejj.com/health=502
+00:43:12 api.smejj.com/health=502
+00:43:23 api.smejj.com/health=502
+00:43:33 api.smejj.com/health=502
+00:43:44 api.smejj.com/health=502
+00:43:55 api.smejj.com/health=502
+00:44:06 api.smejj.com/health=502
+00:44:17 api.smejj.com/health=502
+00:44:27 api.smejj.com/health=502
+00:44:38 api.smejj.com/health=502
+00:44:49 api.smejj.com/health=502
+00:45:00 api.smejj.com/health=502
+00:45:12 api.smejj.com/health=502
+00:45:23 api.smejj.com/health=502
+00:45:34 api.smejj.com/health=502
+00:45:45 api.smejj.com/health=502
+00:45:56 api.smejj.com/health=502
+00:46:06 api.smejj.com/health=502
+00:46:17 api.smejj.com/health=502
+00:46:28 api.smejj.com/health=502
+00:46:39 api.smejj.com/health=502
+00:46:50 api.smejj.com/health=502
+00:47:01 api.smejj.com/health=502
+00:47:12 api.smejj.com/health=502
+00:47:23 api.smejj.com/health=502
+00:47:34 api.smejj.com/health=502
+00:47:45 api.smejj.com/health=502
+00:47:55 api.smejj.com/health=502
+00:48:06 api.smejj.com/health=502
+00:48:17 api.smejj.com/health=502
+00:48:28 api.smejj.com/health=502
+
+FERTIG — die Regel ist im Bauzweig und Zeabur hat neu gebaut.
+Die Sitzung prueft jetzt live: eine echte Code-Aufgabe ueber die tiefe Spur
+muss als Kasten mit Kopier-Knopf ankommen.

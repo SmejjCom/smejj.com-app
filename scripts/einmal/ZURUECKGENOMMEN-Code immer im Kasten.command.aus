@@ -1,0 +1,14 @@
+#!/bin/zsh
+# smejj.com — Doppelklick im Finder: Code kommt immer im Kasten mit Kopier-Knopf.
+# Live gemessen kam der Code ueber die tiefe Spur in zwei von drei Laeufen ohne
+# Auszeichnung und klebte im Fliesstext. Die Anweisung an das Modell bekommt eine
+# klare Regel dafuer. Das ist Serverarbeit: sie geht in den Bauzweig, Zeabur baut neu.
+# Ruft scripts/einmal/codeblock-regel-2026-09-05.sh auf. Protokoll liegt daneben als .log.
+cd "$(dirname "$0")"
+echo "smejj.com — Code immer im Kasten ($(date))"
+echo
+zsh "scripts/einmal/codeblock-regel-2026-09-05.sh" 2>&1 | tee "scripts/einmal/codeblock-regel-2026-09-05.log"
+STATUS=${pipestatus[1]}
+echo
+if [ "$STATUS" -eq 0 ]; then echo "FERTIG — die Regel ist ausgeliefert. Die Sitzung prueft jetzt live nach."; else echo "ABBRUCH mit Code $STATUS — das Protokoll liegt in scripts/einmal/codeblock-regel-2026-09-05.log, die Sitzung liest es selbst."; fi
+read -k 1 "?Taste druecken zum Schliessen ..."
