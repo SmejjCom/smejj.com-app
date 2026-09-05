@@ -46,7 +46,7 @@ test("ein echter Plan aus dem Repo laesst sich uebersetzen", () => {
 });
 
 test("die Beschreibung ist ein Satz fuer Menschen, keine Kennung", () => {
-  assert.match(beschreibe({ action: "navigate", url: "https://smejj.com/" }), /Seite oeffnen/);
+  assert.match(beschreibe({ action: "navigate", url: "https://smejj.com/" }), /Seite öffnen/);
   assert.match(beschreibe({ action: "click", target: { name: "Impressum" } }), /Klicken: Impressum/);
   // Auch in der verschachtelten Form — sonst las der Nutzer waehrend des
   // Laufs "Klicken:" ohne Ziel.
@@ -128,7 +128,7 @@ test("ohne Live-Browser wird ehrlich abgelehnt statt blind losgelaufen", async (
 
   const ohneSeite = await fuehreMausAuftragAus({ auftrag: "x", tab: { sessionId: "s1" }, sende: async () => ({ ok: true }) });
   assert.equal(ohneSeite.ok, false);
-  assert.match(ohneSeite.grund, /Seite oeffnen/);
+  assert.match(ohneSeite.grund, /Seite öffnen/);
 });
 
 // Der Knopf sitzt auf einem reservierten Platzhalter — die Kopfgeometrie
@@ -277,4 +277,42 @@ test("done zeigt das ERGEBNIS, nicht die Begruendung", async () => {
 
   // Leerzeichen zaehlen nicht als Ergebnis.
   assert.equal(entscheidungAlsAktion({ decision: "done", reason: "B", result: "   " }).grund, "B");
+});
+
+test("eine Entscheidung, die nie kommt, endet mit Frist statt fuer immer zu haengen", async () => {
+  const { fuehreFreienLaufAus } = await import("../public/browser-pane-maus.js");
+  // LIVE GESEHEN 2026-09-05: "Maus 1/10: überlegt ..." stand minutenlang da —
+  // der fetch hatte keine Frist. Direkt gerufen antwortete der Server in 1 s.
+  const fetchVorher = globalThis.fetch;
+  globalThis.fetch = (_url, { signal } = {}) => new Promise((_, ablehnen) => {
+    signal?.addEventListener("abort", () => ablehnen(Object.assign(new Error("abgebrochen"), { name: "AbortError" })));
+  });
+  try {
+    const t0 = Date.now();
+    const e = await fuehreFreienLaufAus({
+      auftrag: "lies die Ueberschrift", tab: { url: "https://a.de/", sessionId: "s1" }, schrittUrl: "https://api.test/s",
+      schrittFristMs: 30, sende: async () => ({ ok: true, beobachtung: { elements: [] } })
+    });
+    assert.equal(e.ok, false);
+    assert.match(e.grund, /gewartet/);
+    assert.ok(Date.now() - t0 < 2000, "die Frist muss greifen, nicht der Test-Timeout");
+  } finally {
+    globalThis.fetch = fetchVorher;
+  }
+});
+
+test("fertig ohne Klick heisst nicht 'nach 0 Schritten'", async () => {
+  const { fuehreFreienLaufAus } = await import("../public/browser-pane-maus.js");
+  const fetchVorher = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ ok: true, entscheidung: { decision: "done", reason: "steht da", result: "Example Domain" } }) });
+  try {
+    const e = await fuehreFreienLaufAus({
+      auftrag: "welche Ueberschrift", tab: { url: "https://a.de/", sessionId: "s1" }, schrittUrl: "https://api.test/s",
+      sende: async () => ({ ok: true, beobachtung: { elements: [] } })
+    });
+    assert.equal(e.ok, true);
+    assert.equal(e.grund, "Maus fertig, kein Klick nötig: Example Domain");
+  } finally {
+    globalThis.fetch = fetchVorher;
+  }
 });

@@ -215,7 +215,7 @@ test("DER FALL VOM 20.08.: gemerkt, aber Chrome haelt das Recht nicht", () => {
   });
   assert.equal(befund.ton, "warnung");
   assert.match(befund.text, /mail\.google\.com/);
-  assert.match(befund.text, /Chrome haelt das Recht NICHT/);
+  assert.match(befund.text, /Chrome hält das Recht NICHT/);
 });
 
 test("der umgekehrte Fall faellt ebenso auf", () => {
@@ -253,4 +253,59 @@ test("Muster und Herkunft meinen dasselbe — kein erfundener Unterschied", () =
     });
     assert.equal(befund.ton, "gut", `${recht} wurde als Unterschied gelesen: ${befund.text}`);
   }
+});
+
+test("die Maus meldet ihren Strom an und ab — und hoert auf das Stopp-Viereck", async () => {
+  const { mausAuftragErledigt } = await import("../public/maus-absicht.js");
+  // LIVE GESEHEN 2026-09-05: Lauf fertig, das Viereck blieb 90 s stehen; ein
+  // Klick aufs Viereck stoppte Stroeme, nicht die Maus.
+  const fenster = new EventTarget();
+  const staende = [];
+  fenster.addEventListener("smejj:chat-strom", (e) => staende.push(e.detail.laufen));
+  let angehalten = 0;
+  const gesagt = [];
+  const ergebnis = await mausAuftragErledigt({
+    task: `${MAUS_VORLAGE} auf smejj.com das Impressum oeffnen`,
+    output: null,
+    deps: {
+      fenster,
+      halt: () => { angehalten += 1; },
+      schreibe: (t) => gesagt.push(t),
+      oeffne: () => true,
+      activeTab: () => ({ url: "https://smejj.com", sessionId: "s1" }),
+      warte: async () => {},
+      starte: async () => {
+        // Mitten im Lauf drueckt der Nutzer das Viereck.
+        fenster.dispatchEvent(new Event("smejj:chat-stoppen"));
+        return { ok: false, grund: "Maus angehalten nach 1 Schritten." };
+      }
+    }
+  });
+  assert.equal(ergebnis, true);
+  assert.deepEqual(staende, [1, 0], "erst an, am Ende ab — genau wie ein Chat-Strom");
+  assert.equal(angehalten, 1, "das Stopp-Viereck muss die Maus erreichen");
+  fenster.dispatchEvent(new Event("smejj:chat-stoppen"));
+  assert.equal(angehalten, 1, "nach dem Lauf hoert niemand mehr zu");
+});
+
+test("kein Auftrag fuer die Maus: kein Strom gemeldet", async () => {
+  const { mausAuftragErledigt } = await import("../public/maus-absicht.js");
+  const fenster = new EventTarget();
+  let gemeldet = 0;
+  fenster.addEventListener("smejj:chat-strom", () => { gemeldet += 1; });
+  assert.equal(await mausAuftragErledigt({ task: "Was ist 17 mal 23?", output: null, deps: { fenster } }), false);
+  assert.equal(gemeldet, 0);
+});
+
+test("im eigenen Chrome wird erst geoeffnet, dann angekuendigt — kein Widerspruch im Chat", () => {
+  // LIVE 2026-09-05: "Ich arbeite in deinem eigenen Chrome" stand da, die
+  // naechste Zeile nahm es zurueck. Die Ankuendigung kommt erst nach der
+  // Antwort der Bruecke — und nur, wenn sie ja sagt.
+  const quelle = fs.readFileSync("public/maus-absicht.js", "utf8");
+  const ankuendigung = quelle.indexOf("Ich arbeite in deinem eigenen Chrome");
+  const umweg = quelle.indexOf("noch nichts erlaubt");
+  const frage = quelle.indexOf('sendeAnChrome({ type: "navigate", url: ziel })');
+  assert.ok(frage > -1 && umweg > -1 && ankuendigung > -1, "alle drei Stellen muessen existieren");
+  assert.ok(frage < ankuendigung, "erst die Bruecke fragen, dann ankuendigen");
+  assert.ok(umweg < ankuendigung, "der Umweg-Satz steht VOR der Ankuendigung");
 });
