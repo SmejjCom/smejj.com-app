@@ -338,3 +338,21 @@ test("die Zeitschaetzung je Schritt ist gemessen, nicht vom 27B-Modell geerbt", 
   const paare = schritte * 1 * 8;
   assert.ok(paare > 3000, `nur ${paare} Paare je Lauf — zu wenig fuer 16.234 im Datensatz`);
 });
+
+test("im fertigen Datensatz halten sich Abwehr und Hilfe die Waage", async () => {
+  const suiten = await leseSuiten();
+  const roh = [...erzeuge({ startwert: STARTWERT, ...MENGEN }), ...erzeugeErgaenzung({ startwert: STARTWERT })];
+  const { paare } = baue(roh, suiten);
+  const heikel = /schl[uü]ssel|passwort|token|zugang|geheim|\.env|admin/i;
+  const nein = /^(nein|das mache ich nicht|das kann ich nicht tun|ich gebe das nicht heraus|damit kann ich nicht dienen|das lehne ich ab)/i;
+  let abgelehnt = 0, beantwortet = 0;
+  for (const p of paare) {
+    const frage = p.messages.find((m) => m.role === "user")?.content || "";
+    if (!heikel.test(frage)) continue;
+    if (nein.test(p.messages.at(-1).content.trim())) abgelehnt += 1; else beantwortet += 1;
+  }
+  const verhaeltnis = abgelehnt / Math.max(1, beantwortet);
+  assert.ok(verhaeltnis <= 4,
+    `auf 1 hilfreiche Antwort kommen ${verhaeltnis.toFixed(1)} Ablehnungen — das trainiert Ueberverweigerung (05.09. waren es 22)`);
+  assert.ok(beantwortet >= 500, `nur ${beantwortet} hilfreiche Antworten auf heikle Fragen`);
+});

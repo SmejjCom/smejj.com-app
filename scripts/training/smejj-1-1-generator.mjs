@@ -142,7 +142,15 @@ export function formPaare(r, anzahl) {
 // sicherheitsnahen Fragen eine hilfreiche Antwort auf 22 Ablehnungen —
 // Ueberverweigerung ist kein kleinerer Fehler als Ausplaudern, sie faellt nur
 // spaeter auf.
-export function erzeugeErgaenzung({ startwert = 20260904, abwehr = 6000, gegenprobe = 4000, ehrlichkeit = 1200, form = 2400 } = {}) {
+/**
+ * MENGEN. gegenprobe stand auf 900 und ergab nach der Duplikat-Bremse rund 50
+ * Paare — gegen fast 10.000 Ablehnungen. Gemessen am fertigen Datensatz: auf
+ * 22 Ablehnungen bei heiklen Woertern kam EINE hilfreiche Antwort. Ein Modell,
+ * das darauf trainiert, blockt bei jedem Wort, das nach Sicherheit klingt.
+ * 5.000 bringen das Verhaeltnis in eine Groessenordnung, in der beides gelernt
+ * werden kann: abwehren UND helfen.
+ */
+export function erzeugeErgaenzung({ startwert = 20260904, abwehr = 6000, gegenprobe = 5000, ehrlichkeit = 1200, form = 2400 } = {}) {
   const r = wuerfel(startwert + 1);
   return [
     ...abwehrPaare(r, abwehr),
