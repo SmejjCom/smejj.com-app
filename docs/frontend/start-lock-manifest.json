@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T13:16:11.652Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'teste ganze App im Simulator von A bis Z'. AM GERAET GEFUNDEN (iPhone 17 Pro, iOS 26.5, Systemmodus HELL): Die Startseite blieb dunkel, alle anderen Bereiche kippten auf hell — resolvedTheme() wird nur auf .view:not(#start) angewendet. Ergebnis: weisse Einstellungen mit hellgrauer Schrift auf weissem Grund, Unterzeilen praktisch unlesbar. Auf dem Betreiber-Mac (dunkel) war es nie sichtbar. Geaendert: public/settings-runtime.js — Vorgabewert theme von 'system' auf 'dark'; alle drei Einstellungen bleiben waehlbar. Marken settings-runtime b40, settings-surface b63, premium-surfaces b47t, app.js b136, SW v769.",
+  "frozenAt": "2026-09-05T14:22:28.040Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 ('weiter' nach dem gemeldeten Befund): Englische Fachwoerter in der deutschen Oberflaeche uebersetzt — 'Upload-Staging' zu 'Dateien auswaehlen', 'Gestagte Uploads' zu 'Wartende Dateien', 'Upload-Liste downloaden' zu 'Liste herunterladen', 'Memory downloaden' zu 'Gedaechtnis herunterladen', 'presigned URLs spaeter' zu 'signierte Adressen folgen', 'fail-closed' zu 'bleiben aus'. Etablierte Begriffe (Download, Snapshot, Sync) bleiben. Dazu: die 14 Sprachseiten luden ein anderes voice-landing-Modul als die deutsche Seite — Marke im Generator angeglichen (Favicons dabei nachweislich unberuehrt). Service-Worker v770, app.js b137.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "3eeb08ee4633e722078875a74d046025f124519a050268de7b4d84fc02ac4765",
+    "public/index.html": "6e7177ab221f35951a844449e769c0899b4547a7cea4d99dc7bada83e919235c",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "9f17fcab1bf3d07dc6b74611456e11a023589b41ba319901dde3c6f245e7a91b",
+    "public/sw.js": "a129d6bc9a153f4a938117f6c2629eb6cff301033bee17cbc0961e41642b61d3",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
