@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T00:19:17.964Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'komplette App von a bis z checken und muss hundert Prozent responsive sein' sowie 'mach endlich fertig'. Gefunden beim A-bis-Z-Test am emulierten iPhone: Die Code-Ansicht begruesste mit der ANMELDE-ADRESSE ('Was steht als Naechstes an, name@gmail.com?'), weil das Profil-Dock ohne hinterlegten Namen auf die E-Mail zurueckfaellt. Geaendert: public/code-modell-menue.js prueft jetzt auf eine Mailadresse und gruesst dann neutral; im Dock bleibt die Adresse unveraendert. Dazu Service-Worker-Cache v763.",
+  "frozenAt": "2026-09-05T00:36:45.288Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05: Diagnose-Messseite pwa-mass.html nach der Auswertung entfernt (sie war nur fuer den Vollbild-Befund gedacht), Service-Worker-Cache v764.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "e256f347d80477bd51ed76f3442875e9c6ee63ab017eec052e6048a593f8c61f",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "a5e6102dea6f8bd35735d8b58e3db6bedcfcd80289758f95d3ed9a7afa23cf70",
+    "public/sw.js": "d45e4379a4106511f8dcd82c41e3e99364ec98da6df5c217157ef857c3bf2a79",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
