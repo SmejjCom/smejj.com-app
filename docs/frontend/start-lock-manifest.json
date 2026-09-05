@@ -1,12 +1,12 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T08:48:12.867Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'Geh chrome browser https://smejj.com/ teste Erledige mit der Maus im Browser und alle Fehler beheben.' Zweiter Live-Lauf desselben Tages, vier Befunde behoben: (1) 'Ich arbeite in deinem eigenen Chrome' stand im Chat und wurde in der naechsten Zeile zurueckgenommen — Ankuendigung jetzt erst nach der Antwort der Bruecke; (2) das Stopp-Viereck blieb nach dem Maus-Lauf 90 s stehen und stoppte die Maus nicht — die Maus meldet ihren Strom jetzt wie ein Chat-Strom an und ab und hoert auf smejj:chat-stoppen; (3) 'Maus 1/10: ueberlegt ...' stand minutenlang ohne Ende — Frist von 180 s je Entscheidung mit lesbarer Meldung; (4) ASCII-Umlaute in den Maus-Texten durch echte Umlaute ersetzt, 'fertig nach 0 Schritten' heisst jetzt 'fertig, kein Klick noetig'. Cache-Marken der Maus-Kette, app.js b135, Service-Worker smejj-shell-v766. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-05T09:14:28.982Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'alle Fehler beheben ... mach endlich fertig'. Live gemessen mit 'Generiere ein Bild von: ein roter Apfel auf einem Holztisch': bis das fertige Bild erschien vergingen 5 Minuten 45, und die ganze Zeit wuchs in der Blase eine Wand aus 600.000 base64-Zeichen. Der Text bleibt unveraendert (renderChatMarkdown baut daraus das Bild); nur die ANZEIGE wird waehrend des offenen Datenstroms ausgeblendet und durch 'Bild wird uebertragen ...' ersetzt. Geaendert: public/ai/chat-stream.js (Marke setzen und am Ende sicher loeschen), public/mobil-composer.css (Anzeige), Marke mobil105, SW v767.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "7005b90cd2dff1bc258bfa591a4f228f13f954de9131d6b7adb0b3745985b00a",
+    "public/index.html": "356f14101b1c2e7d1194c01c487a165e6757972d28b9d611f00bf45369fe8d0a",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "ca65fbbd817be546c72faedc70bdce16bc9fa2c1b8d2471eab194143dcdcfc69",
+    "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "1fd177c3de71db3052f1c1ff3c4004ffda73aba82bf80bc9afa385b79dd99f7d",
+    "public/sw.js": "8d860dc607cf091f5797b7f690f54d948020061868765979f2b1874f1147b9c8",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
