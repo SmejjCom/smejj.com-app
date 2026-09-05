@@ -183,3 +183,37 @@ test("ein Fehler beim Zustellen wirft nicht — sonst risse der Strom ab", async
   const gut = await stelleZu({ "stripe-signature": "t=1", body: { a: 1 } }, konfig, async () => ({ ok: true, status: 200 }));
   assert.equal(gut.ok, true);
 });
+
+test("Verbindungs- und Halte-Ereignisse zaehlen NICHT als verworfen", async () => {
+  // LIVETEST 2026-09-05 am echten Kanal: beim Verbinden schickt Smee ein
+  // "ready" ohne body. Der Client meldete "NICHT zugestellt: kein_koerper" —
+  // und haette damit die Ampel des Autopiloten belastet, obwohl nichts
+  // fehlgeschlagen war. Ein Nichts darf nicht wie ein Fehler aussehen.
+  const { laufe } = await import("../workers/smejj-smee/relay.mjs");
+  const bloecke = [
+    'event: ready\ndata: {"say":"hi"}\n\n',
+    "event: ping\ndata: {}\n\n",
+    'data: {"stripe-signature":"t=1","body":{"id":"evt_1"}}\n\n'
+  ];
+  let zugestellt = 0;
+  const meldungen = [];
+  const fetchImpl = async (adresse) => {
+    if (String(adresse).startsWith("http://ziel")) { zugestellt += 1; return { ok: true, status: 200 }; }
+    return {
+      ok: true,
+      body: { getReader() {
+        let i = 0;
+        return { read: async () => (i < bloecke.length
+          ? { value: new TextEncoder().encode(bloecke[i++]), done: false }
+          : { value: undefined, done: true }) };
+      } }
+    };
+  };
+  const abbruch = new AbortController();
+  const lauf = laufe({ kanal: "https://smee.example/k", ziel: "http://ziel/relay", geheimnis: "s" },
+    { fetchImpl, melde: (t) => { meldungen.push(t); if (t.includes("Strom beendet")) abbruch.abort(); }, abbruch: abbruch.signal });
+  const ergebnis = await lauf;
+  assert.equal(zugestellt, 1, "nur das echte Ereignis geht hinaus");
+  assert.equal(ergebnis.verworfen, 0, "ready und ping sind keine Fehlschlaege");
+  assert.ok(!meldungen.some((m) => m.includes("NICHT zugestellt")), meldungen.join(" | "));
+});

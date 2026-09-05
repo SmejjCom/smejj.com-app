@@ -127,7 +127,15 @@ export async function laufe(konfig, { fetchImpl = fetch, melde = console.log, ab
           const block = puffer.slice(0, trenner);
           puffer = puffer.slice(trenner + 2);
           const gelesen = leseSseBlock(block);
-          if (!gelesen || gelesen.art === "ping" || !gelesen.daten) continue;
+          // "ready" schickt Smee beim Verbinden, "ping" alle paar Sekunden zum
+          // Offenhalten. Beides sind KEINE Webhooks. Ein Ereignis ohne body
+          // ebenso wenig — im Livetest 05.09. zaehlte genau das als
+          // "verworfen" und haette die Ampel des Autopiloten belastet, obwohl
+          // nichts fehlgeschlagen war. Ein Nichts darf nicht wie ein Fehler
+          // aussehen.
+          if (!gelesen || !gelesen.daten) continue;
+          if (gelesen.art === "ping" || gelesen.art === "ready") continue;
+          if (gelesen.daten.body === undefined) continue;
           const ergebnis = await stelleZu(gelesen.daten, konfig, fetchImpl);
           if (ergebnis.ok) { zugestellt += 1; melde(`[smee] zugestellt (${zugestellt}) HTTP ${ergebnis.status}`); }
           else { verworfen += 1; melde(`[smee] NICHT zugestellt (${verworfen}): ${ergebnis.grund || "HTTP " + ergebnis.status}`); }
