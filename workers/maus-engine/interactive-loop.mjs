@@ -84,6 +84,51 @@ function urlAus(wert) {
   }
   return "";
 }
+const STRATEGIEN = ["role", "testId", "label", "text", "css", "xpath"];
+const KLICK_FAMILIE = ["click", "doubleClick", "rightClick", "hover"];
+/** Kurzformen eines Selektors in die Schema-Form bringen — oder unveraendert lassen. */
+function normalisiereSelektor(ziel) {
+  if (typeof ziel === "string" && ziel.trim()) {
+    const s = ziel.trim();
+    // Ein nacktes Wort ist nur dann CSS, wenn es ein HTML-Element ist ("h1",
+    // "button") — "Weiter" ist Text auf einem Knopf, kein Element.
+    const istElement = /^(h[1-6]|a|p|button|input|form|main|nav|header|footer|section|article|aside|table|thead|tbody|tr|td|th|ul|ol|li|span|div|img|select|option|textarea|label|body|title|summary|details|dialog|iframe)$/.test(s);
+    return (istElement || (/^[#.\[]|^[a-z][a-z0-9-]*[#.\[:>\s]/i.test(s) && !/\s/.test(s)))
+      ? { strategy: "css", value: s } : { strategy: "text", value: s };
+  }
+  if (!ziel || typeof ziel !== "object" || Array.isArray(ziel)) return ziel;
+  if (typeof ziel.strategy === "string" && typeof ziel.value === "string") return ziel;
+  if (typeof ziel.selector === "string") { const innen = normalisiereSelektor(ziel.selector); return ziel.name && innen && !innen.name && innen.strategy === "role" ? { ...innen, name: String(ziel.name) } : innen; }
+  for (const k of STRATEGIEN) {
+    if (typeof ziel[k] === "string" && ziel[k].trim()) {
+      const aus = { strategy: k, value: ziel[k].trim() };
+      if (k === "role" && typeof ziel.name === "string") aus.name = ziel.name;
+      return aus;
+    }
+  }
+  return ziel;
+}
+/** Praezise Gruende je Aktion — statt der ersten drei Schema-Varianten. */
+function praeziseGruende(step, pflichtfelder) {
+  const gruende = [];
+  const eintrag = pflichtfelder.find((p) => p.action === step?.action);
+  if (!eintrag) return gruende;
+  for (const feld of eintrag.required) if (step[feld] === undefined) gruende.push(`Pflichtfeld fehlt fuer ${step.action}: ${feld}`);
+  const ziel = KLICK_FAMILIE.includes(step.action) ? step.target?.selector : step.target;
+  if (step.target !== undefined && !(ziel && typeof ziel === "object" && typeof ziel.strategy === "string" && typeof ziel.value === "string")) {
+    gruende.push(`target unbrauchbar fuer ${step.action}: erwartet ${KLICK_FAMILIE.includes(step.action) ? "{selector:{strategy,value}}" : "{strategy,value}"}, erhalten ${typeof step.target === "object" ? "Felder " + Object.keys(step.target).join(",") : typeof step.target}`);
+  }
+  return gruende;
+}
+let cachedPflichtfelder = null;
+function pflichtfelderAusSchema() {
+  if (!cachedPflichtfelder) {
+    const s = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "..", "schemas", "maus-action-plan.schema.json"), "utf8"));
+    cachedPflichtfelder = s.$defs.step.oneOf.map((v) => ({ action: v.properties.action.const, required: (v.required || []).filter((f) => f !== "action") }));
+  }
+  return cachedPflichtfelder;
+}
+
 export function repariereEntscheidung(eingabe) {
   const repariert = [];
   if (!eingabe || typeof eingabe !== "object" || Array.isArray(eingabe)) return { decision: eingabe, repariert };
@@ -129,17 +174,20 @@ export function repariereEntscheidung(eingabe) {
     const u = urlAus(s.target);
     if (u) { s.action = "navigate"; s.url = u; delete s.target; repariert.push("klick_auf_adresse_zu_navigate"); }
   }
-  // 8. Ein nackter Selektor-String wird zum Selektor-Objekt.
-  if (typeof s.target === "string" && s.target.trim()) {
-    const t = s.target.trim();
-    s.target = /^[#.\[]|^[a-z][a-z0-9]*[#.\[:>\s]/i.test(t) ? { strategy: "css", value: t } : { strategy: "text", value: t };
-    repariert.push("target_zu_selektor");
+  // 8. Kurzformen des Ziels in die Schema-Form bringen: "h1", {selector:"h1"},
+  //    {css:"h1"}, {text:"…"}, {role:"heading", name:"…"} (Live-Mitschnitt 06.09.:
+  //    ein extract mit id/action/target/name wurde abgelehnt — die Zielform passte nicht).
+  if (s.target !== undefined) {
+    const vorher = JSON.stringify(s.target);
+    const innenVorher = s.target && typeof s.target === "object" && s.target.selector && typeof s.target.selector === "object" ? s.target.selector : null;
+    if (innenVorher) { const innen = normalisiereSelektor(innenVorher); if (JSON.stringify(innen) !== JSON.stringify(innenVorher)) s.target = { ...s.target, selector: innen }; }
+    else s.target = normalisiereSelektor(s.target);
+    if (JSON.stringify(s.target) !== vorher) repariert.push("target_zu_selektor");
   }
   // 9. ZWEI ZIELFORMEN, und das Modell verwechselt sie staendig (Befund schon
   //    2026-08-18): die Klick-Familie verlangt { selector: {...} }, alle
   //    anderen den flachen Selektor { strategy, value }. Beides ist dieselbe
   //    Information — also umpacken statt ablehnen.
-  const KLICK_FAMILIE = ["click", "doubleClick", "rightClick", "hover"];
   if (s.target && typeof s.target === "object" && !Array.isArray(s.target)) {
     const flach = typeof s.target.strategy === "string";
     const gehuellt = s.target.selector && typeof s.target.selector === "object";
@@ -157,7 +205,11 @@ export function validateLoopDecision(rawAnswer, policyInput) {
   // Was hat das Modell vorgeschlagen? Ohne diese Zeile sah man bei einer
   // Ablehnung nur Schema-Gruende und musste raten (Befund 05.09.).
   const vorschlag = decision && typeof decision === "object"
-    ? { decision: decision.decision, action: decision.step?.action, felder: Object.keys(decision.step || {}) }
+    ? {
+      decision: decision.decision, action: decision.step?.action, felder: Object.keys(decision.step || {}),
+      target: typeof decision.step?.target === "string" ? decision.step.target.slice(0, 80)
+        : decision.step?.target && typeof decision.step.target === "object" ? { felder: Object.keys(decision.step.target), selector: decision.step.target.selector && typeof decision.step.target.selector === "object" ? Object.keys(decision.step.target.selector) : typeof decision.step.target.selector } : undefined
+    }
     : null;
   const envelope = decisionValidator()(decision);
   if (!envelope.ok) return { ok: false, errors: envelope.errors.slice(0, 10), repariert, vorschlag };
@@ -176,7 +228,10 @@ export function validateLoopDecision(rawAnswer, policyInput) {
   const validation = validatePlan(syntheticPlanFor(step, policyInput));
   if (!validation.ok) {
     const allowlistViolation = validation.errors.some((error) => /Allowlist|Blockierter Host/i.test(error));
-    return { ok: false, allowlistViolation, errors: validation.errors.slice(0, 10), repariert, vorschlag };
+    // Praezise Gruende ZUERST: "Pflichtfeld fehlt fuer extract: name" sagt dem
+    // Modell (und dem Nutzer) mehr als drei fremde Schema-Varianten.
+    const praezise = allowlistViolation ? [] : praeziseGruende(step, pflichtfelderAusSchema());
+    return { ok: false, allowlistViolation, errors: [...praezise, ...validation.errors].slice(0, 10), repariert, vorschlag };
   }
   return { ok: true, decision, repariert };
 }
