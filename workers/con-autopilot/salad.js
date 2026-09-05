@@ -111,7 +111,11 @@ export function jobUmgebung({ konfig, e2, salad, jobId, modus, parameter = {}, b
  * Liefert {ok, angelegt, gruende}. Kostet nichts: replicas=1 mit autostart=false startet nichts.
  */
 export async function bereiteJobVor({ client, konfig, e2, jobId, modus, parameter, maxMinuten, log = () => {} }) {
-  const buendel = baueBuendel(konfig.jobDir);
+  // Die Suiten kommen aus dem EINEN Quellverzeichnis, nicht aus einer Kopie im Job-Ordner.
+  // Fehlt der Pfad, bricht der Start ab: ein Buendel ohne Latte wuerde einen Messlauf
+  // starten, der nichts misst — und dafuer volle Miete kosten.
+  if (!konfig.suitesDir) return { ok: false, gruende: ["suites_verzeichnis_fehlt"] };
+  const buendel = baueBuendel(konfig.jobDir, { zusatz: { suites: konfig.suitesDir } });
   const env = jobUmgebung({ konfig, e2, salad: konfig.salad, jobId, modus, parameter, buendelB64: buendel.b64, maxMinuten });
   const vorhanden = await client.lese();
   let angelegt = false;
