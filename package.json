@@ -154,7 +154,8 @@
     "con:tick": "node workers/con-autopilot/cli.mjs tick",
     "check:con-abbild": "node scripts/check-con-abbild.mjs",
     "check:con-wache": "node scripts/check-con-wache.mjs",
-    "test:con-daten": "node --test tests/con-daten-generator.test.mjs"
+    "test:con-daten": "node --test tests/con-daten-generator.test.mjs",
+    "diagnose:schluessel": "node scripts/diagnose/schluessel-landkarte.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2"

@@ -19,6 +19,45 @@ export const ZHIPU_CODING_ADRESSE = "https://api.z.ai/api/coding/paas/v4";
 /** Schluessel, ohne die kein Chat antwortet. Nur Namen — Werte bleiben unsichtbar. */
 export const PFLICHT_SCHLUESSEL = Object.freeze(["SMEJJ_LLM_ZHIPU_API_KEY", "SMEJJ_LLM_GROQ_API_KEY"]);
 
+/**
+ * WIE VIELE GLIEDER HAT DIE KETTE WIRKLICH?
+ *
+ * BEFUND 2026-09-05 (Betreiber-Auftrag "kein Single Point of Failure"): Der
+ * Router kennt 16 Anbieter, die Registry fuehrt 6 Modelle — und LIVE ist genau
+ * eines aktiv (glm-5-2 bei Zhipu), alle anderen stehen auf "inactive". Faellt
+ * Zhipu aus, steht der Chat. Genau das ist am 02.09. zweimal passiert.
+ *
+ * Diese Wache zaehlt deshalb ab jetzt, wie viele Anbieter ueberhaupt einen
+ * Schluessel haben. Sie SCHALTET nichts ein und ruft nichts auf — sie sagt nur,
+ * wie tief das Netz ist, bevor jemand hineinfaellt.
+ *
+ * Die Namen folgen der Regel des Routers: SMEJJ_LLM_<ANBIETER>_API_KEY
+ * (modelRouter.js, Zeile 181). Ein Anbieter mit Schluessel ist ein Glied.
+ */
+export const ANBIETER_KETTE = Object.freeze([
+  "groq", "cerebras", "gemini", "deepseek", "mistral", "zhipu", "qwen",
+  "moonshot", "together", "fireworks", "sambanova", "nvidia", "openrouter", "openai"
+]);
+
+/** Ab wie vielen Gliedern die Kette traegt. Zwei ist kein Netz, sondern ein Seil. */
+export const MINDEST_GLIEDER = 3;
+
+/**
+ * Zaehlt die besetzten Glieder. Rein und testbar; liest nur "gesetzt/nicht
+ * gesetzt", nie einen Wert.
+ * @param {object} env
+ */
+export function zaehleKette(env = process.env) {
+  const besetzt = [];
+  for (const anbieter of ANBIETER_KETTE) {
+    const gross = anbieter.toUpperCase();
+    const einer = String(env[`SMEJJ_LLM_${gross}_API_KEY`] || "").trim();
+    const mehrere = String(env[`SMEJJ_LLM_${gross}_API_KEYS`] || "").trim();
+    if (einer || mehrere) besetzt.push(anbieter);
+  }
+  return { besetzt, anzahl: besetzt.length, reicht: besetzt.length >= MINDEST_GLIEDER, gesamt: ANBIETER_KETTE.length };
+}
+
 function hostUndPfad(url) {
   try {
     const u = new URL(String(url || ""));
@@ -58,9 +97,15 @@ export function beurteileUmgebung(env = process.env) {
     fehler.push(`Registry loest fuer ${DEFAULT_MODEL_ID} ${hostUndPfad(aufgeloest)} auf — die Umgebung kommt nicht an`);
   }
 
+  // Die Kettenlaenge ist eine WARNUNG, kein Fehler: mit einem Glied laeuft der
+  // Chat, er haengt nur an einem einzigen Anbieter. Sie gehoert in die Meldung,
+  // damit sie auffaellt, bevor der Anbieter ausfaellt — nicht danach.
+  const kette = zaehleKette(env);
+
   return {
     ok: fehler.length === 0,
     fehler,
+    kette,
     zhipuAdresse: hostUndPfad(gesetzt || aufgeloest),
     schluessel: Object.fromEntries(PFLICHT_SCHLUESSEL.map((name) => [name, !fehlend.includes(name)]))
   };
@@ -96,5 +141,11 @@ export async function laufUmgebungsWache({ env = process.env } = {}) {
   if (!urteil.ok) {
     return { ok: false, meldung: `Umgebung unvollstaendig: ${urteil.fehler.join("; ")} — Zeabur-Variablen pruefen (Portal: smejj-control, Variable), dann Redeploy` };
   }
-  return { ok: true, meldung: `Selbsttest 5/5; Zhipu-Adresse ${urteil.zhipuAdresse} (Coding-Paket), Schluessel: ${schluessel}` };
+  // Die Kettenlaenge steht in JEDER Meldung — auch in der gruenen. Ein Netz mit
+  // einem Glied faellt sonst erst auf, wenn dieses eine Glied reisst.
+  const k = urteil.kette;
+  const netz = k.reicht
+    ? `Kette ${k.anzahl}/${k.gesamt} Anbieter besetzt (${k.besetzt.join(", ")})`
+    : `ACHTUNG: nur ${k.anzahl} von ${k.gesamt} Anbietern hat einen Schluessel (${k.besetzt.join(", ") || "keiner"}) — faellt einer aus, steht der Chat`;
+  return { ok: true, meldung: `Selbsttest 5/5; Zhipu-Adresse ${urteil.zhipuAdresse} (Coding-Paket), Schluessel: ${schluessel}; ${netz}` };
 }
