@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T14:22:28.040Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 ('weiter' nach dem gemeldeten Befund): Englische Fachwoerter in der deutschen Oberflaeche uebersetzt — 'Upload-Staging' zu 'Dateien auswaehlen', 'Gestagte Uploads' zu 'Wartende Dateien', 'Upload-Liste downloaden' zu 'Liste herunterladen', 'Memory downloaden' zu 'Gedaechtnis herunterladen', 'presigned URLs spaeter' zu 'signierte Adressen folgen', 'fail-closed' zu 'bleiben aus'. Etablierte Begriffe (Download, Snapshot, Sync) bleiben. Dazu: die 14 Sprachseiten luden ein anderes voice-landing-Modul als die deutsche Seite — Marke im Generator angeglichen (Favicons dabei nachweislich unberuehrt). Service-Worker v770, app.js b137.",
+  "frozenAt": "2026-09-05T14:38:48.935Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05, Bildschirmfoto mit Wortlaut: 'Soll ganz unten dunkele hintergrund raus, seite soll mit ganz untere kante treffen.' Befund: der Rahmen des Live-Browsers hatte seit dem Entfernen der Kopfzeile zwei Gitterzeilen; die Buehne landete in der auto-Zeile und wurde nur so hoch wie das Bild, darunter zeigte die leere 1fr-Zeile den dunklen Grund (im Browser nachgestellt: 213 px Streifen). Dazu zog remoteBrowserViewport 38 px der entfernten Kopfzeile ab, und der Nachlauf bei Groessenaenderung galt nicht fuer den Live-Browser. Behoben in browser-pane-render.js, browser-pane-fernwege.js, browser-pane.js; Marken der Browser-Kette, app.js b138, Service-Worker smejj-shell-v771. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "6e7177ab221f35951a844449e769c0899b4547a7cea4d99dc7bada83e919235c",
+    "public/index.html": "7b8ad662437df55d21725528eb01239ffeea50ac08bdac9ab56326f908704f54",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "ddd8e494cf033ce3620207fb94c0b7b66eeb2f7a4012a289c2c69a42b8cbef38",
+    "public/app.js": "aa7d5723d1143fc44bf8ee315f1a50edcd805d03592e5c4dd3f96abfc316101d",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,8 +24,8 @@
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "6d26716c99faf8f6ce7e9ba3bf60a8c0335c410e8da67556e21837d419a52400",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "2ed6f3b562540650dcbda83fc46148cb112d7ab45791dcb03c2769a7d48a3c17",
-    "public/browser-pane-render.js": "fcf48d6c9f40f06a96ecd58b616aba8b41a9cc929ac258c458c1b7f86ba5d4ac",
+    "public/browser-pane.js": "7016196add34f93e554deca6849f5e6517832007d114a81aff50665ec4d44faf",
+    "public/browser-pane-render.js": "8e98443fc2b78931e3096da19614ceef3631b8fe119d04520174e31ecf430dec",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
     "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "a129d6bc9a153f4a938117f6c2629eb6cff301033bee17cbc0961e41642b61d3",
+    "public/sw.js": "023f69bc94d427c44f5437243fe970d73a59e0a1903fea24abec58174cc69d09",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
