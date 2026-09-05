@@ -127,3 +127,17 @@ test("Route: reparierte Entscheidung kommt im ersten Anlauf durch und meldet, wa
   assert.ok(res.body.repariert.includes("url_aus_target"));
   assert.match(prompts[0], /NUR diese Aktionen kann der Browser hier ausfuehren/);
 });
+
+// LIVE 2026-09-05: "Klicken: https://de.wikipedia.org/wiki/Ada_Lovelace" ging ins Leere.
+test("ein Klick auf eine Web-Adresse wird zum navigate — die Allowlist gilt weiter", () => {
+  const v = validateLoopDecision(act({ id: "s1", action: "click", target: "https://example.com/wiki/Ada" }), POLICY);
+  assert.equal(v.ok, true, JSON.stringify(v));
+  assert.equal(v.decision.step.action, "navigate");
+  assert.equal(v.decision.step.url, "https://example.com/wiki/Ada");
+  assert.ok(v.repariert.includes("klick_auf_adresse_zu_navigate"));
+  const fremd = validateLoopDecision(act({ id: "s1", action: "openLink", target: { value: "https://boese.example/" } }), POLICY);
+  assert.equal(fremd.ok, false);
+  assert.equal(fremd.allowlistViolation, true);
+  const echt = validateLoopDecision(act({ id: "s1", action: "click", target: { strategy: "text", value: "Ada Lovelace" } }), POLICY);
+  assert.equal(echt.decision.step.action, "click", "ein normales Klickziel bleibt ein Klick");
+});
