@@ -18,12 +18,12 @@
 # (liegt schon im Repo, nur der Push fehlte — der Auto-Modus hat ihn gesperrt).
 #
 # Rollback: `git push origin <vorheriger-stand>:feature/auth-redesign-github-magiclink`
-# ist KEIN Fast-Forward und damit gesperrt; stattdessen `git revert 7020047b` auf
+# ist KEIN Fast-Forward und damit gesperrt; stattdessen `git revert c7472166` auf
 # dem Bauzweig pushen — Zeabur baut den Stand davor.
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 BAUZWEIG="feature/auth-redesign-github-magiclink"
-COMMIT="7020047b"
+COMMIT="c7472166"
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 
 cd "$REPO" || { echo "ABBRUCH: App-Ordner nicht erreichbar."; exit 1; }
