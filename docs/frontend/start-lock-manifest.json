@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T17:57:33.086Z",
+  "frozenAt": "2026-09-05T21:46:16.942Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-05: 'Ich gebe dir alle Rechte. von A bis Z. Mach hundert Prozent fertig, lass nichts offen.' und 'wenn du fertig bist dann nochmal komplett testen.' Zwei Aenderungen: (1) Maus ueberlebt den Verlust der Live-Browser-Sitzung (der ferne Browser haelt vier Sitzungen, die aelteste fliegt raus) — Sitzungs-Client gibt Fehler mit Grund zurueck, onLost verbindet erst live neu statt einzubetten, die Maus baut die Sitzung einmal selbst neu auf, zwei Fehlschlaege erlaubt, gelesene Werte gehen zurueck ans Modell; (2) Hell-Modus-Fix der Parallelsitzung (Einstellungs-Navigation lesbar, f06cbc20). Marken der Browser-Kette, app.js b140, premium-surfaces b47u, Service-Worker smejj-shell-v773. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
