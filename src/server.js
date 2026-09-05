@@ -414,6 +414,8 @@ async function handleHealth(res) {
     aiBackend: aiStatus.aiBackend,
     activeModelId: aiStatus.activeModelId,
     modelRegistry: aiStatus.registry,
+    // Alias "smejj" (Nr. 83): worauf er zeigt und warum — auch wenn er AUS ist.
+    smejjAlias: aiStatus.smejjAlias || null,
     storage: Boolean(process.env.IDRIVE_E2_ENDPOINT && process.env.IDRIVE_E2_ACCESS_KEY && process.env.IDRIVE_E2_SECRET_KEY && process.env.IDRIVE_E2_BUCKET),
     // Suchquelle mit Schluessel: NUR Zustand und Verbrauch, nie der Schluessel.
     // Ohne diese Anzeige ist "konfiguriert" von "Kontingent aufgebraucht" nicht
