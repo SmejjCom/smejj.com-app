@@ -22,7 +22,11 @@ echo "== 0. Ausgangslage"
 git log --oneline -1
 git merge-base --is-ancestor "$CODE_COMMIT" HEAD || { echo "ABBRUCH: Code-Commit $CODE_COMMIT nicht im Zweig."; exit 1; }
 grep -q "export function ersatzZiele" public/browser-pane-maus.js || { echo "ABBRUCH: die Aenderung steht nicht in public/browser-pane-maus.js."; exit 1; }
-git diff --quiet -- public tests || { echo "ABBRUCH: ungespeicherte Aenderungen in public/ oder tests/ — eine andere Sitzung arbeitet gerade."; exit 1; }
+# Nur die Dateien, die HIER ausgeliefert werden, muessen sauber sein — eine
+# Parallelsitzung darf an anderen Dateien arbeiten (06.09.: chat-actions-woerter.js).
+for f in "${DATEIEN[@]}"; do
+  git diff --quiet -- "public/$f" || { echo "ABBRUCH: public/$f hat ungespeicherte Aenderungen — eine andere Sitzung arbeitet gerade daran."; exit 1; }
+done
 
 echo "== 1. Start-Lock stempeln (Betreiber-Wortlaut)"
 node scripts/check-start-lock.mjs --freeze --confirm "Betreiber Wof Kadavanich, 2026-09-05/06: 'Ich gebe dir alle Rechte. von A bis Z. Mach hundert Prozent fertig, lass nichts offen.' und 'wenn du fertig bist dann nochmal komplett testen.' Berlin-Auftrag scheiterte an einer falsch geratenen Rolle (textbox statt searchbox) und derselben Wiederholung; das Panel leitet jetzt Ersatzziele aus seiner eigenen Beobachtung ab (Rollen-Alias, css aus id/name/placeholder, Klick nach passendem Text), bevor ein Fehlschlag zaehlt. browser-pane-maus.js; Marken der Browser-Kette, app.js b143, Service-Worker smejj-shell-v776. Stempel per Doppelklick im Finder." \
