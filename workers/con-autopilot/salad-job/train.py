@@ -14,6 +14,7 @@ Datensatz: JSONL, je Zeile {"messages":[{"role":..,"content":..}, ...]}
 (oder {"prompt","response"}). Nur der Assistenten-Anteil traegt Verlust.
 """
 import gc
+import hashlib
 import json
 import os
 import re
@@ -183,6 +184,18 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
         return {"input_ids": ids, "labels": lab, "attention_mask": att}
 
     os.makedirs(ausgabe, exist_ok=True)
+    # Zwischenstaende gehoeren zu GENAU dieser Kombination aus Kandidat, Datensatz und
+    # Trainingsplan. Am 05.09. fand ein Lauf mit dem NEUEN Datensatz einen Zwischenstand
+    # des alten (Schritt 66 von geplanten 64) und hielt sich fuer fertig — null neue
+    # Schritte, und gemessen worden waere die alte Arbeit unter neuem Namen.
+    kennung = hashlib.sha256(json.dumps({
+        "daten": os.path.abspath(datensatz_pfad),
+        "quelle": konfig.get("datensatzKennung") or os.environ.get("CON_DATENSATZ_PREFIX", ""),
+        "r": konfig.get("r"), "alpha": konfig.get("alpha"), "lr": konfig.get("lr"),
+        "maxLen": max_len, "batch": batch, "gradAkk": grad_akk
+    }, sort_keys=True).encode("utf-8")).hexdigest()[:12]
+    checkpoint_prefix = f"{checkpoint_prefix.rstrip('/')}/{kennung}"
+    status.setze(schritt="zwischenstand_kennung", kennung=kennung)
     letzter = _neuester_zwischenstand(checkpoint_prefix)
     resume = None
     if letzter is not None:
@@ -275,6 +288,10 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
                          vramBelegtMiB=int(torch.cuda.memory_allocated() // (1024 * 1024)))
     except Exception as fehler:  # noqa: BLE001 — Aufraeumen darf den Lauf nie kippen
         status.setze(schritt="vram_freigeben_fehler", hinweis=str(fehler)[:120])
-    return {"adapterPfad": adapter_pfad, "globalStep": schritte,
+    # Ein Lauf, der keinen einzigen neuen Schritt gemacht hat, ist kein Training.
+    # Das gehoert ins Ergebnis, nicht in die Fussnote.
+    neue_schritte = schritte - (letzter or 0)
+    return {"adapterPfad": adapter_pfad, "globalStep": schritte, "neueSchritte": neue_schritte,
+            "ohneNeueSchritte": neue_schritte <= 0, "zwischenstandKennung": kennung,
             "trainLoss": getattr(ergebnis, "training_loss", None), "sekunden": round(dauer),
             "beispiele": len(beispiele), "abgebrochen": abbruch_gewuenscht, "zielModule": ziele}

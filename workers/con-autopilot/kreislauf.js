@@ -200,6 +200,13 @@ async function rettteAdapter(ctx, z, job) {
   if (!kandidat) return null;
   const training = await e2.getJson(`con/versions/${kandidat}/training.json`, null);
   if (!training) return null;
+  // Ein Lauf, der keinen neuen Schritt gemacht hat, hat nichts trainiert. Seinen Adapter
+  // zu retten hiesse, fremde Arbeit unter neuem Namen zu messen (05.09. live passiert).
+  if (training.ungueltig || training.ohneNeueSchritte || training.neueSchritte === 0) {
+    notiere(z, `Adapter ${kandidat} verworfen: der Lauf machte keine neuen Schritte`);
+    log(`Adapter ${kandidat} nicht gerettet — null neue Schritte`);
+    return null;
+  }
   // NUR den Adapter DIESES Laufs retten. Am 04.09. sammelte diese Funktion den Adapter vom
   // Vortag auf, weil er unter derselben Nummer lag: der Autopilot trug verworfene Arbeit als
   // frischen Kandidaten ein und mass sie ein drittes Mal. Ein fremder Lauf wird ignoriert.

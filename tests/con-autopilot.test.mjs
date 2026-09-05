@@ -343,3 +343,46 @@ test("Trainingsziel ist die Schwaeche der STABILEN Version, nicht die des verwor
   assert.equal(plan.schritt, "training");
   assert.equal(plan.schwaeche.kategorie, "reasoning", "die Schwaeche des gefuehrten Standes zaehlt");
 });
+
+test("verwaister Container: laeuft die Gruppe ohne gefuehrten Job, wird sie gestoppt", async () => {
+  const { bereiteJobVor } = await import("../workers/con-autopilot/salad.js");
+  let gestoppt = false;
+  const client = {
+    lese: async () => ({ ok: true, status: 200, daten: { current_state: { status: "running" } } }),
+    stoppe: async () => { gestoppt = true; return { ok: true, status: 202 }; },
+    aktualisiere: async () => ({ ok: true, status: 200 }),
+    erzeuge: async () => ({ ok: true, status: 201 })
+  };
+  const konfig = { jobDir: path.join(ROOT, "workers/con-autopilot/salad-job"),
+    salad: { gruppe: "con-job", organisation: "o", projekt: "p", apiKey: "k", image: "i", vcpu: 8, ramMb: 1024, gpuKlassen: ["a"], speicherGb: 10, prioritaet: "batch" },
+    basis: { repo: "r", prefix: "p" } };
+  const r = await bereiteJobVor({ client, konfig, e2: { endpoint: "e", region: "r", bucket: "b", accessKey: "a", secretKey: "s" },
+    jobId: "j", modus: "messung", parameter: {}, maxMinuten: 10, log: () => {} });
+  assert.equal(r.ok, false, "kein Start, solange etwas Fremdes laeuft");
+  assert.equal(gestoppt, true, "der verwaiste Container MUSS gestoppt werden, sonst laeuft er auf Kosten weiter");
+  assert.match(r.gruende[0], /verwaister_container_gestoppt/);
+});
+
+test("Rettung lehnt einen Lauf ohne neue Schritte ab", async () => {
+  const { tick } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  let registryGeschrieben = null;
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      if (k === "con/autopilot/zustand.json") return { phase: "job_laeuft", ticks: 1, historie: [],
+        laufenderJob: { jobId: "job-X", taskId: "t", modus: "training+messung", version: "con-1.0", kandidat: "con-1.3", gestartet: new Date().toISOString(), maxMinuten: 200 } };
+      // Der Adapter liegt da, gehoert zum Lauf — hat aber nichts gelernt.
+      if (k === "con/versions/con-1.3/training.json") return { jobId: "job-X", neueSchritte: 0, ohneNeueSchritte: true };
+      if (k === "con/logs/jobs/job-X/ergebnis.json") return { ok: false, grund: "training_ohne_neue_schritte" };
+      if (k === "con/registry.json") return { versions: [{ version: "con-1.0", status: "stable", benchmarks: { gesamt: 0.97, kritisch: 1, kategorien: {} } }] };
+      return standard;
+    },
+    putJson: async (k, v) => { if (k === "con/registry.json") registryGeschrieben = v; },
+    liste: async () => [{ key: "con/versions/con-1.3/adapter/adapter_model.safetensors", size: 1 }]
+  };
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir, taktMs: 300000,
+    grenzen: { tagesbudgetUsd: 5, gesamtdeckelUsd: 10, jobMaxMinuten: 200, freigabe: false, notaus: false } };
+  await tick({ konfig, e2, salad: null, log: () => {} });
+  const kandidat = (registryGeschrieben?.versions || []).find((v) => v.version === "con-1.3");
+  assert.equal(kandidat, undefined, "ein Lauf ohne neue Schritte darf nie als Kandidat gefuehrt werden");
+});

@@ -237,6 +237,12 @@ def lauf():
                                                                 "datensatzPrefix": datensatz_prefix, "jobId": JOB_ID,
                                                                 "konfig": konfig, "stand": _iso(time.time())})
         adapter_dir = t["adapterPfad"]
+        if t.get("ohneNeueSchritte"):
+            # Kein einziger neuer Schritt: der Adapter ist die Arbeit eines fremden Laufs.
+            # Ihn unter diesem Namen zu messen waere eine Luege ueber die eigene Arbeit.
+            ergebnis["ok"] = False
+            ergebnis["grund"] = "training_ohne_neue_schritte"
+            return ergebnis
         if t.get("abgebrochen"):
             ergebnis["ok"] = False
             ergebnis["grund"] = "training_abgebrochen_zeitgrenze"
