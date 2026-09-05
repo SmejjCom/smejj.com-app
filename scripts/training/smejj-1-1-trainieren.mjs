@@ -159,7 +159,10 @@ async function main() {
   console.log(`Datensatz geprueft: ${Math.round((satz.size || 0) / 1024)} KB, ${manifest?.paare ?? "?"} Paare`);
 
   const vorher = await zeigeStand(client, e2);
-  if (vorher.zustand === "running") { console.error("ABBRUCH: die Gruppe laeuft bereits."); process.exit(4); }
+  // "deploying"/"pending" zaehlen mit (05.09. 21:49 UTC): ein Doppelklick traf die Gruppe waehrend
+  // ein Messjob gerade zugeteilt wurde — die Pruefung sah kein "running", ueberschrieb die
+  // Job-Umgebung und verdraengte die Messung. Nur "stopped"/"failed" ist frei.
+  if (!["stopped", "failed", "fehlt"].includes(vorher.zustand)) { console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}).`); process.exit(4); }
 
   if (!process.argv.includes("--starten")) {
     console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich trainiert.");

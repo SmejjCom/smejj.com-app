@@ -230,7 +230,7 @@ async function main() {
   if (!training?.adapterPrefix) { console.error("ABBRUCH: kein Adapter unter con/versions/" + KANDIDAT); process.exit(3); }
   console.log(`Adapter:      ${training.adapterPrefix} — Job ${training.jobId}, ${training.beispiele} Beispiele, Loss ${Number(training.trainLoss).toFixed(3)}, Stand ${training.stand}`);
   const vorher = await zeigeStand(client, e2);
-  if (vorher.zustand === "running") { console.error("ABBRUCH: die Gruppe laeuft bereits (Training oder Messung)."); process.exit(4); }
+  if (!["stopped", "failed", "fehlt"].includes(vorher.zustand)) { console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}) — Training oder Messung laeuft oder wird gerade zugeteilt.`); process.exit(4); }
   if (!argv.includes("--starten")) { console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich gemessen."); return; }
 
   const jobDir = baueMessJobVerzeichnis(konfig.jobDir);
