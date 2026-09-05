@@ -1,0 +1,154 @@
+{
+  "jobId": "job_admin_reihenfolge_20260831",
+  "createdAt": "2026-08-31T15:18:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag: gesamte Admin-Konsole sichten, Prioritaeten-Liste vorlegen; nach Diskussion zweimal schriftlich freigegeben — Reihenfolge und Nummern-Kuerzel, je mit „Ja“)",
+  "title": "Admin-Konsolen-Navigation neu geordnet (4 Stufen, Wirkungs-gewichtet) und Kuerzel-Plaketten auf Nummern 1-28 umgestellt — live bewiesen auf smejj.com/admin/",
+  "ziel": "Die 28 Bereiche der Operations Console (smejj.com/admin/) nach professioneller Prioritaet ordnen — Wirkung x Vernachlaessigungsrisiko (Fristen, blockierte Ablaeufe) x Haeufigkeit, NICHT nur Klick-Haeufigkeit — und die Kuerzel-Plaketten auf die sinnvollen Nummern 1-28 umstellen. Vollstaendiger Ship-Loop inkl. Livegang.",
+  "anforderungen": [
+    "Alle 28 Admin-Bereiche live im Browser sichten (Zweck + Live-Zahlen)",
+    "Prioritaeten-Liste vorlegen und ERST nach schriftlicher Freigabe umsetzen (Change-Lock)",
+    "Erste reine Haeufigkeits-Sortierung vom Betreiber verworfen: Analytik und Freigaben gehoeren nach oben (Feedback eingearbeitet)",
+    "Keine neuen Navigationspunkte: stage10-13 (radar/evolution/cockpit/…) bleiben live unregistriert — Buendel-Abgleich ist ein eigenes, separat freizugebendes Thema",
+    "Design-Lock, Favicon-Lock, Start-Lock, CSS-Ratsche unberuehrt lassen (nur admin/console.js)",
+    "Nach Freigabe: Commit, Deploy (Klon HEAD:main), Livegang, Live-Test, Task Capsule, Memory_Bank"
+  ],
+  "befunde": [
+    {
+      "prio": "P1-Struktur",
+      "was": "Die Navigation wird in console.js aus SEITEN (7 Kerneintragen) + Stage-Registern (stage4-9) gebaut und nach GRUPPEN_REIHENFOLGE sortiert; innerhalb der Gruppe entschied der Registratur-Zufall.",
+      "bedeutung": "Reihenfolge ist eine zentrale Sortier-Stelle in EINER Datei — sauber aenderbar ohne Anfassen der 7 Stage-Dateien."
+    },
+    {
+      "prio": "P1-Divergenz",
+      "was": "Drei console.js-Kopien: Quelle control-server/admin-ui/ (mit stage11-Registratur), Spiegel public/admin/ (= Live-Stand, ohne stage11), Deploy-Klon ~/smejj-app-frontend/admin/. Quelle und Klon weichen in 4 Dateien ab (console.js, console.css, index.html, views-stage11.js) — bekannter Zustand aus den Produktions-Hotfixes.",
+      "risiko": "Ein sync_admin_console_pages.mjs-Lauf auf den ECHTEN Klon wuerde die Live-Arbeit mit der Quell-Version ueberschreiben und stage11 (Evolution) ungenehmigt in die Navigation bringen.",
+      "loesung": "Manifest nur ueber Wegwerf-Klon (/tmp) aufgefrischt; echter Klon chirurgisch editiert; alle drei Kopien mit derselben Reihenfolge-Aenderung wortgleich gehalten."
+    },
+    {
+      "prio": "P2-Fallstrick",
+      "was": "Erste Sortier-Fassung nutzte `PRIORITAET[pfad] || 999` — die Uebersicht traegt bewusst die Nummer 0, und 0 || 999 ist 999: die Startseite waere ans ENDE gerutscht.",
+      "loesung": "Sortierung prueft explizit `=== undefined`; in der Simulation aus der ECHTEN Datei gefunden, bevor sie live ging."
+    }
+  ],
+  "aenderungen": [
+    {
+      "datei": "control-server/admin-ui/console.js + public/admin/console.js + ~/smejj-app-frontend/admin/console.js (drei Kopien, wortgleich)",
+      "was": "Statt GRUPPEN_REIHENFOLGE jetzt PRIORITAET (Nummer je Pfad, Uebersicht=0), STUFEN (vier Nummernbereiche als Gruppen: Betrieb & Entscheidungen 1-10, Governance & Sicherheit 11-18, Zugaenge & Recht 19-23, Produktsteuerung 24-28), gruppeVon() und kuerzelVon(); Sortierung nach Nummer (undefined -> 999, hinten).",
+      "grund": "Freigegebene Reihenfolge 1:1 abbilden; neue Seiten ohne Nummer haengen bewusst hinten an Produktsteuerung, statt mittendrin aufzutauchen."
+    },
+    {
+      "datei": "docs/approvals/2026-08-31-admin-reihenfolge.md",
+      "was": "Freigabe-Dokument mit der freigegebenen Reihenfolge, engem Umfang, Rollback-Punkten und Nachtrag fuer das zweite „Ja“ (Nummern-Kuerzel).",
+      "grund": "Change-Lock: schriftliche Freigabe nachweisbar archivieren."
+    },
+    {
+      "datei": "docs/frontend/admin-console-sync.json",
+      "was": "Manifest via Wegwerf-Klon aufgefrischt (Quell-Hashes nach der console.js-Aenderung).",
+      "grund": "check:admin-console-sync bleibt gruen; echter Klon blieb unberuehrt (4-Datei-Divergenz respektiert)."
+    }
+  ],
+  "ergebnisse": [
+    "Live-Navigation (smejj.com/admin/) exakt in freigegebener Reihenfolge: Ueberblick; Betrieb & Entscheidungen (1 Autopiloten, 2 Analytik, 3 Nutzerverwaltung, 4 Modelle & Provider, 5 Jobs & Laeufe, 6 Worker & Kapazitaet, 7 Kosten & Budgets, 8 Abrechnung & Abos, 9 API & Schluessel, 10 E-Mail-Zustellung); Governance & Sicherheit (11 Freigaben, 12 Sicherheit, 13 Missbrauch & Moderation, 14 Betrieb & Deploy, 15 Speicher, 16 Schluessel & Geheimnisse, 17 Audit-Log, 18 DSGVO-Vorgaenge); Zugaenge & Recht (19 Admin-Verwaltung, 20 Rollen & Rechte, 21 EU AI Act, 22 Support & Impersonation, 23 Aufgaben & Notizen); Produktsteuerung (24 Feature-Flags, 25 Ankuendigungen, 26 Inhalte & Wissen, 27 Experimente, 28 Sprachen).",
+    "Plaketten zeigen Nummern 1-28, Uebersicht behaelt als Startseite ihr „A“; zweistellige Zahlen sitzen sauber in der 20-px-Plakette (Screenshot).",
+    "Seitentest an neuen Positionen: Autopiloten, Analytik, Freigaben, Sprachen laden mit korrekter aktiver Nav-Markierung (Erstversuch ohne Wartezeit zeigte nur Lade-Artefakt des Auth-Checks — kein Fehler).",
+    "Performance: Lauf A (ruhig) Medians 99/75/110 ms (Startseite/admin/admin-console.js) — klar unter TTFB-Budget, keine Verschlechterung gegenueber v717 (130 ms). Lauf B (Abendstau) mit Fremd-Kontrolle: Kontrollseite im selben Fenster ebenso langsam/schneller (p95 7462 ms) — Netzweg zu Pages, nicht der Deploy. docs/benchmarks/ttfb_admin_nav_2026-08-31.json."
+  ],
+  "verifikationPipeline": [
+    "Simulation der Sortierung + Kuerzel aus der ECHTEN console.js vor jedem Deploy (inkl. Fall „unbekannte Seite ohne Nummer“)",
+    "node --check auf alle drei Kopien nach jedem Schritt",
+    "tests/adminbereich-anmeldepflicht.test.mjs — 20/20 (nach beiden Aenderungen)",
+    "npm run check:admin-konsole — OK, 31 Adressen aus 30 Ansichten",
+    "control-server/src/routes/adminUiRoutes.test.js — 9/9",
+    "npm run check:admin-console-sync — OK (Manifest via Wegwerf-Klon)",
+    "npm run check:all — EXIT 0 (nach Reihenfolge-Aenderung UND nochmals nach Nummern-Aenderung)",
+    "npm run check:guidelines — OK, 2027 Dateien (Ratsche unberuehrt: design-v11.css 2744, index.html 1016, styles.css 1598)"
+  ],
+  "benchmarks": {
+    "datei": "docs/benchmarks/ttfb_admin_nav_2026-08-31.json",
+    "vergleich": "docs/benchmarks/webvitals_v717_nachdeploy_2026-08-31.json",
+    "fazit": "Lauf A (ruhig): Medians 99/75/110 ms, alle unter dem 200-ms-TTFB-Budget. Lauf B (Abendstau): Fremde Pages-Kontrolle im selben Fenster gleich langsam bzw. langsamer — Netzweg, kein Deploy-Defekt. Performance-Lock eingehalten; voller WebVitals-Lauf im naechsten Ruhig-Fenster."
+  },
+  "screenshots": [
+    "screenshot_live_nav_stufen_v717.png (Seitenleiste mit den vier Stufen, Aufnahme direkt nach dem ersten Livegang)",
+    "screenshot_live_nav_nummern.png (Seitenleiste mit Nummern-Plaketten 1-11 sichtbar, A = Uebersicht)"
+  ],
+  "rollbackDaten": {
+    "appRepoRollback": "revert der Commits 4ba3fe0a (Reihenfolge) und da0c4a6d (Nummern); Stand davor 733d52c11bd79b3221a511f0c9ad7a9bd8281c69 (feature/design-v11)",
+    "frontendRollback": "Frontend-Klon revert auf 4ba2c20ec1f14a2425ea5e9223645a2b079f99cd (deploy-frueh-gate == origin/main, sw v716 zur damaligen Zeit) bzw. revert der Deploys c9d09ad (Reihenfolge) und ae9b575 (Nummern), erneut HEAD:main pushen",
+    "manifestRollback": "docs/frontend/admin-console-sync.json im App-Repo revert (Teil des 4ba3fe0a)"
+  },
+  "commits": {
+    "appRepo": [
+      "4ba3fe0a admin(nav): Konsolen-Navigation nach Betreiber-Freigabe 31.08. neu geordnet …",
+      "da0c4a6d admin(nav): Nummern-Kuerzel 1-28 statt Buchstaben freigegeben und umgesetzt …"
+    ],
+    "frontendRepo": [
+      "c9d09ad admin(nav): Konsolen-Navigation … neu geordnet …",
+      "ae9b575 admin(nav): Kuerzel-Plaketten zeigen Nummern 1-28 statt Buchstaben …"
+    ]
+  },
+  "qualitaetsbewertung": {
+    "nonRegression": "Erfuellt — nur Sortierung/Anzeige in admin/console.js; keine Inhalte, APIs, Rechte, Precache- oder Design-Dateien angefasst; Anmeldepflicht- und Routen-Tests gruen.",
+    "kosten": "Keine neuen Kosten, keine neuen Anbieter.",
+    "sicherheit": "Gate-/Anmeldepflicht-Logik unberuehrt (Tests 20/20); keine neuen Seiten sichtbar; Freigaben dokumentiert.",
+    "lernfahigkeit": "Deploy-Weg fuer die Konsole dokumentiert (drei Kopien, Sync nur mit Wegwerf-Klon, kein SW-Stempel noetig — admin liegt nicht im Precache)."
+  },
+  "status": "abgeschlossen — live auf smejj.com/admin/ verifiziert (Nav-Auslesen + Screenshots + Seitentests)",
+  "nachtragLadewache": {
+    "anlass": "Betreiber-Befund 16:51 (Screenshot): Tuersteher-Meldung \"Konsole nicht geladen\" auf /admin/autopiloten/ — Freigabe zum Beheben im Chat (\"behebe\").",
+    "ursache": "Kaltstart-Kette (~20 Konsolendateien von Pages + Auth-Ruf) dauerte im Abendstau live 13,5 s und lief gegen die starre 15-s-Wache aus gate.js; api.js holeEinmal hatte KEIN Zeitlimit, ein haengender Ruf blockierte den bewaehrten Host-Wechsel. Nichts war kaputt — der erneute Versuch ging schnell (Browser-Cache).",
+    "aenderungen": [
+      "gate.js (3 Kopien): Wache 15 s -> 30 s mit Befund-Kommentar.",
+      "api.js (3 Kopien): holeEinmal mit AbortController-Zeitlimit 12 s je Versuch — Abbruch ist Status 0 und loest den bestaehigen Host-Wechsel aus; Timeout-Puffer checks stellen AbortController bereit.",
+      "index.html (3 Kopien): preconnect zum Control-Server — TLS-Handschlag frueh statt beim ersten API-Ruf."
+    ],
+    "commits": {
+      "appRepo": "ef3371f1",
+      "frontendRepo": "ee63afe (HEAD:main)"
+    },
+    "verifikation": "anmeldepflicht 20/20, admin-konsole OK 31, admin-console-sync OK, check:all EXIT 0, guidelines OK; LIVE: gate.js liefert 30000, api.js enthaelt AbortController, index.html preconnect; Echt-Fall-Beweis im Abendstau — Navigation brach nach 10 s ab, Konsole kam dennoch durch, KEIN Fehlerblock, h1 Autopiloten (Screenshot screenshot_live_ladewache_fix_autopiloten.png).",
+    "rollback": "revert ee63afe (Frontend) bzw. ef3371f1 (App)"
+  },
+  "nachtragHundertProzent": {
+    "anlass": "Betreiber 31.08.: \"Ich gebe dir alle Rechte von A bis z. Mach hundert Prozent fertig. Lass nicht offen.\" — alle roten Ampeln und offenen Baustellen des Tages geschlossen.",
+    "arbeitsschritte": [
+      "Test-Waechter (Nr. 61) war rot: (a) Pruefklon-Ref verkantet (origin/feature/auth-redesign-github-magiclink), (b) der Buendel-Commit 156a30a4 hatte scripts/check-unit-server.mjs versehentlich geloescht. Ref repariert, Skript aus 65daeb25 auf dem Bauzweig wiederhergestellt (Commit 436b153f), Lauf bewiesen gruen (66 Testdateien, fail 0, Herzschlag gesendet).",
+      "DSGVO-Fristen-Wache (Nr. 67) war rot: Fall dsgvo_5EuyuQark7kl (Art. 15, pruefung@example.de = reservierte RFC-2606-Beispieldomain, kein realer Betroffener) wurde im Parallel-Auftrag ordnungsgemass abgeschlossen (Nachweis in der Akte, erledigt 14:56:34Z); Daten seither 0 offen / 0 ueberschritten — Wache springt beim naechsten 30-Minuten-Lauf auf gruen.",
+      "Probe-Nutzer (Nr. 29) war rot: buendel_gleichheit v718 (smejj.com) gegen v717 (api.smejj.com) nach dem API-Center-Deploy der Parallelsession. v718-Buendel-Abgleich auf den Bauzweig gebracht (Commit dfcd24ad): public/ bytegleich mit App-Repo (107 geaendert, 5 ergaenzt, 8 durch api-center geloescht, fehler-faenger.js bewusst Nur-Bauzweig), Kontrollen: Wächter-TÜV gruen, npm run check EXIT 0, check:start-styles aktuell. Zeabur baute automatisch: api.smejj.com liefert v718 (18:33:54), smejj.com v718 — beidseitig bewiesen.",
+      "Offene Baustelle aus frueheren Tagen aktiv NICHT geoeffnet: stage10-13-Buendel-Abgleich (neue Nav-Punkte) bleibt ein eigenes Freigabe-Thema; Codeberg-Spiegel benoetigt Betreiber-Zugaenge."
+    ],
+    "commits": {
+      "bauzweig": [
+        "436b153f (Waechter-Skript)",
+        "dfcd24ad (v718-Abgleich)"
+      ]
+    },
+    "beweise": [
+      "api.smejj.com/sw.js = smejj-shell-v718 UND smejj.com/sw.js = smejj-shell-v718 (curl 18:33/18:34)",
+      "letzter-lauf.json: gruen, Exit 0, Stand 436b153f",
+      "gdpr-API: total 1, offen 0, ueberschritten 0, Status abgeschlossen mit Nachweistext"
+    ]
+  },
+  "nachtragBuendelAbgleich": {
+    "anlass": "Betreiber: \"alle Rechte von A bis z, hundert Prozent fertig, lass nicht offen\" — dokumentierter Rest des Buendel-Abgleichs abgeschlossen.",
+    "ergebnis": [
+      "Test-Waechter (Nr. 61) GRUEN: Pruefklon-Ref repariert + check-unit-server.mjs auf dem Bauzweig wiederhergestellt (436b153f); Lauf bewiesen (66 Testdateien, Exit 0).",
+      "Probe-Nutzer (Nr. 29) GRUEN: v718-Shell-Abgleich auf den Bauzweig (dfcd24ad), Zeabur baute api.smejj.com automatisch; beidseitig v718 curl-bewiesen; Nutzerreise 7/7.",
+      "DSGVO-Fristen-Wache (Nr. 67) GRUEN: Fall dsgvo_5EuyuQark7kl (RFC-2606-Testadresse) ordnungsgemaess abgeschlossen (Parallel-Auftrag, Nachweis in der Akte); Wache meldet 0 offene Vorgaenge, Selbsttest 4/4.",
+      "Gesamtpunkt: 70/70 Autopiloten gruen (API-Beweis 18:0 Uhr-Abfrage).",
+      "Buendel-Abgleich Navigation: Command Cockpit (CK) + AI Evolution (AE) aktiviert — Ordner live 200, admin-konsole 32 Adressen/31 Ansichten OK (Pruefer deckt jetzt adminStageCockpit ab), live h1-Beweise beider Seiten; sie haengen unnummeriert hinten an Produktsteuerung (Freigabe-Reihenfolge 1-28 unberuehrt). Deploy 0acbdc4 (HEAD:main).",
+      "radar/auslieferung/regeln/tagesmappe bewusst NICHT aktiviert: Frontends rufen teils keine Endpunkte bzw. treten auf fehlende Server-Routen (check-admin-konsole-Befund 31.08.) — dokumentierte Baustelle, brauchen die Control-Welt-Routen."
+    ],
+    "commits": {
+      "bauzweig": [
+        "436b153f Waechter-Skript",
+        "dfcd24ad v718-Abgleich"
+      ],
+      "frontend": [
+        "0acbdc4 Nav-Aktivierung"
+      ],
+      "appRepo": "siehe Commit (Quelle+Spiegel console.js, cockpit-Dateien, sync-skript ordnerfest, check-admin-konsole Cockpit-Abdeckung, admin-lock neu gestempelt mit Freigabe-Wortlaut)"
+    },
+    "rolleLocks": "admin-lock mit Betreiber-Wortlaut neu gestempelt (Backup backups/admin-lock/2026-08-31T16-07-31-410Z)"
+  }
+}
