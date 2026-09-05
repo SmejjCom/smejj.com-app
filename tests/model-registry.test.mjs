@@ -24,13 +24,15 @@ test("registry keeps GLM-5.2 primary and Kimi K2.7 feature-flagged", () => {
     registry.models.map((model) => model.name),
     // Ox Alpha seit 2026-08-26 (Betreiber: "ox alpha an 3. Stelle" im Menue) —
     // API-only ueber OpenRouter, fail-closed hinter SMEJJ_OX_ALPHA_ENABLED.
-    ["GLM-5.2", "Kimi K2.7", "Kimi K3", "Ox Alpha", "smejj fast 1.0"]
+    // smejj 1 seit 2026-09-05: die trainierte Familie, fail-closed hinter SMEJJ_1_ENABLED.
+    ["GLM-5.2", "Kimi K2.7", "Kimi K3", "Ox Alpha", "smejj fast 1.0", "smejj 1"]
   );
   assert.equal(registry.models[0].active, true);
   assert.equal(registry.models[1].active, false);
   assert.equal(registry.models[2].active, false);
   assert.equal(registry.models[3].active, false, "Ox Alpha bleibt ohne Env-Freigabe inaktiv (fail-closed)");
   assert.equal(registry.models[4].active, false);
+  assert.equal(registry.models[5].active, false, "smejj 1 bleibt ohne Env-Freigabe inaktiv (fail-closed)");
   assert.equal(registry.models[0].contextTokens, 1_000_000);
   assert.equal(registry.models[1].contextTokens, 262_144);
   assert.equal(JSON.stringify(registry).includes("secret"), false);

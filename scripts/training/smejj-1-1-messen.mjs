@@ -54,6 +54,8 @@ export async function ladeEnvLocal(env = process.env) {
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const SUITE_DATEI = path.join(WURZEL, "evals/suites/smejj-chat-core-v1.json");
 export const EVAL_PREFIX = "smejj/evals";
+/** Ablage der Bewertungen, die Autopilot Nr. 83 liest (control-server/src/autopilots/smejjVersionsTaktAutopilot.js). */
+export const BEWERTUNGEN_PREFIX = "smejj/bewertungen";
 export const BASIS_STAND = "qwen3-4b-basis";
 export const WIEDERHOLUNGEN = 3;
 // 8 GB Basis holen (~5 min), Modell laden, 14 Faelle x 3 x 2 Staende = 84
@@ -155,7 +157,24 @@ async function bewerte(e2, jobId) {
   if (s[BASIS_STAND] != null && s[KANDIDAT] != null) {
     console.log(`Basis nackt ${(s[BASIS_STAND] * 100).toFixed(1)} %  →  mit Adapter ${(s[KANDIDAT] * 100).toFixed(1)} %  (Δ ${((s[KANDIDAT] - s[BASIS_STAND]) * 100).toFixed(1)} Punkte)`);
   }
-  console.log("\nBefoerderung nur mit Betreiber-Freigabe — dieses Skript befoerdert nichts.");
+  // Die ENTSCHEIDUNG trifft Autopilot Nr. 83 (smejj-Versions-Takt) im naechsten
+  // Takt aus diesem Datensatz — nicht dieses Skript ("alles ueber unsere
+  // Autopilots", Betreiber 05.09.). Status "neu" heisst: noch nicht beurteilt.
+  const kandidat = berichte.find((b) => b.version === KANDIDAT)?.bericht;
+  const basisB = berichte.find((b) => b.version === BASIS_STAND)?.bericht;
+  if (kandidat) {
+    const training = await e2.getJson(`con/versions/${KANDIDAT}/training.json`, null).catch(() => null);
+    const datensatz = {
+      id: jobId, art: "smejj-bewertung", createdAt: new Date().toISOString(), status: "neu",
+      version: KANDIDAT, jobId, suite: kandidat.suite?.suiteId || "smejj-chat-core", suiteSha256: kandidat.suite?.integrity?.contentSha256 || null,
+      kandidatNote: kandidat.summary?.weightedScore ?? null, basisNote: basisB?.summary?.weightedScore ?? null,
+      kritisch: kandidat.summary?.criticalFailures ?? null, faelle: kandidat.summary?.cases ?? null, wackelig: kandidat.summary?.wackelig ?? null,
+      referenzNote: zyklus?.referenzNote ?? null, adapterPrefix: training?.adapterPrefix || `con/versions/${KANDIDAT}/adapter`, trainingJobId: training?.jobId || null
+    };
+    await e2.putJson(`${BEWERTUNGEN_PREFIX}/${jobId}.json`, datensatz);
+    console.log(`\nBewertung fuer Nr. 83 abgelegt: ${BEWERTUNGEN_PREFIX}/${jobId}.json (Status neu) — der Versions-Takt entscheidet im naechsten Takt.`);
+  }
+  console.log("Dieses Skript befoerdert nichts; der Alias smejj wird nur vom Autopiloten Nr. 83 umgehaengt.");
   return berichte;
 }
 

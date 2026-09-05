@@ -14,7 +14,11 @@ export const AUTO_MODEL_ID = "auto";
 // `selectedName === "smejj 1.0" && model.id === registry.defaultModelId` —
 // die Marke bezeichnet dort schon das Standardmodell. Nur die Alias-Tabelle
 // widersprach. Ein Markenname ist keine Anbieterwahl.
-export const BRAND_ALIASES = Object.freeze(new Set(["smejj 1.0", "smejj code"]));
+// "smejj", "smejj-latest" (2026-09-05, Betreiber-Auftrag "neue Version uebernimmt
+// alles"): der Alias der Modellfamilie. Zeigt auf das Standardmodell — und
+// auf die stable-Version des Versionsregisters, sobald Nr. 83 sie live
+// geschaltet hat (siehe control-server/src/llm/smejjAlias.js).
+export const BRAND_ALIASES = Object.freeze(new Set(["smejj 1.0", "smejj code", "smejj", "smejj-latest", "smejj latest"]));
 
 const ENABLED_VALUES = new Set(["1", "true", "yes", "on"]);
 const DISABLED_VALUES = new Set(["0", "false", "no", "off"]);
@@ -293,6 +297,52 @@ export const MODEL_REGISTRY = Object.freeze({
       requiredLocalCacheGb: 20,
       recommendedRamGb: 24
     })
+  }),
+  // smejj 1 — die trainierte Modellfamilie (Qwen3-4B-Instruct-2507 + LoRA-
+  // Adapter aus datasets/smejj-1-1, erster Lauf 05.09.2026). WELCHE Version
+  // (smejj-1-1, smejj-1-2 …) bedient wird, steht NICHT hier, sondern im
+  // Versionsregister smejj/versionen auf e2 (src/shared/smejjVersionen.js);
+  // Autopilot Nr. 83 haengt den Alias "smejj" nach bestandener Messung um.
+  // Dieser Eintrag ist nur die Laufzeit-Anbindung — fail-closed wie smejj fast
+  // 1.0: Flag + Adresse + Schluessel, sonst bleibt das Standardmodell zustaendig.
+  "smejj-1": Object.freeze({
+    id: "smejj-1",
+    name: "smejj 1",
+    aliases: Object.freeze(["smejj-1", "smejj 1.x", "smejj-1-x"]),
+    provider: "salad",
+    status: "self-hosted-runtime-configurable",
+    contextTokens: 32_768,
+    codingCapability: "assistant",
+    enabledByDefault: false,
+    featureFlag: "SMEJJ_1_ENABLED",
+    fallbackModelId: DEFAULT_MODEL_ID,
+    storage: Object.freeze({
+      provider: "idrive-e2",
+      bucketEnv: "IDRIVE_E2_MODEL_BUCKET",
+      prefix: "models/staging/qwen3-4b-instruct/",
+      vaultStatusId: null
+    }),
+    capabilities: Object.freeze({
+      chat: true,
+      coding: true,
+      fileAnalysis: true,
+      projectAnalysis: false,
+      agentTasks: false,
+      streaming: true,
+      patchPlanning: false,
+      testExplanation: true
+    }),
+    runtime: Object.freeze({
+      envPrefix: "SMEJJ1",
+      defaultBaseUrl: "",
+      defaultModel: "smejj-1",
+      defaultHeader: "Salad-Api-Key",
+      storageFirstMode: "smejj-self-hosted",
+      engines: Object.freeze(["openai-compatible", "vllm", "llama.cpp"]),
+      workerEngines: Object.freeze(["vllm", "llama.cpp"]),
+      requiredLocalCacheGb: 12,
+      recommendedRamGb: 16
+    })
   })
 });
 
@@ -377,7 +427,13 @@ function nachGesundheitSortiert(ids, health) {
  *   control-server/src/llm/modelRuntimeHealth.js. Fehlt er, verhaelt sich die
  *   Funktion exakt wie zuvor — die Reihenfolge haengt dann allein an der Konfiguration.
  */
-export function resolveModelSelection({ requestedModel, profile = "default", env = process.env, health = null } = {}) {
+/**
+ * @param {string|null} options.aliasZiel Registry-Modell, auf das der Alias
+ *   "smejj" gerade zeigt (aus smejjAlias.js). Greift NUR bei Anfragen ohne
+ *   ausdrueckliche Anbieterwahl (leer oder Markenname) und nur, wenn das Ziel
+ *   freigegeben und konfiguriert ist — sonst verhaelt sich alles wie zuvor.
+ */
+export function resolveModelSelection({ requestedModel, profile = "default", env = process.env, health = null, aliasZiel = null } = {}) {
   // KEINE ANGABE IST KEINE WAHL (Live-Befund 2026-08-02).
   // normalizeModelId("") liefert das fest eingebaute DEFAULT_MODEL_ID. Reicht man
   // das ungeprueft weiter, sieht eine Anfrage OHNE Modellangabe aus wie die
@@ -397,6 +453,13 @@ export function resolveModelSelection({ requestedModel, profile = "default", env
   const autoEnabled = readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, false);
   let selectedId = requestedId && requestedId !== AUTO_MODEL_ID ? requestedId : defaultId;
   let reason = requestedId ? "explicit_model" : "default_model";
+  // ALIAS "smejj" (2026-09-05): keine Angabe oder Markenname heisst "das Modell
+  // der Plattform" — und das ist die stable-Version des Versionsregisters,
+  // sobald sie live-tauglich und bedienbar ist. Ein ausdruecklich gewaehlter
+  // Anbieter bleibt eine ausdrueckliche Wahl.
+  const aliasId = aliasZiel && MODEL_REGISTRY[aliasZiel] && aliasZiel !== AUTO_MODEL_ID ? aliasZiel : null;
+  const aliasGreift = Boolean(aliasId) && !requestedId && isModelEnabled(aliasId, env) && getModelRuntimeConfig(aliasId, env, profile).configured;
+  if (aliasGreift) { selectedId = aliasId; reason = "smejj_alias"; }
 
   if (autoRequested) {
     selectedId = autoEnabled ? autoModelId(profile, env, defaultId) : defaultId;
@@ -423,6 +486,7 @@ export function resolveModelSelection({ requestedModel, profile = "default", env
     requestedModelId: requestedId || defaultId,
     selectedModelId: geordnet[0] || (enabled ? selected.id : defaultId),
     candidateIds: geordnet,
+    alias: aliasGreift ? aliasId : null,
     fallbackAllowed,
     autoRequested,
     autoEnabled,

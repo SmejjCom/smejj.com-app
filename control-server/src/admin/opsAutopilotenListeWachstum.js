@@ -157,5 +157,22 @@ export const WACHSTUM_AUTOPILOTEN = Object.freeze([
     verbessert: "Der Betreiber-Auftrag '24/7 dauerhaft trainieren' war bisher nirgends ein Takt: Training ruhte still, und niemand sagte, welches Tor noch zu ist — jetzt steht es alle 30 Minuten mit Zyklusnummer in der Ampel",
     neuigkeiten: ["Neu am 2026-09-03 (Betreiber-Auftrag: permanentes Modell-Evolutions-System)"],
     ...LAEUFER
+  },
+  {
+    id: "smejj-versions-takt",
+    name: "smejj-Versions-Takt",
+    nummer: "83",
+    kurz: "Der Alias 'smejj' im Router zeigt auf die beste eigene Modellversion — und eine neue Version übernimmt alles automatisch, sobald sie die Messung besteht. Alt bleibt als Rückweg im Register, nichts wird gelöscht.",
+    funktionen: [
+      "REGISTER: liest das Versionsregister (e2 smejj/versionen) — stable-Version, Live-Schalter, alle Versionen mit Status (stable, ersetzt, abgelehnt, zurückgerollt) und einen Verlauf.",
+      "ENTSCHEIDEN: jede neue Bewertung aus der Messung (smejj/bewertungen, geschrieben vom Mess-Skript) wird beurteilt — Adapter besser als Basis nackt, mehr als 2 Punkte über der bisherigen stable, null kritische Sicherheitsfehler. Fail-closed: jede fehlende Zahl ist ein Nein.",
+      "UMHÄNGEN: besteht die Version, wird sie stable; der Alias 'smejj' im Router zeigt auf sie, sobald die Note die Referenz der Live-Kette (Nr. 72/75) erreicht UND die Laufzeit (SMEJJ_1_ENABLED + Adresse + Schlüssel) steht. Sonst bleibt das Standardmodell — mit Grund in /api/health.",
+      "RÜCKWEG: ist die Laufzeit des eigenen Modells rot (modelRuntimeHealth), geht der Alias im nächsten Takt AUS; die vorige Version bleibt im Register und lässt sich per Rückroll-Werkzeug wieder stable machen.",
+      "EHRLICH: er trainiert nicht, misst nicht und mietet keine GPU — Training und Messung bleiben Betreiber-Klick bzw. freigegebener Lauf. Nr. 18 (Release-Verwalter) bleibt unverändert."
+    ],
+    trainiert: "Nichts — er entscheidet über Versionen und hängt den Alias um",
+    verbessert: "Bisher zeigte kein Alias auf ein eigenes Modell, und Nr. 18 verwaltete erfundene Versionen: jetzt gibt es ein echtes Register, eine echte Entscheidung aus der Messung und einen Rückweg",
+    neuigkeiten: ["Neu am 2026-09-05 (Betreiber-Auftrag: neue Version übernimmt automatisch alles — Alias + Router als Autopilot)"],
+    ...LAEUFER
   }
 ]);

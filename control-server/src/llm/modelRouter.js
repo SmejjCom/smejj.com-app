@@ -28,6 +28,7 @@ import {
   markModelRuntimeFailure,
   markModelRuntimeSuccess
 } from "./modelRuntimeHealth.js";
+import { smejjAliasZiel } from "./smejjAlias.js";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
@@ -267,11 +268,15 @@ export function resolveModelRequest(profile = "default", requestedModel = "", en
   // Ohne diesen Wert waehlte der Router am 2026-08-02 live weiter GLM-5.2,
   // obwohl derselbe Prozess dafuer bereits available=false gespeichert hatte —
   // Gesundheitsdaten helfen nur, wenn die Auswahl sie auch liest.
+  // Alias "smejj" (2026-09-05): zeigt auf die stable-Version des eigenen
+  // Modells, sobald Nr. 83 sie live geschaltet hat und die Laufzeit steht.
+  const alias = smejjAliasZiel(env);
   const selection = resolveModelSelection({
     requestedModel,
     profile: safeProfile,
     env,
-    health: getModelRuntimeHealthSnapshot()
+    health: getModelRuntimeHealthSnapshot(),
+    aliasZiel: alias.live ? alias.modelId : null
   });
   const modelChain = [];
   for (const modelId of selection.candidateIds) {

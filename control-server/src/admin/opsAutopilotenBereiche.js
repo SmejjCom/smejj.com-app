@@ -57,6 +57,8 @@ const ZUORDNUNG = Object.freeze({
     "trainings-reife",
     // Nr. 72 (2026-09-03): der Modell-Evolutions-Takt — Messen, Schwaeche, Tore, Zyklus-Protokoll.
     "modell-evolution",
+    // Nr. 83 (2026-09-05): der smejj-Versions-Takt — Alias "smejj" folgt der besten eigenen Version.
+    "smejj-versions-takt",
     // Nr. 74/77 (2026-09-03, Runde 2): Einwilligungs-Weg des Trainings, Frische des Projektwissens.
     "einwilligungs-wache", "projektwissen-frische"
   ],

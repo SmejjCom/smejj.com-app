@@ -10,6 +10,7 @@
 import { getPublicModelRegistry } from "../../../src/shared/modelRegistry.js";
 import { resolveModelRequest } from "./modelRouter.js";
 import { getModelRuntimeHealthSnapshot } from "./modelRuntimeHealth.js";
+import { smejjAliasZiel } from "./smejjAlias.js";
 
 /**
  * Bewertet die serverseitige AI-Verfuegbarkeit rein aus der Umgebung (pur, ohne I/O).
@@ -56,6 +57,8 @@ export function evaluateAiAvailability(env = process.env, profile = "default", r
     budgetOk,
     providerOk,
     activationMode: ai ? (classicGateOk ? "server-budget-gate" : `${chain[0].name}-byok`) : "disabled",
-    registry: getPublicModelRegistry(env, getModelRuntimeHealthSnapshot())
+    registry: getPublicModelRegistry(env, getModelRuntimeHealthSnapshot()),
+    // Alias "smejj" (Nr. 83): worauf er zeigt und warum — auch wenn er AUS ist.
+    smejjAlias: smejjAliasZiel(env)
   };
 }

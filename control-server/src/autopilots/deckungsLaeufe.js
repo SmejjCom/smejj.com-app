@@ -23,6 +23,7 @@ import { laufRedTeamProbe } from "./redTeamProbeAutopilot.js";
 import { laufAgentenSonde } from "./agentenSondeAutopilot.js";
 import { laufBesucherPuls } from "./besucherPulsAutopilot.js";
 import { laufSchutzEchtheit } from "./schutzEchtheitAutopilot.js";
+import { laufSmejjVersionsTakt } from "./smejjVersionsTaktAutopilot.js";
 
 /** Die Kennungen, damit der Läufer sie in IM_LAEUFER_BETRIEBEN aufführen kann. */
 export const DECKUNG_IDS = Object.freeze([
@@ -41,7 +42,9 @@ export const DECKUNG_IDS = Object.freeze([
   // Manifest mit der Arbeitskopie — beide koennen gleich und trotzdem falsch
   // sein. An diesem Tag bewachte der Start-Lock vier Fassungen, die smejj.com
   // nicht ausliefert, und meldete dabei gruen.
-  "schutz-echtheit"
+  "schutz-echtheit",
+  // Nr. 83 (2026-09-05): der smejj-Versions-Takt — Register, Entscheidung, Alias, Rueckweg.
+  "smejj-versions-takt"
 ]);
 
 /** Die [kennung, lauf]-Paare für laufeAlle. */
@@ -69,6 +72,9 @@ export function baueDeckungsLaeufe({ mitNetz = true, kontenLeser = null } = {}) 
     ["besucher-puls", () => laufBesucherPuls({ kontenLeser })],
     // Nr. 82: liest nur oeffentliche Dateien von smejj.com und vergleicht
     // Hashes — keine Anmeldung, kein Auftrag, keine Kosten.
-    ["schutz-echtheit", () => laufSchutzEchtheit({ mitNetz })]
+    ["schutz-echtheit", () => laufSchutzEchtheit({ mitNetz })],
+    // Nr. 83: liest Register + Bewertungen aus der Ablage (ohne e2-Konfiguration
+    // aus dem Speicher), haengt den Alias um, gibt dem Router den Stand.
+    ["smejj-versions-takt", () => laufSmejjVersionsTakt()]
   ];
 }
