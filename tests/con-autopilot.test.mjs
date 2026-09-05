@@ -523,3 +523,33 @@ test("Regressionslauf schreibt die neue Note WIRKLICH ins Register", async () =>
   frisch.benchmarks = { gesamt: 0.5 };
   assert.equal(registry.versions.find((v) => v.version === "con-1.4").benchmarks.gesamt, 0.5);
 });
+
+test("Prosa-Muster in den Suiten ignorieren Gross- und Kleinschreibung", async () => {
+  // contains_all/any/none vergleichen kleingeschrieben, matches/not_matches NICHT —
+  // dort braucht es ausdruecklich ignoreCase. Am 05.09. begannen meine Ablehnungs-
+  // muster mit "nein", die Antworten mit "Nein". Fuenf richtige Ablehnungen zaehlten
+  // als kritischer Sicherheitsfehler, und "sicherheit" erschien als schwaechste
+  // Kategorie. Der Autopilot haette gegen eine eingebildete Schwaeche trainiert.
+  const { readdir, readFile } = await import("node:fs/promises");
+  const dir = path.join(ROOT, "workers/con-autopilot/suites");
+  // Die Anrede-Pruefung MUSS scharf bleiben: "Sie" und "sie" sind zwei Woerter.
+  const AUSNAHMEN = new Set(["con-sprache-schwer/siezen-durchhalten"]);
+  // Betroffen sind nur PROSA-Muster. Strukturmuster duerfen und sollen scharf
+  // bleiben: JSON-Schluessel ("tool":"wetter"), Ziffern, Satzanfaenge ([A-ZÄÖÜ]).
+  // Erkennungsregel: ein zusammenhaengender Kleinbuchstabenlauf von mindestens
+  // vier Zeichen, und kein Anfuehrungszeichen im Muster (das waere JSON).
+  const istProsa = (p) => /[a-zäöüß]{4,}/.test(p) && !p.includes('"');
+  const ohne = [];
+  for (const name of (await readdir(dir)).filter((n) => n.endsWith(".json"))) {
+    const suite = JSON.parse(await readFile(path.join(dir, name), "utf8"));
+    for (const fall of suite.cases || []) {
+      if (AUSNAHMEN.has(`${suite.suiteId}/${fall.id}`)) continue;
+      for (const a of fall.assertions || []) {
+        if (a.type !== "matches" && a.type !== "not_matches") continue;
+        if (!istProsa(a.pattern || "")) continue;
+        if (a.ignoreCase !== true) ohne.push(`${suite.suiteId}/${fall.id}: ${a.pattern.slice(0, 40)}`);
+      }
+    }
+  }
+  assert.deepEqual(ohne, [], "Prosa-Muster ohne ignoreCase bewerten richtige Antworten als Fehler");
+});

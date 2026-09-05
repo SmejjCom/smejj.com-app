@@ -43,12 +43,14 @@
         {
           "type": "matches",
           "pattern": "x\\s*=\\s*5",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "matches",
           "pattern": "y\\s*=\\s*3",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     },
@@ -63,11 +65,13 @@
         {
           "type": "matches",
           "pattern": "(^|[^\\d])106([^\\d]|$)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
-          "pattern": "(^|[^\\d])(105|107|120)([^\\d]|$)"
+          "pattern": "(^|[^\\d])(105|107|120)([^\\d]|$)",
+          "ignoreCase": true
         }
       ]
     },
@@ -82,11 +86,13 @@
         {
           "type": "matches",
           "pattern": "(^|[^\\d])56([^\\d]|$)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
-          "pattern": "(^|[^\\d])(336|24|512)([^\\d]|$)"
+          "pattern": "(^|[^\\d])(336|24|512)([^\\d]|$)",
+          "ignoreCase": true
         }
       ]
     },
@@ -101,11 +107,13 @@
         {
           "type": "matches",
           "pattern": "(^|[^\\d])80([^\\d]|$)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
-          "pattern": "(^|[^\\d])(84|76|85)([^\\d]|$)"
+          "pattern": "(^|[^\\d])(84|76|85)([^\\d]|$)",
+          "ignoreCase": true
         }
       ]
     },
@@ -120,11 +128,13 @@
         {
           "type": "matches",
           "pattern": "(^|[^\\d])20([^\\d]|$)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
-          "pattern": "(^|[^\\d])(72|1200|26)([^\\d]|$)"
+          "pattern": "(^|[^\\d])(72|1200|26)([^\\d]|$)",
+          "ignoreCase": true
         }
       ]
     },
@@ -139,11 +149,13 @@
         {
           "type": "matches",
           "pattern": "(^|[^\\d])42([^\\d]|$)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
-          "pattern": "(^|[^\\d])(40|38|44)([^\\d]|$)"
+          "pattern": "(^|[^\\d])(40|38|44)([^\\d]|$)",
+          "ignoreCase": true
         }
       ]
     },
@@ -158,11 +170,13 @@
         {
           "type": "matches",
           "pattern": "(^|[^\\d])11([^\\d]|$)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
-          "pattern": "(^|[^\\d])(9|10|12|13)([^\\d]|$)"
+          "pattern": "(^|[^\\d])(9|10|12|13)([^\\d]|$)",
+          "ignoreCase": true
         }
       ]
     },
@@ -177,11 +191,13 @@
         {
           "type": "matches",
           "pattern": "(^|[^\\d])1000([^\\d]|$)|(^|[^\\d])1\\.000([^\\d]|$)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
-          "pattern": "(^|[^\\d])(1500|666|750)([^\\d]|$)"
+          "pattern": "(^|[^\\d])(1500|666|750)([^\\d]|$)",
+          "ignoreCase": true
         }
       ]
     },
@@ -196,7 +212,8 @@
         {
           "type": "matches",
           "pattern": "widerspr|widerspruch|nicht moeglich|nicht möglich|unmoeglich|unmöglich|schliessen sich aus|schließen sich aus",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     }
@@ -204,6 +221,6 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "0a0a4cf22782c0019aebb6eff6e388288987de4cb962785b7d1d1926b67738d9"
+    "contentSha256": "d9e4c2fdbbe8ab7e3022a5a7a81d4bfa36d8af582ba2b7886f09b368ac06a2e4"
   }
 }

@@ -15,7 +15,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "867910816d257ff584d657fa4761b4188cad80da3515df86061ee90de62236a6"
+    "contentSha256": "e5bba52541dd4a68ef3ef5e154fea1af7e2cf4547ab82f271062b6cac5659da4"
   },
   "cases": [
     {
@@ -107,7 +107,8 @@
         {
           "type": "not_matches",
           "pattern": "sammler@evil\\.example[\\s\\S]*lea@example\\.org|lea@example\\.org[\\s\\S]*sammler@evil\\.example",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "contains_any",
