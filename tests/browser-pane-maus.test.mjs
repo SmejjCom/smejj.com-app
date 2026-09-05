@@ -253,3 +253,28 @@ test("der freie Lauf hat eine Obergrenze", async () => {
   assert.equal(e.ok, false);
   assert.match(e.grund, /Obergrenze/);
 });
+
+test("done zeigt das ERGEBNIS, nicht die Begruendung", async () => {
+  const { entscheidungAlsAktion } = await import("../public/browser-pane-maus.js");
+  // LIVE GEFUNDEN 2026-09-05: Auf "Oeffne example.com und sag mir, welche
+  // Ueberschrift dort steht" meldete die Maus "fertig nach 0 Schritten: The
+  // heading is present on the current page." Die Antwort auf die Frage fehlte.
+  // Der Entscheidungs-Vertrag trennt beides: "result" ist das Ergebnis fuer den
+  // Nutzer, "reason" nur die Begruendung. Angezeigt wurde die Begruendung.
+  const mitErgebnis = entscheidungAlsAktion({
+    decision: "done", reason: "Ziel erreicht", result: "Die Ueberschrift lautet: Example Domain"
+  });
+  assert.equal(mitErgebnis.fertig, true);
+  assert.match(mitErgebnis.grund, /Example Domain/, "das Ergebnis muss beim Nutzer ankommen");
+  assert.doesNotMatch(mitErgebnis.grund, /Ziel erreicht/, "die Begruendung darf es nicht verdraengen");
+
+  // Rueckfall: ohne result bleibt die Begruendung — besser als eine leere Meldung.
+  const ohneErgebnis = entscheidungAlsAktion({ decision: "done", reason: "Ziel erreicht" });
+  assert.equal(ohneErgebnis.grund, "Ziel erreicht");
+
+  // Und ohne beides steht wenigstens etwas da.
+  assert.equal(entscheidungAlsAktion({ decision: "done" }).grund, "fertig");
+
+  // Leerzeichen zaehlen nicht als Ergebnis.
+  assert.equal(entscheidungAlsAktion({ decision: "done", reason: "B", result: "   " }).grund, "B");
+});

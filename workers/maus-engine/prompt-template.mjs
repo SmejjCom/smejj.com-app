@@ -291,6 +291,20 @@ function stepContractBlock() {
     '- decision "done": {"schemaVersion":1,"decision":"done","reason":"...",',
     '  "result":"kurzes Ergebnis"} — NUR wenn das Aufgabenziel nachweisbar',
     "  erreicht ist (sichtbar im Seitenzustand).",
+    // LIVE GEMESSEN 2026-09-05 (Betreiber-Auftrag "Erledige mit der Maus im
+    // Browser ... alle Fehler beheben"): Auf "Oeffne example.com und sag mir,
+    // welche Ueberschrift dort steht" kam "done" nach NULL Schritten mit
+    // reason "The heading is present on the current page" — englisch, und die
+    // eigentliche Antwort fehlte. Der Vertrag verlangte bis dahin weder eine
+    // Sprache noch, dass bei einer Frage der gefundene WERT im result steht.
+    '  "result" ist die ANTWORT FUER DEN NUTZER und steht auf DEUTSCH.',
+    "  Fragt die Aufgabe nach etwas (welche Ueberschrift, welcher Preis, wie",
+    "  viele Treffer, welcher Text), gehoert der gefundene WERT hinein — im",
+    "  Wortlaut der Seite. Die blosse Feststellung, dass es ihn gibt, ist KEIN",
+    "  Ergebnis und damit auch kein Grund fuer done.",
+    '  "reason" ist nur die kurze Begruendung der Entscheidung, ebenfalls deutsch.',
+    "  Steht der gesuchte Wert noch nicht im Seitenzustand, ist die Aufgabe",
+    "  NICHT erledigt: dann erst lesen (act), nicht done melden.",
     '- decision "fail": {"schemaVersion":1,"decision":"fail","reason":"..."}',
     "  — wenn das Ziel mit den erlaubten Mitteln nicht erreichbar ist.",
     `- Erlaubte Aktionen im Loop: ${allowed.join(", ")}`,
