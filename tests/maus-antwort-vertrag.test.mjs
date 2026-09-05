@@ -72,3 +72,11 @@ test("ohne Adresse im Seitenzustand gibt es keinen Offen-Hinweis", () => {
   assert.doesNotMatch(p, /IST BEREITS GEOEFFNET/);
   assert.match(p, /PFLICHTFELDER JE AKTION/, "die Pflichtfelder gelten immer");
 });
+
+// LIVE 06.09.: role textbox statt searchbox, derselbe Selektor nach dem Fehlschlag.
+test("der Vertrag lenkt Eingabefelder auf css aus der Elementliste und verbietet die Wiederholung", () => {
+  const p = prompt();
+  assert.match(p, /EINGABEFELDER: nimm css aus der Elementliste/);
+  assert.match(p, /Suchfelder sind\n?\s*searchbox, nicht textbox/);
+  assert.match(p, /nie denselben\n?\s*Selektor wiederholen/);
+});
