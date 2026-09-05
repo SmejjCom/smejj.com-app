@@ -27,14 +27,27 @@ import { privateJson, readRawBody } from "../http/respond.js";
 
 export function createBillingHandlers({ env = process.env, readSession, json, fetchImpl = fetch }) {
   async function handleStripeWebhook(req, res) {
-    const secret = String(env.STRIPE_WEBHOOK_SECRET || "");
-    if (!secret) return json(res, 503, { ok: false, error: "billing_webhook_not_configured" });
+    // ZWEI EMPFAENGER, ZWEI GEHEIMNISSE (2026-09-05): Stripe vergibt je
+    // Empfaenger ein eigenes Signatur-Geheimnis. Seit dem Zweitweg ueber die
+    // eigene Domain (api.smejj.com neben smejj-control.zeabur.app) trifft
+    // dasselbe Ereignis auf DIESEN Endpunkt mit zwei verschiedenen
+    // Signaturen — je nachdem, welcher Weg es gebracht hat.
+    //
+    // Beide werden geprueft, nacheinander, mit derselben strengen Pruefung.
+    // Das schwaecht nichts ab: ein Ereignis muss weiterhin mit EINEM gueltigen
+    // Geheimnis signiert sein. Es kennt nur zwei gueltige statt einem.
+    //
+    // Fehlt das zweite Geheimnis, laeuft der Hauptweg unveraendert weiter —
+    // Ereignisse vom Zweitweg werden dann abgelehnt, nicht durchgewinkt.
+    const geheimnisse = [env.STRIPE_WEBHOOK_SECRET, env.STRIPE_WEBHOOK_SECRET_ZWEITWEG]
+      .map((s) => String(s || "").trim()).filter(Boolean);
+    if (!geheimnisse.length) return json(res, 503, { ok: false, error: "billing_webhook_not_configured" });
     const rawBody = await readRawBody(req);
-    const verdict = verifyStripeSignature({
-      rawBody,
-      signatureHeader: req.headers["stripe-signature"],
-      secret
-    });
+    let verdict = { ok: false, reason: "signature_header_missing" };
+    for (const secret of geheimnisse) {
+      verdict = verifyStripeSignature({ rawBody, signatureHeader: req.headers["stripe-signature"], secret });
+      if (verdict.ok) break;
+    }
     if (!verdict.ok) return json(res, 400, { ok: false, error: verdict.reason });
     let event;
     try {

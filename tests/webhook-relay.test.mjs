@@ -217,3 +217,75 @@ test("Verbindungs- und Halte-Ereignisse zaehlen NICHT als verworfen", async () =
   assert.equal(ergebnis.verworfen, 0, "ready und ping sind keine Fehlschlaege");
   assert.ok(!meldungen.some((m) => m.includes("NICHT zugestellt")), meldungen.join(" | "));
 });
+
+// ---------------------------------------------------------------------------
+// Zwei Stripe-Empfänger, zwei Signatur-Geheimnisse
+//
+// Stripe vergibt je Empfänger ein eigenes Geheimnis. Seit dem Zweitweg über
+// die eigene Domain trifft dasselbe Ereignis auf denselben Endpunkt mit zwei
+// verschiedenen Signaturen. Beide müssen gelten — und sonst nichts.
+// ---------------------------------------------------------------------------
+import crypto from "node:crypto";
+import { createBillingHandlers } from "../control-server/src/routes/billingRoutes.js";
+
+function signiere(koerper, geheimnis, zeit = Math.floor(Date.now() / 1000)) {
+  const sig = crypto.createHmac("sha256", geheimnis).update(`${zeit}.${koerper}`).digest("hex");
+  return `t=${zeit},v1=${sig}`;
+}
+// readRawBody liest über req.on("data"/"end") — hier ein Doppel, das genau
+// das anbietet, statt eines async-Iterators.
+function stripeAnfrage(koerper, signatur) {
+  const horcher = {};
+  const req = {
+    method: "POST",
+    headers: { "stripe-signature": signatur },
+    on(ereignis, rueckruf) {
+      horcher[ereignis] = rueckruf;
+      if (ereignis === "end") {
+        setImmediate(() => { horcher.data?.(Buffer.from(koerper)); horcher.end?.(); });
+      }
+      return req;
+    }
+  };
+  return req;
+}
+
+test("beide Empfänger-Geheimnisse werden akzeptiert, ein drittes nicht", async () => {
+  const koerper = JSON.stringify({ id: "evt_1", type: "unbekannt.fuer.den.test" });
+  const env = { STRIPE_WEBHOOK_SECRET: "whsec_haupt", STRIPE_WEBHOOK_SECRET_ZWEITWEG: "whsec_zweit" };
+  const ergebnisse = [];
+  const json = (res, status, body) => ergebnisse.push({ status, body });
+  const handlers = createBillingHandlers({ env, readSession: () => null, json });
+  const url = { pathname: "/api/billing/stripe/webhook" };
+
+  for (const geheim of ["whsec_haupt", "whsec_zweit"]) {
+    ergebnisse.length = 0;
+    await handlers(stripeAnfrage(koerper, signiere(koerper, geheim)), {}, url);
+    assert.equal(ergebnisse[0].status, 200, `${geheim} muss gelten`);
+  }
+  ergebnisse.length = 0;
+  await handlers(stripeAnfrage(koerper, signiere(koerper, "whsec_fremd")), {}, url);
+  assert.equal(ergebnisse[0].status, 400, "ein fremdes Geheimnis darf NICHT gelten");
+});
+
+test("ohne jedes Geheimnis bleibt der Endpunkt geschlossen", async () => {
+  const ergebnisse = [];
+  const json = (res, status, body) => ergebnisse.push({ status, body });
+  const handlers = createBillingHandlers({ env: {}, readSession: () => null, json });
+  await handlers(stripeAnfrage("{}", "t=1,v1=x"), {}, { pathname: "/api/billing/stripe/webhook" });
+  assert.equal(ergebnisse[0].status, 503);
+  assert.equal(ergebnisse[0].body.error, "billing_webhook_not_configured");
+});
+
+test("nur der Hauptweg eingerichtet: er gilt, der Zweitweg wird abgelehnt", async () => {
+  const koerper = JSON.stringify({ id: "evt_2", type: "test" });
+  const ergebnisse = [];
+  const json = (res, status, body) => ergebnisse.push({ status, body });
+  const handlers = createBillingHandlers({ env: { STRIPE_WEBHOOK_SECRET: "whsec_haupt" }, readSession: () => null, json });
+  const url = { pathname: "/api/billing/stripe/webhook" };
+  await handlers(stripeAnfrage(koerper, signiere(koerper, "whsec_haupt")), {}, url);
+  assert.equal(ergebnisse[0].status, 200, "der Hauptweg laeuft unveraendert weiter");
+  ergebnisse.length = 0;
+  await handlers(stripeAnfrage(koerper, signiere(koerper, "whsec_zweit")), {}, url);
+  assert.equal(ergebnisse[0].status, 400, "ohne eingetragenes Zweitweg-Geheimnis wird abgelehnt, nicht durchgewunken");
+});
