@@ -175,7 +175,7 @@ ${faq}
         <a href="/datenschutz.html">${escapeHtml(locale.privacy)}</a>
       </footer>
     </div>
-    <script src="/assets/voice-landing.js?v=blitz-20260726" type="module"></script>
+    <script src="/assets/voice-landing.js?v=emojifrei-20260825x" type="module"></script>
   </body>
 </html>
 `;
