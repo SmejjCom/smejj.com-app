@@ -316,3 +316,92 @@ test("fertig ohne Klick heisst nicht 'nach 0 Schritten'", async () => {
     globalThis.fetch = fetchVorher;
   }
 });
+
+// LIVE 05.09. abends: der ferne Browser verdraengte die Sitzung mitten im Lauf,
+// die Maus meldete nur "gestoppt bei: Lesen: heading" — und hatte davor den
+// gelesenen Wert nie ans Modell zurueckgegeben.
+function laufMit({ antworten, sende, erneuere, tab }) {
+  return (async () => {
+    const { fuehreFreienLaufAus } = await import("../public/browser-pane-maus.js");
+    const koerper = []; const fetchVorher = globalThis.fetch;
+    globalThis.fetch = async (_u, init) => { koerper.push(JSON.parse(init.body)); return { ok: true, status: 200, json: async () => antworten.shift() }; };
+    try {
+      const e = await fuehreFreienLaufAus({ auftrag: "lies", tab: tab || { url: "https://a.de/", sessionId: "s1" }, schrittUrl: "https://api.test/s", sende, erneuere });
+      return { e, koerper };
+    } finally { globalThis.fetch = fetchVorher; }
+  })();
+}
+const ACT = (step) => ({ ok: true, entscheidung: { decision: "act", reason: "r", step } });
+const DONE = { ok: true, entscheidung: { decision: "done", reason: "r", result: "Example Domain" } };
+const LESEN = { id: "s1", action: "extract", name: "titel", target: { strategy: "css", value: "h1" } };
+const KLICK = { id: "s1", action: "click", target: { selector: { strategy: "text", value: "Weiter" } } };
+
+test("gelesene Werte gehen in den Verlauf — die Maus liest nicht zweimal dasselbe", async () => {
+  const { e, koerper } = await laufMit({
+    antworten: [ACT(LESEN), DONE],
+    sende: async (a) => a.type === "observe" ? { ok: true, beobachtung: { elements: [] } } : { ok: true, gelesen: "Example Domain" }
+  });
+  assert.equal(e.ok, true, e.grund);
+  assert.match(koerper[1].verlauf.join("\n"), /Lesen: titel → »Example Domain«/);
+});
+
+test("eine fehlgeschlagene Aktion beendet den Lauf nicht sofort — Grund im Verlauf, zweiter Fehlschlag stoppt lesbar", async () => {
+  const { e, koerper } = await laufMit({
+    antworten: [ACT(KLICK), ACT(KLICK), ACT(KLICK)],
+    sende: async (a) => a.type === "observe" ? { ok: true, beobachtung: { elements: [] } } : { ok: false, error: "selector_not_found" }
+  });
+  assert.equal(e.ok, false);
+  assert.match(e.grund, /zweimal fehlgeschlagen/);
+  assert.match(e.grund, /selector_not_found/, "der Grund muss beim Nutzer ankommen");
+  assert.equal(koerper.length, 2, "nach dem ersten Fehlschlag wird noch einmal gefragt, nach dem zweiten nicht mehr");
+  assert.match(koerper[1].verlauf.join("\n"), /FEHLGESCHLAGEN: Klicken: Weiter \(selector_not_found\)/);
+});
+
+test("Sitzung verloren: die Maus verbindet einmal neu und macht weiter", async () => {
+  const tab = { url: "https://a.de/", sessionId: "s1" };
+  let klicks = 0; let erneuert = 0;
+  const { e, koerper } = await laufMit({
+    tab,
+    antworten: [ACT(KLICK), ACT(KLICK), DONE],
+    sende: async (a) => {
+      if (a.type === "observe") return { ok: true, beobachtung: { elements: [] } };
+      klicks += 1;
+      if (klicks === 1) { tab.sessionId = ""; return { ok: false, error: "session_unknown", verloren: true }; }
+      return { ok: true };
+    },
+    erneuere: async () => { erneuert += 1; tab.sessionId = "s2"; return true; }
+  });
+  assert.equal(e.ok, true, e.grund);
+  assert.equal(erneuert, 1);
+  assert.match(koerper[1].verlauf.join("\n"), /UNTERBROCHEN: Klicken: Weiter/);
+  assert.match(koerper[2].verlauf.join("\n"), /Klicken: Weiter$/m, "nach dem Neuaufbau wurde der Klick wirklich ausgefuehrt");
+});
+
+test("Sitzung verloren und kein Neuaufbau moeglich: ehrlicher, lesbarer Abbruch", async () => {
+  const { e } = await laufMit({
+    antworten: [ACT(KLICK)],
+    sende: async (a) => a.type === "observe" ? { ok: true, beobachtung: { elements: [] } } : { ok: false, error: "session_expired", verloren: true },
+    erneuere: async () => false
+  });
+  assert.equal(e.ok, false);
+  assert.match(e.grund, /abgerissen \(session_expired\)/);
+  assert.match(e.grund, /noch einmal senden/);
+});
+
+test("Sitzungs-Client: ein Fehlschlag kommt mit Grund zurueck, ein Verlust als verloren", async () => {
+  const { createBrowserSessionClient } = await import("../public/browser-pane-session.js");
+  const antworten = [{ ok: false, error: "selector_not_found" }, { ok: false, error: "session_unknown" }];
+  const client = createBrowserSessionClient({
+    routes: { api: { browserSession: "https://x.test/s", browserSessionAct: "https://x.test/a", browserSessionClose: "https://x.test/c" } },
+    fetchImpl: async () => ({ status: 200, json: async () => antworten.shift() })
+  });
+  const tab = { url: "https://a.de/", sessionId: "s1" };
+  let verloren = 0;
+  const erst = await client.actUndWarte(tab, { type: "observe" }, { onLost: () => { verloren += 1; } });
+  assert.deepEqual(erst, { ok: false, error: "selector_not_found" });
+  assert.equal(tab.sessionId, "s1", "ein Zielfehler ist kein Sitzungsverlust");
+  const zweit = await client.actUndWarte(tab, { type: "observe" }, { onLost: () => { verloren += 1; } });
+  assert.equal(zweit.verloren, true);
+  assert.equal(tab.sessionId, "");
+  assert.equal(verloren, 1);
+});

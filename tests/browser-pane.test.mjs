@@ -433,3 +433,10 @@ test("Live-Browser: Viewport ohne den Abzug der entfernten Kopfzeile, Nachlauf a
   assert.match(paneJs, /tab\.mode === "live-browser" && mausLaeuft\(\)\) return;/, "waehrend die Maus arbeitet, wird die Sitzung nicht abgerissen");
   assert.match(paneJs, /if \(tab\.mode === "live-browser"\) \{ oeffneImLiveBrowser\(tab\.url\)/);
 });
+
+test("Sitzungsverlust: erst Live-Browser neu verbinden, nie sofort einbetten; waehrend die Maus laeuft, macht sie es selbst", () => {
+  const onLost = paneJs.slice(paneJs.indexOf("onLost: (tab) => {"), paneJs.indexOf("onSuchErgebnis") > 0 ? paneJs.indexOf("};", paneJs.indexOf("onLost: (tab) => {")) : undefined);
+  assert.match(onLost, /if \(mausLaeuft\(\)\) return;/);
+  assert.match(onLost, /tryLiveBrowser\(tab, tab\.url, \{ push: false \}\)/);
+  assert.match(paneJs, /erneuere: async \(\) => \{ const t = activeTab\(\); if \(!t\?\.url\) return false; return tryLiveBrowser\(t, t\.url, \{ push: false \}\); \}/);
+});
