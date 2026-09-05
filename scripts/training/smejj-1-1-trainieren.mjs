@@ -77,6 +77,24 @@ async function zeigeStand(client, e2, jobId = null) {
   return z;
 }
 
+/**
+ * Startet die Gruppe und wartet dabei den Pending-Zustand ab.
+ * @param {{starte: Function}} client
+ * @param {{versuche?: number, wartenMs?: number, schlaf?: Function}} optionen
+ */
+export async function warteUndStarte(client, { versuche = 12, wartenMs = 15_000, schlaf = (ms) => new Promise((f) => setTimeout(f, ms)) } = {}) {
+  let letzte = null;
+  for (let i = 0; i < versuche; i += 1) {
+    letzte = await client.starte();
+    if (letzte.ok) return letzte;
+    const grund = JSON.stringify(letzte.daten || "");
+    if (!/Pending|pending/.test(grund)) return letzte;
+    console.log(`  Gruppe noch nicht startbereit (Pending) — warte ${wartenMs / 1000} s (${i + 1}/${versuche})`);
+    await schlaf(wartenMs);
+  }
+  return letzte;
+}
+
 async function main() {
   const konfig = trainingsKonfig(leseKonfig(process.env));
   const e2k = e2KonfigAusEnv(process.env);
@@ -123,7 +141,15 @@ async function main() {
     parameter: jobParameter(), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`)
   });
   if (!vor.ok) { console.error("ABBRUCH:", vor.gruende.join("; ")); process.exit(5); }
-  const start = await client.starte();
+  // EINE FRISCH ANGELEGTE GRUPPE IST KURZ "PENDING" und weist den Start ab
+  // ("Starting a container group is not allowed while in a Pending status").
+  // Beim Spiegel am 04.09. lief genau das auf, dort habe ich von Hand
+  // nachgestartet — und vergessen, es ins Skript zu schreiben. Beim ersten
+  // Trainings-Klick des Betreibers scheiterte es deshalb erneut: Gruppe
+  // angelegt, Job nie gestartet, und niemand sah es, weil das Fenster schon zu
+  // war. Ein Skript, das einen bekannten Zustand nicht abwartet, laesst die
+  // Arbeit auf halbem Weg liegen.
+  const start = await warteUndStarte(client);
   if (!start.ok) { console.error(`ABBRUCH: Start abgelehnt (HTTP ${start.status})`, JSON.stringify(start.daten).slice(0, 200)); process.exit(6); }
   console.log(`Job ${jobId} gestartet. Fortschritt: dieses Skript mit --stand aufrufen.`);
 }

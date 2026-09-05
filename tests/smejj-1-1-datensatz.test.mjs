@@ -296,3 +296,27 @@ test("die Zeitgrenze ist gesetzt und bleibt im Rahmen des Deckels", () => {
   assert.ok(TRAIN_MINUTEN > 0 && TRAIN_MINUTEN <= 240, `Zeitgrenze ${TRAIN_MINUTEN} min`);
   assert.ok((TRAIN_MINUTEN / 60) * 0.10 < 1, "ein einzelner Lauf darf keinen Dollar kosten");
 });
+
+test("eine frisch angelegte Gruppe ist kurz Pending — das wird abgewartet", async () => {
+  // BEFUND 2026-09-05: Der Betreiber klickte, das Skript legte die Gruppe an,
+  // Salad wies den Start ab ("not allowed while in a Pending status"), das
+  // Skript brach ab und das Fenster war zu. Gruppe da, Job nie gelaufen,
+  // niemand hat es gesehen. Beim Spiegel am Tag zuvor hatte ich denselben
+  // Zustand von Hand ueberbrueckt und vergessen, es einzubauen.
+  const { warteUndStarte } = await import("../scripts/training/smejj-1-1-trainieren.mjs");
+  let rufe = 0;
+  const pendingDannOk = { starte: async () => (++rufe < 3
+    ? { ok: false, status: 400, daten: { detail: "Starting a container group is not allowed while in a Pending status." } }
+    : { ok: true, status: 202 }) };
+  const r = await warteUndStarte(pendingDannOk, { wartenMs: 0, schlaf: async () => {} });
+  assert.equal(r.ok, true, "nach dem Warten muss der Start gelingen");
+  assert.equal(rufe, 3, "es wird wirklich wiederholt, nicht nur einmal versucht");
+
+  // Gesunde Gegenprobe: ein ANDERER Fehler wird NICHT wegwiederholt — sonst
+  // wartet das Skript zwoelfmal auf etwas, das sich nie aendert.
+  let andere = 0;
+  const echterFehler = { starte: async () => { andere += 1; return { ok: false, status: 403, daten: { detail: "Forbidden" } }; } };
+  const f = await warteUndStarte(echterFehler, { wartenMs: 0, schlaf: async () => {} });
+  assert.equal(f.ok, false);
+  assert.equal(andere, 1, "ein 403 ist kein Pending — sofort melden");
+});

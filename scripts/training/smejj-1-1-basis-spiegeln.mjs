@@ -128,7 +128,11 @@ async function main() {
   });
   if (!vor.ok) { console.error("ABBRUCH:", vor.gruende.join("; ")); process.exit(4); }
   console.log(`Job ${jobId} vorbereitet (Buendel ${vor.buendelDateien} Dateien).`);
-  const start = await client.starte();
+  // Dieselbe Wartelogik wie beim Trainingslauf: eine frisch angelegte Gruppe
+  // ist kurz "Pending" und weist den Start ab. Am 04.09. musste ich hier von
+  // Hand nachstarten.
+  const { warteUndStarte } = await import("./smejj-1-1-trainieren.mjs");
+  const start = await warteUndStarte(client);
   if (!start.ok) { console.error(`ABBRUCH: Start abgelehnt (HTTP ${start.status})`, JSON.stringify(start.daten).slice(0, 200)); process.exit(5); }
   console.log("Job gestartet. Fortschritt: dieses Skript mit --stand aufrufen.");
 }
