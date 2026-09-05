@@ -1,5 +1,5 @@
 {
-  "gesammeltAm": "2026-09-02T20:01:13.822Z",
+  "gesammeltAm": "2026-09-04T20:01:52.559Z",
   "aufgaben": [
     {
       "stufe": 1,
@@ -10,27 +10,11 @@
       "seit": "2026-09-02T02:37:24.704Z"
     },
     {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "web-vitals-wache",
-      "titel": "Ausfall: Web-Vitals-Wache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Budget gerissen: kalt: ttfb_ms p75 878 > Budget 200; kalt: lcp_ms p75 3284 > Budget 1500; warm: ttfb_ms p75 608 > Budget 200 — LCP 2440 ms, TTFB 781 ms, CLS ",
-      "seit": "2026-09-02T03:17:24.724Z"
-    },
-    {
       "stufe": 2,
       "quelle": "CVE-Waechter",
       "betrifft": "bibliothek:pipecat-ai",
       "titel": "pipecat-ai 0.0.67: 2 bekannte Schwachstelle(n)",
       "befund": "Gemeldet von osv.dev. Beispiele: GHSA-c2jg-5cp7-6wc7, PYSEC-2026-458. Quelle: workers/smejj-voice/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
-      "seit": null
-    },
-    {
-      "stufe": 2,
-      "quelle": "CVE-Waechter",
-      "betrifft": "bibliothek:protobuf",
-      "titel": "protobuf 5.29.5: 2 bekannte Schwachstelle(n)",
-      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-7gcm-g887-7qv7, PYSEC-2026-1805. Quelle: workers/smejj-voice/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
       "seit": null
     },
     {

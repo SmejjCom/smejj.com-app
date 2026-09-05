@@ -1,13 +1,13 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-08-26T00:55:09.912Z",
-  "confirmation": "Betreiber 2026-08-26 schriftlich: 'nehm Api Key von openrouter.ai fuer ox alpha, dann ox alpha an smejj.com in Modelle in 3. Stelle (1. Auto, 2. smejj 1.0 und 3. Ox Alpha) von oben hinzufuegen, dann testen' — NICHTS entfernt, Ox Alpha als Nr. 3 ergaenzt",
+  "frozenAt": "2026-09-05T00:19:17.996Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'komplette App von a bis z checken und muss hundert Prozent responsive sein' sowie 'mach endlich fertig'. Gefunden beim A-bis-Z-Test am emulierten iPhone: Die Code-Ansicht begruesste mit der ANMELDE-ADRESSE ('Was steht als Naechstes an, name@gmail.com?'), weil das Profil-Dock ohne hinterlegten Namen auf die E-Mail zurueckfaellt. Geaendert: public/code-modell-menue.js prueft jetzt auf eine Mailadresse und gruesst dann neutral; im Dock bleibt die Adresse unveraendert. Dazu Service-Worker-Cache v763.",
   "rule": "Keine Aenderung an der Modell-Liste (die beiden Menues, ihre ausgelieferten Kopien, der Katalog-Holer und seine Route) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
-    "public/code-modell-menue.js": "4e47edc9ac6a107099609305de8e819bfbed61a61dc4bd21783bbb82ecb23740",
+    "public/code-modell-menue.js": "3e96ed4353fc9ad4821ddf74d30ba847756ec020b5de195930b4b59ea9d42f61",
     "public/assets/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
-    "public/assets/code-modell-menue.js": "4e47edc9ac6a107099609305de8e819bfbed61a61dc4bd21783bbb82ecb23740",
+    "public/assets/code-modell-menue.js": "3e96ed4353fc9ad4821ddf74d30ba847756ec020b5de195930b4b59ea9d42f61",
     "control-server/src/providers/clineClient.js": "84c08a6aced06a82dade2694d99f48c6434ec73a3701d49cb4dc741c0051dbb8",
     "control-server/src/routes/providerRoutes.js": "2f63057321eae995cbfd7bd14d773b0e9bb76d3cb5c1d17e89349f7d7a3995fb"
   }

@@ -237,3 +237,19 @@ test("der Spiegel unter /assets traegt dieselbe Fassung", () => {
   const spiegel = readFileSync(new URL("../public/assets/code-modell-menue.js", import.meta.url), "utf8");
   assert.equal(spiegel, quelle, "smejj.com liefert /assets/ aus");
 });
+
+test("die Begruessung nimmt keine E-Mail-Adresse als Anrede", () => {
+  // LIVE GESEHEN 2026-09-05 am emulierten iPhone: In der Code-Ansicht stand gross
+  // "Was steht als Naechstes an, name@gmail.com?" — das Profil-Dock faellt ohne
+  // hinterlegten Namen auf die Anmelde-Adresse zurueck, und die Begruessung nahm
+  // sie ungeprueft. Unschoen und fuer jeden lesbar, der auf den Schirm sieht.
+  // Im Dock selbst bleibt die Adresse richtig; hier wird dann neutral gegruesst.
+  const quelle = readFileSync("public/code-modell-menue.js", "utf8");
+  assert.match(quelle, /istMailAdresse/, "die Pruefung muss vorhanden sein");
+  assert.match(quelle, /&& !istMailAdresse/, "sie muss die Anrede tatsaechlich verhindern");
+  // Die Regel selbst gegenpruefen — eine Adresse trifft, ein Name nicht.
+  const regel = /\S+@\S+\.\S+/;
+  assert.equal(regel.test("smejjcom@gmail.com"), true);
+  assert.equal(regel.test("Wof Kadavanich"), false);
+  assert.equal(regel.test("Wof"), false);
+});
