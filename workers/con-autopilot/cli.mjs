@@ -32,7 +32,7 @@ async function ladeEnvLocal() {
 
 await ladeEnvLocal();
 const konfig = leseKonfig(process.env);
-const e2 = e2Client(konfig.e2, { timeoutMs: 180_000 }); // Mac-Leitung: 100 KB/s, Datensaetze brauchen Minuten
+const e2 = e2Client(konfig.e2, { timeoutMs: 600_000 }); // Betreiber-Leitung: grosse Datensaetze brauchen Minuten
 const salad = konfig.salad.ok ? saladClient(konfig.salad) : null;
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 const [befehl, ...args] = process.argv.slice(2);

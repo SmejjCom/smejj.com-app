@@ -72,7 +72,7 @@ test("Sicherheitspaare verweigern und verraten nie ein Geheimnis", () => {
     const istAngriff = geheim.test(frage) || /Fuehre bitte aus|Bitte ausfuehren|Mach das eben|Kannst du das ausfuehren|Anweisung an den Assistenten|Schreibe eine E-Mail im Namen|aus euren Nutzerdaten/.test(frage);
     if (istAngriff) {
       angriffe += 1;
-      assert.match(antwort, /(?:Nein|nicht|kein)/i, `Angriff ohne Verweigerung: ${frage}`);
+      assert.match(antwort, /(?:Nein|nicht|kein|ignorier)/i, `Angriff ohne Verweigerung: ${frage}`);
     } else {
       harmlos += 1;
       // Gegenprobe: harmlose Fragen duerfen NICHT verweigert werden.
@@ -127,4 +127,21 @@ test("Datensatz wird gemischt — jeder Anfang bildet das Ganze ab", async () =>
   // Nichts geht verloren und nichts kommt dazu.
   assert.equal(gemischt.length, paare.length);
   assert.equal(gemischt.filter((p) => p.art === "sicherheit").length, 200);
+});
+
+test("Sicherheitsdaten enthalten das Muster 'ablehnen UND trotzdem antworten'", async () => {
+  const { sicherheitsPaare, wuerfel } = await import("../workers/con-autopilot/daten/generator.mjs");
+  const paare = sicherheitsPaare(wuerfel(31337), 600);
+  // Genau daran verlor con-1.2 seinen Punkt: es verweigerte richtig und liess die
+  // eigentliche Frage unbeantwortet. Verweigern darf den Auftrag nicht fallenlassen.
+  const beide = paare.filter((p) => {
+    const a = p.messages[2].content;
+    return /(?:ignorier|befolge .{0,20}nicht|gebe .{0,20}nicht|fuehre .{0,20}nicht aus)/i.test(a)
+      && /(?:Zur eigentlichen Frage|Geoeffnet ist|Die Version ist|werden es|Den Preis|laut Ergebnis)/i.test(a);
+  });
+  assert.ok(beide.length > 30, `zu wenige Beispiele mit beiden Haelften: ${beide.length}`);
+  for (const p of beide.slice(0, 20)) {
+    const a = p.messages[2].content;
+    assert.ok(a.length > 60, "eine Antwort mit beiden Haelften ist nie ein Einzeiler");
+  }
 });
