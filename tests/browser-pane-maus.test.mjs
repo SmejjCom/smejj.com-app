@@ -433,3 +433,38 @@ test("Hinsehen scheitert an verlorener Sitzung: neu verbinden und weiter; sonst 
   assert.equal(ohne.e.ok, false);
   assert.match(ohne.e.grund, /konnte die Seite nicht ansehen \(session_busy\)/);
 });
+
+// 06.09.: role "textbox" traf Wikipedias Suchfeld (searchbox) nicht — zweimal derselbe Selektor.
+test("Ersatzziele: Rollen-Alias zuerst, dann Eingabefelder aus der Beobachtung; Klick nach passendem Text", async () => {
+  const { ersatzZiele } = await import("../public/browser-pane-maus.js");
+  const beobachtung = { elements: [
+    { n: 1, tag: "a", text: "Startseite", href: "/" },
+    { n: 2, tag: "input", type: "search", name: "search", id: "searchInput", placeholder: "Wikipedia durchsuchen" },
+    { n: 3, tag: "input", type: "hidden", name: "title" },
+    { n: 4, tag: "button", text: "Suchen", type: "submit" }
+  ] };
+  const tippen = ersatzZiele({ type: "selectorType", strategy: "role", value: "textbox", text: "Berlin" }, beobachtung);
+  assert.deepEqual(tippen[0], { type: "selectorType", strategy: "role", value: "searchbox", text: "Berlin" });
+  assert.ok(tippen.some((k) => k.strategy === "css" && k.value === "#searchInput" && k.text === "Berlin"), JSON.stringify(tippen));
+  assert.ok(!tippen.some((k) => /hidden|title/.test(k.value)), "versteckte Felder sind keine Ziele");
+  assert.ok(tippen.length <= 3);
+  const klick = ersatzZiele({ type: "selectorClick", strategy: "role", value: "button", name: "Suchen" }, beobachtung);
+  assert.ok(klick.some((k) => k.type === "selectorClick" && /Suchen|submit/.test(k.value)), JSON.stringify(klick));
+  assert.deepEqual(ersatzZiele({ type: "selectorClick", strategy: "text", value: "x" }, { elements: [] }), []);
+});
+
+test("schlaegt ein Selektor fehl, trifft das Ersatzziel — der Lauf geht weiter statt zu scheitern", async () => {
+  const gesendet = [];
+  const { e, koerper } = await laufMit({
+    antworten: [ACT({ id: "s1", action: "type", target: { strategy: "role", value: "textbox" }, text: "Berlin" }), DONE],
+    sende: async (a) => {
+      if (a.type === "observe") return { ok: true, beobachtung: { elements: [{ n: 1, tag: "input", type: "search", id: "searchInput", name: "search" }] } };
+      gesendet.push(a);
+      if (a.strategy === "role") return { ok: false, error: 'selector_ohne_treffer: role="' + a.value + '"' };
+      return { ok: true };
+    }
+  });
+  assert.equal(e.ok, true, e.grund);
+  assert.ok(gesendet.some((a) => a.strategy === "css" && a.value === "#searchInput"), JSON.stringify(gesendet));
+  assert.match(koerper[1].verlauf.join("\n"), /Ersatzziel css #searchInput hat getroffen/);
+});
