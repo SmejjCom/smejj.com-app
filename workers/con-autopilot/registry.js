@@ -70,11 +70,30 @@ export function findeVersion(registry, version) {
 }
 
 /** Kandidat eintragen oder aktualisieren (Status candidate). */
+/**
+ * Traegt eine Version ein oder aktualisiert die vorhandene.
+ *
+ * Gibt IMMER das Objekt zurueck, das wirklich im Register haengt. Bis zum 05.09.
+ * lieferte diese Funktion bei einer schon vorhandenen Version das frisch gebaute
+ * `neu` zurueck, waehrend im Register das per Object.assign befuellte `alt` stand.
+ * Beide hatten denselben Inhalt — bis der Aufrufer nach dem Eintragen noch etwas
+ * setzte. Genau das tut der Regressionslauf: er schreibt status, benchmarks und
+ * bekannteSchwaechen NACH dem Aufruf. Diese Werte landeten in einem losgeloesten
+ * Objekt und wurden nie gespeichert.
+ *
+ * Folge live am 05.09.: con-1.3 wurde gegen die neue, schwere Latte gemessen
+ * (0,9219 statt 1,0), die Note kam nie ins Register, der Planer hielt die Latte
+ * weiter fuer veraltet und startete denselben Messlauf erneut. Zwei Laeufe zu je
+ * rund 90 Minuten, bevor es auffiel. Der Kommentar im Kreislauf behauptete seit
+ * dem 04.09., dieser Fall sei erledigt — geflickt war aber nur die Zusammenfassung,
+ * nicht der Weg ins Register.
+ */
 export function trageKandidatEin(registry, eintrag) {
   const alt = findeVersion(registry, eintrag.version);
   const neu = { status: STATUS.CANDIDATE, createdAt: new Date().toISOString(), ...(alt || {}), ...eintrag,
     updatedAt: new Date().toISOString() };
-  if (alt) Object.assign(alt, neu); else registry.versions.push(neu);
+  if (alt) { Object.assign(alt, neu); return alt; }
+  registry.versions.push(neu);
   return neu;
 }
 

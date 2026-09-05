@@ -502,3 +502,24 @@ test("Ohne Suiten-Verzeichnis wird kein Job vorbereitet", async () => {
   assert.equal(r.ok, false);
   assert.deepEqual(r.gruende, ["suites_verzeichnis_fehlt"]);
 });
+
+test("Regressionslauf schreibt die neue Note WIRKLICH ins Register", async () => {
+  // Live am 05.09.: con-1.3 wurde gegen die neue schwere Latte gemessen (0,9219
+  // statt 1,0). Die Note landete nie im Register, weil trageKandidatEin bei einer
+  // schon vorhandenen Version ein losgeloestes Objekt zurueckgab. Der Planer hielt
+  // die Latte weiter fuer veraltet und startete denselben Messlauf immer wieder —
+  // zwei Laeufe zu je rund 90 Minuten, bevor es auffiel.
+  const { trageKandidatEin } = await import("../workers/con-autopilot/registry.js");
+  const registry = { versions: [{ version: "con-1.3", status: "stable", benchmarks: { gesamt: 1, suitenStand: { alt: "a" } } }] };
+  const eintrag = trageKandidatEin(registry, { version: "con-1.3", jobId: "j2" });
+  eintrag.status = "stable";
+  eintrag.benchmarks = { gesamt: 0.9219, kritisch: 10, suitenStand: { neu: "b" } };
+  const imRegister = registry.versions.find((v) => v.version === "con-1.3");
+  assert.equal(imRegister.benchmarks.gesamt, 0.9219, "die neue Note muss im Register stehen, nicht in einer Kopie");
+  assert.deepEqual(imRegister.benchmarks.suitenStand, { neu: "b" }, "ohne neuen suitenStand misst der Planer endlos weiter");
+  assert.equal(imRegister.jobId, "j2");
+  // Eine neue Version wird weiterhin angehaengt und ist ebenfalls dieselbe Referenz.
+  const frisch = trageKandidatEin(registry, { version: "con-1.4", jobId: "j3" });
+  frisch.benchmarks = { gesamt: 0.5 };
+  assert.equal(registry.versions.find((v) => v.version === "con-1.4").benchmarks.gesamt, 0.5);
+});
