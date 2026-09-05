@@ -14,16 +14,16 @@
 # (buildStepRetryPrompt in workers/maus-engine/prompt-template.mjs, Nachfrage in
 # control-server/src/routes/mausEngineRoutes.js). Allowlist-Verstoesse werden
 # nicht nachverhandelt. Fuenf Waechter: tests/maus-schritt-nachfrage.test.mjs.
-# Beide Zweige gruen (64/64). Arbeitszweig: 6a5d093b. Bauzweig-Commit: 0d830a2a
+# Beide Zweige gruen (64/64). Arbeitszweig: 6a5d093b. Bauzweig-Commit: 01995c91
 # (liegt schon im Repo, nur der Push fehlte — der Auto-Modus hat ihn gesperrt).
 #
 # Rollback: `git push origin <vorheriger-stand>:feature/auth-redesign-github-magiclink`
-# ist KEIN Fast-Forward und damit gesperrt; stattdessen `git revert 0d830a2a` auf
+# ist KEIN Fast-Forward und damit gesperrt; stattdessen `git revert 01995c91` auf
 # dem Bauzweig pushen — Zeabur baut den Stand davor.
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 BAUZWEIG="feature/auth-redesign-github-magiclink"
-COMMIT="0d830a2a"
+COMMIT="01995c91"
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 
 cd "$REPO" || { echo "ABBRUCH: App-Ordner nicht erreichbar."; exit 1; }
