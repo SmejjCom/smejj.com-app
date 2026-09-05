@@ -39,15 +39,68 @@ test("index.html traegt Overlay-Markup und Stylesheet", () => {
 // ohne einen echten Fehler zu melden. Die eigentliche Regel ist: ALLE
 // Importstellen desselben Moduls tragen DIESELBE Kennung — sonst entsteht
 // eine zweite Modulinstanz. Genau das wird jetzt geprueft.
+// Modulname, dahinter die Cache-Marke als OPTIONALE Gruppe 1. Der Name muss
+// direkt hinter einem "/" stehen — sonst wuerde "nachladen.js" auch in
+// "such-nachladen.js" treffen und der Test gruen melden, was er nie geprueft hat.
+const alsPfad = (modul) => `[^"]*/${modul.replace(/\./g, "\\.")}(\\?v=[A-Za-z0-9._-]+)?`;
+
+/**
+ * Unter welcher Kennung laedt `quelle` das Modul — statisch ODER per import()?
+ * Seit der Such-Diaet holt search.js das Overlay nachladend (overlayLader); die
+ * alte Fassung sah nur `from "…"` und meldete darum "Overlay fehlt", obwohl es
+ * geladen wird.
+ */
 function kennung(quelle, modul) {
-  const treffer = quelle.match(new RegExp(`from "[^"]*${modul}\\.js(\\?v=[^"]*)?"`));
+  const treffer = quelle.match(new RegExp(`(?:from\\s*|import\\()"${alsPfad(modul)}"`));
   return treffer ? treffer[1] || "(ohne)" : null;
 }
+
+/**
+ * Namen eines statischen Imports — oder null, wenn das Modul gar nicht
+ * importiert wird. Geprueft wird der MODULNAME, nicht seine Marke.
+ */
+export function importNamen(quelle, modul) {
+  const treffer = quelle.match(new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*"${alsPfad(modul)}"`));
+  return treffer ? treffer[1].split(",").map((n) => n.trim()).filter(Boolean) : null;
+}
+
+/** Laedt `quelle` das Modul per dynamischem import()? Marke egal. */
+export function ladetDynamisch(quelle, modul) {
+  return new RegExp(`import\\("${alsPfad(modul)}"\\)`).test(quelle);
+}
+
+test("kaputte und gesunde Probe: der Modulname zaehlt, die Cache-Marke nicht", () => {
+  // Gesund: dieselbe Verdrahtung unter jeder Marke — und ohne Marke.
+  assert.deepEqual(importNamen('import { a, b } from "./such-nachladen.js?v=99";', "such-nachladen.js"), ["a", "b"]);
+  assert.deepEqual(importNamen('import { a } from "./such-nachladen.js";', "such-nachladen.js"), ["a"]);
+  assert.ok(ladetDynamisch('import("./search.js?v=b54")', "search.js"));
+  assert.ok(ladetDynamisch('import("/assets/search.js")', "search.js"));
+  // Kaputt: fehlender Import muss auffallen — das Lockern der Marke darf den
+  // Waechter nicht zahnlos machen (Hausregel: kaputte UND gesunde Probe).
+  assert.equal(importNamen('import { a } from "./search.js?v=b54";', "such-nachladen.js"), null);
+  assert.ok(!ladetDynamisch('const m = "./search.js";', "search.js"));
+  // Kaputt: ein Teilname darf nicht durchrutschen.
+  assert.equal(importNamen('import { a } from "./such-nachladen.js?v=5";', "nachladen.js"), null);
+  assert.ok(!ladetDynamisch('import("./search-overlay.js?v=b54")', "search.js"));
+  // kennung() sieht beide Ladeformen und liefert die Marke zum Vergleichen.
+  assert.equal(kennung('import { a } from "/assets/chat-store.js?v=b67";', "chat-store.js"), "?v=b67");
+  assert.equal(kennung('import("./search-overlay.js?v=b61")', "search-overlay.js"), "?v=b61");
+  assert.equal(kennung('import { a } from "./search-overlay.js";', "search-overlay.js"), "(ohne)");
+  assert.equal(kennung('import { a } from "./search.js?v=b54";', "search-overlay.js"), null);
+});
 
 test("Nav-Knopf Suche oeffnet das Overlay, nicht die Seite", () => {
   // Seit der Such-Diaet (25.08.) laedt app.js search.js erst bei Bedarf ueber
   // such-nachladen.js; das Overlay kommt weiter aus search.js (overlayLader).
-  assert.match(appJs, /import \{ bindeSuchNachlader, holeSuche \} from "\.\/such-nachladen\.js\?v=1"/, "app.js bindet den Such-Nachlader");
+  // Geprueft wird, WAS app.js aus dem Nachlader zieht — nicht die Marke und
+  // nicht die vollstaendige Namensliste: `ladeSucheFuerAnsicht` kam am 04.09.
+  // dazu (der Haken, ohne den die Suche nie lud) und haette diesen Test sonst
+  // ein zweites Mal grundlos rot gestellt.
+  const namen = importNamen(appJs, "such-nachladen.js");
+  assert.ok(namen, "app.js bindet den Such-Nachlader nicht mehr");
+  for (const name of ["bindeSuchNachlader", "holeSuche"]) {
+    assert.ok(namen.includes(name), `app.js holt ${name} nicht aus such-nachladen.js`);
+  }
   assert.match(appJs, /button\.dataset\.view === "search"\) \{ holeSuche\(\)\.then\(\(m\) => Promise\.resolve\(m\.oeffneSuchOverlay\(\)\)\)/, "der Nav-Knopf laedt und oeffnet das Overlay");
 });
 
@@ -55,11 +108,20 @@ test("Cmd+K schaltet das Overlay und search.js reicht die Datenwege durch", () =
   // app.js importiert search-overlay nicht mehr selbst (Such-Diaet 25.08.);
   // die EINE Kennung lebt in search.js (overlayLader) — der Nachlader in
   // such-nachladen.js kennt nur search.js selbst.
-  assert.ok(kennung(searchJs, "search-overlay"), "search.js laedt das Overlay");
-  assert.equal(kennung(appJs, "search-overlay"), null, "app.js importiert das Overlay nicht mehr direkt");
+  assert.ok(kennung(searchJs, "search-overlay.js"), "search.js laedt das Overlay");
+  assert.equal(kennung(appJs, "search-overlay.js"), null, "app.js importiert das Overlay nicht mehr direkt");
   const nachladerJs = fs.readFileSync("public/such-nachladen.js", "utf8");
-  assert.match(nachladerJs, /import\("\.\/search\.js\?v=b51"\)/, "der Nachlader laedt search.js unter der App-Kennung");
-  assert.match(searchJs, /if \(toggleSearchOverlay\(\)\) return;/);
+  // search.js hat genau EINE Importstelle (hier), darum entsteht keine zweite
+  // Modulinstanz und die Marke darf frei wandern. Fixiert war sie auf ?v=b51,
+  // live steht b54 — genau die Falle "Tests nie auf Cache-Marken festnageln".
+  assert.ok(ladetDynamisch(nachladerJs, "search.js"), "der Nachlader laedt search.js nicht mehr per import()");
+  // Cmd+K schaltet seit dem Nachlade-Umbau (24.08.) ueber overlayLader; der
+  // hier fixierte Direktaufruf `if (toggleSearchOverlay()) return;` steht so
+  // nicht mehr im Code. Geprueft wird der VERTRAG, nicht der Wortlaut: Cmd+K
+  // gebunden, Overlay geschaltet, Such-Seite als Rueckfallebene.
+  assert.match(searchJs, /event\.key\.toLowerCase\(\) !== "k"/, "search.js bindet Cmd+K nicht mehr");
+  assert.match(searchJs, /toggleSearchOverlay\(\)/, "Cmd+K schaltet das Overlay nicht");
+  assert.match(searchJs, /goToView\("search"\)/, "ohne Overlay fehlt die Rueckfallebene auf die Such-Seite");
   assert.match(searchJs, /initSearchOverlay\(\{/);
   // Chat-Treffer tragen das Chat-Objekt (Ausschnitt, Zeit, Titel im Overlay).
   assert.match(searchJs, /chat\.id, chat\];/);
@@ -74,8 +136,8 @@ test("Overlay hebt sicher hervor und bedient die Tastatur", () => {
   assert.match(overlayJs, /"Escape"/);
   // Gleicher chat-store-Spezifizierer wie search.js — sonst ZWEITE Modulinstanz.
   assert.equal(
-    kennung(overlayJs, "chat-store"),
-    kennung(searchJs, "chat-store"),
+    kennung(overlayJs, "chat-store.js"),
+    kennung(searchJs, "chat-store.js"),
     "search-overlay.js und search.js importieren chat-store.js unter verschiedenen Kennungen — zweite Modulinstanz"
   );
 });
