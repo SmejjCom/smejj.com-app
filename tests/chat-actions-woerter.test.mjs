@@ -43,3 +43,17 @@ test("die neuen Woerter stehen in allen 14 Sprachdateien", () => {
     for (const k of ["Vorlesen", "Ändern", "Kopieren", "Gut", "Schwach", "Mehr", "Neu"]) assert.ok(q.includes(`\n  ${JSON.stringify(k)}:`), `${sp}: ${k}`);
   }
 });
+
+test("die Woerter kleben nicht aneinander", () => {
+  // AM GERAET GESEHEN 2026-09-06 (iPhone 17 Pro, iOS 26.5): Die Symbole standen
+  // mit Abstand, die Woerter darunter beruehrten sich — im Screenshot las sich
+  // die Leiste als "KopierenVorlesen". Der Knopf hatte feste 42 px, das Wort ist
+  // breiter und ragte darueber hinaus, waehrend die Leiste gap:0 fuehrt.
+  assert.match(quelle, /:has\(\.msg-act\.hat-wort\)\{gap:6px\}/,
+    "die Leiste braucht einen Steg, sobald Woerter angezeigt werden");
+  // Die Zusage vom 30.08. bleibt unangetastet: die Knoepfe werden NICHT breiter.
+  assert.ok(!/width:\s*auto/.test(quelle.split("@media")[1] || ""),
+    "die Knoepfe bleiben 44 px — der Steg loest das Kleben, nicht die Breite");
+  // Die Zusage des Betreibers bleibt: 44-px-Ziele, eine Zeile.
+  assert.doesNotMatch(quelle, /min-width:\s*(3[0-9]|4[0-3])px/, "keine Ziele unter 44 px");
+});
