@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T23:24:49.330Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-06 im Wortlaut: 'teste jetzt nochmal alles im Simulator von A bis Z'. AM GERAET GEFUNDEN (iPhone 17 Pro, iOS 26.5): In der Aktionsleiste unter einer Antwort beruehrten sich die Woerter — es las sich als 'KopierenVorlesen'. Ursache: die Knoepfe sind 44 px breit (deine Regel vom 30.08.), das Wort darunter ist breiter und ragt hinaus, waehrend die Leiste ohne Steg auskam. Geloest durch einen Steg von 6 px ZWISCHEN den Knoepfen — die 44-px-Ziele bleiben unangetastet (6 x 44 plus 5 x 6 = 294 px, die Zeile hat bei 375 px Schirmbreite 327 px). Geaendert: public/chat-actions-woerter.js. Service-Worker v776.",
+  "frozenAt": "2026-09-05T23:36:46.848Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05/06: 'Ich gebe dir alle Rechte. von A bis Z. Mach hundert Prozent fertig, lass nichts offen.' und 'wenn du fertig bist dann nochmal komplett testen.' Berlin-Auftrag scheiterte an einer falsch geratenen Rolle (textbox statt searchbox) und derselben Wiederholung; das Panel leitet jetzt Ersatzziele aus seiner eigenen Beobachtung ab (Rollen-Alias, css aus id/name/placeholder, Klick nach passendem Text), bevor ein Fehlschlag zaehlt. browser-pane-maus.js; Marken der Browser-Kette, app.js b143, Service-Worker smejj-shell-v776. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "8ec09f267570bfc680f407f38f6896b2487e1c2d1b5ce32df411688c73af3fdf",
