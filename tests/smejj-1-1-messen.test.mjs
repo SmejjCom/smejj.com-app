@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { messStaende, jobParameter, baueMessJobVerzeichnis, benoteAntworten, BASIS_STAND, EVAL_PREFIX } from "../scripts/training/smejj-1-1-messen.mjs";
+import { messStaende, jobParameter, baueSuitenVerzeichnis, benoteAntworten, BASIS_STAND, EVAL_PREFIX } from "../scripts/training/smejj-1-1-messen.mjs";
 import { loadEvalSuite } from "../src/evaluation/evalPacks.js";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,15 +25,15 @@ test("Job-Parameter: eigene Ablage smejj/evals, drei Wiederholungen, beide Staen
   assert.deepEqual(JSON.parse(p.CON_MESS_VERSIONEN), messStaende());
 });
 
-test("Job-Buendel traegt NUR die smejj-Suite, con-Suiten bleiben draussen, der con-Job bleibt unveraendert", () => {
-  const jobDir = path.join(WURZEL, "workers/con-autopilot/salad-job");
-  const vorher = readdirSync(path.join(jobDir, "suites")).sort();
-  const b = baueMessJobVerzeichnis(jobDir);
+test("Suiten-Verzeichnis traegt NUR die smejj-Suite — das con-Suiten-Verzeichnis bleibt unveraendert", () => {
+  const conSuiten = path.join(WURZEL, "workers/con-autopilot/suites");
+  const vorher = readdirSync(conSuiten).sort();
+  const b = baueSuitenVerzeichnis();
   try {
     assert.deepEqual(b.suiten, ["smejj-chat-core-v1.json"]);
-    assert.ok(existsSync(path.join(b.verzeichnis, "job.py")));
-    assert.ok(existsSync(path.join(b.verzeichnis, "evalrun.py")));
-    assert.deepEqual(readdirSync(path.join(jobDir, "suites")).sort(), vorher);
+    assert.ok(existsSync(path.join(b.verzeichnis, "smejj-chat-core-v1.json")));
+    assert.deepEqual(readdirSync(conSuiten).sort(), vorher);
+    assert.ok(vorher.some((n) => /^con-/.test(n)), "die con-Suiten liegen weiter an ihrem Ort");
   } finally {
     rmSync(b.verzeichnis, { recursive: true, force: true });
   }

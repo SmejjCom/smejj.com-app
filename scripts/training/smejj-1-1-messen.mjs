@@ -26,7 +26,7 @@
 //   node scripts/training/smejj-1-1-messen.mjs --starten --nur-adapter   (nur Kandidat, Adapter beim Laden)
 //   node scripts/training/smejj-1-1-messen.mjs --bewerten <jobId> [--basis-job <jobId2>]  (Noten rechnen)
 //   node scripts/training/smejj-1-1-messen.mjs --tuev              (Messstrecke mit leeren Antworten: muss 0 % und BLOCKED melden)
-import { cpSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -86,17 +86,15 @@ export function jobParameter({ nurAdapter = false } = {}) {
 }
 
 /**
- * Kopie des con-Jobs mit NUR der smejj-Suite im suites-Ordner. Der con-Job
- * selbst bleibt unangetastet — er ist die Bibliothek, nicht das Werkstueck.
+ * Eigenes Suiten-Verzeichnis mit NUR der smejj-Suite. Seit 05.09. legt das
+ * con-Buendel die Suiten aus `konfig.suitesDir` unter suites/ ab (tarball.js,
+ * zusatz) — es gibt keine Kopie mehr im Job-Ordner. Der con-Job und sein
+ * Suiten-Verzeichnis bleiben unangetastet: Bibliothek, nicht Werkstueck.
  */
-export function baueMessJobVerzeichnis(jobDir, suiteDatei = SUITE_DATEI) {
-  const ziel = mkdtempSync(path.join(os.tmpdir(), "smejj-1-1-messjob-"));
-  cpSync(jobDir, ziel, { recursive: true, filter: (p) => !/__pycache__|\/suites\//.test(p) });
-  const suites = path.join(ziel, "suites");
-  rmSync(suites, { recursive: true, force: true });
-  mkdirSync(suites);
-  cpSync(suiteDatei, path.join(suites, path.basename(suiteDatei)));
-  return { verzeichnis: ziel, suiten: readdirSync(suites) };
+export function baueSuitenVerzeichnis(suiteDatei = SUITE_DATEI) {
+  const ziel = mkdtempSync(path.join(os.tmpdir(), "smejj-1-1-suiten-"));
+  cpSync(suiteDatei, path.join(ziel, path.basename(suiteDatei)));
+  return { verzeichnis: ziel, suiten: readdirSync(ziel) };
 }
 
 /**
@@ -233,12 +231,12 @@ async function main() {
   if (!["stopped", "failed", "fehlt"].includes(vorher.zustand)) { console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}) — Training oder Messung laeuft oder wird gerade zugeteilt.`); process.exit(4); }
   if (!argv.includes("--starten")) { console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich gemessen."); return; }
 
-  const jobDir = baueMessJobVerzeichnis(konfig.jobDir);
-  console.log(`Job-Buendel:  ${jobDir.verzeichnis} mit Suiten ${jobDir.suiten.join(", ")}`);
+  const suiten = baueSuitenVerzeichnis();
+  console.log(`Suiten im Buendel: ${suiten.suiten.join(", ")} (aus ${suiten.verzeichnis})`);
   const jobId = `smejj11-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}-messung`;
-  const vor = await bereiteJobVor({ client, konfig: { ...konfig, jobDir: jobDir.verzeichnis }, e2: e2k, jobId, modus: "messung",
+  const vor = await bereiteJobVor({ client, konfig: { ...konfig, suitesDir: suiten.verzeichnis }, e2: e2k, jobId, modus: "messung",
     parameter: jobParameter({ nurAdapter }), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
-  rmSync(jobDir.verzeichnis, { recursive: true, force: true });
+  rmSync(suiten.verzeichnis, { recursive: true, force: true });
   if (!vor.ok) { console.error("ABBRUCH:", vor.gruende.join("; ")); process.exit(5); }
   const start = await warteUndStarte(client);
   if (!start.ok) { console.error(`ABBRUCH: Start abgelehnt (HTTP ${start.status})`, JSON.stringify(start.daten).slice(0, 200)); process.exit(6); }
