@@ -26,6 +26,8 @@ workers/*
 !workers/remote-browser/**
 !workers/smejj-worker
 !workers/smejj-worker/**
+!workers/smejj-smee
+!workers/smejj-smee/**
 !workers/maus-engine
 !workers/maus-engine/**
 !workers/glm-salad

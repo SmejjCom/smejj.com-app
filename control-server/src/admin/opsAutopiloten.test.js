@@ -21,7 +21,7 @@ import {
   _ablageLeeren,
   _herzschlaegeZuruecksetzen
 } from "./opsAutopiloten.js";
-import { BEREICHE, zugeordneteKennungen } from "./opsAutopilotenBereiche.js";
+import { BEREICHE, zugeordneteKennungen, bereichVon } from "./opsAutopilotenBereiche.js";
 
 const JETZT = Date.parse("2026-08-07T12:00:00.000Z");
 const ENV = { SMEJJ_AUTOPILOT_KEYS: "qualitaetsmessung:geheim1,codeberg-spiegel:geheim2" };
@@ -497,6 +497,26 @@ test("jeder Autopilot steht in genau einem Bereich — und jeder zugeordnete exi
     assert.ok(BEREICHE.includes(a.bereich), a.id + " ohne Bereich");
     assert.ok(zugeordneteKennungen().includes(a.id), a.id + " fehlt in opsAutopilotenBereiche.js");
   }
+});
+
+test("kein Autopilot landet STILL im letzten Bereich — bereichVon faellt sonst lautlos zurueck", () => {
+  // Der Fall vom 2026-09-06: Nr. 82 "schutz-echtheit" war registriert, aber
+  // nirgends zugeordnet. bereichVon() gibt fuer unbekannte Kennungen den
+  // LETZTEN Bereich zurueck ("Betrieb & Auslieferung") — die Ansicht sah
+  // deshalb vollstaendig aus, waehrend der Waechter im falschen Bereich stand.
+  // Diese Probe unterscheidet "steht dort" von "faellt dorthin": jede Kennung
+  // im letzten Bereich muss dort AUSDRUECKLICH eingetragen sein.
+  const zugeordnet = new Set(zugeordneteKennungen());
+  const letzter = BEREICHE[BEREICHE.length - 1];
+  for (const a of AUTOPILOTEN) {
+    if (bereichVon(a.id) !== letzter) continue;
+    assert.ok(
+      zugeordnet.has(a.id),
+      `${a.id} steht in keinem Bereich und faellt still nach "${letzter}" — in opsAutopilotenBereiche.js eintragen`
+    );
+  }
+  // Nr. 82 bewacht die Sperren selbst und gehoert darum in den Wachdienst.
+  assert.equal(bereichVon("schutz-echtheit"), "Sicherheit & Wachdienst");
 });
 
 test("Neustart-Festigkeit: ALLE Autopiloten-Herzschlaege ueberleben das Laden — auch die alphabetisch letzten (Befund 2026-08-24)", async () => {

@@ -23,9 +23,18 @@ test("dokumentTextAus: Seitenmarken, leere Seiten fallen weg, Kappung mit Hinwei
 });
 
 test("pdf.js liegt als Fremdmodul mit Lizenz und Version unter public/vendor/pdfjs", () => {
-  for (const f of ["pdf.min.js", "pdf.worker.min.js", "LICENSE", "VERSION"]) {
+  // Der Worker liegt seit der Teilung vom 2026-09-04 als part1/part2 im Repo
+  // (1-MB-Regel); die zusammengesetzte pdf.worker.min.js ist git-ignoriert und
+  // entsteht erst zur Laufzeit in src/server.js. Diese Probe darf sie darum
+  // NICHT verlangen — sonst ist sie nur dort gruen, wo zufaellig eine alte
+  // Kopie herumliegt, und in jedem frischen Klon rot.
+  for (const f of ["pdf.min.js", "pdf.worker.min.part1.js", "pdf.worker.min.part2.js", "LICENSE", "VERSION"]) {
     assert.ok(existsSync(`public/vendor/pdfjs/${f}`), `${f} fehlt`);
   }
   assert.match(readFileSync("public/vendor/pdfjs/LICENSE", "utf8"), /Apache License/);
-  assert.match(readFileSync("public/vendor/pdfjs/VERSION", "utf8").trim(), /^\d+\.\d+\.\d+$/);
+  // VERSION traegt seit der Teilung eine zweite Zeile (worker-bytes=…), die
+  // tests/pdfjs-worker-route.test.mjs gegen die Teile-Groesse haelt. Hier zaehlt
+  // nur die Versionsnummer in Zeile 1.
+  const version = readFileSync("public/vendor/pdfjs/VERSION", "utf8").split("\n")[0].trim();
+  assert.match(version, /^\d+\.\d+\.\d+$/);
 });
