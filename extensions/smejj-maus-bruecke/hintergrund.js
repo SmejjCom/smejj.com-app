@@ -337,6 +337,35 @@ function herkuenfteAus(berechtigungen) {
     .filter((h) => h.startsWith("https://"));
 }
 
+// BEREITS ERTEILTE RECHTE BEIM START UEBERNEHMEN.
+//
+// Gefunden 2026-09-05: Der Betreiber klickte "Fuer 30 Minuten erlauben", Chrome
+// erteilte das Recht — aber der laufende Hintergrund war ein aelterer Stand
+// ohne den onAdded-Horcher (die entpackte Erweiterung war nie neu geladen
+// worden). Ergebnis: Chrome haelt das Recht, die Bruecke weiss nichts davon,
+// jeder Auftrag endet mit "herkunft_nicht_freigegeben". Nach dem Neuladen
+// bliebe es dabei, denn onAdded feuert nur im Moment des Klicks.
+//
+// Deshalb gleicht der Hintergrund bei JEDEM Start Chromes Rechte mit seiner
+// Liste ab: ein erteiltes https-Recht ohne Freigabe wird zur Freigabe (mit
+// den ueblichen 30 Minuten ab jetzt). Das erfindet kein Recht — Chrome hat es
+// bereits, nur auf ausdruecklichen Klick des Betreibers erteilt.
+export async function uebernimmErteilteRechte({ getAll = () => chrome.permissions.getAll() } = {}) {
+  const alle = await getAll().catch(() => null);
+  const liste = await freigaben();
+  const uebernommen = [];
+  for (const herkunft of herkuenfteAus(alle)) {
+    if (liste[herkunft]) continue;
+    await freigabeErteilen(herkunft);
+    uebernommen.push(herkunft);
+  }
+  return uebernommen;
+}
+if (typeof chrome !== "undefined" && chrome.permissions?.getAll && chrome.storage?.local) {
+  uebernimmErteilteRechte().catch(() => {});
+  chrome.runtime?.onStartup?.addListener(() => { uebernimmErteilteRechte().catch(() => {}); });
+  chrome.runtime?.onInstalled?.addListener(() => { uebernimmErteilteRechte().catch(() => {}); });
+}
 if (typeof chrome !== "undefined" && chrome.permissions?.onAdded) {
   chrome.permissions.onAdded.addListener(async (berechtigungen) => {
     for (const herkunft of herkuenfteAus(berechtigungen)) await freigabeErteilen(herkunft);

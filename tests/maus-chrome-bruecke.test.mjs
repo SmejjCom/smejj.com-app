@@ -365,3 +365,28 @@ test("das Panel zeigt den Zustand NACH dem Rendern — und ohne gesperrte Datei"
   // Und sie darf bei einem Fehler nicht leer bleiben — leer sieht aus wie "alles gut".
   assert.match(panel, /Zustand der Bruecke nicht lesbar/);
 });
+
+// Gefunden 2026-09-05: Recht in Chrome erteilt, Bruecke wusste nichts davon
+// (alter Hintergrund ohne onAdded lief weiter). Der Start-Abgleich holt das nach.
+test("Bruecke uebernimmt beim Start bereits erteilte Chrome-Rechte als Freigabe", async () => {
+  const speicher = { freigaben: { "https://alt.example": Date.now() + 60_000 } };
+  globalThis.chrome = {
+    storage: { local: { get: async () => ({ freigaben: speicher.freigaben }), set: async (o) => { Object.assign(speicher, o); } } },
+    permissions: { getAll: async () => ({ origins: ["https://de.wikipedia.org/*", "https://alt.example/*", "http://unsicher.example/*"] }) },
+    runtime: { getManifest: () => ({ version: "test" }) }
+  };
+  try {
+    const { uebernimmErteilteRechte } = await import("../extensions/smejj-maus-bruecke/hintergrund.js");
+    // Der Hintergrund gleicht schon beim Laden ab; ein ausdruecklicher Aufruf
+    // danach darf nichts doppelt eintragen.
+    const uebernommen = await uebernimmErteilteRechte();
+    assert.ok(uebernommen.length <= 1 && (!uebernommen.length || uebernommen[0] === "https://de.wikipedia.org"));
+    assert.ok(speicher.freigaben["https://de.wikipedia.org"] > Date.now(), "als Freigabe mit Ablauf eingetragen");
+    assert.ok(!("http://unsicher.example" in speicher.freigaben), "http bleibt draussen");
+    assert.deepEqual(await uebernimmErteilteRechte(), [], "zweiter Lauf aendert nichts");
+  } finally {
+    delete globalThis.chrome;
+  }
+  const manifest = JSON.parse(fs.readFileSync("extensions/smejj-maus-bruecke/manifest.json", "utf8"));
+  assert.notEqual(manifest.version, "0.5.0", "neuer Stand braucht eine neue Versionsnummer");
+});
