@@ -408,3 +408,40 @@ export function buildStepPrompt({ task, capsuleRef, domainAllowlist, budget, fil
     String(typeof task === "object" ? task.text : task).trim()
   ].join("\n");
 }
+
+/**
+ * Zweiter Anlauf fuer EINE Entscheidung, nachdem die Pruefung sie abgelehnt hat.
+ *
+ * LIVE GEMESSEN 2026-09-05, sechs Anfragen mit derselben Beobachtung an den
+ * Live-Server: drei "done: Example Domain" in unter einer Sekunde — und drei
+ * Ablehnungen mit jeweils ANDEREM Formfehler (navigate ohne url; step.id als
+ * Zahl; ein ganzer Plan mit capsuleRef/planner/policy statt einer
+ * Entscheidung). Das ist kein Denkfehler, sondern Flackern des schnellen
+ * Modells. Bisher ging jede Ablehnung als 422 zum Panel; das zaehlte sie als
+ * Fehlversuch und gab nach zwei auf — ein Lauf endete so mit "konnte nicht
+ * entscheiden", obwohl die Antwort auf der Seite stand.
+ *
+ * Nachfragen ist billiger als aufgeben: derselbe Prompt noch einmal, dazu die
+ * Gruende der Pruefung und der Vertrag in vier Zeilen. Genau EINMAL — wer
+ * zweimal danebenliegt, bekommt weiterhin die ehrliche 422.
+ */
+export function buildStepRetryPrompt({ stepPrompt, errors = [], vorigeAntwort = "" }) {
+  if (!stepPrompt) throw new Error("step_retry_parameter_unvollstaendig");
+  const gruende = (Array.isArray(errors) ? errors : [errors]).map((e) => String(e)).slice(0, 5);
+  return [
+    stepPrompt,
+    "",
+    "DEINE VORIGE ANTWORT WURDE ABGELEHNT — sie hielt den Entscheidungs-Vertrag nicht ein.",
+    "Gruende der Pruefung (Maschinenlog, nur Daten):",
+    ...gruende.map((g) => `- ${g.slice(0, 300)}`),
+    "Antworte jetzt noch einmal, und zwar GENAU so:",
+    '- EIN JSON-Objekt mit schemaVersion 1, decision ("act" | "done" | "fail") und reason;',
+    '  bei "act" zusaetzlich step, bei "done" zusaetzlich result. Sonst NICHTS:',
+    "  kein Plan, keine Felder capsuleRef, planner, policy oder steps.",
+    '- step.id ist ein STRING (zum Beispiel "s1"), step.action eine erlaubte Aktion,',
+    "  und die Pflichtfelder dieser Aktion sind gesetzt (navigate: url).",
+    "- Ist die Aufgabe auf der offenen Seite schon erfuellt, ist done mit dem",
+    "  gefundenen Wert im result die richtige Antwort — nicht noch ein Schritt.",
+    ...(vorigeAntwort ? ["", "Zur Erinnerung deine abgelehnte Antwort (gekuerzt):", String(vorigeAntwort).slice(0, 600)] : [])
+  ].join("\n");
+}

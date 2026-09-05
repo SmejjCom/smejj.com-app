@@ -13,7 +13,7 @@ import { evaluateWorkerBudget } from "../budget/budgetGate.js";
 import { aiTransparencyHeaders, transparencyNotice } from "../compliance/aiTransparency.js";
 import { resolveChain, resolveModelRequest, executeWithFallback } from "../llm/modelRouter.js";
 import { planAndExecute } from "../../../workers/maus-engine/planner-roundtrip.mjs";
-import { buildStepPrompt } from "../../../workers/maus-engine/prompt-template.mjs";
+import { buildStepPrompt, buildStepRetryPrompt } from "../../../workers/maus-engine/prompt-template.mjs";
 import { validateLoopDecision } from "../../../workers/maus-engine/interactive-loop.mjs";
 import { createMacroStore } from "../../../workers/maus-engine/macro-store.mjs";
 import { idriveConfigFromEnv } from "../../../workers/maus-engine/artifact-uploader.mjs";
@@ -482,6 +482,7 @@ export async function handleMausRun(req, res, {
     const restSchritte = Math.max(1, Math.min(25, Number(body?.restSchritte) || LOOP_DEFAULT_STEPS));
 
     let entscheidung;
+    let nachgefragt = false;
     try {
       const prompt = buildStepPrompt({
         task, capsuleRef, domainAllowlist,
@@ -491,8 +492,18 @@ export async function handleMausRun(req, res, {
         history: verlauf,
         remainingSteps: restSchritte
       });
-      const roh = await (plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel }))(prompt);
+      const planer = plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel });
+      let roh = await planer(prompt);
       entscheidung = validateLoopDecision(roh, policyInput);
+      // EINMAL NACHFRAGEN, BEVOR ABGELEHNT WIRD (Befund 2026-09-05, siehe
+      // buildStepRetryPrompt): jede zweite Antwort des schnellen Modells war
+      // ein Formfehler, kein Denkfehler. Ein Allowlist-Verstoss ist etwas
+      // anderes — der wird nicht nachverhandelt, sondern sofort abgelehnt.
+      if (!entscheidung.ok && !entscheidung.allowlistViolation) {
+        nachgefragt = true;
+        roh = await planer(buildStepRetryPrompt({ stepPrompt: prompt, errors: entscheidung.errors || [], vorigeAntwort: roh }));
+        entscheidung = validateLoopDecision(roh, policyInput);
+      }
     } catch (error) {
       return json(res, 502, {
         ok: false, error: String(error?.message || error).slice(0, 200),
@@ -504,12 +515,15 @@ export async function handleMausRun(req, res, {
     if (!entscheidung.ok) {
       return json(res, 422, {
         ok: false, error: "entscheidung_abgelehnt", gruende: entscheidung.errors?.slice(0, 5) || [],
+        nachgefragt,
         transparenzhinweis: transparencyNotice("maus-engine-v2")
       });
     }
     return json(res, 200, {
       ok: true,
       entscheidung: entscheidung.decision,
+      // Fuer die Messung: kam die Entscheidung im ersten oder zweiten Anlauf?
+      nachgefragt,
       transparenzhinweis: transparencyNotice("maus-engine-v2")
     });
   }
