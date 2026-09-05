@@ -301,6 +301,10 @@ async function planeUndStarte(ctx, z) {
   z.plan = plan;
   if (!plan.job) {
     z.phase = plan.phase || "warten_auf_daten";
+    // Es steht gar kein Start an, also kann auch nichts blockiert sein. Ohne
+    // dieses Loeschen bliebe eine alte Startsperre fuer immer stehen und die
+    // Betreiber-Wache meldete rot, obwohl nichts klemmt (Falschrot).
+    delete z.startBlockiert;
     return;
   }
   const gestartet = await starteJob(ctx, z, plan.job);
@@ -308,7 +312,12 @@ async function planeUndStarte(ctx, z) {
     z.phase = "ueberwachen";
     z.startBlockiert = { zeit: new Date().toISOString(), gruende: gestartet.gruende };
     notiere(z, "Start blockiert: " + gestartet.gruende.join("; "));
+    return;
   }
+  // Geglueckter Start hebt die Sperrmeldung auf. Die meisten Startgruende sind
+  // voruebergehend (verwaister Container, Anbieter kurz weg) — sie duerfen die
+  // Ampel nicht ueber den naechsten geglueckten Lauf hinaus rot faerben.
+  delete z.startBlockiert;
 }
 
 /** Aktueller Stand der Pruefsuiten aus git: {suiteId: contentSha256}. */
