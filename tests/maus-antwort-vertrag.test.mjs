@@ -45,3 +45,30 @@ test("die uebrigen Vertragsteile bleiben unangetastet", () => {
   assert.match(p, /decision "fail"/, "fail muss weiter beschrieben sein");
   assert.match(p, /untrusted_seitenzustand/, "der Injektionsschutz muss stehen bleiben");
 });
+
+// LIVE GEMESSEN 2026-09-05 (Nachtest nach der Auslieferung): dreimal "navigate"
+// ohne url auf die schon offene Seite -> entscheidung_abgelehnt, Frage offen.
+test("die offene Seite wird als offen benannt — kein navigate im Kreis", () => {
+  const p = prompt();
+  assert.match(p, /DIE SEITE https:\/\/example\.com IST BEREITS GEOEFFNET/);
+  assert.match(p, /navigate auf dieselbe Adresse ist kein Schritt/);
+  assert.match(p, /sofort done, mit dem Wert im result/);
+});
+
+test("Pflichtfelder je Aktion stehen im Vertrag — aus dem Schema, nicht aus dem Kopf", () => {
+  const p = prompt();
+  assert.match(p, /PFLICHTFELDER JE AKTION/);
+  assert.match(p, /navigate: url/);
+  assert.match(p, /click: target/);
+  assert.match(p, /extract: name, target/);
+  assert.doesNotMatch(p, /openBrowser: /, "verbotene Loop-Aktionen gehoeren nicht in die Pflichtfeld-Liste");
+});
+
+test("ohne Adresse im Seitenzustand gibt es keinen Offen-Hinweis", () => {
+  const p = buildStepPrompt({
+    task: "x", capsuleRef: "c", domainAllowlist: ["example.com"], budget: { maxSteps: 3 }, files: [],
+    visionAllowed: false, observation: { title: "ohne Adresse" }, history: [], remainingSteps: 3
+  });
+  assert.doesNotMatch(p, /IST BEREITS GEOEFFNET/);
+  assert.match(p, /PFLICHTFELDER JE AKTION/, "die Pflichtfelder gelten immer");
+});
