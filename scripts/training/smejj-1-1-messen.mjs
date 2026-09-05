@@ -24,6 +24,7 @@
 //   node scripts/training/smejj-1-1-messen.mjs --starten           (Messjob starten)
 //   node scripts/training/smejj-1-1-messen.mjs --stand             (Fortschritt)
 //   node scripts/training/smejj-1-1-messen.mjs --starten --nur-adapter   (nur Kandidat, Adapter beim Laden)
+//   ... --als smejj-1-2-frueh --adapter-prefix checkpoints/smejj/smejj-1-2/<kennung>/checkpoint-245  (Zwischenstand als Kandidat)
 //   node scripts/training/smejj-1-1-messen.mjs --bewerten <jobId> [--basis-job <jobId2>]  (Noten rechnen)
 //   node scripts/training/smejj-1-1-messen.mjs --tuev              (Messstrecke mit leeren Antworten: muss 0 % und BLOCKED melden)
 import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -70,16 +71,21 @@ export const MAX_MINUTEN = 60;
  * nf4-Modell (haenge_adapter_an) starb hart — kein Fehlerstatus, kein Ergebnis,
  * Gruppe gestoppt. Beim con-Job wird der Adapter beim Laden mitgegeben, das laeuft.
  */
-export function messStaende({ nurAdapter = false } = {}) {
-  const kandidat = { version: KANDIDAT, adapterPrefix: `con/versions/${KANDIDAT}/adapter` };
+export function messStaende({ nurAdapter = false, version = KANDIDAT, adapterPrefix = `con/versions/${version}/adapter` } = {}) {
+  const kandidat = { version, adapterPrefix };
   return nurAdapter ? [kandidat] : [{ version: BASIS_STAND }, kandidat];
 }
 
-/** Job-Parameter. Rein und testbar. */
-export function jobParameter({ nurAdapter = false } = {}) {
+/**
+ * Job-Parameter. Rein und testbar. `version`/`adapterPrefix` erlauben, einen
+ * ZWISCHENSTAND eines Laufs als eigenen Kandidaten zu messen (05.09.: Lauf 3
+ * endete bei Loss 0,027 = Auswendiglernen; checkpoint-245 hatte Loss 0,21 —
+ * ob ein frueher Stopp besser ist, entscheidet die Messung, nicht der Loss).
+ */
+export function jobParameter({ nurAdapter = false, version = KANDIDAT, adapterPrefix } = {}) {
   return {
-    CON_VERSION: KANDIDAT,
-    CON_MESS_VERSIONEN: JSON.stringify(messStaende({ nurAdapter })),
+    CON_VERSION: version,
+    CON_MESS_VERSIONEN: JSON.stringify(messStaende({ nurAdapter, version, adapterPrefix })),
     CON_EVAL_PREFIX: EVAL_PREFIX,
     CON_WIEDERHOLUNGEN: String(WIEDERHOLUNGEN)
   };
@@ -139,10 +145,10 @@ async function zeigeStand(client, e2, jobId = null) {
   return z;
 }
 
-async function bewerte(e2, jobId, { basisJob = jobId } = {}) {
+async function bewerte(e2, jobId, { basisJob = jobId, version: kandidatVersion = KANDIDAT, adapterPrefix } = {}) {
   const suite = await ladeSuite();
   const berichte = [];
-  for (const { version } of messStaende()) {
+  for (const { version } of messStaende({ version: kandidatVersion, adapterPrefix })) {
     const job = version === BASIS_STAND ? basisJob : jobId;
     const antworten = await e2.getJson(`${EVAL_PREFIX}/${version}/${job}/antworten.json`, null).catch(() => null);
     if (!antworten) { console.log(`${version}: keine Antworten unter ${EVAL_PREFIX}/${version}/${job}/`); continue; }
@@ -164,16 +170,16 @@ async function bewerte(e2, jobId, { basisJob = jobId } = {}) {
   // Die ENTSCHEIDUNG trifft Autopilot Nr. 83 (smejj-Versions-Takt) im naechsten
   // Takt aus diesem Datensatz — nicht dieses Skript ("alles ueber unsere
   // Autopilots", Betreiber 05.09.). Status "neu" heisst: noch nicht beurteilt.
-  const kandidat = berichte.find((b) => b.version === KANDIDAT)?.bericht;
+  const kandidat = berichte.find((b) => b.version === kandidatVersion)?.bericht;
   const basisB = berichte.find((b) => b.version === BASIS_STAND)?.bericht;
   if (kandidat) {
-    const training = await e2.getJson(`con/versions/${KANDIDAT}/training.json`, null).catch(() => null);
+    const training = await e2.getJson(`con/versions/${kandidatVersion}/training.json`, null).catch(() => null);
     const datensatz = {
       id: jobId, art: "smejj-bewertung", createdAt: new Date().toISOString(), status: "neu",
-      version: KANDIDAT, jobId, suite: kandidat.suite?.suiteId || "smejj-chat-core", suiteSha256: kandidat.suite?.integrity?.contentSha256 || null,
+      version: kandidatVersion, jobId, suite: kandidat.suite?.suiteId || "smejj-chat-core", suiteSha256: kandidat.suite?.integrity?.contentSha256 || null,
       kandidatNote: kandidat.summary?.weightedScore ?? null, basisNote: basisB?.summary?.weightedScore ?? null,
       kritisch: kandidat.summary?.criticalFailures ?? null, faelle: kandidat.summary?.cases ?? null, wackelig: kandidat.summary?.wackelig ?? null,
-      referenzNote: zyklus?.referenzNote ?? null, adapterPrefix: training?.adapterPrefix || `con/versions/${KANDIDAT}/adapter`, trainingJobId: training?.jobId || null
+      referenzNote: zyklus?.referenzNote ?? null, adapterPrefix: adapterPrefix || training?.adapterPrefix || `con/versions/${kandidatVersion}/adapter`, trainingJobId: training?.jobId || null
     };
     await e2.putJson(`${BEWERTUNGEN_PREFIX}/${jobId}.json`, datensatz);
     console.log(`\nBewertung fuer Nr. 83 abgelegt: ${BEWERTUNGEN_PREFIX}/${jobId}.json (Status neu) — der Versions-Takt entscheidet im naechsten Takt.`);
@@ -211,22 +217,28 @@ async function main() {
   const client = saladClient({ ok: true, ...konfig.salad });
   const e2 = e2Client(e2k, { timeoutMs: 120_000 });
 
+  const wert = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
+  // --als <version> --adapter-prefix <e2-Praefix>: einen Zwischenstand als eigenen Kandidaten messen.
+  const als = wert("--als") || KANDIDAT;
+  const adapterPrefix = wert("--adapter-prefix") || `con/versions/${als}/adapter`;
   const iBew = argv.indexOf("--bewerten");
   if (iBew >= 0) {
     const id = argv[iBew + 1]; if (!id) throw new Error("--bewerten braucht die Job-Id");
-    const iB = argv.indexOf("--basis-job");
-    await bewerte(e2, id, { basisJob: iB >= 0 ? argv[iB + 1] : id }); return;
+    await bewerte(e2, id, { basisJob: wert("--basis-job") || id, version: als, adapterPrefix }); return;
   }
   const nurAdapter = argv.includes("--nur-adapter");
   if (argv.includes("--stand")) { await zeigeStand(client, e2); return; }
 
   const suite = await ladeSuite();
   console.log(`Suite:        ${path.relative(WURZEL, SUITE_DATEI)} (${suite.cases.length} Faelle, ${WIEDERHOLUNGEN} Wiederholungen)`);
-  console.log(`Staende:      ${messStaende({ nurAdapter }).map((s) => s.version + (s.adapterPrefix ? ` (+${s.adapterPrefix})` : " (nackt)")).join(" | ")}`);
+  console.log(`Staende:      ${messStaende({ nurAdapter, version: als, adapterPrefix }).map((s) => s.version + (s.adapterPrefix ? ` (+${s.adapterPrefix})` : " (nackt)")).join(" | ")}`);
   console.log(`Salad-Gruppe: ${GRUPPE}, hoechstens ${MAX_MINUTEN} min, rund ${(MAX_MINUTEN / 60 * 0.10).toFixed(2)} USD`);
-  const training = await e2.getJson(`con/versions/${KANDIDAT}/training.json`, null).catch(() => null);
-  if (!training?.adapterPrefix) { console.error("ABBRUCH: kein Adapter unter con/versions/" + KANDIDAT); process.exit(3); }
-  console.log(`Adapter:      ${training.adapterPrefix} — Job ${training.jobId}, ${training.beispiele} Beispiele, Loss ${Number(training.trainLoss).toFixed(3)}, Stand ${training.stand}`);
+  const adapterDateien = await e2.liste(`${adapterPrefix.replace(/\/$/, "")}/`).catch(() => []);
+  if (!adapterDateien.some((d) => /adapter_model\.safetensors$/.test(d.key)) || !adapterDateien.some((d) => /adapter_config\.json$/.test(d.key))) {
+    console.error(`ABBRUCH: unter ${adapterPrefix} liegt kein vollstaendiger Adapter (adapter_config.json + adapter_model.safetensors).`); process.exit(3);
+  }
+  const training = await e2.getJson(`con/versions/${als}/training.json`, null).catch(() => null);
+  console.log(`Adapter:      ${adapterPrefix} (${adapterDateien.length} Dateien)${training ? ` — Job ${training.jobId}, ${training.beispiele} Beispiele, Loss ${Number(training.trainLoss).toFixed(3)}` : ""}`);
   const vorher = await zeigeStand(client, e2);
   if (!["stopped", "failed", "fehlt"].includes(vorher.zustand)) { console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}) — Training oder Messung laeuft oder wird gerade zugeteilt.`); process.exit(4); }
   if (!argv.includes("--starten")) { console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich gemessen."); return; }
@@ -235,7 +247,7 @@ async function main() {
   console.log(`Suiten im Buendel: ${suiten.suiten.join(", ")} (aus ${suiten.verzeichnis})`);
   const jobId = `smejj11-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}-messung`;
   const vor = await bereiteJobVor({ client, konfig: { ...konfig, suitesDir: suiten.verzeichnis }, e2: e2k, jobId, modus: "messung",
-    parameter: jobParameter({ nurAdapter }), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
+    parameter: jobParameter({ nurAdapter, version: als, adapterPrefix }), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
   rmSync(suiten.verzeichnis, { recursive: true, force: true });
   if (!vor.ok) { console.error("ABBRUCH:", vor.gruende.join("; ")); process.exit(5); }
   const start = await warteUndStarte(client);
