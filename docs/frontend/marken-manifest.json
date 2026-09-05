@@ -54,8 +54,8 @@
       "finger": "f5f01394ee4dab0a"
     },
     "sendepfad-nachladen.js": {
-      "marke": "5",
-      "finger": "01895a4e4cd4209f"
+      "marke": "6",
+      "finger": "1e76d49a4d8b98c7"
     },
     "panel-backdrop.js": {
       "marke": "panel-backdrop-20260803",
@@ -134,20 +134,20 @@
       "finger": "38c2e56e6db67c0a"
     },
     "browser-pane.js": {
-      "marke": "browser-pane-20260905-4",
-      "finger": "2ed6f3b562540650"
+      "marke": "browser-pane-20260905-6",
+      "finger": "7016196add34f93e"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
       "finger": "3144f0486fe13e2f"
     },
     "maus-panel.js": {
-      "marke": "15",
-      "finger": "a458f5c607387c14"
+      "marke": "16",
+      "finger": "8110e623be6d1a40"
     },
     "browser-pane-render.js": {
-      "marke": "browser-pane-20260822-1",
-      "finger": "fcf48d6c9f40f06a"
+      "marke": "browser-pane-20260905-5",
+      "finger": "8e98443fc2b78931"
     },
     "browser-pane-adressen.js": {
       "marke": "browser-pane-20260820-2",
@@ -166,8 +166,8 @@
       "finger": "2c9eb269b33cc732"
     },
     "browser-pane-fernwege.js": {
-      "marke": "browser-pane-20260822-1",
-      "finger": "41e8ba3ae72843cb"
+      "marke": "browser-pane-20260905-5",
+      "finger": "1f4d56b7c69b3aad"
     },
     "browser-pane-session.js": {
       "marke": "browser-pane-20260822-1",
@@ -350,8 +350,8 @@
       "finger": "0667a98555341525"
     },
     "app.js": {
-      "marke": "b137",
-      "finger": "ddd8e494cf033ce3"
+      "marke": "b138",
+      "finger": "aa7d5723d1143fc4"
     },
     "pwa-schnellstart.js": {
       "marke": "6",
@@ -362,8 +362,8 @@
       "finger": "6f800a67c611704d"
     },
     "browser-nachladen.js": {
-      "marke": "3",
-      "finger": "a3a8456557a13658"
+      "marke": "4",
+      "finger": "c48b46287ca5fbf0"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",
@@ -402,8 +402,8 @@
       "finger": "80e0ae4f88643d95"
     },
     "maus-absicht.js": {
-      "marke": "21",
-      "finger": "2dd7571d44e1fecc"
+      "marke": "22",
+      "finger": "0c00f2aa7fdf061e"
     },
     "maus-replay.js": {
       "marke": "maus-replay-20260715-3",

@@ -413,3 +413,23 @@ test("der Spiegel unter /assets traegt dieselbe Fassung", () => {
   const spiegel = fs.readFileSync(new URL("../public/assets/browser-pane.js", import.meta.url), "utf8");
   assert.equal(spiegel, quelle);
 });
+
+// Betreiber-Befund 2026-09-05 (Bildschirmfoto): dunkler Streifen unter der Seite im
+// Live-Browser. Im Browser nachgestellt: zwei Gitterzeilen -> 213 px Streifen, eine -> 0.
+test("Live-Browser: die Seite trifft die Unterkante — eine Gitterzeile, Bild oben angeschlagen", async () => {
+  const { buildLiveBrowserHtml } = await import("../public/browser-pane-render.js");
+  const html = buildLiveBrowserHtml({ url: "https://example.com/", title: "t", screenshot: "", viewport: { width: 700, height: 600 } });
+  const live = html.slice(html.indexOf(".bp-live-stage") - 400);
+  assert.match(html, /main\{height:100%;display:grid;grid-template-rows:minmax\(0,1fr\)/, "genau eine Zeile — ohne Kopfzeile gibt es nichts fuer 'auto'");
+  assert.doesNotMatch(html, /grid-template-rows:auto minmax\(0,1fr\)/, "die alte zweite Zeile zeigte den dunklen Grund");
+  assert.match(live, /object-position:center top/, "Rest, falls das Bild kuerzer ist, liegt unten und ist weiss, nicht oben und dunkel");
+});
+
+test("Live-Browser: Viewport ohne den Abzug der entfernten Kopfzeile, Nachlauf auch fuer den Live-Browser", () => {
+  const fernwege = fs.readFileSync("public/browser-pane-fernwege.js", "utf8");
+  assert.doesNotMatch(fernwege, /rect\?\.height \|\| 0\) - 38/, "38 px galten einer Kopfzeile, die es nicht mehr gibt");
+  assert.match(fernwege, /clampViewport\(rect\?\.height \|\| 0, 360, 1200, 900\)/);
+  assert.match(paneJs, /\["remote-browser", "live-browser"\]\.includes\(tab\.mode\)/, "der Live-Browser muss der Panelgroesse folgen");
+  assert.match(paneJs, /tab\.mode === "live-browser" && mausLaeuft\(\)\) return;/, "waehrend die Maus arbeitet, wird die Sitzung nicht abgerissen");
+  assert.match(paneJs, /if \(tab\.mode === "live-browser"\) \{ oeffneImLiveBrowser\(tab\.url\)/);
+});
