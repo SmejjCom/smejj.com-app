@@ -12,14 +12,14 @@
 // abweichende Spezifizierer liess config.js ein zweites Mal laden — zwei Modul-
 // instanzen mit getrennten CLIENT_ROUTES.
 import { CLIENT_ROUTES } from "./config.js";
-import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260822-1";
+import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260905-5";
 import {
   buildExternalFallbackHtml,
   buildLiveBrowserHtml,
   buildRemoteBrowserHtml
-} from "./browser-pane-render.js?v=browser-pane-20260822-1";
-export { buildExternalFallbackHtml, buildRemoteBrowserHtml, isRemoteScreenshot } from "./browser-pane-render.js?v=browser-pane-20260822-1";
-import { createBrowserSessionClient } from "./browser-pane-session.js?v=browser-pane-20260822-1";
+} from "./browser-pane-render.js?v=browser-pane-20260905-5";
+export { buildExternalFallbackHtml, buildRemoteBrowserHtml, isRemoteScreenshot } from "./browser-pane-render.js?v=browser-pane-20260905-5";
+import { createBrowserSessionClient } from "./browser-pane-session.js?v=browser-pane-20260905-7";
 // Chrome-Abgleich (2026-08-17): Tableiste, Adressvorschlaege und Fehlerseite
 // liegen in eigenen Modulen — diese Datei steht bei 795 von 800 Zeilen.
 import { zeichneTableiste } from "./browser-pane-tableiste.js?v=browser-pane-20260819-4";
@@ -28,7 +28,7 @@ import { zeigeSicherheit, zeigeZoom, zeigeNeuladen } from "./browser-pane-sicher
 import { zeigeLesezeichen } from "./browser-pane-lesezeichen.js?v=browser-pane-20260709-2";
 import { verdrahtePanelTasten, merkeGeschlossen } from "./browser-pane-tasten.js?v=browser-pane-20260819-4";
 import { verdrahtePanelSuche } from "./browser-pane-suche.js?v=browser-pane-20260709-2";
-import { verdrahteMausKnopf } from "./browser-pane-maus.js?v=browser-pane-20260905-1";
+import { verdrahteMausKnopf, mausLaeuft } from "./browser-pane-maus.js?v=browser-pane-20260905-7";
 // Gefunden 2026-08-18 beim Livetest: dieser Import FEHLTE, obwohl init() die
 // Funktion benutzt. Folge war kein kleiner Schoenheitsfehler — browser-pane.js
 // warf beim Laden "baueNachrichtenEmpfang is not defined", das ganze Modul kam
@@ -36,7 +36,7 @@ import { verdrahteMausKnopf } from "./browser-pane-maus.js?v=browser-pane-202609
 // gemeldet: alle pruefen den QUELLTEXT, keiner laesst das Modul laufen.
 import { baueNachrichtenEmpfang } from "./browser-pane-nachrichten.js?v=browser-pane-20260709-2";
 let suche = null;
-import { buildErrorPageHtml, buildPaneShellHtml } from "./browser-pane-render.js?v=browser-pane-20260822-1";
+import { buildErrorPageHtml, buildPaneShellHtml } from "./browser-pane-render.js?v=browser-pane-20260905-5";
 // Reine Helfer (2026-08-19 ausgelagert, 800-Zeilen-Regel). Sie werden hier
 // zugleich WEITER EXPORTIERT, damit tests/browser-pane.test.mjs und jeder
 // bisherige Aufrufer sie unveraendert von browser-pane.js bekommt.
@@ -44,6 +44,9 @@ import {
   clampZoom, clampViewport, normalizeAddress, normalizeAgentBrowserUrl,
   shouldOpenInRealBrowser, shouldPreferRealBrowserUrl, shortHost
 } from "./browser-pane-adressen.js?v=browser-pane-20260820-2";
+import { applyZoom, baueZoomHaken } from "./browser-pane-zoom.js?v=1";
+// Der Zoom lebt in browser-pane-zoom.js; hier nur seine drei Anschluesse.
+const zoomHaken = baueZoomHaken({ activeTab: () => activeTab(), schedulePersist: () => schedulePersist(), zeigeHinweis: (t) => showHint(t) });
 export {
   clampZoom, normalizeAddress, normalizeAgentBrowserUrl,
   shouldOpenInRealBrowser, shouldPreferRealBrowserUrl
@@ -84,7 +87,6 @@ function paneBreite() {
 const NEW_TAB_TITLE = "Neuer Tab";
 
 const MAX_PERSISTED_HISTORY = 50;
-const ZOOM_STEP = 0.1;
 const REMOTE_REFIT_DEBOUNCE_MS = 600;
 const REMOTE_REFIT_MIN_DELTA_PX = 64;
 const REMOTE_REFIT_MIN_INTERVAL_MS = 1500;
@@ -110,8 +112,18 @@ const sessionHooks = {
   onNavigated: (tab) => { commitHistory(tab, tab.url, true); persistTabs(); render(); },
   onSuchErgebnis: (anzahl, index) => suche?.melde(anzahl, index),
   onLost: (tab) => {
-    showHint("Live-Browser-Session beendet — verbinde neu ...");
-    if (tab.url) navigate(tab, tab.url, { push: false });
+    showHint("Live-Browser-Sitzung beendet — verbinde neu ...");
+    if (!tab.url) return;
+    // Waehrend die Maus arbeitet, verbindet SIE neu (erneuere) — sonst bauen
+    // zwei Stellen gleichzeitig eine Sitzung auf.
+    if (mausLaeuft()) return;
+    // ERST der Live-Browser, DANN der eingebettete Rahmen. Vorher fiel der Tab
+    // sofort in die eingebettete Ansicht: darin sieht die Maus nichts, und der
+    // Nutzer bekam bei vielen Seiten nur "Inhalt blockiert" (live 05.09., als
+    // der ferne Browser die aelteste seiner vier Sitzungen verdraengte).
+    tryLiveBrowser(tab, tab.url, { push: false })
+      .then((ok) => { if (!ok) navigate(tab, tab.url, { push: false }); })
+      .catch(() => navigate(tab, tab.url, { push: false }));
   }
 };
 
@@ -313,13 +325,15 @@ function mountOnce() {
     knopf: refs.maus, activeTab, render, zeige: showHint,
     planeUrl: CLIENT_ROUTES.api.mausRun,
     holeToken: () => { try { return localStorage.getItem("smejj.auth.accessToken.v1") || sessionStorage.getItem("smejj.auth.accessToken.v1") || ""; } catch { return ""; } },
-    sende: (aktion) => sessionClient.actUndWarte(activeTab(), aktion, sessionHooks)
+    sende: (aktion) => sessionClient.actUndWarte(activeTab(), aktion, sessionHooks),
+    // Sitzung mitten im Lauf verloren? Die Maus baut sie hier neu auf.
+    erneuere: async () => { const t = activeTab(); if (!t?.url) return false; return tryLiveBrowser(t, t.url, { push: false }); }
   });
   refs.menu.addEventListener("click", backToMenu);
   refs.close.addEventListener("click", closePane);
 
   // Zoom wie in Chrome: Strg/Cmd mit +, - oder 0 (50–200 %).
-  document.addEventListener("keydown", onZoomShortcut);
+  document.addEventListener("keydown", zoomHaken);
   suche = verdrahtePanelSuche({
     wurzel: refs.root,
     activeTab,
@@ -351,48 +365,19 @@ function submitAddress() {
   navigate(tab, target);
 }
 
-function onZoomShortcut(event) {
-  if (!document.body.classList.contains("browser-pane-open")) return;
-  if (!event.ctrlKey && !event.metaKey) return;
-  const tab = activeTab();
-  if (!tab?.frame) return;
-  let zoom = tab.zoom || 1;
-  if (event.key === "+" || event.key === "=") zoom += ZOOM_STEP;
-  else if (event.key === "-") zoom -= ZOOM_STEP;
-  else if (event.key === "0") zoom = 1;
-  else return;
-  event.preventDefault();
-  tab.zoom = clampZoom(zoom);
-  applyZoom(tab);
-  showHint(tab.zoom === 1 ? "" : `Zoom: ${Math.round(tab.zoom * 100)} %`);
-  schedulePersist();
-}
-
-
-function applyZoom(tab) {
-  const frame = tab?.frame;
-  if (!frame) return;
-  const zoom = clampZoom(tab.zoom || 1);
-  if (zoom === 1) {
-    frame.style.transform = "";
-    frame.style.transformOrigin = "";
-    frame.style.width = "";
-    frame.style.height = "";
-    return;
-  }
-  frame.style.transform = `scale(${zoom})`;
-  frame.style.transformOrigin = "0 0";
-  frame.style.width = `${Math.round(10000 / zoom) / 100}%`;
-  frame.style.height = `${Math.round(10000 / zoom) / 100}%`;
-}
-
 // Remote-Ansicht an neue Panelgroesse anpassen (debounced + Mindestintervall).
 function scheduleRemoteRefit() {
   if (!state.mounted) return;
   clearTimeout(state.remoteRefitTimer);
   state.remoteRefitTimer = setTimeout(() => {
     const tab = activeTab();
-    if (!tab || tab.mode !== "remote-browser" || !tab.url || tab.status === "loading") return;
+    // Auch der LIVE-Browser folgt der Panelgroesse: sein Bild kommt in der
+    // Groesse, die beim Oeffnen galt. Wird das Panel danach hoeher, blieb das
+    // Bild kuerzer als die Buehne (Betreiber-Befund 05.09.: Seite trifft die
+    // Unterkante nicht). Waehrend die Maus arbeitet, wird NICHT neu geoeffnet:
+    // das wuerde ihre Sitzung mitten im Schritt abreissen.
+    if (!tab || !["remote-browser", "live-browser"].includes(tab.mode) || !tab.url || tab.status === "loading") return;
+    if (tab.mode === "live-browser" && mausLaeuft()) return;
     const current = remoteBrowserViewport();
     const last = tab.remoteViewport;
     if (last &&
@@ -404,6 +389,7 @@ function scheduleRemoteRefit() {
       return;
     }
     state.lastRemoteRefitAt = now;
+    if (tab.mode === "live-browser") { oeffneImLiveBrowser(tab.url).catch(() => {}); return; }
     navigate(tab, tab.url, { push: false });
   }, REMOTE_REFIT_DEBOUNCE_MS);
 }
