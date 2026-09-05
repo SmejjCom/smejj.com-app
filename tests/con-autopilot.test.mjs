@@ -386,3 +386,38 @@ test("Rettung lehnt einen Lauf ohne neue Schritte ab", async () => {
   const kandidat = (registryGeschrieben?.versions || []).find((v) => v.version === "con-1.3");
   assert.equal(kandidat, undefined, "ein Lauf ohne neue Schritte darf nie als Kandidat gefuehrt werden");
 });
+
+test("Eine alte Startsperre faerbt die Wache nicht dauerhaft rot", async () => {
+  // Am 05.09. stand die Betreiber-Wache auf ROT ("gruppe_nicht_gestoppt:running"),
+  // obwohl die Rechengruppe nachweislich gestoppt war und kein Job lief. Grund:
+  // z.startBlockiert wurde gesetzt, aber nie wieder geloescht. Falschrot macht
+  // die Ampel wertlos — man gewoehnt sich daran und uebersieht das echte Rot.
+  const { tick, suitenStand } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
+  let gespeichert = null;
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir, taktMs: 300000,
+    grenzen: { tagesbudgetUsd: 5, gesamtdeckelUsd: 10, jobMaxMinuten: 200, freigabe: false, notaus: false } };
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      // freigabe:false ⇒ der Planer plant keinen Job. Genau dann darf keine
+      // Sperrmeldung uebrig bleiben.
+      if (k === "con/autopilot/zustand.json") {
+        return { phase: "ueberwachen", ticks: 5, historie: [], laufenderJob: null,
+          startBlockiert: { zeit: "2026-09-05T10:00:00.000Z", gruende: ["gruppe_nicht_gestoppt:running"] } };
+      }
+      if (k === "con/registry.json") {
+        // Latte aktuell, kein Kandidat, kein Datensatz ⇒ der Planer plant nichts
+        // und faehrt in die Phase warten_auf_daten. Genau der Live-Fall vom 05.09.
+        return { versions: [{ version: "con-1.3", status: "stable",
+          benchmarks: { gesamt: 1, kritisch: 0, kategorien: { reasoning: 1 }, suitenStand: stand } }] };
+      }
+      return standard;
+    },
+    putJson: async (k, v) => { if (k === "con/autopilot/zustand.json") gespeichert = v; },
+    liste: async () => []
+  };
+  const z = await tick({ konfig, e2, salad: null, log: () => {} });
+  assert.equal(z.startBlockiert, undefined, "ohne anstehenden Start darf keine Sperrmeldung stehen bleiben");
+  assert.equal(gespeichert?.startBlockiert, undefined, "auch der gespeicherte Zustand muss sauber sein");
+});
