@@ -337,6 +337,33 @@ export function trainingsKonfigAusUmgebung(env = process.env) {
   return JSON.parse(env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
 }
 
+/**
+ * Wie viele Minuten muss der Trainingsjob fuer die anschliessende Messung
+ * zuruecklegen?
+ *
+ * Der feste Wert 35 stammt aus der Zeit mit 46 Pruefaellen. Seit dem 06.09. sind
+ * es 102, und die Antwortzeit je Fall schwankt mit der zugeteilten Karte um mehr
+ * als das Doppelte (gemessen am 05.09.: 7,6 s, 11,5 s, 15,2 s und 19,1 s im
+ * Mittel). Ein zu kleines Polster laesst das Training die Zeit aufbrauchen, die
+ * Messung wird abgeschnitten und der ganze Lauf ist umsonst — rund drei Stunden
+ * und 0,37 USD ohne jedes Ergebnis.
+ *
+ * Gerechnet wird mit der langsamsten bisher gemessenen Karte, nicht mit dem
+ * Mittel: die Karte wird zugelost, und ein Polster, das nur im Glücksfall
+ * reicht, ist kein Polster. Dazu kommt ein Zuschlag, weil die Messung in einem
+ * eigenen Prozess laeuft und das Modell dafuer neu laedt.
+ */
+export const MESS_LATENZ_SCHLECHTESTE_MS = 20_000;
+export const MESS_NEULADEN_MINUTEN = 15;
+
+export function messReserveMinuten({ faelle, wiederholungen = 1, jobMaxMinuten = 220 }) {
+  const antworten = Math.max(1, faelle) * Math.max(1, wiederholungen);
+  const minuten = (antworten * MESS_LATENZ_SCHLECHTESTE_MS) / 60_000 + MESS_NEULADEN_MINUTEN;
+  // Nie weniger als der alte Festwert, und nie mehr als die Haelfte des Jobs —
+  // sonst bliebe fuer das Training nichts uebrig und der Lauf waere sinnlos.
+  return Math.min(Math.round(minuten), Math.floor(jobMaxMinuten / 2), 200) || 35;
+}
+
 export async function planeNaechstenSchritt(ctx, z, registry) {
   const { e2, konfig } = ctx;
   const stabil = stabileVersion(registry);
@@ -399,6 +426,11 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   // gradAkk 8 rund 460 Schritte, also 15 Stunden — die Zeitgrenze von 220 Minuten schnitte
   // ihn bei 13 Prozent ab. 700 Zeilen ergeben ~88 Schritte und passen mit Laden und Messen.
   const trainKonfig = trainingsKonfigAusUmgebung();
+  // Das Polster fuer die Messung richtet sich nach der ZAHL der Pruefaelle.
+  // Fest verdrahtet waere es bei jeder Erweiterung der Latte wieder falsch.
+  const faelleGesamt = (await ladeSuiten(konfig.suitesDir)).reduce((n, s) => n + (s.cases || []).length, 0);
+  trainKonfig.messReserveMinuten = messReserveMinuten({ faelle: faelleGesamt,
+    wiederholungen: konfig.wiederholungen, jobMaxMinuten: konfig.grenzen?.jobMaxMinuten || 220 });
   return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
     ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
     parameter: { CON_VERSION: stabil.version, CON_KANDIDAT: version, CON_DATENSATZ_PREFIX: daten.prefix, CON_TRAIN_KONFIG: JSON.stringify(trainKonfig), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };

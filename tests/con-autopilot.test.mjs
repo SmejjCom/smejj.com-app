@@ -623,3 +623,41 @@ test("Eine angeforderte Zeitgrenze fuer die Ablage wird nicht stillschweigend ge
   assert.ok(zeile, "requestTimeoutSignal nicht gefunden");
   assert.ok(Number(zeile[1].replace(/_/g, "")) >= 600_000, `Obergrenze zu niedrig: ${zeile[1]}`);
 });
+
+test("Das Messpolster waechst mit der Zahl der Pruefaelle", async () => {
+  // Der feste Wert 35 stammt aus der Zeit mit 46 Faellen. Seit dem 06.09. sind es
+  // 102. Ein zu kleines Polster laesst das Training die Zeit aufbrauchen, die
+  // Messung wird abgeschnitten, und drei Stunden Rechenzeit sind ohne jedes
+  // Ergebnis verbrannt.
+  const { messReserveMinuten, planeNaechstenSchritt, suitenStand } = await import("../workers/con-autopilot/kreislauf.js");
+  assert.ok(messReserveMinuten({ faelle: 102 }) > messReserveMinuten({ faelle: 46 }), "mehr Faelle brauchen mehr Zeit");
+  assert.ok(messReserveMinuten({ faelle: 102, wiederholungen: 2 }) > messReserveMinuten({ faelle: 102, wiederholungen: 1 }),
+    "zwei Durchgaenge dauern doppelt so lang");
+  // Nie mehr als die Haelfte des Jobs, sonst bleibt fuer das Training nichts.
+  assert.ok(messReserveMinuten({ faelle: 5000, jobMaxMinuten: 220 }) <= 110);
+  assert.ok(messReserveMinuten({ faelle: 1 }) >= 15, "auch ein einziger Fall braucht die Ladezeit");
+
+  // Und der Planer legt den Wert wirklich in die Job-Konfiguration.
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir,
+    grenzen: { jobMaxMinuten: 220 } };
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      if (k === "con/base/x/manifest.json") return { komplett: true };
+      if (k === "con/datasets/index.json") {
+        return { datensaetze: [{ name: "neu-v9", prefix: "con/datasets/neu-v9", paare: 9000,
+          kategorien: ["reasoning"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-06" }] };
+      }
+      return standard;
+    },
+    liste: async () => []
+  };
+  const registry = { versions: [{ version: "con-1.3", status: "stable", datensatz: "alt-v1",
+    trainingsKonfig: { r: 16 },
+    benchmarks: { gesamt: 0.96, kritisch: 5, kategorien: { reasoning: { score: 0.9, kritisch: 2 } }, suitenStand: stand } }] };
+  const plan = await planeNaechstenSchritt({ e2, konfig }, {}, registry);
+  assert.equal(plan.schritt, "training");
+  assert.ok(plan.job.trainingsKonfig.messReserveMinuten >= 30,
+    `Polster fehlt oder zu klein: ${JSON.stringify(plan.job.trainingsKonfig)}`);
+});
