@@ -57,10 +57,32 @@ export function jobParameter() {
     CON_DATENSATZ_PREFIX: DATENSATZ_PREFIX,
     CON_CHECKPOINT_PREFIX: "checkpoints/smejj",
     CON_VERSION: KANDIDAT,
-    // Vorsichtige Werte fuer den ERSTEN Lauf: lieber ein kleiner Adapter, der
-    // durchlaeuft, als ein grosser, der an der Frist stirbt. Rang und Lernrate
-    // koennen spaetere Laeufe erhoehen, wenn die Messung es hergibt.
-    CON_TRAIN_KONFIG: JSON.stringify({ rang: 16, epochen: 1, lernrate: 0.0002, maxZeilen: 16234 })
+    // minutenJeSchritt IST DER ENTSCHEIDENDE WERT — und der Standard stimmt
+    // fuer dieses Modell nicht.
+    //
+    // GEMESSEN im ersten Lauf (05.09., Job smejj11-20260905054636): 831
+    // Sekunden fuer 52 Schritte = 16 Sekunden je Schritt. train.py rechnet mit
+    // dem Standard 2,5 Minuten — das ist der Wert des 27B-Modells und hier um
+    // den Faktor 9,4 zu pessimistisch. Die Folge:
+    //
+    //   moegliche_schritte = (165 - 35) / 2,5 = 52
+    //   zeilen_grenze      = 52 x batch(1) x gradAkk(8) = 416
+    //
+    // Der Lauf sah 416 von 16.234 Paaren — 2,6 % des Datensatzes. Technisch
+    // erfolgreich, inhaltlich fast nichts. Eine Zeitschaetzung, die fuer ein
+    // anderes Modell gemessen wurde, still zu uebernehmen, kostet hier keinen
+    // Fehlschlag, sondern die ganze Arbeit am Datensatz.
+    //
+    // 0,3 min je Schritt sind die gemessenen 0,266 mit Puffer: rund 430
+    // Schritte, also etwa 3.400 Paare je Lauf. Alle 16.234 auf einmal waeren
+    // 9 Stunden — dafuer ist die Frist da, nicht die Schaetzung.
+    //
+    // messReserveMinuten 5 statt 35: dieser Lauf misst nicht, er trainiert nur.
+    // Die Bewertung ist ein eigener Schritt gegen die smejj-Suite.
+    CON_TRAIN_KONFIG: JSON.stringify({
+      rang: 16, epochen: 1, lernrate: 0.0002, maxZeilen: 16234,
+      minutenJeSchritt: 0.3, messReserveMinuten: 5
+    })
   };
 }
 

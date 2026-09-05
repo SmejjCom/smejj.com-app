@@ -320,3 +320,21 @@ test("eine frisch angelegte Gruppe ist kurz Pending — das wird abgewartet", as
   assert.equal(f.ok, false);
   assert.equal(andere, 1, "ein 403 ist kein Pending — sofort melden");
 });
+
+test("die Zeitschaetzung je Schritt ist gemessen, nicht vom 27B-Modell geerbt", () => {
+  // BEFUND 2026-09-05: Der erste Lauf sah 416 von 16.234 Paaren. train.py
+  // rechnet zeilen_grenze = (restMinuten - messReserve) / minutenJeSchritt
+  // x batch x gradAkk. Der Standard 2,5 min stammt vom 27B-Modell; gemessen
+  // wurden hier 16 s je Schritt — Faktor 9,4. Eine Schaetzung, die fuer einen
+  // anderen Gegenstand gilt, still zu uebernehmen, kostet die ganze Arbeit am
+  // Datensatz.
+  const k = JSON.parse(jobParameter().CON_TRAIN_KONFIG);
+  assert.ok(k.minutenJeSchritt > 0 && k.minutenJeSchritt < 1,
+    `minutenJeSchritt ${k.minutenJeSchritt} — bei diesem Modell sind es gemessene 0,27`);
+  assert.ok(k.minutenJeSchritt >= 0.266, "unter dem gemessenen Wert waere die Frist zu knapp");
+  // Die Rechnung aus train.py nachgestellt: es muessen deutlich mehr als die
+  // 416 Paare des ersten Laufs herauskommen.
+  const schritte = Math.max(4, Math.floor((TRAIN_MINUTEN - 5 - (k.messReserveMinuten ?? 35)) / k.minutenJeSchritt));
+  const paare = schritte * 1 * 8;
+  assert.ok(paare > 3000, `nur ${paare} Paare je Lauf — zu wenig fuer 16.234 im Datensatz`);
+});
