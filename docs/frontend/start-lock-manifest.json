@@ -1,19 +1,19 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T06:39:15.169Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'Geh chrome browser https://smejj.com/ teste Erledige mit der Maus im Browser und alle Fehler beheben.' Live gefunden: Auf 'Oeffne example.com und sag mir, welche Ueberschrift dort steht' meldete die Maus 'fertig nach 0 Schritten: The heading is present on the current page' — null Schritte, englisch, Frage unbeantwortet. Zwei Ursachen behoben: public/browser-pane-maus.js zeigte die BEGRUENDUNG statt des ERGEBNISSES (der Vertrag trennt reason und result), und workers/maus-engine/prompt-template.mjs verlangte weder Deutsch noch den gefundenen Wert. Cache-Marken der Maus-Kette und app.js b134, Service-Worker v765.",
+  "frozenAt": "2026-09-05T09:14:28.982Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'alle Fehler beheben ... mach endlich fertig'. Live gemessen mit 'Generiere ein Bild von: ein roter Apfel auf einem Holztisch': bis das fertige Bild erschien vergingen 5 Minuten 45, und die ganze Zeit wuchs in der Blase eine Wand aus 600.000 base64-Zeichen. Der Text bleibt unveraendert (renderChatMarkdown baut daraus das Bild); nur die ANZEIGE wird waehrend des offenen Datenstroms ausgeblendet und durch 'Bild wird uebertragen ...' ersetzt. Geaendert: public/ai/chat-stream.js (Marke setzen und am Ende sicher loeschen), public/mobil-composer.css (Anzeige), Marke mobil105, SW v767.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "f2a11dc9864ebcac88c7ffe66136db6229796ec99b84766687af34febccb8eba",
+    "public/index.html": "356f14101b1c2e7d1194c01c487a165e6757972d28b9d611f00bf45369fe8d0a",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "ca65fbbd817be546c72faedc70bdce16bc9fa2c1b8d2471eab194143dcdcfc69",
+    "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "a46b6aa8b733082d0df909393b50375946e219225a12091d6ef3f4c0bf648e6e",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "4a3c1ec34f1675105b697a991d9ff39627b7d49e213addd6f7c445ed743274b8",
+    "public/app.js": "e6f5b757b739f4ca02495c9cc6f63d15bfd44ffc38f6fee4eee03f22070e167d",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "6d26716c99faf8f6ce7e9ba3bf60a8c0335c410e8da67556e21837d419a52400",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "1334fb2060236d81b6bb3fd65670114dc852e127c6d81751f8405872ae6b0c75",
+    "public/browser-pane.js": "2ed6f3b562540650dcbda83fc46148cb112d7ab45791dcb03c2769a7d48a3c17",
     "public/browser-pane-render.js": "fcf48d6c9f40f06a96ecd58b616aba8b41a9cc929ac258c458c1b7f86ba5d4ac",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "1d0de56a87e07d9abd196058282596a0c8625ae36d31fca6bc7b0401ccaf2fe8",
+    "public/sw.js": "8d860dc607cf091f5797b7f690f54d948020061868765979f2b1874f1147b9c8",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }

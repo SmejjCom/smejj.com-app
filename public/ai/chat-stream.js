@@ -130,6 +130,104 @@ function sendeAlsNutzer(text) {
   return true;
 }
 
+/** Letzte Nutzerfrage aus dem Sendekoerper — fuer Knoepfe, die sie erneut schicken. */
+export function letzteNutzerfrage(body) {
+  // Die App schickt die Frage als `task` (app.js: { task, model, files, preferences,
+  // history }); `messages` ist die Form der Bruecke. Live 16:50 UTC: ohne diese
+  // Zeile schickte der Knopf nur "genauer:" ohne Frage.
+  const task = String(body?.task ?? "").trim();
+  if (task) return task;
+  const nachrichten = Array.isArray(body?.messages) ? body.messages : [];
+  for (let i = nachrichten.length - 1; i >= 0; i -= 1) {
+    if (nachrichten[i]?.role === "user") return String(nachrichten[i].content ?? nachrichten[i].text ?? "").trim();
+  }
+  return "";
+}
+
+/**
+ * Ein Knopf statt eines Tipps (UI/UX-Programm 2026-09-02, Punkt 1): Wer eine
+ * gruendlichere Antwort will, soll nicht »genauer« abtippen, sondern klicken.
+ * Dasselbe Muster bei "Verbindung unterbrochen": ein Klick schickt die Frage neu.
+ * @returns {HTMLButtonElement|null}
+ */
+// Wörter unter den Symbolen der Antwort-Leiste auf dem Handy (UI/UX Nr. 4) —
+// eigenes Modul, dynamisch, stumm bei Fehlern; die Leiste selbst bleibt unberührt.
+if (typeof document !== "undefined") import("/assets/chat-actions-woerter.js").catch(() => {});
+
+const AKTION_STIL_ID = "antwort-aktion-stil";
+// Der Stil kommt aus dem Modul, nicht aus chat-actions.css: die CSS liegt im
+// Start-Buendel (start-styles.css, Start-Lock) — ein Stempel nur fuer zwei
+// Regeln waere unverhaeltnismaessig. Viereckig, ruhig, 44 px (Betreiber-Regeln).
+function sorgeFuerAktionsStil() {
+  if (document.getElementById(AKTION_STIL_ID)) return;
+  const stil = document.createElement("style");
+  stil.id = AKTION_STIL_ID;
+  // BEFUND 2026-09-04, live gemessen: Der Knopf war 30 px breit, vom Text
+  // "Gruendlicher antworten" stand nur "cher antworten" da. Ursache ist die
+  // geerbte Klasse .ghost-button — sie ist anderswo ein SYMBOL-Knopf und setzt
+  // width:30px, height:34px, padding:0 und display:grid. Die Regeln hier
+  // ueberschrieben Hoehe und Innenabstand, die BREITE aber nicht.
+  //
+  // Der Selektor ist bewusst zweiteilig (.antwort-aktion .antwort-aktion-knopf):
+  // bei gleicher Spezifitaet entscheidet nur die Reihenfolge, und dieses
+  // Stil-Element haengt zwar spaeter im Kopf — aber darauf soll sich der Knopf
+  // nicht verlassen muessen, wenn jemand die Ladefolge aendert.
+  stil.textContent = ".antwort-aktion{margin:12px 0 0;padding-bottom:40px}"
+    + ".antwort-aktion .antwort-aktion-knopf{display:inline-flex;align-items:center;justify-content:center;"
+    + "width:auto;height:auto;min-width:0;min-height:44px;padding:0 16px;border-radius:0;font:inherit;font-weight:600;white-space:nowrap;"
+    + "border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;cursor:pointer}"
+    + ".antwort-aktion-knopf:hover{background:rgba(127,127,127,.12)}"
+    + ".antwort-aktion-knopf:disabled{opacity:.55;cursor:default}"
+    + ".antwort-aktion-knopf:focus-visible{outline:2px solid currentColor;outline-offset:2px}";
+  document.head.appendChild(stil);
+}
+
+// Der Verlauf wird nach jeder Antwort neu aufgebaut (Speicher/Sync schreiben
+// log.innerHTML aus dem gespeicherten Text) — ein angehaengter Knopf ist danach
+// weg (live gemessen 2026-09-02, 17:09). Darum merkt sich das Modul die letzten
+// Antworten samt Knopf und haengt ihn nach jedem Neuaufbau wieder an.
+const aktionsMerker = [];
+function merkeAktion(output, beschriftung, text) {
+  const antwort = String(output.textContent || "").trim();
+  if (!antwort) return;
+  aktionsMerker.push({ antwort, beschriftung, text });
+  if (aktionsMerker.length > 20) aktionsMerker.shift();
+  beobachteNeuaufbau();
+}
+function beobachteNeuaufbau() {
+  const log = document.getElementById("startLog");
+  if (!log || log.dataset.aktionBeobachtet) return;
+  log.dataset.aktionBeobachtet = "an";
+  let wecker = 0;
+  new MutationObserver(() => {
+    clearTimeout(wecker);
+    wecker = setTimeout(() => {
+      for (const entry of log.querySelectorAll(":scope > .entry.assistant")) {
+        if (entry.querySelector(".antwort-aktion")) continue;
+        const text = String(entry.textContent || "").trim();
+        const treffer = aktionsMerker.find((m) => m.antwort === text);
+        if (treffer) haengeAktionsKnopf(entry, treffer.beschriftung, treffer.text, { merken: false });
+      }
+    }, 400);
+  }).observe(log, { childList: true, subtree: true });
+}
+
+export function haengeAktionsKnopf(output, beschriftung, text, { senden = sendeAlsNutzer, merken = true } = {}) {
+  if (!output || !text) return null;
+  sorgeFuerAktionsStil();
+  if (merken) merkeAktion(output, beschriftung, text);
+  const zeile = document.createElement("p");
+  zeile.className = "antwort-aktion";
+  const knopf = document.createElement("button");
+  knopf.type = "button";
+  knopf.className = "ghost-button antwort-aktion-knopf";
+  knopf.textContent = beschriftung;
+  knopf.addEventListener("click", () => { knopf.disabled = true; senden(text); });
+  zeile.appendChild(knopf);
+  output.appendChild(zeile);
+  return knopf;
+}
+
 /**
  * Zeigt die Frage-Karte hinter dem Antwort-Knoten.
  * @param {HTMLElement} output Antwort-Knoten.
@@ -208,6 +306,45 @@ export function clearThinkingState(output) {
  * Eine HTML-Seite (typisch fuer ein Gateway) ist fuer Nutzer wertlos — dann
  * lieber der eigene Offline-Hinweis.
  */
+/**
+ * Klartext statt Code (UI/UX-Programm 2026-09-02, Nr. 3): Der Server schickt
+ * Codes wie "authentication_required"; ein Anfaenger braucht einen Satz und
+ * eine Handlung. Unbekannte Texte gehen unveraendert durch.
+ */
+export function verstaendlicheMeldung(status, roh) {
+  const code = String(roh || "").trim();
+  if (status === 401 || /authentication_required|session_revoked_or_expired/.test(code)) return "Du bist nicht mehr angemeldet. Nach der Anmeldung geht es hier weiter.";
+  if (status === 403) return "Dafür fehlt die Berechtigung in deinem Konto.";
+  if (status === 429 || /rate_limit/.test(code)) return "Gerade zu viele Anfragen auf einmal. In 20 Sekunden kannst du es noch einmal schicken.";
+  if (status === 402) return "Dein Guthaben ist aufgebraucht. Unter Einstellungen → API kannst du es aufladen.";
+  if (status >= 500 || /backends failed|model_unavailable/i.test(code)) return "Die Modelle antworten gerade nicht. Das ist unser Fehler, nicht deiner.";
+  return code;
+}
+
+/**
+ * Zu jeder Meldung die passende Handlung: Anmelden, Erneut versuchen oder ein
+ * kurzer Zaehler bei 429. Nie ein Rat ohne Knopf.
+ */
+export function fehlerAktion(output, status, frage, { senden = sendeAlsNutzer, gehZu = (ziel) => location.assign(ziel) } = {}) {
+  if (status === 401 || status === 403) {
+    const knopf = haengeAktionsKnopf(output, "Anmelden", "anmelden", { senden: () => gehZu("/auth/login/?zurueck=" + encodeURIComponent(location.pathname)) });
+    return knopf;
+  }
+  if (status === 402) return haengeAktionsKnopf(output, "Zu den Einstellungen", "einstellungen", { senden: () => gehZu("/settings") });
+  if (!frage) return null;
+  const knopf = haengeAktionsKnopf(output, status === 429 ? "In 20 s erneut versuchen" : "Erneut versuchen", frage, { senden });
+  if (knopf && status === 429) {
+    knopf.disabled = true;
+    let rest = 20;
+    const takt = setInterval(() => {
+      rest -= 1;
+      if (rest <= 0) { clearInterval(takt); knopf.disabled = false; knopf.textContent = "Erneut versuchen"; return; }
+      knopf.textContent = `In ${rest} s erneut versuchen`;
+    }, 1000);
+  }
+  return knopf;
+}
+
 export async function readableError(response, offlineNotice = "") {
   const text = await response.text();
   try {
@@ -257,6 +394,39 @@ export function entferneAbgerisseneMedien(text) {
   if (klammer === -1 || rest.indexOf(")", klammer) !== -1) return roh;
   const art = rest.slice(klammer).startsWith("](data:video") ? "Video" : "Bild";
   return `${roh.slice(0, start).trimEnd()}\n\nDie ${art}-Übertragung ist abgerissen — bitte fordere es einfach noch einmal an.`;
+}
+
+/**
+ * Laeuft gerade ein Bild- oder Video-Strom, steht in der Blase ein noch NICHT
+ * geschlossenes `![...](data:...` — und dahinter waechst die base64-Wand.
+ *
+ * LIVE GEMESSEN 2026-09-05 (Auftrag "Generiere ein Bild von: ein roter Apfel"):
+ * 600.000 Zeichen Zeichensalat, sichtbar ueber 5 Minuten 45, bevor das fertige
+ * Bild erschien. Der Text selbst ist richtig und wird gebraucht —
+ * renderChatMarkdown baut daraus am Ende das <img>. Verstecken laesst er sich
+ * darum nur in der ANZEIGE: diese Marke setzt die Klasse, das Stylesheet
+ * blendet den Rohtext aus und zeigt stattdessen einen Satz.
+ *
+ * @param {HTMLElement} output
+ * @returns {boolean} true, solange ein Medienstrom offen ist
+ */
+export function markiereMedienStrom(output) {
+  if (!output?.classList) return false;
+  const roh = String(output.textContent || "");
+  const start = roh.lastIndexOf("![");
+  let offen = false;
+  let art = "Bild";
+  if (start !== -1) {
+    const rest = roh.slice(start);
+    const klammer = rest.indexOf("](data:");
+    // Offen = Datenblock begonnen, aber die schliessende Klammer fehlt noch.
+    offen = klammer !== -1 && rest.indexOf(")", klammer) === -1;
+    if (offen && rest.slice(klammer).startsWith("](data:video")) art = "Video";
+  }
+  output.classList.toggle("medien-strom", offen);
+  if (offen) output.dataset.medienArt = art;
+  else delete output.dataset.medienArt;
+  return offen;
 }
 
 function meldeStromstand() {
@@ -377,18 +547,23 @@ async function versucheLokaleAntwort(body, output, renderMarkdown) {
     output.textContent = "";
     return false;
   }
-  const hinweis = "\n\nAuf deinem Gerät beantwortet — ohne Server, ohne Kosten."
-    + " Für eine gründlichere Antwort schreibe \u00bbgenauer\u00ab dazu.";
+  const hinweis = "\n\nAuf deinem Gerät beantwortet — ohne Server, ohne Kosten.";
   // Ueber textContent, nicht als zweites Argument: renderChatMarkdown(node)
   // liest den Knoten — ein zweites Argument wurde still verworfen (live
   // 2026-08-23: der Hinweis fehlte in jeder lokalen Antwort).
   output.textContent = `${gestoppteTeilantwort || ergebnis.text}${hinweis}`;
   // Der EINE Renderaufruf dieses Pfads (tests/chat-markdown.test.mjs zaehlt).
   if (typeof renderMarkdown === "function") renderMarkdown(output);
+  // Nach dem Rendern, damit der Knopf kein Markdown ist: ein Klick statt »genauer« tippen.
+  haengeAktionsKnopf(output, "Gründlicher antworten", `genauer: ${letzteNutzerfrage(body)}`);
   return true;
 }
 
 export async function streamChatAnswer(url, body, output, { renderMarkdown, offlineNotice = "" } = {}) {
+  // Fragen-Erfassung (Trainingsplan smejj 1.1, Stufe 1): loest nur aus, wartet
+  // nie, bricht nie — der Server entscheidet aus Ledger und Schalter. Dynamisch
+  // nachgeladen, damit ein fehlendes Modul den Chat nicht beruehrt.
+  import("/assets/ai/frage-erfassung.js").then((m) => m.erfasseFrageFuersTraining(body)).catch(() => {});
   // Stufe 0 zuerst: was das Geraet des Nutzers selbst beantworten kann, kostet
   // niemanden etwas und ist meist schneller (gemessen 1,7-3,5 s gegen 2,9-6,6 s).
   if (await versucheLokaleAntwort(body, output, renderMarkdown)) return;
@@ -406,13 +581,15 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   } catch {
     stoppeWartesignal();
     clearThinkingState(output);
-    output.textContent = "Verbindung zum Server unterbrochen — bitte gleich erneut versuchen.";
+    output.textContent = "Verbindung zum Server unterbrochen.";
+    haengeAktionsKnopf(output, "Erneut versuchen", letzteNutzerfrage(body));
     return;
   }
   if (!response.ok || !response.body) {
     stoppeWartesignal();
     clearThinkingState(output);
-    output.textContent = await readableError(response, offlineNotice);
+    output.textContent = verstaendlicheMeldung(response.status, await readableError(response, offlineNotice));
+    fehlerAktion(output, response.status, letzteNutzerfrage(body));
     return;
   }
 
@@ -480,9 +657,11 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
         if (delta?.content) {
           beendeDenken(output);
           output.textContent += delta.content;
+          markiereMedienStrom(output);
         }
       } catch {
         output.textContent += text;
+        markiereMedienStrom(output);
       }
     }
     output.scrollIntoView({ block: "end" });
@@ -491,6 +670,7 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
     // Netzabbruch mitten im Bild-/Video-Strom: ohne Saeuberung stuenden hier
     // 100+ KB base64-Rohtext in der Blase.
     output.textContent = entferneAbgerisseneMedien(output.textContent);
+    markiereMedienStrom(output);
     throw abriss;
   } finally {
     // Immer deregistrieren — auch wenn read() wirft (Netzabbruch): sonst
@@ -514,6 +694,7 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
     // bleibt DAVOR — ein abgerissener Bildstrom soll nicht als base64-Wand
     // stehen bleiben, nur weil die Meldung jetzt woanders herkommt.
     output.textContent = stilleText(entferneAbgerisseneMedien(output.textContent));
+    markiereMedienStrom(output);
     renderMarkdown?.(output);
     falteSchritte(output, schritteOhneFundZahl);
     return;
@@ -522,6 +703,9 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   // Dann ist die letzte Arbeitsnotiz besser als eine leere Blase.
   if (!output.textContent.trim() && letzteNotiz.trim()) output.textContent = letzteNotiz;
   output.textContent = entferneAbgerisseneMedien(output.textContent);
+  // Die Anzeige-Marke MUSS hier fallen: sie blendet den Rohtext aus, und eine
+  // fertige Antwort waere sonst unsichtbar.
+  markiereMedienStrom(output);
   // VOR renderMarkdown: der Renderer liest textContent und ersetzt innerHTML —
   // danach angehaengter Text bliebe roher Stern-Text.
   output.textContent += quellenHinweis({
