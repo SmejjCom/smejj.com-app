@@ -405,3 +405,31 @@ test("Sitzungs-Client: ein Fehlschlag kommt mit Grund zurueck, ein Verlust als v
   assert.equal(tab.sessionId, "");
   assert.equal(verloren, 1);
 });
+
+// 06.09. frueh, Testreihe nach v773: ".bday" dreimal leer gelesen; Hinsehen scheiterte ohne Grund.
+test("nichts gelesen ist ein Fehlschlag — mit Hinweis im Verlauf, nach zwei Mal Schluss", async () => {
+  const { e, koerper } = await laufMit({
+    antworten: [ACT(LESEN), ACT(LESEN), ACT(LESEN)],
+    sende: async (a) => a.type === "observe" ? { ok: true, beobachtung: { elements: [] } } : { ok: true, gelesen: "" }
+  });
+  assert.equal(e.ok, false);
+  assert.match(e.grund, /zweimal nichts gelesen/);
+  assert.match(koerper[1].verlauf.join("\n"), /FEHLGESCHLAGEN: Lesen: titel — nichts gelesen/);
+  assert.equal(koerper.length, 2);
+});
+
+test("Hinsehen scheitert an verlorener Sitzung: neu verbinden und weiter; sonst Grund nennen", async () => {
+  const tab = { url: "https://a.de/", sessionId: "s1" };
+  let blicke = 0; let erneuert = 0;
+  const { e } = await laufMit({
+    tab,
+    antworten: [DONE],
+    sende: async (a) => { if (a.type !== "observe") return { ok: true }; blicke += 1; if (blicke === 1) { tab.sessionId = ""; return { ok: false, error: "session_unknown", verloren: true }; } return { ok: true, beobachtung: { elements: [] } }; },
+    erneuere: async () => { erneuert += 1; tab.sessionId = "s2"; return true; }
+  });
+  assert.equal(e.ok, true, e.grund);
+  assert.equal(erneuert, 1);
+  const ohne = await laufMit({ antworten: [], sende: async () => ({ ok: false, error: "session_busy" }) });
+  assert.equal(ohne.e.ok, false);
+  assert.match(ohne.e.grund, /konnte die Seite nicht ansehen \(session_busy\)/);
+});
