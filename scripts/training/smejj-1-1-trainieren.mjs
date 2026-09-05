@@ -30,14 +30,21 @@ import { saladClient, bereiteJobVor, gruppenZustand } from "../../workers/con-au
 import { e2KonfigAusEnv, e2Client } from "../../workers/con-autopilot/e2.js";
 import { REPO, PREFIX as BASIS_PREFIX } from "./smejj-1-1-basis-spiegeln.mjs";
 
-export const KANDIDAT = "smejj-1-1";
-export const DATENSATZ_PREFIX = "datasets/smejj-1-1";
+// KANDIDAT aus SMEJJ_KANDIDAT (05.09.): smejj-1-2 traegt den umgebauten
+// Datensatz (Profil in smejj-1-1-datensatz-bauen.mjs). Ohne Variable bleibt
+// alles beim ersten Kandidaten — die Doppelklick-Dateien setzen sie.
+export const KANDIDAT = String(process.env.SMEJJ_KANDIDAT || "smejj-1-1").trim();
+export const DATENSATZ_PREFIX = `datasets/${KANDIDAT}`;
+const ZWEITER = KANDIDAT !== "smejj-1-1";
 export const GRUPPE = "smejj-training";
 // 170 Minuten wie beim con-Job. Grobe Hochrechnung aus dessen Lauf (27B,
 // 3.707 Paare, 220 min): ein 4B-Modell rechnet deutlich schneller, der
 // Datensatz ist mit 16.234 Paaren aber vier Mal so gross. Die Frist ist eine
 // GRENZE, kein Ziel — train.py sichert den Adapter auch beim Abbruch.
-export const MAX_MINUTEN = 170;
+// smejj-1-2: 420 Minuten. Gemessen 05.09.: 16 s je Schritt (8 Paare) — 170 min
+// reichten fuer 4.328 Paare; ein Datensatz von ~12.000 Paaren braucht rund
+// 7 Stunden (0,10 USD/h, also unter 1 USD). Freigabe Betreiber 05.09.
+export const MAX_MINUTEN = ZWEITER ? 420 : 170;
 // 4B in bf16 sind rund 8 GB, dazu Datensatz, Checkpoints und Adapter.
 export const SPEICHER_GB = 60;
 
@@ -79,8 +86,10 @@ export function jobParameter() {
     //
     // messReserveMinuten 5 statt 35: dieser Lauf misst nicht, er trainiert nur.
     // Die Bewertung ist ein eigener Schritt gegen die smejj-Suite.
+    // smejj-1-2: Lernrate halbiert (Lauf 2 endete bei Loss 0,0067 —
+    // Auswendiglernen), maxZeilen grosszuegig: die Zeit begrenzt ohnehin.
     CON_TRAIN_KONFIG: JSON.stringify({
-      rang: 16, epochen: 1, lernrate: 0.0002, maxZeilen: 16234,
+      rang: 16, epochen: 1, lernrate: ZWEITER ? 0.0001 : 0.0002, maxZeilen: ZWEITER ? 20000 : 16234,
       minutenJeSchritt: 0.3, messReserveMinuten: 5
     })
   };

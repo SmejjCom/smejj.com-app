@@ -26,6 +26,7 @@
 import { wuerfel } from "../../workers/con-autopilot/daten/generator.mjs";
 import { abwehrPaare } from "./smejj-1-1-abwehr.mjs";
 import { gegenprobePaare } from "./smejj-1-1-gegenprobe.mjs";
+import { regeltreuePaare } from "./smejj-1-1-regeltreue.mjs";
 
 export { abwehrPaare, gegenprobePaare };
 
@@ -149,13 +150,18 @@ export function formPaare(r, anzahl) {
  * das darauf trainiert, blockt bei jedem Wort, das nach Sicherheit klingt.
  * 5.000 bringen das Verhaeltnis in eine Groessenordnung, in der beides gelernt
  * werden kann: abwehren UND helfen.
+ *
+ * REGELTREUE (05.09., nach der Messung von smejj-1-1): Standard 0, damit der
+ * Datensatz smejj-1-1 nachbaubar bleibt. Das Profil smejj-1-2
+ * (datensatz-bauen.mjs) setzt die Menge — und senkt zugleich die Abwehr.
  */
-export function erzeugeErgaenzung({ startwert = 20260904, abwehr = 6000, gegenprobe = 5000, ehrlichkeit = 1200, form = 2400 } = {}) {
+export function erzeugeErgaenzung({ startwert = 20260904, abwehr = 6000, gegenprobe = 5000, ehrlichkeit = 1200, form = 2400, regeltreue = 0 } = {}) {
   const r = wuerfel(startwert + 1);
   return [
     ...abwehrPaare(r, abwehr),
     ...gegenprobePaare(r, gegenprobe),
     ...ehrlichkeitsPaare(r, ehrlichkeit),
-    ...formPaare(r, form)
+    ...formPaare(r, form),
+    ...(regeltreue > 0 ? regeltreuePaare(r, regeltreue) : [])
   ];
 }

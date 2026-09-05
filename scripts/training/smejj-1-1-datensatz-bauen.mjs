@@ -27,11 +27,33 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { erzeuge } from "../../workers/con-autopilot/daten/generator.mjs";
 import { erzeugeErgaenzung } from "./smejj-1-1-generator.mjs";
-import { baueDatensatz, jsonl } from "../../workers/con-autopilot/daten.js";
+import { baueDatensatz, jsonl, mische } from "../../workers/con-autopilot/daten.js";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const DATENSATZ_NAME = "smejj-1-1";
 export const E2_PRAEFIX = `datasets/${DATENSATZ_NAME}/`;
+
+// PROFILE (05.09.): smejj-1-1 bleibt nachbaubar wie gebaut. smejj-1-2 ist die
+// Antwort auf die Messung (Adapter 70,6 % gegen Basis 91,2 %, 4 kritische
+// Faelle): Sicherheitsanteil von 59 % auf rund ein Fuenftel, Gegenprobe
+// bleibt gross, NEU Regeltreue (Regel im System-Prompt lesen und anwenden),
+// und der Datensatz wird GEMISCHT — der Lauf 2 sah nur die ersten 4.328
+// Zeilen, und die waren fast nur Rechenaufgaben (train.py nimmt den Anfang).
+export const PROFILE = Object.freeze({
+  "smejj-1-1": { startwert: 20260904, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
+  "smejj-1-2": {
+    startwert: 20260905,
+    mengen: { reasoning: 7000, sicherheit: 1500, sprache: 1900 },
+    ergaenzung: { abwehr: 1500, gegenprobe: 3000, ehrlichkeit: 1200, form: 2400, regeltreue: 2600 },
+    mischen: true
+  }
+});
+/** Das Profil aus SMEJJ_KANDIDAT (Standard smejj-1-1); unbekannte Namen sind ein Fehler, kein Rueckfall. */
+export function profil(name = process.env.SMEJJ_KANDIDAT || DATENSATZ_NAME) {
+  const p = PROFILE[name];
+  if (!p) throw new Error(`unbekannter Datensatz ${name} — bekannt: ${Object.keys(PROFILE).join(", ")}`);
+  return { name, ...p };
+}
 // Der Startwert ist das Datum der Betreiber-Entscheidung. Er steht im Manifest,
 // damit jeder den Datensatz Zeichen fuer Zeichen nachbauen kann.
 export const STARTWERT = 20260904;
@@ -63,7 +85,7 @@ export async function leseSuiten(wurzel = WURZEL, dateien = SUITEN_DATEIEN) {
  * Baut den Datensatz. Rein und testbar: keine Datei, kein Netz.
  * @returns {{paare: Array, bericht: object, manifest: object}}
  */
-export function baue(rohPaare, suiten, { startwert = STARTWERT } = {}) {
+export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ_NAME, mischen = false } = {}) {
   // baueDatensatz gibt nur messages + recordId zurueck; die Kategorie geht
   // verloren. Sie wird ueber die Frage zurueckgeholt — ohne sie waere nicht
   // nachvollziehbar, welche Faehigkeit der Datensatz ueberhaupt traegt.
@@ -75,9 +97,11 @@ export function baue(rohPaare, suiten, { startwert = STARTWERT } = {}) {
   // mindestAntwortLaenge 1: "391" IST die vollstaendige richtige Antwort auf
   // "Wie viel ist 17 mal 23?". Die 8-Zeichen-Schwelle gilt fuer geerntete
   // Prosa, wo "ok" Muell ist — hier ist die Richtigkeit ausgerechnet.
-  const { paare, bericht } = baueDatensatz(rohPaare, {
+  const gebaut = baueDatensatz(rohPaare, {
     suiten, angriffeErlaubt: true, mindestAntwortLaenge: 1, maxVarianten: MAX_VARIANTEN_GERECHNET
   });
+  const bericht = gebaut.bericht;
+  const paare = mischen ? mische(gebaut.paare, startwert) : gebaut.paare;
   const text = jsonl(paare);
   const kategorien = {};
   for (const p of paare) {
@@ -86,9 +110,10 @@ export function baue(rohPaare, suiten, { startwert = STARTWERT } = {}) {
     kategorien[k] = (kategorien[k] || 0) + 1;
   }
   const manifest = {
-    name: DATENSATZ_NAME,
+    name,
     erzeugtAm: new Date().toISOString(),
     startwert,
+    gemischt: mischen,
     paare: paare.length,
     kategorien,
     sha256: createHash("sha256").update(text).digest("hex"),
@@ -104,10 +129,12 @@ async function main() {
   // eigene Ergaenzung fuer Abwehr, Gegenprobe, Ehrlichkeit und Form. Ohne sie
   // kippt die Verteilung auf 86 % Rechnen — und wer nur Fakten trainiert,
   // trainiert das Verweigern weg (con-1.1.0, verworfen am 03.09.).
-  const roh = [...erzeuge({ startwert: STARTWERT, ...MENGEN }), ...erzeugeErgaenzung({ startwert: STARTWERT })];
+  const p = profil();
+  console.log(`Profil: ${p.name} (Startwert ${p.startwert}, ${p.mischen ? "gemischt" : "in Erzeugungsreihenfolge"})`);
+  const roh = [...erzeuge({ startwert: p.startwert, ...p.mengen }), ...erzeugeErgaenzung({ startwert: p.startwert, ...p.ergaenzung })];
   const suiten = await leseSuiten();
-  const { paare, bericht, manifest, text } = baue(roh, suiten);
-  const ziel = path.join(WURZEL, "out", DATENSATZ_NAME);
+  const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen });
+  const ziel = path.join(WURZEL, "out", p.name);
   await mkdir(ziel, { recursive: true });
   await writeFile(path.join(ziel, "train.jsonl"), text);
   await writeFile(path.join(ziel, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
@@ -115,13 +142,13 @@ async function main() {
   console.log(`geprueft: ${paare.length} Paare`, JSON.stringify(manifest.kategorien));
   console.log(`abgelehnt:`, JSON.stringify(bericht.abgelehnt || bericht));
   console.log(`sha256: ${manifest.sha256.slice(0, 16)}…`);
-  console.log(`geschrieben nach out/${DATENSATZ_NAME}/`);
+  console.log(`geschrieben nach out/${p.name}/`);
   if (!process.argv.includes("--hochladen")) {
-    console.log(`\nZum Hochladen nach e2 ${E2_PRAEFIX}: nochmal mit --hochladen`);
+    console.log(`\nZum Hochladen nach e2 datasets/${p.name}/: nochmal mit --hochladen`);
     return;
   }
   const { ladeHoch } = await import("./smejj-1-1-hochladen.mjs");
-  await ladeHoch({ text, manifest });
+  await ladeHoch({ text, manifest, praefix: `datasets/${p.name}` });
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

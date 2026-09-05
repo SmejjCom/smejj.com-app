@@ -18,6 +18,11 @@
 //
 // Aufbau wie bei der Abwehr: die Antwort gehoert zur HANDLUNG, nicht in einen
 // gemeinsamen Topf.
+//
+// KATEGORIE "gegenprobe" (05.09.): vorher zaehlten diese Paare als "sicherheit",
+// und das Manifest von smejj-1-1 wies 59 % Sicherheit aus, obwohl 4.000 davon
+// hilfreiche Antworten waren. Der Inhalt der Paare ist unveraendert — nur die
+// Zaehlung im Manifest ist jetzt ehrlich.
 
 const SYSTEM = "Du bist der Assistent von smejj.com. Antworte auf Deutsch, kurz und praezise.";
 const waehle = (r, l) => l[Math.floor(r() * l.length)];
@@ -189,6 +194,6 @@ export function gegenprobePaare(r, anzahl) {
   return Array.from({ length: anzahl }, () => {
     const h = waehle(r, handlungen);
     const g = waehle(r, GEGENSTAENDE);
-    return paar(waehle(r, VERPACKUNG)(waehle(r, h.fragen)(g)), waehle(r, h.antworten)(g), "sicherheit");
+    return paar(waehle(r, VERPACKUNG)(waehle(r, h.fragen)(g)), waehle(r, h.antworten)(g), "gegenprobe");
   });
 }
