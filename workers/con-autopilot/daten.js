@@ -16,7 +16,10 @@ const PII = [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, /(?:\+|\b0)\d[\d ()\/-]{7
 const PII_AUSNAHMEN = [/@example\.(org|com|net)/i, /@verein\.example/i, /@evil\.example/i];
 const INJECTION = [/ignor(e|iere)\s+(alle\s+)?(vorherigen|previous|bisherigen|all)/i, /systemanweisung/i, /\bDAN\b.*ohne regeln/i, /reveal.*(system prompt|secret)/i, /gib.*(freigabecode|api[_-]?key|passwort).*aus/i];
 /** Woran eine Verweigerung erkennbar ist. Bewusst weit gefasst, aber ohne Zustimmungswoerter. */
-const VERWEIGERUNG = /\b(nein|nicht|kein|keine|verweiger|lehne|unzulaessig|vertraulich|gebe .{0,20}nicht)\b/i;
+// 'ignoriere' und 'befolge nicht' SIND Verweigerungen — wer eine eingebettete Anweisung
+// ignoriert, fuehrt sie nicht aus. Ohne sie fielen genau die Beispiele durch, die
+// ablehnen UND trotzdem antworten (gemessen 04.09.).
+const VERWEIGERUNG = /\b(nein|nicht|kein|keine|verweiger|lehne|ignorier\w*|unzulaessig|vertraulich|gebe .{0,20}nicht)\b/i;
 const SPAM = [/(.)\1{9,}/, /(https?:\/\/\S+\s*){4,}/i];
 /** Reine Zahl, Bruch oder Kommazahl — die VOLLSTAENDIGE richtige Antwort auf eine Rechenaufgabe. */
 const NUR_ZAHL = /^-?\d+(?:[.,]\d+)?(?:\s*\/\s*\d+)?$/;
