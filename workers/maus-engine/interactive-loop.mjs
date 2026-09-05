@@ -72,8 +72,13 @@ function syntheticPlanFor(step, policyInput) {
 // damit man MESSEN kann, was das Modell wie oft falsch macht.
 const PLAN_FELDER = ["planId", "createdAt", "capsuleRef", "planner", "policy", "steps"];
 const URL_MUSTER = /^https?:\/\/\S+$/i;
+// Eine Adresse OHNE Schema ("gmail.com", "www.example.com/pfad"): nur echte
+// Hostnamen mit Punkt und ohne Leerzeichen — "Weiter" oder "Example Domain"
+// bleiben Text (Befund 05.09.: "gmail.com registrieren" scheiterte dreimal).
+const HOST_MUSTER = /^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i;
 function urlAus(wert) {
   if (typeof wert === "string" && URL_MUSTER.test(wert.trim())) return wert.trim();
+  if (typeof wert === "string" && HOST_MUSTER.test(wert.trim())) return `https://${wert.trim()}`;
   if (wert && typeof wert === "object" && !Array.isArray(wert)) {
     for (const k of ["url", "href", "value", "link"]) { const u = urlAus(wert[k]); if (u) return u; }
   }
@@ -105,7 +110,7 @@ export function repariereEntscheidung(eingabe) {
   if (s.action === "openLink" && !s.target && urlAus(s.url)) { s.action = "navigate"; repariert.push("openLink_zu_navigate"); }
   // 6. navigate ohne url: die Adresse steckt in einem anderen Feld.
   if (s.action === "navigate" && typeof s.url !== "string") {
-    for (const k of ["target", "href", "value", "link", "address", "adresse", "page", "destination"]) {
+    for (const k of ["target", "href", "value", "link", "address", "adresse", "page", "destination", "domain", "site", "website", "host", "seite"]) {
       const u = urlAus(s[k]);
       if (u) { s.url = u; delete s[k]; repariert.push(`url_aus_${k}`); break; }
     }
@@ -149,8 +154,13 @@ export function validateLoopDecision(rawAnswer, policyInput) {
   const normalized = normalizePlannerOutput(rawAnswer);
   if (!normalized.ok) return { ok: false, errors: [normalized.error] };
   const { decision, repariert } = repariereEntscheidung(normalized.plan);
+  // Was hat das Modell vorgeschlagen? Ohne diese Zeile sah man bei einer
+  // Ablehnung nur Schema-Gruende und musste raten (Befund 05.09.).
+  const vorschlag = decision && typeof decision === "object"
+    ? { decision: decision.decision, action: decision.step?.action, felder: Object.keys(decision.step || {}) }
+    : null;
   const envelope = decisionValidator()(decision);
-  if (!envelope.ok) return { ok: false, errors: envelope.errors.slice(0, 10), repariert };
+  if (!envelope.ok) return { ok: false, errors: envelope.errors.slice(0, 10), repariert, vorschlag };
   if (decision.decision !== "act") return { ok: true, decision, repariert };
 
   const step = decision.step;
@@ -166,7 +176,7 @@ export function validateLoopDecision(rawAnswer, policyInput) {
   const validation = validatePlan(syntheticPlanFor(step, policyInput));
   if (!validation.ok) {
     const allowlistViolation = validation.errors.some((error) => /Allowlist|Blockierter Host/i.test(error));
-    return { ok: false, allowlistViolation, errors: validation.errors.slice(0, 10), repariert };
+    return { ok: false, allowlistViolation, errors: validation.errors.slice(0, 10), repariert, vorschlag };
   }
   return { ok: true, decision, repariert };
 }
