@@ -215,7 +215,9 @@ test("DER FALL VOM 20.08.: gemerkt, aber Chrome haelt das Recht nicht", () => {
   });
   assert.equal(befund.ton, "warnung");
   assert.match(befund.text, /mail\.google\.com/);
-  assert.match(befund.text, /Chrome haelt das Recht NICHT/);
+  // Der sichtbare Text traegt inzwischen echte Umlaute ("hält"); die Probe darf
+  // nicht an der Schreibweise haengen, sondern an der Aussage.
+  assert.match(befund.text, /Chrome h(ä|ae)lt das Recht NICHT/);
 });
 
 test("der umgekehrte Fall faellt ebenso auf", () => {

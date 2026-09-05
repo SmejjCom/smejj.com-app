@@ -53,7 +53,19 @@ const { zeigeFrage } = await import("../public/ai/chat-stream.js");
 function knopfKnoten(tag) {
   const k = knoten(tag);
   const hoerer = {};
-  k.classList = { add: (c) => { k.className += ` ${c}`; }, contains: (c) => k.className.split(" ").includes(c) };
+  // toggle/remove gehoeren dazu, seit chat-stream.js den Medien-Strom markiert
+  // (markiereMedienStrom ruft classList.toggle) — ohne sie stirbt der Strom-Test
+  // an der Buehne statt an der Sache.
+  k.classList = {
+    add: (c) => { k.className += ` ${c}`; },
+    contains: (c) => k.className.split(" ").includes(c),
+    remove: (c) => { k.className = k.className.split(" ").filter((x) => x && x !== c).join(" "); },
+    toggle: (c, an) => {
+      const soll = an === undefined ? !k.classList.contains(c) : Boolean(an);
+      if (soll) k.classList.add(c); else k.classList.remove(c);
+      return soll;
+    }
+  };
   k.addEventListener = (art, fn) => { hoerer[art] = fn; };
   k.click = () => hoerer.click?.();
   Object.defineProperty(k, "nextElementSibling", { get() {
