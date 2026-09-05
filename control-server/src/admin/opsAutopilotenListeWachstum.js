@@ -174,5 +174,23 @@ export const WACHSTUM_AUTOPILOTEN = Object.freeze([
     verbessert: "Bisher zeigte kein Alias auf ein eigenes Modell, und Nr. 18 verwaltete erfundene Versionen: jetzt gibt es ein echtes Register, eine echte Entscheidung aus der Messung und einen Rückweg",
     neuigkeiten: ["Neu am 2026-09-05 (Betreiber-Auftrag: neue Version übernimmt automatisch alles — Alias + Router als Autopilot)"],
     ...LAEUFER
+  },
+  {
+    id: "webhook-wache",
+    name: "Webhook- und Smee-Wache",
+    nummer: "84",
+    kurz: "Webhooks haben einen zweiten Weg: kommt ein Ereignis nicht direkt an, fängt es der Smee-Kanal auf. Diese Wache prüft die Strecke — und dass der Eingang Fremde abweist.",
+    funktionen: [
+      "DIE LAGE, ehrlich: api.smejj.com ist öffentlich erreichbar, Stripe stellt direkt zu. Smee ist deshalb der ZWEITE Weg, nicht der Hauptweg — die übliche Anleitung beschreibt einen Entwicklungsrechner hinter einer Firewall, und das ist hier nicht der Fall.",
+      "DIENST: fragt den Gesundheitsbericht von workers/smejj-smee ab — Kanal verbunden, zugestellt, verworfen, Speicherverbrauch. Der Dienst hält nur einen Datenstrom offen; sein Heap ist auf 64 MB begrenzt.",
+      "EINGANG: klopft am eigenen /api/webhooks/relay OHNE gültigen Beweis. Er MUSS abweisen (401) oder geschlossen sein (503). Antwortet er anders, steht ein öffentlich erreichbares Tor offen — das ist schlimmer als ein ausgefallener Zweitweg und wird sofort rot.",
+      "KEINE TESTEREIGNISSE: der Weg endet bei Stripe in der Zahlungslogik. Ihn zur Prüfung mit erfundenen Ereignissen zu füllen hieße, den Weg zu beschädigen, den man messen will. Geprüft wird die Strecke, nicht der Inhalt.",
+      "AMPEL: grau wenn gar nicht eingeschaltet (ein Zustand, kein Fehler), gelb wenn eingeschaltet aber unverbunden, rot bei totem Dienst oder offenem Eingang, grün wenn die Strecke steht.",
+      "DOPPELTE VERARBEITUNG: kommt dasselbe Ereignis über beide Wege, wirkt es nur einmal — der Eingang merkt sich die Kennung 15 Minuten und antwortet der Wiederholung mit 200 (nicht 409: für den Absender IST es erledigt)."
+    ],
+    trainiert: "Nichts — er misst die Webhook-Strecke und den eigenen Eingang",
+    verbessert: "Ein ausgefallener Webhook fiel bisher gar nicht auf: Stripe wiederholt begrenzt, danach ist das Ereignis weg. Jetzt gibt es einen zweiten Weg und eine Wache, die auch prüft, ob dieser Weg selbst ein Loch aufreißt",
+    neuigkeiten: ["Neu am 2026-09-05 (Betreiber-Auftrag: Smee/Webhook-Proxy muss in unserem System sein)"],
+    ...LAEUFER
   }
 ]);

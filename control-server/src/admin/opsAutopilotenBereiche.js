@@ -79,7 +79,10 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 76/78/80 (2026-09-03, Runde 2): Bau-Kontrolle, 15 Sprachseiten, Agenten-Worker.
     "bau-wache", "sprachseiten-wache", "agenten-sonde",
     // Nr. 81 (2026-09-04): Besucherzahl der Landeseite — Wachstum ist Betrieb.
-    "besucher-puls"
+    "besucher-puls",
+    // Nr. 84: Webhook- und Smee-Wache — Zweitweg fuer Webhooks, plus die Probe,
+    // dass der eigene Eingang Fremde abweist.
+    "webhook-wache"
   ]
 });
 

@@ -71,6 +71,7 @@ import { handleAutopilotHeartbeat } from "../control-server/src/routes/autopilot
 // Fehler-Fänger (Nr. 50) und Missbrauchs-Wache (Nr. 51), Freigabe 2026-08-24.
 import { handleFehlerRoute } from "../control-server/src/routes/fehlerRoutes.js";
 import { handlePulsRoute } from "../control-server/src/routes/pulsRoutes.js";
+import { erstelleWebhookRelayRoute } from "../control-server/src/routes/webhookRelayRoutes.js";
 import { beobachteAnfrage } from "../control-server/src/autopilots/missbrauchsWacheAutopilot.js";
 import { clientKeyFromRequest } from "../control-server/src/http/rateLimiter.js";
 import { handleSupportRoute } from "../control-server/src/routes/supportRoutes.js";
@@ -91,6 +92,8 @@ import { leseUndKuerze } from "./agent/dateiKontext.js";
 import { baueCacheLage, befrageCache, darfAusliefern, liefereAusCache, merkeFuerSpaeter } from "./agent/cacheSpur.js";
 import { baueSystemregeln } from "./agent/systemregeln.js";
 import { holeLiveKontext } from "./agent/liveKontext.js";
+
+const handleWebhookRelay = erstelleWebhookRelayRoute();
 
 installCrashGuard(); // kein stiller Tod: unbehandelte Fehler -> Log mit Stack + Exit 1 (Probes uebernehmen)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -264,6 +267,11 @@ const server = http.createServer(async (req, res) => {
     // Besucher-Puls (Nr. 81): EINE Strichliste je Browser-Sitzung, ohne Konto,
     // ohne Kennung — pulsRoutes.js. Erhoeht nur Zahlen im Speicher.
     if (await handlePulsRoute(req, res, url)) return;
+    // Zweitweg fuer Webhooks (Smee): dasselbe Ereignis kommt zusaetzlich ueber
+    // einen oeffentlichen Kanal an. Fail-closed ohne SMEJJ_SMEE_RELAY_SECRET,
+    // Replay-Schutz, und die Signaturpruefung bleibt beim echten Handler —
+    // webhookRelayRoutes.js.
+    if (await handleWebhookRelay(req, res, url, json)) return;
     // Kundensupport Stufe 1: Ticket + KI-Sofortantwort (angemeldete Nutzer) — supportRoutes.js.
     if (await handleSupportRoute(req, url, res)) return;
     // Daten-Schwungrad Stufe 1: Daumen-Signale der Nutzer — feedbackRoutes.js.

@@ -61,6 +61,8 @@ const MIT_ECHTER_MESSUNG = new Set([
   // Jeder bekommt eine Aufgabe mit feststehender Antwort und wird ROT, wenn
   // er sie falsch loest. Siehe autopilots/autopilotLaeufer.js +
   // autopilots/autopilotSelbsttests.js.
+  "smejj-versions-takt",      // liest Register und Bewertungen aus der Ablage (Nr. 83)
+  "webhook-wache",            // fragt den Smee-Dienst und klopft am eigenen Eingang (Nr. 84)
   "bug-predictor",            // scannt die echten Quelldateien des Containers
   "knowledge-graph",          // baut den Symbolgraphen ueber dieselben Dateien
   "multi-file-repo-architect",// prueft die echte Architektur des Containers

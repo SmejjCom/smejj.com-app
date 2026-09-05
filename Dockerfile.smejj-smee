@@ -1,0 +1,24 @@
+# smejj.com — Bau-Abbild fuer den Zeabur-Dienst 'smejj-smee'.
+#
+# Der schlankeste Dienst im Haus: nur Node-Bordmittel, keine einzige
+# Abhaengigkeit, zwei Dateien. Er leitet Webhooks weiter und tut sonst nichts —
+# keine Modelle, keine Inferenz, keine Datenbank.
+#
+# RAM: Der Heap ist auf 64 MB begrenzt. Das ist der Wert aus der Anleitung, und
+# er passt hier, weil der Dienst nur einen Datenstrom liest und jeden Koerper
+# sofort weiterreicht (Deckel 512 KB je Ereignis). Sollte er je an die Grenze
+# stossen, faellt das im Log auf, bevor der Dienst stirbt — dann erhoehen, aber
+# nur so weit wie noetig.
+FROM node:22-slim
+ENV NODE_ENV=production SMEJJ_HOST=0.0.0.0 PORT=8080 NODE_OPTIONS=--max-old-space-size=64
+WORKDIR /app
+COPY package.json ./
+COPY workers/smejj-smee ./workers/smejj-smee
+# Pflicht-Env (fail-closed: ohne SMEJJ_SMEE_ENABLED=YES wird nichts weitergeleitet):
+#   SMEJJ_SMEE_ENABLED=YES
+#   SMEJJ_SMEE_KANAL=https://smee.io/<kanal>
+#   SMEJJ_SMEE_RELAY_SECRET=<gemeinsames Geheimnis mit dem Control-Server>
+# Optional: SMEJJ_SMEE_ZIEL (Standard https://api.smejj.com/api/webhooks/relay)
+USER node
+EXPOSE 8080
+CMD ["node", "workers/smejj-smee/server.mjs"]
