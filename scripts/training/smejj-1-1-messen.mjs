@@ -23,7 +23,8 @@
 //   node scripts/training/smejj-1-1-messen.mjs                    (nur zeigen)
 //   node scripts/training/smejj-1-1-messen.mjs --starten           (Messjob starten)
 //   node scripts/training/smejj-1-1-messen.mjs --stand             (Fortschritt)
-//   node scripts/training/smejj-1-1-messen.mjs --bewerten <jobId>  (Noten rechnen)
+//   node scripts/training/smejj-1-1-messen.mjs --starten --nur-adapter   (nur Kandidat, Adapter beim Laden)
+//   node scripts/training/smejj-1-1-messen.mjs --bewerten <jobId> [--basis-job <jobId2>]  (Noten rechnen)
 //   node scripts/training/smejj-1-1-messen.mjs --tuev              (Messstrecke mit leeren Antworten: muss 0 % und BLOCKED melden)
 import { cpSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -62,19 +63,23 @@ export const WIEDERHOLUNGEN = 3;
 // Antworten auf einem 4B-Modell. 60 Minuten sind eine GRENZE, kein Ziel.
 export const MAX_MINUTEN = 60;
 
-/** Die beiden Staende, in der Reihenfolge, die job.py ohnehin erzwingt (Fundament zuerst). */
-export function messStaende() {
-  return [
-    { version: BASIS_STAND },
-    { version: KANDIDAT, adapterPrefix: `con/versions/${KANDIDAT}/adapter` }
-  ];
+/**
+ * Die beiden Staende, in der Reihenfolge, die job.py ohnehin erzwingt (Fundament zuerst).
+ * `nurAdapter`: nur der Kandidat, mit Adapter von Anfang an geladen. Grund (05.09.,
+ * Job smejj11-20260905105320): das NACHTRAEGLICHE Anhaengen des Adapters an das
+ * nf4-Modell (haenge_adapter_an) starb hart — kein Fehlerstatus, kein Ergebnis,
+ * Gruppe gestoppt. Beim con-Job wird der Adapter beim Laden mitgegeben, das laeuft.
+ */
+export function messStaende({ nurAdapter = false } = {}) {
+  const kandidat = { version: KANDIDAT, adapterPrefix: `con/versions/${KANDIDAT}/adapter` };
+  return nurAdapter ? [kandidat] : [{ version: BASIS_STAND }, kandidat];
 }
 
 /** Job-Parameter. Rein und testbar. */
-export function jobParameter() {
+export function jobParameter({ nurAdapter = false } = {}) {
   return {
     CON_VERSION: KANDIDAT,
-    CON_MESS_VERSIONEN: JSON.stringify(messStaende()),
+    CON_MESS_VERSIONEN: JSON.stringify(messStaende({ nurAdapter })),
     CON_EVAL_PREFIX: EVAL_PREFIX,
     CON_WIEDERHOLUNGEN: String(WIEDERHOLUNGEN)
   };
@@ -136,12 +141,13 @@ async function zeigeStand(client, e2, jobId = null) {
   return z;
 }
 
-async function bewerte(e2, jobId) {
+async function bewerte(e2, jobId, { basisJob = jobId } = {}) {
   const suite = await ladeSuite();
   const berichte = [];
   for (const { version } of messStaende()) {
-    const antworten = await e2.getJson(`${EVAL_PREFIX}/${version}/${jobId}/antworten.json`, null).catch(() => null);
-    if (!antworten) { console.log(`${version}: keine Antworten unter ${EVAL_PREFIX}/${version}/${jobId}/`); continue; }
+    const job = version === BASIS_STAND ? basisJob : jobId;
+    const antworten = await e2.getJson(`${EVAL_PREFIX}/${version}/${job}/antworten.json`, null).catch(() => null);
+    if (!antworten) { console.log(`${version}: keine Antworten unter ${EVAL_PREFIX}/${version}/${job}/`); continue; }
     const bericht = await benoteAntworten(suite, antworten, version);
     berichte.push({ version, bericht });
     await e2.putJson(`${EVAL_PREFIX}/${version}/${jobId}/bewertung.json`, bericht);
@@ -208,12 +214,17 @@ async function main() {
   const e2 = e2Client(e2k, { timeoutMs: 120_000 });
 
   const iBew = argv.indexOf("--bewerten");
-  if (iBew >= 0) { const id = argv[iBew + 1]; if (!id) throw new Error("--bewerten braucht die Job-Id"); await bewerte(e2, id); return; }
+  if (iBew >= 0) {
+    const id = argv[iBew + 1]; if (!id) throw new Error("--bewerten braucht die Job-Id");
+    const iB = argv.indexOf("--basis-job");
+    await bewerte(e2, id, { basisJob: iB >= 0 ? argv[iB + 1] : id }); return;
+  }
+  const nurAdapter = argv.includes("--nur-adapter");
   if (argv.includes("--stand")) { await zeigeStand(client, e2); return; }
 
   const suite = await ladeSuite();
   console.log(`Suite:        ${path.relative(WURZEL, SUITE_DATEI)} (${suite.cases.length} Faelle, ${WIEDERHOLUNGEN} Wiederholungen)`);
-  console.log(`Staende:      ${messStaende().map((s) => s.version + (s.adapterPrefix ? ` (+${s.adapterPrefix})` : " (nackt)")).join(" | ")}`);
+  console.log(`Staende:      ${messStaende({ nurAdapter }).map((s) => s.version + (s.adapterPrefix ? ` (+${s.adapterPrefix})` : " (nackt)")).join(" | ")}`);
   console.log(`Salad-Gruppe: ${GRUPPE}, hoechstens ${MAX_MINUTEN} min, rund ${(MAX_MINUTEN / 60 * 0.10).toFixed(2)} USD`);
   const training = await e2.getJson(`con/versions/${KANDIDAT}/training.json`, null).catch(() => null);
   if (!training?.adapterPrefix) { console.error("ABBRUCH: kein Adapter unter con/versions/" + KANDIDAT); process.exit(3); }
@@ -226,7 +237,7 @@ async function main() {
   console.log(`Job-Buendel:  ${jobDir.verzeichnis} mit Suiten ${jobDir.suiten.join(", ")}`);
   const jobId = `smejj11-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}-messung`;
   const vor = await bereiteJobVor({ client, konfig: { ...konfig, jobDir: jobDir.verzeichnis }, e2: e2k, jobId, modus: "messung",
-    parameter: jobParameter(), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
+    parameter: jobParameter({ nurAdapter }), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
   rmSync(jobDir.verzeichnis, { recursive: true, force: true });
   if (!vor.ok) { console.error("ABBRUCH:", vor.gruende.join("; ")); process.exit(5); }
   const start = await warteUndStarte(client);

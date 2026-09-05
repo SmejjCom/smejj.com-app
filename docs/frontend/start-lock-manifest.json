@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T09:14:28.982Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'alle Fehler beheben ... mach endlich fertig'. Live gemessen mit 'Generiere ein Bild von: ein roter Apfel auf einem Holztisch': bis das fertige Bild erschien vergingen 5 Minuten 45, und die ganze Zeit wuchs in der Blase eine Wand aus 600.000 base64-Zeichen. Der Text bleibt unveraendert (renderChatMarkdown baut daraus das Bild); nur die ANZEIGE wird waehrend des offenen Datenstroms ausgeblendet und durch 'Bild wird uebertragen ...' ersetzt. Geaendert: public/ai/chat-stream.js (Marke setzen und am Ende sicher loeschen), public/mobil-composer.css (Anzeige), Marke mobil105, SW v767.",
+  "frozenAt": "2026-09-05T12:06:15.810Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'teste ganze App im Simulator von A bis Z'. Auf dem iPhone-Simulator (iPhone 17 Pro, iOS 26.5, 402 pt) gemessen: Die Symbol-Schwelle der Werkzeugzeile lag bei 390 px und damit UNTER den gaengigen iPhones (393 bis 430). Bei 402 pt wurden die Textpillen gequetscht statt ersetzt — 'Nachdenken' brauchte 81 px und bekam 6 (sichtbar blieb ein 'N'), der Modell-Chip brauchte 70 und bekam 44 ('smejj' statt 'smejj 1.0'). Geaendert: public/composer-zeile.js — Schwelle auf 430 px, Modell-Chip width:auto (ghost-button setzte ein festes width:30px), Abstandhalter darf schrumpfen. Service-Worker v768.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "356f14101b1c2e7d1194c01c487a165e6757972d28b9d611f00bf45369fe8d0a",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "8d860dc607cf091f5797b7f690f54d948020061868765979f2b1874f1147b9c8",
+    "public/sw.js": "18484b8b7444ebd2012f06b97f02f34b366772cf422964acd6f39d1fffca412d",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }

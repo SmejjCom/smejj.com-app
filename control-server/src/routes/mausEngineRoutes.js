@@ -134,6 +134,21 @@ const LOOP_DEFAULT_STEPS = 10;
 // gekappten Verbindung zu sterben. Die 60 s Abstand sind Luft fuer den letzten
 // Schritt, der gerade laeuft.
 const LOOP_DEFAULT_DURATION_MS = 240_000;
+// Was das Panel im Browser des Nutzers WIRKLICH ausfuehren kann (Spiegel von
+// alsSitzungsAktion in public/browser-pane-maus.js). Der Schritt-Vertrag
+// nennt dem Modell nur diese; alles andere gilt als abgelehnt und loest die
+// Nachfrage aus. Vorher endete der Lauf im Panel an einem schemagueltigen,
+// aber dort unausfuehrbaren Schritt ("nicht_uebersetzbar") — live 2026-09-05.
+export const PANEL_AKTIONEN = Object.freeze(["navigate", "click", "openLink", "type", "extract", "assert", "scroll", "waitFor"]);
+function pruefeFuerPanel(entscheidung) {
+  const aktion = entscheidung?.decision?.step?.action;
+  if (!entscheidung?.ok || entscheidung.decision?.decision !== "act" || PANEL_AKTIONEN.includes(aktion)) return entscheidung;
+  return {
+    ok: false,
+    repariert: entscheidung.repariert || [],
+    errors: [`aktion_im_browser_nicht_ausfuehrbar: ${aktion} — erlaubt sind nur ${PANEL_AKTIONEN.join(", ")}`]
+  };
+}
 
 // Nach aussen gegeben, damit ein Test die Staffelung pruefen kann. Sie steht
 // sonst nur als Kommentar da, und ein Kommentar haelt keine Zahl fest.
@@ -490,11 +505,12 @@ export async function handleMausRun(req, res, {
         visionAllowed: false,
         observation: beobachtung,
         history: verlauf,
-        remainingSteps: restSchritte
+        remainingSteps: restSchritte,
+        erlaubteAktionen: PANEL_AKTIONEN
       });
       const planer = plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel });
       let roh = await planer(prompt);
-      entscheidung = validateLoopDecision(roh, policyInput);
+      entscheidung = pruefeFuerPanel(validateLoopDecision(roh, policyInput));
       // EINMAL NACHFRAGEN, BEVOR ABGELEHNT WIRD (Befund 2026-09-05, siehe
       // buildStepRetryPrompt): jede zweite Antwort des schnellen Modells war
       // ein Formfehler, kein Denkfehler. Ein Allowlist-Verstoss ist etwas
@@ -502,7 +518,7 @@ export async function handleMausRun(req, res, {
       if (!entscheidung.ok && !entscheidung.allowlistViolation) {
         nachgefragt = true;
         roh = await planer(buildStepRetryPrompt({ stepPrompt: prompt, errors: entscheidung.errors || [], vorigeAntwort: roh }));
-        entscheidung = validateLoopDecision(roh, policyInput);
+        entscheidung = pruefeFuerPanel(validateLoopDecision(roh, policyInput));
       }
     } catch (error) {
       return json(res, 502, {
@@ -522,8 +538,10 @@ export async function handleMausRun(req, res, {
     return json(res, 200, {
       ok: true,
       entscheidung: entscheidung.decision,
-      // Fuer die Messung: kam die Entscheidung im ersten oder zweiten Anlauf?
+      // Fuer die Messung: kam die Entscheidung im ersten oder zweiten Anlauf,
+      // und was musste vorher geradegebogen werden?
       nachgefragt,
+      repariert: entscheidung.repariert || [],
       transparenzhinweis: transparencyNotice("maus-engine-v2")
     });
   }
