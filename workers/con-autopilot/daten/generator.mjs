@@ -251,8 +251,173 @@ export function sprachPaare(r, anzahl) {
   return Array.from({ length: anzahl }, () => waehle(r, bauer)());
 }
 
+// ---------------------------------------------------------------------------
+// Gezielt gegen die fuenf Faelle, an denen con 1.3 am 05.09. gegen die schwere
+// Latte scheiterte. Jede Antwort ist ausgerechnet oder aus Bausteinen gebaut,
+// nie geschaetzt — sonst lernt das Modell einen Fehler mit.
+// ---------------------------------------------------------------------------
+
+const SATZWOERTER = ["Der Regen", "Die Fenster", "Ein Wagen", "Das Wetter", "Die Sonne", "Der Garten",
+  "Die Strasse", "Ein Vogel", "Das Ufer", "Die Wiese"];
+const SATZVERBEN = ["steht", "faellt", "wartet", "glaenzt", "rauscht", "bleibt", "wechselt", "leuchtet"];
+const SATZENDEN = ["seit gestern", "am Morgen", "hinter dem Haus", "vor der Tuer", "neben dem Weg", "bis zum Abend"];
+
+/** Gleichungssysteme mit zwei Unbekannten. con 1.3 antwortete x=7, y=5 statt x=5, y=3. */
+export function gleichungssystemPaare(r, anzahl) {
+  const out = [];
+  for (let i = 0; i < anzahl; i++) {
+    const x = ganz(r, 1, 20), y = ganz(r, 1, 20);
+    const a = ganz(r, 1, 6), b = ganz(r, 1, 6), c = ganz(r, 1, 6), d = ganz(r, 1, 6);
+    // Eindeutig loesbar nur bei nicht verschwindender Determinante.
+    if (a * d - b * c === 0) { i--; continue; }
+    out.push(paar(
+      `Loese das Gleichungssystem und antworte nur mit x=<Zahl>, y=<Zahl>: ${a}x + ${b}y = ${a * x + b * y} und ${c}x + ${d}y = ${c * x + d * y}`,
+      `x=${x}, y=${y}`, "reasoning"));
+  }
+  return out;
+}
+
+/** Buchstaben in einem ganzen SATZ zaehlen. con 1.3 zaehlte 10 statt 11. */
+export function zaehlenImSatzPaare(r, anzahl) {
+  const out = [];
+  for (let i = 0; i < anzahl; i++) {
+    const satz = `${waehle(r, SATZWOERTER)} ${waehle(r, SATZVERBEN)} ${waehle(r, SATZENDEN)}`;
+    const b = waehle(r, ["e", "n", "r", "s", "t", "a", "i"]);
+    const n = [...satz.toLowerCase()].filter((c) => c === b).length;
+    // Der Satz steht in Anfuehrungszeichen: sonst ist unklar, ob "Antworte nur
+    // mit der Zahl" noch zum Satz gehoert und mitgezaehlt werden muss.
+    out.push(paar(`Wie oft kommt der Buchstabe ${b} in diesem Satz vor? Satz: "${satz}". Antworte nur mit der Zahl.`,
+      String(n), "reasoning"));
+  }
+  return out;
+}
+
+const EIGENSCHAFT = ["weit", "still", "kalt", "hell", "rau", "tief", "klar", "warm", "leer", "eng", "schwer", "frisch"];
+// Mit Artikel: "Beschreibe den Gebirge" waere falsches Deutsch und wuerde
+// mittrainiert. Der Datensatz darf keinen Grammatikfehler enthalten.
+const DING = [["den", "Ozean"], ["das", "Gebirge"], ["den", "Wald"], ["den", "Himmel"], ["den", "Fluss"],
+  ["den", "Markt"], ["den", "Bahnhof"], ["den", "Hafen"], ["das", "Tal"], ["das", "Feld"],
+  ["die", "Wiese"], ["die", "Kueste"], ["die", "Stadt"]];
+
+/** Genaue Wortzahl einhalten. con 1.3 lieferte drei Woerter, wo fuenf verlangt waren. */
+export function wortzahlPaare(r, anzahl) {
+  const out = [];
+  for (let i = 0; i < anzahl; i++) {
+    const n = ganz(r, 3, 8);
+    const [artikel, ding] = waehle(r, DING);
+    // n Woerter als lesbare Aufzaehlung: (n-1) Eigenschaften, das "und" ist das
+    // n-te Wort. So ist die Zahl durch den Bau garantiert, nicht geschaetzt.
+    const rest = [...EIGENSCHAFT];
+    const teile = [];
+    while (teile.length < n - 1 && rest.length) teile.push(rest.splice(Math.floor(r() * rest.length), 1)[0]);
+    if (teile.length !== n - 1) { i--; continue; }
+    const letzte = teile.pop();
+    const satz = `${teile.join(" ")} und ${letzte}`.trim();
+    const gross = satz.charAt(0).toUpperCase() + satz.slice(1);
+    if (gross.split(/\s+/).length !== n) { i--; continue; }
+    out.push(paar(`Beschreibe ${artikel} ${ding} in genau ${n} Woertern. Nicht mehr, nicht weniger.`,
+      gross, "sprache"));
+  }
+  return out;
+}
+
+// Antworten werden aus Teilen ZUSAMMENGESETZT, nicht aus einer festen Liste
+// gezogen. Am 04.09. ueberlebten von 2.500 Sicherheitspaaren nur 80 die
+// Entdopplung, weil es bloss fuenf verschiedene Antworttexte gab. Derselbe
+// Fehler haette hier acht Siez-Antworten ergeben.
+const SIE_AUFGABEN = [
+  { aufgabe: "das Passwort aendern", ort: ["die Einstellungen", "Ihr Benutzerkonto", "den Bereich Sicherheit"],
+    schritt: ["Waehlen Sie dort den Punkt Passwort", "Suchen Sie den Eintrag Passwort aendern", "Klicken Sie auf Passwort neu vergeben"],
+    schluss: ["Vergeben Sie ein neues Passwort und bestaetigen Sie es", "Tragen Sie das neue Passwort zweimal ein", "Speichern Sie Ihre Aenderung zum Schluss"] },
+  { aufgabe: "eine Rechnung herunterladen", ort: ["Ihr Konto", "den Bereich Zahlungen", "die Uebersicht Ihrer Rechnungen"],
+    schritt: ["Waehlen Sie den gewuenschten Monat", "Suchen Sie die passende Rechnungsnummer", "Filtern Sie nach dem Zeitraum"],
+    schluss: ["Speichern Sie die Datei auf Ihrem Geraet", "Laden Sie das Dokument herunter", "Sichern Sie die Datei fuer Ihre Unterlagen"] },
+  { aufgabe: "die Zwei-Faktor-Anmeldung einschalten", ort: ["Ihre Kontoeinstellungen", "den Bereich Sicherheit", "Ihr Profil"],
+    schritt: ["Aktivieren Sie die Zwei-Faktor-Anmeldung", "Waehlen Sie ein zweites Verfahren aus", "Verbinden Sie Ihre Anmelde-App"],
+    schluss: ["Bewahren Sie Ihre Ersatzschluessel sicher auf", "Notieren Sie sich die Ersatzcodes", "Pruefen Sie zum Schluss, ob die Anmeldung funktioniert"] },
+  { aufgabe: "die Sprache umstellen", ort: ["das Menue oben rechts", "Ihre Einstellungen", "den Bereich Darstellung"],
+    schritt: ["Waehlen Sie Ihre Sprache aus der Liste", "Suchen Sie den Eintrag Sprache", "Oeffnen Sie die Sprachauswahl"],
+    schluss: ["Bestaetigen Sie Ihre Auswahl", "Speichern Sie die Einstellung", "Laden Sie die Seite danach neu"] },
+  { aufgabe: "ein Geraet abmelden", ort: ["die Uebersicht Ihrer Geraete", "den Bereich Sitzungen", "Ihre Sicherheitseinstellungen"],
+    schritt: ["Suchen Sie das Geraet in der Liste", "Erkennen Sie das Geraet am Namen", "Pruefen Sie den Zeitpunkt der letzten Nutzung"],
+    schluss: ["Melden Sie es dort ab", "Beenden Sie die Sitzung", "Entfernen Sie das Geraet aus der Liste"] },
+  { aufgabe: "die Benachrichtigungen abschalten", ort: ["Ihre Einstellungen", "den Bereich Mitteilungen", "Ihr Profil"],
+    schritt: ["Waehlen Sie den Punkt Benachrichtigungen", "Oeffnen Sie die Liste der Mitteilungen", "Suchen Sie die Art der Meldung"],
+    schluss: ["Schalten Sie ab, was Sie nicht brauchen", "Entfernen Sie die Haken bei den Meldungen", "Speichern Sie Ihre Auswahl"] },
+  { aufgabe: "Ihre Daten ausleiten", ort: ["Ihren Kontobereich", "den Punkt Datenschutz", "Ihre Kontoeinstellungen"],
+    schritt: ["Waehlen Sie den Punkt Daten ausleiten", "Fordern Sie eine Kopie Ihrer Daten an", "Starten Sie die Zusammenstellung"],
+    schluss: ["Bestaetigen Sie den Versand an Ihre Adresse", "Warten Sie auf die Nachricht mit dem Verweis", "Laden Sie die Datei danach herunter"] },
+  { aufgabe: "ein Konto loeschen", ort: ["Ihre Kontoeinstellungen", "den Bereich Konto", "Ihr Profil"],
+    schritt: ["Waehlen Sie ganz unten den Punkt Konto loeschen", "Suchen Sie den Eintrag Konto schliessen", "Oeffnen Sie den Bereich Loeschung"],
+    schluss: ["Bestaetigen Sie Ihre Entscheidung", "Geben Sie zur Sicherheit Ihr Passwort ein", "Beachten Sie, dass dieser Schritt endgueltig ist"] }
+];
+
+/** Durchgehendes Siezen. con 1.3 wechselte mitten in der Antwort ins Duzen. */
+export function siezenPaare(r, anzahl) {
+  const out = [];
+  for (let i = 0; i < anzahl; i++) {
+    const t = waehle(r, SIE_AUFGABEN);
+    const einleitung = waehle(r, ["Erklaeren Sie mir", "Bitte erklaeren Sie mir", "Zeigen Sie mir", "Sagen Sie mir", "Beschreiben Sie mir"]);
+    const eroeffnung = waehle(r, ["Oeffnen Sie", "Rufen Sie", "Gehen Sie in"]);
+    const antwort = `${eroeffnung} ${waehle(r, t.ort)}. ${waehle(r, t.schritt)}. ${waehle(r, t.schluss)}.`;
+    out.push(paar(`${einleitung} in drei Saetzen, wie ich ${t.aufgabe} kann. Siezen Sie mich dabei durchgehend.`,
+      antwort, "sprache"));
+  }
+  return out;
+}
+
+const WERKZEUG_LUECKEN = [
+  { auftraege: ["Schick bitte eine Mail mit dem Text: Die Sitzung faellt aus.", "Bitte eine Mail rausschicken: Die Sitzung faellt aus.", "Mail verschicken, Inhalt: Die Sitzung faellt aus."], fehlt: "der Empfaenger",
+    fragen: ["An welche Adresse soll die Mail gehen?", "Wer soll die Nachricht bekommen?", "Wie lautet die Empfaengeradresse?"] },
+  { auftraege: ["Trag mir bitte einen Termin ein, Betreff Zahnarzt.", "Bitte einen Termin anlegen, Betreff Zahnarzt.", "Termin eintragen: Zahnarzt."], fehlt: "der Zeitpunkt",
+    fragen: ["Wann soll der Termin liegen, welcher Tag und welche Uhrzeit?", "Fuer welchen Tag und welche Uhrzeit?", "Welches Datum und welche Uhrzeit sollen es sein?"] },
+  { auftraege: ["Buche mir bitte ein Zimmer fuer zwei Naechte.", "Bitte ein Zimmer fuer zwei Naechte reservieren.", "Zimmer buchen, zwei Naechte."], fehlt: "der Ort und der Anreisetag",
+    fragen: ["In welcher Stadt soll das Zimmer sein, und ab welchem Tag?", "Wohin geht es, und wann reisen Sie an?", "Welcher Ort und welcher Anreisetag sind es?"] },
+  { auftraege: ["Rechne mir das bitte in Euro um.", "Bitte in Euro umrechnen.", "Kannst du das in Euro umrechnen?"], fehlt: "der Betrag und die Ausgangswaehrung",
+    fragen: ["Welcher Betrag ist es, und in welcher Waehrung?", "Wie hoch ist die Summe, und um welche Waehrung geht es?", "Welcher Betrag und welche Waehrung sind gemeint?"] },
+  { auftraege: ["Sag mir bitte das Wetter fuer morgen.", "Wie wird das Wetter morgen?", "Bitte die Wettervorhersage fuer morgen."], fehlt: "der Ort",
+    fragen: ["Fuer welchen Ort soll ich nachsehen?", "Um welche Stadt geht es?", "Welcher Ort ist gemeint?"] },
+  { auftraege: ["Setz das bitte auf die Liste.", "Bitte auf die Liste setzen.", "Kannst du das auf die Liste nehmen?"], fehlt: "der Eintrag und die Liste",
+    fragen: ["Was genau soll auf die Liste, und auf welche?", "Welchen Eintrag meinen Sie, und in welcher Liste?", "Welcher Eintrag und welche Liste sind gemeint?"] },
+  { auftraege: ["Schick der Kollegin die Datei.", "Bitte die Datei an die Kollegin senden.", "Die Kollegin braucht die Datei."], fehlt: "die Adresse und die Datei",
+    fragen: ["An welche Adresse, und um welche Datei geht es?", "Wer genau ist gemeint, und welche Datei soll mit?", "Welche Adresse und welcher Dateiname sind es?"] },
+  { auftraege: ["Erinnere mich daran.", "Bitte erinnere mich.", "Kannst du mich daran erinnern?"], fehlt: "der Anlass und der Zeitpunkt",
+    fragen: ["Woran soll ich Sie erinnern, und zu welchem Zeitpunkt?", "Worum geht es, und wann soll die Erinnerung kommen?", "Welcher Anlass und welcher Zeitpunkt sind es?"] },
+  { auftraege: ["Bestell bitte nach.", "Bitte eine Nachbestellung ausloesen.", "Wir muessen nachbestellen."], fehlt: "der Artikel und die Menge",
+    fragen: ["Welchen Artikel soll ich bestellen, und wie viele?", "Was genau fehlt, und in welcher Menge?", "Welcher Artikel und welche Stueckzahl sind es?"] },
+  { auftraege: ["Ruf da mal an.", "Bitte dort anrufen.", "Kannst du da anrufen?"], fehlt: "die Nummer",
+    fragen: ["Welche Nummer soll ich waehlen?", "Wen genau meinen Sie?", "Wie lautet die Rufnummer?"] },
+  { auftraege: ["Uebersetze das bitte.", "Bitte uebersetzen.", "Kannst du das uebersetzen?"], fehlt: "der Text und die Zielsprache",
+    fragen: ["Welcher Text soll uebersetzt werden, und in welche Sprache?", "Was genau, und wohin uebersetzt?", "Welcher Text und welche Zielsprache sind es?"] },
+  { auftraege: ["Leg einen Ordner an.", "Bitte einen Ordner anlegen.", "Kannst du einen Ordner erstellen?"], fehlt: "der Name und der Speicherort",
+    fragen: ["Wie soll der Ordner heissen, und wo soll er liegen?", "Welchen Namen, und an welcher Stelle?", "Welcher Name und welcher Ablageort sind es?"] }
+];
+
+/** Fehlende Angabe erfragen statt erfinden. con 1.3 setzte "unbekannt" als Empfaenger ein. */
+export function nachfragenPaare(r, anzahl) {
+  const out = [];
+  for (let i = 0; i < anzahl; i++) {
+    const l = waehle(r, WERKZEUG_LUECKEN);
+    const frage = waehle(r, l.fragen);
+    // Die Luecke wird immer im Nominativ genannt ("der Empfaenger fehlt"), nie
+    // in einen Fall gezwungen, den die Vorlage nicht kennt.
+    const wendung = waehle(r, [
+      `Dafuer fehlt mir noch eine Angabe: ${l.fehlt}. ${frage}`,
+      `Bevor ich das ausfuehre, brauche ich eine Angabe: ${l.fehlt}. ${frage}`,
+      `Eine Angabe fehlt: ${l.fehlt}. ${frage}`,
+      `${frage} Ohne diese Angabe muesste ich raten, und das waere falsch.`,
+      `Das mache ich gern, sobald eine Sache klar ist: ${l.fehlt}. ${frage}`
+    ]);
+    out.push(paar(waehle(r, l.auftraege), wendung, "werkzeuge"));
+  }
+  return out;
+}
+
 /** Kompletter Datensatz. */
-export function erzeuge({ startwert = 20260904, reasoning = 2400, sicherheit = 700, sprache = 500 } = {}) {
+export function erzeuge({ startwert = 20260904, reasoning = 2400, sicherheit = 700, sprache = 500,
+  gleichungen = 0, zaehlenImSatz = 0, wortzahl = 0, siezen = 0, nachfragen = 0 } = {}) {
   const r = wuerfel(startwert);
-  return [...reasoningPaare(r, reasoning), ...sicherheitsPaare(r, sicherheit), ...sprachPaare(r, sprache)];
+  return [...reasoningPaare(r, reasoning), ...sicherheitsPaare(r, sicherheit), ...sprachPaare(r, sprache),
+    ...gleichungssystemPaare(r, gleichungen), ...zaehlenImSatzPaare(r, zaehlenImSatz),
+    ...wortzahlPaare(r, wortzahl), ...siezenPaare(r, siezen), ...nachfragenPaare(r, nachfragen)];
 }

@@ -605,3 +605,21 @@ test("Ein abgelehnter Versuch wird nicht mit denselben Daten wiederholt", async 
   assert.ok(plan2.job, "neue Daten muessen wieder ein Training ergeben");
   assert.equal(plan2.job.datensatz, "con-grundfaehigkeiten-v3");
 });
+
+test("Eine angeforderte Zeitgrenze fuer die Ablage wird nicht stillschweigend gedeckelt", async () => {
+  // Bis zum 06.09. klemmte requestTimeoutSignal jede Anfrage auf hoechstens
+  // 30 Sekunden. Ein Aufrufer konnte 40 Minuten verlangen und bekam 30 Sekunden,
+  // ohne Hinweis. Ueber die Leitung des Betreibers (1 MB in 5 s, 2 MB in 86 s)
+  // war damit bei rund 2 MB Schluss: der 3,94 MB grosse Trainingsdatensatz brach
+  // dreimal mit "aborted due to timeout" ab.
+  const { boundedNumber } = await import("../control-server/src/storage/s3Signer.js");
+  assert.equal(boundedNumber(900_000, 2_500, 100, 900_000), 900_000, "eine grosse Vorgabe muss durchkommen");
+  assert.equal(boundedNumber(undefined, 2_500, 100, 900_000), 2_500, "ohne Vorgabe bleibt es kurz");
+  assert.equal(boundedNumber(10, 2_500, 100, 900_000), 100, "die Untergrenze bleibt");
+  // Und die Quelle selbst darf die Obergrenze nicht wieder auf 30 s setzen.
+  const { readFile } = await import("node:fs/promises");
+  const quelle = await readFile(path.join(ROOT, "control-server/src/storage/s3Signer.js"), "utf8");
+  const zeile = quelle.match(/boundedNumber\(value, 2_500, 100, ([0-9_]+)\)/);
+  assert.ok(zeile, "requestTimeoutSignal nicht gefunden");
+  assert.ok(Number(zeile[1].replace(/_/g, "")) >= 600_000, `Obergrenze zu niedrig: ${zeile[1]}`);
+});
