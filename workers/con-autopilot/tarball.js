@@ -41,9 +41,30 @@ function sammle(wurzel, rel = "") {
   return out;
 }
 
-/** @returns {{ b64: string, sha256: string, dateien: string[], bytes: number }} */
-export function baueBuendel(verzeichnis, { wurzelname = "con-job" } = {}) {
+/**
+ * Baut das Job-Buendel.
+ *
+ * `zusatz` legt weitere Verzeichnisse unter einem eigenen Namen mit hinein.
+ * Genutzt wird das fuer die Pruefsuiten: die liegen unter
+ * workers/con-autopilot/suites und sind die EINZIGE Quelle. Bis zum 05.09. gab
+ * es eine zweite Kopie unter salad-job/suites. Beide waren zufaellig gleich —
+ * die Sorte Falle, die erst auffaellt, wenn jemand nur eine Seite pflegt: der
+ * Job antwortet dann auf alte Faelle, die Bewertung erwartet neue, und das
+ * Ergebnis ist eine Liste "fall_unbekannt" statt einer Note.
+ *
+ * @returns {{ b64: string, sha256: string, dateien: string[], bytes: number }}
+ */
+export function baueBuendel(verzeichnis, { wurzelname = "con-job", zusatz = {} } = {}) {
   const dateien = sammle(verzeichnis);
+  for (const [unterordner, quelle] of Object.entries(zusatz)) {
+    // Nur .json: der Job liest das Verzeichnis mit os.listdir und parst jede
+    // JSON-Datei. Ein mitgeschicktes Hilfsskript waere toter Ballast.
+    for (const d of sammle(quelle)) {
+      if (!d.name.endsWith(".json")) continue;
+      dateien.push({ name: `${unterordner}/${d.name}`, daten: d.daten });
+    }
+  }
+  dateien.sort((a, b) => a.name.localeCompare(b.name));
   const teile = [];
   for (const d of dateien) {
     teile.push(kopf(`${wurzelname}/${d.name}`, d.daten.length, d.name.endsWith(".py") ? 0o644 : 0o644));

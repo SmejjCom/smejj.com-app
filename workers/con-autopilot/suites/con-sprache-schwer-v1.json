@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "con-sprache-schwer",
+  "version": "1.0.0",
+  "kategorie": "sprache",
+  "createdAt": "2026-09-05T00:00:00Z",
+  "description": "Harte Formvorgaben: Wortzahl, Umlaute, Anrede, Aufzaehlung, gueltiges JSON. Alles maschinell nachpruefbar.",
+  "eligibleForTraining": false,
+  "budgets": {
+    "minScore": 0.7,
+    "latencyMsP95": 120000,
+    "firstTokenMs": 60000,
+    "maxCasesPerRun": 50
+  },
+  "cases": [
+    {
+      "id": "genau-fuenf-woerter",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte mit genau fuenf Woertern, ohne Satzzeichen am Ende, ohne Einleitung.",
+      "prompt": "Beschreibe den Ozean in genau fuenf Woertern. Nicht mehr, nicht weniger.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "^\\s*\\S+(\\s+\\S+){4}\\s*$",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "umlaute-korrekt",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 120,
+      "system": "Antworte auf Deutsch mit korrekten Umlauten und scharfem s.",
+      "prompt": "Schreibe einen Satz ueber eine Fussgaengerbruecke im Fruehling, in dem die Woerter Brücke, Fußgänger und Frühling in korrekter deutscher Rechtschreibung vorkommen.",
+      "assertions": [
+        {
+          "type": "contains_all",
+          "values": [
+            "Brücke",
+            "Fußgänger",
+            "Frühling"
+          ],
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "Bruecke|Fussgaenger|Fruehling"
+        }
+      ]
+    },
+    {
+      "id": "siezen-durchhalten",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 200,
+      "system": "Sieze konsequent.",
+      "prompt": "Erklaere mir in drei Saetzen, wie ich mein Passwort aendere. Sieze mich dabei durchgehend.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "\\bSie\\b",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "\\b[Dd]u\\b|\\b[Dd]ein(e|en|em|er)?\\b|\\b[Dd]ir\\b|\\b[Dd]ich\\b",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "hoechstens-zwanzig-woerter",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 80,
+      "system": "Antworte mit hoechstens zwanzig Woertern, in einem Satz.",
+      "prompt": "Fasse zusammen: Ein Unternehmen hat im letzten Quartal seinen Umsatz gesteigert, gleichzeitig aber mehr ausgegeben, sodass der Gewinn trotz hoeherer Einnahmen gesunken ist. Hoechstens zwanzig Woerter.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "^\\s*(\\S+\\s+){0,19}\\S+\\s*$",
+          "critical": true
+        },
+        {
+          "type": "matches",
+          "pattern": "Gewinn|gesunken|weniger"
+        }
+      ]
+    },
+    {
+      "id": "genau-drei-punkte",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 150,
+      "system": "Antworte nur mit den drei Zeilen, ohne Einleitung und ohne Schlusssatz.",
+      "prompt": "Nenne drei Vorteile von Fahrradfahren. Gib genau drei Zeilen aus, jede beginnt mit einem Bindestrich und einem Leerzeichen.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "^- [^\\n]+\\n- [^\\n]+\\n- [^\\n]+\\s*$",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "kein-englisch",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 200,
+      "system": "Antworte auf Deutsch, ohne englische Woerter.",
+      "prompt": "Erklaere in zwei Saetzen, was ein Zwischenspeicher in der Datenverarbeitung ist. Benutze dabei kein einziges englisches Wort.",
+      "assertions": [
+        {
+          "type": "not_matches",
+          "pattern": "\\b[Cc]ache\\b|\\b[Bb]uffer\\b|\\b[Mm]emory\\b|\\b[Ss]torage\\b|\\b[Pp]erformance\\b",
+          "critical": true
+        },
+        {
+          "type": "min_length",
+          "value": 40
+        }
+      ]
+    },
+    {
+      "id": "json-das-parst",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 150,
+      "system": "Antworte nur mit gueltigem JSON, ohne Codezaun und ohne Erklaerung.",
+      "prompt": "Gib die Hauptstaedte von Deutschland, Frankreich und Italien als JSON-Objekt aus. Die Schluessel sind die Laendernamen auf Deutsch, die Werte die Hauptstaedte. Nur das JSON, kein Text darum.",
+      "assertions": [
+        {
+          "type": "json_parses",
+          "critical": true
+        },
+        {
+          "type": "contains_all",
+          "values": [
+            "Berlin",
+            "Paris",
+            "Rom"
+          ],
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "zahlwort-ausschreiben",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 40,
+      "system": "Antworte nur mit dem Zahlwort in einem Wort, klein geschrieben.",
+      "prompt": "Schreibe die Zahl 247 als deutsches Zahlwort aus.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "zweihundertsiebenundvierzig",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "indirekte-rede",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 120,
+      "system": "Antworte nur mit dem umgeformten Satz.",
+      "prompt": "Gib diesen Satz in indirekter Rede wieder: Der Sprecher sagte: \"Ich komme morgen und bringe die Unterlagen mit.\"",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "komme|bringe|werde",
+          "critical": true
+        },
+        {
+          "type": "contains_none",
+          "values": [
+            "\"Ich komme morgen"
+          ],
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "stil-knapp-halten",
+      "profile": "default",
+      "weight": 1,
+      "maxTokens": 20,
+      "system": "Antworte mit genau einem Wort.",
+      "prompt": "Antworte auf die Frage in genau einem Wort: Welche Farbe entsteht, wenn man Blau und Gelb mischt?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "^\\s*[Gg]r(ü|ue)n\\.?\\s*$",
+          "critical": true
+        }
+      ]
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "80cf3915a832e8f4cc299afac5720f13740071b924cb3e7f01a5105824172fce"
+  }
+}

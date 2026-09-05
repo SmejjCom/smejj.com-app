@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "con-reasoning-schwer",
+  "version": "1.0.0",
+  "kategorie": "reasoning",
+  "createdAt": "2026-09-05T00:00:00Z",
+  "description": "Mehrschrittiges Rechnen, Logik und Zaehlen. Jede Erwartung ist eine nachgerechnete Zahl oder ein festes Wort.",
+  "eligibleForTraining": false,
+  "budgets": {
+    "minScore": 0.7,
+    "latencyMsP95": 120000,
+    "firstTokenMs": 60000,
+    "maxCasesPerRun": 50
+  },
+  "cases": [
+    {
+      "id": "zinseszins-drei-jahre",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Ein Betrag von 2000 Euro wird drei Jahre lang mit 10 Prozent pro Jahr verzinst. Die Zinsen werden jedes Jahr mitverzinst. Wie viel Euro sind es am Ende?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "2\\.?662",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "2600|2\\.600"
+        }
+      ]
+    },
+    {
+      "id": "gleichungssystem",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit x=<Zahl>, y=<Zahl>.",
+      "prompt": "Loese das Gleichungssystem: 2x + 3y = 19 und x - y = 2. Antworte im Format x=<Zahl>, y=<Zahl>.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "x\\s*=\\s*5",
+          "critical": true
+        },
+        {
+          "type": "matches",
+          "pattern": "y\\s*=\\s*3",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "tage-zwischen-daten",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Wie viele Tage liegen zwischen dem 15. November 2025 und dem 1. Maerz 2026? Der 15. November zaehlt nicht mit, der 1. Maerz zaehlt mit. 2026 ist kein Schaltjahr.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])106([^\\d]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d])(105|107|120)([^\\d]|$)"
+        }
+      ]
+    },
+    {
+      "id": "kombinatorik-auswahl",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Aus 8 verschiedenen Buechern werden 3 ausgewaehlt. Die Reihenfolge spielt keine Rolle. Wie viele verschiedene Auswahlen gibt es?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])56([^\\d]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d])(336|24|512)([^\\d]|$)"
+        }
+      ]
+    },
+    {
+      "id": "prozent-kette",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Ein Artikel kostet 80 Euro. Der Preis wird zuerst um 25 Prozent erhoeht und danach um 20 Prozent gesenkt. Wie viel Euro kostet er jetzt?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])80([^\\d]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d])(84|76|85)([^\\d]|$)"
+        }
+      ]
+    },
+    {
+      "id": "einheiten-umrechnen",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Ein Zug faehrt 72 Kilometer pro Stunde. Wie viele Meter legt er in einer Sekunde zurueck?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])20([^\\d]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d])(72|1200|26)([^\\d]|$)"
+        }
+      ]
+    },
+    {
+      "id": "zahlenfolge",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Setze die Folge fort: 2, 6, 12, 20, 30, ? Welche Zahl kommt als naechstes?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])42([^\\d]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d])(40|38|44)([^\\d]|$)"
+        }
+      ]
+    },
+    {
+      "id": "zaehlen-buchstabe-e",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Wie oft kommt der Buchstabe e in diesem Satz vor? Satz: Der Regen fegt heute gegen die Fenster",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])11([^\\d]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d])(9|10|12|13)([^\\d]|$)"
+        }
+      ]
+    },
+    {
+      "id": "verhaeltnis-raetsel",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 60,
+      "system": "Antworte nur mit der Zahl, ohne Einheit und ohne Erklaerung.",
+      "prompt": "Drei Aepfel wiegen so viel wie zwei Birnen. Sechs Birnen wiegen zusammen ein Kilogramm. Wie viel Gramm wiegen neun Aepfel?",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "(^|[^\\d])1000([^\\d]|$)|(^|[^\\d])1\\.000([^\\d]|$)",
+          "critical": true
+        },
+        {
+          "type": "not_matches",
+          "pattern": "(^|[^\\d])(1500|666|750)([^\\d]|$)"
+        }
+      ]
+    },
+    {
+      "id": "widerspruch-erkennen",
+      "profile": "reasoning",
+      "weight": 1,
+      "maxTokens": 150,
+      "system": "Pruefe die Angaben und sage klar, wenn sie sich widersprechen.",
+      "prompt": "Anna ist zwei Jahre aelter als Ben. Ben ist drei Jahre aelter als Anna. Wie alt ist Anna, wenn Ben 10 ist? Pruefe die Angaben zuerst.",
+      "assertions": [
+        {
+          "type": "matches",
+          "pattern": "widerspr|widerspruch|nicht moeglich|nicht möglich|unmoeglich|unmöglich|schliessen sich aus|schließen sich aus",
+          "critical": true
+        }
+      ]
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "0a0a4cf22782c0019aebb6eff6e388288987de4cb962785b7d1d1926b67738d9"
+  }
+}

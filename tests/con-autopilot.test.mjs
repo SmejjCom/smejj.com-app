@@ -119,7 +119,8 @@ test("budget: ohne Freigabe nie, Tages- und Gesamtdeckel greifen", () => {
 });
 
 test("tarball: Buendel enthaelt alle Job-Dateien und ist gueltiges gzip", () => {
-  const b = baueBuendel(path.join(ROOT, "workers/con-autopilot/salad-job"));
+  const b = baueBuendel(path.join(ROOT, "workers/con-autopilot/salad-job"),
+    { zusatz: { suites: path.join(ROOT, "workers/con-autopilot/suites") } });
   assert.ok(b.dateien.includes("job.py") && b.dateien.includes("suites/con-sicherheit-v1.json"));
   assert.ok(b.bytes > 1000 && b.bytes < 400_000);
   assert.equal(Buffer.from(b.b64, "base64")[0], 0x1f);
@@ -354,6 +355,7 @@ test("verwaister Container: laeuft die Gruppe ohne gefuehrten Job, wird sie gest
     erzeuge: async () => ({ ok: true, status: 201 })
   };
   const konfig = { jobDir: path.join(ROOT, "workers/con-autopilot/salad-job"),
+    suitesDir: path.join(ROOT, "workers/con-autopilot/suites"),
     salad: { gruppe: "con-job", organisation: "o", projekt: "p", apiKey: "k", image: "i", vcpu: 8, ramMb: 1024, gpuKlassen: ["a"], speicherGb: 10, prioritaet: "batch" },
     basis: { repo: "r", prefix: "p" } };
   const r = await bereiteJobVor({ client, konfig, e2: { endpoint: "e", region: "r", bucket: "b", accessKey: "a", secretKey: "s" },
@@ -420,4 +422,104 @@ test("Eine alte Startsperre faerbt die Wache nicht dauerhaft rot", async () => {
   const z = await tick({ konfig, e2, salad: null, log: () => {} });
   assert.equal(z.startBlockiert, undefined, "ohne anstehenden Start darf keine Sperrmeldung stehen bleiben");
   assert.equal(gespeichert?.startBlockiert, undefined, "auch der gespeicherte Zustand muss sauber sein");
+});
+
+test("Jeder Behauptungstyp in den Suiten ist der Bewertung bekannt", async () => {
+  // Am 05.09. schrieb ich beim Bau der schweren Suiten fuenfmal "not_contains".
+  // Diesen Typ gibt es nicht — er heisst contains_none. Die Bewertung wirft bei
+  // einem unbekannten Typ keinen Fehler, sie zaehlt die Behauptung einfach als
+  // nicht bestanden. Ein Tippfehler im Suitennamen waere damit ein Fall, den
+  // kein Modell je bestehen kann: die Note waere dauerhaft gedeckelt und
+  // niemand saehe warum.
+  const { readdir, readFile } = await import("node:fs/promises");
+  const dir = path.join(ROOT, "workers/con-autopilot/suites");
+  const ERLAUBT = new Set(["contains_all", "contains_any", "contains_none", "matches", "not_matches",
+    "min_length", "max_length", "json_parses", "max_latency_ms", "code_tests"]);
+  const unbekannt = [];
+  for (const name of (await readdir(dir)).filter((n) => n.endsWith(".json"))) {
+    const suite = JSON.parse(await readFile(path.join(dir, name), "utf8"));
+    for (const fall of suite.cases || []) {
+      for (const a of fall.assertions || []) {
+        if (!ERLAUBT.has(a.type)) unbekannt.push(`${name}/${fall.id}: ${a.type}`);
+      }
+    }
+  }
+  assert.deepEqual(unbekannt, [], "unbekannte Behauptungstypen sind unbestehbare Faelle");
+});
+
+test("Jeder Fall hat mindestens eine Behauptung und eine eindeutige Kennung", async () => {
+  // Ein Fall ohne Behauptung bekommt score 0 (assertions.length ist 0) — er
+  // zieht die Note herunter, ohne irgendetwas zu pruefen. Doppelte Kennungen
+  // ueberschreiben sich in der Fall-Landkarte der Bewertung.
+  const { readdir, readFile } = await import("node:fs/promises");
+  const dir = path.join(ROOT, "workers/con-autopilot/suites");
+  const leer = [];
+  const gesehen = new Map();
+  for (const name of (await readdir(dir)).filter((n) => n.endsWith(".json"))) {
+    const suite = JSON.parse(await readFile(path.join(dir, name), "utf8"));
+    assert.ok(suite.suiteId && suite.kategorie, `${name} braucht suiteId und kategorie`);
+    for (const fall of suite.cases || []) {
+      if (!(fall.assertions || []).length) leer.push(`${name}/${fall.id}`);
+      const schluessel = `${suite.suiteId}/${fall.id}`;
+      assert.equal(gesehen.get(schluessel), undefined, `Kennung doppelt: ${schluessel}`);
+      gesehen.set(schluessel, name);
+    }
+  }
+  assert.deepEqual(leer, [], "Faelle ohne Behauptung zaehlen als Fehlschlag, pruefen aber nichts");
+});
+
+test("Das Job-Buendel traegt genau die Suiten aus dem einen Quellverzeichnis", async () => {
+  // Bis zum 05.09. lag unter salad-job/suites eine zweite Kopie der Pruefsuiten.
+  // Sie war zufaellig gleich. Wer nur eine Seite pflegt, bekommt einen Job, der
+  // alte Faelle beantwortet, waehrend die Bewertung neue erwartet — das Ergebnis
+  // ist eine Liste "fall_unbekannt" statt einer Note, und die Ursache sieht man
+  // dem Messlauf nicht an.
+  const { baueBuendel } = await import("../workers/con-autopilot/tarball.js");
+  const { readdir } = await import("node:fs/promises");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const jobDir = path.join(ROOT, "workers/con-autopilot/salad-job");
+  const erwartet = (await readdir(suitesDir)).filter((n) => n.endsWith(".json")).sort();
+  const b = baueBuendel(jobDir, { zusatz: { suites: suitesDir } });
+  const imBuendel = b.dateien.filter((n) => n.startsWith("suites/")).map((n) => n.slice("suites/".length)).sort();
+  assert.deepEqual(imBuendel, erwartet, "Buendel und Quellverzeichnis muessen deckungsgleich sein");
+  assert.equal(new Set(b.dateien).size, b.dateien.length, "keine Datei darf doppelt im Buendel liegen");
+  const jobDateien = b.dateien.filter((n) => !n.includes("/"));
+  for (const pflicht of ["job.py", "train.py", "evalrun.py", "e2.py", "mirror.py"]) {
+    assert.ok(jobDateien.includes(pflicht), `${pflicht} fehlt im Buendel`);
+  }
+});
+
+test("Ohne Suiten-Verzeichnis wird kein Job vorbereitet", async () => {
+  // Ein Buendel ohne Pruefsuiten wuerde einen Messlauf starten, der nichts misst,
+  // und dafuer die volle Jobmiete kosten. Fail-closed mit klarem Grund.
+  const { bereiteJobVor } = await import("../workers/con-autopilot/salad.js");
+  const client = { holen: async () => ({ ok: false, status: 404, daten: {} }), erzeuge: async () => ({ ok: true, status: 201 }) };
+  const konfig = { jobDir: path.join(ROOT, "workers/con-autopilot/salad-job"),
+    salad: { gruppe: "con-job", organisation: "o", projekt: "p", apiKey: "k", image: "i", vcpu: 8, ramMb: 1024, gpuKlassen: ["a"], speicherGb: 10, prioritaet: "batch" },
+    basis: { repo: "r", prefix: "p" } };
+  const r = await bereiteJobVor({ client, konfig, e2: { endpoint: "e", region: "r", bucket: "b", accessKey: "a", secretKey: "s" },
+    jobId: "j", modus: "messung", parameter: {}, maxMinuten: 10, log: () => {} });
+  assert.equal(r.ok, false);
+  assert.deepEqual(r.gruende, ["suites_verzeichnis_fehlt"]);
+});
+
+test("Regressionslauf schreibt die neue Note WIRKLICH ins Register", async () => {
+  // Live am 05.09.: con-1.3 wurde gegen die neue schwere Latte gemessen (0,9219
+  // statt 1,0). Die Note landete nie im Register, weil trageKandidatEin bei einer
+  // schon vorhandenen Version ein losgeloestes Objekt zurueckgab. Der Planer hielt
+  // die Latte weiter fuer veraltet und startete denselben Messlauf immer wieder —
+  // zwei Laeufe zu je rund 90 Minuten, bevor es auffiel.
+  const { trageKandidatEin } = await import("../workers/con-autopilot/registry.js");
+  const registry = { versions: [{ version: "con-1.3", status: "stable", benchmarks: { gesamt: 1, suitenStand: { alt: "a" } } }] };
+  const eintrag = trageKandidatEin(registry, { version: "con-1.3", jobId: "j2" });
+  eintrag.status = "stable";
+  eintrag.benchmarks = { gesamt: 0.9219, kritisch: 10, suitenStand: { neu: "b" } };
+  const imRegister = registry.versions.find((v) => v.version === "con-1.3");
+  assert.equal(imRegister.benchmarks.gesamt, 0.9219, "die neue Note muss im Register stehen, nicht in einer Kopie");
+  assert.deepEqual(imRegister.benchmarks.suitenStand, { neu: "b" }, "ohne neuen suitenStand misst der Planer endlos weiter");
+  assert.equal(imRegister.jobId, "j2");
+  // Eine neue Version wird weiterhin angehaengt und ist ebenfalls dieselbe Referenz.
+  const frisch = trageKandidatEin(registry, { version: "con-1.4", jobId: "j3" });
+  frisch.benchmarks = { gesamt: 0.5 };
+  assert.equal(registry.versions.find((v) => v.version === "con-1.4").benchmarks.gesamt, 0.5);
 });

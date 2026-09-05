@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "con-coding-schwer",
+  "version": "1.0.0",
+  "kategorie": "coding",
+  "createdAt": "2026-09-05T00:00:00Z",
+  "description": "Ausfuehrbare Aufgaben: jede Antwort wird als Code in einer Sandbox gegen echte Zusicherungen gefahren.",
+  "eligibleForTraining": false,
+  "budgets": {
+    "minScore": 0.7,
+    "latencyMsP95": 120000,
+    "firstTokenMs": 60000,
+    "maxCasesPerRun": 50
+  },
+  "cases": [
+    {
+      "id": "js-roemisch",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion roemischZuZahl(s), die eine roemische Zahl als String in eine Zahl umwandelt. Beispiel: MCMXCIV ergibt 1994. Definiere nur die Funktion, exportiere nichts.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(roemischZuZahl(\"MCMXCIV\"), 1994); assert.strictEqual(roemischZuZahl(\"IX\"), 9); assert.strictEqual(roemischZuZahl(\"LVIII\"), 58); assert.strictEqual(roemischZuZahl(\"III\"), 3);"
+        }
+      ]
+    },
+    {
+      "id": "js-tief-flach",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion flach(liste), die ein beliebig tief verschachteltes Array zu einem flachen Array macht. Die Reihenfolge bleibt erhalten. Definiere nur die Funktion, exportiere nichts. Benutze nicht Array.prototype.flat.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.deepStrictEqual(flach([1,[2,[3,[4]]],5]), [1,2,3,4,5]); assert.deepStrictEqual(flach([]), []); assert.deepStrictEqual(flach([[],[[]]]), []); assert.deepStrictEqual(flach([1,[],2]), [1,2]);"
+        }
+      ]
+    },
+    {
+      "id": "js-gruppieren",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion gruppiere(liste, schluesselFn), die ein Array anhand des von schluesselFn gelieferten Schluessels in ein Objekt gruppiert. Die Werte sind Arrays in der urspruenglichen Reihenfolge. Definiere nur die Funktion, exportiere nichts.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.deepStrictEqual(gruppiere([1,2,3,4], (n) => n % 2 === 0 ? \"gerade\" : \"ungerade\"), {ungerade:[1,3], gerade:[2,4]}); assert.deepStrictEqual(gruppiere([], (x)=>x), {});"
+        }
+      ]
+    },
+    {
+      "id": "js-intervalle",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 450,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion vereine(intervalle), die eine Liste von Intervallen [start, ende] zusammenfasst, wenn sie sich ueberlappen oder beruehren. Das Ergebnis ist nach Start sortiert. Definiere nur die Funktion, exportiere nichts.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.deepStrictEqual(vereine([[1,3],[2,6],[8,10],[15,18]]), [[1,6],[8,10],[15,18]]); assert.deepStrictEqual(vereine([[1,4],[4,5]]), [[1,5]]); assert.deepStrictEqual(vereine([]), []);"
+        }
+      ]
+    },
+    {
+      "id": "js-binaere-suche",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion suche(sortiert, ziel), die den Index von ziel in einem aufsteigend sortierten Array per binaerer Suche zurueckgibt, oder -1 wenn es fehlt. Definiere nur die Funktion, exportiere nichts. Benutze nicht indexOf.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(suche([1,3,5,7,9,11], 7), 3); assert.strictEqual(suche([1,3,5], 4), -1); assert.strictEqual(suche([], 1), -1); assert.strictEqual(suche([2], 2), 0);"
+        }
+      ]
+    },
+    {
+      "id": "js-palindrom-streng",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion istPalindrom(text), die pruefe, ob ein Text vorwaerts und rueckwaerts gleich ist. Gross- und Kleinschreibung, Leerzeichen und Satzzeichen werden ignoriert. Definiere nur die Funktion, exportiere nichts.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(istPalindrom(\"Erika feuert nur untreue Fakire\"), true); assert.strictEqual(istPalindrom(\"Hallo Welt\"), false); assert.strictEqual(istPalindrom(\"\"), true); assert.strictEqual(istPalindrom(\"A man, a plan, a canal: Panama\"), true);"
+        }
+      ]
+    },
+    {
+      "id": "js-fehler-werfen",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion teile(a, b), die a durch b teilt. Ist b gleich 0, wirft sie einen Error mit der Nachricht Division durch null. Sind a oder b keine Zahlen, wirft sie einen TypeError. Definiere nur die Funktion, exportiere nichts.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(teile(6,3), 2); assert.throws(() => teile(1,0), /Division durch null/); assert.throws(() => teile(\"a\",1), TypeError);"
+        }
+      ]
+    },
+    {
+      "id": "js-zaehler-abschluss",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 400,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion macheZaehler(start), die ein Objekt mit den Methoden hoch(), runter() und wert() liefert. hoch und runter aendern den Zaehler um eins und geben den neuen Wert zurueck. Zwei Zaehler duerfen sich nicht gegenseitig beeinflussen. Definiere nur die Funktion, exportiere nichts.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "const a = macheZaehler(0); const b = macheZaehler(10); assert.strictEqual(a.hoch(), 1); assert.strictEqual(a.hoch(), 2); assert.strictEqual(b.runter(), 9); assert.strictEqual(a.wert(), 2); assert.strictEqual(b.wert(), 9);"
+        }
+      ]
+    },
+    {
+      "id": "js-tiefer-vergleich",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 450,
+      "system": "Du bist ein Programmierassistent. Antworte mit genau einem JavaScript-Codeblock (```js ... ```), keine Erklaerung.",
+      "prompt": "Schreibe eine Funktion gleich(a, b), die zwei beliebig verschachtelte Werte aus Zahlen, Strings, Arrays und einfachen Objekten tief vergleicht. Definiere nur die Funktion, exportiere nichts. Benutze nicht JSON.stringify.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(gleich({a:[1,{b:2}]}, {a:[1,{b:2}]}), true); assert.strictEqual(gleich({a:1}, {a:1,b:2}), false); assert.strictEqual(gleich([1,2], [2,1]), false); assert.strictEqual(gleich(1, \"1\"), false);"
+        }
+      ]
+    },
+    {
+      "id": "js-fehlerhaften-code-finden",
+      "profile": "coding",
+      "weight": 1,
+      "maxTokens": 450,
+      "system": "Du bist ein Programmierassistent. Erklaere in genau einem Satz und gib danach genau einen JavaScript-Codeblock (```js ... ```) aus.",
+      "prompt": "Dieser Code soll das groesste Element eines Arrays liefern, hat aber einen Fehler:\n\n```js\nfunction groesstes(liste) {\n  let max = 0;\n  for (const x of liste) if (x > max) max = x;\n  return max;\n}\n```\n\nNenne den Fehler in einem Satz und gib die korrigierte Funktion als JavaScript-Codeblock aus. Bei leerem Array soll sie null liefern.",
+      "assertions": [
+        {
+          "type": "code_tests",
+          "language": "js",
+          "critical": true,
+          "tests": "assert.strictEqual(groesstes([-5,-2,-9]), -2); assert.strictEqual(groesstes([]), null); assert.strictEqual(groesstes([1,7,3]), 7);"
+        }
+      ]
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "json-key-sort-v1",
+    "contentSha256": "18ebf4cf80c7fc1823528730b705dbca91e93f6d8957f79ea4343ffdb647ed9d"
+  }
+}
