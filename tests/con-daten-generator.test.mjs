@@ -208,3 +208,31 @@ test("Nachfrage-Antworten fragen wirklich nach und erfinden nichts", async () =>
     assert.doesNotMatch(a, /unbekannt|beispiel@|test@|platzhalter/i, `erfundener Platzhalter statt Nachfrage: ${a}`);
   }
 });
+
+test("Die ersten 700 Zeilen — was das Training WIRKLICH sieht — tragen alle vier Bereiche", async () => {
+  // Ein Trainingslauf nimmt nur den Anfang des Datensatzes (maxZeilen: 700).
+  // Am 04.09. waren das 700 Rechenaufgaben und null Sicherheit; con 1.1 verlor
+  // dadurch sein Ablehnungsverhalten und fiel von 97,2 auf 81,9 Prozent.
+  // Der Misch-Test oben prueft die Funktion mit erfundenen Daten. Dieser hier
+  // prueft den ECHTEN Datensatz, so wie er hochgeladen wird.
+  const { createHash } = await import("node:crypto");
+  const g = await import("../workers/con-autopilot/daten/generator.mjs");
+  const { baueDatensatz, mische } = await import("../workers/con-autopilot/daten.js");
+  const roh = g.erzeuge({ startwert: 20260906, reasoning: 900, sicherheit: 250, sprache: 150,
+    gleichungen: 250, zaehlenImSatz: 250, wortzahl: 200, siezen: 150, nachfragen: 300 });
+  const schluessel = (m) => createHash("sha256").update(JSON.stringify(m.map((x) => [x.role, x.content]))).digest("hex");
+  const kategorie = new Map(roh.map((p) => [schluessel(p.messages), p.kategorie]));
+  const { paare } = baueDatensatz(roh.map((p) => ({ messages: p.messages })), {
+    suiten: [], maxVarianten: 8, maxVariantenZahl: 80, angriffeErlaubt: true, mindestAntwortLaenge: 1 });
+  const kopf = mische(paare).slice(0, Math.min(700, paare.length));
+  const zaehlung = {};
+  for (const p of kopf) { const k = kategorie.get(schluessel(p.messages)) || "unbekannt"; zaehlung[k] = (zaehlung[k] || 0) + 1; }
+  for (const bereich of ["reasoning", "sprache", "sicherheit", "werkzeuge"]) {
+    assert.ok((zaehlung[bereich] || 0) > 0, `${bereich} fehlt im trainierten Anfang: ${JSON.stringify(zaehlung)}`);
+  }
+  // Sicherheit ist der Bereich, der beim Wegfallen am teuersten war. Untergrenze
+  // bewusst niedrig, aber niemals null oder ein Alibi-Anteil.
+  const anteilSicherheit = (zaehlung.sicherheit || 0) / kopf.length;
+  assert.ok(anteilSicherheit >= 0.04, `nur ${(anteilSicherheit * 100).toFixed(1)} % Sicherheit im trainierten Anfang`);
+  assert.equal(zaehlung.unbekannt, undefined, "jedes Paar muss einem Bereich zuzuordnen sein");
+});
