@@ -126,7 +126,16 @@ export async function bereiteJobVor({ client, konfig, e2, jobId, modus, paramete
     return { ok: false, gruende: [`gruppe_lesen_${vorhanden.status}`] };
   } else {
     const zustand = vorhanden.daten?.current_state?.status;
-    if (zustand && zustand !== "stopped" && zustand !== "failed") return { ok: false, gruende: [`gruppe_nicht_gestoppt:${zustand}`] };
+    if (zustand && zustand !== "stopped" && zustand !== "failed") {
+      // VERWAISTER CONTAINER: die Gruppe laeuft, aber der Autopilot fuehrt keinen Job dazu.
+      // Am 05.09. blockierte genau das den Kreislauf ueber vier Stunden — und ein Container,
+      // den niemand fuehrt, kostet trotzdem Miete. Einmal stoppen und beim naechsten Takt
+      // neu ansetzen ist immer richtig: ein Job, der noch laeuft, wird nie hierher geleitet
+      // (der Kreislauf beobachtet ihn dann und plant gar nicht erst).
+      log(`Gruppe laeuft ohne gefuehrten Job (${zustand}) — verwaister Container, wird gestoppt`);
+      const s = await client.stoppe();
+      return { ok: false, gruende: [`verwaister_container_gestoppt:${zustand}:http_${s.status}`] };
+    }
     // WICHTIG: environment_variables wird als Ganzes ERSETZT (Lehre Salad/Zeabur 2026-08) — darum immer die komplette Liste.
     const r = await client.aktualisiere({ container: { environment_variables: env, command: STARTBEFEHL,
       resources: { cpu: konfig.salad.vcpu, memory: konfig.salad.ramMb, gpu_classes: konfig.salad.gpuKlassen,

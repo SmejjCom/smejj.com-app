@@ -206,13 +206,25 @@ def hole_aus_e2(prefix, arbeitsverzeichnis, status, parallel=None):
 
     def _hole(d):
         ziel = os.path.join(arbeitsverzeichnis, d["name"])
-        try:
-            e2.lade_herunter(manifest["prefix"] + d["name"], ziel)
-            if os.path.getsize(ziel) != d["size"]:
-                raise RuntimeError(f"Download unvollstaendig: {d['name']}")
-        except Exception as f:  # noqa: BLE001 — Fehler eines Strangs darf die anderen nicht verschlucken
+        # Netzfehler beim Holen sind normal, nicht endgueltig: am 05.09. starb ein ganzer
+        # Trainingslauf an einem einzelnen "[SYS] unknown error (_ssl.c:2580)" mitten in
+        # 55 GB. Ein zweiter und dritter Versuch kostet Sekunden, ein neuer Lauf Stunden.
+        letzter = None
+        for versuch in range(1, 5):
+            try:
+                e2.lade_herunter(manifest["prefix"] + d["name"], ziel)
+                if os.path.getsize(ziel) != d["size"]:
+                    raise RuntimeError(f"Download unvollstaendig: {d['name']}")
+                break
+            except Exception as f:  # noqa: BLE001 — Fehler eines Strangs darf die anderen nicht verschlucken
+                letzter = f
+                if versuch < 4:
+                    time.sleep(min(30, 5 * versuch))
+        else:
+            letzter = letzter or RuntimeError("unbekannt")
+        if letzter is not None and not (os.path.exists(ziel) and os.path.getsize(ziel) == d["size"]):
             with sperre:
-                fehler.append(f"{d['name']}: {str(f)[:200]}")
+                fehler.append(f"{d['name']}: {str(letzter)[:200]}")
             return
         with sperre:
             fertig[0] += 1

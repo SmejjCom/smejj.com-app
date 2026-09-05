@@ -343,3 +343,22 @@ test("Trainingsziel ist die Schwaeche der STABILEN Version, nicht die des verwor
   assert.equal(plan.schritt, "training");
   assert.equal(plan.schwaeche.kategorie, "reasoning", "die Schwaeche des gefuehrten Standes zaehlt");
 });
+
+test("verwaister Container: laeuft die Gruppe ohne gefuehrten Job, wird sie gestoppt", async () => {
+  const { bereiteJobVor } = await import("../workers/con-autopilot/salad.js");
+  let gestoppt = false;
+  const client = {
+    lese: async () => ({ ok: true, status: 200, daten: { current_state: { status: "running" } } }),
+    stoppe: async () => { gestoppt = true; return { ok: true, status: 202 }; },
+    aktualisiere: async () => ({ ok: true, status: 200 }),
+    erzeuge: async () => ({ ok: true, status: 201 })
+  };
+  const konfig = { jobDir: path.join(ROOT, "workers/con-autopilot/salad-job"),
+    salad: { gruppe: "con-job", organisation: "o", projekt: "p", apiKey: "k", image: "i", vcpu: 8, ramMb: 1024, gpuKlassen: ["a"], speicherGb: 10, prioritaet: "batch" },
+    basis: { repo: "r", prefix: "p" } };
+  const r = await bereiteJobVor({ client, konfig, e2: { endpoint: "e", region: "r", bucket: "b", accessKey: "a", secretKey: "s" },
+    jobId: "j", modus: "messung", parameter: {}, maxMinuten: 10, log: () => {} });
+  assert.equal(r.ok, false, "kein Start, solange etwas Fremdes laeuft");
+  assert.equal(gestoppt, true, "der verwaiste Container MUSS gestoppt werden, sonst laeuft er auf Kosten weiter");
+  assert.match(r.gruende[0], /verwaister_container_gestoppt/);
+});
