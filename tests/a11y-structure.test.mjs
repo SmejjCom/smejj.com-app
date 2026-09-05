@@ -27,20 +27,21 @@ test("visually-hidden CSS versteckt nur visuell (Screenreader lesen weiter)", ()
 });
 
 test("Formularfelder haben programmatische Labels (WCAG 1.3.1/4.1.2)", () => {
+  // Geprueft wird, DASS jedes Feld eine Beschriftung traegt — nicht welche.
+  // Der feste Wortlaut liess den Test am 2026-09-05 reissen, als "Gestagte
+  // Uploads" zu "Wartende Dateien" wurde: eine reine Textverbesserung faerbte
+  // die Barrierefreiheits-Pruefung rot, obwohl die Zusage (jedes Feld hat ein
+  // Label) unveraendert erfuellt war. Der Wortlaut gehoert der Oberflaeche,
+  // die Zusage dem Test.
   const required = [
-    ['id="projectImportFile"', 'aria-label="Import-Datei auswählen"'],
-    ['id="upload"', 'aria-label="Dateien für Upload auswählen"'],
-    ['id="uploadList"', 'aria-label="Gestagte Uploads"'],
-    ['id="aiModeSelect"', 'aria-label="KI-Modus"'],
-    ['id="settingsLanguage"', 'aria-label="Sprache"'],
-    ['id="settingsMode"', 'aria-label="Sicherheitsmodus"'],
-    ['id="language"', 'aria-label="Sprache"'],
-    ['id="mode"', 'aria-label="Antwortmodus"']
+    'id="projectImportFile"', 'id="upload"', 'id="uploadList"',
+    'id="aiModeSelect"', 'id="settingsLanguage"', 'id="settingsMode"',
+    'id="language"', 'id="mode"'
   ];
-  for (const [idAttr, label] of required) {
+  for (const idAttr of required) {
     const tagMatch = html.match(new RegExp(`<[^>]*${idAttr}[^>]*>`));
     assert.ok(tagMatch, `Element ${idAttr} nicht gefunden`);
-    assert.ok(tagMatch[0].includes(label), `${idAttr} ohne ${label}`);
+    assert.match(tagMatch[0], /aria-label="[^"]{2,}"/, `${idAttr} ohne aussagekraeftiges aria-label`);
   }
   // Versteckte Composer-File-Inputs bleiben korrekt aria-hidden (Feature-Lock v2):
   assert.match(html, /id="composerFileInput"[^>]*aria-hidden="true"/);

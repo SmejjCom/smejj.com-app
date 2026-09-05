@@ -12,7 +12,7 @@
   },
   "sources": {
     "scripts/branding/generate-brand-assets.mjs": "8136f5009d0cc7862cff3c52e18245376e88586054b24a16c14b313caf43f6c4",
-    "scripts/i18n/generate-language-pages.mjs": "576f7bebd5b639c2620eb0b6c3b7ab00e057405270af2755c91de49f28f5eb2b",
+    "scripts/i18n/generate-language-pages.mjs": "39072214906095505c0aacd74ec5eaa4d69f8be07213e60588644e3d83ac405b",
     "scripts/i18n/locales.json": "4a7fd4453389d3d3162d61b53c284bba9150c70cac40dc5c6d0f6eb80ff5aff7"
   },
   "htmlHeadReferences": {
@@ -343,5 +343,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "nachtrag": "sources-Pruefsumme 2026-09-05 nachgezogen: EINE Zeile in generate-language-pages.mjs (Cache-Marke voice-landing.js blitz-20260726 -> emojifrei-20260825x), weil die 14 Sprachseiten ein anderes Modul luden als die deutsche Seite. Favicons selbst nachweislich unberuehrt: assets, htmlHeadReferences und webManifestIcons byte-identisch. Betreiber-Freigabe 2026-09-05."
 }
