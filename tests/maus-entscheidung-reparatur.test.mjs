@@ -157,9 +157,37 @@ test("eine Adresse ohne Schema wird erkannt — Text ohne Punkt bleibt Text", ()
 test("eine Ablehnung nennt den Vorschlag des Modells (Aktion und Felder)", async () => {
   const v = validateLoopDecision(act({ id: "s1", action: "navigate", ziel: "irgendwas ohne Adresse" }), POLICY);
   assert.equal(v.ok, false);
-  assert.deepEqual(v.vorschlag, { decision: "act", action: "navigate", felder: ["id", "action", "ziel"] });
+  assert.equal(v.vorschlag.action, "navigate");
+  assert.deepEqual(v.vorschlag.felder, ["id", "action", "ziel"]);
   const { res } = await lauf([act({ id: "s1", action: "navigate", ziel: "x" }), act({ id: "s1", action: "navigate", ziel: "x" })]);
   assert.equal(res.statusCode, 422);
   assert.equal(res.body.vorschlag.action, "navigate");
   assert.ok(Array.isArray(res.body.repariert));
+});
+
+// LIVE-MITSCHNITT 06.09.: extract mit id/action/target/name abgelehnt, Meldung sprach von url.
+test("Selektor-Kurzformen werden zur Schema-Form: selector-String, css/text/role-Kurzform", () => {
+  const a = validateLoopDecision(act({ id: "s1", action: "extract", name: "titel", target: { selector: "h1" } }), POLICY);
+  assert.equal(a.ok, true, JSON.stringify(a));
+  assert.deepEqual(a.decision.step.target, { strategy: "css", value: "h1" });
+  const b = validateLoopDecision(act({ id: "s1", action: "extract", name: "titel", target: { css: "h1" } }), POLICY);
+  assert.equal(b.ok, true, JSON.stringify(b));
+  const c = validateLoopDecision(act({ id: "s1", action: "extract", name: "titel", target: { role: "heading", name: "Example Domain" } }), POLICY);
+  assert.equal(c.ok, true, JSON.stringify(c));
+  assert.deepEqual(c.decision.step.target, { strategy: "role", value: "heading", name: "Example Domain" });
+  const d = validateLoopDecision(act({ id: "s1", action: "click", target: { selector: "Weiter" } }), POLICY);
+  assert.equal(d.ok, true, JSON.stringify(d));
+  assert.deepEqual(d.decision.step.target, { selector: { strategy: "text", value: "Weiter" } });
+  const e = validateLoopDecision(act({ id: "s1", action: "extract", name: "titel", target: "h1" }), POLICY);
+  assert.equal(e.ok, true, JSON.stringify(e));
+});
+
+test("die Ablehnung nennt zuerst den praezisen Grund fuer die vorgeschlagene Aktion", () => {
+  const ohneName = validateLoopDecision(act({ id: "s1", action: "extract", target: { strategy: "css", value: "h1" } }), POLICY);
+  assert.equal(ohneName.ok, false);
+  assert.match(ohneName.errors[0], /^Pflichtfeld fehlt fuer extract: name$/);
+  const kaputt = validateLoopDecision(act({ id: "s1", action: "extract", name: "t", target: { irgendwas: 1 } }), POLICY);
+  assert.equal(kaputt.ok, false);
+  assert.match(kaputt.errors[0], /target unbrauchbar fuer extract: erwartet \{strategy,value\}, erhalten Felder irgendwas/);
+  assert.deepEqual(kaputt.vorschlag.target, { felder: ["irgendwas"], selector: "undefined" });
 });
