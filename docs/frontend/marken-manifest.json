@@ -54,8 +54,8 @@
       "finger": "f5f01394ee4dab0a"
     },
     "sendepfad-nachladen.js": {
-      "marke": "7",
-      "finger": "4aab4f35790a8d43"
+      "marke": "8",
+      "finger": "bd43d51c98a29ef0"
     },
     "panel-backdrop.js": {
       "marke": "panel-backdrop-20260803",
@@ -134,16 +134,16 @@
       "finger": "38c2e56e6db67c0a"
     },
     "browser-pane.js": {
-      "marke": "browser-pane-20260905-8",
-      "finger": "42d7d5c9c51f076c"
+      "marke": "browser-pane-20260906-1",
+      "finger": "0308f6a434d95dd8"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
       "finger": "3144f0486fe13e2f"
     },
     "maus-panel.js": {
-      "marke": "17",
-      "finger": "f0aacdebc207ad72"
+      "marke": "18",
+      "finger": "95cdbdfbc4f34b9a"
     },
     "browser-pane-render.js": {
       "marke": "browser-pane-20260905-5",
@@ -200,6 +200,10 @@
     "browser-pane-nachrichten.js": {
       "marke": "browser-pane-20260709-2",
       "finger": "92bcd41688bb541b"
+    },
+    "browser-pane-zoom.js": {
+      "marke": "1",
+      "finger": "348314e5231ececa"
     },
     "chat-messages.js": {
       "marke": "2",
@@ -350,8 +354,8 @@
       "finger": "0667a98555341525"
     },
     "app.js": {
-      "marke": "b140",
-      "finger": "921b82ddd1de7e19"
+      "marke": "b141",
+      "finger": "20d1624d164224b9"
     },
     "pwa-schnellstart.js": {
       "marke": "6",
@@ -362,8 +366,8 @@
       "finger": "6f800a67c611704d"
     },
     "browser-nachladen.js": {
-      "marke": "5",
-      "finger": "b21f602ecee7e651"
+      "marke": "6",
+      "finger": "e702513d183b5e45"
     },
     "view-chrome.js": {
       "marke": "view-chrome-20260716-2",
@@ -402,8 +406,8 @@
       "finger": "80e0ae4f88643d95"
     },
     "maus-absicht.js": {
-      "marke": "23",
-      "finger": "d5b9888f7209e873"
+      "marke": "24",
+      "finger": "fe2791e43e6ac1b5"
     },
     "maus-replay.js": {
       "marke": "maus-replay-20260715-3",
