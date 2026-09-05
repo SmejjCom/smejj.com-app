@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T12:06:15.810Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'teste ganze App im Simulator von A bis Z'. Auf dem iPhone-Simulator (iPhone 17 Pro, iOS 26.5, 402 pt) gemessen: Die Symbol-Schwelle der Werkzeugzeile lag bei 390 px und damit UNTER den gaengigen iPhones (393 bis 430). Bei 402 pt wurden die Textpillen gequetscht statt ersetzt — 'Nachdenken' brauchte 81 px und bekam 6 (sichtbar blieb ein 'N'), der Modell-Chip brauchte 70 und bekam 44 ('smejj' statt 'smejj 1.0'). Geaendert: public/composer-zeile.js — Schwelle auf 430 px, Modell-Chip width:auto (ghost-button setzte ein festes width:30px), Abstandhalter darf schrumpfen. Service-Worker v768.",
+  "frozenAt": "2026-09-05T13:16:11.652Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'teste ganze App im Simulator von A bis Z'. AM GERAET GEFUNDEN (iPhone 17 Pro, iOS 26.5, Systemmodus HELL): Die Startseite blieb dunkel, alle anderen Bereiche kippten auf hell — resolvedTheme() wird nur auf .view:not(#start) angewendet. Ergebnis: weisse Einstellungen mit hellgrauer Schrift auf weissem Grund, Unterzeilen praktisch unlesbar. Auf dem Betreiber-Mac (dunkel) war es nie sichtbar. Geaendert: public/settings-runtime.js — Vorgabewert theme von 'system' auf 'dark'; alle drei Einstellungen bleiben waehlbar. Marken settings-runtime b40, settings-surface b63, premium-surfaces b47t, app.js b136, SW v769.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "356f14101b1c2e7d1194c01c487a165e6757972d28b9d611f00bf45369fe8d0a",
+    "public/index.html": "3eeb08ee4633e722078875a74d046025f124519a050268de7b4d84fc02ac4765",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,11 +13,11 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "e6f5b757b739f4ca02495c9cc6f63d15bfd44ffc38f6fee4eee03f22070e167d",
+    "public/app.js": "ddd8e494cf033ce3620207fb94c0b7b66eeb2f7a4012a289c2c69a42b8cbef38",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
-    "public/premium-surfaces.js": "0ca8c19dc2def88e065df664dac1eae25c0d8d7d3a6409562aba59b58bdb36b9",
+    "public/premium-surfaces.js": "5cfd7fcd668b061172c462332c22c8dba3072f2dee1b3317d7f13e51751c93c9",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "4bb8257fb20f3cec0863b72d7a4cfb75125cd68b61521481c41f993ea22be41e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "18484b8b7444ebd2012f06b97f02f34b366772cf422964acd6f39d1fffca412d",
+    "public/sw.js": "9f17fcab1bf3d07dc6b74611456e11a023589b41ba319901dde3c6f245e7a91b",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }

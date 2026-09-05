@@ -4,6 +4,7 @@
 // traegt die Konto-Anweisungen, fail-safe bei kaputtem Speicher.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 // localStorage-Attrappe VOR dem Modul-Import bereitstellen (Node hat keins).
 const store = new Map();
@@ -44,4 +45,19 @@ test("chatClient nutzt den Praeferenz-Block im System-Prompt", async () => {
   const source = fs.readFileSync("public/ai/chatClient.js", "utf8");
   assert.match(source, /smejjSettingsRuntime\?\.promptBlock\?\.\(\)/);
   assert.match(source, /Nutzerpraeferenzen:/);
+});
+
+test("das Erscheinungsbild folgt nicht blind dem Geraet", async () => {
+  // GEMESSEN 2026-09-05 auf dem iPhone-Simulator (iOS 26.5, Systemmodus HELL):
+  // Die Startseite blieb dunkel, alle anderen Bereiche wurden hell — weil das
+  // Thema nur auf `.view:not(#start)` angewendet wird. Das Ergebnis war ein
+  // zerrissenes Bild mit hellgrauer Schrift auf weissem Grund; die Unterzeilen
+  // der Einstellungen waren praktisch unlesbar. Der Standard ist darum "dark".
+  const quelle = readFileSync(new URL("../public/settings-runtime.js", import.meta.url), "utf8");
+  assert.match(quelle, /theme:\s*"dark"/, "der Vorgabewert muss dunkel sein");
+  assert.doesNotMatch(quelle, /const DEFAULTS[\s\S]{0,120}theme:\s*"system"/,
+    "der Vorgabewert darf nicht wieder dem Geraet folgen");
+  // Die freie Wahl bleibt: wer hell will, kann es weiter einstellen.
+  assert.match(quelle, /theme:\s*new Set\(\["system", "dark", "light"\]\)/,
+    "alle drei Einstellungen muessen waehlbar bleiben");
 });
