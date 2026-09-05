@@ -117,6 +117,13 @@ export function repariereEntscheidung(eingabe) {
       if (typeof s[k] === "string") { s.text = s[k]; delete s[k]; repariert.push(`text_aus_${k}`); break; }
     }
   }
+  // 7b. Ein KLICK AUF EINE ADRESSE ist ein navigate (live 2026-09-05: "Klicken:
+  //     https://de.wikipedia.org/wiki/Ada_Lovelace" — als Text-Selektor ging der
+  //     Klick ins Leere und beendete den Lauf; als navigate ist er genau richtig).
+  if (["click", "openLink", "doubleClick"].includes(s.action) && !s.url) {
+    const u = urlAus(s.target);
+    if (u) { s.action = "navigate"; s.url = u; delete s.target; repariert.push("klick_auf_adresse_zu_navigate"); }
+  }
   // 8. Ein nackter Selektor-String wird zum Selektor-Objekt.
   if (typeof s.target === "string" && s.target.trim()) {
     const t = s.target.trim();
