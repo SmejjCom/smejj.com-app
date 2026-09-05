@@ -1,7 +1,7 @@
 {
   "lock": "smejj einwilligung lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-03T09:29:02.445Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03, Grossauftrag A bis Z: 'alle Rechte erteilt, alle gefundenen Fehler sofort beheben'. Einzige Aenderung: datenschutz.html verlinkt https://www.idrive.com/privacy statt des toten https://www.idrive.com/e2/privacy (404). Kein Text der Einwilligung geaendert.",
+  "frozenAt": "2026-09-05T22:55:21.652Z",
+  "confirmation": "Betreiber-Auftrag 2026-09-06: 'Option 1 (Empfehlung): Erzeuge die .command-Datei auf einem Branch ab der Bau-Basis, die alle vier Sperren neu einfriert. Ich uebernehme den Doppelklick selbst.' — gestempelt werden start-lock (composer-plus-menu.js, browser-pane.js), security-lock und einwilligung-lock (controlAccessPolicy.js) sowie admin-lock (views-stage7.js, console-stage7.js, sync_admin_console_pages.mjs); Anlass: das Werkstatt-Tor Nr. 30 ist seit Tagen zu, weil die gesperrten Dateien auf der Bau-Basis weitergewandert sind, ohne dass die Manifeste nachgezogen wurden",
   "rule": "Keine Aenderung an der Einwilligungs- und Erfassungskette (ob erfasst werden darf, wogegen eingewilligt wird, wer die Routen erreicht) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
     "src/training/fragenerfassung.js": "5de1223542ffd62f840e3bffcd79eabe56870dda8f8e47e6b96c60f3d1f4c79d",
@@ -9,7 +9,7 @@
     "src/training/consent.js": "01d4a4a7b15e1647848bde1b1c5172714923f93e8e301428ad8629316e2a9fa6",
     "control-server/src/routes/trainingConsentRoutes.js": "6dd0b44d89cf8d9e0e23a244905c82666f82f8e94b1b2782104d4abdd15836cf",
     "src/training/constants.js": "5b5e533d89279711579c2c8845ccb98cc12bab1cf3eed75a4a14303c89b4337c",
-    "src/shared/controlAccessPolicy.js": "2dbb01d0f884627946e89c44380ab2fba53904e7e2a34856e0463d14ebc8b354",
+    "src/shared/controlAccessPolicy.js": "dc43435481d8381d698e6ad706b874bb677f18f2c87fb54e50e44e88dadf5066",
     "public/datenschutz.html": "10683aeee228127a4be6dca5f725c6bb0d2264bf861e91a735800630c8665b20"
   }
 }
