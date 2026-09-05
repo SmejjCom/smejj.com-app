@@ -24,7 +24,16 @@ Dateien, die es in der Bau-Basis nicht gibt (z. B. die git-ignorierte
 | `chat-frage-karte.test.mjs` | Die Test-Bühne kannte kein `classList.toggle`, seit `chat-stream.js` den Medien-Strom markiert |
 | `maus-absicht.test.mjs` | Probe suchte „haelt", der Text sagt längst „hält" |
 
-## Offen (12) — jeweils mit dem Grund, warum die Nachtroutine sie NICHT anfassen darf
+## Nachtrag: die Bau-Basis wanderte während dieser Messung weiter
+
+Gemessen wurde zuerst gegen `3ff9ab71`. Noch während der Arbeit kam `56eff4fc`
+(„Steg in der Antwort-Leiste + SW v776 aus design-v11") hinzu und brachte drei der vier
+Sperr-Stempel mit — offen ist auf der Bau-Basis nur noch der **start-lock**. Nach dem Rebase
+auf `56eff4fc` bleiben von den 24 roten Proben noch **10**: die zwei Proben zu
+„eine geänderte Datei schlägt an" und „die echten Manifeste stimmen mit der Auslieferung
+überein" hat dieser Commit mitgeheilt.
+
+## Offen (10) — jeweils mit dem Grund, warum die Nachtroutine sie NICHT anfassen darf
 
 ### A. Braucht einen Betreiber-Stempel (gesperrte Dateien)
 
@@ -33,8 +42,7 @@ Dateien, die es in der Bau-Basis nicht gibt (z. B. die git-ignorierte
 | `search-overlay.test.mjs` (2) | `public/app.js` (start-lock) | `app.js` bindet den Such-Nachlader nicht; `search.js` lädt das Overlay nicht |
 | `precache-dynamische-importe.test.mjs` | `public/sw.js` (start-lock) | Sechs dynamisch geladene Module fehlen im Precache: `erste-schritte.js`, `chat-actions-woerter.js`, `composer-zeile.js`, `anhang-pdf-text.js`, `anhang-office-text.js`, `anhang-tonspur.js` |
 | `adminbereich-anmeldepflicht.test.mjs` | `control-server/admin-ui/gate.js` (admin-lock) | Quelle und Spiegel weichen ab (`CONTROL_ORIGIN`); der Spiegel entsteht über `scripts/deploy/sync_admin_console_pages.mjs` |
-| `dateisperren.test.mjs` (4) | die Manifeste selbst | Vier Sperren sind auf der Bau-Basis nicht nachgezogen — dafür liegt die Kaskade **„smejj.com Werkstatt-Tor vier Sperren stempeln.command"** bereit |
-| `schutz-echtheit.test.mjs` | Manifeste gegen die Auslieferung | Der Phantom-Wächter (Nr. 82) meldet, dass der Start-Lock Fassungen bewacht, die smejj.com nicht ausliefert — heilt erst mit dem Stempel und einer Auslieferung |
+| `dateisperren.test.mjs` (3) | die Manifeste selbst | Seit `56eff4fc` ist nur noch der **start-lock** auf der Bau-Basis nicht nachgezogen — dafür liegt die Kaskade **„smejj.com Werkstatt-Tor vier Sperren stempeln.command"** bereit (sie stempelt, was verletzt ist, und lässt die grünen unangetastet) |
 
 Sperren neu einzufrieren ist ausdrücklich dem Betreiber vorbehalten (Doppelklick), und eine
 Sperre darf nie im selben Zug geändert und neu gestempelt werden — `pruefeManifeste()` in
