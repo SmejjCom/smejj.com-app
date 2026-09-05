@@ -141,3 +141,25 @@ test("ein Klick auf eine Web-Adresse wird zum navigate — die Allowlist gilt we
   const echt = validateLoopDecision(act({ id: "s1", action: "click", target: { strategy: "text", value: "Ada Lovelace" } }), POLICY);
   assert.equal(echt.decision.step.action, "click", "ein normales Klickziel bleibt ein Klick");
 });
+
+// LIVE 05.09. abends: "gmail.com registrieren" — navigate mit "gmail.com" ohne https://.
+test("eine Adresse ohne Schema wird erkannt — Text ohne Punkt bleibt Text", () => {
+  const v = validateLoopDecision(act({ id: "s1", action: "navigate", target: "example.com/konto" }), POLICY);
+  assert.equal(v.ok, true, JSON.stringify(v));
+  assert.equal(v.decision.step.url, "https://example.com/konto");
+  const text = validateLoopDecision(act({ id: "s1", action: "click", target: "Weiter" }), POLICY);
+  assert.equal(text.decision?.step?.action ?? "click", "click", "'Weiter' ist keine Adresse");
+  const domainFeld = validateLoopDecision(act({ id: "s1", action: "navigate", domain: "example.com" }), POLICY);
+  assert.equal(domainFeld.ok, true, JSON.stringify(domainFeld));
+  assert.equal(domainFeld.decision.step.url, "https://example.com");
+});
+
+test("eine Ablehnung nennt den Vorschlag des Modells (Aktion und Felder)", async () => {
+  const v = validateLoopDecision(act({ id: "s1", action: "navigate", ziel: "irgendwas ohne Adresse" }), POLICY);
+  assert.equal(v.ok, false);
+  assert.deepEqual(v.vorschlag, { decision: "act", action: "navigate", felder: ["id", "action", "ziel"] });
+  const { res } = await lauf([act({ id: "s1", action: "navigate", ziel: "x" }), act({ id: "s1", action: "navigate", ziel: "x" })]);
+  assert.equal(res.statusCode, 422);
+  assert.equal(res.body.vorschlag.action, "navigate");
+  assert.ok(Array.isArray(res.body.repariert));
+});

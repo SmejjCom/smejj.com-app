@@ -621,6 +621,8 @@ export async function handleMausRun(req, res, {
       return json(res, 422, {
         ok: false, error: "entscheidung_abgelehnt", gruende: entscheidung.errors?.slice(0, 5) || [],
         nachgefragt,
+        vorschlag: entscheidung.vorschlag || null,
+        repariert: entscheidung.repariert || [],
         transparenzhinweis: transparencyNotice("maus-engine-v2")
       });
     }
