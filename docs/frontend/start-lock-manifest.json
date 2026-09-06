@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T08:45:10.462Z",
-  "confirmation": "Betreiber, 2026-09-06: 'MAUS SICHTBAR MACHEN wie bei Claude/Codex: Im Live-Browser einen Zeiger zeichnen, der zum Ziel faehrt, dort kurz verweilt, beim Klick einen Ring zeigt und beim Tippen das Feld hervorhebt. Auch beim Scrollen und Navigieren eine kurze sichtbare Rueckmeldung. FLUESSIGKEIT: observe unter 3 s, Frist von 20 s je observe/act mit Wiederholung, Fortschrittszeile mit Sekundenzaehler statt stummem ueberlegt, Planer-502 sichtbar als Modell antwortet nicht, zweiter Versuch.' Umgesetzt: Zeiger, Ring, Feldrahmen, Scroll- und Ladehinweis in browser-stage.js (v6), Zeiger-Nachrichten und Frist im Sitzungs-Client, Ziel aus der eigenen Beobachtung, sendeMitFrist, Fortschrittsuhr und Zeitbilanz in browser-pane-maus.js, Zeilenschreiber ersetzt Zaehler-Zeilen. Marken gehoben: browser-pane-* 20260906-5, maus-absicht v28, maus-panel v22, sendepfad-nachladen v12, browser-nachladen v10, app.js b146, Service-Worker smejj-shell-v780 (zweiter Stempel: Ersatzziel nur erste Zeile). Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-06T09:46:31.345Z",
+  "confirmation": "Betreiber, 2026-09-06: 'Kannst du in smejj browser 7 Webseiten limit raus nehmen'. Umgesetzt: MAX_TABS 7 -> 100 (nur Speicherdeckel, kein Nutzer-Limit) in browser-pane.js, Leertext ohne Zahl in browser-pane-render.js, Marken bis zur Wurzel (browser-pane 20260906-6, render/fernwege 20260906-5, maus-absicht v29, maus-panel v23, sendepfad-nachladen v13, browser-nachladen v11, app.js b147), Service-Worker smejj-shell-v781. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "5918ca86a88d296957095c8824d88a22051dec96d6eb129baacff33344a34457",
+    "public/index.html": "6e717aee1c45821cb9fe44966df0d62b21a0969c74a35d60bb8ce8c0f88cd783",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "a7c4ed82e9cb5a1247841dfcbbc6f72b56780a982dbe9fb3072ad181e85c4b0f",
+    "public/app.js": "59ef95ec9f0befa785c2d7558175aebd6ef6425b33fcc6ff232ac44e32f436ce",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,8 +24,8 @@
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "6d26716c99faf8f6ce7e9ba3bf60a8c0335c410e8da67556e21837d419a52400",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "39ee88588327772fbf601cc75250d0d19a761dbc4205930669bff4ddb603c88d",
-    "public/browser-pane-render.js": "f3d49baf84d19ceffc0f4fc7826b447815ac7bba936875e91967a9d19e254461",
+    "public/browser-pane.js": "e27be935f95919461c1a5369ee55deca06d94232825ed7808047c5f6725b0ae7",
+    "public/browser-pane-render.js": "92c20217a207e9a3af426f755b60252b5c91e1cd4b7bc21739777971d83619b6",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
     "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "455e8edad02456c432edc3a0d608d4bd887fba3225dc33f368450b8f867a379c",
+    "public/sw.js": "aad6038c5dc852eea05c53967f457629bd4ca1c936c7bf72f5636402f50b19fb",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
