@@ -5,7 +5,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { ergaenzeMausSchutz, brauchtMausSchutz, MAUS_SCHUTZ_HINWEIS, MAUS_VORLAGE } from "../control-server/src/llm/mausImitationSchutz.js";
+import { ergaenzeMausSchutz, brauchtMausSchutz, brauchtBrowserHinweis, MAUS_SCHUTZ_HINWEIS, BROWSER_HINWEIS, MAUS_VORLAGE } from "../control-server/src/llm/mausImitationSchutz.js";
 
 const SYSTEM = { role: "system", content: "Du bist der Assistent von smejj.com." };
 const MAUS_LAUF = { role: "assistant", content: "Ich öffne gmail.com im Live-Browser rechts.\nDie Maus fängt an. Du siehst rechts jeden Schritt.\nMaus 1/10: sieht sich die Seite an ...\nMaus 1/10: Klicken: Create account\nMaus gestoppt: »Klicken: Next« ist zweimal fehlgeschlagen." };
@@ -57,4 +57,22 @@ test("BEIDE Chat-Wege haengen den Schutz an — Cline und BYOK-Anbieter", () => 
     assert.match(quelle, /import \{ ergaenzeMausSchutz \} from "\.\.\/llm\/mausImitationSchutz\.js"/, `${datei}: Import fehlt`);
     assert.match(quelle, /ergaenzeMausSchutz\(sanitizeMessages\(body\.messages\)\)/, `${datei}: Schutz nicht am Nachrichtenweg`);
   }
+});
+
+
+test("ohne Maus-Spur, aber mit Browser-Wunsch ohne Vorlage: der Browser-Hinweis kommt (Betreiber 18:39: 'geh smejj browser und mach das')", () => {
+  const rein = [SYSTEM, { role: "user", content: "Mann geh smejj browser und mach das." }];
+  const raus = ergaenzeMausSchutz(rein);
+  assert.equal(raus.length, 3);
+  assert.deepEqual(raus[1], { role: "system", content: BROWSER_HINWEIS });
+  assert.match(BROWSER_HINWEIS, /keine Freigabeliste/);
+  assert.match(BROWSER_HINWEIS, /KEINEN Browser/);
+  assert.ok(BROWSER_HINWEIS.includes(MAUS_VORLAGE));
+  assert.equal(brauchtBrowserHinweis([SYSTEM, { role: "user", content: "Registriere mich bei con.ax" }]), true);
+  assert.equal(brauchtBrowserHinweis([SYSTEM, { role: "user", content: "Was ist 17 mal 23?" }]), false);
+  assert.equal(brauchtBrowserHinweis([SYSTEM, { role: "user", content: MAUS_VORLAGE + " auf con.ax ein Konto anlegen" }]), false, "mit Vorlage uebernimmt die Maus");
+  // Maus-Spur hat Vorrang: dann der ausfuehrliche Hinweis, nicht beide.
+  const beides = ergaenzeMausSchutz([SYSTEM, MAUS_LAUF, { role: "user", content: "geh im browser weiter" }]);
+  assert.equal(beides.filter((m) => m.role === "system").length, 2);
+  assert.equal(beides[1].content, MAUS_SCHUTZ_HINWEIS);
 });
