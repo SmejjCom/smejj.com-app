@@ -661,3 +661,22 @@ test("Das Messpolster waechst mit der Zahl der Pruefaelle", async () => {
   assert.ok(plan.job.trainingsKonfig.messReserveMinuten >= 30,
     `Polster fehlt oder zu klein: ${JSON.stringify(plan.job.trainingsKonfig)}`);
 });
+
+test("Die Wiederholungssperre ignoriert Laufzeitwerte in der Konfiguration", async () => {
+  // Die gespeicherte Konfiguration einer Version traegt auch Werte, die erst auf
+  // dem Rechenknoten entstehen: restMinuten mit vielen Nachkommastellen,
+  // messReserveMinuten aus der Zahl der Pruefaelle. Vergleicht man die ganze
+  // Konfiguration, sind zwei identische Versuche nie gleich und die Sperre greift
+  // nie. Am 06.09. wollte der Planer nach dem Reject von con-1.6 sofort con-1.7
+  // mit demselben Datensatz und derselben Konfiguration starten.
+  const { trainingsKennung, trainingsKonfigAusUmgebung } = await import("../workers/con-autopilot/kreislauf.js");
+  const basis = trainingsKonfigAusUmgebung();
+  const mitLaufzeit = { ...basis, restMinuten: 194.17497419516246, messReserveMinuten: 49, checkpointMinuten: 20 };
+  assert.equal(trainingsKennung(mitLaufzeit), trainingsKennung(basis),
+    "Laufzeitwerte duerfen den Versuch nicht zu einem anderen machen");
+  // Ein echter Unterschied wird weiterhin erkannt.
+  assert.notEqual(trainingsKennung({ ...basis, lr: 0.00005 }), trainingsKennung(basis));
+  assert.notEqual(trainingsKennung({ ...basis, maxZeilen: 1400 }), trainingsKennung(basis));
+  assert.notEqual(trainingsKennung({ ...basis, r: 32 }), trainingsKennung(basis));
+  assert.equal(trainingsKennung(null), "");
+});

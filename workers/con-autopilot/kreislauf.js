@@ -332,6 +332,25 @@ export function abweichendeSuiten(gemessenerStand, aktuellerStand) {
   return Object.keys(aktuellerStand).filter((id) => gemessenerStand[id] !== aktuellerStand[id]);
 }
 
+/**
+ * Kennung eines Trainingsversuchs: nur die Felder, die das ERGEBNIS bestimmen.
+ *
+ * Die gespeicherte Konfiguration einer Version traegt auch Laufzeitwerte —
+ * restMinuten kommt vom Rechenknoten, messReserveMinuten aus der Zahl der
+ * Pruefaelle, checkpointMinuten aus der Sicherungshaeufigkeit. Vergleicht man
+ * die ganze Konfiguration, unterscheiden sich zwei identische Versuche schon an
+ * der zweiten Nachkommastelle von restMinuten, und die Wiederholungssperre
+ * greift nie. Genau das passierte am 06.09.: con-1.6 war auf v4 abgelehnt, und
+ * der Planer wollte sofort con-1.7 mit demselben Datensatz und derselben
+ * Konfiguration starten.
+ */
+export const KONFIG_FELDER = Object.freeze(["r", "alpha", "lr", "epochen", "maxLen", "batch", "gradAkk", "maxZeilen"]);
+
+export function trainingsKennung(konfig) {
+  if (!konfig || typeof konfig !== "object") return "";
+  return JSON.stringify(KONFIG_FELDER.map((f) => [f, konfig[f] ?? null]));
+}
+
 /** Die Trainingskonfiguration aus der Umgebung — an EINER Stelle, damit Plan und Sperre dieselbe sehen. */
 export function trainingsKonfigAusUmgebung(env = process.env) {
   return JSON.parse(env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
@@ -412,9 +431,9 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   // Ergebnis. Am 05.09. lief genau das: con-1.4 fiel mit 89,1 Prozent durch, und
   // der naechste Takt startete con-1.5 mit demselben Datensatz und derselben
   // Konfiguration — 0,37 USD und zwei Stunden fuer ein bekanntes Ergebnis.
-  const konfigText = JSON.stringify(trainingsKonfigAusUmgebung());
+  const konfigText = trainingsKennung(trainingsKonfigAusUmgebung());
   const schonGescheitert = registry.versions.find((v) => v.status === "rejected"
-    && v.datensatz === daten.name && JSON.stringify(v.trainingsKonfig || null) === konfigText);
+    && v.datensatz === daten.name && trainingsKennung(v.trainingsKonfig) === konfigText);
   if (schonGescheitert) {
     return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche,
       grund: `Datensatz ${daten.name} mit dieser Konfiguration wurde als ${schonGescheitert.version} schon abgelehnt (${schonGescheitert.benchmarks?.gesamt != null ? Math.round(schonGescheitert.benchmarks.gesamt * 1000) / 10 + " %" : "ohne Note"}) — neue Daten oder eine andere Konfiguration noetig` };
