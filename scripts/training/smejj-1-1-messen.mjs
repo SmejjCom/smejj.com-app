@@ -84,7 +84,27 @@ export const EVAL_PREFIX = "smejj/evals";
 /** Ablage der Bewertungen, die Autopilot Nr. 83 liest (control-server/src/autopilots/smejjVersionsTaktAutopilot.js). */
 export const BEWERTUNGEN_PREFIX = "smejj/bewertungen";
 export const BASIS_STAND = "qwen3-4b-basis";
-export const WIEDERHOLUNGEN = 3;
+/**
+ * WIEDERHOLUNGEN JE FALL — und warum eine genuegt.
+ *
+ * Wiederholungen glaetten Rauschen: wenn ein Modell auf dieselbe Frage
+ * verschiedene Antworten gibt, mittelt man ueber mehrere Laeufe. Das setzt
+ * voraus, dass es ueberhaupt schwankt.
+ *
+ * GEMESSEN 2026-09-06 an den gespeicherten Antworten des Laufs
+ * smejj11-20260905221014-messung: Alle 14 Faelle lieferten DREIMAL exakt
+ * denselben Text — kein einziger Unterschied. Der Grund steht in
+ * salad-job/evalrun.py: die Erzeugung laeuft mit do_sample=False, also
+ * deterministisch. Dieselbe Frage an dasselbe Modell gibt dieselbe Antwort.
+ *
+ * Drei Wiederholungen kosteten damit das Dreifache an GPU-Zeit fuer ein
+ * identisches Ergebnis. Bei 14 Faellen fiel das nicht auf; bei 295 waeren es
+ * 150 statt 50 Minuten — mehr als das Zeitbudget hergibt.
+ *
+ * Sollte die Messstrecke je auf Sampling umgestellt werden, muss dieser Wert
+ * zurueck auf 3. Der Test haelt beides fest: den Wert und den Grund.
+ */
+export const WIEDERHOLUNGEN = 1;
 // 8 GB Basis holen (~5 min), Modell laden, 14 Faelle x 3 x 2 Staende = 84
 // Antworten auf einem 4B-Modell. 60 Minuten sind eine GRENZE, kein Ziel.
 export const MAX_MINUTEN = 60;

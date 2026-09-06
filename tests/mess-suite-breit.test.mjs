@@ -71,3 +71,26 @@ test("die Latte laesst sich umschalten, damit ein Vergleich moeglich bleibt", ()
   // festgehalten, dass beide Dateien existieren und verschieden sind.
   assert.notEqual(SUITE_BREIT, SUITE_KERN);
 });
+
+test("eine Wiederholung genuegt, solange die Messung deterministisch ist", async () => {
+  // GEMESSEN 2026-09-06 an echten Antworten: alle 14 Fälle lieferten dreimal
+  // exakt denselben Text. salad-job/evalrun.py erzeugt mit do_sample=False.
+  // Drei Wiederholungen kosteten das Dreifache an GPU-Zeit für ein identisches
+  // Ergebnis — bei 295 Fällen wären das 150 statt 50 Minuten.
+  const { WIEDERHOLUNGEN, MAX_MINUTEN } = await import("../scripts/training/smejj-1-1-messen.mjs");
+  assert.equal(WIEDERHOLUNGEN, 1);
+
+  // Und die Rechnung muss ins Zeitbudget passen: zwei Stände (Basis und
+  // Adapter) über alle Fälle, bei gemessenen 5,1 s je Antwort.
+  const { suite } = await loadEvalSuite(SUITE_BREIT);
+  const minuten = (suite.cases.length * WIEDERHOLUNGEN * 5.1 * 2) / 60;
+  assert.ok(minuten < MAX_MINUTEN,
+    `${Math.round(minuten)} min gemessene Laufzeit gegen ${MAX_MINUTEN} min Frist — die Messung liefe in die Zeitgrenze`);
+});
+
+test("do_sample bleibt aus — sonst waere eine Wiederholung zu wenig", () => {
+  // Der Grund für WIEDERHOLUNGEN = 1 steht im Messjob. Ändert ihn jemand,
+  // muss der Wert zurück auf 3, und dieser Test fällt vorher auf.
+  const py = readFileSync("workers/con-autopilot/salad-job/evalrun.py", "utf8");
+  assert.match(py, /"do_sample":\s*False/, "die Messung muss deterministisch bleiben");
+});
