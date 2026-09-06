@@ -568,3 +568,11 @@ test("die Fortschrittszeile zaehlt Sekunden mit und liefert die Dauer der Phase"
   assert.equal(dauer, 3000);
   assert.equal(takt, null, "die Uhr ist nach stopp() aus");
 });
+
+test("Ersatzziel aus Text nimmt nur die erste Zeile — ein Zeilenumbruch trifft nie", async () => {
+  const { ersatzZiele } = await import("../public/browser-pane-maus.js");
+  const k = ersatzZiele({ type: "selectorClick", strategy: "text", value: "Ada" }, { elements: [
+    { tag: "a", text: "Ada Lovelace\nenglische Mathematikerin (1815–1852)" }
+  ] });
+  assert.deepEqual(k, [{ type: "selectorClick", strategy: "text", value: "Ada Lovelace" }]);
+});
