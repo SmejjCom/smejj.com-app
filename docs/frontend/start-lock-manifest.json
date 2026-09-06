@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T10:41:49.455Z",
+  "frozenAt": "2026-09-06T10:44:00.959Z",
   "confirmation": "Betreiber, 2026-09-06: 'Kannst du in smejj browser 7 Webseiten limit raus nehmen'. Umgesetzt: MAX_TABS 7 -> 100 (nur Speicherdeckel, kein Nutzer-Limit) in browser-pane.js, Leertext ohne Zahl in browser-pane-render.js, Marken bis zur Wurzel (browser-pane 20260906-6, render/fernwege 20260906-5, maus-absicht v29, maus-panel v23, sendepfad-nachladen v13, browser-nachladen v11, app.js b147), Service-Worker smejj-shell-v781. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
