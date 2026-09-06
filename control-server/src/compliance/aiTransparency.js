@@ -30,12 +30,11 @@ export const AI_SYSTEMS = Object.freeze([
     id: "kimi-k2.7", zweck: "Reserve-Fundament", anbieter: "Moonshot",
     risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
   }),
-  // Ox Alpha (2026-08-30): aktives Chat-Modell über OpenRouter — nach dem
-  // Drift-Befund der EU-AI-Act-Wache (Nr. 68) ins Verzeichnis aufgenommen.
-  Object.freeze({
-    id: "ox-alpha", zweck: "Chat-Antworten (Menü Nr. 3)", anbieter: "Stealth / OpenRouter",
-    risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
-  }),
+  // Ox Alpha stand hier vom 30.08. bis 06.09.2026 als "aktives Chat-Modell".
+  // Betreiber-Ansage 2026-09-06: abgeschafft. Ein Transparenzverzeichnis, das
+  // ein Modell fuehrt, das die Plattform nicht mehr einsetzt, ist nicht bloss
+  // veraltet — es ist falsch. Genau dagegen wurde die EU-AI-Act-Wache (Nr. 68)
+  // gebaut, die den Eintrag am 30.08. wegen Drift ueberhaupt erst verlangte.
   Object.freeze({
     id: "cline-bridge", zweck: "Coding-Agent", anbieter: "Cline",
     risiko: RISK.limited, transparenzpflicht: true, protokolliert: true

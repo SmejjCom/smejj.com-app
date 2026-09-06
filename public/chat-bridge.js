@@ -79,7 +79,11 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260826-v146-ox-alpha";
+// Das Etikett trug bis 2026-09-06 den Namen "ox-alpha" — es entstand mit
+// dessen Aufnahme ins Menue. Das Modell ist abgeschafft; ein Versionsname,
+// der es weiter nennt, fuehrt jeden in die Irre, der ihn im /health liest.
+// Die Nummer v146 bleibt: sie bezeichnet den Stand, nicht das Modell.
+const BRIDGE_VERSION = "20260826-v146-modellmenue";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
