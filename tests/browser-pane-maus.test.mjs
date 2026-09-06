@@ -9,6 +9,7 @@ import fs from "node:fs";
 import {
   alsSitzungsAktion, planAlsAuftraege, beschreibe, fahreAuftraege
 } from "../public/browser-pane-maus.js";
+import { zielAusBeobachtung, sendeMitFrist, baueFortschrittsUhr, baueZeiger, fuehreFreienLaufAus as freierLauf } from "../public/browser-pane-maus.js";
 
 test("Klicken und Tippen werden auf Elemente uebersetzt, nicht auf Pixel", () => {
   const klick = alsSitzungsAktion({ action: "click", target: { strategy: "role", value: "link", name: "Impressum" } });
@@ -311,7 +312,7 @@ test("fertig ohne Klick heisst nicht 'nach 0 Schritten'", async () => {
       sende: async () => ({ ok: true, beobachtung: { elements: [] } })
     });
     assert.equal(e.ok, true);
-    assert.equal(e.grund, "Maus fertig, kein Klick nötig: Example Domain");
+    assert.match(e.grund, /^Maus fertig, kein Klick nötig: Example Domain \[\d+ s: Hinsehen \d+ s, Überlegen \d+ s, Handeln \d+ s\]$/);
   } finally {
     globalThis.fetch = fetchVorher;
   }
@@ -467,4 +468,103 @@ test("schlaegt ein Selektor fehl, trifft das Ersatzziel — der Lauf geht weiter
   assert.equal(e.ok, true, e.grund);
   assert.ok(gesendet.some((a) => a.strategy === "css" && a.value === "#searchInput"), JSON.stringify(gesendet));
   assert.match(koerper[1].verlauf.join("\n"), /Ersatzziel css #searchInput hat getroffen/);
+});
+
+
+// --- DER ZEIGER (Betreiber 2026-09-06: sichtbar wie bei Claude/Codex) ----------
+
+test("das Ziel wird aus der eigenen Beobachtung gefunden — css #id, Rolle+Name, Text", () => {
+  const beobachtung = { elements: [
+    { n: 1, tag: "a", text: "Impressum", x: 100, y: 800 },
+    { n: 2, tag: "input", type: "search", id: "searchInput", placeholder: "Wikipedia durchsuchen", x: 600, y: 40 },
+    { n: 3, tag: "button", text: "Suchen", x: 700, y: 40 }
+  ] };
+  const vp = { width: 1200, height: 800 };
+  assert.deepEqual(zielAusBeobachtung({ type: "selectorType", strategy: "css", value: "#searchInput" }, beobachtung, vp), { xPct: 50, yPct: 5 });
+  assert.deepEqual(zielAusBeobachtung({ type: "selectorType", strategy: "role", value: "searchbox" }, beobachtung, vp), { xPct: 50, yPct: 5 });
+  assert.deepEqual(zielAusBeobachtung({ type: "selectorClick", strategy: "role", value: "button", name: "suchen" }, beobachtung, vp), { xPct: 58.33, yPct: 5 });
+  assert.deepEqual(zielAusBeobachtung({ type: "selectorClick", strategy: "text", value: "Impressum" }, beobachtung, vp), { xPct: 8.33, yPct: 100 });
+  // Kein Treffer heisst kein Raten.
+  assert.equal(zielAusBeobachtung({ type: "selectorClick", strategy: "text", value: "Datenschutz" }, beobachtung, vp), null);
+  assert.equal(zielAusBeobachtung({ type: "selectorClick", strategy: "text", value: "Impressum" }, beobachtung, null), null);
+});
+
+test("der Zeiger faehrt VOR der Aktion und wartet die Fahrt ab; ohne Rahmen tut er nichts", async () => {
+  const gesendet = [];
+  const frame = { contentWindow: { postMessage: (m) => gesendet.push(m) } };
+  const tab = { frame, remoteViewport: { width: 1000, height: 500 } };
+  let gewartet = 0;
+  const zeiger = baueZeiger(() => tab, { warte: async (ms) => { gewartet += ms; }, fahrtMs: 400 });
+  const ok = await zeiger("fahren", { aktion: { type: "selectorClick", strategy: "text", value: "Weiter" }, beobachtung: { elements: [{ tag: "a", text: "Weiter", x: 500, y: 250 }] } });
+  assert.equal(ok, true);
+  assert.equal(gewartet, 400);
+  assert.deepEqual(gesendet, [{ type: "smejj.browser.zeiger", art: "fahren", xPct: 50, yPct: 50 }]);
+  // Ohne Treffer: keine Fahrt, keine Wartezeit.
+  const nichts = await zeiger("fahren", { aktion: { type: "selectorClick", strategy: "text", value: "Nirgends" }, beobachtung: { elements: [] } });
+  assert.equal(nichts, false);
+  assert.equal(gewartet, 400);
+  // Ohne Rahmen (eigener Chrome): ehrlich false, kein Fehler.
+  const ohne = baueZeiger(() => ({}), { warte: async () => {} });
+  assert.equal(await ohne("weg"), false);
+});
+
+test("der freie Lauf laesst den Zeiger vor jeder Selektor-Aktion fahren und markiert Aktionen als Maus-Aktionen mit Frist", async () => {
+  const reihenfolge = [];
+  let n = 0;
+  const alteFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => (n++ === 0
+    ? { ok: true, entscheidung: { decision: "act", step: { id: "s1", action: "click", target: { selector: { strategy: "text", value: "Weiter" } } } } }
+    : { ok: true, entscheidung: { decision: "done", result: "fertig" } }) });
+  try {
+    const r = await freierLauf({
+      auftrag: "x", tab: { url: "https://a.de/", sessionId: "s1" }, schrittUrl: "https://api/x",
+      zeiger: async (art) => { reihenfolge.push(`zeiger:${art}`); return true; },
+      sende: async (a) => {
+        reihenfolge.push(`sende:${a.type}`);
+        assert.equal(a.maus, true, "jede Maus-Aktion traegt maus:true");
+        assert.equal(a.fristMs, 20_000, "jede Maus-Aktion traegt die Frist");
+        if (a.type === "observe") { assert.equal(a.ohneBild, true, "Hinsehen ohne Bild"); return { ok: true, beobachtung: { elements: [] } }; }
+        return { ok: true };
+      }
+    });
+    assert.equal(r.ok, true);
+    assert.deepEqual(reihenfolge, ["sende:observe", "zeiger:fahren", "sende:selectorClick", "sende:observe"]);
+    assert.ok(r.zeit && typeof r.zeit.gesamtMs === "number");
+  } finally {
+    globalThis.fetch = alteFetch;
+  }
+});
+
+// --- FRIST UND UHR (Fluessigkeit, 2026-09-06) ----------------------------------
+
+test("laeuft die Frist ab, wird sichtbar ein zweites Mal gefragt — dann Schluss", async () => {
+  const gezeigt = [];
+  let rufe = 0;
+  const r = await sendeMitFrist(async () => { rufe += 1; return { ok: false, error: "zeitueberschreitung_20s", frist: true }; }, { type: "observe" },
+    { zeige: (t) => gezeigt.push(t), warte: async () => {}, beschreibung: "Maus 1/10: Hinsehen" });
+  assert.equal(rufe, 2);
+  assert.equal(r.frist, true);
+  assert.deepEqual(gezeigt, ["Maus 1/10: Hinsehen: keine Antwort in 20 s, zweiter Versuch ..."]);
+  // Beim zweiten Mal klappt es: das Ergebnis kommt durch.
+  let k = 0;
+  const gut = await sendeMitFrist(async () => (k++ === 0 ? { ok: false, beschaeftigt: true } : { ok: true, gelesen: "x" }), { type: "selectorText" }, { warte: async () => {} });
+  assert.equal(gut.gelesen, "x");
+});
+
+test("die Fortschrittszeile zaehlt Sekunden mit und liefert die Dauer der Phase", () => {
+  const gezeigt = [];
+  let takt = null;
+  let t = 1000;
+  const uhr = baueFortschrittsUhr((z) => gezeigt.push(z), {
+    jetzt: () => t,
+    setzeIntervall: (fn) => { takt = fn; return 1; },
+    loescheIntervall: () => { takt = null; }
+  });
+  uhr.starte("Maus 1/10: überlegt ...");
+  t = 2000; takt();   // 1 s: noch kein Zaehler — das waere Flackern
+  t = 4000; takt();   // 3 s
+  const dauer = uhr.stopp();
+  assert.deepEqual(gezeigt, ["Maus 1/10: überlegt ...", "Maus 1/10: überlegt ... (3 s)"]);
+  assert.equal(dauer, 3000);
+  assert.equal(takt, null, "die Uhr ist nach stopp() aus");
 });

@@ -309,3 +309,16 @@ test("im eigenen Chrome wird erst geoeffnet, dann angekuendigt — kein Widerspr
   assert.ok(frage < ankuendigung, "erst die Bruecke fragen, dann ankuendigen");
   assert.ok(umweg < ankuendigung, "der Umweg-Satz steht VOR der Ankuendigung");
 });
+
+
+test("der Zeilenschreiber ERSETZT eine Zeile mit Sekundenzaehler statt sie anzuhaengen", () => {
+  const ausgabe = { textContent: "", dataset: {} };
+  const schreibe = baueZeilenschreiber(ausgabe);
+  schreibe("Maus 1/10: überlegt ...");
+  schreibe("Maus 1/10: überlegt ... (2 s)");
+  schreibe("Maus 1/10: überlegt ... (3 s)");
+  assert.equal(ausgabe.textContent, "Maus 1/10: überlegt ... (3 s)");
+  schreibe("Maus 1/10: Klicken: Weiter");
+  schreibe("Maus 1/10: Klicken: Weiter (4 s)");
+  assert.equal(ausgabe.textContent, "Maus 1/10: überlegt ... (3 s)\nMaus 1/10: Klicken: Weiter (4 s)");
+});

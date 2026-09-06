@@ -69,3 +69,20 @@ test("eine Seite mit Passwortfeld geht in den echten Browser, nie in den Proxy",
   assert.equal(shouldOpenInRealBrowser("y".repeat(900000), "https://beispiel.de/"), false,
     "grosse Seite ohne Anmeldefeld bleibt im schnellen Weg");
 });
+
+
+test("die Buehne zeichnet den Zeiger der Maus — Pfeil, Ring, Feldrahmen, Scroll- und Ladehinweis, ohne die Vorlage anzufassen", () => {
+  assert.match(stage, /smejj\.browser\.zeiger/);
+  for (const art of ["fahren", "klick", "tippen", "lesen", "scroll", "laden", "geladen", "weg"]) {
+    assert.ok(stage.includes(`"${art}"`), `Zeiger-Art ${art} fehlt`);
+  }
+  for (const klasse of ["bp-zeiger", "bp-ring", "bp-marke", "bp-hinweis", "bp-scrollpfeil"]) {
+    assert.ok(stage.includes(klasse), `Element ${klasse} fehlt`);
+    assert.ok(!render.includes(klasse), `${klasse} gehoert in die Buehne, nicht in die gesperrte Vorlage`);
+  }
+  // Die Fahrt dauert sichtbar (Uebergang), Ring und Rahmen sind Animationen.
+  assert.match(stage, /transition:transform \.4s/);
+  assert.match(stage, /@keyframes bpRing/);
+  // Die Vorlage laedt die neue Buehne (Cache-Marke gehoben).
+  assert.match(render, /browser-stage\.js\?v=6/);
+});

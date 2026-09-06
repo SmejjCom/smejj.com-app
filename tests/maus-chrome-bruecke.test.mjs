@@ -229,7 +229,7 @@ test("ein Aussetzer beendet den Auftrag nicht — und kostet keinen Schritt", as
   });
   assert.equal(ergebnis.ok, true);
   assert.equal(anfragen, 2);
-  assert.match(zeilen.join(" "), /fragt noch einmal/);
+  assert.match(zeilen.join(" "), /Modell antwortet nicht \(502\), zweiter Versuch/);
   // Der Aussetzer darf keinen Schritt verbrauchen: sonst schrumpft das Budget
   // fuer echte Arbeit, obwohl nichts getan wurde.
   assert.ok(zeilen.filter((z) => /^Maus 1\//.test(z)).length >= 2, "der Schritt muss derselbe bleiben");
