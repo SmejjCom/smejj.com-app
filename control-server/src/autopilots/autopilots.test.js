@@ -38,6 +38,7 @@ import {
   scrubPiiData,
   processUserFeedbackSignal,
   getUserFlywheelStats,
+  __feedbackAblageLeeren,
   decomposeReasoningSteps,
   evaluateStepReward,
   verifyReasoningTracePRM,
@@ -310,6 +311,89 @@ test("User-Feedback Flywheel & PII Scrubbing Test", async () => {
   assert.ok(stats.gesamt >= 1, "das eben verarbeitete Signal muss gezaehlt sein");
   assert.ok((stats.jeTyp.copy || 0) >= 1, "der Signaltyp muss in der Aufschluesselung stehen");
   assert.ok(Array.isArray(stats.negativeLetzte7Tage));
+});
+
+// --- Nr. 19: zwei Daumen auf dieselbe Frage ergeben ein Paar ----------------
+//
+// Bis 2026-09-06 verlangte die Paarbildung, dass eine gewaehlte UND eine
+// verworfene Antwort im SELBEN Aufruf ankommen. Die Route setzt aber immer nur
+// eines der beiden Felder — ein Klick ist hoch oder runter, nie beides. Die
+// Bedingung war damit unerfuellbar, und in sieben Wochen entstand kein einziges
+// Paar, waehrend die Ampel gruen blieb.
+test("Nr. 19: Daumen hoch und runter auf dieselbe Frage werden zu einem DPO-Paar", async () => {
+  __feedbackAblageLeeren();
+  const frage = "Wie rechne ich die Mehrwertsteuer aus?";
+
+  const erster = await processUserFeedbackSignal({
+    prompt: frage,
+    antwort: undefined,
+    chosenResponse: "",
+    rejectedResponse: "Multipliziere einfach mit 19.",
+    signalType: "thumbs_down"
+  });
+  assert.equal(erster.ok, true);
+  assert.equal(erster.processed, false, "allein ergibt ein Daumen runter noch kein Paar");
+
+  const zweiter = await processUserFeedbackSignal({
+    prompt: frage,
+    chosenResponse: "Nettobetrag mal 0,19 ergibt den Steuerbetrag; beides getrennt ausweisen.",
+    rejectedResponse: "",
+    signalType: "thumbs_up"
+  });
+  assert.equal(zweiter.ok, true);
+  assert.equal(zweiter.processed, true, "das Gegenstueck muss gefunden werden");
+  assert.equal(zweiter.paarQuelle, "zusammengefuehrt");
+  assert.ok(zweiter.dpoPairId, "ein Paar braucht eine Kennung");
+
+  const stats = await getUserFlywheelStats();
+  assert.equal(stats.gepaart, 2, "beide Ereignisse sind als gepaart gestempelt");
+  assert.equal(stats.wartend, 0, "nichts wartet mehr");
+});
+
+test("Nr. 19: ein dritter Daumen baut kein zweites, gleiches Paar", async () => {
+  __feedbackAblageLeeren();
+  const frage = "Wann ist eine Rechnung vorsteuerabzugsfaehig?";
+
+  await processUserFeedbackSignal({
+    prompt: frage, chosenResponse: "", rejectedResponse: "Immer.", signalType: "thumbs_down"
+  });
+  const gepaart = await processUserFeedbackSignal({
+    prompt: frage, chosenResponse: "Nur mit getrennt ausgewiesener Steuer.", rejectedResponse: "", signalType: "thumbs_up"
+  });
+  assert.equal(gepaart.processed, true);
+
+  // Derselbe Daumen hoch noch einmal: das Gegenstueck ist verbraucht.
+  const dritter = await processUserFeedbackSignal({
+    prompt: frage, chosenResponse: "Nur mit getrennt ausgewiesener Steuer.", rejectedResponse: "", signalType: "thumbs_up"
+  });
+  assert.equal(dritter.processed, false, "ein verbrauchtes Gegenstueck darf nicht doppelt zaehlen");
+});
+
+test("Nr. 19: gleiche Frage, gleiche Antwort auf beiden Seiten ergibt kein Paar", async () => {
+  __feedbackAblageLeeren();
+  const frage = "Was ist der Unterschied zwischen Netto und Brutto?";
+  const gleicheAntwort = "Brutto ist Netto plus Steuer.";
+
+  await processUserFeedbackSignal({
+    prompt: frage, chosenResponse: "", rejectedResponse: gleicheAntwort, signalType: "thumbs_down"
+  });
+  const zweiter = await processUserFeedbackSignal({
+    prompt: frage, chosenResponse: gleicheAntwort, rejectedResponse: "", signalType: "thumbs_up"
+  });
+  // Ein Paar aus zwei identischen Antworten lehrt nichts — es waere Rauschen,
+  // das als Fortschritt gezaehlt wird.
+  assert.equal(zweiter.processed, false, "identische Antworten sind kein Gegensatz");
+});
+
+test("Nr. 19: verschiedene Fragen werden nicht miteinander gepaart", async () => {
+  __feedbackAblageLeeren();
+  await processUserFeedbackSignal({
+    prompt: "Wie buche ich eine Ausgangsrechnung?", chosenResponse: "", rejectedResponse: "Gar nicht.", signalType: "thumbs_down"
+  });
+  const andere = await processUserFeedbackSignal({
+    prompt: "Wie kuendige ich einen Mietvertrag?", chosenResponse: "Schriftlich, mit Frist.", rejectedResponse: "", signalType: "thumbs_up"
+  });
+  assert.equal(andere.processed, false, "der Fingerabdruck trennt die Fragen");
 });
 
 test("Process-Reward (PRM) & Step-by-Step Reasoner Test", () => {
