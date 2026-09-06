@@ -28,7 +28,7 @@ import { fileURLToPath } from "node:url";
 import { erzeuge } from "../../workers/con-autopilot/daten/generator.mjs";
 import { erzeugeErgaenzung } from "./smejj-1-1-generator.mjs";
 import { echtePaare } from "./smejj-1-1-echte-paare.mjs";
-import { baueDatensatz, jsonl, mische } from "../../workers/con-autopilot/daten.js";
+import { baueDatensatz, jsonl, mische, pruefePaar } from "../../workers/con-autopilot/daten.js";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 export const DATENSATZ_NAME = "smejj-1-1";
@@ -83,6 +83,37 @@ export async function leseSuiten(wurzel = WURZEL, dateien = SUITEN_DATEIEN) {
 }
 
 /**
+ * Sicherheitspruefung fuer HANDGESCHRIEBENE Paare — ohne die Textheuristik.
+ *
+ * BEFUND 2026-09-06: Zwei der 34 handgeschriebenen Paare wurden von der
+ * Daten-Pipeline verworfen:
+ *
+ *   "fehlerhaft"  — das Paar erklaert, warum eine Funktion `undefined`
+ *                   zurueckgibt. Die Regel sucht das Wort als Zeichen fuer
+ *                   halbfertigen Text.
+ *   "spam"        — das Paar zeigt einen Deploy-Befehl und die sichere
+ *                   Alternative. Die Regel schlaegt bei mehreren Adressen an.
+ *
+ * Beide Regeln sind fuer GEERNTETE Prosa gebaut, wo "undefined" auf einen
+ * kaputten Auszug hindeutet und vier Links auf Werbung. Bei einem
+ * handgeschriebenen Fachtext bedeuten sie das Gegenteil: dass er konkret ist.
+ * Dieselbe Familie wie MAX_VARIANTEN und mindestAntwortLaenge — eine Regel,
+ * die fuer einen anderen Gegenstand gemessen wurde.
+ *
+ * Was bleibt, ist die SICHERHEITSpruefung: Schluessel, personenbezogene Daten
+ * und Prompt-Injection ohne Verweigerung fliegen weiterhin raus. Genau die
+ * Gruende, bei denen ein Mensch sich irren kann.
+ */
+export const NUR_HEURISTIK = new Set(["spam", "fehlerhaft", "antwort_zu_kurz"]);
+
+export function pruefeHandgeschrieben(messages) {
+  const urteil = pruefePaar(messages, { angriffeErlaubt: true, mindestAntwortLaenge: 1 });
+  if (urteil.ok) return urteil;
+  if (NUR_HEURISTIK.has(urteil.grund)) return { ok: true, grund: null, heuristikUebergangen: urteil.grund };
+  return urteil;
+}
+
+/**
  * Baut den Datensatz. Rein und testbar: keine Datei, kein Netz.
  * @returns {{paare: Array, bericht: object, manifest: object}}
  */
@@ -102,7 +133,24 @@ export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ
     suiten, angriffeErlaubt: true, mindestAntwortLaenge: 1, maxVarianten: MAX_VARIANTEN_GERECHNET
   });
   const bericht = gebaut.bericht;
-  const paare = mischen ? mische(gebaut.paare, startwert) : gebaut.paare;
+  // HANDGESCHRIEBENE PAARE NACHTRAEGLICH ZURUECKHOLEN, wenn nur die
+  // Textheuristik sie verworfen hat (siehe pruefeHandgeschrieben). Sie sind
+  // der Kern des Datensatzes; ein Paar, das ueber `undefined` SPRICHT, ist
+  // nicht halbfertig, und ein Beispiel mit mehreren Adressen ist keine Werbung.
+  const drin = new Set(gebaut.paare.map((x) => x.messages.map((m) => m.content).join("\u0000")));
+  const nachgeholt = [];
+  for (const h of rohPaare) {
+    if (!h.handgeschrieben) continue;
+    const schluessel = h.messages.map((m) => m.content).join("\u0000");
+    if (drin.has(schluessel)) continue;
+    const urteil = pruefeHandgeschrieben(h.messages);
+    if (urteil.ok && urteil.heuristikUebergangen) {
+      nachgeholt.push({ messages: h.messages.map((m) => ({ role: m.role, content: String(m.content) })) });
+      bericht.heuristikUebergangen = (bericht.heuristikUebergangen || 0) + 1;
+    }
+  }
+  const alle = [...gebaut.paare, ...nachgeholt];
+  const paare = mischen ? mische(alle, startwert) : alle;
   const text = jsonl(paare);
   const kategorien = {};
   for (const p of paare) {
@@ -132,17 +180,43 @@ async function main() {
   // trainiert das Verweigern weg (con-1.1.0, verworfen am 03.09.).
   const p = profil();
   console.log(`Profil: ${p.name} (Startwert ${p.startwert}, ${p.mischen ? "gemischt" : "in Erzeugungsreihenfolge"})`);
-  // HANDGESCHRIEBENE PAARE ZUERST — sie sind der Kern, nicht die Beigabe.
+  // NUR NOCH ZWEI QUELLEN — Betreiber-Entscheidung 2026-09-06.
   //
-  // BEFUND 2026-09-06: Der Adapter aus 11.016 erzeugten Beispielen war 17,4
-  // Punkte schlechter als das Basismodell. Im erzeugten Datensatz sind 98 %
-  // der Saetze Wiederholungen; der haeufigste steht 852 Mal da. Ein Modell
+  // GEMESSEN an der breiten Suite (295 Faelle): Der Adapter aus 11.016
+  // erzeugten Beispielen war 17,4 Punkte SCHLECHTER als das Basismodell.
+  // Aufgeschluesselt nach Gebiet hat das Erzeugte in JEDEM geschadet —
+  // Sprache -53, Sicherheit -28, Code -23, Schutz -22, Naming -20 — mit
+  // genau einer Ausnahme: Rechnen, +11.
+  //
+  // Der Grund steht in den Zahlen des Datensatzes: 32.301 Saetze, davon 1.107
+  // verschiedene. 98 % Wiederholungen, der haeufigste Satz 852 Mal. Ein Modell
   // lernt daraus Satzbausteine und gibt sie danach wahllos aus — auf eine
   // Rueckfrage-Aufgabe kam eine Verweigerungsfloskel.
   //
-  // Die handgeschriebenen Paare haben NULL wiederkehrende Saetze. Sie sind
-  // wenige, und das ist Absicht: Menge war nie das Problem.
-  const roh = [...echtePaare(), ...erzeuge({ startwert: STARTWERT, ...MENGEN }), ...erzeugeErgaenzung({ startwert: STARTWERT })];
+  // Warum Rechnen die Ausnahme ist: Dort IST die Aufgabe schablonenhaft.
+  // "Wie viel ist 47 mal 23" hat eine Form und eine richtige Antwort; ein
+  // Modell, das die Form lernt, wird darin besser. Bei Sprache und Sicherheit
+  // ist die Form gerade nicht die Sache.
+  //
+  // Deshalb bleiben zwei Quellen: die handgeschriebenen Paare (jede Antwort
+  // gehoert zu IHRER Frage, null wiederkehrende Saetze) und die gerechneten
+  // Aufgaben. Alles andere Erzeugte faellt weg — zwoelftausend Paare, deren
+  // Wirkung gemessen negativ war.
+  //
+  // 16.695 Paare mit 98 % Wiederholungen  ->  4.486 Paare mit 0 %.
+  //
+  // Das Erzeugen der uebrigen Gebiete bleibt im Code (smejj-1-1-generator.mjs,
+  // -abwehr, -gegenprobe): geloescht wird nichts, und sollte die naechste
+  // Messung zeigen, dass sie doch tragen, sind sie eine Zeile entfernt.
+  const handgeschrieben = echtePaare().map((h) => ({ ...h, handgeschrieben: true }));
+  const roh = [...handgeschrieben, ...erzeuge({ startwert: STARTWERT, reasoning: MENGEN.reasoning, sicherheit: 0, sprache: 0 })];
+  // Die handgeschriebenen Paare werden zusaetzlich einzeln geprueft und
+  // gemeldet — sie sind der Kern, ein stiller Verlust waere hier am teuersten.
+  const verworfen = handgeschrieben.filter((h) => !pruefeHandgeschrieben(h.messages).ok);
+  if (verworfen.length) {
+    console.log(`ACHTUNG: ${verworfen.length} handgeschriebene Paare aus SICHERHEITSgruenden verworfen:`);
+    for (const h of verworfen) console.log(`  ${pruefeHandgeschrieben(h.messages).grund}: ${h.messages[1].content.slice(0, 60)}`);
+  }
   const suiten = await leseSuiten();
   const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen });
   const ziel = path.join(WURZEL, "out", p.name);
