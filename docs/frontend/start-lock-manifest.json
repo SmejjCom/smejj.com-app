@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T02:31:27.116Z",
+  "frozenAt": "2026-09-06T04:47:55.053Z",
   "confirmation": "Betreiber, 2026-09-06: 'Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter, bis alles stabil, sicher und zuverlaessig funktioniert.' Die Suite stand seit Wochen auf 10 rot; Dauer-Rot verdeckt echte Fehler. Acht davon aufgeraeumt, darunter zwei echte: zehn dynamisch nachgeladene Module fehlten im Offline-Vorrat (Aktionsleiste, Composer-Zeile, erste Schritte, PDF-/Office-/Tonspur-Anhaenge fielen offline stumm aus) und CLIENT_ROUTES.api.trainingCapture gab es in config.js nicht. Die restlichen sechs waren Test-Luecken: hart gepinnte Cache-Marken, ein Helfer der nur statische Importe sah, eine veraltete Erwartung an Cmd+K und ein Stub ohne classList.toggle. sw.js, config.js, Service-Worker smejj-shell-v778. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
