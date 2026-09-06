@@ -390,3 +390,14 @@ test("Bruecke uebernimmt beim Start bereits erteilte Chrome-Rechte als Freigabe"
   const manifest = JSON.parse(fs.readFileSync("extensions/smejj-maus-bruecke/manifest.json", "utf8"));
   assert.notEqual(manifest.version, "0.5.0", "neuer Stand braucht eine neue Versionsnummer");
 });
+
+
+test("v0.5.2: die Seite kann die Bruecke neu laden lassen — nur von smejj.com, per chrome.runtime.reload", () => {
+  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const manifest = JSON.parse(fs.readFileSync("extensions/smejj-maus-bruecke/manifest.json", "utf8"));
+  assert.equal(manifest.version, "0.5.2");
+  assert.match(hintergrund, /nachricht\?\.neuladen/);
+  assert.match(hintergrund, /chrome\.runtime\.reload\(\)/);
+  // Der Neulade-Zweig liegt HINTER der Herkunftspruefung (absender_nicht_erlaubt).
+  assert.ok(hintergrund.indexOf("absender_nicht_erlaubt") < hintergrund.indexOf("nachricht?.neuladen"));
+});

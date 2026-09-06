@@ -298,7 +298,16 @@ function baueEmpfang() {
     // Zwei Woerter, zwei Wege: `befehl` ist der alte Adapter-Weg der
     // Maus-Engine, `aktion` der neue der Seite. Sie bleiben getrennt, damit
     // der bestehende Weg samt seiner 13 Tests unberuehrt weiterlaeuft.
-    const arbeit = nachricht?.zustand
+    // NEU LADEN auf Zuruf der Seite (v0.5.2, 2026-09-06): Chrome haelt den
+    // Hintergrund einer unverpackten Erweiterung fest, bis jemand auf
+    // chrome://extensions "Neu laden" drueckt — der Betreiber sah so tagelang
+    // einen Hintergrund von vor 0.5.0, obwohl auf der Platte 0.5.1 lag.
+    // chrome.runtime.reload() laedt Manifest und Skripte frisch von der
+    // Platte; Freigaben liegen in storage.local und ueberleben das. Nur von
+    // smejj.com (Herkunft oben geprueft), nur auf ausdrueckliche Bitte.
+    const arbeit = nachricht?.neuladen
+      ? Promise.resolve().then(() => { setTimeout(() => chrome.runtime.reload(), 150); return { ok: true, neuladen: true, version: chrome.runtime.getManifest().version }; })
+      : nachricht?.zustand
       ? zustandZeigen()
       : nachricht?.aktion
       ? fuehreAktionAus(nachricht.aktion)
