@@ -26,6 +26,7 @@ import time
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import e2
+from regeln import bereits_vollstaendig
 
 
 def _lade_zeilen(pfad, max_zeilen=None):
@@ -198,11 +199,18 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
     status.setze(schritt="zwischenstand_kennung", kennung=kennung)
     letzter = _neuester_zwischenstand(checkpoint_prefix)
     resume = None
+    zwischenstand_jobid = ""
     if letzter is not None:
         status.setze(schritt="zwischenstand_laden", schrittNr=letzter)
         e2.lade_verzeichnis_herunter(f"{checkpoint_prefix.rstrip('/')}/checkpoint-{letzter}",
                                      os.path.join(ausgabe, f"checkpoint-{letzter}"))
         resume = os.path.join(ausgabe, f"checkpoint-{letzter}")
+        try:
+            with open(os.path.join(resume, "con-zwischenstand.json"), encoding="utf-8") as f:
+                zwischenstand_jobid = json.load(f).get("jobId") or ""
+        except (OSError, ValueError):
+            zwischenstand_jobid = ""
+        status.setze(zwischenstandJobId=zwischenstand_jobid)
 
     # Gemessen 03.09. auf einer RTX 3090 mit 27B/nf4: ein Zwischenstand traegt Adapter UND
     # Optimierer-Zustand (zusammen ueber 1 GB) nach e2 und dauert damit laenger als ein
@@ -232,6 +240,14 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
             pfad = os.path.join(ausgabe, f"checkpoint-{state.global_step}")
             if os.path.isdir(pfad) and pfad not in self.hochgeladen:
                 status.setze(schritt="zwischenstand_sichern", schrittNr=state.global_step)
+                # Herkunftsnotiz MIT in den Zwischenstand: sonst laesst sich spaeter
+                # nicht unterscheiden, ob ein gefundener Zwischenstand die eigene
+                # Arbeit ist oder die eines fremden Laufs. Am 06.09. wurde con-1.6
+                # deshalb verworfen, obwohl der Adapter aus genau diesem Job stammte
+                # (Salad hatte den Rechenknoten mitten im Lauf gewechselt).
+                with open(os.path.join(pfad, "con-zwischenstand.json"), "w", encoding="utf-8") as f:
+                    json.dump({"jobId": os.environ.get("CON_JOB_ID", ""), "kennung": kennung,
+                               "globalStep": state.global_step, "stand": time.time()}, f)
                 e2.lade_verzeichnis_hoch(pfad, f"{checkpoint_prefix.rstrip('/')}/checkpoint-{state.global_step}")
                 self.hochgeladen.add(pfad)
                 status.setze(schritt="training", letzterZwischenstand=state.global_step)
@@ -293,5 +309,8 @@ def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, ko
     neue_schritte = schritte - (letzter or 0)
     return {"adapterPfad": adapter_pfad, "globalStep": schritte, "neueSchritte": neue_schritte,
             "ohneNeueSchritte": neue_schritte <= 0, "zwischenstandKennung": kennung,
+            "zwischenstandJobId": zwischenstand_jobid,
+            "bereitsVollstaendig": bereits_vollstaendig(neue_schritte, schritte, zwischenstand_jobid,
+                                                        os.environ.get("CON_JOB_ID", "")),
             "trainLoss": getattr(ergebnis, "training_loss", None), "sekunden": round(dauer),
             "beispiele": len(beispiele), "abgebrochen": abbruch_gewuenscht, "zielModule": ziele}
