@@ -17,6 +17,7 @@ import {
   putProviderCredential
 } from "../providers/providerCredentialVault.js";
 import { neueMessung, notiere } from "../llm/tokenMesser.js";
+import { ergaenzeMausSchutz } from "../llm/mausImitationSchutz.js";
 
 const PREFIX = "/api/providers/cline";
 // ZWEI Bremsen statt einer (Betreiber-Befund 2026-08-17: "manchmal kommen
@@ -167,7 +168,9 @@ async function testStoredCredential(subjectId, res, env, fetchImpl) {
 async function streamChat(subjectId, req, res, env, fetchImpl) {
   const record = await requireCredential(subjectId, env);
   const body = await readJson(req);
-  const messages = sanitizeMessages(body.messages);
+  // Maus-Spuren im Verlauf? Dann bekommt das Modell die Wahrheit ueber die
+  // Maus mit (mausImitationSchutz.js) — sonst spielt es die Maus nach.
+  const messages = ergaenzeMausSchutz(sanitizeMessages(body.messages));
   if (messages.length === 0) return privateJson(res, 400, { ok: false, error: "messages_required" });
   const messgeraet = neueMessung({ spur: "cline", backend: "cline", modell: record.selectedModel, nutzer: subjectId });
   messgeraet.zaehleEingabe(messages);
