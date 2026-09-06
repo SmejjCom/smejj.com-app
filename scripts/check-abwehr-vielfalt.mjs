@@ -48,7 +48,23 @@ export const SCHWELLE = Object.freeze({
   gemeinsamerTopf: 0.50, // mehr als die Haelfte der Gruende passt zu jeder Frage
   // Hoechstens so viele Ablehnungen auf EINE hilfreiche Antwort bei gleichem
   // Vokabular. Darueber lernt das Modell das Wort statt die Absicht.
-  ueberverweigerung: 5
+  ueberverweigerung: 5,
+  // WIEDERKEHRENDE SAETZE — die Zahl, die am 06.09. gefehlt hat.
+  //
+  // Diese Pruefung meldete fuer den erzeugten Datensatz 94,9 % Antwortvielfalt
+  // und "OK". An der breiten Suite (295 Faelle) gemessen war derselbe Datensatz
+  // bei Sicherheit 28 Punkte SCHLECHTER als das Basismodell ohne Adapter.
+  //
+  // Beide Zahlen stimmen. Sie messen nur Verschiedenes: 8 Anfaenge mal 12
+  // Gruende mal 9 Angebote ergeben 3.908 verschiedene ANTWORTEN aus immer
+  // denselben SAETZEN. Ueber den ganzen Datensatz gerechnet: 32.301 Saetze,
+  // davon 1.107 verschiedene — 98 % Wiederholungen, der haeufigste 852 Mal.
+  //
+  // Ein Modell lernt Saetze, nicht Kombinationen. Es gab danach auf eine
+  // Rueckfrage-Aufgabe zwei zusammengeklebte Verweigerungsfloskeln aus.
+  //
+  // Ueber 60 % wiederkehrende Saetze ist der Datensatz Baukasten, nicht Sprache.
+  satzWiederholung: 0.60
 });
 
 /** Klein, ohne Satzzeichen, ohne Mehrfach-Leerzeichen — sonst zaehlt ein Punkt als Vielfalt. */
@@ -106,6 +122,36 @@ const vielfalt = (liste) => (liste.length ? new Set(liste).size / liste.length :
  * @param {Array<{frage: string, antwort: string}>} paare
  * @param {string[]} ziele Fragen-Ziele, an denen die Passung gemessen wird
  */
+/** Zerlegt eine Antwort in Saetze — die Einheit, die ein Modell wirklich lernt. */
+export function inSaetze(text) {
+  return String(text)
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => normalisiere(s))
+    .filter((s) => s.split(" ").length >= 4);
+}
+
+/**
+ * Wie stark der Datensatz aus wiederkehrenden SAETZEN besteht.
+ * Die Ergaenzung zur Antwort-Vielfalt: verschiedene Antworten aus denselben
+ * Saetzen sind keine Vielfalt, sondern ein Baukasten.
+ */
+export function missSaetze(paare) {
+  const zaehler = new Map();
+  let gesamt = 0;
+  for (const p of paare) {
+    for (const s of inSaetze(p.antwort)) {
+      zaehler.set(s, (zaehler.get(s) || 0) + 1);
+      gesamt += 1;
+    }
+  }
+  let wiederholt = 0, top = { satz: "", mal: 0 };
+  for (const [satz, mal] of zaehler) {
+    if (mal > 1) wiederholt += mal;
+    if (mal > top.mal) top = { satz, mal };
+  }
+  return { gesamt, eindeutig: zaehler.size, anteilWiederholt: gesamt ? wiederholt / gesamt : 0, haeufigsterSatz: top };
+}
+
 export function miss(paare, ziele = []) {
   const antworten = paare.map((p) => normalisiere(p.antwort));
   const teile = paare.map((p) => zerlege(p.antwort));
@@ -140,6 +186,7 @@ export function miss(paare, ziele = []) {
     anzahl: paare.length,
     eindeutig: new Set(antworten).size,
     vielfalt: vielfalt(antworten),
+    saetze: missSaetze(paare),
     schablone: anteilHaeufigste(antworten),
     anfangVielfalt: vielfalt(teile.map((t) => t.anfang)),
     grundVielfalt: vielfalt(teile.map((t) => t.grund)),
@@ -176,6 +223,14 @@ export function befunde(m, schwelle = SCHWELLE) {
   if (m.vielfalt < schwelle.vielfalt) {
     b.push(`Vielfalt ${p(m.vielfalt)} (${m.eindeutig} verschiedene auf ${m.anzahl} Paare) — unter ${p(schwelle.vielfalt)}. `
       + `Das sind Textbausteine, keine Haltung: das Modell lernt die Formulierung statt der Regel.`);
+  }
+  if (m.saetze && m.saetze.anteilWiederholt > schwelle.satzWiederholung) {
+    b.push(`${p(m.saetze.anteilWiederholt)} der Saetze sind Wiederholungen `
+      + `(${m.saetze.gesamt} Saetze, davon ${m.saetze.eindeutig} verschiedene; haeufigster ${m.saetze.haeufigsterSatz.mal}x: `
+      + `"${m.saetze.haeufigsterSatz.satz.slice(0, 50)}") — ueber ${p(schwelle.satzWiederholung)}. `
+      + "Verschiedene Antworten aus denselben Saetzen sind kein Verhalten, sondern ein Baukasten. "
+      + "Am 06.09. bestand genau so ein Datensatz diese Pruefung mit 94,9 % Antwort-Vielfalt "
+      + "und machte das Modell bei Sicherheit 28 Punkte schlechter.");
   }
   if (m.schablone > schwelle.schablone) {
     b.push(`Eine einzelne Antwort traegt ${p(m.schablone)} — ueber ${p(schwelle.schablone)}. Das ist die Vorlage, auf die das Modell zurueckfaellt.`);
@@ -263,6 +318,7 @@ async function main() {
   console.log(`abwehr-vielfalt: ${m.anzahl} Abwehr-Paare`);
   console.log(`  Vielfalt der Antworten   ${p(m.vielfalt)}   (${m.eindeutig} verschiedene, Schwelle ${p(SCHWELLE.vielfalt)})`);
   console.log(`  haeufigste Antwort       ${p(m.schablone)}   (Schwelle hoechstens ${p(SCHWELLE.schablone)})`);
+  if (m.saetze) console.log(`  wiederkehrende Saetze  ${(m.saetze.anteilWiederholt * 100).toFixed(1)} %   (${m.saetze.eindeutig} verschiedene von ${m.saetze.gesamt}, Schwelle hoechstens ${(SCHWELLE.satzWiederholung * 100).toFixed(0)} %)`);
   console.log(`  davon Anfaenge           ${m.anfaenge}`);
   console.log(`  davon Begruendungen      ${m.gruende}`);
   if (m.zieleErkannt > 1) {

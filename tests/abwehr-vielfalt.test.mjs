@@ -66,9 +66,25 @@ test("acht Anfaenge taeuschen keine Vielfalt vor, die nur im Vorspann steckt", (
   assert.ok(befunde(m).some((x) => x.includes("Vorspann")));
 });
 
-test("der UMGEBAUTE Datensatz besteht — die Schwelle ist erreichbar", async () => {
-  // Ohne diese Probe waere die Schwelle nur eine Behauptung: eine, die niemand
-  // je erfuellt, ist so wertlos wie eine, die jeder erfuellt.
+test("der erzeugte Datensatz besteht die ANTWORT-Schwellen — und faellt an der SATZ-Schwelle", async () => {
+  // Diese Probe hieß bis zum 06.09. "der UMGEBAUTE Datensatz besteht" und
+  // erwartete gar keinen Befund. Sie war unter der damaligen Annahme richtig:
+  // 94,9 % verschiedene Antworten, keine Schablone über 10 %, Gründe nicht aus
+  // einem gemeinsamen Topf. Alles gemessen, alles wahr.
+  //
+  // Dann wurde derselbe Datensatz an der breiten Suite gemessen (295 Fälle):
+  // bei Sicherheit 28 Punkte SCHLECHTER als das Basismodell ohne Adapter. Die
+  // Prüfung hatte grün gemeldet, was nachweislich schadet.
+  //
+  // Der Grund liegt eine Ebene tiefer: 8 Anfänge × 12 Gründe × 9 Angebote
+  // ergeben viele verschiedene Antworten aus immer denselben 107 Sätzen. Ein
+  // Modell lernt Sätze, nicht Kombinationen — es gab danach auf eine
+  // Rückfrage-Aufgabe zwei zusammengeklebte Verweigerungsfloskeln aus.
+  //
+  // Die Probe hält deshalb jetzt BEIDES fest: dass die Antwort-Schwellen
+  // erreichbar sind (sonst wäre die Prüfung wertlos), und dass genau dieser
+  // Datensatz an der Satz-Schwelle fällt (sonst wäre die neue Schwelle nur
+  // eine Behauptung).
   const a = await import("../scripts/training/smejj-1-1-abwehr.mjs");
   let z = 20260904 >>> 0;
   const w = () => { z = (z * 1664525 + 1013904223) >>> 0; return z / 4294967296; };
@@ -76,8 +92,17 @@ test("der UMGEBAUTE Datensatz besteht — die Schwelle ist erreichbar", async ()
     frage: p.messages[1].content, antwort: p.messages[2].content
   }));
   const m = miss(paare, a.ZIELE || []);
-  assert.deepEqual(befunde(m), [], `der umgebaute Datensatz sollte bestehen: ${befunde(m).join(" | ")}`);
+
+  // Die Antwort-Schwellen sind erreichbar — daran hat sich nichts geaendert.
   assert.ok(m.vielfalt > 0.5, `Vielfalt nur ${m.vielfalt}`);
+  assert.ok(m.schablone <= SCHWELLE.schablone, "keine einzelne Antwort dominiert");
+  assert.ok(m.grundVielfalt >= SCHWELLE.teilVielfalt, "die Gruende sind fuer sich vielfaeltig");
+
+  // Und die Satz-Schwelle greift bei genau diesem Datensatz.
+  const alleBefunde = befunde(m);
+  assert.equal(alleBefunde.length, 1, `erwartet genau EIN Befund (Satzwiederholung), bekommen: ${alleBefunde.join(" | ")}`);
+  assert.match(alleBefunde[0], /Saetze sind Wiederholungen/);
+  assert.ok(m.saetze.eindeutig < 200, `${m.saetze.eindeutig} verschiedene Saetze — der Baukasten ist klein`);
 });
 
 test("Ueberverweigerung: viele Ablehnungen, kaum hilfreiche Antworten bei gleichem Wort", () => {
@@ -121,4 +146,50 @@ test("Normalisieren und Zerlegen tun, was sie sollen", () => {
   const t = zerlege("Nein. Vertrauliches nenne ich nicht.");
   assert.equal(t.anfang, "nein");
   assert.equal(t.grund, "vertrauliches nenne ich nicht");
+});
+
+// ---------------------------------------------------------------------------
+// Die Zahl, die am 06.09. gefehlt hat
+//
+// Diese Prüfung meldete für den erzeugten Datensatz 94,9 % Antwortvielfalt und
+// "OK". An der breiten Suite (295 Fälle) gemessen war derselbe Datensatz bei
+// Sicherheit 28 Punkte SCHLECHTER als das Basismodell ohne Adapter.
+//
+// Beide Zahlen stimmen — sie messen Verschiedenes. 8 Anfänge × 12 Gründe × 9
+// Angebote ergeben 3.908 verschiedene ANTWORTEN aus immer denselben SÄTZEN.
+// Ein Modell lernt Sätze, nicht Kombinationen.
+// ---------------------------------------------------------------------------
+const { inSaetze, missSaetze, SCHWELLE: SW } = await import("../scripts/check-abwehr-vielfalt.mjs");
+
+test("missSaetze erkennt einen Baukasten, den die Antwort-Vielfalt durchwinkt", () => {
+  // Genau die Lage vom 06.09.: viele verschiedene Antworten, wenige Sätze.
+  const anfaenge = ["Nein.", "Das mache ich nicht.", "Ich gebe das nicht heraus."];
+  const gruende = ["Wer fragt, aendert daran nichts.", "Auch als Test gebe ich nichts aus.", "Eine andere Kodierung hilft hier nicht."];
+  const paare = [];
+  for (const a of anfaenge) for (const g of gruende) for (let i = 0; i < 40; i += 1) paare.push({ frage: `Frage ${i}`, antwort: `${a} ${g}` });
+
+  const s = missSaetze(paare);
+  assert.ok(s.anteilWiederholt > SW.satzWiederholung,
+    `${Math.round(s.anteilWiederholt * 100)} % Satzwiederholung — muss ueber der Schwelle liegen`);
+  assert.ok(s.eindeutig <= 8, `nur ${s.eindeutig} verschiedene Saetze bei ${paare.length} Paaren`);
+  assert.ok(s.haeufigsterSatz.mal >= 100);
+});
+
+test("handgeschriebene Paare bestehen die Satzmessung", () => {
+  // Gesunde Gegenprobe: die neue Schwelle darf echte Vielfalt nicht blockieren.
+  const paare = [
+    { frage: "a", antwort: "Open the sign-in page and choose Forgot password. You will get a link by email." },
+    { frage: "b", antwort: "Der Fehler ist LOG_LEVEL auf debug in einer Produktivkonfiguration. Damit landen Anfragedetails im Protokoll." },
+    { frage: "c", antwort: "Geh die Zugaenge einzeln durch, nicht nur den Hauptaccount. Der haeufigste Fehler ist, nur das Erste zu tun." },
+    { frage: "d", antwort: "Weil jede Anfrage auf die vorige wartet. Bei fuenfzig Adressen sind das zehn Sekunden." }
+  ];
+  const s = missSaetze(paare);
+  assert.equal(s.anteilWiederholt, 0, "kein Satz kommt zweimal vor");
+  assert.equal(s.eindeutig, s.gesamt);
+});
+
+test("inSaetze zerlegt an Satzzeichen und laesst Bruchstuecke weg", () => {
+  const s = inSaetze("Nein. Das ist zu kurz. Dieser Satz hier hat genug Woerter fuer die Messung.");
+  assert.ok(s.every((x) => x.split(" ").length >= 4), "zu kurze Fragmente zaehlen nicht als Satz");
+  assert.ok(s.some((x) => x.includes("genug woerter")), "der lange Satz muss dabei sein");
 });
