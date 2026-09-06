@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T19:33:41.168Z",
-  "confirmation": "Betreiber, 2026-09-06 22:21: 'Ich habe grade eine Maus Aufgabe gegeben hat nicht mal Browser geoeffnet. Muss alles professionell und perfekt funktionieren.' Befund: 'con.ax registieren' wurde nicht als Adresse erkannt (.ax fehlte). Umgesetzt: jede Laenderendung zaehlt (maus-absicht.js), Marken bis zur Wurzel (maus-absicht v32, maus-panel v26, sendepfad-nachladen v16, browser-nachladen v14, app.js b152). Mit ausgeliefert: Stand der Parallelsitzung 44b4563f (Guthaben-Leiste, Ox Alpha raus, Bruecke-Schutzregel). Service-Worker smejj-shell-v786. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-06T19:58:38.181Z",
+  "confirmation": "Betreiber, 2026-09-06 22:21: 'Muss alles professionell und perfekt funktionieren.' Live-Befund con.ax 22:39: Maus gab bei sechs Restschritten vor einem Formular mit sieben Feldern auf. Umgesetzt: Schrittgrenze 25 statt 10 (browser-pane-maus.js), Marken bis zur Wurzel (browser-pane-maus 20260906-6, browser-pane 20260906-9, maus-absicht v33, maus-panel v27, sendepfad-nachladen v17, browser-nachladen v15, app.js b153), Service-Worker smejj-shell-v787. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "702706a05e1f9ba020aadcbedf46335d82089144af380f2d656db33722748f51",
+    "public/index.html": "7b5df3e79bb705c548fbf1c11a0d9f79d46497f5026d3b9e445a7f4d6f05ee46",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "5f664d933d42de0c6e38852ce512ba673c050f782e634c2a9e0b3ac800b112c1",
+    "public/app.js": "a0d95417dc212a10f5a0a0596ef9834e0b6e5bb57d45c4eb27265b070d813ec8",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "6d26716c99faf8f6ce7e9ba3bf60a8c0335c410e8da67556e21837d419a52400",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "1973fdb094173935fd98b048ed83ae4aa4fe5b8322dd7e50f4f1031457188ee5",
+    "public/browser-pane.js": "1946e7ce8a0f5dafe0fc3ec98b2ee3bd3544197acd85c7ff569e5dd29fb805d0",
     "public/browser-pane-render.js": "92c20217a207e9a3af426f755b60252b5c91e1cd4b7bc21739777971d83619b6",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "96fca6354701c0a631b5311724cf095e588ddcf3c29221b4c8a81c88abdb510c",
+    "public/sw.js": "8b70d87f394a4c86aac7fd44b9e14dd7a70dbdc7a7b80284c5acd7719eb8b5ff",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
