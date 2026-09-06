@@ -400,7 +400,7 @@ test("Bruecke uebernimmt beim Start bereits erteilte Chrome-Rechte als Freigabe"
 test("v0.5.2: die Seite kann die Bruecke neu laden lassen — nur von smejj.com, per chrome.runtime.reload", () => {
   const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   const manifest = JSON.parse(fs.readFileSync("extensions/smejj-maus-bruecke/manifest.json", "utf8"));
-  assert.equal(manifest.version, "0.5.2");
+  assert.ok(manifest.version >= "0.5.2", "ab 0.5.2 kann die Seite neu laden lassen");
   assert.match(hintergrund, /nachricht\?\.neuladen/);
   assert.match(hintergrund, /chrome\.runtime\.reload\(\)/);
   // Der Neulade-Zweig liegt HINTER der Herkunftspruefung (absender_nicht_erlaubt).
