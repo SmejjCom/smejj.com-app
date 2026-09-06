@@ -197,6 +197,31 @@ export function baueSuitenVerzeichnis(suiteDatei = SUITE_DATEI, aufgeloesteSuite
  * Note eines Standes aus gespeicherten Antworten — ueber dieselbe Messstrecke
  * wie run_model_eval.mjs. `callModel` gibt die Durchgaenge der Reihe nach zurueck.
  */
+/**
+ * Wie viele Faelle eine ECHTE Antwort haben. Leere zaehlen nicht.
+ *
+ * BEFUND 2026-09-06: Ein Messjob brach mitten im Adapter-Stand ab. In den
+ * gespeicherten Antworten standen trotzdem alle 295 Faelle — 112 mit Text, 183
+ * leer. Die Benotung wertete jede leere Antwort als "nicht bestanden" und kam
+ * auf 24 %. Diese Zahl landete als gueltige Bewertung im Register, wo der
+ * Versions-Takt (Nr. 83) sie gelesen und smejj-1-2 damit abgelehnt haette —
+ * mit einer Begruendung, die nichts mit dem Modell zu tun hat.
+ *
+ * Ein Abbruch darf nicht aussehen wie ein schlechtes Modell. Beides ist "keine
+ * gute Antwort", aber nur eines ist ein Urteil.
+ */
+export function zaehleEchteAntworten(gemessen) {
+  let echt = 0, leer = 0;
+  for (const fall of gemessen?.cases || []) {
+    const lauf = (fall.runs || [])[0];
+    if (lauf && !lauf.error && String(lauf.text || "").trim()) echt += 1; else leer += 1;
+  }
+  return { echt, leer, gesamt: echt + leer, anteil: echt + leer ? echt / (echt + leer) : 0 };
+}
+
+/** Ab welchem Anteil echter Antworten eine Messung ueberhaupt beurteilbar ist. */
+export const MINDEST_ANTWORT_ANTEIL = 0.98;
+
 export async function benoteAntworten(suite, antworten, stand) {
   const gemessen = (antworten.suiten || []).find((s) => s.suiteId === suite.suiteId);
   if (!gemessen) throw new Error(`Suite ${suite.suiteId} fehlt in den Antworten (${(antworten.suiten || []).map((s) => s.suiteId).join(", ") || "keine"})`);
@@ -210,6 +235,14 @@ export async function benoteAntworten(suite, antworten, stand) {
     return { ok: !lauf.error && String(lauf.text || "").trim().length > 0, text: String(lauf.text || ""), latencyMs: lauf.latencyMs ?? 0,
       firstTokenMs: null, backend: "salad-transformers", modelId: stand, error: lauf.error || null };
   };
+  // Fail-closed VOR der Benotung: eine unvollstaendige Messung ergibt keine
+  // niedrige Note, sondern gar keine.
+  const deckung = zaehleEchteAntworten(gemessen);
+  if (deckung.anteil < MINDEST_ANTWORT_ANTEIL) {
+    throw new Error(`Messung unvollstaendig fuer ${stand}: nur ${deckung.echt} von ${deckung.gesamt} Faellen haben eine echte Antwort `
+      + `(${Math.round(deckung.anteil * 100)} %). Der Lauf wurde abgebrochen — leere Antworten als "nicht bestanden" zu werten `
+      + "waere ein Urteil ueber den Abbruch, nicht ueber das Modell.");
+  }
   const wdh = Math.max(1, ...gemessen.cases.map((c) => (c.runs || []).length));
   const { caseScores } = await runEvalSuite({ suite, cases: selectCases(suite), callModel, retries: 0, wiederholungen: wdh });
   const run = { modelId: stand, requestedModelId: stand, backend: "salad-transformers", transport: "salad-job",

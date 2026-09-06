@@ -98,3 +98,50 @@ test("do_sample bleibt aus — sonst waere eine Wiederholung zu wenig", () => {
   const py = readFileSync("workers/con-autopilot/salad-job/evalrun.py", "utf8");
   assert.match(py, /"do_sample":\s*False/, "die Messung muss deterministisch bleiben");
 });
+
+// ---------------------------------------------------------------------------
+// Ein Abbruch ist kein schlechtes Modell
+//
+// BEFUND 2026-09-06: Ein Messjob brach mitten im Adapter-Stand ab. In den
+// gespeicherten Antworten standen trotzdem alle 295 Fälle — 112 mit Text, 183
+// leer. Die Benotung wertete jede leere Antwort als "nicht bestanden" und kam
+// auf 24 %. Diese Zahl landete als gültige Bewertung im Register, wo der
+// Versions-Takt sie gelesen und das Modell damit abgelehnt hätte.
+//
+// Beides ist "keine gute Antwort" — aber nur eines ist ein Urteil.
+// ---------------------------------------------------------------------------
+test("zaehleEchteAntworten trennt Antwort von Leere", async () => {
+  const { zaehleEchteAntworten } = await import("../scripts/training/smejj-1-1-messen.mjs");
+  const gemessen = { cases: [
+    { id: "a", runs: [{ text: "eine echte Antwort" }] },
+    { id: "b", runs: [{ text: "" }] },
+    { id: "c", runs: [{ text: "   " }] },
+    { id: "d", runs: [{ text: "auch echt", error: "boom" }] },
+    { id: "e", runs: [] }
+  ] };
+  const d = zaehleEchteAntworten(gemessen);
+  assert.equal(d.echt, 1, "nur die erste zaehlt: leer, weiss, Fehler und fehlend zaehlen nicht");
+  assert.equal(d.leer, 4);
+  assert.equal(d.gesamt, 5);
+});
+
+test("eine unvollstaendige Messung ergibt gar keine Note, keine niedrige", async () => {
+  const { benoteAntworten, MINDEST_ANTWORT_ANTEIL } = await import("../scripts/training/smejj-1-1-messen.mjs");
+  const { suite } = await loadEvalSuite(SUITE_KERN);
+  // Genau die Lage vom 06.09.: ein Teil beantwortet, der Rest leer.
+  const cases = suite.cases.map((c, i) => ({ id: c.id, runs: [{ text: i < 4 ? "Antwort" : "", latencyMs: 10 }] }));
+  const antworten = { jobId: "abgebrochen", suiten: [{ suiteId: suite.suiteId, cases }] };
+  await assert.rejects(() => benoteAntworten(suite, antworten, "kandidat"),
+    /Messung unvollstaendig.*4 von 14/s, "der Abbruch muss als Abbruch auffallen");
+  assert.ok(MINDEST_ANTWORT_ANTEIL > 0.9, "fast alle Faelle muessen beantwortet sein");
+});
+
+test("eine vollstaendige Messung wird ganz normal benotet", async () => {
+  // Gesunde Gegenprobe: die Schranke darf gute Laeufe nicht blockieren.
+  const { benoteAntworten } = await import("../scripts/training/smejj-1-1-messen.mjs");
+  const { suite } = await loadEvalSuite(SUITE_KERN);
+  const cases = suite.cases.map((c) => ({ id: c.id, runs: [{ text: "smejj.com", latencyMs: 10 }] }));
+  const bericht = await benoteAntworten(suite, { jobId: "voll", suiten: [{ suiteId: suite.suiteId, cases }] }, "kandidat");
+  assert.ok(bericht?.summary, "eine vollstaendige Messung muss durchgehen");
+  assert.equal(typeof bericht.summary.weightedScore, "number");
+});
