@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T16:25:27.168Z",
-  "confirmation": "Betreiber, 2026-09-06 18:39, Bildschirmfoto: 'checke diese Fehlern' — Adressleiste des Live-Browsers zeigte '88709133371969' statt der Adresse. Zweiter Lauf: live gemessen rollt das Feld schon beim Schreiben der Adresse ans Ende; Fix im Render von browser-pane.js (scrollLeft = 0). Marken bis zur Wurzel (browser-pane 20260906-8, maus-absicht v31, maus-panel v25, sendepfad-nachladen v15, browser-nachladen v13, app.js b149), Service-Worker smejj-shell-v783. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-06T17:10:48.228Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05, Bildschirmfoto mit Wortlaut: 'Soll ganz unten dunkele hintergrund raus, seite soll mit ganz untere kante treffen.' Befund: der Rahmen des Live-Browsers hatte seit dem Entfernen der Kopfzeile zwei Gitterzeilen; die Buehne landete in der auto-Zeile und wurde nur so hoch wie das Bild, darunter zeigte die leere 1fr-Zeile den dunklen Grund (im Browser nachgestellt: 213 px Streifen). Dazu zog remoteBrowserViewport 38 px der entfernten Kopfzeile ab, und der Nachlauf bei Groessenaenderung galt nicht fuer den Live-Browser. Behoben in browser-pane-render.js, browser-pane-fernwege.js, browser-pane.js; Marken der Browser-Kette, app.js b138, Service-Worker smejj-shell-v771. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "efa11ee135e7eeb4a3ef4d0c1419f18378b2f0f3bd44a45b97db22b438ba52c9",
