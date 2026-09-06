@@ -47,8 +47,13 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
   // kein frueheres Bild. Ohne diese Ausnahme faellt die GANZE Antwort weg
   // und der Aufrufer sieht eine tote Seite, statt die offene Frage zu lesen.
   const dialogOffen = Boolean(payload.dialog && typeof payload.dialog === "object");
+  // ZWEITE Ausnahme (2026-09-06): bildloses Hinsehen. Der Worker laesst das
+  // Bild auf ausdrueckliche Bitte weg (observe mit ohneBild), weil das
+  // Hinsehen die Seite nicht veraendert — das Panel behaelt sein Bild. Nur
+  // mit Beobachtung, sonst gilt weiter: kein Bild, keine Antwort.
+  const bildlosesHinsehen = payload.ohneBild === true && Boolean(payload.beobachtung && typeof payload.beobachtung === "object");
   if (!sessionId) return null;
-  if (!isSessionScreenshot(payload.screenshot) && !dialogOffen) return null;
+  if (!isSessionScreenshot(payload.screenshot) && !dialogOffen && !bildlosesHinsehen) return null;
   const viewport = payload.viewport || {};
   return {
     ok: true,
@@ -67,6 +72,22 @@ export function sanitizeSessionPayload(payload, fallbackUrl = "") {
       height: clampInt(viewport.height, 900, 360, 1200)
     },
     expiresInMs: clampInt(payload.expiresInMs, 0, 0, 3_600_000),
+    // Bildloses Hinsehen (siehe oben): das Panel muss wissen, dass das Bild
+    // absichtlich fehlt, sonst hielte es die Antwort fuer kaputt.
+    ohneBild: bildlosesHinsehen ? true : undefined,
+    // WO das getroffene Element im Bild lag (x, y, w, h in Bildpunkten des
+    // Fern-Viewports). Damit zeichnet das Panel den Zeiger der Maus dorthin
+    // (Betreiber 2026-09-06: sichtbar wie bei Claude/Codex). Fuenfte Runde
+    // derselben Lehre: ein neues Feld ist erst da, wenn das Tor es kennt.
+    ziel: payload.ziel && typeof payload.ziel === "object"
+      && [payload.ziel.x, payload.ziel.y, payload.ziel.w, payload.ziel.h].every((v) => Number.isFinite(Number(v)))
+      ? {
+        x: clampInt(payload.ziel.x, 0, -20000, 20000),
+        y: clampInt(payload.ziel.y, 0, -20000, 20000),
+        w: clampInt(payload.ziel.w, 0, 0, 20000),
+        h: clampInt(payload.ziel.h, 0, 0, 20000)
+      }
+      : undefined,
     // Trefferzahl der Suche. MUSS hier eingetragen sein: diese Liste ist eine
     // Erlaubnisliste, sie laesst NUR bekannte Felder durch. Am 2026-08-18 hat
     // sie prompt mein eigenes neues Feld verschluckt — die Aktion lief, die
