@@ -99,7 +99,7 @@ test("Router: mit Live-Register und Laufzeit steht smejj-1 vorn, sonst unveraend
     assert.equal(selection.selectedModelId, SMEJJ_MODELL_ID);
     assert.equal(chain[0].logicalModelId, SMEJJ_MODELL_ID);
     assert.equal(chain[0].baseUrl, "https://smejj1.test/v1");
-    assert.equal(chain[0].apiKeyHeader, "Salad-Api-Key");
+    assert.equal(chain[0].apiKeyHeader, "Authorization", "Laufzeit ist der Hausmodell-Dienst (Bearer), seit 06.09.");
     assert.ok(chain.some((b) => b.logicalModelId === "glm-5-2"), "GLM bleibt Rueckfall");
     setzeSmejjRegister(haengeUm(leeresRegister(T), { version: "smejj-1-1", note: 0.61, referenzNote: 100 }, { jetztIso: T }));
     assert.equal(resolveModelRequest("default", "", env).chain[0].logicalModelId, "glm-5-2", "stable ohne Live-Tauglichkeit uebernimmt nicht");

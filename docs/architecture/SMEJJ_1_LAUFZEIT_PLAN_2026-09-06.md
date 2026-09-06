@@ -31,7 +31,28 @@ Gesundheit → Alias). Weg A erst, wenn ein Kandidat die Referenz erreicht UND d
 gemessen nicht reicht. Das Budget von 10 USD/Monat (Trainingsplan 02.09.) deckt A nicht — A braucht
 eine eigene Betreiber-Freigabe über rund 70 USD/Monat.
 
-## 3. Bauschritte für Weg B (Reihenfolge)
+## 2a. Stand nach dem Nachsehen (06.09., später am Tag): Weg B existiert schon zur Hälfte
+
+Der Hausmodell-Dienst (`workers/smejj-hausmodell`, `Dockerfile.smejj-hausmodell`) läuft seit dem
+01.09. auf Zeabur untitled-1: https://smejj-hausmodell.zeabur.app — llama.cpp-Server hinter einer
+Node-Steuerung, OpenAI-Schnittstelle `/v1/chat/completions`, Bearer-Schlüssel `SMEJJ_HAUSMODELL_KEY`,
+Warteschlange (1 Inferenz gleichzeitig), Leerlauf-Entladen nach 5 Minuten (Motor STOPPED, 0 MB),
+Modelle aus e2 `models/<stufe>/<id>/` (BitNet 2B als Standard, Qwen3.5-4B Q4_K_M als Reserve),
+2,7 GB freier RAM neben dem Bild-Maler. Gebaut am 06.09. darauf:
+
+1. Katalog-Eintrag `smejj-1-basis` (Qwen3-4B-Instruct-2507 Q4_K_M von unsloth, 2,5 GB, sha256 aus
+   der HF-API) — der Dienst holt ihn bei der ersten Anfrage selbst nach e2. Fallback ohne Deploy:
+   `SMEJJ_HAUSMODELL_ZUSATZMODELLE` (steht im Doppelklick).
+2. Registry-Modell `smejj-1` zeigt auf den Hausmodell-Dienst (provider hausmodell, Bearer, ctx 4096,
+   Modell `smejj-1-basis`); Gesundheitsprobe `/health` auch für `smejj-1`.
+3. Doppelklick **„smejj.com smejj-1 Laufzeit Zeabur-Werte kopieren.command"** legt die 5 Werte für
+   `smejj-control` in die Zwischenablage (einzeln über „Add", nie Raw-Editor).
+
+Danach: `/api/health` → `modelRegistry.models[smejj-1].runtimeConfigured=true`, Gesundheit grün; Messung
+`run_model_eval.mjs --model smejj-1` liefert die Laufzeit-Note (erwartet ~91 % wie die Basis nackt).
+Der Alias bleibt AUS, bis eine Version stable UND referenz-tauglich ist — so gebaut, so gewollt.
+
+## 3. Bauschritte für Weg B (ursprüngliche Reihenfolge, teils erledigt)
 
 1. **GGUF erzeugen (Salad-Job, ~0,05 USD, einmalig je Version):** Basis Qwen3-4B-Instruct-2507 von
    e2 → `convert_hf_to_gguf.py` → Q4_K_M (~2,5 GB) nach e2 `models/gguf/qwen3-4b-instruct-q4km.gguf`;
