@@ -322,3 +322,15 @@ test("der Zeilenschreiber ERSETZT eine Zeile mit Sekundenzaehler statt sie anzuh
   schreibe("Maus 1/10: Klicken: Weiter (4 s)");
   assert.equal(ausgabe.textContent, "Maus 1/10: überlegt ... (3 s)\nMaus 1/10: Klicken: Weiter (4 s)");
 });
+
+
+test("jede Laenderendung ist eine Adresse — 'con.ax registrieren' fragt nicht mehr 'WO' (Betreiber 06.09. 22:21)", () => {
+  assert.equal(startAdresseAus("con.ax registieren"), "https://con.ax");
+  assert.equal(startAdresseAus("Erledige mit der Maus im Browser: auf con.ax/en/register ein Konto anlegen"), "https://con.ax/en/register");
+  assert.equal(startAdresseAus("bei web.de anmelden"), "https://web.de");
+  assert.equal(startAdresseAus("www.example.co.uk aufrufen"), "https://www.example.co.uk");
+  // Abkuerzungen bleiben draussen: ein einbuchstabiges Wort vor dem Punkt ist keine Adresse.
+  for (const satz of ["z.B. so", "d.h. morgen", "u.a. das", "Das ist z.B.wichtig"]) {
+    assert.equal(startAdresseAus(satz), "", satz);
+  }
+});
