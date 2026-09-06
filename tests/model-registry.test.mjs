@@ -22,18 +22,27 @@ test("registry keeps GLM-5.2 primary and Kimi K2.7 feature-flagged", () => {
   assert.equal(registry.defaultModelId, DEFAULT_MODEL_ID);
   assert.deepEqual(
     registry.models.map((model) => model.name),
-    // Ox Alpha seit 2026-08-26 (Betreiber: "ox alpha an 3. Stelle" im Menue) —
-    // API-only ueber OpenRouter, fail-closed hinter SMEJJ_OX_ALPHA_ENABLED.
-    ["GLM-5.2", "Kimi K2.7", "Kimi K3", "Ox Alpha", "smejj fast 1.0"]
+    // Ox Alpha stand hier vom 26.08. bis 06.09.2026 an dritter Stelle.
+    // Betreiber-Ansage 2026-09-06: abgeschafft, kommt nicht wieder.
+    ["GLM-5.2", "Kimi K2.7", "Kimi K3", "smejj fast 1.0"]
   );
   assert.equal(registry.models[0].active, true);
   assert.equal(registry.models[1].active, false);
   assert.equal(registry.models[2].active, false);
-  assert.equal(registry.models[3].active, false, "Ox Alpha bleibt ohne Env-Freigabe inaktiv (fail-closed)");
-  assert.equal(registry.models[4].active, false);
+  assert.equal(registry.models[3].active, false);
   assert.equal(registry.models[0].contextTokens, 1_000_000);
   assert.equal(registry.models[1].contextTokens, 262_144);
   assert.equal(JSON.stringify(registry).includes("secret"), false);
+});
+
+// Ein geloeschtes Modell kehrt erfahrungsgemaess ueber einen Alias zurueck,
+// nicht ueber den Haupteintrag — deshalb prueft dieser Waechter die GANZE
+// Registry als Text, nicht nur die Namensliste.
+test("Ox Alpha ist restlos aus der Registry verschwunden", () => {
+  const registry = JSON.stringify(getPublicModelRegistry({})).toLowerCase();
+  assert.equal(registry.includes("ox alpha"), false, "kein Anzeigename");
+  assert.equal(registry.includes("ox-alpha"), false, "keine Kennung und kein Alias");
+  assert.equal(normalizeModelId("Ox Alpha"), null, "der alte Name loest nichts mehr auf");
 });
 
 test("registry normalizes UI names and storage vault aliases", () => {
