@@ -14,13 +14,14 @@
 #      nicht (502), zweiter Versuch", Zeitbilanz am Ende jedes Laufs.
 # CODE: ddd3d1a3 + c8ba5e1e + 033dfe87 + 0a8e1411 (Arbeitszweig feature/design-v11).
 # SICHERHEITSNETZ: alle 14 Dateien im Live-Repo byte-gleich mit dem Stand VOR
-# der Aenderung (0e50ad9b, live SW v778).
+# der Aenderung (6a9f5b0c = erster Stempel 10:22, live SW v779). ZWEITER LAUF: Nachfix
+# 0a8e1411 (Ersatzziel nur erste Zeile) + Marken, Service-Worker v780.
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS_VOR_AENDERUNG="0e50ad9b"
+BASIS_VOR_AENDERUNG="6a9f5b0c"
 CODE_COMMIT="0a8e1411"
-SW_NEU="smejj-shell-v779"
+SW_NEU="smejj-shell-v780"
 DATEIEN=(browser-pane.js browser-pane-render.js browser-pane-session.js browser-pane-maus.js
   browser-stage.js browser-pane-fernwege.js maus-absicht.js maus-panel.js sendepfad-nachladen.js
   browser-nachladen.js browser-pane-persistenz.js app.js index.html sw.js)
@@ -50,13 +51,13 @@ node --test tests/browser-pane-maus.test.mjs tests/browser-stage.test.mjs tests/
 grep -E "pass |fail " /tmp/maus-zeiger-kaskade.log | tr '\n' ' '; echo
 
 echo "== 2. Start-Lock stempeln (Betreiber-Wortlaut)"
-node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-06: 'MAUS SICHTBAR MACHEN wie bei Claude/Codex: Im Live-Browser einen Zeiger zeichnen, der zum Ziel faehrt, dort kurz verweilt, beim Klick einen Ring zeigt und beim Tippen das Feld hervorhebt. Auch beim Scrollen und Navigieren eine kurze sichtbare Rueckmeldung. FLUESSIGKEIT: observe unter 3 s, Frist von 20 s je observe/act mit Wiederholung, Fortschrittszeile mit Sekundenzaehler statt stummem ueberlegt, Planer-502 sichtbar als Modell antwortet nicht, zweiter Versuch.' Umgesetzt: Zeiger, Ring, Feldrahmen, Scroll- und Ladehinweis in browser-stage.js (v6), Zeiger-Nachrichten und Frist im Sitzungs-Client, Ziel aus der eigenen Beobachtung, sendeMitFrist, Fortschrittsuhr und Zeitbilanz in browser-pane-maus.js, Zeilenschreiber ersetzt Zaehler-Zeilen. Marken gehoben: browser-pane-* 20260906-5, maus-absicht v28, maus-panel v22, sendepfad-nachladen v12, browser-nachladen v10, app.js b146, Service-Worker smejj-shell-v779. Stempel per Doppelklick im Finder." \
+node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-06: 'MAUS SICHTBAR MACHEN wie bei Claude/Codex: Im Live-Browser einen Zeiger zeichnen, der zum Ziel faehrt, dort kurz verweilt, beim Klick einen Ring zeigt und beim Tippen das Feld hervorhebt. Auch beim Scrollen und Navigieren eine kurze sichtbare Rueckmeldung. FLUESSIGKEIT: observe unter 3 s, Frist von 20 s je observe/act mit Wiederholung, Fortschrittszeile mit Sekundenzaehler statt stummem ueberlegt, Planer-502 sichtbar als Modell antwortet nicht, zweiter Versuch.' Umgesetzt: Zeiger, Ring, Feldrahmen, Scroll- und Ladehinweis in browser-stage.js (v6), Zeiger-Nachrichten und Frist im Sitzungs-Client, Ziel aus der eigenen Beobachtung, sendeMitFrist, Fortschrittsuhr und Zeitbilanz in browser-pane-maus.js, Zeilenschreiber ersetzt Zaehler-Zeilen. Marken gehoben: browser-pane-* 20260906-5, maus-absicht v28, maus-panel v22, sendepfad-nachladen v12, browser-nachladen v10, app.js b146, Service-Worker smejj-shell-v780 (zweiter Stempel: Ersatzziel nur erste Zeile). Stempel per Doppelklick im Finder." \
   || { echo "ABBRUCH: Stempel fehlgeschlagen."; exit 1; }
 
 echo "== 3. Stempel committen"
 git add docs/frontend/start-lock-manifest.json
 if git diff --cached --quiet; then echo "(Manifest unveraendert)"; else
-  git commit -q -m "chore(start-lock): Stempel Maus-Zeiger 2026-09-06 — browser-pane.js, browser-pane-render.js (stage v6), app.js b146, index.html, SW smejj-shell-v779 (Betreiber-Doppelklick)
+  git commit -q -m "chore(start-lock): Stempel Maus-Zeiger 2026-09-06 (2) — browser-pane.js, browser-pane-render.js (stage v6), app.js b146, index.html, SW smejj-shell-v780 (Betreiber-Doppelklick, zweiter Stempel)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: Commit fehlgeschlagen."; exit 1; }
 fi
