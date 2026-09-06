@@ -191,3 +191,13 @@ test("die Ablehnung nennt zuerst den praezisen Grund fuer die vorgeschlagene Akt
   assert.match(kaputt.errors[0], /target unbrauchbar fuer extract: erwartet \{strategy,value\}, erhalten Felder irgendwas/);
   assert.deepEqual(kaputt.vorschlag.target, { felder: ["irgendwas"], selector: "undefined" });
 });
+
+
+test("Playwright-Kurzform 'text=Create account' wird zur Strategie text + Wert (live con.ax 06.09.: als Text gesucht traf sie nie)", () => {
+  const r1 = repariereEntscheidung({ decision: "act", step: { id: "s1", action: "click", target: { selector: { strategy: "text", value: "text=Create account" } } } });
+  assert.deepEqual(r1.decision.step.target.selector, { strategy: "text", value: "Create account" });
+  const r2 = repariereEntscheidung({ decision: "act", step: { id: "s2", action: "click", target: "css=#weiter" } });
+  assert.deepEqual(r2.decision.step.target.selector, { strategy: "css", value: "#weiter" });
+  const r3 = repariereEntscheidung({ decision: "act", step: { id: "s3", action: "type", target: { strategy: "css", value: "role=textbox" }, text: "x" } });
+  assert.deepEqual(r3.decision.step.target, { strategy: "role", value: "textbox" });
+});
