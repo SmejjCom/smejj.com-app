@@ -1,6 +1,6 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-06T03:07:09.101Z",
+  "frozenAt": "2026-09-06T08:44:44.680Z",
   "confirmation": "Betreiber-Doppelklick 2026-09-06: Nachziehen des abo-lock auf den Stand von Commit dd245c4b vom 2026-09-05 ('zweiter Weg fuer Stripe-Webhooks — die eigene Domain daneben', control-server/src/routes/billingRoutes.js: zweites Signatur-Geheimnis STRIPE_WEBHOOK_SECRET_ZWEITWEG, fehlt es, wird der Zweitweg abgelehnt statt durchgewunken). Die Aenderung ist seit dem 2026-09-05 im Bestand, nur das Manifest wurde nie nachgezogen; ohne diesen Stempel meldet das Werkstatt-Tor eine Sperre als verletzt, die es nicht ist",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
