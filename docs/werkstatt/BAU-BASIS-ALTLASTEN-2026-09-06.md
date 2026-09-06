@@ -74,3 +74,31 @@ Ein rotes `npm test` auf der Bau-Basis heißt **nicht**, dass die Nachtarbeit sc
 Die Freigabekarte muss diesen Unterschied benennen, sonst liest sich jede ehrliche Nacht wie
 ein Fehlschlag. Und: gemessen wird immer im Worktree ab der Bau-Basis, nie in der
 Haupt-Arbeitskopie — dort ist grün, was anderswo fehlt.
+
+## Endstand nach Runde 2 (gemessen, nicht geschätzt)
+
+In einem Wegwerf-Worktree ab der Bau-Basis mit beiden Runden und beiden Stempeln gemessen:
+**3444 Proben grün, 4 rot** — von ursprünglich 24. Alle acht Sperren melden grün.
+
+Die vier, die bleiben, und warum keine davon eine Nachtroutine lösen kann:
+
+1. `evolution-bruecke.test.mjs` — Zweig-Divergenz (Code fehlt, Test ist da)
+2. `maus-cookie-banner.test.mjs` — dieselbe Lage
+3. `model-promotion.test.mjs` — die Foundation-Suite pinnt Digests zweier Prüfskripte, die
+   seither geändert wurden; sie nachzuziehen ist eine Freigabe, kein Testfix
+4. `schutz-echtheit.test.mjs` — der Phantom-Wächter (Nr. 82) vergleicht die frisch
+   gestempelten Fassungen mit dem, was smejj.com **heute** ausliefert. Er bleibt bis zur
+   nächsten Auslieferung rot und hat damit recht: gestempelt ist noch nicht ausgeliefert.
+
+Das Werkstatt-Tor bleibt deshalb zu — es verlangt eine restlos grüne Suite. Der Unterschied
+zu vorher: die Gründe sind jetzt vier benannte Entscheidungen statt 24 unbekannter Befunde.
+
+## Ein Messfehler im Tor selbst (Fund vom 2026-09-06)
+
+`npm run check:security-lock` führt **zwei** Dinge aus: das Lock-Skript *und*
+`tests/dateisperren.test.mjs`. Ist nur der Test rot — etwa weil eine ganz andere Sperre
+(hier: `abo-lock`) nicht nachgezogen ist — meldet das Tor trotzdem
+„Sperre check:security-lock verletzt". Die Sperre selbst war dabei nachweislich grün
+(`security-lock OK — 11 Dateien byte-identisch`). Wer dieser Meldung folgt, sucht am
+falschen Ort. Dieselbe Fehlerfamilie wie die roten Ampeln vom 04.09.: die Sammelmeldung
+nennt die falsche Ursache.
