@@ -9,7 +9,7 @@ import fs from "node:fs";
 import {
   alsSitzungsAktion, planAlsAuftraege, beschreibe, fahreAuftraege
 } from "../public/browser-pane-maus.js";
-import { zielAusBeobachtung, sendeMitFrist, baueFortschrittsUhr, baueZeiger, fuehreFreienLaufAus as freierLauf } from "../public/browser-pane-maus.js";
+import { zielAusBeobachtung, sendeMitFrist, baueFortschrittsUhr, baueZeiger, fuehreFreienLaufAus as freierLauf, FREI_MAX_SCHRITTE } from "../public/browser-pane-maus.js";
 
 test("Klicken und Tippen werden auf Elemente uebersetzt, nicht auf Pixel", () => {
   const klick = alsSitzungsAktion({ action: "click", target: { strategy: "role", value: "link", name: "Impressum" } });
@@ -575,4 +575,9 @@ test("Ersatzziel aus Text nimmt nur die erste Zeile — ein Zeilenumbruch trifft
     { tag: "a", text: "Ada Lovelace\nenglische Mathematikerin (1815–1852)" }
   ] });
   assert.deepEqual(k, [{ type: "selectorClick", strategy: "text", value: "Ada Lovelace" }]);
+});
+
+
+test("die Schrittgrenze ist ein Notausgang, kein Budget — mindestens 20 (live con.ax 06.09.: Aufgabe bei 6 Restschritten)", () => {
+  assert.ok(FREI_MAX_SCHRITTE >= 20 && FREI_MAX_SCHRITTE <= 25, `FREI_MAX_SCHRITTE=${FREI_MAX_SCHRITTE}; der Server kappt bei 25`);
 });
