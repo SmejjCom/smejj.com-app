@@ -1,7 +1,7 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-06T01:06:25.082Z",
-  "confirmation": "Betreiber-Auftrag 2026-09-06: 'Option 1 (Empfehlung): Erzeuge die .command-Datei auf einem Branch ab der Bau-Basis, die alle vier Sperren neu einfriert. Ich uebernehme den Doppelklick selbst.' — gestempelt werden start-lock (composer-plus-menu.js, browser-pane.js), security-lock und einwilligung-lock (controlAccessPolicy.js) sowie admin-lock (views-stage7.js, console-stage7.js, sync_admin_console_pages.mjs); Anlass: das Werkstatt-Tor Nr. 30 ist seit Tagen zu, weil die gesperrten Dateien auf der Bau-Basis weitergewandert sind, ohne dass die Manifeste nachgezogen wurden",
+  "frozenAt": "2026-09-06T01:08:09.202Z",
+  "confirmation": "Betreiber-Auftrag 2026-09-06: 'Danach arbeitest du ohne Rueckfrage selbststaendig weiter (anschliessend auch Option 2 und 3, falls weiterhin rot).' — Option 2 war die rote Pruefsuite der Bau-Basis; Autopilot Nr. 82 'schutz-echtheit' stand in keinem Bereich und fiel still nach 'Betrieb & Auslieferung'. Geaenderte gesperrte Datei: control-server/src/admin/opsAutopilotenBereiche.js (eine Kennung mehr im Bereich 'Sicherheit & Wachdienst')",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
     "control-server/src/admin/stepUp.js": "8ec2d663f17b6e3cb6095ff0ba6290844015de80f5cdcf607f24180fbae8abd6",
@@ -24,7 +24,7 @@
     "control-server/src/admin/opsAutopiloten.js": "bfe5ddc1965e0ef20e4a7ef49fd1d6525a087617e5ecd1727b3558508bc7ddc0",
     "control-server/src/admin/opsAutopilotenListe.js": "84e13bdbc89126583acd194b520688c4efe9015cecce9a6554b1a32440ee172c",
     "control-server/src/admin/opsAutopilotenListeEvolution.js": "703e22dd80cc191460eac3acce7cd133495ac29f5afce27594f3319cfe8213be",
-    "control-server/src/admin/opsAutopilotenBereiche.js": "410ce8eea8f00514bd1a6a3e14491dcbebf5aa46cf04d5c30a4bda6fad9761e6",
+    "control-server/src/admin/opsAutopilotenBereiche.js": "0743d537242eb84504ef11a88065f24823bb899badbde1c5fe9f5bd04a68dd3a",
     "control-server/src/admin/opsAuslieferung.js": "1c8cd6387c543db7796ee7d985b494a0c276cbd7c5b54429c600b6330e3d9051",
     "control-server/admin-ui/views-stage12.js": "01019f1bdf06f40d87f2b2aa5ca05e901ade9be3b0d7f8536f9d19cc279389df",
     "control-server/src/admin/opsSicherheitsLage.js": "cff01378042fbfebdf2ba42543f62024593db024ab06b12822f2a1042d9f875a",
