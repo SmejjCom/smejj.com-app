@@ -26,6 +26,7 @@ import {
   providerChatCompletion,
   testProviderConnection
 } from "../providers/genericOpenAiClient.js";
+import { ergaenzeMausSchutz } from "../llm/mausImitationSchutz.js";
 
 const PREFIX = "/api/keys";
 const INDEX_ID = "smejj-key-index"; // reservierte ID: nur nutzerinterner Anbieter-Index
@@ -220,7 +221,8 @@ async function streamChat(subjectId, providerId, req, res, env, fetchImpl) {
   const record = await requireCredential(subjectId, providerId, env);
   const baseUrl = resolveProviderBaseUrl(providerId, record.baseUrl);
   const body = await readJson(req);
-  const messages = sanitizeMessages(body.messages);
+  // Derselbe Schutz wie im Cline-Weg: Maus-Spuren im Verlauf → Hinweis.
+  const messages = ergaenzeMausSchutz(sanitizeMessages(body.messages));
   if (messages.length === 0) return privateJson(res, 400, { ok: false, error: "messages_required" });
   const model = normalizeSelectedModel(body.model) || record.selectedModel;
   if (!isModelId(model)) return privateJson(res, 409, { ok: false, error: "provider_model_not_selected" });
