@@ -91,8 +91,10 @@ test("Config exposes Browser-Proxy route used by Browser-Pane", () => {
   assert.match(paneJs, /\.\/browser-pane-render\.js\?v=browser-pane-[0-9-]+/);
 });
 
-test("Browser-Pane erlaubt maximal 7 Tabs", () => {
-  assert.match(paneJs, /const MAX_TABS = 7;/);
+test("Browser-Pane hat kein Nutzer-Limit mehr — nur einen Speicherdeckel von 100 Tabs (Betreiber 2026-09-06)", () => {
+  assert.match(paneJs, /const MAX_TABS = 100;/);
+  const render = fs.readFileSync("public/browser-pane-render.js", "utf8");
+  assert.doesNotMatch(render, /bis zu \$\{maxTabs\} Tabs/, "der Leertext nennt keine Obergrenze mehr");
 });
 
 test("Browser-Pane keeps iframe content visible and Enter navigates", () => {
