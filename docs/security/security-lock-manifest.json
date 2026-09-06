@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-06T19:03:20.328Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03: Audit A bis Z, Wahl 'Red-Team-Fund schliessen (Empfehlung)' — Systemregel der Chat-Bruecke gegen eingebettete Anweisungen in Code, Dateien und Webseiten (Nr. 79 sich-anweisung-in-code), Bruecke v148",
+  "frozenAt": "2026-09-06T19:03:23.582Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-03: Audit A bis Z, Wahl Red-Team-Fund schliessen — v148 reichte nicht (gpt-oss folgte der Anweisung dreimal trotz Regel); v149 stellt die Schutz-Regel an die Spitze der Systemregeln, Bruecke v149",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
