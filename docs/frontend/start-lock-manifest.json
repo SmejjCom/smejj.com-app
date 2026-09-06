@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T00:24:46.822Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05/06: 'Ich gebe dir alle Rechte. von A bis Z. Mach hundert Prozent fertig, lass nichts offen.' und 'wenn du fertig bist dann nochmal komplett testen.' Berlin-Auftrag scheiterte an einer falsch geratenen Rolle (textbox statt searchbox) und derselben Wiederholung; das Panel leitet jetzt Ersatzziele aus seiner eigenen Beobachtung ab (Rollen-Alias, css aus id/name/placeholder, Klick nach passendem Text), bevor ein Fehlschlag zaehlt. browser-pane-maus.js; Marken der Browser-Kette, app.js b143, Service-Worker smejj-shell-v776. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-06T01:32:58.480Z",
+  "confirmation": "Betreiber, 2026-09-06: 'Bitte oeffne smejj.com im Browser und teste die gesamte App von A bis Z. Wenn du Fehler findest, behebe sie sofort, deploye erneut und teste live weiter, bis alles stabil, sicher und zuverlaessig funktioniert.' Der Livetest fand drei Fehler: die Ansicht Systemzustand war unter /status von public/status.html verdeckt und per Direktaufruf oder Neuladen unerreichbar (jetzt /systemzustand, mit neuem Waechter fuer jede Route), die Code-Ansicht hatte keine Ueberschrift und darum den Titel der Startseite (versteckte h2), und jedes Speichern erzeugte fuer jedes Chat-Bild eine neue Blob-Adresse, ohne eine alte freizugeben (Gedaechtnis in einer WeakMap). index.html, app.js b144, search.js, Service-Worker smejj-shell-v777. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "046309772c9a4f91470353247208b7cb006041268fef8983c56550b46b4db2d5",
