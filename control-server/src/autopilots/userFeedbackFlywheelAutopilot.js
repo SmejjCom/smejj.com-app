@@ -2,10 +2,22 @@
 // Erfasst reale Nutzer-Interaktionen (Kopieren, Neu generieren, Bearbeiten, Thumbs),
 // anonymisiert persönliche Daten (PII-Scrubbing) und erzeugt saubere DPO-Trainingspaare auf IDrive e2 S3.
 
+import { createHash } from "node:crypto";
 import { createRecordStore, neueKennung } from "../admin/recordStore.js";
 import { createDpoPair, saveDpoPair } from "./selfImprovementAutopilot.js";
 
 const userFeedbackStore = createRecordStore("self-improvement/user-feedback-events", { maximal: 2000 });
+
+// Wie weit zurueck ein Gegenstueck gesucht wird. Zwei Bewertungen derselben
+// Frage liegen fast immer Minuten auseinander, manchmal Tage — aber nach vier
+// Wochen ist die Antwort meist von einem anderen Modell und der Vergleich sagt
+// nichts mehr ueber Qualitaet, nur ueber Versionsstaende.
+const PAARFENSTER_MS = 28 * 24 * 60 * 60 * 1000;
+
+/** Verknuepfungsschluessel zweier Bewertungen: derselbe Prompt, bereinigt. */
+export function promptFingerabdruck(bereinigterPrompt) {
+  return createHash("sha256").update(String(bereinigterPrompt || "")).digest("hex").slice(0, 32);
+}
 
 /** Testhilfe: leert die (Memory-)Ablage, damit Tests einander nicht sehen. */
 export function __feedbackAblageLeeren() { userFeedbackStore.__leeren(); }
@@ -46,6 +58,44 @@ export const SIGNAL_TYPEN = Object.freeze(["thumbs_up", "thumbs_down", "copy", "
  * @param {object} options
  * @returns {Promise<{ok: boolean, processed: boolean, dpoPairId?: string, reason?: string}>}
  */
+/**
+ * Sucht zu einer Bewertung die entgegengesetzte auf DIESELBE Frage.
+ *
+ * Bewusst tolerant beim Lesen, streng beim Paaren: alte Ereignisse (vor dem
+ * 06.09.2026) haben weder `fingerabdruck` noch `antwortVoll` und koennen daher
+ * nie ein Gegenstueck sein. Sie werden uebergangen statt in ein halbes Paar
+ * gezwungen — ein Trainingspaar mit leerer Seite ist schlechter als keines.
+ *
+ * @returns {Promise<object|null>} das Gegenstueck, oder null
+ */
+async function sucheGegenstueck({ fingerabdruck, signalType, eigeneAntwort, env, jetztMs }) {
+  if (signalType !== "thumbs_up" && signalType !== "thumbs_down") return null;
+  if (!eigeneAntwort) return null;
+  const gesucht = signalType === "thumbs_up" ? "thumbs_down" : "thumbs_up";
+
+  let liste;
+  try {
+    liste = await userFeedbackStore.liste({ env });
+  } catch {
+    return null; // Ablage nicht lesbar: lieber kein Paar als ein falsches
+  }
+  if (!liste?.ok) return null;
+
+  const treffer = (liste.datensaetze || []).filter((e) => e
+    && e.gepaart !== true
+    && e.signalType === gesucht
+    && e.fingerabdruck === fingerabdruck
+    && typeof e.antwortVoll === "string"
+    && e.antwortVoll.length > 0
+    && e.antwortVoll !== eigeneAntwort
+    && jetztMs - Date.parse(e.createdAt || 0) <= PAARFENSTER_MS);
+
+  if (treffer.length === 0) return null;
+  // Das juengste Gegenstueck: es stammt am ehesten aus demselben Modellstand.
+  treffer.sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
+  return treffer[0];
+}
+
 export async function processUserFeedbackSignal(signal, { env = process.env } = {}) {
   try {
     const prompt = scrubPiiData(String(signal.prompt || "").trim());
@@ -64,28 +114,81 @@ export async function processUserFeedbackSignal(signal, { env = process.env } = 
     // eine (PII-bereinigte) Kostprobe der Antwort mit hinein — sie ist das,
     // was die Werkstatt spaeter als Arbeitsauftrag lesen muss. Ohne sie
     // wuesste das Backlog nur DASS etwas schlecht war, nie WAS.
-    await userFeedbackStore.schreib({
+    //
+    // SEIT 2026-09-06 kommen drei Felder dazu: `fingerabdruck`, `promptVoll`
+    // und `antwortVoll`. Ohne sie war ein Ereignis eine Sackgasse — 100 Zeichen
+    // Prompt und (nur bei Daumen runter) 160 Zeichen Antwort ergeben kein
+    // Trainingspaar. Gespeichert wurde also zwei Monate lang etwas, das seinen
+    // eigenen Zweck nicht erfuellen konnte. Alles Neue ist ebenfalls durch
+    // scrubPiiData gelaufen; die E-Mail des Klickenden bleibt weiter draussen.
+    const fingerabdruck = promptFingerabdruck(prompt);
+    const eigeneAntwort = (chosen || rejected).slice(0, 4000);
+    const jetzt = new Date().toISOString();
+    const eigenesEreignis = {
       id: neueKennung("fb"),
       signalType,
+      fingerabdruck,
       promptSample: prompt.slice(0, 100),
+      promptVoll: prompt.slice(0, 2000),
+      antwortVoll: eigeneAntwort || undefined,
       antwortSample: signalType === "thumbs_down" ? rejected.slice(0, 160) : undefined,
       hasChosen: Boolean(chosen),
       hasRejected: Boolean(rejected),
-      createdAt: new Date().toISOString()
-    }, { env, timeoutMs: 20_000 });
+      gepaart: false,
+      createdAt: jetzt
+    };
 
-    // Wenn ein gewähltes und ein verworfenes Antwortpaar existiert -> DPO-Paar erzeugen
+    // Fall 1: beide Seiten kommen in EINEM Aufruf (z. B. "neu generieren",
+    // wo alte und neue Antwort zugleich vorliegen).
     if (chosen && rejected && chosen !== rejected) {
+      eigenesEreignis.gepaart = true;
+      await userFeedbackStore.schreib(eigenesEreignis, { env, timeoutMs: 20_000 });
       const dpo = createDpoPair(prompt, chosen, rejected, {
         source: `user_flywheel_${signalType}`,
-        verifiedAt: new Date().toISOString(),
+        verifiedAt: jetzt,
         anonymized: true
       });
-      const saveRes = await saveDpoPair(dpo, { env });
-      return { ok: true, processed: true, dpoPairId: dpo.id };
+      await saveDpoPair(dpo, { env });
+      return { ok: true, processed: true, dpoPairId: dpo.id, paarQuelle: "ein_aufruf" };
     }
 
-    return { ok: true, processed: false, reason: "Signal erfasst (warten auf Vergleichspaar)." };
+    // Fall 2: ein einzelner Daumen. Er allein ergibt nie ein Paar — hoch UND
+    // runter im selben Aufruf kann es per Bauart nicht geben, die Route setzt
+    // immer nur eines der beiden Felder. Vorher endete der Vorgang hier mit
+    // "warten auf Vergleichspaar", aber es wartete niemand: das Gegenstueck
+    // wurde nie gesucht, und deshalb entstand seit dem 16.08.2026 kein
+    // einziges Paar. Jetzt wird gesucht.
+    const gegenstueck = await sucheGegenstueck({
+      fingerabdruck,
+      signalType,
+      eigeneAntwort,
+      env,
+      jetztMs: Date.parse(jetzt)
+    });
+
+    if (!gegenstueck) {
+      await userFeedbackStore.schreib(eigenesEreignis, { env, timeoutMs: 20_000 });
+      return { ok: true, processed: false, reason: "Signal erfasst (noch kein Gegenstueck zu dieser Frage)." };
+    }
+
+    // Gefunden: die bessere Antwort ist die mit Daumen hoch, die schlechtere die
+    // mit Daumen runter — unabhaengig davon, welche zuerst da war.
+    const besser = signalType === "thumbs_up" ? eigeneAntwort : gegenstueck.antwortVoll;
+    const schlechter = signalType === "thumbs_up" ? gegenstueck.antwortVoll : eigeneAntwort;
+
+    eigenesEreignis.gepaart = true;
+    await userFeedbackStore.schreib(eigenesEreignis, { env, timeoutMs: 20_000 });
+    // Das Gegenstueck ebenfalls stempeln, sonst baut ein dritter Daumen auf
+    // dieselbe Frage ein zweites, gleiches Paar.
+    await userFeedbackStore.schreib({ ...gegenstueck, gepaart: true }, { env, timeoutMs: 20_000 });
+
+    const dpo = createDpoPair(prompt, besser, schlechter, {
+      source: "user_flywheel_zusammengefuehrt",
+      verifiedAt: jetzt,
+      anonymized: true
+    });
+    await saveDpoPair(dpo, { env });
+    return { ok: true, processed: true, dpoPairId: dpo.id, paarQuelle: "zusammengefuehrt" };
   } catch (err) {
     return { ok: false, processed: false, reason: String(err?.message || err) };
   }
@@ -118,7 +221,17 @@ export async function getUserFlywheelStats({ env = process.env, jetztMs = Date.n
     const negativeLetzte7Tage = ereignisse
       .filter((e) => e?.signalType === "thumbs_down" && Date.parse(e?.createdAt || "") >= wochenGrenze)
       .map((e) => ({ promptSample: e.promptSample || "", antwortSample: e.antwortSample, createdAt: e.createdAt }));
-    return { ok: true, gesamt: ereignisse.length, jeTyp, negativeLetzte7Tage };
+
+    // Zwei Zahlen, die vorher fehlten — und deren Fehlen der eigentliche Fehler
+    // war: der Autopilot lief, meldete gruen, und niemand konnte sehen, dass am
+    // Ende nichts herauskam. `gepaart` sagt, wieviel Arbeit wirklich entstand,
+    // `wartend` sagt, wieviel noch auf ein Gegenstueck hofft.
+    const gepaart = ereignisse.filter((e) => e?.gepaart === true).length;
+    const wartend = ereignisse.filter((e) => e?.gepaart !== true
+      && (e?.signalType === "thumbs_up" || e?.signalType === "thumbs_down")
+      && typeof e?.antwortVoll === "string" && e.antwortVoll.length > 0).length;
+
+    return { ok: true, gesamt: ereignisse.length, jeTyp, negativeLetzte7Tage, gepaart, wartend };
   } catch (fehler) {
     return { ok: false, gesamt: 0, jeTyp: {}, negativeLetzte7Tage: [], grund: String(fehler?.message || fehler).slice(0, 120) };
   }
