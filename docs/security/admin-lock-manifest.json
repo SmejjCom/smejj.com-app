@@ -1,6 +1,6 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-06T01:08:09.202Z",
+  "frozenAt": "2026-09-06T08:44:21.746Z",
   "confirmation": "Betreiber-Auftrag 2026-09-06: 'Danach arbeitest du ohne Rueckfrage selbststaendig weiter (anschliessend auch Option 2 und 3, falls weiterhin rot).' — Option 2 war die rote Pruefsuite der Bau-Basis; Autopilot Nr. 82 'schutz-echtheit' stand in keinem Bereich und fiel still nach 'Betrieb & Auslieferung'. Geaenderte gesperrte Datei: control-server/src/admin/opsAutopilotenBereiche.js (eine Kennung mehr im Bereich 'Sicherheit & Wachdienst')",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
