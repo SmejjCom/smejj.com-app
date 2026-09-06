@@ -24,9 +24,14 @@ const css = fs.readFileSync("public/static-pages.css", "utf8");
 test("die Statusseite liegt ausserhalb des Anmelde-Gates — aber nur sie", () => {
   const routen = fs.readFileSync("public/view-routes.js", "utf8");
   assert.match(gate, /\/\^\\\/status\\\.html\$\//, "PUBLIC_PATHS muss genau /status.html freigeben");
-  // Die App hat unter "/status" eine eigene, anmeldepflichtige Ansicht. Ein
-  // Praefix-Muster wuerde sie mit oeffnen — deshalb das Dollarzeichen oben.
-  assert.match(routen, /tools: "\/status"/, "Annahme geprueft: /status ist eine App-Ansicht");
+  // Bis 2026-09-06 hiess die App-Ansicht "Systemzustand" ebenfalls /status.
+  // GitHub Pages beantwortet /status aber mit public/status.html (HTTP 200),
+  // der SPA-Fallback kam nie zum Zug — die Ansicht war per Direktaufruf und
+  // nach jedem Neuladen unerreichbar. Sie heisst seitdem /systemzustand.
+  assert.match(routen, /tools: "\/systemzustand"/, "Annahme geprueft: die Ansicht hat eine eigene Adresse");
+  assert.doesNotMatch(routen, /: "\/status"/, "keine App-Route darf wieder auf /status zeigen — die Datei verdeckt sie");
+  // Das Dollarzeichen bleibt trotzdem Pflicht: ein Praefix-Muster naehme jeden
+  // kuenftigen Pfad unter /status/... ungefragt aus dem Anmelde-Gate.
   assert.doesNotMatch(gate, /\/\^\\\/status\//, "Praefix-Muster wuerde die App-Ansicht /status oeffnen");
 });
 

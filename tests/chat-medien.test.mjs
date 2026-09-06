@@ -428,3 +428,46 @@ test("Textknoten werden gesaeubert, ohne das Markup neu zu schreiben", async () 
   assert.match(baum.knoten[1].nodeValue, /chat-medien\?id=knot1/);
   assert.equal(baum.knoten[1], vorher, "derselbe Knoten — nichts wurde ersetzt");
 });
+
+// Befund live 2026-09-06: Vor jedem Speichern dreht entwaessere() die Anzeige
+// auf die Serveradresse zurueck, danach holt rehydriereMedien() sie wieder. Das
+// war je Zyklus ein fetch und ein neues createObjectURL — die Konsole zaehlte
+// 47 abgewiesene Bildabrufe bei zwei Bildern, und ebenso viele Blobs blieben
+// liegen. Das Element merkt sich seinen Blob jetzt in einer WeakMap.
+test("nach dem Entwaessern kommt derselbe Blob ohne Netz zurueck", async () => {
+  const k = medienKnoten([{ tag: "img", attribute: { src: ADRESSE } }]);
+  let abrufe = 0;
+  const holen = async () => { abrufe += 1; return new Blob(["x"], { type: "image/png" }); };
+
+  await rehydriereMedien(k, { holen });
+  const ersterBlob = k.elemente[0].getAttribute("src");
+  assert.match(ersterBlob, /^blob:/);
+  assert.equal(abrufe, 1);
+
+  // Ein Speicherzyklus: zurueckdrehen und sofort wieder anzeigen.
+  entwaessere(k);
+  assert.equal(k.elemente[0].getAttribute("src"), ADRESSE, "fuer den Schnappschuss muss die Adresse drinstehen");
+  const r = await rehydriereMedien(k, { holen });
+
+  assert.deepEqual(r, { geholt: 1, gescheitert: 0 });
+  assert.equal(k.elemente[0].getAttribute("src"), ersterBlob, "es muss DERSELBE Blob sein, kein zweiter");
+  assert.equal(abrufe, 1, "der zweite Zyklus darf nichts nachladen");
+  assert.equal(k.elemente[0].getAttribute(ADRESSE_ATTRIBUT), ADRESSE, "ohne Rueckweg stirbt das Medium beim naechsten Speichern");
+});
+
+// Gegenprobe: das Gedaechtnis darf nur fuer DIESELBE Adresse gelten. Wechselt
+// sie (neu ausgelagert, andere id), muss wieder geholt werden — sonst zeigte
+// das Element dauerhaft ein altes Bild.
+test("ein Adresswechsel umgeht das Blob-Gedaechtnis", async () => {
+  const k = medienKnoten([{ tag: "img", attribute: { src: ADRESSE } }]);
+  let abrufe = 0;
+  const holen = async () => { abrufe += 1; return new Blob([String(abrufe)], { type: "image/png" }); };
+
+  await rehydriereMedien(k, { holen });
+  entwaessere(k);
+  k.elemente[0].setAttribute("src", "https://c.example/api/chat-medien?id=anders.png");
+  await rehydriereMedien(k, { holen });
+
+  assert.equal(abrufe, 2, "andere Adresse, also muss neu geholt werden");
+  assert.equal(k.elemente[0].getAttribute(ADRESSE_ATTRIBUT), "https://c.example/api/chat-medien?id=anders.png");
+});

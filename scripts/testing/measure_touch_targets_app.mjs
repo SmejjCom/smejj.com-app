@@ -45,7 +45,7 @@ const ANSICHTEN = [
   ["Verlauf", "/chat-history"], ["Browser", "/browser"], ["Coding", "/code"],
   ["Projekte", "/projects"], ["Dateien", "/files"], ["Speicher", "/storage"],
   ["Gedaechtnis", "/memory"], ["Modelle", "/ai"], ["Kosten", "/cost"],
-  ["Status", "/status"], ["Einstellungen", "/settings"], ["Konto", "/profile"]
+  ["Status", "/systemzustand"], ["Einstellungen", "/settings"], ["Konto", "/profile"]
 ];
 
 // Begruendete Ausnahmen. Jede braucht einen Grund — eine Ausnahmeliste ohne
