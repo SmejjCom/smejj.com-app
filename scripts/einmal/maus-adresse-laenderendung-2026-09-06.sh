@@ -1,35 +1,40 @@
 #!/bin/zsh
-# smejj.com — Betreiber-Kaskade 2026-09-06 (Nacht): jede Laenderendung ist eine
-# Adresse fuer die Maus — stempeln und ausliefern.
+# smejj.com — Betreiber-Kaskade 2026-09-06 (Nacht): EIN Klick fuer zwei Sitzungen.
 #
-# BEFUND (Betreiber 22:21): "Erledige mit der Maus im Browser: con.ax registieren"
-# -> "Ich weiss noch nicht, WO die Maus arbeiten soll". Die Endung .ax fehlte in
-# der Endungsliste von maus-absicht.js. Jetzt zaehlt jede zweibuchstabige Endung
-# nach einem Wort mit mindestens zwei Zeichen (z.B., d.h. bleiben draussen).
-# CODE: 25822a05 + 79d0921a (Arbeitszweig feature/design-v11), Service-Worker v786.
-# REIHENFOLGE: Diese Kaskade setzt auf dem Stempel der Parallelsitzung auf
-# (44b4563f, Service-Worker v785, "Ox Alpha raus"). Ist v785 noch nicht live,
-# bricht sie ab — dann ZUERST "smejj.com Ox Alpha raus ausliefern.command" klicken.
-# SICHERHEITSNETZ: alle 7 Dateien im Live-Repo byte-gleich mit 44b4563f.
+# 1) Maus: jede Laenderendung ist eine Adresse. Befund (Betreiber 22:21):
+#    "Erledige mit der Maus im Browser: con.ax registieren" -> "Ich weiss noch
+#    nicht, WO" — .ax fehlte in der Endungsliste (maus-absicht.js).
+#    CODE: 25822a05 + 79d0921a.
+# 2) Parallelsitzung (Stempel 44b4563f, SW v785): Guthaben-Leiste im API-Bereich
+#    (22596b75), "Ox Alpha raus" (code-modell-menue.js, premium-surfaces.js),
+#    Bruecke-Schutzregel (b4c71d69). Deren Kaskade ("smejj.com Ox Alpha raus
+#    ausliefern.command") haengt am SW v785 — sw.js traegt inzwischen v786, weil
+#    beide Arbeiten in denselben gesperrten Dateien (app.js, index.html, sw.js)
+#    landen. Darum liefert DIESE Kaskade beides zusammen aus; die Ox-Alpha-
+#    Kaskade ist damit ueberholt und muss NICHT mehr geklickt werden.
+# SICHERHEITSNETZ: alle 9 Dateien im Live-Repo byte-gleich mit 79285101
+# (= letzter Stempel, live SW v783).
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS_VOR_AENDERUNG="44b4563f"
+BASIS_VOR_AENDERUNG="79285101"
 CODE_COMMIT="79d0921a"
-SW_VORHER="smejj-shell-v785"
+SW_VORHER="smejj-shell-v783"
 SW_NEU="smejj-shell-v786"
-DATEIEN=(maus-absicht.js maus-panel.js sendepfad-nachladen.js browser-nachladen.js app.js index.html sw.js)
+DATEIEN=(maus-absicht.js maus-panel.js sendepfad-nachladen.js browser-nachladen.js
+  code-modell-menue.js premium-surfaces.js app.js index.html sw.js)
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 
 cd "$REPO" || { echo "ABBRUCH: App-Ordner nicht erreichbar."; exit 1; }
 echo "== 0. Ausgangslage"
 git log --oneline -1
 git merge-base --is-ancestor "$CODE_COMMIT" HEAD || { echo "ABBRUCH: Code-Commit $CODE_COMMIT nicht im Zweig."; exit 1; }
+git merge-base --is-ancestor 44b4563f HEAD || { echo "ABBRUCH: Stand der Parallelsitzung 44b4563f nicht im Zweig."; exit 1; }
 grep -q '|\[a-z\]{2})' public/maus-absicht.js || { echo "ABBRUCH: die Endungs-Regel steht nicht in maus-absicht.js."; exit 1; }
 grep -q "$SW_NEU" public/sw.js || { echo "ABBRUCH: sw.js traegt nicht $SW_NEU."; exit 1; }
 LIVE_SW=$(curl -s -m 15 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
 echo "live: $LIVE_SW"
-[ "$LIVE_SW" = "$SW_VORHER" ] || { echo "ABBRUCH: live ist $LIVE_SW, erwartet $SW_VORHER. ZUERST 'smejj.com Ox Alpha raus ausliefern.command' doppelklicken, dann diese Datei."; exit 1; }
+[ "$LIVE_SW" = "$SW_VORHER" ] || { echo "ABBRUCH: live ist $LIVE_SW, erwartet $SW_VORHER — Basis stimmt nicht mehr, Kaskade neu bauen lassen."; exit 1; }
 for f in "${DATEIEN[@]}"; do
   git diff --quiet -- "public/$f" || { echo "ABBRUCH: public/$f hat ungespeicherte Aenderungen — eine andere Sitzung arbeitet daran."; exit 1; }
 done
@@ -43,13 +48,13 @@ node --test tests/maus-absicht.test.mjs tests/browser-pane.test.mjs tests/maus-c
 grep -E "pass |fail " /tmp/maus-adresse-kaskade.log | tr '\n' ' '; echo
 
 echo "== 2. Start-Lock stempeln (Betreiber-Wortlaut)"
-node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-06 22:21: 'Ich habe grade eine Maus Aufgabe gegeben hat nicht mal Browser geoeffnet. Muss alles professionell und perfekt funktionieren.' Befund: 'con.ax registieren' wurde nicht als Adresse erkannt (.ax fehlte). Umgesetzt: jede Laenderendung zaehlt (maus-absicht.js), Marken bis zur Wurzel (maus-absicht v32, maus-panel v26, sendepfad-nachladen v16, browser-nachladen v14, app.js b152), Service-Worker smejj-shell-v786. Stempel per Doppelklick im Finder." \
+node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-06 22:21: 'Ich habe grade eine Maus Aufgabe gegeben hat nicht mal Browser geoeffnet. Muss alles professionell und perfekt funktionieren.' Befund: 'con.ax registieren' wurde nicht als Adresse erkannt (.ax fehlte). Umgesetzt: jede Laenderendung zaehlt (maus-absicht.js), Marken bis zur Wurzel (maus-absicht v32, maus-panel v26, sendepfad-nachladen v16, browser-nachladen v14, app.js b152). Mit ausgeliefert: Stand der Parallelsitzung 44b4563f (Guthaben-Leiste, Ox Alpha raus, Bruecke-Schutzregel). Service-Worker smejj-shell-v786. Stempel per Doppelklick im Finder." \
   || { echo "ABBRUCH: Stempel fehlgeschlagen."; exit 1; }
 
 echo "== 3. Stempel committen"
 git add docs/frontend/start-lock-manifest.json
 if git diff --cached --quiet; then echo "(Manifest unveraendert)"; else
-  git commit -q -m "chore(start-lock): Stempel Maus-Adresse Laenderendung 2026-09-06 — app.js b152, index.html, SW smejj-shell-v786 (Betreiber-Doppelklick)
+  git commit -q -m "chore(start-lock): Stempel Maus-Adresse + Ox Alpha 2026-09-06 — app.js b152, index.html, SW smejj-shell-v786 (Betreiber-Doppelklick)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: Commit fehlgeschlagen."; exit 1; }
 fi
@@ -78,7 +83,7 @@ for f in "${DATEIEN[@]}"; do
   if [ -f "$KLON/assets/$f" ]; then cp "$REPO/public/$f" "$KLON/assets/$f" && git add "assets/$f"; fi
 done
 git status --short | head -40
-git commit -q -m "deploy(maus): jede Laenderendung ist eine Adresse (con.ax); SW $SW_NEU — Quelle smejj.com-app $QUELLE" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
+git commit -q -m "deploy(maus+api): jede Laenderendung ist eine Adresse (con.ax); Guthaben-Leiste, Ox Alpha raus; SW $SW_NEU — Quelle smejj.com-app $QUELLE" || { echo "ABBRUCH: nichts zu committen?"; exit 1; }
 git merge-base --is-ancestor origin/main HEAD || { echo "ABBRUCH: kein Fast-Forward."; exit 1; }
 git push -q origin HEAD:main || { echo "ABBRUCH: Push fehlgeschlagen."; exit 1; }
 echo "gepusht: $(git rev-parse --short HEAD)"
