@@ -9,7 +9,7 @@ import fs from "node:fs";
 import {
   alsSitzungsAktion, planAlsAuftraege, beschreibe, fahreAuftraege
 } from "../public/browser-pane-maus.js";
-import { zielAusBeobachtung, sendeMitFrist, baueFortschrittsUhr, baueZeiger, fuehreFreienLaufAus as freierLauf, FREI_MAX_SCHRITTE } from "../public/browser-pane-maus.js";
+import { zielAusBeobachtung, sendeMitFrist, baueFortschrittsUhr, baueZeiger, fuehreFreienLaufAus as freierLauf, FREI_MAX_SCHRITTE, erkenneSperrseite } from "../public/browser-pane-maus.js";
 
 test("Klicken und Tippen werden auf Elemente uebersetzt, nicht auf Pixel", () => {
   const klick = alsSitzungsAktion({ action: "click", target: { strategy: "role", value: "link", name: "Impressum" } });
@@ -580,4 +580,37 @@ test("Ersatzziel aus Text nimmt nur die erste Zeile — ein Zeilenumbruch trifft
 
 test("die Schrittgrenze ist ein Notausgang, kein Budget — mindestens 20 (live con.ax 06.09.: Aufgabe bei 6 Restschritten)", () => {
   assert.ok(FREI_MAX_SCHRITTE >= 20 && FREI_MAX_SCHRITTE <= 25, `FREI_MAX_SCHRITTE=${FREI_MAX_SCHRITTE}; der Server kappt bei 25`);
+});
+
+
+test("Sperrseiten werden erkannt — DuckDuckGo 418, Roboter-Pruefung, Cloudflare; normale Seiten nicht", () => {
+  assert.equal(erkenneSperrseite({ url: "https://duckduckgo.com/static-pages/418.html?bno=84f2", title: "DuckDuckGo", textExcerpt: "Unexpected error. Please try again." }), "Sperrseite von DuckDuckGo (Fehler 418)");
+  assert.equal(erkenneSperrseite({ url: "https://www.google.com/sorry/index", title: "", textExcerpt: "Our systems have detected unusual traffic from your computer network." }), "Sperre wegen automatisierter Anfragen");
+  assert.equal(erkenneSperrseite({ url: "https://x.de/", title: "Just a moment...", textExcerpt: "Checking your browser before accessing" }), "Cloudflare-Pruefung");
+  assert.equal(erkenneSperrseite({ url: "https://de.wikipedia.org/wiki/Berlin", title: "Berlin – Wikipedia", textExcerpt: "Berlin ist die Hauptstadt ..." }), "");
+  assert.equal(erkenneSperrseite(null), "");
+});
+
+test("beim zweiten Blick auf eine Sperrseite endet der Lauf mit klarem Grund — nach dem ersten darf das Modell einen anderen Weg waehlen", async () => {
+  let n = 0;
+  const gezeigt = [];
+  const alteFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ ok: true, entscheidung: { decision: "act", step: { id: "s", action: "navigate", url: "https://duckduckgo.com/?q=smejj" } } }) });
+  try {
+    const r = await freierLauf({
+      auftrag: "suche", tab: { url: "https://duckduckgo.com/", sessionId: "s1" }, schrittUrl: "https://api/x",
+      zeige: (t) => gezeigt.push(t),
+      sende: async (a) => a.type === "observe"
+        ? { ok: true, beobachtung: { url: "https://duckduckgo.com/static-pages/418.html", title: "DuckDuckGo", textExcerpt: "Unexpected error. Please try again.", elements: [] } }
+        : { ok: true }
+    });
+    n = gezeigt.length;
+    assert.equal(r.ok, false);
+    assert.match(r.grund, /duckduckgo\.com sperrt den eingebauten Browser \(Sperrseite von DuckDuckGo \(Fehler 418\)\)/);
+    assert.match(r.grund, /Maus-Brücke/);
+    assert.ok(gezeigt.some((z) => /Sperrseite/.test(z)), "der erste Fund wird sichtbar gemeldet");
+    assert.ok(n < 30, "kein langes Kreisen");
+  } finally {
+    globalThis.fetch = alteFetch;
+  }
 });
