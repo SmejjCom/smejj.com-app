@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T16:19:52.112Z",
+  "frozenAt": "2026-09-06T16:25:27.168Z",
   "confirmation": "Betreiber, 2026-09-06 18:39, Bildschirmfoto: 'checke diese Fehlern' — Adressleiste des Live-Browsers zeigte '88709133371969' statt der Adresse. Zweiter Lauf: live gemessen rollt das Feld schon beim Schreiben der Adresse ans Ende; Fix im Render von browser-pane.js (scrollLeft = 0). Marken bis zur Wurzel (browser-pane 20260906-8, maus-absicht v31, maus-panel v25, sendepfad-nachladen v15, browser-nachladen v13, app.js b149), Service-Worker smejj-shell-v783. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
