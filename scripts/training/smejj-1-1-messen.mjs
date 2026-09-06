@@ -26,7 +26,7 @@
 //   node scripts/training/smejj-1-1-messen.mjs --starten --nur-adapter   (nur Kandidat, Adapter beim Laden)
 //   node scripts/training/smejj-1-1-messen.mjs --bewerten <jobId> [--basis-job <jobId2>]  (Noten rechnen)
 //   node scripts/training/smejj-1-1-messen.mjs --tuev              (Messstrecke mit leeren Antworten: muss 0 % und BLOCKED melden)
-import { cpSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -53,7 +53,35 @@ export async function ladeEnvLocal(env = process.env) {
 }
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-export const SUITE_DATEI = path.join(WURZEL, "evals/suites/smejj-chat-core-v1.json");
+
+/**
+ * WELCHE MESSLATTE — und warum die breite jetzt der Standard ist.
+ *
+ * BEFUND 2026-09-06: smejj-1-1 und smejj-1-2 bekamen exakt dieselbe Note
+ * (70,59 %) bei exakt gleicher Zahl kritischer Fehler (4). Der Vergleich der
+ * Einzelfaelle zeigte: die Modelle scheiterten an voellig VERSCHIEDENEN
+ * Faellen — 1-1 an regel-800-zeilen, schutz-daten-loeschen, budget-lcp und
+ * schutz-design-lock; 1-2 an naming-schreibweise, schutz-api-schluessel,
+ * architektur-static-first und patch-unified-diff. Beide hatten 10 von 14
+ * richtig, nur eben andere zehn.
+ *
+ * Die Messung war also in Ordnung. Die MESSLATTE war zu grob: bei 14 Faellen
+ * gibt es zu wenige moegliche Summen, als dass sie zwei Modelle mit
+ * gegensaetzlichem Verhalten auseinanderhalten koennte. Eine Note, die fuer
+ * zwei verschiedene Modelle dieselbe ist, kann keine Beförderung begruenden.
+ *
+ * Die breite Suite gibt es seit dem 03.08. — 295 Faelle in 15 Fachgebieten,
+ * zusammengesetzt aus evals/packs/*.json. Sie wurde nur nie benutzt. Neu
+ * bauen waere doppelte Arbeit gewesen; anschliessen ist die Reparatur.
+ *
+ * Umschaltbar ueber SMEJJ_MESS_SUITE (Dateiname unter evals/suites/), damit
+ * ein Vergleich mit der alten Latte moeglich bleibt.
+ */
+export const SUITE_BREIT = path.join(WURZEL, "evals/suites/smejj-chat-breit-v1.json");
+export const SUITE_KERN = path.join(WURZEL, "evals/suites/smejj-chat-core-v1.json");
+export const SUITE_DATEI = process.env.SMEJJ_MESS_SUITE
+  ? path.join(WURZEL, "evals/suites", path.basename(String(process.env.SMEJJ_MESS_SUITE)))
+  : SUITE_BREIT;
 export const EVAL_PREFIX = "smejj/evals";
 /** Ablage der Bewertungen, die Autopilot Nr. 83 liest (control-server/src/autopilots/smejjVersionsTaktAutopilot.js). */
 export const BEWERTUNGEN_PREFIX = "smejj/bewertungen";
@@ -89,14 +117,38 @@ export function jobParameter({ nurAdapter = false } = {}) {
  * Kopie des con-Jobs mit NUR der smejj-Suite im suites-Ordner. Der con-Job
  * selbst bleibt unangetastet — er ist die Bibliothek, nicht das Werkstueck.
  */
-export function baueMessJobVerzeichnis(jobDir, suiteDatei = SUITE_DATEI) {
+export function baueMessJobVerzeichnis(jobDir, suiteDatei = SUITE_DATEI, aufgeloesteSuite = null) {
   const ziel = mkdtempSync(path.join(os.tmpdir(), "smejj-1-1-messjob-"));
   cpSync(jobDir, ziel, { recursive: true, filter: (p) => !/__pycache__|\/suites\//.test(p) });
   const suites = path.join(ziel, "suites");
   rmSync(suites, { recursive: true, force: true });
   mkdirSync(suites);
-  cpSync(suiteDatei, path.join(suites, path.basename(suiteDatei)));
-  return { verzeichnis: ziel, suiten: readdirSync(suites) };
+  // DIE MANIFEST-FORM WIRD HIER AUFGELOEST, nicht im Job.
+  //
+  // Die breite Suite enthaelt keinen einzigen Fall selbst — sie verweist auf
+  // evals/packs/*.json, und das Zusammenfuehren ist mehr als Aneinanderhaengen:
+  // Kurzschreibweisen werden ausgeschrieben, Standardwerte des Pakets auf jeden
+  // Fall gelegt, Erwartungen gebaut, unbekannte Felder als Tippfehler
+  // zurueckgewiesen (src/evaluation/evalPacks.js).
+  //
+  // Der Messjob auf dem Salad-Knoten liest schlicht suite["cases"]
+  // (salad-job/evalrun.py#lade_suiten). Bekaeme er das Manifest, faende er
+  // NULL Faelle — und wuerde daraus eine Note bilden, ohne dass irgendwo ein
+  // Fehler auftaucht. Genau die Sorte stiller Fehlmessung, die diese Woche
+  // dreimal aufgetreten ist.
+  //
+  // Diese Logik in Python nachzubauen hiesse, eine zweite Wahrheit zu pflegen.
+  // Stattdessen bekommt der Job die FERTIG aufgeloeste Suite: eine Datei, eine
+  // Liste, kein Verweis. evalrun.py bleibt unveraendert.
+  if (aufgeloesteSuite) {
+    if (!Array.isArray(aufgeloesteSuite.cases) || aufgeloesteSuite.cases.length === 0) {
+      throw new Error("aufgeloeste Suite ohne Faelle — der Job wuerde nichts messen und trotzdem eine Note bilden");
+    }
+    writeFileSync(path.join(suites, path.basename(suiteDatei)), JSON.stringify(aufgeloesteSuite, null, 2));
+  } else {
+    cpSync(suiteDatei, path.join(suites, path.basename(suiteDatei)));
+  }
+  return { verzeichnis: ziel, suiten: readdirSync(suites), faelle: aufgeloesteSuite?.cases?.length ?? null };
 }
 
 /**
@@ -233,8 +285,11 @@ async function main() {
   if (vorher.zustand === "running") { console.error("ABBRUCH: die Gruppe laeuft bereits (Training oder Messung)."); process.exit(4); }
   if (!argv.includes("--starten")) { console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich gemessen."); return; }
 
-  const jobDir = baueMessJobVerzeichnis(konfig.jobDir);
-  console.log(`Job-Buendel:  ${jobDir.verzeichnis} mit Suiten ${jobDir.suiten.join(", ")}`);
+  // Die Suite wird HIER aufgeloest und fertig mitgeschickt — der Job auf dem
+  // Salad-Knoten liest nur suite["cases"] und kennt die Manifest-Form nicht.
+  const suiteFuerJob = await ladeSuite();
+  const jobDir = baueMessJobVerzeichnis(konfig.jobDir, SUITE_DATEI, suiteFuerJob);
+  console.log(`Job-Buendel:  ${jobDir.verzeichnis} mit Suite ${jobDir.suiten.join(", ")} (${jobDir.faelle} Faelle)`);
   const jobId = `smejj11-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}-messung`;
   const vor = await bereiteJobVor({ client, konfig: { ...konfig, jobDir: jobDir.verzeichnis }, e2: e2k, jobId, modus: "messung",
     parameter: jobParameter({ nurAdapter }), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
