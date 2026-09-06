@@ -49,11 +49,17 @@ test("GLM 5.2 FP8 is the storage-only flagship coding and planning vault target"
   assert.equal(GLM_5_2_FP8_STATUS.files.weights, "present");
 });
 
-test("Kimi verified IDrive status is complete but inference stays disabled", () => {
+// Nachgesehen 2026-09-06: der e2-Ordner ist leer. Der Test haelt jetzt BEIDES
+// fest — die alte Messung vom 10.07. (sie war echt) und dass sie nicht mehr gilt.
+// Wer den Status wieder auf "verified-complete" setzen will, muss vorher im
+// e2-Konto nachsehen; dieser Test faellt sonst um.
+test("Kimi IDrive status names the empty storage instead of the old proof", () => {
   assert.equal(ROUTES.api.modelStatus, "/api/models/kimi-k2-7/status");
   assert.equal(KIMI_K2_7_STATUS.storage.provider, "idrive-e2");
   assert.equal(KIMI_K2_7_STATUS.storage.prefix, "model-files/kimi-k2-7/original/");
-  assert.equal(KIMI_K2_7_STATUS.verification.status, "verified-complete");
+  assert.equal(KIMI_K2_7_STATUS.verification.status, "storage-empty-since-recheck");
+  assert.equal(KIMI_K2_7_STATUS.verification.recheckObjectCount, 0);
+  assert.equal(KIMI_K2_7_STATUS.verification.lastVerifiedAt, "2026-07-10T01:42:00.000Z");
   assert.equal(KIMI_K2_7_STATUS.verification.originalFileCount, 86);
   assert.equal(KIMI_K2_7_STATUS.verification.idriveObjectCount, 102);
   assert.equal(KIMI_K2_7_STATUS.verification.safetensorsCount, 64);

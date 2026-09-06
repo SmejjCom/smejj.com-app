@@ -26,9 +26,28 @@ export const KIMI_K2_7_STATUS = {
     provider: "idrive-e2",
     prefix: "model-files/kimi-k2-7/original/"
   },
+  // NACHGESEHEN 2026-09-06 im e2-Konto (Bucket smejj-model-files, Region LA):
+  // der Ordner "model-files/kimi-k2-7/" meldet woertlich "Der Ordner ist derzeit
+  // leer". Zweimal geprueft, einmal mit 15 Sekunden Wartezeit — es ist keine
+  // Ladeverzoegerung. Die Zahlen unten sind ECHT, sie stammen von der Pruefung
+  // am 10.07.2026, als 554,3 GiB mit 64 uebereinstimmenden SHA256-Summen dalagen.
+  // Sie beschreiben also, was einmal da war, nicht was heute da ist.
+  //
+  // Genau darin lag der Fehler: der Status sagte weiter "verified-complete", und
+  // jeder, der ihn las, hielt die Datei fuer vorhanden. Ein Pruefergebnis hat ein
+  // Haltbarkeitsdatum. Steht der Befund ohne Nachpruefung im Code, wird aus einer
+  // Momentaufnahme eine Behauptung.
+  //
+  // Der Status blockt jetzt korrekt: workerPreflight verlangt "verified-complete"
+  // und lehnt jeden Worker-Start fuer dieses Modell ab, solange das Lager leer ist.
+  // WAS OFFEN BLEIBT: warum die 554 GiB weg sind. Weder Git noch die Memory-Bank
+  // nennen einen Beschluss, sie zu entfernen.
   verification: {
-    status: "verified-complete",
+    status: "storage-empty-since-recheck",
     lastVerifiedAt: "2026-07-10T01:42:00.000Z",
+    recheckedAt: "2026-09-06T00:00:00.000Z",
+    recheckObjectCount: 0,
+    recheckNote: "e2-Ordner model-files/kimi-k2-7/ ist leer — Grund unbekannt",
     sourceFileCount: 86,
     originalFileCount: 86,
     idriveObjectCount: 102,

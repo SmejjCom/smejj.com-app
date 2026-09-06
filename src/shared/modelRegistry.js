@@ -64,7 +64,11 @@ export const MODEL_REGISTRY = Object.freeze({
     name: "Kimi K2.7",
     aliases: Object.freeze(["kimi k2.7", "kimi-k2.7", "kimi k2.7 code", "kimi-k2-7-code"]),
     provider: "kimi",
-    status: "storage-verified-runtime-configurable",
+    // NACHGESEHEN 2026-09-06: hier stand "storage-verified" — der e2-Ordner ist
+    // aber leer (siehe KIMI_K2_7_STATUS in platform.js). Der Eintrag BLEIBT,
+    // Betreiber-Wunsch: kein Name wird geloescht. Nur das Versprechen ist
+    // zurueckgenommen, damit sich niemand auf eine Datei verlaesst, die fehlt.
+    status: "storage-missing-runtime-configurable",
     contextTokens: 262_144,
     codingCapability: "agentic-coding",
     enabledByDefault: false,
