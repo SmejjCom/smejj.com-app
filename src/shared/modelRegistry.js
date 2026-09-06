@@ -337,7 +337,10 @@ export const MODEL_REGISTRY = Object.freeze({
     }),
     runtime: Object.freeze({
       envPrefix: "SMEJJ1",
-      defaultBaseUrl: "",
+      // Unser eigener Dienst auf Zeabur mit fester Adresse — darum darf sie
+      // hier stehen (bei smejj fast 1.0 blieb sie leer, weil Salad-Adressen
+      // wechseln). Fail-closed bleibt zweiteilig: Flag + Schluessel.
+      defaultBaseUrl: "https://smejj-hausmodell.zeabur.app/v1",
       defaultModel: "smejj-1-basis",
       defaultHeader: "Authorization",
       storageFirstMode: "smejj-self-hosted",

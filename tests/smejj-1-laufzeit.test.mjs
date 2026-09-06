@@ -31,7 +31,8 @@ test("Registry: smejj-1 zeigt auf den Hausmodell-Dienst — Bearer, Katalog-Kenn
   assert.equal(def.provider, "hausmodell");
   assert.equal(def.contextTokens, 4096);
   assert.equal(isModelEnabled(def, {}), false);
-  assert.equal(getModelRuntimeConfig(def, { SMEJJ_1_ENABLED: "YES" }).configured, false, "ohne Adresse und Schluessel nicht konfiguriert");
+  assert.equal(getModelRuntimeConfig(def, { SMEJJ_1_ENABLED: "YES" }).configured, false, "ohne Schluessel nicht konfiguriert");
+  assert.equal(getModelRuntimeConfig(def, { SMEJJ_1_ENABLED: "YES" }).baseUrl, "https://smejj-hausmodell.zeabur.app/v1", "die Adresse des eigenen Dienstes ist Standard");
   const rt = getModelRuntimeConfig(def, ENV);
   assert.equal(rt.configured, true);
   assert.equal(rt.runtimeModel, "smejj-1-basis");
