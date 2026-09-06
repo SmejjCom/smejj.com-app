@@ -87,8 +87,19 @@ function urlAus(wert) {
 const STRATEGIEN = ["role", "testId", "label", "text", "css", "xpath"];
 const KLICK_FAMILIE = ["click", "doubleClick", "rightClick", "hover"];
 /** Kurzformen eines Selektors in die Schema-Form bringen — oder unveraendert lassen. */
+// "text=Create account" (live 2026-09-06, con.ax): das Modell schreibt gern
+// die Playwright-Kurzform strategie=wert — als Text gesucht traf "text=Create
+// account" natuerlich nicht. Der Praefix IST die Strategie; er wird abgestreift.
+const PRAEFIX_STRATEGIEN = { text: "text", css: "css", xpath: "xpath", role: "role", label: "label", placeholder: "placeholder", title: "title", alttext: "altText", testid: "testId" };
+function entpraefixe(strategy, value) {
+  const m = /^\s*(text|css|xpath|role|label|placeholder|title|alttext|testid)\s*=\s*(.+)$/i.exec(String(value ?? ""));
+  if (!m) return null;
+  return { strategy: PRAEFIX_STRATEGIEN[m[1].toLowerCase()] || strategy, value: m[2].trim() };
+}
 function normalisiereSelektor(ziel) {
   if (typeof ziel === "string" && ziel.trim()) {
+    const praefix = entpraefixe("text", ziel);
+    if (praefix) return praefix;
     const s = ziel.trim();
     // Ein nacktes Wort ist nur dann CSS, wenn es ein HTML-Element ist ("h1",
     // "button") — "Weiter" ist Text auf einem Knopf, kein Element.
@@ -97,7 +108,10 @@ function normalisiereSelektor(ziel) {
       ? { strategy: "css", value: s } : { strategy: "text", value: s };
   }
   if (!ziel || typeof ziel !== "object" || Array.isArray(ziel)) return ziel;
-  if (typeof ziel.strategy === "string" && typeof ziel.value === "string") return ziel;
+  if (typeof ziel.strategy === "string" && typeof ziel.value === "string") {
+    const praefix = entpraefixe(ziel.strategy, ziel.value);
+    return praefix ? { ...ziel, ...praefix } : ziel;
+  }
   if (typeof ziel.selector === "string") { const innen = normalisiereSelektor(ziel.selector); return ziel.name && innen && !innen.name && innen.strategy === "role" ? { ...innen, name: String(ziel.name) } : innen; }
   for (const k of STRATEGIEN) {
     if (typeof ziel[k] === "string" && ziel[k].trim()) {
