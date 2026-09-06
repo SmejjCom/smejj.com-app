@@ -53,7 +53,16 @@ const { zeigeFrage } = await import("../public/ai/chat-stream.js");
 function knopfKnoten(tag) {
   const k = knoten(tag);
   const hoerer = {};
-  k.classList = { add: (c) => { k.className += ` ${c}`; }, contains: (c) => k.className.split(" ").includes(c) };
+  // toggle gehoert dazu: chat-stream.js schaltet damit die Klasse
+  // "medien-strom" an der Antwort (Zeile 426). Ohne sie starb der Stromtest
+  // mit "classList.toggle is not a function" — ein Loch im Stub, kein Fehler
+  // im Code, aber es stand rot (aufgeraeumt 2026-09-06).
+  k.classList = {
+    add: (c) => { if (!k.className.split(" ").includes(c)) k.className += ` ${c}`; },
+    remove: (c) => { k.className = k.className.split(" ").filter((x) => x && x !== c).join(" "); },
+    contains: (c) => k.className.split(" ").includes(c),
+    toggle: (c, an) => { const soll = an === undefined ? !k.classList.contains(c) : Boolean(an); if (soll) k.classList.add(c); else k.classList.remove(c); return soll; }
+  };
   k.addEventListener = (art, fn) => { hoerer[art] = fn; };
   k.click = () => hoerer.click?.();
   Object.defineProperty(k, "nextElementSibling", { get() {

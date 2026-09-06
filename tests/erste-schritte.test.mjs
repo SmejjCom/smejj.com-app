@@ -9,9 +9,13 @@ import { pathToFileURL } from "node:url";
 const quelle = readFileSync(new URL("../public/erste-schritte.js", import.meta.url), "utf8");
 
 async function ladeModul() {
+  // Die ?v=-Marken NICHT hart pinnen: ein legitimer Marken-Bump liess diesen
+  // Test wochenlang rot stehen, ohne je einen echten Fehler zu melden
+  // (aufgeraeumt 2026-09-06). Geprueft wird, was hier zaehlt: dass ueberhaupt
+  // kein Browser-Import uebrig bleibt.
   const ersetzt = quelle
-    .replace('import { t } from "/assets/i18n/ui.js?v=3";', "const t = (s) => s;")
-    .replace('import { listChats } from "/assets/chat-store.js?v=b66";', "const listChats = async () => [];");
+    .replace(/import \{ t \} from "\/assets\/i18n\/ui\.js(\?v=[^"]*)?";/, "const t = (s) => s;")
+    .replace(/import \{ listChats \} from "\/assets\/chat-store\.js(\?v=[^"]*)?";/, "const listChats = async () => [];");
   assert.ok(!ersetzt.includes("/assets/"), "alle Browser-Importe ersetzt");
   const datei = join(mkdtempSync(join(tmpdir(), "smejj-erste-")), "erste.mjs");
   writeFileSync(datei, ersetzt);

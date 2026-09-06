@@ -39,15 +39,22 @@ test("index.html traegt Overlay-Markup und Stylesheet", () => {
 // ohne einen echten Fehler zu melden. Die eigentliche Regel ist: ALLE
 // Importstellen desselben Moduls tragen DIESELBE Kennung — sonst entsteht
 // eine zweite Modulinstanz. Genau das wird jetzt geprueft.
+// Statisch UND dynamisch: search.js holt das Overlay per import(), nicht per
+// "from" (Such-Diaet 25.08.). Der Helfer sah nur statische Importe und meldete
+// deshalb "search.js laedt das Overlay" als fehlend — ein Dauer-Rot ohne
+// echten Fehler dahinter (aufgeraeumt 2026-09-06). Eine zweite Modulinstanz
+// entsteht bei dynamischen Importen genauso, also zaehlen sie mit.
 function kennung(quelle, modul) {
-  const treffer = quelle.match(new RegExp(`from "[^"]*${modul}\\.js(\\?v=[^"]*)?"`));
+  const treffer = quelle.match(new RegExp(`(?:from|import\\()\\s*"[^"]*${modul}\\.js(\\?v=[^"]*)?"`));
   return treffer ? treffer[1] || "(ohne)" : null;
 }
 
 test("Nav-Knopf Suche oeffnet das Overlay, nicht die Seite", () => {
   // Seit der Such-Diaet (25.08.) laedt app.js search.js erst bei Bedarf ueber
   // such-nachladen.js; das Overlay kommt weiter aus search.js (overlayLader).
-  assert.match(appJs, /import \{ bindeSuchNachlader, holeSuche \} from "\.\/such-nachladen\.js\?v=1"/, "app.js bindet den Such-Nachlader");
+  // Marke bewusst offen (siehe kennung() oben): geprueft wird die Bindung,
+  // nicht die Zahl dahinter — die darf jeder Marken-Bump aendern.
+  assert.match(appJs, /import \{ bindeSuchNachlader, holeSuche(, [^}]+)? \} from "\.\/such-nachladen\.js(\?v=[^"]*)?"/, "app.js bindet den Such-Nachlader");
   assert.match(appJs, /button\.dataset\.view === "search"\) \{ holeSuche\(\)\.then\(\(m\) => Promise\.resolve\(m\.oeffneSuchOverlay\(\)\)\)/, "der Nav-Knopf laedt und oeffnet das Overlay");
 });
 
@@ -58,8 +65,14 @@ test("Cmd+K schaltet das Overlay und search.js reicht die Datenwege durch", () =
   assert.ok(kennung(searchJs, "search-overlay"), "search.js laedt das Overlay");
   assert.equal(kennung(appJs, "search-overlay"), null, "app.js importiert das Overlay nicht mehr direkt");
   const nachladerJs = fs.readFileSync("public/such-nachladen.js", "utf8");
-  assert.match(nachladerJs, /import\("\.\/search\.js\?v=b51"\)/, "der Nachlader laedt search.js unter der App-Kennung");
-  assert.match(searchJs, /if \(toggleSearchOverlay\(\)\) return;/);
+  assert.match(nachladerJs, /import\("\.\/search\.js(\?v=[^"]*)?"\)/, "der Nachlader laedt search.js");
+  // Seit der Such-Diaet (25.08.) wird das Overlay erst bei Cmd+K nachgeladen,
+  // und es gibt eine Rueckfallebene: schlaegt das Nachladen fehl oder fehlt das
+  // Overlay-Markup, oeffnet die Such-Seite. Ein Cmd+K darf nie ins Leere gehen.
+  // Der Test suchte bis 2026-09-06 noch die alte Form "if (toggleSearchOverlay())
+  // return;" und stand deshalb rot, obwohl der Code besser geworden war.
+  assert.match(searchJs, /event\.key\.toLowerCase\(\) !== "k" \|\| \(!event\.metaKey && !event\.ctrlKey\)/, "Cmd+K bzw. Strg+K");
+  assert.match(searchJs, /overlayLader\(\)\.then\(\(m\) => \{ if \(!m\.toggleSearchOverlay\(\)\) zurueckfall\(\); \}\)\.catch\(zurueckfall\)/, "Rueckfall auf die Such-Seite, wenn das Overlay nicht kommt");
   assert.match(searchJs, /initSearchOverlay\(\{/);
   // Chat-Treffer tragen das Chat-Objekt (Ausschnitt, Zeit, Titel im Overlay).
   assert.match(searchJs, /chat\.id, chat\];/);
