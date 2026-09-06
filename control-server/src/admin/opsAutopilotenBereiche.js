@@ -44,7 +44,12 @@ const ZUORDNUNG = Object.freeze({
     // Nr. 73 (2026-09-03, Audit): der Tuerwaechter lief seit 14.08. ohne Registry-Eintrag.
     "tuerwaechter",
     // Nr. 79 (2026-09-03, Runde 2): Prompt-Injection live gegen die Bruecke.
-    "red-team-probe"
+    "red-team-probe",
+    // Nr. 82 (2026-09-04): haelt jeden eingefrorenen Hash gegen die AUSLIEFERUNG.
+    // Er bewacht die Waechter — er gehoert in den Wachdienst, nicht in den
+    // Betrieb, in dem er bis 2026-09-06 still gelandet ist (bereichVon faellt
+    // auf den letzten Bereich zurueck, wenn eine Kennung fehlt).
+    "schutz-echtheit"
   ],
   // (Nr. 63/64 stehen unten bei "Betrieb & Auslieferung" — Performance und Speicher sind Betriebsfragen.)
   "Modelle & Wissen": [
