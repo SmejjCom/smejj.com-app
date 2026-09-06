@@ -107,7 +107,28 @@ export const BASIS_STAND = "qwen3-4b-basis";
 export const WIEDERHOLUNGEN = 1;
 // 8 GB Basis holen (~5 min), Modell laden, 14 Faelle x 3 x 2 Staende = 84
 // Antworten auf einem 4B-Modell. 60 Minuten sind eine GRENZE, kein Ziel.
-export const MAX_MINUTEN = 60;
+/**
+ * ZEITBUDGET — gemessen, nicht von der kleinen Suite geerbt.
+ *
+ * BEFUND 2026-09-06: Der erste Lauf mit der breiten Suite schaffte in 60
+ * Minuten 188 von 295 Antworten des ERSTEN von zwei Staenden, lief in die
+ * Frist, und Salad startete den Job neu — von vorn, mit frischer Frist. So
+ * wird eine Messung nie fertig und verbrennt trotzdem GPU-Zeit.
+ *
+ * Gerechnet hatte ich mit 5,1 s je Antwort. Diese Zahl stammte aus der
+ * Kern-Suite (214 s fuer 42 Antworten) — deren Faelle sind kuerzer und ihre
+ * drei Wiederholungen liefern denselben Text. GEMESSEN an der breiten Suite:
+ * 19 s je Antwort, fast das Vierfache.
+ *
+ * Damit brauchen 590 Antworten (295 Faelle x 2 Staende) rund 188 Minuten.
+ * 210 lassen Luft fuer das Laden des Modells, ohne dass die Frist zuschlaegt.
+ *
+ * Das ist derselbe Fehler wie bei minutenJeSchritt im Trainingslauf: eine Zahl,
+ * die fuer einen anderen Gegenstand gemessen wurde, still uebernommen. Der Test
+ * rechnet die Frist deshalb jetzt gegen die gemessene Geschwindigkeit nach.
+ */
+export const SEKUNDEN_JE_ANTWORT = 19;
+export const MAX_MINUTEN = 210;
 
 /**
  * Die beiden Staende, in der Reihenfolge, die job.py ohnehin erzwingt (Fundament zuerst).

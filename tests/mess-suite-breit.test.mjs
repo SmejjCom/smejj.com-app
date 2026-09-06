@@ -80,12 +80,16 @@ test("eine Wiederholung genuegt, solange die Messung deterministisch ist", async
   const { WIEDERHOLUNGEN, MAX_MINUTEN } = await import("../scripts/training/smejj-1-1-messen.mjs");
   assert.equal(WIEDERHOLUNGEN, 1);
 
-  // Und die Rechnung muss ins Zeitbudget passen: zwei Stände (Basis und
-  // Adapter) über alle Fälle, bei gemessenen 5,1 s je Antwort.
+  // Und die Rechnung muss ins Zeitbudget passen — mit der Geschwindigkeit, die
+  // an DIESER Suite gemessen wurde. Der erste Lauf scheiterte daran, dass ich
+  // 5,1 s je Antwort aus der Kern-Suite übernommen hatte; gemessen sind es 19.
   const { suite } = await loadEvalSuite(SUITE_BREIT);
-  const minuten = (suite.cases.length * WIEDERHOLUNGEN * 5.1 * 2) / 60;
+  const { SEKUNDEN_JE_ANTWORT } = await import("../scripts/training/smejj-1-1-messen.mjs");
+  const minuten = (suite.cases.length * WIEDERHOLUNGEN * SEKUNDEN_JE_ANTWORT * 2) / 60;
   assert.ok(minuten < MAX_MINUTEN,
-    `${Math.round(minuten)} min gemessene Laufzeit gegen ${MAX_MINUTEN} min Frist — die Messung liefe in die Zeitgrenze`);
+    `${Math.round(minuten)} min gerechnete Laufzeit gegen ${MAX_MINUTEN} min Frist — die Messung liefe in die Zeitgrenze, und Salad startet einen abgelaufenen Job VON VORN`);
+  assert.ok(MAX_MINUTEN < minuten * 1.6,
+    `${MAX_MINUTEN} min Frist bei ${Math.round(minuten)} min Bedarf — zu viel Luft kostet unnoetig GPU-Zeit`);
 });
 
 test("do_sample bleibt aus — sonst waere eine Wiederholung zu wenig", () => {
