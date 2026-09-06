@@ -1,10 +1,10 @@
 {
   "lock": "smejj abo lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-04T21:12:36.418Z",
-  "confirmation": "Ja, stempeln. (Betreiber Wof Kadavanich, 2026-09-04 abends, auf die vorgelegte Zeile-fuer-Zeile-Pruefung) — Der Abo-Lock war seit dem 30.08. rot, weil public/account-privacy.js seit Commit dfcd24ad (31.08., Buendel-Abgleich) zwei Stylesheets laedt statt einem: die CSS-Datei wurde am 25.08. in Grundteil und Formularteil zerlegt. Keine Zahlungslogik, keine Datenschutz-Aktion, kein Server-Aufruf beruehrt. Die zweite Datei account-privacy-formulare.css wird live ausgeliefert (200, 12815 Bytes). Vor dem Stempel gegen die Auslieferung geprueft: alle abrufbaren Dateien byte-gleich mit smejj.com, 0 stumme Phantome.",
+  "frozenAt": "2026-09-06T03:07:09.101Z",
+  "confirmation": "Betreiber-Doppelklick 2026-09-06: Nachziehen des abo-lock auf den Stand von Commit dd245c4b vom 2026-09-05 ('zweiter Weg fuer Stripe-Webhooks — die eigene Domain daneben', control-server/src/routes/billingRoutes.js: zweites Signatur-Geheimnis STRIPE_WEBHOOK_SECRET_ZWEITWEG, fehlt es, wird der Zweitweg abgelehnt statt durchgewunken). Die Aenderung ist seit dem 2026-09-05 im Bestand, nur das Manifest wurde nie nachgezogen; ohne diesen Stempel meldet das Werkstatt-Tor eine Sperre als verletzt, die es nicht ist",
   "rule": "Keine Aenderung an der Abo- und Zahlungskette (Webhook, Signaturpruefung, Plan-Zuordnung, Abo-Anzeige, Kaufknoepfe, Zahlungsbestaetigung) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "control-server/src/routes/billingRoutes.js": "959087778a74f4d49530a58c85b3f40402813e617a1b4ba5c0e2eb15df639925",
+    "control-server/src/routes/billingRoutes.js": "596abc7d0a52cd0f0f4db43842787f0418e9272b0bfcd44a9e4551d0a8edb33d",
     "control-server/src/billing/stripeWebhookVerify.js": "e7a42ade4bc0e78e718bac8cc24cf30e21f46aec70aac8c2d6bcc7ce2a99e6b6",
     "control-server/src/billing/stripeEventApply.js": "71de637a1e577943525db71382bce11fdbfd905c80f5f4e223158e0ecb706d60",
     "control-server/src/billing/subscriptionStore.js": "849806cffa39eebbeb50d67404e567358d38bc5952c717424abea2faa528ffea",
