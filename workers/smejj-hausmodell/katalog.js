@@ -31,6 +31,29 @@ export const LAUF_MODELLE = [
     kontext: 4096
   },
   {
+    // smejj 1 — Basis der trainierten Familie (Qwen3-4B-Instruct-2507), als
+    // Q4_K_M-GGUF von unsloth (Apache-2.0). Gemessen 05.09.2026 auf der
+    // smejj-Suite: 91,2 % nackt — die drei LoRA-Adapter lagen darunter, darum
+    // laeuft hier vorerst die Basis. Der Router erreicht sie als Registry-
+    // Modell `smejj-1` (SMEJJ_LLM_SMEJJ1_MODEL=smejj-1-basis); der Alias
+    // `smejj` haengt erst um, wenn eine Version im Register live-tauglich ist.
+    // sha256 = LFS-Kennung aus der Hugging-Face-API (abgefragt 2026-09-06).
+    id: "smejj-1-basis",
+    anzeige: "smejj 1 Basis (Qwen3-4B-Instruct-2507, kostenlos)",
+    version: "Qwen3-4B-Instruct-2507-Q4_K_M",
+    format: "gguf-q4_k_m",
+    stufe: "staging",
+    standard: false,
+    datei: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+    sizeBytes: 2497281120,
+    sha256: "3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597",
+    hfRepo: "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+    hfDatei: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+    lizenz: "Apache-2.0",
+    ramSchaetzungMb: 2900,
+    kontext: 4096
+  },
+  {
     id: "qwen3.5-4b",
     anzeige: "Hausmodell Qwen 4B (kostenlos, Reserve)",
     version: "3.5-4B-Q4_K_M",

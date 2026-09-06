@@ -87,8 +87,15 @@ export async function refreshModelRuntimeHealth(env = process.env, {
  * Ausfall. Die Sonde repariert also die Anzeige und die Reihenfolge, nicht die
  * Erreichbarkeit — die war die ganze Zeit gegeben.
  */
+// Selbst gehostete Modelle mit /health eine Ebene ueber /v1: smejj fast 1.0
+// (Salad, llama.cpp) und seit 06.09. smejj 1 (Hausmodell-Dienst, llama.cpp).
+const SELBST_GEHOSTET = Object.freeze(["smejj-fast-1", "smejj-1"]);
+
 async function probeSelbstGehostet(env, options) {
-  const modelId = "smejj-fast-1";
+  for (const modelId of SELBST_GEHOSTET) await probeEinSelbstGehostetes(modelId, env, options);
+}
+
+async function probeEinSelbstGehostetes(modelId, env, options) {
   if (!isModelEnabled(modelId, env)) return;
   const runtime = getModelRuntimeConfig(modelId, env);
   if (!runtime?.configured) return;

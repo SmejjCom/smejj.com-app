@@ -309,9 +309,12 @@ export const MODEL_REGISTRY = Object.freeze({
     id: "smejj-1",
     name: "smejj 1",
     aliases: Object.freeze(["smejj-1", "smejj 1.x", "smejj-1-x"]),
-    provider: "salad",
+    // Laufzeit ist der Hausmodell-Dienst (workers/smejj-hausmodell, Zeabur
+    // untitled-1, llama.cpp, ctx 4096, Bearer-Schluessel) — nicht Salad.
+    // Katalog-Kennung dort: smejj-1-basis (SMEJJ_LLM_SMEJJ1_MODEL).
+    provider: "hausmodell",
     status: "self-hosted-runtime-configurable",
-    contextTokens: 32_768,
+    contextTokens: 4_096,
     codingCapability: "assistant",
     enabledByDefault: false,
     featureFlag: "SMEJJ_1_ENABLED",
@@ -335,8 +338,8 @@ export const MODEL_REGISTRY = Object.freeze({
     runtime: Object.freeze({
       envPrefix: "SMEJJ1",
       defaultBaseUrl: "",
-      defaultModel: "smejj-1",
-      defaultHeader: "Salad-Api-Key",
+      defaultModel: "smejj-1-basis",
+      defaultHeader: "Authorization",
       storageFirstMode: "smejj-self-hosted",
       engines: Object.freeze(["openai-compatible", "vllm", "llama.cpp"]),
       workerEngines: Object.freeze(["vllm", "llama.cpp"]),

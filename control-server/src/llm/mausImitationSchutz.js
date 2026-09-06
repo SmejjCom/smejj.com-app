@@ -37,6 +37,22 @@ export const MAUS_SCHUTZ_HINWEIS = [
   "Fragt er, warum die Maus stockt oder was passiert ist, erklaere nur, was WIRKLICH in den Maus-Zeilen steht — nicht mehr."
 ].join("\n");
 
+// ZWEITER FALL (Betreiber-Chat 2026-09-06, 18:39: "Mann geh smejj browser und
+// mach das."): KEINE Maus-Spur im Verlauf, aber der Nutzer verlangt eine
+// Browser-Handlung ohne die Vorlage. Das Modell antwortete mit einer
+// erfundenen "Freigabeliste", einer "Maus-Steuerung", die es angeblich nicht
+// abschalten koenne, und einer Anleitung zum Selbermachen. Nichts davon gibt
+// es. Der Hinweis hier ist kuerzer: kein Browser, keine Regeln erfinden, auf
+// die Vorlage verweisen.
+const BROWSER_WUNSCH = /\b(browser|maus|mouse|klick\w*|click\w*|anklick\w*|surf\w*|webseite|website|registrier\w*|anmeld\w*|einlogg\w*|login)\b/i;
+
+export const BROWSER_HINWEIS = [
+  "WICHTIG — du hast KEINEN Browser.",
+  "Du kannst keine Webseite oeffnen, nichts anklicken, nichts eintippen, kein Konto anlegen und nichts anmelden. Es gibt keine Freigabeliste, keine Maus-Steuerung und keine Regel, die du an- oder abschalten koenntest — erfinde nichts davon.",
+  "Fuer Aufgaben im Browser gibt es bei smejj.com die MAUS, ein eigenes Werkzeug. Sie startet NUR, wenn der Nutzer eine Nachricht schickt, die mit \"" + MAUS_VORLAGE + "\" beginnt, gefolgt von der Aufgabe und der Seite, zum Beispiel: \"" + MAUS_VORLAGE + " auf con.ax/en/register ein Konto mit meiner E-Mail anlegen\".",
+  "Wenn der Nutzer also etwas im Browser erledigt haben will: antworte in ein bis zwei Saetzen, dass du das nicht selbst tun kannst, und gib ihm den fertigen Satz mit der Vorlage zum Abschicken — keine Schritt-fuer-Schritt-Anleitung zum Selbermachen, ausser er fragt ausdruecklich danach."
+].join("\n");
+
 /**
  * Haengt bei Bedarf die Schutz-Nachricht an.
  *
@@ -45,8 +61,9 @@ export const MAUS_SCHUTZ_HINWEIS = [
  */
 export function ergaenzeMausSchutz(messages) {
   if (!Array.isArray(messages) || messages.length === 0) return messages;
-  if (!brauchtMausSchutz(messages)) return messages;
-  const hinweis = { role: "system", content: MAUS_SCHUTZ_HINWEIS };
+  const art = brauchtMausSchutz(messages) ? "maus" : brauchtBrowserHinweis(messages) ? "browser" : "";
+  if (!art) return messages;
+  const hinweis = { role: "system", content: art === "maus" ? MAUS_SCHUTZ_HINWEIS : BROWSER_HINWEIS };
   // Direkt HINTER die vorhandene System-Nachricht — dort liest jedes Modell
   // seine Regeln. Ohne System-Nachricht an den Anfang.
   const erste = messages[0]?.role === "system" ? 1 : 0;
@@ -62,6 +79,16 @@ export function brauchtMausSchutz(messages) {
   if (letzteNutzer && textVon(letzteNutzer.content).trim().startsWith(MAUS_VORLAGE)) return false;
   if (messages.some((m) => m?.role === "system" && textVon(m.content) === MAUS_SCHUTZ_HINWEIS)) return false;
   return messages.some((m) => m?.role === "assistant" && MAUS_SPUR.test(textVon(m.content)));
+}
+
+/** Verlangt die letzte Nutzer-Nachricht eine Browser-Handlung ohne Vorlage? */
+export function brauchtBrowserHinweis(messages) {
+  const letzteNutzer = [...messages].reverse().find((m) => m?.role === "user");
+  if (!letzteNutzer) return false;
+  const text = textVon(letzteNutzer.content).trim();
+  if (text.startsWith(MAUS_VORLAGE)) return false;
+  if (messages.some((m) => m?.role === "system" && [MAUS_SCHUTZ_HINWEIS, BROWSER_HINWEIS].includes(textVon(m.content)))) return false;
+  return BROWSER_WUNSCH.test(text);
 }
 
 function textVon(content) {
