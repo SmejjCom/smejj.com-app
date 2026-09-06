@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-06T16:15:03.897Z",
-  "confirmation": "Betreiber, 2026-09-06 18:39, Bildschirmfoto: 'checke diese Fehlern' — in der Adressleiste des Live-Browsers stand '88709133371969' statt der Adresse. Umgesetzt: Adressleiste rollt beim Verlassen an den Anfang (browser-pane-vorschlaege.js), Marken bis zur Wurzel (browser-pane 20260906-7, vorschlaege 20260709-3, maus-absicht v30, maus-panel v24, sendepfad-nachladen v14, browser-nachladen v12, app.js b148), Service-Worker smejj-shell-v782. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-06T16:19:52.112Z",
+  "confirmation": "Betreiber, 2026-09-06 18:39, Bildschirmfoto: 'checke diese Fehlern' — Adressleiste des Live-Browsers zeigte '88709133371969' statt der Adresse. Zweiter Lauf: live gemessen rollt das Feld schon beim Schreiben der Adresse ans Ende; Fix im Render von browser-pane.js (scrollLeft = 0). Marken bis zur Wurzel (browser-pane 20260906-8, maus-absicht v31, maus-panel v25, sendepfad-nachladen v15, browser-nachladen v13, app.js b149), Service-Worker smejj-shell-v783. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "a9f193eb1d63738b8cb46bee4c5ccf16dc2a3adf7d3ff563910f2854922e47c3",
+    "public/index.html": "efa11ee135e7eeb4a3ef4d0c1419f18378b2f0f3bd44a45b97db22b438ba52c9",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "2b1f71f06639bc637e2c4662b7804cc2318b08b9642707d6f839ec0f998f4e65",
+    "public/app.js": "59232560edc5c74e13f96266ea6fd181fd6cc28ebc149fa32f9986b3f1068c2e",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "6d26716c99faf8f6ce7e9ba3bf60a8c0335c410e8da67556e21837d419a52400",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "f07ea8f267b17ee3cf82ce19af79a49eea63dc803917102139c5b75cc5ab25c6",
+    "public/browser-pane.js": "1973fdb094173935fd98b048ed83ae4aa4fe5b8322dd7e50f4f1031457188ee5",
     "public/browser-pane-render.js": "92c20217a207e9a3af426f755b60252b5c91e1cd4b7bc21739777971d83619b6",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "803cf1583784f52ed3e7ad14137be8e73f007b878c3cbf1bdef8e0e2fd261a52",
+    "public/sw.js": "0ec6a1dabb29520f7652cf9bda13a24bdaa64dc8d662f88de1bee87aa8aa6193",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
