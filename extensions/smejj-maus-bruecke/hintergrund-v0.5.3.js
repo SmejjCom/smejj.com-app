@@ -1,3 +1,11 @@
+// DATEINAME MIT VERSION (v0.5.3, 2026-09-06): Chrome hielt den Hintergrund
+// dieser unverpackten Erweiterung trotz "Neu laden" UND Chrome-Neustart im
+// Cache — das Manifest meldete 0.5.2, der laufende Hintergrund kannte aber
+// weder `zustand` noch `neuladen` (live gemessen). Der Cache haengt an der
+// Adresse des Skripts. Ein neuer Dateiname ist eine neue Adresse, und die muss
+// Chrome frisch von der Platte lesen. Darum traegt die Datei die Version, und
+// der Waechter in tests/maus-chrome-bruecke.test.mjs verlangt, dass sie mit
+// jedem Versionssprung umbenannt wird.
 // smejj.com Maus-Bruecke — Hintergrund (MV3 Service Worker).
 //
 // Single Responsibility: Befehle der Maus entgegennehmen, gegen die sichtbar

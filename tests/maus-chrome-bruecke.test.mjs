@@ -9,6 +9,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+
+// Der Hintergrund heisst je Version anders (siehe Kopf der Datei) — der Pfad
+// kommt aus dem Manifest, damit kein Test am alten Namen haengen bleibt.
+const BRUECKE_MANIFEST = JSON.parse(fs.readFileSync("extensions/smejj-maus-bruecke/manifest.json", "utf8"));
+const HINTERGRUND_PFAD = `extensions/smejj-maus-bruecke/${BRUECKE_MANIFEST.background.service_worker}`;
 import { deuteChromeFehler } from "../public/maus-absicht.js";
 import { sendeAnChrome } from "../public/maus-chrome.js";
 
@@ -72,7 +77,7 @@ test("Fehlerkennungen werden zu einem Handgriff", () => {
 });
 
 test("Erweiterung und ferner Browser sprechen DASSELBE Vokabular", () => {
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   const engine = fs.readFileSync("workers/remote-browser/session-engine.js", "utf8");
   // Was der freie Lauf schickt (browser-pane-maus.js -> alsSitzungsAktion),
   // muss BEIDE Seiten erreichen. Ein Wort, das nur eine Seite kennt, faellt
@@ -106,7 +111,7 @@ test("die Erweiterung darf nur von smejj.com angesprochen werden", () => {
 });
 
 test("die Maus arbeitet in einem EIGENEN Tab, nicht im aktiven", () => {
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   // Der aktive Tab ist waehrend eines Auftrags fast immer smejj.com selbst.
   // Wer dort klickt, bedient die eigene App statt der Zielseite — und ein
   // Tabwechsel des Nutzers mitten im Lauf wuerde die Maus in eine fremde
@@ -183,7 +188,7 @@ test("die Bruecke horcht auf BEIDE Eingaenge", () => {
   // bei onMessage. Der Weg, den die Seite tatsaechlich nimmt, war also tot,
   // und zwar lautlos: die Seite haette bis zur Zeitgrenze gewartet und dann
   // gemeldet, die Bruecke antworte nicht — als waere sie nicht installiert.
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   assert.match(hintergrund, /onMessageExternal\?\.addListener/);
   assert.match(hintergrund, /onMessage\?\.addListener/);
   // Beide muessen DIESELBE Pruefung durchlaufen, sonst ist einer die Hintertuer.
@@ -280,7 +285,7 @@ test("die Freigabe wird im Hintergrund gemerkt, nicht im Fenster", () => {
   // Zeile danach, die die Freigabe in den Speicher schrieb, lief nie. Chrome
   // hatte die Berechtigung erteilt, die Bruecke wusste nichts davon. Fuer den
   // Betreiber sah es aus, als haette sein Klick nichts genuetzt.
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   const fenster = fs.readFileSync("extensions/smejj-maus-bruecke/freigabe.js", "utf8");
 
   assert.match(hintergrund, /permissions\.onAdded/, "der Hintergrund muss die Erteilung selbst mitbekommen");
@@ -292,7 +297,7 @@ test("die Freigabe wird im Hintergrund gemerkt, nicht im Fenster", () => {
 });
 
 test("aus einem Berechtigungsmuster wird die richtige Herkunft", () => {
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   // "https://www.alibaba.com/*" -> "https://www.alibaba.com"
   assert.match(hintergrund, /replace\(\/\\\/\\\*\$\/, ""\)/);
   // Nur https zaehlt: im angemeldeten Chrome waere http ein Klartext-Leck.
@@ -329,7 +334,7 @@ test("der Anklopf-Test nimmt den Hallo-Weg", async () => {
 });
 
 test("der Hintergrund kennt beide Woerter und hat sie VOR dem alten Weg", () => {
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   assert.match(hintergrund, /nachricht\?\.zustand/);
   assert.match(hintergrund, /nachricht\?\.hallo/);
   // Reihenfolge zaehlt: fuehreAus(nachricht?.befehl) ist der Auffangzweig und
@@ -341,7 +346,7 @@ test("der Hintergrund kennt beide Woerter und hat sie VOR dem alten Weg", () => 
 });
 
 test("die Zustandsauskunft nennt BEIDE Seiten nebeneinander", () => {
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   const auskunft = hintergrund.slice(hintergrund.indexOf("export async function zustandZeigen"));
   // Genau darum geht es: gemerkte Freigabe UND tatsaechliches Chrome-Recht.
   // Nur eine der beiden Zahlen zu zeigen war der Fehler vom 2026-08-20.
@@ -376,7 +381,7 @@ test("Bruecke uebernimmt beim Start bereits erteilte Chrome-Rechte als Freigabe"
     runtime: { getManifest: () => ({ version: "test" }) }
   };
   try {
-    const { uebernimmErteilteRechte } = await import("../extensions/smejj-maus-bruecke/hintergrund.js");
+    const { uebernimmErteilteRechte } = await import("../" + HINTERGRUND_PFAD);
     // Der Hintergrund gleicht schon beim Laden ab; ein ausdruecklicher Aufruf
     // danach darf nichts doppelt eintragen.
     const uebernommen = await uebernimmErteilteRechte();
@@ -393,11 +398,19 @@ test("Bruecke uebernimmt beim Start bereits erteilte Chrome-Rechte als Freigabe"
 
 
 test("v0.5.2: die Seite kann die Bruecke neu laden lassen — nur von smejj.com, per chrome.runtime.reload", () => {
-  const hintergrund = fs.readFileSync("extensions/smejj-maus-bruecke/hintergrund.js", "utf8");
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
   const manifest = JSON.parse(fs.readFileSync("extensions/smejj-maus-bruecke/manifest.json", "utf8"));
   assert.equal(manifest.version, "0.5.2");
   assert.match(hintergrund, /nachricht\?\.neuladen/);
   assert.match(hintergrund, /chrome\.runtime\.reload\(\)/);
   // Der Neulade-Zweig liegt HINTER der Herkunftspruefung (absender_nicht_erlaubt).
   assert.ok(hintergrund.indexOf("absender_nicht_erlaubt") < hintergrund.indexOf("nachricht?.neuladen"));
+});
+
+
+test("v0.5.3: der Hintergrund traegt die Version im Dateinamen — Chrome cacht das Skript an seiner Adresse", () => {
+  const sw = BRUECKE_MANIFEST.background.service_worker;
+  assert.equal(sw, `hintergrund-v${BRUECKE_MANIFEST.version}.js`, "bei jedem Versionssprung die Datei umbenennen (git mv) — sonst laeuft in Chrome der alte Hintergrund weiter");
+  assert.ok(fs.existsSync(HINTERGRUND_PFAD), "die Datei aus dem Manifest muss existieren");
+  assert.ok(!fs.existsSync("extensions/smejj-maus-bruecke/hintergrund.js"), "kein namenloser hintergrund.js mehr daneben");
 });
