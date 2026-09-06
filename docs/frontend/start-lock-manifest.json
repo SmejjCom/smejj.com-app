@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-05T23:36:46.848Z",
+  "frozenAt": "2026-09-06T00:24:46.822Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-05/06: 'Ich gebe dir alle Rechte. von A bis Z. Mach hundert Prozent fertig, lass nichts offen.' und 'wenn du fertig bist dann nochmal komplett testen.' Berlin-Auftrag scheiterte an einer falsch geratenen Rolle (textbox statt searchbox) und derselben Wiederholung; das Panel leitet jetzt Ersatzziele aus seiner eigenen Beobachtung ab (Rollen-Alias, css aus id/name/placeholder, Klick nach passendem Text), bevor ein Fehlschlag zaehlt. browser-pane-maus.js; Marken der Browser-Kette, app.js b143, Service-Worker smejj-shell-v776. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "8ec09f267570bfc680f407f38f6896b2487e1c2d1b5ce32df411688c73af3fdf",
+    "public/index.html": "046309772c9a4f91470353247208b7cb006041268fef8983c56550b46b4db2d5",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "76c0855748945058f513bcd524111d1bd857b2862bf2878ba06228c0f83afc10",
-    "public/app.js": "963351722cd87deeedda3694e4514caa134761b86d4ba4b8c1ef81af294214ca",
+    "public/app.js": "c808da6ee2535eb6f39e078f3c7235a6cb184d4fb6446a6d20dbff542cb6489a",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "56f379ff029e24c046b10c27ce3fe4074d0ef959d1b02c275595006e5c92cb4d",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "64565d4f7b608780b194d567994ac7112652c7718ccf2d88ff4c06101714e176",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
-    "public/search.js": "4bb8257fb20f3cec0863b72d7a4cfb75125cd68b61521481c41f993ea22be41e",
+    "public/search.js": "091de127565c7a02417c8a6b36c3cc02b4ecd93fbacc4bd31885567db45a2eed",
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "6d26716c99faf8f6ce7e9ba3bf60a8c0335c410e8da67556e21837d419a52400",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "eacef467f809653f78557611648dbaa7f4fd11cf98fa70354577188be1976798",
+    "public/sw.js": "ecd9e5889565f7b3da733065213c7c3c9646d078f7d14debc0225780328ba9e1",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
