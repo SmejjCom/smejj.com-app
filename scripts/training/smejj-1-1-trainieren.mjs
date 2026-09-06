@@ -34,7 +34,22 @@ import { REPO, PREFIX as BASIS_PREFIX } from "./smejj-1-1-basis-spiegeln.mjs";
 // Datensatz (Profil in smejj-1-1-datensatz-bauen.mjs). Ohne Variable bleibt
 // alles beim ersten Kandidaten — die Doppelklick-Dateien setzen sie.
 export const KANDIDAT = String(process.env.SMEJJ_KANDIDAT || "smejj-1-1").trim();
-export const DATENSATZ_PREFIX = `datasets/${KANDIDAT}`;
+/**
+ * DATENSATZ UND KANDIDAT SIND ZWEIERLEI.
+ *
+ * Bisher hing der Datensatzpfad am Kandidatennamen: wer smejj-1-3 trainieren
+ * wollte, brauchte einen Datensatz unter datasets/smejj-1-3/. Das erzwingt
+ * eine Kopie je Versuch — und damit die Frage, welche der Kopien die echte ist.
+ *
+ * Ein Datensatz gehoert nicht zu einer Modellversion. Dieselben Paare koennen
+ * mehrere Kandidaten hervorbringen (anderer Rang, andere Lernrate, frueherer
+ * Stopp), und genau dieser Vergleich ist der Sinn der Uebung.
+ *
+ * SMEJJ_DATENSATZ waehlt ihn getrennt; ohne Angabe bleibt es beim bisherigen
+ * Verhalten.
+ */
+export const DATENSATZ_NAME = String(process.env.SMEJJ_DATENSATZ || KANDIDAT).trim();
+export const DATENSATZ_PREFIX = `datasets/${DATENSATZ_NAME}`;
 const ZWEITER = KANDIDAT !== "smejj-1-1";
 export const GRUPPE = "smejj-training";
 // 170 Minuten wie beim con-Job. Grobe Hochrechnung aus dessen Lauf (27B,
