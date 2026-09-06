@@ -27,6 +27,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { erzeuge } from "../../workers/con-autopilot/daten/generator.mjs";
 import { erzeugeErgaenzung } from "./smejj-1-1-generator.mjs";
+import { echtePaare } from "./smejj-1-1-echte-paare.mjs";
 import { baueDatensatz, jsonl, mische } from "../../workers/con-autopilot/daten.js";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -131,7 +132,17 @@ async function main() {
   // trainiert das Verweigern weg (con-1.1.0, verworfen am 03.09.).
   const p = profil();
   console.log(`Profil: ${p.name} (Startwert ${p.startwert}, ${p.mischen ? "gemischt" : "in Erzeugungsreihenfolge"})`);
-  const roh = [...erzeuge({ startwert: p.startwert, ...p.mengen }), ...erzeugeErgaenzung({ startwert: p.startwert, ...p.ergaenzung })];
+  // HANDGESCHRIEBENE PAARE ZUERST — sie sind der Kern, nicht die Beigabe.
+  //
+  // BEFUND 2026-09-06: Der Adapter aus 11.016 erzeugten Beispielen war 17,4
+  // Punkte schlechter als das Basismodell. Im erzeugten Datensatz sind 98 %
+  // der Saetze Wiederholungen; der haeufigste steht 852 Mal da. Ein Modell
+  // lernt daraus Satzbausteine und gibt sie danach wahllos aus — auf eine
+  // Rueckfrage-Aufgabe kam eine Verweigerungsfloskel.
+  //
+  // Die handgeschriebenen Paare haben NULL wiederkehrende Saetze. Sie sind
+  // wenige, und das ist Absicht: Menge war nie das Problem.
+  const roh = [...echtePaare(), ...erzeuge({ startwert: STARTWERT, ...MENGEN }), ...erzeugeErgaenzung({ startwert: STARTWERT })];
   const suiten = await leseSuiten();
   const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen });
   const ziel = path.join(WURZEL, "out", p.name);
