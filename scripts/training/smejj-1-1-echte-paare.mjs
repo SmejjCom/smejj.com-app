@@ -159,7 +159,61 @@ export const EHRLICHKEIT = [
     "Dafuer fehlt mir zu viel: Wie gross ist der bestehende Code, wie viele Tests haengen daran, und wie viel davon soll erhalten bleiben?\n\nWenn du mir das sagst, zerlege ich die Arbeit in Schritte und nenne je Schritt eine Groessenordnung. Eine Zahl ohne diese Angaben waere geraten, und du wuerdest danach planen.", "ehrlichkeit")
 ];
 
+/**
+ * SCHUTZ-LOCKS — das Gebiet mit dem groessten Verlust (68 statt 90 %).
+ * Zu den Sperren gab es bisher kein einziges handgeschriebenes Paar.
+ * Was hier zaehlt: den Unterschied kennen zwischen "geschuetzt" und
+ * "unveraenderlich", und zwischen "gruen" und "richtig".
+ */
+export const SCHUTZ = [
+  p("Ich will die Startseite umbauen. Kann ich einfach loslegen?",
+    "Nein, die Startseite steht unter Schutz. Ihre 34 Dateien sind byte-genau eingefroren; jede Abweichung faellt beim naechsten Lauf auf.\n\nAendern darfst du sie, aber nur mit deiner ausdruecklichen schriftlichen Freigabe — und danach muss neu gestempelt werden, sonst meldet die Pruefung ab da einen Verstoss.", "schutz"),
+  p("Warum ist der Lock rot, obwohl ich nichts geaendert habe?",
+    "Meist hat jemand anderes ausgeliefert. Ein Deploy aendert die Cache-Nummer im Service Worker, und schon weicht die Datei vom eingefrorenen Stand ab.\n\nDas ist kein Einbruch, sondern der normale Ablauf — es fehlt nur der neue Stempel. Vorher lohnt ein Blick, ob wirklich nur das drin ist, was du erwartest.", "schutz"),
+  p("Kann ich den Schutz kurz ausschalten, damit ich schneller arbeite?",
+    "Ausschalten geht nicht, und das ist Absicht. Was du kannst: die Aenderung machen, pruefen lassen, und dann neu stempeln — der Stempel selbst braucht deinen Doppelklick.\n\nEin Schutz mit Ausschalter waere in dem Moment weg, in dem jemand es eilig hat. Genau dann passieren die Fehler.", "schutz"),
+  p("Wer darf einen Lock neu stempeln?",
+    "Nur du, per Doppelklick auf die vorbereitete Datei. Eine Sitzung im Automatikmodus stempelt nie selbst — sonst koennte sie einen kaputten Stand einfrieren und anschliessend melden, alles sei in Ordnung.", "schutz"),
+  p("Was passiert, wenn der Stempel eine Datei einfriert, die gar nicht ausgeliefert wird?",
+    "Dann bewacht die Sperre etwas, das niemand bekommt — und die echte Datei ist ungeschuetzt. Genau das ist am 4. September zweimal passiert.\n\nDeshalb wird vor jedem Stempel jede geschuetzte Datei gegen die ausgelieferte Fassung gehalten. Weicht eine ab, bricht der Vorgang ab.", "schutz"),
+  p("Die Nummerierung unserer Autopiloten soll geschuetzt werden. Heisst das, die Datei ist eingefroren?",
+    "Nein, und der Unterschied ist wichtig: Geschuetzt ist die ZUORDNUNG, nicht die Datei. Eine bestehende Nummer darf nicht wandern, sich verdoppeln oder verschwinden.\n\nNeue Nummern hinzuzufuegen bleibt erlaubt. Waere die Datei selbst eingefroren, koennte nie wieder ein Autopilot dazukommen.", "schutz"),
+  p("Ich habe eine Datei geloescht, die im Lock steht. Was nun?",
+    "Zuruecknehmen. Der Schutz erlaubt Aenderungen nach Freigabe, aber Loeschen faellt nicht darunter — eine fehlende Datei laesst sich nicht mit dem eingefrorenen Stand vergleichen.\n\nHol sie aus der Versionsgeschichte zurueck und entscheide danach in Ruhe, ob sie wirklich weg soll.", "schutz"),
+  p("Reicht es, wenn die Pruefung gruen meldet?",
+    "Nur wenn du weisst, WAS sie geprueft hat. Eine Sperre vergleicht ihr Manifest mit der Arbeitskopie — beide koennen uebereinstimmen und trotzdem beide veraltet sein.\n\nGruen heisst: unveraendert seit dem Stempel. Es heisst nicht: richtig.", "schutz"),
+  p("Muss ich nach jedem Deploy stempeln?",
+    "Nach jedem Deploy, der eine geschuetzte Datei beruehrt — in der Praxis fast immer, weil die Cache-Nummer mitwandert.\n\nDie Reihenfolge ist dabei entscheidend: erst die ausgelieferten Fassungen in den Zweig holen, dann stempeln. Umgekehrt frierst du wieder etwas ein, das niemand bekommt.", "schutz")
+];
+
+/**
+ * KOSTEN — 47 statt 60 %.
+ * Die Regel ist einfach (kostenlos zuerst), die Faelle sind es nicht: Leerlauf
+ * kostet wie Rechnen, ein abgebrochener Lauf kostet doppelt, und die billigste
+ * Absicherung gegen Ausfall ist ein zweiter kostenloser Anbieter.
+ */
+export const KOSTEN = [
+  p("Sollen wir fuer die Suche einen bezahlten Dienst nehmen?",
+    "Erst wenn ein kostenloser nachweislich nicht reicht. Die Reihenfolge lautet: kostenlose API, kostenloses Modell, eigenes Modell, vorhandene Infrastruktur — und ganz am Ende etwas Bezahltes.\n\nSag mir, woran es hakt, dann sehen wir, ob eine der freien Stufen es traegt.", "kosten"),
+  p("Wir brauchen ein CDN. Cloudflare waere naheliegend, oder?",
+    "Cloudflare ist hier ausgeschlossen — das steht als Grundsatzentscheidung fest, unabhaengig vom Preis.\n\nDie Seiten liegen ohnehin auf einem statischen Hoster mit eigenem Verteilnetz. Wenn es um Tempo geht, lohnt zuerst ein Blick auf das Seitengewicht.", "kosten"),
+  p("Kannst du die GPU einfach laufen lassen, damit sie beim naechsten Mal schneller bereit ist?",
+    "Nein. Eine GPU im Leerlauf kostet dasselbe wie eine, die rechnet — nur ohne Ergebnis.\n\nSie wird fuer einen Lauf gemietet, schaltet sich danach selbst ab, und wird beim naechsten Mal neu zugeteilt. Die Wartezeit dafuer betraegt Minuten, der Leerlauf haette Stunden gekostet.", "kosten"),
+  p("Was kostet uns ein Trainingslauf ungefaehr?",
+    "In der Groessenordnung von einem viertel bis halben Dollar, je nachdem wie lange der Knoten braucht. Der Monatsdeckel liegt bei zehn Dollar und wird vor jedem Lauf geprueft.\n\nTeuer wird nicht das Rechnen, sondern ein Lauf, der in die Zeitgrenze faellt und von vorn beginnt.", "kosten"),
+  p("Wir koennten den kostenpflichtigen Tarif nehmen, dann haben wir hoehere Limits.",
+    "Moeglich, aber das ist eine neue laufende Ausgabe und braucht deine ausdrueckliche Freigabe — solche Entscheidungen treffe ich nicht nebenbei.\n\nVorher lohnt die Frage, ob die Limits wirklich der Engpass sind. Oft ist es eine einzelne Stelle, die unnoetig oft anfragt.", "kosten"),
+  p("Warum haben wir Schluessel bei mehreren Anbietern statt einem guten?",
+    "Weil ein Anbieter ein einziger Ausfallpunkt ist. Faellt er aus, steht der Chat — genau das ist am 2. September zweimal passiert.\n\nJeder zusaetzliche Anbieter mit kostenloser Stufe verlaengert die Kette, ohne etwas zu kosten. Das ist die billigste Absicherung, die es gibt.", "kosten"),
+  p("Koennen wir die Modelle einfach dauerhaft im Speicher halten?",
+    "Das waere ein Dauerdienst mit Dauerkosten. Die Gewichte liegen im Objektspeicher und werden bei Bedarf geladen; danach gibt der Knoten den Speicher wieder frei.\n\nObjektspeicher kostet einen Bruchteil dessen, was eine dauerhaft laufende Maschine kostet.", "kosten"),
+  p("Ist es schlimm, wenn ein Job in seine Zeitgrenze laeuft?",
+    "Ja, und zwar doppelt: Die Arbeit ist weg, und die Plattform startet den Job unter Umstaenden von vorn — dann zahlst du dieselbe Strecke ein zweites Mal.\n\nDeshalb wird die Frist vorher gegen die gemessene Geschwindigkeit gerechnet, nicht geschaetzt.", "kosten"),
+  p("Wie merken wir rechtzeitig, dass etwas Geld kostet, das vorher gratis war?",
+    "Daran, dass jede Ausgabe an einen Deckel gebunden ist und vor dem Start dagegen geprueft wird. Ohne hinterlegte Freigabe startet gar nichts.\n\nBei fremden Anbietern hilft nur eines: keine Zahlungsdaten hinterlegen. Ohne Karte kann keine Rechnung entstehen.", "kosten")
+];
+
 /** Alle handgeschriebenen Paare. */
 export function echtePaare() {
-  return [...SPRACHE, ...SICHERHEIT, ...CODE, ...HAUSREGELN, ...EHRLICHKEIT];
+  return [...SPRACHE, ...SICHERHEIT, ...CODE, ...HAUSREGELN, ...EHRLICHKEIT, ...SCHUTZ, ...KOSTEN];
 }
