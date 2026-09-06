@@ -107,7 +107,12 @@ switch (befehl) {
     if (!name) throw new Error("Aufruf: daten:erzeugen <name> [startwert]");
     const { erzeuge } = await import("./daten/generator.mjs");
     const { baueDatensatz, veroeffentliche, hashText } = await import("./daten.js");
-    const roh = erzeuge({ startwert: Number(startwert) || 20260904, reasoning: 9000, sicherheit: 2500, sprache: 1500 });
+    // Die fuenf gezielten Bausteine gehen gegen genau die Faelle, an denen con 1.3
+    // am 05.09. gegen die schwere Latte scheiterte: Gleichungssystem, Buchstaben im
+    // Satz zaehlen, exakte Wortzahl, durchgehendes Siezen, fehlende Angabe erfragen.
+    const roh = erzeuge({ startwert: Number(startwert) || 20260904,
+      reasoning: 9000, sicherheit: 2500, sprache: 1500,
+      gleichungen: 2500, zaehlenImSatz: 2500, wortzahl: 2000, siezen: 1500, nachfragen: 3000 });
     const { paare, bericht } = baueDatensatz(roh.map((p) => ({ messages: p.messages })), {
       suiten: await ladeSuiten(konfig.suitesDir),
       // Verweigern ist ein VERHALTEN, kein Fakt: dieselbe richtige Antwort auf viele
@@ -119,11 +124,16 @@ switch (befehl) {
       // Prosa-Schwelle von 8 Zeichen warf hier 3.084 korrekte Paare weg (gemessen 04.09.).
       // Die Richtigkeit dieser Daten haengt nicht an ihrer Laenge, sondern an
       // tests/con-daten-generator.test.mjs, das jede Aufgabe nachrechnet.
-      mindestAntwortLaenge: 1
+      mindestAntwortLaenge: 1,
+      // Eigene Grenze fuer blanke Zahlen: "3" ist die vollstaendige richtige
+      // Antwort auf beliebig viele Aufgaben, keine auswendig gelernte Floskel.
+      // Mit der Prosa-Grenze von acht blieben von allen Zaehlaufgaben zusammen
+      // rund achtzig Paare uebrig — es kommen nur die Ziffern 0 bis 9 vor.
+      maxVariantenZahl: 80
     });
     const manifest = await veroeffentliche(e2, { name, paare, bericht,
       quelle: { art: "erzeugt", generator: "workers/con-autopilot/daten/generator.mjs", startwert: Number(startwert) || 20260904, sha256: hashText(JSON.stringify(roh)) },
-      kategorien: ["reasoning", "sicherheit", "sprache", "allgemein"] });
+      kategorien: ["reasoning", "sicherheit", "sprache", "werkzeuge", "allgemein"] });
     console.log(JSON.stringify({ name, paare: paare.length, bericht, sha256: manifest.dateien[0].sha256 }, null, 2));
     break;
   }

@@ -24,9 +24,10 @@
 //   node scripts/training/smejj-1-1-messen.mjs --starten           (Messjob starten)
 //   node scripts/training/smejj-1-1-messen.mjs --stand             (Fortschritt)
 //   node scripts/training/smejj-1-1-messen.mjs --starten --nur-adapter   (nur Kandidat, Adapter beim Laden)
+//   ... --als smejj-1-2-frueh --adapter-prefix checkpoints/smejj/smejj-1-2/<kennung>/checkpoint-245  (Zwischenstand als Kandidat)
 //   node scripts/training/smejj-1-1-messen.mjs --bewerten <jobId> [--basis-job <jobId2>]  (Noten rechnen)
 //   node scripts/training/smejj-1-1-messen.mjs --tuev              (Messstrecke mit leeren Antworten: muss 0 % und BLOCKED melden)
-import { cpSync, mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync, readFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -53,13 +54,12 @@ export async function ladeEnvLocal(env = process.env) {
 }
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-
 /**
  * WELCHE MESSLATTE — und warum die breite jetzt der Standard ist.
  *
  * BEFUND 2026-09-06: smejj-1-1 und smejj-1-2 bekamen exakt dieselbe Note
  * (70,59 %) bei exakt gleicher Zahl kritischer Fehler (4). Der Vergleich der
- * Einzelfaelle zeigte: die Modelle scheiterten an voellig VERSCHIEDENEN
+ * Einzelfaelle zeigte: die Modelle scheiterten an VOELLIG VERSCHIEDENEN
  * Faellen — 1-1 an regel-800-zeilen, schutz-daten-loeschen, budget-lcp und
  * schutz-design-lock; 1-2 an naming-schreibweise, schutz-api-schluessel,
  * architektur-static-first und patch-unified-diff. Beide hatten 10 von 14
@@ -68,14 +68,12 @@ const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..
  * Die Messung war also in Ordnung. Die MESSLATTE war zu grob: bei 14 Faellen
  * gibt es zu wenige moegliche Summen, als dass sie zwei Modelle mit
  * gegensaetzlichem Verhalten auseinanderhalten koennte. Eine Note, die fuer
- * zwei verschiedene Modelle dieselbe ist, kann keine Beförderung begruenden.
+ * zwei verschiedene Modelle dieselbe ist, kann keine Befoerderung begruenden
+ * und keine Ablehnung erklaeren.
  *
- * Die breite Suite gibt es seit dem 03.08. — 295 Faelle in 15 Fachgebieten,
- * zusammengesetzt aus evals/packs/*.json. Sie wurde nur nie benutzt. Neu
- * bauen waere doppelte Arbeit gewesen; anschliessen ist die Reparatur.
- *
- * Umschaltbar ueber SMEJJ_MESS_SUITE (Dateiname unter evals/suites/), damit
- * ein Vergleich mit der alten Latte moeglich bleibt.
+ * Die breite Suite gibt es seit dem 03.08.: 295 Faelle in 15 Fachgebieten,
+ * zusammengesetzt aus evals/packs/*.json. Sie wurde nur nie angeschlossen.
+ * Umschaltbar ueber SMEJJ_MESS_SUITE, damit ein Vergleich moeglich bleibt.
  */
 export const SUITE_BREIT = path.join(WURZEL, "evals/suites/smejj-chat-breit-v1.json");
 export const SUITE_KERN = path.join(WURZEL, "evals/suites/smejj-chat-core-v1.json");
@@ -98,31 +96,34 @@ export const MAX_MINUTEN = 60;
  * nf4-Modell (haenge_adapter_an) starb hart — kein Fehlerstatus, kein Ergebnis,
  * Gruppe gestoppt. Beim con-Job wird der Adapter beim Laden mitgegeben, das laeuft.
  */
-export function messStaende({ nurAdapter = false } = {}) {
-  const kandidat = { version: KANDIDAT, adapterPrefix: `con/versions/${KANDIDAT}/adapter` };
+export function messStaende({ nurAdapter = false, version = KANDIDAT, adapterPrefix = `con/versions/${version}/adapter` } = {}) {
+  const kandidat = { version, adapterPrefix };
   return nurAdapter ? [kandidat] : [{ version: BASIS_STAND }, kandidat];
 }
 
-/** Job-Parameter. Rein und testbar. */
-export function jobParameter({ nurAdapter = false } = {}) {
+/**
+ * Job-Parameter. Rein und testbar. `version`/`adapterPrefix` erlauben, einen
+ * ZWISCHENSTAND eines Laufs als eigenen Kandidaten zu messen (05.09.: Lauf 3
+ * endete bei Loss 0,027 = Auswendiglernen; checkpoint-245 hatte Loss 0,21 —
+ * ob ein frueher Stopp besser ist, entscheidet die Messung, nicht der Loss).
+ */
+export function jobParameter({ nurAdapter = false, version = KANDIDAT, adapterPrefix } = {}) {
   return {
-    CON_VERSION: KANDIDAT,
-    CON_MESS_VERSIONEN: JSON.stringify(messStaende({ nurAdapter })),
+    CON_VERSION: version,
+    CON_MESS_VERSIONEN: JSON.stringify(messStaende({ nurAdapter, version, adapterPrefix })),
     CON_EVAL_PREFIX: EVAL_PREFIX,
     CON_WIEDERHOLUNGEN: String(WIEDERHOLUNGEN)
   };
 }
 
 /**
- * Kopie des con-Jobs mit NUR der smejj-Suite im suites-Ordner. Der con-Job
- * selbst bleibt unangetastet — er ist die Bibliothek, nicht das Werkstueck.
+ * Eigenes Suiten-Verzeichnis mit NUR der smejj-Suite. Seit 05.09. legt das
+ * con-Buendel die Suiten aus `konfig.suitesDir` unter suites/ ab (tarball.js,
+ * zusatz) — es gibt keine Kopie mehr im Job-Ordner. Der con-Job und sein
+ * Suiten-Verzeichnis bleiben unangetastet: Bibliothek, nicht Werkstueck.
  */
-export function baueMessJobVerzeichnis(jobDir, suiteDatei = SUITE_DATEI, aufgeloesteSuite = null) {
-  const ziel = mkdtempSync(path.join(os.tmpdir(), "smejj-1-1-messjob-"));
-  cpSync(jobDir, ziel, { recursive: true, filter: (p) => !/__pycache__|\/suites\//.test(p) });
-  const suites = path.join(ziel, "suites");
-  rmSync(suites, { recursive: true, force: true });
-  mkdirSync(suites);
+export function baueSuitenVerzeichnis(suiteDatei = SUITE_DATEI, aufgeloesteSuite = null) {
+  const ziel = mkdtempSync(path.join(os.tmpdir(), "smejj-1-1-suiten-"));
   // DIE MANIFEST-FORM WIRD HIER AUFGELOEST, nicht im Job.
   //
   // Die breite Suite enthaelt keinen einzigen Fall selbst — sie verweist auf
@@ -133,22 +134,22 @@ export function baueMessJobVerzeichnis(jobDir, suiteDatei = SUITE_DATEI, aufgelo
   //
   // Der Messjob auf dem Salad-Knoten liest schlicht suite["cases"]
   // (salad-job/evalrun.py#lade_suiten). Bekaeme er das Manifest, faende er
-  // NULL Faelle — und wuerde daraus eine Note bilden, ohne dass irgendwo ein
-  // Fehler auftaucht. Genau die Sorte stiller Fehlmessung, die diese Woche
-  // dreimal aufgetreten ist.
+  // NULL Faelle — und bildete daraus eine Note, ohne dass irgendwo ein Fehler
+  // auftaucht. Genau die Sorte stiller Fehlmessung, die diese Woche mehrfach
+  // aufgetreten ist.
   //
-  // Diese Logik in Python nachzubauen hiesse, eine zweite Wahrheit zu pflegen.
-  // Stattdessen bekommt der Job die FERTIG aufgeloeste Suite: eine Datei, eine
-  // Liste, kein Verweis. evalrun.py bleibt unveraendert.
+  // Die Aufloesung in Python nachzubauen hiesse, eine zweite Wahrheit zu
+  // pflegen. Der Job bekommt deshalb die FERTIGE Fallliste; evalrun.py bleibt
+  // unveraendert.
   if (aufgeloesteSuite) {
     if (!Array.isArray(aufgeloesteSuite.cases) || aufgeloesteSuite.cases.length === 0) {
       throw new Error("aufgeloeste Suite ohne Faelle — der Job wuerde nichts messen und trotzdem eine Note bilden");
     }
-    writeFileSync(path.join(suites, path.basename(suiteDatei)), JSON.stringify(aufgeloesteSuite, null, 2));
+    writeFileSync(path.join(ziel, path.basename(suiteDatei)), JSON.stringify(aufgeloesteSuite, null, 2));
   } else {
-    cpSync(suiteDatei, path.join(suites, path.basename(suiteDatei)));
+    cpSync(suiteDatei, path.join(ziel, path.basename(suiteDatei)));
   }
-  return { verzeichnis: ziel, suiten: readdirSync(suites), faelle: aufgeloesteSuite?.cases?.length ?? null };
+  return { verzeichnis: ziel, suiten: readdirSync(ziel), faelle: aufgeloesteSuite?.cases?.length ?? null };
 }
 
 /**
@@ -193,10 +194,10 @@ async function zeigeStand(client, e2, jobId = null) {
   return z;
 }
 
-async function bewerte(e2, jobId, { basisJob = jobId } = {}) {
+async function bewerte(e2, jobId, { basisJob = jobId, version: kandidatVersion = KANDIDAT, adapterPrefix } = {}) {
   const suite = await ladeSuite();
   const berichte = [];
-  for (const { version } of messStaende()) {
+  for (const { version } of messStaende({ version: kandidatVersion, adapterPrefix })) {
     const job = version === BASIS_STAND ? basisJob : jobId;
     const antworten = await e2.getJson(`${EVAL_PREFIX}/${version}/${job}/antworten.json`, null).catch(() => null);
     if (!antworten) { console.log(`${version}: keine Antworten unter ${EVAL_PREFIX}/${version}/${job}/`); continue; }
@@ -218,16 +219,16 @@ async function bewerte(e2, jobId, { basisJob = jobId } = {}) {
   // Die ENTSCHEIDUNG trifft Autopilot Nr. 83 (smejj-Versions-Takt) im naechsten
   // Takt aus diesem Datensatz — nicht dieses Skript ("alles ueber unsere
   // Autopilots", Betreiber 05.09.). Status "neu" heisst: noch nicht beurteilt.
-  const kandidat = berichte.find((b) => b.version === KANDIDAT)?.bericht;
+  const kandidat = berichte.find((b) => b.version === kandidatVersion)?.bericht;
   const basisB = berichte.find((b) => b.version === BASIS_STAND)?.bericht;
   if (kandidat) {
-    const training = await e2.getJson(`con/versions/${KANDIDAT}/training.json`, null).catch(() => null);
+    const training = await e2.getJson(`con/versions/${kandidatVersion}/training.json`, null).catch(() => null);
     const datensatz = {
       id: jobId, art: "smejj-bewertung", createdAt: new Date().toISOString(), status: "neu",
-      version: KANDIDAT, jobId, suite: kandidat.suite?.suiteId || "smejj-chat-core", suiteSha256: kandidat.suite?.integrity?.contentSha256 || null,
+      version: kandidatVersion, jobId, suite: kandidat.suite?.suiteId || "smejj-chat-core", suiteSha256: kandidat.suite?.integrity?.contentSha256 || null,
       kandidatNote: kandidat.summary?.weightedScore ?? null, basisNote: basisB?.summary?.weightedScore ?? null,
       kritisch: kandidat.summary?.criticalFailures ?? null, faelle: kandidat.summary?.cases ?? null, wackelig: kandidat.summary?.wackelig ?? null,
-      referenzNote: zyklus?.referenzNote ?? null, adapterPrefix: training?.adapterPrefix || `con/versions/${KANDIDAT}/adapter`, trainingJobId: training?.jobId || null
+      referenzNote: zyklus?.referenzNote ?? null, adapterPrefix: adapterPrefix || training?.adapterPrefix || `con/versions/${kandidatVersion}/adapter`, trainingJobId: training?.jobId || null
     };
     await e2.putJson(`${BEWERTUNGEN_PREFIX}/${jobId}.json`, datensatz);
     console.log(`\nBewertung fuer Nr. 83 abgelegt: ${BEWERTUNGEN_PREFIX}/${jobId}.json (Status neu) — der Versions-Takt entscheidet im naechsten Takt.`);
@@ -265,35 +266,40 @@ async function main() {
   const client = saladClient({ ok: true, ...konfig.salad });
   const e2 = e2Client(e2k, { timeoutMs: 120_000 });
 
+  const wert = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
+  // --als <version> --adapter-prefix <e2-Praefix>: einen Zwischenstand als eigenen Kandidaten messen.
+  const als = wert("--als") || KANDIDAT;
+  const adapterPrefix = wert("--adapter-prefix") || `con/versions/${als}/adapter`;
   const iBew = argv.indexOf("--bewerten");
   if (iBew >= 0) {
     const id = argv[iBew + 1]; if (!id) throw new Error("--bewerten braucht die Job-Id");
-    const iB = argv.indexOf("--basis-job");
-    await bewerte(e2, id, { basisJob: iB >= 0 ? argv[iB + 1] : id }); return;
+    await bewerte(e2, id, { basisJob: wert("--basis-job") || id, version: als, adapterPrefix }); return;
   }
   const nurAdapter = argv.includes("--nur-adapter");
   if (argv.includes("--stand")) { await zeigeStand(client, e2); return; }
 
   const suite = await ladeSuite();
   console.log(`Suite:        ${path.relative(WURZEL, SUITE_DATEI)} (${suite.cases.length} Faelle, ${WIEDERHOLUNGEN} Wiederholungen)`);
-  console.log(`Staende:      ${messStaende({ nurAdapter }).map((s) => s.version + (s.adapterPrefix ? ` (+${s.adapterPrefix})` : " (nackt)")).join(" | ")}`);
+  console.log(`Staende:      ${messStaende({ nurAdapter, version: als, adapterPrefix }).map((s) => s.version + (s.adapterPrefix ? ` (+${s.adapterPrefix})` : " (nackt)")).join(" | ")}`);
   console.log(`Salad-Gruppe: ${GRUPPE}, hoechstens ${MAX_MINUTEN} min, rund ${(MAX_MINUTEN / 60 * 0.10).toFixed(2)} USD`);
-  const training = await e2.getJson(`con/versions/${KANDIDAT}/training.json`, null).catch(() => null);
-  if (!training?.adapterPrefix) { console.error("ABBRUCH: kein Adapter unter con/versions/" + KANDIDAT); process.exit(3); }
-  console.log(`Adapter:      ${training.adapterPrefix} — Job ${training.jobId}, ${training.beispiele} Beispiele, Loss ${Number(training.trainLoss).toFixed(3)}, Stand ${training.stand}`);
+  const adapterDateien = await e2.liste(`${adapterPrefix.replace(/\/$/, "")}/`).catch(() => []);
+  if (!adapterDateien.some((d) => /adapter_model\.safetensors$/.test(d.key)) || !adapterDateien.some((d) => /adapter_config\.json$/.test(d.key))) {
+    console.error(`ABBRUCH: unter ${adapterPrefix} liegt kein vollstaendiger Adapter (adapter_config.json + adapter_model.safetensors).`); process.exit(3);
+  }
+  const training = await e2.getJson(`con/versions/${als}/training.json`, null).catch(() => null);
+  console.log(`Adapter:      ${adapterPrefix} (${adapterDateien.length} Dateien)${training ? ` — Job ${training.jobId}, ${training.beispiele} Beispiele, Loss ${Number(training.trainLoss).toFixed(3)}` : ""}`);
   const vorher = await zeigeStand(client, e2);
-  if (vorher.zustand === "running") { console.error("ABBRUCH: die Gruppe laeuft bereits (Training oder Messung)."); process.exit(4); }
+  if (!["stopped", "failed", "fehlt"].includes(vorher.zustand)) { console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}) — Training oder Messung laeuft oder wird gerade zugeteilt.`); process.exit(4); }
   if (!argv.includes("--starten")) { console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich gemessen."); return; }
 
-  // Die Suite wird HIER aufgeloest und fertig mitgeschickt — der Job auf dem
-  // Salad-Knoten liest nur suite["cases"] und kennt die Manifest-Form nicht.
+  // Die Suite wird HIER aufgeloest und fertig mitgeschickt.
   const suiteFuerJob = await ladeSuite();
-  const jobDir = baueMessJobVerzeichnis(konfig.jobDir, SUITE_DATEI, suiteFuerJob);
-  console.log(`Job-Buendel:  ${jobDir.verzeichnis} mit Suite ${jobDir.suiten.join(", ")} (${jobDir.faelle} Faelle)`);
+  const suiten = baueSuitenVerzeichnis(SUITE_DATEI, suiteFuerJob);
+  console.log(`Suiten im Buendel: ${suiten.suiten.join(", ")} (aus ${suiten.verzeichnis})`);
   const jobId = `smejj11-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}-messung`;
-  const vor = await bereiteJobVor({ client, konfig: { ...konfig, jobDir: jobDir.verzeichnis }, e2: e2k, jobId, modus: "messung",
-    parameter: jobParameter({ nurAdapter }), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
-  rmSync(jobDir.verzeichnis, { recursive: true, force: true });
+  const vor = await bereiteJobVor({ client, konfig: { ...konfig, suitesDir: suiten.verzeichnis }, e2: e2k, jobId, modus: "messung",
+    parameter: jobParameter({ nurAdapter, version: als, adapterPrefix }), maxMinuten: MAX_MINUTEN, log: (z) => console.log(`  ${z}`) });
+  rmSync(suiten.verzeichnis, { recursive: true, force: true });
   if (!vor.ok) { console.error("ABBRUCH:", vor.gruende.join("; ")); process.exit(5); }
   const start = await warteUndStarte(client);
   if (!start.ok) { console.error(`ABBRUCH: Start abgelehnt (HTTP ${start.status})`, JSON.stringify(start.daten).slice(0, 200)); process.exit(6); }

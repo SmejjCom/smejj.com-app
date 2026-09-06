@@ -15,10 +15,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
-import { baueMessJobVerzeichnis, SUITE_BREIT, SUITE_DATEI, SUITE_KERN } from "../scripts/training/smejj-1-1-messen.mjs";
+import { baueSuitenVerzeichnis, SUITE_BREIT, SUITE_DATEI, SUITE_KERN } from "../scripts/training/smejj-1-1-messen.mjs";
 import { loadEvalSuite } from "../src/evaluation/evalPacks.js";
-
-const JOB_DIR = "workers/con-autopilot/salad-job";
 
 test("gemessen wird standardmaessig mit der BREITEN Suite", () => {
   assert.equal(path.basename(SUITE_DATEI), "smejj-chat-breit-v1.json");
@@ -37,9 +35,9 @@ test("der Job bekommt die AUFGELOESTE Suite, nicht das Inhaltsverzeichnis", asyn
   // Der Messjob liest schlicht suite["cases"] (salad-job/evalrun.py). Bekaeme
   // er das Manifest, faende er null Faelle — und bildete daraus eine Note.
   const { suite } = await loadEvalSuite(SUITE_BREIT);
-  const gebaut = baueMessJobVerzeichnis(JOB_DIR, SUITE_BREIT, suite);
+  const gebaut = baueSuitenVerzeichnis(SUITE_BREIT, suite);
   try {
-    const datei = path.join(gebaut.verzeichnis, "suites", path.basename(SUITE_BREIT));
+    const datei = path.join(gebaut.verzeichnis, path.basename(SUITE_BREIT));
     const geschickt = JSON.parse(readFileSync(datei, "utf8"));
     assert.ok(Array.isArray(geschickt.cases), "der Job braucht eine Fallliste");
     assert.equal(geschickt.cases.length, suite.cases.length);
@@ -53,15 +51,15 @@ test("der Job bekommt die AUFGELOESTE Suite, nicht das Inhaltsverzeichnis", asyn
 test("eine leere Suite wird ABGEWIESEN, statt still eine Note zu erzeugen", () => {
   // Die kaputte Probe zur gesunden oben: null Faelle duerfen nie durchgehen.
   for (const leer of [{ suiteId: "x", cases: [] }, { suiteId: "x" }, { suiteId: "x", cases: null }]) {
-    assert.throws(() => baueMessJobVerzeichnis(JOB_DIR, SUITE_BREIT, leer),
+    assert.throws(() => baueSuitenVerzeichnis(SUITE_BREIT, leer),
       /ohne Faelle/, `${JSON.stringify(leer)} haette abgewiesen werden muessen`);
   }
 });
 
 test("ohne aufgeloeste Suite wird die Datei kopiert — Bestandsverhalten der Kern-Suite", async () => {
-  const gebaut = baueMessJobVerzeichnis(JOB_DIR, SUITE_KERN);
+  const gebaut = baueSuitenVerzeichnis(SUITE_KERN);
   try {
-    const geschickt = JSON.parse(readFileSync(path.join(gebaut.verzeichnis, "suites", path.basename(SUITE_KERN)), "utf8"));
+    const geschickt = JSON.parse(readFileSync(path.join(gebaut.verzeichnis, path.basename(SUITE_KERN)), "utf8"));
     assert.equal(geschickt.cases.length, 14, "die Kern-Suite traegt ihre Faelle selbst");
   } finally {
     rmSync(gebaut.verzeichnis, { recursive: true, force: true });

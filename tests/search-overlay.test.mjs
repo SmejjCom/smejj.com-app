@@ -40,14 +40,20 @@ test("index.html traegt Overlay-Markup und Stylesheet", () => {
 // Importstellen desselben Moduls tragen DIESELBE Kennung — sonst entsteht
 // eine zweite Modulinstanz. Genau das wird jetzt geprueft.
 function kennung(quelle, modul) {
-  const treffer = quelle.match(new RegExp(`from "[^"]*${modul}\\.js(\\?v=[^"]*)?"`));
+  // Statisch (from "…") UND dynamisch (import("…")): search.js holt das Overlay
+  // seit der Such-Diaet per import(), die alte Fassung sah davon nichts und
+  // meldete "laedt das Overlay nicht", obwohl es genau das tut.
+  const treffer = quelle.match(new RegExp(`(?:from|import\\()\\s*"[^"]*${modul}\\.js(\\?v=[^"]*)?"`));
   return treffer ? treffer[1] || "(ohne)" : null;
 }
 
 test("Nav-Knopf Suche oeffnet das Overlay, nicht die Seite", () => {
   // Seit der Such-Diaet (25.08.) laedt app.js search.js erst bei Bedarf ueber
   // such-nachladen.js; das Overlay kommt weiter aus search.js (overlayLader).
-  assert.match(appJs, /import \{ bindeSuchNachlader, holeSuche \} from "\.\/such-nachladen\.js\?v=1"/, "app.js bindet den Such-Nachlader");
+  // Ohne Cache-Marke geprueft: der Bump auf ?v=5 hat diese Probe rot gemacht,
+  // obwohl sich am Verhalten nichts geaendert hatte. Geprueft wird, DASS app.js
+  // bindeSuchNachlader und holeSuche von dort holt — nicht unter welcher Marke.
+  assert.match(appJs, /import \{[^}]*\bbindeSuchNachlader\b[^}]*\bholeSuche\b[^}]*\} from "\.\/such-nachladen\.js(\?v=[^"]*)?"/, "app.js bindet den Such-Nachlader");
   assert.match(appJs, /button\.dataset\.view === "search"\) \{ holeSuche\(\)\.then\(\(m\) => Promise\.resolve\(m\.oeffneSuchOverlay\(\)\)\)/, "der Nav-Knopf laedt und oeffnet das Overlay");
 });
 
@@ -58,8 +64,13 @@ test("Cmd+K schaltet das Overlay und search.js reicht die Datenwege durch", () =
   assert.ok(kennung(searchJs, "search-overlay"), "search.js laedt das Overlay");
   assert.equal(kennung(appJs, "search-overlay"), null, "app.js importiert das Overlay nicht mehr direkt");
   const nachladerJs = fs.readFileSync("public/such-nachladen.js", "utf8");
-  assert.match(nachladerJs, /import\("\.\/search\.js\?v=b51"\)/, "der Nachlader laedt search.js unter der App-Kennung");
-  assert.match(searchJs, /if \(toggleSearchOverlay\(\)\) return;/);
+  assert.match(nachladerJs, /import\("\.\/search\.js(\?v=[^"]*)?"\)/, "der Nachlader laedt search.js");
+  // Geprueft wird die Aussage, nicht der Wortlaut: search.js schaltet das
+  // Overlay ueber toggleSearchOverlay und faellt zurueck, wenn es nicht greift.
+  // (Die Zeile heisst seit dem Nachladen des Overlays
+  // "overlayLader().then((m) => { if (!m.toggleSearchOverlay()) zurueckfall(); })".)
+  assert.match(searchJs, /toggleSearchOverlay\(\)/);
+  assert.match(searchJs, /zurueckfall|goToView\("search"\)/, "es gibt einen Rueckfall auf die Such-Seite");
   assert.match(searchJs, /initSearchOverlay\(\{/);
   // Chat-Treffer tragen das Chat-Objekt (Ausschnitt, Zeit, Titel im Overlay).
   assert.match(searchJs, /chat\.id, chat\];/);

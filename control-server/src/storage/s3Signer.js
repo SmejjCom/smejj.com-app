@@ -312,8 +312,23 @@ function encodeS3QueryValue(value) {
   ));
 }
 
+/**
+ * Zeitgrenze einer einzelnen S3-Anfrage.
+ *
+ * Die Obergrenze war bis zum 06.09. auf 30 Sekunden festgenagelt. Ein Aufrufer
+ * konnte 40 Minuten verlangen und bekam trotzdem 30 Sekunden — stillschweigend.
+ * Ueber die Leitung des Betreibers (gemessen: 1 MB in 5 s, 2 MB in 86 s) war
+ * damit bei rund 2 MB Schluss: der Trainingsdatensatz con-grundfaehigkeiten-v4
+ * mit 3,94 MB brach dreimal nacheinander mit "aborted due to timeout" ab, ohne
+ * dass irgendwo stand, dass die eigene Vorgabe gar nicht galt.
+ *
+ * Der Standard bleibt bei 2,5 Sekunden — kurz, weil die meisten Aufrufe kleine
+ * JSON-Dateien sind und ein haengender Aufruf nicht den Takt blockieren darf.
+ * Wer mehr braucht, muss es weiterhin ausdruecklich verlangen, bekommt es jetzt
+ * aber auch.
+ */
 function requestTimeoutSignal(value) {
-  const milliseconds = boundedNumber(value, 2_500, 100, 30_000);
+  const milliseconds = boundedNumber(value, 2_500, 100, 900_000);
   return typeof AbortSignal !== "undefined" && AbortSignal.timeout
     ? AbortSignal.timeout(milliseconds)
     : undefined;

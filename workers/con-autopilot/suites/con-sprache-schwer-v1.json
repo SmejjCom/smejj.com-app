@@ -24,7 +24,8 @@
         {
           "type": "matches",
           "pattern": "^\\s*\\S+(\\s+\\S+){4}\\s*$",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     },
@@ -47,7 +48,8 @@
         },
         {
           "type": "not_matches",
-          "pattern": "Bruecke|Fussgaenger|Fruehling"
+          "pattern": "Bruecke|Fussgaenger|Fruehling",
+          "ignoreCase": true
         }
       ]
     },
@@ -82,11 +84,13 @@
         {
           "type": "matches",
           "pattern": "^\\s*(\\S+\\s+){0,19}\\S+\\s*$",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "matches",
-          "pattern": "Gewinn|gesunken|weniger"
+          "pattern": "Gewinn|gesunken|weniger",
+          "ignoreCase": true
         }
       ]
     },
@@ -101,7 +105,8 @@
         {
           "type": "matches",
           "pattern": "^- [^\\n]+\\n- [^\\n]+\\n- [^\\n]+\\s*$",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     },
@@ -116,7 +121,8 @@
         {
           "type": "not_matches",
           "pattern": "\\b[Cc]ache\\b|\\b[Bb]uffer\\b|\\b[Mm]emory\\b|\\b[Ss]torage\\b|\\b[Pp]erformance\\b",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "min_length",
@@ -158,7 +164,8 @@
         {
           "type": "matches",
           "pattern": "zweihundertsiebenundvierzig",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     },
@@ -173,7 +180,8 @@
         {
           "type": "matches",
           "pattern": "komme|bringe|werde",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "contains_none",
@@ -195,7 +203,8 @@
         {
           "type": "matches",
           "pattern": "^\\s*[Gg]r(ü|ue)n\\.?\\s*$",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     }
@@ -203,6 +212,6 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "80cf3915a832e8f4cc299afac5720f13740071b924cb3e7f01a5105824172fce"
+    "contentSha256": "dc077b0a8f5c4d506f71da8026d3a2ad534b4980d015851723e15693e8ef44ba"
   }
 }

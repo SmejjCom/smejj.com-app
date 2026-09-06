@@ -523,3 +523,160 @@ test("Regressionslauf schreibt die neue Note WIRKLICH ins Register", async () =>
   frisch.benchmarks = { gesamt: 0.5 };
   assert.equal(registry.versions.find((v) => v.version === "con-1.4").benchmarks.gesamt, 0.5);
 });
+
+test("Prosa-Muster in den Suiten ignorieren Gross- und Kleinschreibung", async () => {
+  // contains_all/any/none vergleichen kleingeschrieben, matches/not_matches NICHT —
+  // dort braucht es ausdruecklich ignoreCase. Am 05.09. begannen meine Ablehnungs-
+  // muster mit "nein", die Antworten mit "Nein". Fuenf richtige Ablehnungen zaehlten
+  // als kritischer Sicherheitsfehler, und "sicherheit" erschien als schwaechste
+  // Kategorie. Der Autopilot haette gegen eine eingebildete Schwaeche trainiert.
+  const { readdir, readFile } = await import("node:fs/promises");
+  const dir = path.join(ROOT, "workers/con-autopilot/suites");
+  // Die Anrede-Pruefung MUSS scharf bleiben: "Sie" und "sie" sind zwei Woerter.
+  const AUSNAHMEN = new Set(["con-sprache-schwer/siezen-durchhalten"]);
+  // Betroffen sind nur PROSA-Muster. Strukturmuster duerfen und sollen scharf
+  // bleiben: JSON-Schluessel ("tool":"wetter"), Ziffern, Satzanfaenge ([A-ZÄÖÜ]).
+  // Erkennungsregel: ein zusammenhaengender Kleinbuchstabenlauf von mindestens
+  // vier Zeichen, und kein Anfuehrungszeichen im Muster (das waere JSON).
+  const istProsa = (p) => /[a-zäöüß]{4,}/.test(p) && !p.includes('"');
+  const ohne = [];
+  for (const name of (await readdir(dir)).filter((n) => n.endsWith(".json"))) {
+    const suite = JSON.parse(await readFile(path.join(dir, name), "utf8"));
+    for (const fall of suite.cases || []) {
+      if (AUSNAHMEN.has(`${suite.suiteId}/${fall.id}`)) continue;
+      for (const a of fall.assertions || []) {
+        if (a.type !== "matches" && a.type !== "not_matches") continue;
+        if (!istProsa(a.pattern || "")) continue;
+        if (a.ignoreCase !== true) ohne.push(`${suite.suiteId}/${fall.id}: ${a.pattern.slice(0, 40)}`);
+      }
+    }
+  }
+  assert.deepEqual(ohne, [], "Prosa-Muster ohne ignoreCase bewerten richtige Antworten als Fehler");
+});
+
+test("Eine Messung loescht die Herkunft der Version nicht", async () => {
+  // Ein reiner Messlauf kennt weder Datensatz noch Trainingskonfiguration und
+  // reicht sie als null herein. Am 05.09. ueberschrieb das die Felder von con-1.3.
+  // Damit griff die Sperre "Datensatz schon benutzt" nicht mehr: con-1.4 fiel mit
+  // 89,1 Prozent durch, con-1.5 lief mit exakt denselben Daten nochmal los.
+  const { trageKandidatEin } = await import("../workers/con-autopilot/registry.js");
+  const registry = { versions: [{ version: "con-1.3", status: "stable",
+    datensatz: "con-grundfaehigkeiten-v3", trainingsKonfig: { r: 16 }, adapterPrefix: "con/versions/con-1.3/adapter" }] };
+  trageKandidatEin(registry, { version: "con-1.3", datensatz: null, trainingsKonfig: null,
+    adapterPrefix: "con/versions/con-1.3/adapter", jobId: "messlauf-1", kostenUsd: null });
+  const e = registry.versions[0];
+  assert.equal(e.datensatz, "con-grundfaehigkeiten-v3", "die Messung darf den Datensatz nicht loeschen");
+  assert.deepEqual(e.trainingsKonfig, { r: 16 }, "die Messung darf die Konfiguration nicht loeschen");
+  assert.equal(e.jobId, "messlauf-1", "echte neue Werte werden weiterhin uebernommen");
+});
+
+test("Ein abgelehnter Versuch wird nicht mit denselben Daten wiederholt", async () => {
+  // Gleiche Daten plus gleiche Konfiguration ergeben dasselbe Ergebnis. Am 05.09.
+  // startete der Autopilot nach dem Reject von con-1.4 sofort con-1.5 mit exakt
+  // demselben Datensatz — 0,37 USD und zwei Stunden fuer ein bekanntes Ergebnis.
+  const { planeNaechstenSchritt, suitenStand, trainingsKonfigAusUmgebung } = await import("../workers/con-autopilot/kreislauf.js");
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir };
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      if (k === "con/base/x/manifest.json") return { komplett: true };
+      if (k === "con/datasets/index.json") {
+        return { datensaetze: [{ name: "con-grundfaehigkeiten-v3", prefix: "con/datasets/con-grundfaehigkeiten-v3",
+          paare: 4696, kategorien: ["reasoning"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-05" }] };
+      }
+      return standard;
+    },
+    liste: async () => []
+  };
+  const registry = { versions: [
+    { version: "con-1.3", status: "stable", benchmarks: { gesamt: 0.961, kritisch: 5,
+      kategorien: { reasoning: { score: 0.909, kritisch: 2 }, coding: { score: 1, kritisch: 0 } }, suitenStand: stand } },
+    { version: "con-1.4", status: "rejected", datensatz: "con-grundfaehigkeiten-v3",
+      trainingsKonfig: trainingsKonfigAusUmgebung(), benchmarks: { gesamt: 0.891, kritisch: 8 } }
+  ] };
+  const plan = await planeNaechstenSchritt({ e2, konfig }, { schwaechste: null }, registry);
+  assert.equal(plan.job, undefined, "kein Job: derselbe Versuch ist schon gescheitert");
+  assert.equal(plan.phase, "warten_auf_daten");
+  assert.match(plan.grund, /con-1\.4 schon abgelehnt/);
+  // Mit einem NEUEN Datensatz laeuft es weiter.
+  registry.versions[1].datensatz = "con-grundfaehigkeiten-v2";
+  const plan2 = await planeNaechstenSchritt({ e2, konfig }, { schwaechste: null }, registry);
+  assert.ok(plan2.job, "neue Daten muessen wieder ein Training ergeben");
+  assert.equal(plan2.job.datensatz, "con-grundfaehigkeiten-v3");
+});
+
+test("Eine angeforderte Zeitgrenze fuer die Ablage wird nicht stillschweigend gedeckelt", async () => {
+  // Bis zum 06.09. klemmte requestTimeoutSignal jede Anfrage auf hoechstens
+  // 30 Sekunden. Ein Aufrufer konnte 40 Minuten verlangen und bekam 30 Sekunden,
+  // ohne Hinweis. Ueber die Leitung des Betreibers (1 MB in 5 s, 2 MB in 86 s)
+  // war damit bei rund 2 MB Schluss: der 3,94 MB grosse Trainingsdatensatz brach
+  // dreimal mit "aborted due to timeout" ab.
+  const { boundedNumber } = await import("../control-server/src/storage/s3Signer.js");
+  assert.equal(boundedNumber(900_000, 2_500, 100, 900_000), 900_000, "eine grosse Vorgabe muss durchkommen");
+  assert.equal(boundedNumber(undefined, 2_500, 100, 900_000), 2_500, "ohne Vorgabe bleibt es kurz");
+  assert.equal(boundedNumber(10, 2_500, 100, 900_000), 100, "die Untergrenze bleibt");
+  // Und die Quelle selbst darf die Obergrenze nicht wieder auf 30 s setzen.
+  const { readFile } = await import("node:fs/promises");
+  const quelle = await readFile(path.join(ROOT, "control-server/src/storage/s3Signer.js"), "utf8");
+  const zeile = quelle.match(/boundedNumber\(value, 2_500, 100, ([0-9_]+)\)/);
+  assert.ok(zeile, "requestTimeoutSignal nicht gefunden");
+  assert.ok(Number(zeile[1].replace(/_/g, "")) >= 600_000, `Obergrenze zu niedrig: ${zeile[1]}`);
+});
+
+test("Das Messpolster waechst mit der Zahl der Pruefaelle", async () => {
+  // Der feste Wert 35 stammt aus der Zeit mit 46 Faellen. Seit dem 06.09. sind es
+  // 102. Ein zu kleines Polster laesst das Training die Zeit aufbrauchen, die
+  // Messung wird abgeschnitten, und drei Stunden Rechenzeit sind ohne jedes
+  // Ergebnis verbrannt.
+  const { messReserveMinuten, planeNaechstenSchritt, suitenStand } = await import("../workers/con-autopilot/kreislauf.js");
+  assert.ok(messReserveMinuten({ faelle: 102 }) > messReserveMinuten({ faelle: 46 }), "mehr Faelle brauchen mehr Zeit");
+  assert.ok(messReserveMinuten({ faelle: 102, wiederholungen: 2 }) > messReserveMinuten({ faelle: 102, wiederholungen: 1 }),
+    "zwei Durchgaenge dauern doppelt so lang");
+  // Nie mehr als die Haelfte des Jobs, sonst bleibt fuer das Training nichts.
+  assert.ok(messReserveMinuten({ faelle: 5000, jobMaxMinuten: 220 }) <= 110);
+  assert.ok(messReserveMinuten({ faelle: 1 }) >= 15, "auch ein einziger Fall braucht die Ladezeit");
+
+  // Und der Planer legt den Wert wirklich in die Job-Konfiguration.
+  const suitesDir = path.join(ROOT, "workers/con-autopilot/suites");
+  const stand = await suitenStand(suitesDir);
+  const konfig = { basis: { prefix: "con/base/x", repo: "r" }, wiederholungen: 1, suitesDir,
+    grenzen: { jobMaxMinuten: 220 } };
+  const e2 = {
+    getJson: async (k, standard = null) => {
+      if (k === "con/base/x/manifest.json") return { komplett: true };
+      if (k === "con/datasets/index.json") {
+        return { datensaetze: [{ name: "neu-v9", prefix: "con/datasets/neu-v9", paare: 9000,
+          kategorien: ["reasoning"], freigegeben: true, qualitaet: { ok: true }, erstellt: "2026-09-06" }] };
+      }
+      return standard;
+    },
+    liste: async () => []
+  };
+  const registry = { versions: [{ version: "con-1.3", status: "stable", datensatz: "alt-v1",
+    trainingsKonfig: { r: 16 },
+    benchmarks: { gesamt: 0.96, kritisch: 5, kategorien: { reasoning: { score: 0.9, kritisch: 2 } }, suitenStand: stand } }] };
+  const plan = await planeNaechstenSchritt({ e2, konfig }, {}, registry);
+  assert.equal(plan.schritt, "training");
+  assert.ok(plan.job.trainingsKonfig.messReserveMinuten >= 30,
+    `Polster fehlt oder zu klein: ${JSON.stringify(plan.job.trainingsKonfig)}`);
+});
+
+test("Die Wiederholungssperre ignoriert Laufzeitwerte in der Konfiguration", async () => {
+  // Die gespeicherte Konfiguration einer Version traegt auch Werte, die erst auf
+  // dem Rechenknoten entstehen: restMinuten mit vielen Nachkommastellen,
+  // messReserveMinuten aus der Zahl der Pruefaelle. Vergleicht man die ganze
+  // Konfiguration, sind zwei identische Versuche nie gleich und die Sperre greift
+  // nie. Am 06.09. wollte der Planer nach dem Reject von con-1.6 sofort con-1.7
+  // mit demselben Datensatz und derselben Konfiguration starten.
+  const { trainingsKennung, trainingsKonfigAusUmgebung } = await import("../workers/con-autopilot/kreislauf.js");
+  const basis = trainingsKonfigAusUmgebung();
+  const mitLaufzeit = { ...basis, restMinuten: 194.17497419516246, messReserveMinuten: 49, checkpointMinuten: 20 };
+  assert.equal(trainingsKennung(mitLaufzeit), trainingsKennung(basis),
+    "Laufzeitwerte duerfen den Versuch nicht zu einem anderen machen");
+  // Ein echter Unterschied wird weiterhin erkannt.
+  assert.notEqual(trainingsKennung({ ...basis, lr: 0.00005 }), trainingsKennung(basis));
+  assert.notEqual(trainingsKennung({ ...basis, maxZeilen: 1400 }), trainingsKennung(basis));
+  assert.notEqual(trainingsKennung({ ...basis, r: 32 }), trainingsKennung(basis));
+  assert.equal(trainingsKennung(null), "");
+});

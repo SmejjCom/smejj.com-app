@@ -137,7 +137,13 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
     // arbeiten kann: erst schauen, was da ist, dann entscheiden. Ohne ihn
     // muss sie alles vorab planen und scheitert an jeder Ueberraschung.
     case "observe":
-      return { ok: true, action: { type: "observe" } };
+      // OHNE BILD (2026-09-06): Das Hinsehen veraendert die Seite nicht — ein
+      // neuer Schnappschuss zeigt dasselbe wie der letzte. Trotzdem reiste
+      // bei jedem Hinsehen ein ~150-KB-JPEG mit (live gemessen: 156 KB je
+      // observe, davon 147 KB Bild). Ueber die Leitung des Betreibers war
+      // das der groesste Posten je Schritt. Wer es weglassen will, sagt es
+      // ausdruecklich; der alte Weg bleibt unveraendert.
+      return { ok: true, action: { type: "observe", ohneBild: action.ohneBild === true } };
     // HINSEHEN MIT DEM ARIA-BAUM. Dasselbe Ziel wie "observe", aber die
     // Quelle ist Chromiums eigener Bedienbaum statt einer Selektorliste —
     // das Vorbild ist ZCodes domSnapshot. Bewusst eine EIGENE Aktion und
@@ -464,6 +470,24 @@ export function createSessionEngine({
     }
   }
 
+  /**
+   * Wo das Element im Bild liegt — damit das Panel einen Zeiger dorthin
+   * zeichnen kann (Betreiber 2026-09-06: "Maus sichtbar machen wie bei
+   * Claude/Codex"). Erst ins Bild rollen, dann messen: sonst kaeme eine Box
+   * ausserhalb des Ausschnitts zurueck, und der Zeiger zeigte ins Leere.
+   * Fail-open — ohne Box laeuft die Aktion trotzdem, nur ohne Zeiger.
+   */
+  async function zielBox(locator) {
+    try {
+      await locator.scrollIntoViewIfNeeded?.({ timeout: cfg.settleTimeoutMs })?.catch?.(() => {});
+      const box = await locator.boundingBox?.({ timeout: cfg.settleTimeoutMs });
+      if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y)) return null;
+      return { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) };
+    } catch {
+      return null;
+    }
+  }
+
   async function performAction(session, action) {
     const page = session.page;
     const { width, height } = session.viewport;
@@ -504,25 +528,29 @@ export function createSessionEngine({
         const locator = await resolveEindeutig(page, def, { erlaubeMehrere: action.type === "selectorText" })
           .then((l) => (action.type === "selectorText" ? l.first() : l));
         await locator.waitFor({ state: "visible", timeout: cfg.settleTimeoutMs }).catch(() => {});
+        // Die Box VOR der Aktion messen: nach einem Klick ist die Seite
+        // womoeglich eine andere, und das Element weg.
+        const ziel = await zielBox(locator);
+        const mitZiel = (rest) => (ziel ? { ...rest, ziel } : rest);
         if (action.type === "selectorText") {
           const text = await locator.innerText({ timeout: cfg.settleTimeoutMs }).catch(() => "");
-          return { gelesen: String(text || "").slice(0, 2000) };
+          return mitZiel({ gelesen: String(text || "").slice(0, 2000) });
         }
         if (action.type === "selectorType") {
           await locator.fill(action.text, { timeout: cfg.settleTimeoutMs });
-          return undefined;
+          return mitZiel({});
         }
         await locator.click({ timeout: cfg.settleTimeoutMs });
         await page.waitForLoadState("domcontentloaded", { timeout: cfg.settleTimeoutMs }).catch(() => {});
         await page.waitForTimeout?.(300)?.catch?.(() => {});
-        return undefined;
+        return mitZiel({});
       }
       case "observe": {
         // DERSELBE Beobachter wie in der Maus-Engine, nicht ein zweiter:
         // sonst sieht die Maus im Panel eine andere Seite als in ihrem
         // eigenen Browser und entscheidet dort anders.
         const beobachtung = await buildObservation(page);
-        return { beobachtung };
+        return action.ohneBild ? { beobachtung, ohneBild: true } : { beobachtung };
       }
       case "dialogAccept":
       case "dialogDismiss": {
@@ -633,6 +661,20 @@ export function createSessionEngine({
     try {
       const zusatz = await performAction(session, verdict.action);
       touch(session);
+      // Bildloses Hinsehen: kein Schnappschuss, nur Kopfdaten. Das Panel
+      // behaelt sein letztes Bild — es ist noch richtig.
+      if (zusatz?.ohneBild === true) {
+        const title = await page_title(session);
+        return {
+          ok: true,
+          sessionId: session.id,
+          finalUrl: session.page.url(),
+          title,
+          viewport: session.viewport,
+          expiresInMs: expiresInMs(session),
+          ...zusatz
+        };
+      }
       const bild = await snapshot(session);
       // Zusaetzliche Auskuenfte einer Aktion (z. B. die Trefferzahl der Suche)
       // reisen mit dem Schnappschuss zurueck.
@@ -642,6 +684,10 @@ export function createSessionEngine({
     } finally {
       session.busy = false;
     }
+  }
+
+  async function page_title(session) {
+    return session.page.title().catch(() => "");
   }
 
   async function close({ sessionId } = {}) {

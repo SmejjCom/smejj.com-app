@@ -22,7 +22,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "e7025920759ab4d44aff1809b8429ef67b860e230f8d08c90c5822d23d046a3a"
+    "contentSha256": "4c866898747e442ce2209e5bdda55943a7304ceac9cc3d475aa5345a0b103368"
   },
   "packs": [
     "../packs/naming-marke.json",

@@ -361,6 +361,13 @@ function stepContractBlock(erlaubteAktionen = null) {
     ...(erlaubteAktionen ? ["  NUR diese Aktionen kann der Browser hier ausfuehren — jede andere wird abgelehnt.", "  Zum Abschicken eines Formulars: den Such- oder Senden-Knopf per click treffen."] : []),
     `- VERBOTEN im Loop: ${LOOP_FORBIDDEN.join(", ")} (Browser laeuft bereits).`,
     `- Selektor-Strategien (bevorzugt in dieser Reihenfolge): ${strategies.join(", ")}`,
+    // LIVE 06.09.: role "textbox" traf Wikipedias Suchfeld (searchbox) nicht,
+    // und nach dem Fehlschlag kam derselbe Selektor noch einmal. Die
+    // Elementliste nennt id/name/placeholder — damit trifft css sicher.
+    "- EINGABEFELDER: nimm css aus der Elementliste (#id oder input[name=\"…\"]);",
+    "  role nur mit EXAKTER Rolle UND Name aus dem Bedienbaum. Suchfelder sind",
+    "  searchbox, nicht textbox. Nach einem FEHLGESCHLAGENEN Schritt nie denselben",
+    "  Selektor wiederholen — ein anderes Ziel aus der Elementliste waehlen.",
     "- Antworte AUSSCHLIESSLICH mit einem einzigen JSON-Objekt. Kein Text",
     "  davor oder danach, keine Markdown-Zaeune."
   ].join("\n");

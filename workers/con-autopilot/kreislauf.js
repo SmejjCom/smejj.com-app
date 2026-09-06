@@ -332,6 +332,57 @@ export function abweichendeSuiten(gemessenerStand, aktuellerStand) {
   return Object.keys(aktuellerStand).filter((id) => gemessenerStand[id] !== aktuellerStand[id]);
 }
 
+/**
+ * Kennung eines Trainingsversuchs: nur die Felder, die das ERGEBNIS bestimmen.
+ *
+ * Die gespeicherte Konfiguration einer Version traegt auch Laufzeitwerte —
+ * restMinuten kommt vom Rechenknoten, messReserveMinuten aus der Zahl der
+ * Pruefaelle, checkpointMinuten aus der Sicherungshaeufigkeit. Vergleicht man
+ * die ganze Konfiguration, unterscheiden sich zwei identische Versuche schon an
+ * der zweiten Nachkommastelle von restMinuten, und die Wiederholungssperre
+ * greift nie. Genau das passierte am 06.09.: con-1.6 war auf v4 abgelehnt, und
+ * der Planer wollte sofort con-1.7 mit demselben Datensatz und derselben
+ * Konfiguration starten.
+ */
+export const KONFIG_FELDER = Object.freeze(["r", "alpha", "lr", "epochen", "maxLen", "batch", "gradAkk", "maxZeilen"]);
+
+export function trainingsKennung(konfig) {
+  if (!konfig || typeof konfig !== "object") return "";
+  return JSON.stringify(KONFIG_FELDER.map((f) => [f, konfig[f] ?? null]));
+}
+
+/** Die Trainingskonfiguration aus der Umgebung — an EINER Stelle, damit Plan und Sperre dieselbe sehen. */
+export function trainingsKonfigAusUmgebung(env = process.env) {
+  return JSON.parse(env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
+}
+
+/**
+ * Wie viele Minuten muss der Trainingsjob fuer die anschliessende Messung
+ * zuruecklegen?
+ *
+ * Der feste Wert 35 stammt aus der Zeit mit 46 Pruefaellen. Seit dem 06.09. sind
+ * es 102, und die Antwortzeit je Fall schwankt mit der zugeteilten Karte um mehr
+ * als das Doppelte (gemessen am 05.09.: 7,6 s, 11,5 s, 15,2 s und 19,1 s im
+ * Mittel). Ein zu kleines Polster laesst das Training die Zeit aufbrauchen, die
+ * Messung wird abgeschnitten und der ganze Lauf ist umsonst — rund drei Stunden
+ * und 0,37 USD ohne jedes Ergebnis.
+ *
+ * Gerechnet wird mit der langsamsten bisher gemessenen Karte, nicht mit dem
+ * Mittel: die Karte wird zugelost, und ein Polster, das nur im Glücksfall
+ * reicht, ist kein Polster. Dazu kommt ein Zuschlag, weil die Messung in einem
+ * eigenen Prozess laeuft und das Modell dafuer neu laedt.
+ */
+export const MESS_LATENZ_SCHLECHTESTE_MS = 20_000;
+export const MESS_NEULADEN_MINUTEN = 15;
+
+export function messReserveMinuten({ faelle, wiederholungen = 1, jobMaxMinuten = 220 }) {
+  const antworten = Math.max(1, faelle) * Math.max(1, wiederholungen);
+  const minuten = (antworten * MESS_LATENZ_SCHLECHTESTE_MS) / 60_000 + MESS_NEULADEN_MINUTEN;
+  // Nie weniger als der alte Festwert, und nie mehr als die Haelfte des Jobs —
+  // sonst bliebe fuer das Training nichts uebrig und der Lauf waere sinnlos.
+  return Math.min(Math.round(minuten), Math.floor(jobMaxMinuten / 2), 200) || 35;
+}
+
 export async function planeNaechstenSchritt(ctx, z, registry) {
   const { e2, konfig } = ctx;
   const stabil = stabileVersion(registry);
@@ -375,13 +426,30 @@ export async function planeNaechstenSchritt(ctx, z, registry) {
   if (!daten) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Kein freigegebener Datensatz unter con/datasets/ fuer ${schwaeche?.kategorie || "allgemein"} (manifest.json mit qualitaet.ok=true, paare>=${minPaare})` };
   if ((daten.paare || 0) < minPaare) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} hat ${daten.paare} Paare, noetig ${minPaare} (CON_MIN_PAARE)` };
   if (stabil.datensatz === daten.name && stabil.trainingsKonfig) return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche, grund: `Datensatz ${daten.name} wurde fuer ${stabil.version} schon benutzt — neue Daten noetig` };
+  // Ein Versuch, der schon einmal abgelehnt wurde, wird nicht wiederholt.
+  // Gleiche Daten plus gleiche Konfiguration ergeben (bis auf Rauschen) dasselbe
+  // Ergebnis. Am 05.09. lief genau das: con-1.4 fiel mit 89,1 Prozent durch, und
+  // der naechste Takt startete con-1.5 mit demselben Datensatz und derselben
+  // Konfiguration — 0,37 USD und zwei Stunden fuer ein bekanntes Ergebnis.
+  const konfigText = trainingsKennung(trainingsKonfigAusUmgebung());
+  const schonGescheitert = registry.versions.find((v) => v.status === "rejected"
+    && v.datensatz === daten.name && trainingsKennung(v.trainingsKonfig) === konfigText);
+  if (schonGescheitert) {
+    return { schritt: "trainingsplan", phase: "warten_auf_daten", schwaeche,
+      grund: `Datensatz ${daten.name} mit dieser Konfiguration wurde als ${schonGescheitert.version} schon abgelehnt (${schonGescheitert.benchmarks?.gesamt != null ? Math.round(schonGescheitert.benchmarks.gesamt * 1000) / 10 + " %" : "ohne Note"}) — neue Daten oder eine andere Konfiguration noetig` };
+  }
   const version = naechsteVersion(stabil, { basisPrefix: konfig.basis.prefix,
     vergeben: registry.versions.map((v) => v.version) });
   // maxZeilen ist Pflicht, nicht Geschmack: gemessen 03.09. braucht EIN Trainingsschritt
   // auf dem 27B-Modell rund zwei Minuten. Ein Lauf ueber alle 3.707 Paare waere bei
   // gradAkk 8 rund 460 Schritte, also 15 Stunden — die Zeitgrenze von 220 Minuten schnitte
   // ihn bei 13 Prozent ab. 700 Zeilen ergeben ~88 Schritte und passen mit Laden und Messen.
-  const trainKonfig = JSON.parse(process.env.CON_TRAIN_KONFIG || '{"r":16,"alpha":32,"lr":0.0001,"epochen":1,"maxLen":1024,"checkpointMinuten":15,"batch":1,"gradAkk":8,"maxZeilen":700}');
+  const trainKonfig = trainingsKonfigAusUmgebung();
+  // Das Polster fuer die Messung richtet sich nach der ZAHL der Pruefaelle.
+  // Fest verdrahtet waere es bei jeder Erweiterung der Latte wieder falsch.
+  const faelleGesamt = (await ladeSuiten(konfig.suitesDir)).reduce((n, s) => n + (s.cases || []).length, 0);
+  trainKonfig.messReserveMinuten = messReserveMinuten({ faelle: faelleGesamt,
+    wiederholungen: konfig.wiederholungen, jobMaxMinuten: konfig.grenzen?.jobMaxMinuten || 220 });
   return { schritt: "training", schwaeche, job: { modus: "training+messung", version, kandidat: version, datensatz: daten.name, trainingsKonfig: trainKonfig,
     ziel: `Training ${version} gegen Schwaeche ${schwaeche?.kategorie || "allgemein"} mit ${daten.name} (${daten.paare} Paare)`,
     parameter: { CON_VERSION: stabil.version, CON_KANDIDAT: version, CON_DATENSATZ_PREFIX: daten.prefix, CON_TRAIN_KONFIG: JSON.stringify(trainKonfig), CON_WIEDERHOLUNGEN: konfig.wiederholungen } } };

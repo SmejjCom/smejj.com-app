@@ -30,7 +30,7 @@ export function teile(text, proTeil = PAARE_JE_TEIL) {
   return out;
 }
 
-export async function ladeHoch({ text, manifest, env = process.env, client = null }) {
+export async function ladeHoch({ text, manifest, env = process.env, client = null, praefix = PRAEFIX }) {
   // 3,8 MB ueber die Leitung des Betreibers (gemessen 1,5 Mbit/s) sind rund
   // 20 s reine Uebertragung — der Standard von 30 s reicht dafuer nicht
   // zuverlaessig. Hier gesetzt statt im con-Client: der gehoert dem
@@ -48,28 +48,28 @@ export async function ladeHoch({ text, manifest, env = process.env, client = nul
     return fetch(url, { ...rest, signal: AbortSignal.timeout(600_000) });
   };
   const e2Gross = client || e2Client(e2KonfigAusEnv(env), { fetchImpl: ohneZeitdeckel, timeoutMs: 600_000 });
-  await e2Gross.putText(`${PRAEFIX}/train.jsonl`, text, "application/x-ndjson");
+  await e2Gross.putText(`${praefix}/train.jsonl`, text, "application/x-ndjson");
   console.log(`  train.jsonl (${Math.round(Buffer.byteLength(text) / 1024)} KB, fuer den Trainings-Job)`);
 
   const stuecke = teile(text);
   const dateien = [];
   for (let i = 0; i < stuecke.length; i += 1) {
     const name = `train-${String(i + 1).padStart(3, "0")}.jsonl`;
-    await e2.putText(`${PRAEFIX}/${name}`, stuecke[i], "application/x-ndjson");
+    await e2.putText(`${praefix}/${name}`, stuecke[i], "application/x-ndjson");
     dateien.push({ name, zeilen: stuecke[i].split("\n").filter((z) => z.trim()).length, bytes: Buffer.byteLength(stuecke[i]) });
     console.log(`  ${name} (${dateien[i].zeilen} Paare, ${Math.round(dateien[i].bytes / 1024)} KB)`);
   }
-  await e2.putJson(`${PRAEFIX}/manifest.json`, { ...manifest, dateien, teileJe: PAARE_JE_TEIL });
+  await e2.putJson(`${praefix}/manifest.json`, { ...manifest, dateien, teileJe: PAARE_JE_TEIL });
   // Der Index ist die Liste, die eine Wache lesen kann, ohne den ganzen
   // Datensatz zu holen. Bestehende Eintraege bleiben stehen.
   const index = (await e2.getJson(INDEX_KEY, null)) || { schemaVersion: 1, datensaetze: [] };
   index.datensaetze = (index.datensaetze || []).filter((d) => d.name !== manifest.name);
   index.datensaetze.push({
-    name: manifest.name, praefix: PRAEFIX, paare: manifest.paare, kategorien: manifest.kategorien,
+    name: manifest.name, praefix, paare: manifest.paare, kategorien: manifest.kategorien,
     sha256: manifest.sha256, erzeugtAm: manifest.erzeugtAm, quelle: manifest.quelle, freigegeben: true
   });
   index.aktualisiertAm = new Date().toISOString();
   await e2.putJson(INDEX_KEY, index);
   console.log(`hochgeladen: ${dateien.length} Teile (${manifest.paare} Paare), manifest.json, ${INDEX_KEY}`);
-  return { ok: true, praefix: PRAEFIX, paare: manifest.paare, teile: dateien.length };
+  return { ok: true, praefix, paare: manifest.paare, teile: dateien.length };
 }

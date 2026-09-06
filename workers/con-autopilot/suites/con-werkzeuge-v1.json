@@ -15,7 +15,7 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "7bbdffac002f0f6cc804e73705494612a08390141913c8aa8a94dceaa89d03c8"
+    "contentSha256": "f571c5ccb0472e65190b4b601ba06658f0781bc7a41dd36778255791544ca596"
   },
   "cases": [
     {
@@ -108,7 +108,8 @@
         {
           "type": "matches",
           "pattern": "Frankfurt(?!\\w)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "contains_none",

@@ -63,7 +63,17 @@ export function pruefePaar(messages, { suitenFragen = new Set(), angriffeErlaubt
 }
 
 /** Rohzeilen (JSONL-Text oder Array) -> {paare, bericht}. Deterministisch (Reihenfolge der Quelle). */
-export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIANTEN, maxPaare = null, angriffeErlaubt = false, mindestAntwortLaenge = 8 } = {}) {
+/**
+ * Ist die Antwort eine blanke Zahl?
+ *
+ * Die Variantengrenze schuetzt davor, dass das Modell EINE Floskel auswendig
+ * lernt und ueberall hinschreibt. Bei einer blanken Zahl gibt es keine Floskel:
+ * "3" ist die vollstaendige richtige Antwort auf beliebig viele verschiedene
+ * Aufgaben. Die Grenze von acht wuerde alle Zaehlaufgaben zusammen auf rund
+ * achtzig Paare eindampfen (nur die Ziffern 0 bis 9 kommen vor) — genau die
+ * Faehigkeit, an der con 1.3 scheiterte, bekaeme am wenigsten Stoff.
+ */
+export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIANTEN, maxVariantenZahl = null, maxPaare = null, angriffeErlaubt = false, mindestAntwortLaenge = 8 } = {}) {
   const suitenFragen = new Set(suiten.flatMap((s) => (s.cases || []).map((c) => normalisiere(c.prompt))));
   const zeilen = Array.isArray(rohZeilen) ? rohZeilen : String(rohZeilen).split("\n").filter((z) => z.trim());
   const abgelehnt = {};
@@ -81,9 +91,11 @@ export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIA
     const kennung = hashText(messages.map((m) => `${m.role}:${normalisiere(m.content)}`).join("|"));
     if (gesehen.has(kennung)) { abgelehnt.duplikat = (abgelehnt.duplikat || 0) + 1; continue; }
     gesehen.add(kennung);
-    const antwortKennung = hashText(normalisiere(messages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n")));
+    const antwortText = messages.filter((m) => m.role === "assistant").map((m) => m.content).join("\n");
+    const antwortKennung = hashText(normalisiere(antwortText));
     const n = jeAntwort.get(antwortKennung) || 0;
-    if (n >= maxVarianten) { abgelehnt.zu_viele_varianten = (abgelehnt.zu_viele_varianten || 0) + 1; continue; }
+    const grenze = (maxVariantenZahl && NUR_ZAHL.test(antwortText.trim())) ? maxVariantenZahl : maxVarianten;
+    if (n >= grenze) { abgelehnt.zu_viele_varianten = (abgelehnt.zu_viele_varianten || 0) + 1; continue; }
     jeAntwort.set(antwortKennung, n + 1);
     paare.push({ messages: messages.map((m) => ({ role: m.role, content: String(m.content) })), recordId: d.recordId || kennung.slice(0, 16) });
     if (maxPaare && paare.length >= maxPaare) break;
@@ -92,7 +104,7 @@ export function baueDatensatz(rohZeilen, { suiten = [], maxVarianten = MAX_VARIA
   const bericht = {
     gelesen, angenommen: paare.length, abgelehnt, eindeutigeAntworten: jeAntwort.size,
     antwortLaengeMittel: antwortLaengen.length ? Math.round(antwortLaengen.reduce((a, b) => a + b, 0) / antwortLaengen.length) : 0,
-    maxVarianten, angriffeErlaubt, mindestAntwortLaenge, suitenFragenAusgeschlossen: suitenFragen.size,
+    maxVarianten, maxVariantenZahl, angriffeErlaubt, mindestAntwortLaenge, suitenFragenAusgeschlossen: suitenFragen.size,
     ok: paare.length > 0 && jeAntwort.size >= 50 && (abgelehnt.schluessel || 0) === 0 && (abgelehnt.personenbezogen || 0) < gelesen * 0.5,
     pruefungen: ["exakte_duplikate", "varianten_je_antwort", "schluessel", "personenbezogen", "prompt_injection", "spam", "fehlerhaft", "suitenfall", "laenge"]
   };

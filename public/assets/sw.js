@@ -190,7 +190,7 @@
 // in docs/frontend/SW_VERSIONSVERLAUF_2026-08.md, so wie es der Kopf dieser
 // Datei verlangt (Touch-Ziele auf 44 px, Startseite und alle 16 Ansichten).
 // Wer den naechsten Stand sucht, schaut also besser dorthin als hierher.
-const CACHE_NAME = "smejj-shell-v770";
+const CACHE_NAME = "smejj-shell-v777";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -355,6 +355,17 @@ const SHELL = [
   "/assets/papierkorb.js",
   "/assets/chat-actions-menu.js",
   "/assets/chat-code-copy.js",
+  // Sechs dynamisch geladene Module, die bis 2026-09-06 hier fehlten
+  // (tests/precache-dynamische-importe.test.mjs): drei holt chat-actions-menu.js,
+  // drei composer-plus-menu.js per import(). Online faellt das nie auf — der
+  // Browser holt sie einfach aus dem Netz; offline sterben Erste-Schritte-Karten,
+  // Wort-Aktionen und die Anhang-Leser still.
+  "/assets/erste-schritte.js",
+  "/assets/chat-actions-woerter.js",
+  "/assets/composer-zeile.js",
+  "/assets/anhang-pdf-text.js",
+  "/assets/anhang-office-text.js",
+  "/assets/anhang-tonspur.js",
   // Sieben Module, die index.html per <script> laedt und die bis 2026-08-22
   // hier fehlten. Offline lieferte der Fetch-Handler dafuer die index.html
   // zurueck — der Browser bekam HTML statt JavaScript, brach das Modul ab, und
@@ -424,6 +435,7 @@ const SHELL = [
   "/en/legal-notice.html",
   "/en/privacy.html",
   "/assets/browser-pane-adressen.js",
+  "/assets/browser-pane-zoom.js",
   "/assets/browser-pane-fernwege.js",
   "/assets/browser-stage.js",
   "/assets/ai/lokalesModell.js",

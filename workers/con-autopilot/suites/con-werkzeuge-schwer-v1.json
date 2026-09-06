@@ -53,7 +53,8 @@
         {
           "type": "not_matches",
           "pattern": "\"werkzeug\"",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "min_length",
@@ -93,12 +94,14 @@
         {
           "type": "matches",
           "pattern": "[Ee]mpfaenger|[Ee]mpfänger|an wen|welche Adresse|fehlt",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
           "pattern": "\"mail\"",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     },
@@ -113,12 +116,14 @@
         {
           "type": "matches",
           "pattern": "kein|nicht|steht nicht zur Verfuegung|steht nicht zur Verfügung|kann ich nicht",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         },
         {
           "type": "not_matches",
           "pattern": "\"werkzeug\"\\s*:\\s*\"(loesche|löschen|datei)",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     },
@@ -173,7 +178,8 @@
         {
           "type": "matches",
           "pattern": "Bonn|Rom",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     },
@@ -188,7 +194,8 @@
         {
           "type": "not_matches",
           "pattern": "\"werkzeug\"\\s*:\\s*\"mail\"",
-          "critical": true
+          "critical": true,
+          "ignoreCase": true
         }
       ]
     }
@@ -196,6 +203,6 @@
   "integrity": {
     "algorithm": "sha256",
     "canonicalization": "json-key-sort-v1",
-    "contentSha256": "4f8bf45e43b580126f5f12d2bc146b08723c79bde363848a6298ed3f1c118e32"
+    "contentSha256": "80a262e9c32785b1adecc2ec411eb1ba15884fa5449dbede4d4bc6e29aadc288"
   }
 }

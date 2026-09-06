@@ -237,12 +237,20 @@ def lauf():
                                                                 "datensatzPrefix": datensatz_prefix, "jobId": JOB_ID,
                                                                 "konfig": konfig, "stand": _iso(time.time())})
         adapter_dir = t["adapterPfad"]
-        if t.get("ohneNeueSchritte"):
-            # Kein einziger neuer Schritt: der Adapter ist die Arbeit eines fremden Laufs.
-            # Ihn unter diesem Namen zu messen waere eine Luege ueber die eigene Arbeit.
+        if t.get("ohneNeueSchritte") and not t.get("bereitsVollstaendig"):
+            # Kein einziger neuer Schritt und der Zwischenstand stammt NICHT aus diesem
+            # Job: der Adapter ist die Arbeit eines fremden Laufs. Ihn unter diesem Namen
+            # zu messen waere eine Luege ueber die eigene Arbeit.
             ergebnis["ok"] = False
             ergebnis["grund"] = "training_ohne_neue_schritte"
             return ergebnis
+        if t.get("bereitsVollstaendig"):
+            # Eigener Zwischenstand, schon am Ziel. Am 06.09. wechselte Salad mitten im
+            # Lauf den Rechenknoten; der zweite Anlauf fand den eigenen fertigen Stand bei
+            # Schritt 64, plante wegen der kuerzeren Restzeit nur noch 63 — und warf zwei
+            # Stunden bezahlte Rechenzeit weg, weil "nichts mehr zu tun" als Fehler galt.
+            STATUS.setze(phase="training_bereits_vollstaendig", globalStep=t.get("globalStep"))
+            ergebnis["training"]["hinweis"] = "Zwischenstand dieses Jobs war bereits vollstaendig"
         if t.get("abgebrochen"):
             ergebnis["ok"] = False
             ergebnis["grund"] = "training_abgebrochen_zeitgrenze"

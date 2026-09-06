@@ -9,9 +9,13 @@ import { pathToFileURL } from "node:url";
 const quelle = readFileSync(new URL("../public/erste-schritte.js", import.meta.url), "utf8");
 
 async function ladeModul() {
+  // Die Importe werden OHNE ihre Cache-Marke erkannt: ein Bump von ?v=b66 auf
+  // ?v=b67 hat am 2026-09-06 alle drei Proben dieser Datei rot gemacht, obwohl
+  // am Verhalten nichts anders war. Tests duerfen nie auf Cache-Marken
+  // festgenagelt sein.
   const ersetzt = quelle
-    .replace('import { t } from "/assets/i18n/ui.js?v=3";', "const t = (s) => s;")
-    .replace('import { listChats } from "/assets/chat-store.js?v=b66";', "const listChats = async () => [];");
+    .replace(/import \{ t \} from "\/assets\/i18n\/ui\.js(\?v=[^"]*)?";/, "const t = (s) => s;")
+    .replace(/import \{ listChats \} from "\/assets\/chat-store\.js(\?v=[^"]*)?";/, "const listChats = async () => [];");
   assert.ok(!ersetzt.includes("/assets/"), "alle Browser-Importe ersetzt");
   const datei = join(mkdtempSync(join(tmpdir(), "smejj-erste-")), "erste.mjs");
   writeFileSync(datei, ersetzt);
