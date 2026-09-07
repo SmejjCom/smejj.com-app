@@ -12,7 +12,7 @@ set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
 BASIS_VOR_AENDERUNG="2b8e724f"
-CODE_COMMIT="ef232ff7"
+CODE_COMMIT="efb9edde"
 SW_VORHER="smejj-shell-v790"
 SW_NEU="smejj-shell-v791"
 DATEIEN=(branding.css start-styles.css sw.js)
