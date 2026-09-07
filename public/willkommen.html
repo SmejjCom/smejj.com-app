@@ -28,7 +28,7 @@
   <meta name="twitter:title" content="smejj.com — Frag alles. Kostenlos.">
   <meta name="twitter:description" content="smejj.com — Schreiben, recherchieren, Bilder und Videos erstellen, programmieren. In einem Fenster, kostenlos starten, deine Daten bleiben bei dir.">
   <meta name="twitter:image" content="https://smejj.com/og-image.png">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.smejj.com">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#070b11">
   <link rel="icon" href="/favicon.ico?v=112" sizes="any">
@@ -40,6 +40,10 @@
   <title>smejj.com — Frag alles. Kostenlos.</title>
   <script src="/assets/willkommen-sprache.js?v=1" defer></script>
   <script src="/assets/willkommen-fokus.js?v=w3" defer></script>
+  <!-- Besucher-Puls (Autopilot Nr. 81): EINE Strichliste je Sitzung, ohne Cookie
+       und ohne Kennung. Ohne diese Zahl ist "es kommt niemand" nicht von
+       "niemand kann melden" zu unterscheiden. -->
+  <script src="/assets/besucher-puls.js?v=p1" defer></script>
   <style>
     .schwerpunkte { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
     .schwerpunkte button {
@@ -77,7 +81,7 @@
     }
     .leiste img { height: 26px; width: auto; }
     .leiste nav { display: flex; gap: 18px; font-size: 15px; color: var(--ink-dim); }
-    .leiste nav a { text-decoration: none; }
+    .leiste nav a { text-decoration: none; display: inline-block; padding: 12px 0; }
     .leiste nav a:hover { color: var(--ink); }
     .leiste .rechts { margin-left: auto; display: flex; gap: 10px; }
     /* Handy (Nutzerreise USA, 2026-08-23, gemessen bei 375 px): die Leiste war
@@ -85,9 +89,16 @@
        Unter 640 px: Logo + Knöpfe in Reihe 1, die Bereichs-Links als eigene,
        umbrechende Reihe darunter. Nichts wird versteckt, nichts ragt hinaus. */
     @media (max-width: 640px) {
+      /* Anfänger-Handy: alle Ziele der Probier-Zeile mindestens 44 px (UI/UX-Programm 02.09.) */
+      .probier { padding: 8px 10px; }
+      .probier input { min-height: 44px; }
+      .probier button.los { width: 44px; height: 44px; } /* spezifischer als die 38-px-Regel weiter unten */
+      .leiste nav a, .fuss a, .fuss-links a, footer a { min-height: 44px; display: inline-flex; align-items: center; }
+      .schwerpunkte a, .karten a { min-height: 44px; display: inline-flex; align-items: center; }
+      .probier .chip, .schwerpunkte button { min-height: 44px; display: inline-flex; align-items: center; }
       .leiste { gap: 10px 12px; padding: calc(12px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px)); }
       .leiste nav { order: 3; width: 100%; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
-      .leiste nav a { padding: 6px 0; }
+      .leiste nav a { padding: 12px 0; }
       .leiste .rechts { gap: 8px; }
       .leiste .knopf { padding: 10px 12px; font-size: 14.5px; }
     }
