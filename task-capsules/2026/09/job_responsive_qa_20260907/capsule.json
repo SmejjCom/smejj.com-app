@@ -90,5 +90,15 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:security-lock": "ROT bis zum Stempel (auth.css bewusst geaendert) — heilt die Kaskade"
   },
-  "status": "verified"
+  "status": "verified",
+  "nachtrag_20260907_abend": {
+    "stempel": "Security-Lock fuer public/auth/auth.css per Betreiber-Doppelklick gesetzt (Bauzweig 814447a4, Frontend a3d15aa), Anmeldeseite in der iOS-Web-App live bewiesen (Marke unter der Statusleiste).",
+    "neuerBefund": "Echtes iPhone des Betreibers: schwarzer Balken unten in der installierten App (~55 pt), tuerkiser Rahmen endet darueber. Bekannter WebKit-Fehler: Layout-Viewport bleibt nach der ersten Tastatur geschrumpft (iOS 26 unbehoben). Heilung: Reflow bei focusout (display none/offsetHeight/display leer auf .shell), Ort pwa-schnellstart.js (Live != Repo, im SW-Precache -> Start-Lock-Stempel). NICHT gebaut.",
+    "offen": [
+      "Balken-Heilung bauen, im Simulator beweisen (Testbett willkommen.html als Web-App), ausliefern, Start-Lock stempeln",
+      "A-bis-Z angemeldet in der echten iOS-Web-App und Android-TWA: braucht einmal Betreiber-Login (Google) im Simulator und im Emulator-Chrome",
+      "public/chat-bridge.js im Security-Lock weiter rot (fremde Sitzung)"
+    ],
+    "status": "uebergeben an den naechsten Chat (Memory: smejj-ios-pwa-schwarzer-balken-uebergabe-20260907)"
+  }
 }
