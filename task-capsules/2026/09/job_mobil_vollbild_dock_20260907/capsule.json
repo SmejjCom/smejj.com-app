@@ -24,7 +24,7 @@
       "wo": "public/pwa-schnellstart.js (index.html), zusaetzlich in public/willkommen.html eingebunden",
       "was": "Schwarzer Balken unten (~52 pt), der tuerkise Rahmen endete darueber (Betreiber-Screenshot 14:33). WebKit-Fehler in Standalone-Web-Apps: nach dem ersten Oeffnen der Tastatur schrumpft der Layout-Viewport (852 -> 800) und waechst bis zum Neustart nie zurueck; position:fixed und 100dvh haengen daran.",
       "heilung": "Nach dem Schliessen der Tastatur (focusout capture, visualViewport-resize bei vv.height >= innerHeight-2) wird ein synchroner Reflow erzwungen (body display none -> offsetHeight -> zurueck), nur wenn standalone und innerHeight >= 20 px unter der groessten gemessenen Hoehe; hoechstens drei Nachfass-Versuche. Die groesste Hoehe wird nur ohne offene Tastatur gemessen.",
-      "nachweis": "tests/pwa-vollbild-heilung.test.mjs 5/5. Live seit 07.09. (Klon 3e0978c, 7df5cf4). OFFEN: Beweis in einer Standalone-Web-App — der Simulator-Zugriff (Bildschirmsteuerung) wurde in dieser Sitzung verweigert; wiederkehrende App-Nutzer bekommen die Datei erst mit dem CACHE_NAME-Sprung (Doppelklick). Pruefung danach: App oeffnen, Feld antippen, Tastatur schliessen — der Rahmen muss bis zur Unterkante reichen."
+      "nachweis": "tests/pwa-vollbild-heilung.test.mjs 5/5. Live seit 07.09. BEWIESEN 16:51 im iPhone-17-Pro-Simulator (Vollbildsteuerung freigegeben): installierte Web-App → willkommen.html standalone, Hardware-Tastatur abgeschaltet, Bildschirmtastatur im Probier-Feld geoeffnet und geschlossen — der Inhalt reicht danach bis zur Unterkante, kein schwarzer Balken (scratchpad/ios-webapp-nach-tastatur.png)."
     },
     {
       "nr": 3,
@@ -41,6 +41,14 @@
       "was": "Pixel-7-Emulator: der Satz 'Probier es hier …' klebte am Probier-Feld — .held p (0,1,1) schlug .probier-zeile (0,1,0) und setzte margin-top 0. body min-height 100vh.",
       "heilung": ".held .probier-zeile margin-top 12px; min-height 100dvh mit vh-Rueckfall; pwa-schnellstart.js eingebunden (Web-App oeffnet abgemeldet diese Seite).",
       "nachweis": "tablet-willkommen.png (800 px, Abstand sichtbar); tests/mobil-safe-area.test.mjs 8/8; check:markenkette und check:module-queries gruen (Marke v=6 im Zweig, v=7 live wie index.html dort)."
+    },
+    {
+      "nr": 5,
+      "schwere": "mittel",
+      "wo": "public/kompakt.js (Touch-Block pointer:coarse ueber 600 px), public/mobil-dock.js",
+      "was": "Rundgang durch alle 14 Ansichten (Pixel 7 hoch 412 px, quer 863 px, Pixel Tablet 800 px): kein seitlicher Ueberlauf; aber Ziele unter 44 px ueber 600 px auf Touch (Seitenleiste 36, Chat-Zeilen 28, Reiter Start/Code 42, rechte Leiste 36, Profil 42; Start-Dock-Knoepfe 38, Chips 34, Code-Leiste 30/32, Chips 19, Code-Feld 26) und am Handy Banner 42, Profilbild 28x26, Werkzeug-Zeilen 42.",
+      "heilung": "kompakt.js: @media (min-width:601px) and (pointer:coarse) hebt alle genannten Ziele auf 44 px (Runde 2 Seitenleiste u. a., Runde 3 Schreibfeld/Code-Leiste/Banner); mobil-dock.js: Banner, Profilbild-Knopf, .toolbar-Zeilen 44 px. Maus am Schreibtisch unberuehrt.",
+      "nachweis": "tests/touch-ziele.test.mjs; Tablet nach SW-Reset: Seitenleiste 44 px (Runde 2 gestempelt, SW v797). Runde 3 als Modul live (Klon dec89fc), SW v798 wartet auf Doppelklick."
     }
   ],
   "gemessenOhneBefund": [
@@ -50,14 +58,13 @@
   ],
   "nichtGetestet": [
     "Auto mit echter Cline-Anmeldung (nur der Betreiber hat Sitzung + Schluessel; im Emulator liefert der Pfad jetzt den ehrlichen Anmelde-Hinweis statt 'von Hand waehlen')",
-    "Vollbild-Heilung in einer Standalone-Web-App (Simulator-Bildschirmsteuerung verweigert)",
     "Tastatur-Verhalten am Geraet, Drehung, Hintergrund/Rueckkehr in der installierten App",
     "Huawei (kein Emulator vorhanden)"
   ],
   "auslieferung": {
-    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): f53d279 -> 3e0978c (mobil-dock.js, ai/modellRouter.js, pwa-schnellstart.js, chat-actions-menu.js, willkommen.html + assets/) -> 7df5cf4 (willkommen.html mit Heilung) -> 2bb6419 (chatClient.js, sw.js v795, index.html/chat-actions.js/willkommen.html Marken)",
+    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): f53d279 -> 3e0978c (mobil-dock.js, ai/modellRouter.js, pwa-schnellstart.js, chat-actions-menu.js, willkommen.html + assets/) -> 7df5cf4 (willkommen.html mit Heilung) -> 2bb6419 (chatClient.js, sw.js v795, index.html/chat-actions.js/willkommen.html Marken) -> 2b4ccff/9a3e933 (Runde 2, SW v797, Stempel 16:38) -> dec89fc (Runde 3 kompakt.js)",
     "quellzweig": "feature/responsive-qa-2026-09-07: 77b08916, be3fd991, daad77fe (Kaskade)",
-    "offen": "ERLEDIGT 2026-09-07 12:35 UTC per Betreiber-Doppelklick: Start-Lock gestempelt (34 Dateien, Bauzweig 7fc40b9d), Klon 2bb6419 — sw.js smejj-shell-v795, chatClient.js, Marken pwa-schnellstart v8 / chat-actions b49 / chat-actions-menu v6 live",
+    "offen": "Runde 3: 'smejj.com Touch-Ziele Runde 3 stempeln und ausliefern.command' (sw.js v798). Vorher live-Version pruefen — Parallelsitzungen vergeben ebenfalls Versionen (v796 kam von 'Auto ueber Server-Router').",
     "hinweis": "Bis zum Sprung auf smejj-shell-v795 bekommen wiederkehrende App-Nutzer die neuen Module nicht (cache-first Precache); neue Sitzungen und frisch installierte Web-Apps sofort."
   },
   "pruefungen": {
@@ -68,5 +75,5 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — alle Dateien live (SW v795), Start-Lock gestempelt; offen nur der Standalone-Beweis der Balken-Heilung in der installierten App"
+  "status": "verified — Runde 1 und 2 live und gestempelt (SW v797), Balken-Heilung im Simulator bewiesen; Runde 3 (SW v798) wartet auf Doppelklick"
 }

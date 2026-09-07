@@ -39,8 +39,22 @@ Standalone und nur bei >= 20 px Schwund, hoechstens drei Nachfass-Versuche.
 Groesste Hoehe wird nur ohne offene Tastatur gemessen.
 
 **Verifikation:** pwa-vollbild-heilung.test.mjs 5/5; live; SW smejj-shell-v795
-live seit 12:35 UTC; Standalone-Beweis steht aus (Simulator-Bildschirmsteuerung
-in der Sitzung verweigert) — Pruefung in der installierten App des Betreibers.
+live seit 12:35 UTC. BEWIESEN 16:51 im iPhone-17-Pro-Simulator (installierte
+Web-App, Bildschirmtastatur auf/zu): kein Balken, Inhalt bis zur Unterkante.
+
+### [2026-09-07] TOUCH-ZIELE 44 PX AUCH UEBER 600 PX — POINTER:COARSE STATT BREITE (job_mobil_vollbild_dock_20260907)
+
+**Befund:** Die 44-px-Regel galt nur bis 600 px und im flachen Querformat. Tablets
+(800 px) und gedrehte Handys (863 px) bekamen das Schreibtisch-Mass: Seitenleiste
+36, Chat-Zeilen 28, Reiter 42, Schreibfeld-Knoepfe 38, Code-Leiste 30 px.
+
+**Entscheidung:** `kompakt.js` (laeuft ueberall, ohne Marke im Precache) traegt einen
+Block `@media (min-width:601px) and (pointer:coarse)` mit Mindesthoehen 44 px fuer
+alle Ziele. Der Zeiger entscheidet, nicht die Breite — die Maus am Schreibtisch
+bleibt unberuehrt. Jede Modulaenderung braucht den CACHE_NAME-Sprung (Start-Lock).
+
+**Verifikation:** touch-ziele.test.mjs; Pixel Tablet nach SW-Reset Seitenleiste 44 px;
+Runde 2 gestempelt (SW v797), Runde 3 per Doppelklick (v798).
 
 ### [2026-09-07] SAFE-AREA TRAEGT GENAU EIN ELEMENT; LAUFZEIT-STIL SCHLAEGT GESPERRTES BUENDEL (job_mobil_vollbild_dock_20260907)
 
