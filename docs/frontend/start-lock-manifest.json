@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T23:32:22.854Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive, 'Go: alle sechs bauen'): Vollbild-Versatz, Mikrofon in Logofarbe, Chat ohne Seitwaerts-Schieben mit Glas, Modell-Menue volle Breite, Vorlesen fuer eigene Fragen, Ansichten nach dem Login wie eine App — Stempel per Doppelklick; sw.js Precache mobil-ansichten.js, CACHE_NAME live+1, Marken chat-actions-menu/chat-actions +1.",
+  "frozenAt": "2026-09-07T23:32:30.313Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege der Runde 4 holt (Versatz nur Apple, Modell-Menue ueber die Glasbreite, Einstellungs-Zeilen ohne Leere). Stempel per Doppelklick.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "7e8fdb1808d987c7aa61520a30b1e48ae65ed5d008817a1817494c971742f118",
