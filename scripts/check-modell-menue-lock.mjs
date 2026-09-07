@@ -6,15 +6,18 @@
 //    geaendert werden nicht kaputt gemacht werden ohne meine schriftliche
 //    Bestaetigung."
 //
-// WAS "DIESE LISTE" IST — live gemessen am 2026-08-23 im Chrome des
-// Betreibers, angemeldet, an https://smejj.com:
+// WAS "DIESE LISTE" IST — seit dem Betreiber-Auftrag 2026-09-07 (Wortlaut:
+// "Soll hier nur: smejj 1.3 — Spezialfälle / smejj 1.2 — Komplex / smejj 1.1
+// — Alltag / smejj 1.0 — Standard / Auto — Automatisch. Genau so sein."):
 //
-//   Start-Picker -> "Coding-Agent (Cline) >"  (public/cline-model-menu.js)
-//     Auto (aktiv), Gruppe "Cline Pass" mit 12 Modellen, Gruppe "Empfohlen"
-//     mit 3, zuletzt "Alle Modelle & Key -> Einstellungen".
+//   Chat UND Code -> Modellknopf             (public/code-modell-menue.js)
+//     genau diese fuenf Zeilen, in dieser Reihenfolge, sonst nichts.
 //
-//   Code-Flaeche -> Modellknopf              (public/code-modell-menue.js)
-//     Auto (aktiv), smejj 1.0, dann 14 Modelle von Opus 5 bis Mimo V2.5.
+// Bis zum 07.09. war es die Liste vom 2026-08-23: Auto, smejj 1.0, dann der
+// ganze Cline-Katalog (14 Wunschmodelle + Rest). Der Katalog ist nicht weg —
+// er wohnt weiter im Untermenue des alten Start-Pickers (cline-model-menu.js,
+// nicht mehr geoeffnet) und in den Einstellungen; darum bleiben Holer und
+// Route mitgesperrt.
 //
 // WARUM EIN EIGENES MANIFEST und nicht der Start-Lock: derselbe Grund wie
 // beim Einwilligungs-Lock. Der Start-Lock wird bei jedem sw.js-Versionssprung

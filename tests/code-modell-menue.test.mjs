@@ -130,13 +130,19 @@ test("kurzName macht aus einer Katalog-ID einen lesbaren Namen", () => {
 test("modellAnzeige nimmt den Haustext, solange kein Cline-Modell gewaehlt ist", () => {
   umgebungAufbauen();
   assert.equal(modellAnzeige("Schnell"), "Schnell");
+  // smejj 1.0 traegt den Stufentext, 1.1 bis 1.3 ihren Namen (07.09.).
+  localStorage.setItem(MODELL_KEY, "smejj 1.0");
+  assert.equal(modellAnzeige("smejj schnell"), "smejj schnell");
+  localStorage.setItem(MODELL_KEY, "smejj 1.3");
+  assert.equal(modellAnzeige("smejj schnell"), "smejj 1.3");
   // Gesunde Probe: mit Auto-Marke steht "Auto" da, nicht der Haustext.
   localStorage.setItem(MODELL_KEY, "Cline");
   localStorage.setItem(CLINE_MODEL_KEY, AUTO_MARKE);
   assert.equal(modellAnzeige("Schnell"), "Auto");
-  // Und mit einem echten Katalog-Modell dessen Kurzname.
+  // Und mit einem frueher gewaehlten Katalog-Modell dessen lesbarer Name
+  // (kurzName, seit 07.09. ohne die feste Kurzliste).
   localStorage.setItem(CLINE_MODEL_KEY, "anthropic/claude-opus-5");
-  assert.equal(modellAnzeige("Schnell"), "Opus 5");
+  assert.equal(modellAnzeige("Schnell"), "Claude Opus 5");
 });
 
 test("oeffneModellMenue zeichnet das Menue und die Wahl greift wirklich", async () => {
@@ -147,22 +153,49 @@ test("oeffneModellMenue zeichnet das Menue und die Wahl greift wirklich", async 
   const menue = document.getElementById("codeModellMenue");
   assert.ok(menue, "das Menue wurde nicht in das Dokument gehaengt");
   const knoepfe = alleKnoten(menue).filter((k) => k.tagName === "BUTTON");
-  // Zwei Zeilen sind das ehrliche Minimum: Auto und smejj 1.0 stehen fest,
-  // die Katalog-Modelle kommen erst mit einer Antwort dazu (hier leer).
-  assert.ok(knoepfe.length >= 2, `zu wenige Menuezeilen: ${knoepfe.length}`);
-
-  // Die Auto-Zeile steht ganz oben (Betreiber-Auftrag 2026-08-18).
-  const beschriftung = (k) => alleKnoten(k).map((n) => n.textContent).filter(Boolean).join(" ");
-  assert.match(beschriftung(knoepfe[0]), /Auto/);
+  // Genau FUENF Zeilen (Betreiber 2026-09-07: "Soll hier nur ... Genau so
+  // sein") — nicht mehr, nicht weniger, kein Katalog dahinter.
+  // Nur der Zeilentext (<b>), nicht der Haken rechts.
+  const beschriftung = (k) => alleKnoten(k).find((n) => n.tagName === "B")?.textContent;
+  assert.deepEqual(knoepfe.map(beschriftung), [
+    "smejj 1.3 — Spezialfälle",
+    "smejj 1.2 — Komplex",
+    "smejj 1.1 — Alltag",
+    "smejj 1.0 — Standard",
+    "Auto — Automatisch"
+  ]);
 
   // AUSLOESEN, nicht nur zeichnen: der Klick muss den Speicher setzen und
   // den Rueckruf feuern — genau die zwei Draehte, die beim Auslagern
-  // haetten reissen koennen.
-  knoepfe[0].click();
+  // haetten reissen koennen. Auto ist die LETZTE Zeile.
+  knoepfe[4].click();
   assert.equal(localStorage.getItem(CLINE_MODEL_KEY), AUTO_MARKE);
   assert.equal(localStorage.getItem(MODELL_KEY), "Cline");
   assert.equal(neuGezeichnet, 1, "beiWahl wurde nicht gerufen — die Anzeige bliebe stehen");
   assert.equal(document.getElementById("codeModellMenue"), null, "das Menue blieb nach der Wahl offen");
+});
+
+test("smejj 1.2 waehlen setzt den Namen als Wahl — und das Menue zeigt ihn beim naechsten Oeffnen als gewaehlt", async () => {
+  const { chip, ereignisse } = umgebungAufbauen();
+  await oeffneModellMenue({ chip });
+  const knoepfe = alleKnoten(document.getElementById("codeModellMenue")).filter((k) => k.tagName === "BUTTON");
+  knoepfe[1].click();
+  assert.equal(localStorage.getItem(MODELL_KEY), "smejj 1.2");
+  assert.ok(ereignisse.some((e) => e.type === "smejj:model-selected" && e.detail?.model === "smejj 1.2"), "model-selected muss den Namen tragen");
+  // Anzeige: smejj 1.2 zeigt seinen Namen, nicht den Stufentext.
+  assert.equal(modellAnzeige("smejj schnell"), "smejj 1.2");
+  await oeffneModellMenue({ chip });
+  const haken = alleKnoten(document.getElementById("codeModellMenue")).filter((k) => k.tagName === "BUTTON").map((k) => k.getAttribute("aria-checked"));
+  assert.deepEqual(haken, ["false", "true", "false", "false", "false"]);
+});
+
+test("ein Name, den es nicht mehr gibt, wird still zu smejj 1.0 (kaputte Probe: Ox Alpha)", async () => {
+  const { chip } = umgebungAufbauen();
+  localStorage.setItem(MODELL_KEY, "Ox Alpha");
+  await oeffneModellMenue({ chip });
+  assert.equal(localStorage.getItem(MODELL_KEY), "smejj 1.0");
+  const haken = alleKnoten(document.getElementById("codeModellMenue")).filter((k) => k.tagName === "BUTTON").map((k) => k.getAttribute("aria-checked"));
+  assert.deepEqual(haken, ["false", "false", "false", "true", "false"]);
 });
 
 test("ohne Anzeige-Chip entsteht kein Menue (kaputte Probe)", async () => {
@@ -222,13 +255,13 @@ test("ist die Spalte schmaler als 120 px, schiebt es ueber den Knopf hinaus", ()
   assert.equal(264 - plan.right - plan.maxWidth, 204, "linke Kante sitzt auf der Grenze");
 });
 
-test("die Klemme haengt an JEDEM Fuellen, nicht nur am ersten", () => {
-  // Die Modellzeilen kommen asynchron aus dem Katalog; das Menue waechst dabei
-  // nach oben UND nach links. Wer nur einmal klemmt, klemmt das leere Menue.
+test("zu jeder Kappe nach oben gehoert eine nach links", () => {
+  // Seit 07.09. fuellt sich das Menue nicht mehr asynchron (fuenf feste
+  // Zeilen) — eine Kappe je Richtung reicht, aber beide muessen da sein.
   const quelle = readFileSync(new URL("../public/code-modell-menue.js", import.meta.url), "utf8");
   const obenKappen = (quelle.match(/^[ \t]*imFensterHalten\(\);$/gm) || []).length;
   const linksKappen = (quelle.match(/^[ \t]*inDerSpalteHalten\(\);$/gm) || []).length;
-  assert.ok(obenKappen >= 3, `zu wenige Kappen oben: ${obenKappen}`);
+  assert.ok(obenKappen >= 1, `keine Kappe oben: ${obenKappen}`);
   assert.equal(linksKappen, obenKappen, "jede Kappe nach oben braucht eine nach links");
 });
 

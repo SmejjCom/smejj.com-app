@@ -67,6 +67,21 @@ test("fast lane steps aside when an explicit deep-lane model is requested", asyn
   }
 });
 
+test("smejj 1.2 und 1.3 verlangen immer die tiefe Spur — 1.0 und 1.1 nicht (Betreiber 2026-09-07)", async () => {
+  // "smejj 1.3 — Spezialfälle, smejj 1.2 — Komplex": wer sie waehlt, bekommt
+  // nie die Groq-Schnellspur, auch bei einer kurzen Frage. Sonst waere die
+  // Wahl im Menue nur eine Beschriftung.
+  for (const schwer of ["smejj 1.2", "smejj 1.3", " smejj 1.3 "]) {
+    assert.equal(bridge.istSchwereSmejjVersion(schwer), true, schwer);
+    const handled = await bridge.streamFastLane({}, [{ role: "user", content: "Hallo" }], "chat", schwer, "schnell");
+    assert.equal(handled, false, `${schwer} muss die Schnellspur abgeben — auch bei Stufe schnell`);
+  }
+  // Gesunde Gegenprobe: die leichten Namen und Fremdes sind KEINE schwere Version.
+  for (const leicht of ["smejj 1.0", "smejj 1.1", "smejj 1.23", "smejj", "", "GLM-5.2"]) {
+    assert.equal(bridge.istSchwereSmejjVersion(leicht), false, leicht);
+  }
+});
+
 test("weather fast path detects weather tasks, location and day offset", () => {
   assert.equal(wetter.isWeatherTask("Wie ist das Wetter morgen in Berlin?"), true);
   assert.equal(wetter.isWeatherTask("What is the weather in Paris tomorrow?"), true);

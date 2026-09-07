@@ -86,7 +86,7 @@ const RATE_GLOBAL = boundedInteger(process.env.SMEJJ_PUBLIC_AI_GLOBAL_RATE_PER_M
 const clientLimiter = createWindowLimiter({ max: RATE_PER_CLIENT, windowMs: RATE_WINDOW_MS });
 const globalLimiter = createWindowLimiter({ max: RATE_GLOBAL, windowMs: RATE_WINDOW_MS, maxKeys: 1 });
 const STARTED_AT = new Date();
-const BRIDGE_VERSION = "20260904-v149-oberste-regel";
+const BRIDGE_VERSION = "20260907-v150-smejj-familie";
 
 // Premium-Stimme: ausgelagerte Handler (siehe chat-bridge-voice-tts.js).
 // Funktionsdeklarationen unten sind gehoben — der Aufruf hier oben ist sicher.
@@ -476,6 +476,11 @@ export function fastLaneEnabled() {
 // FAIL-SAFE (Bedingung a der Freigabe): Jeder unbekannte Wert — und das
 // Fehlen des Feldes — ergibt "" und damit exakt das bisherige Verhalten.
 // Aeltere Frontends, die nichts davon wissen, aendern sich also nicht.
+/** smejj 1.2 und 1.3 (Komplex, Spezialfaelle) verlangen immer die tiefe Spur. */
+export function istSchwereSmejjVersion(requestedModel) {
+  return /^smejj 1\.[23]$/i.test(String(requestedModel || "").trim());
+}
+
 export function leseStufe(body) {
   const roh = String(body?.stufe || body?.preferences?.stufe || "").trim().toLowerCase();
   return roh === "schnell" || roh === "auto" || roh === "gruendlich" ? roh : "";
@@ -489,6 +494,11 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
   // "gruendlich" gibt die Schnellspur immer ab; "schnell" nimmt sie immer.
   // Ohne Stufe gelten unveraendert die bisherigen Regeln.
   if (stufe === "gruendlich") return false;
+  // Betreiber 2026-09-07: "smejj 1.3 — Spezialfälle, smejj 1.2 — Komplex".
+  // Wer eines der beiden waehlt, bekommt IMMER die tiefe Spur — auch wenn die
+  // Frage kurz aussieht; das ist der Unterschied zu 1.0/1.1, bei denen die
+  // Automatik entscheidet. Sonst waere die Wahl nur eine Beschriftung.
+  if (istSchwereSmejjVersion(requestedModel)) return false;
   if (stufe !== "schnell"
     && (/glm|kimi|cline|\box\b/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))))) return false;
   const controller = new AbortController();

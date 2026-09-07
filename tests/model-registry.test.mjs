@@ -342,7 +342,9 @@ test("der Markenname zeigt auf den konfigurierten Standard, nicht auf einen Anbi
   const env = { ...KETTEN_ENV, SMEJJ_MODEL_DEFAULT: "kimi-k2-7" };
   // Die Grossschreibung wird zur Laufzeit gebildet — hingeschrieben verstiesse
   // sie gegen die Namensregel (die Plattform heisst ausschliesslich smejj.com).
-  for (const marke of ["smejj 1.0", "smejj code", "smejj 1.0".toUpperCase(), "  smejj 1.0  "]) {
+  // Seit 2026-09-07 gehoert die ganze Familie dazu (Betreiber: smejj 1.3 —
+  // Spezialfälle, 1.2 — Komplex, 1.1 — Alltag, 1.0 — Standard).
+  for (const marke of ["smejj 1.0", "smejj 1.1", "smejj 1.2", "smejj 1.3", "smejj code", "smejj 1.0".toUpperCase(), "  smejj 1.0  "]) {
     const selection = resolveModelSelection({ requestedModel: marke, profile: "coding", env });
     assert.equal(selection.selectedModelId, "kimi-k2-7", `Marke ${JSON.stringify(marke)}`);
     assert.equal(selection.reason, "default_model", `Marke ${JSON.stringify(marke)}`);

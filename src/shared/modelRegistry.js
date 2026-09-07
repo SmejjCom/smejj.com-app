@@ -14,7 +14,11 @@ export const AUTO_MODEL_ID = "auto";
 // `selectedName === "smejj 1.0" && model.id === registry.defaultModelId` —
 // die Marke bezeichnet dort schon das Standardmodell. Nur die Alias-Tabelle
 // widersprach. Ein Markenname ist keine Anbieterwahl.
-export const BRAND_ALIASES = Object.freeze(new Set(["smejj 1.0", "smejj code"]));
+// Markennamen: "das Modell der Plattform", keine Anbieterwahl. Seit 2026-09-07
+// gehoert die ganze Familie dazu (Betreiber: "smejj 1.3 — Spezialfälle, 1.2 —
+// Komplex, 1.1 — Alltag, 1.0 — Standard"). Welche Version dahinter antwortet,
+// sagt das Versionsregister (Alias "smejj", Nr. 83) — nicht der Name.
+export const BRAND_ALIASES = Object.freeze(new Set(["smejj 1.0", "smejj 1.1", "smejj 1.2", "smejj 1.3", "smejj code"]));
 
 const ENABLED_VALUES = new Set(["1", "true", "yes", "on"]);
 const DISABLED_VALUES = new Set(["0", "false", "no", "off"]);
