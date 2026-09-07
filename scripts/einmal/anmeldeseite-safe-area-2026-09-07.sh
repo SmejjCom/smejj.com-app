@@ -59,11 +59,14 @@ behalten() {
 aufraeumen() { cd "$QUELLE" 2>/dev/null; git worktree remove --force "$BAUM" 2>/dev/null; }
 
 echo "2/8 QA-Commits uebernehmen (nur die, die der Bauzweig noch nicht hat) ..."
-FEHLEND="$(git rev-list --reverse "origin/$ZWEIG..origin/$QA_ZWEIG" -- public/willkommen.html public/programmieren.html public/auth/auth.css tests/mobil-safe-area.test.mjs package.json)"
+# NUR die QA-Commits dieser Sitzung (am Betreff erkennbar) — der QA-Zweig sitzt
+# auf ox-alpha-server-fix, dessen aeltere Commits der Bauzweig nicht hat; die
+# gehoeren nicht hierher (Trockenlauf 2026-09-07 haette sie mitgenommen).
+FEHLEND="$(git rev-list --reverse -F --grep='fix(mobil)' --grep='fix(tablet)' --grep='test(mobil)' "origin/$ZWEIG..origin/$QA_ZWEIG")"
 if [ -z "$FEHLEND" ]; then
   echo "    nichts zu uebernehmen — der Bauzweig hat die Commits schon"
 else
-  for C in $FEHLEND; do
+  for C in ${(f)FEHLEND}; do
     if git merge-base --is-ancestor "$C" "origin/$ZWEIG"; then continue; fi
     git cherry-pick -x "$C" >/dev/null || { echo "ABBRUCH: cherry-pick $C hat Konflikte"; git cherry-pick --abort; behalten 5; }
     echo "    + $(git log --oneline -1)"
