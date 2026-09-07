@@ -5,6 +5,14 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-07] SAFE-AREA NUR IN DER INSTALLIERTEN APP SICHTBAR — ECHTE APP IN SIMULATOR UND EMULATOR TESTEN (job_responsive_qa_20260907)
+
+Capsule: `task-capsules/2026/09/job_responsive_qa_20260907/capsule.json`.
+**Entscheidung.** Mobil-QA laeuft gegen die ECHTE App: iOS-Web-App vom Home-Bildschirm (iPhone-17-Pro-Simulator) und die signierte Android-TWA (com.smejj.app, Pixel-7- und Pixel-Tablet-Emulator, per adb forward + Chrome-DevTools abgefragt) — nicht gegen den Browser. Jede eigenstaendige Seite mit `viewport-fit=cover` traegt `env(safe-area-inset-*)`; Waechter `tests/mobil-safe-area.test.mjs` in check:frontend.
+**Begruendung.** Im Browser sind die Safe-Area-Werte 0 — drei Fehler (Logo unter der Uhrzeit auf willkommen.html, Marke hinter der Dynamic Island auf den Auth-Seiten, 439-px-Leiste auf programmieren.html) waren dort unsichtbar und in der App sofort da. 152 Messpunkte der Browser-Messung hatten null Befunde.
+**Verifikation.** Live nachgemessen (Frontend-Klon dbcb53c): iOS-App Logo unter der Statusleiste, Android innerWidth = scrollWidth = 412 auf 14 Seiten, Tablet 800/834 einzeilige Leiste. Offen: auth.css unter Security-Lock — Doppelklick `smejj.com Anmeldeseite Safe-Area stempeln und ausliefern.command`.
+
+
 ### [2026-09-04] 100%-SCHUTZ ALS NUMMERN-MANIFEST, NICHT ALS DATEI-HASH; ADMIN-MENUE NUMMERIERT; LOGO IST DER KNOPF (job_admin_nummern_logo_20260904)
 
 Capsule: `task-capsules/2026/09/job_admin_nummern_logo_20260904/capsule.json`.

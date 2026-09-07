@@ -1,0 +1,94 @@
+{
+  "jobId": "job_responsive_qa_20260907",
+  "createdAt": "2026-09-07T17:30:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag 2026-09-07: 100 % Responsive, echte App in Simulator und Emulator)",
+  "title": "Responsive- und Mobil-QA von A bis Z: echte iOS-Web-App im iPhone-17-Pro-Simulator, echte Android-App (TWA) im Pixel-7- und Pixel-Tablet-Emulator, iPad Pro 11, Desktop-Browser",
+  "ziel": "smejj.com als installierte App (nicht im Browser) auf iOS und Android durchklicken, alle Bildschirmbreiten messen, gefundene Fehler sofort beheben, live ausliefern, nachmessen.",
+  "testumgebung": {
+    "ios": "Xcode-Simulator iPhone 17 Pro (iOS 26.5, 402x874 pt) — Web-App ueber Safari 'Zum Home-Bildschirm' (display: standalone, Vollbild); zusaetzlich Safari mit angemeldeter Betreiber-Sitzung; iPad Pro 11-inch (M5) Safari hoch und quer",
+    "android": "Android-Emulator Pixel 7 (API 35, 412x915 dp, 1080x2400) mit der SIGNIERTEN App aus dem Play-Paket (~/Downloads/'smejj.com - Google Play package.zip', com.smejj.app, Trusted Web Activity, assetlinks verifiziert: Vollbild ohne Adressleiste); Pixel Tablet (2560x1600, 320 dpi, von Hand angelegte AVD smejj_tablet) hoch und quer",
+    "androidSteuerung": "adb forward tcp:9222 localabstract:chrome_devtools_remote — die echte App per Chrome-DevTools-Protokoll abfragen (Breite, Ueberstand, Konsolenfehler, Offline, 3G); Tipps per adb shell input tap",
+    "iosSteuerung": "xcrun simctl openurl/io screenshot (ohne Klicks); Klicks per Bildschirmsteuerung auf das Simulator-Fenster; Text per 'xcrun simctl pbcopy booted' + Einsetzen (Hardware-Tastatur loest Akzent-Popups aus)",
+    "desktop": "Chrome headless (scripts/testing/messe_responsive.mjs, 8 Breiten 320..1920, 19 Ansichten), Browser-Fenster 1920x1080 und 375x812, Firefox headless 1440, Safari macOS (Bildschirmfoto)"
+  },
+  "befunde": [
+    {
+      "nr": 1,
+      "schwere": "hoch (nur in der installierten App sichtbar)",
+      "wo": "public/willkommen.html als iOS-Web-App",
+      "was": "Logo und Uhrzeit lagen uebereinander; Knoepfe und Links unter der Statusleiste — viewport-fit=cover ohne env(safe-area-inset-*).",
+      "heilung": "Leiste und Fuss mit Safe-Area-Raendern (calc(14px + env(safe-area-inset-top))), Logo mit festen Massen; live 2026-09-07 (Frontend-Klon f1ddc49)",
+      "nachweis": "scratchpad/ios-pwa-willkommen-nachher.png — Logo unter der Statusleiste"
+    },
+    {
+      "nr": 2,
+      "schwere": "hoch (nur in der installierten App sichtbar)",
+      "wo": "public/auth/auth.css (Anmelde- und Registrierseite) als iOS-Web-App",
+      "was": "Marke 'smejj.com' verschwand hinter der Dynamic Island; der Home-Link war unerreichbar.",
+      "heilung": ".auth-shell mit Safe-Area-Raendern — Datei steht unter dem Security-Lock, Auslieferung NUR per Betreiber-Doppelklick: 'smejj.com Anmeldeseite Safe-Area stempeln und ausliefern.command' (Kaskade scripts/einmal/anmeldeseite-safe-area-2026-09-07.sh)",
+      "nachweis": "scratchpad/ios-pwa-nachher.png; nach dem Stempel: curl -s https://smejj.com/auth/auth.css | grep -c safe-area"
+    },
+    {
+      "nr": 3,
+      "schwere": "mittel",
+      "wo": "public/programmieren.html in der Android-App (412 px)",
+      "was": "Leiste 439 px breit auf 412 px — 'Hilfe' hing rechts aus dem Bild, 'Fuer Programmierer' brach zweizeilig um; die Handy-Regel von willkommen.html fehlte.",
+      "heilung": "Dieselbe @media (max-width: 640px)-Regel wie auf willkommen.html + Safe-Area; live (nav 380 px, innerWidth 412)",
+      "nachweis": "scratchpad/android-programmieren.png (vorher) und android-programmieren-nachher.png"
+    },
+    {
+      "nr": 4,
+      "schwere": "niedrig",
+      "wo": "willkommen.html/programmieren.html auf iPhone 17 Pro (402 pt) und Chrome 375",
+      "was": "Logo + zwei Knoepfe ~396 pt breit — die Knoepfe brachen unter das Logo (Roboto auf Android ist schmaler, dort 312 px).",
+      "heilung": "Unter 640 px: Logo 22 px, Knoepfe 14 px/9x10 px Polster; live, nachgemessen auf iOS Safari (eine Reihe) und Android (A top=17, DIV top=12)",
+      "nachweis": "scratchpad/ios-safari-willkommen-nachher.png"
+    },
+    {
+      "nr": 5,
+      "schwere": "niedrig",
+      "wo": "Pixel Tablet hoch (800 px) und iPad Pro 11 (834 pt)",
+      "was": "Logo + fuenf Links + zwei Knoepfe bis ~850 px zu breit fuer eine Reihe; die Knoepfe rutschten allein in Reihe zwei.",
+      "heilung": "@media (max-width: 900px): Links in eigener Reihe unter Logo und Knoepfen; live",
+      "nachweis": "scratchpad/tablet-hoch-nachher.png, ipad-willkommen-nachher.png"
+    }
+  ],
+  "gemessenOhneBefund": [
+    "Responsive-Messung live: 152 Messpunkte (8 Breiten x 19 Ansichten), 0 Ueberstaende, 0 abgeschnittene Elemente (scripts/testing/messe_responsive.mjs)",
+    "Touch-Ziele live (375 px, coarse): alle 44-px-Ziele eingehalten, 1 Hinweis (linkes Menue offen: Startprompt liegt unter nav — kein Verstoss)",
+    "Android-App: willkommen, login, register, programmieren, hilfe, entwickler, agb, datenschutz, impressum, widerruf, status, verlauf, danke-abo, 404 — innerWidth = scrollWidth = 412, keine Konsolenfehler (entwickler.html: ein 401 fuer den Schluessel-Status ohne Anmeldung — erwartet)",
+    "Android-App Querformat 863x360: kein Ueberstand; Tastatur: E-Mail-Feld bleibt sichtbar; Hintergrund/Rueckkehr: Seite bleibt erhalten; Google-Anmeldung oeffnet accounts.google.com im Custom Tab; Probier-Feld der Startseite fuehrt zur Registrierung",
+    "Android-App offline: Chrome-Fehlerseite 'You're offline' fuer die Willkommensseite (nicht precached — nur die App-Huelle ist offline vorgesehen); 3G (50 kB/s, 400 ms): Anmeldeseite laedt",
+    "iOS Safari angemeldet: Chat senden ('Was ist 3 mal 4?' -> '3 x 4 = 12'), Seitenleiste, Einstellungen, Konto, KI-Modelle, Verlauf (219), Dateien — alles bedienbar, Eingabefeld bleibt ueber der Tastatur",
+    "iOS Web-App Querformat: Anmeldeseite laeuft mit; Home-Indicator ueberdeckt nichts Bedienbares",
+    "iPad Pro 11 hoch/quer: Willkommen und Anmeldung sauber",
+    "Desktop 1920x1080, Firefox 1440, Safari macOS: keine Konsolenfehler, Leiste einzeilig",
+    "Chat-Bilder: CSP-Meldungen 'img-src' in der Konsole sind Laerm — chat-medien.js holt die Bilder per fetch und zeigt sie als blob: (0 api-Bilder, 2 blob-Bilder im DOM)"
+  ],
+  "performance": {
+    "quelle": "scripts/testing/measure_web_vitals.mjs, 5 Laeufe, Chrome headless, Leitung des Betreibers",
+    "kalt": "TTFB p75 1621 ms (min 133), LCP p75 3996 ms (min 600), CLS 0.015, INP 32 ms, Gewicht 291 kB",
+    "warm": "TTFB p75 2155 ms (min 116), LCP p75 2184 ms (min 156), CLS 0.016, INP 24 ms",
+    "bewertung": "LCP-Budget (1500 ms) verfehlt — die Minima (133/600 ms) zeigen, dass die Seite selbst schnell ist; die Streuung bis 4,5 s TTFB ist die Leitung (siehe Memory 'Netz des Betreibers ist der Flaschenhals'). Kein Deploy dieser Sitzung hat das Gewicht veraendert (+0,4 kB CSS)."
+  },
+  "nichtGetestet": [
+    "Registrierung/Anmeldung mit Passwort auf den Geraeten — die Sitzung darf keine Zugangsdaten eintippen und keine Konten anlegen (Sicherheitsregel). Geprueft: Formulare, Tastatur, Sichtbarkeit, Google-Weiterleitung bis accounts.google.com.",
+    "Angemeldete Ablaeufe (Chat, Upload, Mikrofon) in der ANDROID-App — der Emulator hat kein Konto; dieselben Ablaeufe wurden in iOS Safari mit der Betreiber-Sitzung und im Desktop-Browser geprueft. Restrisiko: Android-spezifisches Verhalten des angemeldeten Chats.",
+    "Echtes Mikrofon/Lautsprecher — Simulator und Emulator haben kein Mikrofon; Sprachfunktionen bleiben Restrisiko.",
+    "Datei-Upload auf den Geraeten — Dateiauswahl braucht die System-Dateiwahl mit echten Dateien im Geraet; Ansicht 'Dateien' geprueft (Knoepfe erreichbar).",
+    "Edge — nicht installiert; Chrome (gleiche Engine) geprueft."
+  ],
+  "auslieferung": {
+    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): d9d119a -> f1ddc49 -> 44f49df -> dbcb53c (willkommen.html, programmieren.html + assets/)",
+    "quellzweig": "feature/responsive-qa-2026-09-07 (auf origin), cherry-pick auf den Bauzweig konfliktfrei geprobt",
+    "offen": "auth.css (Security-Lock) — Betreiber-Doppelklick",
+    "rollback": "Tag stand-2026-09-07-vor-responsive-qa; Frontend per git revert im Klon"
+  },
+  "pruefungen": {
+    "tests/mobil-safe-area.test.mjs": "8/8 (neu, in check:frontend)",
+    "check:frontend": "OK (alle Suiten + precache-imports 184 Module + modul-syntax 248 Module)",
+    "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
+    "check:security-lock": "ROT bis zum Stempel (auth.css bewusst geaendert) — heilt die Kaskade"
+  },
+  "status": "verified"
+}
