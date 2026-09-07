@@ -42,9 +42,29 @@ test("Katalog-Anbieter aktivieren sich nur per Key und respektieren Profil-Overr
   assert.equal(providerBackendFromEnv("unbekannt", { SMEJJ_LLM_UNBEKANNT_API_KEY: "k" }), null);
 });
 
-test("zhipu-Default ist glm-5.2 (GLM bleibt Qualitaetsmodell)", () => {
+test("zhipu-Default ist ein Modell, das der Anbieter auch bedient", () => {
+  // Bis 2026-09-07 stand hier fest "glm-5.2". Live gemessen lehnt der Anbieter
+  // genau das ab: 429 "Insufficient balance or no resource package", und im
+  // Klartext "Weekly/Monthly Limit Exhausted. Your limit will reset at
+  // 2026-09-10 17:06:51". Dasselbe gilt fuer glm-4.6 und glm-4.5-air. Weil
+  // kein anderer Anbieter Schluessel hat, war die tiefe Spur damit komplett
+  // tot — der Test war gruen, das Produkt kaputt.
+  //
+  // Darum prueft er jetzt die Zusicherung, auf die es ankommt: der Default
+  // muss aus der Liste der Modelle stammen, die der Anbieter TATSAECHLICH
+  // bedient. glm-4.5-flash laeuft im Freikontingent. Kommt das Kontingent
+  // zurueck (fruehestens 10.09.), darf glm-5.2 wieder eingetragen werden —
+  // dann bleibt der Test gruen, ohne dass jemand ihn anfassen muss.
+  const BEDIENT = new Set(["glm-4.5-flash", "glm-5.2", "glm-4.6", "glm-4.5-air"]);
   const z = providerBackendFromEnv("zhipu", { SMEJJ_LLM_ZHIPU_API_KEY: "k" }, "coding");
-  assert.equal(z.model, "glm-5.2");
+  assert.ok(BEDIENT.has(z.model), `unbekanntes zhipu-Modell: ${z.model}`);
+  // Der heutige Stand, damit eine stille Ruecknahme auffaellt.
+  assert.equal(z.model, "glm-4.5-flash");
+  // Und alle drei Profile ziehen gleich — sonst faellt eine Spur still zurueck.
+  for (const profil of ["default", "coding", "reasoning"]) {
+    const b = providerBackendFromEnv("zhipu", { SMEJJ_LLM_ZHIPU_API_KEY: "k" }, profil);
+    assert.ok(BEDIENT.has(b.model), `${profil}: ${b.model}`);
+  }
 });
 
 test("Reihenfolge: Standard beginnt mit salad,openrouter; Env-Order uebersteuert", () => {
