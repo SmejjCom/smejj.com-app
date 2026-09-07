@@ -1,6 +1,7 @@
 #!/bin/zsh
 # smejj.com — Einmal-Kaskade fuer den Betreiber-Doppelklick (2026-09-07, Runde 4b):
-# NUR ein Service-Worker-Sprung (CACHE_NAME live+1) mit Start-Lock-Stempel.
+# NUR ein Service-Worker-Sprung (CACHE_NAME live+1) mit Start-Lock-Stempel. Wiederverwendbar:
+# jeder Klick nimmt live+1 und liefert die aktuell live liegenden Module an die App aus.
 #
 # WARUM: Nach dem Runde-4-Stempel (18:45) kamen drei Nachzuege an UNGESPERRTEN
 # Modulen, die live sind, aber wiederkehrende App-Nutzer erst mit dem naechsten
@@ -33,9 +34,11 @@ KLON_SW="$(git -C "$KLON" show origin/main:sw.js | grep -o 'smejj-shell-v[0-9]*'
 [ -n "$LIVE_SW" ] && [ "$LIVE_SW" = "$KLON_SW" ] || { echo "ABBRUCH: live ($LIVE_SW) und Klon ($KLON_SW) uneins — kurz warten, neu klicken"; exit 3; }
 SW_NEU="smejj-shell-v$(( ${LIVE_SW#smejj-shell-v} + 1 ))"
 echo "    $LIVE_SW -> $SW_NEU"
-# Die Nachzuege muessen live sein, sonst ist der Sprung nutzlos
-curl -s -m 20 "https://smejj.com/assets/mobil-dock.js?n=$RANDOM" | grep -q "model-picker.model-picker{position:static}" || { echo "ABBRUCH: mobil-dock.js live traegt die Menue-Regel noch nicht (Pages baut?)"; exit 3; }
-curl -s -m 20 "https://smejj.com/assets/mobil-ansichten.js?n=$RANDOM" | grep -q "settings-row.settings-row{flex-wrap:wrap" || { echo "ABBRUCH: mobil-ansichten.js live traegt die flex-wrap-Zeile noch nicht"; exit 3; }
+# Die Module muessen live GENAU die Klon-Fassung sein, sonst ist der Sprung nutzlos (Pages baut noch)
+for f in mobil-dock.js mobil-ansichten.js kompakt.js; do
+  a="$(git -C "$KLON" show origin/main:$f | shasum -a 256 | cut -c1-16)"; b="$(curl -s -m 20 "https://smejj.com/assets/$f?n=$RANDOM" | shasum -a 256 | cut -c1-16)"
+  [ "$a" = "$b" ] || { echo "ABBRUCH: $f live ($b) ist noch nicht die Klon-Fassung ($a) — Pages baut, kurz warten und neu klicken"; exit 3; }
+done
 git worktree prune
 git worktree add -q --detach "$BAUM" "origin/$ZWEIG" || { echo "ABBRUCH: Arbeitsbaum"; exit 4; }
 ln -sfn "$QUELLE/node_modules" "$BAUM/node_modules"

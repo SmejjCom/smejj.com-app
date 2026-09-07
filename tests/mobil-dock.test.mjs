@@ -92,5 +92,6 @@ test("Vollbild-Versatz: gemessen wird nur standalone, hochkant, ohne Tastatur, p
   assert.equal(m.misstVersatz({ ...basis, innerHeight: 600 }), 0, "252 px sind kein Statusleisten-Versatz");
   assert.equal(m.misstVersatz({ ...basis, innerHeight: 852 }), 0);
   assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{bottom:calc\(-1 \* var\(--vollbild-fehl,0px\)\)\}/);
-  assert.match(m.REGELN, /#code\.view\.is-active\.is-active\.is-active\{height:calc\(100dvh \+ var\(--vollbild-fehl,0px\)/);
+  // Betreiber 22:32: mit dem Fehlbetrag auf den dvh-Flaechen rutschte das Dock unter den Schirm — 100dvh ist die volle Hoehe.
+  assert.doesNotMatch(m.REGELN, /100dvh \+ var\(--vollbild-fehl/, "der Fehlbetrag gilt nur fuer position:fixed, nie fuer dvh-Hoehen");
 });
