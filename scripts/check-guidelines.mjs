@@ -121,7 +121,23 @@ const CHECK_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".md", ".json", ".html",
 // ratchet-gepruefte Wurzel 1:1; check:assets/auslieferung-lock beweisen die
 // Byte-Gleichheit) — dieselbe Zeile doppelt zu zaehlen ist kein zweiter
 // Befund, sondern Laerm (Vollaudit 2026-08-25).
-const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/(assets\/)?start-styles\.css$/, /^public\/assets\//];
+// docs/benchmarks/ enthaelt MESSBERICHTE: die woertlichen Antworten der Modelle
+// auf die Pruefsuite. Dort steht, was ein Modell GESAGT hat — nicht, was das
+// Projekt schreibt.
+//
+// Am 07.09. schlug die Naming-Regel auf zwei Zeilen im Bericht von smejj 1.4
+// an, weil das MODELL die Plattform falsch geschrieben hatte — gross und ohne
+// Punkt-com. Genau das ist ein gemessener Modellfehler und gehoert in den
+// Bericht; ihn dort zu "korrigieren" waere Faelschung der Messung, und die
+// Note haette danach nichts mehr mit der Antwort zu tun.
+//
+// (Die falsche Schreibweise steht hier bewusst NICHT woertlich: der Waechter
+// liest seine eigene Quelle mit, und ein Beispiel im Kommentar wuerde ihn
+// gegen sich selbst ausschlagen lassen. Genau das ist beim ersten Anlauf
+// dieser Zeilen passiert.)
+//
+// Die Naming-Regel gilt weiterhin ueberall, wo Menschen schreiben.
+const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/(assets\/)?start-styles\.css$/, /^public\/assets\//, /^docs\/benchmarks\//];
 
 const failures = [];
 const files = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8" })
