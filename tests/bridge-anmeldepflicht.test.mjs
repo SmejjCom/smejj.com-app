@@ -128,6 +128,24 @@ test("das Frontend schickt den Token ueberall mit, wo es die Bruecke ruft", () =
   assert.match(strom, /token \? \{ Authorization: `Bearer \$\{token\}` \} : \{\}/);
 });
 
+test("der Chat erneuert den abgelaufenen Ausweis lautlos und wiederholt einmal (07.09.)", () => {
+  // Der kurze Zugangs-Ausweis lebt nur 10 Minuten; ohne stillen Refresh war der
+  // Chat danach tot ("Du bist nicht mehr angemeldet"), obwohl die Sitzung noch
+  // galt. Gemessen: nur 19,7 % der Anfragen kamen mit gueltigem Ausweis durch.
+  const strom = fs.readFileSync("public/ai/chat-stream.js", "utf8");
+  assert.match(strom, /export async function erneuereZugangsToken/, "die Refresh-Funktion muss existieren");
+  // Beide Wege: durabler Ausweis gegen /api/auth/me UND Cookie gegen session-token.
+  assert.match(strom, /\/api\/auth\/me/, "Weg A (gleitende Verlaengerung) fehlt");
+  assert.match(strom, /\/api\/auth\/session-token/, "Weg B (Cookie) fehlt");
+  // Der frische Ausweis landet in sessionStorage und wird zuerst gelesen.
+  assert.match(strom, /sessionStorage\.setItem\(AUTH_TOKEN_KEY/, "der frische Ausweis muss gemerkt werden");
+  // streamChatAnswer wiederholt bei 401/403 GENAU einmal nach dem Refresh.
+  const s = strom.indexOf("export async function streamChatAnswer");
+  const rumpf = strom.slice(s, s + 3000);
+  assert.match(rumpf, /response\.status === 401 \|\| response\.status === 403/, "der 401/403-Zweig fehlt");
+  assert.match(rumpf, /await erneuereZugangsToken\(\)/, "der Retry muss den Ausweis erneuern");
+});
+
 test("der Nutzer sieht Klartext, nicht die Maschinen-Kennung", async () => {
   // Live gesehen am 2026-08-04 beim ersten Durchlauf: im Chat stand nackt
   // "authentication_required". Daraus erfaehrt niemand, was zu tun ist.
