@@ -25,8 +25,12 @@ test("Bruecke v148: Systemregel gegen eingebettete Anweisungen steht in buildAge
   assert.ok(regelPos > 0 && regelPos < codingPos, "die Regel muss vor der Code-Anweisung stehen (gilt fuer beide Zweige)");
 });
 
-test("Bruecke v149: die Version traegt die oberste Regel", () => {
-  assert.match(QUELLE, /const BRIDGE_VERSION = "20260904-v149-oberste-regel"/);
+test("Bruecke ab v149: die Version traegt die oberste Regel", () => {
+  // Ab v149 ist die Regel drin; jede spaetere Fassung (v150 smejj-Familie, …)
+  // erbt sie — die Pruefung darunter misst den Inhalt, nicht das Etikett.
+  const m = QUELLE.match(/const BRIDGE_VERSION = "(\d{8})-v(\d+)-[a-z0-9-]+"/);
+  assert.ok(m, "BRIDGE_VERSION fehlt oder hat ein fremdes Format");
+  assert.ok(Number(m[2]) >= 149, `Bruecke v${m[2]} ist aelter als v149 — die oberste Regel fehlt dann`);
 });
 
 test("Bruecke v149: die oberste Regel steht VOR der Rollenzeile — auch im Code-Modus zuerst", () => {
