@@ -35,7 +35,7 @@ cd "$WT" || { echo "ABBRUCH: Worktree fehlt."; exit 1; }
 echo "== 0. Ausgangslage (Worktree $WT)"
 git log --oneline -1
 git merge-base --is-ancestor "$CODE_COMMIT" HEAD || { echo "ABBRUCH: Code-Commit $CODE_COMMIT nicht im Zweig."; exit 1; }
-grep -q 'top: calc(var(--bp-row-height) * 2 + 8px)' public/start-styles.css || { echo "ABBRUCH: der Toast-Hinweis steht nicht im Start-Buendel."; exit 1; }
+grep -qF 'top: calc(var(--bp-row-height) * 2 + 8px)' public/start-styles.css || { echo "ABBRUCH: der Toast-Hinweis steht nicht im Start-Buendel."; exit 1; }
 grep -q "$SW_NEU" public/sw.js || { echo "ABBRUCH: sw.js traegt nicht $SW_NEU."; exit 1; }
 LIVE_SW=$(curl -s -m 15 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)
 echo "live: $LIVE_SW"
