@@ -99,6 +99,18 @@ fi
 echo "    alle anderen gesperrten Dateien sind byte-gleich mit smejj.com"
 
 echo "5/8 Security-Lock stempeln ..."
+# NUR auth.css darf abweichen. Stand 2026-09-07: auf dem Bauzweig ist
+# public/chat-bridge.js aus einer anderen Sitzung ebenfalls veraendert. Ein
+# Stempel wuerde das still mit absegnen — genau das verbietet die Sperre.
+VERSTOESSE="$(node scripts/check-security-lock.mjs 2>&1 | grep -E '^[[:space:]]+- ' | sed -E 's/^[[:space:]]+- //; s/: .*//')"
+FREMD="$(printf '%s\n' "$VERSTOESSE" | grep -v '^public/auth/auth.css$' | grep -v '^$' || true)"
+if [ -n "$FREMD" ]; then
+  echo "ABBRUCH: ausser auth.css sind weitere gesperrte Dateien veraendert (fremde Arbeit, nicht Teil dieses Stempels):"
+  printf '%s\n' "$FREMD" | sed 's/^/           /'
+  echo "         Bitte diese Ausgabe in den Chat kopieren — erst wenn diese Dateien gestempelt"
+  echo "         oder zurueckgenommen sind, kann dieser Klick stempeln."
+  behalten 8
+fi
 node scripts/check-security-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Security-Lock nicht gestempelt"; behalten 8; }
 
 echo "6/8 Alle vier Sperren pruefen ..."
