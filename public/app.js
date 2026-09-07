@@ -19,6 +19,10 @@ import { bindLocalWorkspace, ensureProject, refreshLocalWorkspaceStatus } from "
 import { ALIAS_PATHS, PATH_VIEWS, VIEW_ALIASES, VIEW_PATHS, getViewFromUrl, updateCanonical } from "./view-routes.js?v=b50";
 import { applyViewTitle } from "./view-title.js";
 import { getJson, postJson } from "./shared/http-json.js";
+// Kleine DOM-, Speicher- und Anzeige-Helfer. Herausgeloest am 07.09., weil
+// app.js mit 812 Zeilen ueber der Hausgrenze von 800 lag und damit
+// `npm run check:all` bei der ersten Pruefung abbrach.
+import { addEntry, downloadText, hideTaskIndicator, loadJson, loadText, setText, showTaskIndicator, snippet, writeOutput } from "./app-helfer.js?v=1";
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
@@ -34,7 +38,6 @@ const state = {
 
 const workspace = createLocalWorkspace();
 const aiRouter = createAiRouter();
-let taskIndicatorTimer;
 // Antwortstufen (Konkurrenz-Radar V3, Freigabe Betreiber 2026-08-06,
 // Container-Neustart 2026-08-08): der Chip zeigt normalen Nutzern nur noch
 // "Schnell/Auto/Gruendlich" statt Modellnamen. Modellnamen (GLM-5.2, Kimi K2.7,
@@ -737,76 +740,3 @@ async function showJson(target, url) {
   writeOutput(target, JSON.stringify(await getJson(url), null, 2));
 }
 
-function addEntry(text, role, target = "#startLog") {
-  const node = document.createElement("article");
-  node.className = `entry ${role}`;
-  if (!text && role === "assistant") {
-    node.dataset.thinking = "true";
-    node.innerHTML = '<span class="thinking-dots">smejj denkt nach<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>';
-  } else {
-    node.textContent = text;
-  }
-  const log = $(target) || $("#startLog");
-  if (!log) return node;
-  log.hidden = false;
-  if (log.id === "startLog" && role === "user") $("#start")?.classList.add("has-start-chat");
-  log.append(node);
-  node.scrollIntoView({ block: "end" });
-  return node;
-}
-
-function writeOutput(selector, text) {
-  const node = $(selector);
-  node.textContent = text || "";
-}
-
-function setText(selector, text) {
-  const node = $(selector);
-  if (node) node.textContent = text;
-}
-
-function showTaskIndicator(status = "active") {
-  clearTimeout(taskIndicatorTimer);
-  document.body.classList.remove("task-indicator-active", "task-indicator-done");
-  document.body.classList.add("task-indicator-active");
-  if (status === "done") {
-    document.body.classList.add("task-indicator-done");
-    taskIndicatorTimer = setTimeout(hideTaskIndicator, 1400);
-  }
-}
-
-function hideTaskIndicator() {
-  clearTimeout(taskIndicatorTimer);
-  document.body.classList.remove("task-indicator-active", "task-indicator-done");
-}
-
-function loadJson(key, fallback) {
-  try {
-    return JSON.parse(localStorage.getItem(key) || "") || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function loadText(key) {
-  return localStorage.getItem(key) || "";
-}
-
-function snippet(text, query) {
-  const index = text.toLowerCase().indexOf(query);
-  const start = Math.max(0, index - 80);
-  const end = Math.min(text.length, index + query.length + 160);
-  return text.slice(start, end);
-}
-
-function downloadText(filename, text) {
-  const blob = new Blob([text || ""], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}

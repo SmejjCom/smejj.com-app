@@ -255,6 +255,10 @@ const SHELL = [
   "/assets/chat-markdown.js",
   "/assets/frame-guard.js",
   "/assets/app.js",
+  // Herausgeloest aus app.js am 07.09. (812 Zeilen ueber der Hausgrenze).
+  // Ohne diese Zeile waere die App OFFLINE TOT: app.js importiert sie, der
+  // Import laeuft ins Leere, und app.js bricht komplett ab.
+  "/assets/app-helfer.js",
   "/assets/view-title.js",
   "/assets/left-menu-state.js",
   "/assets/panel-backdrop.js",
