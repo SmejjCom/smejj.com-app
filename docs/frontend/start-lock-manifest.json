@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T14:55:19.862Z",
-  "confirmation": "Betreiber, 2026-09-07: Wetter mit Nachdenken funktioniert nicht — behoben, die angereicherte Frage wird jetzt in alle Ziel-Rumpfe uebernommen. Service-Worker smejj-shell-v801.",
+  "frozenAt": "2026-09-07T15:15:56.478Z",
+  "confirmation": "Betreiber, 2026-09-07: A-bis-Z-Check, alle Funktionen sollen einmal frei laufen. Umgesetzt: Senden-Knopf zaehlt Anhaenge (vier tote Anhang-Wege), Datei-Anhang in der Code-Ansicht, Medien-Erkennung angeglichen, Recherche-Suche bei Nachdenken, Rueckfall auf die schnelle Spur bei Ausfall der tiefen, maus-replay im Vorrat. Service-Worker smejj-shell-v803.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "ecdf797269582d5973d4395cb375e94736acd1065a7b7afcdfa5507f7f43d820",
+    "public/index.html": "7e0668fb9f59d060473a12e9a55315d777d569a48b15892dd9be1c792119e572",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "a4cc46fe656908da29571d48a4f962ea5b9deacd024e168b91b9760f11a0d9b9",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -22,7 +22,7 @@
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
     "public/search.js": "091de127565c7a02417c8a6b36c3cc02b4ecd93fbacc4bd31885567db45a2eed",
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
-    "public/composer-plus-menu.js": "6d26716c99faf8f6ce7e9ba3bf60a8c0335c410e8da67556e21837d419a52400",
+    "public/composer-plus-menu.js": "65122a7e9e0b03c84ed9804d12b054c3c4b8b67e6ce55aaff6d53378186d2466",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
     "public/browser-pane.js": "e2cb17c0f2971e3074eb7e09b6dc10b30464812381816f30501a2c85bc735b66",
     "public/browser-pane-render.js": "f6a0df7abdd279f737b41d836722385b8bcdbcebc260fc5d5aa7a0262ae3d49c",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "5c88614a119efe793904927dc048f36229f9812fe43fed4644d6a168cfeb44ef",
+    "public/sw.js": "d9a43db06dd53b8fa7a7e116d2f3d5250eecf5ba0e534c20bbaf8c3554fbf8d1",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
