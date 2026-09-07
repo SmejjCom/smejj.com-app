@@ -386,7 +386,42 @@ async function main() {
   const training = await e2.getJson(`con/versions/${als}/training.json`, null).catch(() => null);
   console.log(`Adapter:      ${adapterPrefix} (${adapterDateien.length} Dateien)${training ? ` — Job ${training.jobId}, ${training.beispiele} Beispiele, Loss ${Number(training.trainLoss).toFixed(3)}` : ""}`);
   const vorher = await zeigeStand(client, e2);
-  if (!["stopped", "failed", "fehlt"].includes(vorher.zustand)) { console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}) — Training oder Messung laeuft oder wird gerade zugeteilt.`); process.exit(4); }
+  /**
+   * WANN IST DIE GRUPPE FREI? Nicht dann, wenn Salad "stopped" meldet.
+   *
+   * BEFUND 07./08.09.: Salad teilt einen FERTIGEN Job immer wieder neu zu. Der
+   * Trainingslauf von smejj 1.5 war um 12:10 fertig und lief danach die halbe
+   * Nacht im Kreis — jeder Anlauf las seinen eigenen Zwischenstand, stellte
+   * fest "bereits vollstaendig", endete nach Minuten, und Salad startete ihn
+   * erneut. Die Gruppe war nie "stopped", also brach diese Pruefung jedes Mal
+   * ab: die Messung ist ueber Stunden NIE gestartet, obwohl der Adapter fertig
+   * in der Ablage lag.
+   *
+   * Das verlaessliche Kennzeichen ist das ERGEBNIS, nicht der Zustand: Wer
+   * seinen Adapter (Training) oder seine Bewertung (Messung) abgelegt hat, ist
+   * fertig — was Salad danach mit dem Container macht, ist dessen Sache. Der
+   * neue Messjob ueberschreibt die Gruppenkonfiguration ohnehin.
+   *
+   * Der Schutz bleibt scharf: Ein Job OHNE abgelegtes Ergebnis haelt die
+   * Gruppe weiterhin besetzt, und dann wird nichts angefasst — laufende
+   * Rechenzeit ist bezahlte Rechenzeit.
+   */
+  const laufendesErgebnisDa = await (async () => {
+    if (!vorher.jobId) return false;
+    const st = await e2.getJson(`con/logs/jobs/${vorher.jobId}/status.json`, null).catch(() => null);
+    const version = st?.version || st?.kandidat || null;
+    const bewertung = await e2.getJson(`${BEWERTUNGEN_PREFIX}/${vorher.jobId}.json`, null).catch(() => null);
+    const tr = version ? await e2.getJson(`con/versions/${version}/training.json`, null).catch(() => null) : null;
+    return Boolean(bewertung) || Boolean(tr && tr.jobId === vorher.jobId);
+  })();
+
+  if (!["stopped", "failed", "fehlt"].includes(vorher.zustand) && !laufendesErgebnisDa) {
+    console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}) — dort laeuft ein Job, der sein Ergebnis noch NICHT abgelegt hat.`);
+    process.exit(4);
+  }
+  if (laufendesErgebnisDa && !["stopped", "failed", "fehlt"].includes(vorher.zustand)) {
+    console.log(`Hinweis: ${vorher.jobId} hat sein Ergebnis laengst abgelegt und wurde von Salad nur neu zugeteilt — die Messung ueberschreibt ihn.`);
+  }
   if (!argv.includes("--starten")) { console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich gemessen."); return; }
 
   // Die Suite wird HIER aufgeloest und fertig mitgeschickt.
