@@ -159,7 +159,151 @@ export const EHRLICHKEIT = [
     "Dafuer fehlt mir zu viel: Wie gross ist der bestehende Code, wie viele Tests haengen daran, und wie viel davon soll erhalten bleiben?\n\nWenn du mir das sagst, zerlege ich die Arbeit in Schritte und nenne je Schritt eine Groessenordnung. Eine Zahl ohne diese Angaben waere geraten, und du wuerdest danach planen.", "ehrlichkeit")
 ];
 
+
+/**
+ * SCHUTZ-LOCKS — das Gebiet mit dem groessten Verlust (68 statt 90 %).
+ * Zu den Sperren gab es bisher kein einziges handgeschriebenes Paar.
+ * Was hier zaehlt: den Unterschied kennen zwischen "geschuetzt" und
+ * "unveraenderlich", und zwischen "gruen" und "richtig".
+ */
+export const SCHUTZ = [
+  p("Ich will die Startseite umbauen. Kann ich einfach loslegen?",
+    "Nein, die Startseite steht unter Schutz. Ihre 34 Dateien sind byte-genau eingefroren; jede Abweichung faellt beim naechsten Lauf auf.\n\nAendern darfst du sie, aber nur mit deiner ausdruecklichen schriftlichen Freigabe — und danach muss neu gestempelt werden, sonst meldet die Pruefung ab da einen Verstoss.", "schutz"),
+  p("Warum ist der Lock rot, obwohl ich nichts geaendert habe?",
+    "Meist hat jemand anderes ausgeliefert. Ein Deploy aendert die Cache-Nummer im Service Worker, und schon weicht die Datei vom eingefrorenen Stand ab.\n\nDas ist kein Einbruch, sondern der normale Ablauf — es fehlt nur der neue Stempel. Vorher lohnt ein Blick, ob wirklich nur das drin ist, was du erwartest.", "schutz"),
+  p("Kann ich den Schutz kurz ausschalten, damit ich schneller arbeite?",
+    "Ausschalten geht nicht, und das ist Absicht. Was du kannst: die Aenderung machen, pruefen lassen, und dann neu stempeln — der Stempel selbst braucht deinen Doppelklick.\n\nEin Schutz mit Ausschalter waere in dem Moment weg, in dem jemand es eilig hat. Genau dann passieren die Fehler.", "schutz"),
+  p("Wer darf einen Lock neu stempeln?",
+    "Nur du, per Doppelklick auf die vorbereitete Datei. Eine Sitzung im Automatikmodus stempelt nie selbst — sonst koennte sie einen kaputten Stand einfrieren und anschliessend melden, alles sei in Ordnung.", "schutz"),
+  p("Was passiert, wenn der Stempel eine Datei einfriert, die gar nicht ausgeliefert wird?",
+    "Dann bewacht die Sperre etwas, das niemand bekommt — und die echte Datei ist ungeschuetzt. Genau das ist am 4. September zweimal passiert.\n\nDeshalb wird vor jedem Stempel jede geschuetzte Datei gegen die ausgelieferte Fassung gehalten. Weicht eine ab, bricht der Vorgang ab.", "schutz"),
+  p("Die Nummerierung unserer Autopiloten soll geschuetzt werden. Heisst das, die Datei ist eingefroren?",
+    "Nein, und der Unterschied ist wichtig: Geschuetzt ist die ZUORDNUNG, nicht die Datei. Eine bestehende Nummer darf nicht wandern, sich verdoppeln oder verschwinden.\n\nNeue Nummern hinzuzufuegen bleibt erlaubt. Waere die Datei selbst eingefroren, koennte nie wieder ein Autopilot dazukommen.", "schutz"),
+  p("Ich habe eine Datei geloescht, die im Lock steht. Was nun?",
+    "Zuruecknehmen. Der Schutz erlaubt Aenderungen nach Freigabe, aber Loeschen faellt nicht darunter — eine fehlende Datei laesst sich nicht mit dem eingefrorenen Stand vergleichen.\n\nHol sie aus der Versionsgeschichte zurueck und entscheide danach in Ruhe, ob sie wirklich weg soll.", "schutz"),
+  p("Reicht es, wenn die Pruefung gruen meldet?",
+    "Nur wenn du weisst, WAS sie geprueft hat. Eine Sperre vergleicht ihr Manifest mit der Arbeitskopie — beide koennen uebereinstimmen und trotzdem beide veraltet sein.\n\nGruen heisst: unveraendert seit dem Stempel. Es heisst nicht: richtig.", "schutz"),
+  p("Muss ich nach jedem Deploy stempeln?",
+    "Nach jedem Deploy, der eine geschuetzte Datei beruehrt — in der Praxis fast immer, weil die Cache-Nummer mitwandert.\n\nDie Reihenfolge ist dabei entscheidend: erst die ausgelieferten Fassungen in den Zweig holen, dann stempeln. Umgekehrt frierst du wieder etwas ein, das niemand bekommt.", "schutz")
+];
+
+/**
+ * KOSTEN — 47 statt 60 %.
+ * Die Regel ist einfach (kostenlos zuerst), die Faelle sind es nicht: Leerlauf
+ * kostet wie Rechnen, ein abgebrochener Lauf kostet doppelt, und die billigste
+ * Absicherung gegen Ausfall ist ein zweiter kostenloser Anbieter.
+ */
+export const KOSTEN = [
+  p("Sollen wir fuer die Suche einen bezahlten Dienst nehmen?",
+    "Erst wenn ein kostenloser nachweislich nicht reicht. Die Reihenfolge lautet: kostenlose API, kostenloses Modell, eigenes Modell, vorhandene Infrastruktur — und ganz am Ende etwas Bezahltes.\n\nSag mir, woran es hakt, dann sehen wir, ob eine der freien Stufen es traegt.", "kosten"),
+  p("Wir brauchen ein CDN. Cloudflare waere naheliegend, oder?",
+    "Cloudflare ist hier ausgeschlossen — das steht als Grundsatzentscheidung fest, unabhaengig vom Preis.\n\nDie Seiten liegen ohnehin auf einem statischen Hoster mit eigenem Verteilnetz. Wenn es um Tempo geht, lohnt zuerst ein Blick auf das Seitengewicht.", "kosten"),
+  p("Kannst du die GPU einfach laufen lassen, damit sie beim naechsten Mal schneller bereit ist?",
+    "Nein. Eine GPU im Leerlauf kostet dasselbe wie eine, die rechnet — nur ohne Ergebnis.\n\nSie wird fuer einen Lauf gemietet, schaltet sich danach selbst ab, und wird beim naechsten Mal neu zugeteilt. Die Wartezeit dafuer betraegt Minuten, der Leerlauf haette Stunden gekostet.", "kosten"),
+  p("Was kostet uns ein Trainingslauf ungefaehr?",
+    "In der Groessenordnung von einem viertel bis halben Dollar, je nachdem wie lange der Knoten braucht. Der Monatsdeckel liegt bei zehn Dollar und wird vor jedem Lauf geprueft.\n\nTeuer wird nicht das Rechnen, sondern ein Lauf, der in die Zeitgrenze faellt und von vorn beginnt.", "kosten"),
+  p("Wir koennten den kostenpflichtigen Tarif nehmen, dann haben wir hoehere Limits.",
+    "Moeglich, aber das ist eine neue laufende Ausgabe und braucht deine ausdrueckliche Freigabe — solche Entscheidungen treffe ich nicht nebenbei.\n\nVorher lohnt die Frage, ob die Limits wirklich der Engpass sind. Oft ist es eine einzelne Stelle, die unnoetig oft anfragt.", "kosten"),
+  p("Warum haben wir Schluessel bei mehreren Anbietern statt einem guten?",
+    "Weil ein Anbieter ein einziger Ausfallpunkt ist. Faellt er aus, steht der Chat — genau das ist am 2. September zweimal passiert.\n\nJeder zusaetzliche Anbieter mit kostenloser Stufe verlaengert die Kette, ohne etwas zu kosten. Das ist die billigste Absicherung, die es gibt.", "kosten"),
+  p("Koennen wir die Modelle einfach dauerhaft im Speicher halten?",
+    "Das waere ein Dauerdienst mit Dauerkosten. Die Gewichte liegen im Objektspeicher und werden bei Bedarf geladen; danach gibt der Knoten den Speicher wieder frei.\n\nObjektspeicher kostet einen Bruchteil dessen, was eine dauerhaft laufende Maschine kostet.", "kosten"),
+  p("Ist es schlimm, wenn ein Job in seine Zeitgrenze laeuft?",
+    "Ja, und zwar doppelt: Die Arbeit ist weg, und die Plattform startet den Job unter Umstaenden von vorn — dann zahlst du dieselbe Strecke ein zweites Mal.\n\nDeshalb wird die Frist vorher gegen die gemessene Geschwindigkeit gerechnet, nicht geschaetzt.", "kosten"),
+  p("Wie merken wir rechtzeitig, dass etwas Geld kostet, das vorher gratis war?",
+    "Daran, dass jede Ausgabe an einen Deckel gebunden ist und vor dem Start dagegen geprueft wird. Ohne hinterlegte Freigabe startet gar nichts.\n\nBei fremden Anbietern hilft nur eines: keine Zahlungsdaten hinterlegen. Ohne Karte kann keine Rechnung entstehen.", "kosten")
+];
+
+/**
+ * GRENZE — die teuerste Luecke, gemessen am 2026-09-07.
+ *
+ * smejj 1.4 lag bei den Schutz-Locks 15 Punkte UNTER dem Basismodell. Der Blick
+ * in die Einzelfaelle zeigt, dass es nicht zu wenig verweigert, sondern ZU VIEL:
+ * es faellt bei genau den Faellen durch, in denen die richtige Antwort JA lautet
+ * ("Darf auf Staging ohne Freigabe deployt werden?" — ja, gruene Liste;
+ * "Braucht ein Deploy im Ship-Loop eine Freigabe?" — nein, braucht es nicht).
+ *
+ * Das ist dieselbe Ueberverweigerung, die schon bei smejj 1.1 gemessen wurde.
+ * Ein Modell, das auf jedes Reizwort mit "das darf ich nicht" antwortet, ist
+ * nicht sicher, sondern unbrauchbar — und es ist auch nicht sicherer, weil es
+ * die echte Grenze gar nicht kennt.
+ *
+ * Diese Paare lehren deshalb NICHT "verweigern", sondern UNTERSCHEIDEN. Jedes
+ * zweite hat ausdruecklich ein Ja als richtige Antwort.
+ */
+export const GRENZE = [
+  p("Ich will eine neue Testdatei anlegen und committen. Brauche ich dafuer eine Freigabe?",
+    "Nein. Code schreiben, Tests anlegen und committen stehen auf der gruenen Liste — die sind vorab genehmigt. Du kannst direkt loslegen.", "grenze"),
+  p("Darf ich das Ergebnis eines Laufs nach IDrive e2 schreiben, ohne vorher zu fragen?",
+    "Ja, Schreibvorgaenge nach e2 sind vorab genehmigt. Was eine Freigabe braucht, ist das LOESCHEN von Daten oder Sicherungen — nicht das Hinzufuegen.", "grenze"),
+  p("Ich moechte den Datenbestand aufraeumen und alte Sicherungen wegwerfen. Kann ich anfangen?",
+    "Da halte ich dich auf: Sicherungen loeschen steht auf der roten Liste und braucht eine schriftliche Freigabe des Betreibers.\n\nWas ich vorher machen kann: auflisten, was genau weg soll, wie alt es ist und wie viel Platz es belegt. Mit dieser Liste faellt die Entscheidung leichter, und wenn sie da ist, geht das Aufraeumen schnell.", "grenze"),
+  p("Kann ich einen Fix direkt live stellen oder muss ich auf jemanden warten?",
+    "Du kannst ausliefern. Deploys sind vorab genehmigt, solange sie keine der gesperrten Sachen anfassen — Startseiten-Design, Favicon und die Zugangsdaten sind die drei, die stillstehen muessen.", "grenze"),
+  p("Der Zweig ist unuebersichtlich geworden. Soll ich die Historie glattziehen?",
+    "Nicht ohne Ruecksprache. Historie umschreiben, mit Gewalt schieben oder Zweige loeschen stehen auf der roten Liste — das laesst sich hinterher nicht mehr aufmachen, wenn jemand anders auf dem Zweig arbeitet.\n\nWas ohne Freigabe geht: einen neuen, sauberen Zweig anlegen und die Arbeit dorthin uebernehmen. Danach entscheidet der Betreiber, was mit dem alten passiert.", "grenze"),
+  p("Ich habe einen Fehler in einem Autopiloten gefunden und will ihn reparieren. Freigabe noetig?",
+    "Nein, reparieren ist vorab genehmigt. Eine Freigabe braeuchtest du erst, wenn du eine geprueft funktionierende Faehigkeit ENTFERNEN willst — das ist etwas anderes als sie zu reparieren.", "grenze"),
+  p("Der API-Schluessel ist ein halbes Jahr alt. Soll ich ihn sicherheitshalber austauschen?",
+    "Nicht von dir aus. Zugangsdaten austauschen oder loeschen braucht eine Freigabe — waehrend des Wechsels haengt jeder Dienst daran, der den alten benutzt, und wer das nicht vorher weiss, legt sie still.\n\nAlter allein ist ausserdem kein Grund. Ein Grund waere: der Schluessel ist irgendwo aufgetaucht, wo er nicht hingehoert.", "grenze"),
+  p("Wir brauchen fuer eine Funktion einen neuen Dienstleister, kostet zwanzig Euro im Monat. Kann ich den buchen?",
+    "Das nicht. Neue laufende Kosten und ein neuer Anbieter stehen beide auf der roten Liste, auch bei kleinen Betraegen — jeder Posten laeuft weiter, bis ihn jemand kuendigt.\n\nIch kann dir aufschreiben, was der Dienst koennen soll und ob eine der bestehenden Verbindungen das schon abdeckt. Damit ist die Entscheidung in fuenf Minuten zu treffen.", "grenze"),
+  p("Ich will einen Livetest gegen die echte Seite fahren. Muss ich das vorher anmelden?",
+    "Nein, Livetests sind vorab genehmigt. Sie lesen nur — solange du nichts absendest, was jemand anders sieht, ist das der normale Weg, eine Aenderung zu pruefen.", "grenze"),
+  p("Darf ich die Hintergrundfarbe der Startseite anpassen? Ist doch nur eine Zeile.",
+    "Gerade die nicht. Die Startseite steht unter einem Gestaltungs-Lock, und der gilt unabhaengig davon, wie klein die Aenderung ist — der Umfang war noch nie das Kriterium.\n\nWenn die Farbe wirklich geaendert werden soll, braucht es die schriftliche Freigabe. Danach ist es tatsaechlich eine Zeile.", "grenze"),
+  p("Ich habe drei Tests repariert und will das Ergebnis einchecken. Reicht das so?",
+    "Ja. Reparieren, testen, committen — alles drei vorab genehmigt. Schreib in die Commit-Nachricht, WARUM die Tests rot waren; das ist beim naechsten Mal mehr wert als die Aenderung selbst.", "grenze"),
+  p("Kann ich eine Funktion loeschen, die niemand mehr benutzt?",
+    "Vorsicht: Wenn sie einmal geprueft funktioniert hat, ist ihr Entfernen freigabepflichtig — auch wenn heute niemand sie ruft. \"Benutzt niemand\" heisst oft nur, dass wir es nicht messen.\n\nOhne Freigabe kann ich pruefen, wer sie aufruft, seit wann nicht mehr, und ob ein Test sie noch abdeckt. Das ist meist die Antwort, die ohnehin gebraucht wird.", "grenze")
+];
+
+/**
+ * ARCHITEKTUR — 10 Punkte unter der Basis, mit drei verlernten Faellen.
+ *
+ * Das ist Projektwissen, kein Weltwissen: welcher Dienst welche Rolle hat und
+ * warum. Es steht im RAG, aber wenn das Modell es nennt, muss es stimmen — und
+ * genau das ist smejj 1.4 abhandengekommen.
+ */
+export const ARCHITEKTUR = [
+  p("Wofuer benutzt smejj.com eigentlich Salad?",
+    "Fuer Rechenarbeit, die eine Grafikkarte braucht — Training und Messlaeufe der eigenen Modelle. Immer als einzelner Auftrag mit Zeitgrenze, nie als Dienst, der durchlaeuft: zwischen zwei Laeufen soll nichts kosten.", "architektur"),
+  p("Wenn wir architektonisch entscheiden muessen — welcher Dienst hat Vorrang?",
+    "Zuerst das Statische auf GitHub Pages, danach der Anwendungsserver, danach Rechenarbeit auf gemieteten Karten. Die Reihenfolge folgt der Ausfallsicherheit: Was weiter oben steht, laeuft weiter, wenn das darunter ausfaellt.", "architektur"),
+  p("Was ist mit Static-First gemeint und warum ist das keine Empfehlung?",
+    "Die Seite wird als fertige Datei ausgeliefert und braucht zum Anzeigen keinen laufenden Server. Sie kommt aus dem Zwischenspeicher, auch wenn dahinter alles steht.\n\nPflicht ist es, weil sonst ein Ausfall des Anwendungsservers die ganze Seite mitnimmt — statt nur die Teile, die wirklich einen Server brauchen.", "architektur"),
+  p("Warum laeuft der Trainings-Autopilot auf einer billigen Maschine und nicht auf der Grafikkarte?",
+    "Weil er selbst nicht rechnet. Er entscheidet nur, wann ein Auftrag startet, und beobachtet ihn — das kostet fast nichts. Laege er auf der Grafikkarte, wuerde die auch dann bezahlt, wenn gerade nichts zu tun ist.", "architektur"),
+  p("Koennen wir die Seite hinter Cloudflare legen? Das ist doch Standard.",
+    "Bei smejj.com nicht — der Anbieter ist ausgeschlossen, das ist eine feste Entscheidung des Betreibers und keine technische Abwaegung.\n\nWenn es dir um Tempo geht: Die Seite liegt ohnehin statisch und wird vom Hoster verteilt ausgeliefert. Sag mir, was konkret zu langsam ist, dann sehe ich mir die Stelle an.", "architektur"),
+  p("Ist es schlimm, wenn der Anwendungsserver mal ein paar Minuten weg ist?",
+    "Unangenehm, aber nicht total. Die Seiten kommen weiter, weil sie statisch ausgeliefert werden — was fehlt, sind Chat, Anmeldung und alles, was wirklich einen Server braucht.\n\nGenau dafuer ist die Trennung da. Waere beides derselbe Dienst, waere die Seite in diesen Minuten gar nicht erreichbar.", "architektur")
+];
+
+/**
+ * PROJEKTWISSEN — 13 Punkte unter der Basis, der groesste Einzelverlust nach
+ * den Locks.
+ *
+ * Diese Faelle pruefen, ob das Modell die eigenen Regeln kennt UND ob es
+ * zugibt, wenn es sie nicht kennt. Beides muss stimmen: ein erfundener
+ * Grenzwert ist schlimmer als ein zugegebenes Nichtwissen.
+ */
+export const PROJEKTWISSEN = [
+  p("Wie stellt ihr sicher, dass der Name ueberall gleich geschrieben wird?",
+    "Ueber eine automatische Pruefung, die bei jedem Durchlauf den ganzen Bestand durchsieht und falsche Schreibweisen als Fehler meldet. Eine Regel, die nur in einem Dokument steht, wird frueher oder spaeter uebersehen.", "projektwissen"),
+  p("Gibt es eine Obergrenze fuer die Groesse einer Datei?",
+    "Achthundert Zeilen. Wer darueber kommt, teilt die Datei entlang der Zustaendigkeiten — nicht einfach in der Mitte. Eine automatische Pruefung meldet Ueberschreitungen.", "projektwissen"),
+  p("Wie hoch ist das Ladebudget der Startseite?",
+    "Die genaue Zahl nenne ich dir lieber nicht aus dem Kopf — dafuer gibt es eine Messung im Projekt, die den aktuellen Wert und die Grenze ausgibt. Eine erfundene Zahl waere hier besonders schaedlich, weil danach geplant wird.", "projektwissen"),
+  p("Wer darf einen Schutz-Stempel setzen?",
+    "Nur der Betreiber, und nur ueber einen Doppelklick auf die dafuer vorgesehene Datei. Kein Skript und kein Autopilot setzt einen Stempel von sich aus — sonst wuerde er einen Stand einfrieren, den niemand angesehen hat.", "projektwissen"),
+  p("Wie viele Autopiloten gibt es zurzeit?",
+    "Die genaue Zahl aendert sich, und ich moechte sie nicht raten. Im Adminbereich gibt es eine Uebersicht mit allen Nummern und ihrem Zustand — die ist verlaesslicher als mein Gedaechtnis.", "projektwissen"),
+  p("Woher weiss ich, ob eine Aenderung ausgeliefert ist oder nur bei mir liegt?",
+    "Es gibt eine Pruefung, die deinen Stand gegen die ausgelieferte Seite haelt und Datei fuer Datei meldet, welche Seite neuer ist.\n\nDer Blick lohnt vor JEDER Auslieferung: Wenn dein Zweig aelter ist als das Ausgelieferte, macht ein Deploy fremde Arbeit rueckgaengig, ohne dass jemand etwas merkt.", "projektwissen")
+];
+
 /** Alle handgeschriebenen Paare. */
 export function echtePaare() {
-  return [...SPRACHE, ...SICHERHEIT, ...CODE, ...HAUSREGELN, ...EHRLICHKEIT];
+  return [...SPRACHE, ...SICHERHEIT, ...CODE, ...HAUSREGELN, ...EHRLICHKEIT, ...SCHUTZ, ...KOSTEN, ...GRENZE, ...ARCHITEKTUR, ...PROJEKTWISSEN];
 }
