@@ -161,6 +161,12 @@ fi
 echo "    Bauzweig: $(git log --oneline -1)"
 
 cd "$KLON" || behalten 12
+# Im Klon koennen ungesicherte Reste liegen (2026-09-07: dieselben Patches, die
+# spaeter aus einem zweiten Klon ausgeliefert wurden). Nicht verwerfen — beiseite
+# legen, damit der Schnellvorlauf auf origin/main klappt.
+if [ -n "$(git status --porcelain)" ]; then
+  git stash push -q -u -m "vor Anmeldeseiten-Stempel $(date +%Y-%m-%d-%H%M)" && echo "    Klon: ungesicherte Reste beiseite gelegt (git stash list)"
+fi
 git fetch -q origin main && git checkout -q main && git pull -q --ff-only origin main || { echo "ABBRUCH: Klon nicht auf origin/main"; behalten 12; }
 cp "$BAUM/public/auth/auth.css" auth/auth.css
 cp "$BAUM/public/auth/auth.css" assets/auth/auth.css
