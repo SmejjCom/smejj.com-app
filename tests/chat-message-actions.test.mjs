@@ -535,7 +535,8 @@ test("Belegung der Leiste je Rolle", () => {
 
 test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   const user = menuItemsFor("user").map((item) => item.act);
-  assert.deepEqual(user, ["copy", "edit", "fork", "remove"]);
+  // "speak" seit 2026-09-07 (Betreiber: eigene Frage laut lesen lassen).
+  assert.deepEqual(user, ["copy", "edit", "speak", "fork", "remove"]);
 
   const assistant = menuItemsFor("assistant");
   // Kopieren/Daumen stehen seit dem ZCode-Abgleich sichtbar in der Leiste —
