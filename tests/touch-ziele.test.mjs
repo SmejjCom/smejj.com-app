@@ -21,7 +21,12 @@ test("kompakt.js: ueber 600 px nur bei Touch (pointer:coarse) — Seitenleiste, 
     assert.ok(block[1].includes(sel), `${sel} fehlt im Touch-Block`);
   }
   assert.match(block[1], /min-height:44px/);
-  assert.doesNotMatch(block[1], /font-size|width:/, "nur Mindesthoehen — keine Schrift, keine Breiten");
+  assert.doesNotMatch(block[1], /font-size/, "keine Schriftgroessen");
+  // Runde 3: auch die Schreibfeld-Knoepfe und die Code-Leiste (Tablet 800 px: 38/34/30/32/19 px)
+  for (const sel of [".prompt-glass .ghost-button.icon-button", ".prompt-glass .send-button", ".prompt-glass .model-picker .text-chip", ".codeleiste .icon-button", ".codeleiste .repochip", "#codeAufgabe", "#smejj-sitzung-abgelaufen button"]) {
+    assert.ok(block[1].includes(sel), `${sel} fehlt im Touch-Block (Runde 3)`);
+  }
+  assert.ok(!/(width|height):\s*(3[0-9]|4[0-3])px/.test(block[1]), "keine Masse unter 44 px");
 });
 
 test("kompakt.js: die Maus am Schreibtisch bleibt unberuehrt (kein Block ohne pointer:coarse ueber 600 px)", () => {
