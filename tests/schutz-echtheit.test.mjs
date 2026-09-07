@@ -23,7 +23,7 @@ function manifestMit(datei, eingefroren) {
   const ordner = mkdtempSync(path.join(tmpdir(), "smejj-echt-"));
   const pfad = path.join(ordner, "probe-lock-manifest.json");
   writeFileSync(pfad, JSON.stringify({ frozenAt: "2026-09-04T00:00:00.000Z", files: { [datei]: eingefroren } }));
-  return { name: "probe", pfad: path.relative(path.resolve(new URL("..", import.meta.url).pathname), pfad) };
+  return { name: "probe", pfad: path.relative(path.resolve(fileURLToPath(new URL("..", import.meta.url))), pfad) };
 }
 
 test("die echten Manifeste stimmen mit der Auslieferung ueberein", async () => {

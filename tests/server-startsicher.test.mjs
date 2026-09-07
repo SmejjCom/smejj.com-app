@@ -13,6 +13,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { imAbbild, liegtImAbbild, pruefe, statischeImporte } from "../scripts/check-server-startsicher.mjs";
+// fileURLToPath statt .pathname: der Projektpfad enthaelt Leerzeichen, und
+// eine file:-URL kodiert die als %20 — readFileSync findet die Datei dann nicht.
+import { fileURLToPath } from "node:url";
 
 test("der echte Serverbaum ist start-sicher", () => {
   const { befunde, geprueft } = pruefe();
@@ -43,7 +46,7 @@ test("ein Pfad ausserhalb der COPY-Ziele faellt auf", () => {
 
 test("dynamische Importe zaehlen NICHT — sie sind die Loesung, nicht das Problem", () => {
   // Der reparierte Autopilot laedt genau so und faellt weich.
-  const datei = new URL("../control-server/src/autopilots/schutzEchtheitAutopilot.js", import.meta.url).pathname;
+  const datei = fileURLToPath(new URL("../control-server/src/autopilots/schutzEchtheitAutopilot.js", import.meta.url));
   const quelle = readFileSync(datei, "utf8");
   assert.match(quelle, /await import\("\.\.\/\.\.\/\.\.\/scripts\/check-schutz-echtheit\.mjs"\)/,
     "der Import muss dynamisch bleiben");

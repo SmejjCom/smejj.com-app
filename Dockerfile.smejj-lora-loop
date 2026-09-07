@@ -35,7 +35,6 @@ COPY workers/smejj-training-loop ./workers/smejj-training-loop
 # die Zahlen schoenzurechnen.
 COPY scripts/training ./scripts/training
 COPY scripts/evaluation/run_model_eval.mjs ./scripts/evaluation/run_model_eval.mjs
-COPY scripts/check/abbild-importbaum.mjs ./scripts/check/abbild-importbaum.mjs
 
 COPY src ./src
 COPY control-server/src ./control-server/src

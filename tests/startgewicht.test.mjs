@@ -12,6 +12,9 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { eigengewicht, nachDatei, statischeImporte } from "../scripts/check-startgewicht.mjs";
+// fileURLToPath statt .pathname: der Projektpfad enthaelt Leerzeichen, und
+// eine file:-URL kodiert die als %20 — readFileSync findet die Datei dann nicht.
+import { fileURLToPath } from "node:url";
 
 const MESSLATTE = JSON.parse(readFileSync(new URL("../docs/frontend/startgewicht-messlatte.json", import.meta.url), "utf8"));
 
@@ -59,7 +62,7 @@ test("dynamische Importe zaehlen NICHT — sie sind das Mittel zum Abspecken", (
   // Waechter das mitzaehlen, bestrafte er genau die Loesung.
   const quelle = readFileSync(new URL("../public/bedarf-nachladen.js", import.meta.url), "utf8");
   assert.match(quelle, /ladeBeiKlick|import\(/, "Erwartung an bedarf-nachladen.js stimmt nicht mehr");
-  const statisch = statischeImporte(new URL("../public/bedarf-nachladen.js", import.meta.url).pathname);
+  const statisch = statischeImporte(fileURLToPath(new URL("../public/bedarf-nachladen.js", import.meta.url)));
   for (const ziel of statisch) assert.doesNotMatch(ziel, /^\s*\(/);
 });
 
@@ -108,7 +111,7 @@ test("die Seite selbst zaehlt mit, nicht nur ihre externen Dateien", () => {
   // gemeldet, weil sie ihren ganzen Stil in einem <style>-Block traegt und
   // keine externe Datei laedt. Die Seite ist aber 8,5 KB gross und geht als
   // erstes ueber die Leitung.
-  const seite = new URL("../public/programmieren.html", import.meta.url).pathname;
+  const seite = fileURLToPath(new URL("../public/programmieren.html", import.meta.url));
   const mess = eigengewicht(seite);
   assert.ok(mess.dateien >= 1, "die Seite selbst fehlt in der Messung");
   assert.ok(mess.bytes > 0, "eine Seite ohne externe Dateien darf nicht 0 Byte wiegen");
@@ -120,7 +123,7 @@ test("jede weitere Seite bleibt unter der Vorgabe", () => {
     "status.html", "willkommen.html", "agb.html", "datenschutz.html", "impressum.html",
     "widerruf.html", "danke-abo.html", "404.html"];
   for (const name of seiten) {
-    const mess = eigengewicht(new URL(`../public/${name}`, import.meta.url).pathname);
+    const mess = eigengewicht(fileURLToPath(new URL(`../public/${name}`, import.meta.url)));
     assert.ok(mess.kb <= MESSLATTE.zielKb, `${name}: ${mess.kb} KB gzip, Vorgabe ${MESSLATTE.zielKb} KB`);
   }
 });
