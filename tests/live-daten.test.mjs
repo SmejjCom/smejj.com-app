@@ -84,15 +84,44 @@ test("die angereicherte Frage reist WIRKLICH mit — die Ziele werden nachgezoge
   const s = strom.indexOf("export async function streamChatAnswer");
   const rumpf = strom.slice(s, s + 4000);
   assert.match(rumpf, /body = await mitLiveDaten\(body\)/, "die Anreicherung fehlt");
-  assert.match(rumpf, /Array\.isArray\(url\)/, "die Ziel-Liste muss angefasst werden");
-  assert.match(rumpf, /JSON\.parse\(ziel\.body\)/, "der Rumpf jedes Ziels muss neu gebaut werden");
-  assert.match(rumpf, /task: frageNachher/, "der angereicherte Text muss in den Rumpf");
+  assert.match(rumpf, /zieleAnpassen\(url, \(rumpf\) => \(\{ \.\.\.rumpf, task: frageNachher \}\)\)/,
+    "der angereicherte Text muss in den Rumpf JEDES Ziels");
+  // Der Anpasser baut den Rumpf wirklich neu (er steht ausserhalb der Funktion).
+  assert.match(strom, /JSON\.parse\(ziel\.body\)/, "der Rumpf jedes Ziels muss neu gebaut werden");
   // Und die Reihenfolge stimmt: erst anreichern, dann Ziele nachziehen, dann senden.
   const iAnreichern = rumpf.indexOf("await mitLiveDaten(body)");
-  const iZiele = rumpf.indexOf("Array.isArray(url)");
+  const iZiele = rumpf.indexOf("zieleAnpassen(url");
   const iSenden = rumpf.indexOf("fetchStreamWithRetry(url");
   assert.ok(iAnreichern < iZiele && iZiele < iSenden,
     "Reihenfolge falsch: anreichern -> Ziele nachziehen -> senden");
+});
+
+test("faellt die tiefe Spur aus, kommt trotzdem eine Antwort", () => {
+  // LIVE GEMESSEN 07.09.: Mit "Nachdenken" gibt die Bruecke die Schnellspur ab.
+  // Danach bleibt nur der Control-Router — und der meldet ALLE Modelle als
+  // "degraded" (glm-5-2: runtimeAvailable=false, reason http_429, 48 Fehlschlaege
+  // in Folge; die uebrigen runtimeConfigured=false). Faellt er durch, antwortet
+  // streamModel 503 "Model backend is not configured", weil die Bruecke kein
+  // eigenes Modell hat. Der Nutzer sah nur einen Fehler.
+  const strom = readFileSync(wurzel + "public/ai/chat-stream.js", "utf8");
+  const s = strom.indexOf("export async function streamChatAnswer");
+  const rumpf = strom.slice(s, s + 6000);
+  assert.match(rumpf, /response\.status === 502 \|\| response\.status === 503/, "der Ausfall-Zweig fehlt");
+  assert.match(rumpf, /stufe: "auto"/, "der Rueckfall muss die Stufe entschaerfen");
+  assert.match(rumpf, /zieleAnpassen\(url/, "auch die Ziele muessen die neue Stufe tragen");
+  // Nur bei "gruendlich" — eine schnelle Anfrage soll nicht doppelt laufen.
+  assert.match(rumpf, /=== "gruendlich"/);
+});
+
+test("der Ziel-Anpasser laesst kaputte Eingaben unangetastet", () => {
+  // Reine Funktion, darum hier als Quelltext-Zusicherung: kein Ziel ohne body,
+  // kein kaputtes JSON darf den Sendepfad sprengen.
+  const strom = readFileSync(wurzel + "public/ai/chat-stream.js", "utf8");
+  const s = strom.indexOf("function zieleAnpassen");
+  const rumpf = strom.slice(s, s + 900);
+  assert.match(rumpf, /if \(!Array\.isArray\(url\)\) return url/, "eine einzelne Adresse bleibt unangetastet");
+  assert.match(rumpf, /typeof ziel\.body !== "string"/, "Ziele ohne Rumpf bleiben unangetastet");
+  assert.match(rumpf, /catch \{ return ziel; \}/, "kaputtes JSON darf nichts sprengen");
 });
 
 test("das Modul haengt am Sendepfad und liegt im Vorrat", () => {
