@@ -80,9 +80,10 @@ test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen 
 });
 
 test("Vollbild-Versatz: gemessen wird nur standalone, hochkant, ohne Tastatur, plausibel; Rahmen und Flaechen rechnen ihn ein", () => {
-  const basis = { standalone: true, schirmHoehe: 852, schirmBreite: 393, innerHeight: 800, tastaturOffen: false };
+  const basis = { standalone: true, apple: true, schirmHoehe: 852, schirmBreite: 393, innerHeight: 800, tastaturOffen: false };
   assert.equal(m.misstVersatz(basis), 52, "852 - 800 = 52 (Betreiber-iPhone, 17:32)");
   assert.equal(m.misstVersatz({ ...basis, standalone: false }), 0, "im Browser-Tab nichts");
+  assert.equal(m.misstVersatz({ ...basis, apple: false, schirmHoehe: 915, schirmBreite: 412, innerHeight: 839 }), 0, "Android-TWA: 76 px sind Status- und Navigationsleiste, kein Fehler");
   assert.equal(m.misstVersatz({ ...basis, tastaturOffen: true }), 0, "offene Tastatur verfaelscht innerHeight");
   assert.equal(m.misstVersatz({ ...basis, schirmBreite: 900, schirmHoehe: 393, innerHeight: 340 }), 0, "quer nicht");
   assert.equal(m.misstVersatz({ ...basis, innerHeight: 600 }), 0, "252 px sind kein Statusleisten-Versatz");
