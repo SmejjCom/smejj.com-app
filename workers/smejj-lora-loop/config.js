@@ -49,9 +49,39 @@ export function ladeLoopKonfiguration(env = process.env) {
     }),
 
     trainer: Object.freeze({
+      /**
+       * ZWEI WEGE ZUR GPU, und die Wahl ist ausdruecklich.
+       *
+       *   "dauerdienst" (Standard) — HTTP zu einer festen Adresse. So war es
+       *       im August gebaut. Der Weg ist am 2026-08-03 gescheitert: der
+       *       Container lief, die Anwendung bediente nicht, Salad meldete
+       *       trotzdem "ready", 28 Stunden unbemerkt, null Zyklen.
+       *   "salad-job" — EIN Job je Lauf. Seit dem 03.09. im con-Autopiloten
+       *       und seit dem 05.09. fuer smejj erprobt.
+       *
+       * Der Standard bleibt der alte Weg, damit eine bestehende Umgebung sich
+       * durch dieses Feld nicht still veraendert. Wer den Job-Weg will, sagt
+       * es: SMEJJ_LORA_TRAINER=salad-job.
+       */
+      art: String(env.SMEJJ_LORA_TRAINER || "dauerdienst").trim().toLowerCase() === "salad-job" ? "salad-job" : "dauerdienst",
       basisUrl: env.SMEJJ_LORA_TRAINER_URL || "",
       apiKey: env.SMEJJ_LORA_TRAINER_KEY || ""
     }),
+
+    /**
+     * Die Nummer, ab der der Autopilot eigene Versionen vergibt.
+     *
+     * smejj 1.0 bis 1.4 sind von Hand gebaut. Faenge der Autopilot bei 0 an,
+     * ueberschriebe sein erster Lauf einen bestehenden Adapter — und der
+     * Vergleich "war 1.3 besser?" waere danach nicht mehr moeglich, weil es
+     * zwei verschiedene 1.3 gaebe. Der Standard steht deshalb hinter dem
+     * letzten Handlauf.
+     */
+    versionStart: begrenzteZahl(env.SMEJJ_LORA_VERSION_START, 5, 0, 999),
+    versionPraefix: env.SMEJJ_LORA_VERSION_PRAEFIX || "smejj-1-",
+
+    /** Name des Datensatzes unter datasets/ — NICHT an die Version gekoppelt. */
+    datensatzName: env.SMEJJ_LORA_DATENSATZ_NAME || "smejj-1-1",
 
     // Messung: exakt die bestehende Suite. Pfad und Kennung sind
     // konfigurierbar, damit ein spaeterer Suite-Nachfolger ohne Codeaenderung
@@ -90,6 +120,10 @@ export function startHindernisse(konfiguration) {
   if (!konfiguration.grenzen.freigabeId) gruende.push("keine_schriftliche_freigabe");
   if (!konfiguration.basismodell.hfRepo) gruende.push("kein_basismodell");
   if (!konfiguration.datensatz.schluessel) gruende.push("kein_datensatz");
-  if (!konfiguration.trainer.basisUrl) gruende.push("keine_trainer_adresse");
+  // Beim Job-Weg gibt es keine Adresse — das ist der Sinn der Sache, kein
+  // Mangel. Ein Hindernis waere es hier nur beim Dauerdienst.
+  if (konfiguration.trainer.art !== "salad-job" && !konfiguration.trainer.basisUrl) {
+    gruende.push("keine_trainer_adresse");
+  }
   return gruende;
 }

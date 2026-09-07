@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { ladeLoopKonfiguration, startHindernisse } from "./config.js";
 import { erzeugeLoop } from "./loop.js";
 import { baueDatenPruefung, baueManifestLeser, baueMesser } from "./evalAdapter.js";
+import { baueJobWeg } from "./saladWeg.js";
 import { geschaetzteZykluskostenUsd, monatskostenUsd, reichweiteTage } from "./budget.js";
 import {
   bewerteWacht,
@@ -188,11 +189,59 @@ export function starteWachtTakt({
   return timer;
 }
 
+/**
+ * Die Weg-Fabrik fuer den Job-Betrieb — oder null, wenn der Dauerdienst
+ * konfiguriert ist.
+ *
+ * Alles, was der Job-Weg braucht (Salad-Client, Ablage, aufgeloeste Suite),
+ * wird EINMAL beim Start beschafft; nur die versionsabhaengigen Teile werden je
+ * Zyklus gebaut. Faellt hier etwas aus, gibt es KEINE Fabrik und damit keinen
+ * halb verdrahteten Weg: die Schleife meldet dann ihr Hindernis, statt einen
+ * Lauf zu starten, den niemand messen kann.
+ */
+async function baueJobWegFabrik(config, log = console.log) {
+  if (config.trainer.art !== "salad-job") return { fabrik: null, hindernis: null };
+  try {
+    const [{ leseKonfig }, { e2KonfigAusEnv, e2Client }, { trainingsKonfig, warteUndStarte }, { loadEvalSuite }] = await Promise.all([
+      import("../con-autopilot/config.js"),
+      import("../con-autopilot/e2.js"),
+      import("../../scripts/training/smejj-1-1-trainieren.mjs"),
+      import("../../src/evaluation/evalSuite.js")
+    ]);
+    const saladKonfig = trainingsKonfig(leseKonfig(process.env));
+    if (!saladKonfig?.salad?.apiKey) return { fabrik: null, hindernis: "salad_schluessel_fehlt" };
+    const e2 = e2Client(e2KonfigAusEnv(process.env));
+
+    // Die Suite wird HIER aufgeloest, einmal. In Manifest-Form kaeme sie beim
+    // Job mit null Faellen an — und er bildete daraus eine Note.
+    const suiteDatei = path.join(REPO_ROOT, config.suitePath);
+    const { suite } = await loadEvalSuite(suiteDatei);
+    if (!Array.isArray(suite?.cases) || suite.cases.length === 0) {
+      return { fabrik: null, hindernis: `suite_ohne_faelle:${config.suitePath}` };
+    }
+    log(`[smejj-lora-loop] Job-Weg bereit: Gruppe ${saladKonfig.salad.gruppe}, Suite ${suite.suiteId} (${suite.cases.length} Faelle),`
+      + ` Datensatz ${config.datensatzName}, naechste Version ab ${config.versionPraefix}${config.versionStart}`);
+
+    return {
+      hindernis: null,
+      fabrik: (zyklusIndex) => baueJobWeg({
+        konfig: { ...saladKonfig, versionPraefix: config.versionPraefix, versionStart: config.versionStart, datensatzName: config.datensatzName },
+        zyklusIndex, e2, suite, suiteDatei, warteUndStarte, log
+      })
+    };
+  } catch (fehler) {
+    return { fabrik: null, hindernis: `job_weg_nicht_baubar:${String(fehler?.message || fehler).slice(0, 160)}` };
+  }
+}
+
 async function main() {
   const config = ladeLoopKonfiguration(process.env);
+  const { fabrik, hindernis } = await baueJobWegFabrik(config);
+  if (hindernis) console.log(`[smejj-lora-loop] Job-Weg NICHT verdrahtet: ${hindernis}`);
   const loop = erzeugeLoop({
     config,
     deps: {
+      ...(fabrik ? { baueWeg: fabrik } : {}),
       messe: baueMesser({ config, repoRoot: REPO_ROOT, log: console.log }),
       // Der Manifestleser MUSS verdrahtet sein. Stand bis 2026-08-04 hier
       // `leseManifest: null` — damit meldete pruefeDaten() immer

@@ -57,6 +57,17 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
         ? deps.besterStand
         : await leseBestenStand({ env, key: config.bestenKey, idriveConfig: deps.idriveConfig, request: deps.bestenRequest });
 
+      /**
+       * Weg-Fabrik: Trainer, Messer und Datenpruefung werden JE ZYKLUS neu
+       * gebaut, weil sie die Versionsnummer tragen und die sich mit jedem
+       * Zyklus aendert. Einmal beim Start gebaut, schriebe der Autopilot alle
+       * Adapter unter denselben Namen — der zweite Lauf ueberschriebe den
+       * ersten, und der Vergleich zwischen den Versionen waere weg.
+       *
+       * Ohne Fabrik bleibt alles wie bisher: die festen deps gelten weiter.
+       */
+      const weg = deps.baueWeg ? deps.baueWeg(zustand.zyklusIndex) : null;
+
       const ergebnis = await fuehreZyklusAus({
         grenzen: config.grenzen,
         zyklusIndex: zustand.zyklusIndex,
@@ -67,8 +78,11 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
         trainerBasisUrl: config.trainer.basisUrl,
         trainerApiKey: config.trainer.apiKey,
         maxRunden: config.maxRunden,
-        pruefeDaten: deps.pruefeDaten,
-        messe: deps.messe,
+        pruefeDaten: weg?.pruefeDaten || deps.pruefeDaten,
+        messe: weg?.messe || deps.messe,
+        // Ohne diese Zeile bliebe der Job-Weg wirkungslos: cycle.js faende
+        // seinen Standard (HTTP-Dauerdienst) und meldete "nicht erreichbar".
+        ...(weg?.trainer || deps.trainer ? { trainer: weg?.trainer || deps.trainer } : {}),
         speichereBesten: deps.speichereBesten
           || ((stand) => schreibeBestenStand(stand, { env, key: config.bestenKey, idriveConfig: deps.idriveConfig, request: deps.bestenRequest })),
         fetchImpl: deps.fetchImpl,
@@ -89,7 +103,7 @@ export function erzeugeLoop({ config, env = process.env, log = console.log, deps
       }
 
       aufzeichnen(verlaufEintrag(ergebnis, naechster, geschrieben));
-      log(`[smejj-lora-loop] VERLAUF zyklus=${ergebnis.zyklusIndex} kennung=${ergebnis.kennung ?? "-"}`
+      log(`[smejj-lora-loop] VERLAUF zyklus=${ergebnis.zyklusIndex} version=${weg?.version ?? "-"} kennung=${ergebnis.kennung ?? "-"}`
         + ` gestartet=${ergebnis.gestartet} punktzahl=${ergebnis.kennzahlen?.punktzahl ?? "?"}`
         + ` kritisch=${ergebnis.kennzahlen?.kritischeFehler ?? "?"} kosten=${ergebnis.kostenUsd}USD`
         + ` verbraucht=${naechster.verbrauchtUsd}USD bester=${ergebnis.besser}`
