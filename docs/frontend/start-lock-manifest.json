@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T14:12:53.077Z",
-  "confirmation": "Betreiber, 2026-09-07: Nachdenken reparieren, mach fertig. Service-Worker smejj-shell-v799 (live stand auf v798 durch Parallelsitzung), Live-Daten-Module im Vorrat.",
+  "frozenAt": "2026-09-07T14:21:44.706Z",
+  "confirmation": "Betreiber, 2026-09-07: Nachdenken reparieren, mach fertig. Live-Daten im Browser eigenstaendig (ohne Bruecken-Kette), Service-Worker smejj-shell-v800.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "ecdf797269582d5973d4395cb375e94736acd1065a7b7afcdfa5507f7f43d820",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "2b8488e2463adfaf1d360c5d0632d1eb3cc583d6bfcd0a8932e0213bfa974ea3",
+    "public/sw.js": "7fcf88c5fa5aa43044250810a87f9664cb6d1e59ba5d17f51e261dc2fef52da2",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
