@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T10:14:16.816Z",
-  "confirmation": "Betreiber, 2026-09-07 (Bildschirmfoto + Anweisung): Wenn Auto gewaehlt ist, stand im Modell-Chip Cline statt Auto — korrigiere das; mach 100% fertig, alle Rechte. Umgesetzt: app.js applySelectedModel zeigt bei smejj.cline.model.v1=auto den Text Auto (b158), Service-Worker smejj-shell-v792. Reiner Anzeige-Fix, kein Verhaltenswechsel.",
+  "frozenAt": "2026-09-07T10:24:23.622Z",
+  "confirmation": "Betreiber, 2026-09-07 (Bildschirmfoto): im Modell-Chip soll bei Auto NUR Auto stehen, nicht Cline Auto. Umgesetzt: setPickerLabel (cline-model-menu.js) und activateClineSelection (provider-settings.js) zeigen bei der Auto-Marke nur Auto; Altbestand-Cline-Modell behaelt Cline mit Name. Marken cline-model-menu.js v=cline2, provider-settings.js v=2, Service-Worker smejj-shell-v793.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "762a4ebf177349b7c3a6c6b2f2e006fd5fa37e76319e19b39d07ae315a3f450f",
+    "public/index.html": "ecdf797269582d5973d4395cb375e94736acd1065a7b7afcdfa5507f7f43d820",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "a4cc46fe656908da29571d48a4f962ea5b9deacd024e168b91b9760f11a0d9b9",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -28,7 +28,7 @@
     "public/browser-pane-render.js": "f6a0df7abdd279f737b41d836722385b8bcdbcebc260fc5d5aa7a0262ae3d49c",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
-    "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
+    "public/cline-model-menu.js": "1b99e6c98a00024f442eabb42888711a177f0de1a9123c6f9d06ae8b09a6dbab",
     "public/cline-model-menu.css": "44599e36922c6f340e3b19df0728f85b9dc89ba09590ca0f0e644dfd29acfa84",
     "public/auth/passkey-ui.js": "ff1335c193e6458b0e5bdf43627ffe3bc2fa94aa94f67c8bf3d53a4ba4f24019",
     "public/ai/chatClient.js": "66c3b2769bfe22e1bc2f7733c423ce07480beb9ca752e7be53a5be8222f18455",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "c3012991e0e9cf8d12632118416347e6f1d662defb3d9d5199e0f55fae682f3c",
+    "public/sw.js": "9bb671e9f1f61999de3e1995ba9d63bd6004bbb5559c7d0c691fd4bdf4d64e4a",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
