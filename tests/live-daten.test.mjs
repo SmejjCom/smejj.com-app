@@ -74,6 +74,27 @@ test("fail-safe: kaputte Eingaben aendern nichts", async () => {
   assert.equal(await mitLiveDaten(ohneStufe), ohneStufe);
 });
 
+test("die angereicherte Frage reist WIRKLICH mit — die Ziele werden nachgezogen", () => {
+  // DIE FALLE (Betreiber-Gegenprobe 07.09., "Wetter mit Nachdenken funktioniert
+  // nicht"): app.js reicht die Endpunkte als LISTE herein (buildChatTargets in
+  // chat-history-context.js), und JEDES Ziel traegt seinen eigenen, bereits
+  // fertig serialisierten Rumpf. Wer nur `body` anreichert, schickt trotzdem
+  // den alten Rumpf los — die Anreicherung war dann wirkungslos.
+  const strom = readFileSync(wurzel + "public/ai/chat-stream.js", "utf8");
+  const s = strom.indexOf("export async function streamChatAnswer");
+  const rumpf = strom.slice(s, s + 4000);
+  assert.match(rumpf, /body = await mitLiveDaten\(body\)/, "die Anreicherung fehlt");
+  assert.match(rumpf, /Array\.isArray\(url\)/, "die Ziel-Liste muss angefasst werden");
+  assert.match(rumpf, /JSON\.parse\(ziel\.body\)/, "der Rumpf jedes Ziels muss neu gebaut werden");
+  assert.match(rumpf, /task: frageNachher/, "der angereicherte Text muss in den Rumpf");
+  // Und die Reihenfolge stimmt: erst anreichern, dann Ziele nachziehen, dann senden.
+  const iAnreichern = rumpf.indexOf("await mitLiveDaten(body)");
+  const iZiele = rumpf.indexOf("Array.isArray(url)");
+  const iSenden = rumpf.indexOf("fetchStreamWithRetry(url");
+  assert.ok(iAnreichern < iZiele && iZiele < iSenden,
+    "Reihenfolge falsch: anreichern -> Ziele nachziehen -> senden");
+});
+
 test("das Modul haengt am Sendepfad und liegt im Vorrat", () => {
   const strom = readFileSync(wurzel + "public/ai/chat-stream.js", "utf8");
   assert.match(strom, /import \{ mitLiveDaten \} from "\.\/live-daten\.js"/);
