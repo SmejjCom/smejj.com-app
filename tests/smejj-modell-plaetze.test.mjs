@@ -105,3 +105,41 @@ test("eine FEHLENDE Note wird als fehlend begruendet, nicht als 0 Prozent", () =
     assert.match(urteil.grund, /fehlt/, `Begruendung war "${urteil.grund}" statt eines Hinweises auf die fehlende Zahl`);
   }
 });
+
+test("belegeAusRegister sortiert abgelehnte Versionen aus, bevor sie geprueft werden", async () => {
+  const { belegeAusRegister, belegungText } = await import("../src/shared/smejjModellPlaetze.js");
+  const register = {
+    stable: "smejj-1-4",
+    versionen: [
+      { version: "smejj-1-2", status: "abgelehnt", note: 0.51, basisNote: 0.684, kritisch: 0 },
+      { version: "smejj-1-3", status: "abgelehnt", note: 0.628, basisNote: 0.684, kritisch: 0 },
+      { version: "smejj-1-4", status: "stable", note: 0.74, basisNote: 0.684, kritisch: 0 }
+    ]
+  };
+  const belegung = belegeAusRegister(register);
+  assert.equal(belegung.find((b) => b.platz === "schwer").version, "smejj-1-4");
+  // Die abgelehnten duerfen nirgends auftauchen — auch nicht auf einem leichten Platz.
+  for (const b of belegung) assert.notEqual(b.version, "smejj-1-2");
+  assert.match(belegungText(belegung), /schwer: smejj-1-4/);
+});
+
+test("ein leerer Platz nennt den RICHTIGEN Grund — bestanden ist nicht gleich bestanden", async () => {
+  const { belegeAusRegister } = await import("../src/shared/smejjModellPlaetze.js");
+  // Lage A: noch gar nichts bestanden.
+  const keins = belegeAusRegister({ versionen: [{ version: "a", status: "abgelehnt", note: 0.5, basisNote: 0.684, kritisch: 0 }] });
+  assert.match(keins[0].grund, /noch keine eigene Version/);
+  // Lage B: eine hat bestanden, sie reicht nur nicht fuer vier Plaetze. Hier
+  // waere "keine hat bestanden" schlicht falsch und verschwiege einen Erfolg.
+  const eine = belegeAusRegister({ versionen: [{ version: "b", status: "stable", note: 0.74, basisNote: 0.684, kritisch: 0 }] });
+  assert.match(eine[0].grund, /reichen nicht fuer alle vier/);
+  assert.equal(eine[3].version, "b");
+});
+
+test("ein Register ohne Versionen ergibt vier leere Plaetze statt eines Absturzes", async () => {
+  const { belegeAusRegister } = await import("../src/shared/smejjModellPlaetze.js");
+  for (const kaputt of [null, undefined, {}, { versionen: null }, { versionen: "nein" }]) {
+    const b = belegeAusRegister(kaputt);
+    assert.equal(b.length, 4);
+    assert.ok(b.every((p) => p.version === null));
+  }
+});

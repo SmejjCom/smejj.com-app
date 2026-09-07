@@ -121,8 +121,16 @@ export function belegePlaetze(bewertungen = []) {
       platz: p.platz, profil: p.profil, rolle: p.rolle,
       version: v?.version ?? null,
       note: v ? Number(v.note) : null,
+      // Zwei verschiedene Gruende fuer einen leeren Platz, und sie duerfen nicht
+      // denselben Text bekommen: "es hat noch keine Version bestanden" ist eine
+      // Lage, in der nichts zu tun ist ausser weiter zu trainieren. "Es haben
+      // welche bestanden, nur nicht genug fuer alle vier Plaetze" ist die Lage
+      // danach — dort waere der Satz "keins hat bestanden" schlicht falsch und
+      // wuerde einen erfolgreichen Lauf verschweigen.
       grund: v ? `besteht mit ${(Number(v.note) * 100).toFixed(1)} % (${v.vorsprung.toFixed(1)} Punkte ueber Basis)`
-        : "frei — kein eigenes Modell hat die Messung bestanden; das Fremdmodell bleibt zustaendig"
+        : zugelassen.length === 0
+          ? "frei — noch keine eigene Version hat die Messung bestanden; das Fremdmodell bleibt zustaendig"
+          : `frei — ${zugelassen.length} bestandene Version(en) reichen nicht fuer alle vier Plaetze; hier bleibt das Fremdmodell zustaendig`
     };
   });
 }
@@ -134,4 +142,37 @@ export function belegePlaetze(bewertungen = []) {
 export function modellFuerProfil(profil, belegung) {
   const treffer = (belegung || []).find((b) => b.profil === profil);
   return treffer?.version || null;
+}
+
+/**
+ * Belegt die Plaetze aus dem VERSIONSREGISTER (smejj/versionen/register).
+ *
+ * Das Register ist die einzige Stelle, an der steht, welche eigenen Versionen
+ * es gibt und wie sie gemessen wurden — Autopilot Nr. 83 schreibt es. Seine
+ * Eintraege tragen genau die Felder, die `darfBesetzen` braucht (version, note,
+ * basisNote, kritisch), also wird hier nichts umgerechnet und nichts geraten.
+ *
+ * ABGELEHNTE VERSIONEN WERDEN VORHER AUSSORTIERT, obwohl `darfBesetzen` sie
+ * ohnehin durchfallen liesse. Der Grund ist die BEGRUENDUNG: eine Version, die
+ * Nr. 83 mit "unter der Basis" abgelehnt hat, soll im Platzbericht nicht als
+ * "0,0 Punkte gegen die Basis" auftauchen, als waere sie knapp gescheitert.
+ * Zwei Instanzen, die dasselbe Urteil verschieden begruenden, kosten bei jeder
+ * spaeteren Fehlersuche Zeit.
+ */
+export function belegeAusRegister(register) {
+  const versionen = Array.isArray(register?.versionen) ? register.versionen : [];
+  const zulaessig = versionen.filter((v) => v && v.status !== "abgelehnt" && v.status !== "zurueckgerollt");
+  return belegePlaetze(zulaessig);
+}
+
+/**
+ * Kurzfassung der Belegung fuer Meldungen und den Adminbereich.
+ * Ein leerer Platz wird ausdruecklich genannt — er ist der Normalfall, kein
+ * Fehler, und ihn zu verschweigen liesse den Eindruck entstehen, es liefe schon
+ * ein eigenes Modell.
+ */
+export function belegungText(belegung = []) {
+  return belegung
+    .map((b) => `${b.platz}: ${b.version || "frei (Fremdmodell)"}`)
+    .join(", ");
 }
