@@ -35,7 +35,10 @@
   // ---- G · Modelle & Provider --------------------------------------------------
 
   function modelle(d) {
-    const zeilen = (d.modelle || []).map(function (m) {
+    // Betreiber-Ansage 2026-09-06: im Adminbereich ALLES sichtbar, nach
+    // Herkunft getrennt. Im Chat sieht der Nutzer davon nur die eigenen
+    // Modelle und "Auto" — hier steht, was dahinter wirklich vorhanden ist.
+    const zeile = function (m) {
       return "<tr><td><b>" + e(m.name) + "</b>" + (m.standard ? " " + pille("Standard", "ok") : "")
         + '<br><span class="s mono">' + e(m.id) + "</span></td>"
         + "<td>" + e(m.anbieter || "—") + "</td>"
@@ -50,7 +53,10 @@
         + (m.zuletztGeprueftAm ? '<br><span class="s">geprüft ' + e(A.zeit(m.zuletztGeprueftAm)) + "</span>" : "")
         + "</td>"
         + "<td>" + e(m.rueckfallModellId || "—") + "</td></tr>";
-    });
+    };
+    const alle = d.modelle || [];
+    const eigene = alle.filter(function (m) { return m.gruppe === "eigen"; }).map(zeile);
+    const fremde = alle.filter(function (m) { return m.gruppe !== "eigen"; }).map(zeile);
 
     // Zwei verschiedene Ursachen, die nicht in einen Topf gehoeren: ein Modell,
     // das eingerichtet ist und trotzdem schweigt, ist ein Ausfall. Eines, das
@@ -104,9 +110,62 @@
       + V.kachelBlock("Standard", e(d.standard || "—"), "ohne eigene Wahl")
       + "</div>"
       + '<div class="stack">' + hinweis
-      + V.panelBlock("Modelle", "auffällige zuerst",
-        V.tabelleBlock(["Modell", "Anbieter", "Ein", "Eingerichtet", "Erreichbar", "Fehlschläge", "Rückfall"], zeilen))
+      + V.panelBlock("Unsere Modelle", eigene.length + " in der Registry",
+        eigene.length
+          ? V.tabelleBlock(SPALTEN, eigene)
+          : '<div class="s" style="padding:12px">Noch keines eingetragen. '
+            + "smejj 1.1 wartet auf eine bestandene Messung.</div>")
+      + V.panelBlock("Fremde Modelle", fremde.length + " über fremde APIs",
+        V.tabelleBlock(SPALTEN, fremde))
+      + ketteBlock(d.kette)
+      + lagerBlock(d.lager)
       + "</div>";
+  }
+
+  var SPALTEN = ["Modell", "Anbieter", "Ein", "Eingerichtet", "Erreichbar", "Fehlschläge", "Rückfall"];
+
+  // Die Anbieterkette. Sie stand bis 2026-09-06 auf keinem Bildschirm, obwohl
+  // sie entscheidet, ob der Chat einen Ausfall ueberlebt: am 02.09. fiel Zhipu
+  // zweimal aus, der Chat stand stundenlang — bei 64 gruenen Ampeln.
+  function ketteBlock(k) {
+    if (!k) return "";
+    var zeilen = (k.anbieter || []).map(function (a) {
+      return "<tr><td><b>" + e(a.name) + "</b>"
+        + '<br><span class="s mono">' + e(a.variable) + "</span></td>"
+        + "<td>" + (a.hatSchluessel ? pille("ja", "ok") : pille("nein", "dim")) + "</td>"
+        + "<td>" + (a.gratisStufe ? pille("gratis", "ok") : '<span class="s">—</span>') + "</td>"
+        + '<td><span class="s">' + e(a.standardModell || "—") + "</span></td></tr>";
+    });
+    var warnung = k.warnung
+      ? '<div class="note glass fehler"><div class="nx">▲</div><div>'
+        + '<div class="nt">Kette zu kurz</div><div class="ns">' + e(k.warnung)
+        + " Ein Glied ist ein ANBIETER, kein Modell: mehr Modelle beim selben Anbieter helfen nicht, "
+        + "denn faellt er aus, fallen alle mit.</div></div></div>"
+      : "";
+    return warnung + V.panelBlock("Anbieterkette",
+      k.besetzt + " von " + k.gesamt + " besetzt · live gemessen",
+      V.tabelleBlock(["Anbieter", "Schlüssel", "Stufe", "Standardmodell"], zeilen));
+  }
+
+  // Das e2-Lager. Bewusst mit Messdatum in der Ueberschrift: diese Liste wird
+  // NICHT live abgefragt. Ein Befund ohne Datum wird mit der Zeit zur
+  // Behauptung — so stand Kimi K2.7 zwei Monate als "geprueft" im Code,
+  // waehrend der Ordner leer war.
+  function lagerBlock(l) {
+    if (!l) return "";
+    var ton = { vollstaendig: "ok", teilweise: "warn", huelle: "dim", fehlt: "bad" };
+    var wort = { vollstaendig: "vollständig", teilweise: "teilweise", huelle: "nur Hülle", fehlt: "fehlt" };
+    var zeilen = (l.dateien || []).map(function (f) {
+      return "<tr><td><b>" + e(f.id) + "</b></td>"
+        + "<td>" + pille(wort[f.zustand] || f.zustand, ton[f.zustand] || "dim") + "</td>"
+        + "<td>" + (f.groesseGb ? e(String(f.groesseGb).replace(".", ",")) + " GB" : '<span class="s">—</span>') + "</td>"
+        + '<td><span class="s">' + e(f.hinweis || "") + "</span></td></tr>";
+    });
+    return V.panelBlock("Heruntergeladene Modelle (e2)",
+      l.vollstaendig + " von " + l.gesamt + " vollständig · Stand " + e(l.gemessenAm),
+      '<div class="note glass"><div class="nx">◆</div><div><div class="nt">Messstand, kein Live-Blick</div>'
+      + '<div class="ns">' + e(l.hinweis) + "</div></div></div>"
+      + V.tabelleBlock(["Datei", "Zustand", "Größe", "Anmerkung"], zeilen));
   }
 
   // ---- H · Jobs & Läufe --------------------------------------------------------

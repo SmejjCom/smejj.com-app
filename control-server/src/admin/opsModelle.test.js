@@ -91,3 +91,24 @@ test("nach Anbietern gruppiert, groesste Gruppe zuerst", () => {
   const summe = e.anbieter.reduce((s, a) => s + a.total, 0);
   assert.equal(summe, e.total, "kein Modell faellt bei der Gruppierung heraus");
 });
+
+test("die Uebersicht trennt eigene von fremden Modellen", () => {
+  // Betreiber-Ansage 2026-09-06: im Adminbereich alles sichtbar, nach Herkunft
+  // getrennt. Die Gruppe sagt, WORUEBER geantwortet wird — nicht, wo eine Datei
+  // liegt. glm-5-2 hat 703,8 GB auf e2 und ist trotzdem fremd, weil die
+  // Antwort ueber die API von Zhipu kommt.
+  const d = modellUebersicht({ env: {} });
+  const glm = d.modelle.find((m) => m.id === "glm-5-2");
+  assert.equal(glm.gruppe, "fremd");
+  assert.ok(glm.lagerPfad, "die Lagerkopie steht daneben, ersetzt die Herkunft aber nicht");
+  for (const m of d.modelle.filter((x) => x.id.startsWith("smejj"))) {
+    assert.equal(m.gruppe, "eigen");
+  }
+});
+
+test("Kette und Lager haengen mit an der Uebersicht", () => {
+  const d = modellUebersicht({ env: { SMEJJ_LLM_ZHIPU_API_KEY: "x" } });
+  assert.equal(d.kette.besetzt, 1);
+  assert.ok(d.kette.warnung, "eine Kette mit einem Glied ist kein Netz");
+  assert.ok(d.lager.gemessenAm, "das Lager nennt sein Messdatum");
+});

@@ -14,6 +14,22 @@
 // eigenen Spalte statt in einem gemeinsamen "Status".
 import { getPublicModelRegistry } from "../../../src/shared/modelRegistry.js";
 import { getModelRuntimeHealthSnapshot } from "../llm/modelRuntimeHealth.js";
+import { anbieterKette, modellLager } from "./opsModellLager.js";
+
+/**
+ * Woher die ANTWORT kommt — nicht, wo eine Datei liegt.
+ *
+ * Diese Unterscheidung ist der ganze Punkt: glm-5-2 hat 703,8 GB auf e2 liegen
+ * und ist trotzdem "fremd", weil geantwortet wird ueber die API von Zhipu. Wer
+ * es wegen der Datei als "gelagert" fuehrt, glaubt irgendwann, die Plattform
+ * laufe auf eigener Hardware. Sie tut es nicht — es gibt keinen Ofen.
+ *
+ * Das e2-Lager ist deshalb KEINE Gruppe hier, sondern eine eigene Liste
+ * (opsModellLager.js). Dort liegen Dateien; hier stehen Modelle, die antworten.
+ */
+function gruppeVon(m) {
+  return String(m.id || "").startsWith("smejj") ? "eigen" : "fremd";
+}
 
 /**
  * @returns {{ok: true, total, aktiv, erreichbar, standard, modelle: Array, anbieter: Array}}
@@ -27,6 +43,10 @@ export function modellUebersicht({ env = process.env, gesundheit = null } = {}) 
     id: m.id,
     name: m.name,
     anbieter: m.provider,
+    gruppe: gruppeVon(m),
+    // Getrennt von der Gruppe: manche fremden Modelle haben zusaetzlich eine
+    // Kopie im Lager. Das ist eine Eigenschaft, kein Herkunftsnachweis.
+    lagerPfad: m.storage?.prefix || null,
     status: m.status,
     aktiv: m.active === true,
     eingerichtet: m.runtimeConfigured === true,
@@ -65,6 +85,11 @@ export function modellUebersicht({ env = process.env, gesundheit = null } = {}) 
     standard: registry?.defaultModelId || null,
     modelle: modelle.sort(sortiereNachDringlichkeit),
     anbieter: nachAnbieter(modelle),
+    // Zwei Sichten, die vorher auf keinem Bildschirm standen und den Betrieb
+    // genauso betreffen wie die Registry selbst: welche Anbieter die Kette
+    // tragen, und was im e2-Lager liegt.
+    kette: anbieterKette({ env }),
+    lager: modellLager(),
     hinweis: "Geprueft wird beim ersten Aufruf eines Backends, nicht auf Vorrat. "
       + "Nach einem Neustart ist deshalb vieles ungeprueft — das ist kein Ausfall."
   };
