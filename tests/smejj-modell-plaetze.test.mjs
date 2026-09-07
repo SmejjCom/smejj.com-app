@@ -87,3 +87,21 @@ test("eine ungueltig gekennzeichnete Bewertung besetzt nichts", () => {
   const belegung = belegePlaetze([{ ...GUT, status: "ungueltig" }]);
   assert.ok(belegung.every((b) => b.version === null));
 });
+
+test("eine FEHLENDE Note wird als fehlend begruendet, nicht als 0 Prozent", () => {
+  // Number(null) ist 0 und Number.isFinite(0) ist true. Wer so prueft, liest
+  // eine fehlende Messung als "gemessen katastrophal". Der Ausgang ist hier
+  // zufaellig derselbe (Ablehnung), die Begruendung aber falsch — und eine
+  // falsche Begruendung schickt die Fehlersuche in die falsche Richtung.
+  // Gefunden am 07.09. durch den gleichlautenden Fall im Mess-Anschluss.
+  for (const kaputt of [
+    { version: "x", note: null, basisNote: 0.68, kritisch: 0 },
+    { version: "x", note: 0.9, basisNote: null, kritisch: 0 },
+    { version: "x", note: 0.9, basisNote: 0.68, kritisch: null },
+    { version: "x", note: "0.9", basisNote: 0.68, kritisch: 0 }
+  ]) {
+    const urteil = darfBesetzen(kaputt);
+    assert.equal(urteil.ok, false);
+    assert.match(urteil.grund, /fehlt/, `Begruendung war "${urteil.grund}" statt eines Hinweises auf die fehlende Zahl`);
+  }
+});

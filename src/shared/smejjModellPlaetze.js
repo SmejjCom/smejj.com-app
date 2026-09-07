@@ -71,9 +71,16 @@ export const AUFNAHME = Object.freeze({
 export function darfBesetzen(v) {
   if (!v || typeof v !== "object") return { ok: false, grund: "keine Bewertung" };
   if (v.status === "ungueltig") return { ok: false, grund: "Bewertung als ungueltig gekennzeichnet" };
-  const note = Number(v.note), basis = Number(v.basisNote), kritisch = Number(v.kritisch);
-  if (!Number.isFinite(note) || !Number.isFinite(basis)) return { ok: false, grund: "Note oder Basisnote fehlt" };
-  if (!Number.isFinite(kritisch)) return { ok: false, grund: "Zahl der kritischen Fehler fehlt" };
+  // ECHTE Zahlen verlangen, nicht "laesst sich in eine Zahl umwandeln".
+  // Number(null) ist 0 und Number.isFinite(0) ist true — eine fehlende Note
+  // saehe damit aus wie 0 %, also wie ein gemessen katastrophales Modell.
+  // Der Ausgang waere hier zufaellig derselbe (Ablehnung), die BEGRUENDUNG
+  // aber falsch: "0 Punkte gegen die Basis" statt "es wurde nichts gemessen".
+  // Eine falsche Begruendung schickt die Fehlersuche in die falsche Richtung.
+  const zahl = (w) => (typeof w === "number" && Number.isFinite(w) ? w : null);
+  const note = zahl(v.note), basis = zahl(v.basisNote), kritisch = zahl(v.kritisch);
+  if (note === null || basis === null) return { ok: false, grund: "Note oder Basisnote fehlt" };
+  if (kritisch === null) return { ok: false, grund: "Zahl der kritischen Fehler fehlt" };
   if (kritisch > AUFNAHME.maxKritisch) return { ok: false, grund: `${kritisch} kritische Fehler` };
   const vorsprung = (note - basis) * 100;
   if (vorsprung < AUFNAHME.mindestVorsprung) {
