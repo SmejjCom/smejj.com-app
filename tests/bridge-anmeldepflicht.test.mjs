@@ -141,7 +141,9 @@ test("der Chat erneuert den abgelaufenen Ausweis lautlos und wiederholt einmal (
   assert.match(strom, /sessionStorage\.setItem\(AUTH_TOKEN_KEY/, "der frische Ausweis muss gemerkt werden");
   // streamChatAnswer wiederholt bei 401/403 GENAU einmal nach dem Refresh.
   const s = strom.indexOf("export async function streamChatAnswer");
-  const rumpf = strom.slice(s, s + 3000);
+  // Grosszuegig geschnitten: zwischen Funktionsanfang und dem 401-Zweig liegen
+  // inzwischen die Live-Daten-Anreicherung und das Nachziehen der Ziele.
+  const rumpf = strom.slice(s, s + 6000);
   assert.match(rumpf, /response\.status === 401 \|\| response\.status === 403/, "der 401/403-Zweig fehlt");
   assert.match(rumpf, /await erneuereZugangsToken\(\)/, "der Retry muss den Ausweis erneuern");
 });
