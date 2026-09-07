@@ -50,14 +50,37 @@ Promise.all([
 
   if (["stopped", "failed", "fehlt"].includes(z.zustand)) { console.log("  Frei."); process.exit(0); }
 
-  // Nur abschalten, was FERTIG ist. Ein laufender Lauf ist bezahlte Zeit.
+  // Nur abschalten, was seine Arbeit ERLEDIGT hat. Ein laufender Lauf ist
+  // bezahlte Zeit und wird nie angefasst.
+  //
+  // "fertig: true" allein genuegt dafuer NICHT — und daran ist der Klick vom
+  // 07.09. gescheitert: Salad teilt einen beendeten Job neu zu, der neue
+  // Durchlauf schreibt "fertig: false, Phase: laden" ueber den alten Status,
+  // und der Zombie sieht in der Statusdatei exakt aus wie ein frischer Lauf.
+  // Die Datei verweigerte daraufhin das Stoppen — und die Kostenschleife lief
+  // weiter, waehrend das Training nicht startete.
+  //
+  // Das verlaessliche Kennzeichen ist das ERGEBNIS in der Ablage: eine
+  // Bewertung (Messung) oder ein Adapter (Training). Wer sein Ergebnis
+  // abgeliefert hat, ist fertig — egal was sein Herzschlag gerade behauptet.
   if (z.jobId) {
     const st = await e2.getJson(`con/logs/jobs/${z.jobId}/status.json`, null).catch(() => null);
-    if (st && st.fertig !== true) {
-      console.log(`  ABBRUCH: ${z.jobId} laeuft noch (Phase ${st.phase}). Es wird nichts angefasst.`);
+    const bewertung = await e2.getJson(`smejj/bewertungen/${z.jobId}.json`, null).catch(() => null);
+    const version = st?.version || st?.kandidat || null;
+    const training = version ? await e2.getJson(`con/versions/${version}/training.json`, null).catch(() => null) : null;
+    const ergebnisDa = Boolean(bewertung) || (training && training.jobId === z.jobId);
+
+    if (st && st.fertig !== true && !ergebnisDa) {
+      console.log(`  ABBRUCH: ${z.jobId} laeuft wirklich noch (Phase ${st.phase}, ${version || "?"}) und hat kein Ergebnis abgelegt.`);
+      console.log("  Es wird nichts angefasst — das waere bezahlte Rechenzeit zum Fenster hinaus.");
       process.exit(3);
     }
-    console.log(`  ${z.jobId} ist fertig — die Gruppe darf abgeschaltet werden.`);
+    if (ergebnisDa && st?.fertig !== true) {
+      console.log(`  ${z.jobId} hat sein Ergebnis laengst abgelegt (${bewertung ? "Bewertung" : "Adapter"}) und wurde von Salad nur neu zugeteilt.`);
+      console.log("  Das ist die Kostenschleife, kein Lauf — sie wird beendet.");
+    } else {
+      console.log(`  ${z.jobId} ist fertig — die Gruppe darf abgeschaltet werden.`);
+    }
   }
   const r = await client.stoppe();
   console.log(`  Stopp: ${r.ok ? "bestaetigt" : "ABGELEHNT"} (HTTP ${r.status})`);
