@@ -50,14 +50,28 @@ Promise.all([
   // SICHERHEITSPRUEFUNG: nur stoppen, wenn der Job WIRKLICH fertig ist.
   // Einen laufenden Trainingslauf zu beenden hiesse, bezahlte Rechenzeit
   // wegzuwerfen. Der Herzschlag des Jobs entscheidet, nicht der Gruppenzustand.
+  // "fertig: true" allein genuegt NICHT: Salad teilt beendete Jobs neu zu, und
+  // der neue Durchlauf schreibt "fertig: false, Phase: laden" ueber den alten
+  // Status. Ein solcher Zombie sieht aus wie ein frischer Lauf und hat am
+  // 07.09. einen Betreiber-Klick blockiert, waehrend die Kostenschleife weiterlief.
+  // Verlaesslich ist das ERGEBNIS in der Ablage, nicht der Herzschlag.
   if (z.jobId) {
     const st = await e2.getJson(`con/logs/jobs/${z.jobId}/status.json`, null).catch(() => null);
-    if (st && st.fertig !== true) {
-      console.log(`  ABBRUCH: Job ${z.jobId} ist NICHT fertig (Phase ${st.phase}).`);
+    const bewertung = await e2.getJson(`smejj/bewertungen/${z.jobId}.json`, null).catch(() => null);
+    const version = st?.version || st?.kandidat || null;
+    const training = version ? await e2.getJson(`con/versions/${version}/training.json`, null).catch(() => null) : null;
+    const ergebnisDa = Boolean(bewertung) || (training && training.jobId === z.jobId);
+
+    if (st && st.fertig !== true && !ergebnisDa) {
+      console.log(`  ABBRUCH: Job ${z.jobId} laeuft wirklich noch (Phase ${st.phase}) und hat kein Ergebnis abgelegt.`);
       console.log("  Es wird nichts gestoppt — ein laufender Lauf ist bezahlte Rechenzeit.");
       process.exit(3);
     }
-    console.log(`  Job ${z.jobId} ist fertig (ok=${st?.ok}) — die Gruppe darf abgeschaltet werden.`);
+    if (ergebnisDa && st?.fertig !== true) {
+      console.log(`  Job ${z.jobId} hat sein Ergebnis abgelegt und wurde nur neu zugeteilt — Kostenschleife, kein Lauf.`);
+    } else {
+      console.log(`  Job ${z.jobId} ist fertig (ok=${st?.ok}) — die Gruppe darf abgeschaltet werden.`);
+    }
   }
 
   const r = await client.stoppe();
