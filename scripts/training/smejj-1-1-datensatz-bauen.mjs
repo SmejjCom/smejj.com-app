@@ -42,6 +42,22 @@ export const E2_PRAEFIX = `datasets/${DATENSATZ_NAME}/`;
 // Zeilen, und die waren fast nur Rechenaufgaben (train.py nimmt den Anfang).
 export const PROFILE = Object.freeze({
   "smejj-1-1": { startwert: 20260904, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
+  // smejj-1-5 (07.09.): dieselbe Bauweise wie smejj-1-1 — das ist der Datensatz,
+  // mit dem 1.4 auf 66,0 % kam, zwei Komma vier Punkte unter der Basis. Er wird
+  // NICHT umgebaut, sondern nur ergaenzt: 24 neue handgeschriebene Paare fuer
+  // genau die Gebiete, in denen 1.4 verloren hat (Grenze zwischen gruener und
+  // roter Liste, Architektur, Projektwissen).
+  //
+  // MISCHEN BLEIBT AUS, obwohl es bei 1.2 eingeschaltet wurde. Grund: train.py
+  // nimmt den ANFANG der Datei, und dort stehen die handgeschriebenen Paare.
+  // Bei 4.500 Zeilen und einer Zeilengrenze um 11.000 kommen ohnehin alle dran;
+  // mischen wuerde die wenigen echten Paare nur zwischen tausende Rechenaufgaben
+  // streuen und ihren Anteil am Anfang verwaessern.
+  //
+  // Eigener Startwert, damit die erzeugten Aufgaben andere sind als in 1-1 —
+  // sonst waere der einzige Unterschied zwischen den beiden Laeufen so klein,
+  // dass die Messung ihn nicht von Rauschen trennen kann.
+  "smejj-1-5": { startwert: 20260907, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-2": {
     startwert: 20260905,
     mengen: { reasoning: 7000, sicherheit: 1500, sprache: 1900 },
