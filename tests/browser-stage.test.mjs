@@ -84,7 +84,7 @@ test("die Buehne zeichnet den Zeiger der Maus — Pfeil, Ring, Feldrahmen, Scrol
   assert.match(stage, /transition:transform \.4s/);
   assert.match(stage, /@keyframes bpRing/);
   // Die Vorlage laedt die neue Buehne (Cache-Marke gehoben).
-  assert.match(render, /browser-stage\.js\?v=6/);
+  assert.match(render, /browser-stage\.js\?v=7/);
 });
 
 
