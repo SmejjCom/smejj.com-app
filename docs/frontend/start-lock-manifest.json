@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T15:15:56.478Z",
-  "confirmation": "Betreiber, 2026-09-07: A-bis-Z-Check, alle Funktionen sollen einmal frei laufen. Umgesetzt: Senden-Knopf zaehlt Anhaenge (vier tote Anhang-Wege), Datei-Anhang in der Code-Ansicht, Medien-Erkennung angeglichen, Recherche-Suche bei Nachdenken, Rueckfall auf die schnelle Spur bei Ausfall der tiefen, maus-replay im Vorrat. Service-Worker smejj-shell-v803.",
+  "frozenAt": "2026-09-07T15:20:47.576Z",
+  "confirmation": "Betreiber, 2026-09-07: A-bis-Z-Check. Fremde Marken der Parallelsitzung nachgezogen, Service-Worker smejj-shell-v803.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "7e0668fb9f59d060473a12e9a55315d777d569a48b15892dd9be1c792119e572",
+    "public/index.html": "4ab46cbe95a78ddaf689916533fdf38ca6629244185d90b3335337aa630a0dd1",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "a4cc46fe656908da29571d48a4f962ea5b9deacd024e168b91b9760f11a0d9b9",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
