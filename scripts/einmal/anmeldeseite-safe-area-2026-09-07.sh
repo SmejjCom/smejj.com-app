@@ -79,6 +79,11 @@ if ! node --test tests/mobil-safe-area.test.mjs tests/auth-pages.test.mjs tests/
   echo "ABBRUCH: Tests rot — nicht gestempelt"; behalten 6
 fi
 
+# Welche gesperrten Dateien weichen ausser auth.css ab? (fremde Arbeit — wird
+# weder gestempelt noch gegen die Auslieferung gehalten; bleibt rot wie vorher)
+VERSTOESSE="$(node scripts/check-security-lock.mjs 2>&1 | grep -E '^[[:space:]]+- ' | sed -E 's/^[[:space:]]+- //; s/: .*//')"
+FREMD="$(printf '%s\n' "$VERSTOESSE" | grep -v '^public/auth/auth.css$' | grep -v '^$' || true)"
+
 echo "4/8 Phantom-Probe: stimmen die anderen gesperrten Dateien mit smejj.com ueberein? ..."
 PHANTOME=0
 for DATEI in $(node -e '
@@ -87,6 +92,10 @@ const liste = m.dateien || m.files || m;
 for (const p of Object.keys(liste)) if (p.startsWith("public/") && p !== "public/auth/auth.css") console.log(p);
 ' 2>/dev/null); do
   [ -f "$DATEI" ] || continue
+  if printf '%s\n' "$FREMD" | grep -qx "$DATEI"; then
+    echo "    ~ $DATEI — fremde Abweichung, wird nicht gestempelt, uebersprungen"
+    continue
+  fi
   ADRESSE="https://smejj.com/${DATEI#public/}"
   HIER="$(shasum -a 256 < "$DATEI" | awk '{print $1}')"
   DORT="$(curl -sf --max-time 20 "$ADRESSE" | shasum -a 256 | awk '{print $1}')"
@@ -108,8 +117,6 @@ echo "5/8 Security-Lock stempeln ..."
 # NUR auth.css darf abweichen. Stand 2026-09-07: auf dem Bauzweig ist
 # public/chat-bridge.js aus einer anderen Sitzung ebenfalls veraendert. Ein
 # Stempel wuerde das still mit absegnen — genau das verbietet die Sperre.
-VERSTOESSE="$(node scripts/check-security-lock.mjs 2>&1 | grep -E '^[[:space:]]+- ' | sed -E 's/^[[:space:]]+- //; s/: .*//')"
-FREMD="$(printf '%s\n' "$VERSTOESSE" | grep -v '^public/auth/auth.css$' | grep -v '^$' || true)"
 if [ -n "$FREMD" ]; then
   echo "    Hinweis: weitere gesperrte Dateien weichen ab (fremde Arbeit, NICHT Teil dieses Stempels):"
   printf '%s\n' "$FREMD" | sed 's/^/           /'
