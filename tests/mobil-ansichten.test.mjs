@@ -14,7 +14,7 @@ test("nur am Handy, geschlossener Block, Klammern ausgeglichen", () => {
 });
 
 test("Reiter von Einstellungen, Konto und Verlauf werden EINE wischbare Zeile mit 44-px-Zielen", () => {
-  assert.match(m.REGELN, /#settings \.settings-nav\.settings-nav,body #profile \.account-nav\.account-nav,body #chatHistory \.ch-chips\.ch-chips\{display:flex;flex-wrap:nowrap;overflow-x:auto/);
+  assert.match(m.REGELN, /#settings \.settings-nav\.settings-nav,body #profile \.account-nav\.account-nav,body #chatHistory \.ch-chips\.ch-chips\{display:flex;flex-wrap:nowrap;align-items:center;overflow-x:auto/);
   assert.match(m.REGELN, /\.settings-nav-button\.settings-nav-button,body #profile \.account-nav button,body #chatHistory \.ch-chips \.ch-chip\{flex:0 0 auto;height:44px;min-height:44px;white-space:nowrap/);
   assert.match(m.REGELN, /\.settings-nav-sub[^}]*\{display:none\}/, "Untertitel der Reiter weichen in der Zeile");
 });
