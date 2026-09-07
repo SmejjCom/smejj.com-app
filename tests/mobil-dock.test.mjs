@@ -69,6 +69,9 @@ test("Modell-Menue am Handy: fest ueber dem Dock, 16 px Rand, Text bricht um, Ha
   assert.match(m.REGELN, /\.model-submenu\.model-submenu\{position:fixed;left:16px;right:16px;bottom:calc\(env\(safe-area-inset-bottom,0px\) \+ 124px\);width:auto;min-width:0;max-width:none/);
   assert.match(m.REGELN, /\.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal;overflow:visible/);
   assert.match(m.REGELN, /\.model-submenu-check\{flex:0 0 auto;width:20px/);
+  // Das Fuenf-Zeilen-Menue der Startseite (#startModellMenue, Inline-Stil) braucht !important
+  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,body #code \.code-modus-menue\.code-modus-menue\{position:fixed!important;left:16px!important;right:16px!important/);
+  assert.match(m.REGELN, /\.code-modus-menue \.modus-links\{flex:1 1 auto;min-width:0;white-space:normal/);
 });
 
 test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen in sich; Frage als Glasblase, Kopfglas", () => {
