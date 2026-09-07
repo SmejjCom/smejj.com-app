@@ -23,7 +23,7 @@ Server-Weg mit dem Haus-Modell. Ein Fehlertext, der dem Nutzer Arbeit auftraegt
 
 **Verifikation:** modell-router.test.mjs mit Aufruf-Protokoll (select alt ->
 /me -> select frisch), 55/55 Tests; modellRouter.js live (Klon 3e0978c),
-chatClient.js per Start-Lock-Stempel (Doppelklick, Kaskade geprobt).
+chatClient.js seit 12:35 UTC live (Start-Lock-Stempel per Doppelklick, SW smejj-shell-v795).
 
 ### [2026-09-07] STANDALONE-WEBKIT: NACH DER TASTATUR EINMAL REFLOW ERZWINGEN (job_mobil_vollbild_dock_20260907)
 
@@ -38,9 +38,9 @@ erzwingt nach focusout/visualViewport-resize einen synchronen Reflow, nur im
 Standalone und nur bei >= 20 px Schwund, hoechstens drei Nachfass-Versuche.
 Groesste Hoehe wird nur ohne offene Tastatur gemessen.
 
-**Verifikation:** pwa-vollbild-heilung.test.mjs 5/5; live; Standalone-Beweis
-steht aus (Simulator-Bildschirmsteuerung in der Sitzung verweigert) — Pruefung
-in der App nach dem Sprung auf smejj-shell-v795.
+**Verifikation:** pwa-vollbild-heilung.test.mjs 5/5; live; SW smejj-shell-v795
+live seit 12:35 UTC; Standalone-Beweis steht aus (Simulator-Bildschirmsteuerung
+in der Sitzung verweigert) — Pruefung in der installierten App des Betreibers.
 
 ### [2026-09-07] SAFE-AREA TRAEGT GENAU EIN ELEMENT; LAUFZEIT-STIL SCHLAEGT GESPERRTES BUENDEL (job_mobil_vollbild_dock_20260907)
 

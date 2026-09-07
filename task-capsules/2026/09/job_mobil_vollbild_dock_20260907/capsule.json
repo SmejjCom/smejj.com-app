@@ -16,7 +16,7 @@
       "wo": "public/ai/modellRouter.js sorgeFuerModell, public/ai/chatClient.js runClineChat",
       "was": "Der stille Refresh (chat-stream.js, v794) legt den frischen kurzen Ausweis in sessionStorage. Die Auto-Wahl las aber nur sessionStorage['smejj.apiToken.v1'] und den ALTEN Ausweis aus localStorage — nach 10 Minuten antwortete /api/providers/cline/select mit 401, und chatClient.js schrieb 'bitte ein Modell von Hand waehlen'. Zweiter Fall: ohne hinterlegten Cline-Schluessel (409 cline_not_configured) gab es gar keinen Rueckfall.",
       "heilung": "modellRouter.js: Ausweis-Reihenfolge sessionStorage (frisch) > eigener Schluessel > localStorage; bei 401/403 genau einmal erneuern (Weg A /api/auth/me, Weg B Cookie /api/auth/session-token) und wiederholen; Fehlerklassen fehler=anmeldung|nicht-eingerichtet|netz, ausweichen=true fuer alles ausser Anmeldung. chatClient.js: bei Anmeldung der ehrliche Hinweis, sonst return false = runClientChat gibt an app.js zurueck, das den Server-Weg (/api/agent, Haus-Modell GLM-5.2) nimmt; Ausweis nach der Modellwahl neu gelesen; holeZugriffsToken kennt den frischen Ausweis.",
-      "nachweis": "tests/modell-router.test.mjs: 5 neue Zusagen (Reihenfolge, 401->Refresh->Retry mit Aufruf-Protokoll, 401 bleibt = anmeldung, 409/Netz = ausweichen, chatClient-Quelle). modellRouter.js live seit 07.09. (Klon 3e0978c); chatClient.js wartet auf den Start-Lock-Stempel."
+      "nachweis": "tests/modell-router.test.mjs: 5 neue Zusagen (Reihenfolge, 401->Refresh->Retry mit Aufruf-Protokoll, 401 bleibt = anmeldung, 409/Netz = ausweichen, chatClient-Quelle). modellRouter.js live seit 07.09. (Klon 3e0978c); chatClient.js wartet auf den Start-Lock-Stempel. Seit 12:35 UTC live (Klon 2bb6419)."
     },
     {
       "nr": 2,
@@ -55,17 +55,18 @@
     "Huawei (kein Emulator vorhanden)"
   ],
   "auslieferung": {
-    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): f53d279 -> 3e0978c (mobil-dock.js, ai/modellRouter.js, pwa-schnellstart.js, chat-actions-menu.js, willkommen.html + assets/) -> 7df5cf4 (willkommen.html mit Heilung)",
+    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): f53d279 -> 3e0978c (mobil-dock.js, ai/modellRouter.js, pwa-schnellstart.js, chat-actions-menu.js, willkommen.html + assets/) -> 7df5cf4 (willkommen.html mit Heilung) -> 2bb6419 (chatClient.js, sw.js v795, index.html/chat-actions.js/willkommen.html Marken)",
     "quellzweig": "feature/responsive-qa-2026-09-07: 77b08916, be3fd991, daad77fe (Kaskade)",
-    "offen": "ai/chatClient.js und sw.js (Start-Lock): 'smejj.com Mobil-Vollbild und Auto stempeln und ausliefern.command' im App-Ordner — Trockenlauf (--probe) gruen; setzt live v794 voraus",
+    "offen": "ERLEDIGT 2026-09-07 12:35 UTC per Betreiber-Doppelklick: Start-Lock gestempelt (34 Dateien, Bauzweig 7fc40b9d), Klon 2bb6419 — sw.js smejj-shell-v795, chatClient.js, Marken pwa-schnellstart v8 / chat-actions b49 / chat-actions-menu v6 live",
     "hinweis": "Bis zum Sprung auf smejj-shell-v795 bekommen wiederkehrende App-Nutzer die neuen Module nicht (cache-first Precache); neue Sitzungen und frisch installierte Web-Apps sofort."
   },
   "pruefungen": {
     "tests": "modell-router 12+5, mobil-dock 8 (neu), pwa-vollbild-heilung 5 (neu), composer-zeile, mobil-safe-area, precache-dynamische-importe, platform-pwa: 55/55 gruen",
     "check:precache-imports": "OK — 189 Module erreichbar",
-    "check:markenkette": "OK", "check:module-queries": "OK — 232 Module",
+    "check:markenkette": "OK",
+    "check:module-queries": "OK — 232 Module",
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
-    "check:start-lock": "ROT bis zum Doppelklick — chatClient.js, sw.js (eigene Arbeit) sowie app.js, config.js (Vorbestand des Zweigs)"
+    "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "live-teilweise — ungesperrte Module live und nachgemessen; gesperrte Dateien und Schutzstempel warten auf den Betreiber-Doppelklick"
+  "status": "verified — alle Dateien live (SW v795), Start-Lock gestempelt; offen nur der Standalone-Beweis der Balken-Heilung in der installierten App"
 }
