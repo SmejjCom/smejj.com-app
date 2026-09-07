@@ -82,16 +82,13 @@ test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen 
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild-Versatz: gemessen wird nur standalone, hochkant, ohne Tastatur, plausibel; Rahmen und Flaechen rechnen ihn ein", () => {
-  const basis = { standalone: true, apple: true, schirmHoehe: 852, schirmBreite: 393, innerHeight: 800, tastaturOffen: false };
-  assert.equal(m.misstVersatz(basis), 52, "852 - 800 = 52 (Betreiber-iPhone, 17:32)");
-  assert.equal(m.misstVersatz({ ...basis, standalone: false }), 0, "im Browser-Tab nichts");
-  assert.equal(m.misstVersatz({ ...basis, apple: false, schirmHoehe: 915, schirmBreite: 412, innerHeight: 839 }), 0, "Android-TWA: 76 px sind Status- und Navigationsleiste, kein Fehler");
-  assert.equal(m.misstVersatz({ ...basis, tastaturOffen: true }), 0, "offene Tastatur verfaelscht innerHeight");
-  assert.equal(m.misstVersatz({ ...basis, schirmBreite: 900, schirmHoehe: 393, innerHeight: 340 }), 0, "quer nicht");
-  assert.equal(m.misstVersatz({ ...basis, innerHeight: 600 }), 0, "252 px sind kein Statusleisten-Versatz");
-  assert.equal(m.misstVersatz({ ...basis, innerHeight: 852 }), 0);
-  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{bottom:calc\(-1 \* var\(--vollbild-fehl,0px\)\)\}/);
-  // Betreiber 22:32: mit dem Fehlbetrag auf den dvh-Flaechen rutschte das Dock unter den Schirm — 100dvh ist die volle Hoehe.
-  assert.doesNotMatch(m.REGELN, /100dvh \+ var\(--vollbild-fehl/, "der Fehlbetrag gilt nur fuer position:fixed, nie fuer dvh-Hoehen");
+test("Vollbild-Rahmen: feste Hoehe bis zur sichtbaren Unterkante (visualViewport), nie innerHeight, nie dvh-Flaechen", () => {
+  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 852 }), 852, "voller Schirm");
+  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 512.4 }), 512, "Tastatur offen: Rahmen endet an der Tastatur");
+  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 0 }), 0, "unbekannt -> Rueckfall 100%");
+  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{top:0;bottom:auto;height:var\(--vv-unten,100%\)\}\}/);
+  assert.doesNotMatch(m.REGELN, /vollbild-fehl/, "innerHeight-Messung ist raus (Betreiber 08.09. 01:49: Balken kam nach der Tastatur zurueck)");
+  assert.doesNotMatch(m.REGELN, /100dvh \+ var\(/, "dvh-Flaechen bleiben unangetastet");
+  const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
+  assert.match(quelle, /vv\.addEventListener\("resize", setze\); vv\.addEventListener\("scroll", setze\);/);
 });
