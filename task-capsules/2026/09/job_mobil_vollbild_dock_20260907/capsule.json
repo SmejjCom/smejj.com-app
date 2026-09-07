@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runden 1-4 live und gestempelt (Runde 4 18:45); Nachzuege live als Module, SW-Sprung per Doppelklick offen; iPhone-Nachpruefung durch den Betreiber steht aus",
+  "status": "verified — Runden 1-4 + Nachzuege live; Vollbild-Rahmen ueber visualViewport; Punkt 7 gebaut; letzter SW-Sprung v809 vom Betreiber geklickt (08.09. ~02:15)",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -86,5 +86,10 @@
     "6_ansichten": "mobil-ansichten.js (neu, import aus mobil-dock.js, Precache): Reiter eine wischbare 44-px-Zeile, Kopf kompakt, Felder 44 volle Breite, Knoepfe untereinander, Zeilen flex-wrap, Konsole kompakt. Emulator: settings-nav 1411>396 scrollbar, Knopf 44.",
     "auslieferung": "Runde 4 vom Betreiber 18:45 gestempelt (Bauzweig 4190b3d8, Marken chat-actions b50 / chat-actions-menu v7, sw mit mobil-ansichten.js; live danach v805 durch Parallelsitzung). Nachzuege als Module live (Klon 30c2585 Versatz nur Apple, 96d6694 Zeilen flex-wrap, 79da4a8 Menue ueber Glasbreite); SW-Sprung fuer wiederkehrende App per 'smejj.com SW-Sprung Nachzuege stempeln und ausliefern.command' (Probe gruen, v806).",
     "tests": "116/116 in der Probe (mobil-dock, mobil-ansichten, touch-ziele, chat-message-actions, modell-router, pwa-vollbild-heilung, composer-zeile, precache, platform-pwa)"
+  },
+  "nachtrag_20260908": {
+    "01:44 Punkt 7": "Luecke zwischen Feld und Tastatur = unterer Sicherheitsrand; html.tastatur-offen (Fokus + visualViewport kuerzer als Schirm-80) setzt --sa-bottom 0 und shell padding-bottom 0; Hardware-Tastatur unberuehrt. Go 02:10, live (Klon 295d591), SW-Sprung v809.",
+    "01:49 Balken zurueck": "innerHeight in der iOS-App unzuverlaessig (800/852 je nach Tastatur-Historie) — Rahmen body::after jetzt top:0; height: var(--vv-unten) aus visualViewport.offsetTop+height (Ereignisse resize/scroll); keine dvh-Flaechen anfassen (Dock rutschte sonst unter den Schirm, 22:32). SW-Spruenge v806, v807, v808 vom Betreiber geklickt; Kaskade sw-sprung ist wiederverwendbar (live+1, Module per Hash geprueft).",
+    "bestaetigt": "Betreiber 22:32: unten Vollbild, Mikrofon tuerkis."
   }
 }
