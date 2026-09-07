@@ -63,3 +63,30 @@ test("Stil wird genau einmal eingehaengt", () => {
   assert.equal(kopf.children.length, 1);
   assert.equal(kopf.children[0].textContent, m.REGELN);
 });
+
+// ---- Runde 4 (Betreiber 07.09. abends): Modell-Menue, Chat-Glas, Vollbild-Versatz ----------
+test("Modell-Menue am Handy: fest ueber dem Dock, 16 px Rand, Text bricht um, Haken in eigener Spalte", () => {
+  assert.match(m.REGELN, /\.model-submenu\.model-submenu\{position:fixed;left:16px;right:16px;bottom:calc\(env\(safe-area-inset-bottom,0px\) \+ 124px\);width:auto;min-width:0;max-width:none/);
+  assert.match(m.REGELN, /\.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal;overflow:visible/);
+  assert.match(m.REGELN, /\.model-submenu-check\{flex:0 0 auto;width:20px/);
+});
+
+test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen in sich; Frage als Glasblase, Kopfglas", () => {
+  assert.match(m.REGELN, /#startLog \.entry,body #codeLogHalter \.entry\{max-width:100%;overflow-wrap:anywhere;word-break:break-word\}/);
+  assert.match(m.REGELN, /#startLog \.entry table,[^{]*\{display:block;max-width:100%;overflow-x:auto/);
+  assert.match(m.REGELN, /\.entry\.user\.user\{margin-left:14%;max-width:86%;[^}]*backdrop-filter:blur/);
+  assert.match(m.REGELN, /\.mobil-kopfglas\{position:fixed;top:0;left:0;right:0;height:calc\(env\(safe-area-inset-top,0px\) \+ 52px\);z-index:73;pointer-events:none/);
+  assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
+});
+
+test("Vollbild-Versatz: gemessen wird nur standalone, hochkant, ohne Tastatur, plausibel; Rahmen und Flaechen rechnen ihn ein", () => {
+  const basis = { standalone: true, schirmHoehe: 852, schirmBreite: 393, innerHeight: 800, tastaturOffen: false };
+  assert.equal(m.misstVersatz(basis), 52, "852 - 800 = 52 (Betreiber-iPhone, 17:32)");
+  assert.equal(m.misstVersatz({ ...basis, standalone: false }), 0, "im Browser-Tab nichts");
+  assert.equal(m.misstVersatz({ ...basis, tastaturOffen: true }), 0, "offene Tastatur verfaelscht innerHeight");
+  assert.equal(m.misstVersatz({ ...basis, schirmBreite: 900, schirmHoehe: 393, innerHeight: 340 }), 0, "quer nicht");
+  assert.equal(m.misstVersatz({ ...basis, innerHeight: 600 }), 0, "252 px sind kein Statusleisten-Versatz");
+  assert.equal(m.misstVersatz({ ...basis, innerHeight: 852 }), 0);
+  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{bottom:calc\(-1 \* var\(--vollbild-fehl,0px\)\)\}/);
+  assert.match(m.REGELN, /#code\.view\.is-active\.is-active\.is-active\{height:calc\(100dvh \+ var\(--vollbild-fehl,0px\)/);
+});

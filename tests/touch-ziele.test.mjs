@@ -48,3 +48,21 @@ test("beide Module haengen ohne Marke im Precache (Aenderung braucht nur den CAC
   const menu = readFileSync(new URL("../public/chat-actions-menu.js", import.meta.url), "utf8");
   assert.ok(menu.includes('import("/assets/kompakt.js").catch(() => {})'));
 });
+
+test("Mikrofon leuchtet beim Diktat in Logofarbe (Chat und Code), sonst normal; Spiegel auf den Code-Knopf", () => {
+  assert.match(kompakt.REGELN, /body \[data-start-tool=voice\]\.is-recording,body #codeDiktat\.is-recording\{color:#02fdfd/);
+  assert.doesNotMatch(kompakt.REGELN, /is-recording\{[^}]*#ff5c5c/, "kein Rot mehr");
+  const quelle = readFileSync(new URL("../public/kompakt.js", import.meta.url), "utf8");
+  assert.match(quelle, /export function spiegleDiktat/);
+  assert.match(quelle, /attributeFilter: \["class"\]/);
+  // Spiegel ohne Browser: Fake-Dokument, Fake-Beobachter
+  let beobachtet = null;
+  class B { constructor(cb) { this.cb = cb; } observe(el) { beobachtet = el; } }
+  const quelleEl = { classList: { contains: () => true } };
+  const ziel = { klassen: {}, attrs: {}, classList: { toggle(k, an) { this.k = k; this.an = an; } }, setAttribute(a, v) { this.attrs[a] = v; } };
+  const doc = { querySelector: () => quelleEl, getElementById: () => ziel };
+  assert.equal(kompakt.spiegleDiktat(doc, B), true);
+  assert.equal(beobachtet, quelleEl);
+  assert.equal(ziel.classList.an, true);
+  assert.equal(ziel.attrs["aria-pressed"], "true");
+});
