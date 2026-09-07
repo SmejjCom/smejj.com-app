@@ -19,7 +19,9 @@ test("Regeln gelten nur am Handy (bis 600 px) und sind ein geschlossener Block",
 test("untere Safe-Area nur EINMAL: Feld und Code-Leiste geben ihren Rand ab, die Huelle behaelt ihn", () => {
   assert.match(m.REGELN, /#start \.prompt-glass\.prompt-glass\.prompt-glass\{margin-bottom:0/);
   assert.match(m.REGELN, /#code \.codeunten\.codeunten\.codeunten\{padding-bottom:0\}/);
-  assert.doesNotMatch(m.REGELN, /main\.shell[^{]*\{[^}]*padding/, "die Huelle wird nicht angefasst — sie traegt die Safe-Area (mobil-composer.css)");
+  // Die Huelle traegt die Safe-Area (mobil-composer.css); angefasst wird sie NUR bei offener Tastatur (Punkt 7).
+  const huellenRegeln = [...m.REGELN.matchAll(/([^{}]*main\.shell[^{]*)\{[^}]*padding/g)].map((t) => t[1]);
+  assert.ok(huellenRegeln.every((sel) => sel.includes("html.tastatur-offen")), `Huelle nur bei offener Tastatur: ${huellenRegeln.join(" | ")}`);
 });
 
 test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () => {
