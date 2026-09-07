@@ -75,5 +75,16 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — alle Runden live und gestempelt (SW v798); Balken-Heilung im Simulator bewiesen; Ziele 44 px auf Handy, Handy quer, Tablet nachgemessen"
+  "status": "Runde 1-3 verified (SW v798); Runde 4 gebaut und als Module live, Stempel + SW-Sprung per Doppelklick offen",
+  "runde4_fehlerliste_abends": {
+    "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
+    "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
+    "2_mikrofon": "kompakt.js: .is-recording Logofarbe #02fdfd (statt Rot+Puls), spiegleDiktat() ueberträgt Zustand auf #codeDiktat.",
+    "3_chat": "mobil-dock.js: overflow-wrap anywhere, Tabellen display:block scroll, Frage als Glasblase (Radius 0 wegen eckig.css), .mobil-kopfglas fixed hinter Logo/Globus nur im Chat-Zustand; Emulator: scrollWidth=innerWidth, Tabelle 382/382, Kopfglas 412x52.",
+    "4_modell_menue": "Startseiten-Menue ist #startModellMenue.code-modus-menue (code-modell-menue.js, 129 px, Inline right/bottom) — jetzt position:fixed left/right 16 px !important, Text umbricht, Haken eigene Spalte; .model-submenu ebenso.",
+    "5_vorlesen": "chat-actions-menu.js MENU_KOPF.user + speak (speakEntry ist rollenneutral); Marken chat-actions-menu v7, chat-actions b50 (Kaskade rechnet live+1).",
+    "6_ansichten": "mobil-ansichten.js (neu, import aus mobil-dock.js, Precache): Reiter eine wischbare 44-px-Zeile, Kopf kompakt, Felder 44 volle Breite, Knoepfe untereinander, Zeilen flex-wrap, Konsole kompakt. Emulator: settings-nav 1411>396 scrollbar, Knopf 44.",
+    "auslieferung": "ungesperrte Module live (Klon bis b3b6543); chat-actions-menu.js + Marken + sw.js per 'smejj.com Runde 4 sechs Fehler stempeln und ausliefern.command' (Probe gruen, v804 zum Probezeitpunkt; Kaskade liest live+1)",
+    "tests": "116/116 in der Probe (mobil-dock, mobil-ansichten, touch-ziele, chat-message-actions, modell-router, pwa-vollbild-heilung, composer-zeile, precache, platform-pwa)"
+  }
 }
