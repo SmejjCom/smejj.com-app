@@ -18,6 +18,13 @@ scripts/*
 # eine Stunde mit 502. Der erste Reparaturversuch scheiterte am Bau selbst,
 # weil hier die Ausnahme fehlte und COPY die Datei gar nicht sah.
 !scripts/check-schutz-echtheit.mjs
+# Die Dauertrainings-Schleife (Dienst smejj-lora-loop) laedt ihre Job-Parameter
+# und die Benotung aus scripts/training/. Ohne diese Ausnahme faende COPY die
+# Dateien nicht und der Container staerbe beim Start mit ERR_MODULE_NOT_FOUND —
+# von aussen ununterscheidbar von einem kaputten Dienst. Geprueft mit
+# `node scripts/check/abbild-importbaum.mjs --alle`.
+!scripts/training
+!scripts/training/**
 idrive-layout
 examples
 workers/*

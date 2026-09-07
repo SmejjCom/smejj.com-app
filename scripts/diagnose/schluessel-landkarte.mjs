@@ -158,4 +158,4 @@ function main() {
   console.log("\nHinweis: WERTE werden nie gelesen oder ausgegeben — nur Namen und Zahlen.");
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

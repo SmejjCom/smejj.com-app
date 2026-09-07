@@ -1,0 +1,62 @@
+# smejj.com Dauertrainings-Schleife — Bau-Abbild fuer den Zeabur-Dienst 'smejj-lora-loop'
+# (Dockerfile.<dienstname>: Zeabur waehlt es gezielt fuer genau diesen Dienst).
+#
+# Der Dienst RECHNET NIE SELBST. Er laeuft auf einer billigen CPU-Instanz und
+# steuert die teure GPU von aussen ueber Salad-Jobs. Kein torch, keine GPU,
+# keine npm-Abhaengigkeiten — nur Node-Bordmittel. Ein Wartezustand kostet
+# damit nichts, und genau das ist der Sinn: zwischen zwei Laeufen laeuft nichts.
+#
+# WAS HIER KOPIERT WIRD, ist nicht geraten. Der Importbaum von worker.mjs
+# umfasst 59 Dateien in 16 Ordnern; `node scripts/check/abbild-importbaum.mjs
+# --alle` prueft, dass jede einzelne davon im Abbild liegt. Ein Container, dem
+# EINE importierte Datei fehlt, startet nicht und antwortet 502, ohne dass im
+# Bau-Protokoll ein Fehler steht — der con-Autopilot ist am 04.09. genau daran
+# gestorben (eine fehlende COPY-Zeile fuer hash.js).
+#
+# Kopiert werden ganze Ordner statt 59 Einzelzeilen: eine Einzelzeile je Datei
+# waere praeziser, aber jeder neue Import brauchte dann eine neue Zeile, und
+# vergessen wird sie erst im Betrieb bemerkt.
+FROM node:22-slim
+ENV NODE_ENV=production SMEJJ_HOST=0.0.0.0 PORT=8080
+WORKDIR /app
+COPY package.json ./
+
+# Die Schleife selbst.
+COPY workers/smejj-lora-loop ./workers/smejj-lora-loop
+# Salad-Client, e2-Ablage, Job-Buendel und Konfiguration. Bibliothek, nicht
+# Werkstueck: der con-Autopilot bleibt davon unberuehrt.
+COPY workers/con-autopilot ./workers/con-autopilot
+COPY workers/glm-salad/s3.js ./workers/glm-salad/s3.js
+COPY workers/maus-engine/artifact-uploader.mjs ./workers/maus-engine/artifact-uploader.mjs
+COPY workers/smejj-training-loop ./workers/smejj-training-loop
+
+# Job-Parameter und Benotung. Der Autopilot benutzt DIESELBE Messstrecke wie
+# die Handmessung des Betreibers — eine zweite waere die bequemste Art, sich
+# die Zahlen schoenzurechnen.
+COPY scripts/training ./scripts/training
+COPY scripts/evaluation/run_model_eval.mjs ./scripts/evaluation/run_model_eval.mjs
+COPY scripts/check/abbild-importbaum.mjs ./scripts/check/abbild-importbaum.mjs
+
+COPY src ./src
+COPY control-server/src ./control-server/src
+
+# ZUR LAUFZEIT PER fs GELESEN, nicht importiert — der Abbild-Waechter sieht das
+# nicht, weil es kein Import ist. Die breite Suite besteht nur aus Verweisen auf
+# evals/packs/*.json; fehlt der Ordner, findet der Dienst NULL Faelle und bildet
+# daraus eine Note, ohne dass irgendwo ein Fehler auftaucht.
+COPY evals ./evals
+
+USER node
+EXPOSE 8080
+# Pflicht-Env (fail-closed: ohne die ersten beiden tickt nichts, ohne Freigabe startet kein Job):
+#   SMEJJ_LORA_LOOP_ENABLED=YES  SMEJJ_LORA_TRAINING_ENABLED=YES
+#   SMEJJ_LORA_TRAINER=salad-job          (Job-Betrieb statt Dauerdienst)
+#   SMEJJ_LORA_FREIGABE_ID / _GPU_KLASSE / _MONATSBETRAG_USD
+#   SMEJJ_LORA_MAX_USD_GESAMT / _MAX_ZYKLUS_MINUTEN
+#   SMEJJ_LORA_BASIS_HF_REPO / _BASIS_PREFIX / _DATENSATZ_NAME / _SUITE_PATH
+#   IDRIVE_E2_ENDPOINT / _BUCKET / _REGION / _ACCESS_KEY / _SECRET_KEY
+#   SALAD_ORGANIZATION_NAME / SALAD_PROJECT_NAME / SALAD_API_KEY
+# Notaus jederzeit: SMEJJ_LORA_NOTAUS=YES
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+CMD ["node", "workers/smejj-lora-loop/worker.mjs"]

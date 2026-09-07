@@ -434,7 +434,7 @@ export function startServer({ port = PORT, host = HOST } = {}) {
   return server;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   // Nur im Direktstart (nicht beim Import in Tests): kein stiller Tod auf Salad.
   installWorkerCrashGuard("smejj.com remote-browser-worker");
   startServer();

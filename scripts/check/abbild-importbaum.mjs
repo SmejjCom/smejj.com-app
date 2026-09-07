@@ -49,7 +49,14 @@ export const DIENSTE = Object.freeze([
 export function importbaum(einstieg, { wurzel = WURZEL, lies = (p) => readFileSync(p, "utf8"), gibtEs = existsSync } = {}) {
   const gesehen = new Set();
   const fehlend = [];
-  const muster = /\b(?:import|export)\s[\s\S]{0,400}?from\s*["'](\.[^"']+)["']|\bimport\(\s*["'](\.[^"']+)["']\s*\)/g;
+  // Drei Formen, und alle drei bringen einen Container zu Fall, wenn ihre Datei
+  // fehlt:
+  //   1. import … from "./x"   (auch ueber mehrere Zeilen)
+  //   2. import("./x")         dynamisch — stuerzt erst beim ersten Aufruf ab
+  //   3. import "./x"          NEBENWIRKUNG, ohne "from". Vom ersten Anlauf am
+  //      07.09. uebersehen, weil das Muster "from" verlangte; ein Test hat es
+  //      gefunden. Solche Importe registrieren etwas und sehen harmlos aus.
+  const muster = /\b(?:import|export)\s[\s\S]{0,400}?from\s*["'](\.[^"']+)["']|\bimport\(\s*["'](\.[^"']+)["']\s*\)|\bimport\s+["'](\.[^"']+)["']/g;
 
   function gehe(datei) {
     const rel = path.relative(wurzel, datei);
@@ -60,7 +67,7 @@ export function importbaum(einstieg, { wurzel = WURZEL, lies = (p) => readFileSy
     muster.lastIndex = 0;
     let treffer;
     while ((treffer = muster.exec(text))) {
-      gehe(path.resolve(path.dirname(datei), treffer[1] || treffer[2]));
+      gehe(path.resolve(path.dirname(datei), treffer[1] || treffer[2] || treffer[3]));
     }
   }
   gehe(path.resolve(wurzel, einstieg));
@@ -91,6 +98,36 @@ export function istAbgedeckt(datei, pfade = []) {
   return pfade.some((p) => datei === p || datei.startsWith(p.endsWith("/") ? p : `${p}/`));
 }
 
+/**
+ * Wird diese Datei von .dockerignore aus dem BAU-KONTEXT ausgeschlossen?
+ *
+ * Das ist die zweite Art, wie eine Datei fehlen kann — und die heimtueckischere:
+ * Eine COPY-Zeile IST da, aber Docker sieht die Datei gar nicht. Der Bau bricht
+ * dann mit "failed to compute cache key" ab (Dauertrainings-Schleife am
+ * 01.08.) oder "failed to calculate checksum" (Bruecken-Waechter am 07.08.) —
+ * eine Fehlermeldung, die nirgends den Namen der fehlenden Regel nennt.
+ *
+ * Die Auswertung folgt Dockers Regel: alle Muster der Reihe nach, das LETZTE
+ * passende entscheidet, "!" macht eine Ausnahme. Bewusst nur die Formen, die
+ * hier wirklich vorkommen (Praefix, "/" + "*", "/**"). Ein Waechter, der
+ * komplizierte Glob-Muster RAET, faellt genau dort um, wo es darauf ankommt —
+ * darum meldet ein unbekanntes Muster lieber nichts, als es falsch zu deuten.
+ */
+export function vonDockerignoreAusgeschlossen(datei, zeilen = []) {
+  let ausgeschlossen = false;
+  for (const roh of zeilen) {
+    const zeile = String(roh).trim();
+    if (!zeile || zeile.startsWith("#")) continue;
+    const negiert = zeile.startsWith("!");
+    const muster = (negiert ? zeile.slice(1) : zeile).replace(/^\.\//, "");
+    if (muster.includes("?") || muster.slice(0, -3).includes("*")) continue; // nicht deutbar
+    const basis = muster.replace(/\/\*\*$/, "").replace(/\/\*$/, "").replace(/\*$/, "");
+    if (!basis) continue;
+    if (datei === basis || datei.startsWith(`${basis}/`)) ausgeschlossen = !negiert;
+  }
+  return ausgeschlossen;
+}
+
 /** Prueft einen Dienst. Rein genug fuer Tests: alles Aeussere ist einreichbar. */
 export function pruefeDienst({ dockerfile, einstieg }, { wurzel = WURZEL, lies = (p) => readFileSync(p, "utf8"), gibtEs = existsSync } = {}) {
   const dfPfad = path.resolve(wurzel, dockerfile);
@@ -98,10 +135,16 @@ export function pruefeDienst({ dockerfile, einstieg }, { wurzel = WURZEL, lies =
   const { dateien, fehlend } = importbaum(einstieg, { wurzel, lies, gibtEs });
   const pfade = kopiertePfade(lies(dfPfad));
   const nichtKopiert = dateien.filter((d) => !istAbgedeckt(d, pfade));
+
+  const ignorePfad = path.resolve(wurzel, ".dockerignore");
+  const ignoreZeilen = gibtEs(ignorePfad) ? lies(ignorePfad).split("\n") : [];
+  const ausgesperrt = dateien.filter((d) => vonDockerignoreAusgeschlossen(d, ignoreZeilen));
+
   const gruende = [];
   if (fehlend.length) gruende.push(`${fehlend.length} importierte Datei(en) existieren gar nicht: ${fehlend.slice(0, 5).join(", ")}`);
   if (nichtKopiert.length) gruende.push(`${nichtKopiert.length} Datei(en) werden NICHT ins Abbild kopiert`);
-  return { ok: gruende.length === 0, dockerfile, einstieg, gesamt: dateien.length, fehlerhaft: nichtKopiert, fehlend, gruende };
+  if (ausgesperrt.length) gruende.push(`${ausgesperrt.length} Datei(en) sperrt .dockerignore aus dem Bau-Kontext aus`);
+  return { ok: gruende.length === 0, dockerfile, einstieg, gesamt: dateien.length, fehlerhaft: nichtKopiert, ausgesperrt, fehlend, gruende };
 }
 
 function main() {
@@ -120,6 +163,7 @@ function main() {
     fehler += 1;
     console.error(`FEHLER  ${b.dockerfile}: ${b.gruende.join("; ")}`);
     for (const d of b.fehlerhaft) console.error(`    fehlt im Abbild: ${d}`);
+    for (const d of b.ausgesperrt || []) console.error(`    von .dockerignore ausgesperrt: ${d}`);
     for (const d of b.fehlend || []) console.error(`    Import zeigt ins Leere: ${d}`);
   }
   if (fehler) {
@@ -129,4 +173,4 @@ function main() {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
