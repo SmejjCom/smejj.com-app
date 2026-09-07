@@ -292,7 +292,7 @@ test("die Job-Parameter zeigen auf den smejj-Datensatz und einen eigenen Kandida
 
 test("die Zeitgrenze ist gesetzt und bleibt im Rahmen des Deckels", () => {
   // Ohne Zeitgrenze wird nicht gestartet. 170 min auf einer 24-GB-Karte zu
-  // 0,10 USD/h sind rund 0,28 USD — der Monatsdeckel liegt bei 10 USD.
+  // 0,10 USD/h sind rund 0,28 USD — der Monatsdeckel liegt seit 07.09. bei 108 USD (100 EUR).
   assert.ok(TRAIN_MINUTEN > 0 && TRAIN_MINUTEN <= 240, `Zeitgrenze ${TRAIN_MINUTEN} min`);
   assert.ok((TRAIN_MINUTEN / 60) * 0.10 < 1, "ein einzelner Lauf darf keinen Dollar kosten");
 });
