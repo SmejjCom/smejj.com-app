@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T12:35:39.426Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 (Auftrag 100 % End-to-End Responsiveness, Fullscreen UI Fix & Multi-Platform QA Loop): 'Fehler sofort beheben und erneut testen, bis alles 100 % sauber laeuft. Zum Schluss bitte 100 % Schutz aktivieren.' — Stempel per Doppelklick: ai/chatClient.js (Auto endet nie mehr mit 'von Hand waehlen'; frischer Ausweis) und sw.js (Precache mobil-dock.js, CACHE_NAME smejj-shell-v795) fuer Vollbild-Heilung und schlankes Dock in der installierten App.",
+  "frozenAt": "2026-09-07T13:38:09.362Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 (Auftrag 100 % End-to-End Responsiveness, 'Teste du selber, weiter'): Touch-Ziele mindestens 44x44 auf Tablets und im Querformat (kompakt.js, pointer:coarse) sowie Banner, Profilbild-Knopf und Werkzeug-Zeilen am Handy (mobil-dock.js); sw.js CACHE_NAME smejj-shell-v797. Stempel per Doppelklick.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "6cf3bc2c5f8faf26a36a8d2ff37097eee571c22708e87ccffcedcedc06b7803a",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "673e4363490804d15d00c7e9dde9ea619dfffa6d2dd58dc78972c303fe513360",
+    "public/sw.js": "fb6acccc19825184bf85bdc41c428e29df0be36c783a57b63b7b5416b2d867dd",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
