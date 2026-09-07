@@ -110,7 +110,13 @@ test("das Menue holt keinen Katalog mehr beim Server", () => {
 test("die Umleitung alter Speicherwerte landet bei smejj 1.0", () => {
   // Wer noch "Ox Alpha" oder ein Katalog-Modell als Wahl im Browser hat, darf
   // nicht ins Leere zeigen — sonst zeigt das Menue nichts als gewaehlt an.
-  assert.match(lies(CODE_MENUE), /if \(wahl && !istCline && !istSmejjVersion\(wahl\)\) \{\s*localStorage\.setItem\(MODELL_KEY, "smejj 1\.0"\);/);
+  const menue = lies(CODE_MENUE);
+  // Altwahl "Auto ueber Cline" wird auf den eigenen Auto-Pfad gehoben ...
+  assert.match(menue, /istCline && aktivesClineModell === AUTO_MARKE[\s\S]{0,160}setItem\(MODELL_KEY, AUTO_WAHL\)/,
+    "die Migration alter Auto-Wahlen fehlt");
+  // ... alles andere Unbekannte landet bei smejj 1.0, "Auto" bleibt gueltig.
+  assert.match(menue, /wahl !== AUTO_WAHL && !istCline && !istSmejjVersion\(wahl\)[\s\S]{0,120}setItem\(MODELL_KEY, "smejj 1\.0"\)/,
+    "die Umleitung unbekannter Werte fehlt");
 });
 
 test("Quelle und ausgelieferte Kopie sind byte-gleich", () => {

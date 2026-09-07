@@ -169,8 +169,9 @@ test("oeffneModellMenue zeichnet das Menue und die Wahl greift wirklich", async 
   // den Rueckruf feuern — genau die zwei Draehte, die beim Auslagern
   // haetten reissen koennen. Auto ist die LETZTE Zeile.
   knoepfe[4].click();
-  assert.equal(localStorage.getItem(CLINE_MODEL_KEY), AUTO_MARKE);
-  assert.equal(localStorage.getItem(MODELL_KEY), "Cline");
+  // Seit 07.09. ist Auto ein EIGENER Live-Pfad — kein Fremd-Dienst, kein /select.
+  assert.equal(localStorage.getItem(MODELL_KEY), "Auto");
+  assert.equal(localStorage.getItem(CLINE_MODEL_KEY), null, "die Cline-Wahl muss geraeumt sein");
   assert.equal(neuGezeichnet, 1, "beiWahl wurde nicht gerufen — die Anzeige bliebe stehen");
   assert.equal(document.getElementById("codeModellMenue"), null, "das Menue blieb nach der Wahl offen");
 });

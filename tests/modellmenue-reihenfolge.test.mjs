@@ -71,7 +71,7 @@ test("Auto ruft weiterhin KEIN /select", () => {
   const [{ text }] = findeMenueDatei();
   const block = text.slice(text.indexOf(AUTO), text.indexOf("feld.append(menue)"));
   assert.ok(!/providers\/cline\/select/.test(block), "Auto darf kein /select rufen");
-  assert.match(block, /AUTO_MARKE/);
+  assert.match(block, /AUTO_WAHL/, "Auto muss den eigenen Live-Pfad setzen, nicht den Fremd-Dienst");
 });
 
 test("die Begruendung des Betreibers steht im Code", () => {
