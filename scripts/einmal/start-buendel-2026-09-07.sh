@@ -6,15 +6,15 @@
 # /assets/start-styles.css, nicht browser-pane.css. Die Toast-Regel fuer die
 # Hinweiszeile (v789) steckte deshalb noch nicht im ausgelieferten Buendel; die
 # #mausButton-Regel stand von Hand im Buendel statt in der Quelle branding.css.
-# Jetzt: Regel in branding.css, Buendel neu gebaut, Service-Worker v790.
+# Jetzt: Regel in branding.css, Buendel neu gebaut, Service-Worker v791 (v790 hat die Parallelsitzung Modell-Menue belegt).
 # SICHERHEITSNETZ: alle 3 Dateien im Live-Repo byte-gleich mit dem letzten Stempel.
 set -uo pipefail
 REPO="/Users/alanbest/Library/CloudStorage/GoogleDrive-smejjcom@gmail.com/.shortcut-targets-by-id/1FZNCd1vuQbdTkRgF0Vtz8htM8e5JhPbY/- smejj.com info/smejj.com App"
 KLON="/Users/alanbest/smejj-app-frontend"
-BASIS_VOR_AENDERUNG="3e628f2a"
-CODE_COMMIT="efb9edde"
-SW_VORHER="smejj-shell-v789"
-SW_NEU="smejj-shell-v790"
+BASIS_VOR_AENDERUNG="2b8e724f"
+CODE_COMMIT="ef232ff7"
+SW_VORHER="smejj-shell-v790"
+SW_NEU="smejj-shell-v791"
 DATEIEN=(branding.css start-styles.css sw.js)
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 
@@ -50,13 +50,13 @@ node --test tests/browser-pane-maus.test.mjs tests/browser-pane.test.mjs tests/m
 grep -E "pass |fail " /tmp/maus-schrittgrenze-kaskade.log | tr '\n' ' '; echo
 
 echo "== 2. Start-Lock stempeln (Betreiber-Wortlaut)"
-node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-07 04:20: teste die gesamte App von A bis Z, behebe Fehler sofort, deploye erneut, danach alles 100 Prozent schuetzen. Suite-Fund: das Start-Buendel start-styles.css trug die Panel-Regeln (Hinweis als Toast, Wiedergabe-Knopf weg) noch nicht — Regel in branding.css, Buendel neu gebaut, Service-Worker smejj-shell-v790. Stempel per Doppelklick im Finder." \
+node scripts/check-start-lock.mjs --freeze --confirm "Betreiber, 2026-09-07 04:20: teste die gesamte App von A bis Z, behebe Fehler sofort, deploye erneut, danach alles 100 Prozent schuetzen. Suite-Fund: das Start-Buendel start-styles.css trug die Panel-Regeln (Hinweis als Toast, Wiedergabe-Knopf weg) noch nicht — Regel in branding.css, Buendel neu gebaut, Service-Worker smejj-shell-v791. Stempel per Doppelklick im Finder." \
   || { echo "ABBRUCH: Stempel fehlgeschlagen."; exit 1; }
 
 echo "== 3. Stempel committen und pushen"
 git add docs/frontend/start-lock-manifest.json
 if git diff --cached --quiet; then echo "(Manifest unveraendert)"; else
-  git commit -q -m "chore(start-lock): Stempel Start-Buendel 2026-09-07 — start-styles.css, branding.css, SW smejj-shell-v790 (Betreiber-Doppelklick)
+  git commit -q -m "chore(start-lock): Stempel Start-Buendel 2026-09-07 — start-styles.css, branding.css, SW smejj-shell-v791 (Betreiber-Doppelklick)
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: Commit fehlgeschlagen."; exit 1; }
 fi
