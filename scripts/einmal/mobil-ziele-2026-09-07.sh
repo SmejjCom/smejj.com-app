@@ -1,7 +1,7 @@
 #!/bin/zsh
 # smejj.com — Einmal-Kaskade fuer den Betreiber-Doppelklick (2026-09-07, Runde 2):
 # Touch-Ziele 44 px auf Tablets und im Querformat, Rest-Ziele am Handy —
-# Start-Lock stempeln und sw.js (Sprung auf v796) ausliefern.
+# Start-Lock stempeln und sw.js (Sprung auf v797) ausliefern.
 #
 # BEFUND (Rundgang durch alle Ansichten, Pixel 7 hoch/quer, Pixel Tablet 800 px):
 #   - Tablet und Handy-Querformat (breiter als 600 px, Touch): Seitenleiste 36 px,
@@ -13,9 +13,9 @@
 #
 # WAS PASSIERT (8 Schritte, jeder bricht bei Rot ab, nichts wird geloescht):
 #   1. frischer Arbeitsbaum vom Bauzweig
-#   2. kompakt.js, mobil-dock.js und Tests aus dem QA-Zweig; sw.js = LIVE (v795) -> v796
+#   2. kompakt.js, mobil-dock.js und Tests aus dem QA-Zweig; sw.js = LIVE (v796) -> v797
 #   3. Tests und Waechter
-#   4. Sicherheitsnetz: live ist v795, kompakt.js live = Bauzweig-Basis
+#   4. Sicherheitsnetz: live ist v796, kompakt.js live = Bauzweig-Basis
 #   5. Start-Lock stempeln   6. Sperren pruefen
 #   7. Bauzweig hochladen; kompakt.js, mobil-dock.js, sw.js in den Frontend-Klon
 #   8. Gegenprobe live
@@ -27,9 +27,9 @@ QA_ZWEIG="feature/responsive-qa-2026-09-07"
 QUELLE="${SMEJJ_APP_ORDNER:-$PWD}"
 KLON="$HOME/smejj-app-frontend"
 BAUM="/private/tmp/claude-501/stempel-mobil-ziele-$(date +%Y%m%d-%H%M%S)"
-SW_VORHER="smejj-shell-v795"
-SW_NEU="smejj-shell-v796"
-WORTLAUT="Betreiber Wof Kadavanich, 2026-09-07 (Auftrag 100 % End-to-End Responsiveness, 'Teste du selber, weiter'): Touch-Ziele mindestens 44x44 auf Tablets und im Querformat (kompakt.js, pointer:coarse) sowie Banner, Profilbild-Knopf und Werkzeug-Zeilen am Handy (mobil-dock.js); sw.js CACHE_NAME smejj-shell-v796. Stempel per Doppelklick."
+SW_VORHER="smejj-shell-v796"
+SW_NEU="smejj-shell-v797"
+WORTLAUT="Betreiber Wof Kadavanich, 2026-09-07 (Auftrag 100 % End-to-End Responsiveness, 'Teste du selber, weiter'): Touch-Ziele mindestens 44x44 auf Tablets und im Querformat (kompakt.js, pointer:coarse) sowie Banner, Profilbild-Knopf und Werkzeug-Zeilen am Handy (mobil-dock.js); sw.js CACHE_NAME smejj-shell-v797. Stempel per Doppelklick."
 DATEIEN=(public/kompakt.js public/mobil-dock.js tests/mobil-dock.test.mjs tests/touch-ziele.test.mjs)
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 [ -e "$QUELLE/.git" ] || { echo "ABBRUCH: Arbeitskopie fehlt unter $QUELLE"; exit 2; }
