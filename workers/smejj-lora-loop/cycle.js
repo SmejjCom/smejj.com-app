@@ -25,6 +25,23 @@ import {
 import { gitterErschoepft, istNeuerBester, konfigurationFuer } from "./sweep.js";
 import { brichTrainingAb, starteTraining, trainerErreichbar, trainingZustand } from "./trainerClient.js";
 
+/**
+ * Der Trainer-Anschluss als EINREICHBARE Abhaengigkeit — Standard ist der
+ * bisherige HTTP-Weg zum Dauerdienst, es aendert sich also nichts fuer
+ * bestehende Aufrufer.
+ *
+ * WARUM DIESE NAHT: Der Dauerdienst ist am 2026-08-03 gescheitert (Container
+ * lief, Anwendung bediente nicht, 28 Stunden unbemerkt). Der Job-Weg ueber
+ * Salad ist seit dem 03.09. erprobt. Beide Wege erfuellen denselben Vertrag
+ * aus vier Funktionen; welcher benutzt wird, entscheidet der Aufrufer, nicht
+ * dieses Modul. Eine zweite Kopie von cycle.js waere die Alternative gewesen —
+ * und damit zwei Stellen, an denen Kosten- und Notaus-Logik auseinanderlaufen.
+ */
+export const HTTP_TRAINER = Object.freeze({
+  art: "http-dauerdienst",
+  trainerErreichbar, starteTraining, trainingZustand, brichTrainingAb
+});
+
 const ABFRAGE_ABSTAND_MS = 30_000;
 /**
  * Wie viele Statusabfragen IN FOLGE unklar sein duerfen, bevor der Lauf
@@ -74,6 +91,8 @@ export async function fuehreZyklusAus({
   pruefeDaten,
   messe,
   speichereBesten,
+  /** Vier Funktionen: trainerErreichbar, starteTraining, trainingZustand, brichTrainingAb. */
+  trainer = HTTP_TRAINER,
   fetchImpl,
   warte = (ms) => new Promise((r) => setTimeout(r, ms)),
   abfrageAbstandMs = ABFRAGE_ABSTAND_MS,
@@ -92,7 +111,7 @@ export async function fuehreZyklusAus({
   // sperren, dann die Netzabfrage.
   const datenBefund = await sicher(() => pruefeDaten?.(), { vorhanden: false, gruende: ["datenpruefung_fehlgeschlagen"] });
   const erreichbar = await sicher(
-    () => trainerErreichbar({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, fetchImpl }),
+    () => trainer.trainerErreichbar({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, fetchImpl }),
     false
   );
 
@@ -121,7 +140,7 @@ export async function fuehreZyklusAus({
   log(`[smejj-lora-loop] Zyklus ${zyklusIndex} startet: ${konfiguration.kennung}` +
     ` (geschaetzt ${tor.zykluskostenUsd} USD, Rest ${tor.restUsd} USD)`);
 
-  const start = await starteTraining({
+  const start = await trainer.starteTraining({
     basisUrl: trainerBasisUrl, apiKey: trainerApiKey, konfiguration, basismodell, datensatz, fetchImpl
   });
   if (!start.ok) {
@@ -139,7 +158,7 @@ export async function fuehreZyklusAus({
     // startet dann sauber.
     if (start.aktiverLauf) {
       const beendet = await sicher(
-        () => brichTrainingAb({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.aktiverLauf, fetchImpl }),
+        () => trainer.brichTrainingAb({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.aktiverLauf, fetchImpl }),
         false
       );
       log(`[smejj-lora-loop] Verwaister Lauf ${start.aktiverLauf} belegte den Trainer —`
@@ -161,7 +180,7 @@ export async function fuehreZyklusAus({
     }
     await warte(abfrageAbstandMs);
     zustand = await sicher(
-      () => trainingZustand({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.laufId, fetchImpl }),
+      () => trainer.trainingZustand({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.laufId, fetchImpl }),
       { zustand: "unbekannt", gelaufeneMinuten: 0 }
     );
     // Ein unklarer Zustand bleibt ein Abbruchgrund — aber erst nach mehreren
@@ -191,7 +210,7 @@ export async function fuehreZyklusAus({
 
   if (abgebrochen) {
     const beendet = await sicher(
-      () => brichTrainingAb({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.laufId, fetchImpl }),
+      () => trainer.brichTrainingAb({ basisUrl: trainerBasisUrl, apiKey: trainerApiKey, laufId: start.laufId, fetchImpl }),
       false
     );
     // Ehrlich melden statt "abgebrochen" zu behaupten: reagiert der Dienst
