@@ -1,13 +1,13 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-06T18:57:22.225Z",
-  "confirmation": "Betreiber-Auftrag 2026-09-06: 'Option 1 (Empfehlung): Erzeuge die .command-Datei auf einem Branch ab der Bau-Basis, die alle vier Sperren neu einfriert. Ich uebernehme den Doppelklick selbst.' — gestempelt werden start-lock (composer-plus-menu.js, browser-pane.js), security-lock und einwilligung-lock (controlAccessPolicy.js) sowie admin-lock (views-stage7.js, console-stage7.js, sync_admin_console_pages.mjs); Anlass: das Werkstatt-Tor Nr. 30 ist seit Tagen zu, weil die gesperrten Dateien auf der Bau-Basis weitergewandert sind, ohne dass die Manifeste nachgezogen wurden",
+  "frozenAt": "2026-09-07T10:41:41.857Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 (Auftrag 100 % Responsive): 'Zum Schluss bitte 100 % Schutz aktivieren: nichts darf kaputtgehen, geloescht oder ohne meine schriftliche Freigabe geaendert werden.' — Stempel per Doppelklick: public/auth/auth.css bekommt Safe-Area-Raender fuer die installierte App (Marke lag hinter der Dynamic Island, gemessen im iPhone-17-Pro-Simulator). — TEILSTEMPEL nur fuer public/auth/auth.css; unveraendert und weiter offen: public/chat-bridge.js",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
     "public/auth/register/index.html": "673885f4a0482ed19c0f31621195e5272fc851e3b1c9427cb370b4bd4076485c",
     "public/auth/auth-page.js": "eca1eec965d0b0911a1764a51908ee7023f05ecb016ed1a3f2fd10be1f36dd3e",
-    "public/auth/auth.css": "f4608ee63a719f8895ac7d6c4da0860e6feefa61218195e51525bacb50b6725e",
+    "public/auth/auth.css": "ae2641fdb167358f9bad1f4b844d68aec2b6c41268882973a63de81896c3a910",
     "public/auth/passkey.js": "f2fad40b5c9556adb64cc048271b2e802697a8872b67e8fae77d07a21b06e01f",
     "src/shared/controlAccessPolicy.js": "dc43435481d8381d698e6ad706b874bb677f18f2c87fb54e50e44e88dadf5066",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
