@@ -25,7 +25,8 @@
 //   (6) Kein waagerechter Ueberlauf der Seite: overflow-x:clip auf Huelle und body
 //       (clip statt hidden — erzeugt keinen Scroll-Container, sticky bleibt heil).
 //   (7) Rest-Ziele unter 44 px: Sitzungs-Banner, Profilbild-Knopf, Werkzeug-Zeilen.
-//   (8) Modell-Menue volle Breite, (9) Chat-Glas ohne Seitwaerts-Schieben, (10) Vollbild-Versatz.
+//   (8) Modell-Menue volle Breite, (9) Chat-Glas ohne Seitwaerts-Schieben, (10) Vollbild-Rahmen bis zur sichtbaren Unterkante,
+//   (11) Feld buendig an der Tastatur (Sicherheitsrand nur ohne Tastatur).
 // Stil aus dem Modul, weil die Regeln sonst in start-styles.css (Start-Buendel,
 // gesperrt) muessten. Spezifitaet bewusst hoch (body + Mehrfachklasse), damit die
 // Buendel-Regeln und die aelteren Laufzeit-Module (kompakt.js, code-feld-unten.js)
@@ -64,10 +65,21 @@ export const REGELN = "@media (max-width:600px){"
   //     232-312 px breit mit nowrap und Ellipse — "smejj 1.3 — Sp…", Haken ueber dem Text.
   //     Am Handy liegt es jetzt FEST ueber dem Dock, 16 px Rand links und rechts, Text darf
   //     umbrechen, der Haken steht rechts in eigener Spalte.
-  + "body .model-picker .model-submenu.model-submenu{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 124px);width:auto;min-width:0;max-width:none;max-height:min(60vh,480px)}"
-  + "body .model-submenu button{white-space:normal;text-align:left;min-height:44px;display:flex;align-items:center;gap:10px}"
-  + "body .model-submenu .model-submenu-name{flex:1 1 auto;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}"
-  + "body .model-submenu .model-submenu-check{flex:0 0 auto;width:20px;text-align:center}"
+  //     GEMESSEN 07.09. 19:10 im Emulator: das Fuenf-Zeilen-Menue der Startseite ist
+  //     #startModellMenue.code-modus-menue (code-modell-menue.js): 129 px breit, Knoepfe in
+  //     zwei Spalten a 115 px, right/bottom als INLINE-Stil. position:fixed geht NICHT — der
+  //     backdrop-filter des Glases macht .prompt-glass zum Bezugsrahmen (das Menue landete bei
+  //     y=-125). Darum: der Picker wird static, das Menue liegt absolut ueber die GANZE
+  //     Glasbreite (6 px Rand), eine Spalte, Text darf umbrechen. Auf der leeren Startseite
+  //     (Glas in der Mitte) klappt es nach unten auf, im Chat (Glas unten) nach oben.
+  + "body #start .prompt-glass .model-picker.model-picker{position:static}"
+  + "body #startModellMenue.code-modus-menue,body #start .prompt-glass .model-submenu.model-submenu,body #start .prompt-glass .model-menu.model-menu{position:absolute!important;left:6px!important;right:6px!important;top:auto!important;bottom:calc(100% + 8px)!important;width:auto!important;min-width:0!important;max-width:none!important;max-height:min(50vh,420px);overflow-y:auto}"
+  + "body #startModellMenue.code-modus-menue{display:flex;flex-direction:column;flex-wrap:nowrap}"
+  + "body #start:not(.has-start-chat) #startModellMenue.code-modus-menue,body #start:not(.has-start-chat) .prompt-glass .model-menu.model-menu{top:calc(100% + 8px)!important;bottom:auto!important}"
+  + "body #startModellMenue.code-modus-menue button,body #code .code-modus-menue.code-modus-menue button,body .model-submenu button{display:flex;align-items:center;gap:10px;width:100%;flex:0 0 auto;min-height:44px;white-space:normal;text-align:left}"
+  + "body .code-modus-menue .modus-links,body .model-submenu .model-submenu-name{flex:1 1 auto;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}"
+  + "body .code-modus-menue .modus-rechts,body .code-modus-menue .modus-haken,body .model-submenu .model-submenu-check{flex:0 0 auto}"
+  + "body #code .code-modus-menue.code-modus-menue{left:0!important;right:0!important;width:auto!important;min-width:0!important;display:flex;flex-direction:column;flex-wrap:nowrap}"
   // (9) Chat wie ChatGPT/iPhone-Glas (Betreiber 17:36): kein Seitwaerts-Schieben — lange
   //     Links und Tabellen brechen bzw. scrollen in sich; eigene Frage als Glasblase rechts
   //     mit Blur, Antwort ohne Blase; Kopfzeile als Glasstreifen unter der Statusleiste,
@@ -86,29 +98,68 @@ export const REGELN = "@media (max-width:600px){"
   //      (~52 pt) zu kurz — Rahmen (body::after, inset:0) und alles mit bottom:0 enden
   //      darueber, darunter nur Grundton. KEIN Tastatur-Fehler. misstVersatz() unten legt
   //      den Fehlbetrag als --vollbild-fehl an; hier wird er auf Rahmen und Flaechen gerechnet.
+  //      BEFUND Betreiber 22:32 nach dem Sprung: Rahmen jetzt bis zur Kante, aber das Dock
+  //      rutschte unter den Schirm. Also: 100dvh war schon die VOLLE Hoehe (852), nur der
+  //      Layout-Viewport fuer position:fixed ist kurz (800). Der Fehlbetrag gilt darum NUR
+  //      fuer fixe Elemente (Rahmen) — die dvh-Flaechen bleiben unangetastet.
+  //      BEFUND Betreiber 08.09. 01:49 (SW v807): nach Tastatur auf/zu war der Balken wieder da —
+  //      innerHeight ist in der iOS-App KEIN verlaesslicher Massstab (mal 800, mal 852, je nach
+  //      Tastatur-Historie). Verlaesslich ist die SICHTBARE Flaeche: visualViewport.offsetTop +
+  //      visualViewport.height. Der Rahmen bekommt darum eine feste Hoehe bis zur sichtbaren
+  //      Unterkante (--vv-unten) statt bottom:0 — bei offener Tastatur endet er an der Tastatur.
   + "@media (display-mode:standalone) and (max-width:600px){"
-  + "body::after{bottom:calc(-1 * var(--vollbild-fehl,0px))}"
-  + "body .workspace,body .view,body .home-feed{min-height:calc(100dvh + var(--vollbild-fehl,0px) - var(--sa-top,0px) - var(--sa-bottom,0px))}"
-  + "body #start.has-start-chat .home-feed.home-feed.home-feed,body #code.view.is-active.is-active.is-active{height:calc(100dvh + var(--vollbild-fehl,0px) - var(--sa-top,0px) - var(--sa-bottom,0px));max-height:calc(100dvh + var(--vollbild-fehl,0px) - var(--sa-top,0px) - var(--sa-bottom,0px))}"
+  + "body::after{top:0;bottom:auto;height:var(--vv-unten,100%)}"
+  + "}"
+  // (11) Feld buendig an der Tastatur (Betreiber 08.09. 01:44, Punkt 7): bei offener Tastatur
+  //      blieb der untere Sicherheitsrand (34 pt Home-Balken) als Luecke zwischen Feld und
+  //      Tastatur stehen — die Tastatur verdeckt den Balken laengst. Solange ein Feld den
+  //      Fokus hat UND die sichtbare Flaeche kuerzer ist als der Schirm (echte Bildschirm-
+  //      tastatur, keine Hardware-Tastatur), traegt <html> die Klasse tastatur-offen: der
+  //      Rand faellt auf null, --sa-bottom ebenso (Flaechenhoehe in mobil-composer.css).
+  + "@media (max-width:600px){"
+  + "html.tastatur-offen{--sa-bottom:0px}"
+  + "html.tastatur-offen main.shell.shell{padding-bottom:0}"
+  + "html.tastatur-offen #start .prompt-glass.prompt-glass.prompt-glass,html.tastatur-offen #code .codeunten.codeunten.codeunten{margin-bottom:0;padding-bottom:0}"
   + "}";
 
-/** Der Fehlbetrag der Layout-Flaeche in der installierten App: Schirmhoehe minus innerHeight,
- *  nur ohne offene Tastatur, nur hochkant, nur plausibel (0 < fehl <= 120). Reine Funktion. */
-export function misstVersatz({ standalone, schirmHoehe, schirmBreite, innerHeight, tastaturOffen }) {
-  if (!standalone || tastaturOffen) return 0;
-  if (!(schirmHoehe > schirmBreite)) return 0;
-  const fehl = Math.round(Number(schirmHoehe) - Number(innerHeight));
-  return fehl > 0 && fehl <= 120 ? fehl : 0;
+/** Ist die Bildschirmtastatur offen? Fokus in einem Feld UND sichtbare Flaeche deutlich kuerzer
+ *  als der Schirm (Hardware-Tastatur laesst die Flaeche voll). Reine Funktion. */
+export function tastaturOffen({ fokusImFeld, sichtbarUnten, schirmHoehe }) {
+  if (!fokusImFeld) return false;
+  const schirm = Number(schirmHoehe) || 0;
+  const unten = Number(sichtbarUnten) || 0;
+  if (!schirm || !unten) return Boolean(fokusImFeld);
+  return unten < schirm - 80;
+}
+
+function verdrahteTastatur(win = window, doc = document) {
+  const vv = win.visualViewport;
+  const imFeld = () => { const a = doc.activeElement; return Boolean(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable)); };
+  const setze = () => {
+    const offen = tastaturOffen({ fokusImFeld: imFeld(), sichtbarUnten: vv ? sichtbareUnterkante(vv) : 0, schirmHoehe: win.screen?.height || win.innerHeight });
+    doc.documentElement.classList.toggle("tastatur-offen", offen);
+  };
+  doc.addEventListener("focusin", () => setTimeout(setze, 60), true);
+  doc.addEventListener("focusout", () => setTimeout(setze, 120), true);
+  if (vv) vv.addEventListener("resize", setze);
+  setze();
+}
+
+/** Sichtbare Unterkante in px vom oberen Rand (visualViewport), gerundet; 0 = unbekannt. Reine Funktion. */
+export function sichtbareUnterkante({ offsetTop, height }) {
+  const unten = Math.round(Number(offsetTop || 0) + Number(height || 0));
+  return unten > 0 && Number.isFinite(unten) ? unten : 0;
 }
 
 function verdrahteVersatz(win = window, doc = document) {
-  const standalone = () => { try { return matchMedia("(display-mode: standalone)").matches || win.navigator.standalone === true; } catch { return false; } };
-  const tastatur = () => { const a = doc.activeElement; return Boolean(a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable)); };
+  const vv = win.visualViewport;
   const setze = () => {
-    const fehl = misstVersatz({ standalone: standalone(), schirmHoehe: win.screen?.height || 0, schirmBreite: win.screen?.width || 0, innerHeight: win.innerHeight, tastaturOffen: tastatur() });
-    if (fehl || !tastatur()) doc.documentElement.style.setProperty("--vollbild-fehl", `${fehl}px`);
+    const unten = vv ? sichtbareUnterkante(vv) : 0;
+    if (unten) doc.documentElement.style.setProperty("--vv-unten", `${unten}px`);
+    else doc.documentElement.style.removeProperty("--vv-unten");
   };
   setze();
+  if (vv) { vv.addEventListener("resize", setze); vv.addEventListener("scroll", setze); }
   win.addEventListener("resize", () => setTimeout(setze, 120));
   win.addEventListener("orientationchange", () => setTimeout(setze, 300));
 }
@@ -140,6 +191,7 @@ export function sorgeFuerStil(doc = document) {
 if (typeof document !== "undefined" && document.querySelector("#startMessage, #codeAufgabe")) {
   sorgeFuerStil();
   verdrahteVersatz();
+  verdrahteTastatur();
   verdrahteKopfglas();
   // Ansichten nach dem Login (Profil, Einstellungen, Verlauf, Dateien …) — eigenes Modul, ohne Marke.
   import("/assets/mobil-ansichten.js").catch(() => {});

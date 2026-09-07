@@ -19,7 +19,9 @@ test("Regeln gelten nur am Handy (bis 600 px) und sind ein geschlossener Block",
 test("untere Safe-Area nur EINMAL: Feld und Code-Leiste geben ihren Rand ab, die Huelle behaelt ihn", () => {
   assert.match(m.REGELN, /#start \.prompt-glass\.prompt-glass\.prompt-glass\{margin-bottom:0/);
   assert.match(m.REGELN, /#code \.codeunten\.codeunten\.codeunten\{padding-bottom:0\}/);
-  assert.doesNotMatch(m.REGELN, /main\.shell[^{]*\{[^}]*padding/, "die Huelle wird nicht angefasst — sie traegt die Safe-Area (mobil-composer.css)");
+  // Die Huelle traegt die Safe-Area (mobil-composer.css); angefasst wird sie NUR bei offener Tastatur (Punkt 7).
+  const huellenRegeln = [...m.REGELN.matchAll(/([^{}]*main\.shell[^{]*)\{[^}]*padding/g)].map((t) => t[1]);
+  assert.ok(huellenRegeln.every((sel) => sel.includes("html.tastatur-offen")), `Huelle nur bei offener Tastatur: ${huellenRegeln.join(" | ")}`);
 });
 
 test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () => {
@@ -65,10 +67,13 @@ test("Stil wird genau einmal eingehaengt", () => {
 });
 
 // ---- Runde 4 (Betreiber 07.09. abends): Modell-Menue, Chat-Glas, Vollbild-Versatz ----------
-test("Modell-Menue am Handy: fest ueber dem Dock, 16 px Rand, Text bricht um, Haken in eigener Spalte", () => {
-  assert.match(m.REGELN, /\.model-submenu\.model-submenu\{position:fixed;left:16px;right:16px;bottom:calc\(env\(safe-area-inset-bottom,0px\) \+ 124px\);width:auto;min-width:0;max-width:none/);
-  assert.match(m.REGELN, /\.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal;overflow:visible/);
-  assert.match(m.REGELN, /\.model-submenu-check\{flex:0 0 auto;width:20px/);
+test("Modell-Menue am Handy: Picker static, Menue absolut ueber die Glasbreite (fixed scheitert am backdrop-filter), eine Spalte, Text bricht um", () => {
+  assert.match(m.REGELN, /#start \.prompt-glass \.model-picker\.model-picker\{position:static\}/);
+  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,[^{]*\{position:absolute!important;left:6px!important;right:6px!important;top:auto!important;bottom:calc\(100% \+ 8px\)!important;width:auto!important/);
+  assert.doesNotMatch(m.REGELN, /model-submenu[^{]*\{position:fixed/, "fixed landet unter backdrop-filter bei y=-125 (gemessen 07.09.)");
+  assert.match(m.REGELN, /#start:not\(\.has-start-chat\) #startModellMenue\.code-modus-menue[^{]*\{top:calc\(100% \+ 8px\)!important;bottom:auto!important\}/, "leere Startseite: nach unten aufklappen");
+  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue button,[^{]*\{display:flex;align-items:center;gap:10px;width:100%;flex:0 0 auto;min-height:44px;white-space:normal/);
+  assert.match(m.REGELN, /\.modus-links,body \.model-submenu \.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal/);
 });
 
 test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen in sich; Frage als Glasblase, Kopfglas", () => {
@@ -79,14 +84,25 @@ test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen 
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild-Versatz: gemessen wird nur standalone, hochkant, ohne Tastatur, plausibel; Rahmen und Flaechen rechnen ihn ein", () => {
-  const basis = { standalone: true, schirmHoehe: 852, schirmBreite: 393, innerHeight: 800, tastaturOffen: false };
-  assert.equal(m.misstVersatz(basis), 52, "852 - 800 = 52 (Betreiber-iPhone, 17:32)");
-  assert.equal(m.misstVersatz({ ...basis, standalone: false }), 0, "im Browser-Tab nichts");
-  assert.equal(m.misstVersatz({ ...basis, tastaturOffen: true }), 0, "offene Tastatur verfaelscht innerHeight");
-  assert.equal(m.misstVersatz({ ...basis, schirmBreite: 900, schirmHoehe: 393, innerHeight: 340 }), 0, "quer nicht");
-  assert.equal(m.misstVersatz({ ...basis, innerHeight: 600 }), 0, "252 px sind kein Statusleisten-Versatz");
-  assert.equal(m.misstVersatz({ ...basis, innerHeight: 852 }), 0);
-  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{bottom:calc\(-1 \* var\(--vollbild-fehl,0px\)\)\}/);
-  assert.match(m.REGELN, /#code\.view\.is-active\.is-active\.is-active\{height:calc\(100dvh \+ var\(--vollbild-fehl,0px\)/);
+test("Vollbild-Rahmen: feste Hoehe bis zur sichtbaren Unterkante (visualViewport), nie innerHeight, nie dvh-Flaechen", () => {
+  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 852 }), 852, "voller Schirm");
+  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 512.4 }), 512, "Tastatur offen: Rahmen endet an der Tastatur");
+  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 0 }), 0, "unbekannt -> Rueckfall 100%");
+  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{top:0;bottom:auto;height:var\(--vv-unten,100%\)\}\}/);
+  assert.doesNotMatch(m.REGELN, /vollbild-fehl/, "innerHeight-Messung ist raus (Betreiber 08.09. 01:49: Balken kam nach der Tastatur zurueck)");
+  assert.doesNotMatch(m.REGELN, /100dvh \+ var\(/, "dvh-Flaechen bleiben unangetastet");
+  const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
+  assert.match(quelle, /vv\.addEventListener\("resize", setze\); vv\.addEventListener\("scroll", setze\);/);
+});
+
+test("Punkt 7: bei offener Bildschirmtastatur faellt der untere Sicherheitsrand weg — Feld buendig an der Tastaturkante", () => {
+  assert.equal(m.tastaturOffen({ fokusImFeld: true, sichtbarUnten: 512, schirmHoehe: 852 }), true, "Feld fokussiert, Flaeche um die Tastatur kuerzer");
+  assert.equal(m.tastaturOffen({ fokusImFeld: true, sichtbarUnten: 852, schirmHoehe: 852 }), false, "Hardware-Tastatur: Flaeche voll, kein Umbau");
+  assert.equal(m.tastaturOffen({ fokusImFeld: false, sichtbarUnten: 512, schirmHoehe: 852 }), false, "ohne Fokus nie");
+  assert.equal(m.tastaturOffen({ fokusImFeld: true, sichtbarUnten: 0, schirmHoehe: 0 }), true, "ohne visualViewport zaehlt der Fokus");
+  assert.match(m.REGELN, /html\.tastatur-offen\{--sa-bottom:0px\}/);
+  assert.match(m.REGELN, /html\.tastatur-offen main\.shell\.shell\{padding-bottom:0\}/);
+  assert.match(m.REGELN, /html\.tastatur-offen #start \.prompt-glass\.prompt-glass\.prompt-glass,html\.tastatur-offen #code \.codeunten\.codeunten\.codeunten\{margin-bottom:0;padding-bottom:0\}/);
+  const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
+  assert.match(quelle, /doc\.addEventListener\("focusout", \(\) => setTimeout\(setze, 120\), true\);/, "focusout mit capture und Verzoegerung");
 });

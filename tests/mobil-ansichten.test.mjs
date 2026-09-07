@@ -14,8 +14,8 @@ test("nur am Handy, geschlossener Block, Klammern ausgeglichen", () => {
 });
 
 test("Reiter von Einstellungen, Konto und Verlauf werden EINE wischbare Zeile mit 44-px-Zielen", () => {
-  assert.match(m.REGELN, /#settings \.settings-nav\.settings-nav,body #profile \.account-nav\.account-nav,body #chatHistory \.ch-chips\.ch-chips\{display:flex;flex-wrap:nowrap;overflow-x:auto/);
-  assert.match(m.REGELN, /\.settings-nav-button\.settings-nav-button,body #profile \.account-nav button,body #chatHistory \.ch-chips \.ch-chip\{flex:0 0 auto;min-height:44px;white-space:nowrap/);
+  assert.match(m.REGELN, /#settings \.settings-nav\.settings-nav,body #profile \.account-nav\.account-nav,body #chatHistory \.ch-chips\.ch-chips\{display:flex;flex-wrap:nowrap;align-items:center;overflow-x:auto/);
+  assert.match(m.REGELN, /\.settings-nav-button\.settings-nav-button,body #profile \.account-nav button,body #chatHistory \.ch-chips \.ch-chip\{flex:0 0 auto;height:44px;min-height:44px;white-space:nowrap/);
   assert.match(m.REGELN, /\.settings-nav-sub[^}]*\{display:none\}/, "Untertitel der Reiter weichen in der Zeile");
 });
 
@@ -25,8 +25,10 @@ test("Felder und Auswahl 44 px und volle Breite, Aktionsknoepfe untereinander", 
   assert.match(m.REGELN, /\.account-picture-choose\{width:100%;min-height:44px;justify-content:center\}/);
 });
 
-test("Schreibtisch-Konsole weg, Raster einspaltig, Tabellen scrollen in sich", () => {
-  assert.match(m.REGELN, /body \.view\.is-active > \.output\.output,body #homeOutput\{display:none\}/);
+test("Konsole kompakt statt weg, Zeilen per flex-wrap (nicht column), Raster einspaltig, Tabellen scrollen in sich", () => {
+  assert.match(m.REGELN, /body \.view \.output\.output\{min-height:44px;padding:10px 12px\}/);
+  assert.doesNotMatch(m.REGELN, /settings-row\.settings-row\{[^}]*flex-direction:column/, "column liess die Zeile auf 230 px Leere wachsen (gemessen 07.09.)");
+  assert.match(m.REGELN, /\.settings-row\.settings-row\{flex-wrap:wrap/);
   assert.match(m.REGELN, /\.status-grid\.status-grid\{grid-template-columns:minmax\(0,1fr\)\}/);
   assert.match(m.REGELN, /body \.view table,body #profile \.account-status\{display:block;max-width:100%;overflow-x:auto/);
 });

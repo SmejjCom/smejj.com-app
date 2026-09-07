@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T23:01:10.739Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege der Runde 4 holt (Versatz nur Apple, Modell-Menue ueber die Glasbreite, Einstellungs-Zeilen ohne Leere). Stempel per Doppelklick.",
+  "frozenAt": "2026-09-07T23:32:22.854Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive, 'Go: alle sechs bauen'): Vollbild-Versatz, Mikrofon in Logofarbe, Chat ohne Seitwaerts-Schieben mit Glas, Modell-Menue volle Breite, Vorlesen fuer eigene Fragen, Ansichten nach dem Login wie eine App — Stempel per Doppelklick; sw.js Precache mobil-ansichten.js, CACHE_NAME live+1, Marken chat-actions-menu/chat-actions +1.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9f4eeb2a70c072e100c852924f36a9c478cac875473a0fd16514c272b7b23a4e",
+    "public/index.html": "7e8fdb1808d987c7aa61520a30b1e48ae65ed5d008817a1817494c971742f118",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "1ec93ef6899305656aec995ec28aeffd3816f28efdced62ed44b587166cb795b",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "bb94d347cbca0c648ff89281068c49b2f85d1c5810687caeb160a634695c3a6b",
+    "public/sw.js": "e6719f2456ee96ad93b21cb40b06dc203ca80d0c365367fef4cb8e5154a88a1d",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
