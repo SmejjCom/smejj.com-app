@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T10:24:23.622Z",
-  "confirmation": "Betreiber, 2026-09-07 (Bildschirmfoto): im Modell-Chip soll bei Auto NUR Auto stehen, nicht Cline Auto. Umgesetzt: setPickerLabel (cline-model-menu.js) und activateClineSelection (provider-settings.js) zeigen bei der Auto-Marke nur Auto; Altbestand-Cline-Modell behaelt Cline mit Name. Marken cline-model-menu.js v=cline2, provider-settings.js v=2, Service-Worker smejj-shell-v793.",
+  "frozenAt": "2026-09-07T10:39:16.881Z",
+  "confirmation": "Betreiber, 2026-09-07: keines der eigenen Modelle und kein Internet funktionierte; mach 100% fertig, alle Rechte. Wurzel: der 10-Minuten-Zugangs-Ausweis wurde nicht erneuert, 80% der Anfragen galten als abgemeldet. Umgesetzt: stiller Refresh im Browser (chat-stream.js erneuereZugangsToken ueber /api/auth/me und /api/auth/session-token, Retry bei 401/403), Service-Worker smejj-shell-v794.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "ecdf797269582d5973d4395cb375e94736acd1065a7b7afcdfa5507f7f43d820",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "9bb671e9f1f61999de3e1995ba9d63bd6004bbb5559c7d0c691fd4bdf4d64e4a",
+    "public/sw.js": "65e24e5349cedae5d10dcd2fff9216616f2bc5f2beff6675be85b29ca78bd453",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
