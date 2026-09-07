@@ -147,22 +147,41 @@ test("oeffneModellMenue zeichnet das Menue und die Wahl greift wirklich", async 
   const menue = document.getElementById("codeModellMenue");
   assert.ok(menue, "das Menue wurde nicht in das Dokument gehaengt");
   const knoepfe = alleKnoten(menue).filter((k) => k.tagName === "BUTTON");
-  // Zwei Zeilen sind das ehrliche Minimum: Auto und smejj 1.0 stehen fest,
-  // die Katalog-Modelle kommen erst mit einer Antwort dazu (hier leer).
-  assert.ok(knoepfe.length >= 2, `zu wenige Menuezeilen: ${knoepfe.length}`);
+  // Fuenf Zeilen sind seit der Staffel (Betreiber-Ansage 2026-09-07) das
+  // Minimum: smejj 1.3 bis 1.0 und Auto. Katalog-Modelle kommen erst mit einer
+  // Antwort dazu (hier leer).
+  assert.ok(knoepfe.length >= 5, `zu wenige Menuezeilen: ${knoepfe.length}`);
 
-  // Die Auto-Zeile steht ganz oben (Betreiber-Auftrag 2026-08-18).
+  // Die Staffel steht absteigend, Auto ganz unten. Bis zum 06.09. stand Auto
+  // oben (Auftrag vom 18.08.); die neue Ansage kehrt die Reihenfolge um.
   const beschriftung = (k) => alleKnoten(k).map((n) => n.textContent).filter(Boolean).join(" ");
-  assert.match(beschriftung(knoepfe[0]), /Auto/);
+  assert.match(beschriftung(knoepfe[0]), /smejj 1\.3/);
+  assert.match(beschriftung(knoepfe[3]), /smejj 1\.0/);
+  assert.match(beschriftung(knoepfe[4]), /Auto/);
 
   // AUSLOESEN, nicht nur zeichnen: der Klick muss den Speicher setzen und
   // den Rueckruf feuern — genau die zwei Draehte, die beim Auslagern
   // haetten reissen koennen.
   knoepfe[0].click();
-  assert.equal(localStorage.getItem(CLINE_MODEL_KEY), AUTO_MARKE);
-  assert.equal(localStorage.getItem(MODELL_KEY), "Cline");
+  assert.equal(localStorage.getItem(MODELL_KEY), "smejj 1.3");
+  // Die Stufe MUSS mitgewandert sein, sonst ist die Wahl folgenlos.
+  assert.equal(localStorage.getItem("smejj.stufe.v1"), "spezial");
   assert.equal(neuGezeichnet, 1, "beiWahl wurde nicht gerufen — die Anzeige bliebe stehen");
   assert.equal(document.getElementById("codeModellMenue"), null, "das Menue blieb nach der Wahl offen");
+});
+
+test("die Auto-Zeile setzt weiterhin den Cline-Weg", async () => {
+  // Vor der Staffel prueften das die Zeilen oben mit. Jetzt steht Auto ganz
+  // unten — der Draht darf beim Umsortieren nicht stillschweigend gerissen sein.
+  const { chip } = umgebungAufbauen();
+  let neuGezeichnet = 0;
+  await oeffneModellMenue({ chip, beiWahl: () => { neuGezeichnet += 1; } });
+  const menue = document.getElementById("codeModellMenue");
+  const knoepfe = alleKnoten(menue).filter((k) => k.tagName === "BUTTON");
+  knoepfe[4].click();
+  assert.equal(localStorage.getItem(CLINE_MODEL_KEY), AUTO_MARKE);
+  assert.equal(localStorage.getItem(MODELL_KEY), "Cline");
+  assert.equal(neuGezeichnet, 1);
 });
 
 test("ohne Anzeige-Chip entsteht kein Menue (kaputte Probe)", async () => {

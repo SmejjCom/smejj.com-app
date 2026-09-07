@@ -21,6 +21,9 @@ import { API_ORIGIN } from "./config.js";
 // (runClineChat-Weiche) greift dann von selbst. Kein eigener Pfad.
 export const MODELL_KEY = "smejj.model.selected.v2";
 export const CLINE_MODEL_KEY = "smejj.cline.model.v1";
+// Derselbe Schluessel wie in app.js (STUFE_KEY). Beide Seiten muessen ihn
+// kennen: das Menue SETZT die Stufe, app.js LIEST sie beim Senden.
+export const STUFE_KEY = "smejj.stufe.v1";
 const TOKEN_KEY = "smejj.apiToken.v1";
 
 // Wohin mit einem Menue, das links aus seiner Spalte laeuft? Reine Rechnung,
@@ -197,46 +200,64 @@ export async function oeffneModellMenue(kontext = {}) {
     menue.append(k);
     return k;
   };
-  // REIHENFOLGE: Auto steht ganz oben (Betreiber-Auftrag 2026-08-18:
-  // "Auto soll ganz oben 1. sein, smejj 1.0 2. sein"). Der sparsame Weg
-  // ist die Voreinstellung, die der Betreiber sehen soll — nicht das
-  // Hausmodell.
-  // Auto: der sparsame Weg. Hier wird NICHT /select gerufen — das Modell
-  // steht erst fest, wenn der Auftrag da ist (ai/modellRouter.js waehlt dann
-  // und wartet das /select ab). Darum ist diese Zeile sofort fertig.
-  // Kein Untertitel: das Menue traegt NUR nackte Kurznamen (Betreiber-Regel
-  // 2026-08-17). Eine zweite Zeile wurde live auf halbem Weg abgeschnitten —
-  // die Erklaerung gehoert darum in den Tooltip, nicht in die Zeile.
+  // DIE STAFFEL smejj 1.0 bis 1.3 (Betreiber-Ansage 2026-09-07).
+  //
+  // Vier Namen fuer vier Schwierigkeitsgrade, Auto darunter. Die Reihenfolge
+  // ist absteigend — 1.3 oben — weil der Betreiber sie so aufgeschrieben hat.
+  // Sie loest die Regel vom 18.08. ab, nach der Auto ganz oben stand.
+  //
+  // JEDE STUFE TUT WIRKLICH ETWAS ANDERES. Das ist der Punkt, an dem so ein
+  // Menue sonst zur Attrappe wird: vier Zeilen, ein Verhalten. Die Stufe reist
+  // als preferences.stufe zur Bruecke (chat-bridge.js: leseStufe) und
+  // entscheidet dort ueber die Spur:
+  //   1.0 Standard      -> schnell     Groq-Schnellspur, auch bei Coding
+  //   1.1 Alltag        -> auto        die Automatik entscheidet
+  //   1.2 Komplex       -> gruendlich  nie die Schnellspur, immer die tiefe
+  //   1.3 Spezialfaelle -> spezial     wie gruendlich, hoechste Denktiefe
+  // "spezial" wurde fuer 1.3 neu angelegt; ohne sie waeren 1.2 und 1.3
+  // dasselbe gewesen.
+  //
+  // Ox Alpha stand hier vom 26.08. bis 06.09.2026 an dritter Stelle und ist
+  // abgeschafft. Wer den Namen noch im Browserspeicher hat, wird still auf
+  // smejj 1.0 gesetzt — sonst zeigte seine Auswahl auf etwas, das es nicht
+  // mehr gibt, und das Menue markierte gar nichts als gewaehlt.
+  if (localStorage.getItem(MODELL_KEY) === "Ox Alpha") {
+    localStorage.setItem(MODELL_KEY, "smejj 1.0");
+    localStorage.removeItem(STUFE_KEY);
+  }
+  const gewaehlt = localStorage.getItem(MODELL_KEY) || "smejj 1.0";
+  const stufenZeile = ({ titel, stufe, hinweis }) => zeile({
+    titel,
+    hinweis,
+    aktiv: !istCline && gewaehlt === titel,
+    aktion: () => {
+      localStorage.setItem(MODELL_KEY, titel);
+      // Die Stufe MUSS mitwandern, sonst waehlt der Nutzer 1.2 und bekommt
+      // weiter die Spur, die vorher eingestellt war.
+      localStorage.setItem(STUFE_KEY, stufe);
+      window.dispatchEvent(new CustomEvent("smejj:model-selected", { detail: { model: titel, stufe } }));
+      zu();
+      kontext.beiWahl?.();
+    }
+  });
+
+  stufenZeile({ titel: "smejj 1.3", stufe: "spezial", hinweis: "Spezialfaelle — tiefste Denkstufe, keine Schnellspur" });
+  stufenZeile({ titel: "smejj 1.2", stufe: "gruendlich", hinweis: "Komplex — immer die tiefe Spur" });
+  stufenZeile({ titel: "smejj 1.1", stufe: "auto", hinweis: "Alltag — die Automatik entscheidet" });
+  stufenZeile({ titel: "smejj 1.0", stufe: "schnell", hinweis: "Standard — schnellste Antwort" });
+
+  // Auto ganz unten: der sparsame Weg ueber Cline. Hier wird NICHT /select
+  // gerufen — das Modell steht erst fest, wenn der Auftrag da ist
+  // (ai/modellRouter.js waehlt dann und wartet das /select ab).
   zeile({
     titel: "Auto",
-    hinweis: "Guenstig: Alltag ueber das Abo, harte Faelle ueber Guthaben",
+    hinweis: "Automatisch: waehlt das passendste verfuegbare Modell und wechselt bei Limit oder Ausfall",
     aktiv: istCline && aktivesClineModell === AUTO_MARKE,
     aktion: () => {
       localStorage.setItem(CLINE_MODEL_KEY, AUTO_MARKE);
       localStorage.setItem(MODELL_KEY, "Cline");
       document.dispatchEvent(new CustomEvent("smejj:cline-selected", { detail: { model: AUTO_MARKE } }));
       window.dispatchEvent(new CustomEvent("smejj:model-selected", { detail: { model: "Cline" } }));
-      zu();
-      kontext.beiWahl?.();
-    }
-  });
-  // Hausmodell: nutzt den bestehenden Stufen-Weg (Auto/Gruendlich/Schnell).
-  //
-  // Ox Alpha stand hier seit dem 26.08.2026 an dritter Stelle. Betreiber-Ansage
-  // 2026-09-06: das Modell ist abgeschafft und kommt nicht wieder — restlos
-  // entfernt, nicht nur ausgeblendet. Wer noch "Ox Alpha" im Speicher seines
-  // Browsers stehen hat, wird beim naechsten Oeffnen still auf smejj 1.0
-  // gesetzt; ohne diese Zeile bliebe seine Auswahl auf einen Namen zeigen, den
-  // es nicht mehr gibt, und das Menue zeigte gar nichts als ausgewaehlt an.
-  if (localStorage.getItem(MODELL_KEY) === "Ox Alpha") {
-    localStorage.setItem(MODELL_KEY, "smejj 1.0");
-  }
-  zeile({
-    titel: "smejj 1.0",
-    aktiv: !istCline,
-    aktion: () => {
-      localStorage.setItem(MODELL_KEY, "smejj 1.0");
-      window.dispatchEvent(new CustomEvent("smejj:model-selected", { detail: { model: "smejj 1.0" } }));
       zu();
       kontext.beiWahl?.();
     }

@@ -45,8 +45,20 @@ let taskIndicatorTimer;
 // leseStufe). Ein unbekannter Wert und fehlende Angabe verhalten sich dort
 // identisch zum bisherigen Zustand (Fail-Safe der Bruecke).
 const STUFE_KEY = "smejj.stufe.v1";
-const STUFE_LABEL = Object.freeze({ schnell: "smejj 1.0 (Schnell)", auto: "smejj 1.0", gruendlich: "smejj 1.0 (Gründlich)" });
+// STAFFEL smejj 1.0 bis 1.3 (Betreiber-Ansage 2026-09-07). Die drei Stufen
+// hiessen intern schon "smejj 1.0 (Schnell)" bis "(Gruendlich)" — jetzt tragen
+// sie eigene Versionsnummern, und "spezial" kam als vierte dazu. Der Chip zeigt
+// damit denselben Namen, den der Nutzer im Modell-Menue angeklickt hat; vorher
+// stand dort in Klammern etwas anderes als im Menue, und beide meinten dasselbe.
+const STUFE_LABEL = Object.freeze({
+  schnell: "smejj 1.0",
+  auto: "smejj 1.1",
+  gruendlich: "smejj 1.2",
+  spezial: "smejj 1.3"
+});
 function normalizeStufe(value) {
+  // Bewusst weiter "auto" als Rueckfall: ein unbekannter Wert darf niemanden in
+  // die teure tiefe Spur zwingen. Das entspricht dem Fail-Safe der Bruecke.
   return Object.hasOwn(STUFE_LABEL, value) ? value : "auto";
 }
 
