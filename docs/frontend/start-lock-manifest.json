@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T00:29:07.765Z",
-  "confirmation": "Betreiber, 2026-09-07 (Bildschirmfoto): Hinweiszeile Live-Browser verbunden samt dunkler Flaeche entfernen, Seite direkt von ganz oben; nur EIN Mauszeiger, unsere originale Maus in Logo-Tuerkis, alle anderen Zeiger weg. Umgesetzt: bp-hint schwebend und selbst ausblendend, keine Verbunden-Meldung, Zeiger in browser-stage.js tuerkis (#02fdfd, Form icons/maus-zeiger.svg), Maus-Knopf der Tableiste als Geraete-Symbol, #mausButton ausgeblendet. Marken bis zur Wurzel (browser-pane 20260906-11, render/fernwege 20260906-6, stage v7, maus-absicht v35, maus-panel v29, sendepfad-nachladen v19, browser-nachladen v17, app.js b155), Service-Worker smejj-shell-v789. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-07T01:30:29.845Z",
+  "confirmation": "Betreiber, 2026-09-07 (Wortlaut): Soll hier nur: smejj 1.3 — Spezialfälle / smejj 1.2 — Komplex / smejj 1.1 — Alltag / smejj 1.0 — Standard / Auto — Automatisch. Genau so sein. Umgesetzt: Modell-Menue (Chat und Code) mit genau diesen fuenf Zeilen in dieser Reihenfolge, Cline-Katalog aus dem Menue entfernt (bleibt in den Einstellungen), smejj 1.1-1.3 als eigene Wahlen in app.js (b156), Bruecke v150 gibt fuer smejj 1.2/1.3 immer die tiefe Spur, Service-Worker smejj-shell-v790. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "156d7a618b83eea91633853a1904fc9fe5bd99bc95c2f3f2599049ce9feb238b",
+    "public/index.html": "d3e93fa626cdff90f4ccd00d25aa5839b8c485cba1858c1a1f1ecfd492760f3f",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "25665e70803be1da830ccbe4e38c2f9d0d508745f2f3767510875312b3726960",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "2df206192af207fc49b69ed85f287d4c0ab0feafce05bb6214458bd5f7ba909f",
-    "public/app.js": "669f67f08192a5b73d1d3dea0a7f9329013114e339268486847ab16b54278b6a",
+    "public/app.js": "a81347b20716997f8fe95c4c5b923aca4ca83a90a54afd2c81c260fabfbcb0bc",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e4f00a9fb965d25e4de3c5e3308f4c95720ecbc0c92314ba1055b88c9424bb7f",
+    "public/sw.js": "1e8a969060b465022d53507506c0c03f4cc1423fa4277ec7a5aa4428bb549425",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
