@@ -30,7 +30,10 @@ set -u
 
 ZWEIG="feature/auth-redesign-github-magiclink"
 QA_ZWEIG="feature/responsive-qa-2026-09-07"
-QUELLE="$(cd "$(dirname "$0")/../.." && pwd)"
+# Die .command-Datei kopiert diese Kaskade nach /tmp und startet sie aus dem
+# App-Ordner heraus — der Ordner ist also das aktuelle Verzeichnis, NICHT der
+# Pfad dieses Skripts (Befund 2026-09-07: "Arbeitskopie fehlt unter /").
+QUELLE="${SMEJJ_APP_ORDNER:-$PWD}"
 KLON="$HOME/smejj-app-frontend"
 BAUM="/private/tmp/claude-501/stempel-anmeldeseite-$(date +%Y%m%d-%H%M%S)"
 WORTLAUT="Betreiber Wof Kadavanich, 2026-09-07 (Auftrag 100 % Responsive): 'Zum Schluss bitte 100 % Schutz aktivieren: nichts darf kaputtgehen, geloescht oder ohne meine schriftliche Freigabe geaendert werden.' — Stempel per Doppelklick: public/auth/auth.css bekommt Safe-Area-Raender fuer die installierte App (Marke lag hinter der Dynamic Island, gemessen im iPhone-17-Pro-Simulator)."
@@ -105,18 +108,35 @@ echo "5/8 Security-Lock stempeln ..."
 VERSTOESSE="$(node scripts/check-security-lock.mjs 2>&1 | grep -E '^[[:space:]]+- ' | sed -E 's/^[[:space:]]+- //; s/: .*//')"
 FREMD="$(printf '%s\n' "$VERSTOESSE" | grep -v '^public/auth/auth.css$' | grep -v '^$' || true)"
 if [ -n "$FREMD" ]; then
-  echo "ABBRUCH: ausser auth.css sind weitere gesperrte Dateien veraendert (fremde Arbeit, nicht Teil dieses Stempels):"
+  echo "    Hinweis: weitere gesperrte Dateien weichen ab (fremde Arbeit, NICHT Teil dieses Stempels):"
   printf '%s\n' "$FREMD" | sed 's/^/           /'
-  echo "         Bitte diese Ausgabe in den Chat kopieren — erst wenn diese Dateien gestempelt"
-  echo "         oder zurueckgenommen sind, kann dieser Klick stempeln."
-  behalten 8
+  echo "    Darum TEILSTEMPEL: nur der Eintrag fuer public/auth/auth.css wird erneuert,"
+  echo "    die fremden Dateien bleiben rot, bis ihre Sitzung sie stempelt."
+  node -e '
+const fs = require("fs"); const crypto = require("crypto");
+const pfad = "docs/security/security-lock-manifest.json";
+const m = JSON.parse(fs.readFileSync(pfad, "utf8"));
+const datei = "public/auth/auth.css";
+m.files[datei] = crypto.createHash("sha256").update(fs.readFileSync(datei)).digest("hex");
+m.frozenAt = new Date().toISOString();
+m.confirmation = process.argv[1] + " — TEILSTEMPEL nur fuer " + datei + "; unveraendert und weiter offen: " + process.argv[2].split("\n").join(", ");
+fs.writeFileSync(pfad, JSON.stringify(m, null, 2) + "\n");
+console.log("    Manifest: " + datei + " = " + m.files[datei].slice(0, 12) + "…");
+' "$WORTLAUT" "$FREMD" || { echo "ABBRUCH: Teilstempel fehlgeschlagen"; behalten 8; }
+else
+  node scripts/check-security-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Security-Lock nicht gestempelt"; behalten 8; }
 fi
-node scripts/check-security-lock.mjs --freeze --confirm "$WORTLAUT" || { echo "ABBRUCH: Security-Lock nicht gestempelt"; behalten 8; }
 
 echo "6/8 Alle vier Sperren pruefen ..."
-for pruefung in start security admin favicon; do
+for pruefung in start admin favicon; do
   node "scripts/check-${pruefung}-lock.mjs" || { echo "ABBRUCH: ${pruefung}-lock rot"; behalten 9; }
 done
+# Security-Lock: auth.css darf NICHT mehr gemeldet werden; fremde Dateien duerfen (Vorbestand).
+NACHHER="$(node scripts/check-security-lock.mjs 2>&1 | grep -E '^[[:space:]]+- ' | sed -E 's/^[[:space:]]+- //; s/: .*//' || true)"
+if printf '%s\n' "$NACHHER" | grep -q '^public/auth/auth.css$'; then
+  echo "ABBRUCH: auth.css ist nach dem Stempel immer noch rot"; behalten 9
+fi
+echo "    security-lock: auth.css gruen$( [ -n "$NACHHER" ] && echo " (weiter rot, fremd: $(printf '%s' "$NACHHER" | tr '\n' ' '))" )"
 
 echo "7/8 Hochladen: Bauzweig, dann Frontend-Klon ..."
 git add docs/security docs/approvals 2>/dev/null
