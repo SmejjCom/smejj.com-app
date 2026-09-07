@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T06:32:16.541Z",
-  "confirmation": "Betreiber, 2026-09-07 04:20: teste die gesamte App von A bis Z, behebe Fehler sofort, deploye erneut, danach alles 100 Prozent schuetzen. Suite-Fund: das Start-Buendel start-styles.css trug die Panel-Regeln (Hinweis als Toast, Wiedergabe-Knopf weg) noch nicht — Regel in branding.css, Buendel neu gebaut, Service-Worker smejj-shell-v791. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-07T10:14:16.816Z",
+  "confirmation": "Betreiber, 2026-09-07 (Bildschirmfoto + Anweisung): Wenn Auto gewaehlt ist, stand im Modell-Chip Cline statt Auto — korrigiere das; mach 100% fertig, alle Rechte. Umgesetzt: app.js applySelectedModel zeigt bei smejj.cline.model.v1=auto den Text Auto (b158), Service-Worker smejj-shell-v792. Reiner Anzeige-Fix, kein Verhaltenswechsel.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "d3e93fa626cdff90f4ccd00d25aa5839b8c485cba1858c1a1f1ecfd492760f3f",
+    "public/index.html": "762a4ebf177349b7c3a6c6b2f2e006fd5fa37e76319e19b39d07ae315a3f450f",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "a4cc46fe656908da29571d48a4f962ea5b9deacd024e168b91b9760f11a0d9b9",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "2df206192af207fc49b69ed85f287d4c0ab0feafce05bb6214458bd5f7ba909f",
-    "public/app.js": "a81347b20716997f8fe95c4c5b923aca4ca83a90a54afd2c81c260fabfbcb0bc",
+    "public/app.js": "8581bf7967edbb2516f69429be801f912efb8f7e58b762ee3acd197676a727a9",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "91966744a3038b69e0cbf7ca1d1d048a68f6d9712993c45914be3c5e7b3ab563",
+    "public/sw.js": "c3012991e0e9cf8d12632118416347e6f1d662defb3d9d5199e0f55fae682f3c",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
