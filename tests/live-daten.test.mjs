@@ -106,8 +106,11 @@ test("faellt die tiefe Spur aus, kommt trotzdem eine Antwort", () => {
   const strom = readFileSync(wurzel + "public/ai/chat-stream.js", "utf8");
   const s = strom.indexOf("export async function streamChatAnswer");
   const rumpf = strom.slice(s, s + 6000);
-  assert.match(rumpf, /response\.status === 502 \|\| response\.status === 503/, "der Ausfall-Zweig fehlt");
-  assert.match(rumpf, /stufe: "auto"/, "der Rueckfall muss die Stufe entschaerfen");
+  assert.match(rumpf, /response\.status >= 500 && response\.status <= 504/, "der Ausfall-Zweig fehlt");
+  // "schnell" ist Pflicht: mit "auto" bliebe fastTask bei Suchfragen falsch
+  // (shouldSearchWeb) und der Rueckfall liefe erneut in die tote tiefe Spur.
+  assert.match(rumpf, /stufe: "schnell"/, "der Rueckfall MUSS die Schnellspur erzwingen");
+  assert.ok(!/stufe: "auto"/.test(rumpf), "'auto' genuegt nicht — die Bruecke versucht die Schnellspur dann nicht");
   assert.match(rumpf, /zieleAnpassen\(url/, "auch die Ziele muessen die neue Stufe tragen");
   // Nur bei "gruendlich" — eine schnelle Anfrage soll nicht doppelt laufen.
   assert.match(rumpf, /=== "gruendlich"/);
