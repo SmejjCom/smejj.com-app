@@ -1,0 +1,71 @@
+{
+  "jobId": "job_mobil_vollbild_dock_20260907",
+  "createdAt": "2026-09-07T12:10:00.000Z",
+  "owner": "smejj.com autonomous coding (Betreiber-Auftrag 2026-09-07: 100 % End-to-End Responsiveness, Fullscreen UI Fix & Multi-Platform QA Loop)",
+  "title": "Auto-Wahl ohne Sackgasse, Vollbild-Heilung gegen den schwarzen Balken der iOS-App, schlankes Eingabe-Dock am Handy",
+  "ziel": "Die drei Befunde aus den iPhone-Screenshots des Betreibers (14:17 bis 14:33) beheben: fuenfmal 'Automatische Modellwahl hat nicht geklappt — bitte ein Modell von Hand waehlen', ein schwarzer Balken unter der App, ein zu hohes und in zwei Zeilen umbrechendes Eingabefeld im Code-Bereich. Live ausliefern, in Simulator und Emulator nachmessen, Schutz per Betreiber-Doppelklick vorbereiten.",
+  "basis": {
+    "live": "smejj.com Service-Worker smejj-shell-v794, app.js b158 (Frontend-Klon f53d279)",
+    "zweig": "feature/responsive-qa-2026-09-07 — der Bauzweig liegt 54 Dateien hinter smejj.com; darum wurden die Aenderungen auf der LIVE-Fassung gebaut und nur eigenstaendige Module in public/ zurueckgeschrieben. sw.js im Zweig = Live-Fassung + app-helfer.js (nur im Zweig) + mobil-dock.js.",
+    "rollback": "Frontend: git revert 3e0978c 7df5cf4 im Klon ~/smejj-app-frontend; Zweig: Commits 77b08916, be3fd991, daad77fe"
+  },
+  "befunde": [
+    {
+      "nr": 1,
+      "schwere": "hoch (Auto war fuer den Betreiber tot)",
+      "wo": "public/ai/modellRouter.js sorgeFuerModell, public/ai/chatClient.js runClineChat",
+      "was": "Der stille Refresh (chat-stream.js, v794) legt den frischen kurzen Ausweis in sessionStorage. Die Auto-Wahl las aber nur sessionStorage['smejj.apiToken.v1'] und den ALTEN Ausweis aus localStorage — nach 10 Minuten antwortete /api/providers/cline/select mit 401, und chatClient.js schrieb 'bitte ein Modell von Hand waehlen'. Zweiter Fall: ohne hinterlegten Cline-Schluessel (409 cline_not_configured) gab es gar keinen Rueckfall.",
+      "heilung": "modellRouter.js: Ausweis-Reihenfolge sessionStorage (frisch) > eigener Schluessel > localStorage; bei 401/403 genau einmal erneuern (Weg A /api/auth/me, Weg B Cookie /api/auth/session-token) und wiederholen; Fehlerklassen fehler=anmeldung|nicht-eingerichtet|netz, ausweichen=true fuer alles ausser Anmeldung. chatClient.js: bei Anmeldung der ehrliche Hinweis, sonst return false = runClientChat gibt an app.js zurueck, das den Server-Weg (/api/agent, Haus-Modell GLM-5.2) nimmt; Ausweis nach der Modellwahl neu gelesen; holeZugriffsToken kennt den frischen Ausweis.",
+      "nachweis": "tests/modell-router.test.mjs: 5 neue Zusagen (Reihenfolge, 401->Refresh->Retry mit Aufruf-Protokoll, 401 bleibt = anmeldung, 409/Netz = ausweichen, chatClient-Quelle). modellRouter.js live seit 07.09. (Klon 3e0978c); chatClient.js wartet auf den Start-Lock-Stempel."
+    },
+    {
+      "nr": 2,
+      "schwere": "hoch (nur in der installierten iOS-App sichtbar)",
+      "wo": "public/pwa-schnellstart.js (index.html), zusaetzlich in public/willkommen.html eingebunden",
+      "was": "Schwarzer Balken unten (~52 pt), der tuerkise Rahmen endete darueber (Betreiber-Screenshot 14:33). WebKit-Fehler in Standalone-Web-Apps: nach dem ersten Oeffnen der Tastatur schrumpft der Layout-Viewport (852 -> 800) und waechst bis zum Neustart nie zurueck; position:fixed und 100dvh haengen daran.",
+      "heilung": "Nach dem Schliessen der Tastatur (focusout capture, visualViewport-resize bei vv.height >= innerHeight-2) wird ein synchroner Reflow erzwungen (body display none -> offsetHeight -> zurueck), nur wenn standalone und innerHeight >= 20 px unter der groessten gemessenen Hoehe; hoechstens drei Nachfass-Versuche. Die groesste Hoehe wird nur ohne offene Tastatur gemessen.",
+      "nachweis": "tests/pwa-vollbild-heilung.test.mjs 5/5. Live seit 07.09. (Klon 3e0978c, 7df5cf4). OFFEN: Beweis in einer Standalone-Web-App — der Simulator-Zugriff (Bildschirmsteuerung) wurde in dieser Sitzung verweigert; wiederkehrende App-Nutzer bekommen die Datei erst mit dem CACHE_NAME-Sprung (Doppelklick). Pruefung danach: App oeffnen, Feld antippen, Tastatur schliessen — der Rahmen muss bis zur Unterkante reichen."
+    },
+    {
+      "nr": 3,
+      "schwere": "mittel",
+      "wo": "neu public/mobil-dock.js (Laufzeit-Stil, Haken in chat-actions-menu.js beiHandy), public/sw.js Precache",
+      "was": "Pixel-7-Emulator 412 px (Chrome DevTools ueber adb): Start-Dock 364x106, Code-Dock 147 px hoch mit Code-Leiste in ZWEI Zeilen (Modus 44 + Stufe 86 + Anhang 44 + Diktat 44 | Modell 64 + 'Mittel' 33 + Senden 44), Platzhalter 'Beschreibe eine Aufgabe oder stelle eine Frage' in zwei Zeilen, Start-Feld durfte bis 324 px wachsen. iPhone (Betreiber-Screenshots): 68 pt Leere unter dem Dock = untere Safe-Area doppelt (main.shell Polster aus mobil-composer.css + margin-bottom aus kompakt.js bzw. padding-bottom aus code-feld-unten.js).",
+      "heilung": "Safe-Area nur auf der Huelle (Feld margin-bottom 0, Code-Leiste padding-bottom 0); Code-Leiste nowrap, Textchips max 80 px mit Ellipse, 'Mittel' unter 600 px weg (Anzeige, kein Ziel); Platzhalter eine Zeile; beide Felder max-height 148 px (~5 Zeilen) dann innen scrollen; Verlauf overflow-y auto + overscroll-behavior contain + scroll-behavior smooth; Code-Bloecke und Tabellen overflow-x auto; body/main.shell overflow-x clip. Keine Ziele unter 44 px, keine Schriftgroessen.",
+      "nachweis": "Nachgemessen im Emulator nach Service-Worker-Reset: Start-Dock 364x102, margin-bottom 0, max-height 148; Code-Dock 102 px (vorher 147), Code-Leiste 372x44 in EINER Zeile, alle Ziele 44x44, scrollWidth = innerWidth. Screenshots scratchpad android-code.png (vorher) / android-code-nachher.png. tests/mobil-dock.test.mjs 8/8."
+    },
+    {
+      "nr": 4,
+      "schwere": "gering",
+      "wo": "public/willkommen.html",
+      "was": "Pixel-7-Emulator: der Satz 'Probier es hier …' klebte am Probier-Feld — .held p (0,1,1) schlug .probier-zeile (0,1,0) und setzte margin-top 0. body min-height 100vh.",
+      "heilung": ".held .probier-zeile margin-top 12px; min-height 100dvh mit vh-Rueckfall; pwa-schnellstart.js eingebunden (Web-App oeffnet abgemeldet diese Seite).",
+      "nachweis": "tablet-willkommen.png (800 px, Abstand sichtbar); tests/mobil-safe-area.test.mjs 8/8; check:markenkette und check:module-queries gruen (Marke v=6 im Zweig, v=7 live wie index.html dort)."
+    }
+  ],
+  "gemessenOhneBefund": [
+    "Pixel Tablet 800 px hoch: willkommen.html, /auth/login/, programmieren.html ohne seitlichen Ueberlauf (scrollWidth = 800)",
+    "Pixel 7 412 px: Startseite und Code-Ansicht scrollWidth = innerWidth",
+    "iPhone 17 Pro Safari (angemeldete Betreiber-Sitzung): Chat antwortet (smejj 1.0), willkommen.html mit Safe-Area-Leiste"
+  ],
+  "nichtGetestet": [
+    "Auto mit echter Cline-Anmeldung (nur der Betreiber hat Sitzung + Schluessel; im Emulator liefert der Pfad jetzt den ehrlichen Anmelde-Hinweis statt 'von Hand waehlen')",
+    "Vollbild-Heilung in einer Standalone-Web-App (Simulator-Bildschirmsteuerung verweigert)",
+    "Tastatur-Verhalten am Geraet, Drehung, Hintergrund/Rueckkehr in der installierten App",
+    "Huawei (kein Emulator vorhanden)"
+  ],
+  "auslieferung": {
+    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): f53d279 -> 3e0978c (mobil-dock.js, ai/modellRouter.js, pwa-schnellstart.js, chat-actions-menu.js, willkommen.html + assets/) -> 7df5cf4 (willkommen.html mit Heilung)",
+    "quellzweig": "feature/responsive-qa-2026-09-07: 77b08916, be3fd991, daad77fe (Kaskade)",
+    "offen": "ai/chatClient.js und sw.js (Start-Lock): 'smejj.com Mobil-Vollbild und Auto stempeln und ausliefern.command' im App-Ordner — Trockenlauf (--probe) gruen; setzt live v794 voraus",
+    "hinweis": "Bis zum Sprung auf smejj-shell-v795 bekommen wiederkehrende App-Nutzer die neuen Module nicht (cache-first Precache); neue Sitzungen und frisch installierte Web-Apps sofort."
+  },
+  "pruefungen": {
+    "tests": "modell-router 12+5, mobil-dock 8 (neu), pwa-vollbild-heilung 5 (neu), composer-zeile, mobil-safe-area, precache-dynamische-importe, platform-pwa: 55/55 gruen",
+    "check:precache-imports": "OK — 189 Module erreichbar",
+    "check:markenkette": "OK", "check:module-queries": "OK — 232 Module",
+    "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
+    "check:start-lock": "ROT bis zum Doppelklick — chatClient.js, sw.js (eigene Arbeit) sowie app.js, config.js (Vorbestand des Zweigs)"
+  },
+  "status": "live-teilweise — ungesperrte Module live und nachgemessen; gesperrte Dateien und Schutzstempel warten auf den Betreiber-Doppelklick"
+}

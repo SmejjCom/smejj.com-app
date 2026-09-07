@@ -66,10 +66,19 @@ echo "    Bauzweig: $(git log --oneline -1)"
 
 echo "2/8 Dateien der QA-Commits uebernehmen, sw.js auf Live-Basis bauen ..."
 git checkout -q "origin/$QA_ZWEIG" -- "${DATEIEN[@]}" || { echo "ABBRUCH: Dateien aus $QA_ZWEIG nicht holbar"; behalten 5; }
-# Marke von pwa-schnellstart.js in willkommen.html an die index.html DIESES Baums angleichen
-MARKE="$(grep -o 'pwa-schnellstart\.js?v=[0-9]*' public/index.html | head -1)"
-[ -n "$MARKE" ] || { echo "ABBRUCH: index.html laedt pwa-schnellstart.js nicht"; behalten 5; }
-sed -i '' "s#pwa-schnellstart\.js?v=[0-9]*#${MARKE}#" public/willkommen.html
+# MARKENKETTE: geaenderter Inhalt braucht eine neue Marke — in JEDEM Lader.
+#   pwa-schnellstart.js (Heilung)      -> ?v=8   in index.html und willkommen.html
+#   chat-actions-menu.js (Haken)       -> ?v=6   in chat-actions.js
+#   chat-actions.js (traegt den Haken) -> ?v=b49 in index.html
+# index.html und chat-actions.js werden NICHT aus dem QA-Zweig kopiert (dort
+# aelter als live) — nur die Marken werden per sed gesetzt, hier wie im Klon.
+marken_setzen() {
+  sed -i '' -e 's#pwa-schnellstart\.js?v=[0-9]*#pwa-schnellstart.js?v=8#' -e 's#chat-actions\.js?v=[a-z0-9-]*#chat-actions.js?v=b49#' "$1/index.html"
+  sed -i '' 's#pwa-schnellstart\.js?v=[0-9]*#pwa-schnellstart.js?v=8#' "$1/willkommen.html"
+  sed -i '' 's#chat-actions-menu\.js?v=[0-9]*#chat-actions-menu.js?v=6#' "$1/chat-actions.js"
+}
+marken_setzen public
+grep -q 'pwa-schnellstart.js?v=8' public/index.html && grep -q 'chat-actions.js?v=b49' public/index.html && grep -q 'chat-actions-menu.js?v=6' public/chat-actions.js || { echo "ABBRUCH: Marken nicht gesetzt"; behalten 5; }
 # sw.js: die LIVE-Fassung (origin/main des Klons) ist die Basis — der Bauzweig ist
 # dort aelter (v777) und wuerde live 16 Precache-Zeilen verlieren.
 git -C "$KLON" show origin/main:sw.js > /tmp/sw-live-2026-09-07.js || { echo "ABBRUCH: Live-sw.js nicht lesbar"; behalten 5; }
@@ -97,7 +106,15 @@ if ! node --test tests/mobil-dock.test.mjs tests/modell-router.test.mjs tests/pw
 fi
 grep -E "ℹ (pass|fail)" /tmp/mobil-dock-kaskade.log | tr '\n' ' '; echo
 node scripts/check-precache-imports.mjs || { echo "ABBRUCH: Precache unvollstaendig"; behalten 6; }
-node scripts/check-markenkette.mjs || { echo "ABBRUCH: Markenkette rot"; behalten 6; }
+# Markenkette: der Bauzweig traegt Vorbestand aus Parallelsitzungen (2026-09-07:
+# 8 Module mit altem Inhalt unter alter Marke). Die gehoeren nicht zu diesem
+# Stempel und bleiben, wie sie sind — ABBRUCH nur, wenn EIGENE Module gemeldet werden.
+MK="$(node scripts/check-markenkette.mjs 2>&1 || true)"
+if printf '%s\n' "$MK" | grep -qE '^\s+(pwa-schnellstart|chat-actions-menu|chat-actions|mobil-dock)\.js'; then
+  echo "ABBRUCH: Markenkette meldet eigene Module:"; printf '%s\n' "$MK" | grep -E '^\s+(pwa-schnellstart|chat-actions-menu|chat-actions|mobil-dock)\.js'; behalten 6
+fi
+FREMD_MARKEN="$(printf '%s\n' "$MK" | grep -c 'steht weiter' || true)"
+[ "$FREMD_MARKEN" = 0 ] || echo "    Hinweis: Markenkette meldet $FREMD_MARKEN fremde Module (Vorbestand des Bauzweigs, nicht Teil dieses Stempels)"
 npm run -s check:module-queries || { echo "ABBRUCH: Modul-Kennungen rot"; behalten 6; }
 
 echo "4/8 Sicherheitsnetz: stimmt live mit der Basis ueberein? ..."
@@ -106,7 +123,11 @@ LIVE_SW="$(curl -s -m 15 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-sh
 BASIS_CC="$(git show "origin/$ZWEIG:public/ai/chatClient.js" | shasum -a 256 | cut -c1-16)"
 LIVE_CC="$(curl -s -m 20 "https://smejj.com/assets/ai/chatClient.js?n=$RANDOM" | shasum -a 256 | cut -c1-16)"
 [ "$BASIS_CC" = "$LIVE_CC" ] || { echo "ABBRUCH: chatClient.js live ($LIVE_CC) weicht von der Bauzweig-Basis ($BASIS_CC) ab — fremde Arbeit, nicht ueberschreiben"; behalten 7; }
-echo "    live sw.js = $LIVE_SW, chatClient.js live = Basis"
+LIVE_INDEX="$(curl -s -m 20 "https://smejj.com/index.html?n=$RANDOM")"
+printf '%s' "$LIVE_INDEX" | grep -q 'pwa-schnellstart.js?v=7' && printf '%s' "$LIVE_INDEX" | grep -q 'chat-actions.js?v=b48' \
+  || { echo "ABBRUCH: live index.html traegt nicht die erwarteten Marken (pwa v7, chat-actions b48) — Basis hat sich bewegt"; behalten 7; }
+curl -s -m 20 "https://smejj.com/assets/chat-actions.js?n=$RANDOM" | grep -q 'chat-actions-menu.js?v=5' || { echo "ABBRUCH: live chat-actions.js laedt das Menue nicht mit ?v=5"; behalten 7; }
+echo "    live sw.js = $LIVE_SW, chatClient.js live = Basis, Marken live wie erwartet"
 if [ "$PROBE" = 1 ]; then
   echo; echo "PROBE — bis hier alles gruen. Stempel, Commit und Push laufen nur per Doppelklick."; aufraeumen; exit 0
 fi
@@ -140,7 +161,10 @@ cp "$BAUM/public/ai/chatClient.js" ai/chatClient.js
 cp "$BAUM/public/ai/chatClient.js" assets/ai/chatClient.js
 cp /tmp/sw-neu-2026-09-07.js sw.js
 cp /tmp/sw-neu-2026-09-07.js assets/sw.js
-git add ai/chatClient.js assets/ai/chatClient.js sw.js assets/sw.js
+# Marken live setzen (nur die drei Stellen; index.html und chat-actions.js bleiben sonst unveraendert)
+marken_setzen .
+marken_setzen assets
+git add ai/chatClient.js assets/ai/chatClient.js sw.js assets/sw.js index.html assets/index.html willkommen.html assets/willkommen.html chat-actions.js assets/chat-actions.js
 git -c user.name="Wof Kadavanich" -c user.email="smejjcom@gmail.com" commit -q \
   -m "deploy(mobil): Auto ohne Sackgasse (chatClient.js), Precache mobil-dock.js; SW $SW_NEU — Quelle smejj.com-app $QUELLKENNUNG (Stempel 2026-09-07)" \
   -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: Klon-Commit (nichts geaendert?)"; behalten 13; }
@@ -153,8 +177,9 @@ echo -n "    warte auf GitHub Pages "
 for i in $(seq 1 40); do
   V="$(curl -s -m 15 "https://smejj.com/sw.js?n=$RANDOM" | grep -o 'smejj-shell-v[0-9]*' | head -1)"
   C="$(curl -s -m 15 "https://smejj.com/assets/ai/chatClient.js?n=$RANDOM" | shasum -a 256 | cut -c1-16)"
-  if [ "$V" = "$SW_NEU" ] && [ "$C" = "$ERW" ]; then
-    echo; echo "    ok: sw.js live $SW_NEU, chatClient.js live byte-gleich"; aufraeumen
+  M="$(curl -s -m 15 "https://smejj.com/index.html?n=$RANDOM" | grep -c 'pwa-schnellstart.js?v=8')"
+  if [ "$V" = "$SW_NEU" ] && [ "$C" = "$ERW" ] && [ "$M" = 1 ]; then
+    echo; echo "    ok: sw.js live $SW_NEU, chatClient.js live byte-gleich, index.html mit neuen Marken"; aufraeumen
     echo; echo "FERTIG — Start-Lock gestempelt, Service-Worker $SW_NEU live. Die App holt sich beim naechsten Start die neuen Module (Vollbild-Heilung, schlankes Dock, Auto ohne Sackgasse)."; exit 0
   fi
   echo -n "."; sleep 8

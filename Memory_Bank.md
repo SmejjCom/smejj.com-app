@@ -5,6 +5,60 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-07] AUTO DARF NIE IN EINER SACKGASSE ENDEN — FRISCHER AUSWEIS UEBERALL, RUECKFALL AUF DEN SERVER-WEG (job_mobil_vollbild_dock_20260907)
+
+Capsule: `task-capsules/2026/09/job_mobil_vollbild_dock_20260907/capsule.json`.
+
+**Befund:** Der stille Refresh (v794) heilte nur den Bruecken-Weg. Die Auto-Wahl
+(`ai/modellRouter.js`) las weiter den alten Ausweis aus localStorage — nach zehn
+Minuten 401 und "bitte ein Modell von Hand waehlen" (fuenf Betreiber-Screenshots).
+Ohne Cline-Schluessel (409) gab es gar keinen Rueckfall.
+
+**Entscheidung:** Jeder Weg, der einen Ausweis mitschickt, liest in DERSELBEN
+Reihenfolge: sessionStorage (frisch) > eigener Schluessel > localStorage; bei
+401/403 genau einmal erneuern und wiederholen. Scheitert Auto aus einem anderen
+Grund als der Anmeldung, gibt `runClineChat` `false` zurueck und app.js nimmt den
+Server-Weg mit dem Haus-Modell. Ein Fehlertext, der dem Nutzer Arbeit auftraegt
+("von Hand waehlen"), ist kein zulaessiger Endzustand.
+
+**Verifikation:** modell-router.test.mjs mit Aufruf-Protokoll (select alt ->
+/me -> select frisch), 55/55 Tests; modellRouter.js live (Klon 3e0978c),
+chatClient.js per Start-Lock-Stempel (Doppelklick, Kaskade geprobt).
+
+### [2026-09-07] STANDALONE-WEBKIT: NACH DER TASTATUR EINMAL REFLOW ERZWINGEN (job_mobil_vollbild_dock_20260907)
+
+**Befund:** Schwarzer Balken unten in der installierten iOS-App. Der Layout-
+Viewport schrumpft beim ersten Oeffnen der Tastatur und waechst bis zum Neustart
+nicht zurueck; position:fixed, 100dvh und der Rahmen haengen daran. Kein CSS
+heilt das — die vier CSS-Anlaeufe der Vorwoche (html-Gefaelle, body::before mit
+Ueberstand) konnten nur den Grund faerben, nicht den Viewport zurueckholen.
+
+**Entscheidung:** `pwa-schnellstart.js` (laeuft in index.html UND willkommen.html)
+erzwingt nach focusout/visualViewport-resize einen synchronen Reflow, nur im
+Standalone und nur bei >= 20 px Schwund, hoechstens drei Nachfass-Versuche.
+Groesste Hoehe wird nur ohne offene Tastatur gemessen.
+
+**Verifikation:** pwa-vollbild-heilung.test.mjs 5/5; live; Standalone-Beweis
+steht aus (Simulator-Bildschirmsteuerung in der Sitzung verweigert) — Pruefung
+in der App nach dem Sprung auf smejj-shell-v795.
+
+### [2026-09-07] SAFE-AREA TRAEGT GENAU EIN ELEMENT; LAUFZEIT-STIL SCHLAEGT GESPERRTES BUENDEL (job_mobil_vollbild_dock_20260907)
+
+**Befund (Emulator + iPhone-Screenshots):** 68 pt Leere unter dem Dock = die
+untere Safe-Area lag doppelt (Huelle aus mobil-composer.css + Feld aus kompakt.js
+bzw. code-feld-unten.js). Code-Leiste brach in zwei Zeilen, Platzhalter in zwei
+Zeilen, Start-Feld wuchs bis 324 px.
+
+**Entscheidung:** `mobil-dock.js` (Laufzeit-Stil, Haken beiHandy in
+chat-actions-menu.js, Precache-Eintrag) — die Huelle traegt die Safe-Area
+allein; Code-Leiste nowrap mit Ellipsen (Rechnung 340 < 368 px); Felder bis
+148 px; Verlauf overscroll-contain + smooth; overflow-x clip statt hidden.
+Spaeter eingehaengter Stil gleicher Spezifitaet gewinnt gegen die aelteren
+Laufzeit-Module.
+
+**Verifikation:** Pixel 7 nach SW-Reset: Start-Dock 102 px, Code-Dock 102 statt
+147 px, Leiste 44 px in einer Zeile, alle Ziele 44x44; mobil-dock.test.mjs 8/8.
+
 ### [2026-09-07] SAFE-AREA NUR IN DER INSTALLIERTEN APP SICHTBAR — ECHTE APP IN SIMULATOR UND EMULATOR TESTEN (job_responsive_qa_20260907)
 
 Capsule: `task-capsules/2026/09/job_responsive_qa_20260907/capsule.json`.
