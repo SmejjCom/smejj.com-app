@@ -442,3 +442,19 @@ test("Sitzungsverlust: erst Live-Browser neu verbinden, nie sofort einbetten; wa
   assert.match(onLost, /tryLiveBrowser\(tab, tab\.url, \{ push: false \}\)/);
   assert.match(paneJs, /erneuere: async \(\) => \{ const t = activeTab\(\); if \(!t\?\.url\) return false; return tryLiveBrowser\(t, t\.url, \{ push: false \}\); \}/);
 });
+
+
+test("die Hinweiszeile nimmt keinen Platz mehr — schwebend, blendet aus, keine Erfolgsmeldung beim Verbinden (Betreiber 07.09.)", () => {
+  const css = fs.readFileSync("public/browser-pane.css", "utf8");
+  const hint = css.slice(css.indexOf(".bp-hint {"), css.indexOf(".bp-hint {") + 500);
+  assert.match(hint, /position: absolute/);
+  assert.match(hint, /pointer-events: none/);
+  const fernwege = fs.readFileSync("public/browser-pane-fernwege.js", "utf8");
+  assert.ok(!fernwege.includes("Live-Browser verbunden"), "kein Dauerhinweis beim Verbinden");
+  assert.ok(!fernwege.includes("hat die Seite gerendert"), "kein Erfolgshinweis beim Standbild");
+  assert.match(paneJs, /hintUhr = setTimeout/);
+  const render = fs.readFileSync("public/browser-pane-render.js", "utf8");
+  assert.ok(!render.includes("M4 3l6.5 17 2.5-7 7-2.5z"), "der Maus-Knopf ist kein Zeiger-Pfeil mehr");
+  const start = fs.readFileSync("public/start-styles.css", "utf8");
+  assert.match(start, /#mausButton \{\n  display: none !important;/);
+});

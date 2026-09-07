@@ -86,3 +86,13 @@ test("die Buehne zeichnet den Zeiger der Maus — Pfeil, Ring, Feldrahmen, Scrol
   // Die Vorlage laedt die neue Buehne (Cache-Marke gehoben).
   assert.match(render, /browser-stage\.js\?v=6/);
 });
+
+
+test("EIN Zeiger, in Logo-Tuerkis wie icons/maus-zeiger.svg — kein weisser Pfeil, Ring und Rahmen in derselben Farbe (Betreiber 07.09.)", () => {
+  const svg = fs.readFileSync("public/icons/maus-zeiger.svg", "utf8");
+  const pfad = svg.match(/d="([^"]+)"/)[1];
+  assert.ok(stage.includes(pfad), "die Buehne zeichnet dieselbe Zeigerform wie das Maus-Zeichen");
+  assert.ok(stage.includes('fill="#02fdfd"'), "Logo-Tuerkis");
+  assert.ok(!stage.includes('fill="#fff" stroke="#111"'), "kein weisser Pfeil mehr");
+  assert.ok(!stage.includes("#1a73e8"), "kein Google-Blau mehr fuer Ring und Rahmen");
+});
