@@ -77,7 +77,15 @@ export const PROVIDER_CATALOG = Object.freeze({
   },
   zhipu: {
     baseUrl: "https://open.bigmodel.cn/api/paas/v4",
-    models: { default: "glm-5.2", coding: "glm-5.2", reasoning: "glm-5.2" }
+    // AUSWEICHMODELL SEIT 2026-09-07 (gleicher Grund wie in
+    // src/shared/modelRegistry.js): der Anbieter lehnt glm-5.2 mit
+    // "Insufficient balance or no resource package" ab, das Wochen-/
+    // Monatskontingent laeuft erst am 2026-09-10 17:06 wieder an. Live
+    // gemessen antwortet einzig glm-4.5-flash (200, Freikontingent).
+    // Diese Liste ist der ZWEITE Ort mit demselben Namen — wer nur die
+    // Registry umstellt, haengt hier weiterhin am erschoepften Modell.
+    // Zurueckstellen auf "glm-5.2", sobald das Kontingent zurueck ist.
+    models: { default: "glm-4.5-flash", coding: "glm-4.5-flash", reasoning: "glm-4.5-flash" }
   },
   qwen: {
     baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
