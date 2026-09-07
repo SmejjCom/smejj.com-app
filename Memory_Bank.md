@@ -54,7 +54,7 @@ alle Ziele. Der Zeiger entscheidet, nicht die Breite — die Maus am Schreibtisc
 bleibt unberuehrt. Jede Modulaenderung braucht den CACHE_NAME-Sprung (Start-Lock).
 
 **Verifikation:** touch-ziele.test.mjs; Pixel Tablet nach SW-Reset Seitenleiste 44 px;
-Runde 2 gestempelt (SW v797), Runde 3 per Doppelklick (v798).
+Runde 2 gestempelt (SW v797), Runde 3 gestempelt (SW v798, ~17:05) — Tablet danach ohne Ziele unter 44 px.
 
 ### [2026-09-07] SAFE-AREA TRAEGT GENAU EIN ELEMENT; LAUFZEIT-STIL SCHLAEGT GESPERRTES BUENDEL (job_mobil_vollbild_dock_20260907)
 

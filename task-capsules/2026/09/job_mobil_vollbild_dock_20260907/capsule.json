@@ -48,7 +48,7 @@
       "wo": "public/kompakt.js (Touch-Block pointer:coarse ueber 600 px), public/mobil-dock.js",
       "was": "Rundgang durch alle 14 Ansichten (Pixel 7 hoch 412 px, quer 863 px, Pixel Tablet 800 px): kein seitlicher Ueberlauf; aber Ziele unter 44 px ueber 600 px auf Touch (Seitenleiste 36, Chat-Zeilen 28, Reiter Start/Code 42, rechte Leiste 36, Profil 42; Start-Dock-Knoepfe 38, Chips 34, Code-Leiste 30/32, Chips 19, Code-Feld 26) und am Handy Banner 42, Profilbild 28x26, Werkzeug-Zeilen 42.",
       "heilung": "kompakt.js: @media (min-width:601px) and (pointer:coarse) hebt alle genannten Ziele auf 44 px (Runde 2 Seitenleiste u. a., Runde 3 Schreibfeld/Code-Leiste/Banner); mobil-dock.js: Banner, Profilbild-Knopf, .toolbar-Zeilen 44 px. Maus am Schreibtisch unberuehrt.",
-      "nachweis": "tests/touch-ziele.test.mjs; Tablet nach SW-Reset: Seitenleiste 44 px (Runde 2 gestempelt, SW v797). Runde 3 als Modul live (Klon dec89fc), SW v798 wartet auf Doppelklick."
+      "nachweis": "tests/touch-ziele.test.mjs; Tablet nach SW-Reset: Seitenleiste 44 (Runde 2, SW v797), Senden 44x44, Modus-Chip 44, Einstellungen 0 kleine Ziele (Runde 3 + Nachzug, SW v798, Stempel per Doppelklick ~17:05, Bauzweig ae0db1c2, Klon 3e60904)."
     }
   ],
   "gemessenOhneBefund": [
@@ -62,9 +62,9 @@
     "Huawei (kein Emulator vorhanden)"
   ],
   "auslieferung": {
-    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): f53d279 -> 3e0978c (mobil-dock.js, ai/modellRouter.js, pwa-schnellstart.js, chat-actions-menu.js, willkommen.html + assets/) -> 7df5cf4 (willkommen.html mit Heilung) -> 2bb6419 (chatClient.js, sw.js v795, index.html/chat-actions.js/willkommen.html Marken) -> 2b4ccff/9a3e933 (Runde 2, SW v797, Stempel 16:38) -> dec89fc (Runde 3 kompakt.js)",
+    "frontend": "GitHub Pages (SmejjCom/smejj-app-frontend main): f53d279 -> 3e0978c (mobil-dock.js, ai/modellRouter.js, pwa-schnellstart.js, chat-actions-menu.js, willkommen.html + assets/) -> 7df5cf4 (willkommen.html mit Heilung) -> 2bb6419 (chatClient.js, sw.js v795, index.html/chat-actions.js/willkommen.html Marken) -> 2b4ccff/9a3e933 (Runde 2, SW v797, Stempel 16:38) -> dec89fc (Runde 3 kompakt.js) -> 2b05707 (Nachzug Senden/Modus-Chip) -> 3e60904 (Runde 3, SW v798, Stempel)",
     "quellzweig": "feature/responsive-qa-2026-09-07: 77b08916, be3fd991, daad77fe (Kaskade)",
-    "offen": "Runde 3: 'smejj.com Touch-Ziele Runde 3 stempeln und ausliefern.command' (sw.js v798). Vorher live-Version pruefen — Parallelsitzungen vergeben ebenfalls Versionen (v796 kam von 'Auto ueber Server-Router').",
+    "offen": "nichts — alle drei Runden gestempelt (Start-Lock 3x per Doppelklick), SW smejj-shell-v798 live",
     "hinweis": "Bis zum Sprung auf smejj-shell-v795 bekommen wiederkehrende App-Nutzer die neuen Module nicht (cache-first Precache); neue Sitzungen und frisch installierte Web-Apps sofort."
   },
   "pruefungen": {
@@ -75,5 +75,5 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runde 1 und 2 live und gestempelt (SW v797), Balken-Heilung im Simulator bewiesen; Runde 3 (SW v798) wartet auf Doppelklick"
+  "status": "verified — alle Runden live und gestempelt (SW v798); Balken-Heilung im Simulator bewiesen; Ziele 44 px auf Handy, Handy quer, Tablet nachgemessen"
 }
