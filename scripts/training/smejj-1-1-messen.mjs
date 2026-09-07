@@ -31,7 +31,7 @@ import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { leseKonfig } from "../../workers/con-autopilot/config.js";
 import { saladClient, bereiteJobVor, gruppenZustand } from "../../workers/con-autopilot/salad.js";
 import { e2KonfigAusEnv, e2Client } from "../../workers/con-autopilot/e2.js";
@@ -380,6 +380,6 @@ async function main() {
   console.log(`Messjob ${jobId} gestartet. Fortschritt: --stand, danach --bewerten ${jobId}`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((f) => { console.error("FEHLER:", f?.message || f); process.exit(1); });
 }

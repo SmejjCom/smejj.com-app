@@ -24,7 +24,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { erzeuge } from "../../workers/con-autopilot/daten/generator.mjs";
 import { erzeugeErgaenzung } from "./smejj-1-1-generator.mjs";
 import { echtePaare } from "./smejj-1-1-echte-paare.mjs";
@@ -236,6 +236,6 @@ async function main() {
   await ladeHoch({ text, manifest, praefix: `datasets/${p.name}` });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((f) => { console.error("FEHLER:", f?.message || f); process.exit(1); });
 }

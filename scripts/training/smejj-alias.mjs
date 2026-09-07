@@ -16,6 +16,7 @@ import { e2KonfigAusEnv, e2Client } from "../../workers/con-autopilot/e2.js";
 import { ladeEnvLocal } from "./smejj-1-1-messen.mjs";
 import { leeresRegister, liveTauglich, rolleZurueck, schalteLive, stableEintrag } from "../../src/shared/smejjVersionen.js";
 import { SMEJJ_VERSIONEN_ABLAGE, REGISTER_ID } from "../../control-server/src/llm/smejjAlias.js";
+import { pathToFileURL } from "node:url";
 
 const SCHLUESSEL = `${SMEJJ_VERSIONEN_ABLAGE}/${REGISTER_ID}.json`;
 
@@ -58,6 +59,6 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((f) => { console.error("FEHLER:", f?.message || f); process.exit(1); });
 }
