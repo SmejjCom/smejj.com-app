@@ -159,3 +159,75 @@ test("Handwahl im selben Tab haelt den Merker richtig", async () => {
   await router.sorgeFuerModell("Schreib noch eine JavaScript Funktion.");
   assert.equal(rufe, 2, "nach einer Handwahl muss der Router wieder selbst setzen");
 });
+
+// ---- Der abgelaufene Ausweis (Betreiber-Screenshots 2026-09-07) -------------
+// Befund: der stille Refresh (chat-stream.js) legt den frischen kurzen Ausweis in
+// sessionStorage — sorgeFuerModell las aber nur den ALTEN aus localStorage. Nach
+// zehn Minuten endete jede Auto-Anfrage mit "bitte ein Modell von Hand waehlen".
+// Und ohne Cline-Schluessel (409) darf Auto nicht in einer Sackgasse enden.
+
+test("Ausweis-Reihenfolge: frischer kurzer Ausweis vor eigenem Schluessel vor durablem Login", async () => {
+  const router = await frischerRouter();
+  const ss = fakeSpeicher(), ls = fakeSpeicher();
+  ls.setItem("smejj.auth.accessToken.v1", "alt-durabel");
+  assert.equal(router.leseAusweis(ss, ls), "alt-durabel");
+  ss.setItem("smejj.apiToken.v1", "eigener-schluessel");
+  assert.equal(router.leseAusweis(ss, ls), "eigener-schluessel");
+  ss.setItem("smejj.auth.accessToken.v1", "frisch");
+  assert.equal(router.leseAusweis(ss, ls), "frisch");
+  assert.equal(router.leseAusweis(null, null), "");
+});
+
+test("401 beim Setzen: genau einmal erneuern, dann mit dem frischen Ausweis wiederholen", async () => {
+  const router = await frischerRouter();
+  globalThis.localStorage.setItem("smejj.auth.accessToken.v1", "alt-durabel");
+  const rufe = [];
+  globalThis.fetch = async (url, optionen = {}) => {
+    const kopf = optionen.headers?.Authorization || "";
+    rufe.push(`${new URL(String(url)).pathname.replace(/^\/api/, "")} ${kopf}`);
+    if (String(url).endsWith("/api/auth/me")) return { ok: true, status: 200, json: async () => ({ authenticated: true, accessToken: "frisch" }) };
+    if (kopf === "Bearer frisch") return { ok: true, status: 200, json: async () => ({ selectedModel: "cline-pass/minimax-m3" }) };
+    return { ok: false, status: 401, json: async () => ({ error: "authentication_required" }) };
+  };
+  const wahl = await router.sorgeFuerModell("Wie spaet ist es in Tokio?");
+  assert.equal(wahl.ok, true, JSON.stringify(rufe));
+  assert.deepEqual(rufe, [
+    "/providers/cline/select Bearer alt-durabel",
+    "/auth/me Bearer alt-durabel",
+    "/providers/cline/select Bearer frisch"
+  ]);
+  assert.equal(globalThis.sessionStorage.getItem("smejj.auth.accessToken.v1"), "frisch", "der frische Ausweis steht fuer chatClient.js bereit");
+});
+
+test("bleibt es 401, ist die Anmeldung wirklich abgelaufen — ehrlich sagen, nicht ausweichen", async () => {
+  const router = await frischerRouter();
+  globalThis.fetch = async () => ({ ok: false, status: 401, json: async () => ({}) });
+  const wahl = await router.sorgeFuerModell("Wie spaet ist es in Tokio?");
+  assert.equal(wahl.ok, false);
+  assert.equal(wahl.fehler, "anmeldung");
+  assert.notEqual(wahl.ausweichen, true);
+});
+
+test("409 (kein Cline-Schluessel) und Netzfehler: Auto weicht auf den Server-Weg aus", async () => {
+  const router = await frischerRouter();
+  globalThis.fetch = async () => ({ ok: false, status: 409, json: async () => ({ error: "cline_not_configured" }) });
+  const ohneSchluessel = await router.sorgeFuerModell("Wie spaet ist es in Tokio?");
+  assert.equal(ohneSchluessel.ok, false);
+  assert.equal(ohneSchluessel.fehler, "nicht-eingerichtet");
+  assert.equal(ohneSchluessel.ausweichen, true);
+  assert.equal(ohneSchluessel.grund, "alltag", "der Routing-Grund bleibt erhalten");
+  globalThis.fetch = async () => { throw new Error("netz weg"); };
+  const netz = await router.sorgeFuerModell("Wie spaet ist es in Tokio?");
+  assert.equal(netz.fehler, "netz");
+  assert.equal(netz.ausweichen, true);
+});
+
+test("chatClient.js: Auto endet nie mit 'von Hand waehlen' — Anmeldung ehrlich, sonst Server-Weg", async () => {
+  const { readFileSync } = await import("node:fs");
+  const quelle = readFileSync(new URL("../public/ai/chatClient.js", import.meta.url), "utf8");
+  assert.ok(!quelle.includes('output.textContent = "Automatische Modellwahl'), "die Sackgasse ist weg");
+  assert.match(quelle, /if \(wahl\.fehler === "anmeldung"\) \{[\s\S]*?nichtAngemeldetText\(\);[\s\S]*?return true;[\s\S]*?\}\s*return false;/);
+  assert.match(quelle, /const ausweis = holeZugriffsToken\(\) \|\| token;/, "nach der Modellwahl wird der Ausweis neu gelesen");
+  assert.match(quelle, /Authorization: `Bearer \$\{ausweis\}`/);
+  assert.match(quelle, /const frisch = sessionStorage\.getItem\(AUTH_TOKEN_KEY\);\s*if \(frisch\) return frisch;/, "holeZugriffsToken kennt den frischen Ausweis");
+});
