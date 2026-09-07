@@ -65,13 +65,13 @@ test("Stil wird genau einmal eingehaengt", () => {
 });
 
 // ---- Runde 4 (Betreiber 07.09. abends): Modell-Menue, Chat-Glas, Vollbild-Versatz ----------
-test("Modell-Menue am Handy: fest ueber dem Dock, 16 px Rand, Text bricht um, Haken in eigener Spalte", () => {
-  assert.match(m.REGELN, /\.model-submenu\.model-submenu\{position:fixed;left:16px;right:16px;bottom:calc\(env\(safe-area-inset-bottom,0px\) \+ 124px\);width:auto;min-width:0;max-width:none/);
-  assert.match(m.REGELN, /\.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal;overflow:visible/);
-  assert.match(m.REGELN, /\.model-submenu-check\{flex:0 0 auto;width:20px/);
-  // Das Fuenf-Zeilen-Menue der Startseite (#startModellMenue, Inline-Stil) braucht !important
-  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,body #code \.code-modus-menue\.code-modus-menue\{position:fixed!important;left:16px!important;right:16px!important/);
-  assert.match(m.REGELN, /\.code-modus-menue \.modus-links\{flex:1 1 auto;min-width:0;white-space:normal/);
+test("Modell-Menue am Handy: Picker static, Menue absolut ueber die Glasbreite (fixed scheitert am backdrop-filter), eine Spalte, Text bricht um", () => {
+  assert.match(m.REGELN, /#start \.prompt-glass \.model-picker\.model-picker\{position:static\}/);
+  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,[^{]*\{position:absolute!important;left:6px!important;right:6px!important;top:auto!important;bottom:calc\(100% \+ 8px\)!important;width:auto!important/);
+  assert.doesNotMatch(m.REGELN, /model-submenu[^{]*\{position:fixed/, "fixed landet unter backdrop-filter bei y=-125 (gemessen 07.09.)");
+  assert.match(m.REGELN, /#start:not\(\.has-start-chat\) #startModellMenue\.code-modus-menue[^{]*\{top:calc\(100% \+ 8px\)!important;bottom:auto!important\}/, "leere Startseite: nach unten aufklappen");
+  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue button,[^{]*\{display:flex;align-items:center;gap:10px;width:100%;flex:0 0 auto;min-height:44px;white-space:normal/);
+  assert.match(m.REGELN, /\.modus-links,body \.model-submenu \.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal/);
 });
 
 test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen in sich; Frage als Glasblase, Kopfglas", () => {
