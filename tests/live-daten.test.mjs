@@ -79,9 +79,20 @@ test("das Modul haengt am Sendepfad und liegt im Vorrat", () => {
   assert.match(strom, /import \{ mitLiveDaten \} from "\.\/live-daten\.js"/);
   assert.match(strom, /body = await mitLiveDaten\(body\)/, "der Sendepfad muss es wirklich rufen");
   const sw = readFileSync(wurzel + "public/sw.js", "utf8");
-  for (const datei of ["/assets/ai/live-daten.js", "/assets/chat-bridge-weather.js", "/assets/chat-bridge-websuche.js"]) {
+  for (const datei of ["/assets/ai/live-daten.js", "/assets/chat-bridge-weather.js"]) {
     assert.ok(sw.includes(`"${datei}"`), `${datei} fehlt im Vorrat — offline und nach Neustart tot`);
   }
+});
+
+test("live-daten zieht KEIN Modul nach, das nur in Node laeuft", () => {
+  // chat-bridge-websuche.js importiert chat-bridge-evolution.js — im Browser
+  // bricht damit die ganze Kette (live gemessen 07.09.). Der Abruf steht darum
+  // eigenstaendig in live-daten.js.
+  const quelle = readFileSync(wurzel + "public/ai/live-daten.js", "utf8");
+  assert.ok(!/^import .*chat-bridge-websuche/m.test(quelle), "die Bruecken-Websuche darf hier nicht importiert werden");
+  // Gegenprobe: eine solche Import-Zeile wuerde erkannt.
+  assert.ok(/^import .*chat-bridge-websuche/m.test('import { x } from "../chat-bridge-websuche.js";'));
+  assert.match(quelle, /\/api\/search\/web/, "die Suche muss eigenstaendig abgerufen werden");
 });
 
 test("das Wetter-Modul laeuft in BEIDEN Welten (Bruecke und Browser)", () => {
