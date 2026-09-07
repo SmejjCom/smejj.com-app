@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T10:39:16.881Z",
-  "confirmation": "Betreiber, 2026-09-07: keines der eigenen Modelle und kein Internet funktionierte; mach 100% fertig, alle Rechte. Wurzel: der 10-Minuten-Zugangs-Ausweis wurde nicht erneuert, 80% der Anfragen galten als abgemeldet. Umgesetzt: stiller Refresh im Browser (chat-stream.js erneuereZugangsToken ueber /api/auth/me und /api/auth/session-token, Retry bei 401/403), Service-Worker smejj-shell-v794.",
+  "frozenAt": "2026-09-07T13:22:59.202Z",
+  "confirmation": "Betreiber, 2026-09-07: Auto und die Modelle funktionierten nicht; mach 100% fertig, alle Rechte. Umgesetzt: Auto laeuft nicht mehr ueber den Fremd-Dienst Cline (ohne Schluessel scheiterte jede Anfrage), sondern als eigener Live-Pfad ueber den Server-Router mit Ersatzkette; code-modell-menue.js AUTO_WAHL, app.js MODEL_MODES, Service-Worker smejj-shell-v795.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "ecdf797269582d5973d4395cb375e94736acd1065a7b7afcdfa5507f7f43d820",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "2df206192af207fc49b69ed85f287d4c0ab0feafce05bb6214458bd5f7ba909f",
-    "public/app.js": "8581bf7967edbb2516f69429be801f912efb8f7e58b762ee3acd197676a727a9",
+    "public/app.js": "421d0973bc15b9771aacd6e653e40636fc9f3077bc77f91babe44af962644f5c",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "65e24e5349cedae5d10dcd2fff9216616f2bc5f2beff6675be85b29ca78bd453",
+    "public/sw.js": "194830a3231c5fa8a0268b9b902ac44ad63efe69fa1b6c33e6ba033fcfa31183",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
