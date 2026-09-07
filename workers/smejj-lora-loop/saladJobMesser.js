@@ -44,13 +44,17 @@ export const MODUS_MESSUNG = "messung";
 /**
  * Zeitgrenze eines Messlaufs.
  *
- * 210 Minuten sind am schlechten Fall bemessen, nicht am guten: die breite
- * Suite hat 295 Faelle, und die gemessene Antwortzeit schwankte am 06.09.
- * zwischen 19 und 150 Sekunden je Antwort — derselbe Job, verschiedene Knoten.
- * Eine am besten Fall bemessene Frist riss eine Messung ab, NACHDEM das
- * Training bereits bezahlt war.
+ * 330 statt 210 Minuten, nachgezogen am 07.09. Die 210 waren immer noch am
+ * GUTEN Fall bemessen: derselbe Job wurde im Lauf von 16,7 auf 25,9 Sekunden je
+ * Antwort langsamer (dreimal gemessen an smejj11-20260907014005), und die
+ * Messung lief auf 46 Minuten Fehlbetrag zu. Sie haette den Basisstand fertig
+ * gemessen und den Kandidaten zur Haelfte: keine Note, volle Rechnung.
+ *
+ * 590 Antworten x 26 s sind 256 Minuten, dazu bis zu 30 fuer das Holen des
+ * Modells aus e2. Bezahlt wird ohnehin nur die TATSAECHLICHE Zeit — eine
+ * grosszuegige Frist kostet nichts, eine zu knappe kostet den ganzen Lauf.
  */
-export const MESS_MAX_MINUTEN = 210;
+export const MESS_MAX_MINUTEN = 330;
 
 /** Job-Kennung fuer einen Messlauf. */
 export function neueMessJobId(version, jetzt = () => new Date()) {

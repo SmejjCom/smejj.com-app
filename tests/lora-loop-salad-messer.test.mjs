@@ -77,11 +77,14 @@ test("die Mess-Kennung ist als Messung erkennbar und traegt die Version", () => 
   assert.equal(MODUS_MESSUNG, "messung");
 });
 
-test("die Zeitgrenze ist am SCHLECHTEN Fall bemessen", () => {
-  // 19 bis 150 Sekunden je Antwort, gemessen am 06.09. auf verschiedenen Knoten.
-  // Eine am guten Fall bemessene Frist riss eine Messung ab, nachdem das
-  // Training bereits bezahlt war.
-  assert.ok(MESS_MAX_MINUTEN >= 210, `Frist ${MESS_MAX_MINUTEN} min ist zu knapp fuer 295 Faelle auf einem langsamen Knoten`);
+test("die Zeitgrenze traegt 590 Antworten auf dem LANGSAMSTEN gemessenen Knoten", () => {
+  // Nicht "irgendeine grosse Zahl", sondern nachgerechnet: Basis + Kandidat sind
+  // 590 Antworten; der schlechteste am 07.09. gemessene Dauerwert war 25,9 s.
+  // Dazu bis zu 30 Minuten fuer das Holen des Modells aus e2.
+  const noetig = (590 * 26) / 60 + 30;
+  assert.ok(MESS_MAX_MINUTEN >= noetig,
+    `Frist ${MESS_MAX_MINUTEN} min traegt die noetigen ${Math.ceil(noetig)} min nicht — `
+    + "eine Messung, die an der Frist abbricht, kostet den ganzen Lauf und liefert keine Note");
 });
 
 // --- Zustand -----------------------------------------------------------------

@@ -127,8 +127,31 @@ export const WIEDERHOLUNGEN = 1;
  * die fuer einen anderen Gegenstand gemessen wurde, still uebernommen. Der Test
  * rechnet die Frist deshalb jetzt gegen die gemessene Geschwindigkeit nach.
  */
-export const SEKUNDEN_JE_ANTWORT = 19;
-export const MAX_MINUTEN = 210;
+/**
+ * GEMESSEN, dreimal am selben Job (07.09., Lauf smejj11-20260907014005):
+ * 16,7 dann 23,1 dann 25,9 Sekunden je Antwort. DERSELBE Knoten wurde im Lauf
+ * langsamer, um mehr als die Haelfte. Die 19 waren der Mittelwert eines guten
+ * Laufs — als Planungsgrundlage sind sie zu optimistisch.
+ *
+ * 26 ist der schlechteste bisher gemessene Dauerwert. Wer hier den guten Fall
+ * einsetzt, plant eine Messung, die an der Frist abbricht, NACHDEM das Training
+ * bereits bezahlt ist.
+ */
+export const SEKUNDEN_JE_ANTWORT = 26;
+/**
+ * Zeitgrenze eines Messlaufs: 210 -> 330 Minuten.
+ *
+ * RECHNUNG statt Bauchgefuehl: 590 Antworten (Basis + Kandidat) x 26 s sind
+ * 256 Minuten, dazu bis zu 30 Minuten fuer das Holen des Modells aus e2 und
+ * etwas Luft — 330.
+ *
+ * Am 07.09. lief eine Messung mit 210 Minuten auf 46 Minuten Fehlbetrag zu.
+ * Der Lauf haette den Basisstand fertig gemessen und den Kandidaten zur
+ * Haelfte: keine Note, aber die volle Rechnung. Bezahlt wird ohnehin nur die
+ * TATSAECHLICHE Zeit; eine grosszuegige Frist kostet nichts, eine zu knappe
+ * kostet den ganzen Lauf.
+ */
+export const MAX_MINUTEN = 330;
 
 /**
  * Die beiden Staende, in der Reihenfolge, die job.py ohnehin erzwingt (Fundament zuerst).
