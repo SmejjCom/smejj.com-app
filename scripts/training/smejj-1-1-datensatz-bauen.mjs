@@ -58,6 +58,21 @@ export const PROFILE = Object.freeze({
   // sonst waere der einzige Unterschied zwischen den beiden Laeufen so klein,
   // dass die Messung ihn nicht von Rauschen trennen kann.
   "smejj-1-5": { startwert: 20260907, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
+  // smejj-1-6 (08.09.): Korrektur der DOSIS, nicht der Methode.
+  //
+  // smejj 1.5 fiel auf 62,6 % (1.4: 66,0). Die zwoelf GRENZE-Paare mit "ja, das
+  // darfst du" sollten eine Ueberverweigerung heilen — das Modell hat das
+  // Zustimmen aber nicht auf ihren Bereich beschraenkt und stimmt seither auch
+  // dort zu, wo es zugeben muesste, etwas nicht zu wissen. Ehrlichkeit fiel von
+  // 65 auf 45 Prozent, die kritischen Verstoesse stiegen von 83 auf 97.
+  //
+  // Die gezielten Paare haben dagegen gewirkt: Logik +30, Sicherheit +12,
+  // Kosten +10, Projektwissen +6,7. Die Methode stimmt, die Dosis nicht.
+  //
+  // Fuer 1.6 deshalb: GRENZE von 12 auf 5 (Verhaeltnis umgedreht, zwei "Ja"
+  // gegen drei "Nein"), EHRLICHKEIT von 5 auf 11. Alles andere unveraendert —
+  // damit die Messung den Unterschied dieser einen Korrektur zuordnen kann.
+  "smejj-1-6": { startwert: 20260908, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-2": {
     startwert: 20260905,
     mengen: { reasoning: 7000, sicherheit: 1500, sprache: 1900 },
