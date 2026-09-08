@@ -53,6 +53,22 @@ repo_ist_oeffentlich() {
     */*) ;;
     *) return 1 ;;   # keine erkennbare GitHub-Adresse -> pruefen
   esac
+  # ZUERST ANGEMELDET FRAGEN (2026-09-08): Der anonyme Weg unten antwortete an
+  # diesem Anschluss nur noch "API rate limit exceeded" (HTTP 403) — nicht
+  # sekundenweise, sondern dauerhaft. Damit war die Sichtbarkeit NIE mehr
+  # feststellbar, und die Sperre blockierte jeden Push mit der Begruendung
+  # "privates Repo", obwohl SmejjCom/smejj.com-app oeffentlich ist. Eine
+  # Messung, die immer dasselbe Ergebnis liefert, ist keine Messung mehr.
+  #
+  # gh bringt den Token des Betreibers mit und hat deshalb das hoehere
+  # Kontingent. Fail-closed bleibt unveraendert: nur ein eindeutiges "false"
+  # oeffnet das Tor, alles andere faellt auf den anonymen Weg zurueck.
+  if command -v gh >/dev/null 2>&1; then
+    gh_antwort=$(gh api "repos/${pfad}" --jq .private 2>/dev/null) || gh_antwort=""
+    [ "$gh_antwort" = "false" ] && return 0
+    [ "$gh_antwort" = "true" ] && return 1
+  fi
+
   command -v curl >/dev/null 2>&1 || return 1
   # Ohne Anmeldung: ein privates Repo antwortet 404, ein oeffentliches 200.
   #
