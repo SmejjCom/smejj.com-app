@@ -77,6 +77,7 @@ test("Runde 5: Kopfknoepfe, Werkzeugzeilen, Konto-Reiter und Plus-Menue auf grob
   assert.match(k, /\.account-picture-actions button,body #profile \.account-picture-choose\{min-height:44px\}/);
   assert.match(k, /\.view input:not\(\[type=checkbox\]\):not\(\[type=radio\]\):not\(\[type=file\]\),body \.view select,/);
   assert.match(k, /\.view textarea,body \.view form button\{min-height:44px\}/);
+  assert.match(k, /#start \.prompt-glass #startMessage,body #code \.codefeld #codeAufgabe\{min-height:44px\}/, "das Start-Feld selbst mass 43,5 px");
   // Der Block gilt weiterhin nur fuer grobe Zeigegeraete ueber 600 px — die Maus bleibt unberuehrt.
   const block = k.split('"@media (min-width:601px) and (pointer:coarse){"')[1];
   assert.ok(block.includes("account-picture-choose"), "die neuen Regeln liegen IM coarse-Block");
