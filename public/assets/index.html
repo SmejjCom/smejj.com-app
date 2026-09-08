@@ -53,7 +53,11 @@
     <meta name="description" content="smejj.com ist ein schneller KI- und Code-Assistent für Chat, Programmierung und Agenten-Aufgaben.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="smejj.com">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- NICHT auf "black-translucent" zurueckstellen. iOS schreibt daraus
+         UIWebClipStatusBarStyleLegacyBlackTranslucent in die Webclip-Datei und macht die Flaeche
+         um die Statusleiste kuerzer als den Schirm (gemessen 08.09. im Simulator: 874 gegen 812,
+         62 pt fehlten) — das war der schwarze Balken unten. Begruendung: public/mobil-dock.js. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
     <meta property="og:type" content="website">

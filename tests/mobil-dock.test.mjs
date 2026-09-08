@@ -19,9 +19,19 @@ test("Regeln gelten nur am Handy (bis 600 px) und sind ein geschlossener Block",
 test("untere Safe-Area nur EINMAL: Feld und Code-Leiste geben ihren Rand ab, die Huelle behaelt ihn", () => {
   assert.match(m.REGELN, /#start \.prompt-glass\.prompt-glass\.prompt-glass\{margin-bottom:0/);
   assert.match(m.REGELN, /#code \.codeunten\.codeunten\.codeunten\{padding-bottom:0\}/);
-  // Die Huelle traegt die Safe-Area (mobil-composer.css); angefasst wird sie NUR bei offener Tastatur (Punkt 7).
+  // Die Huelle traegt die Safe-Area (mobil-composer.css, main.shell padding-bottom). Angefasst wird sie
+  // in genau ZWEI Faellen: bei offener Tastatur faellt sie auf 0 (Punkt 7), und in der installierten App
+  // bekommt sie einen Mindestwert, weil iOS dort seit dem Wechsel auf status-bar-style "default"
+  // safe-area-inset-bottom mit 0 meldet (gemessen 08.09. im Simulator). Verdoppelt wird sie nie:
+  // das Feld und die Code-Leiste geben ihren eigenen Rand ab (die beiden Zusagen darueber).
   const huellenRegeln = [...m.REGELN.matchAll(/([^{}]*main\.shell[^{]*)\{[^}]*padding/g)].map((t) => t[1]);
-  assert.ok(huellenRegeln.every((sel) => sel.includes("html.tastatur-offen")), `Huelle nur bei offener Tastatur: ${huellenRegeln.join(" | ")}`);
+  assert.ok(
+    huellenRegeln.every((sel) => sel.includes("html.tastatur-offen") || sel.includes("html:not(.tastatur-offen)")),
+    `Huelle nur fuer Tastatur oder Mindestabstand: ${huellenRegeln.join(" | ")}`,
+  );
+  const mindest = huellenRegeln.filter((sel) => sel.includes(":not(.tastatur-offen)"));
+  assert.ok(mindest.every((sel) => m.REGELN.includes("max(env(safe-area-inset-bottom,0px),18px)")),
+    "der Mindestwert unterschreitet nie den echten Wert — alte Installationen verlieren nichts");
 });
 
 test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () => {
@@ -90,24 +100,23 @@ test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen 
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild-Rahmen: bedingungsloser Ueberstand nach unten (keine Messung mehr), nie dvh-Flaechen", () => {
-  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 852 }), 852, "voller Schirm");
-  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 512.4 }), 512, "Tastatur offen: Rahmen endet an der Tastatur");
-  assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 0 }), 0, "unbekannt -> Rueckfall 100%");
-  // 08.09. 08:52: auch der visualViewport meldete 800 statt 852 — in der Apple-App zaehlt der Bildschirm
-  assert.equal(m.schirmUnterkante({ schirmHoehe: 852, schirmBreite: 393, innerWidth: 393, innerHeight: 800 }), 852, "hochkant: lange Seite");
-  assert.equal(m.schirmUnterkante({ schirmHoehe: 852, schirmBreite: 393, innerWidth: 852, innerHeight: 350 }), 393, "quer: kurze Seite (iOS meldet screen immer hochkant)");
-  assert.equal(m.schirmUnterkante({ schirmHoehe: 0, schirmBreite: 0, innerWidth: 1, innerHeight: 1 }), 0);
-  const quelle2 = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
-  assert.match(quelle2, /\(apple && standalone\(\)\)\s*\? schirmUnterkante/, "Apple-App nimmt die Bildschirmkante");
-  // 08.09. 08:48-08:55: der Balken kam auch mit screen.height zurueck. Drei Messwege sind gescheitert,
-  // darum reicht der Rahmen jetzt ohne jede Messung 120 px unter die Kante — wie der Grund seit 05.09.
-  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{top:0;bottom:-120px;height:auto\}\}/);
-  assert.doesNotMatch(m.REGELN, /body::after\{[^}]*var\(--vv-unten/, "keine gemessene Rahmenhoehe mehr");
-  assert.doesNotMatch(m.REGELN, /vollbild-fehl/, "innerHeight-Messung ist raus (Betreiber 08.09. 01:49: Balken kam nach der Tastatur zurueck)");
-  assert.doesNotMatch(m.REGELN, /100dvh \+ var\(/, "dvh-Flaechen bleiben unangetastet");
-  const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
-  assert.match(quelle, /vv\.addEventListener\("resize", setze\); vv\.addEventListener\("scroll", setze\);/);
+test("Vollbild-Balken: die Wurzel lag NICHT im Layout, sondern im Status-Bar-Modus der Web-App", () => {
+  // GEMESSEN 08.09. in der installierten App im iPhone-Simulator (Diagnoseseite, drei Messstreifen):
+  // Schirm 402x874, Fenster 402x812, fixed inset:0 = 812, 100dvh = 812 — es fehlten 62 pt, genau
+  // safe-area-inset-top. Die fehlende Flaeche liegt AUSSERHALB des WebViews; ein Rahmen mit
+  // bottom:-120px endete dort ebenso. Ursache: apple-mobile-web-app-status-bar-style
+  // "black-translucent" -> UIWebClipStatusBarStyleLegacyBlackTranslucent in der Webclip-Datei.
+  const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.match(html, /apple-mobile-web-app-status-bar-style" content="default"/, "der Legacy-Modus verkuerzt die Flaeche um die Statusleiste");
+  assert.doesNotMatch(html, /status-bar-style" content="black-translucent"/);
+  assert.match(html, /viewport-fit=cover/, "ohne cover waere die Flaeche erst recht kleiner");
+  // Kein Layout-Hilfsmittel mehr: keine gemessene Rahmenhoehe, kein Ueberstand, keine dvh-Rechnerei.
+  assert.doesNotMatch(m.REGELN, /body::after/, "der Rahmen braucht keine Sonderregel mehr");
+  assert.doesNotMatch(m.REGELN, /vollbild-fehl|--vv-unten/);
+  // Dafuer wird safe-area-inset-bottom in diesem Modus 0 — der Abstand zum Home-Balken kommt von hier,
+  // und nie kleiner als der echte Wert, damit noch nicht neu installierte Apps nichts verlieren.
+  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{html\{--sa-bottom:max\(env\(safe-area-inset-bottom,0px\),18px\)\}/);
+  assert.match(m.REGELN, /html:not\(\.tastatur-offen\) main\.shell\.shell\{padding-bottom:max\(env\(safe-area-inset-bottom,0px\),18px\)\}/, "bei offener Tastatur bleibt es buendig");
 });
 
 test("Punkt 7: bei offener Bildschirmtastatur faellt der untere Sicherheitsrand weg — Feld buendig an der Tastaturkante", () => {
@@ -133,26 +142,3 @@ test("Stufe-Chip kuerzt mit Ellipse statt beidseitig abzuschneiden (inline-flex 
   assert.doesNotMatch(m.REGELN, /\.repochip\.repochip\{display:inline-flex/, "inline-flex laesst text-overflow verpuffen");
   assert.match(m.REGELN, /#codeModusChip\.repochip\{max-width:72px\}/, "der kurze Modus-Chip macht dem Stufen-Chip Platz");
 });
-
-test("Diagnose-Messzeile: liest Schirm, Fenster, sichtbare Flaeche, Safe-Areas und Modus (nur installierte App)", () => {
-  const doc = {
-    documentElement: {},
-    body: { appendChild() {}, },
-    createElement: () => ({ style: { cssText: "" }, getBoundingClientRect: () => ({ height: 34 }), remove() {} }),
-    querySelector: () => null,
-  };
-  const win = { screen: { width: 393, height: 852 }, innerWidth: 393, innerHeight: 800,
-    visualViewport: { width: 393, height: 800, offsetTop: 0 }, devicePixelRatio: 3, navigator: { standalone: true } };
-  globalThis.getComputedStyle = () => ({});
-  const gemessen = m.messwerte(win, doc);
-  assert.equal(gemessen.schirm, "393x852");
-  assert.equal(gemessen.fenster, "393x800", "genau dieser Unterschied ist der Balken");
-  assert.equal(gemessen.sichtbar, "393x800+0");
-  assert.equal(gemessen.saUnten, 34);
-  assert.match(gemessen.modus, /standalone/);
-  // Die Zeile darf NUR in der installierten App erscheinen — im Browser nie.
-  const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
-  assert.match(quelle, /standalone\)"\)\.matches \|\| navigator\.standalone === true\) zeigeMesszeile\(\)/);
-  assert.match(quelle, /setTimeout\(\(\) => zeile\.remove\(\), 15000\)/, "verschwindet von selbst");
-});
-
