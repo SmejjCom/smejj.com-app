@@ -5,6 +5,44 @@ Jeder Eintrag nennt Datum, Typ, Capsule, Entscheidung, Begruendung und Verifikat
 ---
 ## Architekturentscheidungen
 
+### [2026-09-08] WENN VIER LAYOUT-ANLAEUFE NICHTS BEWIRKEN, IST DIE FLAECHE SELBST ZU KLEIN (job_mobil_vollbild_dock_20260907, Runde 6)
+
+Capsule: `task-capsules/2026/09/job_mobil_vollbild_dock_20260907/capsule.json`.
+
+**Befund:** Der schwarze Balken in der installierten iOS-App hat vier Anlaeufe ueberlebt
+(innerHeight, visualViewport, screen.height, bedingungsloser 120-px-Ueberstand). Der
+Betreiber-Screenshot vom 08.09. 11:07 zeigte den entscheidenden Hinweis: dem Streifen
+fehlte AUCH seitlich der Lichtsaum — dort endete nicht nur der Rahmen, sondern der Grund.
+
+**Selbst gemessen** in der installierten App im iPhone-Simulator (der Webclip-Host heisst
+`com.apple.webapp` und laesst sich mit `xcrun simctl launch` starten; die Webclip-Datei
+unter `data/Library/WebClips/<UUID>.webclip/Info.plist` nimmt mit `plutil` jede URL und
+jeden Status-Bar-Modus an — damit ist die installierte App ohne Bildschirmsteuerung
+fernsteuerbar):
+
+| Modus in der Webclip-Datei | fixed inset:0 | 100dvh | safe-area unten | Balken |
+|---|---|---|---|---|
+| LegacyBlackTranslucent (Meta `black-translucent`) | 812 | 812 | 34 | **62 pt** |
+| Default (Meta `default`) | 874 | 874 | 0 | keiner, aber helle Leiste |
+| Black (Meta `black`) | 874 | 874 | 34 | keiner, dunkle Leiste |
+
+**Entscheidung:** `apple-mobile-web-app-status-bar-style` auf `black`. Dazu
+`html{background:…}` auf der Landeseite — iOS faerbt den Statusleistenbereich mit dem
+Hintergrund des WURZELELEMENTS, nicht des body.
+
+**Begruendung:** Im Legacy-Modus liegt die Flaeche oben an, ist aber um die
+Statusleistenhoehe kuerzer als der Schirm. Die fehlenden 62 pt liegen AUSSERHALB des
+WebViews — dorthin kann kein CSS malen, auch kein Ueberstand.
+
+**Betrieb:** iOS friert den Modus beim Installieren ein (im Simulator bewiesen: mit alter
+Webclip-Datei blieb der Balken, obwohl die Seite schon den neuen Wert lieferte).
+Bestehende Installationen muessen EINMAL neu zum Home-Bildschirm.
+
+**Lehre:** Wenn mehrere richtig gerechnete Layout-Korrekturen dasselbe Symptom nicht
+beseitigen, liegt der Fehler nicht im Layout. Dann die FLAECHE messen, nicht die Zahlen
+darin — und zwar dort, wo der Fehler auftritt (in der installierten App), nicht im Browser.
+
+
 ### [2026-09-08] GEGEN EINEN VIEWPORT, DER LUEGT, HILFT KEINE MESSUNG — SONDERN UEBERSTAND (job_mobil_vollbild_dock_20260907, Runde 5)
 
 Capsule: `task-capsules/2026/09/job_mobil_vollbild_dock_20260907/capsule.json`.

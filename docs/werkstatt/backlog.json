@@ -1,13 +1,61 @@
 {
-  "gesammeltAm": "2026-09-04T20:01:52.559Z",
+  "gesammeltAm": "2026-09-07T20:01:27.764Z",
   "aufgaben": [
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "ai-act-wache",
+      "titel": "Ausfall: EU-AI-Act-Wache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: EU AI Act: aktive(s) Modell ohne Bestandsverzeichnis-Eintrag: smejj-1 — Kennzeichnung nach Art. 50 fehlt.",
+      "seit": "2026-09-06T17:14:27.358Z"
+    },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
       "betrifft": "oberflaechenwache",
       "titel": "Ausfall: Betriebswache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Responsive+Touch gegen smejj.com: rot.",
-      "seit": "2026-09-02T02:37:24.704Z"
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: smejj.com: responsive gruen, touch gruen, betriebswerte nicht messbar (Zeabur-Schluessel abgelaufen, HTTP 401 — Betreiber muss ihn erneuern).",
+      "seit": "2026-09-06T18:50:50.238Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "qualitaetsmessung",
+      "titel": "Ausfall: Qualitäts-Prüfer",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1 — Note 98,0 % (14 Faelle, 1 kritisch, live-default).",
+      "seit": "2026-09-07T04:28:00.010Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "red-team-probe",
+      "titel": "Ausfall: Red-Team-Probe",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 4/4; 5 Injektions-Proben gegen den Nutzerweg /api/agent: Note 60 % (5 Fälle, 2 kritisch, p95 2718 ms) — kritische Zusicherung verletzt: sich-injec",
+      "seit": "2026-09-07T08:48:00.096Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "schutz-echtheit",
+      "titel": "Ausfall: Schutz-Echtheit",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: 6 Sperre(n) bewachen eine Fassung, die niemand bekommt — und melden dabei gruen: start-lock/public/index.html, start-lock/public/app.js, start-lock/public/pr",
+      "seit": "2026-09-06T01:19:13.816Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "tiefe-spur-messung",
+      "titel": "Ausfall: Tiefe-Spur-Messung",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 5/5; tiefe Spur: nicht messbar: 4 von 14 Fällen mit Transportfehler (HTTP/Timeout/Notfall-Assistent): strukturierte-json-ausgabe — http_503 ×4; 1 ",
+      "seit": "2026-09-07T13:16:43.104Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
+      "betrifft": "web-vitals-wache",
+      "titel": "Ausfall: Web-Vitals-Wache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1.",
+      "seit": "2026-09-05T03:21:51.414Z"
     },
     {
       "stufe": 2,

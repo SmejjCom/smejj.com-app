@@ -1,4 +1,4 @@
-# smejj.com — Übergabe Mobil-QA von A bis Z (Stand 08.09.2026, 10:50 — Runde 5 erledigt, SW v815)
+# smejj.com — Übergabe Mobil-QA von A bis Z (Stand 08.09.2026, 13:20 — C1 an der Wurzel behoben, SW v817)
 
 Auftrag des Betreibers: 100 % Responsive, Vollbild ohne schwarzen Balken, Chat/Code/Einstellungen wie ChatGPT, Eingabefeld bündig an der Tastatur, alles Deutsch, Touch-Ziele 44 px — in der INSTALLIERTEN App (iOS-Web-App, Android-TWA), nicht im Browser. Regel des Betreibers seit 08.09.: **„pusche selber“** — Commit, Push, Deploy und Stempel-Kaskade aus der Sitzung heraus erledigen, keine Auswahlkarten für Freigaben; kurze Statuszeile, kurze Antworten.
 
@@ -18,7 +18,21 @@ Auftrag des Betreibers: 100 % Responsive, Vollbild ohne schwarzen Balken, Chat/C
 
 ## C. Stand nach Runde 5 (08.09., SW v815) — was erledigt ist und was bleibt
 
-**C1. Schwarzer Balken unten in der iOS-App — ERLEDIGT, Gerätebeweis steht aus.** Drei Messwege sind gescheitert: `innerHeight` (v807), `visualViewport` (v810), `screen.height` (v813). Jeder war richtig gerechnet — die Messgröße selbst lügt, iOS meldet je nach Tastatur-Historie 800 oder 852. Darum wird jetzt **nicht mehr gemessen**: der Rahmen reicht bedingungslos 120 px unter die Kante (`@media (display-mode:standalone) and (max-width:600px){body::after{top:0;bottom:-120px;height:auto}}`) — genau die Bauart, die beim Grund (`body::before`) seit dem 05.09. hält. Der untere Rahmenstrich entfällt (vom Betreiber vorab freigegeben), oben bleibt er. dvh-Flächen unangetastet. **Beweis im Emulator** mit erzwungener Medienfrage (`Emulation.setEmulatedMedia display-mode=standalone`): `top:0 / bottom:-120px`, Höhe 959 px bei 839 px Viewport. **Offen:** der Blick in die installierte App am iPhone des Betreibers.
+**C1. Schwarzer Balken unten in der iOS-App — AN DER WURZEL BEHOBEN, im Simulator bewiesen.** Vier Layout-Anläufe blieben wirkungslos, weil sie am falschen Ende arbeiteten. Der Screenshot vom 11:07 zeigte es: dem Streifen fehlte **auch seitlich** der Lichtsaum — dort endete nicht der Rahmen, sondern die Fläche.
+
+Selbst gemessen in der **installierten App im iPhone-Simulator**. Der Webclip-Host heißt `com.apple.webapp` und lässt sich mit `xcrun simctl launch <UDID> com.apple.webapp` starten — ohne Bildschirmsteuerung. Die Webclip-Datei (`data/Library/WebClips/<UUID>.webclip/Info.plist`) nimmt mit `plutil` jede URL und jeden Status-Bar-Modus an; damit ist die installierte App fern messbar.
+
+| Modus in der Webclip-Datei | fixed inset:0 | 100dvh | safe-area unten | Ergebnis |
+|---|---|---|---|---|
+| LegacyBlackTranslucent (Meta `black-translucent`) | 812 | 812 | 34 | **62 pt Balken** |
+| Default (Meta `default`) | 874 | 874 | 0 | kein Balken, helle Statusleiste |
+| Black (Meta `black`) | 874 | 874 | 34 | kein Balken, dunkle Statusleiste |
+
+Ursache: `black-translucent` lässt iOS den **Legacy**-Modus in die Webclip-Datei schreiben. Dort liegt die Fläche oben an, ist aber um die Statusleistenhöhe kürzer als der Bildschirm — die fehlenden 62 pt liegen **außerhalb des WebViews**, dorthin kann kein CSS malen.
+
+Behoben: `content="black"` in index.html; `html{background:#141517}` auf der Landeseite (iOS färbt den Statusleistenbereich nach dem Hintergrund des **Wurzelelements**, nicht des body); in mobil-dock.js die Rahmen-Sonderregel und der gesamte Messcode entfernt, stattdessen ein Mindestabstand zum Home-Balken (`max(env(safe-area-inset-bottom,0px),18px)`, nie kleiner als der echte Wert).
+
+**Der Betreiber muss die App EINMAL neu installieren** — iOS friert den Modus beim Installieren ein (im Simulator bewiesen: mit alter Webclip-Datei blieb der Balken, obwohl die Seite schon den neuen Wert lieferte). App-Symbol gedrückt halten → „App entfernen" → in Safari smejj.com öffnen → Teilen → „Zum Home-Bildschirm".
 
 **C2. Einstellungen seitlich verschiebbar — ERLEDIGT.** Wurzel war nicht der sichtbar breite Inhalt: `.settings-content` ist ein Raster, dessen einzige Spalte auf `grid-template-columns: 403px` stand (bei 388 px Platz), weil ein Rasterfeld `min-width: auto` hat und bis zur min-content-Breite wächst; Treiber war ein `span.ac-sub` mit `white-space: nowrap`. Jetzt `minmax(0,1fr)` + `min-width: 0`, nowrap-Untertitel dürfen umbrechen, `#settings{overflow-x:hidden}`. Dazu: Cline-Knopfraster einspaltig und 44 px, Suchfeld der Reiterzeile war 26 px breit (jetzt 160–220 px). **Gemessen:** alle 12 Reiter `clientWidth = scrollWidth = 412`, kleine Ziele 0.
 

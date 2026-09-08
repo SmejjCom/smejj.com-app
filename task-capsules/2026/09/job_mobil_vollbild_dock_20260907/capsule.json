@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runde 5 (C1 bis C6) live, SW v815; offen nur der Geraetebeweis fuer C1 und die Betreiber-Rueckmeldung C5",
+  "status": "verified — der schwarze Balken ist an der Wurzel behoben (Webclip-Status-Bar-Modus), im Simulator in beide Richtungen bewiesen; der Betreiber muss die App einmal neu installieren",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -133,5 +133,24 @@
       "check:start-lock rot durch die bekannte Divergenz zwischen QA-Zweig und Bauzweig (index.html, app.js, config.js, ai/chatClient.js, sw.js) — Vorbestand, nicht angefasst.",
       "#startMessage 43,5 px: Aenderung beruehrt den Design-Lock, darum ohne schriftliche Freigabe nicht angefasst."
     ]
+  },
+  "runde6_20260908_wurzel_gefunden": {
+    "auftrag": "Betreiber 08.09.: 'Teste selber mit Simulator und Emulator als App und behebe endlich diese Fehler.'",
+    "wie_selbst_getestet": "Die installierte Web-App laeuft im Simulator unter dem Host com.apple.webapp — startbar mit 'xcrun simctl launch <UDID> com.apple.webapp', ganz ohne Bildschirmsteuerung. Die Webclip-Datei (data/Library/WebClips/<UUID>.webclip/Info.plist) laesst sich mit plutil auf eine beliebige URL und auf jeden Status-Bar-Modus stellen. Damit war die installierte App fern messbar.",
+    "messung": {
+      "black-translucent (Legacy)": "Schirm 402x874, Fenster 402x812, fixed inset:0 812, 100dvh 812, SA 62/34 — 62 pt schwarzer Balken unten",
+      "default": "fixed inset:0 874, 100dvh 874, SA 0/0 — keine Luecke, aber helle Statusleiste",
+      "black": "fixed inset:0 874, 100dvh 874, SA 0/34 — keine Luecke, dunkle Statusleiste"
+    },
+    "wurzel": "Der Meta-Wert apple-mobile-web-app-status-bar-style 'black-translucent' laesst iOS UIWebClipStatusBarStyleLegacyBlackTranslucent in die Webclip-Datei schreiben. In diesem Legacy-Modus liegt die Flaeche oben an, ist aber um die Statusleistenhoehe KUERZER als der Schirm. Die fehlenden 62 pt liegen AUSSERHALB des WebViews — dorthin kann kein CSS malen. Ein Rahmen mit bottom:-120px und drei Messstreifen endeten alle an derselben Kante. Deshalb blieben vier Layout-Anlaeufe (innerHeight, visualViewport, screen.height, bedingungsloser Ueberstand) wirkungslos: sie arbeiteten am falschen Ende.",
+    "fix": [
+      "index.html: status-bar-style auf 'black' (gesperrte Datei, per Kaskade gestempelt).",
+      "willkommen.html: html{background:#141517} — iOS faerbt den Statusleistenbereich mit dem Hintergrund des WURZELELEMENTS; der Verlauf stand nur auf body, die Leiste blieb weiss.",
+      "mobil-dock.js: Rahmen-Sonderregel entfernt (inset:0 aus dem Buendel ist wieder richtig, unterer Strich zurueck); Mindestabstand zum Home-Balken max(env(safe-area-inset-bottom,0px),18px), nie kleiner als der echte Wert; Messcode (--vv-unten, schirmUnterkante, Diagnose-Messzeile) ersatzlos raus."
+    ],
+    "beweis": "In der installierten App im Simulator nachgestellt und in beide Richtungen geprueft: mit Legacy blieb der Balken, obwohl die Seite schon 'default' lieferte (iOS friert den Modus beim Installieren ein); mit 'black' reicht die Flaeche bis zur Unterkante und die Statusleiste ist dunkel.",
+    "betreiber_muss_einmal": "App vom Home-Bildschirm loeschen und neu hinzufuegen — der Status-Bar-Modus steckt in der Webclip-Datei und wird nicht nachgezogen (im Simulator bewiesen).",
+    "auslieferung": "SW smejj-shell-v816 und v817 aus der Sitzung gestempelt; Diagnoseseite wieder entfernt (HTTP 404).",
+    "pruefungen": "node --test Mobil-Suite 51/51, check:frontend 654/654, check:guidelines/precache/module-queries/favicon-lock gruen."
   }
 }
