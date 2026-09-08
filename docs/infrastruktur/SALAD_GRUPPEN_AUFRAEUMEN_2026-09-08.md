@@ -3,7 +3,7 @@
 **Stand:** 2026-09-08 · Aufgenommen beim Bau der
 [Verbindungs-Landkarte](VERBINDUNGS_LANDKARTE_2026-09-08.md).
 
-## Die Ausgangslage
+## Die Ausgangslage (vor dem Aufräumen)
 
 32 Container-Gruppen, davon **eine laufend** (`smejj-training`, legitimes
 Training). Die übrigen 31 stehen still. 20 davon ruhen seit über 30 Tagen,
@@ -31,7 +31,18 @@ Das heißt auch: Eine gelöschte Gruppe lässt sich aus dieser Datei **fast**
 wiederherstellen — Aufbau und Image ja, die Geheimnisse müssten neu gesetzt
 werden.
 
-## Was das Werkzeug entfernen würde (11 Gruppen)
+## Vollzug am 2026-09-08
+
+Der Betreiber hat die Entfernung der 11 unten genannten Gruppen ausdrücklich
+freigegeben. **Alle 11 wurden entfernt** (jeweils HTTP 202), Bestand danach
+**21 statt 32 Gruppen**. Gegenprobe gelaufen: alle geschützten Gruppen stehen
+unverändert — `smejj-voice-stt`, `smejj-voice-tts`, `smejj-remote-browser`,
+`smejj-llm-qwen3(-v2)`, `con-job`, `smejj-spiegel`,
+`smejj-lora-trainer-batch` und das laufende `smejj-training`.
+
+Das Werkzeug meldet seither *„Entfernbar: 0"*.
+
+## Was das Werkzeug entfernt hat (11 Gruppen)
 
 Eindeutige Wegwerf-Artefakte aus dem Juli. Sie waren nie Dienste, sondern
 einmalige Läufe und Testfassungen:
