@@ -14,6 +14,7 @@ import { autopilotUebersicht } from "../admin/opsAutopiloten.js";
 import { laufRueckRoller } from "./rueckRollerAutopilot.js";
 import { laufLogWache } from "./logWacheAutopilot.js";
 import { laufDatenSicherung, laufWiederherstellungsProbe } from "./datenSicherungAutopilot.js";
+import { laufCodeSicherung } from "./codeSicherungAutopilot.js";
 import { laufGeheimnisSpaeher } from "./geheimnisSpaeherAutopilot.js";
 import { laufZertifikatsWache } from "./zertifikatsWacheAutopilot.js";
 import { laufFehlerFaenger } from "./fehlerFaengerAutopilot.js";
@@ -32,7 +33,7 @@ import { laufSpeicherWache } from "./speicherWacheAutopilot.js";
 
 /** Die Kennungen — für IM_LAEUFER_BETRIEBEN (Selbstheilung) und die Tests. */
 export const SCHUTZ_UND_WACHSTUM_IDS = Object.freeze([
-  "rueck-roller", "log-wache", "daten-sicherung", "wiederherstellungs-probe",
+  "rueck-roller", "log-wache", "daten-sicherung", "code-sicherung", "wiederherstellungs-probe",
   "geheimnis-spaeher", "zertifikats-wache", "fehler-faenger", "missbrauchs-wache",
   "konto-wache", "inhalts-schutz", "abhaengigkeits-wache", "kosten-wache",
   "last-probe", "auffindbarkeits-wache", "willkommens-wache", "experiment-meister",
@@ -64,6 +65,12 @@ export function baueSchutzUndWachstumLaeufe({ dateien = [], mitNetz = true } = {
     ["willkommens-wache", () => laufWillkommensWache()],
     ["experiment-meister", () => laufExperimentMeister()],
     ["daten-sicherung", () => laufDatenSicherung()],
+    // Nr. 85 (2026-09-08): der CODE nach e2. Nr. 46 sichert die Betriebsdaten
+    // und schreibt im Kopf, der Codeberg-Spiegel (Nr. 02) sichere den Code —
+    // der lief da schon seit dem 05.09. taeglich rot ins Leere. Dieser Lauf
+    // zieht hoechstens einmal am Tag ein Archiv des Deploy-Zweiges; an allen
+    // uebrigen Takten kostet er eine Listen-Abfrage und sonst nichts.
+    ["code-sicherung", () => laufCodeSicherung()],
     ["wiederherstellungs-probe", () => laufWiederherstellungsProbe()],
     ["tagesmappe", () => laufTagesmappe()],
     ["zertifikats-wache", () => laufZertifikatsWache({ mitNetz })],

@@ -35,6 +35,9 @@ const ZUORDNUNG = Object.freeze({
     "brueckenwaechter", "container-puls", "support-sla", "oberflaechenwache", "selbstheilung", "sync-waechter",
     // Nr. 44-54 (2026-08-24): der Schutz-Block aus dem 135-Piloten-Vergleich.
     "rueck-roller", "log-wache", "daten-sicherung", "wiederherstellungs-probe",
+    // Nr. 85 (2026-09-08): der Code nach e2 — Nr. 02 sicherte seit dem 05.09.
+    // taeglich ins Leere, ohne dass es jemand sah.
+    "code-sicherung",
     "geheimnis-spaeher", "zertifikats-wache", "missbrauchs-wache", "konto-wache",
     "inhalts-schutz", "abhaengigkeits-wache",
     // Nr. 67+68 (2026-08-30): Fristen- und Bestands-Wächter — Recht ist Wachdienst.
