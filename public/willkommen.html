@@ -2,7 +2,7 @@
 <html lang="de" class="p-willkommen">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <!-- Landeseite (Mockup V11, Bildschirme 1/2/6): was ein Besucher sieht,
        BEVOR er ein Konto hat. Bis heute leitete smejj.com jeden sofort auf
        die Anmeldung — "wer nicht weiss, was es ist, meldet sich auch nicht
@@ -67,6 +67,10 @@
       --ink: #f2f5f4; --ink-dim: rgba(242,245,244,.74); --r: 8px;
     }
     * { box-sizing: border-box; margin: 0; }
+    /* Als installierte App faerbt iOS den Statusleistenbereich mit dem Hintergrund des
+       WURZELELEMENTS. Ohne diese Zeile blieb er weiss ueber der dunklen Seite (im
+       iPhone-Simulator gemessen, 08.09.) — der Verlauf steht auf body, html war leer. */
+    html { background: #141517; }
     body {
       background: linear-gradient(180deg, #141517 0%, #101113 58%, #0d0e10 100%);
       color: var(--ink);

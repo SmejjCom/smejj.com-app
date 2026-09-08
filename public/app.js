@@ -39,15 +39,10 @@ const state = {
 const workspace = createLocalWorkspace();
 const aiRouter = createAiRouter();
 let taskIndicatorTimer;
-// Antwortstufen (Konkurrenz-Radar V3, Freigabe Betreiber 2026-08-06,
-// Container-Neustart 2026-08-08): der Chip zeigt normalen Nutzern nur noch
-// "Schnell/Auto/Gruendlich" statt Modellnamen. Modellnamen (GLM-5.2, Kimi K2.7,
-// Cline, Kimi K3) bleiben als "Modelle (erweitert)" im selben Menue erreichbar —
-// wer sie waehlt, verlaesst bewusst den Live-Pfad fuer BYOK/Vault-Betrieb; die
-// Stufe gilt nur auf dem normalen Live-Pfad ("smejj 1.0"/disabled) und wird an
-// die Bruecke als preferences.stufe gereicht (siehe public/chat-bridge.js,
-// leseStufe). Ein unbekannter Wert und fehlende Angabe verhalten sich dort
-// identisch zum bisherigen Zustand (Fail-Safe der Bruecke).
+// Antwortstufen (Konkurrenz-Radar V3, Betreiber 2026-08-06): der Chip zeigt
+// normalen Nutzern "Schnell/Auto/Gruendlich" statt Modellnamen; die Stufe gilt
+// nur auf dem Live-Pfad ("smejj 1.0"/disabled) und reist als preferences.stufe
+// zur Bruecke (chat-bridge.js, leseStufe; unbekannt/fehlend = Fail-Safe).
 const STUFE_KEY = "smejj.stufe.v1";
 // STAFFEL smejj 1.0 bis 1.3 (Betreiber-Ansage 2026-09-07). Die drei Stufen
 // hiessen intern schon "smejj 1.0 (Schnell)" bis "(Gruendlich)" — jetzt tragen

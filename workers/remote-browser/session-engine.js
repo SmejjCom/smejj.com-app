@@ -143,7 +143,7 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
       // observe, davon 147 KB Bild). Ueber die Leitung des Betreibers war
       // das der groesste Posten je Schritt. Wer es weglassen will, sagt es
       // ausdruecklich; der alte Weg bleibt unveraendert.
-      return { ok: true, action: action.ohneBild === true ? { type: "observe", ohneBild: true } : { type: "observe" } };
+      return { ok: true, action: { type: "observe", ohneBild: action.ohneBild === true } };
     // HINSEHEN MIT DEM ARIA-BAUM. Dasselbe Ziel wie "observe", aber die
     // Quelle ist Chromiums eigener Bedienbaum statt einer Selektorliste —
     // das Vorbild ist ZCodes domSnapshot. Bewusst eine EIGENE Aktion und

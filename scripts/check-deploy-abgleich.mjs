@@ -91,10 +91,31 @@ export const AUSNAHMEN = new Map([
   ["chat-bridge.js", "live liegt das ERZEUGTE Buendel (bundle_chat_bridge.mjs, 919 Wissensabschnitte) — public/ traegt die Quelle; Vergleich waere dauerhaft rot"]
 ]);
 
+/**
+ * Die Admin-Konsole wird unter `/admin/` ausgeliefert. Unter `/assets/admin/`
+ * liegt live NUR ein Wegweiser dorthin: 14 Zeilen mit
+ * `<meta http-equiv="refresh">` und `<link rel="canonical">`.
+ *
+ * Gemessen 2026-09-08: ALLE 30 Admin-Seiten im Frontend-Repo sind solche
+ * Weiterleitungen. Der Abgleich verglich also die echte Seite gegen ihren
+ * Wegweiser und meldete 29 Konflikte — jeder davon ein Fehlalarm, und
+ * zusammen mehr als vier Fuenftel aller gemeldeten Konflikte. Das verdeckte
+ * die sechs ECHTEN Faelle.
+ *
+ * Bewusst ein eigenes Muster statt 30 Eintraege in AUSNAHMEN: neue
+ * Admin-Seiten sollen nicht jedes Mal einen neuen Fehlalarm ausloesen.
+ */
+// Auch admin/index.html selbst ist unter /assets/ nur ein Wegweiser — die
+// Weiterleitung steht dort erst nach dem doctype-Kopf, weshalb ein Blick auf
+// die ersten Zeilen sie uebersieht. NUR index.html-Dateien: console.css und
+// console.js liegen unter /assets/ als echte Dateien und werden abgeglichen.
+const ADMIN_WEGWEISER = /^admin\/(.+\/)?index\.html$/;
+
 /** public/<pfad> -> Pfad im Frontend-Repo. null = wird nicht abgeglichen. */
 export function zielpfad(quelle) {
   if (quelle.startsWith("assets/")) return null; // Spiegel, keine Quelle
   if (AUSNAHMEN.has(quelle)) return null;
+  if (ADMIN_WEGWEISER.test(quelle)) return null; // dort liegt live nur der Wegweiser
   if (quelle === "index.html" || quelle === "sw.js") return quelle;
   return `assets/${quelle}`;
 }
