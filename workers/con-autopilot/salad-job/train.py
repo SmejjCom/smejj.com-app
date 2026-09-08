@@ -65,13 +65,38 @@ def _ziel_module(modell):
 
 
 def _neuester_zwischenstand(prefix):
+    """Der neueste VOLLSTAENDIGE Zwischenstand.
+
+    Vollstaendig heisst: trainer_state.json liegt darin. Ohne diese Datei kann
+    der Trainer nicht wiederaufnehmen -- er stuerzt beim Laden ab.
+
+    WARUM DAS GEPRUEFT WERDEN MUSS, gemessen am 2026-09-08: Salad verdraengt
+    Jobs auf Prioritaet "batch" etwa stuendlich. Wird der Container GENAU
+    waehrend des Schreibens beendet, bleibt ein halber Ordner zurueck --
+    checkpoint-567 hatte 4 statt 9 Dateien.
+
+    Vorher nahm diese Funktion schlicht die hoechste Nummer. Der halbe Stand
+    verdraengte damit den vollstaendigen checkpoint-500, jeder Neustart lief in
+    denselben Absturz, und Salad startete wieder: eine Endlosschleife, die nie
+    zum Ziel kommt und dabei durchgehend Rechenzeit kostet. Das Training von
+    smejj 1.6 hat sich daran dreimal aufgehaengt.
+
+    Ein Zwischenstand, aus dem man nicht fortsetzen kann, ist keiner.
+    """
     eintraege = e2.liste(prefix.rstrip("/") + "/")
-    schritte = set()
+    vollstaendig = set()
+    gesehen = set()
     for e in eintraege:
         m = re.search(r"/checkpoint-(\d+)/", e["key"])
-        if m:
-            schritte.add(int(m.group(1)))
-    return max(schritte) if schritte else None
+        if not m:
+            continue
+        gesehen.add(int(m.group(1)))
+        if e["key"].endswith("/trainer_state.json"):
+            vollstaendig.add(int(m.group(1)))
+    halbe = sorted(gesehen - vollstaendig)
+    if halbe:
+        print(f"[train] uebersprungen, weil unvollstaendig (kein trainer_state.json): {halbe}", flush=True)
+    return max(vollstaendig) if vollstaendig else None
 
 
 def trainiere(modellpfad, datensatz_pfad, ausgabe, checkpoint_prefix, status, konfig, abbruch=lambda: False):
