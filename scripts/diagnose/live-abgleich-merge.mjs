@@ -84,7 +84,13 @@ export function abgleichen(quelle, zielPfad) {
     if (!konflikt) { return { quelle, lage: `merge-file scheiterte: ${fehler.message.slice(0, 60)}` }; }
   }
   const ergebnis = readFileSync(pfade.mein, "utf8");
-  if (konflikt) return { quelle, lage: "KONFLIKT — Hand anlegen", konflikte: (ergebnis.match(/^<<<<<<< /gm) || []).length };
+  if (konflikt) {
+    // Mit --konflikte-schreiben landen die Marker in der Datei, damit jede
+    // Stelle von Hand entschieden werden kann. OHNE den Schalter bleibt die
+    // Datei unberuehrt: ein Konflikt darf sich nicht unbemerkt einnisten.
+    if (process.argv.includes("--konflikte-schreiben")) writeFileSync(lokalDatei, ergebnis);
+    return { quelle, lage: "KONFLIKT — Hand anlegen", konflikte: (ergebnis.match(/^<<<<<<< /gm) || []).length };
+  }
 
   if (SCHREIBEN) writeFileSync(lokalDatei, ergebnis);
   return { quelle, lage: SCHREIBEN ? "zusammengefuehrt" : "wuerde sauber zusammenfuehren" };
