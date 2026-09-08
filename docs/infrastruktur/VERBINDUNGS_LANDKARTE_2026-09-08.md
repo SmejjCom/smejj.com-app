@@ -240,12 +240,42 @@ Dann übernimmt wieder die Action, und der Mac-Job kann weg:
 3. Mac-Termin abschalten:
    `launchctl bootout gui/$(id -u)/com.smejj.codeberg-spiegel`
 
+## Salad: der einzige Posten, bei dem Nichtstun teuer wird
+
+Alles andere in dieser Architektur kostet pro Anfrage oder gar nichts. Salad
+kostet, **solange es läuft** — also ist dort ein vergessener Worker der
+teuerste Fehler, den niemand bemerkt.
+
+Die Zeile *Salad → Budget-Gate* fragt deshalb die laufenden Container-Gruppen
+ab. Dass etwas läuft, ist **kein** Fehler — dafür ist Salad da. Rot wird es
+bei zwei Dingen:
+
+* **Ein Worker läuft seit über 12 Stunden.** Die Grenze ist bewusst großzügig:
+  Trainings laufen lange, und ein Fehlalarm hier würde die ganze Zeile
+  entwerten. Gefangen werden soll der *vergessene* Worker.
+* **Eine laufende Gruppe hat eine Neustart-Regel ungleich `never`.** Das ist
+  die Kostenschleife, die am 07.09. schon einmal auffiel: Salad startete
+  fertige Jobs wieder und wieder, und das endet nie von selbst.
+
+Ohne `SALAD_API_KEY` in der Umgebung meldet die Zeile grau — der normale Lauf
+soll ohne jedes Geheimnis funktionieren. Der tägliche Termin reicht die Werte
+durch und misst damit wirklich.
+
+**Stand 08.09.:** 32 Gruppen, davon eine laufend (`smejj-training`, knapp
+2 Stunden, Neustart-Regel `never`) — ein legitimes Training aus einer
+parallelen Sitzung, keine Schleife. Nebenbei sichtbar: von den 32 Gruppen sind
+die meisten alte Staging-Reste aus dem Juli. Im gestoppten Zustand kosten sie
+nichts, aufräumen wäre trotzdem einmal sinnvoll.
+
 ## Was die Landkarte bewusst NICHT misst
 
-* **IDrive-e2-Schreibtest** — braucht Zugangsdaten. Bisher wird nur gelesen,
-  dass der Control-Server e2 als Speicher führt.
-* **Salad-Budget-Gate** — ein echter Aufruf würde Rechenzeit kosten.
-* Beides ließe sich ergänzen, sobald die Schlüssel im Lauf verfügbar sind.
+* **Einen IDrive-e2-Schreibtest im normalen Lauf** — der wäre nur mit
+  Schlüssel möglich. Stattdessen wird das *Ergebnis* der täglichen Sicherung
+  gelesen, die ihn ohnehin durchführt.
+* **Zeabur-Bauzustände** — dafür fehlt ein Zeabur-API-Token auf diesem Mac.
+  Das war am 08.09. spürbar: nach dem Push sah es 25 Minuten lang aus, als
+  baue Zeabur gar nicht; tatsächlich brauchte es knapp eine Stunde. Wer das
+  misst, sollte großzügig warten, bevor er auf „Auto-Deploy kaputt" schließt.
 
 ## Verwandt
 

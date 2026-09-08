@@ -12,7 +12,8 @@ import {
   bewerteHealth,
   bewerteRueckstand,
   bewerteSicherung,
-  bewerteE2Sicherung
+  bewerteE2Sicherung,
+  bewerteSaladLauf
 } from "../scripts/diagnose/kette-pruefen.mjs";
 
 const JETZT = Date.parse("2026-09-08T13:00:00Z");
@@ -139,6 +140,52 @@ test("NICHT MESSBAR: aeltere Meldung ohne e2-Teil, und fehlender Zugang", () => 
   assert.equal(bewerteE2Sicherung("39 Zweige und alle Marken gespiegelt"), "grau");
   assert.equal(bewerteE2Sicherung(""), "grau");
   assert.equal(bewerteE2Sicherung("e2: Code-Sicherung: kein e2-Zugang gesetzt (lokal)"), "grau");
+});
+
+// --- Salad: der einzige Posten, der WAEHREND er laeuft Geld kostet ---------
+
+const vorStd = (h) => new Date(JETZT - h * 3600 * 1000).toISOString();
+
+test("GESUND: nichts laeuft — keine laufenden Kosten", () => {
+  const g = [{ name: "smejj-training", status: "stopped" }, { name: "con-job", status: "stopped" }];
+  assert.equal(bewerteSaladLauf(g, JETZT).zustand, "gruen");
+});
+
+test("GESUND: ein Training laeuft seit zwei Stunden — dafuer ist Salad da", () => {
+  // Die Lage am 08.09.: smejj-training lief legitim. Ein Waechter, der jeden
+  // laufenden Worker anschwaerzt, macht Salad unbenutzbar.
+  const g = [{ name: "smejj-training", status: "running", start: vorStd(2), neustart: "never" }];
+  const u = bewerteSaladLauf(g, JETZT);
+  assert.equal(u.zustand, "gruen");
+  assert.match(u.text, /smejj-training/);
+});
+
+test("KRANK: ein Worker laeuft seit Tagen — vergessen und teuer", () => {
+  const g = [{ name: "smejj-llm-qwen3", status: "running", start: vorStd(50), neustart: "never" }];
+  const u = bewerteSaladLauf(g, JETZT);
+  assert.equal(u.zustand, "rot");
+  assert.match(u.text, /KOSTEN/);
+});
+
+test("KRANK: die Kostenschleife — die Gruppe startet sich selbst neu", () => {
+  // Am 07.09. gemessen: Salad startete fertige Jobs wieder und wieder. Bei
+  // restart_policy "always" endet das nie von selbst.
+  const g = [{ name: "smejj-lora-trainer-batch", status: "running", start: vorStd(1), neustart: "always" }];
+  const u = bewerteSaladLauf(g, JETZT);
+  assert.equal(u.zustand, "rot");
+  assert.match(u.text, /startet sich selbst neu/);
+});
+
+test("GESUND: knapp unter der Frist bleibt gruen", () => {
+  // 12 Stunden sind bewusst grosszuegig: Trainings laufen lange, und ein
+  // Fehlalarm hier wuerde die ganze Zeile entwerten.
+  const g = [{ name: "smejj-training", status: "running", start: vorStd(11), neustart: "never" }];
+  assert.equal(bewerteSaladLauf(g, JETZT).zustand, "gruen");
+});
+
+test("KRANK: fehlende Startzeit macht eine Schleifen-Gruppe nicht harmlos", () => {
+  const g = [{ name: "x", status: "running", neustart: "on_failure" }];
+  assert.equal(bewerteSaladLauf(g, JETZT).zustand, "rot");
 });
 
 test("KRANK: kaputter Zeitstempel gilt nicht als frisch", () => {
