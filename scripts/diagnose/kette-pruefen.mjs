@@ -106,6 +106,54 @@ export function bewerteE2Sicherung(meldung) {
   return "rot";
 }
 
+// Wie lange eine Salad-Gruppe laufen darf, bevor sie auffaellt. Trainings
+// laufen ueber Stunden — 12 h sind deshalb bewusst grosszuegig. Gefangen
+// werden soll der VERGESSENE Worker und die Kostenschleife, nicht die normale
+// Arbeit. (Am 07.09. war genau das ein Befund: Salad startete fertige Jobs
+// wieder und wieder.)
+const SALAD_LAUFZEIT_GRENZE_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * Urteilt ueber die laufenden Salad-Gruppen. Rein und ohne Netz.
+ *
+ * Salad ist der einzige Posten, der WAEHREND er laeuft Geld kostet. Zwei
+ * Dinge sollen auffallen: ein Worker, der seit Stunden vergessen laeuft, und
+ * eine Gruppe, die sich selbst immer wieder neu startet.
+ *
+ * Dass ueberhaupt etwas laeuft, ist KEIN Fehler — dafuer ist Salad da.
+ * @param {Array<{name: string, status: string, start: string, neustart: string}>} gruppen
+ * @returns {{zustand: "gruen"|"rot", text: string}}
+ */
+export function bewerteSaladLauf(gruppen, jetztMs) {
+  const laufend = gruppen.filter((g) => String(g.status).toLowerCase() === "running");
+  if (!laufend.length) {
+    return { zustand: "gruen", text: `${gruppen.length} Gruppen, keine laeuft — keine laufenden Kosten` };
+  }
+
+  const befunde = [];
+  for (const g of laufend) {
+    const start = Date.parse(g.start ?? "");
+    const stunden = Number.isFinite(start) ? (jetztMs - start) / 3600000 : null;
+    // "always"/"on_failure" bei einer laufenden Gruppe ist die Kostenschleife:
+    // sie startet sich nach jedem Ende von selbst wieder.
+    if (g.neustart && String(g.neustart).toLowerCase() !== "never") {
+      befunde.push(`${g.name} startet sich selbst neu (${g.neustart})`);
+      continue;
+    }
+    if (stunden !== null && jetztMs - start > SALAD_LAUFZEIT_GRENZE_MS) {
+      befunde.push(`${g.name} laeuft seit ${stunden.toFixed(0)} h`);
+    }
+  }
+
+  if (befunde.length) return { zustand: "rot", text: `KOSTEN: ${befunde.join("; ")}` };
+  const namen = laufend.map((g) => {
+    const start = Date.parse(g.start ?? "");
+    const stunden = Number.isFinite(start) ? ((jetztMs - start) / 3600000).toFixed(1) : "?";
+    return `${g.name} (${stunden} h)`;
+  });
+  return { zustand: "gruen", text: `${laufend.length} laeuft: ${namen.join(", ")}` };
+}
+
 // Ein Lauf am Tag: nach 36 Stunden ohne Erfolg ist die Sicherung ueberfaellig.
 // Die Reserve von 12 Stunden faengt einen zugeklappten Mac ab, ohne den
 // Ausfall zu verschweigen.
@@ -397,7 +445,46 @@ export async function pruefeSicherung() {
   return [befund("Taegliche Sicherung", "rot", `${actionText}; ${ersatzText} — NICHTS sichert mehr`), e2];
 }
 
-// ----------------------------------------------------------------- Kante 13
+// ----------------------------------------------------------------- Kante 14
+// Salad. Der einzige Posten der Architektur, der WAEHREND er laeuft Geld
+// kostet — und damit der einzige, bei dem Nichtstun teuer werden kann.
+//
+// Ohne SALAD_API_KEY in der Umgebung wird das grau gemeldet, nicht rot: der
+// normale Lauf soll ohne jedes Geheimnis funktionieren. Der taegliche Termin
+// gibt die Werte mit und misst darum wirklich.
+
+export async function pruefeSalad({ env = process.env, jetztMs = Date.now() } = {}) {
+  const org = env.SALAD_ORGANIZATION_NAME;
+  const projekt = env.SALAD_PROJECT_NAME;
+  const key = env.SALAD_API_KEY;
+  if (!org || !projekt || !key) {
+    return [befund("Salad → Budget-Gate", "grau", "kein Salad-Zugang in der Umgebung — nicht messbar")];
+  }
+
+  try {
+    const url = `https://api.salad.com/api/public/organizations/${org}/projects/${projekt}/containers`;
+    const antwort = await fetch(url, {
+      headers: { "Salad-Api-Key": key, Accept: "application/json" },
+      signal: AbortSignal.timeout(30000)
+    });
+    if (!antwort.ok) {
+      return [befund("Salad → Budget-Gate", "rot", `Salad antwortet ${antwort.status} — Kosten nicht pruefbar`)];
+    }
+    const nutzlast = await antwort.json();
+    const gruppen = (nutzlast.items || []).map((g) => ({
+      name: g.name,
+      status: g.current_state?.status,
+      start: g.current_state?.start_time,
+      neustart: g.restart_policy
+    }));
+    const urteil = bewerteSaladLauf(gruppen, jetztMs);
+    return [befund("Salad → Budget-Gate", urteil.zustand, urteil.text)];
+  } catch (fehler) {
+    return [befund("Salad → Budget-Gate", "rot", `nicht erreichbar: ${String(fehler.message).slice(0, 80)}`)];
+  }
+}
+
+// ----------------------------------------------------------------- Kante 15
 // Geheimnisse. Keine Verbindung, aber die Stelle, an der die ganze Kette auf
 // einmal offen stehen kann.
 
@@ -449,6 +536,7 @@ export async function main() {
     pruefeZeabur(),
     pruefeCodebergSpiegel(),
     pruefeSicherung(),
+    pruefeSalad(),
     pruefeGeheimnisse()
   ]);
   const alle = gruppen.flat();

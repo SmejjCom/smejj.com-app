@@ -160,6 +160,15 @@ schreibe_zustand "ok" "${ZWEIGE} Zweige gespiegelt; e2: ${e2_meldung}" "$ZWEIGE"
 # Projektordner kommt ein launchd-Dienst nicht heran.
 BERICHT="${ABLAGE}/landkarte.txt"
 if [ -f "${AUSPACK}/scripts/diagnose/kette-pruefen.mjs" ]; then
+  # Salad-Zugang mitgeben: nur damit wird die Kosten-Kante wirklich gemessen
+  # statt grau gemeldet. Die Werte kommen aus derselben Datei wie fuer e2 und
+  # werden NICHT ausgegeben — nur an den Lauf durchgereicht.
+  if [ -f "$ENV_DATEI" ]; then
+    for schluessel in SALAD_API_KEY SALAD_ORGANIZATION_NAME SALAD_PROJECT_NAME; do
+      wert=$(grep -m1 "^${schluessel}=" "$ENV_DATEI" 2>/dev/null | cut -d= -f2- | tr -d '"'"'"'')
+      [ -n "$wert" ] && export "${schluessel}=${wert}"
+    done
+  fi
   if SMEJJ_KETTE_GITDIR="$KLON" GIT_SSH_COMMAND="$SSH_BEFEHL" \
       node "${AUSPACK}/scripts/diagnose/kette-pruefen.mjs" > "$BERICHT" 2>&1; then
     echo "Landkarte: alle Verbindungen stehen"
