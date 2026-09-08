@@ -121,10 +121,12 @@ GIT_SSH_COMMAND="$SSH_BEFEHL" git --git-dir="$KLON" push "$ZIEL" "refs/tags/*:re
 # wird es aber — still bleiben waere der Fehler, der das alles ausgeloest hat.
 e2_meldung="uebersprungen"
 ENV_DATEI="${HOME}/.config/smejj.com/env.local"
+AUSPACK="${ABLAGE}/code-tmp"
+rm -rf "$AUSPACK" && mkdir -p "$AUSPACK"
+# Einmal auspacken, zweimal nutzen: Sicherungs-Autopilot UND Landkarte.
+git --git-dir="$KLON" archive "$DEPLOY_ZWEIG" control-server/src scripts/diagnose 2>/dev/null | tar -x -C "$AUSPACK" 2>/dev/null
 if [ -f "$ENV_DATEI" ]; then
-  AUSPACK="${ABLAGE}/code-tmp"
-  rm -rf "$AUSPACK" && mkdir -p "$AUSPACK"
-  if git --git-dir="$KLON" archive "$DEPLOY_ZWEIG" control-server/src 2>/dev/null | tar -x -C "$AUSPACK" 2>/dev/null; then
+  if [ -f "${AUSPACK}/control-server/src/autopilots/codeSicherungAutopilot.js" ]; then
     e2_ausgabe=$(AUTOPILOT_PFAD="${AUSPACK}/control-server/src/autopilots/codeSicherungAutopilot.js" \
       ENV_DATEI="$ENV_DATEI" node --input-type=module -e '
         import { readFileSync } from "node:fs";
@@ -142,10 +144,35 @@ if [ -f "$ENV_DATEI" ]; then
   else
     e2_meldung="Code konnte nicht aus dem Klon ausgepackt werden"
   fi
-  rm -rf "$AUSPACK"
 fi
 echo "IDrive e2: ${e2_meldung}"
 
 schreibe_zustand "ok" "${ZWEIGE} Zweige gespiegelt; e2: ${e2_meldung}" "$ZWEIGE"
+
+# --- Verbindungs-Landkarte: taeglich messen, bei ROT laut werden -----------
+# Der ganze Anlass dieses Jobs war ein Riss, der DREI TAGE unbemerkt blieb,
+# weil ein fehlgeschlagener Lauf still bleibt. Also misst der Termin gleich
+# die ganze Kette mit — und meldet sich sichtbar, wenn etwas gerissen ist.
+# Erfolg bleibt bewusst leise: eine Mitteilung, die jeden Tag kommt, wird
+# ausgeblendet, und dann ueberliest man auch die eine, auf die es ankommt.
+#
+# Die Landkarte laeuft im Klon-Modus (SMEJJ_KETTE_GITDIR): an den
+# Projektordner kommt ein launchd-Dienst nicht heran.
+BERICHT="${ABLAGE}/landkarte.txt"
+if [ -f "${AUSPACK}/scripts/diagnose/kette-pruefen.mjs" ]; then
+  if SMEJJ_KETTE_GITDIR="$KLON" GIT_SSH_COMMAND="$SSH_BEFEHL" \
+      node "${AUSPACK}/scripts/diagnose/kette-pruefen.mjs" > "$BERICHT" 2>&1; then
+    echo "Landkarte: alle Verbindungen stehen"
+  else
+    risse=$(grep -c '^ROT ' "$BERICHT" 2>/dev/null || echo "?")
+    echo "Landkarte: ${risse} VERBINDUNG(EN) GERISSEN — siehe ${BERICHT}"
+    osascript -e "display notification \"${risse} Verbindung(en) gerissen. Bericht: landkarte.txt\" with title \"smejj.com\" subtitle \"Taegliche Pruefung\" sound name \"Basso\"" 2>/dev/null || true
+  fi
+  tail -n 4 "$BERICHT" 2>/dev/null
+else
+  echo "Landkarte: Pruefskript nicht im Klon gefunden"
+fi
+
+rm -rf "$AUSPACK"
 echo "=== $(zeit) fertig: gesichert ==="
 exit 0

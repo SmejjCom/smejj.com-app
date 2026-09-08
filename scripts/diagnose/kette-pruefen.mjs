@@ -35,6 +35,9 @@ const WURZEL = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 // auf die statische Seite — der Static-First-Pfad waere damit gekappt.
 const PAGES_IPS = ["185.199.108.153", "185.199.109.153", "185.199.110.153", "185.199.111.153"];
 
+// Der Zweig, aus dem Zeabur baut — im Klon-Modus die Quelle fuer Dateifragen.
+const DEPLOY_ZWEIG = "feature/auth-redesign-github-magiclink";
+
 // Budget aus der Kostenregel: TTFB p95 < 200 ms. Ein einzelner Aufruf von
 // einem Wohnanschluss aus misst das nicht sauber, deshalb ist die Grenze hier
 // grosszuegig — sie soll einen ECHTEN Einbruch fangen, nicht Messrauschen.
@@ -400,8 +403,18 @@ export async function pruefeSicherung() {
 
 export async function pruefeGeheimnisse() {
   const ergebnisse = [];
+  // Im Klon-Modus gibt es kein Arbeitsverzeichnis: dann wird dieselbe Frage
+  // dem Klon gestellt, statt sie unbeantwortet zu lassen. Ein "keine
+  // .gitignore gefunden" waere hier ein FEHLALARM gewesen (gemessen 2026-09-08,
+  // beim ersten naechtlichen Probelauf) — und ein Waechter, der taeglich
+  // grundlos Alarm schlaegt, wird abgeschaltet.
+  const gitDir = process.env.SMEJJ_KETTE_GITDIR || "";
+  const ausKlon = (pfad) => execFileAsync(
+    "git", ["--git-dir", gitDir, "show", `${DEPLOY_ZWEIG}:${pfad}`], { maxBuffer: 4 * 1024 * 1024 }
+  ).then((r) => r.stdout);
+
   try {
-    const ignore = await readFile(join(WURZEL, ".gitignore"), "utf8");
+    const ignore = gitDir ? await ausKlon(".gitignore") : await readFile(join(WURZEL, ".gitignore"), "utf8");
     ergebnisse.push(/^\.env$/m.test(ignore) || /^\.env\b/m.test(ignore)
       ? befund("Geheimnisse: .env ignoriert", "gruen", ".env steht in .gitignore")
       : befund("Geheimnisse: .env ignoriert", "rot", ".env FEHLT in .gitignore"));
@@ -410,8 +423,15 @@ export async function pruefeGeheimnisse() {
   }
 
   try {
-    const { stdout } = await execFileAsync("git", ["ls-files", "--error-unmatch", ".env"], { cwd: WURZEL });
-    ergebnisse.push(befund("Geheimnisse: .env nicht versioniert", "rot", `.env liegt IM Repo: ${stdout.trim()}`));
+    // Im Klon dieselbe Frage an den ausgelieferten Zweig: liegt dort eine
+    // .env? `git show` wirft, wenn es sie nicht gibt — und genau das ist der
+    // gute Fall.
+    if (gitDir) {
+      await ausKlon(".env");
+    } else {
+      await execFileAsync("git", ["ls-files", "--error-unmatch", ".env"], { cwd: WURZEL });
+    }
+    ergebnisse.push(befund("Geheimnisse: .env nicht versioniert", "rot", ".env liegt IM Repo"));
   } catch {
     ergebnisse.push(befund("Geheimnisse: .env nicht versioniert", "gruen", ".env ist nicht eingecheckt"));
   }
