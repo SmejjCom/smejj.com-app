@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — alle 8 Punkte der Abend-Liste live und gestempelt (SW v810, 08.09. 03:01)",
+  "status": "verified — Runde 5 (C1 bis C6) live, SW v815; offen nur der Geraetebeweis fuer C1 und die Betreiber-Rueckmeldung C5",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -93,5 +93,45 @@
     "bestaetigt": "Betreiber 22:32: unten Vollbild, Mikrofon tuerkis.",
     "02:50 Punkt 8 Deutsch": "Einstellungen/Konto/Speicher/Kostenschutz: Quelle deutsch, Anglizismen (Reasoning, Sync, Coding, Key, Free-safe, BYOK, Session, Diff, Limit) per Laufzeit-Woerterbuch in deutsch-klartext.js ersetzt (nur lang=de, exakter Treffer, MutationObserver auf main.shell); Quelldateien sind i18n-Schluessel fuer 30 Sprachen + Marken an premium-surfaces.js — deshalb nicht dort. Emulator (de) danach ohne Reste.",
     "03:01 SW v810": "SW-Sprung-Kaskade aus der Sitzung selbst gestartet (Betreiber: 'pusche selber') — Stempel, Bauzweig d218e347, Klon a156a98, live v810."
+  },
+  "runde5_20260908": {
+    "auftrag": "Uebergabe docs/qa/uebergabe-mobil-2026-09-08.md, Punkte C1 bis C6; Betreiber-Regel 'pusche selber' (Kaskade aus der Sitzung).",
+    "C1_schwarzer_balken": {
+      "befund": "Auch mit screen.height (v813) kam der Balken zurueck — dritter gescheiterter Messweg nach innerHeight (v807) und visualViewport (v810).",
+      "loesung": "body::after in der App bedingungslos 120 px unter die Kante (top:0; bottom:-120px; height:auto) — dieselbe Bauart wie body::before beim Grund seit 05.09. Keine Messung mehr. Unterer Rahmenstrich entfaellt (vom Betreiber freigegeben). dvh-Flaechen unangetastet.",
+      "beweis": "Pixel-Emulator mit Emulation.setEmulatedMedia display-mode=standalone: top 0px, bottom -120px, Hoehe 959 px bei innerHeight 839 — 120 px Ueberstand.",
+      "offen": "Beweis in der installierten App am Geraet des Betreibers; der Zugriff auf den Home-Bildschirm des Simulators wurde abgelehnt."
+    },
+    "C2_einstellungen_seitlich": {
+      "wurzel": ".settings-content war ein Raster mit grid-template-columns:403px bei 388 px Platz — ein Rasterfeld hat min-width:auto und waechst bis min-content; Treiber war ein span.ac-sub mit white-space:nowrap (376 px).",
+      "loesung": "minmax(0,1fr) + min-width:0 auf Schale/Panels/Feldern, nowrap-Untertitel duerfen umbrechen, #settings overflow-x:hidden; Cline-Knopfraster einspaltig und 44 px; Suchfeld in der Reiterzeile war 26 px breit -> flex 160-220 px.",
+      "beweis": "alle 12 Reiter clientWidth = scrollWidth = 412, kleine Ziele 0."
+    },
+    "C3_chat_tabellen": {
+      "befund": "overflow-wrap:anywhere der Eintragsregel brach Tabellenzellen buchstabenweise ('Ze/it').",
+      "loesung": "Zellen overflow-wrap:normal, word-break:normal, white-space:nowrap, min-width:72px; Tabelle width:max-content, max-width:100%, scrollt in sich. Links ausserhalb brechen weiter um.",
+      "beweis": "Testtabelle 5 Spalten: Zeilenhoehe 28 px (eine Zeile), Tabelle 318 sichtbar / 422 Inhalt, Seite 412 = 412 (kein Seitwaertsschub)."
+    },
+    "C4_code_bereich": {
+      "gruss": "body.mobil-chat-offen #code .codegruss padding-top = safe-area-top + 60 px; codeLogHalter + 56 px. Gemessen: Gruss beginnt bei 64 px, Kopfglas ist 52 px hoch — frei.",
+      "stufe_chip": "text-overflow:ellipsis verpufft auf inline-flex; jetzt inline-block, line-height 44 px, max-width 110 px (Modus-Chip 72). Gemessen: 'Automatisch' 90x44 vollstaendig, kein Chip abgeschnitten, Leiste 338 von 372 px."
+    },
+    "C6_rundgang": {
+      "pixel_hochkant_412": "14 Routen: ueberlauf=false, kleineZiele=0",
+      "pixel_quer_863": "14 Routen: ueberlauf=false, kleineZiele=0",
+      "tablet_800": "14 Routen: ueberlauf=false, kleineZiele=0",
+      "rest": "#startMessage misst 43,5 px (Rundung auf 44). Das Startfeld steht unter dem Design-Lock — nicht angefasst, dem Betreiber gemeldet.",
+      "neu_behoben_coarse": "view-chrome-Knoepfe 32x32 (brauchten width/height mit !important, min-height genuegte nicht), .toolbar 40, .account-nav 40, Konto-Knoepfe 40, Plus-Menue 38, Formularfelder 40-43,5 — alle 44 px, nur bei pointer:coarse ueber 600 px.",
+      "kippschalter_und_rechtslinks": "label.settings-switch war 46x26, Impressum/Datenschutz/AGB/Widerruf 16 px hoch — beide auf 44 px."
+    },
+    "messwerkzeug": "scripts/diagnose/emulator/sweep.mjs geschaerft: meldet Selektoren statt Beschriftungen, ueberspringt barrierefrei verborgene Elemente (clip/clip-path/opacity:0), Wartezeit ueber SWEEP_WARTEN + eine Nachfassung. Mit 6 s meldete der Rundgang im Querformat 16-18 Scheinbefunde je Route, mit 14 s null.",
+    "auslieferung": "QA-Zweig feature/responsive-qa-2026-09-07 und Klon main; Service-Worker smejj-shell-v814 und v815 aus der Sitzung gestempelt (sw-sprung-2026-09-07.sh).",
+    "pruefungen": "node --test mobil-dock, mobil-ansichten, touch-ziele, touch-ziele-waechter, deutsch-klartext, mobil-safe-area: 51/51 gruen; check:precache-imports, check:module-queries, check:frontend, check:favicon-lock gruen; check:guidelines wieder gruen (Memory_Bank.md 857 -> 644 Zeilen, Volltexte verlustfrei nach docs/memory/Memory_Bank_2026-09-08_archiv_runde8.md).",
+    "offen": [
+      "C1 Beweis am iPhone des Betreibers (installierte App).",
+      "C5 Rueckmeldung zu Tastatur-Buendigkeit (Punkt 9) und Deutsch in den Ansichten (Punkt 10).",
+      "check:start-lock rot durch die bekannte Divergenz zwischen QA-Zweig und Bauzweig (index.html, app.js, config.js, ai/chatClient.js, sw.js) — Vorbestand, nicht angefasst.",
+      "#startMessage 43,5 px: Aenderung beruehrt den Design-Lock, darum ohne schriftliche Freigabe nicht angefasst."
+    ]
   }
 }
