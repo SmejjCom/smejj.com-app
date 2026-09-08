@@ -83,7 +83,7 @@ test("Modell-Menue am Handy: Picker static, Menue absolut ueber die Glasbreite (
   assert.match(m.REGELN, /#start \.prompt-glass \.model-picker\.model-picker\{position:static\}/);
   assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,[^{]*\{position:absolute!important;left:6px!important;right:6px!important;top:auto!important;bottom:calc\(100% \+ 8px\)!important;width:auto!important/);
   assert.doesNotMatch(m.REGELN, /model-submenu[^{]*\{position:fixed/, "fixed landet unter backdrop-filter bei y=-125 (gemessen 07.09.)");
-  assert.match(m.REGELN, /#start:not\(\.has-start-chat\) #startModellMenue\.code-modus-menue[^{]*\{top:calc\(100% \+ 8px\)!important;bottom:auto!important\}/, "leere Startseite: nach unten aufklappen");
+  assert.doesNotMatch(m.REGELN, /top:calc\(100% \+ 8px\)!important;bottom:auto!important/, "seit 08.09. sitzt das Glas auch leer unten — das Menue klappt immer nach oben");
   assert.match(m.REGELN, /#startModellMenue\.code-modus-menue button,[^{]*\{display:flex;align-items:center;gap:10px;width:100%;flex:0 0 auto;min-height:44px;white-space:normal/);
   assert.match(m.REGELN, /\.modus-links,body \.model-submenu \.model-submenu-name\{flex:1 1 auto;min-width:0;white-space:normal/);
 });
@@ -142,3 +142,28 @@ test("Stufe-Chip kuerzt mit Ellipse statt beidseitig abzuschneiden (inline-flex 
   assert.doesNotMatch(m.REGELN, /\.repochip\.repochip\{display:inline-flex/, "inline-flex laesst text-overflow verpuffen");
   assert.match(m.REGELN, /#codeModusChip\.repochip\{max-width:72px\}/, "der kurze Modus-Chip macht dem Stufen-Chip Platz");
 });
+
+// ---- Betreiber-Screenshots 08.09. 14:24/14:29 ------------------------------------------------
+test("Startseite sammelt sich unten statt mittig — unten blieben 153 px leer", () => {
+  assert.match(m.REGELN, /#start:not\(\.has-start-chat\) \.home-feed\.home-feed\{justify-content:flex-end;gap:10px\}/);
+  assert.match(m.REGELN, /\.home-hero\.home-hero\{margin-bottom:2px\}/);
+});
+
+test("Modell-Menue liegt ueber den Werkzeug-Kacheln (Stapel-Kontext des Glases)", () => {
+  // .prompt-glass traegt backdrop-filter -> eigener Stapel-Kontext; .start-chips kommt im DOM
+  // spaeter und gewann bei gleichem Stapelwert. Der Fingerdruck traf die Kachel statt der Zeile.
+  assert.match(m.REGELN, /#start \.prompt-glass\.prompt-glass\{position:relative;z-index:70\}/);
+  assert.match(m.REGELN, /#startModellMenue\.code-modus-menue,[^{]*\{background:#0d1219;z-index:80!important\}/, "opak, damit nichts durchscheint");
+});
+
+test("Aktionen an Antworten sind am Handy lesbar (kein Zeigen, kein Hover)", () => {
+  assert.match(m.REGELN, /#startLog \.msg-actions \.msg-act,body #codeLogHalter \.msg-actions \.msg-act\{color:rgba\(246,243,238,\.82\)\}/);
+});
+
+test("Antworten tragen dieselben Menuepunkte wie eigene Fragen (Kopieren, Vorlesen)", () => {
+  const menue = readFileSync(new URL("../public/chat-actions-menu.js", import.meta.url), "utf8");
+  const kopf = menue.split("const MENU_KOPF")[1];
+  const assistant = kopf.split("assistant: Object.freeze([")[1].split("])")[0];
+  for (const act of ["copy", "speak", "regen"]) assert.ok(assistant.includes(`act: "${act}"`), `Antwort-Menue braucht ${act}`);
+});
+

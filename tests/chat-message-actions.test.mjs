@@ -341,7 +341,7 @@ test('"Quellen anzeigen" erscheint nur mit echter Quelle', () => {
   assert.ok(!menuItemsFor("assistant", false).some((i) => i.act === "sources"), "ohne Beleg kein Menuepunkt");
   const mitQuelle = menuItemsFor("assistant", true);
   assert.equal(mitQuelle[0].act, "sources", "mit Beleg steht er ganz oben");
-  assert.equal(mitQuelle.length, 5);
+  assert.equal(mitQuelle.length, 7, "sources + copy + speak + regen + copy-plain + fork + remove");
   assert.ok(!menuItemsFor("user", true).some((i) => i.act === "sources"), "eigene Nachrichten haben keine Quellen");
 });
 
@@ -539,9 +539,11 @@ test("Menuepunkte je Rolle, Loeschen zuletzt und als Gefahr markiert", () => {
   assert.deepEqual(user, ["copy", "edit", "speak", "fork", "remove"]);
 
   const assistant = menuItemsFor("assistant");
-  // Kopieren/Daumen stehen seit dem ZCode-Abgleich sichtbar in der Leiste —
-  // im Menue nur noch, was dort NICHT steht (doppelte Wege verwirren).
-  assert.deepEqual(assistant.map((item) => item.act), ["regen", "copy-plain", "fork", "remove"], "Vorlesen sitzt sichtbar in der Leiste");
+  // Betreiber 2026-09-08: "Antworten kann ich nicht kopieren, vorlesen — muessen auch wie meine
+  // Anfragen genau sein." Kopieren und Vorlesen stehen zwar sichtbar in der Leiste, aber wer sie
+  // bei der eigenen Frage im Menue sucht, sucht sie dort auch bei der Antwort. Einheitliche
+  // Bedienung schlaegt die aeltere Regel "keine doppelten Wege" (ZCode-Abgleich 2026-08-16).
+  assert.deepEqual(assistant.map((item) => item.act), ["copy", "speak", "regen", "copy-plain", "fork", "remove"]);
   assert.equal(assistant.at(-1).danger, true);
   assert.ok(!assistant.some((item) => item.act === "sources"), "keine Quellenliste, solange keine Quellen erfasst werden");
 });
@@ -591,7 +593,8 @@ test("buildMenu erzeugt bedienbare Menuepunkte mit Trennlinie vor dem Loeschen",
   assert.equal(head.textContent, "Heute, 16:30 · smejj 1.0");
 
   const items = menu.children.filter((node) => String(node.className).includes("msg-menu-item"));
-  assert.equal(items.length, 4);
+  // seit 2026-09-08 auch Kopieren und Vorlesen (Betreiber: Antworten wie eigene Fragen bedienen)
+  assert.equal(items.length, 6);
   for (const item of items) {
     assert.equal(item.type, "button", "Menuepunkte sind echte Knoepfe und damit fokussierbar");
     assert.equal(item.attributes.role, "menuitem");
