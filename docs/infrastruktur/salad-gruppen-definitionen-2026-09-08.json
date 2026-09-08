@@ -1,0 +1,1838 @@
+{
+  "hinweis": "Definitionen der Salad-Container-Gruppen. Umgebungs-WERTE sind bewusst NICHT enthalten, nur deren Namen.",
+  "organisation": "smejjcom",
+  "projekt": "default",
+  "gesichert_am": "2026-09-08T16:02:23.102Z",
+  "anzahl": 32,
+  "gruppen": [
+    {
+      "name": "con-job",
+      "display_name": "con-Autopilot Job Spiegel Messung Training",
+      "status": "stopped",
+      "create_time": "2026-09-03T13:10:34.0419348+00:00",
+      "update_time": "2026-09-06T02:58:10.8530453+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "docker.io/pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime",
+        "resources": {
+          "cpu": 8,
+          "gpu_classes": [
+            "a5db5c50-cbcb-4596-ae80-6a0c8090d80f",
+            "6d4e9e99-d27e-4751-8d7d-393f7d8ea949",
+            "9998fe42-04a5-4807-b3a5-849943f16c38"
+          ],
+          "memory": 30720,
+          "shm_size": 1024,
+          "storage_amount": 161061273600
+        },
+        "command": [
+          "bash",
+          "-lc",
+          "set -eu\nexport PATH=\"/opt/conda/bin:$PATH\"\nmkdir -p /app /work && cd /app\nprintf %s \"$CON_JOB_BUNDLE_B64\" | base64 -d | tar xzf -\ncd /app/con-job\npip install --no-cache-dir -q boto3 > /tmp/pip-boto3.log 2>&1\nexec python3 job.py"
+        ],
+        "environment_variable_names": [
+          "CON_BASIS_PREFIX",
+          "CON_BASIS_REPO",
+          "CON_DATENSATZ_PREFIX",
+          "CON_JOB_BUNDLE_B64",
+          "CON_JOB_ID",
+          "CON_JOB_MAX_MINUTEN",
+          "CON_JOB_MODUS",
+          "CON_KANDIDAT",
+          "CON_SELBST_STOP",
+          "CON_TRAIN_KONFIG",
+          "CON_VERSION",
+          "CON_WIEDERHOLUNGEN",
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "SALAD_API_KEY",
+          "SALAD_CONTAINER_GROUP_NAME",
+          "SALAD_ORGANIZATION_NAME",
+          "SALAD_PROJECT_NAME"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-browser-agent-rc1-staging",
+      "display_name": "smejj-browser-agent-rc1-staging",
+      "status": "stopped",
+      "create_time": "2026-07-13T14:08:01.1517292+00:00",
+      "update_time": "2026-07-13T14:20:44.4095612+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "mcr.microsoft.com/playwright@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const u=\"https://raw.githubusercontent.com/SmejjCom/smejj-control/0bb7eb58c2c19621e780676ccfd7d60981721a7c/runtime/bootstrap-combined-worker.mjs\";const r=await fetch(u,{redirect:\"error\",cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==\"c938863dea9ff8abe7ea51548209a267ebe1832780de68aa2cb6a7e65f1d5efb\")throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.startCombinedWorker()"
+        ],
+        "environment_variable_names": [
+          "SMEJJ_COMBINED_WORKER_SOURCE_BASE",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_HOST",
+          "SMEJJ_REMOTE_BROWSER_NAV_TIMEOUT_MS",
+          "SMEJJ_REMOTE_BROWSER_TOKEN",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-chat-bridge-live",
+      "display_name": "smejj-chat-bridge-live",
+      "status": "stopped",
+      "create_time": "2026-07-08T11:55:08.1493132+00:00",
+      "update_time": "2026-07-08T12:27:42.308516+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node:22-bookworm",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 1024,
+          "shm_size": 64
+        },
+        "command": [
+          "sh",
+          "-lc",
+          "curl -fsSL https://raw.githubusercontent.com/SmejjCom/smejj-app-frontend/main/assets/chat-bridge.js | node --input-type=module -"
+        ],
+        "environment_variable_names": [
+          "PORT",
+          "SMEJJ_CHAT_BRIDGE_TIMEOUT_MS",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_HOST",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_SALAD_BASE_URL",
+          "SMEJJ_LLM_SALAD_MODEL"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-chat-bridge-v88-live",
+      "display_name": "smejj-chat-bridge-v88-live",
+      "status": "stopped",
+      "create_time": "2026-07-08T12:34:23.76473+00:00",
+      "update_time": "2026-07-08T12:34:23.76473+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node:22-bookworm",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 1024,
+          "shm_size": 64
+        },
+        "command": [
+          "sh",
+          "-lc",
+          "curl -fsSL https://raw.githubusercontent.com/SmejjCom/smejj-app-frontend/main/assets/chat-bridge.js -o /tmp/smejj-chat-bridge.js && node /tmp/smejj-chat-bridge.js"
+        ],
+        "environment_variable_names": [
+          "PORT",
+          "SMEJJ_CHAT_BRIDGE_TIMEOUT_MS",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_HOST",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_SALAD_BASE_URL",
+          "SMEJJ_LLM_SALAD_MODEL"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-chat-bridge-v88b-live",
+      "display_name": "smejj-chat-bridge-v88b-live",
+      "status": "stopped",
+      "create_time": "2026-07-08T12:36:49.3152948+00:00",
+      "update_time": "2026-08-14T06:51:16.2108634+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node:22-alpine",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 1024,
+          "shm_size": 64
+        },
+        "command": [
+          "sh",
+          "-lc",
+          "wget -qO /tmp/smejj-chat-bridge.mjs https://raw.githubusercontent.com/SmejjCom/smejj-app-frontend/main/assets/chat-bridge.js && node /tmp/smejj-chat-bridge.mjs"
+        ],
+        "environment_variable_names": [
+          "PORT",
+          "SMEJJ_CHAT_BRIDGE_TIMEOUT_MS",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_HOST",
+          "SMEJJ_LLM_GROQ_API_KEY",
+          "SMEJJ_LLM_HEADER",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_SALAD_BASE_URL",
+          "SMEJJ_LLM_SALAD_MODEL",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SEARCH_API_MONTHLY_MAX",
+          "SMEJJ_SEARCH_TAVILY_API_KEY",
+          "SMEJJ_VOICE_CONTROL_TOKEN",
+          "SMEJJ_VOICE_TTS_ORIGIN",
+          "SMEJJ_VOICE_TTS_TIMEOUT_MS"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control",
+      "display_name": "smejj-control",
+      "status": "stopped",
+      "create_time": "2026-07-03T21:24:08.8867032+00:00",
+      "update_time": "2026-08-14T00:05:48.2129529+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node:22-alpine",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "GOOGLE_CLIENT_ID",
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_CAPSULES_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_MODEL_BUCKET",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "IDRIVE_E2_STATUS_TIMEOUT_MS",
+          "IDRIVE_E2_TRAINING_ACCESS_KEY",
+          "IDRIVE_E2_TRAINING_ALLOWED_PREFIXES",
+          "IDRIVE_E2_TRAINING_BUCKET",
+          "IDRIVE_E2_TRAINING_ENDPOINT",
+          "IDRIVE_E2_TRAINING_REGION",
+          "IDRIVE_E2_TRAINING_SECRET_KEY",
+          "PORT",
+          "PRESIGN_HARD_LIMIT_ALLOWED",
+          "PRESIGN_REMAINING",
+          "PROJECT_ROOT",
+          "SALAD_API_KEY",
+          "SALAD_ORGANIZATION_NAME",
+          "SALAD_PROJECT_NAME",
+          "SMEJJ_ADMIN_OWNER_EMAILS",
+          "SMEJJ_AGENT_TOOLS_ENABLED",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_AUTOPILOT_KEYS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_FAST_1_ENABLED",
+          "SMEJJ_GITHUB_LOGIN_CLIENT_ID",
+          "SMEJJ_GITHUB_LOGIN_CLIENT_SECRET",
+          "SMEJJ_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_GLM_5_2_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_K2_7_ENABLED",
+          "SMEJJ_KIMI_K3_ENABLED",
+          "SMEJJ_LLM_FAST_API_KEY",
+          "SMEJJ_LLM_FAST_BASE_URL",
+          "SMEJJ_LLM_KIMI_API_KEY",
+          "SMEJJ_LLM_KIMI_BASE_URL",
+          "SMEJJ_LLM_KIMI_HEADER",
+          "SMEJJ_LLM_KIMI_K3_REASONING_EFFORT",
+          "SMEJJ_LLM_KIMI_MODEL",
+          "SMEJJ_LLM_PROVIDER_ORDER",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_SALAD_BASE_URL",
+          "SMEJJ_LLM_SALAD_MODEL",
+          "SMEJJ_LLM_TIMEOUT_MS",
+          "SMEJJ_LLM_ZHIPU_API_KEY",
+          "SMEJJ_LLM_ZHIPU_BASE_URL",
+          "SMEJJ_LLM_ZHIPU_MODEL_CODING",
+          "SMEJJ_MAUS_ENGINE_ENABLED",
+          "SMEJJ_MAUS_ENGINE_TOKEN",
+          "SMEJJ_MAUS_ENGINE_WORKER_URL",
+          "SMEJJ_MAX_PARALLEL_JOBS",
+          "SMEJJ_MODEL_AUTO_ENABLED",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MODEL_FALLBACK_ENABLED",
+          "SMEJJ_PROVIDER_CREDENTIAL_KEY_B64",
+          "SMEJJ_PROVIDER_CREDENTIAL_KEY_ID",
+          "SMEJJ_REMOTE_BROWSER_ENABLED",
+          "SMEJJ_REMOTE_BROWSER_HARD_LIMIT_ALLOWED",
+          "SMEJJ_REMOTE_BROWSER_RATE_CAPACITY",
+          "SMEJJ_REMOTE_BROWSER_RATE_REFILL_PER_SEC",
+          "SMEJJ_REMOTE_BROWSER_REMAINING",
+          "SMEJJ_REMOTE_BROWSER_TOKEN",
+          "SMEJJ_REMOTE_BROWSER_WORKER_URL",
+          "SMEJJ_SEARCH_API_MONTHLY_MAX",
+          "SMEJJ_SEARCH_TAVILY_API_KEY",
+          "SMEJJ_SERVER_AI_ENABLED",
+          "SMEJJ_SERVER_AI_REMAINING",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_SMTP_FROM",
+          "SMEJJ_SMTP_HOST",
+          "SMEJJ_SMTP_PASS",
+          "SMEJJ_SMTP_PORT",
+          "SMEJJ_SMTP_USER",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_BINDING_KEY_B64",
+          "SMEJJ_TRAINING_CONSENT_BINDING_KEY_ID",
+          "SMEJJ_TRAINING_CONSENT_SIGNING_KEY_B64",
+          "SMEJJ_TRAINING_CONSENT_SIGNING_KEY_ID",
+          "SMEJJ_TRAINING_PRIVACY_NOTICE_SHA256",
+          "SMEJJ_VOICE_MAX_RUNTIME_MINUTES",
+          "SMEJJ_VOICE_SESSION_TOKEN",
+          "SMEJJ_VOICE_STT_URL",
+          "SMEJJ_VOICE_TTS_URL",
+          "SMEJJ_VOICE_WORKERS_ENABLED",
+          "SMEJJ_WORKER_BUDGET_USD",
+          "SMEJJ_WORKER_DISPATCH_URL",
+          "SMEJJ_WORKER_ESTIMATED_RUNTIME_MINUTES",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-agent-deadline-rc2-staging",
+      "display_name": "smejj.com RC2 agent deadline staging",
+      "status": "stopped",
+      "create_time": "2026-07-12T16:18:10.558299+00:00",
+      "update_time": "2026-07-12T16:18:10.558299+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node@sha256:7af22e380095d122e3dc2d5ef95935d8edd9577f6c82da107d3e2ff042d3449c",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "PROJECT_ROOT",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_GLM_5_2_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_ENABLED",
+          "SMEJJ_KIMI_K2_7_ENABLED",
+          "SMEJJ_LLM_KIMI_API_KEY",
+          "SMEJJ_LLM_KIMI_BASE_URL",
+          "SMEJJ_LLM_KIMI_HEADER",
+          "SMEJJ_LLM_KIMI_MODEL",
+          "SMEJJ_LLM_PROVIDER_ORDER",
+          "SMEJJ_LLM_TIMEOUT_MS",
+          "SMEJJ_LLM_TOTAL_TIMEOUT_MS",
+          "SMEJJ_LLM_ZHIPU_API_KEY",
+          "SMEJJ_LLM_ZHIPU_BASE_URL",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MODEL_FALLBACK_ENABLED",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SERVER_AI_ENABLED",
+          "SMEJJ_SERVER_AI_REMAINING",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRUSTED_PUBLISHER_ENABLED",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-chat-agent-rc1-staging",
+      "display_name": "smejj-control-chat-agent-rc1-staging",
+      "status": "stopped",
+      "create_time": "2026-07-12T11:41:29.8706857+00:00",
+      "update_time": "2026-08-05T19:33:37.628705+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "node@sha256:7af22e380095d122e3dc2d5ef95935d8edd9577f6c82da107d3e2ff042d3449c",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "PROJECT_ROOT",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_ENABLED",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRUSTED_PUBLISHER_ENABLED",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-pages-layout-rc3-final-staging-20260712",
+      "display_name": "smejj.com RC3 Final Staging",
+      "status": "stopped",
+      "create_time": "2026-07-12T18:16:20.7545227+00:00",
+      "update_time": "2026-07-12T18:22:27.1249843+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "node@sha256:7af22e380095d122e3dc2d5ef95935d8edd9577f6c82da107d3e2ff042d3449c",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "PROJECT_ROOT",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_GLM_5_2_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_ENABLED",
+          "SMEJJ_KIMI_K2_7_ENABLED",
+          "SMEJJ_LLM_KIMI_API_KEY",
+          "SMEJJ_LLM_KIMI_BASE_URL",
+          "SMEJJ_LLM_KIMI_HEADER",
+          "SMEJJ_LLM_KIMI_MODEL",
+          "SMEJJ_LLM_PROVIDER_ORDER",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_TIMEOUT_MS",
+          "SMEJJ_LLM_TOTAL_TIMEOUT_MS",
+          "SMEJJ_LLM_ZHIPU_API_KEY",
+          "SMEJJ_LLM_ZHIPU_BASE_URL",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MODEL_FALLBACK_ENABLED",
+          "SMEJJ_MODEL_PROMOTION_ENABLED",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SERVER_AI_ENABLED",
+          "SMEJJ_SERVER_AI_REMAINING",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRAINING_ENABLED",
+          "SMEJJ_TRUSTED_PUBLISHER_ENABLED",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-pages-layout-rc3-final2-staging-20260712",
+      "display_name": "smejj.com RC3 Final2 Staging",
+      "status": "stopped",
+      "create_time": "2026-07-12T18:23:47.7103338+00:00",
+      "update_time": "2026-07-12T18:29:03.8094044+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "node@sha256:7af22e380095d122e3dc2d5ef95935d8edd9577f6c82da107d3e2ff042d3449c",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "PROJECT_ROOT",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_GLM_5_2_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_ENABLED",
+          "SMEJJ_KIMI_K2_7_ENABLED",
+          "SMEJJ_LLM_KIMI_API_KEY",
+          "SMEJJ_LLM_KIMI_BASE_URL",
+          "SMEJJ_LLM_KIMI_HEADER",
+          "SMEJJ_LLM_KIMI_MODEL",
+          "SMEJJ_LLM_PROVIDER_ORDER",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_TIMEOUT_MS",
+          "SMEJJ_LLM_TOTAL_TIMEOUT_MS",
+          "SMEJJ_LLM_ZHIPU_API_KEY",
+          "SMEJJ_LLM_ZHIPU_BASE_URL",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MODEL_FALLBACK_ENABLED",
+          "SMEJJ_MODEL_PROMOTION_ENABLED",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SERVER_AI_ENABLED",
+          "SMEJJ_SERVER_AI_REMAINING",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRAINING_ENABLED",
+          "SMEJJ_TRUSTED_PUBLISHER_ENABLED",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-pages-layout-rc3-retry-20260712",
+      "display_name": "smejj.com RC3 Ersatz-Staging",
+      "status": "stopped",
+      "create_time": "2026-07-12T17:52:13.8898703+00:00",
+      "update_time": "2026-07-12T17:57:24.5881699+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "node@sha256:7af22e380095d122e3dc2d5ef95935d8edd9577f6c82da107d3e2ff042d3449c",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "PROJECT_ROOT",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_GLM_5_2_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_ENABLED",
+          "SMEJJ_KIMI_K2_7_ENABLED",
+          "SMEJJ_LLM_KIMI_API_KEY",
+          "SMEJJ_LLM_KIMI_BASE_URL",
+          "SMEJJ_LLM_KIMI_HEADER",
+          "SMEJJ_LLM_KIMI_MODEL",
+          "SMEJJ_LLM_PROVIDER_ORDER",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_TIMEOUT_MS",
+          "SMEJJ_LLM_TOTAL_TIMEOUT_MS",
+          "SMEJJ_LLM_ZHIPU_API_KEY",
+          "SMEJJ_LLM_ZHIPU_BASE_URL",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MODEL_FALLBACK_ENABLED",
+          "SMEJJ_MODEL_PROMOTION_ENABLED",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SERVER_AI_ENABLED",
+          "SMEJJ_SERVER_AI_REMAINING",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRAINING_ENABLED",
+          "SMEJJ_TRUSTED_PUBLISHER_ENABLED",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-pages-layout-rc3-staging",
+      "display_name": "smejj.com RC3 Pages Layout Staging",
+      "status": "stopped",
+      "create_time": "2026-07-12T17:03:12.4268344+00:00",
+      "update_time": "2026-07-12T17:03:12.4268344+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "node@sha256:7af22e380095d122e3dc2d5ef95935d8edd9577f6c82da107d3e2ff042d3449c",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "PROJECT_ROOT",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_GLM_5_2_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_ENABLED",
+          "SMEJJ_KIMI_K2_7_ENABLED",
+          "SMEJJ_LLM_KIMI_API_KEY",
+          "SMEJJ_LLM_KIMI_BASE_URL",
+          "SMEJJ_LLM_KIMI_HEADER",
+          "SMEJJ_LLM_KIMI_MODEL",
+          "SMEJJ_LLM_PROVIDER_ORDER",
+          "SMEJJ_LLM_TIMEOUT_MS",
+          "SMEJJ_LLM_TOTAL_TIMEOUT_MS",
+          "SMEJJ_LLM_ZHIPU_API_KEY",
+          "SMEJJ_LLM_ZHIPU_BASE_URL",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MODEL_FALLBACK_ENABLED",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SERVER_AI_ENABLED",
+          "SMEJJ_SERVER_AI_REMAINING",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRUSTED_PUBLISHER_ENABLED",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-rc9-staging",
+      "display_name": "smejj-control-rc9-staging",
+      "status": "stopped",
+      "create_time": "2026-07-11T18:11:08.3805406+00:00",
+      "update_time": "2026-07-11T18:20:08.4569218+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node@sha256:7af22e380095d122e3dc2d5ef95935d8edd9577f6c82da107d3e2ff042d3449c",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const r=await fetch(process.env.SMEJJ_CONTROL_BOOTSTRAP_URL,{cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==process.env.SMEJJ_CONTROL_BOOTSTRAP_SHA256)throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "IDRIVE_E2_WATCHDOG_ACCESS_KEY",
+          "IDRIVE_E2_WATCHDOG_BUCKET",
+          "IDRIVE_E2_WATCHDOG_ENDPOINT",
+          "IDRIVE_E2_WATCHDOG_REGION",
+          "IDRIVE_E2_WATCHDOG_SECRET_KEY",
+          "PORT",
+          "PROJECT_ROOT",
+          "SALAD_CONTAINER_GROUP_NAME",
+          "SALAD_ORGANIZATION_NAME",
+          "SALAD_PROJECT_NAME",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_ENABLED",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MULTI_MODEL_ROUTER_ENABLED",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_TRAINING_CAPTURE_ENABLED",
+          "SMEJJ_TRAINING_CONSENT_API_ENABLED",
+          "SMEJJ_TRUSTED_PUBLISHER_ENABLED",
+          "SMEJJ_WORKER_BUDGET_USD",
+          "SMEJJ_WORKER_ESTIMATED_RUNTIME_MINUTES",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-control-staging-codex",
+      "display_name": "smejj.com Control Staging",
+      "status": "stopped",
+      "create_time": "2026-07-11T17:51:46.567213+00:00",
+      "update_time": "2026-07-15T17:12:50.2253493+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "docker.io/library/node@sha256:35d1e2d251585b806c41f71d0933d7ba3afb6374ee3745523c2ae406480f6bc7",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "--eval",
+          "const source=Buffer.from(process.env.SMEJJ_CONTROL_DIRECT_BOOTSTRAP_B64,'base64').toString('utf8');const crypto=await import('node:crypto');const actual=crypto.createHash('sha256').update(source).digest('hex');if(actual!==process.env.SMEJJ_CONTROL_DIRECT_BOOTSTRAP_SHA256)throw new Error('direct bootstrap SHA-256 mismatch');const runtime=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));await runtime.runBootstrap()"
+        ],
+        "environment_variable_names": [
+          "CONFIRM_GITHUB_PUBLISH",
+          "CONFIRM_SALAD_CREATE",
+          "CONFIRM_SALAD_START",
+          "CONFIRM_SALAD_STOP",
+          "GOOGLE_CLIENT_ID",
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_CAPSULES_BUCKET",
+          "IDRIVE_E2_DEPLOY_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_MODEL_BUCKET",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "IDRIVE_E2_STATUS_TIMEOUT_MS",
+          "IDRIVE_E2_WATCHDOG_ACCESS_KEY",
+          "IDRIVE_E2_WATCHDOG_ALLOWED_PREFIX",
+          "IDRIVE_E2_WATCHDOG_BUCKET",
+          "IDRIVE_E2_WATCHDOG_ENDPOINT",
+          "IDRIVE_E2_WATCHDOG_REGION",
+          "IDRIVE_E2_WATCHDOG_SECRET_KEY",
+          "IDRIVE_E2_WATCHDOG_TIMEOUT_MS",
+          "PORT",
+          "PRESIGN_HARD_LIMIT_ALLOWED",
+          "PRESIGN_REMAINING",
+          "PROJECT_ROOT",
+          "SALAD_API_KEY",
+          "SALAD_ORGANIZATION_NAME",
+          "SALAD_PROJECT_NAME",
+          "SMEJJ_AUTONOMOUS_LOOP_ENABLED",
+          "SMEJJ_BUDGET_MAX_CONCURRENT_WORKERS",
+          "SMEJJ_BUDGET_MAX_GLOBAL_RESERVED_USD",
+          "SMEJJ_BUDGET_MAX_RUNTIME_MINUTES",
+          "SMEJJ_BUDGET_MAX_USD_PER_JOB",
+          "SMEJJ_CONTROL_ARTIFACT_KEY",
+          "SMEJJ_CONTROL_ARTIFACT_MAX_BYTES",
+          "SMEJJ_CONTROL_ARTIFACT_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_ATTEMPTS",
+          "SMEJJ_CONTROL_BOOTSTRAP_MODE",
+          "SMEJJ_CONTROL_BOOTSTRAP_RETRY_DELAY_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_BOOTSTRAP_TIMEOUT_MS",
+          "SMEJJ_CONTROL_BOOTSTRAP_URL",
+          "SMEJJ_CONTROL_DIRECT_BOOTSTRAP_B64",
+          "SMEJJ_CONTROL_DIRECT_BOOTSTRAP_SHA256",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_EPHEMERAL_RECOVERY_CONCURRENCY",
+          "SMEJJ_EPHEMERAL_RECOVERY_MAX_LEASES",
+          "SMEJJ_EPHEMERAL_RUNTIME_ALLOW_STAGING_CANDIDATE",
+          "SMEJJ_EPHEMERAL_RUNTIME_IDRIVE_KEY",
+          "SMEJJ_EPHEMERAL_RUNTIME_IDRIVE_SHA256",
+          "SMEJJ_EPHEMERAL_RUNTIME_SOURCE_REPOSITORY",
+          "SMEJJ_EPHEMERAL_SECURITY_REVIEW_ID",
+          "SMEJJ_EPHEMERAL_TRUSTED_REPOS_ONLY",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_CREATE_SETTLE_POLL_INTERVAL_MS",
+          "SMEJJ_EPHEMERAL_WORKER_CREATE_SETTLE_TIMEOUT_MS",
+          "SMEJJ_EPHEMERAL_WORKER_ENABLED",
+          "SMEJJ_EPHEMERAL_WORKER_MANIFEST_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_MEMORY_MB",
+          "SMEJJ_EPHEMERAL_WORKER_POLL_INTERVAL_MS",
+          "SMEJJ_EPHEMERAL_WORKER_SHM_MB",
+          "SMEJJ_EPHEMERAL_WORKER_SOURCE_BASE",
+          "SMEJJ_EPHEMERAL_WORKER_STARTUP_TIMEOUT_MS",
+          "SMEJJ_EPHEMERAL_WORKER_STORAGE_BYTES",
+          "SMEJJ_EPHEMERAL_WORKER_VCPU",
+          "SMEJJ_GITHUB_APP_ID",
+          "SMEJJ_GITHUB_APP_INSTALLATION_ID",
+          "SMEJJ_GITHUB_APP_PRIVATE_KEY_BASE64",
+          "SMEJJ_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_GITHUB_PUBLISHER_APP_ID",
+          "SMEJJ_GITHUB_PUBLISHER_APP_INSTALLATION_ID",
+          "SMEJJ_GITHUB_PUBLISHER_APP_PRIVATE_KEY_BASE64",
+          "SMEJJ_GITHUB_PUBLISHER_ENABLED",
+          "SMEJJ_GITHUB_PUBLISH_REPOSITORY_ALLOWLIST",
+          "SMEJJ_GITHUB_REPOSITORY_ALLOWLIST",
+          "SMEJJ_GLM_5_2_ENABLED",
+          "SMEJJ_HOST",
+          "SMEJJ_KIMI_K2_7_ENABLED",
+          "SMEJJ_LLM_KIMI_API_KEY",
+          "SMEJJ_LLM_KIMI_BASE_URL",
+          "SMEJJ_LLM_KIMI_HEADER",
+          "SMEJJ_LLM_KIMI_MODEL",
+          "SMEJJ_LLM_PROVIDER_ORDER",
+          "SMEJJ_LLM_SALAD_API_KEY",
+          "SMEJJ_LLM_SALAD_BASE_URL",
+          "SMEJJ_LLM_SALAD_MODEL",
+          "SMEJJ_LLM_TIMEOUT_MS",
+          "SMEJJ_LLM_ZHIPU_API_KEY",
+          "SMEJJ_LLM_ZHIPU_BASE_URL",
+          "SMEJJ_MAX_PARALLEL_JOBS",
+          "SMEJJ_MODEL_AUTO_ENABLED",
+          "SMEJJ_MODEL_DEFAULT",
+          "SMEJJ_MODEL_FALLBACK_ENABLED",
+          "SMEJJ_PROVIDER_CREDENTIAL_KEY_B64",
+          "SMEJJ_PROVIDER_CREDENTIAL_KEY_ID",
+          "SMEJJ_REMOTE_BROWSER_ENABLED",
+          "SMEJJ_REMOTE_BROWSER_HARD_LIMIT_ALLOWED",
+          "SMEJJ_REMOTE_BROWSER_RATE_CAPACITY",
+          "SMEJJ_REMOTE_BROWSER_RATE_REFILL_PER_SEC",
+          "SMEJJ_REMOTE_BROWSER_REMAINING",
+          "SMEJJ_REMOTE_BROWSER_TOKEN",
+          "SMEJJ_REMOTE_BROWSER_WORKER_URL",
+          "SMEJJ_SALAD_WATCHDOG_RECOVERY_ENABLED",
+          "SMEJJ_SERVER_AI_ENABLED",
+          "SMEJJ_SERVER_AI_REMAINING",
+          "SMEJJ_SESSION_SECRET",
+          "SMEJJ_WORKER_BUDGET_USD",
+          "SMEJJ_WORKER_CALLBACK_SECRET",
+          "SMEJJ_WORKER_DISPATCH_URL",
+          "SMEJJ_WORKER_ESTIMATED_RUNTIME_MINUTES",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_REQUEST_TIMEOUT_MS",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST",
+          "SMEJJ_WORKER_TOKEN_SECRET"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-fast-1",
+      "display_name": "smejj-fast-1",
+      "status": "stopped",
+      "create_time": "2026-07-17T15:11:39.8086863+00:00",
+      "update_time": "2026-08-01T23:23:19.2122442+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "ghcr.io/ggml-org/llama.cpp:server-cuda",
+        "resources": {
+          "cpu": 8,
+          "gpu_classes": [
+            "ed563892-aacd-40f5-80b7-90c9be6c759b",
+            "9998fe42-04a5-4807-b3a5-849943f16c38",
+            "a5db5c50-cbcb-4596-ae80-6a0c8090d80f",
+            "6d4e9e99-d27e-4751-8d7d-393f7d8ea949",
+            "0d062939-7c01-4aae-a2b1-30e315124e51",
+            "f1380143-51cd-4bad-80cb-1f86ee6b49fe",
+            "2b73eef8-be49-4667-8fc0-5c0cb127cfe0"
+          ],
+          "memory": 30720,
+          "shm_size": 2048,
+          "storage_amount": 107374182400
+        },
+        "command": [
+          "sh",
+          "-c",
+          "exec /app/llama-server --temp \"${LLAMA_SERVER_TEMP}\" --top-p \"${LLAMA_SERVER_TOP_P}\" --min-p \"${LLAMA_SERVER_MIN_P}\""
+        ],
+        "environment_variable_names": [
+          "LLAMA_ARG_ALIAS",
+          "LLAMA_ARG_CHAT_TEMPLATE_KWARGS",
+          "LLAMA_ARG_CTX_SIZE",
+          "LLAMA_ARG_FIT",
+          "LLAMA_ARG_FLASH_ATTN",
+          "LLAMA_ARG_HF_FILE",
+          "LLAMA_ARG_HF_REPO",
+          "LLAMA_ARG_HOST",
+          "LLAMA_ARG_JINJA",
+          "LLAMA_ARG_N_GPU_LAYERS",
+          "LLAMA_ARG_N_PARALLEL",
+          "LLAMA_ARG_PORT",
+          "LLAMA_ARG_TOP_K",
+          "LLAMA_SERVER_MIN_P",
+          "LLAMA_SERVER_TEMP",
+          "LLAMA_SERVER_TOP_P"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-job-426689a929adabe3b1794f8fb9e1d1de",
+      "display_name": "smejj.com Job job-codex-parity-source-",
+      "status": "stopped",
+      "create_time": "2026-07-12T11:12:59.7830177+00:00",
+      "update_time": "2026-07-12T11:12:59.7830177+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "mcr.microsoft.com/playwright@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [],
+          "memory": 8192,
+          "shm_size": 1024,
+          "storage_amount": 32212254720
+        },
+        "command": [
+          "/bin/bash",
+          "-lc",
+          "set -euo pipefail; node --input-type=module --eval 'import crypto from \"node:crypto\"; import {writeFile} from \"node:fs/promises\"; const u=process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL; const attempts=12; let s=\"\"; let failure; for(let i=1;i<=attempts;i+=1){try{const r=await fetch(u,{redirect:\"error\",cache:\"no-store\",signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error(`bootstrap_fetch_${r.status}`); s=await r.text(); failure=undefined; break;}catch(error){failure=error; if(i<attempts) await new Promise((resolve)=>setTimeout(resolve,5000));}} if(failure) throw failure; const h=crypto.createHash(\"sha256\").update(s).digest(\"hex\"); if(h!==process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256) throw new Error(\"bootstrap_sha256_mismatch\"); await writeFile(\"/tmp/smejj-ephemeral-bootstrap.mjs\",s,{mode:0o500});'; exec node /tmp/smejj-ephemeral-bootstrap.mjs"
+        ],
+        "environment_variable_names": [
+          "HOST",
+          "PORT",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_MANIFEST_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_SOURCE_BASE",
+          "SMEJJ_HOST",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_PORT",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-job-6d4b971ea0a2c49d519e1bf1a6477059",
+      "display_name": "smejj.com Job job-codex-parity-source-",
+      "status": "stopped",
+      "create_time": "2026-07-12T11:31:46.5272394+00:00",
+      "update_time": "2026-07-12T11:31:46.5272394+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "mcr.microsoft.com/playwright@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [],
+          "memory": 8192,
+          "shm_size": 1024,
+          "storage_amount": 32212254720
+        },
+        "command": [
+          "/bin/bash",
+          "-lc",
+          "set -euo pipefail; node --input-type=module --eval 'import crypto from \"node:crypto\"; import {writeFile} from \"node:fs/promises\"; const u=process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL; const attempts=12; let s=\"\"; let failure; for(let i=1;i<=attempts;i+=1){try{const r=await fetch(u,{redirect:\"error\",cache:\"no-store\",signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error(`bootstrap_fetch_${r.status}`); s=await r.text(); failure=undefined; break;}catch(error){failure=error; if(i<attempts) await new Promise((resolve)=>setTimeout(resolve,5000));}} if(failure) throw failure; const h=crypto.createHash(\"sha256\").update(s).digest(\"hex\"); if(h!==process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256) throw new Error(\"bootstrap_sha256_mismatch\"); await writeFile(\"/tmp/smejj-ephemeral-bootstrap.mjs\",s,{mode:0o500});'; exec node /tmp/smejj-ephemeral-bootstrap.mjs"
+        ],
+        "environment_variable_names": [
+          "HOST",
+          "PORT",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_MANIFEST_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_SOURCE_BASE",
+          "SMEJJ_HOST",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_PORT",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-job-7864036310613c954e2c23f3efa24a5f",
+      "display_name": "smejj.com Job job-codex-parity-source-",
+      "status": "stopped",
+      "create_time": "2026-07-12T11:53:52.9015693+00:00",
+      "update_time": "2026-07-12T11:53:52.9015693+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "mcr.microsoft.com/playwright@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [],
+          "memory": 8192,
+          "shm_size": 1024,
+          "storage_amount": 32212254720
+        },
+        "command": [
+          "/bin/bash",
+          "-lc",
+          "set -euo pipefail; node --input-type=module --eval 'import crypto from \"node:crypto\"; import {writeFile} from \"node:fs/promises\"; const u=process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL; const attempts=12; let s=\"\"; let failure; for(let i=1;i<=attempts;i+=1){try{const r=await fetch(u,{redirect:\"error\",cache:\"no-store\",signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error(`bootstrap_fetch_${r.status}`); s=await r.text(); failure=undefined; break;}catch(error){failure=error; if(i<attempts) await new Promise((resolve)=>setTimeout(resolve,5000));}} if(failure) throw failure; const h=crypto.createHash(\"sha256\").update(s).digest(\"hex\"); if(h!==process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256) throw new Error(\"bootstrap_sha256_mismatch\"); await writeFile(\"/tmp/smejj-ephemeral-bootstrap.mjs\",s,{mode:0o500});'; exec node /tmp/smejj-ephemeral-bootstrap.mjs"
+        ],
+        "environment_variable_names": [
+          "HOST",
+          "PORT",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_MANIFEST_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_SOURCE_BASE",
+          "SMEJJ_HOST",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_PORT",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-job-8662e95807478bf4287ae42e2d91bd16",
+      "display_name": "smejj.com Job job-codex-parity-source-",
+      "status": "failed",
+      "create_time": "2026-07-12T10:17:50.1621496+00:00",
+      "update_time": "2026-07-12T10:17:50.1621496+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "mcr.microsoft.com/playwright:v1.45.3-jammy@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [],
+          "memory": 8192,
+          "shm_size": 1024,
+          "storage_amount": 32212254720
+        },
+        "command": [
+          "/bin/bash",
+          "-lc",
+          "set -euo pipefail; node --input-type=module --eval 'import crypto from \"node:crypto\"; import {writeFile} from \"node:fs/promises\"; const u=process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL; const attempts=12; let s=\"\"; let failure; for(let i=1;i<=attempts;i+=1){try{const r=await fetch(u,{redirect:\"error\",cache:\"no-store\",signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error(`bootstrap_fetch_${r.status}`); s=await r.text(); failure=undefined; break;}catch(error){failure=error; if(i<attempts) await new Promise((resolve)=>setTimeout(resolve,5000));}} if(failure) throw failure; const h=crypto.createHash(\"sha256\").update(s).digest(\"hex\"); if(h!==process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256) throw new Error(\"bootstrap_sha256_mismatch\"); await writeFile(\"/tmp/smejj-ephemeral-bootstrap.mjs\",s,{mode:0o500});'; exec node /tmp/smejj-ephemeral-bootstrap.mjs"
+        ],
+        "environment_variable_names": [
+          "HOST",
+          "PORT",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_MANIFEST_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_SOURCE_BASE",
+          "SMEJJ_HOST",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_PORT",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-job-a44459ed7e191587dd076eb8d2f0e934",
+      "display_name": "smejj.com Job job-codex-parity-source-",
+      "status": "stopped",
+      "create_time": "2026-07-12T15:44:23.0408604+00:00",
+      "update_time": "2026-07-12T15:44:23.0408604+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "mcr.microsoft.com/playwright@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [],
+          "memory": 8192,
+          "shm_size": 1024,
+          "storage_amount": 32212254720
+        },
+        "command": [
+          "/bin/bash",
+          "-lc",
+          "set -euo pipefail; node --input-type=module --eval 'import crypto from \"node:crypto\"; import {writeFile} from \"node:fs/promises\"; const u=process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL; const attempts=12; let s=\"\"; let failure; for(let i=1;i<=attempts;i+=1){try{const r=await fetch(u,{redirect:\"error\",cache:\"no-store\",signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error(`bootstrap_fetch_${r.status}`); s=await r.text(); failure=undefined; break;}catch(error){failure=error; if(i<attempts) await new Promise((resolve)=>setTimeout(resolve,5000));}} if(failure) throw failure; const h=crypto.createHash(\"sha256\").update(s).digest(\"hex\"); if(h!==process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256) throw new Error(\"bootstrap_sha256_mismatch\"); await writeFile(\"/tmp/smejj-ephemeral-bootstrap.mjs\",s,{mode:0o500});'; exec node /tmp/smejj-ephemeral-bootstrap.mjs"
+        ],
+        "environment_variable_names": [
+          "HOST",
+          "PORT",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_MANIFEST_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_SOURCE_BASE",
+          "SMEJJ_HOST",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_PORT",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-job-ea19ee1494029ce43a076a0d012d91fb",
+      "display_name": "smejj.com Job job-codex-parity-source-",
+      "status": "stopped",
+      "create_time": "2026-07-12T16:01:07.7647128+00:00",
+      "update_time": "2026-07-12T16:17:59.9632882+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "mcr.microsoft.com/playwright@sha256:b24b5ad840990572e84d03acc47c29bd46a07ee012859f19a6c40fb3a8726e3f",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [],
+          "memory": 8192,
+          "shm_size": 1024,
+          "storage_amount": 32212254720
+        },
+        "command": [
+          "/bin/bash",
+          "-lc",
+          "set -euo pipefail; node --input-type=module --eval 'import crypto from \"node:crypto\"; import {writeFile} from \"node:fs/promises\"; const u=process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL; const attempts=12; let s=\"\"; let failure; for(let i=1;i<=attempts;i+=1){try{const r=await fetch(u,{redirect:\"error\",cache:\"no-store\",signal:AbortSignal.timeout(15000)}); if(!r.ok) throw new Error(`bootstrap_fetch_${r.status}`); s=await r.text(); failure=undefined; break;}catch(error){failure=error; if(i<attempts) await new Promise((resolve)=>setTimeout(resolve,5000));}} if(failure) throw failure; const h=crypto.createHash(\"sha256\").update(s).digest(\"hex\"); if(h!==process.env.SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256) throw new Error(\"bootstrap_sha256_mismatch\"); await writeFile(\"/tmp/smejj-ephemeral-bootstrap.mjs\",s,{mode:0o500});'; exec node /tmp/smejj-ephemeral-bootstrap.mjs"
+        ],
+        "environment_variable_names": [
+          "HOST",
+          "PORT",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_BOOTSTRAP_URL",
+          "SMEJJ_EPHEMERAL_WORKER_MANIFEST_SHA256",
+          "SMEJJ_EPHEMERAL_WORKER_SOURCE_BASE",
+          "SMEJJ_HOST",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_PORT",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-llm-qwen3",
+      "display_name": "smejj-llm-qwen3",
+      "status": "stopped",
+      "create_time": "2026-07-03T11:15:59.1131572+00:00",
+      "update_time": "2026-07-04T14:43:12.7970985+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "saladtechnologies/text-generation-inference:3.3.0-qwen3-8b",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [
+            "ed563892-aacd-40f5-80b7-90c9be6c759b"
+          ],
+          "memory": 30720,
+          "shm_size": 64,
+          "storage_amount": 1073741824
+        },
+        "command": [],
+        "environment_variable_names": [
+          "HOSTNAME",
+          "PORT"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-llm-qwen3-v2",
+      "display_name": "smejj-llm-qwen3-v2",
+      "status": "stopped",
+      "create_time": "2026-07-10T14:10:35.0382748+00:00",
+      "update_time": "2026-07-10T14:10:35.0382748+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "saladtechnologies/text-generation-inference:3.3.0-qwen3-8b",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [
+            "ed563892-aacd-40f5-80b7-90c9be6c759b"
+          ],
+          "memory": 30720,
+          "shm_size": 64,
+          "storage_amount": 1073741824
+        },
+        "command": [],
+        "environment_variable_names": [
+          "HOSTNAME",
+          "PORT"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 3000,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-lora-trainer-batch",
+      "display_name": "smejj-lora-trainer-batch",
+      "status": "stopped",
+      "create_time": "2026-08-09T07:32:04.788968+00:00",
+      "update_time": "2026-08-09T07:32:54.7641616+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "docker.io/pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [
+            "a5db5c50-cbcb-4596-ae80-6a0c8090d80f"
+          ],
+          "memory": 16384,
+          "shm_size": 64,
+          "storage_amount": 85899345920
+        },
+        "command": [
+          "bash",
+          "-lc",
+          "set -eu\nexport PATH=\"/opt/conda/bin:$PATH\"\nmkdir -p /app\ncd /app\nprintf %s \"$SMEJJ_TRAINER_BUNDLE_B64\" | base64 -d | tar xzf -\ncd /app/smejj-lora-trainer\nif [ \"${SMEJJ_TRAINER_MODUS:-attrappe}\" = \"echt\" ]; then\n  ( apt-get update -qq > /tmp/apt.log 2>&1 || true; apt-get install -y -qq --no-install-recommends gcc >> /tmp/apt.log 2>&1 || true;\n    pip install --no-cache-dir 'torch==2.6.0' 'transformers==4.51.3' 'peft==0.15.2' 'accelerate==1.6.0' 'bitsandbytes==0.45.5' 'safetensors>=0.4.5' > /tmp/pip.log 2>&1; echo $? > /tmp/smejj-pip.rc ) &\nfi\nexec python3 server.py"
+        ],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_MODEL_BUCKET",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "SMEJJ_HOST",
+          "SMEJJ_TRAINER_BASIS_REPO",
+          "SMEJJ_TRAINER_BUNDLE_B64",
+          "SMEJJ_TRAINER_CODE_ABDRUCK",
+          "SMEJJ_TRAINER_MODUS",
+          "SMEJJ_TRAINER_PUBLIC_URL"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": true
+    },
+    {
+      "name": "smejj-maus-engine",
+      "display_name": "smejj-maus-engine",
+      "status": "stopped",
+      "create_time": "2026-07-14T17:24:38.7728385+00:00",
+      "update_time": "2026-07-15T22:39:10.1534131+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "ghcr.io/smejjcom/smejj-maus-engine:v1",
+        "resources": {
+          "cpu": 2,
+          "gpu_classes": [],
+          "memory": 4096,
+          "shm_size": 64
+        },
+        "command": [],
+        "environment_variable_names": [
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "SMEJJ_HOST",
+          "SMEJJ_MAUS_ENGINE_TOKEN",
+          "SMEJJ_MAUS_PLANNER_MODEL",
+          "SMEJJ_MAUS_PLANNER_URL"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-remote-browser",
+      "display_name": "smejj-remote-browser",
+      "status": "stopped",
+      "create_time": "2026-07-08T08:58:33.702794+00:00",
+      "update_time": "2026-07-08T08:58:33.702794+00:00",
+      "replicas": 0,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node:22-bookworm",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--version"
+        ],
+        "environment_variable_names": [
+          "PORT",
+          "SMEJJ_HOST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-remote-browser-bridge-live",
+      "display_name": "smejj-remote-browser-bridge-live",
+      "status": "stopped",
+      "create_time": "2026-07-08T09:23:27.0177572+00:00",
+      "update_time": "2026-08-05T16:24:24.1761949+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "node:22-bookworm",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [],
+          "memory": 1024,
+          "shm_size": 64
+        },
+        "command": [
+          "sh",
+          "-lc",
+          "curl -fsSL https://raw.githubusercontent.com/SmejjCom/smejj-app-frontend/main/assets/remote-browser-bridge.js | node --input-type=module -"
+        ],
+        "environment_variable_names": [
+          "PORT",
+          "SMEJJ_HOST",
+          "SMEJJ_REMOTE_BROWSER_RATE_CAPACITY",
+          "SMEJJ_REMOTE_BROWSER_RATE_REFILL_PER_SEC",
+          "SMEJJ_REMOTE_BROWSER_TOKEN",
+          "SMEJJ_REMOTE_BROWSER_WORKER_URL"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-remote-browser-live",
+      "display_name": "smejj-remote-browser-live",
+      "status": "stopped",
+      "create_time": "2026-07-08T09:01:19.1253658+00:00",
+      "update_time": "2026-08-05T16:30:06.2479851+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "ghcr.io/smejjcom/smejj-remote-browser:latest",
+        "resources": {
+          "cpu": 1,
+          "gpu_classes": [
+            "0f60d6f5-642a-44a5-af51-3ac34d7602c1",
+            "ce8950bc-a52a-4bef-ac64-1fe3c7078b5d"
+          ],
+          "memory": 2048,
+          "shm_size": 64
+        },
+        "command": [
+          "node",
+          "--input-type=module",
+          "-e",
+          "const u=\"https://raw.githubusercontent.com/SmejjCom/smejj-control/0bb7eb58c2c19621e780676ccfd7d60981721a7c/runtime/bootstrap-combined-worker.mjs\";const r=await fetch(u,{redirect:\"error\",cache:\"no-store\"});if(!r.ok)throw new Error(\"bootstrap HTTP \"+r.status);const s=await r.text();const c=await import(\"node:crypto\");const h=c.createHash(\"sha256\").update(s).digest(\"hex\");if(h!==\"c938863dea9ff8abe7ea51548209a267ebe1832780de68aa2cb6a7e65f1d5efb\")throw new Error(\"bootstrap SHA-256 mismatch\");const m=await import(\"data:text/javascript;base64,\"+Buffer.from(s).toString(\"base64\"));await m.startCombinedWorker()"
+        ],
+        "environment_variable_names": [
+          "SMEJJ_COMBINED_WORKER_SOURCE_BASE",
+          "SMEJJ_CONTROL_ORIGIN",
+          "SMEJJ_HOST",
+          "SMEJJ_REMOTE_BROWSER_NAV_TIMEOUT_MS",
+          "SMEJJ_REMOTE_BROWSER_TOKEN",
+          "SMEJJ_WORKER_GITHUB_OWNER_ALLOWLIST",
+          "SMEJJ_WORKER_MAX_MODEL_ACTIONS",
+          "SMEJJ_WORKER_MAX_RUNTIME_MS",
+          "SMEJJ_WORKER_MODEL_MAX_TOKENS",
+          "SMEJJ_WORKER_REQUIRE_REPO_ALLOWLIST"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": false
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-spiegel",
+      "display_name": "con-Autopilot Job Spiegel Messung Training",
+      "status": "stopped",
+      "create_time": "2026-09-04T16:25:49.7288376+00:00",
+      "update_time": "2026-09-04T17:39:20.7835744+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "docker.io/pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime",
+        "resources": {
+          "cpu": 8,
+          "gpu_classes": [],
+          "memory": 30720,
+          "shm_size": 1024,
+          "storage_amount": 32212254720
+        },
+        "command": [
+          "bash",
+          "-lc",
+          "set -eu\nexport PATH=\"/opt/conda/bin:$PATH\"\nmkdir -p /app /work && cd /app\nprintf %s \"$CON_JOB_BUNDLE_B64\" | base64 -d | tar xzf -\ncd /app/con-job\npip install --no-cache-dir -q boto3 > /tmp/pip-boto3.log 2>&1\nexec python3 job.py"
+        ],
+        "environment_variable_names": [
+          "CON_BASIS_PREFIX",
+          "CON_BASIS_REPO",
+          "CON_JOB_BUNDLE_B64",
+          "CON_JOB_ID",
+          "CON_JOB_MAX_MINUTEN",
+          "CON_JOB_MODUS",
+          "CON_SELBST_STOP",
+          "CON_VERSION",
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "SALAD_API_KEY",
+          "SALAD_CONTAINER_GROUP_NAME",
+          "SALAD_ORGANIZATION_NAME",
+          "SALAD_PROJECT_NAME"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-training",
+      "display_name": "con-Autopilot Job Spiegel Messung Training",
+      "status": "running",
+      "create_time": "2026-09-04T23:41:10.9661487+00:00",
+      "update_time": "2026-09-08T14:09:59.1127558+00:00",
+      "replicas": 1,
+      "restart_policy": "never",
+      "country_codes": [],
+      "container": {
+        "image": "docker.io/pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime",
+        "resources": {
+          "cpu": 8,
+          "gpu_classes": [
+            "a5db5c50-cbcb-4596-ae80-6a0c8090d80f",
+            "6d4e9e99-d27e-4751-8d7d-393f7d8ea949",
+            "9998fe42-04a5-4807-b3a5-849943f16c38"
+          ],
+          "memory": 30720,
+          "shm_size": 1024,
+          "storage_amount": 64424509440
+        },
+        "command": [
+          "bash",
+          "-lc",
+          "set -eu\nexport PATH=\"/opt/conda/bin:$PATH\"\nmkdir -p /app /work && cd /app\nprintf %s \"$CON_JOB_BUNDLE_B64\" | base64 -d | tar xzf -\ncd /app/con-job\npip install --no-cache-dir -q boto3 > /tmp/pip-boto3.log 2>&1\nexec python3 job.py"
+        ],
+        "environment_variable_names": [
+          "CON_BASIS_PREFIX",
+          "CON_BASIS_REPO",
+          "CON_CHECKPOINT_PREFIX",
+          "CON_DATENSATZ_PREFIX",
+          "CON_JOB_BUNDLE_B64",
+          "CON_JOB_ID",
+          "CON_JOB_MAX_MINUTEN",
+          "CON_JOB_MODUS",
+          "CON_KANDIDAT",
+          "CON_SELBST_STOP",
+          "CON_TRAIN_KONFIG",
+          "CON_VERSION",
+          "IDRIVE_E2_ACCESS_KEY",
+          "IDRIVE_E2_BUCKET",
+          "IDRIVE_E2_ENDPOINT",
+          "IDRIVE_E2_REGION",
+          "IDRIVE_E2_SECRET_KEY",
+          "PORT",
+          "SALAD_API_KEY",
+          "SALAD_CONTAINER_GROUP_NAME",
+          "SALAD_ORGANIZATION_NAME",
+          "SALAD_PROJECT_NAME"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 8080,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-voice-stt",
+      "display_name": "smejj-voice-stt",
+      "status": "stopped",
+      "create_time": "2026-07-19T07:26:52.6226196+00:00",
+      "update_time": "2026-08-03T17:08:25.3584285+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "docker.io/hwdsl2/whisper-server:cuda",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [
+            "5d6b104d-c029-4357-b179-8b662d0a76b2",
+            "2b73eef8-be49-4667-8fc0-5c0cb127cfe0",
+            "0798d5aa-2d17-42ee-81b8-ea92e3bc088e",
+            "f51baccc-dc95-40fb-a5d1-6d0ee0db31d2"
+          ],
+          "memory": 8192,
+          "shm_size": 64
+        },
+        "command": [],
+        "environment_variable_names": [
+          "WHISPER_COMPUTE_TYPE",
+          "WHISPER_DEVICE",
+          "WHISPER_LANGUAGE",
+          "WHISPER_MODEL"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 9000,
+        "auth": true
+      },
+      "readiness_probe": false
+    },
+    {
+      "name": "smejj-voice-tts",
+      "display_name": "smejj-voice-tts",
+      "status": "stopped",
+      "create_time": "2026-07-20T08:22:54.8221696+00:00",
+      "update_time": "2026-08-03T18:50:26.8222983+00:00",
+      "replicas": 1,
+      "restart_policy": "always",
+      "country_codes": [],
+      "container": {
+        "image": "ghcr.io/coqui-ai/xtts-streaming-server:latest-cuda121",
+        "resources": {
+          "cpu": 4,
+          "gpu_classes": [
+            "5d6b104d-c029-4357-b179-8b662d0a76b2",
+            "2b73eef8-be49-4667-8fc0-5c0cb127cfe0",
+            "0798d5aa-2d17-42ee-81b8-ea92e3bc088e",
+            "f51baccc-dc95-40fb-a5d1-6d0ee0db31d2"
+          ],
+          "memory": 8192,
+          "shm_size": 64
+        },
+        "command": [
+          "uvicorn",
+          "main:app",
+          "--host",
+          "::",
+          "--port",
+          "80"
+        ],
+        "environment_variable_names": [
+          "COQUI_TOS_AGREED",
+          "WHISPER_DEVICE"
+        ]
+      },
+      "networking": {
+        "protocol": "http",
+        "port": 80,
+        "auth": true
+      },
+      "readiness_probe": false
+    }
+  ]
+}
