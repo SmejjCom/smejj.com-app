@@ -60,3 +60,9 @@ test("Cline-Knoepfe einspaltig und 44 px hoch (gemessen 177x38 in zwei Spalten)"
 test("Suchfeld in der Reiterzeile bleibt bedienbar (schrumpfte auf 26 px)", () => {
   assert.match(m.REGELN, /\.settings-nav #settingsSuche\{flex:0 0 clamp\(160px,48vw,220px\);min-width:160px;min-height:44px/);
 });
+
+test("Kippschalter und Rechtslinks sind volle Ziele (gemessen 46x26 und 16 px hoch)", () => {
+  assert.match(m.REGELN, /\.settings-switch,body #profile \.settings-switch\{min-height:44px;display:inline-flex;align-items:center\}/);
+  assert.match(m.REGELN, /\.settings-links a,body \.view \.settings-links a\{min-height:44px;display:inline-flex;align-items:center\}/);
+});
+
