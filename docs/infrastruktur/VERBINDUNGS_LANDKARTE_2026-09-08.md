@@ -201,6 +201,27 @@ launchd-PATH. In beiden Fällen lief Codeberg grün weiter und nur e2 fiel
 aus — genau die Sorte Ausfall, gegen die dieser ganze Umbau gebaut wurde.
 Deshalb steht die e2-Sicherung als eigene, messbare Zeile da.
 
+### Die Rücksicherung ist geprüft — nicht gehofft
+
+Ein Backup, das nie zurückgelesen wurde, ist eine Hoffnung. Am 08.09. wurde
+der Schnappschuss deshalb von Hand aus e2 zurückgeholt und vollständig
+gegengeprüft:
+
+* 8,6 MB in 25 Sekunden zurückgelesen, ließ sich sauber auspacken
+* **2971 von 2971 Dateien inhaltlich identisch** mit dem Git-Stand
+  (Blob-für-Blob verglichen), null Abweichungen, null fehlende Dateien
+* der einzige Unterschied ist der `node_modules`-**Symlink** — kein Inhalt,
+  keine Datei. (Nebenbefund: dieser bekannte Selbst-Symlink liegt auf dem
+  Deploy-Zweig immer noch im Repo.)
+
+Damit diese Probe nicht einmalig bleibt, **läuft sie jetzt bei jeder
+Sicherung mit**: Nr. 85 holt das eben Geschriebene direkt zurück und
+vergleicht es Byte für Byte. Liest es sich anders zurück, ist der Lauf rot.
+
+Ein *gescheiterter* Abruf ist dabei bewusst **kein** roter Befund — ein
+Netzhänger beim Zurücklesen macht ein korrekt geschriebenes Archiv nicht
+wertlos. Nur ein tatsächlich anderer Inhalt zählt, der dafür hart.
+
 ### Ein Rest, ehrlich benannt
 
 Im Präfix liegt eine 1 MB große Datei `sicherung/code/probe-frist.bin` — meine
