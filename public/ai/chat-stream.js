@@ -9,6 +9,8 @@
 // werden (fetch-retry.js) und welchen Rumpf jeder von ihnen bekommt
 // (chat-history-context.js). Dieses Modul empfaengt nur.
 import { fetchStreamWithRetry } from "./fetch-retry.js";
+import { API_ORIGIN } from "../config.js";
+import { mitLiveDaten } from "./live-daten.js";
 import { starteStilleWache, stilleText, STILLE_GRENZE_MS } from "./strom-stillstand.js";
 import { frageLokal, istRueckfrage, lokalErlaubt, merkeEntscheidung, taugtFuerLokal } from "./lokalesModell.js";
 
@@ -33,14 +35,66 @@ const AUTH_TOKEN_KEY = "smejj.auth.accessToken.v1";
  * @param {Storage} [storage]
  * @returns {Record<string, string>} leer, wenn keine Anmeldung vorliegt
  */
-export function bridgeAuthHeaders(storage = globalThis.localStorage) {
+export function bridgeAuthHeaders(storage) {
   try {
-    const token = storage?.getItem(AUTH_TOKEN_KEY) || "";
+    let token = "";
+    if (storage) {
+      token = storage.getItem(AUTH_TOKEN_KEY) || "";
+    } else {
+      // sessionStorage zuerst: dort liegt der frisch erneuerte kurze Ausweis
+      // (H1-Haertung, erneuereZugangsToken). localStorage haelt den durablen
+      // Login-Ausweis als Rueckfall.
+      const ss = typeof sessionStorage !== "undefined" ? sessionStorage : null;
+      const ls = typeof localStorage !== "undefined" ? localStorage : null;
+      token = (ss && ss.getItem(AUTH_TOKEN_KEY)) || (ls && ls.getItem(AUTH_TOKEN_KEY)) || "";
+    }
     return token ? { Authorization: `Bearer ${token}` } : {};
   } catch {
     // Storage gesperrt (Privatmodus): dann eben ohne Kopf.
     return {};
   }
+}
+
+// Stiller Refresh (Profi-Standard, Betreiber-Auftrag 2026-09-07): der kurze
+// Zugangs-Ausweis lebt nur 10 Minuten (ACCESS_TTL_MS), die Sitzung selbst bis
+// zu 180 Tage. Laeuft der Ausweis ab, war der Chat bisher tot ("Du bist nicht
+// mehr angemeldet"), obwohl die Sitzung noch gilt — gemessen: nur 19,7 % der
+// Anfragen kamen mit gueltigem Ausweis durch. Diese Funktion holt aus der noch
+// gueltigen Sitzung LAUTLOS einen frischen Ausweis, auf zwei Wegen:
+//   A) durabler Login-Ausweis (localStorage) -> /api/auth/me legt jeder
+//      gueltigen Antwort ein frisches Token bei (gleitende Verlaengerung),
+//   B) HttpOnly-Sitzungs-Cookie -> /api/auth/session-token.
+// Der frische Ausweis landet in sessionStorage; bridgeAuthHeaders nimmt ihn
+// dann zuerst. Gibt keine der beiden Quellen etwas her, ist der Nutzer wirklich
+// abgemeldet und bekommt den ehrlichen Anmelde-Hinweis.
+export async function erneuereZugangsToken() {
+  const merke = (token) => {
+    const wert = String(token || "");
+    if (!wert) return "";
+    try { sessionStorage.setItem(AUTH_TOKEN_KEY, wert); } catch { /* Storage gesperrt */ }
+    return wert;
+  };
+  // Weg A: durabler Ausweis aus dem Login gegen /api/auth/me.
+  try {
+    let durable = "";
+    try { durable = localStorage.getItem(AUTH_TOKEN_KEY) || ""; } catch { durable = ""; }
+    if (durable) {
+      const r = await fetch(`${API_ORIGIN}/api/auth/me`, { headers: { Authorization: `Bearer ${durable}` } });
+      if (r.ok) {
+        const d = await r.json().catch(() => ({}));
+        if (d && d.authenticated && d.accessToken) return merke(d.accessToken);
+      }
+    }
+  } catch { /* naechster Weg */ }
+  // Weg B: HttpOnly-Sitzungs-Cookie gegen /api/auth/session-token.
+  try {
+    const r = await fetch(`${API_ORIGIN}/api/auth/session-token`, { credentials: "include" });
+    if (r.ok) {
+      const d = await r.json().catch(() => ({}));
+      if (d && d.accessToken) return merke(d.accessToken);
+    }
+  } catch { /* aufgeben */ }
+  return "";
 }
 
 import { zeigeSchritt, falteSchritte, starteWartesignal, quellenHinweis, verwirfArbeitsnotiz, findeSchrittListe, schrittListe, schrittOhneFund } from "./chat-schritte-anzeige.js";
@@ -559,6 +613,26 @@ async function versucheLokaleAntwort(body, output, renderMarkdown) {
   return true;
 }
 
+
+/**
+ * Passt den Rumpf JEDES Ziels an. app.js reicht die Endpunkte als Liste herein
+ * (buildChatTargets), und jedes Ziel traegt seinen eigenen, bereits
+ * serialisierten Rumpf — wer nur `body` aendert, schickt trotzdem den alten los.
+ * @param {Array|string} url Ziele
+ * @param {(rumpf: object) => object} aendere
+ */
+function zieleAnpassen(url, aendere) {
+  if (!Array.isArray(url)) return url;
+  return url.map((ziel) => {
+    if (!ziel || typeof ziel !== "object" || typeof ziel.body !== "string") return ziel;
+    try {
+      const rumpf = JSON.parse(ziel.body);
+      if (!rumpf || typeof rumpf !== "object") return ziel;
+      return { ...ziel, body: JSON.stringify(aendere(rumpf)) };
+    } catch { return ziel; }
+  });
+}
+
 export async function streamChatAnswer(url, body, output, { renderMarkdown, offlineNotice = "" } = {}) {
   // Fragen-Erfassung (Trainingsplan smejj 1.1, Stufe 1): loest nur aus, wartet
   // nie, bricht nie — der Server entscheidet aus Ledger und Schalter. Dynamisch
@@ -567,6 +641,21 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
   // Stufe 0 zuerst: was das Geraet des Nutzers selbst beantworten kann, kostet
   // niemanden etwas und ist meist schneller (gemessen 1,7-3,5 s gegen 2,9-6,6 s).
   if (await versucheLokaleAntwort(body, output, renderMarkdown)) return;
+
+  // Live-Daten bei "Nachdenken" (Betreiber 07.09.): die Bruecke haengt ihren
+  // Wetter-/Web-Kontext NUR an die Schnellspur und gibt die bei "gruendlich"
+  // ab — der tiefe Weg bekam nie aktuelle Zahlen und antwortete "Ich habe
+  // keinen Zugriff auf aktuelle Wetterdaten". Der Browser holt sie jetzt
+  // selbst. Fail-safe: ohne Fund bleibt die Frage unveraendert.
+  const frageVorher = String(body?.task || "");
+  body = await mitLiveDaten(body);
+  // UND DIE ZIELE NACHZIEHEN — sonst war die ganze Anreicherung umsonst:
+  // app.js reicht die Endpunkte als LISTE herein (buildChatTargets), und jedes
+  // Ziel traegt seinen eigenen, VOR dieser Zeile eingefrorenen Rumpf. Ohne
+  // dieses Nachziehen geht der alte Rumpf ohne Live-Daten auf die Reise
+  // (Betreiber-Gegenprobe 07.09.: "Wetter mit Nachdenken funktioniert nicht").
+  const frageNachher = String(body?.task || "");
+  if (frageNachher !== frageVorher) url = zieleAnpassen(url, (rumpf) => ({ ...rumpf, task: frageNachher }));
 
   // Ab dem Absenden sichtbar arbeiten — der Server meldet sich erst nach
   // gemessenen 5,75 s (siehe starteWartesignal).
@@ -584,6 +673,58 @@ export async function streamChatAnswer(url, body, output, { renderMarkdown, offl
     output.textContent = "Verbindung zum Server unterbrochen.";
     haengeAktionsKnopf(output, "Erneut versuchen", letzteNutzerfrage(body));
     return;
+  }
+  // TIEFE SPUR AUSGEFALLEN? Dann eine schnelle Antwort statt gar keiner.
+  //
+  // Live gemessen 2026-09-07: Mit "Nachdenken" gibt die Bruecke die Schnellspur
+  // ab (streamFastLane: `if (stufe === "gruendlich") return false`). Danach
+  // bleibt nur der Control-Router — und der meldet derzeit ALLE Modelle als
+  // "degraded" (runtimeAvailable=false). Faellt er durch, antwortet streamModel
+  // mit 503 "Model backend is not configured", weil die Bruecke kein eigenes
+  // Modell hat (modelConfigured=false). Der Nutzer sah nur einen Fehler.
+  //
+  // Ein EINZIGER Rueckfall auf die schnelle Spur bringt eine echte Antwort. Die
+  // Live-Daten bleiben dabei erhalten — sie stecken schon in der Frage.
+  // Jeder Server-Ausfall zaehlt (500/502/503/504) — nicht nur die zwei, die
+  // heute gemessen wurden. Der Rueckfall kostet eine Anfrage und kann nur
+  // helfen; bleibt auch er erfolglos, kommt unten die ehrliche Meldung.
+  if (response && !response.ok && response.status >= 500 && response.status <= 504
+      && String(body?.preferences?.stufe || "") === "gruendlich") {
+    // "schnell", NICHT "auto" — das ist der Unterschied zwischen Antwort und
+    // Fehler. Die Bruecke versucht die Schnellspur nur, wenn
+    // `fastTask = stufe === "schnell" || (!coding && !shouldSearchWeb(task))`
+    // zutrifft. Bei einer Such- oder Nachrichtenfrage ist shouldSearchWeb wahr,
+    // mit "auto" bliebe fastTask also FALSCH und der Rueckfall liefe erneut in
+    // die tote tiefe Spur. "schnell" macht fastTask immer wahr, und
+    // streamFastLane gibt bei "schnell" nie ab.
+    const leichter = { ...body, preferences: { ...(body.preferences || {}), stufe: "schnell" } };
+    const leichtereZiele = zieleAnpassen(url, (rumpf) => ({
+      ...rumpf,
+      preferences: { ...(rumpf.preferences || {}), stufe: "schnell" }
+    }));
+    try {
+      response = await fetchStreamWithRetry(leichtereZiele, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...bridgeAuthHeaders() },
+        body: JSON.stringify(leichter)
+      });
+    } catch { /* faellt unten in die normale Fehlermeldung */ }
+  }
+
+  // Abgelaufener kurzer Ausweis (401/403): LAUTLOS aus der gueltigen Sitzung
+  // einen frischen holen und die Anfrage GENAU einmal wiederholen, statt den
+  // Nutzer auszuloggen. Erst wenn auch das scheitert, kommt der Anmelde-Hinweis.
+  if (response && !response.ok && (response.status === 401 || response.status === 403)) {
+    const frisch = await erneuereZugangsToken();
+    if (frisch) {
+      try {
+        response = await fetchStreamWithRetry(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...bridgeAuthHeaders() },
+          body: JSON.stringify(body)
+        });
+      } catch { /* faellt unten in die normale Fehlermeldung */ }
+    }
   }
   if (!response.ok || !response.body) {
     stoppeWartesignal();

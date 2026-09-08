@@ -190,7 +190,7 @@
 // in docs/frontend/SW_VERSIONSVERLAUF_2026-08.md, so wie es der Kopf dieser
 // Datei verlangt (Touch-Ziele auf 44 px, Startseite und alle 16 Ansichten).
 // Wer den naechsten Stand sucht, schaut also besser dorthin als hierher.
-const CACHE_NAME = "smejj-shell-v799";
+const CACHE_NAME = "smejj-shell-v824";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -205,6 +205,8 @@ const SHELL = [
   "/assets/panel-layout.js",
   "/assets/local-workspace-surface.js",
   "/assets/maus-panel.js",
+  // Wiedergabe der Maus-Laeufe (maus-panel.js bettet maus-replay.html ein).
+  "/assets/maus-replay.js",
   "/assets/view-routes.js",
   "/assets/ai/providers-catalog.js",
   "/assets/account-sessions.js",
@@ -313,6 +315,9 @@ const SHELL = [
   "/assets/voice-premium-tts.js",
   "/assets/voice-warmup.js",
   "/assets/ai/chat-stream.js",
+  // Live-Daten im Browser (Nachdenken holt Wetter/Websuche selbst, 07.09.).
+  "/assets/ai/live-daten.js",
+  "/assets/chat-bridge-weather.js",
   "/assets/ai/chat-schritte-anzeige.js",
   "/assets/ai/strom-stillstand.js",
   "/assets/ai/fetch-retry.js",
@@ -356,6 +361,10 @@ const SHELL = [
   "/assets/code-anhaenge.js",
   "/assets/code-nachladen.js",
   "/assets/code-modell-menue.js",
+  // Schlankes Dock am Handy (2026-09-07, Parallelsitzung), per import() aus chat-actions-menu.js.
+  "/assets/mobil-dock.js",
+  // Ansichten nach dem Login am Handy (2026-09-07, Parallelsitzung), per import() aus mobil-dock.js.
+  "/assets/mobil-ansichten.js",
   "/assets/kamera.js",
   "/assets/fuehrung.js",
   "/assets/willkommen-fokus.js",

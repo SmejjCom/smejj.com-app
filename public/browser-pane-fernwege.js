@@ -10,14 +10,17 @@
 // Dieselbe Kennung wie in browser-pane.js: zwei Spezifizierer laden dasselbe
 // Modul ZWEIMAL, jede Haelfte mit eigenem Zustand (Befund vom 2026-09-06,
 // tests/module-queries.test.mjs).
-import { buildLiveBrowserHtml, buildRemoteBrowserHtml } from "./browser-pane-render.js?v=browser-pane-20260905-5";
+import { buildLiveBrowserHtml, buildRemoteBrowserHtml } from "./browser-pane-render.js?v=browser-pane-20260906-6";
 import { clampViewport, shortHost } from "./browser-pane-adressen.js?v=browser-pane-20260820-2";
 
 export function baueFernwege({ sessionClient, refs, routes, setFrame, setFallbackFrame, commitHistory, showHint, persistTabs, render }) {
   function remoteBrowserViewport() {
     const rect = refs.content?.getBoundingClientRect?.();
     const width = clampViewport(rect?.width, 360, 1920, 1365);
-    const height = clampViewport((rect?.height || 0) - 38, 360, 1200, 900);
+    // Kein Abzug mehr: die 38 px galten der Kopfzeile im Rahmen, die es seit
+    // dem 17.08. nicht mehr gibt. Mit dem Abzug war das Bild 38 px kuerzer als
+    // die Buehne — Rand statt Seite (Betreiber-Befund 05.09.).
+    const height = clampViewport(rect?.height || 0, 360, 1200, 900);
     return { width, height };
   }
 
@@ -36,7 +39,7 @@ export function baueFernwege({ sessionClient, refs, routes, setFrame, setFallbac
     });
     tab.status = "ready";
     commitHistory(tab, tab.url, push);
-    showHint("Live-Browser verbunden — klicken, tippen und scrollen wie in Chrome.");
+    // KEIN Hinweis mehr (Betreiber 2026-09-07): die Seite steht da — das ist die Meldung.
     persistTabs();
     render();
     return true;
@@ -75,7 +78,7 @@ export function baueFernwege({ sessionClient, refs, routes, setFrame, setFallbac
     });
     tab.status = "ready";
     commitHistory(tab, tab.url, push);
-    showHint("Remote-Browser-Worker hat die Seite gerendert.");
+    // KEIN Hinweis mehr — Erfolg zeigt sich an der Seite selbst.
     persistTabs();
     render();
     return true;

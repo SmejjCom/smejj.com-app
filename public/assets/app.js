@@ -3,10 +3,10 @@ import { PROJECT_ROLES, createLocalWorkspace } from "/assets/storage/index.js";
 import { AI_MODES, createAiRouter } from "/assets/ai/index.js";
 import { Icons, closeModal, openModal, renderChatMarkdown, renderEmptyState, setButtonIcon, showToast } from "./components.js?v=b48";
 import { bindPasteAttach, composePastedTask } from "./composer-paste-attach.js?v=4";
-import { bindeSuchNachlader, holeSuche, ladeSucheFuerAnsicht } from "./such-nachladen.js?v=5";
+import { bindeSuchNachlader, holeSuche, ladeSucheFuerAnsicht } from "./such-nachladen.js?v=6";
 import { initWorkspaceBridge } from "./workspace-bridge.js";
 import { ladeBeiAnsicht, ladeBeiKlick } from "./nachladen.js?v=1";
-import { holeSendepfad } from "./sendepfad-nachladen.js?v=8";
+import { holeSendepfad } from "./sendepfad-nachladen.js?v=19";
 import { applyPanelCompact, syncLeftMenuState } from "./left-menu-state.js";
 import { initPanelBackdrop } from "./panel-backdrop.js?v=panel-backdrop-20260803";
 import { buildChatTargets, buildRequestHistory } from "./chat-history-context.js";
@@ -16,7 +16,7 @@ import { bindUploads, validateBrowserUpload } from "./uploads-surface.js?v=b39u"
 import { bindProjects, refreshProjectList, selectedProjectId } from "./projects-surface.js";
 import { PANEL_WIDTHS, bindPanelResize, getPanelWidth, restorePanelWidths, setPanelOpen, setPanelWidth } from "./panel-layout.js?v=4";
 import { bindLocalWorkspace, ensureProject, refreshLocalWorkspaceStatus } from "./local-workspace-surface.js";
-import { ALIAS_PATHS, PATH_VIEWS, VIEW_ALIASES, VIEW_PATHS, getViewFromUrl, updateCanonical } from "./view-routes.js?v=b50";
+import { ALIAS_PATHS, PATH_VIEWS, VIEW_ALIASES, VIEW_PATHS, getViewFromUrl, updateCanonical } from "./view-routes.js?v=b51";
 import { applyViewTitle } from "./view-title.js";
 import { getJson, postJson } from "./shared/http-json.js";
 // Kleine DOM-, Speicher- und Anzeige-Helfer. Herausgeloest am 07.09., weil
@@ -38,6 +38,7 @@ const state = {
 
 const workspace = createLocalWorkspace();
 const aiRouter = createAiRouter();
+let taskIndicatorTimer;
 // Antwortstufen (Konkurrenz-Radar V3, Freigabe Betreiber 2026-08-06,
 // Container-Neustart 2026-08-08): der Chip zeigt normalen Nutzern nur noch
 // "Schnell/Auto/Gruendlich" statt Modellnamen. Modellnamen (GLM-5.2, Kimi K2.7,
@@ -68,7 +69,7 @@ function normalizeStufe(value) {
 const MODEL_MODES = Object.freeze({
   // Nur echte Modelle im Picker; Verbindungsarten (local browser, BYOK)
   // werden unter Einstellungen -> KI-Provider (/ai) verwaltet.
-  "smejj 1.0": AI_MODES.disabled,
+  "smejj 1.0": AI_MODES.disabled, "smejj 1.1": AI_MODES.disabled, "smejj 1.2": AI_MODES.disabled, "smejj 1.3": AI_MODES.disabled, "Auto": AI_MODES.disabled, // 07.09.: Name reist als body.model; 1.2/1.3 tiefe Spur, "Auto" = Server-Router waehlt + Ersatzkette
   "GLM-5.2": AI_MODES.glm52Vault, "Kimi K2.7": AI_MODES.kimiK27Vault,
   // K3 hat keinen Modell-Vault (nur API) und laeuft ueber einen Anbieter-Key —
   // darum byok wie Cline, nicht *Vault wie GLM-5.2 und K2.7.
@@ -80,7 +81,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
-const holeFlaechen = ladeBeiAnsicht(["start", "chat"], () => import("./premium-surfaces.js?v=b47u").then((m) => (m.enhancePremiumSurfaces(), m)));
+const holeFlaechen = ladeBeiAnsicht(["start", "chat"], () => import("./premium-surfaces.js?v=b47v").then((m) => (m.enhancePremiumSurfaces(), m)));
 // Google-Login gehoert zur Profilseite — laedt erst beim Verlassen von Start/Chat.
 const holeGoogleLogin = ladeBeiAnsicht(["start", "chat"], () => import("./google-login.js")
   .then((m) => m.initGoogleLogin({ $, state, writeOutput, refreshSessionStatus }))
@@ -233,6 +234,11 @@ function applySelectedModel(model, { persist = true, quiet = false } = {}) {
   if (selectedModel === "smejj 1.0") {
     const stufe = state.settings.stufe || "auto";
     if (button) button.textContent = STUFE_LABEL[stufe] || "smejj 1.0";
+  } else if (selectedModel === "Cline") {
+    // "Auto" laeuft ueber den Cline-Router (cline.model=auto) -> Chip zeigt "Auto",
+    // nicht "Cline" (Betreiber-Screenshot 07.09.); Alt-Katalogmodell behaelt Namen.
+    const clineWahl = localStorage.getItem("smejj.cline.model.v1") || "";
+    if (button) button.textContent = clineWahl === "auto" ? "Auto" : selectedModel;
   } else {
     if (button) button.textContent = selectedModel;
   }
@@ -573,7 +579,7 @@ function updateAiStatus(result) {
 }
 
 async function refreshLiveSystemStatus() {
-  refreshLocalWorkspaceStatus(projektAbhaengigkeiten()); try { const h = await getJson(CLIENT_ROUTES.api.health); if (h) { if (h.storage) setText("#storageStatusText", lesbarerStatus(h.storage)); if (h.idrive) setText("#idriveStatusText", lesbarerStatus(h.idrive)); if (h.aiMode) setText("#aiModeText", lesbarerStatus(h.aiMode)); if (h.cost) setText("#costStatusText", lesbarerStatus(h.cost)); } const s = await getJson(CLIENT_ROUTES.api.storageStatus); if (s?.configured) setText("#idriveStatusText", `IDrive e2 (${s.bucket || "smejj-app"}) OK`); } catch {}
+  refreshLocalWorkspaceStatus(projektAbhaengigkeiten()); try { const h = await getJson(CLIENT_ROUTES.api.health); if (h) { if (h.storage) setText("#storageStatusText", lesbarerStatus(h.storage)); if (h.idrive) setText("#idriveStatusText", lesbarerStatus(h.idrive)); if (h.aiMode) setText("#aiModeText", lesbarerStatus(h.aiMode)); if (h.cost) setText("#costStatusText", lesbarerStatus(h.cost)); } const s = await getJson(CLIENT_ROUTES.api.storageStatus); if (s?.configured) { setText("#idriveStatusText", `IDrive e2 (${s.bucket || "smejj-app"}) OK`); setText("#idriveStatusChip", "IDrive: e2 OK"); } else { setText("#idriveStatusText", "IDrive e2: nicht eingerichtet"); setText("#idriveStatusChip", "IDrive: nicht eingerichtet"); } } catch { setText("#idriveStatusText", "IDrive e2: Status nicht abrufbar"); setText("#idriveStatusChip", "IDrive: Status offen"); }
 }
 
 function bindTools() {

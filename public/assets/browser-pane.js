@@ -3,7 +3,7 @@
 // Remote-Session (klicken/tippen/scrollen wie in Chrome); Details in
 // browser-pane-session.js. Fallback bleibt die Standbild-Ansicht.
 // Split-View: links bleibt der Arbeitsbereich, rechts oeffnet sich der Browser.
-// Bis zu 7 Tabs, Zurueck/Vor/Neu laden, URL- und Suchleiste.
+// Tabs ohne Nutzer-Limit (Betreiber 2026-09-06), Zurueck/Vor/Neu laden, URL- und Suchleiste.
 // Rendering: direkt einbettbare Seiten laufen im Original-Iframe (volles JS),
 // blockierende Seiten (Google, GitHub, ...) kommen als sichere, serverseitig
 // umgeschriebene Ansicht ueber /api/browser/fetch. Fail-closed: ohne Server
@@ -12,23 +12,23 @@
 // abweichende Spezifizierer liess config.js ein zweites Mal laden — zwei Modul-
 // instanzen mit getrennten CLIENT_ROUTES.
 import { CLIENT_ROUTES } from "./config.js";
-import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260905-5";
+import { baueFernwege } from "./browser-pane-fernwege.js?v=browser-pane-20260906-6";
 import {
   buildExternalFallbackHtml,
   buildLiveBrowserHtml,
   buildRemoteBrowserHtml
-} from "./browser-pane-render.js?v=browser-pane-20260905-5";
-export { buildExternalFallbackHtml, buildRemoteBrowserHtml, isRemoteScreenshot } from "./browser-pane-render.js?v=browser-pane-20260905-5";
-import { createBrowserSessionClient } from "./browser-pane-session.js?v=browser-pane-20260905-7";
+} from "./browser-pane-render.js?v=browser-pane-20260906-6";
+export { buildExternalFallbackHtml, buildRemoteBrowserHtml, isRemoteScreenshot } from "./browser-pane-render.js?v=browser-pane-20260906-6";
+import { createBrowserSessionClient } from "./browser-pane-session.js?v=browser-pane-20260906-4";
 // Chrome-Abgleich (2026-08-17): Tableiste, Adressvorschlaege und Fehlerseite
 // liegen in eigenen Modulen — diese Datei steht bei 795 von 800 Zeilen.
 import { zeichneTableiste } from "./browser-pane-tableiste.js?v=browser-pane-20260819-4";
-import { anzeigeAdresse, verdrahtePanelVorschlaege } from "./browser-pane-vorschlaege.js?v=browser-pane-20260709-2";
+import { anzeigeAdresse, verdrahtePanelVorschlaege } from "./browser-pane-vorschlaege.js?v=browser-pane-20260709-3";
 import { zeigeSicherheit, zeigeZoom, zeigeNeuladen } from "./browser-pane-sicherheit.js?v=browser-pane-20260709-2";
 import { zeigeLesezeichen } from "./browser-pane-lesezeichen.js?v=browser-pane-20260709-2";
 import { verdrahtePanelTasten, merkeGeschlossen } from "./browser-pane-tasten.js?v=browser-pane-20260819-4";
 import { verdrahtePanelSuche } from "./browser-pane-suche.js?v=browser-pane-20260709-2";
-import { verdrahteMausKnopf, mausLaeuft } from "./browser-pane-maus.js?v=browser-pane-20260905-7";
+import { verdrahteMausKnopf, mausLaeuft } from "./browser-pane-maus.js?v=browser-pane-20260906-7";
 // Gefunden 2026-08-18 beim Livetest: dieser Import FEHLTE, obwohl init() die
 // Funktion benutzt. Folge war kein kleiner Schoenheitsfehler — browser-pane.js
 // warf beim Laden "baueNachrichtenEmpfang is not defined", das ganze Modul kam
@@ -36,7 +36,7 @@ import { verdrahteMausKnopf, mausLaeuft } from "./browser-pane-maus.js?v=browser
 // gemeldet: alle pruefen den QUELLTEXT, keiner laesst das Modul laufen.
 import { baueNachrichtenEmpfang } from "./browser-pane-nachrichten.js?v=browser-pane-20260709-2";
 let suche = null;
-import { buildErrorPageHtml, buildPaneShellHtml } from "./browser-pane-render.js?v=browser-pane-20260905-5";
+import { buildErrorPageHtml, buildPaneShellHtml } from "./browser-pane-render.js?v=browser-pane-20260906-6";
 // Reine Helfer (2026-08-19 ausgelagert, 800-Zeilen-Regel). Sie werden hier
 // zugleich WEITER EXPORTIERT, damit tests/browser-pane.test.mjs und jeder
 // bisherige Aufrufer sie unveraendert von browser-pane.js bekommt.
@@ -52,7 +52,14 @@ export {
   shouldOpenInRealBrowser, shouldPreferRealBrowserUrl
 };
 
-const MAX_TABS = 7;
+// KEIN NUTZER-LIMIT MEHR (Betreiber 2026-09-06: "7 Webseiten Limit raus nehmen").
+// Chrome kennt keine Tab-Obergrenze; die alte Sieben war ein Rest aus der
+// Zeit, als jeder Tab einen Rahmen samt Bild im Speicher hielt. Die 100 ist
+// nur ein Deckel fuer localStorage und die Tableiste — kein Mensch oeffnet
+// so viele Tabs im Panel, und wer es tut, bekommt weiter den Hinweis statt
+// eines stillen Verlusts. Der ferne Browser haelt ohnehin nur 4 Sitzungen;
+// aeltere Live-Tabs verbinden beim Anklicken neu (onLost).
+const MAX_TABS = 100;
 const TABS_STORAGE_KEY = "smejj.browser.tabs.v1";
 // Die Mitte darf nicht verhungern. Bis 2026-08-22 nahm das Panel stur die halbe
 // Fensterbreite ("50vw"). Es liegt aber per position:fixed UEBER dem Chat, und
@@ -709,7 +716,15 @@ export function render() {
   refs.addTab.disabled = state.tabs.length >= MAX_TABS;
   refs.addTab.title = refs.addTab.disabled ? `Tab-Limit erreicht (${MAX_TABS})` : "Neuer Tab (⌘T)";
 
-  if (document.activeElement !== refs.address) refs.address.value = anzeigeAdresse(active?.url || "");
+  if (document.activeElement !== refs.address) {
+    refs.address.value = anzeigeAdresse(active?.url || "");
+    // ANFANG ZEIGEN. Chrome setzt beim Schreiben von .value den Cursor ans
+    // Ende und rollt das Feld dorthin — auch ohne Fokus (live gemessen
+    // 2026-09-06: scrollLeft 809 direkt nach der Navigation). Bei einer langen
+    // Google-Adresse stand dann nur "88709133371969" in der Leiste, der Host
+    // war unsichtbar. Chrome selbst zeigt immer den Anfang der Adresse.
+    refs.address.scrollLeft = 0;
+  }
   zeigeSicherheit(refs.addressForm, active?.url || "");
   zeigeNeuladen(refs.reload, active?.status === "loading");
   zeigeZoom(refs.addressForm, active?.zoom || 1, () => { const t = activeTab(); if (t) { t.zoom = 1; applyZoom(t); render(); schedulePersist(); } });
@@ -725,10 +740,16 @@ export function render() {
   }
 }
 
+let hintUhr = 0;
 function showHint(text) {
   if (!refs.hint) return;
   refs.hint.textContent = text || "";
   refs.hint.hidden = !text;
+  // Von selbst wieder weg (Betreiber-Bild 2026-09-07): ein Hinweis ist eine
+  // Meldung, kein Dauerzustand. Wer laenger lesen will, hat sechs Sekunden;
+  // Maus-Fortschritt schreibt ohnehin jede Zeile neu.
+  clearTimeout(hintUhr);
+  if (text) hintUhr = setTimeout(() => { if (refs.hint.textContent === text) refs.hint.hidden = true; }, 6000);
 }
 
 // --- Persistenz ---------------------------------------------------------------

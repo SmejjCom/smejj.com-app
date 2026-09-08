@@ -67,8 +67,13 @@ test("Config exposes Browser-Proxy route used by Browser-Pane", () => {
   assert.match(paneJs, /\.\/browser-pane-render\.js\?v=browser-pane-[\w-]+/);
 });
 
-test("Browser-Pane erlaubt maximal 7 Tabs", () => {
-  assert.match(paneJs, /const MAX_TABS = 7;/);
+test("Browser-Pane hat eine Tab-Obergrenze — seit dem 06.09. bei 100", () => {
+  // Die Grenze stand auf 7 und wurde beim Maus-Fluss geloest ("Tab-Limit
+  // raus", 2026-09-06): ein Auftrag, der sich durch viele Seiten arbeitet,
+  // lief sonst gegen die Wand. 100 ist keine Schoenheit, sondern eine
+  // Reissleine gegen Endlosschleifen — GAR KEINE Grenze waere der Fehler.
+  // Der Test haelt deshalb weiter fest, DASS es eine gibt.
+  assert.match(paneJs, /const MAX_TABS = 100;/);
 });
 
 test("Browser-Pane keeps iframe content visible and Enter navigates", () => {

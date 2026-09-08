@@ -229,7 +229,10 @@ test("ein Aussetzer beendet den Auftrag nicht — und kostet keinen Schritt", as
   });
   assert.equal(ergebnis.ok, true);
   assert.equal(anfragen, 2);
-  assert.match(zeilen.join(" "), /fragt noch einmal/);
+  // Wortlaut seit dem Live-Stand: "zweiter Versuch" statt "fragt noch einmal".
+  // Geprueft wird die Zusage, nicht die Formulierung — der Nutzer muss SEHEN,
+  // dass es weitergeht, sonst haelt er den Auftrag fuer haengengeblieben.
+  assert.match(zeilen.join(" "), /zweiter Versuch/);
   // Der Aussetzer darf keinen Schritt verbrauchen: sonst schrumpft das Budget
   // fuer echte Arbeit, obwohl nichts getan wurde.
   assert.ok(zeilen.filter((z) => /^Maus 1\//.test(z)).length >= 2, "der Schritt muss derselbe bleiben");

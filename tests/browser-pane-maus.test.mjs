@@ -46,7 +46,7 @@ test("ein echter Plan aus dem Repo laesst sich uebersetzen", () => {
 });
 
 test("die Beschreibung ist ein Satz fuer Menschen, keine Kennung", () => {
-  assert.match(beschreibe({ action: "navigate", url: "https://smejj.com/" }), /Seite oeffnen/);
+  assert.match(beschreibe({ action: "navigate", url: "https://smejj.com/" }), /Seite öffnen/);
   assert.match(beschreibe({ action: "click", target: { name: "Impressum" } }), /Klicken: Impressum/);
   // Auch in der verschachtelten Form — sonst las der Nutzer waehrend des
   // Laufs "Klicken:" ohne Ziel.
@@ -128,7 +128,7 @@ test("ohne Live-Browser wird ehrlich abgelehnt statt blind losgelaufen", async (
 
   const ohneSeite = await fuehreMausAuftragAus({ auftrag: "x", tab: { sessionId: "s1" }, sende: async () => ({ ok: true }) });
   assert.equal(ohneSeite.ok, false);
-  assert.match(ohneSeite.grund, /Seite oeffnen/);
+  assert.match(ohneSeite.grund, /Seite öffnen/);
 });
 
 // Der Knopf sitzt auf einem reservierten Platzhalter — die Kopfgeometrie

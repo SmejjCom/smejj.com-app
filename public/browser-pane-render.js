@@ -107,7 +107,7 @@ export function buildErrorPageHtml({ url = "", grund = "" } = {}) {
        Einbetters (script-src 'self', kein unsafe-inline) — Inline-Skripte
        hier sterben STUMM. Live gemessen 2026-08-19: Buehne/Worker/Fehlerseite
        unbedienbar. Nie wieder ein Skript-Element ohne src in diese Vorlagen. -->
-  <script src="/assets/browser-stage.js?v=5"></script>
+  <script src="/assets/browser-stage.js?v=7"></script>
 </body>
 </html>`;
 }
@@ -179,7 +179,7 @@ export function buildRemoteBrowserHtml({ url, title, screenshot, reason = "", ca
        Einbetters (script-src 'self', kein unsafe-inline) — Inline-Skripte
        hier sterben STUMM. Live gemessen 2026-08-19: Buehne/Worker/Fehlerseite
        unbedienbar. Nie wieder ein Skript-Element ohne src in diese Vorlagen. -->
-  <script src="/assets/browser-stage.js?v=5"></script>
+  <script src="/assets/browser-stage.js?v=7"></script>
 </body>
 </html>`;
 }
@@ -199,13 +199,18 @@ export function buildLiveBrowserHtml({ url, title, screenshot, viewport = {} } =
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     html,body{height:100%;margin:0;background:#101113;color:#f6f3ee;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    main{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);box-sizing:border-box}
+    /* EINE Gitterzeile. Die Kopfzeile ist seit dem 17.08. weg — die zweite Zeile
+       "auto" blieb stehen, die Buehne rutschte hinein und wurde nur so hoch wie
+       das Bild. Darunter zeigte die leere 1fr-Zeile den dunklen Grund: der
+       Streifen unter der Seite, den der Betreiber am 05.09. sah (im Browser
+       nachgestellt: 213 px bei einem 600 px hohen Bild in 813 px Hoehe). */
+    main{height:100%;display:grid;grid-template-rows:minmax(0,1fr);box-sizing:border-box}
     header{display:flex;align-items:center;gap:10px;min-height:38px;padding:0 10px;border-bottom:1px solid rgba(246,243,238,.12);background:#18191c}
     strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
     header .bp-live-state{color:#9fe7d4;font-size:11px;white-space:nowrap}
     header a{margin-left:auto;color:#9fe7d4;font-size:12px;font-weight:700;text-decoration:none}
     .bp-live-stage{position:relative;overflow:hidden;background:#fff;outline:none;cursor:default}
-    .bp-live-stage img{display:block;width:100%;height:100%;object-fit:contain;background:#fff;user-select:none;-webkit-user-drag:none}
+    .bp-live-stage img{display:block;width:100%;height:100%;object-fit:contain;object-position:center top;background:#fff;user-select:none;-webkit-user-drag:none}
     .bp-live-stage.is-busy img{opacity:.72;transition:opacity .15s ease}
     /* JS-Dialog der Seite (alert/confirm/prompt). Er liegt UEBER dem Bild,
        weil die Seite dahinter wirklich blockiert ist — ein halbdurchsichtiger
@@ -256,7 +261,7 @@ export function buildLiveBrowserHtml({ url, title, screenshot, viewport = {} } =
        Einbetters (script-src 'self', kein unsafe-inline) — Inline-Skripte
        hier sterben STUMM. Live gemessen 2026-08-19: Buehne/Worker/Fehlerseite
        unbedienbar. Nie wieder ein Skript-Element ohne src in diese Vorlagen. -->
-  <script src="/assets/browser-stage.js?v=5"></script>
+  <script src="/assets/browser-stage.js?v=7"></script>
 </body>
 </html>`;
 }
@@ -278,7 +283,7 @@ function escapeHtml(value) {
  * Zustand. Die Werte kommen als Argumente herein, damit hier nichts ueber die
  * Panel-Logik gewusst werden muss.
  */
-export function buildPaneShellHtml({ neuerTabTitel = "Neuer Tab", maxTabs = 7 } = {}) {
+export function buildPaneShellHtml({ neuerTabTitel = "Neuer Tab", maxTabs = 100 } = {}) {
   return `
     <div class="bp-tabstrip" role="tablist" aria-label="Browser Tabs">
       <div class="bp-tab-left">
@@ -287,7 +292,7 @@ export function buildPaneShellHtml({ neuerTabTitel = "Neuer Tab", maxTabs = 7 } 
       <div class="bp-tabs"></div>
       <div class="bp-tab-right">
         <button class="bp-maus" type="button" title="Maus beauftragen — sie bedient diesen Browser" aria-label="Maus beauftragen">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3l6.5 17 2.5-7 7-2.5z"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="5"/><path d="M12 7v3"/></svg>
         </button>
         <span class="bp-tab-spacer" aria-hidden="true"></span>
       </div>
@@ -329,7 +334,7 @@ export function buildPaneShellHtml({ neuerTabTitel = "Neuer Tab", maxTabs = 7 } 
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg>
         </div>
         <strong>${neuerTabTitel}</strong>
-        <span>Suchen oder URL eingeben — bis zu ${maxTabs} Tabs.</span>
+        <span>Suchen oder URL eingeben — so viele Tabs, wie du brauchst.</span>
       </div>
     </div>`;
 }

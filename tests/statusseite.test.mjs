@@ -24,10 +24,16 @@ const css = fs.readFileSync("public/static-pages.css", "utf8");
 test("die Statusseite liegt ausserhalb des Anmelde-Gates — aber nur sie", () => {
   const routen = fs.readFileSync("public/view-routes.js", "utf8");
   assert.match(gate, /\/\^\\\/status\\\.html\$\//, "PUBLIC_PATHS muss genau /status.html freigeben");
-  // Die App hat unter "/status" eine eigene, anmeldepflichtige Ansicht. Ein
-  // Praefix-Muster wuerde sie mit oeffnen — deshalb das Dollarzeichen oben.
-  assert.match(routen, /tools: "\/status"/, "Annahme geprueft: /status ist eine App-Ansicht");
-  assert.doesNotMatch(gate, /\/\^\\\/status\//, "Praefix-Muster wuerde die App-Ansicht /status oeffnen");
+  // Die anmeldepflichtige App-Ansicht liegt seit dem 2026-09-06 unter
+  // "/systemzustand", NICHT mehr unter "/status": GitHub Pages liefert
+  // status.html mit HTTP 200 aus, der SPA-Fallback kam also nie zum Zug und
+  // die Ansicht war unter /status gar nicht erreichbar (live gemessen).
+  // Das Dollarzeichen oben bleibt trotzdem Pflicht — ein Praefix-Muster
+  // wuerde alles unter /status/ mit oeffnen.
+  assert.match(routen, /tools: "\/systemzustand"/, "Annahme geprueft: die App-Ansicht liegt unter /systemzustand");
+  assert.doesNotMatch(gate, /\/\^\\\/status\//, "Praefix-Muster wuerde alles unter /status/ oeffnen");
+  // Und die neue Adresse darf das Gate erst recht nicht freigeben.
+  assert.doesNotMatch(gate, /systemzustand/, "/systemzustand ist anmeldepflichtig und gehoert NICHT in PUBLIC_PATHS");
 });
 
 test("Seite und Skript liegen im Precache", () => {

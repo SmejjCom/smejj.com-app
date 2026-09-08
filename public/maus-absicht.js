@@ -42,8 +42,8 @@
 // Dann zeigte activeTab() auf ein leeres Panel und starteMausLauf() meldete
 // ewig "Der Browser ist noch nicht bereit". Nichts waere kaputt zu sehen,
 // alles waere kaputt.
-const PANEL = "./browser-pane.js?v=browser-pane-20260906-1";
-const PANEL_MAUS = "./browser-pane-maus.js?v=browser-pane-20260905-7";
+const PANEL = "./browser-pane.js?v=browser-pane-20260906-11";
+const PANEL_MAUS = "./browser-pane-maus.js?v=browser-pane-20260906-7";
 
 async function holePanel() {
   const [pane, maus] = await Promise.all([import(PANEL), import(PANEL_MAUS)]);
@@ -196,7 +196,7 @@ export function deuteBrueckenZustand(zustand, { installiert = true } = {}) {
 }
 
 /**
- * Oeffnet das Ziel — auch wenn das Panel seine sieben Taebe schon voll hat.
+ * Oeffnet das Ziel — auch wenn das Panel seinen Tab-Deckel (MAX_TABS) erreicht hat.
  *
  * WARUM ES DAS BRAUCHT (live gemessen 2026-08-18 im Browser des Betreibers):
  * openBrowserRequest() gibt false zurueck, wenn addTab() wegen MAX_TABS nichts
@@ -305,8 +305,13 @@ const ENDUNGEN = [
   "pl", "se", "dk", "no", "fi", "cz", "pt", "gr", "ru", "jp", "cn", "kr", "in", "br", "ca",
   "au", "mx", "tr", "shop", "app", "dev", "info", "news", "tv", "me", "online", "store", "blog"
 ].join("|");
+// JEDE Laenderendung zaehlt (Betreiber 2026-09-06, 22:21: "con.ax registrieren"
+// wurde nicht als Adresse erkannt — .ax ist Aland — und die Maus fragte "WO",
+// statt loszulegen). Zwei Buchstaben nach dem Punkt sind eine Endung, sofern
+// davor ein echtes Wort mit mindestens zwei Zeichen steht: so bleiben "z.B.",
+// "d.h." und "u.a." draussen, "con.ax" und "web.de" kommen durch.
 const ADRESSE = new RegExp(
-  `(https?://)?(www\\.)?([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+(${ENDUNGEN})(?![a-z])(/[^\\s"'<>]*)?`,
+  `(https?://)?(www\\.)?([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)*[a-z0-9][a-z0-9-]*[a-z0-9]\\.(${ENDUNGEN}|[a-z]{2})(?![a-z])(/[^\\s"'<>]*)?`,
   "i"
 );
 
@@ -495,9 +500,14 @@ async function sammleVorlagen() {
 // waeren aber nur Rauschen — die eine Wiederholung filtern wir.
 export function baueZeilenschreiber(ausgabe) {
   let letzte = "";
+  // Der Stamm einer Zeile: alles vor dem Sekundenzaehler " (7 s)". Zwei
+  // Zeilen mit gleichem Stamm sind DIESELBE Zeile zu verschiedenen Zeiten —
+  // sie wird ersetzt, nicht angehaengt (Sekundenzaehler der Maus, 06.09.).
+  const stamm = (z) => z.replace(/ \(\d+ s\)$/, "");
   return (text) => {
     const zeile = String(text || "").trim();
     if (!zeile || zeile === letzte) return;
+    const ersetzt = Boolean(letzte) && stamm(zeile) === stamm(letzte);
     letzte = zeile;
     if (!ausgabe) return;
     // addEntry() setzt fuer die leere Antwort die Denkpunkte als innerHTML.
@@ -505,6 +515,12 @@ export function baueZeilenschreiber(ausgabe) {
     if (ausgabe.dataset?.thinking) {
       ausgabe.textContent = "";
       delete ausgabe.dataset.thinking;
+    }
+    if (ersetzt && ausgabe.textContent) {
+      const zeilen = String(ausgabe.textContent).split("\n");
+      zeilen[zeilen.length - 1] = zeile;
+      ausgabe.textContent = zeilen.join("\n");
+      return;
     }
     ausgabe.textContent = ausgabe.textContent ? `${ausgabe.textContent}\n${zeile}` : zeile;
   };
