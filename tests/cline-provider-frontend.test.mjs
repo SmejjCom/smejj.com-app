@@ -96,7 +96,20 @@ test("Cline-Pfad loescht den Wartetext erst beim ersten Text, nicht vor dem Abru
   const cline = src.slice(src.indexOf("async function runClineChat"), src.indexOf("// Generischer BYOK-Anbieter"));
   assert.doesNotMatch(cline, /let answer = "";\s*output\.textContent = "";/, "kein Leeren der Blase vor dem Strom");
   assert.match(cline, /if \(!answer\) clearThinking\(\);\s*answer \+= delta;/, "Wartetext faellt beim ersten Delta");
-  for (const pfad of ["nichtAngemeldetText", "Automatische Modellwahl", "(leere Antwort)", "Cline-Fehler"]) {
+
+  // Und der Gegenbeweis zur Zeile oben: der Nicht-Anmelde-Fehlweg der Auto-Wahl
+  // darf den Wartetext gerade NICHT wegraeumen, sondern gibt an den Server ab.
+  const autoWahl = cline.slice(cline.indexOf("if (autoAktiv())"), cline.indexOf("const ausweis ="));
+  assert.match(autoWahl, /if \(wahl\.fehler === "anmeldung"\)[\s\S]{0,120}clearThinking\(\)/,
+    "nur die abgelaufene Anmeldung raeumt den Wartetext weg");
+  assert.match(autoWahl, /return false;/, "jeder andere Grund gibt an den Server-Weg ab");
+  // "Automatische Modellwahl" steht seit 2026-09-07 (7fc40b9) NICHT mehr in
+  // dieser Liste: die Sackgassen-Meldung wurde bewusst geloescht. Scheitert die
+  // Auto-Wahl aus einem anderen Grund als abgelaufener Anmeldung, uebernimmt
+  // lautlos der Server-Weg mit dem Haus-Modell — der Wartetext MUSS dann stehen
+  // bleiben, denn es kommt noch eine Antwort. Der Begriff steht heute nur noch
+  // im Kommentar; ihn weiter zu verlangen pruefte einen Kommentar, nicht Verhalten.
+  for (const pfad of ["nichtAngemeldetText", "(leere Antwort)", "Cline-Fehler"]) {
     const i = cline.indexOf(pfad);
     assert.ok(i > 0 && cline.slice(Math.max(0, i - 200), i).includes("clearThinking()"), `Fehlerweg '${pfad}' raeumt den Wartetext weg`);
   }

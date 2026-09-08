@@ -66,20 +66,20 @@
       "finger": "9c5bf7dca3e34d07"
     },
     "panel-layout.js": {
-      "marke": "4",
-      "finger": "cd2f77cbb93ee212"
+      "marke": "6",
+      "finger": "d721d9b230859aec"
     },
     "view-routes.js": {
       "marke": "b50",
       "finger": "86a9acdf00a6bf97"
     },
     "premium-surfaces.js": {
-      "marke": "b47u",
-      "finger": "64565d4f7b608780"
+      "marke": "b47w",
+      "finger": "5cfd7fcd668b0611"
     },
     "composer-tools.js": {
       "marke": "werkzeuge-19",
-      "finger": "8b88f9da661051df"
+      "finger": "7f5c14921d712529"
     },
     "voice-landing.js": {
       "marke": "emojifrei-20260825x",
@@ -135,7 +135,7 @@
     },
     "browser-pane.js": {
       "marke": "browser-pane-20260906-1",
-      "finger": "0308f6a434d95dd8"
+      "finger": "6ca5bbedfa2455b9"
     },
     "browser-pane-backdrop.js": {
       "marke": "2",
@@ -146,8 +146,8 @@
       "finger": "95cdbdfbc4f34b9a"
     },
     "browser-pane-render.js": {
-      "marke": "browser-pane-20260905-5",
-      "finger": "8e98443fc2b78931"
+      "marke": "browser-pane-20260905-7",
+      "finger": "fcf48d6c9f40f06a"
     },
     "browser-pane-adressen.js": {
       "marke": "browser-pane-20260820-2",
@@ -166,12 +166,12 @@
       "finger": "2c9eb269b33cc732"
     },
     "browser-pane-fernwege.js": {
-      "marke": "browser-pane-20260905-5",
-      "finger": "1f4d56b7c69b3aad"
+      "marke": "browser-pane-20260905-7",
+      "finger": "60f4558daa51494a"
     },
     "browser-pane-session.js": {
-      "marke": "browser-pane-20260905-7",
-      "finger": "15fc508a1ec37a98"
+      "marke": "browser-pane-20260905-9",
+      "finger": "610208e89f709d5b"
     },
     "browser-pane-vorschlaege.js": {
       "marke": "browser-pane-20260709-2",
@@ -194,8 +194,8 @@
       "finger": "03919cd71d3fe05d"
     },
     "browser-pane-maus.js": {
-      "marke": "browser-pane-20260905-7",
-      "finger": "bc54cd01259e1f3a"
+      "marke": "browser-pane-20260905-9",
+      "finger": "07b013c954ddd5c4"
     },
     "browser-pane-nachrichten.js": {
       "marke": "browser-pane-20260709-2",
@@ -210,8 +210,8 @@
       "finger": "181075d690bb74f0"
     },
     "chat-actions-menu.js": {
-      "marke": "5",
-      "finger": "fd6c8ceab609ec86"
+      "marke": "9",
+      "finger": "b3cd9e327a9d9fca"
     },
     "voice-speech-queue.js": {
       "marke": "emojifrei-20260825",
@@ -270,8 +270,8 @@
       "finger": "a7df61a11ed0be38"
     },
     "anhang-pdf-text.js": {
-      "marke": "3",
-      "finger": "644a30a74b8f61dd"
+      "marke": "2",
+      "finger": "582ab7d01baaa58d"
     },
     "anhang-office-text.js": {
       "marke": "1",
@@ -298,8 +298,8 @@
       "finger": "e91ca1252b24edb7"
     },
     "composer-plus-menu.js": {
-      "marke": "werkzeuge-10",
-      "finger": "6d26716c99faf8f6"
+      "marke": "werkzeuge-12",
+      "finger": "5f3a314dd8c9ba09"
     },
     "frame-guard.js": {
       "marke": "1",
@@ -334,16 +334,16 @@
       "finger": "1a918591ef019f34"
     },
     "arbeitsflaeche.js": {
-      "marke": "3",
-      "finger": "ccd3a583a3e29c6f"
+      "marke": "5",
+      "finger": "5800803325a35c3d"
     },
     "spur-schalter.js": {
       "marke": "9",
       "finger": "9c20b31fb9a63a08"
     },
     "spur-start.js": {
-      "marke": "b48",
-      "finger": "902fde81388ff584"
+      "marke": "b50",
+      "finger": "2c4d6890d726db31"
     },
     "code-nachladen.js": {
       "marke": "17",
@@ -354,12 +354,12 @@
       "finger": "0667a98555341525"
     },
     "app.js": {
-      "marke": "b141",
-      "finger": "20d1624d164224b9"
+      "marke": "b143",
+      "finger": "ba3394e9d5484984"
     },
     "pwa-schnellstart.js": {
-      "marke": "6",
-      "finger": "d703b7354f0471e3"
+      "marke": "8",
+      "finger": "7e7de7c6db82d46b"
     },
     "cline-model-menu.js": {
       "marke": "cline-submenu-20260825-6",
@@ -382,8 +382,8 @@
       "finger": "99d844fa8f16e214"
     },
     "chat-actions.js": {
-      "marke": "b47",
-      "finger": "e847cda974db64d0"
+      "marke": "b52",
+      "finger": "8b8ba208c5e0fe3f"
     },
     "panel-status.js": {
       "marke": "1",
@@ -407,7 +407,7 @@
     },
     "maus-absicht.js": {
       "marke": "24",
-      "finger": "fe2791e43e6ac1b5"
+      "finger": "5864c906a023e70f"
     },
     "maus-replay.js": {
       "marke": "maus-replay-20260715-3",
@@ -418,8 +418,8 @@
       "finger": "6b08b7a49a30bec1"
     },
     "settings-surface.js": {
-      "marke": "b64",
-      "finger": "e30462c16796a8c6"
+      "marke": "b63",
+      "finger": "dc9f6b9329bad881"
     },
     "account-privacy.js": {
       "marke": "b48",

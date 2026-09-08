@@ -14,6 +14,7 @@ import { createRateLimiter } from "../http/rateLimiter.js";
 import { GRANT, can } from "../admin/adminRoles.js";
 import { resolveAdminActor } from "../admin/adminAuth.js";
 import { modellUebersicht } from "../admin/opsModelle.js";
+import { modellbestandUebersicht } from "../admin/opsModellbestand.js";
 import { jobUebersicht } from "../admin/opsJobs.js";
 import { workerUebersicht } from "../admin/opsWorker.js";
 import { deployUebersicht } from "../admin/opsDeploy.js";
@@ -46,7 +47,8 @@ const GESTARTET_MS = Date.now();
 
 const BEREICHE = Object.freeze([
   "cockpit", "modelle", "jobs", "worker", "deploy", "speicher", "kontingent", "wissen", "sprachen",
-  "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch", "auslieferung", "tagesmappe"
+  "experimente", "email", "analytik", "autopiloten", "evolution", "verbrauch", "auslieferung", "tagesmappe",
+  "modellbestand"
 ]);
 
 export async function handleAdminOpsRoute(req, url, res, { env = process.env } = {}) {
@@ -78,6 +80,17 @@ export async function handleAdminOpsRoute(req, url, res, { env = process.env } =
     if (bereich === "") return privateJson(res, 200, { ok: true, bereiche: BEREICHE }), true;
     if (bereich === "cockpit") return privateJson(res, 200, await cockpitUebersicht({ env, mitNetz: true, startzeitMs: GESTARTET_MS })), true;
     if (bereich === "modelle") return privateJson(res, 200, modellUebersicht({ env })), true;
+    // Modul G2: was WIRKLICH in e2 liegt, plus die Motoren dahinter. Modul G
+    // oben kennt nur die Registry und sieht Dateien nicht, die kein Motor
+    // laden kann - genau die kosten aber Speichergebuehr.
+    // kannSchalten kommt aus dem Recht des Akteurs, nicht aus dem Modul:
+    // ohne models.write blendet die Konsole alle Knoepfe aus, statt tote
+    // Knoepfe zu zeigen (Befund "Aktionsleisten-Blindgaenger", 28.07.).
+    if (bereich === "modellbestand") {
+      const bestand = await modellbestandUebersicht({ env });
+      bestand.kannSchalten = can(actor.role, "models.write") === GRANT.allow;
+      return privateJson(res, 200, bestand), true;
+    }
     if (bereich === "jobs") return privateJson(res, 200, jobUebersicht({ limit: grenze(url) })), true;
     if (bereich === "worker") return privateJson(res, 200, await workerUebersicht({ env })), true;
     if (bereich === "deploy") return privateJson(res, 200, deployUebersicht({ env, startzeitMs: GESTARTET_MS })), true;

@@ -121,7 +121,11 @@ const CHECK_EXTENSIONS = new Set([".js", ".mjs", ".ts", ".md", ".json", ".html",
 // ratchet-gepruefte Wurzel 1:1; check:assets/auslieferung-lock beweisen die
 // Byte-Gleichheit) — dieselbe Zeile doppelt zu zaehlen ist kein zweiter
 // Befund, sondern Laerm (Vollaudit 2026-08-25).
-const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/(assets\/)?start-styles\.css$/, /^public\/assets\//];
+// docs/benchmarks/ ist ausgenommen (2026-09-08): dort stehen AUFGEZEICHNETE
+// Modellantworten. Schreibt ein Modell den Namen falsch, ist das ein Messwert
+// und kein Fliesstext. Wer ihn "korrigiert", faelscht ein Messprotokoll — und
+// die Namensregel soll unsere eigene Sprache pruefen, nicht die des Modells.
+const IGNORED_PATHS = [/^node_modules\//, /^\.pnpm-store\//, /^tests\/fixtures\//, /^pnpm-lock/, /^backups\//, /^UPLOAD-ZU-GITHUB\//, /^public\/(assets\/)?start-styles\.css$/, /^public\/assets\//, /^docs\/benchmarks\//];
 
 const failures = [];
 const files = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { encoding: "utf8" })
