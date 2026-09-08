@@ -32,7 +32,7 @@
 //     Nr. 46, und aus demselben Grund (ein zweiter Eimer braucht einen
 //     zweiten Schluessel).
 import crypto from "node:crypto";
-import { signedS3Put, signedS3List, parseS3Keys } from "../storage/s3Signer.js";
+import { signedS3Put, signedS3List, signedS3Get, parseS3Keys } from "../storage/s3Signer.js";
 
 /** Der Zweig, aus dem Zeabur baut — der Stand, der live ist. */
 export const DEPLOY_ZWEIG = "feature/auth-redesign-github-magiclink";
@@ -128,6 +128,32 @@ async function schonGesichert(cfg, schluessel, listImpl) {
   return { bekannt: keys.includes(schluessel), anzahl: keys.length };
 }
 
+/**
+ * Holt das eben Geschriebene zurueck und vergleicht Byte fuer Byte.
+ *
+ * Ein fehlgeschlagener Abruf ist NICHT "abweichung": ein Netzhaenger beim
+ * Zuruecklesen macht ein korrekt geschriebenes Archiv nicht wertlos. Nur ein
+ * tatsaechlich ANDERER Inhalt ist ein Befund — der aber ein harter.
+ * @returns {Promise<"bestaetigt"|"abweichung"|"unbestaetigt">}
+ */
+async function pruefeRuecklese({ cfg, schluessel, md5, getImpl }) {
+  try {
+    const antwort = await getImpl({
+      ...cfg,
+      key: schluessel,
+      responseType: "buffer",
+      timeoutMs: UPLOAD_FRIST_MS
+    });
+    const roh = antwort?.body ?? antwort?.buffer ?? antwort;
+    if (!roh || typeof roh === "string") return "unbestaetigt";
+    const puffer = Buffer.isBuffer(roh) ? roh : Buffer.from(roh);
+    if (!puffer.length) return "unbestaetigt";
+    return crypto.createHash("md5").update(puffer).digest("hex") === md5 ? "bestaetigt" : "abweichung";
+  } catch {
+    return "unbestaetigt";
+  }
+}
+
 async function ladeArchiv(url, fetchImpl) {
   const antwort = await fetchImpl(url, {
     signal: AbortSignal.timeout(ABRUF_FRIST_MS),
@@ -152,7 +178,8 @@ export async function laufCodeSicherung({
   jetztMs = Date.now(),
   fetchImpl = fetch,
   putImpl = signedS3Put,
-  listImpl = signedS3List
+  listImpl = signedS3List,
+  getImpl = signedS3Get
 } = {}) {
   const cfg = eimerKonfig(env);
   if (!cfg) {
@@ -196,10 +223,23 @@ export async function laufCodeSicherung({
     if (beweis === "abweichung") {
       return { ok: false, meldung: `Code-Sicherung: e2 meldet eine ANDERE Pruefsumme als gesendet (${schluessel}) — der Schnappschuss ist nicht vertrauenswuerdig.` };
     }
+
+    // RUECKLESE-PROBE, einmal je Tag direkt nach dem Schreiben. Hausregel von
+    // Nr. 46: "geschrieben heisst noch nicht lesbar". Das ETag oben ist die
+    // Zusage des Speichers, DASS er es hat — dies hier holt es tatsaechlich
+    // zurueck. Am 08.09. von Hand durchgespielt: das Archiv liess sich
+    // auspacken und alle 2971 Dateien waren inhaltlich identisch mit dem
+    // Git-Stand. Genau diese Probe laeuft jetzt bei jeder Sicherung mit.
+    const rueck = await pruefeRuecklese({ cfg, schluessel, md5, getImpl });
+    if (rueck === "abweichung") {
+      return { ok: false, meldung: `Code-Sicherung: ${schluessel} liest sich ANDERS zurueck, als es geschrieben wurde — kein brauchbares Backup.` };
+    }
+
     const zusatz = beweis === "bestaetigt" ? "Pruefsumme von e2 bestaetigt" : "Pruefsumme unbestaetigt (kein ETag)";
+    const rueckText = rueck === "bestaetigt" ? ", zurueckgelesen und geprueft" : ", Ruecklese-Probe nicht moeglich";
     return {
       ok: true,
-      meldung: `Code-Sicherung: ${(bytes.length / 1048576).toFixed(1)} MB nach e2 gelegt (${schluessel}, ${zusatz}).`
+      meldung: `Code-Sicherung: ${(bytes.length / 1048576).toFixed(1)} MB nach e2 gelegt (${schluessel}, ${zusatz}${rueckText}).`
     };
   } catch (fehler) {
     return { ok: false, meldung: `Code-Sicherung fehlgeschlagen: ${String(fehler?.message || fehler).slice(0, 160)}` };

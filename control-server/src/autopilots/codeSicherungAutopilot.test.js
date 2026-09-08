@@ -33,6 +33,8 @@ const E2_ENV = {
 };
 
 const LEERE_LISTE = async () => ({ response: { ok: true }, body: "<ListBucketResult></ListBucketResult>" });
+/** Liest zurueck, was gerade geschrieben wurde — der gesunde Normalfall. */
+const RUECKLESE_GLEICH = (puffer) => async () => ({ body: puffer });
 
 test("GESUND: ein normales Archiv wird angenommen", () => {
   const a = archiv();
@@ -95,9 +97,11 @@ test("GESUND: der volle Lauf legt das Archiv ab und liest die Pruefsumme gegen",
     jetztMs: Date.parse("2026-09-08T12:00:00Z"),
     fetchImpl: async () => ({ ok: true, status: 200, arrayBuffer: async () => a }),
     listImpl: LEERE_LISTE,
+    getImpl: RUECKLESE_GLEICH(a),
     putImpl: async (args) => { gespeichert = args; return { created: true, etag: `"${md5}"` }; }
   });
   assert.equal(ergebnis.ok, true);
+  assert.match(ergebnis.meldung, /zurueckgelesen und geprueft/);
   assert.equal(gespeichert.key, `${PRAEFIX}/smejj.com-app_2026-09-08.tar.gz`);
   assert.equal(gespeichert.ifNoneMatch, "*", "bestehende Schnappschuesse duerfen nie ueberschrieben werden");
   assert.match(ergebnis.meldung, /bestaetigt/);
@@ -174,6 +178,41 @@ test("KRANK: e2 speichert etwas anderes, als gesendet wurde", async () => {
   });
   assert.equal(ergebnis.ok, false);
   assert.match(ergebnis.meldung, /nicht vertrauenswuerdig/);
+});
+
+test("KRANK: es liest sich ANDERS zurueck, als es geschrieben wurde", async () => {
+  // Die Hausregel von Nr. 46: geschrieben heisst noch nicht lesbar. Das ETag
+  // ist die Zusage des Speichers, DASS er es hat — diese Probe holt es
+  // tatsaechlich zurueck. Kommt etwas anderes an, ist es kein Backup.
+  const a = archiv();
+  const md5 = crypto.createHash("md5").update(a).digest("hex");
+  const ergebnis = await laufCodeSicherung({
+    env: E2_ENV,
+    jetztMs: Date.now(),
+    fetchImpl: async () => ({ ok: true, arrayBuffer: async () => a }),
+    listImpl: LEERE_LISTE,
+    getImpl: async () => ({ body: archiv(9_000_001) }),
+    putImpl: async () => ({ created: true, etag: `"${md5}"` })
+  });
+  assert.equal(ergebnis.ok, false);
+  assert.match(ergebnis.meldung, /liest sich ANDERS zurueck/);
+});
+
+test("GESUND: klemmt die Ruecklese-Probe, ist das kein Grund fuer Rot", async () => {
+  // Ein Netzhaenger beim Zuruecklesen macht ein korrekt geschriebenes Archiv
+  // nicht wertlos — nur ein tatsaechlich anderer Inhalt ist ein Befund.
+  const a = archiv();
+  const md5 = crypto.createHash("md5").update(a).digest("hex");
+  const ergebnis = await laufCodeSicherung({
+    env: E2_ENV,
+    jetztMs: Date.now(),
+    fetchImpl: async () => ({ ok: true, arrayBuffer: async () => a }),
+    listImpl: LEERE_LISTE,
+    getImpl: async () => { throw new Error("timeout"); },
+    putImpl: async () => ({ created: true, etag: `"${md5}"` })
+  });
+  assert.equal(ergebnis.ok, true);
+  assert.match(ergebnis.meldung, /Ruecklese-Probe nicht moeglich/);
 });
 
 test("GESUND: ohne e2-Zugang ist Ruhe, kein Fehler", async () => {
