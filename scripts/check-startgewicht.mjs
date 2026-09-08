@@ -143,7 +143,31 @@ export function eigengewicht(seite = SEITE) {
     gesehen.set(datei, gzipSync(readFileSync(datei)).length);
     if (datei.endsWith(".js") || datei.endsWith(".mjs")) offen.push(...statischeImporte(datei));
   }
-  const posten = [...gesehen.entries()]
+  // ZWILLINGE ZAEHLEN EINMAL (Messfehler gefunden 2026-09-08):
+  // `public/config.js` und `public/assets/config.js` sind dieselbe Datei, und
+  // der Waechter hat sie BEIDE gewogen — 1837 Bytes gzip zu viel. Der Browser
+  // laedt sie nur einmal: `/assets/pwa-schnellstart.js` existiert gar nicht als
+  // eigene Datei, wird also aus `public/` ausgeliefert, und sein relativer
+  // Import `./config.js` loest im Browser zu `/assets/config.js` auf — genau
+  // der Adresse, die auch alle anderen Module verwenden. Nur die statische
+  // Aufloesung hier landete bei `public/config.js` und zaehlte doppelt.
+  //
+  // Ein Waechter, der zu VIEL misst, ist keine sichere Seite: er zwingt zum
+  // Abspecken an Stellen, die gar nicht schwer sind — und wenn er einmal
+  // nachgibt, weiss niemand mehr, welche Zahl stimmte. Verglichen wird der
+  // INHALT, nicht der Name: laufen die Zwillinge auseinander, bleiben beide
+  // stehen (und zwillingeVergleichen meldet es ohnehin).
+  const behalten = new Map(gesehen);
+  for (const datei of gesehen.keys()) {
+    const rel = path.relative(OEFFENTLICH, datei);
+    if (rel.startsWith("assets/")) continue;               // die Auslieferungs-Kopie bleibt
+    const kopie = path.join(OEFFENTLICH, "assets", rel);
+    if (!gesehen.has(kopie)) continue;                     // kein Zwilling im Startpfad
+    if (!readFileSync(datei).equals(readFileSync(kopie))) continue;  // verschieden: beide zaehlen
+    behalten.delete(datei);
+  }
+
+  const posten = [...behalten.entries()]
     .map(([datei, bytes]) => ({ datei: path.relative(OEFFENTLICH, datei), bytes }))
     .sort((a, b) => b.bytes - a.bytes);
   const bytes = posten.reduce((s, p) => s + p.bytes, 0);
