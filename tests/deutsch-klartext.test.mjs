@@ -10,9 +10,9 @@ const quelle = readFileSync(new URL("../public/deutsch-klartext.js", import.meta
 const m = await import("data:text/javascript;base64," + Buffer.from(quelle.split("\nif (typeof document")[0]).toString("base64"));
 
 test("die gemessenen Anglizismen haben ein deutsches Wort", () => {
-  for (const alt of ["Modelle und Reasoning", "Reasoning-Aufwand", "Offline, Sync, Platz", "Free-safe", "BYOK vorbereitet", "Coding-Arbeitsbereich", "Coding öffnen", "API-Key", "API-Keys", "Key sicher verbinden", "Session", "local-only", "Exakte Diff-Freigabe", "Free-Guard anzeigen", "Sync"]) {
+  for (const alt of ["Modelle und Reasoning", "Reasoning-Aufwand", "Offline, Sync, Platz", "Free-safe", "BYOK vorbereitet", "Coding-Arbeitsbereich", "Coding öffnen", "API-Key", "API-Keys", "Key sicher verbinden", "Session", "local-only", "Exakte Diff-Freigabe", "Free-Guard anzeigen", "Sync", "Standardmodell, BYOK und lokale Modelle.", "Wenn ein Diff oder externer Schritt wartet.", "owner/editor/viewer/local-only vorbereitet", "Aufbauphase: ohne Limit."]) {
     assert.ok(m.WOERTER[alt], `${alt} fehlt`);
-    assert.doesNotMatch(m.WOERTER[alt], /Reasoning|Sync|Coding|\bKey|Free|BYOK|Session|Diff/, `${alt} -> ${m.WOERTER[alt]} ist noch nicht deutsch`);
+    assert.doesNotMatch(m.WOERTER[alt], /Reasoning|Sync|Coding|\bKey|Free|BYOK|Session|Diff|Limit|local-only/, `${alt} -> ${m.WOERTER[alt]} ist noch nicht deutsch`);
   }
 });
 
