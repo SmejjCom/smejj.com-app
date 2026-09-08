@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runde 7 live (SW v818): Startseite unten, Modell-Menue bedienbar, Antworten wie eigene Fragen; Vollbild oben ist bei iOS-Web-Apps nicht zusammen mit einer balkenfreien Unterkante zu haben (gemessen)",
+  "status": "verified — Runde 8 live (SW v819): Vollbild oben zurueck, Streifen unten unsichtbar, Aktionen unter Antworten antippbar; OFFEN: admin-lock rot durch fremde Aenderung, App muss einmal neu installiert werden",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -161,5 +161,20 @@
     "4_antwort_aktionen": "Die Leiste war da (copy, speak, rate-up, rate-down, menu, je 44 px), aber auf 52 % Deckkraft — heller wurde sie nur beim Zeigen, und Zeigen gibt es am Handy nicht. Jetzt 82 %. Dazu traegt das Drei-Punkte-Menue der Antwort nun dieselben Punkte wie bei eigenen Fragen: Kopieren, Vorlesen, Neu generieren, Ohne Formatierung, Ab hier neuen Chat, Ab hier loeschen.",
     "auslieferung": "SW smejj-shell-v818; Diagnoseseite wieder entfernt (HTTP 404).",
     "pruefungen": "Mobil-Suite 41/41, chat-message-actions 56/56, check:frontend 654/654, Waechter gruen."
+  },
+  "runde8_20260908_vollbild_und_aktionen": {
+    "auftrag": "Betreiber 08.09. 16:13: 'oben ist immer noch schwarz, nicht Vollbild' und 'nach der Antwort stehen drei Punkte, aber man kann nicht draufklicken'.",
+    "vollbild": {
+      "messung": "Im Simulator alle Wege durchgemessen. Genau zwei Zustaende, kein dritter: black-translucent -> Flaeche top 0 / hoch 812 (Vollbild oben, 62 pt Schwarz unten); black oder default -> hoch 874 (nichts unten, dafuer Statusleistenbalken oben). Mit knallrotem Wurzelelement geprueft: der Bereich unten gehoert nicht zur Seite und bleibt schwarz.",
+      "entscheidung": "Vollbild oben (Betreiber-Anweisung). Der Streifen unten wird UNSICHTBAR gemacht statt bekaempft: Grund laeuft auf reines Schwarz aus (die Farbe dahinter), der Rahmen bekommt unten weder Strich noch Schein (nur er machte die Kante sichtbar), das Dock schliesst buendig ab (Sicherheitsrand 0 — der Home-Balken liegt in den 62 pt darunter)."
+    },
+    "drei_punkte": {
+      "wurzel": "#startLog .msg-actions traegt pointer-events:none, am Handy dazu overflow-x:auto — die Leiste war 0 px hoch, ihre 44-px-Knoepfe ragten heraus und wurden vom Scroll-Container ABGESCHNITTEN. Ein Treffertest fand statt des Knopfes das Log. Dazu lag genau die letzte Leiste hinter dem Dock (Leiste 767..811, Glas ab 738).",
+      "fix": "Leiste nimmt Klicks an, min-height 44, overflow:visible, margin-top 0; unter dem letzten Eintrag 132 px Platz.",
+      "beweis": "Alle fuenf Knoepfe (Kopieren, Vorlesen, Daumen hoch/runter, Menue) im Pixel-Emulator: TRIFFT."
+    },
+    "auslieferung": "SW smejj-shell-v819 — direkt im Klon gesprungen, weil die Bauzweig-Kaskade am admin-lock stoppt: control-server/src/admin/opsAutopilotenBereiche.js wurde von einer PARALLELSITZUNG geaendert (Commit 639f8128 'Autopilot Nr. 85'). Fremde Arbeit wird nicht mit einem neuen Stempel abgesegnet — der Befund ist gemeldet.",
+    "betreiber_muss_einmal": "App erneut vom Home-Bildschirm loeschen und neu hinzufuegen: der Status-Bar-Modus steckt in der Webclip-Datei und wird nicht nachgezogen.",
+    "pruefungen": "Mobil-Suite und Chat-Aktionen 98/98, check:frontend 654/654, check:guidelines gruen."
   }
 }

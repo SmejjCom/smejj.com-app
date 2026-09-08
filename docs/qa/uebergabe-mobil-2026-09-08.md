@@ -72,3 +72,18 @@ Behoben: `content="black"` in index.html; `html{background:#141517}` auf der Lan
 3. **Modell-Menü war nicht bedienbar.** `.prompt-glass` trägt `backdrop-filter` und ist damit ein eigener Stapel-Kontext — das Menü mit `z-index:60` steckt darin fest, `.start-chips` kommt im DOM später und gewinnt bei gleichem Stapelwert. Der Fingerdruck traf die Kachel. Jetzt Glas `z-index:70`, Menü opak und `z-index:80`, klappt immer nach oben. Alle fünf Zeilen 44 px und treffsicher.
 4. **Antworten wie eigene Fragen.** Die Leiste war da, aber auf 52 % Deckkraft (heller nur beim Zeigen — am Handy gibt es kein Zeigen); jetzt 82 %. Das Drei-Punkte-Menü der Antwort trägt nun Kopieren und Vorlesen wie bei eigenen Fragen.
 
+## G. Runde 8 (Betreiber 08.09. 16:13)
+
+**Vollbild oben — wieder da.** Im Simulator gibt es genau zwei Zustände, keinen dritten:
+
+| Meta-Wert | Fläche | oben | unten |
+|---|---|---|---|
+| `black-translucent` | top 0, hoch 812 | **Vollbild** | 62 pt Schwarz |
+| `black` / `default` | hoch 874 | Statusleistenbalken | nichts |
+
+Gewählt: `black-translucent`. Der Streifen unten wird **unsichtbar gemacht statt bekämpft** — der Grund läuft auf reines Schwarz aus (die Farbe dahinter), der Rahmen bekommt unten weder Strich noch Schein, das Dock schließt bündig ab. Sichtbar war die Kante nur durch den Cyan-Saum.
+
+**Die drei Punkte unter Antworten sind antippbar.** Wurzel: `#startLog .msg-actions` trägt `pointer-events:none`, am Handy dazu `overflow-x:auto` — die Leiste war **0 px hoch**, ihre 44-px-Knöpfe ragten heraus und wurden vom Scroll-Container abgeschnitten. Ein Treffertest fand statt des Knopfes das Log. Dazu lag genau die letzte Leiste hinter dem Dock. Jetzt: alle fünf Knöpfe treffen.
+
+**Kaskade blockiert:** `admin-lock` ist rot durch `control-server/src/admin/opsAutopilotenBereiche.js` — geändert von einer **Parallelsitzung** (Commit 639f8128 „Autopilot Nr. 85"). Fremde Arbeit wird nicht mit einem neuen Stempel abgesegnet; der Service-Worker wurde stattdessen direkt im Klon auf v819 gezogen.
+
