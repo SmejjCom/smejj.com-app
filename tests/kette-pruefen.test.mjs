@@ -11,7 +11,8 @@ import {
   bewertePagesAdressen,
   bewerteHealth,
   bewerteRueckstand,
-  bewerteSicherung
+  bewerteSicherung,
+  bewerteE2Sicherung
 } from "../scripts/diagnose/kette-pruefen.mjs";
 
 const JETZT = Date.parse("2026-09-08T13:00:00Z");
@@ -116,6 +117,28 @@ test("KRANK: beide Wege tot — NICHTS sichert mehr", () => {
     bewerteSicherung("fehler", { ergebnis: "fehler", stand: vorStunden(1) }, JETZT),
     "rot"
   );
+});
+
+// --- der dritte Sicherungsort: IDrive e2 -----------------------------------
+
+test("GESUND: der Code liegt in e2 — frisch abgelegt oder schon da", () => {
+  assert.equal(bewerteE2Sicherung("39 Zweige gespiegelt; e2: Code-Sicherung: 8.6 MB nach e2 gelegt (…)."), "gruen");
+  assert.equal(bewerteE2Sicherung("39 Zweige gespiegelt; e2: Code-Sicherung: heutiger Stand liegt bereits in e2 (2)."), "gruen");
+});
+
+test("KRANK: der e2-Schritt ist still ausgefallen", () => {
+  // Genau so sah es aus, als launchd node nicht fand: Codeberg gruen, e2 tot,
+  // Gesamtlauf Exit 0. Ohne eigene Zeile faellt das niemandem auf.
+  assert.equal(bewerteE2Sicherung("39 Zweige gespiegelt; e2: node: command not found"), "rot");
+  assert.equal(bewerteE2Sicherung("39 Zweige gespiegelt; e2: Code konnte nicht ausgepackt werden"), "rot");
+  assert.equal(bewerteE2Sicherung("39 Zweige gespiegelt; e2: Code-Sicherung fehlgeschlagen: timeout"), "rot");
+});
+
+test("NICHT MESSBAR: aeltere Meldung ohne e2-Teil, und fehlender Zugang", () => {
+  // Eine Meldung aus der Zeit vor dem e2-Schritt darf keinen Fehlalarm geben.
+  assert.equal(bewerteE2Sicherung("39 Zweige und alle Marken gespiegelt"), "grau");
+  assert.equal(bewerteE2Sicherung(""), "grau");
+  assert.equal(bewerteE2Sicherung("e2: Code-Sicherung: kein e2-Zugang gesetzt (lokal)"), "grau");
 });
 
 test("KRANK: kaputter Zeitstempel gilt nicht als frisch", () => {

@@ -87,6 +87,22 @@ export function bewerteRueckstand(rueckstand) {
   return rueckstand.length ? "rot" : "gruen";
 }
 
+/**
+ * Urteilt ueber die Code-Sicherung nach IDrive e2 anhand der Meldung, die der
+ * Sicherungslauf hinterlassen hat. Rein und ohne Netz.
+ *
+ * Das ist der einzige Sicherungsort, der NICHT bei einem Git-Anbieter liegt.
+ * Faellt er aus, merkt man es sonst erst, wenn man ihn braucht.
+ * @returns {"gruen"|"rot"|"grau"}
+ */
+export function bewerteE2Sicherung(meldung) {
+  const text = String(meldung || "");
+  if (!/e2:/i.test(text)) return "grau";
+  if (/kein e2-Zugang/i.test(text)) return "grau";
+  if (/liegt bereits in e2|nach e2 gelegt|Wettlauf/i.test(text)) return "gruen";
+  return "rot";
+}
+
 // Ein Lauf am Tag: nach 36 Stunden ohne Erfolg ist die Sicherung ueberfaellig.
 // Die Reserve von 12 Stunden faengt einen zugeklappten Mac ab, ohne den
 // Ausfall zu verschweigen.
@@ -343,12 +359,22 @@ export async function pruefeSicherung() {
     ? `Mac-Termin ${String(ersatz.stand).slice(0, 16).replace("T", " ")} UTC: ${ersatz.ergebnis}`
     : "kein Mac-Termin";
 
-  if (zustand === "gruen") return [befund("Taegliche Sicherung", "gruen", actionText)];
+  // Der dritte Sicherungsort steht als EIGENE Kante da: er liegt als einziger
+  // nicht bei einem Git-Anbieter und faellt sonst still aus.
+  const e2Zustand = bewerteE2Sicherung(ersatz?.meldung);
+  const e2Text = String(ersatz?.meldung || "").split("e2:")[1]?.trim() || "kein Lauf gemeldet";
+  const e2 = befund(
+    "Code-Sicherung → IDrive e2",
+    e2Zustand,
+    e2Zustand === "grau" ? `nicht gemessen (${e2Text})` : e2Text
+  );
+
+  if (zustand === "gruen") return [befund("Taegliche Sicherung", "gruen", actionText), e2];
   if (zustand === "grau") {
     return [befund("Taegliche Sicherung", "grau",
-      `${ersatzText} — traegt gerade allein (${actionText}; Secret CODEBERG_TOKEN fehlt)`)];
+      `${ersatzText} — traegt gerade allein (${actionText}; Secret CODEBERG_TOKEN fehlt)`), e2];
   }
-  return [befund("Taegliche Sicherung", "rot", `${actionText}; ${ersatzText} — NICHTS sichert mehr`)];
+  return [befund("Taegliche Sicherung", "rot", `${actionText}; ${ersatzText} — NICHTS sichert mehr`), e2];
 }
 
 // ----------------------------------------------------------------- Kante 13

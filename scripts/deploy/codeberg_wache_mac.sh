@@ -49,8 +49,16 @@ LOG="${ABLAGE}/lauf.log"
 QUELLE="https://github.com/SmejjCom/smejj.com-app.git"
 ZIEL="ssh://git@codeberg.org/smejj/smejj.com-app.git"
 SSH_KEY="${HOME}/.ssh/codeberg_smejj_ed25519"
+# Der Zweig, aus dem Zeabur baut — aus ihm wird der Code fuer den e2-Schritt
+# ausgepackt. Muss zu DEPLOY_ZWEIG in codeSicherungAutopilot.js passen.
+DEPLOY_ZWEIG="feature/auth-redesign-github-magiclink"
 
-export PATH="/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
+# /usr/local/bin und /opt/homebrew/bin gehoeren dazu: launchd startet mit einem
+# minimalen PATH, in dem node NICHT liegt ("node: command not found", gemessen
+# 2026-09-08). Der Zweig fuer Codeberg lief trotzdem gruen — nur der
+# e2-Schritt fiel still aus, genau die Sorte Ausfall, die dieser Job
+# verhindern soll.
+export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
 # git stirbt auf diesem Mac ohne diesen Umweg an der Xcode-Lizenz.
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Library/Developer/CommandLineTools}"
 # launchd startet ohne ssh-agent: den Schluessel deshalb ausdruecklich nennen.
@@ -98,6 +106,46 @@ echo "Zweige bei GitHub: ${ZWEIGE}"
 GIT_SSH_COMMAND="$SSH_BEFEHL" git --git-dir="$KLON" push "$ZIEL" "refs/heads/*:refs/heads/*" || abbruch "Push der Zweige nach Codeberg fehlgeschlagen"
 GIT_SSH_COMMAND="$SSH_BEFEHL" git --git-dir="$KLON" push "$ZIEL" "refs/tags/*:refs/tags/*" || abbruch "Push der Marken nach Codeberg fehlgeschlagen"
 
-schreibe_zustand "ok" "${ZWEIGE} Zweige und alle Marken gespiegelt" "$ZWEIGE"
+# --- Zweiter Sicherungsort: IDrive e2 --------------------------------------
+# Warum hier und nicht nur auf dem Server: Autopilot Nr. 85 macht dasselbe im
+# Control-Server und ist damit vom Mac unabhaengig — aber Zeabur hat den Bau
+# nach dem Push vom 08.09. nicht gestartet, der Autopilot liegt also
+# ausgeliefert und untaetig. Bis er anspringt, macht es der Mac.
+#
+# Der Code dafuer wird AUS DEM NACKTEN KLON ausgepackt, nicht aus dem
+# Projektordner: an den kommt ein launchd-Dienst nicht heran (macOS sperrt
+# CloudStorage). So laeuft immer die Fassung, die auch live geht.
+#
+# Faellt dieser Teil aus, ist der Lauf trotzdem gruen: Codeberg ist gesichert,
+# und ein zweiter Ort, der klemmt, darf den ersten nicht entwerten. Gemeldet
+# wird es aber — still bleiben waere der Fehler, der das alles ausgeloest hat.
+e2_meldung="uebersprungen"
+ENV_DATEI="${HOME}/.config/smejj.com/env.local"
+if [ -f "$ENV_DATEI" ]; then
+  AUSPACK="${ABLAGE}/code-tmp"
+  rm -rf "$AUSPACK" && mkdir -p "$AUSPACK"
+  if git --git-dir="$KLON" archive "$DEPLOY_ZWEIG" control-server/src 2>/dev/null | tar -x -C "$AUSPACK" 2>/dev/null; then
+    e2_ausgabe=$(AUTOPILOT_PFAD="${AUSPACK}/control-server/src/autopilots/codeSicherungAutopilot.js" \
+      ENV_DATEI="$ENV_DATEI" node --input-type=module -e '
+        import { readFileSync } from "node:fs";
+        const { laufCodeSicherung } = await import(process.env.AUTOPILOT_PFAD);
+        const env = {};
+        for (const zeile of readFileSync(process.env.ENV_DATEI, "utf8").split("\n")) {
+          const t = /^([A-Z0-9_]+)=(.*)$/.exec(zeile.trim());
+          if (t) env[t[1]] = t[2].replace(/^["\x27]|["\x27]$/g, "");
+        }
+        const r = await laufCodeSicherung({ env });
+        console.log(r.meldung);
+        process.exitCode = r.ok ? 0 : 1;
+      ' 2>&1 | tail -1)
+    e2_meldung="$e2_ausgabe"
+  else
+    e2_meldung="Code konnte nicht aus dem Klon ausgepackt werden"
+  fi
+  rm -rf "$AUSPACK"
+fi
+echo "IDrive e2: ${e2_meldung}"
+
+schreibe_zustand "ok" "${ZWEIGE} Zweige gespiegelt; e2: ${e2_meldung}" "$ZWEIGE"
 echo "=== $(zeit) fertig: gesichert ==="
 exit 0

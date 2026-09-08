@@ -161,8 +161,52 @@ Damit hängt der Code an drei Fäden statt an einem: **GitHub** (Quelle),
 **Codeberg** (unabhängiger Git-Spiegel) und **IDrive e2** (Archiv am dafür
 vorgesehenen Ort). Sichtbar im Adminbereich unter *Sicherheit & Wachdienst*.
 
-TÜV: 16 Tests, darunter eine Fehlerseite statt eines Archivs, eine
+TÜV: 17 Tests, darunter eine Fehlerseite statt eines Archivs, eine
 ETag-Abweichung, zwei gleichzeitige Takte und der Lauf ohne e2-Zugang.
+
+### Der Mac macht es sofort mit
+
+Der Autopilot ging am 08.09. um 14:50 live (Zeabur brauchte für den Bau knapp
+eine Stunde). Damit die Sicherung nicht erst am nächsten Tag greift — und
+damit sie weiterläuft, falls ein Zeabur-Bau einmal ausbleibt — führt der
+Mac-Termin **denselben Autopiloten** gleich mit aus. Der Code dafür wird aus
+dem nackten Klon ausgepackt, nicht aus dem Projektordner (an den kommt ein
+launchd-Dienst nicht heran). So läuft immer die Fassung, die auch live ist.
+
+Klemmt der e2-Schritt, bleibt der Lauf trotzdem grün: Codeberg ist dann
+gesichert, und ein zweiter Ort, der hakt, darf den ersten nicht entwerten.
+Gemeldet wird es aber — die Landkarte hat dafür eine **eigene Zeile**
+(*Code-Sicherung → IDrive e2*), denn das ist der einzige Sicherungsort, der
+nicht bei einem Git-Anbieter liegt.
+
+**Bewiesen am 08.09.** gegen das echte IDrive e2:
+`sicherung/code/smejj.com-app_2026-09-08.tar.gz`, 8,6 MB, **Prüfsumme von e2
+bestätigt**. Der zweite Lauf lud nichts mehr nach — die Tagessperre greift.
+
+### Drei Fristen, dieselbe Lehre
+
+Der Weg dorthin kostete drei Anläufe, und jeder war dieselbe Falle:
+
+1. `signedS3Put` arbeitet standardmäßig mit **2,5 Sekunden** — richtig für die
+   kleinen JSON-Datensätze, für die es gebaut wurde, viel zu knapp für 9 MB.
+2. Die Fassung mit **180 Sekunden** scheiterte wieder: von einem Wohnanschluss
+   brauchte allein 1 MB 29,5 Sekunden, die vollen 9 MB also über vier Minuten.
+   Im Rechenzentrum ist derselbe Upload Sekundensache.
+3. Jetzt **600 Sekunden**. Die Frist soll einen *hängenden* Upload beenden,
+   nicht einen langsamen bestrafen — sie kostet nichts, solange nichts hängt.
+
+Dazu zwei Fallen der launchd-Umgebung, beide zuerst **still**: `DEPLOY_ZWEIG`
+war im Wachskript nicht gesetzt, und `node` liegt nicht im minimalen
+launchd-PATH. In beiden Fällen lief Codeberg grün weiter und nur e2 fiel
+aus — genau die Sorte Ausfall, gegen die dieser ganze Umbau gebaut wurde.
+Deshalb steht die e2-Sicherung als eigene, messbare Zeile da.
+
+### Ein Rest, ehrlich benannt
+
+Im Präfix liegt eine 1 MB große Datei `sicherung/code/probe-frist.bin` — meine
+Messprobe für die Upload-Geschwindigkeit. Sie lässt sich von hier aus nicht
+entfernen: der lokale Schlüssel darf schreiben und lesen, aber **nicht
+löschen** (403). Das ist so gewollt und richtig; die Datei ist harmlos.
 
 ### Wenn du den Token doch noch setzen willst
 
