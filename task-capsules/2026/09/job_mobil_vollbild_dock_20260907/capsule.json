@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — der schwarze Balken ist an der Wurzel behoben (Webclip-Status-Bar-Modus), im Simulator in beide Richtungen bewiesen; der Betreiber muss die App einmal neu installieren",
+  "status": "verified — Runde 7 live (SW v818): Startseite unten, Modell-Menue bedienbar, Antworten wie eigene Fragen; Vollbild oben ist bei iOS-Web-Apps nicht zusammen mit einer balkenfreien Unterkante zu haben (gemessen)",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -152,5 +152,14 @@
     "betreiber_muss_einmal": "App vom Home-Bildschirm loeschen und neu hinzufuegen — der Status-Bar-Modus steckt in der Webclip-Datei und wird nicht nachgezogen (im Simulator bewiesen).",
     "auslieferung": "SW smejj-shell-v816 und v817 aus der Sitzung gestempelt; Diagnoseseite wieder entfernt (HTTP 404).",
     "pruefungen": "node --test Mobil-Suite 51/51, check:frontend 654/654, check:guidelines/precache/module-queries/favicon-lock gruen."
+  },
+  "runde7_20260908_vier_punkte": {
+    "auftrag": "Betreiber-Screenshots 08.09. 14:24/14:29, vier Punkte.",
+    "1_startseite_unten": "Gemessen (Pixel 7, 412x839): .home-feed stand auf justify-content:center, der Block endete bei 686 — 153 px blieben unten leer. Jetzt flex-end mit engeren Abstaenden: Block endet bei 815, nur 24 px frei.",
+    "2_vollbild_oben": "Geht NICHT zusammen mit 'kein Balken unten'. Im Simulator mit knallrotem Wurzelelement geprueft: der Bereich ausserhalb der Flaeche bleibt schwarz und laesst sich nicht einfaerben. Legacy = Vollbild oben + 62 pt Balken unten; 'black' = volle Flaeche + normale Statusleiste. Entscheidung: 'black' bleibt, der Platz wird ueber Punkt 1 zurueckgeholt.",
+    "3_modell_menue": "Wurzel: .prompt-glass traegt backdrop-filter und ist damit ein eigener Stapel-Kontext — das Menue mit z-index:60 steckt darin fest, waehrend .start-chips im DOM SPAETER kommt und bei gleichem Stapelwert gewinnt. Der Fingerdruck traf die Kachel. Fix: Glas auf z-index 70, Menue opak (#0d1219) und z-index 80, klappt immer nach oben. Gemessen: alle fuenf Zeilen 44 px und TRIFFT.",
+    "4_antwort_aktionen": "Die Leiste war da (copy, speak, rate-up, rate-down, menu, je 44 px), aber auf 52 % Deckkraft — heller wurde sie nur beim Zeigen, und Zeigen gibt es am Handy nicht. Jetzt 82 %. Dazu traegt das Drei-Punkte-Menue der Antwort nun dieselben Punkte wie bei eigenen Fragen: Kopieren, Vorlesen, Neu generieren, Ohne Formatierung, Ab hier neuen Chat, Ab hier loeschen.",
+    "auslieferung": "SW smejj-shell-v818; Diagnoseseite wieder entfernt (HTTP 404).",
+    "pruefungen": "Mobil-Suite 41/41, chat-message-actions 56/56, check:frontend 654/654, Waechter gruen."
   }
 }

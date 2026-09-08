@@ -1,4 +1,4 @@
-# smejj.com — Übergabe Mobil-QA von A bis Z (Stand 08.09.2026, 13:20 — C1 an der Wurzel behoben, SW v817)
+# smejj.com — Übergabe Mobil-QA von A bis Z (Stand 08.09.2026, 15:10 — Runde 7, SW v818)
 
 Auftrag des Betreibers: 100 % Responsive, Vollbild ohne schwarzen Balken, Chat/Code/Einstellungen wie ChatGPT, Eingabefeld bündig an der Tastatur, alles Deutsch, Touch-Ziele 44 px — in der INSTALLIERTEN App (iOS-Web-App, Android-TWA), nicht im Browser. Regel des Betreibers seit 08.09.: **„pusche selber“** — Commit, Push, Deploy und Stempel-Kaskade aus der Sitzung heraus erledigen, keine Auswahlkarten für Freigaben; kurze Statuszeile, kurze Antworten.
 
@@ -64,3 +64,11 @@ Behoben: `content="black"` in index.html; `html{background:#141517}` auf der Lan
 - `screen.height - innerHeight` ist in der Android-TWA die Systemleiste (76 px) — nur Apple messen.
 - Design bleibt VIERECKIG (eckig.css), große Schrift, keine Ziele unter 44 px, keine neuen Anbieter, keine Kosten.
 - Zwei Sitzungen deployen parallel in denselben Klon: vor jedem Push `git pull --rebase origin main`.
+
+## F. Runde 7 (Betreiber-Screenshots 08.09. 14:24/14:29)
+
+1. **Startseite kompakt und unten.** `.home-feed` stand auf `justify-content:center`, der Block endete bei 686 von 839 — 153 px blieben unten leer. Jetzt `flex-end`: Block endet bei 815, 24 px frei.
+2. **Vollbild oben ODER kein Balken unten — nicht beides.** Im Simulator mit knallrotem Wurzelelement geprüft: der Bereich außerhalb der Fläche bleibt schwarz, er lässt sich nicht einfärben. Es bleibt bei `black` (volle Fläche, normale Statusleiste).
+3. **Modell-Menü war nicht bedienbar.** `.prompt-glass` trägt `backdrop-filter` und ist damit ein eigener Stapel-Kontext — das Menü mit `z-index:60` steckt darin fest, `.start-chips` kommt im DOM später und gewinnt bei gleichem Stapelwert. Der Fingerdruck traf die Kachel. Jetzt Glas `z-index:70`, Menü opak und `z-index:80`, klappt immer nach oben. Alle fünf Zeilen 44 px und treffsicher.
+4. **Antworten wie eigene Fragen.** Die Leiste war da, aber auf 52 % Deckkraft (heller nur beim Zeigen — am Handy gibt es kein Zeigen); jetzt 82 %. Das Drei-Punkte-Menü der Antwort trägt nun Kopieren und Vorlesen wie bei eigenen Fragen.
+
