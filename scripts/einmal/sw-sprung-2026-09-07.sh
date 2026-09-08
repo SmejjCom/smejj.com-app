@@ -18,7 +18,7 @@ ZWEIG="feature/auth-redesign-github-magiclink"
 QUELLE="${SMEJJ_APP_ORDNER:-$PWD}"
 KLON="$HOME/smejj-app-frontend"
 BAUM="/private/tmp/claude-501/stempel-sw-sprung-$(date +%Y%m%d-%H%M%S)"
-WORTLAUT="Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege der Runde 4 holt (Versatz nur Apple, Modell-Menue ueber die Glasbreite, Einstellungs-Zeilen ohne Leere). Stempel per Doppelklick."
+WORTLAUT="Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege holt (Tastatur-Buendigkeit, Vollbild-Rahmen ueber visualViewport, Einstellungen durchgaengig Deutsch). Stempel per Doppelklick."
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 [ -e "$QUELLE/.git" ] || { echo "ABBRUCH: Arbeitskopie fehlt unter $QUELLE"; exit 2; }
 [ -e "$KLON/.git" ] || { echo "ABBRUCH: Frontend-Klon fehlt unter $KLON"; exit 2; }
@@ -35,7 +35,7 @@ KLON_SW="$(git -C "$KLON" show origin/main:sw.js | grep -o 'smejj-shell-v[0-9]*'
 SW_NEU="smejj-shell-v$(( ${LIVE_SW#smejj-shell-v} + 1 ))"
 echo "    $LIVE_SW -> $SW_NEU"
 # Die Module muessen live GENAU die Klon-Fassung sein, sonst ist der Sprung nutzlos (Pages baut noch)
-for f in mobil-dock.js mobil-ansichten.js kompakt.js; do
+for f in mobil-dock.js mobil-ansichten.js kompakt.js deutsch-klartext.js; do
   a="$(git -C "$KLON" show origin/main:$f | shasum -a 256 | cut -c1-16)"; b="$(curl -s -m 20 "https://smejj.com/assets/$f?n=$RANDOM" | shasum -a 256 | cut -c1-16)"
   [ "$a" = "$b" ] || { echo "ABBRUCH: $f live ($b) ist noch nicht die Klon-Fassung ($a) — Pages baut, kurz warten und neu klicken"; exit 3; }
 done
