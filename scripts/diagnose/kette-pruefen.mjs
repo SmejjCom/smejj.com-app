@@ -289,19 +289,36 @@ export async function pruefeZeabur() {
 // gruener Job, der nichts kopiert, waere ebenso wertlos wie ein roter.
 
 export async function pruefeCodebergSpiegel() {
-  const git = (args) => execFileAsync("git", args, { cwd: WURZEL, maxBuffer: 8 * 1024 * 1024 });
+  // ZWEI BETRIEBSARTEN (2026-09-08): normalerweise misst der Lauf im
+  // Projektordner. Als taeglicher Hintergrund-Termin geht das NICHT — macOS
+  // laesst launchd-Dienste nicht in CloudStorage-Ordner ("Operation not
+  // permitted"). Ueber SMEJJ_KETTE_GITDIR laesst sich deshalb der nackte Klon
+  // der Sicherungs-Wache angeben, der beide Seiten kennt. Dort liegt der
+  // GitHub-Stand direkt in refs/heads/*, nicht in refs/remotes/origin/*.
+  const gitDir = process.env.SMEJJ_KETTE_GITDIR || "";
+  const quellPraefix = gitDir ? "refs/heads/" : "refs/remotes/origin/";
+  const git = (args) => execFileAsync(
+    "git",
+    gitDir ? ["--git-dir", gitDir, ...args] : args,
+    { cwd: gitDir ? undefined : WURZEL, maxBuffer: 8 * 1024 * 1024 }
+  );
 
   try {
-    await git(["fetch", "--prune", "--quiet", "origin"]);
-    await git(["fetch", "--prune", "--quiet", "codeberg"]);
+    if (gitDir) {
+      await git(["remote", "update", "--prune"]);
+    } else {
+      await git(["fetch", "--prune", "--quiet", "origin"]);
+      await git(["fetch", "--prune", "--quiet", "codeberg"]);
+    }
   } catch (fehler) {
     return [befund("GitHub → Codeberg (Spiegel)", "rot", `Abgleich nicht moeglich: ${String(fehler.stderr || fehler.message).trim().split("\n").pop()}`)];
   }
 
-  const { stdout } = await git(["for-each-ref", "--format=%(refname:short)", "refs/remotes/origin/"]);
+  const { stdout } = await git(["for-each-ref", "--format=%(refname:short)", quellPraefix]);
   const zweige = stdout.split("\n").map((z) => z.replace(/^origin\//, "").trim())
     .filter((z) => z && z !== "HEAD" && z !== "origin");
 
+  const quelleRef = (zweig) => (gitDir ? `refs/heads/${zweig}` : `origin/${zweig}`);
   const rueckstand = [];
   for (const zweig of zweige) {
     try {
@@ -310,7 +327,7 @@ export async function pruefeCodebergSpiegel() {
       rueckstand.push(`${zweig} (fehlt ganz)`);
       continue;
     }
-    const { stdout: anzahl } = await git(["rev-list", "--count", `codeberg/${zweig}..origin/${zweig}`]);
+    const { stdout: anzahl } = await git(["rev-list", "--count", `codeberg/${zweig}..${quelleRef(zweig)}`]);
     const n = Number.parseInt(anzahl.trim(), 10);
     if (n > 0) rueckstand.push(`${zweig} (${n} Commits)`);
   }
