@@ -131,6 +131,39 @@ unsichtbar werden. Rot wäre aber falsch — an dauerndes Rot gewöhnt man sich,
 bis man den echten Ausfall ebenso übersieht. Die 36 Stunden geben eine Nacht
 Reserve, ohne einen Ausfall zu verschweigen.
 
+## Dritter Sicherungsweg: der Code liegt jetzt auch in IDrive e2
+
+Der Mac-Termin rettet das Backup, hängt aber an einem eingeschalteten Mac.
+Deshalb sichert seit dem 08.09. zusätzlich der Control-Server selbst —
+**Autopilot Nr. 85, Code-Sicherung**
+(`control-server/src/autopilots/codeSicherungAutopilot.js`).
+
+Er ist der einzige Ort, der **ohne ein einziges neues Geheimnis** sichern kann:
+das Repo ist öffentlich lesbar, und die e2-Zugänge liegen längst in seiner
+Umgebung. Und er läuft rund um die Uhr, unabhängig von jedem Arbeitsplatz.
+
+* **Ziel:** `sicherung/code/smejj.com-app_JJJJ-MM-TT.tar.gz` im Haupt-Eimer
+* **Takt:** höchstens ein Schnappschuss je Tag (rund 9 MB). Liegt der heutige
+  Stand schon, wird **gar nichts geladen** — die übrigen Takte kosten eine
+  Listen-Abfrage.
+* **Kein Überschreiben:** `If-None-Match: *`. Zwei gleichzeitige Takte können
+  sich nicht überholen, ein bestehender Schnappschuss wird nie ersetzt.
+* **Zwei Prüfungen gegen stilles Scheitern:** vor dem Speichern Größe und
+  gzip-Dateikopf (eine GitHub-Fehlerseite darf nie als Sicherung durchgehen),
+  nach dem Speichern das ETag von e2 gegen die eigene Prüfsumme — die
+  Gegenprobe der *anderen* Seite, nicht die Zusicherung des Absenders. Weicht
+  sie ab, ist der Lauf rot.
+* **Löscht nichts.** Für eine Aufbewahrungsfrist auf diesem Präfix gibt es
+  keine schriftliche Freigabe. Das wächst um rund 3 GB im Jahr — tragbar, aber
+  es wächst; eine Frist ist eine Betreiber-Entscheidung.
+
+Damit hängt der Code an drei Fäden statt an einem: **GitHub** (Quelle),
+**Codeberg** (unabhängiger Git-Spiegel) und **IDrive e2** (Archiv am dafür
+vorgesehenen Ort). Sichtbar im Adminbereich unter *Sicherheit & Wachdienst*.
+
+TÜV: 16 Tests, darunter eine Fehlerseite statt eines Archivs, eine
+ETag-Abweichung, zwei gleichzeitige Takte und der Lauf ohne e2-Zugang.
+
 ### Wenn du den Token doch noch setzen willst
 
 Dann übernimmt wieder die Action, und der Mac-Job kann weg:
