@@ -176,3 +176,25 @@ test("Die drei Punkte unter einer Antwort sind antippbar", () => {
   assert.match(m.REGELN, /#startLog\.start-log,body #code #codeLogHalter\.code-log-halter\{padding-bottom:132px\}/);
 });
 
+test("Auf der leeren Startseite steht das EINGABEFELD unten, nicht nur der Block", () => {
+  // Gemessen 08.09.: mit flex-end allein sass das Feld bei 441 von 839 — darunter Werkzeugzeile
+  // und "Erste Schritte" mit zusammen 374 px. Der Betreiber meinte das Feld ("wie ChatGPT").
+  assert.match(m.REGELN, /\.home-feed \.erste-schritte\{order:6\}/);
+  assert.match(m.REGELN, /\.home-feed \.start-chips\{order:7\}/);
+  assert.match(m.REGELN, /\.home-feed \.prompt-glass\{order:8\}/);
+});
+
+test("Das Modell-Menue schliesst beim Tipp daneben — sonst schluckt es die ganze Oberflaeche", () => {
+  // GEMESSEN 08.09.: der vorhandene Aussenklick-Handler sitzt in code-flaeche.js, und dieses Modul
+  // ist auf der Startseite gar nicht geladen. Das Menue blieb offen und blockierte mit z-index 80
+  // alles darunter — unter anderem die Aktionen unter einer Antwort.
+  const quelle = readFileSync(new URL("../public/code-modell-menue.js", import.meta.url), "utf8");
+  assert.match(quelle, /export function bewacheAussenklick\(menueId, knopf\)/);
+  assert.match(quelle, /bewacheAussenklick\(menueId, chip\);/, "beim Oeffnen gesetzt");
+  assert.match(quelle, /doc\.addEventListener\("pointerdown", daneben, true\)/, "der Finger meldet pointerdown");
+  assert.match(quelle, /e\.key === "Escape"/, "Escape schliesst am Schreibtisch");
+  // schliesseModellMenue muss BEIDE Menues treffen
+  const zu = quelle.split("export function schliesseModellMenue")[1].split("}")[0];
+  assert.ok(zu.includes("codeModellMenue") && zu.includes("startModellMenue"));
+});
+

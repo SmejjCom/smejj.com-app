@@ -156,7 +156,43 @@ export function modellAnzeige(hausText) {
 
 // ---- Modell-Menue (wie Claudes "Fable 5"-Menue, Betreiber 2026-08-17) ---
 export function schliesseModellMenue() {
+  // BEIDE Menues: der Code-Bereich nutzt "codeModellMenue", die Startseite "startModellMenue".
+  // Bis 2026-09-08 stand hier nur das erste — das Menue der Startseite blieb offen liegen.
   document.getElementById("codeModellMenue")?.remove();
+  document.getElementById("startModellMenue")?.remove();
+}
+
+/** Schliesst das Menue beim naechsten Tipp daneben und bei Escape.
+ *
+ * GEMESSEN 08.09. im Pixel-Emulator: Auf der STARTSEITE blieb das Modell-Menue offen liegen,
+ * bis man eine Zeile waehlte. Der vorhandene Aussenklick-Handler sitzt in code-flaeche.js —
+ * und dieses Modul ist auf der Startseite gar nicht geladen (nachgewiesen: kein script-Tag).
+ * Mit z-index 80 legte sich das offene Menue ueber die ganze Oberflaeche und schluckte jeden
+ * Fingerdruck; unter anderem waren dadurch die Aktionen unter einer Antwort nicht erreichbar.
+ * Der Wachhund haengt deshalb an DIESEM Modul — es ist immer geladen, wenn ein Menue offen ist.
+ * @param {string} menueId
+ * @param {Element|null} knopf
+ */
+export function bewacheAussenklick(menueId, knopf) {
+  const doc = document;
+  const zu = () => doc.getElementById(menueId)?.remove();
+  const daneben = (e) => {
+    if (e.target?.closest?.(`#${menueId}`)) return;
+    if (knopf && e.target?.closest?.(`#${knopf.id}`)) return;
+    zu();
+    loese();
+  };
+  const taste = (e) => { if (e.key === "Escape") { zu(); loese(); } };
+  const loese = () => {
+    doc.removeEventListener("pointerdown", daneben, true);
+    doc.removeEventListener("click", daneben, true);
+    doc.removeEventListener("keydown", taste, true);
+  };
+  // pointerdown UND click: der Finger meldet pointerdown, die Maus am Schreibtisch beides.
+  doc.addEventListener("pointerdown", daneben, true);
+  doc.addEventListener("click", daneben, true);
+  doc.addEventListener("keydown", taste, true);
+  return loese;
 }
 
 // Betreiber 2026-08-17 ("bei Startseite auch gleiche Modelle-Menue"):
@@ -173,6 +209,9 @@ export async function oeffneModellMenue(kontext = {}) {
   menue.id = menueId;
   menue.className = "code-projekt-menue code-modus-menue";
   menue.setAttribute("role", "menu");
+  // Wachhund: der naechste Tipp daneben (oder Escape) schliesst. Ohne ihn blieb das Menue der
+  // Startseite offen liegen und schluckte mit z-index 80 jeden Fingerdruck (gemessen 08.09.).
+  bewacheAussenklick(menueId, chip);
   const kopf = document.createElement("div");
   kopf.className = "code-menue-titel";
   kopf.textContent = "Modell";
