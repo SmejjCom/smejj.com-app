@@ -29,9 +29,9 @@ test("untere Safe-Area nur EINMAL: Feld und Code-Leiste geben ihren Rand ab, die
     huellenRegeln.every((sel) => sel.includes("html.tastatur-offen") || sel.includes("html:not(.tastatur-offen)")),
     `Huelle nur fuer Tastatur oder Mindestabstand: ${huellenRegeln.join(" | ")}`,
   );
-  const mindest = huellenRegeln.filter((sel) => sel.includes(":not(.tastatur-offen)"));
-  assert.ok(mindest.every((sel) => m.REGELN.includes("max(env(safe-area-inset-bottom,0px),18px)")),
-    "der Mindestwert unterschreitet nie den echten Wert — alte Installationen verlieren nichts");
+  // In der installierten App faellt der Rand auf 0: der Home-Balken liegt in den 62 pt UNTER der
+  // Flaeche (Vollbild oben), ein Abstand wuerde dort nur Platz verschenken.
+  assert.ok(m.REGELN.includes('html:not(.tastatur-offen) main.shell.shell{padding-bottom:0}'));
 });
 
 test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () => {
@@ -100,23 +100,24 @@ test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen 
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild-Balken: die Wurzel lag NICHT im Layout, sondern im Status-Bar-Modus der Web-App", () => {
+test("Vollbild oben, und der Streifen unten wird unsichtbar gemacht statt bekaempft", () => {
   // GEMESSEN 08.09. in der installierten App im iPhone-Simulator (Diagnoseseite, drei Messstreifen):
   // Schirm 402x874, Fenster 402x812, fixed inset:0 = 812, 100dvh = 812 — es fehlten 62 pt, genau
   // safe-area-inset-top. Die fehlende Flaeche liegt AUSSERHALB des WebViews; ein Rahmen mit
   // bottom:-120px endete dort ebenso. Ursache: apple-mobile-web-app-status-bar-style
   // "black-translucent" -> UIWebClipStatusBarStyleLegacyBlackTranslucent in der Webclip-Datei.
   const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
-  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black"/, "Legacy verkuerzt die Flaeche; \"default\" macht die Statusleiste hell");
-  assert.doesNotMatch(html, /status-bar-style" content="black-translucent"/);
+  // Betreiber-Anweisung 08.09.: Vollbild oben. Im Simulator gemessen — es gibt genau zwei Zustaende:
+  //   black-translucent -> Flaeche top 0 / hoch 812: Vollbild oben, 62 pt Schwarz unten
+  //   black oder default -> hoch 874: nichts unten, dafuer ein Statusleistenbalken oben
+  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black-translucent"/);
   assert.match(html, /viewport-fit=cover/, "ohne cover waere die Flaeche erst recht kleiner");
-  // Kein Layout-Hilfsmittel mehr: keine gemessene Rahmenhoehe, kein Ueberstand, keine dvh-Rechnerei.
-  assert.doesNotMatch(m.REGELN, /body::after/, "der Rahmen braucht keine Sonderregel mehr");
-  assert.doesNotMatch(m.REGELN, /vollbild-fehl|--vv-unten/);
-  // Dafuer wird safe-area-inset-bottom in diesem Modus 0 — der Abstand zum Home-Balken kommt von hier,
-  // und nie kleiner als der echte Wert, damit noch nicht neu installierte Apps nichts verlieren.
-  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{html\{--sa-bottom:max\(env\(safe-area-inset-bottom,0px\),18px\)\}/);
-  assert.match(m.REGELN, /html:not\(\.tastatur-offen\) main\.shell\.shell\{padding-bottom:max\(env\(safe-area-inset-bottom,0px\),18px\)\}/, "bei offener Tastatur bleibt es buendig");
+  assert.doesNotMatch(m.REGELN, /vollbild-fehl|--vv-unten/, "keine gemessene Rahmenhoehe mehr");
+  // Der Streifen unten wird unsichtbar gemacht statt bekaempft: gleiche Farbe, kein Rahmen, kein Schein.
+  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{html\{--sa-bottom:0px;background:#000\}/);
+  assert.match(m.REGELN, /body::before\{background:[^}]*#000 100%\) #000\}/, "Grund laeuft auf die Farbe dahinter aus");
+  assert.match(m.REGELN, /body::after\{box-shadow:inset 0 1px 0[^}]*inset 0 26px 40px -26px[^}]*\}/, "unten weder Strich noch Schein");
+  assert.ok(!/body::after\{box-shadow:[^}]*inset 0 -1px/.test(m.REGELN), "kein unterer Strich");
 });
 
 test("Punkt 7: bei offener Bildschirmtastatur faellt der untere Sicherheitsrand weg — Feld buendig an der Tastaturkante", () => {
@@ -165,5 +166,13 @@ test("Antworten tragen dieselben Menuepunkte wie eigene Fragen (Kopieren, Vorles
   const kopf = menue.split("const MENU_KOPF")[1];
   const assistant = kopf.split("assistant: Object.freeze([")[1].split("])")[0];
   for (const act of ["copy", "speak", "regen"]) assert.ok(assistant.includes(`act: "${act}"`), `Antwort-Menue braucht ${act}`);
+});
+
+test("Die drei Punkte unter einer Antwort sind antippbar", () => {
+  // Gemessen 08.09.: #startLog .msg-actions traegt pointer-events:none und am Handy overflow-x:auto —
+  // die Leiste war 0 px hoch, ihre Knoepfe ragten heraus und wurden vom Scroll-Container abgeschnitten.
+  assert.match(m.REGELN, /#startLog \.msg-actions,body #codeLogHalter \.msg-actions\{pointer-events:auto;min-height:44px;overflow:visible;margin-top:0\}/);
+  // Und Platz unter dem letzten Eintrag, sonst liegt genau die letzte Leiste hinter dem Dock.
+  assert.match(m.REGELN, /#startLog\.start-log,body #code #codeLogHalter\.code-log-halter\{padding-bottom:132px\}/);
 });
 
