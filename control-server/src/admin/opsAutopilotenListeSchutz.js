@@ -77,6 +77,24 @@ export const SCHUTZ_AUTOPILOTEN = Object.freeze([
     ...LAEUFER
   },
   {
+    id: "code-sicherung",
+    name: "Code-Sicherung",
+    nummer: "85",
+    kurz: "Legt einmal täglich ein Archiv des Deploy-Zweiges nach IDrive e2 und lässt sich die Prüfsumme vom Speicher bestätigen.",
+    funktionen: [
+      "Ein Schnappschuss je Tag unter sicherung/code/ — der Schlüssel trägt das Datum, ein bestehender wird durch If-None-Match NIE überschrieben.",
+      "Liegt der heutige Stand schon, wird gar nichts geladen: an allen übrigen Takten kostet der Lauf eine Listen-Abfrage und sonst nichts.",
+      "Vor dem Speichern wird das Archiv geprüft (Größe und gzip-Dateikopf) — eine Fehlerseite von GitHub darf nie als Sicherung durchgehen.",
+      "Nach dem Speichern wird das ETag von e2 gegen die eigene Prüfsumme gehalten: die Gegenprobe der ANDEREN Seite, nicht die Zusicherung des Absenders.",
+      "Braucht KEIN neues Geheimnis: das Repo ist öffentlich lesbar, die e2-Zugänge liegen bereits im Control-Server.",
+      "Löscht nichts. Für eine Aufbewahrungsfrist auf diesem Präfix gibt es keine schriftliche Freigabe — rund 9 MB je Tag wachsen also auf."
+    ],
+    trainiert: "Nichts — sie sichert und beweist",
+    verbessert: "Der Code hängt nicht mehr an einem einzigen Faden: neben GitHub und Codeberg liegt er jetzt auch dort, wo laut Architektur die Backups hingehören",
+    neuigkeiten: ["Neu am 2026-09-08 (Befund: Codeberg-Spiegel lief seit dem 05.09. täglich rot — \"es wurde NICHTS gesichert\")"],
+    ...LAEUFER
+  },
+  {
     id: "wiederherstellungs-probe",
     name: "Wiederherstellungs-Probe",
     nummer: "47",
