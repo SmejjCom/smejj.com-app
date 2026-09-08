@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-08T05:46:02.885Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive, 'Go: alle sechs bauen'): Vollbild-Versatz, Mikrofon in Logofarbe, Chat ohne Seitwaerts-Schieben mit Glas, Modell-Menue volle Breite, Vorlesen fuer eigene Fragen, Ansichten nach dem Login wie eine App — Stempel per Doppelklick; sw.js Precache mobil-ansichten.js, CACHE_NAME live+1, Marken chat-actions-menu/chat-actions +1.",
+  "frozenAt": "2026-09-08T06:01:43.095Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege holt (Tastatur-Buendigkeit, Vollbild-Rahmen ueber visualViewport, Einstellungen durchgaengig Deutsch). Stempel per Doppelklick.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "2d26230434b0a6dce9a46d340e95c104271ed807163c4d83ff86d0f2a2fdcc04",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "dfacb043048594d78b258bbfa37e30074bb36cc0c6ba29eb72483f36ed490382",
+    "public/sw.js": "fb8d6f0ae8eba99596cad691d2fc9d5b55f3bef9339af7760b3984c586fe0032",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
