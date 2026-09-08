@@ -193,6 +193,10 @@ test("Das Modell-Menue schliesst beim Tipp daneben — sonst schluckt es die gan
   assert.match(quelle, /bewacheAussenklick\(menueId, chip\);/, "beim Oeffnen gesetzt");
   assert.match(quelle, /doc\.addEventListener\("pointerdown", daneben, true\)/, "der Finger meldet pointerdown");
   assert.match(quelle, /e\.key === "Escape"/, "Escape schliesst am Schreibtisch");
+  // Abgehaertet nach dem eigenen Rollentest: nur EIN Wachhund gleichzeitig, und contains statt
+  // id-Selektor (ein Knopf ohne id haette "#" ergeben — ungueltiger Selektor).
+  assert.match(quelle, /aktiverLoeser\?\.\(\);/, "alter Wachhund wird geloest");
+  assert.match(quelle, /knopf\?\.contains\?\.\(ziel\)/);
   // schliesseModellMenue muss BEIDE Menues treffen
   const zu = quelle.split("export function schliesseModellMenue")[1].split("}")[0];
   assert.ok(zu.includes("codeModellMenue") && zu.includes("startModellMenue"));
