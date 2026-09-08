@@ -161,8 +161,36 @@ async function main() {
 
   // Ohne Basismodell und ohne Datensatz braucht der Lauf gar nicht erst zu
   // starten — sonst stirbt er auf dem Knoten und die Minuten sind bezahlt.
-  const basis = await e2.getJson(`${BASIS_PREFIX}/manifest.json`, null).catch(() => null);
-  if (!basis?.komplett) { console.error(`ABBRUCH: Basismodell unter ${BASIS_PREFIX} ist nicht komplett gespiegelt.`); process.exit(3); }
+  /**
+   * ZWEI VERSCHIEDENE FEHLER, die bisher dieselbe Meldung bekamen:
+   *
+   *   a) Das Manifest sagt "nicht komplett" — der Spiegel ist wirklich luecken-
+   *      haft, ein Lauf darauf waere bezahlte Zeit fuer nichts.
+   *   b) Das Manifest ist gerade nicht LESBAR (Netz, Zeitgrenze, Aussetzer der
+   *      Ablage). Ueber den Spiegel sagt das gar nichts.
+   *
+   * Am 08.09. trat b) auf und meldete a): "Basismodell ist nicht komplett
+   * gespiegelt", waehrend in der Ablage 14 Dateien mit 7,51 GB lagen und das
+   * Manifest komplett:true sagte. Der Neustart des Trainings brach daran ab —
+   * eine halbe Stunde Suche an der falschen Stelle.
+   *
+   * Ein fehlgeschlagener Abruf ist kein Befund. Er wird jetzt einmal
+   * wiederholt und, wenn er wieder scheitert, als das gemeldet was er ist.
+   */
+  let basis = await e2.getJson(`${BASIS_PREFIX}/manifest.json`, null).catch(() => null);
+  if (basis === null) {
+    basis = await e2.getJson(`${BASIS_PREFIX}/manifest.json`, null).catch(() => null);
+    if (basis === null) {
+      console.error(`ABBRUCH: Das Manifest unter ${BASIS_PREFIX} ist zweimal nicht lesbar gewesen.`);
+      console.error("Das ist KEIN Urteil ueber den Spiegel — die Ablage antwortet gerade nicht. IDRIVE_E2_* pruefen.");
+      process.exit(3);
+    }
+  }
+  if (!basis.komplett) {
+    console.error(`ABBRUCH: Das Manifest unter ${BASIS_PREFIX} meldet den Spiegel als UNVOLLSTAENDIG.`);
+    console.error(`Dateien laut Manifest: ${(basis.dateien || []).length}; erneut spiegeln mit smejj-1-1-basis-spiegeln.mjs.`);
+    process.exit(3);
+  }
   console.log(`Basis geprueft: ${basis.dateien?.length ?? "?"} Dateien, ${(Number(basis.gesamtBytes || 0) / 1024 ** 3).toFixed(1)} GB`);
   // NUR die Liste, nicht den Inhalt: Der erste Entwurf holte die Datei mit
   // getText — 6,7 MB laufen in den 30-s-Deckel des Signierers, und die Pruefung
