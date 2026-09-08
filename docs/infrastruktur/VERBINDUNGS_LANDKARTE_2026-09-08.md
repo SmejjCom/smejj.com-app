@@ -68,25 +68,79 @@ Zwei Entwurfsentscheidungen, die den Wächter brauchbar halten:
   `feature/design-v11` allein 122 Commits. **Nachgezogen** über
   `scripts/deploy/codeberg_spiegel_sync.sh lokal` (SSH-Weg, funktioniert vom
   Mac aus ohne Token) — danach alle 39 Zweige gleichauf.
-* **Tägliche Sicherung (Action)**: bleibt rot, bis der Betreiber das Secret
-  setzt. Siehe unten.
+* **Tägliche Sicherung**: die Action bleibt rot, bis das Secret gesetzt ist —
+  ersetzt durch einen Mac-Termin, der ohne Geheimnis auskommt. Siehe unten.
 
-## Offen: das Secret für die tägliche Sicherung
+Ein dritter Fund kam beim Ausliefern dazu: **`scripts/check/github_kostenfrei.sh`
+blockierte jeden Push.** Der Wächter fragte die GitHub-API ohne Anmeldung nach
+der Sichtbarkeit des Repos und bekam von diesem Anschluss dauerhaft
+`API rate limit exceeded` (HTTP 403). Er meldete deshalb immer „privates Repo",
+obwohl SmejjCom/smejj.com-app öffentlich ist — eine Messung, die immer dasselbe
+Ergebnis liefert, misst nichts mehr. Behoben: fragt zuerst über `gh` (mit
+Token, kein Limit), der anonyme Weg bleibt Rückfall, fail-closed unverändert.
 
-Der Spiegel ist jetzt aktuell, aber der automatische Lauf schlägt weiter fehl.
-Diesen einen Schritt kann keine Sitzung erledigen — ein Token darf nur der
-Betreiber erzeugen:
+## Die tägliche Sicherung läuft wieder — über einen Ersatzweg
 
-1. Auf **codeberg.org**: Einstellungen → Anwendungen → „Token generieren",
-   Recht `write:repository`.
-2. Auf **github.com/SmejjCom/smejj.com-app**: Settings → Secrets and variables
-   → Actions → „New repository secret", Name **`CODEBERG_TOKEN`**, Wert = der
-   Token.
-3. Danach einmal prüfen: Actions → „Code-Sicherung nach Codeberg" → „Run
-   workflow", anschließend `node scripts/diagnose/kette-pruefen.mjs`.
+Die GitHub Action bleibt rot, solange das Secret `CODEBERG_TOKEN` fehlt, und
+ein Token darf nur der Betreiber erzeugen. Ohne Zutun gäbe es damit **gar kein
+Backup**. Deshalb läuft die Sicherung jetzt über den einzigen Ort, der bereits
+Schreibrecht bei Codeberg hat: den Mac.
 
-Bis dahin hält der SSH-Weg vom Mac aus den Spiegel aktuell — er braucht keine
-weiteren Zugangsdaten, aber eben einen Menschen, der ihn anstößt.
+* **Termin:** `com.smejj.codeberg-spiegel` (launchd), täglich 14:20 Ortszeit
+* **Skript:** `~/.local/share/smejj-codeberg/wache.sh`
+  (Kopie im Repo: `scripts/deploy/codeberg_wache_mac.sh`)
+* **Termindatei:** `~/Library/LaunchAgents/com.smejj.codeberg-spiegel.plist`
+  (Kopie im Repo: `scripts/deploy/com.smejj.codeberg-spiegel.plist`)
+* **Zustand:** `~/.local/share/smejj-codeberg/zustand.json`, Log daneben
+* Bewiesen am 08.09.: `LastExitStatus = 0`, 39 Zweige und alle Marken gespiegelt
+
+Der Job braucht **kein Geheimnis** (SSH-Schlüssel
+`~/.ssh/codeberg_smejj_ed25519` ist bei Codeberg registriert), **keine
+Action-Minuten** und **nicht einmal den Projektordner**: er hält einen eigenen
+nackten Klon und spiegelt direkt GitHub → Codeberg.
+
+Zwei Fallen, die dabei gemessen wurden — beide sind im Skript vermerkt:
+
+1. **Der erste Entwurf lief im Google-Drive-Ordner.** Von Hand ging das, unter
+   launchd brach es sofort ab: `Operation not permitted`. macOS gibt
+   Hintergrunddiensten keinen Zugriff auf CloudStorage-Ordner. Der eigene Klon
+   ist nicht nur der Ausweg, sondern die bessere Sicherung — unabhängig vom
+   Arbeitszweig und davon, ob Drive gerade eingehängt ist.
+2. **Ein Schlüssel für zwei Dienste geht schief.** Mit `GIT_SSH_COMMAND` global
+   auf den Codeberg-Schlüssel scheiterte schon das Lesen bei GitHub. Die Quelle
+   wird deshalb über **HTTPS** gelesen (das Repo ist öffentlich, Lesen braucht
+   dort nichts), und der Schlüssel gilt nur für die Codeberg-Pushes.
+
+Gepusht wird **nie** mit `--mirror` und **nie** mit `--force`: ein Zweig, den
+GitHub nicht mehr hat, wird auf Codeberg nicht gelöscht, und eine auseinander
+gelaufene Historie lässt den Lauf abbrechen statt überschreiben.
+
+### Wie die Landkarte das bewertet
+
+Gefragt ist nicht „läuft die Action?", sondern **„ist der Code gesichert?"**.
+Die Zeile *Tägliche Sicherung* liest deshalb beide Wege:
+
+| Lage | Meldung |
+|---|---|
+| Action erfolgreich | **grün** |
+| Action rot, Mac-Termin jünger als 36 h | **grau** — „trägt gerade allein" |
+| Mac-Termin älter als 36 h oder fehlgeschlagen | **rot** — nichts sichert mehr |
+
+Grau und nicht grün: der Mac muss dafür laufen, und dieser Vorbehalt darf nicht
+unsichtbar werden. Rot wäre aber falsch — an dauerndes Rot gewöhnt man sich,
+bis man den echten Ausfall ebenso übersieht. Die 36 Stunden geben eine Nacht
+Reserve, ohne einen Ausfall zu verschweigen.
+
+### Wenn du den Token doch noch setzen willst
+
+Dann übernimmt wieder die Action, und der Mac-Job kann weg:
+
+1. **codeberg.org** → Einstellungen → Anwendungen → „Token generieren",
+   Berechtigung `repository` auf Read and Write.
+2. **github.com/SmejjCom/smejj.com-app** → Settings → Secrets and variables →
+   Actions → New repository secret, Name `CODEBERG_TOKEN`.
+3. Mac-Termin abschalten:
+   `launchctl bootout gui/$(id -u)/com.smejj.codeberg-spiegel`
 
 ## Was die Landkarte bewusst NICHT misst
 

@@ -87,6 +87,38 @@ export function bewerteRueckstand(rueckstand) {
   return rueckstand.length ? "rot" : "gruen";
 }
 
+// Ein Lauf am Tag: nach 36 Stunden ohne Erfolg ist die Sicherung ueberfaellig.
+// Die Reserve von 12 Stunden faengt einen zugeklappten Mac ab, ohne den
+// Ausfall zu verschweigen.
+const SICHERUNG_FRIST_MS = 36 * 60 * 60 * 1000;
+
+/**
+ * Urteilt ueber die taegliche Sicherung — GESAMT, ueber beide Wege.
+ *
+ * Gefragt ist nicht "laeuft die Action?", sondern "ist der Code gesichert?".
+ * Solange das Secret CODEBERG_TOKEN fehlt, ist die Action rot und trotzdem
+ * alles gesichert, weil der Mac-Job es tut. Wer hier stur die Action bewertet,
+ * zeigt dauerhaft Rot — und an dauerndes Rot gewoehnt man sich, bis man den
+ * echten Ausfall auch uebersieht.
+ *
+ * @param {"erfolg"|"fehler"|"unbekannt"} action  Ergebnis des letzten Action-Laufs
+ * @param {{ergebnis?: string, stand?: string}|null} ersatz  Inhalt von zustand.json
+ * @param {number} jetzt  Zeitstempel in ms
+ * @returns {"gruen"|"rot"|"grau"}
+ */
+export function bewerteSicherung(action, ersatz, jetzt) {
+  if (action === "erfolg") return "gruen";
+
+  const frisch = ersatz?.ergebnis === "ok"
+    && Number.isFinite(Date.parse(ersatz.stand ?? ""))
+    && jetzt - Date.parse(ersatz.stand) < SICHERUNG_FRIST_MS;
+
+  // Ersatzweg traegt: gemeldet wird grau, nicht gruen — der Mac muss dafuer
+  // laufen, und dieser Vorbehalt darf nicht unsichtbar werden.
+  if (frisch) return "grau";
+  return action === "unbekannt" && !ersatz ? "grau" : "rot";
+}
+
 async function hole(url, timeoutMs = 15000) {
   const abbruch = AbortSignal.timeout(timeoutMs);
   const start = Date.now();
@@ -252,22 +284,46 @@ export async function pruefeCodebergSpiegel() {
 
 // ----------------------------------------------------------------- Kante 12
 // Der Waechter des Waechters: laeuft die taegliche Sicherung ueberhaupt durch?
-// Ohne gh-Werkzeug ist das grau, nicht rot — fehlendes Werkzeug ist kein Defekt.
+//
+// Zwei Wege fuehren dorthin, und gefragt ist das ERGEBNIS, nicht der Weg:
+//   1. GitHub Action — schlaeft, solange das Secret CODEBERG_TOKEN fehlt.
+//   2. Mac-Termin (launchd, com.smejj.codeberg-spiegel) — laeuft heute.
+// Deshalb wird beides gelesen und gemeinsam bewertet.
 
-export async function pruefeSpiegelLauf() {
+const ERSATZ_ZUSTAND = join(process.env.HOME || "", ".local/share/smejj-codeberg/zustand.json");
+
+export async function pruefeSicherung() {
+  let action = "unbekannt";
+  let actionText = "gh nicht verfuegbar";
   try {
     const { stdout } = await execFileAsync("gh",
       ["run", "list", "--workflow=codeberg-spiegel.yml", "--limit", "1", "--json", "conclusion,createdAt"],
       { cwd: WURZEL });
     const [letzter] = JSON.parse(stdout);
-    if (!letzter) return [befund("Taegliche Sicherung (Action)", "grau", "noch kein Lauf")];
-    const tag = String(letzter.createdAt).slice(0, 10);
-    return [letzter.conclusion === "success"
-      ? befund("Taegliche Sicherung (Action)", "gruen", `letzter Lauf ${tag} erfolgreich`)
-      : befund("Taegliche Sicherung (Action)", "rot", `letzter Lauf ${tag}: ${letzter.conclusion} — Secret CODEBERG_TOKEN pruefen`)];
-  } catch {
-    return [befund("Taegliche Sicherung (Action)", "grau", "gh nicht verfuegbar — nicht messbar")];
+    if (letzter) {
+      action = letzter.conclusion === "success" ? "erfolg" : "fehler";
+      actionText = `Action ${String(letzter.createdAt).slice(0, 10)}: ${letzter.conclusion}`;
+    } else {
+      actionText = "Action: noch kein Lauf";
+    }
+  } catch { /* kein gh — bleibt "unbekannt" */ }
+
+  let ersatz = null;
+  try {
+    ersatz = JSON.parse(await readFile(ERSATZ_ZUSTAND, "utf8"));
+  } catch { /* kein Mac-Termin eingerichtet */ }
+
+  const zustand = bewerteSicherung(action, ersatz, Date.now());
+  const ersatzText = ersatz
+    ? `Mac-Termin ${String(ersatz.stand).slice(0, 16).replace("T", " ")} UTC: ${ersatz.ergebnis}`
+    : "kein Mac-Termin";
+
+  if (zustand === "gruen") return [befund("Taegliche Sicherung", "gruen", actionText)];
+  if (zustand === "grau") {
+    return [befund("Taegliche Sicherung", "grau",
+      `${ersatzText} — traegt gerade allein (${actionText}; Secret CODEBERG_TOKEN fehlt)`)];
   }
+  return [befund("Taegliche Sicherung", "rot", `${actionText}; ${ersatzText} — NICHTS sichert mehr`)];
 }
 
 // ----------------------------------------------------------------- Kante 13
@@ -304,7 +360,7 @@ export async function main() {
     pruefeStartseite(),
     pruefeZeabur(),
     pruefeCodebergSpiegel(),
-    pruefeSpiegelLauf(),
+    pruefeSicherung(),
     pruefeGeheimnisse()
   ]);
   const alle = gruppen.flat();
