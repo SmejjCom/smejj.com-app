@@ -1,5 +1,5 @@
 {
-  "gesammeltAm": "2026-09-07T20:01:27.764Z",
+  "gesammeltAm": "2026-09-08T20:01:38.418Z",
   "aufgaben": [
     {
       "stufe": 1,
@@ -12,18 +12,18 @@
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
-      "betrifft": "oberflaechenwache",
-      "titel": "Ausfall: Betriebswache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: smejj.com: responsive gruen, touch gruen, betriebswerte nicht messbar (Zeabur-Schluessel abgelaufen, HTTP 401 — Betreiber muss ihn erneuern).",
-      "seit": "2026-09-06T18:50:50.238Z"
+      "betrifft": "modell-katalog-wache",
+      "titel": "Ausfall: Modell-Katalog-Wache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: 1 gewählte(s) Modell(e) beim Anbieter verschwunden — Stand vor 0 h, z. B. zhipu:glm-4.5-flash.",
+      "seit": "2026-09-08T10:27:52.407Z"
     },
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
-      "betrifft": "qualitaetsmessung",
-      "titel": "Ausfall: Qualitäts-Prüfer",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1 — Note 98,0 % (14 Faelle, 1 kritisch, live-default).",
-      "seit": "2026-09-07T04:28:00.010Z"
+      "betrifft": "oberflaechenwache",
+      "titel": "Ausfall: Betriebswache",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: smejj.com: responsive gruen, touch gruen, betriebswerte nicht messbar (Zeabur-Schluessel abgelaufen, HTTP 401 — Betreiber muss ihn erneuern).",
+      "seit": "2026-09-06T18:50:50.238Z"
     },
     {
       "stufe": 1,
@@ -44,18 +44,26 @@
     {
       "stufe": 1,
       "quelle": "Ampel-Vorfall",
+      "betrifft": "synthetic-user-watchdog",
+      "titel": "Ausfall: Probe-Nutzer",
+      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Nutzerreise P1: 1 von 7 Schritten kaputt — buendel_gleichheit: sw.js weicht ab: https://smejj.com traegt smejj-shell-v819, https://api.smejj.com traegt smejj",
+      "seit": "2026-09-08T14:21:45.615Z"
+    },
+    {
+      "stufe": 1,
+      "quelle": "Ampel-Vorfall",
       "betrifft": "tiefe-spur-messung",
       "titel": "Ausfall: Tiefe-Spur-Messung",
       "befund": "Der letzte Lauf hat einen Fehler gemeldet: Selbsttest 5/5; tiefe Spur: nicht messbar: 4 von 14 Fällen mit Transportfehler (HTTP/Timeout/Notfall-Assistent): strukturierte-json-ausgabe — http_503 ×4; 1 ",
       "seit": "2026-09-07T13:16:43.104Z"
     },
     {
-      "stufe": 1,
-      "quelle": "Ampel-Vorfall",
-      "betrifft": "web-vitals-wache",
-      "titel": "Ausfall: Web-Vitals-Wache",
-      "befund": "Der letzte Lauf hat einen Fehler gemeldet: Exit 1.",
-      "seit": "2026-09-05T03:21:51.414Z"
+      "stufe": 2,
+      "quelle": "CVE-Waechter",
+      "betrifft": "bibliothek:accelerate",
+      "titel": "accelerate 1.1.1: 1 bekannte Schwachstelle(n)",
+      "befund": "Gemeldet von osv.dev. Beispiele: GHSA-4j2p-28q2-5m79. Quelle: workers/smejj-bild-maler/requirements.txt. Behebung = Version anheben und den Dienst neu bauen.",
+      "seit": null
     },
     {
       "stufe": 2,

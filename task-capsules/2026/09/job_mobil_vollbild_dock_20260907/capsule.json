@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runde 10 (SW v823): Rundgang hochkant und quer sauber, Felder auf 44 px, check:all-Blocker beseitigt. OFFEN nur zwei Schritte, die eine Sitzung nicht selbst ausfuehren darf: Doppelklick auf die Schutz-Datei, und die App einmal neu installieren.",
+  "status": "verified — Runde 11 (SW v824): A-bis-Z ueber Desktop, Android und iOS. Groesster Fund: Chat-Bilder waren live blockiert, weil ein Fix vom 07.09. nie ausgeliefert wurde.",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -251,5 +251,24 @@
     },
     "tablet": "In Runde 7 vollstaendig gemessen (14 Routen, 0 Befunde). Die seitdem hinzugekommenen Aenderungen betreffen es nicht: die Startseiten-Reihenfolge gilt nur bis 600 px, die uebrigen sind Verbesserungen. Ein Nachlauf scheiterte daran, dass beide Emulatoren dem Mac ausgingen (parallel liefen zwei iOS-Simulatoren).",
     "auslieferung": "SW smejj-shell-v823."
+  },
+  "runde11_20260908_a_bis_z": {
+    "auftrag": "Betreiber: 'teste die gesamte App, Web, PWA, iOS mit Simulator, Android mit Emulator, von A bis Z'.",
+    "groesster_fund": {
+      "was": "CHAT-BILDER WAREN LIVE BLOCKIERT. Die Content-Security-Policy der ausgelieferten index.html kannte die eigene API nicht: img-src 'self' data: blob: — ohne https://api.smejj.com. Jedes Bild im Chat wurde vom Browser abgewiesen.",
+      "wie_gefunden": "Im DESKTOP-BROWSER, beim ersten Test dort ueberhaupt. Zehn Runden Mobil-QA hatten diese Ebene nie angefasst — die Konsole meldete es sofort.",
+      "wurzel": "Der Fix existiert seit dem 07.09. im Bauzweig (Commit acc32034), ist aber NIE LIVE GEGANGEN. Der Klon trug weiter die alte Direktive.",
+      "behoben": "Gezielt nur diese eine Direktive im Klon nachgezogen (nicht die ganze Datei: der Bauzweig ist an 34 Zeilen aelter als live). SW v824.",
+      "gegenprobe": "Kern-Module systematisch gegen live verglichen — app.js, start-styles.css und chat-actions.js weichen ab, aber dort ist LIVE neuer (Refactoring bzw. Marken). Der CSP-Fehler war der einzige verlorene Fix."
+    },
+    "a_bis_z": {
+      "desktop_web": "1280x720, Maus erkannt: Mobil- und coarse-Regeln greifen dort korrekt NICHT, kein seitlicher Ueberlauf, keine kleinen Ziele. Konsole nach dem CSP-Fix sauber.",
+      "android_emulator": "Pixel 7 hochkant, 14 von 14 Ansichten: ueberlauf=false, kleineZiele=0 — auch das Start-Feld (vorher 43,5 px).",
+      "android_quer": "863x360: 6 Ansichten sauber.",
+      "ios_simulator": "Installierte Web-App: Vollbild oben, kein Balken unten.",
+      "pwa": "Service-Worker v824 live, Precache vollstaendig (190 Module)."
+    },
+    "auslieferung": "SW smejj-shell-v824.",
+    "offen": "Nur die zwei Schutz-Sperren und die Benchmark-Pruefsummen — beides darf eine Sitzung nicht selbst ausfuehren. Doppelklick-Datei liegt jetzt zusaetzlich auf dem Schreibtisch: 'SMEJJ Schutz einschalten.command'."
   }
 }
