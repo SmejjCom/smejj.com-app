@@ -225,3 +225,70 @@ test("der Eimer wandert mit, damit Loeschen den richtigen Ort trifft", async () 
   assert.equal(ornith.eimer, "modell");
   assert.equal(ornith.pfad, "model-files/ornith/");
 });
+
+// --- Befunde vom Live-Bildschirm, 2026-09-08 --------------------------------
+
+test("eine lose Datei unter dem Praefix ist kein Modell", async () => {
+  const bestand = await modellbestandUebersicht({
+    env: ENV,
+    jetzt: JETZT,
+    fetchImpl: fakeFetch({
+      listen: {
+        "models/production/": listeXml([
+          { key: "models/production/.registry.json", size: 480 },
+          { key: "models/production/qwen35-4b/gewichte.safetensors", size: 2_900_000_000 }
+        ])
+      }
+    })
+  });
+  // Vorher stand ".registry.json" als eigene Zeile in der Liste — mit
+  // Loeschen-Knopf daneben. Verwaltungskram ist kein Modell.
+  assert.equal(bestand.modelle.some((m) => m.name === ".registry.json"), false);
+  assert.equal(bestand.modelle.some((m) => m.name === "qwen35-4b"), true);
+});
+
+test("ein Modell, das nur der Motor kennt, verschwindet nicht stillschweigend", async () => {
+  const frisch = new Date(JETZT - 30 * 1000).toISOString();
+  const bestand = await modellbestandUebersicht({
+    env: ENV,
+    jetzt: JETZT,
+    fetchImpl: fakeFetch({
+      listen: { "admin/motoren/": listeXml([{ key: "admin/motoren/mac2.json", size: 200 }]) },
+      dateien: {
+        "admin/motoren/mac2.json": JSON.stringify({
+          id: "mac2", art: "smee", name: "Mac 2 ueber smee.io",
+          gemeldetAm: frisch, modelle: ["ornith-1.0-9b"]
+        })
+      }
+    })
+  });
+
+  // Der Motor sagt "ich bediene 1 Modell". Ohne diese Zeile zeigte die Liste
+  // keines - und niemand erfuhr, welches (Befund live am 08.09.: ornith liegt
+  // im Eimer der smejj-Cloud, den diese Sicht nicht liest).
+  const ornith = bestand.modelle.find((m) => m.name === "ornith-1.0-9b");
+  assert.ok(ornith, "das vom Motor gemeldete Modell muss in der Liste stehen");
+  assert.equal(ornith.motorId, "mac2");
+  assert.equal(ornith.zustand, "aktiv");
+  assert.match(ornith.meldung, /nicht in den hier gelesenen Eimern/);
+});
+
+test("meldet ein stummer Motor ein Modell, ist die Zeile ein Fehler und kein Erfolg", async () => {
+  const alt = new Date(JETZT - 10 * 60 * 1000).toISOString();
+  const bestand = await modellbestandUebersicht({
+    env: ENV,
+    jetzt: JETZT,
+    fetchImpl: fakeFetch({
+      listen: { "admin/motoren/": listeXml([{ key: "admin/motoren/mac2.json", size: 200 }]) },
+      dateien: {
+        "admin/motoren/mac2.json": JSON.stringify({
+          id: "mac2", art: "smee", name: "Mac 2 ueber smee.io",
+          gemeldetAm: alt, modelle: ["ornith-1.0-9b"]
+        })
+      }
+    })
+  });
+  const ornith = bestand.modelle.find((m) => m.name === "ornith-1.0-9b");
+  assert.equal(ornith.zustand, "fehler");
+  assert.match(ornith.meldung, /meldet sich nicht/);
+});

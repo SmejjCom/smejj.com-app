@@ -59,8 +59,15 @@ export async function modellbestandUebersicht({
 } = {}) {
   const haupt = eimerConfig(env, env.IDRIVE_E2_BUCKET);
   // Reihenfolge ist hier KEIN Geschmack, sondern ein dokumentierter Befund
-  // (2026-07-09): der Haupteimer ist smejj-app, die Modellgewichte liegen in
-  // smejj-model-files. Wer auf den Haupteimer zurueckfaellt, bekommt fuer die
+  // (2026-07-09): der Haupteimer und der Modell-Eimer sind verschieden.
+  //
+  // NACHTRAG 2026-09-08, live gemessen: die Doku nennt smejj-app als
+  // IDRIVE_E2_BUCKET, der laufende Control-Server liest aber aus
+  // smejj-model-files. Nachgewiesen, indem dasselbe Lebenszeichen in beide
+  // Eimer gelegt wurde — die Konsole fand nur das zweite. Wer sich hier auf
+  // die Doku verlaesst, sucht am falschen Ort.
+  //
+  // Wer auf den Haupteimer zurueckfaellt, bekommt fuer die
   // Gewichte eine Null — und eine Null sieht aus wie "nichts da", nicht wie
   // "am falschen Ort gesucht". Genau dieser Anzeigefehler stand schon einmal
   // in /api/models/status. Deshalb: erst der ausdrueckliche Modell-Eimer,
@@ -90,7 +97,10 @@ export async function modellbestandUebersicht({
   const registry = sicherheitshalber(() => modellUebersicht({ env, gesundheit }), null);
   if (!registry) stumme.push("Modell-Registry");
 
-  const modelle = verschmelze(bestand, motoren, registry, schaltungen);
+  const modelle = [
+    ...verschmelze(bestand, motoren, registry, schaltungen),
+    ...nurVomMotorGemeldet(bestand, motoren)
+  ];
   return {
     ok: true,
     erstelltAm: new Date(jetzt).toISOString(),
@@ -152,7 +162,11 @@ async function zaehleOrt(cfg, praefix, fetchImpl) {
     for (const eintrag of leseEintraege(xml)) {
       const rest = eintrag.key.slice(praefix.length);
       if (!rest) continue;
-      const name = rest.includes("/") ? rest.slice(0, rest.indexOf("/")) : rest;
+      // Ein Modell ist ein ORDNER. Eine lose Datei direkt unter dem Praefix
+      // (z.B. models/production/.registry.json) ist Verwaltungskram und stand
+      // bis 2026-09-08 als eigene Zeile in der Liste — mit Loeschen-Knopf.
+      if (!rest.includes("/")) continue;
+      const name = rest.slice(0, rest.indexOf("/"));
       if (!name) continue;
       const wert = ordner.get(name) || { bytes: 0, dateien: 0, neuestes: "" };
       wert.bytes += eintrag.groesse;
@@ -228,6 +242,47 @@ function zeichneMotor(m, jetzt) {
     modelle: Array.isArray(m.modelle) ? m.modelle.map(String) : [],
     speicherBytes: Number(m.speicherBytes) || null
   };
+}
+
+// ------------------------------------------------- Vom Motor gemeldet, ohne Datei
+
+// Ein Motor meldet, welche Modelle er bedient. Findet sich dazu keine Datei in
+// den gelesenen Eimern, ist das KEINE Kleinigkeit: entweder liegt die Datei
+// woanders (ornith-1.0-9b liegt im Eimer der smejj-Cloud, den diese Sicht nicht
+// liest) oder der Motor meldet etwas, das es nicht mehr gibt. Beides gehoert
+// auf den Bildschirm. Die Zeile stillschweigend wegzulassen hiesse: der Motor
+// sagt "ich bediene 1 Modell", und die Liste zeigt keines — und niemand erfaehrt,
+// welches.
+function nurVomMotorGemeldet(bestand, motoren) {
+  const bekannt = new Set();
+  for (const d of bestand) { bekannt.add(d.id); bekannt.add(d.name); }
+
+  const zeilen = new Map();
+  for (const motor of motoren) {
+    for (const name of motor.modelle || []) {
+      if (bekannt.has(name) || zeilen.has(name)) continue;
+      zeilen.set(name, {
+        id: `motor:${motor.id}:${name}`,
+        name,
+        groesseBytes: 0,
+        dateien: 0,
+        herkunft: "vom Motor gemeldet",
+        pfad: null,
+        eimer: null,
+        geaendertAm: null,
+        motorId: motor.id,
+        motorName: motor.name,
+        kostenlos: true,
+        zustand: motor.zustand === "verbunden" ? "aktiv" : "fehler",
+        meldung: motor.zustand === "verbunden"
+          ? "laeuft auf diesem Motor — die Datei liegt aber nicht in den hier gelesenen Eimern"
+          : `Motor ${motor.name} meldet sich nicht`,
+        geschaltetVon: null,
+        geschaltetAm: null
+      });
+    }
+  }
+  return [...zeilen.values()];
 }
 
 // -------------------------------------------------------------- Schaltungen
