@@ -5,7 +5,13 @@ import fs from "node:fs";
 const html = fs.readFileSync("public/index.html", "utf8");
 // Seit der Aufteilung vom 2026-07-28 liegen die Ansichtstabellen in
 // public/view-routes.js. Geprueft wird weiterhin dieselbe Zusage.
+// app-helfer.js gehoert dazu: die kleinen DOM- und Speicher-Helfer wurden am
+// 07.09. aus app.js herausgeloest (812 Zeilen ueber der Hausgrenze von 800).
+// Die Pruefungen unten gelten dem VERHALTEN — welche Datei die Funktion
+// enthaelt, ist dafuer gleichgueltig, und ein Test, der an einer Dateigrenze
+// haengt, verbietet jedes Aufteilen.
 const app = fs.readFileSync("public/app.js", "utf8")
+  + fs.readFileSync("public/app-helfer.js", "utf8")
   + fs.readFileSync("public/view-routes.js", "utf8");
 const css = fs.readFileSync("public/styles.css", "utf8");
 const sw = fs.readFileSync("public/sw.js", "utf8");
