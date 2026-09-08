@@ -1,6 +1,6 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-08T10:16:33.656Z",
+  "frozenAt": "2026-09-08T11:59:55.731Z",
   "confirmation": "Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege holt (Tastatur-Buendigkeit, Vollbild-Rahmen ueber visualViewport, Einstellungen durchgaengig Deutsch). Stempel per Doppelklick.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "da6f5b634b0926ed27950ae23ce7a5e8094b61085d8b37424bc489a961461c2e",
+    "public/sw.js": "8c11c7da84fc415f370cc58ddc7c061164f571a113034729d0f3f1675c142888",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
