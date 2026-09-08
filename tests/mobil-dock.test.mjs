@@ -32,10 +32,12 @@ test("beide Felder wachsen bis ~5 Zeilen (148 px) und scrollen dann innen", () =
 
 test("Code-Leiste bleibt EINE Zeile: Rechnung bei 368 px Innenbreite geht auf, Ziele 44 px", () => {
   assert.match(m.REGELN, /\.codeleiste\.codeleiste\{flex-wrap:nowrap/);
-  assert.match(m.REGELN, /\.repochip\.repochip\{max-width:80px;min-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap/);
+  assert.match(m.REGELN, /\.repochip\.repochip\{display:inline-block;max-width:110px;min-width:44px/);
   assert.match(m.REGELN, /#codeTiefeAnzeige\{display:none\}/, "die reine Anzeige 'Mittel' faellt weg, sie ist kein Ziel");
-  // Modus 44 + Stufe 80 + Anhang 44 + Diktat 44 + Modell 64 + Senden 44 + 5 Luecken a 4
-  assert.ok(44 + 80 + 44 + 44 + 64 + 44 + 5 * 4 < 368);
+  // Die Chips sind flex:0 1 auto — sie duerfen schrumpfen. Massgeblich ist darum die Rechnung mit den
+  // MINDESTBREITEN: Modus 44 + Stufe 44 + Anhang 44 + Diktat 44 + Modell 64 + Senden 44 + 5 Luecken a 4.
+  assert.match(m.REGELN, /\.repochip\.repochip\{[^}]*flex:0 1 auto\}/);
+  assert.ok(44 + 44 + 44 + 44 + 64 + 44 + 5 * 4 < 368);
   assert.ok(!/height:\s*(3[0-9]|4[0-3])px/.test(m.REGELN), "keine Ziele unter 44 px");
   assert.doesNotMatch(m.REGELN, /font-size/, "keine Schriftgroessen (grosse Schrift, Betreiber-Regel)");
 });
@@ -78,13 +80,17 @@ test("Modell-Menue am Handy: Picker static, Menue absolut ueber die Glasbreite (
 
 test("Chat ohne Seitwaerts-Schieben: Eintraege brechen Links, Tabellen scrollen in sich; Frage als Glasblase, Kopfglas", () => {
   assert.match(m.REGELN, /#startLog \.entry,body #codeLogHalter \.entry\{max-width:100%;overflow-wrap:anywhere;word-break:break-word\}/);
-  assert.match(m.REGELN, /#startLog \.entry table,[^{]*\{display:block;max-width:100%;overflow-x:auto/);
+  assert.match(m.REGELN, /#startLog \.entry table,[^{]*\{display:block;width:max-content;max-width:100%;overflow-x:auto/);
+  // 08.09.: Zellen wurden buchstabenweise zerhackt ("Ze/it") — sie brechen jetzt gar nicht mehr,
+  // die Tabelle scrollt stattdessen in sich.
+  assert.match(m.REGELN, /table td,body #startLog \.entry table th,[^{]*\{overflow-wrap:normal;word-break:normal;white-space:nowrap;min-width:72px\}/);
+  assert.match(m.REGELN, /#startLog \.entry a\{overflow-wrap:anywhere\}/, "lange Links ausserhalb von Tabellen brechen weiter um");
   assert.match(m.REGELN, /\.entry\.user\.user\{margin-left:14%;max-width:86%;[^}]*backdrop-filter:blur/);
   assert.match(m.REGELN, /\.mobil-kopfglas\{position:fixed;top:0;left:0;right:0;height:calc\(env\(safe-area-inset-top,0px\) \+ 52px\);z-index:73;pointer-events:none/);
   assert.match(m.REGELN, /body:not\(\.mobil-chat-offen\) \.mobil-kopfglas\{display:none\}/);
 });
 
-test("Vollbild-Rahmen: feste Hoehe bis zur sichtbaren Unterkante (visualViewport), nie innerHeight, nie dvh-Flaechen", () => {
+test("Vollbild-Rahmen: bedingungsloser Ueberstand nach unten (keine Messung mehr), nie dvh-Flaechen", () => {
   assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 852 }), 852, "voller Schirm");
   assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 512.4 }), 512, "Tastatur offen: Rahmen endet an der Tastatur");
   assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 0 }), 0, "unbekannt -> Rueckfall 100%");
@@ -94,7 +100,10 @@ test("Vollbild-Rahmen: feste Hoehe bis zur sichtbaren Unterkante (visualViewport
   assert.equal(m.schirmUnterkante({ schirmHoehe: 0, schirmBreite: 0, innerWidth: 1, innerHeight: 1 }), 0);
   const quelle2 = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
   assert.match(quelle2, /\(apple && standalone\(\)\)\s*\? schirmUnterkante/, "Apple-App nimmt die Bildschirmkante");
-  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{top:0;bottom:auto;height:var\(--vv-unten,100%\)\}\}/);
+  // 08.09. 08:48-08:55: der Balken kam auch mit screen.height zurueck. Drei Messwege sind gescheitert,
+  // darum reicht der Rahmen jetzt ohne jede Messung 120 px unter die Kante — wie der Grund seit 05.09.
+  assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{top:0;bottom:-120px;height:auto\}\}/);
+  assert.doesNotMatch(m.REGELN, /body::after\{[^}]*var\(--vv-unten/, "keine gemessene Rahmenhoehe mehr");
   assert.doesNotMatch(m.REGELN, /vollbild-fehl/, "innerHeight-Messung ist raus (Betreiber 08.09. 01:49: Balken kam nach der Tastatur zurueck)");
   assert.doesNotMatch(m.REGELN, /100dvh \+ var\(/, "dvh-Flaechen bleiben unangetastet");
   const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
@@ -111,4 +120,16 @@ test("Punkt 7: bei offener Bildschirmtastatur faellt der untere Sicherheitsrand 
   assert.match(m.REGELN, /html\.tastatur-offen #start \.prompt-glass\.prompt-glass\.prompt-glass,html\.tastatur-offen #code \.codeunten\.codeunten\.codeunten\{margin-bottom:0;padding-bottom:0\}/);
   const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
   assert.match(quelle, /doc\.addEventListener\("focusout", \(\) => setTimeout\(setze, 120\), true\);/, "focusout mit capture und Verzoegerung");
+});
+
+// ---- Runde 5 (Betreiber-Screenshots 08.09. 08:48-08:55) -------------------------------------
+test("Code-Bereich: Gruss und Verlauf liegen unter dem Kopfglas, nicht darunter versteckt", () => {
+  assert.match(m.REGELN, /body\.mobil-chat-offen #code \.codegruss\{padding-top:calc\(env\(safe-area-inset-top,0px\) \+ 60px\)\}/);
+  assert.match(m.REGELN, /#code #codeLogHalter\.code-log-halter\{padding-top:calc\(env\(safe-area-inset-top,0px\) \+ 56px\);scroll-padding-top:/);
+});
+
+test("Stufe-Chip kuerzt mit Ellipse statt beidseitig abzuschneiden (inline-flex kann das nicht)", () => {
+  assert.match(m.REGELN, /\.codeleiste \.repochip\.repochip\{display:inline-block;max-width:110px;min-width:44px;height:44px;line-height:44px;text-align:center;overflow:hidden;text-overflow:ellipsis/);
+  assert.doesNotMatch(m.REGELN, /\.repochip\.repochip\{display:inline-flex/, "inline-flex laesst text-overflow verpuffen");
+  assert.match(m.REGELN, /#codeModusChip\.repochip\{max-width:72px\}/, "der kurze Modus-Chip macht dem Stufen-Chip Platz");
 });
