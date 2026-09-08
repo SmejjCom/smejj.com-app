@@ -103,6 +103,22 @@ test("GESUND: der volle Lauf legt das Archiv ab und liest die Pruefsumme gegen",
   assert.match(ergebnis.meldung, /bestaetigt/);
 });
 
+test("KRANK-GEWESEN: der Upload bekommt eine eigene, grosszuegige Frist", async () => {
+  // signedS3Put arbeitet standardmaessig mit 2,5 Sekunden — richtig fuer die
+  // kleinen JSON-Datensaetze, fuer die es gebaut wurde, viel zu knapp fuer
+  // 9 MB. Der erste echte Lauf gegen e2 scheiterte genau daran, und auf dem
+  // Server waere er jeden Tag still an derselben Stelle gescheitert.
+  let gesehen = null;
+  await laufCodeSicherung({
+    env: E2_ENV,
+    jetztMs: Date.now(),
+    fetchImpl: async () => ({ ok: true, arrayBuffer: async () => archiv() }),
+    listImpl: LEERE_LISTE,
+    putImpl: async (args) => { gesehen = args; return { created: true, etag: null }; }
+  });
+  assert.ok(gesehen.timeoutMs >= 60_000, `Upload-Frist zu knapp: ${gesehen.timeoutMs} ms`);
+});
+
 test("GESUND: liegt der heutige Stand schon, wird NICHT erneut geladen", async () => {
   // Der Takt laeuft oft am Tag. Ohne diese Bremse zoege jeder Takt 9 MB.
   let abrufe = 0;
