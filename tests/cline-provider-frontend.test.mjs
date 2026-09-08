@@ -96,7 +96,12 @@ test("Cline-Pfad loescht den Wartetext erst beim ersten Text, nicht vor dem Abru
   const cline = src.slice(src.indexOf("async function runClineChat"), src.indexOf("// Generischer BYOK-Anbieter"));
   assert.doesNotMatch(cline, /let answer = "";\s*output\.textContent = "";/, "kein Leeren der Blase vor dem Strom");
   assert.match(cline, /if \(!answer\) clearThinking\(\);\s*answer \+= delta;/, "Wartetext faellt beim ersten Delta");
-  for (const pfad of ["nichtAngemeldetText", "Automatische Modellwahl", "(leere Antwort)", "Cline-Fehler"]) {
+  // "Automatische Modellwahl" stand hier bis zum 2026-09-07 (Commit 77b08916). Seitdem gibt es
+  // diesen Fehlerweg NICHT MEHR: ohne Cline-Schluessel scheitert die Auto-Wahl nicht, sondern
+  // weicht auf den Server-Weg aus. Ein Fehlertext, der nie erscheint, braucht auch kein Aufraeumen.
+  // Der Test lief seitdem rot und hat die ganze Kette check:all blockiert (bemerkt 2026-09-08).
+  assert.doesNotMatch(cline, /Automatische Modellwahl/, "der Auto-Fehlerweg ist durch den Server-Weg ersetzt");
+  for (const pfad of ["nichtAngemeldetText", "(leere Antwort)", "Cline-Fehler"]) {
     const i = cline.indexOf(pfad);
     assert.ok(i > 0 && cline.slice(Math.max(0, i - 200), i).includes("clearThinking()"), `Fehlerweg '${pfad}' raeumt den Wartetext weg`);
   }

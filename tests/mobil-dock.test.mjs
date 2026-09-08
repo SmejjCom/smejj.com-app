@@ -202,3 +202,7 @@ test("Das Modell-Menue schliesst beim Tipp daneben — sonst schluckt es die gan
   assert.ok(zu.includes("codeModellMenue") && zu.includes("startModellMenue"));
 });
 
+test("Auch das Start-Feld selbst haelt 44 px (mass 43,5)", () => {
+  assert.match(m.REGELN, /#start \.prompt-glass #startMessage,body #start \.prompt-glass textarea\.textarea\{min-height:44px\}/);
+});
+
