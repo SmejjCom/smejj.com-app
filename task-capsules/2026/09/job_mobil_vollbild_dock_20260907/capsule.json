@@ -176,5 +176,40 @@
     "auslieferung": "SW smejj-shell-v819 — direkt im Klon gesprungen, weil die Bauzweig-Kaskade am admin-lock stoppt: control-server/src/admin/opsAutopilotenBereiche.js wurde von einer PARALLELSITZUNG geaendert (Commit 639f8128 'Autopilot Nr. 85'). Fremde Arbeit wird nicht mit einem neuen Stempel abgesegnet — der Befund ist gemeldet.",
     "betreiber_muss_einmal": "App erneut vom Home-Bildschirm loeschen und neu hinzufuegen: der Status-Bar-Modus steckt in der Webclip-Datei und wird nicht nachgezogen.",
     "pruefungen": "Mobil-Suite und Chat-Aktionen 98/98, check:frontend 654/654, check:guidelines gruen."
+  },
+  "benchmark_20260908_startseite": {
+    "gemessen": "Pixel-7-Emulator (412x839, Cache und Service-Worker geleert) gegen https://smejj.com/ plus curl vom Mac.",
+    "werte": {
+      "ttfb_ms": 568,
+      "ttfb_extern_median_ms": 976,
+      "fcp_ms": 3946,
+      "domInteraktiv_ms": 1391,
+      "geladen_ms": 2206,
+      "anfragen": 102,
+      "gewicht_kb": 777,
+      "gewicht_ohne_bilder_kb": 768,
+      "dokument_gzip_kb": 18.7
+    },
+    "gegen_budget": {
+      "ttfb": "UEBER (Budget 200 ms p95)",
+      "gewicht_ohne_bilder": "UEBER (Budget 300 kB)",
+      "dokument": "im Rahmen",
+      "lcp_inp_cls": "nicht belastbar messbar im Emulator ohne echte Nutzerinteraktion"
+    },
+    "einordnung": "VORBESTAND, keine Regression dieser Runden: die Aenderungen vom 08.09. sind CSS-Regeln in bereits geladenen Modulen (mobil-dock.js 21,9 kB, kompakt.js 8,0 kB, mobil-ansichten.js 9,5 kB, chat-actions-menu.js 15,1 kB) und aendern weder Anzahl noch Reihenfolge der Anfragen. Die externe TTFB-Messung traf auch bei CDN-Treffern (age 339) auf ~1 s — das deutet auf die Messstrecke, nicht auf GitHub Pages.",
+    "empfehlung": "Eigener Auftrag: 102 Anfragen und 768 kB auf der Startseite sind der groesste Hebel gegen die Budgets (Static-First ist erfuellt, die Menge nicht)."
+  },
+  "schutzstand_20260908": {
+    "gruen": [
+      "favicon-lock",
+      "check:guidelines (2191 Dateien)",
+      "check:module-queries (233 Module)",
+      "check:precache-imports (190 Module)"
+    ],
+    "rot_und_warum": {
+      "admin-lock": "control-server/src/admin/opsAutopilotenBereiche.js — geaendert von einer PARALLELSITZUNG (Commit 639f8128 'Autopilot Nr. 85').",
+      "start-lock": "public/index.html (meine beauftragte Vollbild-Aenderung) plus vier FREMDE aus dem 07.09.: app.js (Refactoring 812->742 Zeilen), config.js (Live-Abgleich), ai/chatClient.js (Auto-Wahl), sw.js (Runde 4). Der Lock wurde zuletzt am 06.09. eingefroren."
+    },
+    "entscheidung": "NICHT neu eingefroren. Ein neuer Stempel wuerde fremde Arbeit mit absegnen; Einfrieren ist Rote Liste. Der Schutz bleibt damit WIRKSAM (er meldet weiter), statt stillgelegt zu werden. Fuer einen sauberen Stempel muss der Betreiber die vier fremden Aenderungen freigeben — dann laeuft die Kaskade wieder komplett durch."
   }
 }
