@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runde 8 live (SW v819): Vollbild oben zurueck, Streifen unten unsichtbar, Aktionen unter Antworten antippbar; OFFEN: admin-lock rot durch fremde Aenderung, App muss einmal neu installiert werden",
+  "status": "verified — Runde 9 live (SW v820): das offen liegende Modell-Menue war die Wurzel der nicht antippbaren Aktionen; Eingabefeld steht jetzt wirklich unten",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -211,5 +211,28 @@
       "start-lock": "public/index.html (meine beauftragte Vollbild-Aenderung) plus vier FREMDE aus dem 07.09.: app.js (Refactoring 812->742 Zeilen), config.js (Live-Abgleich), ai/chatClient.js (Auto-Wahl), sw.js (Runde 4). Der Lock wurde zuletzt am 06.09. eingefroren."
     },
     "entscheidung": "NICHT neu eingefroren. Ein neuer Stempel wuerde fremde Arbeit mit absegnen; Einfrieren ist Rote Liste. Der Schutz bleibt damit WIRKSAM (er meldet weiter), statt stillgelegt zu werden. Fuer einen sauberen Stempel muss der Betreiber die vier fremden Aenderungen freigeben — dann laeuft die Kaskade wieder komplett durch."
+  },
+  "runde9_20260908_rollentest": {
+    "auftrag": "Betreiber 08.09.: 'Teste wie 2 user, 1 testet, 1 Chef kontrolliert, Verbesserungsvorschlaege machen.'",
+    "befund_1_modellmenue": {
+      "was": "WURZEL des 'drei Punkte lassen sich nicht antippen'. Auf der STARTSEITE blieb das Modell-Menue offen liegen, bis man eine Zeile waehlte.",
+      "wurzel": "Der Aussenklick-Handler sitzt in code-flaeche.js — dieses Modul ist auf der Startseite gar nicht geladen (im Emulator nachgewiesen: kein script-Tag). Mit z-index 80 legte sich das offene Menue ueber die ganze Oberflaeche; ein Treffertest fand statt der Aktionsknoepfe das Menue. Dazu traf schliesseModellMenue() nur '#codeModellMenue', nie '#startModellMenue'.",
+      "fix": "Wachhund an code-modell-menue.js selbst (dort immer geladen, wenn ein Menue offen ist): pointerdown UND click plus Escape; schliesseModellMenue() trifft jetzt beide Menues.",
+      "chef_nachbesserung": "Der erste Wachhund loeste sich nur beim Tipp daneben — bei jedem Oeffnen kam ein Zuhoerer dazu. Und '#${knopf.id}' waere bei einem Knopf ohne id zu '#' geworden (ungueltiger Selektor). Jetzt ein Modul-weiter Loeser und contains statt Selektor.",
+      "beweis": "Dreimal oeffnen und daneben tippen: geoeffnet=true, danach offen=false. Escape ebenso."
+    },
+    "befund_2_eingabefeld": {
+      "was": "'Wie ChatGPT ganz unten' war halb erfuellt: mit flex-end sass der BLOCK unten, das EINGABEFELD aber bei 441 von 839 — darunter Werkzeugzeile und 'Erste Schritte' mit 374 px.",
+      "fix": "Reihenfolge gedreht (order): Gruss 303, Vorschlaege 341-638, Werkzeuge 648-704, FELD 714-815.",
+      "beweis": "Im Emulator nachgemessen."
+    },
+    "geprueft_ohne_befund": {
+      "antwort_aktionen": "copy/speak/rate-up/rate-down/menu je 44x44, alle OK",
+      "eigene_frage": "menu 44x44 OK (der erste Messwert 'blockiert' war ein Artefakt — die Leiste lag bei -569 ausserhalb des Bildes)",
+      "chat_tabelle": "382 sichtbar von 409, scrollt in sich, Seite bricht nicht seitlich aus",
+      "modellmenue_zeilen": "alle fuenf 44 px und treffsicher"
+    },
+    "auslieferung": "SW smejj-shell-v820, direkt im Klon gesprungen (Kaskade weiter am admin-lock blockiert).",
+    "pruefungen": "mobil-dock 21/21, check:frontend 654/654, guidelines und precache gruen."
   }
 }
