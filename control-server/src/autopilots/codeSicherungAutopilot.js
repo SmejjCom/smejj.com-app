@@ -45,6 +45,21 @@ export const PRAEFIX = "sicherung/code";
 // kostet den ganzen Lauf, eine grosszuegige kostet nichts.)
 const ABRUF_FRIST_MS = 180_000;
 
+// EIGENE FRIST FUER DEN UPLOAD (zweimal gemessen am 2026-09-08):
+//   1. signedS3Put arbeitet standardmaessig mit 2,5 Sekunden — richtig fuer die
+//      kleinen JSON-Datensaetze, fuer die es gebaut wurde, und viel zu knapp
+//      fuer 9 MB. Der erste echte Lauf scheiterte genau daran ("aborted due to
+//      timeout"); auf dem Server waere er jeden Tag still an derselben Stelle
+//      gescheitert.
+//   2. Die naechste Fassung mit 180 s scheiterte WIEDER — von einem
+//      Wohnanschluss aus brauchte allein 1 MB 29,5 Sekunden, die vollen 9 MB
+//      also ueber vier Minuten. Im Rechenzentrum ist derselbe Upload
+//      Sekundensache.
+// Zehn Minuten sind darum bewusst grosszuegig: die Frist soll einen HAENGENDEN
+// Upload beenden, nicht einen langsamen bestrafen. Sie kostet nichts, solange
+// nichts haengt — eine zu knappe Frist kostet die ganze Sicherung.
+const UPLOAD_FRIST_MS = 600_000;
+
 // Ein Archiv, das viel zu klein ist, ist kein Archiv, sondern eine
 // Fehlerseite. Ein viel zu grosses ist ein Zeichen, dass hier etwas anderes
 // liegt als erwartet — beides soll auffallen, statt still gesichert zu werden.
@@ -169,7 +184,8 @@ export async function laufCodeSicherung({
       key: schluessel,
       body: bytes,
       contentType: "application/gzip",
-      ifNoneMatch: "*"
+      ifNoneMatch: "*",
+      timeoutMs: UPLOAD_FRIST_MS
     });
 
     if (!ergebnis?.created) {
