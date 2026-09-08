@@ -107,7 +107,7 @@ test("Vollbild-Balken: die Wurzel lag NICHT im Layout, sondern im Status-Bar-Mod
   // bottom:-120px endete dort ebenso. Ursache: apple-mobile-web-app-status-bar-style
   // "black-translucent" -> UIWebClipStatusBarStyleLegacyBlackTranslucent in der Webclip-Datei.
   const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
-  assert.match(html, /apple-mobile-web-app-status-bar-style" content="default"/, "der Legacy-Modus verkuerzt die Flaeche um die Statusleiste");
+  assert.match(html, /apple-mobile-web-app-status-bar-style" content="black"/, "Legacy verkuerzt die Flaeche; \"default\" macht die Statusleiste hell");
   assert.doesNotMatch(html, /status-bar-style" content="black-translucent"/);
   assert.match(html, /viewport-fit=cover/, "ohne cover waere die Flaeche erst recht kleiner");
   // Kein Layout-Hilfsmittel mehr: keine gemessene Rahmenhoehe, kein Ueberstand, keine dvh-Rechnerei.
