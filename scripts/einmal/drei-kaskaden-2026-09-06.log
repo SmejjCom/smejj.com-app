@@ -1,0 +1,27 @@
+== 0. Ausgangslage (Worktree /private/tmp/claude-501/kaskade-design-v11)
+ae61e11b chore(einmal): Kaskade Maus-Sperrseiten 2026-09-06 — Basis c115d6c2, SW v788, eigener Worktree
+ABBRUCH: sw.js traegt nicht smejj-shell-v787.
+
+Fenster kann geschlossen werden.
+== 1 FERTIG ==
+smejj.com — Ox Alpha auch beim Server raus (Sun Sep  6 23:41:07 +03 2026)
+
+== 0. Ausgangslage
+Arbeitszweig bleibt unberuehrt: ox-alpha-server-fix
+a1101898 feat(modelle): Ox Alpha auch aus dem Control-Server entfernt
+
+== 1. Bauzweig holen
+Bauzweig auf dem Server: a1101898 feat(modelle): Ox Alpha auch aus dem Control-Server entfernt
+
+Auf dem Bauzweig steht Ox Alpha schon nicht mehr — nichts zu tun.
+
+ERGEBNIS: FERTIG (Code 0)
+not interactive and can't open terminal
+== 2 FERTIG ==
+== 0. Ausgangslage (Worktree /private/tmp/claude-501/kaskade-design-v11)
+ae61e11b chore(einmal): Kaskade Maus-Sperrseiten 2026-09-06 — Basis c115d6c2, SW v788, eigener Worktree
+live: smejj-shell-v788
+ABBRUCH: live ist smejj-shell-v788, erwartet smejj-shell-v787 — Basis stimmt nicht mehr, Kaskade neu bauen lassen.
+
+Fenster kann geschlossen werden.
+== 3 FERTIG ==

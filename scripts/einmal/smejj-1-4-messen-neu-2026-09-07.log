@@ -1,0 +1,28 @@
+smejj 1.4 — Messung neu starten
+════════════════════════════════════════════════════════════════════════
+
+SCHRITT 1 — den feststeckenden Lauf abbrechen
+────────────────────────────────────────────────────────────────────────
+  Gruppe: running (smejj11-20260907031420-messung, messung)
+  Stand: ?/? Antworten in 10.1 min — diese Arbeit ist verloren.
+  Stopp: bestaetigt (HTTP 202)
+  Gruppe ist stopped — frei.
+
+SCHRITT 2 — neu starten (Frist jetzt 330 statt 210 Minuten)
+────────────────────────────────────────────────────────────────────────
+Suite:        evals/suites/smejj-chat-breit-v1.json (295 Faelle, 1 Wiederholungen)
+Staende:      qwen3-4b-basis (nackt) | smejj-1-4 (+con/versions/smejj-1-4/adapter)
+Salad-Gruppe: smejj-training, hoechstens 330 min, rund 0.55 USD
+Adapter:      con/versions/smejj-1-4/adapter (7 Dateien) — Job smejj11-20260907000413-training, 4506 Beispiele, Loss 0.000
+Salad-Gruppe smejj-training: stopped (Job smejj11-20260907031420-messung, messung)
+Job: Phase laden
+Suiten im Buendel: smejj-chat-breit-v1.json (aus /var/folders/xs/y84tmr0539sd_27pjcn0c4540000gn/T/smejj-1-1-suiten-uXqk1f)
+Messjob smejj11-20260907033136-messung gestartet. Fortschritt: --stand, danach --bewerten smejj11-20260907033136-messung
+
+════════════════════════════════════════════════════════════════════════
+Die Messung laeuft neu. Sie darf jetzt bis zu 330 Minuten brauchen.
+
+Fortschritt:  node scripts/training/smejj-1-1-messen.mjs --stand
+════════════════════════════════════════════════════════════════════════
+
+Fenster kann geschlossen werden.

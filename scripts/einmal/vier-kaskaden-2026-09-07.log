@@ -1,0 +1,121 @@
+smejj 1.4 messen
+════════════════════════════════════════════════════════════════════════
+
+SCHRITT 1 — die fertige Trainingsgruppe abschalten
+────────────────────────────────────────────────────────────────────────
+  Gruppe smejj-training: running (Job smejj11-20260907014005-messung, messung)
+  ABBRUCH: Job smejj11-20260907014005-messung ist NICHT fertig (Phase messung).
+  Es wird nichts gestoppt — ein laufender Lauf ist bezahlte Rechenzeit.
+
+Es laeuft noch ein Trainingslauf. Nichts wurde angefasst.
+Fenster kann geschlossen werden.
+== 1 MESSUNG FERTIG ==
+== 0. Ausgangslage (Worktree /private/tmp/claude-501/kaskade-design-v11)
+ce882d4d chore(einmal): Kaskade Start-Buendel — Code-Commit efb9edde (rebased), SW v791
+ABBRUCH: sw.js traegt nicht smejj-shell-v790.
+
+Fenster kann geschlossen werden.
+== 2 MENUE FERTIG ==
+== 0. Ausgangslage (Worktree /private/tmp/claude-501/kaskade-design-v11)
+ce882d4d chore(einmal): Kaskade Start-Buendel — Code-Commit efb9edde (rebased), SW v791
+ABBRUCH: der Toast-Hinweis steht nicht im Start-Buendel.
+
+Fenster kann geschlossen werden.
+== 3 BUENDEL FERTIG ==
+BEREITSCHAFT DES TRAININGS-AUTOPILOTEN (smejj-lora-loop)
+------------------------------------------------------------------------------
+9 Hindernis(se) — der Dienst wuerde NICHT trainieren:
+   - SMEJJ_LORA_LOOP_ENABLED!=YES
+   - SMEJJ_LORA_TRAINING_ENABLED!=YES
+   - kostengrenze_fehlt:SMEJJ_LORA_GPU_KLASSE
+   - kostengrenze_fehlt:SMEJJ_LORA_MAX_USD_GESAMT
+   - kostengrenze_fehlt:SMEJJ_LORA_MAX_ZYKLUS_MINUTEN
+   - keine_schriftliche_freigabe
+   - kein_basismodell
+   - kein_datensatz
+   - keine_trainer_adresse
+
+Schriftliche Freigabe: FEHLT
+   - freigabe_fehlt:SMEJJ_LORA_FREIGABE_ID
+   - freigabe_ohne_gpu_klasse
+   - freigabe_ohne_monatsbetrag
+
+Trainer-Weg:  dauerdienst  (Dauerdienst — am 03.08. gescheitert)
+Deckel:       ? USD gesamt, ? min je Zyklus
+Karte:        ? auf batch, ? USD/h
+Datensatz:    smejj-1-1
+Suite:        evals/suites/smejj-chat-core-v1.json
+Erste Version: smejj-1-5
+
+Von 24 Werten sind hier 8 gesetzt, 16 fehlen.
+Diese Pruefung gilt fuer DIESEN Rechner. Massgeblich ist die Umgebung im Zeabur-Portal.
+
+WERTE FUER DEN ZEABUR-DIENST 'smejj-lora-loop'
+==============================================================================
+  SMEJJ_LORA_LOOP_ENABLED                = YES
+                                           der Prozess tickt ueberhaupt
+  SMEJJ_LORA_TRAINING_ENABLED            = YES
+                                           es darf Geld ausgegeben werden
+  SMEJJ_LORA_TRAINER                     = salad-job
+                                           EIN Job je Lauf statt Dauerdienst — der Weg, der seit 03.09. laeuft
+  SMEJJ_LORA_GPU_KLASSE                  = rtx3090
+                                           24 GB, guenstigste Klasse; 0,09 USD/h auf Stapel-Prioritaet
+  SMEJJ_LORA_PRIORITAET                  = batch
+                                           Training muss nicht sofort starten — ein Drittel des Preises
+  SMEJJ_LORA_MAX_USD_GESAMT              = 108
+                                           harte Obergrenze; 100 EUR, Betreiber-Anweisung 07.09.
+  SMEJJ_LORA_MAX_ZYKLUS_MINUTEN          = 660
+                                           Training bis 420 + Messung bis 210 + Puffer
+  SMEJJ_LORA_FREIGABE_ID                 = betreiber-2026-09-07-100-eur
+                                           Referenz der schriftlichen Freigabe
+  SMEJJ_LORA_FREIGABE_GPU_KLASSE         = rtx3090
+                                           muss zur gebuchten Klasse passen — eine 3090-Freigabe deckt keine 5090
+  SMEJJ_LORA_FREIGABE_MONATSBETRAG_USD   = 108
+                                           muss die echten Monatskosten decken
+  SMEJJ_LORA_BASIS_HF_REPO               = Qwen/Qwen3-4B-Instruct-2507
+                                           Basismodell
+  SMEJJ_LORA_BASIS_PREFIX                = models/staging/qwen3-4b-instruct
+                                           gespiegelt in e2, 8 GB
+  SMEJJ_LORA_DATENSATZ_NAME              = smejj-1-1
+                                           4.506 handgeschriebene Paare, 0 % Satzwiederholung
+  SMEJJ_LORA_DATENSATZ_SCHLUESSEL        = datasets/smejj-1-1/train.jsonl
+                                           Trainingsanteil in e2
+  SMEJJ_LORA_SUITE_PATH                  = evals/suites/smejj-chat-breit-v1.json
+                                           295 Faelle; die schmale Suite mit 14 Faellen misst zu grob
+  SMEJJ_LORA_VERSION_START               = 5
+                                           smejj 1.0 bis 1.4 sind von Hand gebaut — der Autopilot faengt dahinter an
+  IDRIVE_E2_ENDPOINT                     = <aus env.local uebernehmen>
+                                           hier gesetzt — Ablage
+  IDRIVE_E2_BUCKET                       = <aus env.local uebernehmen>
+                                           hier gesetzt — Ablage
+  IDRIVE_E2_REGION                       = <aus env.local uebernehmen>
+                                           hier gesetzt — Ablage
+  IDRIVE_E2_ACCESS_KEY                   = <GEHEIM — aus env.local uebernehmen>
+                                           hier gesetzt — Ablage
+  IDRIVE_E2_SECRET_KEY                   = <GEHEIM — aus env.local uebernehmen>
+                                           hier gesetzt — Ablage
+  SALAD_ORGANIZATION_NAME                = <aus env.local uebernehmen>
+                                           hier gesetzt — GPU-Anbieter
+  SALAD_PROJECT_NAME                     = <aus env.local uebernehmen>
+                                           hier gesetzt — GPU-Anbieter
+  SALAD_API_KEY                          = <GEHEIM — aus env.local uebernehmen>
+                                           hier gesetzt — GPU-Anbieter
+==============================================================================
+Notaus jederzeit:  SMEJJ_LORA_NOTAUS=YES  — sperrt sofort und beendet einen laufenden Lauf.
+
+SO WIRD DARAUS EIN LAUFENDER DIENST:
+  1. Zeabur-Portal → Projekt smejj.com → Add Service → Git → dasselbe Repo.
+     Zeabur waehlt Dockerfile.smejj-lora-loop, wenn der Dienst 'smejj-lora-loop' heisst.
+  2. Die Werte oben als Environment Variables eintragen.
+  3. Deploy. Danach beantwortet GET /health die Frage, warum gerade nicht trainiert wird.
+
+Der Dienst kostet als CPU-Instanz wenige USD im Monat und rechnet nie selbst.
+Die GPU-Zeit entsteht nur waehrend eines Laufs und ist durch den Deckel begrenzt.
+
+──────────────────────────────────────────────────────────────────────────────
+Nichts wurde eingeschaltet, nichts wurde gestartet, es sind keine Kosten
+entstanden. Der naechste Schritt liegt im Zeabur-Portal.
+──────────────────────────────────────────────────────────────────────────────
+
+Fenster kann geschlossen werden.
+== 4 CHECK FERTIG ==

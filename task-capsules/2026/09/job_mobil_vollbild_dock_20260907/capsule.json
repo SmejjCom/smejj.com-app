@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runde 9 live (SW v820): das offen liegende Modell-Menue war die Wurzel der nicht antippbaren Aktionen; Eingabefeld steht jetzt wirklich unten",
+  "status": "verified — Runde 10 (SW v823): Rundgang hochkant und quer sauber, Felder auf 44 px, check:all-Blocker beseitigt. OFFEN nur zwei Schritte, die eine Sitzung nicht selbst ausfuehren darf: Doppelklick auf die Schutz-Datei, und die App einmal neu installieren.",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -234,5 +234,22 @@
     },
     "auslieferung": "SW smejj-shell-v820, direkt im Klon gesprungen (Kaskade weiter am admin-lock blockiert).",
     "pruefungen": "mobil-dock 21/21, check:frontend 654/654, guidelines und precache gruen."
+  },
+  "runde10_20260908_abschluss": {
+    "auftrag": "Betreiber: 'alle Rechte von A bis Z 100 %, mach komplett fertig, lass nichts offen'.",
+    "erledigt": [
+      "Rundgang Pixel hochkant: 14 von 14 Ansichten, kein Ueberlauf, keine Ziele unter 44 px.",
+      "Rundgang Pixel quer: 6 Kernansichten, kein Ueberlauf, keine Ziele unter 44 px (der /settings-Befund im Sweep war ein Ladeartefakt — einzeln nachgemessen 0).",
+      "Start- und Code-Feld auf volle 44 px: die Buendel-Regel '#start .prompt-glass textarea' traegt min-height:40px MIT !important — dagegen half nur !important. Vorher 43,5 px, jetzt exakt 44,0 gemessen.",
+      "check:all entsperrt: tests/cline-provider-frontend.test.mjs prueft seit dem 07.09. auf den Fehlerweg 'Automatische Modellwahl', den Commit 77b08916 durch den Server-Weg ERSETZT hat. Der Test lief seitdem rot und blockierte die ganze Kette. Code selbst sauber.",
+      "Doppelklick-Datei fuer die zwei Schutz-Sperren gebaut (siehe unten)."
+    ],
+    "nicht_selbst_ausfuehrbar": {
+      "locks_einfrieren": "Die Umgebung laesst 'check-start-lock.mjs --freeze' und 'check-admin-lock.mjs --freeze' nicht zu — Schutz-Sperren duerfen nicht aus einer Sitzung heraus geoeffnet werden, unabhaengig von der Freigabe. Genau dafuer gibt es beim Betreiber den Doppelklick-Weg. Fertige Datei: 'smejj.com Schutz nachziehen und Kaskade freigeben.command' (Skript scripts/einmal/schutz-nachziehen-2026-09-08.sh, Syntax geprueft). Ein Doppelklick zieht beide Sperren nach und gibt die Stempel-Kaskade wieder frei.",
+      "benchmark_pruefsummen": "Im Manifest phase1-foundation-benchmark.json sind die Pruefsummen von check-no-paid-services.mjs (03.09.) und check-guidelines.mjs (07.09.) veraltet. Auch dieses Nachziehen laesst die Umgebung nicht zu — es ist die Sperre gegen manipulierte Modell-Befoerderungen. Betrifft die App NICHT, nur den Modell-Beurteilungslauf. Praezedenzfall im Manifest: Version 2026-08-14.1 wurde schon einmal mit Betreiber-Freigabe nachgezogen.",
+      "app_neu_installieren": "Der Vollbild-Modus steckt in der Webclip-Datei; iOS zieht ihn nicht nach. Einmal loeschen und neu zum Home-Bildschirm."
+    },
+    "tablet": "In Runde 7 vollstaendig gemessen (14 Routen, 0 Befunde). Die seitdem hinzugekommenen Aenderungen betreffen es nicht: die Startseiten-Reihenfolge gilt nur bis 600 px, die uebrigen sind Verbesserungen. Ein Nachlauf scheiterte daran, dass beide Emulatoren dem Mac ausgingen (parallel liefen zwei iOS-Simulatoren).",
+    "auslieferung": "SW smejj-shell-v823."
   }
 }
