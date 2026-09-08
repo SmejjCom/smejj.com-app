@@ -20,7 +20,16 @@ const MESSUNG = `(() => {
     const b = el.getBoundingClientRect(); const cs = getComputedStyle(el);
     if (b.width === 0 || b.height === 0 || cs.visibility === "hidden" || cs.display === "none") continue;
     if (b.bottom < 0 || b.top > innerHeight) continue;
-    if (b.width < 44 || b.height < 44) klein.push((el.getAttribute("aria-label") || el.textContent.trim().slice(0, 24) || el.id || el.className.toString().slice(0, 24)) + " " + Math.round(b.width) + "x" + Math.round(b.height));
+    // Barrierefrei verborgene Elemente sind keine Ziele: der native Datei-Input des Profilbilds
+    // liegt absolut und ist per clip/clip-path ausgeblendet (bedient wird das Label daneben).
+    // Ohne diese Zeile meldete der Rundgang ihn als "Profilbild auswaehlen 28x26" (08.09.).
+    if (cs.clipPath === "inset(50%)" || cs.clip.replace(/[ px]/g, "").startsWith("rect(0,0,0,0") || Number(cs.opacity) === 0) continue;
+    // Meldet den SELEKTOR (Eltern > Kind), nicht nur die Beschriftung — sonst muss man jeden Befund
+    // einzeln nachschlagen, um die Regel schreiben zu koennen (08.09.).
+    if (b.width < 44 || b.height < 44) {
+      const kurz = (x) => (x.id ? "#" + x.id : x.tagName.toLowerCase() + (x.className ? "." + String(x.className).trim().split(/\s+/).slice(0, 2).join(".") : ""));
+      klein.push(kurz(el.parentElement || el) + " > " + kurz(el) + " " + Math.round(b.width) + "x" + Math.round(b.height));
+    }
   }
   const ansicht = document.querySelector(".view.is-active")?.id || location.pathname;
   return { vp, ueberlauf, ansicht, klein: klein.slice(0, 12), anzahlKlein: klein.length };
@@ -28,8 +37,15 @@ const MESSUNG = `(() => {
 for (const route of routen) {
   fehler.length = 0;
   await ruf("Page.navigate", { url: `https://smejj.com${route}${route.includes("?") ? "&" : "?"}n=${Date.now()}` });
-  await schlaf(6000);
-  const m = await ev(MESSUNG);
+  // Wartezeit ueber SWEEP_WARTEN einstellbar: im Querformat und auf dem Tablet brauchten die
+  // Laufzeit-Module laenger als 6 s — die Messung sah dann Schreibtisch-Masse und meldete
+  // reihenweise Ziele unter 44 px, die nach dem Einhaengen laengst 44 px hatten (08.09.).
+  await schlaf(Number(process.env.SWEEP_WARTEN || 6000));
+  let m = await ev(MESSUNG);
+  // Bei langsamen Ansichten kam die Messung leer zurueck (die Seite hing noch am Laden) und der
+  // Rundgang brach ab — einmal nachfassen, danach die Route als "keine Messung" vermerken.
+  if (!m || !m.vp) { await schlaf(5000); m = await ev(MESSUNG); }
+  if (!m || !m.vp) { console.log(`${route.padEnd(22)} KEINE MESSUNG (Seite antwortete nicht)`); continue; }
   const name = route.replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "start";
   const shot = await ruf("Page.captureScreenshot", { format: "png" });
   writeFileSync(`${praefix}-${name}.png`, Buffer.from(shot.result.data, "base64"));

@@ -66,3 +66,17 @@ test("Mikrofon leuchtet beim Diktat in Logofarbe (Chat und Code), sonst normal; 
   assert.equal(ziel.classList.an, true);
   assert.equal(ziel.attrs["aria-pressed"], "true");
 });
+
+// ---- Rundgang 08.09. (Pixel quer 863 px, Tablet 800 px, pointer:coarse) ---------------------
+test("Runde 5: Kopfknoepfe, Werkzeugzeilen, Konto-Reiter und Plus-Menue auf grobem Zeigegeraet 44 px", () => {
+  const k = readFileSync(new URL("../public/kompakt.js", import.meta.url), "utf8");
+  // gemessen: view-chrome 32x32, toolbar 40, account-nav 40, plus-menu 38 (min-height stand auf 34)
+  assert.match(k, /\.view-chrome\.view-chrome button\{min-width:44px;min-height:44px\}/);
+  assert.match(k, /\.view \.toolbar button,body \.view \.panel-actions button,body \.plus-menu\.plus-menu button,/);
+  assert.match(k, /#profile \.account-nav button,body #profile \.account-actions button,/);
+  assert.match(k, /\.account-picture-actions button,body #profile \.account-picture-choose\{min-height:44px\}/);
+  // Der Block gilt weiterhin nur fuer grobe Zeigegeraete ueber 600 px — die Maus bleibt unberuehrt.
+  const block = k.split('"@media (min-width:601px) and (pointer:coarse){"')[1];
+  assert.ok(block.includes("account-picture-choose"), "die neuen Regeln liegen IM coarse-Block");
+});
+
