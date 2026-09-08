@@ -224,6 +224,23 @@ async function main() {
   const ergebnisSchonDa = await (async () => {
     if (!vorher.jobId) return false;
     const st = await e2.getJson(`con/logs/jobs/${vorher.jobId}/status.json`, null).catch(() => null);
+
+    /**
+     * DRITTER FALL, und ohne ihn blockiert diese Pruefung sich selbst:
+     * ein Job, der beim Start ABSTUERZT, legt nie ein Ergebnis ab. Er gilt
+     * damit fuer immer als "laeuft" — und keine Korrektur kommt je an ihn heran.
+     *
+     * Genau das ist am 08.09. passiert: smejj 1.6 stuerzte an einem halben
+     * Zwischenstand ab, Salad startete stuendlich neu, und acht Startversuche
+     * hintereinander bekamen "die Gruppe ist nicht frei". Die Reparatur lag
+     * fertig im Code und kam nicht in den Container, weil der kaputte Job den
+     * Platz hielt.
+     *
+     * Phase "fehler" heisst: dieser Job rechnet nicht mehr. Ihn zu ueberschreiben
+     * wirft keine Arbeit weg — er hat keine.
+     */
+    if (st?.phase === "fehler") return true;
+
     const version = st?.version || st?.kandidat || null;
     const bew = await e2.getJson(`smejj/bewertungen/${vorher.jobId}.json`, null).catch(() => null);
     const tr = version ? await e2.getJson(`con/versions/${version}/training.json`, null).catch(() => null) : null;
