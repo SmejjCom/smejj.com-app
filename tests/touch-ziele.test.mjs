@@ -71,7 +71,7 @@ test("Mikrofon leuchtet beim Diktat in Logofarbe (Chat und Code), sonst normal; 
 test("Runde 5: Kopfknoepfe, Werkzeugzeilen, Konto-Reiter und Plus-Menue auf grobem Zeigegeraet 44 px", () => {
   const k = readFileSync(new URL("../public/kompakt.js", import.meta.url), "utf8");
   // gemessen: view-chrome 32x32, toolbar 40, account-nav 40, plus-menu 38 (min-height stand auf 34)
-  assert.match(k, /\.view-chrome\.view-chrome button\{min-width:44px;min-height:44px\}/);
+  assert.match(k, /\.view \.view-chrome button,body \.premium-view \.view-chrome button\{width:44px!important;height:44px!important\}/);
   assert.match(k, /\.view \.toolbar button,body \.view \.panel-actions button,body \.plus-menu\.plus-menu button,/);
   assert.match(k, /#profile \.account-nav button,body #profile \.account-actions button,/);
   assert.match(k, /\.account-picture-actions button,body #profile \.account-picture-choose\{min-height:44px\}/);
