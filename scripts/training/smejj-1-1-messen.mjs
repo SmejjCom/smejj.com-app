@@ -356,7 +356,31 @@ async function main() {
   if (argv.includes("--tuev")) { await tuev(); return; }
   await ladeEnvLocal();
   const basis = leseKonfig(process.env);
-  const konfig = { ...trainingsKonfig(basis), salad: { ...trainingsKonfig(basis).salad, speicherGb: 30 } };
+  /**
+   * MESSUNGEN LAUFEN AUF HOHER PRIORITAET, Trainings auf batch. Der Unterschied
+   * ist nicht Bequemlichkeit, sondern folgt daraus, was eine Unterbrechung
+   * jeweils kostet:
+   *
+   *   TRAINING  schreibt alle paar Minuten einen Zwischenstand. Wird der
+   *             Container verdraengt, setzt der naechste Anlauf dort auf —
+   *             verloren ist nur die Ladezeit. batch (0,09 USD/h) ist richtig.
+   *
+   *   MESSUNG   hat KEINEN Zwischenstand. Jede Verdraengung wirft ALLE bis
+   *             dahin gesammelten Antworten weg und faengt bei null an.
+   *
+   * GEMESSEN am 08./09.09.: Salad raeumt Jobs auf batch etwa stuendlich ab
+   * (Training 1.6 dreimal, je nach ~55 Minuten). Eine Messung ueber 590
+   * Antworten braucht auf einem langsamen Knoten vier Stunden — sie kaeme dann
+   * NIE durch, sondern liefe endlos im Kreis und kostete dabei durchgehend.
+   *
+   * high kostet 0,25 statt 0,09 USD je Stunde. Eine Messung wird damit von
+   * 0,36 auf rund 1,00 USD teurer — und kommt dafuer an. Eine Messung, die nie
+   * fertig wird, ist zu jedem Preis zu teuer.
+   *
+   * Betreiber-Entscheidung 09.09.2026. Umstellbar ueber SMEJJ_MESS_PRIORITAET.
+   */
+  const messPrioritaet = String(process.env.SMEJJ_MESS_PRIORITAET || "high").trim();
+  const konfig = { ...trainingsKonfig(basis), salad: { ...trainingsKonfig(basis).salad, speicherGb: 30, prioritaet: messPrioritaet } };
   const e2k = e2KonfigAusEnv(process.env);
   if (!e2k.ok) { console.error("ABBRUCH: e2 nicht konfiguriert —", e2k.fehlend.join(", ")); process.exit(2); }
   if (!konfig.salad.apiKey) { console.error("ABBRUCH: SALAD_API_KEY fehlt"); process.exit(2); }
@@ -378,7 +402,7 @@ async function main() {
   const suite = await ladeSuite();
   console.log(`Suite:        ${path.relative(WURZEL, SUITE_DATEI)} (${suite.cases.length} Faelle, ${WIEDERHOLUNGEN} Wiederholungen)`);
   console.log(`Staende:      ${messStaende({ nurAdapter, version: als, adapterPrefix }).map((s) => s.version + (s.adapterPrefix ? ` (+${s.adapterPrefix})` : " (nackt)")).join(" | ")}`);
-  console.log(`Salad-Gruppe: ${GRUPPE}, hoechstens ${MAX_MINUTEN} min, rund ${(MAX_MINUTEN / 60 * 0.10).toFixed(2)} USD`);
+  console.log(`Salad-Gruppe: ${GRUPPE}, hoechstens ${MAX_MINUTEN} min, Prioritaet ${messPrioritaet}, rund ${(MAX_MINUTEN / 60 * (messPrioritaet === "high" ? 0.25 : 0.10)).toFixed(2)} USD`);
   const adapterDateien = await e2.liste(`${adapterPrefix.replace(/\/$/, "")}/`).catch(() => []);
   if (!adapterDateien.some((d) => /adapter_model\.safetensors$/.test(d.key)) || !adapterDateien.some((d) => /adapter_config\.json$/.test(d.key))) {
     console.error(`ABBRUCH: unter ${adapterPrefix} liegt kein vollstaendiger Adapter (adapter_config.json + adapter_model.safetensors).`); process.exit(3);
