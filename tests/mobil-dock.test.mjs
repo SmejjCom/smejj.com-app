@@ -88,6 +88,12 @@ test("Vollbild-Rahmen: feste Hoehe bis zur sichtbaren Unterkante (visualViewport
   assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 852 }), 852, "voller Schirm");
   assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 512.4 }), 512, "Tastatur offen: Rahmen endet an der Tastatur");
   assert.equal(m.sichtbareUnterkante({ offsetTop: 0, height: 0 }), 0, "unbekannt -> Rueckfall 100%");
+  // 08.09. 08:52: auch der visualViewport meldete 800 statt 852 — in der Apple-App zaehlt der Bildschirm
+  assert.equal(m.schirmUnterkante({ schirmHoehe: 852, schirmBreite: 393, innerWidth: 393, innerHeight: 800 }), 852, "hochkant: lange Seite");
+  assert.equal(m.schirmUnterkante({ schirmHoehe: 852, schirmBreite: 393, innerWidth: 852, innerHeight: 350 }), 393, "quer: kurze Seite (iOS meldet screen immer hochkant)");
+  assert.equal(m.schirmUnterkante({ schirmHoehe: 0, schirmBreite: 0, innerWidth: 1, innerHeight: 1 }), 0);
+  const quelle2 = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
+  assert.match(quelle2, /\(apple && standalone\(\)\)\s*\? schirmUnterkante/, "Apple-App nimmt die Bildschirmkante");
   assert.match(m.REGELN, /@media \(display-mode:standalone\) and \(max-width:600px\)\{body::after\{top:0;bottom:auto;height:var\(--vv-unten,100%\)\}\}/);
   assert.doesNotMatch(m.REGELN, /vollbild-fehl/, "innerHeight-Messung ist raus (Betreiber 08.09. 01:49: Balken kam nach der Tastatur zurueck)");
   assert.doesNotMatch(m.REGELN, /100dvh \+ var\(/, "dvh-Flaechen bleiben unangetastet");
