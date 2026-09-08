@@ -109,6 +109,10 @@ const MIT_ECHTER_MESSUNG = new Set([
   "rueck-roller",             // Ampeln gegen Deploy-Staende; Empfehlung in die Ablage
   "log-wache",                // Ringpuffer der eigenen Prozess-Fehlersignale
   "daten-sicherung",          // taeglicher Schnappschuss + sofortige Ruecklese mit Pruefsumme
+  // Nr. 85 (2026-09-08): holt das echte Archiv von GitHub, legt es nach e2 und
+  // liest es SOFORT zurueck — Groesse, gzip-Kopf, ETag und Byte-Vergleich.
+  // Am 08.09. von Hand gegengeprueft: 2971 von 2971 Dateien identisch.
+  "code-sicherung",           // Code-Archiv nach IDrive e2 + sofortige Ruecklese
   "wiederherstellungs-probe", // juengste Sicherung vollstaendig zurueckgelesen (RPO/RTO)
   "geheimnis-spaeher",        // scannt die echten Quelldateien des Containers
   "zertifikats-wache",        // echte TLS-Handshakes gegen die vier Domains
