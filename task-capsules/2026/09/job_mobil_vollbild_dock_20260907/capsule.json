@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runden 1-4 + Nachzuege live; Vollbild-Rahmen ueber visualViewport; Punkt 7 gebaut; letzter SW-Sprung v809 vom Betreiber geklickt (08.09. ~02:15)",
+  "status": "verified — alle 8 Punkte der Abend-Liste live und gestempelt (SW v810, 08.09. 03:01)",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -90,6 +90,8 @@
   "nachtrag_20260908": {
     "01:44 Punkt 7": "Luecke zwischen Feld und Tastatur = unterer Sicherheitsrand; html.tastatur-offen (Fokus + visualViewport kuerzer als Schirm-80) setzt --sa-bottom 0 und shell padding-bottom 0; Hardware-Tastatur unberuehrt. Go 02:10, live (Klon 295d591), SW-Sprung v809.",
     "01:49 Balken zurueck": "innerHeight in der iOS-App unzuverlaessig (800/852 je nach Tastatur-Historie) — Rahmen body::after jetzt top:0; height: var(--vv-unten) aus visualViewport.offsetTop+height (Ereignisse resize/scroll); keine dvh-Flaechen anfassen (Dock rutschte sonst unter den Schirm, 22:32). SW-Spruenge v806, v807, v808 vom Betreiber geklickt; Kaskade sw-sprung ist wiederverwendbar (live+1, Module per Hash geprueft).",
-    "bestaetigt": "Betreiber 22:32: unten Vollbild, Mikrofon tuerkis."
+    "bestaetigt": "Betreiber 22:32: unten Vollbild, Mikrofon tuerkis.",
+    "02:50 Punkt 8 Deutsch": "Einstellungen/Konto/Speicher/Kostenschutz: Quelle deutsch, Anglizismen (Reasoning, Sync, Coding, Key, Free-safe, BYOK, Session, Diff, Limit) per Laufzeit-Woerterbuch in deutsch-klartext.js ersetzt (nur lang=de, exakter Treffer, MutationObserver auf main.shell); Quelldateien sind i18n-Schluessel fuer 30 Sprachen + Marken an premium-surfaces.js — deshalb nicht dort. Emulator (de) danach ohne Reste.",
+    "03:01 SW v810": "SW-Sprung-Kaskade aus der Sitzung selbst gestartet (Betreiber: 'pusche selber') — Stempel, Bauzweig d218e347, Klon a156a98, live v810."
   }
 }
