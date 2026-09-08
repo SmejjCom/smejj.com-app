@@ -110,8 +110,11 @@ test("die Session-Engine laesst ariaObserve durch — und Unbekanntes nicht", ()
   });
   // Fail-closed bleibt fail-closed: der neue Fall reisst kein Loch auf.
   assert.equal(validateSessionAction({ type: "ariaSnapshotXY" }).ok, false);
-  // Der alte Weg ist unveraendert gueltig.
-  assert.deepEqual(validateSessionAction({ type: "observe" }), { ok: true, action: { type: "observe" } });
+  // Der alte Weg ist unveraendert gueltig — traegt seit dem 2026-09-06 aber
+  // das Feld ohneBild: das Hinsehen kann das ~150-KB-JPEG weglassen, wenn man
+  // es ausdruecklich sagt. Standard bleibt MIT Bild (false).
+  assert.deepEqual(validateSessionAction({ type: "observe" }), { ok: true, action: { type: "observe", ohneBild: false } });
+  assert.deepEqual(validateSessionAction({ type: "observe", ohneBild: true }), { ok: true, action: { type: "observe", ohneBild: true } });
 });
 
 test("der Knotendeckel ist eine bewusste Zahl, keine Zufallszahl", () => {
