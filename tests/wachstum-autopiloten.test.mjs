@@ -143,7 +143,7 @@ test("Nr. 60 Tagesmappe: stumme Quellen werden benannt, gesunde Mappe ist vollst
   assert.ok(gesund.entscheiden.some((e) => e.art === "trainings-reife"), "die reife Karte muss unter ENTSCHEIDEN stehen");
 });
 
-test("ANSCHLUSS-BEWEIS: alle 17 in Registry, Taktgeber und Selbstheilung — Nummern 44-60 eindeutig", () => {
+test("ANSCHLUSS-BEWEIS: alle in Registry, Taktgeber und Selbstheilung — Nummern eindeutig", () => {
   const registryIds = new Set(AUTOPILOTEN.map((a) => a.id));
   for (const id of SCHUTZ_UND_WACHSTUM_IDS) {
     assert.ok(registryIds.has(id), `${id} fehlt in der Registry (opsAutopilotenListe.js)`);
@@ -158,6 +158,11 @@ test("ANSCHLUSS-BEWEIS: alle 17 in Registry, Taktgeber und Selbstheilung — Num
   const neue = AUTOPILOTEN.filter((a) => SCHUTZ_UND_WACHSTUM_IDS.includes(a.id)).map((a) => Number(a.nummer)).sort((x, y) => x - y);
   // 44-60 vom 24.08. plus Nr. 62 (Modell-Katalog-Wache, gleicher Tag);
   // Nr. 61 (Test-Waechter) laeuft auf dem Mac, nicht im Laeufer.
-  assert.deepEqual(neue, [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62, 64]);
+  // Nr. 85 (2026-09-08): die Code-Sicherung nach IDrive e2 — fachlich derselbe
+  // Schutz-Block, aber ausserhalb des alten Nummernbandes. Die Liste bleibt
+  // ABSICHTLICH fest aufgezaehlt: sie ist der Anschluss-Beweis. Wer einen
+  // Autopiloten hinzufuegt, soll ihn hier eintragen MUESSEN und dabei merken,
+  // ob er ihn auch in Registry und Selbstheilung angeschlossen hat.
+  assert.deepEqual(neue, [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62, 64, 85]);
   assert.ok(AUTOPILOTEN.length >= 62, `die Registry muss mindestens 62 Autopiloten führen, hat ${AUTOPILOTEN.length}`);
 });
