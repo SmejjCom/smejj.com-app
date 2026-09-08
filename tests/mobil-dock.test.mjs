@@ -133,3 +133,26 @@ test("Stufe-Chip kuerzt mit Ellipse statt beidseitig abzuschneiden (inline-flex 
   assert.doesNotMatch(m.REGELN, /\.repochip\.repochip\{display:inline-flex/, "inline-flex laesst text-overflow verpuffen");
   assert.match(m.REGELN, /#codeModusChip\.repochip\{max-width:72px\}/, "der kurze Modus-Chip macht dem Stufen-Chip Platz");
 });
+
+test("Diagnose-Messzeile: liest Schirm, Fenster, sichtbare Flaeche, Safe-Areas und Modus (nur installierte App)", () => {
+  const doc = {
+    documentElement: {},
+    body: { appendChild() {}, },
+    createElement: () => ({ style: { cssText: "" }, getBoundingClientRect: () => ({ height: 34 }), remove() {} }),
+    querySelector: () => null,
+  };
+  const win = { screen: { width: 393, height: 852 }, innerWidth: 393, innerHeight: 800,
+    visualViewport: { width: 393, height: 800, offsetTop: 0 }, devicePixelRatio: 3, navigator: { standalone: true } };
+  globalThis.getComputedStyle = () => ({});
+  const gemessen = m.messwerte(win, doc);
+  assert.equal(gemessen.schirm, "393x852");
+  assert.equal(gemessen.fenster, "393x800", "genau dieser Unterschied ist der Balken");
+  assert.equal(gemessen.sichtbar, "393x800+0");
+  assert.equal(gemessen.saUnten, 34);
+  assert.match(gemessen.modus, /standalone/);
+  // Die Zeile darf NUR in der installierten App erscheinen — im Browser nie.
+  const quelle = readFileSync(new URL("../public/mobil-dock.js", import.meta.url), "utf8");
+  assert.match(quelle, /standalone\)"\)\.matches \|\| navigator\.standalone === true\) zeigeMesszeile\(\)/);
+  assert.match(quelle, /setTimeout\(\(\) => zeile\.remove\(\), 15000\)/, "verschwindet von selbst");
+});
+
