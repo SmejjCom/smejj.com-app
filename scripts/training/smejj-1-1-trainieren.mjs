@@ -178,7 +178,36 @@ async function main() {
   // "deploying"/"pending" zaehlen mit (05.09. 21:49 UTC): ein Doppelklick traf die Gruppe waehrend
   // ein Messjob gerade zugeteilt wurde — die Pruefung sah kein "running", ueberschrieb die
   // Job-Umgebung und verdraengte die Messung. Nur "stopped"/"failed" ist frei.
-  if (!["stopped", "failed", "fehlt"].includes(vorher.zustand)) { console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}).`); process.exit(4); }
+  /**
+   * WANN IST DIE GRUPPE FREI? Nicht dann, wenn Salad "stopped" meldet.
+   *
+   * Salad teilt einen FERTIGEN Job immer wieder neu zu — der Trainingslauf von
+   * smejj 1.5 lief so eine halbe Nacht im Kreis, die Messung danach dreimal.
+   * Die Gruppe ist dabei nie "stopped", und diese Pruefung brach jedes Mal ab:
+   * am 07./08.09. sind daran mehrere Betreiber-Klicks gescheitert.
+   *
+   * Verlaesslich ist das ERGEBNIS in der Ablage, nicht der Zustand. Wer seinen
+   * Adapter (Training) oder seine Bewertung (Messung) abgelegt hat, ist fertig.
+   * Dieselbe Korrektur steht seit dem 08.09. in smejj-1-1-messen.mjs — sie
+   * fehlte hier, weil ich nur die eine Stelle gesucht hatte.
+   *
+   * Der Schutz bleibt scharf: ein Job OHNE Ergebnis haelt die Gruppe besetzt.
+   */
+  const ergebnisSchonDa = await (async () => {
+    if (!vorher.jobId) return false;
+    const st = await e2.getJson(`con/logs/jobs/${vorher.jobId}/status.json`, null).catch(() => null);
+    const version = st?.version || st?.kandidat || null;
+    const bew = await e2.getJson(`smejj/bewertungen/${vorher.jobId}.json`, null).catch(() => null);
+    const tr = version ? await e2.getJson(`con/versions/${version}/training.json`, null).catch(() => null) : null;
+    return Boolean(bew) || Boolean(tr && tr.jobId === vorher.jobId);
+  })();
+  if (!["stopped", "failed", "fehlt"].includes(vorher.zustand) && !ergebnisSchonDa) {
+    console.error(`ABBRUCH: die Gruppe ist nicht frei (${vorher.zustand}) — dort laeuft ein Job ohne abgelegtes Ergebnis.`);
+    process.exit(4);
+  }
+  if (ergebnisSchonDa && !["stopped", "failed", "fehlt"].includes(vorher.zustand)) {
+    console.log(`Hinweis: ${vorher.jobId} hat sein Ergebnis abgelegt und wurde nur neu zugeteilt — das Training ueberschreibt ihn.`);
+  }
 
   if (!process.argv.includes("--starten")) {
     console.log("\nProbelauf — nichts gestartet. Mit --starten wird wirklich trainiert.");
