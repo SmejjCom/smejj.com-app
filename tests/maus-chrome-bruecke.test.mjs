@@ -414,3 +414,16 @@ test("v0.5.3: der Hintergrund traegt die Version im Dateinamen — Chrome cacht 
   assert.ok(fs.existsSync(HINTERGRUND_PFAD), "die Datei aus dem Manifest muss existieren");
   assert.ok(!fs.existsSync("extensions/smejj-maus-bruecke/hintergrund.js"), "kein namenloser hintergrund.js mehr daneben");
 });
+
+// --- Die Tab-Kennung ueberlebt den Hintergrund ------------------------------
+// Live 2026-09-09 im Betreiber-Chrome: der Planer brauchte 64 s, Chrome beendete
+// den Hintergrund (Manifest V3, ~30 s Leerlauf), die Variable war leer —
+// "kein_maus_tab: erst eine Seite oeffnen" mitten im Lauf, obwohl das
+// Wikipedia-Tab offen vor dem Betreiber stand.
+test("die Tab-Kennung liegt in chrome.storage.session, nicht nur in einer Variablen", () => {
+  const hintergrund = fs.readFileSync(HINTERGRUND_PFAD, "utf8");
+  assert.match(hintergrund, /chrome\.storage\.session\?\.set\(\{ mausTabId/, "Kennung wird gespeichert");
+  assert.match(hintergrund, /chrome\.storage\.session\?\.get\("mausTabId"\)/, "Kennung wird zurueckgelesen");
+  // Jeder Weg zum Tab geht ueber den Speicher — sonst greift der Schutz nur an einer Stelle.
+  assert.ok(!/mausTabId === null \? null : mausTabId/.test(hintergrund), "zustandZeigen liest die Variable nicht direkt");
+});

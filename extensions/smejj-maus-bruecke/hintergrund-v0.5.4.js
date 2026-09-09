@@ -43,17 +43,39 @@ const BEOBACHTUNG_MAX_ZEICHEN = 6000;
 // eigene App statt der Zielseite. Ausserdem waere jeder Tabwechsel des
 // Nutzers mitten im Lauf ein Sprung auf eine fremde Seite: die Maus klickt
 // dann in einer Bank, weil dort gerade jemand nachgesehen hat.
+//
+// DIE KENNUNG UEBERLEBT DEN HINTERGRUND (v0.5.4, gefunden 2026-09-09 live):
+// Chrome beendet den Hintergrund einer Manifest-V3-Erweiterung nach etwa 30 s
+// Leerlauf. Als der Planer einmal 64 s ueberlegte, war beim naechsten Schritt
+// die Variable leer — "kein_maus_tab: erst eine Seite oeffnen" mitten im Lauf,
+// obwohl das Wikipedia-Tab offen vor dem Betreiber stand. Darum liegt die
+// Kennung zusaetzlich in chrome.storage.session: ueberlebt den Neustart des
+// Hintergrunds, NICHT den von Chrome — genau richtig, ein Tab lebt auch nicht
+// laenger. Die Variable bleibt als schneller Weg fuer den Normalfall.
 let mausTabId = null;
+async function merkeMausTab(id) {
+  mausTabId = id;
+  try { await chrome.storage.session?.set({ mausTabId: id }); } catch { /* ohne session-Speicher bleibt die Variable */ }
+}
+async function gemerkterMausTab() {
+  if (mausTabId !== null) return mausTabId;
+  try {
+    const { mausTabId: id = null } = (await chrome.storage.session?.get("mausTabId")) || {};
+    mausTabId = Number.isInteger(id) ? id : null;
+  } catch { /* s. o. */ }
+  return mausTabId;
+}
 
 async function mausTab({ erzeugeMit = null } = {}) {
-  if (mausTabId !== null) {
-    const vorhanden = await chrome.tabs.get(mausTabId).catch(() => null);
+  const id = await gemerkterMausTab();
+  if (id !== null) {
+    const vorhanden = await chrome.tabs.get(id).catch(() => null);
     if (vorhanden) return vorhanden;
-    mausTabId = null;
+    await merkeMausTab(null);
   }
   if (!erzeugeMit) return null;
   const neu = await chrome.tabs.create({ url: erzeugeMit, active: true });
-  mausTabId = neu.id;
+  await merkeMausTab(neu.id);
   return neu;
 }
 
@@ -131,7 +153,7 @@ export async function zustandZeigen() {
       restMinuten: Math.max(0, Math.ceil((Number(bis) - Date.now()) / 60000))
     })),
     chromeRechte: rechte,
-    arbeitsTab: mausTabId === null ? null : mausTabId
+    arbeitsTab: await gemerkterMausTab()
   };
 }
 
