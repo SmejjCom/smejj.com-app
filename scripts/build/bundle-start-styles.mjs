@@ -28,7 +28,6 @@ const OUTPUT = join(ROOT, "public", "start-styles.css");
 // entsprechen, sonst gewinnen andere Regeln als vorher.
 export const SOURCES = Object.freeze([
   "styles.css",
-  "cline-model-menu.css",
   "branding.css",
   "composer-tools.css",
   "browser-pane.css",

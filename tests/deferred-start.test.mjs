@@ -102,13 +102,14 @@ test("Control-Server-Aufrufe stehen nicht mehr im Ladepfad", () => {
   }
 });
 
-test("auch die letzten drei Startaufrufe stehen nicht im Ladepfad", () => {
-  // Zweite Welle (2026-07-27): /api/auth/me, /api/keys und die beiden
-  // Cline-Aufrufe. Alle drei Quellen muessen ueber afterFirstPaint laufen.
+test("auch die letzten Startaufrufe stehen nicht im Ladepfad", () => {
+  // Zweite Welle (2026-07-27): /api/auth/me und /api/keys. Der dritte Fall
+  // war provider-settings.js (Cline-Schluessel); die Datei ist am 2026-09-10
+  // mit dem Anbieter entfallen — ein Aufruf, den es nicht gibt, kann den
+  // Ladepfad auch nicht belasten.
   const faelle = [
     ["public/account-privacy.js", /afterFirstPaint\(\[\(\) => hydrateAuthSession\(view\)\]\)/, /\n {2}hydrateAuthSession\(view\);/],
-    ["public/api-keys-surface.js", /afterFirstPaint\(\[\(\) => refresh\(root\)/, /\n {2}refresh\(root\)\.catch/],
-    ["public/provider-settings.js", /afterFirstPaint\(\[\(\) => load\(root\)/, /\n {2}load\(root\)\.catch/]
+    ["public/api-keys-surface.js", /afterFirstPaint\(\[\(\) => refresh\(root\)/, /\n {2}refresh\(root\)\.catch/]
   ];
   for (const [datei, verschoben, direkt] of faelle) {
     const quelle = fs.readFileSync(datei, "utf8");
@@ -126,12 +127,17 @@ test("auch der letzte Startaufruf steht nicht mehr im Ladepfad", () => {
   assert.doesNotMatch(quelle, /\n {2}refreshSession\(\)\.catch\(showError\);/, "laeuft noch direkt beim Start");
 });
 
-test("cline-model-menu.js laedt seinen Katalog weiterhin nur auf Klick", () => {
-  // Non-Regression: das Untermenue war nie im Ladepfad und darf es nicht werden.
-  const menu = fs.readFileSync("public/cline-model-menu.js", "utf8");
-  const openIndex = menu.indexOf("function openSubmenu");
-  assert.ok(openIndex > 0);
-  assert.ok(menu.indexOf("loadCatalog()") > openIndex, "loadCatalog gehoert in openSubmenu, nicht in init");
+test("das Modell-Menue holt beim Start GAR NICHTS mehr", () => {
+  // Vorher stand hier: "cline-model-menu.js laedt seinen Katalog nur auf Klick".
+  // Seit 2026-09-10 ist der Fremdkatalog samt Datei entfernt (Betreiber:
+  // "Cline muss vollstaendig aus der App entfernt werden"), und die Liste steht
+  // als Daten im Menue. Damit ist die alte Sorge gegenstandslos — die neue ist,
+  // dass niemand heimlich wieder einen Katalog nachlaedt.
+  assert.equal(fs.existsSync("public/cline-model-menu.js"), false, "Datei ist entfernt");
+  assert.equal(html.includes("cline-model-menu"), false, "Startseite laedt sie nicht mehr");
+  const menue = fs.readFileSync("public/code-modell-menue.js", "utf8");
+  assert.doesNotMatch(menue, /fetch\(/, "das Menue darf ohne Netz auskommen");
+  assert.match(menue, /export const SMEJJ_STAFFEL/, "die Liste steht als Daten in der Datei");
 });
 
 test("Startseite laedt ein Buendel statt acht Stylesheets", () => {

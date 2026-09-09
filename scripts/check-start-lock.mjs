@@ -53,8 +53,8 @@ const PROTECTED_FILES = [
   "public/browser-pane-render.js",
   "public/panel-backdrop.js",
   "public/panel-backdrop.css",
-  "public/cline-model-menu.js",
-  "public/cline-model-menu.css",
+  // cline-model-menu.js/.css: 2026-09-10 mit dem Anbieter entfernt (Betreiber:
+  // "Cline muss vollstaendig aus der App entfernt werden").
   "public/auth/passkey-ui.js",
   "public/ai/chatClient.js",
   "public/ai/index.js",
