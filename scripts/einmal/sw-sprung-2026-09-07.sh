@@ -18,7 +18,11 @@ ZWEIG="feature/auth-redesign-github-magiclink"
 QUELLE="${SMEJJ_APP_ORDNER:-$PWD}"
 KLON="$HOME/smejj-app-frontend"
 BAUM="/private/tmp/claude-501/stempel-sw-sprung-$(date +%Y%m%d-%H%M%S)"
-WORTLAUT="Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege holt (Tastatur-Buendigkeit, Vollbild-Rahmen ueber visualViewport, Einstellungen durchgaengig Deutsch). Stempel per Doppelklick."
+# Der Stempel-Wortlaut und der Anlass sind ueberschreibbar, damit die Kaskade bei jeder
+# Runde die WAHRHEIT protokolliert statt den Anlass vom 07.09.:
+#   SMEJJ_STEMPEL_WORTLAUT="..." SMEJJ_ANLASS="..." ./sw-sprung-2026-09-07.sh
+ANLASS="${SMEJJ_ANLASS:-Nachzuege der Runde 4}"
+WORTLAUT="${SMEJJ_STEMPEL_WORTLAUT:-Betreiber Wof Kadavanich, 2026-09-07 abends (Auftrag 100 % Responsive): Service-Worker-Sprung, damit die installierte App die Nachzuege holt (Tastatur-Buendigkeit, Vollbild-Rahmen ueber visualViewport, Einstellungen durchgaengig Deutsch). Stempel per Doppelklick.}"
 [ -d /Library/Developer/CommandLineTools ] && export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 [ -e "$QUELLE/.git" ] || { echo "ABBRUCH: Arbeitskopie fehlt unter $QUELLE"; exit 2; }
 [ -e "$KLON/.git" ] || { echo "ABBRUCH: Frontend-Klon fehlt unter $KLON"; exit 2; }
@@ -62,7 +66,7 @@ for pruefung in start admin favicon; do node "scripts/check-${pruefung}-lock.mjs
 
 echo "5/6 Hochladen ..."
 git add public/sw.js public/assets/sw.js docs/frontend/start-lock-manifest.json 2>/dev/null
-git -c user.name="Wof Kadavanich" -c user.email="smejjcom@gmail.com" commit -q -m "chore(start-lock): Service-Worker-Sprung $SW_NEU fuer die Nachzuege der Runde 4 — Stempel per Betreiber-Doppelklick 2026-09-07" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: commit"; behalten 10; }
+git -c user.name="Wof Kadavanich" -c user.email="smejjcom@gmail.com" commit -q -m "chore(start-lock): Service-Worker-Sprung $SW_NEU — $ANLASS (Stempel $(date +%Y-%m-%d))" -m "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>" || { echo "ABBRUCH: commit"; behalten 10; }
 git push -q origin "HEAD:$ZWEIG" || { echo "Push abgelehnt — bitte Claude Code Bescheid geben."; behalten 11; }
 QUELLKENNUNG="$(git rev-parse --short HEAD)"
 cd "$KLON" || behalten 12
@@ -70,7 +74,7 @@ cd "$KLON" || behalten 12
 git checkout -q main && git pull -q --ff-only origin main || { echo "ABBRUCH: Klon nicht auf origin/main"; behalten 12; }
 cp /tmp/sw-sprung.js sw.js; cp /tmp/sw-sprung.js assets/sw.js
 git add sw.js assets/sw.js
-git -c user.name="Wof Kadavanich" -c user.email="smejjcom@gmail.com" commit -q -m "deploy(sw): $SW_NEU — Nachzuege Runde 4 fuer wiederkehrende App-Nutzer — Quelle smejj.com-app $QUELLKENNUNG (Stempel 2026-09-07)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" || { echo "ABBRUCH: Klon-Commit"; behalten 13; }
+git -c user.name="Wof Kadavanich" -c user.email="smejjcom@gmail.com" commit -q -m "deploy(sw): $SW_NEU — $ANLASS fuer wiederkehrende App-Nutzer — Quelle smejj.com-app $QUELLKENNUNG (Stempel $(date +%Y-%m-%d))" -m "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>" || { echo "ABBRUCH: Klon-Commit"; behalten 13; }
 git push -q origin HEAD:main || { echo "ABBRUCH: Push"; behalten 14; }
 echo "    Klon: $(git log --oneline -1)"
 
