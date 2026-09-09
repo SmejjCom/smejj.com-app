@@ -484,3 +484,66 @@ test("die Anleitung nennt JEDE Aktion, die die Pruefung verlangt", async () => {
     "ohne diese Zeile raet das Modell die Scroll-Form — und wird abgelehnt");
   assert.match(prompt, /amountPx/);
 });
+
+// --- Tempo des Planers (Live-Befund 2026-09-09, Betreiber-Chrome) ---------
+// Ein Lauf ueber elf Schritte brauchte 467 s, davon 455 s "Ueberlegen":
+// Groq (8.000 Tokens je Minute) antwortete nach einem grossen Schritt mit
+// 429, GLM-4.5-flash uebernahm mit 47–100 s je Antwort, dreimal 502.
+// Drei Ursachen, drei Tests — plus die Messung in der Antwort.
+function planerAntwort(inhalt, status = 200) {
+  return { ok: status >= 200 && status < 300, status, headers: new Map(), json: async () => ({ choices: [{ message: { content: inhalt } }] }) };
+}
+const ENV_ZWEI = Object.freeze({ SMEJJ_LLM_GROQ_API_KEY: "g", SMEJJ_LLM_ZHIPU_API_KEY: "z" });
+
+test("Planer-Prompt: die Beobachtung wird KOMPAKT — 40 Elemente, 2500 Zeichen, ohne Koordinaten, Nummern bleiben", async () => {
+  const { buildStepPrompt, kompakteBeobachtung, KOMPAKT_MAX_ELEMENTE, KOMPAKT_MAX_ZEICHEN } = await import("../workers/maus-engine/prompt-template.mjs");
+  const elements = Array.from({ length: 60 }, (_, i) => ({ n: i + 1, tag: "a", href: `/wiki/A_${i}`, text: `Verweis ${i} auf einen Artikel`, x: 100 + i, y: 200 + i }));
+  const observation = { url: "https://de.wikipedia.org/wiki/Ada_Lovelace", title: "Ada", textExcerpt: "x".repeat(6000), elements };
+  const k = kompakteBeobachtung(observation);
+  assert.equal(k.elements.length, KOMPAKT_MAX_ELEMENTE);
+  assert.equal(k.elementeGekappt, 60);
+  assert.equal(k.elements[39].n, 40, "die Nummer eines Elements bleibt seine Nummer");
+  assert.ok(!("x" in k.elements[0]) && !("y" in k.elements[0]), "Koordinaten gehen den Planer nichts an");
+  assert.ok(k.textExcerpt.length <= KOMPAKT_MAX_ZEICHEN + 2);
+  assert.equal(observation.elements.length, 60, "das Original bleibt unangetastet — das Panel braucht es fuer den Zeiger");
+  const prompt = buildStepPrompt({ task: "t", capsuleRef: "c", domainAllowlist: ["de.wikipedia.org"], budget: { maxActions: 10 }, files: [], visionAllowed: false, observation, remainingSteps: 5 });
+  assert.ok(prompt.length < 12000, `Prompt muss klein bleiben, ist ${prompt.length} Zeichen (vorher ~18.000)`);
+  assert.match(prompt, /Nur die ersten 40 von 60 Bedienelementen/);
+  assert.ok(!prompt.includes('"x":100'), "keine Koordinaten im Prompt");
+});
+
+test("Planer: Ratenlimit des schnellen Glieds -> kurz warten und DASSELBE Glied noch einmal, nicht sofort das langsame", async () => {
+  const gefragt = [];
+  let geschlafen = null;
+  const fetchImpl = async (url) => {
+    gefragt.push(url);
+    if (gefragt.length === 1) return planerAntwort("", 429);
+    return planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}');
+  };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, warteMs: 15000, schlafe: async (ms) => { geschlafen = ms; } });
+  const antwort = await client("prompt");
+  assert.match(antwort, /"done"/);
+  assert.equal(geschlafen, 15000, "es wird gewartet");
+  assert.equal(gefragt.length, 2);
+  assert.ok(gefragt.every((u) => /groq/.test(u)), `beide Anfragen an Groq, nicht an GLM: ${gefragt.join(", ")}`);
+});
+
+test("Planer: leere Antwort (nur reasoning) ist ein Fehlversuch — die Kette wird noch einmal gefragt", async () => {
+  let n = 0;
+  const fetchImpl = async () => (++n === 1 ? planerAntwort("") : planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}'));
+  const messungen = [];
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {}, melde: (m) => messungen.push(m) });
+  const antwort = await client("prompt");
+  assert.match(antwort, /"done"/);
+  assert.equal(n, 2);
+  assert.ok(messungen[0].fehlversuche.some((f) => /leere_antwort/.test(f)), "die leere Antwort steht in der Messung");
+});
+
+test("Planer: GLM bekommt das Denken ausgeschaltet — ein JSON-Schritt braucht keinen Aufsatz", async () => {
+  const koerper = [];
+  const fetchImpl = async (url, init) => { koerper.push({ url, body: JSON.parse(init.body) }); return planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}'); };
+  const client = buildPlannerClient({ env: { SMEJJ_LLM_ZHIPU_API_KEY: "z" }, fetchImpl, schlafe: async () => {} });
+  await client("prompt");
+  assert.equal(koerper.length, 1);
+  assert.deepEqual(koerper[0].body.thinking, { type: "disabled" }, `GLM-Anfrage ohne Denken: ${JSON.stringify(koerper[0].body).slice(0, 200)}`);
+});

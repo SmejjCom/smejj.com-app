@@ -7,7 +7,30 @@ import { resolveChain, resolveModelRequest, executeWithFallback } from "../llm/m
 // die Plattformgrenze (300 s) lebt als GATEWAY_HARTGRENZE_MS in mausEngineRoutes.js.
 export const PLANER_TIMEOUT_MS = 100_000;
 
-export function buildPlannerClient({ env = process.env, fetchImpl = fetch, requestedModel = "", melde = null } = {}) {
+// RATENLIMIT DER SCHNELLEN KETTE: KURZ WARTEN STATT LANGSAM AUSWEICHEN.
+//
+// Gemessen 2026-09-09: Groq (openai/gpt-oss-20b, 8.000 Tokens je Minute)
+// antwortet in 2–4 s, meldet aber nach einem grossen Schritt HTTP 429 mit
+// "reset in 12 s". Der bisherige Weg wich sofort auf GLM-4.5-flash aus:
+// 47–100 s, oft in die Zeitgrenze (502). 15 s Warten und Groq noch einmal
+// fragen ist in jedem gemessenen Fall schneller. Die Zahl ist einreichbar,
+// damit der Test nicht schlafen muss.
+export const RATENLIMIT_WARTEZEIT_MS = 15_000;
+
+const nurRatenlimit = (attempts) => Array.isArray(attempts) && attempts.length > 0 && attempts.every((a) => a?.error === "http_429");
+
+async function inhaltAus(result) {
+  if (!result?.ok) return "";
+  const payload = await result.response.json().catch(() => null);
+  const content = payload?.choices?.[0]?.message?.content;
+  return typeof content === "string" ? content.trim() : "";
+}
+
+export function buildPlannerClient({
+  env = process.env, fetchImpl = fetch, requestedModel = "", melde = null,
+  warteMs = RATENLIMIT_WARTEZEIT_MS,
+  schlafe = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+} = {}) {
   return async (prompt) => {
     const begonnen = performance.now();
     // ZWEI PROFILE HINTEREINANDER, nicht nur eines.
@@ -90,11 +113,43 @@ export function buildPlannerClient({ env = process.env, fetchImpl = fetch, reque
     // sicher unter der Plattformgrenze von 300 s, ab der die Verbindung
     // gekappt wird (siehe GATEWAY_HARTGRENZE_MS oben). Eine Zahl, die den
     // Aufruf ueberleben laesst, aber nicht die Antwort verhindert.
-    const result = await executeWithFallback(chain, [{ role: "user", content: prompt }], {
+    const nachricht = [{ role: "user", content: prompt }];
+    const optionen = {
       fetchImpl,
       stream: false,
-      timeoutMs: PLANER_TIMEOUT_MS
-    });
+      timeoutMs: PLANER_TIMEOUT_MS,
+      // DENKEN AUS: der Planer liefert ein JSON-Objekt, keinen Aufsatz. GLM
+      // denkt sonst standardmaessig mit — gemessen 2026-09-09: 47 s statt
+      // 37 s fuer denselben kleinen Prompt. Anbieter ohne den Schalter
+      // bekommen ihn nicht (backendSupportsThinking im Router).
+      thinking: { type: "disabled" }
+    };
+    const versuche = [];
+    const frage = async (kette) => {
+      const r = await executeWithFallback(kette, nachricht, optionen);
+      versuche.push(...(r.attempts || []));
+      return r;
+    };
+    // Das ERSTE Glied ist das schnelle. Meldet es nur ein Ratenlimit, wird
+    // kurz gewartet und dasselbe Glied noch einmal gefragt, bevor die
+    // langsamen Glieder drankommen (Begruendung bei RATENLIMIT_WARTEZEIT_MS).
+    const [erstes, ...weitere] = chain;
+    let result = await frage([erstes]);
+    if (!result.ok && nurRatenlimit(result.attempts)) {
+      await schlafe(warteMs);
+      result = await frage([erstes]);
+    }
+    if (!result.ok && weitere.length) result = await frage(weitere);
+    let content = await inhaltAus(result);
+    // LEERE ANTWORT IST EIN FEHLVERSUCH, KEIN ERGEBNIS. Gemessen 2026-09-09:
+    // gpt-oss-20b lieferte bei grossem Prompt HTTP 200 mit leerem content
+    // (nur "reasoning") — bisher sofort 502 "planer_leere_antwort", ohne die
+    // Kette weiter zu fragen. Einmal die ganze Kette noch einmal.
+    if (result.ok && !content) {
+      versuche.push({ backend: result.backend, model: result.model, error: "leere_antwort" });
+      result = await frage(chain);
+      content = await inhaltAus(result);
+    }
     // WER hat geantwortet und wie lange hat es gedauert? Ohne diese Auskunft
     // ist jede Tempo-Frage Kaffeesatz: executeWithFallback WEISS es, sagte es
     // aber niemandem. Am 2026-08-18 stand deshalb die Frage im Raum, ob
@@ -105,12 +160,10 @@ export function buildPlannerClient({ env = process.env, fetchImpl = fetch, reque
       ms: Math.round(performance.now() - begonnen),
       // Fehlversuche kosten die volle Zeitgrenze. Zwei davon erklaeren eine
       // Minute Wartezeit vollstaendig.
-      fehlversuche: (result.attempts || []).map((a) => `${a.backend || a.name || "?"}/${a.model || "?"}: ${a.error || a.failure || "?"}`)
+      fehlversuche: versuche.map((a) => `${a.backend || a.name || "?"}/${a.model || "?"}: ${a.error || a.failure || "?"}`)
     });
     if (!result.ok) throw new Error("planer_nicht_erreichbar");
-    const payload = await result.response.json();
-    const content = payload?.choices?.[0]?.message?.content;
-    if (typeof content !== "string" || !content.trim()) throw new Error("planer_leere_antwort");
+    if (!content) throw new Error("planer_leere_antwort");
     return content;
   };
 }
