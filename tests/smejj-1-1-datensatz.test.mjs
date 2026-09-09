@@ -287,7 +287,15 @@ test("die Job-Parameter zeigen auf den smejj-Datensatz und einen eigenen Kandida
   assert.ok(!p.CON_DATENSATZ_PREFIX.startsWith("con/"), "nicht aus dem con-Lager lesen");
   assert.ok(!p.CON_CHECKPOINT_PREFIX.startsWith("con/"), "nicht ins con-Lager schreiben");
   const konfig = JSON.parse(p.CON_TRAIN_KONFIG);
-  assert.ok(konfig.rang > 0 && konfig.epochen > 0 && konfig.lernrate > 0, "unvollstaendige Trainingskonfiguration");
+  // DIE NAMEN, NICHT NUR DIE WERTE. Bis zum 10.09. stand hier `konfig.rang` und
+  // `konfig.lernrate` — beides war gesetzt, beides groesser null, der Test war
+  // gruen. train.py liest aber `r` und `lr` und nahm still seine Vorgaben.
+  // Ein Test, der nur prueft, dass ein Feld DA ist, prueft nicht, ob es
+  // ANKOMMT: die Gegenseite kam in ihm gar nicht vor.
+  assert.ok(konfig.r > 0, 'train.py liest konfig.get("r") — ein Feld "rang" kommt nie an');
+  assert.ok(konfig.lr > 0, 'train.py liest konfig.get("lr") — ein Feld "lernrate" kommt nie an');
+  assert.ok(konfig.epochen > 0);
+  assert.equal(konfig.alpha, konfig.r * 2, "alpha muss dem Rang folgen, sonst aendern sich zwei Dinge auf einmal");
 });
 
 test("die Zeitgrenze ist gesetzt und bleibt im Rahmen des Deckels", () => {

@@ -212,6 +212,7 @@ def lauf():
     adapter_prefix = os.environ.get("CON_ADAPTER_PREFIX", "").strip()
     if "training" in MODUS:
         import train
+        import gguf_adapter
         datensatz_prefix = os.environ["CON_DATENSATZ_PREFIX"].rstrip("/")
         kandidat = os.environ.get("CON_KANDIDAT", version)
         konfig = json.loads(os.environ.get("CON_TRAIN_KONFIG", "{}"))
@@ -237,6 +238,14 @@ def lauf():
                                                                 "datensatzPrefix": datensatz_prefix, "jobId": JOB_ID,
                                                                 "konfig": konfig, "stand": _iso(time.time())})
         adapter_dir = t["adapterPfad"]
+        # Der Adapter im Format, das der Hausmodell-Dienst wirklich laden kann.
+        # Ohne diesen Schritt bleibt jeder trainierte Stand unbenutzbar: das
+        # Training legt PEFT-safetensors ab, llama.cpp liest GGUF. Neun Laeufe
+        # lang ist das niemandem aufgefallen, weil der Dienst klaglos die
+        # nackte Basis auslieferte. Scheitert die Umwandlung, ist der Adapter
+        # trotzdem gesichert — darum wirft sie nicht.
+        ergebnis["training"]["adapterGguf"] = gguf_adapter.wandle_und_sichere(
+            adapter_dir, modell_dir, ARBEIT, kandidat, e2, status=STATUS, pip=pip_installieren)
         if t.get("ohneNeueSchritte") and not t.get("bereitsVollstaendig"):
             # Kein einziger neuer Schritt und der Zwischenstand stammt NICHT aus diesem
             # Job: der Adapter ist die Arbeit eines fremden Laufs. Ihn unter diesem Namen

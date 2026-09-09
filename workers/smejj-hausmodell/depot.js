@@ -17,7 +17,7 @@ import { mkdir, readdir, rm, stat, utimes, rename } from "node:fs/promises";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
-import { e2Schluessel, e2ManifestSchluessel, e2PruefsummenSchluessel, baueManifest } from "./katalog.js";
+import { e2Schluessel, e2AdapterSchluessel, e2ManifestSchluessel, e2PruefsummenSchluessel, baueManifest } from "./katalog.js";
 
 const HF_BASIS = "https://huggingface.co";
 
@@ -79,6 +79,61 @@ export class Depot {
     const ergebnis = await this.#ausHuggingFace(modell, ziel, { beiFortschritt });
     await this.nachE2Spiegeln(modell, ziel);
     return { pfad: ziel, quelle: "huggingface+e2", bytes: ergebnis.bytes };
+  }
+
+  /** Wo der Adapter auf der SSD liegt — neben der Modelldatei, im selben Ordner. */
+  adapterPfadVon(modell) {
+    return modell?.adapter ? path.join(this.cacheVerzeichnis, modell.id, modell.adapter.datei) : null;
+  }
+
+  /**
+   * Holt den Adapter, wenn das Modell einen hat. Gibt `null` zurueck, wenn
+   * keiner beschrieben ist — das ist der Normalfall und kein Fehler.
+   *
+   * ANDERS ALS BEI DER MODELLDATEI wird hier IMMER die Pruefsumme geprueft,
+   * auch wenn die Groesse stimmt. Ein Adapter ist wenige Megabyte gross, das
+   * Rechnen dauert Millisekunden — und ein falscher Adapter faellt sonst
+   * nirgends auf: das Modell antwortet weiter, nur eben als ein anderes.
+   * Bei der 2,5-GB-Modelldatei waere dieselbe Pruefung mehrere Sekunden
+   * Kaltstart bei jedem Start, darum steht sie dort nur beim Laden.
+   */
+  async adapterBereitstellen(modell) {
+    const a = modell?.adapter;
+    if (!a) return null;
+    const ziel = this.adapterPfadVon(modell);
+    await mkdir(path.dirname(ziel), { recursive: true });
+
+    const vorhanden = await stat(ziel).catch(() => null);
+    if (vorhanden && vorhanden.size === a.sizeBytes) {
+      const summe = await this.#summeVon(ziel);
+      if (summe === a.sha256) {
+        await utimes(ziel, new Date(), new Date()).catch(() => {});
+        return { pfad: ziel, quelle: "ssd-cache", bytes: vorhanden.size };
+      }
+      this.protokoll.warn?.(`[depot] Adapter ${modell.id}: Pruefsumme im Cache stimmt nicht — wird neu geholt`);
+      await rm(ziel, { force: true });
+    } else if (vorhanden) {
+      await rm(ziel, { force: true });
+    }
+
+    const schluessel = e2AdapterSchluessel(modell);
+    const vorlaeufig = `${ziel}.teil`;
+    this.protokoll.log?.(`[depot] Adapter ${modell.id}: laedt aus e2 (${schluessel})`);
+    const ergebnis = await this.e2.ladeInDatei(schluessel, vorlaeufig, {});
+    if (ergebnis.sha256 !== a.sha256) {
+      await rm(vorlaeufig, { force: true });
+      throw new Error(`adapter_pruefsumme_falsch: ${modell.id} (${ergebnis.sha256.slice(0, 16)} statt ${a.sha256.slice(0, 16)})`);
+    }
+    await rename(vorlaeufig, ziel);
+    this.protokoll.log?.(`[depot] Adapter ${modell.id}: geladen, SHA256 stimmt`);
+    return { pfad: ziel, quelle: "e2", bytes: ergebnis.bytes };
+  }
+
+  async #summeVon(pfad) {
+    const { createReadStream } = await import("node:fs");
+    const hasher = createHash("sha256");
+    await pipeline(createReadStream(pfad), hasher);
+    return hasher.digest("hex");
   }
 
   async #ausE2(modell, ziel, { beiFortschritt }) {
