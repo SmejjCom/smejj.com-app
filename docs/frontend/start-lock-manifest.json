@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-07T15:55:14.651Z",
-  "confirmation": "Betreiber, 2026-09-07: Modelle zum Laufen bringen. Reparatur: mobil-ansichten.js der Parallelsitzung wiederhergestellt, Service-Worker smejj-shell-v805.",
+  "frozenAt": "2026-09-09T06:47:07.266Z",
+  "confirmation": "Betreiber, 2026-09-09: checke nochmal und verbessere. Live-Befund: Chat-Bilder wurden bei jedem Zeichnen erst von der Sicherheitsrichtlinie blockiert (Konsole voll), ein fehlendes Bild blieb ein kaputtes Symbol. Umgesetzt: Serveradressen vor dem Einfuegen parken, fehlende Bilder mit sichtbarem Ersatz (chat-medien.js, chat-store.js), Marken bis zur Wurzel, Service-Worker smejj-shell-v806. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "4ab46cbe95a78ddaf689916533fdf38ca6629244185d90b3335337aa630a0dd1",
+    "public/index.html": "9a7e856e40615763b32dbcb92f337a5340f7db4c9069a63201103b46f122f25f",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "a4cc46fe656908da29571d48a4f962ea5b9deacd024e168b91b9760f11a0d9b9",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,14 +13,14 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "2df206192af207fc49b69ed85f287d4c0ab0feafce05bb6214458bd5f7ba909f",
-    "public/app.js": "421d0973bc15b9771aacd6e653e40636fc9f3077bc77f91babe44af962644f5c",
+    "public/app.js": "a4bddf54b02eccb06a3997895c39b22de31ab71f873161899fb18949406bca28",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
     "public/premium-surfaces.js": "124416ab88ee41713f47d17deb25f2e6d7eea78d641459c4c648be0a12dd3cd1",
     "public/autonomous-coding.js": "6b08b7a49a30bec13849beccee5bb7b2b2b60ce218dcc81bdd3cc0207878c4c7",
     "public/autonomous-coding.css": "b6cfd67d3ff1bef46b61a741706b3660a6b96f35a8525c57251258535f4db1c1",
-    "public/search.js": "091de127565c7a02417c8a6b36c3cc02b4ecd93fbacc4bd31885567db45a2eed",
+    "public/search.js": "e8a732bb305a81ceb13265caa0f0190dc39ce09b588bbe66691b5cd917cb2499",
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "65122a7e9e0b03c84ed9804d12b054c3c4b8b67e6ce55aaff6d53378186d2466",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "eeb8fc21d45f6bde919500601bfe2a1c7211b7015247a15af7fe9c2d99cc53ed",
+    "public/sw.js": "a868fcadd853a17c9007c3c3c8ab999247d4a89d576f6c1e40c8da22fb74cc3f",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
