@@ -30,6 +30,15 @@
 #    Autopiloten Nr. 85 samt Begruendung. Geprueft und harmlos — aber die
 #    Datei steht im admin-lock, deshalb muss noch einmal gestempelt werden.
 #
+# NACHTRAG 2026-09-08, dritter Lauf — die Ursache eines Raetsels:
+#    Meine Stufe-14-Skripte standen in 34 Konsolenseiten des Frontend-Klons und
+#    verschwanden dort immer wieder. Grund: sync_admin_console_pages.mjs
+#    ERZEUGT diese 34 Seiten aus EINER Quelle,
+#      control-server/admin-ui/index.html,
+#    und ueberschreibt dabei alles, was nur im Klon steht. Der Eintrag sitzt
+#    jetzt in der Quelle — zwei script-Zeilen plus Kommentar. Die Seiten werden
+#    daraus erzeugt, nicht mehr von Hand gepflegt.
+#
 # ES WIRD NICHTS AUSGELIEFERT. Diese Datei stempelt nur und prueft danach.
 # Commit, Tag und Push bleiben ein eigener Schritt.
 set -euo pipefail

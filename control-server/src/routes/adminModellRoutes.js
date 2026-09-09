@@ -157,6 +157,19 @@ async function loeschen(req, res, actor, body, env) {
   const modell = await modellSuchen(env, id);
   if (!modell) return privateJson(res, 404, { ok: false, error: "modell_unbekannt", id });
 
+  // Zeilen, die nur ein Motor gemeldet hat, tragen KEINEN Pfad. Ohne diese
+  // Schranke liefe die Suche mit leerem Praefix — und loeschte im schlimmsten
+  // Fall den halben Eimer. Aufgefallen am 08.09. auf dem Live-Bildschirm:
+  // ornith-1.0-9b stand dort mit Loeschen-Knopf und "Groesse: —".
+  if (!modell.pfad) {
+    return privateJson(res, 409, {
+      ok: false,
+      error: "kein_pfad",
+      hinweis: `${modell.name} ist nur eine Meldung des Motors, keine Datei in den hier gelesenen Eimern.`
+        + " Es gibt nichts zu loeschen."
+    });
+  }
+
   const cfg = eimerConfig(env, eimerName(env, modell.eimer));
   if (!cfg) return privateJson(res, 503, { ok: false, error: "e2_zugang_fehlt" });
 

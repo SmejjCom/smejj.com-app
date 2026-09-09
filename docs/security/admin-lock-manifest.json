@@ -1,6 +1,6 @@
 {
   "lock": "smejj admin lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-08T17:50:20.455Z",
+  "frozenAt": "2026-09-08T21:18:14.857Z",
   "confirmation": "Betreiber-Freigabe 2026-09-08: Modelle-Seite im Adminbereich ausliefern; die drei Sperren wurden Datei fuer Datei geprueft, die fremden vier sind byte-identisch mit git",
   "rule": "Keine Aenderung an Adminzugang, Step-up, Vortuer, schreibenden Adminaktionen, Vier-Augen-Prinzip, Audit-Nachweis oder Impersonation ohne ausdrueckliche schriftliche Freigabe des Betreibers.",
   "files": {
@@ -35,7 +35,7 @@
     "control-server/admin-ui/views-cockpit.js": "e10ffc62485492bf689ec4737965c76ee4a807811daa81341a080b694d27825d",
     "control-server/admin-ui/console.js": "2abffe013877d359dd7a2e157b6070ed5824330fc7d3067f314eca2a46d53443",
     "control-server/admin-ui/views.js": "6b4b905bb989d5db03e10b931be01b7a36ff218381a0e1cd399aacc0993774c1",
-    "control-server/admin-ui/index.html": "3b53fce137addbfc9f56b88fb236a62125325008cbf022f8bf99d499059ccfeb",
+    "control-server/admin-ui/index.html": "08091e7581f88a819402d6c13e26611212d7d0507f57002388b730399fc45623",
     "control-server/admin-ui/console.css": "8064644c5588fcea30bce965a123cce97202bb90a263861213b9f5dd58b4b9cf",
     "control-server/admin-ui/views-stage5.js": "fcffea722ad7b24a1ed85ffc90a63b4f472c833b3a8fc41aa547b22a3847ca27",
     "control-server/admin-ui/views-stage7.js": "77c675cb48b1801f7b57ccdf8b248b61bc91646d5531124287db51d68fa8150e",

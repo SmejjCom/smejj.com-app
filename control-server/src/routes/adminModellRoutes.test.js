@@ -122,3 +122,14 @@ test("eingeschaltet wird nur, was ein Motor laden kann", async () => {
   assert.match(quelle, /if \(an && !modell\.motorId\)/, "ohne Motor darf nicht eingeschaltet werden");
   assert.match(quelle, /error: "kein_motor"/);
 });
+
+test("ohne Dateipfad wird nicht geloescht — sonst liefe die Suche mit leerem Praefix", async () => {
+  const quelle = await import("node:fs").then((fs) =>
+    fs.readFileSync(new URL("./adminModellRoutes.js", import.meta.url), "utf8"));
+  const block = quelle.slice(quelle.indexOf("async function loeschen"));
+  const schranke = block.indexOf("if (!modell.pfad)");
+  const suche = block.indexOf("alleSchluessel(");
+  assert.ok(schranke > 0, "die Pfad-Schranke muss es geben");
+  assert.ok(schranke < suche, "sie muss VOR der Objektsuche stehen, nicht danach");
+  assert.match(block.slice(schranke, schranke + 400), /error: "kein_pfad"/);
+});
