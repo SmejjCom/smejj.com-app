@@ -14,6 +14,9 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+// 09.09.: fileURLToPath wurde in 741072d0 benutzt, aber nie importiert — vier Proben starben
+// mit ReferenceError, statt den Waechter zu pruefen.
+import { fileURLToPath } from "node:url";
 import { MANIFESTE, adresseVon, pruefeManifest } from "../scripts/check-schutz-echtheit.mjs";
 
 const hash = (t) => createHash("sha256").update(t).digest("hex");

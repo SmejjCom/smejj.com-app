@@ -172,8 +172,18 @@ test("Die drei Punkte unter einer Antwort sind antippbar", () => {
   // Gemessen 08.09.: #startLog .msg-actions traegt pointer-events:none und am Handy overflow-x:auto —
   // die Leiste war 0 px hoch, ihre Knoepfe ragten heraus und wurden vom Scroll-Container abgeschnitten.
   assert.match(m.REGELN, /#startLog \.msg-actions,body #codeLogHalter \.msg-actions\{pointer-events:auto;min-height:44px;overflow:visible;margin-top:0\}/);
-  // Und Platz unter dem letzten Eintrag, sonst liegt genau die letzte Leiste hinter dem Dock.
-  assert.match(m.REGELN, /#startLog\.start-log,body #code #codeLogHalter\.code-log-halter\{padding-bottom:132px\}/);
+  // Und ein NORMALER Abstand unter dem letzten Eintrag — keine Overlay-Freihaltung.
+  // KORRIGIERT 09.09.: hier standen 132px, weil ich das Eingabefeld fuer ein schwebendes Dock
+  // hielt. Live nachgemessen ist .home-feed ein Raster (grid-template-rows: minmax(0,1fr) auto)
+  // und .prompt-glass steht auf position:relative — ein Geschwister, das nie ueber dem Log liegt.
+  // Die 132px hielten also nichts frei, sie verschenkten den Platz (81px Loch statt 16px).
+  const treffer = m.REGELN.match(
+    /#startLog\.start-log,body #code #codeLogHalter\.code-log-halter\{padding-bottom:(\d+)px\}/,
+  );
+  assert.ok(treffer, "der Abstand unter dem letzten Eintrag muss gesetzt sein");
+  const abstand = Number(treffer[1]);
+  assert.ok(abstand >= 8, `Abstand ${abstand}px — die Leiste klebt sonst am Eingabefeld`);
+  assert.ok(abstand <= 24, `Abstand ${abstand}px — das ist ein Loch, kein Abstand (Feld ist kein Overlay)`);
 });
 
 test("Auf der leeren Startseite steht das EINGABEFELD unten, nicht nur der Block", () => {
