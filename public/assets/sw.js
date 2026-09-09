@@ -190,7 +190,7 @@
 // in docs/frontend/SW_VERSIONSVERLAUF_2026-08.md, so wie es der Kopf dieser
 // Datei verlangt (Touch-Ziele auf 44 px, Startseite und alle 16 Ansichten).
 // Wer den naechsten Stand sucht, schaut also besser dorthin als hierher.
-const CACHE_NAME = "smejj-shell-v824";
+const CACHE_NAME = "smejj-shell-v828";
 const SHELL = [
   "/",
   "/assets/start-styles.css",
@@ -248,6 +248,8 @@ const SHELL = [
   "/assets/browser-pane-tasten.js",
   "/assets/browser-pane-suche.js",
   "/assets/browser-pane-maus.js",
+  "/assets/browser-pane-maus-plan.js",
+  "/assets/browser-pane-maus-frei.js",
   "/assets/browser-pane-nachrichten.js",
   "/assets/browser-pane-menue.js",
   "/assets/auth/passkey.js",
@@ -257,9 +259,10 @@ const SHELL = [
   "/assets/chat-markdown.js",
   "/assets/frame-guard.js",
   "/assets/app.js",
-  // Herausgeloest aus app.js am 07.09. (812 Zeilen ueber der Hausgrenze).
-  // Ohne diese Zeile waere die App OFFLINE TOT: app.js importiert sie, der
-  // Import laeuft ins Leere, und app.js bricht komplett ab.
+  // Herausgeloest aus app.js am 07.09. (812 Zeilen ueber der Hausgrenze). Ohne diese
+  // Zeile waere die App OFFLINE TOT, sobald app.js nachzieht: der Import liefe ins
+  // Leere und app.js braeche komplett ab. Datei wurde zuerst ausgeliefert (22339f2),
+  // denn cache.addAll bricht beim ersten 404 ab.
   "/assets/app-helfer.js",
   "/assets/view-title.js",
   "/assets/left-menu-state.js",
@@ -389,10 +392,6 @@ const SHELL = [
   "/assets/composer-zeile.js",
   "/assets/verlauf-unten.js",
   "/assets/code-feld-unten.js",
-  // Schlankes Dock am Handy (2026-09-07), per import() aus chat-actions-menu.js.
-  "/assets/mobil-dock.js",
-  // Ansichten nach dem Login am Handy (2026-09-07), per import() aus mobil-dock.js.
-  "/assets/mobil-ansichten.js",
   "/assets/chat-code-copy.js",
   // Sieben Module, die index.html per <script> laedt und die bis 2026-08-22
   // hier fehlten. Offline lieferte der Fetch-Handler dafuer die index.html
