@@ -614,3 +614,27 @@ test("beim zweiten Blick auf eine Sperrseite endet der Lauf mit klarem Grund —
     globalThis.fetch = alteFetch;
   }
 });
+
+// LIVE 09.09. 14:55: nach gut zehn Minuten im Panel endete jeder Lauf sofort
+// mit "authentication_required" — der gespeicherte Ausweis war abgelaufen,
+// und die Maus fragte nie nach einem frischen.
+test("abgelaufener Ausweis: die Maus holt einen frischen und wiederholt den Schritt", async () => {
+  const { fuehreFreienLaufAus } = await import("../public/browser-pane-maus.js");
+  const gesehen = []; const fetchVorher = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    if (/session-token/.test(String(url))) { gesehen.push("refresh"); return { ok: true, status: 200, json: async () => ({ accessToken: "neu" }) }; }
+    const ausweis = init.headers?.Authorization || "";
+    gesehen.push(ausweis);
+    if (ausweis !== "Bearer neu") return { ok: false, status: 401, json: async () => ({ ok: false, error: "authentication_required" }) };
+    return { ok: true, status: 200, json: async () => ({ ok: true, entscheidung: { decision: "done", reason: "r", result: "1815" } }) };
+  };
+  try {
+    const e = await fuehreFreienLaufAus({
+      auftrag: "Geburtsjahr", tab: { url: "https://a.de/", sessionId: "s1" }, schrittUrl: "https://api.test/api/maus/run",
+      holeToken: () => "alt", sende: async () => ({ ok: true, beobachtung: { elements: [] } })
+    });
+    assert.equal(e.ok, true, e.grund);
+    assert.match(e.grund, /1815/);
+    assert.deepEqual(gesehen, ["Bearer alt", "refresh", "Bearer neu"], "erst der alte, dann frisch holen, dann noch einmal");
+  } finally { globalThis.fetch = fetchVorher; }
+});
