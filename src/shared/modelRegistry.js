@@ -18,7 +18,16 @@ export const AUTO_MODEL_ID = "auto";
 // alles"): der Alias der Modellfamilie. Zeigt auf das Standardmodell — und
 // auf die stable-Version des Versionsregisters, sobald Nr. 83 sie live
 // geschaltet hat (siehe control-server/src/llm/smejjAlias.js).
-export const BRAND_ALIASES = Object.freeze(new Set(["smejj 1.0", "smejj code", "smejj", "smejj-latest", "smejj latest"]));
+export const BRAND_ALIASES = Object.freeze(new Set([
+  "smejj 1.0", "smejj 1.1", "smejj 1.2", "smejj 1.3",
+  "smejj code", "smejj", "smejj-latest", "smejj latest"
+]));
+
+// Auto ist per Vorgabe AN (Betreiber 2026-09-10). Bis dahin stand die Vorgabe
+// auf false: "auto" kam an, wurde erkannt — und nahm dann still das
+// Standardmodell. Der Schalter SMEJJ_MODEL_AUTO_ENABLED bleibt, um Auto im
+// Notfall ohne Deploy abstellen zu koennen.
+const AUTO_STANDARD_AN = true;
 
 const ENABLED_VALUES = new Set(["1", "true", "yes", "on"]);
 const DISABLED_VALUES = new Set(["0", "false", "no", "off"]);
@@ -41,6 +50,12 @@ export const MODEL_REGISTRY = Object.freeze({
       prefix: "model-files/glm-5-2-fp8/original/",
       vaultStatusId: GLM_5_2_FP8_STATUS.id
     }),
+    // Waehlbarkeit fuer "Auto" (2026-09-10). Live laeuft dahinter derzeit
+    // glm-4.5-flash, das GRATIS-Kontingent des Anbieters (Umstellung 07.09.,
+    // nachdem das bezahlte Kontingent leer war) — darum "gratis" und nicht
+    // "guthaben". Tempo 6 von 10: gemessen 19,7 s fuer eine Coding-Antwort
+    // (02.08.), also solide, aber nicht schnell.
+    auswahl: Object.freeze({ kostenklasse: "gratis", tempo: 6, eigen: false }),
     capabilities: Object.freeze({
       chat: true,
       coding: true,
@@ -101,6 +116,10 @@ export const MODEL_REGISTRY = Object.freeze({
       prefix: "model-files/kimi-k2-7/original/",
       vaultStatusId: KIMI_K2_7_STATUS.id
     }),
+    // Waehlbarkeit fuer "Auto": Anbieter-API auf Guthaben. Tempo 8 —
+    // gemessen 3,5 s fuer dieselbe Coding-Antwort, fuer die GLM 19,7 s
+    // brauchte (02.08.). Stark beim Programmieren, kostet aber echtes Geld.
+    auswahl: Object.freeze({ kostenklasse: "guthaben", tempo: 8, eigen: false }),
     capabilities: Object.freeze({
       chat: true,
       coding: true,
@@ -144,6 +163,10 @@ export const MODEL_REGISTRY = Object.freeze({
     featureFlag: "SMEJJ_KIMI_K3_ENABLED",
     fallbackModelId: DEFAULT_MODEL_ID,
     storage: null,
+    // Waehlbarkeit fuer "Auto": wie K2.7 auf Guthaben, groesseres
+    // Kontextfenster. Tempo 7 — GESCHAETZT, nicht gemessen: fuer K3 liegt
+    // keine eigene Messung vor.
+    auswahl: Object.freeze({ kostenklasse: "guthaben", tempo: 7, eigen: false }),
     capabilities: Object.freeze({
       chat: true,
       coding: true,
@@ -253,6 +276,12 @@ export const MODEL_REGISTRY = Object.freeze({
       prefix: "model-files/smejj-1-0/original/",
       vaultStatusId: null
     }),
+    // Waehlbarkeit fuer "Auto": unser eigenes, selbst gehostetes Modell.
+    // Rechenzeit auf Salad kostet stundenweise, aber es geht kein Geld an einen
+    // fremden Anbieter und die Daten bleiben im Haus — darum "eigen". Tempo 9:
+    // dafuer ist es gebaut. Kontextfenster 32.768, also nichts fuer Coding mit
+    // mehreren Dateien; das schliesst bewerteFuerAuto selbst aus.
+    auswahl: Object.freeze({ kostenklasse: "eigen", tempo: 9, eigen: true }),
     capabilities: Object.freeze({
       chat: true,
       coding: true,
@@ -309,6 +338,10 @@ export const MODEL_REGISTRY = Object.freeze({
       prefix: "models/staging/qwen3-4b-instruct/",
       vaultStatusId: null
     }),
+    // Waehlbarkeit fuer "Auto": das Hausmodell, das langfristige Ziel des
+    // Projekts. Tempo 7 GESCHAETZT. Kontextfenster 4.096 — genug fuer kurze
+    // Fragen, zu wenig fuer Programmieraufgaben.
+    auswahl: Object.freeze({ kostenklasse: "eigen", tempo: 7, eigen: true }),
     capabilities: Object.freeze({
       chat: true,
       coding: true,
@@ -440,7 +473,7 @@ export function resolveModelSelection({ requestedModel, profile = "default", env
   const requestedId = rohAngabe && !istMarkenname ? normalizeModelId(rohAngabe) : "";
   const defaultId = enabledDefaultModelId(env);
   const autoRequested = requestedId === AUTO_MODEL_ID;
-  const autoEnabled = readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, false);
+  const autoEnabled = readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, AUTO_STANDARD_AN);
   let selectedId = requestedId && requestedId !== AUTO_MODEL_ID ? requestedId : defaultId;
   let reason = requestedId ? "explicit_model" : "default_model";
   // ALIAS "smejj" (2026-09-05): keine Angabe oder Markenname heisst "das Modell
@@ -452,7 +485,7 @@ export function resolveModelSelection({ requestedModel, profile = "default", env
   if (aliasGreift) { selectedId = aliasId; reason = "smejj_alias"; }
 
   if (autoRequested) {
-    selectedId = autoEnabled ? autoModelId(profile, env, defaultId) : defaultId;
+    selectedId = autoEnabled ? autoModelId(profile, env, defaultId, health) : defaultId;
     reason = autoEnabled ? "auto_profile_selection" : "auto_disabled_default_used";
   }
 
@@ -519,8 +552,8 @@ export function getPublicModelRegistry(env = process.env, runtimeHealth = {}) {
     defaultModelId,
     auto: {
       id: AUTO_MODEL_ID,
-      active: readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, false),
-      status: readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, false) ? "ready" : "prepared-inactive"
+      active: readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, AUTO_STANDARD_AN),
+      status: readFlag(env.SMEJJ_MODEL_AUTO_ENABLED, AUTO_STANDARD_AN) ? "ready" : "prepared-inactive"
     },
     models
   };
@@ -552,17 +585,105 @@ function enabledDefaultModelId(env) {
   return DEFAULT_MODEL_ID;
 }
 
-function autoModelId(profile, env, defaultId) {
-  const kimi = MODEL_REGISTRY["kimi-k2-7"];
-  const kimiRuntime = getModelRuntimeConfig(kimi, env, profile);
-  if (profile === "coding" && isModelEnabled(kimi, env) && kimiRuntime.configured) return kimi.id;
-  // Profil "fast": kurze Anfragen gehen an das eigene, selbst gehostete Modell —
-  // aber NUR wenn es aktiviert UND vollstaendig konfiguriert ist (fail-closed).
-  // Sonst bleibt GLM-5.2 zustaendig; Qualitaet geht vor Tempo.
-  const fast = MODEL_REGISTRY["smejj-fast-1"];
-  const fastRuntime = getModelRuntimeConfig(fast, env, profile);
-  if (profile === "fast" && isModelEnabled(fast, env) && fastRuntime.configured) return fast.id;
-  return defaultId;
+/**
+ * Waehlt fuer ein Profil das geeignetste LAUFENDE Modell.
+ *
+ * Betreiber 2026-09-10: "Auto soll automatisch das geeignetste verfuegbare
+ * Modell fuer die jeweilige Aufgabe auswaehlen. Beruecksichtige: Aufgabe, Chat,
+ * Coding, Reasoning, Geschwindigkeit, Kontextgroesse, verfuegbare Ressourcen,
+ * API-Gesundheit, Kosten, lokale Modelle, kostenlose Modelle, eigene
+ * smejj-Modelle, Fallback-Moeglichkeiten."
+ *
+ * Vorher standen hier zwei if-Zeilen: Coding -> Kimi, Fast -> smejj-fast-1,
+ * sonst Standard. Drei Modelle, zwei Regeln, keine Kosten, keine Gesundheit —
+ * und jedes neue Modell haette eine weitere if-Zeile gebraucht.
+ *
+ * DIE REIHENFOLGE DER KRITERIEN IST NICHT BELIEBIG:
+ *   1. KANN ES DIE AUFGABE? Ein Modell, dessen Kontextfenster zu klein ist
+ *      oder das kein Coding kann, ist kein guenstiger Kandidat — es ist gar
+ *      keiner. Qualitaet geht vor Tempo und vor Kosten.
+ *   2. LAEUFT ES WIRKLICH? fail-closed: ohne Schluessel/Konfiguration kein
+ *      Kandidat, und ein bekannt ausgefallenes Modell rutscht ans Ende.
+ *   3. ERST DANN Kosten und Tempo. Das ist die Betreiber-Reihenfolge aus dem
+ *      Auftrag: eigene und kostenlose Modelle zuerst ("so trocken wie moeglich
+ *      verbrauchen und trotzdem perfekter Service"), Guthaben zuletzt.
+ *
+ * Reine Funktion ohne Netz — damit die Wahl pruefbar bleibt.
+ */
+export function bewerteFuerAuto(model, profile, env, health = null) {
+  if (!model || model.id === AUTO_MODEL_ID) return null;
+  if (!isModelEnabled(model, env)) return null;
+  if (!getModelRuntimeConfig(model, env, profile).configured) return null;
+
+  const kann = model.capabilities || {};
+  const wahl = model.auswahl || {};
+  const gesund = !(health && health[model.id] && health[model.id].available === false);
+
+  // 1. Eignung — ein "Nein" hier ist ein Ausschluss, kein Abzug.
+  //
+  // Die Profile kommen aus ROUTING_PROFILES (modelRouter.js):
+  //   coding | reasoning | fast | web | default
+  // "reasoning" MUSS hier stehen: ohne eigenen Zweig fiel es durch alle
+  // Bedingungen und wurde wie eine kurze Alltagsfrage behandelt — dann gewann
+  // das schnellste kleine Modell ausgerechnet die Aufgabe, bei der es um
+  // Nachdenken geht. Aufgefallen an tests/model-registry.test.mjs.
+  const grosseAufgabe = profile === "coding" || profile === "reasoning";
+  if (profile === "coding" && !kann.coding) return null;
+  // NUR das Profil "fast" darf ein kleines Modell nehmen.
+  //
+  // Unter 100.000 Tokens ist ein Modell fuer alles ausser kurzen Fragen keine
+  // Sparsamkeit, sondern ein abgeschnittener Auftrag (smejj-1 hat 4.096,
+  // smejj-fast-1 32.768). Diese Grenze stand sinngemaess schon im Bestand
+  // ("smejj fast 1.0 verdraengt GLM-5.2 NICHT bei coding/reasoning/default —
+  // Qualitaet geht vor Tempo") und gilt jetzt fuer jedes Modell statt fuer
+  // eines. Ausgeschlossen heisst nicht verloren: als Ersatz bleibt es in der
+  // Kette (weitereErsatzmodelle), falls das bessere ausfaellt.
+  if (profile !== "fast" && Number(model.contextTokens || 0) < 100_000) return null;
+  if (!kann.chat) return null;
+
+  // 2. KOSTENGRENZE — und zwar hart, nicht als Punktabzug.
+  //
+  // Ein Modell, das echtes Guthaben zieht, waehlt die Automatik NIE von sich
+  // aus. Der Nutzer kann es jederzeit von Hand waehlen; dann ist es seine
+  // Entscheidung und er sieht sie. Diese Regel stand schon vor dem Umbau im
+  // Bestand ("K3 ist kostenpflichtig und darf niemals ohne ausdrueckliches
+  // Flag + Key greifen", tests/model-registry.test.mjs) — sie war dort nur
+  // inkonsequent: Kimi K2.7 durfte bei Coding doch automatisch greifen,
+  // obwohl es beim selben Anbieter dasselbe Geld kostet.
+  //
+  // Ein Punktabzug haette das nicht getragen: sobald das kostenlose Modell
+  // ausfaellt oder fehlt, haette die Automatik still Geld ausgegeben. Der
+  // Betreiber-Grundsatz ist das Gegenteil ("so trocken wie moeglich
+  // verbrauchen und trotzdem perfekter Service").
+  if (wahl.kostenklasse === "guthaben") return null;
+
+  // 3. Punkte. Hoeher ist besser; die Gewichte stehen bewusst hier und nicht
+  //    verteilt im Code, damit man sie an EINER Stelle nachlesen kann.
+  let punkte = 0;
+  if (!gesund) punkte -= 100;                       // ausgefallen: nur als letzte Wahl
+  if (wahl.eigen) punkte += 30;                     // Projektziel: eigene Modelle zuerst
+  if (wahl.kostenklasse === "gratis") punkte += 25;
+  if (profile === "fast") punkte += Number(wahl.tempo || 0) * 3;
+  if (grosseAufgabe) {
+    // Bei grossen Aufgaben zaehlt Koennen, nicht Tempo.
+    if (model.codingCapability === "flagship") punkte += 20;
+    if (model.codingCapability === "agentic-coding") punkte += 15;
+    punkte += Math.min(10, Math.round(Number(model.contextTokens || 0) / 100_000));
+  }
+  // "web" und "default" sind ausgewogen: Tempo zaehlt, aber nur einfach.
+  if (profile === "default" || profile === "web") punkte += Number(wahl.tempo || 0);
+  return { id: model.id, punkte, gesund };
+}
+
+function autoModelId(profile, env, defaultId, health = null) {
+  const bewertet = Object.values(MODEL_REGISTRY)
+    .map((model) => bewerteFuerAuto(model, profile, env, health))
+    .filter(Boolean)
+    .sort((a, b) => b.punkte - a.punkte || a.id.localeCompare(b.id));
+  // Fail-safe: findet die Bewertung keinen Kandidaten (alles aus, nichts
+  // konfiguriert), bleibt es beim Standardmodell — Auto darf nie eine
+  // Sackgasse sein. Genau daran ist der alte Auto-Weg gescheitert.
+  return bewertet.length > 0 ? bewertet[0].id : defaultId;
 }
 
 function readFlag(value, fallback) {
