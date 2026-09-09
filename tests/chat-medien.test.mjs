@@ -259,12 +259,12 @@ test("rehydrieren zeigt als blob: an und merkt sich die echte Adresse", async ()
     "ohne gemerkte Adresse gaebe es keinen Rueckweg — genau daran starben die Videos");
 });
 
-test("scheitert das Holen, bleibt die Adresse unangetastet", async () => {
+test("scheitert das Holen, zeigt das Bild einen sichtbaren Ersatz — die Adresse bleibt im Attribut (09.09.: vorher kaputtes Bildsymbol)", async () => {
   const k = medienKnoten([{ tag: "img", attribute: { src: ADRESSE } }]);
   const r = await rehydriereMedien(k, { holen: async () => null });
   assert.deepEqual(r, { geholt: 0, gescheitert: 1 });
-  assert.equal(k.elemente[0].getAttribute("src"), ADRESSE);
-  assert.equal(k.elemente[0].getAttribute(ADRESSE_ATTRIBUT), null);
+  assert.match(k.elemente[0].getAttribute("src"), /^data:image\/svg\+xml/);
+  assert.equal(k.elemente[0].getAttribute(ADRESSE_ATTRIBUT), ADRESSE, "Rueckweg fuers Speichern bleibt");
 });
 
 test("entwaessern dreht jedes blob: zurueck auf seine Adresse", () => {
@@ -470,4 +470,43 @@ test("ein Adresswechsel umgeht das Blob-Gedaechtnis", async () => {
 
   assert.equal(abrufe, 2, "andere Adresse, also muss neu geholt werden");
   assert.equal(k.elemente[0].getAttribute(ADRESSE_ATTRIBUT), "https://c.example/api/chat-medien?id=anders.png");
+});
+
+
+import { parkeMedienAdressen, LEERES_BILD, FEHLENDES_BILD, ADRESSE_ATTRIBUT as ADR, rehydriereMedien as rehydriere } from "../public/chat-medien.js";
+
+test("parkeMedienAdressen: Serveradresse wandert ins Attribut, src wird ein leeres SVG — nichts laedt vor dem Tausch (live 09.09.)", () => {
+  const html = '<p>Hier:</p><img src="https://api.smejj.com/api/chat-medien?id=abc.png" alt="x"><video controls src="https://api.smejj.com/api/chat-medien?id=v1.mp4"></video>';
+  const raus = parkeMedienAdressen(html);
+  assert.ok(!raus.includes('src="https://api.smejj.com/api/chat-medien'), "keine Serveradresse mehr im src");
+  assert.ok(raus.includes(`${ADR}="https://api.smejj.com/api/chat-medien?id=abc.png"`));
+  assert.ok(raus.includes(`src="${LEERES_BILD}"`));
+  assert.ok(raus.includes(`${ADR}="https://api.smejj.com/api/chat-medien?id=v1.mp4"`), "auch Videos");
+  assert.equal(parkeMedienAdressen("<p>kein Medium</p>"), "<p>kein Medium</p>");
+  assert.equal(parkeMedienAdressen(raus), raus, "zweimal parken aendert nichts");
+  assert.ok(!LEERES_BILD.includes(";base64,"), "das leere Bild darf die Auslagerung nicht als neues Medium finden");
+});
+
+test("rehydriereMedien holt geparkte Medien und zeigt bei Fehlschlag einen sichtbaren Ersatz, behaelt aber die Adresse", async () => {
+  const gebaut = (attrs) => {
+    const el = { tagName: "IMG", attrs: { ...attrs }, getAttribute(k) { return this.attrs[k] ?? null; }, setAttribute(k, v) { this.attrs[k] = String(v); }, removeAttribute(k) { delete this.attrs[k]; } };
+    return el;
+  };
+  const gut = gebaut({ src: LEERES_BILD, [ADR]: "https://api.smejj.com/api/chat-medien?id=ok.png" });
+  const weg = gebaut({ src: LEERES_BILD, [ADR]: "https://api.smejj.com/api/chat-medien?id=weg.png" });
+  const knoten = { querySelectorAll: () => [gut, weg] };
+  const alteCreate = globalThis.URL.createObjectURL;
+  globalThis.URL.createObjectURL = () => "blob:https://smejj.com/test";
+  try {
+    const r = await rehydriere(knoten, { holen: async (adresse) => (/ok\.png/.test(adresse) ? new Blob(["x"]) : null) });
+    assert.equal(r.geholt, 1);
+    assert.equal(r.gescheitert, 1);
+    assert.equal(gut.attrs.src, "blob:https://smejj.com/test");
+    assert.equal(gut.attrs[ADR], "https://api.smejj.com/api/chat-medien?id=ok.png");
+    assert.equal(weg.attrs.src, FEHLENDES_BILD, "sichtbarer Ersatz statt kaputtem Bildsymbol");
+    assert.equal(weg.attrs[ADR], "https://api.smejj.com/api/chat-medien?id=weg.png", "Adresse bleibt fuer das Speichern erhalten");
+    assert.match(weg.attrs.alt, /nicht mehr verfügbar/);
+  } finally {
+    globalThis.URL.createObjectURL = alteCreate;
+  }
 });
