@@ -121,6 +121,13 @@
       "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
       "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
     ],
+    "public/auth/index.html": [
+      "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
+      "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-32x32.png?v=112\" type=\"image/png\" sizes=\"32x32\">",
+      "<link rel=\"icon\" href=\"/icons/favicon-16x16.png?v=112\" type=\"image/png\" sizes=\"16x16\">",
+      "<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
+    ],
     "public/auth/login/index.html": [
       "<link rel=\"icon\" href=\"/favicon.ico?v=112\" sizes=\"any\">",
       "<link rel=\"icon\" href=\"/icons/smejj_favicon.svg?v=112\" type=\"image/svg+xml\">",
@@ -344,5 +351,13 @@
       "purpose": "maskable"
     }
   ],
-  "nachtrag": "sources-Pruefsumme 2026-09-05 nachgezogen: EINE Zeile in generate-language-pages.mjs (Cache-Marke voice-landing.js blitz-20260726 -> emojifrei-20260825x), weil die 14 Sprachseiten ein anderes Modul luden als die deutsche Seite. Favicons selbst nachweislich unberuehrt: assets, htmlHeadReferences und webManifestIcons byte-identisch. Betreiber-Freigabe 2026-09-05."
+  "nachtrag": "sources-Pruefsumme 2026-09-05 nachgezogen: EINE Zeile in generate-language-pages.mjs (Cache-Marke voice-landing.js blitz-20260726 -> emojifrei-20260825x), weil die 14 Sprachseiten ein anderes Modul luden als die deutsche Seite. Favicons selbst nachweislich unberuehrt: assets, htmlHeadReferences und webManifestIcons byte-identisch. Betreiber-Freigabe 2026-09-05.",
+  "amendments": [
+    {
+      "at": "2026-09-09T19:17:21.051Z",
+      "change": "htmlHeadReferences um public/auth/index.html ergaenzt",
+      "why": "Die Anmeldeseite entstand nach dem Einfrieren. Ihre Favicon-Verweise sind mit allen bereits registrierten Seiten identisch; keine Favicon-Datei, keine Generatorquelle und keine Web-Manifest-Ikone wurde veraendert (im Skript nachgemessen). Reiner Zuwachs, kein Rueckbau.",
+      "approval": "Betreiber Wof Kadavanich, 2026-09-09: auf Nachfrage 'Ja, nachtragen'."
+    }
+  ]
 }
