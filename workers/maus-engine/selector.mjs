@@ -54,7 +54,10 @@ export function resolveLocator(page, selectorDef) {
 // Unterschied zwischen einer Auswahl und einem Zufall.
 export class MehrdeutigError extends Error {
   constructor(anzahl, selectorDef) {
-    super(`selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)} — Selektor enger fassen (Rolle+Name aus dem Bedienbaum) oder nth ausdruecklich setzen`);
+    // Der Rat steht VORN: das Panel kuerzt Fehlertexte, und bis 09.09. fiel
+    // genau der Teil mit "nth" weg — das Modell las nur "enger fassen" und
+    // scheiterte am selben Paar Links ein zweites Mal.
+    super(`selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)} — "nth":0 waehlt ausdruecklich den ersten (0-basiert) oder Selektor enger fassen (Rolle+Name aus dem Bedienbaum)`);
     this.name = "MehrdeutigError";
     this.anzahl = anzahl;
     // Warten hilft hier NIE: zwei Treffer werden nicht durch Geduld zu einem.

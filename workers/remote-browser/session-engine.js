@@ -125,6 +125,13 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
       if (!value || value.length > 300) return { ok: false, error: "selector_value_invalid" };
       const gebaut = { type: action.type, strategy, value };
       if (action.name !== undefined) gebaut.name = String(action.name).slice(0, 200);
+      // AUSDRUECKLICHE AUSWAHL bei gleichnamigen Treffern (Schema erlaubt nth
+      // seit dem 21.08.; das Panel liess es bis 09.09. fallen). Ohne dieses
+      // Feld endete jeder Lauf mit zwei gleichen Links in "selector_mehrdeutig"
+      // — live 09.09.: Wikipedia zeigte Suchvorschlag UND Treffer fuer Ada
+      // Lovelace, die Maus gab nach zwei Versuchen auf. Kein .first(): die
+      // Wahl trifft das Modell, benannt und sichtbar im Verlauf.
+      if (Number.isInteger(action.nth) && action.nth >= 0 && action.nth <= 999) gebaut.nth = action.nth;
       if (action.type === "selectorType") {
         const text = String(action.text ?? "");
         if (!text || text.length > limits.typeMaxChars) return { ok: false, error: "type_text_invalid" };

@@ -638,3 +638,14 @@ test("abgelaufener Ausweis: die Maus holt einen frischen und wiederholt den Schr
     assert.deepEqual(gesehen, ["Bearer alt", "refresh", "Bearer neu"], "erst der alte, dann frisch holen, dann noch einmal");
   } finally { globalThis.fetch = fetchVorher; }
 });
+
+// LIVE 2026-09-09: zwei gleiche Links (Suchvorschlag + Treffer) — der ferne
+// Browser lehnt Mehrdeutiges ab, und das Modell darf mit "nth" waehlen. Das
+// Feld muss den Weg vom Planer bis zum Browser ueberleben.
+test("selektorAus reicht die benannte Wahl nth durch — und nur als ganze Zahl", async () => {
+  const { selektorAus } = await import("../public/browser-pane-maus.js");
+  assert.deepEqual(selektorAus({ target: { selector: { strategy: "css", value: "a[href='/wiki/Ada_Lovelace']", nth: 0 } } }),
+    { strategy: "css", value: "a[href='/wiki/Ada_Lovelace']", nth: 0 });
+  assert.deepEqual(selektorAus({ target: { strategy: "css", value: "a", nth: "0" } }), { strategy: "css", value: "a" });
+  assert.deepEqual(selektorAus({ target: { strategy: "css", value: "a", nth: -1 } }), { strategy: "css", value: "a" });
+});

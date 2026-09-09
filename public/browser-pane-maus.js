@@ -72,7 +72,11 @@ export function selektorAus(step) {
   return {
     strategy: ziel.strategy,
     value: ziel.value,
-    ...(ziel.name !== undefined ? { name: ziel.name } : {})
+    ...(ziel.name !== undefined ? { name: ziel.name } : {}),
+    // "nth" ist die BENANNTE Wahl bei gleichnamigen Treffern (Schema seit
+    // 21.08.). Bis 09.09. fiel es hier weg — live stoppte deshalb ein Lauf an
+    // zwei gleichen Wikipedia-Links, obwohl das Modell haette waehlen koennen.
+    ...(Number.isInteger(ziel.nth) && ziel.nth >= 0 ? { nth: ziel.nth } : {})
   };
 }
 
@@ -776,7 +780,7 @@ export async function fuehreFreienLaufAus({
       // Auch das Hinsehen kann an einer verdraengten Sitzung scheitern (live
       // 06.09.: "konnte die Seite nicht ansehen" ohne Grund, Schritt 5). Dann
       // gilt dasselbe wie bei einer Aktion: einmal neu verbinden, Grund nennen.
-      const grund = blick?.error ? String(blick.error).slice(0, 120) : "keine Antwort";
+      const grund = blick?.error ? String(blick.error).slice(0, 220) : "keine Antwort";
       const verloren = blick?.verloren === true || (braucheSitzung && !tab?.sessionId);
       if (verloren && erneuere && !verlauf.some((z) => z.startsWith("UNTERBROCHEN"))) {
         zeige(`Maus ${n}/${maxSchritte}: Live-Browser-Sitzung verloren, sie verbindet neu ...`);
@@ -935,7 +939,7 @@ export async function fuehreFreienLaufAus({
     }
     zeit.handeln += uhr.stopp();
     if (!ergebnis || ergebnis.ok === false) {
-      const grund = ergebnis?.error ? String(ergebnis.error).slice(0, 120) : "keine Antwort";
+      const grund = ergebnis?.error ? String(ergebnis.error).slice(0, 220) : "keine Antwort";
       // SITZUNG VERLOREN (live 05.09.: der ferne Browser haelt vier Sitzungen,
       // die aelteste fliegt raus — mitten im Lauf). Nicht aufgeben, neu
       // verbinden und den Schritt noch einmal versuchen. Einmal.

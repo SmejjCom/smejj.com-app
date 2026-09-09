@@ -398,6 +398,13 @@ function stepContractBlock(erlaubteAktionen = null) {
     // unausfuehrbaren Schritt (live 2026-09-05: hotkey nach dem Tippen).
     ...(erlaubteAktionen ? ["  NUR diese Aktionen kann der Browser hier ausfuehren — jede andere wird abgelehnt.", "  Zum Abschicken eines Formulars: den Such- oder Senden-Knopf per click treffen."] : []),
     `- VERBOTEN im Loop: ${LOOP_FORBIDDEN.join(", ")} (Browser laeuft bereits).`,
+    // LIVE 2026-09-09: zwei gleiche Links (Suchvorschlag + Treffer) — der
+    // Browser lehnt Mehrdeutiges ab, und das Modell wiederholte denselben
+    // Selektor. Es muss wissen, dass es die Wahl BENENNEN kann.
+    '- Meldet der Verlauf "selector_mehrdeutig" (mehrere gleiche Treffer):',
+    '  Selektor enger fassen ODER "nth":0 in den Selektor setzen (0 = erster',
+    "  Treffer, 1 = zweiter, in der Reihenfolge der Seite). Nie denselben",
+    "  Selektor unveraendert wiederholen.",
     `- Selektor-Strategien (bevorzugt in dieser Reihenfolge): ${strategies.join(", ")}`,
     // LIVE 06.09.: role "textbox" traf Wikipedias Suchfeld (searchbox) nicht,
     // und nach dem Fehlschlag kam derselbe Selektor noch einmal. Die
