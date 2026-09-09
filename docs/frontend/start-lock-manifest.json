@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-09T06:47:07.266Z",
-  "confirmation": "Betreiber, 2026-09-09: checke nochmal und verbessere. Live-Befund: Chat-Bilder wurden bei jedem Zeichnen erst von der Sicherheitsrichtlinie blockiert (Konsole voll), ein fehlendes Bild blieb ein kaputtes Symbol. Umgesetzt: Serveradressen vor dem Einfuegen parken, fehlende Bilder mit sichtbarem Ersatz (chat-medien.js, chat-store.js), Marken bis zur Wurzel, Service-Worker smejj-shell-v806. Stempel per Doppelklick im Finder.",
+  "frozenAt": "2026-09-09T12:57:31.358Z",
+  "confirmation": "Betreiber, 2026-09-09: 'Mach weitere Tests.' Befund 14:55: Maus-Lauf endete nach zehn Minuten im Panel mit authentication_required. Umgesetzt (412fad17): die Maus holt bei 401/403 per /api/auth/session-token einen frischen Ausweis und wiederholt den Schritt; Marken bis zur Wurzel, Service-Worker smejj-shell-v827. Stempel per Doppelklick im Finder.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "9a7e856e40615763b32dbcb92f337a5340f7db4c9069a63201103b46f122f25f",
+    "public/index.html": "646ae8d28ee492831e76dc4872916b64ff7b60db95a3940e64c475004cd7e272",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
     "public/start-styles.css": "a4cc46fe656908da29571d48a4f962ea5b9deacd024e168b91b9760f11a0d9b9",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
@@ -13,7 +13,7 @@
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
     "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
     "public/browser-pane.css": "2df206192af207fc49b69ed85f287d4c0ab0feafce05bb6214458bd5f7ba909f",
-    "public/app.js": "a4bddf54b02eccb06a3997895c39b22de31ab71f873161899fb18949406bca28",
+    "public/app.js": "a26e33147abef317bf44ca7934a80f3b8f0283f13e2cd4609aad58def945105c",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
     "public/config.js": "aedd51ac96c7ed60444cbae5f54775b46bc8d528b7c348a883318cc2a59c34e1",
     "public/components.js": "54b1f9b624a2e4c83a798c352a25882202dd950dc83465a1523fc68078986c7e",
@@ -24,7 +24,7 @@
     "public/composer-tools.js": "8b88f9da661051df59a29bfbc380e276b22624804c27b99e8c2bc6f9c7f7fbd2",
     "public/composer-plus-menu.js": "65122a7e9e0b03c84ed9804d12b054c3c4b8b67e6ce55aaff6d53378186d2466",
     "public/workspace-bridge.js": "cc0abe22610ee7b1685d612ead44da4be8c85bc56218debd8a3911a7ce515226",
-    "public/browser-pane.js": "e2cb17c0f2971e3074eb7e09b6dc10b30464812381816f30501a2c85bc735b66",
+    "public/browser-pane.js": "fdc8b397dc116207c5dc8d6f8e4bf079f3feca68d40e2d6a70ec32951540a13f",
     "public/browser-pane-render.js": "f6a0df7abdd279f737b41d836722385b8bcdbcebc260fc5d5aa7a0262ae3d49c",
     "public/panel-backdrop.js": "b7978c772410b623ce6315d1975b1aa01976e10e57ecbed6b7d116ffea926d92",
     "public/panel-backdrop.css": "0041497836f0540e7060ff261bf2e522b2b14cce4cb0f8f50c7cc8b90c7081f6",
@@ -36,7 +36,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "a868fcadd853a17c9007c3c3c8ab999247d4a89d576f6c1e40c8da22fb74cc3f",
+    "public/sw.js": "5471f9c1d424a20a02492eb52cca39f254812147dc194dfde5915b1bb8b658fd",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
