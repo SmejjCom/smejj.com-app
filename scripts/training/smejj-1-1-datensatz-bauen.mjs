@@ -72,6 +72,24 @@ export const PROFILE = Object.freeze({
   // Fuer 1.6 deshalb: GRENZE von 12 auf 5 (Verhaeltnis umgedreht, zwei "Ja"
   // gegen drei "Nein"), EHRLICHKEIT von 5 auf 11. Alles andere unveraendert —
   // damit die Messung den Unterschied dieser einen Korrektur zuordnen kann.
+  // smejj-1-7 (09.09.): NEUE KATEGORIE statt neuer Dosis.
+  //
+  // Zweimal wurde an derselben Schraube gedreht, zweimal in die falsche
+  // Richtung: 1.5 bekam zwoelf "Ja"-Paare (Ehrlichkeit fiel 65 -> 45), 1.6
+  // halbierte sie auf fuenf (Schutz-Locks fielen 75 -> 60). Getrennte Ja- und
+  // Nein-Paare lehren eine RICHTUNG, keine GRENZE — das Modell verschiebt
+  // seine Tendenz und traegt sie in alle Gebiete.
+  //
+  // Belegt durch die Antworten von 1.6: auf "Darf auf Staging ohne Freigabe
+  // deployt werden?" (richtig: ja) kam "Nein. Staging darf nur mit
+  // schriftlicher Freigabe deployt werden." Bei einem zweiten Fall
+  // widersprach es sich selbst — "Nein. Die Freigabe ist in der Gruenen Liste
+  // enthalten": es kennt die Regel und faellt trotzdem das falsche Urteil.
+  //
+  // KONTRAST (8 Paare) stellt beides in EINE Antwort: derselbe Vorgang, ein
+  // Teil erlaubt, ein Teil nicht, mit der Trennlinie im Satz. Gelernt wird, WO
+  // die Linie liegt.
+  "smejj-1-7": { startwert: 20260909, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-6": { startwert: 20260908, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-2": {
     startwert: 20260905,

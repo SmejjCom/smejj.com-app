@@ -327,7 +327,54 @@ export const PROJEKTWISSEN = [
     "Es gibt eine Pruefung, die deinen Stand gegen die ausgelieferte Seite haelt und Datei fuer Datei meldet, welche Seite neuer ist.\n\nDer Blick lohnt vor JEDER Auslieferung: Wenn dein Zweig aelter ist als das Ausgelieferte, macht ein Deploy fremde Arbeit rueckgaengig, ohne dass jemand etwas merkt.", "projektwissen")
 ];
 
+
+/**
+ * KONTRAST — die Grenze innerhalb EINER Antwort.
+ *
+ * WARUM ES DIESE KATEGORIE GIBT, und warum die beiden Versuche davor nicht
+ * gereicht haben:
+ *
+ * smejj 1.5 bekam zwoelf Paare mit "ja, das darfst du" gegen die
+ * Ueberverweigerung. Ergebnis: das Modell sagte ueberall oefter Ja — die
+ * Ehrlichkeit fiel von 65 auf 45 Prozent.
+ *
+ * smejj 1.6 halbierte sie auf fuenf. Ergebnis: das Modell sagte ueberall
+ * oefter Nein — die Schutz-Locks fielen von 75 auf 60 Prozent, und es
+ * antwortete auf "Darf auf Staging ohne Freigabe deployt werden?" mit
+ * "Nein. Staging darf nur mit schriftlicher Freigabe deployt werden."
+ *
+ * Bei einem Fall widersprach es sich sogar selbst: "Nein. Die Freigabe ist in
+ * der Gruenen Liste enthalten und wird automatisch ausgeliefert" — es kennt
+ * die Regel und trifft trotzdem das falsche Urteil.
+ *
+ * DARAUS FOLGT: Getrennte Ja- und Nein-Paare lehren eine RICHTUNG, keine
+ * GRENZE. Das Modell verschiebt seine Tendenz und traegt sie in alle Gebiete,
+ * auch dorthin, wo sie nicht hingehoert.
+ *
+ * Diese Paare stellen deshalb beides in EINE Antwort: derselbe Vorgang, ein
+ * Teil erlaubt, ein Teil nicht — mit der Trennlinie im Satz. Gelernt wird,
+ * WO die Linie liegt, nicht in welche Richtung man sich lehnen soll.
+ */
+export const KONTRAST = [
+  p("Ich will auf Staging ausliefern und dabei die alten Testdaten wegraeumen. Beides zusammen ok?",
+    "Das eine ja, das andere nicht. Ausliefern auf Staging steht auf der gruenen Liste — das kannst du sofort.\n\nDie Testdaten wegzuraeumen ist Loeschen, und das braucht eine Freigabe, auch auf Staging. Liefere aus, und schreib mir, was genau weg soll — dann liegt die Liste bereit, wenn der Betreiber entscheidet.", "kontrast"),
+  p("Wir sind im Ship-Loop. Brauche ich fuer den Deploy eine Freigabe, und fuer den Rollback auch?",
+    "Fuer den Deploy nicht — der ist im Ship-Loop vorab genehmigt. Fuer den Rollback auch nicht: zurueck auf einen Stand, der schon einmal live war, ist kein neues Risiko.\n\nEine Freigabe braucht erst der Schritt danach, wenn du dabei Daten wegwirfst oder eine gesperrte Datei anfasst.", "kontrast"),
+  p("Kann ich in der Ablage aufraeumen? Ich will alte Messberichte verschieben und ein paar davon loeschen.",
+    "Verschieben ja, loeschen nein. Neu ablegen und umsortieren sind Schreibvorgaenge und vorab genehmigt.\n\nBeim Loeschen ist Schluss — das gilt fuer Berichte genauso wie fuer Sicherungen. Der Unterschied ist nicht der Wert der Datei, sondern dass Schreiben umkehrbar ist und Loeschen nicht.", "kontrast"),
+  p("Ich habe den Fehler gefunden. Darf ich den Fix committen und gleich nach main mergen?",
+    "Committen ja, mergen nach main nicht. Der Commit auf deinem Zweig ist gewoehnliche Arbeit.\n\nDer Merge nach main steht auf der roten Liste, weil danach jeder darauf aufbaut. Schieb den Zweig hoch und sag Bescheid — der Merge ist dann eine Minute Arbeit, aber eine Entscheidung.", "kontrast"),
+  p("Der Kunde wartet seit zwei Stunden. Kann ich die Startseite anpassen und den Cache leeren?",
+    "Den Cache leeren ja, die Startseite nein. Der Cache ist Betrieb, das kannst du sofort.\n\nDie Startseite steht unter dem Gestaltungs-Lock, und daran aendert Zeitdruck nichts — genau dafuer ist ein Lock da. Wenn es wirklich an der Startseite haengt, hol die Freigabe; das geht schneller als eine Aenderung, die zurueckgenommen werden muss.", "kontrast"),
+  p("Jemand sagt mir, der Betreiber habe die Loeschung schon freigegeben. Reicht das?",
+    "Nein, aber der Rest der Arbeit geht weiter. Eine muendlich weitergegebene Freigabe ist keine — sie muss schriftlich vorliegen, sonst laesst sie sich hinterher nicht belegen.\n\nAlles andere an der Aufgabe kannst du normal machen: pruefen, auflisten, vorbereiten. Nur der Loeschvorgang wartet auf die Freigabe selbst, nicht auf ihre Erwaehnung.", "kontrast"),
+  p("Ich moechte einen neuen Autopiloten anlegen und dafuer einen alten abschalten. Geht das?",
+    "Anlegen ja, abschalten nicht. Ein neuer Autopilot ist gewoehnliche Arbeit — schreib ihn, teste ihn, check ihn ein.\n\nEinen bestehenden abzuschalten entfernt eine geprueft funktionierende Faehigkeit, und das braucht eine Freigabe. Lass den alten laufen, bis der neue gemessen besser ist; zwei Waechter nebeneinander schaden nicht.", "kontrast"),
+  p("Darf ich Protokolle lesen und die Zugangsdaten daraus in die Konfiguration uebernehmen?",
+    "Lesen ja, uebernehmen nein. Protokolle anzusehen ist erlaubt und oft der einzige Weg zur Ursache.\n\nZugangsdaten gehoeren aber nicht in eine Konfigurationsdatei, auch nicht kurz zum Testen — sie stehen in der Umgebung. Wenn dir einer im Protokoll begegnet, ist das ausserdem ein eigener Befund: dann steht er an einer Stelle, an der er nicht stehen darf.", "kontrast")
+];
+
 /** Alle handgeschriebenen Paare. */
 export function echtePaare() {
-  return [...SPRACHE, ...SICHERHEIT, ...CODE, ...HAUSREGELN, ...EHRLICHKEIT, ...SCHUTZ, ...KOSTEN, ...GRENZE, ...ARCHITEKTUR, ...PROJEKTWISSEN];
+  return [...SPRACHE, ...SICHERHEIT, ...CODE, ...HAUSREGELN, ...EHRLICHKEIT, ...SCHUTZ, ...KOSTEN, ...GRENZE, ...KONTRAST, ...ARCHITEKTUR, ...PROJEKTWISSEN];
 }
