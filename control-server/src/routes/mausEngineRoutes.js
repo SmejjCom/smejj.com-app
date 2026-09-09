@@ -587,6 +587,10 @@ export async function handleMausRun(req, res, {
 
     let entscheidung;
     let nachgefragt = false;
+    // Welches Modell hat entschieden und wie lange hat es gebraucht? Steht
+    // seit 2026-09-09 in jeder Antwort — vorher war "ueberlegt ... (101 s)"
+    // im Panel nicht zu erklaeren, ohne den Server selbst nachzumessen.
+    let planerMessung = null;
     try {
       const prompt = buildStepPrompt({
         task, capsuleRef, domainAllowlist,
@@ -597,7 +601,7 @@ export async function handleMausRun(req, res, {
         remainingSteps: restSchritte,
         erlaubteAktionen: PANEL_AKTIONEN
       });
-      const planer = plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel });
+      const planer = plannerClient || buildPlannerClient({ env, fetchImpl, requestedModel, melde: (m) => { planerMessung = m; } });
       let roh = await planer(prompt);
       entscheidung = pruefeFuerPanel(validateLoopDecision(roh, policyInput));
       // EINMAL NACHFRAGEN, BEVOR ABGELEHNT WIRD (Befund 2026-09-05, siehe
@@ -612,6 +616,7 @@ export async function handleMausRun(req, res, {
     } catch (error) {
       return json(res, 502, {
         ok: false, error: String(error?.message || error).slice(0, 200),
+        planer: planerMessung,
         transparenzhinweis: transparencyNotice("maus-engine-v2")
       });
     }
@@ -623,12 +628,14 @@ export async function handleMausRun(req, res, {
         nachgefragt,
         vorschlag: entscheidung.vorschlag || null,
         repariert: entscheidung.repariert || [],
+        planer: planerMessung,
         transparenzhinweis: transparencyNotice("maus-engine-v2")
       });
     }
     return json(res, 200, {
       ok: true,
       entscheidung: entscheidung.decision,
+      planer: planerMessung,
       // Fuer die Messung: kam die Entscheidung im ersten oder zweiten Anlauf,
       // und was musste vorher geradegebogen werden?
       nachgefragt,
