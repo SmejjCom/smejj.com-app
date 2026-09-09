@@ -1,7 +1,7 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-09T23:13:01.568Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-10: 'Cline muss vollstaendig aus der App entfernt werden ... Im Modellbereich duerfen nur noch diese Bereiche existieren: Unsere Modelle / Auto. Die neueste und staerkste smejj-Version muss immer ganz oben stehen.' Ausgeliefert: Menue ohne Fremdkatalog, Staffel als Daten, Auto ueber den eigenen Server-Router; cline-model-menu und provider-settings entfernt, auch aus dem Precache.",
+  "frozenAt": "2026-09-09T23:50:41.911Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-10: 'Auto soll automatisch das geeignetste verfuegbare Modell fuer die jeweilige Aufgabe auswaehlen ... Wenn ein Modell oder eine API ausfaellt, automatisch auf eine geeignete Alternative wechseln.' Ausgeliefert: bewerteFuerAuto im Server (Eignung vor Kosten, Guthaben nie automatisch, Ersatzkette nach Gesundheit), Auto per Vorgabe an, der doppelte Modell-Router im Browser entfernt.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "36e7aa0fb1899ee1cc55c76da3f443442ebc70a8f43dbf57093f29f8f5ebfab2",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "b4db0f144721e4b02cc5d20eb8f289fe9042465018b688b2c1bc7f88abbb813d",
+    "public/sw.js": "e748429f504f551d32aa905da2b1aeea90ae07d0a1855c67a38d6f49bb55b6d3",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
