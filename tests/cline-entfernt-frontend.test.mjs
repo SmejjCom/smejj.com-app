@@ -1,108 +1,103 @@
+// smejj.com — Cline ist aus dem Frontend ENTFERNT und darf nicht zurueckkommen.
+//
+// Diese Datei hiess bis 2026-09-10 cline-provider-frontend.test.mjs und pruefte,
+// dass der Fremdanbieter im Frontend richtig eingebaut ist: Untermenue mit
+// Gruppen, Key-Feld in den Einstellungen, eigener Chatweg. Betreiber-Auftrag
+// vom 2026-09-10 im Wortlaut:
+//
+//   "Cline muss vollstaendig aus der App entfernt werden. Entferne Cline aus:
+//    Modellmenues, UI, Backend, Routing, Konfiguration, Model Registry,
+//    API-Auswahl, Fallbacks, Prompts, Autopilot, Dokumentation, ungenutzten
+//    Imports, ungenutzten Komponenten."
+//
+// Damit dreht sich der Zweck der Datei um: sie bewacht jetzt die ABWESENHEIT.
+// Das ist die Sorte Aufraeumarbeit, die sonst still zurueckrutscht — ein
+// vergessener Import, eine Zeile im Precache, ein Menuepunkt aus einem alten
+// Zweig, und der Anbieter ist wieder halb da.
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
-const settings = fs.readFileSync("public/provider-settings.js", "utf8");
-const chat = fs.readFileSync("public/ai/chatClient.js", "utf8");
-const worker = fs.readFileSync("control-server/src/routes/workerModelRoutes.js", "utf8");
-const submenu = fs.readFileSync("public/cline-model-menu.js", "utf8");
+const lies = (p) => fs.readFileSync(p, "utf8");
+const gibtEs = (p) => fs.existsSync(p);
 
-test("Cline settings never persist or render the API key", () => {
-  assert.match(settings, /type="password"/);
-  assert.match(settings, /autocomplete="new-password"/);
-  assert.doesNotMatch(settings, /localStorage\.setItem\([^\n]*apiKey/i);
-  assert.doesNotMatch(settings, /sessionStorage\.setItem\([^\n]*apiKey/i);
-  assert.match(settings, /root\.querySelector\("#clineApiKey"\)\.value = ""/);
+// Kommentare duerfen den Umbau erklaeren — sonst weiss der naechste Umbau
+// nicht, warum hier etwas fehlt. Geprueft wird der ausfuehrbare Teil.
+function ohneKommentare(text) {
+  return text.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
+test("die reinen Cline-Dateien sind weg — Quelle und Auslieferung", () => {
+  for (const pfad of [
+    "public/cline-model-menu.js",
+    "public/cline-model-menu.css",
+    "public/provider-settings.js",
+    "public/provider-settings.css",
+    "public/assets/cline-model-menu.js",
+    "public/assets/cline-model-menu.css",
+    "public/assets/provider-settings.js",
+    "public/assets/provider-settings.css"
+  ]) assert.equal(gibtEs(pfad), false, `${pfad} existiert noch`);
 });
 
-test("Cline selection streams through authenticated backend and supports restart-free switching", () => {
-  assert.match(settings, /Modell ohne Neustart gewechselt/);
-  assert.match(settings, /localStorage\.setItem\(STORAGE_KEYS\.model, "Cline"\)/);
-  assert.match(chat, /\/api\/providers\/cline\/chat/);
-  assert.match(chat, /Authorization: `Bearer \$\{token\}`/);
-  assert.doesNotMatch(chat, /clineApiKey/);
+test("die Startseite laedt keinen Cline-Baustein mehr", () => {
+  const html = lies("public/index.html");
+  assert.doesNotMatch(html, /cline/i, "index.html nennt Cline noch");
 });
 
-test("Cline submenu shows the live catalog grouped like the settings surface", () => {
-  assert.match(submenu, /\/api\/providers\/cline/);
-  assert.match(submenu, /"cline-pass": "Cline Pass"/);
-  assert.match(submenu, /recommended: "Empfohlen"/);
-  assert.match(submenu, /Alle Modelle & Key → Einstellungen/);
-  assert.match(submenu, /aria-checked/);
+test("der Service Worker legt keine Cline-Datei mehr in den Vorrat", () => {
+  // Eine Precache-Zeile auf eine geloeschte Datei ist nicht nur Altlast:
+  // cache.addAll bricht beim ersten 404 ab — der Service Worker koennte sich
+  // dann gar nicht mehr installieren und die App waere fuer wiederkehrende
+  // Nutzer tot (dieselbe Falle wie bei app-helfer.js am 09.09.).
+  for (const pfad of ["public/sw.js", "public/assets/sw.js"]) {
+    const text = ohneKommentare(lies(pfad));
+    assert.doesNotMatch(text, /cline-model-menu|provider-settings/, `${pfad} listet eine entfernte Datei`);
+  }
 });
 
-// Messlatte BEWUSST verschoben (2026-08-17): der Test verlangte bis hierher
-// eine Gruppe "Kostenlos". Live gemessen liefern genau diese Modelle 403
-// ("only available via Cline product surfaces") — der alte Vertrag forderte
-// also tote Knoepfe. Jetzt wird das Gegenteil festgehalten.
-test("Cline submenu bietet keine toten Knoepfe an", () => {
-  assert.doesNotMatch(submenu, /free: "Kostenlos"/);
-  assert.match(submenu, /GROUP_ORDER = \["cline-pass", "recommended"\]/);
-  // Die zwei Blindgaenger (HTTP 200, aber leere Antwort) fliegen ebenfalls raus.
-  assert.match(submenu, /BLINDGAENGER = new Set\(\["cline-pass\/qwen3\.7-max", "x-ai\/grok-4\.5"\]\)/);
-  assert.match(submenu, /!BLINDGAENGER\.has\(model\.id\)/);
+test("Modellwahl und Chatweg kennen keinen Fremdanbieter mehr", () => {
+  for (const pfad of ["public/code-modell-menue.js", "public/ai/modellRouter.js", "public/app.js"]) {
+    const text = ohneKommentare(lies(pfad));
+    // Erlaubt bleibt allein das Aufraeumen alter Browserspeicher: wer "Cline"
+    // noch gespeichert hat, muss auf Auto umgesetzt werden koennen.
+    const ohneMigration = text
+      .replace(/ALTE_AUTO_WERTE[\s\S]{0,80}?\n/g, "")
+      .replace(/ALTER_CLINE_MODELL_KEY[^\n]*\n/g, "")
+      .replace(/smejj\.cline\.(model|status|katalog)\.v1/g, "");
+    assert.doesNotMatch(ohneMigration, /cline/i, `${pfad} nennt Cline im Code`);
+  }
 });
 
-test("Cline submenu bietet Auto an und ruft dafuer kein /select", () => {
-  assert.match(submenu, /const AUTO_MARKE = "auto"/);
-  assert.match(submenu, /submenu\.append\(autoButton\(submenu, active\)\)/);
-  // Auto darf NICHT ueber die /select-Route gehen: das Modell steht erst fest,
-  // wenn der Auftrag da ist (ai/modellRouter.js waehlt dann und wartet ab).
-  const autoBlock = submenu.slice(submenu.indexOf("function autoButton"), submenu.indexOf("function modelButton"));
-  assert.doesNotMatch(autoBlock, /\/select/);
-  assert.match(autoBlock, /activateCline\(AUTO_MARKE\)/);
+test("der Chatweg ruft keinen Cline-Endpunkt mehr", () => {
+  const chat = ohneKommentare(lies("public/ai/chatClient.js"));
+  assert.doesNotMatch(chat, /providers\/cline/, "der eigene Cline-Chatweg ist entfallen");
+  assert.doesNotMatch(chat, /runClineChat/, "die Funktion ist entfernt, nicht nur unerreichbar");
 });
 
-test("Cline submenu activates a model instantly without touching the chat path", () => {
-  assert.match(submenu, /localStorage\.setItem\(CLINE_MODEL_KEY, model\)/);
-  assert.match(submenu, /localStorage\.setItem\(STORAGE_KEYS\.model, "Cline"\)/);
-  assert.match(submenu, /Cline · \$\{shortModel\(model\)\}/);
-  assert.match(submenu, /smejj:cline-selected/);
-  assert.doesNotMatch(submenu, /import[^\n]*chatClient/);
-  assert.doesNotMatch(submenu, /clineApiKey/i);
-  assert.doesNotMatch(submenu, /localStorage\.setItem\([^\n]*apiKey/i);
+test("der BYOK-Katalog fuehrt Cline nicht mehr", async () => {
+  const { PROVIDER_CATALOG, selectableProviders } = await import("../public/ai/providers-catalog.js");
+  assert.equal(PROVIDER_CATALOG.some((e) => e.id === "cline"), false);
+  // Und die Ausnahme, die es dafuer gab, ist mit weg: alle Anbieter im Katalog
+  // sind jetzt auch waehlbar. Sonst bliebe eine Filterregel ohne Gegenstand.
+  assert.equal(selectableProviders().length, PROVIDER_CATALOG.length);
 });
 
-test("Cline submenu stays fail-closed without a connected key", () => {
-  assert.match(submenu, /Cline-Key in Einstellungen verbinden/);
-  assert.match(submenu, /status\?\.configured/);
-  assert.match(submenu, /renderKeyHint\(submenu\)/);
+test("die Einstellungen bieten kein Cline-Schluesselfeld mehr an", () => {
+  const einstellungen = ohneKommentare(lies("public/settings-surface.js"));
+  assert.doesNotMatch(einstellungen, /cline/i);
+  assert.doesNotMatch(einstellungen, /provider-settings/, "der geloeschte Bereich wird nicht mehr geladen");
 });
 
-// Betreiber-Befund 2026-08-17: "manchmal kommen komplette Modelle und
-// manchmal nur 2, 3". Ursache war ein 429 der geteilten Bremse, das der
-// alte Code als "kein Key" auslegte. Gebremst ist NICHT fehlend.
-test("Gebremst (429) wird nicht als fehlender Key ausgegeben", () => {
-  assert.match(submenu, /fehler\?\.status === 429/);
-  assert.match(submenu, /retryAfterSec/);
-  // Der 429-Zweig muss VOR renderKeyHint zurueckkehren, sonst luegt das Menue.
-  const zweig = submenu.slice(submenu.indexOf("fehler?.status === 429"), submenu.indexOf("renderKeyHint(submenu);\n    });"));
-  assert.match(zweig, /return;/);
-  // Und er laedt selbst nach, statt den Nutzer klicken zu lassen.
-  assert.match(zweig, /setTimeout\([\s\S]*openSubmenu\(trigger, submenu, true\)/);
-});
-
-test("autonomous worker resolves Cline credential only on the control server", () => {
-  assert.match(worker, /getProviderCredential\(job\.userId, "cline"/);
-  assert.match(worker, /job\.providerRuntime/);
-  assert.match(worker, /tools: CODING_TOOLS/);
-});
-
-// Betreiber-Freigabe 2026-08-23 (Nutzerreise): der Wartetext "smejj denkt nach …"
-// bleibt im Cline-Pfad bis zum ersten Delta — gemessen waren 3,6 s leere Blase.
-test("Cline-Pfad loescht den Wartetext erst beim ersten Text, nicht vor dem Abruf", () => {
-  const src = fs.readFileSync(new URL("../public/ai/chatClient.js", import.meta.url), "utf8");
-  assert.doesNotMatch(src, /selected === "Cline"\) \{ clearThinking\(\);/, "clearThinking() darf nicht VOR runClineChat laufen");
-  const cline = src.slice(src.indexOf("async function runClineChat"), src.indexOf("// Generischer BYOK-Anbieter"));
-  assert.doesNotMatch(cline, /let answer = "";\s*output\.textContent = "";/, "kein Leeren der Blase vor dem Strom");
-  assert.match(cline, /if \(!answer\) clearThinking\(\);\s*answer \+= delta;/, "Wartetext faellt beim ersten Delta");
-  // "Automatische Modellwahl" stand hier bis zum 2026-09-07 (Commit 77b08916). Seitdem gibt es
-  // diesen Fehlerweg NICHT MEHR: ohne Cline-Schluessel scheitert die Auto-Wahl nicht, sondern
-  // weicht auf den Server-Weg aus. Ein Fehlertext, der nie erscheint, braucht auch kein Aufraeumen.
-  // Der Test lief seitdem rot und hat die ganze Kette check:all blockiert (bemerkt 2026-09-08).
-  assert.doesNotMatch(cline, /Automatische Modellwahl/, "der Auto-Fehlerweg ist durch den Server-Weg ersetzt");
-  for (const pfad of ["nichtAngemeldetText", "(leere Antwort)", "Cline-Fehler"]) {
-    const i = cline.indexOf(pfad);
-    assert.ok(i > 0 && cline.slice(Math.max(0, i - 200), i).includes("clearThinking()"), `Fehlerweg '${pfad}' raeumt den Wartetext weg`);
+test("kein Modul importiert eine geloeschte Datei", () => {
+  // Ein Import auf eine entfernte Datei faellt nicht beim Bauen auf — er
+  // faellt dem Nutzer auf, wenn die Seite still stehenbleibt.
+  const dateien = fs.readdirSync("public").filter((n) => n.endsWith(".js"));
+  for (const name of dateien) {
+    const text = lies(`public/${name}`);
+    for (const weg of ["cline-model-menu", "provider-settings.js"]) {
+      assert.equal(text.includes(`import`) && new RegExp(`import[^\\n]*${weg}`).test(text), false,
+        `public/${name} importiert ${weg}`);
+    }
   }
 });

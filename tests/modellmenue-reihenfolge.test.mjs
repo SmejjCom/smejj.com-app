@@ -91,29 +91,27 @@ test("die Wahl setzt Modell UND Stufe", () => {
   assert.match(text, /localStorage\.setItem\(STUFE_KEY, stufe\)/);
 });
 
-test("Auto ruft weiterhin KEIN /select", () => {
-  // Der Router waehlt erst, wenn der Auftrag da ist. Wuerde die Auto-Zeile
-  // beim Umsortieren oder Umziehen einen /select-Aufruf erben, waere die Wahl
-  // eingefroren und der sparsame Weg kaputt.
+test("Auto ruft KEIN /select und keinen Fremdanbieter", () => {
+  // Der Server waehlt erst, wenn der Auftrag da ist. Wuerde die Auto-Zeile beim
+  // Umsortieren wieder einen Vorab-Rundlauf erben, waere die Wahl eingefroren —
+  // und liefe sie ueber einen fremden Anbieter, scheiterte sie ohne dessen
+  // Schluessel komplett (Betreiber-Screenshots 07.09.).
   const [{ text }] = findeMenueDatei();
-  // Nur der Auto-Block, nicht der Rest der Datei: weiter unten steht ein
-  // /select fuer einen anderen Zweck. Ohne diese Grenze schluege der Waechter
-  // an, sobald Auto ans Ende wandert — und meldete einen Fehler, den es nicht
-  // gibt. Ein Test, der beim Umsortieren blind rot wird, wird abgeschaltet.
   const ab = text.indexOf(AUTO);
   const ende = text.indexOf("feld.append(menue)", ab);
   const block = text.slice(ab, ende > ab ? ende : undefined);
-  assert.ok(!/providers\/cline\/select/.test(block), "Auto darf kein /select rufen");
-  assert.match(block, /AUTO_MARKE/);
+  assert.ok(!/\/select/.test(block), "Auto darf keinen Vorab-Rundlauf rufen");
+  assert.ok(!/providers\//.test(block), "Auto darf keinen Anbieter-Endpunkt rufen");
+  assert.match(block, /AUTO_WAHL/);
 });
 
 test("die Begruendung des Betreibers steht im Code", () => {
   // Damit der naechste Umbau weiss, warum die Reihenfolge so ist — und dass
   // sie eine aeltere Regel bewusst abgeloest hat.
   const [{ text }] = findeMenueDatei();
-  assert.match(text, /Betreiber-Ansage 2026-09-07/);
+  assert.match(text, /Betreiber: "Cline muss vollstaendig aus der App entfernt/);
   // Ueber Zeilenumbrueche hinweg suchen: der Kommentar im Menue ist umbrochen,
   // und ein Waechter, der an der Zeilenbreite scheitert, prueft die falsche
   // Frage.
-  assert.match(text.replace(/\s*\n\s*\/\/\s*/g, " "), /Reihenfolge ist absteigend/);
+  assert.match(text.replace(/\s*\n\s*\/\/\s*/g, " "), /neueste Version steht oben|absteigend sortiert/);
 });

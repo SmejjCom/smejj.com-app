@@ -11,7 +11,9 @@ const routes = fs.readFileSync("control-server/src/routes/apiKeysRoutes.js", "ut
 
 test("Katalog: neuer Anbieter = ein Eintrag, mit Key- und Billing-Link", () => {
   const ids = PROVIDER_CATALOG.map((p) => p.id);
-  for (const required of ["openai", "anthropic", "openrouter", "google", "mistral", "deepseek", "cline"]) {
+  // "cline" stand hier bis 2026-09-10 und ist mit dem Anbieter entfernt
+  // (Betreiber: "Cline muss vollstaendig aus der App entfernt werden").
+  for (const required of ["openai", "anthropic", "openrouter", "google", "mistral", "deepseek"]) {
     assert.ok(ids.includes(required), `fehlender Anbieter ${required}`);
   }
   for (const entry of PROVIDER_CATALOG) {
@@ -19,7 +21,9 @@ test("Katalog: neuer Anbieter = ein Eintrag, mit Key- und Billing-Link", () => {
     assert.ok(entry.keyUrl.startsWith("https://"), `${entry.id} keyUrl`);
   }
   assert.equal(catalogProvider("openai").name, "OpenAI");
-  assert.ok(!selectableProviders().some((p) => p.id === "cline"), "Cline hat eigenen Fluss");
+  assert.ok(!PROVIDER_CATALOG.some((p) => p.id === "cline"), "Cline ist entfernt");
+  // Die Ausnahmeregel dafuer ist mit weg: jeder Anbieter im Katalog ist waehlbar.
+  assert.equal(selectableProviders().length, PROVIDER_CATALOG.length);
 });
 
 test("SSRF-Schutz: nur https, keine privaten Hosts, Allowlist fuer bekannte Anbieter", () => {

@@ -116,27 +116,33 @@ function umgebungAufbauen({ fetchAntwort, mitChip = true } = {}) {
   return { chip, feld, ereignisse, speicher };
 }
 
-const { MODELL_KEY, CLINE_MODEL_KEY, AUTO_MARKE, kurzName, modellAnzeige, oeffneModellMenue } =
+const { MODELL_KEY, AUTO_WAHL, migriereAlteWahl, modellAnzeige, oeffneModellMenue } =
   await (async () => { umgebungAufbauen(); return import("../public/code-modell-menue.js"); })();
 
-test("kurzName macht aus einer Katalog-ID einen lesbaren Namen", () => {
-  assert.equal(kurzName("cline-pass/qwen3.8-max"), "Qwen 3.8 Max");
-  assert.equal(kurzName("openai/gpt-5.6-sol"), "GPT 5.6 Sol");
-  // Kaputte Probe: eine ID, die es so nicht gibt, darf NICHT zufaellig
-  // denselben Namen liefern — sonst pruefte der Test nichts.
-  assert.notEqual(kurzName("cline-pass/qwen3.8-mini"), "Qwen 3.8 Max");
-});
-
-test("modellAnzeige nimmt den Haustext, solange kein Cline-Modell gewaehlt ist", () => {
+test("modellAnzeige nimmt den Haustext, solange Auto nicht gewaehlt ist", () => {
   umgebungAufbauen();
   assert.equal(modellAnzeige("Schnell"), "Schnell");
-  // Gesunde Probe: mit Auto-Marke steht "Auto" da, nicht der Haustext.
-  localStorage.setItem(MODELL_KEY, "Cline");
-  localStorage.setItem(CLINE_MODEL_KEY, AUTO_MARKE);
+  // Gesunde Probe: mit Auto steht "Auto" da, nicht der Haustext.
+  localStorage.setItem(MODELL_KEY, AUTO_WAHL);
   assert.equal(modellAnzeige("Schnell"), "Auto");
-  // Und mit einem echten Katalog-Modell dessen Kurzname.
-  localStorage.setItem(CLINE_MODEL_KEY, "anthropic/claude-opus-5");
-  assert.equal(modellAnzeige("Schnell"), "Opus 5");
+  // Kaputte Probe: eine Stufe darf NICHT als Auto durchgehen.
+  localStorage.setItem(MODELL_KEY, "smejj 1.2");
+  assert.equal(modellAnzeige("Schnell"), "Schnell");
+});
+
+test("eine alte Cline-Wahl im Browser wird still auf Auto gesetzt", () => {
+  // Ohne diese Migration zeigte die Wahl eines wiederkehrenden Nutzers auf
+  // etwas, das es nicht mehr gibt — das Menue markierte dann gar nichts.
+  umgebungAufbauen();
+  localStorage.setItem(MODELL_KEY, "Cline");
+  localStorage.setItem("smejj.cline.model.v1", "cline-pass/minimax-m3");
+  assert.equal(migriereAlteWahl(localStorage), true);
+  assert.equal(localStorage.getItem(MODELL_KEY), AUTO_WAHL);
+  assert.equal(localStorage.getItem("smejj.cline.model.v1"), null, "der zweite Speicher wird mit aufgeraeumt");
+  // Kaputte Probe: eine gueltige Wahl darf die Migration NICHT anfassen.
+  localStorage.setItem(MODELL_KEY, "smejj 1.3");
+  assert.equal(migriereAlteWahl(localStorage), false);
+  assert.equal(localStorage.getItem(MODELL_KEY), "smejj 1.3");
 });
 
 test("oeffneModellMenue zeichnet das Menue und die Wahl greift wirklich", async () => {
@@ -170,17 +176,18 @@ test("oeffneModellMenue zeichnet das Menue und die Wahl greift wirklich", async 
   assert.equal(document.getElementById("codeModellMenue"), null, "das Menue blieb nach der Wahl offen");
 });
 
-test("die Auto-Zeile setzt weiterhin den Cline-Weg", async () => {
-  // Vor der Staffel prueften das die Zeilen oben mit. Jetzt steht Auto ganz
-  // unten — der Draht darf beim Umsortieren nicht stillschweigend gerissen sein.
+test("die Auto-Zeile setzt Auto — und keinen Umweg ueber einen Fremdanbieter", async () => {
+  // Auto steht ganz unten; der Draht darf beim Umsortieren nicht reissen.
+  // Und er darf nicht wieder auf einen fremden Anbieter zeigen: genau das
+  // liess bis 2026-09-10 jede Auto-Anfrage ohne Fremdschluessel scheitern.
   const { chip } = umgebungAufbauen();
   let neuGezeichnet = 0;
   await oeffneModellMenue({ chip, beiWahl: () => { neuGezeichnet += 1; } });
   const menue = document.getElementById("codeModellMenue");
   const knoepfe = alleKnoten(menue).filter((k) => k.tagName === "BUTTON");
   knoepfe[4].click();
-  assert.equal(localStorage.getItem(CLINE_MODEL_KEY), AUTO_MARKE);
-  assert.equal(localStorage.getItem(MODELL_KEY), "Cline");
+  assert.equal(localStorage.getItem(MODELL_KEY), AUTO_WAHL);
+  assert.equal(localStorage.getItem("smejj.cline.model.v1"), null);
   assert.equal(neuGezeichnet, 1);
 });
 
@@ -241,13 +248,15 @@ test("ist die Spalte schmaler als 120 px, schiebt es ueber den Knopf hinaus", ()
   assert.equal(264 - plan.right - plan.maxWidth, 204, "linke Kante sitzt auf der Grenze");
 });
 
-test("die Klemme haengt an JEDEM Fuellen, nicht nur am ersten", () => {
-  // Die Modellzeilen kommen asynchron aus dem Katalog; das Menue waechst dabei
-  // nach oben UND nach links. Wer nur einmal klemmt, klemmt das leere Menue.
+test("jede Kappe nach oben hat eine nach links", () => {
+  // Frueher kamen Zeilen asynchron aus dem Katalog nach, darum brauchte es
+  // mindestens drei Kappen. Seit 2026-09-10 steht die Liste fest, das Menue
+  // waechst nur einmal — aber die beiden Kappen muessen PAARWEISE bleiben:
+  // wer nur nach oben klemmt, schiebt das Menue unter die Seitenleiste.
   const quelle = readFileSync(new URL("../public/code-modell-menue.js", import.meta.url), "utf8");
   const obenKappen = (quelle.match(/^[ \t]*imFensterHalten\(\);$/gm) || []).length;
   const linksKappen = (quelle.match(/^[ \t]*inDerSpalteHalten\(\);$/gm) || []).length;
-  assert.ok(obenKappen >= 3, `zu wenige Kappen oben: ${obenKappen}`);
+  assert.ok(obenKappen >= 1, `keine Kappe nach oben: ${obenKappen}`);
   assert.equal(linksKappen, obenKappen, "jede Kappe nach oben braucht eine nach links");
 });
 

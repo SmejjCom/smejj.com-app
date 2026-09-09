@@ -55,9 +55,19 @@ test("jeder genannte Arbeitsbereich existiert wirklich", () => {
 // Beschriftung, die der Nutzer im Menue liest ("Kraftvoll (GLM-5.2)").
 // Die Hilfe spricht mit dem Nutzer, also darf sie die Beschriftung nennen —
 // vorher zaehlte nur die Kennung, und jede lesbare Bezeichnung war rot.
-const ANGEBOTENE_MODELLE = [...index.matchAll(/data-model="([^"]+)"[^>]*>([^<]+)</g)]
-  .flatMap((treffer) => [treffer[1], treffer[2].trim()])
-  .filter(Boolean);
+//
+// SEIT 2026-09-10 gibt es ZWEI Quellen, und die zweite war der blinde Fleck:
+// die eigenen Stufen und "Auto" stehen nicht mehr im HTML, sondern als Daten
+// im Modell-Menue (SMEJJ_STAFFEL). Wer nur index.html liest, haelt genau die
+// Modelle fuer nicht vorhanden, die die App zuerst anbietet.
+const menueQuelle = fs.readFileSync(new URL("../public/code-modell-menue.js", import.meta.url), "utf8");
+const STAFFEL_NAMEN = [...menueQuelle.matchAll(/\{ titel: "([^"]+)", stufe:/g)].map((t) => t[1]);
+const ANGEBOTENE_MODELLE = [
+  ...[...index.matchAll(/data-model="([^"]+)"[^>]*>([^<]+)</g)]
+    .flatMap((treffer) => [treffer[1], treffer[2].trim()]),
+  ...STAFFEL_NAMEN,
+  "Auto"
+].filter(Boolean);
 
 test("die Hilfe nennt genau die Modelle, die die App anbietet", () => {
   assert.ok(ANGEBOTENE_MODELLE.length >= 2, "index.html bietet gar keine Modellwahl — Testgrundlage fehlt");
@@ -71,7 +81,7 @@ test("die Hilfe nennt genau die Modelle, die die App anbietet", () => {
   // Richtung 2: was die Hilfe als waehlbar auszeichnet, muss es auch geben.
   // Nur die <strong>-Auszeichnungen im Modell-Absatz zaehlen — Fliesstext ueber
   // Anbieter oder Preise soll hier nicht mitgeprueft werden.
-  const absatz = /welches Modell antwortet:([\s\S]*?)<\/p>/.exec(hilfe);
+  const absatz = /welches Modell antwortet[.:]([\s\S]*?)<\/p>/.exec(hilfe);
   assert.ok(absatz, "Der Modell-Absatz der Hilfe wurde nicht gefunden");
   for (const treffer of absatz[1].matchAll(/<strong>([^<]+)<\/strong>/g)) {
     assert.ok(

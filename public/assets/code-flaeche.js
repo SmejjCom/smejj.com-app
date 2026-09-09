@@ -39,9 +39,7 @@ import { API_ORIGIN } from "./config.js";
 import { zieheAnhaengeAusFeld, nimmAnhaengeMit } from "./code-anhaenge.js?v=1";
 import {
   MODELL_KEY,
-  CLINE_MODEL_KEY,
-  AUTO_MARKE,
-  kurzName,
+  AUTO_WAHL,
   baueKopfzeile,
   modellAnzeige as modellAnzeigeRoh,
   oeffneModellMenue as oeffneModellMenueRoh,
@@ -368,18 +366,17 @@ export function initCodeFlaeche() {
   }, { capture: true });
   // Anzeige im Start-Knopf: kurzer Modellname statt "Cline · <rohe id>".
   // app.js schreibt seinen Text bei model-selected — wir setzen NACH ihm.
-  // app.js schreibt "Cline · <id>" auch SPAETER (async) in den Knopf —
-  // ein Waechter haelt bei Cline-Wahl den kurzen Namen dagegen.
+  // Bei Auto muss im Knopf "Auto" stehen und nicht der Name des zuletzt
+  // benutzten Modells; ein Waechter haelt das gegen spaetere Schreiber.
   if (startKnopf && !startKnopf.dataset.kurzWacht) {
     startKnopf.dataset.kurzWacht = "an";
     const kurzHalten = () => {
-      if (localStorage.getItem(MODELL_KEY) !== "Cline") return;
+      if (localStorage.getItem(MODELL_KEY) !== AUTO_WAHL) return;
       const soll = modellAnzeige();
       if (startKnopf.textContent !== soll) startKnopf.textContent = soll;
     };
     new MutationObserver(kurzHalten).observe(startKnopf, { childList: true, characterData: true, subtree: true });
     window.addEventListener("smejj:model-selected", () => setTimeout(kurzHalten, 0));
-    document.addEventListener("smejj:cline-selected", () => setTimeout(kurzHalten, 0));
     kurzHalten();
   }
   document.getElementById("codeAufgabe")?.addEventListener("keydown", (ereignis) => {

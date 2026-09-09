@@ -42,7 +42,7 @@ let taskIndicatorTimer;
 // Antwortstufen (Konkurrenz-Radar V3, Freigabe Betreiber 2026-08-06,
 // Container-Neustart 2026-08-08): der Chip zeigt normalen Nutzern nur noch
 // "Schnell/Auto/Gruendlich" statt Modellnamen. Modellnamen (GLM-5.2, Kimi K2.7,
-// Cline, Kimi K3) bleiben als "Modelle (erweitert)" im selben Menue erreichbar —
+// Kimi K3) bleiben als "Modelle (erweitert)" im selben Menue erreichbar —
 // wer sie waehlt, verlaesst bewusst den Live-Pfad fuer BYOK/Vault-Betrieb; die
 // Stufe gilt nur auf dem normalen Live-Pfad ("smejj 1.0"/disabled) und wird an
 // die Bruecke als preferences.stufe gereicht (siehe public/chat-bridge.js,
@@ -72,9 +72,8 @@ const MODEL_MODES = Object.freeze({
   "smejj 1.0": AI_MODES.disabled, "smejj 1.1": AI_MODES.disabled, "smejj 1.2": AI_MODES.disabled, "smejj 1.3": AI_MODES.disabled, "Auto": AI_MODES.disabled, // 07.09.: Name reist als body.model; 1.2/1.3 tiefe Spur, "Auto" = Server-Router waehlt + Ersatzkette
   "GLM-5.2": AI_MODES.glm52Vault, "Kimi K2.7": AI_MODES.kimiK27Vault,
   // K3 hat keinen Modell-Vault (nur API) und laeuft ueber einen Anbieter-Key —
-  // darum byok wie Cline, nicht *Vault wie GLM-5.2 und K2.7.
-  "Kimi K3": AI_MODES.byok,
-  "Cline": AI_MODES.byok
+  // darum byok, nicht *Vault wie GLM-5.2 und K2.7.
+  "Kimi K3": AI_MODES.byok
 });
 
 if ("serviceWorker" in navigator) {
@@ -199,7 +198,10 @@ function bindModelPicker() {
   };
   const selectFromEvent = (event) => {
     const item = event.target.closest("[data-model], [data-stufe]");
-    if (!item || item.hasAttribute("data-submenu-trigger")) return; // Untermenue (cline-model-menu.js) uebernimmt Trigger.
+    // data-submenu-trigger hatte bis 2026-09-10 genau einen Traeger: den
+    // Cline-Eintrag mit eigenem Untermenue. Der ist entfernt; die Weiche bleibt
+    // stehen, damit ein kuenftiges Untermenue nicht sofort ausgewaehlt wird.
+    if (!item || item.hasAttribute("data-submenu-trigger")) return;
     event.stopPropagation();
     event.preventDefault();
     selectItem(item);
@@ -234,11 +236,6 @@ function applySelectedModel(model, { persist = true, quiet = false } = {}) {
   if (selectedModel === "smejj 1.0") {
     const stufe = state.settings.stufe || "auto";
     if (button) button.textContent = STUFE_LABEL[stufe] || "smejj 1.0";
-  } else if (selectedModel === "Cline") {
-    // "Auto" laeuft ueber den Cline-Router (cline.model=auto) -> Chip zeigt "Auto",
-    // nicht "Cline" (Betreiber-Screenshot 07.09.); Alt-Katalogmodell behaelt Namen.
-    const clineWahl = localStorage.getItem("smejj.cline.model.v1") || "";
-    if (button) button.textContent = clineWahl === "auto" ? "Auto" : selectedModel;
   } else {
     if (button) button.textContent = selectedModel;
   }

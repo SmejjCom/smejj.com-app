@@ -78,13 +78,14 @@ test("die Meldung nennt NUR die Anmeldung — nicht den Anbieter", () => {
   assert.ok(!/Modelle verbinden/i.test(text), "die Meldung schickt den Nutzer wieder in die Einstellungen");
 });
 
-test("BEIDE Chat-Wege benutzen den Rueckfall — keiner liest mehr direkt", () => {
-  // Cline und BYOK-Anbieter hatten dieselbe Zeile; wird nur einer umgestellt,
-  // bleibt der andere still kaputt.
+test("JEDER Chat-Weg benutzt den Rueckfall — keiner liest mehr direkt", () => {
+  // Cline und BYOK-Anbieter hatten dieselbe Zeile; wurde nur einer umgestellt,
+  // blieb der andere still kaputt. Der Cline-Weg ist am 2026-09-10 entfallen,
+  // die Regel gilt unveraendert fuer die verbliebenen: nur der Helfer liest.
   const direkt = (QUELLE.match(/sessionStorage\.getItem\(API_TOKEN_KEY\)/g) || []).length;
   assert.equal(direkt, 1, "ausser im Helfer selbst darf niemand mehr direkt lesen");
   const ueberHelfer = (QUELLE.match(/holeZugriffsToken\(\)/g) || []).length;
-  assert.ok(ueberHelfer >= 3, `nur ${ueberHelfer} Stellen nutzen den Helfer (Definition + zwei Wege erwartet)`);
+  assert.ok(ueberHelfer >= 2, `nur ${ueberHelfer} Stellen nutzen den Helfer (Definition + mindestens ein Weg erwartet)`);
 });
 
 test("die alte irrefuehrende Meldung steht nirgends mehr", () => {

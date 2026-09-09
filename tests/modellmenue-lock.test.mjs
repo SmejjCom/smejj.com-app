@@ -1,24 +1,29 @@
 // Waechter fuer die MODELL-LISTE — die Substanz, nicht nur die Bytes.
 //
-// Betreiber-Auftrag 2026-08-23 im Wortlaut: "Genau diese Liste ich will haben
-// und musst du sichern soll nicht geaendert werden nicht kaputt gemacht werden
-// ohne meine schriftliche Bestaetigung."
+// Betreiber-Auftrag 2026-09-10 im Wortlaut:
+//   "Cline muss vollstaendig aus der App entfernt werden ... Im Modellbereich
+//    duerfen nur noch diese Bereiche existieren: Unsere Modelle (smejj 1.3,
+//    1.2, 1.1, zukuenftige smejj-Versionen automatisch ergaenzen) / Auto.
+//    Die neueste und staerkste smejj-Version muss immer ganz oben stehen."
+//
+// Er loest den Auftrag vom 2026-08-23 ab ("Genau diese Liste ich will haben"),
+// der eine lange Fremdkatalog-Liste schuetzte. Der Schutzgedanke bleibt, das
+// Schutzgut ist ein anderes.
 //
 // WARUM DIESER WAECHTER NEBEN DER DATEISPERRE STEHT:
 // scripts/check-modell-menue-lock.mjs vergleicht Hashes. Das meldet JEDE
 // Aenderung — auch einen Kommentar — und sagt nichts darueber, ob die Liste
-// noch funktioniert. Hier wird das Gegenteil geprueft: was die Liste
-// ausmacht, muss da sein, egal wie die Datei sonst umgebaut wird.
+// noch stimmt. Hier wird das Gegenteil geprueft: was die Liste ausmacht, muss
+// da sein, egal wie die Datei sonst umgebaut wird.
 //
-// Die drei Arten, wie die lange Liste bisher verschwunden ist oder haette
-// verschwinden koennen — je eine Pruefung dagegen:
-//   1. Der Katalog-Nachbau faellt beim Aufraeumen raus. Dann bleibt nur die
-//      fest verdrahtete Kurzliste stehen und sieht voellig gesund aus.
-//   2. Jemand deckelt die Liste ("die ersten zehn reichen doch"). Faellt bei
-//      14 Eintraegen niemandem auf — bis der Katalog waechst.
-//   3. Die Quelle wird geaendert, die ausgelieferte /assets/-Kopie nicht.
-//      Live bleibt die alte Liste stehen (Memory: "Artefakt ersetzt NIE die
-//      Quelle").
+// Die vier Arten, wie diese Liste kaputtgehen kann — je eine Pruefung dagegen:
+//   1. Ein Fremdanbieter kehrt zurueck, sei es auch nur als Adresse im Code.
+//   2. Die Reihenfolge kippt: 1.10 landet unter 1.9, weil jemand Zeichenketten
+//      vergleicht statt Zahlen. Faellt erst bei der zehnten Version auf.
+//   3. Die Staffel wird wieder fest verdrahtet — dann ergaenzt sich keine
+//      kuenftige Version mehr von selbst, und der Auftrag ist gebrochen.
+//   4. Die Quelle wird geaendert, die ausgelieferte /assets/-Kopie nicht. Live
+//      bleibt die alte Liste stehen (Memory: "Artefakt ersetzt NIE die Quelle").
 //
 // Jede Pruefung hat eine GESUNDE und eine KAPUTTE Probe (Waechter-TUEV):
 // ein Waechter, der nie ausschlaegt, schuetzt nichts.
@@ -33,141 +38,99 @@ import { fileURLToPath } from "node:url";
 const wurzel = fileURLToPath(new URL("../", import.meta.url));
 const lies = (p) => readFileSync(wurzel + p, "utf8");
 
-const CLINE_MENUE = "public/cline-model-menu.js";
 const CODE_MENUE = "public/code-modell-menue.js";
 
-// Die 14 Kurznamen aus der Betreiber-Freigabe 2026-08-17, in seiner Reihenfolge.
-const WUNSCHLISTE = [
-  "Opus 5", "GPT 5.6", "GLM 5.3", "Kimi K3", "Deepseek V4 Pro", "Qwen 3.8 Max",
-  "Kimi K2.7 Code", "Minimax M3", "Deepseek V4 Flash", "GLM 5.2",
-  "Mimo V2.5 Pro", "Qwen 3.7 Plus", "Kimi K2.6", "Mimo V2.5"
-];
+// ---- Pruefungen als reine Funktionen, damit der TUEV sie fuettern kann -------
 
-// ---- reine Pruefungen (auf Text, damit sich kaputte Proben einspeisen lassen)
-
-/** Baut das Untermenue Auto ZUERST und danach alle Katalog-Gruppen? */
-export function autoStehtVorDenGruppen(text) {
-  const auto = text.indexOf("submenu.append(autoButton(");
-  const gruppen = text.indexOf("for (const category of GROUP_ORDER)");
-  return auto >= 0 && gruppen >= 0 && auto < gruppen;
+/** Steht im ausfuehrbaren Teil noch ein Fremdanbieter? Kommentare zaehlen nicht. */
+export function fremdanbieterImCode(text) {
+  const ohneKommentare = text.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  return /cline/i.test(ohneKommentare) && !/ALTER_CLINE_MODELL_KEY|smejj\.cline\.(model|status|katalog)/.test(ohneKommentare);
 }
 
-/** Kommen die Gruppen in der gewohnten Folge — erst Cline Pass, dann Empfohlen? */
-export function gruppenFolge(text) {
-  const treffer = text.match(/GROUP_ORDER\s*=\s*\[([^\]]*)\]/);
-  if (!treffer) return [];
-  return [...treffer[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+/** Kommt die Staffel aus Daten — oder ist sie wieder Zeile fuer Zeile gebaut? */
+export function staffelAusDaten(text) {
+  return /export const SMEJJ_STAFFEL\s*=\s*\[/.test(text)
+    && /for \(const eintrag of nachVersionAbsteigend\(SMEJJ_STAFFEL\)\)/.test(text);
 }
 
-/**
- * Wird die lange Liste ueberhaupt noch aus dem Katalog gebaut?
- * Gesucht ist eine Schleife ueber die Katalog-Eintraege — ohne sie zeigt das
- * Menue nur noch das, was fest im Code steht.
- */
-export function baustDuAusDemKatalog(text) {
-  return /for \(const model of entries\)/.test(text)
-    || /for \(const m of katalog\?\.models \|\| \[\]\)/.test(text);
+/** Wird nach Zahl sortiert (1.10 vor 1.9) oder nach Zeichen? */
+export function sortiertNachZahl(nachVersionAbsteigend) {
+  const probe = [
+    { titel: "smejj 1.9" }, { titel: "smejj 1.10" }, { titel: "smejj 1.2" }, { titel: "smejj 2.0" }
+  ];
+  return nachVersionAbsteigend(probe).map((e) => e.titel).join(" ") === "smejj 2.0 smejj 1.10 smejj 1.9 smejj 1.2";
 }
 
-/**
- * Deckelt irgendwer die Liste? slice/splice/`> N`-Abbrueche auf den
- * Katalog-Eintraegen sind hier verboten: die Liste ist so lang wie der
- * Katalog, Punkt.
- */
-export function deckelGefunden(text) {
-  return /(models|entries|katalog\?\.models|katalog\.models)[^\n;]{0,40}\.slice\(/.test(text)
-    || /\.slice\(0,\s*\d+\)[^\n]{0,30}(models|entries)/.test(text);
-}
-
-/**
- * Holt das Menue den Katalog noch beim Server ab?
- * Zwei Schreibweisen sind im Haus ueblich und beide zaehlen: das Untermenue
- * ruft api("/models"), die Code-Flaeche baut den Pfad zusammen
- * (`${API_ORIGIN}/api/providers/cline/${pfad}` mit pfad = "models"). Ein
- * Waechter, der nur die eine Schreibweise kennt, meldet beim naechsten
- * Umbau einen Fehler, den es nicht gibt.
- */
-export function holtDenKatalog(text) {
-  if (/api\("\/models"\)/.test(text)) return true;
-  if (/providers\/cline\/models/.test(text)) return true;
-  return /providers\/cline\//.test(text) && /baueGedaechtnis\("models"/.test(text);
+/** Genau zwei Bereiche, in dieser Reihenfolge: unsere Modelle, dann Auto. */
+export function zweiBereiche(text) {
+  const unsere = text.indexOf('kopf.textContent = "Unsere Modelle"');
+  const automatisch = text.indexOf('TRENNER.textContent = "Automatisch"');
+  const auto = text.indexOf('titel: "Auto"');
+  return unsere > 0 && automatisch > unsere && auto > automatisch;
 }
 
 // ---- die echten Dateien ------------------------------------------------------
 
-test("Untermenue: Auto steht ueber den Gruppen", () => {
-  assert.ok(autoStehtVorDenGruppen(lies(CLINE_MENUE)),
-    "Auto muss VOR der Gruppenschleife angehaengt werden — der Betreiber will es ganz oben");
+test("kein Fremdanbieter mehr im ausfuehrbaren Teil des Menues", () => {
+  assert.equal(fremdanbieterImCode(lies(CODE_MENUE)), false,
+    "Cline darf nur noch in Kommentaren und in der Aufraeum-Migration vorkommen");
 });
 
-test("Untermenue: Gruppenfolge Cline Pass, dann Empfohlen", () => {
-  assert.deepEqual(gruppenFolge(lies(CLINE_MENUE)), ["cline-pass", "recommended"]);
-});
-
-test("beide Menues bauen die lange Liste aus dem Katalog", () => {
-  for (const datei of [CLINE_MENUE, CODE_MENUE]) {
-    assert.ok(baustDuAusDemKatalog(lies(datei)),
-      `${datei} baut die Liste nicht mehr aus dem Katalog — dann bleibt nur die Kurzliste`);
-  }
-});
-
-test("kein Deckel auf der Liste", () => {
-  for (const datei of [CLINE_MENUE, CODE_MENUE]) {
-    assert.ok(!deckelGefunden(lies(datei)),
-      `${datei} kuerzt die Katalogliste — die Liste ist so lang wie der Katalog`);
-  }
-});
-
-test("beide Menues holen den Katalog beim Server", () => {
-  for (const datei of [CLINE_MENUE, CODE_MENUE]) {
-    assert.ok(holtDenKatalog(lies(datei)), `${datei} ruft den Katalog nicht mehr ab`);
-  }
-});
-
-test("die 14 Wunschmodelle stehen vollstaendig und in der Reihenfolge des Betreibers", () => {
+test("das Menue braucht kein Netz — die Liste steht als Daten drin", () => {
   const text = lies(CODE_MENUE);
-  const block = text.slice(text.indexOf("const CLINE_KURZ"), text.indexOf("];", text.indexOf("const CLINE_KURZ")));
-  const namen = [...block.matchAll(/\["([^"]+)",/g)].map((m) => m[1]);
-  assert.deepEqual(namen, WUNSCHLISTE);
+  assert.ok(staffelAusDaten(text), "SMEJJ_STAFFEL fehlt oder wird nicht durchlaufen");
+  assert.doesNotMatch(text, /fetch\(/, "ein Menue, das laedt, kann halb ankommen");
+});
+
+test("die neueste Version steht oben — auch bei zweistelligen Nummern", async () => {
+  const { nachVersionAbsteigend, SMEJJ_STAFFEL } = await import("../public/code-modell-menue.js");
+  assert.ok(sortiertNachZahl(nachVersionAbsteigend),
+    "1.10 muss ueber 1.9 stehen — Zeichenvergleich macht genau das falsch");
+  assert.equal(nachVersionAbsteigend(SMEJJ_STAFFEL)[0].titel, "smejj 1.3", "aktuell hoechste Version");
+});
+
+test("genau zwei Bereiche: Unsere Modelle, dann Auto", () => {
+  assert.ok(zweiBereiche(lies(CODE_MENUE)),
+    "Betreiber 2026-09-10: 'Im Modellbereich duerfen nur noch diese Bereiche existieren'");
+});
+
+test("jede Stufe traegt eine eigene Spur — sonst ist das Menue eine Attrappe", async () => {
+  const { SMEJJ_STAFFEL } = await import("../public/code-modell-menue.js");
+  const spuren = SMEJJ_STAFFEL.map((e) => e.stufe);
+  assert.equal(new Set(spuren).size, spuren.length, `doppelte Spur: ${spuren.join(", ")}`);
+  for (const eintrag of SMEJJ_STAFFEL) assert.ok(eintrag.hinweis, `${eintrag.titel} ohne Erklaerung`);
 });
 
 test("Quelle und ausgelieferte Kopie sind byte-gleich", () => {
   // Live zaehlt /assets/. Laufen die beiden auseinander, aendert man die
   // Quelle und die Nutzer sehen weiter die alte Liste.
-  for (const datei of [CLINE_MENUE, CODE_MENUE]) {
-    const kopie = datei.replace("public/", "public/assets/");
-    assert.equal(lies(datei), lies(kopie), `${datei} und ${kopie} weichen ab — Auslieferung nachziehen`);
-  }
+  const kopie = CODE_MENUE.replace("public/", "public/assets/");
+  assert.equal(lies(CODE_MENUE), lies(kopie), `${CODE_MENUE} und ${kopie} weichen ab — Auslieferung nachziehen`);
 });
 
 test("die Betreiber-Anordnung steht im Code, nicht nur im Chat", () => {
-  // Damit der naechste Umbau weiss, warum hier nichts vereinfacht werden darf.
-  assert.match(lies("scripts/check-modell-menue-lock.mjs"), /Genau diese Liste ich will haben/);
+  // Damit der naechste Umbau weiss, warum hier nichts dazukommen darf.
+  assert.match(lies("scripts/check-modell-menue-lock.mjs"), /duerfen nur noch diese Bereiche existieren/);
 });
 
 // ---- Waechter-TUEV: schlaegt er bei kaputten Proben ueberhaupt an? -----------
 
 test("TUEV: kaputte Proben werden erkannt", () => {
-  // 1. Auto hinter die Gruppen gerutscht
-  assert.ok(!autoStehtVorDenGruppen(
-    "for (const category of GROUP_ORDER) {}\nsubmenu.append(autoButton(submenu, active));"));
-  // 2. Gruppe stillschweigend entfernt
-  assert.deepEqual(gruppenFolge('const GROUP_ORDER = ["cline-pass"];'), ["cline-pass"]);
-  // 3. Katalog-Nachbau herausgeloescht
-  assert.ok(!baustDuAusDemKatalog("submenu.append(autoButton(x));"));
-  // 4. Deckel eingebaut
-  assert.ok(deckelGefunden("for (const model of entries.slice(0, 10)) {}"));
-  assert.ok(deckelGefunden("const kurz = katalog.models.slice(0, 5);"));
-  // 5. Katalog-Abruf gekappt
-  assert.ok(!holtDenKatalog("const models = FESTE_LISTE;"));
+  assert.equal(fremdanbieterImCode('const x = fetch("/api/providers/cline/models");'), true,
+    "ein zurueckgekehrter Fremdanbieter muss auffallen");
+  assert.equal(staffelAusDaten('stufenZeile({ titel: "smejj 1.3" });\nstufenZeile({ titel: "smejj 1.2" });'), false,
+    "eine wieder fest verdrahtete Staffel muss auffallen");
+  assert.equal(sortiertNachZahl((l) => [...l].sort((a, b) => String(b.titel).localeCompare(String(a.titel)))), false,
+    "Zeichenvergleich muss auffallen — er stellt 1.9 ueber 1.10");
+  assert.equal(zweiBereiche('kopf.textContent = "Unsere Modelle"; titel: "Auto"'), false,
+    "ein fehlender Trenner muss auffallen");
 });
 
 test("TUEV: gesunde Proben bleiben gruen", () => {
-  assert.ok(autoStehtVorDenGruppen(
-    "submenu.append(autoButton(submenu, active));\nfor (const category of GROUP_ORDER) {}"));
-  assert.deepEqual(gruppenFolge('const GROUP_ORDER = ["cline-pass", "recommended"];'), ["cline-pass", "recommended"]);
-  assert.ok(baustDuAusDemKatalog("for (const model of entries) submenu.append(x);"));
-  assert.ok(!deckelGefunden("const roh = String(id).split('/').pop();"));
-  assert.ok(holtDenKatalog('api("/models")'));
-  assert.ok(holtDenKatalog('fetch(`/api/providers/cline/${pfad}`)\nbaueGedaechtnis("models", k)'));
+  assert.equal(fremdanbieterImCode("// frueher lief das ueber Cline\nconst x = 1;"), false,
+    "ein erklaerender Kommentar darf nicht ausschlagen");
+  assert.equal(staffelAusDaten(
+    "export const SMEJJ_STAFFEL = [];\nfor (const eintrag of nachVersionAbsteigend(SMEJJ_STAFFEL)) stufenZeile(eintrag);"
+  ), true);
 });
