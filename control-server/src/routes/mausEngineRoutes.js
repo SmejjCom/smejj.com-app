@@ -14,7 +14,7 @@ import { aiTransparencyHeaders, transparencyNotice } from "../compliance/aiTrans
 import { resolveChain, resolveModelRequest, executeWithFallback } from "../llm/modelRouter.js";
 import { planAndExecute } from "../../../workers/maus-engine/planner-roundtrip.mjs";
 import { buildStepPrompt, buildStepRetryPrompt } from "../../../workers/maus-engine/prompt-template.mjs";
-import { validateLoopDecision } from "../../../workers/maus-engine/interactive-loop.mjs";
+import { validateLoopDecision, benenneMehrdeutigeWahl } from "../../../workers/maus-engine/interactive-loop.mjs";
 import { createMacroStore } from "../../../workers/maus-engine/macro-store.mjs";
 import { idriveConfigFromEnv } from "../../../workers/maus-engine/artifact-uploader.mjs";
 import { signedS3Request } from "../../../workers/glm-salad/s3.js";
@@ -524,6 +524,9 @@ export async function handleMausRun(req, res, {
         roh = await planer(buildStepRetryPrompt({ stepPrompt: prompt, errors: entscheidung.errors || [], vorigeAntwort: roh }));
         entscheidung = pruefeFuerPanel(validateLoopDecision(roh, policyInput));
       }
+      // Zwei gleiche Treffer, dieselbe Wahl noch einmal: benennen (nth 0) statt
+      // ein drittes Mal an derselben Stelle zu scheitern (Begruendung dort).
+      entscheidung = benenneMehrdeutigeWahl(entscheidung, verlauf);
     } catch (error) {
       return json(res, 502, {
         ok: false, error: String(error?.message || error).slice(0, 200),

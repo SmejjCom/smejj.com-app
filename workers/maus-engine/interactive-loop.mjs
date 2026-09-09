@@ -109,8 +109,13 @@ function normalisiereSelektor(ziel) {
   }
   if (!ziel || typeof ziel !== "object" || Array.isArray(ziel)) return ziel;
   if (typeof ziel.strategy === "string" && typeof ziel.value === "string") {
-    const praefix = entpraefixe(ziel.strategy, ziel.value);
-    return praefix ? { ...ziel, ...praefix } : ziel;
+    // Live 09.09.: xpath-Wert kam als "\"//a[@href='…'][1]\"" — mit
+    // Anfuehrungszeichen IM Wert. Die gehoeren zur JSON-Huelle, nicht zum Selektor.
+    const wert = ziel.value.trim();
+    const q = /^"(.*)"$/.exec(wert) || /^'(.*)'$/.exec(wert);
+    const ohneHuelle = q ? { ...ziel, value: q[1].trim() } : ziel;
+    const praefix = entpraefixe(ohneHuelle.strategy, ohneHuelle.value);
+    return praefix ? { ...ohneHuelle, ...praefix } : ohneHuelle;
   }
   if (typeof ziel.selector === "string") { const innen = normalisiereSelektor(ziel.selector); return ziel.name && innen && !innen.name && innen.strategy === "role" ? { ...innen, name: String(ziel.name) } : innen; }
   for (const k of STRATEGIEN) {
@@ -210,6 +215,29 @@ export function repariereEntscheidung(eingabe) {
   }
   d.step = s;
   return { decision: d, repariert };
+}
+
+// MEHRDEUTIG → BENANNT. Live 09.09.: der Browser lehnte zwei gleiche Links ab
+// (selector_mehrdeutig), der Vertrag erklaerte "nth":0, und das schnelle
+// Modell antwortete trotzdem dreimal mit DEMSELBEN Selektor ohne nth (einmal
+// mit note "erster Treffer auswaehlen"). Wenn das Modell nach diesem Hinweis
+// denselben Selektor noch einmal waehlt, IST das seine Wahl des ersten
+// Treffers — sie wird hier benannt (nth 0) und im Feld repariert sichtbar
+// gemacht. Kein stilles .first(): nur nach ausdruecklicher Ablehnung, nur
+// fuer genau den abgelehnten Selektor, und protokolliert.
+const MEHRDEUTIG = /selector_mehrdeutig: \d+ Treffer fuer (\w+)="([^"]+)"/;
+export function benenneMehrdeutigeWahl(entscheidung, verlauf = []) {
+  if (!entscheidung?.ok || entscheidung.decision?.decision !== "act") return entscheidung;
+  const s = entscheidung.decision.step || {};
+  const sel = s.target?.selector && typeof s.target.selector === "object" ? s.target.selector
+    : s.target && typeof s.target === "object" && typeof s.target.strategy === "string" ? s.target : null;
+  if (!sel || sel.nth !== undefined) return entscheidung;
+  const letzte = [...verlauf].reverse().find((z) => MEHRDEUTIG.test(String(z)));
+  if (!letzte) return entscheidung;
+  const [, strategy, value] = MEHRDEUTIG.exec(String(letzte));
+  if (sel.strategy !== strategy || sel.value !== value) return entscheidung;
+  sel.nth = 0;
+  return { ...entscheidung, repariert: [...(entscheidung.repariert || []), "nth_0_nach_mehrdeutig"] };
 }
 
 export function validateLoopDecision(rawAnswer, policyInput) {
