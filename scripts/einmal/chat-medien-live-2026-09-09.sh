@@ -37,7 +37,10 @@ echo "live: $LIVE_SW   Klon: $KLON_SW"
 [ "$LIVE_SW" = "$KLON_SW" ] || { echo "ABBRUCH: live ($LIVE_SW) und origin/main ($KLON_SW) passen nicht zusammen — erst klaeren."; exit 1; }
 
 echo "== 3. Fix auf den Live-Stand legen (Pruefsummen-Netz im Skript)"
-node "$WT/scripts/einmal/chat-medien-live-2026-09-09.mjs" "$KLON" "$WT" || { git checkout -q -- . ; echo "ABBRUCH: Fix nicht angewendet, Klon zurueckgesetzt."; exit 1; }
+# Das Skript liegt NICHT im Quell-Commit (der traegt nur den Fix) — es kommt
+# aus der Spitze des Arbeitszweigs. Erster Lauf 09.09. 10:20 brach genau daran ab.
+git -C "$REPO" show origin/feature/design-v11:scripts/einmal/chat-medien-live-2026-09-09.mjs > /tmp/chat-medien-live-2026-09-09.mjs || { echo "ABBRUCH: Skript nicht im Arbeitszweig."; exit 1; }
+node /tmp/chat-medien-live-2026-09-09.mjs "$KLON" "$WT" || { git checkout -q -- . ; echo "ABBRUCH: Fix nicht angewendet, Klon zurueckgesetzt."; exit 1; }
 SW_NEU=$(cat /tmp/chat-medien-live-sw.txt)
 
 echo "== 4. Committen und Fast-Forward-Push auf main"
