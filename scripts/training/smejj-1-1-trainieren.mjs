@@ -52,6 +52,14 @@ export const KANDIDAT = String(process.env.SMEJJ_KANDIDAT || "smejj-1-1").trim()
 export const DATENSATZ_NAME = String(process.env.SMEJJ_DATENSATZ || KANDIDAT).trim();
 export const DATENSATZ_PREFIX = `datasets/${DATENSATZ_NAME}`;
 const ZWEITER = KANDIDAT !== "smejj-1-1";
+
+// Wie TIEF der Adapter eingreift. Am 10.09. gemessen: ueber alle fuenf Laeufe
+// faellt das WISSEN (neun Gebiete, bei 1.8 um 13,1 Punkte) und steigt das
+// KOENNEN (sechs Gebiete, +7,4) — je staerker der Eingriff, desto beides.
+// Darum sind Rang und Lernrate ab 1.9 von aussen steuerbar: der halbe Rang bei
+// einem Drittel Lernrate ist der erste Versuch, weniger zu vergessen.
+export const RANG = Number(process.env.SMEJJ_RANG || 16);
+export const LERNRATE = Number(process.env.SMEJJ_LERNRATE || (ZWEITER ? 0.0001 : 0.0002));
 export const GRUPPE = "smejj-training";
 // 170 Minuten wie beim con-Job. Grobe Hochrechnung aus dessen Lauf (27B,
 // 3.707 Paare, 220 min): ein 4B-Modell rechnet deutlich schneller, der
@@ -104,8 +112,19 @@ export function jobParameter() {
     // Die Bewertung ist ein eigener Schritt gegen die smejj-Suite.
     // smejj-1-2: Lernrate halbiert (Lauf 2 endete bei Loss 0,0067 —
     // Auswendiglernen), maxZeilen grosszuegig: die Zeit begrenzt ohnehin.
+    // DIE NAMEN MUESSEN "r", "alpha" UND "lr" HEISSEN. Bis 1.8 stand hier
+    // `rang` und `lernrate` — train.py liest aber `konfig.get("r")` und
+    // `konfig.get("lr")` und nahm still seine Vorgaben (r=16, lr=1e-4). Das
+    // fiel nie auf, weil die Vorgaben zufaellig dasselbe waren; ein anderer
+    // Wert waere lautlos verpufft. Gefunden beim Vorbereiten von 1.9, das als
+    // erster Lauf wirklich andere Werte braucht.
+    //
+    // alpha folgt dem Rang im Verhaeltnis 2:1 — sonst aendert ein halber Rang
+    // zwei Dinge auf einmal (Kapazitaet UND Ausschlag) und die Messung sagt
+    // nicht mehr, welches davon gewirkt hat.
     CON_TRAIN_KONFIG: JSON.stringify({
-      rang: 16, epochen: 1, lernrate: ZWEITER ? 0.0001 : 0.0002, maxZeilen: ZWEITER ? 20000 : 16234,
+      r: RANG, alpha: RANG * 2, lr: LERNRATE, epochen: 1,
+      maxZeilen: ZWEITER ? 20000 : 16234,
       minutenJeSchritt: 0.3, messReserveMinuten: 5
     })
   };
