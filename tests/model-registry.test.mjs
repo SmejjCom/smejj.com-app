@@ -93,12 +93,26 @@ test("inactive Kimi selection falls back to GLM-5.2", () => {
   assert.equal(selection.reason, "requested_model_inactive");
 });
 
-test("auto mode is prepared and selects configured Kimi only for coding", () => {
+test("Auto waehlt NIE von sich aus ein Modell, das Guthaben zieht", () => {
+  // GEAENDERT 2026-09-10. Vorher hiess dieser Test "auto mode ... selects
+  // configured Kimi only for coding" und erwartete, dass die Automatik bei
+  // Programmieraufgaben von selbst auf Kimi K2.7 geht — ein Modell, das echtes
+  // Guthaben zieht.
+  //
+  // Das widersprach der Regel zwei Tests weiter unten ("Kimi K3 ist
+  // kostenpflichtig und darf niemals ohne ausdrueckliches Flag + Key
+  // greifen"): beide Modelle sind beim selben Anbieter, beide kosten dasselbe
+  // Geld — eines durfte automatisch greifen, das andere nicht. Seit dem Umbau
+  // gilt fuer beide dasselbe: von Hand jederzeit waehlbar, von selbst nie.
   const env = { ...KIMI_ENV, SMEJJ_MODEL_AUTO_ENABLED: "YES" };
-  const coding = resolveModelSelection({ requestedModel: "auto", profile: "coding", env });
-  const chat = resolveModelSelection({ requestedModel: "auto", profile: "default", env });
-  assert.equal(coding.selectedModelId, "kimi-k2-7");
-  assert.equal(chat.selectedModelId, "glm-5-2");
+  for (const profile of ["coding", "reasoning", "fast", "default", "web"]) {
+    const wahl = resolveModelSelection({ requestedModel: "auto", profile, env });
+    assert.equal(wahl.selectedModelId, DEFAULT_MODEL_ID, `Profil ${profile}: Automatik gibt kein Geld aus`);
+  }
+  // Von Hand bleibt es selbstverstaendlich waehlbar — es ist dann eine
+  // sichtbare Entscheidung des Nutzers.
+  const vonHand = resolveModelSelection({ requestedModel: "Kimi K2.7", profile: "coding", env });
+  assert.equal(vonHand.selectedModelId, "kimi-k2-7");
 });
 
 // --- Kimi K3 (reines API-Modell, kein Vault in IDrive e2) ---
