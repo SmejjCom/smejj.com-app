@@ -111,9 +111,14 @@ function normalisiereSelektor(ziel) {
   if (typeof ziel.strategy === "string" && typeof ziel.value === "string") {
     // Live 09.09.: xpath-Wert kam als "\"//a[@href='…'][1]\"" — mit
     // Anfuehrungszeichen IM Wert. Die gehoeren zur JSON-Huelle, nicht zum Selektor.
-    const wert = ziel.value.trim();
+    let wert = ziel.value.trim();
+    // Live 09.09. (Groq): value = "\"a[href='…']\";nth:0" — die Wahl stand IM
+    // Wert statt als Feld. Herausloesen, sonst ist der Selektor kaputt.
+    const imWert = /^(.*?)\s*[;,]\s*nth\s*[:=]\s*(\d+)\s*$/.exec(wert);
+    const nthAusWert = imWert && ziel.nth === undefined ? Number(imWert[2]) : undefined;
+    if (imWert) wert = imWert[1].trim();
     const q = /^"(.*)"$/.exec(wert) || /^'(.*)'$/.exec(wert);
-    const ohneHuelle = q ? { ...ziel, value: q[1].trim() } : ziel;
+    const ohneHuelle = (q || imWert) ? { ...ziel, value: (q ? q[1] : wert).trim(), ...(nthAusWert !== undefined ? { nth: nthAusWert } : {}) } : ziel;
     const praefix = entpraefixe(ohneHuelle.strategy, ohneHuelle.value);
     return praefix ? { ...ohneHuelle, ...praefix } : ohneHuelle;
   }

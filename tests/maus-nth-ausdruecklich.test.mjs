@@ -79,3 +79,12 @@ test("Route: die benannte Wahl kommt in der Antwort an", async () => {
   assert.equal(res.body.entscheidung.step.target.selector.nth, 0);
   assert.ok(res.body.repariert.includes("nth_0_nach_mehrdeutig"));
 });
+
+test("nth IM Wert (Groq live 09.09.: \"…\";nth:0) wird zum Feld nth — der Selektor bleibt heil", () => {
+  const { decision } = repariereEntscheidung({ schemaVersion: 1, decision: "act", reason: "r", step: { id: "s1", action: "click", target: { selector: { strategy: "css", value: "\"a[href='/wiki/Ada_Lovelace']\";nth:0" } } } });
+  assert.equal(decision.step.target.selector.value, "a[href='/wiki/Ada_Lovelace']");
+  assert.equal(decision.step.target.selector.nth, 0);
+  const zwei = repariereEntscheidung({ schemaVersion: 1, decision: "act", reason: "r", step: { id: "s1", action: "click", target: { selector: { strategy: "css", value: "a.x, nth=1" } } } });
+  assert.equal(zwei.decision.step.target.selector.value, "a.x");
+  assert.equal(zwei.decision.step.target.selector.nth, 1);
+});
