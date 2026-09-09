@@ -89,6 +89,26 @@ export const PROFILE = Object.freeze({
   // KONTRAST (8 Paare) stellt beides in EINE Antwort: derselbe Vorgang, ein
   // Teil erlaubt, ein Teil nicht, mit der Trennlinie im Satz. Gelernt wird, WO
   // die Linie liegt.
+  // smejj-1-8 (09.09.): DAS VERHAELTNIS, nicht wieder der Inhalt.
+  //
+  // Sieben Versionen lang bestand der Datensatz zu 98 Prozent aus erzeugten
+  // Rechenaufgaben; die 83 handgeschriebenen Paare waren 1,8 Prozent. Jede
+  // Aenderung an ihnen verschob das Gleichgewicht des ganzen Modells — ein
+  // Gebiet stieg, zwei fielen. 1.5, 1.6 und 1.7 haben das dreimal gezeigt.
+  //
+  //   1.5  mehr "Ja"-Paare  -> Ehrlichkeit 65 -> 45
+  //   1.6  weniger "Ja"     -> Schutz-Locks 75 -> 60
+  //   1.7  Kontrastpaare    -> Locks 60 -> 70, dafuer Wissen 40 -> 26,7
+  //
+  // Hier aendert sich deshalb NICHT der Inhalt (dieselben 83 Paare), sondern
+  // ihr GEWICHT: sechsfach wiederholt, und die Rechenaufgaben von 9.000 roh
+  // auf 900 gesenkt. Aus 1,8 Prozent werden rund 55.
+  //
+  // Wiederholung erhoeht das Gewicht, nicht den Inhalt — aus 83 Paaren werden
+  // keine 500 verschiedenen. Sie ist der uebliche Weg, ein kleines gutes
+  // Korpus gegen ein grosses billiges zu gewichten, und ersetzt kein einziges
+  // neu geschriebenes Paar.
+  "smejj-1-8": { startwert: 20260909, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6 },
   "smejj-1-7": { startwert: 20260909, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-6": { startwert: 20260908, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-2": {
@@ -166,7 +186,7 @@ export function pruefeHandgeschrieben(messages) {
  * Baut den Datensatz. Rein und testbar: keine Datei, kein Netz.
  * @returns {{paare: Array, bericht: object, manifest: object}}
  */
-export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ_NAME, mischen = false } = {}) {
+export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ_NAME, mischen = false, wiederholungen = 1 } = {}) {
   // baueDatensatz gibt nur messages + recordId zurueck; die Kategorie geht
   // verloren. Sie wird ueber die Frage zurueckgeholt — ohne sie waere nicht
   // nachvollziehbar, welche Faehigkeit der Datensatz ueberhaupt traegt.
@@ -198,7 +218,42 @@ export function baue(rohPaare, suiten, { startwert = STARTWERT, name = DATENSATZ
       bericht.heuristikUebergangen = (bericht.heuristikUebergangen || 0) + 1;
     }
   }
-  const alle = [...gebaut.paare, ...nachgeholt];
+  /**
+   * GEWICHT STATT MENGE — die Strukturaenderung vom 09.09.
+   *
+   * DAS PROBLEM, gemessen ueber sieben Versionen: Der Datensatz bestand zu
+   * 98 Prozent aus erzeugten Rechenaufgaben und zu 1,8 Prozent aus den
+   * handgeschriebenen Paaren, auf die es ankommt (83 von 4.537). Das Modell
+   * verbrachte fast seine ganze Trainingszeit mit Rechnen.
+   *
+   * Die Folge war jedes Mal dieselbe: Acht neue Paare bei 83 verschoben das
+   * Gleichgewicht des ganzen Modells, ein Gebiet stieg und zwei fielen. Vier
+   * Versuche lang habe ich Gewicht hin- und hergeschoben, statt Substanz
+   * hinzuzufuegen — 1.5 (mehr "Ja"), 1.6 (weniger "Ja"), 1.7 (Kontrast).
+   *
+   * WIEDERHOLUNG ist der uebliche Weg, ein kleines, gutes Korpus gegen ein
+   * grosses, billiges zu gewichten. Sie greift hier ERST NACH der
+   * Duplikatpruefung — davor wuerde jede Kopie als Duplikat verworfen.
+   *
+   * Die Kopien stehen VORNE, weil train.py die Datei von vorne liest und die
+   * Zeilengrenze der Zeit oft vor dem Ende erreicht ist.
+   *
+   * Kein Ersatz fuer mehr echte Paare: Wiederholung erhoeht das Gewicht, nicht
+   * den Inhalt. Sie macht aus 83 Paaren keine 500 verschiedenen.
+   */
+  const handgeschriebeneSchluessel = new Set(
+    rohPaare.filter((h) => h.handgeschrieben).map((h) => h.messages.map((m) => m.content).join("\u0000"))
+  );
+  const zusammen = [...gebaut.paare, ...nachgeholt];
+  const istHand = (x) => handgeschriebeneSchluessel.has(x.messages.map((m) => m.content).join("\u0000"));
+  const handTeil = zusammen.filter(istHand);
+  const restTeil = zusammen.filter((x) => !istHand(x));
+  const kopien = [];
+  for (let i = 0; i < Math.max(1, wiederholungen); i += 1) kopien.push(...handTeil);
+  const alle = [...kopien, ...restTeil];
+  if (wiederholungen > 1) {
+    bericht.handgeschriebenGewichtet = { einzeln: handTeil.length, faktor: wiederholungen, zeilen: kopien.length };
+  }
   const paare = mischen ? mische(alle, startwert) : alle;
   const text = jsonl(paare);
   const kategorien = {};
@@ -258,7 +313,24 @@ async function main() {
   // -abwehr, -gegenprobe): geloescht wird nichts, und sollte die naechste
   // Messung zeigen, dass sie doch tragen, sind sie eine Zeile entfernt.
   const handgeschrieben = echtePaare().map((h) => ({ ...h, handgeschrieben: true }));
-  const roh = [...handgeschrieben, ...erzeuge({ startwert: STARTWERT, reasoning: MENGEN.reasoning, sicherheit: 0, sprache: 0 })];
+  /**
+   * BEFUND 09.09.: Diese Zeile las STARTWERT und MENGEN.reasoning — die
+   * KONSTANTEN — statt der Werte aus dem Profil. Die Profile in PROFILE
+   * sehen damit so aus, als steuerten sie Menge und Startwert, tun es aber
+   * nicht: smejj-1-5, -1-6 und -1-7 hatten trotz verschiedener Startwerte
+   * dieselben Rechenaufgaben, und smejj-1-8 bekam 4.454 statt der
+   * eingestellten 900.
+   *
+   * Eine Einstellung, die aussieht wie eine Einstellung und keine ist, ist
+   * schlimmer als eine fehlende — man plant damit und misst danach etwas
+   * anderes, als man glaubt.
+   */
+  const roh = [...handgeschrieben, ...erzeuge({
+    startwert: p.startwert ?? STARTWERT,
+    reasoning: p.mengen?.reasoning ?? MENGEN.reasoning,
+    sicherheit: p.mengen?.sicherheit ?? 0,
+    sprache: p.mengen?.sprache ?? 0
+  })];
   // Die handgeschriebenen Paare werden zusaetzlich einzeln geprueft und
   // gemeldet — sie sind der Kern, ein stiller Verlust waere hier am teuersten.
   const verworfen = handgeschrieben.filter((h) => !pruefeHandgeschrieben(h.messages).ok);
@@ -267,7 +339,7 @@ async function main() {
     for (const h of verworfen) console.log(`  ${pruefeHandgeschrieben(h.messages).grund}: ${h.messages[1].content.slice(0, 60)}`);
   }
   const suiten = await leseSuiten();
-  const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen });
+  const { paare, bericht, manifest, text } = baue(roh, suiten, { startwert: p.startwert, name: p.name, mischen: p.mischen, wiederholungen: p.wiederholungen || 1 });
   const ziel = path.join(WURZEL, "out", p.name);
   await mkdir(ziel, { recursive: true });
   await writeFile(path.join(ziel, "train.jsonl"), text);
