@@ -16,6 +16,14 @@ export const PLANER_TIMEOUT_MS = 100_000;
 // fragen ist in jedem gemessenen Fall schneller. Die Zahl ist einreichbar,
 // damit der Test nicht schlafen muss.
 export const RATENLIMIT_WARTEZEIT_MS = 15_000;
+export const RATENLIMIT_WARTEZEIT_MAX_MS = 45_000;
+// Sagt der Anbieter, wann es weitergeht, gilt seine Zahl — nie unter dem
+// Standard, nie ueber dem Deckel (laenger als GLM braucht, lohnt sich nicht).
+export function wartezeitAus(attempts, standard = RATENLIMIT_WARTEZEIT_MS, maximum = RATENLIMIT_WARTEZEIT_MAX_MS) {
+  const genannt = (attempts || []).map((a) => Number(a?.retryAfterMs)).filter((v) => Number.isFinite(v) && v > 0);
+  if (!genannt.length) return standard;
+  return Math.min(maximum, Math.max(standard, Math.max(...genannt) + 1000));
+}
 
 const nurRatenlimit = (attempts) => Array.isArray(attempts) && attempts.length > 0 && attempts.every((a) => a?.error === "http_429");
 
@@ -136,7 +144,7 @@ export function buildPlannerClient({
     const [erstes, ...weitere] = chain;
     let result = await frage([erstes]);
     if (!result.ok && nurRatenlimit(result.attempts)) {
-      await schlafe(warteMs);
+      await schlafe(wartezeitAus(result.attempts, warteMs));
       result = await frage([erstes]);
     }
     if (!result.ok && weitere.length) result = await frage(weitere);
