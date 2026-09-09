@@ -88,3 +88,27 @@ test("nth IM Wert (Groq live 09.09.: \"…\";nth:0) wird zum Feld nth — der Se
   assert.equal(zwei.decision.step.target.selector.value, "a.x");
   assert.equal(zwei.decision.step.target.selector.nth, 1);
 });
+
+// --- E2E 10.09. ueber die Schnittstelle: nth kam bis zur Validierung, nicht bis
+// zum Locator; und 15 s Wartezeit waren bei 8.000 Tokens je Minute zu kurz.
+import { selektorDefinition } from "../workers/remote-browser/session-engine.js";
+import { retryAfterMsAus } from "../control-server/src/llm/modelRouter.js";
+
+test("selektorDefinition traegt nth in den Locator — sonst bleibt 'Treffer 1' ein leeres Versprechen", () => {
+  assert.deepEqual(selektorDefinition({ type: "selectorClick", strategy: "role", value: "button", name: "Suchen", nth: 0 }), { strategy: "role", value: "button", name: "Suchen", nth: 0 });
+  assert.deepEqual(selektorDefinition({ type: "selectorClick", strategy: "css", value: "a" }), { strategy: "css", value: "a" });
+});
+
+test("Wartezeit nach 429 kommt aus den Kopfzeilen des Anbieters", async () => {
+  const kopf = (o) => new Map(Object.entries(o));
+  assert.equal(retryAfterMsAus(kopf({ "retry-after": "7" })), 7000);
+  assert.equal(retryAfterMsAus(kopf({ "x-ratelimit-reset-tokens": "12.097s" })), 12097);
+  assert.equal(retryAfterMsAus(kopf({ "x-ratelimit-reset-tokens": "1m2.5s" })), 62500);
+  assert.equal(retryAfterMsAus(kopf({})), undefined);
+  const pfad = (await import("node:fs")).existsSync("control-server/src/routes/mausPlannerClient.js") ? "../control-server/src/routes/mausPlannerClient.js" : "../control-server/src/routes/mausPlanerClient.js";
+  const { wartezeitAus } = await import(pfad);
+  assert.equal(wartezeitAus([{ error: "http_429", retryAfterMs: 12097 }]), 15000, "nie unter dem Standard");
+  assert.equal(wartezeitAus([{ error: "http_429", retryAfterMs: 38000 }]), 39000, "die Zahl des Anbieters plus eine Sekunde");
+  assert.equal(wartezeitAus([{ error: "http_429", retryAfterMs: 90000 }]), 45000, "Deckel");
+  assert.equal(wartezeitAus([{ error: "http_429" }]), 15000);
+});

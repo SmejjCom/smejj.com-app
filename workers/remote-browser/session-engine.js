@@ -72,6 +72,16 @@ export const SESSION_ALLOWED_COMBOS = new Set([
 // role/testId/label sind die stabilen: sie ueberleben ein Umgestalten der Seite.
 const ERLAUBTE_STRATEGIEN = new Set(["role", "testId", "label", "text", "placeholder", "altText", "title", "css", "xpath"]);
 
+// Was vom Aktions-Objekt in den Playwright-Locator wandert. E2E 10.09. ueber
+// die Schnittstelle: nth kam durch die Validierung, wurde aber HIER fallen
+// gelassen — "selector_mehrdeutig" trotz "Treffer 1". Ein Feld, zwei Stellen.
+export function selektorDefinition(action) {
+  const def = { strategy: action.strategy, value: action.value };
+  if (action.name !== undefined) def.name = action.name;
+  if (Number.isInteger(action.nth) && action.nth >= 0) def.nth = action.nth;
+  return def;
+}
+
 export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
   if (!action || typeof action !== "object" || typeof action.type !== "string") {
     return { ok: false, error: "action_missing" };
@@ -525,8 +535,7 @@ export function createSessionEngine({
         // DER AUFLOESER DER MAUS, nicht ein zweiter. Beide muessen Elemente
         // gleich finden — sonst tut die Maus im Panel etwas anderes als in
         // ihrem eigenen Browser, und das faellt erst live auf.
-        const def = { strategy: action.strategy, value: action.value };
-        if (action.name !== undefined) def.name = action.name;
+        const def = selektorDefinition(action);
         // EINDEUTIG statt .first() (Betreiber-Freigabe 2026-08-21, ZCode-Regel).
         // Vorher nahm diese Zeile bei mehreren Treffern kommentarlos den
         // ersten: auf einer Seite mit zwei "Anmelden"-Knoepfen wurde
