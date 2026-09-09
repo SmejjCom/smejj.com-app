@@ -12,6 +12,7 @@
 // nahm dann das Standardmodell. Das sah funktionierend aus und war keines.
 import assert from "node:assert/strict";
 import test from "node:test";
+import { existsSync, readFileSync } from "node:fs";
 import { bewerteFuerAuto, MODEL_REGISTRY, resolveModelSelection } from "../src/shared/modelRegistry.js";
 
 // Vollstaendige Umgebungen — ein Modell gilt nur als Kandidat, wenn Schluessel
@@ -102,5 +103,21 @@ test("die smejj-Stufen gelten als Markenname, nicht als Anbieterwahl", () => {
     const w = resolveModelSelection({ requestedModel: name, env: { ...GLM } });
     assert.notEqual(w.reason, "requested_model_inactive", `${name} wurde als Anbieterwahl missverstanden`);
     assert.ok(w.selectedModelId, `${name} liefert kein Modell`);
+  }
+});
+
+test("der Client trifft KEINE Modellwahl mehr — sie gehoert an EINE Stelle", () => {
+  // Bis 2026-09-10 gab es zwei Router: einen im Browser (public/ai/modellRouter.js,
+  // waehlte eine feste Fremd-ID) und einen auf dem Server. Zwei Stellen, die
+  // dasselbe entscheiden, laufen frueher oder spaeter auseinander — und nur eine
+  // von beiden weiss, welches Modell gerade wirklich laeuft.
+  //
+  // Der Browser-Router ist entfernt. Das Profil bestimmt classifyProfile() auf
+  // dem Server aus dem Auftragstext; der Browser schickt nur noch "Auto".
+  assert.equal(existsSync("public/ai/modellRouter.js"), false, "der zweite Router ist entfernt");
+  for (const pfad of ["public/sw.js", "public/assets/sw.js"]) {
+    // Eine Precache-Zeile auf eine geloeschte Datei laesst cache.addAll beim
+    // 404 abbrechen — der Service Worker koennte sich nicht mehr installieren.
+    assert.doesNotMatch(readFileSync(pfad, "utf8"), /modellRouter/, `${pfad} listet den entfernten Router`);
   }
 });

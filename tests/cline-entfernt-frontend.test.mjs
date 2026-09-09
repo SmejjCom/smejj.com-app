@@ -57,7 +57,9 @@ test("der Service Worker legt keine Cline-Datei mehr in den Vorrat", () => {
 });
 
 test("Modellwahl und Chatweg kennen keinen Fremdanbieter mehr", () => {
-  for (const pfad of ["public/code-modell-menue.js", "public/ai/modellRouter.js", "public/app.js"]) {
+  // ai/modellRouter.js stand hier bis 2026-09-10 und ist entfernt: die
+  // Modellwahl gehoert auf den Server, nicht in zwei Router.
+  for (const pfad of ["public/code-modell-menue.js", "public/app.js"]) {
     const text = ohneKommentare(lies(pfad));
     // Erlaubt bleibt allein das Aufraeumen alter Browserspeicher: wer "Cline"
     // noch gespeichert hat, muss auf Auto umgesetzt werden koennen.
