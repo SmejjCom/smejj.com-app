@@ -649,3 +649,9 @@ test("selektorAus reicht die benannte Wahl nth durch — und nur als ganze Zahl"
   assert.deepEqual(selektorAus({ target: { strategy: "css", value: "a", nth: "0" } }), { strategy: "css", value: "a" });
   assert.deepEqual(selektorAus({ target: { strategy: "css", value: "a", nth: -1 } }), { strategy: "css", value: "a" });
 });
+
+test("die Fortschrittszeile nennt die benannte Wahl: Klicken: … (Treffer 1)", async () => {
+  const { beschreibe } = await import("../public/browser-pane-maus.js");
+  assert.equal(beschreibe({ action: "click", target: { selector: { strategy: "css", value: "a.x", nth: 0 } } }), "Klicken: a.x (Treffer 1)");
+  assert.equal(beschreibe({ action: "click", target: { selector: { strategy: "css", value: "a.x" } } }), "Klicken: a.x");
+});
