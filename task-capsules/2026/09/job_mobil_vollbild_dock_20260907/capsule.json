@@ -75,7 +75,7 @@
     "check:guidelines": "ROT — Vorbestand aus einer Parallelsitzung: docs/benchmarks/modeleval-smejj-chat-core-smejj-1-4-smejj11-20260907062808-messung.json:2659 und :6355 Naming-Verstoss (nicht angefasst, Auftrag = nur das Genannte)",
     "check:start-lock": "OK — 34 Dateien byte-identisch zum Stempel 2026-09-07T12:35:39Z (Betreiber-Doppelklick)"
   },
-  "status": "verified — Runde 11 (SW v824): A-bis-Z ueber Desktop, Android und iOS. Groesster Fund: Chat-Bilder waren live blockiert, weil ein Fix vom 07.09. nie ausgeliefert wurde.",
+  "status": "verified — Runde 12 (SW v825): die Hausgrenze von 800 Zeilen haelt wieder, check:guidelines gruen. Maus-Engine in drei Module geteilt, live bewiesen.",
   "runde4_fehlerliste_abends": {
     "auftrag": "Betreiber 17:26-17:45 sechs Fehler gemeldet (kurze Antworten, nicht bauen), ~18:00 'Go: alle sechs bauen'",
     "1_vollbild_versatz": "mobil-dock.js misstVersatz(screen.height - innerHeight, nur standalone + Apple-WebKit + hochkant + ohne Tastatur, 0<x<=120) -> --vollbild-fehl; body::after und Flaechen rechnen ihn ein. Android-TWA ausgeschlossen (76 px waeren Systemleiste). Beweis nur am Betreiber-iPhone moeglich.",
@@ -270,5 +270,20 @@
     },
     "auslieferung": "SW smejj-shell-v824.",
     "offen": "Nur die zwei Schutz-Sperren und die Benchmark-Pruefsummen — beides darf eine Sitzung nicht selbst ausfuehren. Doppelklick-Datei lag zeitweise auf dem Schreibtisch; erledigt wurde es am 09.09. ueber einen Befehlsknopf in der Antwort."
+  },
+  "runde12_20260909_hausgrenze": {
+    "auftrag": "Betreiber: 'mach browser-pane-maus.js auch fertig'.",
+    "ausgangslage": "check:guidelines meldete drei Verstoesse, alle aus dem Live-Abgleich vom 09.09. (Commit 32848c3a einer Parallelsitzung, die groessere Live-Fassungen hereinholte).",
+    "1_maus_geteilt": {
+      "vorher": "browser-pane-maus.js 951 Zeilen (Hausgrenze 800)",
+      "erster_anlauf_gescheitert": "Eine Abhaengigkeitsanalyse per Shell-Einzeiler meldete 'die beiden Haelften teilen keinen Namen'. Das war FALSCH — das Suchmuster war durch die Shell-Weitergabe kaputt. Nach dem Schnitt fielen sieben Tests um; sofort zurueckgesetzt, alle 64 wieder gruen.",
+      "saubere_analyse": "Analyse-Skript in eine Datei geschrieben statt als Einzeiler. Ergebnis: A Plan+Knopf (1-242) haengt von nichts ab; C Frei (391-952) braucht aus A alsSitzungsAktion, beschreibe, erlaubteHosts; B Lauf (243-390) braucht aus A kurz, erlaubteHosts, fuehreMausAuftragAus und aus C baueZeiger, fuehreFreienLaufAus. Die scheinbaren Rueckwaertskanten (A->B 'laeuft'/'anhalten', C->B 'laeuft') waren ausnahmslos KOMMENTARE. Ordnung damit zirkelfrei: Plan <- Frei <- Lauf.",
+      "nachher": "browser-pane-maus-plan.js 252, browser-pane-maus-frei.js 569, browser-pane-maus.js 161 Zeilen. Kein Aufrufer aendert seinen Import (export* reicht alles weiter). Marke auf browser-pane-20260909-1 erhoeht, Precache und Auslieferungs-Spiegel ergaenzt.",
+      "live_bewiesen": "Im Browser ueber die echte URL geladen: 30 Exporte, keiner fehlt, Plan- und Frei-Funktionen beide erreichbar."
+    },
+    "2_und_3_unter_die_grenze": "index.html 1028 -> 1020, browser-pane.js 825 -> 813. Nichts geloescht: die langen Begruendungen sind nach docs/qa/befunde-live.md gewandert, im Code steht der Verweis.",
+    "nebenbefund": "Eine verwaiste .git/index.lock von gestern 09:56 (336 kB, kein schreibender Prozess) blockierte jeden Commit — auch eine wartende Parallelsitzung. Gesichert und entfernt.",
+    "ergebnis": "check:guidelines GRUEN (2209 Dateien). Tests 64/64 Maus, check:frontend 654/654, module-queries 236, precache 195. SW smejj-shell-v825.",
+    "offen": "check:markenkette meldet 13 Module ohne erhoehte Marke — allesamt aus dem Live-Abgleich, keins davon von mir beruehrt. Kein Live-Problem: die Bauzweig-Fassungen SIND die Live-Fassungen."
   }
 }
