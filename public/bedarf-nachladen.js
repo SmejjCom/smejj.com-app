@@ -32,7 +32,16 @@ if (location.pathname.includes("papierkorb")) {
 // 3. Kamera — lebt hinter dem Plus-Menue; derselbe Ausloeser, mit dem app.js
 //    schon composer-tools nachlaedt. Das Modul bindet seinen Knopf selbst,
 //    sobald das Menue existiert.
-ladeBeiKlick(["#composerPlusButton", "[data-start-tool]"], () => import("./kamera.js?v=b35live2"));
+//
+//    [data-kamera-start] MUSS mit in die Liste (2026-09-10). Die Sprachwelle
+//    baut sich einen EIGENEN Kamera-Knopf mit genau diesem Merkmal
+//    (voice-overlay-ui.js: "Kamera — smejj sieht mit"), und der stand hier
+//    nicht drin. Live gemessen: ein Klick darauf lud kamera.js nie, rief nie
+//    getUserMedia und oeffnete kein Overlay — der Knopf war eine Attrappe.
+//    Aufgefallen ist es erst, weil danach GEMESSEN wurde, ob das Modul im
+//    Netzwerk auftaucht; sichtbar passiert bei einer Attrappe ja nichts, und
+//    "nichts passiert" sieht aus wie "die Kamera darf nicht".
+ladeBeiKlick(["#composerPlusButton", "[data-start-tool]", "[data-kamera-start]"], () => import("./kamera.js?v=b35live2"));
 
 // 4. "@"-Erwaehnung — erst wenn im Startfeld ein "@" getippt wird. Nach dem
 //    Laden bekommt das Feld ein synthetisches input-Ereignis, damit die
