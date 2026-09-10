@@ -264,3 +264,63 @@ test(":contains('X') aus jQuery wird zu Playwrights :has-text(\"X\")", () => {
   // Was schon richtig ist, bleibt unangetastet.
   assert.deepEqual(alsZiel({ strategy: "css", value: "h1" }), { strategy: "css", value: "h1" });
 });
+
+// --- Klick auf die NUMMER aus der Beobachtung (11.09.) --------------------
+// Befund aus fuenf Messlaeufen: das Modell erfand Selektoren, die es nie gab
+// ("selector_ohne_treffer" war 7 von 10 Fehlschlaegen). Jedes Element traegt
+// aber eine Nummer — die Chrome-Bruecke klickt seit dem 20.08. danach, der
+// ferne Browser konnte es nicht. Jetzt beide gleich.
+import { markiereGesehenes, entferneMarke, ZIEL_MARKE } from "../workers/remote-browser/session-engine.js";
+import { pageSnapshotScript } from "../workers/maus-engine/observer.mjs";
+
+test("der ferne Browser nimmt die Nummer an — als ganze Zahl im Rahmen", () => {
+  const mit = validateSessionAction({ type: "selectorClick", strategy: "css", value: "a", n: 14 });
+  assert.equal(mit.action.n, 14, "die Nummer fiel weg");
+  assert.equal(validateSessionAction({ type: "selectorClick", strategy: "css", value: "a", n: 0 }).action.n, undefined, "0 gibt es nicht, gezaehlt wird ab 1");
+  assert.equal(validateSessionAction({ type: "selectorClick", strategy: "css", value: "a", n: "14" }).action.n, undefined, "Text ist keine Nummer");
+  assert.equal(validateSessionAction({ type: "selectorClick", strategy: "css", value: "a", n: 1001 }).action.n, undefined, "ueber dem Deckel");
+});
+
+test("markiereGesehenes heftet genau das gesehene Element an — und faellt weich, wenn es weg ist", async () => {
+  const seite = {
+    zustand: null,
+    async evaluate(fn, arg) {
+      const el = { verbunden: true, merkmale: {}, get isConnected() { return this.verbunden; },
+        setAttribute(k, v) { this.merkmale[k] = v; }, removeAttribute(k) { delete this.merkmale[k]; } };
+      globalThis.window = { __smejjMausGesehen: seite.liste ?? [el] };
+      globalThis.document = { querySelectorAll: () => [] };
+      seite.zustand = el;
+      return fn(arg);
+    }
+  };
+  assert.equal(await markiereGesehenes(seite, 1), true);
+  assert.equal(seite.zustand.merkmale[ZIEL_MARKE], "1", "das Element wurde nicht angeheftet");
+  seite.liste = [];
+  assert.equal(await markiereGesehenes(seite, 1), false, "leere Liste = keine Marke, kein Absturz");
+  assert.equal(await markiereGesehenes({}, 1), false, "ohne evaluate keine Marke");
+  assert.equal(await markiereGesehenes(seite, 0), false, "0 ist keine Nummer");
+  await entferneMarke({});
+});
+
+test("die Nummer schlaegt den Selektor — und wird danach wieder abgenommen", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("const perNummer = await markiereGesehenes"), quelle.indexOf("await locator.waitFor"));
+  assert.match(stelle, /perNummer\s*\n?\s*\? page\.locator/, "die Nummer muss vor dem Selektor greifen");
+  assert.match(stelle, /resolveEindeutig/, "ohne Nummer bleibt es beim eindeutigen Selektor");
+  assert.match(quelle, /export async function entferneMarke/, "die Marke muss wieder weg");
+});
+
+test("die Beobachtung merkt sich die Elemente und nummeriert sie aus der VOLLEN Liste", () => {
+  const quelle = pageSnapshotScript.toString();
+  assert.match(quelle, /window\.__smejjMausGesehen = gesehen/, "ohne diese Liste findet kein Klick sein Element wieder");
+  assert.match(quelle, /roh: gesehen\.length/, "die Nummer muss aus der ungekuerzten Liste stammen");
+});
+
+test("der Vertrag sagt dem Modell, dass es die Nummer nehmen darf", async () => {
+  const { buildStepPrompt } = await import("../workers/maus-engine/prompt-template.mjs");
+  const prompt = buildStepPrompt({ task: "t", capsuleRef: "c", domainAllowlist: ["a.de"], budget: { maxActions: 10 }, files: [],
+    visionAllowed: false, observation: { url: "https://a.de/", title: "A", elements: [{ n: 1, tag: "button", text: "Los" }] }, remainingSteps: 5 });
+  assert.match(prompt, /NIMM DIE NUMMER/);
+  assert.match(prompt, /"n":14/);
+  assert.match(prompt, /selector_ohne_treffer/);
+});

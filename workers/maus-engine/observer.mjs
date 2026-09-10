@@ -27,6 +27,7 @@ export function pageSnapshotScript() {
   const selector = "a[href], button, input, select, textarea, [role=\"" + roles.join("\"], [role=\"") + "\"]";
   const elements = [];
   const nodes = document.querySelectorAll(selector);
+  const gesehen = [];
   for (let i = 0; i < nodes.length && elements.length < 160; i += 1) {
     const node = nodes[i];
     const rect = node.getBoundingClientRect();
@@ -45,7 +46,11 @@ export function pageSnapshotScript() {
     const isPassword = node.tagName === "INPUT" && type === "password";
     let label = node.getAttribute("aria-label") || "";
     if (!label && node.labels && node.labels.length > 0) label = node.labels[0].textContent || "";
+    // Die Nummer der VOLLEN Liste, nicht die der spaeter gekuerzten: sonst
+    // zeigte "n" nach dem Kuerzen auf ein anderes Element als beim Klicken.
+    gesehen.push(node);
     elements.push({
+      roh: gesehen.length,
       tag: node.tagName.toLowerCase(),
       type: type || undefined,
       role: node.getAttribute("role") || undefined,
@@ -63,6 +68,13 @@ export function pageSnapshotScript() {
       y: Math.round(rect.top + rect.height / 2)
     });
   }
+  // DIE LISTE BLEIBT IN DER SEITE LIEGEN — daran findet ein Klick "auf die
+  // Nummer 14" spaeter genau dasselbe Element wieder. Die Chrome-Bruecke macht
+  // das seit dem 20.08. so; der ferne Browser konnte es bis 11.09. NICHT, und
+  // das Modell erfand darum Selektoren, die es nie gab ("selector_ohne_treffer"
+  // war in einem Messlauf 7 von 10 Fehlschlaegen). Ein eigener Name, damit
+  // nichts auf der Seite darueber stolpert.
+  window.__smejjMausGesehen = gesehen;
   return {
     text: (document.body && document.body.innerText ? document.body.innerText : "").slice(0, 6000),
     elements
@@ -80,7 +92,9 @@ function truncate(value, limit) {
 function normalizeElement(raw, index) {
   const isPassword = raw.password === true || String(raw.type || "").toLowerCase() === "password";
   const element = {
-    n: index + 1,
+    // `roh` ist die Nummer aus der ungekuerzten Liste (siehe pageSnapshotScript).
+    // Fehlt sie (Tests, Fremdquellen), bleibt es bei der laufenden Nummer.
+    n: Number.isInteger(raw.roh) && raw.roh > 0 ? raw.roh : index + 1,
     tag: truncate(raw.tag || "?", 20),
     x: Number.isFinite(raw.x) ? raw.x : 0,
     y: Number.isFinite(raw.y) ? raw.y : 0
