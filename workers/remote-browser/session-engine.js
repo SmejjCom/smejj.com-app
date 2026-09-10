@@ -616,6 +616,11 @@ export function createSessionEngine({
           await locator.click({ timeout: cfg.aktionTimeoutMs });
         } catch (fehler) {
           if (!/Timeout .*exceeded/i.test(String(fehler?.message || fehler))) throw fehler;
+          // ERST HINSCHEUCHEN, DANN DRUECKEN: `force` ueberspringt ALLE
+          // Pruefungen — auch das Scrollen. Live 10.09. endete der erzwungene
+          // Klick darum mit "Element is outside of the viewport", obwohl er
+          // gerade das Problem loesen sollte.
+          await locator.scrollIntoViewIfNeeded?.({ timeout: cfg.settleTimeoutMs })?.catch?.(() => {});
           await locator.click({ timeout: cfg.settleTimeoutMs, force: true });
           erzwungen = true;
         }
