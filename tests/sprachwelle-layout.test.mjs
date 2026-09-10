@@ -85,10 +85,17 @@ test("die Kamera legt sich NICHT ueber die Bedienzone", () => {
   // spaeter ins Dokument. elementFromPoint auf die Mitte JEDES der sechs
   // Bedienelemente lieferte "kameraOverlay", auch beim X: die Sprachwelt liess
   // sich nicht mehr schliessen, solange die Kamera lief.
-  const flaechen = readFileSync(new URL("../public/design-v11-flaechen.css", import.meta.url), "utf8");
-  assert.match(flaechen, /body\.voice-mode-open #kameraOverlay\s*\{[^}]*bottom:\s*calc\(var\(--voice-bedienzone/,
+  // GEPRUEFT WIRD DAS AUSGELIEFERTE BUENDEL, nicht die Quelle.
+  //
+  // Der erste Anlauf legte die Regel in design-v11-flaechen.css — eine Datei,
+  // die NIEMAND laedt: sie steht weder in index.html noch in den Quellen von
+  // bundle-start-styles.mjs. Die Regel war da, sah richtig aus und wirkte nie.
+  // start-styles.css ist das, was der Browser bekommt; wer hier misst, kann
+  // sich die Frage "welche Quelle ist die echte?" sparen.
+  const buendel = readFileSync(new URL("../public/start-styles.css", import.meta.url), "utf8");
+  assert.match(buendel, /body\.voice-mode-open #kameraOverlay\s*\{[^}]*bottom:\s*calc\(var\(--voice-bedienzone/,
     "das Kamera-Overlay muss im Sprachmodus ueber der Bedienzone enden");
-  assert.match(flaechen, /body\.voice-mode-open #voiceModeClose\s*\{[^}]*z-index/,
+  assert.match(buendel, /body\.voice-mode-open #voiceModeClose\s*\{[^}]*z-index/,
     "das X muss in jedem Fall erreichbar bleiben");
   // Und die Hoehe muss gemeldet werden, sonst rechnet die Regel mit 0.
   assert.match(ui, /--voice-bedienzone/, "voice-overlay-ui.js meldet die Hoehe nicht");
