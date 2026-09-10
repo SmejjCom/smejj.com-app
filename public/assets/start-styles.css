@@ -1890,6 +1890,12 @@ body:has(#browserPanel:not(.is-open)) #mausButton {
      font-size: 13.5px;
      line-height: 1.35;
 }
+body.voice-mode-open #kameraOverlay {
+     bottom: calc(var(--voice-bedienzone, 0px) + 8px);
+}
+body.voice-mode-open #voiceModeClose {
+     z-index: 201;
+}
 .voice-mode-overlay[data-upgraded="true"] .voice-mode-bar {
      margin-bottom: 0;
 }
@@ -5324,10 +5330,6 @@ body.spur-zu:not(.right-panel-open) #code .code-wchips button {
   font-weight: 700;
   box-shadow: inset 0 0 0 1px var(--v11-cy-line-on);
 }
-body.voice-mode-open #kameraOverlay {
-  bottom: calc(var(--voice-bedienzone, 0px) + 8px);
-}
-body.voice-mode-open #voiceModeClose { z-index: 201; }
 #kameraOverlay .kamera-leiste { display: flex; gap: 10px; }
 #kameraOverlay .kamera-leiste button {
   flex: 1;
