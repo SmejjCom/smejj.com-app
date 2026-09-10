@@ -22,6 +22,7 @@ Jede Version gegen ihre eigene, im selben Lauf gemessene Basis:
 | 1.6 | −7,3 | +3,5 |
 | 1.7 | −9,5 | +3,4 |
 | **1.8** | **−13,1** | **+7,4** |
+| 1.9 (Rang 8, lr 3e-5) | −6,6 | **−2,2** |
 
 **Fuenf von fuenf Laeufen: Wissen faellt, Koennen steigt.** Keine einzige
 Ausnahme. Bei 1.8 einzeln betrachtet fallen ALLE neun Wissensgebiete und
@@ -45,14 +46,18 @@ die Gesamtnote, obwohl der Adapter beim Koennen besser ist.
 
 ## Die zwei Auswege
 
-1. **Weniger tief eingreifen.** Rang 16 → 8, Lernrate 1e-4 → 3e-5. Weniger
-   Vergessen, aber auch weniger Gewinn. Billig zu messen, ein Lauf.
+1. ~~**Weniger tief eingreifen.**~~ **GEMESSEN am 10.09. mit 1.9 — Sackgasse.**
+   Rang 16 → 8, Lernrate 1e-4 → 3e-5. Das Vergessen halbiert sich tatsaechlich
+   (−13,1 → −6,6), aber der Gewinn verschwindet nicht nur, er kippt ins Minus
+   (+7,4 → −2,2). Gesamtnote 63,1 % gegen 62,9 % — kein Unterschied.
+   **Der Verlust schrumpft NICHT schneller als der Gewinn.** Ein flacherer
+   Eingriff kauft nichts; er lernt einfach weniger, in beide Richtungen.
 2. **Wissen mittrainieren.** Die Projektfakten, die die Suite abfragt, gehoeren
    als Paare in den Korpus — heute ist kein einziges der 83 Paare eine
    Wissensfrage zur Trainingsdaten-Policy, und genau dieses Gebiet stuerzt am
    staerksten ab (−25,6).
 
-Weg 2 ist der richtige, Weg 1 der schnellere. Beide sind messbar.
+Damit bleibt nur Weg 2. Er ist der aufwendigere — und seit dem 10.09. der einzige.
 
 ## Wo die Zahlen herkommen
 
