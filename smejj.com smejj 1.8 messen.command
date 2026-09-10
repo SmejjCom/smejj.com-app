@@ -87,10 +87,31 @@ Promise.all([
     }
     const ergebnisDa = Boolean(bewertung) || Boolean(training);
 
-    if (st && st.fertig !== true && !ergebnisDa) {
+    // EIN ALTER HERZSCHLAG IST EIN TOTER JOB — egal, welche Phase dasteht.
+    //
+    // Am 10.09. hing ein Messjob DREI STUNDEN in Phase "start": Container
+    // bereit, Abbild gezogen, Instanz "ready" — und kein einziger Herzschlag
+    // seit dem Start. Die Pruefung sah "Phase start, nicht fertig, kein
+    // Ergebnis" und schuetzte ihn als laufenden Lauf. Auf Prioritaet high
+    // sind das 0,75 USD fuer nichts.
+    //
+    // Der Herzschlag wird alle paar Sekunden geschrieben. Steht er zehn
+    // Minuten still, rechnet dort nichts mehr. Die Zahl ist grosszuegig: ein
+    // Modellbezug aus e2 dauert Minuten, schreibt dabei aber weiter.
+    const HERZSCHLAG_FRIST_MIN = 10;
+    const herzAlterMin = st?.herzschlag
+      ? (Date.now() - new Date(st.herzschlag).getTime()) / 60000
+      : Infinity;
+    const herzStehtStill = Boolean(st) && herzAlterMin > HERZSCHLAG_FRIST_MIN;
+
+    if (st && st.fertig !== true && !ergebnisDa && !herzStehtStill) {
       console.log(`  ABBRUCH: Job ${z.jobId} laeuft wirklich noch (Phase ${st.phase}) und hat kein Ergebnis abgelegt.`);
       console.log("  Es wird nichts gestoppt — ein laufender Lauf ist bezahlte Rechenzeit.");
       process.exit(3);
+    }
+    if (herzStehtStill && !ergebnisDa) {
+      console.log(`  Job ${z.jobId} haengt: Herzschlag steht seit ${Math.round(herzAlterMin)} Minuten (Phase ${st.phase}).`);
+      console.log("  Das ist bezahlte Zeit ohne Rechnung — die Gruppe wird abgeschaltet.");
     }
     if (ergebnisDa && st?.fertig !== true) {
       console.log(`  Job ${z.jobId} hat sein Ergebnis abgelegt und wurde nur neu zugeteilt — Kostenschleife, kein Lauf.`);
