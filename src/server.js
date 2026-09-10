@@ -30,6 +30,10 @@ import { handleBrowserSession } from "../control-server/src/routes/browserSessio
 import { handleMausRun, handleMausStatus, istMausEngineToken } from "../control-server/src/routes/mausEngineRoutes.js";
 import { handlePasskeyLoginOptions, handlePasskeyLoginVerify, handlePasskeyRegisterOptions, handlePasskeyRegisterVerify } from "../control-server/src/routes/passkeyRoutes.js";
 import { handleVoiceRoute } from "../control-server/src/routes/voiceWorkerRoutes.js";
+// Das Sprach-Ohr direkt hier: die Chat-Bridge, auf der es bisher allein lag,
+// antwortet auf jede Route mit 404 (live gemessen 2026-09-10) —
+// voiceOhrRoutes.js erklaert die Lage.
+import { handleOhrRoute } from "../control-server/src/routes/voiceOhrRoutes.js";
 import { handleModelStatus, handleModelsStatus, handleWorkerPreflight } from "../control-server/src/routes/modelRoutes.js";
 import { handleWorkerModelAction, handleWorkerValidate } from "../control-server/src/routes/workerModelRoutes.js";
 import { refreshModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
@@ -274,6 +278,9 @@ const server = http.createServer(async (req, res) => {
     if (await handleDeveloperKeyRoute(req, url, res)) return; // eigene Schluessel: Gegenrichtung zu /api/keys
     // Sprachserver (Wecken/Idle-Stopp/Audio-Proxy, Token-gepflichtig) — voiceWorkerRoutes.js.
     if (await handleVoiceRoute(req, url, res)) return;
+    // Ohr und ehrliche Status-Auskunft. NACH handleVoiceRoute, damit die
+    // Worker-Wege (/api/voice/worker/*, /api/voice/session/*) Vorrang behalten.
+    if (await handleOhrRoute(req, url, res)) return;
     // Herzschlag der Autopiloten (Maschinen-Absender, eigener Schluessel je Automatik) — autopilotRoutes.js.
     if (await handleAutopilotHeartbeat(req, url, res)) return;
     // Fehler-Fänger (Nr. 50): Browserfehler angemeldeter Nutzer — fehlerRoutes.js.
