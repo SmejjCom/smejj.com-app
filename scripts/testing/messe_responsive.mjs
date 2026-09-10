@@ -244,8 +244,51 @@ async function auswerten(page, ausdruck) {
   const { result, exceptionDetails } = await page("Runtime.evaluate", {
     expression: ausdruck, returnByValue: true, awaitPromise: true
   });
-  if (exceptionDetails) throw new Error(exceptionDetails.text || "Auswertung fehlgeschlagen");
+  if (exceptionDetails) {
+    // WARUM SO AUSFUEHRLICH: Am 2026-09-10 brach dieser Lauf mit dem Wort
+    // "Uncaught" ab — mehr stand nicht da. exceptionDetails.text traegt bei
+    // einer geworfenen Ausnahme nur diesen Kopf; die Ursache steckt in
+    // .exception.description (Meldung samt Aufrufkette) oder in .value.
+    // Ein Messwerkzeug, das nicht sagen kann, woran es scheitert, ist kein
+    // Werkzeug — man misst dann den Messfehler statt der App.
+    const e = exceptionDetails.exception || {};
+    const grund = e.description || e.value || exceptionDetails.text || "Auswertung fehlgeschlagen";
+    const ort = exceptionDetails.lineNumber != null ? ` (Zeile ${exceptionDetails.lineNumber + 1})` : "";
+    throw new Error(`${grund}${ort}`);
+  }
   return result.value;
+}
+
+/**
+ * Wartet, bis das Dokument die Zieladresse traegt UND ansprechbar ist.
+ *
+ * Zwei Bedingungen, beide noetig: about:blank hat eine gesperrte
+ * localStorage-Eigenschaft (SecurityError), und ein Dokument im Zustand
+ * "loading" kann sie zwar lesen, verliert die Eintraege aber beim naechsten
+ * Navigationsschritt.
+ */
+async function warteAufHerkunft(page, hoechstensMs = 25000) {
+  const bis = Date.now() + hoechstensMs;
+  let letzterGrund = "keine Antwort";
+  while (Date.now() < bis) {
+    try {
+      const stand = await auswerten(page, `(() => {
+        try {
+          if (!location.origin || location.origin === "null") return "leer";
+          localStorage.getItem("probe");
+          return document.readyState === "loading" ? "laedt" : "bereit";
+        } catch (f) { return "gesperrt: " + f.name; }
+      })()`);
+      if (stand === "bereit") return true;
+      letzterGrund = stand;
+    } catch (fehler) { letzterGrund = String(fehler.message || fehler).slice(0, 80); }
+    await sleep(400);
+  }
+  // Die Adresse MIT in die Meldung: die Vorgabe ist der lokale Entwicklungsserver.
+  // Laeuft der nicht, sah die Meldung bisher nach einem App-Fehler aus und war
+  // in Wahrheit eine falsche Adresse (2026-09-10: 25 s auf 127.0.0.1:3000 gewartet,
+  // wo nichts lief). Fuer die Live-Seite: --url https://smejj.com/
+  throw new Error(`Seite kam nicht hoch: ${URL_UNTER_TEST} (${hoechstensMs} ms, zuletzt: ${letzterGrund})`);
 }
 
 // Wartet, bis die Seite WIRKLICH steht — nicht bis die Uhr abgelaufen ist.
@@ -312,10 +355,17 @@ try {
   await page("Page.enable");
   await page("Runtime.enable");
   await page("Page.navigate", { url: URL_UNTER_TEST });
-  await sleep(2500);
+  // WARTEN, BIS DIE SEITE WIRKLICH DA IST — nicht bis die Uhr abgelaufen ist.
+  //
+  // GEMESSEN 2026-09-10: nach festen 2,5 s stand der Browser auf dieser Leitung
+  // noch auf about:blank. localStorage ist dort GESPERRT, und der Lauf brach mit
+  // "SecurityError: Failed to read the 'localStorage' property" ab — bei jedem
+  // Aufruf, ohne je eine Ansicht zu messen. Dieselbe Falle, gegen die weiter
+  // unten schon warteBisRuhig() steht; hier oben fehlte sie.
+  await warteAufHerkunft(page);
   await auswerten(page, ANMELDEN);
   await page("Page.navigate", { url: URL_UNTER_TEST });
-  await sleep(2800);
+  await warteAufHerkunft(page);
 
   for (const g of geraeteliste) {
     await page("Emulation.setDeviceMetricsOverride", {
