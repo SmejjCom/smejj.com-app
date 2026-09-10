@@ -209,3 +209,21 @@ test("lange Treffer-Texte kuerzen die Liste, nie den Rat", async () => {
   const ohne = mehrdeutigText(2, { strategy: "css", value: "a.x" }, []);
   assert.ok(ohne.length <= 220 && /"nth":N/.test(ohne) && !/nth 0:/.test(ohne));
 });
+
+// --- Welcher Treffer, wenn das Modell keinen nennt (gemessen 10.09.) -------
+// Die Liste lautete `nth 0: ohne Text | nth 1: "Suchen"`; die blinde Null traf
+// einen unbeschrifteten Symbolknopf, und der Lauf lief im Kreis.
+test("die Ersatzwahl nimmt den ersten Treffer MIT Beschriftung, nicht blind die Null", async () => {
+  const { besterTreffer } = await import("../workers/maus-engine/interactive-loop.mjs");
+  assert.equal(besterTreffer('selector_mehrdeutig: 8 Treffer fuer role="button" — nth 0: ohne Text | nth 1: "Suchen" | nth 2: ohne Text — "nth":N …'), 1);
+  assert.equal(besterTreffer('… — nth 0: "Verbergen" | nth 1: "Verbergen" — …'), 0, "sind alle beschriftet, gilt die Reihenfolge der Seite");
+  assert.equal(besterTreffer('… — nth 0: "" | nth 1: "Treffer" — …'), 1, "leerer Text zaehlt nicht als Beschriftung");
+  assert.equal(besterTreffer("selector_mehrdeutig: 2 Treffer fuer css=\"a.x\" — \"nth\":N …"), 0, "ohne Liste bleibt es bei der Null");
+});
+
+test("die getroffene Wahl steht im Feld repariert — mit ihrer Nummer", () => {
+  const zeile = 'FEHLGESCHLAGEN: Klicken: button (selector_mehrdeutig: 8 Treffer fuer role="button" — nth 0: ohne Text | nth 1: "Suchen" — "nth":N (0-basiert) waehlen)';
+  const e = benenneMehrdeutigeWahl({ ok: true, decision: { decision: "act", step: { id: "s2", action: "click", target: { selector: { strategy: "role", value: "button" } } } }, repariert: [] }, [zeile]);
+  assert.equal(e.decision.step.target.selector.nth, 1);
+  assert.ok(e.repariert.includes("nth_1_nach_mehrdeutig"), `repariert: ${e.repariert.join(",")}`);
+});

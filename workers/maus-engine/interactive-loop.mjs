@@ -241,6 +241,17 @@ export function repariereEntscheidung(eingabe) {
 // gemacht. Kein stilles .first(): nur nach ausdruecklicher Ablehnung, nur
 // fuer genau den abgelehnten Selektor, und protokolliert.
 const MEHRDEUTIG = /selector_mehrdeutig: \d+ Treffer fuer (\w+)="([^"]+)"/;
+// WELCHER Treffer, wenn das Modell selbst keinen nennt? Gemessen 10.09.
+// (de.wikipedia.org): die Liste lautete `nth 0: ohne Text | nth 1: "Suchen"`,
+// und die blinde Null traf einen unbeschrifteten Symbolknopf — der Lauf lief
+// weiter im Kreis. Ein Knopf OHNE Beschriftung ist selten das Ziel eines
+// Auftrags, der in Worten formuliert ist. Also: der erste Treffer MIT Text,
+// sonst die Null. Die Wahl steht sichtbar im Feld `repariert`.
+export function besterTreffer(meldung) {
+  const treffer = [...String(meldung).matchAll(/nth (\d+): "([^"]*)"/g)];
+  const mitText = treffer.find(([, , text]) => text.trim().length > 0);
+  return mitText ? Number(mitText[1]) : 0;
+}
 export function benenneMehrdeutigeWahl(entscheidung, verlauf = []) {
   if (!entscheidung?.ok || entscheidung.decision?.decision !== "act") return entscheidung;
   const s = entscheidung.decision.step || {};
@@ -251,8 +262,8 @@ export function benenneMehrdeutigeWahl(entscheidung, verlauf = []) {
   if (!letzte) return entscheidung;
   const [, strategy, value] = MEHRDEUTIG.exec(String(letzte));
   if (sel.strategy !== strategy || sel.value !== value) return entscheidung;
-  sel.nth = 0;
-  return { ...entscheidung, repariert: [...(entscheidung.repariert || []), "nth_0_nach_mehrdeutig"] };
+  sel.nth = besterTreffer(String(letzte));
+  return { ...entscheidung, repariert: [...(entscheidung.repariert || []), `nth_${sel.nth}_nach_mehrdeutig`] };
 }
 
 export function validateLoopDecision(rawAnswer, policyInput) {
