@@ -619,6 +619,9 @@ export async function handleMausRun(req, res, {
     } catch (error) {
       return json(res, 502, {
         ok: false, error: String(error?.message || error).slice(0, 200),
+        // Wie lange es dauert, bis wieder Kontingent da ist — der Anbieter
+        // sagt es, und das Panel kann es dem Betreiber sagen.
+        ...(Number.isFinite(error?.wartezeitMs) ? { wartezeitMs: error.wartezeitMs } : {}),
         planer: planerMessung,
         transparenzhinweis: transparencyNotice("maus-engine-v2")
       });

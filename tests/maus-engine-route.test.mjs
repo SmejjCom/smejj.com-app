@@ -586,3 +586,23 @@ test("Steckt die GANZE Kette im Ratenlimit, wird einmal gewartet und alles erneu
   assert.match(await client("prompt"), /"done"/);
   assert.ok(geschlafen >= 15000, "nach einer vollstaendig gedrosselten Kette gehoert eine Pause hin");
 });
+
+// --- Am Limit ist etwas anderes als nicht erreichbar (gemessen 10.09.) -----
+// Beide Gratis-Kontingente waren erschoepft; der Chat schrieb "Modell
+// antwortet nicht (502)" — als waere etwas kaputt. Es war nur voll.
+test("sind ALLE Modelle gedrosselt, heisst der Fehler planer_am_limit und nennt die Wartezeit", async () => {
+  const fetchImpl = async () => planerAntwort("", 429);
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {} });
+  await assert.rejects(client("prompt"), (fehler) => {
+    assert.equal(fehler.message, "planer_am_limit");
+    assert.equal(typeof fehler.wartezeitMs, "number");
+    assert.ok(fehler.wartezeitMs >= 15000);
+    return true;
+  });
+});
+
+test("ein echter Ausfall bleibt planer_nicht_erreichbar", async () => {
+  const fetchImpl = async () => { throw new Error("kein Netz"); };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {} });
+  await assert.rejects(client("prompt"), /planer_nicht_erreichbar/);
+});
