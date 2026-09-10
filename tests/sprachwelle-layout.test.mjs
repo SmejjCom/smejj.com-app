@@ -77,3 +77,30 @@ test("der Hinweis unter der Sprachwelle bleibt kurz", () => {
   assert.ok(treffer, "der Hinweistext wurde nicht gefunden");
   assert.ok(treffer[1].length <= 60, `Hinweis ist ${treffer[1].length} Zeichen lang: "${treffer[1]}"`);
 });
+
+test("die Kamera legt sich NICHT ueber die Bedienzone", () => {
+  // Betreiber 2026-09-10: "Video darf niemals wichtige Bedienelemente
+  // verdecken." GEMESSEN (375x812, Kamera im Sprachmodus): #kameraOverlay steht
+  // auf fixed/inset:0/z-index 200 — genau wie das Sprach-Overlay, und es kommt
+  // spaeter ins Dokument. elementFromPoint auf die Mitte JEDES der sechs
+  // Bedienelemente lieferte "kameraOverlay", auch beim X: die Sprachwelt liess
+  // sich nicht mehr schliessen, solange die Kamera lief.
+  const flaechen = readFileSync(new URL("../public/design-v11-flaechen.css", import.meta.url), "utf8");
+  assert.match(flaechen, /body\.voice-mode-open #kameraOverlay\s*\{[^}]*bottom:\s*calc\(var\(--voice-bedienzone/,
+    "das Kamera-Overlay muss im Sprachmodus ueber der Bedienzone enden");
+  assert.match(flaechen, /body\.voice-mode-open #voiceModeClose\s*\{[^}]*z-index/,
+    "das X muss in jedem Fall erreichbar bleiben");
+  // Und die Hoehe muss gemeldet werden, sonst rechnet die Regel mit 0.
+  assert.match(ui, /--voice-bedienzone/, "voice-overlay-ui.js meldet die Hoehe nicht");
+  assert.match(ui, /ResizeObserver/, "bei Umbruch oder Drehung aendert sich die Hoehe");
+});
+
+test("eine Aufnahme im Sprachmodus landet im SPRACH-Feld", () => {
+  // Bis 2026-09-10 ging das Bild immer an #startMessage — das Feld der
+  // Startseite, das im Sprachmodus verdeckt ist. Fuer den Nutzer sah es aus,
+  // als sei nichts passiert.
+  const kamera = readFileSync(new URL("../public/kamera.js", import.meta.url), "utf8");
+  assert.match(kamera, /voice-mode-open/, "kamera.js unterscheidet die Modi nicht");
+  assert.match(kamera, /imSprachmodus \? "voiceModeInput" : "startMessage"/,
+    "das Ziel-Feld haengt nicht am Modus");
+});

@@ -41,7 +41,7 @@ if (location.pathname.includes("papierkorb")) {
 //    Aufgefallen ist es erst, weil danach GEMESSEN wurde, ob das Modul im
 //    Netzwerk auftaucht; sichtbar passiert bei einer Attrappe ja nichts, und
 //    "nichts passiert" sieht aus wie "die Kamera darf nicht".
-ladeBeiKlick(["#composerPlusButton", "[data-start-tool]", "[data-kamera-start]"], () => import("./kamera.js?v=b35live2"));
+ladeBeiKlick(["#composerPlusButton", "[data-start-tool]", "[data-kamera-start]"], () => import("./kamera.js?v=b35live3"));
 
 // 4. "@"-Erwaehnung — erst wenn im Startfeld ein "@" getippt wird. Nach dem
 //    Laden bekommt das Feld ein synthetisches input-Ereignis, damit die
