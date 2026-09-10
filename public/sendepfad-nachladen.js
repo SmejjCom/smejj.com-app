@@ -14,8 +14,8 @@ export function holeSendepfad() {
     import("/assets/ai/chat-stream.js"),
     import("./autonomous-intent.js"),
     import("./browser-context.js"),
-    import("./medien-absicht.js?v=7"),
-    import("./maus-absicht.js?v=24"),
+    import("./medien-absicht.js?v=8"),
+    import("./maus-absicht.js?v=25"),
     import("./free-coding-fallback.js")
   ]).then((teile) => Object.assign({}, ...teile))
     .catch((fehler) => { sendepfadGeladen = null; console.error("[smejj.com] Nachladen fehlgeschlagen:", fehler); throw fehler; });
