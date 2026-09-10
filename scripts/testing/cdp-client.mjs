@@ -23,7 +23,15 @@ const CHROME_PATHS = [
 ];
 
 /** Startet Chrome headless und liefert einen verbundenen Client. */
-export async function launchChrome({ chromePath = "", timeoutMs = 20000 } = {}) {
+/**
+ * @param {string[]} [options.extraArgs] Zusaetzliche Chrome-Schalter.
+ *   Gebraucht fuer Messungen, die ein Geraet brauchen, das es headless nicht
+ *   gibt — etwa ein Mikrofon: --use-fake-device-for-media-stream liefert einen
+ *   Testton, --use-fake-ui-for-media-stream ueberspringt die Erlaubnisfrage.
+ *   Ohne sie bleibt getUserMedia in einer Messung ewig haengen, und man haelt
+ *   eine gesunde Sprachwelle fuer kaputt.
+ */
+export async function launchChrome({ chromePath = "", timeoutMs = 20000, extraArgs = [] } = {}) {
   const binary = chromePath || (await firstExistingChrome());
   if (!binary) throw new Error("Kein Chrome gefunden — Pfad per CHROME_PATH setzen.");
   const profile = await mkdtemp(join(tmpdir(), "smejj-vitals-"));
@@ -36,6 +44,7 @@ export async function launchChrome({ chromePath = "", timeoutMs = 20000 } = {}) 
     "--disable-extensions",
     "--force-device-scale-factor=1",
     "--window-size=1280,900",
+    ...extraArgs,
     "about:blank"
   ], { stdio: ["ignore", "ignore", "ignore"] });
 

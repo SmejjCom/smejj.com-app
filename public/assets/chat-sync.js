@@ -274,8 +274,24 @@ async function push() {
         body: JSON.stringify({ chat })
       });
       if (antwort.status === 503) { serverSagtNein = true; break; }
-      // 4xx betrifft GENAU DIESEN Chat und wird sich von selbst nie aendern —
-      // also melden und mit dem naechsten weitermachen, nicht abbrechen.
+      // 401/403 betrifft NICHT diesen Chat, sondern die SITZUNG — und dann ist
+      // jede weitere Anfrage dieses Laufs genauso vergeblich.
+      //
+      // GEMESSEN 2026-09-10 mit abgelaufener Anmeldung: der Lauf arbeitete
+      // sich durch die lokalen Chats und schickte fuer JEDEN eine Anfrage, die
+      // mit 401 zurueckkam. Bei den 113 Gespraechen, die dieser Code an
+      // anderer Stelle als Normalfall nennt, sind das 113 vergebliche
+      // Anfragen — genau in dem Moment, in dem der Nutzer den Streifen "Deine
+      // Anmeldung ist abgelaufen" vor sich hat.
+      //
+      // Bewusst OHNE Merker: der naechste planePush() (4 s Entprellung, durch
+      // eine Aenderung ausgeloest) versucht es wieder. Hat der Nutzer sich
+      // inzwischen angemeldet, laeuft der Abgleich einfach weiter. Ein
+      // dauerhafter Merker wie serverSagtNein wuerde den Abgleich bis zum
+      // Neuladen abschalten — das waere schlimmer als der Sturm.
+      if (antwort.status === 401 || antwort.status === 403) break;
+      // Die uebrigen 4xx betreffen GENAU DIESEN Chat und werden sich von
+      // selbst nie aendern — also melden und mit dem naechsten weitermachen.
       // 4xx UND das 500 des Body-Lesers: "Request too large" kommt roh
       // heraus, BEVOR die Chat-Pruefung laeuft (maxJsonBodyBytes = 1 MB).
       // Bis heute fiel genau das durch — sechs der zehn ungesicherten Chats
@@ -376,6 +392,11 @@ async function pushProjekte() {
       });
       if (antwort.status === 404) break; // Backend noch nicht da: aufhoeren, nicht merken
       if (antwort.status === 503) { serverSagtNeinProjekte = true; break; }
+      // Wie beim Chat-Push: 401/403 betrifft die Sitzung, nicht dieses Projekt.
+      // Weiterlaufen hiesse, fuer jedes Projekt dieselbe vergebliche Anfrage zu
+      // schicken. Ohne Merker — beim naechsten Anlauf zaehlt die dann
+      // vielleicht frische Anmeldung.
+      if (antwort.status === 401 || antwort.status === 403) break;
       // Dieselbe Luecke wie beim Chat-Push: eine 4xx-Ablehnung war unsichtbar.
       // 404 ist oben schon abgefangen — das ist "noch nicht ausgerollt", kein Verlust.
       if (antwort.status >= 400 && antwort.status < 500) {
