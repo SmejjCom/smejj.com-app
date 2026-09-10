@@ -104,7 +104,17 @@ function normalisiereSelektor(ziel) {
     // Ein nacktes Wort ist nur dann CSS, wenn es ein HTML-Element ist ("h1",
     // "button") — "Weiter" ist Text auf einem Knopf, kein Element.
     const istElement = /^(h[1-6]|a|p|button|input|form|main|nav|header|footer|section|article|aside|table|thead|tbody|tr|td|th|ul|ol|li|span|div|img|select|option|textarea|label|body|title|summary|details|dialog|iframe)$/.test(s);
-    return (istElement || (/^[#.\[]|^[a-z][a-z0-9-]*[#.\[:>\s]/i.test(s) && !/\s/.test(s)))
+    // EIN LEERZEICHEN MACHT AUS CSS KEINEN TEXT (live 10.09.): Bis hierher
+    // fiel jeder zusammengesetzte Selektor durch — "#searchform button[type=
+    // \"submit\"]" wurde als TEXT gesucht und fand nie etwas
+    // ("selector_ohne_treffer"), zweimal hintereinander, weil das Modell die
+    // Form fuer richtig hielt. Sie WAR richtig; nur die Deutung war falsch.
+    // Entscheidend ist nicht das Leerzeichen, sondern ob CSS-Zeichen drin
+    // stehen: #id, .klasse, [attribut], > oder ein Tag mit einem davon.
+    // "Impressum und Datenschutz" traegt nichts davon und bleibt Text.
+    const cssZeichen = /^[#.[]/.test(s) || /[[\]>]/.test(s) || /^[a-z][a-z0-9-]*[#.[:>]/i.test(s)
+      || /(^|\s)[#.][a-z][\w-]*/i.test(s);
+    return (istElement || cssZeichen)
       ? { strategy: "css", value: s } : { strategy: "text", value: s };
   }
   if (!ziel || typeof ziel !== "object" || Array.isArray(ziel)) return ziel;

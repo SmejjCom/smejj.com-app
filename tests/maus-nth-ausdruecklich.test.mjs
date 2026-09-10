@@ -174,3 +174,19 @@ test("beschreibeTreffer liest hoechstens vier Treffer und faellt nie um", async 
   assert.deepEqual(await beschreibeTreffer(kaputt, 2), ["nicht lesbar", "nicht lesbar"]);
   assert.deepEqual(await beschreibeTreffer({}, 2), [], "ohne nth-Faehigkeit keine Liste, kein Absturz");
 });
+
+// --- CSS mit Leerzeichen (live 10.09., zweimal hintereinander) -------------
+// "#searchform button[type=\"submit\"]" wurde als TEXT gesucht und fand nie
+// etwas. Die Form des Modells war richtig, die Deutung war falsch.
+test("zusammengesetzte CSS-Selektoren bleiben CSS, echte Beschriftungen bleiben Text", () => {
+  const alsZiel = (wert) => repariereEntscheidung({ schemaVersion: 1, decision: "act", reason: "r", step: { id: "s1", action: "click", target: wert } }).decision.step.target.selector;
+  assert.deepEqual(alsZiel('#searchform button[type="submit"]'), { strategy: "css", value: '#searchform button[type="submit"]' });
+  assert.deepEqual(alsZiel("form#searchform button[type='submit']"), { strategy: "css", value: "form#searchform button[type='submit']" });
+  assert.deepEqual(alsZiel("div.treffer > a"), { strategy: "css", value: "div.treffer > a" });
+  assert.deepEqual(alsZiel("#searchInput"), { strategy: "css", value: "#searchInput" });
+  assert.deepEqual(alsZiel("h1"), { strategy: "css", value: "h1" });
+  // Und die Gegenprobe: Beschriftungen mit Leerzeichen bleiben Text.
+  assert.deepEqual(alsZiel("Impressum und Datenschutz"), { strategy: "text", value: "Impressum und Datenschutz" });
+  assert.deepEqual(alsZiel("Ada Lovelace"), { strategy: "text", value: "Ada Lovelace" });
+  assert.deepEqual(alsZiel("Weiter"), { strategy: "text", value: "Weiter" });
+});
