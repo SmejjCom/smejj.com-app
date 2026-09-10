@@ -227,3 +227,24 @@ test("die getroffene Wahl steht im Feld repariert — mit ihrer Nummer", () => {
   assert.equal(e.decision.step.target.selector.nth, 1);
   assert.ok(e.repariert.includes("nth_1_nach_mehrdeutig"), `repariert: ${e.repariert.join(",")}`);
 });
+
+// --- Zweiter Versuch mit Nachdruck (live 10.09., de.wikipedia.org) --------
+// Wikipedias Suchknopf ist ein <button type="submit">, das die Seite
+// absichtlich unsichtbar macht. Playwright wartete auf Bedienbarkeit, die nie
+// eintrat — fuenf Schritte hintereinander "element_nicht_bedienbar".
+test("ein nicht bedienbares, aber EINDEUTIGES Ziel bekommt genau einen erzwungenen Klick", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("let erzwungen = false;"), quelle.indexOf("waitForLoadState(\"domcontentloaded\"", quelle.indexOf("let erzwungen = false;")));
+  assert.match(stelle, /catch \(fehler\)/, "der erste Versuch bleibt der normale");
+  assert.match(stelle, /Timeout .\*exceeded/, "erzwungen wird NUR nach einer abgelaufenen Frist");
+  assert.match(stelle, /force: true/);
+  assert.match(quelle, /erzwungen \? \{ erzwungen: true \} : \{\}/, "die Antwort sagt, dass nachgedrueckt wurde");
+  // Und es bleibt bei EINEM: kein zweiter force-Klick, keine Schleife.
+  assert.equal((quelle.match(/force: true/g) || []).length, 1);
+});
+
+test("ein anderer Klick-Fehler wird NICHT erzwungen, sondern weitergereicht", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("let erzwungen = false;"), quelle.indexOf("erzwungen = true;"));
+  assert.match(stelle, /if \(!\/Timeout \.\*exceeded\/i\.test\(String\(fehler\?\.message \|\| fehler\)\)\) throw fehler;/);
+});
