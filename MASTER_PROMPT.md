@@ -220,7 +220,10 @@ Es wird kein weiterer Anbieter hinzugefügt, ohne schriftliche Freigabe des Betr
 
 Modell-Strategie (Multi-Model, API-Key-basiert)
 * Alle Modelle werden ausschließlich über API-Keys (BYOK) an den zentralen Modell-Router angebunden.
-* Aktuell verfügbare Modelle: smejj 1.0 (eigenes Modell), GLM-5.2, Kimi K3, Cline.
+* Aktuell verfügbare Modelle: die smejj-Staffel (1.0 bis 1.3) als eigene Modelle,
+  dazu Auto (der Server wählt pro Aufgabe) sowie GLM-5.2, Kimi K2.7 und Kimi K3
+  über eigene API-Schlüssel. Cline wurde am 2026-09-10 auf Betreiber-Anweisung
+  vollständig entfernt ("Cline muss vollständig aus der App entfernt werden").
 * GLM-5.2 ist das aktuelle Qualitäts-, Reasoning- und Coding-Fundament (Profil coding: GLM-5.2 zuerst).
 * Zukünftige Modelle (Claude, GPT, Gemini, Grok, DeepSeek und weitere) werden ebenfalls
   per API-Key über den Router angebunden — ohne Architekturänderung, nur als neue Router-Einträge.
