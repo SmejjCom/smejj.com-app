@@ -100,6 +100,12 @@ test("die Kamera legt sich NICHT ueber die Bedienzone", () => {
   // Und die Hoehe muss gemeldet werden, sonst rechnet die Regel mit 0.
   assert.match(ui, /--voice-bedienzone/, "voice-overlay-ui.js meldet die Hoehe nicht");
   assert.match(ui, /ResizeObserver/, "bei Umbruch oder Drehung aendert sich die Hoehe");
+  // EIN UNPLAUSIBLER WERT DARF NICHT DURCH. Der erste Anlauf rechnete Hoehe +
+  // Abstand zur Unterkante und meldete 812px bei 812px Fensterhoehe — das
+  // Kamera-Overlay bekam bottom: 820px, schrumpfte auf Hoehe 0, und das nackte
+  // video-Element lag ueber dem X. Eine kaputte Zahl war schlimmer als keine.
+  assert.match(ui, /innerHeight \* 0\.5/, "kein Deckel gegen unplausible Werte");
+  assert.match(ui, /requestAnimationFrame/, "vor dem Layout gemessen ist geraten");
 });
 
 test("eine Aufnahme im Sprachmodus landet im SPRACH-Feld", () => {
