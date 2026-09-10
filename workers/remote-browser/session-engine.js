@@ -87,6 +87,32 @@ const ERLAUBTE_STRATEGIEN = new Set(["role", "testId", "label", "text", "placeho
 // Was vom Aktions-Objekt in den Playwright-Locator wandert. E2E 10.09. ueber
 // die Schnittstelle: nth kam durch die Validierung, wurde aber HIER fallen
 // gelassen — "selector_mehrdeutig" trotz "Treffer 1". Ein Feld, zwei Stellen.
+// Das Merkmal, mit dem ein per Nummer gewaehltes Element kurz angeheftet wird.
+// Es lebt nur zwischen Auswahl und Aktion und wird danach wieder entfernt.
+export const ZIEL_MARKE = "data-smejj-ziel";
+
+// Element Nummer n aus der letzten Beobachtung anheften. Fail-open: geht es
+// nicht (Seite gewechselt, Beobachtung veraltet), bleibt es beim Selektor —
+// schlechter als vorher wird es dadurch nie.
+export async function markiereGesehenes(page, n, marke = ZIEL_MARKE) {
+  if (typeof page?.evaluate !== "function" || !Number.isInteger(n) || n <= 0) return false;
+  return await page.evaluate(([nummer, feld]) => {
+    const liste = window.__smejjMausGesehen;
+    const el = Array.isArray(liste) ? liste[nummer - 1] : null;
+    document.querySelectorAll(`[${feld}]`).forEach((x) => x.removeAttribute(feld));
+    if (!el || !el.isConnected) return false;
+    el.setAttribute(feld, "1");
+    return true;
+  }, [n, marke]).catch(() => false);
+}
+
+export async function entferneMarke(page, marke = ZIEL_MARKE) {
+  if (typeof page?.evaluate !== "function") return;
+  await page.evaluate((feld) => {
+    document.querySelectorAll(`[${feld}]`).forEach((x) => x.removeAttribute(feld));
+  }, marke).catch(() => {});
+}
+
 export function selektorDefinition(action) {
   const def = { strategy: action.strategy, value: action.value };
   if (action.name !== undefined) def.name = action.name;
@@ -154,6 +180,9 @@ export function validateSessionAction(action, limits = SESSION_DEFAULTS) {
       // Lovelace, die Maus gab nach zwei Versuchen auf. Kein .first(): die
       // Wahl trifft das Modell, benannt und sichtbar im Verlauf.
       if (Number.isInteger(action.nth) && action.nth >= 0 && action.nth <= 999) gebaut.nth = action.nth;
+      // DIE NUMMER AUS DER BEOBACHTUNG (11.09.): das Modell muss keinen
+      // Selektor mehr erfinden, es kann auf das zeigen, was es GESEHEN hat.
+      if (Number.isInteger(action.n) && action.n > 0 && action.n <= 1000) gebaut.n = action.n;
       if (action.type === "selectorType") {
         const text = String(action.text ?? "");
         if (!text || text.length > limits.typeMaxChars) return { ok: false, error: "type_text_invalid" };
@@ -578,13 +607,20 @@ export function createSessionEngine({
         // gleich finden — sonst tut die Maus im Panel etwas anderes als in
         // ihrem eigenen Browser, und das faellt erst live auf.
         const def = selektorDefinition(action);
+        // ZUERST DIE NUMMER, DANN DER SELEKTOR. Genau die Reihenfolge der
+        // Chrome-Bruecke: eine Kennung aus der eigenen Beobachtung zeigt auf
+        // GENAU das gesehene Element, ein Selektor kann inzwischen auf ein
+        // zweites, gleich benanntes zeigen.
+        const perNummer = await markiereGesehenes(page, action.n);
         // EINDEUTIG statt .first() (Betreiber-Freigabe 2026-08-21, ZCode-Regel).
         // Vorher nahm diese Zeile bei mehreren Treffern kommentarlos den
         // ersten: auf einer Seite mit zwei "Anmelden"-Knoepfen wurde
         // stillschweigend der falsche geklickt. Lesen (selectorText) darf
         // weiterhin mehrdeutig sein — es veraendert nichts.
-        const locator = await resolveEindeutig(page, def, { erlaubeMehrere: action.type === "selectorText" })
-          .then((l) => (action.type === "selectorText" ? l.first() : l));
+        const locator = perNummer
+          ? page.locator(`[${ZIEL_MARKE}]`)
+          : await resolveEindeutig(page, def, { erlaubeMehrere: action.type === "selectorText" })
+            .then((l) => (action.type === "selectorText" ? l.first() : l));
         await locator.waitFor({ state: "visible", timeout: cfg.settleTimeoutMs }).catch(() => {});
         // Die Box VOR der Aktion messen: nach einem Klick ist die Seite
         // womoeglich eine andere, und das Element weg.
