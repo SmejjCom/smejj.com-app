@@ -52,6 +52,32 @@ export function resolveLocator(page, selectorDef) {
 // `nth` bleibt erlaubt, WENN der Plan es ausdruecklich sagt: dann ist die
 // Mehrdeutigkeit gewollt und benannt, nicht verschwiegen. Genau das ist der
 // Unterschied zwischen einer Auswahl und einem Zufall.
+// DIE MELDUNG MUSS IN 220 ZEICHEN PASSEN — so weit kuerzt das Panel sie, ehe
+// sie in den Verlauf des Modells wandert. Live 10.09. stand die Trefferliste
+// hinter drei Zeilen Rat und fiel weg; danach passte der Rat nicht mehr neben
+// drei lange Treffer. Deshalb hier die Reihenfolge: Kopf und Rat sind gesetzt,
+// und es kommen so viele Treffer dazwischen, wie noch hineingehen — mindestens
+// einer, sonst waere die Liste sinnlos.
+export const MELDUNG_MAX = 220;
+export function mehrdeutigText(anzahl, selectorDef, kandidaten = [], grenze = MELDUNG_MAX) {
+  const kopf = `selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)}`;
+  const rat = ' — "nth":N (0-basiert) waehlen oder Selektor enger fassen (Bedienbaum); NICHT denselben wiederholen.';
+  const bauen = (liste) => `${kopf}${liste.length ? ` — ${liste.join(" | ")}` : ""}${rat}`;
+  const teile = [];
+  for (const [i, k] of (kandidaten || []).slice(0, 3).entries()) {
+    const eintrag = `nth ${i}: ${k}`;
+    if (bauen([...teile, eintrag]).length <= grenze) { teile.push(eintrag); continue; }
+    // Der ERSTE Treffer bleibt in jedem Fall — notfalls gekuerzt. Ohne ihn
+    // waere die Liste leer und das Modell wieder so klug wie vorher.
+    if (!teile.length) {
+      const platz = grenze - bauen([`nth ${i}: `]).length;
+      if (platz > 8) teile.push(`nth ${i}: ${k.slice(0, platz - 1)}…`);
+    }
+    break;
+  }
+  return bauen(teile);
+}
+
 export class MehrdeutigError extends Error {
   constructor(anzahl, selectorDef, kandidaten = []) {
     // Der Rat steht VORN: das Panel kuerzt Fehlertexte, und bis 09.09. fiel
@@ -62,9 +88,10 @@ export class MehrdeutigError extends Error {
     // und verbrannte je Runde eine halbe Minute Denkzeit. Wer die Treffer
     // sieht, kann waehlen: entweder das passende "nth" oder ein Merkmal, das
     // nur einer von ihnen traegt.
-    const liste = (kandidaten || []).slice(0, 4).map((k, i) => `nth ${i}: ${k}`).join(" | ");
-    super(`selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)} — "nth":0 waehlt ausdruecklich den ersten (0-basiert) oder Selektor enger fassen (Rolle+Name aus dem Bedienbaum)`
-      + (liste ? `. Die Treffer: ${liste}` : ""));
+    // DAS NUETZLICHE ZUERST: das Panel kuerzt Fehlertexte auf 220 Zeichen, und
+    // live 10.09. fiel genau die Trefferliste weg — sie stand hinter drei
+    // Zeilen Rat. Jetzt: Anzahl, Treffer, dann der Rat in einem Satz.
+    super(mehrdeutigText(anzahl, selectorDef, kandidaten));
     this.name = "MehrdeutigError";
     this.anzahl = anzahl;
     this.kandidaten = kandidaten || [];
