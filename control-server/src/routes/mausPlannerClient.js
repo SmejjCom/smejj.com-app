@@ -181,6 +181,15 @@ export function buildPlannerClient({
       // Minute Wartezeit vollstaendig.
       fehlversuche: versuche.map((a) => `${a.backend || a.name || "?"}/${a.model || "?"}: ${a.error || a.failure || "?"}`)
     });
+    // AM LIMIT IST ETWAS ANDERES ALS NICHT ERREICHBAR (gemessen 10.09.): sind
+    // ALLE Modelle gedrosselt, hilft kein zweiter Versuch in derselben Minute
+    // — nur Warten. Der Unterschied gehoert bis in den Chat, sonst liest der
+    // Betreiber "Modell antwortet nicht" und sucht den Fehler bei sich.
+    if (!result.ok && nurRatenlimit(versuche)) {
+      const fehler = new Error("planer_am_limit");
+      fehler.wartezeitMs = wartezeitAus(versuche, warteMs);
+      throw fehler;
+    }
     if (!result.ok) throw new Error("planer_nicht_erreichbar");
     if (!content) throw new Error("planer_leere_antwort");
     return content;
