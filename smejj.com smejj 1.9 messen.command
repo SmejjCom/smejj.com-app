@@ -25,6 +25,14 @@
 # solcher Zombie sieht wie ein laufender Lauf aus.
 #
 # KOSTEN: hoechstens rund 0,55 USD (330 Minuten Frist, 0,10 USD/h).
+#
+# ZUR PRIORITAET: Das Skript gibt "high" aus, aber Salad nimmt das Feld
+# per PATCH nicht an (gemessen 11.09.: HTTP 200, danach steht kein
+# priority-Feld in der Gruppe). Es gilt die Prioritaet, mit der die Gruppe
+# ERSTELLT wurde. Wir rechnen also auf der guenstigen Stufe — und werden
+# verdraengt. Dagegen schuetzen seit dem 11.09. die Zwischenstaende: die
+# Messung sichert alle 25 Antworten und nimmt nach einer Verdraengung
+# wieder auf, statt bei null anzufangen.
 
 cd "$(dirname "$0")" || exit 1
 if [ -f "$HOME/.config/smejj.com/env.local" ]; then

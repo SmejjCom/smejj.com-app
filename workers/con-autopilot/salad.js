@@ -141,6 +141,19 @@ export async function bereiteJobVor({ client, konfig, e2, jobId, modus, paramete
       return { ok: false, gruende: [`verwaister_container_gestoppt:${zustand}:http_${s.status}`] };
     }
     // WICHTIG: environment_variables wird als Ganzes ERSETZT (Lehre Salad/Zeabur 2026-08) — darum immer die komplette Liste.
+    // ACHTUNG, gemessen am 11.09.: `priority` laesst sich per PATCH NICHT
+    // aendern. Salad nimmt das Feld mit HTTP 200 an und verwirft es still —
+    // ein Blick in die Gruppe danach zeigt gar kein priority-Feld. Die
+    // Prioritaet steht nur beim ERSTELLEN der Gruppe fest.
+    //
+    // Folge, die uns drei Messlaeufe gekostet hat: Wir haben seit dem 09.09.
+    // "Prioritaet high" ausgegeben und auf der Standardprioritaet gerechnet.
+    // Die Messung wurde dreimal kurz vor dem Ziel verdraengt (bei 287, 280 und
+    // 276 von 295) und begann jedes Mal von vorn.
+    //
+    // Das Feld bleibt trotzdem im PATCH: schadet nicht, und sollte Salad es
+    // eines Tages annehmen, wirkt es sofort. Verlassen wir uns nicht darauf —
+    // der Schutz sind die Zwischenstaende in evalrun.fuehre_aus().
     const r = await client.aktualisiere({ container: { environment_variables: env, command: STARTBEFEHL,
       resources: { cpu: konfig.salad.vcpu, memory: konfig.salad.ramMb, gpu_classes: konfig.salad.gpuKlassen,
         storage_amount: Math.round(konfig.salad.speicherGb * 1024 * 1024 * 1024), shm_size: 1024 }, priority: konfig.salad.prioritaet }, replicas: 1 });
