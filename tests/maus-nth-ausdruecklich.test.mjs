@@ -21,11 +21,16 @@ test("der ferne Browser nimmt nth an — und nur als ganze Zahl im Rahmen", () =
   assert.equal(validateSessionAction({ type: "selectorClick", strategy: "css", value: "a", nth: 1.5 }).action.nth, undefined);
 });
 
-test("die Mehrdeutig-Meldung nennt nth VORN — sie ueberlebt die Kuerzung des Panels", () => {
-  const fehler = new MehrdeutigError(2, { strategy: "css", value: "a[href='/wiki/Ada_Lovelace']" });
-  const gekuerzt = fehler.message.slice(0, 120);
-  assert.match(gekuerzt, /"nth":0/, `in den ersten 120 Zeichen fehlt der Rat: ${gekuerzt}`);
+test("die Mehrdeutig-Meldung ueberlebt die Kuerzung des Panels auf 220 Zeichen — mit Trefferliste UND Rat", () => {
+  const fehler = new MehrdeutigError(3, { strategy: "role", value: "button", name: "Suchen" }, ['"Suchen"', '"Erweiterte Suche"', '"Suche starten"']);
+  const gekuerzt = fehler.message.slice(0, 220);
+  assert.match(gekuerzt, /nth 0: "Suchen"/, `die Trefferliste faellt weg: ${gekuerzt}`);
+  assert.match(gekuerzt, /"nth":N/, `der Rat faellt weg: ${gekuerzt}`);
+  assert.match(gekuerzt, /NICHT denselben wiederholen/, `die Warnung faellt weg: ${gekuerzt}`);
+  assert.ok(fehler.message.length <= 220, `Meldung ist ${fehler.message.length} Zeichen lang`);
   assert.match(fehler.message, /enger fassen/);
+  // Ohne lesbare Treffer bleibt die Meldung trotzdem vollstaendig.
+  assert.match(new MehrdeutigError(2, { strategy: "css", value: "a.x" }).message.slice(0, 220), /"nth":N/);
 });
 
 test("der Schritt-Vertrag erklaert nth — sonst kann das Modell die Wahl nicht benennen", () => {
@@ -163,8 +168,10 @@ test("die Mehrdeutig-Meldung nennt die ersten Treffer mit Text und Adresse", asy
   const { MehrdeutigError } = await import("../workers/maus-engine/selector.mjs");
   const fehler = new MehrdeutigError(3, { strategy: "text", value: "Ada Lovelace" }, ['"Ada Lovelace" (/wiki/Ada_Lovelace)', '"Ada Lovelace (Begriffsklärung)" (/wiki/Ada_Lovelace_(BKL))']);
   assert.match(fehler.message, /nth 0: "Ada Lovelace" \(\/wiki\/Ada_Lovelace\)/);
-  assert.match(fehler.message, /nth 1: "Ada Lovelace \(Begriffskl/);
-  assert.equal(fehler.kandidaten.length, 2);
+  // Der zweite Treffer passt nur, wenn die 220 Zeichen reichen — der Rat geht vor.
+  assert.ok(fehler.message.length <= 220, `Meldung ist ${fehler.message.length} Zeichen`);
+  assert.match(fehler.message, /NICHT denselben wiederholen/);
+  assert.equal(fehler.kandidaten.length, 2, "gemerkt werden beide, gezeigt so viele wie passen");
 });
 
 test("beschreibeTreffer liest hoechstens vier Treffer und faellt nie um", async () => {
@@ -189,4 +196,16 @@ test("zusammengesetzte CSS-Selektoren bleiben CSS, echte Beschriftungen bleiben 
   assert.deepEqual(alsZiel("Impressum und Datenschutz"), { strategy: "text", value: "Impressum und Datenschutz" });
   assert.deepEqual(alsZiel("Ada Lovelace"), { strategy: "text", value: "Ada Lovelace" });
   assert.deepEqual(alsZiel("Weiter"), { strategy: "text", value: "Weiter" });
+});
+
+test("lange Treffer-Texte kuerzen die Liste, nie den Rat", async () => {
+  const { mehrdeutigText } = await import("../workers/maus-engine/selector.mjs");
+  const lang = mehrdeutigText(4, { strategy: "css", value: "a.treffer" }, ['"Ada Lovelace, britische Mathematikerin" (/wiki/Ada_Lovelace)', '"Ada Lovelace (Begriffsklaerung)" (/wiki/BKL)', '"Ada Lovelace Day" (/wiki/Day)']);
+  assert.ok(lang.length <= 220, `Meldung ist ${lang.length} Zeichen: ${lang}`);
+  assert.match(lang, /NICHT denselben wiederholen/, "der Rat bleibt immer");
+  assert.match(lang, /nth 0: "Ada Lovelace, britische/, "wenigstens der erste Treffer bleibt, notfalls gekuerzt");
+  assert.match(lang, /…/, "und die Kuerzung ist sichtbar");
+  // Ohne Treffer bleibt die Meldung die alte, kurze.
+  const ohne = mehrdeutigText(2, { strategy: "css", value: "a.x" }, []);
+  assert.ok(ohne.length <= 220 && /"nth":N/.test(ohne) && !/nth 0:/.test(ohne));
 });
