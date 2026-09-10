@@ -134,3 +134,43 @@ test("misslingt das Foto, gilt das letzte Bild weiter und die Aktion bleibt erfo
   assert.match(stelle, /catch \(error\) \{\s*session\.bildFehler/, "der Fehler wird gemerkt, nicht geworfen");
   assert.match(quelle, /bildVeraltet: true/, "der Aufrufer erfaehrt, dass das Bild von vorhin ist");
 });
+
+// --- Klick-Frist und Klartext (live 10.09., de.wikipedia.org) --------------
+test("Klick und Tippen haben eine eigene, groessere Frist als das Abwarten einer Seite", () => {
+  assert.equal(SESSION_DEFAULTS.aktionTimeoutMs, 10000);
+  assert.ok(SESSION_DEFAULTS.aktionTimeoutMs > SESSION_DEFAULTS.settleTimeoutMs, "sonst ist der Klick abgelaufen, bevor die Seite steht");
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  assert.match(quelle, /locator\.click\(\{ timeout: cfg\.aktionTimeoutMs \}\)/);
+  assert.match(quelle, /locator\.fill\(action\.text, \{ timeout: cfg\.aktionTimeoutMs \}\)/);
+});
+
+test("eine abgelaufene Klick-Frist wird zur deutschen Handlungsanweisung, nicht zu Playwright-Englisch", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("function klartext(error)"), quelle.indexOf("function fail(status, error)"));
+  assert.match(stelle, /element_nicht_bedienbar/, "der Grund steht vorn");
+  assert.match(stelle, /ANDERES Ziel/, "und der Rat auch");
+  assert.match(stelle, /NICHT dasselbe wiederholen/);
+  // Das Original bleibt lesbar dahinter — sonst ist die Fehlersuche blind.
+  assert.match(stelle, /roh\.slice\(0, 80\)/);
+});
+
+// --- Mehrdeutig: die Treffer beim Namen nennen (live 10.09.) --------------
+// "3 Treffer" allein half dem Modell nicht: es riet einen anderen, ebenfalls
+// mehrdeutigen Selektor und verbrannte je Runde eine halbe Minute Denkzeit.
+import { beschreibeTreffer } from "../workers/maus-engine/selector.mjs";
+
+test("die Mehrdeutig-Meldung nennt die ersten Treffer mit Text und Adresse", async () => {
+  const { MehrdeutigError } = await import("../workers/maus-engine/selector.mjs");
+  const fehler = new MehrdeutigError(3, { strategy: "text", value: "Ada Lovelace" }, ['"Ada Lovelace" (/wiki/Ada_Lovelace)', '"Ada Lovelace (Begriffsklärung)" (/wiki/Ada_Lovelace_(BKL))']);
+  assert.match(fehler.message, /nth 0: "Ada Lovelace" \(\/wiki\/Ada_Lovelace\)/);
+  assert.match(fehler.message, /nth 1: "Ada Lovelace \(Begriffskl/);
+  assert.equal(fehler.kandidaten.length, 2);
+});
+
+test("beschreibeTreffer liest hoechstens vier Treffer und faellt nie um", async () => {
+  const bau = (n) => ({ nth: (i) => ({ innerText: async () => `Treffer ${i}`, getAttribute: async () => `/w/${i}` }), _n: n });
+  assert.deepEqual(await beschreibeTreffer(bau(9), 9), ['"Treffer 0" (/w/0)', '"Treffer 1" (/w/1)', '"Treffer 2" (/w/2)', '"Treffer 3" (/w/3)']);
+  const kaputt = { nth: () => ({ innerText: async () => { throw new Error("weg"); }, getAttribute: async () => null }) };
+  assert.deepEqual(await beschreibeTreffer(kaputt, 2), ["nicht lesbar", "nicht lesbar"]);
+  assert.deepEqual(await beschreibeTreffer({}, 2), [], "ohne nth-Faehigkeit keine Liste, kein Absturz");
+});

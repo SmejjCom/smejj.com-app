@@ -53,13 +53,21 @@ export function resolveLocator(page, selectorDef) {
 // Mehrdeutigkeit gewollt und benannt, nicht verschwiegen. Genau das ist der
 // Unterschied zwischen einer Auswahl und einem Zufall.
 export class MehrdeutigError extends Error {
-  constructor(anzahl, selectorDef) {
+  constructor(anzahl, selectorDef, kandidaten = []) {
     // Der Rat steht VORN: das Panel kuerzt Fehlertexte, und bis 09.09. fiel
     // genau der Teil mit "nth" weg — das Modell las nur "enger fassen" und
     // scheiterte am selben Paar Links ein zweites Mal.
-    super(`selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)} — "nth":0 waehlt ausdruecklich den ersten (0-basiert) oder Selektor enger fassen (Rolle+Name aus dem Bedienbaum)`);
+    // DIE TREFFER BEIM NAMEN NENNEN (live 10.09.): "3 Treffer" allein half dem
+    // Modell nicht — es riet einen anderen, ebenfalls mehrdeutigen Selektor,
+    // und verbrannte je Runde eine halbe Minute Denkzeit. Wer die Treffer
+    // sieht, kann waehlen: entweder das passende "nth" oder ein Merkmal, das
+    // nur einer von ihnen traegt.
+    const liste = (kandidaten || []).slice(0, 4).map((k, i) => `nth ${i}: ${k}`).join(" | ");
+    super(`selector_mehrdeutig: ${anzahl} Treffer fuer ${beschreibe(selectorDef)} — "nth":0 waehlt ausdruecklich den ersten (0-basiert) oder Selektor enger fassen (Rolle+Name aus dem Bedienbaum)`
+      + (liste ? `. Die Treffer: ${liste}` : ""));
     this.name = "MehrdeutigError";
     this.anzahl = anzahl;
+    this.kandidaten = kandidaten || [];
     // Warten hilft hier NIE: zwei Treffer werden nicht durch Geduld zu einem.
     // withRetries bricht auf diese Marke hin sofort ab.
     this.nichtWiederholen = true;
@@ -88,8 +96,24 @@ export async function resolveEindeutig(page, selectorDef, { erlaubeMehrere = fal
   if (typeof locator.count !== "function") return locator; // Mock ohne count: nicht schlechter als vorher
   const anzahl = await locator.count();
   if (anzahl === 0) throw new NichtGefundenError(selectorDef);
-  if (anzahl > 1) throw new MehrdeutigError(anzahl, selectorDef);
+  if (anzahl > 1) throw new MehrdeutigError(anzahl, selectorDef, await beschreibeTreffer(locator, anzahl));
   return locator;
+}
+
+// Kurzbeschreibung der ersten Treffer — fail-open: geht es nicht, bleibt die
+// Meldung die alte. Ein Fehler beim ERKLAEREN eines Fehlers darf nichts kosten.
+export async function beschreibeTreffer(locator, anzahl, grenze = 4) {
+  if (typeof locator?.nth !== "function") return [];
+  const aus = [];
+  for (let i = 0; i < Math.min(anzahl, grenze); i += 1) {
+    try {
+      const eins = locator.nth(i);
+      const text = String((await eins.innerText?.({ timeout: 1000 })) || "").replace(/\s+/g, " ").trim().slice(0, 40);
+      const href = String((await eins.getAttribute?.("href", { timeout: 1000 })) || "").slice(0, 60);
+      aus.push([text ? `"${text}"` : "", href ? `(${href})` : ""].filter(Boolean).join(" ") || "ohne Text");
+    } catch { aus.push("nicht lesbar"); }
+  }
+  return aus;
 }
 
 // Selektor-Kandidaten in deterministischer Reihenfolge: Hauptselektor,
