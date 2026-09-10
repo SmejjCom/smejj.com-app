@@ -118,6 +118,23 @@ export const PROFILE = Object.freeze({
   // Training nicht vorkommt, muss es sich durch Fakten IM Training aufhalten
   // lassen. Trifft das nicht zu, ist die Idee widerlegt und nicht nur ungenau —
   // dann liegt es an der Methode, nicht an den Daten.
+  // smejj-1-11 (10.09.): MEHR PLATZ. Datensatz identisch mit 1.10 — nur Rang 32
+  // statt 16 (per SMEJJ_RANG). Der Grund steht in der Messung von 1.10:
+  //
+  //   1.8  Wissen -13,1  Koennen +7,4   Note 62,9
+  //   1.9  Wissen  -6,6  Koennen -2,2   Note 63,1
+  //   1.10 Wissen  -6,9  Koennen -2,5   Note 63,2
+  //
+  // Drei voellig verschiedene Profile, dreimal dieselbe Note — alle drei
+  // innerhalb der Messschwankung von 0,4 Punkten. Die Wissenspaare haben ihre
+  // Gebiete gehoben (Trainingsdaten +16,7, Architektur +16,7 und damit UEBER
+  // der Basis) und dafuer Sprache um 31 Punkte gekostet. Es wurde nichts
+  // besser, nur verschoben.
+  //
+  // Das ist kein Datenproblem mehr, sondern ein Platzproblem: ein Adapter mit
+  // Rang 16 hat eine feste Kapazitaet, und jedes neue Wissen verdraengt
+  // anderes Koennen.
+  "smejj-1-11": { startwert: 20260910, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6, wissen: true },
   "smejj-1-10": { startwert: 20260910, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6, wissen: true },
   "smejj-1-8": { startwert: 20260909, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6 },
   "smejj-1-7": { startwert: 20260909, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
