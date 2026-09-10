@@ -512,18 +512,23 @@ test("Planer-Prompt: die Beobachtung wird KOMPAKT — 40 Elemente, 2500 Zeichen,
   assert.ok(!prompt.includes('"x":100'), "keine Koordinaten im Prompt");
 });
 
-test("Planer: Ratenlimit des schnellen Glieds -> kurz warten und DASSELBE Glied noch einmal, nicht sofort das langsame", async () => {
+// GEAENDERT 10.09. nach Messung: frueher schlief der Planer hier 15 s und
+// fragte DASSELBE Glied noch einmal. Das war richtig gedacht (nicht auf das
+// langsame GLM ausweichen), aber unnoetig teuer — Groq zaehlt sein Kontingent
+// je MODELL, also ist das zweite Groq-Modell sofort frei. Der Zweck bleibt:
+// bloss nicht auf das langsame Glied fallen. Nur schneller.
+test("Planer: Ratenlimit des schnellen Glieds -> sofort das zweite Groq-Modell, nicht das langsame und kein Schlaf", async () => {
   const gefragt = [];
-  let geschlafen = null;
+  let geschlafen = 0;
   const fetchImpl = async (url) => {
     gefragt.push(url);
     if (gefragt.length === 1) return planerAntwort("", 429);
     return planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}');
   };
-  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, warteMs: 15000, schlafe: async (ms) => { geschlafen = ms; } });
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, warteMs: 15000, schlafe: async (ms) => { geschlafen += ms; } });
   const antwort = await client("prompt");
   assert.match(antwort, /"done"/);
-  assert.equal(geschlafen, 15000, "es wird gewartet");
+  assert.equal(geschlafen, 0, "kein Schlaf, solange ein anderes Modell frei ist");
   assert.equal(gefragt.length, 2);
   assert.ok(gefragt.every((u) => /groq/.test(u)), `beide Anfragen an Groq, nicht an GLM: ${gefragt.join(", ")}`);
 });
@@ -546,4 +551,38 @@ test("Planer: GLM bekommt das Denken ausgeschaltet — ein JSON-Schritt braucht 
   await client("prompt");
   assert.equal(koerper.length, 1);
   assert.deepEqual(koerper[0].body.thinking, { type: "disabled" }, `GLM-Anfrage ohne Denken: ${JSON.stringify(koerper[0].body).slice(0, 200)}`);
+});
+
+// --- Erst ausweichen, dann warten (gemessen 10.09.) -----------------------
+// Groq zaehlt sein Kontingent JE MODELL. Die Kette hatte das zweite
+// Groq-Modell hinter dem langsamen GLM — jedes Ratenlimit kostete darum
+// 47–100 s, obwohl daneben ein freies Kontingent lag.
+test("Planer-Kette: die Modelle desselben Anbieters stehen beieinander", async () => {
+  const gefragt = [];
+  const fetchImpl = async (url) => { gefragt.push(url.replace(/^https:\/\//, "").split("/")[0]); return planerAntwort("", 429); };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {} });
+  await client("prompt").catch(() => {});
+  const ersteDrei = gefragt.slice(0, 3);
+  assert.equal(ersteDrei[0], "api.groq.com");
+  assert.equal(ersteDrei[1], "api.groq.com", `nach dem Ratenlimit muss das zweite Groq-Modell kommen, kam aber: ${ersteDrei.join(" -> ")}`);
+});
+
+test("Ratenlimit auf einem Glied: das naechste wird SOFORT gefragt, ohne Schlaf", async () => {
+  let geschlafen = 0; let n = 0;
+  const fetchImpl = async () => (++n === 1 ? planerAntwort("", 429) : planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}'));
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async (ms) => { geschlafen += ms; } });
+  assert.match(await client("prompt"), /"done"/);
+  assert.equal(geschlafen, 0, "es wurde geschlafen, obwohl ein anderes Modell frei war");
+  assert.equal(n, 2);
+});
+
+test("Steckt die GANZE Kette im Ratenlimit, wird einmal gewartet und alles erneut gefragt", async () => {
+  let geschlafen = 0; const antworten = [];
+  const fetchImpl = async () => {
+    antworten.push(1);
+    return antworten.length <= 3 ? planerAntwort("", 429) : planerAntwort('{"schemaVersion":1,"decision":"done","reason":"r","result":"ok"}');
+  };
+  const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async (ms) => { geschlafen += ms; } });
+  assert.match(await client("prompt"), /"done"/);
+  assert.ok(geschlafen >= 15000, "nach einer vollstaendig gedrosselten Kette gehoert eine Pause hin");
 });
