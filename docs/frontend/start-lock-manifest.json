@@ -1,17 +1,17 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-10T23:23:14.375Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-10: 'Video darf niemals wichtige Bedienelemente verdecken.' Gemessen und behoben: das Kamera-Overlay lag ueber allen sechs Bedienelementen der Sprachwelt, auch ueber dem X (nicht mehr schliessbar); 'Aufnehmen & fragen' schrieb ins verdeckte Startseiten-Feld statt ins Sprachfeld. Die Bedienzone meldet jetzt ihre Hoehe, unplausible Werte werden verworfen.",
+  "frozenAt": "2026-09-10T23:38:49.676Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-10: 'Video darf niemals wichtige Bedienelemente verdecken.' Gemessen (375x812): alle sechs Bedienelemente frei — X oben 117..165, Video 173..748, Bedienzone 756..804. Der z-index allein reichte nicht: .voice-mode-overlay bildet durch backdrop-filter einen eigenen Stapel-Kontext, aus dem ein Kind nicht ausbrechen kann.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "0dfdc02e5a12a5ae99e3a565f8c67f8daa379d42c20275583df27b998196766a",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "e1030d24c73608a97aaa3492e1a648a07a45eaf1c2d00de79384a898bc61d85d",
+    "public/start-styles.css": "57369b52e20602b5fa4818fa0121225d3f7ec392462503886880d774665d119f",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
-    "public/composer-tools.css": "c5e5f3d9302b8aac47548383940457055eecf48abf17846db8c116b343413fcc",
+    "public/composer-tools.css": "f8d1dd861c8168a7baf59d0dbc7a0210a6f5f0cbbd494d887f2f801c195473ad",
     "public/browser-pane.css": "2df206192af207fc49b69ed85f287d4c0ab0feafce05bb6214458bd5f7ba909f",
     "public/app.js": "3b76cf58ae571690f2424174060ac1d4e3922149507e4035189f8131c4109c55",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "241e0a2441f2e245a889d90263549b8b15d3fe4869c29070d2ce22437d51c770",
+    "public/sw.js": "243723cb4ccd877e30ec4bbb1473030882827fc8d841dd5c1113695b8799f3d5",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
