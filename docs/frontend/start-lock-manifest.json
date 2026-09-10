@@ -1,17 +1,17 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-09T23:50:41.911Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-10: 'Auto soll automatisch das geeignetste verfuegbare Modell fuer die jeweilige Aufgabe auswaehlen ... Wenn ein Modell oder eine API ausfaellt, automatisch auf eine geeignete Alternative wechseln.' Ausgeliefert: bewerteFuerAuto im Server (Eignung vor Kosten, Guthaben nie automatisch, Ersatzkette nach Gesundheit), Auto per Vorgabe an, der doppelte Modell-Router im Browser entfernt.",
+  "frozenAt": "2026-09-10T00:24:44.498Z",
+  "confirmation": "Betreiber Wof Kadavanich, 2026-09-10: 'Das X zum Schliessen muss oben rechts sitzen ... Die UI soll auf dem Telefon bis zur unteren Safe Area reichen ... Keine unnoetigen Leerflaechen.' Ausgeliefert und ueber sieben Bildschirmlagen gemessen: X oben rechts (weicht dem Hinweisstreifen aus), Luecke unten 32 auf 8 px, Hinweis 59 auf 18 px, keine Ziele unter 44 px, kein waagerechter Ueberlauf.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/index.html": "36e7aa0fb1899ee1cc55c76da3f443442ebc70a8f43dbf57093f29f8f5ebfab2",
     "public/styles.css": "8b87b24ed431e2d22d55a08b8d79a0f6327751f6f1d0ef5774325a5170f874b6",
-    "public/start-styles.css": "e028283be72db8cd908d136e93eadb14168d67e2a60f3687caf534667a20c34f",
+    "public/start-styles.css": "3ad8fd07ded5619971d7766d095739e3570e81e31ba99adac313bbc7201c47e3",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
     "public/eckig.css": "715eaf2001300af0a0b5ac434dca0f4aea5b8a08c902b679a8308aa197b50d42",
     "public/branding.css": "10ba77e36d5b6e57b90245a559b2451db1ec256ff9d5aa8004677c9236a76b59",
     "public/app-surfaces.css": "55d902bab47df4b4e87ddf3b32c63a9383697f82aa2f04f221ae6437d94ea941",
-    "public/composer-tools.css": "226c36d30677cbee3a9fe36027cba0d001a6b9f7506202fbf2aee620a00f92cb",
+    "public/composer-tools.css": "16698301868837206fddcd2f1febcb01a3040f5af51d184dd347404c3c6db575",
     "public/browser-pane.css": "2df206192af207fc49b69ed85f287d4c0ab0feafce05bb6214458bd5f7ba909f",
     "public/app.js": "7a32a66f2395e9fde4e18f68fca92b40ec59cb9d6e449005e007913dc724c900",
     "public/left-menu-state.js": "2ad96fca7b85f87e4c6aeebe5af88619e4c99f4636372d5aa1ad249aad7d37c3",
@@ -34,7 +34,7 @@
     "public/ai/router.js": "746234e4b25965155c80eff01036b6d26f1e2c11a64bf552ec3ce188bd69994d",
     "public/ai/byok.js": "73cf62a02a98d772e908706561a17975d3c885accc14efc4e6d22d46dc9b0034",
     "public/ai/providers.js": "84a0eb8da0822742ae3332a4826ba5b039cc0bd2270c0a915186db873b9de050",
-    "public/sw.js": "e748429f504f551d32aa905da2b1aeea90ae07d0a1855c67a38d6f49bb55b6d3",
+    "public/sw.js": "06bdb09371bedf61067f6e910addd4949831b62d81239a3ea69b6a7ee8d88509",
     "public/manifest.webmanifest": "5838be223f7bffa4022ec4550fba3a6882fad6ce2f993fc1cfcf0128586b7e18"
   }
 }
