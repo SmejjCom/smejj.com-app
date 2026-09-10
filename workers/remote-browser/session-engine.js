@@ -37,6 +37,14 @@ export const SESSION_DEFAULTS = {
   actionTimeoutMs: 15_000,
   navTimeoutMs: 25_000,
   settleTimeoutMs: 4_000,
+  // EIGENE FRIST FUER KLICK UND TIPPEN (live 10.09., de.wikipedia.org):
+  // Playwright wartet vor einem Klick darauf, dass das Element sichtbar,
+  // ruhig und bedienbar ist. Bei Wikipedias Suchknopf dauerte das laenger als
+  // die 4 s, die fuers Abwarten einer Seite gedacht waren — die Maus bekam
+  // "locator.click: Timeout 4000ms exceeded", obwohl das Element da war.
+  // 10 s: genug fuer eine traege Seite, kurz genug, dass ein wirklich
+  // unbedienbares Ziel den Lauf nicht aufhaelt (Playwright-Standard: 30 s).
+  aktionTimeoutMs: 10_000,
   // Playwright wartet vor einem Foto auf die Schriften der Seite. Bei
   // Wikipedia dauerte das live ueber 15 s (Standard) — laenger als die ganze
   // Aktion. 6 s reichen fuer jede Seite, die ueberhaupt ein Bild hergibt.
@@ -225,8 +233,23 @@ export function createSessionEngine({
   const cfg = { ...SESSION_DEFAULTS, ...overrides };
   const sessions = new Map();
 
+  // AUS DER MELDUNG MUSS HERVORGEHEN, WAS ZU TUN IST. Playwrights
+  // "locator.click: Timeout 10000ms exceeded. Call log: - waiting for
+  // locator(...)" ist englisch, lang und sagt dem Modell nichts — es waehlte
+  // live 10.09. denselben Knopf noch einmal. Der Rat steht darum VORN und auf
+  // Deutsch; das Original bleibt gekuerzt dahinter, fuer die Fehlersuche.
+  function klartext(error) {
+    const roh = String(error || "session_error");
+    const m = /^locator\.(click|fill): Timeout (\d+)ms exceeded/.exec(roh);
+    if (!m) return roh.slice(0, 200);
+    const was = m[1] === "click" ? "anklicken" : "beschreiben";
+    return `element_nicht_bedienbar: Das Ziel ist da, liess sich aber in ${Math.round(Number(m[2]) / 1000)} s nicht ${was}`
+      + " (verdeckt, ausserhalb des Bildes oder abgeschaltet) — ein ANDERES Ziel aus der Elementliste waehlen,"
+      + ` NICHT dasselbe wiederholen. [${roh.slice(0, 80).replace(/\s+/g, " ")}]`;
+  }
+
   function fail(status, error) {
-    return { ok: false, status, error: String(error || "session_error").slice(0, 200) };
+    return { ok: false, status, error: klartext(error) };
   }
 
   function expiresInMs(session) {
@@ -572,10 +595,10 @@ export function createSessionEngine({
           return mitZiel({ gelesen: String(text || "").slice(0, 2000) });
         }
         if (action.type === "selectorType") {
-          await locator.fill(action.text, { timeout: cfg.settleTimeoutMs });
+          await locator.fill(action.text, { timeout: cfg.aktionTimeoutMs });
           return mitZiel({});
         }
-        await locator.click({ timeout: cfg.settleTimeoutMs });
+        await locator.click({ timeout: cfg.aktionTimeoutMs });
         await page.waitForLoadState("domcontentloaded", { timeout: cfg.settleTimeoutMs }).catch(() => {});
         await page.waitForTimeout?.(300)?.catch?.(() => {});
         return mitZiel({});
