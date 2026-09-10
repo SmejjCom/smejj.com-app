@@ -28,6 +28,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { erzeuge } from "../../workers/con-autopilot/daten/generator.mjs";
 import { erzeugeErgaenzung } from "./smejj-1-1-generator.mjs";
 import { echtePaare } from "./smejj-1-1-echte-paare.mjs";
+import { alsZeile as wissenAlsZeile, wissensPaare } from "./smejj-1-1-wissenspaare.mjs";
 import { baueDatensatz, jsonl, mische, pruefePaar } from "../../workers/con-autopilot/daten.js";
 
 const WURZEL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -108,6 +109,16 @@ export const PROFILE = Object.freeze({
   // keine 500 verschiedenen. Sie ist der uebliche Weg, ein kleines gutes
   // Korpus gegen ein grosses billiges zu gewichten, und ersetzt kein einziges
   // neu geschriebenes Paar.
+  // smejj-1-10 (10.09.): WISSEN dazu. Gleiche Gewichtung wie 1.8 — das war der
+  // Lauf mit dem besten Verhaeltnis (Wissen -13,1 zu Koennen +7,4). Neu sind
+  // allein die Wissenspaare: 46 Fakten ueber das eigene Projekt, sechsfach
+  // gewichtet wie die uebrigen Handpaare.
+  //
+  // Die Wette dahinter: Wenn das Vergessen daher kommt, dass Faktenwissen im
+  // Training nicht vorkommt, muss es sich durch Fakten IM Training aufhalten
+  // lassen. Trifft das nicht zu, ist die Idee widerlegt und nicht nur ungenau —
+  // dann liegt es an der Methode, nicht an den Daten.
+  "smejj-1-10": { startwert: 20260910, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6, wissen: true },
   "smejj-1-8": { startwert: 20260909, mengen: { reasoning: 900, sicherheit: 0, sprache: 0 }, ergaenzung: {}, mischen: false, wiederholungen: 6 },
   "smejj-1-7": { startwert: 20260909, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
   "smejj-1-6": { startwert: 20260908, mengen: { reasoning: 9000, sicherheit: 2600, sprache: 1900 }, ergaenzung: {}, mischen: false },
@@ -312,7 +323,18 @@ async function main() {
   // Das Erzeugen der uebrigen Gebiete bleibt im Code (smejj-1-1-generator.mjs,
   // -abwehr, -gegenprobe): geloescht wird nichts, und sollte die naechste
   // Messung zeigen, dass sie doch tragen, sind sie eine Zeile entfernt.
-  const handgeschrieben = echtePaare().map((h) => ({ ...h, handgeschrieben: true }));
+  // Die WISSENSpaare kommen ab smejj-1-10 dazu (Profil-Schalter `wissen`).
+  //
+  // Sie sind die Antwort auf den Befund vom 10.09.: ueber alle sechs Laeufe
+  // faellt das Wissen (bei 1.8 um 13,1 Punkte) und steigt das Koennen (+7,4).
+  // Von den 83 handgeschriebenen Paaren war kein einziges eine Wissensfrage —
+  // das Modell konnte nur verlieren, was es ueber sein eigenes Projekt wusste.
+  //
+  // Sie sind ABSCHALTBAR, damit 1.1 bis 1.9 Zeichen fuer Zeichen nachbaubar
+  // bleiben. Ein Datensatz, der sich rueckwirkend aendert, macht jeden
+  // frueheren Vergleich wertlos.
+  const wissen = p.wissen ? wissensPaare().map(wissenAlsZeile) : [];
+  const handgeschrieben = [...echtePaare(), ...wissen].map((h) => ({ ...h, handgeschrieben: true }));
   /**
    * BEFUND 09.09.: Diese Zeile las STARTWERT und MENGEN.reasoning — die
    * KONSTANTEN — statt der Werte aus dem Profil. Die Profile in PROFILE
