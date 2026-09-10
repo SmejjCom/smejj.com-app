@@ -149,8 +149,9 @@ async function vorwaermen(anfrage, antwort) {
   if (!modell) return sendeJson(antwort, 400, { error: { message: `unbekanntes Modell: ${koerper.model}`, type: "invalid_request_error" } });
   const begonnen = Date.now();
   const bezug = await depot.bereitstellen(modell);
+  const adapter = await depot.adapterBereitstellen(modell);
   letzterBezug = { modell: modell.id, quelle: bezug.quelle, bytes: bezug.bytes, dauerMs: Date.now() - begonnen, am: new Date().toISOString() };
-  sendeJson(antwort, 200, { ok: true, ...letzterBezug });
+  sendeJson(antwort, 200, { ok: true, ...letzterBezug, adapter: adapter ? { datei: modell.adapter.datei, quelle: adapter.quelle } : null });
 }
 
 async function inferenz(anfrage, antwort, pfad) {
@@ -170,7 +171,12 @@ async function inferenz(anfrage, antwort, pfad) {
       if (bezug.quelle !== "ssd-cache") {
         letzterBezug = { modell: modell.id, quelle: bezug.quelle, bytes: bezug.bytes, dauerMs: Date.now() - begonnen, am: new Date().toISOString() };
       }
-      await motor.sicherstellen(modell, bezug.pfad);
+      // Der Adapter kommt VOR dem Motorstart, nicht danach: llama-server nimmt
+      // ihn nur als Startargument. Ein fehlender Adapter laesst die Anfrage
+      // scheitern, statt still die nackte Basis zu antworten — sonst merkt
+      // niemand, dass das trainierte Modell gar nicht gelaufen ist.
+      const adapter = await depot.adapterBereitstellen(modell);
+      await motor.sicherstellen(modell, bezug.pfad, adapter?.pfad || null);
 
       motor.anfrageBeginnt();
       try {

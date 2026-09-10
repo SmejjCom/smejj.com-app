@@ -31,6 +31,29 @@ export const LAUF_MODELLE = [
     kontext: 4096
   },
   {
+    // smejj 1 — Basis der trainierten Familie (Qwen3-4B-Instruct-2507), als
+    // Q4_K_M-GGUF von unsloth (Apache-2.0). Gemessen 05.09.2026 auf der
+    // smejj-Suite: 91,2 % nackt — die drei LoRA-Adapter lagen darunter, darum
+    // laeuft hier vorerst die Basis. Der Router erreicht sie als Registry-
+    // Modell `smejj-1` (SMEJJ_LLM_SMEJJ1_MODEL=smejj-1-basis); der Alias
+    // `smejj` haengt erst um, wenn eine Version im Register live-tauglich ist.
+    // sha256 = LFS-Kennung aus der Hugging-Face-API (abgefragt 2026-09-06).
+    id: "smejj-1-basis",
+    anzeige: "smejj 1 Basis (Qwen3-4B-Instruct-2507, kostenlos)",
+    version: "Qwen3-4B-Instruct-2507-Q4_K_M",
+    format: "gguf-q4_k_m",
+    stufe: "staging",
+    standard: false,
+    datei: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+    sizeBytes: 2497281120,
+    sha256: "3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597",
+    hfRepo: "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+    hfDatei: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+    lizenz: "Apache-2.0",
+    ramSchaetzungMb: 2900,
+    kontext: 4096
+  },
+  {
     id: "qwen3.5-4b",
     anzeige: "Hausmodell Qwen 4B (kostenlos, Reserve)",
     version: "3.5-4B-Q4_K_M",
@@ -80,11 +103,48 @@ function zusatzModelle() {
   try {
     const liste = JSON.parse(roh);
     if (!Array.isArray(liste)) return [];
-    return liste.filter((m) => m && m.id && m.datei && m.sha256 && m.sizeBytes).map((m) => ({ stufe: "staging", kontext: 4096, ...m }));
+    return liste
+      .filter((m) => m && m.id && m.datei && m.sha256 && m.sizeBytes)
+      .map((m) => ({ stufe: "staging", kontext: 4096, ...m, adapter: adapterOderNichts(m) }));
   } catch {
     console.error("[katalog] SMEJJ_HAUSMODELL_ZUSATZMODELLE ist kein gueltiges JSON — wird ignoriert");
     return [];
   }
+}
+
+/**
+ * Ein Adapter (LoRA) ist eine ZWEITE Datei neben der Modelldatei — llama-server
+ * bekommt sie ueber `--lora`. Er wird nur akzeptiert, wenn er vollstaendig
+ * beschrieben ist: ohne Groesse und Pruefsumme kann das Depot nicht erkennen,
+ * ob die geladene Datei die richtige ist, und ein falscher Adapter ist
+ * schlimmer als keiner — das Modell antwortet dann, nur eben als ein anderes.
+ *
+ * Halbe Angaben werden VERWORFEN, nicht ergaenzt: ein Modell ohne Adapter ist
+ * ein klarer Zustand, ein Modell mit halbem Adapter ein Raetsel.
+ */
+export function adapterOderNichts(modell) {
+  const a = modell?.adapter;
+  if (!a || typeof a !== "object") return null;
+  const vollstaendig = typeof a.datei === "string" && a.datei
+    && typeof a.sha256 === "string" && a.sha256.length === 64
+    && Number.isFinite(Number(a.sizeBytes)) && Number(a.sizeBytes) > 0;
+  if (!vollstaendig) {
+    console.error(`[katalog] Adapter von ${modell?.id} ist unvollstaendig (datei/sha256/sizeBytes) — wird ignoriert`);
+    return null;
+  }
+  return { datei: a.datei, sha256: a.sha256, sizeBytes: Number(a.sizeBytes), version: a.version || null, prefix: a.prefix || null };
+}
+
+/**
+ * Wo der Adapter in e2 liegt. Standard ist der Ordner des Modells; ein
+ * eigener `prefix` erlaubt es, den Adapter dort zu lassen, wo das Training ihn
+ * abgelegt hat (con/versions/<version>/adapter-gguf/), statt ihn zu kopieren.
+ */
+export function e2AdapterSchluessel(modell) {
+  const a = modell?.adapter;
+  if (!a) return null;
+  if (a.prefix) return `${String(a.prefix).replace(/\/+$/, "")}/${a.datei}`;
+  return `models/${modell.stufe}/${modell.id}/${a.datei}`;
 }
 
 /** Alle startbaren Modelle: fest verdrahtete plus Zusatzmodelle. */

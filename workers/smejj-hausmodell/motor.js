@@ -20,6 +20,41 @@ import { setTimeout as warte } from "node:timers/promises";
 
 export const ZUSTAENDE = { GESTOPPT: "STOPPED", LADEND: "LOADING", AKTIV: "ACTIVE", WARM: "WARM" };
 
+/**
+ * Die Startargumente von llama-server — rein und darum pruefbar.
+ *
+ * HERAUSGELOEST, weil der Adapter genau hier ankommen muss und ein Test das
+ * sehen koennen soll, ohne einen Prozess zu starten. Der erste Anlauf pruefte
+ * ueber `sicherstellen()` mit einem nicht existierenden Binaerpfad und lief in
+ * die 180-Sekunden-Startfrist: ein Test, der drei Minuten haengt, wird nicht
+ * ausgefuehrt, und ein Test, der nicht ausgefuehrt wird, prueft nichts.
+ */
+export function baueStartArgumente({ modell, modellPfad, kvTyp = null, adapterPfad = null, hafen = 8081, threads = 2 }) {
+  const argumente = [
+    "--model", modellPfad,
+    "--host", "127.0.0.1",
+    "--port", String(hafen),
+    "--ctx-size", String(modell.kontext || 4096),
+    "--threads", String(threads),
+    "--threads-batch", String(threads),
+    // Ein Slot = hoechstens eine Inferenz im Motor. Der Deckel steht
+    // zusaetzlich in der Warteschlange; hier ist er hart.
+    "--parallel", "1",
+    "--no-warmup",
+    "--alias", modell.id
+  ];
+  // Der trainierte Adapter. OHNE ihn laeuft die nackte Basis — und genau das
+  // ist bis heute passiert: neun Trainingslaeufe lagen in der Ablage, waehrend
+  // der Dienst das unveraenderte Modell auslieferte, weil er das Wort
+  // "Adapter" nicht kannte. llama-server kann einen Adapter zur Laufzeit nicht
+  // mehr anhaengen, darum gehoert er in den Start und nicht in die Anfrage.
+  if (adapterPfad) argumente.push("--lora", adapterPfad);
+  // KV-Cache in q8_0 statt f16 halbiert den Cache-Speicher bei praktisch
+  // gleicher Antwortqualitaet — der wichtigste RAM-Hebel neben mmap.
+  if (kvTyp) argumente.push("--cache-type-k", kvTyp, "--cache-type-v", kvTyp);
+  return argumente;
+}
+
 export class Motor {
   constructor({
     binaer = "/opt/llama/llama-server",
@@ -47,6 +82,9 @@ export class Motor {
     this.startZaehler = 0;
     this.benutzterKvTyp = null;
     this.letzterFehler = null;
+    // Damit /health beantwortet, was sonst niemand sieht: laeuft die nackte
+    // Basis oder ein trainierter Stand?
+    this.adapterPfad = null;
   }
 
   get basisUrl() {
@@ -61,6 +99,7 @@ export class Motor {
       letzteNutzung: this.letzteNutzung,
       letzterStartMs: this.letzterStartMs,
       kvCache: this.benutzterKvTyp || null,
+      adapter: this.adapterPfad ? this.adapterPfad.split("/").pop() : null,
       startZaehler: this.startZaehler,
       leerlaufMs: this.leerlaufMs,
       letzterFehler: this.letzterFehler
@@ -71,7 +110,7 @@ export class Motor {
    * Sorgt dafuer, dass genau `modell` geladen ist. Laeuft ein anderes Modell,
    * wird es zuerst beendet — zwei Modelle gleichzeitig sprengen die 8 GB.
    */
-  async sicherstellen(modell, modellPfad) {
+  async sicherstellen(modell, modellPfad, adapterPfad = null) {
     if (this.prozess && this.modell?.id !== modell.id) {
       this.protokoll.log?.(`[motor] Modellwechsel ${this.modell?.id} -> ${modell.id}: alter Prozess wird beendet`);
       await this.stoppen("modellwechsel");
@@ -79,13 +118,13 @@ export class Motor {
     if (this.startVersprechen) return this.startVersprechen;
     if (this.prozess) return true;
 
-    this.startVersprechen = this.#starten(modell, modellPfad).finally(() => {
+    this.startVersprechen = this.#starten(modell, modellPfad, adapterPfad).finally(() => {
       this.startVersprechen = null;
     });
     return this.startVersprechen;
   }
 
-  async #starten(modell, modellPfad) {
+  async #starten(modell, modellPfad, adapterPfad = null) {
     const begonnen = Date.now();
     this.zustand = ZUSTAENDE.LADEND;
     this.modell = modell;
@@ -102,11 +141,12 @@ export class Motor {
     let letzterStartFehler = null;
     for (const kvTyp of kvTypen) {
       try {
-        await this.#startVersuch(modell, modellPfad, kvTyp);
+        await this.#startVersuch(modell, modellPfad, kvTyp, adapterPfad);
         this.letzterStartMs = Date.now() - begonnen;
         this.startZaehler += 1;
         this.zustand = ZUSTAENDE.WARM;
         this.benutzterKvTyp = kvTyp || "f16 (Standard)";
+        this.adapterPfad = adapterPfad;
         this.#leerlaufUhrStellen();
         this.protokoll.log?.(`[motor] ${modell.id} bereit nach ${this.letzterStartMs} ms (KV-Cache ${this.benutzterKvTyp})`);
         return true;
@@ -122,23 +162,9 @@ export class Motor {
     throw letzterStartFehler || new Error("start_fehlgeschlagen");
   }
 
-  async #startVersuch(modell, modellPfad, kvTyp) {
-    const argumente = [
-      "--model", modellPfad,
-      "--host", "127.0.0.1",
-      "--port", String(this.hafen),
-      "--ctx-size", String(modell.kontext || 4096),
-      "--threads", String(this.threads),
-      "--threads-batch", String(this.threads),
-      // Ein Slot = hoechstens eine Inferenz im Motor. Der Deckel steht
-      // zusaetzlich in der Warteschlange; hier ist er hart.
-      "--parallel", "1",
-      "--no-warmup",
-      "--alias", modell.id
-    ];
-    // KV-Cache in q8_0 statt f16 halbiert den Cache-Speicher bei praktisch
-    // gleicher Antwortqualitaet — der wichtigste RAM-Hebel neben mmap.
-    if (kvTyp) argumente.push("--cache-type-k", kvTyp, "--cache-type-v", kvTyp);
+  async #startVersuch(modell, modellPfad, kvTyp, adapterPfad = null) {
+    const argumente = baueStartArgumente({ modell, modellPfad, kvTyp, adapterPfad, hafen: this.hafen, threads: this.threads });
+    if (adapterPfad) this.protokoll.log?.(`[motor] ${modell.id} startet MIT Adapter ${adapterPfad}`);
 
     this.protokoll.log?.(`[motor] startet ${modell.id} (KV-Cache ${kvTyp || "f16"})`);
     this.prozess = spawn(this.binaer, argumente, {
