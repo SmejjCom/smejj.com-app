@@ -55,7 +55,11 @@ async function neueSitzung(bei) {
   return w.j.sessionId;
 }
 const verloren = (a) => a.status === 404 || /session_unknown|session_expired/.test(String(a.j?.error || ""));
-for (let n = 1; n <= 12; n++) {
+// DIESELBE SCHRITTGRENZE WIE DIE APP (25, browser-pane-maus.js
+// FREI_MAX_SCHRITTE). Mit 12 brach die Messung ab, waehrend der echte Lauf
+// weitergelaufen waere — ein Urteil ueber die App, das die App nie faellt.
+const MAX_SCHRITTE = Number(process.env.SMEJJ_E2E_SCHRITTE || 25);
+for (let n = 1; n <= MAX_SCHRITTE; n++) {
   let blick = await post("/api/browser/session/act", { sessionId: sid, action: { type: "observe", ohneBild: true } }, 45000);
   zeit.hinsehen += blick.ms;
   if (!blick.j?.beobachtung && verloren(blick)) {
@@ -65,7 +69,7 @@ for (let n = 1; n <= 12; n++) {
   if (!blick.j?.beobachtung) { console.log(`[${s()}s] ${n}: Hinsehen FEHL ${blick.status} ${blick.j?.error || blick.roh} (${blick.ms} ms)`); break; }
   letzteAdresse = blick.j.beobachtung.url || letzteAdresse;
   const b = blick.j.beobachtung; console.log(`[${s()}s] ${n}: Hinsehen ${blick.ms} ms — ${b.title} — ${b.elements?.length} Elemente`);
-  const plan = await post("/api/maus/run", { naechsterSchritt: true, task: TASK, capsuleRef: `e2e-${t0.toString(36)}`, domainAllowlist: ["de.wikipedia.org"], beobachtung: b, verlauf: verlauf.slice(-12), restSchritte: 13 - n }, 130000);
+  const plan = await post("/api/maus/run", { naechsterSchritt: true, task: TASK, capsuleRef: `e2e-${t0.toString(36)}`, domainAllowlist: ["de.wikipedia.org"], beobachtung: b, verlauf: verlauf.slice(-12), restSchritte: MAX_SCHRITTE + 1 - n }, 130000);
   zeit.ueberlegen += plan.ms; const p = plan.j?.planer;
   if (!plan.j?.ok) { console.log(`[${s()}s] ${n}: Planer ${plan.status} ${plan.j?.error} ${JSON.stringify(plan.j?.gruende || "")} (${plan.ms} ms)`); verlauf.push(`VERWORFEN: ${(plan.j?.gruende || []).join("; ")}`); continue; }
   const e = plan.j.entscheidung; console.log(`[${s()}s] ${n}: Überlegt ${plan.ms} ms (${p?.backend} ${p?.ms} ms${plan.j.repariert?.length ? ", repariert " + plan.j.repariert.join(",") : ""}) → ${e.decision}${e.step ? " " + beschreibe(e.step) : ": " + (e.result || e.reason)}`);
