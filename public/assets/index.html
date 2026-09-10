@@ -53,9 +53,7 @@
     <meta name="description" content="smejj.com ist ein schneller KI- und Code-Assistent für Chat, Programmierung und Agenten-Aufgaben.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="smejj.com">
-    <!-- Vollbild oben (Betreiber-Anweisung 08.09.). Preis: die Flaeche ist 62 pt kuerzer als der
-         Schirm, darunter liegt Schwarz. Unsichtbar gemacht in mobil-dock.js — dort steht auch die
-         volle Messung. NICHT auf "black"/"default" stellen: dann ist die Statusleiste ein Balken. -->
+    <!-- Vollbild oben. NICHT auf "black"/"default" stellen. Messung: public/mobil-dock.js -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
@@ -476,14 +474,8 @@
         </section>
 
         <section id="code" class="view" aria-label="Code-Assistent">
-          <!-- Befund live 2026-09-06: view-title.js nimmt den Seitentitel aus
-               der ersten h1/h2 der Ansicht. Hier gab es keine — der Tab hiess
-               in der Code-Ansicht weiter "smejj.com — KI- und Code-Assistent",
-               also genau wie die Startseite. Bei mehreren offenen Tabs, im
-               Verlauf und in Lesezeichen war nicht erkennbar, wo man ist, und
-               Screenreader sagten beim Wechsel nichts an (dieselbe Luecke, die
-               W2-05 fuer alle anderen Ansichten geschlossen hat).
-               Visuell versteckt: das Mockup bleibt unveraendert. -->
+          <!-- Gibt der Code-Ansicht einen eigenen Tab-Titel (view-title.js liest die erste
+               h1/h2). Visuell versteckt. Befund und Begruendung: docs/qa/befunde-live.md -->
           <h2 class="visually-hidden">Code</h2>
           <!-- Code-Bereich 1:1 nach Mockup-Bildschirm 26: persoenliche
                Begruessung oben, leere Flaeche fuer die Auftraege, unten
@@ -1004,11 +996,11 @@
     <script src="/assets/spur-schalter.js?v=9" type="module"></script>
     <script src="/assets/spur-start.js?v=b51" type="module"></script>
     <!-- holt code-flaeche.js (27,1 KB) erst, wenn #code aufgeht — Begruendung im Modul -->
-    <script src="/assets/code-nachladen.js?v=20" type="module"></script>
+    <script src="/assets/code-nachladen.js?v=21" type="module"></script>
     <!-- Peripherie (Fuehrung, Papierkorb, Kamera, @-Erwaehnung, Codeblock-Werkzeuge)
          laedt erst bei ihrer Handlung — Betreiber-Freigabe 2026-08-24 "Startseite abspecken". -->
-    <script src="/assets/bedarf-nachladen.js?v=5" type="module"></script>
-    <script src="/assets/app.js?v=b160" type="module"></script>
+    <script src="/assets/bedarf-nachladen.js?v=6" type="module"></script>
+    <script src="/assets/app.js?v=b161" type="module"></script>
     <script src="/assets/pwa-schnellstart.js?v=9" type="module"></script>
     <!-- Browser-Panel und Maus-Panel: erst wenn sie gebraucht werden.
          63,3 KB von 335,6 KB zahlte bisher jeder Seitenaufruf fuer zwei
@@ -1017,8 +1009,8 @@
     <script src="/assets/auth/passkey-ui.js" type="module"></script>
     <script src="/assets/view-chrome.js?v=view-chrome-20260716-2" type="module"></script>
     <script src="/assets/profile-dock.js?v=b50" type="module"></script>
-    <script src="/assets/chat-store.js?v=b68" type="module"></script>
-    <script src="/assets/chat-history-view.js?v=b62" type="module"></script>
+    <script src="/assets/chat-store.js?v=b70" type="module"></script>
+    <script src="/assets/chat-history-view.js?v=b63" type="module"></script>
     <script src="/assets/chat-actions.js?v=b53" type="module"></script>
     <script src="/assets/panel-status.js?v=1" type="module"></script>
     <script src="/assets/chat-stopp.js?v=11" type="module"></script>
