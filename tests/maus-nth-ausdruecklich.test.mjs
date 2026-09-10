@@ -248,3 +248,19 @@ test("ein anderer Klick-Fehler wird NICHT erzwungen, sondern weitergereicht", ()
   const stelle = quelle.slice(quelle.indexOf("let erzwungen = false;"), quelle.indexOf("erzwungen = true;"));
   assert.match(stelle, /if \(!\/Timeout \.\*exceeded\/i\.test\(String\(fehler\?\.message \|\| fehler\)\)\) throw fehler;/);
 });
+
+// --- Erzwungener Klick scrollt, jQuery-Schreibweise wird uebersetzt --------
+test("der erzwungene Klick scrollt zuerst hin — force ueberspringt sonst auch das Scrollen", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("let erzwungen = false;"), quelle.indexOf("erzwungen = true;"));
+  assert.match(stelle, /scrollIntoViewIfNeeded/, "live 10.09.: 'Element is outside of the viewport'");
+  assert.ok(stelle.indexOf("scrollIntoViewIfNeeded") < stelle.indexOf("force: true"), "erst scrollen, dann druecken");
+});
+
+test(":contains('X') aus jQuery wird zu Playwrights :has-text(\"X\")", () => {
+  const alsZiel = (wert) => repariereEntscheidung({ schemaVersion: 1, decision: "act", reason: "r", step: { id: "s1", action: "extract", target: wert } }).decision.step.target;
+  assert.deepEqual(alsZiel({ strategy: "css", value: ".infobox th:contains('Geburtsdatum')" }), { strategy: "css", value: '.infobox th:has-text("Geburtsdatum")' });
+  assert.deepEqual(alsZiel('.infobox th:contains("Geburt")'), { strategy: "css", value: '.infobox th:has-text("Geburt")' });
+  // Was schon richtig ist, bleibt unangetastet.
+  assert.deepEqual(alsZiel({ strategy: "css", value: "h1" }), { strategy: "css", value: "h1" });
+});

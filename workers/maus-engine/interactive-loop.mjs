@@ -96,11 +96,18 @@ function entpraefixe(strategy, value) {
   if (!m) return null;
   return { strategy: PRAEFIX_STRATEGIEN[m[1].toLowerCase()] || strategy, value: m[2].trim() };
 }
+// jQuery-Schreibweise, die es in CSS nie gab (live 10.09.:
+// ".infobox th:contains('Geburtsdatum')" — zweimal hintereinander, beide Male
+// ohne Treffer). Playwright kennt dasselbe als :has-text().
+function containsZuHasText(wert) {
+  return String(wert).replace(/:contains\(\s*(['"])(.*?)\1\s*\)/gi, (_, __, text) => `:has-text("${text.replace(/"/g, '\\"')}")`);
+}
+
 function normalisiereSelektor(ziel) {
   if (typeof ziel === "string" && ziel.trim()) {
     const praefix = entpraefixe("text", ziel);
     if (praefix) return praefix;
-    const s = ziel.trim();
+    const s = containsZuHasText(ziel.trim());
     // Ein nacktes Wort ist nur dann CSS, wenn es ein HTML-Element ist ("h1",
     // "button") — "Weiter" ist Text auf einem Knopf, kein Element.
     const istElement = /^(h[1-6]|a|p|button|input|form|main|nav|header|footer|section|article|aside|table|thead|tbody|tr|td|th|ul|ol|li|span|div|img|select|option|textarea|label|body|title|summary|details|dialog|iframe)$/.test(s);
@@ -121,14 +128,19 @@ function normalisiereSelektor(ziel) {
   if (typeof ziel.strategy === "string" && typeof ziel.value === "string") {
     // Live 09.09.: xpath-Wert kam als "\"//a[@href='…'][1]\"" — mit
     // Anfuehrungszeichen IM Wert. Die gehoeren zur JSON-Huelle, nicht zum Selektor.
-    let wert = ziel.value.trim();
+    let wert = containsZuHasText(ziel.value.trim());
     // Live 09.09. (Groq): value = "\"a[href='…']\";nth:0" — die Wahl stand IM
     // Wert statt als Feld. Herausloesen, sonst ist der Selektor kaputt.
     const imWert = /^(.*?)\s*[;,]\s*nth\s*[:=]\s*(\d+)\s*$/.exec(wert);
     const nthAusWert = imWert && ziel.nth === undefined ? Number(imWert[2]) : undefined;
     if (imWert) wert = imWert[1].trim();
     const q = /^"(.*)"$/.exec(wert) || /^'(.*)'$/.exec(wert);
-    const ohneHuelle = (q || imWert) ? { ...ziel, value: (q ? q[1] : wert).trim(), ...(nthAusWert !== undefined ? { nth: nthAusWert } : {}) } : ziel;
+    // Auch eine reine Schreibweisen-Korrektur (:contains -> :has-text) muss
+    // ankommen — sonst faellt sie hier still unter den Tisch.
+    const bereinigt = (q ? q[1] : wert).trim();
+    const ohneHuelle = (q || imWert || bereinigt !== ziel.value)
+      ? { ...ziel, value: bereinigt, ...(nthAusWert !== undefined ? { nth: nthAusWert } : {}) }
+      : ziel;
     const praefix = entpraefixe(ohneHuelle.strategy, ohneHuelle.value);
     return praefix ? { ...ohneHuelle, ...praefix } : ohneHuelle;
   }
