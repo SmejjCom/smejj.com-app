@@ -57,7 +57,8 @@ Skalieren ist ein Zahlenwechsel, kein Umbau.
 
 Domain: Spaceship. **Kein weiterer Anbieter ohne meine Freigabe.**
 Modelle laufen alle ueber den Router per API-Key (smejj 1.0, GLM-5.2, Kimi K3,
-Cline; kuenftige genauso). Coding-Fundament ist derzeit GLM-5.2.
+kuenftige genauso). Coding-Fundament ist derzeit GLM-5.2. Cline wurde am
+2026-09-10 auf Betreiber-Anweisung vollstaendig aus der App entfernt.
 
 ## 5. Schutz (Non-Regression)
 Nichts geht kaputt, nichts wird geloescht oder ohne meine schriftliche Freigabe
