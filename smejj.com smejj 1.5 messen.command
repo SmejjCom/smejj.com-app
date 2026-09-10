@@ -61,9 +61,24 @@ Promise.all([
   if (z.jobId) {
     const st = await e2.getJson(`con/logs/jobs/${z.jobId}/status.json`, null).catch(() => null);
     const bewertung = await e2.getJson(`smejj/bewertungen/${z.jobId}.json`, null).catch(() => null);
-    const version = st?.version || st?.kandidat || null;
-    const training = version ? await e2.getJson(`con/versions/${version}/training.json`, null).catch(() => null) : null;
-    const ergebnisDa = Boolean(bewertung) || (training && training.jobId === z.jobId);
+    // DIE VERSION AUS DREI QUELLEN, nicht nur aus dem Status.
+    //
+    // Am 10.09. hat diese Zeile den Messstart blockiert: Salad hatte den
+    // fertigen Trainingsjob neu zugeteilt, der neue Durchlauf schrieb
+    // "Phase start" ueber den alten Status — und in dieser fruehen Phase steht
+    // die Version noch nicht drin. Ohne Version kein Blick in die Ablage, ohne
+    // Blick kein Ergebnis, und der erledigte Job galt als laufend.
+    //
+    // Der Kandidat, den wir gleich messen wollen, ist die dritte und
+    // verlaesslichste Quelle: er kommt aus der Umgebung und nicht aus einer
+    // Datei, die der Zombie gerade ueberschreibt.
+    const kandidaten = [st?.version, st?.kandidat, process.env.SMEJJ_KANDIDAT].filter(Boolean);
+    let training = null;
+    for (const v of kandidaten) {
+      const t = await e2.getJson(`con/versions/${v}/training.json`, null).catch(() => null);
+      if (t && t.jobId === z.jobId) { training = t; break; }
+    }
+    const ergebnisDa = Boolean(bewertung) || Boolean(training);
 
     if (st && st.fertig !== true && !ergebnisDa) {
       console.log(`  ABBRUCH: Job ${z.jobId} laeuft wirklich noch (Phase ${st.phase}) und hat kein Ergebnis abgelegt.`);

@@ -29,10 +29,17 @@ import urllib.request
 # aus einem reproduzierbaren Lauf ein Gluecksspiel. b6100 ist die Fassung, die
 # zur llama.cpp-Version des Hausmodell-Abbilds passt (Dockerfile: b10729 —
 # das Konverterskript ist zwischen diesen Staenden unveraendert geblieben).
-KONVERTER_URL = (
-    "https://raw.githubusercontent.com/ggml-org/llama.cpp/b6100/convert_lora_to_gguf.py"
-)
-GGUF_PAKET = "gguf>=0.10"
+LLAMA_BASIS = "https://raw.githubusercontent.com/ggml-org/llama.cpp/b6100"
+# ZWEI Dateien, nicht eine. convert_lora_to_gguf.py endet mit
+#   from convert_hf_to_gguf import LazyTorchTensor, ModelBase
+# und stirbt ohne die zweite mit ModuleNotFoundError — genau so gescheitert im
+# ersten Lauf am 10.09. um 04:50. Die Modelldefinitionen (welche Gewichtsnamen
+# zu welcher Architektur gehoeren) stehen dort, nicht im Adapter-Konverter.
+KONVERTER_DATEIEN = ("convert_lora_to_gguf.py", "convert_hf_to_gguf.py")
+KONVERTER_URL = f"{LLAMA_BASIS}/convert_lora_to_gguf.py"
+# convert_hf_to_gguf braucht mehr als nur gguf: transformers fuer AutoConfig
+# (liegt im Trainingsjob ohnehin vor) und sentencepiece fuer Tokenizer.
+GGUF_PAKETE = ["gguf>=0.10", "sentencepiece"]
 
 
 def sha256_von(pfad):
@@ -44,17 +51,19 @@ def sha256_von(pfad):
 
 
 def _hole_konverter(ziel_dir, oeffne=urllib.request.urlopen):
-    """Laedt das Konverterskript. Getrennt, damit ein Test es ersetzen kann."""
-    ziel = os.path.join(ziel_dir, "convert_lora_to_gguf.py")
-    if os.path.exists(ziel) and os.path.getsize(ziel) > 1000:
-        return ziel
-    with oeffne(KONVERTER_URL, timeout=60) as antwort:
-        inhalt = antwort.read()
-    if len(inhalt) < 1000:
-        raise RuntimeError(f"konverter_zu_klein: {len(inhalt)} Bytes")
-    with open(ziel, "wb") as f:
-        f.write(inhalt)
-    return ziel
+    """Laedt BEIDE Konverterskripte. Getrennt, damit ein Test es ersetzen kann."""
+    os.makedirs(ziel_dir, exist_ok=True)
+    for name in KONVERTER_DATEIEN:
+        ziel = os.path.join(ziel_dir, name)
+        if os.path.exists(ziel) and os.path.getsize(ziel) > 1000:
+            continue
+        with oeffne(f"{LLAMA_BASIS}/{name}", timeout=120) as antwort:
+            inhalt = antwort.read()
+        if len(inhalt) < 1000:
+            raise RuntimeError(f"konverter_zu_klein: {name} hat {len(inhalt)} Bytes")
+        with open(ziel, "wb") as f:
+            f.write(inhalt)
+    return os.path.join(ziel_dir, KONVERTER_DATEIEN[0])
 
 
 def wandle(adapter_dir, basis_dir, ausgabe_dir, name, status=None, pip=None, lauf=subprocess.run):
@@ -72,15 +81,19 @@ def wandle(adapter_dir, basis_dir, ausgabe_dir, name, status=None, pip=None, lau
     if status:
         status.setze(phase="gguf_umwandlung")
     if pip:
-        pip([GGUF_PAKET])
+        pip(GGUF_PAKETE)
 
     os.makedirs(ausgabe_dir, exist_ok=True)
     konverter = _hole_konverter(ausgabe_dir)
     ziel = os.path.join(ausgabe_dir, f"{name}.gguf")
 
+    # cwd auf das Konverterverzeichnis: convert_lora_to_gguf.py importiert
+    # convert_hf_to_gguf als NACHBARMODUL. Liegt der Arbeitsordner woanders,
+    # findet Python es nicht, obwohl die Datei da ist.
+    umgebung = {**os.environ, "PYTHONPATH": ausgabe_dir + os.pathsep + os.environ.get("PYTHONPATH", "")}
     r = lauf(
         [sys.executable, konverter, adapter_dir, "--base", basis_dir, "--outfile", ziel, "--outtype", "f16"],
-        capture_output=True, text=True, timeout=1800
+        capture_output=True, text=True, timeout=1800, cwd=ausgabe_dir, env=umgebung
     )
     if r.returncode != 0:
         # Die letzten Zeilen genuegen: der Konverter schreibt seinen Grund ans Ende.

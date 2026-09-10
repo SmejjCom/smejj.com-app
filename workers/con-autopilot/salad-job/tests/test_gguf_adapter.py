@@ -147,5 +147,62 @@ class TestSichern(unittest.TestCase):
         self.assertIsNone(gguf_adapter.wandle_und_sichere(adapter_ordner(self.tmp), "/b", self.tmp, "k", KaputtesE2()))
 
 
+class TestKonverterHolen(unittest.TestCase):
+    """Der Fehler, der den ersten echten Lauf gekostet hat (10.09., 04:50).
+
+    convert_lora_to_gguf.py endet mit
+        from convert_hf_to_gguf import LazyTorchTensor, ModelBase
+    Es allein zu holen ergibt ein Skript, das beim Start mit
+    ModuleNotFoundError stirbt — nach dem Training, nach dem pip-Install, nach
+    dem Herunterladen. Alles richtig ausser einer fehlenden Datei.
+    """
+
+    def setUp(self):
+        import tempfile
+        self.tmp = tempfile.mkdtemp()
+
+    def test_BEIDE_skripte_werden_geholt(self):
+        geholt = []
+
+        class Antwort:
+            def __init__(self, inhalt):
+                self.inhalt = inhalt
+
+            def read(self):
+                return self.inhalt
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        def oeffne(url, timeout=None):
+            geholt.append(url.rsplit("/", 1)[-1])
+            return Antwort(b"x" * 5000)
+
+        gguf_adapter._hole_konverter(self.tmp, oeffne=oeffne)
+        self.assertIn("convert_lora_to_gguf.py", geholt)
+        self.assertIn("convert_hf_to_gguf.py", geholt,
+                      "ohne die Modelldefinitionen stirbt der Konverter beim Import")
+
+    def test_eine_verdaechtig_kleine_datei_wird_abgelehnt(self):
+        # Eine Fehlerseite statt des Skripts ist wenige hundert Bytes gross und
+        # laesst sich sonst klaglos speichern.
+        class Antwort:
+            def read(self):
+                return b"404: Not Found"
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        with self.assertRaises(RuntimeError) as f:
+            gguf_adapter._hole_konverter(self.tmp, oeffne=lambda url, timeout=None: Antwort())
+        self.assertIn("konverter_zu_klein", str(f.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
