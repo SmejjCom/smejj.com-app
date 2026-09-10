@@ -1,20 +1,31 @@
 // smejj.com control-server — das Sprach-Ohr direkt am Control Server.
 //
-// WARUM ES DIESE ZWEITE ADRESSE GIBT — live gemessen 2026-09-10:
-// Die Sprachwelle rief ihre drei Dienste ausschliesslich auf der Chat-Bridge
-// (smejj-chat-bridge.zeabur.app). Die antwortet auf JEDE Route mit 404, auch
-// auf /api/chat und /api/agent:
+// WARUM ES DIESE ZWEITE ADRESSE GIBT — und eine KORREKTUR meiner ersten
+// Diagnose, damit sie niemand als Tatsache weitertraegt:
 //
-//   /api/voice/status       404
-//   /api/voice/tts          404
-//   /api/voice/transcribe   404
+// Am 2026-09-10 habe ich die Dienste der Sprachwelle mit curl gemessen und
+// ueberall 404 bekommen — /api/voice/status, /api/voice/tts,
+// /api/voice/transcribe, sogar /api/health. Daraus schloss ich, die
+// Chat-Bridge sei tot und die Sprachwelle laufe deshalb nur mit
+// Browser-Erkennung und Browser-Stimme.
 //
-// Beim Chat faellt das niemandem auf: er hat einen zweiten Weg
-// (CLIENT_ROUTES.chatFallback -> api.smejj.com) und nimmt ihn still. Die
-// Sprachwelle hatte keinen. Ergebnis: kein Server-Ohr, keine Premium-Stimme —
-// uebrig blieb die Browser-Erkennung mit der Browser-Stimme. Genau das meinte
-// der Betreiber mit "nicht nur eine einfache Animation mit anschliessendem
-// Text-to-Speech".
+// DAS WAR FALSCH. Die Bridge nimmt POST; auf GET antwortet sie 404. Mit der
+// Methode, die der Browser wirklich benutzt, sieht es so aus:
+//
+//   POST /api/voice/status       200  {"ok":true,"premiumVoice":true}
+//   POST /api/voice/transcribe   401  (verlangt Anmeldung)
+//   POST /api/voice/tts          401  (verlangt Anmeldung)
+//
+// Die Premium-Stimme laeuft also, und das Ohr auch. Wer ein Werkzeug mit einer
+// anderen Methode befragt als der Klient, misst nicht den Dienst, sondern sich
+// selbst.
+//
+// WAS BLEIBT: Ein zweiter Weg ist trotzdem richtig. Der Chat hat ihn seit
+// jeher (chatFallback -> api.smejj.com), die Sprachwelle hatte keinen — faellt
+// die Bridge wirklich einmal aus, war das Ohr fuer die ganze Sitzung weg
+// (voice-ear.js schaltete sich bei der ersten 404 ab). Diese Route ist der
+// zweite Weg. Sie kostet nichts: das Ohr braucht nur den Groq-Schluessel, den
+// dieser Server ohnehin fuehrt.
 //
 // WAS HIER GEHT UND WAS NICHT:
 //   * Das OHR (Spracherkennung) braucht nur den Groq-Schluessel, den dieser
@@ -22,11 +33,11 @@
 //     "Schnellspur und Sprach-Ohr"). Es kostet nichts extra und laeuft ab
 //     sofort — Whisper erkennt deutsche Sprache deutlich zuverlaessiger als
 //     die Browser-Erkennung, besonders bei Hintergrundgeraeuschen.
-//   * Die PREMIUM-STIMME braucht einen eigenen Sprachworker (XTTS/Piper auf
-//     Salad). Der laeuft nicht und waere eine neue laufende Kostenposition —
-//     das entscheidet der Betreiber, nicht dieser Server. /api/voice/status
-//     sagt darum ehrlich, was da ist und was fehlt, statt Verfuegbarkeit zu
-//     behaupten.
+//   * Die PREMIUM-STIMME braucht einen eigenen Sprachworker (XTTS/Piper). Die
+//     BRIDGE hat einen und meldet premiumVoice: true — DIESER Server hat
+//     keinen. Er sagt das auch so (stimme: false), statt Verfuegbarkeit zu
+//     behaupten: der Klient fragt ohnehin zuerst die Bridge und bekommt dort
+//     die richtige Antwort.
 //
 // Kein eigener Code fuer die Erkennung: dieselbe gepruefte Funktion wie in der
 // Bridge (public/chat-bridge-voice-ear.js). Zwei Fassungen derselben Logik

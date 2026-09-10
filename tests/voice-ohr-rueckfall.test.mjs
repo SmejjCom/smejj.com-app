@@ -1,13 +1,17 @@
 // smejj.com — das Sprach-Ohr gibt nicht bei der ersten toten Adresse auf.
 //
-// LIVE GEMESSEN 2026-09-10: Die Sprachwelle rief ihre Dienste ausschliesslich
-// auf der Chat-Bridge (smejj-chat-bridge.zeabur.app). Die antwortet auf JEDE
-// Route mit 404 — auch auf /api/chat und /api/agent. Beim Chat faellt das
-// niemandem auf: er hat einen zweiten Weg (chatFallback) und nimmt ihn still.
-// Das Ohr hatte keinen und schaltete sich bei der ersten 404 fuer die GANZE
-// Sitzung ab (alive = false). Uebrig blieb die Browser-Erkennung — genau das,
-// was der Betreiber als "nur eine einfache Animation mit anschliessendem
-// Text-to-Speech" beschrieben hat.
+// DIE LUECKE: Das Ohr lag allein auf der Chat-Bridge und schaltete sich bei der
+// ersten 404 fuer die GANZE Sitzung ab (alive = false). Uebrig blieb dann die
+// Browser-Erkennung — ohne dass der Nutzer erfaehrt, warum sie ploetzlich
+// schlechter versteht. Der Chat hat gegen genau diesen Fall seit jeher einen
+// zweiten Weg (chatFallback); das Ohr hatte keinen.
+//
+// UND EINE LEHRE UEBERS MESSEN, die hier stehenbleiben soll: Ich hielt die
+// Bridge zuerst fuer tot, weil curl auf JEDE ihrer Routen 404 lieferte —
+// /api/voice/status, /api/voice/tts, sogar /api/health. Sie nimmt POST; auf GET
+// antwortet sie 404. Mit der Methode, die der Klient wirklich benutzt, kommt
+// {"ok":true,"premiumVoice":true} zurueck. Wer ein Werkzeug anders befragt als
+// der Klient, misst nicht den Dienst, sondern sich selbst.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createServerEar } from "../public/voice-ear.js";
