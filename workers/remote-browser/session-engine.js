@@ -598,10 +598,30 @@ export function createSessionEngine({
           await locator.fill(action.text, { timeout: cfg.aktionTimeoutMs });
           return mitZiel({});
         }
-        await locator.click({ timeout: cfg.aktionTimeoutMs });
+        // ZWEITER VERSUCH MIT NACHDRUCK — benannt, nicht heimlich.
+        //
+        // Live 10.09. (de.wikipedia.org): Der Suchknopf ist ein
+        // `<button type="submit">`, das Wikipedia absichtlich unsichtbar macht
+        // (OOUI legt ein Symbol darueber). Playwright wartet dann auf
+        // Bedienbarkeit, die nie eintritt — fuenf Schritte hintereinander
+        // "element_nicht_bedienbar", der Auftrag scheiterte an einem Knopf,
+        // den jeder Mensch benutzen kann.
+        //
+        // Erzwungen wird NUR das, was die Maus ohnehin gewaehlt hat: ein
+        // EINDEUTIG aufgeloestes Element (Mehrdeutiges fliegt vorher raus).
+        // Es bleibt bei EINEM Nachdruck, und die Antwort sagt es (erzwungen),
+        // damit im Verlauf steht, was wirklich geschah.
+        let erzwungen = false;
+        try {
+          await locator.click({ timeout: cfg.aktionTimeoutMs });
+        } catch (fehler) {
+          if (!/Timeout .*exceeded/i.test(String(fehler?.message || fehler))) throw fehler;
+          await locator.click({ timeout: cfg.settleTimeoutMs, force: true });
+          erzwungen = true;
+        }
         await page.waitForLoadState("domcontentloaded", { timeout: cfg.settleTimeoutMs }).catch(() => {});
         await page.waitForTimeout?.(300)?.catch?.(() => {});
-        return mitZiel({});
+        return mitZiel(erzwungen ? { erzwungen: true } : {});
       }
       case "observe": {
         // DERSELBE Beobachter wie in der Maus-Engine, nicht ein zweiter:
