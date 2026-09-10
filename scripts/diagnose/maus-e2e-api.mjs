@@ -37,12 +37,33 @@ const alsAktion = (st) => { const sel = st.target?.selector || st.target || null
   return null; };
 const open = await post("/api/browser/session", { url: START, viewport: { width: 1365, height: 900 } }, 60000);
 if (!open.j?.ok) { console.log("OPEN fehlgeschlagen", open.status, open.roh); process.exit(1); }
-const sid = open.j.sessionId; console.log(`[${s()}s] Sitzung ${sid.slice(0, 8)} offen, ${open.ms} ms, ${open.j.title}`);
+let sid = open.j.sessionId; let letzteAdresse = START; console.log(`[${s()}s] Sitzung ${sid.slice(0, 8)} offen, ${open.ms} ms, ${open.j.title}`);
 const verlauf = []; const zeit = { hinsehen: 0, ueberlegen: 0, handeln: 0 }; let ergebnis = null;
+// EINMAL NEU VERBINDEN, wie es das Panel tut. Gemessen 10.09.: eine Sitzung
+// lebt 30 Minuten und wird bei jedem Schritt aufgefrischt — "session_unknown"
+// heisst deshalb NIE Zeitablauf, sondern: der Worker-Dienst wurde neu gebaut
+// (jeder Push auf den Bauzweig startet smejj-remote-browser neu) und hat seine
+// Sitzungen im Arbeitsspeicher verloren.
+let neuVerbunden = false;
+async function neueSitzung(bei) {
+  if (neuVerbunden) return null;
+  neuVerbunden = true;
+  const w = await post("/api/browser/session", { url: bei, viewport: { width: 1365, height: 900 } }, 60000);
+  if (!w.j?.ok) { console.log(`[${s()}s] neu verbinden fehlgeschlagen: ${w.j?.error || w.status}`); return null; }
+  console.log(`[${s()}s] Sitzung verloren — neu verbunden (${w.j.sessionId.slice(0, 8)})`);
+  verlauf.push("UNTERBROCHEN: Sitzung neu aufgebaut, Schritt noch NICHT ausgefuehrt");
+  return w.j.sessionId;
+}
+const verloren = (a) => a.status === 404 || /session_unknown|session_expired/.test(String(a.j?.error || ""));
 for (let n = 1; n <= 12; n++) {
-  const blick = await post("/api/browser/session/act", { sessionId: sid, action: { type: "observe", ohneBild: true } }, 45000);
+  let blick = await post("/api/browser/session/act", { sessionId: sid, action: { type: "observe", ohneBild: true } }, 45000);
   zeit.hinsehen += blick.ms;
+  if (!blick.j?.beobachtung && verloren(blick)) {
+    const neu = await neueSitzung(letzteAdresse);
+    if (neu) { sid = neu; n -= 1; continue; }
+  }
   if (!blick.j?.beobachtung) { console.log(`[${s()}s] ${n}: Hinsehen FEHL ${blick.status} ${blick.j?.error || blick.roh} (${blick.ms} ms)`); break; }
+  letzteAdresse = blick.j.beobachtung.url || letzteAdresse;
   const b = blick.j.beobachtung; console.log(`[${s()}s] ${n}: Hinsehen ${blick.ms} ms — ${b.title} — ${b.elements?.length} Elemente`);
   const plan = await post("/api/maus/run", { naechsterSchritt: true, task: TASK, capsuleRef: `e2e-${t0.toString(36)}`, domainAllowlist: ["de.wikipedia.org"], beobachtung: b, verlauf: verlauf.slice(-12), restSchritte: 13 - n }, 130000);
   zeit.ueberlegen += plan.ms; const p = plan.j?.planer;
@@ -52,6 +73,10 @@ for (let n = 1; n <= 12; n++) {
   const aktion = alsAktion(e.step); if (!aktion) { verlauf.push(`FEHLGESCHLAGEN: ${beschreibe(e.step)} (nicht ausfuehrbar)`); continue; }
   const tat = await post("/api/browser/session/act", { sessionId: sid, action: aktion }, 45000);
   zeit.handeln += tat.ms;
+  if (!tat.j?.ok && verloren(tat)) {
+    const neu = await neueSitzung(letzteAdresse);
+    if (neu) { sid = neu; n -= 1; continue; }
+  }
   if (tat.j?.ok) { console.log(`[${s()}s] ${n}: Handeln ${tat.ms} ms ok${tat.j.gelesen ? " → " + tat.j.gelesen.slice(0, 80) : ""}`); verlauf.push(tat.j.gelesen ? `${beschreibe(e.step)} → »${tat.j.gelesen.slice(0, 300)}«` : `${beschreibe(e.step)}: erledigt`); }
   else { console.log(`[${s()}s] ${n}: Handeln FEHL ${tat.status} ${tat.j?.error || tat.roh} (${tat.ms} ms)`); verlauf.push(`FEHLGESCHLAGEN: ${beschreibe(e.step)} (${String(tat.j?.error || "keine Antwort").slice(0, 220)}) — bitte anders vorgehen`); }
 }

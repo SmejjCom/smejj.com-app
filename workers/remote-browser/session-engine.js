@@ -37,6 +37,10 @@ export const SESSION_DEFAULTS = {
   actionTimeoutMs: 15_000,
   navTimeoutMs: 25_000,
   settleTimeoutMs: 4_000,
+  // Playwright wartet vor einem Foto auf die Schriften der Seite. Bei
+  // Wikipedia dauerte das live ueber 15 s (Standard) — laenger als die ganze
+  // Aktion. 6 s reichen fuer jede Seite, die ueberhaupt ein Bild hergibt.
+  screenshotTimeoutMs: 6_000,
   jpegQuality: 70,
   typeMaxChars: 2_000,
   scrollMaxPx: 4_000
@@ -271,10 +275,23 @@ export function createSessionEngine({
         dialog: dialogNachAussen(session.dialogWache)
       };
     }
-    const screenshot = await page.screenshot({ type: "jpeg", quality: cfg.jpegQuality });
+    // DAS BILD DARF DIE AKTION NICHT ZU FALL BRINGEN (live 10.09.,
+    // de.wikipedia.org): Der Klick hatte laengst getroffen, die neue Seite
+    // stand da — und trotzdem kam beim Aufrufer "502 page.screenshot: Timeout
+    // 15000ms exceeded, waiting for fonts to load" an. Die Maus schrieb
+    // "FEHLGESCHLAGEN" in ihren Verlauf und versuchte denselben Klick noch
+    // einmal, auf einer Seite, die es nicht mehr gab. Ein Foto ist Beiwerk:
+    // misslingt es, gilt das letzte Bild weiter, und die Aktion bleibt
+    // erfolgreich. Fail-soft nur hier — die Aktion selbst bleibt fail-closed.
+    let bild = session.letztesBild || "";
+    try {
+      const screenshot = await page.screenshot({ type: "jpeg", quality: cfg.jpegQuality, timeout: cfg.screenshotTimeoutMs });
+      bild = `data:image/jpeg;base64,${screenshot.toString("base64")}`;
+      session.letztesBild = bild;
+    } catch (error) {
+      session.bildFehler = String(error?.message || error).slice(0, 200);
+    }
     const title = await page.title().catch(() => "");
-    const bild = `data:image/jpeg;base64,${screenshot.toString("base64")}`;
-    session.letztesBild = bild;
     return {
       ok: true,
       sessionId: session.id,
@@ -282,7 +299,9 @@ export function createSessionEngine({
       finalUrl: page.url(),
       title,
       viewport: session.viewport,
-      expiresInMs: expiresInMs(session)
+      expiresInMs: expiresInMs(session),
+      // Sichtbar, aber harmlos: der Aufrufer weiss, dass das Bild von vorhin ist.
+      ...(session.bildFehler ? { bildVeraltet: true } : {})
     };
   }
 
@@ -674,6 +693,7 @@ export function createSessionEngine({
     }
     if (session.busy) return fail(409, "session_busy");
     session.busy = true;
+    session.bildFehler = "";
     try {
       const zusatz = await performAction(session, verdict.action);
       touch(session);

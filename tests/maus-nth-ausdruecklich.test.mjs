@@ -112,3 +112,25 @@ test("Wartezeit nach 429 kommt aus den Kopfzeilen des Anbieters", async () => {
   assert.equal(wartezeitAus([{ error: "http_429", retryAfterMs: 90000 }]), 45000, "Deckel");
   assert.equal(wartezeitAus([{ error: "http_429" }]), 15000);
 });
+
+// --- Ein misslungenes Foto darf die Aktion nicht zu Fall bringen -----------
+// Live 10.09. (de.wikipedia.org): Der Klick traf, die neue Seite stand da, und
+// der Aufrufer bekam "502 page.screenshot: Timeout 15000ms exceeded, waiting
+// for fonts to load". Die Maus schrieb FEHLGESCHLAGEN in ihren Verlauf und
+// klickte auf einer Seite weiter, die es nicht mehr gab.
+import { SESSION_DEFAULTS } from "../workers/remote-browser/session-engine.js";
+import { readFileSync } from "node:fs";
+
+test("das Foto hat eine eigene, kurze Zeitgrenze — kuerzer als Playwrights 15 s", () => {
+  assert.equal(SESSION_DEFAULTS.screenshotTimeoutMs, 6000);
+  assert.ok(SESSION_DEFAULTS.screenshotTimeoutMs < 15000, "sonst haengt die Aktion laenger als der Klick dauert");
+});
+
+test("misslingt das Foto, gilt das letzte Bild weiter und die Aktion bleibt erfolgreich", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("let bild = session.letztesBild"), quelle.indexOf("const title = await page.title()"));
+  assert.match(stelle, /try \{/, "der Foto-Aufruf steht in einem try");
+  assert.match(stelle, /timeout: cfg\.screenshotTimeoutMs/, "mit eigener Zeitgrenze");
+  assert.match(stelle, /catch \(error\) \{\s*session\.bildFehler/, "der Fehler wird gemerkt, nicht geworfen");
+  assert.match(quelle, /bildVeraltet: true/, "der Aufrufer erfaehrt, dass das Bild von vorhin ist");
+});
