@@ -93,19 +93,20 @@ test("die Kamera legt sich NICHT ueber die Bedienzone", () => {
   // start-styles.css ist das, was der Browser bekommt; wer hier misst, kann
   // sich die Frage "welche Quelle ist die echte?" sparen.
   const buendel = readFileSync(new URL("../public/start-styles.css", import.meta.url), "utf8");
-  assert.match(buendel, /body\.voice-mode-open #kameraOverlay\s*\{[^}]*bottom:\s*calc\(var\(--voice-bedienzone/,
+  assert.match(buendel, /body\.voice-mode-open #kameraOverlay\s*\{[^}]*bottom:\s*calc\(48px/,
     "das Kamera-Overlay muss im Sprachmodus ueber der Bedienzone enden");
   assert.match(buendel, /body\.voice-mode-open #voiceModeClose\s*\{[^}]*z-index/,
     "das X muss in jedem Fall erreichbar bleiben");
-  // Und die Hoehe muss gemeldet werden, sonst rechnet die Regel mit 0.
-  assert.match(ui, /--voice-bedienzone/, "voice-overlay-ui.js meldet die Hoehe nicht");
-  assert.match(ui, /ResizeObserver/, "bei Umbruch oder Drehung aendert sich die Hoehe");
-  // EIN UNPLAUSIBLER WERT DARF NICHT DURCH. Der erste Anlauf rechnete Hoehe +
-  // Abstand zur Unterkante und meldete 812px bei 812px Fensterhoehe — das
-  // Kamera-Overlay bekam bottom: 820px, schrumpfte auf Hoehe 0, und das nackte
-  // video-Element lag ueber dem X. Eine kaputte Zahl war schlimmer als keine.
-  assert.match(ui, /innerHeight \* 0\.5/, "kein Deckel gegen unplausible Werte");
-  assert.match(ui, /requestAnimationFrame/, "vor dem Layout gemessen ist geraten");
+  // OHNE JS-MESSUNG. Zwei Anlaeufe, zwei Messfehler: erst 812px bei 812px
+  // Fensterhoehe (das Overlay schrumpfte auf Hoehe 0 und das nackte
+  // video-Element lag ueber dem X), dann gar kein Wert — gemessen wurde beim
+  // AUFBAU, und da ist das Overlay noch hidden. Der einzige richtige
+  // Messzeitpunkt ist leicht zu verpassen; die Hoehe steht ohnehin im
+  // Stylesheet. Weniger Mechanik ist hier die bessere Loesung.
+  assert.doesNotMatch(ui, /--voice-bedienzone/,
+    "die Hoehe wird nicht mehr gemessen — sie steht in composer-tools.css");
+  assert.match(buendel, /max\(env\(safe-area-inset-bottom/,
+    "der Home Indicator gehoert in die Rechnung");
 });
 
 test("eine Aufnahme im Sprachmodus landet im SPRACH-Feld", () => {
