@@ -278,3 +278,9 @@ test("done zeigt das ERGEBNIS, nicht die Begruendung", async () => {
   // Leerzeichen zaehlen nicht als Ergebnis.
   assert.equal(entscheidungAlsAktion({ decision: "done", reason: "B", result: "   " }).grund, "B");
 });
+
+test("die Fortschrittszeile nennt die benannte Wahl: Klicken: … (Treffer 1)", async () => {
+  const { beschreibe } = await import("../public/browser-pane-maus.js");
+  assert.equal(beschreibe({ action: "click", target: { selector: { strategy: "css", value: "a.x", nth: 0 } } }), "Klicken: a.x (Treffer 1)");
+  assert.equal(beschreibe({ action: "click", target: { selector: { strategy: "css", value: "a.x" } } }), "Klicken: a.x");
+});
