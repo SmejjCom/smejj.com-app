@@ -1,61 +1,62 @@
-// smejj.com — Laufzeit fuer smejj 1 ueber den Hausmodell-Dienst (Weg B, 06.09.2026):
-// Katalog-Eintrag, Registry-Anbindung, Gesundheitsprobe. Kaputte UND gesunde Probe.
-// Ausführen: node --test tests/smejj-1-laufzeit.test.mjs
+// smejj 1 — die Bedingungen, unter denen das EIGENE Modell waehlbar wird.
+//
+// Der Anlass: Am 10.09. war alles fertig — Dienst live, Modell geladen, es
+// antwortete nachweislich ("17 mal 3 ist 51") — und im Chat stand es trotzdem
+// nicht zur Wahl. Der Grund war eine doppelte Tuer vor demselben Raum: ein
+// Feature-Flag UND ein Schluessel. Das Flag hat nie etwas geschuetzt, denn ohne
+// Schluessel ist die Laufzeit ohnehin nicht konfiguriert. Es hat nur einen
+// zweiten Handgriff verlangt, den vier Tage lang niemand machte.
+
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LAUF_MODELLE, findeLaufModell, e2Schluessel } from "../workers/smejj-hausmodell/katalog.js";
+
 import { getModelDefinition, getModelRuntimeConfig, isModelEnabled } from "../src/shared/modelRegistry.js";
-import { refreshModelRuntimeHealth, resetModelRuntimeHealth } from "../control-server/src/llm/modelRuntimeHealth.js";
 
-const ENV = {
-  SMEJJ_1_ENABLED: "YES",
-  SMEJJ_LLM_SMEJJ1_BASE_URL: "https://hausmodell.test/v1",
-  SMEJJ_LLM_SMEJJ1_API_KEY: "haus-schluessel"
-};
-
-test("Katalog: smejj-1-basis ist ein vollstaendiger, startbarer Eintrag und nicht der Standard", () => {
-  const m = findeLaufModell("smejj-1-basis");
-  assert.ok(m, "Eintrag fehlt");
-  assert.equal(m.standard, false, "das Hausmodell-Standardmodell bleibt BitNet");
-  assert.match(m.sha256, /^[0-9a-f]{64}$/);
-  assert.ok(m.sizeBytes > 2_000_000_000 && m.sizeBytes < 3_000_000_000, "Q4_K_M eines 4B-Modells liegt bei ~2,5 GB");
-  assert.ok(m.ramSchaetzungMb <= 3200, "muss neben dem Bild-Maler in die ~3 GB freien RAM passen");
-  assert.equal(m.kontext, 4096);
-  assert.equal(e2Schluessel(m), "models/staging/smejj-1-basis/Qwen3-4B-Instruct-2507-Q4_K_M.gguf");
-  assert.equal(LAUF_MODELLE.filter((x) => x.standard).length, 1, "genau ein Standardmodell");
-  assert.equal(new Set(LAUF_MODELLE.map((x) => x.id)).size, LAUF_MODELLE.length, "keine Kennung doppelt");
+test("ohne Schluessel bleibt smejj 1 unkonfiguriert — fail-closed", () => {
+  // Die eine Tuer, die wirklich schuetzt.
+  assert.equal(getModelRuntimeConfig("smejj-1", {}).configured, false);
 });
 
-test("Registry: smejj-1 zeigt auf den Hausmodell-Dienst — Bearer, Katalog-Kennung, 4096 Kontext, fail-closed", () => {
-  const def = getModelDefinition("smejj-1");
-  assert.equal(def.provider, "hausmodell");
-  assert.equal(def.contextTokens, 4096);
-  assert.equal(isModelEnabled(def, {}), false);
-  assert.equal(getModelRuntimeConfig(def, { SMEJJ_1_ENABLED: "YES" }).configured, false, "ohne Schluessel nicht konfiguriert");
-  assert.equal(getModelRuntimeConfig(def, { SMEJJ_1_ENABLED: "YES" }).baseUrl, "https://smejj-hausmodell.zeabur.app/v1", "die Adresse des eigenen Dienstes ist Standard");
-  const rt = getModelRuntimeConfig(def, ENV);
-  assert.equal(rt.configured, true);
-  assert.equal(rt.runtimeModel, "smejj-1-basis");
-  assert.equal(rt.apiKeyHeader, "Authorization", "der Hausmodell-Dienst prueft Bearer");
-  assert.equal(rt.baseUrl, "https://hausmodell.test/v1");
+test("EIN Schluessel genuegt — Adresse und Modellkennung stehen im Code", () => {
+  // Das Skript vom 06.09. nannte fuenf Werte. Drei davon ueberschreiben nur,
+  // was ohnehin in der Registry steht: Adresse, Kennung und Kopfzeile.
+  const r = getModelRuntimeConfig("smejj-1", { SMEJJ_LLM_SMEJJ1_API_KEY: "k" });
+  assert.equal(r.configured, true);
+  assert.equal(r.baseUrl, "https://smejj-hausmodell.zeabur.app/v1");
+  assert.equal(r.runtimeModel, "smejj-1-basis");
+  assert.equal(r.apiKeyHeader, "Authorization");
 });
 
-test("Gesundheitsprobe: /health eine Ebene ueber /v1 mit Bearer — gesund gruen, kaputt rot, ohne Flag keine Anfrage", async () => {
-  resetModelRuntimeHealth();
-  const aufrufe = [];
-  const gesund = async (url, init) => { aufrufe.push({ url, auth: init?.headers?.Authorization }); return { ok: true, status: 200 }; };
-  let snap = await refreshModelRuntimeHealth(ENV, { fetchImpl: gesund, force: true });
-  assert.ok(aufrufe.some((a) => a.url === "https://hausmodell.test/health"), `erwartet /health, gesehen: ${aufrufe.map((a) => a.url).join(", ")}`);
-  assert.equal(aufrufe.find((a) => a.url === "https://hausmodell.test/health").auth, "Bearer haus-schluessel");
-  assert.equal(snap["smejj-1"]?.available, true);
+test("der Schluessel darf auch unter seinem Dienstnamen stehen", () => {
+  // Derselbe Wert heisst beim Hausmodell-Dienst SMEJJ_HAUSMODELL_KEY. Ihn ein
+  // zweites Mal einzutragen ist eine Fehlerquelle, kein Schutz.
+  const r = getModelRuntimeConfig("smejj-1", { SMEJJ_HAUSMODELL_KEY: "k" });
+  assert.equal(r.configured, true);
+  assert.deepEqual(r.apiKeys, ["k"]);
+});
 
-  resetModelRuntimeHealth();
-  const kaputt = async () => ({ ok: false, status: 503 });
-  snap = await refreshModelRuntimeHealth(ENV, { fetchImpl: kaputt, force: true });
-  assert.equal(snap["smejj-1"]?.available, false, "503 muss rot sein — sonst wuerde Nr. 83 nie zurueckrollen");
+test("der modellspezifische Name gewinnt, wenn beide gesetzt sind", () => {
+  // Sonst ueberstimmt ein alter Dienstschluessel still einen neu eingetragenen.
+  const r = getModelRuntimeConfig("smejj-1", { SMEJJ_LLM_SMEJJ1_API_KEY: "neu", SMEJJ_HAUSMODELL_KEY: "alt" });
+  assert.equal(r.apiKeys[0], "neu");
+});
 
-  resetModelRuntimeHealth();
-  const zaehler = [];
-  await refreshModelRuntimeHealth({}, { fetchImpl: async (u) => { zaehler.push(u); return { ok: true, status: 200 }; }, force: true });
-  assert.equal(zaehler.length, 0, "ohne Freigabe wird nichts angefragt");
+test("smejj 1 braucht kein Freischalt-Flag mehr", () => {
+  assert.equal(isModelEnabled("smejj-1", {}), true);
+  assert.equal(getModelDefinition("smejj-1").enabledByDefault, true);
+});
+
+test("das Flag kann das Modell weiterhin ABSCHALTEN", () => {
+  // Wichtig fuer den Notfall: wenn der Hausmodell-Dienst klemmt, muss es EINEN
+  // Schalter geben, der das Modell aus dem Menue nimmt, ohne den Schluessel zu
+  // loeschen.
+  assert.equal(isModelEnabled("smejj-1", { SMEJJ_1_ENABLED: "NO" }), false);
+  assert.equal(isModelEnabled("smejj-1", { SMEJJ_1_ENABLED: "false" }), false);
+});
+
+test("kein anderes Modell hat sich dabei veraendert", () => {
+  // Die Registry ist geteilt. Eine Aenderung an smejj-1 darf glm-5-2 nicht
+  // anfassen — das ist das Modell, das smejj.com heute antreibt.
+  assert.equal(getModelRuntimeConfig("glm-5-2", {}).configured, false);
+  assert.equal(getModelRuntimeConfig("glm-5-2", { SMEJJ_LLM_ZHIPU_API_KEY: "k" }).configured, true);
 });

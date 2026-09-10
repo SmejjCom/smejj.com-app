@@ -24,14 +24,24 @@ test("registry keeps GLM-5.2 primary and Kimi K2.7 feature-flagged", () => {
     registry.models.map((model) => model.name),
     // Ox Alpha stand hier vom 26.08. bis 06.09.2026 an dritter Stelle.
     // Betreiber-Ansage 2026-09-06: abgeschafft, kommt nicht wieder.
-    // smejj 1 seit 2026-09-05: die trainierte Familie, fail-closed hinter SMEJJ_1_ENABLED.
+    // smejj 1 seit 2026-09-05: die trainierte Familie. Fail-closed haengt seit
+    // dem 10.09. am SCHLUESSEL statt am Flag SMEJJ_1_ENABLED — siehe unten.
     ["GLM-5.2", "Kimi K2.7", "Kimi K3", "smejj fast 1.0", "smejj 1"]
   );
   assert.equal(registry.models[0].active, true);
   assert.equal(registry.models[1].active, false);
   assert.equal(registry.models[2].active, false);
   assert.equal(registry.models[3].active, false);
-  assert.equal(registry.models[4].active, false, "smejj 1 bleibt ohne Env-Freigabe inaktiv (fail-closed)");
+  // smejj 1 ist WAEHLBAR, aber ohne Schluessel nicht benutzbar. Das ist der
+  // Unterschied, an dem diese Zeile bis zum 10.09. das Falsche gemessen hat:
+  // sie prueft `active`, also das Flag — die Tuer, die nichts verschliesst.
+  // Verschlossen wird ueber `runtimeConfigured`, und das bleibt ohne Schluessel
+  // false. Vier Tage lang war der Hausmodell-Dienst live, das Modell geladen
+  // und antwortbereit, und niemand konnte es waehlen, weil ein zweites Flag
+  // fehlte, das gar nichts geschuetzt hat.
+  assert.equal(registry.models[4].active, true, "smejj 1 steht zur Wahl");
+  assert.equal(registry.models[4].runtimeConfigured, false,
+    "ohne Schluessel bleibt smejj 1 unbenutzbar — DAS ist fail-closed");
   assert.equal(registry.models[0].contextTokens, 1_000_000);
   assert.equal(registry.models[1].contextTokens, 262_144);
   assert.equal(JSON.stringify(registry).includes("secret"), false);
