@@ -156,16 +156,71 @@ def lade_suiten(verzeichnis):
     return suiten
 
 
-def fuehre_aus(weg, suiten, status, abbruch=lambda: False, wiederholungen=1):
-    """Liefert {suiteId: {...antworten}}; jeder Fall wird `wiederholungen`-mal gestellt."""
+def fuehre_aus(weg, suiten, status, abbruch=lambda: False, wiederholungen=1,
+               sichere=None, vorherige=None, sicherungs_abstand=25):
+    """Liefert {suiteId: {...antworten}}; jeder Fall wird `wiederholungen`-mal gestellt.
+
+    ZWISCHENSTAENDE, seit 11.09. — der Grund steht in einer verlorenen Nacht:
+    Am 10.09. war eine Messung bei 287 von 295 Antworten des ZWEITEN Standes,
+    also fast fertig. Salad teilte den Knoten neu zu, und sie begann wieder bei
+    null. Drei Stunden Rechenzeit fuer nichts, und beliebig wiederholbar — ein
+    Messlauf ohne Zwischenstand kann grundsaetzlich nie fertig werden, wenn die
+    Verdraengung haeufiger kommt als die Messung dauert.
+
+    Das Training hatte diesen Schutz von Anfang an (checkpoint-N alle 15 min).
+    Die Messung nicht, weil sie "ja nur ein paar Minuten" dauern sollte.
+
+    `sichere(teilstand)` wird alle `sicherungs_abstand` Antworten gerufen,
+    `vorherige` ist ein zurueckgegebener Teilstand. Fehlt beides, verhaelt sich
+    die Funktion exakt wie vorher.
+    """
     ergebnisse = []
     gesamt = sum(len(s.get("cases", [])) for s in suiten) * wiederholungen
     erledigt = 0
     tokens_gesamt = 0
     sekunden_gesamt = 0.0
+
+    # Was schon beantwortet ist, wird nicht neu gefragt. Der Schluessel ist
+    # (suiteId, fallId) — die Reihenfolge kann sich zwischen Laeufen aendern,
+    # die Kennung nicht.
+    schon = {}
+    if vorherige:
+        for s in vorherige.get("suiten", []):
+            for f in s.get("cases", []):
+                if f.get("runs"):
+                    schon[(s.get("suiteId"), f.get("id"))] = f["runs"]
+        tokens_gesamt = int((vorherige.get("leistung") or {}).get("tokensGesamt") or 0)
+        sekunden_gesamt = float((vorherige.get("leistung") or {}).get("sekundenGesamt") or 0.0)
+        if schon:
+            print(f"[eval] {len(schon)} Antworten aus dem Zwischenstand uebernommen", flush=True)
+
+    def teilstand():
+        """Der aktuelle Stand als vollstaendige Antwortstruktur — auch halb fertig lesbar."""
+        offene = [{"suiteId": s.get("suiteId"), "version": s.get("version"),
+                   "contentSha256": (s.get("integrity") or {}).get("contentSha256"),
+                   "kategorie": s.get("kategorie"),
+                   "cases": [{"id": f.get("id"),
+                              "kategorie": f.get("kategorie") or s.get("kategorie"),
+                              "runs": schon.get((s.get("suiteId"), f.get("id")), [])}
+                             for f in s.get("cases", [])]}
+                  for s in suiten]
+        return {"suiten": offene, "unvollstaendig": True,
+                "leistung": {"tokensGesamt": tokens_gesamt,
+                             "sekundenGesamt": round(sekunden_gesamt, 1),
+                             "antworten": erledigt}}
+
     for suite in suiten:
         faelle = []
         for fall in suite.get("cases", []):
+            vorhanden = schon.get((suite.get("suiteId"), fall.get("id")))
+            if vorhanden and len(vorhanden) >= wiederholungen:
+                faelle.append({"id": fall.get("id"),
+                               "kategorie": fall.get("kategorie") or suite.get("kategorie"),
+                               "runs": vorhanden})
+                erledigt += len(vorhanden)
+                status.setze(phase="messung", suite=suite.get("suiteId"), fall=fall.get("id"),
+                             erledigt=erledigt, von=gesamt)
+                continue
             laeufe = []
             for w in range(wiederholungen):
                 if abbruch():
@@ -187,6 +242,16 @@ def fuehre_aus(weg, suiten, status, abbruch=lambda: False, wiederholungen=1):
                              erledigt=erledigt, von=gesamt)
             faelle.append({"id": fall.get("id"), "kategorie": fall.get("kategorie") or suite.get("kategorie"),
                            "runs": laeufe})
+            schon[(suite.get("suiteId"), fall.get("id"))] = laeufe
+            # Sichern kostet einen e2-Schreibvorgang je 25 Antworten — gegen
+            # eine Verdraengung, die den ganzen Lauf kostet, ist das nichts.
+            if sichere and erledigt % sicherungs_abstand < wiederholungen:
+                try:
+                    sichere(teilstand())
+                except Exception as fehler:  # noqa: BLE001
+                    # Ein misslungenes Sichern darf die Messung nicht anhalten:
+                    # die Antworten sind noch im Speicher, der Lauf geht weiter.
+                    print(f"[eval] Zwischenstand nicht gesichert: {fehler}", flush=True)
         ergebnisse.append({"suiteId": suite.get("suiteId"), "version": suite.get("version"),
                            "contentSha256": (suite.get("integrity") or {}).get("contentSha256"),
                            "kategorie": suite.get("kategorie"), "cases": faelle})

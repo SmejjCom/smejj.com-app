@@ -341,12 +341,30 @@ def lauf():
                 e2.lade_verzeichnis_herunter(praefix, ziel, lambda n: STATUS.setze(aktuell=n))
                 weg.haenge_adapter_an(ziel)
             STATUS.setze(phase="messung", stand=stand, standNr=i + 1, staende=len(auftraege))
-            antworten = evalrun.fuehre_aus(weg, suiten, STATUS, abbruch=_ABBRUCH.is_set, wiederholungen=wdh)
+            eval_prefix = f"{os.environ.get('CON_EVAL_PREFIX', 'con/evals').rstrip('/')}/{stand}/{JOB_ID}"
+            teil_key = eval_prefix + "/teilstand.json"
+            # WIEDERAUFNAHME. Wird der Knoten mitten in der Messung verdraengt,
+            # faengt der neue Durchlauf sonst bei null an — am 10.09. bei 287
+            # von 295 Antworten passiert, also kurz vor dem Ziel. Der
+            # Zwischenstand traegt die Kennung des JOBS: ein fremder Lauf soll
+            # hier nichts finden.
+            vorherige = e2.get_json(teil_key, None)
+            if vorherige and vorherige.get("jobId") not in (None, JOB_ID):
+                vorherige = None
+            antworten = evalrun.fuehre_aus(
+                weg, suiten, STATUS, abbruch=_ABBRUCH.is_set, wiederholungen=wdh,
+                vorherige=vorherige,
+                sichere=lambda t: e2.put_json(teil_key, {**t, "jobId": JOB_ID, "version": stand}))
             antworten.update({"jobId": JOB_ID, "version": stand, "adapterPrefix": praefix,
                               "basisPrefix": basis_prefix, "stand": _iso(time.time()),
                               "abgebrochen": _ABBRUCH.is_set()})
-            eval_prefix = f"{os.environ.get('CON_EVAL_PREFIX', 'con/evals').rstrip('/')}/{stand}/{JOB_ID}"
             e2.put_json(eval_prefix + "/antworten.json", antworten)
+            # Der Zwischenstand hat seinen Zweck erfuellt. Ihn liegen zu lassen
+            # waere eine zweite, halbe Wahrheit neben der vollstaendigen.
+            try:
+                e2.put_json(teil_key, {"erledigt": True, "jobId": JOB_ID, "version": stand})
+            except Exception:  # noqa: BLE001
+                pass
             ergebnis["messungen"].append({"version": stand, "adapterPrefix": praefix, "prefix": eval_prefix,
                                           "leistung": antworten["leistung"], "modell": antworten["modell"],
                                           "suiten": [s["suiteId"] for s in antworten["suiten"]],
