@@ -308,7 +308,13 @@ export const MODEL_REGISTRY = Object.freeze({
     status: "self-hosted-runtime-configurable",
     contextTokens: 4_096,
     codingCapability: "assistant",
-    enabledByDefault: false,
+    // FRUEHER false mit dem Flag SMEJJ_1_ENABLED. Das war eine doppelte Tuer
+    // vor demselben Raum: ohne Schluessel ist `configured` ohnehin false, das
+    // Modell also nicht benutzbar. Die zweite Tuer hat nichts geschuetzt und
+    // dafuer einen Handgriff mehr verlangt — am 10.09. stand smejj 1 deshalb
+    // vier Tage lang bereit und niemand konnte es waehlen.
+    // Fail-closed bleibt es: der Schluessel entscheidet.
+    enabledByDefault: true,
     featureFlag: "SMEJJ_1_ENABLED",
     fallbackModelId: DEFAULT_MODEL_ID,
     storage: Object.freeze({
@@ -333,6 +339,11 @@ export const MODEL_REGISTRY = Object.freeze({
     }),
     runtime: Object.freeze({
       envPrefix: "SMEJJ1",
+      // Derselbe Schluessel heisst beim Hausmodell-Dienst SMEJJ_HAUSMODELL_KEY.
+      // Wer ihn dort schon gesetzt hat, muss ihn hier nicht ein zweites Mal
+      // eintragen — zwei Namen fuer denselben Wert sind eine Fehlerquelle, kein
+      // Schutz.
+      keyEnvAlternativen: Object.freeze(["SMEJJ_HAUSMODELL_KEY"]),
       // Unser eigener Dienst auf Zeabur mit fester Adresse — darum darf sie
       // hier stehen (bei smejj fast 1.0 blieb sie leer, weil Salad-Adressen
       // wechseln). Fail-closed bleibt zweiteilig: Flag + Schluessel.
@@ -376,7 +387,11 @@ export function getModelRuntimeConfig(modelOrId, env = process.env, profile = "d
   if (!model) return null;
   const prefix = model.runtime.envPrefix;
   const fallbackPrefix = model.runtime.keyFallbackEnvPrefix;
-  const keys = uniqueKeys(env[`SMEJJ_LLM_${prefix}_API_KEY`], env[`SMEJJ_LLM_${prefix}_API_KEYS`]);
+  // Die Alternativen stehen HINTEN: der modellspezifische Name gewinnt, wenn
+  // beide gesetzt sind. Sonst haette ein alter Dienstschluessel einen neu
+  // eingetragenen still ueberstimmt.
+  const alternativen = (model.runtime.keyEnvAlternativen || []).map((name) => env[name]);
+  const keys = uniqueKeys(env[`SMEJJ_LLM_${prefix}_API_KEY`], env[`SMEJJ_LLM_${prefix}_API_KEYS`], ...alternativen);
   // Nur wenn fuer dieses Modell gar kein eigener Key gesetzt ist, wird der Key
   // eines ausdruecklich benannten Schwestermodells beim selben Anbieter genutzt.
   const effectiveKeys = keys.length > 0 || !fallbackPrefix
