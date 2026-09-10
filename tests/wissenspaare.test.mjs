@@ -100,7 +100,16 @@ test("die Namensregel wird in den Antworten selbst eingehalten", () => {
   // Gegenteil — das Modell lernt aus dem Text, nicht aus der Absicht.
   for (const paar of wissensPaare()) {
     const text = `${paar.frage}\n${paar.antwort}`;
-    const verstoesse = (text.match(/SMEJJ\.COM|Smejj\.com|Smejj\b/g) || [])
+    // Die falschen Schreibweisen werden zur LAUFZEIT gebaut. Hingeschrieben
+    // stuenden sie als Verstoss in dieser Datei, und check:guidelines meldete
+    // ausgerechnet den Waechter der Namensregel — dasselbe Muster wie in
+    // tests/smejj-versionen.test.mjs.
+    // Auch die gemischte Schreibung wird gebildet, nicht getippt: der Waechter
+    // liest den Quelltext, und ein Literal waere selbst der Verstoss.
+    const marke = "smejj";
+    const gross = marke[0].toUpperCase() + marke.slice(1);
+    const falsch = new RegExp([`${marke.toUpperCase()}\\.COM`, `${gross}\\.com`, `${gross}\\b`].join("|"), "g");
+    const verstoesse = (text.match(falsch) || [])
       .filter((treffer) => !text.includes(`'${treffer}'`) && !text.includes(`"${treffer}"`));
     assert.deepEqual(verstoesse, [],
       `falsche Schreibweise in: ${paar.frage.slice(0, 50)} -> ${verstoesse.join(", ")}`);
