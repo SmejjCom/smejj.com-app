@@ -97,6 +97,13 @@ test("die Kamera legt sich NICHT ueber die Bedienzone", () => {
     "das Kamera-Overlay muss im Sprachmodus ueber der Bedienzone enden");
   assert.match(buendel, /body\.voice-mode-open #voiceModeClose\s*\{[^}]*z-index/,
     "das X muss in jedem Fall erreichbar bleiben");
+  // DER Z-INDEX ALLEIN REICHT NICHT: .voice-mode-overlay traegt backdrop-filter
+  // und bildet einen eigenen Stapel-Kontext — ein Kind darin kann nie ueber ein
+  // Element ausserhalb liegen. Gemessen: mit z-index 201 lieferte
+  // elementFromPoint auf die X-Mitte weiter "kameraOverlay". Das Kamera-Overlay
+  // muss oben Platz lassen.
+  assert.match(buendel, /body\.voice-mode-open #kameraOverlay\s*\{[^}]*top:\s*calc\(env\(safe-area-inset-top/,
+    "das Kamera-Overlay muss oben Platz fuer das X lassen");
   // OHNE JS-MESSUNG. Zwei Anlaeufe, zwei Messfehler: erst 812px bei 812px
   // Fensterhoehe (das Overlay schrumpfte auf Hoehe 0 und das nackte
   // video-Element lag ueber dem X), dann gar kein Wert — gemessen wurde beim
