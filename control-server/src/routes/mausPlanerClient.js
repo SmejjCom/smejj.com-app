@@ -107,6 +107,15 @@ export function buildPlannerClient({
     anhaengen(resolveModelRequest("coding", requestedModel, env).chain);
     anhaengen(resolveModelRequest("default", requestedModel, env).chain);
     if (!chain.length) throw new Error("kein_planer_backend_konfiguriert");
+    // ZWEITES MODELL DESSELBEN ANBIETERS NACH VORN (gemessen 10.09.):
+    // Groq zaehlt sein Kontingent JE MODELL. Die Kette war
+    // groq/gpt-oss-20b -> zhipu/glm-4.5-flash -> groq/gpt-oss-120b — also lag
+    // hinter jedem Ratenlimit des schnellen Modells zuerst das langsame GLM
+    // (47–100 s je Antwort), obwohl daneben ein freies Groq-Kontingent lag.
+    // Jetzt stehen die Modelle desselben Anbieters beieinander: faellt eines
+    // ins Limit, antwortet das andere in Sekunden.
+    const ersterAnbieter = chain[0]?.name;
+    chain.sort((a, b) => (a.name === ersterAnbieter ? 0 : 1) - (b.name === ersterAnbieter ? 0 : 1));
     // Modellneutral: KEINE feste temperature. Provider wie Moonshot/Kimi-Coding
     // erzwingen modellabhaengige Werte und lehnen andere mit HTTP 400 ab
     // (Live-Befund 2026-07-14); der Provider-Default gilt fuer jedes Modell.
@@ -146,13 +155,15 @@ export function buildPlannerClient({
     // Das ERSTE Glied ist das schnelle. Meldet es nur ein Ratenlimit, wird
     // kurz gewartet und dasselbe Glied noch einmal gefragt, bevor die
     // langsamen Glieder drankommen (Begruendung bei RATENLIMIT_WARTEZEIT_MS).
-    const [erstes, ...weitere] = chain;
-    let result = await frage([erstes]);
-    if (!result.ok && nurRatenlimit(result.attempts)) {
-      await schlafe(wartezeitAus(result.attempts, warteMs));
-      result = await frage([erstes]);
+    // ERST AUSWEICHEN, DANN WARTEN. Bis 10.09. schlief der Planer 15–45 s vor
+    // dem ersten Glied, ehe er das zweite ueberhaupt fragte — Wartezeit, die
+    // es nicht brauchte, solange irgendein anderes Modell frei war. Gewartet
+    // wird nur noch, wenn die GANZE Kette im Ratenlimit steckt.
+    let result = await frage(chain);
+    if (!result.ok && nurRatenlimit(versuche)) {
+      await schlafe(wartezeitAus(versuche, warteMs));
+      result = await frage(chain);
     }
-    if (!result.ok && weitere.length) result = await frage(weitere);
     let content = await inhaltAus(result);
     // LEERE ANTWORT IST EIN FEHLVERSUCH, KEIN ERGEBNIS. Gemessen 2026-09-09:
     // gpt-oss-20b lieferte bei grossem Prompt HTTP 200 mit leerem content
