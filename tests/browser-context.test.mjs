@@ -139,5 +139,8 @@ test("ohne Adresse bleibt die Wahl des Nutzers unangetastet", () => {
 
 test("eine bereits tiefspurfaehige Wahl wird nie ueberschrieben", () => {
   assert.equal(modelForTask("lies imild.com", "Kimi K2.7"), "Kimi K2.7");
-  assert.equal(modelForTask("lies imild.com", "Cline"), "Cline");
+  // Hier stand bis 2026-09-11 "Cline". Der Anbieter ist entfernt (Auftrag
+  // Punkt 1) und aus dem Tiefspur-Muster gestrichen — eine Wahl, die es nicht
+  // mehr gibt, beweist nichts. GLM-5.2 ist der Fall, den es wirklich gibt.
+  assert.equal(modelForTask("lies imild.com", "GLM-5.2"), "GLM-5.2");
 });

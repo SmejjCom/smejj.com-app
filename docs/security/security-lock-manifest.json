@@ -1,7 +1,7 @@
 {
   "lock": "smejj security lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-11T16:33:03.487Z",
-  "confirmation": "Betreiber Wof Kadavanich, zwei bereits erteilte Auftraege, deren Arbeit fertig ist und nur den Stempel brauchte. 1) Responsive-/Mobil-Auftrag: 'muss hundert Prozent responsive sein' — public/auth/auth.css bekam Safe-Area-Raender, weil als installierte App die Marke oben hinter Uhrzeit und Dynamic Island verschwand (gemessen 2026-09-07 im iPhone-17-Pro-Simulator); im Browser sind die Werte 0. 2) A-bis-Z-Auftrag Punkt 1, Modellstaffel: public/chat-bridge.js nimmt 'spezial' als gueltige Stufe an, sonst waeren smejj 1.2 und 1.3 dasselbe gewesen — zwei Namen, ein Verhalten. Beide Aenderungen sind committet (05ebaed6, 8d0730f6), beruehren weder Anmeldung noch Schluessel noch Sicherheitsrichtlinien und wurden vor dem Stempel im Diff geprueft.",
+  "frozenAt": "2026-09-11T17:27:04.022Z",
+  "confirmation": "Betreiber Wof Kadavanich, A-bis-Z-Auftrag Punkt 1 im Wortlaut: 'Cline vollstaendig aus der App entfernen (Modellmenues, UI, Backend, Routing, Konfiguration, Model Registry, API-Auswahl, Fallbacks, Prompts, Autopilot, Dokumentation, ungenutzte Imports/Komponenten)'. In public/chat-bridge.js wurde genau EIN Zeichen geaendert: der tote Name 'cline' faellt aus dem Tiefspur-Muster /glm|kimi|cline|ox/ heraus. Kein Modell heisst mehr so — das Muster erklaerte kuenftigen Lesern eine Spur, die es nicht gibt. Die Spurwahl selbst bleibt unveraendert (GLM und Kimi treffen weiter), 43 Proben in browser-context/chat-bridge/i18n gruen, 653 Frontend-Proben gruen.",
   "rule": "Keine Aenderung an Anmeldung, Konto-Sicherheit, Gespraechsuebertragung oder Endpunktwahl ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
     "public/auth/login/index.html": "e17cab6eeec5393c65c3cf1269a582499c65e489ebfddb8d85852d69bf0863ee",
@@ -12,7 +12,7 @@
     "src/shared/controlAccessPolicy.js": "dc43435481d8381d698e6ad706b874bb677f18f2c87fb54e50e44e88dadf5066",
     "public/account-sessions.js": "b6623e48ec0482b48e35f7f4f647118de63fc914dbfd0e57ef31e462309b74b3",
     "public/chat-history-context.js": "fb3b2ce06399428b9166a46a00769234f738c3bf87571334168bda5097babfe5",
-    "public/chat-bridge.js": "acc2f4458c886b64d3db30affe3f35f7ed6e073258759dfdf101364cb16489a7",
+    "public/chat-bridge.js": "9f80894eb7e477c00003b4e68f9ceda38db835dd86efa60478369a2e7707083d",
     "public/ai/fetch-retry.js": "c9cc00145776d34fecae036769ddd73dbeb67b924db1fb4479666bc724f052b2",
     "public/chat-bridge-rechner.js": "562f0478c221a69266a82d555bc8ed8a3d6365820c439f8d32220c1a2f1b87fd"
   }

@@ -477,7 +477,7 @@ export async function streamFastLane(res, messages, profile, requestedModel = ""
   // sie immer. Ohne Stufe gelten unveraendert die bisherigen Regeln.
   if (stufe === "gruendlich" || stufe === "spezial") return false;
   if (stufe !== "schnell"
-    && (/glm|kimi|cline|\box\b/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))))) return false;
+    && (/glm|kimi|\box\b/i.test(String(requestedModel || "")) || (profile === "coding" && ((CONTROL_ROUTER_ENABLED && CONTROL_ORIGIN) || (LLM_BASE_URL && LLM_API_KEY && LLM_MODEL))))) return false;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(REQUEST_TIMEOUT_MS, FAST_LANE_TIMEOUT_MS));
   let upstream;
