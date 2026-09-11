@@ -253,7 +253,7 @@ test("ein anderer Klick-Fehler wird NICHT erzwungen, sondern weitergereicht", ()
 test("der erzwungene Klick scrollt zuerst hin — force ueberspringt sonst auch das Scrollen", () => {
   const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
   const stelle = quelle.slice(quelle.indexOf("let erzwungen = false;"), quelle.indexOf("erzwungen = true;"));
-  assert.match(stelle, /scrollIntoViewIfNeeded/, "live 10.09.: 'Element is outside of the viewport'");
+  assert.match(stelle, /scrollIntoView/, "live 10.09.: 'Element is outside of the viewport'");
   assert.ok(stelle.indexOf("scrollIntoViewIfNeeded") < stelle.indexOf("force: true"), "erst scrollen, dann druecken");
 });
 
@@ -323,4 +323,14 @@ test("der Vertrag sagt dem Modell, dass es die Nummer nehmen darf", async () => 
   assert.match(prompt, /NIMM DIE NUMMER/);
   assert.match(prompt, /"n":14/);
   assert.match(prompt, /selector_ohne_treffer/);
+});
+
+test("vor dem erzwungenen Klick wird SCHLICHT gescrollt, nicht pruefend", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("let erzwungen = false;"), quelle.indexOf("erzwungen = true;"));
+  assert.match(stelle, /locator\.evaluate\(\(el\) => el\.scrollIntoView/, "live 11.09.: 'Element is outside of the viewport' nach dem Scroll-Versuch");
+  // Die pruefende Fassung darf nicht mehr AUFGERUFEN werden (im Kommentar
+  // steht ihr Name weiter — genau dort gehoert die Begruendung hin).
+  assert.ok(!/locator\.scrollIntoViewIfNeeded\?\.\(/.test(stelle), "die pruefende Fassung laeuft in dieselbe Frist wie der Klick");
+  assert.ok(stelle.indexOf("scrollIntoView") < stelle.indexOf("force: true"));
 });
