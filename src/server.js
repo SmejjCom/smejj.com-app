@@ -66,7 +66,6 @@ import { createExtraAuthRouter } from "./auth/extraAuthRoutes.js";
 import { mailerConfig } from "../control-server/src/auth/mailer.js";
 import { emailSessionStillValid, handleEmailAuthRoutes, revokeCurrentEmailSession } from "../control-server/src/routes/emailAuthRoutes.js";
 import { sessionRegistryEnabled, newSessionId, registerSession, isSessionActive, revokeSession } from "../control-server/src/auth/sessionRegistry.js";
-import { handleProviderRoute } from "../control-server/src/routes/providerRoutes.js";
 import { handleApiKeysRoute } from "../control-server/src/routes/apiKeysRoutes.js";
 import { handlePublicApiRoute } from "../control-server/src/publicapi/publicApiRoutes.js";
 import { handleDeveloperKeyRoute } from "../control-server/src/routes/developerKeyRoutes.js";
@@ -269,11 +268,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyRegisterVerify) return await handlePasskeyRegisterVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeAccessToken });
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginOptions) return await handlePasskeyLoginOptions(req, res, { env: process.env });
     if (req.method === "POST" && url.pathname === ROUTES.api.passkeyLoginVerify) return await handlePasskeyLoginVerify(req, res, { env: process.env, makeSessionCookie: serializeSessionCookie, makeAccessToken: serializeAccessToken });
-    // Agent API — fail-closed hinter SMEJJ_AGENT_API_ENABLED (aus => Provider-Pfad bleibt zustaendig).
+    // Agent API — fail-closed hinter SMEJJ_AGENT_API_ENABLED. /api/providers/*
+    // gehoerte Cline und ist am 2026-09-11 entfernt (Auftrag Punkt 1); der Weg
+    // war schon tot, weil niemand mehr einen Schluessel hinterlegen konnte.
     if (url.pathname.startsWith("/api/agent/")) {
       if (await handleAgentRoute(req, url, res)) return;
     }
-    if (url.pathname.startsWith("/api/providers/")) return await handleProviderRoute(req, url, res);
     if (url.pathname === "/api/keys" || url.pathname.startsWith("/api/keys/")) return await handleApiKeysRoute(req, url, res);
     if (await handleDeveloperKeyRoute(req, url, res)) return; // eigene Schluessel: Gegenrichtung zu /api/keys
     // Sprachserver (Wecken/Idle-Stopp/Audio-Proxy, Token-gepflichtig) — voiceWorkerRoutes.js.

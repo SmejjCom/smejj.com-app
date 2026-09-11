@@ -1,5 +1,5 @@
 // smejj.com — Einheitliche Fehlertaxonomie der Agentenplattform.
-// Zweck: Provider-spezifische Fehler (Cline, GLM, Kimi, kuenftige Anbieter) werden in
+// Zweck: Provider-spezifische Fehler (GLM, Kimi, eigene und kuenftige Anbieter) werden in
 // genau eine neutrale smejj.com-Fehlerklasse uebersetzt. Frontend und Orchestrator
 // kennen ausschliesslich diese Klassen — niemals Provider-Rohfehler.
 // Input: beliebiger Fehler/Statuscode. Output: { code, status, message, retryable }.
@@ -58,19 +58,16 @@ const HTTP_STATUS = Object.freeze({
 const LEGACY_CODE_MAP = Object.freeze({
   authentication_required: "AUTHENTICATION_ERROR",
   worker_token_rejected: "AUTHENTICATION_ERROR",
-  cline_api_key_invalid: "AUTHENTICATION_ERROR",
-  cline_api_key_rejected: "AUTHENTICATION_ERROR",
   provider_credential_scope_invalid: "AUTHENTICATION_ERROR",
   provider_credential_encryption_not_configured: "PROVIDER_UNAVAILABLE",
   provider_unavailable: "PROVIDER_UNAVAILABLE",
-  cline_api_error: "PROVIDER_UNAVAILABLE",
-  cline_not_configured: "MODEL_NOT_AVAILABLE",
-  cline_model_not_in_catalog: "MODEL_NOT_AVAILABLE",
-  cline_model_catalog_empty: "MODEL_NOT_AVAILABLE",
-  cline_model_id_invalid: "INVALID_REQUEST",
-  cline_rate_limit: "RATE_LIMITED",
+  // Die acht cline_*-Codes standen hier bis 2026-09-11. Sie sind mit dem
+  // Anbieter entfallen (A-bis-Z-Auftrag, Punkt 1); die neutralen provider_*-
+  // Codes decken dieselben Faelle fuer jeden kuenftigen Anbieter ab.
+  provider_not_configured: "MODEL_NOT_AVAILABLE",
+  provider_model_not_in_catalog: "MODEL_NOT_AVAILABLE",
   provider_rate_limit: "RATE_LIMITED",
-  cline_insufficient_credits: "COST_LIMIT_REACHED",
+  provider_insufficient_credits: "COST_LIMIT_REACHED",
   messages_required: "INVALID_REQUEST",
   provider_route_not_found: "INVALID_REQUEST",
   model_tool_not_allowed: "TOOL_PERMISSION_DENIED",
@@ -108,7 +105,7 @@ export class AgentError extends Error {
 
 /**
  * Uebersetzt einen beliebigen Fehler in eine AgentError-Instanz.
- * Erkennt: AgentError (durchreichen), ClineApiError, Legacy-String-Codes, HTTP-Status.
+ * Erkennt: AgentError (durchreichen), Anbieterfehler, Legacy-String-Codes, HTTP-Status.
  */
 export function toAgentError(error, { fallback = "INTERNAL_ERROR" } = {}) {
   if (error instanceof AgentError) return error;
@@ -116,7 +113,12 @@ export function toAgentError(error, { fallback = "INTERNAL_ERROR" } = {}) {
   const status = Number(error?.status || error?.statusCode || 0);
   const rawMessage = String(error?.message || "").slice(0, 500);
 
-  if (error?.name === "ClineApiError") {
+  // Anbieterfehler. Hier stand bis 2026-09-11 der feste Name "ClineApiError" —
+  // mit dem Anbieter ist der Name verschwunden, die Aufgabe geblieben. Erkannt
+  // wird jetzt jeder Fehler, der sich ALS Anbieterfehler ausweist: durch das
+  // Merkmal providerError oder einen Namen, der auf "ApiError" endet. Damit
+  // haelt diese Datei endlich, was ihr Kopf verspricht: anbieterneutral.
+  if (error?.providerError === true || /ApiError$/.test(String(error?.name || ""))) {
     return new AgentError(mapProviderStatus(status, error?.code), providerMessage(status, rawMessage), {
       providerStatus: status,
       requestId: error?.requestId

@@ -83,5 +83,16 @@ test("Regression: server.js mountet die Agent API nur fuer Unterpfade", async ()
   assert.ok(source.includes('handleAgentRoute'), "Agent API muss gemountet sein");
   assert.ok(source.includes('url.pathname.startsWith("/api/agent/")'), "nur Unterpfade mounten");
   assert.ok(source.includes("ROUTES.api.agent"), "bestehender Modell-Router-Endpoint bleibt erhalten");
-  assert.ok(source.includes('url.pathname.startsWith("/api/providers/")'), "bestehender Cline-Pfad bleibt erhalten");
+});
+
+test("der Fremdanbieter-Pfad /api/providers/ ist entfernt und kommt nicht zurueck", async () => {
+  // Bis 2026-09-11 verlangte diese Probe das GEGENTEIL ("bestehender
+  // Cline-Pfad bleibt erhalten"). Der A-bis-Z-Auftrag (Punkt 1) hat ihn
+  // entfernt — der Weg war da schon funktionslos, weil niemand mehr einen
+  // Schluessel hinterlegen konnte. Eine Probe, die den alten Stand einfriert,
+  // wuerde die Aufraeumarbeit stillschweigend zurueckdrehen.
+  const source = await readFile(SERVER, "utf8");
+  const code = source.split("\n").filter((z) => !z.trim().startsWith("//")).join("\n");
+  assert.ok(!code.includes('url.pathname.startsWith("/api/providers/")'), "die Fremdanbieter-Route ist zurueck");
+  assert.ok(!code.includes("handleProviderRoute"), "providerRoutes.js wird wieder eingebunden");
 });

@@ -4,8 +4,6 @@ import { getJob, replaceJob } from "../jobs/jobStore.js";
 import { hydrateJobFromIdrive } from "../jobs/jobHydration.js";
 import { executeWithFallback, resolveModelRequest } from "../llm/modelRouter.js";
 import { signedS3Put } from "../storage/s3Signer.js";
-import { clineChatCompletion } from "../providers/clineClient.js";
-import { getProviderCredential } from "../providers/providerCredentialVault.js";
 
 const ALLOWED_TOOLS = new Set(["read_file", "write_file", "run_cmd", "browser_check", "finish"]);
 const ACTIVE_JOB_STATUSES = new Set(["planning", "running", "verifying"]);
@@ -122,34 +120,14 @@ export async function handleWorkerModelAction(req, res, { env = process.env, now
 }
 
 async function executeWorkerModelAction(job, messages, { env, fetchImpl }) {
-  if (job.providerRuntime?.id === "cline") {
-    const credential = await getProviderCredential(job.userId, "cline", env).catch(() => null);
-    const model = String(job.providerRuntime.modelId || "");
-    if (!credential?.enabled || !credential.apiKey || !model) {
-      return {
-        selection: { requestedModelId: model || "cline" },
-        result: { ok: false, attempts: [{ backend: "cline", error: "cline_credential_unavailable" }] }
-      };
-    }
-    const response = await clineChatCompletion({
-      apiKey: credential.apiKey,
-      model,
-      messages,
-      stream: false,
-      temperature: 0.2,
-      tools: CODING_TOOLS,
-      toolChoice: "required",
-      maxTokens: clampInteger(env.SMEJJ_WORKER_MODEL_MAX_TOKENS, 1_024, 16_000, 8_192),
-      fetchImpl,
-      taskId: job.id
-    });
-    return {
-      selection: { requestedModelId: model },
-      result: response.ok
-        ? { ok: true, response, backend: "cline", model, logicalModelId: model, attempts: [] }
-        : { ok: false, attempts: [{ backend: "cline", model, status: response.status }] }
-    };
-  }
+  // Hier stand bis 2026-09-11 ein Sonderweg fuer den Fremdanbieter Cline
+  // (A-bis-Z-Auftrag, Punkt 1: vollstaendig entfernen). Er war zu diesem
+  // Zeitpunkt schon tot: ohne die entfernte Oberflaeche konnte niemand mehr
+  // einen Schluessel hinterlegen, und der Zweig endete zuverlaessig in
+  // "cline_credential_unavailable".
+  //
+  // Es braucht keinen Ersatz: darunter lag immer schon der eigene Weg ueber
+  // die Modell-Registry MIT Ersatzkette, und der nimmt jeden Auftrag.
   const { chain, selection } = resolveModelRequest("coding", job.model?.id || "glm-5-2", env);
   if (chain.length === 0) {
     return { selection, result: { ok: false, attempts: [{ error: "model_backend_not_configured" }] } };

@@ -41,12 +41,11 @@ export async function handleCreateJob(req, res, { env = process.env, writeEnvelo
   const ownerId = req.authUser ? authenticatedUserId(req.authUser) : "";
   const ownedInput = req.authUser ? { ...input, userId: ownerId, tenantId: ownerId } : input;
   let body = inferDeterministicReplay(ownedInput, ownedInput.userId);
-  if (ownerId) {
-    const cline = await getProviderCredential(ownerId, "cline", env).catch(() => null);
-    if (cline?.enabled === true && cline.selectedModel) {
-      body = { ...body, providerRuntime: { id: "cline", modelId: cline.selectedModel } };
-    }
-  }
+  // Hier wurde bis 2026-09-11 eine Cline-Laufzeit an den Job gehaengt, wenn der
+  // Nutzer einen Schluessel hinterlegt hatte (A-bis-Z-Auftrag, Punkt 1: der
+  // Anbieter ist entfernt). Ohne sie waehlt der Worker ueber die eigene
+  // Modell-Registry mit Ersatzkette — derselbe Weg, den jeder Job ohne
+  // hinterlegten Fremdschluessel ohnehin schon ging.
   if (!String(body.task || "").trim()) return json(res, 400, { error: "Missing task" });
   const repository = body.repository || body.repo;
   // QA-Welle 3, Befund W3-02: Die Allowlist galt frueher nur fuer private

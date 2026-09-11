@@ -1,6 +1,22 @@
-// smejj.com — Vertragstests der Provider-Schicht (Phase 1).
+// smejj.com — Vertragstests der Provider-Schicht.
 // Diese Tests laufen unveraendert gegen jeden kuenftigen Provider (GLM, Kimi,
 // SmejjProvider). Schlaegt ein Provider hier fehl, ist der Adapter fehlerhaft.
+//
+// STAND 2026-09-11: Es gibt derzeit KEINEN Adapter. Cline war der einzige und
+// ist mit dem A-bis-Z-Auftrag (Punkt 1) entfernt worden — er war zu diesem
+// Zeitpunkt bereits funktionslos, weil die Oberflaeche zum Hinterlegen eines
+// Schluessels nicht mehr existierte.
+//
+// WAS DAVON BLEIBT UND WARUM: Geprueft wird weiter alles, was echten
+// Produktionscode hat — providerContract.js (Registry, Normalisierung,
+// Autonomiestufen) und sessionStore.js. Die acht Proben, die das VERHALTEN des
+// Cline-Adapters beschrieben (Streaming, Lebenszyklus, Freigaben, getResult),
+// sind mit ihm entfallen: Tests fuer Code, den es nicht mehr gibt, waeren
+// Theater — und ein Prueflings-Adapter im Test haette nur meinen eigenen
+// Testcode geprueft.
+//
+// Der Vertrag selbst ist das Wertvolle: er sagt einem kuenftigen eigenen
+// Agenten, was er erfuellen muss.
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -12,48 +28,28 @@ import {
   registerProvider,
   __resetProviderRegistryForTests
 } from "../src/agent/providers/providerContract.js";
-import { createClineProvider } from "../src/agent/providers/clineProvider.js";
 import { createSessionStore } from "../src/agent/api/sessionStore.js";
 
-function sseResponse(chunks, { ok = true } = {}) {
-  const encoder = new TextEncoder();
-  let index = 0;
-  return {
-    ok,
-    body: {
-      getReader: () => ({
-        read: async () => (index < chunks.length
-          ? { value: encoder.encode(chunks[index++]), done: false }
-          : { value: undefined, done: true }),
-        releaseLock() {}
-      })
-    },
-    headers: { get: () => "" }
-  };
+/**
+ * Ein Adapter, der den Vertrag genau erfuellt — nicht mehr.
+ *
+ * Bewusst OHNE Verhalten: er dient allein dazu, die Registry zu pruefen
+ * (nimmt sie einen vollstaendigen Adapter an, lehnt sie einen unvollstaendigen
+ * ab). Alles, was er "koennte", waere Testcode, der sich selbst prueft.
+ */
+function vertragstreuerAdapter() {
+  return Object.fromEntries(PROVIDER_METHODS.map((name) => [name, () => {
+    throw new Error(`${name} ist in dieser Pruef-Attrappe nicht belegt`);
+  }]));
 }
 
-function buildProvider({ completion, credential } = {}) {
-  const sessionStore = createSessionStore();
-  const provider = createClineProvider({
-    clineChatCompletion: completion || (async () => sseResponse(['data: {"choices":[{"delta":{"content":"Hallo"}}]}\n\ndata: [DONE]\n\n'])),
-    clineResponseError: async () => Object.assign(new Error("Cline API HTTP 502"), { name: "ClineApiError", status: 502 }),
-    loadCredential: credential || (async () => ({ apiKey: "sk-test-key-1234567890", selectedModel: "openai/gpt-5.6-sol", enabled: true })),
-    sessionStore
-  });
-  return { provider, sessionStore };
-}
-
-async function collect(iterable) {
-  const frames = [];
-  for await (const frame of iterable) frames.push(frame);
-  return frames;
-}
-
-test("ClineProvider erfuellt den CodingAgentProvider-Vertrag vollstaendig", () => {
-  const { provider } = buildProvider();
+test("ein vertragstreuer Adapter wird angenommen", () => {
+  __resetProviderRegistryForTests();
+  const provider = vertragstreuerAdapter();
   for (const method of PROVIDER_METHODS) {
     assert.equal(typeof provider[method], "function", `${method} fehlt`);
   }
+  assert.doesNotThrow(() => registerProvider("pruefung", provider));
 });
 
 test("Registry lehnt unvollstaendige Provider ab (fail-closed)", () => {
@@ -63,8 +59,7 @@ test("Registry lehnt unvollstaendige Provider ab (fail-closed)", () => {
 
 test("Registry lehnt ungueltige Provider-Ids ab", () => {
   __resetProviderRegistryForTests();
-  const { provider } = buildProvider();
-  assert.throws(() => registerProvider("Cline GmbH!", provider), /ungueltig/);
+  assert.throws(() => registerProvider("Fremd GmbH!", vertragstreuerAdapter()), /ungueltig/);
 });
 
 test("Unbekannter Provider liefert PROVIDER_UNAVAILABLE", () => {
@@ -74,10 +69,17 @@ test("Unbekannter Provider liefert PROVIDER_UNAVAILABLE", () => {
 
 test("Registrierter Provider ist auffindbar und listbar", () => {
   __resetProviderRegistryForTests();
-  const { provider } = buildProvider();
-  registerProvider("cline", provider, { capabilities: ["streaming"] });
-  assert.equal(getProvider("cline"), provider);
-  assert.deepEqual(listProviders(), [{ id: "cline", capabilities: ["streaming"] }]);
+  const provider = vertragstreuerAdapter();
+  registerProvider("pruefung", provider, { capabilities: ["streaming"] });
+  assert.equal(getProvider("pruefung"), provider);
+  assert.deepEqual(listProviders(), [{ id: "pruefung", capabilities: ["streaming"] }]);
+});
+
+test("ohne registrierten Provider ist die Liste leer", () => {
+  // Das ist der Normalzustand seit dem 2026-09-11 — und agentRoutes.js
+  // verlaesst sich darauf: keine Provider, keine Agent-Route.
+  __resetProviderRegistryForTests();
+  assert.deepEqual(listProviders(), []);
 });
 
 test("normalizeTaskInput setzt sichere Vorgaben (fail-closed Berechtigungen)", () => {
@@ -98,82 +100,9 @@ test("Autonomiestufen entsprechen der Spezifikation", () => {
   assert.deepEqual([...AUTONOMY_LEVELS], ["observe", "assist", "supervised", "autonomous"]);
 });
 
-test("startTask erzeugt Sitzung mit Modell aus dem Credential", async () => {
-  const { provider } = buildProvider();
-  const session = await provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" }));
-  assert.equal(session.provider, "cline");
-  assert.equal(session.model, "openai/gpt-5.6-sol");
-  assert.match(session.sessionId, /^[0-9a-f-]{36}$/);
-});
-
-test("streamEvents liefert task.started, assistant.message und task.completed", async () => {
-  const { provider } = buildProvider();
-  const session = await provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" }));
-  const frames = await collect(provider.streamEvents(session.sessionId));
-  const names = frames.map((frame) => frame.split("\n")[0].replace("event: ", ""));
-  assert.equal(names[0], "task.started");
-  assert.ok(names.includes("assistant.message"));
-  assert.equal(names.at(-1), "task.completed");
-  assert.ok(!frames.join("").includes("sk-test-key"), "Key darf nie im Event-Stream stehen");
-  assert.ok(!frames.join("").includes("choices"), "Provider-Struktur darf nie im Event-Stream stehen");
-});
-
-test("Provider-Fehler wird zu task.failed mit neutraler Fehlerklasse", async () => {
-  const { provider } = buildProvider({ completion: async () => sseResponse([], { ok: false }) });
-  const session = await provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" }));
-  const frames = await collect(provider.streamEvents(session.sessionId));
-  const failed = frames.find((frame) => frame.startsWith("event: task.failed"));
-  assert.ok(failed, "task.failed erwartet");
-  assert.ok(failed.includes("PROVIDER_UNAVAILABLE"));
-});
-
-test("Fehlendes Cline-Credential liefert MODEL_NOT_AVAILABLE statt Absturz", async () => {
-  const { provider } = buildProvider({
-    credential: async () => { throw Object.assign(new Error("cline_not_configured"), { status: 409 }); }
-  });
-  await assert.rejects(
-    () => provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" })),
-    (error) => String(error.message).includes("cline_not_configured")
-  );
-});
-
-test("Lebenszyklus: pause, resume, cancel und Status", async () => {
-  const { provider } = buildProvider();
-  const session = await provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" }));
-  await provider.pauseTask(session.sessionId);
-  assert.equal((await provider.getStatus(session.sessionId)).status, "paused");
-  await assert.rejects(() => collect(provider.streamEvents(session.sessionId)), (error) => error.code === "INVALID_REQUEST");
-  await provider.resumeTask(session.sessionId);
-  assert.equal((await provider.getStatus(session.sessionId)).status, "running");
-  await provider.cancelTask(session.sessionId);
-  assert.equal((await provider.getStatus(session.sessionId)).status, "cancelled");
-});
-
-test("resume ohne vorheriges pause wird abgelehnt", async () => {
-  const { provider } = buildProvider();
-  const session = await provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" }));
-  await assert.rejects(() => provider.resumeTask(session.sessionId), (error) => error.code === "INVALID_REQUEST");
-});
-
-test("Freigaben sind fuer Cline in Phase 1 klar abgelehnt (kein stilles Ignorieren)", async () => {
-  const { provider } = buildProvider();
-  const session = await provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" }));
-  await assert.rejects(() => provider.approveAction(session.sessionId, "a1"), (error) => error.code === "INVALID_REQUEST");
-  await assert.rejects(() => provider.rejectAction(session.sessionId, "a1", "nein"), (error) => error.code === "INVALID_REQUEST");
-});
-
-test("getResult liefert den zusammengesetzten Text", async () => {
-  const { provider } = buildProvider();
-  const session = await provider.startTask(normalizeTaskInput({ prompt: "Hallo", userId: "u1" }));
-  await collect(provider.streamEvents(session.sessionId));
-  const result = await provider.getResult(session.sessionId);
-  assert.equal(result.text, "Hallo");
-  assert.equal(result.status, "completed");
-});
-
 test("SessionStore: Fremdzugriff wird verweigert", () => {
   const store = createSessionStore();
-  const session = store.create({ userId: "u1", provider: "cline" });
+  const session = store.create({ userId: "u1", provider: "pruefung" });
   assert.throws(() => store.requireOwned(session.sessionId, "u2"), (error) => error.code === "AUTHENTICATION_ERROR");
   assert.equal(store.requireOwned(session.sessionId, "u1").sessionId, session.sessionId);
 });
@@ -201,7 +130,7 @@ test("SessionStore: Obergrenze schuetzt den Control Server", () => {
 
 test("SessionStore speichert keine Secrets", () => {
   const store = createSessionStore();
-  const session = store.create({ userId: "u1", provider: "cline", model: "m" });
+  const session = store.create({ userId: "u1", provider: "pruefung", model: "m" });
   assert.ok(!("apiKey" in session), "Sitzung darf keinen Key halten");
   assert.ok(!JSON.stringify({ ...session, abortController: undefined }).includes("sk-"));
 });

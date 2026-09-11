@@ -75,7 +75,10 @@ export function normalizeTaskInput(input = {}) {
     taskId: String(input.taskId || "").slice(0, 120),
     userId: String(input.userId || "").slice(0, 120),
     workspaceId: String(input.workspaceId || "").slice(0, 120),
-    provider: String(input.provider || "cline").slice(0, 40),
+    // Kein Standard-Anbieter mehr: hier stand bis 2026-09-11 "cline". Ein
+    // Vorgabewert, der auf einen entfernten Anbieter zeigt, waere schlimmer
+    // als keiner — getProvider("") scheitert sichtbar mit PROVIDER_UNAVAILABLE.
+    provider: String(input.provider || "").slice(0, 40),
     model: String(input.model || "").slice(0, 200),
     prompt,
     messages: Array.isArray(input.messages) ? input.messages : [],
