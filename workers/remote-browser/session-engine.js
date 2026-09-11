@@ -656,7 +656,12 @@ export function createSessionEngine({
           // Pruefungen — auch das Scrollen. Live 10.09. endete der erzwungene
           // Klick darum mit "Element is outside of the viewport", obwohl er
           // gerade das Problem loesen sollte.
-          await locator.scrollIntoViewIfNeeded?.({ timeout: cfg.settleTimeoutMs })?.catch?.(() => {});
+          // SCHLICHT SCROLLEN, NICHT PRUEFEND. `scrollIntoViewIfNeeded` prueft
+          // selbst auf Bedienbarkeit — bei genau den Elementen, um die es hier
+          // geht, laeuft es darum in dieselbe Frist und tut nichts. Danach warf
+          // der erzwungene Klick "Element is outside of the viewport" (live
+          // 11.09., dreimal in einem Lauf). Das DOM kann es ohne jede Pruefung.
+          await locator.evaluate((el) => el.scrollIntoView({ block: "center", inline: "center" })).catch(() => {});
           await locator.click({ timeout: cfg.settleTimeoutMs, force: true });
           erzwungen = true;
         }
