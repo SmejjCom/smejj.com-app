@@ -49,8 +49,37 @@ export function pageSnapshotScript() {
     // Die Nummer der VOLLEN Liste, nicht die der spaeter gekuerzten: sonst
     // zeigte "n" nach dem Kuerzen auf ein anderes Element als beim Klicken.
     gesehen.push(node);
+    // EIN FERTIGER, EINDEUTIGER SELEKTOR JE ELEMENT (11.09.).
+    //
+    // Das Modell nimmt die Nummer n nicht von selbst — es schreibt CSS. Dann
+    // soll es RICHTIGES CSS bekommen: gemessen wurden Selektoren wie css="a"
+    // (105 Treffer) und role="button" (8 Treffer); acht von neun
+    // Fehlschlaegen eines Laufes waren Mehrdeutigkeit. Hier entsteht darum ein
+    // Pfad, der genau EIN Element trifft — bevorzugt ueber die Kennung, sonst
+    // ueber die Stellung unter dem Elternteil. Geprueft wird das Ergebnis auf
+    // der Seite selbst: was nicht genau einmal trifft, wird nicht angeboten.
+    let fertig = "";
+    try {
+      const teil = (el) => {
+        const t = el.tagName.toLowerCase();
+        if (el.id && /^[A-Za-z][\w-]*$/.test(el.id)) return "#" + el.id;
+        const eltern = el.parentElement;
+        if (!eltern) return t;
+        const gleiche = [...eltern.children].filter((k) => k.tagName === el.tagName);
+        return gleiche.length > 1 ? `${t}:nth-of-type(${gleiche.indexOf(el) + 1})` : t;
+      };
+      let pfad = teil(node);
+      let ahne = node;
+      for (let tiefe = 0; tiefe < 6 && document.querySelectorAll(pfad).length > 1; tiefe += 1) {
+        ahne = ahne.parentElement;
+        if (!ahne || ahne === document.documentElement) break;
+        pfad = `${teil(ahne)} > ${pfad}`;
+      }
+      if (document.querySelectorAll(pfad).length === 1) fertig = pfad.slice(0, 160);
+    } catch (e) { fertig = ""; }
     elements.push({
       roh: gesehen.length,
+      sel: fertig || undefined,
       tag: node.tagName.toLowerCase(),
       type: type || undefined,
       role: node.getAttribute("role") || undefined,
@@ -105,6 +134,8 @@ function normalizeElement(raw, index) {
   if (raw.name) element.name = truncate(raw.name, 60);
   if (raw.id) element.id = truncate(raw.id, 60);
   if (raw.href) element.href = truncate(raw.href, 200);
+  // Der fertige, auf der Seite geprueft eindeutige Selektor (siehe pageSnapshotScript).
+  if (raw.sel) element.sel = truncate(raw.sel, 160);
   if (raw.placeholder) element.placeholder = truncate(raw.placeholder, ELEMENT_TEXT_LIMIT);
   if (raw.label) element.label = truncate(raw.label, ELEMENT_TEXT_LIMIT);
   if (isPassword) {
