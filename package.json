@@ -156,7 +156,14 @@
     "check:con-wache": "node scripts/check-con-wache.mjs",
     "test:con-daten": "node --test tests/con-daten-generator.test.mjs",
     "diagnose:schluessel": "node scripts/diagnose/schluessel-landkarte.mjs",
-    "diagnose:doppelte-module": "node scripts/diagnose/doppelte-module-live.mjs"
+    "diagnose:doppelte-module": "node scripts/diagnose/doppelte-module-live.mjs",
+    "diagnose:rundgang": "node scripts/diagnose/rundgang.mjs",
+    "diagnose:rundgang:selbsttest": "node scripts/diagnose/rundgang.mjs --runden 1 --selbsttest",
+    "diagnose:sprachwelle": "node scripts/diagnose/sprachwelle-gespraech.mjs",
+    "diagnose:sprachwelle-video": "node scripts/diagnose/sprachwelle-video.mjs",
+    "diagnose:designsystem": "node scripts/diagnose/designsystem-einheit.mjs",
+    "diagnose:chat-scrollen": "node scripts/diagnose/chat-scrollverhalten.mjs",
+    "diagnose:chat-scrollen:selbsttest": "node scripts/diagnose/chat-scrollverhalten.mjs --selbsttest"
   },
   "devDependencies": {
     "@resvg/resvg-js": "2.6.2"
