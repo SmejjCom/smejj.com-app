@@ -1,10 +1,16 @@
 // smejj.com — wer sendet, muss seine eigene Nachricht sehen.
 //
 // DER FALL, live gemessen 2026-09-11 mit echter Geraete-Emulation:
-// Auf dem Handy landete die frische Nachricht UNTER der sichtbaren Kante des
+// Auf dem Handy landete die frische Nachricht unter der sichtbaren Kante des
 // Verlaufs und damit hinter der Bedienzone — 47 px bei 375 px Breite, 152 px
 // bei 320 px. Gemessen: #startLog endete bei 698, die Bedienzone begann bei
-// 710, die neue Nachricht lag bei 715..762. Man sendet und sieht nichts.
+// 710, die neue Nachricht lag bei 715..762.
+//
+// RICHTIGSTELLUNG nach dem Selbsttest der Messung: dauerhaft war das nicht.
+// 250 ms spaeter blieben noch 3 px. Der Fehler traf also die ersten
+// Augenblicke — genau die, in denen man hinsieht, weil man gerade gesendet
+// hat. Die erste Fassung dieser Notiz las sich, als bleibe die Nachricht fuer
+// immer verdeckt; das waere zu dick aufgetragen.
 //
 // URSACHE: addEntry rief `node.scrollIntoView({ block: "end" })`. Das richtet
 // am FENSTER aus, nicht am scrollenden Verlauf. Der Retter, der das sonst

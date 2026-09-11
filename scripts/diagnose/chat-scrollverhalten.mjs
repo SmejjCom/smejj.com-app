@@ -144,17 +144,39 @@ const MISS_SCROLL = `(() => {
   };
 })()`;
 
-const ANS_ENDE_UND_NEUE_NACHRICHT = `(() => {
+// WICHTIG: hier wird der ECHTE Weg der App gefahren (addEntry aus
+// app-helfer.js), nicht sein Nachbau. Die erste Fassung dieses Skripts rief
+// selbst `scrollIntoView({ block: "end" })` mit dem Kommentar "derselbe Weg wie
+// addEntry" — nach der Korrektur in addEntry stimmte das nicht mehr, und die
+// Messung pruefte den alten Fehler statt den neuen Stand. Wer den Weg nachbaut,
+// misst seinen Nachbau.
+const ANS_ENDE_UND_NEUE_NACHRICHT = `(async () => {
   const log = document.getElementById("startLog");
   const scroller = log.scrollHeight > log.clientHeight + 10 ? log
     : [...document.querySelectorAll("#start, .home-feed, .workspace, body")].find((e) => e && e.scrollHeight > e.clientHeight + 10) || document.scrollingElement;
   scroller.scrollTop = scroller.scrollHeight;   // Nutzer ist unten
   const vorher = Math.round(scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight);
-  const neu = document.createElement("article");
-  neu.className = "entry user";
-  neu.textContent = "Eine frische Nachricht, die unten ankommen muss.";
-  log.append(neu);
-  neu.scrollIntoView({ block: "end" });   // derselbe Weg wie addEntry in app-helfer.js
+  // DIE ECHTE LAGE HERSTELLEN: Beim Senden laeuft sofort ein Strom, und
+  // verlauf-unten.js haelt sich dann bewusst zurueck ("waehrend des Stroms
+  // haelt chat-stream.js die Sicht selbst"). Ohne dieses Ereignis rettet der
+  // Beobachter nach 120 ms JEDEN Weg — auch den falschen — und die Messung
+  // waere gruen, egal was addEntry tut. Genau daran ist der erste Selbsttest
+  // dieses Skripts aufgefallen.
+  window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: 1 } }));
+  let neu;
+  if (window.__smejjSelbsttest) {
+    // Der ALTE, fehlerhafte Weg — absichtlich. Siehe --selbsttest unten.
+    neu = document.createElement("article");
+    neu.className = "entry user";
+    neu.textContent = "Eine frische Nachricht, die unten ankommen muss.";
+    log.append(neu);
+    neu.scrollIntoView({ block: "end" });
+  } else {
+    const helfer = await import("/assets/app-helfer.js?v=3");
+    neu = helfer.addEntry("Eine frische Nachricht, die unten ankommen muss.", "user", "#startLog");
+  }
+  await new Promise((r) => setTimeout(r, 250));
+  window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: 0 } }));
   // Der "Rest" allein ist noch kein Fehler: unter dem Verlauf kann Polster
   // liegen. Entscheidend ist, was der NUTZER sieht — steht die frische
   // Nachricht ganz im Bild, und verdeckt die Bedienzone sie nicht?
@@ -173,6 +195,10 @@ const ANS_ENDE_UND_NEUE_NACHRICHT = `(() => {
 async function main() {
   const url = arg("--url", "https://smejj.com/");
   const alsJson = process.argv.includes("--json");
+  // --selbsttest faehrt den ALTEN Weg (scrollIntoView statt addEntry) und MUSS
+  // rot werden. Eine Messung, die den Fehler nicht mehr findet, den sie einmal
+  // gefunden hat, ist keine Messung mehr — sie ist nur noch gruen.
+  const selbsttest = process.argv.includes("--selbsttest");
   const chrome = await launchChrome();
   const befunde = [];
   try {
@@ -194,6 +220,7 @@ async function main() {
       await page("Page.navigate", { url });
       await warteAufHerkunft(page);
       await sleep(1200);
+      if (selbsttest) await auswerten(page, "window.__smejjSelbsttest = true");
       const gebaut = await auswerten(page, BAUE_VERLAUF(PROBEN));
       await sleep(900);
       const ueberlauf = await auswerten(page, MISS_UEBERLAUF);
@@ -222,6 +249,14 @@ async function main() {
     fehler += zeilen.length;
     console.log(`  ${b.lage.padEnd(14)} ${String(b.breite).padStart(4)}  ${zeilen.length ? "" : "in Ordnung"}`);
     for (const z of zeilen) console.log(`      - ${z}`);
+  }
+  if (selbsttest) {
+    const erkannt = fehler > 0;
+    console.log(erkannt
+      ? `\nSELBSTTEST BESTANDEN — der alte Weg wurde als Fehler erkannt (${fehler} Befunde).\n`
+      : "\nSELBSTTEST GESCHEITERT — der alte, nachweislich falsche Weg sah gruen aus. Die Messung ist blind.\n");
+    process.exitCode = erkannt ? 0 : 1;
+    return;
   }
   console.log(fehler === 0
     ? "\nKein seitlicher Ueberlauf, das Eingabefeld bleibt erreichbar, neue Nachrichten landen unten.\n"
