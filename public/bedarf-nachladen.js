@@ -90,6 +90,24 @@ ladeBeiKlick(["#composerPlusButton", "[data-start-tool]", "[data-kamera-start]"]
   }
 }
 
+// 7. Verlauf-Ansicht — 35 KB, die beim Start NICHTS tun.
+//
+//    chat-history-view.js baut ausschliesslich die Ansicht #chatHistory und
+//    prueft das selbst: "if (isHistoryViewVisible() || location.pathname ===
+//    '/chat-history')". Auf der Startseite laeuft sie leer — und war trotzdem
+//    fest im index.html verdrahtet. Gemessen am 2026-09-12: 35,3 KB von 740 KB
+//    Startgewicht, waehrend das Budget bei 300 KB liegt.
+//
+//    BEIDE Wege muessen laden, sonst bleibt der Verlauf leer: der Klick in der
+//    Spur UND der Direkteinstieg ueber die Adresse. Genau daran waere es eine
+//    Attrappe geworden — wer /chat-history als Lesezeichen hat, saehe nichts.
+if (location.pathname.includes("chat-history") || location.pathname.includes("chatHistory")) {
+  import("./chat-history-view.js?v=b63");
+} else {
+  ladeBeiKlick(['[data-view="chatHistory"]', '[data-jump="chatHistory"]', '[data-view="chat-history"]'],
+    () => import("./chat-history-view.js?v=b63"));
+}
+
 // 6. Projects/Arbeitsbereiche — erst wenn die Ansicht aufgeht (Klick in der
 //    Spur oder Direkteinstieg ueber die URL).
 if (location.pathname.includes("arbeitsbereiche") || location.pathname.includes("projects")) {
