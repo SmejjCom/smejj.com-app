@@ -1,14 +1,10 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-08T21:18:14.925Z",
-  "confirmation": "Betreiber-Freigabe 2026-09-08: Modelle-Seite im Adminbereich ausliefern; die drei Sperren wurden Datei fuer Datei geprueft, die fremden vier sind byte-identisch mit git",
-  "rule": "Keine Aenderung an der Modell-Liste (die beiden Menues, ihre ausgelieferten Kopien, der Katalog-Holer und seine Route) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
+  "frozenAt": "2026-09-11T19:43:24.246Z",
+  "confirmation": "Betreiber-Freigabe 2026-09-11: Cline-Entfernung ist gewollt und gilt als neuer geschuetzter Stand. Die sechs Dateien wurden einzeln geprueft — keine offenen Importe, kein funktionierender Cline-Weg mehr; uebrig sind nur zwei tote Textstellen (deutsch-klartext.js, chat-bridge.js), die unveraendert bleiben.",
+  "rule": "Keine Aenderung an der Modell-Liste (das Menue und seine ausgelieferte Kopie) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
-    "public/code-modell-menue.js": "b27f6981a230ad0185e09672720d1766b68c1028894edaeff86acefd0e9b1b48",
-    "public/assets/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
-    "public/assets/code-modell-menue.js": "b27f6981a230ad0185e09672720d1766b68c1028894edaeff86acefd0e9b1b48",
-    "control-server/src/providers/clineClient.js": "84c08a6aced06a82dade2694d99f48c6434ec73a3701d49cb4dc741c0051dbb8",
-    "control-server/src/routes/providerRoutes.js": "27e1cf33e909537d42ddec5d13bb4bbc9b99004aa515f8ce248ece3c26fbcb1c"
+    "public/code-modell-menue.js": "42c9c9927f96f89ac6063bd4af36c17f0a0e57cdc1db896f91cc15448cf2dab4",
+    "public/assets/code-modell-menue.js": "42c9c9927f96f89ac6063bd4af36c17f0a0e57cdc1db896f91cc15448cf2dab4"
   }
 }
