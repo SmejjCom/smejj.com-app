@@ -355,3 +355,30 @@ test("bleibt ein Element auch fuer force unsichtbar, klickt die Seite selbst —
   // Ein anderer Fehler wird weitergereicht, nicht uebergangen.
   assert.match(stelle, /throw zweiter;/);
 });
+
+// --- Ein fertiger, eindeutiger Selektor je Element (11.09.) ---------------
+// Gemessen: das Modell schrieb css="a" (105 Treffer) und role="button"
+// (8 Treffer) — acht von neun Fehlschlaegen eines Laufes waren Mehrdeutigkeit.
+// Es nimmt die Nummer nicht, aber es schreibt CSS. Also bekommt es richtiges.
+test("die Beobachtung baut einen auf der Seite geprueften Einzel-Selektor", () => {
+  const quelle = pageSnapshotScript.toString();
+  assert.match(quelle, /sel: fertig \|\| undefined/, "der fertige Selektor muss am Element haengen");
+  assert.match(quelle, /document\.querySelectorAll\(pfad\)\.length === 1/, "angeboten wird NUR, was genau einmal trifft");
+  assert.match(quelle, /nth-of-type/, "ohne Kennung zaehlt die Stellung unter dem Elternteil");
+  assert.match(quelle, /tiefe < 6/, "der Pfad waechst begrenzt, nicht bis zur Wurzel");
+});
+
+test("der fertige Selektor ueberlebt die Saeuberung der Beobachtung", async () => {
+  const { saubereBeobachtungsElement } = await import("../control-server/src/routes/browserSessionRoutes.js");
+  const e = saubereBeobachtungsElement({ n: 3, tag: "button", sel: "form#searchform > button:nth-of-type(2)" });
+  assert.equal(e.sel, "form#searchform > button:nth-of-type(2)", "ohne ihn kommt er nie beim Modell an");
+});
+
+test("der Vertrag stellt den fertigen Selektor VOR die Nummer", async () => {
+  const { buildStepPrompt } = await import("../workers/maus-engine/prompt-template.mjs");
+  const prompt = buildStepPrompt({ task: "t", capsuleRef: "c", domainAllowlist: ["a.de"], budget: { maxActions: 10 }, files: [],
+    visionAllowed: false, observation: { url: "https://a.de/", title: "A", elements: [{ n: 1, tag: "button", sel: "#los" }] }, remainingSteps: 5 });
+  assert.match(prompt, /NIMM DEN FERTIGEN SELEKTOR/);
+  assert.ok(prompt.indexOf("NIMM DEN FERTIGEN SELEKTOR") < prompt.indexOf("NIMM DIE NUMMER"));
+  assert.match(prompt, /"sel"/);
+});
