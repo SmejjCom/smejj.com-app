@@ -11,7 +11,7 @@
 // Kein Zustand bleibt zurueck — das Profil liegt in einem Temp-Ordner.
 
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -31,9 +31,33 @@ const CHROME_PATHS = [
  *   Ohne sie bleibt getUserMedia in einer Messung ewig haengen, und man haelt
  *   eine gesunde Sprachwelle fuer kaputt.
  */
+/** Profilordner abgebrochener Laeufe entfernen (aelter als 20 Minuten). */
+async function raeumeAlteProfile(hoechstalterMs = 20 * 60_000) {
+  try {
+    const ordner = tmpdir();
+    const grenze = Date.now() - hoechstalterMs;
+    for (const name of await readdir(ordner)) {
+      if (!name.startsWith("smejj-vitals-")) continue;
+      const pfad = join(ordner, name);
+      try {
+        const info = await stat(pfad);
+        if (info.mtimeMs < grenze) await rm(pfad, { recursive: true, force: true });
+      } catch { /* schon weg oder fremd — nichts erzwingen */ }
+    }
+  } catch { /* Aufraeumen ist Zugabe, nie ein Grund zu scheitern */ }
+}
+
 export async function launchChrome({ chromePath = "", timeoutMs = 20000, extraArgs = [] } = {}) {
   const binary = chromePath || (await firstExistingChrome());
   if (!binary) throw new Error("Kein Chrome gefunden — Pfad per CHROME_PATH setzen.");
+  // Vor dem Start aufraeumen, was frueher liegengeblieben ist.
+  //
+  // Am 2026-09-11 haben sich 22 Profilordner aus abgebrochenen Laeufen
+  // angesammelt; der naechste Chrome kam dann nicht mehr hoch, und die Messung
+  // lief ins Zeitlimit. Das sah aus wie ein kaputtes Skript und war ein voller
+  // Rechner. Nur ALTE Ordner (ueber 20 Minuten) — ein paralleler Lauf soll
+  // seinen eigenen behalten.
+  await raeumeAlteProfile();
   const profile = await mkdtemp(join(tmpdir(), "smejj-vitals-"));
   const chrome = spawn(binary, [
     "--headless=new",
