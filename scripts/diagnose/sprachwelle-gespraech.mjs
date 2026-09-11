@@ -166,11 +166,26 @@ const MISS_ZONE = `(() => {
 })()`;
 
 async function main() {
+  // Abbruch (Strg-C, Zeitlimit der aufrufenden Sitzung) darf kein Chrome
+  // zuruecklassen. Am 2026-09-11 gemessen: 21 verwaiste Profilordner
+  // (smejj-vitals-* im Temp-Verzeichnis) und 11 laufende Chrome-Prozesse aus
+  // abgebrochenen Laeufen — der naechste Lauf kam dann nicht mehr hoch und lief
+  // ins Zeitlimit. Das sah aus wie ein kaputtes Skript und war ein voller
+  // Rechner. Das finally unten greift bei SIGTERM nicht, diese Zeilen tun es.
+  //
+  // Aufraeumen, wenn es doch einmal passiert ist:
+  //   pkill -f smejj-vitals
+  //   find "$TMPDIR" -maxdepth 1 -name "smejj-vitals-*" -type d -mmin +60 -exec rm -rf {} +
+  let aufraeumen = () => {};
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.once(signal, () => { aufraeumen(); process.exit(130); });
+  }
   const url = arg("--url", "https://smejj.com/");
   const alsJson = process.argv.includes("--json");
   const chrome = await launchChrome({
     extraArgs: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--autoplay-policy=no-user-gesture-required"]
   });
+  aufraeumen = () => { chrome.close().catch(() => {}); };
   const befund = {};
   try {
     const page = await openPage(chrome);
