@@ -156,6 +156,39 @@ Browserspeicher hat, wird still auf smejj gesetzt.
 Belastbar ist allein `gestartetAm`. Der erste Push loeste keinen Bau aus, ein
 leerer zweiter Commit genuegte.
 
+## Punkte 5, 7, 8, 10-13, 16, 17 nachgereicht (11./12.09.)
+
+| Punkt | Ergebnis |
+|---|---|
+| 5 Sprachwelle Realtime | Barge-in loest wirklich aus — mit KUENSTLICHEM Mikrofon gemessen (Chrome-Flag). 14 Module, Pegel 0,40, X 48x48. Der Relay lebt (401 per `--http1.1`); ob der Gemini-Schluessel gesetzt ist, sagt erst eine angemeldete Messung. |
+| 7 Sprachwelle mit Video | `kamera.js` laedt, Videobild 640x480, Overlay sichtbar, **nichts verdeckt** — mit kuenstlicher Kamera bewiesen. Der Fund vom 11.09. ist damit auch von aussen bestaetigt behoben. |
+| 8 Designsystem | Fuenf gemeldete Ausreisser, davon **vier Absicht** (eigene Klassen, gewachsene Hoehen, Betreiber-Regeln). 234 von 234 Elementen haben einen Fokusring. 474 Zeilen totes CSS entfernt und live 404. |
+| 10-13 Rundgang | **Alle 19 Ansichten oeffnen sauber, in zwei Runden** — mit Selbsttest, der in jeder Ansicht drei Schaeden einstreut und verlangt, dass alle gemeldet werden. |
+| 16 Performance | `pageWeight_kb` 309 -> **298**, alle Budgets eingehalten. Hebel: `chat-history-view.js` (35 KB) hing fest im index.html und lief auf der Startseite leer. |
+| 17 Sicherheit | Die drei GitHub-Meldungen benannt (pipecat-ai, transformers, accelerate) und die Ursache der zwei gescheiterten Anlaeufe gefunden: beide hoben nie `diffusers`. |
+
+### Neue Werkzeuge
+
+`npm run diagnose:rundgang` (19 Ansichten, mehrere Runden, mit Selbsttest),
+`diagnose:sprachwelle`, `diagnose:sprachwelle-video`, `diagnose:designsystem`,
+`diagnose:chat-scrollen` — alle mit Selbsttest oder offengelegter Grenze.
+
+### Was ich dabei selbst falsch gemacht habe
+
+* **"Attrappe wie am 10.09."** gemeldet, weil 2,5 Sekunden Wartezeit nicht
+  reichten — und im selben Atemzug ein Bild mit 640x480 gemessen. Der
+  Widerspruch entlarvte die Messung, nicht die App.
+* **Verdeckung mit RECHTECKEN** gemessen. Zwei Rechtecke, die sich schneiden,
+  sagen nichts darueber, was obenauf liegt. Richtig ist `elementFromPoint`.
+* **Den Deep-Link-Zweig an den Pfad gehaengt.** `/chat-history` ist die
+  offizielle Route, aber Pages liefert dafuer die 404-Seite; der Zweig griff
+  nie, und der Verlauf blieb leer. Jetzt haengt es an der Ansicht.
+* **Eine Datei in den Klon kopiert, ohne vorher den Diff zu lesen** — es war
+  nur ein Kommentar, aber die Regel gilt trotzdem.
+* **In einem Template-String einen Regex mit Schraegstrichen** benutzt: aus
+  `/\/kamera\.js/` wird `//kamera.js/` — ein Zeilenkommentar, der die naechste
+  Zeile verschluckt.
+
 ## Offen
 
 * **Der Zeabur-Schluessel ist abgelaufen** (`cli.yaml:token`, HTTP 401). Der

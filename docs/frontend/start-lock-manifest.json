@@ -1,10 +1,10 @@
 {
   "lock": "smejj start lock v3 (100% Schutz)",
-  "frozenAt": "2026-09-11T16:32:16.535Z",
-  "confirmation": "Betreiber Wof Kadavanich, A-bis-Z-Auftrag 2026-09-10/11 (20 Punkte), im Wortlaut u.a.: Punkt 1 'Cline vollstaendig aus der App entfernen ... Nur noch Unsere Modelle und Auto', Punkt 3 'Chatbereich A-Z', Punkt 4 'Codebereich', Punkt 14 'Fehlerbehebung an der Ursache', Punkt 19 'Funktionierenden Stand schuetzen' sowie 'Bitte arbeite eigenstaendig weiter ... erledige die Aufgabe vollstaendig, ohne unnoetig nachzufragen'. Seit dem letzten Stempel geaendert: Cline-Menue entfernt (cline-model-menu.js/.css), Eingabebereich kompakt (132px-Polster war mein eigener Irrtum), Sprachwellen- und Kamera-Layout, und am 11.09. sieben Fehler an der Ursache behoben - Modell-Chip zeigte eine andere Wahl als das Menue, Nachdenken loeschte still die Automatik, Neu-generieren loeschte den Verlauf vor dem Ersatz, Rueckfrage liess eine leere Blase zurueck, nach dem Stoppen dachte die App ewig weiter, die eigene Nachricht landete unter der Bedienzone, und die Oberflaeche sagte Project statt Projekt. Alle live bewiesen, 653/653 Frontend-Proben gruen.",
+  "frozenAt": "2026-09-11T23:14:53.098Z",
+  "confirmation": "Betreiber Wof Kadavanich, A-bis-Z-Auftrag, Punkt 16 'Performance': Die Web-Vitals meldeten pageWeight_kb 309 gegen ein Budget von 300. Gemessen, woher das Gewicht kommt — chat-history-view.js (35 KB) hing fest im index.html, baut aber ausschliesslich die Ansicht #chatHistory und prueft das selbst; auf der Startseite lief sie leer. Die feste Einbindung ist entfernt, das Modul laedt jetzt an der ANSICHT (sofort wenn sie offen ist, sonst per Beobachter) plus Klick in der Spur. BEIDE Wege live bewiesen: Klick und Direkteinstieg zeigen denselben Verlauf. Ergebnis: 309 auf 298 KB, alle Performance-Budgets eingehalten, Startgewicht 233 auf 223 KB gzip, 653 Frontend-Proben gruen.",
   "rule": "Keine Aenderung an Design, Layout, Text, Icons, Abstaenden, Farben, Funktionen oder Inhalten der Startseite ohne ausdrueckliche schriftliche Bestaetigung des Nutzers.",
   "files": {
-    "public/index.html": "2259279f8dfcddf3a97865521dee5d66ded1dc34100ffed41353f97c3b56db3d",
+    "public/index.html": "5d0c0b54e3b734c05300cc857f2dac0f1da34b62a1975e63e5e2fde5da4c4d2f",
     "public/styles.css": "1aed5392bc4ad49ec210f3bccec3b5e30c5708ffc531f3cb1b4a46b82d05829e",
     "public/start-styles.css": "6d5f5c649101e8a2b81f2781d2d425a877d685bf4f177d89a0151a55ba055fe0",
     "public/start-glass.css": "7cae1f44238f9cb031421a53e6a644f74cde0bd1652d31f465ad78628b9be530",
