@@ -24,20 +24,33 @@ test("chat-history-view.js haengt NICHT mehr fest im index.html", () => {
 });
 
 test("der Klick in der Spur laedt sie nach", () => {
-  const stelle = nachlader.match(/ladeBeiKlick\(\[[^\]]*chatHistory[^\]]*\][\s\S]{0,120}?chat-history-view/);
-  assert.ok(stelle, "kein Klick-Ausloeser fuer die Verlauf-Ansicht");
+  assert.match(nachlader, /ladeBeiKlick\(\['\[data-view="chatHistory"\]'/);
 });
 
-test("der DIREKTEINSTIEG ueber die Adresse laedt sie auch", () => {
-  // Ohne diesen Zweig saehe jeder, der /chat-history direkt oeffnet, eine
-  // leere Seite — und "nichts passiert" sieht aus wie "kaputt".
-  assert.match(nachlader, /location\.pathname\.includes\("chat-history"\)[\s\S]{0,200}?import\("\.\/chat-history-view\.js/);
+test("die ANSICHT selbst loest das Nachladen aus — nicht die Adresse", () => {
+  // Der erste Entwurf haengte am Pfad (/chat-history). Das ist zwar die
+  // offizielle Route, aber GitHub Pages liefert dafuer die 404-Seite, die in
+  // die App umleitet — beim Laden dieses Moduls steht dann laengst etwas
+  // anderes in location.pathname. LIVE gemessen: der Verlauf blieb leer.
+  //
+  // Die Ansicht wird sichtbar, egal ob man klickt, ein Lesezeichen oeffnet
+  // oder zurueckgeht. Nur daran darf es haengen.
+  assert.match(nachlader, /getElementById\("chatHistory"\)/);
+  assert.match(nachlader, /new MutationObserver[\s\S]{0,200}?chat-history-view|istOffen\(\)[\s\S]{0,120}?laden\(\)/);
+  assert.ok(!/location\.pathname\.includes\("chat-history"\)/.test(nachlader),
+    "der Pfad-Zweig ist zurueck — er greift bei Pages nie");
+});
+
+test("die Ansicht wird auch geladen, wenn sie schon offen IST", () => {
+  // Beim Direkteinstieg ist sie bereits sichtbar, bevor dieses Modul laeuft —
+  // ein Beobachter allein wuerde dann nie ausloesen.
+  assert.match(nachlader, /if \(istOffen\(\)\) laden\(\);/);
 });
 
 test("beide Wege laden DIESELBE Marke", () => {
   // Zwei Kennungen waeren zwei Modulinstanzen mit eigenem Zustand — der Fall
   // vom 10.09. (chat-store.js lag live unter zwei Marken).
   const marken = [...nachlader.matchAll(/chat-history-view\.js\?v=([0-9a-z]+)/g)].map((m) => m[1]);
-  assert.ok(marken.length >= 2, "es sollten zwei Ladestellen sein (Klick und Direkteinstieg)");
+  assert.ok(marken.length >= 1, "keine Ladestelle gefunden");
   assert.equal(new Set(marken).size, 1, `verschiedene Marken: ${marken.join(", ")}`);
 });
