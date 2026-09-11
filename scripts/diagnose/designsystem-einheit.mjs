@@ -5,6 +5,15 @@
 // nicht ansehen — auf einem Bildschirm sehen 10 px und 12 px Rundung gleich
 // aus, und genau daran erkennt man ein gewachsenes Design.
 //
+// DIE GRENZE DIESER MESSUNG, ehrlich vorweg: Sie sieht nur, was auf den zwoelf
+// Ansichten SICHTBAR ist. Am 2026-09-11 hat mich das in die Irre gefuehrt — sie
+// meldete "13 px (4x) neben 14 px (37x)", ich hielt 13 px fuer eine vergessene
+// Zeile und hob sie an. Die Gegenprobe im Quelltext zeigte dann **70 Stellen
+// mit 13 px in 15 Dateien**: eine etablierte Nebengroesse, kein Versehen.
+//
+// Eine Stichprobe von zwoelf Ansichten ist nicht die App. Vor jeder Aenderung
+// gegenpruefen:  grep -rn "font-size: *13px" public/*.css | wc -l
+//
 // GEMESSEN WIRD DIE STREUUNG, NICHT DIE EXISTENZ. Ein hartkodierter Wert ist
 // nicht schlimm; ein Wert, den es in vier leicht abweichenden Varianten gibt,
 // schon. Darum sammelt dieses Skript die TATSAECHLICH GERENDERTEN Werte ueber
@@ -209,13 +218,20 @@ async function main() {
   }
 
   // Zusammenfuehren
-  const wer = new Map();   // Wert -> "Ansicht: element" (erstes Vorkommen)
+  // Wert -> alle Fundorte. Die erste Fassung merkte sich nur den ERSTEN und
+  // liess damit jeden weiteren im Dunkeln: nach dem Beheben des einen tauchte
+  // der naechste auf, als waere er neu. Wer aufraeumen soll, braucht die ganze
+  // Liste, nicht ein Beispiel.
+  const wer = new Map();
   const summe = (schluessel) => {
     const karte = new Map();
     for (const a of proAnsicht) for (const e of a[schluessel]) {
       karte.set(e.wert, (karte.get(e.wert) || 0) + e.anzahl);
       const kennung = `${schluessel}:${e.wert}`;
-      if (!wer.has(kennung) && e.beispiel) wer.set(kennung, `${a.name}: ${e.beispiel}`);
+      if (e.beispiel) {
+        if (!wer.has(kennung)) wer.set(kennung, new Set());
+        wer.get(kennung).add(`${a.name}: ${e.beispiel}`);
+      }
     }
     return [...karte.entries()].sort((a, b) => a[0] - b[0]);
   };
@@ -228,6 +244,8 @@ async function main() {
 
   const zeile = (liste) => liste.map(([w, n]) => `${w}px (${n}x)`).join(", ");
   console.log(`\nDesignsystem auf ${url} — ${ANSICHTEN.length} Ansichten\n`);
+  console.log("  (Gemessen wird, was SICHTBAR ist. Eine Groesse kann anderswo haeufig sein");
+  console.log("   und hier selten aussehen — im Zweifel gegenpruefen: grep -rn \"font-size: *13px\" public/*.css)\n");
   console.log(`  Eckradien       ${radien.length} verschiedene: ${zeile(radien)}`);
   console.log(`  Schriftgroessen ${schriften.length} verschiedene: ${zeile(schriften)}`);
   console.log(`  Knopfhoehen     ${feste.length} fest gesetzte (Entscheidung): ${zeile(feste)}`);
@@ -236,7 +254,10 @@ async function main() {
 
   const befunde = [];
   if (knoepfe === 0) befunde.push("MESSUNG UNGUELTIG — kein einziger Knopf gefunden");
-  const woher = (art, wert) => { const q = wer.get(`${art}:${wert}`); return q ? `  [${q}]` : ""; };
+  const woher = (art, wert) => {
+    const q = wer.get(`${art}:${wert}`);
+    return q ? `\n      Fundorte: ${[...q].join(" | ")}` : "";
+  };
   const ausnahmen = [];
   /**
    * Derselbe Baustein, nur anderer Text? Dann ist der Unterschied keiner.
@@ -247,9 +268,10 @@ async function main() {
    * Regel, die es gar nicht gibt.
    */
   const gleicherBaustein = (art, a, b) => {
-    const eins = (wer.get(`${art}:${a}`) || "").split(": ").pop();
-    const zwei = (wer.get(`${art}:${b}`) || "").split(": ").pop();
-    return Boolean(eins) && eins === zwei;
+    const bausteine = (wert) => new Set([...(wer.get(`${art}:${wert}`) || [])].map((o) => o.split(": ").pop()));
+    const eins = bausteine(a), zwei = bausteine(b);
+    if (eins.size !== 1 || zwei.size !== 1) return false;
+    return [...eins][0] === [...zwei][0];
   };
   for (const a of findeAusreisser(radien)) {
     const frei = istAusnahme("radien", a.wert);
