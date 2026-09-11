@@ -507,7 +507,12 @@ test("Planer-Prompt: die Beobachtung wird KOMPAKT — 40 Elemente, 2500 Zeichen,
   assert.ok(k.textExcerpt.length <= KOMPAKT_MAX_ZEICHEN + 2);
   assert.equal(observation.elements.length, 60, "das Original bleibt unangetastet — das Panel braucht es fuer den Zeiger");
   const prompt = buildStepPrompt({ task: "t", capsuleRef: "c", domainAllowlist: ["de.wikipedia.org"], budget: { maxActions: 10 }, files: [], visionAllowed: false, observation, remainingSteps: 5 });
-  assert.ok(prompt.length < 12000, `Prompt muss klein bleiben, ist ${prompt.length} Zeichen (vorher ~18.000)`);
+  // 12.600 statt 12.000 seit dem 11.09.: das vollstaendige Beispiel mit der
+  // Elementnummer kostet rund 400 Zeichen und ist sie wert — es war der
+  // haeufigste Grund fuer geratene Selektoren. Der Anker bleibt der alte Stand
+  // (~18.000): alles darunter ist ein Gewinn, und der Deckel haelt die
+  // Beobachtung weiter kompakt.
+  assert.ok(prompt.length < 12600, `Prompt muss klein bleiben, ist ${prompt.length} Zeichen (vorher ~18.000)`);
   assert.match(prompt, /Nur die ersten 40 von 60 Bedienelementen/);
   assert.ok(!prompt.includes('"x":100'), "keine Koordinaten im Prompt");
 });
