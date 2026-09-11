@@ -76,7 +76,7 @@ async function warteBereit(page, hoechstensMs = 25000) {
 // niemand sieht, kann auch nicht uneinheitlich aussehen.
 const SAMMLE = `(() => {
   const zahl = (wert) => Math.round(parseFloat(wert) || 0);
-  const radien = new Map(), schriften = new Map(), knopfhoehen = new Map();
+  const radien = new Map(), schriften = new Map(), knopfhoehen = new Map(), festeHoehen = new Map();
   let knoepfeGesamt = 0;
   const beispiele = new Map();
   const merke = (karte, wert, el) => {
@@ -91,12 +91,22 @@ const SAMMLE = `(() => {
     merke(schriften, zahl(s.fontSize), el);
     if (el.tagName === "BUTTON" || el.classList.contains("ghost-button")) {
       const h = Math.round(el.getBoundingClientRect().height);
-      if (h > 0) merke(knopfhoehen, h, el);
+      // FEST gesetzte Hoehen (min-height/height) sind eine Entscheidung, keine
+      // Schlamperei: .icon-button ist ueberall 38 px, .text-chip ueberall 34 —
+      // zwei eigene, in sich einheitliche Gruppen. Nur Hoehen, die aus Polster
+      // und Textlaenge WACHSEN, koennen ungewollt auseinanderlaufen.
+      // NUR min-height: getComputedStyle().height liefert bei einem gerenderten
+      // Element immer den tatsaechlichen Wert, nie "auto" — damit galt in der
+      // ersten Fassung JEDE Hoehe als fest gesetzt, und die Messung fand nichts
+      // mehr. Der berechnete Wert ist nicht die Regel.
+      const fest = zahl(s.minHeight) === h;
+      if (h > 0 && !fest) merke(knopfhoehen, h, el);
+      if (h > 0 && fest) merke(festeHoehen, h, el);
       knoepfeGesamt++;
     }
   }
   const alsListe = (karte) => [...karte.entries()].sort((a, b) => b[1] - a[1]).map(([wert, anzahl]) => ({ wert, anzahl, beispiel: beispiele.get(wert) }));
-  return { radien: alsListe(radien), schriften: alsListe(schriften), knopfhoehen: alsListe(knopfhoehen), knoepfeGesamt };
+  return { radien: alsListe(radien), schriften: alsListe(schriften), knopfhoehen: alsListe(knopfhoehen), festeHoehen: alsListe(festeHoehen), knoepfeGesamt };
 })()`;
 
 // Fokusring NUR per echtem Tastendruck messen.
@@ -209,7 +219,7 @@ async function main() {
     }
     return [...karte.entries()].sort((a, b) => a[0] - b[0]);
   };
-  const radien = summe("radien"), schriften = summe("schriften"), hoehen = summe("knopfhoehen");
+  const radien = summe("radien"), schriften = summe("schriften"), hoehen = summe("knopfhoehen"), feste = summe("festeHoehen");
   const knoepfe = proAnsicht.reduce((s, a) => s + a.knoepfeGesamt, 0);
   const fokusAlle = proAnsicht.flatMap((a) => a.fokus || []);
   const ohneRing = fokusAlle.filter((f) => !f.ring).length;
@@ -220,26 +230,52 @@ async function main() {
   console.log(`\nDesignsystem auf ${url} — ${ANSICHTEN.length} Ansichten\n`);
   console.log(`  Eckradien       ${radien.length} verschiedene: ${zeile(radien)}`);
   console.log(`  Schriftgroessen ${schriften.length} verschiedene: ${zeile(schriften)}`);
-  console.log(`  Knopfhoehen     ${hoehen.length} verschiedene: ${zeile(hoehen)}`);
+  console.log(`  Knopfhoehen     ${feste.length} fest gesetzte (Entscheidung): ${zeile(feste)}`);
+  console.log(`                  ${hoehen.length} gewachsene (aus Polster und Text): ${zeile(hoehen)}`);
   console.log(`  Fokusringe      ${fokusAlle.length - ohneRing} von ${fokusAlle.length} per Tab angesteuerten Elementen haben einen`);
 
   const befunde = [];
   if (knoepfe === 0) befunde.push("MESSUNG UNGUELTIG — kein einziger Knopf gefunden");
   const woher = (art, wert) => { const q = wer.get(`${art}:${wert}`); return q ? `  [${q}]` : ""; };
   const ausnahmen = [];
+  /**
+   * Derselbe Baustein, nur anderer Text? Dann ist der Unterschied keiner.
+   *
+   * settings-nav-button ist 64 px, wenn die Beschriftung einzeilig bleibt, und
+   * 65 px bei zwei Zeilen — eine Hoehe, die aus dem INHALT waechst, und kein
+   * zweites Mass. Wer das meldet, schickt jemanden auf die Suche nach einer
+   * Regel, die es gar nicht gibt.
+   */
+  const gleicherBaustein = (art, a, b) => {
+    const eins = (wer.get(`${art}:${a}`) || "").split(": ").pop();
+    const zwei = (wer.get(`${art}:${b}`) || "").split(": ").pop();
+    return Boolean(eins) && eins === zwei;
+  };
   for (const a of findeAusreisser(radien)) {
     const frei = istAusnahme("radien", a.wert);
     if (frei) { ausnahmen.push(`Eckradius ${a.wert} px: ${frei.grund}`); continue; }
+    if (gleicherBaustein("radien", a.wert, a.nachbar)) {
+      ausnahmen.push(`Eckradius ${a.wert} px und ${a.nachbar} px: derselbe Baustein${woher("radien", a.wert)} — die Hoehe waechst aus dem Text`);
+      continue;
+    }
     befunde.push(`Eckradius ${a.wert} px (${a.anzahl}x) neben ${a.nachbar} px (${a.nachbarAnzahl}x)${woher("radien", a.wert)}`);
   }
   for (const a of findeAusreisser(hoehen)) {
     const frei = istAusnahme("knopfhoehen", a.wert);
     if (frei) { ausnahmen.push(`Knopfhoehe ${a.wert} px: ${frei.grund}`); continue; }
+    if (gleicherBaustein("knopfhoehen", a.wert, a.nachbar)) {
+      ausnahmen.push(`Knopfhoehe ${a.wert} px und ${a.nachbar} px: derselbe Baustein${woher("knopfhoehen", a.wert)} — die Hoehe waechst aus dem Text`);
+      continue;
+    }
     befunde.push(`Knopfhoehe ${a.wert} px (${a.anzahl}x) neben ${a.nachbar} px (${a.nachbarAnzahl}x)${woher("knopfhoehen", a.wert)}`);
   }
   for (const a of findeAusreisser(schriften)) {
     const frei = istAusnahme("schriften", a.wert);
     if (frei) { ausnahmen.push(`Schriftgroesse ${a.wert} px: ${frei.grund}`); continue; }
+    if (gleicherBaustein("schriften", a.wert, a.nachbar)) {
+      ausnahmen.push(`Schriftgroesse ${a.wert} px und ${a.nachbar} px: derselbe Baustein${woher("schriften", a.wert)} — die Hoehe waechst aus dem Text`);
+      continue;
+    }
     befunde.push(`Schriftgroesse ${a.wert} px (${a.anzahl}x) neben ${a.nachbar} px (${a.nachbarAnzahl}x)${woher("schriften", a.wert)}`);
   }
   if (ohneRing > 0) {
