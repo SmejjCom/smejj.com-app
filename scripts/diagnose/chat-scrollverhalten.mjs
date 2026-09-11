@@ -15,7 +15,14 @@
 //   2. Springt er bei einer neuen Nachricht ans Ende? (Auto-Scroll)
 //   3. Bleibt das Eingabefeld erreichbar, statt vom Verlauf verdeckt zu werden?
 //
+// GRENZE DIESER MESSUNG, ehrlich notiert: Der Selbsttest (--selbsttest) schiebt
+// den Verlauf um 300 px aus dem Endanschlag. Tablet und Laptop melden das
+// zuverlaessig, die beiden Handy-Breiten NICHT — dort zieht offenbar noch etwas
+// anderes nach. Auf Handy ist diese Messung also weniger empfindlich, als ihr
+// gruenes Ergebnis vermuten laesst.
+//
 // Aufruf: node scripts/diagnose/chat-scrollverhalten.mjs [--url https://smejj.com/]
+//         node scripts/diagnose/chat-scrollverhalten.mjs --selbsttest
 import { launchChrome, openPage, sleep } from "../testing/cdp-client.mjs";
 
 const BREITEN = [
@@ -96,7 +103,13 @@ const BAUE_VERLAUF = (proben) => `(() => {
   if (!log) return "kein Verlauf";
   log.hidden = false;
   document.getElementById("start")?.classList.add("has-start-chat");
-  for (const probe of ${JSON.stringify(proben)}) {
+  // Viermal durch: ein Verlauf, der nicht laenger ist als sein Fenster, SCROLLT
+  // nicht — und dann misst man Auto-Scroll an etwas, das sich nie bewegt.
+  // Genau daran ist der erste Selbsttest gescheitert (er sah nichts und meldete
+  // gruen).
+  const alle = [];
+  for (let runde = 0; runde < 4; runde++) alle.push(...${JSON.stringify(proben)});
+  for (const probe of alle) {
     const frage = document.createElement("article");
     frage.className = "entry user";
     frage.textContent = "Zeig mir: " + probe.was;
@@ -163,19 +176,12 @@ const ANS_ENDE_UND_NEUE_NACHRICHT = `(async () => {
   // waere gruen, egal was addEntry tut. Genau daran ist der erste Selbsttest
   // dieses Skripts aufgefallen.
   window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: 1 } }));
-  let neu;
-  if (window.__smejjSelbsttest) {
-    // Der ALTE, fehlerhafte Weg — absichtlich. Siehe --selbsttest unten.
-    neu = document.createElement("article");
-    neu.className = "entry user";
-    neu.textContent = "Eine frische Nachricht, die unten ankommen muss.";
-    log.append(neu);
-    neu.scrollIntoView({ block: "end" });
-  } else {
-    const helfer = await import("/assets/app-helfer.js?v=3");
-    neu = helfer.addEntry("Eine frische Nachricht, die unten ankommen muss.", "user", "#startLog");
-  }
+  const helfer = await import("/assets/app-helfer.js?v=3");
+  const neu = helfer.addEntry("Eine frische Nachricht, die unten ankommen muss.", "user", "#startLog");
   await new Promise((r) => setTimeout(r, 250));
+  // Der Selbsttest schiebt den Verlauf absichtlich aus dem Endanschlag. Die
+  // Messung MUSS das melden — sonst misst sie nichts und meldet trotzdem gruen.
+  if (window.__smejjSelbsttest) scroller.scrollTop = Math.max(0, scroller.scrollTop - 300);
   window.dispatchEvent(new CustomEvent("smejj:chat-strom", { detail: { laufen: 0 } }));
   // Der "Rest" allein ist noch kein Fehler: unter dem Verlauf kann Polster
   // liegen. Entscheidend ist, was der NUTZER sieht — steht die frische
@@ -184,6 +190,7 @@ const ANS_ENDE_UND_NEUE_NACHRICHT = `(async () => {
   const zone = document.querySelector(".prompt-glass, .composer, #startComposer")?.getBoundingClientRect();
   const obergrenze = zone ? Math.min(zone.top, window.innerHeight) : window.innerHeight;
   return {
+    scrollt: scroller.scrollHeight > scroller.clientHeight + 10,
     restVorher: vorher,
     restNachher: Math.round(scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight),
     nachrichtGanzImBild: r.top >= -1 && r.bottom <= obergrenze + 1,
@@ -195,9 +202,15 @@ const ANS_ENDE_UND_NEUE_NACHRICHT = `(async () => {
 async function main() {
   const url = arg("--url", "https://smejj.com/");
   const alsJson = process.argv.includes("--json");
-  // --selbsttest faehrt den ALTEN Weg (scrollIntoView statt addEntry) und MUSS
-  // rot werden. Eine Messung, die den Fehler nicht mehr findet, den sie einmal
-  // gefunden hat, ist keine Messung mehr — sie ist nur noch gruen.
+  // --selbsttest schiebt den Verlauf absichtlich aus dem Endanschlag; die
+  // Messung MUSS das melden. Eine Messung, die nicht beweisen kann, dass sie
+  // ueberhaupt etwas sieht, ist nur noch gruen.
+  //
+  // Die erste Fassung liess den Selbsttest stattdessen den ALTEN Scrollweg
+  // fahren (scrollIntoView statt addEntry) und erwartete Rot. Das war ein
+  // Irrtum: der Unterschied zwischen beiden Wegen zeigt sich hier mal mit 152,
+  // mal mit 3, mal mit 0 px — abhaengig von Layoutruhe und Zeitpunkt. Ein
+  // Selbsttest, der mal rot und mal gruen ist, beweist gar nichts.
   const selbsttest = process.argv.includes("--selbsttest");
   const chrome = await launchChrome();
   const befunde = [];
@@ -241,11 +254,14 @@ async function main() {
     if (b.ueberlauf.seitenUeberlauf > 2) zeilen.push(`Seite laeuft ${b.ueberlauf.seitenUeberlauf} px seitlich ueber`);
     for (const e of b.ueberlauf.elemente) zeilen.push(`${e.probe}: ${e.was} ragt ${e.ueberMs} px hinaus`);
     if (!b.scroll.feldSichtbar) zeilen.push(`Eingabefeld nicht sichtbar (Unterkante ${b.scroll.feldUnterkante})`);
-    if (!b.autoScroll.nachrichtGanzImBild) {
-      zeilen.push(b.autoScroll.verdecktUmPx > 0
-        ? `neue Nachricht ${b.autoScroll.verdecktUmPx} px von der Bedienzone verdeckt`
-        : `neue Nachricht ${b.autoScroll.obenAbgeschnittenPx} px oben abgeschnitten`);
-    }
+    // Die STABILE Frage: steht der Verlauf danach am Ende? Die Pixel-Verdeckung
+    // allein schwankte von Lauf zu Lauf (Schriften, Layoutruhe) und taugte nicht
+    // als Kriterium — der Selbsttest war damit mal rot, mal gruen. Der Rest zum
+    // Ende ist eindeutig: beim falschen Weg blieben 78 px stehen, beim richtigen
+    // bleibt 0.
+    if (!b.autoScroll.scrollt) zeilen.push("MESSUNG UNGUELTIG — der Verlauf scrollt gar nicht, Auto-Scroll ist hier nicht pruefbar");
+    else if (b.autoScroll.restNachher > 24) zeilen.push(`Verlauf steht ${b.autoScroll.restNachher} px vor dem Ende — die neue Nachricht ist nicht ganz da`);
+    else if (!b.autoScroll.nachrichtGanzImBild && b.autoScroll.verdecktUmPx > 24) zeilen.push(`neue Nachricht ${b.autoScroll.verdecktUmPx} px von der Bedienzone verdeckt`);
     fehler += zeilen.length;
     console.log(`  ${b.lage.padEnd(14)} ${String(b.breite).padStart(4)}  ${zeilen.length ? "" : "in Ordnung"}`);
     for (const z of zeilen) console.log(`      - ${z}`);
@@ -253,8 +269,8 @@ async function main() {
   if (selbsttest) {
     const erkannt = fehler > 0;
     console.log(erkannt
-      ? `\nSELBSTTEST BESTANDEN — der alte Weg wurde als Fehler erkannt (${fehler} Befunde).\n`
-      : "\nSELBSTTEST GESCHEITERT — der alte, nachweislich falsche Weg sah gruen aus. Die Messung ist blind.\n");
+      ? `\nSELBSTTEST BESTANDEN — der verschobene Verlauf wurde gemeldet (${fehler} Befunde).\n`
+      : "\nSELBSTTEST GESCHEITERT — ein absichtlich verschobener Verlauf sah gruen aus. Die Messung ist blind.\n");
     process.exitCode = erkannt ? 0 : 1;
     return;
   }
