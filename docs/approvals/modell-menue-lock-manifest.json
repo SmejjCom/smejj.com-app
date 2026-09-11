@@ -1,14 +1,10 @@
 {
   "lock": "smejj modell-menue lock v1 (100% Schutz)",
-  "frozenAt": "2026-09-05T00:19:17.996Z",
-  "confirmation": "Betreiber Wof Kadavanich, 2026-09-05 im Wortlaut: 'komplette App von a bis z checken und muss hundert Prozent responsive sein' sowie 'mach endlich fertig'. Gefunden beim A-bis-Z-Test am emulierten iPhone: Die Code-Ansicht begruesste mit der ANMELDE-ADRESSE ('Was steht als Naechstes an, name@gmail.com?'), weil das Profil-Dock ohne hinterlegten Namen auf die E-Mail zurueckfaellt. Geaendert: public/code-modell-menue.js prueft jetzt auf eine Mailadresse und gruesst dann neutral; im Dock bleibt die Adresse unveraendert. Dazu Service-Worker-Cache v763.",
-  "rule": "Keine Aenderung an der Modell-Liste (die beiden Menues, ihre ausgelieferten Kopien, der Katalog-Holer und seine Route) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
+  "frozenAt": "2026-09-11T16:31:57.916Z",
+  "confirmation": "Betreiber Wof Kadavanich, A-bis-Z-Auftrag 2026-09-10/11, Punkt 1 im Wortlaut: 'Cline vollstaendig aus der App entfernen (Modellmenues, UI, Backend, Routing, Konfiguration, Model Registry, API-Auswahl, Fallbacks, Prompts, Autopilot, Dokumentation). Nur noch Unsere Modelle (smejj 1.3/1.2/1.1, zukuenftige automatisch, neueste oben) und Auto.' Die Schutzliste fuehrt seit dem Umbau nur noch das Menue selbst (public/code-modell-menue.js und die ausgelieferte Kopie): die Liste steht als Daten in SMEJJ_STAFFEL und kommt nicht mehr vom Server. Die vier Fremdanbieter-Dateien im alten Manifest sind damit nicht mehr Teil der geschuetzten Liste.",
+  "rule": "Keine Aenderung an der Modell-Liste (das Menue und seine ausgelieferte Kopie) ohne ausdrueckliche schriftliche Bestaetigung des Betreibers.",
   "files": {
-    "public/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
-    "public/code-modell-menue.js": "3e96ed4353fc9ad4821ddf74d30ba847756ec020b5de195930b4b59ea9d42f61",
-    "public/assets/cline-model-menu.js": "6f800a67c611704db876f4c3622e4ed19d202f31f6c45a4be833ea76c151ad4b",
-    "public/assets/code-modell-menue.js": "3e96ed4353fc9ad4821ddf74d30ba847756ec020b5de195930b4b59ea9d42f61",
-    "control-server/src/providers/clineClient.js": "84c08a6aced06a82dade2694d99f48c6434ec73a3701d49cb4dc741c0051dbb8",
-    "control-server/src/routes/providerRoutes.js": "2f63057321eae995cbfd7bd14d773b0e9bb76d3cb5c1d17e89349f7d7a3995fb"
+    "public/code-modell-menue.js": "42c9c9927f96f89ac6063bd4af36c17f0a0e57cdc1db896f91cc15448cf2dab4",
+    "public/assets/code-modell-menue.js": "42c9c9927f96f89ac6063bd4af36c17f0a0e57cdc1db896f91cc15448cf2dab4"
   }
 }
