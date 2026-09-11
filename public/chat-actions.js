@@ -27,6 +27,7 @@
 
 import { addSources, addVersion, entriesUpTo, hasSources, metaOf, nextMenuIndex, observeLog, planEdit, planRegenerate, planRemoval, planSettle, previousUserEntry, rawOf, restoreNodes, setRating } from "/assets/chat-messages.js?v=2";
 import { barSpecFor, buildMenu, buildSourcePanel, toPlainText, versionLabel } from "/assets/chat-actions-menu.js?v=7";
+import { wendeAn, entferneEndgueltig } from "./chat-neu-versuch.js?v=1";
 // OHNE ?v=-Kennung — app.js importiert "./browser-context.js" (also
 // /assets/browser-context.js). Ein anderer Spezifizierer erzeugt eine ZWEITE
 // Modulinstanz mit eigenem Quellen-Gedaechtnis; der Menuepunkt "Quellen
@@ -327,8 +328,7 @@ function resubmit(text) {
 // Die Entscheidung selbst liegt in chat-messages.js und ist dort geprueft.
 function applyResubmitPlan(plan) {
   pendingVersions = plan.stash;
-  for (const node of plan.entfernen) node.remove();
-  if (!resubmit(plan.text)) pendingVersions = null;
+  if (!wendeAn(plan, resubmit)) pendingVersions = null;
 }
 
 function regenerate(entry) {
@@ -734,7 +734,7 @@ function onSettled() {
   const plan = planSettle(Array.from(log()?.querySelectorAll(":scope > .entry") || []), busy);
   if (!plan.ok) return;
   metaOf(plan.ziel).versions = pendingVersions.slice();
-  pendingVersions = null;
+  pendingVersions = null; entferneEndgueltig();
   addVersion(plan.ziel, { raw: plan.raw, html: plan.ziel.innerHTML, editedAt: new Date().toISOString() });
   ensureBar(plan.ziel);
 }
