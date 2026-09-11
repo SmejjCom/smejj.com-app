@@ -662,7 +662,23 @@ export function createSessionEngine({
           // der erzwungene Klick "Element is outside of the viewport" (live
           // 11.09., dreimal in einem Lauf). Das DOM kann es ohne jede Pruefung.
           await locator.evaluate((el) => el.scrollIntoView({ block: "center", inline: "center" })).catch(() => {});
-          await locator.click({ timeout: cfg.settleTimeoutMs, force: true });
+          try {
+            await locator.click({ timeout: cfg.settleTimeoutMs, force: true });
+          } catch (zweiter) {
+            // LETZTE STUFE: DER KLICK AUS DER SEITE HERAUS.
+            //
+            // Playwright weigert sich auch mit `force`, wenn das Element gar
+            // keine sichtbare Flaeche hat ("Element is not visible") — genau der
+            // Fall bei Wikipedias Suchknopf, der unter einem Symbol liegt. Live
+            // 11.09. endeten so ZWOELF Schritte eines Laufes, jeder nach zehn
+            // Sekunden Warten. Die Chrome-Bruecke macht seit dem 20.08. das
+            // Naheliegende: sie ruft `element.click()` in der Seite auf. Der
+            // ferne Browser tut das ab jetzt auch — dieselbe Maus, dasselbe
+            // Verhalten. Geklickt wird weiterhin NUR das eine, eindeutig
+            // aufgeloeste Element, das die Maus selbst gewaehlt hat.
+            if (!/not visible|outside of the viewport|Timeout .*exceeded/i.test(String(zweiter?.message || zweiter))) throw zweiter;
+            await locator.evaluate((el) => el.click());
+          }
           erzwungen = true;
         }
         await page.waitForLoadState("domcontentloaded", { timeout: cfg.settleTimeoutMs }).catch(() => {});
