@@ -344,3 +344,14 @@ test("der Vertrag ZEIGT die Nummer in einem vollstaendigen Beispiel, nicht nur i
   assert.match(prompt, /NIMM SIE IMMER MIT/);
   assert.match(prompt, /Beispiel \(so soll es aussehen\)/);
 });
+
+test("bleibt ein Element auch fuer force unsichtbar, klickt die Seite selbst — wie die Chrome-Bruecke", () => {
+  const quelle = readFileSync("workers/remote-browser/session-engine.js", "utf8");
+  const stelle = quelle.slice(quelle.indexOf("let erzwungen = false;"), quelle.indexOf("erzwungen = true;"));
+  // Drei Stufen, in dieser Reihenfolge: normal -> force -> Klick aus der Seite.
+  assert.ok(stelle.indexOf("force: true") < stelle.indexOf("el.click()"), "der Klick aus der Seite ist die LETZTE Stufe");
+  assert.match(stelle, /not visible\|outside of the viewport\|Timeout/, "nur diese drei Gruende rechtfertigen die letzte Stufe");
+  assert.match(stelle, /await locator\.evaluate\(\(el\) => el\.click\(\)\)/);
+  // Ein anderer Fehler wird weitergereicht, nicht uebergangen.
+  assert.match(stelle, /throw zweiter;/);
+});
