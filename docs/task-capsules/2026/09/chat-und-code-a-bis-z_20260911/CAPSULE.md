@@ -123,12 +123,46 @@ Beim Security-Lock lagen zwei fremde, bereits committete Aenderungen
 Stempel im Diff geprueft: sie beruehren weder Anmeldung noch Schluessel noch
 Sicherheitsrichtlinien.
 
+## Punkt 1 nachgereicht und LIVE (19:48 Uhr)
+
+Der Backend-Cline ist entfernt und ausgerollt. **Vor** dem Entfernen
+nachgewiesen, dass nichts Benutztes stirbt: `public/provider-settings.js` — die
+einzige Oberflaeche zum Hinterlegen eines Schluessels — existierte nicht mehr,
+ohne Schluessel endete jede Anfrage in "nicht konfiguriert", `check:cline` war
+bereits rot. Ein toter Weg, kein Rueckbau.
+
+Geloescht: `clineClient.js`, `providerRoutes.js` (war ganz Cline) samt Mount,
+`clineProvider.js`, `providerRegistry.js`, der Worker-Sonderweg, die
+Cline-Laufzeit an Jobs. Neutral gemacht, wo der NAME das Problem war:
+`errors.js` erkennt Anbieterfehler am Merkmal statt am Namen "ClineApiError";
+`providerContract.js` hat keinen Vorgabe-Anbieter mehr. Das
+**Transparenzverzeichnis** fuehrte "cline-bridge" als offengelegte
+Datenverarbeitung — dort stand die Regel schon woertlich vom Abschied von Ox
+Alpha: ein Verzeichnis, das etwas fuehrt, das die Plattform nicht einsetzt, ist
+nicht veraltet, sondern falsch.
+
+Geblieben ist bewusst die Migration alter Nutzerwahlen — wer "Cline" noch im
+Browserspeicher hat, wird still auf smejj gesetzt.
+
+### Drei Messfallen beim Rollout
+
+1. **Ein Statuscode beweist keine Route.** `/api/gibtesnichtxyz` antwortet
+   ebenfalls 401 — eine vorgelagerte Anmeldepruefung kommt vor jeder Route.
+2. **Ein gruener check-run kann zum VORHERIGEN Bau gehoeren** (abgeschlossen
+   17:44:35, Push 17:50).
+3. **`total_count: 0` heisst nicht "kein Bau"** — der zweite Push trug keinen
+   check-run und wurde trotzdem ausgerollt.
+
+Belastbar ist allein `gestartetAm`. Der erste Push loeste keinen Bau aus, ein
+leerer zweiter Commit genuegte.
+
 ## Offen
 
-* Punkt 1 ist NICHT fertig: der Backend-Cline lebt
-  (`control-server/src/providers/clineClient.js`, `providerRoutes.js`,
-  `src/agent/providers/clineProvider.js` und die Aufrufer in `agentRoutes.js`
-  und `workerModelRoutes.js`). Der Modell-Menue-Lock schuetzt sie nicht mehr,
-  der Weg ist also frei.
+* **Der Zeabur-Schluessel ist abgelaufen** (`cli.yaml:token`, HTTP 401). Der
+  manuelle Bauweg steht damit nicht zur Verfuegung; nur der Betreiber kann ihn
+  erneuern. Diagnose in einer Zeile:
+  `node scripts/diagnose/zeabur-schluessel-suchen.mjs`.
+* `public/assets/chat-bridge.js` ist eine aeltere Abzweigung der Quelle
+  (667 gegen 702 Zeilen). Nicht angefasst.
 * Punkt 5 (Sprachwelle Realtime), Punkt 8 (Designsystem), Punkte 10-13
   (A-bis-Z-Rundgang, mehrfache Durchlaeufe), Punkt 17 (Sicherheit).
