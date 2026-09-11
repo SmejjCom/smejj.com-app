@@ -334,3 +334,13 @@ test("vor dem erzwungenen Klick wird SCHLICHT gescrollt, nicht pruefend", () => 
   assert.ok(!/locator\.scrollIntoViewIfNeeded\?\.\(/.test(stelle), "die pruefende Fassung laeuft in dieselbe Frist wie der Klick");
   assert.ok(stelle.indexOf("scrollIntoView") < stelle.indexOf("force: true"));
 });
+
+test("der Vertrag ZEIGT die Nummer in einem vollstaendigen Beispiel, nicht nur in Prosa", async () => {
+  const { buildStepPrompt } = await import("../workers/maus-engine/prompt-template.mjs");
+  const prompt = buildStepPrompt({ task: "t", capsuleRef: "c", domainAllowlist: ["a.de"], budget: { maxActions: 10 }, files: [],
+    visionAllowed: false, observation: { url: "https://a.de/", title: "A", elements: [{ n: 7, tag: "input", id: "searchInput" }] }, remainingSteps: 5 });
+  // Modelle ahmen nach, was sie SEHEN: das Beispiel muss die Form tragen.
+  assert.match(prompt, /"strategy":"css","value":"#searchInput","n":7/);
+  assert.match(prompt, /NIMM SIE IMMER MIT/);
+  assert.match(prompt, /Beispiel \(so soll es aussehen\)/);
+});

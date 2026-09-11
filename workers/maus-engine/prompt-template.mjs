@@ -370,6 +370,17 @@ function stepContractBlock(erlaubteAktionen = null) {
     "strikt, unevaluatedProperties:false):",
     '- decision "act": {"schemaVersion":1,"decision":"act","reason":"kurz,',
     '  warum genau dieser Schritt","step":{...}} — step ist EIN Schritt im',
+    // EIN VOLLSTAENDIGES BEISPIEL, UND ZWAR MIT "n" (11.09.): Der Vertrag
+    // erklaerte die Nummer zwar, zeigte sie aber nirgends — und das Modell
+    // schrieb weiter geratene Selektoren (in einem Messlauf 10 Fehlschlaege
+    // durch Mehrdeutigkeit). Modelle ahmen nach, was sie SEHEN. Also steht
+    // hier jetzt genau die Form, die getroffen werden soll.
+    '  Beispiel (so soll es aussehen): {"schemaVersion":1,"decision":"act",',
+    '  "reason":"Suchfeld fuellen","step":{"id":"s1","action":"type",',
+    '  "target":{"strategy":"css","value":"#searchInput","n":7},',
+    '  "text":"Ada Lovelace"}} — die 7 ist das Feld "n" des Suchfelds aus der',
+    "  Elementliste unten. NIMM SIE IMMER MIT; sie ist der Unterschied zwischen",
+    "  treffen und raten.",
     "  Format des Plan-Schemas (id, action, aktionsspezifische Felder,",
     "  optional timeoutMs/retries/onFailure/note).",
     '- decision "done": {"schemaVersion":1,"decision":"done","reason":"...",',
