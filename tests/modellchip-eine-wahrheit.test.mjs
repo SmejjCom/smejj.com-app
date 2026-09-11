@@ -74,3 +74,10 @@ test("die Pille merkt sich die Stufe von vor dem Einschalten", () => {
   assert.match(ohr, /localStorage\.setItem\(VORHER_SPEICHER/);
   assert.match(ohr, /localStorage\.removeItem\(VORHER_SPEICHER\)/);
 });
+
+test("die Pille zeichnet sich nach einer Modellwahl neu", () => {
+  // Die Staffel-Zeilen setzen die Stufe mit (1.2 = gruendlich). Ohne dieses Ohr
+  // zeigte die Pille nach der Wahl von "smejj 1.2" weiter "aus", obwohl
+  // gruendlich lief — und der erste Klick schaltete dann AUS statt an.
+  assert.match(pille, /addEventListener\("smejj:model-selected"[\s\S]{0,80}?zeichneNachdenken/);
+});
