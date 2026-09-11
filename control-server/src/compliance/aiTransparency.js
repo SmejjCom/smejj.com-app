@@ -35,10 +35,12 @@ export const AI_SYSTEMS = Object.freeze([
   // ein Modell fuehrt, das die Plattform nicht mehr einsetzt, ist nicht bloss
   // veraltet — es ist falsch. Genau dagegen wurde die EU-AI-Act-Wache (Nr. 68)
   // gebaut, die den Eintrag am 30.08. wegen Drift ueberhaupt erst verlangte.
-  Object.freeze({
-    id: "cline-bridge", zweck: "Coding-Agent", anbieter: "Cline",
-    risiko: RISK.limited, transparenzpflicht: true, protokolliert: true
-  }),
+  // "cline-bridge" (Anbieter Cline) stand hier bis 2026-09-11 als Coding-Agent.
+  // Der Anbieter ist mit dem A-bis-Z-Auftrag (Punkt 1) vollstaendig entfernt —
+  // und damit gilt fuer ihn woertlich, was zwei Absaetze weiter oben ueber Ox
+  // Alpha steht: ein Verzeichnis, das einen Anbieter fuehrt, den die Plattform
+  // nicht mehr einsetzt, ist nicht bloss veraltet, sondern falsch. Es wuerde
+  // Nutzern eine Datenverarbeitung offenlegen, die gar nicht stattfindet.
   Object.freeze({
     id: "maus-engine-v2", zweck: "autonome Browser-Steuerung", anbieter: "smejj.com",
     risiko: RISK.limited, transparenzpflicht: true, verschaerft: true, protokolliert: true,

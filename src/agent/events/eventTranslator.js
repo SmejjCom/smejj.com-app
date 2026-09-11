@@ -1,6 +1,6 @@
 // smejj.com — Uebersetzer von Provider-Streams in neutrale smejj.com-Events.
-// Zweck: Einzige Ausgangsstelle fuer Events. OpenAI-kompatible SSE-Chunks (Cline,
-// GLM, Kimi und kuenftige Anbieter) werden hier in die smejj.com-Taxonomie
+// Zweck: Einzige Ausgangsstelle fuer Events. OpenAI-kompatible SSE-Chunks (GLM,
+// Kimi, eigene und kuenftige Anbieter) werden hier in die smejj.com-Taxonomie
 // uebersetzt; Provider-Strukturen enden an dieser Grenze.
 // Input: rohe SSE-Bytes. Output: sanitisierte smejj.com-Events als SSE-Text.
 
@@ -42,8 +42,11 @@ export function parseOpenAiSseChunk(buffer, chunk) {
         continue; // Unvollstaendige Zeile — naechster Chunk vervollstaendigt sie.
       }
       if (parsed?.error) {
+        // providerError statt eines Anbieter-Namens: bis 2026-09-11 stand hier
+        // "ClineApiError". toAgentError erkennt jetzt das Merkmal, nicht den
+        // Namen — damit gilt dieser Weg fuer jeden kuenftigen Anbieter.
         error = toAgentError({
-          name: "ClineApiError",
+          providerError: true,
           message: parsed.error?.message || "Provider stream error",
           code: parsed.error?.code,
           status: Number(parsed.error?.status) || 502
@@ -54,7 +57,7 @@ export function parseOpenAiSseChunk(buffer, chunk) {
       if (!choice) continue;
       if (choice.finish_reason === "error") {
         error = toAgentError({
-          name: "ClineApiError",
+          providerError: true,
           message: choice.error?.message || "Provider stream error",
           status: 502
         });

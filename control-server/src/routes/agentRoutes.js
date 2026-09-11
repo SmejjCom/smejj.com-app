@@ -2,52 +2,39 @@
 // Zweck: Einziger Einstieg des Frontends in die Agentenplattform. Liefert
 // ausschliesslich neutrale smejj.com-Events und -Fehler. Provider werden hier
 // nur ausgewaehlt, nie direkt aufgerufen.
-// Fail-closed: ohne SMEJJ_AGENT_API_ENABLED=YES ist die Route nicht vorhanden;
-// der bestehende Cline-Pfad bleibt dann unveraendert zustaendig (Dual-Run).
+// Fail-closed, jetzt aus ZWEI Gruenden: ohne SMEJJ_AGENT_API_ENABLED=YES ist die
+// Route nicht vorhanden — und ohne registrierten Provider ebenfalls nicht.
+//
+// CLINE IST AM 2026-09-11 ENTFERNT WORDEN (A-bis-Z-Auftrag, Punkt 1). Er war
+// der einzige hier registrierte Provider, und der Weg war zu diesem Zeitpunkt
+// bereits funktionslos: die Oberflaeche zum Hinterlegen eines Cline-Schluessels
+// (public/provider-settings.js) gibt es nicht mehr, ohne Schluessel warf
+// loadCredential bei JEDER Anfrage "Cline ist nicht konfiguriert", und
+// npm run check:cline war rot (MODULE_NOT_FOUND).
+//
+// Die Fassade bleibt vollstaendig stehen: sie ist providerneutral gebaut
+// (getProvider/registerProvider). Wer hier kuenftig einen EIGENEN Agenten
+// anschliesst, registriert ihn — und die Route lebt wieder. Bis dahin meldet
+// sie sich ab, statt auf jede Anfrage einen Fehler zu werfen.
 
 import { SECURITY_HEADERS } from "../../../src/shared/platform.js";
 import { createRateLimiter } from "../http/rateLimiter.js";
 import { privateJson, readJson } from "../http/respond.js";
 import { authenticatedUserId } from "../jobs/jobAccess.js";
-import { agentErrorResponse, AgentError } from "../../../src/agent/errors.js";
+import { agentErrorResponse } from "../../../src/agent/errors.js";
 import { getProvider, normalizeTaskInput, listProviders } from "../../../src/agent/providers/providerContract.js";
-import { createClineProvider } from "../../../src/agent/providers/clineProvider.js";
 import { createSessionStore } from "../../../src/agent/api/sessionStore.js";
-import { registerProvider } from "../../../src/agent/providers/providerContract.js";
-import { clineChatCompletion, clineResponseError, isModelId } from "../providers/clineClient.js";
-import { getProviderCredential } from "../providers/providerCredentialVault.js";
 
 const PREFIX = "/api/agent";
 const requestGate = createRateLimiter({ capacity: 12, refillPerSec: 0.2, maxKeys: 20_000 });
 const sessionStore = createSessionStore();
-
-let providersReady = false;
 
 /** Prueft das Feature-Flag. Default NO (fail-closed, Non-Regression). */
 export function agentApiEnabled(env = process.env) {
   return String(env.SMEJJ_AGENT_API_ENABLED || "").trim().toUpperCase() === "YES";
 }
 
-// Registriert die Provider einmalig. Cline wird ueber den Adapter gekapselt —
-// keine direkten Cline-Aufrufe ausserhalb des Adapters.
-function ensureProviders(env, fetchImpl) {
-  if (providersReady) return;
-  registerProvider("cline", createClineProvider({
-    clineChatCompletion: (args) => clineChatCompletion({ ...args, fetchImpl }),
-    clineResponseError,
-    loadCredential: async (userId) => {
-      const record = await getProviderCredential(userId, "cline", env);
-      if (!record?.enabled || !record.apiKey || !isModelId(record.selectedModel)) {
-        throw new AgentError("MODEL_NOT_AVAILABLE", "Cline ist nicht konfiguriert.");
-      }
-      return record;
-    },
-    sessionStore
-  }), { capabilities: ["streaming", "tools", "reasoning", "images"] });
-  providersReady = true;
-}
-
-export async function handleAgentRoute(req, url, res, { env = process.env, fetchImpl = fetch } = {}) {
+export async function handleAgentRoute(req, url, res, { env = process.env } = {}) {
   // Nur Unterpfade: "/api/agent" selbst gehoert dem bestehenden Modell-Router-
   // Endpoint und darf hier nicht uebernommen werden (Non-Regression).
   if (!url.pathname.startsWith(`${PREFIX}/`)) return false;
@@ -67,9 +54,17 @@ export async function handleAgentRoute(req, url, res, { env = process.env, fetch
     return true;
   }
 
-  try {
-    ensureProviders(env, fetchImpl);
+  // Die Pruefung auf einen Provider steht bewusst NACH Anmeldung und Bremse:
+  // wer nicht angemeldet ist, bekommt 401 — nicht die Auskunft, was hier
+  // angeschlossen ist. Seit der Entfernung von Cline (2026-09-11) ist kein
+  // Provider registriert; /providers darf trotzdem antworten und die leere
+  // Liste zeigen, das ist die ehrliche Auskunft.
+  if (listProviders().length === 0 && url.pathname !== `${PREFIX}/providers`) {
+    privateJson(res, 404, { ok: false, error: { code: "INVALID_REQUEST", message: "Derzeit ist kein Agent angeschlossen." } });
+    return true;
+  }
 
+  try {
     if (req.method === "GET" && url.pathname === `${PREFIX}/providers`) {
       privateJson(res, 200, { ok: true, providers: listProviders() });
       return true;

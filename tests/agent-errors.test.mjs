@@ -17,18 +17,18 @@ test("Unbekannter Code faellt fail-closed auf INTERNAL_ERROR", () => {
   assert.equal(error.status, 500);
 });
 
-test("Cline 401 wird zu AUTHENTICATION_ERROR ohne Rohmeldung", () => {
-  const error = toAgentError({ name: "ClineApiError", status: 401, message: "invalid api key sk-abc123" });
+test("Anbieter-401 wird zu AUTHENTICATION_ERROR ohne Rohmeldung", () => {
+  const error = toAgentError({ name: "FremdApiError", status: 401, message: "invalid api key sk-abc123" });
   assert.equal(error.code, "AUTHENTICATION_ERROR");
   assert.ok(!error.message.includes("sk-abc123"), "Rohmeldung darf nicht durchsickern");
 });
 
-test("Cline 403 ENTITLEMENT wird zu MODEL_NOT_AVAILABLE (bekannter cline-pass-Fall)", () => {
-  const error = toAgentError({ name: "ClineApiError", status: 403, code: "ENTITLEMENT_REQUIRED", message: "no entitlement" });
+test("Anbieter-403 ENTITLEMENT wird zu MODEL_NOT_AVAILABLE", () => {
+  const error = toAgentError({ name: "FremdApiError", status: 403, code: "ENTITLEMENT_REQUIRED", message: "no entitlement" });
   assert.equal(error.code, "MODEL_NOT_AVAILABLE");
 });
 
-test("Cline 403 ohne ENTITLEMENT bleibt AUTHENTICATION_ERROR", () => {
+test("Anbieter-403 ohne ENTITLEMENT bleibt AUTHENTICATION_ERROR", () => {
   assert.equal(mapProviderStatus(403, ""), "AUTHENTICATION_ERROR");
 });
 
@@ -44,13 +44,13 @@ test("Legacy-String-Codes der Codebasis werden gemappt", () => {
   assert.equal(toAgentError(new Error("worker_token_rejected")).code, "AUTHENTICATION_ERROR");
   assert.equal(toAgentError(new Error("model_tool_not_allowed")).code, "TOOL_PERMISSION_DENIED");
   assert.equal(toAgentError(new Error("unsafe_path")).code, "SECURITY_POLICY_VIOLATION");
-  assert.equal(toAgentError(new Error("cline_not_configured")).code, "MODEL_NOT_AVAILABLE");
-  assert.equal(toAgentError(new Error("cline_insufficient_credits")).code, "COST_LIMIT_REACHED");
+  assert.equal(toAgentError(new Error("provider_not_configured")).code, "MODEL_NOT_AVAILABLE");
+  assert.equal(toAgentError(new Error("provider_insufficient_credits")).code, "COST_LIMIT_REACHED");
 });
 
 test("Retryable-Klassifizierung stimmt", () => {
-  assert.equal(toAgentError({ name: "ClineApiError", status: 503 }).retryable, true);
-  assert.equal(toAgentError({ name: "ClineApiError", status: 401 }).retryable, false);
+  assert.equal(toAgentError({ name: "FremdApiError", status: 503 }).retryable, true);
+  assert.equal(toAgentError({ name: "FremdApiError", status: 401 }).retryable, false);
 });
 
 test("toJSON gibt nur erlaubte Felder aus (keine cause/stack)", () => {
@@ -66,7 +66,7 @@ test("AgentError wird unveraendert durchgereicht", () => {
 });
 
 test("agentErrorResponse liefert HTTP-Status und neutralen Koerper", () => {
-  const { status, body } = agentErrorResponse(new Error("cline_rate_limit"));
+  const { status, body } = agentErrorResponse(new Error("provider_rate_limit"));
   assert.equal(status, 429);
   assert.equal(body.ok, false);
   assert.equal(body.error.code, "RATE_LIMITED");

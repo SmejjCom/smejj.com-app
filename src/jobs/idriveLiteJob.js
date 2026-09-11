@@ -29,8 +29,7 @@ export function createIdriveLiteCodingJob({
   parentJobId = "",
   preview = null,
   executionMode = "edit",
-  replay = null,
-  providerRuntime = null
+  replay = null
 } = {}) {
   const safeJobId = normalizeId(jobId, "jobId");
   const safeProjectId = normalizeId(projectId, "projectId");
@@ -77,7 +76,12 @@ export function createIdriveLiteCodingJob({
       engineCandidates: [...modelDefinition.runtime.workerEngines],
       fallback: "disabled"
     },
-    providerRuntime: normalizeProviderRuntime(providerRuntime),
+    // Laufzeit eines FREMDEN Anbieters: bis 2026-09-11 trug ein Job hier eine
+    // Cline-Laufzeit. Mit ihm ist der letzte Fremdanbieter entfernt (Auftrag
+    // Punkt 1) — ein Job nimmt jetzt immer die eigene Modell-Registry mit
+    // Ersatzkette. Fail-closed: ein mitgeschickter Wert wird verworfen, nicht
+    // durchgereicht.
+    providerRuntime: null,
     taskCapsule: capsule,
     storage: buildJobStorage(safeJobId, safeProjectId, contextPaths, capsule),
     serverLimits: {
@@ -103,18 +107,6 @@ export function createIdriveLiteCodingJob({
       sourceJobId: replay?.sourceJobId || "",
       sourceActionLogSha256: replay?.sourceActionLogSha256 || ""
     }
-  };
-}
-
-function normalizeProviderRuntime(value) {
-  if (value?.id !== "cline") return null;
-  const modelId = String(value.modelId || "").trim();
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{2,199}$/.test(modelId)) return null;
-  return {
-    id: "cline",
-    modelId,
-    credentialHandling: "control-server-encrypted-vault",
-    keyForwardedToWorker: false
   };
 }
 
