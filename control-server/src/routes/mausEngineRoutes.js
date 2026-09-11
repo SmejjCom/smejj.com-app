@@ -484,7 +484,29 @@ export async function handleMausRun(req, res, {
   // Ungebremst ist das nicht: die Anfrage braucht das Engine-Token, darf
   // ausschliesslich den Planer-Proxy ausloesen, und der Lauf, fuer den sie
   // fragt, ist durch maxLoopSteps und das Budget-Gate hart begrenzt.
-  const istSchrittfrage = fromWorker && !req?.authUser;
+  // Der Koerper wird VOR der Bremse gelesen, weil erst er sagt, WORUM es geht:
+  // eine Schrittfrage eines laufenden Auftrags ist etwas anderes als ein neuer
+  // Auftrag. Die Groessengrenze (MAX_BODY_BYTES) gilt unveraendert, und die
+  // Anmeldung ist oben schon geprueft.
+  let body;
+  try {
+    body = JSON.parse(await readBody(req));
+  } catch {
+    return json(res, 400, { ok: false, error: "kein_gueltiges_json" });
+  }
+
+  // SCHRITTFRAGEN EINES LAUFENDEN AUFTRAGS SIND KEINE NEUEN AUFTRAEGE.
+  //
+  // Der Kommentar unten stimmte schon 2026-08-17 — die Ausnahme galt aber nur
+  // fuer den Worker-Weg. Der freie Lauf IM PANEL fragt als angemeldeter Nutzer
+  // und lief damit weiter in die Bremse: gemessen 11.09. war ab dem sechsten
+  // Schritt jede Antwort "Zu viele Maus-Engine-Anfragen", zwanzig Schritte
+  // hintereinander, und das Panel hielt 429 fuer einen Abbruchgrund. Ein
+  // Auftrag mit 25 erlaubten Schritten kam also nie ueber fuenf hinaus.
+  //
+  // `naechsterSchritt` ist per Definition ein Schritt IN einem Lauf; seine
+  // Bremse ist die Schrittzahl (restSchritte, maxLoopSteps) und das Budget-Gate.
+  const istSchrittfrage = (fromWorker && !req?.authUser) || body?.naechsterSchritt === true;
   if (limiter && !istSchrittfrage) {
     const verdict = limiter.take(clientKeyFromRequest(req));
     if (!verdict.allowed) {
@@ -509,13 +531,6 @@ export async function handleMausRun(req, res, {
     // sah, DASS das Gate blockt, nie WARUM (Befund 2026-08-17: zwei fehlende
     // Umgebungswerte kosteten eine halbe Stunde Suche).
     return json(res, 503, { ok: false, error: "budget_gate_blockiert", reasons: budgetVerdict.reasons ?? [] });
-  }
-
-  let body;
-  try {
-    body = JSON.parse(await readBody(req));
-  } catch {
-    return json(res, 400, { ok: false, error: "kein_gueltiges_json" });
   }
 
   // Worker-Anfragen: ausschliesslich Planer-Proxy, sonst fail-closed.

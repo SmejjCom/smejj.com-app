@@ -611,3 +611,31 @@ test("ein echter Ausfall bleibt planer_nicht_erreichbar", async () => {
   const client = buildPlannerClient({ env: ENV_ZWEI, fetchImpl, schlafe: async () => {} });
   await assert.rejects(client("prompt"), /planer_nicht_erreichbar/);
 });
+
+// --- Schrittfragen eines laufenden Auftrags werden nicht gebremst ---------
+// Gemessen 11.09.: ab dem SECHSTEN Schritt kam nur noch "Zu viele
+// Maus-Engine-Anfragen" — zwanzig Schritte hintereinander. Ein Auftrag mit 25
+// erlaubten Schritten kam nie ueber fuenf hinaus.
+test("naechsterSchritt laeuft an der Nutzer-Bremse vorbei, ein neuer Auftrag nicht", async () => {
+  const bremse = { genommen: 0, take() { this.genommen += 1; return { allowed: false, retryAfterSec: 20 }; } };
+  const resSchritt = mockRes();
+  await handleMausRun(mockReq({ body: {
+    naechsterSchritt: true, task: "t", capsuleRef: "c", domainAllowlist: ["example.com"],
+    beobachtung: { url: "https://example.com/", title: "T", elements: [] }, verlauf: [], restSchritte: 9
+  } }), resSchritt, {
+    env: ENV_OK, limiter: bremse, budgetEvaluator: () => ({ ok: true }),
+    plannerClient: async () => JSON.stringify({ schemaVersion: 1, decision: "done", reason: "da", result: "fertig" }),
+    fetchImpl: async () => { throw new Error("kein Netz im Test"); }
+  });
+  assert.equal(resSchritt.statusCode, 200, `Schrittfrage wurde gebremst: ${JSON.stringify(resSchritt.body)}`);
+  assert.equal(bremse.genommen, 0, "die Bremse darf die Schrittfrage gar nicht erst anfassen");
+
+  // Gegenprobe: ein NEUER Auftrag bleibt gebremst — sonst waere die Bremse weg.
+  const resAuftrag = mockRes();
+  await handleMausRun(mockReq({ body: { task: "t", capsuleRef: "c", domainAllowlist: ["example.com"] } }), resAuftrag, {
+    env: ENV_OK, limiter: bremse, budgetEvaluator: () => ({ ok: true })
+  });
+  assert.equal(resAuftrag.statusCode, 429);
+  assert.equal(resAuftrag.headers["Retry-After"], "20");
+  assert.equal(bremse.genommen, 1);
+});
